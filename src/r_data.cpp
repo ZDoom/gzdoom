@@ -3051,4 +3051,4 @@ CCMD (hashfoo)
 			Printf ("%s not found\n", TexMan[i]->Name);
 		}
 	}
-}
+}

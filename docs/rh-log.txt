@@ -1,4 +1,6 @@
 November 23, 2003
+- Oops. Quick update from 2.0.54 to 2.0.55 to let old savegames load again.
+  Hopefully nobody downloaded 2.0.54 in the hour it was available.
 - The sector an actor resides in now gets stored in savegames, because
   different rules are applied for things spawned at level start than for
   things spawned afterward.

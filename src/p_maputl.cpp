@@ -349,6 +349,11 @@ void AActor::LinkToWorld (bool buggy)
 
 void AActor::LinkToWorld (sector_t *sec)
 {
+	if (sec == NULL)
+	{
+		LinkToWorld ();
+		return;
+	}
 	Sector = sec;
 
 	if ( !(flags & MF_NOSECTOR) )

@@ -1,0 +1,15 @@
+[CODEPTR]
+Frame 77 = A_FireRailgun
+Frame 78 = A_RailWait
+
+# S_PLASMA1
+Frame 77
+Sprite subnumber = 32768
+Duration = 3
+Next frame = 78
+
+# S_PLASMA2
+Frame 78
+Sprite subnumber = 1
+Duration = 50
+Next frame = 74

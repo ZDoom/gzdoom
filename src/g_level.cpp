@@ -176,7 +176,8 @@ static int numwadclusterinfos = 0;
 level_info_t *wadlevelinfos;
 int numwadlevelinfos = 0;
 
-BOOL HexenHack;
+// MAPINFO is parsed slightly differently when the map name is just a number.
+static bool HexenHack;
 
 static level_info_t TheDefaultLevelInfo = { "", 0, "", "", "", "SKY1", 0, 0, 0, NULL, "Unnamed", "COLORMAP", +8, -8 };
 
@@ -1497,27 +1498,7 @@ void G_DoLoadLevel (int position, bool autosave)
 		memset (players[i].frags,0,sizeof(players[i].frags)); 
 		players[i].fragcount = 0;
 	}
-/*
-	// initialize the msecnode_t freelist.					phares 3/25/98
-	// any nodes in the freelist are gone by now, cleared
-	// by Z_FreeTags() when the previous level ended or player
-	// died.
 
-	{
-		extern msecnode_t *headsecnode; // phares 3/25/98
-		headsecnode = NULL;
-
-		// [RH] Need to prevent the AActor destructor from trying to
-		//		free the nodes
-		AActor *actor;
-		TThinkerIterator<AActor> iterator;
-
-		while ( (actor = iterator.Next ()) )
-		{
-			actor->touching_sectorlist = NULL;
-		}
-	}
-*/
 	SN_StopAllSequences ();
 	P_SetupLevel (level.mapname, position);
 
@@ -1685,7 +1666,6 @@ void G_InitLevelLocals ()
 		*/
 	}
 	level.outsidefog = info->outsidefog;
-	level.flags |= LEVEL_DEFINEDINMAPINFO;
 	level.WallVertLight = info->WallVertLight;
 	level.WallHorizLight = info->WallHorizLight;
 	if (info->gravity != 0.f)
@@ -1712,7 +1692,7 @@ void G_InitLevelLocals ()
 		level.musicorder = info->musicorder;
 
 		strncpy (level.level_name, info->level_name, 63);
-		G_MaybeLookupLevelName ();
+		G_MaybeLookupLevelName (NULL);
 		strncpy (level.nextmap, info->nextmap, 8);
 		level.nextmap[8] = 0;
 		strncpy (level.secretmap, info->secretmap, 8);
@@ -1819,17 +1799,28 @@ cluster_info_t *FindClusterInfo (int cluster)
 		return &TheDefaultClusterInfo;
 }
 
-void G_MaybeLookupLevelName ()
+const char *G_MaybeLookupLevelName (level_info_t *ininfo)
 {
-	if (level.info != NULL && level.info->flags & LEVEL_LOOKUPLEVELNAME)
+	level_info_t *info;
+
+	if (ininfo == NULL)
+	{
+		info = level.info;
+	}
+	else
+	{
+		info = ininfo;
+	}
+
+	if (info != NULL && info->flags & LEVEL_LOOKUPLEVELNAME)
 	{
 		const char *thename;
 		int strnum;
 
-		strnum = GStrings.FindString (level.info->level_name);
+		strnum = GStrings.FindString (info->level_name);
 		if (strnum < 0)
 		{
-			thename = sc_String;
+			thename = info->level_name;
 		}
 		else
 		{
@@ -1837,13 +1828,13 @@ void G_MaybeLookupLevelName ()
 			char checkstring[32];
 
 			// Strip out the header from the localized string
-			if (level.info->mapname[0] == 'E' && level.info->mapname[2] == 'M')
+			if (info->mapname[0] == 'E' && info->mapname[2] == 'M')
 			{
-				sprintf (checkstring, "%s: ", level.info->mapname);
+				sprintf (checkstring, "%s: ", info->mapname);
 			}
-			else if (level.info->mapname[0] == 'M' && level.info->mapname[1] == 'A' && level.info->mapname[2] == 'P')
+			else if (info->mapname[0] == 'M' && info->mapname[1] == 'A' && info->mapname[2] == 'P')
 			{
-				sprintf (checkstring, "%d: ", atoi(level.info->mapname + 3));
+				sprintf (checkstring, "%d: ", atoi(info->mapname + 3));
 			}
 			thename = strstr (lookedup, checkstring);
 			if (thename == NULL)
@@ -1855,8 +1846,13 @@ void G_MaybeLookupLevelName ()
 				thename += strlen (checkstring);
 			}
 		}
-		strncpy (level.level_name, thename, 63);
+		if (ininfo == NULL)
+		{
+			strncpy (level.level_name, thename, 63);
+		}
+		return thename;
 	}
+	return NULL;
 }
 
 void G_MakeEpisodes ()

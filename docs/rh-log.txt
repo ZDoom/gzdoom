@@ -1,3 +1,55 @@
+November 23, 2003
+- The sector an actor resides in now gets stored in savegames, because
+  different rules are applied for things spawned at level start than for
+  things spawned afterward.
+- Added calls to SetWindowLongPtr to take away the window's border in
+  fullscreen mode and put it back in windowed mode.
+- Fixed FBaseStatusBar::RepositionCoords() so that LilWhiteMouse's Chosen
+  ammo icons appear on the fullscreen HUD again.
+
+November 21, 2003
+- Added Strife's "Becoming Acolyte".
+- Added Strife's zombie.
+- Added Strife's grenade launchers.
+
+November 20, 2003
+- Added Strife's merchants.
+- Added a check for a NULL texture to the player setup drawer, even though
+  that should never happen.
+- Fixed: GiveInventory would not let you have more than one puzzle item of a
+  certain kind because I thought Hexen restricted you that way.
+- Fixed: Starting a non-deathmatch game, changing the deathmatch cvar to true,
+  and then starting a new game would still show the ARMS graphic on the
+  status bar because the status bar graphic was not reloaded.
+- Changed the fast floor dropping behavior so that Hexen format maps use the
+  Hexen behavior and Doom format maps use the Doom behavior.
+
+November 19, 2003
+- Added Strife's peasants.
+- Added the Strife translation tables.
+- Changed dehacked parsing so that the "Far attack frame" for players cannot
+  be changed. Fixes insaned1.deh and insaned2.deh that come with insane.wad.
+- Fixed: The intermission screen did not lookup level names.
+- Added a check for a NULL target to A_FiredAttack.
+- Fixed: Enter, respawn, and death scripts were run with the equivalent of
+  ACS_Execute instead of ACS_ExecuteAlways, preventing them from executing
+  for more than one player at once. This especially defeats the purpose of
+  enter scripts, because those are always run at the same time for each
+  player when the level starts, so only the first player would actually
+  run any enter scripts.
+- Fixed: The read-modify-write map array ops in p_acs.cpp took the array
+  index from the world var store instead of the map var store.
+
+November 18, 2003
+- Added Strife's Sentinel.
+- Adjusted P_SpawnMissileXYZ so that if a missile would normally shoot over
+  the player's head, it will be aimed slightly lower.
+- Added the first half of Strife's Bishop.
+- Added Strife's Crusader (minus its special death action).
+
+November 17, 2003
+- Added a check for bad sidedefs to P_SaveLineSpecial.
+
 November 15, 2003
 - Added Strife's high-explosive and white phosphorous grenades (but not the
   grenade launchers).

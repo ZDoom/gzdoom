@@ -462,6 +462,9 @@ void FBaseStatusBar::DrawPartialImage (FTexture *img, int wx, int ww) const
 bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
 	const int w, const int h) const
 {
+	bool xright = x < 0;
+	bool ybot = y < 0;
+
 	if (FixedOrigin)
 	{
 		x += xo - w / 2;
@@ -472,10 +475,10 @@ bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
 		x *= CleanXfac;
 		if (Centering)
 			x += SCREENWIDTH / 2;
-		else if (x < 0)
+		else if (xright)
 			x = SCREENWIDTH + x;
 		y *= CleanYfac;
-		if (y < 0)
+		if (ybot)
 			y = SCREENHEIGHT + y;
 		return true;
 	}
@@ -483,9 +486,9 @@ bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
 	{
 		if (Centering)
 			x += SCREENWIDTH / 2;
-		else if (x < 0)
+		else if (xright)
 			x = SCREENWIDTH + x;
-		if (y < 0)
+		if (ybot)
 			y = SCREENHEIGHT + y;
 		return false;
 	}

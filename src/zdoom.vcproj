@@ -4153,6 +4153,15 @@
 			Name="Strife Game"
 			Filter="">
 			<File
+				RelativePath=".\g_strife\a_becomingacolyte.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_merchants.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_peasant.cpp">
+			</File>
+			<File
 				RelativePath=".\g_strife\a_strifeammo.cpp">
 			</File>
 			<File
@@ -4172,6 +4181,9 @@
 						Name="VCCLCompilerTool"
 						GeneratePreprocessedFile="0"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\g_strife\a_zombie.cpp">
 			</File>
 			<File
 				RelativePath=".\g_strife\strife_sbar.cpp">

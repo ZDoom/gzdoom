@@ -37,7 +37,7 @@
 // Lots of different representations for the version number
 enum { VERSION = 204 };
 #define STRVERSION "204"
-#define DOTVERSIONSTR "2.0.53"
+#define DOTVERSIONSTR "2.0.54"
 #define GAMEVER (2*256+2)
 
 // SAVEVER is the version of the information stored in level snapshots.

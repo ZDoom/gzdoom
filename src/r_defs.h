@@ -748,7 +748,7 @@ public:
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
-private:
+public:
 	struct TextureHash
 	{
 		FTexture *Texture;

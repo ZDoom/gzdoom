@@ -820,7 +820,12 @@ static int PatchThing (int thingy)
 				else if (!strnicmp (Line1, "Close attack", 12))
 					info->MeleeState = state;
 				else if (!strnicmp (Line1, "Far attack", 10))
-					info->MissileState = state;
+				{
+					if (thingy != 1)	// Not for players!
+					{
+						info->MissileState = state;
+					}
+				}
 				else if (!strnicmp (Line1, "Death", 5))
 					info->DeathState = state;
 				else if (!strnicmp (Line1, "Exploding", 9))

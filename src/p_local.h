@@ -116,6 +116,7 @@ AActor *P_SpawnMissileAngle (AActor *source, const TypeInfo *type, angle_t angle
 AActor *P_SpawnMissileAngleSpeed (AActor *source, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed);
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz);
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner=NULL);
+AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const TypeInfo *type);
 
 AActor *P_SpawnPlayerMissile (AActor* source, const TypeInfo *type);
 AActor *P_SpawnPlayerMissile (AActor *source, const TypeInfo *type, angle_t angle);

@@ -1016,7 +1016,7 @@ void R_InitTranslationTables ()
 	translationtables[0] = new BYTE[256*
 		(NUMCOLORMAPS*16			// Shaded
 		 +MAXPLAYERS*2				// Players + PlayersExtra
-		 +4							// Standard
+		 +8							// Standard	(7 for Strife, 3 for the rest)
 		 +MAX_ACS_TRANSLATIONS		// LevelScripted
 		 +BODYQUESIZE				// PlayerCorpses
 		 )];
@@ -1029,13 +1029,13 @@ void R_InitTranslationTables ()
 	translationtables[TRANSLATION_PlayersExtra] =
 		translationtables[TRANSLATION_Players] + MAXPLAYERS*256;
 
-	// The three standard translations from Doom or Heretic,
+	// The three standard translations from Doom or Heretic (seven for Strife),
 	// plus the generic ice translation.
 	translationtables[TRANSLATION_Standard] =
 		translationtables[TRANSLATION_PlayersExtra] + MAXPLAYERS*256;
 
 	translationtables[TRANSLATION_LevelScripted] =
-		translationtables[TRANSLATION_Standard] + 4*256;
+		translationtables[TRANSLATION_Standard] + 8*256;
 
 	translationtables[TRANSLATION_PlayerCorpses] =
 		translationtables[TRANSLATION_LevelScripted] + MAX_ACS_TRANSLATIONS*256;
@@ -1054,7 +1054,7 @@ void R_InitTranslationTables ()
 	}
 
 	// Create the standard translation tables
-	for (i = 0; i < 3; ++i)
+	for (i = 0; i < 7; ++i)
 	{
 		memcpy (translationtables[TRANSLATION_Standard] + i*256, translationtables[0], 256);
 	}
@@ -1074,6 +1074,19 @@ void R_InitTranslationTables ()
 			translationtables[TRANSLATION_Standard][i    ] = 114+(i-225); // yellow
 			translationtables[TRANSLATION_Standard][i+256] = 145+(i-225); // red
 			translationtables[TRANSLATION_Standard][i+512] = 190+(i-225); // blue
+		}
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		for (i = 0x80; i < 0x90; i++)
+		{
+			translationtables[TRANSLATION_Standard][i      ] = 0x40 + (i&0xf); // red
+			translationtables[TRANSLATION_Standard][i+1*256] = 0xAC + (i&0xf); // rust
+			translationtables[TRANSLATION_Standard][i+2*256] = 0x10 + (i&0xf); // gray
+			translationtables[TRANSLATION_Standard][i+3*256] = 0x2C + (i&0xf); // dark green
+			translationtables[TRANSLATION_Standard][i+4*256] = 0x50 + (i&0xf); // gold
+			translationtables[TRANSLATION_Standard][i+5*256] = 0x60 + (i&0xf); // bright green
+			translationtables[TRANSLATION_Standard][i+6*256] = 0x90 + (i&0xf); // blue
 		}
 	}
 
@@ -1111,7 +1124,7 @@ void R_InitTranslationTables ()
 		int g = GPalette.BaseColors[i].g;
 		int b = GPalette.BaseColors[i].b;
 		int v = (r*77 + g*143 + b*37) >> 12;
-		translationtables[TRANSLATION_Standard][768+i] = IcePaletteRemap[v];
+		translationtables[TRANSLATION_Standard][7*256+i] = IcePaletteRemap[v];
 	}
 
 	// set up shading tables for shaded columns

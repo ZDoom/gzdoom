@@ -343,6 +343,12 @@ void AActor::LinkToWorld (bool buggy)
 	{
 		sec = LinkToWorldForMapThing ();
 	}
+
+	LinkToWorld (sec);
+}
+
+void AActor::LinkToWorld (sector_t *sec)
+{
 	Sector = sec;
 
 	if ( !(flags & MF_NOSECTOR) )

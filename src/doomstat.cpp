@@ -60,7 +60,7 @@ CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
 			LanguageIDs[2], LanguageIDs[3]);
 	GStrings.ReloadStrings ();
 	GStrings.Compact ();
-	G_MaybeLookupLevelName ();
+	G_MaybeLookupLevelName (NULL);
 }
 
 // [RH] Network arbitrator

@@ -343,7 +343,7 @@ static FTexture*		lnames[2];	// Name graphics of each level (centered)
 
 // [RH] Info to dynamically generate the level name graphics
 static int				lnamewidths[2];
-static char				*lnametexts[2];
+static const char		*lnametexts[2];
 
 static FTexture			*background;
 static bool				DrawFoM;	// [RH] Make the Fortress of Mystery permanent after visiting it
@@ -384,7 +384,7 @@ static void WI_DrawCharPatch (FTexture *patch, int x, int y)
 		TAG_DONE);
 }
 
-static int WI_DrawName (char *str, int x, int y, bool nomove=false)
+static int WI_DrawName (const char *str, int x, int y, bool nomove=false)
 {
 	screen->SetFont (BigFont);
 	if (nomove)
@@ -407,7 +407,7 @@ static int WI_DrawName (char *str, int x, int y, bool nomove=false)
 	return BigFont->GetHeight()*5/4;
 }
 
-static int WI_CalcWidth (char *str)
+static int WI_CalcWidth (const char *str)
 {
 	int w;
 
@@ -1703,7 +1703,7 @@ void WI_loadData ()
 		for (i = 0; i < 2; i++)
 		{
 			lnames[i] = NULL;
-			lnametexts[i] = FindLevelInfo (i == 0 ? wbs->current : wbs->next)->level_name;
+			lnametexts[i] = G_MaybeLookupLevelName (FindLevelInfo (i == 0 ? wbs->current : wbs->next));
 			lnamewidths[i] = WI_CalcWidth (lnametexts[i]);
 		}
 		if (gameinfo.gametype == GAME_Hexen)
@@ -1760,7 +1760,7 @@ void WI_loadData ()
 				}
 				else
 				{
-					lnametexts[i] = FindLevelInfo (i == 0 ? wbs->current : wbs->next)->level_name;
+					lnametexts[i] = G_MaybeLookupLevelName (FindLevelInfo (i == 0 ? wbs->current : wbs->next));
 					lnamewidths[i] = WI_CalcWidth (lnametexts[i]);
 				}
 			}

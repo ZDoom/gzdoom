@@ -1271,6 +1271,9 @@ void P_AdjustLine (line_t *ld)
 
 void P_SaveLineSpecial (line_t *ld)
 {
+	if (*ld->sidenum == 65535)
+		return;
+
 	// killough 4/4/98: support special sidedef interpretation below
 	if ((ld->sidenum[0] != NO_INDEX) &&
 		// [RH] Save Static_Init only if it's interested in the textures
@@ -2637,7 +2640,7 @@ static void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, T
 		const mapthing2_t *mt = (mapthing2_t *)lumpy.GetMem();
 		int num = Wads.LumpLength (lump) / sizeof(*mt);
 
-		if (HexenHack)
+		if (gameinfo.gametype == GAME_Hexen)
 		{
 			spot1 = SHORT(PO_HEX_SPAWN_TYPE);
 			spot2 = SHORT(PO_HEX_SPAWNCRUSH_TYPE);
@@ -2867,6 +2870,7 @@ void P_SetupLevel (char *lumpname, int position)
 		if (HasBehavior)
 		{
 			P_LoadBehavior (lumpnum+ML_BEHAVIOR);
+			level.flags |= LEVEL_HEXENFORMAT;
 		}
 		else if (gameinfo.gametype == GAME_Strife)
 		{

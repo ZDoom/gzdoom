@@ -996,6 +996,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 
 			if (index == TypeMap::NO_INDEX)
 			{
+
 				if (obj->IsKindOf (RUNTIME_CLASS (AActor)) &&
 					(player = static_cast<AActor *>(obj)->player) &&
 					player->mo == obj)

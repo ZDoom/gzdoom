@@ -91,7 +91,6 @@ DWORD			SessionID;
 HANDLE			MainThread;
 
 HMODULE			hwtsapi32;		// handle to wtsapi32.dll
-HMODULE			hd3d8;			// handle to d3d8.dll
 
 BOOL			(*pIsDebuggerPresent)(VOID);
 
@@ -149,17 +148,6 @@ static void STACK_ARGS UnWTS (void)
 		}
 		FreeLibrary (hwtsapi32);
 		hwtsapi32 = 0;
-	}
-}
-#endif
-
-#if 0
-static void CloseD3D8 (void)
-{
-	if (hd3d8 != 0)
-	{
-		FreeLibrary (hd3d8);
-		hd3d8 = 0;
 	}
 }
 #endif

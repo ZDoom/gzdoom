@@ -225,6 +225,7 @@ private:
 			}
 		}
 
+		StatusBarTex.Unload ();
 		if (!deathmatch)
 		{
 			StatusBarTex.DrawToBar ("STARMS", 104, 0);

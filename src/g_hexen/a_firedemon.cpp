@@ -409,6 +409,8 @@ void A_SmBounce (AActor *actor)
 
 void A_FiredAttack (AActor *actor)
 {
+	if (actor->target == NULL)
+		return;
 	AActor *mo = P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(AFireDemonMissile));
 	if (mo) S_Sound (actor, CHAN_BODY, "FireDemonAttack", 1, ATTN_NORM);
 }

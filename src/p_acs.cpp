@@ -197,11 +197,7 @@ static void DoGiveInv (player_t *player, const char *type, int amount)
 		{
 			int maxCount;
 
-			if (i >= arti_firstpuzzitem)
-			{
-				maxCount = 1;
-			}
-			else if (gameinfo.gametype == GAME_Heretic)
+			if (gameinfo.gametype == GAME_Heretic)
 			{
 				maxCount = 16;
 			}
@@ -1596,6 +1592,7 @@ void FBehavior::StartTypedScripts (WORD type, AActor *activator)
 {
 	const ScriptPtr *ptr;
 	int i;
+	bool always = type != SCRIPT_Open && type != SCRIPT_Lightning;
 
 	for (i = 0; i < NumScripts; ++i)
 	{
@@ -1603,7 +1600,7 @@ void FBehavior::StartTypedScripts (WORD type, AActor *activator)
 		if (ptr->Type == type)
 		{
 			P_GetScriptGoing (activator, NULL, ptr->Number,
-				ptr, this, 0, 0, 0, 0, 0, true);
+				ptr, this, 0, 0, 0, 0, always, true);
 		}
 	}
 }
@@ -2729,7 +2726,7 @@ void DLevelScript::RunScript ()
 
 		case PCD_ADDMAPARRAY:
 			{
-				int a = ACS_WorldVars[NEXTBYTE];
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(2);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) + STACK(1));
 				sp -= 2;
@@ -2776,7 +2773,7 @@ void DLevelScript::RunScript ()
 
 		case PCD_SUBMAPARRAY:
 			{
-				int a = ACS_WorldVars[NEXTBYTE];
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(2);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) - STACK(1));
 				sp -= 2;
@@ -2823,7 +2820,7 @@ void DLevelScript::RunScript ()
 
 		case PCD_MULMAPARRAY:
 			{
-				int a = ACS_WorldVars[NEXTBYTE];
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(2);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) * STACK(1));
 				sp -= 2;
@@ -2870,7 +2867,7 @@ void DLevelScript::RunScript ()
 
 		case PCD_DIVMAPARRAY:
 			{
-				int a = ACS_WorldVars[NEXTBYTE];
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(2);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) / STACK(1));
 				sp -= 2;
@@ -2917,7 +2914,7 @@ void DLevelScript::RunScript ()
 
 		case PCD_MODMAPARRAY:
 			{
-				int a = ACS_WorldVars[NEXTBYTE];
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(2);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) % STACK(1));
 				sp -= 2;
@@ -2960,7 +2957,7 @@ void DLevelScript::RunScript ()
 
 		case PCD_INCMAPARRAY:
 			{
-				int a = ACS_WorldVars[NEXTBYTE];
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(1);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) + 1);
 				sp--;
@@ -3003,7 +3000,7 @@ void DLevelScript::RunScript ()
 
 		case PCD_DECMAPARRAY:
 			{
-				int a = ACS_WorldVars[NEXTBYTE];
+				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(1);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) - 1);
 				sp--;

@@ -244,10 +244,7 @@ void A_Tracer (AActor *self)
 		return;
 	
 	// change angle 	
-	exact = R_PointToAngle2 (self->x,
-							 self->y,
-							 dest->x,
-							 dest->y);
+	exact = R_PointToAngle2 (self->x, self->y, dest->x,  dest->y);
 
 	if (exact != self->angle)
 	{

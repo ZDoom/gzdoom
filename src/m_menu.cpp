@@ -1880,17 +1880,20 @@ static void M_PlayerSetupDrawer ()
 		if (sprframe != NULL)
 		{
 			FTexture *tex = TexMan(sprframe->Texture[0]);
-			if (tex->Rotations != 0xFFFF)
+			if (tex != NULL && tex->UseType != FTexture::TEX_Null)
 			{
-				tex = TexMan(SpriteFrames[tex->Rotations].Texture[PlayerRotation]);
+				if (tex->Rotations != 0xFFFF)
+				{
+					tex = TexMan(SpriteFrames[tex->Rotations].Texture[PlayerRotation]);
+				}
+				screen->DrawTexture (tex,
+					(320 - 52 - 32 + xo - 160)*CleanXfac + (SCREENWIDTH)/2,
+					(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
+					DTA_DestWidth, MulScale6 (tex->GetWidth() * CleanXfac, scale),
+					DTA_DestHeight, MulScale6 (tex->GetHeight() * CleanYfac, scale),
+					DTA_Translation, translationtables[TRANSLATION_Players] + consoleplayer*256,
+					TAG_DONE);
 			}
-			screen->DrawTexture (tex,
-				(320 - 52 - 32 + xo - 160)*CleanXfac + (SCREENWIDTH)/2,
-				(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
-				DTA_DestWidth, MulScale6 (tex->GetWidth() * CleanXfac, scale),
-				DTA_DestHeight, MulScale6 (tex->GetHeight() * CleanYfac, scale),
-				DTA_Translation, translationtables[TRANSLATION_Players] + consoleplayer*256,
-				TAG_DONE);
 		}
 
 		const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";

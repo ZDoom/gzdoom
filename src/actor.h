@@ -278,10 +278,10 @@ enum
 
 // --- dummies for unknown/unimplemented Strife flags ---
 
-	MF_STRIFEx40 = 0,
-	MF_STRIFEx400 = 0,
+	MF_STRIFEx40 = 0,			// looks like this is still MF_JUSTHIT
+	MF_STRIFEx800 = 0,			// used in A_Look as an allaround flag for P_LookForPlayers; seems to have other uses, too
 	MF_STRIFEx8000 = 0,
-	MF_STRIFEx4000000 = 0,
+	MF_STRIFEx4000000 = 0,		// seems related to MF_SHADOW
 	MF_STRIFEx8000000 = 0
 };
 
@@ -589,6 +589,7 @@ private:
 
 public:
 	void LinkToWorld (bool buggy=false);
+	void LinkToWorld (sector_t *sector);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
 	void SetOrigin (fixed_t x, fixed_t y, fixed_t z);

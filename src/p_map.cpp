@@ -3668,7 +3668,7 @@ void PIT_FloorDrop (AActor *thing)
 			P_CheckFakeFloorTriggers (thing, oldz);
 		}
 		else if ((thing->flags & MF_NOGRAVITY) ||
-			((gameinfo.gametype != GAME_Hexen || moveamt < 9*FRACUNIT)
+			((!(level.flags & LEVEL_HEXENFORMAT) || moveamt < 9*FRACUNIT)
 			 && thing->z - thing->floorz <= moveamt))
 		{
 			thing->z = thing->floorz;

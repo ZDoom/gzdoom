@@ -184,7 +184,7 @@ void P_BringUpWeapon (player_t *player)
 	}
 	if (player->powers[pw_weaponlevel2])
 	{
-		weapon = wpnlev1info[player->pendingweapon];
+		weapon = wpnlev2info[player->pendingweapon];
 	}
 	else
 	{

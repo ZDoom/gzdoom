@@ -808,6 +808,11 @@ class AMiniMissile : public AActor
 {
 	DECLARE_ACTOR (AMiniMissile, AActor);
 public:
+	void PreExplode ()
+	{
+		S_StopSound (this, CHAN_VOICE);
+		RenderStyle = STYLE_Add;
+	}
 	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
 	{
 		damage = dist = 64;
@@ -959,11 +964,6 @@ weapontype_t AFlameThrower::OldStyleID () const
 
 void A_FlameDie (AActor *);
 
-class AFlameMissile : public AActor
-{
-	DECLARE_ACTOR (AFlameMissile, AActor)
-};
-
 FState AFlameMissile::States[] =
 {
 #define S_FLAME 0
@@ -995,19 +995,6 @@ IMPLEMENT_ACTOR (AFlameMissile, Strife, -1, 0)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_Alpha (OPAQUE)
 	PROP_SeeSound ("weapons/flamethrower")
-END_DEFAULTS
-
-// Fast Flame Projectile (not used by the player) ---------------------------
-
-class AFastFlameMissile : public AFlameMissile
-{
-	DECLARE_STATELESS_ACTOR (AFastFlameMissile, AFlameMissile)
-};
-
-IMPLEMENT_STATELESS_ACTOR (AFastFlameMissile, Strife, -1, 0)
-	PROP_Mass (50)
-	PROP_Damage (1)	// Should be 0.5, but that's not possible
-	PROP_SpeedFixed (35)
 END_DEFAULTS
 
 //============================================================================
@@ -1376,13 +1363,26 @@ AActor *P_SpawnSubMissile (AActor *source, TypeInfo *type);
 
 void A_MaulerTorpedoWave (AActor *self)
 {
+	fixed_t savedz;
 	self->angle += ANGLE_180;
+
+	// If the torpedo hit the ceiling, it should still spawn the wave
+	savedz = self->z;
+	if (self->ceilingz - self->z < GetDefault<AMaulerTorpedoWave>()->height)
+	{
+		self->z = self->ceilingz - GetDefault<AMaulerTorpedoWave>()->height;
+	}
 
 	for (int i = 0; i < 80; ++i)
 	{
 		self->angle += ANGLE_45/10;
-		P_SpawnSubMissile (self, RUNTIME_CLASS(AMaulerTorpedoWave));
+		AActor *wave = P_SpawnSubMissile (self, RUNTIME_CLASS(AMaulerTorpedoWave));
+		if (wave != NULL)
+		{
+			wave->target = self->target;
+		}
 	}
+	self->z = savedz;
 }
 
 AActor *P_SpawnSubMissile (AActor *source, TypeInfo *type)
@@ -1394,7 +1394,7 @@ AActor *P_SpawnSubMissile (AActor *source, TypeInfo *type)
 		return NULL;
 	}
 
-	other->target = source->target;
+	other->target = source;
 	other->angle = source->angle;
 
 	other->momx = FixedMul (other->Speed, finecosine[source->angle >> ANGLETOFINESHIFT]);
@@ -1594,4 +1594,225 @@ void A_Burnination (AActor *self)
 			drop->flags |= MF_DROPPED;
 		}
 	}
+}
+
+// High-Explosive Grenade Launcher ------------------------------------------
+
+void A_FireGrenade (AActor *, pspdef_t *);
+
+class AGrenadeLauncher : public AStrifeWeapon
+{
+	DECLARE_ACTOR (AGrenadeLauncher, AStrifeWeapon)
+public:
+	weapontype_t OldStyleID() const;
+	static FWeaponInfo WeaponInfo;
+	bool TryPickup (AActor *toucher);
+protected:
+	const char *PickupMessage ()
+	{
+		return "You picked up the Grenade launcher";
+	}
+};
+
+FState AGrenadeLauncher::States[] =
+{
+#define S_HEPICKUP 0
+	S_NORMAL (GRND, 'A',   -1, NULL,					NULL),
+
+#define S_HEGRENADE (S_HEPICKUP+1)
+	S_NORMAL (GREN, 'A',	1, A_WeaponReady,			&States[S_HEGRENADE]),
+
+#define S_HEGRENADE_DOWN (S_HEGRENADE+1)
+	S_NORMAL (GREN, 'A',	1, A_Lower,					&States[S_HEGRENADE_DOWN]),
+
+#define S_HEGRENADE_UP (S_HEGRENADE_DOWN+1)
+	S_NORMAL (GREN, 'A',	1, A_Raise,					&States[S_HEGRENADE_UP]),
+
+#define S_HEGRENADE_ATK (S_HEGRENADE_UP+1)
+	S_NORMAL (GREN, 'A',	5, A_FireGrenade,			&States[S_HEGRENADE_ATK+1]),
+	S_NORMAL (GREN, 'B',   10, NULL,					&States[S_HEGRENADE_ATK+2]),
+	S_NORMAL (GREN, 'A',	5, A_FireGrenade,			&States[S_HEGRENADE_ATK+3]),
+	S_NORMAL (GREN, 'C',   10, NULL,					&States[S_HEGRENADE_ATK+4]),
+	S_NORMAL (GREN, 'A',	0, A_ReFire,				&States[S_HEGRENADE]),
+
+#define S_HEGRENADE_FLASH (S_HEGRENADE_ATK+5)
+	S_BRIGHT (GREF, 'A',	5, A_Light1,				&AWeapon::States[S_LIGHTDONE]),
+	S_NORMAL (GREF, 'A',   10, A_Light0,				&AWeapon::States[S_LIGHTDONE]),
+	S_BRIGHT (GREF, 'B',	5, A_Light2,				&AWeapon::States[S_LIGHTDONE]),
+
+
+#define S_PHGRENADE (S_HEGRENADE_FLASH+3)
+	S_NORMAL (GREN, 'D',	1, A_WeaponReady,			&States[S_PHGRENADE]),
+
+#define S_PHGRENADE_DOWN (S_PHGRENADE+1)
+	S_NORMAL (GREN, 'D',	1, A_Lower,					&States[S_PHGRENADE_DOWN]),
+
+#define S_PHGRENADE_UP (S_PHGRENADE_DOWN+1)
+	S_NORMAL (GREN, 'D',	1, A_Raise,					&States[S_PHGRENADE_UP]),
+
+#define S_PHGRENADE_ATK (S_PHGRENADE_UP+1)
+	S_NORMAL (GREN, 'D',	5, A_FireGrenade,			&States[S_PHGRENADE_ATK+1]),
+	S_NORMAL (GREN, 'E',   10, NULL,					&States[S_PHGRENADE_ATK+2]),
+	S_NORMAL (GREN, 'D',	5, A_FireGrenade,			&States[S_PHGRENADE_ATK+3]),
+	S_NORMAL (GREN, 'F',   10, NULL,					&States[S_PHGRENADE_ATK+4]),
+	S_NORMAL (GREN, 'A',	0, A_ReFire,				&States[S_PHGRENADE]),
+
+#define S_PHGRENADE_FLASH (S_PHGRENADE_ATK+5)
+	S_BRIGHT (GREF, 'C',	5, A_Light1,				&AWeapon::States[S_LIGHTDONE]),
+	S_NORMAL (GREF, 'C',   10, A_Light0,				&AWeapon::States[S_LIGHTDONE]),
+	S_BRIGHT (GREF, 'D',	5, A_Light2,				&AWeapon::States[S_LIGHTDONE]),
+};
+
+FWeaponInfo AGrenadeLauncher::WeaponInfo =
+{
+	0,
+	am_hegrenade,
+	am_hegrenade,
+	1,
+	8,
+	&States[S_HEGRENADE_UP],
+	&States[S_HEGRENADE_DOWN],
+	&States[S_HEGRENADE],
+	&States[S_HEGRENADE_ATK],
+	&States[S_HEGRENADE_ATK],
+	&States[S_HEGRENADE_FLASH],
+	RUNTIME_CLASS(AGrenadeLauncher),
+	150,
+	0,
+	NULL,
+	NULL,
+	RUNTIME_CLASS(AGrenadeLauncher),
+	-1
+};
+
+WEAPON1 (wp_hegrenadelauncher, AGrenadeLauncher)
+
+IMPLEMENT_ACTOR (AGrenadeLauncher, Strife, 154, 0)
+	PROP_Flags (MF_SPECIAL)
+	PROP_SpawnState (S_HEPICKUP)
+	PROP_Tag ("Grenade_launcher")
+END_DEFAULTS
+
+weapontype_t AGrenadeLauncher::OldStyleID () const
+{
+	return wp_hegrenadelauncher;
+}
+
+bool AGrenadeLauncher::TryPickup (AActor *toucher)
+{
+	if (Super::TryPickup (toucher))
+	{
+		// You get the high-explosive and white phosphorous grenade
+		// launchers at the same time.
+		toucher->player->weaponowned[wp_phgrenadelauncher] = true;
+		return true;
+	}
+	return false;
+}
+
+// White Phosphorous Grenade Launcher ---------------------------------------
+
+class AGrenadeLauncher2 : public AGrenadeLauncher
+{
+	DECLARE_STATELESS_ACTOR (AGrenadeLauncher2, AGrenadeLauncher)
+public:
+	static FWeaponInfo WeaponInfo;
+};
+
+FWeaponInfo AGrenadeLauncher2::WeaponInfo =
+{
+	0,
+	am_phgrenade,
+	am_phgrenade,
+	1,
+	0,
+	&States[S_PHGRENADE_UP],
+	&States[S_PHGRENADE_DOWN],
+	&States[S_PHGRENADE],
+	&States[S_PHGRENADE_ATK],
+	&States[S_PHGRENADE_ATK],
+	&States[S_PHGRENADE_FLASH],
+	RUNTIME_CLASS(AGrenadeLauncher),
+	150,
+	0,
+	NULL,
+	NULL,
+	RUNTIME_CLASS(AGrenadeLauncher2),
+	-1
+};
+
+WEAPON1 (wp_phgrenadelauncher, AGrenadeLauncher2)
+
+IMPLEMENT_ABSTRACT_ACTOR (AGrenadeLauncher2)
+
+//============================================================================
+//
+// A_FireGrenade
+//
+//============================================================================
+
+void A_FireGrenade (AActor *self, pspdef_t *psp)
+{
+	TypeInfo *grenadetype;
+	player_t *player = self->player;
+	AActor *grenade;
+	angle_t an;
+	fixed_t tworadii;
+	FWeaponInfo *weapon;
+
+	if (player == NULL)
+		return;
+
+	if (player->powers[pw_weaponlevel2])
+	{
+		weapon = wpnlev2info[player->readyweapon];
+	}
+	else
+	{
+		weapon = wpnlev1info[player->readyweapon];
+	}
+
+	if (player->readyweapon == wp_hegrenadelauncher)
+	{
+		grenadetype = RUNTIME_CLASS(AHEGrenade);
+	}
+	else
+	{
+		grenadetype = RUNTIME_CLASS(APhosphorousGrenade);
+	}
+	if (!player->UseAmmo ())
+		return;
+
+	// Make it flash
+	P_SetPsprite (player, ps_flash, weapon->flashstate + (psp->state - weapon->atkstate));
+
+	self->z += 32*FRACUNIT;
+	grenade = P_SpawnSubMissile (self, grenadetype);
+	self->z -= 32*FRACUNIT;
+	if (grenade == NULL)
+		return;
+
+	if (grenade->SeeSound != 0)
+	{
+		S_SoundID (grenade, CHAN_VOICE, grenade->SeeSound, 1, ATTN_NORM);
+	}
+
+	grenade->momz = FixedMul (finetangent[FINEANGLES/4-(self->pitch>>ANGLETOFINESHIFT)], grenade->Speed) + 8*FRACUNIT;
+
+	an = self->angle >> ANGLETOFINESHIFT;
+	tworadii = self->radius + grenade->radius;
+	grenade->x += FixedMul (finecosine[an], tworadii);
+	grenade->y += FixedMul (finesine[an], tworadii);
+
+	if (weapon->atkstate == psp->state)
+	{
+		an = self->angle - ANGLE_90;
+	}
+	else
+	{
+		an = self->angle + ANGLE_90;
+	}
+	an >>= ANGLETOFINESHIFT;
+	grenade->x += FixedMul (finecosine[an], 15*FRACUNIT);
+	grenade->y += FixedMul (finesine[an], 15*FRACUNIT);
 }

@@ -571,6 +571,51 @@ void P_NewChaseDir (AActor *actor)
 	actor->movedir = DI_NODIR;	// can not move
 }
 
+void P_RandomChaseDir (AActor *actor)
+{
+	dirtype_t olddir, turnaround;
+	int tdir;
+
+	olddir = (dirtype_t)actor->movedir;
+	turnaround = opposite[olddir];
+
+	if (pr_newchasedir() & 1)
+	{
+		for (tdir = DI_WEST; tdir <= DI_NORTHWEST; ++tdir)
+		{
+			if (tdir != turnaround)
+			{
+				actor->movedir = tdir;
+				if (P_TryWalk (actor))
+					return;
+			}
+		}
+	}
+	else
+	{
+		for (tdir = DI_NORTHWEST; tdir >= DI_WEST; --tdir)
+		{
+			if (tdir != turnaround)
+			{
+				actor->movedir = tdir;
+				if (P_TryWalk (actor))
+					return;
+			}
+		}
+	}
+
+	if (turnaround != DI_NODIR)
+	{
+		actor->movedir = turnaround;
+		if (P_TryWalk (actor))
+		{
+			actor->movecount = pr_newchasedir() & 15;
+			return;
+		}
+	}
+
+	actor->movedir = DI_NODIR;	// cannot move
+}
 
 //---------------------------------------------------------------------------
 //
@@ -1043,6 +1088,84 @@ void A_Look (AActor *actor)
 		actor->SetState (actor->SeeState);
 }
 
+void A_Wander (AActor *self)
+{
+	int delta;
+
+	if (self->flags & MF_AMBUSH)
+		return;
+
+	if (self->threshold != 0)
+	{
+		self->threshold--;
+		return;
+	}
+
+	// turn towards movement direction if not there yet
+	if (self->movedir < DI_NODIR)
+	{
+		self->angle &= (angle_t)(7<<29);
+		delta = self->angle - (self->movedir << 29);
+		if (delta > 0)
+		{
+			self->angle -= ANG90/2;
+		}
+		else if (delta < 0)
+		{
+			self->angle += ANG90/2;
+		}
+	}
+
+	if (--self->movecount < 0 || !P_Move (self))
+	{
+		P_RandomChaseDir (self);
+		self->movecount += 5;
+	}
+}
+
+void A_Look2 (AActor *self)
+{
+	static dword2f178 = 0;
+	AActor *targ;
+
+	self->threshold = 0;
+	targ = self->Sector->soundtarget;
+
+	if (targ && (targ->flags & MF_SHOOTABLE))
+	{
+		if ((self->flags & MF_STRIFEx4000000) != (targ->flags & MF_STRIFEx4000000) ||
+			dword2f178 == 3 ||
+			dword2f178 == 34)
+		{
+			self->target = targ;
+			if (self->flags & MF_COUNTITEM)
+			{
+				if (!P_CheckSight (self, targ, 2))
+					goto nosee;
+			}
+			self->threshold = 10;
+			self->SetState (self->SeeState);
+			return;
+		}
+		else
+		{
+			if (!P_LookForPlayers (self, self->flags & MF_STRIFEx800))
+				goto nosee;
+			self->SetState (self->SeeState);
+			self->flags |= MF_STRIFEx8000;
+			return;
+		}
+	}
+nosee:
+	if (pr_look2() < 30)
+	{
+		self->SetState (self->SpawnState + (pr_look2() & 1) + 1);
+	}
+	if (!(self->flags & MF_AMBUSH) && pr_look2() < 40)
+	{
+		self->SetState (self->SpawnState + 4);
+	}
+}
 
 /*
 ==============

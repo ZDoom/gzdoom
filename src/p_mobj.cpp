@@ -293,6 +293,11 @@ void AActor::Serialize (FArchive &arc)
 	{
 		SDWORD fakereactiontime;
 		arc << fakereactiontime;
+		Sector = NULL;
+	}
+	else
+	{
+		arc << Sector;
 	}
 	arc << Speed
 		<< Mass
@@ -328,7 +333,7 @@ void AActor::Serialize (FArchive &arc)
 	if (arc.IsLoading ())
 	{
 		touching_sectorlist = NULL;
-		LinkToWorld ();
+		LinkToWorld (Sector);
 		AddToHash ();
 		SetShade (alphacolor);
 		if (player)
@@ -2334,7 +2339,7 @@ void A_FreeTargMobj (AActor *mo)
 
 void A_GenericFreezeDeath (AActor *actor)
 {
-	actor->Translation = TRANSLATION(TRANSLATION_Standard, 3);
+	actor->Translation = TRANSLATION(TRANSLATION_Standard, 7);
 	A_FreezeDeath (actor);
 }
 
@@ -2838,7 +2843,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	}
 
 	// [RH] Record polyobject-related things
-	if (HexenHack)
+	if (gameinfo.gametype == GAME_Hexen)
 	{
 		switch (mthing->type)
 		{
@@ -3552,10 +3557,16 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	velocity[0] = (float)(dest->x - source->x);
 	velocity[1] = (float)(dest->y - source->y);
 	velocity[2] = (float)(dest->z - source->z);
+	// [RH] Adjust the trajectory if the missile will go over the player's head.
+	if (z - source->z >= dest->height)
+	{
+		velocity[2] += (float)(dest->height - z + source->z);
+	}
 	VectorNormalize (velocity);
 	th->momx = (fixed_t)(velocity[0] * speed);
 	th->momy = (fixed_t)(velocity[1] * speed);
 	th->momz = (fixed_t)(velocity[2] * speed);
+
 
 	// invisible target: rotate velocity vector in 2D
 	if (dest->flags & MF_SHADOW)
@@ -3595,6 +3606,26 @@ AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z,
 {
 	return P_SpawnMissileAngleZSpeed (source, z, type, angle, momz,
 		GetDefaultByType (type)->Speed);
+}
+
+AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const TypeInfo *type)
+{
+	angle_t an;
+	fixed_t dist;
+	fixed_t speed;
+	fixed_t momz;
+
+	an = source->angle;
+
+	if (dest->flags & MF_SHADOW)
+	{
+		an += pr_spawnmissile.Random2() << 20;
+	}
+	dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
+	speed = GetDefaultByType (type)->Speed;
+	dist /= speed;
+	momz = dist != 0 ? (dest->z - source->z)/dist : 0;
+	return P_SpawnMissileAngleZSpeed (source, z, type, an, momz, speed);
 }
 
 //---------------------------------------------------------------------------

@@ -11,56 +11,196 @@
 #include "p_lnspec.h"
 
 // Notes so I don't forget them:
-// Strife does some extra stuff in A_Explode if a player caused the explosion.
+// Strife does some extra stuff in A_Explode if a player caused the explosion. (probably NoiseAlert)
 // See the instructions @ 21249.
+
+// In P_CheckMissileRange, mobjtypes 53,54,55,56,57,58 shift the distance right 4 bits (some, but not all the acolytes)
+//						   mobjtypes 61,63,91 shift it right 1 bit
+
+// When shooting missiles at something, if MF_SHADOW is set, the angle is adjusted with the formula:
+//		angle += pr_spawnmissile.Random2() << 21
+// When MF_STRIFEx4000000 is set, the angle is adjusted similarly:
+//		angle += pr_spawnmissile.Random2() << 22
+// Note that these numbers are different from those used by all the other Doom engine games.
 
 /* These mobjinfos have been converted:
 
+	  0
 	  1 StrifePlayer
-
-     27 MaulerPuff
-
+	  2 WeaponSmith
+	  3 BarKeep
+	  4 Armorer
+	  5 Medic
+	  6 Peasant1
+	  7 Peasant2
+	  8 Peasant3
+	  9 Peasant4
+     10 Peasant5
+	 11 Peasant6
+	 12 Peasant7
+	 13 Peasant8
+	 14 Peasant9
+	 15 Peasant10
+	 16 Peasant11
+	 17 Peasant12
+	 18 Peasant13
+	 19 Peasant14
+	 20 Peasant15
+	 21 Peasant16
+	 22 Peasant17
+	 23 Peasant18
+	 24 Peasant19
+	 25 Peasant20
+	 26 Peasant21
+     27 Peasant22
+	 28 Zombie
+	 29
+	 30
 	 31 Tank1
 	 32 Tank2
 	 33 Tank3
 	 34 Tank4
 	 35 Tank5
 	 36 Tank6
-
+	 37 KneelingGuy
+	 38
+	 39
+	 40
+	 41
+	 42
+	 43
+	 44
+	 45
+	 46
+	 47
+	 48
+	 49
+	 50
 	 51 RocketTrail
 	 52 Reaver (incomplete)
-
+	 53
+	 54
+	 55
+	 56
+	 57
+	 58
+	 59
+	 60
+	 61
+	 63 Crusader
+	 64 StrifeBishop
+	 65
+	 66
+	 67
+	 68
+	 69
+	 70
+	 71
+	 72
+	 73
+	 74
+	 75
 	 76 EntityNest
 	 77 EntityPod
-
+	 78
+	 79
+	 80
+	 81
+	 82
 	 83 Zap6
-
+	 84
+	 85
+	 86
+	 87
 	 88 Zap5 (incomplete)
-
+	 89
+	 90
+	 91 Sentinel
+	 92
+	 93 -- Plays full-volume sight sound --
+	 94
+	 95
+	 96
+	 97
+	 98
 	 99 MiniMissile
-
+    100 CrusaderMissile
+	101 BishopMissile
     102 ElectricBolt
 	103 PoisonBolt
-
+	104 SentinelFX1
+	105 SentinelFX2
 	106 HEGrenade
 	107 PhosphorousGrenade
-
+	108
 	109 PhosphorousFire
 	110 MaulerTorpedo
 	111 MaulerTorpedoWave
 	112 FlameMissile
 	113 FastFlameMissile
-	114 ElectricBoltAmmo
+	114 MaulerPuff
 	115 StrifePuff
     116 StrifeSpark
-
+	117
+	118
+	119
+	120
 	121 KlaxonWarningLight (incomplete)
-
+	122
+	123
 	124 Computer (incomplete)
-
+	125
+	126
+	127
+	128
+	129
+	130
 	131 WaterBottle
 	132 Mug
-
+	133
+	134
+	135
+	136
+	137
+	138
+	139
+	140
+	141
+	142
+	143
+	144
+	145
+	146
+	147
+	148
+	149
+	150
+	151
+	152
+	153
+	154
+	155
+	156
+	157
+	158
+	159
+	160
+	161
+	162
+	163
+	164
+	165
+	166
+	167
+	168
+	169
+	170
+	171
+	172
+	173
+	174
+	175
+	176
 	177 HEGrenadeRounds
 	178 PhosphorusGrenadeRounds
 	179 ClipOfBullets
@@ -75,13 +215,18 @@
 	188 AssaultGun
 	189 AssaultGunStanding
 	190 FlameThrower
-
+	191
 	192 MiniMissileLauncher
 	193 Mauler
 	194 ElectricCrossbow
-
+	195
+	196
+	197
+	198
+	199
+	200
 	201 PowerCrystal (incomplete)
-
+	202
 	203 WoodenBarrel
 	204 ExplosiveBarrel2
 	205 TargetPractice
@@ -168,7 +313,7 @@
 	286 RebelHelmet
 	287 RebelShirt
 	288 PowerCoupling
-
+	289
 	290 AlienBubbleColumn
 	291 AlienFloorBubble
 	292 AlienCeilingBubble
@@ -176,6 +321,53 @@
 	294 AlienSpiderLight
 	295 Meat
 	296 Junk
+	297
+	298
+	299
+	300
+	301
+	302
+	303
+	304
+	305
+	306
+	307
+	308
+	309
+	310
+	311
+	312
+	313
+	314
+	315
+	316
+	317
+	318
+	319
+	320
+	321
+	322
+	323
+	324
+	325
+	326
+	327
+	328
+	329
+	330
+	331
+	332
+	333
+	334
+	335
+	336
+	337
+	338
+	339
+	340
+	341
+	342
+	343
 */	
 
 static FRandom pr_gibtosser ("GibTosser");
@@ -317,6 +509,87 @@ IMPLEMENT_ACTOR (ATank6, Strife, 229, 0)
 	PROP_Flags (MF_SOLID)
 END_DEFAULTS
 
+// Kneeling Guy -------------------------------------------------------------
+
+void A_SetShadow (AActor *self)
+{
+	self->flags |= MF_STRIFEx8000000|MF_SHADOW;
+	self->RenderStyle = STYLE_Translucent;
+	self->alpha = HR_SHADOW;
+}
+
+void A_ClearShadow (AActor *self)
+{
+	self->flags &= ~(MF_STRIFEx8000000|MF_SHADOW);
+	self->RenderStyle = STYLE_Normal;
+	self->alpha = OPAQUE;
+}
+
+static FRandom pr_gethurt ("HurtMe!");
+
+void A_GetHurt (AActor *self)
+{
+	self->flags |= MF_STRIFEx8000;
+	if ((pr_gethurt() % 5) == 0)
+	{
+		S_SoundID (self, CHAN_VOICE, self->PainSound, 1, ATTN_NORM);
+		self->health--;
+	}
+	if (self->health <= 0)
+	{
+		self->Die (self->target, self->target);
+	}
+}
+
+class AKneelingGuy : public AActor
+{
+	DECLARE_ACTOR (AKneelingGuy, AActor)
+};
+
+FState AKneelingGuy::States[] =
+{
+#define S_KNEEL	0
+	S_NORMAL (NEAL, 'A',   15, A_LoopActiveSound,	&States[S_KNEEL+1]),
+	S_NORMAL (NEAL, 'B',   40, A_LoopActiveSound,	&States[S_KNEEL]),
+
+#define S_KNEEL_PAIN (S_KNEEL+2)
+	S_NORMAL (NEAL, 'C',	5, A_SetShadow,			&States[S_KNEEL_PAIN+1]),
+	S_NORMAL (NEAL, 'B',	4, A_Pain,				&States[S_KNEEL_PAIN+2]),
+	S_NORMAL (NEAL, 'C',	5, A_ClearShadow,		&States[S_KNEEL]),
+
+#define S_KNEEL_HURT (S_KNEEL_PAIN+3)
+	S_NORMAL (NEAL, 'B',	6, NULL,				&States[S_KNEEL_HURT+1]),
+	S_NORMAL (NEAL, 'C',   13, A_GetHurt,			&States[S_KNEEL_HURT]),
+
+#define S_KNEEL_DIE (S_KNEEL_HURT+2)
+	S_NORMAL (NEAL, 'D',	5, NULL,				&States[S_KNEEL_DIE+1]),
+	S_NORMAL (NEAL, 'E',	5, A_Scream,			&States[S_KNEEL_DIE+2]),
+	S_NORMAL (NEAL, 'F',	6, NULL,				&States[S_KNEEL_DIE+3]),
+	S_NORMAL (NEAL, 'G',	5, A_NoBlocking,		&States[S_KNEEL_DIE+4]),
+	S_NORMAL (NEAL,	'H',	5, NULL,				&States[S_KNEEL_DIE+5]),
+	S_NORMAL (NEAL, 'I',	6, NULL,				&States[S_KNEEL_DIE+6]),
+	S_NORMAL (NEAL, 'J',   -1, NULL,				NULL)
+};
+
+IMPLEMENT_ACTOR (AKneelingGuy, Strife, 204, 0)
+	PROP_SpawnState (S_KNEEL)
+	PROP_SeeState (S_KNEEL)
+	PROP_PainState (S_KNEEL_PAIN)
+//	PROP_WoundState (S_KNEEL_HURT)
+	PROP_DeathState (S_KNEEL_DIE)
+
+	PROP_SpawnHealth (51)
+	PROP_PainChance (255)
+	PROP_RadiusFixed (6)
+	PROP_HeightFixed (6)
+	PROP_MassLong (50000)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
+
+	PROP_PainSound ("misc/static")
+	PROP_DeathSound ("misc/static")
+	PROP_ActiveSound ("misc/chant")
+END_DEFAULTS
+
 // Reaver -------------------------------------------------------------------
 
 void A_ReaverMelee (AActor *self);
@@ -444,6 +717,588 @@ void A_ReaverRanged (AActor *self)
 			angle_t angle = bangle + (pr_reaverattack.Random2() << 20);
 			int damage = ((pr_reaverattack() & 7) + 1) * 3;
 			P_LineAttack (self, angle, MISSILERANGE, pitch, damage);
+		}
+	}
+}
+
+// Crusader -----------------------------------------------------------------
+
+void A_CrusaderChoose (AActor *);
+void A_CrusaderSweepLeft (AActor *);
+void A_CrusaderSweepRight (AActor *);
+void A_CrusaderRefire (AActor *);
+void A_21598 () {}
+
+class ACrusader : public AActor
+{
+	DECLARE_ACTOR (ACrusader, AActor)
+public:
+	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+	{
+		damage = dist = 64;
+	}
+	bool SuggestMissileAttack (fixed_t dist)
+	{
+		return Super::SuggestMissileAttack (dist >> 1);
+	}
+};
+
+FState ACrusader::States[] =
+{
+#define S_CRUSADER_STND 0
+	S_NORMAL (ROB2, 'Q',   10, A_Look,					&States[S_CRUSADER_STND]),
+
+#define S_CRUSADER_RUN (S_CRUSADER_STND+1)
+	S_NORMAL (ROB2, 'A',	3, A_Chase,					&States[S_CRUSADER_RUN+1]),
+	S_NORMAL (ROB2, 'A',	3, A_Chase,					&States[S_CRUSADER_RUN+2]),
+	S_NORMAL (ROB2, 'B',	3, A_Chase,					&States[S_CRUSADER_RUN+3]),
+	S_NORMAL (ROB2, 'B',	3, A_Chase,					&States[S_CRUSADER_RUN+4]),
+	S_NORMAL (ROB2, 'C',	3, A_Chase,					&States[S_CRUSADER_RUN+5]),
+	S_NORMAL (ROB2, 'C',	3, A_Chase,					&States[S_CRUSADER_RUN+6]),
+	S_NORMAL (ROB2, 'D',	3, A_Chase,					&States[S_CRUSADER_RUN+7]),
+	S_NORMAL (ROB2, 'D',	3, A_Chase,					&States[S_CRUSADER_RUN]),
+
+#define S_CRUSADER_ATTACK (S_CRUSADER_RUN+8)
+	S_NORMAL (ROB2, 'E',	3, A_FaceTarget,			&States[S_CRUSADER_ATTACK+1]),
+	S_BRIGHT (ROB2, 'F',	2, A_CrusaderChoose,		&States[S_CRUSADER_ATTACK+2]),
+	S_BRIGHT (ROB2, 'E',	2, A_CrusaderSweepLeft,		&States[S_CRUSADER_ATTACK+3]),
+	S_BRIGHT (ROB2, 'F',	3, A_CrusaderSweepLeft,		&States[S_CRUSADER_ATTACK+4]),
+	S_BRIGHT (ROB2, 'E',	2, A_CrusaderSweepLeft,		&States[S_CRUSADER_ATTACK+5]),
+	S_BRIGHT (ROB2, 'F',	2, A_CrusaderSweepLeft,		&States[S_CRUSADER_ATTACK+6]),
+	S_BRIGHT (ROB2, 'E',	2, A_CrusaderSweepRight,	&States[S_CRUSADER_ATTACK+7]),
+	S_BRIGHT (ROB2, 'F',	2, A_CrusaderSweepRight,	&States[S_CRUSADER_ATTACK+8]),
+	S_BRIGHT (ROB2, 'E',	2, A_CrusaderSweepRight,	&States[S_CRUSADER_ATTACK+9]),
+	S_BRIGHT (ROB2, 'F',	2, A_CrusaderRefire,		&States[S_CRUSADER_ATTACK]),
+
+#define S_CRUSADER_PAIN (S_CRUSADER_ATTACK+10)
+	S_NORMAL (ROB2, 'D',	1, A_Pain,					&States[S_CRUSADER_RUN]),
+
+#define S_CRUSADER_DEATH (S_CRUSADER_PAIN+1)
+	S_NORMAL (ROB2, 'G',	3, A_Scream,				&States[S_CRUSADER_DEATH+1]),
+	S_NORMAL (ROB2, 'H',	5, A_TossGib,				&States[S_CRUSADER_DEATH+2]),
+	S_BRIGHT (ROB2, 'I',	4, A_TossGib,				&States[S_CRUSADER_DEATH+3]),
+	S_BRIGHT (ROB2, 'J',	4, A_Explode,				&States[S_CRUSADER_DEATH+4]),
+	S_BRIGHT (ROB2, 'K',	4, A_NoBlocking,			&States[S_CRUSADER_DEATH+5]),
+	S_NORMAL (ROB2, 'L',	4, A_Explode,				&States[S_CRUSADER_DEATH+6]),
+	S_NORMAL (ROB2, 'M',	4, A_TossGib,				&States[S_CRUSADER_DEATH+7]),
+	S_NORMAL (ROB2, 'N',	4, A_TossGib,				&States[S_CRUSADER_DEATH+8]),
+	S_NORMAL (ROB2, 'O',	4, A_Explode,				&States[S_CRUSADER_DEATH+9]),
+	S_NORMAL (ROB2, 'P',   -1, A_21598,					NULL)
+};
+
+IMPLEMENT_ACTOR (ACrusader, Strife, 3005, 0)
+	PROP_SpawnState (S_CRUSADER_STND)
+	PROP_SeeState (S_CRUSADER_RUN)
+	PROP_MissileState (S_CRUSADER_ATTACK)
+	PROP_PainState (S_CRUSADER_PAIN)
+	PROP_DeathState (S_CRUSADER_DEATH)
+	PROP_SpeedFixed (8)
+	PROP_RadiusFixed (40)
+	PROP_HeightFixed (56)
+	PROP_Mass (400)
+	PROP_SpawnHealth (400)
+	PROP_PainChance (128)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
+	PROP_SeeSound ("crusader/sight")
+	PROP_PainSound ("crusader/pain")
+	PROP_DeathSound ("crusader/death")
+	PROP_ActiveSound ("crusader/active")
+END_DEFAULTS
+
+// Fast Flame Projectile (used by Crusader) ---------------------------------
+
+class AFastFlameMissile : public AFlameMissile
+{
+	DECLARE_STATELESS_ACTOR (AFastFlameMissile, AFlameMissile)
+};
+
+IMPLEMENT_STATELESS_ACTOR (AFastFlameMissile, Strife, -1, 0)
+	PROP_Mass (50)
+	PROP_Damage (1)
+	PROP_SpeedFixed (35)
+END_DEFAULTS
+
+// Crusader Missile ---------------------------------------------------------
+// This is just like the mini missile the player shoots, except it doesn't
+// explode when it dies, and it does slightly less damage for a direct hit.
+
+void A_RocketInFlight (AActor *);
+void A_RocketDead (AActor *);
+
+class ACrusaderMissile : public AActor
+{
+	DECLARE_ACTOR (ACrusaderMissile, AActor)
+};
+
+FState ACrusaderMissile::States[] =
+{
+	S_BRIGHT (MICR, 'A', 6, A_RocketInFlight,	&States[0]),
+
+	S_BRIGHT (MISL, 'A', 5, A_RocketDead,		&States[2]),
+	S_BRIGHT (MISL, 'B', 5, NULL,				&States[3]),
+	S_BRIGHT (MISL, 'C', 4, NULL,				&States[4]),
+	S_BRIGHT (MISL, 'D', 2, NULL,				&States[5]),
+	S_BRIGHT (MISL, 'E', 2, NULL,				&States[6]),
+	S_BRIGHT (MISL, 'F', 2, NULL,				&States[7]),
+	S_BRIGHT (MISL, 'G', 2, NULL,				NULL),
+};
+
+IMPLEMENT_ACTOR (ACrusaderMissile, Strife, -1, 0)
+	PROP_SpawnState (0)
+	PROP_DeathState (1)
+	PROP_SpeedFixed (20)
+	PROP_RadiusFixed (10)
+	PROP_HeightFixed (14)
+	PROP_Damage (7)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_SeeSound ("crusader/misl")
+	PROP_DeathSound ("crusader/mislx")
+END_DEFAULTS
+
+bool Sys_1ed64 (AActor *self)
+{
+	if (P_CheckSight (self, self->target) && self->reactiontime == 0)
+	{
+		return P_AproxDistance (self->x - self->target->x, self->y - self->target->y) < 264*FRACUNIT;
+	}
+	return false;
+}
+
+void A_CrusaderChoose (AActor *self)
+{
+	if (self->target == NULL)
+		return;
+
+	if (Sys_1ed64 (self))
+	{
+		A_FaceTarget (self);
+		self->angle -= ANGLE_180/16;
+		P_SpawnMissileZAimed (self, self->z + 40*FRACUNIT, self->target, RUNTIME_CLASS(AFastFlameMissile));
+	}
+	else
+	{
+		if (P_CheckMissileRange (self))
+		{
+			A_FaceTarget (self);
+			P_SpawnMissileZAimed (self, self->z + 56*FRACUNIT, self->target, RUNTIME_CLASS(ACrusaderMissile));
+			self->angle -= ANGLE_45/32;
+			P_SpawnMissileZAimed (self, self->z + 40*FRACUNIT, self->target, RUNTIME_CLASS(ACrusaderMissile));
+			self->angle += ANGLE_45/16;
+			P_SpawnMissileZAimed (self, self->z + 40*FRACUNIT, self->target, RUNTIME_CLASS(ACrusaderMissile));
+			self->angle -= ANGLE_45/16;
+			self->reactiontime += 15;
+		}
+		self->SetState (self->SeeState);
+	}
+}
+
+void A_CrusaderSweepLeft (AActor *self)
+{
+	self->angle += ANGLE_90/16;
+	AActor *misl = P_SpawnMissileZAimed (self, self->z + 48*FRACUNIT, self->target, RUNTIME_CLASS(AFastFlameMissile));
+	if (misl != NULL)
+	{
+		misl->momz = FRACUNIT;
+	}
+}
+
+void A_CrusaderSweepRight (AActor *self)
+{
+	self->angle -= ANGLE_90/16;
+	AActor *misl = P_SpawnMissileZAimed (self, self->z + 48*FRACUNIT, self->target, RUNTIME_CLASS(AFastFlameMissile));
+	if (misl != NULL)
+	{
+		misl->momz = FRACUNIT;
+	}
+}
+
+void A_CrusaderRefire (AActor *self)
+{
+	if (self->target == NULL ||
+		self->target->health <= 0 ||
+		!P_CheckSight (self, self->target))
+	{
+		self->SetState (self->SeeState);
+	}
+}
+
+void A_RocketDead (AActor *self)
+{
+	self->RenderStyle = STYLE_Add;
+	S_StopSound (self, CHAN_VOICE);
+}
+
+// Bishop -------------------------------------------------------------------
+
+void A_SBishopAttack (AActor *);
+void A_20b54 (AActor *) {}
+
+class AStrifeBishop : public AActor
+{
+	DECLARE_ACTOR (AStrifeBishop, AActor)
+public:
+	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+	{
+		damage = dist = 64;
+	}
+};
+
+FState AStrifeBishop::States[] =
+{
+#define S_BISHOP_STND 0
+	S_NORMAL (MLDR, 'A',   10, A_Look,				&States[S_BISHOP_STND]),
+
+#define S_BISHOP_RUN (S_BISHOP_STND+1)
+	S_NORMAL (MLDR, 'A',	3, A_Chase,				&States[S_BISHOP_RUN+1]),
+	S_NORMAL (MLDR, 'A',	3, A_Chase,				&States[S_BISHOP_RUN+2]),
+	S_NORMAL (MLDR, 'B',	3, A_Chase,				&States[S_BISHOP_RUN+3]),
+	S_NORMAL (MLDR, 'B',	3, A_Chase,				&States[S_BISHOP_RUN+4]),
+	S_NORMAL (MLDR, 'C',	3, A_Chase,				&States[S_BISHOP_RUN+5]),
+	S_NORMAL (MLDR, 'C',	3, A_Chase,				&States[S_BISHOP_RUN+6]),
+	S_NORMAL (MLDR, 'D',	3, A_Chase,				&States[S_BISHOP_RUN+7]),
+	S_NORMAL (MLDR, 'D',	3, A_Chase,				&States[S_BISHOP_RUN]),
+
+#define S_BISHOP_ATK (S_BISHOP_RUN+8)
+	S_NORMAL (MLDR, 'E',	3, A_FaceTarget,		&States[S_BISHOP_ATK+1]),
+	S_BRIGHT (MLDR, 'F',	2, A_SBishopAttack,		&States[S_BISHOP_RUN]),
+
+#define S_BISHOP_PAIN (S_BISHOP_ATK+2)
+	S_NORMAL (MLDR, 'D',	1, A_Pain,				&States[S_BISHOP_RUN]),
+
+#define S_BISHOP_DIE (S_BISHOP_PAIN+1)
+	S_BRIGHT (MLDR, 'G',	3, NULL,				&States[S_BISHOP_DIE+1]),
+	S_BRIGHT (MLDR, 'H',	5, A_Scream,			&States[S_BISHOP_DIE+2]),
+	S_BRIGHT (MLDR, 'I',	4, A_TossGib,			&States[S_BISHOP_DIE+3]),
+	S_BRIGHT (MLDR, 'J',	4, A_Explode,			&States[S_BISHOP_DIE+4]),
+	S_BRIGHT (MLDR, 'K',	4, NULL,				&States[S_BISHOP_DIE+5]),
+	S_BRIGHT (MLDR, 'L',	4, NULL,				&States[S_BISHOP_DIE+6]),
+	S_BRIGHT (MLDR, 'M',	4, A_NoBlocking,		&States[S_BISHOP_DIE+7]),
+	S_BRIGHT (MLDR, 'N',	4, NULL,				&States[S_BISHOP_DIE+8]),
+	S_BRIGHT (MLDR, 'O',	4, A_TossGib,			&States[S_BISHOP_DIE+9]),
+	S_BRIGHT (MLDR, 'P',	4, NULL,				&States[S_BISHOP_DIE+10]),
+	S_BRIGHT (MLDR, 'Q',	4, A_TossGib,			&States[S_BISHOP_DIE+11]),
+	S_BRIGHT (MLDR, 'R',	4, NULL,				&States[S_BISHOP_DIE+12]),
+	S_BRIGHT (MLDR, 'S',	4, A_TossGib,			&States[S_BISHOP_DIE+13]),
+	S_BRIGHT (MLDR, 'T',	4, NULL,				&States[S_BISHOP_DIE+14]),
+	S_BRIGHT (MLDR, 'U',	4, A_TossGib,			&States[S_BISHOP_DIE+15]),
+	S_BRIGHT (MLDR, 'V',	4, A_20b54,				NULL),
+};
+
+IMPLEMENT_ACTOR (AStrifeBishop, Strife, 187, 0)
+	PROP_SpawnState (S_BISHOP_STND)
+	PROP_SeeState (S_BISHOP_RUN)
+	PROP_PainState (S_BISHOP_PAIN)
+	PROP_MissileState (S_BISHOP_ATK)
+	PROP_DeathState (S_BISHOP_DIE)
+
+	PROP_SpawnHealth (500)
+	PROP_PainChance (128)
+	PROP_SpeedFixed (8)
+	PROP_RadiusFixed (40)
+	PROP_HeightFixed (56)
+	PROP_Mass (500)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL|MF_NOTDMATCH)
+	PROP_SeeSound ("bishop/sight")
+	PROP_PainSound ("bishop/pain")
+	PROP_DeathSound ("bishop/death")
+	PROP_ActiveSound ("bishop/active")
+END_DEFAULTS
+
+// The Bishop's missile -----------------------------------------------------
+
+void A_Tracer2 (AActor *);
+
+class ABishopMissile : public AActor
+{
+	DECLARE_ACTOR (ABishopMissile, AActor)
+public:
+	void PreExplode ()
+	{
+		RenderStyle = STYLE_Add;
+		S_StopSound (this, CHAN_VOICE);
+	}
+	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+	{
+		damage = dist = 64;
+	}
+};
+
+FState ABishopMissile::States[] =
+{
+	S_BRIGHT (MISS, 'A',	4, A_RocketInFlight,	&States[1]),
+	S_BRIGHT (MISS, 'B',	3, A_Tracer2,			&States[0]),
+
+	S_BRIGHT (MISL, 'A',	5, A_Explode,			&States[3]),
+	S_BRIGHT (MISL, 'B',	5, NULL,				&States[4]),
+	S_BRIGHT (MISL, 'C',	4, NULL,				&States[5]),
+	S_BRIGHT (MISL, 'D',	2, NULL,				&States[6]),
+	S_BRIGHT (MISL, 'E',	2, NULL,				&States[7]),
+	S_BRIGHT (MISL, 'F',	2, NULL,				&States[8]),
+	S_BRIGHT (MISL, 'G',	2, NULL,				NULL),
+};
+
+IMPLEMENT_ACTOR (ABishopMissile, Strife, -1, 0)
+	PROP_SpawnState (0)
+	PROP_DeathState (2)
+	PROP_SpeedFixed (20)
+	PROP_RadiusFixed (10)
+	PROP_HeightFixed (14)
+	PROP_Damage (10)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_SEEKERMISSILE)
+	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_SeeSound ("bishop/misl")
+	PROP_DeathSound ("bishop/mislx")
+END_DEFAULTS
+
+void A_SBishopAttack (AActor *self)
+{
+	if (self->target != NULL)
+	{
+		AActor *missile = P_SpawnMissileZ (self, self->z + 64*FRACUNIT, self->target, RUNTIME_CLASS(ABishopMissile));
+
+		if (missile != NULL)
+		{
+			missile->tracer = self->target;
+		}
+	}
+}
+
+// In Strife, this number is stored in the data segment, but it doesn't seem to be
+// altered anywhere.
+#define TRACEANGLE (0xe000000)
+
+void A_Tracer2 (AActor *self)
+{
+	AActor *dest;
+	angle_t exact;
+	fixed_t dist;
+	fixed_t slope;
+
+	dest = self->tracer;
+
+	if (dest == NULL || dest->health <= 0)
+		return;
+
+	// change angle
+	exact = R_PointToAngle2 (self->x, self->y, dest->x, dest->y);
+
+	if (exact != self->angle)
+	{
+		if (exact - self->angle > 0x80000000)
+		{
+			self->angle -= TRACEANGLE;
+			if (exact - self->angle < 0x80000000)
+				self->angle = exact;
+		}
+		else
+		{
+			self->angle += TRACEANGLE;
+			if (exact - self->angle > 0x80000000)
+				self->angle = exact;
+		}
+	}
+
+	exact = self->angle >> ANGLETOFINESHIFT;
+	self->momx = FixedMul (self->Speed, finecosine[exact]);
+	self->momy = FixedMul (self->Speed, finesine[exact]);
+
+	// change slope
+	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
+	dist /= self->Speed;
+
+	if (dist < 1)
+	{
+		dist = 1;
+	}
+	slope = (dest->z + 40*FRACUNIT - self->z) / dist;
+	if (slope < self->momz)
+	{
+		self->momz -= FRACUNIT/8;
+	}
+	else
+	{
+		self->momz += FRACUNIT/8;
+	}
+}
+
+// Sentinel -----------------------------------------------------------------
+
+void A_1fc30 (AActor *);
+void A_1fa58 (AActor *);
+void A_1fa10 (AActor *);
+
+class ASentinel : public AActor
+{
+	DECLARE_ACTOR (ASentinel, AActor)
+};
+
+FState ASentinel::States[] =
+{
+#define S_SENTINEL_STND 0
+	S_NORMAL (SEWR, 'A',   10, A_Look,				&States[S_SENTINEL_STND]),
+
+#define S_SENTINEL_RUN (S_SENTINEL_STND+1)
+	S_NORMAL (SEWR, 'A',	6, A_1fc30,				&States[S_SENTINEL_RUN+1]),
+	S_NORMAL (SEWR, 'A',	6, A_Chase,				&States[S_SENTINEL_RUN]),
+
+#define S_SENTINEL_ATK (S_SENTINEL_RUN+2)
+	S_NORMAL (SEWR, 'B',	4, A_FaceTarget,		&States[S_SENTINEL_ATK+1]),
+	S_BRIGHT (SEWR, 'C',	8, A_1fa58,				&States[S_SENTINEL_ATK+2]),
+	S_BRIGHT (SEWR, 'C',	4, A_1fa10,				&States[S_SENTINEL_ATK+1]),
+
+#define S_SENTINEL_PAIN (S_SENTINEL_ATK+3)
+	S_NORMAL (SEWR, 'D',	5, A_Pain,				&States[S_SENTINEL_ATK+2]),
+
+#define S_SENTINEL_DIE (S_SENTINEL_PAIN+1)
+	S_NORMAL (SEWR, 'D',	7, A_NoBlocking,		&States[S_SENTINEL_DIE+1]),
+	S_BRIGHT (SEWR, 'E',	8, A_TossGib,			&States[S_SENTINEL_DIE+2]),
+	S_BRIGHT (SEWR, 'F',	5, A_Scream,			&States[S_SENTINEL_DIE+3]),
+	S_BRIGHT (SEWR, 'G',	4, A_TossGib,			&States[S_SENTINEL_DIE+4]),
+	S_BRIGHT (SEWR, 'H',	4, A_TossGib,			&States[S_SENTINEL_DIE+5]),
+	S_NORMAL (SEWR, 'I',	4, NULL,				&States[S_SENTINEL_DIE+6]),
+	S_NORMAL (SEWR, 'J',	5, NULL,				NULL)
+};
+
+IMPLEMENT_ACTOR (ASentinel, Strife, 3006, 0)
+	PROP_SpawnState (S_SENTINEL_STND)
+	PROP_SeeState (S_SENTINEL_RUN)
+	PROP_PainState (S_SENTINEL_PAIN)
+	PROP_MissileState (S_SENTINEL_ATK)
+	PROP_DeathState (S_SENTINEL_DIE)
+
+	PROP_SpawnHealth (100)
+	PROP_PainChance (255)
+	PROP_SpeedFixed (7)
+	PROP_RadiusFixed (23)
+	PROP_HeightFixed (53)
+	PROP_Mass (300)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_SPAWNCEILING|MF_NOGRAVITY|
+				MF_STRIFEx800|MF_FLOAT|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
+
+	PROP_SeeSound ("sentinel/sight")
+	PROP_DeathSound ("sentinel/death")
+	PROP_ActiveSound ("sentinel/active")
+END_DEFAULTS
+
+// Sentinel FX 1 ------------------------------------------------------------
+
+class ASentinelFX1 : public AActor
+{
+	DECLARE_ACTOR (ASentinelFX1, AActor)
+};
+
+FState ASentinelFX1::States[] =
+{
+	S_NORMAL (SHT1, 'A', 4, NULL, &States[1]),
+	S_NORMAL (SHT1, 'B', 4, NULL, &States[0]),
+
+#define S_SENTINELFX2_X 2
+	S_NORMAL (POW1, 'F', 4, NULL, &States[S_SENTINELFX2_X+1]),
+	S_NORMAL (POW1, 'G', 4, NULL, &States[S_SENTINELFX2_X+2]),
+	S_NORMAL (POW1, 'H', 4, NULL, &States[S_SENTINELFX2_X+3]),
+	S_NORMAL (POW1, 'I', 4, NULL, &States[S_SENTINELFX2_X+4]),
+#define S_SENTINELFX1_X (S_SENTINELFX2_X+4)
+	S_NORMAL (POW1, 'J', 4, NULL, NULL),
+};
+
+IMPLEMENT_ACTOR (ASentinelFX1, Strife, -1, 0)
+	PROP_SpawnState (0)
+	PROP_DeathState (S_SENTINELFX1_X)
+	PROP_SpeedFixed (40)
+	PROP_RadiusFixed (10)
+	PROP_HeightFixed (8)
+	PROP_Damage (0)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
+	PROP_RenderStyle (STYLE_Add)
+END_DEFAULTS
+
+// Sentinel FX 2 ------------------------------------------------------------
+
+class ASentinelFX2 : public ASentinelFX1
+{
+	DECLARE_STATELESS_ACTOR (ASentinelFX2, ASentinelFX1)
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASentinelFX2, Strife, -1, 0)
+	PROP_DeathState (S_SENTINELFX2_X)
+	PROP_Damage (1)
+	PROP_SeeSound ("sentinel/plasma")
+END_DEFAULTS
+
+void A_1fc30 (AActor *self)
+{
+	fixed_t minz, maxz;
+
+	if (self->threshold != 0 || (self->flags & MF_INFLOAT))
+		return;
+
+	maxz =  self->ceilingz - self->height - 16*FRACUNIT;;
+	minz = self->floorz + 96*FRACUNIT;
+	if (minz > maxz)
+	{
+		minz = maxz;
+	}
+	if (minz < self->z)
+	{
+		self->momz -= FRACUNIT;
+	}
+	else
+	{
+		self->momz += FRACUNIT;
+	}
+	self->reactiontime = (minz == self->z) ? 4 : 0;
+}
+
+void A_1fa58 (AActor *self)
+{/*
+	[esp+04] = self->x
+	[esp+08] = self->y
+	[esp+0C] = -missile.default.radius
+	[esp+10] = self
+	[esp+14] = 4*(self->angle >> ANGLETOFINESHIFT)
+*/
+	AActor *missile, *trail;
+
+	missile = P_SpawnMissileZAimed (self, self->z + 32*FRACUNIT, self->target, RUNTIME_CLASS(ASentinelFX2));
+
+	if (missile != NULL && (missile->momx|missile->momy) != 0)
+	{
+		for (int i = 8; i > 1; --i)
+		{
+			trail = Spawn<ASentinelFX1> (
+				self->x + FixedMul (missile->radius * i, finecosine[missile->angle >> ANGLETOFINESHIFT]),
+				self->y + FixedMul (missile->radius * i, finesine[missile->angle >> ANGLETOFINESHIFT]),
+				missile->z + (missile->momz / 4 * i));
+			if (trail != NULL)
+			{
+				trail->target = self;
+				trail->momx = missile->momx;
+				trail->momy = missile->momy;
+				trail->momz = missile->momz;
+				P_CheckMissileSpawn (trail);
+			}
+		}
+		missile->z += missile->momz >> 2;
+	}
+}
+
+static FRandom pr_sentinelrefire ("SentinelRefire");
+
+void A_1fa10 (AActor *self)
+{
+	A_FaceTarget (self);
+
+	if (pr_sentinelrefire() >= 30)
+	{
+		if (self->target == NULL ||
+			self->target->health <= 0 ||
+			!P_CheckSight (self, self->target) ||
+			pr_sentinelrefire() < 40)
+		{
+			self->SetState (self->SeeState);
 		}
 	}
 }
@@ -625,7 +1480,7 @@ IMPLEMENT_ACTOR (AComputer, Strife, 182, 0)
 	PROP_RadiusFixed (26)
 	PROP_HeightFixed (128)
 	PROP_MassLong (100000)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx400|MF_STRIFEx8000|MF_NOBLOOD)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx800|MF_STRIFEx8000|MF_NOBLOOD)
 	PROP_DeathSound ("misc/explosion")
 END_DEFAULTS
 
@@ -763,7 +1618,7 @@ IMPLEMENT_ACTOR (APowerCrystal, Strife, 92, 0)
 	PROP_RadiusFixed (20)		// This size seems odd, but that's what the mobjinfo says
 	PROP_HeightFixed (16)
 	PROP_MassLong (99999999)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOGRAVITY|MF_STRIFEx400|MF_NOBLOOD)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOGRAVITY|MF_STRIFEx800|MF_NOBLOOD)
 	PROP_DeathSound ("misc/explosion")
 	PROP_ActiveSound ("misc/reactor")
 END_DEFAULTS
@@ -1389,8 +2244,6 @@ IMPLEMENT_ACTOR (ATeleportSwirl, Strife, 23, 0)
 END_DEFAULTS
 
 // Dead Crusader ------------------------------------------------------------
-
-void A_21598() {}
 
 class ADeadCrusader : public AActor
 {
@@ -2497,7 +3350,7 @@ IMPLEMENT_ACTOR (APowerCoupling, Strife, 220, 0)
 	PROP_RadiusFixed (17)
 	PROP_HeightFixed (64)
 	PROP_MassLong (999999)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx400|MF_STRIFEx8000|MF_DROPPED|MF_NOBLOOD|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx800|MF_STRIFEx8000|MF_DROPPED|MF_NOBLOOD|MF_NOTDMATCH)
 	// Why no death state?
 END_DEFAULTS
 

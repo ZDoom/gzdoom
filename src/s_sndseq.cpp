@@ -23,6 +23,7 @@
 #include "i_system.h"
 #include "cmdlib.h"
 #include "p_local.h"
+#include "gi.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -527,7 +528,7 @@ void S_ParseSndSeq (void)
 
 	free (ScriptTemp);
 
-	if (HexenHack)
+	if (gameinfo.gametype == GAME_Hexen)
 		AssignHexenTranslations ();
 }
 

@@ -34,6 +34,8 @@ inline void P_DropItem (AActor *source, const char *type, int special, int chanc
 }
 
 void A_Look (AActor *actor);
+void A_Wander (AActor *actor);
+void A_Look2 (AActor *actor);
 void A_Chase (AActor *actor);
 void A_FastChase (AActor *actor);
 void A_FaceTarget (AActor *actor);

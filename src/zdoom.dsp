@@ -2233,54 +2233,6 @@ SOURCE=.\win32\win32video.cpp
 SOURCE=win32\zdoom.exe.manifest
 # End Source File
 # End Group
-# Begin Group "Text Files"
-
-# PROP Default_Filter "txt"
-# Begin Source File
-
-SOURCE=..\docs\classes.txt
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\colors.txt
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\commands.txt
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\console.html
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\history.txt
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\notes.txt
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\rh-log.txt
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\zdoom.txt
-# End Source File
-# Begin Group "Licenses"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=..\docs\BUILDLIC.TXT
-# End Source File
-# Begin Source File
-
-SOURCE=..\docs\doomlic.txt
-# End Source File
-# End Group
-# End Group
 # Begin Group "Shared Game"
 
 # PROP Default_Filter ""
@@ -3276,6 +3228,10 @@ SOURCE=.\g_heretic\heretic_sbar.cpp
 !ENDIF
 
 # End Source File
+# Begin Source File
+
+SOURCE=.\r_main.h
+# End Source File
 # End Group
 # Begin Group "Hexen Game"
 
@@ -3863,6 +3819,56 @@ SOURCE=.\g_hexen\a_wraith.cpp
 SOURCE=g_hexen\hexen_sbar.cpp
 # End Source File
 # End Group
+# Begin Group "Strife Game"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\g_strife\a_becomingacolyte.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_merchants.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_peasant.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_strifeammo.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_strifeglobal.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_strifeplayer.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_strifestuff.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_strifeweapons.cpp
+
+!IF  "$(CFG)" == "_zdoom - Win32 Debug"
+
+# ADD CPP /nologo /GZ /GX 
+!ENDIF
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_zombie.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\strife_sbar.cpp
+# End Source File
+# End Group
 # Begin Group "Render Core"
 
 # PROP Default_Filter ""
@@ -4012,10 +4018,6 @@ SOURCE=.\r_local.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_main.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\r_plane.h
 # End Source File
 # Begin Source File
@@ -4033,6 +4035,54 @@ SOURCE=.\r_state.h
 # Begin Source File
 
 SOURCE=.\r_things.h
+# End Source File
+# End Group
+# End Group
+# Begin Group "Text Files"
+
+# PROP Default_Filter "txt"
+# Begin Source File
+
+SOURCE=..\docs\classes.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\docs\colors.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\docs\commands.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\docs\console.html
+# End Source File
+# Begin Source File
+
+SOURCE=..\docs\history.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\docs\notes.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\docs\rh-log.txt
+# End Source File
+# Begin Source File
+
+SOURCE=..\docs\zdoom.txt
+# End Source File
+# Begin Group "Licenses"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=..\docs\BUILDLIC.TXT
+# End Source File
+# Begin Source File
+
+SOURCE=..\docs\doomlic.txt
 # End Source File
 # End Group
 # End Group
@@ -4173,18 +4223,6 @@ SOURCE=sound\sample_flac.cpp
 # Begin Source File
 
 SOURCE=sound\sample_flac.h
-# End Source File
-# End Group
-# Begin Group "Strife Game"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\g_strife\a_strifeplayer.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\g_strife\a_strifestuff.cpp
 # End Source File
 # End Group
 # Begin Source File

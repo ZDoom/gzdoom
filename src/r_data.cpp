@@ -178,7 +178,7 @@ int FTextureManager::GetTexture (const char *name, int usetype, BITFIELD flags)
 	if (i == -1)
 	{
 		// Use a default texture instead of aborting like Doom did
-		Printf ("Unknown texture: %s\n", name);
+		Printf ("Unknown texture: \"%s\"\n", name);
 		i = DefaultTexture;
 	}
 	return i;
@@ -3037,3 +3037,18 @@ CCMD (picnum)
 	int picnum = TexMan.GetTexture (argv[1], FTexture::TEX_Any);
 	Printf ("%d: %s - %s\n", picnum, TexMan[picnum]->Name, TexMan(picnum)->Name);
 }
+
+CCMD (hashfoo)
+{
+	for (int i = 1; i < TexMan.NumTextures(); ++i)
+	{
+		if (TexMan.Textures[i].HashNext != FTextureManager::HASH_END)
+		{
+			Printf ("%s -> %s\n", TexMan[i]->Name, TexMan[TexMan.Textures[i].HashNext]->Name);
+		}
+		if (TexMan.CheckForTexture (TexMan[i]->Name, TexMan[i]->UseType) < 0)
+		{
+			Printf ("%s not found\n", TexMan[i]->Name);
+		}
+	}
+}

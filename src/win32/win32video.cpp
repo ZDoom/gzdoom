@@ -565,6 +565,8 @@ bool DDrawFB::CreateResources ()
 	if (!Windowed)
 	{
 		ShowWindow (Window, SW_SHOW);
+		// Remove the window border in fullscreen mode
+		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_SYSMENU);
 		hr = DDraw->SetDisplayMode (Width, Height, 8, 0, 0);
 		if (FAILED(hr))
 		{
@@ -600,6 +602,8 @@ bool DDrawFB::CreateResources ()
 					 GetSystemMetrics (SM_CYCAPTION);
 		LOG2 ("Resize window to %dx%d\n", sizew, sizeh);
 		VidResizing = true;
+		// Make sure the window has a border in windowed mode
+		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
 		if (!SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
 			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER))
 		{

@@ -79,9 +79,9 @@
 #define LEVEL_STARTLIGHTNING	0x01000000		// Automatically start lightning
 #define LEVEL_FILTERSTARTS		0x02000000		// Apply mapthing filtering to player starts
 #define LEVEL_LOOKUPLEVELNAME	0x04000000		// Level name is the name of a language string
+#define LEVEL_HEXENFORMAT		0x08000000		// Level uses the Hexen map format
 
 #define LEVEL_SWAPSKIES			0x10000000		// Used by lightning
-#define LEVEL_DEFINEDINMAPINFO	0x20000000		// Level was defined in a MAPINFO lump
 #define LEVEL_CHANGEMAPCHEAT	0x40000000		// Don't display cluster messages
 #define LEVEL_VISITED			0x80000000		// Used for intermission map
 
@@ -236,7 +236,6 @@ extern TAutoGrowArray<SDWORD> ACS_WorldArrays[NUM_WORLDVARS];
 extern TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern BOOL savegamerestore;
-extern BOOL HexenHack;		// Semi-Hexen-compatibility mode
 
 // mapname will be changed if it is a valid warptrans
 bool CheckWarpTransMap (char mapname[9], bool substitute);
@@ -259,7 +258,7 @@ void G_InitLevelLocals (void);
 void G_AirControlChanged ();
 
 void G_MakeEpisodes (void);
-void G_MaybeLookupLevelName (void);
+const char *G_MaybeLookupLevelName (level_info_t *level);
 
 cluster_info_t *FindClusterInfo (int cluster);
 level_info_t *FindLevelInfo (char *mapname);

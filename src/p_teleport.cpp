@@ -352,6 +352,9 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 
 	for (i = -1; (i = P_FindLineFromID (id, i)) >= 0; )
 	{
+		if (line-lines == i)
+			continue;
+
 		if ((l=lines+i) != line && l->backsector)
 		{
 			// Get the thing's position along the source linedef

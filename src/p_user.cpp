@@ -191,21 +191,10 @@ fixed_t APlayerPawn::GetJumpZ ()
 	return 8*FRACUNIT;
 }
 
-const TypeInfo *APlayerPawn::GetDropType ()
+void APlayerPawn::Die (AActor *source, AActor *inflictor)
 {
-	if (player == NULL ||
-		player->readyweapon >= NUMWEAPONS)
-	{
-		return NULL;
-	}
-	else
-	{
-		return wpnlev1info[player->readyweapon]->droptype;
-	}
-}
+	Super::Die (source, inflictor);
 
-void APlayerPawn::NoBlockingSet ()
-{
 	if (dmflags2 & DF2_YES_WEAPONDROP)
 	{
 		const TypeInfo *droptype = GetDropType ();
@@ -213,6 +202,18 @@ void APlayerPawn::NoBlockingSet ()
 		{
 			P_DropItem (this, droptype, -1, 256);
 		}
+	}
+}
+
+const TypeInfo *APlayerPawn::GetDropType ()
+{
+	if (player == NULL || player->readyweapon >= NUMWEAPONS)
+	{
+		return NULL;
+	}
+	else
+	{
+		return wpnlev1info[player->readyweapon]->droptype;
 	}
 }
 
@@ -1368,6 +1369,7 @@ void player_s::Serialize (FArchive &arc)
 		{
 			char *str = NULL;
 
+			memset (inventory, 0, sizeof(inventory));
 			arc << str;
 			while (str != NULL)
 			{

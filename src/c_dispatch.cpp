@@ -216,16 +216,28 @@ void DStoredCommand::Tick ()
 	Destroy ();
 }
 
-static int ListActionCommands (void)
+static int ListActionCommands (const char *pattern)
 {
+	char matcher[16];
 	unsigned int i;
+	int count = 0;
 
 	for (i = 0; i < NUM_ACTIONS; ++i)
 	{
-		Printf ("+%s\n", ActionMaps[i].Name);
-		Printf ("-%s\n", ActionMaps[i].Name);
+		if (pattern == NULL || CheckWildcards (pattern,
+			(sprintf (matcher, "+%s", ActionMaps[i].Name), matcher)))
+		{
+			Printf ("+%s\n", ActionMaps[i].Name);
+			count++;
+		}
+		if (pattern == NULL || CheckWildcards (pattern,
+			(sprintf (matcher, "-%s", ActionMaps[i].Name), matcher)))
+		{
+			Printf ("-%s\n", ActionMaps[i].Name);
+			count++;
+		}
 	}
-	return NUM_ACTIONS * 2;
+	return count;
 }
 
 unsigned int MakeKey (const char *s)
@@ -864,7 +876,7 @@ char *BuildString (int argc, char **argv)
 	}
 }
 
-static int DumpHash (FConsoleCommand **table, BOOL aliases)
+static int DumpHash (FConsoleCommand **table, BOOL aliases, const char *pattern=NULL)
 {
 	int bucket, count;
 	FConsoleCommand *cmd;
@@ -874,18 +886,21 @@ static int DumpHash (FConsoleCommand **table, BOOL aliases)
 		cmd = table[bucket];
 		while (cmd)
 		{
-			if (cmd->IsAlias())
+			if (CheckWildcards (pattern, cmd->m_Name))
 			{
-				if (aliases)
+				if (cmd->IsAlias())
+				{
+					if (aliases)
+					{
+						++count;
+						static_cast<FConsoleAlias *>(cmd)->PrintAlias ();
+					}
+				}
+				else if (!aliases)
 				{
 					++count;
-					static_cast<FConsoleAlias *>(cmd)->PrintAlias ();
+					cmd->PrintCommand ();
 				}
-			}
-			else if (!aliases)
-			{
-				++count;
-				cmd->PrintCommand ();
 			}
 			cmd = cmd->m_Next;
 		}
@@ -996,9 +1011,10 @@ CCMD (alias)
 CCMD (cmdlist)
 {
 	int count;
+	const char *filter = (argv.argc() == 1 ? NULL : argv[1]);
 
-	count = ListActionCommands ();
-	count += DumpHash (Commands, false);
+	count = ListActionCommands (filter);
+	count += DumpHash (Commands, false, filter);
 	Printf ("%d commands\n", count);
 }
 

@@ -127,6 +127,8 @@ protected:
 	HANDLE PauseEvent;
 	HANDLE ExitEvent;
 	HANDLE VolumeChangeEvent;
+	DWORD SavedVolume;
+	bool VolumeWorks;
 
 	const BYTE *MusBuffer;
 	const MUSHeader *MusHeader;
@@ -167,6 +169,8 @@ protected:
 	HANDLE PauseEvent;
 	HANDLE ExitEvent;
 	HANDLE VolumeChangeEvent;
+	DWORD SavedVolume;
+	bool VolumeWorks;
 
 	const BYTE *MusHeader;
 	BYTE ChannelVolumes[16];

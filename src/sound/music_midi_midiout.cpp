@@ -176,9 +176,40 @@ void MIDISong2::Play (bool looping)
 		return;
 	}
 
+	// Try two different methods for setting the stream to full volume.
+	// Unfortunately, this isn't as reliable as it once was, which is a pity.
+	// The real volume selection is done by setting the volume controller for
+	// each channel. Because every General MIDI-compliant device must support
+	// this controller, it is the most reliable means of setting the volume.
+
+	VolumeWorks = (MMSYSERR_NOERROR == midiOutGetVolume (MidiOut, &SavedVolume));
+	if (VolumeWorks)
+	{
+		VolumeWorks &= (MMSYSERR_NOERROR == midiOutSetVolume (MidiOut, 0xffffffff));
+	}
+	else
+	{
+		// Send the standard SysEx message for full master volume
+		BYTE volmess[] = { 0xf0, 0x7f, 0x7f, 0x04, 0x01, 0x7f, 0x7f, 0xf7 };
+		MIDIHDR hdr = { (LPSTR)volmess, sizeof(volmess), };
+
+		if (MMSYSERR_NOERROR == midiOutPrepareHeader (MidiOut, &hdr, sizeof(hdr)))
+		{
+			midiOutLongMsg (MidiOut, &hdr, sizeof(hdr));
+			while (MIDIERR_STILLPLAYING == midiOutUnprepareHeader (MidiOut, &hdr, sizeof(hdr)))
+			{
+				Sleep (10);
+			}
+		}
+	}
+
 	PlayerThread = CreateThread (NULL, 0, PlayerProc, this, 0, &tid);
 	if (PlayerThread == NULL)
 	{
+		if (VolumeWorks)
+		{
+			midiOutSetVolume (MidiOut, SavedVolume);
+		}
 		midiOutClose (MidiOut);
 		MidiOut = NULL;
 	}
@@ -216,6 +247,10 @@ void MIDISong2::Stop ()
 	if (MidiOut)
 	{
 		midiOutReset (MidiOut);
+		if (VolumeWorks)
+		{
+			midiOutSetVolume (MidiOut, SavedVolume);
+		}
 		midiOutClose (MidiOut);
 		MidiOut = NULL;
 	}

@@ -166,6 +166,11 @@ static const char *DoomKeyNames[6] =
 
 static void DoGiveInv (player_t *player, const char *type, int amount)
 {
+	if (amount <= 0)
+	{
+		return;
+	}
+
 	int i;
 	weapontype_t savedpendingweap = player->pendingweapon;
 

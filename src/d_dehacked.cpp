@@ -991,6 +991,16 @@ static int PatchThing (int thingy)
 		{
 			TouchedActors.Push (const_cast<TypeInfo *>(type));
 		}
+
+		// Make MF3_ISMONSTER match MF_COUNTKILL
+		if (info->flags & MF_COUNTKILL)
+		{
+			info->flags3 |= MF3_ISMONSTER;
+		}
+		else
+		{
+			info->flags3 &= ~MF3_ISMONSTER;
+		}
 	}
 
 	return result;

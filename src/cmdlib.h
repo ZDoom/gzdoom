@@ -43,9 +43,6 @@ BOOL	IsNum (char *str);		// [RH] added
 char	*copystring(const char *s);
 void	ReplaceString (char **ptr, const char *str);
 
-void	CRC_Init(unsigned short *crcvalue);
-void	CRC_ProcessByte(unsigned short *crcvalue, byte data);
-unsigned short CRC_Value(unsigned short crcvalue);
-
+bool CheckWildcards (const char *pattern, const char *text);
 
 #endif

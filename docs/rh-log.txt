@@ -1,4 +1,26 @@
+February 12, 2003
+- 2.0.42 time.
+- Fixed: If weapon drop was on and a player respawned before their body went
+  nonblocking, they wouldn't actually drop a weapon.
+- Dehacked compatibility fix: MF3_ISMONSTER now copies the state of
+  MF_COUNTKILL for any actors that get patched.
+- BOOM compatibility fix: Lines with a type of 0 still need their ID set to
+  their tag. P:AR's rotating light on E1M1 requires this for the teleport line
+  its voodoo doll uses.
+- Added code to set the MIDI output device's volume to full for devices that
+  support it. That makes the full range of volumes available without having
+  to set the volume with the Windows mixer. 
+- Fixed: The GiveInventory command would give one inventory item if the amount
+  was 0.
+- Fixed: Inventory items that were not present in a savegame were not reset to
+  0 when the savegame was loaded.
+
 February 10, 2003
+- Added wildcard support to the cmdlist and cvarlist commands, so you can look
+  at just a subset of the lists.
+- Fixed: The total monster count reset when loading saved games so that it would
+  no longer include monsters that spawned after the start of the level.
+- Uploaded 2.0.41.
 - Fixed: When a MIDI or MUS song stopped because it reached the end of the song
   (if it was nonlooping), the midiOut device would not be released.
 - Removed the DirectMusic MIDI option because it wasn't working, and Timidity++

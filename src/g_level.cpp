@@ -1811,6 +1811,11 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializeSounds (arc);
 	StatusBar->Serialize (arc);
 
+	if (SaveVersion >= 210)
+	{
+		arc << level.total_monsters << level.total_items << level.total_secrets;
+	}
+
 	// Does this level have custom translations?
 	if (arc.IsStoring ())
 	{

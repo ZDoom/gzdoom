@@ -36,7 +36,6 @@
 #include <windows.h>
 #include <tlhelp32.h>
 #include "resource.h"
-#include "gccseh.h"
 
 #define MAX_CRASH_REPORT (256*1024)
 

@@ -83,7 +83,8 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	{
 		ld->special = 0;
 		ld->flags = flags;
-		memset (ld->args, 0, sizeof(ld->args));
+		ld->args[0] = mld->tag;
+		memset (ld->args+1, 0, sizeof(ld->args)-sizeof(ld->args[0]));
 		return;
 	}
 

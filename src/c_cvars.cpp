@@ -1245,6 +1245,11 @@ CCMD (toggle)
 	}
 }
 
+CCMD (pat)
+{
+	Printf ("%d\n", CheckWildcards (argv[1], argv[2]));
+}
+
 void FBaseCVar::ListVars (const char *filter, bool plain)
 {
 	FBaseCVar *var = CVars;
@@ -1252,31 +1257,34 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 
 	while (var)
 	{
-		DWORD flags = var->GetFlags();
-		UCVarValue val;
+		if (CheckWildcards (filter, var->GetName()))
+		{
+			DWORD flags = var->GetFlags();
+			UCVarValue val;
 
-		val = var->GetGenericRep (CVAR_String);
-		if (plain)
-		{ // plain formatting does not include user-defined cvars
-			if (!(flags & CVAR_UNSETTABLE))
+			val = var->GetGenericRep (CVAR_String);
+			if (plain)
+			{ // plain formatting does not include user-defined cvars
+				if (!(flags & CVAR_UNSETTABLE))
+				{
+					++count;
+					Printf ("%s : %s\n", var->GetName(), var->GetGenericRep(CVAR_String).String);
+				}
+			}
+			else
 			{
 				++count;
-				Printf ("%s : %s\n", var->GetName(), var->GetGenericRep(CVAR_String).String);
+				Printf ("%c%c%c %s : :%s\n",
+					flags & CVAR_ARCHIVE ? 'A' : ' ',
+					flags & CVAR_USERINFO ? 'U' :
+				flags & CVAR_SERVERINFO ? 'S' :
+				flags & CVAR_AUTO ? 'C' : ' ',
+					flags & CVAR_NOSET ? '-' :
+				flags & CVAR_LATCH ? 'L' :
+				flags & CVAR_UNSETTABLE ? '*' : ' ',
+					var->GetName(),
+					var->GetGenericRep (CVAR_String).String);
 			}
-		}
-		else
-		{
-			++count;
-			Printf ("%c%c%c %s : :%s\n",
-				flags & CVAR_ARCHIVE ? 'A' : ' ',
-				flags & CVAR_USERINFO ? 'U' :
-			flags & CVAR_SERVERINFO ? 'S' :
-			flags & CVAR_AUTO ? 'C' : ' ',
-				flags & CVAR_NOSET ? '-' :
-			flags & CVAR_LATCH ? 'L' :
-			flags & CVAR_UNSETTABLE ? '*' : ' ',
-				var->GetName(),
-				var->GetGenericRep (CVAR_String).String);
 		}
 		var = var->m_Next;
 	}

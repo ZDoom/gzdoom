@@ -246,3 +246,41 @@ BOOL IsNum (char *str)
 	}
 	return true;
 }
+
+// [RH] Checks if text matches the wildcard pattern using ? or *
+
+bool CheckWildcards (const char *pattern, const char *text)
+{
+	if (pattern == NULL || text == NULL)
+		return true;
+
+	while (*pattern)
+	{
+		if (*pattern == '*')
+		{
+			char stop = tolower (*++pattern);
+			while (*text && tolower(*text) != stop)
+			{
+				text++;
+			}
+			if (*text && tolower(*text) == stop)
+			{
+				if (CheckWildcards (pattern, text++))
+				{
+					return true;
+				}
+				pattern--;
+			}
+		}
+		else if (*pattern == '?' || tolower(*pattern) == tolower(*text))
+		{
+			pattern++;
+			text++;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	return (*pattern | *text) == 0;
+}

@@ -75,9 +75,8 @@ public:
 
 	virtual void SpecialInvulnerabilityHandling (EInvulState state);
 
-	virtual void NoBlockingSet ();
-
 	void BeginPlay ();
+	void Die (AActor *source, AActor *inflictor);
 };
 
 class APlayerChunk : APlayerPawn

@@ -942,7 +942,8 @@ void P_AdjustLine (line_t *ld)
 	}
 
 	// [RH] Set line id (as appropriate) here
-	if (ld->special == Line_SetIdentification ||
+	if (!HasBehavior ||
+		ld->special == Line_SetIdentification ||
 		ld->special == Teleport_Line ||
 		ld->special == TranslucentLine ||
 		ld->special == Scroll_Texture_Model)

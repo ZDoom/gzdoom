@@ -1,27 +1,16 @@
-// Emacs style mode select   -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log:$
-//
-// DESCRIPTION:
-//		Handles WAD file header, directory, lump I/O.
-//		[RH] Changed to use buffered I/O (fread, etc)
-//
-//-----------------------------------------------------------------------------
 
+//**************************************************************************
+//**
+//** w_wad.c : Heretic 2 : Raven Software, Corp.
+//**
+//** $RCSfile: w_wad.c,v $
+//** $Revision: 1.6 $
+//** $Date: 95/10/06 20:56:47 $
+//** $Author: cjr $
+//**
+//**************************************************************************
+
+// HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <io.h>
@@ -30,6 +19,10 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 #include "m_alloc.h"
 #include "doomtype.h"
@@ -40,40 +33,74 @@
 #include "i_system.h"
 #include "z_zone.h"
 #include "cmdlib.h"
-
 #include "w_wad.h"
 
-#ifndef _WIN32
-#include <unistd.h>
+// MACROS ------------------------------------------------------------------
+
+#ifdef NeXT
+// NeXT doesn't need a binary flag in open call
+#define O_BINARY 0
+#define strcmpi strcasecmp
 #endif
 
+// TYPES -------------------------------------------------------------------
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+lumpinfo_t *lumpinfo;
+int numlumps;
+void **lumpcache;
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// CODE --------------------------------------------------------------------
+
+#ifdef NeXT
+//==========================================================================
 //
-// GLOBALS
+// strupr
 //
+//==========================================================================
 
-// Location of each lump on disk.
-lumpinfo_t*		lumpinfo;
-int				numlumps;
-
-void**			lumpcache;
-
-
-int W_filelength (FILE *handle) 
+void strupr (char *s)
 {
-	int len;
-
-	if (fseek (handle, 0, SEEK_END))
-		I_Error ("Error fseeking");
-
-	len = ftell (handle);
-
-	if (fseek (handle, 0, SEEK_SET))
-		I_Error ("Error fseeking");
-
-	return len;
+    while (*s)
+	*s++ = toupper (*s);
 }
 
+//==========================================================================
+//
+// filelength
+//
+//==========================================================================
+
+int filelength (int handle)
+{
+    struct stat fileinfo;
+
+    if (fstat (handle, &fileinfo) == -1)
+	{
+		close (handle);
+		I_Error ("Error fstating");
+	}
+    return fileinfo.st_size;
+}
+#endif
+
+//==========================================================================
+//
+// uppercoppy
+//
 // [RH] Copy up to 8 chars, upper-casing them in the process
+//==========================================================================
 
 void uppercopy (char *to, const char *from)
 {
@@ -85,22 +112,15 @@ void uppercopy (char *to, const char *from)
 		to[i] = 0;
 }
 
-
-
-//
-// LUMP BASED ROUTINES.
-//
-
+//==========================================================================
 //
 // W_AddFile
-// All files are optional, but at least one file must be
-//  found (PWAD, if all required lumps are present).
-// Files with a .wad extension are wadlink files
-//  with multiple lumps.
-// Other files are single lumps with the base filename
-//  for the lump name.
+//
+// Files with a .wad extension are wadlink files with multiple lumps,
+// other files are single lumps with the base filename for the lump name.
 //
 // [RH] Removed reload hack
+//==========================================================================
 
 void W_AddFile (char *filename)
 {
@@ -108,7 +128,7 @@ void W_AddFile (char *filename)
 	wadinfo_t		header;
 	lumpinfo_t*		lump_p;
 	unsigned		i;
-	FILE			*handle;
+	int				handle;
 	int				length;
 	int				startlump;
 	filelump_t*		fileinfo, *fileinfo2free;
@@ -121,9 +141,8 @@ void W_AddFile (char *filename)
 	DefaultExtension (name, ".wad");
 
 	// open the file and add to directory
-
-	if ((handle = fopen (name, "rb")) == NULL)
-	{
+	if ((handle = open (name, O_RDONLY|O_BINARY)) == -1)
+	{ // Didn't find file
 		Printf (PRINT_HIGH, " couldn't open %s\n",filename);
 		return;
 	}
@@ -132,27 +151,27 @@ void W_AddFile (char *filename)
 	startlump = numlumps;
 	
 	// [RH] Determine if file is a WAD based on its signature, not its name.
-	fread (&header, sizeof(header), 1, handle);
+	read (handle, &header, sizeof(header));
 
-	if (header.identification == IWAD_ID ||
-		header.identification == PWAD_ID) {
-		// This is a WAD file
+	if (header.identification == IWAD_ID || header.identification == PWAD_ID)
+	{ // This is a WAD file
 
 		header.numlumps = LONG(header.numlumps);
 		header.infotableofs = LONG(header.infotableofs);
 		length = header.numlumps * sizeof(filelump_t);
 		fileinfo = fileinfo2free = Z_Malloc (length, PU_STATIC, 0);
-		fseek (handle, header.infotableofs, SEEK_SET);
-		fread (fileinfo, 1, length, handle);
+		lseek (handle, header.infotableofs, SEEK_SET);
+		read (handle, fileinfo, length);
 		numlumps += header.numlumps;
 		Printf (PRINT_HIGH, " (%d lumps)", header.numlumps);
-	} else {
-		// This is just a single lump file
+	}
+	else
+	{ // This is just a single lump file
 
 		fileinfo2free = NULL;
 		fileinfo = &singleinfo;
 		singleinfo.filepos = 0;
-		singleinfo.size = LONG(W_filelength(handle));
+		singleinfo.size = LONG(filelength(handle));
 		ExtractFileBase (filename, name);
 		strupr (name);
 		strncpy (singleinfo.name, name, 8);
@@ -162,15 +181,12 @@ void W_AddFile (char *filename)
 
 	// Fill in lumpinfo
 	lumpinfo = Realloc (lumpinfo, numlumps*sizeof(lumpinfo_t));
-
 	lump_p = &lumpinfo[startlump];
-	
-	for (i=startlump ; i<numlumps ; i++,lump_p++, fileinfo++)
+	for (i = startlump; i < numlumps; i++, lump_p++, fileinfo++)
 	{
 		lump_p->handle = handle;
 		lump_p->position = LONG(fileinfo->filepos);
 		lump_p->size = LONG(fileinfo->size);
-
 		// [RH] Convert name to uppercase during copy
 		uppercopy (lump_p->name, fileinfo->name);
 	}
@@ -181,30 +197,27 @@ void W_AddFile (char *filename)
 
 
 
+//==========================================================================
 //
 // W_InitMultipleFiles
-// Pass a null terminated list of files to use.
-// All files are optional, but at least one file
-//  must be found.
-// Files with a .wad extension are idlink files
-//  with multiple lumps.
-// Other files are single lumps with the base filename
-//  for the lump name.
-// Lump names can appear multiple times.
-// The name searcher looks backwards, so a later file
-//  does override all earlier ones.
 //
+// Pass a null terminated list of files to use. All files are optional,
+// but at least one file must be found. Lump names can appear multiple
+// times. The name searcher looks backwards, so a later file can
+// override an earlier one.
+//
+//==========================================================================
+
 void W_InitMultipleFiles (wadlist_t **filenames)
 {
 	int i;
 
 	// open all the files, load headers, and count lumps
 	numlumps = 0;
+	lumpinfo = NULL; // will be realloced as lumps are added
 
-	// will be realloced as lumps are added
-	lumpinfo = NULL;		// [RH] Start out as NULL
-
-	while (*filenames) {
+	while (*filenames)
+	{
 		wadlist_t *next = (*filenames)->next;
 
 		W_AddFile ((*filenames)->name);
@@ -213,7 +226,9 @@ void W_InitMultipleFiles (wadlist_t **filenames)
 	}
 
 	if (!numlumps)
-		I_FatalError ("W_InitFiles: no files found");
+	{
+		I_FatalError ("W_InitMultipleFiles: no files found");
+	}
 
 	// [RH] Set namespace markers to global for everything
 	for (i = 0; i < numlumps; i++)
@@ -222,11 +237,8 @@ void W_InitMultipleFiles (wadlist_t **filenames)
 	// [RH] Merge sprite and flat groups.
 	//		(We don't need to bother with patches, since
 	//		Doom doesn't use markers to identify them.)
-	W_Profile ("waddump1.txt");
 	W_MergeLumps ("S_START", "S_END", ns_sprites);
-	W_Profile ("waddump2.txt");
 	W_MergeLumps ("F_START", "F_END", ns_flats);
-	W_Profile ("waddump3.txt");
 	W_MergeLumps ("C_START", "C_END", ns_colormaps);
 
 	// [RH] Set up hash table
@@ -238,13 +250,14 @@ void W_InitMultipleFiles (wadlist_t **filenames)
 	memset (lumpcache, 0, i);
 }
 
-
-
-
+//===========================================================================
 //
 // W_InitFile
-// Just initialize from a single file.
 //
+// Initialize the primary from a single file.
+//
+//==========================================================================
+
 void W_InitFile (char *filename)
 {
 	wadlist_t *names = Z_Malloc (sizeof(*names)+strlen(filename), PU_STATIC, 0);
@@ -254,25 +267,27 @@ void W_InitFile (char *filename)
 	W_InitMultipleFiles (&names);
 }
 
-
-
+//==========================================================================
 //
 // W_NumLumps
 //
+//==========================================================================
+
 int W_NumLumps (void)
 {
 	return numlumps;
 }
 
-
-
+//==========================================================================
 //
 // W_CheckNumForName
+//
 // Returns -1 if name not found.
 //
 // [RH] Changed to use hash lookup ala BOOM instead of a linear search
-//		and namespace parameter
-//
+// and namespace parameter
+//==========================================================================
+
 int (W_CheckNumForName) (const char *name, int space)
 {
 	char uname[8];
@@ -281,7 +296,8 @@ int (W_CheckNumForName) (const char *name, int space)
 	uppercopy (uname, name);
 	i = lumpinfo[W_LumpNameHash (uname) % (unsigned)numlumps].index;
 
-	while (i != -1) {
+	while (i != -1)
+	{
 		if (!strncmp (lumpinfo[i].name, uname, 8) && lumpinfo[i].namespc == space)
 			break;
 		i = lumpinfo[i].next;
@@ -290,13 +306,14 @@ int (W_CheckNumForName) (const char *name, int space)
 	return i;
 }
 
-
-
-
+//==========================================================================
 //
 // W_GetNumForName
+//
 // Calls W_CheckNumForName, but bombs out if not found.
 //
+//==========================================================================
+
 int W_GetNumForName (const char *name)
 {
 	int	i;
@@ -310,10 +327,14 @@ int W_GetNumForName (const char *name)
 }
 
 
+//==========================================================================
 //
 // W_LumpLength
+//
 // Returns the buffer size needed to load the given lump.
 //
+//==========================================================================
+
 int W_LumpLength (int lump)
 {
 	if (lump >= numlumps)
@@ -322,44 +343,50 @@ int W_LumpLength (int lump)
 	return lumpinfo[lump].size;
 }
 
-
-
+//==========================================================================
 //
 // W_ReadLump
-// Loads the lump into the given buffer,
-//  which must be >= W_LumpLength().
 //
-// [RH] Removed reload hack
+// Loads the lump into the given buffer, which must be >= W_LumpLength().
 //
+//==========================================================================
+
 void W_ReadLump (int lump, void *dest)
 {
-	int			c;
-	lumpinfo_t*	l;
+	int c;
+	lumpinfo_t *l;
 	
 	if (lump >= numlumps)
+	{
 		I_Error ("W_ReadLump: %i >= numlumps",lump);
-
+	}
 	l = lumpinfo + lump;
-	
-	fseek (l->handle, l->position, SEEK_SET);
-	c = fread (dest, 1, l->size, l->handle);
-
+	//I_BeginRead();	
+	lseek (l->handle, l->position, SEEK_SET);
+	c = read (l->handle, dest, l->size);
 	if (c < l->size)
+	{
 		I_Error ("W_ReadLump: only read %i of %i on lump %i",
-				 c,l->size,lump);	
+			c, l->size, lump);	
+	}
+	//I_EndRead();
 }
 
+//==========================================================================
 //
 // W_CacheLumpNum
 //
+//==========================================================================
+
 void *W_CacheLumpNum (int lump, int tag)
 {
 	byte *ptr;
 	int lumplen;
 
 	if ((unsigned)lump >= numlumps)
+	{
 		I_Error ("W_CacheLumpNum: %u >= numlumps",lump);
-
+	}
 	if (!lumpcache[lump])
 	{
 		// read the lump in
@@ -378,13 +405,13 @@ void *W_CacheLumpNum (int lump, int tag)
 		//DPrintf ("cache hit on lump %i\n",lump);
 		Z_ChangeTag (lumpcache[lump],tag);
 	}
-
 	return lumpcache[lump];
 }
 
-// [RH] W_CacheLumpName macro-ized
-
-
+//==========================================================================
+//
+// W_LumpNameHash
+//
 // [RH] This is from Boom.
 //		NOTE: s should already be uppercase.
 //		This is different from the BOOM version.
@@ -393,6 +420,8 @@ void *W_CacheLumpNum (int lump, int tag)
 // Must be mod'ed with table size.
 // Can be used for any 8-character names.
 // by Lee Killough
+//
+//==========================================================================
 
 unsigned W_LumpNameHash (const char *s)
 {
@@ -410,10 +439,14 @@ unsigned W_LumpNameHash (const char *s)
 	return hash;
 }
 
-// [RH] W_InitHashChains
+//==========================================================================
+//
+// W_InitHashChains
 //
 // Prepares the lumpinfos for hashing.
 // (Hey! This looks suspiciously like something from Boom! :-)
+//
+//==========================================================================
 
 void W_InitHashChains (void)
 {
@@ -426,7 +459,8 @@ void W_InitHashChains (void)
 		lumpinfo[i].index = -1;
 
 	// Now set up the chains
-	for (i = 0; i < numlumps; i++) {
+	for (i = 0; i < numlumps; i++)
+	{
 		uppercopy (name, lumpinfo[i].name);
 		j = W_LumpNameHash (name) % (unsigned) numlumps;
 		lumpinfo[i].next = lumpinfo[j].index;
@@ -434,17 +468,29 @@ void W_InitHashChains (void)
 	}
 }
 
-// [RH] From Boom also
+//==========================================================================
+//
+// IsMarker
+//
+// (from BOOM)
+//
+//==========================================================================
+
 static BOOL IsMarker (const lumpinfo_t *lump, const char *marker)
 {
 	return (lump->namespc == ns_global) && (!strncmp (lump->name, marker, 8) || 
 			(*(lump->name) == *marker && !strncmp (lump->name + 1, marker, 7)));
 }
 
-// [RH] Merge multiple tagged groups into one
+//==========================================================================
 //
-// Basically from Boom, too, although I tried to write
-// it independently.
+// W_MergeLumps
+//
+// Merge multiple tagged groups into one
+// Basically from BOOM, too, although I tried to write it independently.
+//
+//==========================================================================
+
 void W_MergeLumps (const char *start, const char *end, int space)
 {
 	char ustart[8], uend[8];
@@ -459,7 +505,8 @@ void W_MergeLumps (const char *start, const char *end, int space)
 	// Some pwads use an icky hack to get flats with regular Doom.
 	// This tries to detect them.
 	flatHack = 0;
-	if (!strcmp ("F_START", ustart) && !M_CheckParm ("-noflathack")) {
+	if (!strcmp ("F_START", ustart) && !M_CheckParm ("-noflathack"))
+	{
 		int fudge = 0, start = 0;
 
 		for (i = 0; i < numlumps; i++) {
@@ -480,48 +527,69 @@ void W_MergeLumps (const char *start, const char *end, int space)
 	oldlumps = 0;
 	insideBlock = false;
 
-	for (i = 0; i < numlumps; i++) {
-		if (!insideBlock) {
+	for (i = 0; i < numlumps; i++)
+	{
+		if (!insideBlock)
+		{
 			// Check if this is the start of a block
-			if (IsMarker (lumpinfo + i, ustart)) {
+			if (IsMarker (lumpinfo + i, ustart))
+			{
 				insideBlock = true;
 
 				// Create start marker if we haven't already
-				if (!newlumps) {
+				if (!newlumps)
+				{
 					newlumps++;
 					strncpy (newlumpinfos[0].name, ustart, 8);
-					newlumpinfos[0].handle = NULL;
+					newlumpinfos[0].handle = -1;
 					newlumpinfos[0].position =
 						newlumpinfos[0].size = 0;
 					newlumpinfos[0].namespc = ns_global;
 				}
-			} else {
+			}
+			else
+			{
 				// Copy lumpinfo down this list
 				lumpinfo[oldlumps++] = lumpinfo[i];
 			}
-		} else {
+		}
+		else
+		{
 			// Check if this is the end of a block
-			if (flatHack) {
-				if (flatHack == i) {
+			if (flatHack)
+			{
+				if (flatHack == i)
+				{
 					insideBlock = false;
 					flatHack = 0;
-				} else {
-					if (lumpinfo[i].size != 4096) {
+				}
+				else
+				{
+					if (lumpinfo[i].size != 4096)
+					{
 						lumpinfo[oldlumps++] = lumpinfo[i];
-					} else {
+					}
+					else
+					{
 						newlumpinfos[newlumps] = lumpinfo[i];
 						newlumpinfos[newlumps++].namespc = space;
 					}
 				}
-			} else if (i && lumpinfo[i].handle != lumpinfo[i-1].handle) {
+			}
+			else if (i && lumpinfo[i].handle != lumpinfo[i-1].handle)
+			{
 				// Blocks cannot span multiple files
 				insideBlock = false;
 				lumpinfo[oldlumps++] = lumpinfo[i];
-			} else if (IsMarker (lumpinfo + i, uend)) {
+			}
+			else if (IsMarker (lumpinfo + i, uend))
+			{
 				// It is. We'll add the end marker once
 				// we've processed everything.
 				insideBlock = false;
-			} else {
+			}
+			else
+			{
 				newlumpinfos[newlumps] = lumpinfo[i];
 				newlumpinfos[newlumps++].namespc = space;
 			}
@@ -531,7 +599,8 @@ void W_MergeLumps (const char *start, const char *end, int space)
 	// Now copy the merged lumps to the end of the old list
 	// and create the end marker entry.
 
-	if (newlumps) {
+	if (newlumps)
+	{
 		if (oldlumps + newlumps > numlumps)
 			lumpinfo = Realloc (lumpinfo, oldlumps + newlumps);
 
@@ -540,7 +609,7 @@ void W_MergeLumps (const char *start, const char *end, int space)
 		numlumps = oldlumps + newlumps;
 		
 		strncpy (lumpinfo[numlumps].name, uend, 8);
-		lumpinfo[numlumps].handle = NULL;
+		lumpinfo[numlumps].handle = -1;
 		lumpinfo[numlumps].position =
 			lumpinfo[numlumps].size = 0;
 		lumpinfo[numlumps].namespc = ns_global;
@@ -550,9 +619,12 @@ void W_MergeLumps (const char *start, const char *end, int space)
 	free (newlumpinfos);
 }
 
+//==========================================================================
 //
 // W_Profile
 //
+//==========================================================================
+
 // [RH] Unused
 void W_Profile (const char *fname)
 {
@@ -599,49 +671,47 @@ void W_Profile (const char *fname)
 }
 
 
-// [RH] Find a named lump. Specifically allows duplicates for
-//		merging of e.g. SNDINFO lumps. Sorry, this uses a linear
-//		search. (Not a big deal, since it only gets called
-//		a few times during game setup.)
+//==========================================================================
+//
+// W_FindLump
+//
+// Find a named lump. Specifically allows duplicates for merging of e.g.
+// SNDINFO lumps.
+//
+//==========================================================================
+
 int W_FindLump (const char *name, int *lastlump)
 {
-	int lump;
-
-	union {
-		char	s[8];
-		int		x[2];
-	} name8;
-
-	int			v1;
-	int			v2;
-	lumpinfo_t* lump_p;
+	char name8[8];
+	int v1, v2;
+	lumpinfo_t *lump_p;
 
 	// make the name into two integers for easy compares
-	uppercopy (name8.s, name);
-
-	v1 = name8.x[0];
-	v2 = name8.x[1];
+	uppercopy (name8, name);
+	v1 = *(int *)name8;
+	v2 = *(int *)&name8[4];
 
 	lump_p = lumpinfo + *lastlump;
-	while (lump_p < lumpinfo + numlumps) {
-		if ( *(int *)lump_p->name == v1 && *(int *)&lump_p->name[4] == v2)
-			break;
+	while (lump_p < lumpinfo + numlumps)
+	{
+		if (*(int *)lump_p->name == v1 && *(int *)&lump_p->name[4] == v2)
+		{
+			int lump = lump_p - lumpinfo;
+			*lastlump = lump + 1;
+			return lump;
+		}
 		lump_p++;
 	}
 
-	lump = lump_p - lumpinfo;
-
-	if (lump < numlumps) {
-		*lastlump = lump + 1;
-		return lump;
-	} else {
-		*lastlump = numlumps;
-		return -1;
-	}
+	*lastlump = numlumps;
+	return -1;
 }
 
-// [RH] Used by P_SetupLevel() to check for the presence of
-//		a BEHAVIOR lump and adjust its behavior accordingly.
+//==========================================================================
+//
+// W_CheckLumpName
+//
+//==========================================================================
 
 BOOL W_CheckLumpName (int lump, const char *name)
 {
@@ -651,7 +721,12 @@ BOOL W_CheckLumpName (int lump, const char *name)
 	return !strnicmp (lumpinfo[lump].name, name, 8);
 }
 
-// [RH] Copies the lump name to to using uppercopy
+//==========================================================================
+//
+// W_GetLumpName
+//
+//==========================================================================
+
 void W_GetLumpName (char *to, int lump)
 {
 	if (lump >= numlumps)
@@ -660,16 +735,26 @@ void W_GetLumpName (char *to, int lump)
 		uppercopy (to, lumpinfo[lump].name);
 }
 
-// [RH] Returns file ptr for specified lump
-FILE *W_GetLumpFile (int lump)
+//==========================================================================
+//
+// W_GetLumpHandle
+//
+//==========================================================================
+
+int W_GetLumpHandle (int lump)
 {
 	if (lump >= numlumps)
-		return NULL;
+		return -1;
 	else
 		return lumpinfo[lump].handle;
 }
 
-// [RH] Put a lump in a certain namespace
+//==========================================================================
+//
+// W_SetLumpNamespace
+//
+//==========================================================================
+
 void W_SetLumpNamespace (int lump, int nmspace)
 {
 	if (lump < numlumps)

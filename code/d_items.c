@@ -381,7 +381,7 @@ gitem_t itemlist[] = {
 		IT_POWERUP,
 		pw_invisibility,
 		0,
-		"Partial Invisibility"
+		"Invisibility"
 	},
 
 	{
@@ -391,7 +391,7 @@ gitem_t itemlist[] = {
 		IT_POWERUP,
 		pw_ironfeet,
 		0,
-		"Iron Feet"
+		"Radiation Suit"
 	},
 
 	{

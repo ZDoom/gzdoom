@@ -24,22 +24,16 @@
 //-----------------------------------------------------------------------------
 
 #include "m_alloc.h"
-
 #include "doomdef.h"
-
 #include "i_system.h"
 #include "z_zone.h"
 #include "w_wad.h"
-
 #include "r_local.h"
-
-// Needs access to LFB (guess what).
 #include "v_video.h"
-
-// State.
 #include "doomstat.h"
-
 #include "st_stuff.h"
+
+#include "gi.h"
 
 #undef RANGECHECK
 
@@ -379,15 +373,51 @@ void R_DrawFuzzColumnP_C (void)
 //
 // R_DrawTranlucentColumn
 //
-byte *dc_transmap;
+fixed_t dc_translevel;
 
-#ifndef USEASM
+/*
+[RH] This note is from DOSDoom 0.65:
+
+New translucency algorithm, by Erik Sandberg:
+
+Basically, we compute the red, green and blue values for each pixel, and
+then use a RGB table to check which one of the palette colours that best
+represents those RGB values. The RGB table is 8k big, with 4 R-bits,
+5 G-bits and 4 B-bits. A 4k table gives a bit too bad precision, and a 32k
+table takes up more memory and results in more cache misses, so an 8k
+table seemed to be quite ultimate.
+
+The computation of the RGB for each pixel is accelerated by using two
+1k tables for each translucency level.
+The xth element of one of these tables contains the r, g and b values for
+the colour x, weighted for the current translucency level (for example,
+the weighted rgb values for background colour at 75% translucency are 1/4
+of the original rgb values). The rgb values are stored as three
+low-precision fixed point values, packed into one long per colour:
+Bit 0-4:   Frac part of blue  (5 bits)
+Bit 5-8:   Int  part of blue  (4 bits)
+Bit 9-13:  Frac part of red   (5 bits)
+Bit 14-17: Int  part of red   (4 bits)
+Bit 18-22: Frac part of green (5 bits)
+Bit 23-27: Int  part of green (5 bits)
+Bit 28-31: All zeros          (4 bits)
+
+The point of this format is that the two colours now can be added, and
+then be converted to a RGB table index very easily: First, we just set
+all the frac bits and the four upper zero bits to 1. It's now possible
+to get the RGB table index by anding the current value >> 5 with the
+current value >> 19. When asm-optimised, this should be the fastest
+algorithm that uses RGB tables.
+
+*/
+
 void R_DrawTranslucentColumnP_C (void)
 {
-	int 				count;
-	byte*				dest;
-	fixed_t 			frac;
-	fixed_t 			fracstep;
+	int count;
+	byte *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+	unsigned int *fg2rgb, *bg2rgb;
 
 	count = dc_yh - dc_yl;
 	if (count < 0)
@@ -402,8 +432,16 @@ void R_DrawTranslucentColumnP_C (void)
 		I_Error ( "R_DrawTranslucentColumnP_C: %i to %i at %i",
 				  dc_yl, dc_yh, dc_x);
 	}
-	
 #endif 
+
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = dc_translevel & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
 
 	dest = ylookup[dc_yl] + columnofs[dc_x];
 
@@ -411,7 +449,6 @@ void R_DrawTranslucentColumnP_C (void)
 	frac = dc_texturemid + (dc_yl-centery)*fracstep;
 
 	{
-		byte *transmap = dc_transmap;
 		byte *colormap = dc_colormap;
 		byte *source = dc_source;
 		int mask = dc_mask;
@@ -419,14 +456,18 @@ void R_DrawTranslucentColumnP_C (void)
 
 		do
 		{
-			*dest = transmap[colormap[source[(frac>>FRACBITS)&mask]] | ((*dest)<<8)];
-			dest += pitch;
+			unsigned int fg = colormap[source[(frac>>FRACBITS)&mask]];
+			unsigned int bg = *dest;
 
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg+bg) | 0xf07c3e1f;
+			*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+			dest += pitch;
 			frac += fracstep;
 		} while (--count);
 	}
 }
-#endif	// USEASM 
 
 //
 // R_DrawTranslatedColumn
@@ -465,11 +506,9 @@ void R_DrawTranslatedColumnP_C (void)
 
 	dest = ylookup[dc_yl] + columnofs[dc_x];
 
-	// Looks familiar.
 	fracstep = dc_iscale;
 	frac = dc_texturemid + (dc_yl-centery)*fracstep;
 
-	// Here we do an additional index re-mapping.
 	{
 		// [RH] Local copies of global vars to improve compiler optimizations
 		byte *colormap = dc_colormap;
@@ -480,11 +519,6 @@ void R_DrawTranslatedColumnP_C (void)
 
 		do
 		{
-			// Translation tables are used
-			//	to map certain colorramps to other ones,
-			//	used with PLAY sprites.
-			// Thus the "green" ramp of the player 0 sprite
-			//	is mapped to gray, red, black/indigo. 
 			*dest = colormap[translation[source[(frac>>FRACBITS) & mask]]];
 			dest += pitch;
 
@@ -493,13 +527,14 @@ void R_DrawTranslatedColumnP_C (void)
 	}
 }
 
-// [RH] Draw a column that is both translated and translucent
+// Draw a column that is both translated and translucent
 void R_DrawTlatedLucentColumnP_C (void)
 {
-	int 				count;
-	byte*				dest;
-	fixed_t 			frac;
-	fixed_t 			fracstep;
+	int count;
+	byte *dest;
+	fixed_t frac;
+	fixed_t fracstep;
+	unsigned int *fg2rgb, *bg2rgb;
 
 	count = dc_yh - dc_yl;
 	if (count < 0)
@@ -517,6 +552,15 @@ void R_DrawTlatedLucentColumnP_C (void)
 	
 #endif 
 
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = dc_translevel & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
 	dest = ylookup[dc_yl] + columnofs[dc_x];
 
 	fracstep = dc_iscale;
@@ -524,7 +568,6 @@ void R_DrawTlatedLucentColumnP_C (void)
 
 	{
 		byte *translation = dc_translation;
-		byte *transmap = dc_transmap;
 		byte *colormap = dc_colormap;
 		byte *source = dc_source;
 		int mask = dc_mask;
@@ -532,9 +575,14 @@ void R_DrawTlatedLucentColumnP_C (void)
 
 		do
 		{
-			*dest = transmap[colormap[translation[source[(frac>>FRACBITS)&mask]]] | ((*dest)<<8)];
-			dest += pitch;
+			unsigned int fg = colormap[translation[source[(frac>>FRACBITS)&mask]]];
+			unsigned int bg = *dest;
 
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg+bg) | 0xf07c3e1f;
+			*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+			dest += pitch;
 			frac += fracstep;
 		} while (--count);
 	}
@@ -1071,7 +1119,7 @@ void R_DrawBorder (int x1, int y1, int x2, int y2)
 {
 	int lump;
 
-	lump = R_FlatNumForName ((gamemode == commercial) ? "GRNROCK" : "FLOOR7_2");
+	lump = R_FlatNumForName (gameinfo.borderFlat);
 	V_FlatFill (x1 & ~63, y1, x2, y2, &screen,
 				W_CacheLumpNum (lump + firstflat, PU_CACHE));
 
@@ -1094,6 +1142,8 @@ void V_MarkRect (int x, int y, int width, int height);
 void R_DrawViewBorder (void)
 {
 	int x, y;
+	int offset, size;
+	gameborder_t *border;
 
 	// [RH] Redraw the status bar if SCREENWIDTH > status bar width.
 	// Will draw borders around itself, too.
@@ -1106,43 +1156,47 @@ void R_DrawViewBorder (void)
 		return;
 	}
 
+	border = gameinfo.border;
+	offset = border->offset;
+	size = border->size;
+
 	R_DrawBorder (0, 0, screen.width, viewwindowy);
 	R_DrawBorder (0, viewwindowy, viewwindowx, realviewheight + viewwindowy);
 	R_DrawBorder (viewwindowx + realviewwidth, viewwindowy, screen.width, realviewheight + viewwindowy);
 	R_DrawBorder (0, viewwindowy + realviewheight, screen.width, ST_Y);
 
-	for (x = viewwindowx; x < viewwindowx + realviewwidth; x += 8)
+	for (x = viewwindowx; x < viewwindowx + realviewwidth; x += size)
 	{
-		V_DrawPatch (x, viewwindowy - 8, &screen, W_CacheLumpName ("brdr_t", PU_CACHE));
-		V_DrawPatch (x, viewwindowy + realviewheight, &screen, W_CacheLumpName ("brdr_b", PU_CACHE));
+		V_DrawPatch (x, viewwindowy - offset, &screen,
+			W_CacheLumpName (border->t, PU_CACHE));
+		V_DrawPatch (x, viewwindowy + realviewheight, &screen,
+			W_CacheLumpName (border->b, PU_CACHE));
 	}
-	for (y = viewwindowy; y < viewwindowy + realviewheight; y += 8)
+	for (y = viewwindowy; y < viewwindowy + realviewheight; y += size)
 	{
-		V_DrawPatch (viewwindowx - 8, y, &screen, W_CacheLumpName ("brdr_l", PU_CACHE));
-		V_DrawPatch (viewwindowx + realviewwidth, y, &screen, W_CacheLumpName ("brdr_r", PU_CACHE));
+		V_DrawPatch (viewwindowx - offset, y, &screen,
+			W_CacheLumpName (border->l, PU_CACHE));
+		V_DrawPatch (viewwindowx + realviewwidth, y, &screen,
+			W_CacheLumpName (border->r, PU_CACHE));
 	}
 	// Draw beveled edge.
-	V_DrawPatch (viewwindowx-8,
-				 viewwindowy-8,
+	V_DrawPatch (viewwindowx-offset, viewwindowy-offset,
 				 &screen,
-				 W_CacheLumpName ("brdr_tl",PU_CACHE));
+				 W_CacheLumpName (border->tl, PU_CACHE));
 	
-	V_DrawPatch (viewwindowx+realviewwidth,
-				 viewwindowy-8,
+	V_DrawPatch (viewwindowx+realviewwidth, viewwindowy-offset,
 				 &screen,
-				 W_CacheLumpName ("brdr_tr",PU_CACHE));
+				 W_CacheLumpName (border->tr, PU_CACHE));
 	
-	V_DrawPatch (viewwindowx-8,
-				 viewwindowy+realviewheight,
+	V_DrawPatch (viewwindowx-offset, viewwindowy+realviewheight,
 				 &screen,
-				 W_CacheLumpName ("brdr_bl",PU_CACHE));
+				 W_CacheLumpName (border->bl, PU_CACHE));
 	
-	V_DrawPatch (viewwindowx+realviewwidth,
-				 viewwindowy+realviewheight,
+	V_DrawPatch (viewwindowx+realviewwidth, viewwindowy+realviewheight,
 				 &screen,
-				 W_CacheLumpName ("brdr_br",PU_CACHE));
+				 W_CacheLumpName (border->br, PU_CACHE));
 
-	V_MarkRect (0,0,screen.width, ST_Y);
+	V_MarkRect (0, 0, screen.width, ST_Y);
 }
 
 /*
@@ -1264,7 +1318,7 @@ void R_InitColumnDrawers (BOOL is8bit)
 			R_DrawColumn		= R_DrawColumnP_ASM;
 		R_DrawColumnHoriz		= R_DrawColumnHorizP_ASM;
 		R_DrawFuzzColumn		= R_DrawFuzzColumnP_ASM;
-		R_DrawTranslucentColumn = R_DrawTranslucentColumnP_ASM;
+		R_DrawTranslucentColumn = R_DrawTranslucentColumnP_C;
 		R_DrawTranslatedColumn	= R_DrawTranslatedColumnP_C;
 		if (screen.width <= 320)
 			R_DrawSpan			= R_DrawSpanP_Unrolled;

@@ -263,7 +263,7 @@ void EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
 	{
 		sector_t *sec = &sectors[secnum];
-		if (P_SectorActive (lighting_special, sec))	//jff 2/22/98
+		if (sec->lightingdata)
 			continue;
 		
 		P_SpawnStrobeFlash (sec, upper, lower, utics, ltics, 0);
@@ -453,7 +453,7 @@ void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
 	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
 	{
 		sector_t *sec = &sectors[secnum];
-		if (P_SectorActive (lighting_special, sec))
+		if (sec->lightingdata)
 			continue;
 		
 		P_SpawnGlowingLight2 (sec, upper, lower, tics, false);
@@ -468,7 +468,7 @@ void EV_StartLightFading (int tag, int value, int tics)
 	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
 	{
 		sector_t *sec = &sectors[secnum];
-		if (P_SectorActive (lighting_special, sec))
+		if (sec->lightingdata)
 			continue;
 
 		// No need to fade if lightlevel is already at desired value.

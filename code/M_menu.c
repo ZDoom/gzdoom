@@ -35,42 +35,30 @@
 #include <sys/stat.h>
 #endif
 
-
 #include "doomdef.h"
 #include "dstrings.h"
-
 #include "c_consol.h"
 #include "c_dispch.h"
-
 #include "d_main.h"
-
 #include "i_system.h"
 #include "i_input.h"
 #include "i_video.h"
 #include "z_zone.h"
 #include "v_video.h"
 #include "w_wad.h"
-
 #include "r_local.h"
-
-
 #include "hu_stuff.h"
-
 #include "g_game.h"
-
 #include "m_argv.h"
 #include "m_swap.h"
 #include "m_random.h"
-
 #include "s_sound.h"
-
 #include "doomstat.h"
-
 #include "m_menu.h"
-
 #include "v_text.h"
 #include "st_stuff.h"
 
+#include "gi.h"
 
 extern patch_t* 	hu_font[HU_FONTSIZE];
 
@@ -106,7 +94,6 @@ int 				saveCharIndex;	// which char we're editing
 // old save description before edit
 char				saveOldString[SAVESTRINGSIZE];	
 
-BOOL 				inhelpscreens;
 BOOL 				menuactive;
 
 #define SKULLXOFF	-32
@@ -255,7 +242,7 @@ oldmenuitem_t EpisodeMenu[]=
 
 oldmenu_t EpiDef =
 {
-	ep_end, 			// # of menu items
+	ep4,	 			// # of menu items
 	EpisodeMenu,		// oldmenuitem_t ->
 	M_DrawEpisode,		// drawing routine ->
 	48,63,				// x,y
@@ -799,21 +786,8 @@ void M_QuickLoad(void)
 //
 void M_DrawReadThis1(void)
 {
-	inhelpscreens = true;
-	switch ( gamemode )
-	{
-	  case commercial:
-		V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP",PU_CACHE));
-		break;
-	  case shareware:
-	  case registered:
-	  case retail:
-		V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP1",PU_CACHE));
-		break;
-	  default:
-		break;
-	}
-	return;
+	V_DrawPatchIndirect (0, 0, &screen,
+		W_CacheLumpName (gameinfo.info.infoPage[0], PU_CACHE));
 }
 
 
@@ -823,22 +797,8 @@ void M_DrawReadThis1(void)
 //
 void M_DrawReadThis2(void)
 {
-	inhelpscreens = true;
-	switch ( gamemode )
-	{
-	  case retail:
-	  case commercial:
-		// This hack keeps us from having to change menus.
-		V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("CREDIT",PU_CACHE));
-		break;
-	  case shareware:
-	  case registered:
-		V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP2",PU_CACHE));
-		break;
-	  default:
-		break;
-	}
-	return;
+	V_DrawPatchIndirect (0, 0, &screen,
+		W_CacheLumpName (gameinfo.info.infoPage[1], PU_CACHE));
 }
 
 
@@ -870,7 +830,7 @@ void M_NewGame(int choice)
 		return;
 	}
 		
-	if (gamemode == commercial)
+	if (gameinfo.flags & GI_MAPxx)
 		M_SetupNextMenu(&NewDef);
 	else
 		M_SetupNextMenu(&EpiDef);
@@ -915,20 +875,13 @@ void M_ChooseSkill(int choice)
 
 void M_Episode (int choice)
 {
-	if ((gamemode == shareware) && choice)
+	if ((gameinfo.flags & GI_SHAREWARE) && choice)
 	{
 		M_StartMessage(SWSTRING,NULL,false);
 		M_SetupNextMenu(&ReadDef1);
 		return;
 	}
 
-	// Yet another hack...
-	if ((gamemode != retail) && (choice > 2))
-	{
-		Printf (PRINT_HIGH, "M_Episode: 4th episode requires Ultimate DOOM\n");
-		choice = 0;
-	}
-		 
 	epi = choice;
 	M_SetupNextMenu(&NewDef);
 }
@@ -1011,37 +964,9 @@ void M_FinishReadThis(int choice)
 	M_SetupNextMenu(&MainDef);
 }
 
-
-
-
 //
 // M_QuitDOOM
 //
-char *quitsounds[8] =
-{
-	"player/male/death1",
-	"demon/pain",
-	"grunt/pain",
-	"misc/gibbed",
-	"misc/teleport",
-	"grunt/sight1",
-	"grunt/sight3",
-	"demon/melee"
-};
-
-char *quitsounds2[8] =
-{
-	"vile/active",
-	"misc/p_pkup",
-	"brain/cube",
-	"misc/gibbed",
-	"skeleton/swing",
-	"knight/death",
-	"baby/active",
-	"demon/melee"
-};
-
-
 
 void M_QuitResponse(int ch)
 {
@@ -1049,18 +974,15 @@ void M_QuitResponse(int ch)
 		return;
 	if (!netgame)
 	{
-		if (gamemode == commercial) {
-			S_Sound (NULL, CHAN_VOICE, quitsounds2[(gametic>>2)&7], 1, ATTN_SURROUND);
-		} else {
-			S_Sound (NULL, CHAN_VOICE, quitsounds[(gametic>>2)&7], 1, ATTN_SURROUND);
+		if (gameinfo.quitSounds)
+		{
+			S_Sound (NULL, CHAN_VOICE, gameinfo.quitSounds[(gametic>>2)&7],
+				1, ATTN_SURROUND);
+			I_WaitVBL (105);
 		}
-		I_WaitVBL(105);
 	}
 	exit (0);
 }
-
-
-
 
 void M_QuitDOOM (int choice)
 {
@@ -1787,6 +1709,8 @@ void M_StartControlPanel (void)
 	drawSkull = true;
 	MenuStackDepth = 0;
 	menuactive = 1;
+	currentMenu = &MainDef;
+	itemOn = currentMenu->lastOn;
 	C_HideConsole ();				// [RH] Make sure console goes bye bye.
 	OptionsActive = false;			// [RH] Make sure none of the options menus appear.
 	I_PauseMouse ();				// [RH] Give the mouse back in windowed modes.
@@ -1806,8 +1730,6 @@ void M_Drawer (void)
 	short			max;
 	char			string[80];
 	int 			start;
-
-	inhelpscreens = false;
 
 	// Horiz. & Vertically center string and print it.
 	if (messageToPrint)
@@ -1978,31 +1900,30 @@ void M_Init (void)
 
 	// Here we could catch other version dependencies,
 	//	like HELP1/2, and four episodes.
-	switch ( gamemode )
+	switch (gameinfo.flags & GI_MENUHACK)
 	{
-	  case commercial:
-		// This is used because DOOM 2 had only one HELP
-		//	page. I use CREDIT as second page now, but
-		//	kept this hack for educational purposes.
-		MainMenu[readthis] = MainMenu[quitdoom];
-		MainDef.numitems--;
-		MainDef.y += 8;
-		ReadDef1.routine = M_DrawReadThis1;
-		ReadDef1.x = 330;
-		ReadDef1.y = 165;
-		ReadMenu1[0].routine = M_FinishReadThis;
-		break;
-	  case shareware:
-		// Episode 2 and 3 are handled,
-		//	branching to an ad screen.
-	  case registered:
-		// We need to remove the fourth episode.
-		EpiDef.numitems--;
-		break;
-	  case retail:
-		// We are fine.
-	  default:
-		break;
+		case GI_MENUHACK_COMMERCIAL:
+			// This is used because DOOM 2 had only one HELP
+			//	page. I use CREDIT as second page now, but
+			//	kept this hack for educational purposes.
+			MainMenu[readthis] = MainMenu[quitdoom];
+			MainDef.numitems--;
+			MainDef.y += 8;
+			ReadDef1.routine = M_DrawReadThis1;
+			ReadDef1.x = 330;
+			ReadDef1.y = 165;
+			ReadMenu1[0].routine = M_FinishReadThis;
+			break;
+		case GI_MENUHACK_RETAIL:
+			// add the fourth episode.
+			EpiDef.numitems++;
+			break;
+		case GI_MENUHACK_EXTENDED:
+//			EpisodeMenu.itemCount = 5;
+//			EpisodeMenu.y -= ITEM_HEIGHT;
+			break;
+		default:
+			break;
 	}
 	M_OptInit ();
 

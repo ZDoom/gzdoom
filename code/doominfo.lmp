@@ -1,0 +1,3136 @@
+// This file describes the state definitions and info declarations used for
+// all incarnations of the games DOOM and DOOM 2. The format of this file is
+// based on the format used by the original infogen with modifications to
+// suit the way things are done internally by ZDoom.
+//
+// Much of this file comes unmodified from the multigen.txt file, which is
+// included with the DOOM Utilities package available for download from
+// DOSDoom's homepage (http://frag.com/dosdoom).
+//
+// Original header follows:
+//
+//============================================================================
+// If the first two characters of a line are S_, it is a state definition
+// line. Otherwise, it is part of an info declaration.
+//
+//============================================================================
+// state data is:
+//
+// statename  sprite  frame tics action nextstate [optional1] [optional2]
+// a * after the frame letter causes full bright
+//
+//============================================================================
+// An info definition is:
+//
+// $ MOBJNAME
+// field data
+//
+// if MOBJNAME is +, a new unique name will be generated
+// if fieldname starts with str_, it will be made a char * instead of an int
+//============================================================================
+
+multigen
+{
+//
+// info default MUST be first in file
+//
+
+$ DEFAULT
+doomednum		-1					//number to spawn this object
+spawnstate		S_NULL				//
+spawnhealth		1000				//
+seestate		S_NULL				//when player sighted or enemy shot
+seesound		""					//also launch sound for missiles
+reactiontime	8					//wait time before attacking
+attacksound		""					//
+painstate		S_NULL				//
+painchance		0					//out of 256
+painsound		""					//
+meleestate		S_NULL				//
+missilestate	S_NULL				//
+crashstate		S_NULL				//
+deathstate		S_NULL				//also explodestate for missiles
+xdeathstate		S_NULL				//when knocked to -spawnhelath or lower
+deathsound		""					//also explosion sound for missiles
+speed			0					//
+radius			20					//
+height			16					//
+mass			100					//
+damage			0					//missile damage in d8s
+activesound		""					//
+flags			0					//
+flags2			0					//Heretic/Hexen flags
+raisestate		S_NULL				//vile resurection state
+translucency	1					//0=invisible, 1=opaque
+item			NULL				//inventory item, implies pickup-able
+
+
+// when a state cycles to S_NULL, the actor will be removed
+
+S_NULL			TROO	A	-1	NULL			S_NULL
+
+//
+// map spots
+//
+
+$ MT_MAPSPOT
+doomednum		9001
+spawnstate		S_MAPSPOT
+flags			MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY
+
+$ MT_MAPSPOTGRAVITY
+doomednum		9013
+spawnstate		S_MAPSPOT
+flags2			MF2_DONTDRAW
+
+S_MAPSPOT		TNT1	A	-1	NULL			S_NULL
+
+
+
+//============================================================================
+// player sprites
+//============================================================================
+
+// all flashes go to S_LIGHTDONE to reset the light then remove self
+S_LIGHTDONE		SHTG	E	0	A_Light0		S_NULL
+
+
+//
+// fist
+//
+S_PUNCH			PUNG	A	1	A_WeaponReady	S_PUNCH
+S_PUNCHDOWN		PUNG	A	1	A_Lower			S_PUNCHDOWN
+S_PUNCHUP		PUNG	A	1	A_Raise			S_PUNCHUP
+
+S_PUNCH1		PUNG	B	4	NULL			S_PUNCH2
+S_PUNCH2		PUNG	C	4	A_Punch			S_PUNCH3
+S_PUNCH3		PUNG	D	5	NULL			S_PUNCH4
+S_PUNCH4		PUNG	C	4	NULL			S_PUNCH5
+S_PUNCH5		PUNG	B	5	A_ReFire		S_PUNCH
+
+
+//
+// pistol
+//
+S_PISTOL		PISG	A	1	A_WeaponReady	S_PISTOL
+S_PISTOLDOWN	PISG	A	1	A_Lower			S_PISTOLDOWN
+S_PISTOLUP		PISG	A	1	A_Raise			S_PISTOLUP
+S_PISTOL1		PISG	A	4	NULL			S_PISTOL2
+S_PISTOL2		PISG	B	6	A_FirePistol	S_PISTOL3
+S_PISTOL3		PISG	C	4	NULL			S_PISTOL4
+S_PISTOL4		PISG	B	5	A_ReFire		S_PISTOL
+
+S_PISTOLFLASH	PISF	A*	7	A_Light1		S_LIGHTDONE
+
+
+//
+// shotgun
+//
+S_SGUN			SHTG	A	1	A_WeaponReady	S_SGUN
+S_SGUNDOWN		SHTG	A	1	A_Lower			S_SGUNDOWN
+S_SGUNUP 		SHTG	A	1	A_Raise			S_SGUNUP
+
+S_SGUN1			SHTG	A	3	NULL			S_SGUN2
+S_SGUN2			SHTG	A	7	A_FireShotgun	S_SGUN3
+S_SGUN3			SHTG	B	5	NULL			S_SGUN4
+S_SGUN4			SHTG	C	5	NULL			S_SGUN5
+S_SGUN5			SHTG	D	4	NULL			S_SGUN6
+S_SGUN6			SHTG	C	5	NULL			S_SGUN7
+S_SGUN7			SHTG	B	5	NULL			S_SGUN8
+S_SGUN8			SHTG	A	3	NULL			S_SGUN9
+S_SGUN9			SHTG	A	7	A_ReFire		S_SGUN
+
+S_SGUNFLASH1	SHTF	A*	4	A_Light1		S_SGUNFLASH2
+S_SGUNFLASH2	SHTF	B*	3	A_Light2		S_LIGHTDONE
+
+
+//
+// double shotgun
+//
+S_DSGUN			SHT2	A	1	A_WeaponReady	S_DSGUN
+S_DSGUNDOWN		SHT2	A	1	A_Lower			S_DSGUNDOWN
+S_DSGUNUP 		SHT2	A	1	A_Raise			S_DSGUNUP
+
+S_DSGUN1		SHT2	A	3	NULL			S_DSGUN2
+S_DSGUN2		SHT2	A	7	A_FireShotgun2	S_DSGUN3
+S_DSGUN3		SHT2	B	7	NULL			S_DSGUN4
+S_DSGUN4		SHT2	C	7	A_CheckReload	S_DSGUN5
+
+S_DSGUN5		SHT2	D	7	A_OpenShotgun2	S_DSGUN6
+S_DSGUN6		SHT2	E	7	NULL			S_DSGUN7
+S_DSGUN7		SHT2	F	7	A_LoadShotgun2	S_DSGUN8
+S_DSGUN8		SHT2	G	6	NULL			S_DSGUN9
+S_DSGUN9		SHT2	H	6	A_CloseShotgun2	S_DSGUN10
+S_DSGUN10		SHT2	A	5	A_ReFire		S_DSGUN
+
+S_DSNR1			SHT2	B	7	NULL			S_DSNR2
+S_DSNR2			SHT2	A	3	NULL			S_DSGUNDOWN
+
+S_DSGUNFLASH1	SHT2	I*	5	A_Light1		S_DSGUNFLASH2
+S_DSGUNFLASH2	SHT2	J*	4	A_Light2		S_LIGHTDONE
+
+
+//
+// chaingun
+//
+S_CHAIN			CHGG	A	1	A_WeaponReady	S_CHAIN
+S_CHAINDOWN		CHGG	A	1	A_Lower			S_CHAINDOWN
+S_CHAINUP		CHGG	A	1	A_Raise			S_CHAINUP
+
+S_CHAIN1		CHGG	A	4	A_FireCGun		S_CHAIN2
+S_CHAIN2		CHGG	B	4	A_FireCGun		S_CHAIN3
+S_CHAIN3		CHGG	B	0	A_ReFire		S_CHAIN
+
+S_CHAINFLASH1	CHGF	A*	5	A_Light1		S_LIGHTDONE
+S_CHAINFLASH2	CHGF	B*	5	A_Light2		S_LIGHTDONE
+
+
+//
+// missile
+//
+S_MISSILE		MISG	A	1	A_WeaponReady	S_MISSILE
+S_MISSILEDOWN	MISG	A	1	A_Lower			S_MISSILEDOWN
+S_MISSILEUP		MISG	A	1	A_Raise			S_MISSILEUP
+
+S_MISSILE1		MISG	B	8	A_GunFlash		S_MISSILE2
+S_MISSILE2		MISG	B	12	A_FireMissile	S_MISSILE3
+S_MISSILE3		MISG	B	0	A_ReFire		S_MISSILE
+
+S_MISSILEFLASH1	MISF	A*	3	A_Light1		S_MISSILEFLASH2
+S_MISSILEFLASH2	MISF	B*	4	NULL			S_MISSILEFLASH3 
+S_MISSILEFLASH3	MISF	C*	4	A_Light2		S_MISSILEFLASH4 
+S_MISSILEFLASH4	MISF	D*	4	A_Light2		S_LIGHTDONE 
+
+
+//
+// chainsaw
+//
+S_SAW			SAWG	C	4	A_WeaponReady	S_SAWB
+S_SAWB			SAWG	D	4	A_WeaponReady	S_SAW
+S_SAWDOWN		SAWG	C	1	A_Lower			S_SAWDOWN
+S_SAWUP			SAWG	C	1	A_Raise			S_SAWUP
+
+S_SAW1			SAWG	A	4	A_Saw			S_SAW2
+S_SAW2			SAWG	B	4	A_Saw			S_SAW3
+S_SAW3			SAWG	B	0	A_ReFire		S_SAW
+
+
+//
+// plasma
+//
+S_PLASMA		PLSG	A	1	A_WeaponReady	S_PLASMA
+S_PLASMADOWN	PLSG	A	1	A_Lower			S_PLASMADOWN
+S_PLASMAUP		PLSG	A	1	A_Raise			S_PLASMAUP
+
+S_PLASMA1		PLSG	A	3	A_FirePlasma	S_PLASMA2
+S_PLASMA2		PLSG	B	20	A_Refire		S_PLASMA
+
+S_PLASMAFLASH1	PLSF	A*	4	A_Light1		S_LIGHTDONE
+S_PLASMAFLASH2	PLSF	B*	4	A_Light1		S_LIGHTDONE
+
+
+//
+// BFG
+//
+S_BFG			BFGG	A	1	A_WeaponReady	S_BFG
+S_BFGDOWN		BFGG	A	1	A_Lower			S_BFGDOWN
+S_BFGUP			BFGG	A	1	A_Raise			S_BFGUP
+
+S_BFG1			BFGG	A	20	A_BFGsound		S_BFG2
+S_BFG2			BFGG	B	10	A_GunFlash		S_BFG3
+S_BFG3			BFGG	B	10	A_FireBFG		S_BFG4
+S_BFG4			BFGG	B	20	A_ReFire		S_BFG
+
+S_BFGFLASH1		BFGF	A*	11	A_Light1		S_BFGFLASH2
+S_BFGFLASH2		BFGF	B*	6	A_Light2		S_LIGHTDONE
+
+
+
+//============================================================================
+// world objects
+//============================================================================
+
+S_BLOOD1		BLUD	C	8	NULL			S_BLOOD2
+S_BLOOD2		BLUD	B	8	NULL			S_BLOOD3
+S_BLOOD3		BLUD	A	8	NULL			S_NULL
+
+S_PUFF1			PUFF	A*	4	NULL			S_PUFF2
+S_PUFF2			PUFF	B	4	NULL			S_PUFF3
+S_PUFF3			PUFF	C	4	NULL			S_PUFF4
+S_PUFF4			PUFF	D	4	NULL			S_NULL
+
+
+// fireballs
+
+S_TBALL1		BAL1	A*	4	NULL			S_TBALL2
+S_TBALL2		BAL1	B*	4	NULL			S_TBALL1
+
+S_TBALLX1		BAL1	C*	6	NULL			S_TBALLX2
+S_TBALLX2		BAL1	D*	6	NULL			S_TBALLX3
+S_TBALLX3		BAL1	E*	6	NULL			S_NULL
+
+
+S_RBALL1		BAL2	A*	4	NULL			S_RBALL2
+S_RBALL2		BAL2	B*	4	NULL			S_RBALL1
+
+S_RBALLX1		BAL2	C*	6	NULL			S_RBALLX2
+S_RBALLX2		BAL2	D*	6	NULL			S_RBALLX3
+S_RBALLX3		BAL2	E*	6	NULL			S_NULL
+
+
+
+// plasma balls
+
+S_PLASBALL		PLSS	A*	6	NULL			S_PLASBALL2
+S_PLASBALL2		PLSS	B*	6	NULL			S_PLASBALL
+
+//
+//	Plasma explosion on an object
+//
+S_PLASEXP		PLSE	A*	4	NULL			S_PLASEXP2
+S_PLASEXP2		PLSE	B*	4	NULL			S_PLASEXP3
+S_PLASEXP3		PLSE	C*	4	NULL			S_PLASEXP4
+S_PLASEXP4		PLSE	D*	4	NULL			S_PLASEXP5
+S_PLASEXP5		PLSE	E*	4	NULL			S_NULL
+
+//
+//	Rocket
+//
+S_ROCKET		MISL	A*	1	NULL			S_ROCKET
+
+//
+// BFG shot
+//
+S_BFGSHOT		BFS1	A*	4	NULL			S_BFGSHOT2
+S_BFGSHOT2		BFS1	B*	4	NULL			S_BFGSHOT
+
+//
+//	BFG explosion when shot lands
+//
+S_BFGLAND		BFE1	A*	8	NULL			S_BFGLAND2
+S_BFGLAND2		BFE1	B*	8	NULL			S_BFGLAND3
+S_BFGLAND3		BFE1	C*	8	A_BFGSpray		S_BFGLAND4
+S_BFGLAND4		BFE1	D*	8	NULL			S_BFGLAND5
+S_BFGLAND5		BFE1	E*	8	NULL			S_BFGLAND6
+S_BFGLAND6		BFE1	F*	8	NULL			S_NULL
+
+//
+//	BFG explosion on an object
+//
+S_BFGEXP		BFE2	A*	8	NULL			S_BFGEXP2
+S_BFGEXP2		BFE2	B*	8	NULL			S_BFGEXP3
+S_BFGEXP3		BFE2	C*	8	NULL			S_BFGEXP4
+S_BFGEXP4		BFE2	D*	8	NULL			S_NULL
+
+// explosions
+
+S_EXPLODE1		MISL	B*	8	A_Explode		S_EXPLODE2
+S_EXPLODE2		MISL	C*	6	NULL			S_EXPLODE3
+S_EXPLODE3		MISL	D*	4	NULL			S_NULL
+
+//
+//	Teleport Fog
+//
+S_TFOG			TFOG	A*	6	NULL			S_TFOG01
+S_TFOG01		TFOG	B*	6	NULL			S_TFOG02
+S_TFOG02		TFOG	A*	6	NULL			S_TFOG2
+S_TFOG2			TFOG	B*	6	NULL			S_TFOG3
+S_TFOG3			TFOG	C*	6	NULL			S_TFOG4
+S_TFOG4			TFOG	D*	6	NULL			S_TFOG5
+S_TFOG5			TFOG	E*	6	NULL			S_TFOG6
+S_TFOG6			TFOG	F*	6	NULL			S_TFOG7
+S_TFOG7			TFOG	G*	6	NULL			S_TFOG8
+S_TFOG8			TFOG	H*	6	NULL			S_TFOG9
+S_TFOG9			TFOG	I*	6	NULL			S_TFOG10
+S_TFOG10		TFOG	J*	6	NULL			S_NULL
+
+//
+//	Item Teleport Fog
+//
+S_IFOG			IFOG	A*	6	NULL			S_IFOG01
+S_IFOG01		IFOG	B*	6	NULL			S_IFOG02
+S_IFOG02		IFOG	A*	6	NULL			S_IFOG2
+S_IFOG2			IFOG	B*	6	NULL			S_IFOG3
+S_IFOG3			IFOG	C*	6	NULL			S_IFOG4
+S_IFOG4			IFOG	D*	6	NULL			S_IFOG5
+S_IFOG5			IFOG	E*	6	NULL			S_NULL
+
+
+//==============================================================================
+
+// player
+
+$ MT_PLAYER
+spawnstate		S_PLAY
+seestate		S_PLAY_RUN1
+spawnhealth		100
+painstate		S_PLAY_PAIN
+painchance		255
+painsound		*pain100_1
+reactiontime	0
+missilestate	S_PLAY_ATK1
+deathstate		S_PLAY_DIE1
+xdeathstate		S_PLAY_XDIE1
+deathsound		*death1
+radius			16
+height			56
+flags			MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH
+flags2			MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_TELESTOMP|MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL
+
+
+S_PLAY			PLAY	A	-1	NULL			S_NULL
+
+S_PLAY_RUN1		PLAY	A	4	NULL			S_PLAY_RUN2
+S_PLAY_RUN2		PLAY	B	4	NULL			S_PLAY_RUN3
+S_PLAY_RUN3		PLAY	C	4	NULL			S_PLAY_RUN4
+S_PLAY_RUN4		PLAY	D	4	NULL			S_PLAY_RUN1
+
+S_PLAY_ATK1		PLAY	E	12	NULL			S_PLAY
+S_PLAY_ATK2		PLAY	F*	6	NULL			S_PLAY_ATK1
+
+S_PLAY_PAIN		PLAY	G	4	NULL			S_PLAY_PAIN2
+S_PLAY_PAIN2	PLAY	G	4	A_Pain			S_PLAY
+
+S_PLAY_DIE1		PLAY	H	10	NULL			S_PLAY_DIE2
+S_PLAY_DIE2		PLAY	I	10	A_PlayerScream	S_PLAY_DIE3
+S_PLAY_DIE3		PLAY	J	10	A_Fall			S_PLAY_DIE4
+S_PLAY_DIE4		PLAY	K	10	NULL			S_PLAY_DIE5
+S_PLAY_DIE5		PLAY	L	10	NULL			S_PLAY_DIE6
+S_PLAY_DIE6		PLAY	M	10	NULL			S_PLAY_DIE7
+S_PLAY_DIE7		PLAY	N	-1	NULL			S_NULL
+
+S_PLAY_XDIE1	PLAY	O	5	NULL			S_PLAY_XDIE2
+S_PLAY_XDIE2	PLAY	P	5	A_XScream		S_PLAY_XDIE3
+S_PLAY_XDIE3	PLAY	Q	5	A_Fall			S_PLAY_XDIE4
+S_PLAY_XDIE4	PLAY	R	5	NULL			S_PLAY_XDIE5
+S_PLAY_XDIE5	PLAY	S	5	NULL			S_PLAY_XDIE6
+S_PLAY_XDIE6	PLAY	T	5	NULL			S_PLAY_XDIE7
+S_PLAY_XDIE7	PLAY	U	5	NULL			S_PLAY_XDIE8
+S_PLAY_XDIE8	PLAY	V	5	NULL			S_PLAY_XDIE9
+S_PLAY_XDIE9	PLAY	W	-1	NULL			S_NULL
+
+//==============================================================================
+// Former Humans
+//==============================================================================
+
+// possesed humans
+
+$ MT_POSSESSED	
+doomednum		3004
+spawnstate		S_POSS_STND
+spawnhealth		20
+seestate		S_POSS_RUN1
+seesound		grunt/sight1
+attacksound		grunt/attack
+painstate		S_POSS_PAIN
+painchance		200
+painsound		grunt/pain
+missilestate	S_POSS_ATK1
+deathstate		S_POSS_DIE1
+xdeathstate		S_POSS_XDIE1
+raisestate		S_POSS_RAISE1
+deathsound		grunt/death1
+speed			8
+radius			20
+height			56
+activesound		grunt/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHPOSSESSED	
+doomednum		9061
+spawnstate		S_POSS_STND
+spawnhealth		20
+seestate		S_POSS_RUN1
+seesound		grunt/sight1
+attacksound		grunt/attack
+painstate		S_POSS_PAIN
+painchance		200
+painsound		grunt/pain
+missilestate	S_POSS_ATK1
+deathstate		S_POSS_DIE1
+xdeathstate		S_POSS_XDIE1
+raisestate		S_POSS_RAISE1
+deathsound		grunt/death1
+speed			8
+radius			20
+height			56
+activesound		grunt/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+
+S_POSS_STND		POSS	A	10	A_Look			S_POSS_STND2
+S_POSS_STND2	POSS	B	10	A_Look			S_POSS_STND
+
+S_POSS_RUN1		POSS	A	4	A_Chase			S_POSS_RUN2
+S_POSS_RUN2		POSS	A	4	A_Chase			S_POSS_RUN3
+S_POSS_RUN3		POSS	B	4	A_Chase			S_POSS_RUN4
+S_POSS_RUN4		POSS	B	4	A_Chase			S_POSS_RUN5
+S_POSS_RUN5		POSS	C	4	A_Chase			S_POSS_RUN6
+S_POSS_RUN6		POSS	C	4	A_Chase			S_POSS_RUN7
+S_POSS_RUN7		POSS	D	4	A_Chase			S_POSS_RUN8
+S_POSS_RUN8		POSS	D	4	A_Chase			S_POSS_RUN1
+
+S_POSS_ATK1		POSS	E	10	A_FaceTarget	S_POSS_ATK2
+S_POSS_ATK2		POSS	F	8	A_PosAttack		S_POSS_ATK3
+S_POSS_ATK3		POSS	E	8	NULL			S_POSS_RUN1
+
+S_POSS_PAIN		POSS	G	3	NULL			S_POSS_PAIN2
+S_POSS_PAIN2	POSS	G	3	A_Pain			S_POSS_RUN1
+
+S_POSS_DIE1		POSS	H	5	NULL			S_POSS_DIE2
+S_POSS_DIE2		POSS	I	5	A_Scream		S_POSS_DIE3
+S_POSS_DIE3		POSS	J	5	A_Fall			S_POSS_DIE4
+S_POSS_DIE4		POSS	K	5	NULL			S_POSS_DIE5
+S_POSS_DIE5		POSS	L	-1	NULL			S_NULL
+
+S_POSS_XDIE1	POSS	M	5	NULL			S_POSS_XDIE2
+S_POSS_XDIE2	POSS	N	5	A_XScream		S_POSS_XDIE3
+S_POSS_XDIE3	POSS	O	5	A_Fall			S_POSS_XDIE4
+S_POSS_XDIE4	POSS	P	5	NULL			S_POSS_XDIE5
+S_POSS_XDIE5	POSS	Q	5	NULL			S_POSS_XDIE6
+S_POSS_XDIE6	POSS	R	5	NULL			S_POSS_XDIE7
+S_POSS_XDIE7	POSS	S	5	NULL			S_POSS_XDIE8
+S_POSS_XDIE8	POSS	T	5	NULL			S_POSS_XDIE9
+S_POSS_XDIE9	POSS	U	-1	NULL			S_NULL
+
+S_POSS_RAISE1	POSS	K	5	NULL			S_POSS_RAISE2
+S_POSS_RAISE2	POSS	J	5	NULL			S_POSS_RAISE3
+S_POSS_RAISE3	POSS	I	5	NULL			S_POSS_RAISE4
+S_POSS_RAISE4	POSS	H	5	NULL			S_POSS_RUN1
+
+
+//==============================================================================
+// Former Human Sergeants
+//==============================================================================
+
+// shotgun possesed humans
+
+$ MT_SHOTGUY
+doomednum		9
+spawnstate		S_SPOS_STND
+spawnhealth		30
+seestate		S_SPOS_RUN1
+seesound		shotguy/sight1
+painstate		S_SPOS_PAIN
+painchance		170
+painsound		shotguy/pain
+missilestate	S_SPOS_ATK1
+deathstate		S_SPOS_DIE1
+xdeathstate		S_SPOS_XDIE1
+raisestate		S_SPOS_RAISE1
+deathsound		shotguy/death1
+speed			8
+radius			20
+height			56
+activesound		shotguy/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHSHOTGUY
+doomednum		9060
+spawnstate		S_SPOS_STND
+spawnhealth		30
+seestate		S_SPOS_RUN1
+seesound		shotguy/sight1
+painstate		S_SPOS_PAIN
+painchance		170
+painsound		shotguy/pain
+missilestate	S_SPOS_ATK1
+deathstate		S_SPOS_DIE1
+xdeathstate		S_SPOS_XDIE1
+raisestate		S_SPOS_RAISE1
+deathsound		shotguy/death1
+speed			8
+radius			20
+height			56
+activesound		shotguy/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+S_SPOS_STND		SPOS	A	10	A_Look			S_SPOS_STND2
+S_SPOS_STND2	SPOS	B	10	A_Look			S_SPOS_STND
+
+S_SPOS_RUN1		SPOS	A	3	A_Chase			S_SPOS_RUN2
+S_SPOS_RUN2		SPOS	A	3	A_Chase			S_SPOS_RUN3
+S_SPOS_RUN3		SPOS	B	3	A_Chase			S_SPOS_RUN4
+S_SPOS_RUN4		SPOS	B	3	A_Chase			S_SPOS_RUN5
+S_SPOS_RUN5		SPOS	C	3	A_Chase			S_SPOS_RUN6
+S_SPOS_RUN6		SPOS	C	3	A_Chase			S_SPOS_RUN7
+S_SPOS_RUN7		SPOS	D	3	A_Chase			S_SPOS_RUN8
+S_SPOS_RUN8		SPOS	D	3	A_Chase			S_SPOS_RUN1
+
+S_SPOS_ATK1		SPOS	E	10	A_FaceTarget	S_SPOS_ATK2
+S_SPOS_ATK2		SPOS	F*	10	A_SPosAttack	S_SPOS_ATK3
+S_SPOS_ATK3		SPOS	E	10	NULL			S_SPOS_RUN1
+
+S_SPOS_PAIN		SPOS	G	3	NULL			S_SPOS_PAIN2
+S_SPOS_PAIN2	SPOS	G	3	A_Pain			S_SPOS_RUN1
+
+S_SPOS_DIE1		SPOS	H	5	NULL			S_SPOS_DIE2
+S_SPOS_DIE2		SPOS	I	5	A_Scream		S_SPOS_DIE3
+S_SPOS_DIE3		SPOS	J	5	A_Fall			S_SPOS_DIE4
+S_SPOS_DIE4		SPOS	K	5	NULL			S_SPOS_DIE5
+S_SPOS_DIE5		SPOS	L	-1	NULL			S_NULL
+
+S_SPOS_XDIE1	SPOS	M	5	NULL			S_SPOS_XDIE2
+S_SPOS_XDIE2	SPOS	N	5	A_XScream		S_SPOS_XDIE3
+S_SPOS_XDIE3	SPOS	O	5	A_Fall			S_SPOS_XDIE4
+S_SPOS_XDIE4	SPOS	P	5	NULL			S_SPOS_XDIE5
+S_SPOS_XDIE5	SPOS	Q	5	NULL			S_SPOS_XDIE6
+S_SPOS_XDIE6	SPOS	R	5	NULL			S_SPOS_XDIE7
+S_SPOS_XDIE7	SPOS	S	5	NULL			S_SPOS_XDIE8
+S_SPOS_XDIE8	SPOS	T	5	NULL			S_SPOS_XDIE9
+S_SPOS_XDIE9	SPOS	U	-1	NULL			S_NULL
+
+S_SPOS_RAISE1	SPOS	L	5	NULL			S_SPOS_RAISE2
+S_SPOS_RAISE2	SPOS	K	5	NULL			S_SPOS_RAISE3
+S_SPOS_RAISE3	SPOS	J	5	NULL			S_SPOS_RAISE4
+S_SPOS_RAISE4	SPOS	I	5	NULL			S_SPOS_RAISE5
+S_SPOS_RAISE5	SPOS	H	5	NULL			S_SPOS_RUN1
+
+//==============================================================================
+// The Archvile
+//==============================================================================
+
+$ MT_VILE
+doomednum		64
+spawnstate		S_VILE_STND
+spawnhealth		700
+seestate		S_VILE_RUN1
+seesound		vile/sight
+painstate		S_VILE_PAIN
+painchance		10
+painsound		vile/pain
+missilestate	S_VILE_ATK1
+deathstate		S_VILE_DIE1
+deathsound		vile/death
+speed			15
+radius			20
+height			56
+activesound		vile/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+mass			500
+
+// stealth
+
+$ MT_STEALTHVILE
+doomednum		9051
+spawnstate		S_VILE_STND
+spawnhealth		700
+seestate		S_VILE_RUN1
+seesound		vile/sight
+painstate		S_VILE_PAIN
+painchance		10
+painsound		vile/pain
+missilestate	S_VILE_ATK1
+deathstate		S_VILE_DIE1
+deathsound		vile/death
+speed			15
+radius			20
+height			56
+activesound		vile/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+mass			500
+translucency	0
+
+S_VILE_STND		VILE	A	10	A_Look			S_VILE_STND2
+S_VILE_STND2	VILE	B	10	A_Look			S_VILE_STND
+
+S_VILE_RUN1		VILE	A	2	A_VileChase		S_VILE_RUN2
+S_VILE_RUN2		VILE	A	2	A_VileChase		S_VILE_RUN3
+S_VILE_RUN3		VILE	B	2	A_VileChase		S_VILE_RUN4
+S_VILE_RUN4		VILE	B	2	A_VileChase		S_VILE_RUN5
+S_VILE_RUN5		VILE	C	2	A_VileChase		S_VILE_RUN6
+S_VILE_RUN6		VILE	C	2	A_VileChase		S_VILE_RUN7
+S_VILE_RUN7		VILE	D	2	A_VileChase		S_VILE_RUN8
+S_VILE_RUN8		VILE	D	2	A_VileChase		S_VILE_RUN9
+S_VILE_RUN9		VILE	E	2	A_VileChase		S_VILE_RUN10
+S_VILE_RUN10	VILE	E	2	A_VileChase		S_VILE_RUN11
+S_VILE_RUN11	VILE	F	2	A_VileChase		S_VILE_RUN12
+S_VILE_RUN12	VILE	F	2	A_VileChase		S_VILE_RUN1
+
+S_VILE_ATK1		VILE	G*	0		A_VileStart		S_VILE_ATK2
+S_VILE_ATK2		VILE	G*	10	A_FaceTarget	S_VILE_ATK3
+S_VILE_ATK3		VILE	H*	8	A_VileTarget	S_VILE_ATK4
+S_VILE_ATK4		VILE	I*	8	A_FaceTarget	S_VILE_ATK5
+S_VILE_ATK5		VILE	J*	8	A_FaceTarget	S_VILE_ATK6
+S_VILE_ATK6		VILE	K*	8	A_FaceTarget	S_VILE_ATK7
+S_VILE_ATK7		VILE	L*	8	A_FaceTarget	S_VILE_ATK8
+S_VILE_ATK8		VILE	M*	8	A_FaceTarget	S_VILE_ATK9
+S_VILE_ATK9		VILE	N*	8	A_FaceTarget	S_VILE_ATK10
+S_VILE_ATK10	VILE	O*	8	A_VileAttack	S_VILE_ATK11
+S_VILE_ATK11	VILE	P*	20	NULL			S_VILE_RUN1
+
+S_VILE_HEAL1	VILE	[*	10	NULL			S_VILE_HEAL2
+S_VILE_HEAL2	VILE	\*	10	NULL			S_VILE_HEAL3
+S_VILE_HEAL3	VILE	]*	10	NULL			S_VILE_RUN1
+
+S_VILE_PAIN		VILE	Q	5	NULL			S_VILE_PAIN2
+S_VILE_PAIN2	VILE	Q	5	A_Pain			S_VILE_RUN1
+
+S_VILE_DIE1		VILE	Q	7	NULL			S_VILE_DIE2
+S_VILE_DIE2		VILE	R	7	A_Scream		S_VILE_DIE3
+S_VILE_DIE3		VILE	S	7	A_Fall			S_VILE_DIE4
+S_VILE_DIE4		VILE	T	7	NULL			S_VILE_DIE5
+S_VILE_DIE5		VILE	U	7	NULL			S_VILE_DIE6
+S_VILE_DIE6		VILE	V	7	NULL			S_VILE_DIE7
+S_VILE_DIE7		VILE	W	7	NULL			S_VILE_DIE8
+S_VILE_DIE8		VILE	X	5	NULL			S_VILE_DIE9
+S_VILE_DIE9		VILE	Y	5	NULL			S_VILE_DIE10
+S_VILE_DIE10	VILE	Z	-1	NULL			S_NULL
+
+
+//
+//	hellfire
+//
+$ MT_FIRE
+spawnstate		S_FIRE1
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+
+S_FIRE1			FIRE	A*	2	A_StartFire		S_FIRE2
+S_FIRE2			FIRE	B*	2	A_Fire			S_FIRE3
+S_FIRE3			FIRE	A*	2	A_Fire			S_FIRE4
+S_FIRE4			FIRE	B*	2	A_Fire			S_FIRE5
+
+S_FIRE5			FIRE	C*	2	A_FireCrackle	S_FIRE6
+S_FIRE6			FIRE	B*	2	A_Fire			S_FIRE7
+S_FIRE7			FIRE	C*	2	A_Fire			S_FIRE8
+S_FIRE8			FIRE	B*	2	A_Fire			S_FIRE9
+
+S_FIRE9			FIRE	C*	2	A_Fire			S_FIRE10
+S_FIRE10		FIRE	D*	2	A_Fire			S_FIRE11
+S_FIRE11		FIRE	C*	2	A_Fire			S_FIRE12
+S_FIRE12		FIRE	D*	2	A_Fire			S_FIRE13
+S_FIRE13		FIRE	C*	2	A_Fire			S_FIRE14
+
+S_FIRE14		FIRE	D*	2	A_Fire			S_FIRE15
+S_FIRE15		FIRE	E*	2	A_Fire			S_FIRE16
+S_FIRE16		FIRE	D*	2	A_Fire			S_FIRE17
+S_FIRE17		FIRE	E*	2	A_Fire			S_FIRE18
+S_FIRE18		FIRE	D*	2	A_Fire			S_FIRE19
+
+S_FIRE19		FIRE	E*	2	A_FireCrackle	S_FIRE20
+S_FIRE20		FIRE	F*	2	A_Fire			S_FIRE21
+S_FIRE21		FIRE	E*	2	A_Fire			S_FIRE22
+S_FIRE22		FIRE	F*	2	A_Fire			S_FIRE23
+S_FIRE23		FIRE	E*	2	A_Fire			S_FIRE24
+S_FIRE24		FIRE	F*	2	A_Fire			S_FIRE25
+
+S_FIRE25		FIRE	G*	2	A_Fire			S_FIRE26
+S_FIRE26		FIRE	H*	2	A_Fire			S_FIRE27
+S_FIRE27		FIRE	G*	2	A_Fire			S_FIRE28
+S_FIRE28		FIRE	H*	2	A_Fire			S_FIRE29
+S_FIRE29		FIRE	G*	2	A_Fire			S_FIRE30
+S_FIRE30		FIRE	H*	2	A_Fire			S_NULL
+
+
+//==============================================================================
+// The Revenant
+//==============================================================================
+
+$ MT_UNDEAD
+doomednum		66
+spawnstate		S_SKEL_STND
+spawnhealth		300
+seestate		S_SKEL_RUN1
+seesound		skeleton/sight
+painstate		S_SKEL_PAIN
+painchance		100
+painsound		skeleton/pain
+meleestate		S_SKEL_FIST1
+missilestate	S_SKEL_MISS1
+deathstate		S_SKEL_DIE1
+raisestate		S_SKEL_RAISE1
+deathsound		skeleton/death
+speed			10
+radius			20
+height			56
+activesound		skeleton/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+mass			500
+
+$ MT_STEALTHUNDEAD
+doomednum		9059
+spawnstate		S_SKEL_STND
+spawnhealth		300
+seestate		S_SKEL_RUN1
+seesound		skeleton/sight
+painstate		S_SKEL_PAIN
+painchance		100
+painsound		skeleton/pain
+meleestate		S_SKEL_FIST1
+missilestate	S_SKEL_MISS1
+deathstate		S_SKEL_DIE1
+raisestate		S_SKEL_RAISE1
+deathsound		skeleton/death
+speed			10
+radius			20
+height			56
+activesound		skeleton/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+mass			500
+translucency	0
+
+$ MT_TRACER
+spawnstate		S_TRACER
+deathstate		S_TRACEEXP1
+speed			10
+damage			10
+seesound		skeleton/attack
+deathsound		skeleton/tracex
+radius			11
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+translucency	.75
+
+//S_TRACER		MISL	A*	1	A_Tracer		S_TRACER
+
+// explosions
+
+//S_TRACEEXP1	MISL	B*	8	NULL			S_TRACEEXP2
+//S_TRACEEXP2	MISL	C*	6	NULL			S_TRACEEXP3
+//S_TRACEEXP3	MISL	D*	4	NULL			S_NULL
+
+
+$ MT_SMOKE
+spawnstate		S_SMOKE1
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+translucency	.50
+
+// trailing smoke
+
+S_SMOKE1		PUFF	B	4	NULL			S_SMOKE2
+S_SMOKE2		PUFF	C	4	NULL			S_SMOKE3
+S_SMOKE3		PUFF	B	4	NULL			S_SMOKE4
+S_SMOKE4		PUFF	C	4	NULL			S_SMOKE5
+S_SMOKE5		PUFF	D	4	NULL			S_NULL
+
+// Revenant shot
+
+S_TRACER		FATB	A*	2	A_Tracer		S_TRACER2
+S_TRACER2		FATB	B*	2	A_Tracer		S_TRACER
+
+S_TRACEEXP1		FBXP	A*	8	NULL			S_TRACEEXP2
+S_TRACEEXP2		FBXP	B*	6	NULL			S_TRACEEXP3
+S_TRACEEXP3		FBXP	C*	4	NULL			S_NULL
+
+
+
+S_SKEL_STND		SKEL	A	10	A_Look			S_SKEL_STND2
+S_SKEL_STND2	SKEL	B	10	A_Look			S_SKEL_STND
+
+S_SKEL_RUN1		SKEL	A	2	A_Chase			S_SKEL_RUN2
+S_SKEL_RUN2		SKEL	A	2	A_Chase			S_SKEL_RUN3
+S_SKEL_RUN3		SKEL	B	2	A_Chase			S_SKEL_RUN4
+S_SKEL_RUN4		SKEL	B	2	A_Chase			S_SKEL_RUN5
+S_SKEL_RUN5		SKEL	C	2	A_Chase			S_SKEL_RUN6
+S_SKEL_RUN6		SKEL	C	2	A_Chase			S_SKEL_RUN7
+S_SKEL_RUN7		SKEL	D	2	A_Chase			S_SKEL_RUN8
+S_SKEL_RUN8		SKEL	D	2	A_Chase			S_SKEL_RUN9
+S_SKEL_RUN9		SKEL	E	2	A_Chase			S_SKEL_RUN10
+S_SKEL_RUN10	SKEL	E	2	A_Chase			S_SKEL_RUN11
+S_SKEL_RUN11	SKEL	F	2	A_Chase			S_SKEL_RUN12
+S_SKEL_RUN12	SKEL	F	2	A_Chase			S_SKEL_RUN1
+
+S_SKEL_FIST1	SKEL	G	0		A_FaceTarget	S_SKEL_FIST2
+S_SKEL_FIST2	SKEL	G	6	A_SkelWhoosh	S_SKEL_FIST3
+S_SKEL_FIST3	SKEL	H	6	A_FaceTarget	S_SKEL_FIST4
+S_SKEL_FIST4	SKEL	I	6	A_SkelFist		S_SKEL_RUN1
+
+S_SKEL_MISS1	SKEL	J*	0		A_FaceTarget	S_SKEL_MISS2
+S_SKEL_MISS2	SKEL	J*	10	A_FaceTarget	S_SKEL_MISS3
+S_SKEL_MISS3	SKEL	K	10	A_SkelMissile	S_SKEL_MISS4
+S_SKEL_MISS4	SKEL	K	10	A_FaceTarget	S_SKEL_RUN1
+
+S_SKEL_PAIN		SKEL	L	5	NULL			S_SKEL_PAIN2
+S_SKEL_PAIN2	SKEL	L	5	A_Pain			S_SKEL_RUN1
+
+S_SKEL_DIE1		SKEL	L	7	NULL			S_SKEL_DIE2
+S_SKEL_DIE2		SKEL	M	7	NULL			S_SKEL_DIE3
+S_SKEL_DIE3		SKEL	N	7	A_Scream		S_SKEL_DIE4
+S_SKEL_DIE4		SKEL	O	7	A_Fall			S_SKEL_DIE5
+S_SKEL_DIE5		SKEL	P	7	NULL			S_SKEL_DIE6
+S_SKEL_DIE6		SKEL	Q	-1	NULL			S_NULL
+
+S_SKEL_RAISE1	SKEL	Q	5	NULL			S_SKEL_RAISE2
+S_SKEL_RAISE2	SKEL	P	5	NULL			S_SKEL_RAISE3
+S_SKEL_RAISE3	SKEL	O	5	NULL			S_SKEL_RAISE4
+S_SKEL_RAISE4	SKEL	N	5	NULL			S_SKEL_RAISE5
+S_SKEL_RAISE5	SKEL	M	5	NULL			S_SKEL_RAISE6
+S_SKEL_RAISE6	SKEL	L	5	NULL			S_SKEL_RUN1
+
+
+//==============================================================================
+// The Mancubus
+//==============================================================================
+
+$ MT_FATSO
+doomednum		67
+spawnstate		S_FATT_STND
+spawnhealth		600
+seestate		S_FATT_RUN1
+seesound		fatso/sight
+painstate		S_FATT_PAIN
+painchance		80
+painsound		fatso/pain
+missilestate	S_FATT_ATK1
+deathstate		S_FATT_DIE1
+raisestate		S_FATT_RAISE1
+deathsound		fatso/death
+speed			8
+radius			48
+height			64
+activesound		fatso/active
+mass			1000
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHFATSO
+doomednum		9058
+spawnstate		S_FATT_STND
+spawnhealth		600
+seestate		S_FATT_RUN1
+seesound		fatso/sight
+painstate		S_FATT_PAIN
+painchance		80
+painsound		fatso/pain
+missilestate	S_FATT_ATK1
+deathstate		S_FATT_DIE1
+raisestate		S_FATT_RAISE1
+deathsound		fatso/death
+speed			8
+radius			48
+height			64
+activesound		fatso/active
+mass			1000
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+$ MT_FATSHOT
+spawnstate		S_FATSHOT1
+deathstate		S_FATSHOTX1
+speed			20
+damage			8
+seesound		fatso/attack
+deathsound		fatso/shotx
+radius			6
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+translucency	.75
+
+// fatso shot (Mancubus)
+
+S_FATSHOT1		MANF	A*	4	NULL			S_FATSHOT2
+S_FATSHOT2		MANF	B*	4	NULL			S_FATSHOT1
+
+S_FATSHOTX1		MISL	B*	8	NULL			S_FATSHOTX2
+S_FATSHOTX2		MISL	C*	6	NULL			S_FATSHOTX3
+S_FATSHOTX3		MISL	D*	4	NULL			S_NULL
+
+//==================================================
+
+S_FATT_STND		FATT	A	15	A_Look			S_FATT_STND2
+S_FATT_STND2	FATT	B	15	A_Look			S_FATT_STND
+
+S_FATT_RUN1		FATT	A	4	A_Chase			S_FATT_RUN2
+S_FATT_RUN2		FATT	A	4	A_Chase			S_FATT_RUN3
+S_FATT_RUN3		FATT	B	4	A_Chase			S_FATT_RUN4
+S_FATT_RUN4		FATT	B	4	A_Chase			S_FATT_RUN5
+S_FATT_RUN5		FATT	C	4	A_Chase			S_FATT_RUN6
+S_FATT_RUN6		FATT	C	4	A_Chase			S_FATT_RUN7
+S_FATT_RUN7		FATT	D	4	A_Chase			S_FATT_RUN8
+S_FATT_RUN8		FATT	D	4	A_Chase			S_FATT_RUN9
+S_FATT_RUN9		FATT	E	4	A_Chase			S_FATT_RUN10
+S_FATT_RUN10	FATT	E	4	A_Chase			S_FATT_RUN11
+S_FATT_RUN11	FATT	F	4	A_Chase			S_FATT_RUN12
+S_FATT_RUN12	FATT	F	4	A_Chase			S_FATT_RUN1
+
+S_FATT_ATK1		FATT	G	20	A_FatRaise		S_FATT_ATK2
+S_FATT_ATK2		FATT	H*	10	A_FatAttack1	S_FATT_ATK3
+S_FATT_ATK3		FATT	I	5	A_FaceTarget	S_FATT_ATK4
+S_FATT_ATK4		FATT	G	5	A_FaceTarget	S_FATT_ATK5
+S_FATT_ATK5		FATT	H*	10	A_FatAttack2	S_FATT_ATK6
+S_FATT_ATK6		FATT	I	5	A_FaceTarget	S_FATT_ATK7
+S_FATT_ATK7		FATT	G	5	A_FaceTarget	S_FATT_ATK8
+S_FATT_ATK8		FATT	H*	10	A_FatAttack3	S_FATT_ATK9
+S_FATT_ATK9		FATT	I	5	A_FaceTarget	S_FATT_ATK10
+S_FATT_ATK10	FATT	G	5	A_FaceTarget	S_FATT_RUN1
+
+S_FATT_PAIN		FATT	J	3	NULL			S_FATT_PAIN2
+S_FATT_PAIN2	FATT	J	3	A_Pain			S_FATT_RUN1
+
+S_FATT_DIE1		FATT	K	6	NULL			S_FATT_DIE2
+S_FATT_DIE2		FATT	L	6	A_Scream		S_FATT_DIE3
+S_FATT_DIE3		FATT	M	6	A_Fall			S_FATT_DIE4
+S_FATT_DIE4		FATT	N	6	NULL			S_FATT_DIE5
+S_FATT_DIE5		FATT	O	6	NULL			S_FATT_DIE6
+S_FATT_DIE6		FATT	P	6	NULL			S_FATT_DIE7
+S_FATT_DIE7		FATT	Q	6	NULL			S_FATT_DIE8
+S_FATT_DIE8		FATT	R	6	NULL			S_FATT_DIE9
+S_FATT_DIE9		FATT	S	6	NULL			S_FATT_DIE10
+S_FATT_DIE10	FATT	T	-1	A_BossDeath		S_NULL
+
+S_FATT_RAISE1	FATT	R	5	NULL			S_FATT_RAISE2
+S_FATT_RAISE2	FATT	Q	5	NULL			S_FATT_RAISE3
+S_FATT_RAISE3	FATT	P	5	NULL			S_FATT_RAISE4
+S_FATT_RAISE4	FATT	O	5	NULL			S_FATT_RAISE5
+S_FATT_RAISE5	FATT	N	5	NULL			S_FATT_RAISE6
+S_FATT_RAISE6	FATT	M	5	NULL			S_FATT_RAISE7
+S_FATT_RAISE7	FATT	L	5	NULL			S_FATT_RAISE8
+S_FATT_RAISE8	FATT	K	5	NULL			S_FATT_RUN1
+
+//==============================================================================
+// Former Human Commando
+//==============================================================================
+
+// chaingun possesed humans
+
+$ MT_CHAINGUY
+doomednum		65
+spawnstate		S_CPOS_STND
+spawnhealth		70
+seestate		S_CPOS_RUN1
+seesound		chainguy/sight1
+painstate		S_CPOS_PAIN
+painchance		170
+painsound		chainguy/pain
+missilestate	S_CPOS_ATK1
+deathstate		S_CPOS_DIE1
+xdeathstate		S_CPOS_XDIE1
+raisestate		S_CPOS_RAISE1
+deathsound		chainguy/death1
+speed			8
+radius			20
+height			56
+activesound		chainguy/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHCHAINGUY
+doomednum		9054
+spawnstate		S_CPOS_STND
+spawnhealth		70
+seestate		S_CPOS_RUN1
+seesound		chainguy/sight1
+painstate		S_CPOS_PAIN
+painchance		170
+painsound		chainguy/pain
+missilestate	S_CPOS_ATK1
+deathstate		S_CPOS_DIE1
+xdeathstate		S_CPOS_XDIE1
+raisestate		S_CPOS_RAISE1
+deathsound		chainguy/death1
+speed			8
+radius			20
+height			56
+activesound		chainguy/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+
+S_CPOS_STND		CPOS	A	10	A_Look			S_CPOS_STND2
+S_CPOS_STND2	CPOS	B	10	A_Look			S_CPOS_STND
+
+S_CPOS_RUN1		CPOS	A	3	A_Chase			S_CPOS_RUN2
+S_CPOS_RUN2		CPOS	A	3	A_Chase			S_CPOS_RUN3
+S_CPOS_RUN3		CPOS	B	3	A_Chase			S_CPOS_RUN4
+S_CPOS_RUN4		CPOS	B	3	A_Chase			S_CPOS_RUN5
+S_CPOS_RUN5		CPOS	C	3	A_Chase			S_CPOS_RUN6
+S_CPOS_RUN6		CPOS	C	3	A_Chase			S_CPOS_RUN7
+S_CPOS_RUN7		CPOS	D	3	A_Chase			S_CPOS_RUN8
+S_CPOS_RUN8		CPOS	D	3	A_Chase			S_CPOS_RUN1
+
+S_CPOS_ATK1		CPOS	E	10	A_FaceTarget	S_CPOS_ATK2
+S_CPOS_ATK2		CPOS	F*	4	A_CPosAttack	S_CPOS_ATK3
+S_CPOS_ATK3		CPOS	E*	4	A_CPosAttack	S_CPOS_ATK4
+S_CPOS_ATK4		CPOS	F	1	A_CPosRefire	S_CPOS_ATK2
+
+S_CPOS_PAIN		CPOS	G	3	NULL			S_CPOS_PAIN2
+S_CPOS_PAIN2	CPOS	G	3	A_Pain			S_CPOS_RUN1
+
+S_CPOS_DIE1		CPOS	H	5	NULL			S_CPOS_DIE2
+S_CPOS_DIE2		CPOS	I	5	A_Scream		S_CPOS_DIE3
+S_CPOS_DIE3		CPOS	J	5	A_Fall			S_CPOS_DIE4
+S_CPOS_DIE4		CPOS	K	5	NULL			S_CPOS_DIE5
+S_CPOS_DIE5		CPOS	L	5	NULL			S_CPOS_DIE6
+S_CPOS_DIE6		CPOS	M	5	NULL			S_CPOS_DIE7
+S_CPOS_DIE7		CPOS	N	-1	NULL			S_NULL
+
+S_CPOS_XDIE1	CPOS	O	5	NULL			S_CPOS_XDIE2
+S_CPOS_XDIE2	CPOS	P	5	A_XScream		S_CPOS_XDIE3
+S_CPOS_XDIE3	CPOS	Q	5	A_Fall			S_CPOS_XDIE4
+S_CPOS_XDIE4	CPOS	R	5	NULL			S_CPOS_XDIE5
+S_CPOS_XDIE5	CPOS	S	5	NULL			S_CPOS_XDIE6
+S_CPOS_XDIE6	CPOS	T	-1	NULL			S_NULL
+
+S_CPOS_RAISE1	CPOS	N	5	NULL			S_CPOS_RAISE2
+S_CPOS_RAISE2	CPOS	M	5	NULL			S_CPOS_RAISE3
+S_CPOS_RAISE3	CPOS	L	5	NULL			S_CPOS_RAISE4
+S_CPOS_RAISE4	CPOS	K	5	NULL			S_CPOS_RAISE5
+S_CPOS_RAISE5	CPOS	J	5	NULL			S_CPOS_RAISE6
+S_CPOS_RAISE6	CPOS	I	5	NULL			S_CPOS_RAISE7
+S_CPOS_RAISE7	CPOS	H	5	NULL			S_CPOS_RUN1
+
+//==============================================================================
+// Imps
+//==============================================================================
+
+// troops
+
+$ MT_TROOP
+doomednum		3001
+spawnstate		S_TROO_STND
+spawnhealth		60
+seestate		S_TROO_RUN1
+seesound		imp/sight1
+painstate		S_TROO_PAIN
+painchance		200
+painsound		imp/pain
+meleestate		S_TROO_ATK1
+missilestate	S_TROO_ATK1
+deathstate		S_TROO_DIE1
+xdeathstate		S_TROO_XDIE1
+raisestate		S_TROO_RAISE1
+deathsound		imp/death1
+speed			8
+radius			20
+height			56
+activesound		imp/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHTROOP
+doomednum		9057
+spawnstate		S_TROO_STND
+spawnhealth		60
+seestate		S_TROO_RUN1
+seesound		imp/sight1
+painstate		S_TROO_PAIN
+painchance		200
+painsound		imp/pain
+meleestate		S_TROO_ATK1
+missilestate	S_TROO_ATK1
+deathstate		S_TROO_DIE1
+xdeathstate		S_TROO_XDIE1
+raisestate		S_TROO_RAISE1
+deathsound		imp/death1
+speed			8
+radius			20
+height			56
+activesound		imp/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+
+S_TROO_STND		TROO	A	10	A_Look			S_TROO_STND2
+S_TROO_STND2	TROO	B	10	A_Look			S_TROO_STND
+
+S_TROO_RUN1		TROO	A	3	A_Chase			S_TROO_RUN2
+S_TROO_RUN2		TROO	A	3	A_Chase			S_TROO_RUN3
+S_TROO_RUN3		TROO	B	3	A_Chase			S_TROO_RUN4
+S_TROO_RUN4		TROO	B	3	A_Chase			S_TROO_RUN5
+S_TROO_RUN5		TROO	C	3	A_Chase			S_TROO_RUN6
+S_TROO_RUN6		TROO	C	3	A_Chase			S_TROO_RUN7
+S_TROO_RUN7		TROO	D	3	A_Chase			S_TROO_RUN8
+S_TROO_RUN8		TROO	D	3	A_Chase			S_TROO_RUN1
+
+S_TROO_ATK1		TROO	E	8	A_FaceTarget	S_TROO_ATK2
+S_TROO_ATK2		TROO	F	8	A_FaceTarget	S_TROO_ATK3
+S_TROO_ATK3		TROO	G	6	A_TroopAttack	S_TROO_RUN1
+
+S_TROO_PAIN		TROO	H	2	NULL			S_TROO_PAIN2
+S_TROO_PAIN2	TROO	H	2	A_Pain			S_TROO_RUN1
+
+S_TROO_DIE1		TROO	I	8	NULL			S_TROO_DIE2
+S_TROO_DIE2		TROO	J	8	A_Scream		S_TROO_DIE3
+S_TROO_DIE3		TROO	K	6	NULL			S_TROO_DIE4
+S_TROO_DIE4		TROO	L	6	A_FALL			S_TROO_DIE5
+S_TROO_DIE5		TROO	M	-1	NULL			S_NULL
+
+S_TROO_XDIE1	TROO	N	5	NULL			S_TROO_XDIE2
+S_TROO_XDIE2	TROO	O	5	A_XScream		S_TROO_XDIE3
+S_TROO_XDIE3	TROO	P	5	NULL			S_TROO_XDIE4
+S_TROO_XDIE4	TROO	Q	5	A_FALL			S_TROO_XDIE5
+S_TROO_XDIE5	TROO	R	5	NULL			S_TROO_XDIE6
+S_TROO_XDIE6	TROO	S	5	NULL			S_TROO_XDIE7
+S_TROO_XDIE7	TROO	T	5	NULL			S_TROO_XDIE8
+S_TROO_XDIE8	TROO	U	-1	NULL			S_NULL
+
+S_TROO_RAISE1	TROO	M	8	NULL			S_TROO_RAISE2
+S_TROO_RAISE2	TROO	L	8	NULL			S_TROO_RAISE3
+S_TROO_RAISE3	TROO	K	6	NULL			S_TROO_RAISE4
+S_TROO_RAISE4	TROO	J	6	NULL			S_TROO_RAISE5
+S_TROO_RAISE5	TROO	I	6	NULL			S_TROO_RUN1
+
+//==============================================================================
+// Spectre
+//==============================================================================
+
+// sargeant/ shadow sargeant
+
+$ MT_SERGEANT
+doomednum		3002
+spawnstate		S_SARG_STND
+spawnhealth		150
+seestate		S_SARG_RUN1
+seesound		demon/sight
+attacksound		demon/melee
+painstate		S_SARG_PAIN
+painchance		180
+painsound		demon/pain
+meleestate		S_SARG_ATK1
+deathstate		S_SARG_DIE1
+raisestate		S_SARG_RAISE1
+deathsound		demon/death
+speed			10
+radius			30
+height			56
+mass			400
+activesound		demon/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_SHADOWS
+doomednum		58
+spawnstate		S_SARG_STND
+spawnhealth		150
+seestate		S_SARG_RUN1
+seesound		spectre/sight
+attacksound		spectre/attack
+painstate		S_SARG_PAIN
+painchance		180
+painsound		spectre/pain
+meleestate		S_SARG_ATK1
+deathstate		S_SARG_DIE1
+deathsound		spectre/death
+raisestate		S_SARG_RAISE1
+speed			10
+radius			30
+height			56
+mass			400
+activesound		spectre/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_SHADOW|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHSERGEANT
+doomednum		9055
+spawnstate		S_SARG_STND
+spawnhealth		150
+seestate		S_SARG_RUN1
+seesound		demon/sight
+attacksound		demon/melee
+painstate		S_SARG_PAIN
+painchance		180
+painsound		demon/pain
+meleestate		S_SARG_ATK1
+deathstate		S_SARG_DIE1
+raisestate		S_SARG_RAISE1
+deathsound		demon/death
+speed			10
+radius			30
+height			56
+mass			400
+activesound		demon/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+
+S_SARG_STND		SARG	A	10	A_Look			S_SARG_STND2
+S_SARG_STND2	SARG	B	10	A_Look			S_SARG_STND
+
+S_SARG_RUN1		SARG	A	2	A_Chase			S_SARG_RUN2
+S_SARG_RUN2		SARG	A	2	A_Chase			S_SARG_RUN3
+S_SARG_RUN3		SARG	B	2	A_Chase			S_SARG_RUN4
+S_SARG_RUN4		SARG	B	2	A_Chase			S_SARG_RUN5
+S_SARG_RUN5		SARG	C	2	A_Chase			S_SARG_RUN6
+S_SARG_RUN6		SARG	C	2	A_Chase			S_SARG_RUN7
+S_SARG_RUN7		SARG	D	2	A_Chase			S_SARG_RUN8
+S_SARG_RUN8		SARG	D	2	A_Chase			S_SARG_RUN1
+
+S_SARG_ATK1		SARG	E	8	A_FaceTarget	S_SARG_ATK2
+S_SARG_ATK2		SARG	F	8	A_FaceTarget	S_SARG_ATK3
+S_SARG_ATK3		SARG	G	8	A_SargAttack	S_SARG_RUN1
+
+S_SARG_PAIN		SARG	H	2	NULL			S_SARG_PAIN2
+S_SARG_PAIN2	SARG	H	2	A_Pain			S_SARG_RUN1
+
+S_SARG_DIE1		SARG	I	8	NULL			S_SARG_DIE2
+S_SARG_DIE2		SARG	J	8	A_Scream		S_SARG_DIE3
+S_SARG_DIE3		SARG	K	4	NULL			S_SARG_DIE4
+S_SARG_DIE4		SARG	L	4	A_Fall			S_SARG_DIE5
+S_SARG_DIE5		SARG	M	4	NULL			S_SARG_DIE6
+S_SARG_DIE6		SARG	N	-1	NULL			S_NULL
+
+S_SARG_RAISE1	SARG	N	5	NULL			S_SARG_RAISE2
+S_SARG_RAISE2	SARG	M	5	NULL			S_SARG_RAISE3
+S_SARG_RAISE3	SARG	L	5	NULL			S_SARG_RAISE4
+S_SARG_RAISE4	SARG	K	5	NULL			S_SARG_RAISE5
+S_SARG_RAISE5	SARG	J	5	NULL			S_SARG_RAISE6
+S_SARG_RAISE6	SARG	I	5	NULL			S_SARG_RUN1
+
+//==============================================================================
+// Cacodemon
+//==============================================================================
+
+// demon head
+
+$ MT_HEAD
+doomednum		3005
+spawnstate		S_HEAD_STND
+spawnhealth		400
+seestate		S_HEAD_RUN1
+seesound		caco/sight
+painstate		S_HEAD_PAIN
+painchance		128
+painsound		caco/pain
+missilestate	S_HEAD_ATK1
+deathstate		S_HEAD_DIE1
+raisestate		S_HEAD_RAISE1
+deathsound		caco/death
+speed			8
+radius			31
+height			56
+mass			400
+activesound		caco/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHHEAD
+doomednum		9053
+spawnstate		S_HEAD_STND
+spawnhealth		400
+seestate		S_HEAD_RUN1
+seesound		caco/sight
+painstate		S_HEAD_PAIN
+painchance		128
+painsound		caco/pain
+missilestate	S_HEAD_ATK1
+deathstate		S_HEAD_DIE1
+raisestate		S_HEAD_RAISE1
+deathsound		caco/death
+speed			8
+radius			31
+height			56
+mass			400
+activesound		caco/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+S_HEAD_STND		HEAD	A	10	A_Look			S_HEAD_STND
+
+S_HEAD_RUN1		HEAD	A	3	A_Chase			S_HEAD_RUN1
+
+S_HEAD_ATK1		HEAD	B	5	A_FaceTarget	S_HEAD_ATK2
+S_HEAD_ATK2		HEAD	C	5	A_FaceTarget	S_HEAD_ATK3
+S_HEAD_ATK3		HEAD	D*	5	A_HeadAttack	S_HEAD_RUN1
+
+S_HEAD_PAIN		HEAD	E	3	NULL			S_HEAD_PAIN2
+S_HEAD_PAIN2	HEAD	E	3	A_Pain			S_HEAD_PAIN3
+S_HEAD_PAIN3	HEAD	F	6	NULL			S_HEAD_RUN1
+
+S_HEAD_DIE1		HEAD	G	8	NULL			S_HEAD_DIE2
+S_HEAD_DIE2		HEAD	H	8	A_Scream		S_HEAD_DIE3
+S_HEAD_DIE3		HEAD	I	8	NULL			S_HEAD_DIE4
+S_HEAD_DIE4		HEAD	J	8	NULL			S_HEAD_DIE5
+S_HEAD_DIE5		HEAD	K	8	A_Fall			S_HEAD_DIE6
+S_HEAD_DIE6		HEAD	L	-1	NULL			S_NULL
+
+S_HEAD_RAISE1	HEAD	L	8	NULL			S_HEAD_RAISE2
+S_HEAD_RAISE2	HEAD	K	8	NULL			S_HEAD_RAISE3
+S_HEAD_RAISE3	HEAD	J	8	NULL			S_HEAD_RAISE4
+S_HEAD_RAISE4	HEAD	I	8	NULL			S_HEAD_RAISE5
+S_HEAD_RAISE5	HEAD	H	8	NULL			S_HEAD_RAISE6
+S_HEAD_RAISE6	HEAD	G	8	NULL			S_HEAD_RUN1
+
+//==============================================================================
+// Baron of Hell
+//==============================================================================
+
+// bruiser
+
+$ MT_BRUISER
+doomednum		3003
+spawnstate		S_BOSS_STND
+spawnhealth		1000
+seestate		S_BOSS_RUN1
+seesound		baron/sight
+painstate		S_BOSS_PAIN
+painchance		50
+painsound		baron/pain
+meleestate		S_BOSS_ATK1
+missilestate	S_BOSS_ATK1
+deathstate		S_BOSS_DIE1
+raisestate		S_BOSS_RAISE1
+deathsound		baron/death
+speed			8
+radius			24
+height			64
+mass			1000
+activesound		baron/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHBRUISER
+doomednum		9052
+spawnstate		S_BOSS_STND
+spawnhealth		1000
+seestate		S_BOSS_RUN1
+seesound		baron/sight
+painstate		S_BOSS_PAIN
+painchance		50
+painsound		baron/pain
+meleestate		S_BOSS_ATK1
+missilestate	S_BOSS_ATK1
+deathstate		S_BOSS_DIE1
+raisestate		S_BOSS_RAISE1
+deathsound		baron/death
+speed			8
+radius			24
+height			64
+mass			1000
+activesound		baron/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+$ MT_BRUISERSHOT
+spawnstate		S_BRBALL1
+deathstate		S_BRBALLX1
+speed			15
+damage			8
+seesound		baron/attack
+deathsound		baron/shotx
+radius			6
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+translucency	.75
+
+// bruiser shot
+
+S_BRBALL1		BAL7	A*	4	NULL			S_BRBALL2
+S_BRBALL2		BAL7	B*	4	NULL			S_BRBALL1
+
+S_BRBALLX1		BAL7	C*	6	NULL			S_BRBALLX2
+S_BRBALLX2		BAL7	D*	6	NULL			S_BRBALLX3
+S_BRBALLX3		BAL7	E*	6	NULL			S_NULL
+
+
+
+S_BOSS_STND		BOSS	A	10	A_Look			S_BOSS_STND2
+S_BOSS_STND2	BOSS	B	10	A_Look			S_BOSS_STND
+
+S_BOSS_RUN1		BOSS	A	3	A_Chase			S_BOSS_RUN2
+S_BOSS_RUN2		BOSS	A	3	A_Chase			S_BOSS_RUN3
+S_BOSS_RUN3		BOSS	B	3	A_Chase			S_BOSS_RUN4
+S_BOSS_RUN4		BOSS	B	3	A_Chase			S_BOSS_RUN5
+S_BOSS_RUN5		BOSS	C	3	A_Chase			S_BOSS_RUN6
+S_BOSS_RUN6		BOSS	C	3	A_Chase			S_BOSS_RUN7
+S_BOSS_RUN7		BOSS	D	3	A_Chase			S_BOSS_RUN8
+S_BOSS_RUN8		BOSS	D	3	A_Chase			S_BOSS_RUN1
+
+S_BOSS_ATK1		BOSS	E	8	A_FaceTarget	S_BOSS_ATK2
+S_BOSS_ATK2		BOSS	F	8	A_FaceTarget	S_BOSS_ATK3
+S_BOSS_ATK3		BOSS	G	8	A_BruisAttack	S_BOSS_RUN1
+
+S_BOSS_PAIN		BOSS	H	2	NULL			S_BOSS_PAIN2
+S_BOSS_PAIN2	BOSS	H	2	A_Pain			S_BOSS_RUN1
+
+S_BOSS_DIE1		BOSS	I	8	NULL			S_BOSS_DIE2
+S_BOSS_DIE2		BOSS	J	8	A_Scream		S_BOSS_DIE3
+S_BOSS_DIE3		BOSS	K	8	NULL			S_BOSS_DIE4
+S_BOSS_DIE4		BOSS	L	8	A_Fall			S_BOSS_DIE5
+S_BOSS_DIE5		BOSS	M	8	NULL			S_BOSS_DIE6
+S_BOSS_DIE6		BOSS	N	8	NULL			S_BOSS_DIE7
+S_BOSS_DIE7		BOSS	O	-1	A_BossDeath		S_NULL
+
+S_BOSS_RAISE1	BOSS	O	8	NULL			S_BOSS_RAISE2
+S_BOSS_RAISE2	BOSS	N	8	NULL			S_BOSS_RAISE3
+S_BOSS_RAISE3	BOSS	M	8	NULL			S_BOSS_RAISE4
+S_BOSS_RAISE4	BOSS	L	8	NULL			S_BOSS_RAISE5
+S_BOSS_RAISE5	BOSS	K	8	NULL			S_BOSS_RAISE6
+S_BOSS_RAISE6	BOSS	J	8	NULL			S_BOSS_RAISE7
+S_BOSS_RAISE7	BOSS	I	8	NULL			S_BOSS_RUN1
+
+//==============================================================================
+// Hell Knight
+//==============================================================================
+
+$ MT_KNIGHT
+doomednum		69
+spawnstate		S_BOS2_STND
+spawnhealth		500
+seestate		S_BOS2_RUN1
+seesound		knight/sight
+painstate		S_BOS2_PAIN
+painchance		50
+painsound		knight/pain
+meleestate		S_BOS2_ATK1
+missilestate	S_BOS2_ATK1
+deathstate		S_BOS2_DIE1
+raisestate		S_BOS2_RAISE1
+deathsound		knight/death
+speed			8
+radius			24
+height			64
+mass			1000
+activesound		knight/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+$ MT_STEALTHKNIGHT
+doomednum		9056
+spawnstate		S_BOS2_STND
+spawnhealth		500
+seestate		S_BOS2_RUN1
+seesound		knight/sight
+painstate		S_BOS2_PAIN
+painchance		50
+painsound		knight/pain
+meleestate		S_BOS2_ATK1
+missilestate	S_BOS2_ATK1
+deathstate		S_BOS2_DIE1
+raisestate		S_BOS2_RAISE1
+deathsound		knight/death
+speed			8
+radius			24
+height			64
+mass			1000
+activesound		knight/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+
+S_BOS2_STND		BOS2	A	10	A_Look			S_BOS2_STND2
+S_BOS2_STND2	BOS2	B	10	A_Look			S_BOS2_STND
+
+S_BOS2_RUN1		BOS2	A	3	A_Chase			S_BOS2_RUN2
+S_BOS2_RUN2		BOS2	A	3	A_Chase			S_BOS2_RUN3
+S_BOS2_RUN3		BOS2	B	3	A_Chase			S_BOS2_RUN4
+S_BOS2_RUN4		BOS2	B	3	A_Chase			S_BOS2_RUN5
+S_BOS2_RUN5		BOS2	C	3	A_Chase			S_BOS2_RUN6
+S_BOS2_RUN6		BOS2	C	3	A_Chase			S_BOS2_RUN7
+S_BOS2_RUN7		BOS2	D	3	A_Chase			S_BOS2_RUN8
+S_BOS2_RUN8		BOS2	D	3	A_Chase			S_BOS2_RUN1
+
+S_BOS2_ATK1		BOS2	E	8	A_FaceTarget	S_BOS2_ATK2
+S_BOS2_ATK2		BOS2	F	8	A_FaceTarget	S_BOS2_ATK3
+S_BOS2_ATK3		BOS2	G	8	A_BruisAttack	S_BOS2_RUN1
+
+S_BOS2_PAIN		BOS2	H	2	NULL			S_BOS2_PAIN2
+S_BOS2_PAIN2	BOS2	H	2	A_Pain			S_BOS2_RUN1
+
+S_BOS2_DIE1		BOS2	I	8	NULL			S_BOS2_DIE2
+S_BOS2_DIE2		BOS2	J	8	A_Scream		S_BOS2_DIE3
+S_BOS2_DIE3		BOS2	K	8	NULL			S_BOS2_DIE4
+S_BOS2_DIE4		BOS2	L	8	A_Fall			S_BOS2_DIE5
+S_BOS2_DIE5		BOS2	M	8	NULL			S_BOS2_DIE6
+S_BOS2_DIE6		BOS2	N	8	NULL			S_BOS2_DIE7
+S_BOS2_DIE7		BOS2	O	-1	NULL			S_NULL
+
+S_BOS2_RAISE1	BOS2	O	8	NULL			S_BOS2_RAISE2
+S_BOS2_RAISE2	BOS2	N	8	NULL			S_BOS2_RAISE3
+S_BOS2_RAISE3	BOS2	M	8	NULL			S_BOS2_RAISE4
+S_BOS2_RAISE4	BOS2	L	8	NULL			S_BOS2_RAISE5
+S_BOS2_RAISE5	BOS2	K	8	NULL			S_BOS2_RAISE6
+S_BOS2_RAISE6	BOS2	J	8	NULL			S_BOS2_RAISE7
+S_BOS2_RAISE7	BOS2	I	8	NULL			S_BOS2_RUN1
+
+//==============================================================================
+// Lost Soul
+//==============================================================================
+
+// demon skull
+
+$ MT_SKULL
+doomednum		3006
+spawnstate		S_SKULL_STND
+spawnhealth		100
+seestate		S_SKULL_RUN1
+attacksound		skull/melee
+painstate		S_SKULL_PAIN
+painchance		256
+painsound		skull/pain
+missilestate	S_SKULL_ATK1
+deathstate		S_SKULL_DIE1
+deathsound		skull/death
+speed			8
+radius			16
+height			56
+damage			3				// when attacking as a missile
+mass			50
+activesound		skull/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY
+flags2			MF2_MCROSS|MF2_PUSHWALL|MF2_PASSMOBJ
+
+
+S_SKULL_STND	SKUL	A*	10	A_Look			S_SKULL_STND2
+S_SKULL_STND2	SKUL	B*	10	A_Look			S_SKULL_STND
+
+S_SKULL_RUN1	SKUL	A*	6	A_Chase			S_SKULL_RUN2
+S_SKULL_RUN2	SKUL	B*	6	A_Chase			S_SKULL_RUN1
+
+S_SKULL_ATK1	SKUL	C*	10	A_FaceTarget	S_SKULL_ATK2
+S_SKULL_ATK2	SKUL	D*	4	A_SkullAttack	S_SKULL_ATK3
+S_SKULL_ATK3	SKUL	C*	4	NULL			S_SKULL_ATK4
+S_SKULL_ATK4	SKUL	D*	4	NULL			S_SKULL_ATK3
+
+S_SKULL_PAIN	SKUL	E*	3	NULL			S_SKULL_PAIN2
+S_SKULL_PAIN2	SKUL	E*	3	A_Pain			S_SKULL_RUN1
+
+S_SKULL_DIE1	SKUL	F*	6	NULL			S_SKULL_DIE2
+S_SKULL_DIE2	SKUL	G*	6	A_Scream		S_SKULL_DIE3
+S_SKULL_DIE3	SKUL	H*	6	NULL			S_SKULL_DIE4
+S_SKULL_DIE4	SKUL	I*	6	A_Fall			S_SKULL_DIE5
+S_SKULL_DIE5	SKUL	J	6	NULL			S_SKULL_DIE6
+S_SKULL_DIE6	SKUL	K	6	NULL			S_NULL
+
+
+//==============================================================================
+// Spider Mastermind
+//==============================================================================
+
+// spider boss
+
+$ MT_SPIDER
+doomednum		7
+spawnstate		S_SPID_STND
+spawnhealth		3000
+seestate		S_SPID_RUN1
+seesound		spider/sight
+attacksound		spider/attack
+painstate		S_SPID_PAIN
+painchance		40
+painsound		spider/pain
+missilestate	S_SPID_ATK1
+deathstate		S_SPID_DIE1
+deathsound		spider/death
+speed			12
+radius			128
+height			100
+mass			1000
+activesound		spider/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_BOSS
+
+
+S_SPID_STND		SPID	A	10	A_Look			S_SPID_STND2
+S_SPID_STND2	SPID	B	10	A_Look			S_SPID_STND
+
+S_SPID_RUN1		SPID	A	3	A_Metal			S_SPID_RUN2
+S_SPID_RUN2		SPID	A	3	A_Chase			S_SPID_RUN3
+S_SPID_RUN3		SPID	B	3	A_Chase			S_SPID_RUN4
+S_SPID_RUN4		SPID	B	3	A_Chase			S_SPID_RUN5
+S_SPID_RUN5		SPID	C	3	A_Metal			S_SPID_RUN6
+S_SPID_RUN6		SPID	C	3	A_Chase			S_SPID_RUN7
+S_SPID_RUN7		SPID	D	3	A_Chase			S_SPID_RUN8
+S_SPID_RUN8		SPID	D	3	A_Chase			S_SPID_RUN9
+S_SPID_RUN9		SPID	E	3	A_Metal			S_SPID_RUN10
+S_SPID_RUN10	SPID	E	3	A_Chase			S_SPID_RUN11
+S_SPID_RUN11	SPID	F	3	A_Chase			S_SPID_RUN12
+S_SPID_RUN12	SPID	F	3	A_Chase			S_SPID_RUN1
+
+S_SPID_ATK1		SPID	A*	20	A_FaceTarget	S_SPID_ATK2
+S_SPID_ATK2		SPID	G*	4	A_SPosAttack	S_SPID_ATK3
+S_SPID_ATK3		SPID	H*	4	A_SPosAttack	S_SPID_ATK4
+S_SPID_ATK4		SPID	H*	1	A_SpidRefire	S_SPID_ATK2
+
+S_SPID_PAIN		SPID	I	3	NULL			S_SPID_PAIN2
+S_SPID_PAIN2	SPID	I	3	A_Pain			S_SPID_RUN1
+
+S_SPID_DIE1		SPID	J	20	A_Scream		S_SPID_DIE2
+S_SPID_DIE2		SPID	K	10	A_Fall			S_SPID_DIE3
+S_SPID_DIE3		SPID	L	10	NULL			S_SPID_DIE4
+S_SPID_DIE4		SPID	M	10	NULL			S_SPID_DIE5
+S_SPID_DIE5		SPID	N	10	NULL			S_SPID_DIE6
+S_SPID_DIE6		SPID	O	10	NULL			S_SPID_DIE7
+S_SPID_DIE7		SPID	P	10	NULL			S_SPID_DIE8
+S_SPID_DIE8		SPID	Q	10	NULL			S_SPID_DIE9
+S_SPID_DIE9		SPID	R	10	NULL			S_SPID_DIE10
+S_SPID_DIE10	SPID	S	30	NULL			S_SPID_DIE11
+S_SPID_DIE11	SPID	S	-1	A_BossDeath		S_NULL
+
+//==============================================================================
+// Arachnotron
+//==============================================================================
+
+// baby spider
+
+$ MT_BABY
+doomednum		68
+spawnstate		S_BSPI_STND
+spawnhealth		500
+seestate		S_BSPI_SIGHT
+seesound		baby/sight
+painstate		S_BSPI_PAIN
+painchance		128
+painsound		baby/pain
+missilestate	S_BSPI_ATK1
+deathstate		S_BSPI_DIE1
+raisestate		S_BSPI_RAISE1
+deathsound		baby/death
+speed			12
+radius			64
+height			64
+mass			600
+activesound		baby/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+// stealth baby spider
+
+$ MT_STEALTHBABY
+doomednum		9050
+spawnstate		S_BSPI_STND
+spawnhealth		500
+seestate		S_BSPI_SIGHT
+seesound		baby/sight
+painstate		S_BSPI_PAIN
+painchance		128
+painsound		baby/pain
+missilestate	S_BSPI_ATK1
+deathstate		S_BSPI_DIE1
+raisestate		S_BSPI_RAISE1
+deathsound		baby/death
+speed			12
+radius			64
+height			64
+mass			600
+activesound		baby/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+translucency	0
+
+S_BSPI_STND		BSPI	A	10	A_Look			S_BSPI_STND2
+S_BSPI_STND2	BSPI	B	10	A_Look			S_BSPI_STND
+
+S_BSPI_SIGHT	BSPI	A	20	NULL			S_BSPI_RUN1
+
+S_BSPI_RUN1		BSPI	A	3	A_BabyMetal		S_BSPI_RUN2
+S_BSPI_RUN2		BSPI	A	3	A_Chase			S_BSPI_RUN3
+S_BSPI_RUN3		BSPI	B	3	A_Chase			S_BSPI_RUN4
+S_BSPI_RUN4		BSPI	B	3	A_Chase			S_BSPI_RUN5
+S_BSPI_RUN5		BSPI	C	3	A_Chase			S_BSPI_RUN6
+S_BSPI_RUN6		BSPI	C	3	A_Chase			S_BSPI_RUN7
+S_BSPI_RUN7		BSPI	D	3	A_BabyMetal		S_BSPI_RUN8
+S_BSPI_RUN8		BSPI	D	3	A_Chase			S_BSPI_RUN9
+S_BSPI_RUN9		BSPI	E	3	A_Chase			S_BSPI_RUN10
+S_BSPI_RUN10	BSPI	E	3	A_Chase			S_BSPI_RUN11
+S_BSPI_RUN11	BSPI	F	3	A_Chase			S_BSPI_RUN12
+S_BSPI_RUN12	BSPI	F	3	A_Chase			S_BSPI_RUN1
+
+S_BSPI_ATK1		BSPI	A*	20	A_FaceTarget	S_BSPI_ATK2
+S_BSPI_ATK2		BSPI	G*	4	A_BspiAttack	S_BSPI_ATK3
+S_BSPI_ATK3		BSPI	H*	4	NULL			S_BSPI_ATK4
+S_BSPI_ATK4		BSPI	H*	1	A_SpidRefire	S_BSPI_ATK2
+
+S_BSPI_PAIN		BSPI	I	3	NULL			S_BSPI_PAIN2
+S_BSPI_PAIN2	BSPI	I	3	A_Pain			S_BSPI_RUN1
+
+S_BSPI_DIE1		BSPI	J	20	A_Scream		S_BSPI_DIE2
+S_BSPI_DIE2		BSPI	K	7	A_Fall			S_BSPI_DIE3
+S_BSPI_DIE3		BSPI	L	7	NULL			S_BSPI_DIE4
+S_BSPI_DIE4		BSPI	M	7	NULL			S_BSPI_DIE5
+S_BSPI_DIE5		BSPI	N	7	NULL			S_BSPI_DIE6
+S_BSPI_DIE6		BSPI	O	7	NULL			S_BSPI_DIE7
+S_BSPI_DIE7		BSPI	P	-1	A_BossDeath		S_NULL
+
+S_BSPI_RAISE1	BSPI	P	5	NULL			S_BSPI_RAISE2
+S_BSPI_RAISE2	BSPI	O	5	NULL			S_BSPI_RAISE3
+S_BSPI_RAISE3	BSPI	N	5	NULL			S_BSPI_RAISE4
+S_BSPI_RAISE4	BSPI	M	5	NULL			S_BSPI_RAISE5
+S_BSPI_RAISE5	BSPI	L	5	NULL			S_BSPI_RAISE6
+S_BSPI_RAISE6	BSPI	K	5	NULL			S_BSPI_RAISE7
+S_BSPI_RAISE7	BSPI	J	5	NULL			S_BSPI_RUN1
+
+// Plasma bolt
+S_ARACH_PLAZ	APLS	A*	5	NULL			S_ARACH_PLAZ2
+S_ARACH_PLAZ2	APLS	B*	5	NULL			S_ARACH_PLAZ
+
+// Explosion
+S_ARACH_PLEX	APBX	A*	5	NULL			S_ARACH_PLEX2
+S_ARACH_PLEX2	APBX	B*	5	NULL			S_ARACH_PLEX3
+S_ARACH_PLEX3	APBX	C*	5	NULL			S_ARACH_PLEX4
+S_ARACH_PLEX4	APBX	D*	5	NULL			S_ARACH_PLEX5
+S_ARACH_PLEX5	APBX	E*	5	NULL			S_NULL
+
+
+//==============================================================================
+// Cyberdemon
+//==============================================================================
+
+// cyber boss
+
+$ MT_CYBORG
+doomednum		16
+spawnstate		S_CYBER_STND
+spawnhealth		4000
+seestate		S_CYBER_RUN1
+seesound		cyber/sight
+painstate		S_CYBER_PAIN
+painchance		20
+painsound		cyber/pain
+missilestate	S_CYBER_ATK1
+deathstate		S_CYBER_DIE1
+deathsound		cyber/death
+speed			16
+radius			40
+height			110
+mass			1000
+activesound		cyber/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_BOSS
+
+S_CYBER_STND	CYBR	A	10	A_Look			S_CYBER_STND2
+S_CYBER_STND2	CYBR	B	10	A_Look			S_CYBER_STND
+
+S_CYBER_RUN1	CYBR	A	3	A_Hoof			S_CYBER_RUN2
+S_CYBER_RUN2	CYBR	A	3	A_Chase			S_CYBER_RUN3
+S_CYBER_RUN3	CYBR	B	3	A_Chase			S_CYBER_RUN4
+S_CYBER_RUN4	CYBR	B	3	A_Chase			S_CYBER_RUN5
+S_CYBER_RUN5	CYBR	C	3	A_Chase			S_CYBER_RUN6
+S_CYBER_RUN6	CYBR	C	3	A_Chase			S_CYBER_RUN7
+S_CYBER_RUN7	CYBR	D	3	A_Metal			S_CYBER_RUN8
+S_CYBER_RUN8	CYBR	D	3	A_Chase			S_CYBER_RUN1
+
+S_CYBER_ATK1	CYBR	E	6	A_FaceTarget	S_CYBER_ATK2
+S_CYBER_ATK2	CYBR	F	12	A_CyberAttack	S_CYBER_ATK3
+S_CYBER_ATK3	CYBR	E	12	A_FaceTarget	S_CYBER_ATK4
+S_CYBER_ATK4	CYBR	F	12	A_CyberAttack	S_CYBER_ATK5
+S_CYBER_ATK5	CYBR	E	12	A_FaceTarget	S_CYBER_ATK6
+S_CYBER_ATK6	CYBR	F	12	A_CyberAttack	S_CYBER_RUN1
+
+S_CYBER_PAIN	CYBR	G	10	A_Pain			S_CYBER_RUN1
+
+S_CYBER_DIE1	CYBR	H	10	NULL			S_CYBER_DIE2
+S_CYBER_DIE2	CYBR	I	10	A_Scream		S_CYBER_DIE3
+S_CYBER_DIE3	CYBR	J	10	NULL			S_CYBER_DIE4
+S_CYBER_DIE4	CYBR	K	10	NULL			S_CYBER_DIE5
+S_CYBER_DIE5	CYBR	L	10	NULL			S_CYBER_DIE6
+S_CYBER_DIE6	CYBR	M	10	A_Fall			S_CYBER_DIE7
+S_CYBER_DIE7	CYBR	N	10	NULL			S_CYBER_DIE8
+S_CYBER_DIE8	CYBR	O	10	NULL			S_CYBER_DIE9
+S_CYBER_DIE9	CYBR	P	30	NULL			S_CYBER_DIE10
+S_CYBER_DIE10	CYBR	P	-1	A_BossDeath		S_NULL
+
+//==============================================================================
+// Pain Elemental
+//==============================================================================
+
+$ MT_PAIN
+doomednum		71
+spawnstate		S_PAIN_STND
+spawnhealth		400
+seestate		S_PAIN_RUN1
+seesound		pain/sight
+painstate		S_PAIN_PAIN
+painchance		128
+painsound		pain/pain
+missilestate	S_PAIN_ATK1
+deathstate		S_PAIN_DIE1
+raisestate		S_PAIN_RAISE1
+deathsound		pain/death
+speed			8
+radius			31
+height			56
+mass			400
+activesound		pain/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+
+S_PAIN_STND		PAIN	A	10	A_Look			S_PAIN_STND
+
+S_PAIN_RUN1		PAIN	A	3	A_Chase			S_PAIN_RUN2
+S_PAIN_RUN2		PAIN	A	3	A_Chase			S_PAIN_RUN3
+S_PAIN_RUN3		PAIN	B	3	A_Chase			S_PAIN_RUN4
+S_PAIN_RUN4		PAIN	B	3	A_Chase			S_PAIN_RUN5
+S_PAIN_RUN5		PAIN	C	3	A_Chase			S_PAIN_RUN6
+S_PAIN_RUN6		PAIN	C	3	A_Chase			S_PAIN_RUN1
+
+S_PAIN_ATK1		PAIN	D	5	A_FaceTarget	S_PAIN_ATK2
+S_PAIN_ATK2		PAIN	E	5	A_FaceTarget	S_PAIN_ATK3
+S_PAIN_ATK3		PAIN	F*	5	A_FaceTarget	S_PAIN_ATK4
+S_PAIN_ATK4		PAIN	F*	0	A_PainAttack	S_PAIN_RUN1
+
+S_PAIN_PAIN		PAIN	G	6	NULL			S_PAIN_PAIN2
+S_PAIN_PAIN2	PAIN	G	6	A_Pain			S_PAIN_RUN1
+
+S_PAIN_DIE1		PAIN	H*	8	NULL			S_PAIN_DIE2
+S_PAIN_DIE2		PAIN	I*	8	A_Scream		S_PAIN_DIE3
+S_PAIN_DIE3		PAIN	J*	8	NULL			S_PAIN_DIE4
+S_PAIN_DIE4		PAIN	K*	8	NULL			S_PAIN_DIE5
+S_PAIN_DIE5		PAIN	L*	8	A_PainDie		S_PAIN_DIE6
+S_PAIN_DIE6		PAIN	M*	8	NULL			S_NULL
+
+S_PAIN_RAISE1	PAIN	M	8	NULL			S_PAIN_RAISE2
+S_PAIN_RAISE2	PAIN	L	8	NULL			S_PAIN_RAISE3
+S_PAIN_RAISE3	PAIN	K	8	NULL			S_PAIN_RAISE4
+S_PAIN_RAISE4	PAIN	J	8	NULL			S_PAIN_RAISE5
+S_PAIN_RAISE5	PAIN	I	8	NULL			S_PAIN_RAISE6
+S_PAIN_RAISE6	PAIN	H	8	NULL			S_PAIN_RUN1
+
+//==============================================================================
+// Wolfenstein SS
+//==============================================================================
+
+$ MT_WOLFSS
+doomednum		84
+spawnstate		S_SSWV_STND
+spawnhealth		50
+seestate		S_SSWV_RUN1
+seesound		wolfss/sight
+painstate		S_SSWV_PAIN
+painchance		170
+painsound		wolfss/pain
+missilestate	S_SSWV_ATK1
+deathstate		S_SSWV_DIE1
+xdeathstate		S_SSWV_XDIE1
+raisestate		S_SSWV_RAISE1
+deathsound		wolfss/death
+speed			8
+radius			20
+height			56
+activesound		wolfss/active
+flags			MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL
+flags2			MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL
+
+
+S_SSWV_STND		SSWV	A	10	A_Look			S_SSWV_STND2
+S_SSWV_STND2	SSWV	B	10	A_Look			S_SSWV_STND
+
+S_SSWV_RUN1		SSWV	A	3	A_Chase			S_SSWV_RUN2
+S_SSWV_RUN2		SSWV	A	3	A_Chase			S_SSWV_RUN3
+S_SSWV_RUN3		SSWV	B	3	A_Chase			S_SSWV_RUN4
+S_SSWV_RUN4		SSWV	B	3	A_Chase			S_SSWV_RUN5
+S_SSWV_RUN5		SSWV	C	3	A_Chase			S_SSWV_RUN6
+S_SSWV_RUN6		SSWV	C	3	A_Chase			S_SSWV_RUN7
+S_SSWV_RUN7		SSWV	D	3	A_Chase			S_SSWV_RUN8
+S_SSWV_RUN8		SSWV	D	3	A_Chase			S_SSWV_RUN1
+
+S_SSWV_ATK1		SSWV	E	10	A_FaceTarget	S_SSWV_ATK2
+S_SSWV_ATK2		SSWV	F	10	A_FaceTarget	S_SSWV_ATK3
+S_SSWV_ATK3		SSWV	G*	4	A_CPosAttack	S_SSWV_ATK4
+S_SSWV_ATK4		SSWV	F	6	A_FaceTarget	S_SSWV_ATK5
+S_SSWV_ATK5		SSWV	G*	4	A_CPosAttack	S_SSWV_ATK6
+S_SSWV_ATK6		SSWV	F	1	A_CPosRefire	S_SSWV_ATK2
+
+S_SSWV_PAIN		SSWV	H	3	NULL			S_SSWV_PAIN2
+S_SSWV_PAIN2	SSWV	H	3	A_Pain			S_SSWV_RUN1
+
+S_SSWV_DIE1		SSWV	I	5	NULL			S_SSWV_DIE2
+S_SSWV_DIE2		SSWV	J	5	A_Scream		S_SSWV_DIE3
+S_SSWV_DIE3		SSWV	K	5	A_Fall			S_SSWV_DIE4
+S_SSWV_DIE4		SSWV	L	5	NULL			S_SSWV_DIE5
+S_SSWV_DIE5		SSWV	M	-1	NULL			S_NULL
+
+S_SSWV_XDIE1	SSWV	N	5	NULL			S_SSWV_XDIE2
+S_SSWV_XDIE2	SSWV	O	5	A_XScream		S_SSWV_XDIE3
+S_SSWV_XDIE3	SSWV	P	5	A_Fall			S_SSWV_XDIE4
+S_SSWV_XDIE4	SSWV	Q	5	NULL			S_SSWV_XDIE5
+S_SSWV_XDIE5	SSWV	R	5	NULL			S_SSWV_XDIE6
+S_SSWV_XDIE6	SSWV	S	5	NULL			S_SSWV_XDIE7
+S_SSWV_XDIE7	SSWV	T	5	NULL			S_SSWV_XDIE8
+S_SSWV_XDIE8	SSWV	U	5	NULL			S_SSWV_XDIE9
+S_SSWV_XDIE9	SSWV	V	-1	NULL			S_NULL
+
+S_SSWV_RAISE1	SSWV	M	5	NULL			S_SSWV_RAISE2
+S_SSWV_RAISE2	SSWV	L	5	NULL			S_SSWV_RAISE3
+S_SSWV_RAISE3	SSWV	K	5	NULL			S_SSWV_RAISE4
+S_SSWV_RAISE4	SSWV	J	5	NULL			S_SSWV_RAISE5
+S_SSWV_RAISE5	SSWV	I	5	NULL			S_SSWV_RUN1
+
+//==============================================================================
+// Commander Keen
+//==============================================================================
+
+$ MT_KEEN
+doomednum		72
+spawnstate		S_KEENSTND
+flags			MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY|MF_SHOOTABLE|MF_COUNTKILL
+height			72
+radius			16
+spawnhealth		100
+painchance		256
+painstate		S_KEENPAIN
+deathstate		S_COMMKEEN
+deathsound		keen/death
+painsound		keen/pain
+mass			10000000
+
+S_KEENSTND		KEEN	A	-1		NULL			S_KEENSTND
+
+S_COMMKEEN		KEEN	A	6	NULL			S_COMMKEEN2
+S_COMMKEEN2		KEEN	B	6	NULL			S_COMMKEEN3
+S_COMMKEEN3		KEEN	C	6	A_Scream		S_COMMKEEN4
+S_COMMKEEN4		KEEN	D	6	NULL			S_COMMKEEN5
+S_COMMKEEN5		KEEN	E	6	NULL			S_COMMKEEN6
+S_COMMKEEN6		KEEN	F	6	NULL			S_COMMKEEN7
+S_COMMKEEN7		KEEN	G	6	NULL			S_COMMKEEN8
+S_COMMKEEN8		KEEN	H	6	NULL			S_COMMKEEN9
+S_COMMKEEN9		KEEN	I	6	NULL			S_COMMKEEN10
+S_COMMKEEN10	KEEN	J	6	NULL			S_COMMKEEN11
+S_COMMKEEN11	KEEN	K	6	A_KeenDie		S_COMMKEEN12
+S_COMMKEEN12	KEEN	L	-1		NULL			S_NULL
+
+S_KEENPAIN		KEEN	M	4	NULL			S_KEENPAIN2
+S_KEENPAIN2		KEEN	M	8	A_Pain			S_KEENSTND
+
+//==============================================================================
+
+$ MT_BOSSBRAIN
+doomednum		88
+spawnstate		S_BRAIN
+spawnhealth		250
+deathstate		S_BRAIN_DIE1
+deathsound		brain/death
+painstate		S_BRAIN_PAIN
+painchance		255
+painsound		brain/pain
+speed			0
+radius			16
+height			16
+flags			MF_SOLID|MF_SHOOTABLE
+mass			10000000
+
+// stay in state until killed
+S_BRAIN			BBRN	A	-1		NULL			S_NULL
+
+S_BRAIN_PAIN	BBRN	B	36	A_BrainPain		S_BRAIN
+
+S_BRAIN_DIE1	BBRN	A	100	A_BrainScream	S_BRAIN_DIE2
+S_BRAIN_DIE2	BBRN	A	10	NULL			S_BRAIN_DIE3
+S_BRAIN_DIE3	BBRN	A	10	NULL			S_BRAIN_DIE4
+S_BRAIN_DIE4	BBRN	A	-1		A_BrainDie		S_NULL
+
+
+// source (invisible) for boss to spit MT_SPAWNSHOTS and look for player
+$ MT_BOSSSPIT
+doomednum		89
+spawnstate		S_BRAINEYE
+seestate		S_BRAINEYESEE
+height			32
+flags			MF_NOBLOCKMAP|MF_NOSECTOR
+
+S_BRAINEYE		SSWV	A	10	A_Look			S_BRAINEYE
+
+S_BRAINEYESEE	SSWV	A	181	A_BrainAwake	S_BRAINEYE1
+
+S_BRAINEYE1		SSWV	A	150	A_BrainSpit		S_BrainEye1
+
+
+// targets (invisible) for boss to spit at
+$ MT_BOSSTARGET
+doomednum		87
+height			32
+flags			MF_NOBLOCKMAP|MF_NOSECTOR
+
+
+// spinning demon cube to shoot from MT_BOSSSPIT to MT_BOSSTARGET
+$ MT_SPAWNSHOT
+spawnstate		S_SPAWN1
+speed			10
+damage			3
+seesound		brain/spit
+deathsound		brain/spawn
+radius			6
+height			32
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY|MF_NOCLIP
+	
+S_SPAWN1		BOSF	A*	3	A_SpawnSound	S_SPAWN2
+S_SPAWN2		BOSF	B*	3	A_SpawnFly		S_SPAWN3
+S_SPAWN3		BOSF	C*	3	A_SpawnFly		S_SPAWN4
+S_SPAWN4		BOSF	D*	3	A_SpawnFly		S_SPAWN1
+
+
+$ MT_SPAWNFIRE
+spawnstate		S_SPAWNFIRE1
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+translucency	.66
+
+S_SPAWNFIRE1	FIRE	A*	4	A_Fire			S_SPAWNFIRE2
+S_SPAWNFIRE2	FIRE	B*	4	A_Fire			S_SPAWNFIRE3
+S_SPAWNFIRE3	FIRE	C*	4	A_Fire			S_SPAWNFIRE4
+S_SPAWNFIRE4	FIRE	D*	4	A_Fire			S_SPAWNFIRE5
+S_SPAWNFIRE5	FIRE	E*	4	A_Fire			S_SPAWNFIRE6
+S_SPAWNFIRE6	FIRE	F*	4	A_Fire			S_SPAWNFIRE7
+S_SPAWNFIRE7	FIRE	G*	4	A_Fire			S_SPAWNFIRE8
+S_SPAWNFIRE8	FIRE	H*	4	A_Fire			S_NULL
+
+S_BRAINEXPLODE1	MISL	B*	10	NULL			S_BRAINEXPLODE2
+S_BRAINEXPLODE2	MISL	C*	10	NULL			S_BRAINEXPLODE3
+S_BRAINEXPLODE3	MISL	D*	10	A_BrainExplode	S_NULL
+
+
+//==============================================================================
+
+$ MT_BARREL
+doomednum		2035
+spawnstate		S_BAR1
+spawnhealth		20
+deathstate		S_BEXP
+deathsound		world/barrelx
+speed			0
+radius			10
+height			42
+flags			MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD
+
+// ===========================
+// 
+//  missiles
+// 
+// ===========================
+
+$ MT_TROOPSHOT
+spawnstate		S_TBALL1
+deathstate		S_TBALLX1
+speed			10
+damage			3
+seesound		imp/attack
+deathsound		imp/shotx
+radius			6
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+translucency	.75
+
+$ MT_HEADSHOT
+spawnstate		S_RBALL1
+deathstate		S_RBALLX1
+speed			10
+damage			5
+seesound		caco/attack
+deathsound		caco/shotx
+radius			6
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+translucency	.75
+
+$ MT_ROCKET
+spawnstate		S_ROCKET
+deathstate		S_EXPLODE1
+speed			20
+damage			20
+seesound		weapons/rocklf
+deathsound		weapons/rocklx
+radius			11
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+
+$ MT_PLASMA
+spawnstate		S_PLASBALL
+deathstate		S_PLASEXP
+speed			25
+damage			5
+seesound		weapons/plasmaf
+deathsound		weapons/plasmax
+radius			13
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+translucency	.66
+
+$ MT_BFG
+spawnstate		S_BFGSHOT
+deathstate		S_BFGLAND
+speed			25
+damage			100
+deathsound		weapons/bfgx
+radius			13
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+translucency	.66
+
+$ MT_ARACHPLAZ
+spawnstate		S_ARACH_PLAZ
+deathstate		S_ARACH_PLEX
+speed			25
+damage			5
+seesound		baby/attack
+deathsound		baby/shotx
+radius			13
+height			8
+flags			MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY
+flags2			MF2_PCROSS|MF2_IMPACT
+translucency	.66
+
+
+// ===================
+// 
+//  misc
+// 
+// ===================
+
+$ MT_PUFF
+spawnstate		S_PUFF1
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+translucency	.50
+
+$ MT_BLOOD
+spawnstate		S_BLOOD1
+flags			MF_NOBLOCKMAP
+
+$ MT_TFOG
+spawnstate		S_TFOG
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+translucency	.66
+
+$ MT_IFOG
+spawnstate		S_IFOG
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+
+$ MT_TELEPORTMAN
+doomednum		14
+flags			MF_NOBLOCKMAP|MF_NOSECTOR
+
+$ MT_EXTRABFG		// explosion for all other visible monsters
+spawnstate		S_BFGEXP
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+translucency	.66
+
+
+// ===================
+// 
+//  static sprites
+// 
+// ===================
+
+$ MT_ARMOR1
+	doomednum 2018	spawnstate S_ARM1	flags	MF_SPECIAL
+	item		"Basic Armor"
+
+$ MT_ARMOR2
+	doomednum 2019	spawnstate S_ARM2	flags	MF_SPECIAL
+	item		"Mega Armor"
+
+$ MT_HEALTHBONUS
+	doomednum 2014	spawnstate S_BON1	flags	MF_SPECIAL|MF_COUNTITEM
+	item		"Health Bonus"
+
+$ MT_ARMORBONUS
+	doomednum 2015	spawnstate S_BON2	flags	MF_SPECIAL|MF_COUNTITEM
+	item		"Armor Bonus"
+
+$ MT_BKEY
+	doomednum 5		spawnstate S_BKEY	flags	MF_SPECIAL|MF_NOTDMATCH
+	item		"Blue Keycard"
+
+$ MT_RKEY
+	doomednum 13	spawnstate S_RKEY	flags	MF_SPECIAL|MF_NOTDMATCH
+	item		"Red Keycard"
+
+$ MT_YKEY
+	doomednum 6		spawnstate S_YKEY	flags	MF_SPECIAL|MF_NOTDMATCH
+	item		"Yellow Keycard"
+
+$ MT_YSKULL
+	 doomednum 39	spawnstate S_YSKULL	flags	MF_SPECIAL|MF_NOTDMATCH
+	 item		"Yellow Skull Key"
+
+$ MT_RSKULL
+	doomednum 38	spawnstate S_RSKULL	flags	MF_SPECIAL|MF_NOTDMATCH
+	item		"Red Skull Key"
+
+$ MT_BSKULL
+	doomednum 40	spawnstate S_BSKULL	flags	MF_SPECIAL|MF_NOTDMATCH
+	item		"Blue Skull Key"
+
+$ MT_STIMPACK
+	doomednum 2011	spawnstate S_STIM	flags	MF_SPECIAL
+	item		"Stim Pack"
+
+$ MT_MEDIKIT
+	doomednum 2012	spawnstate S_MEDI	flags	MF_SPECIAL
+	item		"Medikit"
+
+$ MT_SOULSPHERE
+	doomednum 2013	spawnstate S_SOUL	flags	MF_SPECIAL|MF_COUNTITEM
+	item		"Soul Sphere"
+
+$ MT_INV
+	doomednum 2022	spawnstate S_PINV	flags	MF_SPECIAL|MF_COUNTITEM
+	item		"Invulnerability"
+
+$ MT_STRENGTH
+	doomednum 2023	spawnstate S_PSTR	flags	MF_SPECIAL|MF_COUNTITEM
+	item		"Berserk"
+
+$ MT_INS
+	doomednum 2024	spawnstate S_PINS	flags	MF_SPECIAL|MF_COUNTITEM
+	item		"Invisibility"
+
+$ MT_SUIT
+	doomednum 2025	spawnstate S_SUIT	flags	MF_SPECIAL
+	height 46
+	item		"Radiation Suit"
+
+$ MT_MAP
+	doomednum 2026	spawnstate S_PMAP	flags	MF_SPECIAL|MF_COUNTITEM
+	item		"Computer Map"
+
+$ MT_LIGHTAMP
+	doomednum 2045	spawnstate S_PVIS	flags	MF_SPECIAL|MF_COUNTITEM
+	height 10
+	item		"Light Amplification Visor"
+
+$ MT_MEGA
+	doomednum 83	spawnstate S_MEGA	flags	MF_SPECIAL|MF_COUNTITEM
+	item		"Mega Health"
+
+$ MT_CLIP
+	doomednum 2007	spawnstate S_CLIP	flags	MF_SPECIAL
+	height 10
+	item		"Bullets"
+	spawnhealth	10
+
+$ MT_AMMOBOX
+	doomednum 2048	spawnstate S_AMMO	flags	MF_SPECIAL
+	item		"Bullets"
+	spawnhealth	50
+
+$ MT_ROCKETPICKUP
+	doomednum 2010	spawnstate S_ROCK	flags	MF_SPECIAL
+	item		"Rockets"
+	spawnhealth	1
+	
+$ MT_ROCKETBOX
+	doomednum 2046	spawnstate S_BROK	flags	MF_SPECIAL
+	height 26
+	item		"Rockets"
+	spawnhealth	5
+
+$ MT_CELL
+	doomednum 2047	spawnstate S_CELL	flags	MF_SPECIAL
+	height 10
+	item		"Cells"
+	spawnhealth	20
+
+$ MT_CELLPACK
+	doomednum 17	spawnstate S_CELP	flags	MF_SPECIAL
+	height 18
+	item		"Cells"
+	spawnhealth	100
+
+$ MT_SHELLS
+	doomednum 2008	spawnstate S_SHEL	flags	MF_SPECIAL
+	height 8
+	item		"Shells"
+	spawnhealth	4
+
+$ MT_SHELLBOX
+	doomednum 2049	spawnstate S_SBOX	flags	MF_SPECIAL
+	height 10
+	item		"Shells"
+	spawnhealth	20
+
+$ MT_BACKPACK
+	doomednum 8		spawnstate S_BPAK	flags	MF_SPECIAL
+	height 26
+	item		"Backpack"
+
+$ MT_BFGGUN
+	doomednum 2006	spawnstate S_BFUG	flags	MF_SPECIAL
+	height 20
+	item		"BFG 9000"
+
+$ MT_CHAINGUN
+	doomednum 2002	spawnstate S_MGUN	flags	MF_SPECIAL
+	item		"Chaingun"
+
+$ MT_CHAINSAW
+	doomednum 2005	spawnstate S_CSAW	flags	MF_SPECIAL
+	item		"Chainsaw"
+
+$ MT_ROCKETLAUNCHER
+	doomednum 2003	spawnstate S_LAUN	flags	MF_SPECIAL
+	item		"Rocket Launcher"
+
+$ MT_PLASMAGUN
+	doomednum 2004	spawnstate S_PLAS	flags	MF_SPECIAL
+	item		"Plasma Rifle"
+
+$ MT_SHOTGUN
+	doomednum 2001	spawnstate S_SHOT	flags	MF_SPECIAL
+	item		"Shotgun"
+
+$ MT_SUPERSHOTGUN
+	doomednum 82	spawnstate S_SHOT2	flags	MF_SPECIAL
+	item		"Super Shotgun"
+
+$ + doomednum 85	spawnstate S_TECHLAMP	flags	MF_SOLID radius 16 height 80
+$ + doomednum 86	spawnstate S_TECH2LAMP	flags	MF_SOLID radius 16 height 60
+
+$ + doomednum 2028	spawnstate S_COLU		flags	MF_SOLID radius 16 height 48
+$ + doomednum 30	spawnstate S_TALLGRNCOL	flags	MF_SOLID radius 16 height 52
+$ + doomednum 31	spawnstate S_SHRTGRNCOL	flags	MF_SOLID radius 16 height 40
+$ + doomednum 32	spawnstate S_TALLREDCOL	flags	MF_SOLID radius 16 height 52
+$ + doomednum 33	spawnstate S_SHRTREDCOL	flags	MF_SOLID radius 16 height 40
+$ + doomednum 37	spawnstate S_SKULLCOL	flags	MF_SOLID radius 16 height 40
+$ + doomednum 36	spawnstate S_HEARTCOL	flags	MF_SOLID radius 16 height 40
+$ + doomednum 41	spawnstate S_EVILEYE	flags	MF_SOLID radius 16 height 54
+$ + doomednum 42	spawnstate S_FLOATSKULL	flags	MF_SOLID radius 16 height 26
+$ + doomednum 43	spawnstate S_TORCHTREE	flags	MF_SOLID radius 16 height 56
+$ + doomednum 44	spawnstate S_BLUETORCH	flags	MF_SOLID radius 16 height 68
+$ + doomednum 45	spawnstate S_GREENTORCH	flags	MF_SOLID radius 16 height 68
+$ + doomednum 46	spawnstate S_REDTORCH	flags	MF_SOLID radius 16 height 68
+$ + doomednum 55	spawnstate S_BTORCHSHRT	flags	MF_SOLID radius 16 height 37
+$ + doomednum 56	spawnstate S_GTORCHSHRT	flags	MF_SOLID radius 16 height 37
+$ + doomednum 57	spawnstate S_RTORCHSHRT	flags	MF_SOLID radius 16 height 37
+$ + doomednum 47	spawnstate S_STALAGTITE	flags	MF_SOLID radius 16 height 40
+$ + doomednum 48	spawnstate S_TECHPILLAR	flags	MF_SOLID radius 16 height 128
+
+
+$ + doomednum 34 spawnstate S_CANDLESTIK height 14
+$ + doomednum 35 spawnstate S_CANDELABRA	flags	MF_SOLID radius 16 height 60
+
+$ + doomednum 49 spawnstate S_BLOODYTWITCH
+	flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+	height	68 radius 16
+$ + doomednum 50 spawnstate S_MEAT2
+	flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+	height	84 radius 16
+$ + doomednum 51 spawnstate S_MEAT3
+	flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+	height	84 radius 16
+$ + doomednum 52 spawnstate S_MEAT4
+	flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+	height	68 radius 16
+$ + doomednum 53 spawnstate S_MEAT5
+	flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+	height	52 radius 16
+$ + doomednum 59 spawnstate S_MEAT2
+	flags MF_SPAWNCEILING|MF_NOGRAVITY
+	height	84
+$ + doomednum 60 spawnstate S_MEAT4
+	flags MF_SPAWNCEILING|MF_NOGRAVITY
+	height	68
+$ + doomednum 61 spawnstate S_MEAT3
+	flags MF_SPAWNCEILING|MF_NOGRAVITY
+	height	52
+$ + doomednum 62 spawnstate S_MEAT5
+	flags MF_SPAWNCEILING|MF_NOGRAVITY
+	height	52
+$ + doomednum 63 spawnstate S_BLOODYTWITCH
+	flags MF_SPAWNCEILING|MF_NOGRAVITY
+	height	68
+$ + doomednum 22 spawnstate S_HEAD_DIE6		height 38
+$ + doomednum 15 spawnstate S_PLAY_DIE7		height 12
+$ + doomednum 18 spawnstate S_POSS_DIE5		height 14
+$ + doomednum 21 spawnstate S_SARG_DIE6		height 14
+$ + doomednum 23 spawnstate S_SKULL_DIE6	height 16
+$ + doomednum 20 spawnstate S_TROO_DIE5		height 18
+$ + doomednum 19 spawnstate S_SPOS_DIE5		height 16
+$ MT_GUTS
+	doomednum 10 spawnstate S_PLAY_XDIE9	height 8
+$ + doomednum 12 spawnstate S_PLAY_XDIE9	height 8
+$ + doomednum 28 spawnstate S_HEADSONSTICK	flags MF_SOLID radius 16 height 64
+$ MT_GIBS
+	doomednum 24 spawnstate S_GIBS			height 8
+$ + doomednum 27 spawnstate S_HEADONASTICK	flags MF_SOLID radius 16 height 56
+$ + doomednum 29 spawnstate S_HEADCANDLES	flags MF_SOLID radius 16 height 42
+$ + doomednum 25 spawnstate S_DEADSTICK		flags MF_SOLID radius 16 height 64
+$ + doomednum 26 spawnstate S_LIVESTICK		flags MF_SOLID radius 16 height 64
+$ + doomednum 54 spawnstate S_BIGTREE		flags MF_SOLID radius 32 height 108
+$ MT_BURNINGBARREL
+	doomednum 70 spawnstate S_BBAR1			flags MF_SOLID radius 16 height 32
+$ + doomednum 73 spawnstate S_HANGNOGUTS
+flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+height 88	radius 16
+$ + doomednum 74 spawnstate S_HANGBNOBRAIN
+flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+height 88	radius 16
+$ + doomednum 75 spawnstate S_HANGTLOOKDN
+flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+height 64	radius 16
+$ + doomednum 76 spawnstate S_HANGTSKULL
+flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+height 64	radius 16
+$ + doomednum 77 spawnstate S_HANGTLOOKUP
+flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+height 64	radius 16
+$ + doomednum 78 spawnstate S_HANGTNOBRAIN
+flags MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY
+height 64	radius 16
+$ MT_COLONGIBS
+	doomednum 79 spawnstate S_COLONGIBS		flags MF_NOBLOCKMAP height 4
+$ MT_SMALLPOOL
+	doomednum 80 spawnstate S_SMALLPOOL		flags MF_NOBLOCKMAP height 1
+$ MT_BRAINSTEM
+	doomednum 81 spawnstate S_BRAINSTEM		flags MF_NOBLOCKMAP height 4
+
+//
+// items
+//
+S_ARM1			ARM1	A	6	NULL			S_ARM1A
+S_ARM1A			ARM1	B*	7	NULL			S_ARM1
+
+S_ARM2			ARM2	A	6	NULL			S_ARM2A
+S_ARM2A			ARM2	B*	6	NULL			S_ARM2
+
+//
+// Innocent barrel - bubbling 2 frames
+//
+S_BAR1			BAR1	A	6	NULL			S_BAR2
+S_BAR2			BAR1	B	6	NULL			S_BAR1
+
+//
+// Barrel explosion
+//
+S_BEXP			BEXP	A*	5	NULL			S_BEXP2
+S_BEXP2			BEXP	B*	5	A_Scream		S_BEXP3
+S_BEXP3			BEXP	C*	5	NULL			S_BEXP4
+S_BEXP4			BEXP	D*	10	A_Explode		S_BEXP5
+S_BEXP5			BEXP	E*	10	NULL			S_NULL
+
+//
+// Burning barrel
+//
+S_BBAR1			FCAN	A*	4	NULL			S_BBAR2
+S_BBAR2			FCAN	B*	4	NULL			S_BBAR3
+S_BBAR3			FCAN	C*	4	NULL			S_BBAR1
+
+//
+// 2 bonus items
+//
+S_BON1			BON1	A	6	NULL			S_BON1A
+S_BON1A			BON1	B	6	NULL			S_BON1B
+S_BON1B			BON1	C	6	NULL			S_BON1C
+S_BON1C			BON1	D	6	NULL			S_BON1D
+S_BON1D			BON1	C	6	NULL			S_BON1E
+S_BON1E			BON1	B	6	NULL			S_BON1
+
+S_BON2			BON2	A	6	NULL			S_BON2A
+S_BON2A			BON2	B	6	NULL			S_BON2B
+S_BON2B			BON2	C	6	NULL			S_BON2C
+S_BON2C			BON2	D	6	NULL			S_BON2D
+S_BON2D			BON2	C	6	NULL			S_BON2E
+S_BON2E			BON2	B	6	NULL			S_BON2
+
+//
+// Blue key
+//
+S_BKEY			BKEY	A	10	NULL			S_BKEY2
+S_BKEY2			BKEY	B*	10	NULL			S_BKEY
+
+//
+// Red key
+//
+S_RKEY			RKEY	A	10	NULL			S_RKEY2
+S_RKEY2			RKEY	B*	10	NULL			S_RKEY
+
+//
+// Yellow key
+//
+S_YKEY			YKEY	A	10	NULL			S_YKEY2
+S_YKEY2			YKEY	B*	10	NULL			S_YKEY
+
+//
+// Blue skull key
+//
+S_BSKULL		BSKU	A	10	NULL			S_BSKULL2
+S_BSKULL2		BSKU	B*	10	NULL			S_BSKULL
+
+//
+// Red skull key
+//
+S_RSKULL		RSKU	A	10	NULL			S_RSKULL2
+S_RSKULL2		RSKU	B*	10	NULL			S_RSKULL
+
+//
+// Yellow skull key
+//
+S_YSKULL		YSKU	A	10	NULL			S_YSKULL2
+S_YSKULL2		YSKU	B*	10	NULL			S_YSKULL
+
+//
+// Health stimpack/medikit
+//
+S_STIM			STIM	A	-1	NULL			S_NULL
+S_MEDI			MEDI	A	-1	NULL			S_NULL
+
+//
+// Soul Sphere
+//
+S_SOUL			SOUL	A*	6	NULL			S_SOUL2
+S_SOUL2			SOUL	B*	6	NULL			S_SOUL3
+S_SOUL3			SOUL	C*	6	NULL			S_SOUL4
+S_SOUL4			SOUL	D*	6	NULL			S_SOUL5
+S_SOUL5			SOUL	C*	6	NULL			S_SOUL6
+S_SOUL6			SOUL	B*	6	NULL			S_SOUL
+
+//
+// Invincibility
+//
+S_PINV			PINV	A*	6	NULL			S_PINV2
+S_PINV2			PINV	B*	6	NULL			S_PINV3
+S_PINV3			PINV	C*	6	NULL			S_PINV4
+S_PINV4			PINV	D*	6	NULL			S_PINV
+
+//
+// Strength (Berserk)
+//
+S_PSTR			PSTR	A*	-1	NULL			S_NULL
+
+//
+// Invisibility
+//
+S_PINS			PINS	A*	6	NULL			S_PINS2
+S_PINS2			PINS	B*	6	NULL			S_PINS3
+S_PINS3			PINS	C*	6	NULL			S_PINS4
+S_PINS4			PINS	D*	6	NULL			S_PINS
+
+//
+// Mega sphere
+//
+S_MEGA			MEGA	A*	6	NULL			S_MEGA2
+S_MEGA2			MEGA	B*	6	NULL			S_MEGA3
+S_MEGA3			MEGA	C*	6	NULL			S_MEGA4
+S_MEGA4			MEGA	D*	6	NULL			S_MEGA
+
+//
+// Ironfeet (Radiation Shielding)
+//
+S_SUIT			SUIT	A*	-1	NULL	S_NULL
+//
+// Super Map
+//
+S_PMAP			PMAP	A*	6	NULL			S_PMAP2
+S_PMAP2			PMAP	B*	6	NULL			S_PMAP3
+S_PMAP3			PMAP	C*	6	NULL			S_PMAP4
+S_PMAP4			PMAP	D*	6	NULL			S_PMAP5
+S_PMAP5			PMAP	C*	6	NULL			S_PMAP6
+S_PMAP6			PMAP	B*	6	NULL			S_PMAP
+
+//
+// InfraVisor (Light Amp.)
+//
+S_PVIS			PVIS	A*	6	NULL			S_PVIS2
+S_PVIS2			PVIS	B	6	NULL			S_PVIS
+
+//
+// Ammo
+//
+S_CLIP			CLIP	A	-1	NULL			S_NULL
+S_AMMO			AMMO	A	-1	NULL			S_NULL
+S_ROCK			ROCK	A	-1	NULL			S_NULL
+S_BROK			BROK	A	-1	NULL			S_NULL
+S_CELL			CELL	A	-1	NULL			S_NULL
+S_CELP			CELP	A	-1	NULL			S_NULL
+S_SHEL			SHEL	A	-1	NULL			S_NULL
+S_SBOX			SBOX	A	-1	NULL			S_NULL
+
+// Backpack
+S_BPAK			BPAK	A	-1	NULL			S_NULL
+
+//
+// Weapons
+//
+S_BFUG			BFUG	A	-1	NULL			S_NULL
+S_MGUN			MGUN	A	-1	NULL			S_NULL
+S_CSAW			CSAW	A	-1	NULL			S_NULL
+S_LAUN			LAUN	A	-1	NULL			S_NULL
+S_PLAS			PLAS	A	-1	NULL			S_NULL
+S_SHOT			SHOT	A	-1	NULL			S_NULL
+S_SHOT2			SGN2	A	-1	NULL			S_NULL
+
+//
+// Freds
+//
+S_COLU			COLU	A*	-1	NULL			S_NULL
+
+S_STALAG		SMT2	A	-1	NULL			S_NULL
+
+// Bloody, twitching G.I.Joe
+S_BLOODYTWITCH	GOR1	A	10	NULL			S_BLOODYTWITCH2
+S_BLOODYTWITCH2	GOR1	B	15	NULL			S_BLOODYTWITCH3
+S_BLOODYTWITCH3	GOR1	C	8	NULL			S_BLOODYTWITCH4
+S_BLOODYTWITCH4	GOR1	B	6	NULL			S_BLOODYTWITCH
+
+// Dead, torso me
+S_DEADTORSO		PLAY	N	-1	NULL			S_NULL
+// Dead, bottom me
+S_DEADBOTTOM	PLAY	S	-1	NULL			S_NULL
+// Fred, Bunch o' heads
+S_HEADSONSTICK	POL2	A	-1	NULL			S_NULL
+// Dead, gibs
+S_GIBS			POL5	A	-1	NULL			S_NULL
+// Fred, head on a stick
+S_HEADONASTICK	POL4	A	-1	NULL			S_NULL
+// Fred, Heads & Candles
+S_HEADCANDLES	POL3	A*	6	NULL			S_HEADCANDLES2
+S_HEADCANDLES2	POL3	B*	6	NULL			S_HEADCANDLES
+// Fred, on a stick, dead
+S_DEADSTICK		POL1	A	-1	NULL			S_NULL
+// Fred, on a stick, live
+S_LIVESTICK		POL6	A	6	NULL			S_LIVESTICK2
+S_LIVESTICK2	POL6	B	8	NULL			S_LIVESTICK
+
+S_MEAT2			GOR2	A	-1	NULL			S_NULL
+S_MEAT3			GOR3	A	-1	NULL			S_NULL
+S_MEAT4			GOR4	A	-1	NULL			S_NULL
+S_MEAT5			GOR5	A	-1	NULL			S_NULL
+S_STALAGTITE	SMIT	A	-1	NULL			S_NULL
+S_TALLGRNCOL	COL1	A	-1	NULL			S_NULL
+S_SHRTGRNCOL	COL2	A	-1	NULL			S_NULL
+S_TALLREDCOL	COL3	A	-1	NULL			S_NULL
+S_SHRTREDCOL	COL4	A	-1	NULL			S_NULL
+S_CANDLESTIK	CAND	A*	-1	NULL			S_NULL
+S_CANDELABRA	CBRA	A*	-1	NULL			S_NULL
+S_SKULLCOL		COL6	A	-1	NULL			S_NULL
+S_TORCHTREE		TRE1	A	-1	NULL			S_NULL
+S_BIGTREE		TRE2	A	-1	NULL			S_NULL
+S_TECHPILLAR	ELEC	A	-1	NULL			S_NULL
+
+S_EVILEYE		CEYE	A*	6	NULL			S_EVILEYE2
+S_EVILEYE2		CEYE	B*	6	NULL			S_EVILEYE3
+S_EVILEYE3		CEYE	C*	6	NULL			S_EVILEYE4
+S_EVILEYE4		CEYE	B*	6	NULL			S_EVILEYE
+
+S_FLOATSKULL	FSKU	A*	6	NULL			S_FLOATSKULL2
+S_FLOATSKULL2	FSKU	B*	6	NULL			S_FLOATSKULL3
+S_FLOATSKULL3	FSKU	C*	6	NULL			S_FLOATSKULL
+
+S_HEARTCOL		COL5	A	14	NULL			S_HEARTCOL2
+S_HEARTCOL2		COL5	B	14	NULL			S_HEARTCOL
+
+S_BLUETORCH		TBLU	A*	4	NULL			S_BLUETORCH2
+S_BLUETORCH2	TBLU	B*	4	NULL			S_BLUETORCH3
+S_BLUETORCH3	TBLU	C*	4	NULL			S_BLUETORCH4
+S_BLUETORCH4	TBLU	D*	4	NULL			S_BLUETORCH
+
+S_GREENTORCH	TGRN	A*	4	NULL			S_GREENTORCH2
+S_GREENTORCH2	TGRN	B*	4	NULL			S_GREENTORCH3
+S_GREENTORCH3	TGRN	C*	4	NULL			S_GREENTORCH4
+S_GREENTORCH4	TGRN	D*	4	NULL			S_GREENTORCH
+
+S_REDTORCH		TRED	A*	4	NULL			S_REDTORCH2
+S_REDTORCH2		TRED	B*	4	NULL			S_REDTORCH3
+S_REDTORCH3		TRED	C*	4	NULL			S_REDTORCH4
+S_REDTORCH4		TRED	D*	4	NULL			S_REDTORCH
+
+S_BTORCHSHRT	SMBT	A*	4	NULL			S_BTORCHSHRT2
+S_BTORCHSHRT2	SMBT	B*	4	NULL			S_BTORCHSHRT3
+S_BTORCHSHRT3	SMBT	C*	4	NULL			S_BTORCHSHRT4
+S_BTORCHSHRT4	SMBT	D*	4	NULL			S_BTORCHSHRT
+
+S_GTORCHSHRT	SMGT	A*	4	NULL			S_GTORCHSHRT2
+S_GTORCHSHRT2	SMGT	B*	4	NULL			S_GTORCHSHRT3
+S_GTORCHSHRT3	SMGT	C*	4	NULL			S_GTORCHSHRT4
+S_GTORCHSHRT4	SMGT	D*	4	NULL			S_GTORCHSHRT
+
+S_RTORCHSHRT	SMRT	A*	4	NULL			S_RTORCHSHRT2
+S_RTORCHSHRT2	SMRT	B*	4	NULL			S_RTORCHSHRT3
+S_RTORCHSHRT3	SMRT	C*	4	NULL			S_RTORCHSHRT4
+S_RTORCHSHRT4	SMRT	D*	4	NULL			S_RTORCHSHRT
+
+S_HANGNOGUTS	HDB1	A	-1	NULL			S_NULL
+S_HANGBNOBRAIN	HDB2	A	-1	NULL			S_NULL
+S_HANGTLOOKDN	HDB3	A	-1	NULL			S_NULL
+S_HANGTSKULL	HDB4	A	-1	NULL			S_NULL
+S_HANGTLOOKUP	HDB5	A	-1	NULL			S_NULL
+S_HANGTNOBRAIN	HDB6	A	-1	NULL			S_NULL
+S_COLONGIBS		POB1	A	-1	NULL			S_NULL
+S_SMALLPOOL		POB2	A	-1	NULL			S_NULL
+S_BRAINSTEM		BRS1	A	-1	NULL			S_NULL
+
+// New Tech Lamps (tall)
+S_TECHLAMP		TLMP	A*	4	NULL			S_TECHLAMP2
+S_TECHLAMP2		TLMP	B*	4	NULL			S_TECHLAMP3
+S_TECHLAMP3		TLMP	C*	4	NULL			S_TECHLAMP4
+S_TECHLAMP4		TLMP	D*	4	NULL			S_TECHLAMP
+
+// New Tech Lamps (short)
+S_TECH2LAMP		TLP2	A*	4	NULL			S_TECH2LAMP2
+S_TECH2LAMP2	TLP2	B*	4	NULL			S_TECH2LAMP3
+S_TECH2LAMP3	TLP2	C*	4	NULL			S_TECH2LAMP4
+S_TECH2LAMP4	TLP2	D*	4	NULL			S_TECH2LAMP
+
+
+// BOOM's point pusher and puller
+$ MT_PUSH
+doomednum		5001
+spawnstate		S_MAPSPOT
+flags			MF_NOBLOCKMAP
+flags2			MF2_DONTDRAW
+
+$ MT_PUSH
+doomednum		5002
+spawnstate		S_MAPSPOT
+flags			MF_NOBLOCKMAP
+flags2			MF2_DONTDRAW
+
+// Other types of map spots for ZDoom
+$ MT_PATHNODE
+doomednum		9024
+spawnstate		S_MAPSPOT
+flags			MF_NOBLOCKMAP
+flags2			MF2_DONTDRAW
+
+$ MT_CAMERA
+doomednum		9025
+spawnstate		S_MAPSPOT
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+flags2			MF2_DONTDRAW
+
+$ MT_SPARK
+doomednum		9026
+spawnstate		S_MAPSPOT
+flags			MF_NOSECTOR|MF_NOBLOCKMAP|MF_NOGRAVITY
+
+// The fountain is created for types 9027-9033.
+$ MT_FOUNTAIN
+spawnstate		S_MAPSPOT
+height			1
+flags			MF_NOBLOCKMAP|MF_NOGRAVITY
+
+$ MT_TELEPORTMAN2
+doomednum		9044
+flags			MF_NOBLOCKMAP|MF2_DONTDRAW
+
+$ MT_AMBIENT
+doomednum		14065
+spawnstate		S_AMBIENTSOUND
+flags			MF_NOBLOCKMAP|MF_NOSECTOR
+flags2			MF2_DONTDRAW
+
+S_AMBIENTSOUND	TROO	A	1	A_Ambient			S_AMBIENTSOUND
+
+}	// end multigen
+
+//==========================================================================
+
+// Things that can be spawned with the Thing_Spawn
+// and Thing_Projectile specials
+
+spawnables
+{
+MT_SHOTGUY = 1
+MT_CHAINGUY
+MT_BRUISER
+MT_POSSESSED
+MT_TROOP
+MT_BABY
+MT_SPIDER
+MT_SERGEANT
+MT_SHADOWS
+MT_TROOPSHOT
+MT_CLIP
+MT_SHELLS
+MT_CACODEMON = 19
+MT_UNDEAD
+MT_BRIDGE
+MT_ARMORBONUS
+MT_STIMPACK
+MT_MEDIKIT
+MT_SOULSPHERE
+MT_SHOTGUN = 27
+MT_CHAINGUN
+MT_ROCKETLAUNCHER
+MT_PLASMAGUN
+MT_BFGGUN
+MT_CHAINSAW
+MT_SUPERSHOTGUN
+MT_PLASMA = 51
+MT_TRACER = 53
+MT_ARMOR1 = 68
+MT_ARMOR2
+MT_CELL = 75
+MT_BKEY = 85
+MT_RKEY
+MT_YKEY
+MT_YSKULL
+MT_RSKULL
+MT_BSKULL
+MT_FIRE = 98
+MT_STEALTHBRUISER = 100
+MT_STEALTHKNIGHT
+MT_STEALTHZOMBIE
+MT_STEALTHSHOTGUY
+MT_SKULL = 110
+MT_VILE
+MT_FATSO
+MT_HELLKNIGHT
+MT_CYBORG
+MT_PAIN
+MT_WOLFSS
+MT_STEALTHBABY
+MT_STEALTHVILE
+MT_STEALTHHEAD
+MT_STEALTHCHAINGUY
+MT_STEALTHSERGEANT
+MT_STEALTHIMP
+MT_STEALTHFATSO
+MT_STEALTHUNDEAD
+MT_DBARREL
+MT_HEADSHOT
+MT_ROCKET
+MT_BFG
+MT_ARACHPLAZ
+MT_BLOOD
+MT_PUFF
+MT_MEGA
+MT_INV
+MT_STRENGTH
+MT_INS
+MT_SUIT
+MT_MAP
+MT_LIGHTAMP
+MT_AMMOBOX
+MT_ROCKETPICKUP
+MT_ROCKETBOX
+MT_CELLPACK
+MT_SHELLBOX
+MT_BACKPACK
+MT_GUTS
+MT_GIBS
+MT_COLONGIBS
+MT_SMALLPOOL
+MT_BURNINGBARREL
+MT_BRAINSTEM
+}	// end spawnables
+
+// weapon definitions
+
+weapons
+{
+	// {
+	// <weapon name>
+	// <pickup message>
+	// <ammo type>
+	// <up state>
+	// <down state>
+	// <ready state>
+	// <attack state>
+	// <flash tsate>
+	// }
+
+	{
+		"Fist"
+		NULL
+		NULL
+		S_PUNCHUP
+		S_PUNCHDOWN
+		S_PUNCH
+		S_PUNCH1
+		S_NULL
+	}
+
+	{
+		"Chainsaw"
+		"A chainsaw!  Find some meat!"
+		NULL
+		S_SAWUP
+		S_SAWDOWN
+		S_SAW
+		S_SAW1
+		S_NULL
+	}
+
+	{
+		"Pistol"
+		NULL
+		"Bullets"
+		S_PISTOLUP
+		S_PISTOLDOWN
+		S_PISTOL
+		S_PISTOL1
+		S_PISTOLFLASH
+	}
+
+	{
+		"Shotgun"
+		"You got the shotgun!"
+		"Shells"
+		S_SGUNUP
+		S_SGUNDOWN
+		S_SGUN
+		S_SGUN1
+		S_SGUNFLASH
+	}
+
+	{
+		"Super Shotgun"
+		"You got the super shotgun!"
+		"Shells"
+		S_DSGUNUP
+		S_DSGUNDOWN
+		S_DSGUN
+		S_DSGUN1
+		S_DSGUNFLASH1
+	}
+
+	{
+		"chaingun"
+		"You got the chaingun!"
+		"Bullets"
+		S_CHAINUP
+		S_CHAINDOWN
+		S_CHAIN
+		S_CHAIN1
+		S_CHAINFLASH1
+	}
+
+	{
+		"Rocket Laucher"
+		"You got the rocket launcher!"
+		"Rockets"
+		S_MISSILEUP
+		S_MISSILEDOWN
+		S_MISSILE
+		S_MISSILE1
+		S_MISSILEFLASH1
+	}
+
+	{
+		"Plasma Rifle"
+		"You got the plasma gun!"
+		"Cells"
+		S_PLASMAUP
+		S_PLASMADOWN
+		S_PLASMA
+		S_PLASMA1
+		S_PLASMAFLASH
+	}
+
+	{
+		"BFG 9000"
+		"You got the BFG9000!  Oh, yes."
+		"Cells"
+		S_BFGUP
+		S_BFGDOWN
+		S_BFG
+		S_BFG1
+		S_BFGFLASH1
+	}
+
+}
+
+// ammo definitions
+
+ammo
+{
+	// {
+	// name
+	// pickup message
+	// big pickup message
+	// status bar picture
+	// clipammo (a weapon has two clips)
+	// maxammo (a backpack doubles this)
+	//}
+	
+	{
+		"Bullets"
+		"Picked up a clip."
+		"Picked up a box of bullets."
+		CLIPA0
+		10
+		200
+	}
+
+	{
+		"Shells"
+		"Picked up 4 shotgun shells."
+		"Picked up a box of shotgun shells."
+		SHELA0
+		4
+		50
+	}
+
+	{
+		"Cells"
+		"Picked up an energy cell."
+		"Picked up an energy cell pack."
+		CELLA0
+		20
+		300
+	}
+
+	{
+		"Rockets"
+		"Picked up a rocket."
+		"Picked up a box of rockets."
+		ROCKA0
+		1
+		50
+	}
+}
+
+// key definitions
+
+keys
+{
+	// {
+	// name
+	// pickup message
+	// status bar picture
+	// id (for ACS_ExecuteLocked and Door_RaiseLocked)
+	// class (e.g. yellow keycard and yellow skull are in the same class)
+	// }
+
+	{
+		"Blue Keycard"
+		"Picked up a blue keycard."
+		STKEYS0
+		1
+		0
+	}
+
+	{
+		"Yellow Keycard"
+		"Picked up a yellow keycard."
+		STKEYS1
+		2
+		1
+	}
+
+	{
+		"Red Keycard"
+		"Picked up a red keycard."
+		STKEYS2
+		3
+		2
+	}
+
+	{
+		"Blue Skull Key"
+		"Picked up a blue skull key."
+		STEYS3
+		4
+		0
+	}
+
+	{
+		"Yellow Skull Key"
+		"Picked up a yellow skull key."
+		STKEYS4
+		5
+		1
+	}
+
+	{
+		"Red Skull Key"
+		"Picked up a red skull key."
+		STKEYS5
+		6
+		2
+	}
+}

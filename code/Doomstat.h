@@ -85,6 +85,9 @@ extern	BOOL			netgame;
 // Flag: true only if started as net deathmatch.
 extern	cvar_t			*deathmatch;
 
+// [RH] Pretend as deathmatch for purposes of dmflags
+extern	cvar_t			*fakedmatch;
+
 // [RH] Teamplay mode
 extern	cvar_t			*teamplay;
 		
@@ -316,27 +319,6 @@ extern struct DehInfo deh;
 
 extern cvar_t *dmflagsvar;
 extern int	   dmflags;
-
-// [RH] Generic information about the current game
-
-struct gameinfo_s
-{
-	char *gameTitle;
-	BOOL pagesArePatches;
-	char *titlePage;
-	char *demoPage1;
-	char *demoPage2;
-	char *advisory;
-	float titleTime;
-	float demoPage1Time;
-	float demoPage2Time;
-	float advisoryTime;
-	char *titleSong;
-	char *skyFlatName;
-};
-typedef struct gameinfo_s gameinfo_t;
-
-extern gameinfo_t gameinfo;
 
 #endif
 //-----------------------------------------------------------------------------

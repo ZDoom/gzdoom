@@ -27,6 +27,9 @@
 #include "r_data.h"
 
 
+// killough 10/98: special mask indicates sky flat comes from sidedef
+#define PL_SKYFLAT (0x80000000)
+
 // Visplane related.
 extern	short*			lastopening;
 
@@ -46,35 +49,18 @@ extern fixed_t			*distscale;
 void R_InitPlanes (void);
 void R_ClearPlanes (void);
 
-void
-R_MapPlane
-( int			y,
-  int			x1,
-  int			x2 );
-
-void
-R_MakeSpans
-( int			x,
-  int			t1,
-  int			b1,
-  int			t2,
-  int			b2 );
-
+void R_MapPlane (int y, int x1, int x2);
+void R_MakeSpans (int x, int t1, int b1, int t2, int b2);
 void R_DrawPlanes (void);
 
-visplane_t*
-R_FindPlane
+visplane_t *R_FindPlane
 ( fixed_t		height,
   int			picnum,
   int			lightlevel,
   fixed_t		xoffs,		// killough 2/28/98: add x-y offsets
   fixed_t		yoffs );
 
-visplane_t*
-R_CheckPlane
-( visplane_t*	pl,
-  int			start,
-  int			stop );
+visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop);
 
 
 // [RH] Added for multires support

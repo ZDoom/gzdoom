@@ -184,9 +184,6 @@ BOOL P_Thing_Spawn (int tid, int type, angle_t angle, BOOL fog)
 		return false;
 
 	while ( (spot = P_FindMobjByTid (spot, tid)) ) {
-		if (spot->type != MT_MAPSPOT && spot->type != MT_MAPSPOTGRAV)
-			continue;
-
 		if (mobjinfo[kind].flags2 & MF2_FLOATBOB) {
 			z = spot->z - spot->floorz;
 		} else {
@@ -201,7 +198,7 @@ BOOL P_Thing_Spawn (int tid, int type, angle_t angle, BOOL fog)
 				if (fog)
 					S_Sound (P_SpawnMobj (spot->x, spot->y, spot->z, MT_TFOG),
 							 CHAN_VOICE, "misc/teleport", 1, ATTN_NORM);
-				mobj->flags2 |= MF2_DROPPED;	// Don't respawn
+				mobj->flags |= MF_DROPPED;	// Don't respawn
 				if (mobj->flags2 & MF2_FLOATBOB) {
 					mobj->special1 = mobj->z - mobj->floorz;
 				}
@@ -233,7 +230,7 @@ BOOL P_Thing_Projectile (int tid, int type, angle_t angle,
 		return false;
 
 	while ( (spot = P_FindMobjByTid (spot, tid)) ) {
-		if (spot->type != MT_MAPSPOT && spot->type != MT_MAPSPOTGRAV)
+		if (spot->type != MT_MAPSPOT && spot->type != MT_MAPSPOTGRAVITY)
 			continue;
 
 		mobj = P_SpawnMobj (spot->x, spot->y, spot->z, kind);

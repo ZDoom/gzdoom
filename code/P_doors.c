@@ -294,7 +294,7 @@ BOOL EV_DoDoor (vldoor_e type, line_t *line, mobj_t *thing,
 		{
 			sec = &sectors[secnum];
 			// if the ceiling already moving, don't start the door action
-			if (P_SectorActive (ceiling_special,sec)) //jff 2/22/98
+			if (sec->ceilingdata)
 				continue;
 
 			rtn |= SpawnDoor (sec, type, speed, delay);

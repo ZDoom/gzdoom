@@ -1,4 +1,4 @@
-This is the source code for ZDoom 1.17a released on 21 February 1999.
+This is the source code for ZDoom 1.17b released on 15 March 1999.
 
 It is based on the Linux DOOM sources that were prepared by B. Krenheimer
 and generously released by John Carmack shortly before Christmas, 1997. If
@@ -88,7 +88,7 @@ If you want to recompile the DOS code, you need DJGPP and allegro. Allegro
 is only needed because MIDAS uses its interrupt wrappers. I don't use it
 for anything myself. The makefile.dj file can be used with make to
 generate either a release or debug build. (Create the appropriate
-subdirectories in the code/djgpp directory first.)
+subdirectories under code/djgpp first.)
 
 
 Randy Heit

@@ -404,7 +404,7 @@ sightcounts[0]++;
 //
 	// [RH] Andy Baker's stealth monsters:
 	// Cannot see an invisible object
-	if (!ignoreInvisibility && (t2->flags2 & MF2_DONTDRAW)
+	if (!ignoreInvisibility && (t2->translucency == 0)
 		&& P_Random (pr_checksight) > 50)	// <- small chance of an attack being made anyway
 		return false;
 

@@ -37,8 +37,9 @@ typedef struct sfxinfo_struct sfxinfo_t;
 struct sfxinfo_struct
 {
 	char		name[MAX_SNDNAME+1];	// [RH] Sound name defined in SNDINFO
-	void*		data;					// sound data
-	void*		loopdata;				// Sound data for looping sounds
+	unsigned	normal;					// Normal sample handle
+	unsigned	looping;				// Looping sample handle
+	void*		data;
 
 	struct sfxinfo_struct *link;
 

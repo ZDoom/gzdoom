@@ -1,4 +1,164 @@
+March 15, 1999
+- Added support for custom ambient sound attenuations. This is an optional
+  floating point value that follows the point keyword.
+- For 1.17, I had changed the sound volumes in s_sound.c to floats
+  *except* for the ambient sounds which were still being treated as byte
+  values between 0-255, so they would always play at full volume. Fixed.
+
+March 14, 1999
+- Discovered a savegame bug: An mobj's translation table was being saved
+  improperly and could point to invalid memory on reload. Fixed.
+- Added another dmflag, DF_RESPAWN_SUPER, to cause invulnerability and
+  invisibility to respawn. No room in menu, so you have to set it by hand.
+- Added an alwaysapplydmflags cvar that can be used to cause dmflags that
+  normally only affect deathmatch to apply to single player and coop games
+  as well.
+- Changed P_Thing_Spawn() so that it can spawns things anywhere and not
+  just at map spots. (Useful for making it look like a monster was carrying
+  an item.)
+- Added support for MBF's sky texture transfer linedefs. Also added support
+  for Hexen's Sky2 sector special.
+- In r_plane.c, spanstop was never used anywhere. Removed it.
+
+March 10, 1999
+- Made the network code "better." htons is used in the appropriate places,
+  and the port a packet is sent from is used to determine which node sent
+  a packet (so now I can test more than two-player games on my machine).
+- Added an event-driven timer routine. Instead of busy waiting for a new tic,
+  I can wait on an event and give other processes some CPU time. This makes
+  two-player games on one machine run much more smoothly on Windows 95/98.
+  (It was already smooth for the foreground player on NT.)
+
+March 8, 1999
+- Fixed a problem with R_DrawPSprite. It was leaving vis->translucency unset,
+  which could produce odd results depending on the contents of the stack.
+
+March 7, 1999
+- Discovered a big problem with my linked list of ceiling_t's implementation.
+  Fixed.
+
+March 6, 1999
+- Added two new screen wipes: burn and crossfade.
+- The mid-screen message gets cleared out on level load now.
+- Stopped using the zone heap to store level snapshots.
+- Enhanced the stealth monsters so that they will take advantage of all
+  translucency levels available.
+- Fixed the damage for A_MonsterRail. I guess DOOM doesn't copy the damage
+  amount out of the mobjinfo when an mobj is spawned.
+- Added a check to the fullscreen HUD to prevent it from going outside the
+  array of armor pictures if the AC was above 2.
+- The DeHackEd code was setting the Blue AC for max soulsphere health. Fixed.
+- Tried out Rick Clark's toxplant.wad and discovered a bug with the
+  particles: They were colored by whichever sector was drawn last and not
+  the sector they were in. Fixed.
+- Pulled the old info.h from the 1.17a source so I could get things in a
+  working state to put up a fixed DeHackEd version for the Ground Zero TC.
+
+March 4, 1999
+- Word of advice: When you have 2847 states and 399 mobjinfos (from Hexen)
+  to reformat, don't try to do it all by hand. I was smart enough to use a
+  program to convert all the states into the multigen format, but I thought
+  I could handle the mobjs myself. Ha ha ha ha ha ha! After a few hours,
+  my arm was aching, and I had only done about one fourth of the mobjinfos.
+  Then I wrote a program to convert the ones from Hexen's info.c into
+  multigen format, and all I had to do was drag them to the correct place
+  with my mouse. Much easier, and much less strenuous. (Also much less
+  error-prone.)
+
+  For comparison, Heretic has 161 mobjinfos and 1205 states.
+  Doom 2 has a mere 137 mobjinfos and 967 states.
+
+March 3, 1999
+- Had a change of plans about how I want to implement multiple games in a
+  single executable. All the data in info.c and info.h will be moved to an
+  external data file whose format is based on that used by multigen (the
+  tool id used to generate info.c). The list of spawnable things will also
+  be moved out of p_things.c and into this file.
+  
+  This means that everything I did in info.h on March 1 was wasted. Oh well.
+
+March 1, 1999
+- Pasted labels for the Heretic and Hexen things into info.c. Had to
+  shuffle a few of them around:
+
+  --- Things renamed ---
+	MT_MISC* -> MT_DMISC* (if Doom)
+				MT_HMISC* (if Heretic)
+				MT_XMISC* (if Hexen)
+	MT_BARREL -> MT_HBARREL (for Heretic)
+				 MT_DBARREL (for Doom)
+	MT_TFOG -> MT_DTFOG, MT_HTFOG, MT_XTFOG
+			   created a new MT_TFOG elsewhere. the others should be
+			   copied on top of it as appropriate.
+	MT_HEAD -> renamed Doom's to MT_CACODEMON
+	MT_KNIGHT -> renamed Doom's to MT_HELLKNIGHT
+	MT_FIREBOMB -> MT_HFIREBOMB, MT_XFIREBOMB
+
+  --- Things moved into common Heretic/Hexen section ---
+	MT_ARTIFLY
+	MT_ARTIINVULNERABILITY -> ditto
+	MT_ARTIEGG -> ditto
+	MT_EGGFX -> ditto
+	MT_ARTISUPERHEAL -> ditto
+	MT_ARTITELEPORT -> ditto
+	MT_SPLASH
+	MT_SPLASHBASE
+	MT_LAVASPLASH
+	MT_LAVASMAKE
+	MT_SLUDGECHUNK
+	MT_SLUDGESPLASH
+	MT_BLOODSPLATTER
+	MT_BLOODYSKULL
+	MT_MNTRFX1
+	MT_MNTRFX2 (deathsound is sfx_phohit in Heretic, no sound in Hexen)
+	MT_MNTRFX3
+	MT_SOUNDWATERFALL
+
+  --- Things moved to global section ---
+	MT_BLOOD (note that Hexen's blood has mass 5, not 100. was #38)
+	MT_TELEPORTMAN (was #41)
+	MT_PLAYER (was #0) Hexen's is name differently, so it didn't move.
+
+	(Hexen things renamed)
+	MT_MINOTAUR -> MT_MAULATOR
+	MT_SOUNDWIND -> MT_XSOUNDWIND
+
+- Added a pulsating effect for the invisibility powerup that slowly
+  "pulses" it in and out of visibility, but never going below 25%, so it's
+  never totally invisible.
+- Spent a few hours with the DOSDoom translucency code. I think the
+  greenness of it is probably more the fault of DOOM's limited palette,
+  particularly after comparing the 25% translucency table from before
+  with 25% translucency now. Very low levels of translucency with one
+  of the colors being dark are still too green, though.
+
+February 28, 1999
+- Added DOSDoom 0.65's translucency code. I'm not sure if it was really
+  worth it, though. I tried Allegro's RGB table code to speed up the
+  generation of the translucency table, but it didn't seem to produce
+  very satisfactory results, so I use BestColor to find palette colors
+  to use. The results are satisfactory, but they seem a bit too green.
+- Delayed gathering of data on a sprite's patches (width, topoffset, and
+  offset) until it is needed (either when the level is precached, or when
+  the sprite is first seen). Game startup is a great deal quicker without
+  any noticable performance hit elsewhere. Cool.
+
+February 27, 1999
+- Note: Hexen's friction is roughly equivalent to a Sector_SetFriction of
+  171 (ends up as 0xf909, Hexen uses 0xf900). Player movement thrust should
+  be halved at this level. Changed the calculation of sector->movefactor
+  accordingly. (With the BOOM code, player thrust was nearly one fourth
+  normal with that level of friction.)
+- Discovered that MBF's code to affect monsters with friction doesn't
+  work without the change it made to how mobjs are linked into the blockmap.
+
+February 24, 1999
+- Stopped using stdio in w_wad.c.
+- Had left some calls to W_Profile in W_InitMultipleFiles(). Removed.
+
 February 21, 1999
+- Added support for real looping sounds, because Herian 2 used so many of
+  them, and the old method sounded pretty bad with them.
 - Found a problem with sliding polyobj doors: If, when they try to close,
   they can't move anywhere from their open position, they would move
   slightly further open and leave a gap when they managed to close. Fixed.

@@ -21,11 +21,9 @@
 //
 //-----------------------------------------------------------------------------
 
-
-
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <mmsystem.h>
 #include "resource.h"
 
 #include <stdio.h>
@@ -52,16 +50,26 @@ HWND			Window;
 HINSTANCE		hInstance;
 
 extern float mb_used;
+extern UINT TimerPeriod;
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
 	LONG WinWidth, WinHeight;
 	int height, width;
 	RECT cRect;
+	TIMECAPS tc;
 
 	g_hInst = hInstance;
 	myargc = __argc;
 	myargv = __argv;
+
+	// Set the timer to be as accurate as possible
+	if (timeGetDevCaps (&tc, sizeof(tc) != TIMERR_NOERROR))
+		TimerPeriod = 1;	// Assume minimum resolution of 1 ms
+	else
+		TimerPeriod = tc.wPeriodMin;
+
+	timeBeginPeriod (TimerPeriod);
 
 	/*
 	 killough 1/98:

@@ -28,21 +28,17 @@
 
 #include "m_random.h"
 #include "i_system.h"
-
 #include "doomdef.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_effect.h"
-
 #include "s_sound.h"
-
 #include "g_game.h"
-
-// State.
 #include "doomstat.h"
 #include "r_state.h"
-
 #include "c_cvars.h"
+
+#include "gi.h"
 
 cvar_t *testgibs;
 
@@ -279,9 +275,9 @@ BOOL P_Move (mobj_t *actor)
 	fixed_t tryx, tryy, deltax, deltay, origx, origy;
 	BOOL try_ok;
 	int good;
+	int speed;
 	int movefactor = ORIG_FRICTION_FACTOR;
 	int friction = ORIG_FRICTION;
-	int speed;
 
 	if (actor->movedir == DI_NODIR)
 		return false;
@@ -289,15 +285,17 @@ BOOL P_Move (mobj_t *actor)
 	if ((unsigned)actor->movedir >= 8)
 		I_Error ("Weird actor->movedir!");
 	
+	speed = actor->info->speed;
+
+#if 0	// [RH] I'm not so sure this is such a good idea
 	// killough 10/98: make monsters get affected by ice and sludge too:
 	movefactor = P_GetMoveFactor (actor, &friction);
-
-	speed = actor->info->speed;
 
 	if (friction < ORIG_FRICTION &&		// sludge
 		!(speed = ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)
 		   * speed) / ORIG_FRICTION_FACTOR))
 		speed = 1;	// always give the monster a little bit of speed
+#endif
 
 	tryx = (origx = actor->x) + (deltax = speed * xspeed[actor->movedir]);
 	tryy = (origy = actor->y) + (deltay = speed * yspeed[actor->movedir]);
@@ -682,7 +680,7 @@ void A_Look (mobj_t *actor)
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
-		P_IncreaseVisibility(actor);
+		actor->visdir = 1;
 	}
 
 	if (targ && (targ->flags & MF_SHOOTABLE) )
@@ -745,7 +743,7 @@ void A_Chase (mobj_t *actor)
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
-		P_DecreaseVisibility(actor);
+		actor->visdir = -1;
 	}
 
 	if (actor->reactiontime)
@@ -875,7 +873,7 @@ void A_FaceTarget (mobj_t *actor)
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
-		P_IncreaseVisibility(actor);
+		actor->visdir = 1;
 	}
 
 	actor->flags &= ~MF_AMBUSH;
@@ -905,7 +903,7 @@ void A_MonsterRail (mobj_t *actor)
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
-		P_IncreaseVisibility(actor);
+		actor->visdir = 1;
 	}
 
 	actor->flags &= ~MF_AMBUSH;
@@ -915,7 +913,9 @@ void A_MonsterRail (mobj_t *actor)
 									actor->target->x,
 									actor->target->y);
 
-	actor->pitch = FixedDiv (P_AimLineAttack (actor, actor->angle, MISSILERANGE), -40960);
+	// The -2000 makes the monster aim a bit higher (at your chest instead
+	// of your butt).
+	actor->pitch = FixedDiv (P_AimLineAttack (actor, actor->angle, MISSILERANGE), -40960) - 2000;
 
 	// Let the aim trail behind the player
 	actor->angle = R_PointToAngle2 (actor->x,
@@ -929,7 +929,7 @@ void A_MonsterRail (mobj_t *actor)
 		actor->angle += (t-P_Random(pr_facetarget))<<21;
     }
 
-	P_RailAttack (actor, actor->damage, 0);
+	P_RailAttack (actor, actor->info->damage, 0);
 }
 
 //
@@ -993,7 +993,7 @@ void A_CPosAttack (mobj_t *actor)
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
-		P_IncreaseVisibility(actor);
+		actor->visdir = 1;
 	}
 
 	S_Sound (actor, CHAN_WEAPON, "chainguy/attack", 1, ATTN_NORM);
@@ -1048,7 +1048,7 @@ void A_BspiAttack (mobj_t *actor)
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
-		P_IncreaseVisibility(actor);
+		actor->visdir = 1;
 	}
 
 	A_FaceTarget (actor);
@@ -1373,7 +1373,10 @@ void A_VileChase (mobj_t *actor)
 					P_SetMobjState (corpsehit,info->raisestate);
 					corpsehit->height = info->height;	// [RH] Use real mobj height
 					corpsehit->radius = info->radius;	// [RH] Use real radius
-					corpsehit->flags = (info->flags & ~MF_TRANSLUCBITS) | MF_TRANSLUC50;
+					if (corpsehit->translucency > TRANSLUC50)
+						corpsehit->translucency /= 2;
+					corpsehit->flags = info->flags;
+					corpsehit->flags2 = info->flags2;
 					corpsehit->health = info->spawnhealth;
 					corpsehit->target = NULL;
 
@@ -1761,7 +1764,8 @@ void A_Fall (mobj_t *actor)
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
-		P_BecomeVisible(actor);
+		actor->translucency = FRACUNIT;
+		actor->visdir = 0;
 	}
 
 	// actor is on ground, it can be walked over
@@ -1937,7 +1941,7 @@ void A_BossDeath (mobj_t *mo)
 	}
 
 	// [RH] If noexit, then don't end the level.
-	if (deathmatch->value && (dmflags & DF_NO_EXIT))
+	if ((deathmatch->value || fakedmatch->value) && (dmflags & DF_NO_EXIT))
 		return;
 
 	G_ExitLevel (0);
@@ -2078,7 +2082,7 @@ void A_BrainExplode (mobj_t *mo)
 void A_BrainDie (mobj_t *mo)
 {
 	// [RH] If noexit, then don't end the level.
-	if (deathmatch->value && (dmflags & DF_NO_EXIT))
+	if ((deathmatch->value || fakedmatch->value) && (dmflags & DF_NO_EXIT))
 		return;
 
 	G_ExitLevel (0);
@@ -2184,8 +2188,8 @@ void A_PlayerScream (mobj_t *mo)
 {
 	char nametemp[128];
 	char *sound;
-		
-	if ((gamemode == commercial) && (mo->health < -50))
+
+	if (!(gameinfo.flags & GI_NOCRAZYDEATH) && (mo->health < -50))
 	{
 		// IF THE PLAYER DIES LESS THAN -50% WITHOUT GIBBING
 		sound = "*xdeath1";
@@ -2197,52 +2201,3 @@ void A_PlayerScream (mobj_t *mo)
 	
 	S_Sound (mo, CHAN_VOICE, sound, 1, ATTN_NORM);
 }
-
-
-/***** Start of new functions for Andy Baker's stealth monsters ******/
-
-void P_BecomeVisible (mobj_t *actor)
-{
-	actor->flags2 &= ~MF2_DONTDRAW;
-	actor->flags &= ~MF_TRANSLUCBITS;
-};
-
-void P_IncreaseVisibility (mobj_t *actor)
-{
-	if (actor->flags2 & MF2_DONTDRAW) {
-		actor->flags2 &= ~MF2_DONTDRAW;
-		actor->flags |= MF_TRANSLUC25;
-	} else switch (actor->flags & MF_TRANSLUCBITS) {
-		case MF_TRANSLUC25:
-			actor->flags ^= MF_TRANSLUCBITS;
-			break;
-		case MF_TRANSLUC50:
-			actor->flags |= MF_TRANSLUC25;
-			break;
-		case MF_TRANSLUC75:
-			actor->flags &= ~MF_TRANSLUCBITS;
-			break;
-	}
-}
-
-void P_DecreaseVisibility (mobj_t *actor)
-{
-	if (actor->flags2 & MF2_DONTDRAW)
-		return;			// already invisible
-
-	switch (actor->flags & MF_TRANSLUCBITS) {
-		case 0:
-			actor->flags |= MF_TRANSLUC75;
-			break;
-		case MF_TRANSLUC75:
-			actor->flags &= ~MF_TRANSLUC25;
-			break;
-		case MF_TRANSLUC50:
-			actor->flags ^= MF_TRANSLUCBITS;
-			break;
-		case MF_TRANSLUC25:
-			actor->flags &= ~MF_TRANSLUCBITS;
-			actor->flags2 |= MF2_DONTDRAW;
-	}
-}
-/***** End of new functions for Andy Baker's stealth monsters ******/

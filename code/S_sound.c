@@ -40,6 +40,11 @@
 #include "v_video.h"
 #include "v_text.h"
 
+#define SELECT_ATTEN(a)			((a)==ATTN_NONE ? 0 : (a)==ATTN_SURROUND ? -1 : \
+								 (a)==ATTN_STATIC ? 3 : 1)
+#ifndef FIXED2FLOAT
+#define FIXED2FLOAT(f)			(((float)(f))/(float)65536)
+#endif
 
 #define MAX_SND_DIST			2025
 #define PRIORITY_MAX_ADJUST		10
@@ -62,7 +67,7 @@ typedef struct
 	int			sound_id;
 	int			entchannel;	// entity's sound channel
 	int			basepriority;
-	int			attenuation;
+	float		attenuation;
 	float		volume;
 	int			pitch;
 	int			priority;
@@ -116,10 +121,15 @@ static fixed_t P_AproxDistance2 (mobj_t *listener, fixed_t x, fixed_t y)
 {
 	// calculate the distance to sound origin
 	//	and clip it if necessary
-	fixed_t adx = abs (listener->x - x);
-	fixed_t ady = abs (listener->y - y);
-	// From _GG1_ p.428. Appox. eucledian distance fast.
-	return adx + ady - ((adx < ady ? adx : ady)>>1);
+	if (listener)
+	{
+		fixed_t adx = abs (listener->x - x);
+		fixed_t ady = abs (listener->y - y);
+		// From _GG1_ p.428. Appox. eucledian distance fast.
+		return adx + ady - ((adx < ady ? adx : ady)>>1);
+	}
+	else
+		return 0;
 }
 
 //
@@ -136,9 +146,9 @@ void S_NoiseDebug (void)
 	y += 8;
 
 	V_DrawText (CR_GREY, 0, y, "name");
-	V_DrawText (CR_GREY, 70, y, "mo.x");
-	V_DrawText (CR_GREY, 120, y, "mo.y");
-	V_DrawText (CR_GREY, 170, y, "id");
+	V_DrawText (CR_GREY, 70, y, "x");
+	V_DrawText (CR_GREY, 120, y, "y");
+	V_DrawText (CR_GREY, 170, y, "vol");
 	V_DrawText (CR_GREY, 200, y, "pri");
 	V_DrawText (CR_GREY, 240, y, "dist");
 	V_DrawText (CR_GREY, 280, y, "chan");
@@ -149,14 +159,18 @@ void S_NoiseDebug (void)
 			char temp[16];
 			mobj_t *origin = Channel[i].mo;
 
-			if (Channel[i].attenuation == ATTN_NONE ||
-				Channel[i].attenuation == ATTN_SURROUND) {
+			if (Channel[i].attenuation <= 0)
+			{
 				ox = players[consoleplayer].camera->x;
 				oy = players[consoleplayer].camera->y;
-			} else if (origin) {
+			}
+			else if (origin)
+			{
 				ox = origin->x;
 				oy = origin->y;
-			} else {
+			}
+			else
+			{
 				ox = Channel[i].x;
 				oy = Channel[i].y;
 			}
@@ -168,7 +182,7 @@ void S_NoiseDebug (void)
 			V_DrawText (color, 70, y, temp);
 			sprintf (temp, "%d", oy / FRACUNIT);
 			V_DrawText (color, 120, y, temp);
-			sprintf (temp, "%ld", Channel[i].sfxinfo - S_sfx);
+			sprintf (temp, "%g", Channel[i].volume);
 			V_DrawText (color, 170, y, temp);
 			sprintf (temp, "%d", Channel[i].priority);
 			V_DrawText (color, 200, y, temp);
@@ -284,8 +298,14 @@ void S_Start (void)
 // [RH] Split S_StartSoundAtVolume into multiple parts so that sounds can
 //		be specified both by id and by name. Also borrowed some stuff from
 //		Hexen and parameters from Quake.
+//
+// 0 attenuation means full volume over whole level
+// -1 attenuation means full volume in surround over whole level
+// 0<attenuation<=1 means to scale the distance by that amount when
+//		calculating volume
+
 static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
-						  int sound_id, float volume, int attenuation, BOOL looping)
+						  int sound_id, float volume, float attenuation, BOOL looping)
 {
 	sfxinfo_t *sfx;
 	int dist, vol;
@@ -299,12 +319,17 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 
 	if (sound_id == -1 || volume <= 0)
 		return;
-	if (ent == NULL) {
-		if (attenuation != ATTN_SURROUND)
-			attenuation = ATTN_NONE;
-	} else if (ent == (mobj_t *)(~0)) {
+	if (ent == NULL)
+	{
+		if (attenuation > 0)
+			attenuation = 0;
+	}
+	else if (ent == (mobj_t *)(~0))
+	{
 		ent = NULL;
-	} else {
+	}
+	else
+	{
 		x = ent->x;
 		y = ent->y;
 	}
@@ -313,24 +338,31 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 	if (volume > 1)
 		volume = 1;
 
-	if (attenuation == ATTN_NONE) {
+	if (attenuation == 0)
+	{
 		sep = NORM_SEP;
 		dist = 0;
-	} else if (attenuation == ATTN_SURROUND) {
+	}
+	else if (attenuation < 0)
+	{
 		sep = -1;
 		dist = 0;
-	} else {
+	}
+	else
+	{
 		// calculate the distance before other stuff so we can throw out
 		// sounds that are beyond the hearing range.
-		dist = P_AproxDistance2 (players[consoleplayer].camera, x, y) >> FRACBITS;
-		if (attenuation == ATTN_STATIC)
-			dist *= 3;
-		if (dist >= MAX_SND_DIST) {
+			dist = (int)(FIXED2FLOAT
+					(P_AproxDistance2 (players[consoleplayer].camera, x, y))
+					* attenuation);
+		if (dist >= MAX_SND_DIST)
+		{
 			if (level.flags & LEVEL_NOSOUNDCLIPPING)
 				dist = MAX_SND_DIST;
 			else
 				return;	// sound is beyond the hearing range...
-		} else if (dist < 0)
+		}
+		else if (dist < 0)
 			dist = 0;
 		sep = -2;	// Calculate separation later on
 	}
@@ -344,12 +376,18 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 			sfx = sfx->link;
 	}
 
-	if (sfx->lumpnum == sfx_empty) {
+	if (sfx->lumpnum == sfx_empty)
+	{
 		basepriority = -1000;
-	} else if (attenuation == ATTN_NONE || attenuation == ATTN_SURROUND) {
+	}
+	else if (attenuation <= 0)
+	{
 		basepriority = 200;
-	} else {
-		switch (channel) {
+	}
+	else
+	{
+		switch (channel)
+		{
 			case CHAN_WEAPON:
 				basepriority = 100;
 				break;
@@ -364,7 +402,7 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 				basepriority = 25;
 				break;
 		}
-		if (attenuation == ATTN_NORM)
+		if (attenuation == 1)
 			basepriority += 50;
 		if (dist == 0)
 			basepriority += 30;
@@ -374,30 +412,41 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 	if (!S_StopSoundID (sound_id, priority))
 		return;	// other sounds have greater priority
 
-	if (ent) {
-		for (i = 0; i < numChannels; i++) {
+	if (ent)
+	{
+		for (i = 0; i < numChannels; i++)
+		{
 			if (Channel[i].sfxinfo &&
 				ent == Channel[i].mo &&
-				Channel[i].entchannel == channel) {
+				Channel[i].entchannel == channel)
+			{
 				break;
 			}
 		}
-		if (i < numChannels && channel != CHAN_AUTO) {
+		if (i < numChannels && channel != CHAN_AUTO)
+		{
 			S_StopChannel (i);
-		} else if (channel == CHAN_AUTO) {
+		}
+		else if (channel == CHAN_AUTO)
+		{
 			int chansused[8], freechan;
 
 			memset (chansused, 0, sizeof(chansused));
 			freechan = numChannels;
 
-			for (i = 0; i < numChannels; i++) {
-				if (!Channel[i].sfxinfo) {
+			for (i = 0; i < numChannels; i++)
+			{
+				if (!Channel[i].sfxinfo)
+				{
 					freechan = i;
-				} else if (ent == Channel[i].mo) {
+				}
+				else if (ent == Channel[i].mo)
+				{
 					chansused[Channel[i].entchannel] = 1;
 				}
 			}
-			for (i = 7; i >= 0; i--) {
+			for (i = 7; i >= 0; i--)
+			{
 				if (!chansused[i])
 					break;
 			}
@@ -406,31 +455,42 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 			channel = i;
 			i = freechan;
 		}
-	} else {
+	}
+	else
+	{
 		i = numChannels;
 	}
 
-	if (i >= numChannels) {
-		for (i = 0; i < numChannels; i++) {
-			if (Channel[i].sfxinfo == NULL) {
+	if (i >= numChannels)
+	{
+		for (i = 0; i < numChannels; i++)
+		{
+			if (Channel[i].sfxinfo == NULL)
+			{
 				break;
 			}
 		}
-		if (i >= numChannels) {
+		if (i >= numChannels)
+		{
 			// look for a lower priority sound to replace.
 			sndcount++;
 			if (sndcount >= numChannels)
 				sndcount = 0;
-			for (chan = 0; chan < numChannels; chan++) {
+			for (chan = 0; chan < numChannels; chan++)
+			{
 				i = (sndcount + chan) % numChannels;
-				if (priority >= Channel[i].priority) {
+				if (priority >= Channel[i].priority)
+				{
 					chan = -1;	//denote that sound should be replaced.
 					break;
 				}
 			}
-			if (chan != -1) {
+			if (chan != -1)
+			{
 				return;	// no free channels.
-			} else {
+			}
+			else
+			{
 				// replace the lower priority sound.
 				S_StopChannel (i);
 			}
@@ -438,11 +498,15 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 	}
 
 	vol = (int)(SoundCurve[dist]*volume*2);
-	if (sep == -2) {
+	if (sep == -2)
+	{
 		mobj_t *listener = players[consoleplayer].camera;
-		if (!listener || dist == 0) {
+		if (!listener || dist == 0)
+		{
 			sep = NORM_SEP;
-		} else {
+		}
+		else
+		{
 			angle = R_PointToAngle2 (listener->x, listener->y, x, y);
 			if (angle > listener->angle)
 				angle = angle - listener->angle;
@@ -482,16 +546,16 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 
 void S_SoundID (mobj_t *ent, int channel, int sound_id, float volume, int attenuation)
 {
-	S_StartSound (ent, 0, 0, channel, sound_id, volume, attenuation, false);
+	S_StartSound (ent, 0, 0, channel, sound_id, volume, SELECT_ATTEN(attenuation), false);
 }
 
 void S_LoopedSoundID (mobj_t *ent, int channel, int sound_id, float volume, int attenuation)
 {
-	S_StartSound (ent, 0, 0, channel, sound_id, volume, attenuation, true);
+	S_StartSound (ent, 0, 0, channel, sound_id, volume, SELECT_ATTEN(attenuation), true);
 }
 
 static void S_StartNamedSound (mobj_t *ent, fixed_t x, fixed_t y, int channel, 
-							   char *name, float volume, int attenuation, BOOL looping)
+							   char *name, float volume, float attenuation, BOOL looping)
 {
 	int sfx_id;
 	
@@ -526,17 +590,17 @@ static void S_StartNamedSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 
 void S_Sound (mobj_t *ent, int channel, char *name, float volume, int attenuation)
 {
-	S_StartNamedSound (ent, 0, 0, channel, name, volume, attenuation, false);
+	S_StartNamedSound (ent, 0, 0, channel, name, volume, SELECT_ATTEN(attenuation), false);
 }
 
 void S_LoopedSound (mobj_t *ent, int channel, char *name, float volume, int attenuation)
 {
-	S_StartNamedSound (ent, 0, 0, channel, name, volume, attenuation, true);
+	S_StartNamedSound (ent, 0, 0, channel, name, volume, SELECT_ATTEN(attenuation), true);
 }
 
 void S_PositionedSound (fixed_t x, fixed_t y, int channel, char *name, float volume, int attenuation)
 {
-	S_StartNamedSound ((mobj_t *)(~0), x, y, channel, name, volume, attenuation, false);
+	S_StartNamedSound ((mobj_t *)(~0), x, y, channel, name, volume, SELECT_ATTEN(attenuation), false);
 }
 
 // S_StopSoundID from Hexen (albeit, modified somewhat)
@@ -675,8 +739,7 @@ void S_UpdateSounds (void *listener_p)
 			S_StopChannel (i);
 		}
 		if (Channel[i].sound_id == -1
-			|| Channel[i].mo == listener || Channel[i].attenuation == ATTN_NONE
-			|| Channel[i].attenuation == ATTN_SURROUND)
+			|| Channel[i].mo == listener || Channel[i].attenuation <= 0)
 		{
 			continue;
 		}
@@ -689,9 +752,8 @@ void S_UpdateSounds (void *listener_p)
 				x = Channel[i].mo->x;
 				y = Channel[i].mo->y;
 			}
-			dist = P_AproxDistance2 (listener, x, y) >> FRACBITS;
-			if (Channel[i].attenuation == ATTN_STATIC)
-				dist *= 3;
+			dist = (int)(FIXED2FLOAT(P_AproxDistance2 (listener, x, y))
+					* Channel[i].attenuation);
 			if (dist >= MAX_SND_DIST)
 			{
 				if (!(level.flags & LEVEL_NOSOUNDCLIPPING)) {
@@ -864,7 +926,8 @@ static struct AmbientSound {
 	unsigned	type;		// type of ambient sound
 	int			periodmin;	// # of tics between repeats
 	int			periodmax;	// max # of tics for random ambients
-	int			volume;		// relative volume of sound
+	float		volume;		// relative volume of sound
+	float		attenuation;
 	char		sound[MAX_SNDNAME+1]; // Logical name of sound to play
 } Ambients[256];
 
@@ -976,7 +1039,7 @@ void S_ParseSndInfo (void)
 				// com_token is a command
 
 				if (!stricmp (com_token + 1, "ambient")) {
-					// $ambient <num> <logical name> [point|surround] <type> [secs] <relative volume>
+					// $ambient <num> <logical name> [point [atten]|surround] <type> [secs] <relative volume>
 					struct AmbientSound *ambient, dummy;
 					int index;
 
@@ -993,16 +1056,28 @@ void S_ParseSndInfo (void)
 					sndinfo = COM_Parse (sndinfo);
 					strncpy (ambient->sound, com_token, MAX_SNDNAME);
 					ambient->sound[MAX_SNDNAME] = 0;
+					ambient->attenuation = 0;
 
 					sndinfo = COM_Parse (sndinfo);
 					if (!stricmp (com_token, "point")) {
+						float attenuation;
+
 						ambient->type = POSITIONAL;
 						sndinfo = COM_Parse (sndinfo);
-					} else {
-						if (!stricmp (com_token, "surround")) {
-							ambient->type = SURROUND;
+						attenuation = (float)atof (com_token);
+						if (attenuation > 0)
+						{
+							ambient->attenuation = attenuation;
 							sndinfo = COM_Parse (sndinfo);
 						}
+						else
+						{
+							ambient->attenuation = 1;
+						}
+					} else if (!stricmp (com_token, "surround")) {
+						ambient->type = SURROUND;
+						sndinfo = COM_Parse (sndinfo);
+						ambient->attenuation = -1;
 					}
 
 					if (!stricmp (com_token, "continuous")) {
@@ -1022,9 +1097,9 @@ void S_ParseSndInfo (void)
 					}
 
 					sndinfo = COM_Parse (sndinfo);
-					ambient->volume = (int)(atof (com_token) * 255.0);
-					if (ambient->volume > 255)
-						ambient->volume = 255;
+					ambient->volume = (float)atof (com_token);
+					if (ambient->volume > 1)
+						ambient->volume = 1;
 					else if (ambient->volume < 0)
 						ambient->volume = 0;
 				} else if (!stricmp (com_token + 1, "map")) {
@@ -1076,10 +1151,12 @@ void Cmd_Soundlist (void *plyr, int argc, char **argv)
 
 	lumpname[8] = 0;
 	for (i = 0; i < numsfx; i++)
-		if (S_sfx[i].lumpnum != -1) {
+		if (S_sfx[i].lumpnum != -1)
+		{
 			strncpy (lumpname, lumpinfo[S_sfx[i].lumpnum].name, 8);
 			Printf (PRINT_HIGH, "%3d. %s (%s)\n", i+1, S_sfx[i].name, lumpname);
-		} else
+		}
+		else
 			Printf (PRINT_HIGH, "%3d. %s **not present**\n", i+1, S_sfx[i].name);
 }
 
@@ -1094,13 +1171,18 @@ void Cmd_Soundlinks (void *plyr, int argc, char **argv)
 
 static void SetTicker (int *tics, struct AmbientSound *ambient)
 {
-	if ((ambient->type & CONTINUOUS) == CONTINUOUS) {
+	if ((ambient->type & CONTINUOUS) == CONTINUOUS)
+	{
 		*tics = 1;
-	} else if (ambient->type & RANDOM) {
+	}
+	else if (ambient->type & RANDOM)
+	{
 		*tics = (int)(((float)rand() / (float)RAND_MAX) *
 				(float)(ambient->periodmax - ambient->periodmin)) +
 				ambient->periodmin;
-	} else {
+	}
+	else
+	{
 		*tics = ambient->periodmin;
 	}
 }
@@ -1114,25 +1196,29 @@ void A_Ambient (mobj_t *actor)
 		if (S_GetSoundPlayingInfo (actor, S_FindSound (ambient->sound)))
 			return;
 
-		if (ambient->sound[0]) {
-			S_LoopedSound (actor, CHAN_BODY, ambient->sound, ambient->volume,
-						   ambient->type & POSITIONAL ? ATTN_NORM :
-						   (ambient->type & SURROUND ? ATTN_SURROUND : ATTN_NONE));
+		if (ambient->sound[0])
+		{
+			S_StartNamedSound (actor, 0, 0, CHAN_BODY,
+				ambient->sound, ambient->volume, ambient->attenuation, true);
 
 			SetTicker (&actor->tics, ambient);
-		} else {
+		}
+		else
+		{
 			P_RemoveMobj (actor);
 		}
 	}
 	else
 	{
-		if (ambient->sound[0]) {
-			S_Sound (actor, CHAN_BODY, ambient->sound, ambient->volume,
-					 ambient->type & POSITIONAL ? ATTN_NORM :
-						(ambient->type & SURROUND ? ATTN_SURROUND : ATTN_NONE));
+		if (ambient->sound[0])
+		{
+			S_StartNamedSound (actor, 0, 0, CHAN_BODY,
+				ambient->sound, ambient->volume, ambient->attenuation, false);
 
 			SetTicker (&actor->tics, ambient);
-		} else {
+		}
+		else
+		{
 			P_RemoveMobj (actor);
 		}
 	}
@@ -1142,7 +1228,8 @@ void S_ActivateAmbient (mobj_t *origin, int ambient)
 {
 	struct AmbientSound *amb = &Ambients[ambient];
 
-	if (!(amb->type & 3) && !amb->periodmin) {
+	if (!(amb->type & 3) && !amb->periodmin)
+	{
 		sfxinfo_t *sfx = S_sfx + S_FindSound (amb->sound);
 
 		// Make sure the sound has been loaded so we know how long it is

@@ -26,17 +26,14 @@
 #include "doomdef.h"
 #include "p_local.h"
 #include "p_lnspec.h"
-
 #include "g_game.h"
-
 #include "s_sound.h"
-
-// State.
 #include "doomstat.h"
 #include "r_state.h"
-
 #include "z_zone.h"
 #include "w_wad.h"
+
+#include "gi.h"
 
 //
 // CHANGE THE TEXTURE OF A WALL SWITCH TO ITS OPPOSITE
@@ -57,29 +54,25 @@ void P_InitSwitchList(void)
 {
 	byte *alphSwitchList = W_CacheLumpName ("SWITCHES", PU_STATIC);
 	byte *list_p;
-
 	int i;
-	int episode;
 
 	for (i = 0, list_p = alphSwitchList; list_p[18] || list_p[19]; list_p += 20, i++)
 		;
 
-	if (i == 0) {
+	if (i == 0)
+	{
 		switchlist = Z_Malloc (sizeof(*switchlist), PU_STATIC, 0);
 		*switchlist = -1;
 		numswitches = 0;
-	} else {
+	}
+	else
+	{
 		switchlist = Z_Malloc (sizeof(*switchlist)*(i*2+1), PU_STATIC, 0);
 
-		if (gamemode == registered || gamemode == retail)
-			episode = 2;
-		else if ( gamemode == commercial )
-			episode = 3;
-		else
-			episode = 1;
-
-		for (i = 0, list_p = alphSwitchList; list_p[18] || list_p[19]; list_p += 20) {
-			if (episode >= (list_p[18] | (list_p[19] << 8)))
+		for (i = 0, list_p = alphSwitchList; list_p[18] || list_p[19]; list_p += 20)
+		{
+			if (((gameinfo.maxSwitch & 15) >= (list_p[18] & 15)) &&
+				((gameinfo.maxSwitch & ~15) == (list_p[18] & ~15)))
 			{
 				// [RH] Skip this switch if it can't be found.
 				if (R_CheckTextureNumForName (list_p /* .name1 */) < 0)

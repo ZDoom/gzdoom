@@ -28,11 +28,6 @@
 #include <setjmp.h>
 #include "d_event.h"
 
-
-void D_AddFile (char *file);
-
-
-
 //
 // D_DoomMain()
 // Not a globally visible function, just included for source reference,

@@ -13,6 +13,7 @@
 #include "r_draw.h"
 #include "r_main.h"
 #include "r_things.h"
+#include "v_video.h"
 
 byte dc_temp[1200*4];
 unsigned int dc_tspans[4][256];
@@ -339,23 +340,37 @@ void rt_lucent1col (int hx, int sx, int yl, int yh)
 	byte *colormap;
 	byte *source;
 	byte *dest;
-	byte *transmap;
 	int count;
 	int pitch;
+	unsigned int *fg2rgb, *bg2rgb;
 
 	count = yh-yl;
 	if (count < 0)
 		return;
 	count++;
 
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = dc_translevel & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
 	dest = ylookup[yl] + columnofs[sx];
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
-	transmap = dc_transmap;
 	colormap = dc_colormap;
 
 	do {
-		*dest = transmap[colormap[*source] | ((*dest) << 8)];
+		unsigned int fg = colormap[*source];
+		unsigned int bg = *dest;
+
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -367,24 +382,44 @@ void rt_lucent2cols (int hx, int sx, int yl, int yh)
 	byte *colormap;
 	byte *source;
 	byte *dest;
-	byte *transmap;
 	int count;
 	int pitch;
+	unsigned int *fg2rgb, *bg2rgb;
 
 	count = yh-yl;
 	if (count < 0)
 		return;
 	count++;
 
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = dc_translevel & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
 	dest = ylookup[yl] + columnofs[sx];
 	source = &dc_temp[yl*4 + hx];
 	pitch = dc_pitch;
-	transmap = dc_transmap;
 	colormap = dc_colormap;
 
 	do {
-		dest[0] = transmap[colormap[source[0]] | (dest[0] << 8)];
-		dest[1] = transmap[colormap[source[1]] | (dest[1] << 8)];
+		unsigned int fg = colormap[source[0]];
+		unsigned int bg = dest[0];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[0] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
+		fg = colormap[source[1]];
+		bg = dest[1];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[1] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -396,26 +431,59 @@ void rt_lucent4cols (int sx, int yl, int yh)
 	byte *colormap;
 	byte *source;
 	byte *dest;
-	byte *transmap;
 	int count;
 	int pitch;
+	unsigned int *fg2rgb, *bg2rgb;
 
 	count = yh-yl;
 	if (count < 0)
 		return;
 	count++;
 
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = dc_translevel & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
 	dest = ylookup[yl] + columnofs[sx];
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
-	transmap = dc_transmap;
 	colormap = dc_colormap;
 
 	do {
-		dest[0] = transmap[colormap[source[0]] | (dest[0] << 8)];
-		dest[1] = transmap[colormap[source[1]] | (dest[1] << 8)];
-		dest[2] = transmap[colormap[source[2]] | (dest[2] << 8)];
-		dest[3] = transmap[colormap[source[3]] | (dest[3] << 8)];
+		unsigned int fg = colormap[source[0]];
+		unsigned int bg = dest[0];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[0] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
+		fg = colormap[source[1]];
+		bg = dest[1];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[1] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
+
+		fg = colormap[source[2]];
+		bg = dest[2];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[2] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
+		fg = colormap[source[3]];
+		bg = dest[3];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[3] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -424,20 +492,28 @@ void rt_lucent4cols (int sx, int yl, int yh)
 // Translates and mixes one span at hx to the screen at sx.
 void rt_tlatelucent1col (int hx, int sx, int yl, int yh)
 {
-	byte *transmap;
 	byte *translation;
 	byte *colormap;
 	byte *source;
 	byte *dest;
 	int count;
 	int pitch;
+	unsigned int *fg2rgb, *bg2rgb;
 
 	count = yh-yl;
 	if (count < 0)
 		return;
 	count++;
 
-	transmap = dc_transmap;
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = dc_translevel & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
 	translation = dc_translation;
 	colormap = dc_colormap;
 	dest = ylookup[yl] + columnofs[sx];
@@ -445,7 +521,13 @@ void rt_tlatelucent1col (int hx, int sx, int yl, int yh)
 	pitch = dc_pitch;
 
 	do {
-		*dest = transmap[colormap[translation[*source]] | ((*dest) << 8)];
+		unsigned int fg = colormap[translation[*source]];
+		unsigned int bg = *dest;
+
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -454,20 +536,28 @@ void rt_tlatelucent1col (int hx, int sx, int yl, int yh)
 // Translates and mixes two spans at hx and hx+1 to the screen at sx and sx+1.
 void rt_tlatelucent2cols (int hx, int sx, int yl, int yh)
 {
-	byte *transmap;
 	byte *translation;
 	byte *colormap;
 	byte *source;
 	byte *dest;
 	int count;
 	int pitch;
+	unsigned int *fg2rgb, *bg2rgb;
 
 	count = yh-yl;
 	if (count < 0)
 		return;
 	count++;
 
-	transmap = dc_transmap;
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = dc_translevel & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
 	translation = dc_translation;
 	colormap = dc_colormap;
 	dest = ylookup[yl] + columnofs[sx];
@@ -475,8 +565,20 @@ void rt_tlatelucent2cols (int hx, int sx, int yl, int yh)
 	pitch = dc_pitch;
 
 	do {
-		dest[0] = transmap[colormap[translation[source[0]]] | (dest[0] << 8)];
-		dest[1] = transmap[colormap[translation[source[1]]] | (dest[1] << 8)];
+		unsigned int fg = colormap[translation[source[0]]];
+		unsigned int bg = dest[0];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[0] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
+		fg = colormap[translation[source[1]]];
+		bg = dest[1];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[1] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -485,31 +587,64 @@ void rt_tlatelucent2cols (int hx, int sx, int yl, int yh)
 // Translates and mixes all four spans to the screen starting at sx.
 void rt_tlatelucent4cols (int sx, int yl, int yh)
 {
-	byte *transmap;
 	byte *translation;
 	byte *colormap;
 	byte *source;
 	byte *dest;
 	int count;
 	int pitch;
+	unsigned int *fg2rgb, *bg2rgb;
 
-	transmap = dc_transmap;
-	translation = dc_translation;
 	count = yh-yl;
 	if (count < 0)
 		return;
 	count++;
 
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = dc_translevel & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
+	translation = dc_translation;
 	colormap = dc_colormap;
 	dest = ylookup[yl] + columnofs[sx];
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 	
 	do {
-		dest[0] = transmap[colormap[translation[source[0]]] | (dest[0] << 8)];
-		dest[1] = transmap[colormap[translation[source[1]]] | (dest[1] << 8)];
-		dest[2] = transmap[colormap[translation[source[2]]] | (dest[2] << 8)];
-		dest[3] = transmap[colormap[translation[source[3]]] | (dest[3] << 8)];
+		unsigned int fg = colormap[translation[source[0]]];
+		unsigned int bg = dest[0];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[0] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
+		fg = colormap[translation[source[1]]];
+		bg = dest[1];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[1] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
+
+		fg = colormap[translation[source[2]]];
+		bg = dest[2];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[2] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
+		fg = colormap[translation[source[3]]];
+		bg = dest[3];
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		dest[3] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+
 		source += 4;
 		dest += pitch;
 	} while (--count);

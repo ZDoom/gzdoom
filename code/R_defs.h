@@ -115,6 +115,8 @@ struct sector_s
 	mobj_t* 	thinglist;		// list of mobjs in sector
 	int			seqType;		// this sector's sound sequence
 
+	int sky;
+
 	// killough 8/28/98: friction is a sector property, not an mobj property.
 	// these fields used to be in mobj_t, but presented performance problems
 	// when processed as mobj properties. Fix is to make them sector properties.
@@ -385,6 +387,7 @@ struct vissprite_s
 	int 			mobjflags;		// for shadow draw
 	byte			*translation;	// [RH] for translation;
 	int				heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
+	fixed_t			translucency;
 };
 typedef struct vissprite_s vissprite_t;
 

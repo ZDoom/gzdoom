@@ -200,7 +200,9 @@ extern cvar_t *am_rotate,
 			  *r_drawfuzz,
 			  *cl_rockettrails,
 			  *cl_pufftype,
-			  *cl_bloodtype;
+			  *cl_bloodtype,
+			  *wipetype,
+			  *vid_palettehack;
 
 static value_t Crosshairs[] = {
 	{ 0.0, "None" },
@@ -237,6 +239,13 @@ static value_t PuffTypes[] = {
 	{ 1.0, "Particles" }
 };
 
+static value_t Wipes[] = {
+	{ 0.0, "None" },
+	{ 1.0, "Melt" },
+	{ 2.0, "Burn" },
+	{ 3.0, "Crossfade" }
+};
+
 static menuitem_t VideoItems[] = {
 	{ more,		"Messages",				NULL,					0.0, 0.0,	0.0, (value_t *)StartMessagesMenu },
 	{ redtext,	" ",					NULL,					0.0, 0.0,	0.0, NULL },
@@ -246,7 +255,11 @@ static menuitem_t VideoItems[] = {
 	{ discrete, "Column render mode",	(cvar_t **)&r_columnmethod,2.0,0.0,	0.0, ColumnMethods },
 	{ discrete, "Detail mode",			(cvar_t **)&r_detail,	4.0, 0.0,	0.0, DetailModes },
 	{ discrete, "Stretch short skies",	(cvar_t **)&r_stretchsky, 2.0,0.0,	0.0, OnOff },
-	{ discrete, "Scale status bar",		(cvar_t **)&st_scale,	2.0, 0.0,	0.0, OnOff },
+	{ discrete, "Stretch status bar",	(cvar_t **)&st_scale,	2.0, 0.0,	0.0, OnOff },
+	{ discrete, "Screen wipe style",	(cvar_t **)&wipetype,	4.0, 0.0,	0.0, Wipes },
+#ifdef _WIN32
+	{ discrete, "DirectDraw palette hack", (cvar_t **)&vid_palettehack, 2.0,0.0,0.0,OnOff },
+#endif
 	{ redtext,	" ",					NULL,					0.0, 0.0,	0.0, NULL },
 	{ discrete, "Use fuzz effect",		(cvar_t **)&r_drawfuzz, 2.0, 0.0, 0.0, YesNo },
 	{ discrete, "Rocket Trails",		(cvar_t **)&cl_rockettrails, 2.0, 0.0, 0.0, OnOff },
@@ -261,7 +274,11 @@ static menuitem_t VideoItems[] = {
 menu_t VideoMenu = {
 	"M_VIDEO",
 	0,
-	17,
+#ifdef _WIN32
+	20,
+#else
+	19,
+#endif
 	0,
 	VideoItems,
 };

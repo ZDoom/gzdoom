@@ -667,7 +667,7 @@ FUNC(LS_Teleport_EndGame)
 // Teleport_EndGame ()
 {
 	if (!TeleportSide) {
-		if (gamemode == commercial && CheckIfExitIsGood (it)) {
+		if (CheckIfExitIsGood (it)) {
 			strncpy (level.nextmap, "EndGameC", 8);
 			G_ExitLevel (0);
 			return true;

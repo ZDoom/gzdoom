@@ -8,22 +8,21 @@
 ####################################################################
 
 CC = gcc
-# sorry, but the DOS version of nasm runs out of memory
 AS = d:/nasm/nasmw
 RM = del
 CP = copy
 
 # options common to all builds
 IMPDIR = djgpp
-CFLAGS_common = -Wall -Winline -I. -I$(IMPDIR) -idirafter ../ptc/source
+CFLAGS_common = -Wall -Winline -DUSEASM -I. -I$(IMPDIR) -idirafter ../ptc/source
 OUTFILE = zdoomdos.exe
 
 # options specific to the debug build
-CFLAGS_debug = -g -O2 -DNOASM
+CFLAGS_debug = -g -O2 -DRANGECHECK
 LFLAGS_debug =
 
 # options specific to the release build
-CFLAGS_release = -O3 -ffast-math -fomit-frame-pointer -m486 -DUSEASM
+CFLAGS_release = -O3 -ffast-math -fomit-frame-pointer -m486
 LFLAGS_release = -s
 
 # libraries to link with
@@ -65,6 +64,7 @@ OBJS = \
 	$(INTDIR)/f_wipe.o \
 	$(INTDIR)/g_game.o \
 	$(INTDIR)/g_level.o \
+	$(INTDIR)/gi.o \
 	$(INTDIR)/i_input.o \
 	$(INTDIR)/i_main.o \
 	$(INTDIR)/i_music.o \
@@ -142,7 +142,6 @@ OBJS = \
 zdoom doom release all: $(INTDIR)/$(OUTFILE)
 	$(CP) $(IMPDIR)\$(mode)\$(OUTFILE) .
 
-# why doesn't this work?
 debug:
 	$(MAKE) mode=debug
 
@@ -171,7 +170,7 @@ $(INTDIR)/%.o: $(IMPDIR)/%.cpp
 # Changing the makefile rebuilds everything else
 $(OBJS): Makefile.dj
 
-# Dependencies for each file (this is why I automatically
+# Dependencies for each file (which is why I automatically
 # generated this file instead of writing it all by hand).
 
 $(INTDIR)/am_map.o: am_map.c \
@@ -251,6 +250,7 @@ $(INTDIR)/c_cmds.o: c_cmds.c \
 	dstrings.h \
 	g_game.h \
 	g_level.h \
+	gi.h \
 	info.h \
 	m_fixed.h \
 	p_inter.h \
@@ -283,6 +283,7 @@ $(INTDIR)/c_consol.o: c_consol.c \
 	dstrings.h \
 	g_game.h \
 	g_level.h \
+	gi.h \
 	hu_stuff.h \
 	info.h \
 	m_alloc.h \
@@ -491,6 +492,7 @@ $(INTDIR)/d_main.o: d_main.c \
 	f_wipe.h \
 	g_game.h \
 	g_level.h \
+	gi.h \
 	hu_stuff.h \
 	info.h \
 	lzoconf.h \
@@ -519,6 +521,7 @@ $(INTDIR)/d_main.o: d_main.c \
 	st_stuff.h \
 	tables.h \
 	v_palett.h \
+	v_text.h \
 	v_video.h \
 	w_wad.h \
 	wi_stuff.h \
@@ -545,6 +548,7 @@ $(INTDIR)/d_net.o: d_net.c \
 	doomtype.h \
 	g_game.h \
 	g_level.h \
+	gi.h \
 	info.h \
 	m_alloc.h \
 	m_cheat.h \
@@ -693,6 +697,7 @@ $(INTDIR)/f_finale.o: f_finale.c \
 	doomtype.h \
 	dstrings.h \
 	g_level.h \
+	gi.h \
 	hu_stuff.h \
 	info.h \
 	m_fixed.h \
@@ -824,6 +829,7 @@ $(INTDIR)/g_level.o: g_level.c \
 	f_finale.h \
 	g_game.h \
 	g_level.h \
+	gi.h \
 	hu_stuff.h \
 	info.h \
 	lzoconf.h \
@@ -860,6 +866,12 @@ $(INTDIR)/g_level.o: g_level.c \
 	wi_stuff.h \
 	$(IMPDIR)/i_system.h \
 	z_zone.h
+
+$(INTDIR)/gi.o: gi.c \
+	d_think.h \
+	doomtype.h \
+	gi.h \
+	info.h
 
 $(INTDIR)/info.o: info.c \
 	d_think.h \
@@ -954,6 +966,7 @@ $(INTDIR)/m_menu.o: m_menu.c \
 	dstrings.h \
 	g_game.h \
 	g_level.h \
+	gi.h \
 	hu_stuff.h \
 	info.h \
 	m_argv.h \
@@ -1277,6 +1290,7 @@ $(INTDIR)/p_enemy.o: p_enemy.c \
 	doomtype.h \
 	g_game.h \
 	g_level.h \
+	gi.h \
 	info.h \
 	m_fixed.h \
 	m_random.h \
@@ -1750,7 +1764,9 @@ $(INTDIR)/p_saveg.o: p_saveg.c \
 	z_zone.h
 
 $(INTDIR)/p_setup.o: p_setup.c \
+	c_consol.h \
 	c_cvars.h \
+	cmdlib.h \
 	d_event.h \
 	d_items.h \
 	d_net.h \
@@ -1891,6 +1907,7 @@ $(INTDIR)/p_switch.o: p_switch.c \
 	doomtype.h \
 	g_game.h \
 	g_level.h \
+	gi.h \
 	info.h \
 	m_fixed.h \
 	p_lnspec.h \
@@ -2211,6 +2228,7 @@ $(INTDIR)/r_draw.o: r_draw.c \
 	doomstat.h \
 	doomtype.h \
 	g_level.h \
+	gi.h \
 	info.h \
 	m_alloc.h \
 	m_fixed.h \
@@ -2255,7 +2273,9 @@ $(INTDIR)/r_drawt.o: r_drawt.c \
 	r_main.h \
 	r_state.h \
 	r_things.h \
-	tables.h
+	tables.h \
+	v_palett.h \
+	v_video.h
 
 $(INTDIR)/r_main.o: r_main.c \
 	c_cvars.h \

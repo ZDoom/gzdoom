@@ -88,7 +88,6 @@ short					*ceilingclip;
 // initialized to 0 at start
 //
 int 					*spanstart;
-int 					*spanstop;
 
 //
 // texture mapping
@@ -132,18 +131,14 @@ void R_InitPlanes (void)
 
 void R_MapPlane (int y, int x1, int x2)
 {
-	angle_t 	angle;
-	fixed_t 	distance;
-	fixed_t 	length;
-	unsigned	index;
+	angle_t angle;
+	fixed_t distance, length;
+	unsigned index;
 
 #ifdef RANGECHECK
-	if (x2 < x1
-		|| x1<0
-		|| x2>=viewwidth
-		|| (unsigned)y>=(unsigned)viewheight)
+	if (x2 < x1 || x1<0 || x2>=viewwidth || (unsigned)y>=(unsigned)viewheight)
 	{
-		I_FatalError ("R_MapPlane: %i, %i at %i",x1,x2,y);
+		I_FatalError ("R_MapPlane: %i, %i at %i", x1, x2, y);
 	}
 #endif
 	if (planeheight != cachedheight[y])
@@ -198,8 +193,8 @@ void R_MapPlane (int y, int x1, int x2)
 
 void R_ClearPlanes (void)
 {
-	int 		i;
-	angle_t 	angle;
+	int i;
+	angle_t angle;
 	
 	// opening / clipping determination
 	for (i = 0; i < viewwidth ; i++)
@@ -214,10 +209,10 @@ void R_ClearPlanes (void)
 
 	lastopening = openings;
 	
-	// texture calculation
+	// Texture calculation
 	memset (cachedheight, 0, sizeof(*cachedheight) * screen.height);
 	angle = (viewangle - ANG90)>>ANGLETOFINESHIFT;	// left to right mapping
-	// scale will be unit scale at SCREENWIDTH/2 distance
+	// Scale will be unit scale at SCREENWIDTH/2 distance
 	basexscale = FixedDiv (finecosine[angle], centerxfrac);
 	baseyscale = -FixedDiv (finesine[angle], centerxfrac);
 }
@@ -259,8 +254,8 @@ visplane_t *R_FindPlane (fixed_t height, int picnum, int lightlevel,
 	visplane_t *check;
 	unsigned hash;						// killough
 
-	if (picnum == skyflatnum)
-		height = lightlevel = 0;		// all skys map together
+	if (picnum == skyflatnum || picnum & PL_SKYFLAT)	// killough 10/98
+		height = lightlevel = 0;		// most skies map together
 		
 	// New visplane algorithm uses hash table -- killough
 	hash = visplane_hash (picnum, lightlevel, height);
@@ -282,7 +277,7 @@ visplane_t *R_FindPlane (fixed_t height, int picnum, int lightlevel,
 	check->xoffs = xoffs;				// killough 2/28/98: Save offsets
 	check->yoffs = yoffs;
 	check->colormap = basecolormap;		// [RH] Save colormap
-	check->minx = screen.width;
+	check->minx = viewwidth;			// Was SCREENWIDTH -- killough 11/98
 	check->maxx = -1;
 	
 	memset (check->top, 0xff, sizeof(*check->top) * screen.width);
@@ -383,6 +378,9 @@ void R_MakeSpans (int x, int t1, int b1, int t2, int b2)
 //==========================================================================
 
 static visplane_t *_skypl;
+static int frontskytex, backskytex;
+static angle_t skyflip;
+static int frontpos, backpos;
 
 static void _skycolumn (void (*drawfunc)(void), int x)
 {
@@ -390,11 +388,11 @@ static void _skycolumn (void (*drawfunc)(void), int x)
 	dc_yh = _skypl->bottom[x];
 
 	if (dc_yl <= dc_yh)	{
-		int angle = ((((viewangle + xtoviewangle[x])>>(ANGLETOSKYSHIFT-16)) + sky1pos)>>16);
+		int angle = ((((viewangle + xtoviewangle[x])^skyflip)>>(ANGLETOSKYSHIFT-16)) + frontpos)>>16;
 
-		if (!(level.flags & LEVEL_DOUBLESKY))
+		if (backskytex == -1)
 		{
-			dc_source = R_GetColumn (sky1texture, angle);
+			dc_source = R_GetColumn (frontskytex, angle);
 			drawfunc ();
 		}
 		else
@@ -413,9 +411,9 @@ static void _skycolumn (void (*drawfunc)(void), int x)
 			bottom >>= FRACBITS;
 			count = bottom - top + 1;
 
-			source = R_GetColumn (sky1texture, angle) + top;
-			angle = ((((viewangle + xtoviewangle[x])>>(ANGLETOSKYSHIFT-16)) + sky2pos)>>16);
-			source2 = R_GetColumn (sky2texture, angle) + top;
+			source = R_GetColumn (frontskytex, angle) + top;
+			angle = ((((viewangle + xtoviewangle[x])^skyflip)>>(ANGLETOSKYSHIFT-16)) + backpos)>>16;
+			source2 = R_GetColumn (backskytex, angle) + top;
 			dest = composite + top;
 
 			do
@@ -538,8 +536,55 @@ void R_DrawPlanes (void)
 				continue;
 			
 			// sky flat
-			if (pl->picnum == skyflatnum)
+			if (pl->picnum == skyflatnum || pl->picnum & PL_SKYFLAT)
 			{
+				if (pl->picnum == skyflatnum)
+				{	// use sky1
+					frontskytex = sky1texture;
+					if (level.flags & LEVEL_DOUBLESKY)
+						backskytex = sky2texture;
+					else
+						backskytex = -1;
+					skyflip = 0;
+					frontpos = sky1pos;
+					backpos = sky2pos;
+				}
+				else if (pl->picnum == PL_SKYFLAT)
+				{	// use sky2
+					frontskytex = sky2texture;
+					backskytex = -1;
+					skyflip = 0;
+					frontpos = sky2pos;
+				}
+				else
+				{	// MBF's linedef-controlled skies
+					// Sky Linedef
+					const line_t *l = &lines[(pl->picnum & ~PL_SKYFLAT)-1];
+
+					// Sky transferred from first sidedef
+					const side_t *s = *l->sidenum + sides;
+
+					// Texture comes from upper texture of reference sidedef
+					frontskytex = texturetranslation[s->toptexture];
+					backskytex = -1;
+
+					// Horizontal offset is turned into an angle offset,
+					// to allow sky rotation as well as careful positioning.
+					// However, the offset is scaled very small, so that it
+					// allows a long-period of sky rotation.
+					frontpos = (-s->textureoffset) >> (ANGLETOSKYSHIFT-16);
+
+					// Vertical offset allows careful sky positioning.
+					dc_texturemid = s->rowoffset - 28*FRACUNIT;
+
+					// We sometimes flip the picture horizontally.
+					//
+					// Doom always flipped the picture, so we make it optional,
+					// to make it easier to use the new feature, while to still
+					// allow old sky textures to be used.
+					skyflip = l->args[2] ? 0u : ~0u;
+				}
+
 				if (fixedlightlev) {
 					dc_colormap = DefaultPalette->maps.colormaps + fixedlightlev;
 				} else if (fixedcolormap) {
@@ -616,7 +661,6 @@ BOOL R_PlaneInitData (void)
 	ceilingclip = Malloc (screen.width * sizeof(*ceilingclip));
 
 	spanstart = Calloc (screen.height, sizeof(*spanstart));
-	spanstop = Calloc (screen.height, sizeof(*spanstop));
 
 	yslopetab = Calloc ((screen.height<<1)+(screen.height>>1), sizeof(*yslopetab));
 	distscale = Calloc (screen.width, sizeof(*distscale));

@@ -869,18 +869,8 @@ void R_PrecacheLevel (void)
 
 	for (i = numsprites - 1; i >= 0; i--)
 	{
-		if (hitlist[i]) {
-			int j;
-
-			for (j = sprites[i].numframes - 1; j >= 0; j--)
-			{
-				short *sflumps = sprites[i].spriteframes[j].lump;
-				int k;
-
-				for (k = 7; k >= 0; k--)
-					W_CacheLumpNum(sflumps[k], PU_CACHE);
-			}
-		}
+		if (hitlist[i])
+			R_CacheSprite (sprites + i);
 	}
 
 	Z_Free (hitlist);

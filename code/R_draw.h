@@ -149,7 +149,7 @@ void	R_DrawSpanP_Unrolled (void);
 void	R_DrawColumnHorizP_ASM (void);
 void	R_DrawColumnP_ASM (void);
 void	R_DrawFuzzColumnP_ASM (void);
-void	R_DrawTranslucentColumnP_ASM (void);
+void	R_DrawTranslucentColumnP_C (void);
 void	R_DrawTranslatedColumnP_C (void);
 void	R_DrawSpanP (void);
 
@@ -191,7 +191,7 @@ extern int				ds_color;		// [RH] For flat color (no texturing)
 extern byte*			translationtables;
 extern byte*			dc_translation;
 
-extern byte*			dc_transmap;
+extern fixed_t dc_translevel;
 
 
 /* [Petteri] R_DrawSpan8() optimized inner loop (does two pixels

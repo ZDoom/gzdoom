@@ -21,6 +21,7 @@
 //
 //-----------------------------------------------------------------------------
 
+// HEADER FILES ------------------------------------------------------------
 
 #include "m_alloc.h"
 #include "i_system.h"
@@ -37,11 +38,14 @@
 #include "v_video.h"
 #include "c_cvars.h"
 
-cvar_t *sv_gravity;
-cvar_t *sv_friction;
-
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void G_PlayerReborn (int player);
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+cvar_t *sv_gravity;
+cvar_t *sv_friction;
 
 fixed_t FloatBobOffsets[64] =
 {
@@ -63,11 +67,16 @@ fixed_t FloatBobOffsets[64] =
 	-200637, -152193, -102284, -51389
 };
 
+// CODE --------------------------------------------------------------------
 
+//==========================================================================
 //
 // P_SetMobjState
+//
 // Returns true if the mobj is still present.
 //
+//==========================================================================
+
 BOOL P_SetMobjState (mobj_t *mobj, statenum_t state)
 {
 	state_t *st;
@@ -122,19 +131,21 @@ BOOL P_SetMobjState (mobj_t *mobj, statenum_t state)
 	return ret;
 }
 
+//----------------------------------------------------------------------------
+//
+// PROC P_ExplodeMissile
+//
+//----------------------------------------------------------------------------
 
-//
-// P_ExplodeMissile  
-//
 void P_ExplodeMissile (mobj_t* mo)
 {
 	mo->momx = mo->momy = mo->momz = 0;
 
 	P_SetMobjState (mo, mobjinfo[mo->type].deathstate);
-	// [RH] If the object isn't translucent, don't change it.
-	// Otherwise, make it 75% translucent.
-	if (TransTable && !(mo->flags & MF_TRANSLUCBITS))
-		mo->flags |= MF_TRANSLUC75;
+	// [RH] If the object is already translucent, don't change it.
+	// Otherwise, make it 66% translucent.
+	if (mo->translucency == FRACUNIT)
+		mo->translucency = TRANSLUC66;
 
 	mo->tics -= P_Random (pr_explodemissile) & 3;
 
@@ -646,24 +657,20 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
 //
 void P_NightmareRespawn (mobj_t *mobj)
 {
-	fixed_t 			x;
-	fixed_t 			y;
-	subsector_t*		ss;
-	mobj_t* 			mo;
-	mapthing2_t* 		mthing;
+	fixed_t x, y, z;
+	subsector_t *ss;
+	mobj_t *mo;
+	mapthing2_t *mthing;
 
 	x = mobj->spawnpoint.x << FRACBITS;
 	y = mobj->spawnpoint.y << FRACBITS;
-
 	// something is occupying it's position?
 	if (!P_CheckPosition (mobj, x, y)) 
 		return;		// no respawn
 
 	// spawn a teleport fog at old spot
 	// because of removal of the body?
-	mo = P_SpawnMobj (mobj->x,
-					  mobj->y,
-					  ONFLOORZ, MT_TFOG);
+	mo = P_SpawnMobj (mobj->x, mobj->y, ONFLOORZ, MT_TFOG);
 	// initiate teleport sound
 	S_Sound (mo, CHAN_VOICE, "misc/teleport", 1, ATTN_NORM);
 
@@ -677,11 +684,32 @@ void P_NightmareRespawn (mobj_t *mobj)
 	// spawn the new monster
 	mthing = &mobj->spawnpoint;
 
+	if (mobj->info->flags & MF_SPAWNCEILING)
+		z = ONCEILINGZ;
+	else if (mobj->info->flags2 & MF2_SPAWNFLOAT)
+		z = FLOATRANDZ;
+	else if (mobj->info->flags2 & MF2_FLOATBOB)
+		z = mthing->z << FRACBITS;
+	else
+		z = ONFLOORZ;
+
 	// spawn it
 	// inherit attributes from deceased one
 	mo = P_SpawnMobj (x, y, ONFLOORZ, mobj->type);
 	mo->spawnpoint = mobj->spawnpoint;
 	mo->angle = ANG45 * (mthing->angle/45);
+
+	if (z == ONFLOORZ)
+		mobj->z += mthing->z << FRACBITS;
+	else if (z == ONCEILINGZ)
+		mobj->z -= mthing->z << FRACBITS;
+	mobj->spawnpoint = *mthing;
+
+	if (mobj->flags2 & MF2_FLOATBOB)
+	{ // Seed random starting index for bobbing motion
+		mobj->health = M_Random();
+		mobj->special1 = mthing->z << FRACBITS;
+	}
 
 	if (mthing->flags & MTF_AMBUSH)
 		mo->flags |= MF_AMBUSH;
@@ -818,6 +846,49 @@ void P_MobjThinker (mobj_t *mobj)
 	if (mobj->targettic)
 		mobj->targettic--;
 
+	// [RH] Pulse in and out of visibility
+	if (mobj->effects & FX_VISIBILITYPULSE)
+	{
+		if (mobj->special2 > 0)
+		{
+			mobj->translucency += 0x800;
+			if (mobj->translucency >= FRACUNIT)
+			{
+				mobj->translucency = FRACUNIT;
+				mobj->special2 = -1;
+			}
+		}
+		else
+		{
+			mobj->translucency -= 0x800;
+			if (mobj->translucency <= TRANSLUC25)
+			{
+				mobj->translucency = TRANSLUC25;
+				mobj->special2 = 1;
+			}
+		}
+	}
+
+	// [RH] Fade a stealth monster in and out of visibility
+	if (mobj->visdir > 0)
+	{
+		mobj->translucency += 2*FRACUNIT/TICRATE;
+		if (mobj->translucency > FRACUNIT)
+		{
+			mobj->translucency = FRACUNIT;
+			mobj->visdir = 0;
+		}
+	}
+	else if (mobj->visdir < 0)
+	{
+		mobj->translucency -= 3*FRACUNIT/TICRATE/2;
+		if (mobj->translucency < 0)
+		{
+			mobj->translucency = 0;
+			mobj->visdir = 0;
+		}
+	}
+
 	// Handle X and Y momemtums
 	BlockingMobj = NULL;
 	if (mobj->momx || mobj->momy || (mobj->flags & MF_SKULLFLY))
@@ -898,8 +969,7 @@ void P_MobjThinker (mobj_t *mobj)
 	else
 	{
 		// check for nightmare respawn
-		if (!(mobj->flags & MF_COUNTKILL) ||
-			!respawnmonsters)
+		if (!(mobj->flags & MF_COUNTKILL) || !respawnmonsters)
 			return;
 
 		mobj->movecount++;
@@ -907,7 +977,7 @@ void P_MobjThinker (mobj_t *mobj)
 		if (mobj->movecount < 12*TICRATE)
 			return;
 
-		if ( level.time&31 )
+		if (level.time & 31)
 			return;
 
 		if (P_Random (pr_mobjthinker) > 4)
@@ -917,19 +987,18 @@ void P_MobjThinker (mobj_t *mobj)
 	}
 }
 
-
+//==========================================================================
 //
 // P_SpawnMobj
-//	[RH] Since MapThings can now be stored with their own z-position,
-//		 we now use a separate parameter to indicate if it should be
-//		 spawned relative to the floor or ceiling.
 //
+//==========================================================================
+
 mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 {
-	mobj_t* 	mobj;
-	state_t*	st;
-	mobjinfo_t* info;
-	fixed_t		space;
+	mobj_t *mobj;
+	state_t *st;
+	mobjinfo_t *info;
+	fixed_t space;
 		
 	mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
 	memset (mobj, 0, sizeof (*mobj));
@@ -943,16 +1012,23 @@ mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 	mobj->height = info->height;
 	mobj->flags = info->flags;
 	mobj->flags2 = info->flags2;
+	mobj->damage = info->damage;
 	mobj->health = info->spawnhealth;
-	if (mobj->flags & MF_STEALTH)	// [RH] Stealth monsters start out invisible
-		mobj->flags2 |= MF2_DONTDRAW;
+	mobj->translucency = info->translucency;
+	if (type == MT_INS)
+	{
+		mobj->effects = FX_VISIBILITYPULSE;
+		mobj->special2 = -1;
+	}
 
 	if (gameskill->value != sk_nightmare)
 		mobj->reactiontime = info->reactiontime;
 	
 	mobj->lastlook = P_Random (pr_spawnmobj) % MAXPLAYERS;
-	// do not set the state with P_SetMobjState,
-	// because action routines can not be called yet
+
+	// Set the state, but do not use P_SetMobjState, because action
+	// routines can't be called yet.  If the spawnstate has an action
+	// routine, it will not be called.
 	st = &states[info->spawnstate];
 	mobj->state = st;
 	mobj->tics = st->tics;
@@ -962,7 +1038,6 @@ mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type)
 
 	// set subsector and/or block links
 	P_SetThingPosition (mobj);
-		
 	mobj->floorz = mobj->subsector->sector->floorheight;
 	mobj->ceilingz = mobj->subsector->sector->ceilingheight;
 
@@ -1012,16 +1087,17 @@ int 			iquehead;
 int 			iquetail;
 
 
-void P_RemoveMobj (mobj_t* mobj)
+void P_RemoveMobj (mobj_t *mobj)
 {
-	if ((mobj->flags & MF_SPECIAL)
-		&& !(mobj->flags & MF_DROPPED)
-		&& (mobj->type != MT_INV)
-		&& (mobj->type != MT_INS))
+	if ((mobj->flags & MF_SPECIAL) && !(mobj->flags & MF_DROPPED))
 	{
-		itemrespawnque[iquehead] = mobj->spawnpoint;
-		itemrespawntime[iquehead] = level.time;
-		iquehead = (iquehead+1)&(ITEMQUESIZE-1);
+		if ((mobj->type != MT_INV && mobj->type != MT_INS)
+			|| (dmflags & DF_RESPAWN_SUPER))
+		{
+			itemrespawnque[iquehead] = mobj->spawnpoint;
+			itemrespawntime[iquehead] = level.time;
+			iquehead = (iquehead+1)&(ITEMQUESIZE-1);
+		}
 
 		// lose one off the end?
 		if (iquehead == iquetail)
@@ -1035,10 +1111,9 @@ void P_RemoveMobj (mobj_t* mobj)
 	P_RemoveMobjFromHash (mobj);
 
 	// Delete all nodes on the current sector_list			phares 3/16/98
-
 	if (sector_list)
 	{
-		P_DelSeclist(sector_list);
+		P_DelSeclist (sector_list);
 		sector_list = NULL;
 	}
 
@@ -1068,7 +1143,7 @@ void P_RespawnSpecials (void)
 	int 				i;
 
 	// only respawn items in deathmatch
-	if (!deathmatch->value || !(dmflags & DF_ITEMS_RESPAWN))
+	if ((!deathmatch->value && !fakedmatch->value) || !(dmflags & DF_ITEMS_RESPAWN))
 		return;
 
 	// nothing left to respawn?
@@ -1121,8 +1196,10 @@ void P_RespawnSpecials (void)
 	}
 
 	// [RH] Set the thing's special
-	mo->special = mthing->special;
-	memcpy (mo->args, mthing->args, sizeof(mo->args));
+	// On second thought, don't.
+	mo->special = 0;
+	//mo->special = mthing->special;
+	//memcpy (mo->args, mthing->args, sizeof(mo->args));
 
 	// pull it from the que
 	iquetail = (iquetail+1)&(ITEMQUESIZE-1);
@@ -1182,6 +1259,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	p->extralight = 0;
 	p->fixedcolormap = 0;
 	p->viewheight = VIEWHEIGHT;
+	p->inconsistant = 0;
 
 	p->momx = p->momy = 0;		// killough 10/98: initialize bobbing to 0.
 
@@ -1418,7 +1496,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	}
 	
 	// [RH] Other things that shouldn't be spawned depending on dmflags
-	if (deathmatch->value) {
+	if (deathmatch->value || fakedmatch->value) {
 		spritenum_t sprite = states[mobjinfo[i].spawnstate].sprite;
 
 		if (dmflags & DF_NO_HEALTH) {

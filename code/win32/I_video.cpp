@@ -104,6 +104,7 @@ cvar_t *ticker;
 cvar_t *win_stretchx;
 cvar_t *win_stretchy;
 cvar_t *fullscreen;
+cvar_t *vid_palettehack;
 BOOL Fullscreen;
 static modelist_t *IteratorMode;
 static int IteratorID;
@@ -389,6 +390,14 @@ void I_FinishUpdate (void)
 		framecount++;
 	}
 	lastms = ms;
+
+	if (vid_palettehack->value)
+	{
+		if (NeedPalChange <= 0)
+			NeedPalChange = 1;
+		else
+			NeedPalChange++;
+	}
 
 	// draws little dots on the bottom of the screen
 	if (ticker->value) {
@@ -710,6 +719,7 @@ void I_InitGraphics (void)
 	win_stretchy = cvar ("win_stretchy", "1.0", CVAR_ARCHIVE|CVAR_CALLBACK);
 	fullscreen = cvar ("fullscreen", "1", CVAR_ARCHIVE|CVAR_CALLBACK);
 	vid_noptc = cvar ("vid_noptc", "0", CVAR_ARCHIVE);
+	vid_palettehack = cvar ("vid_palettehack", "0", CVAR_ARCHIVE);
 
 	Fullscreen = (BOOL)fullscreen->value;
 

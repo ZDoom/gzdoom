@@ -929,7 +929,8 @@ void ST_updateWidgets(void)
 
 void ST_Ticker (void)
 {
-
+//FIXME
+//return;
 	st_clock++;
 	st_randomnumber = M_Random();
 	ST_updateWidgets();
@@ -1084,6 +1085,8 @@ void ST_Drawer (void)
 			"Demo was recorded with a different version\n"
 			"of ZDoom. Expect it to go out of sync.");
 
+//FIXME
+//return;
 	if (realviewheight == screen.height && viewactive)
 	{
 		if (DrawNewHUD)
@@ -1485,7 +1488,8 @@ static BOOL	st_stopped = true;
 
 void ST_Start (void)
 {
-
+// FIXME
+//return;
 	if (!st_stopped)
 		ST_Stop();
 
@@ -1535,6 +1539,8 @@ void ST_ChangeScale (cvar_t *var)
 
 void ST_Init (void)
 {
+//FIXME
+//return;
 	veryfirsttime = 0;
 
 	if (!V_AllocScreen (&stbarscreen, 320, 32, 8) ||

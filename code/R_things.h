@@ -88,8 +88,8 @@ extern fixed_t			pspriteyscale;		// [RH] Aspect ratio stuff (from Doom Legacy)
 void R_DrawMaskedColumn (column_t* column);
 
 
+void R_CacheSprite (spritedef_t *sprite);
 void R_SortVisSprites (void);
-
 void R_AddSprites (sector_t *sec, int lightlevel);
 void R_AddPSprites (void);
 void R_DrawSprites (void);

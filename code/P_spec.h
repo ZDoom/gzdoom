@@ -349,7 +349,7 @@ typedef struct plat_s
 	thinker_t	thinker;
 
 	// [RH] Added next and prev links
-	struct plat_s *next, *prev;
+	struct plat_s *next, **prev;
 
 	sector_t*	sector;
 	fixed_t 	speed;
@@ -496,7 +496,7 @@ typedef struct ceiling_s
 	thinker_t	thinker;
 
 	// [RH] Added next and prev links
-	struct ceiling_s *next, *prev;
+	struct ceiling_s *next, **prev;
 
 	ceiling_e	type;
 	sector_t*	sector;
@@ -683,9 +683,6 @@ BOOL EV_Teleport (int tid, int side, mobj_t *thing);
 BOOL EV_SilentTeleport (int tid, line_t *line, int side, mobj_t *thing);
 BOOL EV_SilentLineTeleport (line_t *line, int side, mobj_t *thing, int id,
 							BOOL reverse);
-
-
-int P_SectorActive (special_e t, sector_t *s);	// [RH] from BOOM
 
 
 //

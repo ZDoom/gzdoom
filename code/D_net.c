@@ -39,6 +39,8 @@
 #include "p_effect.h"
 #include "p_local.h"
 
+#include "gi.h"
+
 #define NCMD_EXIT				0x80000000
 #define NCMD_RETRANSMIT 		0x40000000
 #define NCMD_SETUP				0x20000000
@@ -501,24 +503,21 @@ void NetUpdate (void)
 //
 // CheckAbort
 //
-void CheckAbort (void)
+BOOL CheckAbort (void)
 {
 	event_t *ev;
-	int stoptic;
 
 	Printf (PRINT_HIGH, "");	// [RH] Give the console a chance to redraw itself
-	stoptic = I_GetTime () + 2; 
-	while (I_GetTime() < stoptic) 
-		I_StartTic (); 
-
+	I_WaitForTic (I_GetTime () + TICRATE*2/35);
 	I_StartTic ();
 	for ( ; eventtail != eventhead 
 		  ; eventtail = (++eventtail)&(MAXEVENTS-1) ) 
 	{ 
 		ev = &events[eventtail]; 
 		if (ev->type == ev_keydown && ev->data1 == KEY_ESCAPE)
-			I_Error ("Network game synchronization aborted.");
-	} 
+			return true;
+	}
+	return false;
 }
 
 
@@ -548,7 +547,8 @@ void D_ArbitrateNetStart (void)
 	Printf (PRINT_HIGH, "Waiting for %d more player%s...\n",
 		doomcom->numnodes - 1, (doomcom->numnodes == 2) ? "" : "s");
 	do {
-		CheckAbort ();
+		if (CheckAbort ())
+			I_FatalError ("Network game synchronization aborted.");
 
 		for (i = 10; i > 0; i--) {
 			if (HGetPacket ()) {
@@ -736,7 +736,7 @@ void TryRunTics (void)
 	int 		numplaying;
 	
 	// get real tics
-	entertic = I_GetTime ()/ticdup;
+	entertic = I_WaitForTic (oldentertics * ticdup) / ticdup;
 	realtics = entertic - oldentertics;
 	oldentertics = entertic;
 	
@@ -945,22 +945,12 @@ void Net_DoCommand (int type, byte **stream, int player)
 				if ((who == 0) || players[player].userinfo.team[0] == 0) {
 					// Said to everyone
 					Printf (PRINT_CHAT, "%s: %s\n", players[player].userinfo.netname, s);
-					
-					if (gamemode == commercial) {
-						S_Sound (NULL, CHAN_VOICE, "misc/chat", 1, ATTN_NONE);
-					} else {
-						S_Sound (NULL, CHAN_VOICE, "misc/chat2", 1, ATTN_NONE);
-					}
+					S_Sound (NULL, CHAN_VOICE, gameinfo.chatSound, 1, ATTN_NONE);
 				} else if (!stricmp (players[player].userinfo.team,
 									 players[consoleplayer].userinfo.team)) {
 					// Said only to members of the player's team
 					Printf (PRINT_TEAMCHAT, "(%s): %s\n", players[player].userinfo.netname, s);
-					
-					if (gamemode == commercial) {
-						S_Sound (NULL, CHAN_VOICE, "misc/chat", 1, ATTN_NONE);
-					} else {
-						S_Sound (NULL, CHAN_VOICE, "misc/chat2", 1, ATTN_NONE);
-					}
+					S_Sound (NULL, CHAN_VOICE, gameinfo.chatSound, 1, ATTN_NONE);
 				}
 			}
 			break;
@@ -1018,7 +1008,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 		free (s);
 }
 
-// [RH] List ping times
+// [RH] List "ping" times
 void Cmd_Pings (void *plyr, int argc, char **argv)
 {
 	int i;

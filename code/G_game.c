@@ -557,6 +557,7 @@ BOOL G_Responder (event_t *ev)
 				stricmp (cmd, "+showscores") &&
 				stricmp (cmd, "bumpgamma") &&
 				stricmp (cmd, "screenshot"))) {
+				S_Sound (NULL, CHAN_VOICE, "switches/normbutn", 1, ATTN_NONE);
 				M_StartControlPanel (); 
 				return true; 
 			} else {
@@ -629,11 +630,14 @@ BOOL G_Responder (event_t *ev)
 // G_Ticker
 // Make ticcmd_ts for the players.
 //
+extern screen_t page;
+
 void G_Ticker (void) 
 { 
 	int 		i;
 	int 		buf; 
 	ticcmd_t*	cmd;
+	gamestate_t	oldgamestate;
 
 	// do player reborns if needed
 	for (i=0 ; i<MAXPLAYERS ; i++) 
@@ -641,6 +645,7 @@ void G_Ticker (void)
 			G_DoReborn (i);
 
 	// do things to change the game state
+	oldgamestate = gamestate;
 	while (gameaction != ga_nothing) 
 	{ 
 		switch (gameaction) 
@@ -688,6 +693,9 @@ void G_Ticker (void)
 		C_AdjustBottom ();
 	}
 
+	if (oldgamestate == GS_DEMOSCREEN && oldgamestate != gamestate && page.impdata)
+		V_FreeScreen (&page);
+
 	// get commands, check consistancy,
 	// and build new consistancy check
 	buf = (gametic/ticdup)%BACKUPTICS;
@@ -717,8 +725,7 @@ void G_Ticker (void)
 				if (gametic > BACKUPTICS
 					&& consistancy[i][buf] != cmd->consistancy)
 				{
-					Printf_Bold ("Consistency failure! %d: %i (!%i)\n",
-							 i, cmd->consistancy, consistancy[i][buf]);
+					players[i].inconsistant = 1;
 				}
 				if (players[i].mo)
 					consistancy[i][buf] = players[i].mo->x;
@@ -1113,6 +1120,7 @@ void G_LoadGame (char* name)
 
 void G_DoLoadGame (void)
 {
+extern BOOL ZDoom117aSave;
 	int 		length;
 	int 		i;
 	char		mapname[9];
@@ -1122,8 +1130,18 @@ void G_DoLoadGame (void)
 	length = M_ReadFile (savename, &savebuffer);
 	save_p = savebuffer + SAVESTRINGSIZE;	// skip the description field
 
-	if (strncmp (save_p, SAVESIG, 16))	// Bad version
-		I_Error ("Savegame is from a different version\n");
+	if (strncmp (save_p, SAVESIG, 16))
+	{	// Bad version
+		// This is a quick hack to support ZDoom 1.17 and 1.17a savegames
+		// with 1.17b. 1.17b mobjs have a translucency field. Earlier
+		// versions used flags bits to specify it.
+		if (strncmp (save_p, "ZDOOMSAVE117    ", 16))
+			I_Error ("Savegame is from a different version\n");
+		else
+			ZDoom117aSave = true;
+	}
+	else
+		ZDoom117aSave = false;
 
 	save_p += 16;
 
@@ -1663,7 +1681,7 @@ BOOL G_CheckDemoStatus (void)
 		int endtime;
 
 		if (timingdemo)
-			endtime = I_GetTimeReally () - starttime;
+			endtime = I_GetTimePolled () - starttime;
 			
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 

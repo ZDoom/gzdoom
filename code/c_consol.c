@@ -25,8 +25,9 @@
 #include "st_stuff.h"
 #include "s_sound.h"
 #include "s_sndseq.h"
-
 #include "doomstat.h"
+
+#include "gi.h"
 
 static void C_TabComplete (void);
 static BOOL TabbedLast;		// Last key pressed was tab
@@ -151,21 +152,33 @@ void C_InitConsole (int width, int height, BOOL ingame)
 	if ( (vidactive = ingame) ) {
 		if (!gotconback) {
 			BOOL stylize = false;
-			patch_t *patch;
+			BOOL isRaw = false;
+			patch_t *bg;
 			int num;
 
 			num = W_CheckNumForName ("CONBACK");
 			if (num == -1) {
 				stylize = true;
-				num = W_GetNumForName ("TITLEPIC");
+				num = W_GetNumForName (gameinfo.titlePage);
+				isRaw = gameinfo.flags & GI_PAGESARERAW;
 			}
 
-			patch = W_CacheLumpNum (num, PU_CACHE);
+			bg = W_CacheLumpNum (num, PU_CACHE);
 
-			V_AllocScreen (&conback, SHORT(patch->width), SHORT(patch->height), 8);
+			if (isRaw)
+				V_AllocScreen (&conback, 320, 200, 8);
+			else
+				V_AllocScreen (&conback, SHORT(bg->width), SHORT(bg->height), 8);
+
+			if (!conback.impdata)
+				I_FatalError ("No memory for console backdrop");
+
 			V_LockScreen (&conback);
 
-			V_DrawPatch (0, 0, &conback, patch);
+			if (isRaw)
+				V_DrawBlock (0, 0, &conback, 320, 200, (byte *)bg);
+			else
+				V_DrawPatch (0, 0, &conback, bg);
 
 			if (stylize) {
 				byte *fadetable = W_CacheLumpName ("COLORMAP", PU_CACHE), f, *v, *i;
@@ -1117,14 +1130,19 @@ void C_MidPrint (char *msg)
 	if (MidMsg)
 		V_FreeBrokenLines (MidMsg);
 
-	if ( (MidMsg = V_BreakLines (con_scaletext->value ? screen.width / CleanXfac : screen.width, msg)) ) {
-		MidTicker = (int)(con_midtime->value * TICRATE) + gametic;
+	if (msg)
+	{
+		if ( (MidMsg = V_BreakLines (con_scaletext->value ? screen.width / CleanXfac : screen.width, msg)) ) {
+			MidTicker = (int)(con_midtime->value * TICRATE) + gametic;
 
-		for (i = 0; MidMsg[i].width != -1; i++)
-			;
+			for (i = 0; MidMsg[i].width != -1; i++)
+				;
 
-		MidLines = i;
+			MidLines = i;
+		}
 	}
+	else
+		MidMsg = NULL;
 }
 
 void C_DrawMid (void)

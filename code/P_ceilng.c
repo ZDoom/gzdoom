@@ -204,7 +204,7 @@ BOOL EV_DoCeiling (ceiling_e type, line_t *line,
 		sec = &sectors[secnum];
 manual_ceiling:
 		// if ceiling already moving, don't start a second function on it
-		if (P_SectorActive (ceiling_special, sec))	//jff 2/22/98
+		if (sec->ceilingdata)
 			continue;
 		
 		// new door thinker
@@ -406,8 +406,9 @@ manual_ceiling:
 //
 void P_AddActiveCeiling (ceiling_t *c)
 {
-	c->next = activeceilings;
-	c->prev = NULL;
+	if ( (c->next = activeceilings) )
+		c->next->prev = &c->next;
+	c->prev = &activeceilings;
 	activeceilings = c;
 }
 
@@ -424,14 +425,9 @@ void P_RemoveActiveCeiling (ceiling_t *c)
 	while (scan) {
 		if (scan == c) {
 			c->sector->ceilingdata = NULL;
-			if (c == activeceilings) {
-				activeceilings = c->next;
-			} else {
-				if (c->prev)
-					c->prev->next = c->next;
-				if (c->next)
-					c->next->prev = c->prev;
-			}
+			if ( (*(c->prev) = c->next) )
+				c->next->prev = c->prev;
+
 			P_RemoveThinker (&c->thinker);
 			break;
 		}

@@ -17,7 +17,6 @@ BITS 32
 
 ; External variables:
 EXTERN	_columnofs
-EXTERN	_TransTable
 EXTERN	_ylookup
 EXTERN	_centery
 EXTERN	_fuzzpos
@@ -27,7 +26,6 @@ EXTERN	_realviewheight
 
 EXTERN	_dc_pitch
 EXTERN	_dc_colormap
-EXTERN	_dc_transmap
 EXTERN	_dc_iscale
 EXTERN	_dc_texturemid
 EXTERN	_dc_source
@@ -193,27 +191,20 @@ _ASM_PatchPitch:
 	mov	[rdcp1+2],edx
 	mov	[f1a+3],edx
 	mov	[f1b+2],edx
-	mov	[l1a+2],edx
-	mov	[l1b+2],edx
 
 	; 2 * dc_pitch
 	add	edx,[_dc_pitch]
 	mov	[f2a+3],edx
 	mov	[f2b+2],edx
-	mov	[l2a+2],edx
-	mov	[l2b+2],edx
 
 	; 3 * dc_pitch
 	add	edx,[_dc_pitch]
 	mov	[f3a+3],edx
 	mov	[f3b+2],edx
-	mov	[l3a+2],edx
-	mov	[l3b+2],edx
 
 	; 4 * dc_pitch
 	add	edx,[_dc_pitch]
 	mov	[f4+2],edx
-	mov	[l4+2],edx
 
 	jmp	_PatchUnrolled
 
@@ -459,197 +450,6 @@ dfcdone:
 	pop	edi
 	pop	esi
 	pop	ebx
-	ret
-
-;*----------------------------------------------------------------------
-;*
-;* R_DrawTranslucentColumnP
-;*
-;*----------------------------------------------------------------------
-
-GLOBAL	_R_DrawTranslucentColumnP_ASM
-GLOBAL	@R_DrawTranslucentColumnP_ASM@0
-
-	align 16
-
-_R_DrawTranslucentColumnP_ASM:
-@R_DrawTranslucentColumnP_ASM@0:
-;
-; dest = ylookup[dc_yl] + columnofs[dc_x];
-;
-	push	ebp
-	push	ebx
-	push	edi
-	push	esi
-
-	mov	ebp,[_dc_yl]
-;
-; pixelcount = yh - yl + 1
-;
-	mov	eax,[_dc_yh]
-	mov	ebx,ebp
-	inc	eax
-	sub	eax,ebp				; pixel count
-	mov	[pixelcount],eax		; save for final pixel
-	jle	near ldone			; nothing to scale
-
-	mov	edi,[_ylookup]
-	push	ebp				; make space for ystep frac. later
-	mov	edi,[edi+ebx*4]
-
-	mov	esi,[_columnofs]
-	mov	ebx,[_dc_x]
-	add	edi,[esi+ebx*4]			; edi = dest
-
-
-;
-; frac = dc_texturemid - (centery-dc_yl)*fracstep;
-;
-	mov	ecx,[_dc_iscale]		; fracstep
-	mov	eax,[_centery]
-	sub	eax,ebp
-	imul	eax,ecx
-	mov	edx,[_dc_texturemid]
-	sub	edx,eax
-	mov	ebx,edx
-	shr	ebx,16				; frac int.
-	and	ebx,[_dc_mask]
-	shl	edx,16				; y frac up
-
-	mov	ebp,ecx
-	shl	ebp,16				; fracstep f. up
-	shr	ecx,16				; fracstep i. ->cl
-	and	cl,[_dc_mask]
-
-	mov	esi,[_dc_source]
-
-	mov	eax,[pixelcount]
-	mov	[esp],ebp
-	mov	ebp,edx
-	mov	ch,al
-	shr	eax,2
-	mov	edx,[_dc_transmap]
-	test	ch,3
-	jz	.l4quadloop
-	mov	eax,[_dc_colormap]
-
-;
-; [esp] : ystep frac. upper 24 bits
-;  ebp  : y     frac. upper 24 bits
-;  ebx  : y     i.    lower 8 bits,  masked for index
-;  ecx  : ch = counter, cl = y step i.
-;  eax  : colormap aligned 256
-;  edx  : transtable aligned 65536
-;  esi  : source texture column
-;  edi  : dest screen
-;
-
-;
-;  do un-even pixel
-;
-	test	ch,1
-	jz	.lc2
-
-	mov	al,[esi+ebx]
-	 mov	dh,[edi]
-	mov	dl,[eax]
-	 add	ebp,[esp]
-	mov	al,[edx]
-	 adc	bl,cl
-	mov	[edi],al
-	 and	ebx,[_dc_mask]
-	add	edi,[_dc_pitch]
-
-
-;
-;  do two non-quad-aligned pixels
-;
-.lc2:
-	test	ch,2
-	jz	.lc3
-
-	mov	al,[esi+ebx]
-	 mov	dh,[edi]
-	mov	dl,[eax]
-	 add	ebp,[esp]
-	mov	al,[edx]
-	 adc	bl,cl
-	mov	[edi],al
-	 and	ebx,[_dc_mask]
-
-	mov	al,[esi+ebx]
-	 mov	dh,[edi]
-	add	edi,[_dc_pitch]
-	 mov	dl,[eax]
-	add	ebp,[esp]
-	 mov	al,[edx]
-	adc	bl,cl
-	 mov	[edi],al
-	and	ebx,[_dc_mask]
-	 add	edi,[_dc_pitch]
-
-;
-;  test if there were at least 4 pixels
-;
-.lc3:
-	mov	eax,[pixelcount]
-	shr	eax,2
-	test	eax,eax				; test quad count
-	jz	near ldone
-
-.l4quadloop:
-	mov	ch,al
-	mov	eax,[_dc_colormap]
-
-;	.align  4
-lquadloop:
-	mov	al,[esi+ebx]
-	 mov	dh,[edi]
-	mov	dl,[eax]
-	 add	ebp,[esp]
-	mov	al,[edx]
-	 adc	bl,cl
-	mov	[edi],al
-	 and	ebx,[_dc_mask]
-
-	mov	al,[esi+ebx]
-l1a:	 mov	dh,[edi+0x12345678]
-	mov	dl,[eax]
-	 add	ebp,[esp]
-	mov	al,[edx]
-	 adc	bl,cl
-l1b:	mov	[edi+0x12345678],al
-	 and	ebx,[_dc_mask]
-
-	mov	al,[esi+ebx]
-l2a:	 mov	dh,[edi+2*0x12345678]
-	mov	dl,[eax]
-	 add	ebp,[esp]
-	mov	al,[edx]
-	 adc	bl,cl
-l2b:	mov	[edi+2*0x12345678],al
-	 and	ebx,[_dc_mask]
-
-	mov	al,[esi+ebx]
-l3a:	 mov	dh,[edi+3*0x12345678]
-	mov	dl,[eax]
-	 add	ebp,[esp]
-	mov	al,[edx]
-	 adc	bl,cl
-l3b:	mov	[edi+3*0x12345678],al
-	 and	ebx,[_dc_mask]
-
-l4:	add	edi,4*0x12345678
-
-	 dec	ch
-	jnz	lquadloop
-
-ldone:
-	pop	ebp
-	pop	esi
-	pop	edi
-	pop	ebx
-	pop	ebp
 	ret
 
 

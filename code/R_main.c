@@ -1026,12 +1026,14 @@ void R_RenderPlayerView (player_t *player)
 		colfunc = R_FillColumnP;
 		//spanfunc = R_FillSpan;
 	}
-
-	hcolfunc_pre = R_DrawColumnHoriz;
-	colfunc = basecolfunc;
-	hcolfunc_post1 = rt_map1col;
-	hcolfunc_post2 = rt_map2cols;
-	hcolfunc_post4 = rt_map4cols;
+	else
+	{
+		hcolfunc_pre = R_DrawColumnHoriz;
+		colfunc = basecolfunc;
+		hcolfunc_post1 = rt_map1col;
+		hcolfunc_post2 = rt_map2cols;
+		hcolfunc_post4 = rt_map4cols;
+	}
 	
 	// Never draw the player unless in chasecam mode
 	if (camera->player && !(camera->player->cheats & CF_CHASECAM)) {

@@ -1353,7 +1353,7 @@ typedef enum {
 	// [RH] Miscellaneous things
 	MT_UNKNOWNTHING,
 	MT_MAPSPOT,
-	MT_MAPSPOTGRAV,
+	MT_MAPSPOTGRAVITY,
 	MT_BRIDGE,
 	MT_PUSH,		// Boom's push thing
 	MT_PULL,		// Boom's pull thing
@@ -1393,6 +1393,7 @@ typedef struct
 	int flags;
 	int flags2;
 	int raisestate;
+	int translucency;
 
 } mobjinfo_t;
 

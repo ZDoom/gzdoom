@@ -754,6 +754,7 @@ static int PatchThing (int thingNum)
 		{ "Mass",				myoffsetof(mobjinfo_t,mass) },
 		{ "Missile damage",		myoffsetof(mobjinfo_t,damage) },
 		{ "Respawn frame",		myoffsetof(mobjinfo_t,raisestate) },
+		{ "Translucency",		myoffsetof(mobjinfo_t,translucency) },
 		{ NULL, }
 	};
 
@@ -849,11 +850,6 @@ static int PatchThing (int thingNum)
 		Printf (PRINT_HIGH, "Thing %d out of range.\n", thingNum + 1);
 	}
 
-	// Turn off transparency for the mobj, since original DOOM
-	// didn't have any. If some is wanted, let the patch specify it.
-	// Uncomment this if you want to make it so.
-	//info->flags &= ~MF_TRANSLUCBITS;
-
 	while ((result = GetLine ()) == 1) {
 		int sndmap = atoi (Line2);
 
@@ -916,7 +912,13 @@ static int PatchThing (int thingNum)
 					}
 				}
 				if (vchanged)
+				{
 					info->flags = value;
+					// Bit flags are no longer used to specify translucency.
+					// This is just a temporary hack.
+					if (info->flags & 0x60000000)
+						info->translucency = (info->flags & 0x60000000) >> 15;
+				}
 				if (v2changed)
 					info->flags2 = value2;
 				DPrintf ("Bits: %d,%d (0x%08x,0x%08x)\n", info->flags, info->flags2,
@@ -1174,7 +1176,7 @@ static int PatchMisc (int dummy)
 		{ "Max Armor",				myoffsetof(struct DehInfo,MaxArmor) },
 		{ "Green Armor Class",		myoffsetof(struct DehInfo,GreenAC) },
 		{ "Blue Armor Class",		myoffsetof(struct DehInfo,BlueAC) },
-		{ "Max Soulsphere",			myoffsetof(struct DehInfo,BlueAC) },
+		{ "Max Soulsphere",			myoffsetof(struct DehInfo,MaxSoulsphere) },
 		{ "Soulsphere Health",		myoffsetof(struct DehInfo,SoulsphereHealth) },
 		{ "Megasphere Health",		myoffsetof(struct DehInfo,MegasphereHealth) },
 		{ "God Mode Health",		myoffsetof(struct DehInfo,GodHealth) },

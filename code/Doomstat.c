@@ -46,6 +46,4 @@ cvar_t *boom_friction, *boom_pushers;
 // [RH] Deathmatch flags
 cvar_t			*dmflagsvar;
 int				dmflags;		// Copy of dmflagsvar->value, but as an integer.
-
-// [RH] Information about the current game
-gameinfo_t		gameinfo;
+cvar_t			*fakedmatch;

@@ -70,7 +70,9 @@ extern	int 	dirtybox[4];
 extern	byte	newgamma[256];
 extern	cvar_t	*gammalevel;
 
-extern	byte*	TransTable;			// Translucency tables (minus 65536)
+// DOSDoom 0.65's neat-o translucency tables
+extern unsigned int Col2RGB8[65][256];
+extern byte RGB8k[16][32][16];
 
 extern	int		CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 

@@ -126,7 +126,8 @@ typedef struct player_s
 
 	int			attackdown, usedown;	// true if button down last tic
 	int			cheats;					// bit flags
-	int			refire;					// refired shots are less accurate
+	short		refire;					// refired shots are less accurate
+	short		inconsistant;
 	int			killcount, itemcount, secretcount;		// for intermission
 	int			damagecount, bonuscount;// for screen flashing
 	mobj_t		*attacker;				// who did damage (NULL for floors

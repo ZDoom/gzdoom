@@ -684,12 +684,14 @@ void R_Subsector (int num)
 
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel
-
+	// killough 10/98: add support for skies transferred from sidedefs
 	floorplane = frontsector->floorheight < viewz || // killough 3/7/98
 		(frontsector->heightsec != -1 &&
 		 sectors[frontsector->heightsec].ceilingpic == skyflatnum) ?
 		R_FindPlane(frontsector->floorheight,
-					frontsector->floorpic,
+					frontsector->floorpic == skyflatnum &&  // kilough 10/98
+						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
+						frontsector->floorpic,
 					floorlightlevel,				// killough 3/16/98
 					frontsector->floor_xoffs,		// killough 3/7/98
 					frontsector->floor_yoffs
@@ -700,7 +702,9 @@ void R_Subsector (int num)
 		(frontsector->heightsec != -1 &&
 		 sectors[frontsector->heightsec].floorpic == skyflatnum) ?
 		R_FindPlane(frontsector->ceilingheight,		// killough 3/8/98
-					frontsector->ceilingpic,
+					frontsector->ceilingpic == skyflatnum &&  // kilough 10/98
+						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
+						frontsector->ceilingpic,
 					ceilinglightlevel,				// killough 4/11/98
 					frontsector->ceiling_xoffs,		// killough 3/7/98
 					frontsector->ceiling_yoffs

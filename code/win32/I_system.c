@@ -57,12 +57,16 @@ BOOL STACK_ARGS CheckMMX (char *vendorid);
 
 extern HWND Window;
 
-BOOL	UseMMX;
-BOOL	fastdemo;
+BOOL UseMMX;
+BOOL fastdemo;
+UINT TimerPeriod;
+UINT TimerEventID;
+HANDLE NewTicArrived;
 
-float 	mb_used = 8.0;
+float mb_used = 8.0;
 
 int (*I_GetTime) (void);
+int (*I_WaitForTic) (int);
 
 os_t OSPlatform;
 
@@ -72,19 +76,18 @@ void I_Tactile (int on, int off, int total)
   on = off = total = 0;
 }
 
-ticcmd_t		emptycmd;
-ticcmd_t*		I_BaseTiccmd(void)
+ticcmd_t emptycmd;
+ticcmd_t *I_BaseTiccmd(void)
 {
 	return &emptycmd;
 }
 
-
-int  I_GetHeapSize (void)
+int I_GetHeapSize (void)
 {
 	return (int)(mb_used*1024*1024);
 }
 
-byte* I_ZoneBase (int *size)
+byte *I_ZoneBase (int *size)
 {
 	int i;
 
@@ -103,7 +106,7 @@ void I_EndRead(void)
 {
 }
 
-byte*	I_AllocLow(int length)
+byte *I_AllocLow(int length)
 {
 	byte*		mem;
 
@@ -133,7 +136,7 @@ unsigned int I_MSTime (void)
 // I_GetTime
 // returns time in 1/35th second tics
 //
-int I_GetTimeReally (void)
+int I_GetTimePolled (void)
 {
 	DWORD tm;
 
@@ -144,20 +147,59 @@ int I_GetTimeReally (void)
 	return ((tm-basetime)*TICRATE)/1000;
 }
 
+int I_WaitForTicPolled (int prevtic)
+{
+	int time;
+
+	while ((time = I_GetTimePolled()) <= prevtic)
+		;
+
+	return time;
+}
+
+
+static int tics;
+
+int I_GetTimeEventDriven (void)
+{
+	return tics;
+}
+
+int I_WaitForTicEvent (int prevtic)
+{
+	if (prevtic >= tics)
+		do
+		{
+			WaitForSingleObject (NewTicArrived, INFINITE);
+		} while (prevtic >= tics);
+
+	return tics;
+}
+
+void CALLBACK TimerTicked (UINT id, UINT msg, DWORD user, DWORD dw1, DWORD dw2)
+{
+	tics++;
+	SetEvent (NewTicArrived);
+}
+
 // [RH] Increments the time count every time it gets called.
 //		Used only by -fastdemo (just like BOOM).
+static int faketic = 0;
+
 int I_GetTimeFake (void)
 {
-	static int tic = 0;
+	return faketic++;
+}
 
-	return tic++;
+int I_WaitForTicFake (int whocares)
+{
+	return faketic++;
 }
 
 void I_WaitVBL (int count)
 {
 	// I_WaitVBL is never used to actually synchronize to the
 	// vertical blank. Instead, it's used for delay purposes.
-
 	Sleep (1000 * count / 70);
 }
 
@@ -233,9 +275,35 @@ void I_Init (void)
 
 	// [RH] Support for BOOM's -fastdemo
 	if (fastdemo)
+	{
 		I_GetTime = I_GetTimeFake;
+		I_WaitForTic = I_WaitForTicFake;
+	}
 	else
-		I_GetTime = I_GetTimeReally;
+	{	// Use a timer event if possible
+		NewTicArrived = CreateEvent (NULL, FALSE, FALSE, NULL);
+		if (NewTicArrived)
+		{
+			TimerEventID = timeSetEvent
+				(
+					1000/TICRATE,
+					0,
+					TimerTicked,
+					0,
+					TIME_PERIODIC
+				);
+		}
+		if (TimerEventID != 0)
+		{
+			I_GetTime = I_GetTimeEventDriven;
+			I_WaitForTic = I_WaitForTicEvent;
+		}
+		else
+		{	// Otherwise, busy-loop with timeGetTime
+			I_GetTime = I_GetTimePolled;
+			I_WaitForTic = I_WaitForTicPolled;
+		}
+	}
 
 	I_InitSound();
 	I_InitInput (Window);
@@ -249,6 +317,13 @@ static int has_exited;
 void STACK_ARGS I_Quit (void)
 {
 	has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
+
+	if (TimerEventID)
+		timeKillEvent (TimerEventID);
+	if (NewTicArrived)
+		CloseHandle (NewTicArrived);
+
+	timeEndPeriod (TimerPeriod);
 
 	if (demorecording)
 		G_CheckDemoStatus();

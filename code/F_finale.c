@@ -38,6 +38,8 @@
 #include "r_state.h"
 #include "hu_stuff.h"
 
+#include "gi.h"
+
 // Stage of animation:
 //	0 = text, 1 = art screen, 2 = character cast
 unsigned int	finalestage;
@@ -73,20 +75,15 @@ void F_StartFinale (char *music, char *flat, char *text)
 	//  determined in G_WorldDone() based on data in
 	//  a level_info_t and a cluster_info_t.
 
-	if (*music == 0) {
-		if (gamemode == commercial)
-			S_ChangeMusic ("D_READ_M", true);
-		else
-			S_ChangeMusic ("D_VICTOR", true);
-	} else
- 		S_ChangeMusic (music, true);
+	if (*music == 0)
+		S_ChangeMusic (gameinfo.finaleMusic,
+			!(gameinfo.flags & GI_NOLOOPFINALEMUSIC));
+	else
+ 		S_ChangeMusic (music, !(gameinfo.flags & GI_NOLOOPFINALEMUSIC));
 
-	if (*flat == 0) {
-		if (gamemode == commercial)
-			finaleflat = "SLIME16";
-		else
-			finaleflat = "FLOOR4_8";
-	} else
+	if (*flat == 0)
+		finaleflat = gameinfo.finaleFlat;
+	else
 		finaleflat = flat;
 
 	if (text)
@@ -676,7 +673,8 @@ void F_BunnyScroll (void)
 //
 void F_Drawer (void)
 {
-	switch (finalestage) {
+	switch (finalestage)
+	{
 		case 0:
 			F_TextWrite ();
 			break;
@@ -684,24 +682,22 @@ void F_Drawer (void)
 		case 1:
 			switch (level.nextmap[7])
 			{
-			  case '1':
-				if (gamemode == retail)
-				  V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("CREDIT",PU_CACHE));
-				else
-				  V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP2",PU_CACHE));
-				break;
-			  case '2':
-				V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("VICTORY2",PU_CACHE));
-				break;
-			  case '3':
-				F_BunnyScroll ();
-				break;
-			  case '4':
-				V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("ENDPIC",PU_CACHE));
-				break;
-			  default:
-				V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP2",PU_CACHE));
-				break;
+				default:
+				case '1':
+					V_DrawPatchIndirect (0, 0, &screen,
+						W_CacheLumpName (gameinfo.finalePage1, PU_CACHE));
+					break;
+				case '2':
+					V_DrawPatchIndirect (0, 0, &screen,
+						W_CacheLumpName (gameinfo.finalePage2, PU_CACHE));
+					break;
+				case '3':
+					F_BunnyScroll ();
+					break;
+				case '4':
+					V_DrawPatchIndirect (0, 0, &screen,
+						W_CacheLumpName (gameinfo.finalePage3, PU_CACHE));
+					break;
 			}
 			break;
 

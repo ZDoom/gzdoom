@@ -201,7 +201,7 @@ BOOL EV_DoPlat (int tag, line_t *line, plattype_e type, int height,
 		sec = &sectors[secnum];
 
 manual_plat:
-		if (P_SectorActive (floor_special, sec))	//jff 2/23/98 multiple thinkers
+		if (sec->floordata)
 			continue;
 		
 		// Find lowest & highest floors around sector
@@ -361,10 +361,9 @@ void EV_StopPlat (int tag)
 // [RH] Rewritten to use list
 void P_AddActivePlat (plat_t *plat)
 {
-	if (activeplats)
-		activeplats->prev = plat;
-	plat->next = activeplats;
-	plat->prev = NULL;
+	if ( (plat->next = activeplats) )
+		plat->next->prev = &plat->next;
+	plat->prev = &activeplats;
 	activeplats = plat;
 }
 
@@ -376,14 +375,8 @@ void P_RemoveActivePlat (plat_t *plat)
 	while (scan) {
 		if (scan == plat) {
 			scan->sector->floordata = NULL;
-			if (scan == activeplats) {
-				activeplats = scan->next;
-			} else {
-				if (scan->prev)
-					scan->prev->next = scan->next;
-				if (scan->next)
-					scan->next->prev = scan->prev;
-			}
+			if ( (*(scan->prev) = scan->next) )
+				scan->next->prev = scan->prev;
 			P_RemoveThinker (&scan->thinker);
 			break;
 		}

@@ -56,7 +56,10 @@ byte *I_ZoneBase (int *size);
 // returns current time in tics.
 int (*I_GetTime) (void);
 
-int I_GetTimeReally (void);
+// like I_GetTime, except it waits for a new tic before returning
+int (*I_WaitForTic) (int);
+
+int I_GetTimePolled (void);
 int I_GetTimeFake (void);
 
 

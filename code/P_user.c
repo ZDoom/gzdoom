@@ -333,7 +333,7 @@ void P_DeathThink (player_t *player)
 	// [RH] Delay rebirth slightly
 	if (level.time >= player->respawn_time) {
 		if (player->cmd.ucmd.buttons & BT_USE ||
-			(deathmatch->value && dmflags & DF_FORCE_RESPAWN))
+			((deathmatch->value || fakedmatch->value) && dmflags & DF_FORCE_RESPAWN))
 			player->playerstate = PST_REBORN;
 	}
 }

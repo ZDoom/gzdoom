@@ -372,9 +372,12 @@ static const xlat_t SpecialTranslation[] = {
 /* 266 */ { MONWALK,		Teleport_Line,				 { TAG, TAG, 0 } },
 /* 267 */ { MONWALK|REP,	Teleport_Line,				 { TAG, TAG, 0 } },
 /* 268 */ { MONWALK,		Teleport_NoFog,				 { TAG } },
-/* 269 */ { MONWALK|REP,	Teleport_NoFog,				 { TAG } }
+/* 269 */ { MONWALK|REP,	Teleport_NoFog,				 { TAG } },
+/* 270 */ { 0,				0,							 { 0 } },
+/* 271 */ { 0,				Static_Init,				 { TAG, Init_TransferSky, 0 } },
+/* 272 */ { 0,				Static_Init,				 { TAG, Init_TransferSky, 1 } }
 };
-#define NUM_SPECIALS 269
+#define NUM_SPECIALS 272
 
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 {

@@ -223,10 +223,6 @@ int P_GetFriction (const mobj_t *mo, int *frictionfactor)
 	const msecnode_t *m;
 	const sector_t *sec;
 
-	// Assign the friction value to objects on the floor, non-floating,
-	// and clipped. Normally the object's friction value is kept at
-	// ORIG_FRICTION and this thinker changes it for icy or muddy floors.
-	//
 	// When the object is straddling sectors with the same
 	// floorheight that have different frictions, use the lowest
 	// friction value (muddy has precedence over icy).

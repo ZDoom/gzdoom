@@ -54,7 +54,7 @@ typedef unsigned long DWORD;
 #include "../../midas/src/midas/midasdll.h"
 
 #ifdef USEASM
-BOOL MIDAS_CALL CheckMMX (char *vendorid);
+BOOL STACK_ARGS CheckMMX (char *vendorid);
 #endif
 
 BOOL UseMMX;
@@ -63,6 +63,7 @@ BOOL	fastdemo;
 float 	mb_used = 6.0;
 
 int (*I_GetTime) (void);
+int (*I_WaitForTic) (int);
 
 
 void I_Tactile (int on, int off, int total)
@@ -144,18 +145,30 @@ static void MIDAS_CALL TimerCallback (void)
 }
 static void TimerEnd (void) { }
 
-int I_GetTimeReally (void)
+int I_GetTimePolled (void)
 {
+	return counter;
+}
+
+int I_WaitForTicPolled (int prevtic)
+{
+	while (counter <= prevtic)
+		;
 	return counter;
 }
 
 // [RH] Increments the time count every time it gets called.
 //		Used only by -fastdemo (just like BOOM).
+static int faketic = 0;
+
 int I_GetTimeFake (void)
 {
-	static int tic = 0;
+	return faketic++;
+}
 
-	return tic++;
+int I_WaitForTicFake (int whocares)
+{
+	return faketic++;
 }
 
 
@@ -202,9 +215,15 @@ void I_Init(void)
 
 	// [RH] Support for BOOM's -fastdemo
 	if (fastdemo)
+	{
 		I_GetTime = I_GetTimeFake;
+		I_WaitForTic = I_WaitForTicFake;
+	}
 	else
-		I_GetTime = I_GetTimeReally;
+	{
+		I_GetTime = I_GetTimePolled;
+		I_WaitForTic = I_WaitForTicPolled;
+	}
 
 	I_InitSound();
 
@@ -283,9 +302,6 @@ void I_Error (const char *error, ...)
 	else
 		I_FatalError ("humph");
 }
-
-// killough 2/22/98: Add support for ENDBOOM, which is PC-specific
-// [RH] Use ENDOOM if ENDBOOM not found.
 
 void I_EndDoom(void)
 {

@@ -28,6 +28,7 @@
 #include "v_text.h"
 #include "s_sndseq.h"
 
+#include "gi.h"
 #include "minilzo.h"
 
 // [RH] Output buffer size for LZO compression.
@@ -585,7 +586,6 @@ void G_InitNew (char *mapname)
 //
 BOOL 			secretexit;
 static int		startpos;	// [RH] Support for multiple starts per level
-extern char*	pagename;
 extern BOOL		NoWipe;		// [RH] Don't wipe when travelling in hubs
 
 // [RH] The position parameter to these next two functions should
@@ -818,7 +818,7 @@ void G_DoLoadLevel (int position)
 		static BOOL firstTime = true;
 
 		if (firstTime) {
-			starttime = I_GetTimeReally ();
+			starttime = I_GetTimePolled ();
 			firstTime = false;
 		}
 	}
@@ -948,9 +948,12 @@ char *CalcMapName (int episode, int level)
 {
 	static char lumpname[9];
 
-	if (gamemode == commercial) {
+	if (gameinfo.flags & GI_MAPxx)
+	{
 		sprintf (lumpname, "MAP%02d", level);
-	} else {
+	}
+	else
+	{
 		lumpname[0] = 'E';
 		lumpname[1] = '0' + episode;
 		lumpname[2] = 'M';
@@ -1095,7 +1098,7 @@ void G_SnapshotLevel (void)
 	save_p = savebuffer = Malloc (savegamesize);
 
 	if (level.info->snapshot)
-		Z_Free (level.info->snapshot);
+		free (level.info->snapshot);
 
 	WriteLong (level.flags, &save_p);
 	WriteLong (level.fadeto, &save_p);
@@ -1134,7 +1137,7 @@ void G_SnapshotLevel (void)
 			DPrintf ("Snapshot: %d .. %d bytes\n", len, outlen);
 		}
 
-		level.info->snapshot = Z_Malloc (((outlen == 0) ? len : outlen) + sizeof(int)*2, PU_STATIC, 0);
+		level.info->snapshot = Malloc (((outlen == 0) ? len : outlen) + sizeof(int)*2);
 		((int *)(level.info->snapshot))[0] = outlen;
 		((int *)(level.info->snapshot))[1] = len;
 		if (outlen == 0)
@@ -1163,7 +1166,7 @@ void G_UnSnapshotLevel (BOOL keepPlayers)
 	if (cprlen) {
 		int r, newlen;
 
-		expand = Z_Malloc (expandsize, PU_STATIC, 0);
+		expand = Malloc (expandsize);
 		r = lzo1x_decompress (level.info->snapshot + sizeof(int)*2, cprlen, expand, &newlen, NULL);
 		if (r != LZO_E_OK || newlen != expandsize) {
 			Printf (PRINT_HIGH, "Could not decompress snapshot");
@@ -1192,10 +1195,10 @@ void G_UnSnapshotLevel (BOOL keepPlayers)
 	P_UnArchiveSounds ();
 
 	if (expand)
-		Z_Free (expand);
+		free (expand);
 
 	// No reason to keep the snapshot around once the level's been entered.
-	Z_Free (level.info->snapshot);
+	free (level.info->snapshot);
 	level.info->snapshot = NULL;
 
 	save_p = NULL;
@@ -1207,13 +1210,13 @@ void G_ClearSnapshots (void)
 
 	for (i = 0; i < numwadlevelinfos; i++)
 		if (wadlevelinfos[i].snapshot) {
-			Z_Free (wadlevelinfos[i].snapshot);
+			free (wadlevelinfos[i].snapshot);
 			wadlevelinfos[i].snapshot = NULL;
 		}
 
 	for (i = 0; LevelInfos[i].level_name; i++)
 		if (LevelInfos[i].snapshot) {
-			Z_Free (LevelInfos[i].snapshot);
+			free (LevelInfos[i].snapshot);
 			LevelInfos[i].snapshot = NULL;
 		}
 }
@@ -1266,7 +1269,7 @@ void G_UnArchiveSnapshots (void)
 		fullsize = ((int *)save_p)[1];
 		savesize = (shortsize ? shortsize : fullsize) + sizeof(int)*2;
 		if (i) {
-			i->snapshot = Z_Malloc (savesize, PU_STATIC, 0);
+			i->snapshot = Malloc (savesize);
 			memcpy (i->snapshot, save_p, savesize);
 		}
 		save_p += savesize;

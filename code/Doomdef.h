@@ -314,6 +314,7 @@ typedef enum
 #define DF_FAST_MONSTERS	32768	// Monsters are fast (replaces -fast parm)
 #define DF_NO_JUMP			65536	// Don't allow jumping
 #define DF_NO_FREELOOK		131072	// Don't allow freelook
+#define DF_RESPAWN_SUPER	262144	// Respawn invulnerability and invisibility
 
 // phares 3/20/98:
 //

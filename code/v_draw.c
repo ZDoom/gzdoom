@@ -116,23 +116,53 @@ void V_DrawPatchSP (byte *source, byte *dest, int count, int pitch, int yinc)
 // Translucent patch drawers (always 50%)
 void V_DrawLucentPatchP (byte *source, byte *dest, int count, int pitch)
 {
-	byte *map = TransTable + 65536 * 2;
+	unsigned int *fg2rgb, *bg2rgb;
+
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = 0x8000 & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
 
 	do
 	{
-		*dest = map[(*dest)|((*source++)<<8)];
+		unsigned int fg = *source++;
+		unsigned int bg = *dest;
+
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
 		dest += pitch; 
 	} while (--count);
 }
 
 void V_DrawLucentPatchSP (byte *source, byte *dest, int count, int pitch, int yinc)
 {
-	byte *map = TransTable + 65536 * 2;
+	unsigned int *fg2rgb, *bg2rgb;
 	int c = 0;
+
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = 0x8000 & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
 
 	do
 	{
-		*dest = map[(*dest)|((source[c >> 16])<<8)];
+		unsigned int fg = source[c >> 16];
+		unsigned int bg = *dest;
+
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
 		dest += pitch;
 		c += yinc;
 	} while (--count);
@@ -165,23 +195,55 @@ void V_DrawTranslatedPatchSP (byte *source, byte *dest, int count, int pitch, in
 // Translated, translucent patch drawers
 void V_DrawTlatedLucentPatchP (byte *source, byte *dest, int count, int pitch)
 {
-	byte *map = TransTable + 65536 * 2;
+	unsigned int *fg2rgb, *bg2rgb;
+	byte *colormap = V_ColorMap;
+
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = 0x8000 & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
 
 	do
 	{
-		*dest = map[(*dest)|(V_ColorMap[*source++]<<8)];
+		unsigned int fg = colormap[*source++];
+		unsigned int bg = *dest;
+
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
 		dest += pitch; 
 	} while (--count);
 }
 
 void V_DrawTlatedLucentPatchSP (byte *source, byte *dest, int count, int pitch, int yinc)
 {
-	byte *map = TransTable + 65536 * 2;
 	int c = 0;
+	unsigned int *fg2rgb, *bg2rgb;
+	byte *colormap = V_ColorMap;
+
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = 0x8000 & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
 
 	do
 	{
-		*dest = map[(*dest)|(V_ColorMap[source[c >> 16]]<<8)];
+		unsigned int fg = colormap[source[c >> 16]];
+		unsigned int bg = *dest;
+
+		fg = fg2rgb[fg];
+		bg = bg2rgb[bg];
+		fg = (fg+bg) | 0xf07c3e1f;
+		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
 		dest += pitch;
 		c += yinc;
 	} while (--count);
@@ -210,12 +272,26 @@ void V_DrawColoredPatchP (byte *source, byte *dest, int count, int pitch)
 // care about the patch's actual contents, just it's outline.
 void V_DrawColorLucentPatchP (byte *source, byte *dest, int count, int pitch)
 {
-	byte *map = TransTable + 65536 * 2;
-	int fill = V_ColorFill << 8;
+	unsigned int *bg2rgb;
+	unsigned int fg;
+	byte *colormap = V_ColorMap;
+
+	{
+		unsigned int *fg2rgb;
+		fixed_t fglevel, bglevel;
+
+		fglevel = 0x8000 & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+		fg = fg2rgb[V_ColorFill];
+	}
 
 	do
 	{
-		*dest = map[(*dest)|fill];
+		unsigned int bg = bg2rgb[*dest];
+		bg = (bg+bg) | 0xf07c3e1f;
+		*dest = RGB8k[0][0][(bg>>5) & (bg>>19)];
 		dest += pitch; 
 	} while (--count);
 }

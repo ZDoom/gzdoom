@@ -1096,6 +1096,8 @@ void I_GetEvent(void)
 		else
 			MouseRead_Win32 ();
 	}
+	if (usejoystick->value)
+		DI_JoyCheck ();
 }
 
 
@@ -1112,6 +1114,4 @@ void I_StartTic (void)
 //
 void I_StartFrame (void)
 {
-	if (usejoystick->value)
-		DI_JoyCheck ();
 }

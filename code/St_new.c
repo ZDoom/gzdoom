@@ -126,7 +126,9 @@ void ST_newDraw (void)
 	if (plyr->armortype && plyr->armorpoints) {
 		if (armors[plyr->armortype])
 			V_DrawPatchCleanNoMove (20 * CleanXfac, y - 4*CleanYfac,
-									&screen, armors[plyr->armortype-1]);
+									&screen,
+									plyr->armortype > 2 ? armors[1] :
+										armors[plyr->armortype-1]);
 		ST_DrawNum (40*CleanXfac, y - (SHORT(armors[0]->height)+3)*CleanYfac,
 					 &screen, plyr->armorpoints);
 	}
@@ -160,19 +162,45 @@ void ST_newDraw (void)
 void ST_nameDraw (int y)
 {
 	int x, color;
+	char conbuff[64], *string, pnum[4];
+	BOOL inconsistant;
 
-	if (!netgame || level.time > NameUp + 5 || (level.time < TICRATE * 3 && !demoplayback))
+	inconsistant = false;
+	for (x = 0; x < MAXPLAYERS; x++)
+	{
+		if (playeringame[x] && players[x].inconsistant)
+		{
+			if (!inconsistant)
+			{
+				strcpy (conbuff, "Consistency failure: ");
+				inconsistant = true;
+			}
+			pnum[0] = '0' + x;
+			pnum[1] = 0;
+			strcat (conbuff, pnum);
+		}
+	}
+	if (!inconsistant && (!netgame || level.time > NameUp + 5 || (level.time < TICRATE * 3 && !demoplayback)))
 		return;
 
-	if (plyr - players == consoleplayer)
-		color = CR_GOLD;
-	else
+	if (inconsistant)
+	{
 		color = CR_GREEN;
-
-	x = (screen.width - V_StringWidth (plyr->userinfo.netname)*CleanXfac) >> 1;
-	if (level.time < NameUp)
-		V_DrawTextClean (color, x, y, plyr->userinfo.netname);
+		string = conbuff;
+	}
 	else
-		V_DrawTextCleanLuc (color, x, y, plyr->userinfo.netname);
+	{
+		string = plyr->userinfo.netname;
+		if (plyr - players == consoleplayer)
+			color = CR_GOLD;
+		else
+			color = CR_GREEN;
+	}
+
+	x = (screen.width - V_StringWidth (string)*CleanXfac) >> 1;
+	if (level.time < NameUp || inconsistant)
+		V_DrawTextClean (color, x, y, string);
+	else
+		V_DrawTextCleanLuc (color, x, y, string);
 	BorderNeedRefresh = true;
 }

@@ -183,13 +183,13 @@ BOOL P_GiveWeapon (player_t *player, weapontype_t weapon, BOOL dropped)
 	if ((state->frame & FF_FRAMEMASK) >= sprites[state->sprite].numframes)
 		return false;
 
-	if (netgame && (!deathmatch->value || dmflags & DF_WEAPONS_STAY) && !dropped)
+	if (netgame && ((!deathmatch->value && !fakedmatch->value) || dmflags & DF_WEAPONS_STAY) && !dropped)
 	{
 		// leave placed weapons forever on net games
 		if (player->weaponowned[weapon])
 			return false;
 
-		player->bonuscount += BONUSADD;
+		player->bonuscount = BONUSADD;
 		player->weaponowned[weapon] = true;
 
 		if (deathmatch->value)
@@ -256,7 +256,7 @@ BOOL P_GiveBody (player_t *player, int num)
 //
 BOOL P_GiveArmor (player_t *player, int armortype)
 {
-	int 		hits;
+	int hits;
 		
 	hits = armortype*100;
 	if (player->armorpoints >= hits)
@@ -399,8 +399,6 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		break;
 		
 	  case SPR_MEGA:
-		if (gamemode != commercial)
-			return;
 		player->health = deh.MegasphereHealth;
 		player->mo->health = player->health;
 		P_GiveArmor (player,deh.BlueAC);
@@ -662,7 +660,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		level.found_items++;
 	}
 	P_RemoveMobj (special);
-	player->bonuscount += BONUSADD;
+	player->bonuscount = BONUSADD;
 
 	{
 		mobj_t *ent;
@@ -1170,7 +1168,8 @@ void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage
 	// [RH] Andy Baker's Stealth monsters
 	if (target->flags & MF_STEALTH)
 	{
-		P_BecomeVisible(target);
+		target->translucency = FRACUNIT;
+		target->visdir = -1;
 	}
 
 	if ( target->flags & MF_SKULLFLY )

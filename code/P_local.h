@@ -160,11 +160,6 @@ extern struct brain_s {				// killough 3/26/98: global state of boss brain
 	int easy, targeton;
 } brain;
 
-// [RH] Andy Baker's stealth monsters
-void	 P_BecomeVisible (mobj_t *actor);
-void	 P_IncreaseVisibility (mobj_t *actor);
-void	 P_DecreaseVisibility (mobj_t *actor);
-
 
 //
 // P_MAPUTL

@@ -317,7 +317,8 @@ BOOL CheckIfExitIsGood (mobj_t *self)
 	if (self == NULL)
 		return false;
 
-	if (deathmatch->value && dmflags & DF_NO_EXIT && self) {
+	if ((deathmatch->value || fakedmatch->value) && dmflags & DF_NO_EXIT && self)
+	{
 		while (self->health > 0)
 			P_DamageMobj (self, self, self, 10000, MOD_EXIT);
 		return false;
@@ -415,32 +416,6 @@ sector_t *P_NextSpecialSector (sector_t *sec, int type, sector_t *nogood)
 	}
 	return NULL;
 }
-
-//
-// P_SectorActive()
-//
-// Passed a linedef special class (floor, ceiling, lighting) and a sector
-// returns whether the sector is already busy with a linedef special of the
-// same class. If old demo compatibility true, all linedef special classes
-// are the same.
-//
-// jff 2/23/98 added to prevent old demos from
-//  succeeding in starting multiple specials on one sector
-//
-int P_SectorActive(special_e t,sector_t *sec)
-{
-	switch (t)	// return whether thinker of same type is active
-	{
-		case floor_special:
-			return (int)sec->floordata;
-		case ceiling_special:
-			return (int)sec->ceilingdata;
-		case lighting_special:
-			return (int)sec->lightingdata;
-	}
-	return 1;	// don't know which special, must be active, shouldn't be here
-}
-
 
 //
 // P_FindLowestFloorSurrounding()
@@ -1403,6 +1378,10 @@ void P_SpawnSpecials (void)
 			P_SpawnLightPhased (sector);
 			break;
 
+		  case Sky2:
+			sector->sky = PL_SKYFLAT;
+			break;
+
 		  default:
 			  // [RH] Try for normal Hexen scroller
 			if ((sector->special & 0xff) >= Scroll_North_Slow &&
@@ -1434,7 +1413,6 @@ void P_SpawnSpecials (void)
 			break;
 		}
 	}
-
 	
 	// Init other misc stuff
 
@@ -1443,9 +1421,7 @@ void P_SpawnSpecials (void)
 
 	activeceilings = NULL;
 	activeplats = NULL;
-
 	buttonlist = NULL;	// [RH] And buttonlist is also a singly-linked list.
-	
 	ActiveQuakes = NULL;	// [RH] Clear out any earthquakes.
 
 	// P_InitTagLists() must be called before P_FindSectorFromTag()
@@ -1507,6 +1483,20 @@ void P_SpawnSpecials (void)
 								sectors[s].mod = MOD_UNKNOWN;
 							}
 						}
+						break;
+
+					// killough 10/98:
+					//
+					// Support for sky textures being transferred from sidedefs.
+					// Allows scrolling and other effects (but if scrolling is
+					// used, then the same sector tag needs to be used for the
+					// sky sector, the sky-transfer linedef, and the scroll-effect
+					// linedef). Still requires user to use F_SKY1 for the floor
+					// or ceiling texture, to distinguish floor and ceiling sky.
+
+					case Init_TransferSky:
+						for (s = -1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
+							sectors[s].sky = (i+1) | PL_SKYFLAT;
 						break;
 				}
 				break;
@@ -1866,7 +1856,8 @@ static void P_SpawnFriction(void)
 	{
 		if (l->special == Sector_SetFriction)
 		{
-			int length, friction, movefactor, s;
+			int length, s;
+			fixed_t friction, movefactor;
 
 			if (l->args[1])
 			{	// [RH] Allow setting friction amount from parameter
@@ -1878,20 +1869,25 @@ static void P_SpawnFriction(void)
 			}
 			friction = (0x1EB8*length)/0x80 + 0xD000;
 
-			// The following check might seem odd. At the time of movement,
-			// the move distance is multiplied by 'friction/0x10000', so a
-			// higher friction value actually means 'less friction'.
-
-			if (friction > ORIG_FRICTION)       // ice
-				movefactor = ((0x10092 - friction)*(0x70))/0x158;
-			else
-				movefactor = ((friction - 0xDB34)*(0xA))/0x80;
-
 			// killough 8/28/98: prevent odd situations
 			if (friction > FRACUNIT)
 				friction = FRACUNIT;
 			if (friction < 0)
 				friction = 0;
+
+			// The following check might seem odd. At the time of movement,
+			// the move distance is multiplied by 'friction/0x10000', so a
+			// higher friction value actually means 'less friction'.
+
+			// [RH] Twiddled these values so that momentum on ice (with
+			//		friction 0xf900) is the same as in Heretic/Hexen.
+			if (friction > ORIG_FRICTION)	// ice
+//				movefactor = ((0x10092 - friction)*(0x70))/0x158;
+				movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
+			else
+				movefactor = ((friction - 0xDB34)*(0xA))/0x80;
+
+			// killough 8/28/98: prevent odd situations
 			if (movefactor < 32)
 				movefactor = 32;
 

@@ -465,7 +465,7 @@ void P_DisconnectEffect (mobj_t *actor)
 	int i;
 
 	for (i = 64; i; i--) {
-		particle_t *p = JitterParticle (40);
+		particle_t *p = JitterParticle (TICRATE*2);
 
 		if (!p)
 			break;

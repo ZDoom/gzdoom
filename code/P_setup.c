@@ -40,6 +40,7 @@
 #include "doomstat.h"
 #include "p_lnspec.h"
 #include "v_palett.h"
+#include "c_consol.h"
 
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
@@ -367,6 +368,8 @@ void P_LoadSectors (int lump)
 		else
 			ss->colormap = GetSpecialLights (255,255,255,
 				RPART(level.fadeto),GPART(level.fadeto),BPART(level.fadeto));
+
+		ss->sky = 0;
 	}
 		
 	Z_Free (data);
@@ -1271,11 +1274,13 @@ void P_SetupLevel (char *lumpname, int position)
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
 	wminfo.partime = 180;
-	for (i=0 ; i<MAXPLAYERS ; i++)
-	{
-		players[i].killcount = players[i].secretcount 
-			= players[i].itemcount = 0;
-	}
+
+	if (!savegamerestore)
+		for (i=0 ; i<MAXPLAYERS ; i++)
+		{
+			players[i].killcount = players[i].secretcount 
+				= players[i].itemcount = 0;
+		}
 
 	// Initial height of PointOfView will be set by player think.
 	players[consoleplayer].viewz = 1; 
@@ -1285,6 +1290,9 @@ void P_SetupLevel (char *lumpname, int position)
 
 	// [RH] Clear all ThingID hash chains.
 	P_ClearTidHashes ();
+
+	// [RH] clear out the mid-screen message
+	C_MidPrint (NULL);
 
 	PolyBlockMap = NULL;
 
@@ -1390,8 +1398,7 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 
 	// killough 3/26/98: Spawn icon landings:
-	if (gamemode == commercial)
-		P_SpawnBrainTargets();
+	P_SpawnBrainTargets();
 
 	// clear special respawning que
 	iquehead = iquetail = 0;			

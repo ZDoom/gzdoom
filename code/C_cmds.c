@@ -25,6 +25,7 @@
 #include "z_zone.h"
 #include "w_wad.h"
 #include "g_level.h"
+#include "gi.h"
 
 extern FILE *Logfile;
 
@@ -229,11 +230,12 @@ void Cmd_idclev (player_t *plyr, int argc, char **argv)
 	if ((argc > 1) && (*(argv[1] + 2) == 0) && *(argv[1] + 1) && *argv[1]) {
 		int epsd, map;
 		char *buf = argv[1];
+		char *mapname;
 
 		buf[0] -= '0';
 		buf[1] -= '0';
 
-		if (gamemode == commercial) {
+		if (gameinfo.flags & GI_MAPxx) {
 			epsd = 1;
 			map = buf[0]*10 + buf[1];
 		} else {
@@ -242,28 +244,13 @@ void Cmd_idclev (player_t *plyr, int argc, char **argv)
 		}
 
 		// Catch invalid maps.
-		if (epsd < 1)
-			return;
-
-		if (map < 1)
-			return;
-  
-		if ((gamemode == retail) && ((epsd > 4) || (map > 9)))
-			return;
-
-		if ((gamemode == registered) && ((epsd > 3) || (map > 9)))
-			return;
-
-		if ((gamemode == shareware) && ((epsd > 1) || (map > 9)))
-			return;
-
-		if ((gamemode == commercial) && (( epsd > 1) || (map > 34)))
+		mapname = CalcMapName (epsd, map);
+		if (W_CheckNumForName (mapname) == -1)
 			return;
 
 		// So be it.
 		Printf (PRINT_HIGH, "%s\n", STSTR_CLEV);
-      
-		G_DeferedInitNew (CalcMapName (epsd, map));
+      	G_DeferedInitNew (mapname);
 	}
 }
 
@@ -290,21 +277,28 @@ void Cmd_idmus (player_t *plyr, int argc, char **argv)
 	char *map;
 	int l;
 
-	if (argc > 1) {
-		if (gamemode == commercial) {
+	if (argc > 1)
+	{
+		if (gameinfo.flags & GI_MAPxx)
+		{
 			l = atoi (argv[1]);
 			if (l <= 99)
 				map = CalcMapName (0, l);
-			else {
+			else
+			{
 				Printf (PRINT_HIGH, "%s\n", STSTR_NOMUS);
 				return;
 			}
-		} else {
+		}
+		else
+		{
 			map = CalcMapName (argv[1][0] - '0', argv[1][1] - '0');
 		}
 
-		if ( (info = FindLevelInfo (map)) ) {
-			if (info->music[0]) {
+		if ( (info = FindLevelInfo (map)) )
+		{
+			if (info->music[0])
+			{
 				S_ChangeMusic (info->music, 1);
 				Printf (PRINT_HIGH, "%s\n", STSTR_MUS);
 			}

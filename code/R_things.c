@@ -84,6 +84,7 @@ short			*negonearray;
 short			*screenheightarray;
 
 #define MAX_SPRITE_FRAMES 29		// [RH] Macro-ized as in BOOM.
+#define SPRITE_NEEDS_INFO	MAXINT
 
 
 cvar_t *r_drawplayersprites;		// [RH] Draw player sprites?
@@ -113,6 +114,30 @@ particle_t		*Particles;
 cvar_t			*r_particles;
 
 
+void R_CacheSprite (spritedef_t *sprite)
+{
+	int i, r;
+	patch_t *patch;
+
+	DPrintf ("cache sprite %s\n",
+		sprite - sprites < NUMSPRITES ? sprnames[sprite - sprites] : "");
+	for (i = 0; i < sprite->numframes; i++)
+	{
+		for (r = 0; r < 8; r++)
+		{
+			if (sprite->spriteframes[i].width[r] == SPRITE_NEEDS_INFO)
+			{
+				if (sprite->spriteframes[i].lump[r] == -1)
+					I_Error ("Sprite %d, rotation %d has no lump", i, r);
+				patch = W_CacheLumpNum (sprite->spriteframes[i].lump[r], PU_CACHE);
+				sprite->spriteframes[i].width[r] = SHORT(patch->width)<<FRACBITS;
+				sprite->spriteframes[i].offset[r] = SHORT(patch->leftoffset)<<FRACBITS;
+				sprite->spriteframes[i].topoffset[r] = SHORT(patch->topoffset)<<FRACBITS;
+			}
+		}
+	}
+}
+
 //
 // R_InstallSpriteLump
 // Local function for R_InitSprites.
@@ -124,17 +149,8 @@ static void R_InstallSpriteLump (int lump, unsigned frame, unsigned rotation, BO
 {
 	static unsigned int called;
 
-	// [RH] Record the sprite's width, offset, and topoffset here
-	//		instead of in R_InitSpriteLumps().
-	patch_t *patch;
-
-	if (!((called++) & 63))
-		C_SetTicker (called);
-
 	if (frame >= MAX_SPRITE_FRAMES || rotation > 8)
 		I_FatalError ("R_InstallSpriteLump: Bad frame characters in lump %i", lump);
-
-	patch = W_CacheLumpNum (lump, PU_CACHE);
 
 	if ((int)frame > maxframe)
 		maxframe = frame;
@@ -150,22 +166,14 @@ static void R_InstallSpriteLump (int lump, unsigned frame, unsigned rotation, BO
 				sprtemp[frame].lump[r] = (short)(lump);
 				sprtemp[frame].flip[r] = (byte)flipped;
 				sprtemp[frame].rotate = false;
-
-				// [RH] Need to set these, too.
-				sprtemp[frame].width[r] = SHORT(patch->width)<<FRACBITS;
-				sprtemp[frame].offset[r] = SHORT(patch->leftoffset)<<FRACBITS;
-				sprtemp[frame].topoffset[r] = SHORT(patch->topoffset)<<FRACBITS;
+				sprtemp[frame].width[r] = SPRITE_NEEDS_INFO;
 			}
 	} else if (sprtemp[frame].lump[--rotation] == -1) {
 		// the lump is only used for one rotation
 		sprtemp[frame].lump[rotation] = (short)(lump);
 		sprtemp[frame].flip[rotation] = (byte)flipped;
 		sprtemp[frame].rotate = true;
-
-		// [RH] Need to set these, too.
-		sprtemp[frame].width[rotation] = SHORT(patch->width)<<FRACBITS;
-		sprtemp[frame].offset[rotation] = SHORT(patch->leftoffset)<<FRACBITS;
-		sprtemp[frame].topoffset[rotation] = SHORT(patch->topoffset)<<FRACBITS;
+		sprtemp[frame].width[rotation] = SPRITE_NEEDS_INFO;
 	}
 }
 
@@ -176,7 +184,8 @@ static void R_InstallSprite (const char *name, int num)
 	char sprname[5];
 	int frame;
 
-	if (maxframe == -1) {
+	if (maxframe == -1)
+	{
 		sprites[num].numframes = 0;
 		return;
 	}
@@ -255,8 +264,6 @@ void R_InitSpriteDefs (char **namelist)
 	if (!numsprites)
 		return;
 
-	C_InitTicker ("sprites", W_GetNumForName ("S_END") - W_GetNumForName ("S_START") - 2);
-
 	sprites = Z_Malloc (numsprites * sizeof(*sprites), PU_STATIC, NULL);
 		
 	start = firstspritelump - 1;
@@ -294,7 +301,6 @@ void R_InitSpriteDefs (char **namelist)
 		
 		R_InstallSprite (namelist[i], i);
 	}
-	C_InitTicker (NULL, 0);
 }
 
 // [RH]
@@ -475,7 +481,6 @@ void R_InitSkins (void)
 			}
 		}
 	}
-	C_InitTicker (NULL, 0);
 	// Grrk. May have changed sound table. Fix it.
 	if (numskins > 1)
 		S_HashSounds ();
@@ -693,9 +698,9 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 	{
 		// [RH] I use MF_SHADOW to recognize fuzz effect now instead of
 		//		a NULL colormap. This allow proper substition of
-		//		MF_TRANSLUC25 with light levels if desired. The original
-		//		code used colormap == NULL instead.
-		dc_transmap = TransTable + 65536;	// Just in case
+		//		translucency with light levels if desired. The original
+		//		code used colormap == NULL to indicate shadows.
+		dc_translevel = FRACUNIT/5;
 		if (r_drawfuzz->value) {
 			colfunc = fuzzcolfunc;
 		} else {
@@ -705,13 +710,13 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 				colfunc = tlatedlucentcolfunc;
 		}
 	}
-	else if ((vis->mobjflags & MF_TRANSLUCBITS) && TransTable)
+	else if (vis->translucency < FRACUNIT)
 	{	// [RH] draw translucent column
 		if (colfunc == basecolfunc)
 			colfunc = lucentcolfunc;
 		else
 			colfunc = tlatedlucentcolfunc;
-		dc_transmap = TransTable + ((vis->mobjflags & MF_TRANSLUCBITS) >> (MF_TRANSLUCSHIFT - 16));
+		dc_translevel = vis->translucency;
 	}
 
 	//dc_iscale = abs(vis->xiscale)>>detailshift;
@@ -870,8 +875,7 @@ void R_ProjectSprite (mobj_t *thing)
 
 	int					heightsec;			// killough 3/27/98
 
-	// [RH] Andy Baker's stealth monsters
-	if (thing->flags2 & MF2_DONTDRAW)
+	if (thing->flags2 & MF2_DONTDRAW || thing->translucency == 0)
 		return;
 
 	// transform the origin point
@@ -913,7 +917,7 @@ void R_ProjectSprite (mobj_t *thing)
 		return;
 	}
 #endif
-	sprframe = &sprdef->spriteframes[ thing->frame & FF_FRAMEMASK];
+	sprframe = &sprdef->spriteframes[thing->frame & FF_FRAMEMASK];
 
 	if (sprframe->rotate)
 	{
@@ -929,6 +933,9 @@ void R_ProjectSprite (mobj_t *thing)
 		lump = sprframe->lump[rot = 0];
 		flip = (BOOL)sprframe->flip[0];
 	}
+
+	if (sprframe->width[rot] == SPRITE_NEEDS_INFO)
+		R_CacheSprite (sprdef);	// [RH] speeds up game startup time
 	
 	// calculate edges of the shape
 	tx -= sprframe->offset[rot];	// [RH] Moved out of spriteoffset[]
@@ -990,6 +997,7 @@ void R_ProjectSprite (mobj_t *thing)
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
 	vis->translation = thing->translation;		// [RH] thing translation table
+	vis->translucency = thing->translucency;
 	iscale = FixedDiv (FRACUNIT, xscale);
 
 	if (flip)
@@ -1103,6 +1111,9 @@ void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 
 	lump = sprframe->lump[0];
 	flip = (BOOL)sprframe->flip[0];
+
+	if (sprframe->width[0] == SPRITE_NEEDS_INFO)
+		R_CacheSprite (sprdef);	// [RH] speeds up game startup time
 	
 	// calculate edges of the shape
 	tx = psp->sx-((320/2)<<FRACBITS);
@@ -1130,6 +1141,7 @@ void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;		
 	vis->scale = pspriteyscale;
 	vis->translation = NULL;		// [RH] Use default colors
+	vis->translucency = FRACUNIT;
 	
 	if (flip)
 	{
@@ -1680,7 +1692,7 @@ void R_ProjectParticle (particle_t *particle)
 	vis->mobjflags = particle->trans;
 
 	if (fixedlightlev) {
-		vis->colormap = basecolormap + fixedlightlev;
+		vis->colormap = sector->colormap->maps + fixedlightlev;
 	} else if (fixedcolormap) {
 		vis->colormap = fixedcolormap;
 	} else if (sector) {
@@ -1695,7 +1707,7 @@ void R_ProjectParticle (particle_t *particle)
 		if (index >= MAXLIGHTSCALE) 
 			index = MAXLIGHTSCALE-1;
 
-		vis->colormap = scalelight[lightnum][index] + basecolormap;
+		vis->colormap = scalelight[lightnum][index] + sector->colormap->maps;
 	} else {
 		vis->colormap = realcolormaps;
 	}
@@ -1706,11 +1718,8 @@ void R_DrawParticle (vissprite_t *vis, int x1, int x2)
 	byte color = vis->colormap[vis->startfrac];
 	int yl = (centeryfrac - FixedMul(vis->texturemid, vis->scale) + FRACUNIT - 1) >> FRACBITS;
 	int yh;
-	int y;
 	x1 = vis->x1;
 	x2 = vis->x2;
-
-//	dc_transmap = TransTable + ((vis->mobjflags & MF_TRANSLUCBITS) >> (MF_TRANSLUCSHIFT - 16));
 
 	if (x1 < 0)
 		x1 = 0;
@@ -1731,34 +1740,46 @@ void R_DrawParticle (vissprite_t *vis, int x1, int x2)
 	if (yl <= mceilingclip[x2])
 		yl = mceilingclip[x2]+1;
 
-	// vis->mobjflags holds translucency level (1-255)
-	if (!TransTable || vis->mobjflags >= 192) {
-		for (y = yl; y <= yh; y++) {
-			byte *dest = ylookup[y] + columnofs[x1];
-			int count = x2 - x1 + 1;
-			do {
-				*dest = color;
-				dest += ds_colsize;
-			} while (--count);
-		}
-	} else {
-		byte *transmap;
+	// vis->mobjflags holds translucency level (0-255)
+	{
+		unsigned int *bg2rgb;
+		int countbase = x2 - x1 + 1;
+		int ycount;
+		int colsize = ds_colsize;
+		int spacing;
+		byte *dest;
+		unsigned int fg;
 
-		if (vis->mobjflags >= 128)
-			transmap = TransTable + 65536;
-		else if (vis->mobjflags >= 64)
-			transmap = TransTable + 65536*2;
-		else
-			transmap = TransTable + 65536*3;
-		transmap += color << 8;
+		ycount = yh - yl;
+		if (ycount < 0)
+			return;
+		ycount++;
 
-		for (y = yl; y <= yh; y++) {
-			byte *dest = ylookup[y] + columnofs[x1];
-			int count = x2 - x1 + 1;
-			do {
-				*dest = transmap[*dest];
-				dest += ds_colsize;
-			} while (--count);
+		{
+			fixed_t fglevel, bglevel;
+			unsigned int *fg2rgb;
+
+			fglevel = ((vis->mobjflags + 1) << 8) & ~0x3ff;
+			bglevel = FRACUNIT-fglevel;
+			fg2rgb = Col2RGB8[fglevel>>10];
+			bg2rgb = Col2RGB8[bglevel>>10];
+			fg = fg2rgb[color];
 		}
+
+		spacing = screen.pitch - (countbase << detailxshift);
+		dest = ylookup[yl] + columnofs[x1];
+
+		do
+		{
+			int count = countbase;
+			do
+			{
+				unsigned int bg = bg2rgb[*dest];
+				bg = (fg+bg) | 0xf07c3e1f;
+				*dest = RGB8k[0][0][(bg>>5) & (bg>>19)];
+				dest += colsize;
+			} while (--count);
+			dest += spacing;
+		} while (--ycount);
 	}
 }

@@ -36,10 +36,12 @@
 #include "v_palett.h"
 
 extern button_t *buttonlist;
+extern byte *translationtables;
 
 byte *save_p;
 
 
+BOOL ZDoom117aSave;
 
 //
 // P_ArchivePlayers
@@ -349,6 +351,11 @@ void P_ArchiveThinkers (void)
 
 			// killough 2/14/98: end changes
 
+			if (mobj->translation)
+				mobj->translation = (byte *)(mobj->translation - translationtables);
+			else
+				mobj->translation = (byte *)-1;
+
 			if (mobj->player)
 				mobj->player = (player_t *)((mobj->player-players) + 1);
 		}
@@ -413,7 +420,10 @@ void P_UnArchiveThinkers (BOOL keepPlayers)
 		for (size = 1; *save_p++ == tc_mobj; size++)	// killough 2/14/98
 		{					// skip all entries, adding up count
 			PADSAVEP();
-			save_p += sizeof(mobj_t);
+			if (ZDoom117aSave)	// Quick hack. To be removed.
+				save_p += sizeof(mobj_t)-sizeof(fixed_t);
+			else
+				save_p += sizeof(mobj_t);
 		}
 
 		if (*--save_p != tc_end)
@@ -433,8 +443,32 @@ void P_UnArchiveThinkers (BOOL keepPlayers)
 		mobj_p[size] = mobj;
 
 		PADSAVEP();
-		memcpy (mobj, save_p, sizeof(mobj_t));
-		save_p += sizeof(mobj_t);
+		if (ZDoom117aSave)
+		{	// Quick hack. To be removed.
+			memcpy (mobj, save_p, sizeof(mobj_t)-sizeof(fixed_t));
+			mobj->translucency = (mobj->flags & 0x60000000) >> 15;
+			mobj->flags &= ~0x60000000;
+			if (mobj->translucency == 0)
+			{
+				if (mobj->flags2 & MF2_DONTDRAW)
+				{
+					mobj->flags2 &= ~MF2_DONTDRAW;
+				}
+				else
+				{
+					mobj->translucency = FRACUNIT;
+				}
+			}
+			if (mobj->type == MT_INS)
+				mobj->effects |= 0x40;	// FX_VISIBILITYPULSE
+			mobj->visdir = 0;
+			save_p += sizeof(mobj_t)-sizeof(fixed_t);
+		}
+		else
+		{
+			memcpy (mobj, save_p, sizeof(mobj_t));
+			save_p += sizeof(mobj_t);
+		}
 		mobj->state = states + (int) mobj->state;
 
 		if (mobj->player) {
@@ -452,6 +486,7 @@ void P_UnArchiveThinkers (BOOL keepPlayers)
 			mobj->player->camera = mobj;	// [RH] Reset the camera to the player's viewpoint
 		}
 
+		mobj->touching_sectorlist = NULL;
 		P_SetThingPosition (mobj);
 		mobj->info = &mobjinfo[mobj->type];
 
@@ -487,12 +522,17 @@ void P_UnArchiveThinkers (BOOL keepPlayers)
 
 			((mobj_t *) th)->goal =		// [RH] restore goal
 			  mobj_p[(size_t)((mobj_t *)th)->goal];
+
+			if (ZDoom117aSave)	// Quick hack. To be removed.
+				((mobj_t *)th)->translation = NULL;
+			else
+				((mobj_t *) th)->translation = ((ptrdiff_t)((mobj_t *) th)->translation != -1) ?
+					translationtables + (ptrdiff_t)((mobj_t *) th)->translation : NULL;
 		}
 	}
 
 	// killough 3/26/98: Spawn icon landings:
-	if (gamemode == commercial)
-		P_SpawnBrainTargets();
+	P_SpawnBrainTargets();
 }
 
 
@@ -934,7 +974,7 @@ void P_UnArchiveSpecials (void)
 				ceiling->thinker.function.acp1 = (actionf_p1)T_MoveCeiling;
 
 			P_AddThinker (&ceiling->thinker);
-			P_AddActiveCeiling(ceiling);
+			P_AddActiveCeiling (ceiling);
 			break;
 
 		  case tc_door:

@@ -153,7 +153,8 @@ badwave:
 			sfx->link = S_sfx + i;
 			sfx->ms = S_sfx[i].ms;
 			sfx->data = S_sfx[i].data;
-			sfx->loopdata = S_sfx[i].loopdata;
+			sfx->normal = S_sfx[i].normal;
+			sfx->looping = S_sfx[i].looping;
 			return;
 		}
 
@@ -290,7 +291,7 @@ badwave:
 		smp.loop1Start = smp.loop1End = 0;
 		smp.loop1Type = loopNone;
 
-		if ( (error = blargh (&smp, 0, (unsigned *)&sfx->data)) != OK)
+		if ( (error = blargh (&smp, 0, (unsigned *)&sfx->normal)) != OK)
 			I_FatalError ("getsfx: AddSample failed: %s", MIDASgetErrorMessage(error));
 
 		/* With loop: */
@@ -299,7 +300,7 @@ badwave:
 		smp.loop1End = smp.sampleLength;
 		smp.loop1Type = loopUnidir;
 
-		if ( (error = blargh (&smp, 0, (unsigned *)&sfx->loopdata)) != OK)
+		if ( (error = blargh (&smp, 0, (unsigned *)&sfx->looping)) != OK)
 			I_FatalError ("getsfx: AddSample failed: %s", MIDASgetErrorMessage(error));
 	}
 
@@ -308,6 +309,7 @@ badwave:
 	if (sfx->frequency == 0)
 		sfx->frequency = 11025;
 	sfx->ms = (sfx->ms * 1000) / (sfx->frequency);
+	sfx->data = sfxcopy;
 }
 
 
@@ -383,8 +385,8 @@ int I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOOL
 	}
 
 	ChannelMap[channel].playHandle = MIDASplaySample (
-									 looping ? (MIDASsample)sfx->loopdata
-										: (MIDASsample)sfx->data,
+									 looping ? (MIDASsample)sfx->looping
+										: (MIDASsample)sfx->normal,
 									 ChannelMap[channel].midasChannel,
 									 0,
 									 PITCH(sfx->frequency,pitch),
@@ -593,7 +595,6 @@ void STACK_ARGS I_ShutdownSound (void)
 	size_t len = 0;
 
 	if (MidasInited) {
-		Printf (PRINT_HIGH, "I_ShutdownSound: Stopping sounds\n");
 		if (ChannelMap) {
 			for (i = 0; i < numChannels; i++ ) {
 				if (ChannelMap[i].playHandle) {
@@ -607,23 +608,23 @@ void STACK_ARGS I_ShutdownSound (void)
 
 		I_ShutdownMusic();
 
-		Printf (PRINT_HIGH, "I_ShutdownSound: Uninitializing MIDAS\n");
-
 		// [RH] Free all loaded samples
 		for (i = 0; i < numsfx; i++) {
 			if (!S_sfx[i].link) {
-				if (S_sfx[i].data) {
-					MIDASfreeSample ((MIDASsample)S_sfx[i].data);
+				if (S_sfx[i].normal) {
+					MIDASfreeSample ((MIDASsample)S_sfx[i].normal);
 					len += S_sfx[i].length;
 					c++;
 				}
-				if (S_sfx[i].loopdata) {
-					MIDASfreeSample ((MIDASsample)S_sfx[i].loopdata);
+				if (S_sfx[i].looping) {
+					MIDASfreeSample ((MIDASsample)S_sfx[i].looping);
+				}
+				if (S_sfx[i].data) {
+					free (S_sfx[i].data);
 				}
 			}
 			S_sfx[i].data = S_sfx[i].link = NULL;
 		}
-		Printf (PRINT_HIGH, "%d sounds expunged (%d bytes)\n", c, len);
 
 		if ( !MIDASstopBackgroundPlay() )
 			MIDASerror();

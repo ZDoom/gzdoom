@@ -12,6 +12,7 @@ typedef struct {
 } cvarinit_t;
 
 extern cvar_t	*gammalevel,
+				*wipetype,
 				*st_scale,
 				*gameskill,
 				*crosshair,
@@ -94,6 +95,7 @@ extern cvar_t	*gammalevel,
 				
 				*teamplay,
 				*deathmatch,
+				*fakedmatch,
 				*dmflagsvar,
 				*fraglimit,
 				*timelimit,
@@ -119,9 +121,10 @@ extern cvar_t	*gammalevel,
 
 static const cvarinit_t Initializers[] = {
 	{ &gammalevel,			"gamma",				"1",				CVAR_ARCHIVE|CVAR_CALLBACK },
+	{ &wipetype,			"wipetype",				"1",				CVAR_ARCHIVE },
 	{ &testgibs,			"testgibs",				"0",				0 },
 	{ &st_scale,			"st_scale",				"0",				CVAR_ARCHIVE|CVAR_CALLBACK },
-	{ &dimamount,			"dimamount",			"1",				CVAR_ARCHIVE },
+	{ &dimamount,			"dimamount",			"0.2",				CVAR_ARCHIVE },
 	{ &dimcolor,			"dimcolor",				"ff d7 00",			CVAR_ARCHIVE },
 	{ &crosshair,			"crosshair",			"0",				CVAR_ARCHIVE },
 	{ &developer,			"developer",			"0",				0 },
@@ -210,6 +213,7 @@ static const cvarinit_t Initializers[] = {
 
 	{ &teamplay,			"teamplay",				"0",				CVAR_SERVERINFO },
 	{ &deathmatch,			"deathmatch",			"0",				CVAR_SERVERINFO|CVAR_LATCH },
+	{ &fakedmatch,			"alwaysapplydmflags",	"0",				CVAR_SERVERINFO },
 	{ &dmflagsvar,			"dmflags",				"0",				CVAR_SERVERINFO|CVAR_CALLBACK },
 	{ &timelimit,			"timelimit",			"0",				CVAR_SERVERINFO },
 	{ &fraglimit,			"fraglimit",			"0",				CVAR_SERVERINFO },

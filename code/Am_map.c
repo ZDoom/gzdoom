@@ -558,14 +558,18 @@ void AM_unloadPics(void)
 	int i;
   
 	for (i = 0; i < 10; i++)
-		Z_ChangeTag (marknums[i], PU_CACHE);
+		if (marknums[i])
+		{
+			Z_ChangeTag (marknums[i], PU_CACHE);
+			marknums[i] = NULL;
+		}
 }
 
 void AM_clearMarks(void)
 {
 	int i;
 
-	for (i=0;i<AM_NUMMARKPOINTS;i++)
+	for (i = AM_NUMMARKPOINTS-1; i >= 0; i--)
 		markpoints[i].x = -1; // means empty
 	markpointnum = 0;
 }

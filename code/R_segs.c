@@ -164,7 +164,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	if (!r_columnmethod->value) {
 		if (curline->linedef->lucency < 240) {
 			colfunc = lucentcolfunc;
-			dc_transmap = TransTable + ((curline->linedef->lucency << 10) & 0x30000);
+			dc_translevel = curline->linedef->lucency << 8;
 		} else
 			colfunc = basecolfunc;
 		// killough 4/11/98: end translucent 2s normal code
@@ -175,7 +175,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			hcolfunc_post1 = rt_lucent1col;
 			hcolfunc_post2 = rt_lucent2cols;
 			hcolfunc_post4 = rt_lucent4cols;
-			dc_transmap = TransTable + ((curline->linedef->lucency << 10) & 0x30000);
+			dc_translevel = curline->linedef->lucency << 8;
 		} else {
 			hcolfunc_post1 = rt_map1col;
 			hcolfunc_post2 = rt_map2cols;

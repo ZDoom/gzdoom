@@ -394,6 +394,10 @@ SOURCE=.\g_level.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\gi.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\info.c
 
 !IF  "$(CFG)" == "zdoom - Win32 Release"
@@ -1410,6 +1414,10 @@ SOURCE=.\g_level.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\gi.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\hu_stuff.h
 # End Source File
 # Begin Source File
@@ -1741,7 +1749,19 @@ SOURCE=..\commands.txt
 # End Source File
 # Begin Source File
 
+SOURCE=.\doominfo.lmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\hexninfo.lmp
+# End Source File
+# Begin Source File
+
 SOURCE=".\docs\Rh-log.txt"
+# End Source File
+# Begin Source File
+
+SOURCE=.\ticinfo.lmp
 # End Source File
 # End Group
 # Begin Group "Win32 Files"
@@ -1830,15 +1850,6 @@ SOURCE=.\win32\resource.h
 # Begin Source File
 
 SOURCE=.\win32\zdoom.rc
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-!ENDIF 
-
 # End Source File
 # End Group
 # End Target

@@ -432,7 +432,7 @@ BOOL EV_DoFloor (floor_e floortype, line_t *line, int tag,
 
 manual_floor:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
-		if (P_SectorActive (floor_special, sec))	//jff 2/33/98
+		if (sec->floordata)
 			continue;
 		
 		// new floor thinker
@@ -764,7 +764,7 @@ manual_stair:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		//jff 2/26/98 add special lockout condition to wait for entire
 		//staircase to build before retriggering
-		if (P_SectorActive (floor_special, sec) || sec->stairlock) {
+		if (sec->floordata || sec->stairlock) {
 			if (!manual)
 				continue;
 			else
@@ -815,7 +815,7 @@ manual_stair:
 
 					// if sector's floor already moving, look for another
 					//jff 2/26/98 special lockout condition for retriggering
-					if (P_SectorActive (floor_special,tsec) || tsec->stairlock) {
+					if (tsec->floordata || tsec->stairlock) {
 						prev = sec;
 						sec = tsec;
 						continue;
@@ -845,7 +845,7 @@ manual_stair:
 
 					// if sector's floor already moving, look for another
 					//jff 2/26/98 special lockout condition for retriggering
-					if (P_SectorActive (floor_special,tsec) || tsec->stairlock)
+					if (tsec->floordata || tsec->stairlock)
 						continue;
 
 					ok = true;
@@ -922,7 +922,7 @@ int EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 		s1 = &sectors[secnum];					// s1 is pillar's sector
 				
 		// ALREADY MOVING?	IF SO, KEEP GOING...
-		if (P_SectorActive (floor_special, s1))	//jff 2/22/98
+		if (s1->floordata)
 			continue;
 						
 		rtn = 1;

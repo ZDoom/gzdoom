@@ -45,4 +45,6 @@ void	ReplaceString (char **ptr, const char *str);
 
 bool CheckWildcards (const char *pattern, const char *text);
 
+void FormatGUID (char *text, const GUID &guid);
+
 #endif

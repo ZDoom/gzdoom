@@ -1,5 +1,6 @@
 /*
-** mus2strm.h
+** a_soundenvironment.cpp
+** Actor that controls the EAX settings in its zone
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2001 Randy Heit
@@ -31,13 +32,43 @@
 **
 */
 
-#ifndef __MUS2STRM_H__
-#define __MUS2STRM_H__
+#include "info.h"
+#include "r_defs.h"
+#include "s_sound.h"
+#include "r_state.h"
 
-#include "mid2strm.h"
+class ASoundEnvironment : public AActor
+{
+	DECLARE_STATELESS_ACTOR (ASoundEnvironment, AActor)
+public:
+	void PostBeginPlay ();
+	void Deactivate ();
+	void Activate ();
+};
 
-PSTREAMBUF	mus2strmConvert (BYTE *inFile, DWORD inSize);
-void		mus2strmCleanup (void);
+IMPLEMENT_STATELESS_ACTOR (ASoundEnvironment, Any, 9048, 0)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
+END_DEFAULTS
 
+void ASoundEnvironment::PostBeginPlay ()
+{
+	Super::PostBeginPlay ();
+	if (!(flags2 & MF2_DORMANT))
+	{
+		Activate ();
+	}
+}
 
-#endif //__MUS2STRM_H__
+void ASoundEnvironment::Activate ()
+{
+	zones[Sector->ZoneNumber].Environment = S_FindEnvironment ((args[0]<<8) | (args[1]));
+}
+
+// Deactivate just exists so that you can flag the thing as dormant in an editor
+// and not have it take effect. This is so you can use multiple environments in
+// a single zone, with only one set not-dormant, so you know which one will take
+// effect at the start.
+void ASoundEnvironment::Deactivate ()
+{
+	flags2 |= MF2_DORMANT;
+}

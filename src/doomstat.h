@@ -264,6 +264,10 @@ extern	int 			ticdup;
 // ---- [RH] ----
 EXTERN_CVAR (Bool, developer)
 
+extern bool ToggleFullscreen;
+
+extern float JoyAxes[6];
+
 extern int Net_Arbitrator;
 
 // Use MMX routines? (Only if USEASM is defined)

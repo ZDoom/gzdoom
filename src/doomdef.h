@@ -170,43 +170,28 @@ enum ESkillLevels
 #define KEY_MOUSE7				0x106
 #define KEY_MOUSE8				0x107
 
-#define KEY_JOY1				0x108
-#define KEY_JOY2				0x109
-#define KEY_JOY3				0x10a
-#define KEY_JOY4				0x10b
-#define KEY_JOY5				0x10c
-#define KEY_JOY6				0x10d
-#define KEY_JOY7				0x10e
-#define KEY_JOY8				0x10f
-#define KEY_JOY9				0x110
-#define KEY_JOY10				0x111
-#define KEY_JOY11				0x112
-#define KEY_JOY12				0x113
-#define KEY_JOY13				0x114
-#define KEY_JOY14				0x115
-#define KEY_JOY15				0x116
-#define KEY_JOY16				0x117
-#define KEY_JOY17				0x118
-#define KEY_JOY18				0x119
-#define KEY_JOY19				0x11a
-#define KEY_JOY20				0x11b
-#define KEY_JOY21				0x11c
-#define KEY_JOY22				0x11d
-#define KEY_JOY23				0x11e
-#define KEY_JOY24				0x11f
-#define KEY_JOY25				0x120
-#define KEY_JOY26				0x121
-#define KEY_JOY27				0x122
-#define KEY_JOY28				0x123
-#define KEY_JOY29				0x124
-#define KEY_JOY30				0x125
-#define KEY_JOY31				0x126
-#define KEY_JOY32				0x127
+#define KEY_FIRSTJOYBUTTON		0x108
+#define KEY_LASTJOYBUTTON		0x187
+#define KEY_JOYPOV1_UP			0x188
+#define KEY_JOYPOV1_RIGHT		0x189
+#define KEY_JOYPOV1_DOWN		0x18a
+#define KEY_JOYPOV1_LEFT		0x18b
+#define KEY_JOYPOV2_UP			0x18c
+#define KEY_JOYPOV3_UP			0x190
+#define KEY_JOYPOV4_UP			0x194
 
-#define KEY_MWHEELUP			0x128
-#define KEY_MWHEELDOWN			0x129
+#define KEY_MWHEELUP			0x198
+#define KEY_MWHEELDOWN			0x199
 
-#define NUM_KEYS				0x130
+#define NUM_KEYS				0x19A
+
+#define JOYAXIS_NONE			0
+#define JOYAXIS_YAW				1
+#define JOYAXIS_PITCH			2
+#define JOYAXIS_FORWARD			3
+#define JOYAXIS_SIDE			4
+#define JOYAXIS_UP				5
+//#define JOYAXIS_ROLL			6		// Ha ha. No roll for you.
 
 // [RH] dmflags bits (based on Q2's)
 enum

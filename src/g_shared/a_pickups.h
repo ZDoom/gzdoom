@@ -265,6 +265,7 @@ public:
 	virtual void Hide ();
 	virtual bool DoRespawn ();
 	virtual bool TryPickup (AActor *toucher);
+	virtual void DoPickupSpecial (AActor *toucher);
 
 	virtual const char *PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);

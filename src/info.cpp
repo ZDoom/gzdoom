@@ -171,9 +171,32 @@ static void ProcessStates (FState *states, int numstates)
 	}
 }
 
+CCMD (slist)
+{
+	for (size_t i = 0; i < sprites.Size(); ++i)
+	{
+		Printf ("%3d. %s\n", i, sprites[i].name);
+	}
+}
+
 void FActorInfo::StaticInit ()
 {
 	TAutoSegIterator<FActorInfo *, &ARegHead, &ARegTail> reg;
+
+	if (sprites.Size() == 0)
+	{
+		spritedef_t temp;
+
+		// Sprite 0 is always TNT1
+		memcpy (temp.name, "TNT1", 5);
+		temp.numframes = 0;
+		temp.spriteframes = 0;
+		sprites.Push (temp);
+
+		// Sprite 1 is always ----
+		memcpy (temp.name, "----", 5);
+		sprites.Push (temp);
+	}
 
 	// Attach FActorInfo structures to every actor's TypeInfo
 	while (++reg != NULL)

@@ -5,6 +5,7 @@ void A_HideThing (AActor *);
 void A_UnHideThing (AActor *);
 void A_FreezeDeath (AActor *);
 void A_FreezeDeathChunks (AActor *);
+void A_GenericFreezeDeath (AActor *);
 void A_IceSetTics (AActor *);
 void A_IceCheckHeadDone (AActor *);
 void A_QueueCorpse (AActor *);

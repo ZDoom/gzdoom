@@ -226,7 +226,7 @@ static void ParseAnim (byte istex)
 	sink.bIsTexture = istex;
 
 	// no decals on animating textures, by default
-	if (istex)
+	if (istex && picnum >= 0)
 	{
 		texturenodecals[picnum] = 1;
 	}
@@ -1032,15 +1032,21 @@ CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 	if (gamestate == GS_LEVEL)
 	{
 		int i;
-		byte setTo = self ? 2 : 0;
 
 		for (i = 0; i < numsectors; i++)
 		{
 			if (sectors[i].heightsec &&
 				!(sectors[i].heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
-				sectors[i].heightsec->waterzone != 1)
+				!(sectors[i].heightsec->MoreFlags & SECF_UNDERWATER))
 			{
-				sectors[i].heightsec->waterzone = setTo;
+				if (self)
+				{
+					sectors[i].heightsec->MoreFlags |= SECF_FORCEDUNDERWATER;
+				}
+				else
+				{
+					sectors[i].heightsec->MoreFlags &= ~SECF_FORCEDUNDERWATER;
+				}
 			}
 		}
 	}
@@ -1147,8 +1153,8 @@ void DLightTransfer::DoTransfer (BYTE level, int target, bool floor)
 
 //
 // P_SpawnSpecials
-// After the map has been loaded, scan for specials
-//	that spawn thinkers
+//
+// After the map has been loaded, scan for specials that spawn thinkers
 //
 
 void P_SpawnSpecials (void)
@@ -1303,10 +1309,6 @@ void P_SpawnSpecials (void)
 		// support for drawn heights coming from different sector
 		case Transfer_Heights:
 			sec = sides[*lines[i].sidenum].sector;
-			if (forcewater)
-			{
-				sec->waterzone = 2;
-			}
 			if (lines[i].args[1] & 2)
 			{
 				sec->MoreFlags |= SECF_FAKEFLOORONLY;
@@ -1317,7 +1319,11 @@ void P_SpawnSpecials (void)
 			}
 			if (lines[i].args[1] & 8)
 			{
-				sec->waterzone = 1;
+				sec->MoreFlags |= SECF_UNDERWATER;
+			}
+			else if (forcewater)
+			{
+				sec->MoreFlags |= SECF_FORCEDUNDERWATER;
 			}
 			if (lines[i].args[1] & 16)
 			{

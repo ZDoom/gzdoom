@@ -59,9 +59,7 @@ MODSong::~MODSong ()
 
 MODSong::MODSong (const void *mem, int len)
 {
-	// Is this const_cast safe or do I need to copy the lump to
-	// readable memory?
-	m_Module = FMUSIC_LoadSongMemory (const_cast<void *>(mem), len);
+	m_Module = FMUSIC_LoadSongEx ((const char *)mem, len, FSOUND_LOADMEMORY, NULL, 0);
 }
 
 bool MODSong::IsPlaying ()

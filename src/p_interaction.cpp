@@ -560,9 +560,19 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	{ // Burn death
 		SetState (BDeathState);
 	}
-	else if (flags2 & MF2_ICEDAMAGE && IDeathState)
+	else if ((flags2 & MF2_ICEDAMAGE) &&
+		(IDeathState || (!(flags4 & MF4_NOICEDEATH) &&
+		(player || (flags3 & MF3_ISMONSTER)))))
 	{ // Ice death
-		SetState (IDeathState);
+		flags |= MF_ICECORPSE;
+		if (IDeathState)
+		{
+			SetState (IDeathState);
+		}
+		else
+		{
+			SetState (&AActor::States[S_GENERICFREEZEDEATH]);
+		}
 	}
 	else if (XDeathState &&
 		health < (gameinfo.gametype == GAME_Doom
@@ -572,6 +582,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	}
 	else
 	{ // Normal death
+		flags2 &= ~MF2_ICEDAMAGE;	// [RH] "Frozen" barrels shouldn't do freezing damage
 		SetState (DeathState);
 	}
 
@@ -676,7 +687,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		else if (target->flags & MF_ICECORPSE) // frozen
 		{
 			target->tics = 1;
-			target->momx = target->momy = 0;
+			target->momx = target->momy = target->momz = 0;
 		}
 		return;
 	}
@@ -1010,7 +1021,7 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 {
 	if (other == this)
 		return false;		// [RH] Don't hate self (can happen when shooting barrels)
-	if ((other->flags3 & MF3_NOTARGET) && (other->tid != TIDtoHate))
+	if ((other->flags3 & MF3_NOTARGET) && (other->tid != TIDtoHate || TIDtoHate == 0))
 		return false;
 	if (threshold != 0 && !(flags4 & MF4_QUICKTORETALIATE))
 		return false;

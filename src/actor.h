@@ -155,7 +155,7 @@ enum
 	MF2_LOGRAV			= 0x00000001,	// alternate gravity setting
 	MF2_WINDTHRUST		= 0x00000002,	// gets pushed around by the wind specials
 	MF2_BOUNCE1			= 0x00000004,
-	MF2_BLASTED			= 0x00000008,	// missile will pass through ghosts
+	MF2_BLASTED			= 0x00000008,	// actor will temporarily take damage from impact
 	MF2_FLY				= 0x00000010,	// fly mode is active
 	MF2_FLOORCLIP		= 0x00000020,	// if feet are allowed to be clipped
 	MF2_SPAWNFLOAT		= 0x00000040,	// spawn random float z
@@ -240,6 +240,9 @@ enum
 
 	MF4_NOHATEPLAYERS	= 0x00000001,	// Ignore player attacks
 	MF4_QUICKTORETALIATE= 0x00000002,	// Always switch targets when hurt
+	MF4_NOICEDEATH		= 0x00000004,	// Actor never enters an ice death, not even the generic one
+	MF4_BOSSDEATH		= 0x00000008,	// A_FreezeDeathChunks calls A_BossDeath
+	MF4_RANDOMIZE		= 0x00000010,	// Missile has random initial tic count
 
 // --- mobj.renderflags ---
 
@@ -561,6 +564,8 @@ public:
 	bool UpdateWaterLevel (fixed_t oldz);
 
 	static FState States[];
+
+	enum { S_GENERICFREEZEDEATH = 3 };
 };
 
 class FActorIterator

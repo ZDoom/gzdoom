@@ -18,7 +18,7 @@ const int SHARDSPAWN_DOWN	= 8;
 
 static FRandom pr_cone ("FireConePL1");
 
-void A_FireConePL1 (player_t *, pspdef_t *);
+void A_FireConePL1 (AActor *actor, pspdef_t *);
 void A_ShedShard (AActor *);
 
 // The Mage's Frost Cone ----------------------------------------------------
@@ -167,7 +167,7 @@ END_DEFAULTS
 //
 //============================================================================
 
-void A_FireConePL1 (player_t *player, pspdef_t *psp)
+void A_FireConePL1 (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
@@ -175,6 +175,12 @@ void A_FireConePL1 (player_t *player, pspdef_t *psp)
 	int i;
 	AActor *pmo,*mo;
 	bool conedone=false;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	pmo = player->mo;
 	player->UseAmmo ();
@@ -226,37 +232,35 @@ void A_ShedShard (AActor *actor)
 	actor->special2 = 0;
 	spermcount--;
 
-	// every so many calls, spawn a new missile in it's set directions
+	// every so many calls, spawn a new missile in its set directions
 	if (spawndir & SHARDSPAWN_LEFT)
 	{
 		mo = P_SpawnMissileAngleZSpeed (actor, actor->z, RUNTIME_CLASS(AFrostMissile), actor->angle+(ANG45/9),
-											 0, (20+2*spermcount)<<FRACBITS);
+											 0, (20+2*spermcount)<<FRACBITS, actor->target);
 		if (mo)
 		{
 			mo->special1 = SHARDSPAWN_LEFT;
 			mo->special2 = spermcount;
 			mo->momz = actor->momz;
-			mo->target = actor->target;
 			mo->args[0] = (spermcount==3)?2:0;
 		}
 	}
 	if (spawndir & SHARDSPAWN_RIGHT)
 	{
 		mo = P_SpawnMissileAngleZSpeed (actor, actor->z, RUNTIME_CLASS(AFrostMissile), actor->angle-(ANG45/9),
-											 0, (20+2*spermcount)<<FRACBITS);
+											 0, (20+2*spermcount)<<FRACBITS, actor->target);
 		if (mo)
 		{
 			mo->special1 = SHARDSPAWN_RIGHT;
 			mo->special2 = spermcount;
 			mo->momz = actor->momz;
-			mo->target = actor->target;
 			mo->args[0] = (spermcount==3)?2:0;
 		}
 	}
 	if (spawndir & SHARDSPAWN_UP)
 	{
 		mo = P_SpawnMissileAngleZSpeed (actor, actor->z+8*FRACUNIT, RUNTIME_CLASS(AFrostMissile), actor->angle, 
-											 0, (15+2*spermcount)<<FRACBITS);
+											 0, (15+2*spermcount)<<FRACBITS, actor->target);
 		if (mo)
 		{
 			mo->momz = actor->momz;
@@ -265,14 +269,13 @@ void A_ShedShard (AActor *actor)
 			else
 				mo->special1 = SHARDSPAWN_UP;
 			mo->special2 = spermcount;
-			mo->target = actor->target;
 			mo->args[0] = (spermcount==3)?2:0;
 		}
 	}
 	if (spawndir & SHARDSPAWN_DOWN)
 	{
 		mo = P_SpawnMissileAngleZSpeed (actor, actor->z-4*FRACUNIT, RUNTIME_CLASS(AFrostMissile), actor->angle, 
-											 0, (15+2*spermcount)<<FRACBITS);
+											 0, (15+2*spermcount)<<FRACBITS, actor->target);
 		if (mo)
 		{
 			mo->momz = actor->momz;

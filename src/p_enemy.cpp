@@ -634,35 +634,127 @@ BOOL P_LookForMonsters (AActor *actor)
 
 //============================================================================
 //
+// LookForTIDinBlock
+//
+// Finds a target with the specified TID in a mapblock. Alternatively, it
+// can find a target with a specified TID if something in this mapblock is
+// already targetting it.
+//
+//============================================================================
+
+AActor *LookForTIDinBlock (AActor *lookee, int index)
+{
+	AActor *link;
+	AActor *other;
+	
+	for (link = blocklinks[index]; link != NULL; link = link->bnext)
+	{
+        if (!(link->flags & MF_SHOOTABLE))
+			continue;			// not shootable (observer or dead)
+
+		if (link == lookee)
+			continue;
+
+		if (link->health <= 0)
+			continue;			// dead
+
+		if (link->flags2 & MF2_DORMANT)
+			continue;			// don't target dormant things
+
+		if (link->tid == lookee->TIDtoHate)
+		{
+			other = link;
+		}
+		else if (link->target != NULL && link->target->tid == lookee->TIDtoHate)
+		{
+			other = link->target;
+			if (!(other->flags & MF_SHOOTABLE) ||
+				other->health <= 0 ||
+				(other->flags2 & MF2_DORMANT))
+			{
+				continue;
+			}
+		}
+		else
+		{
+			continue;
+		}
+
+		if (!(lookee->flags3 & MF3_NOSIGHTCHECK))
+		{
+			if (!P_CheckSight (lookee, other, false))
+				continue;			// out of sight
+	/*						
+			if (!allaround)
+			{
+				angle_t an = R_PointToAngle2 (actor->x, actor->y, 
+											other->x, other->y)
+					- actor->angle;
+				
+				if (an > ANG90 && an < ANG270)
+				{
+					fixed_t dist = P_AproxDistance (other->x - actor->x,
+											other->y - actor->y);
+					// if real close, react anyway
+					if (dist > MELEERANGE)
+						continue;	// behind back
+				}
+			}
+	*/
+		}
+
+		return other;
+	}
+	return NULL;
+}
+
+//============================================================================
+//
 // P_LookForTID
 //
 // Selects a live monster with the given TID
 //
 //============================================================================
 
+CVAR (Int, search, 0, 0)
+
 BOOL P_LookForTID (AActor *actor, BOOL allaround)
 {
-	FActorIterator iterator (actor->TIDtoHate, actor->LastLook.Actor);
-	int c;
 	AActor *other;
 
-	c = (pr_look3() & 31) + 7;	// Look for between 7 and 38 hatees at a time
+	other = P_BlockmapSearch (actor, search, LookForTIDinBlock);
+
+	if (other != NULL)
+	{
+		if (actor->goal && actor->target == actor->goal)
+			actor->reactiontime = 0;
+
+		actor->target = other;
+		actor->LastLook.Actor = other;
+		return true;
+	}
+
+	FActorIterator iterator (actor->TIDtoHate, actor->LastLook.Actor);
+	int c = (pr_look3() & 31) + 7;	// Look for between 7 and 38 hatees at a time
 	while ((other = iterator.Next()) != actor->LastLook.Actor)
 	{
 		if (other == NULL)
 			continue;
 
-		if (other == actor)
-			continue;			// don't hate self
-
 		if (!(other->flags & MF_SHOOTABLE))
 			continue;			// not shootable (observer or dead)
+
+		if (other == actor)
+			continue;			// don't hate self
 
 		if (other->health <= 0)
 			continue;			// dead
 
 		if (other->flags2 & MF2_DORMANT)
 			continue;			// don't target dormant things
+
+		if (--c == 0)
+			break;
 
 		if (!(actor->flags3 & MF3_NOSIGHTCHECK))
 		{

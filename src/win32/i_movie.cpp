@@ -89,6 +89,7 @@ extern void I_CheckNativeMouse (bool preferNative);
 
 static bool MovieNotDone;
 static bool MovieInterrupted;
+static bool MovieDestroyed;
 static bool FullVideo;
 static bool NoVideo;
 static IVideoWindow *vidwin;
@@ -122,10 +123,6 @@ LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 		}
 		break;
 
-	case WM_DESTROY:
-		PostQuitMessage (0);
-		break;
-
 	case WM_SIZE:
 		if (vidwin == NULL)
 		{
@@ -141,23 +138,44 @@ LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 	case WM_PAINT:
 		if (vidwin == NULL)
 		{
-			static_cast<BaseWinFB *> (screen)->PaintToWindow ();
+			if (screen != NULL)
+			{
+				static_cast<BaseWinFB *> (screen)->PaintToWindow ();
+			}
 		}
-		else
+		else if (!FullVideo)
 		{
 			PAINTSTRUCT ps;
+			HBRUSH br;
 			HDC dc;
+			long left, top, width, height;
 
-			dc = BeginPaint (Window, &ps);
-			if (dc != NULL)
+			if (S_OK == vidwin->GetWindowPosition (&left, &top, &width, &height))
 			{
-				FillRect (dc, &ps.rcPaint, (HBRUSH)GetStockObject (BLACK_BRUSH));
-				EndPaint (Window, &ps);
-				return 0;
+				dc = BeginPaint (Window, &ps);
+				if (dc != NULL)
+				{
+					RECT rect = { left, top, left+width, top+height };
+					ScreenToClient (hWnd, (LPPOINT)&rect.left);
+					ScreenToClient (hWnd, (LPPOINT)&rect.right);
+					br = (HBRUSH)GetStockObject (BLACK_BRUSH);
+					switch (ExcludeClipRect (dc, rect.left, rect.top, rect.right, rect.bottom))
+					{
+					case SIMPLEREGION:
+					case COMPLEXREGION:
+						FillRect (dc, &ps.rcPaint, br);
+						break;
+					default:
+						break;
+					}
+					EndPaint (Window, &ps);
+					//return 0;
+				}
 			}
 		}
 		break;
 
+	case WM_DESTROY:
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
 		/*
@@ -167,12 +185,16 @@ LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 		*/
 		if (MovieNotDone)
 		{
-			if (wParam == VK_ESCAPE || message == WM_CANCELMODE)
+			if (wParam == VK_ESCAPE || message == WM_CANCELMODE || message == WM_DESTROY)
 			{
 				control->Stop ();
 				MovieNotDone = false;
 				MovieInterrupted = true;
 			}
+		}
+		if (message == WM_DESTROY)
+		{
+			MovieDestroyed = true;
 		}
 		return 0;
 
@@ -306,6 +328,7 @@ int I_PlayMovie (const char *name)
 	}
 
 	MovieInterrupted = false;
+	MovieDestroyed = false;
 
 	while (MovieNotDone && GetMessage (&msg, NULL, 0, 0))
 	{
@@ -370,6 +393,11 @@ bomb2:
 
 bomb1:
 	delete[] uniname;
+
+	if (MovieDestroyed)
+	{
+		exit (0);
+	}
 
 	return returnval;
 }

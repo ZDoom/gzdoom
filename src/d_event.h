@@ -38,7 +38,6 @@ enum EGenericEvent
 	EV_KeyDown,		// data1: scan code, data2: Qwerty ASCII code
 	EV_KeyUp,		// same
 	EV_Mouse,		// x, y: mouse movement deltas
-	EV_Joystick,	// x, y: joystick position
 	EV_GUI_Event	// subtype specifies actual event
 };
 

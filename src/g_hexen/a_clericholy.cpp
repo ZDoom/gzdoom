@@ -24,8 +24,8 @@ void A_CHolySeek (AActor *);
 void A_CHolyCheckScream (AActor *);
 void A_DropWraithvergePieces (AActor *);
 
-void A_CHolyAttack (player_t *, pspdef_t *);
-void A_CHolyPalette (player_t *, pspdef_t *);
+void A_CHolyAttack (AActor *, pspdef_t *);
+void A_CHolyPalette (AActor *, pspdef_t *);
 
 void SpawnSpiritTail (AActor *spirit);
 
@@ -561,8 +561,14 @@ void SpawnSpiritTail (AActor *spirit)
 //
 //============================================================================
 
-void A_CHolyAttack (player_t *player, pspdef_t *psp)
+void A_CHolyAttack (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->UseAmmo (true))
 	{
 		P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHolyMissile));
@@ -577,11 +583,11 @@ void A_CHolyAttack (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_CHolyPalette (player_t *player, pspdef_t *psp)
+void A_CHolyPalette (AActor *actor, pspdef_t *psp)
 {
-	if (player->cholycount)
+	if (actor->player != NULL && actor->player->cholycount)
 	{
-		player->cholycount--;
+		actor->player->cholycount--;
 	}
 }
 

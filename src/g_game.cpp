@@ -178,13 +178,6 @@ int 			turnheld;								// for accelerative turning
 int 			mousex;
 int 			mousey; 		
 
-// joystick values are repeated
-// [RH] now, if the joystick is enabled, it will generate an event every tick
-//		so the values here are reset to zero after each tic build (in case
-//		use_joystick gets set to 0 when the joystick is off center)
-int 			joyxmove;
-int 			joyymove;
- 
 char			*savegamefile;
 char			savedescription[SAVESTRINGSIZE];
 
@@ -461,23 +454,22 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		cmd->ucmd.buttons |= BT_JUMP;
 
 	// [RH] Scale joystick moves to full range of allowed speeds
-	if (strafe || lookstrafe)
-		side += (MAXPLMOVE * joyxmove) / 256;
-	else 
-		cmd->ucmd.yaw -= (1280 * joyxmove) / 256; 
-
-	// [RH] Scale joystick moves over full range
+	if (strafe || (Button_Mlook.bDown && lookstrafe))
+	{
+		JoyAxes[JOYAXIS_SIDE] += JoyAxes[JOYAXIS_YAW];
+		JoyAxes[JOYAXIS_YAW] = 0;
+	}
 	if (Button_Mlook.bDown)
 	{
-		if (invertmouse)
-			look -= (joyymove * 32767) / 256;
-		else
-			look += (joyymove * 32767) / 256;
+		JoyAxes[JOYAXIS_PITCH] += JoyAxes[JOYAXIS_FORWARD];
+		JoyAxes[JOYAXIS_FORWARD] = 0;
 	}
-	else
-	{
-		forward += (MAXPLMOVE * joyymove) / 256;
-	}
+
+	side += int((MAXPLMOVE * JoyAxes[JOYAXIS_SIDE]) / 256);
+	cmd->ucmd.yaw += short((1280 * JoyAxes[JOYAXIS_YAW]) / 256);
+	look += int((JoyAxes[JOYAXIS_PITCH] * 2048) / 256);
+	forward += int((JoyAxes[JOYAXIS_FORWARD] * MAXPLMOVE) / 256);
+	fly += int(JoyAxes[JOYAXIS_UP] * 8);
 
 	if (Button_Mlook.bDown || freelook)
 	{
@@ -584,9 +576,6 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 	cmd->ucmd.forwardmove <<= 8;
 	cmd->ucmd.sidemove <<= 8;
-
-	joyxmove = 0;
-	joyymove = 0;
 }
 
 
@@ -727,11 +716,6 @@ BOOL G_Responder (event_t *ev)
 		mousex = (int)(ev->x * mouse_sensitivity);
 		mousey = (int)(ev->y * mouse_sensitivity);
 		break;
-
-	case EV_Joystick:
-		joyxmove = ev->x;
-		joyymove = ev->y;
-		break;
 	}
 
 	// [RH] If the view is active, give the automap a chance at
@@ -741,8 +725,7 @@ BOOL G_Responder (event_t *ev)
 		return AM_Responder (ev);
 
 	return (ev->type == EV_KeyDown ||
-			ev->type == EV_Mouse ||
-			ev->type == EV_Joystick);
+			ev->type == EV_Mouse);
 }
 
 
@@ -767,6 +750,12 @@ void G_Ticker ()
 		{
 			G_DoReborn (i, false);
 		}
+	}
+
+	if (ToggleFullscreen)
+	{
+		ToggleFullscreen = false;
+		AddCommandString ("toggle fullscreen");
 	}
 
 	// do things to change the game state
@@ -1820,6 +1809,7 @@ void G_DoSaveGame (bool okForQuicksave)
 		Printf ("Could not create savegame '%s'\n", savegamefile);
 		delete[] savegamefile;
 		savegamefile = NULL;
+		gameaction = ga_nothing;
 		return;
 	}
 

@@ -14,10 +14,10 @@
 static FRandom pr_staffcheck ("CStaffCheck");
 static FRandom pr_blink ("CStaffBlink");
 
-void A_CStaffInitBlink (player_t *player, pspdef_t *psp);
-void A_CStaffCheckBlink (player_t *player, pspdef_t *psp);
-void A_CStaffCheck (player_t *player, pspdef_t *psp);
-void A_CStaffAttack (player_t *player, pspdef_t *psp);
+void A_CStaffInitBlink (AActor *actor, pspdef_t *psp);
+void A_CStaffCheckBlink (AActor *actor, pspdef_t *psp);
+void A_CStaffCheck (AActor *actor, pspdef_t *psp);
+void A_CStaffAttack (AActor *actor, pspdef_t *psp);
 void A_CStaffMissileSlither (AActor *);
 
 // The Cleric's Serpent Staff -----------------------------------------------
@@ -199,7 +199,7 @@ END_DEFAULTS
 //
 //============================================================================
 
-void A_CStaffCheck (player_t *player, pspdef_t *psp)
+void A_CStaffCheck (AActor *actor, pspdef_t *psp)
 {
 	AActor *pmo;
 	int damage;
@@ -207,6 +207,12 @@ void A_CStaffCheck (player_t *player, pspdef_t *psp)
 	angle_t angle;
 	int slope;
 	int i;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	pmo = player->mo;
 	damage = 20+(pr_staffcheck()&15);
@@ -257,10 +263,16 @@ void A_CStaffCheck (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_CStaffAttack (player_t *player, pspdef_t *psp)
+void A_CStaffAttack (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
 	AActor *pmo;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo (true);
 	pmo = player->mo;
@@ -306,9 +318,9 @@ void A_CStaffMissileSlither (AActor *actor)
 //
 //============================================================================
 
-void A_CStaffInitBlink (player_t *player, pspdef_t *psp)
+void A_CStaffInitBlink (AActor *actor, pspdef_t *psp)
 {
-	player->mo->special1 = (pr_blink()>>1)+20;
+	actor->special1 = (pr_blink()>>1)+20;
 }
 
 //============================================================================
@@ -317,11 +329,11 @@ void A_CStaffInitBlink (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_CStaffCheckBlink (player_t *player, pspdef_t *psp)
+void A_CStaffCheckBlink (AActor *actor, pspdef_t *psp)
 {
-	if (!--player->mo->special1)
+	if (!--actor->special1)
 	{
-		P_SetPsprite (player, ps_weapon, &ACWeapStaff::States[S_CSTAFFBLINK]);
-		player->mo->special1 = (pr_blink()+50)>>2;
+		P_SetPsprite (actor->player, ps_weapon, &ACWeapStaff::States[S_CSTAFFBLINK]);
+		actor->special1 = (pr_blink()+50)>>2;
 	}
 }

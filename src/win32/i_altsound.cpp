@@ -38,7 +38,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
-#define INITGUID
 #include <dsound.h>
 #include <malloc.h>
 #include <assert.h>

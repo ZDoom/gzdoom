@@ -69,6 +69,7 @@ union UCVarValue
 	int Int;
 	float Float;
 	char *String;
+	const GUID *pGUID;
 };
 
 enum ECVarType
@@ -78,7 +79,8 @@ enum ECVarType
 	CVAR_Float,
 	CVAR_String,
 	CVAR_Color,		// stored as CVAR_Int
-	CVAR_Dummy		// just redirects to another cvar
+	CVAR_Dummy,		// just redirects to another cvar
+	CVAR_GUID
 };
 
 class FConfigFile;
@@ -127,10 +129,12 @@ protected:
 	static int ToInt (UCVarValue value, ECVarType type);
 	static float ToFloat (UCVarValue value, ECVarType type);
 	static char *ToString (UCVarValue value, ECVarType type);
+	static const GUID *ToGUID (UCVarValue value, ECVarType type);
 	static UCVarValue FromBool (bool value, ECVarType type);
 	static UCVarValue FromInt (int value, ECVarType type);
 	static UCVarValue FromFloat (float value, ECVarType type);
 	static UCVarValue FromString (const char *value, ECVarType type);
+	static UCVarValue FromGUID (const GUID &value, ECVarType type);
 
 	char *Name;
 	DWORD Flags;
@@ -321,6 +325,31 @@ protected:
 
 	FIntCVar &ValueVar;
 	DWORD BitVal;
+};
+
+class FGUIDCVar : public FBaseCVar
+{
+public:
+	FGUIDCVar (const char *name, const GUID *defguid, DWORD flags, void (*callback)(FGUIDCVar &)=NULL);
+
+	virtual ECVarType GetRealType () const;
+
+	virtual UCVarValue GetGenericRep (ECVarType type) const;
+	virtual UCVarValue GetFavoriteRep (ECVarType *type) const;
+	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
+	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
+	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
+
+	const GUID &operator= (const GUID &guidval)
+		{ UCVarValue val; val.pGUID = &guidval; SetGenericRep (val, CVAR_GUID); return guidval; }
+	inline operator const GUID & () const { return Value; }
+	inline const GUID &operator *() const { return Value; }
+
+protected:
+	virtual void DoSet (UCVarValue value, ECVarType type);
+
+	GUID Value;
+	GUID DefaultValue;
 };
 
 extern int cvar_defflags;

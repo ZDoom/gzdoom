@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.00"
-	Name="zdoom"
+	Name="_zdoom"
 	SccProjectName=""
 	SccAuxPath=""
 	SccLocalPath=""
@@ -29,7 +29,7 @@
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
-				AdditionalIncludeDirectories="f:\fmodapi361win32\api\inc,win32,sound,.,zlib-1.1.4,g_shared,g_doom,g_raven,g_heretic,g_hexen"
+				AdditionalIncludeDirectories="win32,sound,.,zlib-1.1.4,g_shared,g_doom,g_raven,g_heretic,g_hexen;flac"
 				PreprocessorDefinitions="NDEBUG,WIN32,_WINDOWS,USEASM"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -43,7 +43,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="3"
+				DebugInformationFormat="2"
 				CallingConvention="1"
 				CompileAs="0"/>
 			<Tool
@@ -51,18 +51,21 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="comctl32.lib strmiids.lib wsock32.lib winmm.lib f:\fmodapi361win32/api/lib/fmodvc.lib"
+				AdditionalDependencies="dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib"
 				OutputFile="../../zdoom.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile=".\Release/zdoom.pdb"
+				ProgramDatabaseFile=".\Release\zdoom.pdb"
+				StripPrivateSymbols=".\Release\zdoom-stripped.pdb"
 				GenerateMapFile="TRUE"
 				MapFileName=".\Release/zdoom.map"
 				MapExports="TRUE"
 				MapLines="FALSE"
-				SubSystem="2"/>
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"/>
 			<Tool
 				Name="VCMIDLTool"
 				PreprocessorDefinitions="NDEBUG"
@@ -96,7 +99,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "
 				Optimization="0"
-				AdditionalIncludeDirectories="f:\fmodapi361win32\api\inc;win32;sound;.;&quot;zlib-1.1.4&quot;;g_shared;g_doom;g_raven;g_heretic;g_hexen"
+				AdditionalIncludeDirectories="win32;sound;.;&quot;zlib-1.1.4&quot;;g_shared;g_doom;g_raven;g_heretic;g_hexen;flac"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,USEASM"
 				MinimalRebuild="TRUE"
 				RuntimeLibrary="1"
@@ -116,11 +119,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="comctl32.lib strmiids.lib wsock32.lib winmm.lib f:\fmodapi361win32/api/lib/fmodvc.lib"
+				AdditionalDependencies="dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib"
 				OutputFile="../../zdoomd.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
-				IgnoreDefaultLibraryNames="libcmt"
+				AdditionalLibraryDirectories="d:\gnu\flac-1.1.0\obj\debug\lib"
+				IgnoreDefaultLibraryNames="libcmt;msvcrtd;msvcrt"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/doomdbg.pdb"
 				SubSystem="2"/>
@@ -1430,6 +1434,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="s_environment.cpp">
+			</File>
+			<File
 				RelativePath=".\s_playlist.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -2189,19 +2196,7 @@
 				RelativePath=".\win32\cursor1.cur">
 			</File>
 			<File
-				RelativePath=".\win32\dxcrap.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
+				RelativePath="win32\eaxedit.cpp">
 			</File>
 			<File
 				RelativePath=".\win32\hardware.cpp">
@@ -2655,6 +2650,9 @@
 						Name="VCCLCompilerTool"
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="g_shared\a_soundenvironment.cpp">
 			</File>
 			<File
 				RelativePath=".\g_shared\a_spark.cpp">
@@ -3491,21 +3489,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_summon.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\g_heretic\a_wizard.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -4146,6 +4129,21 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\g_hexen\a_summon.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\g_hexen\a_teleportother.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -4440,43 +4438,10 @@
 				RelativePath="sound\i_sound.h">
 			</File>
 			<File
-				RelativePath="sound\mid2strm.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="sound\mid2strm.h">
-			</File>
-			<File
-				RelativePath="sound\mus2strm.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="sound\mus2strm.h">
-			</File>
-			<File
 				RelativePath="sound\music_cd.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_flac.cpp">
 			</File>
 			<File
 				RelativePath="sound\music_midi_midiout.cpp">
@@ -4502,7 +4467,16 @@
 			<File
 				RelativePath="sound\music_stream.cpp">
 			</File>
+			<File
+				RelativePath="sound\sample_flac.cpp">
+			</File>
+			<File
+				RelativePath="sound\sample_flac.h">
+			</File>
 		</Filter>
+		<File
+			RelativePath="win32\icon2.ico">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

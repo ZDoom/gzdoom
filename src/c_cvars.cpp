@@ -195,6 +195,9 @@ bool FBaseCVar::ToBool (UCVarValue value, ECVarType type)
 		else
 			return !!strtol (value.String, NULL, 0);
 
+	case CVAR_GUID:
+		return false;
+
 	default:
 		return false;
 	}
@@ -209,15 +212,16 @@ int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 
 	switch (type)
 	{
-	case CVAR_Bool:         res = (int)value.Bool; break;
-	case CVAR_Int:          res = value.Int; break;
+	case CVAR_Bool:			res = (int)value.Bool; break;
+	case CVAR_Int:			res = value.Int; break;
 #if __GNUC__ <= 2
-	case CVAR_Float:        tmp = value.Float; res = (int)tmp; break;
+	case CVAR_Float:		tmp = value.Float; res = (int)tmp; break;
 #else
-	case CVAR_Float:        res = (int)value.Float; break;
+	case CVAR_Float:		res = (int)value.Float; break;
 #endif
-	case CVAR_String:       res = strtol (value.String, NULL, 0); break;
-	default:                        res = 0; break;
+	case CVAR_String:		res = strtol (value.String, NULL, 0); break;
+	case CVAR_GUID:			res = 0; break;
+	default:				res = 0; break;
 	}
 	return res;
 }
@@ -238,12 +242,16 @@ float FBaseCVar::ToFloat (UCVarValue value, ECVarType type)
 	case CVAR_String:
 		return strtod (value.String, NULL);
 
+	case CVAR_GUID:
+		return 0.f;
+
 	default:
 		return 0.f;
 	}
 }
 
-static char cstrbuf[32];
+static char cstrbuf[40];
+static GUID cGUID;
 static char truestr[] = "true";
 static char falsestr[] = "false";
 
@@ -265,11 +273,33 @@ char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
 		sprintf (cstrbuf, "%g", value.Float);
 		break;
 
+	case CVAR_GUID:
+		FormatGUID (cstrbuf, *value.pGUID);
+		break;
+
 	default:
 		strcpy (cstrbuf, "<huh?>");
 		break;
 	}
 	return cstrbuf;
+}
+
+const GUID *FBaseCVar::ToGUID (UCVarValue value, ECVarType type)
+{
+	UCVarValue trans;
+
+	switch (type)
+	{
+	case CVAR_String:
+		trans = FromString (value.String, CVAR_GUID);
+		return trans.pGUID;
+
+	case CVAR_GUID:
+		return value.pGUID;
+
+	default:
+		return NULL;
+	}
 }
 
 UCVarValue FBaseCVar::FromBool (bool value, ECVarType type)
@@ -292,6 +322,10 @@ UCVarValue FBaseCVar::FromBool (bool value, ECVarType type)
 
 	case CVAR_String:
 		ret.String = value ? truestr : falsestr;
+		break;
+
+	case CVAR_GUID:
+		ret.pGUID = NULL;
 		break;
 
 	default:
@@ -324,6 +358,10 @@ UCVarValue FBaseCVar::FromInt (int value, ECVarType type)
 		ret.String = cstrbuf;
 		break;
 
+	case CVAR_GUID:
+		ret.pGUID = NULL;
+		break;
+
 	default:
 		break;
 	}
@@ -354,6 +392,10 @@ UCVarValue FBaseCVar::FromFloat (float value, ECVarType type)
 		ret.String = cstrbuf;
 		break;
 
+	case CVAR_GUID:
+		ret.pGUID = NULL;
+		break;
+
 	default:
 		break;
 	}
@@ -361,9 +403,32 @@ UCVarValue FBaseCVar::FromFloat (float value, ECVarType type)
 	return ret;
 }
 
+static BYTE HexToByte (const char *hex)
+{
+	BYTE v = 0;
+	for (int i = 0; i < 2; ++i)
+	{
+		v <<= 4;
+		if (hex[i] >= '0' && hex[i] <= '9')
+		{
+			v += hex[i] - '0';
+		}
+		else if (hex[i] >= 'A' && hex[i] <= 'F')
+		{
+			v += hex[i] - 'A';
+		}
+		else // The string is already verified to contain valid hexits
+		{
+			v += hex[i] - 'a';
+		}
+	}
+	return v;
+}
+
 UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 {
 	UCVarValue ret;
+	int i;
 
 	switch (type)
 	{
@@ -388,6 +453,63 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 		ret.String = const_cast<char *>(value);
 		break;
 
+	case CVAR_GUID:
+		// {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
+		// 01234567890123456789012345678901234567
+		// 0         1         2         3
+
+		ret.pGUID = NULL;
+		for (i = 0; i < 38; ++i)
+		{
+			if (value[i] == 0)
+			{
+				break;
+			}
+			bool goodv = true;
+			switch (i)
+			{
+			case 0:
+				if (value[i] != '{')
+					goodv = false;
+				break;
+			case 9:
+			case 14:
+			case 19:
+			case 24:
+				if (value[i] != '-')
+					goodv = false;
+				break;
+			case 37:
+				if (value[i] != '}')
+					goodv = false;
+				break;
+			default:
+				if (value[i] < '0' && value[i] > '9' &&
+					value[i] < 'A' && value[i] > 'F' &&
+					value[i] < 'a' && value[i] > 'f')
+				{
+					goodv = false;
+				}
+				break;
+			}
+		}
+		if (i == 38 && value[i] == 0)
+		{
+			cGUID.Data1 = strtoul (value + 1, NULL, 16);
+			cGUID.Data2 = strtoul (value + 10, NULL, 16);
+			cGUID.Data3 = strtoul (value + 15, NULL, 16);
+			cGUID.Data4[0] = HexToByte (value + 20);
+			cGUID.Data4[1] = HexToByte (value + 22);
+			cGUID.Data4[2] = HexToByte (value + 25);
+			cGUID.Data4[3] = HexToByte (value + 27);
+			cGUID.Data4[4] = HexToByte (value + 29);
+			cGUID.Data4[5] = HexToByte (value + 31);
+			cGUID.Data4[6] = HexToByte (value + 33);
+			cGUID.Data4[7] = HexToByte (value + 35);
+			ret.pGUID = &cGUID;
+		}
+		break;
+
 	default:
 		break;
 	}
@@ -395,6 +517,39 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 	return ret;
 }
 
+UCVarValue FBaseCVar::FromGUID (const GUID &guid, ECVarType type)
+{
+	UCVarValue ret;
+
+	switch (type)
+	{
+	case CVAR_Bool:
+		ret.Bool = false;
+		break;
+
+	case CVAR_Int:
+		ret.Int = 0;
+		break;
+
+	case CVAR_Float:
+		ret.Float = 0.f;
+		break;
+
+	case CVAR_String:
+		ret.pGUID = &guid;
+		ret.String = ToString (ret, CVAR_GUID);
+		break;
+
+	case CVAR_GUID:
+		ret.pGUID = &guid;
+		break;
+
+	default:
+		break;
+	}
+
+	return ret;
+}
 FBaseCVar *cvar_set (const char *var_name, const char *val)
 {
 	FBaseCVar *var;
@@ -760,6 +915,84 @@ int FColorCVar::ToInt2 (UCVarValue value, ECVarType type)
 	}
 	return ret;
 }
+
+//
+// GUID cvar implementation
+//
+
+FGUIDCVar::FGUIDCVar (const char *name, const GUID *def, DWORD flags, void (*callback)(FGUIDCVar &))
+: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
+{
+	if (def != NULL)
+	{
+		DefaultValue = *def;
+		if (Flags & CVAR_ISDEFAULT)
+			Value = *def;
+	}
+	else
+	{
+		memset (&Value, 0, sizeof(DefaultValue));
+		memset (&DefaultValue, 0, sizeof(DefaultValue));
+	}
+}
+
+ECVarType FGUIDCVar::GetRealType () const
+{
+	return CVAR_GUID;
+}
+
+UCVarValue FGUIDCVar::GetGenericRep (ECVarType type) const
+{
+	return FromGUID (Value, type);
+}
+
+UCVarValue FGUIDCVar::GetFavoriteRep (ECVarType *type) const
+{
+	UCVarValue ret;
+	*type = CVAR_GUID;
+	ret.pGUID = &Value;
+	return ret;
+}
+
+UCVarValue FGUIDCVar::GetGenericRepDefault (ECVarType type) const
+{
+	return FromGUID (DefaultValue, type);
+}
+
+UCVarValue FGUIDCVar::GetFavoriteRepDefault (ECVarType *type) const
+{
+	UCVarValue ret;
+	*type = CVAR_GUID;
+	ret.pGUID = &DefaultValue;
+	return ret;
+}
+
+void FGUIDCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
+{
+	const GUID *guid = ToGUID (value, type);
+	if (guid != NULL)
+	{
+		Value = *guid;
+		if (Flags & CVAR_ISDEFAULT)
+		{
+			SetGenericRep (value, type);
+			Flags |= CVAR_ISDEFAULT;
+		}
+	}
+}
+
+void FGUIDCVar::DoSet (UCVarValue value, ECVarType type)
+{
+	const GUID *guid = ToGUID (value, type);
+	if (guid != NULL)
+	{
+		Value = *guid;
+	}
+}
+
+//
+// More base cvar stuff
+//
 
 void FBaseCVar::ResetColors ()
 {
@@ -1243,11 +1476,6 @@ CCMD (toggle)
 				val.Bool ? "true" : "false");
 		}
 	}
-}
-
-CCMD (pat)
-{
-	Printf ("%d\n", CheckWildcards (argv[1], argv[2]));
 }
 
 void FBaseCVar::ListVars (const char *filter, bool plain)

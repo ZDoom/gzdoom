@@ -44,7 +44,7 @@ struct pspdef_s;
 
 typedef void (*actionf_v)();
 typedef void (*actionf_p1)( AActor* );
-typedef void (*actionf_p2)( player_s*, pspdef_s* );
+typedef void (*actionf_p2)( AActor*, pspdef_s* );
 
 typedef union
 {

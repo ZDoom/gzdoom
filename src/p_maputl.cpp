@@ -892,6 +892,11 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 
 AActor *P_RoughMonsterSearch (AActor *mo, int distance)
 {
+	return P_BlockmapSearch (mo, distance, RoughBlockCheck);
+}
+
+AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, int))
+{
 	int blockX;
 	int blockY;
 	int startX, startY;
@@ -908,7 +913,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance)
 	
 	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
 	{
-		if ( (target = RoughBlockCheck (mo, startY*bmapwidth+startX)) )
+		if ( (target = check (mo, startY*bmapwidth+startX)) )
 		{ // found a target right away
 			return target;
 		}
@@ -945,7 +950,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance)
 		// Trace the first block section (along the top)
 		for (; blockIndex <= firstStop; blockIndex++)
 		{
-			if ( (target = RoughBlockCheck (mo, blockIndex)) )
+			if ( (target = check (mo, blockIndex)) )
 			{
 				return target;
 			}
@@ -953,7 +958,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance)
 		// Trace the second block section (right edge)
 		for (blockIndex--; blockIndex <= secondStop; blockIndex += bmapwidth)
 		{
-			if ( (target = RoughBlockCheck(mo, blockIndex)) )
+			if ( (target = check (mo, blockIndex)) )
 			{
 				return target;
 			}
@@ -961,7 +966,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance)
 		// Trace the third block section (bottom edge)
 		for (blockIndex -= bmapwidth; blockIndex >= thirdStop; blockIndex--)
 		{
-			if ( (target = RoughBlockCheck(mo, blockIndex)) )
+			if ( (target = check (mo, blockIndex)) )
 			{
 				return target;
 			}
@@ -969,7 +974,7 @@ AActor *P_RoughMonsterSearch (AActor *mo, int distance)
 		// Trace the final block section (left edge)
 		for (blockIndex++; blockIndex > finalStop; blockIndex -= bmapwidth)
 		{
-			if ( (target = RoughBlockCheck (mo, blockIndex)) )
+			if ( (target = check (mo, blockIndex)) )
 			{
 				return target;
 			}
@@ -988,7 +993,6 @@ static AActor *RoughBlockCheck (AActor *mo, int index)
 {
 	AActor *link;
 
-	link = blocklinks[index];
 	for (link = blocklinks[index]; link != NULL; link = link->bnext)
 	{
 		if (link != mo && mo->IsOkayToAttack (link))

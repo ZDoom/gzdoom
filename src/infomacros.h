@@ -255,15 +255,5 @@ public:
 #define PROP_RaiseState(x)		ADD_BYTE_PROP(ADEF_RaiseState,x)
 
 #define PROP_SKIP_SUPER			ADD_BYTE_PROP(ADEF_SkipSuper,0)
-#if 0
-#ifndef __GNUC__
-#if _MSC_VER < 1300
-#define PROP_STATE_BASE(x)		ADD_LONG_PROP(ADEF_StateBase,((int)RUNTIME_CLASS(x)))
-#else
-#define PROP_STATE_BASE(x)		ADD_LONG_PROP(ADEF_StateBase,(1))
-#endif
-#else
-#define PROP_STATE_BASE(x)		ADD_STRING_PROP(ADEF_StateBase,"\x29",#x)
-#endif
-#endif
+
 #endif //__INFOMACROS_H__

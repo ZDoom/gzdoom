@@ -1791,6 +1791,7 @@ void D_DoomMain (void)
 
 	// [RH] Parse any SNDINFO lumps
 	S_ParseSndInfo ();
+	S_ParseSndEax ();
 
 	// [RH] Load custom key and weapon settings from WADs
 	D_LoadWadSettings ();

@@ -19,8 +19,8 @@ static FRandom pr_zap ("LightningZap");
 static FRandom pr_zapf ("LightningZapF");
 static FRandom pr_hit ("LightningHit");
 
-void A_LightningReady (player_t *, pspdef_t *);
-void A_MLightningAttack (player_t *, pspdef_t *);
+void A_LightningReady (AActor *actor, pspdef_t *);
+void A_MLightningAttack (AActor *actor, pspdef_t *);
 
 void A_LightningClip (AActor *);
 void A_LightningZap (AActor *);
@@ -364,12 +364,12 @@ int ALightningZap::SpecialMissileHit (AActor *thing)
 //
 //============================================================================
 
-void A_LightningReady (player_t *player, pspdef_t *psp)
+void A_LightningReady (AActor *actor, pspdef_t *psp)
 {
-	A_WeaponReady (player, psp);
+	A_WeaponReady (actor, psp);
 	if (pr_lightningready() < 160)
 	{
-		S_Sound (player->mo, CHAN_WEAPON, "MageLightningReady", 1, ATTN_NORM);
+		S_Sound (actor, CHAN_WEAPON, "MageLightningReady", 1, ATTN_NORM);
 	}
 }
 
@@ -387,6 +387,10 @@ void A_LightningClip (AActor *actor)
 
 	if (actor->flags3 & MF3_FLOORHUGGER)
 	{
+		if (actor->lastenemy == NULL)
+		{
+			return;
+		}
 		actor->z = actor->floorz;
 		target = actor->lastenemy->tracer;
 	}
@@ -519,10 +523,13 @@ void A_MLightningAttack2 (AActor *actor)
 //
 //============================================================================
 
-void A_MLightningAttack (player_t *player, pspdef_t *psp)
+void A_MLightningAttack (AActor *actor, pspdef_t *psp)
 {
-	A_MLightningAttack2(player->mo);
-	player->UseAmmo ();
+	A_MLightningAttack2(actor);
+	if (actor->player != NULL)
+	{
+		actor->player->UseAmmo ();
+	}
 }
 
 //============================================================================

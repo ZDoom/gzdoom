@@ -117,7 +117,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AAct
 AActor *P_SpawnMissileAngle (AActor *source, const TypeInfo *type, angle_t angle, fixed_t momz);
 AActor *P_SpawnMissileAngleSpeed (AActor *source, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed);
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz);
-AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed);
+AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner=NULL);
 
 AActor *P_SpawnPlayerMissile (AActor* source, const TypeInfo *type);
 AActor *P_SpawnPlayerMissile (AActor *source, const TypeInfo *type, angle_t angle);
@@ -132,7 +132,7 @@ extern const TypeInfo *SpawnableThings[MAX_SPAWNABLES];
 
 bool	P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, int type, angle_t angle,
-			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, bool gravity);
+			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid);
 bool	P_Thing_Move (int tid, int mapspot);
 
 //
@@ -239,6 +239,7 @@ P_PathTraverse
   int			flags,
   BOOL		(*trav) (intercept_t *));
 
+AActor *P_BlockmapSearch (AActor *origin, int distance, AActor *(*func)(AActor *, int));
 AActor *P_RoughMonsterSearch (AActor *mo, int distance);
 
 //
@@ -269,6 +270,11 @@ extern sector_t			*tmsector;
 extern line_t			*ceilingline;
 
 extern TArray<line_t *> spechit;
+
+// [RH] These are used by PIT_CheckThing and P_XYMovement to apply
+// ripping damage once per tic instead of once per move.
+extern bool				DoRipping;
+extern AActor			*LastRipped;
 
 BOOL	P_TestMobjLocation (AActor *mobj);
 bool	P_TestMobjZ (AActor *mobj);

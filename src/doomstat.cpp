@@ -69,3 +69,5 @@ int Net_Arbitrator = 0;
 int NextSkill = -1;
 
 int SinglePlayerClass[MAXPLAYERS];
+
+bool ToggleFullscreen;

@@ -1,3 +1,217 @@
+April 7, 2003
+- Fixed incorrect end-of-LevelInfos detection. Interestingly, it only crashed
+  when compiled with GCC.
+- Updated the crash logger to display the exception information for an
+  access violation.
+- Added Thing_Projectile2 ACS command. It's mostly a clone of the
+  Thing_Projectile and Thing_ProjectileGravity specials, but it lets you give
+  the projectile a TID.
+- Added a newtid parameter to the Thing_ProjectileAimed special.
+- Fixed flat warping so that it does not crash with flats smaller than 64x64.
+- Fixed: The secondary frost shards shed by the mage's primary frost missile
+  could damage the player who shot them.
+- Made the randomization of the starting tic count for missiles an actor flag.
+  This is so that Heretic and Hexen missiles can be better used in a Doom game.
+
+April 6, 2003
+- Added a check for NULL players to DCajunMaster::WhatToGet() because I got
+  a bug report where that happened.
+- Fixed: MF3_NOTARGET only worked if the attackers's TID was non-0 or you used
+  Thing_Hate on the target.
+- Fixed: The Heretic staff was able to damage ghost enemies, which it
+  isn't supposed to be able to do.
+- Fixed: In their charge attack, Minotaurs could only do damage to other
+  monsters and not to players.
+
+April 5, 2003
+- Created a minimal FLAC distribution with just the parts ZDoom needs to
+  compile, so the lazy people who want to build don't need to grab the
+  library themselves.
+- Changed A_FreezeDeathChunks() so that it spawns more ice chunks for large
+  things than it does for small things.
+- Added a generic ice death, so things can turn to ice and shatter without
+  having a specific ice death. Now you can use bex to create a Doom missile
+  that does ice damage and watch Hexen's cool ice death.
+- Fixed: Radius damage did more thrust as your distance from the bomb
+  source increased.
+
+April 2, 2003
+- Changed ripper projectiles to do damage per-tic and not per-step. This is
+  more intuitive and also makes for better Heretic/Hexen compatibility,
+  since those games don't adjust the step count with projectile size (unless
+  the radius > 15, but none of their ripping projectiles are that big).
+- Fixed some weirdness that can happen when the listener is positioned
+  directly on a sound source in 3D sound mode by moving the listener
+  back slightly from its true location. It was especially pronounced with
+  the nForce but can also be heard with the Audigy depending on the
+  environment settings.
+- Fixed: Sector sounds always played at Z coordinate 0, so they weren't
+  always audible when using 3D sound.
+- Added all the EAX presets from UT2003 and verified that the SNDEAX parser
+  actually works. Also tweaked the EAX editor a bit.
+  
+April 1, 2003
+- Updated to FMOD 3.62.
+- Fixed: Loading more than one dehacked patch (through some means other
+  than an include statement) that altered state information would not work
+  because only the first one would be able to find the correct locations
+  of the original numbered states.
+
+March 31, 2003
+- Fixed: PCD_PRINTNAME with input values 1 through 8 did not work properly.
+
+March 29, 2003
+- Added support for normal, buring, and frozen deaths to decorations. Still
+  need to test these.
+- Changed P_SeekerMissile() to aim at the center of targets when seeking
+  vertically, rather than at the targets' feet.
+- Fixed: MF_ICECORPSE was not being set when things froze to death.
+- Changed DCanvas::TextSWrapper() so that it can draw characters that are
+  clipped, since that was fixed in the underlying block drawers a long
+  time ago.
+- Fixed: V_BreakLines() crashed if it encountered a character wider than the
+  width of the box used to break the text in.
+
+March 27, 2003
+- Added support for playing SLIGE-generated maps without running them through
+  a node builder first.
+
+March 26, 2003
+- Added support for FLAC music and sounds. See <http://flac.sourceforge.net>
+  for more information about what FLAC is. Since it's a lossless codec, I
+  don't really want to see people using it for music, but the option is
+  there none-the-less. All the sounds in zdoom.wad (sans DSEMPTY) have now
+  been compressed using FLAC.
+- Added a fix for fonts that contain color 255 in their glyphs. LWM had some
+  fonts like this, and it counts as a bug in imagetool (which I have now
+  fixed).
+
+March 22, 2003
+- Made more flags available to decorations.
+
+March 21, 2003
+- Added Alt-Enter as a hotkey for toggling between fullscreen and windowed
+  modes, as is customary for Windows programs. Also discovered that I can't
+  seem to run fullscreen through the debugger anymore without the game
+  window minimizing.
+- Revamped the joystick menu to support axis mapping and multiple controllers.
+  Under Windows versions that send DBT_DEVNODES_CHANGED broadcasts, it even
+  updates itself automatically when you attach/detach USB controllers.
+- Changed MF2_REFLECTIVE behavior so that missiles also get reflected
+  vertically.
+- Changed all the weapon state functions' prototyes from (player_t*, pspdef_t*)
+  to (AActor*, pspdef_t*). Now they have the same first parameter as the
+  standard state functions, so bex/dehacked patches should be able to use the
+  standard code pointers with players, so long as they don't need a target
+  or something similar that player's don't maintain. It also means that weapon
+  functions that do very generic things like just playing a sound should work
+  with non-weapons.
+- Changed AActor::UpdateWaterLevel to accurately reflect when a player's eyes
+  are underwater.
+- Made setslot usable from KEYCONF lumps.
+
+March 19, 2003
+- Updated the joystick code to use DirectInput instead of the old multimedia
+  system.
+- Removed dxcrap.cpp. I am linking with dinput(8).lib again.
+- Fixed: If Trace() did not hit a wall in a sector with a fake floor before
+  the trace ran out, it would not set CrossedWater even if the trace crossed
+  below the fake floor.
+- Altered P_LineAttack() so that it doesn't spawn bullet puffs on lines
+  using the Line_Horizon special.
+
+March 17, 2003
+- Added a check for a NULL lastenemy in A_LightningClip() because Mike B. had
+  a crash where this was NULL.
+- Gave the fist and chainsaw AmmoUse values of 1, so dehacked patches that make
+  them ammo-using will use ammo without needing to specify a new AmmoUse.
+- Added new sound sequences for the Heretic doors, because they don't have the
+  same sound usage as Doom's.
+- Fixed: The powered-up phoenix rod would use ammo when a Tome of Power ran out
+  and infinite ammo was enabled.
+- Added SpawnPoint initialization to AActor::StaticSpawn(), so things that get
+  spawned during the game can respawn someplace other than (0,0).
+- Changed projectile impact lines so that the projectile's owner activates the
+  script instead of the projectile itself. Projectile cross lines will still be
+  activated by the projectile.
+- Fixed: The window drew over the video window when WM_PAINT was received while
+  playing a movie in windowed mode.
+- Fixed: Closing the window while a movie was playing would close the window
+  without quitting the game.
+- Fixed: Fake inventory items cleared their special after being picked up.
+- Added support for setting the player's speed using SetActorProperty()
+  and APROP_Speed. This speed gets multiplied to the player's normal
+  speed.
+- Changed A_BrainSpit() so that it does not rely on a pointer to the
+  DBrainState in the BrainEye that calls it. This allows it to be used
+  by actors other than the eye, which is necessary because of Dehacked.
+
+March 13, 2003
+- Fixed: Loading a FON2 font without a space or N character would read
+  (essentially) undefined memory when calculating the width to use for the
+  space character.
+
+March 11, 2003
+- Removed the old midiStream-based code.
+- Wrote a SNDEAX lump parser.
+- Fixed: Aliases defined in KEYCONF lumps were still saved to the ini. They
+  could also override aliases stored in the ini. Now, if an alias is defined
+  in a KEYCONF, it will not be saved to the ini, and if there is an alias with
+  the same name already defined in the ini, the original alias will be kept in
+  the ini when you quit.
+
+March 10, 2003
+- Fixed: Defining an animation for a non-existant texture could stomp on memory.
+- Added support for different sound zones with individual EAX settings. To assign
+  sectors to different zones, you either make them physically unconnected or you
+  use a Line_SetIdentification with the second parameter set to 1.
+- Fixed: Changed FindLevelByWarpTrans() search order to return later warptrans
+  matches in favor of earlier ones, so you can start Hexen DK with the menu
+  again.
+- Fixed: AZShrub2::GetExplodeParms() and AZXmasTree::GetExplodeParms() were
+  mis-named and had the wrong prototypes, so they were never called.
+- Added a hack when playing Hexen so that the BLANK texture is permanently mapped
+  to the empty texture. The standard Hexen maps use it as an empty texture,
+  even though it isn't really empty.
+
+March 8, 2003
+- Changed sprite initialization so that TNT1 is always the first sprite. This
+  is what I wanted a long time ago, and I think it used to be like this but
+  got changed when I rearranged the sprite table initialization.
+- Changed the TID target search so that it looks for actors in the same block
+  before it searches the actor chains. Helm's Deep's AI seems a bit quicker once
+  things get going now, but there are still bits of architecture (lots of masked
+  mid textures) that are going to slow it down, and it's still slow at the
+  beginning and when the second wave starts moving.
+
+February 24, 2003
+- Decided to take up the challenge and figure out how to load Strife textures.
+  It looks like they just removed some unused fields from the texture
+  directory. Now you can actually load strife1.wad and look at the maps, but
+  there are still plenty of oportunities to make it crash if you try to use
+  it as an iwad.
+- Added a check for negative texture patchcounts to R_InitTextures(), just
+  for the people who try to use -iwad strife1.wad.
+- Fixed: The game would hang when trying to overwrite an read-only savegame
+  for the same reason it used to hang when playing back a save operation
+  recorded in a demo: The save itself was cancelled, but the request to save
+  was not cancelled, so it would endlessly try to save the game.
+- Fixed: P_BounceWall() would bounce every bounce type off of walls, but it
+  shouldn't have done anything for MT2_HERETICBOUNCE.
+
+February 18, 2003
+- Changed: P_RadiusAttack no longer tries to apply damage when distance is 0.
+
+February 15, 2003
+- Changed P_SetSlope() to scale by ANGLE_90 instead of ANGLE_180. Silly me;
+  Scale() works with signed ints, but ANGLE_180 is to big for that, so it
+  could overflow.
+
+Feburary 13, 2003
+- Changed: When locating a map by its warptrans number fails, it can now try
+  to locate it by map number instead. Apparently, an old version of the Hexen
+  demo did not have warptrans.
+
 February 12, 2003
 - 2.0.42 time.
 - Fixed: If weapon drop was on and a player respawned before their body went
@@ -123,7 +337,7 @@ January 31, 2003
 - Fixed: Scrolling up past the top of the menu was hard-coded to assume
   the Doom font when finding the bottom of a menu, so it didn't work
   correctly for Heretic or Hexen.
-- Fixed: When pressing up arrow to scroll the top of a menu, it's scrollpos
+- Fixed: When pressing up arrow to scroll the top of a menu, its scrollpos
   could get set to -1.
 - Removed the limit on the number of frames that can assigned to an
   animation sequence with ANIMDEFS.
@@ -173,7 +387,7 @@ January 29, 2003
   (Because, of the four basic waveforms of the OPL2, all but one of them
   only use the upper half of a sine wave.)
 - Fixed the assembly part of OPLmusicBlock::ServiceStream() to work with
-  non-even buffer sizes.
+  odd-sized buffers.
 - Fixed: When the player does not have the invisibility power active, the
   weapon would always be drawn with STYLE_Normal instead of whatever style
   the player had.

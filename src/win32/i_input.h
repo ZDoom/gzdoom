@@ -43,4 +43,15 @@ char *I_GetFromClipboard ();
 
 void I_GetEvent ();
 
+struct GUIDName
+{
+	GUID ID;
+	char *Name;
+};
+
+extern TArray<GUIDName> JoystickNames;
+extern char *JoyAxisNames[8];
+
+extern void DI_EnumJoy ();
+
 #endif

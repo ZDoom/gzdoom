@@ -37,6 +37,7 @@ IMPLEMENT_ACTOR (AExplosiveBarrel, Doom, 2035, 125)
 	PROP_HeightFixed (34)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
 	PROP_Flags3 (MF3_DONTGIB)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_BAR)
 	PROP_DeathState (S_BEXP)

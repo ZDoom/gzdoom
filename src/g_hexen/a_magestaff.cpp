@@ -12,8 +12,8 @@ static FRandom pr_bloodscourgedrop ("BloodScourgeDrop");
 
 void A_MStaffTrack (AActor *);
 void A_DropBloodscourgePieces (AActor *);
-void A_MStaffAttack (player_t *, pspdef_t *);
-void A_MStaffPalette (player_t *, pspdef_t *);
+void A_MStaffAttack (AActor *actor, pspdef_t *);
+void A_MStaffPalette (AActor *actor, pspdef_t *);
 
 //==========================================================================
 
@@ -408,10 +408,16 @@ void MStaffSpawn (AActor *pmo, angle_t angle)
 //
 //============================================================================
 
-void A_MStaffAttack (player_t *player, pspdef_t *psp)
+void A_MStaffAttack (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	AActor *pmo;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	if (player->UseAmmo (true))
 	{
@@ -432,11 +438,11 @@ void A_MStaffAttack (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_MStaffPalette (player_t *player, pspdef_t *psp)
+void A_MStaffPalette (AActor *actor, pspdef_t *psp)
 {
-	if (player->mstaffcount)
+	if (actor->player != NULL && actor->player->mstaffcount)
 	{
-		player->mstaffcount--;
+		actor->player->mstaffcount--;
 	}
 }
 

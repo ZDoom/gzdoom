@@ -63,6 +63,7 @@ IMPLEMENT_ACTOR (AIceGuy, Hexen, 8020, 20)
 	PROP_Mass (150)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD|MF_COUNTKILL)
 	PROP_Flags2 (MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL|MF2_MCROSS|MF2_ICEDAMAGE)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ICEGUY_LOOK)
 	PROP_SeeState (S_ICEGUY_WALK1)
@@ -369,7 +370,7 @@ void A_IceGuyDie (AActor *actor)
 	actor->momx = 0;
 	actor->momy = 0;
 	actor->momz = 0;
-	actor->height <<= 2;
+	actor->height = actor->GetDefault()->height;
 	A_FreezeDeathChunks (actor);
 }
 

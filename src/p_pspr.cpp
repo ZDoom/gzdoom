@@ -115,7 +115,7 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 		}
 		if (state->GetAction().acp2)
 		{ // Call action routine.
-			state->GetAction().acp2 (player, psp);
+			state->GetAction().acp2 (player->mo, psp);
 			if (!psp->state)
 			{
 				break;
@@ -433,10 +433,16 @@ void P_DropWeapon (player_t *player)
 //
 //---------------------------------------------------------------------------
 
-void A_WeaponReady(player_t *player, pspdef_t *psp)
+void A_WeaponReady(AActor *actor, pspdef_t *psp)
 {
 	FWeaponInfo *weapon;
 	int angle;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	if (gameinfo.gametype == GAME_Heretic && player->morphTics)
 	{ // Change to the chicken beak
@@ -459,7 +465,7 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
 	{
 		if (!(weapon->flags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
 		{
-			S_Sound (player->mo, CHAN_WEAPON, weapon->readysound, 1, ATTN_NORM);
+			S_Sound (actor, CHAN_WEAPON, weapon->readysound, 1, ATTN_NORM);
 		}
 	}
 	
@@ -500,8 +506,14 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_ReFire (player_t *player, pspdef_t *psp)
+void A_ReFire (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if ((player->cmd.ucmd.buttons&BT_ATTACK)
 		&& player->pendingweapon == wp_nochange && player->health)
 	{
@@ -521,8 +533,14 @@ void A_ReFire (player_t *player, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_Lower (player_t *player, pspdef_t *psp)
+void A_Lower (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->morphTics || player->cheats & CF_INSTANTWEAPSWITCH)
 	{
 		psp->sy = WEAPONBOTTOM;
@@ -562,8 +580,14 @@ void A_Lower (player_t *player, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_Raise (player_t *player, pspdef_t *psp)
+void A_Raise (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	psp->sy -= RAISESPEED;
 	if (psp->sy > WEAPONTOP)
 	{ // Not raised all the way yet
@@ -589,8 +613,14 @@ void A_Raise (player_t *player, pspdef_t *psp)
 //
 // A_GunFlash
 //
-void A_GunFlash (player_t *player, pspdef_t *psp)
+void A_GunFlash (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	player->mo->PlayAttacking2 ();
 	P_SetPsprite (player, ps_flash, wpnlev1info[player->readyweapon]->flashstate);
 }
@@ -642,19 +672,28 @@ void P_GunShot (AActor *mo, BOOL accurate)
 	P_LineAttack (mo, angle, MISSILERANGE, bulletpitch, damage);
 }
 
-void A_Light0 (player_t *player, pspdef_t *psp)
+void A_Light0 (AActor *actor, pspdef_t *psp)
 {
-	player->extralight = 0;
+	if (actor->player != NULL)
+	{
+		actor->player->extralight = 0;
+	}
 }
 
-void A_Light1 (player_t *player, pspdef_t *psp)
+void A_Light1 (AActor *actor, pspdef_t *psp)
 {
-	player->extralight = 1;
+	if (actor->player != NULL)
+	{
+		actor->player->extralight = 1;
+	}
 }
 
-void A_Light2 (player_t *player, pspdef_t *psp)
+void A_Light2 (AActor *actor, pspdef_t *psp)
 {
-	player->extralight = 2;
+	if (actor->player != NULL)
+	{
+		actor->player->extralight = 2;
+	}
 }
 
 //------------------------------------------------------------------------

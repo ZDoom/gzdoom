@@ -16,12 +16,12 @@
 static FRandom pr_atk ("FAxeAtk");
 static FRandom pr_splat ("FAxeSplatter");
 
-void A_FAxeCheckReady (player_t *player, pspdef_t *psp);
-void A_FAxeCheckUp (player_t *player, pspdef_t *psp);
-void A_FAxeCheckAtk (player_t *player, pspdef_t *psp);
-void A_FAxeCheckReadyG (player_t *player, pspdef_t *psp);
-void A_FAxeCheckUpG (player_t *player, pspdef_t *psp);
-void A_FAxeAttack (player_t *player, pspdef_t *psp);
+void A_FAxeCheckReady (AActor *actor, pspdef_t *psp);
+void A_FAxeCheckUp (AActor *actor, pspdef_t *psp);
+void A_FAxeCheckAtk (AActor *actor, pspdef_t *psp);
+void A_FAxeCheckReadyG (AActor *actor, pspdef_t *psp);
+void A_FAxeCheckUpG (AActor *actor, pspdef_t *psp);
+void A_FAxeAttack (AActor *actor, pspdef_t *psp);
 
 extern void AdjustPlayerAngle (AActor *pmo);
 
@@ -219,15 +219,21 @@ END_DEFAULTS
 //
 //============================================================================
 
-void A_FAxeCheckReady (player_t *player, pspdef_t *psp)
+void A_FAxeCheckReady (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->ammo[MANA_1])
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEREADY_G]);
 	}
 	else
 	{
-		A_WeaponReady (player, psp);
+		A_WeaponReady (actor, psp);
 	}
 }
 
@@ -237,15 +243,21 @@ void A_FAxeCheckReady (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeCheckReadyG (player_t *player, pspdef_t *psp)
+void A_FAxeCheckReadyG (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->ammo[MANA_1] <= 0)
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEREADY]);
 	}
 	else
 	{
-		A_WeaponReady (player, psp);
+		A_WeaponReady (actor, psp);
 	}
 }
 
@@ -255,15 +267,21 @@ void A_FAxeCheckReadyG (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeCheckUp (player_t *player, pspdef_t *psp)
+void A_FAxeCheckUp (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->ammo[MANA_1])
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEUP_G]);
 	}
 	else
 	{
-		A_Raise (player, psp);
+		A_Raise (actor, psp);
 	}
 }
 
@@ -273,15 +291,21 @@ void A_FAxeCheckUp (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeCheckUpG (player_t *player, pspdef_t *psp)
+void A_FAxeCheckUpG (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->ammo[MANA_1] <= 0)
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEUP]);
 	}
 	else
 	{
-		A_Raise (player, psp);
+		A_Raise (actor, psp);
 	}
 }
 
@@ -291,8 +315,14 @@ void A_FAxeCheckUpG (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeCheckAtk (player_t *player, pspdef_t *psp)
+void A_FAxeCheckAtk (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->ammo[MANA_1])
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEATK_G]);
@@ -305,15 +335,21 @@ void A_FAxeCheckAtk (player_t *player, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeAttack (player_t *player, pspdef_t *psp)
+void A_FAxeAttack (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
-	AActor *pmo=player->mo;
 	fixed_t power;
 	int damage;
 	int slope;
 	int i;
 	int useMana;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
+	AActor *pmo=player->mo;
 
 	damage = 40+(pr_atk()&15);
 	damage += pr_atk()&7;

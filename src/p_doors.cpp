@@ -30,6 +30,7 @@
 #include "doomstat.h"
 #include "r_state.h"
 #include "c_console.h"
+#include "gi.h"
 
 IMPLEMENT_CLASS (DDoor)
 
@@ -187,11 +188,20 @@ void DDoor::DoorSound (bool raise) const
 	}
 	else
 	{
-		if (raise)
-			snd = (m_Speed >= FRACUNIT*8) ? "DoorOpenBlazing" : "DoorOpenNormal";
+		if (gameinfo.gametype == GAME_Heretic)
+		{
+			if (raise)
+				snd = "HereticDoorOpen";
+			else
+				snd = "HereticDoorClose";
+		}
 		else
-			snd = (m_Speed >= FRACUNIT*8) ? "DoorCloseBlazing" : "DoorCloseNormal";
-
+		{
+			if (raise)
+				snd = (m_Speed >= FRACUNIT*8) ? "DoorOpenBlazing" : "DoorOpenNormal";
+			else
+				snd = (m_Speed >= FRACUNIT*8) ? "DoorCloseBlazing" : "DoorCloseNormal";
+		}
 		SN_StartSequence (m_Sector, snd);
 	}
 }

@@ -34,6 +34,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <winnt.h>
 #include <tlhelp32.h>
 #include "resource.h"
 
@@ -162,6 +163,12 @@ void CreateCrashLog (char *(*userCrashInfo)(char *text, char *maxtext))
 	else
 	{
 		CrashPtr = CrashText + wsprintf (CrashText, "Code: %08x\r\n", CrashPointers.ExceptionRecord->ExceptionCode);
+	}
+	if (CrashPointers.ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
+	{
+		CrashPtr += wsprintf (CrashPtr, "Tried to %s address %08x\r\n",
+			CrashPointers.ExceptionRecord->ExceptionInformation[0] ? "write" : "read",
+			CrashPointers.ExceptionRecord->ExceptionInformation[1]);
 	}
 	CrashPtr += wsprintf (CrashPtr, "Flags: %08x\r\nAddress: %08x\r\n\r\n", CrashPointers.ExceptionRecord->ExceptionFlags,
 		CrashPointers.ExceptionRecord->ExceptionAddress);

@@ -258,7 +258,8 @@ extern TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 extern BOOL savegamerestore;
 extern BOOL HexenHack;		// Semi-Hexen-compatibility mode
 
-bool CheckWarpTransMap (char mapname[9]);	// mapname will be changed if it is a valid warptrans
+// mapname will be changed if it is a valid warptrans
+bool CheckWarpTransMap (char mapname[9], bool substitute);
 
 void G_InitNew (char *mapname);
 

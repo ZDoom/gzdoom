@@ -668,7 +668,7 @@ void FSingleLumpFont::LoadFON2 (const BYTE *data)
 	}
 	else
 	{
-		SpaceWidth = Chars[i].Width * 2 / 3;
+		SpaceWidth = totalwidth * 2 / (3 * count);
 	}
 
 	FixupPalette (identity, luminosity, palette, data[9] == 0);
@@ -711,6 +711,15 @@ void FSingleLumpFont::LoadFON2 (const BYTE *data)
 		{
 			i += FirstChar;
 			I_FatalError ("Overflow decompressing char %d (%c) of %s", i, i, Name);
+		}
+	}
+
+	// "Fix" bad fonts
+	for (i = 0; i < totalwidth * FontHeight; ++i)
+	{
+		if (Bitmaps[i] > ActiveColors)
+		{
+			Bitmaps[i] = 0;
 		}
 	}
 

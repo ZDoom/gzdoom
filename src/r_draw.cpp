@@ -1133,7 +1133,7 @@ void R_InitTranslationTables ()
 	translationtables[0] = new BYTE[256*
 		(NUMCOLORMAPS*16			// Shaded
 		 +MAXPLAYERS*2				// Players + PlayersExtra
-		 +3							// Standard
+		 +4							// Standard
 		 +MAX_ACS_TRANSLATIONS		// LevelScripted
 		 +BODYQUESIZE				// PlayerCorpses
 		 )];
@@ -1146,12 +1146,13 @@ void R_InitTranslationTables ()
 	translationtables[TRANSLATION_PlayersExtra] =
 		translationtables[TRANSLATION_Players] + MAXPLAYERS*256;
 
-	// The three standard translations from Doom or Heretic
+	// The three standard translations from Doom or Heretic,
+	// plus the generic ice translation.
 	translationtables[TRANSLATION_Standard] =
 		translationtables[TRANSLATION_PlayersExtra] + MAXPLAYERS*256;
 
 	translationtables[TRANSLATION_LevelScripted] =
-		translationtables[TRANSLATION_Standard] + 3*256;
+		translationtables[TRANSLATION_Standard] + 4*256;
 
 	translationtables[TRANSLATION_PlayerCorpses] =
 		translationtables[TRANSLATION_LevelScripted] + MAX_ACS_TRANSLATIONS*256;
@@ -1191,6 +1192,43 @@ void R_InitTranslationTables ()
 			translationtables[TRANSLATION_Standard][i+256] = 145+(i-225); // red
 			translationtables[TRANSLATION_Standard][i+512] = 190+(i-225); // blue
 		}
+	}
+
+	// Create the ice translation table, based on Hexen's. Alas, the standard
+	// Doom palette has no good substitutes for these bluish-tinted grays, so
+	// they will just look gray unless you use a different PLAYPAL with Doom.
+
+	static const BYTE IcePalette[16][3] =
+	{
+		{  10,  8, 18 },
+		{  15, 15, 26 },
+		{  20, 16, 36 },
+		{  30, 26, 46 },
+		{  40, 36, 57 },
+		{  50, 46, 67 },
+		{  59, 57, 78 },
+		{  69, 67, 88 },
+		{  79, 77, 99 },
+		{  89, 87,109 },
+		{  99, 97,120 },
+		{ 109,107,130 },
+		{ 118,118,141 },
+		{ 128,128,151 },
+		{ 138,138,162 },
+		{ 148,148,172 }
+	};
+	BYTE IcePaletteRemap[16];
+	for (i = 0; i < 16; ++i)
+	{
+		IcePaletteRemap[i] = ColorMatcher.Pick (IcePalette[i][0], IcePalette[i][1], IcePalette[i][2]);
+	}
+	for (i = 0; i < 256; ++i)
+	{
+		int r = GPalette.BaseColors[i].r;
+		int g = GPalette.BaseColors[i].g;
+		int b = GPalette.BaseColors[i].b;
+		int v = (r*77 + g*143 + b*37) >> 12;
+		translationtables[TRANSLATION_Standard][768+i] = IcePaletteRemap[v];
 	}
 
 	// set up shading tables for shaded columns

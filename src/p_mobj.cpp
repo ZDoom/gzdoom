@@ -48,6 +48,7 @@
 #include "cmdlib.h"
 #include "decallib.h"
 #include "ravenshared.h"
+#include "a_action.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -357,31 +358,36 @@ bool AActor::SetState (FState *newstate)
 		}
 		state = newstate;
 		tics = newstate->GetTics();
-		frame = newstate->GetFrame();
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 		newsprite = newstate->sprite.index;
-		if (newsprite == SpawnState->sprite.index)
-		{ // [RH] If the new sprite is the same as the original sprite, and
-		  // this actor is attached to a player, use the player's skin's
-		  // sprite. If a player is not attached, do not change the sprite
-		  // unless it is different from the previous state's sprite; a
-		  // player may have been attached, died, and respawned elsewhere,
-		  // and we do not want to lose the skin on the body. If it wasn't
-		  // for Dehacked, I would move sprite changing out of the states
-		  // altogether, since actors rarely change their sprites after
-		  // spawning.
-			if (player != NULL && gameinfo.gametype != GAME_Hexen)
-			{
-				sprite = skins[player->userinfo.skin].sprite;
+		if (newsprite != 1)
+		{
+			// Sprite 1 is ----, which means "do not change the sprite"
+			frame = newstate->GetFrame();
+
+			if (newsprite == SpawnState->sprite.index)
+			{ // [RH] If the new sprite is the same as the original sprite, and
+			// this actor is attached to a player, use the player's skin's
+			// sprite. If a player is not attached, do not change the sprite
+			// unless it is different from the previous state's sprite; a
+			// player may have been attached, died, and respawned elsewhere,
+			// and we do not want to lose the skin on the body. If it wasn't
+			// for Dehacked, I would move sprite changing out of the states
+			// altogether, since actors rarely change their sprites after
+			// spawning.
+				if (player != NULL && gameinfo.gametype != GAME_Hexen)
+				{
+					sprite = skins[player->userinfo.skin].sprite;
+				}
+				else if (newsprite != prevsprite)
+				{
+					sprite = newsprite;
+				}
 			}
-			else if (newsprite != prevsprite)
+			else
 			{
 				sprite = newsprite;
 			}
-		}
-		else
-		{
-			sprite = newsprite;
 		}
 		if (newstate->GetAction().acp1)
 		{
@@ -423,23 +429,28 @@ bool AActor::SetStateNF (FState *newstate)
 		}
 		state = newstate;
 		tics = newstate->GetTics();
-		frame = newstate->GetFrame();
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 		newsprite = newstate->sprite.index;
-		if (newsprite == SpawnState->sprite.index)
+		if (newsprite != 1)
 		{
-			if (player != NULL && gameinfo.gametype != GAME_Hexen)
+			// Sprite 1 is ----, which means "do not change the sprite"
+
+			frame = newstate->GetFrame();
+			if (newsprite == SpawnState->sprite.index)
 			{
-				sprite = skins[player->userinfo.skin].sprite;
+				if (player != NULL && gameinfo.gametype != GAME_Hexen)
+				{
+					sprite = skins[player->userinfo.skin].sprite;
+				}
+				else if (newsprite != prevsprite)
+				{
+					sprite = newsprite;
+				}
 			}
-			else if (newsprite != prevsprite)
+			else
 			{
 				sprite = newsprite;
 			}
-		}
-		else
-		{
-			sprite = newsprite;
 		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
@@ -724,7 +735,7 @@ bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 		{
 			dist = 1;
 		}
-		actor->momz = (target->z - actor->z) / dist;
+		actor->momz = ((target->z+target->height/2) - (actor->z+actor->height/2)) / dist;
 	}
 	return true;
 }
@@ -848,6 +859,22 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 	step = 1;
 	totalsteps = steps;
 
+	// [RH] Instead of doing ripping damage each step, do it each tic.
+	// This makes it compatible with Heretic and Hexen, which only did
+	// one step for their missiles with ripping damage (excluding those
+	// that don't use P_XYMovement). It's also more intuitive since it
+	// makes the damage done dependant on the amount of time the projectile
+	// spends inside a target rather than on the projectile's size. The
+	// last actor ripped through is recorded so that if the projectile
+	// passes through more than one actor this tic, each one takes damage
+	// and not just the first one.
+
+	if (mo->flags2 & MF2_RIP)
+	{
+		DoRipping = true;
+		LastRipped = NULL;
+	}
+
 	do
 	{
 		ptryx = startx + Scale (xmove, step, steps);
@@ -959,11 +986,13 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 							{
 								S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
 							}
+							DoRipping = false;
 							return;
 						}
 						else
 						{ // Struck a player/creature
 							P_ExplodeMissile (mo, NULL);
+							DoRipping = false;
 							return;
 						}
 					}
@@ -977,6 +1006,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 						{
 							S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
 						}
+						DoRipping = false;
 						return;
 					}
 				}
@@ -998,12 +1028,13 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 					angle >>= ANGLETOFINESHIFT;
 					mo->momx = FixedMul (mo->Speed>>1, finecosine[angle]);
 					mo->momy = FixedMul (mo->Speed>>1, finesine[angle]);
-//					mo->momz = -mo->momz;
+					mo->momz = -mo->momz/2;
 					if (mo->flags2 & MF2_SEEKERMISSILE)
 					{
 						mo->tracer = mo->target;
 					}
 					mo->target = BlockingMobj;
+					DoRipping = false;
 					return;
 				}
 explode:
@@ -1017,9 +1048,11 @@ explode:
 					// Hack to prevent missiles exploding against the sky.
 					// Does not handle sky floors.
 					mo->Destroy ();
+					DoRipping = false;
 					return;
 				}
 				P_ExplodeMissile (mo, BlockingLine);
+				DoRipping = false;
 				return;
 			}
 			else
@@ -1048,6 +1081,8 @@ explode:
 			}
 		}
 	} while (++step <= steps);
+
+	DoRipping = false;
 
 	// Friction
 
@@ -2138,7 +2173,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz)
 		return false;
 	}
 
-	if (Sector->waterzone)
+	if (Sector->MoreFlags & SECF_UNDERWATERMASK)
 	{
 		waterlevel = 3;
 	}
@@ -2148,7 +2183,7 @@ bool AActor::UpdateWaterLevel (fixed_t oldz)
 		if (hsec != NULL && !(hsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 		{
 			fixed_t fh = hsec->floorplane.ZatPoint (x, y);
-			if (hsec->waterzone)
+			if (hsec->MoreFlags & SECF_UNDERWATERMASK)
 			{
 				if (z < fh)
 				{
@@ -2156,8 +2191,11 @@ bool AActor::UpdateWaterLevel (fixed_t oldz)
 					if (z + height/2 < fh)
 					{
 						waterlevel = 2;
-						if (z + height <= fh)
+						if ((player && z + player->viewheight <= fh) ||
+							(z + height <= fh))
+						{
 							waterlevel = 3;
+						}
 					}
 				}
 				else if (z + height > hsec->ceilingplane.ZatPoint (x, y))
@@ -2191,11 +2229,33 @@ void A_FreeTargMobj (AActor *mo)
 	mo->player = NULL;
 }
 
+//==========================================================================
+//
+// A_GenericFreezeDeath
+//
+//==========================================================================
+
+void A_GenericFreezeDeath (AActor *actor)
+{
+	actor->Translation = TRANSLATION(TRANSLATION_Standard, 3);
+	A_FreezeDeath (actor);
+}
+
+//==========================================================================
+//
+// AActor stuff
+//
+//==========================================================================
+
 FState AActor::States[] =
 {
 	S_NORMAL (TNT1, 'A', -1, NULL, NULL),
 	S_NORMAL (TNT1, 'E', 1050, A_FreeTargMobj, NULL),
 	S_NORMAL (TNT1, 'A', 1, NULL, NULL),	// S_NULL
+
+	// Generic freeze death frames. Woo!
+	S_NORMAL (----, 'A', 5, A_GenericFreezeDeath, &States[4]),
+	S_NORMAL (----, 'A', 1, A_FreezeDeathChunks, &States[4])
 };
 
 BEGIN_DEFAULTS (AActor, Any, -1, 0)
@@ -2277,6 +2337,9 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 		actor->floorsector = tmffloorsector;
 	}
 
+	actor->SpawnPoint[0] = ix >> FRACBITS;
+	actor->SpawnPoint[1] = iy >> FRACBITS;
+
 	if (iz == ONFLOORZ)
 	{
 		actor->z = actor->floorz;
@@ -2298,6 +2361,11 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 			actor->z = actor->floorz;
 		}
 	}
+	else
+	{
+		actor->SpawnPoint[2] = (actor->z - actor->floorz) >> FRACBITS;
+	}
+
 	if (actor->flags2 & MF2_FLOATBOB)
 	{ // Prime the bobber
 		actor->FloatBobPhase = rng();
@@ -3255,7 +3323,7 @@ bool P_HitFloor (AActor *thing)
 bool P_CheckMissileSpawn (AActor* th)
 {
 	// [RH] Don't decrement tics if they are already less than 1
-	if (gameinfo.gametype == GAME_Doom && th->tics > 0)
+	if ((th->flags4 & MF4_RANDOMIZE) && th->tics > 0)
 	{
 		th->tics -= pr_checkmissilespawn() & 3;
 		if (th->tics < 1)
@@ -3406,7 +3474,7 @@ AActor *P_SpawnMissileAngleSpeed (AActor *source, const TypeInfo *type,
 }
 
 AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
-	const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed)
+	const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed, AActor *owner)
 {
 	AActor *mo;
 	int defflags3 = GetDefaultByType (type)->flags3;
@@ -3428,7 +3496,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	{
 		S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 	}
-	mo->target = source; // Originator
+	mo->target = owner != NULL ? owner : source; // Originator
 	mo->angle = angle;
 	angle >>= ANGLETOFINESHIFT;
 	mo->momx = FixedMul (mo->Speed, finecosine[angle]);

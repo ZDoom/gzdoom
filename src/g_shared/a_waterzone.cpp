@@ -49,7 +49,7 @@ END_DEFAULTS
 void AWaterZone::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
-	Sector->waterzone = 1;
+	Sector->MoreFlags |= SECF_UNDERWATER;
 	Destroy ();
 }
 

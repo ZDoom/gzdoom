@@ -13,7 +13,7 @@
 static FRandom pr_quietusdrop ("QuietusDrop");
 static FRandom pr_fswordflame ("FSwordFlame");
 
-void A_FSwordAttack (player_t *player, pspdef_t *psp);
+void A_FSwordAttack (AActor *actor, pspdef_t *psp);
 void A_DropQuietusPieces (AActor *);
 void A_FSwordFlames (AActor *);
 
@@ -313,8 +313,14 @@ END_DEFAULTS
 //
 //============================================================================
 
-void A_FSwordAttack (player_t *player, pspdef_t *psp)
+void A_FSwordAttack (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->UseAmmo (true))
 	{
 		AActor *pmo = player->mo;

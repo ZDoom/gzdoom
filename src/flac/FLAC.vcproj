@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding = "Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="7.00"
+	Name="FLAC"
+	ProjectGUID="{873F2EEA-24DF-454C-B245-CB9738BA993E}"
+	Keyword="Win32Proj">
+	<Platforms>
+		<Platform
+			Name="Win32"/>
+	</Platforms>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="Debug"
+			IntermediateDirectory="Debug"
+			ConfigurationType="4"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;FLAC__CPU_IA32;FLAC__HAS_NASM;FLAC__SSE_OS;FLAC__USE_3DNOW"
+				MinimalRebuild="TRUE"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="1"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="4"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/FLAC.lib"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="Release"
+			IntermediateDirectory="Release"
+			ConfigurationType="4"
+			CharacterSet="2">
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="1"
+				OmitFramePointers="TRUE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;FLAC__CPU_IA32;FLAC__HAS_NASM;FLAC__SSE_OS;FLAC__USE_3DNOW"
+				StringPooling="TRUE"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="TRUE"
+				UsePrecompiledHeader="0"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="TRUE"
+				DebugInformationFormat="3"/>
+			<Tool
+				Name="VCCustomBuildTool"/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/FLAC.lib"/>
+			<Tool
+				Name="VCMIDLTool"/>
+			<Tool
+				Name="VCPostBuildEventTool"/>
+			<Tool
+				Name="VCPreBuildEventTool"/>
+			<Tool
+				Name="VCPreLinkEventTool"/>
+			<Tool
+				Name="VCResourceCompilerTool"/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"/>
+		</Configuration>
+	</Configurations>
+	<Files>
+		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm">
+			<File
+				RelativePath="bitbuffer.c">
+			</File>
+			<File
+				RelativePath="bitmath.c">
+			</File>
+			<File
+				RelativePath="cpu.c">
+			</File>
+			<File
+				RelativePath="crc.c">
+			</File>
+			<File
+				RelativePath="fixed.c">
+			</File>
+			<File
+				RelativePath="format.c">
+			</File>
+			<File
+				RelativePath="lpc.c">
+			</File>
+			<File
+				RelativePath="stream_decoder.c">
+			</File>
+			<File
+				RelativePath="stream_decoder_pp.cpp">
+			</File>
+		</Filter>
+		<Filter
+			Name="Header Files"
+			Filter="h;hpp;hxx;hm;inl;inc">
+			<Filter
+				Name="Protected"
+				Filter="">
+				<File
+					RelativePath="protected\stream_decoder.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="Private"
+				Filter="">
+				<File
+					RelativePath="private\bitbuffer.h">
+				</File>
+				<File
+					RelativePath="private\bitmath.h">
+				</File>
+				<File
+					RelativePath="private\cpu.h">
+				</File>
+				<File
+					RelativePath="private\crc.h">
+				</File>
+				<File
+					RelativePath="private\fixed.h">
+				</File>
+				<File
+					RelativePath="private\format.h">
+				</File>
+				<File
+					RelativePath="private\lpc.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="FLAC"
+				Filter="">
+				<File
+					RelativePath="FLAC\assert.h">
+				</File>
+				<File
+					RelativePath="FLAC\export.h">
+				</File>
+				<File
+					RelativePath="FLAC\format.h">
+				</File>
+				<File
+					RelativePath="FLAC\ordinals.h">
+				</File>
+				<File
+					RelativePath="FLAC\stream_decoder.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="FLAC++"
+				Filter="">
+				<File
+					RelativePath="FLAC++\decoder.h">
+				</File>
+				<File
+					RelativePath="FLAC++\export.h">
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="IA32 Files"
+			Filter="">
+			<File
+				RelativePath="ia32\cpu_asm.nasm">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+"
+						Outputs="$(IntDir)\$(InputName).obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+"
+						Outputs="$(IntDir)\$(InputName).obj"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="ia32\fixed_asm.nasm">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+"
+						Outputs="$(IntDir)\$(InputName).obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+"
+						Outputs="$(IntDir)\$(InputName).obj"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="ia32\lpc_asm.nasm">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+"
+						Outputs="$(IntDir)\$(InputName).obj"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Assembling $(InputPath)..."
+						CommandLine="nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+"
+						Outputs="$(IntDir)\$(InputName).obj"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="ia32\nasm.h">
+			</File>
+		</Filter>
+		<File
+			RelativePath="ReadMe.txt">
+		</File>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>

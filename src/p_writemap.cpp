@@ -108,7 +108,7 @@ static int WriteLINEDEFS (FILE *file)
 	{
 		mld.v1 = SHORT(short(lines[i].v1 - vertexes));
 		mld.v2 = SHORT(short(lines[i].v2 - vertexes));
-		mld.flags = SHORT(lines[i].flags);
+		mld.flags = SHORT(short(lines[i].flags));
 		mld.special = lines[i].special;
 		for (int j = 0; j < 5; ++j)
 		{

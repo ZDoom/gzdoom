@@ -2092,7 +2092,13 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	}
 	switch (property)
 	{
-	case APROP_Health:		actor->health = value;		break;
+	case APROP_Health:
+		actor->health = value;
+		if (actor->player->health != 0)
+		{
+			actor->player->health = value;
+		}
+		break;
 	case APROP_Speed:		actor->Speed = value;		break;
 	case APROP_Damage:		actor->damage = value;		break;
 	case APROP_Alpha:		actor->alpha = value;		break;
@@ -3181,19 +3187,19 @@ void DLevelScript::RunScript ()
 						player = activator->player;
 					}
 				}
-				else if (playeringame[STACK(1)])
+				else if (playeringame[STACK(1)-1])
 				{
-					player = &players[STACK(1)];
+					player = &players[STACK(1)-1];
 				}
 				else
 				{
-					workwhere += sprintf (workwhere, "Player %ld\n", STACK(1));
+					workwhere += sprintf (workwhere, "Player %ld", STACK(1));
 					sp--;
 					break;
 				}
 				if (player)
 				{
-					workwhere += sprintf (workwhere, "%s", activator->player->userinfo.netname);
+					workwhere += sprintf (workwhere, "%s", player->userinfo.netname);
 				}
 				else if (activator)
 				{
@@ -3998,6 +4004,14 @@ void DLevelScript::RunScript ()
 
 		case PCD_GETSCREENHEIGHT:
 			PushToStack (SCREENHEIGHT);
+			break;
+
+		case PCD_THING_PROJECTILE2:
+			// Like Thing_Projectile(Gravity) specials, but you can give the
+			// projectile a TID.
+			// Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
+			P_Thing_Projectile (STACK(7), STACK(6), ((angle_t)(STACK(5)<<24)),
+				STACK(4)<<(FRACBITS-3), STACK(3), 0, NULL, STACK(2), STACK(1));
 			break;
 		}
 	}

@@ -1051,14 +1051,14 @@ FUNC(LS_Thing_Projectile)
 // Thing_Projectile (tid, type, angle, speed, vspeed)
 {
 	return P_Thing_Projectile (arg0, arg1, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
-		arg4<<(FRACBITS-3), 0, NULL, false);
+		arg4<<(FRACBITS-3), 0, NULL, 0, 0);
 }
 
 FUNC(LS_Thing_ProjectileGravity)
 // Thing_ProjectileGravity (tid, type, angle, speed, vspeed)
 {
 	return P_Thing_Projectile (arg0, arg1, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
-		arg4<<(FRACBITS-3), 0, NULL, true);
+		arg4<<(FRACBITS-3), 0, NULL, 1, 0);
 }
 
 FUNC(LS_Thing_Hate)
@@ -1221,9 +1221,9 @@ FUNC(LS_Thing_Hate)
 }
 
 FUNC(LS_Thing_ProjectileAimed)
-// Thing_ProjectileAimed (tid, type, speed, target)
+// Thing_ProjectileAimed (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, arg1, 0, arg2<<(FRACBITS-3), 0, arg3, it, false);
+	return P_Thing_Projectile (arg0, arg1, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4);
 }
 
 // [BC] added newtid for next two

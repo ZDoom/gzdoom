@@ -89,6 +89,7 @@ typedef enum {
 	inverter,
 	discrete,
 	cdiscrete,
+	discrete_guid,
 	control,
 	screenres,
 	bitflag,
@@ -96,16 +97,21 @@ typedef enum {
 	nochoice
 } itemtype;
 
+struct GUIDName;
+
 typedef struct menuitem_s {
 	itemtype		  type;
 	char			 *label;
 	union {
 		FBaseCVar		 *cvar;
 		FIntCVar		 *intcvar;
+		FGUIDCVar		 *guidcvar;
 		int				  selmode;
 	} a;
 	union {
 		float			  min;		/* aka numvalues aka invflag */
+		float			  numvalues;
+		float			  invflag;
 		int				  key1;
 		char			 *res1;
 	} b;
@@ -120,6 +126,7 @@ typedef struct menuitem_s {
 	} d;
 	union {
 		struct value_s	 *values;
+		GUIDName		 *guidvalues;
 		char			 *command;
 		void			(*cfunc)(FBaseCVar *cvar, float newval);
 		void			(*mfunc)(void);

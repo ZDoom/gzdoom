@@ -73,6 +73,7 @@ IMPLEMENT_ACTOR (ABossBrain, Doom, 88, 0)
 	PROP_MassLong (10000000)
 	PROP_PainChance (255)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_BRAIN)
 	PROP_PainState (S_BRAIN_PAIN)
@@ -85,17 +86,9 @@ END_DEFAULTS
 class ABossEye : public AActor
 {
 	DECLARE_ACTOR (ABossEye, AActor)
-	HAS_OBJECT_POINTERS
 public:
 	void Serialize (FArchive &arc);
-	void BeginPlay ();
-
-	DBrainState *SharedState;
 };
-
-IMPLEMENT_POINTY_CLASS (ABossEye)
- DECLARE_POINTER (SharedState)
-END_POINTERS
 
 FState ABossEye::States[] =
 {
@@ -107,7 +100,7 @@ FState ABossEye::States[] =
 	S_NORMAL (SSWV, 'A',  150, A_BrainSpit					, &States[S_BRAINEYESEE+1])
 };
 
-BEGIN_DEFAULTS (ABossEye, Doom, 89, 0)
+IMPLEMENT_ACTOR (ABossEye, Doom, 89, 0)
 	PROP_HeightFixed (32)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
 
@@ -118,18 +111,10 @@ END_DEFAULTS
 void ABossEye::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << SharedState;
-}
-
-void ABossEye::BeginPlay ()
-{
-	Super::BeginPlay ();
-
-	TThinkerIterator<DBrainState> iterator;
-	SharedState = iterator.Next ();
-	if (SharedState == NULL)
+	if (SaveVersion < 212)
 	{
-		SharedState = new DBrainState;
+		AActor *foo;
+		arc << foo;
 	}
 }
 
@@ -164,6 +149,7 @@ IMPLEMENT_ACTOR (ASpawnShot, Doom, -1, 0)
 	PROP_Damage (3)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY|MF_NOCLIP)
 	PROP_Flags2 (MF2_NOTELEPORT)
+	PROP_Flags4 (MF4_RANDOMIZE)
 
 	PROP_SpawnState (0)
 
@@ -251,11 +237,17 @@ void A_BrainDie (AActor *self)
 
 void A_BrainSpit (AActor *self)
 {
+	TThinkerIterator<DBrainState> iterator (STAT_BOSSTARGET);
+	DBrainState *state;
 	AActor *targ;
 	AActor *spit;
 
 	// shoot a cube at current target
-	targ = static_cast<ABossEye *> (self)->SharedState->GetTarget ();
+	if (NULL == (state = iterator.Next ()))
+	{
+		state = new DBrainState;
+	}
+	targ = state->GetTarget ();
 
 	if (targ != NULL)
 	{
@@ -267,7 +259,11 @@ void A_BrainSpit (AActor *self)
 			spit->target = targ;
 			// [RH] Do this correctly for any trajectory. Doom would divide by 0
 			// if the target had the same y coordinate as the spitter.
-			if (spit->momy != 0)
+			if ((spit->momx | spit->momy) == 0)
+			{
+				spit->reactiontime = 0;
+			}
+			else if (abs(spit->momy) > abs(spit->momx))
 			{
 				spit->reactiontime = (targ->y - self->y) / spit->momy;
 			}
@@ -295,7 +291,7 @@ void A_SpawnFly (AActor *self)
 		
 	targ = self->target;
 
-	// First spawn teleport fog.
+	// First spawn teleport fire.
 	fog = Spawn<ASpawnFire> (targ->x, targ->y, targ->z);
 	S_Sound (fog, CHAN_BODY, "brain/spawn", 1, ATTN_NORM);
 

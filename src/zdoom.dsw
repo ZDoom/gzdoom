@@ -3,20 +3,31 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
+Project: "FLAC"=".\FLAC\FLAC.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
+}}}
+
+###############################################################################
+
 Project: "zdoom"=".\zdoom.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
-    begin source code control
-    Perforce Project
-    ..
-    end source code control
 }}}
 
 Package=<4>
 {{{
     Begin Project Dependency
     Project_Dep_Name zlib
+    End Project Dependency
+    Begin Project Dependency
+    Project_Dep_Name FLAC
     End Project Dependency
 }}}
 
@@ -26,10 +37,6 @@ Project: "zlib"=".\zlib-1.1.4\zlib.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
-    begin source code control
-    Perforce Project
-    .\zlib-1.1.4
-    end source code control
 }}}
 
 Package=<4>

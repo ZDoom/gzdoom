@@ -180,7 +180,7 @@ void AMinotaur::NoBlockingSet ()
 bool AMinotaur::Slam (AActor *thing)
 {
 	// Slamming minotaurs shouldn't move non-creatures
-	if (!(thing->flags3&MF3_ISMONSTER))
+	if (!(thing->flags3&MF3_ISMONSTER) && !thing->player)
 	{
 		return false;
 	}

@@ -40,8 +40,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
-#include "mid2strm.h"
-#include "mus2strm.h"
 #else
 #include <SDL/SDL.h>
 #include <sys/types.h>
@@ -271,6 +269,10 @@ void *I_RegisterSong (int lump)
 		{
 			info = new SPCSong (mem, len);
 		}
+	}
+	else if (id == MAKE_ID('f','L','a','C'))
+	{
+		info = new FLACSong (mem, len);
 	}
 
 	if (info == NULL)

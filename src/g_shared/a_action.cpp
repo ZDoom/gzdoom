@@ -9,6 +9,7 @@
 #include "p_terrain.h"
 #include "p_enemy.h"
 #include "statnums.h"
+#include "templates.h"
 
 static FRandom pr_freezedeath ("FreezeDeath");
 static FRandom pr_icesettics ("IceSetTics");
@@ -139,8 +140,8 @@ void A_FreezeDeath (AActor *actor)
 	actor->tics = 75+t+pr_freezedeath();
 	actor->flags |= MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD;
 	actor->flags2 |= MF2_PUSHABLE|MF2_TELESTOMP|MF2_PASSMOBJ|MF2_SLIDE;
-	actor->height <<= 2;
-	S_Sound (actor, CHAN_BODY, "FreezeDeath", 1, ATTN_NORM);
+	actor->height = actor->GetDefault()->height;
+	S_Sound (actor, CHAN_BODY, "misc/freeze", 1, ATTN_NORM);
 
 	if (actor->player)
 	{
@@ -202,6 +203,7 @@ void A_FreezeDeathChunks (AActor *actor)
 {
 
 	int i;
+	int numChunks;
 	AActor *mo;
 	
 	if (actor->momx || actor->momy || actor->momz)
@@ -209,9 +211,16 @@ void A_FreezeDeathChunks (AActor *actor)
 		actor->tics = 3*TICRATE;
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, "FreezeShatter", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_BODY, "misc/icebreak", 1, ATTN_NORM);
 
-	for (i = 24 + (pr_freeze()&31); i >= 0; i--)
+	// [RH] In Hexen, this creates a random number of shards (range [24,56])
+	// with no relation to the size of the actor shattering. I think it should
+	// base the number of shards on the size of the dead thing, so bigger
+	// things break up into more shards than smaller things.
+	// An actor with radius 20 and height 64 creates ~40 chunks.
+	numChunks = (actor->radius>>FRACBITS)*(actor->height>>FRACBITS)/32;
+	i = (pr_freeze.Random2()) % (numChunks/4);
+	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{
 		mo = Spawn<AIceChunk> (
 			actor->x + (((pr_freeze()-128)*actor->radius)>>7), 
@@ -224,6 +233,8 @@ void A_FreezeDeathChunks (AActor *actor)
 			mo->momx = pr_freeze.Random2 () << (FRACBITS-7);
 			mo->momy = pr_freeze.Random2 () << (FRACBITS-7);
 			A_IceSetTics (mo); // set a random tic wait
+			mo->RenderStyle = actor->RenderStyle;
+			mo->alpha = actor->alpha;
 		}
 	}
 	if (actor->player)
@@ -238,11 +249,21 @@ void A_FreezeDeathChunks (AActor *actor)
 		head->angle = actor->angle;
 		head->player->mo = head;
 		head->pitch = 0;
+		head->RenderStyle = actor->RenderStyle;
+		head->alpha = actor->alpha;
 		if (head->player->camera == actor)
 		{
 			head->player->camera = head;
 		}
 	}
+
+	// [RH] Do some stuff to make this more useful outside Hexen
+	if (actor->flags4 & MF4_BOSSDEATH)
+	{
+		A_BossDeath (actor);
+	}
+	A_NoBlocking (actor);
+
 	actor->RemoveFromHash ();
 	actor->SetState (&AActor::States[S_FREETARGMOBJ]);
 	actor->renderflags |= RF_INVISIBLE;
@@ -290,8 +311,10 @@ DCorpsePointer::DCorpsePointer (AActor *ptr)
 	{
 		if (first->Count >= CORPSEQUEUESIZE)
 		{
+			DCorpsePointer *next = iterator.Next ();
+			next->Count = first->Count;
 			first->Destroy ();
-			first = iterator.Next ();
+			return;
 		}
 	}
 	++first->Count;

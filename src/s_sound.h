@@ -22,7 +22,7 @@
 #define __S_SOUND__
 
 #include "m_fixed.h"
-
+#include "tarray.h"
 
 #define MAX_SNDNAME	63
 
@@ -171,6 +171,7 @@ void S_UpdateSounds (void *listener);
 
 // [RH] S_sfx "maintenance" routines
 void S_ParseSndInfo ();
+void S_ParseSndEax ();
 
 void S_HashSounds ();
 int S_FindSound (const char *logicalname);
@@ -191,5 +192,71 @@ void S_ShrinkPlayerSoundLists ();
 //		Modelled after Hexen's noise cheat.
 void S_NoiseDebug ();
 
+// For convenience, this structure matches FSOUND_REVERB_PROPERTIES.
+// Since I can't very well #include system-specific stuff in the
+// main game files, I duplicate it here.
+struct REVERB_PROPERTIES
+{                                   
+    /*unsigned*/int Environment;
+    float        EnvSize;
+    float        EnvDiffusion;
+    int          Room;
+    int          RoomHF;
+    int          RoomLF;
+    float        DecayTime;
+    float        DecayHFRatio;
+    float        DecayLFRatio;
+    int          Reflections;
+    float        ReflectionsDelay;
+    float        ReflectionsPan0;
+	float        ReflectionsPan1;
+	float        ReflectionsPan2;
+    int          Reverb;
+    float        ReverbDelay;
+    float        ReverbPan0;
+	float        ReverbPan1;
+	float        ReverbPan2;
+    float        EchoTime;
+    float        EchoDepth;
+    float        ModulationTime;
+    float        ModulationDepth;
+    float        AirAbsorptionHF;
+    float        HFReference;
+    float        LFReference;
+    float        RoomRolloffFactor;
+    float        Diffusion;
+    float        Density;
+    unsigned int Flags;
+};
+
+#define REVERB_FLAGS_DECAYTIMESCALE        0x00000001
+#define REVERB_FLAGS_REFLECTIONSSCALE      0x00000002
+#define REVERB_FLAGS_REFLECTIONSDELAYSCALE 0x00000004
+#define REVERB_FLAGS_REVERBSCALE           0x00000008
+#define REVERB_FLAGS_REVERBDELAYSCALE      0x00000010
+#define REVERB_FLAGS_DECAYHFLIMIT          0x00000020
+#define REVERB_FLAGS_ECHOTIMESCALE         0x00000040
+#define REVERB_FLAGS_MODULATIONTIMESCALE   0x00000080
+
+struct ReverbContainer
+{
+	ReverbContainer *Next;
+	const char *Name;
+	WORD ID;
+	bool Builtin;
+	bool Modified;
+	REVERB_PROPERTIES Properties;
+};
+
+extern ReverbContainer *Environments;
+extern ReverbContainer *DefaultEnvironments[26];
+
+class FArchive;
+FArchive &operator<< (FArchive &arc, ReverbContainer *&env);
+
+void S_SetEnvironment (const ReverbContainer *settings);
+ReverbContainer *S_FindEnvironment (const char *name);
+ReverbContainer *S_FindEnvironment (int id);
+void S_AddEnvironment (ReverbContainer *settings);
 
 #endif

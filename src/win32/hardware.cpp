@@ -49,6 +49,8 @@ EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Float, vid_winscale)
 
+bool ForceWindowed;
+
 IVideo *Video;
 //static IKeyboard *Keyboard;
 //static IMouse *Mouse;
@@ -98,7 +100,14 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 		fs = true;
 		break;
 	case DISPLAY_Both:
-		fs = fullscreen;
+		if (ForceWindowed)
+		{
+			fs = false;
+		}
+		else
+		{
+			fs = fullscreen;
+		}
 		break;
 	}
 	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);

@@ -8,10 +8,10 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <fmod.h>
-#include "mid2strm.h"
 #include "tempfiles.h"
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
+#include "mus2midi.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -41,57 +41,6 @@ public:
 	} m_Status;
 	bool m_Looping;
 	const void *m_LumpMem;
-};
-
-// MIDI file played with a MIDI output stream -------------------------------
-
-class MIDISong : public MusInfo
-{
-public:
-	MIDISong (const void *mem, int len);
-	~MIDISong ();
-	void SetVolume (float volume);
-	void Play (bool looping);
-	void Pause ();
-	void Resume ();
-	void Stop ();
-	bool IsPlaying ();
-	bool IsMIDI () const;
-	bool IsValid () const;
-	void MidiProc (UINT uMsg);
-
-protected:
-	MIDISong ();
-	void MCIError (MMRESULT res, const char *descr);
-	void UnprepareHeaders ();
-	bool PrepareHeaders ();
-	void SubmitBuffer ();
-	void AllChannelsOff ();
-	void SetStreamVolume ();
-	void UnsetStreamVolume ();
-
-	bool m_IsMUS;
-
-	enum
-	{
-		cb_play,
-		cb_die,
-		cb_dead
-	} m_CallbackStatus;
-	HMIDISTRM m_MidiStream;
-	PSTREAMBUF m_Buffers;
-	PSTREAMBUF m_CurrBuffer;
-	bool m_bVolGood, m_bOldVolGood;
-
-	DWORD m_OldVolume, m_LastSetVol;
-};
-
-// MUS file played with a MIDI output stream --------------------------------
-
-class MUSSong : public MIDISong
-{
-public:
-	MUSSong (const void *mem, int len);
 };
 
 // MUS file played with MIDI output messages --------------------------------
@@ -328,6 +277,25 @@ protected:
 	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
 
 	OPLmusicBlock *Music;
+};
+
+// FLAC file streamed through FMOD (You should probably use Vorbis instead) -
+
+class FLACSong : public StreamSong
+{
+public:
+	FLACSong (const void *mem, int len);
+	~FLACSong ();
+	void Play (bool looping);
+	bool IsPlaying ();
+	bool IsValid () const;
+
+protected:
+	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+
+	class FLACStreamer;
+
+	FLACStreamer *State;
 };
 
 // CD track/disk played through the multimedia system -----------------------

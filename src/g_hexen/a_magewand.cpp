@@ -13,7 +13,7 @@
 
 static FRandom pr_smoke ("MWandSmoke");
 
-void A_MWandAttack (player_t *player, pspdef_t *psp);
+void A_MWandAttack (AActor *actor, pspdef_t *psp);
 
 // The Mage's Wand ----------------------------------------------------------
 
@@ -138,6 +138,9 @@ void AMageWandMissile::Tick ()
 	fixed_t hitz;
 	bool changexy;
 
+	// [RH] Ripping is a little different
+	DoRipping = true;
+
 	// Handle movement
 	if (momx || momy || (z != floorz) || momz)
 	{
@@ -149,9 +152,11 @@ void AMageWandMissile::Tick ()
 		{
 			if (changexy)
 			{
+				LastRipped = NULL;	// [RH] Do rip damage each step, like Hexen
 				if (!P_TryMove (this, x+xfrac,y+yfrac, true))
 				{ // Blocked move
 					P_ExplodeMissile (this, BlockingLine);
+					DoRipping = false;
 					return;
 				}
 			}
@@ -161,12 +166,14 @@ void AMageWandMissile::Tick ()
 				z = floorz;
 				P_HitFloor (this);
 				P_ExplodeMissile (this, NULL);
+				DoRipping = false;
 				return;
 			}
 			if (z+height > ceilingz)
 			{ // Hit the ceiling
 				z = ceilingz-height;
 				P_ExplodeMissile (this, NULL);
+				DoRipping = false;
 				return;
 			}
 			if (changexy)
@@ -183,6 +190,7 @@ void AMageWandMissile::Tick ()
 			}
 		}
 	}
+	DoRipping = false;
 	// Advance the state
 	if (tics != -1)
 	{
@@ -203,10 +211,10 @@ void AMageWandMissile::Tick ()
 //
 //============================================================================
 
-void A_MWandAttack (player_t *player, pspdef_t *psp)
+void A_MWandAttack (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
 
-	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMageWandMissile));
-	S_Sound (player->mo, CHAN_WEAPON, "MageWandFire", 1, ATTN_NORM);
+	mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AMageWandMissile));
+	S_Sound (actor, CHAN_WEAPON, "MageWandFire", 1, ATTN_NORM);
 }

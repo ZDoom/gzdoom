@@ -18,10 +18,10 @@ static FRandom pr_feathers ("Feathers");
 static FRandom pr_beakatkpl1 ("BeakAtkPL1");
 static FRandom pr_beakatkpl2 ("BeakAtkPL2");
 
-void A_BeakReady (player_t *, pspdef_t *);
-void A_BeakRaise (player_t *, pspdef_t *);
-void A_BeakAttackPL1 (player_t *, pspdef_t *);
-void A_BeakAttackPL2 (player_t *, pspdef_t *);
+void A_BeakReady (AActor *, pspdef_t *);
+void A_BeakRaise (AActor *, pspdef_t *);
+void A_BeakAttackPL1 (AActor *, pspdef_t *);
+void A_BeakAttackPL2 (AActor *, pspdef_t *);
 
 void A_Feathers (AActor *);
 void A_ChicLook (AActor *);
@@ -168,6 +168,7 @@ IMPLEMENT_ACTOR (AChickenPlayer, Heretic, -1, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (24)
 	PROP_PainChance (255)
+	PROP_SpeedFixed (1)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOTDMATCH)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP|MF2_LOGRAV|MF2_TELESTOMP)
 
@@ -398,9 +399,12 @@ void A_Feathers (AActor *actor)
 //
 //---------------------------------------------------------------------------
 
-void P_UpdateBeak (player_t *player, pspdef_t *psp)
+void P_UpdateBeak (AActor *actor, pspdef_t *psp)
 {
-	psp->sy = WEAPONTOP + (player->chickenPeck << (FRACBITS-1));
+	if (actor->player != NULL)
+	{
+		psp->sy = WEAPONTOP + (actor->player->chickenPeck << (FRACBITS-1));
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -409,8 +413,14 @@ void P_UpdateBeak (player_t *player, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_BeakReady (player_t *player, pspdef_t *psp)
+void A_BeakReady (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	if (player->cmd.ucmd.buttons & BT_ATTACK)
 	{ // Chicken beak attack
 		player->mo->SetState (player->mo->MissileState);
@@ -439,8 +449,14 @@ void A_BeakReady (player_t *player, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_BeakRaise (player_t *player, pspdef_t *psp)
+void A_BeakRaise (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	psp->sy = WEAPONTOP;
 	P_SetPsprite (player, ps_weapon,
 		wpnlev1info[player->readyweapon]->readystate);
@@ -463,11 +479,17 @@ void P_PlayPeck (AActor *chicken)
 //
 //----------------------------------------------------------------------------
 
-void A_BeakAttackPL1 (player_t *player, pspdef_t *psp)
+void A_BeakAttackPL1 (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
 	int slope;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	damage = 1 + (pr_beakatkpl1()&3);
 	angle = player->mo->angle;
@@ -490,11 +512,17 @@ void A_BeakAttackPL1 (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_BeakAttackPL2 (player_t *player, pspdef_t *psp)
+void A_BeakAttackPL2 (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
 	int slope;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	damage = pr_beakatkpl2.HitDice (4);
 	angle = player->mo->angle;

@@ -93,14 +93,14 @@ void P_DropWeapon (player_s *player);
 void P_BulletSlope (AActor *mo);
 void P_GunShot (AActor *mo, BOOL accurate);
 
-void A_WeaponReady (player_s *player, pspdef_t *psp);
-void A_ReFire (player_s *player, pspdef_t *psp);
-void A_Lower (player_s *player, pspdef_t *psp);
-void A_Raise (player_s *player, pspdef_t *psp);
-void A_GunFlash (player_s *player, pspdef_t *psp);
-void A_Light0 (player_s *player, pspdef_t *psp);
-void A_Light1 (player_s *player, pspdef_t *psp);
-void A_Light2 (player_s *player, pspdef_t *psp);
+void A_WeaponReady (AActor *actor, pspdef_t *psp);
+void A_ReFire (AActor *actor, pspdef_t *psp);
+void A_Lower (AActor *actor, pspdef_t *psp);
+void A_Raise (AActor *actor, pspdef_t *psp);
+void A_GunFlash (AActor *actor, pspdef_t *psp);
+void A_Light0 (AActor *actor, pspdef_t *psp);
+void A_Light1 (AActor *actor, pspdef_t *psp);
+void A_Light2 (AActor *actor, pspdef_t *psp);
 
 extern angle_t bulletpitch;
 

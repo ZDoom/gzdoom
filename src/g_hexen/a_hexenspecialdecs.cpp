@@ -142,6 +142,7 @@ IMPLEMENT_ACTOR (ATreeDestructible, Hexen, 8062, 0)
 	PROP_HeightFixed (180)
 	PROP_MassLong (INT_MAX)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZTREEDESTRUCTIBLE)
 	PROP_DeathState (S_ZTREEDES_D)
@@ -191,6 +192,7 @@ IMPLEMENT_ACTOR (APottery1, Hexen, 104, 0)
 	PROP_HeightFixed (32)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD|MF_DROPOFF)
 	PROP_Flags2 (MF2_SLIDE|MF2_PUSHABLE|MF2_TELESTOMP|MF2_PASSMOBJ)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZPOTTERY)
 	PROP_DeathState (S_ZPOTTERY_EXPLODE)
@@ -281,6 +283,7 @@ IMPLEMENT_ACTOR (APotteryBit, Hexen, -1, 0)
 	PROP_HeightFixed (5)
 	PROP_Flags (MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_POTTERYBIT)
 	PROP_DeathState (S_POTTERYBIT_EX0)
@@ -428,6 +431,7 @@ IMPLEMENT_ACTOR (ACorpseBloodDrip, Hexen, -1, 0)
 	PROP_HeightFixed (4)
 	PROP_Flags (MF_MISSILE)
 	PROP_Flags2 (MF2_LOGRAV)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_CORPSEBLOODDRIP)
 	PROP_DeathState (S_CORPSEBLOODDRIP_X)
@@ -491,6 +495,7 @@ IMPLEMENT_ACTOR (AZCorpseSitting, Hexen, 110, 0)
 	PROP_RadiusFixed (15)
 	PROP_HeightFixed (35)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (0)
 	PROP_DeathState (1)
@@ -594,6 +599,7 @@ IMPLEMENT_ACTOR (ALeaf1, Hexen, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_LOGRAV)
 	PROP_Flags3 (MF3_DONTSPLASH)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_LEAF1)
 	PROP_DeathState (S_LEAF_X)
@@ -828,6 +834,7 @@ IMPLEMENT_ACTOR (AZShrub1, Hexen, 8101, 0)
 	PROP_HeightFixed (24)
 	PROP_MassLong (FIXED_MAX)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZSHRUB1)
 	PROP_MeleeState (S_ZSHRUB1_X)
@@ -842,7 +849,7 @@ class AZShrub2 : public AActor
 {
 	DECLARE_ACTOR (AZShrub2, AActor)
 public:
-	void GetDamageParms (int &damage, int &distance, bool hurtSrc);
+	void GetExplodeParms (int &damage, int &distance, bool &hurtSrc);
 };
 
 FState AZShrub2::States[] =
@@ -865,6 +872,7 @@ IMPLEMENT_ACTOR (AZShrub2, Hexen, 8102, 0)
 	PROP_HeightFixed (40)
 	PROP_MassLong (FIXED_MAX)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZSHRUB2)
 	PROP_MeleeState (S_ZSHRUB2_X)
@@ -873,7 +881,7 @@ IMPLEMENT_ACTOR (AZShrub2, Hexen, 8102, 0)
 	PROP_DeathSound ("TreeExplode")
 END_DEFAULTS
 
-void AZShrub2::GetDamageParms (int &damage, int &distance, bool hurtSrc)
+void AZShrub2::GetExplodeParms (int &damage, int &distance, bool &hurtSrc)
 {
 	damage = 30;
 	distance = 64;
@@ -934,6 +942,7 @@ IMPLEMENT_ACTOR (AZPoisonShroom, Hexen, 8104, 0)
 	PROP_SpawnHealth (30)
 	PROP_MassLong (0x7fffffff)
 	PROP_Flags (MF_SHOOTABLE|MF_SOLID|MF_NOBLOOD)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZPOISONSHROOM)
 	PROP_PainState (S_ZPOISONSHROOM_P)
@@ -1032,6 +1041,7 @@ IMPLEMENT_ACTOR (AZSuitOfArmor, Hexen, 8064, 0)
 	PROP_HeightFixed (72)
 	PROP_MassLong (0x7fffffff)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (0)
 	PROP_DeathState (1)
@@ -1176,6 +1186,7 @@ IMPLEMENT_ACTOR (AZBell, Hexen, 8065, 0)
 	PROP_HeightFixed (120)
 	PROP_MassLong (0x7fffffff)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD|MF_NOGRAVITY|MF_SPAWNCEILING)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZBELL)
 	PROP_DeathState (S_ZBELL_X)
@@ -1228,7 +1239,7 @@ class AZXmasTree : public AActor
 {
 	DECLARE_ACTOR (AZXmasTree, AActor)
 public:
-	void SetExplodeParms (int &damage, int &dist, bool dmgSource);
+	void GetExplodeParms (int &damage, int &dist, bool &dmgSource);
 };
 
 FState AZXmasTree::States[] =
@@ -1258,6 +1269,7 @@ IMPLEMENT_ACTOR (AZXmasTree, Hexen, 8068, 0)
 	PROP_HeightFixed (130)
 	PROP_MassLong (0x7fffffff)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZXMAS_TREE)
 	PROP_MeleeState (S_ZXMAS_TREE_X)
@@ -1266,7 +1278,7 @@ IMPLEMENT_ACTOR (AZXmasTree, Hexen, 8068, 0)
 	PROP_DeathSound ("TreeExplode")
 END_DEFAULTS
 
-void AZXmasTree::SetExplodeParms (int &damage, int &dist, bool dmgSource)
+void AZXmasTree::GetExplodeParms (int &damage, int &dist, bool &dmgSource)
 {
 	damage = 30;
 	dist = 64;

@@ -32,24 +32,28 @@
 **
 */
 
-// DI3 only supports up to 4 mouse buttons, so use DI7 unless I find some
-// reason not to.
-//#define DIRECTINPUT_VERSION 0x300	// We want to support DirectInput 3.
-#define DIRECTINPUT_VERSION 0x700
+// DI3 only supports up to 4 mouse buttons, and I want the joystick to
+// be read using DirectInput instead of winmm.
+
+#define DIRECTINPUT_VERSION 0x800
 #if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0400
 #define _WIN32_WINNT 0x0501			// Support the mouse wheel and session notification.
 #endif
 
 #define WIN32_LEAN_AND_MEAN
 #define __BYTEBOOL__
+#ifndef __GNUC__
+#define INITGUID
+#endif
 #include <windows.h>
 #include <mmsystem.h>
+#include <dbt.h>
+#include <dinput.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-#include <dinput.h>
 
 // Compensate for w32api's lack
 #ifndef WM_XBUTTONDOWN
@@ -68,6 +72,30 @@
 #define SetClassLongPtr SetClassLong
 #endif
 
+#ifdef __GNUC__
+// I don't know if the new MinGW DirectX 9 libs define these or not.
+const GUID IID_IDirectInput8A = { 0xBF798030,0x483A,0x4DA2,{0xAA,0x99,0x5D,0x64,0xED,0x36,0x97,0x00}};
+static DIOBJECTDATAFORMAT MouseObjectData2[11] =
+{
+	{&GUID_XAxis,  0, 0x00ffff03, 0},
+	{&GUID_YAxis,  4, 0x00ffff03, 0},
+	{&GUID_ZAxis,  8, 0x80ffff03, 0},
+	{NULL,		  12, 0x00ffff0c, 0},
+	{NULL,		  13, 0x00ffff0c, 0},
+	{NULL,		  14, 0x80ffff0c, 0},
+	{NULL,		  15, 0x80ffff0c, 0},
+	{NULL,		  16, 0x80ffff0c, 0},
+	{NULL,		  17, 0x80ffff0c, 0},
+	{NULL,		  18, 0x80ffff0c, 0},
+	{NULL,		  19, 0x80ffff0c, 0},
+};
+
+const DIDATAFORMAT c_dfDIMouse2 =
+{
+	24, 16, 2, 20, 11, MouseObjectData2
+};
+#endif
+
 #include "c_dispatch.h"
 #include "doomtype.h"
 #include "doomdef.h"
@@ -76,14 +104,16 @@
 #include "i_input.h"
 #include "v_video.h"
 #include "i_sound.h"
+#include "m_menu.h"
 
 #include "d_main.h"
 #include "d_gui.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "i_system.h"
-
 #include "s_sound.h"
+#include "m_misc.h"
+#include "gameconfigfile.h"
 #include "win32iface.h"
 
 #define DINPUT_BUFFERSIZE	32
@@ -95,8 +125,13 @@
 #define INGAME_PRIORITY_CLASS	NORMAL_PRIORITY_CLASS
 #endif
 
+BOOL DI_InitJoy (void);
+
 extern HINSTANCE g_hInst;
 extern DWORD SessionID;
+
+extern void ShowEAXEditor ();
+extern bool SpawnEAXWindow;
 
 static void KeyRead ();
 static BOOL DI_Init2 ();
@@ -108,9 +143,10 @@ static BOOL I_GetDIMouse ();
 static void I_GetWin32Mouse ();
 static void CenterMouse_Win32 (LONG curx, LONG cury);
 static void WheelMoved ();
-static void DI_Acquire (LPDIRECTINPUTDEVICE mouse);
-static void DI_Unacquire (LPDIRECTINPUTDEVICE mouse);
+static void DI_Acquire (LPDIRECTINPUTDEVICE8 mouse);
+static void DI_Unacquire (LPDIRECTINPUTDEVICE8 mouse);
 static void SetCursorState (int visible);
+static HRESULT InitJoystick ();
 
 static bool GUICapture;
 static bool NativeMouse;
@@ -119,8 +155,13 @@ static POINT UngrabbedPointerPos;
 
 bool VidResizing;
 
+extern bool SpawnEAXWindow;
 extern BOOL vidactive;
 extern HWND Window;
+extern HWND EAXEditWindow;
+
+extern void UpdateJoystickMenu ();
+extern menu_t JoystickMenu;
 
 EXTERN_CVAR (String, language)
 
@@ -128,15 +169,10 @@ EXTERN_CVAR (String, language)
 // [RH] As of 1.14, ZDoom no longer needs to be linked with dinput.lib.
 //		We now go straight to the DLL ourselves.
 
-#ifndef __CYGNUS__
 typedef HRESULT (WINAPI *DIRECTINPUTCREATE_FUNCTION) (HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
-#else
-typedef HRESULT WINAPI (*DIRECTINPUTCREATE_FUNCTION) (HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
-#endif
+typedef HRESULT (WINAPI *DIRECTINPUT8CREATE_FUNCTION) (HINSTANCE, DWORD, REFIID, LPDIRECTINPUT8*, LPUNKNOWN);
 
 static HMODULE DirectInputInstance;
-
-void InitKeyboardObjectData (void);
 
 typedef enum { win32, dinput } mousemode_t;
 static mousemode_t mousemode;
@@ -146,11 +182,43 @@ static bool HaveFocus = false;
 static bool noidle = false;
 static int WheelMove;
 
-static LPDIRECTINPUT			g_pdi;
-static LPDIRECTINPUTDEVICE		g_pKey;
-static LPDIRECTINPUTDEVICE		g_pMouse;
+static LPDIRECTINPUT8			g_pdi;
+static LPDIRECTINPUT			g_pdi3;
+
+static LPDIRECTINPUTDEVICE8		g_pJoy;
+
+// These can also be earlier IDirectInputDevice interfaces.
+// Since IDirectInputDevice8 just added new methods to it
+// without rearranging the old ones, I just maintain one
+// pointer for each device instead of two.
+
+static LPDIRECTINPUTDEVICE8		g_pKey;
+static LPDIRECTINPUTDEVICE8		g_pMouse;
 
 HCURSOR TheArrowCursor, TheInvisibleCursor;
+
+TArray<GUIDName> JoystickNames;
+
+static DIDEVCAPS JoystickCaps;
+
+float JoyAxes[6];
+static int JoyActive;
+static BYTE JoyButtons[128];
+static BYTE JoyPOV[4];
+static BYTE JoyAxisMap[8];
+char *JoyAxisNames[8];
+static const size_t Axes[8] =
+{
+	myoffsetof(DIJOYSTATE2,lX),
+	myoffsetof(DIJOYSTATE2,lY),
+	myoffsetof(DIJOYSTATE2,lZ),
+	myoffsetof(DIJOYSTATE2,lRx),
+	myoffsetof(DIJOYSTATE2,lRy),
+	myoffsetof(DIJOYSTATE2,lRz),
+	myoffsetof(DIJOYSTATE2,rglSlider[0]),
+	myoffsetof(DIJOYSTATE2,rglSlider[1])
+};
+static const BYTE POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x09, 0x00 };
 
 //Other globals
 static int GDx,GDy;
@@ -165,11 +233,84 @@ CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR (Bool,  use_joystick,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_speedmultiplier,	1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_xsensitivity,		1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_ysensitivity,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_xthreshold,		0.15f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_ythreshold,		0.15f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR (GUID, joy_guid,		NULL, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+	if (g_pJoy != NULL)
+	{
+		DIDEVICEINSTANCE inst = { sizeof(DIDEVICEINSTANCE), };
+
+		if (SUCCEEDED(g_pJoy->GetDeviceInfo (&inst)) && self != inst.guidInstance)
+		{
+			DI_InitJoy ();
+			UpdateJoystickMenu ();
+		}
+	}
+	else
+	{
+		DI_InitJoy ();
+		UpdateJoystickMenu ();
+	}
+}
+
+static void MapAxis (FIntCVar &var, int num)
+{
+	if (var < JOYAXIS_NONE || var > JOYAXIS_UP)
+	{
+		var = JOYAXIS_NONE;
+	}
+	else
+	{
+		JoyAxisMap[num] = var;
+	}
+}
+
+CUSTOM_CVAR (Int, joy_xaxis,	JOYAXIS_YAW,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 0);
+}
+CUSTOM_CVAR (Int, joy_yaxis,	JOYAXIS_FORWARD, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 1);
+}
+CUSTOM_CVAR (Int, joy_zaxis,	JOYAXIS_SIDE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 2);
+}
+CUSTOM_CVAR (Int, joy_xrot,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 3);
+}
+CUSTOM_CVAR (Int, joy_yrot,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 4);
+}
+CUSTOM_CVAR (Int, joy_zrot,		JOYAXIS_PITCH,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 5);
+}
+CUSTOM_CVAR (Int, joy_slider,	JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 6);
+}
+CUSTOM_CVAR (Int, joy_dial,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 7);
+}
+
+CVAR (Float, joy_speedmultiplier,1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_yawspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_pitchspeed,	-.75f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_forwardspeed,	-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_sidespeed,		 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_upspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+static FBaseCVar * const JoyConfigVars[] =
+{
+	&joy_xaxis, &joy_yaxis, &joy_zaxis, &joy_xrot, &joy_yrot, &joy_zrot, &joy_slider, &joy_dial,
+	&joy_speedmultiplier, &joy_yawspeed, &joy_pitchspeed, &joy_forwardspeed, &joy_sidespeed,
+	&joy_upspeed
+};
 
 CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -181,7 +322,7 @@ CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	{
 		self = 2;
 	}
-	else if (!g_pdi)
+	else if (g_pdi == NULL && g_pdi3 == NULL)
 	{
 		return;
 	}
@@ -350,17 +491,12 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		FlushDIKState ();
 		HaveFocus = false;
 		I_CheckNativeMouse (true);	// Make sure mouse gets released right away
-		SetSoundPaused (0);
-		if (!noidle)
-			SetPriorityClass (GetCurrentProcess(), IDLE_PRIORITY_CLASS);
 		break;
 
 	case WM_SETFOCUS:
-		SetPriorityClass (GetCurrentProcess(), INGAME_PRIORITY_CLASS);
 		if (g_pKey)
 			DI_Acquire (g_pKey);
 		HaveFocus = true;
-		SetSoundPaused (1);
 		break;
 
 	case WM_SIZE:
@@ -384,6 +520,14 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	// Being forced to separate my keyboard input handler into
 	// two pieces like this really stinks. (IMHO)
 	case WM_KEYDOWN:
+		// When the EAX editor is open, pressing Ctrl+Tab will switch to it
+		if (EAXEditWindow != 0 && wParam == VK_TAB && !(lParam & 0x40000000) &&
+			(GetKeyState (VK_CONTROL) & 0x8000))
+		{
+			SetForegroundWindow (EAXEditWindow);
+			return 0;
+		}
+		// Intentional fall-through
 	case WM_KEYUP:
 		GetKeyboardState (KeyState);
 		if (GUICapture)
@@ -448,9 +592,13 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			else
 			{
 				if (lParam & 0x40000000)
+				{
 					return 0;
+				}
 				else
+				{
 					event.type = EV_KeyDown;
+				}
 			}
 
 			switch (wParam)
@@ -492,6 +640,10 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			event.data1 = wParam;
 			event.data2 = 1;
 			D_PostEvent (&event);
+		}
+		if (wParam == '\r')
+		{
+			ToggleFullscreen = !ToggleFullscreen;
 		}
 		break;
 
@@ -555,6 +707,14 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case WM_DISPLAYCHANGE:
+		if (SpawnEAXWindow)
+		{
+			SpawnEAXWindow = false;
+			ShowEAXEditor ();
+		}
+		break;
+
 	case WM_GETMINMAXINFO:
 		if (screen && !VidResizing)
 		{
@@ -568,6 +728,12 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_ACTIVATEAPP:
 		AppActive = wParam;
+		if (!noidle)
+		{
+			SetPriorityClass (GetCurrentProcess(),
+				wParam ? INGAME_PRIORITY_CLASS : IDLE_PRIORITY_CLASS);
+		}
+		SetSoundPaused (wParam);
 		break;
 
 #ifndef NOWTS
@@ -617,6 +783,74 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 #endif
 
+	case WM_DEVICECHANGE:
+		if (wParam == DBT_DEVNODES_CHANGED ||
+			wParam == DBT_DEVICEARRIVAL ||
+			wParam == DBT_CONFIGCHANGED)
+		{
+			size_t i;
+			TArray<GUID> oldjoys;
+
+			for (i = 0; i < JoystickNames.Size(); ++i)
+			{
+				oldjoys.Push (JoystickNames[i].ID);
+			}
+
+			DI_EnumJoy ();
+
+			// If a new joystick was added and the joystick menu is open,
+			// switch to it.
+			if (menuactive && CurrentMenu == &JoystickMenu)
+			{
+				for (i = 0; i < JoystickNames.Size(); ++i)
+				{
+					bool wasListed = false;
+
+					for (size_t j = 0; j < oldjoys.Size(); ++j)
+					{
+						if (oldjoys[j] == JoystickNames[i].ID)
+						{
+							wasListed = true;
+							break;
+						}
+					}
+					if (!wasListed)
+					{
+						joy_guid = JoystickNames[i].ID;
+						break;
+					}
+				}
+			}
+
+			// If the current joystick was removed,
+			// try to switch to a different one.
+			if (g_pJoy != NULL)
+			{
+				DIDEVICEINSTANCE inst = { sizeof(DIDEVICEINSTANCE), };
+
+				if (SUCCEEDED(g_pJoy->GetDeviceInfo (&inst)))
+				{
+					for (i = 0; i < JoystickNames.Size(); ++i)
+					{
+						if (JoystickNames[i].ID == inst.guidInstance)
+						{
+							break;
+						}
+					}
+					if (i == JoystickNames.Size ())
+					{
+						DI_InitJoy ();
+					}
+				}
+			}
+			else
+			{
+				DI_InitJoy ();
+			}
+			UpdateJoystickMenu ();
+		}
+		break;
+
 	case WM_PALETTECHANGED:
 		if ((HWND)wParam == Window)
 			break;
@@ -636,28 +870,112 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-/****** Stuff from Andy Bay's myjoy.c ******/
+/****** Joystick stuff ******/
 
-static struct {
-	int X,Y,Z,R,U,V;
-}					JoyBias;
-static int 			JoyActive;
-static int			JoyDevice;
-static JOYINFOEX	JoyStats;
-static JOYCAPS 		JoyCaps;
-
-void JoyFixBias (void)
+void DI_JoyCheck ()
 {
-	JoyBias.X = (JoyCaps.wXmin + JoyCaps.wXmax) >> 1;
-	JoyBias.Y = (JoyCaps.wYmin + JoyCaps.wYmax) >> 1;
-//	JoyBias.Z = (JoyCaps.wZmin + JoyCaps.wZmax) >> 1;
-//	JoyBias.R = (JoyCaps.wRmin + JoyCaps.wRmax) >> 1;
-//	JoyBias.U = (JoyCaps.wUmin + JoyCaps.wUmax) >> 1;
-//	JoyBias.V = (JoyCaps.wVmin + JoyCaps.wVmax) >> 1;
-}
+	float mul;
+	event_t event;
+	HRESULT hr;
+	DIJOYSTATE2 js;
+	int i;
+	BYTE pov;
 
-void DI_JoyCheck (void)
-{
+	if (g_pJoy == NULL)
+	{
+		return;
+	}
+
+	hr = g_pJoy->Poll ();
+	if (FAILED(hr))
+	{
+		do
+		{
+			hr = g_pJoy->Acquire ();
+		}
+		while (hr == DIERR_INPUTLOST);
+		if (FAILED(hr))
+			return;
+	}
+
+	hr = g_pJoy->GetDeviceState (sizeof(DIJOYSTATE2), &js);
+	if (FAILED(hr))
+		return;
+
+	mul = joy_speedmultiplier;
+	if (Button_Speed.bDown)
+	{
+		mul *= 0.5f;
+	}
+
+	for (i = 0; i < 6; ++i)
+	{
+		JoyAxes[i] = 0.f;
+	}
+
+	for (i = 0; i < 8; ++i)
+	{
+		if (JoyAxisMap[i] != JOYAXIS_NONE)
+		{
+			JoyAxes[JoyAxisMap[i]] += *((LONG *)((BYTE *)&js + Axes[i])) * mul;
+		}
+	}
+
+	JoyAxes[JOYAXIS_YAW] *= joy_yawspeed;
+	JoyAxes[JOYAXIS_PITCH] *= joy_pitchspeed;
+	JoyAxes[JOYAXIS_FORWARD] *= joy_forwardspeed;
+	JoyAxes[JOYAXIS_SIDE] *= joy_sidespeed;
+	JoyAxes[JOYAXIS_UP] *= joy_upspeed;
+
+	// Send button up/down events
+
+	event.data2 = event.data3 = 0;
+
+	for (i = 0; i < 128; ++i)
+	{
+		if ((js.rgbButtons[i] ^ JoyButtons[i]) & 0x80)
+		{
+			event.data1 = KEY_FIRSTJOYBUTTON + i;
+			if (JoyButtons[i])
+			{
+				event.type = EV_KeyUp;
+				JoyButtons[i] = 0;
+			}
+			else
+			{
+				event.type = EV_KeyDown;
+				JoyButtons[i] = 0x80;
+			}
+			D_PostEvent (&event);
+		}
+	}
+
+	for (i = 0; i < 4; ++i)
+	{
+		if (LOWORD(js.rgdwPOV[i]) == 0xFFFF)
+		{
+			pov = 8;
+		}
+		else
+		{
+			pov = ((js.rgdwPOV[i] + 2250) % 36000) / 4500;
+		}
+		pov = POVButtons[pov];
+		for (int j = 0; j < 4; ++j)
+		{
+			BYTE mask = 1 << j;
+
+			if ((JoyPOV[i] ^ pov) & mask)
+			{
+				event.data1 = KEY_JOYPOV1_UP + i*4 + j;
+				event.type = (pov & mask) ? EV_KeyDown : EV_KeyUp;
+				D_PostEvent (&event);
+			}
+		}
+		JoyPOV[i] = pov;
+	}
+
+#if 0
 	event_t joyevent;
 	fixed_t xscale, yscale;
 	int xdead, ydead;
@@ -740,38 +1058,233 @@ void DI_JoyCheck (void)
 			oldButtons = JoyStats.dwButtons;
 		}
 	}
+#endif
+}
+
+bool SetJoystickSection (bool create)
+{
+	DIDEVICEINSTANCE inst = { sizeof(DIDEVICEINSTANCE), };
+	char section[80] = "Joystick.";
+
+	if (g_pJoy != NULL && SUCCEEDED(g_pJoy->GetDeviceInfo (&inst)))
+	{
+		FormatGUID (section + 9, inst.guidInstance);
+		strcpy (section + 9 + 38, ".Axes");
+		return GameConfig->SetSection (section, create);
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void LoadJoystickConfig ()
+{
+	if (SetJoystickSection (false))
+	{
+		for (size_t i = 0; i < sizeof(JoyConfigVars)/sizeof(JoyConfigVars[0]); ++i)
+		{
+			const char *val = GameConfig->GetValueForKey (JoyConfigVars[i]->GetName());
+			UCVarValue cval;
+
+			cval.String = const_cast<char *>(val);
+			JoyConfigVars[i]->SetGenericRep (cval, CVAR_String);
+		}
+	}
+}
+
+void SaveJoystickConfig ()
+{
+	if (SetJoystickSection (true))
+	{
+		GameConfig->ClearCurrentSection ();
+		for (size_t i = 0; i < sizeof(JoyConfigVars)/sizeof(JoyConfigVars[0]); ++i)
+		{
+			UCVarValue cval = JoyConfigVars[i]->GetGenericRep (CVAR_String);
+			GameConfig->SetValueForKey (JoyConfigVars[i]->GetName(), cval.String);
+		}
+	}
+}
+
+BOOL CALLBACK EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
+{
+	GUIDName name;
+
+	JoyActive++;
+	name.ID = lpddi->guidInstance;
+	name.Name = copystring (lpddi->tszInstanceName);
+	JoystickNames.Push (name);
+	return DIENUM_CONTINUE;
+}
+
+void DI_EnumJoy ()
+{
+	size_t i;
+
+	for (i = 0; i < JoystickNames.Size(); ++i)
+	{
+		delete[] JoystickNames[i].Name;
+	}
+
+	JoyActive = 0;
+	JoystickNames.Clear ();
+
+	if (g_pdi != NULL)
+	{
+		g_pdi->EnumDevices (DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
+	}
 }
 
 BOOL DI_InitJoy (void)
 {
-	int i;
+	HRESULT hr;
+	size_t i;
 
-	JoyActive = joyGetNumDevs ();
-	JoyStats.dwSize = sizeof(JOYINFOEX);
-	JoyDevice = -1;
-
-	for (i = JOYSTICKID1; i <= JOYSTICKID2; i++)
+	if (g_pdi == NULL)
 	{
-		if (joyGetDevCaps (i, &JoyCaps, sizeof(JOYCAPS)) != JOYERR_NOERROR)
-			continue;
-
-		JoyStats.dwFlags = JOY_RETURNALL;
-		if (joyGetPosEx (i, &JoyStats) != JOYERR_NOERROR)
-			continue;
-
-		JoyDevice = i;
-		break;
+		return TRUE;
 	}
 
-	if (JoyDevice == -1)
+	if (g_pJoy != NULL)
+	{
+		SaveJoystickConfig ();
+		g_pJoy->Release ();
+		g_pJoy = NULL;
+	}
+
+	if (JoystickNames.Size() == 0)
+	{
+		return TRUE;
+	}
+
+	// Try to obtain the joystick specified by joy_guid
+	for (i = 0; i < JoystickNames.Size(); ++i)
+	{
+		if (JoystickNames[i].ID == joy_guid)
+		{
+			hr = g_pdi->CreateDevice (JoystickNames[i].ID, &g_pJoy, NULL);
+			if (FAILED(hr))
+			{
+				i = JoystickNames.Size();
+			}
+			break;
+		}
+	}
+
+	// If the preferred joystick could not be obtained, grab the first
+	// one available.
+	if (i == JoystickNames.Size())
+	{
+		for (i = 0; i <= JoystickNames.Size(); ++i)
+		{
+			hr = g_pdi->CreateDevice (JoystickNames[i].ID, &g_pJoy, NULL);
+			if (SUCCEEDED(hr))
+			{
+				break;
+			}
+		}
+	}
+
+	if (i == JoystickNames.Size())
+	{
 		JoyActive = 0;
+		return TRUE;
+	}
+
+	if (FAILED (InitJoystick ()))
+	{
+		JoyActive = 0;
+		g_pJoy->Release ();
+		g_pJoy = NULL;
+	}
 	else
-		JoyFixBias();
+	{
+		LoadJoystickConfig ();
+		joy_guid = JoystickNames[i].ID;
+	}
 
 	return TRUE;
 }
 
-static void DI_Acquire (LPDIRECTINPUTDEVICE mouse)
+BOOL CALLBACK EnumAxesCallback (LPCDIDEVICEOBJECTINSTANCE lpddoi, LPVOID pvRef)
+{
+	DIPROPRANGE diprg =
+	{
+		{
+			sizeof (DIPROPRANGE),
+			sizeof (DIPROPHEADER),
+			lpddoi->dwType,
+			DIPH_BYID
+		},
+		-256,
+		+256
+	};
+	if (lpddoi->wUsagePage == 1)
+	{
+		if (lpddoi->wUsage >= 0x30 && lpddoi->wUsage <= 0x37)
+		{
+			JoyAxisNames[lpddoi->wUsage-0x30] = copystring (lpddoi->tszName);
+		}
+	}
+	if (FAILED(g_pJoy->SetProperty (DIPROP_RANGE, &diprg.diph)))
+	{
+		return DIENUM_STOP;
+	}
+	else
+	{
+		return DIENUM_CONTINUE;
+	}
+}
+
+static HRESULT InitJoystick ()
+{
+	HRESULT hr;
+
+	memset (JoyPOV, 9, sizeof(JoyPOV));
+	for (int i = 0; i < 8; ++i)
+	{
+		if (JoyAxisNames[i])
+		{
+			delete[] JoyAxisNames[i];
+			JoyAxisNames[i] = NULL;
+		}
+	}
+
+	hr = g_pJoy->SetDataFormat (&c_dfDIJoystick2);
+	if (FAILED(hr))
+	{
+		Printf (PRINT_BOLD, "Could not set joystick data format.\n");
+		return hr;
+	}
+
+	hr = g_pJoy->SetCooperativeLevel (Window, DISCL_EXCLUSIVE|DISCL_FOREGROUND);
+	if (FAILED(hr))
+	{
+		Printf (PRINT_BOLD, "Could not set joystick cooperative level.\n");
+		return hr;
+	}
+
+	JoystickCaps.dwSize = sizeof(JoystickCaps);
+	hr = g_pJoy->GetCapabilities (&JoystickCaps);
+	if (FAILED(hr))
+	{
+		Printf (PRINT_BOLD, "Could not query joystick capabilities.\n");
+		return hr;
+	}
+
+	hr = g_pJoy->EnumObjects (EnumAxesCallback, NULL, DIDFT_AXIS);
+	if (FAILED(hr))
+	{
+		Printf (PRINT_BOLD, "Could not set joystick axes ranges.\n");
+		return hr;
+	}
+
+	g_pJoy->Acquire ();
+
+	return S_OK;
+}
+
+static void DI_Acquire (LPDIRECTINPUTDEVICE8 mouse)
 {
 	mouse->Acquire ();
 	if (!NativeMouse)
@@ -780,7 +1293,7 @@ static void DI_Acquire (LPDIRECTINPUTDEVICE mouse)
 		SetCursorState (TRUE);
 }
 
-static void DI_Unacquire (LPDIRECTINPUTDEVICE mouse)
+static void DI_Unacquire (LPDIRECTINPUTDEVICE8 mouse)
 {
 	mouse->Unacquire ();
 	SetCursorState (TRUE);
@@ -836,7 +1349,14 @@ static BOOL I_GetDIMouse ()
 		return FALSE;
 
 	// Obtain an interface to the system mouse device.
-	hr = g_pdi->CreateDevice (GUID_SysMouse, &g_pMouse, NULL);
+	if (g_pdi)
+	{
+		hr = g_pdi->CreateDevice (GUID_SysMouse, &g_pMouse, NULL);
+	}
+	else
+	{
+		hr = g_pdi3->CreateDevice (GUID_SysMouse, (LPDIRECTINPUTDEVICE*)&g_pMouse, NULL);
+	}
 
 	if (FAILED(hr))
 		return FALSE;
@@ -902,7 +1422,8 @@ static BOOL I_GetDIMouse ()
 
 BOOL I_InitInput (void *hwnd)
 {
-	DIRECTINPUTCREATE_FUNCTION DirectInputCreateFunction;
+	DIRECTINPUTCREATE_FUNCTION create;
+	DIRECTINPUT8CREATE_FUNCTION create8;
 	HRESULT hr;
 
 	atterm (I_ShutdownInput);
@@ -910,23 +1431,48 @@ BOOL I_InitInput (void *hwnd)
 	NativeMouse = true;
 
 	noidle = !!Args.CheckParm ("-noidle");
+	g_pdi = NULL;
+	g_pdi3 = NULL;
 
-	// [RH] Removed dependence on existance of dinput.lib when linking.
-	DirectInputInstance = (HMODULE)LoadLibrary ("dinput.dll");
-	if (!DirectInputInstance)
-		I_FatalError ("Sorry, you need Microsoft's DirectX 3 or higher installed.\n\n"
-					  "Go grab it at http://www.microsoft.com/directx\n");
+	// Register with DirectInput and get an interface to play with.
+	// Try for DirectInput 8 first, then DirectInput 3 for NT 4's benefit.
 
-	DirectInputCreateFunction = (DIRECTINPUTCREATE_FUNCTION)GetProcAddress (DirectInputInstance, "DirectInputCreateA");
-	if (!DirectInputCreateFunction)
-		I_FatalError ("Could not get address of DirectInputCreateA");
+	DirectInputInstance = (HMODULE)LoadLibrary ("dinput8.dll");
+	if (DirectInputInstance != NULL)
+	{
+		create8 = (DIRECTINPUT8CREATE_FUNCTION)GetProcAddress (DirectInputInstance, "DirectInput8Create");
+		if (create8 != NULL)
+		{
+			hr = create8 (g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, &g_pdi, NULL);
+			if (FAILED(hr))
+			{
+				g_pdi = NULL;
+				FreeLibrary (DirectInputInstance);
+				DirectInputInstance = NULL;
+			}
+		}
+	}
+	if (DirectInputInstance == NULL)
+	{
+		DirectInputInstance = (HMODULE)LoadLibrary ("dinput.dll");
+		if (DirectInputInstance == NULL)
+		{
+			I_FatalError ("Sorry, you need at least DirectX 3 installed.\n\n"
+						  "For Windows NT 4, this is included in the latest Service Pack.\n"
+						  "For other versions of Windows Go grab it at http://www.microsoft.com/directx\n");
+		}
 
-	// Register with DirectInput and get an IDirectInput to play with.
-	// Force DirectInput 3.0 compatibility.
-	hr = DirectInputCreateFunction (g_hInst, 0x300, &g_pdi, NULL);
+		create = (DIRECTINPUTCREATE_FUNCTION)GetProcAddress (DirectInputInstance, "DirectInputCreateA");
+		if (create == NULL)
+			I_FatalError ("Could not get address of DirectInputCreateA");
 
-	if (FAILED(hr))
-		I_FatalError ("Could not obtain DirectInput interface");
+		hr = create (g_hInst, 0x300, &g_pdi3, NULL);
+
+		if (FAILED(hr))
+		{
+			I_FatalError ("Could not obtain DirectInput interface");
+		}
+	}
 
 	DI_Init2();
 
@@ -949,11 +1495,22 @@ void STACK_ARGS I_ShutdownInput ()
 		g_pMouse->Release ();
 		g_pMouse = NULL;
 	}
+	if (g_pJoy)
+	{
+		SaveJoystickConfig ();
+		g_pJoy->Release ();
+		g_pJoy = NULL;
+	}
 	UngrabMouse_Win32 ();
 	if (g_pdi)
 	{
 		g_pdi->Release ();
 		g_pdi = NULL;
+	}
+	if (g_pdi3)
+	{
+		g_pdi3->Release ();
+		g_pdi3 = NULL;
 	}
 	// [RH] Close dinput.dll
 	if (DirectInputInstance)
@@ -1033,16 +1590,11 @@ static void GrabMouse_Win32 ()
 	RECT rect;
 
 	ClipCursor (NULL);		// helps with Win95?
-	GetWindowRect (Window, &rect);
+	GetClientRect (Window, &rect);
 
 	// Reposition the rect so that it only covers the client area.
-	// Is there some way to actually get this information from
-	// the window itself instead of assuming that window metrics
-	// are the same across all windows?
-	rect.left += GetSystemMetrics (SM_CXFRAME);
-	rect.right -= GetSystemMetrics (SM_CXFRAME);
-	rect.top += GetSystemMetrics (SM_CYFRAME) + GetSystemMetrics (SM_CYCAPTION);
-	rect.bottom -= GetSystemMetrics (SM_CYFRAME);
+	ClientToScreen (Window, (LPPOINT)&rect.left);
+	ClientToScreen (Window, (LPPOINT)&rect.right);
 
 	ClipCursor (&rect);
 	SetCursorState (FALSE);
@@ -1211,15 +1763,19 @@ static BOOL DI_Init2 (void)
 	int hr;
 
 	// Obtain an interface to the system key device.
-	hr = g_pdi->CreateDevice (GUID_SysKeyboard, &g_pKey, NULL);
+	if (g_pdi)
+	{
+		hr = g_pdi->CreateDevice (GUID_SysKeyboard, &g_pKey, NULL);
+	}
+	else
+	{
+		hr = g_pdi3->CreateDevice (GUID_SysKeyboard, (LPDIRECTINPUTDEVICE*)&g_pKey, NULL);
+	}
 
 	if (FAILED(hr))
 	{
 		I_FatalError ("Could not create keyboard device");
 	}
-
-	// [RH] Prepare c_dfDIKeyboard for use.
-	InitKeyboardObjectData ();
 
 	// Set the data format to "keyboard format".
 	hr = g_pKey->SetDataFormat (&c_dfDIKeyboard);
@@ -1239,6 +1795,7 @@ static BOOL DI_Init2 (void)
 
 	g_pKey->Acquire ();
 
+	DI_EnumJoy ();
 	DI_InitJoy ();
 	return TRUE;
 }
@@ -1343,8 +1900,11 @@ void I_GetEvent ()
 		{
 			if (mess.message == WM_QUIT)
 				exit (mess.wParam);
-			TranslateMessage (&mess);
-			DispatchMessage (&mess);
+			if (EAXEditWindow == 0 || !IsDialogMessage (EAXEditWindow, &mess))
+			{
+				TranslateMessage (&mess);
+				DispatchMessage (&mess);
+			}
 		}
 //		if (havefocus || netgame || gamestate != GS_LEVEL)
 //			break;

@@ -17,8 +17,8 @@ static FRandom pr_atk ("FHammerAtk");
 
 extern void AdjustPlayerAngle (AActor *pmo);
 
-void A_FHammerAttack (player_t *player, pspdef_t *psp);
-void A_FHammerThrow (player_t *player, pspdef_t *psp);
+void A_FHammerAttack (AActor *actor, pspdef_t *psp);
+void A_FHammerThrow (AActor *actor, pspdef_t *psp);
 void A_HammerSound (AActor *);
 
 // The Fighter's Hammer -----------------------------------------------------
@@ -189,14 +189,20 @@ void AHammerPuff::BeginPlay ()
 //
 //============================================================================
 
-void A_FHammerAttack (player_t *player, pspdef_t *psp)
+void A_FHammerAttack (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
-	AActor *pmo=player->mo;
 	int damage;
 	fixed_t power;
 	int slope;
 	int i;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
+	AActor *pmo=player->mo;
 
 	damage = 60+(pr_atk()&63);
 	power = 10*FRACUNIT;
@@ -257,9 +263,15 @@ hammerdone:
 //
 //============================================================================
 
-void A_FHammerThrow (player_t *player, pspdef_t *psp)
+void A_FHammerThrow (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	if (!player->mo->special1)
 	{

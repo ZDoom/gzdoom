@@ -88,6 +88,7 @@ IMPLEMENT_ACTOR (AFighterPlayer, Hexen, -1, 0)
 	PROP_HeightFixed (64)
 	PROP_Mass (100)
 	PROP_PainChance (255)
+	PROP_SpeedFixed (1)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_SLIDE|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
@@ -171,7 +172,7 @@ void AdjustPlayerAngle (AActor *pmo)
 
 // Fist (first weapon) ------------------------------------------------------
 
-void A_FPunchAttack (player_t *, pspdef_t *);
+void A_FPunchAttack (AActor *actor, pspdef_t *);
 
 class AFWeapFist : public AFighterWeapon
 {
@@ -284,14 +285,20 @@ void APunchPuff::BeginPlay ()
 //
 //============================================================================
 
-void A_FPunchAttack (player_t *player, pspdef_t *psp)
+void A_FPunchAttack (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
 	int slope;
-	APlayerPawn *pmo = player->mo;
 	fixed_t power;
 	int i;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
+	APlayerPawn *pmo = player->mo;
 
 	damage = 40+(pr_fpatk()&15);
 	power = 2*FRACUNIT;

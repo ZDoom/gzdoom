@@ -405,7 +405,7 @@ void FBaseStatusBar::CopyToScreen (int x, int y, int w, int h) const
 	if (nx + ow > SCREENWIDTH)
 		ow = SCREENWIDTH - nx;
 
-	if ((oh | ow) <= 0)
+	if (oh <= 0 || ow <= 0)
 		return;
 
 	int frompitch = ScaleCopy->GetPitch();

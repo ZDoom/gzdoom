@@ -88,8 +88,8 @@ IMPLEMENT_ABSTRACT_ACTOR (AHereticWeapon)
 
 // --- Staff ----------------------------------------------------------------
 
-void A_StaffAttackPL1 (player_t *, pspdef_t *);
-void A_StaffAttackPL2 (player_t *, pspdef_t *);
+void A_StaffAttackPL1 (AActor *, pspdef_t *);
+void A_StaffAttackPL2 (AActor *, pspdef_t *);
 
 // Staff --------------------------------------------------------------------
 
@@ -246,11 +246,17 @@ void AStaffPuff2::BeginPlay ()
 //
 //----------------------------------------------------------------------------
 
-void A_StaffAttackPL1 (player_t *player, pspdef_t *psp)
+void A_StaffAttackPL1 (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
 	int slope;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo ();
 	damage = 5+(pr_sap()&15);
@@ -274,11 +280,17 @@ void A_StaffAttackPL1 (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_StaffAttackPL2 (player_t *player, pspdef_t *psp)
+void A_StaffAttackPL2 (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
 	int slope;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo();
 	// P_inter.c:P_DamageMobj() handles target momentums
@@ -299,8 +311,8 @@ void A_StaffAttackPL2 (player_t *player, pspdef_t *psp)
 
 // --- Gold wand ------------------------------------------------------------
 
-void A_FireGoldWandPL1 (player_t *, pspdef_t *);
-void A_FireGoldWandPL2 (player_t *, pspdef_t *);
+void A_FireGoldWandPL1 (AActor *, pspdef_t *);
+void A_FireGoldWandPL2 (AActor *, pspdef_t *);
 
 // Wimpy ammo ---------------------------------------------------------------
 
@@ -556,11 +568,17 @@ END_DEFAULTS
 //
 //----------------------------------------------------------------------------
 
-void A_FireGoldWandPL1 (player_t *player, pspdef_t *psp)
+void A_FireGoldWandPL1 (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
 	angle_t angle;
 	int damage;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	mo = player->mo;
 	player->UseAmmo ();
@@ -582,13 +600,19 @@ void A_FireGoldWandPL1 (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireGoldWandPL2 (player_t *player, pspdef_t *psp)
+void A_FireGoldWandPL2 (AActor *actor, pspdef_t *psp)
 {
 	int i;
 	AActor *mo;
 	angle_t angle;
 	int damage;
 	fixed_t momz;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	mo = player->mo;
 	player->UseAmmo ();
@@ -610,8 +634,8 @@ void A_FireGoldWandPL2 (player_t *player, pspdef_t *psp)
 
 // --- Crossbow -------------------------------------------------------------
 
-void A_FireCrossbowPL1 (player_t *, pspdef_t *);
-void A_FireCrossbowPL2 (player_t *, pspdef_t *);
+void A_FireCrossbowPL1 (AActor *, pspdef_t *);
+void A_FireCrossbowPL2 (AActor *, pspdef_t *);
 void A_BoltSpark (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
@@ -920,9 +944,15 @@ END_DEFAULTS
 //
 //----------------------------------------------------------------------------
 
-void A_FireCrossbowPL1 (player_t *player, pspdef_t *psp)
+void A_FireCrossbowPL1 (AActor *actor, pspdef_t *psp)
 {
 	AActor *pmo;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	pmo = player->mo;
 	player->UseAmmo ();
@@ -937,9 +967,15 @@ void A_FireCrossbowPL1 (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireCrossbowPL2(player_t *player, pspdef_t *psp)
+void A_FireCrossbowPL2(AActor *actor, pspdef_t *psp)
 {
 	AActor *pmo;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	pmo = player->mo;
 	player->UseAmmo ();
@@ -972,12 +1008,12 @@ void A_BoltSpark (AActor *bolt)
 
 #define MAGIC_JUNK 1234
 
-void A_FireMacePL1B (player_t *, pspdef_t *);
-void A_FireMacePL1 (player_t *, pspdef_t *);
+void A_FireMacePL1B (AActor *, pspdef_t *);
+void A_FireMacePL1 (AActor *, pspdef_t *);
 void A_MacePL1Check (AActor *);
 void A_MaceBallImpact (AActor *);
 void A_MaceBallImpact2 (AActor *);
-void A_FireMacePL2 (player_t *, pspdef_t *);
+void A_FireMacePL2 (AActor *, pspdef_t *);
 void A_DeathBallImpact (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
@@ -1407,11 +1443,17 @@ bool AMace::DoRespawn ()
 //
 //----------------------------------------------------------------------------
 
-void A_FireMacePL1B (player_t *player, pspdef_t *psp)
+void A_FireMacePL1B (AActor *actor, pspdef_t *psp)
 {
 	AActor *pmo;
 	AActor *ball;
 	angle_t angle;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	if (!player->UseAmmo (true))
 	{
@@ -1439,13 +1481,19 @@ void A_FireMacePL1B (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireMacePL1 (player_t *player, pspdef_t *psp)
+void A_FireMacePL1 (AActor *actor, pspdef_t *psp)
 {
 	AActor *ball;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	if (pr_maceatk() < 28)
 	{
-		A_FireMacePL1B (player, psp);
+		A_FireMacePL1B (actor, psp);
 		return;
 	}
 	if (!player->UseAmmo (true))
@@ -1595,9 +1643,15 @@ boom:
 //
 //----------------------------------------------------------------------------
 
-void A_FireMacePL2 (player_t *player, pspdef_t *psp)
+void A_FireMacePL2 (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo ();
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMaceFX4));
@@ -1707,7 +1761,7 @@ boom:
 
 // --- Gauntlets ------------------------------------------------------------
 
-void A_GauntletAttack (player_t *, pspdef_t *);
+void A_GauntletAttack (AActor *, pspdef_t *);
 
 // Gauntlets ----------------------------------------------------------------
 
@@ -1884,13 +1938,19 @@ END_DEFAULTS
 //
 //---------------------------------------------------------------------------
 
-void A_GauntletAttack (player_t *player, pspdef_t *psp)
+void A_GauntletAttack (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
 	int slope;
 	int randVal;
 	fixed_t dist;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo ();
 	psp->sx = ((pr_gatk()&3)-2) * FRACUNIT;
@@ -1965,8 +2025,8 @@ void A_GauntletAttack (player_t *player, pspdef_t *psp)
 
 // --- Blaster (aka Claw) ---------------------------------------------------
 
-void A_FireBlasterPL1 (player_t *, pspdef_t *);
-void A_FireBlasterPL2 (player_t *, pspdef_t *);
+void A_FireBlasterPL1 (AActor *, pspdef_t *);
+void A_FireBlasterPL2 (AActor *, pspdef_t *);
 void A_SpawnRippers (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
@@ -2326,11 +2386,17 @@ END_DEFAULTS
 //
 //----------------------------------------------------------------------------
 
-void A_FireBlasterPL1 (player_t *player, pspdef_t *psp)
+void A_FireBlasterPL1 (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
 	angle_t angle;
 	int damage;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	mo = player->mo;
 	player->UseAmmo ();
@@ -2354,9 +2420,15 @@ void A_FireBlasterPL1 (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireBlasterPL2 (player_t *player, pspdef_t *psp)
+void A_FireBlasterPL2 (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo ();
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ABlasterFX1));
@@ -2457,8 +2529,8 @@ void ABlasterFX1::Tick ()
 
 // --- Skull rod ------------------------------------------------------------
 
-void A_FireSkullRodPL1 (player_t *, pspdef_t *);
-void A_FireSkullRodPL2 (player_t *, pspdef_t *);
+void A_FireSkullRodPL1 (AActor *, pspdef_t *);
+void A_FireSkullRodPL2 (AActor *, pspdef_t *);
 void A_SkullRodPL2Seek (AActor *);
 void A_AddPlayerRain (AActor *);
 void A_HideInCeiling (AActor *);
@@ -2783,9 +2855,15 @@ int ARainPillar::DoSpecialDamage (AActor *target, int damage)
 //
 //----------------------------------------------------------------------------
 
-void A_FireSkullRodPL1 (player_t *player, pspdef_t *psp)
+void A_FireSkullRodPL1 (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	if (!player->UseAmmo (true))
 	{
@@ -2808,8 +2886,14 @@ void A_FireSkullRodPL1 (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireSkullRodPL2 (player_t *player, pspdef_t *psp)
+void A_FireSkullRodPL2 (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	player->UseAmmo ();
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHornRodFX2));
 	// Use MissileActor instead of the return value from
@@ -2977,10 +3061,10 @@ void A_HideInCeiling (AActor *actor)
 
 // --- Phoenix Rod ----------------------------------------------------------
 
-void A_FirePhoenixPL1 (player_t *, pspdef_t *);
-void A_InitPhoenixPL2 (player_t *, pspdef_t *);
-void A_FirePhoenixPL2 (player_t *, pspdef_t *);
-void A_ShutdownPhoenixPL2 (player_t *, pspdef_t *);
+void A_FirePhoenixPL1 (AActor *, pspdef_t *);
+void A_InitPhoenixPL2 (AActor *, pspdef_t *);
+void A_FirePhoenixPL2 (AActor *, pspdef_t *);
+void A_ShutdownPhoenixPL2 (AActor *, pspdef_t *);
 void A_PhoenixPuff (AActor *);
 void A_FlameEnd (AActor *);
 void A_FloatPuff (AActor *);
@@ -3276,9 +3360,15 @@ int APhoenixFX2::DoSpecialDamage (AActor *target, int damage)
 //
 //----------------------------------------------------------------------------
 
-void A_FirePhoenixPL1 (player_t *player, pspdef_t *psp)
+void A_FirePhoenixPL1 (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo ();
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(APhoenixFX1));
@@ -3321,9 +3411,12 @@ void A_PhoenixPuff (AActor *actor)
 //
 //----------------------------------------------------------------------------
 
-void A_InitPhoenixPL2 (player_t *player, pspdef_t *psp)
+void A_InitPhoenixPL2 (AActor *actor, pspdef_t *psp)
 {
-	player->flamecount = FLAME_THROWER_TICS;
+	if (actor->player != NULL)
+	{
+		actor->player->flamecount = FLAME_THROWER_TICS;
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -3334,7 +3427,7 @@ void A_InitPhoenixPL2 (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FirePhoenixPL2 (player_t *player, pspdef_t *psp)
+void A_FirePhoenixPL2 (AActor *actor, pspdef_t *psp)
 {
 	AActor *mo;
 	AActor *pmo;
@@ -3342,6 +3435,12 @@ void A_FirePhoenixPL2 (player_t *player, pspdef_t *psp)
 	fixed_t x, y, z;
 	fixed_t slope;
 	int soundid;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	soundid = S_FindSound ("weapons/phoenixpowshoot");
 
@@ -3378,8 +3477,14 @@ void A_FirePhoenixPL2 (player_t *player, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_ShutdownPhoenixPL2 (player_t *player, pspdef_t *psp)
+void A_ShutdownPhoenixPL2 (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	S_StopSound (player->mo, CHAN_WEAPON);
 	player->UseAmmo ();
 }

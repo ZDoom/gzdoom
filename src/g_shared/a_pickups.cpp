@@ -349,12 +349,7 @@ void AInventory::Touch (AActor *toucher)
 	//VerifFavoritWeapon (player);
 
 	// [RH] Execute an attached special (if any)
-	if (special)
-	{
-		LineSpecials[special] (NULL, toucher,
-			args[0], args[1], args[2], args[3], args[4]);
-		special = 0;
-	}
+	DoPickupSpecial (toucher);
 
 	if (flags & MF_COUNTITEM)
 	{
@@ -401,6 +396,16 @@ void AInventory::Touch (AActor *toucher)
 	}
 
 	toucher->player->bonuscount = BONUSADD;
+}
+
+void AInventory::DoPickupSpecial (AActor *toucher)
+{
+	if (special)
+	{
+		LineSpecials[special] (NULL, toucher,
+			args[0], args[1], args[2], args[3], args[4]);
+		special = 0;
+	}
 }
 
 const char *AInventory::PickupMessage ()

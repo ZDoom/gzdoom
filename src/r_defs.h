@@ -224,6 +224,9 @@ enum
 	SECF_CLIPFAKEPLANES = 4,	// as a heightsec, clip planes to target sector's planes
 	SECF_NOFAKELIGHT	= 8,	// heightsec does not change lighting
 	SECF_IGNOREHEIGHTSEC= 16,	// heightsec is only for triggering sector actions
+	SECF_UNDERWATER		= 32,	// sector is underwater
+	SECF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
+	SECF_UNDERWATERMASK	= 32+64
 };
 
 struct FDynamicColormap;
@@ -346,7 +349,7 @@ struct sector_t
 	short damage;		// [RH] Damage to do while standing on floor
 	short mod;			// [RH] Means-of-death for applied damage
 
-	byte waterzone;		// [RH] Sector is underwater?
+	WORD ZoneNumber;	// [RH] Zone this sector belongs to
 	WORD MoreFlags;		// [RH] Misc sector flags
 
 	// [RH] Action specials for sectors. Like Skull Tag, but more
@@ -365,6 +368,11 @@ struct sector_t
 	vertex_t *Triangle[3];	// Three points that can define a plane
 };
 
+struct ReverbContainer;
+struct zone_t
+{
+	ReverbContainer *Environment;
+};
 
 
 //
@@ -409,11 +417,13 @@ enum slopetype_t
 	ST_NEGATIVE
 };
 
+#define ML_ZONEBOUNDARY		0x00010000
+
 struct line_s
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
 	fixed_t 	dx, dy;		// precalculated v2 - v1 for side checking
-	short		flags;
+	DWORD		flags;
 	byte		special;	// [RH] specials are only one byte (like Hexen)
 	byte		alpha;		// <--- translucency (0-255/255=opaque)
 	short		id;			// <--- same as tag or set with Line_SetIdentification

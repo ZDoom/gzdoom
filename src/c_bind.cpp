@@ -182,7 +182,8 @@ const char *KeyNames[NUM_KEYS] =
 	// non-keyboard buttons that can be bound
 	"mouse1",	"mouse2",	"mouse3",	"mouse4",		// 8 mouse buttons
 	"mouse5",	"mouse6",	"mouse7",	"mouse8",
-	"joy1",		"joy2",		"joy3",		"joy4",			// 32 joystick buttons
+
+	"joy1",		"joy2",		"joy3",		"joy4",			// 128 joystick buttons!
 	"joy5",		"joy6",		"joy7",		"joy8",
 	"joy9",		"joy10",	"joy11",	"joy12",
 	"joy13",	"joy14",	"joy15",	"joy16",
@@ -190,6 +191,36 @@ const char *KeyNames[NUM_KEYS] =
 	"joy21",	"joy22",	"joy23",	"joy24",
 	"joy25",	"joy26",	"joy27",	"joy28",
 	"joy29",	"joy30",	"joy31",	"joy32",
+	"joy33",	"joy34",	"joy35",	"joy36",
+	"joy37",	"joy38",	"joy39",	"joy40",
+	"joy41",	"joy42",	"joy43",	"joy44",
+	"joy45",	"joy46",	"joy47",	"joy48",
+	"joy49",	"joy50",	"joy51",	"joy52",
+	"joy53",	"joy54",	"joy55",	"joy56",
+	"joy57",	"joy58",	"joy59",	"joy60",
+	"joy61",	"joy62",	"joy63",	"joy64",
+	"joy65",	"joy66",	"joy67",	"joy68",
+	"joy69",	"joy70",	"joy71",	"joy72",
+	"joy73",	"joy74",	"joy75",	"joy76",
+	"joy77",	"joy78",	"joy79",	"joy80",
+	"joy81",	"joy82",	"joy83",	"joy84",
+	"joy85",	"joy86",	"joy87",	"joy88",
+	"joy89",	"joy90",	"joy91",	"joy92",
+	"joy93",	"joy94",	"joy95",	"joy96",
+	"joy97",	"joy98",	"joy99",	"joy100",
+	"joy101",	"joy102",	"joy103",	"joy104",
+	"joy105",	"joy106",	"joy107",	"joy108",
+	"joy109",	"joy110",	"joy111",	"joy112",
+	"joy113",	"joy114",	"joy115",	"joy116",
+	"joy117",	"joy118",	"joy119",	"joy120",
+	"joy121",	"joy122",	"joy123",	"joy124",
+	"joy125",	"joy126",	"joy127",	"joy128",
+
+	"pov1up",	"pov1right","pov1down",	"pov1left",		// First POV hat
+	"pov2up",	"pov2right","pov2down",	"pov2left",		// Second POV hat
+	"pov3up",	"pov3right","pov3down",	"pov3left",		// Third POV hat
+	"pov4up",	"pov4right","pov4down",	"pov4left",		// Fourth POV hat
+
 	"mwheelup",	"mwheeldown",							// the mouse wheel
 };
 

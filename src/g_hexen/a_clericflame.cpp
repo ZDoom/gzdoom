@@ -17,7 +17,7 @@ const fixed_t FLAMEROTSPEED	= 2*FRACUNIT;
 
 static FRandom pr_missile ("CFlameMissile");
 
-void A_CFlameAttack (player_t *, pspdef_t *);
+void A_CFlameAttack (AActor *, pspdef_t *);
 void A_CFlameRotate (AActor *);
 void A_CFlamePuff (AActor *);
 void A_CFlameMissile (AActor *);
@@ -386,8 +386,14 @@ void ACFlameMissile::Tick ()
 //
 //============================================================================
 
-void A_CFlameAttack (player_t *player, pspdef_t *psp)
+void A_CFlameAttack (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ACFlameMissile));
 	player->UseAmmo ();
 	S_Sound (player->mo, CHAN_WEAPON, "ClericFlameFire", 1, ATTN_NORM);

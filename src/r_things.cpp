@@ -535,6 +535,7 @@ void R_InitSkins (void)
 		}
 
 		strncpy (temp.name, lumpinfo[base+1].name, 4);
+		temp.name[4] = 0;
 		skins[i].sprite = (int)sprites.Push (temp);
 		R_InstallSprite (skins[i].sprite);
 

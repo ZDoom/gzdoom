@@ -3,7 +3,7 @@
 ** Functions for executing console commands and aliases
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2003 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@
 #include "d_player.h"
 #include "configfile.h"
 #include "m_crc32.h"
+#include "v_text.h"
 
 bool ParsingKeyConf;
 
@@ -58,7 +59,8 @@ static const char *KeyConfCommands[] =
 	"addkeysection",
 	"addmenukey",
 	"addslotdefault",
-	"weaponsection"
+	"weaponsection",
+	"setslot"
 };
 
 
@@ -459,7 +461,7 @@ void C_DoCommand (const char *cmd, int keynum)
 
 	if ( (com = FindNameInHashTable (Commands, beg, len)) )
 	{
-		if (gamestate != GS_STARTUP ||
+		if (gamestate != GS_STARTUP || ParsingKeyConf ||
 			(len == 3 && strnicmp (beg, "set", 3) == 0) ||
 			(len == 7 && strnicmp (beg, "logfile", 7) == 0) ||
 			(len == 9 && strnicmp (beg, "unbindall", 9) == 0) ||
@@ -831,19 +833,23 @@ void FConsoleCommand::Run (FCommandLine &argv, AActor *instigator, int key)
 	m_RunFunc (argv, instigator, key);
 }
 
-FConsoleAlias::FConsoleAlias (const char *name, const char *command)
+FConsoleAlias::FConsoleAlias (const char *name, const char *command, bool noSave)
 	: FConsoleCommand (name, NULL),
 	  bRunning (false), bKill (false)
 {
-	m_Command = copystring (command);
+	m_Command[noSave] = copystring (command);
+	m_Command[!noSave] = NULL;
 }
 
 FConsoleAlias::~FConsoleAlias ()
 {
-	if (m_Command != NULL)
+	for (int i = 0; i < 2; ++i)
 	{
-		delete[] m_Command;
-		m_Command = NULL;
+		if (m_Command[i] != NULL)
+		{
+			delete[] m_Command[i];
+			m_Command[i] = NULL;
+		}
 	}
 }
 
@@ -908,12 +914,24 @@ static int DumpHash (FConsoleCommand **table, BOOL aliases, const char *pattern=
 	return count;
 }
 
+void FConsoleAlias::PrintAlias ()
+{
+	if (m_Command[0])
+	{
+		Printf (TEXTCOLOR_YELLOW "%s : %s\n", m_Name, m_Command[0]);
+	}
+	if (m_Command[1])
+	{
+		Printf (TEXTCOLOR_ORANGE "%s : %s\n", m_Name, m_Command[1]);
+	}
+}
+
 void FConsoleAlias::Archive (FConfigFile *f)
 {
-	if (f != NULL && !bNoSave)
+	if (f != NULL && m_Command[0] != NULL)
 	{
 		f->SetValueForKey ("Name", m_Name, true);
-		f->SetValueForKey ("Command", m_Command, true);
+		f->SetValueForKey ("Command", m_Command[0], true);
 	}
 }
 
@@ -934,6 +952,7 @@ void C_ArchiveAliases (FConfigFile *f)
 	}
 }
 
+// This is called only by the ini parser.
 void C_SetAlias (const char *name, const char *cmd)
 {
 	FConsoleCommand *prev, *alias, **chain;
@@ -949,7 +968,7 @@ void C_SetAlias (const char *name, const char *cmd)
 		}
 		delete alias;
 	}
-	new FConsoleAlias (name, cmd);
+	new FConsoleAlias (name, cmd, false);
 }
 
 CCMD (alias)
@@ -988,7 +1007,7 @@ CCMD (alias)
 			{
 				if (alias->IsAlias ())
 				{
-					static_cast<FConsoleAlias *> (alias)->Realias (argv[2]);
+					static_cast<FConsoleAlias *> (alias)->Realias (argv[2], ParsingKeyConf);
 				}
 				else
 				{
@@ -998,11 +1017,7 @@ CCMD (alias)
 			}
 			else
 			{
-				alias = new FConsoleAlias (argv[1], argv[2]);
-			}
-			if (alias != NULL)
-			{ // To avoid clutter, aliases added by KEYCONF are not saved to the ini
-				static_cast<FConsoleAlias *> (alias)->bNoSave = ParsingKeyConf;
+				alias = new FConsoleAlias (argv[1], argv[2], ParsingKeyConf);
 			}
 		}
 	}
@@ -1073,18 +1088,25 @@ bool FConsoleAlias::IsAlias ()
 
 void FConsoleAlias::Run (FCommandLine &args, AActor *m_Instigator, int key)
 {
-	char *mycommand = m_Command;
-	m_Command = NULL;
+	if (bRunning)
+	{
+		Printf ("Alias %s tried to recurse.\n", m_Name);
+		return;
+	}
+
+	int index = m_Command[1] != NULL;
+	char *mycommand = m_Command[index];
+	m_Command[index] = NULL;
 	bRunning = true;
 	AddCommandString (mycommand, key);
 	bRunning = false;
-	if (m_Command != NULL)
+	if (m_Command[index] != NULL)
 	{ // The alias realiased itself, so delete the memory used by this command.
 		delete[] mycommand;
 	}
 	else
 	{ // The alias is unchanged, so put the command back so it can be used again.
-		m_Command = mycommand;
+		m_Command[index] = mycommand;
 	}
 	if (bKill)
 	{ // The alias wants to remove itself
@@ -1092,13 +1114,17 @@ void FConsoleAlias::Run (FCommandLine &args, AActor *m_Instigator, int key)
 	}
 }
 
-void FConsoleAlias::Realias (const char *command)
+void FConsoleAlias::Realias (const char *command, bool noSave)
 {
-	if (m_Command != NULL)
+	if (m_Command[1] != NULL)
 	{
-		delete[] m_Command;
+		noSave = true;
 	}
-	m_Command = copystring (command);
+	if (m_Command[noSave] != NULL)
+	{
+		delete[] m_Command[noSave];
+	}
+	m_Command[noSave] = copystring (command);
 	bKill = false;
 }
 

@@ -443,8 +443,13 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	MainThread = INVALID_HANDLE_VALUE;
 	DuplicateHandle (GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &MainThread,
 		0, FALSE, DUPLICATE_SAME_ACCESS);
+
+	// Uncomment this line to make the Visual C++ CRT check the heap before
+	// every allocation and deallocation. This will be slow, but it can be a
+	// great help in finding problem areas.
 	//_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
-#ifndef __GNUC__
+
+#if !defined(__GNUC__) && !defined(_DEBUG)
 	if (MainThread != INVALID_HANDLE_VALUE)
 	{
 		SetUnhandledExceptionFilter (CatchAllExceptions);

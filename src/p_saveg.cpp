@@ -73,6 +73,8 @@ void P_SerializeWorld (FArchive &arc)
 	int i, j;
 	sector_t *sec;
 	line_t *li;
+	zone_t *zn;
+	BYTE waterflag = 0;
 
 	// do sectors
 	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
@@ -108,9 +110,12 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->bottommap << sec->midmap << sec->topmap
 			<< sec->gravity
 			<< sec->damage
-			<< sec->mod
-			<< sec->waterzone
-			<< sec->SecActTarget
+			<< sec->mod;
+		if (SaveVersion < 211)
+		{
+			arc << waterflag;
+		}
+		arc << sec->SecActTarget
 			<< sec->FloorLight
 			<< sec->CeilingLight
 			<< sec->FloorFlags
@@ -118,6 +123,22 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->sky
 			<< sec->MoreFlags
 			<< sec->SkyBox;
+		if (SaveVersion >= 211)
+		{
+			arc << sec->ZoneNumber;
+		}
+		else
+		{
+			sec->ZoneNumber = 0;
+			if (waterflag == 1)
+			{
+				sec->MoreFlags |= SECF_UNDERWATER;
+			}
+			else if (waterflag == 2)
+			{
+				sec->MoreFlags |= SECF_FORCEDUNDERWATER;
+			}
+		}
 		if (arc.IsStoring ())
 		{
 			arc << sec->ColorMap->Color
@@ -139,8 +160,17 @@ void P_SerializeWorld (FArchive &arc)
 	// do lines
 	for (i = 0, li = lines; i < numlines; i++, li++)
 	{
-		arc << li->flags
-			<< li->special
+		if (SaveVersion < 211)
+		{
+			short sflags;
+			arc << sflags;
+			li->flags = sflags;
+		}
+		else
+		{
+			arc << li->flags;
+		}
+		arc << li->special
 			<< li->alpha
 			<< li->id
 			<< li->args[0] << li->args[1] << li->args[2] << li->args[3] << li->args[4];
@@ -161,6 +191,32 @@ void P_SerializeWorld (FArchive &arc)
 				<< si->LeftSide
 				<< si->RightSide;
 			ADecal::SerializeChain (arc, &si->BoundActors);
+		}
+	}
+
+	// do zones
+	if (SaveVersion < 211)
+	{
+		numzones = 1;
+		zones = new zone_t[1];
+		zones[0].Environment = DefaultEnvironments[0];
+	}
+	else
+	{
+		arc << numzones;
+
+		if (arc.IsLoading())
+		{
+			if (zones != NULL)
+			{
+				delete[] zones;
+			}
+			zones = new zone_t[numzones];
+		}
+
+		for (i = 0, zn = zones; i < numzones; ++i, ++zn)
+		{
+			arc << zn->Environment;
 		}
 	}
 }

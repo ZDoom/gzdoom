@@ -517,13 +517,23 @@ const byte *R_GetColumn (int tex, int col)
 //
 void R_InitTextures (void)
 {
-	maptexture_t*		mtexture;
+	union
+	{
+		maptexture_t	*d;
+		strifemaptexture_t *s;
+	} mtexture;
+	union
+	{
+		mappatch_t		*d;
+		strifemappatch_t *s;
+	} mpatch;
+
 	texture_t*			texture;
-	mappatch_t* 		mpatch;
 	texpatch_t* 		patch;
 
 	int					i;
 	int 				j;
+	int					patchCount;
 
 	const int*			maptex;
 	const int*			maptex2;
@@ -542,6 +552,7 @@ void R_InitTextures (void)
 	const int*			directory;
 
 	int					errors = 0;
+	bool				bStrifeTextures = false;
 
 	
 	// Load the patch names from pnames.lmp.
@@ -612,6 +623,17 @@ void R_InitTextures (void)
 
 	totalwidth = 0;
 
+	i = 0;
+restart:
+	for (j = 0; j < i; ++j)
+	{
+		if (textures[j] != NULL)
+		{
+			free (textures[j]);
+		}
+		textures[j] = NULL;
+	}
+
 	for (i = 0; i < numtextures; i++, directory++)
 	{
 		if (i == numtextures1)
@@ -625,27 +647,66 @@ void R_InitTextures (void)
 		offset = LONG(*directory);
 
 		if (offset > maxoff)
-			I_FatalError ("R_InitTextures: bad texture directory");
+		{
+			if (bStrifeTextures)
+			{
+				I_FatalError ("R_InitTextures: bad texture directory");
+			}
+			else
+			{
+				bStrifeTextures = true;
+				goto restart;
+			}
+		}
 		
-		mtexture = (maptexture_t *) ((byte *)maptex + offset);
+		mtexture.d = (maptexture_t *) ((byte *)maptex + offset);
+
+		if (!bStrifeTextures)
+		{
+			patchCount = SAFESHORT(mtexture.d->patchcount);
+			if (patchCount <= 0 ||
+				mtexture.d->columndirectory[0] != 0 ||
+				mtexture.d->columndirectory[1] != 0 ||
+				mtexture.d->columndirectory[2] != 0 ||
+				mtexture.d->columndirectory[3] != 0)
+			{
+				bStrifeTextures = true;
+				goto restart;
+			}
+		}
+		else
+		{
+			patchCount = SAFESHORT(mtexture.s->patchcount);
+			if (patchCount <= 0)
+			{
+				I_FatalError ("R_InitTextures: bad texture directory");
+			}
+		}
 
 		texture = textures[i] = (texture_t *)
 			Malloc (sizeof(texture_t)
-					  + sizeof(texpatch_t)*(SAFESHORT(mtexture->patchcount)-1));
+					  + sizeof(texpatch_t)*(patchCount-1));
 
-		texture->width = SAFESHORT(mtexture->width);
-		texture->height = SAFESHORT(mtexture->height);
-		texture->patchcount = SAFESHORT(mtexture->patchcount);
-		uppercopy (texture->name, mtexture->name);
+		texture->width = SAFESHORT(mtexture.d->width);
+		texture->height = SAFESHORT(mtexture.d->height);
+		texture->patchcount = patchCount;
+		uppercopy (texture->name, mtexture.d->name);
 
-		mpatch = &mtexture->patches[0];
+		if (!bStrifeTextures)
+		{
+			mpatch.d = &mtexture.d->patches[0];
+		}
+		else
+		{
+			mpatch.s = &mtexture.s->patches[0];
+		}
 		patch = &texture->patches[0];
 
-		for (j = 0; j < texture->patchcount; j++, mpatch++, patch++)
+		for (j = 0; j < texture->patchcount; j++, patch++)
 		{
-			patch->originx = SHORT(mpatch->originx);
-			patch->originy = SHORT(mpatch->originy);
-			patch->patch = patchlookup[SHORT(mpatch->patch)];
+			patch->originx = SHORT(mpatch.d->originx);
+			patch->originy = SHORT(mpatch.d->originy);
+			patch->patch = patchlookup[SHORT(mpatch.d->patch)];
 			if (patch->patch == -1)
 			{
 				char name[9];
@@ -657,6 +718,10 @@ void R_InitTextures (void)
 				--j;
 				//errors++;
 			}
+			if (bStrifeTextures)
+				mpatch.s++;
+			else
+				mpatch.d++;
 		}
 		if (texture->patchcount == 0)
 		{
@@ -714,8 +779,8 @@ void R_InitTextures (void)
 		// to determine scaling instead of defaulting to 8. I will likely
 		// remove this once I finish the betas, because by then, users
 		// should be able to actually create scaled textures.
-		texturescalex[i] = mtexture->ScaleX ? mtexture->ScaleX : 0;
-		texturescaley[i] = mtexture->ScaleY ? mtexture->ScaleY : 0;
+		texturescalex[i] = mtexture.d->ScaleX ? mtexture.d->ScaleX : 0;
+		texturescaley[i] = mtexture.d->ScaleY ? mtexture.d->ScaleY : 0;
 
 		totalwidth += texture->width;
 	}
@@ -754,6 +819,15 @@ void R_InitTextures (void)
 	
 	for (i = 0; i < numtextures; i++)
 		texturetranslation[i] = i;
+
+	// The Hexen scripts use BLANK as a blank texture, even though it's really not.
+	// I guess the Doom renderer must have clipped away the line at the bottom of
+	// the texture so it wasn't visible. I'll just map it to 0, so it really is blakn.
+	if (gameinfo.gametype == GAME_Hexen &&
+		0 <= (i = R_CheckTextureNumForName ("BLANK")))
+	{
+		texturetranslation[i] = 0;
+	}
 }
 
 

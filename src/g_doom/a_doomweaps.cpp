@@ -329,7 +329,7 @@ END_DEFAULTS
 
 // Fist ---------------------------------------------------------------------
 
-void A_Punch (player_t *, pspdef_t *);
+void A_Punch (AActor *, pspdef_t *);
 
 class AFist : public AWeapon
 {
@@ -364,7 +364,7 @@ FWeaponInfo AFist::WeaponInfo =
 	0,
 	am_noammo,
 	am_noammo,
-	0,
+	1,
 	0,
 	&States[S_PUNCHUP],
 	&States[S_PUNCHDOWN],
@@ -394,40 +394,43 @@ weapontype_t AFist::OldStyleID () const
 //
 // A_Punch
 //
-void A_Punch (player_t *player, pspdef_t *psp)
+void A_Punch (AActor *actor, pspdef_t *psp)
 {
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
 
-	player->UseAmmo ();
-
 	damage = (pr_punch()%10+1)<<1;
 
-	if (player->powers[pw_strength])	
-		damage *= 10;
+	if (actor->player != NULL)
+	{
+		actor->player->UseAmmo ();
 
-	angle = player->mo->angle;
+		if (actor->player->powers[pw_strength])	
+			damage *= 10;
+	}
+
+	angle = actor->angle;
 
 	angle += pr_punch.Random2() << 18;
-	pitch = P_AimLineAttack (player->mo, angle, MELEERANGE);
+	pitch = P_AimLineAttack (actor, angle, MELEERANGE);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
-	P_LineAttack (player->mo, angle, MELEERANGE, pitch, damage);
+	P_LineAttack (actor, angle, MELEERANGE, pitch, damage);
 
 	// turn to face target
 	if (linetarget)
 	{
-		S_Sound (player->mo, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
-		player->mo->angle = R_PointToAngle2 (player->mo->x,
-											 player->mo->y,
-											 linetarget->x,
-											 linetarget->y);
+		S_Sound (actor, CHAN_WEAPON, "*fist", 1, ATTN_NORM);
+		actor->angle = R_PointToAngle2 (actor->x,
+										actor->y,
+										linetarget->x,
+										linetarget->y);
 	}
 }
 
 // Pistol -------------------------------------------------------------------
 
-void A_FirePistol (player_t *, pspdef_t *);
+void A_FirePistol (AActor *, pspdef_t *);
 
 class APistol : public AWeapon
 {
@@ -497,24 +500,35 @@ weapontype_t APistol::OldStyleID () const
 //
 // A_FirePistol
 //
-void A_FirePistol (player_t *player, pspdef_t *psp)
+void A_FirePistol (AActor *actor, pspdef_t *psp)
 {
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
+	bool accurate;
 
-	player->mo->PlayAttacking2 ();
-	player->UseAmmo ();
+	if (actor->player != NULL)
+	{
+		actor->player->mo->PlayAttacking2 ();
+		actor->player->UseAmmo ();
 
-	P_SetPsprite (player, ps_flash,
-		wpnlev1info[player->readyweapon]->flashstate);
+		P_SetPsprite (actor->player, ps_flash,
+			wpnlev1info[actor->player->readyweapon]->flashstate);
+
+		accurate = !actor->player->refire;
+	}
+	else
+	{
+		accurate = true;
+	}
+
+	S_Sound (actor, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 
 	PuffType = RUNTIME_CLASS(ABulletPuff);
-	P_BulletSlope (player->mo);
-	P_GunShot (player->mo, !player->refire);
+	P_BulletSlope (actor);
+	P_GunShot (actor, accurate);
 }
 
 // Chainsaw -----------------------------------------------------------------
 
-void A_Saw (player_t *, pspdef_t *);
+void A_Saw (AActor *, pspdef_t *);
 
 class AChainsaw : public AWeapon
 {
@@ -553,7 +567,7 @@ FWeaponInfo AChainsaw::WeaponInfo =
 	0,
 	am_noammo,
 	am_noammo,
-	0,
+	1,
 	0,
 	&States[S_SAWUP],
 	&States[S_SAWDOWN],
@@ -593,15 +607,21 @@ const char *AChainsaw::PickupMessage ()
 //
 // A_Saw
 //
-void A_Saw (player_t *player, pspdef_t *psp)
+void A_Saw (AActor *actor, pspdef_t *psp)
 {
 	angle_t 	angle;
 	int 		damage;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo ();
 
 	damage = 2 * (pr_saw()%10+1);
-	angle = player->mo->angle;
+	angle = actor->angle;
 	angle += pr_saw.Random2() << 18;
 	
 	// use meleerange + 1 so the puff doesn't skip the flash
@@ -610,39 +630,39 @@ void A_Saw (player_t *player, pspdef_t *psp)
 	// won't puff the wall, which is why the fist does not create puffs on
 	// the walls.
 	PuffType = RUNTIME_CLASS(ABulletPuff);
-	P_LineAttack (player->mo, angle, MELEERANGE+1,
-				  P_AimLineAttack (player->mo, angle, MELEERANGE+1), damage);
+	P_LineAttack (actor, angle, MELEERANGE+1,
+				  P_AimLineAttack (actor, angle, MELEERANGE+1), damage);
 
 	if (!linetarget)
 	{
-		S_Sound (player->mo, CHAN_WEAPON, "weapons/sawfull", 1, ATTN_NORM);
+		S_Sound (actor, CHAN_WEAPON, "weapons/sawfull", 1, ATTN_NORM);
 		return;
 	}
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/sawhit", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sawhit", 1, ATTN_NORM);
 		
 	// turn to face target
-	angle = R_PointToAngle2 (player->mo->x, player->mo->y,
+	angle = R_PointToAngle2 (actor->x, actor->y,
 							 linetarget->x, linetarget->y);
-	if (angle - player->mo->angle > ANG180)
+	if (angle - actor->angle > ANG180)
 	{
-		if (angle - player->mo->angle < (angle_t)(-ANG90/20))
-			player->mo->angle = angle + ANG90/21;
+		if (angle - actor->angle < (angle_t)(-ANG90/20))
+			actor->angle = angle + ANG90/21;
 		else
-			player->mo->angle -= ANG90/20;
+			actor->angle -= ANG90/20;
 	}
 	else
 	{
-		if (angle - player->mo->angle > ANG90/20)
-			player->mo->angle = angle - ANG90/21;
+		if (angle - actor->angle > ANG90/20)
+			actor->angle = angle - ANG90/21;
 		else
-			player->mo->angle += ANG90/20;
+			actor->angle += ANG90/20;
 	}
-	player->mo->flags |= MF_JUSTATTACKED;
+	actor->flags |= MF_JUSTATTACKED;
 }
 
 // Shotgun ------------------------------------------------------------------
 
-void A_FireShotgun (player_t *, pspdef_t *);
+void A_FireShotgun (AActor *, pspdef_t *);
 
 class AShotgun : public AWeapon
 {
@@ -730,30 +750,36 @@ const char *AShotgun::PickupMessage ()
 //
 // A_FireShotgun
 //
-void A_FireShotgun (player_t *player, pspdef_t *psp)
+void A_FireShotgun (AActor *actor, pspdef_t *psp)
 {
 	int i;
+	player_t *player;
 
-	S_Sound (player->mo, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
+
+	S_Sound (actor, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	player->mo->PlayAttacking2 ();
 	player->UseAmmo ();
 
 	P_SetPsprite (player, ps_flash, wpnlev1info[player->readyweapon]->flashstate);
 
-	P_BulletSlope (player->mo);
+	P_BulletSlope (actor);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
 
 	for (i=0 ; i<7 ; i++)
-		P_GunShot (player->mo, false);
+		P_GunShot (actor, false);
 }
 
 // Super Shotgun ------------------------------------------------------------
 
-void A_FireShotgun2 (player_t *, pspdef_t *);
-void A_CheckReload (player_t *, pspdef_t *);
-void A_OpenShotgun2 (player_t *, pspdef_t *);
-void A_LoadShotgun2 (player_t *, pspdef_t *);
-void A_CloseShotgun2 (player_t *, pspdef_t *);
+void A_FireShotgun2 (AActor *actor, pspdef_t *);
+void A_CheckReload (AActor *actor, pspdef_t *);
+void A_OpenShotgun2 (AActor *actor, pspdef_t *);
+void A_LoadShotgun2 (AActor *actor, pspdef_t *);
+void A_CloseShotgun2 (AActor *actor, pspdef_t *);
 
 class ASuperShotgun : public AWeapon
 {
@@ -846,27 +872,32 @@ const char *ASuperShotgun::PickupMessage ()
 //
 // A_FireShotgun2
 //
-void A_FireShotgun2 (player_t *player, pspdef_t *psp)
+void A_FireShotgun2 (AActor *actor, pspdef_t *psp)
 {
 	int 		i;
 	angle_t 	angle;
 	int 		damage;
-				
-		
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
+
+	S_Sound (actor, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
 	player->mo->PlayAttacking2 ();
 	player->UseAmmo ();
 
 	P_SetPsprite (player, ps_flash,
 		wpnlev1info[player->readyweapon]->flashstate);
 
-	P_BulletSlope (player->mo);
+	P_BulletSlope (actor);
 		
 	PuffType = RUNTIME_CLASS(ABulletPuff);
 	for (i=0 ; i<20 ; i++)
 	{
 		damage = 5*(pr_fireshotgun2()%3+1);
-		angle = player->mo->angle;
+		angle = actor->angle;
 		angle += pr_fireshotgun2.Random2() << 19;
 
 		// Doom adjusts the bullet slope by shifting a random number [-255,255]
@@ -875,37 +906,40 @@ void A_FireShotgun2 (player_t *player, pspdef_t *psp)
 		// some simple trigonometry, that means the vertical angle of the shot
 		// can deviate by as many as ~7.097 degrees or ~84676099 BAMs.
 
-		P_LineAttack (player->mo,
+		P_LineAttack (actor,
 					  angle,
 					  MISSILERANGE,
 					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage);
 	}
 }
 
-void A_CheckReload (player_t *player, pspdef_t *psp)
+void A_CheckReload (AActor *actor, pspdef_t *psp)
 {
-	P_CheckAmmo (player);
+	if (actor->player != NULL)
+	{
+		P_CheckAmmo (actor->player);
+	}
 }
 
-void A_OpenShotgun2 (player_t *player, pspdef_t *psp)
+void A_OpenShotgun2 (AActor *actor, pspdef_t *psp)
 {
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/sshoto", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sshoto", 1, ATTN_NORM);
 }
 
-void A_LoadShotgun2 (player_t *player, pspdef_t *psp)
+void A_LoadShotgun2 (AActor *actor, pspdef_t *psp)
 {
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/sshotl", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sshotl", 1, ATTN_NORM);
 }
 
-void A_CloseShotgun2 (player_t *player, pspdef_t *psp)
+void A_CloseShotgun2 (AActor *actor, pspdef_t *psp)
 {
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
-	A_ReFire(player,psp);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
+	A_ReFire (actor, psp);
 }
 
 // Chaingun -----------------------------------------------------------------
 
-void A_FireCGun (player_t *, pspdef_t *);
+void A_FireCGun (AActor *, pspdef_t *);
 
 class AChaingun : public AWeapon
 {
@@ -987,9 +1021,15 @@ const char *AChaingun::PickupMessage ()
 //
 // A_FireCGun
 //
-void A_FireCGun (player_t *player, pspdef_t *psp)
+void A_FireCGun (AActor *actor, pspdef_t *psp)
 {
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
+	S_Sound (actor, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	FWeaponInfo *wpninfo = wpnlev1info[player->readyweapon];
 
 	if (wpninfo->ammo < NUMAMMO && !player->ammo[wpninfo->ammo])
@@ -1004,14 +1044,14 @@ void A_FireCGun (player_t *player, pspdef_t *psp)
 			wpninfo->flashstate + (psp->state - wpninfo->atkstate));
 	}
 
-	P_BulletSlope (player->mo);
+	P_BulletSlope (actor);
 	PuffType = RUNTIME_CLASS (ABulletPuff);		
-	P_GunShot (player->mo, !player->refire);
+	P_GunShot (actor, !player->refire);
 }
 
 // Rocket launcher ---------------------------------------------------------
 
-void A_FireMissile (player_t *, pspdef_t *);
+void A_FireMissile (AActor *, pspdef_t *);
 void A_Explode (AActor *);
 
 class ARocketLauncher : public AWeapon
@@ -1111,6 +1151,7 @@ IMPLEMENT_ACTOR (ARocket, Doom, -1, 127)
 	PROP_Damage (20)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT)
+	PROP_Flags4 (MF4_RANDOMIZE)
 
 	PROP_SpawnState (S_ROCKET)
 	PROP_DeathState (S_EXPLODE)
@@ -1128,15 +1169,21 @@ void ARocket::BeginPlay ()
 //
 // A_FireMissile
 //
-void A_FireMissile (player_t *player, pspdef_t *psp)
+void A_FireMissile (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	player->UseAmmo ();
-	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ARocket));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ARocket));
 }
 
 // Plasma rifle ------------------------------------------------------------
 
-void A_FirePlasma (player_t *, pspdef_t *);
+void A_FirePlasma (AActor *, pspdef_t *);
 
 class APlasmaRifle : public AWeapon
 {
@@ -1234,8 +1281,9 @@ IMPLEMENT_ACTOR (APlasmaBall, Doom, -1, 51)
 	PROP_SpeedFixed (25)
 	PROP_Damage (5)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT)
+	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT|MF2_ICEDAMAGE)
 	PROP_Flags3 (MF3_WARNBOT)
+	PROP_Flags4 (MF4_RANDOMIZE)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_Alpha (TRANSLUC75)
 
@@ -1249,8 +1297,14 @@ END_DEFAULTS
 //
 // A_FirePlasma
 //
-void A_FirePlasma (player_t *player, pspdef_t *psp)
+void A_FirePlasma (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	player->UseAmmo ();
 
 	if (wpnlev1info[player->readyweapon]->flashstate)
@@ -1260,7 +1314,7 @@ void A_FirePlasma (player_t *player, pspdef_t *psp)
 			+ (pr_fireplasma()&1));
 	}
 
-	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(APlasmaBall));
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(APlasmaBall));
 }
 
 //
@@ -1268,9 +1322,15 @@ void A_FirePlasma (player_t *player, pspdef_t *psp)
 //
 static int RailOffset;
 
-void A_FireRailgun (player_t *player, pspdef_t *psp)
+void A_FireRailgun (AActor *actor, pspdef_t *psp)
 {
 	int damage;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	player->UseAmmo ();
 
@@ -1283,32 +1343,32 @@ void A_FireRailgun (player_t *player, pspdef_t *psp)
 
 	damage = deathmatch ? 100 : 150;
 
-	P_RailAttack (player->mo, damage, RailOffset);
+	P_RailAttack (actor, damage, RailOffset);
 	RailOffset = 0;
 }
 
-void A_FireRailgunRight (player_t *player, pspdef_t *psp)
+void A_FireRailgunRight (AActor *actor, pspdef_t *psp)
 {
 	RailOffset = 10;
-	A_FireRailgun (player, psp);
+	A_FireRailgun (actor, psp);
 }
 
-void A_FireRailgunLeft (player_t *player, pspdef_t *psp)
+void A_FireRailgunLeft (AActor *actor, pspdef_t *psp)
 {
 	RailOffset = -10;
-	A_FireRailgun (player, psp);
+	A_FireRailgun (actor, psp);
 }
 
-void A_RailWait (player_t *player, pspdef_t *psp)
+void A_RailWait (AActor *actor, pspdef_t *psp)
 {
 	// Okay, this was stupid. Just use a NULL function instead of this.
 }
 
 // BFG 9000 -----------------------------------------------------------------
 
-void A_FireBFG (player_t *, pspdef_t *);
+void A_FireBFG (AActor *, pspdef_t *);
 void A_BFGSpray (AActor *);
-void A_BFGsound (player_t *, pspdef_t *);
+void A_BFGsound (AActor *, pspdef_t *);
 
 class ABFG9000 : public AWeapon
 {
@@ -1415,6 +1475,7 @@ IMPLEMENT_ACTOR (ABFGBall, Doom, -1, 128)
 	PROP_Damage (100)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT)
+	PROP_Flags4 (MF4_RANDOMIZE)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_Alpha (TRANSLUC75)
 
@@ -1444,21 +1505,27 @@ END_DEFAULTS
 // A_FireBFG
 //
 
-void A_FireBFG (player_t *player, pspdef_t *psp)
+void A_FireBFG (AActor *actor, pspdef_t *psp)
 {
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 	// [RH] bfg can be forced to not use freeaim
-	angle_t storedpitch = player->mo->pitch;
+	angle_t storedpitch = actor->pitch;
 	int storedaimdist = player->userinfo.aimdist;
 
 	player->UseAmmo ();
 
 	if (dmflags2 & DF2_NO_FREEAIMBFG)
 	{
-		player->mo->pitch = 0;
+		actor->pitch = 0;
 		player->userinfo.aimdist = ANGLE_1*35;
 	}
-	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ABFGBall));
-	player->mo->pitch = storedpitch;
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ABFGBall));
+	actor->pitch = storedpitch;
 	player->userinfo.aimdist = storedaimdist;
 }
 
@@ -1503,8 +1570,8 @@ void A_BFGSpray (AActor *mo)
 //
 // A_BFGsound
 //
-void A_BFGsound (player_t *player, pspdef_t *psp)
+void A_BFGsound (AActor *actor, pspdef_t *psp)
 {
-	S_Sound (player->mo, CHAN_WEAPON, "weapons/bfgf", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, "weapons/bfgf", 1, ATTN_NORM);
 }
 

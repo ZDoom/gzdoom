@@ -264,7 +264,7 @@ CCMD (hxvisit)
 
 		sprintf (mapname, "&wt@%c%c", argv[1][0], argv[1][1]);
 
-		if (CheckWarpTransMap (mapname))
+		if (CheckWarpTransMap (mapname, false))
 		{
 			// Just because it's in MAPINFO doesn't mean it's in the wad.
 			if (W_CheckNumForName (mapname) != -1)

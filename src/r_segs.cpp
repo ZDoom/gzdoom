@@ -833,7 +833,7 @@ void R_NewWall ()
 				midtexture = texturetranslation[sidedef->midtexture];
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
-					rw_midtexturemid = frontsector->floortexz + textureheight[sidedef->midtexture];
+					rw_midtexturemid = frontsector->floortexz + textureheight[midtexture];
 				}
 				else
 				{ // top of texture at top
@@ -974,12 +974,12 @@ void R_NewWall ()
 			markceiling = false;
 	}
 
-	segtextured = sidedef->midtexture | (toptexture | bottomtexture);
+	segtextured = texturetranslation[sidedef->midtexture] | toptexture | bottomtexture;
 
 	// calculate light table
 	if (segtextured || (backsector && IsFogBoundary (frontsector, backsector)))
 	{
-		lwallscale = sidedef->midtexture ? texturescalex[sidedef->midtexture] :
+		lwallscale = texturetranslation[sidedef->midtexture] ? texturescalex[texturetranslation[sidedef->midtexture]] :
 					 toptexture ? texturescalex[toptexture] :
 					 bottomtexture ? texturescalex[bottomtexture] : 0;
 		if (lwallscale == 0)
@@ -1180,7 +1180,7 @@ void R_StoreWallRange (int start, int stop)
 
 		// allocate space for masked texture tables, if needed
 		// [RH] Don't just allocate the space; fill it in too.
-		if ((sidedef->midtexture || IsFogBoundary (frontsector, backsector)) &&
+		if ((texturetranslation[sidedef->midtexture] || IsFogBoundary (frontsector, backsector)) &&
 			(rw_ceilstat != 12 || sidedef->toptexture == 0) &&
 			(rw_floorstat != 3 || sidedef->bottomtexture == 0) &&
 			(WallSZ1 >= TOO_CLOSE_Z && WallSZ2 >= TOO_CLOSE_Z))
@@ -1192,15 +1192,15 @@ void R_StoreWallRange (int start, int stop)
 			maskedtexture = true;
 
 			ds_p->bFogBoundary = IsFogBoundary (frontsector, backsector);
-			if (sidedef->midtexture)
+			if (texturetranslation[sidedef->midtexture])
 			{
 				ds_p->maskedtexturecol = R_NewOpening (stop - start);
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
 
 				lwal = openings + ds_p->maskedtexturecol;
 				swal = (fixed_t *)(openings + ds_p->swall);
-				int scaley = texturescaley[sidedef->midtexture] ?
-					texturescaley[sidedef->midtexture] : ty;
+				int scaley = texturescaley[texturetranslation[sidedef->midtexture]] ?
+					texturescaley[texturetranslation[sidedef->midtexture]] : ty;
 				int xoffset = rw_offset;
 				for (i = start; i < stop; i++)
 				{

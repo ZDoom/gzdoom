@@ -46,7 +46,7 @@ static FRandom pr_morphplayerthink ("MorphPlayerThink");
 static FRandom pr_torch ("Torch");
 static FRandom pr_healradius ("HealRadius");
 
-extern void P_UpdateBeak (player_t *, pspdef_t *);
+extern void P_UpdateBeak (AActor *, pspdef_t *);
 
 // [RH] # of ticks to complete a turn180
 #define TURN180_TICKS	9
@@ -505,6 +505,8 @@ void P_MovePlayer (player_t *player)
 		fm = cmd->ucmd.forwardmove;
 		sm = cmd->ucmd.sidemove;
 		mo->TweakSpeeds (fm, sm);
+		fm = FixedMul (fm, player->mo->Speed);
+		sm = FixedMul (sm, player->mo->Speed);
 
 		forwardmove = Scale (fm, movefactor * 35, TICRATE << 8);
 		sidemove = Scale (sm, movefactor * 35, TICRATE << 8);
@@ -732,7 +734,7 @@ void P_MorphPlayerThink (player_t *player)
 	{ // Chicken think
 		if (player->health > 0)
 		{ // Handle beak movement
-			P_UpdateBeak (player, &player->psprites[ps_weapon]);
+			P_UpdateBeak (player->mo, &player->psprites[ps_weapon]);
 		}
 		if (player->morphTics & 15)
 		{
@@ -1100,8 +1102,7 @@ void P_PlayerThink (player_t *player)
 			{
 				P_SetPsprite (player, ps_weapon,
 					wpnlev1info[wp_phoenixrod]->readystate);
-				player->ammo[am_phoenixrod] -=
-					wpnlev2info[wp_phoenixrod]->ammouse;
+				player->UseAmmo ();
 				player->refire = 0;
 				S_StopSound (player->mo, CHAN_WEAPON);
 			}

@@ -82,7 +82,7 @@ static CodePtrMap *CodePtrNames;
 static int NumCodePtrs;
 
 // Prototype the dehacked code pointers
-#define WEAPON(x)	void A_##x(player_s*, pspdef_t*);
+#define WEAPON(x)	void A_##x(AActor*, pspdef_t*);
 #define ACTOR(x)	void A_##x(AActor*);
 #include "d_dehackedactions.h"
 
@@ -2108,11 +2108,13 @@ static void UnloadDehSupp ()
 			delete[] OrgSprNames;
 			OrgSprNames = NULL;
 		}
+		/* No! Not if we want to load multiple independant patches!
 		if (StateMap != NULL)
 		{
 			delete[] StateMap;
 			StateMap = NULL;
 		}
+		*/
 		if (BitNames != NULL)
 		{
 			delete[] BitNames;
@@ -2221,41 +2223,44 @@ static bool LoadDehSupp ()
 				Printf ("Names must come before state map\n");
 				return false;
 			}
-			NumStateMaps = GetWord (supp + 4);
-			StateMap = new StateMapper[NumStateMaps];
-			for (i = 0; i < NumStateMaps; i++)
+			if (StateMap == NULL)
 			{
-				const char *name = GetName (GetWord (supp + 6 + i*4));
-				const TypeInfo *type = TypeInfo::FindType (name);
-				if (type == NULL)
+				NumStateMaps = GetWord (supp + 4);
+				StateMap = new StateMapper[NumStateMaps];
+				for (i = 0; i < NumStateMaps; i++)
 				{
-					Printf ("Can't find type %s\n", name);
-					return false;
-				}
-				else if (type->ActorInfo == NULL)
-				{
-					Printf ("%s has no ActorInfo\n", name);
-					return false;
-				}
-				else
-				{
-					AActor *def = GetDefaultByType (type);
-
-					switch (supp[6 + i*4 + 2])
+					const char *name = GetName (GetWord (supp + 6 + i*4));
+					const TypeInfo *type = TypeInfo::FindType (name);
+					if (type == NULL)
 					{
-					case FirstState:
-						StateMap[i].State = type->ActorInfo->OwnedStates;
-						break;
-					case SpawnState:
-						StateMap[i].State = def->SpawnState;
-						break;
-					case DeathState:
-						StateMap[i].State = def->DeathState;
-						break;
+						Printf ("Can't find type %s\n", name);
+						return false;
 					}
-					StateMap[i].StateSpan = supp[6+i*4+3];
-					StateMap[i].Owner = type;
-					StateMap[i].OwnerIsPickup = (def->flags & MF_SPECIAL) != 0;
+					else if (type->ActorInfo == NULL)
+					{
+						Printf ("%s has no ActorInfo\n", name);
+						return false;
+					}
+					else
+					{
+						AActor *def = GetDefaultByType (type);
+
+						switch (supp[6 + i*4 + 2])
+						{
+						case FirstState:
+							StateMap[i].State = type->ActorInfo->OwnedStates;
+							break;
+						case SpawnState:
+							StateMap[i].State = def->SpawnState;
+							break;
+						case DeathState:
+							StateMap[i].State = def->DeathState;
+							break;
+						}
+						StateMap[i].StateSpan = supp[6+i*4+3];
+						StateMap[i].Owner = type;
+						StateMap[i].OwnerIsPickup = (def->flags & MF_SPECIAL) != 0;
+					}
 				}
 			}
 			supp += 6 + NumStateMaps * 4;

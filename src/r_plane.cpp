@@ -915,30 +915,34 @@ void R_DrawPlanes ()
 					}
 					if (flatwarpedwhen[useflatnum] != level.time)
 					{
-						static byte buffer[64];
+						static byte buffer[256];
 						int timebase = level.time*23;
+						int xsize = 1 << ds_xbits;
+						int ysize = 1 << ds_ybits;
+						int xmask = xsize - 1;
+						int ymask = ysize - 1;
 
 						flatwarpedwhen[useflatnum] = level.time;
 						byte *warped = warpedflats[useflatnum];
 
-						for (x = 63; x >= 0; x--)
+						for (x = xsize-1; x >= 0; x--)
 						{
-							int yt, yf = (finesine[(timebase+(x+17)*128)&FINEMASK]>>13) & 63;
+							int yt, yf = (finesine[(timebase+(x+17)*128)&FINEMASK]>>13) & ymask;
 							byte *source = ds_source + x;
 							byte *dest = warped + x;
-							for (yt = 64; yt; yt--, yf = (yf+1)&63, dest += 64)
-								*dest = *(source+yf*64);
+							for (yt = ysize; yt; yt--, yf = (yf+1)&ymask, dest += xsize)
+								*dest = *(source+(yf<<ds_xbits));
 						}
 						timebase = level.time*32;
 						int y;
-						for (y = 63; y >= 0; y--)
+						for (y = ysize-1; y >= 0; y--)
 						{
-							int xt, xf = (finesine[(timebase+y*128)&FINEMASK]>>13) & 63;
-							byte *source = warped + y*64;
+							int xt, xf = (finesine[(timebase+y*128)&FINEMASK]>>13) & xmask;
+							byte *source = warped + (y<<ds_xbits);
 							byte *dest = buffer;
-							for (xt = 64; xt; xt--, xf = (xf+1)&63)
+							for (xt = xsize; xt; xt--, xf = (xf+1)&xmask)
 								*dest++ = *(source+xf);
-							memcpy (warped+y*64, buffer, 64);
+							memcpy (warped+y*xsize, buffer, xsize);
 						}
 						ds_source = warped;
 					}

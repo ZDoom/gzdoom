@@ -296,8 +296,8 @@ void DCanvas::TextSWrapper (EWrapperCode drawer, int normalcolor, int x, int y, 
 		{
 			int sw = w * CleanXfac;
 
-			if (cx + sw > Width)
-				break;
+//			if (cx + sw > Width)
+//				break;
 
 			switch (drawer)
 			{
@@ -408,7 +408,7 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 
 		nw = screen->Font->GetCharWidth (c);
 
-		if (w + nw > maxwidth || c == '\n')
+		if ((w > 0 && w + nw > maxwidth) || c == '\n')
 		{ // Time to break the line
 			if (!space)
 				space = string - 1;

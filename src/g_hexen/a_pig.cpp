@@ -18,7 +18,7 @@ static FRandom pr_pigattack ("PigAttack");
 
 extern void AdjustPlayerAngle (AActor *);
 
-void A_SnoutAttack (player_t *, pspdef_t *);
+void A_SnoutAttack (AActor *actor, pspdef_t *);
 
 void A_PigPain (AActor *);
 void A_PigLook (AActor *);
@@ -156,6 +156,7 @@ IMPLEMENT_ACTOR (APigPlayer, Hexen, -1, 0)
 	PROP_PainChance (255)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (24)
+	PROP_SpeedFixed (1)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOTDMATCH)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_SLIDE|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
 
@@ -280,11 +281,17 @@ const char *APig::GetObituary ()
 //
 //============================================================================
 
-void A_SnoutAttack (player_t *player, pspdef_t *psp)
+void A_SnoutAttack (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
 	int slope;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	damage = 3+(pr_snoutattack()&3);
 	angle = player->mo->angle;

@@ -140,7 +140,7 @@ bool P_Thing_Move (int tid, int mapspot)
 }
 
 bool P_Thing_Projectile (int tid, int type, angle_t angle,
-	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, bool gravity)
+	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid)
 {
 	int rtn = 0;
 	const TypeInfo *kind;
@@ -169,6 +169,8 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 
 				if (mobj)
 				{
+					mobj->tid = newtid;
+					mobj->AddToHash ();
 					if (mobj->SeeSound)
 					{
 						S_SoundID (mobj, CHAN_VOICE, mobj->SeeSound, 1, ATTN_NORM);
@@ -176,7 +178,7 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 					if (gravity)
 					{
 						mobj->flags &= ~MF_NOGRAVITY;
-						if (!(mobj->flags3 & MF3_ISMONSTER))
+						if (!(mobj->flags3 & MF3_ISMONSTER) && gravity == 1)
 						{
 							mobj->flags2 |= MF2_LOGRAV;
 						}

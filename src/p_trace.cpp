@@ -81,11 +81,17 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 	if (P_PathTraverse (x, y, x + FixedMul (vx, maxDist), y + FixedMul (vy, maxDist),
 		ptflags, PTR_TraceIterator))
 	{ // check for intersection with floor/ceiling
-		Results->Sector = CurSector;
+		res.Sector = CurSector;
 
 		if (CheckSectorPlane (CurSector, true))
 		{
 			res.HitType = TRACE_HitFloor;
+			if (res.CrossedWater == NULL &&
+				CurSector->heightsec != NULL &&
+				CurSector->heightsec->floorplane.ZatPoint (res.X, res.Y) >= res.Z)
+			{
+				res.CrossedWater = CurSector;
+			}
 		}
 		else if (CheckSectorPlane (CurSector, false))
 		{

@@ -3,7 +3,7 @@
 ** System interface for sound; uses fmod.dll
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2003 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@ extern HINSTANCE g_hInst;
 
 
 #include <fmod.h>
+#include "sample_flac.h"
 
 #include "m_swap.h"
 #include "stats.h"
@@ -83,7 +84,8 @@ extern int I_SoundIsPlaying_Simple (int handle);
 extern void I_UpdateSoundParams_Simple (int handle, int vol, int sep, int pitch);
 extern void I_LoadSound_Simple (sfxinfo_t *sfx);
 
-static bool wasUnderwater;
+static const ReverbContainer *PrevEnvironment;
+ReverbContainer *ForcedEnvironment;
 
 extern int MAX_SND_DIST;
 const int S_CLIPPING_DIST = 1200;
@@ -177,12 +179,12 @@ static const char *FmodErrors[] =
 // so this is a replacement for it that loads the data manually. Source data
 // is mono, unsigned, 8-bit. Output is mono, signed, 8- or 16-bit.
 
-static int PutSampleData (FSOUND_SAMPLE *sample, BYTE *data, int len,
+static int PutSampleData (FSOUND_SAMPLE *sample, const BYTE *data, int len,
 	unsigned int mode)
 {
 	if (mode & FSOUND_2D)
 	{
-		return FSOUND_Sample_Upload (sample, data,
+		return FSOUND_Sample_Upload (sample, const_cast<BYTE *>(data),
 			FSOUND_8BITS|FSOUND_MONO|FSOUND_UNSIGNED);
 	}
 	else if (FSOUND_Sample_GetMode (sample) & FSOUND_8BITS)
@@ -249,7 +251,7 @@ static int PutSampleData (FSOUND_SAMPLE *sample, BYTE *data, int len,
 
 static void DoLoad (void **slot, sfxinfo_t *sfx)
 {
-	byte *sfxdata;
+	const byte *sfxdata;
 	int size;
 	int errcount;
 	unsigned long samplemode;
@@ -262,7 +264,7 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 	{
 		if (sfxdata != NULL)
 		{
-			delete[] sfxdata;
+			W_UnMapLump (sfxdata);
 			sfxdata = NULL;
 		}
 
@@ -276,8 +278,7 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 			continue;
 		}
 
-		sfxdata = new byte[size];
-		W_ReadLump (sfx->lumpnum, sfxdata);
+		sfxdata = (const byte *)W_MapLumpNum (sfx->lumpnum);
 		SDWORD len = ((SDWORD *)sfxdata)[1];
 
 		// If the sound is raw, just load it as such.
@@ -287,7 +288,7 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 			(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
 		{
 			FSOUND_SAMPLE *sample;
-			BYTE *sfxstart;
+			const BYTE *sfxstart;
 			unsigned int bits;
 
 			if (sfx->bLoadRAW)
@@ -334,12 +335,26 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 		}
 		else
 		{
-			*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata,
-				samplemode|FSOUND_LOADMEMORY, size);
-			if (*slot == NULL && FSOUND_GetError() == FMOD_ERR_CREATEBUFFER && samplemode == FSOUND_HW3D)
+			if (((BYTE *)sfxdata)[0] == 'f' && ((BYTE *)sfxdata)[1] == 'L' &&
+				 ((BYTE *)sfxdata)[2] == 'a' && ((BYTE *)sfxdata)[3] == 'C')
 			{
-				DPrintf ("Trying to fall back to software sample\n");
-				*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata, FSOUND_2D|FSOUND_LOADMEMORY, size);
+				FLACSampleLoader loader (sfx);
+				*slot = loader.LoadSample (samplemode);
+				if (*slot == NULL && FSOUND_GetError() == FMOD_ERR_CREATEBUFFER && samplemode == FSOUND_HW3D)
+				{
+					DPrintf ("Trying to fall back to software sample\n");
+					*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata, FSOUND_2D, size);
+				}
+			}
+			else
+			{
+				*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata,
+					samplemode|FSOUND_LOADMEMORY, size);
+				if (*slot == NULL && FSOUND_GetError() == FMOD_ERR_CREATEBUFFER && samplemode == FSOUND_HW3D)
+				{
+					DPrintf ("Trying to fall back to software sample\n");
+					*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata, FSOUND_2D|FSOUND_LOADMEMORY, size);
+				}
 			}
 			if (*slot != NULL)
 			{
@@ -351,12 +366,6 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 				sfx->frequency = probe;
 				sfx->ms = FSOUND_Sample_GetLength ((FSOUND_SAMPLE *)sfx->data);
 				sfx->length = sfx->ms;
-			}
-			else
-			{
-				int i;
-				i=FSOUND_GetError ();
-				i=i;
 			}
 		}
 		break;
@@ -378,7 +387,7 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 
 	if (sfxdata != NULL)
 	{
-		delete[] sfxdata;
+		W_UnMapLump (sfxdata);
 	}
 }
 
@@ -403,8 +412,6 @@ static void getsfx (sfxinfo_t *sfx)
 			DPrintf ("Linked to %s (%d)\n", S_sfx[i].name, i);
 			sfx->link = i;
 			sfx->ms = S_sfx[i].ms;
-//			sfx->data = S_sfx[i].data;
-//			sfx->altdata = S_sfx[i].altdata;
 			return;
 		}
 	}
@@ -588,19 +595,11 @@ long I_StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel,
 	if (_nosound || !Sound3D || !ChannelMap)
 		return 0;
 
-	float lpos[3], lvel[3];
 	int id = sfx - &S_sfx[0];
 	long freq;
 	long chan;
 
 	freq = PITCH(sfx->frequency,pitch);
-
-	lpos[0] = pos[0];
-	lpos[1] = pos[1];
-	lpos[2] = pos[2];
-	lvel[0] = vel[0];
-	lvel[1] = vel[1];
-	lvel[2] = vel[2];
 
 	FSOUND_SAMPLE *sample = CheckLooping (sfx, looping);
 
@@ -611,7 +610,7 @@ long I_StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel,
 		//FSOUND_SetReserved (chan, TRUE);
 		FSOUND_SetFrequency (chan, freq);
 		FSOUND_SetVolume (chan, (int)(vol * 255.f));
-		FSOUND_3D_SetAttributes (chan, lpos, lvel);
+		FSOUND_3D_SetAttributes (chan, pos, vel);
 		FSOUND_SetPaused (chan, false);
 		ChannelMap[channel].channelID = chan;
 		ChannelMap[channel].soundID = id;
@@ -750,14 +749,7 @@ void I_UpdateSoundParams3D (int handle, float pos[3], float vel[3])
 	if (ChannelMap[handle].soundID == -1)
 		return;
 
-	float lpos[3], lvel[3];
-	lpos[0] = pos[0];
-	lpos[1] = pos[1];
-	lpos[2] = pos[2];
-	lvel[0] = vel[0];
-	lvel[1] = vel[1];
-	lvel[2] = vel[2];
-	FSOUND_3D_SetAttributes (ChannelMap[handle].channelID, lpos, lvel);
+	FSOUND_3D_SetAttributes (ChannelMap[handle].channelID, pos, vel);
 }
 
 void I_UpdateSounds ()
@@ -771,8 +763,8 @@ void I_UpdateSounds ()
 void I_UpdateListener (AActor *listener)
 {
 	float angle;
-	float vel[3];
-	float pos[3];
+	float pos[3], vel[3];
+	float lpos[3];
 
 	if (Sound3D && ChannelMap)
 	{
@@ -783,37 +775,58 @@ void I_UpdateListener (AActor *listener)
 		pos[2] = listener->y / 65536.f;
 		pos[1] = listener->z / 65536.f;
 
-		angle = (float)(listener->angle) * ((float)PI / 2147483648.f);
-
 		// Move sounds that are not meant to be heard in 3D so
 		// that they remain on top of the listener.
-
+		
 		for (int i = 0; i < numChannels; i++)
 		{
 			if (ChannelMap[i].soundID != -1 && !ChannelMap[i].bIs3D)
 			{
-				FSOUND_3D_SetAttributes (ChannelMap[i].channelID,
-					pos, vel);
+				FSOUND_3D_SetAttributes (ChannelMap[i].channelID, pos, vel);
 			}
 		}
 
-		FSOUND_3D_Listener_SetAttributes (pos, vel,
+		// Sounds that are right on top of the listener can produce
+		// weird results depending on the environment, so position
+		// the listener back slightly from its true location.
+
+		angle = (float)(listener->angle) * ((float)PI / 2147483648.f);
+
+		lpos[0] = pos[0] - .5f * cosf (angle);
+		lpos[2] = pos[2] - .5f * sinf (angle);
+		lpos[1] = pos[1];
+
+		FSOUND_3D_Listener_SetAttributes (lpos, vel,
 			cosf (angle), 0.f, sinf (angle), 0.f, 1.f, 0.f);
 
-		if (DriverCaps & (FSOUND_CAPS_EAX2|FSOUND_CAPS_EAX3))
+		//if (DriverCaps & (FSOUND_CAPS_EAX2|FSOUND_CAPS_EAX3))
 		{
-			static FSOUND_REVERB_PROPERTIES water = FSOUND_PRESET_UNDERWATER;
-			static FSOUND_REVERB_PROPERTIES off = FSOUND_PRESET_OFF;
 			bool underwater;
+			const ReverbContainer *env;
 
-			underwater = (listener->waterlevel == 3 && snd_waterreverb);
-			if (underwater != wasUnderwater)
+			if (ForcedEnvironment)
 			{
-				FSOUND_REVERB_PROPERTIES *props = underwater ? &water : &off;
-
-				DPrintf ("Reverb Environment %d\n", props->Environment);
-				FSOUND_Reverb_SetProperties (props);
-				wasUnderwater = underwater;
+				env = ForcedEnvironment;
+			}
+			else
+			{
+				underwater = (listener->waterlevel == 3 && snd_waterreverb);
+				env = zones[listener->Sector->ZoneNumber].Environment;
+				if (env == NULL)
+				{
+					env = DefaultEnvironments[0];
+				}
+				if (env == DefaultEnvironments[0] && underwater)
+				{
+					env = DefaultEnvironments[22];
+				}
+			}
+			if (env != PrevEnvironment || env->Modified)
+			{
+				DPrintf ("Reverb Environment %s\n", env->Name);
+				const_cast<ReverbContainer*>(env)->Modified = false;
+				FSOUND_Reverb_SetProperties ((FSOUND_REVERB_PROPERTIES *)(&env->Properties));
+				PrevEnvironment = env;
 			}
 		}
 
@@ -904,7 +917,7 @@ void I_InitSound ()
 	{
 		snd_samplerate = 65535;
 	}
-	wasUnderwater = false;
+	PrevEnvironment = DefaultEnvironments[0];
 
 	nofmod = false;
 #ifdef _WIN32

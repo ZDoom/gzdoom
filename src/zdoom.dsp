@@ -43,8 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /Gr /MD /W3 /GX /O2 /I "f:\fmodapi361win32\api\inc" /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /I /fmod/api/inc" " /c
-# SUBTRACT CPP /Fr
+# ADD CPP /nologo /Gr /MD /W3 /GX /O2 /I "flac" /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -54,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 zlib-1.1.4/release/zlib.lib kernel32.lib user32.lib gdi32.lib comctl32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib winmm.lib wsock32.lib f:\fmodapi361win32/api/lib/fmodvc.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /nodefaultlib:"libcmt" /out:"../../zdoom.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib comctl32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib winmm.lib wsock32.lib fmodvc.lib dinput8.lib dsound.lib dxguid.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /nodefaultlib:"libcmt" /out:"../../zdoom.exe"
 # SUBTRACT LINK32 /verbose /profile /debug
 
 !ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
@@ -71,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "f:\fmodapi361win32\api\inc" /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /I /fmod/api/inc" " /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "flac" /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -81,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 odbc32.lib odbccp32.lib ddraw.lib zlib-1.1.4/debug/zlib.lib kernel32.lib user32.lib gdi32.lib comctl32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib winmm.lib wsock32.lib f:\fmodapi361win32/api/lib/fmodvc.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../../doomdbg.exe"
+# ADD LINK32 odbc32.lib odbccp32.lib ddraw.lib kernel32.lib user32.lib gdi32.lib comctl32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib winmm.lib wsock32.lib fmodvc.lib dxguid.lib dinput8.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../../doomdbg.exe"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -452,6 +451,10 @@ SOURCE=.\po_man.cpp
 # Begin Source File
 
 SOURCE=.\s_advsound.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\s_environment.cpp
 # End Source File
 # Begin Source File
 
@@ -1137,7 +1140,7 @@ InputName=tmap3
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\win32\dxcrap.cpp
+SOURCE=.\win32\eaxedit.cpp
 # End Source File
 # Begin Source File
 
@@ -1970,6 +1973,15 @@ SOURCE=.\sound\i_musicinterns.h
 # Begin Source File
 
 SOURCE=.\sound\i_sound.cpp
+
+!IF  "$(CFG)" == "zdoom - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
+
+# ADD CPP /Gi /vmb
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
@@ -1977,23 +1989,11 @@ SOURCE=.\sound\i_sound.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\sound\mid2strm.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\sound\mid2strm.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\sound\mus2strm.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\sound\mus2strm.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\sound\music_cd.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_flac.cpp
 # End Source File
 # Begin Source File
 
@@ -2026,6 +2026,14 @@ SOURCE=.\sound\music_spc.cpp
 # Begin Source File
 
 SOURCE=.\sound\music_stream.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\sample_flac.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\sample_flac.h
 # End Source File
 # End Group
 # Begin Source File

@@ -284,6 +284,31 @@ typedef struct
 	mappatch_t	patches[1];
 } maptexture_t;
 
+// [RH] Just for documentation purposes, here's what I think the
+// Strife versions of the above two structures are:
+
+typedef struct
+{
+	short	originx;
+	short	originy;
+	short	patch;
+} strifemappatch_t;
+
+//
+// A wall texture is a list of patches which are to be combined in a
+// predefined order.
+//
+typedef struct
+{
+	char		name[8];
+	WORD		masked;				// [RH] Unused
+	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
+	BYTE		ScaleY;				// [RH] Same as above
+	short		width;
+	short		height;
+	short		patchcount;
+	strifemappatch_t	patches[1];
+} strifemaptexture_t;
 
 
 

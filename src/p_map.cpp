@@ -119,6 +119,8 @@ msecnode_t* sector_list = NULL;		// phares 3/16/98
 
 extern sector_t *openbottomsec;
 
+bool DoRipping;
+AActor *LastRipped;
 
 //==========================================================================
 //
@@ -771,23 +773,27 @@ BOOL PIT_CheckThing (AActor *thing)
 		{ // Didn't do any damage
 			return !(thing->flags & MF_SOLID);
 		}
-		if (tmthing->flags2 & MF2_RIP)
+		if (DoRipping)
 		{
-			if (!(thing->flags & MF_NOBLOOD) &&
-				!(thing->flags2 & MF2_REFLECTIVE) &&
-				!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
-			{ // Ok to spawn blood
-				P_RipperBlood (tmthing);
-			}
-			S_Sound (tmthing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
-			damage = ((pr_checkthing()&3)+2)*tmthing->damage;
-			P_DamageMobj (thing, tmthing, tmthing->target, damage);
-			P_TraceBleed (damage, thing, tmthing);
-			if (thing->flags2 & MF2_PUSHABLE
-				&& !(tmthing->flags2 & MF2_CANNOTPUSH))
-			{ // Push thing
-				thing->momx += tmthing->momx>>2;
-				thing->momy += tmthing->momy>>2;
+			if (LastRipped != thing)
+			{
+				LastRipped = thing;
+				if (!(thing->flags & MF_NOBLOOD) &&
+					!(thing->flags2 & MF2_REFLECTIVE) &&
+					!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
+				{ // Ok to spawn blood
+					P_RipperBlood (tmthing);
+				}
+				S_Sound (tmthing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
+				damage = ((pr_checkthing()&3)+2)*tmthing->damage;
+				P_DamageMobj (thing, tmthing, tmthing->target, damage);
+				P_TraceBleed (damage, thing, tmthing);
+				if (thing->flags2 & MF2_PUSHABLE
+					&& !(tmthing->flags2 & MF2_CANNOTPUSH))
+				{ // Push thing
+					thing->momx += tmthing->momx>>2;
+					thing->momy += tmthing->momy>>2;
+				}
 			}
 			spechit.Clear ();
 			return true;
@@ -1254,7 +1260,8 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 		}
 		else if (mobj->flags2 & MF2_IMPACT)
 		{
-			P_ActivateLine (line, mobj, side, SPAC_IMPACT);
+			P_ActivateLine (line, (mobj->flags & MF_MISSILE) ? mobj->target : mobj,
+				side, SPAC_IMPACT);
 		}	
 	}
 }
@@ -2024,7 +2031,7 @@ bool P_BounceWall (AActor *mo)
 	fixed_t         movelen;
 	line_t			*line;
 
-	if (!(mo->flags2 & MF2_BOUNCETYPE))
+	if (!(mo->flags2 & MF2_BOUNCE2))
 	{
 		return false;
 	}
@@ -2282,6 +2289,23 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vr
 =================
 */
 
+static bool CheckForGhost (FTraceResults &res)
+{
+	if (res.HitType != TRACE_HitActor)
+	{
+		return false;
+	}
+
+	// check for physical attacks on a ghost
+	if (res.Actor->flags3 & MF3_GHOST)
+	{
+		res.HitType = TRACE_HitNone;
+		return true;
+	}
+
+	return false;
+}
+
 void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				   int pitch, int damage)
 {
@@ -2303,7 +2327,8 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 	if (!Trace (t1->x, t1->y, shootz, t1->Sector, vx, vy, vz, distance,
 		MF_SHOOTABLE, ML_BLOCKEVERYTHING, t1, trace,
-		TRACE_NoSky|TRACE_Impact))
+		TRACE_NoSky|TRACE_Impact,
+			t1->player && t1->player->readyweapon == wp_staff ? CheckForGhost : NULL))
 	{ // hit nothing
 		AActor *puffDefaults = GetDefaultByType (PuffType);
 		if (puffDefaults->ActiveSound)
@@ -2327,13 +2352,16 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		if (trace.HitType != TRACE_HitActor)
 		{
 			// position a bit closer for puffs
-			fixed_t closer = trace.Distance - 4*FRACUNIT;
-			puff = P_SpawnPuff (t1->x + FixedMul (vx, closer),
-				t1->y + FixedMul (vy, closer),
-				shootz + FixedMul (vz, closer), angle - ANG90, 0);
+			if (trace.HitType != TRACE_HitWall || trace.Line->special != Line_Horizon)
+			{
+				fixed_t closer = trace.Distance - 4*FRACUNIT;
+				puff = P_SpawnPuff (t1->x + FixedMul (vx, closer),
+					t1->y + FixedMul (vy, closer),
+					shootz + FixedMul (vz, closer), angle - ANG90, 0);
+			}
 
 			// [RH] Spawn a decal
-			if (trace.HitType == TRACE_HitWall)
+			if (trace.HitType == TRACE_HitWall && trace.Line->special != Line_Horizon)
 			{
 				SpawnShootDecal (t1, trace);
 			}
@@ -2343,10 +2371,6 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				trace.HitType == TRACE_HitFloor)
 			{
 				P_HitWater (puff, trace.Sector);
-			}
-			if (trace.CrossedWater)
-			{
-				SpawnDeepSplash (t1, trace, puff, vx, vy, vz);
 			}
 		}
 		else
@@ -2370,21 +2394,6 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				!(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
 				P_SpawnBlood (hitx, hity, hitz, angle - ANG180, damage);
-			}
-			if (trace.CrossedWater)
-			{
-				bool killPuff = false;
-
-				if (puff == NULL)
-				{ // Spawn puff just to get a mass for the splash
-					puff = P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
-					killPuff = true;
-				}
-				SpawnDeepSplash (t1, trace, puff, vx, vy, vz);
-				if (killPuff)
-				{
-					puff->Destroy();
-				}
 			}
 
 			if (damage)
@@ -2424,6 +2433,21 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				// [RH] Stick blood to walls
 				P_TraceBleed (damage, trace.X, trace.Y, trace.Z,
 					trace.Actor, srcangle, srcpitch);
+			}
+		}
+		if (trace.CrossedWater)
+		{
+			bool killPuff = false;
+
+			if (puff == NULL)
+			{ // Spawn puff just to get a mass for the splash
+				puff = P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
+				killPuff = true;
+			}
+			SpawnDeepSplash (t1, trace, puff, vx, vy, vz);
+			if (killPuff)
+			{
+				puff->Destroy();
 			}
 		}
 	}
@@ -2966,7 +2990,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		!thing->IsKindOf (RUNTIME_CLASS(AExplosiveBarrel)) &&
 		!thing->IsKindOf (RUNTIME_CLASS(ABossBrain)))
 	{
-		// [RH] New code. The bounding cylinder only covers the
+		// [RH] New code. The bounding box only covers the
 		// height of the thing and not the height of the map.
 		float points;
 		float len;
@@ -3022,8 +3046,6 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		{ // OK to damage; target is in direct path
 			float momz;
 			float thrust;
-			fixed_t momx = thing->momx;
-			fixed_t momy = thing->momy;
 			int damage = (int)points;
 
 			P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
@@ -3045,8 +3067,9 @@ BOOL PIT_RadiusAttack (AActor *thing)
 				{
 					momz *= 0.8f;
 				}
-				thing->momx = momx + (fixed_t)((thing->x - bombspot->x) * thrust);
-				thing->momy = momy + (fixed_t)((thing->y - bombspot->y) * thrust);
+				angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
+				thing->momx += fixed_t (finecosine[ang] * thrust);
+				thing->momy += fixed_t (finesine[ang] * thrust);
 				thing->momz += (fixed_t)momz;
 			}
 		}
@@ -3062,11 +3085,11 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		dist = dx>dy ? dx : dy;
 		dist = (dist - thing->radius) >> FRACBITS;
 
-		if (dist >= bombdamage)
-			return true;  // out of range
-
 		if (dist < 0)
 			dist = 0;
+
+		if (dist >= bombdistance)
+			return true;  // out of range
 
 		if (P_CheckSight (thing, bombspot, true))
 		{ // OK to damage; target is in direct path
@@ -3093,7 +3116,10 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
 	int x, y;
 	int xl, xh, yl, yh;
 	fixed_t dist;
-		
+
+	if (distance <= 0)
+		return;
+
 	dist = (distance + MAXRADIUS)<<FRACBITS;
 	yh = (spot->y + dist - bmaporgy)>>MAPBLOCKSHIFT;
 	yl = (spot->y - dist - bmaporgy)>>MAPBLOCKSHIFT;
@@ -3641,14 +3667,16 @@ bool P_ChangeSector (sector_t *sector, int crunch, int amt, int floorOrCeil)
 	movesec = sector;
 
 	// [RH] Use different functions for the four different types of sector
-	// movement.
+	// movement. Also update the soundorg's z-coordinate for 3D sound.
 	if (floorOrCeil == 0)
 	{ // floor
 		iterator = (amt < 0) ? PIT_FloorDrop : PIT_FloorRaise;
+		sector->soundorg[2] = sector->floorplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
 	}
 	else
 	{ // ceiling
 		iterator = (amt < 0) ? PIT_CeilingLower : PIT_CeilingRaise;
+		sector->soundorg[2] = sector->ceilingplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
 	}
 
 	// killough 4/4/98: scan list front-to-back until empty or exhausted,

@@ -15,7 +15,7 @@ extern void AdjustPlayerAngle (AActor *pmo);
 
 static FRandom pr_atk ("CMaceAttack");
 
-void A_CMaceAttack (player_t *player, pspdef_t *psp);
+void A_CMaceAttack (AActor *actor, pspdef_t *psp);
 
 // The Cleric's Mace --------------------------------------------------------
 
@@ -95,12 +95,18 @@ WEAPON1 (wp_cmace, ACWeapMace)
 //
 //===========================================================================
 
-void A_CMaceAttack (player_t *player, pspdef_t *psp)
+void A_CMaceAttack (AActor *actor, pspdef_t *psp)
 {
 	angle_t angle;
 	int damage;
 	int slope;
 	int i;
+	player_t *player;
+
+	if (NULL == (player = actor->player))
+	{
+		return;
+	}
 
 	damage = 25+(pr_atk()&15);
 	PuffType = RUNTIME_CLASS(AHammerPuff);

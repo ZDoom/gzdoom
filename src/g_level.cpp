@@ -3,7 +3,7 @@
 ** Parses MAPINFO and controls movement between levels
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2002 Randy Heit
+** Copyright 1998-2003 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -158,7 +158,7 @@ extern char BackupSaveName[PATH_MAX];
 
 BOOL savegamerestore;
 
-extern int mousex, mousey, joyxmove, joyymove;
+extern int mousex, mousey;
 extern bool sendpause, sendsave, sendcenterview, sendturn180, SendLand;
 extern BYTE SendWeaponSlot, SendWeaponChoice;
 extern int SendItemSelect;
@@ -777,7 +777,7 @@ level_info_t *FindLevelByWarpTrans (int num)
 {
 	int i;
 
-	for (i = 0; i < numwadlevelinfos; ++i)
+	for (i = numwadlevelinfos - 1; i >= 0; --i)
 		if (wadlevelinfos[i].WarpTrans == num)
 			return (level_info_t *)(wadlevelinfos + i);
 
@@ -807,7 +807,7 @@ void P_RemoveDefereds (void)
 			wadlevelinfos[i].defered = NULL;
 		}
 	}
-	for (i = 0; LevelInfos[i].level_name; i++)
+	for (i = 0; LevelInfos[i].mapname[0]; i++)
 	{
 		if (LevelInfos[i].defered)
 		{
@@ -817,7 +817,7 @@ void P_RemoveDefereds (void)
 	}
 }
 
-bool CheckWarpTransMap (char mapname[9])
+bool CheckWarpTransMap (char mapname[9], bool substitute)
 {
 	if (mapname[0] == '&' && mapname[1] == 'w' &&
 		mapname[2] == 't' && mapname[3] == '@')
@@ -828,6 +828,15 @@ bool CheckWarpTransMap (char mapname[9])
 			strncpy (mapname, lev->mapname, 8);
 			mapname[8] = 0;
 			return true;
+		}
+		else if (substitute)
+		{
+			mapname[0] = 'M';
+			mapname[1] = 'A';
+			mapname[2] = 'P';
+			mapname[3] = mapname[4];
+			mapname[4] = mapname[5];
+			mapname[5] = 0;
 		}
 	}
 	return false;
@@ -843,7 +852,7 @@ static char d_mapname[9];
 void G_DeferedInitNew (char *mapname)
 {
 	strncpy (d_mapname, mapname, 8);
-	CheckWarpTransMap (d_mapname);
+	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 }
 
@@ -1081,7 +1090,7 @@ void G_DoCompleted (void)
 		}
 	}
 
-	CheckWarpTransMap (wminfo.next);
+	CheckWarpTransMap (wminfo.next, true);
 
 	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
 	wminfo.maxkills = level.total_monsters;
@@ -1297,7 +1306,6 @@ void G_DoLoadLevel (int position, bool autosave)
 	SendWeaponSlot = SendWeaponChoice = 255;
 	SendItemSelect = 0;
 	SendItemUse = arti_none;
-	joyxmove = joyymove = 0;
 	mousex = mousey = 0; 
 	sendpause = sendsave = sendcenterview = sendturn180 = SendLand = false;
 	paused = 0;
@@ -1546,7 +1554,7 @@ static level_info_t *FindDefLevelInfo (char *mapname)
 	level_info_t *i;
 
 	i = LevelInfos;
-	while (i->level_name)
+	while (i->mapname[0])
 	{
 		if (!strnicmp (i->mapname, mapname, 8))
 			break;
@@ -1576,7 +1584,7 @@ level_info_t *FindLevelByNum (int num)
 	}
 	{
 		level_info_t *i = LevelInfos;
-		while (i->level_name)
+		while (i->mapname[0])
 		{
 			if (i->levelnum == num && W_CheckNumForName (i->mapname) != -1)
 				return i;
@@ -2136,7 +2144,7 @@ void P_SerializeACSDefereds (FILE *file, bool storing)
 			}
 		}
 
-		for (i = 0; LevelInfos[i].level_name; i++)
+		for (i = 0; LevelInfos[i].mapname[0]; i++)
 		{
 			if (LevelInfos[i].defered)
 			{

@@ -103,6 +103,9 @@ extern line_t*			lines;
 extern int				numsides;
 extern side_t*			sides;
 
+extern int				numzones;
+extern zone_t*			zones;
+
 extern FExtraLight*		ExtraLights;
 extern FLightStack*		LightStacks;
 

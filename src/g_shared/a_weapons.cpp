@@ -565,6 +565,12 @@ CCMD (setslot)
 {
 	int slot, i;
 
+	if (ParsingKeyConf && !WeaponSection)
+	{
+		Printf ("You need to use weaponsection before using setslot\n");
+		return;
+	}
+
 	if (argv.argc() < 2 || (slot = atoi (argv[1])) >= NUM_WEAPON_SLOTS)
 	{
 		Printf ("Usage: setslot [slot] [weapons]\nCurrent slot assignments:\n");

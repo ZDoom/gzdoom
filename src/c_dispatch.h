@@ -111,17 +111,16 @@ const int KEY_DBLCLICKED = 0x8000;
 class FConsoleAlias : public FConsoleCommand
 {
 public:
-	FConsoleAlias (const char *name, const char *command);
+	FConsoleAlias (const char *name, const char *command, bool noSave);
 	~FConsoleAlias ();
 	void Run (FCommandLine &args, AActor *Instigator, int key);
 	bool IsAlias ();
-	void PrintAlias () { Printf ("%s : %s\n", m_Name, m_Command); }
+	void PrintAlias ();
 	void Archive (FConfigFile *f);
-	void Realias (const char *command);
+	void Realias (const char *command, bool noSave);
 	void SafeDelete ();
-	bool bNoSave;
 protected:
-	char *m_Command;
+	char *m_Command[2];
 	bool bRunning;
 	bool bKill;
 };

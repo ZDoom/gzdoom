@@ -92,6 +92,9 @@ line_t* 		lines;
 int 			numsides;
 side_t* 		sides;
 
+int				numzones;
+zone_t*			zones;
+
 FExtraLight*	ExtraLights;
 FLightStack*	LightStacks;
 
@@ -199,6 +202,52 @@ static void SetTextureNoErr (short *texture, DWORD *color, char *name)
 		name2[8] = 0;
 		*color = strtoul (name2, &stop, 16);
 		*texture = 0;
+	}
+}
+
+void P_FloodZone (sector_t *sec, int zonenum)
+{
+	int i;
+
+	if (sec->ZoneNumber == zonenum)
+		return;
+
+	sec->ZoneNumber = zonenum;
+
+	for (i = 0; i < sec->linecount; ++i)
+	{
+		line_t *check = sec->lines[i];
+		sector_t *other;
+
+		if (check->sidenum[1] == NO_INDEX || (check->flags & ML_ZONEBOUNDARY))
+			continue;
+
+		if (check->frontsector == sec)
+			other = check->backsector;
+		else
+			other = check->frontsector;
+
+		if (other->ZoneNumber != zonenum)
+			P_FloodZone (other, zonenum);
+	}
+}
+
+void P_FloodZones ()
+{
+	int z = 0, i;
+
+	for (i = 0; i < numsectors; ++i)
+	{
+		if (sectors[i].ZoneNumber == 0xFFFF)
+		{
+			P_FloodZone (&sectors[i], z++);
+		}
+	}
+	numzones = z;
+	zones = new zone_t[z];
+	for (i = 0; i < z; ++i)
+	{
+		zones[i].Environment = DefaultEnvironments[0];
 	}
 }
 
@@ -506,6 +555,7 @@ void P_LoadSectors (int lump)
 		// killough 3/7/98: end changes
 
 		ss->gravity = 1.f;	// [RH] Default sector gravity of 1.0
+		ss->ZoneNumber = 0xFFFF;
 
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
@@ -771,7 +821,7 @@ void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
 	}
 	else
 	{
-		zang = Scale (zangi, ANGLE_180, 180);
+		zang = Scale (zangi, ANGLE_90, 90);
 	}
 	if (!setCeil)
 	{
@@ -779,7 +829,7 @@ void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
 	}
 	zang >>= ANGLETOFINESHIFT;
 
-	xyang = (angle_t)Scale (xyangi, ANGLE_180, 180) >> ANGLETOFINESHIFT;
+	xyang = (angle_t)Scale (xyangi, ANGLE_90, 90 << ANGLETOFINESHIFT);
 
 	vec3_t norm;
 
@@ -942,8 +992,15 @@ void P_AdjustLine (line_t *ld)
 	}
 
 	// [RH] Set line id (as appropriate) here
-	if (!HasBehavior ||
-		ld->special == Line_SetIdentification ||
+	if (ld->special == Line_SetIdentification)
+	{
+		ld->id = ld->args[0];
+		if (ld->args[1] == 1)
+		{
+			ld->flags |= ML_ZONEBOUNDARY;
+		}
+	}
+	else if (!HasBehavior ||
 		ld->special == Teleport_Line ||
 		ld->special == TranslucentLine ||
 		ld->special == Scroll_Texture_Model)
@@ -2054,6 +2111,7 @@ static void P_GroupLines (bool buildmap)
 		// set the soundorg to the middle of the bounding box
 		sector->soundorg[0] = (bbox.Right()+bbox.Left())/2;
 		sector->soundorg[1] = (bbox.Top()+bbox.Bottom())/2;
+		sector->soundorg[2] = sector->floorplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
 
 		// Find a triangle in the sector for sorting extra lights
 		// The points must be in the sector, because intersecting
@@ -2202,8 +2260,19 @@ void FExtraLight::InsertLight (const secplane_t &inplane, line_t *line, int type
 //
 void P_LoadReject (int lump, bool junk)
 {
+	char lname[9];
 	const int neededsize = (numsectors * numsectors + 7) >> 3;
-	int rejectsize = junk ? 0 : W_LumpLength (lump);
+	int rejectsize;
+
+	W_GetLumpName (lname, lump);
+	if (strcmp (lname, "REJECT") != 0)
+	{
+		rejectsize = 0;
+	}
+	else
+	{
+		rejectsize = junk ? 0 : W_LumpLength (lump);
+	}
 
 	if (rejectsize < neededsize)
 	{
@@ -2344,55 +2413,10 @@ static void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, T
 	}
 }
 
-//
-// P_SetupLevel
-//
 extern polyblock_t **PolyBlockMap;
 
-// [RH] position indicates the start spot to spawn at
-void P_SetupLevel (char *lumpname, int position)
+void P_FreeLevelData ()
 {
-	mapthing2_t buildstart;
-	int i, lumpnum;
-	bool buildmap;
-
-	wminfo.partime = 180;
-
-	if (!savegamerestore)
-	{
-		for (i = 0; i < MAXPLAYERS; ++i)
-		{
-			players[i].killcount = players[i].secretcount 
-				= players[i].itemcount = 0;
-		}
-	}
-	for (i = 0; i < MAXPLAYERS; ++i)
-	{
-		players[i].mo = NULL;
-	}
-	// [RH] Set default scripted translation colors
-	for (i = 0; i < 256; ++i)
-	{
-		translationtables[TRANSLATION_LevelScripted][i] = i;
-	}
-	for (i = 1; i < MAX_ACS_TRANSLATIONS; ++i)
-	{
-		memcpy (&translationtables[TRANSLATION_LevelScripted][i*256],
-				translationtables[TRANSLATION_LevelScripted], 256);
-	}
-	// Initial height of PointOfView will be set by player think.
-	players[consoleplayer].viewz = 1; 
-
-	// Make sure all sounds are stopped before Z_FreeTags.
-	S_Start ();
-	// [RH] Clear all ThingID hash chains.
-	AActor::ClearTIDHashes ();
-
-	// [RH] clear out the mid-screen message
-	C_MidPrint (NULL);
-	PolyBlockMap = NULL;
-
-	// Free all level data from the previous map
 	DThinker::DestroyAllThinkers ();
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
@@ -2444,7 +2468,7 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 	if (PolyBlockMap != NULL)
 	{
-		for (i = bmapwidth*bmapheight-1; i >= 0; --i)
+		for (int i = bmapwidth*bmapheight-1; i >= 0; --i)
 		{
 			polyblock_t *link = PolyBlockMap[i];
 			while (link != NULL)
@@ -2486,7 +2510,7 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 	if (polyobjs != NULL)
 	{
-		for (i = 0; i < po_NumPolyobjs; ++i)
+		for (int i = 0; i < po_NumPolyobjs; ++i)
 		{
 			if (polyobjs[i].segs != NULL)
 			{
@@ -2504,8 +2528,61 @@ void P_SetupLevel (char *lumpname, int position)
 		delete[] polyobjs;
 		polyobjs = NULL;
 	}
+	if (zones != NULL)
+	{
+		delete[] zones;
+	}
+}
 
-	// UNUSED W_Profile ();
+//
+// P_SetupLevel
+//
+
+// [RH] position indicates the start spot to spawn at
+void P_SetupLevel (char *lumpname, int position)
+{
+	mapthing2_t buildstart;
+	int i, lumpnum;
+	bool buildmap;
+
+	wminfo.partime = 180;
+
+	if (!savegamerestore)
+	{
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			players[i].killcount = players[i].secretcount 
+				= players[i].itemcount = 0;
+		}
+	}
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		players[i].mo = NULL;
+	}
+	// [RH] Set default scripted translation colors
+	for (i = 0; i < 256; ++i)
+	{
+		translationtables[TRANSLATION_LevelScripted][i] = i;
+	}
+	for (i = 1; i < MAX_ACS_TRANSLATIONS; ++i)
+	{
+		memcpy (&translationtables[TRANSLATION_LevelScripted][i*256],
+				translationtables[TRANSLATION_LevelScripted], 256);
+	}
+	// Initial height of PointOfView will be set by player think.
+	players[consoleplayer].viewz = 1; 
+
+	// Make sure all sounds are stopped before Z_FreeTags.
+	S_Start ();
+	// [RH] Clear all ThingID hash chains.
+	AActor::ClearTIDHashes ();
+
+	// [RH] clear out the mid-screen message
+	C_MidPrint (NULL);
+	PolyBlockMap = NULL;
+
+	// Free all level data from the previous map
+	P_FreeLevelData ();
 
 	// find map num
 	level.lumpnum = lumpnum = W_GetNumForName (lumpname);
@@ -2522,6 +2599,8 @@ void P_SetupLevel (char *lumpname, int position)
 
 	if (!buildmap)
 	{
+		char lname[9];
+
 		// [RH] Check if this map is Hexen-style.
 		//		LINEDEFS and THINGS need to be handled accordingly.
 		HasBehavior = W_CheckLumpName (lumpnum+ML_BEHAVIOR, "BEHAVIOR");
@@ -2538,7 +2617,19 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 
 		P_LoadVertexes (lumpnum+ML_VERTEXES);
-		P_LoadSectors (lumpnum+ML_SECTORS);
+		
+		// Check for maps without any BSP data at all (e.g. SLIGE)
+		W_GetLumpName (lname, lumpnum+ML_SEGS);
+		if (strcmp (lname, "SECTORS") == 0)
+		{
+			P_LoadSectors (lumpnum+ML_SEGS);
+			ForceNodeBuild = true;
+		}
+		else
+		{
+			P_LoadSectors (lumpnum+ML_SECTORS);
+		}
+
 		P_LoadSideDefs (lumpnum+ML_SIDEDEFS);
 		if (!HasBehavior)
 			P_LoadLineDefs (lumpnum+ML_LINEDEFS);
@@ -2588,6 +2679,7 @@ void P_SetupLevel (char *lumpname, int position)
 	P_LoadReject (lumpnum+ML_REJECT, buildmap);
 
 	P_GroupLines (buildmap);
+	P_FloodZones ();
 
 	bodyqueslot = 0;
 // phares 8/10/98: Clear body queue so the corpses from previous games are

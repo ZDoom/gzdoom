@@ -20,12 +20,13 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __DOOMDEF__
-#define __DOOMDEF__
+#ifndef __DOOMDEF_H__
+#define __DOOMDEF_H__
 
 #include <stdio.h>
 #include <string.h>
 
+#include "farchive.h"
 
 //
 // Global parameters/defines.
@@ -90,7 +91,9 @@ typedef enum
 	GS_DEMOSCREEN,
 	GS_FULLCONSOLE,		// [RH]	Fullscreen console
 	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
-	GS_STARTUP			// [RH] Console is fullscreen, and game is just starting
+	GS_STARTUP,			// [RH] Console is fullscreen, and game is just starting
+
+	GS_FORCEWIPE = -1
 } gamestate_t;
 
 //
@@ -131,6 +134,14 @@ typedef enum
 	
 } card_t;
 
+inline FArchive &operator<< (FArchive &arc, card_t i)
+{
+	return arc << (BYTE)i;
+}
+inline FArchive &operator>> (FArchive &arc, card_t &i)
+{
+	BYTE in; arc >> in; i = (card_t)in; return arc;
+}
 
 
 // The defined weapons,
@@ -155,6 +166,15 @@ typedef enum
 
 } weapontype_t;
 
+inline FArchive &operator<< (FArchive &arc, weapontype_t i)
+{
+	return arc << (BYTE)i;
+}
+inline FArchive &operator>> (FArchive &arc, weapontype_t &i)
+{
+	BYTE in; arc >> in; i = (weapontype_t)in; return arc;
+}
+
 
 // Ammunition types defined.
 typedef enum
@@ -167,6 +187,15 @@ typedef enum
 	am_noammo	// Unlimited for chainsaw / fist.		
 
 } ammotype_t;
+
+inline FArchive &operator<< (FArchive &arc, ammotype_t i)
+{
+	return arc << (BYTE)i;
+}
+inline FArchive &operator>> (FArchive &arc, ammotype_t &i)
+{
+	BYTE in; arc >> in; i = (ammotype_t)in; return arc;
+}
 
 
 // Power up artifacts.
@@ -182,23 +211,23 @@ typedef enum
 	
 } powertype_t;
 
-
-
-//
-// Power up durations,
-//	how many seconds till expiration,
-//	assuming TICRATE is 35 ticks/second.
-//
-typedef enum
+inline FArchive &operator<< (FArchive &arc, powertype_t i)
 {
-	INVULNTICS	= (30*TICRATE),
-	INVISTICS	= (60*TICRATE),
-	INFRATICS	= (120*TICRATE),
-	IRONTICS	= (60*TICRATE)
-	
-} powerduration_t;
+	return arc << (BYTE)i;
+}
+inline FArchive &operator>> (FArchive &arc, powertype_t &i)
+{
+	BYTE in; arc >> in; i = (powertype_t)in; return arc;
+}
 
 
+//
+// Power up durations, how many tics till expiration.
+//
+#define INVULNTICS	(30*TICRATE)
+#define INVISTICS	(60*TICRATE)
+#define INFRATICS	(120*TICRATE)
+#define IRONTICS	(60*TICRATE)
 
 
 //
@@ -322,8 +351,9 @@ typedef enum
 // linedefs. More friction can create mud, sludge,
 // magnetized floors, etc. Less friction can create ice.
 
-#define MORE_FRICTION_MOMENTUM 15000	// mud factor based on momentum
-#define ORIG_FRICTION          0xE800	// original value
-#define ORIG_FRICTION_FACTOR   2048		// original value
+#define MORE_FRICTION_MOMENTUM	15000	// mud factor based on momentum
+#define ORIG_FRICTION			0xE800	// original value
+#define ORIG_FRICTION_FACTOR	2048	// original value
+#define FRICTION_FLY			0xeb00
 
-#endif			// __DOOMDEF__
+#endif	// __DOOMDEF_H__

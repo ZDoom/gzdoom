@@ -20,9 +20,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __I_VIDEO__
-#define __I_VIDEO__
-
+#ifndef __I_VIDEO_H__
+#define __I_VIDEO_H__
 
 #include "doomtype.h"
 #include "v_video.h"
@@ -59,16 +58,4 @@ void I_EndRead (void);
 BOOL I_CheckResolution (int width, int height, int bpp);
 BOOL I_SetResolution (int width, int height, int bpp);
 
-BOOL I_AllocateScreen (screen_t *scrn, int width, int height, int Bpp);
-void I_FreeScreen (screen_t *scrn);
-void I_LockScreen (screen_t *scrn);
-void I_UnlockScreen (screen_t *scrn);
-void I_Blit (screen_t *src, int srcx, int srcy, int srcwidth, int srcheight,
-			 screen_t *dest, int destx, int desty, int destwidth, int destheight);
-
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif // __I_VIDEO_H__

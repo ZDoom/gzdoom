@@ -64,8 +64,8 @@ void G_ScreenShot (char *filename);
 void G_PlayerFinishLevel (int player);
 
 #define BODYQUESIZE 	32
-struct mobj_s;
-extern struct mobj_s *bodyque[BODYQUESIZE]; 
+class AActor;
+extern AActor *bodyque[BODYQUESIZE]; 
 extern int bodyqueslot; 
 
 

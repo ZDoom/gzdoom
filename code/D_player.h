@@ -20,9 +20,13 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __D_PLAYER__
-#define __D_PLAYER__
+#ifndef __D_PLAYER_H__
+#define __D_PLAYER_H__
 
+// Finally, for odd reasons, the player input
+// is buffered within the player data struct,
+// as commands per game tick.
+#include "d_ticcmd.h"
 
 // The player data structure depends on a number
 // of other structs: items (internal inventory),
@@ -33,15 +37,12 @@
 
 // In addition, the player is just a special
 // case of the generic moving object/actor.
-#include "p_mobj.h"
-
-// Finally, for odd reasons, the player input
-// is buffered within the player data struct,
-// as commands per game tick.
-#include "d_ticcmd.h"
+#include "actor.h"
 
 #include "d_netinf.h"
 
+//Added by MC:
+#include "b_bot.h"
 
 
 
@@ -74,26 +75,32 @@ typedef enum
 	CF_NOMOMENTUM		= 4,
 	// [RH] Monsters don't target
 	CF_NOTARGET			= 8,
+	// [RH] Flying player
+	CF_FLY				= 16,
 	// [RH] Put camera behind player
-	CF_CHASECAM			= 16,
+	CF_CHASECAM			= 32,
 	// [RH] Don't let the player move
-	CF_FROZEN			= 32,
+	CF_FROZEN			= 64,
 	// [RH] Stick camera in player's head if he moves
-	CF_REVERTPLEASE		= 64
+	CF_REVERTPLEASE		= 128
 } cheat_t;
 
 
 //
 // Extended player object info: player_t
 //
-typedef struct player_s
+class player_s
 {
-	mobj_t *mo;
-	playerstate_t playerstate;
-	ticcmd_t cmd;
+public:
+	void Serialize (FArchive &arc);
+
+	AActor		*mo;
+	BYTE		playerstate;
+	struct ticcmd_t	cmd;
 
 	userinfo_t	userinfo;				// [RH] who is this?
 	
+	float		fov;					// field of vision
 	fixed_t		viewz;					// focal origin above r.z
 	fixed_t		viewheight;				// base height above floor for viewz
 	fixed_t		deltaviewheight;		// squat speed.
@@ -110,9 +117,8 @@ typedef struct player_s
 	int			armorpoints;
 	int			armortype;				// armor type is 0-2
 
-
 	int			powers[NUMPOWERS];		// invinc and invis are tic counters
-	BOOL		cards[NUMCARDS];
+	bool		cards[NUMCARDS];
 	BOOL		backpack;
 	
 	int			frags[MAXPLAYERS];		// kills of other players
@@ -120,7 +126,7 @@ typedef struct player_s
 
 	weapontype_t	readyweapon;
 	weapontype_t	pendingweapon;		// wp_nochange if not changing
-	BOOL		weaponowned[NUMWEAPONS];
+	int			weaponowned[NUMWEAPONS];// needs to be int for status bar
 	int			ammo[NUMAMMO];
 	int			maxammo[NUMAMMO];
 
@@ -130,7 +136,7 @@ typedef struct player_s
 	short		inconsistant;
 	int			killcount, itemcount, secretcount;		// for intermission
 	int			damagecount, bonuscount;// for screen flashing
-	mobj_t		*attacker;				// who did damage (NULL for floors
+	AActor		*attacker;				// who did damage (NULL for floors)
 	int			extralight;				// so gun flashes light up areas
 	int			fixedcolormap;			// can be set to REDCOLORMAP, etc.
 	int			xviewshift;				// [RH] view shift (for earthquakes)
@@ -139,15 +145,84 @@ typedef struct player_s
 
 	int			respawn_time;			// [RH] delay respawning until this tic
 	fixed_t		oldvelocity[3];			// [RH] Used for falling damage
-	mobj_t		*camera;				// [RH] Whose eyes this player sees through
-} player_t;
+	AActor		*camera;				// [RH] Whose eyes this player sees through
+
+	int			air_finished;			// [RH] Time when you start drowning
+
+	//Added by MC:
+	angle_t		savedyaw;
+	int			savedpitch;
+
+	angle_t		angle;		// The wanted angle that the bot try to get every tic.
+							//  (used to get a smoth view movement)
+	AActor		*dest;		// Move Destination.
+	AActor		*prev;		// Previous move destination.
+
+
+	AActor		*enemy;		// The dead meat.
+	AActor		*missile;	// A threathing missile that got to be avoided.
+	AActor		*mate;		// Friend (used for grouping in templay or coop.
+	AActor		*last_mate;	// If bots mate dissapeared (not if died) that mate is
+							// pointed to by this. Allows bot to roam to it if
+							// necessary.
+
+	//Skills
+	struct botskill_t	skill;
+
+	//Tickers
+	int			t_active;	// Open door, lower lift stuff, door must open and
+							// lift must go down before bot does anything
+							// radical like try a stuckmove
+	int			t_respawn;
+	int			t_strafe;
+	int			t_react;
+	int			t_fight;
+	int			t_roam;
+	int			t_rocket;
+
+	//Misc booleans
+	bool		isbot;
+	bool		first_shot;	// Used for reaction skill.
+	bool		sleft;		// If false, strafe is right.
+	bool		allround;
+	bool		redteam;	// in ctf, if true this bot is on red team, else on blue..
+
+	fixed_t		oldx;
+	fixed_t		oldy;
+
+	//Misc
+	char c_target[256];		// Target for chat.
+	botchat_t chat;			// What bot will say one a tic.
+};
+typedef player_s player_t;
+
+// Bookkeeping on players - state.
+extern	player_s		players[MAXPLAYERS];
+
+inline FArchive &operator<< (FArchive &arc, player_s *p)
+{
+	if (p)
+		return arc << (BYTE)(p - players);
+	else
+		return arc << (BYTE)255;
+}
+inline FArchive &operator>> (FArchive &arc, player_s* &p)
+{
+	BYTE ofs;
+	arc >> ofs;
+	if (ofs != 255)
+		p = players + ofs;
+	else
+		p = NULL;
+	return arc;
+}
 
 
 //
 // INTERMISSION
 // Structure passed e.g. to WI_Start(wb)
 //
-typedef struct
+typedef struct wbplayerstruct_s
 {
 	BOOL		in;			// whether the player is in game
 	
@@ -162,7 +237,7 @@ typedef struct
 
 } wbplayerstruct_t;
 
-typedef struct
+typedef struct wbstartstruct_s
 {
 	int			epsd;	// episode # (0-2)
 
@@ -183,8 +258,8 @@ typedef struct
 	// index of this player in game
 	int			pnum;	
 
-	wbplayerstruct_t	plyr[MAXPLAYERS];
+	wbplayerstruct_s	plyr[MAXPLAYERS];
 } wbstartstruct_t;
 
 
-#endif
+#endif // __D_PLAYER_H__

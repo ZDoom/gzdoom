@@ -20,8 +20,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __R_MAIN__
-#define __R_MAIN__
+#ifndef __R_MAIN_H__
+#define __R_MAIN_H__
 
 #include "d_player.h"
 #include "r_data.h"
@@ -42,13 +42,11 @@ extern int				viewwindowy;
 
 
 extern int				centerx;
-extern int				centery;
+extern "C" int			centery;
 
 extern fixed_t			centerxfrac;
 extern fixed_t			centeryfrac;
-extern fixed_t			projection;
-extern fixed_t			projectiony;	// [RH] fix aspect ratio (from doom3)
-extern fixed_t			skytopfrac;		// [RH] virtual top of the sky (for freelooking)
+extern fixed_t			yaspectmul;
 
 extern byte*			basecolormap;	// [RH] Colormap for sector currently being drawn
 
@@ -56,7 +54,6 @@ extern int				validcount;
 
 extern int				linecount;
 extern int				loopcount;
-
 
 //
 // Lighting LUT.
@@ -95,8 +92,8 @@ extern int				lightscaleymul;
 
 
 // [RH] New detail modes
-extern int				detailxshift;
-extern int				detailyshift;
+extern "C" int			detailxshift;
+extern "C" int			detailyshift;
 
 
 //
@@ -121,43 +118,15 @@ extern void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 //
 // Utility functions.
-int
-R_PointOnSide
-( fixed_t		x,
-  fixed_t		y,
-  node_t*		node );
-
-int
-R_PointOnSegSide
-( fixed_t		x,
-  fixed_t		y,
-  seg_t*		line );
-
-angle_t
-R_PointToAngle
-( fixed_t		x,
-  fixed_t		y );
-
-angle_t
-R_PointToAngle2
-( fixed_t		x1,
-  fixed_t		y1,
-  fixed_t		x2,
-  fixed_t		y2 );
-
-
+int R_PointOnSide (fixed_t x, fixed_t y, node_t *node);
+int R_PointOnSegSide (fixed_t x, fixed_t y, seg_t *line);
+angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
+inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
 fixed_t R_ScaleFromGlobalAngle (angle_t visangle);
-
-subsector_t*
-R_PointInSubsector
-( fixed_t		x,
-  fixed_t		y );
-
-void
-R_AddPointToBox
-( int			x,
-  int			y,
-  fixed_t*		box );
+subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
+fixed_t R_PointToDist (fixed_t x, fixed_t y);
+fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy);
+void R_SetFOV (float fov);
 
 
 
@@ -177,9 +146,4 @@ void R_SetViewSize (int blocks);
 // [RH] Initialize multires stuff for renderer
 void R_MultiresInit (void);
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif // __R_MAIN_H__

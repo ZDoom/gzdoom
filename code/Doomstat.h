@@ -30,12 +30,12 @@
 
 // We need globally shared data structures,
 //	for defining the global state variables.
+// We need the player data structure as well.
+//#include "d_player.h"
+
 #include "doomdata.h"
 #include "d_net.h"
 #include "g_level.h"
-
-// We need the player data structure as well.
-#include "d_player.h"
 
 // We also need the definition of a cvar
 #include "c_cvars.h"
@@ -74,7 +74,7 @@ extern	char			startmap[8];		// [RH] Actual map name now
 extern	BOOL 			autostart;
 
 // Selected by user. 
-extern	cvar_t			*gameskill;
+EXTERN_CVAR (gameskill)
 
 // Nightmare mode flag, single player.
 extern	BOOL 			respawnmonsters;
@@ -82,14 +82,17 @@ extern	BOOL 			respawnmonsters;
 // Netgame? Only true if >1 player.
 extern	BOOL			netgame;
 
+// Bot game? Like netgame, but doesn't involve network communication.
+extern	BOOL			multiplayer;
+
 // Flag: true only if started as net deathmatch.
-extern	cvar_t			*deathmatch;
+EXTERN_CVAR (deathmatch)
 
 // [RH] Pretend as deathmatch for purposes of dmflags
-extern	cvar_t			*fakedmatch;
+EXTERN_CVAR (alwaysapplydmflags)
 
 // [RH] Teamplay mode
-extern	cvar_t			*teamplay;
+EXTERN_CVAR (teamplay)
 		
 // -------------------------
 // Internal parameters for sound rendering.
@@ -102,8 +105,8 @@ extern	cvar_t			*teamplay;
 //	Sound FX volume has default, 0 - 15
 //	Music volume has default, 0 - 15
 // These are multiplied by 8.
-extern cvar_t *snd_SfxVolume;	   // maximum volume for sound
-extern cvar_t *snd_MusicVolume;    // maximum volume for music
+EXTERN_CVAR (snd_sfxvolume)				// maximum volume for sound
+EXTERN_CVAR (snd_musicvolume)			// maximum volume for music
 
 
 // -------------------------
@@ -127,13 +130,13 @@ extern	BOOL	 		noblit;
 
 extern	int 			viewwindowx;
 extern	int 			viewwindowy;
-extern	int 			viewheight;
-extern	int 			viewwidth;
+extern	"C" int 		viewheight;
+extern	"C" int 		viewwidth;
 
-extern	int				realviewwidth;		// [RH] Physical width of view window
-extern	int				realviewheight;		// [RH] Physical height of view window
-extern	int				detailxshift;		// [RH] X shift for horizontal detail level
-extern	int				detailyshift;		// [RH] Y shift for vertical detail level
+extern	"C" int			realviewwidth;		// [RH] Physical width of view window
+extern	"C" int			realviewheight;		// [RH] Physical height of view window
+extern	"C" int			detailxshift;		// [RH] X shift for horizontal detail level
+extern	"C" int			detailyshift;		// [RH] Y shift for vertical detail level
 
 
 
@@ -185,9 +188,6 @@ extern	gamestate_t 	gamestate;
 extern	int 			gametic;
 
 
-// Bookkeeping on players - state.
-extern	player_t		players[MAXPLAYERS];
-
 // Alive? Disconnected?
 extern	BOOL	 		playeringame[MAXPLAYERS];
 
@@ -195,14 +195,14 @@ extern	BOOL	 		playeringame[MAXPLAYERS];
 // Player spawn spots for deathmatch.
 extern	int				MaxDeathmatchStarts;
 extern	mapthing2_t		*deathmatchstarts;
-extern	mapthing2_t* 	deathmatch_p;
+extern	mapthing2_t*	deathmatch_p;
 
 // Player spawn spots.
 extern	mapthing2_t		playerstarts[MAXPLAYERS];
 
 // Intermission stats.
 // Parameters for world map / intermission.
-extern	wbstartstruct_t wminfo; 
+extern	struct wbstartstruct_s wminfo; 
 
 
 // LUT of ammunition limits for each kind.
@@ -238,7 +238,7 @@ extern BOOL BorderNeedRefresh;
 extern BOOL BorderTopRefresh;
 
 
-extern	cvar_t 			*mouseSensitivity;
+EXTERN_CVAR (mouse_sensitivity)
 //?
 // debug flag to cancel adaptiveness
 extern	BOOL	 		singletics; 	
@@ -263,7 +263,7 @@ extern	doomcom_t*		doomcom;
 extern	doomdata_t* 	netbuffer;		
 
 
-extern	ticcmd_t		localcmds[BACKUPTICS];
+extern	struct ticcmd_t		localcmds[BACKUPTICS];
 
 extern	int 			maketic;
 extern	int 			nettics[MAXNETNODES];
@@ -273,7 +273,9 @@ extern	int 			ticdup;
 
 
 // ---- [RH] ----
-extern	cvar_t			*developer;
+EXTERN_CVAR (developer)
+
+extern int Net_Arbitrator;
 
 // Use MMX routines? (Only if USEASM is defined)
 extern	BOOL			UseMMX;
@@ -290,12 +292,13 @@ void EndMMX (void);
 
 #endif
 
-extern cvar_t *boom_friction;
-extern cvar_t *boom_pushers;
+EXTERN_CVAR (var_friction)
+EXTERN_CVAR (var_pushers)
 
 
 // [RH] Miscellaneous info for DeHackEd support
-struct DehInfo {
+struct DehInfo
+{
 	int StartHealth;
 	int StartBullets;
 	int MaxHealth;
@@ -317,12 +320,6 @@ extern struct DehInfo deh;
 
 // [RH] Deathmatch flags
 
-extern cvar_t *dmflagsvar;
-extern int	   dmflags;
+extern int dmflags;
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

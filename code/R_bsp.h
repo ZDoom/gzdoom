@@ -38,7 +38,7 @@ extern drawseg_t*	ds_p;
 
 typedef void (*drawfunc_t) (int start, int stop);
 
-extern cvar_t*		r_drawflat;		// [RH] Don't texture segs?
+EXTERN_CVAR (r_drawflat)		// [RH] Don't texture segs?
 
 // BSP?
 void R_ClearClipSegs (void);

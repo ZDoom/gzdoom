@@ -19,9 +19,8 @@
 //	  
 //-----------------------------------------------------------------------------
 
-
-#ifndef __M_BBOX__
-#define __M_BBOX__
+#ifndef __M_BBOX_H__
+#define __M_BBOX_H__
 
 #ifndef _WIN32
 #include <values.h>
@@ -31,6 +30,7 @@
 #endif
 #endif
 
+#include "dobject.h"
 #include "m_fixed.h"
 
 
@@ -43,19 +43,24 @@ enum
 	BOXRIGHT
 };		// bbox coordinates
 
-// Bounding box functions.
-void M_ClearBox (fixed_t*		box);
 
-void
-M_AddToBox
-( fixed_t*		box,
-  fixed_t		x,
-  fixed_t		y );
+class DBoundingBox : public DObject
+{
+	DECLARE_CLASS (DBoundingBox, DObject)
+public:
+	DBoundingBox();
+
+	void ClearBox ();
+	void AddToBox (fixed_t x, fixed_t y);
+
+	inline fixed_t Top () { return m_Box[BOXTOP]; }
+	inline fixed_t Bottom () { return m_Box[BOXBOTTOM]; }
+	inline fixed_t Left () { return m_Box[BOXLEFT]; }
+	inline fixed_t Right () { return m_Box[BOXRIGHT]; }
+
+protected:
+	fixed_t m_Box[4];
+};
 
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif //__M_BBOX_H__

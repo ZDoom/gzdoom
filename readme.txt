@@ -1,4 +1,5 @@
-This is the source code for ZDoom 1.17c released on 5 May 1999.
+This is the source code for ZDoom 1.18 released on 5 September 1999. It is
+not the same as the source released on 15 August.
 
 It is based on the Linux DOOM sources that were prepared by B. Krenheimer
 and generously released by John Carmack shortly before Christmas, 1997. If
@@ -18,40 +19,29 @@ the other text files in the code directory are from the original Linux
 source code and do not accurately reflect the state of many of the files
 used now.
 
-If you do use these sources, you should also be familiar with doomlic.txt.
-This is the license agreement for the Doom sources. The file COPYING
-applies to the patch program and NOT the Doom source code. I'd also
-appreciate a short e-mail so that I know if anyone's actually using
-this. :-)
+If you do use these sources, you should also be familiar with
+docs/doomlic.txt. This is the license agreement for the Doom sources. 
 
 To compile this source code, you also need to download several other
 packages if you don't already have them. These are:
 
   MIDAS Digital Audio System
-    http://www.s2.org/MIDAS/
+    http://www.s2.org/midas/
 
     Be sure to link with the static library and not the DLL version of
     MIDAS! I use a hack from NTDOOM that crashes with the DLL but not the
     static library.
 
-  Prometheus Truecolor Library (PTC) 0.72
+  OpenPTC 1.0.17
     http://www.gaffer.org/ptc
 
-    IMPORTANT NOTE! PTC 0.72 is no longer available at gaffer.org. If you
-    need it, e-mail me, and I can send you the source for it.
-
-    Once you get the source, you'll need to build at least the release
-    build of PTC. The batch files provided with PTC to do this will generate
-    the library somewhere in ../library. In my case, this ends up being
-    d:/games/doom/ptc/library/win32/vc5.x.
-
   NASM (for the assembly files)
-    http://www.cryogen.com/Nasm
+    http://www.web-sites.co.uk/nasm/
 
     If you don't want to use NASM, you can #define NOASM while compiling
     ZDoom, and it will use C code instead.
 
-The included project file (doom.dsp) is for Visual C++ 5.0 and makes a few
+The included project file (doom.dsp) is for Visual C++ 6 and makes a few
 assumptions about the development environment:
 
     MIDAS is installed at the same location in the directory hierarchy as
@@ -62,7 +52,7 @@ assumptions about the development environment:
 
     NASM is installed in d:/nasm.
 
-    PTC is installed in d:/games/doom/ptc.
+    PTC is installed in ../openptc.
 
 If you want to put things in different places, you'll need to adjust the
 project file's settings accordingly.
@@ -77,11 +67,11 @@ the Watcom linker:
 (The line I use is "nasm -o file.obj -f win32 file.nas" which works with
 Microsoft's linker, but not Watcom's.)
 
-If you want to recompile the DOS code, you need DJGPP and Allegro. Allegro
-is only needed because MIDAS uses its interrupt wrappers. I don't use it
-for anything myself. The makefile.dj file can be used with make to
-generate either a release or debug build. (Create the appropriate
-subdirectories under code/djgpp first.)
+The old DOS code from 1.17c is provided, although it won't compile as-is,
+because OpenPTC for DOS still only supports text- and fake-mode graphics,
+and I don't care enough about DOS to hook the older version of PTC in with
+the new code. If someone else wants to mess with it and get it to work, be
+my guest.
 
 
 Randy Heit

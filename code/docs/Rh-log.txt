@@ -1,3 +1,457 @@
+September 5, 1999
+- The +moveup and +movedown commands finally do something.
+- Added a fly cheat.
+- Changed the handling of action commands so that they increment and
+  decrement numbers in an array instead of setting and clearing bits in an
+  int.
+- Fixed R_AlignFlat(). Apparently, I broke it sometime (or it never worked
+  properly in the first place). Also made it simpler.
+
+September 3, 1999
+- Added localambientsound and activatorsound ACS commands.
+- Fixed the DLevelScript constructor to place new scripts in the array of
+  RunningScripts (if not ACS_ExecuteAlways).
+
+September 2, 1999
+- Replaced the error abort in FArchive.cpp when an attempt is made to store
+  a DObject, with a NULL object save instead. There are conditions that will
+  come up during regular gameplay that will result in dangling pointers.
+  Example: A lost soul attacks a monster. The attacked monster then sets its
+  target field to the lost soul. Something kills the lost soul, and it
+  destroys itself. The other monster is now left with a pointer to nowhere.
+  The only reasonable solution to this problem I can think of is to collect
+  a list of all objects that want to destroy themselves. At the end of each
+  tic, they get destroyed, *and* all thinkers are searched for pointers to
+  those object. If any pointers are found, they get NULLed.
+
+September 1, 1999
+- Significantly cleaned up G_ParseMapInfo(). It's easier to follow what it's
+  doing, and now it's smart enough to give you an error message if you make
+  a mistake in your MAPINFO lump instead of hanging.
+- Added a flat warping effect similar to Quake's liquid textures.
+
+August 31, 1999
+- Added swimmable water. The forcewater cvar can be used to make all BOOM
+  deep water swimmable.
+- C_MidPrint() now adds messages to the console as well as the middle of
+  the screen.
+- Fixed the "you need a key" messages to only appear for the player who
+  tries to activate the locked door.
+- Restored the code for storing server cvars in savegames.
+
+August 30, 1999
+- Made items respawn the default for -deathmatch.
+- After creating some huge log files, I believe I finally fixed the demo
+  and network sync with bots. The bots use P_CheckPosition() to determine
+  if a spot is free. This function can also causes items to be picked up.
+  Thus, on the arbitrator's machine, bots pick up items before they do
+  on the other machines, and they can also pick up items that they decide
+  not to touch (and so don't pick them up on other machines). To fix, I
+  made a wrapper for the bots that turns off their MF_PICKUP flag before
+  performing the check and then sets it back after the check is made.
+- Fixed the loading of the "straight-ahead" status bar graphics for skins.
+  The corresponding patches weren't being moved into the skin's namespace.
+
+August 28, 1999
+- Fixed the bot's FakeFire() so that it doesn't do damage to anything
+  that it might hit, by adding another thing instead of using MT_HEADSHOT.
+- Another cause of the sync problem is in P_CheckSight(). If a monster
+  is invisible, a random number is used to determine if the thing
+  should be reported as not visible.
+- Found part of the problem with bot sync: P_SpawnPlayerMissile() used
+  a special routine when a bot wanted to fire. The routine aimed at
+  whatever the bot's enemy was set at. Only on the arbitrary (and not
+  during demo playback), can enemy ever be non-NULL. Changed this to
+  just disable autoaim for bots. Should be effectively the same.
+- Changed P_SpawnPlayerMissile() so that if a player has autoaim set to
+  0, it doesn't try adjusting the angle left and right.
+- Fixed projectile velocities by using vector math. Doom calculated the
+  velocity on a 2D plane, then added in the vertical component.
+- Fixed the bot's vertical aiming.
+- Rewrote the parts of the Cajun that used degrees to use binary angles
+  instead.
+- Changed the Cajun's TurnToAng() function to let it turn both left and
+  right, depending on which results in a shorter distance.
+
+August 27, 1999
+- Added the Cajun 0.97 code. Needs work yet: Bot looks up/down too far,
+  always turns right, demos don't stay in sync, and networking with bots
+  probably doesn't work either.
+
+August 14, 1999
+- Cleaned out a lot of the no longer relevant docs from the docs dir that
+  came from the Linux source.
+- Changed IdentifyVersion() so that it can look for an IWAD in one of four
+  directories: current, program, $DOOMWADDIR, and $HOME. (The same search
+  order used by BOOM.)
+
+August 13, 1999
+- Fixed the DLevelScript constructor. (Using local vars with the same names
+  as member vars still isn't a good thing. :-)
+
+August 12, 1999
+- Made the vertical calculations in the renderer subpixel-accurate. This
+  negates some of the work I did on the 10th. A pity. Something also needs to
+  be done about the walls--they are horribly jittery.
+- Moved the calculation of the initial texture coordinate out of the column
+  drawers and into their callers. Besides making the column drawers simpler,
+  it also allows for some optimizations of masked texture/sprite rendering,
+  where the initial coordinate is almost always 0.
+- Added variable field of view. Use the fov command to change it.
+
+August 11, 1999
+- When using -nosound, MIDAS's dsmClearBufferFloat() sometimes tries to free
+  memory that isn't allocated (apparently already freed). To compensate, I
+  avoid initializing MIDAS when -nosound or -nosfx is specified instead of
+  setting MIDAS's nosound option.
+- Found that when a stat display is active when the game is quit, a pure
+  virtual function call was being made. Unfortunately, when I tried to track
+  it down, the problem stopped.
+- Optimized away two multiplies I had added to R_MapPlane() earlier. Oddly,
+  performance seems unaffected.
+
+August 10, 1999
+- Did some performance tuning for the yslope movement loop in
+  R_SetupFrame(). memmove() is not an intrinsic function, so I wrote some
+  loops that VC++ optimizes nicely. (Other optimizing compilers should be
+  able to do the job just as well.) I also split up the loop that calculates
+  the yslope values into three cases so that the body of the loop can be as
+  simple as possible.
+  It probably wasn't worth the effort...
+- Changed P_SpawnPlayer to set player_t::attacker to NULL so that invalid
+  attackers aren't carried over across levels, which can cause the problems
+  if you try to save your game before being attacked on the new level.
+- Finished reimplementing hub travel. The new code in FArchive worked
+  properly on the first try. (Yay!)
+
+August 7, 1999
+- Added some code to FArchive that distinguishes player-controlled actors
+  (but not voodoo dolls) so that the stored actors can be overridden by
+  explicitly spawned ones when travelling between levels in a hud. Untested,
+  but I think it should work.
+- For curiosity's sake, a did a comparison of savegame sizes with 1.17c and
+  test9. The map tested was map29, just after spawning. The 1.17c snapshot
+  for the level was 99542 bytes uncompressed (20659 compressed). The test9
+  snapshot was 111786 bytes uncompressed (14824 compressed). So the new
+  archive format is bigger but compresses better, which I'll consider to be
+  a good thing, because snapshots are normally stored in memory in their
+  compressed state.
+
+August 6, 1999
+- Changed the tag changing behavior of W_CacheLumpNum(). Before, it would
+  always change a block's tag. Now, it will only change the tag if the new
+  one is less than the previous. This way, a block can be promoted from
+  PU_CACHE to PU_STATIC, but not the other way around. This was the cause
+  of intermittant bugs that were visible in st_new.cpp. ST_New uses some
+  graphics that also serve as sprite graphics. When those sprites are drawn,
+  their tags were changed to PU_CACHE, and with enough spawning, their data
+  could be overwritten, and st_new would never know.
+
+August 5, 1999
+- Changed M_Drawer() to use V_BreakLines() to split lines for prompt
+  messages, because it wasn't working right. Also fixed a bug in
+  V_BreakLines() so that now it will recognize blank lines.
+- Added nofilecompression cvar to prevent compression of LZO files.
+- Fixed savegames.
+- Made the thinkers the first thing that gets serialized in a level
+  snapshot (instead of sectors and walls), because a sector's specialdata
+  fields might cause a thinker to be serialized. But when
+  DThinker::SerializeAll is called, it destroys all existing thinkers,
+  including the ones that were created while reading the sectors. Storing
+  the thinkers before anything else avoids this.
+- Moved the serialization of player data into G_SerializeLevel. The bots
+  use pointers to some actors in their player_s, so we need to keep the
+  player data in the same context as the actors they reference. (i.e. They
+  need to go in the level snapshot instead of outside of them as was done
+  previously.)
+- Also fixed a bug with FLZOFile::Write. If a large write request was made,
+  it would only double the amount of memory to store the file in, which
+  might not have been enough. Now it doubles it until the buffer is large
+  enough to store the new data.
+- Figured out what was wrong with storing FLZOMemFiles in an archive: I was
+  forgetting to add the 8 bytes of header to the size of the block to write
+  out.
+
+August 4, 1999
+- Hubs somewhat work. Level data is properly stored on exit and loaded when
+  reentering the level. I just need to fix the player spawning. Savegames
+  are another matter. I seem to be having trouble embedding an FLZOMemFile
+  inside an archive. It appears to be getting saved properly, but trying to
+  decompress it crashes.
+- Got the FArchive class working. It is now able to write out objects and
+  reconstruct them, filling in pointers as appropriate. Cool.
+
+August 3, 1999
+- Instead of relying on Z_FreeTags to remove all thinkers when a new level
+  is started, I now call DThinker::RemoveAllThinkers, so that any subclasses
+  of DThinker that have custom destructors can have them called. Currently,
+  the only one with a destructor is DACSThinker, which destroys all the
+  active scripts.
+- Created a thinker responsible for running the ACS scripts, because it
+  makes serializing them easier.
+- Moved some of the mobj handling functions into the AActor class. Most
+  notably, P_SpawnMobj and P_RemoveMobj are gone. Use the new and delete
+  operators instead. AActor has a constructor that takes the same parameters
+  as P_SpawnMobj, so converting old code to use new is easy enough.
+
+August 1, 1999
+- Changed the code in i_music.cpp to use a simple class hierarchy for
+  defining music formats and how to play them. This removed some (messy)
+  switch statements and the nameless unions (that I guess mingw32 chokes on).
+- Rearranged the atterm functions so that I_ShutdownMusic() is called before
+  I_ShutdownSound() to prevent crashes when a MOD is playing at shutdown time.
+
+July 31, 1999
+- Removed the lists of active ceilings and plats, mainly because it makes
+  the serialization code simpler, but also because the same result can be
+  achieved (albeit more slowly) by searching the list of thinkers for each
+  instance of DCeiling or DPlat.
+- Made the active buttons (button_t) and earthquakes (quake_t) subclasses of
+  DThinker (DActiveButton and DEarthquake, respectively).
+- Created a TThinkerIterator template class to manage iterating through the
+  list of active thinkers.
+
+July 28, 1999
+- Ever since I added the extra network commands (like say) around a year ago,
+  I have been executing them the instant they arrived from the network. I
+  have only now figured out that this is wrong. They should be stored and
+  only executed when the gametic they arrived with is executed. With commands
+  like say, the timing is unimportant. With other commands, like changemap,
+  it can be vital that all machines execute the command on the same gametic.
+- Made some changes to the ticcmd building code in d_net.cpp to compensate
+  for ticdups greater than 1 by dividing pitch and yaw deltas by the ticdup
+  value so that the end result of moving the mouse a certain distance is the
+  same as if a ticdup of 1 were used. This is also necessary to make bots
+  work with ticdups other than 1.
+- Fixed the crazy bot turning. The cause? I was calculating angle deltas for
+  the bots' ticcmds based on their yaw when their think routine was called.
+  This is incorrect, because that yaw can incorrectly reflect the state of
+  the current gametic, because maketic can be more than 1 tic in advance of
+  gametic. The correct way is to take the bot's current yaw, add all the
+  deltas that haven't been played yet to it, and using the resulting yaw as
+  the base for the current maketic's yaw delta. In some ways, this is exactly
+  what you would also do for player prediction.
+
+July 26, 1999
+- Removed G_InitPlayer(). It was never used and just called G_PlayerReborn().
+
+July 23, 1999
+- Spent too many hours tracking down a circular #include dependancy I had
+  inadvertantly created yesterday.
+
+July 22, 1999
+- Did some work with the savegame serialization.
+
+July 21, 1999
+- Changed P_SpawnMapThing() to silently reject mapthings of type -1.
+- Fixed kill command to restore player's MF_SHOOTABLE flag before doing the
+  damage.
+- Changed bot observer mode to use noclip instead of noblockmap. Otherwise,
+  the player is unable to ride lifts while observing.
+- The bot code spawns bglobal.body1 and bglobal.body2 actors to help with
+  aiming. The original code would carry pointers to these over between
+  levels, even though all actors disappear when travelling between levels.
+  Not a good thing. Fixed.
+
+July 20, 1999
+- Changed the network code so that now bots work in network games. Their
+  ticcmds are sent along with the arbitrator's to the other players in the
+  game. This way, only one computer is responsible for doing the bot
+  thinking. (BOOM's random number generator was extremely useful for this.)
+  Unfortunately, the bots seem to have trouble aiming with more than one
+  live player and often end up spinning wildly.
+- Made weapondrop a server variable.
+- Fixed bots so that they can be recorded in savegames. There were two things
+  preventing it before: 1) The bots ticcmd was being written directly to the
+  player structure instead of netcmds, so the demo writer never had a change
+  to see the bot's commands. 2) There are several places in the bot code that
+  fiddle with the bot's angle directly. The quick (and acceptable) fix was to
+  keep the fiddling in, but use the new angle to calculate the bot's ucmd.yaw
+  value and set its angle back to what it was before being fiddled.
+- Delayed the call to I_InitMusic() in I_InitSound() until after MIDAS
+  is initialized. Also removed the call to I_ShutdownMusic() in I_InitSound(),
+  since I_ShutdownMusic() will be called automatically at exit.
+
+July 19, 1999
+- Made the network arbitrator changeable, so that if player 1 leaves the game,
+  someone will still be able to control things.
+- Moved the call to I_FinishClockCalibration() before D_CheckNetGame().
+
+July 17, 1999
+- Changed several references in am_map.cpp from plr to the console player's
+  camera. Also added colors for inter- and intra-level teleporters.
+- Changed P_PlayerThink() so that the game doesn't die if you try to add more
+  bots than there are coop starts (in a coop game, of course).
+- Fixed removebots command so that if you are looking through a bot's eyes
+  when you remove the bots, your vision is restored to your own head.
+
+July 16, 1999
+- Fixed the rotation of player arrows in the rotating automap in coop games.
+- Changed wipe_initBurn to allocate FIREHEIGHT+5 rows. Apparently FIREHEIGHT+4
+  wasn't enough.
+- Fixed SN_StartSequence so that it doesn't attempt to play nonassigned
+  sequences. I had broken it when I separated part of the code into a
+  separate TwiddleSeqNum function.
+
+July 14, 1999
+- Moved the "VectorCopy (RailEnd, end);" line in P_RailAttack() in front of
+  the for loop.
+
+July 12, 1999
+- Enclosed the bot thinking code inside if (bglobal.botnum) {} blocks so that
+  no bot thinking occurs when there are no bots. Also defaulted bot_calcnodes
+  to 0. If a bot is spawned, and there are no nodes loaded, bot_calcnodes
+  will automatically be set to 1. Now the bots don't eat up any time if none
+  are present in the world.
+- Added a generic FStat class. Different statistics can be measured and
+  reported by subclassing it. The console command "stat" provides the
+  interface to select which stats to view.
+- You cannot directly call a constructor from inside another constructor to
+  help do initialization. Instead, you end up with a temporary object that
+  is destroyed immediately when the second constructor finishes. This was
+  causing crashes with wall scrollers, because their constructor was calling
+  the constructor for more general scrollers.
+
+July 11, 1999
+- Changed the bot code so that it doesn't go into multiplayer mode until
+  after a bot is spawned, so the game won't be in coop mode when players have
+  no intention of playing with bots.
+
+July 10, 1999
+- Changed ReplaceString() function to properly handle the case where the 
+  string being replaced is the same as the new one.
+- Cajun bot now runs under ZDoom, although some things aren't perfect (such
+  as skin color).
+
+July 9, 1999
+- Received the Cajun bot source. Started moving it to ZDoom.
+
+July 7, 1999
+- The sky can now scale horizontally as well as vertically (when using
+  r_stretchsky), so its aspect ratio is preserved when stretched.
+- Redid the Wu line drawer to support 64 intensity levels and wrote a version
+  that used the translucency tables so that it could look good in overlayed
+  mode. Also cleaned up the code to make it more readable (to me anyway) and
+  removed the use of short ints.
+
+July 6, 1999
+- Restored Cmd_Exec to it's 1.17c version. I'm not sure what I was trying to
+  accomplish with the changes I made, but they broke it under certain
+  situations.
+
+July 5, 1999
+- Added Heretic's anti-aliased Wu line drawer to the automap.
+- Delayed the execution of cvar callbacks until the video subsystem has been
+  initialized.
+
+July 3, 1999
+- ST_Start() now sets the status bar dimensions.
+- Fixed some of the DCanvas member functions that used width and height as
+  parameters. Having two function parameters with the same names as two
+  member variables is not a good thing...
+
+July 2, 1999
+- Converted screen_t to class DCanvas and moved a bunch of the screen drawing
+  functions into it. This let me catch a few instances where the screen
+  dimensions were being referenced before they were initialized.
+- Found this code in i_input.cpp under WM_ACTIVATE:
+		if (Fullscreen)
+		{
+			extern int DisplayWidth, DisplayHeight, DisplayBits;
+			I_SetMode (DisplayWidth, DisplayHeight, DisplayBits);
+		}
+  Apparently, I added it when converting the video code to OpenPTC and
+  completely forgot about it. I still don't remember adding it. This was
+  probably the cause of problems starting up in fullscreen mode with some
+  chipsets. (Banshee and Voodoo3 are the two I know about.)
+- Changed refreshDisplay() in i_video.cpp to not do anything during startup.
+- Added a WM_GETMINMAXINFO handler to prevent the user from shrinking the
+  window smaller than the surface.
+
+July 1, 1999
+- Added default aliases for idclip and idspispopd that point to noclip.
+- Further fleshed out the DConsoleCommand and DConsoleAlias classes. Commands
+  and aliases are now hashed in the same array, and aliases get saved to the
+  config file again.
+- Changed PIT_ChangeSector() to not call P_DamageMobj() if the crushing damage
+  is 0. This is the way it used to be in Doom (so I hear; I don't feel like
+  checking), but not in Hexen.
+- Added a check to P_SpawnMapThing() to not bother checking mapthings of
+  type 0. Apparently, some maps in Final Doom actually have these.
+- DActor.movecount needs to be signed; there are places in p_enemy.cpp that
+  test if it is < 0. I had changed it to unsigned. Making it signed again
+  fixed the problem in test1 that made monsters act as if they had "bad
+  vision."
+- Changed P_AimLineAttack to calculate the top and bottom slope based on a
+  spherical 64 degree vertical field of view instead of just adding some
+  values to the center slope. With things that look straight ahead, the
+  result is the same as the original Doom. With things that don't, the result
+  is more correct than before. Also fixes the BFG problem in test1.
+
+June 30, 1999
+- Did some cleanup. Released 118test1.
+
+June 29, 1999
+- Made the actor's pitch member variable represent an angle between -ANGLE_90
+  and +ANGLE_90 exclusive instead of a screen sliding amount. Now the same
+  representation can be used for the current engine and any possible future
+  ones that offer true 6 DOF. This also makes the relationship between pitch
+  and all the slope values Doom uses for collision detection more apparent--
+  just take the tangent of the pitch instead of multiplying it by a magic
+  number.
+
+June 23, 1999
+- Moved the multiplication by lightscalexmul out of the inner wall
+  rendering loop so that it can be stepped instead, saving all the time I
+  used to be spending multiplying.
+- Finished converting all cvars to a cvar_t class. Use the macros defined in
+  c_cvars.h for declaring them. One (possibly significant for mods) change
+  is that callback functions are now always called when a cvar is created.
+  If callback depends on something else being initialized to work properly
+  (see snd_mididevice in i_music.cpp), either make sure the callback only
+  does its thing once the stuff it needs has been initialized, or don't
+  create any instances of the cvar until the initialization has finished.
+
+June 17, 1999
+- Added flat scaling, manual panning, and rotation.
+- Fixed a problem with PCD_UNARYMINUS. It was popping the result off the
+  stack, so any calculations that used it were wrong and could potentially
+  crash.
+
+June 15, 1999
+- Got the program to compile and link as C++ code. Some structs have been
+  transformed into classes, and savegames are disabled until I can get
+  serialization to work.
+
+June 11, 1999
+- Found an interesting problem with EV_StartLightFlickering. It takes two
+  parameters describing the light levels, but they were completely ignored.
+  Fixed.
+
+June 7, 1999
+- Changed R_FakeFlat to optionally not care about whether or not the camera's
+  current sector is also in a sector referenced by a Transfer_Heights special.
+- Changed all numspechit loops in the code to test against (numspechit > 0)
+  instead of (numspechit--).
+- Changed Thing_Projectile(Gravity) so that it should work properly with any
+  non-missiles.
+- Fixed a bug in P_NightmareRespawn caused by mindlessly cutting-and-pasting
+  from P_SpawnMapThing.
+- Found a bug in the translation of BOOM generalized floors/ceilings. One
+  of my bit shifts was off by one. Also fixed the code in zwadconv.
+- Changed the boss brain's height back to 16 for compatibility with
+  Strain MAP20.
+- A few days ago, I tried sorting the edges of polyobjects at runtime to
+  support concave polys at any rotation. It didn't work. I'll probably
+  have to use a span buffer.
+- Stuck in my new span drawer. I actually wrote it about two months ago.
+  Now it's finally going to be in a release version of ZDoom. It's about
+  6 fps (~23%) faster at 1024x768. Also removed ds_colshift because it is
+  no longer used and the unrolled span drawer in linear.nas.
+- The turbo cvar's callback wasn't being called when it was set. Fixed.
+- This a huge gap between log entries. Sorry, but I've been too lazy to
+  write anything here.
+
 March 15, 1999
 - Added support for custom ambient sound attenuations. This is an optional
   floating point value that follows the point keyword.

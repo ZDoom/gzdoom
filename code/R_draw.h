@@ -25,56 +25,57 @@
 
 
 
-extern byte**			ylookup;
-extern int*				columnofs;
+extern "C" byte**		ylookup;
+extern "C" int*			columnofs;
 
-extern int				dc_pitch;		// [RH] Distance between rows
+extern "C" int			dc_pitch;		// [RH] Distance between rows
 
-extern lighttable_t*	dc_colormap;
-extern unsigned int*	dc_shademap;	// [RH] For high/true color modes
-extern int				dc_x;
-extern int				dc_yl;
-extern int				dc_yh;
-extern fixed_t			dc_iscale;
-extern fixed_t			dc_texturemid;
-extern int				dc_color;		// [RH] For flat colors (no texturing)
+extern "C" lighttable_t*	dc_colormap;
+extern "C" unsigned int*	dc_shademap;	// [RH] For high/true color modes
+extern "C" int			dc_x;
+extern "C" int			dc_yl;
+extern "C" int			dc_yh;
+extern "C" fixed_t		dc_iscale;
+extern "C" fixed_t		dc_texturemid;
+extern "C" fixed_t		dc_texturefrac;
+extern "C" int			dc_color;		// [RH] For flat colors (no texturing)
 
 // first pixel in a column
-extern byte*			dc_source;
+extern "C" byte*			dc_source;
 
 // [RH] Temporary buffer for column drawing
-extern byte				dc_temp[1200*4];
-extern unsigned int		dc_tspans[4][256];
-extern unsigned int		*dc_ctspan[4];
-extern unsigned int		horizspans[4];
+extern "C" byte			dc_temp[1200*4];
+extern "C" unsigned int	dc_tspans[4][256];
+extern "C" unsigned int	*dc_ctspan[4];
+extern "C" unsigned int	horizspans[4];
 
 // [RH] Tutti-Frutti fix
-unsigned int			dc_mask;
+extern "C" unsigned int		dc_mask;
 
 
 // [RH] Pointers to the different column and span drawers...
 
 // The span blitting interface.
 // Hook in assembler or system specific BLT here.
-void (*R_DrawColumn)(void);
+extern void (*R_DrawColumn)(void);
 
 // The Spectre/Invisibility effect.
-void (*R_DrawFuzzColumn)(void);
+extern void (*R_DrawFuzzColumn)(void);
 
 // [RH] Draw translucent column;
-void (*R_DrawTranslucentColumn)(void);
+extern void (*R_DrawTranslucentColumn)(void);
 
 // Draw with color translation tables,
 //	for player sprite rendering,
 //	Green/Red/Blue/Indigo shirts.
-void (*R_DrawTranslatedColumn)(void);
+extern void (*R_DrawTranslatedColumn)(void);
 
 // Span blitting for rows, floor/ceiling.
 // No Sepctre effect needed.
-void (*R_DrawSpan)(void);
+extern void (*R_DrawSpan)(void);
 
 // [RH] Span blit into an interleaved intermediate buffer
-void (*R_DrawColumnHoriz)(void);
+extern void (*R_DrawColumnHoriz)(void);
 void R_DrawMaskedColumnHoriz (column_t *column);
 
 // [RH] Initialize the above five pointers
@@ -96,12 +97,15 @@ void rt_tlate4cols (int sx, int yl, int yh);
 void rt_tlatelucent1col (int hx, int sx, int yl, int yh);
 void rt_tlatelucent2cols (int hx, int sx, int yl, int yh);
 void rt_tlatelucent4cols (int sx, int yl, int yh);
-void rt_copy1col_asm (int hx, int sx, int yl, int yh);
-void rt_copy2cols_asm (int hx, int sx, int yl, int yh);
-void rt_copy4cols_asm (int sx, int yl, int yh);
-void rt_map1col_asm (int hx, int sx, int yl, int yh);
-void rt_map2cols_asm (int hx, int sx, int yl, int yh);
-void rt_map4cols_asm (int sx, int yl, int yh);
+extern "C" void rt_copy1col_asm (int hx, int sx, int yl, int yh);
+extern "C" void rt_copy2cols_asm (int hx, int sx, int yl, int yh);
+extern "C" void rt_copy4cols_asm (int sx, int yl, int yh);
+extern "C" void rt_map1col_asm (int hx, int sx, int yl, int yh);
+extern "C" void rt_map2cols_asm (int hx, int sx, int yl, int yh);
+extern "C" void rt_map4cols_asm1 (int sx, int yl, int yh);
+extern "C" void rt_map4cols_asm2 (int sx, int yl, int yh);
+
+extern void (*rt_map4cols)(int sx, int yl, int yh);
 
 #ifdef USEASM
 #define rt_copy1col		rt_copy1col_asm
@@ -109,14 +113,12 @@ void rt_map4cols_asm (int sx, int yl, int yh);
 #define rt_copy4cols	rt_copy4cols_asm
 #define rt_map1col		rt_map1col_asm
 #define rt_map2cols		rt_map2cols_asm
-#define rt_map4cols		rt_map4cols_asm
 #else
 #define rt_copy1col		rt_copy1col_c
 #define rt_copy2cols	rt_copy2cols_c
 #define rt_copy4cols	rt_copy4cols_c
 #define rt_map1col		rt_map1col_c
 #define rt_map2cols		rt_map2cols_c
-#define rt_map4cols		rt_map4cols_c
 #endif
 
 void rt_draw1col (int hx, int sx);
@@ -133,7 +135,7 @@ void	R_DrawColumnP_C (void);
 void	R_DrawFuzzColumnP_C (void);
 void	R_DrawTranslucentColumnP_C (void);
 void	R_DrawTranslatedColumnP_C (void);
-void	R_DrawSpanP (void);
+void	R_DrawSpanP_C (void);
 
 void	R_DrawColumnD_C (void);
 void	R_DrawFuzzColumnD_C (void);
@@ -143,15 +145,14 @@ void	R_DrawSpanD (void);
 
 #else	/* USEASM */
 
-void	R_DrawColumnP_Unrolled (void);
-void	R_DrawSpanP_Unrolled (void);
+extern "C" void	R_DrawColumnP_Unrolled (void);
 
-void	R_DrawColumnHorizP_ASM (void);
-void	R_DrawColumnP_ASM (void);
-void	R_DrawFuzzColumnP_ASM (void);
+extern "C" void	R_DrawColumnHorizP_ASM (void);
+extern "C" void	R_DrawColumnP_ASM (void);
+extern "C" void	R_DrawFuzzColumnP_ASM (void);
 void	R_DrawTranslucentColumnP_C (void);
 void	R_DrawTranslatedColumnP_C (void);
-void	R_DrawSpanP (void);
+extern "C" void	R_DrawSpanP_ASM (void);
 
 void	R_DrawColumnD_C (void);
 void	R_DrawFuzzColumnD_C (void);
@@ -169,34 +170,28 @@ void	R_FillColumnP (void);
 void	R_FillColumnHorizP (void);
 void	R_FillSpan (void);
 
-extern int				ds_colsize;		// [RH] Distance between columns
-extern int				ds_colshift;
+extern "C" int				ds_colsize;		// [RH] Distance between columns
 
-extern int				ds_y;
-extern int				ds_x1;
-extern int				ds_x2;
+extern "C" int				ds_y;
+extern "C" int				ds_x1;
+extern "C" int				ds_x2;
 
-extern lighttable_t*	ds_colormap;
+extern "C" lighttable_t*	ds_colormap;
 
-extern fixed_t			ds_xfrac;
-extern fixed_t			ds_yfrac;
-extern fixed_t			ds_xstep;
-extern fixed_t			ds_ystep;
+extern "C" dsfixed_t		ds_xfrac;
+extern "C" dsfixed_t		ds_yfrac;
+extern "C" dsfixed_t		ds_xstep;
+extern "C" dsfixed_t		ds_ystep;
 
 // start of a 64*64 tile image
-extern byte*			ds_source;
+extern "C" byte*			ds_source;
 
-extern int				ds_color;		// [RH] For flat color (no texturing)
+extern "C" int				ds_color;		// [RH] For flat color (no texturing)
 
 extern byte*			translationtables;
 extern byte*			dc_translation;
 
 extern fixed_t dc_translevel;
-
-
-/* [Petteri] R_DrawSpan8() optimized inner loop (does two pixels
-   per cycle) */
-void STACK_ARGS DrawSpan8Loop (fixed_t xfrac, fixed_t yfrac, int count, byte *dest);
 
 
 // [RH] Double view pixels by detail mode

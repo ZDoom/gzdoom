@@ -15,6 +15,11 @@ BITS 32
   SECTION .data
 %endif
 
+%define SPACEFILLER4 (0x44444444)
+
+; If you change this in r_draw.c, be sure to change it here, too!
+FUZZTABLE	equ	64
+
 ; External variables:
 EXTERN	_columnofs
 EXTERN	_ylookup
@@ -27,7 +32,7 @@ EXTERN	_realviewheight
 EXTERN	_dc_pitch
 EXTERN	_dc_colormap
 EXTERN	_dc_iscale
-EXTERN	_dc_texturemid
+EXTERN	_dc_texturefrac
 EXTERN	_dc_source
 EXTERN	_dc_yl
 EXTERN	_dc_yh
@@ -38,7 +43,6 @@ EXTERN	_dc_ctspan
 EXTERN	_dc_temp
 
 EXTERN	_ds_colsize
-EXTERN	_ds_colshift
 EXTERN	_ds_xstep
 EXTERN	_ds_ystep
 EXTERN	_ds_colormap
@@ -49,8 +53,12 @@ EXTERN	_ds_xfrac
 EXTERN	_ds_yfrac
 EXTERN	_ds_y
 
-; If you change this in r_draw.c, be sure to change it here, too!
-FUZZTABLE	equ	64
+; Global variables:
+GLOBAL		_ds_cursource
+GLOBAL		_ds_curcolormap
+
+_ds_cursource	DD 0
+_ds_curcolormap	DD 0
 
 
 ; Local stuff:
@@ -68,113 +76,191 @@ pixelcount	DD 0
 GLOBAL	_ASM_PatchColSize
 GLOBAL	@ASM_PatchColSize@0
 
-EXTERN _PatchUnrolledColSize
-
 _ASM_PatchColSize:
 @ASM_PatchColSize@0:
-	mov	ecx,[_ds_colshift]
+	mov	ecx,[_ds_colsize]
 	mov	edx,[_ds_colsize]
-	mov	[s0+2],cl
-	mov	[s1+2],dl
+	neg	ecx
+	mov	[spadva+2],edx
+	mov	[spstb+2],dl
 	add	edx,edx
-	mov	[s2+2],edx
-	jmp	_PatchUnrolledColSize
-
-;*----------------------------------------------------------------------
-;*
-;* DrawSpan8Loop Written by Petteri Kangaslampi <pekangas@sci.fi>
-;* and Donated to the public domain.
-;*
-;*----------------------------------------------------------------------
-
-GLOBAL	_DrawSpan8Loop
-
-;void DrawSpan8Loop(fixed_t xfrac, fixed_t yfrac, int count, byte *dest);
-	align 16
-
-_DrawSpan8Loop:
-	push	ebp
-	 push	edi
-	push	esi
-	 push	ebx
-
-	mov	eax,[esp+28]	; count
-	 mov	ebx,[esp+20]	; xfrac
-s0:	sal	eax,8
-	 mov	edi,[esp+32]	; dest
-	add	eax,edi
-	 mov	ecx,[esp+24]	; yfrac
-	mov	[lastAddress],eax
-	
-	 mov	ebp,ebx
-	mov	edx,ecx
-	 and	ebp,65536*63
-	shr	edx,10
-
-	 shr	ebp,16
-	xor	eax,eax
-	 nop
-
-ds8loo:	and	edx,64*63
-	mov	esi,[_ds_source]
-
-	or	ebp,edx
-	mov	edx,[_ds_xstep]
-
-	add	ebx,edx
-	mov	edx,[_ds_ystep]
-
-	mov	al,[esi+ebp]
-	mov	esi,[_ds_colormap]
-
-	add	ecx,edx
-	mov	ebp,ebx
-
-	mov	edx,ecx
-	mov	al,[esi+eax]
-
-	shr	edx,10
-	mov	[edi],al
-
-	shr	ebp,16
-	and	edx,64*63
-
-	and	ebp,63
-	mov	esi,[_ds_source]
-
-	or	ebp,edx
-	mov	edx,[_ds_xstep]
-
-	add	ebx,edx
-	mov	edx,[_ds_ystep]
-
-	mov	al,[esi+ebp]
-	mov	esi,[_ds_colormap]
-
-	add	ecx,edx
-	mov	ebp,ebx
-
-	mov	edx,ecx
-	mov	al,[esi+eax]
-
-	shr	edx,10
-s1:	mov	[edi+1],al
-
-	shr	ebp,16
-	mov	esi,[lastAddress]
-
-	and	ebp,63
-s2:	add	edi,2
-
-	cmp	edi,esi
-	jne	near ds8loo
-
-	pop	ebx
-	pop	esi
-	pop	edi
-	pop	ebp
-
+	mov	[spadvb+2],edx
+	add	edx,edx
+	mov	[spsta+2],cl
+	mov	[spstd+2],cl
+	add	cl,cl
+	mov	[spadvc+2],edx
+	mov	[spstc+2],cl
 	ret
+
+GLOBAL @R_SetSpanSource_ASM@4
+
+@R_SetSpanSource_ASM@4:
+	mov	[spreada+2],ecx
+	mov	[spreadb+2],ecx
+	mov	[spreadc+2],ecx
+	mov	[spreadd+2],ecx
+	mov	[spreade+2],ecx
+	mov	[spreadf+2],ecx
+	mov	[spreadg+2],ecx
+	mov	[_ds_cursource],ecx
+	ret
+
+GLOBAL @R_SetSpanColormap_ASM@4
+
+@R_SetSpanColormap_ASM@4:
+	mov	[spmapa+2],ecx
+	mov	[spmapb+2],ecx
+	mov	[spmapc+2],ecx
+	mov	[spmapd+2],ecx
+	mov	[spmape+2],ecx
+	mov	[spmapf+2],ecx
+	mov	[spmapg+2],ecx
+	mov	[_ds_curcolormap],ecx
+aret:	ret
+
+GLOBAL @R_DrawSpanP_ASM@0
+GLOBAL _R_DrawSpanP_ASM
+
+; eax: scratch
+; ebx: zero
+; ecx: xfrac at top end, yfrac int part in low end
+; edx: yfrac frac part at top end
+; edi: dest
+; ebp: scratch
+; esi: count
+
+	align	16
+
+@R_DrawSpanP_ASM@0:
+_R_DrawSpanP_ASM
+	mov	eax,[_ds_x2]
+	 mov	ecx,[_ds_x1]
+	sub	eax,ecx
+	 mov	edx,[_columnofs]
+
+	jl	aret		; count < 0: nothing to do, so leave
+
+	push	ebx
+	push	edi
+	push	ebp
+	push	esi
+
+	mov	edi,[edx+ecx*4]
+	 mov	edx,[_ylookup]
+	mov	ecx,[_ds_y]
+	 add	edi,[edx+ecx*4]
+
+	mov	edx,[_ds_ystep]
+	 xor	ebx,ebx
+	shl	edx,6
+	 mov	ecx,[_ds_ystep]
+	shr	ecx,26
+	 lea	esi,[eax+1]
+	or	ecx,[_ds_xstep]
+	 mov	[_ds_ystep],edx
+	mov	[_ds_xstep],ecx
+;	 mov	[spstep2d+2],ecx
+;	mov	[spstep2e+2],ecx
+;	 mov	[spstep2f+2],ecx
+;	mov	[spstep2g+2],ecx
+;	 mov	[spstep1d+2],edx
+;	mov	[spstep1e+2],edx
+;	 mov	[spstep1f+2],edx
+;	mov	[spstep1g+2],edx
+	 mov	ecx,[_ds_yfrac]
+	shr	ecx,26
+	 mov	edx,[_ds_yfrac]
+	shl	edx,6
+	 or	ecx,[_ds_xfrac]
+	shr	esi,1
+	 jnc	dseven1
+
+; do odd pixel
+
+		mov	ebp,ecx
+		rol	ebp,6
+		and	ebp,0xfff
+		 add	edx,[_ds_ystep]
+		adc	ecx,[_ds_xstep]
+spreada		 mov	bl,[ebp+SPACEFILLER4]
+spmapa		mov	bl,[ebx+SPACEFILLER4]
+		mov	[edi],bl
+spadva		 add	edi,1
+
+dseven1		shr	esi,1
+		 jnc	dsrest
+
+; do two more pixels
+
+		mov	ebp,ecx
+		 add	edx,[_ds_ystep]
+		adc	ecx,[_ds_xstep]
+		 and	ebp,0xfc00003f
+		rol	ebp,6
+		mov	eax,ecx
+		 add	edx,[_ds_ystep]
+		adc	ecx,[_ds_xstep]
+spreadb		 mov	bl,[ebp+SPACEFILLER4]	;read texel1
+		rol	eax,6
+		and	eax,0xfff
+spmapb		 mov	bl,[ebx+SPACEFILLER4]	;map texel1
+		mov	[edi],bl		;store texel1
+spadvb		 add	edi,2
+spreadc		mov	bl,[eax+SPACEFILLER4]	;read texel2
+spmapc		mov	bl,[ebx+SPACEFILLER4]	;map texel2
+spsta		mov	[edi-1],bl		;store texel2
+
+; do the rest
+
+dsrest		test	esi,esi
+		jz near	dsdone
+
+		align 16
+
+dsloop		mov	ebp,ecx
+spstep1d	 add	edx,[_ds_ystep]
+spstep2d	adc	ecx,[_ds_xstep]
+		 and	ebp,0xfc00003f
+		rol	ebp,6
+		mov	eax,ecx
+spstep1e	 add	edx,[_ds_ystep]
+spstep2e	adc	ecx,[_ds_xstep]
+spreadd		 mov	bl,[ebp+SPACEFILLER4]	;read texel1
+		rol	eax,6
+		and	eax,0xfff
+spmapd		 mov	bl,[ebx+SPACEFILLER4]	;map texel1
+		mov	[edi],bl		;store texel1
+		 mov	ebp,ecx
+spreade		mov	bl,[eax+SPACEFILLER4]	;read texel2
+spstep1f	 add	edx,[_ds_ystep]
+spstep2f	adc	ecx,[_ds_xstep]
+		 and	ebp,0xfc00003f
+		rol	ebp,6
+spmape		mov	bl,[ebx+SPACEFILLER4]	;map texel2
+		 mov	eax,ecx
+spstb		mov	[edi+1],bl		;store texel2
+spreadf		 mov	bl,[ebp+SPACEFILLER4]	;read texel3
+spmapf		mov	bl,[ebx+SPACEFILLER4]	;map texel3
+spadvc		 add	edi,4
+		rol	eax,6
+		and	eax,0xfff
+spstc		 mov	[edi-2],bl		;store texel3
+spreadg		mov	bl,[eax+SPACEFILLER4]	;read texel4
+spstep1g	 add	edx,[_ds_ystep]
+spstep2g	adc	ecx,[_ds_xstep]
+spmapg		 mov	bl,[ebx+SPACEFILLER4]	;map texel4
+		dec	esi
+spstd		 mov	[edi-1],bl		;store texel4
+		jnz near dsloop
+
+dsdone	pop	esi
+	pop	ebp
+	pop	edi
+	pop	ebx
+
+rdspret	ret
+
 
 ;************************
 
@@ -243,20 +329,13 @@ _R_DrawColumnP_ASM:
 	 mov	edx,[_columnofs]
 	mov	ebx,[_dc_x]
 	 inc	eax			; make 0 count mean 0 pixels
-	add	edi,[edx+ebx*4]		; edi = top of destination column
-	 sub	ecx,[_centery]		; ecx = dc_yl - centery
 
 	imul	eax,[_dc_pitch]		; Start turning the counter into an index
-
+	 add	edi,[edx+ebx*4]		; edi = top of destination column
 	add	edi,eax			; Point edi to the bottom of the destination column
 	 mov	edx,[_dc_iscale]
-
-; frac = dc_texturemid + (dc_yl - centery) * fracstep
-
-	imul	ecx,edx
-
 	shr	edx,16
-	 add	ecx,[_dc_texturemid]	; ecx = frac (all 32 bits)
+	 mov	ecx,[_dc_texturefrac]	; ecx = frac (all 32 bits)
 	mov	ebx,ecx
 	 mov	ebp,0
 	shl	ebx,16
@@ -293,7 +372,7 @@ rdcploop:
 	mov	al,[esi+ecx]		; Fetch texel
 	 add	ebx,edx			; increment frac fractional part
 	adc	cl,bl			; increment frac integral part
-rdcp1:	 add	ebp,0x12345678		; increment counter
+rdcp1:	 add	ebp,SPACEFILLER4	; increment counter
 	mov	al,[eax]		; colormap texel
 	 and	cl,bh
 	mov	[edi+ebp],al		; Store texel
@@ -419,27 +498,27 @@ fquadloop:
 	mov	[edi],bl
 
 	 inc	ecx
-f1a:	mov	al,[edi+edx+0x12345678]
+f1a:	mov	al,[edi+edx+SPACEFILLER4]
 	 and	ecx,FUZZTABLE-1
 	mov	bl,[eax]
 	 mov	edx,[_fuzzoffset+ecx*4]
-f1b:	mov	[edi+0x12345678],bl
+f1b:	mov	[edi+SPACEFILLER4],bl
 
 	 inc	ecx
-f2a:	mov	al,[edi+edx+2*0x12345678]
+f2a:	mov	al,[edi+edx+2*SPACEFILLER4]
 	 and	ecx,FUZZTABLE-1
 	mov	bl,[eax]
 	 mov	edx,[_fuzzoffset+ecx*4]
-f2b:	mov	[edi+2*0x12345678],bl
+f2b:	mov	[edi+2*SPACEFILLER4],bl
 
 	 inc	ecx
-f3a:	mov	al,[edi+edx+3*0x12345678]
+f3a:	mov	al,[edi+edx+3*SPACEFILLER4]
 	 and	ecx,FUZZTABLE-1
 	mov	bl,[eax]
 	 dec	esi
-f3b:	mov	[edi+3*0x12345678],bl
+f3b:	mov	[edi+3*SPACEFILLER4],bl
 
-f4:	 lea	edi,[edi+4*0x12345678]
+f4:	 lea	edi,[edi+4*SPACEFILLER4]
 	jnz	fquadloop
 
 savefuzzpos:
@@ -489,27 +568,21 @@ _R_DrawColumnHorizP_ASM:
 	 mov	esi,[_dc_ctspan+edx*4]
 	lea	eax,[_dc_temp+ecx*4+edx] ; eax = top of column in buffer
 	 mov	ebp,[_dc_yh]
-	mov	ebx,[_centery]
-	 mov	[esi],ecx
-	sub	ecx,ebx			; ecx = dc_yl - centery
+	mov	[esi],ecx
 	 mov	[esi+4],ebp
 	add	esi,8
 	 mov	[_dc_ctspan+edx*4],esi
-
-; frac = dc_texturemid + (dc_yl - centery) * fracstep
-
 	mov	esi,[_dc_iscale]
-	imul	ecx,esi
-	add	ecx,[_dc_texturemid]	; ecx = frac (all 32 bits)
-	 mov	ebx,[_dc_mask]
+	 mov	ecx,[_dc_texturefrac]	; ecx = frac (all 32 bits)
 	shl	ecx,8
-	 mov	edi,[_dc_source]
+	 mov	ebx,[_dc_mask]
 	shl	esi,8
-	 or	ecx,ebx
-	mov	dl,[edi]		; load cache
-	 mov	ebx,[esp]
-	and	ebx,0xfffffff8
-	 jnz	.mthan8
+	 mov	edi,[_dc_source]
+	or	ecx,ebx
+	 mov	dl,[edi]		; load cache
+	mov	ebx,[esp]
+	 and	ebx,0xfffffff8
+	jnz	.mthan8
 
 ; Register usage in the following code is:
 ;
@@ -1086,12 +1159,12 @@ _rt_map2cols_asm:
 ;*
 ;*----------------------------------------------------------------------
 
-GLOBAL	_rt_map4cols_asm
-GLOBAL	@rt_map4cols_asm@12
+GLOBAL	_rt_map4cols_asm1
+GLOBAL	@rt_map4cols_asm1@12
 
 	align 16
 
-_rt_map4cols_asm:
+_rt_map4cols_asm1:
 	pop	eax
 	mov	ecx,[esp+8]
 	mov	edx,[esp+4]
@@ -1099,7 +1172,7 @@ _rt_map4cols_asm:
 	mov	ecx,[esp+4]
 	push	eax
 
-@rt_map4cols_asm@12:
+@rt_map4cols_asm1@12:
 	push	ebx
 	mov	ebx,[esp+8]
 	push	ebp
@@ -1170,6 +1243,98 @@ _rt_map4cols_asm:
 	mov	[eax+edi+3],cl
 	 lea	eax,[eax+edi*2]
 	dec	ebx
+
+	jnz	.loop
+
+.done	pop	edi
+	pop	esi
+	pop	ebp
+	pop	ebx
+	ret	4
+
+GLOBAL	_rt_map4cols_asm2
+GLOBAL	@rt_map4cols_asm2@12
+
+	align 16
+
+_rt_map4cols_asm2:
+	pop	eax
+	mov	ecx,[esp+8]
+	mov	edx,[esp+4]
+	push	ecx
+	mov	ecx,[esp+4]
+	push	eax
+
+@rt_map4cols_asm2@12:
+	push	ebx
+	mov	ebx,[esp+8]
+	push	ebp
+	push	esi
+	sub	ebx,edx
+	push	edi
+	js	near .done
+
+	mov	eax,[_columnofs]
+	mov	esi,[_dc_colormap]	; esi = colormap
+	shl	edx,2
+	mov	eax,[eax+ecx*4]
+	mov	ecx,[_ylookup]
+	inc	ebx			; ebx = count
+	mov	edi,[ecx+edx]
+	lea	ebp,[_dc_temp+edx]	; ebp = source
+	add	eax,edi			; eax = dest
+	mov	edi,[_dc_pitch]		; edi = pitch
+	xor	ecx,ecx
+	xor	edx,edx
+
+	shr	ebx,1
+	jnc	.even
+
+	mov	dl,[ebp]
+	 mov	cl,[ebp+1]
+	add	ebp,4
+	 mov	dl,[esi+edx]
+	mov	cl,[esi+ecx]
+	 mov	[eax],dl
+	mov	[eax+1],cl
+	 mov	dl,[ebp-1]
+	mov	cl,[ebp-2]
+	 mov	dl,[esi+edx]
+	mov	cl,[esi+ecx]
+	 mov	[eax+2],dl
+	mov	[eax+3],cl
+	 add	eax,edi
+
+.even	and	ebx,ebx
+	jz	.done
+
+.loop
+	mov	dl,[ebp+3]
+	mov	ch,[esi+edx]
+	mov	dl,[ebp+2]
+	mov	cl,[esi+edx]
+	shl	ecx,16
+	mov	dl,[ebp+1]
+	mov	ch,[esi+edx]
+	mov	dl,[ebp]
+	mov	cl,[esi+edx]
+	mov	[eax],ecx
+	add	eax,edi
+
+	mov	dl,[ebp+7]
+	mov	ch,[esi+edx]
+	mov	dl,[ebp+6]
+	mov	cl,[esi+edx]
+	shl	ecx,16
+	mov	dl,[ebp+5]
+	mov	ch,[esi+edx]
+	mov	dl,[ebp+4]
+	mov	cl,[esi+edx]
+	mov	[eax],ecx
+	add	eax,edi
+	add	ebp,8
+	dec	ebx
+
 	jnz	.loop
 
 .done	pop	edi

@@ -20,8 +20,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __P_PSPR__
-#define __P_PSPR__
+#ifndef __P_PSPR_H__
+#define __P_PSPR_H__
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
@@ -60,7 +60,16 @@ typedef enum
 
 } psprnum_t;
 
-typedef struct
+inline FArchive &operator<< (FArchive &arc, psprnum_t i)
+{
+	return arc << (BYTE)i;
+}
+inline FArchive &operator>> (FArchive &arc, psprnum_t &out)
+{
+	BYTE in; arc >> in; out = (psprnum_t)in; return arc;
+}
+
+typedef struct pspdef_s
 {
 	state_t*	state;	// a NULL state means not active
 	int 		tics;
@@ -69,9 +78,7 @@ typedef struct
 
 } pspdef_t;
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+FArchive &operator<< (FArchive &, pspdef_t &);
+FArchive &operator>> (FArchive &, pspdef_t &);
+
+#endif	// __P_PSPR_H__

@@ -22,10 +22,10 @@
 //
 //-----------------------------------------------------------------------------
 
-
 #ifndef __P_SPEC__
 #define __P_SPEC__
 
+#include "dsectoreffect.h"
 
 //jff 2/23/98 identify the special classes that can share sectors
 
@@ -38,44 +38,88 @@ typedef enum
 
 // killough 3/7/98: Add generalized scroll effects
 
-typedef struct {
-	thinker_t thinker;		// Thinker structure for scrolling
-	fixed_t dx, dy;			// (dx,dy) scroll speeds
-	int affectee;			// Number of affected sidedef, sector, tag, or whatever
-	int control;			// Control sector (-1 if none) used to control scrolling
-	fixed_t last_height;	// Last known height of control sector
-	fixed_t vdx, vdy;		// Accumulated velocity if accelerative
-	int accel;				// Whether it's accelerative
-	enum
+class DScroller : public DThinker
+{
+	DECLARE_SERIAL (DScroller, DThinker)
+public:
+	enum EScrollType
 	{
 		sc_side,
 		sc_floor,
 		sc_ceiling,
 		sc_carry,
-		sc_carry_ceiling,	// killough 4/11/98: carry objects hanging on ceilings
-	} type;					// Type of scroll effect
-} scroll_t;
+		sc_carry_ceiling	// killough 4/11/98: carry objects hanging on ceilings
+
+	};
+	
+	DScroller (EScrollType type, fixed_t dx, fixed_t dy, int control, int affectee, int accel);
+	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel);
+
+	void RunThink ();
+
+protected:
+	EScrollType m_Type;		// Type of scroll effect
+	fixed_t m_dx, m_dy;		// (dx,dy) scroll speeds
+	int m_Affectee;			// Number of affected sidedef, sector, tag, or whatever
+	int m_Control;			// Control sector (-1 if none) used to control scrolling
+	fixed_t m_LastHeight;	// Last known height of control sector
+	fixed_t m_vdx, m_vdy;	// Accumulated velocity if accelerative
+	int m_Accel;			// Whether it's accelerative
+
+private:
+	DScroller ();
+};
+
+inline FArchive &operator<< (FArchive &arc, DScroller::EScrollType type)
+{
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, DScroller::EScrollType &out)
+{
+	BYTE in; arc >> in; out = (DScroller::EScrollType)in; return arc;
+}
 
 // phares 3/20/98: added new model of Pushers for push/pull effects
 
-typedef struct {
-	thinker_t thinker;		// Thinker structure for Pusher
-	enum
+class DPusher : public DThinker
+{
+	DECLARE_SERIAL (DPusher, DThinker)
+public:
+	enum EPusher
 	{
 		p_push,
 		p_pull,
 		p_wind,
-		p_current,
-	} type;
-	mobj_t* source;			// Point source if point pusher
-	int x_mag;				// X Strength
-	int y_mag;				// Y Strength
-	int magnitude;			// Vector strength for point pusher
-	int radius;				// Effective radius for point pusher
-	int x;					// X of point source if point pusher
-	int y;					// Y of point source if point pusher
-	int affectee;			// Number of affected sector
-} pusher_t;
+		p_current
+	};
+
+	DPusher ();
+	DPusher (EPusher type, line_t *l, int magnitude, int angle, AActor *source, int affectee);
+
+	void RunThink ();
+
+protected:
+	EPusher m_Type;
+	AActor *m_Source;		// Point source if point pusher
+	int m_Xmag;				// X Strength
+	int m_Ymag;				// Y Strength
+	int m_Magnitude;		// Vector strength for point pusher
+	int m_Radius;			// Effective radius for point pusher
+	int m_X;				// X of point source if point pusher
+	int m_Y;				// Y of point source if point pusher
+	int m_Affectee;			// Number of affected sector
+
+	friend BOOL PIT_PushThing (AActor *thing);
+};
+
+inline FArchive &operator<< (FArchive &arc, DPusher::EPusher type)
+{
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, DPusher::EPusher &out)
+{
+	BYTE in; arc >> in; out = (DPusher::EPusher)in; return arc;
+}
 
 // [RH] Types of keys used by locked doors and scripts
 typedef enum
@@ -103,7 +147,7 @@ BOOL P_CheckKeys (player_t *p, keytype_t lock, BOOL remote);
 // [RH] If a deathmatch game, checks to see if noexit is enabled.
 //		If so, it kills the player and returns false. Otherwise,
 //		it returns true, and the player is allowed to live.
-BOOL	CheckIfExitIsGood (mobj_t *self);
+BOOL	CheckIfExitIsGood (AActor *self);
 
 // at game start
 void	P_InitPicAnims (void);
@@ -115,15 +159,59 @@ void	P_SpawnSpecials (void);
 void	P_UpdateSpecials (void);
 
 // when needed
-BOOL	P_ActivateLine (line_t *ld, mobj_t *mo, int side, int activationType);
+BOOL	P_ActivateLine (line_t *ld, AActor *mo, int side, int activationType);
+BOOL	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType);
 
 void	P_PlayerInSpecialSector (player_t *player);
 
-int		twoSided (int sector, int line);
+//
+// getSide()
+// Will return a side_t*
+//	given the number of the current sector,
+//	the line number, and the side (0/1) that you want.
+//
+inline side_t *getSide (int currentSector, int line, int side)
+{
+	return &sides[ (sectors[currentSector].lines[line])->sidenum[side] ];
+}
 
-sector_t *getSector (int currentSector, int line, int side);
+//
+// getSector()
+// Will return a sector_t*
+//	given the number of the current sector,
+//	the line number and the side (0/1) that you want.
+//
+inline sector_t *getSector (int currentSector, int line, int side)
+{
+	return sides[ (sectors[currentSector].lines[line])->sidenum[side] ].sector;
+}
 
-side_t	*getSide (int currentSector, int line, int side);
+
+//
+// twoSided()
+// Given the sector number and the line number,
+//	it will tell you whether the line is two-sided or not.
+//
+inline int twoSided (int sector, int line)
+{
+	return (sectors[sector].lines[line])->flags & ML_TWOSIDED;
+}
+
+//
+// getNextSector()
+// Return sector_t * of sector next to current.
+// NULL if not two-sided line
+//
+inline sector_t *getNextSector (line_t *line, sector_t *sec)
+{
+	if (!(line->flags & ML_TWOSIDED))
+		return NULL;
+	
+	return (line->frontsector == sec) ? line->backsector : line->frontsector;
+		
+	return line->frontsector;
+}
+
 
 fixed_t	P_FindLowestFloorSurrounding (sector_t *sec);
 fixed_t	P_FindHighestFloorSurrounding (sector_t *sec);
@@ -148,123 +236,150 @@ int		P_FindLineFromID (int id, int start);
 
 int		P_FindMinSurroundingLight (sector_t *sector, int max);
 
-sector_t *getNextSector (line_t *line, sector_t *sec);
 sector_t *P_NextSpecialSector (sector_t *sec, int type, sector_t *back2);	// [RH]
-
-void	T_Scroll (scroll_t *);		// killough 3/7/98: scroll effect thinker
-void	T_Pusher (pusher_t *);		// phares 3/20/98: Push thinker
-
-
-//
-// SPECIAL
-//
-int EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed);
 
 
 
 //
 // P_LIGHTS
 //
-typedef struct
+
+class DLighting : public DSectorEffect
 {
-	thinker_t	thinker;
-	sector_t*	sector;
-	int 		count;
-	int 		maxlight;
-	int 		minlight;
-} fireflicker_t;
+	DECLARE_SERIAL (DLighting, DSectorEffect);
+public:
+	DLighting (sector_t *sector);
+protected:
+	DLighting ();
+};
 
-
-
-typedef struct
+class DFireFlicker : public DLighting
 {
-	thinker_t	thinker;
-	sector_t*	sector;
-	int 		count;
-	int 		maxlight;
-	int 		minlight;
-	int 		maxtime;
-	int 		mintime;
-} lightflash_t;
+	DECLARE_SERIAL (DFireFlicker, DLighting)
+public:
+	DFireFlicker (sector_t *sector);
+	DFireFlicker (sector_t *sector, int upper, int lower);
+	void		RunThink ();
+protected:
+	int 		m_Count;
+	int 		m_MaxLight;
+	int 		m_MinLight;
+private:
+	DFireFlicker ();
+};
 
-
-
-typedef struct
+class DFlicker : public DLighting
 {
-	thinker_t	thinker;
-	sector_t*	sector;
-	int 		count;
-	int 		minlight;
-	int 		maxlight;
-	int 		darktime;
-	int 		brighttime;
-} strobe_t;
+	DECLARE_SERIAL (DFlicker, DLighting)
+public:
+	DFlicker (sector_t *sector, int upper, int lower);
+	void		RunThink ();
+protected:
+	int 		m_Count;
+	int 		m_MaxLight;
+	int 		m_MinLight;
+private:
+	DFlicker ();
+};
 
-
-
-
-typedef struct
+class DLightFlash : public DLighting
 {
-	thinker_t	thinker;
-	sector_t*	sector;
-	int 		minlight;
-	int 		maxlight;
-	int 		direction;
-} glow_t;
+	DECLARE_SERIAL (DLightFlash, DLighting)
+public:
+	DLightFlash (sector_t *sector);
+	DLightFlash (sector_t *sector, int min, int max);
+	void		RunThink ();
+protected:
+	int 		m_Count;
+	int 		m_MaxLight;
+	int 		m_MinLight;
+	int 		m_MaxTime;
+	int 		m_MinTime;
+private:
+	DLightFlash ();
+};
+
+class DStrobe : public DLighting
+{
+	DECLARE_SERIAL (DStrobe, DLighting)
+public:
+	DStrobe (sector_t *sector, int utics, int ltics, bool inSync);
+	DStrobe (sector_t *sector, int upper, int lower, int utics, int ltics);
+	void		RunThink ();
+protected:
+	int 		m_Count;
+	int 		m_MinLight;
+	int 		m_MaxLight;
+	int 		m_DarkTime;
+	int 		m_BrightTime;
+private:
+	DStrobe ();
+};
+
+class DGlow : public DLighting
+{
+	DECLARE_SERIAL (DGlow, DLighting)
+public:
+	DGlow (sector_t *sector);
+	void		RunThink ();
+protected:
+	int 		m_MinLight;
+	int 		m_MaxLight;
+	int 		m_Direction;
+private:
+	DGlow ();
+};
 
 // [RH] Glow from Light_Glow and Light_Fade specials
-typedef struct
+class DGlow2 : public DLighting
 {
-	thinker_t	thinker;
-	sector_t	*sector;
-	int			start;
-	int			end;
-	int			maxtics;
-	int			tics;
-	BOOL		oneshot;
-} glow2_t;
+	DECLARE_SERIAL (DGlow2, DLighting)
+public:
+	DGlow2 (sector_t *sector, int start, int end, int tics, bool oneshot);
+	void		RunThink ();
+protected:
+	int			m_Start;
+	int			m_End;
+	int			m_MaxTics;
+	int			m_Tics;
+	bool		m_OneShot;
+private:
+	DGlow2 ();
+};
 
 // [RH] Phased light thinker
-typedef struct
+class DPhased : public DLighting
 {
-	thinker_t	thinker;
-	sector_t	*sector;
-	byte		baselevel;
-	byte		phase;
-} phased_t;
+	DECLARE_SERIAL (DPhased, DLighting)
+public:
+	DPhased (sector_t *sector);
+	DPhased (sector_t *sector, int baselevel, int phase);
+	void		RunThink ();
+protected:
+	byte		m_BaseLevel;
+	byte		m_Phase;
+private:
+	DPhased ();
+	DPhased (sector_t *sector, int baselevel);
+	int PhaseHelper (sector_t *sector, int index, int light, sector_t *prev);
+};
 
 #define GLOWSPEED				8
 #define STROBEBRIGHT			5
 #define FASTDARK				15
 #define SLOWDARK				TICRATE
 
-void	T_FireFlicker (fireflicker_t *flick);
-void	P_SpawnFireFlicker (sector_t *sector);
-void	T_LightFlash (lightflash_t *flash);
-void	P_SpawnLightFlash (sector_t *sector, int min, int max);
-void	T_StrobeFlash (strobe_t *flash);
-
-void	P_SpawnStrobeFlash (sector_t *sector, int upper, int lower,
-							int utics, int ltics, int inSync);
-
-void	T_Flicker (fireflicker_t *flick);
 void	EV_StartLightFlickering (int tag, int upper, int lower);
-void	EV_StartLightStrobing (int tag, int upper, int lower,
-							   int utics, int ltics);
+void	EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics);
+void	EV_StartLightStrobing (int tag, int utics, int ltics);
 void	EV_TurnTagLightsOff (int tag);
 void	EV_LightTurnOn (int tag, int bright);
 void	EV_LightChange (int tag, int value);
 
-void	T_Glow (glow_t *g);
 void	P_SpawnGlowingLight (sector_t *sector);
 
-void	T_Glow2 (glow2_t *g);
 void	EV_StartLightGlowing (int tag, int upper, int lower, int tics);
 void	EV_StartLightFading (int tag, int value, int tics);
-
-void	T_PhasedLight (phased_t *l);
-void	P_SpawnLightSequence (sector_t *sector);
-void	P_SpawnLightPhased (sector_t *sector);
 
 
 //
@@ -279,178 +394,187 @@ typedef struct
 } switchlist_t;
 
 
-typedef enum
-{
-	top,
-	middle,
-	bottom
-
-} bwhere_e;
-
-
-typedef struct button_s
-{
-	struct button_s *next;	// [RH] make buttons a singly-linked list
-	line_t* 	line;
-	bwhere_e	where;
-	int 		btexture;
-	int 		btimer;
-	fixed_t		x, y;		// [RH] Location of switch sound, independent of any mobjs
-
-} button_t;
-
-
-
-
- // 1 second, in ticks. 
+// 1 second, in ticks. 
 #define BUTTONTIME		TICRATE
-
-extern button_t *buttonlist; 
 
 void	P_ChangeSwitchTexture (line_t *line, int useAgain);
 
-void	P_InitSwitchList(void);
+void	P_InitSwitchList ();
 
 
 //
 // P_PLATS
 //
-typedef enum
+class DPlat : public DMovingFloor
 {
-	up,
-	down,
-	waiting,
-	in_stasis
+	DECLARE_SERIAL (DPlat, DMovingFloor);
+public:
+	enum EPlatState
+	{
+		up,
+		down,
+		waiting,
+		in_stasis
+	};
 
-} plat_e;
+	enum EPlatType
+	{
+		platPerpetualRaise,
+		platDownWaitUpStay,
+		platUpWaitDownStay,
+		platDownByValue,
+		platUpByValue,
+		platUpByValueStay,
+		platRaiseAndStay,
+		platToggle,
+		platDownToNearestFloor,
+		platDownToLowestCeiling
+	};
 
+	void RunThink ();
 
+protected:
+	DPlat (sector_t *sector);
 
-typedef enum
+	fixed_t 	m_Speed;
+	fixed_t 	m_Low;
+	fixed_t 	m_High;
+	int 		m_Wait;
+	int 		m_Count;
+	EPlatState	m_Status;
+	EPlatState	m_OldStatus;
+	BOOL 		m_Crush;
+	int 		m_Tag;
+	EPlatType	m_Type;
+
+	void PlayPlatSound (const char *sound);
+	void Reactivate ();
+	void Stop ();
+
+private:
+	DPlat ();
+
+	friend BOOL	EV_DoPlat (int tag, line_t *line, EPlatType type,
+						   int height, int speed, int delay, int lip, int change);
+	friend void EV_StopPlat (int tag);
+	friend void P_ActivateInStasis (int tag);
+};
+
+inline FArchive &operator<< (FArchive &arc, DPlat::EPlatType type)
 {
-	// [RH] Changed these
-	platPerpetualRaise,
-	platDownWaitUpStay,
-	platUpWaitDownStay,
-	platDownByValue,
-	platUpByValue,
-	platUpByValueStay,
-	platRaiseAndStay,
-	platToggle,
-	platDownToNearestFloor,
-	platDownToLowestCeiling
-
-} plattype_e;
-
-
-
-typedef struct plat_s
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, DPlat::EPlatType &out)
 {
-	thinker_t	thinker;
-
-	// [RH] Added next and prev links
-	struct plat_s *next, **prev;
-
-	sector_t*	sector;
-	fixed_t 	speed;
-	fixed_t 	low;
-	fixed_t 	high;
-	int 		wait;
-	int 		count;
-	plat_e		status;
-	plat_e		oldstatus;
-	BOOL 		crush;
-	int 		tag;
-	plattype_e	type;
-	
-} plat_t;
-
-
-
-extern plat_t *activeplats;
-
-void	T_PlatRaise(plat_t *plat);
-
-BOOL	EV_DoPlat (int tag, line_t *line, plattype_e type, int height,
-				   int speed, int delay, int lip, int change);
-
-void	P_AddActivePlat (plat_t *plat);
-void	P_RemoveActivePlat (plat_t *plat);
-void	EV_StopPlat (int tag);
-void	P_ActivateInStasis (int tag);
-
+	BYTE in; arc >> in; out = (DPlat::EPlatType)in; return arc;
+}
+inline FArchive &operator<< (FArchive &arc, DPlat::EPlatState state)
+{
+	return arc << (BYTE)state;
+}
+inline FArchive &operator>> (FArchive &arc, DPlat::EPlatState &out)
+{
+	BYTE in; arc >> in; out = (DPlat::EPlatState)in; return arc;
+}
 
 //
 // [RH]
 // P_PILLAR
 //
-typedef enum
+
+class DPillar : public DMover
 {
-	pillarBuild,
-	pillarOpen
+	DECLARE_SERIAL (DPillar, DMover)
+public:
+	enum EPillar
+	{
+		pillarBuild,
+		pillarOpen
 
-} pillar_e;
+	};
 
-typedef struct
+	DPillar (sector_t *sector, EPillar type, fixed_t speed, fixed_t height,
+			 fixed_t height2, int crush);
+
+	void RunThink ();
+
+protected:
+	EPillar		m_Type;
+	fixed_t		m_FloorSpeed;
+	fixed_t		m_CeilingSpeed;
+	fixed_t		m_FloorTarget;
+	fixed_t		m_CeilingTarget;
+	int			m_Crush;
+
+private:
+	DPillar ();
+};
+
+inline FArchive &operator<< (FArchive &arc, DPillar::EPillar type)
 {
-	thinker_t	thinker;
-	sector_t	*sector;
-	pillar_e	type;
-	fixed_t		floorspeed;
-	fixed_t		ceilingspeed;
-	fixed_t		floortarget;
-	fixed_t		ceilingtarget;
-	int			crush;
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, DPillar::EPillar &out)
+{
+	BYTE in; arc >> in; out = (DPillar::EPillar)in; return arc;
+}
 
-} pillar_t;
-
-BOOL EV_DoPillar (pillar_e type, int tag, fixed_t speed, fixed_t height,
+BOOL EV_DoPillar (DPillar::EPillar type, int tag, fixed_t speed, fixed_t height,
 				  fixed_t height2, int crush);
-
-void T_Pillar (pillar_t *pillar);
 
 //
 // P_DOORS
 //
-typedef enum
+class DDoor : public DMovingCeiling
 {
-	// [RH] Changed for new specials
-	doorClose,
-	doorOpen,
-	doorRaise,
-	doorRaiseIn5Mins,
-	doorCloseWaitOpen,
+	DECLARE_SERIAL (DDoor, DMovingCeiling)
+public:
+	enum EVlDoor
+	{
+		doorClose,
+		doorOpen,
+		doorRaise,
+		doorRaiseIn5Mins,
+		doorCloseWaitOpen,
+	};
 
-} vldoor_e;
+	DDoor (sector_t *sector);
+	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay);
 
-typedef struct
-{
-	thinker_t	thinker;
-	vldoor_e	type;
-	sector_t*	sector;
-	fixed_t 	topheight;
-	fixed_t 	speed;
+	void RunThink ();
+protected:
+	EVlDoor		m_Type;
+	fixed_t 	m_TopHeight;
+	fixed_t 	m_Speed;
 
 	// 1 = up, 0 = waiting at top, -1 = down
-	int 		direction;
+	int 		m_Direction;
 	
 	// tics to wait at the top
-	int 		topwait;
+	int 		m_TopWait;
 	// (keep in case a door going down is reset)
 	// when it reaches 0, start going down
-	int 		topcountdown;
-	
-} vldoor_t;
+	int 		m_TopCountdown;
 
+	void DoorSound (bool raise) const;
 
-BOOL	EV_DoDoor (vldoor_e type, line_t *line, mobj_t *thing,
-				   int tag, int speed, int delay, keytype_t lock);
+	friend BOOL	EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
+						   int tag, int speed, int delay, keytype_t lock);
+	friend void P_SpawnDoorCloseIn30 (sector_t *sec);
+	friend void P_SpawnDoorRaiseIn5Mins (sector_t *sec);
+private:
+	DDoor ();
 
-void	T_VerticalDoor (vldoor_t *door);
-void	P_SpawnDoorCloseIn30 (sector_t *sec);
+};
 
-void	P_SpawnDoorRaiseIn5Mins (sector_t *sec);
-
+inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor type)
+{
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, DDoor::EVlDoor &out)
+{
+	BYTE in; arc >> in; out = (DDoor::EVlDoor)in; return arc;
+}
 
 
 //
@@ -458,230 +582,265 @@ void	P_SpawnDoorRaiseIn5Mins (sector_t *sec);
 //
 
 // [RH] Changed these
-typedef enum
+class DCeiling : public DMovingCeiling
 {
-	ceilLowerByValue,
-	ceilRaiseByValue,
-	ceilMoveToValue,
-	ceilLowerToHighestFloor,
-	ceilLowerInstant,
-	ceilRaiseInstant,
-	ceilCrushAndRaise,
-	ceilLowerAndCrush,
-	ceilCrushRaiseAndStay,
-	ceilRaiseToNearest,
-	ceilLowerToLowest,
-	ceilLowerToFloor,
+	DECLARE_SERIAL (DCeiling, DMovingCeiling)
+public:
+	enum ECeiling
+	{
+		ceilLowerByValue,
+		ceilRaiseByValue,
+		ceilMoveToValue,
+		ceilLowerToHighestFloor,
+		ceilLowerInstant,
+		ceilRaiseInstant,
+		ceilCrushAndRaise,
+		ceilLowerAndCrush,
+		ceilCrushRaiseAndStay,
+		ceilRaiseToNearest,
+		ceilLowerToLowest,
+		ceilLowerToFloor,
 
-	// The following are only used by Generic_Ceiling
-	ceilRaiseToHighest,
-	ceilLowerToHighest,
-	ceilRaiseToLowest,
-	ceilLowerToNearest,
-	ceilRaiseToHighestFloor,
-	ceilRaiseToFloor,
-	ceilRaiseByTexture,
-	ceilLowerByTexture,
+		// The following are only used by Generic_Ceiling
+		ceilRaiseToHighest,
+		ceilLowerToHighest,
+		ceilRaiseToLowest,
+		ceilLowerToNearest,
+		ceilRaiseToHighestFloor,
+		ceilRaiseToFloor,
+		ceilRaiseByTexture,
+		ceilLowerByTexture,
 
-	genCeilingChg0,
-	genCeilingChgT,
-	genCeilingChg
+		genCeilingChg0,
+		genCeilingChgT,
+		genCeilingChg
+	};
 
-} ceiling_e;
+	DCeiling (sector_t *sec);
+	DCeiling (sector_t *sec, fixed_t speed1, fixed_t speed2, int silent);
 
+	void RunThink ();
 
+protected:
+	ECeiling	m_Type;
+	fixed_t 	m_BottomHeight;
+	fixed_t 	m_TopHeight;
+	fixed_t 	m_Speed;
+	fixed_t		m_Speed1;		// [RH] dnspeed of crushers
+	fixed_t		m_Speed2;		// [RH] upspeed of crushers
+	int 		m_Crush;
+	int			m_Silent;
+	int 		m_Direction;	// 1 = up, 0 = waiting, -1 = down
 
-typedef struct ceiling_s
-{
-	thinker_t	thinker;
-
-	// [RH] Added next and prev links
-	struct ceiling_s *next, **prev;
-
-	ceiling_e	type;
-	sector_t*	sector;
-	fixed_t 	bottomheight;
-	fixed_t 	topheight;
-	fixed_t 	speed;
-	fixed_t		speed1;		// [RH] dnspeed of crushers
-	fixed_t		speed2;		// [RH] upspeed of crushers
-	int 		crush;
-	int			silent;
-	int 		direction;	// 1 = up, 0 = waiting, -1 = down
-
-	// [RH] Need these for BOOM-ish transfering ceilings
-	int			texture;
-	int			newspecial;
+	// [RH] Need these for BOOM-ish transferring ceilings
+	int			m_Texture;
+	int			m_NewSpecial;
 
 	// ID
-	int 		tag;
-	int 		olddirection;
-} ceiling_t;
+	int 		m_Tag;
+	int 		m_OldDirection;
 
-extern ceiling_t *activeceilings;
+	void PlayCeilingSound ();
 
-BOOL	EV_DoCeiling (ceiling_e type, line_t *line,
-					  int tag, fixed_t speed, fixed_t speed2, fixed_t height,
-					  int crush, int silent, int change);
+private:
+	DCeiling ();
 
-void	T_MoveCeiling (ceiling_t *ceiling);
-void	P_AddActiveCeiling (ceiling_t *c);
-void	P_RemoveActiveCeiling (ceiling_t *c);
-BOOL 	EV_CeilingCrushStop (int tag);
-void	P_ActivateInStasisCeiling(int tag);
+	friend BOOL EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
+		int tag, fixed_t speed, fixed_t speed2, fixed_t height,
+		int crush, int silent, int change);
+	friend BOOL EV_CeilingCrushStop (int tag);
+	friend void P_ActivateInStasisCeiling (int tag);
+};
+
+inline FArchive &operator<< (FArchive &arc, DCeiling::ECeiling type)
+{
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, DCeiling::ECeiling &type)
+{
+	BYTE in; arc >> in; type = (DCeiling::ECeiling)in; return arc;
+}
 
 
 //
 // P_FLOOR
 //
-// [RH] Changed these enums
-typedef enum
+
+class DFloor : public DMovingFloor
 {
-	floorLowerToLowest,
-	floorLowerToNearest,
-	floorLowerToHighest,
-	floorLowerByValue,
-	floorRaiseByValue,
-	floorRaiseToHighest,
-	floorRaiseToNearest,
-	floorRaiseAndCrush,
-	floorCrushStop,
-	floorLowerInstant,
-	floorRaiseInstant,
-	floorMoveToValue,
-	floorRaiseToLowestCeiling,
-	floorRaiseByTexture,
+	DECLARE_SERIAL (DFloor, DMovingFloor)
+public:
+	enum EFloor
+	{
+		floorLowerToLowest,
+		floorLowerToNearest,
+		floorLowerToHighest,
+		floorLowerByValue,
+		floorRaiseByValue,
+		floorRaiseToHighest,
+		floorRaiseToNearest,
+		floorRaiseAndCrush,
+		floorCrushStop,
+		floorLowerInstant,
+		floorRaiseInstant,
+		floorMoveToValue,
+		floorRaiseToLowestCeiling,
+		floorRaiseByTexture,
 
-	floorLowerAndChange,
-	floorRaiseAndChange,
+		floorLowerAndChange,
+		floorRaiseAndChange,
 
-	floorRaiseToLowest,
-	floorRaiseToCeiling,
-	floorLowerToLowestCeiling,
-	floorLowerByTexture,
-	floorLowerToCeiling,
-	 
-	donutRaise,
+		floorRaiseToLowest,
+		floorRaiseToCeiling,
+		floorLowerToLowestCeiling,
+		floorLowerByTexture,
+		floorLowerToCeiling,
+		 
+		donutRaise,
 
-	buildStair,
-	waitStair,
-	resetStair,
+		buildStair,
+		waitStair,
+		resetStair,
 
-	// Not to be used as parameters to EV_DoFloor()
-	genFloorChg0,
-	genFloorChgT,
-	genFloorChg
+		// Not to be used as parameters to EV_DoFloor()
+		genFloorChg0,
+		genFloorChgT,
+		genFloorChg
+	};
 
-} floor_e;
+	// [RH] Changed to use Hexen-ish specials
+	enum EStair
+	{
+		buildUp,
+		buildDown
+	};
+
+	DFloor (sector_t *sec);
+
+	void RunThink ();
+
+protected:
+	EFloor	 	m_Type;
+	int 		m_Crush;
+	int 		m_Direction;
+	short 		m_NewSpecial;
+	short		m_Texture;
+	fixed_t 	m_FloorDestHeight;
+	fixed_t 	m_Speed;
+
+	// [RH] New parameters used to reset and delay stairs
+	int			m_ResetCount;
+	int			m_OrgHeight;
+	int			m_Delay;
+	int			m_PauseTime;
+	int			m_StepTime;
+	int			m_PerStepTime;
+
+	void StartFloorSound ();
+
+	friend BOOL EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
+		fixed_t stairsize, fixed_t speed, int delay, int reset, int igntxt,
+		int usespecials);
+	friend BOOL EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
+		fixed_t speed, fixed_t height, int crush, int change);
+	friend BOOL EV_FloorCrushStop (int tag);
+	friend int EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed);
+private:
+	DFloor ();
+};
+
+inline FArchive &operator<< (FArchive &arc, DFloor::EFloor type)
+{
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, DFloor::EFloor &type)
+{
+	BYTE in; arc >> in; type = (DFloor::EFloor)in; return arc;
+}
+
+class DElevator : public DMover
+{
+	DECLARE_SERIAL (DElevator, DMover)
+public:
+	enum EElevator
+	{
+		elevateUp,
+		elevateDown,
+		elevateCurrent,
+		// [RH] For FloorAndCeiling_Raise/Lower
+		elevateRaise,
+		elevateLower
+	};
+
+	DElevator (sector_t *sec);
+
+	void RunThink ();
+
+protected:
+	EElevator	m_Type;
+	int			m_Direction;
+	fixed_t		m_FloorDestHeight;
+	fixed_t		m_CeilingDestHeight;
+	fixed_t		m_Speed;
+
+	void StartFloorSound ();
+
+	friend BOOL EV_DoElevator (line_t *line, DElevator::EElevator type, fixed_t speed,
+		fixed_t height, int tag);
+private:
+	DElevator ();
+};
+
+inline FArchive &operator<< (FArchive &arc, DElevator::EElevator type)
+{
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, DElevator::EElevator &out)
+{
+	BYTE in; arc >> in; out = (DElevator::EElevator)in; return arc;
+}
+
+class DFloorWaggle : public DMovingFloor
+{
+	DECLARE_SERIAL (DFloorWaggle, DMovingFloor);
+public:
+	DFloorWaggle (sector_t *sec);
+
+	void RunThink ();
+
+protected:
+	fixed_t m_OriginalHeight;
+	fixed_t m_Accumulator;
+	fixed_t m_AccDelta;
+	fixed_t m_TargetScale;
+	fixed_t m_Scale;
+	fixed_t m_ScaleDelta;
+	int m_Ticker;
+	int m_State;
+
+	friend BOOL EV_StartFloorWaggle (int tag, int height, int speed,
+		int offset, int timer);
+private:
+	DFloorWaggle ();
+};
 
 //jff 3/15/98 pure texture/type change for better generalized support
-typedef enum
+enum EChange
 {
 	trigChangeOnly,
 	numChangeOnly,
-} change_e;
+};
 
-// [RH] Changed to use Hexen-ish specials
-typedef enum
-{
-	buildUp,
-	buildDown
-	
-} stair_e;
+BOOL EV_DoChange (line_t *line, EChange changetype, int tag);
 
-typedef enum
-{
-	elevateUp,
-	elevateDown,
-	elevateCurrent,
-	// [RH] For FloorAndCeiling_Raise/Lower
-	elevateRaise,
-	elevateLower
-} elevator_e;
-
-typedef struct
-{
-	thinker_t	thinker;
-	floor_e 	type;
-	int 		crush;
-	sector_t*	sector;
-	int 		direction;
-	short 		newspecial;
-	short		texture;
-	fixed_t 	floordestheight;
-	fixed_t 	speed;
-
-	// [RH] New parameters use to reset and delayed stairs
-	int			resetcount;
-	int			orgheight;
-	int			delay;
-	int			pausetime;
-	int			steptime;
-	int			persteptime;
-
-} floormove_t;
-
-typedef struct
-{
-	thinker_t	thinker;
-	elevator_e	type;
-	sector_t*	sector;
-	int			direction;
-	fixed_t		floordestheight;
-	fixed_t		ceilingdestheight;
-	fixed_t		speed;
-} elevator_t;
-
-typedef struct
-{
-	thinker_t thinker;
-	sector_t *sector;
-	fixed_t originalHeight;
-	fixed_t accumulator;
-	fixed_t accDelta;
-	fixed_t targetScale;
-	fixed_t scale;
-	fixed_t scaleDelta;
-	int ticker;
-	int state;
-} floorWaggle_t;
-
-
-typedef enum
-{
-	ok,
-	crushed,
-	pastdest
-	
-} result_e;
-
-result_e T_MovePlane (sector_t *sector, fixed_t speed, fixed_t dest,
-					  int crush, int floorOrCeiling, int direction);
-
-BOOL EV_DoElevator (line_t *line, ceiling_e type, fixed_t speed, fixed_t height, int tag);
-
-BOOL EV_BuildStairs (int tag, stair_e type, line_t *line,
-					 fixed_t stairsize, fixed_t speed, int delay, int reset, int igntxt,
-					 int usespecials);
-
-BOOL EV_DoFloor (floor_e floortype, line_t *line, int tag,
-				 fixed_t speed, fixed_t height, int crush, int change);
-BOOL EV_FloorCrushStop (int tag);
-BOOL EV_DoChange (line_t *line, change_e changetype, int tag);
-BOOL EV_StartFloorWaggle(int tag, int height, int speed, int offset,
-	int timer);
-
-void T_FloorWaggle (floorWaggle_t *w);
-void T_MoveFloor (floormove_t *floor);
-void T_MoveElevator (elevator_t *elevator);
 
 
 //
 // P_TELEPT
 //
-BOOL EV_Teleport (int tid, int side, mobj_t *thing);
-BOOL EV_SilentTeleport (int tid, line_t *line, int side, mobj_t *thing);
-BOOL EV_SilentLineTeleport (line_t *line, int side, mobj_t *thing, int id,
+BOOL EV_Teleport (int tid, int side, AActor *thing);
+BOOL EV_SilentTeleport (int tid, line_t *line, int side, AActor *thing);
+BOOL EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 							BOOL reverse);
 
 
@@ -689,9 +848,7 @@ BOOL EV_SilentLineTeleport (line_t *line, int side, mobj_t *thing, int id,
 // [RH] ACS (see also p_acs.h)
 //
 
-void P_ClearScripts (void);
-
-BOOL P_StartScript (mobj_t *who, line_t *where, int script, char *map, int lineSide,
+BOOL P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
 					int arg0, int arg1, int arg2, int always);
 void P_SuspendScript (int script, char *map);
 void P_TerminateScript (int script, char *map);
@@ -701,18 +858,6 @@ void P_DoDeferedScripts (void);
 //
 // [RH] p_quake.c
 //
-typedef struct quake_s {
-	struct quake_s *next;
-	mobj_t *quakespot;
-	fixed_t tremorbox[4];
-	fixed_t damagebox[4];
-	int intensity;
-	int countdown;
-} quake_t;
-
-extern quake_t *ActiveQuakes;
-
-void P_RunQuakes (void);
 BOOL P_StartQuake (int tid, int intensity, int duration, int damrad, int tremrad);
 
 #endif

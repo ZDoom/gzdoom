@@ -25,7 +25,6 @@
 #ifndef __D_MAIN__
 #define __D_MAIN__
 
-#include <setjmp.h>
 #include "d_event.h"
 
 //
@@ -52,10 +51,5 @@ void D_StartTitle (void);
 
 // [RH] Set this to something to draw an icon during the next screen refresh.
 extern char *D_DrawIcon;
-
-// [RH] Allow for recoverable errors to drop to console only
-extern char errortext[2048];
-extern jmp_buf errorjmp;
-extern BOOL errorjmpable;
 
 #endif

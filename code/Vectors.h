@@ -23,9 +23,9 @@ typedef vec_t	vec3_t[3];
 #define VectorFixedSet(v,x,y,z)	(v[0]=FIXED2FLOAT(x), v[1]=FIXED2FLOAT(y), v[2]=FIXED2FLOAT(z))
 #define VectorInverse(v)		(v[0]=-v[0],v[1]=-v[1],v[2]=-v[2])
 
-struct mobj_s;
+class AActor;
 
-void VectorPosition (const struct mobj_s *thing, vec3_t out);
+void VectorPosition (const class AActor *thing, vec3_t out);
 void FixedAngleToVector (angle_t an, fixed_t pitch, vec3_t v);
 vec_t VectorLength (const vec3_t v);
 void VectorMA (const vec3_t a, float scale, const vec3_t b, vec3_t out);

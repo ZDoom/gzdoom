@@ -28,8 +28,6 @@
 #include "d_ticcmd.h"
 #include "d_event.h"
 
-extern BOOL fastdemo;
-
 // [RH] Detects the OS the game is running under.
 void I_DetectOS (void);
 
@@ -42,6 +40,9 @@ typedef enum {
 
 extern os_t OSPlatform;
 
+extern "C" {
+	extern byte CPUFamily, CPUModel, CPUStepping;
+}
 
 // Called by DoomMain.
 void I_Init (void);
@@ -49,15 +50,15 @@ void I_Init (void);
 // Called by startup code
 // to get the ammount of memory to malloc
 // for the zone management.
-byte *I_ZoneBase (int *size);
+byte *I_ZoneBase (unsigned int *size);
 
 
 // Called by D_DoomLoop,
 // returns current time in tics.
-int (*I_GetTime) (void);
+extern int (*I_GetTime) (void);
 
 // like I_GetTime, except it waits for a new tic before returning
-int (*I_WaitForTic) (int);
+extern int (*I_WaitForTic) (int);
 
 int I_GetTimePolled (void);
 int I_GetTimeFake (void);
@@ -104,9 +105,10 @@ byte* I_AllocLow (int length);
 void I_Tactile (int on, int off, int total);
 
 
-void STACK_ARGS I_Error (char *error, ...);
-void STACK_ARGS I_FatalError (char *error, ...);
+void STACK_ARGS I_Error (const char *error, ...);
+void STACK_ARGS I_FatalError (const char *error, ...);
 
+void atterm (void (STACK_ARGS *func)(void));
 
 // Repaint the pre-game console
 void I_PaintConsole (void);
@@ -130,6 +132,8 @@ unsigned int I_MSTime (void);
 // [RH] Title string to display at bottom of console during startup
 extern char DoomStartupTitle[256];
 
+void I_FinishClockCalibration ();
+
 
 // Directory searching routines
 
@@ -149,8 +153,3 @@ int I_FindClose (long handle);
 #define FA_ARCH		_A_ARCH
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

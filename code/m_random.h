@@ -109,6 +109,15 @@ typedef enum {
 	pr_playerpain,				// 57
 	pr_bounce,					// 58
 	pr_opendoor,				// 59
+	pr_botmove,					// 60
+	pr_botdofire,				// 61
+	pr_botspawn,				// 62
+	pr_botrespawn,				// 63
+	pr_bottrywalk,				// 64
+	pr_botnewchasedir,			// 65
+	pr_botspawnmobj,			// 66
+	pr_botopendoor,				// 67
+	pr_botchecksight,			// 68
 	// Start new entries -- add new entries below
 
 	// End of new entries

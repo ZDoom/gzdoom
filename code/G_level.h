@@ -47,34 +47,21 @@ struct level_info_s {
 	int			partime;
 	char		skypic1[8];
 	char		music[8];
-	unsigned	flags;
+	DWORD		flags;
 	int			cluster;
-	byte		*snapshot;
+	FLZOMemFile	*snapshot;
 	struct acsdefered_s *defered;
 };
 typedef struct level_info_s level_info_t;
 
-struct level_pwad_info_s {
-	char		mapname[8];
-	int			levelnum;
-	char		*level_name;
-	char		pname[8];
-	char		nextmap[8];
-	char		secretmap[8];
-	int			partime;
-	char		skypic1[8];
-	char		music[8];
-	unsigned	flags;
-	int			cluster;
-	byte		*snapshot;
-	struct acsdefered_s *defered;
-
+struct level_pwad_info_s : public level_info_s
+{
 	char		skypic2[8];
 	fixed_t		skyspeed1;
 	fixed_t		skyspeed2;
-	unsigned	fadeto;
+	DWORD		fadeto;
 	char		fadetable[8];
-	unsigned	outsidefog;
+	DWORD		outsidefog;
 };
 typedef struct level_pwad_info_s level_pwad_info_t;
 
@@ -92,10 +79,10 @@ struct level_locals_s {
 	char		nextmap[8];				// go here when fraglimit is hit
 	char		secretmap[8];			// map to go to when used secret exit
 
-	unsigned	flags;
+	DWORD		flags;
 
-	unsigned	fadeto;					// The color the palette fades to (usually black)
-	unsigned	outsidefog;				// The fog for sectors with sky ceilings
+	DWORD		fadeto;					// The color the palette fades to (usually black)
+	DWORD		outsidefog;				// The fog for sectors with sky ceilings
 
 	char		music[8];
 	char		skypic1[8];
@@ -117,7 +104,7 @@ struct level_locals_s {
 	byte		*behavior;
 	int			*scripts;
 	int			*strings;
-	int			vars[NUM_MAPVARS];
+	SDWORD		vars[NUM_MAPVARS];
 };
 typedef struct level_locals_s level_locals_t;
 
@@ -169,8 +156,7 @@ void G_ParseMapInfo (void);
 
 void G_ClearSnapshots (void);
 void G_SnapshotLevel (void);
-void G_UnSnapshotLevel (BOOL keepPlayers);
-void G_ArchiveSnapshots (void);
-void G_UnArchiveSnapshots (void);
+void G_UnSnapshotLevel (bool keepPlayers);
+void G_SerializeSnapshots (FArchive &arc);
 
 #endif //__G_LEVEL_H__

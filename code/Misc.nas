@@ -4,8 +4,6 @@
 
 BITS 32
 
-EXTERN	_I_FatalError
-
 %ifdef M_TARGET_WATCOM
   SEGMENT DATA PUBLIC ALIGN=16 CLASS=DATA USE32
   SEGMENT DATA
@@ -21,12 +19,16 @@ EXTERN	_I_FatalError
   SECTION .text
 %endif
 
+extern	_HaveRDTSC
+extern	_CPUFamily
+extern	_CPUModel
+extern	_CPUStepping
 
 ;-----------------------------------------------------------
 ;
 ; FixedMul_ASM
 ;
-; Assembly version of FixedMul. Only four instructions!
+; Assembly version of FixedMul.
 ;
 ;-----------------------------------------------------------
 
@@ -47,7 +49,7 @@ GLOBAL @FixedMul_ASM@8
 	align	16
 
 @FixedMul_ASM@8:
-	mov		eax,ecx
+	mov	eax,ecx
 	imul	edx
 	shrd	eax,edx,16
 	ret
@@ -151,8 +153,21 @@ _CheckMMX:
 	mov	[eax+4],edx
 	mov	[eax+8],ecx
 
+	xor	eax,eax
 	mov	eax,1		; setup function 1
 	CPUID			; call the function
+	and	ah,0xf
+	mov	[_CPUFamily],ah
+	mov	ah,al
+	shr	ah,4
+	and	al,0xf
+	mov	[_CPUModel],ah
+	mov	[_CPUStepping],al
+	xor	eax,eax
+	test	edx,0x00000010	; test for RDTSC
+	setnz	al		; al=1 if RDTSC is available
+	mov	[_HaveRDTSC],eax
+
 	test	edx,0x00800000	; test 23rd bit
 	jz	.nommx
 

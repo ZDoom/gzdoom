@@ -35,21 +35,12 @@ typedef struct brokenlines_s brokenlines_t;
 #define TEXTCOLOR_NORMAL	"\x8a-"
 #define TEXTCOLOR_BOLD		"\x8a+"
 
-// Output a line of text using the console font
-void V_PrintStr (int x, int y, const byte *str, int count);
-void V_PrintStr2 (int x, int y, const byte *str, int count);
-
-// Output some text with wad heads-up font
-void V_DrawText (int color, int x, int y, const byte *str);
-void V_DrawTextLuc (int color, int x, int y, const byte *str);
-void V_DrawTextClean (int color, int x, int y, const byte *str); // Does not adjust x and y
-void V_DrawTextCleanLuc (int color, int x, int y, const byte *str); // ditto
-void V_DrawTextCleanMove (int color, int x, int y, const byte *str); // This one does
-
 int V_StringWidth (const byte *str);
+inline int V_StringWidth (const char *str) { return V_StringWidth ((const byte *)str); }
 
 brokenlines_t *V_BreakLines (int maxwidth, const byte *str);
 void V_FreeBrokenLines (brokenlines_t *lines);
+inline brokenlines_t *V_BreakLines (int maxwidth, const char *str) { return V_BreakLines (maxwidth, (const byte *)str); }
 
 void V_InitConChars (byte transcolor);
 

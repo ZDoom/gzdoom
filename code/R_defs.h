@@ -20,9 +20,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __R_DEFS__
-#define __R_DEFS__
-
+#ifndef __R_DEFS_H__
+#define __R_DEFS_H__
 
 // Screenwidth.
 #include "doomdef.h"
@@ -33,10 +32,10 @@
 
 // We rely on the thinker data struct
 // to handle sound origins in sectors.
-#include "d_think.h"
 // SECTORS do store MObjs anyway.
-#include "p_mobj.h"
+#include "actor.h"
 
+#include "dthinker.h"
 
 
 
@@ -74,27 +73,15 @@ typedef struct vertex_s vertex_t;
 // Forward of LineDefs, for Sectors.
 struct line_s;
 
-// Each sector has a degenmobj_t in its center
-//	for sound origin purposes.
-// I suppose this does not handle sound from
-//	moving objects (doppler), because
-//	position is prolly just buffered, not
-//	updated.
-struct player_s;
-struct degenmobj_s
-{
-	thinker_t			thinker;		// not used for anything
-	fixed_t 			x;
-	fixed_t 			y;
-	fixed_t 			z;
-};
-typedef struct degenmobj_s degenmobj_t;
+class player_s;
 
 //
 // The SECTORS record, at runtime.
 // Stores things/mobjs.
 //
 struct dyncolormap_s;
+
+class DSectorEffect;
 
 struct sector_s
 {
@@ -108,24 +95,24 @@ struct sector_s
 	int			nexttag,firsttag;	// killough 1/30/98: improves searches for tags.
 
 	int 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
-	mobj_t* 	soundtarget;	// thing that made a sound (or null)
-	int 		blockbox[4];	// mapblock bounding box for height changes
-	degenmobj_t soundorg;		// origin for any sounds played by the sector
+	AActor* 	soundtarget;	// thing that made a sound (or null)
+//	int 		blockbox[4];	// mapblock bounding box for height changes
+	fixed_t		soundorg[3];	// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
-	mobj_t* 	thinglist;		// list of mobjs in sector
+	AActor* 	thinglist;		// list of mobjs in sector
 	int			seqType;		// this sector's sound sequence
 
 	int sky;
 
 	// killough 8/28/98: friction is a sector property, not an mobj property.
-	// these fields used to be in mobj_t, but presented performance problems
+	// these fields used to be in AActor, but presented performance problems
 	// when processed as mobj properties. Fix is to make them sector properties.
 	int friction, movefactor;
 
 	// thinker_t for reversable actions
-	void *floordata;			// jff 2/22/98 make thinkers on
-	void *ceilingdata;			// floors, ceilings, lighting,
-	void *lightingdata;			// independent of one another
+	DSectorEffect *floordata;			// jff 2/22/98 make thinkers on
+	DSectorEffect *ceilingdata;			// floors, ceilings, lighting,
+	DSectorEffect *lightingdata;		// independent of one another
 
 	// jff 2/26/98 lockout machinery for stairbuilding
 	int stairlock;		// -2 on first locked -1 after thinker done 0 normally
@@ -136,11 +123,21 @@ struct sector_s
 	fixed_t   floor_xoffs,   floor_yoffs;
 	fixed_t ceiling_xoffs, ceiling_yoffs;
 
+	// [RH] floor and ceiling texture scales
+	fixed_t   floor_xscale,   floor_yscale;
+	fixed_t ceiling_xscale, ceiling_yscale;
+
+	// [RH] floor and ceiling texture rotation
+	angle_t	floor_angle, ceiling_angle;
+
+	fixed_t base_ceiling_angle, base_ceiling_yoffs;
+	fixed_t base_floor_angle, base_floor_yoffs;
+
 	// killough 3/7/98: support flat heights drawn at another sector's heights
-	int heightsec;		// other sector, or -1 if no other sector
+	struct sector_s *heightsec;		// other sector, or NULL if no other sector
 
 	// killough 4/11/98: support for lightlevels coming from another sector
-	int floorlightsec, ceilinglightsec;
+	struct sector_s *floorlightsec, *ceilinglightsec;
 
 	unsigned int bottommap, midmap, topmap; // killough 4/4/98: dynamic colormaps
 											// [RH] these can also be blend values if
@@ -158,6 +155,9 @@ struct sector_s
 	short mod;			// [RH] Means-of-death for applied damage
 	struct dyncolormap_s *floorcolormap;	// [RH] Per-sector colormap
 	struct dyncolormap_s *ceilingcolormap;
+
+	bool alwaysfake;	// [RH] Always apply heightsec modifications?
+	byte waterzone;		// [RH] Sector is underwater?
 };
 typedef struct sector_s sector_t;
 
@@ -211,7 +211,6 @@ struct line_s
 };
 typedef struct line_s line_t;
 
-
 // phares 3/14/98
 //
 // Sector list node showing all sectors an object appears in.
@@ -219,7 +218,7 @@ typedef struct line_s line_t;
 // There are two threads that flow through these nodes. The first thread
 // starts at touching_thinglist in a sector_t and flows through the m_snext
 // links to find all mobjs that are entirely or partially in the sector.
-// The second thread starts at touching_sectorlist in an mobj_t and flows
+// The second thread starts at touching_sectorlist in a AActor and flows
 // through the m_tnext links to find all sectors a thing touches. This is
 // useful when applying friction or push effects to sectors. These effects
 // can be done as thinkers that act upon all objects touching their sectors.
@@ -231,7 +230,7 @@ typedef struct line_s line_t;
 typedef struct msecnode_s
 {
 	sector_t			*m_sector;	// a sector containing this object
-	struct mobj_s		*m_thing;	// this object
+	AActor				*m_thing;	// this object
 	struct msecnode_s	*m_tprev;	// prev msecnode_t for this thing
 	struct msecnode_s	*m_tnext;	// next msecnode_t for this thing
 	struct msecnode_s	*m_sprev;	// prev msecnode_t for this sector
@@ -264,11 +263,11 @@ typedef struct seg_s seg_t;
 
 
 // ===== Polyobj data =====
-typedef struct
+typedef struct FPolyObj
 {
 	int			numsegs;
 	seg_t		**segs;
-	degenmobj_t	startSpot;
+	fixed_t		startSpot[3];
 	vertex_t	*originalPts;	// used as the base for the rotations
 	vertex_t	*prevPts; 		// use to restore the old point values
 	angle_t		angle;
@@ -278,7 +277,7 @@ typedef struct
 	BOOL		crush; 			// should the polyobj attempt to crush mobjs?
 	int			seqType;
 	fixed_t		size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
-	void		*specialdata;	// pointer a thinker, if the poly is moving
+	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
 } polyobj_t;
 
 typedef struct polyblock_s
@@ -343,6 +342,7 @@ struct drawseg_s
 	seg_t*		curline;
 	int 		x1, x2;
 	fixed_t 	scale1, scale2, scalestep;
+	fixed_t		light, lightstep;
 	int 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	fixed_t 	bsilheight;		// don't clip sprites above this
 	fixed_t 	tsilheight;		// don't clip sprites below this
@@ -380,14 +380,15 @@ struct vissprite_s
 	fixed_t			gx, gy;			// for line side calculation
 	fixed_t			gz, gzt;		// global bottom / top for silhouette clipping
 	fixed_t			startfrac;		// horizontal position of x1
-	fixed_t			scale;
+	fixed_t			xscale, yscale;
 	fixed_t			xiscale;		// negative if flipped
+	fixed_t			depth;
 	fixed_t			texturemid;
 	int				patch;
 	lighttable_t	*colormap;
 	int 			mobjflags;		// for shadow draw
 	byte			*translation;	// [RH] for translation;
-	int				heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
+	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	fixed_t			translucency;
 };
 typedef struct vissprite_s vissprite_t;
@@ -436,7 +437,7 @@ struct playerskin_s
 {
 	char		name[17];	// 16 chars + NULL
 	char		face[3];
-	int			sprite;
+	spritenum_t	sprite;
 	int			namespc;	// namespace for this skin
 	int			gender;		// This skin's gender (not used)
 };
@@ -455,14 +456,13 @@ struct visplane_s
 	fixed_t		xoffs, yoffs;		// killough 2/28/98: Support scrolling flats
 	int			minx, maxx;
 	byte		*colormap;			// [RH] Support multiple colormaps
-	int			color;				// [RH] Color to render if r_drawflat is 1
+	fixed_t		xscale, yscale;		// [RH] Support flat scaling
+	angle_t		angle;				// [RH] Support flat rotation
 
 	unsigned short *bottom;			// [RH] bottom and top arrays are dynamically
 	unsigned short pad;				//		allocated immediately after the
 	unsigned short top[3];			//		visplane.
 };
 typedef struct visplane_s visplane_t;
-
-
 
 #endif

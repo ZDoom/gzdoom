@@ -3,56 +3,263 @@
 #ifndef __P_ACS_H__
 #define __P_ACS_H__
 
+#include "dobject.h"
+
 #define STACK_SIZE	200
 #define LOCAL_SIZE	10
 
-typedef enum
+class DLevelScript : public DObject
 {
-	running,
-	suspended,
-	delayed,
-	tagwait,
-	polywait,
-	scriptwait,
-	scriptwaitpre,
-	removeThisThingNow
-} scriptstate_e;
+	DECLARE_SERIAL (DLevelScript, DObject)
+public:
 
-typedef enum
-{
-	spString,
-	spNumber,
-	spChar
-} stringpart_e;
+	// P-codes for ACS scripts
+	enum
+	{
+		PCD_NOP =					0,
+		PCD_TERMINATE =				1,
+		PCD_SUSPEND =				2,
+		PCD_PUSHNUMBER =			3,
+		PCD_LSPEC1 =				4,
+		PCD_LSPEC2 =				5,
+		PCD_LSPEC3 =				6,
+		PCD_LSPEC4 =				7,
+		PCD_LSPEC5 =				8,
+		PCD_LSPEC1DIRECT =			9,
+		PCD_LSPEC2DIRECT =			10,
+		PCD_LSPEC3DIRECT =			11,
+		PCD_LSPEC4DIRECT =			12,
+		PCD_LSPEC5DIRECT =			13,
+		PCD_ADD =					14,
+		PCD_SUBTRACT =				15,
+		PCD_MULTIPLY =				16,
+		PCD_DIVIDE =				17,
+		PCD_MODULUS =				18,
+		PCD_EQ =					19,
+		PCD_NE =					20,
+		PCD_LT =					21,
+		PCD_GT =					22,
+		PCD_LE =					23,
+		PCD_GE =					24,
+		PCD_ASSIGNSCRIPTVAR =		25,
+		PCD_ASSIGNMAPVAR =			26,
+		PCD_ASSIGNWORLDVAR =		27,
+		PCD_PUSHSCRIPTVAR =			28,
+		PCD_PUSHMAPVAR =			29,
+		PCD_PUSHWORLDVAR =			30,
+		PCD_ADDSCRIPTVAR =			31,
+		PCD_ADDMAPVAR =				32,
+		PCD_ADDWORLDVAR =			33,
+		PCD_SUBSCRIPTVAR =			34,
+		PCD_SUBMAPVAR =				35,
+		PCD_SUBWORLDVAR =			36,
+		PCD_MULSCRIPTVAR =			37,
+		PCD_MULMAPVAR =				38,
+		PCD_MULWORLDVAR =			39,
+		PCD_DIVSCRIPTVAR =			40,
+		PCD_DIVMAPVAR =				41,
+		PCD_DIVWORLDVAR =			42,
+		PCD_MODSCRIPTVAR =			43,
+		PCD_MODMAPVAR =				44,
+		PCD_MODWORLDVAR =			45,
+		PCD_INCSCRIPTVAR =			46,
+		PCD_INCMAPVAR =				47,
+		PCD_INCWORLDVAR =			48,
+		PCD_DECSCRIPTVAR =			49,
+		PCD_DECMAPVAR =				50,
+		PCD_DECWORLDVAR =			51,
+		PCD_GOTO =					52,
+		PCD_IFGOTO =				53,
+		PCD_DROP =					54,
+		PCD_DELAY =					55,
+		PCD_DELAYDIRECT =			56,
+		PCD_RANDOM =				57,
+		PCD_RANDOMDIRECT =			58,
+		PCD_THINGCOUNT =			59,
+		PCD_THINGCOUNTDIRECT =		60,
+		PCD_TAGWAIT =				61,
+		PCD_TAGWAITDIRECT =			62,
+		PCD_POLYWAIT =				63,
+		PCD_POLYWAITDIRECT =		64,
+		PCD_CHANGEFLOOR =			65,
+		PCD_CHANGEFLOORDIRECT =		66,
+		PCD_CHANGECEILING =			67,
+		PCD_CHANGECEILINGDIRECT =	68,
+		PCD_RESTART =				69,
+		PCD_ANDLOGICAL =			70,
+		PCD_ORLOGICAL =				71,
+		PCD_ANDBITWISE =			72,
+		PCD_ORBITWISE =				73,
+		PCD_EORBITWISE =			74,
+		PCD_NEGATELOGICAL =			75,
+		PCD_LSHIFT =				76,
+		PCD_RSHIFT =				77,
+		PCD_UNARYMINUS =			78,
+		PCD_IFNOTGOTO =				79,
+		PCD_LINESIDE =				80,
+		PCD_SCRIPTWAIT =			81,
+		PCD_SCRIPTWAITDIRECT =		82,
+		PCD_CLEARLINESPECIAL =		83,
+		PCD_CASEGOTO =				84,
+		PCD_BEGINPRINT =			85,
+		PCD_ENDPRINT =				86,
+		PCD_PRINTSTRING =			87,
+		PCD_PRINTNUMBER =			88,
+		PCD_PRINTCHARACTER =		89,
+		PCD_PLAYERCOUNT =			90,
+		PCD_GAMETYPE =				91,
+		PCD_GAMESKILL =				92,
+		PCD_TIMER =					93,
+		PCD_SECTORSOUND =			94,
+		PCD_AMBIENTSOUND =			95,
+		PCD_SOUNDSEQUENCE =			96,
+		PCD_SETLINETEXTURE =		97,
+		PCD_SETLINEBLOCKING =		98,
+		PCD_SETLINESPECIAL =		99,
+		PCD_THINGSOUND =			100,
+		PCD_ENDPRINTBOLD =			101,
+		PCD_ACTIVATORSOUND =		102,
+		PCD_LOCALAMBIENTSOUND =		103,
+		PCD_SETLINEMONSTERBLOCKING =104
+	};
 
-typedef struct script_s
-{
-	struct script_s *next, *prev;
+	// Some constants used by ACS scripts
+	enum {
+		LINE_FRONT =			0,
+		LINE_BACK =				1
+	};
+	enum {
+		SIDE_FRONT =			0,
+		SIDE_BACK =				1
+	};
+	enum {
+		TEXTURE_TOP =			0,
+		TEXTURE_MIDDLE =		1,
+		TEXTURE_BOTTOM =		2
+	};
+	enum {
+		GAME_SINGLE_PLAYER =	0,
+		GAME_NET_COOPERATIVE =	1,
+		GAME_NET_DEATHMATCH =	2
+	};
+	enum {
+		CLASS_FIGHTER =			0,
+		CLASS_CLERIC =			1,
+		CLASS_MAGE =			2
+	};
+	enum {
+		SKILL_VERY_EASY =		0,
+		SKILL_EASY =			1,
+		SKILL_NORMAL =			2,
+		SKILL_HARD =			3,
+		SKILL_VERY_HARD =		4
+	};
+	enum {
+		BLOCK_NOTHING =			0,
+		BLOCK_CREATURES =		1,
+		BLOCK_EVERYTHING =		2
+	};
+
+	enum EScriptState
+	{
+		SCRIPT_Running,
+		SCRIPT_Suspended,
+		SCRIPT_Delayed,
+		SCRIPT_TagWait,
+		SCRIPT_PolyWait,
+		SCRIPT_ScriptWaitPre,
+		SCRIPT_ScriptWait,
+		SCRIPT_PleaseRemove
+	};
+
+	DLevelScript (AActor *who, line_t *where, int num, int *code,
+		int lineSide, int arg0, int arg1, int arg2, int always, bool delay);
+
+	void RunScript ();
+
+	inline void SetState (EScriptState newstate) { state = newstate; }
+	inline EScriptState GetState () { return state; }
+
+	void *operator new (size_t size);
+	void operator delete (void *block);
+
+protected:
+	DLevelScript	*next, *prev;
 	int				script;
 	int				stack[STACK_SIZE];
 	int				sp;
 	int				locals[LOCAL_SIZE];
 	int				*pc;
-	scriptstate_e	state;
+	EScriptState	state;
 	int				statedata;
-	mobj_t			*activator;
+	AActor			*activator;
 	line_t			*activationline;
 	int				lineSide;
 	int				stringstart;
-} script_t;
 
-extern script_t *LastScript;
-extern script_t *Scripts;	// List of all running scripts
-extern script_t *RunningScripts[1000];	// Array of all synchronous scripts
+	inline void PushToStack (int val);
 
-void P_RunScripts (void);
+	void Link ();
+	void Unlink ();
+	void PutLast ();
+	void PutFirst ();
+	static int Random (int min, int max);
+	static int ThingCount (int type, int tid);
+	static void ChangeFlat (int tag, int name, bool floorOrCeiling);
+	static int CountPlayers ();
+	static void SetLineTexture (int lineid, int side, int position, int name);
+
+private:
+	DLevelScript ();
+
+	friend class DACSThinker;
+};
+
+inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState state)
+{
+	return arc << (BYTE)state;
+}
+inline FArchive &operator>> (FArchive &arc, DLevelScript::EScriptState &state)
+{
+	BYTE in; arc >> in; state = (DLevelScript::EScriptState)in; return arc;
+}
+
+inline void DLevelScript::PushToStack (int val)
+{
+	if (sp == STACK_SIZE)
+	{
+		Printf (PRINT_HIGH, "Stack overflow in script %d\n", script);
+		state = SCRIPT_PleaseRemove;
+	}
+	stack[sp++] = val;
+}
+
+class DACSThinker : public DThinker
+{
+	DECLARE_SERIAL (DACSThinker, DThinker)
+public:
+	DACSThinker ();
+	~DACSThinker ();
+
+	void RunThink ();
+
+	DLevelScript *RunningScripts[1000];	// Array of all synchronous scripts
+	static DACSThinker *ActiveThinker;
+
+private:
+	DLevelScript *LastScript;
+	DLevelScript *Scripts;				// List of all running scripts
+
+	friend class DLevelScript;
+};
 
 // The structure used to control scripts between maps
 struct acsdefered_s
 {
 	struct acsdefered_s *next;
 
-	enum {
+	enum EType
+	{
 		defexecute,
 		defexealways,
 		defsuspend,
@@ -63,135 +270,7 @@ struct acsdefered_s
 };
 typedef struct acsdefered_s acsdefered_t;
 
-// Known P-codes for ACS scripts
-
-#define PCD_NOP					0
-#define PCD_TERMINATE			1
-#define PCD_SUSPEND				2
-#define PCD_PUSHNUMBER			3
-#define PCD_LSPEC1				4
-#define PCD_LSPEC2				5
-#define PCD_LSPEC3				6
-#define PCD_LSPEC4				7
-#define PCD_LSPEC5				8
-#define PCD_LSPEC1DIRECT		9
-#define PCD_LSPEC2DIRECT		10
-#define PCD_LSPEC3DIRECT		11
-#define PCD_LSPEC4DIRECT		12
-#define PCD_LSPEC5DIRECT		13
-#define PCD_ADD					14
-#define PCD_SUBTRACT			15
-#define PCD_MULTIPLY			16
-#define PCD_DIVIDE				17
-#define PCD_MODULUS				18
-#define PCD_EQ					19
-#define PCD_NE					20
-#define PCD_LT					21
-#define PCD_GT					22
-#define PCD_LE					23
-#define PCD_GE					24
-#define PCD_ASSIGNSCRIPTVAR		25
-#define PCD_ASSIGNMAPVAR		26
-#define PCD_ASSIGNWORLDVAR		27
-#define PCD_PUSHSCRIPTVAR		28
-#define PCD_PUSHMAPVAR			29
-#define PCD_PUSHWORLDVAR		30
-#define PCD_ADDSCRIPTVAR		31
-#define PCD_ADDMAPVAR			32
-#define PCD_ADDWORLDVAR			33
-#define PCD_SUBSCRIPTVAR		34
-#define PCD_SUBMAPVAR			35
-#define PCD_SUBWORLDVAR			36
-#define PCD_MULSCRIPTVAR		37
-#define PCD_MULMAPVAR			38
-#define PCD_MULWORLDVAR			39
-#define PCD_DIVSCRIPTVAR		40
-#define PCD_DIVMAPVAR			41
-#define PCD_DIVWORLDVAR			42
-#define PCD_MODSCRIPTVAR		43
-#define PCD_MODMAPVAR			44
-#define PCD_MODWORLDVAR			45
-#define PCD_INCSCRIPTVAR		46
-#define PCD_INCMAPVAR			47
-#define PCD_INCWORLDVAR			48
-#define PCD_DECSCRIPTVAR		49
-#define PCD_DECMAPVAR			50
-#define PCD_DECWORLDVAR			51
-#define PCD_GOTO				52
-#define PCD_IFGOTO				53
-#define PCD_DROP				54
-#define PCD_DELAY				55
-#define PCD_DELAYDIRECT			56
-#define PCD_RANDOM				57
-#define PCD_RANDOMDIRECT		58
-#define PCD_THINGCOUNT			59
-#define PCD_THINGCOUNTDIRECT	60
-#define PCD_TAGWAIT				61
-#define PCD_TAGWAITDIRECT		62
-#define PCD_POLYWAIT			63
-#define PCD_POLYWAITDIRECT		64
-#define PCD_CHANGEFLOOR			65
-#define PCD_CHANGEFLOORDIRECT	66
-#define PCD_CHANGECEILING		67
-#define PCD_CHANGECEILINGDIRECT	68
-#define PCD_RESTART				69
-#define PCD_ANDLOGICAL			70
-#define PCD_ORLOGICAL			71
-#define PCD_ANDBITWISE			72
-#define PCD_ORBITWISE			73
-#define PCD_EORBITWISE			74
-#define PCD_NEGATELOGICAL		75
-#define PCD_LSHIFT				76
-#define PCD_RSHIFT				77
-#define PCD_UNARYMINUS			78
-#define PCD_IFNOTGOTO			79
-#define PCD_LINESIDE			80
-#define PCD_SCRIPTWAIT			81
-#define PCD_SCRIPTWAITDIRECT	82
-#define PCD_CLEARLINESPECIAL	83
-#define PCD_CASEGOTO			84
-#define PCD_BEGINPRINT			85
-#define PCD_ENDPRINT			86
-#define PCD_PRINTSTRING			87
-#define PCD_PRINTNUMBER			88
-#define PCD_PRINTCHARACTER		89
-#define PCD_PLAYERCOUNT			90
-#define PCD_GAMETYPE			91
-#define PCD_GAMESKILL			92
-#define PCD_TIMER				93
-#define PCD_SECTORSOUND			94
-#define PCD_AMBIENTSOUND		95
-#define PCD_SOUNDSEQUENCE		96
-#define PCD_SETLINETEXTURE		97
-#define PCD_SETLINEBLOCKING		98
-#define PCD_SETLINESPECIAL		99
-#define PCD_THINGSOUND			100
-#define PCD_ENDPRINTBOLD		101
-
-// Some constants used by ACS scripts
-
-#define LINE_FRONT				0
-#define LINE_BACK				1
-
-#define SIDE_FRONT				0
-#define SIDE_BACK				1
-
-#define TEXTURE_TOP				0
-#define TEXTURE_MIDDLE			1
-#define TEXTURE_BOTTOM			2
-
-#define GAME_SINGLE_PLAYER		0
-#define GAME_NET_COOPERATIVE	1
-#define GAME_NET_DEATHMATCH		2
-
-#define CLASS_FIGHTER			0
-#define CLASS_CLERIC			1
-#define CLASS_MAGE				2
-
-#define SKILL_VERY_EASY			0
-#define SKILL_EASY				1
-#define SKILL_NORMAL			2
-#define SKILL_HARD				3
-#define SKILL_VERY_HARD			4
+FArchive &operator<< (FArchive &arc, acsdefered_s *defer);
+FArchive &operator>> (FArchive &arc, acsdefered_s* &defer);
 
 #endif //__P_ACS_H__

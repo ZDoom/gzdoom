@@ -11,8 +11,8 @@ extern "C" {
 #include <sys/nearptr.h>
 
 #include "doomtype.h"
-#include "c_dispch.h"
-#include "c_consol.h"
+#include "c_dispatch.h"
+#include "c_console.h"
 
 #include "doomstat.h"
 #include "cmdlib.h"
@@ -25,9 +25,9 @@ extern "C" {
 #include "d_main.h"
 #include "m_alloc.h"
 
-#include "c_consol.h"
+#include "c_console.h"
 #include "c_cvars.h"
-#include "c_dispch.h"
+#include "c_dispatch.h"
 #include "st_stuff.h"
 
 #include "doomdef.h"
@@ -336,7 +336,7 @@ void I_InitGraphics(void)
 	char num[8];
 
 	I_ShowFPS = cvar ("vid_fps", "0", 0);	// unused for DOS
-	num[0] = '0' + !!M_CheckParm ("-devparm");
+	num[0] = '0' + !!Args.CheckParm ("-devparm");
 	num[1] = 0;
 	ticker = cvar ("ticker", num, 0);
 	Fullscreen = true;

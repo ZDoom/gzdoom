@@ -20,8 +20,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __M_CHEAT__
-#define __M_CHEAT__
+#ifndef __M_CHEAT_H__
+#define __M_CHEAT_H__
 
 //
 // CHEAT SEQUENCE PACKAGE
@@ -33,8 +33,8 @@
 
 typedef struct
 {
-	unsigned char*		sequence;
-	unsigned char*		p;
+	unsigned char *sequence;
+	unsigned char *p;
 	
 } cheatseq_t;
 
@@ -43,14 +43,9 @@ int cht_CheckCheat (cheatseq_t *cht, char key);
 void cht_GetParam (cheatseq_t *cht, char *buffer);
 
 // [RH] Functions that actually perform the cheating
-struct player_s;
-void cht_DoCheat (struct player_s *player, int cheat);
-void cht_Give (struct player_s *player, char *item);
-void cht_Suicide (struct player_s *player);
+class player_s;
+void cht_DoCheat (player_s *player, int cheat);
+void cht_Give (player_s *player, char *item);
+void cht_Suicide (player_s *player);
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

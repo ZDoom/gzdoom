@@ -20,17 +20,17 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __D_TICCMD__
-#define __D_TICCMD__
+#ifndef __D_TICCMD_H__
+#define __D_TICCMD_H__
 
 #include "doomtype.h"
-#include "d_proto.h"
+#include "d_protocol.h"
 
 // The data sampled per tick (single player)
 // and transmitted to other peers (multiplayer).
 // Mainly movements/button commands per game tick,
 // plus a checksum for internal state consistency.
-struct ticcmd_s
+struct ticcmd_t
 {
 	usercmd_t	ucmd;
 /*
@@ -38,14 +38,19 @@ struct ticcmd_s
 	char		sidemove;		// *2048 for move
 	short		angleturn;		// <<16 for angle delta
 */
-	short		consistancy;	// checks for net game
+	SWORD		consistancy;	// checks for net game
 };
-typedef struct ticcmd_s ticcmd_t;
 
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+inline FArchive &operator<< (FArchive &arc, ticcmd_t &cmd)
+{
+	return arc << cmd.consistancy << cmd.ucmd;
+}
+
+inline FArchive &operator>> (FArchive &arc, ticcmd_t &cmd)
+{
+	return arc >> cmd.consistancy >> cmd.ucmd;
+}
+
+
+#endif	// __D_TICCMD_H__

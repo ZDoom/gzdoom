@@ -36,49 +36,23 @@
 
 #include "i_net.h"
 
-void NetSend (void);
-BOOL NetListen (void);
-
 //
 // NETWORKING
 //
-
-void (*netget) (void);
-void (*netsend) (void);
-
-//
-// PacketSend
-//
-void PacketSend (void)
-{
-	__dpmi_regs r;
-                              
-	__dpmi_int(doomcom->intnum,&r);
-}
-
-
-//
-// PacketGet
-//
-void PacketGet (void)
-{
-	__dpmi_regs r;
-                              
-	__dpmi_int(doomcom->intnum,&r);
-}
 
 //
 // I_InitNetwork
 //
 void I_InitNetwork (void)
 {
-	int i,j;
+	int i, j;
+	char *p;
       
 	// set up for network
                       
 	// parse network game options,
 	//  -net <consoleplayer> <host> <host> ...
-	i = M_CheckParm ("-net");
+	i = Args.CheckParm ("-net");
 	if (!i)
 	{
 		// single player game
@@ -86,11 +60,12 @@ void I_InitNetwork (void)
 		memset (doomcom, 0, sizeof(*doomcom) );
 
 		netgame = false;
+		multiplayer = false;
 		doomcom->id = DOOMCOM_ID;
 		doomcom->numplayers = doomcom->numnodes = 1;
 		doomcom->consoleplayer = 0;
-		doomcom->extratics=0;
-		doomcom->ticdup=1;
+		doomcom->extratics = 0;
+		doomcom->ticdup = 1;
 		return;
 	}
 
@@ -99,14 +74,14 @@ void I_InitNetwork (void)
 
 	doomcom=(doomcom_t *)(__djgpp_conventional_base+atoi(myargv[i+1]));
 
-	doomcom->ticdup=1;
-	if (M_CheckParm ("-extratic"))
+	doomcom->ticdup = 1;
+	if (Args.CheckParm ("-extratic"))
 		doomcom-> extratics = 1;
 	else
 		doomcom-> extratics = 0;
 
-	j = M_CheckParm ("-dup");
-	if (j && j< myargc-1)
+	p = Args.CheckValue ("-dup");
+	if (p)
 	{
 		doomcom->ticdup = myargv[j+1][0]-'0';
 		if (doomcom->ticdup < 1)
@@ -115,24 +90,16 @@ void I_InitNetwork (void)
 			doomcom->ticdup = 9;
 	}
 	else
-		doomcom-> ticdup = 1;
+		doomcom->ticdup = 1;
 
-	netsend = PacketSend;
-	netget = PacketGet;
-	netgame = true;    
+	netgame = true;
+	multiplayer = true;
 }
 
 
 void I_NetCmd (void)
 {
-	if (doomcom->command == CMD_SEND)
-	{
-		netsend ();
-	}
-	else if (doomcom->command == CMD_GET)
-	{
-		netget ();
-	}
-	else
-		I_Error ("Bad net cmd: %i\n",doomcom->command);
+	__dpmi_regs r;
+                              
+	__dpmi_int(doomcom->intnum,&r);
 }

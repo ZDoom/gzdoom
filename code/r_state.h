@@ -20,13 +20,15 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __R_STATE__
-#define __R_STATE__
+#ifndef __R_STATE_H__
+#define __R_STATE_H__
 
 // Need data structure definitions.
 #include "d_player.h"
 #include "r_data.h"
 
+#define WALLFRACBITS	4
+#define WALLFRACUNIT	(1<<WALLFRACBITS)
 
 
 //
@@ -37,31 +39,34 @@
 // needed for texture pegging
 extern fixed_t* 		textureheight;
 
-extern int				viewwidth;
-extern int				realviewwidth;
-extern int				viewheight;
-extern int				realviewheight;
+extern "C" int			viewwidth;
+extern "C" int			realviewwidth;
+extern "C" int			viewheight;
+extern "C" int			realviewheight;
 
 extern int				firstflat;
 
 // for global animation
-extern int*				flattranslation;		
+extern bool*			flatwarp;
+extern byte**			warpedflats;
+extern int*				flatwarpedwhen;
+extern int*				flattranslation;
+		
 extern int* 			texturetranslation; 	
-
 
 // Sprite....
 extern int				firstspritelump;
 extern int				lastspritelump;
 extern int				numspritelumps;
 
+extern size_t			numskins;	// [RH]
+extern playerskin_t*	skins;		// [RH]
+
 
 
 //
 // Lookup tables for map data.
 //
-extern size_t			numskins;	// [RH]
-extern playerskin_t*	skins;		// [RH]
-
 extern int				numsprites;
 extern spritedef_t* 	sprites;
 
@@ -86,6 +91,42 @@ extern line_t*			lines;
 extern int				numsides;
 extern side_t*			sides;
 
+inline FArchive &operator<< (FArchive &arc, sector_t *sec)
+{
+	if (sec)
+		return arc << (WORD)(sec - sectors);
+	else
+		return arc << (WORD)0xffff;
+}
+inline FArchive &operator>> (FArchive &arc, sector_t *&sec)
+{
+	WORD ofs;
+	arc >> ofs;
+	if (ofs == 0xffff)
+		sec = NULL;
+	else
+		sec = sectors + ofs;
+	return arc;
+}
+
+inline FArchive &operator<< (FArchive &arc, line_t *line)
+{
+	if (line)
+		return arc << (WORD)(line - lines);
+	else
+		return arc << (WORD)0xffff;
+}
+inline FArchive &operator>> (FArchive &arc, line_t *&line)
+{
+	WORD ofs;
+	arc >> ofs;
+	if (ofs == 0xffff)
+		line = NULL;
+	else
+		line = lines + ofs;
+	return arc;
+}
+
 
 //
 // POV data.
@@ -95,10 +136,8 @@ extern fixed_t			viewy;
 extern fixed_t			viewz;
 
 extern angle_t			viewangle;
-extern mobj_t*			camera;		// [RH] camera instead of viewplayer
+extern AActor*			camera;		// [RH] camera instead of viewplayer
 
-
-// ?
 extern angle_t			clipangle;
 
 extern int				viewangletox[FINEANGLES/2];
@@ -118,9 +157,4 @@ extern visplane_t*		floorplane;
 extern visplane_t*		ceilingplane;
 
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif // __R_STATE_H__

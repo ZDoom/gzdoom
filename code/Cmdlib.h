@@ -26,7 +26,7 @@
 
 
 int		Q_filelength (FILE *f);
-BOOL FileExists (char *filename);
+BOOL FileExists (const char *filename);
 
 extern	char	progdir[1024];
 
@@ -34,8 +34,8 @@ void	FixPathSeperator (char *path);
 
 void 	DefaultExtension (char *path, char *extension);
 
-void	ExtractFilePath (char *path, char *dest);
-void 	ExtractFileBase (char *path, char *dest);
+void	ExtractFilePath (const char *path, char *dest);
+void 	ExtractFileBase (const char *path, char *dest);
 
 int		ParseHex (char *str);
 int 	ParseNum (char *str);

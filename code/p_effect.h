@@ -22,9 +22,9 @@ void P_ThinkParticles (void);
 void P_InitEffects (void);
 void P_RunEffects (void);
 
-void P_RunEffect (mobj_t *actor, int effects);
+void P_RunEffect (AActor *actor, int effects);
 
 void P_DrawRailTrail (vec3_t start, vec3_t end);
 void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int kind);
 void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int updown, int kind);
-void P_DisconnectEffect (mobj_t *actor);
+void P_DisconnectEffect (AActor *actor);

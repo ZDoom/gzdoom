@@ -33,9 +33,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __TABLES__
-#define __TABLES__
-
+#ifndef __TABLES_H__
+#define __TABLES_H__
 
 #include <math.h>
 
@@ -56,7 +55,7 @@
 // Effective size is 10240.
 extern	fixed_t 		finesine[5*FINEANGLES/4];
 
-// Re-use data, is just PI/2 pahse shift.
+// Re-use data, is just PI/2 phase shift.
 extern	fixed_t*		finecosine;
 
 
@@ -81,7 +80,7 @@ extern fixed_t			finetangent[FINEANGLES/2];
 #define SLOPEBITS		11
 #define DBITS			(FRACBITS-SLOPEBITS)
 
-typedef unsigned angle_t;
+typedef DWORD			angle_t;
 
 
 // Effective size is 2049;
@@ -92,13 +91,18 @@ extern angle_t			tantoangle[SLOPERANGE+1];
 
 // Utility function,
 //	called by R_PointToAngle.
-int SlopeDiv (unsigned int num, unsigned den);
+inline int SlopeDiv (unsigned int num, unsigned den)
+{
+	unsigned int ans;
+
+	if (den < 512)
+		return SLOPERANGE;
+
+	ans = (num << 3) / (den >> 8);
+
+	return ans <= SLOPERANGE ? ans : SLOPERANGE;
+}
 
 #define CALC_TABLES
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif // __TABLES_H__

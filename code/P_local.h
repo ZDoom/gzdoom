@@ -68,19 +68,6 @@
 
 
 //
-// P_TICK
-//
-
-// both the head and tail of the thinker list
-extern	thinker_t		thinkercap; 	
-
-
-void P_InitThinkers (void);
-void P_AddThinker (thinker_t* thinker);
-void P_RemoveThinker (thinker_t* thinker);
-
-
-//
 // P_PSPR
 //
 void P_SetupPsprites (player_t* curplayer);
@@ -91,7 +78,7 @@ void P_DropWeapon (player_t* player);
 //
 // P_USER
 //
-void	P_FallingDamage (mobj_t *ent);
+void	P_FallingDamage (AActor *ent);
 void	P_PlayerThink (player_t *player);
 
 
@@ -112,29 +99,17 @@ extern int				iquehead;
 extern int				iquetail;
 
 
-// [RH] Functions to work with ThingIDs.
-void	P_ClearTidHashes (void);
-void	P_AddMobjToHash (mobj_t *mobj);
-void	P_RemoveMobjFromHash (mobj_t *mobj);
-mobj_t *P_FindMobjByTid (mobj_t *mobj, int tid);
-mobj_t *P_FindGoal (mobj_t *mobj, int tid, int type);
-
-
 void	P_RespawnSpecials (void);
 
-mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
-
-void	P_RemoveMobj (mobj_t* th);
-BOOL	P_SetMobjState (mobj_t* mobj, statenum_t state);
-void	P_MobjThinker (mobj_t* mobj);
+BOOL	P_SetMobjState (AActor* mobj, statenum_t state);
 
 void	P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown);
 void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage);
-mobj_t* P_SpawnMissile (mobj_t* source, mobj_t* dest, mobjtype_t type);
-void	P_SpawnPlayerMissile (mobj_t* source, mobjtype_t type);
+AActor* P_SpawnMissile (AActor* source, AActor* dest, mobjtype_t type);
+void	P_SpawnPlayerMissile (AActor* source, mobjtype_t type);
 
 // [RH] Throws gibs about
-void	ThrowGib (mobj_t *self, mobjtype_t gibtype, int damage);
+void	ThrowGib (AActor *self, mobjtype_t gibtype, int damage);
 
 
 //
@@ -146,14 +121,14 @@ extern const int NumSpawnableThings;
 BOOL	P_Thing_Spawn (int tid, int type, angle_t angle, BOOL fog);
 BOOL	P_Thing_Projectile (int tid, int type, angle_t angle,
 							fixed_t speed, fixed_t vspeed, BOOL gravity);
-BOOL	P_ActivateMobj (mobj_t *mobj);
-BOOL	P_DeactivateMobj (mobj_t *mobj);
+BOOL	P_ActivateMobj (AActor *mobj, AActor *activator);
+BOOL	P_DeactivateMobj (AActor *mobj);
 
 
 //
 // P_ENEMY
 //
-void	P_NoiseAlert (mobj_t* target, mobj_t* emmiter);
+void	P_NoiseAlert (AActor* target, AActor* emmiter);
 void	P_SpawnBrainTargets(void);	// killough 3/26/98: spawn icon landings
 
 extern struct brain_s {				// killough 3/26/98: global state of boss brain
@@ -178,7 +153,7 @@ typedef struct
 	fixed_t 	frac;			// along trace line
 	BOOL 	isaline;
 	union {
-		mobj_t* thing;
+		AActor* thing;
 		line_t* line;
 	}					d;
 } intercept_t;
@@ -205,7 +180,7 @@ extern fixed_t			lowfloor;
 void	P_LineOpening (const line_t *linedef);
 
 BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*) );
-BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(mobj_t*) );
+BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*) );
 
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2
@@ -222,9 +197,6 @@ P_PathTraverse
   int			flags,
   BOOL		(*trav) (intercept_t *));
 
-void P_UnsetThingPosition (mobj_t* thing);
-void P_SetThingPosition (mobj_t* thing);
-
 
 //
 // P_MAP
@@ -237,44 +209,47 @@ extern fixed_t			tmfloorz;
 extern fixed_t			tmceilingz;
 extern msecnode_t		*sector_list;		// phares 3/16/98
 extern BOOL				oldshootactivation;	// [RH]
-extern mobj_t			*BlockingMobj;
+extern AActor			*BlockingMobj;
 extern line_t			*BlockingLine;		// Used only by P_Move
 											// This is not necessarily a *blocking* line
+//Added by MC: tmsectortype
+extern fixed_t			tmdropoffz; //Needed in b_move.c
+extern sector_t			*tmsector;
 
 extern	line_t* 		ceilingline;
 
-BOOL	P_TestMobjLocation (mobj_t *mobj);
-BOOL	P_CheckPosition (mobj_t *thing, fixed_t x, fixed_t y);
-mobj_t	*P_CheckOnmobj (mobj_t *thing);
-void	P_FakeZMovement (mobj_t *mo);
-BOOL	P_TryMove (mobj_t* thing, fixed_t x, fixed_t y, BOOL dropoff);
-BOOL	P_TeleportMove (mobj_t* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
-void	P_SlideMove (mobj_t* mo);
-void	P_BounceWall (mobj_t *mo);
-BOOL	P_CheckSight (const mobj_t* t1, const mobj_t* t2, BOOL ignoreInvisibility);
+BOOL	P_TestMobjLocation (AActor *mobj);
+BOOL	P_CheckPosition (AActor *thing, fixed_t x, fixed_t y);
+AActor	*P_CheckOnmobj (AActor *thing);
+void	P_FakeZMovement (AActor *mo);
+BOOL	P_TryMove (AActor* thing, fixed_t x, fixed_t y, BOOL dropoff);
+BOOL	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
+void	P_SlideMove (AActor* mo);
+void	P_BounceWall (AActor *mo);
+BOOL	P_CheckSight (const AActor* t1, const AActor* t2, BOOL ignoreInvisibility=false);
 void	P_UseLines (player_t* player);
 
-BOOL	P_ChangeSector (sector_t* sector, int crunch);
+bool	P_ChangeSector (sector_t* sector, int crunch);
 
-extern	mobj_t*	linetarget; 	// who got hit (or NULL)
+extern	AActor*	linetarget; 	// who got hit (or NULL)
 
-fixed_t P_AimLineAttack (mobj_t *t1, angle_t angle, fixed_t distance);
-void	P_LineAttack (mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, int damage);
-void	P_RailAttack (mobj_t *source, int damage, int offset);	// [RH] Shoot a railgun
-int		P_HitFloor (mobj_t *thing);
+fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance);
+void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t slope, int damage);
+void	P_RailAttack (AActor *source, int damage, int offset);	// [RH] Shoot a railgun
+int		P_HitFloor (AActor *thing);
 
 // [RH] Position the chasecam
-void	P_AimCamera (mobj_t *t1);
+void	P_AimCamera (AActor *t1);
 extern	fixed_t CameraX, CameraY, CameraZ;
 
 // [RH] Means of death
-void	P_RadiusAttack (mobj_t *spot, mobj_t *source, int damage, int mod);
+void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int mod);
 
 void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
-void	P_CreateSecNodeList(mobj_t*,fixed_t,fixed_t);		// phares 3/14/98
-int		P_GetMoveFactor(const mobj_t *mo, int *frictionp);	// phares  3/6/98
-int		P_GetFriction(const mobj_t *mo, int *frictionfactor);
-BOOL	Check_Sides(mobj_t *, int, int);					// phares
+void	P_CreateSecNodeList(AActor*,fixed_t,fixed_t);		// phares 3/14/98
+int		P_GetMoveFactor(const AActor *mo, int *frictionp);	// phares  3/6/98
+int		P_GetFriction(const AActor *mo, int *frictionfactor);
+BOOL	Check_Sides(AActor *, int, int);					// phares
 
 
 //
@@ -288,7 +263,7 @@ extern int				bmapwidth;
 extern int				bmapheight; 	// in mapblocks
 extern fixed_t			bmaporgx;
 extern fixed_t			bmaporgy;		// origin of block map
-extern mobj_t** 		blocklinks; 	// for thing chains
+extern AActor** 		blocklinks; 	// for thing chains
 
 
 
@@ -298,10 +273,11 @@ extern mobj_t** 		blocklinks; 	// for thing chains
 extern int				maxammo[NUMAMMO];
 extern int				clipammo[NUMAMMO];
 
-void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher);
+void P_TouchSpecialThing (AActor *special, AActor *toucher);
 
-void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage, int mod);
+void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int mod=0, int flags=0);
 
+#define DMG_NO_ARMOR		1
 
 // [RH] Means of death flags (based on Quake2's)
 #define MOD_UNKNOWN			0
@@ -342,31 +318,74 @@ typedef enum
 	PODOOR_SWING,
 } podoortype_t;
 
-typedef struct
+inline FArchive &operator<< (FArchive &arc, podoortype_t type)
 {
-	thinker_t thinker;
-	int polyobj;
-	int speed;
-	unsigned int dist;
-	int angle;
-	fixed_t xSpeed; // for sliding walls
-	fixed_t ySpeed;
-} polyevent_t;
+	return arc << (BYTE)type;
+}
+inline FArchive &operator>> (FArchive &arc, podoortype_t &out)
+{
+	BYTE in; arc >> in; out = (podoortype_t)in; return arc;
+}
 
-typedef struct
+class DPolyAction : public DThinker
 {
-	thinker_t thinker;
-	int polyobj;
-	int speed;
-	int dist;
-	int totalDist;
-	int direction;
-	fixed_t xSpeed, ySpeed;
-	int tics;
-	int waitTics;
-	podoortype_t type;
-	BOOL close;
-} polydoor_t;
+	DECLARE_SERIAL (DPolyAction, DThinker)
+public:
+	DPolyAction (int polyNum);
+protected:
+	DPolyAction ();
+	int m_PolyObj;
+	int m_Speed;
+	unsigned int m_Dist;
+
+	friend void ThrustMobj (AActor *actor, seg_t *seg, polyobj_t *po);
+};
+
+class DRotatePoly : public DPolyAction
+{
+	DECLARE_SERIAL (DRotatePoly, DPolyAction)
+public:
+	DRotatePoly (int polyNum);
+	void RunThink ();
+protected:
+	friend BOOL EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
+private:
+	DRotatePoly ();
+};
+
+class DMovePoly : public DPolyAction
+{
+	DECLARE_SERIAL (DMovePoly, DPolyAction)
+public:
+	DMovePoly (int polyNum);
+	void RunThink ();
+protected:
+	DMovePoly ();
+	int m_Angle;
+	fixed_t m_xSpeed; // for sliding walls
+	fixed_t m_ySpeed;
+
+	friend BOOL EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, BOOL overRide);
+};
+
+class DPolyDoor : public DMovePoly
+{
+	DECLARE_SERIAL (DPolyDoor, DMovePoly)
+public:
+	DPolyDoor (int polyNum, podoortype_t type);
+	void RunThink ();
+protected:
+	int m_Direction;
+	int m_TotalDist;
+	int m_Tics;
+	int m_WaitTics;
+	podoortype_t m_Type;
+	bool m_Close;
+
+	friend BOOL EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
+private:
+	DPolyDoor ();
+};
 
 // [RH] Data structure for P_SpawnMapThing() to keep track
 //		of polyobject-related things.
@@ -398,12 +417,6 @@ extern polyobj_t *polyobjs; // list of all poly-objects on the level
 extern int po_NumPolyobjs;
 extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 
-void T_PolyDoor (polydoor_t *pd);
-void T_RotatePoly (polyevent_t *pe);
-BOOL EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
-void T_MovePoly (polyevent_t *pe);
-BOOL EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, BOOL overRide);
-BOOL EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
 
 BOOL PO_MovePolyobj (int num, int x, int y);
 BOOL PO_RotatePolyobj (int num, angle_t angle);

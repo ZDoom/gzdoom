@@ -8,7 +8,7 @@
 #include "i_system.h"
 #include "v_video.h"
 #include "d_main.h"
-#include "c_consol.h"
+#include "c_console.h"
 #include "c_cvars.h"
 #include "i_video.h"
 
@@ -539,7 +539,7 @@ static void I_StartupJoystick (void)
 	int centerx, centery;
 
 	joystickpresent = 0;
-	if (M_CheckParm ("-nojoy") || !usejoystick->value)
+	if (Args.CheckParm ("-nojoy") || !usejoystick->value)
 		return;
 
 	if (!I_ReadJoystick ())

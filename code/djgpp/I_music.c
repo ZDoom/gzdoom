@@ -6,8 +6,8 @@ typedef unsigned int UINT;
 #include "m_argv.h"
 #include "i_music.h"
 #include "w_wad.h"
-#include "c_consol.h"
-#include "c_dispch.h"
+#include "c_console.h"
+#include "c_dispatch.h"
 #include "z_zone.h"
 
 #include "../midas/include/midasdll.h"
@@ -98,7 +98,7 @@ void I_InitMusic (void)
 	ChangeMIDIDevice (snd_mididevice);
 	C_RegisterCommand ("snd_listmididevices", ListMIDIDevices);
 
-	nomusic = !!M_CheckParm("-nomusic") || !!M_CheckParm("-nosound");
+	nomusic = !!Args.CheckParm("-nomusic") || !!Args.CheckParm("-nosound");
 
 	/* Create temporary file name for MIDAS */
 	temp = getenv("TEMP");

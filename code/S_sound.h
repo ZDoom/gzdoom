@@ -23,11 +23,12 @@
 #ifndef __S_SOUND__
 #define __S_SOUND__
 
+#include "m_fixed.h"
 
 
 #define MAX_SNDNAME	63
 
-struct mobj_s;
+class AActor;
 
 //
 // SoundFX struct.
@@ -74,15 +75,21 @@ void S_Init (int sfxVolume, int musicVolume);
 void S_Start(void);
 
 // Start sound for thing at <ent>
-void S_Sound (struct mobj_s *ent, int channel, char *name, float volume, int attenuation);
-void S_LoopedSound (struct mobj_s *ent, int channel, char *name, float volume, int attenuation);
-void S_PositionedSound (int x, int y, int channel, char *name, float volume, int attenuation);
-void S_SoundID (struct mobj_s *ent, int channel, int sfxid, float volume, int attenuation);
-void S_LoopedSoundID (struct mobj_s *ent, int channel, int sfxid, float volume, int attenuation);
+void S_Sound (int channel, char *name, float volume, int attenuation);
+void S_Sound (AActor *ent, int channel, char *name, float volume, int attenuation);
+void S_Sound (fixed_t *pt, int channel, char *name, float volume, int attenuation);
+void S_Sound (fixed_t x, fixed_t y, int channel, char *name, float volume, int attenuation);
+void S_LoopedSound (AActor *ent, int channel, char *name, float volume, int attenuation);
+void S_LoopedSound (fixed_t *pt, int channel, char *name, float volume, int attenuation);
+void S_SoundID (int channel, int sfxid, float volume, int attenuation);
+void S_SoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
+void S_SoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
+void S_LoopedSoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
+void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
 
 // sound channels
 // channel 0 never willingly overrides
-// other channels (1-7) allways override a playing sound on that channel
+// other channels (1-7) always override a playing sound on that channel
 #define CHAN_AUTO				0
 #define CHAN_WEAPON				1
 #define CHAN_VOICE				2
@@ -106,22 +113,24 @@ void S_LoopedSoundID (struct mobj_s *ent, int channel, int sfxid, float volume, 
 BOOL S_StopSoundID (int sound_id, int priority);
 
 // Stops a sound emanating from one of an entity's channels
-void S_StopSound (struct mobj_s *ent, int channel);
+void S_StopSound (AActor *ent, int channel);
+void S_StopSound (fixed_t *pt, int channel);
 
 // Stop sound for all channels
 void S_StopAllChannels (void);
 
 // Is the sound playing on one of the entity's channels?
-BOOL S_GetSoundPlayingInfo (struct mobj_s *ent, int sound_id);
+bool S_GetSoundPlayingInfo (AActor *ent, int sound_id);
+bool S_GetSoundPlayingInfo (fixed_t *pt, int sound_id);
 
 // Moves all sounds from one mobj to another
-void S_RelinkSound (struct mobj_s *from, struct mobj_s *to);
+void S_RelinkSound (AActor *from, AActor *to);
 
 // Start music using <music_name>
 void S_StartMusic (char *music_name);
 
 // Start music using <music_name>, and set whether looping
-void S_ChangeMusic (char *music_name, int looping);
+void S_ChangeMusic (const char *music_name, int looping);
 
 // Stops the music fer sure.
 void S_StopMusic (void);
@@ -142,7 +151,7 @@ void S_SetSfxVolume (int volume);
 
 // [RH] Activates an ambient sound. Called when the thing is added to the map.
 //		(0-biased)
-void S_ActivateAmbient (struct mobj_s *mobj, int ambient);
+void S_ActivateAmbient (AActor *mobj, int ambient);
 
 // [RH] S_sfx "maintenance" routines
 void S_ParseSndInfo (void);
@@ -156,8 +165,9 @@ int S_AddSoundLump (char *logicalname, int lump);	// Add sound by lump index
 // [RH] Prints sound debug info to the screen.
 //		Modelled after Hexen's noise cheat.
 void S_NoiseDebug (void);
-extern struct cvar_s *noisedebug;
 
+class cvar_t;
+extern cvar_t noisedebug;
 
 
 #endif

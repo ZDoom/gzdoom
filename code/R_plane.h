@@ -20,9 +20,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __R_PLANE__
-#define __R_PLANE__
-
+#ifndef __R_PLANE_H__
+#define __R_PLANE_H__
 
 #include "r_data.h"
 
@@ -42,7 +41,6 @@ extern planefunction_t	ceilingfunc_t;
 extern short			*floorclip;
 extern short			*ceilingclip;
 
-extern fixed_t			*yslopetab;		// [RH] Added for freelook. ylook points into it
 extern fixed_t			*yslope;
 extern fixed_t			*distscale;
 
@@ -58,18 +56,17 @@ visplane_t *R_FindPlane
   int			picnum,
   int			lightlevel,
   fixed_t		xoffs,		// killough 2/28/98: add x-y offsets
-  fixed_t		yoffs );
+  fixed_t		yoffs,
+  fixed_t		xscale,
+  fixed_t		yscale,
+  angle_t		angle);
 
 visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop);
 
+BOOL R_AlignFlat (int linenum, int side, int fc);
 
 // [RH] Added for multires support
 BOOL R_PlaneInitData (void);
 
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif // __R_PLANE_H__

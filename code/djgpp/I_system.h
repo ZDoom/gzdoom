@@ -27,20 +27,18 @@
 #include "d_ticcmd.h"
 #include "d_event.h"
 
-extern BOOL fastdemo;
-
 // Called by DoomMain.
 void I_Init(void);
 
 // Called by startup code
 // to get the ammount of memory to malloc
 // for the zone management.
-byte *I_ZoneBase (int *size);
+byte *I_ZoneBase (unsigned int *size);
 
 // Called by D_DoomLoop,
 // returns current time in tics.
-int (*I_GetTime) (void);
-int (*I_WaitForTic) (int);
+extern int (*I_GetTime) (void);
+extern int (*I_WaitForTic) (int);
 
 int I_GetTimePolled (void);
 int I_GetTimeFake (void);

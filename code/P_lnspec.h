@@ -121,6 +121,15 @@ typedef enum {
 	Sector_ChangeSound = 140,
 
 // [RH] Begin new specials for ZDoom
+	Line_AlignCeiling = 183,
+	Line_AlignFloor = 184,
+
+	Sector_SetRotation = 185,
+	Sector_SetCeilingOffset = 186,
+	Sector_SetFloorOffset = 187,
+	Sector_SetCeilingScale = 188,
+	Sector_SetFloorScale = 189,
+
 	Static_Init = 190,
 
 	SetPlayerProperty = 191,
@@ -287,10 +296,10 @@ typedef enum {
 #define PUSH_MASK		0x1000
 
 struct line_s;
-struct mobj_s;
+class AActor;
 
-typedef BOOL (*lnSpecFunc)(struct line_s   *line,
-						   struct mobj_s   *activator,
+typedef BOOL (*lnSpecFunc)(struct line_s	*line,
+						   class AActor		*activator,
 						   int				arg1,
 						   int				arg2,
 						   int				arg3,

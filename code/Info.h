@@ -21,11 +21,12 @@
 //
 //-----------------------------------------------------------------------------
 
-#ifndef __INFO__
-#define __INFO__
+#ifndef __INFO_H__
+#define __INFO_H__
 
 // Needed for action function pointer handling.
-#include "d_think.h"
+#include "dthinker.h"
+#include "farchive.h"
 
 typedef enum
 {
@@ -183,6 +184,9 @@ typedef enum
 	NUMSPRITES
 
 } spritenum_t;
+
+inline FArchive &operator<< (FArchive &arc, spritenum_t i) { return arc << (WORD)i; }
+inline FArchive &operator>> (FArchive &arc, spritenum_t &i) { return arc >> (WORD &)i; }
 
 typedef enum
 {
@@ -1173,22 +1177,45 @@ typedef enum
 	NUMSTATES
 } statenum_t;
 
+inline FArchive &operator<< (FArchive &arc, statenum_t i) { return arc << (WORD)i; }
+inline FArchive &operator>> (FArchive &arc, statenum_t &i) { return arc >> (WORD &)i; }
 
 typedef struct
 {
-  spritenum_t	sprite;
-  long			frame;
-  long			tics;
-  // void		(*action) ();
-  actionf_t 	action;
-  statenum_t	nextstate;
-  long			misc1, misc2;
+	spritenum_t	sprite;
+	int			frame;
+	int			tics;
+	actionf_t 	action;
+	statenum_t	nextstate;
+	int			misc1, misc2;
+/*
+	DState (spritenum_t sprite, int frame, int tics, acp2, statenum_t nextstate);
+	DState (spritenum_t sprite, int frame, int tics, acp2, statenum_t nextstate, int misc1, int misc2);
+	DState (spritenum_t sprite, int frame, int tics, acp1, statenum_t nextstate);
+*/
 } state_t;
 
-extern state_t	states[NUMSTATES];
+extern state_t states[NUMSTATES];
 extern char *sprnames[NUMSPRITES];
 
+inline FArchive &operator<< (FArchive &arc, state_t *state)
+{
+	if (state)
+		return arc << (WORD)(state - states);
+	else
+		return arc << (WORD)0xffff;
+}
 
+inline FArchive &operator>> (FArchive &arc, state_t *&state)
+{
+	WORD ofs;
+	arc >> ofs;
+	if (ofs == 0xffff)
+		state = NULL;
+	else
+		state = states + ofs;
+	return arc;
+}
 
 typedef enum {
 	MT_PLAYER,
@@ -1363,26 +1390,34 @@ typedef enum {
 	MT_CAMERA,		// Camera used for "cutscenes"
 	MT_SPARK,		// Throws out sparks when activated
 	MT_FOUNTAIN,	// Just a container for a particle fountain
+	MT_NODE,		//Added by MC:
+	MT_BOTTRACE,
+	MT_WATERZONE,
+	MT_SECRETTRIGGER,
+
 	NUMMOBJTYPES
 
 } mobjtype_t;
 
+inline FArchive &operator<< (FArchive &arc, mobjtype_t i) { return arc << (WORD)i; }
+inline FArchive &operator>> (FArchive &arc, mobjtype_t &i) { return arc >> (WORD &)i; }
+
 typedef struct
 {
 	int doomednum;
-	int spawnstate;
+	statenum_t spawnstate;
 	int spawnhealth;
-	int seestate;
+	statenum_t seestate;
 	char *seesound;		// [RH] not int
 	int reactiontime;
 	char *attacksound;	// [RH] not int
-	int painstate;
+	statenum_t painstate;
 	int painchance;
 	char *painsound;	// [RH] not int
-	int meleestate;
-	int missilestate;
-	int deathstate;
-	int xdeathstate;
+	statenum_t meleestate;
+	statenum_t missilestate;
+	statenum_t deathstate;
+	statenum_t xdeathstate;
 	char *deathsound;	// [RH] not int
 	int speed;
 	int radius;
@@ -1392,16 +1427,30 @@ typedef struct
 	char *activesound;	// [RH] not int
 	int flags;
 	int flags2;
-	int raisestate;
+	statenum_t raisestate;
 	int translucency;
 
 } mobjinfo_t;
 
 extern mobjinfo_t mobjinfo[NUMMOBJTYPES];
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+inline FArchive &operator<< (FArchive &arc, mobjinfo_t *info)
+{
+	if (info)
+		return arc << (WORD)(info - mobjinfo);
+	else
+		return arc << (WORD)0xffff;
+}
+
+inline FArchive &operator>> (FArchive &arc, mobjinfo_t *&info)
+{
+	WORD ofs;
+	arc >> ofs;
+	if (ofs == 0xffff)
+		info = NULL;
+	else
+		info = mobjinfo + ofs;
+	return arc;
+}
+
+#endif	// __INFO_H__

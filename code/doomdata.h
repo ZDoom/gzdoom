@@ -113,7 +113,7 @@ typedef struct
 // top or bottom of the texture (stairs or pulled
 // down things) and will move with a height change
 // of one of the neighbor sectors.
-// Unpegged textures allways have the first row of
+// Unpegged textures always have the first row of
 // the texture at the top pixel of the line for both
 // top and bottom textures (use next to windows).
 
@@ -210,7 +210,7 @@ typedef struct
 } mapthing_t;
 
 // [RH] Hexen-compatible MapThing.
-typedef struct
+typedef struct MapThing
 {
 	unsigned short thingid;
 	short		x;
@@ -221,6 +221,8 @@ typedef struct
 	short		flags;
 	byte		special;
 	byte		args[5];
+
+	void Serialize (FArchive &);
 } mapthing2_t;
 
 

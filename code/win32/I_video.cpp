@@ -20,15 +20,15 @@
 #include <initguid.h>
 #include <ddraw.h>
 #include <mmsystem.h>
+#include <stdio.h>
+#include <math.h>
 
 #include "ptc.h"
 
-extern "C" {
-
 #define __BYTEBOOL__
 #include "doomtype.h"
-#include "c_dispch.h"
-#include "c_consol.h"
+#include "c_dispatch.h"
+#include "c_console.h"
 
 #include "doomstat.h"
 #include "cmdlib.h"
@@ -40,9 +40,9 @@ extern "C" {
 #include "m_argv.h"
 #include "d_main.h"
 #include "m_alloc.h"
-#include "c_consol.h"
+#include "c_console.h"
 #include "c_cvars.h"
-#include "c_dispch.h"
+#include "c_dispatch.h"
 #include "st_stuff.h"
 #include "doomdef.h"
 #include "z_zone.h"
@@ -55,34 +55,26 @@ extern "C" {
 // TYPES -------------------------------------------------------------------
 
 struct screenchain {
-	screen_t *scr;
-	struct screenchain *next;
+	DCanvas *scr;
+	screenchain *next;
 } *chain;
 
 typedef struct modelist_s {
 	modelist_s *next;
 	int width, height, bpp;
-	int id;
 } modelist_t;
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void I_StartModeIterator (int id);
-BOOLI_NextMode (int *width, int *height);
+BOOL I_NextMode (int *width, int *height);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-struct player_s;
-static void Cmd_Vid_DescribeModes (struct player_s*,int,char**);
-static void Cmd_Vid_DescribeCurrentMode (struct player_s*,int,char**);
-
-static void AddMode (int x, int y, int bpp, int id, modelist_t **lastmode);
+static void AddMode (int x, int y, int bpp, modelist_t **lastmode);
 static void FreeModes (void);
 static void MakeModesList (void);
-static char *GetFormatName (const int id);
-static void ReinitPTC (char *iface);
 static void refreshDisplay (void);
-static void stretchChanged (cvar_t *var);
 static void fullChanged (cvar_t *var);
 
 static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes);
@@ -95,71 +87,29 @@ extern HWND Window;
 extern BOOL vidactive;	// Checked to avoid annoying flashes on console
 						// during startup if developer is true
 extern BOOL setmodeneeded;
-extern int	NewWidth, NewHeight, NewID;
+extern int	NewWidth, NewHeight, NewBits;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-cvar_t *I_ShowFPS;
-cvar_t *ticker;
-cvar_t *win_stretchx;
-cvar_t *win_stretchy;
-cvar_t *fullscreen;
-cvar_t *vid_palettehack;
+CVAR (vid_fps, "0", 0)
+CVAR (ticker, "0", 0)
+CVAR (vid_palettehack, "0", CVAR_ARCHIVE)
+CVAR (vid_noptc, "0", CVAR_ARCHIVE)
+
 BOOL Fullscreen;
 static modelist_t *IteratorMode;
-static int IteratorID;
+static int IteratorBits;
 
-char *IdStrings[22] = {
-	"ARGB8888",
-	"ABGR8888",
-	"BGRA8888",
-	"RGBA8888",
-	"RGB888",
-	"BGR888",
-	"RGB565",
-	"BGR565",
-	"ARGB1555",
-	"ABGR1555",
-	"INDEX8",
-	"FAKEMODE1A",
-	"FAKEMODE1B",
-	"FAKEMODE1C",
-	"FAKEMODE2A",
-	"FAKEMODE2B",
-	"FAKEMODE2C",
-	"FAKEMODE3A",
-	"FAKEMODE3B",
-	"FAKEMODE3C",
-	"GREY8",
-	"RGB332"
-};
-
-byte IdTobpp[22] = {
-	32, 32, 32, 32, 24, 24, 16, 16, 15, 15, 8,
-	18, 18, 18, 14, 14, 14, 12, 12, 12, 8, 8
-};
-
-int DisplayID;
-int DisplayBPP;	// Number of bits-per-pixel of output device
+int DisplayBits, RealDisplayBits;
 int DisplayWidth, DisplayHeight;	// Display size
 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static modelist_t *Modes = NULL;
-static char WindowedIFace[8];
-static char FullscreenIFace[8];
 static int nummodes = 0;
 
-static struct CmdDispatcher VidCommands[] = {
-	{ "vid_currentmode",	Cmd_Vid_DescribeCurrentMode },
-	{ "vid_listmodes",		Cmd_Vid_DescribeModes },
-	{ NULL, }
-};
-
-}	// extern "C"
-
-static PTC ptc;				// the PTC interface object
+static Console *Con;
 static Palette *DisPal;		// the display palette
 
 static IDirectDraw			*DDObj;
@@ -167,16 +117,23 @@ static LPDIRECTDRAWPALETTE	DDPalette;
 static LPDIRECTDRAWSURFACE	DDPrimary;
 static LPDIRECTDRAWSURFACE	DDBack;
 static int NeedPalChange;
-static BOOL CalledCoInitialize;
+static bool CalledCoInitialize;
 
 static union {
 	PALETTEENTRY pe[256];
-	uint		 ui[256];
+	int32		 ui[256];
 } PalEntries;
 
-extern "C" {
+static BOOL Have320x200x8, Have320x240x8;
 
 // CODE --------------------------------------------------------------------
+
+BEGIN_CUSTOM_CVAR (fullscreen, "1", CVAR_ARCHIVE)
+{
+	if (!DDObj && Fullscreen != var.value)
+		refreshDisplay ();
+}
+END_CUSTOM_CVAR (fullscreen)
 
 //==========================================================================
 //
@@ -184,17 +141,23 @@ extern "C" {
 //
 //==========================================================================
 
-static void AddMode (int x, int y, int bpp, int id, modelist_t **lastmode)
+static void AddMode (int x, int y, int bpp, modelist_t **lastmode)
 {
-	modelist_t *newmode = (modelist_t *)Z_Malloc (sizeof (modelist_t), PU_STATIC, 0);
+	modelist_t *newmode = new modelist_t;
 
 	nummodes++;
 	newmode->next = NULL;
 	newmode->width = x;
 	newmode->height = y;
 	newmode->bpp = bpp;
-	newmode->id = id;
 
+	if (x == 320 && bpp == 8)
+	{
+		if (y == 200)
+			Have320x200x8 = true;
+		else if (y == 240)
+			Have320x240x8 = true;
+	}
 	(*lastmode)->next = newmode;
 	*lastmode = newmode;
 }
@@ -213,7 +176,7 @@ static void FreeModes (void)
 	{
 		tempmode = mode;
 		mode = mode->next;
-		Z_Free (tempmode);
+		delete tempmode;
 	}
 	Modes = NULL;
 	nummodes = 0;
@@ -228,64 +191,34 @@ static void FreeModes (void)
 static void MakeModesList (void)
 {
 	modelist_t *lastmode = (modelist_t *)&Modes;
-	BOOL have320x200x8 = false, have320x240x8 = false;
 
 	// get ptc modelist
-	List<MODE> list;
-	ptc.GetModeList(list);
+	const Mode *modes = Con->modes();
+	if (!modes[0].valid())
+	{
+		I_FatalError ("Could not get list of available resolutions.\n"
+					  "If you ran ZDoom from a fullscreen DOS box, try\n",
+					  "running it from a window instead. Alternatively,\n",
+					  "try running with the -noptc switch. If that doesn't\n"
+					  "work, try rebooting and running ZDoom again.");
+	}
 
-	// modelist iterator
-	List<MODE>::Iterator iterator = list.first();
-	MODE *ptcmode = iterator.current();
+	int index=0;
+	while (modes[index].valid())
+	{
+		// Filter out modes taller than 1024 pixels because some
+		// of the assembly routines will choke on them.
+		int width = modes[index].width();
+		int height = modes[index].height();
+		int bits = modes[index].format().bits();
 
-	while (ptcmode) {
-		if (ptcmode->output == WINDOWED) {
-			if (!WindowedIFace[0])
-				strncpy (WindowedIFace, ptcmode->i, 8);
-		} else {
-			if (!FullscreenIFace[0])
-				strncpy (FullscreenIFace, ptcmode->i, 8);
-
-			// Filter out modes taller than 1024 pixels since the
-			// assembly routines will choke on them. (Besides, they
-			// are really slow so why use them?)
-			if (ptcmode->y <= 1024 && ptcmode->format.id == INDEX8) {
-				nummodes++;
-
-				AddMode (ptcmode->x, ptcmode->y, ptcmode->format.bits,
-					ptcmode->format.id, &lastmode);
-				if (ptcmode->x == 320 && ptcmode->format.bits == 8) {
-					if (ptcmode->y == 200)
-						have320x200x8 = true;
-					else if (ptcmode->y == 240)
-						have320x240x8 = true;
-				}
-			}
+		if (height <= 1024 && bits == 8)
+		{
+			nummodes++;
+			AddMode (width, height, bits, &lastmode);
 		}
-		ptcmode = iterator.next ();
+		index++;
 	}
-
-	if (OSPlatform == os_Win95) {
-		// Windows 95 will let us use Mode X (assuming my PTC patch has been
-		// applied). If we didn't find any linear modes in the loop above,
-		// add the Mode X modes here.
-
-		if (!have320x200x8)
-			AddMode (320, 200, 8, INDEX8, &lastmode);
-		if (!have320x240x8)
-			AddMode (320, 240, 8, INDEX8, &lastmode);
-	}
-}
-
-//==========================================================================
-//
-// GetFormatName
-//
-//==========================================================================
-
-static char *GetFormatName (const int id)
-{
-	return IdStrings[id-1000];
 }
 
 //==========================================================================
@@ -298,9 +231,8 @@ void STACK_ARGS I_ShutdownGraphics (void)
 {
 	FreeModes ();
 
-	while (chain) {
+	while (chain)
 		I_FreeScreen (chain->scr);
-	}
 
 	if (DDObj)
 	{
@@ -325,7 +257,11 @@ void STACK_ARGS I_ShutdownGraphics (void)
 			DisPal = NULL;
 		}
 
-		ptc.Close ();
+		if (Con)
+		{
+			delete Con;
+			Con = NULL;
+		}
 	}
 
 	if (CalledCoInitialize)
@@ -333,6 +269,7 @@ void STACK_ARGS I_ShutdownGraphics (void)
 		CoUninitialize ();
 		CalledCoInitialize = false;
 	}
+	ShowWindow (Window, SW_HIDE);
 }
 
 //==========================================================================
@@ -343,7 +280,7 @@ void STACK_ARGS I_ShutdownGraphics (void)
 
 void I_BeginUpdate (void)
 {
-	V_LockScreen (&screen);
+	screen->Lock ();
 }
 
 //==========================================================================
@@ -354,7 +291,7 @@ void I_BeginUpdate (void)
 
 void I_FinishUpdateNoBlit (void)
 {
-	V_UnlockScreen (&screen);
+	screen->Unlock ();
 }
 
 //==========================================================================
@@ -372,7 +309,8 @@ void I_FinishUpdate (void)
 	int		howlong;
 
 	ms = timeGetTime ();
-	if ((howlong = ms - lastms) && I_ShowFPS->value) {
+	if ((howlong = ms - lastms) && vid_fps.value)
+	{
 		char fpsbuff[40];
 		int chars;
 
@@ -380,9 +318,10 @@ void I_FinishUpdate (void)
 				 howlong,
 				 lastcount);
 		chars = strlen (fpsbuff);
-		V_Clear (0, screen.height - 8, chars * 8, screen.height, &screen, 0);
-		V_PrintStr (0, screen.height - 8, (byte *)&fpsbuff[0], chars);
-		if (lastsec != ms / 1000) {
+		screen->Clear (0, screen->height - 8, chars * 8, screen->height, 0);
+		screen->PrintStr (0, screen->height - 8, (char *)&fpsbuff[0], chars);
+		if (lastsec != ms / 1000)
+		{
 			lastcount = framecount;
 			framecount = 0;
 			lastsec = ms / 1000;
@@ -391,7 +330,7 @@ void I_FinishUpdate (void)
 	}
 	lastms = ms;
 
-	if (vid_palettehack->value)
+	if (vid_palettehack.value)
 	{
 		if (NeedPalChange <= 0)
 			NeedPalChange = 1;
@@ -400,16 +339,17 @@ void I_FinishUpdate (void)
 	}
 
 	// draws little dots on the bottom of the screen
-	if (ticker->value) {
+	if (ticker.value)
+	{
 		i = I_GetTime();
 		tics = i - lasttic;
 		lasttic = i;
 		if (tics > 20) tics = 20;
 
 		for (i=0 ; i<tics*2 ; i+=2)
-			screen.buffer[(screen.height-1)*screen.pitch + i] = 0xff;
+			screen->buffer[(screen->height-1)*screen->pitch + i] = 0xff;
 		for ( ; i<20*2 ; i+=2)
-			screen.buffer[(screen.height-1)*screen.pitch + i] = 0x0;
+			screen->buffer[(screen->height-1)*screen->pitch + i] = 0x0;
 	}
 
 	if (DDObj)
@@ -430,7 +370,8 @@ void I_FinishUpdate (void)
 								  DDLOCK_SURFACEMEMORYPTR, NULL);
 		} while ((dderr == DDERR_WASSTILLDRAWING) || (dderr == DDERR_SURFACEBUSY));
 
-		if (dderr == DDERR_SURFACELOST) {
+		if (dderr == DDERR_SURFACELOST)
+		{
 			dderr = DDPrimary->Restore ();
 			do
 			{
@@ -439,18 +380,23 @@ void I_FinishUpdate (void)
 			} while ((dderr == DDERR_WASSTILLDRAWING) || (dderr == DDERR_SURFACEBUSY));
 		}
 
-		if (dderr == DD_OK) {
+		if (dderr == DD_OK)
+		{
 			byte *to = (byte *)ddsd.lpSurface;
-			byte *from = screen.buffer;
+			byte *from = screen->buffer;
 			int y;
 
-			if (ddsd.lPitch == screen.width && screen.width == screen.pitch) {
-				memcpy (to, from, screen.width * screen.height);
-			} else {
-				for (y = 0; y < screen.height; y++) {
-					memcpy (to, from, screen.width);
+			if (ddsd.lPitch == screen->width && screen->width == screen->pitch)
+			{
+				memcpy (to, from, screen->width * screen->height);
+			}
+			else
+			{
+				for (y = 0; y < screen->height; y++)
+				{
+					memcpy (to, from, screen->width);
 					to += ddsd.lPitch;
-					from += screen.pitch;
+					from += screen->pitch;
 				}
 			}
 			do
@@ -459,7 +405,7 @@ void I_FinishUpdate (void)
 			} while ((dderr == DDERR_WASSTILLDRAWING) || (dderr == DDERR_SURFACEBUSY));
 		}
 
-		V_UnlockScreen (&screen);
+		screen->Unlock ();
 
 		while (1)
 		{
@@ -482,28 +428,28 @@ void I_FinishUpdate (void)
 	}
 	else
 	{
-		V_UnlockScreen (&screen);
-		((Surface *)(screen.impdata))->Update ();
-
-		if (DisPal && NeedPalChange > 0)
+		try
 		{
-			uint *palentries;
+			screen->Unlock ();
+			((Surface *)(screen->m_Private))->copy (*Con);
+			Con->update ();
 
-			if (palentries = (uint *)DisPal->Lock ())
+			if (DisPal && NeedPalChange > 0)
 			{
+				int32 *palentries;
+
+				palentries = DisPal->lock ();
 				NeedPalChange--;
-				memcpy (palentries, PalEntries.ui, 256*sizeof(uint));
-				DisPal->Unlock ();
-
-				if (screen.is8bit)
-					((Surface *)(screen.impdata))->SetPalette (*DisPal);
-
-				// Only set the display palette if it is indexed color
-				FORMAT format = ptc.GetFormat ();
-
-				if (format.type == INDEXED && format.model != GREYSCALE)
-					ptc.SetPalette (*DisPal);
+				memcpy (palentries, PalEntries.ui, 256*sizeof(int32));
+				DisPal->unlock ();
+				Con->palette (*DisPal);
+				if (screen->is8bit)
+					((Surface *)(screen->m_Private))->palette (*DisPal);
 			}
+		}
+		catch (Error &error)
+		{
+			I_FatalError (error.message());
 		}
 	}
 }
@@ -519,17 +465,17 @@ void I_ReadScreen (byte *scr)
 	int y;
 	byte *source;
 
-	V_LockScreen (&screen);
-	source = screen.buffer;
+	screen->Lock ();
+	source = screen->buffer;
 
-	for (y = 0; y < screen.height; y++)
+	for (y = 0; y < screen->height; y++)
 	{
-		memcpy (scr, source, screen.width);
-		scr += screen.width;
-		source += screen.pitch;
+		memcpy (scr, source, screen->width);
+		scr += screen->width;
+		source += screen->pitch;
 	}
 
-	V_UnlockScreen (&screen);
+	screen->Unlock ();
 }
 
 
@@ -557,27 +503,9 @@ void I_SetPalette (unsigned int *pal)
 	}
 	else
 	{
-		memcpy (PalEntries.ui, pal, 256*sizeof(uint));
+		memcpy (PalEntries.ui, pal, 256*sizeof(int32));
 	}
 	NeedPalChange++;
-}
-
-//==========================================================================
-//
-// ReinitPTC
-//
-//==========================================================================
-
-static void ReinitPTC (char *iface)
-{
-	if (!ptc.Init (iface, (WINDOW)Window))
-		I_FatalError ("Could not reinitialize PTC");
-#ifdef _DEBUG
-	// We don't want our priority class bumped up!
-	SetPriorityClass (GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-#endif
-	if (developer->value && vidactive)
-		Printf (PRINT_HIGH, "PTC reinitialized to use %s\n\n", iface);
 }
 
 //==========================================================================
@@ -586,13 +514,11 @@ static void ReinitPTC (char *iface)
 //
 //==========================================================================
 
-void I_SetMode (int width, int height, int id)
+void I_SetMode (int width, int height, int bits)
 {
 	DisplayWidth = width;
 	DisplayHeight = height;
-	DisplayID = id;
-
-	ShowWindow (Window, SW_SHOW);
+	DisplayBits = bits;
 
 	if (DDObj)
 	{
@@ -600,63 +526,58 @@ void I_SetMode (int width, int height, int id)
 	}
 	else
 	{
-		if (Fullscreen)
+		try
 		{
-			if (!fullscreen->value)
+			Con->close ();
+			I_PauseMouse ();
+			Con->option ("DirectX");
+			if (Fullscreen)
 			{
-				Fullscreen = FALSE;
-				// Get out of fullscreen mode
-				ptc.Close ();
-				//ReinitPTC (WindowedIFace);
+				if (!fullscreen.value)
+				{
+					Fullscreen = FALSE;
+				}
 			}
-		}
-		else
-		{
-			if (fullscreen->value)
+			else
 			{
-				Fullscreen = TRUE;
-				ReinitPTC (FullscreenIFace);
+				if (fullscreen.value)
+				{
+					Fullscreen = TRUE;
+				}
+			}
+
+			if (Fullscreen)
+			{
+				Con->option ("fullscreen output");
+			}
+			else
+			{
+				Con->option ("windowed output");
+				SetWindowPos (Window, NULL, 0, 0,
+					width + GetSystemMetrics (SM_CXSIZEFRAME) * 2,
+					height + GetSystemMetrics (SM_CYSIZEFRAME) * 2 +
+						     GetSystemMetrics (SM_CYCAPTION)
+					, SWP_DRAWFRAME|
+					  SWP_NOACTIVATE|
+					  SWP_NOCOPYBITS|
+					  SWP_NOMOVE|
+					  SWP_NOZORDER);
+			}
+			ShowWindow (Window, SW_SHOW);
+			Con->open (Window, width, height, Format(8));
+			Con->option ("disable key buffering");
+			if (Fullscreen || (!menuactive && gamestate != GS_FULLCONSOLE))
 				I_ResumeMouse ();	// Make sure mouse pointer is grabbed.
-			}
 		}
-
-		if (Fullscreen)
+		catch (Error &error)
 		{
-			ptc.SetMode (width, height, id);
-		}
-		else
-		{
-			width *= win_stretchx->value;
-			height *= win_stretchy->value;
-
-			height += GetSystemMetrics (SM_CYFIXEDFRAME) * 2 +
-					  GetSystemMetrics (SM_CYCAPTION);
-			width  += GetSystemMetrics (SM_CXFIXEDFRAME) * 2;
-
-			SetWindowPos (Window, NULL, 0, 0, width, height, SWP_DRAWFRAME|
-															 SWP_NOACTIVATE|
-															 SWP_NOCOPYBITS|
-															 SWP_NOMOVE|
-															 SWP_NOZORDER);
-
-			// Let PTC know about the new window size
-			ReinitPTC (WindowedIFace);
-
-			// If the menu is active, make sure the mouse is released.
-			if (menuactive || gamestate == GS_FULLCONSOLE)
-				I_PauseMouse ();
-
-			MODE mode = ptc.GetMode();
-
-			DisplayBPP = mode.format.bits;
-			if (developer->value && vidactive)
-				Printf (PRINT_HIGH, "Mode set: %dx%d (%s)\n", mode.x, mode.y,
-					IdStrings[DisplayID-1000]);
+			I_FatalError (error.message());
 		}
 	}
 
-	// cheapo hack to make sure current display BPP is stored in screen
-	screen.Bpp = IdTobpp[DisplayID-1000] >> 3;
+	// cheapo hack to make sure current display depth is stored in screen
+	if (screen)
+		screen->bits = DisplayBits;
 }
 
 //==========================================================================
@@ -667,34 +588,13 @@ void I_SetMode (int width, int height, int id)
 
 static void refreshDisplay (void)
 {
-	NewWidth = DisplayWidth;
-	NewHeight = DisplayHeight;
-	NewID = DisplayID;
-	setmodeneeded = true;
-}
-
-//==========================================================================
-//
-// stretchChanged
-//
-//==========================================================================
-
-static void stretchChanged (cvar_t *var)
-{
-	if (!Fullscreen && !DDObj)
-		refreshDisplay ();
-}
-
-//==========================================================================
-//
-// fullChanged
-//
-//==========================================================================
-
-static void fullChanged (cvar_t *var)
-{
-	if (!DDObj && Fullscreen != var->value)
-		refreshDisplay ();
+	if (gamestate != GS_STARTUP)
+	{
+		NewWidth = DisplayWidth;
+		NewHeight = DisplayHeight;
+		NewBits = DisplayBits;
+		setmodeneeded = true;
+	}
 }
 
 //==========================================================================
@@ -705,67 +605,45 @@ static void fullChanged (cvar_t *var)
 
 void I_InitGraphics (void)
 {
-	char num[8], *iface;
+	char num[8];
 	modelist_t *mode = (modelist_t *)&Modes;
-	cvar_t *vid_noptc;
 
 	I_DetectOS ();
 
-	I_ShowFPS = cvar ("vid_fps", "0", 0);
-	num[0] = '0' + !!M_CheckParm ("-devparm");
+	num[0] = '1' - !Args.CheckParm ("-devparm");
 	num[1] = 0;
-	ticker = cvar ("ticker", num, 0);
-	win_stretchx = cvar ("win_stretchx", "1.0", CVAR_ARCHIVE|CVAR_CALLBACK);
-	win_stretchy = cvar ("win_stretchy", "1.0", CVAR_ARCHIVE|CVAR_CALLBACK);
-	fullscreen = cvar ("fullscreen", "1", CVAR_ARCHIVE|CVAR_CALLBACK);
-	vid_noptc = cvar ("vid_noptc", "0", CVAR_ARCHIVE);
-	vid_palettehack = cvar ("vid_palettehack", "0", CVAR_ARCHIVE);
+	ticker.SetDefault (num);
 
-	Fullscreen = (BOOL)fullscreen->value;
+	Fullscreen = (BOOL)fullscreen.value;
 
-	win_stretchx->u.callback =
-	win_stretchy->u.callback = stretchChanged;
-	fullscreen->u.callback = fullChanged;
-
-	C_RegisterCommands (VidCommands);
-
-	if (vid_noptc->value || M_CheckParm ("-noptc"))
+	if (vid_noptc.value || Args.CheckParm ("-noptc"))
 	{
 		Printf_Bold ("Bypassing PTC\n");
 		InitDDraw ();
 	}
 	else
 	{
-		MakeModesList ();
-		sprintf (num, "%d", nummodes);
-		cvar ("vid_nummodes", num, CVAR_NOSET);
-
-		if (Fullscreen)
-			iface = FullscreenIFace;
-		else
-			iface = WindowedIFace;
-
-		if (!ptc.Init (iface, Window))
+		try
 		{
-			Printf_Bold ("Failed to initialize PTC. You won't be\n");
-			Printf_Bold ("able to play in a window. (Terrible, huh?)\n");
-			InitDDraw ();
+			Con = new Console;
+			if (!Con)
+				throw Error ("Could not create console");
+//			Con->option ("enable logging");
+			DisPal = new Palette;
+			MakeModesList ();
+			sprintf (num, "%d", nummodes);
+			new cvar_t ("vid_nummodes", num, CVAR_NOSET);
 		}
-		else
+		catch (Error &err)
 		{
-#ifdef _DEBUG
-			// We don't want our priority class bumped up!
-			SetPriorityClass (GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-#endif
-			if (!(DisPal = new Palette))
-			{
-				FreeModes ();
-				I_FatalError ("Could not create palette");
-			}
+			FreeModes ();
+			Printf_Bold ("Failed to initialize PTC. You won't be\n"
+						 "able to play in a window. Reason:\n", err.message ());
+			InitDDraw ();
 		}
 	}
 
-	atexit (I_ShutdownGraphics);
+	atterm (I_ShutdownGraphics);
 }
 
 //==========================================================================
@@ -811,7 +689,21 @@ static void InitDDraw (void)
 		DDObj->Release ();
 		I_FatalError ("Could not enumerate display modes: %x", dderr);
 	}
+	if (nummodes == 0)
+	{
+		DDObj->Release ();
+		I_FatalError ("DirectDraw returned no display modes. Try rebooting.");
+	}
+	if (OSPlatform == os_Win95)
+	{
+		// Windows 95 will let us use Mode X. If we didn't find any linear
+		// modes in the loop above, add the Mode X modes here.
 
+		if (!Have320x200x8)
+			nummodes++, AddMode (320, 200, 8, &lastmode);
+		if (!Have320x240x8)
+			nummodes++, AddMode (320, 240, 8, &lastmode);
+	}
 	sprintf (num, "%d", nummodes);
 	cvar_forceset ("vid_nummodes", num);
 }
@@ -828,7 +720,7 @@ static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes)
 		desc->dwHeight <= 1024)
 	{
 		nummodes++;
-		AddMode (desc->dwWidth, desc->dwHeight, 8, INDEX8, (modelist_t **)modes);
+		AddMode (desc->dwWidth, desc->dwHeight, 8, (modelist_t **)modes);
 	}
 
 	return DDENUMRET_OK;
@@ -899,12 +791,13 @@ static void NewDDMode (int width, int height)
 //
 //==========================================================================
 
-BOOL I_CheckResolution (int width, int height, int id)
+BOOL I_CheckResolution (int width, int height, int bits)
 {
 	modelist_t *mode = Modes;
 
-	while (mode) {
-		if (mode->width == width && mode->height == height && mode->id == id)
+	while (mode)
+	{
+		if (mode->width == width && mode->height == height && mode->bpp == bits)
 			return true;
 
 		mode = mode->next;
@@ -918,10 +811,10 @@ BOOL I_CheckResolution (int width, int height, int id)
 //
 //==========================================================================
 
-void I_StartModeIterator (int id)
+void I_StartModeIterator (int bits)
 {
 	IteratorMode = Modes;
-	IteratorID = id;
+	IteratorBits = bits;
 }
 
 //==========================================================================
@@ -932,11 +825,13 @@ void I_StartModeIterator (int id)
 
 BOOL I_NextMode (int *width, int *height)
 {
-	if (IteratorMode) {
-		while (IteratorMode && IteratorMode->id != IteratorID)
+	if (IteratorMode)
+	{
+		while (IteratorMode && IteratorMode->bpp != IteratorBits)
 			IteratorMode = IteratorMode->next;
 
-		if (IteratorMode) {
+		if (IteratorMode)
+		{
 			*width = IteratorMode->width;
 			*height = IteratorMode->height;
 			IteratorMode = IteratorMode->next;
@@ -952,23 +847,23 @@ BOOL I_NextMode (int *width, int *height)
 //
 //==========================================================================
 
-static void Cmd_Vid_DescribeModes (struct player_s *p, int c, char **v)
+BEGIN_COMMAND (vid_listmodes)
 {
 	modelist_t *mode = Modes;
 
 	while (mode)
 	{
 		// print accumulated mode info
-		Printf (PRINT_HIGH, "%4dx%-4d  %2dbit %10s\n",
+		Printf (PRINT_HIGH, "%4dx%-4d  %2dbit\n",
 				mode->width,
 				mode->height,
-				mode->bpp,
-				IdStrings[mode->id-1000]);
+				mode->bpp);
 
 		// go to next mode
 		mode = mode->next;
 	}
 }
+END_COMMAND (vid_listmodes)
 
 //==========================================================================
 //
@@ -976,11 +871,12 @@ static void Cmd_Vid_DescribeModes (struct player_s *p, int c, char **v)
 //
 //==========================================================================
 
-void Cmd_Vid_DescribeCurrentMode (struct player_s *p, int c, char **v)
+BEGIN_COMMAND (vid_currentmode)
 {
-	Printf (PRINT_HIGH, "%dx%d (%s)\n", screen.width, screen.height,
-			IdStrings[DisplayID-1000]);
+	Printf (PRINT_HIGH, "%dx%dx%d\n", screen->width, screen->height,
+			DisplayBits);
 }
+END_COMMAND (vid_currentmode)
 
 //==========================================================================
 //
@@ -988,17 +884,17 @@ void Cmd_Vid_DescribeCurrentMode (struct player_s *p, int c, char **v)
 //
 //==========================================================================
 
-BOOL I_AllocateScreen (screen_t *scrn, int width, int height, int Bpp)
+bool I_AllocateScreen (DCanvas *scrn, int width, int height, int bits)
 {
-	if (scrn->impdata)
+	if (scrn->m_Private)
 		I_FreeScreen (scrn);
 
 	scrn->width = width;
 	scrn->height = height;
-	scrn->is8bit = (Bpp == 8) ? true : false;
-	scrn->lockcount = 0;
-	scrn->Bpp = IdTobpp[DisplayID-1000] >> 3;
-	scrn->palette = NULL;
+	scrn->is8bit = (bits == 8) ? true : false;
+	scrn->bits = DisplayBits;
+	scrn->m_LockCount = 0;
+	scrn->m_Palette = NULL;
 
 	if (DDObj)
 	{
@@ -1018,9 +914,9 @@ BOOL I_AllocateScreen (screen_t *scrn, int width, int height, int Bpp)
 		dderr = DDObj->CreateSurface (&ddsd, &surface, NULL);
 		if (SUCCEEDED(dderr))
 		{
-			screenchain *tracer = (screenchain *)Malloc (sizeof(*tracer));
+			screenchain *tracer = new screenchain;
 
-			scrn->impdata = surface;
+			scrn->m_Private = surface;
 			tracer->scr = scrn;
 			tracer->next = chain;
 			chain = tracer;
@@ -1030,35 +926,33 @@ BOOL I_AllocateScreen (screen_t *scrn, int width, int height, int Bpp)
 	}
 	else
 	{
-		Surface *surface;
-
-		if (scrn == &screen)
-			surface = new Surface (ptc, width, height, (Bpp == 8) ? INDEX8 : ARGB8888);
-		else
-			surface = new Surface (width, height, (Bpp == 8) ? INDEX8 : ARGB8888);
-
-		if (surface)
+		try
 		{
-			screenchain *tracer = (screenchain *)Malloc (sizeof(*tracer));
+			Surface *surface;
 
-			scrn->impdata = surface;
+			surface = new Surface (width, height,
+				(bits == 8) ? Format(8) : Format(32,0xff0000,0x00ff00,0x0000ff));
+
+			screenchain *tracer = new screenchain;
+
+			scrn->m_Private = surface;
 			tracer->scr = scrn;
 			tracer->next = chain;
 			chain = tracer;
 
-			if (developer->value && vidactive)
+			if (developer.value && vidactive)
 			{
-				Printf_Bold ("Allocated new surface. (%dx%dx%d)\n",
-						surface->GetWidth (),
-						surface->GetHeight (),
-						surface->GetBitsPerPixel ());
-				Printf (PRINT_HIGH, "Orientation: %d\n", surface->GetOrientation ());
-				Printf (PRINT_HIGH, "Layout: %d\n", surface->GetLayout ());
-				Printf (PRINT_HIGH, "Advance: %d\n", surface->GetAdvance ());
-				Printf (PRINT_HIGH, "Pitch: %d\n", surface->GetPitch ());
-				Printf (PRINT_HIGH, "Format: %s\n\n", GetFormatName ((surface->GetFormat ()).id));
+				Printf_Bold ("Allocated new surface. (%dx%dx%d)/%d\n",
+						surface->width(),
+						surface->height(),
+						surface->format().bits(),
+						surface->pitch());
 			}
 			return true;
+		}
+		catch (Error &error)
+		{
+			I_FatalError (error.message());
 		}
 	}
 	return false;
@@ -1070,46 +964,56 @@ BOOL I_AllocateScreen (screen_t *scrn, int width, int height, int Bpp)
 //
 //==========================================================================
 
-void I_FreeScreen (screen_t *scrn)
+void I_FreeScreen (DCanvas *scrn)
 {
 	struct screenchain *thisone, *prev;
 
-	if (scrn->impdata)
+	if (scrn->m_Private)
 	{
 		if (DDObj)
 		{
 			// Make sure the surface is unlocked
-			if (scrn->lockcount)
-				((LPDIRECTDRAWSURFACE)(scrn->impdata))->Unlock (NULL);
+			if (scrn->m_LockCount)
+				((LPDIRECTDRAWSURFACE)(scrn->m_Private))->Unlock (NULL);
 
-			((LPDIRECTDRAWSURFACE)(scrn->impdata))->Release ();
-			scrn->impdata = NULL;
+			((LPDIRECTDRAWSURFACE)(scrn->m_Private))->Release ();
+			scrn->m_Private = NULL;
 		}
 		else
 		{
-			// Make sure the surface is unlocked
-			if (scrn->lockcount)
-				((Surface *)(scrn->impdata))->Unlock ();
+			try
+			{
+				// Make sure the surface is unlocked
+				if (scrn->m_LockCount)
+					((Surface *)(scrn->m_Private))->unlock ();
 
-			delete (Surface *)(scrn->impdata);
-			scrn->impdata = NULL;
+				delete (Surface *)(scrn->m_Private);
+				scrn->m_Private = NULL;
+			}
+			catch (Error &error)
+			{
+				I_FatalError (error.message());
+			}
 		}
 	}
 
-	V_DetachPalette (scrn);
+	scrn->DetachPalette ();
 
 	thisone = chain;
 	prev = NULL;
-	while (thisone) {
-		if (thisone->scr == scrn) {
-			if (prev) {
+	while (thisone)
+	{
+		if (thisone->scr == scrn)
+		{
+			if (prev)
 				prev->next = thisone->next;
-			} else {
+			else
 				chain = thisone->next;
-			}
-			free (thisone);
+			delete thisone;
 			break;
-		} else {
+		}
+		else
+		{
 			prev = thisone;
 			thisone = thisone->next;
 		}
@@ -1122,9 +1026,9 @@ void I_FreeScreen (screen_t *scrn)
 //
 //==========================================================================
 
-void I_LockScreen (screen_t *scrn)
+void I_LockScreen (DCanvas *scrn)
 {
-	if (scrn->impdata)
+	if (scrn->m_Private)
 	{
 		if (DDObj)
 		{
@@ -1135,7 +1039,7 @@ void I_LockScreen (screen_t *scrn)
 			ddsd.dwSize = sizeof(ddsd);
 			do
 			{
-				dderr = ((LPDIRECTDRAWSURFACE)(scrn->impdata))->Lock (NULL,
+				dderr = ((LPDIRECTDRAWSURFACE)(scrn->m_Private))->Lock (NULL,
 					&ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
 			} while (dderr == DDERR_SURFACEBUSY || dderr == DDERR_WASSTILLDRAWING);
 
@@ -1148,15 +1052,20 @@ void I_LockScreen (screen_t *scrn)
 		}
 		else
 		{
-			scrn->buffer = (byte *)((Surface *)(scrn->impdata))->Lock ();
-
-			if (scrn->buffer == NULL)
-				I_FatalError ("Could not lock surface");
-
-			scrn->pitch = ((Surface *)(scrn->impdata))->GetPitch ();
+			try
+			{
+				scrn->buffer = (byte *)((Surface *)(scrn->m_Private))->lock ();
+				scrn->pitch = ((Surface *)(scrn->m_Private))->pitch ();
+			}
+			catch (Error &error)
+			{
+				I_FatalError (error.message());
+			}
 		}
-	} else {
-		scrn->lockcount--;
+	}
+	else
+	{
+		scrn->m_LockCount--;
 	}
 }
 
@@ -1166,17 +1075,24 @@ void I_LockScreen (screen_t *scrn)
 //
 //==========================================================================
 
-void I_UnlockScreen (screen_t *scrn)
+void I_UnlockScreen (DCanvas *scrn)
 {
-	if (scrn->impdata)
+	if (scrn->m_Private)
 	{
 		if (DDObj)
 		{
-			((LPDIRECTDRAWSURFACE)(scrn->impdata))->Unlock (scrn->buffer);
+			((LPDIRECTDRAWSURFACE)(scrn->m_Private))->Unlock (scrn->buffer);
 		}
 		else
 		{
-			((Surface *)(scrn->impdata))->Unlock ();
+			try
+			{
+				((Surface *)(scrn->m_Private))->unlock ();
+			}
+			catch (Error &error)
+			{
+				I_FatalError (error.message());
+			}
 		}
 		scrn->buffer = NULL;
 	}
@@ -1188,10 +1104,10 @@ void I_UnlockScreen (screen_t *scrn)
 //
 //==========================================================================
 
-void I_Blit (screen_t *src, int srcx, int srcy, int srcwidth, int srcheight,
-			 screen_t *dest, int destx, int desty, int destwidth, int destheight)
+void I_Blit (DCanvas *src, int srcx, int srcy, int srcwidth, int srcheight,
+			 DCanvas *dest, int destx, int desty, int destwidth, int destheight)
 {
-	if (!src->impdata || !dest->impdata)
+	if (!src->m_Private || !dest->m_Private)
 		return;
 /*
 	Funny problem with calling BitBlt() here. The more I do, the slower it gets.
@@ -1202,86 +1118,100 @@ void I_Blit (screen_t *src, int srcx, int srcy, int srcwidth, int srcheight,
 	RECTANGLE srcrect (srcx, srcy, srcx + srcwidth, srcy + srcheight);
 	RECTANGLE destrect (destx, desty, destx + destwidth, desty + destheight);
 
-	((Surface *)(src->impdata))->BitBlt (*(Surface *)(dest->impdata),
+	((Surface *)(src->m_Private))->BitBlt (*(Surface *)(dest->m_Private),
 										 srcrect, destrect);
 #else
 	fixed_t fracxstep, fracystep;
 	fixed_t fracx, fracy;
 	int x, y;
 
-	if (!src->lockcount)
-		I_LockScreen (src);
-	if (!dest->lockcount)
-		I_LockScreen (dest);
+	if (!src->m_LockCount)
+		src->Lock ();
+	if (!dest->m_LockCount)
+		dest->Lock ();
 
 	fracy = srcy << FRACBITS;
 	fracystep = (srcheight << FRACBITS) / destheight;
 	fracxstep = (srcwidth << FRACBITS) / destwidth;
 
-	if (src->is8bit == dest->is8bit) {
+	if (src->is8bit == dest->is8bit)
+	{
 		// INDEX8 -> INDEX8 or ARGB8888 -> ARGB8888
 
 		byte *destline, *srcline;
 
-		if (!dest->is8bit) {
+		if (!dest->is8bit)
+		{
 			destwidth <<= 2;
 			srcwidth <<= 2;
 			srcx <<= 2;
 			destx <<= 2;
 		}
 
-		if (fracxstep == FRACUNIT) {
-			for (y = desty; y < desty + destheight; y++, fracy += fracystep) {
+		if (fracxstep == FRACUNIT)
+		{
+			for (y = desty; y < desty + destheight; y++, fracy += fracystep)
+			{
 				memcpy (dest->buffer + y * dest->pitch + destx,
 						src->buffer + (fracy >> FRACBITS) * src->pitch + srcx,
 						destwidth);
 			}
-		} else {
-			for (y = desty; y < desty + destheight; y++, fracy += fracystep) {
+		}
+		else
+		{
+			for (y = desty; y < desty + destheight; y++, fracy += fracystep)
+			{
 				srcline = src->buffer + (fracy >> FRACBITS) * src->pitch + srcx;
 				destline = dest->buffer + y * dest->pitch + destx;
-				for (x = fracx = 0; x < destwidth; x++, fracx += fracxstep) {
+				for (x = fracx = 0; x < destwidth; x++, fracx += fracxstep)
+				{
 					destline[x] = srcline[fracx >> FRACBITS];
 				}
 			}
 		}
-	} else if (!src->is8bit && dest->is8bit) {
+	}
+	else if (!src->is8bit && dest->is8bit)
+	{
 		// ARGB8888 -> INDEX8
 		I_FatalError ("Can't I_Blit() an ARGB8888 source to\nan INDEX8 destination");
-	} else {
+	}
+	else
+	{
 		// INDEX8 -> ARGB8888 (Palette set in V_Palette)
-		uint *destline;
+		int32 *destline;
 		byte *srcline;
 
-		if (fracxstep == FRACUNIT) {
+		if (fracxstep == FRACUNIT)
+		{
 			// No X-scaling
-			for (y = desty; y < desty + destheight; y++, fracy += fracystep) {
+			for (y = desty; y < desty + destheight; y++, fracy += fracystep)
+			{
 				srcline = src->buffer + (fracy >> FRACBITS) * src->pitch + srcx;
-				destline = (uint *)(dest->buffer + y * dest->pitch) + destx;
-				for (x = 0; x < destwidth; x++) {
+				destline = (int32 *)(dest->buffer + y * dest->pitch) + destx;
+				for (x = 0; x < destwidth; x++)
+				{
 					destline[x] = V_Palette[srcline[x]];
 				}
 			}
-		} else {
+		}
+		else
+		{
 			// With X-scaling
-			for (y = desty; y < desty + destheight; y++, fracy += fracystep) {
+			for (y = desty; y < desty + destheight; y++, fracy += fracystep)
+			{
 				srcline = src->buffer + (fracy >> FRACBITS) * src->pitch + srcx;
-				destline = (uint *)(dest->buffer + y * dest->pitch) + destx;
-				for (x = fracx = 0; x < destwidth; x++, fracx += fracxstep) {
+				destline = (int32 *)(dest->buffer + y * dest->pitch) + destx;
+				for (x = fracx = 0; x < destwidth; x++, fracx += fracxstep)
+				{
 					destline[x] = V_Palette[srcline[fracx >> FRACBITS]];
 				}
 			}
 		}
 	}
 
-	if (!src->lockcount)
+	if (!src->m_LockCount)
 		I_UnlockScreen (src);
-	if (!dest->lockcount)
+	if (!dest->m_LockCount)
 		I_UnlockScreen (dest);
 #endif
 }
-
-// NON-PTC DIRECTDRAW STUFF FOLLOWS ----------------------------------------
-
-
-}	// extern "C"

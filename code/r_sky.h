@@ -19,35 +19,27 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __R_SKY__
-#define __R_SKY__
-
+#ifndef __R_SKY_H__
+#define __R_SKY_H__
 
 #include "c_cvars.h"
 
 // SKY, store the number for name.
 extern char SKYFLATNAME[8];
 
-// The sky map is 256*128*4 maps.
-#define ANGLETOSKYSHIFT 		22
+extern int		sky1shift,		sky2shift;
 
-extern int 				sky1texture,	sky2texture;
-extern fixed_t			sky1pos,		sky2pos;
-extern int				skytexturemid;
-extern int				skystretch;
-fixed_t					skyiscale;
-int						skyscale;
-fixed_t					skyheight;
+extern int 		sky1texture,	sky2texture;
+extern fixed_t	sky1pos,		sky2pos;
+extern fixed_t	skytexturemid;
+extern int		skystretch;
+extern fixed_t	skyiscale;
+extern fixed_t	skyscale;
+extern fixed_t	skyheight;
 
-extern cvar_t			*r_stretchsky;
+EXTERN_CVAR (r_stretchsky)
 
 // Called whenever the sky changes.
-void R_InitSkyMap		(cvar_t *stretchsky);
+void R_InitSkyMap		();
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif //__R_SKY_H__

@@ -21,17 +21,20 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __V_VIDEO__
-#define __V_VIDEO__
+#ifndef __V_VIDEO_H__
+#define __V_VIDEO_H__
 
 #include "doomtype.h"
+#include "m_bbox.h"
 
-#include "v_palett.h"
+#include "v_palette.h"
 
 #include "doomdef.h"
 
 // Needed because we are refering to patches.
 #include "r_data.h"
+
+extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 
 //
 // VIDEO
@@ -44,72 +47,403 @@
 // there are only two display depths: 8-bit indexed and
 // 32-bit RGBA. The video driver is expected to be able
 // to convert these to a format supported by the hardware.
-// As such, the Bpp field is only used as an indicator
+// As such, the bits field is only used as an indicator
 // of the output display depth and not as the screen's
 // display depth (use is8bit for that).
-struct screen_s {
-	void	   *impdata;
-	int			Bpp;		// *Bytes* per pixel
-	byte	   *buffer;
-	int			width;
-	int			height;
-	int			pitch;
-	BOOL		is8bit;
-	int			lockcount;
-	palette_t  *palette;
-};
-typedef struct screen_s screen_t;
+class DCanvas : DObject
+{
+	DECLARE_CLASS (DCanvas, DObject)
+public:
+	enum EWrapperCode
+	{
+		EWrapper_Normal = 0,		// Just draws the patch as is
+		EWrapper_Lucent = 1,		// Mixes the patch with the background
+		EWrapper_Translated = 2,	// Color translates the patch and draws it
+		EWrapper_TlatedLucent = 3,	// Translates the patch and mixes it with the background
+		EWrapper_Colored = 4,		// Fills the patch area with a solid color
+		EWrapper_ColoredLucent = 5	// Mixes a solid color in the patch area with the background
+	};
 
-extern palette_t *DefaultPalette;
+	//DCanvas ();
+	DCanvas (int width, int height, int bits);
+	~DCanvas ();
+
+	int bits;
+	byte *buffer;
+	int width;
+	int height;
+	int pitch;
+	bool is8bit;
+
+	// Copy blocks from one canvas to another
+	void Blit (int srcx, int srcy, int srcwidth, int srcheight, DCanvas *dest, int destx, int desty, int destwidth, int destheight);
+	void CopyRect (int srcx, int srcy, int width, int height, int destx, int desty, DCanvas *destscrn);
+
+	// Draw a linear block of pixels into the view buffer.
+	void DrawBlock (int x, int y, int width, int height, const byte *src) const;
+
+	// Reads a linear block of pixels into the view buffer.
+	void GetBlock (int x, int y, int width, int height, byte *dest) const;
+
+	// Darken the entire canvas
+	void Dim () const;
+
+	// Fill an area with a 64x64 flat texture
+	void FlatFill (int left, int top, int right, int bottom, const byte *src) const;
+
+	// Set an area to a specified color
+	void Clear (int left, int top, int right, int bottom, int color) const;
+
+	// Access control
+	void Lock ();
+	void Unlock ();
+
+	// Palette control (unused)
+	void AttachPalette (palette_t *pal);
+	void DetachPalette ();
+
+	// Text drawing functions
+	// Output a line of text using the console font
+	void PrintStr (int x, int y, const char *s, int count) const;
+	void PrintStr2 (int x, int y, const char *s, int count) const;
+
+	// Output some text with wad heads-up font
+	inline void DrawText (int normalcolor, int x, int y, const byte *string) const;
+	inline void DrawTextLuc (int normalcolor, int x, int y, const byte *string) const;
+	inline void DrawTextClean (int normalcolor, int x, int y, const byte *string) const;		// Does not adjust x and y
+	inline void DrawTextCleanLuc (int normalcolor, int x, int y, const byte *string) const;		// ditto
+	inline void DrawTextCleanMove (int normalcolor, int x, int y, const byte *string) const;	// This one does
+
+	inline void DrawText (int normalcolor, int x, int y, const char *string) const;
+	inline void DrawTextLuc (int normalcolor, int x, int y, const char *string) const;
+	inline void DrawTextClean (int normalcolor, int x, int y, const char *string) const;
+	inline void DrawTextCleanLuc (int normalcolor, int x, int y, const char *string) const;
+	inline void DrawTextCleanMove (int normalcolor, int x, int y, const char *string) const;
+
+	// Patch drawing functions
+	void DrawPatchFlipped (const patch_t *patch, int x, int y) const;
+
+	inline void DrawPatch (const patch_t *patch, int x, int y) const;
+	inline void DrawPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const;
+	inline void DrawPatchDirect (const patch_t *patch, int x, int y) const;
+	inline void DrawPatchIndirect (const patch_t *patch, int x, int y) const;
+	inline void DrawPatchClean (const patch_t *patch, int x, int y) const;
+	inline void DrawPatchCleanNoMove (const patch_t *patch, int x, int y) const;
+
+	inline void DrawLucentPatch (const patch_t *patch, int x, int y) const;
+	inline void DrawLucentPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const;
+	inline void DrawLucentPatchDirect (const patch_t *patch, int x, int y) const;
+	inline void DrawLucentPatchIndirect (const patch_t *patch, int x, int y) const;
+	inline void DrawLucentPatchClean (const patch_t *patch, int x, int y) const;
+	inline void DrawLucentPatchCleanNoMove (const patch_t *patch, int x, int y) const;
+
+	inline void DrawTranslatedPatch (const patch_t *patch, int x, int y) const;
+	inline void DrawTranslatedPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const;
+	inline void DrawTranslatedPatchDirect (const patch_t *patch, int x, int y) const;
+	inline void DrawTranslatedPatchIndirect (const patch_t *patch, int x, int y) const;
+	inline void DrawTranslatedPatchClean (const patch_t *patch, int x, int y) const;
+	inline void DrawTranslatedPatchCleanNoMove (const patch_t *patch, int x, int y) const;
+
+	inline void DrawTranslatedLucentPatch (const patch_t *patch, int x, int y) const;
+	inline void DrawTranslatedLucentPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const;
+	inline void DrawTranslatedLucentPatchDirect (const patch_t *patch, int x, int y) const;
+	inline void DrawTranslatedLucentPatchIndirect (const patch_t *patch, int x, int y) const;
+	inline void DrawTranslatedLucentPatchClean (const patch_t *patch, int x, int y) const;
+	inline void DrawTranslatedLucentPatchCleanNoMove (const patch_t *patch, int x, int y) const;
+
+	inline void DrawColoredPatch (const patch_t *patch, int x, int y) const;
+	inline void DrawColoredPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const;
+	inline void DrawColoredPatchDirect (const patch_t *patch, int x, int y) const;
+	inline void DrawColoredPatchIndirect (const patch_t *patch, int x, int y) const;
+	inline void DrawColoredPatchClean (const patch_t *patch, int x, int y) const;
+	inline void DrawColoredPatchCleanNoMove (const patch_t *patch, int x, int y) const;
+
+	inline void DrawColoredLucentPatch (const patch_t *patch, int x, int y) const;
+	inline void DrawColoredLucentPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const;
+	inline void DrawColoredLucentPatchDirect (const patch_t *patch, int x, int y) const;
+	inline void DrawColoredLucentPatchIndirect (const patch_t *patch, int x, int y) const;
+	inline void DrawColoredLucentPatchClean (const patch_t *patch, int x, int y) const;
+	inline void DrawColoredLucentPatchCleanNoMove (const patch_t *patch, int x, int y) const;
+
+protected:
+	void TextWrapper (EWrapperCode drawer, int normalcolor, int x, int y, const byte *string) const;
+	void TextSWrapper (EWrapperCode drawer, int normalcolor, int x, int y, const byte *string) const;
+
+	void DrawWrapper (EWrapperCode drawer, const patch_t *patch, int x, int y) const;
+	void DrawSWrapper (EWrapperCode drawer, const patch_t *patch, int x, int y, int destwidth, int destheight) const;
+	void DrawIWrapper (EWrapperCode drawer, const patch_t *patch, int x, int y) const;
+	void DrawCWrapper (EWrapperCode drawer, const patch_t *patch, int x, int y) const;
+	void DrawCNMWrapper (EWrapperCode drawer, const patch_t *patch, int x, int y) const;
+
+	static void DrawPatchP (const byte *source, byte *dest, int count, int pitch);
+	static void DrawLucentPatchP (const byte *source, byte *dest, int count, int pitch);
+	static void DrawTranslatedPatchP (const byte *source, byte *dest, int count, int pitch);
+	static void DrawTlatedLucentPatchP (const byte *source, byte *dest, int count, int pitch);
+	static void DrawColoredPatchP (const byte *source, byte *dest, int count, int pitch);
+	static void DrawColorLucentPatchP (const byte *source, byte *dest, int count, int pitch);
+
+	static void DrawPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
+	static void DrawLucentPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
+	static void DrawTranslatedPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
+	static void DrawTlatedLucentPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
+
+	static void DrawPatchD (const byte *source, byte *dest, int count, int pitch);
+	static void DrawLucentPatchD (const byte *source, byte *dest, int count, int pitch);
+	static void DrawTranslatedPatchD (const byte *source, byte *dest, int count, int pitch);
+	static void DrawTlatedLucentPatchD (const byte *source, byte *dest, int count, int pitch);
+	static void DrawColoredPatchD (const byte *source, byte *dest, int count, int pitch);
+	static void DrawColorLucentPatchD (const byte *source, byte *dest, int count, int pitch);
+
+	static void DrawPatchSD (const byte *source, byte *dest, int count, int pitch, int yinc);
+	static void DrawLucentPatchSD (const byte *source, byte *dest, int count, int pitch, int yinc);
+	static void DrawTranslatedPatchSD (const byte *source, byte *dest, int count, int pitch, int yinc);
+	static void DrawTlatedLucentPatchSD (const byte *source, byte *dest, int count, int pitch, int yinc);
+
+	typedef void (*vdrawfunc) (const byte *source, byte *dest, int count, int pitch);
+	typedef void (*vdrawsfunc) (const byte *source, byte *dest, int count, int pitch, int yinc);
+
+	// Palettized versions of the column drawers
+	static vdrawfunc Pfuncs[6];
+	static vdrawsfunc Psfuncs[6];
+
+	// Direct (true-color) versions of the column drawers
+	static vdrawfunc Dfuncs[6];
+	static vdrawsfunc Dsfuncs[6];
+
+	// The current set of column drawers (set in V_SetResolution)
+	static vdrawfunc *m_Drawfuncs;
+	static vdrawsfunc *m_Drawsfuncs;
+
+private:
+	int m_LockCount;
+	palette_t *m_Palette;
+	void *m_Private;
+
+	friend bool I_AllocateScreen (DCanvas *canvas, int width, int height, int bits);
+	friend void I_FreeScreen (DCanvas *canvas);
+
+	friend void I_FinishUpdate ();
+
+	friend void I_LockScreen (DCanvas *canvas);
+	friend void I_UnlockScreen (DCanvas *canvas);
+	friend void I_Blit (DCanvas *from, int srcx, int srcy, int srcwidth, int srcheight,
+						DCanvas *to, int destx, int desty, int destwidth, int destheight);
+};
+
+inline void DCanvas::DrawText (int normalcolor, int x, int y, const byte *string) const
+{
+	TextWrapper (EWrapper_Translated, normalcolor, x, y, string);
+}
+inline void DCanvas::DrawTextLuc (int normalcolor, int x, int y, const byte *string) const
+{
+	TextWrapper (EWrapper_TlatedLucent, normalcolor, x, y, string);
+}
+inline void DCanvas::DrawTextClean (int normalcolor, int x, int y, const byte *string) const
+{
+	TextSWrapper (EWrapper_Translated, normalcolor, x, y, string);
+}
+inline void DCanvas::DrawTextCleanLuc (int normalcolor, int x, int y, const byte *string) const
+{
+	TextSWrapper (EWrapper_TlatedLucent, normalcolor, x, y, string);
+}
+inline void DCanvas::DrawTextCleanMove (int normalcolor, int x, int y, const byte *string) const
+{
+	TextSWrapper (EWrapper_Translated, normalcolor,
+		(x - 160) * CleanXfac + width / 2,
+		(y - 100) * CleanYfac + height / 2,
+		string);
+}
+
+inline void DCanvas::DrawText (int normalcolor, int x, int y, const char *string) const
+{
+	TextWrapper (EWrapper_Translated, normalcolor, x, y, (const byte *)string);
+}
+inline void DCanvas::DrawTextLuc (int normalcolor, int x, int y, const char *string) const
+{
+	TextWrapper (EWrapper_TlatedLucent, normalcolor, x, y, (const byte *)string);
+}
+inline void DCanvas::DrawTextClean (int normalcolor, int x, int y, const char *string) const
+{
+	TextSWrapper (EWrapper_Translated, normalcolor, x, y, (const byte *)string);
+}
+inline void DCanvas::DrawTextCleanLuc (int normalcolor, int x, int y, const char *string) const
+{
+	TextSWrapper (EWrapper_TlatedLucent, normalcolor, x, y, (const byte *)string);
+}
+inline void DCanvas::DrawTextCleanMove (int normalcolor, int x, int y, const char *string) const
+{
+	TextSWrapper (EWrapper_Translated, normalcolor,
+		(x - 160) * CleanXfac + width / 2,
+		(y - 100) * CleanYfac + height / 2,
+		(const byte *)string);
+}
+
+inline void DCanvas::DrawPatch (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_Normal, patch, x, y);
+}
+inline void DCanvas::DrawPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const
+{
+	DrawSWrapper (EWrapper_Normal, patch, x, y, dw, dh);
+}
+inline void DCanvas::DrawPatchDirect (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_Normal, patch, x, y);
+}
+inline void DCanvas::DrawPatchIndirect (const patch_t *patch, int x, int y) const
+{
+	DrawIWrapper (EWrapper_Normal, patch, x, y);
+}
+inline void DCanvas::DrawPatchClean (const patch_t *patch, int x, int y) const
+{
+	DrawCWrapper (EWrapper_Normal, patch, x, y);
+}
+inline void DCanvas::DrawPatchCleanNoMove (const patch_t *patch, int x, int y) const
+{
+	DrawCNMWrapper (EWrapper_Normal, patch, x, y);
+}
+
+inline void DCanvas::DrawLucentPatch (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_Lucent, patch, x, y);
+}
+inline void DCanvas::DrawLucentPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const
+{
+	DrawSWrapper (EWrapper_Lucent, patch, x, y, dw, dh);
+}
+inline void DCanvas::DrawLucentPatchDirect (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_Lucent, patch, x, y);
+}
+inline void DCanvas::DrawLucentPatchIndirect (const patch_t *patch, int x, int y) const
+{
+	DrawIWrapper (EWrapper_Lucent, patch, x, y);
+}
+inline void DCanvas::DrawLucentPatchClean (const patch_t *patch, int x, int y) const
+{
+	DrawCWrapper (EWrapper_Lucent, patch, x, y);
+}
+inline void DCanvas::DrawLucentPatchCleanNoMove (const patch_t *patch, int x, int y) const
+{
+	DrawCNMWrapper (EWrapper_Lucent, patch, x, y);
+}
+
+inline void DCanvas::DrawTranslatedPatch (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_Translated, patch, x, y);
+}
+inline void DCanvas::DrawTranslatedPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const
+{
+	DrawSWrapper (EWrapper_Translated, patch, x, y, dw, dh);
+}
+inline void DCanvas::DrawTranslatedPatchDirect (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_Translated, patch, x, y);
+}
+inline void DCanvas::DrawTranslatedPatchIndirect (const patch_t *patch, int x, int y) const
+{
+	DrawIWrapper (EWrapper_Translated, patch, x, y);
+}
+inline void DCanvas::DrawTranslatedPatchClean (const patch_t *patch, int x, int y) const
+{
+	DrawCWrapper (EWrapper_Translated, patch, x, y);
+}
+inline void DCanvas::DrawTranslatedPatchCleanNoMove (const patch_t *patch, int x, int y) const
+{
+	DrawCNMWrapper (EWrapper_Translated, patch, x, y);
+}
+
+inline void DCanvas::DrawTranslatedLucentPatch (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_TlatedLucent, patch, x, y);
+}
+inline void DCanvas::DrawTranslatedLucentPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const
+{
+	DrawSWrapper (EWrapper_TlatedLucent, patch, x, y, dw, dh);
+}
+inline void DCanvas::DrawTranslatedLucentPatchDirect (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_TlatedLucent, patch, x, y);
+}
+inline void DCanvas::DrawTranslatedLucentPatchIndirect (const patch_t *patch, int x, int y) const
+{
+	DrawIWrapper (EWrapper_TlatedLucent, patch, x, y);
+}
+inline void DCanvas::DrawTranslatedLucentPatchClean (const patch_t *patch, int x, int y) const
+{
+	DrawCWrapper (EWrapper_TlatedLucent, patch, x, y);
+}
+inline void DCanvas::DrawTranslatedLucentPatchCleanNoMove (const patch_t *patch, int x, int y) const
+{
+	DrawCNMWrapper (EWrapper_TlatedLucent, patch, x, y);
+}
+
+inline void DCanvas::DrawColoredPatch (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_Colored, patch, x, y);
+}
+inline void DCanvas::DrawColoredPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const
+{
+	DrawSWrapper (EWrapper_Colored, patch, x, y, dw, dh);
+}
+inline void DCanvas::DrawColoredPatchDirect (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_Colored, patch, x, y);
+}
+inline void DCanvas::DrawColoredPatchIndirect (const patch_t *patch, int x, int y) const
+{
+	DrawIWrapper (EWrapper_Colored, patch, x, y);
+}
+inline void DCanvas::DrawColoredPatchClean (const patch_t *patch, int x, int y) const
+{
+	DrawCWrapper (EWrapper_Colored, patch, x, y);
+}
+inline void DCanvas::DrawColoredPatchCleanNoMove (const patch_t *patch, int x, int y) const
+{
+	DrawCNMWrapper (EWrapper_Colored, patch, x, y);
+}
+
+inline void DCanvas::DrawColoredLucentPatch (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_ColoredLucent, patch, x, y);
+}
+inline void DCanvas::DrawColoredLucentPatchStretched (const patch_t *patch, int x, int y, int dw, int dh) const
+{
+	DrawSWrapper (EWrapper_ColoredLucent, patch, x, y, dw, dh);
+}
+inline void DCanvas::DrawColoredLucentPatchDirect (const patch_t *patch, int x, int y) const
+{
+	DrawWrapper (EWrapper_ColoredLucent, patch, x, y);
+}
+inline void DCanvas::DrawColoredLucentPatchIndirect (const patch_t *patch, int x, int y) const
+{
+	DrawIWrapper (EWrapper_ColoredLucent, patch, x, y);
+}
+inline void DCanvas::DrawColoredLucentPatchClean (const patch_t *patch, int x, int y) const
+{
+	DrawCWrapper (EWrapper_ColoredLucent, patch, x, y);
+}
+inline void DCanvas::DrawColoredLucentPatchCleanNoMove (const patch_t *patch, int x, int y) const
+{
+	DrawCNMWrapper (EWrapper_ColoredLucent, patch, x, y);
+}
+
+extern "C" palette_t *DefaultPalette;
 
 // This is the screen updated by I_FinishUpdate.
-extern	screen_t screen;
+extern	DCanvas *screen;
 
-extern	int 	dirtybox[4];
+extern	DBoundingBox 	dirtybox;
 
 extern	byte	newgamma[256];
-extern	cvar_t	*gammalevel;
+EXTERN_CVAR (gamma)
 
-// translucency tables
+// Translucency tables
 extern unsigned int Col2RGB8[65][256];
 extern byte RGB32k[32][32][32];
 
-extern	int		CleanWidth, CleanHeight, CleanXfac, CleanYfac;
-
 // Allocates buffer screens, call before R_Init.
 void V_Init (void);
-
-// [RH] Separated V_DrawPatch and all its derivatives into a
-//		wrapper and the individual column drawers.
-typedef void (*vdrawfunc) (byte *source, byte *dest, int count, int pitch);
-typedef void (*vdrawsfunc) (byte *source, byte *dest, int count, int pitch, int yinc);
-
-// Palettized versions of the column drawers
-extern vdrawfunc vdrawPfuncs[6];
-extern vdrawsfunc vdrawsPfuncs[6];
-
-// Direct (true-color) versions of the column drawers
-extern vdrawfunc vdrawDfuncs[6];
-extern vdrawsfunc vdrawsDfuncs[6];
-
-void V_DrawWrapper (int drawer, int x, int y, screen_t *scrn, patch_t *patch);
-void V_DrawSWrapper (int drawer, int x, int y, screen_t *scrn, patch_t *patch, int destwidth, int destheight);
-void V_DrawIWrapper (int drawer, int x, int y, screen_t *scrn, patch_t *patch);
-void V_DrawCWrapper (int drawer, int x, int y, screen_t *scrn, patch_t *patch);
-void V_DrawCNMWrapper (int drawer, int x, int y, screen_t *scrn, patch_t *patch);
-
-// Just draws the patch as is
-#define V_DRAWPATCH				0
-// Mixes the patch with the background
-#define V_DRAWLUCENTPATCH		1
-// Color translates the patch and draws it
-#define V_DRAWTRANSLATEDPATCH	2
-// Translates the patch and mixes it with the background
-#define V_DRAWTLATEDLUCENTPATCH	3
-// Fills the patch area with a solid color
-#define V_DRAWCOLOREDPATCH		4
-// Mixes a solid color in the patch area with the background
-#define V_DRAWCOLORLUCENTPATCH	5
 
 // The color to fill with for #4 and #5 above
 extern int V_ColorFill;
@@ -118,118 +452,9 @@ extern int V_ColorFill;
 extern byte *V_ColorMap;
 
 // The palette lookup table to be used with for direct modes
-extern int *V_Palette;
+extern unsigned int *V_Palette;
 
-
-#define V_DrawPatch(x,y,s,p) \
-		V_DrawWrapper (V_DRAWPATCH, x, y, s, p)
-#define V_DrawPatchStretched(x,y,s,p) \
-		V_DrawSWrapper (V_DRAWPATCH, x, y, s, p)
-#define V_DrawPatchDirect(x,y,s,p) \
-		V_DrawWrapper (V_DRAWPATCH, x, y, s, p)
-#define V_DrawPatchIndirect(x,y,s,p) \
-		V_DrawIWrapper (V_DRAWPATCH, x, y, s, p)
-#define V_DrawPatchClean(x,y,s,p) \
-		V_DrawCWrapper (V_DRAWPATCH, x, y, s, p)
-#define V_DrawPatchCleanNoMove(x,y,s,p) \
-		V_DrawCNMWrapper (V_DRAWPATCH, x, y, s, p)
-
-#define V_DrawLucentPatch(x,y,s,p) \
-		V_DrawWrapper (V_DRAWLUCENTPATCH, x, y, s, p)
-#define V_DrawLucentPatchStretched(x,y,s,p) \
-		V_DrawSWrapper (V_DRAWLUCENTPATCH, x, y, s, p)
-#define V_DrawLucentPatchIndirect(x,y,s,p) \
-		V_DrawIWrapper (V_DRAWLUCENTPATCH, x, y, s, p)
-#define V_DrawLucentPatchClean(x,y,s,p) \
-		V_DrawWrapper (V_DRAWLUCENTPATCH, x, y, s, p)
-#define V_DrawLucentPatchCleanNoMove(x,y,s,p) \
-		V_DrawWrapper (V_DRAWLUCENTPATCH, x, y, s, p)
-
-#define V_DrawTranslatedPatch(x,y,s,p) \
-		V_DrawWrapper (V_DRAWTRANSLATEDPATCH, x, y, s, p)
-#define V_DrawTranslatedPatchStretched(x,y,s,p) \
-		V_DrawSWrapper (V_DRAWTRANSLATEDPATCH, x, y, s, p)
-#define V_DrawTranslatedPatchIndirect(x,y,s,p) \
-		V_DrawIWrapper (V_DRAWTRANLATEDPATCH, x, y, s, p)
-#define V_DrawTranslatedPatchClean(x,y,s,p) \
-		V_DrawCWrapper (V_DRAWTRANSLATEDPATCH, x, y, s, p)
-#define V_DrawTranslatedPatchCleanNoMove(x,y,s,p) \
-		V_DrawCNMWrapper (V_DRAWTRANSLATEDPATCH, x, y, s, p)
-
-#define V_DrawTranslatedLucentPatch(x,y,s,p) \
-		V_DrawWrapper (V_DRAWTLATEDLUCENTPATCH, x, y, s, p)
-#define V_DrawTranslatedLucentPatchStretched(x,y,s,p) \
-		V_DrawSWrapper (V_DRAWTLATEDLUCENTPATCH, x, y, s, p)
-#define V_DrawTranslatedLucentPatchIndirect(x,y,s,p) \
-		V_DrawIWrapper (V_DRAWTLATEDLUCENTPATCH, x, y, s, p)
-#define V_DrawTranslatedLucentPatchClean(x,y,s,p) \
-		V_DrawCWrapper (V_DRAWTLATEDLUCENTPATCH, x, y, s, p)
-#define V_DrawTranslatedLucentPatchCleanNoMove(x,y,s,p) \
-		V_DrawCNMWrapper (V_DRAWTLATEDLUCENTPATCH, x, y, s, p)
-
-#define V_DrawColoredPatch(x,y,s,p) \
-		V_DrawWrapper (V_DRAWCOLOREDPATCH, x, y, s, p)
-#define V_DrawColoredPatchStretched(x,y,s,p) \
-		V_DrawSWrapper (V_DRAWCOLOREDPATCH, x, y, s, p)
-#define V_DrawColoredPatchIndirect(x,y,s,p) \
-		V_DrawIWrapper (V_DRAWCOLOREDPATCH, x, y, s, p)
-#define V_DrawColoredPatchClean(x,y,s,p) \
-		V_DrawCWrapper (V_DRAWCOLOREDPATCH, x, y, s, p)
-#define V_DrawColoredPatchCleanNoMove(x,y,s,p) \
-		V_DrawCNMWrapper (V_DRAWCOLOREDPATCH, x, y, s, p)
-
-#define V_DrawColoredLucentPatch(x,y,s,p) \
-		V_DrawWrapper (V_DRAWCOLORLUCENTPATCH, x, y, s, p)
-#define V_DrawColoredLucentPatchStretched(x,y,s,p) \
-		V_DrawSWrapper (V_DRAWCOLORLUCENTPATCH, x, y, s, p)
-#define V_DrawColoredLucentPatchIndirect(x,y,s,p) \
-		V_DrawIWrapper (V_DRAWCOLORLUCENTPATCH, x, y, s, p)
-#define V_DrawColoredLucentPatchClean(x,y,s,p) \
-		V_DrawCWrapper (V_DRAWCOLORLUCENTPATCH, x, y, s, p)
-#define V_DrawColoredLucentPatchCleanNoMove(x,y,s,p) \
-		V_DrawCNMWrapper (V_DRAWCOLORLUCENTPATCH, x, y, s, p)
-
-
-void V_CopyRect
-( int			srcx,
-  int			srcy,
-  screen_t	   *srcscrn,
-  int			width,
-  int			height,
-  int			destx,
-  int			desty,
-  screen_t	   *destscrn );
-
-
-// Draw a linear block of pixels into the view buffer.
-void
-V_DrawBlock
-( int			x,
-  int			y,
-  screen_t	   *scrn,
-  int			width,
-  int			height,
-  byte* 		src );
-
-// Reads a linear block of pixels into the view buffer.
-void
-V_GetBlock
-( int			x,
-  int			y,
-  screen_t	   *scrn,
-  int			width,
-  int			height,
-  byte* 		dest );
-
-// Darken the entire screen
-void V_DimScreen (screen_t *screen);
-
-void
-V_MarkRect
-( int			x,
-  int			y,
-  int			width,
-  int			height );
+void V_MarkRect (int x, int y, int width, int height);
 
 // BestColor
 byte BestColor (const unsigned int *palette, const int r, const int g, const int b, const int numcolors);
@@ -240,37 +465,13 @@ int V_GetColorFromString (const unsigned int *palette, const char *colorstring);
 // and returns a color string suitable for V_GetColorFromString.
 char *V_GetColorStringByName (const char *name);
 
-// [RH] Fill an area with a 64x64 flat texture
-void V_FlatFill (int left, int top, int right, int bottom, screen_t *scrn, byte *src);
-// [RH] Set an area to a specified color
-void V_Clear (int left, int top, int right, int bottom, screen_t *scrn, int color);
 
 BOOL V_SetResolution (int width, int height, int bpp);
 
-void V_LockScreen (screen_t *screen);
-void V_UnlockScreen (screen_t *screen);
-void V_Blit (screen_t *src, int srcx, int srcy, int srcwidth, int srcheight,
-			 screen_t *dest, int destx, int desty, int destwidth, int destheight);
-
-// Only used when blitting when at least on of the screens is 8-bit.
-void V_AttachPalette (screen_t *screen, palette_t *pal);
-// Converse
-void V_DetachPalette (screen_t *screen);
-
-BOOL I_AllocateScreen (screen_t *scrn, int width, int height, int bpp);
-void I_FreeScreen (screen_t *scrn);
-// #defines for consistancy
-#define V_AllocScreen(s,x,y,d)	I_AllocateScreen(s,x,y,d)
-#define V_FreeScreen(s)			I_FreeScreen(s)
 
 #ifdef USEASM
-void ASM_PatchPitch (void);
-void ASM_PatchColSize (void);
+extern "C" void ASM_PatchPitch (void);
+extern "C" void ASM_PatchColSize (void);
 #endif
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif // __V_VIDEO_H__

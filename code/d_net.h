@@ -23,7 +23,7 @@
 #ifndef __D_NET__
 #define __D_NET__
 
-#include "d_player.h"
+//#include "d_player.h"
 
 
 //
@@ -93,6 +93,21 @@ typedef struct
 } doomcom_t;
 
 
+class FDynamicBuffer
+{
+public:
+	FDynamicBuffer ();
+	~FDynamicBuffer ();
+
+	void SetData (const byte *data, int len);
+	byte *GetData (int *len = NULL);
+
+private:
+	byte *m_Data;
+	int m_Len, m_BufferLen;
+};
+
+extern FDynamicBuffer NetSpecs[MAXPLAYERS][BACKUPTICS];
 
 // Create any new ticcmds and broadcast to other players.
 void NetUpdate (void);
@@ -112,12 +127,6 @@ void Net_WriteLong (int);
 void Net_WriteString (const char *);
 
 void Net_DoCommand (int type, byte **stream, int player);
+void Net_SkipCommand (int type, byte **stream);
 
 #endif
-
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
-

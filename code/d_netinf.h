@@ -3,7 +3,7 @@
 
 #include "c_cvars.h"
 
-extern cvar_t *autoaim;
+EXTERN_CVAR (autoaim)
 
 #define MAXPLAYERNAME	15
 
@@ -11,16 +11,20 @@ extern cvar_t *autoaim;
 #define GENDER_FEMALE	1
 #define GENDER_NEUTER	2
 
-struct userinfo_s {
+struct userinfo_s
+{
 	char		netname[MAXPLAYERNAME+1];
 	char		team[MAXPLAYERNAME+1];
 	fixed_t		aimdist;
 	int			color;
 	int			skin;
 	int			gender;
-	BOOL		neverswitch;
+	bool		neverswitch;
 };
 typedef struct userinfo_s userinfo_t;
+
+FArchive &operator<< (FArchive &arc, userinfo_t &info);
+FArchive &operator>> (FArchive &arc, userinfo_t &info);
 
 void D_SetupUserInfo (void);
 

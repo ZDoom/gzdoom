@@ -20,28 +20,80 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __M_SWAP__
-#define __M_SWAP__
-
+#ifndef __M_SWAP_H__
+#define __M_SWAP_H__
 
 // Endianess handling.
 // WAD files are stored little endian.
 #ifdef __BIG_ENDIAN__
-short	SwapSHORT(short);
-long	SwapLONG(long);
-#define SHORT(x)		((short)SwapSHORT((unsigned short) (x)))
-#define LONG(x) 		((long)SwapLONG((unsigned long) (x)))
+
+// Swap 16bit, that is, MSB and LSB byte.
+// No masking with 0xFF should be necessary. 
+inline short SHORT (short x)
+{
+	return (short)((((unsigned short)x)>>8) | (((unsigned short)x)<<8));
+}
+
+inline unsigned short SHORT (unsigned short x)
+{
+	return (unsigned short)((x>>8) | (x<<8));
+}
+
+// Swapping 32bit.
+inline unsigned int LONG (unsigned int x)
+{
+	return (unsigned int)(
+		(x>>24)
+		| ((x>>8) & 0xff00)
+		| ((x<<8) & 0xff0000)
+		| (x<<24));
+}
+
+inline int LONG (int x)
+{
+	return (int)(
+		(((unsigned int)x)>>24)
+		| ((((unsigned int)x)>>8) & 0xff00)
+		| ((((unsigned int)x)<<8) & 0xff0000)
+		| (((unsigned int)x)<<24));
+}
+
+#define BESHORT(x)		(x)
+#define BELONG(x)		(x)
+
 #else
+
 #define SHORT(x)		(x)
 #define LONG(x) 		(x)
-#endif
 
+inline short BESHORT (short x)
+{
+	return (short)((((unsigned short)x)>>8) | (((unsigned short)x)<<8));
+}
 
+inline unsigned short BESHORT (unsigned short x)
+{
+	return (unsigned short)((x>>8) | (x<<8));
+}
 
+inline unsigned int BELONG (unsigned int x)
+{
+	return (unsigned int)(
+		(x>>24)
+		| ((x>>8) & 0xff00)
+		| ((x<<8) & 0xff0000)
+		| (x<<24));
+}
 
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+inline int BELONG (int x)
+{
+	return (int)(
+		(((unsigned int)x)>>24)
+		| ((((unsigned int)x)>>8) & 0xff00)
+		| ((((unsigned int)x)<<8) & 0xff0000)
+		| (((unsigned int)x)<<24));
+}
+
+#endif // __BIG_ENDIAN__
+
+#endif // __M_SWAP_H__

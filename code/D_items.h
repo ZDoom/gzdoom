@@ -19,26 +19,26 @@
 //
 //-----------------------------------------------------------------------------
 
-
-#ifndef __D_ITEMS__
-#define __D_ITEMS__
+#ifndef __D_ITEMS_H__
+#define __D_ITEMS_H__
 
 #include "doomdef.h"
 #include "doomtype.h"
+#include "info.h"
 
-struct mobj_s;
-struct player_s;
+class AActor;
+class player_s;
 
 // Weapon info: sprite frames, ammunition use.
 struct weaponinfo_s
 {
 	ammotype_t	ammo;
-	int 		upstate;
-	int 		downstate;
-	int 		readystate;
-	int 		atkstate;
-	int 		flashstate;
-
+	statenum_t	upstate;
+	statenum_t	downstate;
+	statenum_t 	readystate;
+	statenum_t	atkstate;
+	statenum_t	flashstate;
+	mobjtype_t	droptype;
 };
 typedef struct weaponinfo_s weaponinfo_t;
 
@@ -57,8 +57,8 @@ extern	weaponinfo_t	weaponinfo[NUMWEAPONS];
 struct gitem_s
 {
 		char			*classname;
-		BOOL	 		(*pickup)(struct player_s *ent, struct mobj_s *other);
-		void			(*use)(struct player_s *ent, struct gitem_s *item);
+		BOOL	 		(*pickup)(player_s *ent, class AActor *other);
+		void			(*use)(player_s *ent, struct gitem_s *item);
 		byte			flags;
 		byte			offset; 				// For Weapon, Ammo, Armor, Key: Offset in appropriate table
 		byte			quantity;				// For Ammo: How much to pickup
@@ -80,10 +80,4 @@ gitem_t *FindItem (const char *pickup_name);
 
 #define ITEM_INDEX(i)	((i)-itemlist)
 
-
-#endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------
+#endif //__D_ITEMS_H__

@@ -20,10 +20,8 @@
 //-----------------------------------------------------------------------------
 
 
-#ifndef __M_MENU__
-#define __M_MENU__
-
-
+#ifndef __M_MENU_H__
+#define __M_MENU_H__
 
 #include "d_event.h"
 #include "c_cvars.h"
@@ -91,7 +89,7 @@ typedef struct menuitem_s {
 	itemtype		  type;
 	char			 *label;
 	union {
-		cvar_t			**cvar;
+		cvar_t			 *cvar;
 		int				  selmode;
 		int				  flagmask;
 	} a;
@@ -162,7 +160,7 @@ typedef struct oldmenu_s
 typedef struct
 {
 	union {
-		menu_t *new;
+		menu_t *newmenu;
 		oldmenu_t *old;
 	} menu;
 	BOOL isNewStyle;
@@ -183,8 +181,3 @@ extern short	 itemOn;
 extern oldmenu_t *currentMenu;
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

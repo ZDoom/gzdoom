@@ -1,5 +1,5 @@
 # Microsoft Developer Studio Project File - Name="zdoom" - Package Owner=<4>
-# Microsoft Developer Studio Generated Build File, Format Version 5.00
+# Microsoft Developer Studio Generated Build File, Format Version 6.00
 # ** DO NOT EDIT **
 
 # TARGTYPE "Win32 (x86) Application" 0x0101
@@ -19,10 +19,10 @@ CFG=zdoom - Win32 Debug
 !MESSAGE 
 !MESSAGE "zdoom - Win32 Release" (based on "Win32 (x86) Application")
 !MESSAGE "zdoom - Win32 Debug" (based on "Win32 (x86) Application")
-!MESSAGE "zdoom - Win32 Profiling" (based on "Win32 (x86) Application")
 !MESSAGE 
 
 # Begin Project
+# PROP AllowPerConfigDependencies 0
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
@@ -43,9 +43,10 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /Gr /MT /W3 /GX /O2 /I "../ptc/source" /I "win32" /I "." /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /FAs /YX /FD /c
-# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
-# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
+# ADD CPP /nologo /Gr /MD /W3 /GX /O2 /I "../openptc/source" /I "win32" /I "." /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /FAs /YX /FD /c
+# SUBTRACT CPP /Fr
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
 # ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
@@ -53,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ..\midas\lib\win32\vcretail\midas.lib wsock32.lib ..\ptc\library\win32\vc5.x\release.lib winmm.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /out:"../zdoom.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ..\midas\lib\win32\vcretail\midas.lib wsock32.lib ../openptc/library/visual/ptc.lib winmm.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /nodefaultlib:"libcmt" /out:"../zdoom.exe"
 # SUBTRACT LINK32 /verbose /profile /debug
 
 !ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
@@ -70,9 +71,9 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /G5 /Gr /MTd /W3 /Gm /GX /Zi /Od /I "../ptc/source" /I "win32" /I "." /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "NOASM" /YX /FD /c
-# ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
-# ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
+# ADD CPP /nologo /G5 /Gr /MTd /W3 /Gm /GX /ZI /Od /I "../openptc/source" /I "win32" /I "." /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "NOASM" /YX /FD /c
+# ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
+# ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
 # ADD RSC /l 0x409 /d "_DEBUG"
 BSC32=bscmake.exe
@@ -80,37 +81,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ddraw.lib winmm.lib ..\midas\lib\win32\vcretail\midas.lib wsock32.lib ..\ptc\library\win32\vc5.x\release.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../doomdbg.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ddraw.lib winmm.lib ..\midas\lib\win32\vcretail\midas.lib wsock32.lib ../openptc/library/visual/ptcdebug.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../doomdbg.exe"
 # SUBTRACT LINK32 /profile
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 0
-# PROP BASE Output_Dir "zdoom___"
-# PROP BASE Intermediate_Dir "zdoom___"
-# PROP BASE Ignore_Export_Lib 0
-# PROP BASE Target_Dir ""
-# PROP Use_MFC 0
-# PROP Use_Debug_Libraries 0
-# PROP Output_Dir "Profiling"
-# PROP Intermediate_Dir "Profiling"
-# PROP Ignore_Export_Lib 0
-# PROP Target_Dir ""
-# ADD BASE CPP /nologo /G5 /MT /W3 /GX /O2 /I "../ptc/source" /I "win32" /I "." /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /c
-# ADD CPP /nologo /G5 /MT /W3 /GX /O2 /I "../ptc/source" /I "win32" /I "." /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /c
-# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
-# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
-# ADD BASE RSC /l 0x409 /d "NDEBUG"
-# ADD RSC /l 0x409 /d "NDEBUG"
-BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
-LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ..\midas\lib\win32\vcretail\midas.lib wsock32.lib d:\games\doom\ptc\library\win32\vc5.x\release.lib winmm.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /out:"../zdoom.exe"
-# SUBTRACT BASE LINK32 /verbose /profile /debug
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ..\midas\lib\win32\vcretail\midas.lib wsock32.lib d:\games\doom\ptc\library\win32\vc5.x\release.lib winmm.lib /nologo /subsystem:windows /profile /debug /machine:I386 /nodefaultlib:"libc" /out:"../zdoomprof.exe"
-# SUBTRACT LINK32 /verbose /map
 
 !ENDIF 
 
@@ -118,1187 +90,400 @@ LINK32=link.exe
 
 # Name "zdoom - Win32 Release"
 # Name "zdoom - Win32 Debug"
-# Name "zdoom - Win32 Profiling"
 # Begin Group "Source Files"
 
-# PROP Default_Filter "*.c; *.cpp"
+# PROP Default_Filter "c;cpp"
 # Begin Source File
 
-SOURCE=.\am_map.c
+SOURCE=.\Am_map.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_bind.c
+SOURCE=.\b_bot.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_cmds.c
+SOURCE=.\B_func.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_consol.c
+SOURCE=.\B_game.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_cvars.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\b_move.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_dispch.c
+SOURCE=.\B_think.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_varini.c
+SOURCE=.\c_bind.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\cmdlib.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
 
-!ENDIF 
-
+SOURCE=.\c_cmds.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\ct_chat.c
+SOURCE=.\c_console.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\d_dehack.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\c_cvars.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\d_items.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\c_dispatch.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\d_main.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\cmdlib.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\d_net.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\ct_chat.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_netinf.c
+SOURCE=.\d_dehacked.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_proto.c
+SOURCE=.\d_items.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\doomdef.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\D_main.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\doomstat.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\d_net.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\dstrings.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\d_netinfo.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\f_finale.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\d_protocol.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\f_wipe.c
 
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\dobject.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\g_game.c
 
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\doomdef.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\g_level.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
 
+SOURCE=.\doomstat.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\gi.c
+SOURCE=.\dsectoreffect.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\info.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\dstrings.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\m_alloc.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
 
+SOURCE=.\dthinker.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\m_argv.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\f_finale.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\m_bbox.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
 
-!ENDIF 
-
+SOURCE=.\f_wipe.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\m_cheat.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\farchive.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\m_fixed.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\g_game.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\m_menu.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\g_level.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\m_misc.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\gi.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\m_option.c
+SOURCE=.\info.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\m_random.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\m_alloc.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\m_swap.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\m_argv.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\minilzo.c
+SOURCE=.\m_bbox.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_acs.c
+SOURCE=.\m_cheat.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_ceilng.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\m_fixed.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_doors.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\m_menu.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_effect.c
+SOURCE=.\m_misc.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_enemy.c
 
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\m_options.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_floor.c
 
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\m_random.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_inter.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
 
+SOURCE=.\minilzo.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_lights.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_acs.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_lnspec.c
+SOURCE=.\p_ceiling.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_map.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
 
+SOURCE=.\p_doors.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_maputl.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_effect.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_mobj.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
 
-!ENDIF 
-
+SOURCE=.\p_enemy.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_pillar.c
+SOURCE=.\p_floor.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_plats.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_interaction.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_pspr.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_lights.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_quake.c
+SOURCE=.\p_lnspec.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_saveg.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_map.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_setup.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_maputl.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_sight.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_mobj.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_spec.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_pillar.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_switch.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_plats.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_telept.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_pspr.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_things.c
+SOURCE=.\p_quake.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_tick.c
 
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_saveg.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\p_user.c
 
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_setup.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_xlat.c
+SOURCE=.\p_sight.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\Po_man.c
+SOURCE=.\p_spec.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\r_bsp.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
 
+SOURCE=.\p_switch.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_data.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_teleport.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\r_draw.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
 
+SOURCE=.\p_things.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_drawt.c
+SOURCE=.\p_tick.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\r_main.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\p_user.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\r_plane.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
 
-!ENDIF 
-
+SOURCE=.\p_xlat.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\r_segs.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\po_man.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\r_sky.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\r_bsp.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\r_things.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\r_data.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\s_sndseq.c
+SOURCE=.\r_draw.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\s_sound.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\r_drawt.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\sc_man.c
+SOURCE=.\r_main.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\st_lib.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\r_plane.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\st_new.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\r_segs.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\st_stuff.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\r_sky.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\tables.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\r_things.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\v_draw.c
+SOURCE=.\s_sndseq.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\v_palett.c
+SOURCE=.\s_sound.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\v_text.c
+SOURCE=.\sc_man.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\v_video.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\st_lib.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\vectors.c
+SOURCE=.\st_new.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\w_wad.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
+SOURCE=.\st_stuff.cpp
 # End Source File
 # Begin Source File
-
-SOURCE=.\wi_stuff.c
 
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
+SOURCE=.\stats.cpp
+# End Source File
+# Begin Source File
 
+SOURCE=.\tables.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\z_zone.c
+SOURCE=.\v_draw.cpp
+# End Source File
+# Begin Source File
 
-!IF  "$(CFG)" == "zdoom - Win32 Release"
+SOURCE=.\v_palette.cpp
+# End Source File
+# Begin Source File
 
-# ADD CPP /FAs
+SOURCE=.\v_text.cpp
+# End Source File
+# Begin Source File
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
+SOURCE=.\v_video.cpp
+# End Source File
+# Begin Source File
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
+SOURCE=.\vectors.cpp
+# End Source File
+# Begin Source File
 
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
+SOURCE=.\w_wad.cpp
+# End Source File
+# Begin Source File
 
-!ENDIF 
+SOURCE=.\wi_stuff.cpp
+# End Source File
+# Begin Source File
 
+SOURCE=.\z_zone.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
 
-# PROP Default_Filter "*.H"
+# PROP Default_Filter "h"
+# Begin Source File
+
+SOURCE=.\actor.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\am_map.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\B_BOT.H
 # End Source File
 # Begin Source File
 
@@ -1306,11 +491,7 @@ SOURCE=.\c_bind.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_cmds.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\c_consol.h
+SOURCE=.\c_console.h
 # End Source File
 # Begin Source File
 
@@ -1318,7 +499,7 @@ SOURCE=.\c_cvars.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_dispch.h
+SOURCE=.\c_dispatch.h
 # End Source File
 # Begin Source File
 
@@ -1326,7 +507,7 @@ SOURCE=.\cmdlib.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_dehack.h
+SOURCE=.\d_dehacked.h
 # End Source File
 # Begin Source File
 
@@ -1362,7 +543,7 @@ SOURCE=.\d_player.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_proto.h
+SOURCE=.\d_protocol.h
 # End Source File
 # Begin Source File
 
@@ -1370,11 +551,11 @@ SOURCE=.\d_textur.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_think.h
+SOURCE=.\d_ticcmd.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_ticcmd.h
+SOURCE=.\dobject.h
 # End Source File
 # Begin Source File
 
@@ -1394,7 +575,19 @@ SOURCE=.\doomtype.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\dsectoreffect.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\dstrings.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\dthinker.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\errors.h
 # End Source File
 # Begin Source File
 
@@ -1403,6 +596,10 @@ SOURCE=.\f_finale.h
 # Begin Source File
 
 SOURCE=.\f_wipe.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\farchive.h
 # End Source File
 # Begin Source File
 
@@ -1490,10 +687,6 @@ SOURCE=.\p_local.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_mobj.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\p_pspr.h
 # End Source File
 # Begin Source File
@@ -1578,11 +771,15 @@ SOURCE=.\st_stuff.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\stats.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\Tables.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\v_palett.h
+SOURCE=.\v_palette.h
 # End Source File
 # Begin Source File
 
@@ -1619,7 +816,7 @@ SOURCE=.\z_zone.h
 # End Group
 # Begin Group "Assembly Files"
 
-# PROP Default_Filter "*.nas; *.asm"
+# PROP Default_Filter "nas; asm"
 # Begin Source File
 
 SOURCE=.\linear.nas
@@ -1647,8 +844,6 @@ InputName=linear
 	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
 
 # End Custom Build
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
 
 !ENDIF 
 
@@ -1678,18 +873,6 @@ InputName=misc
 
 "$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
-
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# Begin Custom Build - Executing NASM...
-IntDir=.\Profiling
-InputPath=.\misc.nas
-InputName=misc
-
-"$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	d:\nasm\nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
 
 # End Custom Build
 
@@ -1724,44 +907,20 @@ InputName=tmap
 
 # End Custom Build
 
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# Begin Custom Build - Executing NASM...
-IntDir=.\Profiling
-InputPath=.\tmap.nas
-InputName=tmap
-
-"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	d:\nasm\nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
-
-# End Custom Build
-
 !ENDIF 
 
 # End Source File
 # End Group
 # Begin Group "Text Files"
 
-# PROP Default_Filter "*.txt"
+# PROP Default_Filter "txt"
 # Begin Source File
 
 SOURCE=..\commands.txt
 # End Source File
 # Begin Source File
 
-SOURCE=.\doominfo.lmp
-# End Source File
-# Begin Source File
-
-SOURCE=.\hexninfo.lmp
-# End Source File
-# Begin Source File
-
 SOURCE=".\docs\Rh-log.txt"
-# End Source File
-# Begin Source File
-
-SOURCE=.\ticinfo.lmp
 # End Source File
 # End Group
 # Begin Group "Win32 Files"
@@ -1769,11 +928,11 @@ SOURCE=.\ticinfo.lmp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\win32\dxcrap.c
+SOURCE=.\win32\dxcrap.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\I_input.c
+SOURCE=.\win32\i_input.cpp
 # End Source File
 # Begin Source File
 
@@ -1781,11 +940,11 @@ SOURCE=.\win32\I_input.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\I_main.c
+SOURCE=.\win32\I_main.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\I_music.c
+SOURCE=.\win32\i_music.cpp
 # End Source File
 # Begin Source File
 
@@ -1793,7 +952,7 @@ SOURCE=.\win32\I_music.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\I_net.c
+SOURCE=.\win32\i_net.cpp
 # End Source File
 # Begin Source File
 
@@ -1801,7 +960,7 @@ SOURCE=.\win32\i_net.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\I_sound.c
+SOURCE=.\win32\i_sound.cpp
 # End Source File
 # Begin Source File
 
@@ -1809,7 +968,7 @@ SOURCE=.\win32\I_sound.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\I_system.c
+SOURCE=.\win32\I_system.cpp
 # End Source File
 # Begin Source File
 
@@ -1829,7 +988,7 @@ SOURCE=.\win32\icon1.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\mid2strm.c
+SOURCE=.\win32\mid2strm.cpp
 # End Source File
 # Begin Source File
 
@@ -1837,7 +996,7 @@ SOURCE=.\win32\mid2strm.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\mus2strm.c
+SOURCE=.\win32\mus2strm.cpp
 # End Source File
 # Begin Source File
 

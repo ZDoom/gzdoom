@@ -45,12 +45,7 @@ extern int chatmodeon;
 
 // [RH] Draw deathmatch scores
 
-struct player_s;
-void HU_DrawScores (struct player_s *me);
+class player_s;
+void HU_DrawScores (player_s *me);
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

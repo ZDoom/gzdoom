@@ -54,11 +54,10 @@ typedef unsigned long DWORD;
 #include "../../midas/src/midas/midasdll.h"
 
 #ifdef USEASM
-BOOL STACK_ARGS CheckMMX (char *vendorid);
+extern "C" BOOL STACK_ARGS CheckMMX (char *vendorid);
 #endif
 
 BOOL UseMMX;
-BOOL	fastdemo;
 
 float 	mb_used = 6.0;
 
@@ -84,20 +83,19 @@ int I_GetHeapSize (void)
 	return (int)(mb_used*1024*1024);
 }
 
-byte *I_ZoneBase (int *size)
+byte *I_ZoneBase (unsigned int *size)
 {
 	int heap;
-	int i;
+	char *i;
 	byte *ptr;
 
 	heap = _go32_dpmi_remaining_physical_memory ();	// get memory info
 	printf ("DPMI memory: 0x%x, ", heap);
-	i = M_CheckParm ("-heapsize");
-	if (i && i < myargc - 1) {
-		heap = (mb_used*1024*1024);
-	} else {
+	i = Args.CheckValue ("-heapsize");
+	if (i)
+		heap = (atoi(i)*1024*1024);
+	else
 		heap -= 2 * 1024 * 1024 + 0x10000;	// leave at least 2 megs free
-	}
 
 	do
 	{
@@ -157,21 +155,6 @@ int I_WaitForTicPolled (int prevtic)
 	return counter;
 }
 
-// [RH] Increments the time count every time it gets called.
-//		Used only by -fastdemo (just like BOOM).
-static int faketic = 0;
-
-int I_GetTimeFake (void)
-{
-	return faketic++;
-}
-
-int I_WaitForTicFake (int whocares)
-{
-	return faketic++;
-}
-
-
 void I_WaitVBL(int count)
 {
 	// I_WaitVBL is never used to actually synchronize to the
@@ -201,7 +184,7 @@ void I_Init(void)
 
 	vendorid[0] = vendorid[12] = 0;
 	UseMMX = CheckMMX (vendorid);
-	if (M_CheckParm ("-nommx"))
+	if (Args.CheckParm ("-nommx"))
 		UseMMX = 0;
 
 	if (vendorid[0])
@@ -213,17 +196,8 @@ void I_Init(void)
 		Printf (PRINT_HIGH, "not using MMX)\n");
 #endif
 
-	// [RH] Support for BOOM's -fastdemo
-	if (fastdemo)
-	{
-		I_GetTime = I_GetTimeFake;
-		I_WaitForTic = I_WaitForTicFake;
-	}
-	else
-	{
-		I_GetTime = I_GetTimePolled;
-		I_WaitForTic = I_WaitForTicPolled;
-	}
+	I_GetTime = I_GetTimePolled;
+	I_WaitForTic = I_WaitForTicPolled;
 
 	I_InitSound();
 

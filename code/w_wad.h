@@ -94,9 +94,13 @@ extern	int			numlumps;
 
 void	W_InitMultipleFiles (wadlist_t** filenames);
 
-#define W_CheckNumForName(name) (W_CheckNumForName)(name, ns_global)
-int		(W_CheckNumForName) (const char *name, int);
+int		W_CheckNumForName (const char *name, int);
 int		W_GetNumForName (const char *name);
+
+inline int W_CheckNumForName (const byte *name) { return W_CheckNumForName ((const char *)name, ns_global); }
+inline int W_CheckNumForName (const char *name) { return W_CheckNumForName (name, ns_global); }
+inline int W_CheckNumForName (const byte *name, int ns) { return W_CheckNumForName ((const char *)name, ns); }
+inline int W_GetNumForName (const byte *name) { return W_GetNumForName ((const char *)name); }
 
 int		W_LumpLength (int lump);
 void	W_ReadLump (int lump, void *dest);

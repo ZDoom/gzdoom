@@ -696,8 +696,8 @@ bool V_DoModeSetup (int width, int height, int bits)
 	screen->SetFont (SmallFont);
 	screen->SetGamma (Gamma);
 
-	CleanXfac = width / 320;
-	CleanYfac = height / 200;
+	CleanXfac = MAX (width / 320, 1);
+	CleanYfac = MAX (height / 200, 1);
 
 	if (CleanXfac > 1 && CleanYfac > 1 && CleanXfac != CleanYfac)
 	{
@@ -900,9 +900,56 @@ void V_Init (void)
 
 void STACK_ARGS FreeCanvasChain ()
 {
-	while (DCanvas::CanvasChain != NULL)
+	if (screen != NULL)
 	{
-		delete DCanvas::CanvasChain;
+		delete screen;
 	}
 	screen = NULL;
 }
+
+EXTERN_CVAR (Bool, vid_tft)
+
+// Tries to guess the physical dimensions of the screen based on the
+// screen's pixel dimensions. Can return:
+// 0: 4:3
+// 1: 16:9
+// 2: 16:10
+// 4: 5:4
+int CheckRatio (int width, int height)
+{
+	// If the size is approximately 16:9, consider it so.
+	if (abs (height * 16/9 - width) < 10)
+	{
+		return 1;
+	}
+	// 16:10 has more variance in the pixel dimensions. Grr.
+	if (abs (height * 16/10 - width) < 60)
+	{
+		// 320x200 and 640x400 are always 4:3, not 16:10
+		if ((width == 320 && height == 200) || (width == 640 && height == 400))
+		{
+			return 0;
+		}
+		return 2;
+	}
+	// Unless vid_tft is set, 1280x1024 is 4:3, not 5:4.
+	if (height * 5/4 == width && vid_tft)
+	{
+		return 4;
+	}
+	// Assume anything else is 4:3.
+	return 0;
+}
+
+// First column: Base width (unused)
+// Second column: Base height (used for wall visibility multiplier)
+// Third column: Psprite offset (needed for "tallscreen" modes)
+// Fourth column: Width or height multiplier
+const int BaseRatioSizes[5][4] =
+{
+	{  960, 600, 0,            48 },				// 320,      200,      multiplied by three
+	{ 1280, 450, 0,            48*3/4 },			// 426.6667, 150,      multiplied by three
+	{ 1152, 500, 0,            48*5/6 },			// 386,      166.6667, multiplied by three
+	{  960, 600, 0,            48 },
+	{  960, 640, 6.5*FRACUNIT, 48*15/16 }			// 320,      213.3333, multiplied by three
+};

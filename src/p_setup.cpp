@@ -2884,7 +2884,9 @@ void P_SetupLevel (char *lumpname, int position)
 
 	wminfo.partime = 180;
 
-	numinterpolations = 0;	// [RH] Nothing to interpolate on a fresh level.
+	clearinterpolations();	// [RH] Nothing to interpolate on a fresh level.
+	FCanvasTextureInfo::EmptyList ();
+	R_FreePastViewers ();
 
 	if (!savegamerestore)
 	{

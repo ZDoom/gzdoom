@@ -1,4 +1,3 @@
-#ifdef _WIN32
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "c_cvars.h"
@@ -57,20 +56,22 @@ SPCSong::SPCSong (FILE *iofile, int len)
 	// No sense in using a higher frequency than the final output
 	int freq = MIN (*spc_frequency, *snd_samplerate);
 
-	m_Stream = FSOUND_Stream_Create (FillStream, 16384,
-		FSOUND_SIGNED | FSOUND_2D |
-		(spc_stereo ? FSOUND_STEREO : FSOUND_MONO) |
-		(spc_8bit ? FSOUND_8BITS : FSOUND_16BITS),
+	Is8Bit = spc_8bit;
+	Stereo = spc_stereo;
+
+	m_Stream = GSnd->CreateStream (FillStream, 16384,
+		(Stereo ? 0 : SoundStream::Mono) |
+		(Is8Bit ? SoundStream::Bits8 : 0),
 		freq, this);
 	if (m_Stream == NULL)
 	{
-		Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
+		Printf (PRINT_BOLD, "Could not create music stream.\n");
 		CloseEmu ();
 		return;
 	}
 
 	ResetAPU (spc_amp);
-	SetAPUOpt (~0, spc_stereo + 1, spc_8bit ? 8 : 16, freq, spc_quality,
+	SetAPUOpt (~0, Stereo + 1, Is8Bit ? 8 : 16, freq, spc_quality,
 		(spc_lowpass ? 1 : 0) | (spc_oldsamples ? 2 : 0) | (spc_surround ? 4 : 0) | (spc_noecho ? 16 : 0));
 
 	BYTE spcfile[66048];
@@ -152,27 +153,28 @@ bool SPCSong::IsPlaying ()
 
 void SPCSong::Play (bool looping)
 {
-	int volume = (int)(snd_musicvolume * 255);
-
 	m_Status = STATE_Stopped;
 	m_Looping = true;
 
-	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
-	if (m_Channel != -1)
+	if (m_Stream->Play (snd_musicvolume))
 	{
-		FSOUND_SetVolumeAbsolute (m_Channel, volume);
-		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
-		FSOUND_SetPaused (m_Channel, false);
 		m_Status = STATE_Playing;
 	}
 }
 
-signed char F_CALLBACKAPI SPCSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata)
+bool SPCSong::FillStream (SoundStream *stream, void *buff, int len, void *userdata)
 {
 	SPCSong *song = (SPCSong *)userdata;
-	int div = 1 << (spc_stereo + !spc_8bit);
-	song->EmuAPU (buff, len/div, 1);
-	return TRUE;
+	song->EmuAPU (buff, len >> (song->Stereo + !song->Is8Bit), 1);
+	if (song->Is8Bit)
+	{
+		BYTE *bytebuff = (BYTE *)buff;
+		for (int i = 0; i < len; ++i)
+		{
+			bytebuff[i] -= 128;
+		}
+	}
+	return true;
 }
 
 bool SPCSong::LoadEmu ()
@@ -251,4 +253,3 @@ void SPCSong::CloseEmu ()
 		HandleAPU = NULL;
 	}
 }
-#endif

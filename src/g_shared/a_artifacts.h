@@ -50,8 +50,6 @@ public:
 	const TypeInfo *PowerupType;
 	int EffectTics;			// Non-0 to override the powerup's default tics
 	PalEntry BlendColor;	// Non-0 to override the powerup's default blend
-protected:
-	void PlayPickupSound (AActor *toucher);
 };
 
 class APowerInvulnerable : public APowerup

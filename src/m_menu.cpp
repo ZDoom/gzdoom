@@ -1099,11 +1099,12 @@ static void M_DrawSaveLoadCommon ()
 void M_DrawFrame (int left, int top, int width, int height)
 {
 	FTexture *p1, *p2;
-	gameborder_t *border = gameinfo.border;
+	const gameborder_t *border = gameinfo.border;
 	int offset = border->offset;
 	int size = border->size;
 	int x, y;
 
+	// Draw top and bottom sides.
 	p1 = TexMan[border->t];
 	p2 = TexMan[border->b];
 	for (x = left; x < left + width; x += size)
@@ -1114,6 +1115,7 @@ void M_DrawFrame (int left, int top, int width, int height)
 		screen->DrawTexture (p2, x, top + height, TAG_DONE);
 	}
 
+	// Draw left and right sides.
 	p1 = TexMan[border->l];
 	p2 = TexMan[border->r];
 	for (y = top; y < top + height; y += size)
@@ -1124,7 +1126,7 @@ void M_DrawFrame (int left, int top, int width, int height)
 		screen->DrawTexture (p2, left + width, y, TAG_DONE);
 	}
 
-	// Draw beveled edge.
+	// Draw beveled corners.
 	screen->DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
 	screen->DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
 	screen->DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);

@@ -509,6 +509,9 @@ public:
 	// Tosses an item out of the inventory.
 	virtual AInventory *DropInventory (AInventory *item);
 
+	// Returns true if this view is considered "local" for the player.
+	bool CheckLocalView (int playernum) const;
+
 	// Finds the first item of a particular type.
 	AInventory *FindInventory (const TypeInfo *type) const;
 	template<class T> T *FindInventory () const

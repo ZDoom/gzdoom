@@ -2354,7 +2354,7 @@ FUNC(LS_SendToCommunicator)
 			it->player->SetLogNumber (arg0);
 		}
 
-		if (players[consoleplayer].camera == it)
+		if (it->CheckLocalView (consoleplayer))
 		{
 			S_StopSound ((fixed_t *)NULL, CHAN_VOICE);
 			S_Sound (CHAN_VOICE, name, 1, ATTN_NORM);

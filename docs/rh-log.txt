@@ -1,3 +1,270 @@
+December 23, 2004
+- Made the bottom of the viewborder visible when the status bar doesn't cover
+  the full width of the screen and no border would normally be visible.
+- Added SetAmmoCapacity (str typename, int maxamount) and
+  GetAmmoCapacity (str typename) ACS commands. Also added the ACS log command.
+  It is exactly like printbold, except it prints directly to the console instead
+  of the middle of the screen. BTW, ACS has static local variables ala C now.
+  They are exactly the same as map variables, except they can only be used in
+  the script or function that defines them.
+- Fixed some fullscreen pages to work properly with non-4:3 aspect displays.
+- Fixed DCanvas::DrawTexture() so that all virtual sizes (not just 320x200wide)
+  work with non-4:3 aspect screens. (So long as the virtual size is 4:3.)
+
+December 22, 2004
+- Fixed: The backpack was not added to the player's inventory, although there
+  was code present to handle removing it from the inventory.
+- Loading a BEHAVIOR without any scripts but with other content crashed.
+- More revelations with the sprite splitting experiment: Drawsegs are not
+  always created when you might think they are. Probably the biggest problem
+  is when you look at a line straight-on, so you see the sectors on each side
+  of it but not the line itself. I conceded defeat and stuck an #if 0 around
+  the related code. If I or someone else want to revisit it later, it's still
+  there but inactive. I don't think it's worth the effort to make it work
+  properly. A z-buffer would be much easier, more reliable, and possibly even
+  quicker when there are a lot of two-sided lines in view. So the solution
+  seems obvious: Use hardware acceleration and let it worry about sprite
+  clipping. Or stick with the way things are and ignore it. :-) (Community
+  Chest 2, MAP15, building number 4 makes a great test-case for this, BTW.)
+
+December 21, 2004
+- Messed around with splitting sprites along drawsegs some more. This is far
+  from being as straight forward as I had thought. One unexpected problem I
+  realized: Most (if not all) of the sprites that stand on the ground are
+  actually sunk into the ground, but splitting sprites is not a win unless you
+  clip them to the floor and ceiling. So I tried bumping the sprites up so that
+  they are aligned with the bottoms of their actor so I could clip them to the
+  floor. Now it looks much better. When it works. Unfortunately, there are
+  lots of cases that still don't work properly.
+
+December 20, 2004
+- Added some code to split sprites along drawsegs.
+- Changed the sprite-in-front of drawseg calculations. Now it compares inverse
+  Z values in screen space.
+- Fixed: The MinotaurFriend targetted friendlies other than itself.
+- Fixed: An actor's floorpic was not serialized by name.
+- Fixed: Each piece of Hexen armor only gave you one AC.
+- Fixed: Morphing a monster didn't copy the original monster's friendliness and
+  TID hating to the morphed version.
+
+December 18, 2004
+- Fixed: Slideshows in Strife are supposed to change the music to D_SLIDE.
+- Fixed: Merchants played their greeting animation in place of their "yes"
+  animation. (Or rather, the greeting was played immediately after starting the
+  "yes" one, so you only saw the greeting.)
+- Fixed: The Strife health bar texture assumed that the vial level would always
+  be non-negative. It can go negative if the player dies then cheats to give
+  themself health, but not enough for their real health to go positive.
+- Fixed: Creating a fade-in-out hudmessage with a fadetime of 0 crashed, because
+  it assumed the fade-in time would always be positive.
+- Fixed: Instead of calling G_StartTravel(), idclev should set the player's
+  health to 0, so the player will do a complete spawn on the new level.
+- Fixed: DrBNumberOuter(Font) and DrINumberOuter drew the shadow from one digit
+  on top of the next digit.
+- Fixed: The Doom HUD drew the selected inventory item on top of the secondary
+  ammo if both were present.
+- Moved the DrawPowerups() call out of FBaseStatusBar::Draw() and into
+  DrawTopStuff(), so the Doom HUD key display won't cover them up
+- Fixed: If you started flying and then pressed the land key, you wouldn't be
+  able to fly again until the Wings of Wrath wore off. This was done by changing
+  several checks for a player with MF2_FLY into checks for a player with
+  MF_NOGRAVITY. MF2_FLY just indicates that the player is using the Wings;
+  for the player to fly, MF_NOGRAVITY must also be set. If MF_NOGRAVITY is not
+  set, but MF2_FLY is, then the pressing +moveup/down reactivates fly mode.
+- Changed the receipt of BasicArmorPickup so that the SaveAmount is multiplied
+  by the given amount (via the give cheat or ACS giveinventory) in order to make
+  it compatible again with earlier versions of ZDoom.
+- Fixed: Picking up an armor bonus after using up your armor left you with
+  useless armor until you picked up a full-fledged armor item.
+- Fixed: Even though voodoo dolls couldn't pick up items, they could still touch
+  them without pretending to be a real player and mess things up in the player's
+  inventory.
+- Fixed: Strife's alien spectres did not execute specials attached to them upon
+  death, because they have MF_SPECIAL set.
+- Changed the inventory left/light gems (that indicate if you have more items in
+  that direction) to blink with gametic instead of level.time, so now they can
+  blink while the game is paused.
+- Fixed: You could use items while the game was paused.
+- I just noticed the fighter's fist doesn't meet the edge of the screen when you
+  swing it. What's a good, clean way to handle this situation?
+- Brought over the startup log viewer I had added for my Duke port. Unlike my
+  Duke port, however, this window is normally hidden and only shows itself when
+  a fatal error occurs. Now if something goes wrong during the startup
+  sequence, you can review the console log to try and figure out why. I tried
+  making it show up at startup as a sort of revival of the way the startup
+  process worked once upon a time in DOS land, but too much of the code now
+  requires the video to be one of the first things initialized and it just isn't
+  practical to rearrange things to make it init later.
+
+December 16, 2004
+- New: ZDoom.wad is now managed along with the source code.
+
+December 15, 2004
+- Added support for letterboxing, so people without widescreen displays can still
+  use widescreen modes without running in a window. Note that if the video card
+  enumerates any widescreen displays, then the game will assume they are displayed
+  as widescreen, even if they really aren't. Letterbox modes are automatically
+  generated from the existing 4:3 modes, but if an existing resolution already has
+  the same size, then that resolution won't be available in letterbox form. The
+  video modes menu displays LB next to any modes that are letterboxed, so you can
+  tell them apart without trying each one.
+- Corrected widescreen displays for non-90 degree FOVs.
+
+December 14, 2004
+- Added support for 16:10 and (if vid_tft is true) 5:4 displays. Also rearranged
+  the video modes menu, removing the depth choice and replacing it with an aspect
+  ratio choice.
+
+December 13, 2004
+- Rewrote the interpolators to use a hash table instead of a linear array, for
+  improved insertion and deletion performance.
+- Added interpolation for scrolling floors, ceilings, and walls. Floors especially
+  need it, because the lack of interpolation really sticks out when you're being
+  carried along by a floor that only moves at 35 FPS.
+- Resolutions are now sorted, and you can pick widescreen resolutions if you play
+  in a window even if your don't have any fullscreen widescreen modes. (Yep, 16:9
+  modes are now supported.)
+
+December 11, 2004
+- Decided it's time to bring the goodness of Polymost to ZDoom. Stage 1 complete:
+  Convert the clipper to a stand-alone C++ class. Stage 2 to be completed some
+  time in the indeterminate future. There's really other things that I should be
+  doing right now, ne?
+
+December 9, 2004
+- Fixed: APlayerPawn::BestWeapon() did not know about the Tome of Power, so
+  when you ran out of sufficient ammo for your tome'd weapon, it could select
+  the untome'd version of that weapon, which would turn into the tome'd version
+  when it was raised, so you would be stuck in a cycle until the tome ran out or
+  you picked a different weapon manually.
+- Fixed AMinotaur::Die() should have used a thinker iterator instead of an
+  actor iterator to look for minotaurs that are still alive.
+- Added Graf's deltaviewheight fix for climbing stairs made of actors.
+- Fixed up the pickup ammo amount for the BFG. (Was 100, should be 40.)
+- Merged in Jim's ACS character array printing support.
+
+December 6, 2004
+- Fixed: Fog boundaries flashed with gunfire. That's wrong because foggy
+  sectors don't flash.
+- Fixed: Masked textures in a skybox would determine their height from the
+  viewz used for the last skybox drawn instead of the viewz for the skybox they
+  belong to.
+- Fixed: "*fistgrunt" was undefined, so A_FPunchAttack() was unable to play it.
+- Fixed: Hexen players did not play their burn death sounds. Neither did the
+  cleric boss.
+- Fixed: Thingcount should not count items in somebody's inventory.
+- Fixed: AInventory::BecomeItem() did not remove the item's TID, so it could
+  still be manipulated by scripts even after being picked up.
+- Fixed: CheckBossDeath() should consider frozen corpses as not dead, because
+  A_BossDeath() is not called until the corpse shatters.
+- Changed APlayerPawn::Die() to use P_DropItem() to spawn a new weapon when
+  weapondrop is turned on instead of dropping the player's actual weapon.
+- Fixed: P_DropItem() needs to clear the MF_NOGRAVITY flag because some Hexen
+  items have it set.
+- Fixed: ArtiTeleport::Use() called P_UndoPlayerMorph with its player instead of
+  its owner's player.
+
+December 4, 2004
+- Updated the libraries and moved them out of src and into the base directory.
+  Now zlib is at version 1.2.2, libFLAC is version 1.1.1, and src contains only
+  the ZDoom-specific files.
+- Updated to zlib 1.2.2.
+
+December 3, 2004
+- Fixed: 256 entries per column is not enough for dc_tspans. Each column should
+  have MAXHEIGHT entries available, because a column that alternates drawn/not-
+  drawn pixels each row will need one entry per row.
+
+December 2, 2004
+- Fixed playback of SPCs when spc_8bit is true. SNESAPU renders them unsigned,
+  but we need them to be signed. Also fixed: Altering spc_stereo and spc_8bit
+  while a SPC was playing could crash.
+- Added new stuff to the alternate sound renderer: MMX CopyAndClip routine,
+  interpolated mixers, FLAC sample loading, streams, and slightly tighter
+  inner. So now it's a bit more of a realistic alternative to FMOD. All it
+  really lacks is MP3, Vorbis, and MOD support. The snd_interpolate cvar can
+  even select between linear (1) and quadratic (2) interpolation, so it can
+  sound better than FMOD, which only does linear interpolation.
+  
+  I'd like to compare the performance of the new code with FMOD, but
+  unfortunately, I can't seem to figure out a good way to calculate % CPU used
+  by the mixer. My attempts lead to numbers that fluctuate quite a lot for
+  relative constant environments. At least it ought to be attractive to the
+  Linux folks if it gets modified to support SDL as well as DirectSound, even
+  if I have no idea how well it performs.
+
+December 1, 2004
+- Reorganized the sound interface code to make it easier to target multiple
+  sound renderers.
+
+November 29, 2004
+- Added the CTRL-X keypress for clearing the current console command line.
+- Changed tab completion to be more Bash-like: When there is more than one
+  possible completion, and they all have a common prefix longer than what
+  has been typed so far, the full prefix will be filled in for you. (e.g.
+  Typing "sn[TAB]" will append "d_" for you because every command that
+  starts with "sn" also starts with "snd_".) Note that this only works if
+  you have the completion list turned on (con_notablist is false).
+- Fixed: Only the first berserk pack you picked up would give you health.
+- Fixed: Soul sphere played the wrong pickup sound.
+
+November 25, 2004
+- Added render-to-texture support to the engine. Using it requires you do two
+  things:
+    (1) Define a texture that can be drawn into. You do this with a line in
+        ANIMDEFS:
+
+        cameratexture <texture name> <width> <heigth> [fit <width> <height>]
+
+        e.g.
+
+        cameratexture CAMTEX1 64 64
+            Creates a texture called CAMTEX1.
+
+        cameratexture CAMTEX2 100 50 fit 80 50
+            Creates a texture called CAMTEX2. Its actual dimensions are 100x50,
+            but it will be scaled to fit into an area 80x50 units large.
+
+        cameratexture STARTAN2 64 64
+            Replaces the existing texture STARTAN2 with a new one that can be
+            rendered into. Since no fit size was provided, this new texture will
+            be sized to occupy the same space as the old STARTAN2 texture, which
+            is 128x128.
+
+        cameratexture STARTAN2 64 64 fit 64 64
+            Replaces the existing texture STARTAN2, but leaves the texture
+            unscaled by specifying a fit size that matches the real size.
+
+        Square textures use less memory than non-square textures. However, if
+        you want to use a camera that can see the texture it renders into, you
+        should use a non-square texture.
+
+    (2) Use ACS to identify which camera renders to the texture:
+    
+        SetCameraToTexture (<camera tid>, <texture name>, <FOV>);
+        
+        e.g.
+        
+        SetCameraToTexture (100, "CAMTEX1", 90);
+
+November 24, 2004
+- Expanded the definition of local for such things as "localambientsound" so
+  that players will still hear the sound if they are looking through a camera.
+- Added the summonfriend command.
+- Made P_RandomChaseDir() truely random. The only real randomness it had before
+  was in deciding whether monsters preferred to go east or southeast.
+
+November 20, 2004
+- Fixed: AInventory::BecomeItem() must remove the actor from all the touching
+  sector lists. Otherwise, you can get crashes if a floor or ceiling in a
+  sector touching the item moves later.
+- Fixed: Patrols only went to the first goal and then got stuck.
+- Fixed: Recurssion when an unloading script tries to change to a different
+  map. The map change is already under way, so the script cannot start another
+  map change.
+- Moved BasicArmor's PostBeginPlay icon fixing into Tick, so it can cope with
+  the "give armor" cheat removing the icon when the player already has armor.
+
 November 18, 2004
 - New ACS stuff:
     bool playeringame (int playernumber);

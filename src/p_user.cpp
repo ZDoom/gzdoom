@@ -225,6 +225,7 @@ AWeapon *APlayerPawn::BestWeapon (const TypeInfo *ammotype)
 	int bestOrder = INT_MAX;
 	AInventory *item;
 	AWeapon *weap;
+	bool tomed = NULL != FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
 
 	// Find the best weapon the player has.
 	for (item = Inventory; item != NULL; item = item->Inventory)
@@ -242,6 +243,14 @@ AWeapon *APlayerPawn::BestWeapon (const TypeInfo *ammotype)
 		if (ammotype != NULL &&
 			(weap->Ammo1 == NULL ||
 			 weap->Ammo1->GetClass() != ammotype))
+			continue;
+
+		// Don't select it if the Tome is active and this isn't the powered-up version.
+		if (tomed && weap->SisterWeapon != NULL && weap->SisterWeapon->WeaponFlags & WIF_POWERED_UP)
+			continue;
+
+		// Don't select it if it's powered-up and the Tome is not active.
+		if (!tomed && weap->WeaponFlags & WIF_POWERED_UP)
 			continue;
 
 		// Don't select it if there isn't enough ammo to use its primary fire.
@@ -355,17 +364,26 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 			AWeapon *weap = player->ReadyWeapon;
 			if (weap != NULL)
 			{
+				AInventory *item;
+
 				if (weap->SpawnState != NULL &&
 					weap->SpawnState != &AActor::States[AActor::S_NULL])
 				{
-					weap->BecomePickup ();
-					weap->SetOrigin (x, y, z);
-					P_TossItem (weap);
+					item = P_DropItem (this, weap->GetClass(), -1, 256);
+					if (item != NULL)
+					{
+						if (weap->AmmoGive1 && weap->Ammo1)
+						{
+							static_cast<AWeapon *>(item)->AmmoGive1 = weap->Ammo1->Amount;
+						}
+						if (weap->AmmoGive2 && weap->Ammo2)
+						{
+							static_cast<AWeapon *>(item)->AmmoGive2 = weap->Ammo2->Amount;
+						}
+					}
 				}
 				else
 				{
-					AInventory *item;
-
 					item = P_DropItem (this, weap->AmmoType1, -1, 256);
 					if (item != NULL)
 					{
@@ -437,7 +455,7 @@ void P_ForwardThrust (player_t *player, angle_t angle, fixed_t move)
 {
 	angle >>= ANGLETOFINESHIFT;
 
-	if ((player->mo->waterlevel || (player->mo->flags2 & MF2_FLY))
+	if ((player->mo->waterlevel || (player->mo->flags & MF_NOGRAVITY))
 		&& player->mo->pitch != 0)
 	{
 		angle_t pitch = (angle_t)player->mo->pitch >> ANGLETOFINESHIFT;
@@ -497,7 +515,7 @@ void P_CalcHeight (player_t *player)
 	// it causes bobbing jerkiness when the player moves from ice to non-ice,
 	// and vice-versa.
 
-	if ((player->mo->flags2 & MF2_FLY) && !onground)
+	if ((player->mo->flags & MF_NOGRAVITY) && !onground)
 	{
 		player->bob = FRACUNIT / 2;
 	}
@@ -641,7 +659,7 @@ void P_MovePlayer (player_t *player)
 
 		movefactor = P_GetMoveFactor (mo, &friction);
 		bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
-		if (!onground && !(player->mo->flags2 & MF2_FLY) && !player->mo->waterlevel)
+		if (!onground && !(player->mo->flags & MF_NOGRAVITY) && !player->mo->waterlevel)
 		{
 			// [RH] allow very limited movement if not on ground.
 			movefactor = FixedMul (movefactor, level.aircontrol);
@@ -1052,7 +1070,7 @@ void P_PlayerThink (player_t *player)
 			{
 				player->mo->momz = 4*FRACUNIT;
 			}
-			else if (player->mo->flags2 & MF2_FLY)
+			else if (player->mo->flags & MF_NOGRAVITY)
 			{
 				player->mo->momz = 3*FRACUNIT;
 			}
@@ -1067,9 +1085,9 @@ void P_PlayerThink (player_t *player)
 
 		if (cmd->ucmd.upmove == -32768)
 		{ // Only land if in the air
-			if ((player->mo->flags2 & MF2_FLY) && player->mo->waterlevel < 2)
+			if ((player->mo->flags & MF_NOGRAVITY) && player->mo->waterlevel < 2)
 			{
-				player->mo->flags2 &= ~MF2_FLY;
+				//player->mo->flags2 &= ~MF2_FLY;
 				player->mo->flags &= ~MF_NOGRAVITY;
 			}
 		}
@@ -1078,7 +1096,7 @@ void P_PlayerThink (player_t *player)
 			if (player->mo->waterlevel >= 2 || (player->mo->flags2 & MF2_FLY))
 			{
 				player->mo->momz = cmd->ucmd.upmove << 9;
-				if (player->mo->waterlevel < 2 && !(player->mo->flags2 & MF2_FLY))
+				if (player->mo->waterlevel < 2 && !(player->mo->flags & MF_NOGRAVITY))
 				{
 					player->mo->flags2 |= MF2_FLY;
 					player->mo->flags |= MF_NOGRAVITY;

@@ -143,32 +143,6 @@ bool SDLVideo::FullscreenChanged (bool fs)
 	return true;
 }
 
-int SDLVideo::GetModeCount ()
-{
-	if (IteratorFS)
-	{
-		SDL_Rect **modes = SDL_ListModes (NULL, SDL_FULLSCREEN|SDL_HWSURFACE);
-		if (modes == NULL)
-		{
-			return 0;
-		}
-		if (modes == (SDL_Rect **)-1)
-		{
-			IteratorFS = 0;
-			return sizeof(WinModes)/sizeof(WinModes[0]);
-		}
-		int count;
-		for (count = 0; modes[count]; ++count)
-		{
-		}
-		return count;
-	}
-	else
-	{
-		return sizeof(WinModes)/sizeof(WinModes[0]);
-	}
-}
-
 void SDLVideo::StartModeIterator (int bits)
 {
 	IteratorMode = 0;

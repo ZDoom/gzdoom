@@ -88,6 +88,8 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	BOOL flipX = false;
 	fixed_t shadowAlpha = 0;
 	int shadowColor = 0;
+	int virtWidth = this->GetWidth();
+	int virtHeight = this->GetHeight();
 
 	x0 <<= FRACBITS;
 	y0 <<= FRACBITS;
@@ -148,10 +150,8 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			boolval = va_arg (tags, BOOL);
 			if (boolval)
 			{
-				x0 = Scale (Width, x0, 320);
-				y0 = Scale (Height, y0, 200);
-				destwidth = FixedDiv (Width * img->GetWidth(), 320);
-				destheight = FixedDiv (Height * img->GetHeight(), 200);
+				virtWidth = 320;
+				virtHeight = 200;
 			}
 			break;
 
@@ -187,15 +187,11 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_VirtualWidth:
-			intval = va_arg (tags, int);
-			x0 = Scale (Width, x0, intval);
-			destwidth = FixedDiv (Width * img->GetWidth(), intval);
+			virtWidth = va_arg (tags, int);
 			break;
 			
 		case DTA_VirtualHeight:
-			intval = va_arg (tags, int);
-			y0 = Scale (Height, y0, intval);
-			destheight = FixedDiv (Height * img->GetHeight(), intval);
+			virtHeight = va_arg (tags, int);
 			break;
 
 		case DTA_Alpha:
@@ -318,6 +314,30 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 		tag = va_arg (tags, DWORD);
 	}
 	va_end (tags);
+
+	if (virtWidth != Width || virtHeight != Height)
+	{
+		int myratio = CheckRatio (Width, Height);
+		if (myratio != 0)
+		{ // The target surface is not 4:3, so expand the specified
+		  // virtual size to avoid undesired stretching of the image.
+		  // Does not handle non-4:3 virtual sizes. I'll worry about
+		  // those if somebody expresses a desire to use them.
+			x0 = Scale (Width*960, x0-virtWidth*FRACUNIT/2, virtWidth*BaseRatioSizes[myratio][0]) + Width*FRACUNIT/2;
+			y0 = Scale (Height, y0, virtHeight);
+			//destwidth = FixedDiv (Width*3 * img->GetWidth(), 1280);
+			//destheight = FixedDiv (Height * img->GetHeight(), 200);
+			destwidth = FixedDiv (Width*960 * img->GetWidth(), virtWidth*BaseRatioSizes[myratio][0]);
+			destheight = FixedDiv (Height * img->GetHeight(), virtHeight);
+		}
+		else
+		{
+			x0 = Scale (Width, x0, virtWidth);
+			y0 = Scale (Height, y0, virtHeight);
+			destwidth = FixedDiv (Width * img->GetWidth(), virtWidth);
+			destheight = FixedDiv (Height * img->GetHeight(), virtHeight);
+		}
+	}
 
 	if (destwidth <= 0 || destheight <= 0)
 	{
@@ -507,6 +527,45 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	if (ticdup != 0 && menuactive == MENU_Off)
 	{
 		NetUpdate ();
+	}
+}
+
+void DCanvas::FillBorder (FTexture *img)
+{
+	int myratio = CheckRatio (Width, Height);
+	if (myratio == 0)
+	{ // This is a 4:3 display, so no border to show
+		return;
+	}
+	int bordtop, bordbottom, bordleft, bordright, bord;
+	if (myratio & 4)
+	{ // Screen is taller than it is wide
+		bordleft = bordright = 0;
+		bord = Height - Height * BaseRatioSizes[myratio][3] / 48;
+		bordtop = bord / 2;
+		bordbottom = bord - bordtop;
+	}
+	else
+	{ // Screen is wider than it is tall
+		bordtop = bordbottom = 0;
+		bord = Width - Width * BaseRatioSizes[myratio][3] / 48;
+		bordleft = bord / 2;
+		bordright = bord - bordleft;
+	}
+
+	if (img != NULL)
+	{
+		FlatFill (0, 0, Width, bordtop, img);									// Top
+		FlatFill (0, bordtop, bordleft, Height - bordbottom, img);				// Left
+		FlatFill (Width - bordright, bordtop, Width, Height - bordbottom, img);	// Right
+		FlatFill (0, Height - bordbottom, Width, Height, img);					// Bottom
+	}
+	else
+	{
+		Clear (0, 0, Width, bordtop, 0);									// Top
+		Clear (0, bordtop, bordleft, Height - bordbottom, 0);				// Left
+		Clear (Width - bordright, bordtop, Width, Height - bordbottom, 0);	// Right
+		Clear (0, Height - bordbottom, Width, Height, 0);					// Bottom
 	}
 }
 

@@ -13,7 +13,6 @@ class AArtiHealth : public AHealthPickup
 	DECLARE_ACTOR (AArtiHealth, AHealthPickup)
 public:
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiHealth::States[] =
@@ -28,20 +27,14 @@ IMPLEMENT_ACTOR (AArtiHealth, Raven, 82, 24)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnHealth (25)
 	PROP_SpawnState (0)
-	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIPTN2")
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 const char *AArtiHealth::PickupMessage ()
 {
 	return GStrings(TXT_ARTIHEALTH);
-}
-
-void AArtiHealth::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-		toucher == NULL || toucher == players[consoleplayer].camera
-		? ATTN_SURROUND : ATTN_NORM);
 }
 
 // Super health -------------------------------------------------------------
@@ -51,7 +44,6 @@ class AArtiSuperHealth : public AHealthPickup
 	DECLARE_ACTOR (AArtiSuperHealth, AHealthPickup)
 public:
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiSuperHealth::States[] =
@@ -64,20 +56,14 @@ IMPLEMENT_ACTOR (AArtiSuperHealth, Raven, 32, 25)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_SpawnHealth (100)
-	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTISPHL")
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 const char *AArtiSuperHealth::PickupMessage ()
 {
 	return GStrings(TXT_ARTISUPERHEALTH);
-}
-
-void AArtiSuperHealth::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-		toucher == NULL || toucher == players[consoleplayer].camera
-		? ATTN_SURROUND : ATTN_NORM);
 }
 
 // Flight -------------------------------------------------------------------

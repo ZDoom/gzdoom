@@ -55,7 +55,7 @@
 // But what is horizspan, and what is its relation with dc_ctspan?
 
 byte dc_temp[MAXHEIGHT*4];
-unsigned int dc_tspans[4][256];
+unsigned int dc_tspans[4][MAXHEIGHT];
 unsigned int *dc_ctspan[4];
 unsigned int *horizspan[4];
 

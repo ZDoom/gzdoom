@@ -207,6 +207,7 @@ void AActor::Serialize (FArchive &arc)
 			arc << ff;
 			TexMan.WriteTexture (arc, picnum);
 		}
+		TexMan.WriteTexture (arc, floorpic);
 	}
 	else
 	{
@@ -219,6 +220,10 @@ void AActor::Serialize (FArchive &arc)
 		else
 		{
 			picnum = TexMan.ReadTexture (arc);
+		}
+		if (SaveVersion >= 227)
+		{
+			floorpic = TexMan.ReadTexture (arc);
 		}
 	}
 	arc << TIDtoHate;
@@ -239,9 +244,12 @@ void AActor::Serialize (FArchive &arc)
 		<< floorz
 		<< ceilingz
 		<< dropoffz
-		<< floorsector
-		<< floorpic
-		<< radius
+		<< floorsector;
+	if (SaveVersion < 227)
+	{
+		arc << floorpic;
+	}
+	arc << radius
 		<< height
 		<< momx
 		<< momy
@@ -659,7 +667,6 @@ bool AActor::UseInventory (AInventory *item)
 
 AInventory *AActor::DropInventory (AInventory *item)
 {
-	int i;
 	fixed_t dropdist;
 	angle_t an;
 	AInventory *drop = item->CreateTossable ();
@@ -671,30 +678,10 @@ AInventory *AActor::DropInventory (AInventory *item)
 	an = angle >> ANGLETOFINESHIFT;
 	/* 92682 = sqrt(2) * FRACUNIT */
 	dropdist = FixedMul (92682, radius + 8*FRACUNIT + item->radius);
-#if 0
-	drop->x = x + momx + FixedMul (dropdist, finecosine[an]);
-	drop->y = y + momy + FixedMul (dropdist, finesine[an]);
-	drop->z = z + momz + 10*FRACUNIT;
-
-	// Doom needs a good solid trace function. Unfortunately, it doesn't, so
-	// we have to move the item several small steps to make sure it can be where
-	// we want it to.
-	for (i = 3; i < 9; ++i)
-	{
-		if (!P_TryMove (drop, x + (drop->x - x)*i/8, y + (drop->y - y)*i/8, true) &&
-			BlockingMobj != this && !floatok)
-		{
-			if (drop->TryPickup (this))
-				return NULL;
-			return drop;
-		}
-	}
-#else
 	drop->x = x;
 	drop->y = y;
 	drop->z = z + 10*FRACUNIT;
 	P_TryMove (drop, x, y, true);
-#endif
 	drop->angle = angle;
 	drop->momx = momx + 5 * finecosine[an];
 	drop->momy = momy + 5 * finesine[an];
@@ -761,6 +748,34 @@ bool AActor::GiveAmmo (const TypeInfo *type, int amount)
 		return false;
 	}
 	return true;
+}
+
+//============================================================================
+//
+// AActor :: CheckLocalView
+//
+// Returns true if this actor is local for the player. Here, local means the
+// player is either looking out this actor's eyes, or this actor is the player
+// and the player is looking out the eyes of something non-"sentient."
+//
+//============================================================================
+
+bool AActor::CheckLocalView (int playernum) const
+{
+	if (players[playernum].camera == this)
+	{
+		return true;
+	}
+	if (players[playernum].mo != this || players[playernum].camera == NULL)
+	{
+		return false;
+	}
+	if (players[playernum].camera->player == NULL &&
+		!(players[playernum].camera->flags3 & MF3_ISMONSTER))
+	{
+		return true;
+	}
+	return false;
 }
 
 //============================================================================
@@ -1449,7 +1464,7 @@ explode:
 	}
 
 	if (mo->z > mo->floorz && !(mo->flags2 & MF2_ONMOBJ) &&
-		!(mo->flags2 & MF2_FLY)	&& !mo->waterlevel)
+		(!(mo->flags2 & MF2_FLY) || !(mo->flags & MF_NOGRAVITY)) && !mo->waterlevel)
 	{ // [RH] Friction when falling is available for larger aircontrols
 		if (player != NULL && level.airfriction != FRACUNIT)
 		{
@@ -1612,7 +1627,7 @@ void P_ZMovement (AActor *mo)
 				mo->z += FLOATSPEED, mo->momz = 0;
 		}
 	}
-	if (mo->player && (mo->flags2 & MF2_FLY) && (mo->z > mo->floorz))
+	if (mo->player && (mo->flags & MF_NOGRAVITY) && (mo->z > mo->floorz))
 	{
 		mo->z += finesine[(FINEANGLES/80*level.time)&FINEMASK]/8;
 		mo->momz = FixedMul (mo->momz, FRICTION_FLY);
@@ -1701,7 +1716,7 @@ void P_ZMovement (AActor *mo)
 				if (mo->player)
 				{
 					mo->player->jumpTics = 7;	// delay any jumping for a short while
-					if (mom < minmom && !(mo->flags2 & MF2_FLY))
+					if (mom < minmom && !(mo->flags & MF_NOGRAVITY))
 					{
 						// Squat down.
 						// Decrease viewheight for a moment after hitting the ground (hard),
@@ -2474,7 +2489,7 @@ void AActor::Tick ()
 				if (player)
 				{
 					if (momz < (fixed_t)(level.gravity * Sector->gravity * -655.36f)
-						&& !(flags2&MF2_FLY))
+						&& !(flags&MF_NOGRAVITY))
 					{
 						PlayerLandedOnThing (this, onmo);
 					}
@@ -2487,6 +2502,15 @@ void AActor::Tick ()
 						player->deltaviewheight =
 							(VIEWHEIGHT - player->viewheight)>>3;
 					}
+					if (player && player->mo == this)
+					{
+						player->viewheight -= onmo->z + onmo->height - z;
+						fixed_t deltaview = (VIEWHEIGHT - player->viewheight)>>3;
+						if (deltaview > player->deltaviewheight)
+						{
+							player->deltaviewheight = deltaview;
+						}
+					} 
 					z = onmo->z + onmo->height;
 				}
 				flags2 |= MF2_ONMOBJ;

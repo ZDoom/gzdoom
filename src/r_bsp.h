@@ -26,18 +26,18 @@
 #include "tarray.h"
 #include <stddef.h>
 
-struct drawseg_s
+struct drawseg_t
 {
 	seg_t*		curline;
-	short 		x1, x2;
-	fixed_t 	neardepth, fardepth;
 	fixed_t		light, lightstep;
 	fixed_t		iscale, iscalestep;
-	short		sx1, sx2;
-	fixed_t		sz1, sz2;
-	fixed_t		cx, cy, cdx, cdy;
+	short 		x1, x2;			// Same as sx1 and sx2, but clipped to the drawseg
+	short		sx1, sx2;		// left, right of parent seg on screen
+	fixed_t		sz1, sz2;		// z for left, right of parent seg on screen
+	fixed_t		siz1, siz2;		// 1/z for left, right of parent seg on screen
 	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
 	BYTE		bFogBoundary;
+	int			shade;
 // Pointers to lists for sprite clipping,
 // all three adjusted so [x1] is first value.
 	ptrdiff_t	sprtopclip; 		// type short
@@ -45,7 +45,6 @@ struct drawseg_s
 	ptrdiff_t	maskedtexturecol;	// type short
 	ptrdiff_t	swall;				// type fixed_t
 };
-typedef struct drawseg_s drawseg_t;
 
 
 extern seg_t*		curline;

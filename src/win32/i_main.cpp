@@ -58,6 +58,7 @@
 #include "i_sound.h"
 #include "gccseh.h"
 #include "autosegs.h"
+#include "w_wad.h"
 
 #include "stats.h"
 
@@ -81,10 +82,11 @@ extern char *CrashText;
 DArgs Args;
 
 const char WinClassName[] = "ZDOOM WndClass";
+const char ConClassName[] = "ZDOOM Logview";
 
 HINSTANCE		g_hInst;
 WNDCLASS		WndClass;
-HWND			Window;
+HWND			Window, ConWindow;
 DWORD			SessionID;
 HANDLE			MainThread;
 
@@ -145,6 +147,53 @@ static void STACK_ARGS UnWTS (void)
 		}
 		FreeLibrary (hwtsapi32);
 		hwtsapi32 = 0;
+	}
+}
+
+LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	LPMINMAXINFO minmax;
+	HWND view;
+
+	switch (msg)
+	{
+	case WM_SIZE:
+		if (wParam != SIZE_MAXHIDE && wParam != SIZE_MAXSHOW)
+		{
+			MoveWindow ((HWND)GetWindowLongPtr (hWnd, GWLP_USERDATA),
+				0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
+		}
+		return 0;
+
+	case WM_GETMINMAXINFO:
+		minmax = (LPMINMAXINFO)lParam;
+		minmax->ptMinTrackSize.x *= 10;
+		minmax->ptMinTrackSize.y *= 8;
+		break;
+	
+	case WM_CREATE:
+		view = CreateWindow ("EDIT", NULL,
+			WS_CHILD | WS_VISIBLE | WS_VSCROLL |
+			ES_LEFT | ES_MULTILINE,
+			0, 0, 0, 0,
+			hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+		if (view == NULL)
+		{
+			return -1;
+		}
+		SetWindowLongPtr (hWnd, GWLP_USERDATA, (LONG_PTR)view);
+		SendMessage (view, WM_SETFONT, (WPARAM)GetStockObject (DEFAULT_GUI_FONT), FALSE);
+		SendMessage (view, EM_SETREADONLY, TRUE, 0);
+		return 0;
+	}
+	return DefWindowProc (hWnd, msg, wParam, lParam);
+}
+
+void I_HideLogWindow ()
+{
+	if (ConWindow != NULL && 0)
+	{
+		ShowWindow (ConWindow, SW_HIDE);
 	}
 }
 
@@ -280,6 +329,20 @@ void DoMain (HINSTANCE hInstance)
 		if (!Window)
 			I_FatalError ("Could not open window");
 
+		WndClass.lpfnWndProc = LConProc;
+		WndClass.lpszClassName = (LPCTSTR)ConClassName;
+		if (RegisterClass ((LPWNDCLASS)&WndClass))
+		{
+			ConWindow = CreateWindowEx (
+				WS_EX_PALETTEWINDOW & (~WS_EX_TOPMOST),
+				(LPCTSTR)ConClassName,
+				(LPCTSTR) "ZDoom Startup Viewer",
+				WS_OVERLAPPEDWINDOW/* | WS_VISIBLE*/,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				512, 384,
+				Window, NULL, hInstance, NULL);
+		}
+
 		if (kernel != 0)
 		{
 			typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
@@ -325,6 +388,10 @@ void DoMain (HINSTANCE hInstance)
 	{
 		I_ShutdownHardware ();
 		SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
+		if (ConWindow != NULL)
+		{
+			ShowWindow (ConWindow, SW_SHOW);
+		}
 		if (error.GetMessage ())
 			MessageBox (Window, error.GetMessage(),
 				"ZDOOM Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);

@@ -495,7 +495,7 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 	const msecnode_t *m;
 	const sector_t *sec;
 
-	if (mo->flags2 & MF2_FLY)
+	if (mo->flags2 & MF2_FLY && mo->flags & MF_NOGRAVITY)
 	{
 		friction = FRICTION_FLY;
 	}
@@ -1418,7 +1418,7 @@ void P_FakeZMovement (AActor *mo)
 				mo->z += FLOATSPEED;
 		}
 	}
-	if (mo->player && mo->flags2&MF2_FLY && (mo->z > mo->floorz))
+	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->z > mo->floorz))
 	{
 		mo->z += finesine[(FINEANGLES/80*level.time)&FINEMASK]/8;
 	}
@@ -1529,11 +1529,11 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		if (!(thing->flags & MF_TELEPORT)
 			&& tmceilingz - thing->z < thing->height
 			&& !(thing->flags3 & MF3_CEILINGHUGGER)
-			&& !(thing->flags2 & MF2_FLY))
+			&& (!(thing->flags2 & MF2_FLY) || !(thing->flags & MF_NOGRAVITY)))
 		{
 			goto pushline;		// mobj must lower itself to fit
 		}
-		if (thing->flags2 & MF2_FLY)
+		if (thing->flags2 & MF2_FLY && thing->flags & MF_NOGRAVITY)
 		{
 #if 1
 			if (thing->z+thing->height > tmceilingz)
@@ -3019,6 +3019,8 @@ BOOL PTR_UseTraverse (intercept_t *in)
 		}
 		if (in->d.thing->Conversation != NULL)
 		{
+			// Give the NPC a chance to play a brief animation
+			in->d.thing->ConversationAnimation (0);
 			P_StartConversation (in->d.thing, usething);
 			return false;
 		}

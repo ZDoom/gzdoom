@@ -270,7 +270,10 @@ int I_PlayMovie (const char *name)
 		goto bomb3;
 	}
 
-	I_MovieDisableSound ();
+	if (GSnd != NULL)
+	{
+		GSnd->MovieDisableSound ();
+	}
 	returnSound = true;
 
 	CheckIfVideo ();
@@ -382,7 +385,10 @@ bomb2:
 
 	if (returnSound)
 	{
-		I_MovieResumeSound ();
+		if (GSnd != NULL)
+		{
+			GSnd->MovieResumeSound ();
+		}
 		C_FlushDisplay ();
 	}
 	if (runningFull)

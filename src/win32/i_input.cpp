@@ -793,13 +793,16 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 			}
 
-			if (!oldstate && SessionState)
+			if(GSnd != NULL)
 			{
-				I_MovieDisableSound ();
-			}
-			else if (oldstate && !SessionState)
-			{
-				I_MovieResumeSound ();
+				if (!oldstate && SessionState)
+				{
+					GSnd->MovieDisableSound ();
+				}
+				else if (oldstate && !SessionState)
+				{
+					GSnd->MovieResumeSound ();
+				}
 			}
 #ifdef _DEBUG
 			char foo[256];

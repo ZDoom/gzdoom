@@ -172,7 +172,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	{
 		if (player)
 		{
-			if (thing->flags2 & MF2_FLY && aboveFloor)
+			if (thing->flags & MF_NOGRAVITY && aboveFloor)
 			{
 				z = floorheight + aboveFloor;
 				if (z + thing->height > ceilingheight)

@@ -492,7 +492,7 @@ DHUDMessageFadeInOut::DHUDMessageFadeInOut (const char *text, float x, float y,
 	: DHUDMessageFadeOut (text, x, y, hudwidth, hudheight, textColor, holdTime, fadeOutTime)
 {
 	FadeInTics = (int)(fadeInTime * TICRATE);
-	State = 0;
+	State = FadeInTics == 0;
 }
 
 //============================================================================

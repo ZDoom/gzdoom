@@ -599,14 +599,119 @@ void P_NewChaseDir (AActor *actor)
 void P_RandomChaseDir (AActor *actor)
 {
 	dirtype_t olddir, turnaround;
-	int tdir;
+	int tdir, i;
 
 	olddir = (dirtype_t)actor->movedir;
 	turnaround = opposite[olddir];
+	int turndir;
 
+	// Friendly monsters like to head toward a player
+	if (actor->flags & MF_FRIENDLY)
+	{
+		AActor *player;
+		fixed_t deltax, deltay;
+		dirtype_t d[3];
+
+		if (actor->FriendPlayer != 0)
+		{
+			player = players[actor->FriendPlayer - 1].mo;
+		}
+		else
+		{
+			if (!multiplayer)
+			{
+				i = 0;
+			}
+			else for (i = pr_newchasedir() & (MAXPLAYERS-1); !playeringame[i]; i = (i+1) & (MAXPLAYERS-1))
+			{
+			}
+			player = players[i].mo;
+		}
+
+		if (pr_newchasedir() & 1 || !P_CheckSight (actor, player))
+		{
+			deltax = player->x - actor->x;
+			deltay = player->y - actor->y;
+
+			if (deltax>128*FRACUNIT)
+				d[1]= DI_EAST;
+			else if (deltax<-128*FRACUNIT)
+				d[1]= DI_WEST;
+			else
+				d[1]=DI_NODIR;
+
+			if (deltay<-128*FRACUNIT)
+				d[2]= DI_SOUTH;
+			else if (deltay>128*FRACUNIT)
+				d[2]= DI_NORTH;
+			else
+				d[2]=DI_NODIR;
+
+			// try direct route
+			if (d[1] != DI_NODIR && d[2] != DI_NODIR)
+			{
+				actor->movedir = diags[((deltay<0)<<1) + (deltax>0)];
+				if (actor->movedir != turnaround && P_TryWalk(actor))
+					return;
+			}
+
+			// try other directions
+			if (pr_newchasedir() > 200 || abs(deltay) > abs(deltax))
+			{
+				swap (d[1], d[2]);
+			}
+
+			if (d[1] == turnaround)
+				d[1] = DI_NODIR;
+			if (d[2] == turnaround)
+				d[2] = DI_NODIR;
+				
+			if (d[1] != DI_NODIR)
+			{
+				actor->movedir = d[1];
+				if (P_TryWalk (actor))
+				{
+					// either moved forward or attacked
+					return;
+				}
+			}
+
+			if (d[2] != DI_NODIR)
+			{
+				actor->movedir = d[2];
+				if (P_TryWalk (actor))
+					return;
+			}
+		}
+	}
+
+	// If the actor elects to continue in its current direction, let it do
+	// so unless the way is blocked. Then it must turn.
+	if (pr_newchasedir() < 150)
+	{
+		if (P_TryWalk (actor))
+			return;
+	}
+
+	turndir = (pr_newchasedir() & 1) ? -1 : 1;
+
+	if (olddir == DI_NODIR)
+	{
+		olddir = (dirtype_t)(pr_newchasedir() & 7);
+	}
+	for (tdir = (olddir + turndir) & 7; tdir != olddir; tdir = (tdir + turndir) & 7)
+	{
+		if (tdir != turnaround)
+		{
+			actor->movedir = tdir;
+			if (P_TryWalk (actor))
+				return;
+		}
+	}
+/*
 	if (pr_newchasedir() & 1)
 	{
-		for (tdir = DI_EAST; tdir <= DI_SOUTHEAST; ++tdir)
+		for (tdir = olddir; tdir <= DI_SOUTHEAST; ++tdir)
 		{
 			if (tdir != turnaround)
 			{
@@ -628,7 +733,7 @@ void P_RandomChaseDir (AActor *actor)
 			}
 		}
 	}
-
+*/
 	if (turnaround != DI_NODIR)
 	{
 		actor->movedir = turnaround;
@@ -1093,7 +1198,7 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 					return true;
 				}
 			}
-			return false;
+			return actor->target == actor->goal && actor->goal != NULL;
 		}
 
 		player = &players[pnum];
@@ -1427,6 +1532,33 @@ void A_Chase (AActor *actor)
 	if (actor->target && actor->target != actor->goal && actor->target->health <= 0)
 		actor->target = NULL;
 
+	// [RH] Friendly monsters will consider chasing whoever hurts a player if they
+	// don't already have a target.
+	if (actor->flags & MF_FRIENDLY && actor->target == NULL)
+	{
+		player_t *player;
+
+		if (actor->FriendPlayer != 0)
+		{
+			player = &players[actor->FriendPlayer - 1];
+		}
+		else
+		{
+			int i;
+			if (!multiplayer)
+			{
+				i = 0;
+			}
+			else for (i = pr_newchasedir() & (MAXPLAYERS-1); !playeringame[i]; i = (i+1) & (MAXPLAYERS-1))
+			{
+			}
+			player = &players[i];
+		}
+		if (player->attacker && player->attacker->health > 0 && player->attacker->flags & MF_SHOOTABLE && pr_newchasedir() < 80)
+		{
+			actor->target = player->attacker;
+		}
+	}
 	if (!actor->target || !(actor->target->flags & MF_SHOOTABLE))
 	{ // look for a new target
 		if (P_LookForPlayers (actor, true) && actor->target != actor->goal)
@@ -1711,6 +1843,7 @@ AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int c
 		}
 		mo = Spawn (type, source->x, source->y, spawnz);
 		mo->flags |= MF_DROPPED;
+		mo->flags &= ~MF_NOGRAVITY;	// [RH] Make sure it is affected by gravity
 		if (mo->IsKindOf (RUNTIME_CLASS(AInventory)))
 		{
 			if (special > 0)
@@ -1843,8 +1976,11 @@ bool CheckBossDeath (AActor *actor)
 
 	while ( (other = iterator.Next ()) )
 	{
-		if (other != actor && other->health > 0 && other->GetClass() == actor->GetClass())
+		if (other != actor &&
+			(other->health > 0 || (other->flags & MF_ICECORPSE))
+			&& other->GetClass() == actor->GetClass())
 		{ // Found a living boss
+		  // [RH] Frozen bosses don't count as dead until they shatter
 			return false;
 		}
 	}

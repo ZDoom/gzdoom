@@ -1,0 +1,11 @@
+include "xlat/doomxlat.txt"
+
+  7 = USE,				Stairs_BuildUpDoom (tag, F_SLOW, 8)
+  8 = WALK,				Stairs_BuildUpDoom (tag, F_SLOW, 8)
+ 10 = WALK,				Plat_DownWaitUpStayLip (tag, P_FAST, PLATWAIT, 0)
+ 88 = WALK|REP,			Plat_DownWaitUpStayLip (tag, P_FAST, PLATWAIT, 0)
+ 99 = 0,				Scroll_Texture_Right (SCROLL_UNIT)
+100 = WALK|REP,			Door_Raise (tag, D_SLOW*3, VDOORWAIT)
+105 = WALK,				Exit_Secret (0)
+106 = WALK,				Stairs_BuildUpDoom (tag, F_SLOW, 16)
+107 = USE,				Stairs_BuildUpDoom (tag, F_SLOW, 16)

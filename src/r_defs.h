@@ -605,6 +605,7 @@ public:
 	BYTE bWorldPanning:1;	// Texture is panned in world units rather than texels
 	BYTE bMasked:1;			// Texture (might) have holes
 	BYTE bAlphaTexture:1;	// Texture is an alpha channel without color information
+	BYTE bHasCanvas:1;		// Texture is based off FCanvasTexture
 
 	WORD Rotations;
 
@@ -733,9 +734,9 @@ public:
 	int AddPatch (const char *patchname, int namespc=0);
 
 	// Replaces one texture with another. The new texture will be assigned
-	// the same name, slot, and use type as the texture as it is replacing.
+	// the same name, slot, and use type as the texture it is replacing.
 	// The old texture will no longer be managed. Set free true if you want
-	// the old texture to be deleted or set it false if you it texture to
+	// the old texture to be deleted or set it false if you want it to
 	// be left alone in memory. You will still need to delete it at some
 	// point, because the texture manager no longer knows about it.
 	// This function can be used for such things as warping textures.
@@ -773,18 +774,20 @@ struct vissprite_t
 	fixed_t			startfrac;		// horizontal position of x1
 	fixed_t			xscale, yscale;
 	fixed_t			xiscale;		// negative if flipped
-	fixed_t			depth;
+	fixed_t			idepth;			// 1/z
 	fixed_t			texturemid;
 	DWORD			AlphaColor;
 	lighttable_t	*colormap;
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
+	sector_t		*sector;		// [RH] sector this sprite is in
 	fixed_t			alpha;
 	fixed_t			floorclip;
 	FTexture		*pic;
 	short 			renderflags;
+	WORD			Translation;	// [RH] for color translation
 	BYTE			RenderStyle;
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
-	WORD			Translation;	// [RH] for color translation
+	BYTE			bSplitSprite;	// [RH] Sprite was split by a drawseg
 };
 
 enum

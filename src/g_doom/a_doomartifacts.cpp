@@ -83,9 +83,10 @@ FState ASoulsphere::States[] =
 
 IMPLEMENT_ACTOR (ASoulsphere, Doom, 2013, 25)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_MaxAmount (0)
 	PROP_SpawnState (0)
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 // Mega sphere --------------------------------------------------------------
@@ -140,6 +141,7 @@ class ABerserk : public APowerupGiver
 public:
 	virtual bool Use (bool pickup)
 	{
+		P_GiveBody (Owner->player, -100);
 		if (Super::Use (pickup))
 		{
 			const TypeInfo *fistType = TypeInfo::FindType ("Fist");
@@ -278,12 +280,6 @@ protected:
 	{
 		return GStrings(GOTMAP);
 	}
-	void PlayPickupSound (AActor *toucher)
-	{
-		S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-			toucher == NULL || toucher == players[consoleplayer].camera
-			? ATTN_SURROUND : ATTN_NORM);
-	}
 };
 
 FState AAllmap::States[] =
@@ -298,7 +294,8 @@ FState AAllmap::States[] =
 
 IMPLEMENT_ACTOR (AAllmap, Doom, 2026, 137)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_Inventory_FlagsSet (IF_ALWAYSPICKUP)
+	PROP_Inventory_FlagsSet (IF_ALWAYSPICKUP|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_MaxAmount (0)
 	PROP_SpawnState (0)
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS

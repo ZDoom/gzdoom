@@ -59,7 +59,7 @@ void ASecretTrigger::PostBeginPlay ()
 
 void ASecretTrigger::Activate (AActor *activator)
 {
-	if (activator == players[consoleplayer].camera)
+	if (activator->CheckLocalView (consoleplayer))
 	{
 		if (args[0] <= 1)
 		{

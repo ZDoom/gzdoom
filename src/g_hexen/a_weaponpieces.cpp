@@ -17,6 +17,7 @@ IMPLEMENT_POINTY_CLASS (AFourthWeaponPiece)
 END_POINTERS
 
 BEGIN_STATELESS_DEFAULTS (AFourthWeaponPiece, Hexen, -1, 0)
+	PROP_Inventory_PickupSound ("misc/w_pkup")
 END_DEFAULTS
 
 void AFourthWeaponPiece::Serialize (FArchive &arc)
@@ -64,7 +65,7 @@ void AFourthWeaponPiece::PlayPickupSound (AActor *toucher)
 	}
 	else
 	{
-		S_Sound (toucher, CHAN_PICKUP, "misc/w_pkup", 1, ATTN_NORM);
+		Super::PlayPickupSound (toucher);
 	}
 }
 
@@ -132,7 +133,7 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 
 			if (PieceValue & mask)
 			{
-				if (players[consoleplayer].camera == toucher)
+				if (toucher->CheckLocalView (consoleplayer))
 				{
 					StatusBar->SetInteger (0, i);
 				}

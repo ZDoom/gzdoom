@@ -304,7 +304,7 @@ void S_Init ()
 	S_ParseSndSeq ();
 
 	// Allocating the virtual channels
-	numChannels = I_SetChannels (snd_channels);
+	numChannels = GSnd ? GSnd->SetChannels (snd_channels) : 0;
 	if (Channel != NULL)
 	{
 		delete[] Channel;
@@ -375,36 +375,39 @@ void S_PrecacheLevel ()
 {
 	size_t i;
 
-	for (i = 0; i < S_sfx.Size(); ++i)
+	if (GSnd)
 	{
-		S_sfx[i].bUsed = false;
-	}
-
-	AActor *actor;
-	TThinkerIterator<AActor> iterator;
-
-	while ( (actor = iterator.Next ()) != NULL )
-	{
-		S_sfx[actor->SeeSound].bUsed = true;
-		S_sfx[actor->AttackSound].bUsed = true;
-		S_sfx[actor->PainSound].bUsed = true;
-		S_sfx[actor->DeathSound].bUsed = true;
-		S_sfx[actor->ActiveSound].bUsed = true;
-		S_sfx[actor->UseSound].bUsed = true;
-	}
-
-	for (i = 1; i < S_sfx.Size(); ++i)
-	{
-		if (S_sfx[i].bUsed)
+		for (i = 0; i < S_sfx.Size(); ++i)
 		{
-			S_CacheSound (&S_sfx[i]);
+			S_sfx[i].bUsed = false;
 		}
-	}
-	for (i = 1; i < S_sfx.Size(); ++i)
-	{
-		if (!S_sfx[i].bUsed && S_sfx[i].link == sfxinfo_t::NO_LINK)
+
+		AActor *actor;
+		TThinkerIterator<AActor> iterator;
+
+		while ( (actor = iterator.Next ()) != NULL )
 		{
-			I_UnloadSound (&S_sfx[i]);
+			S_sfx[actor->SeeSound].bUsed = true;
+			S_sfx[actor->AttackSound].bUsed = true;
+			S_sfx[actor->PainSound].bUsed = true;
+			S_sfx[actor->DeathSound].bUsed = true;
+			S_sfx[actor->ActiveSound].bUsed = true;
+			S_sfx[actor->UseSound].bUsed = true;
+		}
+
+		for (i = 1; i < S_sfx.Size(); ++i)
+		{
+			if (S_sfx[i].bUsed)
+			{
+				S_CacheSound (&S_sfx[i]);
+			}
+		}
+		for (i = 1; i < S_sfx.Size(); ++i)
+		{
+			if (!S_sfx[i].bUsed && S_sfx[i].link == sfxinfo_t::NO_LINK)
+			{
+				GSnd->UnloadSound (&S_sfx[i]);
+			}
 		}
 	}
 }
@@ -417,22 +420,25 @@ void S_PrecacheLevel ()
 
 void S_CacheSound (sfxinfo_t *sfx)
 {
-	if (sfx->bPlayerReserve)
+	if (GSnd)
 	{
-		return;
-	}
-	else if (sfx->bRandomHeader)
-	{
-		S_CacheRandomSound (sfx);
-	}
-	else
-	{
-		while (sfx->link != sfxinfo_t::NO_LINK)
+		if (sfx->bPlayerReserve)
 		{
-			sfx = &S_sfx[sfx->link];
+			return;
 		}
-		sfx->bUsed = true;
-		I_LoadSound (sfx);
+		else if (sfx->bRandomHeader)
+		{
+			S_CacheRandomSound (sfx);
+		}
+		else
+		{
+			while (sfx->link != sfxinfo_t::NO_LINK)
+			{
+				sfx = &S_sfx[sfx->link];
+			}
+			sfx->bUsed = true;
+			GSnd->LoadSound (sfx);
+		}
 	}
 }
 
@@ -485,7 +491,7 @@ void CalcPosVel (fixed_t *pt, AActor *mover, int constz,
 //==========================================================================
 
 static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
-	int sound_id, float volume, float attenuation, BOOL looping)
+	int sound_id, float volume, float attenuation, bool looping)
 {
 	sfxinfo_t *sfx;
 	int dist, vol;
@@ -500,7 +506,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	static int sndcount = 0;
 	int chan;
 
-	if (sound_id <= 0 || volume <= 0)
+	if (sound_id <= 0 || volume <= 0 || GSnd == NULL)
 		return;
 
 	org_id = sound_id;
@@ -592,7 +598,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	
 	if (!sfx->data)
 	{
-		I_LoadSound (sfx);
+		GSnd->LoadSound (sfx);
 		if (sfx->link != sfxinfo_t::NO_LINK)
 		{
 			sfx = &S_sfx[sfx->link];
@@ -768,7 +774,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		Channel[i].pitch = NORM_PITCH;
 	}
 
-	if (Sound3D && attenuation > 0)
+	if (GSnd->Sound3D && attenuation > 0)
 	{
 		float pos[3];
 		float vel[3];
@@ -785,13 +791,13 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 			pt2[2] = z;
 			CalcPosVel (pt2, mover, chanflags & CHAN_LISTENERZ,  pos, vel);
 		}
-		Channel[i].handle = I_StartSound3D (sfx, volume, Channel[i].pitch, i, looping, pos, vel);
+		Channel[i].handle = GSnd->StartSound3D (sfx, volume, Channel[i].pitch, i, looping, pos, vel);
 		Channel[i].is3d = true;
 		Channel[i].constz = !!(chanflags & CHAN_LISTENERZ);
 	}
 	else
 	{
-		Channel[i].handle = I_StartSound (sfx, vol, sep, Channel[i].pitch, i, looping);
+		Channel[i].handle = GSnd->StartSound (sfx, vol, sep, Channel[i].pitch, i, looping);
 		Channel[i].is3d = false;
 		Channel[i].constz = true;
 	}
@@ -874,7 +880,7 @@ void S_LoopedSoundID (fixed_t *pt, int channel, int sound_id, float volume, int 
 //==========================================================================
 
 void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
-	const char *name, float volume, float attenuation, BOOL looping)
+	const char *name, float volume, float attenuation, bool looping)
 {
 	int sfx_id;
 	
@@ -1173,6 +1179,9 @@ void S_UpdateSounds (void *listener_p)
 	angle_t angle;
 	int sep;
 
+	if (GSnd == NULL)
+		return;
+
 	listener = listener_p ? &((AActor *)listener_p)->x : NULL;
 
 	// [RH] Update playlist
@@ -1189,12 +1198,12 @@ void S_UpdateSounds (void *listener_p)
 		if (!Channel[i].sfxinfo)
 			continue;
 
-		if (!I_SoundIsPlaying (Channel[i].handle))
+		if (!GSnd->IsPlayingSound (Channel[i].handle))
 		{
 			S_StopChannel (i);
 		}
 		if (Channel[i].sound_id == -1 ||
-			(Channel[i].pt == listener && !Sound3D) ||
+			(Channel[i].pt == listener && !GSnd->Sound3D) ||
 			Channel[i].attenuation <= 0)
 		{
 			continue;
@@ -1252,13 +1261,13 @@ void S_UpdateSounds (void *listener_p)
 			}
 			if (!Channel[i].is3d)
 			{
-				I_UpdateSoundParams (Channel[i].handle, vol, sep, Channel[i].pitch);
+				GSnd->UpdateSoundParams (Channel[i].handle, vol, sep, Channel[i].pitch);
 			}
 			else
 			{
 				float pos[3], vel[3];
 				CalcPosVel (Channel[i].pt, Channel[i].mover, Channel[i].constz, pos, vel);
-				I_UpdateSoundParams3D (Channel[i].handle, pos, vel);
+				GSnd->UpdateSoundParams3D (Channel[i].handle, pos, vel);
 			}
 			Channel[i].priority = Channel[i].basepriority * (PRIORITY_MAX_ADJUST-(dist/DIST_ADJUST));
 		}
@@ -1266,12 +1275,12 @@ void S_UpdateSounds (void *listener_p)
 
 	SN_UpdateActiveSequences ();
 
-	if (Sound3D && players[consoleplayer].camera)
+	if (GSnd->Sound3D && players[consoleplayer].camera)
 	{
-		I_UpdateListener (players[consoleplayer].camera);
+		GSnd->UpdateListener (players[consoleplayer].camera);
 	}
 
-	I_UpdateSounds ();
+	GSnd->UpdateSounds ();
 }
 
 //==========================================================================
@@ -1517,7 +1526,7 @@ static void S_StopChannel (int cnum)
 	if (c->sfxinfo)
 	{
 		// stop the sound playing
-		I_StopSound (c->handle);
+		if (GSnd != NULL) GSnd->StopSound (c->handle);
 
 		// check to see
 		//	if other channels are playing the sound

@@ -10,6 +10,7 @@ public:
 	~FLACSampleLoader ();
 
 	FSOUND_SAMPLE *LoadSample (unsigned int samplemode);
+	BYTE *ReadSample (SDWORD *numbytes);
 
 	unsigned NumChannels, SampleBits, SampleRate, NumSamples;
 

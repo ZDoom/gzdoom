@@ -17,7 +17,6 @@ class AArtiTeleport : public AInventory
 public:
 	bool Use (bool pickup);
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiTeleport::States[] =
@@ -33,8 +32,9 @@ IMPLEMENT_ACTOR (AArtiTeleport, Raven, 36, 18)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIATLP")
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 bool AArtiTeleport::Use (bool pickup)
@@ -60,7 +60,7 @@ bool AArtiTeleport::Use (bool pickup)
 	P_Teleport (Owner, destX, destY, ONFLOORZ, destAngle, true, true, false);
 	if (gameinfo.gametype == GAME_Hexen && Owner->player->morphTics)
 	{ // Teleporting away will undo any morph effects (pig)
-		P_UndoPlayerMorph (player);
+		P_UndoPlayerMorph (Owner->player);
 	}
 	if (gameinfo.gametype == GAME_Heretic)
 	{ // Full volume laugh
@@ -72,13 +72,6 @@ bool AArtiTeleport::Use (bool pickup)
 const char *AArtiTeleport::PickupMessage ()
 {
 	return GStrings(TXT_ARTITELEPORT);
-}
-
-void AArtiTeleport::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-		toucher == NULL || toucher == players[consoleplayer].camera
-		? ATTN_SURROUND : ATTN_NORM);
 }
 
 //---------------------------------------------------------------------------

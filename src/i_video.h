@@ -39,7 +39,7 @@ bool I_CheckResolution (int width, int height, int bpp);
 void I_ClosestResolution (int *width, int *height, int bits);
 
 void I_StartModeIterator (int bits);
-bool I_NextMode (int *width, int *height);
+bool I_NextMode (int *width, int *height, bool *fullscreen);
 
 DCanvas *I_NewStaticCanvas (int width, int height);
 

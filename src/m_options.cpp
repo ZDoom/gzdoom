@@ -3,7 +3,7 @@
 ** New options menu code
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2002 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -595,13 +595,47 @@ EXTERN_CVAR (Bool, fullscreen)
 
 static value_t Depths[22];
 
+EXTERN_CVAR (Bool, vid_tft)		// Defined below
+CUSTOM_CVAR (Int, menu_screenratios, 0, CVAR_ARCHIVE)
+{
+	if (self < 0 || self > 4)
+	{
+		self = 3;
+	}
+	else if (self == 4 && !vid_tft)
+	{
+		self = 3;
+	}
+	else
+	{
+		BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+	}
+}
+
+static value_t Ratios[] =
+{
+	{ 0.0, "4:3" },
+	{ 1.0, "16:9" },
+	{ 2.0, "16:10" },
+	{ 3.0, "All" }
+};
+static value_t RatiosTFT[] =
+{
+	{ 0.0, "4:3" },
+	{ 4.0, "5:4" },
+	{ 1.0, "16:9" },
+	{ 2.0, "16:10" },
+	{ 3.0, "All" }
+};
+
 static char VMEnterText[] = "Press ENTER to set mode";
 static char VMTestText[] = "T to test mode for 5 seconds";
 
 static menuitem_t ModesItems[] = {
-	{ discrete, "Screen mode",			{&DummyDepthCvar},		{0.0}, {0.0},	{0.0}, {Depths} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+//	{ discrete, "Screen mode",			{&DummyDepthCvar},		{0.0}, {0.0},	{0.0}, {Depths} },
+	{ discrete, "Aspect ratio",			{&menu_screenratios},	{4.0}, {0.0},	{0.0}, {Ratios} },
 	{ discrete, "Fullscreen",			{&fullscreen},			{2.0}, {0.0},	{0.0}, {YesNo} },
+	{ discrete, "Monitor is a TFT display", {&vid_tft},			{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
@@ -612,13 +646,15 @@ static menuitem_t ModesItems[] = {
 	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ whitetext,"Note: Only 8 bpp modes are supported",{NULL},	{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+//	{ whitetext,"Note: Only 8 bpp modes are supported",{NULL},	{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,  VMEnterText,			{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,  VMTestText,				{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 };
 
 #define VM_DEPTHITEM	0
+#define VM_ASPECTITEM	0
 #define VM_RESSTART		4
 #define VM_ENTERLINE	14
 #define VM_TESTLINE		16
@@ -628,9 +664,28 @@ menu_t ModesMenu =
 	"VIDEO MODE",
 	2,
 	17,
-	130,
+	0,
 	ModesItems,
 };
+
+CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE)
+{
+	if (self)
+	{
+		ModesItems[VM_ASPECTITEM].b.numvalues = 5.f;
+		ModesItems[VM_ASPECTITEM].e.values = RatiosTFT;
+	}
+	else
+	{
+		ModesItems[VM_ASPECTITEM].b.numvalues = 4.f;
+		ModesItems[VM_ASPECTITEM].e.values = Ratios;
+		if (menu_screenratios == 4.f)
+		{
+			menu_screenratios = 0.f;
+		}
+	}
+	BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+}
 
 /*=======================================
  *
@@ -877,7 +932,7 @@ void M_OptInit (void)
 	for (i = 1; i < 32; i++)
 	{
 		I_StartModeIterator (i);
-		if (I_NextMode (&dummy1, &dummy2))
+		if (I_NextMode (&dummy1, &dummy2, NULL))
 		{
 			Depths[currval].value = currval;
 			sprintf (name, "%d bit", i);
@@ -887,7 +942,7 @@ void M_OptInit (void)
 		}
 	}
 
-	ModesItems[VM_DEPTHITEM].b.min = (float)currval;
+	//ModesItems[VM_DEPTHITEM].b.min = (float)currval;
 
 	switch (I_DisplayType ())
 	{
@@ -983,7 +1038,7 @@ static void CalcIndent (menu_t *menu)
 	for (i = 0; i < menu->numitems; i++)
 	{
 		item = menu->items + i;
-		if (item->type != whitetext && item->type != redtext)
+		if (item->type != whitetext && item->type != redtext && item->type != screenres)
 		{
 			thiswidth = SmallFont->StringWidth (item->label);
 			if (thiswidth > widest)
@@ -1299,22 +1354,16 @@ void M_OptDrawer ()
 			{
 				switch (x)
 				{
-				case 0:
-					str = item->b.res1;
-					break;
-				case 1:
-					str = item->c.res2;
-					break;
-				case 2:
-					str = item->d.res3;
-					break;
+				case 0: str = item->b.res1; break;
+				case 1: str = item->c.res2; break;
+				case 2: str = item->d.res3; break;
 				}
 				if (str)
 				{
 					if (x == item->e.highlight)
-						color = ValueColor;
+ 						color = CR_GOLD;	//ValueColor;
 					else
-						color = LabelColor;
+						color = CR_BRICK;	//LabelColor;
 
 					screen->DrawText (color, 104 * x + 20, y, str, DTA_Clean, true, TAG_DONE);
 				}
@@ -2183,7 +2232,17 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 	char strtemp[32], **str;
 	int	 i, c;
 	int	 width, height, showbits;
+	bool letterbox;
+	int  ratiomatch;
 
+	if (menu_screenratios >= 0 && menu_screenratios <= 4 && menu_screenratios != 3)
+	{
+		ratiomatch = menu_screenratios;
+	}
+	else
+	{
+		ratiomatch = -1;
+	}
 	showbits = BitTranslate[DummyDepthCvar];
 
 	I_StartModeIterator (showbits);
@@ -2193,24 +2252,25 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 		ModesItems[i].e.highlight = -1;
 		for (c = 0; c < 3; c++)
 		{
-			if (c == 0)
+			bool haveMode;
+
+			switch (c)
 			{
-				str = &ModesItems[i].b.res1;
+			case 0: str = &ModesItems[i].b.res1; break;
+			case 1: str = &ModesItems[i].c.res2; break;
+			case 2: str = &ModesItems[i].d.res3; break;
 			}
-			else if (c == 1)
+			while ((haveMode = I_NextMode (&width, &height, &letterbox)) &&
+				(ratiomatch >= 0 && CheckRatio (width, height) != ratiomatch))
 			{
-				str = &ModesItems[i].c.res2;
 			}
-			else
-			{
-				str = &ModesItems[i].d.res3;
-			}
-			if (I_NextMode (&width, &height))
+
+			if (haveMode)
 			{
 				if (/* hi_bits == showbits && */ width == hiwidth && height == hiheight)
 					ModesItems[i].e.highlight = ModesItems[i].a.selmode = c;
 				
-				sprintf (strtemp, "%dx%d", width, height);
+				sprintf (strtemp, "%dx%d%s", width, height, letterbox?TEXTCOLOR_BROWN" LB":"");
 				ReplaceString (str, strtemp);
 			}
 			else
@@ -2232,24 +2292,28 @@ void M_RefreshModesList ()
 
 static BOOL GetSelectedSize (int line, int *width, int *height)
 {
-	int i, stopat;
-
 	if (ModesItems[line].type != screenres)
 	{
 		return false;
 	}
 	else
 	{
-		I_StartModeIterator (BitTranslate[DummyDepthCvar]);
+		char *res, *breakpt;
+		long x, y;
 
-		stopat = (line - VM_RESSTART) * 3 + ModesItems[line].a.selmode + 1;
+		switch (ModesItems[line].a.selmode)
+		{
+		case 0: res = ModesItems[line].b.res1; break;
+		case 1: res = ModesItems[line].c.res2; break;
+		case 2: res = ModesItems[line].d.res3; break;
+		}
+		x = strtol (res, &breakpt, 10);
+		y = strtol (breakpt+1, NULL, 10);
 
-		for (i = 0; i < stopat; i++)
-			if (!I_NextMode (width, height))
-				return false;
+		*width = x;
+		*height = y;
+		return true;
 	}
-
-	return true;
 }
 
 static int FindBits (int bits)

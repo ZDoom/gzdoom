@@ -672,10 +672,10 @@ CCMD (skins)
 // GAME FUNCTIONS
 //
 int				MaxVisSprites;
-vissprite_t 	*vissprites;
-vissprite_t		*firstvissprite;
-vissprite_t		*vissprite_p;
-vissprite_t		*lastvissprite;
+vissprite_t 	**vissprites;
+vissprite_t		**firstvissprite;
+vissprite_t		**vissprite_p;
+vissprite_t		**lastvissprite;
 int 			newvissprite;
 
 static void R_CreateSkinTranslation (const char *palname)
@@ -702,10 +702,6 @@ void R_InitSprites ()
 	size_t i;
 
 	clearbufshort (zeroarray, MAXWIDTH, 0);
-
-	MaxVisSprites = 128;	// [RH] This is the initial default value. It grows as needed.
-	firstvissprite = vissprites = (vissprite_t *)Malloc (MaxVisSprites * sizeof(vissprite_t));
-	lastvissprite = &vissprites[MaxVisSprites];
 
 	if (gameinfo.gametype == GAME_Doom)
 	{
@@ -811,16 +807,22 @@ vissprite_t *R_NewVisSprite (void)
 		ptrdiff_t firstvisspritenum = firstvissprite - vissprites;
 		ptrdiff_t prevvisspritenum = vissprite_p - vissprites;
 
-		MaxVisSprites *= 2;
-		vissprites = (vissprite_t *)Realloc (vissprites, MaxVisSprites * sizeof(vissprite_t));
+		MaxVisSprites = MaxVisSprites ? MaxVisSprites * 2 : 128;
+		vissprites = (vissprite_t **)Realloc (vissprites, MaxVisSprites * sizeof(vissprite_t));
 		lastvissprite = &vissprites[MaxVisSprites];
 		firstvissprite = &vissprites[firstvisspritenum];
 		vissprite_p = &vissprites[prevvisspritenum];
 		DPrintf ("MaxVisSprites increased to %d\n", MaxVisSprites);
+
+		// Allocate sprites from the new pile
+		for (vissprite_t **p = vissprite_p; p < lastvissprite; ++p)
+		{
+			*p = new vissprite_t;
+		}
 	}
 	
 	vissprite_p++;
-	return vissprite_p-1;
+	return *(vissprite_p-1);
 }
 
 
@@ -1222,14 +1224,15 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	// killough 3/27/98: save sector for special clipping later
 	vis->heightsec = heightsec;
+	vis->sector = thing->Sector;
 
 	vis->renderflags = thing->renderflags;
 	vis->RenderStyle = thing->RenderStyle;
 	vis->AlphaColor = thing->alphacolor;
 	vis->xscale = xscale;
 	vis->yscale = Scale (InvZtoScale, ((thing->yscale+1) * tex->ScaleY) << (6-3), tz);
-	vis->depth = tz;
-	vis->cx = tx2;
+	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;	// tz is 20.12, so idepth ought to be 12.20, but
+	vis->cx = tx2;									// signed math makes it 13.19
 	vis->gx = fx;
 	vis->gy = fy;
 	vis->gz = gzb;		// [RH] use gzb, not thing->z
@@ -1384,17 +1387,21 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		{
 			weapon = camera->player->ReadyWeapon;
 		}
-		if (weapon != NULL && weapon->YAdjust != 0 && pspnum <= ps_flash)
+		if (pspnum <= ps_flash)
 		{
-			if (RenderTarget != screen || realviewheight == RenderTarget->GetHeight())
+			if (weapon != NULL && weapon->YAdjust != 0)
 			{
-				vis->texturemid -= weapon->YAdjust;
+				if (RenderTarget != screen || realviewheight == RenderTarget->GetHeight())
+				{
+					vis->texturemid -= weapon->YAdjust;
+				}
+				else
+				{
+					vis->texturemid -= FixedMul (StatusBar->GetDisplacement (),
+						weapon->YAdjust);
+				}
 			}
-			else
-			{
-				vis->texturemid -= FixedMul (StatusBar->GetDisplacement (),
-					weapon->YAdjust);
-			}
+			vis->texturemid -= BaseRatioSizes[WidescreenRatio][2];
 		}
 	}
 	vis->x1 = x1 < 0 ? 0 : x1;
@@ -1539,22 +1546,155 @@ static vissprite_t **spritesorter;
 static int spritesortersize = 0;
 static int vsprcount;
 
+static drawseg_t **drawsegsorter;
+static int drawsegsortersize = 0;
+
+// Sort vissprites by depth, far to near
 static int STACK_ARGS sv_compare (const void *arg1, const void *arg2)
 {
-	int diff = (*(vissprite_t **)arg1)->depth - (*(vissprite_t **)arg2)->depth;
+	int diff = (*(vissprite_t **)arg2)->idepth - (*(vissprite_t **)arg1)->idepth;
+	// If two sprites are the same distance, then the higher one gets precedence
 	if (diff == 0)
 		return (*(vissprite_t **)arg2)->gzt - (*(vissprite_t **)arg1)->gzt;
 	return diff;
 }
 
-void R_SortVisSprites (void)
+#if 0
+// Sort vissprites by leftmost column, left to right
+static int STACK_ARGS sv_comparex (const void *arg1, const void *arg2)
+{
+	return (*(vissprite_t **)arg2)->x1 - (*(vissprite_t **)arg1)->x1;
+}
+
+// Sort drawsegs by rightmost column, left to right
+static int STACK_ARGS sd_comparex (const void *arg1, const void *arg2)
+{
+	return (*(drawseg_t **)arg2)->x2 - (*(drawseg_t **)arg1)->x2;
+}
+
+CVAR (Bool, r_splitsprites, true, CVAR_ARCHIVE)
+
+// Split up vissprites that intersect drawsegs
+void R_SplitVisSprites ()
+{
+	size_t start, stop;
+	size_t numdrawsegs = ds_p - firstdrawseg;
+	size_t numsprites;
+	size_t spr, dseg, dseg2;
+
+	if (!r_splitsprites)
+		return;
+
+	if (numdrawsegs == 0 || vissprite_p - firstvissprite == 0)
+		return;
+
+	// Sort drawsegs from left to right
+	if (numdrawsegs > drawsegsortersize)
+	{
+		if (drawsegsorter != NULL)
+			delete[] drawsegsorter;
+		drawsegsortersize = numdrawsegs * 2;
+		drawsegsorter = new drawseg_t *[drawsegsortersize];
+	}
+	for (dseg = dseg2 = 0; dseg < numdrawsegs; ++dseg)
+	{
+		// Drawsegs that don't clip any sprites don't need to be considered.
+		if (firstdrawseg[dseg].silhouette)
+		{
+			drawsegsorter[dseg2++] = &firstdrawseg[dseg];
+		}
+	}
+	numdrawsegs = dseg2;
+	if (numdrawsegs == 0)
+	{
+		return;
+	}
+	qsort (drawsegsorter, numdrawsegs, sizeof(drawseg_t *), sd_comparex);
+
+	// Now sort vissprites from left to right, and walk them simultaneously
+	// with the drawsegs, splitting any that intersect.
+	start = firstvissprite - vissprites;
+
+	int p = 0;
+	do
+	{
+		p++;
+		R_SortVisSprites (sv_comparex, start);
+		stop = vissprite_p - vissprites;
+		numsprites = stop - start;
+
+		spr = dseg = 0;
+		do
+		{
+			vissprite_t *vis = spritesorter[spr], *vis2;
+
+			// Skip drawsegs until we get to one that doesn't end before the sprite
+			// begins.
+			while (dseg < numdrawsegs && drawsegsorter[dseg]->x2 <= vis->x1)
+			{
+				dseg++;
+			}
+			// Now split the sprite against any drawsegs it intersects
+			for (dseg2 = dseg; dseg2 < numdrawsegs; dseg2++)
+			{
+				drawseg_t *ds = drawsegsorter[dseg2];
+
+				if (ds->x1 > vis->x2 || ds->x2 < vis->x1)
+					continue;
+
+				if ((vis->idepth < ds->siz1) != (vis->idepth < ds->siz2))
+				{ // The drawseg is crossed; find the x where the intersection occurs
+					int cross = Scale (vis->idepth - ds->siz1, ds->sx2 - ds->sx1, ds->siz2 - ds->siz1) + ds->sx1 + 1;
+
+/*					if (cross < ds->x1 || cross > ds->x2)
+					{ // The original seg is crossed, but the drawseg is not
+						continue;
+					}
+*/					if (cross <= vis->x1 || cross >= vis->x2)
+					{ // Don't create 0-sized sprites
+						continue;
+					}
+
+					vis->bSplitSprite = true;
+
+					// Create a new vissprite for the right part of the sprite
+					vis2 = R_NewVisSprite ();
+					*vis2 = *vis;
+					vis2->startfrac += vis2->xiscale * (cross - vis2->x1);
+					vis->x2 = cross-1;
+					vis2->x1 = cross;
+					//vis2->alpha /= 2;
+					//vis2->RenderStyle = STYLE_Add;
+
+					if (vis->idepth < ds->siz1)
+					{ // Left is in back, right is in front
+						vis->sector  = ds->curline->backsector;
+						vis2->sector = ds->curline->frontsector;
+					}
+					else
+					{ // Right is in front, left is in back
+						vis->sector  = ds->curline->frontsector;
+						vis2->sector = ds->curline->backsector;
+					}
+				}
+			}
+		}
+		while (dseg < numdrawsegs && ++spr < numsprites);
+
+		// Repeat for any new sprites that were added.
+	}
+	while (start = stop, stop != vissprite_p - vissprites);
+}
+#endif
+
+void R_SortVisSprites (int (STACK_ARGS *compare)(const void *, const void *), size_t first)
 {
 	int i;
-	vissprite_t *spr;
+	vissprite_t **spr;
 
-	vsprcount = vissprite_p - firstvissprite;
+	vsprcount = vissprite_p - &vissprites[first];
 
-	if (!vsprcount)
+	if (vsprcount == 0)
 		return;
 
 	if (spritesortersize < MaxVisSprites)
@@ -1567,10 +1707,10 @@ void R_SortVisSprites (void)
 
 	for (i = 0, spr = firstvissprite; i < vsprcount; i++, spr++)
 	{
-		spritesorter[i] = spr;
+		spritesorter[i] = *spr;
 	}
 
-	qsort (spritesorter, vsprcount, sizeof (vissprite_t *), sv_compare);
+	qsort (spritesorter, vsprcount, sizeof (vissprite_t *), compare);
 }
 
 
@@ -1598,6 +1738,10 @@ void R_DrawSprite (vissprite_t *spr)
 	if (spr->x1 > spr->x2)
 		return;
 
+	// [RH] Sprites split behind a one-sided line can also be discarded.
+	if (spr->sector == NULL)
+		return;
+
 	// [RH] Initialize the clipping arrays to their largest possible range
 	// instead of using a special "not clipped" value. This eliminates
 	// visual anomalies when looking down and should be faster, too.
@@ -1608,10 +1752,11 @@ void R_DrawSprite (vissprite_t *spr)
 	// Clip the sprite against deep water and/or fake ceilings.
 	// [RH] rewrote this to be based on which part of the sector is really visible
 
+	fixed_t scale = MulScale19 (InvZtoScale, spr->idepth);
+
 	if (spr->heightsec &&
 		!(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{ // only things in specially marked sectors
-		fixed_t scale = SafeDivScale12 (InvZtoScale, spr->depth);
 		if (spr->FakeFlatStat != FAKED_AboveCeiling)
 		{
 			fixed_t h = spr->heightsec->floorplane.ZatPoint (spr->gx, spr->gy);
@@ -1666,6 +1811,28 @@ void R_DrawSprite (vissprite_t *spr)
 		}
 	}
 
+#if 0
+	// [RH] Sprites that were split by a drawseg should also be clipped
+	// by the sector's floor and ceiling. (Not sure how/if to handle this
+	// with fake floors, since those already do clipping.)
+	if (spr->bSplitSprite &&
+		(spr->heightsec == NULL || (spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)))
+	{
+		fixed_t h = spr->sector->floorplane.ZatPoint (spr->gx, spr->gy);
+		h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
+		if (h < botclip)
+		{
+			botclip = MAX<short> (0, h);
+		}
+		h = spr->sector->ceilingplane.ZatPoint (spr->gx, spr->gy);
+		h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
+		if (h > topclip)
+		{
+			topclip = MIN<short> (h, viewheight);
+		}
+	}
+#endif
+
 	i = spr->x2 - spr->x1 + 1;
 	clip1 = clipbot + spr->x1;
 	clip2 = cliptop + spr->x1;
@@ -1698,10 +1865,20 @@ void R_DrawSprite (vissprite_t *spr)
 		r1 = MAX<int> (ds->x1, spr->x1);
 		r2 = MIN<int> (ds->x2, spr->x2);
 
-		if (ds->neardepth > spr->depth || (ds->fardepth > spr->depth &&
+		fixed_t nearidepth, faridepth;
+		if (ds->siz1 > ds->siz2)
+		{
+			nearidepth = ds->siz1, faridepth = ds->siz2;
+		}
+		else
+		{
+			nearidepth = ds->siz2, faridepth = ds->siz1;
+		}
+		// (siz2 - siz1)*(rx - sx1)/(sx2 - sx1)
+		// Lower values are further away
+		if (nearidepth < spr->idepth || (faridepth < spr->idepth &&
 			// Check if sprite is in front of draw seg:
-			DMulScale24 (spr->depth - ds->cy, ds->cdx,
-						 ds->cdy, ds->cx - spr->cx) < 0))
+			Scale (ds->siz2 - ds->siz1, (r1+r2)/2 - ds->sx1, ds->sx2 - ds->sx1) + ds->siz1 < spr->idepth))
 		{
 			// seg is behind sprite, so draw the mid texture if it has one
 			if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
@@ -1758,7 +1935,10 @@ void R_DrawMasked (void)
 	drawseg_t *ds;
 	int i;
 
-	R_SortVisSprites ();
+#if 0
+	R_SplitVisSprites ();
+#endif
+	R_SortVisSprites (sv_compare, firstvissprite - vissprites);
 
 	for (i = vsprcount; i > 0; i--)
 	{
@@ -1781,8 +1961,7 @@ void R_DrawMasked (void)
 		}
 	}
 	
-	// draw the psprites on top of everything
-	//	but does not draw on side views
+	// draw the psprites on top of everything but does not draw on side views
 	if (!viewangleoffset)
 	{
 		R_DrawPlayerSprites ();
@@ -1971,7 +2150,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->xscale = xscale;
 //	vis->yscale = FixedMul (xscale, InvZtoScale);
 	vis->yscale = xscale;
-	vis->depth = tz;
+	vis->idepth = (DWORD)DivScale32 (1, tz) >> 1;
 	vis->cx = tx;
 	vis->gx = particle->x;
 	vis->gy = particle->y;
@@ -2018,8 +2197,7 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 		{
 			continue;
 		}
-		if (DMulScale24 (vis->depth - ds->cy, ds->cdx,
-						 ds->cdy, ds->cx - vis->cx) < 0)
+		if (Scale (ds->siz2 - ds->siz1, (x2 + x1)/2 - ds->sx1, ds->sx2 - ds->sx1) + ds->siz1 < vis->idepth)
 		{
 			R_RenderMaskedSegRange (ds, MAX<int> (ds->x1, x1), MIN<int> (ds->x2, x2-1));
 		}

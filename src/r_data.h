@@ -26,6 +26,7 @@
 
 #include "r_defs.h"
 #include "r_state.h"
+#include "v_video.h"
 
 
 // A texture that doesn't really exist
@@ -232,7 +233,49 @@ protected:
 	void MakeTexture (DWORD time);
 };
 
+// A texture that can be drawn to.
+class DSimpleCanvas;
+class FCanvasTexture : public FTexture
+{
+public:
+	FCanvasTexture (const char *name, int width, int height);
+	~FCanvasTexture ();
 
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	bool CheckModified ();
+	void RenderView (AActor *viewpoint, int fov);
+
+protected:
+	DSimpleCanvas *Canvas;
+	BYTE *Pixels;
+	Span DummySpans[2];
+	BYTE bNeedsUpdate:1;
+	BYTE bDidUpdate:1;
+
+	void MakeTexture ();
+
+	friend struct FCanvasTextureInfo;
+};
+
+// This list keeps track of the cameras that draw into canvas textures.
+struct FCanvasTextureInfo
+{
+	FCanvasTextureInfo *Next;
+	AActor *Viewpoint;
+	FCanvasTexture *Texture;
+	int PicNum;
+	int FOV;
+
+	static void Add (AActor *viewpoint, int picnum, int fov);
+	static void UpdateAll ();
+	static void EmptyList ();
+	static void Serialize (FArchive &arc);
+
+private:
+	static FCanvasTextureInfo *List;
+};
 
 // I/O, setting up the stuff.
 void R_InitData (void);

@@ -96,11 +96,14 @@ inline FArchive &operator<< (FArchive &arc, vertex_t *&vert)
 	return arc.SerializePointer (vertexes, (BYTE **)&vert, sizeof(*vertexes));
 }
 
+inline FArchive &operator<< (FArchive &arc, side_t *&side)
+{
+	return arc.SerializePointer (sides, (BYTE **)&side, sizeof(*sides));
+}
+
 //
 // POV data.
 //
-extern fixed_t			viewx;
-extern fixed_t			viewy;
 extern fixed_t			viewz;
 extern angle_t			viewangle;
 

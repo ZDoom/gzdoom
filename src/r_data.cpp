@@ -61,6 +61,8 @@
 #include "cmdlib.h"
 #include "templates.h"
 
+extern float LastFOV;
+
 static void R_InitPatches ();
 
 // [RH] Just a format I invented to avoid WinTex's palette remapping
@@ -735,7 +737,7 @@ FTexture::FTexture ()
 : LeftOffset(0), TopOffset(0),
   WidthBits(0), HeightBits(0), ScaleX(8), ScaleY(8),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false),
+  bMasked(true), bAlphaTexture(false), bHasCanvas(false),
   Rotations(0xFFFF), Width(0xFFFF), Height(0), WidthMask(0)
 {
 }
@@ -2437,6 +2439,131 @@ void FWarpTexture::MakeTexture (DWORD time)
 			*dest++ = source[yf];
 		memcpy (Pixels+(x<<ybits), buffer, ysize);
 	}
+}
+
+
+FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
+{
+	strncpy (Name, name, 8);
+	Name[8] = 0;
+	Width = width;
+	Height = height;
+	LeftOffset = TopOffset = 0;
+	CalcBitSize ();
+
+	bMasked = false;
+	DummySpans[0].TopOffset = 0;
+	DummySpans[0].Length = height;
+	DummySpans[1].TopOffset = 0;
+	DummySpans[1].Length = 0;
+	UseType = TEX_Wall;
+	Canvas = NULL;
+	bNeedsUpdate = true;
+	bDidUpdate = false;
+	bHasCanvas = true;
+}
+
+FCanvasTexture::~FCanvasTexture ()
+{
+	Unload ();
+}
+
+const BYTE *FCanvasTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	bNeedsUpdate = true;
+	if (Canvas == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = DummySpans;
+	}
+	return Pixels + column*Height;
+}
+
+const BYTE *FCanvasTexture::GetPixels ()
+{
+	bNeedsUpdate = true;
+	if (Canvas == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+void FCanvasTexture::MakeTexture ()
+{
+	Canvas = new DSimpleCanvas (Width, Height);
+	Canvas->Lock ();
+	if (Width != Height)
+	{
+		Pixels = new BYTE[Width*Height];
+	}
+	else
+	{
+		Pixels = Canvas->GetBuffer();
+	}
+	// Draw a special "unrendered" initial texture into the buffer.
+	memset (Pixels, 0, Width*Height/2);
+	memset (Pixels+Width*Height/2, 255, Width*Height/2);
+}
+
+void FCanvasTexture::Unload ()
+{
+	if (Canvas != NULL)
+	{
+		if (Pixels != NULL && Pixels != Canvas->GetBuffer())
+		{
+			delete[] Pixels;
+		}
+		Pixels = NULL;
+		delete Canvas;
+		Canvas = NULL;
+	}
+}
+
+bool FCanvasTexture::CheckModified ()
+{
+	if (bDidUpdate)
+	{
+		bDidUpdate = false;
+		return true;
+	}
+	return false;
+}
+
+void FCanvasTexture::RenderView (AActor *viewpoint, int fov)
+{
+	if (Canvas == NULL)
+	{
+		MakeTexture ();
+	}
+	float savedfov = LastFOV;
+	R_SetFOV (fov);
+	R_RenderViewToCanvas (viewpoint, Canvas, 0, 0, Width, Height);
+	R_SetFOV (savedfov);
+	if (Width == Height)
+	{
+		FlipSquareBlock (Pixels, Width, Height);
+	}
+	else
+	{
+		FlipNonSquareBlock (Pixels, Canvas->GetBuffer(), Width, Height);
+	}
+	bNeedsUpdate = false;
+	bDidUpdate = true;
 }
 
 //

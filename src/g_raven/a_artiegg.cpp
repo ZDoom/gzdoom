@@ -64,7 +64,7 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	}
 	if (actor->flags2 & MF2_FLY)
 	{
-		morphed->flags |= MF2_FLY;
+		morphed->flags2 |= MF2_FLY;
 	}
 	if (actor->flags3 & MF3_GHOST)
 	{
@@ -199,6 +199,12 @@ bool P_MorphMonster (AActor *actor, const TypeInfo *spawntype)
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
 	//morphed->special = actor->special;
 	//memcpy (morphed->args, actor->args, sizeof(actor->args));
+	morphed->TIDtoHate = actor->TIDtoHate;
+	morphed->LastLook = actor->LastLook;
+	morphed->LastHeard = actor->LastHeard;
+	morphed->flags |= actor->flags & MF_FRIENDLY;
+	morphed->flags3 |= actor->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
+	morphed->flags4 |= actor->flags4 & MF4_NOHATEPLAYERS;
 	if (actor->renderflags & RF_INVISIBLE)
 	{
 		morphed->special2 |= MF_JUSTHIT;
@@ -327,7 +333,6 @@ class AArtiEgg : public AInventory
 public:
 	bool Use (bool pickup);
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiEgg::States[] =
@@ -343,8 +348,9 @@ IMPLEMENT_ACTOR (AArtiEgg, Heretic, 30, 14)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIEGGC")
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 bool AArtiEgg::Use (bool pickup)
@@ -360,13 +366,6 @@ bool AArtiEgg::Use (bool pickup)
 const char *AArtiEgg::PickupMessage ()
 {
 	return GStrings (TXT_ARTIEGG);
-}
-
-void AArtiEgg::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-		toucher == NULL || toucher == players[consoleplayer].camera
-		? ATTN_SURROUND : ATTN_NORM);
 }
 
 // Pork missile --------------------------------------------------------------
@@ -427,7 +426,6 @@ class AArtiPork : public AInventory
 public:
 	bool Use (bool pickup);
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiPork::States[] =
@@ -447,8 +445,9 @@ IMPLEMENT_ACTOR (AArtiPork, Hexen, 30, 14)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIPORK")
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 bool AArtiPork::Use (bool pickup)
@@ -464,11 +463,4 @@ bool AArtiPork::Use (bool pickup)
 const char *AArtiPork::PickupMessage ()
 {
 	return GStrings(TXT_ARTIEGG2);
-}
-
-void AArtiPork::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-		toucher == NULL || toucher == players[consoleplayer].camera
-		? ATTN_SURROUND : ATTN_NORM);
 }

@@ -2,7 +2,7 @@
 ** info.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -222,6 +222,7 @@ enum
 	ADEF_UseSound,
 	ADEF_Weapon_UpSound,
 	ADEF_Weapon_ReadySound,
+	ADEF_Inventory_PickupSound,
 	ADEF_Tag,			// Used by Strife to name items
 	ADEF_Weapon_AmmoType1,
 	ADEF_Weapon_AmmoType2,

@@ -122,7 +122,7 @@ struct FBloodSFX
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
-	const char *name, float volume, float attenuation, BOOL looping);
+	const char *name, float volume, float attenuation, bool looping);
 extern bool IsFloat (const char *str);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -1468,8 +1468,8 @@ void AAmbientSound::Activate (AActor *activator)
 			sfxinfo_t *sfx = &S_sfx[sndnum];
 
 			// Make sure the sound has been loaded so we know how long it is
-			if (!sfx->data)
-				I_LoadSound (sfx);
+			if (!sfx->data && GSnd != NULL)
+				GSnd->LoadSound (sfx);
 			amb->periodmin = (sfx->ms * TICRATE) / 1000;
 		}
 

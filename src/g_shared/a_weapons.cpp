@@ -28,6 +28,7 @@ IMPLEMENT_POINTY_CLASS (AWeapon)
 END_POINTERS
 
 BEGIN_DEFAULTS (AWeapon, Any, -1, 0)
+ PROP_Inventory_PickupSound ("misc/w_pkup")
 END_DEFAULTS
 
 //===========================================================================
@@ -57,17 +58,6 @@ void AWeapon::Serialize (FArchive &arc)
 		<< FlashState
 		<< Ammo1 << Ammo2 << SisterWeapon
 		<< bAltFire;
-}
-
-//===========================================================================
-//
-// AWeapon :: PlayPickupSound
-//
-//===========================================================================
-
-void AWeapon::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/w_pkup", 1, ATTN_NORM);
 }
 
 //===========================================================================

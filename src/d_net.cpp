@@ -2051,7 +2051,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 		break;
 
 	case DEM_INVUSEALL:
-		if (gamestate == GS_LEVEL)
+		if (gamestate == GS_LEVEL && !paused)
 		{
 			AInventory *item = players[player].mo->Inventory;
 
@@ -2072,7 +2072,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 		{
 			DWORD which = ReadLong (stream);
 
-			if (gamestate == GS_LEVEL)
+			if (gamestate == GS_LEVEL && !paused)
 			{
 				AInventory *item = players[player].mo->Inventory;
 				while (item != NULL && item->InventoryID != which)
@@ -2095,26 +2095,34 @@ void Net_DoCommand (int type, byte **stream, int player)
 		break;
 
 	case DEM_SUMMON:
+	case DEM_SUMMONFRIEND:
 		{
-			const TypeInfo *type;
+			const TypeInfo *typeinfo;
 
 			s = ReadString (stream);
-			type = TypeInfo::FindType (s);
-			if (type != NULL && type->ActorInfo != NULL)
+			typeinfo = TypeInfo::FindType (s);
+			if (type != NULL && typeinfo->ActorInfo != NULL)
 			{
 				AActor *source = players[player].mo;
 				if (source != NULL)
 				{
-					if (GetDefaultByType (type)->flags & MF_MISSILE)
+					if (GetDefaultByType (typeinfo)->flags & MF_MISSILE)
 					{
-						P_SpawnPlayerMissile (source, type);
+						P_SpawnPlayerMissile (source, typeinfo);
 					}
 					else
 					{
-						const AActor *def = GetDefaultByType (type);
-						Spawn (type, source->x + FixedMul (def->radius * 2 + source->radius, finecosine[source->angle>>ANGLETOFINESHIFT]),
-									source->y + FixedMul (def->radius * 2 + source->radius, finesine[source->angle>>ANGLETOFINESHIFT]),
-									source->z + 8 * FRACUNIT);
+						const AActor *def = GetDefaultByType (typeinfo);
+						AActor *spawned = Spawn (typeinfo,
+							source->x + FixedMul (def->radius * 2 + source->radius, finecosine[source->angle>>ANGLETOFINESHIFT]),
+							source->y + FixedMul (def->radius * 2 + source->radius, finesine[source->angle>>ANGLETOFINESHIFT]),
+							source->z + 8 * FRACUNIT);
+						if (spawned != NULL && type == DEM_SUMMONFRIEND)
+						{
+							spawned->FriendPlayer = player + 1;
+							spawned->flags |= MF_FRIENDLY;
+							spawned->LastHeard = players[player].mo;
+						}
 					}
 				}
 			}

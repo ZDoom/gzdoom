@@ -84,8 +84,6 @@ void Disable_FSOUND_IO_Loader ();
 
 static bool MusicDown = true;
 
-extern bool nofmod;
-
 MusInfo *currSong;
 int		nomusic = 0;
 
@@ -248,7 +246,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
 		// This is a mus file
-		if (!nofmod && opl_enable)
+		if (GSnd != NULL && opl_enable)
 		{
 			info = new OPLMUSSong (file, len);
 		}
@@ -259,7 +257,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 			{
 				info = new MUSSong2 (file, len);
 			}
-			else if (!nofmod)
+			else if (GSnd != NULL)
 #endif // _WIN32
 			{
 				info = new TimiditySong (file, len);
@@ -274,13 +272,12 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 		{
 			info = new MIDISong2 (file, len);
 		}
-		else if (!nofmod)
+		else if (GSnd != NULL)
 #endif // _WIN32
 		{
 			info = new TimiditySong (file, len);
 		}
 	}
-#ifdef _WIN32
 	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
 	{
 		char header[0x23];
@@ -298,7 +295,6 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 			info = new SPCSong (file, len);
 		}
 	}
-#endif // _WIN32
 	else if (id == MAKE_ID('f','L','a','C'))
 	{
 		info = new FLACSong (file, len);
@@ -330,7 +326,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 		// 1024 bytes is an arbitrary restriction. It's assumed that anything
 		// smaller than this can't possibly be a valid music file if it hasn't
 		// been identified already, so don't even bother trying to load it.
-		if (info == NULL && !nofmod && len >= 1024)
+		if (info == NULL && GSnd != NULL && len >= 1024)
 		{
 			// First try loading it as MOD, then as a stream
 			fclose (file);

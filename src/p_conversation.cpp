@@ -800,9 +800,6 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	}
 	ConversationMenu.DontDim = true;
 
-	// Give the NPC a chance to play a brief animation
-	ConversationNPC->ConversationAnimation (0);
-
 	// And open the menu
 	M_StartControlPanel (false);
 	OptionsActive = true;

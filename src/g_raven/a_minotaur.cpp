@@ -201,6 +201,21 @@ bool AMinotaur::IsOkayToAttack (AActor *link)
 {
 	if ((link->flags3&MF3_ISMONSTER) && (link != tracer))
 	{
+		if (!((link->flags ^ flags) & MF_FRIENDLY))
+		{ // Don't attack friends
+			if (link->flags & MF_FRIENDLY)
+			{
+				if (!deathmatch || link->FriendPlayer == 0 || FriendPlayer == 0 ||
+					link->FriendPlayer != FriendPlayer)
+				{
+					return false;
+				}
+			}
+			else
+			{
+				return false;
+			}
+		}
 		if (!(link->flags&MF_SHOOTABLE))
 		{
 			return false;
@@ -233,7 +248,7 @@ void AMinotaur::Die (AActor *source, AActor *inflictor)
 	if (tracer && tracer->health > 0 && tracer->player)
 	{
 		// Search thinker list for minotaur
-		TActorIterator<AMinotaur> iterator (0);
+		TThinkerIterator<AMinotaur> iterator;
 		AMinotaur *mo;
 
 		while ((mo = iterator.Next()) != NULL)

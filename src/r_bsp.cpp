@@ -656,7 +656,7 @@ void R_AddLine (seg_t *line)
 	v2 = line->linedef->v2;
 
 	if ((v1 == line->v1 && v2 == line->v2) || (v2 == line->v1 && v1 == line->v2))
-	{
+	{ // The seg is the entire wall.
 		if (MirrorFlags & RF_XFLIP)
 		{
 			WallUoverZorg = (float)WallTX2 * WallTMapScale;
@@ -673,7 +673,7 @@ void R_AddLine (seg_t *line)
 		}
 	}
 	else
-	{
+	{ // The seg is only part of the wall.
 		if (line->linedef->sidenum[0] != line->sidedef - sides)
 		{
 			swap (v1, v2);

@@ -778,41 +778,45 @@ void F_CastDrawer (void)
 void F_DemonScroll ()
 {
 	int yval;
-	int swidth = screen->GetWidth();
-	int sheight = screen->GetHeight();
+	FTexture *final1 = TexMan("FINAL1");
+	FTexture *final2 = TexMan("FINAL2");
+	int fwidth = final1->GetWidth();
+	int fheight = final1->GetHeight();
 
 	if (FinaleCount < 70)
 	{
-		screen->DrawTexture (TexMan("FINAL1"), 0, 0,
-			DTA_DestWidth, swidth,
-			DTA_DestHeight, sheight,
+		screen->DrawTexture (final1, 0, 0,
+			DTA_VirtualWidth, fwidth,
+			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
 			TAG_DONE);
+		screen->FillBorder (NULL);
 		return;
 	}
 	yval = FinaleCount - 70;
 	if (yval < 600)
 	{
-		yval = Scale (yval, sheight, 600);
-		screen->DrawTexture (TexMan("FINAL1"), 0, yval,
-			DTA_DestWidth, swidth,
-			DTA_DestHeight, sheight,
+		yval = Scale (yval, fheight, 600);
+		screen->DrawTexture (final1, 0, yval,
+			DTA_VirtualWidth, fwidth,
+			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
 			TAG_DONE);
-		screen->DrawTexture (TexMan("FINAL2"), 0, yval - sheight,
-			DTA_DestWidth, swidth,
-			DTA_DestHeight, sheight,
+		screen->DrawTexture (TexMan("FINAL2"), 0, yval - fheight,
+			DTA_VirtualWidth, fwidth,
+			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
 			TAG_DONE);
 	}
 	else
 	{ //else, we'll just sit here and wait, for now
 		screen->DrawTexture (TexMan("FINAL2"), 0, 0,
-			DTA_DestWidth, swidth,
-			DTA_DestHeight, sheight,
+			DTA_VirtualWidth, fwidth,
+			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
 			TAG_DONE);
 	}
+	screen->FillBorder (NULL);
 }
 
 /*
@@ -826,6 +830,7 @@ void F_DemonScroll ()
 void F_DrawUnderwater(void)
 {
 	extern EMenuState menuactive;
+	FTexture *pic;
 
 	switch (FinaleStage)
 	{
@@ -845,10 +850,12 @@ void F_DrawUnderwater(void)
 		}
 		screen->UpdatePalette ();
 
-		screen->DrawTexture (TexMan("E2END"), 0, 0,
-			DTA_DestWidth, screen->GetWidth(),
-			DTA_DestHeight, screen->GetHeight(),
+		pic = TexMan("E2END");
+		screen->DrawTexture (pic, 0, 0,
+			DTA_VirtualWidth, pic->GetWidth(),
+			DTA_VirtualHeight, pic->GetHeight(),
 			TAG_DONE);
+		screen->FillBorder (NULL);
 		FinaleStage = 2;
 		}
 
@@ -870,11 +877,12 @@ void F_DrawUnderwater(void)
 		}
 		screen->UpdatePalette ();
 
-		screen->UpdatePalette ();
-		screen->DrawTexture (TexMan("TITLE"), 0, 0,
-			DTA_DestWidth, screen->GetWidth(),
-			DTA_DestHeight, screen->GetHeight(),
+		pic = TexMan("TITLE");
+		screen->DrawTexture (pic, 0, 0,
+			DTA_VirtualWidth, pic->GetWidth(),
+			DTA_VirtualHeight, pic->GetHeight(),
 			TAG_DONE);
+		screen->FillBorder (NULL);
 		break;
 		}
 	}
@@ -907,6 +915,7 @@ void F_BunnyScroll (void)
 		DTA_320x200, true, DTA_Masked, false, TAG_DONE);
 	screen->DrawTexture (TexMan(bunny ? "PFUB2" : "VELLOGO"), scrolled - 320, 0,
 		DTA_320x200, true, DTA_Masked, false, TAG_DONE);
+	screen->FillBorder (TexMan(FinaleFlat));
 
 	if (bunny)
 	{
@@ -952,6 +961,7 @@ void F_StartSlideshow ()
 	automapactive = false;
 
 	S_StopAllChannels ();
+	S_ChangeMusic ("D_SLIDE", 0, true);
 
 	// The slideshow is determined solely by the map you're on.
 	if (!multiplayer && level.flags & LEVEL_DEATHSLIDESHOW)
@@ -1174,15 +1184,21 @@ void F_Drawer (void)
 		default:
 		case END_Pic1:
 			picname = gameinfo.finalePage1;
-			screen->DrawTexture (TexMan[picname], 0, 0, DTA_320x200, true, TAG_DONE);
+			screen->DrawTexture (TexMan[picname], 0, 0,
+				DTA_DestWidth, screen->GetWidth(),
+				DTA_DestHeight, screen->GetHeight(), TAG_DONE);
 			break;
 		case END_Pic2:
 			picname = gameinfo.finalePage2;
-			screen->DrawTexture (TexMan[picname], 0, 0, DTA_320x200, true, TAG_DONE);
+			screen->DrawTexture (TexMan[picname], 0, 0,
+				DTA_DestWidth, screen->GetWidth(),
+				DTA_DestHeight, screen->GetHeight(), TAG_DONE);
 			break;
 		case END_Pic3:
 			picname = gameinfo.finalePage3;
-			screen->DrawTexture (TexMan[picname], 0, 0, DTA_320x200, true, TAG_DONE);
+			screen->DrawTexture (TexMan[picname], 0, 0,
+				DTA_DestWidth, screen->GetWidth(),
+				DTA_DestHeight, screen->GetHeight(), TAG_DONE);
 			break;
 		case END_Pic:
 			picname = EndSequences[FinaleSequence].PicName;
@@ -1229,20 +1245,26 @@ void F_Drawer (void)
 	}
 	if (picname != NULL)
 	{
-		screen->DrawTexture (TexMan[picname], 0, 0,
-			DTA_DestWidth, screen->GetWidth(),
-			DTA_DestHeight, screen->GetHeight(),
+		FTexture *pic = TexMan[picname];
+		screen->DrawTexture (pic, 0, 0,
+			DTA_VirtualWidth, pic->GetWidth(),
+			DTA_VirtualHeight, pic->GetHeight(),
 			TAG_DONE);
+		screen->FillBorder (NULL);
 		if (FinaleStage >= 14)
 		{ // Chess pic, draw the correct character graphic
 			if (multiplayer)
 			{
-				screen->DrawTexture (TexMan["CHESSALL"], 20, 0, DTA_320x200, true, TAG_DONE);
+				screen->DrawTexture (TexMan["CHESSALL"], 20, 0,
+					DTA_VirtualWidth, pic->GetWidth(),
+					DTA_VirtualHeight, pic->GetHeight(), TAG_DONE);
 			}
 			else if (players[consoleplayer].CurrentPlayerClass > 0)
 			{
 				picname = players[consoleplayer].CurrentPlayerClass == 1 ? "CHESSC" : "CHESSM";
-				screen->DrawTexture (TexMan[picname], 60, 0, DTA_320x200, true, TAG_DONE);
+				screen->DrawTexture (TexMan[picname], 60, 0,
+					DTA_VirtualWidth, pic->GetWidth(),
+					DTA_VirtualHeight, pic->GetHeight(), TAG_DONE);
 			}
 		}
 	}

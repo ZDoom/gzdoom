@@ -37,14 +37,14 @@
 // Lots of different representations for the version number
 enum { GAMEVERSION = 205 };
 #define STRVERSION "205"
-#define DOTVERSIONSTR "2.0.94"
+#define DOTVERSIONSTR "2.0.95"
 #define GAMEVER (2*256+2)
 
 // SAVEVER is the version of the information stored in level snapshots.
 // Note that SAVEVER is not directly comparable to VERSION.
 // SAVESIG should match SAVEVER.
-#define SAVEVER 225
-#define SAVESIG "ZDOOMSAVE225"
+#define SAVEVER 227
+#define SAVESIG "ZDOOMSAVE227"
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
 #define MINSAVEVER 221	// Used by 2.0.90

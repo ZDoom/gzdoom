@@ -15,18 +15,9 @@
 
 static FRandom pr_restore ("RestorePos");
 
-//===========================================================================
-//
-// AArmor :: PlayPickupSound
-//
-//===========================================================================
-
-void AArmor::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/armor_pkup", 1, ATTN_NORM);
-}
-
-IMPLEMENT_ABSTRACT_ACTOR (AAmmo)
+IMPLEMENT_STATELESS_ACTOR (AAmmo, Any, -1, 0)
+	PROP_Inventory_PickupSound ("misc/ammo_pkup")
+END_DEFAULTS
 
 //===========================================================================
 //
@@ -41,17 +32,6 @@ void AAmmo::Serialize (FArchive &arc)
 	{
 		arc << BackpackAmount << BackpackMaxAmount;
 	}
-}
-
-//===========================================================================
-//
-// AAmmo :: PlayPickupSound
-//
-//===========================================================================
-
-void AAmmo::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/ammo_pkup", 1, ATTN_NORM);
 }
 
 //===========================================================================
@@ -424,6 +404,7 @@ BEGIN_DEFAULTS (AInventory, Any, -1, 0)
 	PROP_Inventory_Amount (1)
 	PROP_Inventory_MaxAmount (1)
 	PROP_UseSound ("misc/invuse")
+	PROP_Inventory_PickupSound ("misc/i_pkup")
 END_DEFAULTS
 
 //===========================================================================
@@ -461,6 +442,10 @@ void AInventory::Serialize (FArchive &arc)
 	else
 	{
 		Icon = TexMan.ReadTexture (arc);
+	}
+	if (SaveVersion >= 226)
+	{
+		arc << AR_SOUNDW(PickupSound);
 	}
 }
 
@@ -678,9 +663,15 @@ void AInventory::BecomeItem ()
 	if (!(flags & (MF_NOBLOCKMAP|MF_NOSECTOR)))
 	{
 		UnlinkFromWorld ();
+		if (sector_list)
+		{
+			P_DelSeclist (sector_list);
+			sector_list = NULL;
+		}
 		flags |= MF_NOBLOCKMAP|MF_NOSECTOR;
 		LinkToWorld ();
 	}
+	RemoveFromHash ();
 	flags &= ~MF_SPECIAL;
 	SetState (&States[S_HELD]);
 }
@@ -797,7 +788,8 @@ void AInventory::Hide ()
 
 void AInventory::Touch (AActor *toucher)
 {
-	if (!TryPickup (toucher))
+	// If a voodoo doll touches something, pretend the real player touched it instead.
+	if (!TryPickup (toucher->player ? toucher->player->mo : toucher))
 		return;
 
 	if (!(ItemFlags & IF_QUIET))
@@ -808,7 +800,7 @@ void AInventory::Touch (AActor *toucher)
 			message = PickupMessage ();
 		}
 
-		if (toucher == players[consoleplayer].camera
+		if (toucher->CheckLocalView (consoleplayer)
 			&& (StaticLastMessageTic != gametic || StaticLastMessage != message))
 		{
 			StaticLastMessageTic = gametic;
@@ -820,9 +812,9 @@ void AInventory::Touch (AActor *toucher)
 		// Special check so voodoo dolls picking up items cause the
 		// real player to make noise.
 		if (toucher->player)
-			DoPlayPickupSound (toucher->player->mo);
+			PlayPickupSound (toucher->player->mo);
 		else
-			DoPlayPickupSound (toucher);
+			PlayPickupSound (toucher);
 
 		toucher->player->bonuscount = BONUSADD;
 	}
@@ -877,34 +869,16 @@ const char *AInventory::PickupMessage ()
 
 //===========================================================================
 //
-// AInventory :: DoPlayPickupSound
-//
-// Plays a sound when this actor is picked up.
-//
-//===========================================================================
-
-void AInventory::DoPlayPickupSound (AActor *toucher)
-{
-	int pickupsound = GetClass()->Meta.GetMetaInt (AIMETA_PickupSound);
-	if (pickupsound != 0)
-	{
-		S_SoundID (toucher, CHAN_PICKUP, pickupsound, 1, ATTN_NORM);
-	}
-	else
-	{
-		PlayPickupSound (toucher);
-	}
-}
-
-//===========================================================================
-//
 // AInventory :: PlayPickupSound
 //
 //===========================================================================
 
 void AInventory::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
+	S_SoundID (toucher, CHAN_PICKUP, PickupSound, 1,
+		(ItemFlags & IF_FANCYPICKUPSOUND) &&
+		(toucher == NULL || toucher->CheckLocalView (consoleplayer))
+		? ATTN_SURROUND : ATTN_NORM);
 }
 
 //===========================================================================
@@ -1032,21 +1006,9 @@ bool AInventory::DrawPowerup (int x, int y)
 IMPLEMENT_STATELESS_ACTOR (APowerupGiver, Any, -1, 0)
 	PROP_Inventory_RespawnTics (30+1400)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_FANCYPICKUPSOUND)
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
-
-//===========================================================================
-//
-// APowerupGiver :: PlayPickupSound
-//
-//===========================================================================
-
-void APowerupGiver::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-		toucher == NULL || toucher == players[consoleplayer].camera
-		? ATTN_SURROUND : ATTN_NORM);
-}
 
 //===========================================================================
 //
@@ -1172,7 +1134,9 @@ void AInventory::DetachFromOwner ()
 {
 }
 
-IMPLEMENT_ABSTRACT_ACTOR (AArmor)
+IMPLEMENT_STATELESS_ACTOR (AArmor, Any, -1, 0)
+	PROP_Inventory_PickupSound ("misc/armor_pkup")
+END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (ABasicArmor, Any, -1, 0)
 	PROP_SpawnState (S_HELD)
@@ -1267,7 +1231,7 @@ bool ABasicArmorPickup::Use (bool pickup)
 
 //===========================================================================
 //
-// ABasicArmorPickup :: Serialize
+// ABasicArmorBonus :: Serialize
 //
 //===========================================================================
 
@@ -1325,6 +1289,12 @@ bool ABasicArmorBonus::Use (bool pickup)
 	{
 		return false;
 	}
+	if (armor->Amount <= 0)
+	{ // Should never be less than 0, but might as well check anyway
+		armor->Amount = 0;
+		armor->Icon = Icon;
+		armor->SavePercent = SavePercent;
+	}
 	armor->Amount += saveAmount;
 	armor->MaxAmount = MAX (armor->MaxAmount, MaxSaveAmount);
 	return true;
@@ -1344,15 +1314,16 @@ void ABasicArmor::Serialize (FArchive &arc)
 
 //===========================================================================
 //
-// ABasicArmor :: PostBeginPlay
+// ABasicArmor :: Tick
 //
 // If BasicArmor is given to the player by means other than a
 // BasicArmorPickup, then it may not have an icon set. Fix that here.
 //
 //===========================================================================
 
-void ABasicArmor::PostBeginPlay ()
+void ABasicArmor::Tick ()
 {
+	Super::Tick ();
 	if (Icon == 0)
 	{
 		switch (gameinfo.gametype)
@@ -1636,18 +1607,8 @@ void AHexenArmor::AbsorbDamage (int damage, int damageType, int &newdamage)
 
 IMPLEMENT_STATELESS_ACTOR (AHealth, Any, -1, 0)
 	PROP_Inventory_MaxAmount (0)
+	PROP_Inventory_PickupSound ("misc/health_pkup")
 END_DEFAULTS
-
-//===========================================================================
-//
-// AHealth :: PlayPickupSound
-//
-//===========================================================================
-
-void AHealth::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/health_pkup", 1, ATTN_NORM);
-}
 
 //===========================================================================
 //
@@ -1759,11 +1720,29 @@ bool AHealthPickup::Use (bool pickup)
 
 //===========================================================================
 //
-// ABackpack :: TryPickup
+// ABackpack :: Serialize
 //
 //===========================================================================
 
-bool ABackpack::TryPickup (AActor *other)
+void ABackpack::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	if (SaveVersion >= 227)
+	{
+		arc << bDepleted;
+	}
+}
+
+//===========================================================================
+//
+// ABackpack :: CreateCopy
+//
+// A backpack is being added to a player who doesn't yet have one. Give them
+// every kind of ammo, and increase their max amounts.
+//
+//===========================================================================
+
+AInventory *ABackpack::CreateCopy (AActor *other)
 {
 	// Find every unique type of ammo. Give it to the player if
 	// he doesn't have it already, and double it's maximum capacity.
@@ -1776,19 +1755,19 @@ bool ABackpack::TryPickup (AActor *other)
 		{
 			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory (type));
 			if (ammo == NULL)
-			{
+			{ // The player did not have the ammo. Add it.
 				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0));
-				ammo->Amount = ammo->BackpackAmount;
+				ammo->Amount = bDepleted ? 0 : ammo->BackpackAmount;
 				ammo->MaxAmount = ammo->BackpackMaxAmount;
 				ammo->AttachToOwner (other);
 			}
 			else
-			{
+			{ // The player had the ammo. Give some more.
 				if (ammo->MaxAmount < ammo->BackpackMaxAmount)
 				{
 					ammo->MaxAmount = ammo->BackpackMaxAmount;
 				}
-				if (ammo->Amount < ammo->MaxAmount)
+				if (!bDepleted && ammo->Amount < ammo->MaxAmount)
 				{
 					ammo->Amount += static_cast<AAmmo*>(ammo->GetDefault())->BackpackAmount;
 					if (ammo->Amount > ammo->MaxAmount)
@@ -1799,8 +1778,57 @@ bool ABackpack::TryPickup (AActor *other)
 			}
 		}
 	}
-	GoAwayAndDie ();
+	return Super::CreateCopy (other);
+}
+
+//===========================================================================
+//
+// ABackpack :: HandlePickup
+//
+// When the player picks up another backpack, just give them more ammo.
+//
+//===========================================================================
+
+bool ABackpack::HandlePickup (AInventory *item)
+{
+	// Since you already have a backpack, that means you already have every
+	// kind of ammo in your inventory, so we don't need to look at the
+	// entire TypeInfo list to discover what kinds of ammo exist, and we don't
+	// have to alter the MaxAmount either.
+	for (AInventory *probe = Owner->Inventory; probe != NULL; probe = probe->Inventory)
+	{
+		if (probe->GetClass()->ParentType == RUNTIME_CLASS(AAmmo))
+		{
+			if (probe->Amount < probe->MaxAmount)
+			{
+				probe->Amount += static_cast<AAmmo*>(probe->GetDefault())->BackpackAmount;
+				if (probe->Amount > probe->MaxAmount)
+				{
+					probe->Amount = probe->MaxAmount;
+				}
+			}
+		}
+	}
+
+	// The pickup always succeeds, even if you didn't get anything
+	item->ItemFlags |= IF_PICKUPGOOD;
 	return true;
+}
+
+//===========================================================================
+//
+// ABackpack :: CreateTossable
+//
+// The tossed backpack must not give out any more ammo, otherwise a player
+// could cheat by dropping their backpack and picking it up for more ammo.
+//
+//===========================================================================
+
+AInventory *ABackpack::CreateTossable ()
+{
+	ABackpack *pack = static_cast<ABackpack *>(Super::CreateTossable());
+	pack->bDepleted = true;
+	return pack;
 }
 
 //===========================================================================
@@ -1816,7 +1844,8 @@ void ABackpack::DetachFromOwner ()
 
 	for (item = Owner->Inventory; item != NULL; item = item->Inventory)
 	{
-		if (item->GetClass()->ParentType == RUNTIME_CLASS(AAmmo))
+		if (item->GetClass()->ParentType == RUNTIME_CLASS(AAmmo) &&
+			item->MaxAmount == static_cast<AAmmo*>(item)->BackpackMaxAmount)
 		{
 			item->MaxAmount = static_cast<AInventory*>(item->GetDefault())->MaxAmount;
 			if (item->Amount > item->MaxAmount)
@@ -1880,6 +1909,7 @@ IMPLEMENT_ACTOR (ACommunicator, Strife, 206, 0)
 	PROP_StrifeTeaserType2 (172)
 	PROP_Inventory_Icon ("I_COMM")
 	PROP_Tag ("Communicator")
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 //===========================================================================
@@ -1891,15 +1921,4 @@ END_DEFAULTS
 const char *ACommunicator::PickupMessage ()
 {
 	return "You picked up the Communicator";
-}
-
-//===========================================================================
-//
-// ACommunicator :: PlayPickupSound
-//
-//===========================================================================
-
-void ACommunicator::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1, ATTN_NORM);
 }

@@ -250,7 +250,7 @@ CCMD (idclev)
 		// So be it.
 		Printf ("%s\n", GStrings(STSTR_CLEV));
       	G_DeferedInitNew (mapname);
-		G_StartTravel ();
+		players[0].health = 0;		// Force reset
 	}
 }
 

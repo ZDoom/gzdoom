@@ -29,7 +29,7 @@
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
-				AdditionalIncludeDirectories="src\win32,src\sound,src,src\zlib-1.2.1,src\g_shared,src\g_doom,src\g_raven,src\g_heretic,src\g_hexen,src\g_strife;src\flac"
+				AdditionalIncludeDirectories="src\win32,src\sound,src,zlib,src\g_shared,src\g_doom,src\g_raven,src\g_heretic,src\g_hexen,src\g_strife;flac"
 				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,USEASM,HAVE_STRUPR,HAVE_FILELENGTH"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -109,7 +109,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "
 				Optimization="0"
-				AdditionalIncludeDirectories="src\win32;src\sound;src;&quot;src\zlib-1.2.1&quot;;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;src\flac"
+				AdditionalIncludeDirectories="src\win32;src\sound;src;zlib;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;flac"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,USEASM,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH"
 				MinimalRebuild="TRUE"
 				RuntimeLibrary="1"
@@ -136,7 +136,7 @@
 				AdditionalLibraryDirectories="d:\gnu\src\flac-1.1.0\obj\debug\lib"
 				IgnoreDefaultLibraryNames="libcmt;msvcrtd;msvcrt"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile=".\Debug/doomdbg.pdb"
+				ProgramDatabaseFile=".\Debug/zdoomd.pdb"
 				SubSystem="2"
 				StackReserveSize="0"
 				TerminalServerAware="2"
@@ -1915,6 +1915,9 @@
 				RelativePath=".\src\i_movie.h">
 			</File>
 			<File
+				RelativePath=".\src\i_video.h">
+			</File>
+			<File
 				RelativePath=".\src\Info.h">
 			</File>
 			<File
@@ -2233,9 +2236,6 @@
 			</File>
 			<File
 				RelativePath=".\src\win32\helperthread.h">
-			</File>
-			<File
-				RelativePath="src\win32\i_altsound.cpp">
 			</File>
 			<File
 				RelativePath=".\src\win32\i_cd.cpp">
@@ -4264,6 +4264,9 @@
 		<Filter
 			Name="Render Core"
 			Filter="">
+			<File
+				RelativePath=".\src\r_polymost.h">
+			</File>
 			<Filter
 				Name="Render Sources"
 				Filter="">
@@ -4356,6 +4359,9 @@
 							Name="VCCLCompilerTool"
 							AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\src\r_polymost.cpp">
 				</File>
 				<File
 					RelativePath=".\src\r_segs.cpp">
@@ -4544,6 +4550,21 @@
 		<Filter
 			Name="Audio Files"
 			Filter="">
+			<File
+				RelativePath=".\src\sound\altsound.cpp">
+			</File>
+			<File
+				RelativePath=".\src\sound\altsound.h">
+			</File>
+			<File
+				RelativePath=".\src\sound\altsoundmixer.cpp">
+			</File>
+			<File
+				RelativePath=".\src\sound\fmodsound.cpp">
+			</File>
+			<File
+				RelativePath=".\src\sound\fmodsound.h">
+			</File>
 			<File
 				RelativePath="src\sound\i_music.cpp">
 			</File>

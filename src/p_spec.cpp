@@ -223,6 +223,51 @@ static void P_InitAnimDefs ()
 					}
 				}
 			}
+			else if (SC_Compare ("cameratexture"))
+			{
+				int width, height;
+				int fitwidth, fitheight;
+				char *picname;
+
+				SC_MustGetString ();
+				picname = copystring (sc_String);
+				SC_MustGetNumber ();
+				width = sc_Number;
+				SC_MustGetNumber ();
+				height = sc_Number;
+				int picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Flat, texflags);
+				FTexture *viewer = new FCanvasTexture (sc_String, width, height);
+				if (picnum != -1)
+				{
+					FTexture *oldtex = TexMan[picnum];
+					fitwidth = DivScale3 (oldtex->GetWidth (), oldtex->ScaleX ? oldtex->ScaleX : 8);
+					fitheight = DivScale3 (oldtex->GetHeight (), oldtex->ScaleY ? oldtex->ScaleY : 8);
+					viewer->UseType = oldtex->UseType;
+					TexMan.ReplaceTexture (picnum, viewer, true);
+				}
+				else
+				{
+					fitwidth = width;
+					fitheight = height;
+				}
+				delete[] picname;
+				if (SC_GetString())
+				{
+					if (SC_Compare ("fit"))
+					{
+						SC_MustGetNumber ();
+						fitwidth = sc_Number;
+						SC_MustGetNumber ();
+						fitheight = sc_Number;
+					}
+					else
+					{
+						SC_UnGet ();
+					}
+				}
+				viewer->ScaleX = width * 8 / fitwidth;
+				viewer->ScaleY = height * 8 / fitheight;
+			}
 			else if (SC_Compare ("animatedDoor"))
 			{
 				P_ParseAnimatedDoor ();
@@ -695,7 +740,6 @@ BOOL P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	if (buttonSuccess)
 	{
 		if (lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT || lineActivation == SPAC_USETHROUGH)
-
 		{
 			P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
 		}
@@ -706,10 +750,12 @@ BOOL P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		!(level.flags & LEVEL_HEXENFORMAT) &&					// only in Doom-format maps
 		!repeat &&												// only non-repeatable triggers
 		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
+		special &&												// not for lines without a special
 		line->args[0] &&										// only if there's a tag (all types that are used by Doom-format maps use args[0] as tag)
 		P_FindSectorFromTag (line->args[0], -1) == -1)			// only if no sector is tagged to this linedef
 	{
 		P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
+		line->special = 0;
 	}
 // end of changed code
 	if (developer && buttonSuccess)
@@ -1002,7 +1048,7 @@ void P_PlayerInSpecialSector (player_t *player)
 		player->secretcount++;
 		level.found_secrets++;
 		sector->special &= ~SECRET_MASK;
-		if (player->mo == players[consoleplayer].camera)
+		if (player->mo->CheckLocalView (consoleplayer))
 		{
 			C_MidPrint ("A secret is revealed!");
 			S_Sound (CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
@@ -1589,13 +1635,48 @@ DScroller::DScroller (EScrollType type, fixed_t dx, fixed_t dy,
 		m_LastHeight =
 			sectors[control].CenterFloor () + sectors[control].CenterCeiling ();
 	m_Affectee = affectee;
-	if (type == sc_carry)
+	switch (type)
 	{
+	case sc_carry:
 		level.AddScroller (this, affectee);
-	}
-	else if (type == sc_side)
-	{
+		break;
+
+	case sc_side:
 		sides[affectee].Flags |= WALLF_NOAUTODECALS;
+		setinterpolation (INTERP_WallPanning, &sides[affectee]);
+		break;
+
+	case sc_floor:
+		setinterpolation (INTERP_FloorPanning, &sectors[affectee]);
+		break;
+
+	case sc_ceiling:
+		setinterpolation (INTERP_CeilingPanning, &sectors[affectee]);
+		break;
+
+	default:
+		break;
+	}
+}
+
+DScroller::~DScroller ()
+{
+	switch (m_Type)
+	{
+	case sc_side:
+		stopinterpolation (INTERP_WallPanning, &sides[m_Affectee]);
+		break;
+
+	case sc_floor:
+		stopinterpolation (INTERP_FloorPanning, &sectors[m_Affectee]);
+		break;
+
+	case sc_ceiling:
+		stopinterpolation (INTERP_CeilingPanning, &sectors[m_Affectee]);
+		break;
+
+	default:
+		break;
 	}
 }
 

@@ -66,10 +66,10 @@ FState AClericBoss::States[] =
 	S_NORMAL (CLER, '\\',	1, A_FreezeDeathChunks	    , &States[S_CLERIC_ICE+1]),
 
 #define S_CLERIC_BURN (S_CLERIC_ICE+2)
-	S_BRIGHT (FDTH, 'C',	5, NULL					    , &States[S_CLERIC_BURN+1]),
+	S_BRIGHT (FDTH, 'C',	5, NULL						, &States[S_CLERIC_BURN+1]),
 	S_BRIGHT (FDTH, 'D',	4, NULL					    , &States[S_CLERIC_BURN+2]),
 	S_BRIGHT (FDTH, 'G',	5, NULL					    , &States[S_CLERIC_BURN+3]),
-	S_BRIGHT (FDTH, 'H',	4, A_Scream				    , &States[S_CLERIC_BURN+4]),
+	S_BRIGHT (FDTH, 'H',	4, A_ClericBurnScream	    , &States[S_CLERIC_BURN+4]),
 	S_BRIGHT (FDTH, 'I',	5, NULL					    , &States[S_CLERIC_BURN+5]),
 	S_BRIGHT (FDTH, 'J',	4, NULL					    , &States[S_CLERIC_BURN+6]),
 	S_BRIGHT (FDTH, 'K',	5, NULL					    , &States[S_CLERIC_BURN+7]),

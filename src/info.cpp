@@ -412,3 +412,22 @@ CCMD (summon)
 		Net_WriteString (type->Name + 1);
 	}
 }
+
+CCMD (summonfriend)
+{
+	if (CheckCheatmode ())
+		return;
+
+	if (argv.argc() > 1)
+	{
+		// Don't use FindType, because we want a case-insensitive search
+		const TypeInfo *type = TypeInfo::IFindType (argv[1]);
+		if (type == NULL)
+		{
+			Printf ("Unknown class '%s'\n", argv[1]);
+			return;
+		}
+		Net_WriteByte (DEM_SUMMONFRIEND);
+		Net_WriteString (type->Name + 1);
+	}
+}

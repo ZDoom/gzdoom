@@ -1796,7 +1796,7 @@ static void PutSavePic (FILE *file, int width, int height)
 
 		// Take a snapshot of the player's view
 		pic->Lock ();
-		R_RenderViewToCanvas (&players[consoleplayer], pic, 0, 0, width, height);
+		R_RenderViewToCanvas (players[consoleplayer].mo, pic, 0, 0, width, height);
 		screen->GetFlashedPalette (palette);
 		M_CreatePNG (file, pic, palette);
 		pic->Unlock ();

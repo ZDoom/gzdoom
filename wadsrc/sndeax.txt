@@ -1,0 +1,1861 @@
+"Castle Alcove" 30 0
+{
+	Environment 20
+	EnvironmentDiffusion 0.890
+	RoomHF -600
+	RoomLF -2000
+	DecayTime 1.640
+	DecayHFRatio 0.870
+	DecayLFRatio 0.310
+	Reflections -100
+	ReflectionsDelay 0.007
+	Reverb -500
+	ReverbDelay 0.034
+	EchoTime 0.138
+	EchoDepth 0.080
+	HFReference 5168.600
+	LFReference 139.500
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Castle Courtyard" 30 1
+{
+	Environment 20
+	EnvironmentDiffusion 0.420
+	Room -1100
+	RoomHF -700
+	RoomLF -900
+	DecayTime 2.130
+	DecayHFRatio 0.610
+	DecayLFRatio 0.230
+	Reflections -2300
+	ReflectionsDelay 0.112
+	Reverb -1500
+	ReverbDelay 0.036
+	EchoDepth 0.370
+	AirAbsorptionHF 0.000
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Castle Cupboard" 30 2
+{
+	Environment 20
+	EnvironmentDiffusion 0.890
+	RoomHF -1100
+	RoomLF -2000
+	DecayTime 0.670
+	DecayHFRatio 0.870
+	DecayLFRatio 0.310
+	Reflections 300
+	ReflectionsDelay 0.010
+	Reverb 300
+	ReverbDelay 0.007
+	EchoTime 0.138
+	EchoDepth 0.080
+	HFReference 5168.600
+	LFReference 139.500
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Castle Hall" 30 3
+{
+	Environment 20
+	EnvironmentDiffusion 0.810
+	RoomHF -1100
+	RoomLF -1500
+	DecayTime 3.140
+	DecayHFRatio 0.790
+	DecayLFRatio 0.620
+	Reflections -1300
+	ReflectionsDelay 0.056
+	Reverb -500
+	ReverbDelay 0.024
+	HFReference 5168.600
+	LFReference 139.500
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Castle Large Room" 30 4
+{
+	Environment 20
+	EnvironmentDiffusion 0.820
+	RoomHF -1100
+	RoomLF -1800
+	DecayTime 2.530
+	DecayHFRatio 0.830
+	DecayLFRatio 0.500
+	Reflections -900
+	ReflectionsDelay 0.034
+	Reverb -400
+	ReverbDelay 0.016
+	EchoTime 0.185
+	EchoDepth 0.070
+	HFReference 5168.600
+	LFReference 139.500
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Castle Long Passage" 30 5
+{
+	Environment 20
+	EnvironmentDiffusion 0.890
+	RoomHF -800
+	RoomLF -2000
+	DecayTime 3.420
+	DecayHFRatio 0.830
+	DecayLFRatio 0.310
+	Reflections -200
+	ReflectionsDelay 0.007
+	Reverb -600
+	ReverbDelay 0.023
+	EchoTime 0.138
+	EchoDepth 0.080
+	HFReference 5168.600
+	LFReference 139.500
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Castle Medium Room" 30 6
+{
+	Environment 20
+	EnvironmentDiffusion 0.930
+	RoomHF -1100
+	RoomLF -2000
+	DecayTime 2.040
+	DecayHFRatio 0.830
+	DecayLFRatio 0.460
+	Reflections -300
+	ReflectionsDelay 0.022
+	Reverb -200
+	ReverbDelay 0.011
+	EchoTime 0.155
+	EchoDepth 0.030
+	HFReference 5168.600
+	LFReference 139.500
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Castle Short Passage" 30 7
+{
+	Environment 20
+	EnvironmentDiffusion 0.890
+	RoomHF -1000
+	RoomLF -2000
+	DecayTime 2.320
+	DecayHFRatio 0.830
+	DecayLFRatio 0.310
+	Reflections -100
+	ReflectionsDelay 0.007
+	Reverb -500
+	ReverbDelay 0.023
+	EchoTime 0.138
+	EchoDepth 0.080
+	HFReference 5168.600
+	LFReference 139.500
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Castle Small Room" 30 8
+{
+	Environment 20
+	EnvironmentDiffusion 0.890
+	Room -1100
+	RoomHF -800
+	RoomLF -2000
+	DecayTime 1.220
+	DecayHFRatio 0.830
+	DecayLFRatio 0.310
+	Reflections -100
+	ReflectionsDelay 0.022
+	Reverb 0
+	ReverbDelay 0.011
+	EchoTime 0.138
+	EchoDepth 0.080
+	HFReference 5168.600
+	LFReference 139.500
+	bDecayHFLimit true
+	bEchoTimeScale true
+}
+
+"Chapel" 31 0
+{
+	Environment 7
+	EnvironmentDiffusion 0.840
+	DecayTime 4.620
+	DecayHFRatio 0.640
+	DecayLFRatio 1.230
+	Reflections -700
+	ReflectionsDelay 0.032
+	Reverb -800
+	ReverbDelay 0.049
+	ModulationDepth 0.110
+	bEchoTimeScale true
+}
+
+"City Abandoned" 32 0
+{
+	Environment 16
+	EnvironmentSize 3.000
+	EnvironmentDiffusion 0.690
+	Room -1100
+	RoomHF -200
+	RoomLF -100
+	DecayTime 3.280
+	DecayHFRatio 1.170
+	DecayLFRatio 0.910
+	Reflections -1400
+	ReflectionsDelay 0.044
+	Reverb -2400
+	ReverbDelay 0.024
+	EchoDepth 0.200
+	bEchoTimeScale true
+}
+
+"City Library" 32 1
+{
+	Environment 16
+	EnvironmentSize 80.300
+	EnvironmentDiffusion 0.820
+	Room -1100
+	RoomHF -1100
+	RoomLF -2100
+	DecayTime 2.760
+	DecayHFRatio 0.890
+	DecayLFRatio 0.410
+	Reflections -1100
+	ReflectionsDelay 0.029
+	Reverb -500
+	ReverbDelay 0.020
+	EchoTime 0.130
+	EchoDepth 0.170
+	HFReference 2854.400
+	LFReference 107.500
+	bEchoTimeScale true
+}
+
+"City Museum" 32 2
+{
+	Environment 16
+	EnvironmentSize 80.300
+	EnvironmentDiffusion 0.820
+	Room -1100
+	RoomHF -1500
+	RoomLF -1500
+	DecayTime 3.280
+	DecayHFRatio 1.400
+	DecayLFRatio 0.570
+	Reflections -1600
+	ReflectionsDelay 0.039
+	Reverb -600
+	ReverbDelay 0.034
+	EchoTime 0.130
+	EchoDepth 0.170
+	AirAbsorptionHF 0.000
+	HFReference 2854.400
+	LFReference 107.500
+	bEchoTimeScale true
+}
+
+"City Streets" 32 3
+{
+	Environment 16
+	EnvironmentSize 3.000
+	EnvironmentDiffusion 0.780
+	Room -1100
+	RoomHF -300
+	RoomLF -100
+	DecayTime 1.790
+	DecayHFRatio 1.120
+	DecayLFRatio 0.910
+	Reflections -1700
+	ReflectionsDelay 0.046
+	Reverb -2800
+	ReverbDelay 0.028
+	EchoDepth 0.200
+	AirAbsorptionHF 0.000
+	bEchoTimeScale true
+}
+
+"City Subway" 32 4
+{
+	Environment 16
+	EnvironmentSize 3.000
+	EnvironmentDiffusion 0.740
+	Room -1100
+	RoomHF -300
+	RoomLF -100
+	DecayTime 3.010
+	DecayHFRatio 1.230
+	DecayLFRatio 0.910
+	Reflections -700
+	ReflectionsDelay 0.046
+	Reverb -1000
+	ReverbDelay 0.028
+	EchoTime 0.125
+	EchoDepth 0.210
+	AirAbsorptionHF 0.000
+	bEchoTimeScale true
+}
+
+"City Underpass" 32 5
+{
+	Environment 16
+	EnvironmentSize 3.000
+	EnvironmentDiffusion 0.820
+	Room -1500
+	RoomHF -700
+	RoomLF -100
+	DecayTime 3.570
+	DecayHFRatio 1.120
+	DecayLFRatio 0.910
+	Reflections -1500
+	ReflectionsDelay 0.059
+	Reverb -1100
+	ReverbDelay 0.037
+	EchoDepth 0.140
+	AirAbsorptionHF 0.000
+	bEchoTimeScale true
+}
+
+"Dome Saint Paul" 33 0
+{
+	Environment 0
+	EnvironmentSize 50.300
+	EnvironmentDiffusion 0.870
+	Room -1000
+	RoomHF -900
+	RoomLF -1300
+	DecayTime 10.480
+	DecayHFRatio 0.190
+	DecayLFRatio 0.100
+	Reflections -1500
+	ReflectionsDelay 0.090
+	Reverb -500
+	ReverbDelay 0.042
+	EchoDepth 0.120
+	HFReference 2854.400
+	LFReference 20.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Dome Tomb" 33 1
+{
+	Environment 0
+	EnvironmentSize 51.800
+	EnvironmentDiffusion 0.790
+	Room -1000
+	RoomHF -900
+	RoomLF -1300
+	DecayTime 4.180
+	DecayHFRatio 0.210
+	DecayLFRatio 0.100
+	Reflections -825
+	ReflectionsDelay 0.030
+	Reverb -125
+	ReverbDelay 0.022
+	EchoTime 0.177
+	EchoDepth 0.190
+	HFReference 2854.400
+	LFReference 20.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Driving Commentator" 34 0
+{
+	Environment 0
+	EnvironmentSize 3.000
+	Room -900
+	RoomHF -500
+	RoomLF -600
+	DecayTime 2.420
+	DecayHFRatio 0.880
+	DecayLFRatio 0.680
+	Reflections -1400
+	ReflectionsDelay 0.093
+	Reverb -1200
+	ReverbDelay 0.017
+	EchoDepth 1.000
+	AirAbsorptionHF 0.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Driving Empty Grandstand" 34 1
+{
+	Environment 0
+	EnvironmentSize 8.300
+	Room -700
+	RoomHF 0
+	RoomLF -200
+	DecayTime 4.620
+	DecayHFRatio 1.750
+	DecayLFRatio 1.400
+	Reflections -1363
+	ReflectionsDelay 0.090
+	Reverb -1900
+	ReverbDelay 0.049
+	HFReference 10420.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Driving Full Grandstand" 34 2
+{
+	Environment 0
+	EnvironmentSize 8.300
+	Room -1100
+	RoomHF -1100
+	RoomLF -400
+	DecayTime 3.010
+	DecayHFRatio 1.370
+	DecayLFRatio 1.280
+	Reflections -900
+	ReflectionsDelay 0.090
+	Reverb -1700
+	ReverbDelay 0.049
+	HFReference 10420.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Driving In-Car Luxury" 34 3
+{
+	Environment 0
+	EnvironmentSize 1.600
+	Room -800
+	RoomHF -2000
+	RoomLF -600
+	DecayTime 0.130
+	DecayHFRatio 0.410
+	DecayLFRatio 0.460
+	Reflections -200
+	ReflectionsDelay 0.010
+	Reverb 300
+	ReverbDelay 0.010
+	AirAbsorptionHF 0.000
+	HFReference 10268.200
+	LFReference 251.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Driving In-Car Pit Garage" 34 6
+{
+	Environment 0
+	EnvironmentSize 1.900
+	EnvironmentDiffusion 0.590
+	Room -1400
+	RoomHF -300
+	RoomLF -500
+	DecayTime 1.720
+	DecayHFRatio 0.930
+	DecayLFRatio 0.870
+	Reflections -500
+	ReflectionsDelay 0.000
+	Reverb 0
+	ReverbDelay 0.016
+	EchoDepth 0.110
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Driving In-Car Racer" 34 4
+{
+	Environment 0
+	EnvironmentSize 1.100
+	EnvironmentDiffusion 0.800
+	Room -700
+	RoomHF 0
+	RoomLF -200
+	DecayTime 0.170
+	DecayHFRatio 2.000
+	DecayLFRatio 0.410
+	Reflections 500
+	Reverb -500
+	ReverbDelay 0.015
+	AirAbsorptionHF 0.000
+	HFReference 10268.200
+	LFReference 251.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Driving In-Car Sports" 34 5
+{
+	Environment 0
+	EnvironmentSize 1.100
+	EnvironmentDiffusion 0.800
+	Room -900
+	RoomHF -400
+	DecayTime 0.170
+	DecayHFRatio 0.750
+	DecayLFRatio 0.410
+	Reflections 500
+	Reverb -600
+	ReverbDelay 0.000
+	AirAbsorptionHF 0.000
+	HFReference 10268.200
+	LFReference 251.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Driving Tunnel" 34 7
+{
+	Environment 0
+	EnvironmentSize 3.100
+	EnvironmentDiffusion 0.810
+	Room -900
+	RoomHF -800
+	RoomLF -100
+	DecayTime 3.420
+	DecayHFRatio 0.940
+	DecayLFRatio 1.310
+	Reflections -300
+	ReflectionsDelay 0.051
+	Reverb -500
+	ReverbDelay 0.047
+	EchoTime 0.214
+	EchoDepth 0.050
+	AirAbsorptionHF 0.000
+	LFReference 155.300
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Dusty Room" 35 0
+{
+	Environment 2
+	EnvironmentSize 1.800
+	EnvironmentDiffusion 0.560
+	Room -1100
+	RoomHF -200
+	RoomLF -300
+	DecayTime 1.790
+	DecayHFRatio 0.380
+	DecayLFRatio 0.210
+	Reflections -600
+	Reverb 200
+	ReverbDelay 0.006
+	EchoTime 0.202
+	EchoDepth 0.050
+	AirAbsorptionHF -3.000
+	HFReference 13046.000
+	LFReference 163.300
+	bEchoTimeScale true
+}
+
+"Factory Alcove" 36 0
+{
+	Environment 2
+	EnvironmentSize 1.800
+	EnvironmentDiffusion 0.590
+	Room -1200
+	RoomHF -200
+	RoomLF -600
+	DecayTime 3.140
+	DecayHFRatio 0.650
+	DecayLFRatio 1.310
+	Reflections 300
+	ReflectionsDelay 0.010
+	Reverb -1200
+	ReverbDelay 0.038
+	EchoTime 0.114
+	EchoDepth 0.100
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Factory Courtyard" 36 1
+{
+	Environment 2
+	EnvironmentSize 1.700
+	EnvironmentDiffusion 0.570
+	RoomHF -1000
+	RoomLF -400
+	DecayTime 2.320
+	DecayHFRatio 0.290
+	DecayLFRatio 0.560
+	Reflections -2400
+	ReflectionsDelay 0.090
+	Reverb -2000
+	ReverbDelay 0.039
+	EchoDepth 0.290
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Factory Cupboard" 36 2
+{
+	Environment 2
+	EnvironmentSize 1.700
+	EnvironmentDiffusion 0.630
+	Room -1200
+	RoomHF -200
+	RoomLF -600
+	DecayTime 0.490
+	DecayHFRatio 0.650
+	DecayLFRatio 1.310
+	Reflections 200
+	ReflectionsDelay 0.010
+	Reverb 200
+	ReverbDelay 0.032
+	EchoTime 0.107
+	EchoDepth 0.070
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Factory Hall" 36 3
+{
+	Environment 2
+	EnvironmentDiffusion 0.750
+	RoomHF -300
+	RoomLF -400
+	DecayTime 7.430
+	DecayHFRatio 0.510
+	DecayLFRatio 1.310
+	Reflections -2400
+	ReflectionsDelay 0.073
+	Reverb -500
+	ReverbDelay 0.027
+	EchoDepth 0.070
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Factory Large Room" 36 4
+{
+	Environment 2
+	EnvironmentDiffusion 0.750
+	Room -1200
+	RoomHF -300
+	RoomLF -400
+	DecayTime 4.420
+	DecayHFRatio 0.510
+	DecayLFRatio 1.310
+	Reflections -1500
+	ReflectionsDelay 0.039
+	Reverb -600
+	ReverbDelay 0.023
+	EchoTime 0.231
+	EchoDepth 0.070
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Factory Long Passage" 36 5
+{
+	Environment 2
+	EnvironmentSize 1.800
+	EnvironmentDiffusion 0.640
+	Room -1200
+	RoomHF -200
+	RoomLF -600
+	DecayTime 4.059
+	DecayHFRatio 0.650
+	DecayLFRatio 1.310
+	Reflections 0
+	ReflectionsDelay 0.020
+	Reverb -900
+	ReverbDelay 0.037
+	EchoTime 0.135
+	EchoDepth 0.230
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Factory Medium Room" 36 6
+{
+	Environment 2
+	EnvironmentDiffusion 0.820
+	Room -1200
+	RoomHF -200
+	RoomLF -600
+	DecayTime 2.760
+	DecayHFRatio 0.650
+	DecayLFRatio 1.310
+	Reflections 0
+	ReflectionsDelay 0.022
+	Reverb -400
+	ReverbDelay 0.023
+	EchoTime 0.174
+	EchoDepth 0.070
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Factory Short Passage" 36 7
+{
+	Environment 2
+	EnvironmentSize 1.800
+	EnvironmentDiffusion 0.640
+	Room -1200
+	RoomHF -200
+	RoomLF -600
+	DecayTime 2.530
+	DecayHFRatio 0.650
+	DecayLFRatio 1.310
+	Reflections 0
+	ReflectionsDelay 0.010
+	Reverb -600
+	ReverbDelay 0.038
+	EchoTime 0.135
+	EchoDepth 0.230
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Factory Small Room" 36 8
+{
+	Environment 2
+	EnvironmentSize 1.800
+	EnvironmentDiffusion 0.820
+	Room -1200
+	RoomHF -200
+	RoomLF -600
+	DecayTime 1.720
+	DecayHFRatio 0.650
+	DecayLFRatio 1.310
+	Reflections -300
+	ReflectionsDelay 0.010
+	Reverb -200
+	ReverbDelay 0.024
+	EchoTime 0.119
+	EchoDepth 0.070
+	AirAbsorptionHF 0.000
+	HFReference 3762.600
+	LFReference 362.500
+	bEchoTimeScale true
+}
+
+"Ice Palace Alcove" 37 0
+{
+	Environment 21
+	EnvironmentSize 2.700
+	EnvironmentDiffusion 0.840
+	RoomHF -500
+	RoomLF -1100
+	DecayTime 2.760
+	DecayHFRatio 1.460
+	DecayLFRatio 0.280
+	Reflections 100
+	ReflectionsDelay 0.010
+	Reverb -1200
+	ReverbDelay 0.030
+	EchoTime 0.161
+	EchoDepth 0.090
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Ice Palace Courtyard" 37 1
+{
+	Environment 21
+	EnvironmentSize 2.900
+	EnvironmentDiffusion 0.590
+	RoomHF -1100
+	RoomLF -1000
+	DecayTime 2.040
+	DecayHFRatio 1.200
+	DecayLFRatio 0.380
+	Reflections -2000
+	ReflectionsDelay 0.073
+	Reverb -2200
+	ReverbDelay 0.043
+	EchoTime 0.235
+	EchoDepth 0.480
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Ice Palace Cupboard" 37 2
+{
+	Environment 21
+	EnvironmentSize 2.700
+	EnvironmentDiffusion 0.830
+	RoomHF -600
+	RoomLF -1300
+	DecayTime 0.760
+	DecayHFRatio 1.530
+	DecayLFRatio 0.260
+	Reflections 100
+	ReflectionsDelay 0.012
+	Reverb 100
+	ReverbDelay 0.016
+	EchoTime 0.143
+	EchoDepth 0.080
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Ice Palace Hall" 37 3
+{
+	Environment 21
+	EnvironmentSize 2.900
+	EnvironmentDiffusion 0.760
+	RoomHF -700
+	RoomLF -500
+	DecayTime 5.490
+	DecayHFRatio 1.530
+	DecayLFRatio 0.380
+	Reflections -1900
+	ReflectionsDelay 0.054
+	Reverb -1400
+	ReverbDelay 0.052
+	EchoTime 0.226
+	EchoDepth 0.110
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Ice Palace Large Room" 37 4
+{
+	Environment 21
+	EnvironmentSize 2.900
+	EnvironmentDiffusion 0.810
+	RoomHF -500
+	RoomLF -700
+	DecayTime 3.140
+	DecayHFRatio 1.530
+	DecayLFRatio 0.320
+	Reflections -1200
+	ReflectionsDelay 0.039
+	Reverb -1300
+	ReverbDelay 0.027
+	EchoTime 0.214
+	EchoDepth 0.110
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Ice Palace Long Passage" 37 5
+{
+	Environment 21
+	EnvironmentSize 2.700
+	EnvironmentDiffusion 0.770
+	RoomHF -500
+	RoomLF -800
+	DecayTime 3.010
+	DecayHFRatio 1.460
+	DecayLFRatio 0.280
+	Reflections -200
+	ReflectionsDelay 0.012
+	Reverb -800
+	ReverbDelay 0.025
+	EchoTime 0.186
+	EchoDepth 0.040
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Ice Palace Medium Room" 37 6
+{
+	Environment 21
+	EnvironmentSize 2.700
+	EnvironmentDiffusion 0.870
+	RoomHF -500
+	RoomLF -700
+	DecayTime 2.220
+	DecayHFRatio 1.530
+	DecayLFRatio 0.320
+	Reflections -800
+	ReflectionsDelay 0.039
+	Reverb -1200
+	ReverbDelay 0.027
+	EchoTime 0.186
+	EchoDepth 0.120
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Ice Palace Short Passage" 37 7
+{
+	Environment 21
+	EnvironmentSize 2.700
+	EnvironmentDiffusion 0.750
+	RoomHF -500
+	RoomLF -1100
+	DecayTime 1.790
+	DecayHFRatio 1.460
+	DecayLFRatio 0.280
+	Reflections -600
+	ReflectionsDelay 0.010
+	Reverb -700
+	ReverbDelay 0.019
+	EchoTime 0.177
+	EchoDepth 0.090
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Ice Palace Small Room" 37 8
+{
+	Environment 21
+	EnvironmentSize 2.700
+	EnvironmentDiffusion 0.840
+	RoomHF -500
+	RoomLF -1100
+	DecayTime 1.510
+	DecayHFRatio 1.530
+	DecayLFRatio 0.270
+	Reflections -100
+	ReflectionsDelay 0.010
+	Reverb -900
+	ReverbDelay 0.011
+	EchoTime 0.164
+	EchoDepth 0.140
+	AirAbsorptionHF 0.000
+	HFReference 12428.500
+	LFReference 99.600
+	bEchoTimeScale true
+}
+
+"Mood Heaven" 38 0
+{
+	Environment 0
+	EnvironmentSize 19.600
+	EnvironmentDiffusion 0.940
+	Room -1000
+	RoomHF -200
+	RoomLF -700
+	DecayTime 5.040
+	DecayHFRatio 1.120
+	DecayLFRatio 0.560
+	Reflections -1230
+	ReflectionsDelay 0.020
+	Reverb -200
+	ReverbDelay 0.029
+	EchoDepth 0.080
+	ModulationTime 2.742
+	ModulationDepth 0.050
+	AirAbsorptionHF -2.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Mood Hell" 38 1
+{
+	Environment 0
+	EnvironmentSize 100.000
+	EnvironmentDiffusion 0.570
+	Room -1000
+	RoomHF -900
+	RoomLF -700
+	DecayTime 3.570
+	DecayHFRatio 0.490
+	DecayLFRatio 2.000
+	Reflections -10000
+	ReflectionsDelay 0.020
+	Reverb 100
+	ReverbDelay 0.030
+	EchoTime 0.110
+	EchoDepth 0.040
+	ModulationTime 2.109
+	ModulationDepth 0.520
+	LFReference 139.500
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Mood Memory" 38 2
+{
+	Environment 0
+	EnvironmentSize 8.000
+	EnvironmentDiffusion 0.850
+	Room -1000
+	RoomHF -400
+	RoomLF -900
+	DecayTime 4.059
+	DecayHFRatio 0.820
+	DecayLFRatio 0.560
+	Reflections -2800
+	ReflectionsDelay 0.000
+	Reverb -500
+	ReverbDelay 0.000
+	ModulationTime 0.474
+	ModulationDepth 0.450
+	AirAbsorptionHF -2.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Outdoors Backyard" 39 0
+{
+	Environment 0
+	EnvironmentSize 80.300
+	EnvironmentDiffusion 0.450
+	Room -1100
+	RoomHF -1200
+	RoomLF -600
+	DecayTime 1.120
+	DecayHFRatio 0.340
+	DecayLFRatio 0.460
+	Reflections -1100
+	ReflectionsDelay 0.049
+	Reverb -1300
+	ReverbDelay 0.023
+	EchoTime 0.218
+	EchoDepth 0.340
+	HFReference 4399.100
+	LFReference 242.900
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Outdoors Creek" 39 1
+{
+	Environment 0
+	EnvironmentSize 80.300
+	EnvironmentDiffusion 0.350
+	Room -1100
+	RoomHF -1500
+	RoomLF -600
+	DecayTime 2.130
+	DecayHFRatio 0.210
+	DecayLFRatio 0.460
+	Reflections -1700
+	ReflectionsDelay 0.115
+	Reverb -1100
+	ReverbDelay 0.031
+	EchoTime 0.218
+	EchoDepth 0.340
+	HFReference 4399.100
+	LFReference 242.900
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Outdoors Deep Canyon" 39 2
+{
+	Environment 0
+	EnvironmentSize 80.300
+	EnvironmentDiffusion 0.740
+	Room -1100
+	RoomHF -1500
+	RoomLF -400
+	DecayTime 3.890
+	DecayHFRatio 0.210
+	DecayLFRatio 0.460
+	Reflections -2000
+	ReflectionsDelay 0.193
+	Reverb -1100
+	ReverbDelay 0.019
+	EchoDepth 1.000
+	HFReference 4399.100
+	LFReference 242.900
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Outdoors Rolling Plains" 39 3
+{
+	Environment 0
+	EnvironmentSize 80.300
+	EnvironmentDiffusion 0.740
+	Room -1100
+	RoomHF -3900
+	RoomLF -400
+	DecayTime 2.130
+	DecayHFRatio 0.210
+	DecayLFRatio 0.460
+	Reflections -2000
+	ReflectionsDelay 0.300
+	Reverb -1500
+	ReverbDelay 0.019
+	EchoDepth 1.000
+	HFReference 4399.100
+	LFReference 242.900
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Outdoors Valley" 39 4
+{
+	Environment 0
+	EnvironmentSize 80.300
+	EnvironmentDiffusion 0.280
+	Room -1100
+	RoomHF -3100
+	RoomLF -1600
+	DecayTime 2.880
+	DecayHFRatio 0.260
+	DecayLFRatio 0.350
+	Reflections -3200
+	ReflectionsDelay 0.163
+	Reverb -1000
+	ReverbDelay 0.100
+	EchoDepth 0.340
+	AirAbsorptionHF 0.000
+	HFReference 2854.400
+	LFReference 107.500
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Pipe Large" 40 0
+{
+	Environment 21
+	EnvironmentSize 50.300
+	EnvironmentDiffusion 1.000
+	RoomHF -900
+	RoomLF -1300
+	DecayTime 8.450
+	DecayHFRatio 0.100
+	DecayLFRatio 0.100
+	Reflections -800
+	ReflectionsDelay 0.046
+	Reverb 0
+	ReverbDelay 0.032
+	HFReference 2854.400
+	LFReference 20.000
+	bEchoTimeScale true
+}
+
+"Pipe Long Thin" 40 1
+{
+	Environment 21
+	EnvironmentSize 1.600
+	EnvironmentDiffusion 0.910
+	Room -1200
+	RoomHF -700
+	RoomLF -1100
+	DecayTime 9.210
+	DecayHFRatio 0.180
+	DecayLFRatio 0.100
+	Reflections -300
+	ReflectionsDelay 0.010
+	Reverb -1000
+	ReverbDelay 0.022
+	HFReference 2854.400
+	LFReference 20.000
+	bEchoTimeScale true
+}
+
+"Pipe Resonant" 40 2
+{
+	Environment 21
+	EnvironmentSize 1.300
+	EnvironmentDiffusion 0.910
+	Room -1200
+	RoomHF -700
+	RoomLF -1100
+	DecayTime 6.810
+	DecayHFRatio 0.180
+	DecayLFRatio 0.100
+	Reflections -300
+	ReflectionsDelay 0.010
+	Reverb -700
+	ReverbDelay 0.022
+	HFReference 2854.400
+	LFReference 20.000
+	bEchoTimeScale true
+}
+
+"Pipe Small" 40 3
+{
+	Environment 21
+	EnvironmentSize 50.300
+	EnvironmentDiffusion 1.000
+	RoomHF -900
+	RoomLF -1300
+	DecayTime 5.040
+	DecayHFRatio 0.100
+	DecayLFRatio 0.100
+	Reflections -600
+	ReflectionsDelay 0.032
+	Reverb 400
+	ReverbDelay 0.015
+	HFReference 2854.400
+	LFReference 20.000
+	bEchoTimeScale true
+}
+
+"Prefab Caravan" 41 0
+{
+	Environment 0
+	EnvironmentSize 8.300
+	Room -1000
+	RoomHF -2100
+	RoomLF -1800
+	DecayTime 0.430
+	DecayHFRatio 1.500
+	Reflections 0
+	ReflectionsDelay 0.012
+	Reverb 400
+	ReverbDelay 0.012
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Prefab Outhouse" 41 1
+{
+	Environment 0
+	EnvironmentSize 80.300
+	EnvironmentDiffusion 0.820
+	Room -1100
+	RoomHF -1900
+	RoomLF -1600
+	DecayTime 1.380
+	DecayHFRatio 0.380
+	DecayLFRatio 0.350
+	Reflections -100
+	ReflectionsDelay 0.024
+	Reverb -800
+	ReverbDelay 0.044
+	EchoTime 0.121
+	EchoDepth 0.170
+	AirAbsorptionHF 0.000
+	HFReference 2854.400
+	LFReference 107.500
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Prefab Practise Room" 41 2
+{
+	Environment 0
+	EnvironmentSize 1.860
+	EnvironmentDiffusion 0.870
+	Room -1000
+	RoomHF -800
+	RoomLF -600
+	DecayTime 1.120
+	DecayHFRatio 0.560
+	DecayLFRatio 0.180
+	Reflections 200
+	ReflectionsDelay 0.010
+	Reverb -200
+	EchoTime 0.095
+	EchoDepth 0.140
+	AirAbsorptionHF 0.000
+	HFReference 7176.900
+	LFReference 211.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Prefab School Room" 41 3
+{
+	Environment 0
+	EnvironmentSize 1.860
+	EnvironmentDiffusion 0.690
+	Room -1100
+	RoomHF -400
+	RoomLF -600
+	DecayTime 0.980
+	DecayHFRatio 0.450
+	DecayLFRatio 0.180
+	Reflections 300
+	ReflectionsDelay 0.017
+	Reverb 0
+	ReverbDelay 0.015
+	EchoTime 0.095
+	EchoDepth 0.140
+	AirAbsorptionHF 0.000
+	HFReference 7176.900
+	LFReference 211.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Prefab Workshop" 41 4
+{
+	Environment 0
+	EnvironmentSize 1.900
+	Room -1000
+	RoomHF -1700
+	RoomLF -800
+	DecayTime 0.760
+	Reflections 0
+	ReflectionsDelay 0.012
+	Reverb -200
+	ReverbDelay 0.012
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Small Water Room" 42 0
+{
+	Environment 2
+	EnvironmentSize 36.200
+	EnvironmentDiffusion 0.700
+	Room -1200
+	RoomHF -698
+	DecayTime 1.510
+	DecayHFRatio 1.250
+	DecayLFRatio 1.140
+	Reflections -100
+	ReflectionsDelay 0.020
+	Reverb 200
+	ReverbDelay 0.030
+	EchoTime 0.179
+	EchoDepth 0.150
+	ModulationTime 0.895
+	ModulationDepth 0.190
+	bEchoTimeScale true
+}
+
+"Spacestation Alcove" 43 0
+{
+	Environment 0
+	EnvironmentSize 1.500
+	EnvironmentDiffusion 0.780
+	Room -1100
+	RoomHF -300
+	RoomLF -100
+	DecayTime 1.160
+	DecayHFRatio 0.810
+	DecayLFRatio 0.550
+	Reflections 300
+	Reverb -500
+	ReverbDelay 0.018
+	EchoTime 0.192
+	EchoDepth 0.210
+	HFReference 3316.100
+	LFReference 458.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Spacestation Cupboard" 43 1
+{
+	Environment 0
+	EnvironmentSize 1.400
+	EnvironmentDiffusion 0.560
+	Room -1000
+	RoomHF -300
+	RoomLF -100
+	DecayTime 0.790
+	DecayHFRatio 0.810
+	DecayLFRatio 0.550
+	Reflections 200
+	Reverb 400
+	ReverbDelay 0.018
+	EchoTime 0.181
+	EchoDepth 0.310
+	HFReference 3316.100
+	LFReference 458.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Spacestation Hall" 43 2
+{
+	Environment 0
+	EnvironmentSize 1.900
+	EnvironmentDiffusion 0.870
+	Room -1000
+	RoomHF -400
+	RoomLF -100
+	DecayTime 7.110
+	DecayHFRatio 0.380
+	DecayLFRatio 0.610
+	Reflections -1500
+	ReflectionsDelay 0.100
+	Reverb -1000
+	ReverbDelay 0.047
+	EchoDepth 0.250
+	HFReference 3316.100
+	LFReference 458.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Spacestation Large Room" 43 3
+{
+	Environment 0
+	EnvironmentSize 1.800
+	EnvironmentDiffusion 0.810
+	Room -1000
+	RoomHF -400
+	RoomLF -100
+	DecayTime 3.890
+	DecayHFRatio 0.380
+	DecayLFRatio 0.610
+	Reflections -1200
+	ReflectionsDelay 0.056
+	Reverb -800
+	ReverbDelay 0.035
+	EchoTime 0.233
+	EchoDepth 0.280
+	HFReference 3316.100
+	LFReference 458.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Spacestation Long Passage" 43 4
+{
+	Environment 0
+	EnvironmentSize 1.900
+	EnvironmentDiffusion 0.820
+	Room -1000
+	RoomHF -400
+	RoomLF -100
+	DecayTime 4.620
+	DecayHFRatio 0.620
+	DecayLFRatio 0.550
+	Reflections 0
+	ReflectionsDelay 0.012
+	Reverb -800
+	ReverbDelay 0.031
+	EchoDepth 0.230
+	HFReference 3316.100
+	LFReference 458.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Spacestation Medium Room" 43 5
+{
+	Environment 0
+	EnvironmentSize 1.500
+	EnvironmentDiffusion 0.750
+	Room -1000
+	RoomHF -400
+	RoomLF -100
+	DecayTime 3.010
+	DecayHFRatio 0.500
+	DecayLFRatio 0.550
+	Reflections -1000
+	ReflectionsDelay 0.034
+	Reverb -700
+	ReverbDelay 0.035
+	EchoTime 0.209
+	EchoDepth 0.310
+	HFReference 3316.100
+	LFReference 458.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Spacestation Short Passage" 43 6
+{
+	Environment 0
+	EnvironmentSize 1.500
+	EnvironmentDiffusion 0.870
+	Room -1000
+	RoomHF -400
+	RoomLF -100
+	DecayTime 3.570
+	DecayHFRatio 0.500
+	DecayLFRatio 0.550
+	Reflections -1000
+	ReflectionsDelay 0.012
+	Reverb -600
+	ReverbDelay 0.016
+	EchoTime 0.172
+	EchoDepth 0.200
+	HFReference 3316.100
+	LFReference 458.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Spacestation Small Room" 43 7
+{
+	Environment 0
+	EnvironmentSize 1.500
+	EnvironmentDiffusion 0.700
+	Room -1000
+	RoomHF -300
+	RoomLF -100
+	DecayTime 1.720
+	DecayHFRatio 0.820
+	DecayLFRatio 0.550
+	Reflections -400
+	Reverb -500
+	ReverbDelay 0.013
+	EchoTime 0.188
+	EchoDepth 0.260
+	HFReference 3316.100
+	LFReference 458.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Sport Empty Stadium" 44 0
+{
+	Environment 0
+	EnvironmentSize 7.200
+	Room -1300
+	RoomHF -700
+	RoomLF -200
+	DecayTime 6.260
+	DecayHFRatio 0.510
+	DecayLFRatio 1.100
+	Reflections -2400
+	ReflectionsDelay 0.183
+	Reverb -1100
+	ReverbDelay 0.038
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Sport Full Stadium" 44 1
+{
+	Environment 0
+	EnvironmentSize 7.200
+	Room -1300
+	RoomHF -2300
+	RoomLF -200
+	DecayTime 5.250
+	DecayHFRatio 0.170
+	DecayLFRatio 0.800
+	Reflections -2000
+	ReflectionsDelay 0.188
+	Reverb -1300
+	ReverbDelay 0.038
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Sport Gymnasium" 44 2
+{
+	Environment 0
+	EnvironmentDiffusion 0.810
+	Room -1200
+	RoomHF -700
+	RoomLF -100
+	DecayTime 3.140
+	DecayHFRatio 1.060
+	DecayLFRatio 1.350
+	Reflections -800
+	ReflectionsDelay 0.029
+	Reverb -700
+	ReverbDelay 0.045
+	EchoTime 0.146
+	EchoDepth 0.140
+	AirAbsorptionHF 0.000
+	HFReference 7176.900
+	LFReference 211.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Sport Small Swimming Pool" 44 3
+{
+	Environment 0
+	EnvironmentSize 36.200
+	EnvironmentDiffusion 0.700
+	Room -1400
+	RoomHF -200
+	RoomLF -100
+	DecayTime 2.760
+	DecayHFRatio 1.250
+	DecayLFRatio 1.140
+	Reflections -400
+	ReflectionsDelay 0.020
+	Reverb -300
+	ReverbDelay 0.030
+	EchoTime 0.179
+	EchoDepth 0.150
+	ModulationTime 0.895
+	ModulationDepth 0.190
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Sport Squash Court" 44 4
+{
+	Environment 0
+	EnvironmentDiffusion 0.750
+	Room -1100
+	RoomHF -1000
+	RoomLF -200
+	DecayTime 2.220
+	DecayHFRatio 0.910
+	DecayLFRatio 1.160
+	Reflections -700
+	Reverb -300
+	EchoTime 0.126
+	EchoDepth 0.190
+	AirAbsorptionHF 0.000
+	HFReference 7176.900
+	LFReference 211.200
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Sport Stadium Tannoy" 44 5
+{
+	Environment 0
+	EnvironmentSize 3.000
+	EnvironmentDiffusion 0.780
+	Room -900
+	RoomHF -500
+	RoomLF -600
+	DecayTime 2.530
+	DecayHFRatio 0.880
+	DecayLFRatio 0.680
+	Reflections -1100
+	ReflectionsDelay 0.230
+	Reverb -600
+	ReverbDelay 0.063
+	EchoDepth 0.200
+	AirAbsorptionHF 0.000
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Alcove" 45 0
+{
+	Environment 0
+	Room -1100
+	RoomHF -1800
+	RoomLF -1000
+	DecayTime 1.220
+	DecayHFRatio 0.620
+	DecayLFRatio 0.910
+	Reflections -100
+	ReflectionsDelay 0.012
+	Reverb -600
+	ReverbDelay 0.024
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Courtyard" 45 1
+{
+	Environment 0
+	EnvironmentDiffusion 0.650
+	Room -1700
+	RoomHF -2200
+	RoomLF -1000
+	DecayTime 1.790
+	DecayHFRatio 0.350
+	DecayLFRatio 0.790
+	Reflections -700
+	ReflectionsDelay 0.063
+	Reverb -2300
+	ReverbDelay 0.032
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Cupboard" 45 2
+{
+	Environment 0
+	Room -1000
+	RoomHF -1700
+	RoomLF -1000
+	DecayTime 0.560
+	DecayHFRatio 0.460
+	DecayLFRatio 0.910
+	Reflections -100
+	ReflectionsDelay 0.012
+	Reverb -100
+	ReverbDelay 0.028
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Hall" 45 3
+{
+	Environment 0
+	Room -1200
+	RoomHF -2200
+	RoomLF -1100
+	DecayTime 1.950
+	DecayHFRatio 0.300
+	DecayLFRatio 0.820
+	Reflections -300
+	ReflectionsDelay 0.068
+	Reverb -500
+	ReverbDelay 0.063
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Large Room" 45 4
+{
+	Environment 0
+	Room -1200
+	RoomHF -2100
+	RoomLF -1100
+	DecayTime 1.450
+	DecayHFRatio 0.330
+	DecayLFRatio 0.820
+	Reflections -300
+	ReflectionsDelay 0.056
+	Reverb -500
+	ReverbDelay 0.049
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Long Passage" 45 5
+{
+	Environment 0
+	Room -1100
+	RoomHF -2000
+	RoomLF -1000
+	DecayTime 1.790
+	DecayHFRatio 0.400
+	DecayLFRatio 0.790
+	Reflections -200
+	ReflectionsDelay 0.020
+	Reverb -1000
+	ReverbDelay 0.036
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Medium Room" 45 6
+{
+	Environment 0
+	Room -1200
+	RoomHF -2000
+	RoomLF -1100
+	DecayTime 1.070
+	DecayHFRatio 0.420
+	DecayLFRatio 0.820
+	Reflections -300
+	ReflectionsDelay 0.039
+	Reverb -400
+	ReverbDelay 0.029
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Short Passage" 45 7
+{
+	Environment 0
+	Room -1100
+	RoomHF -1800
+	RoomLF -1000
+	DecayTime 1.450
+	DecayHFRatio 0.500
+	DecayLFRatio 0.870
+	Reflections -300
+	ReflectionsDelay 0.012
+	Reverb -700
+	ReverbDelay 0.024
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+
+"Wooden Small Room" 45 8
+{
+	Environment 0
+	Room -1200
+	RoomHF -1900
+	RoomLF -1000
+	DecayTime 0.790
+	DecayHFRatio 0.320
+	DecayLFRatio 0.870
+	Reflections -200
+	ReflectionsDelay 0.032
+	Reverb -300
+	ReverbDelay 0.029
+	HFReference 4705.000
+	LFReference 99.600
+	Diffusion 100.000
+	Density 100.000
+	bEchoTimeScale true
+}
+

@@ -13,7 +13,6 @@ class SDLVideo : public IVideo
 
 	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
 
-	int GetModeCount ();
 	void StartModeIterator (int bits);
 	bool NextMode (int *width, int *height);
 

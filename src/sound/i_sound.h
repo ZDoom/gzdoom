@@ -2,7 +2,7 @@
 ** i_sound.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -35,79 +35,95 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
-#include "doomdef.h"
-
-#include "doomstat.h"
 #include "s_sound.h"
-#include "w_wad.h"
 
+class SoundStream
+{
+public:
+	virtual ~SoundStream ();
 
-extern bool Sound3D;
+	enum
+	{	// For CreateStream
+		Mono = 1,
+		Bits8 = 2,
 
-// Init at program start...
-void I_InitSound();
+		// For OpenStream
+		Loop = 4
+	};
 
-// ... shut down and relase at program termination.
+	virtual bool Play (float volume) = 0;
+	virtual void Stop () = 0;
+	virtual void SetVolume (float volume) = 0;
+	virtual bool SetPaused (bool paused) = 0;
+	virtual unsigned int GetPosition () = 0;
+};
+
+class SoundTrackerModule
+{
+public:
+	virtual ~SoundTrackerModule ();
+
+	virtual bool Play () = 0;
+	virtual void Stop () = 0;
+	virtual void SetVolume (float volume) = 0;
+	virtual bool SetPaused (bool paused) = 0;
+	virtual bool IsPlaying () = 0;
+	virtual bool IsFinished () = 0;
+	virtual bool SetOrder (int order) = 0;
+};
+
+typedef bool (*SoundStreamCallback)(SoundStream *stream, void *buff, int len, void *userdata);
+
+class SoundRenderer
+{
+public:
+	SoundRenderer ();
+	virtual ~SoundRenderer ();
+
+	virtual void SetSfxVolume (float volume) = 0;
+	virtual int  SetChannels (int numchans) = 0;	// Initialize channels
+	virtual void LoadSound (sfxinfo_t *sfx) = 0;	// load a sound from disk
+	virtual void UnloadSound (sfxinfo_t *sfx) = 0;	// unloads a sound from memory
+
+	// Streaming sounds. PlayStream returns a channel handle that can be used with StopSound.
+	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
+	virtual SoundStream *OpenStream (const char *filename, int flags, int offset, int length) = 0;
+
+	// Tracker modules.
+	virtual SoundTrackerModule *OpenModule (const char *file, int offset, int length);
+
+	// Starts a sound in a particular sound channel.
+	virtual long StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, bool looping) = 0;
+	virtual long StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel, bool looping, float pos[3], float vel[3]);
+
+	// Stops a sound channel.
+	virtual void StopSound (long handle) = 0;
+
+	// Returns true if the channel is still playing a sound.
+	virtual bool IsPlayingSound (long handle) = 0;
+
+	// Updates the volume, separation, and pitch of a sound channel.
+	virtual void UpdateSoundParams (long handle, int vol, int sep, int pitch) = 0;
+	virtual void UpdateSoundParams3D (long handle, float pos[3], float vel[3]);
+
+	// For use by I_PlayMovie
+	virtual void MovieDisableSound () = 0;
+	virtual void MovieResumeSound () = 0;
+
+	virtual void UpdateListener (AActor *listener);
+	virtual void UpdateSounds ();
+
+	virtual bool IsValid () = 0;
+	virtual void PrintStatus () = 0;
+	virtual void PrintDriversList () = 0;
+	virtual void GatherStats (char *outstring);
+
+	bool Sound3D;
+};
+
+extern SoundRenderer *GSnd;
+
+void I_InitSound ();
 void STACK_ARGS I_ShutdownSound ();
-
-void I_SetSfxVolume (int volume);
-
-//
-//	SFX I/O
-//
-
-// Initialize channels
-int I_SetChannels (int);
-
-// load a sound from disk
-void I_LoadSound (sfxinfo_t *sfx);
-
-// unloads a sound from memory
-void I_UnloadSound (sfxinfo_t *sfx);
-
-// Starts a sound in a particular sound channel.
-long
-I_StartSound
-( sfxinfo_t		*sfx,
-  int			vol,
-  int			sep,
-  int			pitch,
-  int			channel,
-  BOOL			looping );
-
-long
-I_StartSound3D
-( sfxinfo_t		*sfx,
-  float			vol,
-  int			pitch,
-  int			channel,
-  BOOL			looping,
-  float			pos[3],
-  float			vel[3] );
-
-void I_UpdateListener (AActor *listener);
-void I_UpdateSounds ();
-
-// Stops a sound channel.
-void I_StopSound (int handle);
-
-// Called by S_*() functions to see if a channel is still playing.
-// Returns 0 if no longer playing, 1 if playing.
-int I_SoundIsPlaying (int handle);
-
-// Updates the volume, separation, and pitch of a sound channel.
-void I_UpdateSoundParams (int handle, int vol, int sep, int pitch);
-void I_UpdateSoundParams3D (int handle, float pos[3], float vel[3]);
-
-
-// For use by I_PlayMovie
-void I_MovieDisableSound ();
-void I_MovieResumeSound ();
 
 #endif

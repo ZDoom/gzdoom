@@ -340,7 +340,6 @@ END_DEFAULTS
 
 void APowerStrength::InitEffect ()
 {
-	P_GiveBody (Owner->player, 100);
 }
 
 //===========================================================================
@@ -729,7 +728,7 @@ bool APowerFlight::DrawPowerup (int x, int y)
 		int picnum = TexMan.GetTexture ("SPFLY0", FTexture::TEX_MiscPatch);
 		int frame = (level.time/3) & 15;
 
-		if (Owner->flags2 & MF2_FLY)
+		if (Owner->flags & MF_NOGRAVITY)
 		{
 			if (HitCenterFrame && (frame != 15 && frame != 0))
 			{

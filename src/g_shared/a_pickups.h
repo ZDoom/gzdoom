@@ -69,7 +69,6 @@ enum
 {
 	AIMETA_BASE = 0x71000,
 	AIMETA_PickupMessage,		// string
-	AIMETA_PickupSound			// int
 };
 
 enum
@@ -85,6 +84,7 @@ enum
 	IF_INTERHUBSTRIP	= 1<<8,		// Item is removed when travelling between hubs
 	IF_PICKUPFLASH		= 1<<9,		// Item "flashes" when picked up
 	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
+	IF_FANCYPICKUPSOUND	= 1<<11,	// Play pickup sound in "surround" mode
 
 	IF_CHEATNOTWEAPON	= 1<<30,	// Give cheat considers this not a weapon (used by Sigil)
 };
@@ -114,8 +114,6 @@ public:
 	virtual const char *PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);
 
-	void DoPlayPickupSound (AActor *toucher);
-
 	AInventory *PrevItem () const;	// Returns the item preceding this one in the list.
 	AInventory *PrevInv () const;	// Returns the previous item with IF_INVBAR set.
 	AInventory *NextInv () const;	// Returns the next item with IF_INVBAR set.
@@ -128,6 +126,8 @@ public:
 	int DropTime;				// Countdown after dropping
 
 	DWORD ItemFlags;
+
+	WORD PickupSound;
 
 	virtual void BecomeItem ();
 	virtual void BecomePickup ();
@@ -160,7 +160,6 @@ public:
 	AInventory *CreateCopy (AActor *other);
 	bool HandlePickup (AInventory *item);
 	const TypeInfo *GetParentAmmo () const;
-	virtual void PlayPickupSound (AActor *toucher);
 
 	int BackpackAmount, BackpackMaxAmount;
 };
@@ -199,7 +198,6 @@ public:
 	bool bAltFire;	// Set when this weapon's alternate fire is used.
 
 	virtual void Serialize (FArchive &arc);
-	virtual void PlayPickupSound (AActor *toucher);
 	virtual bool ShouldStay ();
 	virtual void AttachToOwner (AActor *other);
 	virtual bool HandlePickup (AInventory *item);
@@ -265,7 +263,6 @@ class AHealth : public AInventory
 {
 	DECLARE_STATELESS_ACTOR (AHealth, AInventory)
 public:
-	virtual void PlayPickupSound (AActor *toucher);
 	virtual bool TryPickup (AActor *other);
 };
 
@@ -284,8 +281,6 @@ public:
 class AArmor : public AInventory
 {
 	DECLARE_STATELESS_ACTOR (AArmor, AInventory)
-public:
-	virtual void PlayPickupSound (AActor *toucher);
 };
 
 // Basic armor absorbs a specific percent of the damage. You should
@@ -296,7 +291,7 @@ class ABasicArmor : public AArmor
 	DECLARE_STATELESS_ACTOR (ABasicArmor, AArmor)
 public:
 	virtual void Serialize (FArchive &arc);
-	virtual void PostBeginPlay ();
+	virtual void Tick ();
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual bool HandlePickup (AInventory *item);
 	virtual void AbsorbDamage (int damage, int damageType, int &newdamage);
@@ -356,7 +351,6 @@ class APuzzleItem : public AInventory
 	DECLARE_STATELESS_ACTOR (APuzzleItem, AInventory)
 public:
 	void Serialize (FArchive &arc);
-	void PlayPickupSound (AActor *toucher);
 	bool ShouldStay ();
 	bool Use (bool pickup);
 	bool HandlePickup (AInventory *item);
@@ -378,9 +372,14 @@ class ABackpack : public AInventory
 {
 	DECLARE_ACTOR (ABackpack, AInventory)
 public:
-	bool TryPickup (AActor *other);
+	void Serialize (FArchive &arc);
+	bool HandlePickup (AInventory *item);
+	AInventory *CreateCopy (AActor *other);
+	AInventory *CreateTossable ();
 	const char *PickupMessage ();
 	void DetachFromOwner ();
+
+	bool bDepleted;
 };
 
 // When the communicator is in a player's inventory, the
@@ -390,7 +389,6 @@ class ACommunicator : public AInventory
 	DECLARE_ACTOR (ACommunicator, AInventory)
 public:
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 #endif //__A_PICKUPS_H__

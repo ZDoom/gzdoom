@@ -18,7 +18,6 @@ public:
 
 protected:
 	virtual bool ShouldStay ();
-	virtual void PlayPickupSound (AActor *toucher);
 };
 
 class ADoomKey : public AKey

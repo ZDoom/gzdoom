@@ -53,6 +53,7 @@ public:
 	
 	DScroller (EScrollType type, fixed_t dx, fixed_t dy, int control, int affectee, int accel);
 	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel);
+	~DScroller ();
 
 	void Serialize (FArchive &arc);
 	void Tick ();

@@ -54,7 +54,7 @@ extern "C" const BYTE*	bufplce[4];
 
 // [RH] Temporary buffer for column drawing
 extern "C" byte			dc_temp[MAXHEIGHT*4];
-extern "C" unsigned int	dc_tspans[4][256];
+extern "C" unsigned int	dc_tspans[4][MAXHEIGHT];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];
 

@@ -2,25 +2,16 @@
 
 void StreamSong::SetVolume (float volume)
 {
-	if (m_Channel)
-	{
-		FSOUND_SetVolumeAbsolute (m_Channel, (int)(volume * 255));
-	}
+	m_Stream->SetVolume (volume);
 }
 
 void StreamSong::Play (bool looping)
 {
-	int volume = (int)(snd_musicvolume * 255);
-
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
-	if (m_Channel != -1)
+	if (m_Stream->Play (snd_musicvolume))
 	{
-		FSOUND_SetVolumeAbsolute (m_Channel, volume);
-		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
-		FSOUND_SetPaused (m_Channel, false);
 		m_Status = STATE_Playing;
 		m_LastPos = 0;
 	}
@@ -30,7 +21,7 @@ void StreamSong::Pause ()
 {
 	if (m_Status == STATE_Playing && m_Stream != NULL)
 	{
-		if (FSOUND_SetPaused (m_Channel, TRUE))
+		if (m_Stream->SetPaused (true))
 			m_Status = STATE_Paused;
 	}
 }
@@ -39,7 +30,7 @@ void StreamSong::Resume ()
 {
 	if (m_Status == STATE_Paused && m_Stream != NULL)
 	{
-		if (FSOUND_SetPaused (m_Channel, FALSE))
+		if (m_Stream->SetPaused (false))
 			m_Status = STATE_Playing;
 	}
 }
@@ -48,8 +39,7 @@ void StreamSong::Stop ()
 {
 	if (m_Status != STATE_Stopped && m_Stream)
 	{
-		FSOUND_Stream_Stop (m_Stream);
-		m_Channel = -1;
+		m_Stream->Stop ();
 	}
 	m_Status = STATE_Stopped;
 }
@@ -59,28 +49,24 @@ StreamSong::~StreamSong ()
 	Stop ();
 	if (m_Stream != NULL)
 	{
-		FSOUND_Stream_Close (m_Stream);
+		delete m_Stream;
 		m_Stream = NULL;
 	}
 }
 
 StreamSong::StreamSong (const char *filename, int offset, int len)
-: m_Channel (-1)
 {
-	m_Stream = FSOUND_Stream_Open (filename,
-		FSOUND_LOOP_NORMAL|FSOUND_NORMAL|FSOUND_2D, offset, len);
-	int err = FSOUND_GetError ();
-	err = err;
+	m_Stream = GSnd->OpenStream (filename, SoundStream::Loop, offset, len);
 }
 
 bool StreamSong::IsPlaying ()
 {
-	if (m_Channel != -1)
+	if (m_Status != STATE_Stopped)
 	{
 		if (m_Looping)
 			return true;
 
-		int pos = FSOUND_Stream_GetPosition (m_Stream);
+		int pos = m_Stream->GetPosition ();
 
 		if (pos < m_LastPos)
 		{

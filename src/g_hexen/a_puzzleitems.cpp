@@ -33,6 +33,7 @@ IMPLEMENT_STATELESS_ACTOR (APuzzleItem, Any, -1, 0)
 	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_DefMaxAmount
 	PROP_UseSound ("PuzzleSuccess")
+	PROP_Inventory_PickupSound ("misc/i_pkup")
 END_DEFAULTS
 
 void APuzzleItem::Serialize (FArchive &arc)
@@ -66,11 +67,6 @@ bool APuzzleItem::Use (bool pickup)
 	S_Sound (Owner, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
 	C_MidPrintBold (GStrings(TXT_USEPUZZLEFAILED));
 	return false;
-}
-
-void APuzzleItem::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
 }
 
 bool APuzzleItem::ShouldStay ()

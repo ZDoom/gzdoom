@@ -74,7 +74,7 @@ extern "C"
 	CPUInfo		CPU;
 }
 
-extern HWND Window;
+extern HWND Window, ConWindow;
 extern HINSTANCE g_hInst;
 
 UINT TimerPeriod;
@@ -425,6 +425,7 @@ void I_Init (void)
 		I_WaitForTic = I_WaitForTicPolled;
 	}
 
+	atterm (I_ShutdownSound);
 	I_InitSound ();
 	I_InitInput (Window);
 	I_InitHardware ();
@@ -558,9 +559,55 @@ void I_SetTitleString (const char *title)
 		DoomStartupTitle[i] = title[i];
 }
 
-void I_PrintStr (int xp, const char *cp, int count, BOOL scroll)
+void I_PrintStr (const char *cp, bool lineBreak)
 {
-	// used in the DOS version
+	if (ConWindow == NULL)
+		return;
+
+	static bool newLine = true;
+	HWND edit = (HWND)GetWindowLongPtr (ConWindow, GWLP_USERDATA);
+	char buf[256];
+	int bpos = 0;
+
+	SendMessage (edit, EM_SETSEL, -1, 0);
+
+	if (lineBreak && !newLine)
+	{
+		buf[0] = '\r';
+		buf[1] = '\n';
+		bpos = 2;
+	}
+	while (*cp != NULL)
+	{
+		if (*cp == 28)
+		{ // Skip color changes
+			if (*++cp != 0)
+				cp++;
+			continue;
+		}
+		if (bpos < 253)
+		{
+			// Stupid edit controls need CR-LF pairs
+			if (*cp == '\n')
+			{
+				buf[bpos++] = '\r';
+			}
+		}
+		else
+		{
+			buf[bpos] = 0;
+			SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
+			newLine = buf[bpos-1] == '\n';
+			bpos = 0;
+		}
+		buf[bpos++] = *cp++;
+	}
+	if (bpos != 0)
+	{
+		buf[bpos] = 0;
+		SendMessage (edit, EM_REPLACESEL, FALSE, (LPARAM)buf);
+		newLine = buf[bpos-1] == '\n';
+	}
 }
 
 EXTERN_CVAR (Bool, queryiwad);

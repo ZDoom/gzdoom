@@ -151,13 +151,12 @@ CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 Win32Video::Win32Video (int parm)
 : m_Modes (NULL),
-  m_IsFullscreen (false),
-  m_Have320x200x8 (false),
-  m_Have320x240x8 (false)
+  m_IsFullscreen (false)
 {
 	STARTLOG;
 
 	HRESULT dderr;
+	ModeInfo *mode, *nextmode;
 
 	dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_INPROC_SERVER, IID_IDirectDraw2, (void **)&DDraw);
 
@@ -193,11 +192,24 @@ Win32Video::Win32Video (int parm)
 	{
 		// Windows 95 will let us use Mode X. If we didn't find any linear
 		// modes in the loop above, add the Mode X modes here.
-
-		if (!m_Have320x200x8)
-			AddMode (320, 200, 8);
-		if (!m_Have320x240x8)
-			AddMode (320, 240, 8);
+		AddMode (320, 200, 8, 200);
+		AddMode (320, 240, 8, 240);
+	}
+	// Now add 16:9 and 16:10 resolutions you can use in a window or letterboxed
+	for (mode = m_Modes; mode != NULL; mode = nextmode)
+	{
+		nextmode = mode->next;
+		if (mode->realheight == mode->height && mode->height * 4/3 == mode->width)
+		{
+			if (mode->width >= 360)
+			{
+				AddMode (mode->width, mode->width * 9/16, mode->bits, mode->height);
+			}
+			if (mode->width > 640)
+			{
+				AddMode (mode->width, mode->width * 10/16, mode->bits, mode->height);
+			}
+		}
 	}
 }
 
@@ -274,39 +286,38 @@ HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
 		desc->dwHeight >= 200 &&
 		desc->dwWidth >= 320)
 	{
-		((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8);
+		((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8, desc->dwHeight);
 	}
 
 	return DDENUMRET_OK;
 }
 
-void Win32Video::AddMode (int x, int y, int bits)
+void Win32Video::AddMode (int x, int y, int bits, int y2)
 {
 	ModeInfo **probep = &m_Modes;
 	ModeInfo *probe = m_Modes;
 
 	// This mode may have been already added to the list because it is
 	// enumerated multiple times at different refresh rates. If it's
-	// not present, add it to the end of the list; otherwise, do nothing.
-	while (probe != 0)
+	// not present, add it to the right spot in the list; otherwise, do nothing.
+	// Modes are sorted first by width, then by height, then by depth. In each
+	// case the order is ascending.
+	for (; probe != 0; probep = &probe->next, probe = probe->next)
 	{
-		if (probe->width == x && probe->height == y && probe->bits == bits)
-		{
-			return;
-		}
-		probep = &probe->next;
-		probe = probe->next;
+		if (probe->width > x)		break;
+		if (probe->width < x)		continue;
+		// Width is equal
+		if (probe->height > y)		break;
+		if (probe->height < y)		continue;
+		// Height is equal
+		if (probe->bits > bits)		break;
+		if (probe->bits < bits)		continue;
+		// Bits is equal
+		return;
 	}
 
-	*probep = new ModeInfo (x, y, bits);
-
-	if (x == 320 && bits == 8)
-	{
-		if (y == 200)
-			m_Have320x200x8 = true;
-		else if (y == 240)
-			m_Have320x240x8 = true;
-	}
+	*probep = new ModeInfo (x, y, bits, y2);
+	(*probep)->next = probe;
 }
 
 void Win32Video::FreeModes ()
@@ -330,36 +341,26 @@ bool Win32Video::FullscreenChanged (bool fs)
 	return true;
 }
 
-int Win32Video::GetModeCount ()
-{
-	int count = 0;
-	ModeInfo *mode = m_Modes;
-
-	while (mode)
-	{
-		count++;
-		mode = mode->next;
-	}
-	return count;
-}
-
 void Win32Video::StartModeIterator (int bits)
 {
 	m_IteratorMode = m_Modes;
 	m_IteratorBits = bits;
 }
 
-bool Win32Video::NextMode (int *width, int *height)
+bool Win32Video::NextMode (int *width, int *height, bool *letterbox)
 {
 	if (m_IteratorMode)
 	{
 		while (m_IteratorMode && m_IteratorMode->bits != m_IteratorBits)
+		{
 			m_IteratorMode = m_IteratorMode->next;
+		}
 
 		if (m_IteratorMode)
 		{
 			*width = m_IteratorMode->width;
 			*height = m_IteratorMode->height;
+			if (letterbox != NULL) *letterbox = m_IteratorMode->realheight != m_IteratorMode->height;
 			m_IteratorMode = m_IteratorMode->next;
 			return true;
 		}
@@ -592,7 +593,17 @@ bool DDrawFB::CreateResources ()
 		ShowWindow (Window, SW_SHOW);
 		// Remove the window border in fullscreen mode
 		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_SYSMENU);
-		hr = DDraw->SetDisplayMode (Width, Height, bits = vid_displaybits, 0, 0);
+
+		TrueHeight = Height;
+		for (Win32Video::ModeInfo *mode = static_cast<Win32Video *>(Video)->m_Modes; mode != NULL; mode = mode->next)
+		{
+			if (mode->width == Width && mode->height == Height)
+			{
+				TrueHeight = mode->realheight;
+				break;
+			}
+		}
+		hr = DDraw->SetDisplayMode (Width, TrueHeight, bits = vid_displaybits, 0, 0);
 		if (FAILED(hr))
 		{
 			bits = 32;
@@ -630,6 +641,7 @@ bool DDrawFB::CreateResources ()
 		MustBuffer = true;
 
 		LOG ("Running in a window\n");
+		TrueHeight = Height;
 
 		// Create the primary surface
 		ddsd.dwFlags = DDSD_CAPS;
@@ -1468,16 +1480,25 @@ void DDrawFB::Update ()
 		{
 			if (LockSurf (NULL, NULL) != NoGood)
 			{
+				BYTE *writept = Buffer + (TrueHeight - Height)/2*Pitch;
 				LOG3 ("Copy %dx%d (%d)\n", Width, Height, BufferPitch);
 				if (UsePfx)
 				{
 					GPfx.Convert (MemBuffer, BufferPitch,
-						Buffer, Pitch, Width, Height,
+						writept, Pitch, Width, Height,
 						FRACUNIT, FRACUNIT, 0, 0);
 				}
 				else
 				{
-					CopyFromBuff (MemBuffer, BufferPitch, Width, Height, Buffer);
+					CopyFromBuff (MemBuffer, BufferPitch, Width, Height, writept);
+				}
+				if (TrueHeight != Height)
+				{
+					// Letterbox time! Draw black top and bottom borders.
+					int topborder = (TrueHeight - Height) / 2;
+					int botborder = TrueHeight - topborder - Height;
+					memset (Buffer, 0, Pitch*topborder);
+					memset (writept + Height*Pitch, 0, Pitch*botborder);
 				}
 				LockingSurf->Unlock (NULL);
 			}

@@ -61,6 +61,8 @@ EXTERN_CVAR (Bool, hud_scale)
 
 FBaseStatusBar *StatusBar;
 
+extern int setblocks;
+
 int ST_X, ST_Y;
 int SB_state = 3;
 
@@ -195,12 +197,14 @@ void FBaseStatusBar::SetScaled (bool scale)
 	}
 	else
 	{
+		bool wide = !(CheckRatio (SCREENWIDTH, SCREENHEIGHT) & 3);
+		int basewidth = wide ? 1280 : 960;
 		ST_X = 0;
 		ST_Y = 200 - RelTop;
 		::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);
-		ScaleX = (SCREENWIDTH << FRACBITS) / 320;
+		ScaleX = (SCREENWIDTH << (FRACBITS+2)) / basewidth;
 		ScaleY = (SCREENHEIGHT << FRACBITS) / 200;
-		ScaleIX = (320 << FRACBITS) / SCREENWIDTH;
+		ScaleIX = (basewidth << (FRACBITS-2)) / SCREENWIDTH;
 		ScaleIY = (200 << FRACBITS) / SCREENHEIGHT;
 		Displacement = 0;
 	}
@@ -624,12 +628,14 @@ void FBaseStatusBar::DrINumberOuter (signed int val, int x, int y, bool center, 
 		return;
 	}
 
+	int oval = val;
+	int ox = x;
+
+	// First the shadow
 	while (val != 0)
 	{
 		screen->DrawTexture (Images[imgINumbers + val % 10], x + 1, y + 1,
 			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
-			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
-		screen->DrawTexture (Images[imgINumbers + val % 10], x, y,
 			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 		x -= w;
 		val /= 10;
@@ -639,6 +645,20 @@ void FBaseStatusBar::DrINumberOuter (signed int val, int x, int y, bool center, 
 		screen->DrawTexture (Images[imgNEGATIVE], x + 1, y + 1,
 			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
 			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
+	}
+
+	// Then the real deal
+	val = oval;
+	x = ox;
+	while (val != 0)
+	{
+		screen->DrawTexture (Images[imgINumbers + val % 10], x, y,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
+		x -= w;
+		val /= 10;
+	}
+	if (negative)
+	{
 		screen->DrawTexture (Images[imgNEGATIVE], x, y,
 			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 	}
@@ -690,6 +710,10 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 		val = -val;
 	}
 
+	int oval = val;
+	int oxpos = xpos;
+
+	// Draw shadow first
 	while (val != 0)
 	{
 		pic = Images[val % 10 + imgBNumbers];
@@ -697,9 +721,6 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 			DTA_HUDRules, HUD_Normal,
 			DTA_Alpha, HR_SHADOW,
 			DTA_FillColor, 0,
-			TAG_DONE);
-		screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-			DTA_HUDRules, HUD_Normal,
 			TAG_DONE);
 		val /= 10;
 		xpos -= w;
@@ -714,6 +735,26 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 				DTA_Alpha, HR_SHADOW,
 				DTA_FillColor, 0,
 				TAG_DONE);
+		}
+	}
+
+	// Then draw the real thing
+	val = oval;
+	xpos = oxpos;
+	while (val != 0)
+	{
+		pic = Images[val % 10 + imgBNumbers];
+		screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
+			DTA_HUDRules, HUD_Normal,
+			TAG_DONE);
+		val /= 10;
+		xpos -= w;
+	}
+	if (negative)
+	{
+		pic = Images[imgBNEGATIVE];
+		if (pic != NULL)
+		{
 			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
 				DTA_HUDRules, HUD_Normal,
 				TAG_DONE);
@@ -766,6 +807,10 @@ void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 		val = -val;
 	}
 
+	int oval = val;
+	int oxpos = xpos;
+
+	// First the shadow
 	while (val != 0)
 	{
 		pic = BigFont->GetChar ('0' + val % 10, &v);
@@ -773,10 +818,6 @@ void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 			DTA_HUDRules, HUD_Normal,
 			DTA_Alpha, HR_SHADOW,
 			DTA_FillColor, 0,
-			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
-			TAG_DONE);
-		screen->DrawTexture (pic, xpos - v/2, y,
-			DTA_HUDRules, HUD_Normal,
 			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
 			TAG_DONE);
 		val /= 10;
@@ -793,6 +834,27 @@ void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size)
 				DTA_FillColor, 0,
 				DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
 				TAG_DONE);
+		}
+	}
+
+	// Then the foreground number
+	val = oval;
+	xpos = oxpos;
+	while (val != 0)
+	{
+		pic = BigFont->GetChar ('0' + val % 10, &v);
+		screen->DrawTexture (pic, xpos - v/2, y,
+			DTA_HUDRules, HUD_Normal,
+			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			TAG_DONE);
+		val /= 10;
+		xpos -= w;
+	}
+	if (negative)
+	{
+		pic = BigFont->GetChar ('-', &v);
+		if (pic != NULL)
+		{
 			screen->DrawTexture (pic, xpos - v/2, y,
 				DTA_HUDRules, HUD_Normal,
 				DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
@@ -843,10 +905,32 @@ void FBaseStatusBar::DrSmallNumberOuter (int val, int x, int y, bool center) con
 
 void FBaseStatusBar::RefreshBackground () const
 {
+	int x, y, i, ratio;
+
 	if (SCREENWIDTH > 320)
 	{
-		R_DrawBorder (0, ST_Y, ST_X, SCREENHEIGHT);
-		R_DrawBorder (SCREENWIDTH - ST_X, ST_Y, SCREENWIDTH, SCREENHEIGHT);
+		ratio = CheckRatio (SCREENWIDTH, SCREENHEIGHT);
+		x = !(ratio & 3) ? ST_X : SCREENWIDTH/8;
+		if (x > 0)
+		{
+			y = x == ST_X ? ST_Y : ::ST_Y;
+			R_DrawBorder (0, y, x, SCREENHEIGHT);
+			R_DrawBorder (SCREENWIDTH - x, y, SCREENWIDTH, SCREENHEIGHT);
+
+			if (setblocks >= 10)
+			{
+				const gameborder_t *border = gameinfo.border;
+
+				for (i = x - border->size; i > -border->size; i -= border->size)
+				{
+					screen->DrawTexture (TexMan[border->b], i, y, TAG_DONE);
+				}
+				for (i = SCREENWIDTH - x; i < SCREENWIDTH; i += border->size)
+				{
+					screen->DrawTexture (TexMan[border->b], i, y, TAG_DONE);
+				}
+			}
+		}
 	}
 }
 
@@ -886,7 +970,7 @@ void FBaseStatusBar::DrawCrosshair ()
 
 	if (crosshairscale)
 	{
-		size = SCREENWIDTH * FRACUNIT / 320;
+		size = SCREENHEIGHT * FRACUNIT / 200;
 	}
 	else
 	{
@@ -992,7 +1076,7 @@ void FBaseStatusBar::Draw (EHudState state)
 	blend[0] = blend[1] = blend[2] = blend[3] = 0;
 	BlendView (blend);
 
-	if (SB_state != 0 && state == HUD_StatusBar && !Scaled)
+	if ((SB_state != 0 || BorderNeedRefresh) && state == HUD_StatusBar)
 	{
 		RefreshBackground ();
 	}
@@ -1018,8 +1102,6 @@ void FBaseStatusBar::Draw (EHudState state)
 			BorderNeedRefresh = screen->GetPageCount();
 		}
 	}
-
-	DrawPowerups ();
 
 	if (viewactive)
 	{
@@ -1150,6 +1232,8 @@ void FBaseStatusBar::DrawTopStuff (EHudState state)
 			"of ZDoom. Expect it to go out of sync.",
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
+
+	DrawPowerups ();
 
 	if (state == HUD_StatusBar)
 	{

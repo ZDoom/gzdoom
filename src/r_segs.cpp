@@ -190,7 +190,6 @@ static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FText
 
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 {
-	int 		lightnum;
 	FTexture	*tex;
 	int			i;
 	sector_t	tempsec;		// killough 4/13/98
@@ -225,23 +224,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	basecolormap = sec->ColorMap->Maps;	// [RH] Set basecolormap
 
-	// [RH] Get wall light level
-	if (curline->sidedef->Flags & WALLF_ABSLIGHTING)
-	{
-		lightnum = (BYTE)curline->sidedef->Light;
-	}
-	else
-	{
-		lightnum = sec->lightlevel;
-
-		if (!level.fadeto &&
-			(sec->ColorMap == NULL || sec->ColorMap->Fade == MAKERGB(0,0,0)))
-		{ // Don't do relative lighting in foggy sectors
-			lightnum += curline->sidedef->Light * 2;
-		}
-	}
-
-	wallshade = LIGHT2SHADE(lightnum + r_actualextralight);
+	wallshade = ds->shade;
 	rw_lightstep = ds->lightstep;
 	rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
 
@@ -291,14 +274,14 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 
 	// [RH] Don't bother drawing segs that are completely offscreen
-	if (MulScale12 (globaldclip, ds->neardepth) < -textop &&
-		MulScale12 (globaldclip, ds->fardepth) < -textop)
+	if (MulScale12 (globaldclip, ds->sz1) < -textop &&
+		MulScale12 (globaldclip, ds->sz2) < -textop)
 	{ // Texture top is below the bottom of the screen
 		goto clearfog;
 	}
 
-	if (MulScale12 (globaluclip, ds->neardepth) > texheight - textop &&
-		MulScale12 (globaluclip, ds->fardepth) > texheight - textop)
+	if (MulScale12 (globaluclip, ds->sz1) > texheight - textop &&
+		MulScale12 (globaluclip, ds->sz2) > texheight - textop)
 	{ // Texture bottom is above the top of the screen
 		goto clearfog;
 	}
@@ -733,7 +716,7 @@ void R_RenderSegLoop ()
 			}
 			if (midtexture->bWorldPanning)
 			{
-				rw_offset = MulScale3 (xoffset, midtexture->ScaleX ? midtexture->ScaleX : ty);
+				rw_offset = MulScale3 (xoffset, midtexture->ScaleX ? midtexture->ScaleX : tx);
 			}
 			if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
 			{
@@ -767,7 +750,7 @@ void R_RenderSegLoop ()
 				}
 				if (toptexture->bWorldPanning)
 				{
-					rw_offset = MulScale3 (xoffset, toptexture->ScaleY ? toptexture->ScaleY : ty);
+					rw_offset = MulScale3 (xoffset, toptexture->ScaleX ? toptexture->ScaleX : tx);
 				}
 				if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
 				{
@@ -804,7 +787,7 @@ void R_RenderSegLoop ()
 				}
 				if (bottomtexture->bWorldPanning)
 				{
-					rw_offset = MulScale3 (xoffset, bottomtexture->ScaleY ? bottomtexture->ScaleY : ty);
+					rw_offset = MulScale3 (xoffset, bottomtexture->ScaleX ? bottomtexture->ScaleX : tx);
 				}
 				else
 				{
@@ -1160,25 +1143,16 @@ void R_StoreWallRange (int start, int stop)
 	rw_offset = sidedef->textureoffset;
 	rw_light = rw_lightleft + rw_lightstep * (start - WallSX1);
 
-	if (WallSZ1 < WallSZ2)
-	{
-		ds_p->neardepth = WallSZ1;
-		ds_p->fardepth = WallSZ2;
-	}
-	else
-	{
-		ds_p->neardepth = WallSZ2;
-		ds_p->fardepth = WallSZ1;
-	}
-
+	ds_p->sx1 = WallSX1;
+	ds_p->sx2 = WallSX2;
+	ds_p->sz1 = WallSZ1;
+	ds_p->sz2 = WallSZ2;
+	ds_p->siz1 = (DWORD)DivScale32 (1, WallSZ1) >> 1;
+	ds_p->siz2 = (DWORD)DivScale32 (1, WallSZ2) >> 1;
 	ds_p->x1 = rw_x = start;
 	ds_p->x2 = stop-1;
 	ds_p->curline = curline;
 	rw_stopx = stop;
-	ds_p->cx = WallTX1;
-	ds_p->cy = WallTY1;
-	ds_p->cdx = WallTX2 - WallTX1;
-	ds_p->cdy = WallTY2 - WallTY1;
 	ds_p->bFogBoundary = false;
 
 	// killough 1/6/98, 2/1/98: remove limit on openings
@@ -1292,10 +1266,7 @@ void R_StoreWallRange (int start, int stop)
 			}
 			ds_p->light = rw_light;
 			ds_p->lightstep = rw_lightstep;
-			ds_p->sx1 = WallSX1;
-			ds_p->sx2 = WallSX2;
-			ds_p->sz1 = WallSZ1;
-			ds_p->sz2 = WallSZ2;
+			ds_p->shade = wallshade;
 
 			if (ds_p->bFogBoundary || ds_p->maskedtexturecol != -1)
 			{

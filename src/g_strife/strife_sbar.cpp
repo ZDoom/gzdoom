@@ -120,7 +120,11 @@ const BYTE *FHealthBar::GetPixels ()
 
 void FHealthBar::SetVial (int level)
 {
-	if (level > 200 && level != 999)
+	if (level < 0)
+	{
+		level = 0;
+	}
+	else if (level > 200 && level != 999)
 	{
 		level = 200;
 	}

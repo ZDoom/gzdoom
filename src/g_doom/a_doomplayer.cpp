@@ -113,59 +113,57 @@ void ADoomPlayer::GiveDefaultInventory ()
 		static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
 }
 
+void A_FireScreamReplace (AActor *self)
+{
+	self->DeathSound = S_FindSkinnedSound (self, "*burndeath");
+}
+
 void A_PlayerScream (AActor *self)
 {
-	const char *sound;
+	int sound = 0;
 	int chan = CHAN_VOICE;
-	int gametype;
 
-	if (self->player == NULL || self->player->morphTics != 0)
+	if (self->player == NULL || self->DeathSound != 0)
 	{
 		S_SoundID (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
 		return;
 	}
-
-	gametype = skins[self->player->userinfo.skin].game;
 
 	// Handle the different player death screams
 	if ((((level.flags >> 15) | (dmflags)) &
 		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
 		self->momz <= -39*FRACUNIT)
 	{
-		sound = "*splat";
+		sound = S_FindSkinnedSound (self, "*splat");
 		chan = CHAN_BODY;
 	}
-	else if (gametype == GAME_Doom)
-	{
-		if (self->health < -50)
-		{ // IF THE PLAYER DIES LESS THAN -50% WITHOUT GIBBING
-			sound = "*xdeath";
-		}
-		else
-		{
-			sound = "*death";
-		}
+
+	// try to find the appropriate death sound and use suitable replacements if necessary
+	if (!sound && self->special1<10)
+	{ // Wimpy death sound
+		sound = S_FindSkinnedSound (self, "*wimpydeath");
 	}
-	else
+	if (!sound && self->health <= -50)
 	{
-		if (gametype == GAME_Heretic && self->special1 < 10)
-		{ // Wimpy death sound
-			sound = "*wimpydeath";
-		}
-		else if (self->health > -50)
-		{ // Normal death sound
-			sound = "*death";
-		}
-		else if (self->health > -100)
+		if (self->health > -100)
 		{ // Crazy death sound
-			sound = "*crazydeath";
+			sound = S_FindSkinnedSound (self, "*crazydeath");
 		}
-		else
+		if (!sound)
 		{ // Extreme death sound
-			sound = "*gibbed";
-			chan = CHAN_BODY;
+			sound = S_FindSkinnedSound (self, "*xdeath");
+			if (!sound)
+			{
+				sound = S_FindSkinnedSound (self, "*gibbed");
+				chan = CHAN_BODY;
+			}
 		}
 	}
+	if (!sound)
+	{ // Normal death sound
+		sound=S_FindSkinnedSound (self, "*death");
+	}
+
 	if (chan != CHAN_VOICE)
 	{
 		for (int i = 0; i < 8; ++i)
@@ -177,7 +175,7 @@ void A_PlayerScream (AActor *self)
 			}
 		}
 	}
-	S_Sound (self, CHAN_VOICE, sound, 1, ATTN_NORM);
+	S_SoundID (self, chan, sound, 1, ATTN_NORM);
 }
 
 //==========================================================================

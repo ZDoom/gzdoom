@@ -18,7 +18,6 @@ class AArtiBlastRadius : public AInventory
 public:
 	bool Use (bool pickup);
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 protected:
 	void BlastActor (AActor *victim, fixed_t strength);
 };
@@ -39,20 +38,14 @@ IMPLEMENT_ACTOR (AArtiBlastRadius, Hexen, 10110, 74)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIBLST")
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 const char *AArtiBlastRadius::PickupMessage ()
 {
 	return GStrings(TXT_ARTIBLASTRADIUS);
-}
-
-void AArtiBlastRadius::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-		toucher == NULL || toucher == players[consoleplayer].camera
-		? ATTN_SURROUND : ATTN_NORM);
 }
 
 // Blast Effect -------------------------------------------------------------

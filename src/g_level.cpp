@@ -1274,18 +1274,29 @@ static bool		startkeepfacing;	// [RH] Support for keeping your facing angle
 // [RH] The position parameter to these next three functions should
 //		match the first parameter of the single player start spots
 //		that should appear in the next map.
-static void goOn (int position, bool keepFacing)
+static void goOn (int position, bool keepFacing, bool secret)
 {
+	static bool unloading;
+
+	if (unloading)
+	{
+		Printf (TEXTCOLOR_RED "Unloading scripts cannot exit the level again.\n");
+		return;
+	}
+
 	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
 	cluster_info_t *nextcluster = FindClusterInfo (CheckLevelRedirect (FindLevelInfo (level.nextmap))->cluster);
 
 	startpos = position;
 	startkeepfacing = keepFacing;
 	gameaction = ga_completed;
+	secretexit = secret;
 	bglobal.End();	//Added by MC:
 
 	// [RH] Give scripts a chance to do something
+	unloading = true;
 	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+	unloading = false;
 
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
@@ -1297,8 +1308,7 @@ static void goOn (int position, bool keepFacing)
 
 void G_ExitLevel (int position, bool keepFacing)
 {
-	secretexit = false;
-	goOn (position, keepFacing);
+	goOn (position, keepFacing, false);
 }
 
 // Here's for the german edition.
@@ -1307,8 +1317,7 @@ void G_SecretExitLevel (int position)
 	// [RH] Check for secret levels is done in 
 	//		G_DoCompleted()
 
-	secretexit = true;
-	goOn (position, false);
+	goOn (position, false, true);
 }
 
 void G_DoCompleted (void)

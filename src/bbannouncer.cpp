@@ -225,7 +225,7 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 
 	if (cl_bbannounce && deathmatch)
 	{
-		bool playSound = (killee == players[consoleplayer].camera);
+		bool playSound = killee->CheckLocalView (consoleplayer);
 
 		if (killer == NULL)
 		{ // The world killed the player
@@ -261,7 +261,7 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 			// Blood only plays the announcement sound on the killer's
 			// computer. I think it sounds neater to also hear it on
 			// the killee's machine.
-			playSound |= (killer == players[consoleplayer].camera);
+			playSound |= killer->CheckLocalView (consoleplayer);
 		}
 
 		message = GStrings(choice->Message);
@@ -305,8 +305,8 @@ bool AnnounceTelefrag (AActor *killer, AActor *killee)
 				killee->player->userinfo.netname, killer->player->userinfo.netname);
 			Printf (PRINT_MEDIUM, "%s\n", assembled);
 		}
-		if (killee == players[consoleplayer].camera ||
-			killer == players[consoleplayer].camera)
+		if (killee->CheckLocalView (consoleplayer) ||
+			killer->CheckLocalView (consoleplayer))
 		{
 			DoVoiceAnnounce (TelefragSounds[rannum % 7]);
 		}
@@ -340,7 +340,7 @@ bool AnnounceSpreeLoss (AActor *who)
 {
 	if (cl_bbannounce)
 	{
-		if (who == players[consoleplayer].camera)
+		if (who->CheckLocalView (consoleplayer))
 		{
 			DoVoiceAnnounce (TooBadSounds[M_Random() % 3]);
 		}
@@ -360,7 +360,7 @@ bool AnnounceMultikill (AActor *who)
 {
 	if (cl_bbannounce)
 	{
-		if (who == players[consoleplayer].camera)
+		if (who->CheckLocalView (consoleplayer))
 		{
 			DoVoiceAnnounce (GoodJobSounds[M_Random() % 3]);
 		}

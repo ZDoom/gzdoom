@@ -216,7 +216,7 @@ float APathFollower::Splerp (float p1, float p2, float p3, float p4)
 // Linearly interpolate between p1 and p2
 float APathFollower::Lerp (float p1, float p2)
 {
-	return p2 * Time + p1 * (1.f - Time);
+	return p1 + Time * (p2 - p1);
 }
 
 void APathFollower::BeginPlay ()

@@ -3,7 +3,7 @@
 ** Implements the console itself
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -633,6 +633,8 @@ int PrintString (int printlevel, const char *outline)
 		fflush (Logfile);
 //#endif
 	}
+
+	I_PrintStr (outline, false);
 
 	AddToConsole (printlevel, outline);
 	if (vidactive && screen && screen->Font)
@@ -1341,6 +1343,14 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			TabbedList = false;
 			break;
 
+		case 'X':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer[1] = buffer[0] = 0;
+				TabbedLast = TabbedList = false;
+			}
+			break;
+
 		case 'D':
 			if (ev->data3 & GKM_CTRL && buffer[0] == 0)
 			{ // Control-D pressed on an empty line
@@ -1412,7 +1422,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 				}
 			}
 			HistPos = NULL;
-			Printf (127, "]%s\n", &buffer[2]);
+			Printf (127, TEXTCOLOR_WHITE "]%s\n", &buffer[2]);
 			buffer[0] = buffer[1] = buffer[len+4] = 0;
 			AddCommandString ((char *)&buffer[2]);
 			TabbedLast = false;
@@ -1769,6 +1779,7 @@ static void C_TabComplete (bool goForward)
 static bool C_TabCompleteList ()
 {
 	int nummatches, maxwidth, i;
+	int commonsize = INT_MAX;
 
 	nummatches = 0;
 	maxwidth = 0;
@@ -1781,6 +1792,17 @@ static bool C_TabCompleteList ()
 		}
 		else
 		{
+			if (i > TabPos)
+			{
+				// This keeps track of the longest common prefix for all the possible
+				// completions, so we can fill in part of the command for the user if
+				// the longest common prefix is longer than what the user already typed.
+				int diffpt = FindDiffPoint (TabCommands[i-1].Name, TabCommands[i].Name);
+				if (diffpt < commonsize)
+				{
+					commonsize = diffpt;
+				}
+			}
 			nummatches++;
 			maxwidth = MAX<int> (maxwidth, strlen (TabCommands[i].Name));
 		}
@@ -1803,6 +1825,14 @@ static bool C_TabCompleteList ()
 		if (x != 0)
 		{
 			Printf ("\n");
+		}
+		// Fill in the longest common prefix, if it's longer than what was typed.
+		if (TabSize != commonsize)
+		{
+			TabSize = commonsize;
+			strncpy ((char *)CmdLine + TabStart, TabCommands[TabPos].Name, commonsize);
+			CmdLine[0] = TabStart + commonsize - 2;
+			CmdLine[1] = CmdLine[0];
 		}
 		return false;
 	}

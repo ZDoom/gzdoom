@@ -560,13 +560,13 @@ private:
 			// Is there something to the left?
 			if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
 			{
-				DrawImage (Images[!(level.time & 4) ?
+				DrawImage (Images[!(gametic & 4) ?
 					imgINVLFGEM1 : imgINVLFGEM2], 38, 2);
 			}
 			// Is there something to the right?
 			if (item != NULL)
 			{
-				DrawImage (Images[!(level.time & 4) ?
+				DrawImage (Images[!(gametic & 4) ?
 					imgINVRTGEM1 : imgINVRTGEM2], 269, 2);
 			}
 		}
@@ -582,6 +582,7 @@ private:
 	{
 		const AInventory *item;
 		int i;
+		int ammotop;
 
 		// Draw health
 		screen->DrawTexture (Images[imgMEDI], 20, -2,
@@ -606,6 +607,7 @@ private:
 		int ammocount1, ammocount2;
 
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
+		ammotop = -1;
 		if (ammo1 != NULL)
 		{
 			FTexture *ammoIcon = TexMan(ammo1->Icon);
@@ -615,15 +617,17 @@ private:
 				DTA_CenterBottomOffset, true,
 				TAG_DONE);
 			DrBNumberOuter (ammo1->Amount, -67, -4 - BigHeight);
+			ammotop = -4 - BigHeight;
 			if (ammo2 != NULL)
 			{
 				// Draw secondary ammo just above the primary ammo
-				int y = MIN (-5 - BigHeight, -5 - (ammoIcon != NULL ? ammoIcon->GetHeight() : 0));
+				int y = MIN (-6 - BigHeight, -6 - (ammoIcon != NULL ? ammoIcon->GetHeight() : 0));
 				screen->DrawTexture (TexMan(ammo2->Icon), -14, y,
 					DTA_HUDRules, HUD_Normal,
 					DTA_CenterBottomOffset, true,
 					TAG_DONE);
 				DrBNumberOuter (ammo2->Amount, -67, y - BigHeight);
+				ammotop = y - BigHeight;
 			}
 		}
 
@@ -679,11 +683,11 @@ private:
 			{
 				if (CPlayer->InvSel != NULL)
 				{
-					screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -14, -24,
+					screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -14, ammotop - 1/*-24*/,
 						DTA_HUDRules, HUD_Normal,
 						DTA_CenterBottomOffset, true,
 						TAG_DONE);
-					DrBNumberOuter (CPlayer->InvSel->Amount, -67, -41);
+					DrBNumberOuter (CPlayer->InvSel->Amount, -68, ammotop - 18/*-41*/);
 				}
 			}
 			else
@@ -723,7 +727,7 @@ private:
 					// Is there something to the left?
 					if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
 					{
-						screen->DrawTexture (Images[!(level.time & 4) ?
+						screen->DrawTexture (Images[!(gametic & 4) ?
 							imgINVLFGEM1 : imgINVLFGEM2], -118, -33,
 							DTA_HUDRules, HUD_HorizCenter,
 							TAG_DONE);
@@ -731,7 +735,7 @@ private:
 					// Is there something to the right?
 					if (item != NULL)
 					{
-						screen->DrawTexture (Images[!(level.time & 4) ?
+						screen->DrawTexture (Images[!(gametic & 4) ?
 							imgINVRTGEM1 : imgINVRTGEM2], 113, -33,
 							DTA_HUDRules, HUD_HorizCenter,
 							TAG_DONE);

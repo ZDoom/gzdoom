@@ -18,6 +18,7 @@
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
 #include "mus2midi.h"
+#include "i_sound.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -161,7 +162,7 @@ public:
 protected:
 	MODSong () {}
 
-	FMUSIC_MODULE *m_Module;
+	SoundTrackerModule *m_Module;
 };
 
 // OGG/MP3/WAV/other format streamed through FMOD ---------------------------
@@ -181,16 +182,14 @@ public:
 	bool IsValid () const { return m_Stream != NULL; }
 
 protected:
-	StreamSong () : m_Stream(NULL), m_Channel(-1) {}
+	StreamSong () : m_Stream(NULL), m_LastPos(0) {}
 
-	FSOUND_STREAM *m_Stream;
-	int m_Channel;
+	SoundStream *m_Stream;
 	int m_LastPos;
 };
 
 // SPC file, rendered with SNESAPU.DLL and streamed through FMOD ------------
 
-#ifdef _WIN32
 typedef void (__stdcall *SNESAPUInfo_TYPE) (DWORD*, DWORD*, DWORD*);
 typedef void (__stdcall *GetAPUData_TYPE) (void**, BYTE**, BYTE**, DWORD**, void**, void**, DWORD**, DWORD**);
 typedef void (__stdcall *ResetAPU_TYPE) (DWORD);
@@ -212,10 +211,17 @@ protected:
 	bool LoadEmu ();
 	void CloseEmu ();
 
-	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata);
+	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 
+#ifdef _WIN32
 	HINSTANCE HandleAPU;
+#else
+	void *HandleAPU;
+#endif
 	int APUVersion;
+
+	bool Stereo;
+	bool Is8Bit;
 
 	SNESAPUInfo_TYPE SNESAPUInfo;
 	GetAPUData_TYPE GetAPUData;
@@ -225,7 +231,6 @@ protected:
 	SetAPUOpt_TYPE SetAPUOpt;
 	EmuAPU_TYPE EmuAPU;
 };
-#endif
 
 // MIDI file played with Timidity and possibly streamed through FMOD --------
 
@@ -258,7 +263,7 @@ protected:
 	char *CommandLine;
 	int LoopPos;
 
-	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata);
+	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 #ifdef _WIN32
 	static const char EventName[];
 #endif
@@ -277,7 +282,7 @@ public:
 	void ResetChips ();
 
 protected:
-	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata);
+	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 
 	OPLmusicBlock *Music;
 };
@@ -294,7 +299,7 @@ public:
 	bool IsValid () const;
 
 protected:
-	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata);
+	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 
 	class FLACStreamer;
 

@@ -135,7 +135,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		{
 			datastr = (const char *)parser;
 			parser = (const BYTE *)datastr + strlen (datastr) + 1;
-			if (defnum <= ADEF_Weapon_ReadySound)
+			if (defnum <= ADEF_Inventory_PickupSound)
 			{
 				datasound = S_FindSound (datastr);
 			}
@@ -283,16 +283,17 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 			break;
 
 
-		case ADEF_Inventory_FlagsSet:	((AInventory*)actor)->ItemFlags |= dataint; break;
-		case ADEF_Inventory_FlagsClear:	((AInventory*)actor)->ItemFlags &= ~dataint; break;
-		case ADEF_Inventory_Amount:		((AInventory*)actor)->Amount = dataint;	break;
-		case ADEF_Inventory_RespawnTics:((AInventory*)actor)->RespawnTics = dataint; break;
+		case ADEF_Inventory_FlagsSet:	item->ItemFlags |= dataint; break;
+		case ADEF_Inventory_FlagsClear:	item->ItemFlags &= ~dataint; break;
+		case ADEF_Inventory_Amount:		item->Amount = dataint;	break;
+		case ADEF_Inventory_RespawnTics:item->RespawnTics = dataint; break;
 		case ADEF_Inventory_MaxAmount:	item->MaxAmount = dataint; break;
 		case ADEF_Inventory_DefMaxAmount:
 			// In Heretic, the maximum number of artifacts of one kind you can carry is 16.
 			// In Hexen, it was upped to 25.
 			item->MaxAmount = gameinfo.gametype == GAME_Heretic ? 16 : 25;
 			break;
+		case ADEF_Inventory_PickupSound:item->PickupSound = datasound; break;
 
 		case ADEF_BasicArmorPickup_SavePercent:		armorp->SavePercent = dataint; break;
 		case ADEF_BasicArmorPickup_SaveAmount:		armorp->SaveAmount = dataint; break;

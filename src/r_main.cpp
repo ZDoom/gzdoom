@@ -49,13 +49,23 @@
 // MACROS ------------------------------------------------------------------
 
 #if 0
-#define TEST_X 268141009  
-#define TEST_Y -133465913 
-#define TEST_Z 20105352  
-#define TEST_ANGLE 3732930560  
+#define TEST_X 32343794 
+#define TEST_Y 111387517 
+#define TEST_Z 2164524 
+#define TEST_ANGLE 2468347904 
 #endif
 
 // TYPES -------------------------------------------------------------------
+
+struct InterpolationViewer
+{
+	AActor *ViewActor;
+	int otic;
+	fixed_t oviewx, oviewy, oviewz;
+	fixed_t nviewx, nviewy, nviewz;
+	int oviewpitch, nviewpitch;
+	angle_t oviewangle, nviewangle;
+};
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -76,11 +86,12 @@ EXTERN_CVAR (Bool, cl_capfps)
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
 
-static float LastFOV;
 static float CurrentVisibility = 8.f;
 static fixed_t MaxVisForWall;
 static fixed_t MaxVisForFloor;
 static FRandom pr_torchflicker ("TorchFlicker");
+static TArray<InterpolationViewer> PastViewers;
+static int centerxwide;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -101,6 +112,9 @@ bool			r_NoInterpolate;
 angle_t			LocalViewAngle;
 int				LocalViewPitch;
 bool			LocalKeyboardTurner;
+
+float			LastFOV;
+int				WidescreenRatio;
 
 fixed_t			GlobVis;
 fixed_t			FocalTangent;
@@ -134,14 +148,13 @@ int 			framecount;
 int 			linecount;
 int 			loopcount;
 
-fixed_t 		viewx, oviewx, nviewx;
-fixed_t 		viewy, oviewy, nviewy;
-fixed_t 		viewz, oviewz, nviewz;
-int				viewpitch, oviewpitch, nviewpitch;
-AActor			*oviewer;
+fixed_t 		viewx;
+fixed_t 		viewy;
+fixed_t 		viewz;
+int				viewpitch;
 int				otic;
 
-angle_t 		viewangle, oviewangle, nviewangle;
+angle_t 		viewangle;
 sector_t		*viewsector;
 
 fixed_t 		viewcos, viewtancos;
@@ -149,7 +162,7 @@ fixed_t 		viewsin, viewtansin;
 
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
 
-int				r_Yaspect = 200;
+int				r_Yaspect = 200;	// Why did I make this a variable? It's never set anywhere.
 
 //
 // precalculated math tables
@@ -376,8 +389,24 @@ void R_InitTextureMapping ()
 {
 	int i;
 	fixed_t slope;
+	int fov = FieldOfView;
 
-	const int hitan = finetangent[FINEANGLES/4+FieldOfView/2];
+	// For widescreen displays, increase the FOV so that the middle part of the
+	// screen that would be visible on a 4:3 display has the requested FOV.
+	if (centerxwide != centerx)
+	{ // centerxwide is what centerx would be if the display was not widescreen
+		fov = int(atan(double(centerx)*tan(double(fov)*M_PI/(FINEANGLES))/double(centerxwide))*(FINEANGLES)/M_PI);
+		if (fov > 170*FINEANGLES/360)
+			fov = 170*FINEANGLES/360;
+	}
+	/*
+	default: break;
+	case 1: fov = MIN (fov * 512/433, 170 * FINEANGLES / 360);	break;	// 16:9
+	case 2: fov = MIN (fov * 512/459, 170 * FINEANGLES / 360);	break;	// 16:10
+	}
+	*/
+
+	const int hitan = finetangent[FINEANGLES/4+fov/2];
 
 	// Calc focallength so FieldOfView fineangles covers viewwidth.
 	FocalTangent = hitan;
@@ -473,8 +502,8 @@ void R_SetVisibility (float vis)
 	else
 		r_WallVisibility = r_BaseVisibility;
 
-	r_WallVisibility = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(r_Yaspect<<detailyshift),
-		(viewwidth<<detailxshift)*SCREENHEIGHT), FixedMul (r_WallVisibility, FocalTangent));
+	r_WallVisibility = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(BaseRatioSizes[WidescreenRatio][1]<<detailyshift),
+		(viewwidth<<detailxshift)*SCREENHEIGHT*3), FixedMul (r_WallVisibility, FocalTangent));
 
 	// Prevent overflow on floors/ceilings. Note that the calculation of
 	// MaxVisForFloor means that planes less than two units from the player's
@@ -589,6 +618,9 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 		freelookviewheight = ((setblocks*fullHeight)/10)&~7;
 	}
 
+	// If the screen is approximately 16:9 or 16:10, consider it widescreen.
+	WidescreenRatio = CheckRatio (fullWidth, fullHeight);
+
 	DrawFSHUD = (windowSize == 11);
 	
 	viewwidth = realviewwidth >> detailxshift;
@@ -615,6 +647,16 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 
 	virtwidth = fullWidth >> detailxshift;
 	virtheight = fullHeight >> detailyshift;
+	if (WidescreenRatio & 4)
+	{
+		virtheight = virtheight * BaseRatioSizes[WidescreenRatio][3] / 48;
+		centerxwide = centerx;
+	}
+	else
+	{
+		virtwidth = virtwidth * BaseRatioSizes[WidescreenRatio][3] / 48;
+		centerxwide = centerx * BaseRatioSizes[WidescreenRatio][3] / 48;
+	}
 
 	yaspectmul = Scale ((320<<FRACBITS), virtheight, r_Yaspect * virtwidth);
 	iyaspectmulfloat = (float)virtwidth * r_Yaspect / 320.f / (float)virtheight;
@@ -624,7 +666,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	WallTMapScale2 = iyaspectmulfloat * 2.f / (float)centerx;
 
 	// psprite scales
-	pspritexscale = centerxfrac / 160;
+	pspritexscale = (centerxwide << FRACBITS) / 160;
 	pspriteyscale = FixedMul (pspritexscale, yaspectmul);
 	pspritexiscale = FixedDiv (FRACUNIT, pspritexscale);
 
@@ -778,26 +820,27 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 //CVAR (Int, tf, 0, 0)
 EXTERN_CVAR (Bool, cl_noprediction)
 
-void R_InterpolateView (player_t *player, fixed_t frac)
+void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *iview)
 {
 //	frac = tf;
 	if (NoInterpolateView)
 	{
 		NoInterpolateView = false;
-		oviewx = nviewx;
-		oviewy = nviewy;
-		oviewz = nviewz;
-		oviewpitch = nviewpitch;
-		oviewangle = nviewangle;
+		iview->oviewx = iview->nviewx;
+		iview->oviewy = iview->nviewy;
+		iview->oviewz = iview->nviewz;
+		iview->oviewpitch = iview->nviewpitch;
+		iview->oviewangle = iview->nviewangle;
 	}
-	viewx = oviewx + FixedMul (frac, nviewx - oviewx);
-	viewy = oviewy + FixedMul (frac, nviewy - oviewy);
-	viewz = oviewz + FixedMul (frac, nviewz - oviewz);
-	if (player - players == consoleplayer &&
+	viewx = iview->oviewx + FixedMul (frac, iview->nviewx - iview->oviewx);
+	viewy = iview->oviewy + FixedMul (frac, iview->nviewy - iview->oviewy);
+	viewz = iview->oviewz + FixedMul (frac, iview->nviewz - iview->oviewz);
+	if (player != NULL &&
+		player - players == consoleplayer &&
 		camera == player->mo &&
 		!demoplayback &&
-		nviewx == camera->x &&
-		nviewy == camera->y && 
+		iview->nviewx == camera->x &&
+		iview->nviewy == camera->y && 
 		!(player->cheats & (CF_TOTALLYFROZEN|CF_FROZEN)) &&
 		player->playerstate == PST_LIVE &&
 		player->mo->reactiontime == 0 &&
@@ -806,13 +849,13 @@ void R_InterpolateView (player_t *player, fixed_t frac)
 		(!netgame || !cl_noprediction) &&
 		!LocalKeyboardTurner)
 	{
-		viewangle = nviewangle + (LocalViewAngle & 0xFFFF0000);
-		viewpitch = clamp<int> (nviewpitch - (LocalViewPitch & 0xFFFF0000), -ANGLE_1*32, +ANGLE_1*56);
+		viewangle = iview->nviewangle + (LocalViewAngle & 0xFFFF0000);
+		viewpitch = clamp<int> (iview->nviewpitch - (LocalViewPitch & 0xFFFF0000), -ANGLE_1*32, +ANGLE_1*56);
 	}
 	else
 	{
-		viewpitch = oviewpitch + FixedMul (frac, nviewpitch - oviewpitch);
-		viewangle = oviewangle + FixedMul (frac, nviewangle - oviewangle);
+		viewpitch = iview->oviewpitch + FixedMul (frac, iview->nviewpitch - iview->oviewpitch);
+		viewangle = iview->oviewangle + FixedMul (frac, iview->nviewangle - iview->oviewangle);
 	}
 }
 
@@ -846,19 +889,65 @@ void R_SetViewAngle ()
 
 //==========================================================================
 //
+// FindPastViewer
+//
+//==========================================================================
+
+static InterpolationViewer *FindPastViewer (AActor *actor)
+{
+	for (size_t i = 0; i < PastViewers.Size(); ++i)
+	{
+		if (PastViewers[i].ViewActor == actor)
+		{
+			return &PastViewers[i];
+		}
+	}
+
+	// Not found, so make a new one
+	InterpolationViewer iview;
+	iview.ViewActor = actor;
+	iview.otic = -1;
+	return &PastViewers[PastViewers.Push (iview)];
+}
+
+//==========================================================================
+//
+// R_FreePastViewers
+//
+//==========================================================================
+
+void R_FreePastViewers ()
+{
+	PastViewers.Clear ();
+}
+
+//==========================================================================
+//
 // R_SetupFrame
 //
 //==========================================================================
 
-void R_SetupFrame (player_t *player)
+void R_SetupFrame (AActor *actor)
 {
+	player_t *player = actor->player;
 	unsigned int newblend;
+	InterpolationViewer *iview;
 
-	camera = player->camera;	// [RH] Use camera instead of viewplayer
-
-	if (camera == NULL)
+	if (player != NULL && player->mo == actor)
+	{	// [RH] Use camera instead of viewplayer
+		camera = player->camera;
+		if (camera == NULL)
+		{
+			camera = player->camera = player->mo;
+		}
+		if (camera == actor)
+		{
+			P_PredictPlayer (player);
+		}
+	}
+	else
 	{
-		camera = player->camera = player->mo;
+		camera = actor;
 	}
 
 	if (camera == NULL)
@@ -866,52 +955,50 @@ void R_SetupFrame (player_t *player)
 		I_Error ("You lost your body. Bad dehacked work is likely to blame.");
 	}
 
-	if (camera == player->mo)
-	{
-		P_PredictPlayer (player);
-	}
+	iview = FindPastViewer (camera);
 
 	int nowtic = I_GetTime (false);
-	if (nowtic > otic)
+	if (iview->otic != -1 && nowtic > iview->otic)
 	{
-		otic = nowtic;
-		oviewx = nviewx;
-		oviewy = nviewy;
-		oviewz = nviewz;
-		oviewpitch = nviewpitch;
-		oviewangle = nviewangle;
+		iview->otic = nowtic;
+		iview->oviewx = iview->nviewx;
+		iview->oviewy = iview->nviewy;
+		iview->oviewz = iview->nviewz;
+		iview->oviewpitch = iview->nviewpitch;
+		iview->oviewangle = iview->nviewangle;
 	}
 
-	if (((player->cheats & CF_CHASECAM)/* || (camera->health <= 0)*/) &&
+	if (player != NULL &&
+		((player->cheats & CF_CHASECAM)/* || (camera->health <= 0)*/) &&
 		(camera->RenderStyle != STYLE_None) &&
 		!(camera->renderflags & RF_INVISIBLE) &&
 		camera->sprite != 0)	// Sprite 0 is always TNT1
 	{
 		// [RH] Use chasecam view
 		P_AimCamera (camera);
-		nviewx = CameraX;
-		nviewy = CameraY;
-		nviewz = CameraZ;
+		iview->nviewx = CameraX;
+		iview->nviewy = CameraY;
+		iview->nviewz = CameraZ;
 		viewsector = CameraSector;
 	}
 	else
 	{
-		nviewx = camera->x;
-		nviewy = camera->y;
-		nviewz = camera->player ? camera->player->viewz : camera->z;
+		iview->nviewx = camera->x;
+		iview->nviewy = camera->y;
+		iview->nviewz = camera->player ? camera->player->viewz : camera->z;
 		viewsector = camera->Sector;
 	}
-	nviewpitch = camera->pitch;
+	iview->nviewpitch = camera->pitch;
 	if (camera->player != 0)
 	{
 		player = camera->player;
 	}
 
-	nviewangle = camera->angle + viewangleoffset;
-	if (camera != oviewer || r_NoInterpolate)
+	iview->nviewangle = camera->angle + viewangleoffset;
+	if (iview->otic == -1 || r_NoInterpolate)
 	{
 		R_ResetViewInterpolation ();
-		oviewer = camera;
+		iview->otic = nowtic;
 	}
 
 	r_TicFrac = I_GetTimeFrac (&r_FrameTime);
@@ -920,7 +1007,7 @@ void R_SetupFrame (player_t *player)
 		r_TicFrac = FRACUNIT;
 	}
 
-	R_InterpolateView (player, r_TicFrac);
+	R_InterpolateView (player, r_TicFrac, iview);
 
 #ifdef TEST_X
 	viewx = TEST_X;
@@ -1002,7 +1089,7 @@ void R_SetupFrame (player_t *player)
 	fixedcolormap = NULL;
 	fixedlightlev = 0;
 
-	if (camera == player->mo && player->fixedcolormap)
+	if (player != NULL && camera == player->mo && player->fixedcolormap)
 	{
 		if (player->fixedcolormap < NUMCOLORMAPS)
 		{
@@ -1299,16 +1386,16 @@ void R_SetupBuffer (bool inview)
 
 //==========================================================================
 //
-// R_RenderPlayerView
+// R_RenderActorView
 //
 //==========================================================================
 
-void R_RenderPlayerView (player_t *player)
+void R_RenderActorView (AActor *actor)
 {
 	WallCycles = PlaneCycles = MaskedCycles = WallScanCycles = 0;
 
 	R_SetupBuffer (true);
-	R_SetupFrame (player);
+	R_SetupFrame (actor);
 
 	// Clear buffers.
 	R_ClearClipSegs (0, viewwidth);
@@ -1349,7 +1436,7 @@ void R_RenderPlayerView (player_t *player)
 
 	clock (WallCycles);
 	// Never draw the player unless in chasecam mode
-	if (camera->player && !(player->cheats & CF_CHASECAM) && camera->health > 0)
+	if (camera->player && !(camera->player->cheats & CF_CHASECAM) && camera->health > 0)
 	{
 		WORD savedflags = camera->renderflags;
 		camera->renderflags |= RF_INVISIBLE;
@@ -1410,7 +1497,7 @@ void R_RenderPlayerView (player_t *player)
 //
 //==========================================================================
 
-void R_RenderViewToCanvas (player_t *player, DCanvas *canvas,
+void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas,
 	int x, int y, int width, int height)
 {
 	const int saveddetail = detailxshift | (detailyshift << 1);
@@ -1426,7 +1513,7 @@ void R_RenderViewToCanvas (player_t *player, DCanvas *canvas,
 	viewwindowx = x;
 	viewwindowy = y;
 
-	R_RenderPlayerView (player);
+	R_RenderActorView (actor);
 
 	RenderTarget = screen;
 	bRenderingToCanvas = false;
@@ -1435,6 +1522,130 @@ void R_RenderViewToCanvas (player_t *player, DCanvas *canvas,
 	screen->Lock (true);
 	R_SetupBuffer (false);
 	screen->Unlock ();
+}
+
+FCanvasTextureInfo *FCanvasTextureInfo::List;
+//==========================================================================
+//
+// FCanvasTextureInfo :: Add
+//
+// Assigns a camera to a canvas texture.
+//
+//==========================================================================
+
+void FCanvasTextureInfo::Add (AActor *viewpoint, int picnum, int fov)
+{
+	FCanvasTextureInfo *probe;
+	FCanvasTexture *texture;
+
+	texture = static_cast<FCanvasTexture *>(TexMan[picnum]);
+	if (!texture->bHasCanvas)
+	{
+		Printf ("%s is not a valid target for a camera\n", texture->Name);
+		return;
+	}
+
+	// First, is this texture already assigned to a camera?
+	for (probe = List; probe != NULL; probe = probe->Next)
+	{
+		if (probe->Texture == texture)
+		{
+			// Yes, change its assignment to this new camera
+			probe->Viewpoint = viewpoint;
+			return;
+		}
+	}
+	// No, create a new assignment
+	probe = new FCanvasTextureInfo;
+	probe->Viewpoint = viewpoint;
+	probe->Texture = texture;
+	probe->PicNum = picnum;
+	probe->FOV = fov;
+	probe->Next = List;
+	List = probe;
+}
+
+//==========================================================================
+//
+// FCanvasTextureInfo :: UpdateAll
+//
+// Updates all canvas textures that were visible in the last frame.
+//
+//==========================================================================
+
+void FCanvasTextureInfo::UpdateAll ()
+{
+	FCanvasTextureInfo *probe;
+
+	for (probe = List; probe != NULL; probe = probe->Next)
+	{
+		if (probe->Viewpoint != NULL && probe->Texture->bNeedsUpdate)
+		{
+			probe->Texture->RenderView (probe->Viewpoint, probe->FOV);
+		}
+	}
+}
+
+//==========================================================================
+//
+// FCanvasTextureInfo :: EmptyList
+//
+// Removes all camera->texture assignments.
+//
+//==========================================================================
+
+void FCanvasTextureInfo::EmptyList ()
+{
+	FCanvasTextureInfo *probe, *next;
+
+	for (probe = List; probe != NULL; probe = next)
+	{
+		next = probe->Next;
+		delete probe;
+	}
+	List = NULL;
+}
+
+//==========================================================================
+//
+// FCanvasTextureInfo :: Serialize
+//
+// Reads or writes the current set of mappings in an archive.
+//
+//==========================================================================
+
+void FCanvasTextureInfo::Serialize (FArchive &arc)
+{
+	if (arc.IsStoring ())
+	{
+		FCanvasTextureInfo *probe;
+
+		for (probe = List; probe != NULL; probe = probe->Next)
+		{
+			if (probe->Texture != NULL && probe->Viewpoint != NULL)
+			{
+				arc << probe->Viewpoint << probe->FOV;
+				TexMan.WriteTexture (arc, probe->PicNum);
+			}
+		}
+		AActor *nullactor = NULL;
+		arc << nullactor;
+	}
+	else
+	{
+		AActor *viewpoint;
+		int picnum, fov;
+		
+		EmptyList ();
+		arc << viewpoint;
+		while (viewpoint != NULL)
+		{
+			arc << fov;
+			picnum = TexMan.ReadTexture (arc);
+			Add (viewpoint, picnum, fov);
+			arc << viewpoint;
+		}
+	}
 }
 
 //==========================================================================
@@ -1456,114 +1667,233 @@ void R_MultiresInit ()
 // "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
 // Ken Silverman's official web site: "http://www.advsys.net/ken"
 // See the included license file "BUILDLIC.TXT" for license info.
-
-int numinterpolations = 0, startofdynamicinterpolations = 0;
-fixed_t oldipos[MAXINTERPOLATIONS][2];
-fixed_t bakipos[MAXINTERPOLATIONS][2];
-FActiveInterpolation curipos[MAXINTERPOLATIONS];
+// This code has been modified from its original form.
 
 static bool didInterp;
 
-void CopyInterpToOld (int i)
+FActiveInterpolation *FActiveInterpolation::curiposhash[INTERPOLATION_BUCKETS];
+
+void FActiveInterpolation::CopyInterpToOld ()
 {
-	switch (curipos[i].Type)
+	switch (Type)
 	{
 	case INTERP_SectorFloor:
-		oldipos[i][0] = ((sector_t*)curipos[i].Address)->floorplane.d;
-		oldipos[i][1] = ((sector_t*)curipos[i].Address)->floortexz;
+		oldipos[0] = ((sector_t*)Address)->floorplane.d;
+		oldipos[1] = ((sector_t*)Address)->floortexz;
 		break;
 	case INTERP_SectorCeiling:
-		oldipos[i][0] = ((sector_t*)curipos[i].Address)->ceilingplane.d;
-		oldipos[i][1] = ((sector_t*)curipos[i].Address)->ceilingtexz;
+		oldipos[0] = ((sector_t*)Address)->ceilingplane.d;
+		oldipos[1] = ((sector_t*)Address)->ceilingtexz;
 		break;
 	case INTERP_Vertex:
-		oldipos[i][0] = ((vertex_t*)curipos[i].Address)->x;
-		oldipos[i][1] = ((vertex_t*)curipos[i].Address)->y;
+		oldipos[0] = ((vertex_t*)Address)->x;
+		oldipos[1] = ((vertex_t*)Address)->y;
+		break;
+	case INTERP_FloorPanning:
+		oldipos[0] = ((sector_t*)Address)->floor_xoffs;
+		oldipos[1] = ((sector_t*)Address)->floor_yoffs;
+		break;
+	case INTERP_CeilingPanning:
+		oldipos[0] = ((sector_t*)Address)->ceiling_xoffs;
+		oldipos[1] = ((sector_t*)Address)->ceiling_yoffs;
+		break;
+	case INTERP_WallPanning:
+		oldipos[0] = ((side_t*)Address)->rowoffset;
+		oldipos[1] = ((side_t*)Address)->textureoffset;
 		break;
 	}
 }
 
-void CopyBakToInterp (int i)
+void FActiveInterpolation::CopyBakToInterp ()
 {
-	switch (curipos[i].Type)
+	switch (Type)
 	{
 	case INTERP_SectorFloor:
-		((sector_t*)curipos[i].Address)->floorplane.d = bakipos[i][0];
-		((sector_t*)curipos[i].Address)->floortexz = bakipos[i][1];
+		((sector_t*)Address)->floorplane.d = bakipos[0];
+		((sector_t*)Address)->floortexz = bakipos[1];
 		break;
 	case INTERP_SectorCeiling:
-		((sector_t*)curipos[i].Address)->ceilingplane.d = bakipos[i][0];
-		((sector_t*)curipos[i].Address)->ceilingtexz = bakipos[i][1];
+		((sector_t*)Address)->ceilingplane.d = bakipos[0];
+		((sector_t*)Address)->ceilingtexz = bakipos[1];
 		break;
 	case INTERP_Vertex:
-		((vertex_t*)curipos[i].Address)->x = bakipos[i][0];
-		((vertex_t*)curipos[i].Address)->y = bakipos[i][1];
+		((vertex_t*)Address)->x = bakipos[0];
+		((vertex_t*)Address)->y = bakipos[1];
+		break;
+	case INTERP_FloorPanning:
+		((sector_t*)Address)->floor_xoffs = bakipos[0];
+		((sector_t*)Address)->floor_yoffs = bakipos[1];
+		break;
+	case INTERP_CeilingPanning:
+		((sector_t*)Address)->ceiling_xoffs = bakipos[0];
+		((sector_t*)Address)->ceiling_yoffs = bakipos[1];
+		break;
+	case INTERP_WallPanning:
+		((side_t*)Address)->rowoffset = bakipos[0];
+		((side_t*)Address)->textureoffset = bakipos[1];
 		break;
 	}
 }
 
-void DoAnInterpolation (int i, fixed_t smoothratio)
+void FActiveInterpolation::DoAnInterpolation (fixed_t smoothratio)
 {
 	fixed_t *adr1, *adr2, pos;
 
-	switch (curipos[i].Type)
+	switch (Type)
 	{
 	case INTERP_SectorFloor:
-		adr1 = &((sector_t*)curipos[i].Address)->floorplane.d;
-		adr2 = &((sector_t*)curipos[i].Address)->floortexz;
+		adr1 = &((sector_t*)Address)->floorplane.d;
+		adr2 = &((sector_t*)Address)->floortexz;
 		break;
 	case INTERP_SectorCeiling:
-		adr1 = &((sector_t*)curipos[i].Address)->ceilingplane.d;
-		adr2 = &((sector_t*)curipos[i].Address)->ceilingtexz;
+		adr1 = &((sector_t*)Address)->ceilingplane.d;
+		adr2 = &((sector_t*)Address)->ceilingtexz;
 		break;
 	case INTERP_Vertex:
-		adr1 = &((vertex_t*)curipos[i].Address)->x;
-		adr2 = &((vertex_t*)curipos[i].Address)->y;
+		adr1 = &((vertex_t*)Address)->x;
+		adr2 = &((vertex_t*)Address)->y;
+		break;
+	case INTERP_FloorPanning:
+		adr1 = &((sector_t*)Address)->floor_xoffs;
+		adr2 = &((sector_t*)Address)->floor_yoffs;
+		break;
+	case INTERP_CeilingPanning:
+		adr1 = &((sector_t*)Address)->ceiling_xoffs;
+		adr2 = &((sector_t*)Address)->ceiling_yoffs;
+		break;
+	case INTERP_WallPanning:
+		adr1 = &((side_t*)Address)->rowoffset;
+		adr2 = &((side_t*)Address)->textureoffset;
 		break;
 	default:
 		return;
 	}
 
-	pos = bakipos[i][0] = *adr1;
-	*adr1 = oldipos[i][0] + FixedMul (pos - oldipos[i][0], smoothratio);
+	pos = bakipos[0] = *adr1;
+	*adr1 = oldipos[0] + FixedMul (pos - oldipos[0], smoothratio);
 
-	pos = bakipos[i][1] = *adr2;
-	*adr2 = oldipos[i][1] + FixedMul (pos - oldipos[i][1], smoothratio);
+	pos = bakipos[1] = *adr2;
+	*adr2 = oldipos[1] + FixedMul (pos - oldipos[1], smoothratio);
+}
+
+int FActiveInterpolation::HashKey (EInterpType type, void *interptr)
+{
+	return (int)type * ((int)interptr>>5);
+}
+
+int FActiveInterpolation::CountInterpolations ()
+{
+	int d1, d2, d3;
+	return CountInterpolations (&d1, &d2, &d3);
+}
+
+int FActiveInterpolation::CountInterpolations (int *usedbuckets, int *minbucketfill, int *maxbucketfill)
+{
+	int count = 0;
+	int inuse = 0;
+	int minuse = INT_MAX;
+	int maxuse = INT_MIN;
+
+	for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
+	{
+		int use = 0;
+		FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
+		if (probe != NULL)
+		{
+			inuse++;
+		}
+		while (probe != NULL)
+		{
+			count++;
+			use++;
+			probe = probe->Next;
+		}
+		if (use > 0 && use < minuse)
+		{
+			minuse = use;
+		}
+		if (use > maxuse)
+		{
+			maxuse = use;
+		}
+	}
+	*usedbuckets = inuse;
+	*minbucketfill = minuse == INT_MAX ? 0 : minuse;
+	*maxbucketfill = maxuse;
+	return count;
+}
+
+FActiveInterpolation *FActiveInterpolation::FindInterpolation (EInterpType type, void *interptr, FActiveInterpolation **&interp_p)
+{
+	int hash = HashKey (type, interptr) % INTERPOLATION_BUCKETS;
+	FActiveInterpolation *probe, **probe_p;
+
+	for (probe_p = &curiposhash[hash], probe = *probe_p;
+		probe != NULL;
+		probe_p = &probe->Next, probe = *probe_p)
+	{
+		if (probe->Address > interptr)
+		{ // We passed the place it would have been, so it must not be here.
+			probe = NULL;
+			break;
+		}
+		if (probe->Address == interptr && probe->Type == type)
+		{ // Found it.
+			break;
+		}
+	}
+	interp_p = probe_p;
+	return probe;
+}
+
+void clearinterpolations()
+{
+	for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
+	{
+		for (FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
+			probe != NULL; )
+		{
+			FActiveInterpolation *next = probe->Next;
+			delete probe;
+			probe = next;
+		}
+		FActiveInterpolation::curiposhash[i] = NULL;
+	}
 }
 
 void updateinterpolations()  //Stick at beginning of domovethings
 {
-	for (int i = numinterpolations-1; i >= 0; --i)
+	for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
 	{
-		CopyInterpToOld (i);
+		for (FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
+			probe != NULL; probe = probe->Next)
+		{
+			probe->CopyInterpToOld ();
+		}
 	}
 }
 
 void setinterpolation(EInterpType type, void *posptr)
 {
-	if (numinterpolations >= MAXINTERPOLATIONS) return;
-	for(int i = numinterpolations-1; i >= 0; i--)
-		if (curipos[i].Address == posptr && curipos[i].Type == type) return;
-	curipos[numinterpolations].Address = posptr;
-	curipos[numinterpolations].Type = type;
-	CopyInterpToOld (numinterpolations);
-	numinterpolations++;
+	FActiveInterpolation **interp_p;
+	FActiveInterpolation *interp = FActiveInterpolation::FindInterpolation (type, posptr, interp_p);
+	if (interp != NULL) return; // It's already active
+	interp = new FActiveInterpolation;
+	interp->Type = type;
+	interp->Address = posptr;
+	interp->Next = *interp_p;
+	*interp_p = interp;
+	interp->CopyInterpToOld ();
 }
 
 void stopinterpolation(EInterpType type, void *posptr)
 {
-	for(int i=numinterpolations-1; i>= startofdynamicinterpolations; --i)
+	FActiveInterpolation **interp_p;
+	FActiveInterpolation *interp = FActiveInterpolation::FindInterpolation (type, posptr, interp_p);
+	if (interp != NULL)
 	{
-		if (curipos[i].Address == posptr && curipos[i].Type == type)
-		{
-			numinterpolations--;
-			oldipos[i][0] = oldipos[numinterpolations][0];
-			oldipos[i][1] = oldipos[numinterpolations][1];
-			bakipos[i][0] = bakipos[numinterpolations][0];
-			bakipos[i][1] = bakipos[numinterpolations][1];
-			curipos[i] = curipos[numinterpolations];
-			break;
-		}
+		*interp_p = interp->Next;
+		delete interp;
 	}
 }
 
@@ -1577,9 +1907,13 @@ void dointerpolations(fixed_t smoothratio)       //Stick at beginning of drawscr
 
 	didInterp = true;
 
-	for (int i = numinterpolations-1; i >= 0; --i)
+	for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
 	{
-		DoAnInterpolation (i, smoothratio);
+		for (FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
+			probe != NULL; probe = probe->Next)
+		{
+			probe->DoAnInterpolation (smoothratio);
+		}
 	}
 }
 
@@ -1588,68 +1922,96 @@ void restoreinterpolations()  //Stick at end of drawscreen
 	if (didInterp)
 	{
 		didInterp = false;
-		for (int i = numinterpolations-1; i >= 0; --i)
+		for (int i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
 		{
-			CopyBakToInterp (i);
+			for (FActiveInterpolation *probe = FActiveInterpolation::curiposhash[i];
+				probe != NULL; probe = probe->Next)
+			{
+				probe->CopyBakToInterp ();
+			}
 		}
 	}
 }
 
 void SerializeInterpolations (FArchive &arc)
 {
+	FActiveInterpolation *interp;
+	int numinterpolations;
 	int i;
 
 	if (arc.IsStoring ())
 	{
+		numinterpolations = FActiveInterpolation::CountInterpolations();
 		arc.WriteCount (numinterpolations);
+		for (i = INTERPOLATION_BUCKETS-1; i >= 0; --i)
+		{
+			for (interp = FActiveInterpolation::curiposhash[i];
+				interp != NULL; interp = interp->Next)
+			{
+				arc << interp;
+			}
+		}
 	}
 	else
 	{
+		clearinterpolations ();
 		numinterpolations = arc.ReadCount ();
-	}
-	for (i = 0; i < numinterpolations; ++i)
-	{
-		arc << curipos[i];
+		for (i = numinterpolations; i > 0; --i)
+		{
+			FActiveInterpolation **interp_p;
+			arc << interp;
+			if (FActiveInterpolation::FindInterpolation (interp->Type, interp->Address, interp_p) == NULL)
+			{ // Should always return NULL, because there should never been any duplicates stored.
+				interp->Next = *interp_p;
+				*interp_p = interp;
+			}
+		}
 	}
 }
 
-FArchive &operator << (FArchive &arc, FActiveInterpolation &interp)
+FArchive &operator << (FArchive &arc, FActiveInterpolation *&interp)
 {
 	BYTE type;
 	union
 	{
 		vertex_t *vert;
 		sector_t *sect;
+		side_t *side;
 		void *ptr;
 	} ptr;
 
 	if (arc.IsStoring ())
 	{
-		type = interp.Type;
-		ptr.ptr = interp.Address;
+		type = interp->Type;
+		ptr.ptr = interp->Address;
 		arc << type;
-		if (type == INTERP_Vertex)
+		switch (type)
 		{
-			arc << ptr.vert;
-		}
-		else
-		{
-			arc << ptr.sect;
+		case INTERP_Vertex:			arc << ptr.vert;	break;
+		case INTERP_WallPanning:	arc << ptr.side;	break;
+		default:					arc << ptr.sect;	break;
 		}
 	}
 	else
 	{
+		interp = new FActiveInterpolation;
 		arc << type;
-		interp.Type = (EInterpType)type;
-		if (type == INTERP_Vertex)
+		interp->Type = (EInterpType)type;
+		switch (type)
 		{
-			arc << ptr.vert;
+		case INTERP_Vertex:			arc << ptr.vert;	break;
+		case INTERP_WallPanning:	arc << ptr.side;	break;
+		default:					arc << ptr.sect;	break;
 		}
-		else
-		{
-			arc << ptr.sect;
-		}
-		interp.Address = ptr.ptr;
+		interp->Address = ptr.ptr;
 	}
 	return arc;
+}
+
+ADD_STAT (interpolations, out)
+{
+	int inuse, minuse, maxuse, total;
+	total = FActiveInterpolation::CountInterpolations (&inuse, &minuse, &maxuse);
+	sprintf (out, "%d interpolations  buckets:%3d  min:%3d  max:%3d  avg:%3d  %d%% full  %d%% buckfull",
+		total, inuse, minuse, maxuse, inuse?total/inuse:0, total*100/INTERPOLATION_BUCKETS, inuse*100/INTERPOLATION_BUCKETS);
 }

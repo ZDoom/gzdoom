@@ -498,13 +498,13 @@ private:
 			// Is there something to the left?
 			if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
 			{
-				DrawImage (Images[!(level.time & 4) ?
+				DrawImage (Images[!(gametic & 4) ?
 					imgINVLFGEM1 : imgINVLFGEM2], 38, 1);
 			}
 			// Is there something to the right?
 			if (item != NULL)
 			{
-				DrawImage (Images[!(level.time & 4) ?
+				DrawImage (Images[!(gametic & 4) ?
 					imgINVRTGEM1 : imgINVRTGEM2], 269, 1);
 			}
 		}
@@ -676,14 +676,14 @@ private:
 				// Is there something to the left?
 				if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
 				{
-					screen->DrawTexture (Images[!(level.time & 4) ?
+					screen->DrawTexture (Images[!(gametic & 4) ?
 						imgINVLFGEM1 : imgINVLFGEM2], -112, -33,
 						DTA_HUDRules, HUD_HorizCenter, TAG_DONE);
 				}
 				// Is there something to the right?
 				if (item != NULL)
 				{
-					screen->DrawTexture (Images[!(level.time & 4) ?
+					screen->DrawTexture (Images[!(gametic & 4) ?
 						imgINVRTGEM1 : imgINVRTGEM2], 119, -33,
 						DTA_HUDRules, HUD_HorizCenter, TAG_DONE);
 				}

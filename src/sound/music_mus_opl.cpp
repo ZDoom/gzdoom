@@ -28,12 +28,11 @@ OPLMUSSong::OPLMUSSong (FILE *file, int len)
 
 	Music = new OPLmusicBlock (file, len, rate, samples);
 
-	m_Stream = FSOUND_Stream_Create (FillStream, samples*2,
-		FSOUND_SIGNED | FSOUND_2D | FSOUND_MONO | FSOUND_16BITS,
-		rate, this);
+	m_Stream = GSnd->CreateStream (FillStream, samples*2,
+		SoundStream::Mono, rate, this);
 	if (m_Stream == NULL)
 	{
-		Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
+		Printf (PRINT_BOLD, "Could not create music stream.\n");
 		delete Music;
 		return;
 	}
@@ -67,25 +66,19 @@ bool OPLMUSSong::IsPlaying ()
 
 void OPLMUSSong::Play (bool looping)
 {
-	int volume = (int)(snd_musicvolume * 255);
-
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
 	Music->SetLooping (looping);
 	Music->Restart ();
 
-	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
-	if (m_Channel != -1)
+	if (m_Stream->Play (snd_musicvolume))
 	{
-		FSOUND_SetVolumeAbsolute (m_Channel, volume);
-		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
-		FSOUND_SetPaused (m_Channel, false);
 		m_Status = STATE_Playing;
 	}
 }
 
-signed char F_CALLBACKAPI OPLMUSSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata)
+bool OPLMUSSong::FillStream (SoundStream *stream, void *buff, int len, void *userdata)
 {
 	OPLMUSSong *song = (OPLMUSSong *)userdata;
 	return song->Music->ServiceStream (buff, len);

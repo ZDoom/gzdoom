@@ -131,7 +131,6 @@ class AArtiTimeBomb : public AInventory
 public:
 	bool Use (bool pickup);
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiTimeBomb::States[] =
@@ -144,8 +143,9 @@ IMPLEMENT_ACTOR (AArtiTimeBomb, Heretic, 34, 72)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH|IF_FANCYPICKUPSOUND)
 	PROP_Inventory_Icon ("ARTIFBMB")
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
 
 bool AArtiTimeBomb::Use (bool pickup)
@@ -162,11 +162,4 @@ bool AArtiTimeBomb::Use (bool pickup)
 const char *AArtiTimeBomb::PickupMessage ()
 {
 	return GStrings(TXT_ARTIFIREBOMB);
-}
-
-void AArtiTimeBomb::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
-		toucher == NULL || toucher == players[consoleplayer].camera
-		? ATTN_SURROUND : ATTN_NORM);
 }

@@ -50,9 +50,8 @@ class Win32Video : public IVideo
 
 	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
 
-	int GetModeCount ();
 	void StartModeIterator (int bits);
-	bool NextMode (int *width, int *height);
+	bool NextMode (int *width, int *height, bool *letterbox);
 
 	bool GoFullscreen (bool yes);
 	void BlankForGDI ();
@@ -60,15 +59,17 @@ class Win32Video : public IVideo
  private:
 	struct ModeInfo
 	{
-		ModeInfo (int inX, int inY, int inBits)
+		ModeInfo (int inX, int inY, int inBits, int inRealY)
 			: next (NULL),
 			  width (inX),
 			  height (inY),
-			  bits (inBits)
+			  bits (inBits),
+			  realheight (inRealY)
 		{}
 
 		ModeInfo *next;
 		int width, height, bits;
+		int realheight;
 	} *m_Modes;
 
 	ModeInfo *m_IteratorMode;
@@ -76,20 +77,15 @@ class Win32Video : public IVideo
 	bool m_IteratorFS;
 	bool m_IsFullscreen;
 
-	int m_DisplayWidth;
-	int m_DisplayHeight;
-	int m_DisplayBits;
-
-	bool m_Have320x200x8;
-	bool m_Have320x240x8;
-
 	bool m_CalledCoInitialize;
 
-	void AddMode (int x, int y, int bits);
+	void AddMode (int x, int y, int bits, int baseHeight);
 	void FreeModes ();
 
 	void NewDDMode (int x, int y);
 	static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes);
+
+	friend class DDrawFB;
 };
 
 class BaseWinFB : public DFrameBuffer
@@ -172,6 +168,7 @@ private:
 	int FlashAmount;
 	int BufferCount;
 	int BufferPitch;
+	int TrueHeight;
 	float Gamma;
 
 	bool NeedGammaUpdate;

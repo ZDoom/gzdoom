@@ -490,8 +490,10 @@ void D_Display (bool screenshot)
 		if (1 || viewactive)
 		{
 			R_RefreshViewBorder ();
-			R_RenderPlayerView (&players[consoleplayer]);
+			R_RenderActorView (players[consoleplayer].mo);
 			R_DetailDouble ();		// [RH] Apply detail mode expansion
+			// [RH] Let cameras draw onto textures that were visible this frame.
+			FCanvasTextureInfo::UpdateAll ();
 		}
 		if (automapactive)
 		{
@@ -775,10 +777,11 @@ void D_PageDrawer (void)
 	if (Page != NULL)
 	{
 		screen->DrawTexture (Page, 0, 0,
-			DTA_DestWidth, screen->GetWidth(),
-			DTA_DestHeight, screen->GetHeight(),
+			DTA_VirtualWidth, Page->GetWidth(),
+			DTA_VirtualHeight, Page->GetHeight(),
 			DTA_Masked, false,
 			TAG_DONE);
+		screen->FillBorder (NULL);
 	}
 	else
 	{
@@ -1986,6 +1989,7 @@ void D_DoomMain (void)
 	// Base systems have been inited; enable cvar callbacks
 	FBaseCVar::EnableCallbacks ();
 
+
 	// [RH] Now that all text strings are set up,
 	// insert them into the level and cluster data.
 	G_MakeEpisodes ();
@@ -2122,6 +2126,7 @@ void D_DoomMain (void)
 		autostart = true;
 	}
 
+	//I_Error ("Oh gnos!");
 	// [RH] Hack to handle +map
 	p = Args.CheckParm ("+map");
 	if (p && p < Args.NumArgs()-1)

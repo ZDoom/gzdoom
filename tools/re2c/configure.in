@@ -1,0 +1,59 @@
+AC_PREREQ([2.57])
+AC_INIT(Makefile.am, 0.9.3, re2c-general@lists.sourceforge.net)
+AM_INIT_AUTOMAKE(re2c, $PACKAGE_VERSION)
+AC_CONFIG_SRCDIR(actions.cc)
+AM_CONFIG_HEADER(config.h)
+
+AC_SUBST(PACKAGE_VERSION)
+AC_SUBST(PACKAGE_NAME)
+AC_SUBST(PACKAGE_TARNAME)
+
+# Checks for programs.
+AC_PROG_YACC
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_INSTALL
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_HEADER_STDC
+
+# We only rely on standard C/C++ headers.  If we ever have a pressing need
+# for something non-standard, we should add a check for it here.
+# AC_CHECK_HEADERS([stddef.h stdlib.h string.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_SIZE_T
+AC_C_VOLATILE
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+AC_FUNC_MEMCMP
+AC_FUNC_MMAP
+AC_CHECK_FUNCS([memset munmap strdup])
+
+AC_CHECK_SIZEOF([char])
+AC_CHECK_SIZEOF([short])
+AC_CHECK_SIZEOF([int])
+AC_CHECK_SIZEOF([long])
+
+AC_CHECK_TYPE([uchar], [
+  AC_DEFINE([HAVE_UCHAR], [1],  [Define to 1 if you have uchar type definition])
+])
+AC_CHECK_TYPE([ushort], [
+  AC_DEFINE([HAVE_USHORT], [1],  [Define to 1 if you have ushort type definition])
+])
+AC_CHECK_TYPE([uint], [
+  AC_DEFINE([HAVE_UINT], [1],  [Define to 1 if you have uint type definition])
+])
+AC_CHECK_TYPE([ulong], [
+  AC_DEFINE([HAVE_ULONG], [1],  [Define to 1 if you have ulong type definition])
+])
+
+AC_CONFIG_FILES([Makefile README makerpm re2c.1 re2c.spec])
+AC_OUTPUT_COMMANDS([chmod +x makerpm])
+AC_OUTPUT

@@ -392,7 +392,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	//		the activator of the script.
 	// New: In Hexen, the thing that died is the activator,
 	//		so now a level flag selects who the activator gets to be.
-	if (special && !(flags & MF_SPECIAL))
+	if (special && (!(flags & MF_SPECIAL) || (flags3 & MF3_ISMONSTER)))
 	{
 		LineSpecials[special] (NULL, level.flags & LEVEL_ACTOWNSPECIAL
 			? this : source, false, args[0], args[1], args[2], args[3], args[4]);
@@ -495,7 +495,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 				}
 
 				if (deathmatch &&
-					source->player->mo == players[consoleplayer].camera &&
+					source->CheckLocalView (consoleplayer) &&
 					cl_showmultikills)
 				{
 					const char *multimsg;
@@ -1158,7 +1158,7 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	}
 	if ((flags & MF_FRIENDLY) && other->player != NULL)
 	{ // [RH] Friendlies don't target their player friends either
-		if (!deathmatch || other->player - players == FriendPlayer)
+		if (!deathmatch || other->player - players == FriendPlayer+1)
 		{
 			return false;
 		}

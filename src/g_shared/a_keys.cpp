@@ -179,7 +179,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 	// If a failtext isn't already set, locate a key that would have satisfied
 	// the lock and grab text from it.
 
-	if (owner == players[consoleplayer].camera)
+	if (owner->CheckLocalView (consoleplayer))
 	{
 		if (KeyTypes.Size() == 0)
 		{
@@ -215,6 +215,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 
 IMPLEMENT_STATELESS_ACTOR (AKey, Any, -1, 0)
  PROP_Inventory_FlagsSet (IF_INTERHUBSTRIP)
+ PROP_Inventory_PickupSound ("misc/k_pkup")
 END_DEFAULTS
 
 bool AKey::HandlePickup (AInventory *item)
@@ -240,11 +241,6 @@ bool AKey::HandlePickup (AInventory *item)
 bool AKey::ShouldStay ()
 {
 	return !!multiplayer;
-}
-
-void AKey::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/k_pkup", 1, ATTN_NORM);
 }
 
 const char *AKey::NeedKeyMessage (bool remote, int keynum)

@@ -2,7 +2,7 @@
 ** infomacros.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -202,13 +202,14 @@ public:
 #define PROP_UseSound(x)				ADD_STRING_PROP(ADEF_UseSound,"\6",x)
 #define PROP_Weapon_UpSound(x)			ADD_STRING_PROP(ADEF_Weapon_UpSound,"\7",x)
 #define PROP_Weapon_ReadySound(x)		ADD_STRING_PROP(ADEF_Weapon_ReadySound,"\10",x)
-#define PROP_Tag(x)						ADD_STRING_PROP(ADEF_Tag,"\11",x)
-#define PROP_Weapon_AmmoType1(x)		ADD_STRING_PROP(ADEF_Weapon_AmmoType1,"\12",x)
-#define PROP_Weapon_AmmoType2(x)		ADD_STRING_PROP(ADEF_Weapon_AmmoType2,"\13",x)
-#define PROP_Weapon_SisterType(x)		ADD_STRING_PROP(ADEF_Weapon_SisterType,"\14",x)
-#define PROP_Weapon_ProjectileType(x)	ADD_STRING_PROP(ADEF_Weapon_ProjectileType,"\15",x)
-#define PROP_PowerupGiver_Powerup(x)	ADD_STRING_PROP(ADEF_PowerupGiver_Powerup,"\16",x)
-#define PROP_Inventory_Icon(x)			ADD_STRING_PROP(ADEF_Inventory_Icon,"\17",x)
+#define PROP_Inventory_PickupSound(x)	ADD_STRING_PROP(ADEF_Inventory_PickupSound,"\11",x)
+#define PROP_Tag(x)						ADD_STRING_PROP(ADEF_Tag,"\12",x)
+#define PROP_Weapon_AmmoType1(x)		ADD_STRING_PROP(ADEF_Weapon_AmmoType1,"\13",x)
+#define PROP_Weapon_AmmoType2(x)		ADD_STRING_PROP(ADEF_Weapon_AmmoType2,"\14",x)
+#define PROP_Weapon_SisterType(x)		ADD_STRING_PROP(ADEF_Weapon_SisterType,"\15",x)
+#define PROP_Weapon_ProjectileType(x)	ADD_STRING_PROP(ADEF_Weapon_ProjectileType,"\16",x)
+#define PROP_PowerupGiver_Powerup(x)	ADD_STRING_PROP(ADEF_PowerupGiver_Powerup,"\17",x)
+#define PROP_Inventory_Icon(x)			ADD_STRING_PROP(ADEF_Inventory_Icon,"\20",x)
 
 #define PROP_XScale(x)					ADD_BYTE_PROP(ADEF_XScale,x)
 #define PROP_YScale(x)					ADD_BYTE_PROP(ADEF_YScale,x)

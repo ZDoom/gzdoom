@@ -24,7 +24,7 @@
 #define __R_THINGS__
 
 // [RH] Particle details
-struct particle_s
+struct particle_t
 {
 	fixed_t	x,y,z;
 	fixed_t velx,vely,velz;
@@ -37,7 +37,6 @@ struct particle_s
 	WORD	tnext;
 	WORD	snext;
 };
-typedef struct particle_s particle_t;
 
 extern int	NumParticles;
 extern int	ActiveParticles;
@@ -69,9 +68,8 @@ extern TArray<WORD>		ParticlesInSubsec;
 
 extern int MaxVisSprites;
 
-extern vissprite_t		*vissprites, *firstvissprite;
-extern vissprite_t* 	vissprite_p;
-extern vissprite_t		vsprsortedhead;
+extern vissprite_t		**vissprites, **firstvissprite;
+extern vissprite_t		**vissprite_p;
 
 // Constant arrays used for psprite clipping
 //	and initializing clipping.
@@ -94,7 +92,7 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *spans);
 
 
 void R_CacheSprite (spritedef_t *sprite);
-void R_SortVisSprites (void);
+void R_SortVisSprites (int (STACK_ARGS *compare)(const void *, const void *), size_t first);
 void R_AddSprites (sector_t *sec, int lightlevel, int fakeside);
 void R_AddPSprites ();
 void R_DrawSprites ();

@@ -10,7 +10,7 @@ public:
 	FLACStreamer (FILE *file, int length);
 	~FLACStreamer ();
 
-	signed char ServiceStream (void *buff, int len, bool loop);
+	bool ServiceStream (void *buff, int len, bool loop);
 
 	unsigned NumChannels, SampleBits, SampleRate;
 
@@ -41,31 +41,29 @@ FLACSong::FLACSong (FILE *file, int length)
 
 	if (State->NumChannels > 0 && State->SampleBits > 0 && State->SampleRate > 0)
 	{
-		unsigned int mode = FSOUND_SIGNED | FSOUND_2D;
+		int flags = 0;
 		int buffsize = State->SampleRate / 5;
 
 		if (State->SampleBits <= 8)
 		{
-			mode |= FSOUND_8BITS;
+			flags |= SoundStream::Bits8;
 		}
 		else
 		{
-			mode |= FSOUND_16BITS;
 			buffsize <<= 1;
 		}
 		if (State->NumChannels == 1)
 		{
-			mode |= FSOUND_MONO;
+			flags |= SoundStream::Mono;
 		}
 		else
 		{
-			mode |= FSOUND_STEREO;
 			buffsize <<= 1;
 		}
-		m_Stream = FSOUND_Stream_Create (FillStream, buffsize, mode, State->SampleRate, this);
+		m_Stream = GSnd->CreateStream (FillStream, buffsize, flags, State->SampleRate, this);
 		if (m_Stream == NULL)
 		{
-			Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
+			Printf (PRINT_BOLD, "Could not create music stream.\n");
 			return;
 		}
 	}
@@ -92,22 +90,16 @@ bool FLACSong::IsPlaying ()
 
 void FLACSong::Play (bool looping)
 {
-	int volume = (int)(snd_musicvolume * 255);
-
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
-	if (m_Channel != -1)
+	if (m_Stream->Play (snd_musicvolume))
 	{
-		FSOUND_SetVolumeAbsolute (m_Channel, volume);
-		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
-		FSOUND_SetPaused (m_Channel, false);
 		m_Status = STATE_Playing;
 	}
 }
 
-signed char F_CALLBACKAPI FLACSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata)
+bool FLACSong::FillStream (SoundStream *stream, void *buff, int len, void *userdata)
 {
 	FLACSong *song = (FLACSong *)userdata;
 	return song->State->ServiceStream (buff, len, song->m_Looping);
@@ -138,7 +130,7 @@ FLACSong::FLACStreamer::~FLACStreamer ()
 	fclose (File.GetFile());
 }
 
-signed char FLACSong::FLACStreamer::ServiceStream (void *buff1, int len, bool loop)
+bool FLACSong::FLACStreamer::ServiceStream (void *buff1, int len, bool loop)
 {
 	void *buff = buff1;
 	size_t samples = len;

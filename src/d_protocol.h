@@ -135,6 +135,7 @@ enum EDemoCommand
 	DEM_INVDROP,		// 34 4 bytes: ID of item to drop
 	DEM_WARPCHEAT,		// 35 4 bytes: 2 for x, 2 for y
 	DEM_CENTERVIEW,		// 36
+	DEM_SUMMONFRIEND,	// 37 String: Thing to fabricate
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

@@ -8,10 +8,10 @@
 
 enum
 {
-	ARMOR_ARMOR,
-	ARMOR_SHIELD,
-	ARMOR_HELMET,
-	ARMOR_AMULET
+	ARMOR_ARMOR,		// MeshArmor
+	ARMOR_SHIELD,		// FalconShield
+	ARMOR_HELMET,		// PlatinumHelm
+	ARMOR_AMULET		// AmuletOfWarding
 };
 
 // Mesh Armor (1) -----------------------------------------------------------
@@ -35,6 +35,7 @@ IMPLEMENT_ACTOR (AMeshArmor, Hexen, 8005, 68)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
 	PROP_HexenArmor_Class (ARMOR_ARMOR)
 	PROP_SpawnState (0)
+	PROP_Inventory_Amount (0)
 END_DEFAULTS
 
 // Falcon Shield (2) --------------------------------------------------------
@@ -58,6 +59,7 @@ IMPLEMENT_ACTOR (AFalconShield, Hexen, 8006, 69)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
 	PROP_HexenArmor_Class (ARMOR_SHIELD)
 	PROP_SpawnState (0)
+	PROP_Inventory_Amount (0)
 END_DEFAULTS
 
 // Platinum Helm (3) --------------------------------------------------------
@@ -81,6 +83,7 @@ IMPLEMENT_ACTOR (APlatinumHelm, Hexen, 8007, 70)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
 	PROP_HexenArmor_Class (ARMOR_HELMET)
 	PROP_SpawnState (0)
+	PROP_Inventory_Amount (0)
 END_DEFAULTS
 
 // Amulet of Warding (4) ----------------------------------------------------
@@ -104,4 +107,5 @@ IMPLEMENT_ACTOR (AAmuletOfWarding, Hexen, 8008, 71)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
 	PROP_HexenArmor_Class (ARMOR_AMULET)
 	PROP_SpawnState (0)
+	PROP_Inventory_Amount (0)
 END_DEFAULTS

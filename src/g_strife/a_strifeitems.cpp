@@ -120,7 +120,6 @@ protected:
 	{
 		return "You picked up the map";
 	}
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AStrifeMap::States[] =
@@ -135,18 +134,8 @@ IMPLEMENT_ACTOR (AStrifeMap, Strife, 2026, 137)
 	PROP_StrifeType (164)
 	PROP_StrifeTeaserType (160)
 	PROP_StrifeTeaserType2 (163)
+	PROP_Inventory_PickupSound ("misc/p_pkup")
 END_DEFAULTS
-
-//===========================================================================
-//
-// AStrifeMap :: PlayPickupSound
-//
-//===========================================================================
-
-void AStrifeMap::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1, ATTN_NORM);
-}
 
 // Degnin Ore ---------------------------------------------------------------
 
@@ -395,7 +384,6 @@ class AShadowArmor : public APowerupGiver
 	DECLARE_ACTOR (AShadowArmor, APowerupGiver)
 public:
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AShadowArmor::States[] =
@@ -413,25 +401,16 @@ IMPLEMENT_ACTOR (AShadowArmor, Strife, 2024, 135)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_MaxAmount (2)
+	PROP_Inventory_FlagsClear (IF_FANCYPICKUPSOUND)
 	PROP_PowerupGiver_Powerup ("PowerShadow")
 	PROP_Tag ("Shadow_armor")
 	PROP_Inventory_Icon ("I_SHD1")
+	PROP_Inventory_PickupSound ("misc/i_pkup")
 END_DEFAULTS
 
 const char *AShadowArmor::PickupMessage ()
 {
 	return "You picked up the Shadow armor.";
-}
-
-//===========================================================================
-//
-// AShadowArmor :: PlayPickupSound
-//
-//===========================================================================
-
-void AShadowArmor::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
 }
 
 // Environmental suit -------------------------------------------------------
@@ -441,7 +420,6 @@ class AEnvironmentalSuit : public APowerupGiver
 	DECLARE_ACTOR (AEnvironmentalSuit, APowerupGiver)
 public:
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState AEnvironmentalSuit::States[] =
@@ -456,27 +434,17 @@ IMPLEMENT_ACTOR (AEnvironmentalSuit, Strife, 2025, 136)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_MaxAmount (5)
+	PROP_Inventory_FlagsClear (IF_FANCYPICKUPSOUND)
 	PROP_PowerupGiver_Powerup ("PowerMask")
 	PROP_Tag ("Environmental_Suit")
 	PROP_Inventory_Icon ("I_MASK")
+	PROP_Inventory_PickupSound ("misc/i_pkup")
 END_DEFAULTS
 
 const char *AEnvironmentalSuit::PickupMessage ()
 {
 	return "You picked up the Environmental Suit.";
 }
-
-//===========================================================================
-//
-// AEnvironmentalSuit :: PlayPickupSound
-//
-//===========================================================================
-
-void AEnvironmentalSuit::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
-}
-
 
 // Guard Uniform ------------------------------------------------------------
 
@@ -681,7 +649,6 @@ class ATargeter : public APowerupGiver
 	DECLARE_ACTOR (ATargeter, APowerupGiver)
 public:
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 };
 
 FState ATargeter::States[] =
@@ -696,25 +663,16 @@ IMPLEMENT_ACTOR (ATargeter, Strife, 207, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_MaxAmount (5)
+	PROP_Inventory_FlagsClear (IF_FANCYPICKUPSOUND)
 	PROP_Tag ("Targeter")
 	PROP_Inventory_Icon ("I_TARG")
 	PROP_PowerupGiver_Powerup ("PowerTargeter")
+	PROP_Inventory_PickupSound ("misc/i_pkup")
 END_DEFAULTS
 
 const char *ATargeter::PickupMessage ()
 {
 	return "You picked up the Targeter.";
-}
-
-//===========================================================================
-//
-// ATargeter :: PlayPickupSound
-//
-//===========================================================================
-
-void ATargeter::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
 }
 
 // Scanner ------------------------------------------------------------------
@@ -724,7 +682,6 @@ class AScanner : public APowerupGiver
 	DECLARE_ACTOR (AScanner, APowerupGiver)
 public:
 	const char *PickupMessage ();
-	void PlayPickupSound (AActor *toucher);
 	bool Use (bool pickup);
 };
 
@@ -739,9 +696,11 @@ IMPLEMENT_ACTOR (AScanner, Strife, 2027, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_MaxAmount (1)
+	PROP_Inventory_FlagsClear (IF_FANCYPICKUPSOUND)
 	PROP_Tag ("scanner")
 	PROP_Inventory_Icon ("I_PMUP")
 	PROP_PowerupGiver_Powerup ("PowerScanner")
+	PROP_Inventory_PickupSound ("misc/i_pkup")
 END_DEFAULTS
 
 const char *AScanner::PickupMessage ()
@@ -749,22 +708,11 @@ const char *AScanner::PickupMessage ()
 	return "You picked up the scanner.";
 }
 
-//===========================================================================
-//
-// AScanner :: PlayPickupSound
-//
-//===========================================================================
-
-void AScanner::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
-}
-
 bool AScanner::Use (bool pickup)
 {
 	if (!(level.flags & LEVEL_ALLMAP))
 	{
-		if (Owner == players[consoleplayer].camera)
+		if (Owner->CheckLocalView (consoleplayer))
 		{
 			Printf ("The scanner won't work without a map!\n");
 		}
@@ -816,7 +764,7 @@ bool ARaiseAlarm::TryPickup (AActor *toucher)
 bool ARaiseAlarm::SpecialDropAction (AActor *dropper)
 {
 	P_NoiseAlert (dropper->target, dropper->target);
-	if (dropper->target == players[consoleplayer].camera)
+	if (dropper->target->CheckLocalView (consoleplayer))
 	{
 		Printf ("You Fool!  You've set off the alarm.\n");
 	}
@@ -872,7 +820,7 @@ bool ACloseDoor222::TryPickup (AActor *toucher)
 bool ACloseDoor222::SpecialDropAction (AActor *dropper)
 {
 	EV_DoDoor (DDoor::doorClose, NULL, dropper, 222, 2*FRACUNIT, 0, 0, 0);
-	if (players[consoleplayer].camera == dropper->target)
+	if (dropper->target->CheckLocalView (consoleplayer))
 	{
 		Printf ("You're dead!  You set off the alarm.\n");
 	}

@@ -4,7 +4,7 @@ void MODSong::SetVolume (float volume)
 {
 	if (m_Module)
 	{
-		FMUSIC_SetMasterVolume (m_Module, (int)(volume * 256));
+		m_Module->SetVolume (volume);
 	}
 }
 
@@ -13,9 +13,9 @@ void MODSong::Play (bool looping)
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	if (FMUSIC_PlaySong (m_Module))
+	if (m_Module->Play ())
 	{
-		FMUSIC_SetMasterVolume (m_Module, (int)(snd_musicvolume * 256));
+		m_Module->SetVolume (snd_musicvolume);
 		m_Status = STATE_Playing;
 	}
 }
@@ -24,7 +24,7 @@ void MODSong::Pause ()
 {
 	if (m_Status == STATE_Playing)
 	{
-		if (FMUSIC_SetPaused (m_Module, TRUE))
+		if (m_Module->SetPaused (true))
 			m_Status = STATE_Paused;
 	}
 }
@@ -33,7 +33,7 @@ void MODSong::Resume ()
 {
 	if (m_Status == STATE_Paused)
 	{
-		if (FMUSIC_SetPaused (m_Module, FALSE))
+		if (m_Module->SetPaused (false))
 			m_Status = STATE_Playing;
 	}
 }
@@ -42,7 +42,7 @@ void MODSong::Stop ()
 {
 	if (m_Status != STATE_Stopped && m_Module)
 	{
-		FMUSIC_StopSong (m_Module);
+		m_Module->Stop ();
 	}
 	m_Status = STATE_Stopped;
 }
@@ -52,23 +52,23 @@ MODSong::~MODSong ()
 	Stop ();
 	if (m_Module != NULL)
 	{
-		FMUSIC_FreeSong (m_Module);
+		delete m_Module;
 		m_Module = NULL;
 	}
 }
 
 MODSong::MODSong (const char *file, int offset, int length)
 {
-	m_Module = FMUSIC_LoadSongEx (file, offset, length, FSOUND_LOOP_NORMAL, NULL, 0);
+	m_Module = GSnd->OpenModule (file, offset, length);
 }
 
 bool MODSong::IsPlaying ()
 {
 	if (m_Status != STATE_Stopped)
 	{
-		if (FMUSIC_IsPlaying (m_Module))
+		if (m_Module->IsPlaying ())
 		{
-			if (!m_Looping && FMUSIC_IsFinished (m_Module))
+			if (!m_Looping && m_Module->IsFinished ())
 			{
 				Stop ();
 				return false;
@@ -86,6 +86,6 @@ bool MODSong::IsPlaying ()
 
 bool MODSong::SetPosition (int order)
 {
-	return !!FMUSIC_SetOrder (m_Module, order);
+	return m_Module->SetOrder (order);
 }
 

@@ -26,6 +26,7 @@
 #include "d_player.h"
 #include "r_data.h"
 #include "r_bsp.h"
+#include "r_state.h"
 
 
 //
@@ -41,6 +42,7 @@ extern fixed_t			FocalTangent;
 extern fixed_t			FocalLengthX, FocalLengthY;
 extern float			FocalLengthXfloat;
 extern fixed_t			InvZtoScale;
+extern int				WidescreenRatio;
 
 extern angle_t			LocalViewAngle;			// [RH] Added to consoleplayer's angle
 extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's pitch
@@ -160,6 +162,9 @@ inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
 	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
 }
 
+extern fixed_t			viewx;
+extern fixed_t			viewy;
+
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
 inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
 subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);
@@ -176,11 +181,11 @@ void R_SetViewAngle ();
 //
 
 // Called by G_Drawer.
-void R_RenderPlayerView (player_t *player);
+void R_RenderActorView (AActor *actor);
 void R_RefreshViewBorder ();
 void R_SetupBuffer (bool inview);
 
-void R_RenderViewToCanvas (player_t *player, DCanvas *canvas, int x, int y, int width, int height);
+void R_RenderViewToCanvas (AActor *actor, DCanvas *canvas, int x, int y, int width, int height);
 
 void R_ResetViewInterpolation ();
 
@@ -193,34 +198,51 @@ void R_SetViewSize (int blocks);
 // [RH] Initialize multires stuff for renderer
 void R_MultiresInit (void);
 
-// BUILD stuff for interpolating between frames, but modified
-#define MAXINTERPOLATIONS 2048
+// BUILD stuff for interpolating between frames, but modified (rather a lot)
+#define INTERPOLATION_BUCKETS 107
 
 enum EInterpType
 {
 	INTERP_SectorFloor,		// Pass a sector_t *
 	INTERP_SectorCeiling,	// Pass a sector_t *
 	INTERP_Vertex,			// Pass a vertex_t *
+	INTERP_FloorPanning,	// Pass a sector_t *
+	INTERP_CeilingPanning,	// Pass a sector_t *
+	INTERP_WallPanning,		// Pass a side_t *
 };
 
 struct FActiveInterpolation
 {
-	EInterpType Type;
+	FActiveInterpolation *Next;
 	void *Address;
+	EInterpType Type;
 
-	friend FArchive &operator << (FArchive &arc, FActiveInterpolation &interp);
+	friend FArchive &operator << (FArchive &arc, FActiveInterpolation *&interp);
+
+	static int CountInterpolations ();
+	static int CountInterpolations (int *usedbuckets, int *minbucketfill, int *maxbucketfill);
+
+private:
+	fixed_t oldipos[2], bakipos[2];
+
+	void CopyInterpToOld();
+	void CopyBakToInterp();
+	void DoAnInterpolation(fixed_t smoothratio);
+
+	static int HashKey(EInterpType type, void *interptr);
+	static FActiveInterpolation *FindInterpolation(EInterpType, void *interptr, FActiveInterpolation **&interp_p);
+
+	friend void updateinterpolations();
+	friend void setinterpolation(EInterpType, void *interptr);
+	friend void stopinterpolation(EInterpType, void *interptr);
+	friend void dointerpolations(fixed_t smoothratio);
+	friend void restoreinterpolations();
+	friend void clearinterpolations();
+	friend void SerializeInterpolations(FArchive &arc);
+
+	static FActiveInterpolation *curiposhash[INTERPOLATION_BUCKETS];
 };
 
-extern int numinterpolations;
-extern fixed_t oldipos[MAXINTERPOLATIONS][2];
-extern fixed_t bakipos[MAXINTERPOLATIONS][2];
-extern FActiveInterpolation curipos[MAXINTERPOLATIONS];
-
-extern void updateinterpolations();
-extern void setinterpolation(EInterpType, void *interptr);
-extern void stopinterpolation(EInterpType, void *interptr);
-extern void dointerpolations(fixed_t smoothratio);
-extern void restoreinterpolations();
-extern void SerializeInterpolations (FArchive &arc);
+extern void R_FreePastViewers ();
 
 #endif // __R_MAIN_H__

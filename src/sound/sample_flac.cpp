@@ -78,6 +78,38 @@ FSOUND_SAMPLE *FLACSampleLoader::LoadSample (unsigned int samplemode)
 	return sample;
 }
 
+BYTE *FLACSampleLoader::ReadSample (SDWORD *numbytes)
+{
+	if (NumSamples == 0)
+	{
+		DPrintf ("FLAC has unknown number of samples\n");
+		return NULL;
+	}
+
+	BYTE *sfxdata;
+
+	Sfx->frequency = SampleRate;
+	Sfx->b16bit = (SampleBits > 8);
+
+	sfxdata = new BYTE[NumSamples << Sfx->b16bit];
+
+	SBuff = sfxdata;
+	SBuff2 = NULL;
+	SLen = NumSamples;
+	SLen2 = 0;
+	Dest8 = !Sfx->b16bit;
+	*numbytes = NumSamples << Sfx->b16bit;
+
+	if (!process_until_end_of_stream ())
+	{
+		DPrintf ("Failed loading FLAC sample\n");
+		delete[] sfxdata;
+		return NULL;
+	}
+
+	return sfxdata;
+}
+
 FLACSampleLoader::~FLACSampleLoader ()
 {
 }

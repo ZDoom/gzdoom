@@ -64,10 +64,6 @@ static const int PO_LINE_EXPLICIT = 5;
 #define P(x) do{}while(0)
 #endif
 
-#ifndef M_PI
-#define M_PI            3.14159265358979323846
-#endif
-
 angle_t FNodeBuilder::PointToAngle (fixed_t x, fixed_t y)
 {
 	const double rad2bam = double(1<<30) / M_PI;

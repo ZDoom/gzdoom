@@ -176,7 +176,14 @@ static void DoGiveInv (AActor *actor, const TypeInfo *info, int amount)
 	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0));
 	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		static_cast<ABasicArmorPickup*>(item)->SaveAmount = amount;
+		if (static_cast<ABasicArmorPickup*>(item)->SaveAmount != 0)
+		{
+			static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
+		}
+		else
+		{
+			static_cast<ABasicArmorPickup*>(item)->SaveAmount *= amount;
+		}
 	}
 	else if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
 	{
@@ -992,6 +999,7 @@ void FBehavior::LoadScriptsDirectory ()
 	int i, max;
 
 	NumScripts = 0;
+	Scripts = NULL;
 
 	// Load the main script directory
 	switch (Format)
@@ -999,26 +1007,33 @@ void FBehavior::LoadScriptsDirectory ()
 	case ACS_Old:
 		scripts.dw = (DWORD *)(Data + ((DWORD *)Data)[1]);
 		NumScripts = scripts.dw[0];
-		scripts.dw++;
-
-		Scripts = new ScriptPtr[NumScripts];
-
-		for (i = 0; i < NumScripts; ++i)
+		if (NumScripts != 0)
 		{
-			ScriptPtr2 *ptr1 = &scripts.po[i];
-			ScriptPtr  *ptr2 = &Scripts[i];
+			scripts.dw++;
 
-			ptr2->Number = LONG(ptr1->Number) % 1000;
-			ptr2->Type = LONG(ptr1->Number) / 1000;
-			ptr2->ArgCount = LONG(ptr1->ArgCount);
-			ptr2->Address = LONG(ptr1->Address);
+			Scripts = new ScriptPtr[NumScripts];
+
+			for (i = 0; i < NumScripts; ++i)
+			{
+				ScriptPtr2 *ptr1 = &scripts.po[i];
+				ScriptPtr  *ptr2 = &Scripts[i];
+
+				ptr2->Number = LONG(ptr1->Number) % 1000;
+				ptr2->Type = LONG(ptr1->Number) / 1000;
+				ptr2->ArgCount = LONG(ptr1->ArgCount);
+				ptr2->Address = LONG(ptr1->Address);
+			}
 		}
 		break;
 
 	case ACS_Enhanced:
 	case ACS_LittleEnhanced:
 		scripts.b = FindChunk (MAKE_ID('S','P','T','R'));
-		if (*(DWORD *)Data != MAKE_ID('A','C','S',0))
+		if (scripts.b == NULL)
+		{
+			// There are no scripts!
+		}
+		else if (*(DWORD *)Data != MAKE_ID('A','C','S',0))
 		{
 			NumScripts = scripts.dw[1] / 12;
 			Scripts = new ScriptPtr[NumScripts];
@@ -1779,7 +1794,12 @@ int DLevelScript::ThingCount (int type, int tid)
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				count++;
+				// Don't count items in somebody's inventory
+				if (!actor->IsKindOf (RUNTIME_CLASS(AInventory)) ||
+					static_cast<AInventory *>(actor)->Owner == NULL)
+				{
+					count++;
+				}
 			}
 		}
 	}
@@ -1791,7 +1811,12 @@ int DLevelScript::ThingCount (int type, int tid)
 			if (actor->health > 0 &&
 				(kind == NULL || actor->IsA (kind)))
 			{
-				count++;
+				// Don't count items in somebody's inventory
+				if (!actor->IsKindOf (RUNTIME_CLASS(AInventory)) ||
+					static_cast<AInventory *>(actor)->Owner == NULL)
+				{
+					count++;
+				}
 			}
 		}
 	}
@@ -3370,11 +3395,55 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		// [JB] Print map character array
+		case PCD_PRINTMAPCHARARRAY:
+			{
+				int a = *(activeBehavior->MapVars[STACK(1)]);
+				int offset = STACK(2);
+				while((workwhere[0] = activeBehavior->GetArrayVal (a, offset)) != '\0') {
+					workwhere++;
+					offset++;
+				}
+				sp-=2;
+			}
+			break;
+
+		// [JB] Print world character array
+		case PCD_PRINTWORLDCHARARRAY:
+			{
+				int a = STACK(1);
+				int offset = STACK(2);
+				while((workwhere[0] = ACS_WorldArrays[a].GetVal (offset)) != '\0') {
+					workwhere++;
+					offset++;
+				}
+				sp-=2;
+			}
+			break;
+
+		// [JB] Print global character array
+		case PCD_PRINTGLOBALCHARARRAY:
+			{
+				int a = STACK(1);
+				int offset = STACK(2);
+				while((workwhere[0] = ACS_GlobalArrays[a].GetVal (offset)) != '\0') {
+					workwhere++;
+					offset++;
+				}
+				sp-=2;
+			}
+			break;
+
 		case PCD_ENDPRINT:
 		case PCD_ENDPRINTBOLD:
 		case PCD_MOREHUDMESSAGE:
+		case PCD_ENDLOG:
 			strbin (work);
-			if (pcd != PCD_MOREHUDMESSAGE)
+			if (pcd == PCD_ENDLOG)
+			{
+				Printf ("%s\n", work);
+			}
+			else if (pcd != PCD_MOREHUDMESSAGE)
 			{
 				AActor *screen = activator;
 				// If a missile is the activator, make the thing that
@@ -3387,9 +3456,8 @@ int DLevelScript::RunScript ()
 					screen = screen->target;
 				}
 				if (pcd == PCD_ENDPRINTBOLD || screen == NULL ||
-					players[consoleplayer].mo == screen)
+					screen->CheckLocalView (consoleplayer))
 				{
-					strbin (work);
 					C_MidPrint (work);
 				}
 			}
@@ -3590,7 +3658,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_LOCALAMBIENTSOUND:
 			lookup = FBehavior::StaticLookupString (STACK(2));
-			if (lookup != NULL && players[consoleplayer].camera == activator)
+			if (lookup != NULL && activator->CheckLocalView (consoleplayer))
 			{
 				S_Sound (CHAN_AUTO,
 						 lookup,
@@ -3822,6 +3890,59 @@ int DLevelScript::RunScript ()
 					PushToStack (sigil->NumPieces);
 				}
 			}
+			break;
+
+		case PCD_GETAMMOCAPACITY:
+			if (activator != NULL)
+			{
+				const TypeInfo *type = TypeInfo::FindType (FBehavior::StaticLookupString (STACK(1)));
+				AInventory *item;
+
+				if (type != NULL && type->ParentType == RUNTIME_CLASS(AAmmo))
+				{
+					item = activator->FindInventory (type);
+					if (item != NULL)
+					{
+						STACK(1) = item->MaxAmount;
+					}
+					else
+					{
+						STACK(1) = ((AInventory *)GetDefaultByType (type))->MaxAmount;
+					}
+				}
+				else
+				{
+					STACK(1) = 0;
+				}
+			}
+			else
+			{
+				STACK(1) = 0;
+			}
+			break;
+
+		case PCD_SETAMMOCAPACITY:
+			if (activator != NULL)
+			{
+				const TypeInfo *type = TypeInfo::FindType (FBehavior::StaticLookupString (STACK(2)));
+				AInventory *item;
+
+				if (type != NULL && type->ParentType == RUNTIME_CLASS(AAmmo))
+				{
+					item = activator->FindInventory (type);
+					if (item != NULL)
+					{
+						item->MaxAmount = STACK(1);
+					}
+					else
+					{
+						item = activator->GiveInventoryType (type);
+						item->MaxAmount = STACK(1);
+						item->Amount = 0;
+					}
+				}
+			}
+			sp -= 2;
 			break;
 
 		case PCD_SETMUSIC:
@@ -4339,6 +4460,30 @@ int DLevelScript::RunScript ()
 					sky2texture = TexMan.GetTexture (sky2name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 				}
 				R_InitSkyMap ();
+			}
+			break;
+
+		case PCD_SETCAMERATOTEXTURE:
+			{
+				const char *picname = FBehavior::StaticLookupString (STACK(2));
+				AActor *camera;
+
+				if (STACK(3) == 0)
+				{
+					camera = activator;
+				}
+				else
+				{
+					FActorIterator it (STACK(3));
+					camera = it.Next ();
+				}
+
+				if (camera != NULL)
+				{
+					int picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+					FCanvasTextureInfo::Add (camera, picnum, STACK(1));
+				}
+				sp -= 3;
 			}
 			break;
 		}

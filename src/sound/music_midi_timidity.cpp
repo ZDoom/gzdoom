@@ -72,8 +72,6 @@ CUSTOM_CVAR (Int, timidity_frequency, 22050, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void TimiditySong::Play (bool looping)
 {
-	int volume = (int)(snd_musicvolume * 255);
-
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
@@ -81,12 +79,8 @@ void TimiditySong::Play (bool looping)
 	{
 		if (m_Stream != NULL)
 		{
-			m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
-			if (m_Channel != -1)
+			if (m_Stream->Play (snd_musicvolume))
 			{
-				FSOUND_SetVolumeAbsolute (m_Channel, volume);
-				FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
-				FSOUND_SetPaused (m_Channel, false);
 				m_Status = STATE_Playing;
 			}
 		}
@@ -103,14 +97,16 @@ void TimiditySong::Stop ()
 	{
 		if (m_Stream != NULL)
 		{
-			FSOUND_Stream_Stop (m_Stream);
-			m_Channel = -1;
+			m_Stream->Stop ();
 		}
 #ifdef _WIN32
 		if (ChildProcess != INVALID_HANDLE_VALUE)
 		{
 			SetEvent (KillerEvent);
-			WaitForSingleObject (ChildProcess, INFINITE);
+			if (WaitForSingleObject (ChildProcess, 500) != WAIT_OBJECT_0)
+			{
+				TerminateProcess (ChildProcess, 666);
+			}
 			CloseHandle (ChildProcess);
 			ChildProcess = INVALID_HANDLE_VALUE;
 		}
@@ -133,15 +129,15 @@ TimiditySong::~TimiditySong ()
 {
 	Stop ();
 #if _WIN32
-	if (ReadWavePipe != INVALID_HANDLE_VALUE)
-	{
-		CloseHandle (ReadWavePipe);
-		ReadWavePipe = INVALID_HANDLE_VALUE;
-	}
 	if (WriteWavePipe != INVALID_HANDLE_VALUE)
 	{
 		CloseHandle (WriteWavePipe);
 		WriteWavePipe = INVALID_HANDLE_VALUE;
+	}
+	if (ReadWavePipe != INVALID_HANDLE_VALUE)
+	{
+		CloseHandle (ReadWavePipe);
+		ReadWavePipe = INVALID_HANDLE_VALUE;
 	}
 	if (KillerEvent != INVALID_HANDLE_VALUE)
 	{
@@ -149,15 +145,15 @@ TimiditySong::~TimiditySong ()
 		KillerEvent = INVALID_HANDLE_VALUE;
 	}
 #else
-	if (WavePipe[0] != -1)
-	{
-		close (WavePipe[0]);
-		WavePipe[0] = -1;
-	}
 	if (WavePipe[1] != -1)
 	{
 		close (WavePipe[1]);
 		WavePipe[1] = -1;
+	}
+	if (WavePipe[0] != -1)
+	{
+		close (WavePipe[0]);
+		WavePipe[0] = -1;
 	}
 #endif
 	if (CommandLine != NULL)
@@ -276,22 +272,21 @@ void TimiditySong::PrepTimidity ()
 		}
 		else
 		{
-			m_Stream = FSOUND_Stream_Create (FillStream, pipeSize,
-				FSOUND_SIGNED | FSOUND_2D |
-				(timidity_stereo ? FSOUND_STEREO : FSOUND_MONO) |
-				(timidity_8bit ? FSOUND_8BITS : FSOUND_16BITS),
+			m_Stream = GSnd->CreateStream (FillStream, pipeSize,
+				(timidity_stereo ? 0 : SoundStream::Mono) |
+				(timidity_8bit ? SoundStream::Bits8 : 0),
 				timidity_frequency, this);
 			if (m_Stream == NULL)
 			{
-				Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
+				Printf (PRINT_BOLD, "Could not create music stream.\n");
 				pipeSize = 0;
 #ifdef _WIN32
-				CloseHandle (ReadWavePipe);
 				CloseHandle (WriteWavePipe);
+				CloseHandle (ReadWavePipe);
 				ReadWavePipe = WriteWavePipe = INVALID_HANDLE_VALUE;
 #else
-				close (WavePipe[0]);
 				close (WavePipe[1]);
+				close (WavePipe[0]);
 				WavePipe[0] = WavePipe[1] = -1;
 #endif
 			}
@@ -479,7 +474,7 @@ bool TimiditySong::LaunchTimidity ()
 		
 		close (WavePipe[0]);
 		WavePipe[0] = -1;
-		FSOUND_Stream_Close (m_Stream);
+		delete m_Stream;
 		m_Stream = NULL;
 		PrepTimidity ();
 	}
@@ -529,7 +524,7 @@ bool TimiditySong::LaunchTimidity ()
 #endif // _WIN32
 }
 
-signed char F_CALLBACKAPI TimiditySong::FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata)
+bool TimiditySong::FillStream (SoundStream *stream, void *buff, int len, void *userdata)
 {
 	TimiditySong *song = (TimiditySong *)userdata;
 	
@@ -573,10 +568,10 @@ signed char F_CALLBACKAPI TimiditySong::FillStream (FSOUND_STREAM *stream, void 
 		ChildQuit = 0;
 //		printf ("child gone\n");
 		song->ChildProcess = -1;
-		return FALSE;
+		return false;
 	}
 #endif
-	return TRUE;
+	return true;
 }
 
 bool TimiditySong::IsPlaying ()

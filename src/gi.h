@@ -108,6 +108,7 @@ typedef struct
 	int telefogheight;
 	EGameType gametype;
 	int defKickback;
+	char SkyFlatName[9];
 } gameinfo_t;
 
 extern gameinfo_t gameinfo;

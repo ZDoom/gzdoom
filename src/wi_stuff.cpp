@@ -1714,9 +1714,7 @@ void WI_loadData ()
 		}
 	}
 
-	if (gameinfo.gametype == GAME_Doom &&
-		gamemode != commercial &&
-		epsd < 3)
+	if (gameinfo.gametype == GAME_Doom && gamemode != commercial && epsd < 3)
 	{
 		for (j = 0; j < NUMANIMS[epsd]; j++)
 		{

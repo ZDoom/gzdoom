@@ -1433,7 +1433,7 @@ static EIWADType IdentifyVersion (void)
 		I_FatalError ("Cannot find a game IWAD (doom.wad, doom2.wad, heretic.wad, etc.).\n"
 					  "Did you install ZDoom properly? You can do either of the following:\n"
 					  "\n"
-					  "1. Place one or more of these wads in the same directory as ZDoom."
+					  "1. Place one or more of these wads in the same directory as ZDoom.\n"
 					  "2. Edit your zdoom.ini and add the directories of your iwads\n"
 					  "to the list beneath [IWADSearch.Directories]");
 	}

@@ -506,7 +506,6 @@ static void G_DoParseMapInfo (int lump)
 			{	// MAPNAME is a number; assume a Hexen wad
 				int map = atoi (sc_String);
 				sprintf (sc_String, "MAP%02d", map);
-				SKYFLATNAME[5] = 0;
 				HexenHack = true;
 				// Hexen levels are automatically nointermission,
 				// no auto sound sequences, falling damage, and
@@ -592,6 +591,18 @@ static void G_DoParseMapInfo (int lump)
 			}
 			ParseMapInfoLower (MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
 			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
+			if (levelinfo->pname[0] != 0 && TexMan.CheckForTexture (levelinfo->pname, FTexture::TEX_MiscPatch) < 0)
+			{
+				int lumpnum = Wads.CheckNumForName (levelinfo->pname);
+				if (lumpnum >= 0)
+				{
+					TexMan.CreateTexture (lumpnum, FTexture::TEX_MiscPatch);
+				}
+				else
+				{
+					levelinfo->pname[0] = 0;
+				}
+			}
 			break;
 
 		case MITL_CLUSTERDEF:	// clusterdef <clusternum>
@@ -1496,11 +1507,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	//	a flat. The data is in the WAD only because
 	//	we look for an actual index, instead of simply
 	//	setting one.
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		strncpy (SKYFLATNAME, "F_SKY001", 8);
-	}
-	skyflatnum = TexMan.GetTexture (SKYFLATNAME, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+	skyflatnum = TexMan.GetTexture (gameinfo.SkyFlatName, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 
 	// DOOM determines the sky texture to be used
 	// depending on the current episode and the game version.

@@ -2357,44 +2357,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="Text Files"
-			Filter="txt">
-			<File
-				RelativePath="..\docs\classes.txt">
-			</File>
-			<File
-				RelativePath="..\docs\colors.txt">
-			</File>
-			<File
-				RelativePath="..\docs\commands.txt">
-			</File>
-			<File
-				RelativePath="..\docs\console.html">
-			</File>
-			<File
-				RelativePath="..\docs\history.txt">
-			</File>
-			<File
-				RelativePath="..\docs\notes.txt">
-			</File>
-			<File
-				RelativePath="..\docs\rh-log.txt">
-			</File>
-			<File
-				RelativePath="..\docs\zdoom.txt">
-			</File>
-			<Filter
-				Name="Licenses"
-				Filter="">
-				<File
-					RelativePath="..\docs\BUILDLIC.TXT">
-				</File>
-				<File
-					RelativePath="..\docs\doomlic.txt">
-				</File>
-			</Filter>
-		</Filter>
-		<Filter
 			Name="Shared Game"
 			Filter="">
 			<File
@@ -4185,6 +4147,16 @@
 			</File>
 		</Filter>
 		<Filter
+			Name="Strife Game"
+			Filter="">
+			<File
+				RelativePath=".\g_strife\a_strifeplayer.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_strifestuff.cpp">
+			</File>
+		</Filter>
+		<Filter
 			Name="Render Core"
 			Filter="">
 			<Filter
@@ -4365,6 +4337,44 @@
 			</Filter>
 		</Filter>
 		<Filter
+			Name="Text Files"
+			Filter="txt">
+			<File
+				RelativePath="..\docs\classes.txt">
+			</File>
+			<File
+				RelativePath="..\docs\colors.txt">
+			</File>
+			<File
+				RelativePath="..\docs\commands.txt">
+			</File>
+			<File
+				RelativePath="..\docs\console.html">
+			</File>
+			<File
+				RelativePath="..\docs\history.txt">
+			</File>
+			<File
+				RelativePath="..\docs\notes.txt">
+			</File>
+			<File
+				RelativePath="..\docs\rh-log.txt">
+			</File>
+			<File
+				RelativePath="..\docs\zdoom.txt">
+			</File>
+			<Filter
+				Name="Licenses"
+				Filter="">
+				<File
+					RelativePath="..\docs\BUILDLIC.TXT">
+				</File>
+				<File
+					RelativePath="..\docs\doomlic.txt">
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
 			Name="Versioning"
 			Filter="">
 			<File
@@ -4476,16 +4486,6 @@
 			</File>
 			<File
 				RelativePath="sound\sample_flac.h">
-			</File>
-		</Filter>
-		<Filter
-			Name="Strife Game"
-			Filter="">
-			<File
-				RelativePath=".\g_strife\a_strifeplayer.cpp">
-			</File>
-			<File
-				RelativePath=".\g_strife\a_strifestuff.cpp">
 			</File>
 		</Filter>
 		<File

@@ -24,9 +24,6 @@
 
 #include "c_cvars.h"
 
-// SKY, store the number for name.
-extern char SKYFLATNAME[8];
-
 extern int		sky1shift,		sky2shift;
 
 extern int 		sky1texture,	sky2texture;

@@ -807,9 +807,16 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{ // Let missiles use regular player teleports
 		lineActivation = SPAC_PCROSS;
 	}
-	if (lineActivation == SPAC_CROSS && activationType == SPAC_OTHERCROSS)
+	// BOOM's generalized line types that allow monster use can actually be
+	// activated by anything!
+	if (activationType == SPAC_OTHERCROSS)
 	{
-		return (line->flags & ML_MONSTERSCANACTIVATE) != 0;
+		if (lineActivation == SPAC_CROSS && line->special >= Generic_Floor &&
+			line->special <= Generic_Crusher)
+		{
+			return (line->flags & ML_MONSTERSCANACTIVATE) != 0;
+		}
+		return false;
 	}
 	if (lineActivation != activationType &&
 		!(activationType == SPAC_MCROSS && lineActivation == SPAC_CROSS))

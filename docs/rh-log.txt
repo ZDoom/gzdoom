@@ -1,3 +1,13 @@
+October 30, 2003
+- Moved SKYFLATNAME into the gameinfo structure.
+- Added a bunch more Strife things.
+- Restricted the use of SPAC_OTHERCROSS to just the BOOM generalized line type
+  containers, since those are the only specials it's needed for.
+- Fixed: Each level's intermission name was always drawn as text, even if
+  it had a graphic that was supposed to be displayed instead.
+- Rewrote the flat hack used to make the flats in Gothic DM 2 load and
+  verified that it once again works.
+
 October 29, 2003
 - Added a few Strife things.
 - Fixed another Doom bug/oversimplification: PIT_AddThingIntercepts() checked

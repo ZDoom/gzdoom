@@ -1104,7 +1104,7 @@ void I_InitSound ()
 		if (snd_3d)
 		{
 			Sound3D = true;
-			if (gameinfo.gametype == GAME_Doom)
+			if (gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Strife)
 			{ 
 				FSOUND_3D_SetRolloffFactor (1.7f);
 			}

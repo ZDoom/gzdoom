@@ -273,7 +273,15 @@ enum
 	RF_WALLSPRITE		= 0x1000,	// Wall sprite
 	RF_FLOORSPRITE		= 0x2000,	// Floor sprite
 	RF_VOXELSPRITE		= 0x3000,	// Voxel object
-	RF_INVISIBLE		= 0x8000	// Don't bother drawing this actor
+	RF_INVISIBLE		= 0x8000,	// Don't bother drawing this actor
+
+// --- dummies for unknown/unimplemented Strife flags ---
+
+	MF_STRIFEx40 = 0,
+	MF_STRIFEx400 = 0,
+	MF_STRIFEx8000 = 0,
+	MF_STRIFEx4000000 = 0,
+	MF_STRIFEx8000000 = 0
 };
 
 enum ERenderStyle

@@ -328,7 +328,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 		// 1024 bytes is an arbitrary restriction. It's assumed that anything
 		// smaller than this can't possibly be a valid music file if it hasn't
 		// been identified already, so don't even bother trying to load it.
-		if (info == NULL && !nofmod && len < 1024)
+		if (info == NULL && !nofmod && len >= 1024)
 		{
 			// First try loading it as MOD, then as a stream
 			fclose (file);

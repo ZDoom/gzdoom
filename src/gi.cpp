@@ -115,7 +115,8 @@ gameinfo_t HexenGameInfo =
 	&HereticBorder,
 	32*FRACUNIT,
 	GAME_Hexen,
-	150
+	150,
+	"F_SKY",
 };
 
 gameinfo_t HexenDKGameInfo =
@@ -141,7 +142,8 @@ gameinfo_t HexenDKGameInfo =
 	&HereticBorder,
 	32*FRACUNIT,
 	GAME_Hexen,
-	150
+	150,
+	"F_SKY",
 };
 
 gameinfo_t HereticGameInfo =
@@ -167,7 +169,8 @@ gameinfo_t HereticGameInfo =
 	&HereticBorder,
 	32*FRACUNIT,
 	GAME_Heretic,
-	150
+	150,
+	"F_SKY1",
 };
 
 gameinfo_t HereticSWGameInfo =
@@ -194,6 +197,7 @@ gameinfo_t HereticSWGameInfo =
 	32*FRACUNIT,
 	GAME_Heretic,
 	150,
+	"F_SKY1",
 };
 
 gameinfo_t SharewareGameInfo =
@@ -219,7 +223,8 @@ gameinfo_t SharewareGameInfo =
 	&DoomBorder,
 	0,
 	GAME_Doom,
-	100
+	100,
+	"F_SKY1",
 };
 
 gameinfo_t RegisteredGameInfo =
@@ -245,7 +250,8 @@ gameinfo_t RegisteredGameInfo =
 	&DoomBorder,
 	0,
 	GAME_Doom,
-	100
+	100,
+	"F_SKY1",
 };
 
 gameinfo_t RetailGameInfo =
@@ -271,7 +277,8 @@ gameinfo_t RetailGameInfo =
 	&DoomBorder,
 	0,
 	GAME_Doom,
-	100
+	100,
+	"F_SKY1",
 };
 
 gameinfo_t CommercialGameInfo =
@@ -297,7 +304,8 @@ gameinfo_t CommercialGameInfo =
 	&DoomBorder,
 	0,
 	GAME_Doom,
-	100
+	100,
+	"F_SKY1",
 };
 
 gameinfo_t StrifeGameInfo =
@@ -323,5 +331,6 @@ gameinfo_t StrifeGameInfo =
 	&StrifeBorder,
 	0,
 	GAME_Strife,
-	150
+	150,
+	"F_SKY001",
 };

@@ -183,6 +183,9 @@ protected:
 	// [RH] Combine multiple marked ranges of lumps into one.
 	void MergeLumps (const char *start, const char *end, int);
 	bool IsMarker (const LumpRecord *lump, const char *marker) const;
+
+private:
+	void ScanForFlatHack (int startlump);
 };
 
 extern FWadCollection Wads;

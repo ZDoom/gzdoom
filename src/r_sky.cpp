@@ -58,8 +58,6 @@ CUSTOM_CVAR (Bool, r_stretchsky, true, CVAR_ARCHIVE)
 	R_InitSkyMap ();
 }
 
-char SKYFLATNAME[8] = "F_SKY1";
-
 extern "C" int detailxshift, detailyshift;
 extern fixed_t freelookviewheight;
 

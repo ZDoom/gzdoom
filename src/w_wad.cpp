@@ -338,6 +338,8 @@ void FWadCollection::AddFile (const char *filename)
 		{
 			delete[] fileinfo2free;
 		}
+
+		ScanForFlatHack (startlump);
 	}
 
 	wadinfo->FirstLump = startlump;
@@ -600,7 +602,67 @@ bool FWadCollection::IsMarker (const FWadCollection::LumpRecord *lump, const cha
 
 //==========================================================================
 //
-// W_MergeLumps
+// ScanForFlatHack
+//
+// Try to detect wads that add extra flats by sticking an extra F_END
+// at the end of the flat list without any corresponding FF_START.
+// In other words, fix gothic2.wad.
+//
+//==========================================================================
+
+void FWadCollection::ScanForFlatHack (int startlump)
+{
+	if (Args.CheckParm ("-noflathack"))
+	{
+		return;
+	}
+
+	for (int i = startlump; i < NumLumps; ++i)
+	{
+		if (LumpInfo[i].name[0] == 'F')
+		{
+			if (strcmp (LumpInfo[i].name + 1, "_START") == 0 ||
+				strncmp (LumpInfo[i].name + 1, "F_START", 7) == 0)
+			{
+				// If the wad has a F_START/FF_START marker, don't
+				// try to fix it.
+				return;
+			}
+
+			// No need to look for FF_END, because Doom doesn't. One minor
+			// nitpick: Doom will look for the last F_END; this finds the first
+			// one if there is more than one in the file. Too bad. If there's
+			// more than one F_END, this algorithm won't be able to properly
+			// determine where to put the F_START anyway.
+			if (strcmp (LumpInfo[i].name + 1, "_END") == 0)
+			{
+				int j;
+
+				// When F_END is found, back up past any lumps of length
+				// 4096, then insert an F_START marker.
+				for (j = i - 1; LumpInfo[j].size == 4096; --j)
+				{
+				}
+				++NumLumps;
+				LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
+				for (; i > j; --i)
+				{
+					LumpInfo[i+1] = LumpInfo[i];
+				}
+				++j;
+				strcpy (LumpInfo[j].name, "F_START");
+				LumpInfo[j].size = 0;
+				LumpInfo[j].namespc = ns_global;
+				LumpInfo[j].flags = 0;
+				return;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// MergeLumps
 //
 // Merge multiple tagged groups into one
 // Basically from BOOM, too, although I tried to write it independently.
@@ -612,32 +674,11 @@ void FWadCollection::MergeLumps (const char *start, const char *end, int space)
 	char ustart[8], uend[8];
 	LumpRecord *newlumpinfos;
 	int newlumps, oldlumps;
-    size_t i, flatHack;
+    size_t i;
 	BOOL insideBlock;
 
 	uppercopy (ustart, start);
 	uppercopy (uend, end);
-
-	// Some pwads use an icky hack to get extra flats with regular Doom.
-	// They have an F_END without a corresponding F_START or FF_START.
-	// This tries to detect them.
-	flatHack = 0;
-	if (strcmp ("F_START", ustart) == 0 && !Args.CheckParm ("-noflathack"))
-	{
-		size_t fudge = 0, start = 0;
-
-		for (i = 0; i < NumLumps; i++)
-		{
-			if (IsMarker (LumpInfo + i, ustart))
-				fudge++, start = i;
-			else if (IsMarker (LumpInfo + i, uend))
-				fudge--, flatHack = i;
-		}
-		if (start > flatHack)
-			fudge--;
-		if (fudge >= 0)
-			flatHack = 0;
-	}
 
 	newlumpinfos = new LumpRecord[NumLumps];
 
@@ -673,28 +714,7 @@ void FWadCollection::MergeLumps (const char *start, const char *end, int space)
 		}
 		else
 		{
-			// Check if this is the end of a block
-			if (flatHack)
-			{
-				if (flatHack == i)
-				{
-					insideBlock = false;
-					flatHack = 0;
-				}
-				else
-				{
-					if (LumpInfo[i].size != 4096)
-					{
-						LumpInfo[oldlumps++] = LumpInfo[i];
-					}
-					else
-					{
-						newlumpinfos[newlumps] = LumpInfo[i];
-						newlumpinfos[newlumps++].namespc = space;
-					}
-				}
-			}
-			else if (i && LumpInfo[i].wadnum != LumpInfo[i-1].wadnum)
+			if (i && LumpInfo[i].wadnum != LumpInfo[i-1].wadnum)
 			{
 				// Blocks cannot span multiple files
 				insideBlock = false;

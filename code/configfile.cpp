@@ -1,0 +1,403 @@
+#include <stdio.h>
+#include <string.h>
+
+#include "configfile.h"
+
+#define READBUFFERSIZE	256
+
+FConfigFile::FConfigFile ()
+{
+	Sections = CurrentSection = NULL;
+	LastSectionPtr = &Sections;
+	CurrentEntry = NULL;
+	PathName = NULL;
+}
+
+FConfigFile::FConfigFile (const char *pathname,
+	void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata),
+	void *userdata)
+{
+	ChangePathName (pathname);
+	LoadConfigFile (nosechandler, userdata);
+}
+
+FConfigFile::FConfigFile (const FConfigFile &other)
+{
+	Sections = CurrentSection = NULL;
+	LastSectionPtr = &Sections;
+	CurrentEntry = NULL;
+	PathName = NULL;
+	ChangePathName (other.PathName);
+	*this = other;
+}
+
+FConfigFile::~FConfigFile ()
+{
+	FConfigSection *section = Sections;
+
+	while (section != NULL)
+	{
+		FConfigSection *nextsection = section->Next;
+		FConfigEntry *entry = section->RootEntry;
+
+		while (entry != NULL)
+		{
+			FConfigEntry *nextentry = entry->Next;
+			delete[] (char *)entry;
+			entry = nextentry;
+		}
+		delete[] (char *)section;
+		section = nextsection;
+	}
+	delete[] PathName;
+}
+
+FConfigFile &FConfigFile::operator = (const FConfigFile &other)
+{
+	FConfigSection *fromsection, *tosection;
+	FConfigEntry *fromentry;
+
+	ClearConfig ();
+	fromsection = other.Sections;
+	while (fromsection != NULL)
+	{
+		fromentry = fromsection->RootEntry;
+		tosection = NewConfigSection (fromsection->Name);
+		while (fromentry != NULL)
+		{
+			NewConfigEntry (tosection, fromentry->Key, fromentry->Value);
+			fromentry = fromentry->Next;
+		}
+		fromsection = fromsection->Next;
+	}
+	return *this;
+}
+
+void FConfigFile::ClearConfig ()
+{
+	CurrentSection = Sections;
+	while (CurrentSection != NULL)
+	{
+		FConfigSection *next = CurrentSection->Next;
+		ClearCurrentSection ();
+		delete CurrentSection;
+		CurrentSection = next;
+	}
+	Sections = NULL;
+	LastSectionPtr = &Sections;
+}
+
+void FConfigFile::ChangePathName (const char *pathname)
+{
+	if (PathName != NULL)
+	{
+		delete[] PathName;
+	}
+	PathName = new char[strlen (pathname)+1];
+	strcpy (PathName, pathname);
+}
+
+bool FConfigFile::SetSection (const char *name, bool allowCreate)
+{
+	FConfigSection *section = FindSection (name);
+	if (section == NULL && allowCreate)
+	{
+		section = NewConfigSection (name);
+	}
+	if (section != NULL)
+	{
+		CurrentSection = section;
+		CurrentEntry = section->RootEntry;
+		return true;
+	}
+	return false;
+}
+
+bool FConfigFile::SetFirstSection ()
+{
+	CurrentSection = Sections;
+	if (CurrentSection != NULL)
+	{
+		CurrentEntry = CurrentSection->RootEntry;
+		return true;
+	}
+	return false;
+}
+
+bool FConfigFile::SetNextSection ()
+{
+	if (CurrentSection != NULL)
+	{
+		CurrentSection = CurrentSection->Next;
+		if (CurrentSection != NULL)
+		{
+			CurrentEntry = CurrentSection->RootEntry;
+			return true;
+		}
+	}
+	return false;
+}
+
+const char *FConfigFile::GetCurrentSection () const
+{
+	if (CurrentSection != NULL)
+	{
+		return CurrentSection->Name;
+	}
+	return NULL;
+}
+
+void FConfigFile::ClearCurrentSection ()
+{
+	if (CurrentSection != NULL)
+	{
+		FConfigEntry *entry, *next;
+
+		entry = CurrentSection->RootEntry;
+		while (entry != NULL)
+		{
+			next = entry->Next;
+			delete[] entry->Value;
+			delete entry;
+			entry = next;
+		}
+		CurrentSection->RootEntry = NULL;
+		CurrentSection->LastEntryPtr = &CurrentSection->RootEntry;
+	}
+}
+
+bool FConfigFile::NextInSection (const char *&key, const char *&value)
+{
+	FConfigEntry *entry = CurrentEntry;
+
+	if (entry == NULL)
+		return false;
+
+	CurrentEntry = entry->Next;
+	key = entry->Key;
+	value = entry->Value;
+	return true;
+}
+
+const char *FConfigFile::GetValueForKey (const char *key) const
+{
+	FConfigEntry *entry = FindEntry (CurrentSection, key);
+
+	if (entry != NULL)
+	{
+		return entry->Value;
+	}
+	return NULL;
+}
+
+void FConfigFile::SetValueForKey (const char *key, const char *value, bool duplicates)
+{
+	if (CurrentSection != NULL)
+	{
+		FConfigEntry *entry;
+
+		if (duplicates || (entry = FindEntry (CurrentSection, key)) == NULL)
+		{
+			NewConfigEntry (CurrentSection, key, value);
+		}
+		else
+		{
+			entry->SetValue (value);
+		}
+	}
+}
+
+FConfigFile::FConfigSection *FConfigFile::FindSection (const char *name) const
+{
+	FConfigSection *section = Sections;
+
+	while (section != NULL && stricmp (section->Name, name) != 0)
+	{
+		section = section->Next;
+	}
+	return section;
+}
+
+FConfigFile::FConfigEntry *FConfigFile::FindEntry (
+	FConfigFile::FConfigSection *section, const char *key) const
+{
+	FConfigEntry *probe = section->RootEntry;
+
+	while (probe != NULL && stricmp (probe->Key, key) != 0)
+	{
+		probe = probe->Next;
+	}
+	return probe;
+}
+
+FConfigFile::FConfigSection *FConfigFile::NewConfigSection (const char *name)
+{
+	FConfigSection *section;
+
+	section = FindSection (name);
+	if (section == NULL)
+	{
+		int namelen = strlen (name);
+		section = (FConfigSection *)new char[sizeof(*section)+namelen];
+		section->RootEntry = NULL;
+		section->LastEntryPtr = &section->RootEntry;
+		section->Next = NULL;
+		memcpy (section->Name, name, namelen);
+		section->Name[namelen] = 0;
+		*LastSectionPtr = section;
+		LastSectionPtr = &section->Next;
+	}
+	return section;
+}
+
+FConfigFile::FConfigEntry *FConfigFile::NewConfigEntry (
+	FConfigFile::FConfigSection *section, const char *key, const char *value)
+{
+	FConfigEntry *entry;
+	int keylen;
+
+	keylen = strlen (key);
+	entry = (FConfigEntry *)new char[sizeof(*section)+keylen];
+	entry->Value = NULL;
+	entry->Next = NULL;
+	memcpy (entry->Key, key, keylen);
+	entry->Key[keylen] = 0;
+	*(section->LastEntryPtr) = entry;
+	section->LastEntryPtr = &entry->Next;
+	entry->SetValue (value);
+	return entry;
+}
+
+void FConfigFile::LoadConfigFile (void (*nosechandler)(const char *pathname, FConfigFile *config, void *userdata), void *userdata)
+{
+	FILE *file = fopen (PathName, "r");
+	bool succ;
+
+	if (file == NULL)
+		return;
+
+	succ = ReadConfig (file);
+	fclose (file);
+
+	if (!succ)
+	{ // First valid line did not define a section
+		if (nosechandler != NULL)
+		{
+			nosechandler (PathName, this, userdata);
+		}
+	}
+}
+
+bool FConfigFile::ReadConfig (void *file)
+{
+	char readbuf[READBUFFERSIZE];
+	FConfigSection *section = NULL;
+	ClearConfig ();
+
+	while (ReadLine (readbuf, READBUFFERSIZE, file) != NULL)
+	{
+		char *start = readbuf;
+		char *equalpt;
+		char *endpt;
+
+		// Remove white space at start of line
+		while (*start && *start <= ' ')
+		{
+			start++;
+		}
+		// Remove comment lines
+		if (*start == '#')
+		{
+			continue;
+		}
+		// Remove white space at end of line
+		endpt = start + strlen (start) - 1;
+		while (endpt > start && *endpt <= ' ')
+		{
+			endpt--;
+		}
+		endpt[1] = 0;
+		if (endpt <= start)
+			continue;	// Nothing here
+
+		if (*start == '[')
+		{ // Section header
+			if (*endpt == ']')
+				*endpt = 0;
+			section = NewConfigSection (start+1);
+		}
+		else if (section == NULL)
+		{
+			return false;
+		}
+		else
+		{ // Should be key=value
+			equalpt = strchr (start, '=');
+			if (equalpt != NULL && equalpt > start)
+			{
+				// Remove white space in front of =
+				char *whiteprobe = equalpt - 1;
+				while (whiteprobe > start && *whiteprobe <= ' ')
+				{
+					whiteprobe--;
+				}
+				whiteprobe[1] = 0;
+				// Remove white space after =
+				whiteprobe = equalpt + 1;
+				while (*whiteprobe && *whiteprobe <= ' ')
+				{
+					whiteprobe++;
+				}
+				*(whiteprobe - 1) = 0;
+				NewConfigEntry (section, start, whiteprobe);
+			}
+		}
+	}
+	return true;
+}
+
+char *FConfigFile::ReadLine (char *string, int n, void *file) const
+{
+	return fgets (string, n, (FILE *)file);
+}
+
+void FConfigFile::WriteConfigFile () const
+{
+	FILE *file = fopen (PathName, "w");
+	FConfigSection *section;
+	FConfigEntry *entry;
+
+	if (file == NULL)
+		return;
+
+	WriteCommentHeader (file);
+
+	section = Sections;
+	while (section != NULL)
+	{
+		entry = section->RootEntry;
+		fprintf (file, "[%s]\n", section->Name);
+		while (entry != NULL)
+		{
+			fprintf (file, "%s=%s\n", entry->Key, entry->Value);
+			entry = entry->Next;
+		}
+		section = section->Next;
+		fprintf (file, "\n");
+	}
+	fclose (file);
+}
+
+void FConfigFile::WriteCommentHeader (FILE *file) const
+{
+}
+
+void FConfigFile::FConfigEntry::SetValue (const char *value)
+{
+	if (Value != NULL)
+	{
+		delete[] Value;
+	}
+	Value = new char[strlen (value)+1];
+	strcpy (Value, value);
+}

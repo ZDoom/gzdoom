@@ -1,0 +1,71 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: zlib - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "D:\WIN98\TEMP\RSPD041.TMP" with contents
+[
+/nologo /Zp8 /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /Fp"Debug/zlib.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ  /c 
+"D:\Games\doom\code\zlib-1.1.3\compress.c"
+"D:\Games\doom\code\zlib-1.1.3\crc32.c"
+"D:\Games\doom\code\zlib-1.1.3\deflate.c"
+"D:\Games\doom\code\zlib-1.1.3\gzio.c"
+"D:\Games\doom\code\zlib-1.1.3\infblock.c"
+"D:\Games\doom\code\zlib-1.1.3\infcodes.c"
+"D:\Games\doom\code\zlib-1.1.3\inffast.c"
+"D:\Games\doom\code\zlib-1.1.3\inflate.c"
+"D:\Games\doom\code\zlib-1.1.3\inftrees.c"
+"D:\Games\doom\code\zlib-1.1.3\infutil.c"
+"D:\Games\doom\code\zlib-1.1.3\trees.c"
+"D:\Games\doom\code\zlib-1.1.3\uncompr.c"
+"D:\Games\doom\code\zlib-1.1.3\zutil.c"
+"D:\Games\doom\code\zlib-1.1.3\adler32.c"
+]
+Creating command line "cl.exe @D:\WIN98\TEMP\RSPD041.TMP" 
+Creating temporary file "D:\WIN98\TEMP\RSPD042.TMP" with contents
+[
+/nologo /out:"Debug\zlib.lib" 
+".\Debug\compress.obj"
+".\Debug\crc32.obj"
+".\Debug\deflate.obj"
+".\Debug\gzio.obj"
+".\Debug\infblock.obj"
+".\Debug\infcodes.obj"
+".\Debug\inffast.obj"
+".\Debug\inflate.obj"
+".\Debug\inftrees.obj"
+".\Debug\infutil.obj"
+".\Debug\trees.obj"
+".\Debug\uncompr.obj"
+".\Debug\zutil.obj"
+".\Debug\adler32.obj"
+]
+Creating command line "link.exe -lib @D:\WIN98\TEMP\RSPD042.TMP"
+<h3>Output Window</h3>
+Compiling...
+compress.c
+crc32.c
+deflate.c
+gzio.c
+infblock.c
+infcodes.c
+inffast.c
+inflate.c
+inftrees.c
+infutil.c
+trees.c
+uncompr.c
+zutil.c
+adler32.c
+Creating library...
+
+
+
+<h3>Results</h3>
+zlib.lib - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

@@ -1,0 +1,100 @@
+---Hexen---
+
+Pig (not player) needs MF3_SEEISALSOACTIVE and activesound "PigActive2"
+
+MT_WRAITHB, MT_SERPENT, MT_SERPENTLEADER, and MT_MINOTAUR need MF3_STAYMORPHED
+MT_LEAF1, MT_LEAF2, MT_SPLASH and MT_SLUDGECHUNK need MF3_DONTSPLASH
+MT_CENTAUR_FX is launched at z+45*FRACUNIT
+MT_ICEGUY_FX is launched at z+40*FRACUNIT
+MT_HOLY_MISSILE is launched at z+40*FRACUNIT
+MT_ICEGUY_FX2 is launched at z+3*FRACUNIT
+MT_MSTAFF_FX2 is launched at z+40*FRACUNIT
+MT_LIGHTNING_FLOOR is launched at ONFLOORZ
+MT_LIGHTNING_CEILING is launched at ONCEILINGZ
+MT_MWAND_MISSILE and MT_CFLAME_MISSILE need MF3_VERYFAST
+
+Anything with MF2_BOSS also needs MF3_IGNOREMATTACKS
+
+
+ecx, ebx: work
+esi: source
+edi: dest
+eax: fg2rgb
+edx: bg2rgb
+ebp: count
+
+loop:
+	xor	ecx, ecx
+	mov	ebx, [colors]
+
+	mov	cl, [esi]
+	inc	esi
+
+	cmp	ecx, 255
+	je	nowrite
+
+	mov	cl, [ecx+ebx]
+	xor	ebx,ebx
+
+	mov	bl, [edi]
+	mov	ecx, [eax+ecx*4]
+
+	add	ecx, [edx+ebx*4]
+
+	or	ecx, 0x1f07c1f
+
+	mov	ebx, ecx
+
+	shr	ebx, 15
+
+	and	ebx, ecx
+
+	mov	cl, [RGB32k+ebx]
+
+	mov	[edi], cl
+nowrite:
+	inc	edi
+	dec	ebp
+
+	jne	loop
+
+
+
+ecx, ebx: work
+esi: source
+edi: dest
+eax: fg2rgb
+edx: bg2rgb
+ebp: count
+
+loop:
+	xor	ecx, ecx
+	xor	ebx, ebx
+
+	mov	cl, [esi]
+	inc	esi
+
+	cmp	ecx, 255
+	je	nowrite
+
+	mov	bl, [edi]
+	mov	ecx, [eax+ecx*4]
+
+	add	ecx, [edx+ebx*4]
+
+	or	ecx, 0x1f07c1f
+
+	mov	ebx, ecx
+
+	shr	ebx, 15
+
+	and	ebx, ecx
+
+	mov	cl, [RGB32k+ebx]
+
+	mov	[edi], cl
+nowrite:
+	inc	edi
+	dec	ebp
+
+	jne	loop

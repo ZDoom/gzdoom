@@ -73,8 +73,8 @@ IMPLEMENT_ACTOR (AZWingedStatueNoSkull, Hexen, 9011, 0)
 	PROP_Flags (MF_SOLID)
 
 	PROP_SpawnState (0)
-	PROP_SeeState (0)
-	PROP_MeleeState (1)
+	PROP_SeeState (1)
+	PROP_MeleeState (0)
 END_DEFAULTS
 
 // Gem pedestal -------------------------------------------------------------
@@ -96,8 +96,8 @@ IMPLEMENT_ACTOR (AZGemPedestal, Hexen, 9012, 0)
 	PROP_Flags (MF_SOLID)
 
 	PROP_SpawnState (0)
-	PROP_SeeState (0)
-	PROP_MeleeState (1)
+	PROP_SeeState (1)
+	PROP_MeleeState (0)
 END_DEFAULTS
 
 // Tree (destructible) ------------------------------------------------------

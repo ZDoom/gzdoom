@@ -136,7 +136,7 @@ static void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3],
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int MAX_SND_DIST;
+int MAX_SND_DIST;
 static channel_t *Channel;			// the set of channels available
 static BOOL		mus_paused;			// whether songs are paused
 static MusPlayingInfo mus_playing;	// music currently being played
@@ -1144,7 +1144,7 @@ void S_UpdateSounds (void *listener_p)
 			{
 				dist = 0;
 			}
-			vol = (int)(SoundCurve[dist]*Channel[i].volume*2);
+			vol = (int)(SoundCurve[dist]*Channel[i].volume);
 			if (dist > 0)
 			{
 				angle = R_PointToAngle2(listener[0], listener[1], x, y);

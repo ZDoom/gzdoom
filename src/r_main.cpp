@@ -748,22 +748,21 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 {
 	node_t *node;
 	int side;
-	int nodenum;
 
 	// single subsector is a special case
-	if (!numnodes)								
+	if (numnodes == 0)
 		return subsectors;
 				
-	nodenum = numnodes-1;
+	node = nodes + numnodes - 1;
 
-	while (! (nodenum & NF_SUBSECTOR) )
+	do
 	{
-		node = &nodes[nodenum];
 		side = R_PointOnSide (x, y, node);
-		nodenum = node->children[side];
+		node = (node_t *)node->children[side];
 	}
+	while (!((size_t)node & 1));
 		
-	return &subsectors[nodenum & ~NF_SUBSECTOR];
+	return (subsector_t *)((BYTE *)node - 1);
 }
 
 //==========================================================================
@@ -1136,7 +1135,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	WindowRight = ds->x2;
 	MirrorFlags = (depth + 1) & 1;
 
-	R_RenderBSPNode (numnodes - 1);
+	R_RenderBSPNode (nodes + numnodes - 1);
 
 	R_DrawPlanes ();
 	R_DrawSkyBoxes ();
@@ -1258,7 +1257,7 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 //memset (screen->GetBuffer(), 255, screen->GetWidth()*screen->GetHeight());
 		if (!r_experimental)
 		{
-			R_RenderBSPNode (numnodes - 1);
+			R_RenderBSPNode (nodes + numnodes - 1);
 		}
 		else
 		{
@@ -1271,7 +1270,7 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 		// [[RH] Not that this tells me anything...]
 		if (!r_experimental)
 		{
-			R_RenderBSPNode (numnodes - 1);
+			R_RenderBSPNode (nodes + numnodes - 1);
 		}
 		else
 		{

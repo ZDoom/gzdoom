@@ -69,6 +69,7 @@ extern HINSTANCE g_hInst;
 #include "w_wad.h"
 #include "i_video.h"
 #include "s_sound.h"
+#include "gi.h"
 
 #include "doomdef.h"
 
@@ -83,10 +84,11 @@ extern int I_SoundIsPlaying_Simple (int handle);
 extern void I_UpdateSoundParams_Simple (int handle, int vol, int sep, int pitch);
 extern void I_LoadSound_Simple (sfxinfo_t *sfx);
 
-#define SCALE3D		96.f
-#define INVSCALE3D	(1.f/SCALE3D)
-#define ROLLOFF3D	0.5f
-#define DOPPLER3D	1.f
+static bool wasUnderwater;
+
+extern int MAX_SND_DIST;
+const int S_CLIPPING_DIST = 1200;
+const int S_CLOSE_DIST = 160;
 
 extern void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3], float vel[3]);
 
@@ -464,6 +466,14 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 	{
 		sfx->ms = (sfx->ms * 1000) / (sfx->frequency);
 		DPrintf ("sound loaded: %d Hz %d samples\n", sfx->frequency, sfx->length);
+
+		if (Sound3D)
+		{
+			// Match s_sound.cpp min distance.
+			// Max distance is irrelevant.
+			FSOUND_Sample_SetMinMaxDistance ((FSOUND_SAMPLE *)sfx->data,
+				(float)S_CLOSE_DIST, (float)MAX_SND_DIST*2);
+		}
 	}
 
 	if (sfxdata != NULL)
@@ -685,12 +695,12 @@ long I_StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel,
 
 	freq = PITCH(sfx->frequency,pitch);
 
-	lpos[0] = pos[0] * INVSCALE3D;
-	lpos[1] = pos[1] * INVSCALE3D;
-	lpos[2] = pos[2] * INVSCALE3D;
-	lvel[0] = vel[0] * INVSCALE3D;
-	lvel[1] = vel[1] * INVSCALE3D;
-	lvel[2] = vel[2] * INVSCALE3D;
+	lpos[0] = pos[0];
+	lpos[1] = pos[1];
+	lpos[2] = pos[2];
+	lvel[0] = vel[0];
+	lvel[1] = vel[1];
+	lvel[2] = vel[2];
 
 	FSOUND_SAMPLE *sample = CheckLooping (sfx, looping);
 
@@ -841,12 +851,12 @@ void I_UpdateSoundParams3D (int handle, float pos[3], float vel[3])
 		return;
 
 	float lpos[3], lvel[3];
-	lpos[0] = pos[0] * INVSCALE3D;
-	lpos[1] = pos[1] * INVSCALE3D;
-	lpos[2] = pos[2] * INVSCALE3D;
-	lvel[0] = vel[0] * INVSCALE3D;
-	lvel[1] = vel[1] * INVSCALE3D;
-	lvel[2] = vel[2] * INVSCALE3D;
+	lpos[0] = pos[0];
+	lpos[1] = pos[1];
+	lpos[2] = pos[2];
+	lvel[0] = vel[0];
+	lvel[1] = vel[1];
+	lvel[2] = vel[2];
 	FSOUND_3D_SetAttributes (ChannelMap[handle].channelID, lpos, lvel);
 }
 
@@ -866,12 +876,12 @@ void I_UpdateListener (AActor *listener)
 
 	if (Sound3D && ChannelMap)
 	{
-		vel[0] = listener->momx * (TICRATE*INVSCALE3D/65536.f);
-		vel[1] = listener->momy * (TICRATE*INVSCALE3D/65536.f);
-		vel[2] = listener->momz * (TICRATE*INVSCALE3D/65536.f);
-		pos[0] = listener->x * (INVSCALE3D/65536.f);
-		pos[2] = listener->y * (INVSCALE3D/65536.f);
-		pos[1] = listener->z * (INVSCALE3D/65536.f);
+		vel[0] = listener->momx * (TICRATE/65536.f);
+		vel[1] = listener->momy * (TICRATE/65536.f);
+		vel[2] = listener->momz * (TICRATE/65536.f);
+		pos[0] = listener->x / 65536.f;
+		pos[2] = listener->y / 65536.f;
+		pos[1] = listener->z / 65536.f;
 
 		angle = (float)(listener->angle) * ((float)PI / 2147483648.f);
 
@@ -894,7 +904,6 @@ void I_UpdateListener (AActor *listener)
 		{
 			static FSOUND_REVERB_PROPERTIES water = FSOUND_PRESET_UNDERWATER;
 			static FSOUND_REVERB_PROPERTIES off = FSOUND_PRESET_OFF;
-			static bool wasUnderwater = false;
 			bool underwater;
 
 			underwater = (listener->waterlevel == 3 && snd_waterreverb);
@@ -908,7 +917,7 @@ void I_UpdateListener (AActor *listener)
 			}
 		}
 
-		FSOUND_3D_Update ();
+		FSOUND_Update ();
 	}
 }
 
@@ -993,6 +1002,7 @@ void I_InitSound ()
 	{
 		snd_samplerate = 65535;
 	}
+	wasUnderwater = false;
 
 	nofmod = false;
 #ifdef _WIN32
@@ -1178,8 +1188,21 @@ void I_InitSound ()
 		if (snd_3d)
 		{
 			Sound3D = true;
-			FSOUND_3D_Listener_SetRolloffFactor (ROLLOFF3D);
-			FSOUND_3D_Listener_SetDopplerFactor (DOPPLER3D);
+			if (gameinfo.gametype == GAME_Doom)
+			{ // I'm not sure why Doom gets the lowest rolloff factor
+			  // when it also has the smallest range.
+				FSOUND_3D_SetRolloffFactor (1.7f);
+			}
+			else if (gameinfo.gametype == GAME_Heretic)
+			{
+				FSOUND_3D_SetRolloffFactor (7.5f);
+			}
+			else
+			{
+				FSOUND_3D_SetRolloffFactor (5.6f);
+			}
+			FSOUND_3D_SetDopplerFactor (1.f);
+			FSOUND_3D_SetDistanceFactor (100.f);	// Distance factor only effects doppler!
 			if (!(DriverCaps & FSOUND_CAPS_HARDWARE))
 			{
 				Printf ("Using software 3D sound\n");

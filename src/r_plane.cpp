@@ -1068,7 +1068,7 @@ void R_DrawSkyBoxes ()
 		firstdrawseg = ds_p++;
 		FirstInterestingDrawseg = InterestingDrawsegs.Size();
 
-		R_RenderBSPNode (numnodes - 1);
+		R_RenderBSPNode (nodes + numnodes - 1);
 		R_DrawPlanes ();
 		R_DrawMasked ();
 

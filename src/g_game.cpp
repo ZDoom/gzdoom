@@ -1562,8 +1562,11 @@ extern void P_CalcHeight (player_t *);
 
 void G_DoAutoSave ()
 {
-	// Do not autosave in multiplayer games or demos
-	if (multiplayer || demoplayback || disableautosave >= 2)
+	// Do not autosave in multiplayer games or demos or when dead
+	if (multiplayer ||
+		demoplayback ||
+		players[consoleplayer].playerstate != PST_LIVE ||
+		disableautosave >= 2)
 	{
 		gameaction = ga_nothing;
 		return;

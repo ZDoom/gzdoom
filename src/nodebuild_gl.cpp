@@ -64,7 +64,7 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 {
 	for (size_t i = 0; i < SplitSharers.Size(); ++i)
 	{
-		WORD seg = SplitSharers[i].Seg;
+		DWORD seg = SplitSharers[i].Seg;
 		int v2 = Segs[seg].v2;
 		FEvent *event = Events.FindEvent (SplitSharers[i].Distance);
 		FEvent *next;
@@ -101,13 +101,13 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 				Vertices[event->Info.Vertex].x>>16,
 				Vertices[event->Info.Vertex].y>>16));
 
-			WORD newseg = SplitSeg (seg, event->Info.Vertex, 1);
+			DWORD newseg = SplitSeg (seg, event->Info.Vertex, 1);
 
 			Segs[newseg].next = Segs[seg].next;
 			Segs[seg].next = newseg;
 
-			WORD partner = Segs[seg].partner;
-			if (partner != NO_INDEX)
+			DWORD partner = Segs[seg].partner;
+			if (partner != DWORD_MAX)
 			{
 				int endpartner = SplitSeg (partner, event->Info.Vertex, 1);
 
@@ -133,7 +133,7 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 	}
 }
 
-void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, WORD &fset, WORD &bset)
+void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, DWORD &fset, DWORD &bset)
 {
 	FEvent *event = Events.GetMinimum (), *prev = NULL;
 
@@ -142,7 +142,7 @@ void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, WORD &fset, WO
 		if (prev != NULL)
 		{
 			int fseg1, bseg1, fseg2, bseg2;
-			WORD fnseg, bnseg;
+			DWORD fnseg, bnseg;
 
 			// Minisegs should only be added when they can create valid loops on both the front and
 			// back of the splitter. This means some subsectors could be unclosed if their sectors
@@ -155,7 +155,7 @@ void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, WORD &fset, WO
 				(bseg2 = CheckLoopEnd (-node.dx, -node.dy, event->Info.Vertex, prev->Info.Vertex)) >= 0)
 			{
 				// Add miniseg on the front side
-				fnseg = AddMiniseg (prev->Info.Vertex, event->Info.Vertex, NO_INDEX, fseg1, splitseg);
+				fnseg = AddMiniseg (prev->Info.Vertex, event->Info.Vertex, DWORD_MAX, fseg1, splitseg);
 				Segs[fnseg].next = fset;
 				fset = fnseg;
 
@@ -199,7 +199,7 @@ void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, WORD &fset, WO
 	}
 }
 
-WORD FNodeBuilder::AddMiniseg (int v1, int v2, WORD partner, int seg1, int splitseg)
+DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, int seg1, int splitseg)
 {
 	int nseg;
 	FPrivSeg *seg = &Segs[seg1];
@@ -208,7 +208,7 @@ WORD FNodeBuilder::AddMiniseg (int v1, int v2, WORD partner, int seg1, int split
 	newseg.sidedef = NO_INDEX;
 	newseg.linedef = -1;
 	newseg.loopnum = 0;
-	newseg.next = NO_INDEX;
+	newseg.next = DWORD_MAX;
 	newseg.planefront = true;
 
 	if (splitseg >= 0)
@@ -225,16 +225,16 @@ WORD FNodeBuilder::AddMiniseg (int v1, int v2, WORD partner, int seg1, int split
 	newseg.nextforvert = Vertices[v1].segs;
 	newseg.nextforvert2 = Vertices[v2].segs2;
 	newseg.next = seg->next;
-	if (partner != NO_INDEX)
+	if (partner != DWORD_MAX)
 	{
 		newseg.partner = partner;
 	}
 	else
 	{
-		newseg.partner = NO_INDEX;
+		newseg.partner = DWORD_MAX;
 	}
 	nseg = (int)Segs.Push (newseg);
-	if (newseg.partner != NO_INDEX)
+	if (newseg.partner != DWORD_MAX)
 	{
 		Segs[partner].partner = nseg;
 	}
@@ -257,7 +257,7 @@ int FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vertex
 	segnum = v->segs2;
 	bestang = ANGLE_MAX;
 	bestseg = -1;
-	while (segnum != NO_INDEX)
+	while (segnum != DWORD_MAX)
 	{
 		FPrivSeg *seg = &Segs[segnum];
 		angle_t segAngle = PointToAngle (Vertices[seg->v1].x - v->x, Vertices[seg->v1].y - v->y);
@@ -285,7 +285,7 @@ int FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vertex
 	// Now make sure there are no segs starting at this vertex that form
 	// an even smaller angle to the splitter.
 	segnum = v->segs;
-	while (segnum != NO_INDEX)
+	while (segnum != DWORD_MAX)
 	{
 		FPrivSeg *seg = &Segs[segnum];
 		if (seg->v2 == vertex2)
@@ -316,7 +316,7 @@ int FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex)
 	segnum = v->segs;
 	bestang = ANGLE_MAX;
 	bestseg = -1;
-	while (segnum != NO_INDEX)
+	while (segnum != DWORD_MAX)
 	{
 		FPrivSeg *seg = &Segs[segnum];
 		angle_t segAngle = PointToAngle (Vertices[seg->v2].x - v->x, Vertices[seg->v2].y - v->y);
@@ -344,7 +344,7 @@ int FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex)
 	// Now make sure there are no segs ending at this vertex that form
 	// an even smaller angle to the splitter.
 	segnum = v->segs2;
-	while (segnum != NO_INDEX)
+	while (segnum != DWORD_MAX)
 	{
 		FPrivSeg *seg = &Segs[segnum];
 		angle_t segAngle = PointToAngle (Vertices[seg->v1].x - v->x, Vertices[seg->v1].y - v->y);

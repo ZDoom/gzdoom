@@ -467,8 +467,8 @@ struct FPolyObj;
 typedef struct subsector_s
 {
 	sector_t	*sector;
-	WORD		numlines;
-	WORD		firstline;
+	DWORD		numlines;
+	DWORD		firstline;
 	FPolyObj	*poly;
 	int			validcount;
 	fixed_t		CenterX, CenterY;
@@ -525,7 +525,11 @@ struct node_s
 	fixed_t		dx;
 	fixed_t		dy;
 	fixed_t		bbox[2][4];		// Bounding box for each child.
-	unsigned short children[2];	// If NF_SUBSECTOR its a subsector.
+	union
+	{
+		void	*children[2];	// If bit 0 is set, it's a subsector.
+		int		intchildren[2];	// Used by nodebuilder.
+	};
 };
 typedef struct node_s node_t;
 

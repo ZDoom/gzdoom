@@ -342,7 +342,7 @@ punchdone:
 	{
 		pmo->special1 = 0;
 		P_SetPsprite (player, ps_weapon, &AFWeapFist::States[S_PUNCHATK2]);
-		S_Sound (pmo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
+		S_Sound (pmo, CHAN_VOICE, "*fistgrunt", 1, ATTN_NORM);
 	}
 	return;		
 }

@@ -174,8 +174,8 @@ static int WriteSSECTORS (FILE *file)
 
 	for (int i = 0; i < numsubsectors; ++i)
 	{
-		mss.firstseg = SHORT(subsectors[i].firstline);
-		mss.numsegs = SHORT(subsectors[i].numlines);
+		mss.firstseg = SHORT((WORD)subsectors[i].firstline);
+		mss.numsegs = SHORT((WORD)subsectors[i].numlines);
 		fwrite (&mss, sizeof(mss), 1, file);
 	}
 	return numsubsectors * sizeof(mss);

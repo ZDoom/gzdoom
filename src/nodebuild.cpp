@@ -48,13 +48,13 @@ void FNodeBuilder::BuildTree ()
 	fixed_t bbox[4];
 
 	C_InitTicker ("Building BSP", FRACUNIT);
-	HackSeg = NO_INDEX;
+	HackSeg = DWORD_MAX;
 	CreateNode (0, bbox);
 	CreateSubsectorsForReal ();
 	C_InitTicker (NULL, 0);
 }
 
-int FNodeBuilder::CreateNode (WORD set, fixed_t bbox[4])
+int FNodeBuilder::CreateNode (DWORD set, fixed_t bbox[4])
 {
 	node_t node;
 	int skip, count, selstat, splitseg;
@@ -69,14 +69,14 @@ int FNodeBuilder::CreateNode (WORD set, fixed_t bbox[4])
 		CheckSubsector (set, node, splitseg, count))
 	{
 		// Create a normal node
-		WORD set1, set2;
+		DWORD set1, set2;
 
 		SplitSegs (set, node, splitseg, set1, set2);
 		D(PrintSet (1, set1));
 		D(Printf ("(%d,%d) delta (%d,%d) from seg %d\n", node.x>>16, node.y>>16, node.dx>>16, node.dy>>16, splitseg));
 		D(PrintSet (2, set2));
-		node.children[0] = CreateNode (set1, node.bbox[0]);
-		node.children[1] = CreateNode (set2, node.bbox[1]);
+		node.intchildren[0] = CreateNode (set1, node.bbox[0]);
+		node.intchildren[1] = CreateNode (set2, node.bbox[1]);
 		bbox[BOXTOP] = MAX (node.bbox[0][BOXTOP], node.bbox[1][BOXTOP]);
 		bbox[BOXBOTTOM] = MIN (node.bbox[0][BOXBOTTOM], node.bbox[1][BOXBOTTOM]);
 		bbox[BOXLEFT] = MIN (node.bbox[0][BOXLEFT], node.bbox[1][BOXLEFT]);
@@ -85,11 +85,11 @@ int FNodeBuilder::CreateNode (WORD set, fixed_t bbox[4])
 	}
 	else
 	{
-		return NF_SUBSECTOR | CreateSubsector (set, bbox);
+		return 0x80000000 | CreateSubsector (set, bbox);
 	}
 }
 
-int FNodeBuilder::CreateSubsector (WORD set, fixed_t bbox[4])
+int FNodeBuilder::CreateSubsector (DWORD set, fixed_t bbox[4])
 {
 	int ssnum, count;
 
@@ -98,7 +98,7 @@ int FNodeBuilder::CreateSubsector (WORD set, fixed_t bbox[4])
 
 	D(Printf ("Subsector from set %d\n", set));
 
-	assert (set != NO_INDEX);
+	assert (set != DWORD_MAX);
 
 	// We cannot actually create the subsector now because the node building
 	// process might split a seg in this subsector (because all partner segs
@@ -108,7 +108,7 @@ int FNodeBuilder::CreateSubsector (WORD set, fixed_t bbox[4])
 	ssnum = (int)SubsectorSets.Push (set);
 
 	count = 0;
-	while (set != NO_INDEX)
+	while (set != DWORD_MAX)
 	{
 		AddSegToBBox (bbox, &Segs[set]);
 		set = Segs[set].next;
@@ -135,10 +135,10 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 
 	for (i = 0; i < SubsectorSets.Size(); ++i)
 	{
-		WORD set = SubsectorSets[i];
+		DWORD set = SubsectorSets[i];
 
-		sub.firstline = (WORD)SegList.Size();
-		while (set != NO_INDEX)
+		sub.firstline = (DWORD)SegList.Size();
+		while (set != DWORD_MAX)
 		{
 			USegPtr ptr;
 
@@ -146,7 +146,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 			SegList.Push (ptr);
 			set = ptr.SegPtr->next;
 		}
-		sub.numlines = (WORD)(SegList.Size() - sub.firstline);
+		sub.numlines = (DWORD)(SegList.Size() - sub.firstline);
 
 		// Sort segs by linedef for special effects
 		qsort (&SegList[sub.firstline], sub.numlines, sizeof(int), SortSegs);
@@ -220,11 +220,11 @@ int STACK_ARGS FNodeBuilder::SortSegs (const void *a, const void *b)
 	}
 }
 
-int FNodeBuilder::CountSegs (WORD set) const
+int FNodeBuilder::CountSegs (DWORD set) const
 {
 	int count = 0;
 
-	while (set != NO_INDEX)
+	while (set != DWORD_MAX)
 	{
 		count++;
 		set = Segs[set].next;
@@ -237,7 +237,7 @@ int FNodeBuilder::CountSegs (WORD set) const
 // a splitter is synthesized, and true is returned to continue processing
 // down this branch of the tree.
 
-bool FNodeBuilder::CheckSubsector (WORD set, node_t &node, int &splitseg, int setsize)
+bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, int &splitseg, int setsize)
 {
 	sector_t *sec;
 	int seg;
@@ -273,9 +273,9 @@ bool FNodeBuilder::CheckSubsector (WORD set, node_t &node, int &splitseg, int se
 			}
 		}
 		seg = Segs[seg].next;
-	} while (seg != NO_INDEX);
+	} while (seg != DWORD_MAX);
 
-	if (seg == NO_INDEX)
+	if (seg == DWORD_MAX)
 	{ // It's a valid subsector
 		return false;
 	}
@@ -376,7 +376,7 @@ bool FNodeBuilder::CheckSubsector (WORD set, node_t &node, int &splitseg, int se
 			}
 
 			seg = Segs[seg].next;
-		} while (seg != NO_INDEX);
+		} while (seg != DWORD_MAX);
 	} while ((nosplit ^= 1) == 0);
 
 	// Give up.
@@ -391,23 +391,23 @@ bool FNodeBuilder::CheckSubsector (WORD set, node_t &node, int &splitseg, int se
 // each unique plane needs to be considered as a splitter. A result of 0 means
 // this set is a convex region. A result of -1 means that there were possible
 // splitters, but they all split segs we want to keep intact.
-int FNodeBuilder::SelectSplitter (WORD set, node_t &node, int &splitseg, int step, bool nosplit)
+int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, int &splitseg, int step, bool nosplit)
 {
 	int stepleft;
 	int bestvalue;
-	WORD bestseg;
-	WORD seg;
+	DWORD bestseg;
+	DWORD seg;
 	bool nosplitters = false;
 
 	bestvalue = 0;
-	bestseg = NO_INDEX;
+	bestseg = DWORD_MAX;
 
 	seg = set;
 	stepleft = 0;
 
 	memset (&PlaneChecked[0], 0, PlaneChecked.Size());
 
-	while (seg != NO_INDEX)
+	while (seg != DWORD_MAX)
 	{
 		FPrivSeg *pseg = &Segs[seg];
 
@@ -450,7 +450,7 @@ int FNodeBuilder::SelectSplitter (WORD set, node_t &node, int &splitseg, int ste
 		seg = pseg->next;
 	}
 
-	if (bestseg == NO_INDEX)
+	if (bestseg == DWORD_MAX)
 	{ // No lines split any others into two sets, so this is a convex region.
 	D(Printf ("set %d, step %d, nosplit %d has no good splitter (%d)\n", set, step, nosplit, nosplitters));
 		return nosplitters ? -1 : 0;
@@ -469,14 +469,14 @@ int FNodeBuilder::SelectSplitter (WORD set, node_t &node, int &splitseg, int ste
 // true. A score of 0 means that the splitter does not split any of the segs
 // in the set.
 
-int FNodeBuilder::Heuristic (node_t &node, WORD set, bool honorNoSplit)
+int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 {
 	int score = 0;
 	int segsInSet = 0;
 	int counts[2] = { 0, 0 };
 	int realSegs[2] = { 0, 0 };
 	int specialSegs[2] = { 0, 0 };
-	WORD i = set;
+	DWORD i = set;
 	int sidev1, sidev2;
 	int side;
 	bool splitter = false;
@@ -485,7 +485,7 @@ int FNodeBuilder::Heuristic (node_t &node, WORD set, bool honorNoSplit)
 	Touched.Clear ();
 	Colinear.Clear ();
 
-	while (i != NO_INDEX)
+	while (i != DWORD_MAX)
 	{
 		const FPrivSeg *test = &Segs[i];
 
@@ -723,15 +723,15 @@ int FNodeBuilder::ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, 
 	return -1;
 }
 
-void FNodeBuilder::SplitSegs (WORD set, node_t &node, int splitseg, WORD &outset0, WORD &outset1)
+void FNodeBuilder::SplitSegs (DWORD set, node_t &node, int splitseg, DWORD &outset0, DWORD &outset1)
 {
-	outset0 = NO_INDEX;
-	outset1 = NO_INDEX;
+	outset0 = DWORD_MAX;
+	outset1 = DWORD_MAX;
 
 	Events.DeleteAll ();
 	SplitSharers.Clear ();
 
-	while (set != NO_INDEX)
+	while (set != DWORD_MAX)
 	{
 		bool hack;
 		FPrivSeg *seg = &Segs[set];
@@ -741,7 +741,7 @@ void FNodeBuilder::SplitSegs (WORD set, node_t &node, int splitseg, WORD &outset
 
 		if (HackSeg == set)
 		{
-			HackSeg = NO_INDEX;
+			HackSeg = DWORD_MAX;
 			side = 1;
 			sidev1 = sidev2 = 0;
 			hack = true;
@@ -799,8 +799,8 @@ void FNodeBuilder::SplitSegs (WORD set, node_t &node, int splitseg, WORD &outset
 			}
 			else
 			{
-				newvert.segs = NO_INDEX;
-				newvert.segs2 = NO_INDEX;
+				newvert.segs = DWORD_MAX;
+				newvert.segs2 = DWORD_MAX;
 				vertnum = (int)Vertices.Push (newvert);
 			}
 
@@ -812,7 +812,7 @@ void FNodeBuilder::SplitSegs (WORD set, node_t &node, int splitseg, WORD &outset
 			outset1 = set;
 
 			// Also split the seg on the back side
-			if (Segs[set].partner != NO_INDEX)
+			if (Segs[set].partner != DWORD_MAX)
 			{
 				int partner1 = Segs[set].partner;
 				int partner2 = SplitSeg (partner1, vertnum, sidev2);
@@ -853,9 +853,9 @@ void FNodeBuilder::SplitSegs (WORD set, node_t &node, int splitseg, WORD &outset
 		}
 		if (hack && GLNodes)
 		{
-			WORD newback, newfront;
+			DWORD newback, newfront;
 
-			newback = AddMiniseg (seg->v2, seg->v1, NO_INDEX, set, splitseg);
+			newback = AddMiniseg (seg->v2, seg->v1, DWORD_MAX, set, splitseg);
 			newfront = AddMiniseg (Segs[set].v1, Segs[set].v2, newback, set, splitseg);
 			Segs[newback].frontsector = Segs[newback].backsector =
 				Segs[newfront].frontsector = Segs[newfront].backsector =
@@ -894,7 +894,7 @@ void FNodeBuilder::SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const
 	}
 }
 
-WORD FNodeBuilder::SplitSeg (WORD segnum, int splitvert, int v1InFront)
+DWORD FNodeBuilder::SplitSeg (DWORD segnum, int splitvert, int v1InFront)
 {
 	double dx, dy;
 	FPrivSeg newseg;
@@ -956,7 +956,7 @@ void FNodeBuilder::RemoveSegFromVert1 (int segnum, int vertnum)
 		int prev, curr;
 		prev = 0;
 		curr = v->segs;
-		while (curr != NO_INDEX && curr != segnum)
+		while (curr != DWORD_MAX && curr != segnum)
 		{
 			prev = curr;
 			curr = Segs[curr].nextforvert;
@@ -981,7 +981,7 @@ void FNodeBuilder::RemoveSegFromVert2 (int segnum, int vertnum)
 		int prev, curr;
 		prev = 0;
 		curr = v->segs2;
-		while (curr != NO_INDEX && curr != segnum)
+		while (curr != DWORD_MAX && curr != segnum)
 		{
 			prev = curr;
 			curr = Segs[curr].nextforvert2;
@@ -1040,10 +1040,10 @@ inline int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int 
 	return 0;
 }
 
-void FNodeBuilder::PrintSet (int l, WORD set)
+void FNodeBuilder::PrintSet (int l, DWORD set)
 {
 	Printf ("set %d:\n", l);
-	for (; set != NO_INDEX; set = Segs[set].next)
+	for (; set != DWORD_MAX; set = Segs[set].next)
 	{
 		Printf ("\t%d(%d):%d(%ld,%ld)-%d(%ld,%ld) ", set, Segs[set].frontsector-sectors,
 			Segs[set].v1,

@@ -833,9 +833,6 @@ void G_InitNew (char *mapname)
 	bool wantFast;
 	int i;
 
-	// [RH] Remove all particles
-	R_ClearParticles ();
-
 	if (!savegamerestore)
 		G_ClearSnapshots ();
 

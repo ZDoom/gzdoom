@@ -1,4 +1,41 @@
+December 28, 2002
+- Moved the R_ClearParticles() call out of G_InitNew() and into P_SetupLevel().
+- Experimented with the 3D sound parameters to find a rolloff factor that
+  best approximates the software sound.
+- Updated to FMOD 3.61.
+- Fixed: S_UpdateSounds() still multiplied the SoundCurve volume by 2, so
+  things decayed twice as quickly as they should have. I would like to get
+  rid of the SoundCurve use, but I'm not sure how Raven modelled the curve
+  for Heretic and Hexen.
+
+December 27, 2002
+- Fixed: The FireDemon could not be perceived to move except when strafing
+  because it still used PROP_SpeedLong instead of PROP_SpeedFixed. Because
+  this was the only place where PROP_SpeedLong was used, I got rid of it.
+
+December 26, 2002
+- Changed the internal subsector_t struct to use 32 bits to keep track of
+  segs instead of 16, and fixed the node builder up so that it works with
+  >64k segs.
+- Changed the internal node_t struct to allow for more than 32768 subsectors
+  and nodes.
+- Fixed: The fighter played PlayerFighterGrunt instead of FighterGrunt on his
+  third punch because I didn't realize the two sounds had different names.
+- Changed PIT_FloorDrop() to more accurately reflect Hexen's behavior. Things
+  under gravity move down with the floor if the floor moves fewer than 9 units
+  in one tic (not 24), and no-gravity things always move down with the floor
+  (no matter how fast it drops) if they were standing on it.
+- Changed forwardmove and sidemove scaling calculations in P_MovePlayer()
+  so that they won't overflow.
+- Changed server vars so that only compatflags and forcewater are archived.
+
 December 24, 2002
+- Fixed: Autosave still worked when the player was dead.
+- Fixed: The Quietus pieces had the wrong spawnids, so they were overriding
+  the stained glass shards. I'm not sure why they had the wrong numbers.
+- Fixed: AZWingedStatueNoSkull and AZGemPedestal had their see and melee
+  states swapped, so they wouldn't change their appearance when activated.
+- Uploaded 28.cab.
 - Fixed: When "Monsters Ignore Each Other" was set, monsters could not be
   hurt by ACS-spawned projectiles.
 - Fixed: Underwater reverb did not work on Audigies anymore because FMOD was

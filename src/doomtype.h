@@ -60,13 +60,13 @@ typedef unsigned char byte;
 #endif
 
 typedef unsigned char           BYTE;
-typedef signed char                     SBYTE;
+typedef signed char             SBYTE;
 
 typedef unsigned short          WORD;
 typedef signed short            SWORD;
 
 typedef unsigned long           DWORD;
-typedef signed long                     SDWORD;
+typedef signed long             SDWORD;
 
 typedef unsigned __int64        QWORD;
 typedef signed __int64          SQWORD;
@@ -93,6 +93,9 @@ typedef DWORD                           dsfixed_t;              // fixedpt used 
 
 #define FIXED_MAX                       (signed)(0x7fffffff)
 #define FIXED_MIN                       (signed)(0x80000000)
+
+#define DWORD_MIN						((DWORD)0)
+#define DWORD_MAX						((DWORD)0xffffffff)
 
 #ifndef NOASM
 #ifndef USEASM

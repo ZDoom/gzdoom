@@ -74,7 +74,7 @@ EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
 // BSP?
 void R_ClearClipSegs (short left, short right);
 void R_ClearDrawSegs ();
-void R_RenderBSPNode (int bspnum);
+void R_RenderBSPNode (void *node);
 void R_RenderSubsectors ();
 
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:

@@ -55,11 +55,11 @@ class FNodeBuilder
 		sector_t *frontsector;
 		sector_t *backsector;
 		int next;
-		WORD nextforvert;
-		WORD nextforvert2;
-		int loopnum;	// loop number for split avoidance (0 means splitting is okay)
-		WORD partner;	// seg on back side
-		WORD storedseg;	// seg # in the GL_SEGS lump
+		DWORD nextforvert;
+		DWORD nextforvert2;
+		int loopnum;		// loop number for split avoidance (0 means splitting is okay)
+		DWORD partner;		// seg on back side
+		DWORD storedseg;	// seg # in the GL_SEGS lump
 
 		int planenum;
 		bool planefront;
@@ -68,8 +68,8 @@ class FNodeBuilder
 	struct FPrivVert
 	{
 		fixed_t x, y;
-		WORD segs;		// segs that use this vertex as v1
-		WORD segs2;		// segs that use this vertex as v2
+		DWORD segs;		// segs that use this vertex as v1
+		DWORD segs2;	// segs that use this vertex as v2
 
 		bool operator== (const FPrivVert &other)
 		{
@@ -119,7 +119,7 @@ public:
 private:
 	TArray<node_t> Nodes;
 	TArray<subsector_t> Subsectors;
-	TArray<WORD> SubsectorSets;
+	TArray<DWORD> SubsectorSets;
 	TArray<FPrivSeg> Segs;
 	TArray<FPrivVert> Vertices;
 	TArray<USegPtr> SegList;
@@ -132,7 +132,7 @@ private:
 
 	TArray<FSplitSharer> SplitSharers;	// Segs collinear with the current splitter
 
-	WORD HackSeg;			// Seg to force to back of splitter
+	DWORD HackSeg;			// Seg to force to back of splitter
 	FLevel &Level;
 	bool GLNodes;			// Add minisegs to make GL nodes?
 
@@ -148,29 +148,29 @@ private:
 	bool GetPolyExtents (int polynum, fixed_t bbox[4]);
 	int MarkLoop (int firstseg, int loopnum);
 	void AddSegToBBox (fixed_t bbox[4], const FPrivSeg *seg);
-	int CreateNode (WORD set, fixed_t bbox[4]);
-	int CreateSubsector (WORD set, fixed_t bbox[4]);
+	int CreateNode (DWORD set, fixed_t bbox[4]);
+	int CreateSubsector (DWORD set, fixed_t bbox[4]);
 	void CreateSubsectorsForReal ();
-	bool CheckSubsector (WORD set, node_t &node, int &splitseg, int setsize);
-	int SelectSplitter (WORD set, node_t &node, int &splitseg, int step, bool nosplit);
-	void SplitSegs (WORD set, node_t &node, int splitseg, WORD &outset0, WORD &outset1);
-	WORD SplitSeg (WORD segnum, int splitvert, int v1InFront);
-	int Heuristic (node_t &node, WORD set, bool honorNoSplit);
+	bool CheckSubsector (DWORD set, node_t &node, int &splitseg, int setsize);
+	int SelectSplitter (DWORD set, node_t &node, int &splitseg, int step, bool nosplit);
+	void SplitSegs (DWORD set, node_t &node, int splitseg, DWORD &outset0, DWORD &outset1);
+	DWORD SplitSeg (DWORD segnum, int splitvert, int v1InFront);
+	int Heuristic (node_t &node, DWORD set, bool honorNoSplit);
 	int ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2);
-	int CountSegs (WORD set) const;
+	int CountSegs (DWORD set) const;
 
 	void FixSplitSharers (const node_t &node);
 	double AddIntersection (const node_t &node, int vertex);
-	void AddMinisegs (const node_t &node, int splitseg, WORD &fset, WORD &rset);
+	void AddMinisegs (const node_t &node, int splitseg, DWORD &fset, DWORD &rset);
 	int CheckLoopStart (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
 	int CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
 	void RemoveSegFromVert1 (int segnum, int vertnum);
 	void RemoveSegFromVert2 (int segnum, int vertnum);
-	WORD AddMiniseg (int v1, int v2, WORD partner, int seg1, int splitseg);
+	DWORD AddMiniseg (int v1, int v2, DWORD partner, int seg1, int splitseg);
 	void SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const;
 
 	int CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *outVerts);
-	WORD PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts);
+	DWORD PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts);
 	void PushConnectingGLSeg (int subsector, TArray<seg_t> &segs, vertex_t *v1, vertex_t *v2);
 
 	static int STACK_ARGS SortSegs (const void *a, const void *b);
@@ -182,5 +182,5 @@ private:
 	inline int PointOnSide (int x, int y, int x1, int y1, int dx, int dy);
 	double InterceptVector (const node_t &splitter, const FPrivSeg &seg);
 
-	void PrintSet (int l, WORD set);
+	void PrintSet (int l, DWORD set);
 };

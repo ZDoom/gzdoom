@@ -48,8 +48,8 @@ void FNodeBuilder::FindUsedVertices (vertex_t *oldverts, int max)
 
 	memset (&map[0], -1, sizeof(size_t)*max);
 
-	newvert.segs = NO_INDEX;
-	newvert.segs2 = NO_INDEX;
+	newvert.segs = DWORD_MAX;
+	newvert.segs2 = DWORD_MAX;
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
@@ -93,9 +93,9 @@ void FNodeBuilder::MakeSegsFromSides ()
 	FPrivSeg seg;
 	int i, j;
 
-	seg.next = NO_INDEX;
+	seg.next = DWORD_MAX;
 	seg.loopnum = 0;
-	seg.partner = NO_INDEX;
+	seg.partner = DWORD_MAX;
 
 	if (Level.NumLines == 0)
 	{
@@ -168,7 +168,7 @@ void FNodeBuilder::GroupSegPlanes ()
 		seg->hashnext = NULL;
 	}
 
-	Segs[Segs.Size()-1].next = NO_INDEX;
+	Segs[Segs.Size()-1].next = DWORD_MAX;
 
 	for (i = planenum = 0; i < (int)Segs.Size(); ++i)
 	{
@@ -359,13 +359,13 @@ int FNodeBuilder::MarkLoop (int firstseg, int loopnum)
 				Vertices[s1->v1].x>>16, Vertices[s1->v1].y>>16,
 				Vertices[s1->v2].x>>16, Vertices[s1->v2].y>>16));
 
-		int bestseg = NO_INDEX;
+		int bestseg = DWORD_MAX;
 		int tryseg = Vertices[s1->v2].segs;
 		angle_t bestang = ANGLE_MAX;
 		angle_t ang1 = PointToAngle (Vertices[s1->v2].x - Vertices[s1->v1].x,
 			Vertices[s1->v2].y - Vertices[s1->v1].y);
 
-		while (tryseg != NO_INDEX)
+		while (tryseg != DWORD_MAX)
 		{
 			FPrivSeg *s2 = &Segs[tryseg];
 
@@ -385,7 +385,7 @@ int FNodeBuilder::MarkLoop (int firstseg, int loopnum)
 		}
 
 		seg = bestseg;
-	} while (seg != NO_INDEX && Segs[seg].loopnum == 0);
+	} while (seg != DWORD_MAX && Segs[seg].loopnum == 0);
 
 	return loopnum + 1;
 }
@@ -424,7 +424,7 @@ bool FNodeBuilder::GetPolyExtents (int polynum, fixed_t bbox[4])
 			AddSegToBBox (bbox, &Segs[i]);
 			vert = Segs[i].v2;
 			i = Vertices[vert].segs;
-		} while (i != NO_INDEX && (Vertices[vert].x != start.x || Vertices[vert].y != start.y));
+		} while (i != DWORD_MAX && (Vertices[vert].x != start.x || Vertices[vert].y != start.y));
 
 		return true;
 	}

@@ -56,7 +56,7 @@ FState AFWeaponPiece1::States[] =
 	S_BRIGHT (WFR1, 'A',   -1, NULL					    , NULL)
 };
 
-IMPLEMENT_ACTOR (AFWeaponPiece1, Hexen, 12, 59)
+IMPLEMENT_ACTOR (AFWeaponPiece1, Hexen, 12, 29)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
@@ -82,7 +82,7 @@ FState AFWeaponPiece2::States[] =
 	S_BRIGHT (WFR2, 'A',   -1, NULL					    , NULL)
 };
 
-IMPLEMENT_ACTOR (AFWeaponPiece2, Hexen, 13, 61)
+IMPLEMENT_ACTOR (AFWeaponPiece2, Hexen, 13, 30)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
@@ -108,7 +108,7 @@ FState AFWeaponPiece3::States[] =
 	S_BRIGHT (WFR3, 'A',   -1, NULL					    , NULL)
 };
 
-IMPLEMENT_ACTOR (AFWeaponPiece3, Hexen, 16, 63)
+IMPLEMENT_ACTOR (AFWeaponPiece3, Hexen, 16, 31)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)

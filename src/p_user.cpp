@@ -521,8 +521,8 @@ void P_MovePlayer (player_t *player)
 		sm = cmd->ucmd.sidemove;
 		mo->TweakSpeeds (fm, sm);
 
-		forwardmove = (fm * movefactor * 35/TICRATE) >> 8;
-		sidemove = (sm * movefactor * 35/TICRATE) >> 8;
+		forwardmove = Scale (fm, movefactor * 35, TICRATE << 8);
+		sidemove = Scale (sm, movefactor * 35, TICRATE << 8);
 
 		if (forwardmove)
 		{

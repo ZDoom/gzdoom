@@ -645,8 +645,8 @@ BOOL PIT_CheckThing (AActor *thing)
 			damage = ((pr_checkthing()&3)+2)*tmthing->damage;
 			P_DamageMobj (thing, tmthing, tmthing->target, damage);
 			P_TraceBleed (damage, thing, tmthing);
-			if(thing->flags2&MF2_PUSHABLE
-				&& !(tmthing->flags2&MF2_CANNOTPUSH))
+			if (thing->flags2 & MF2_PUSHABLE
+				&& !(tmthing->flags2 & MF2_CANNOTPUSH))
 			{ // Push thing
 				thing->momx += tmthing->momx>>2;
 				thing->momy += tmthing->momy>>2;
@@ -3344,7 +3344,8 @@ void PIT_FloorDrop (AActor *thing)
 
 	P_AdjustFloorCeil (thing);
 
-	if (!(thing->flags & MF_NOGRAVITY) && thing->momz == 0)
+	if (thing->momz == 0 &&
+		(!(thing->flags & MF_NOGRAVITY) || thing->z == oldfloorz))
 	{ // If float bob, always stay the same approximate distance above
 	  // the floor, otherwise only move things standing on the floor,
 	  // and only do it if the drop is slow enough.
@@ -3352,7 +3353,8 @@ void PIT_FloorDrop (AActor *thing)
 		{
 			thing->z = thing->z - oldfloorz + thing->floorz;
 		}
-		else if (moveamt < 24*FRACUNIT && thing->z - thing->floorz <= moveamt)
+		else if ((thing->flags & MF_NOGRAVITY) ||
+			(moveamt < 9*FRACUNIT && thing->z - thing->floorz <= moveamt))
 		{
 			thing->z = thing->floorz;
 		}

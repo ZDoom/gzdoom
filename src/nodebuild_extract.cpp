@@ -22,12 +22,27 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		outVerts[i].y = Vertices[i].y;
 	}
 
-	nodeCount = Nodes.Size ();
-	outNodes = (node_t *)Z_Malloc (nodeCount*sizeof(node_t), PU_LEVEL, 0);
-	memcpy (outNodes, &Nodes[0], nodeCount*sizeof(node_t));
-
 	subCount = Subsectors.Size();
 	outSubs = new subsector_t[subCount];
+
+	nodeCount = Nodes.Size ();
+	outNodes = (node_t *)Z_Malloc (nodeCount*sizeof(node_t), PU_LEVEL, 0);
+
+	memcpy (outNodes, &Nodes[0], nodeCount*sizeof(node_t));
+	for (i = 0; i < nodeCount; ++i)
+	{
+		for (int j = 0; j < 2; ++j)
+		{
+			if (outNodes[i].intchildren[j] & 0x80000000)
+			{
+				outNodes[i].children[j] = (BYTE *)(outSubs + (outNodes[i].intchildren[j] & 0x7fffffff)) + 1;
+			}
+			else
+			{
+				outNodes[i].children[j] = outNodes + outNodes[i].intchildren[j];
+			}
+		}
+	}
 
 	if (GLNodes)
 	{
@@ -73,6 +88,8 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 			out->bPolySeg = false;
 		}
 	}
+
+	//Printf ("%i segs, %i nodes, %i subsectors\n", segCount, nodeCount, subCount);
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
@@ -164,7 +181,7 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 	return count;
 }
 
-WORD FNodeBuilder::PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts)
+DWORD FNodeBuilder::PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts)
 {
 	seg_t newseg;
 
@@ -182,9 +199,9 @@ WORD FNodeBuilder::PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_t
 		newseg.linedef = NULL;
 		newseg.sidedef = NULL;
 	}
-	newseg.PartnerSeg = (seg_t *)(seg->partner == NO_INDEX ? NULL : seg->partner + 1);
+	newseg.PartnerSeg = (seg_t *)(seg->partner == DWORD_MAX ? NULL : seg->partner + 1);
 	newseg.bPolySeg = false;
-	return (WORD)segs.Push (newseg);
+	return (DWORD)segs.Push (newseg);
 }
 
 void FNodeBuilder::PushConnectingGLSeg (int subsector, TArray<seg_t> &segs, vertex_t *v1, vertex_t *v2)

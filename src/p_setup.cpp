@@ -570,20 +570,22 @@ void P_LoadNodes (int lump)
 		no->dy = SHORT(mn->dy)<<FRACBITS;
 		for (j = 0; j < 2; j++)
 		{
-			no->children[j] = SHORT(mn->children[j]);
-			if (no->children[j] & NF_SUBSECTOR)
+			WORD child = SHORT(mn->children[j]);
+			if (child & NF_SUBSECTOR)
 			{
-				if ((no->children[j] & ~NF_SUBSECTOR) >= maxss)
+				child &= ~NF_SUBSECTOR;
+				if (child >= maxss)
 				{
 					Printf ("BSP node %d references invalid subsector %d.\n"
-						"The BSP will be rebuilt.\n", i, no->children[j] & ~NF_SUBSECTOR);
+						"The BSP will be rebuilt.\n", i, child);
 					ForceNodeBuild = true;
 					Z_Free (nodes);
 					Z_Free (data);
 					return;
 				}
+				no->children[j] = (BYTE *)&subsectors[child] + 1;
 			}
-			else if (no->children[j] >= numnodes)
+			else if (child >= numnodes)
 			{
 				Printf ("BSP node %d references invalid node %d.\n"
 					"The BSP will be rebuilt.\n", i, no->children[j]);
@@ -592,11 +594,11 @@ void P_LoadNodes (int lump)
 				Z_Free (data);
 				return;
 			}
-			else if (used[no->children[j]])
+			else if (used[child])
 			{
 				Printf ("BSP node %d references node %d,\n"
 					"which is already used by node %d.\n"
-					"The BSP will be rebuilt.\n", i, no->children[j], used[no->children[j]]-1);
+					"The BSP will be rebuilt.\n", i, child, used[child]-1);
 				ForceNodeBuild = true;
 				Z_Free (nodes);
 				Z_Free (data);
@@ -604,7 +606,8 @@ void P_LoadNodes (int lump)
 			}
 			else
 			{
-				used[no->children[j]] = j + 1;
+				no->children[j] = &nodes[child];
+				used[child] = j + 1;
 			}
 			for (k = 0; k < 4; k++)
 			{
@@ -2434,8 +2437,8 @@ void P_SetupLevel (char *lumpname, int position)
 	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
 
 	UsingGLNodes = false;
-	if (!ForceNodeBuild) P_LoadNodes (lumpnum+ML_NODES);
 	if (!ForceNodeBuild) P_LoadSubsectors (lumpnum+ML_SSECTORS);
+	if (!ForceNodeBuild) P_LoadNodes (lumpnum+ML_NODES);
 	if (!ForceNodeBuild) P_LoadSegs (lumpnum+ML_SEGS);
 	if (ForceNodeBuild)
 	{
@@ -2515,6 +2518,9 @@ void P_SetupLevel (char *lumpname, int position)
 	//	UNUSED P_ConnectSubsectors ();
 
 	R_OldBlend = 0xffffffff;
+
+	// [RH] Remove all particles
+	R_ClearParticles ();
 
 	// preload graphics
 	if (precache)

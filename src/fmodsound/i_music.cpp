@@ -1593,7 +1593,12 @@ MUSSong::MUSSong (int handle, int pos, int len) : MIDISong ()
 
 MODSong::MODSong (int handle, int pos, int len)
 {
-	m_Module = FMUSIC_LoadSong ((char *)new FileHandle (handle, pos, len));
+	BYTE *song = new BYTE[len];
+	lseek (handle, SEEK_SET, pos);
+	read (handle, song, len);
+	m_Module = FMUSIC_LoadSongMemory (song, len);
+	delete[] song;
+	//m_Module = FMUSIC_LoadSong ((char *)new FileHandle (handle, pos, len));
 }
 
 #ifdef _WIN32

@@ -1047,21 +1047,19 @@ void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 // Add sprites of things in sector.
 // Draw one or more line segments.
 //
-void R_Subsector (int num, bool add)
+void R_Subsector (subsector_t *sub, bool add)
 {
 	int 		 count;
 	seg_t*		 line;
-	subsector_t *sub;
 	sector_t     tempsec;				// killough 3/7/98: deep water hack
 	int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
 	int          ceilinglightlevel;		// killough 4/11/98
 
 #ifdef RANGECHECK
-	if ((unsigned)num>=(unsigned)numsubsectors)
-		I_Error ("R_Subsector: ss %i with numss = %i", num, numsubsectors);
+	if (sub - subsectors >= (ptrdiff_t)numsubsectors)
+		I_Error ("R_Subsector: ss %i with numss = %i", sub - subsectors, numsubsectors);
 #endif
 
-	sub = &subsectors[num];
 	frontsector = sub->sector;
 	count = sub->numlines;
 	line = &segs[sub->firstline];
@@ -1126,9 +1124,9 @@ void R_Subsector (int num, bool add)
 
 	// [RH] Add particles
 	int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
-	for (WORD i = ParticlesInSubsec[num]; i != NO_PARTICLE; i = Particles[i].snext)
+	for (WORD i = ParticlesInSubsec[sub-subsectors]; i != NO_PARTICLE; i = Particles[i].snext)
 	{
-		R_ProjectParticle (Particles + i, subsectors[num].sector, shade, FakeSide);
+		R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
 	}
 
 	if (sub->poly)
@@ -1157,11 +1155,16 @@ void R_Subsector (int num, bool add)
 // Just call with BSP root and -1.
 // killough 5/2/98: reformatted, removed tail recursion
 
-void R_RenderBSPNode (int bspnum)
+void R_RenderBSPNode (void *node)
 {
-	while (!(bspnum & NF_SUBSECTOR))  // Found a subsector?
+	if (numnodes == 0)
 	{
-		node_t *bsp = &nodes[bspnum];
+		R_Subsector (subsectors, false);
+		return;
+	}
+	while (!((size_t)node & 1))  // Keep going until found a subsector
+	{
+		node_t *bsp = (node_t *)node;
 
 		// Decide which side the view point is on.
 		int side = R_PointOnSide (viewx, viewy, bsp);
@@ -1174,9 +1177,9 @@ void R_RenderBSPNode (int bspnum)
 		if (!R_CheckBBox (bsp->bbox[side]))
 			return;
 
-		bspnum = bsp->children[side];
+		node = bsp->children[side];
 	}
-	R_Subsector (bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR, false);
+	R_Subsector ((subsector_t *)((BYTE *)node - 1), false);
 }
 
 bool R_SubsectorInFront (subsector_t *front, subsector_t *back)
@@ -1204,10 +1207,9 @@ bool R_SubsectorInFront (subsector_t *front, subsector_t *back)
 
 	fixed_t fx, fy, bx, by;
 	node_t *node;
-	int pnode;
 	int fside, bside;
 
-	pnode = numnodes - 1;
+	node = nodes + numnodes - 1;
 	fx = front->CenterX ;
 	fy = front->CenterY;
 	bx = back->CenterX;
@@ -1215,11 +1217,10 @@ bool R_SubsectorInFront (subsector_t *front, subsector_t *back)
 
 	do
 	{
-		node = &nodes[pnode];
 		fside = R_PointOnSide (fx, fy, node);
 		bside = R_PointOnSide (bx, by, node);
-		pnode = node->children[fside];
-	} while (fside == bside && !(pnode & NF_SUBSECTOR));
+		node = (node_t *)node->children[fside];
+	} while (fside == bside && !((size_t)node &1));
 
 	if (fside == bside)
 	{
@@ -1256,7 +1257,7 @@ void R_RenderSubsectors ()
 	{
 		subsector_t *subsector = SubsectorQueue->Subsector;
 		RemoveSubsectorFromQueueStart ();
-		R_Subsector (subsector - subsectors, true);
+		R_Subsector (subsector, true);
 		//Printf ("%d ", subsector - subsectors);
 	}
 	//Printf ("\n");

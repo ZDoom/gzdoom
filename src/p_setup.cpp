@@ -1857,7 +1857,7 @@ static void P_CreateBlockMap ()
 void P_LoadBlockMap (int lump)
 {
 	int count;
-	
+
 	if (ForceNodeBuild || genblockmap ||
 		(count = W_LumpLength(lump)/2) >= 0x10000 ||
 		Args.CheckParm("-blockmap") ||

@@ -11,6 +11,7 @@
 #include "tarray.h"
 #include "m_bbox.h"
 #include "c_console.h"
+#include "r_main.h"
 
 const int MaxSegs = 64;
 const int SplitCost = 8;
@@ -776,7 +777,7 @@ void FNodeBuilder::SplitSegs (WORD set, node_t &node, int splitseg, WORD &outset
 					set,
 					Vertices[seg->v1].x>>16, Vertices[seg->v1].y>>16,
 					Vertices[seg->v2].x>>16, Vertices[seg->v2].y>>16,
-					seg->frontsector, seg->loopnum);
+					seg->frontsector - sectors, seg->loopnum);
 			}
 
 			frac = InterceptVector (node, *seg);

@@ -70,6 +70,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 			out->linedef = Level.Lines + org->linedef;
 			out->sidedef = Level.Sides + org->sidedef;
 			out->PartnerSeg = NULL;
+			out->bPolySeg = false;
 		}
 	}
 
@@ -182,6 +183,7 @@ WORD FNodeBuilder::PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_t
 		newseg.sidedef = NULL;
 	}
 	newseg.PartnerSeg = (seg_t *)(seg->partner == NO_INDEX ? NULL : seg->partner + 1);
+	newseg.bPolySeg = false;
 	return (WORD)segs.Push (newseg);
 }
 
@@ -196,5 +198,6 @@ void FNodeBuilder::PushConnectingGLSeg (int subsector, TArray<seg_t> &segs, vert
 	newseg.linedef = NULL;
 	newseg.sidedef = NULL;
 	newseg.PartnerSeg = NULL;
+	newseg.bPolySeg = false;
 	segs.Push (newseg);
 }

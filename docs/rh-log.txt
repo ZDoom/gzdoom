@@ -1,4 +1,5 @@
 December 19, 2002
+- Uploaded 26.cab.
 - Fixed: TELEFOGHEIGHT was not being used everywhere it needed to be.
 - Changed: P_DropItem() uses the standard Doom drop for items that don't
   have gravity (such as the Mage's lightning weapon).

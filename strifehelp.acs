@@ -1,0 +1,31 @@
+#include "zcommon.acs"
+
+#library "strfhelp"
+
+script 255 (int type, int tag)
+{
+	switch (type)
+	{
+	case 165:
+		print (s:"That doesn't seem to work");
+		activatorsound ("*usefail", 127);
+		break;
+		
+	case 205:
+		print (s:"THIS AREA IS ONLY AVAILABLE IN THE RETAIL VERSION OF STRIFE");
+		activatorsound ("*usefail", 127);
+		break;
+		
+	case 145:
+	case 186:
+		if (gametype() == GAME_NET_DEATHMATCH)
+		{
+			Floor_RaiseByValue (tag, 128, 64);
+		}
+		else
+		{
+			Teleport_NewMap (tag/100, tag%100);
+		}
+		break;
+	}
+}

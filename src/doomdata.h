@@ -142,6 +142,8 @@ typedef struct
 #define SPAC_PCROSS		5	// when projectile crosses line
 #define SPAC_USETHROUGH	6	// SPAC_USE, but passes it through
 
+#define SPAC_OTHERCROSS	8	// [RH] Not a real activation type. Here for compatibility.
+
 // [RH] Monsters (as well as players) can active the line
 #define ML_MONSTERSCANACTIVATE		0x2000
 

@@ -4478,6 +4478,16 @@
 				RelativePath="sound\sample_flac.h">
 			</File>
 		</Filter>
+		<Filter
+			Name="Strife Game"
+			Filter="">
+			<File
+				RelativePath=".\g_strife\a_strifeplayer.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_strifestuff.cpp">
+			</File>
+		</Filter>
 		<File
 			RelativePath="win32\icon2.ico">
 		</File>

@@ -221,20 +221,35 @@ void C_InitConsole (int width, int height, BOOL ingame)
 	{
 		if (!gotconback)
 		{
+			int i;
+
 			conback = TexMan.CheckForTexture ("CONBACK", FTexture::TEX_MiscPatch);
 
 			if (conback <= 0)
 			{
+				BYTE unremap[256];
+				BYTE shadetmp[256];
+
 				conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
 
 				FWadLump palookup = Wads.OpenLumpName ("COLORMAP");
 				palookup.Seek (22*256, SEEK_CUR);
-				palookup.Read (conshade, 256);
+				palookup.Read (shadetmp, 256);
+				memset (unremap, 0, 256);
+				for (i = 0; i < 256; ++i)
+				{
+					unremap[GPalette.Remap[i]] = i;
+				}
+				for (i = 0; i < 256; ++i)
+				{
+					conshade[i] = GPalette.Remap[shadetmp[unremap[i]]];
+				}
 				conline = true;
+				conshade[0] = GPalette.Remap[0];
 			}
 			else
 			{
-				for (int i = 0; i < 256; ++i)
+				for (i = 0; i < 256; ++i)
 				{
 					conshade[i] = i;
 				}

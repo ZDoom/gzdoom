@@ -966,6 +966,11 @@ static void M_DrawSaveLoadCommon ()
 	bool didSeeSelected = false;
 
 	// Draw picture area
+	if (gameaction == ga_loadgame || gameaction == ga_savegame)
+	{
+		return;
+	}
+
 	M_DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
 	if (SavePic != NULL)
 	{
@@ -995,7 +1000,10 @@ static void M_DrawSaveLoadCommon ()
 	screen->Clear (commentLeft, commentTop, commentRight, commentBottom, 0);
 	if (SaveComment != NULL)
 	{
-		for (i = 0; SaveComment[i].width != -1 && i < 6; ++i)
+		// I'm not sure why SaveComment would go NULL in this loop, but I got
+		// a crash report where it was NULL when i reached 1, so now I check
+		// for that.
+		for (i = 0; SaveComment != NULL && SaveComment[i].width != -1 && i < 6; ++i)
 		{
 			screen->DrawText (CR_GOLD, commentLeft, commentTop
 				+ SmallFont->GetHeight()*i*CleanYfac, SaveComment[i].string,

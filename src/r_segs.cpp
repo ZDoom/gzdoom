@@ -108,6 +108,8 @@ fixed_t			rw_light;		// [RH] Scale lights with viewsize adjustments
 fixed_t			rw_lightstep;
 fixed_t			rw_lightleft;
 
+static fixed_t	rw_frontlowertop;
+
 static int		rw_x;
 static int		rw_stopx;
 fixed_t			rw_offset;
@@ -839,16 +841,26 @@ void R_NewWall ()
 	else
 	{ // two-sided line
 		// hack to allow height changes in outdoor areas
-		//bool skyhack = false;
 
-		if (rw_havehigh &&
-			frontsector->ceilingpic == skyflatnum &&
+		rw_frontlowertop = frontsector->ceilingtexz;
+
+		if (frontsector->ceilingpic == skyflatnum &&
 			backsector->ceilingpic == skyflatnum)
 		{
-			memcpy (&walltop[WallSX1], &wallupper[WallSX1], (WallSX2 - WallSX1)*sizeof(walltop[0]));
-
-			rw_havehigh = false;
-			//skyhack = true;
+			if (rw_havehigh)
+			{ // front ceiling is above back ceiling
+				memcpy (&walltop[WallSX1], &wallupper[WallSX1], (WallSX2 - WallSX1)*sizeof(walltop[0]));
+				rw_havehigh = false;
+			}
+			else
+			{ // back ceiling is above front ceiling
+				// Recalculate walltop so that the wall is clipped by the back sector's
+				// ceiling instead of the front sector's ceiling. This also alters the
+				// positioning of unpegged lower textures by making them relative to the
+				// back sector's ceiling instead of the front sector's ceiling.
+				WallMost (walltop, backsector->ceilingplane);
+				rw_frontlowertop = backsector->ceilingtexz;
+			}
 		}
 
 		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
@@ -940,7 +952,7 @@ void R_NewWall ()
 
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // bottom of texture at bottom
-				rw_bottomtexturemid = frontsector->ceilingtexz;
+				rw_bottomtexturemid = rw_frontlowertop;
 			}
 			else
 			{ // top of texture at top

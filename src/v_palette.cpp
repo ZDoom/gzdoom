@@ -183,8 +183,14 @@ void FPalette::MakeGoodRemap ()
 			if ((sortcopy[i] & 0xFFFFFF) == (sortcopy[i-1] & 0xFFFFFF))
 			{
 				int new0 = sortcopy[i].a;
+				int dup = sortcopy[i-1].a;
+				if (new0 > dup)
+				{
+					// Make the lower-numbered entry a copy of color 0. (Just because.)
+					swap (new0, dup);
+				}
 				Remap[0] = new0;
-				Remap[new0] = sortcopy[i-1].a;
+				Remap[new0] = dup;
 				BaseColors[new0] = color0;
 				Colors[new0] = Colors[0];
 				break;

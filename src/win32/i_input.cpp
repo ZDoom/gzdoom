@@ -951,7 +951,7 @@ void DI_JoyCheck ()
 		if (JoyAxisMap[i] != JOYAXIS_NONE)
 		{
 			float axisval = *((LONG *)((BYTE *)&js + Axes[i]));
-			if (abs(axisval) > JoyAxisThresholds[i])
+			if (fabsf(axisval) > JoyAxisThresholds[i])
 			{
 				if (axisval > 0.f)
 				{
@@ -972,12 +972,9 @@ void DI_JoyCheck ()
 	JoyAxes[JOYAXIS_SIDE] *= joy_sidespeed;
 	JoyAxes[JOYAXIS_UP] *= joy_upspeed;
 
-	G_AddViewPitch (int((JoyAxes[JOYAXIS_PITCH] * 2048) / 256));
-	G_AddViewAngle (int((-1280 * JoyAxes[JOYAXIS_YAW]) / 256));
+	event.data2 = event.data3 = 0;
 
 	// Send button up/down events
-
-	event.data2 = event.data3 = 0;
 
 	for (i = 0; i < 128; ++i)
 	{

@@ -281,7 +281,6 @@ BOOL PIT_StompThing (AActor *thing)
 	return false;
 }
 
-
 //
 // P_TeleportMove
 //
@@ -1123,7 +1122,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 						{
 							thingblocker = BlockingMobj;
 						}
-						robin = BlockingMobj->bnext;
+						robin = BlockingMobj;
 						BlockingMobj = NULL;
 					}
 					else if (thing->player &&
@@ -1138,7 +1137,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 						// Nothing is blocking us, but this actor potentially could
 						// if there is something else to step on.
 						fakedblocker = BlockingMobj;
-						robin = BlockingMobj->bnext;
+						robin = BlockingMobj;
 						BlockingMobj = NULL;
 					}
 					else
@@ -1248,6 +1247,8 @@ bool P_TestMobjZ (AActor *actor)
 	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
 	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
 	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+
+	validcount++;
 
 	for (bx = xl; bx <= xh; bx++)
 		for (by = yl; by <= yh; by++)
@@ -1552,6 +1553,12 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 						  ld->special == Teleport_Line))
 				{	// [RH] Just a little hack for BOOM compatibility
 					P_ActivateLine (ld, thing, oldside, SPAC_MCROSS);
+				}
+				else
+				{
+					// I don't think allowing non-monsters to activate
+					// monster-allowed lines will hurt Hexen compatibility.
+					P_ActivateLine (ld, thing, oldside, SPAC_OTHERCROSS);
 				}
 			}
 		}
@@ -2424,7 +2431,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	}
 	else
 	{
-		fixed_t hitx = 0, hity = 0, hitz = 0, closer;
+		fixed_t hitx = 0, hity = 0, hitz = 0;
 		AActor *puff = NULL;
 
 		if (trace.HitType != TRACE_HitActor)
@@ -2453,11 +2460,10 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		}
 		else
 		{
-			// position a bit closer for puffs/blood
-			closer = trace.Distance - 10*FRACUNIT;
-			hitx = t1->x + FixedMul (vx, closer);
-			hity = t1->y + FixedMul (vy, closer);
-			hitz = shootz + FixedMul (vz, closer);
+			// Hit a thing, so it could be either a puff or blood
+			hitx = t1->x + FixedMul (vx, trace.Distance);
+			hity = t1->y + FixedMul (vy, trace.Distance);
+			hitz = shootz + FixedMul (vz, trace.Distance);
 
 			// Spawn bullet puffs or blood spots, depending on target type.
 			AActor *puffDefaults = GetDefaultByType (PuffType);
@@ -2824,16 +2830,18 @@ bool foundline;
 
 BOOL PTR_UseTraverse (intercept_t *in)
 {
-	if (in->d.line->special == 0)
+	if (in->d.line->special == 0 || (GET_SPAC(in->d.line->flags) != SPAC_USETHROUGH &&
+		GET_SPAC(in->d.line->flags) != SPAC_USE))
 	{
 		P_LineOpening (in->d.line, trace.x + FixedMul (trace.dx, in->frac),
 			trace.y + FixedMul (trace.dy, in->frac));
-		if (openrange <= 0)
+		if (openrange <= 0 ||
+			(in->d.line->special != 0 && (compatflags & COMPATF_USEBLOCKING)))
 		{
 			// [RH] Give sector a chance to intercept the use
 			sector_t *sec = in->d.line->frontsector;
 			if ((!sec->SecActTarget ||
-				 !sec->SecActTarget->TriggerAction (usething, SECSPAC_Use|SECSPAC_UseWall))
+					!sec->SecActTarget->TriggerAction (usething, SECSPAC_Use|SECSPAC_UseWall))
 				&& usething->player)
 			{
 				S_Sound (usething, CHAN_VOICE, "*usefail", 1, ATTN_IDLE);
@@ -3229,7 +3237,9 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
 	bombdamagefloat = (float)damage;
 	bombmod = mod;
 	VectorPosition (spot, bombvec);
-		
+
+	validcount++;
+
 	for (y = yl; y <= yh; y++)
 		for (x = xl; x <= xh; x++)
 			P_BlockThingsIterator (x, y, PIT_RadiusAttack);
@@ -3381,6 +3391,8 @@ void P_FindAboveIntersectors (AActor *actor)
 	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
 	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
+	validcount++;
+
 	for (bx = xl; bx <= xh; bx++)
 		for (by = yl; by <= yh; by++)
 			if (!P_BlockThingsIterator (bx, by, PIT_FindAboveIntersectors))
@@ -3423,6 +3435,8 @@ void P_FindBelowIntersectors (AActor *actor)
 	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
 	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
 	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+
+	validcount++;
 
 	for (bx = xl; bx <= xh; bx++)
 		for (by = yl; by <= yh; by++)

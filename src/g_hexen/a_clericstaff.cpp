@@ -160,7 +160,7 @@ int ACStaffMissile::DoSpecialDamage (AActor *target, int damage)
 	// Cleric Serpent Staff does poison damage
 	if (target->player)
 	{
-		P_PoisonPlayer (target->player, this, 20);
+		P_PoisonPlayer (target->player, this, this->target, 20);
 		damage >>= 1;
 	}
 	return damage;

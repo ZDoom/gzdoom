@@ -192,6 +192,7 @@ static void R_InstallSprite (int num)
 {
 	int frame;
 	int framestart;
+	int rot;
 //	int undefinedFix;
 
 	if (maxframe == -1)
@@ -227,39 +228,39 @@ static void R_InstallSprite (int num)
 			
 		case 0:
 			// only the first rotation is needed
+			for (rot = 1; rot < 16; ++rot)
+			{
+				sprtemp[frame].Texture[rot] = sprtemp[frame].Texture[0];
+			}
 			break;
 					
 		case 1:
 			// must have all 8 frame pairs
+			for (rot = 0; rot < 8; ++rot)
 			{
-				int rot;
-
-				for (rot = 0; rot < 8; ++rot)
+				if (sprtemp[frame].Texture[rot*2+1] == 0xFFFF)
 				{
-					if (sprtemp[frame].Texture[rot*2+1] == 0xFFFF)
+					sprtemp[frame].Texture[rot*2+1] = sprtemp[frame].Texture[rot*2];
+					if (sprtemp[frame].Flip & (1 << (rot*2)))
 					{
-						sprtemp[frame].Texture[rot*2+1] = sprtemp[frame].Texture[rot*2];
-						if (sprtemp[frame].Flip & (1 << (rot*2)))
-						{
-							sprtemp[frame].Flip |= 1 << (rot*2+1);
-						}
+						sprtemp[frame].Flip |= 1 << (rot*2+1);
 					}
-					if (sprtemp[frame].Texture[rot*2] == 0xFFFF)
-					{
-						sprtemp[frame].Texture[rot*2] = sprtemp[frame].Texture[rot*2+1];
-						if (sprtemp[frame].Flip & (1 << (rot*2+1)))
-						{
-							sprtemp[frame].Flip |= 1 << (rot*2);
-						}
-					}
-
 				}
-				for (rot = 0; rot < 16; ++rot)
+				if (sprtemp[frame].Texture[rot*2] == 0xFFFF)
 				{
-					if (sprtemp[frame].Texture[rot] == 0xFFFF)
-						I_FatalError ("R_InstallSprite: Sprite %s frame %c is missing rotations",
-									  sprites[num].name, frame+'A');
+					sprtemp[frame].Texture[rot*2] = sprtemp[frame].Texture[rot*2+1];
+					if (sprtemp[frame].Flip & (1 << (rot*2+1)))
+					{
+						sprtemp[frame].Flip |= 1 << (rot*2);
+					}
 				}
+
+			}
+			for (rot = 0; rot < 16; ++rot)
+			{
+				if (sprtemp[frame].Texture[rot] == 0xFFFF)
+					I_FatalError ("R_InstallSprite: Sprite %s frame %c is missing rotations",
+									sprites[num].name, frame+'A');
 			}
 			break;
 		}
@@ -349,7 +350,10 @@ void R_InitSpriteDefs ()
 				
 		maxframe = -1;
 		intname = *(DWORD *)sprites[i].name;
-		
+
+		if (intname == MAKE_ID('B','O','S','2'))
+		{
+			intname=intname;}
 		// scan the lumps, filling in the frames for whatever is found
 		int hash = hashes[intname % max].Head;
 		while (hash != 0xFFFF)
@@ -1071,6 +1075,27 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	if (thing->picnum != 0xFFFF)
 	{
 		picnum = thing->picnum;
+
+		tex = TexMan(picnum);
+		if (tex->UseType == FTexture::TEX_Null)
+		{
+			return;
+		}
+		flip = 0;
+
+		if (thing->picnum != 0xFFFF)
+		{
+			if (tex->Rotations != 0xFFFF)
+			{
+				// choose a different rotation based on player view
+				spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
+				angle_t ang = R_PointToAngle (fx, fy);
+				angle_t rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+				picnum = sprframe->Texture[rot];
+				flip = sprframe->Flip & (1 << rot);
+				tex = TexMan[picnum];	// Do not animate the rotation
+			}
+		}
 	}
 	else
 	{
@@ -1090,26 +1115,19 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		}
 		else
 		{
-			picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
+			//picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
+			// choose a different rotation based on player view
+			spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
+			angle_t ang = R_PointToAngle (fx, fy);
+			angle_t rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+			picnum = sprframe->Texture[rot];
+			flip = sprframe->Flip & (1 << rot);
+			tex = TexMan[picnum];	// Do not animate the rotation
 		}
 	}
-
-	tex = TexMan(picnum);	// <- Look! You could animate sprites if ANIMDEFS supported it!
-	if (tex->UseType == FTexture::TEX_Null)
+	if (tex == NULL || tex->UseType == FTexture::TEX_Null)
 	{
 		return;
-	}
-	flip = 0;
-
-	if (tex->Rotations != 0xFFFF)
-	{
-		// choose a different rotation based on player view
-		spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
-		angle_t ang = R_PointToAngle (fx, fy);
-		angle_t rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
-		picnum = sprframe->Texture[rot];
-		flip = sprframe->Flip & (1 << rot);
-		tex = TexMan[picnum];	// Do not animate the rotation
 	}
 
 	// Getting the width now ensures that the texture's dimensions are loaded

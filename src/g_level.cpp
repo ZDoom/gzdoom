@@ -91,6 +91,7 @@ static void SetEndSequence (char *nextmap, int type);
 static void InitPlayerClasses ();
 static void ParseEpisodeInfo ();
 static void G_DoParseMapInfo (int lump);
+static void SetLevelNum (level_info_t *info, int num);
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -590,6 +591,7 @@ static void G_DoParseMapInfo (int lump)
 				levelinfo->levelnum = epinum*10 + mapnum;
 			}
 			ParseMapInfoLower (MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
+			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
 			break;
 
 		case MITL_CLUSTERDEF:	// clusterdef <clusternum>
@@ -1811,6 +1813,17 @@ level_info_t *FindLevelByNum (int num)
 			return (level_info_t *)(wadlevelinfos + i);
 
 	return NULL;
+}
+
+static void SetLevelNum (level_info_t *info, int num)
+{
+	// Avoid duplicate levelnums. The level being set always has precedence.
+	for (int i = 0; i < numwadlevelinfos; ++i)
+	{
+		if (wadlevelinfos[i].levelnum == num)
+			wadlevelinfos[i].levelnum = 0;
+	}
+	info->levelnum = num;
 }
 
 cluster_info_t *FindClusterInfo (int cluster)

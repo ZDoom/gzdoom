@@ -436,6 +436,10 @@ void FDecalLib::ParseDecal ()
 
 		case DECAL_PIC:
 			SC_MustGetString ();
+			if (sc_String[0] == 'P' && sc_String[1] == 'L' && sc_String[2] == 'S' && sc_String[3] == 'S')
+			{
+				int i = 1;
+			}
 			picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Any);
 			if (picnum < 0 && (picnum = Wads.CheckNumForName (sc_String)) >= 0)
 			{

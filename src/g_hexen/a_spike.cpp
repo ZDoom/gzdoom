@@ -60,7 +60,7 @@ BOOL PIT_ThrustStompThing (AActor *thing)
 	return true;
 }
 
-void PIT_ThrustSpike (AActor *actor)
+void P_ThrustSpike (AActor *actor)
 {
 	int xl,xh,yl,yh,bx,by;
 	int x0,x2,y0,y2;
@@ -78,9 +78,9 @@ void PIT_ThrustSpike (AActor *actor)
 	yh = (y2 - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
 	// stomp on any things contacted
-	for (bx=xl ; bx<=xh ; bx++)
-		for (by=yl ; by<=yh ; by++)
-			P_BlockThingsIterator (bx,by,PIT_ThrustStompThing);
+	for (bx = xl; bx <= xh; bx++)
+		for (by = yl; by <= yh; by++)
+			P_BlockThingsIterator (bx, by, PIT_ThrustStompThing);
 }
 
 // AThrustFloor is just a container for all the spike states.
@@ -310,6 +310,6 @@ void A_ThrustBlock (AActor *actor)
 void A_ThrustImpale (AActor *actor)
 {
 	// Impale all shootables in radius
-	PIT_ThrustSpike (actor);
+	P_ThrustSpike (actor);
 }
 

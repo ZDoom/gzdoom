@@ -1245,6 +1245,22 @@ void P_PredictPlayer (player_t *player)
 		mnode = mnode->m_tnext;
 	}
 
+	// Blockmap ordering also needs to stay the same, so unlink the block nodes
+	// without releasing them. (They will be used again in P_UnpredictPlayer).
+	FBlockNode *block = act->BlockNode;
+
+	while (block != NULL)
+	{
+		if (block->NextActor != NULL)
+		{
+			block->NextActor->PrevActor = block->PrevActor;
+		}
+		*(block->PrevActor) = block->NextActor;
+		block = block->NextBlock;
+	}
+	act->BlockNode = NULL;
+
+
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		player->cmd = localcmds[i % LOCALCMDTICS];
@@ -1277,17 +1293,23 @@ void P_UnPredictPlayer ()
 		}
 
 		// The blockmap ordering needs to remain unchanged, too. Right now, act has the right
-		// pointers, to temporarily set its MF_NOBLOCKMAP flag so that LinkToWorld() does not
+		// pointers, so temporarily set its MF_NOBLOCKMAP flag so that LinkToWorld() does not
 		// mess with them.
 		act->flags |= MF_NOBLOCKMAP;
 		act->LinkToWorld ();
-
-		// Now fix the pointers in the next and previous blockmap entries
 		act->flags &= ~MF_NOBLOCKMAP;
-		*(act->bprev) = act;
-		if (act->bnext)
+
+		// Now fix the pointers in the blocknode chain
+		FBlockNode *block = act->BlockNode;
+
+		while (block != NULL)
 		{
-			act->bnext->bprev = &act->bnext;
+			*(block->PrevActor) = block;
+			if (block->NextActor != NULL)
+			{
+				block->NextActor->PrevActor = &block->NextActor;
+			}
+			block = block->NextBlock;
 		}
 	}
 }

@@ -649,12 +649,18 @@ void D_ErrorCleanup ()
 
 void D_DoomLoop ()
 {
+	int lasttic = 0;
+
 	for (;;)
 	{
 		try
 		{
 			// frame syncronous IO operations
-			I_StartFrame ();
+			if (gametic > lasttic)
+			{
+				lasttic = gametic;
+				I_StartFrame ();
+			}
 			
 			// process one or more tics
 			if (singletics)
@@ -1803,6 +1809,9 @@ void D_DoomMain (void)
 	FActorInfo::StaticInit ();
 	FActorInfo::StaticGameSet ();
 
+	Printf ("Init DOOM refresh subsystem.\n");
+	R_Init ();
+
 	DecalLibrary.Clear ();
 	DecalLibrary.ReadAllDecals ();
 
@@ -1976,9 +1985,6 @@ void D_DoomMain (void)
 
 	Printf ("Init miscellaneous info.\n");
 	M_Init ();
-
-	Printf ("Init DOOM refresh subsystem.\n");
-	R_Init ();
 
 	Printf ("Init Playloop state.\n");
 	P_Init ();

@@ -70,6 +70,7 @@ static const char *BotConfigStrings[] =
 	"perfection",
 	"reaction",
 	"isp",
+	"team",
 	NULL
 };
 
@@ -79,7 +80,8 @@ enum
 	BOTCFG_AIMING,
 	BOTCFG_PERFECTION,
 	BOTCFG_REACTION,
-	BOTCFG_ISP
+	BOTCFG_ISP,
+	BOTCFG_TEAM
 };
 
 static bool waitingforspawn[MAXPLAYERS];
@@ -532,6 +534,8 @@ void DCajunMaster::ForgetBots ()
 
 bool DCajunMaster::LoadBots ()
 {
+	bool gotteam;
+
 	bglobal.ForgetBots ();
 #ifndef unix
 	if (!FileExists ("zcajun/" BOTFILENAME))
@@ -575,7 +579,7 @@ bool DCajunMaster::LoadBots ()
 
 		memset (newinfo, 0, sizeof(*newinfo));
 
-		newinfo->info = copystring ("\\autoaim\\0\\movebob\\.25\\team\\255");
+		newinfo->info = copystring ("\\autoaim\\0\\movebob\\.25");
 
 		for (;;)
 		{
@@ -612,6 +616,39 @@ bool DCajunMaster::LoadBots ()
 				newinfo->skill.isp = sc_Number;
 				break;
 
+			case BOTCFG_TEAM:
+				{
+					char teamstr[4];
+					unsigned int teamnum;
+
+					SC_MustGetString ();
+					if (IsNum (sc_String))
+					{
+						teamnum = atoi (sc_String);
+						if (teamnum >= NUM_TEAMS)
+						{
+							teamnum = TEAM_None;
+						}
+					}
+					else
+					{
+						teamnum = TEAM_None;
+						for (int i = 0; i < NUM_TEAMS; ++i)
+						{
+							if (stricmp (TeamNames[i], sc_String) == 0)
+							{
+								teamnum = i;
+								break;
+							}
+						}
+					}
+					appendinfo (newinfo->info, "team");
+					sprintf (teamstr, "%u", teamnum);
+					appendinfo (newinfo->info, teamstr);
+					gotteam = true;
+					break;
+				}
+
 			default:
 				if (stricmp (sc_String, "playerclass") == 0)
 				{
@@ -627,6 +664,11 @@ bool DCajunMaster::LoadBots ()
 		{ // Bots that don't specify a class get a random one
 			appendinfo (newinfo->info, "playerclass");
 			appendinfo (newinfo->info, "random");
+		}
+		if (!gotteam)
+		{ // Same for bot teams
+			appendinfo (newinfo->info, "team");
+			appendinfo (newinfo->info, "255");
 		}
 		newinfo->next = bglobal.botinfo;
 		newinfo->lastteam = TEAM_None;

@@ -122,7 +122,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			{ // found it, so use the LUT
 				const BYTE *specialmap = tlate + (special - low) * 7;
 
-				ld->flags = flags | ((specialmap[0] & 0x3f) << 9);
+				ld->flags = flags | ((specialmap[0] & 0x1f) << 9);
 
 				if (passthrough && (GET_SPAC(flags) == SPAC_USE))
 				{
@@ -135,12 +135,16 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 				ld->args[2] = specialmap[4];
 				ld->args[3] = specialmap[5];
 				ld->args[4] = specialmap[6];
-				switch (specialmap[0] & 0xc0)
+				switch (specialmap[0] & 0xe0)
 				{
 				case 0xc0:					// First two arguments are tags
 					ld->args[1] = tag;
 				case 0x80: case 0x40:		// First argument is a tag
 					ld->args[0] = tag;
+					break;
+				case 0x20:					// Fourth argument is a tag
+					ld->args[3] = tag;
+					break;
 				}
 				return;
 			}

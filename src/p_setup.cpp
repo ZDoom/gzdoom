@@ -52,6 +52,7 @@
 #include "wi_stuff.h"
 #include "stats.h"
 #include "doomerrors.h"
+#include "gi.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);
@@ -145,7 +146,7 @@ int				*blockmaplump;	// offsets in blockmap are from here
 fixed_t 		bmaporgx;		// origin of block map
 fixed_t 		bmaporgy;
 
-AActor**		blocklinks;		// for thing chains
+FBlockNode**	blocklinks;		// for thing chains
 			
 
 
@@ -272,6 +273,11 @@ void P_LoadVertexes (int lump)
 	// Determine number of vertices:
 	//	total lump length / vertex record length.
 	numvertexes = Wads.LumpLength (lump) / sizeof(mapvertex_t);
+
+	if (numvertexes == 0)
+	{
+		I_Error ("Map has no vertices.\n");
+	}
 
 	// Allocate memory for buffer.
 	vertexes = new vertex_t[numvertexes];		
@@ -929,7 +935,7 @@ void P_LoadNodes (int lump)
 //
 // P_LoadThings
 //
-void P_LoadThings (int lump)
+void P_LoadThings (int lump, int position)
 {
 	mapthing2_t mt2;		// [RH] for translation
 	FMemLump data = Wads.ReadLump (lump);
@@ -960,7 +966,7 @@ void P_LoadThings (int lump)
 		mt2.angle = SHORT(mt->angle);
 		mt2.type = SHORT(mt->type);
 
-		P_SpawnMapThing (&mt2, 0);
+		P_SpawnMapThing (&mt2, position);
 	}
 }
 
@@ -2223,7 +2229,7 @@ void P_LoadBlockMap (int lump)
 
 	// clear out mobj chains
 	count = bmapwidth*bmapheight;
-	blocklinks = new AActor *[count];
+	blocklinks = new FBlockNode *[count];
 	memset (blocklinks, 0, count*sizeof(*blocklinks));
 	blockmap = blockmaplump+4;
 }
@@ -2862,6 +2868,10 @@ void P_SetupLevel (char *lumpname, int position)
 		{
 			P_LoadBehavior (lumpnum+ML_BEHAVIOR);
 		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			P_LoadBehavior (Wads.CheckNumForName ("STRFHELP", ns_acslibrary));
+		}
 
 		P_LoadVertexes (lumpnum+ML_VERTEXES);
 		
@@ -3008,7 +3018,7 @@ void P_SetupLevel (char *lumpname, int position)
 	if (!buildmap)
 	{
 		if (!HasBehavior)
-			P_LoadThings (lumpnum+ML_THINGS);
+			P_LoadThings (lumpnum+ML_THINGS, position);
 		else
 			P_LoadThings2 (lumpnum+ML_THINGS, position);	// [RH] Load Hexen-style things
 
@@ -3075,4 +3085,22 @@ void P_Init ()
 	P_InitSwitchList ();
 	P_InitTerrainTypes ();
 	R_InitSprites ();
+}
+
+#include "c_dispatch.h"
+CCMD (lineloc)
+{
+	if (argv.argc() != 2)
+	{
+		return;
+	}
+	int linenum = atoi (argv[1]);
+	if (linenum < 0 || linenum >= numlines)
+	{
+		Printf ("No such line\n");
+	}
+	Printf ("(%ld,%ld) -> (%ld,%ld)\n", lines[linenum].v1->x >> FRACBITS,
+		lines[linenum].v1->y >> FRACBITS,
+		lines[linenum].v2->x >> FRACBITS,
+		lines[linenum].v2->y >> FRACBITS);
 }

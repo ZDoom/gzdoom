@@ -3,7 +3,7 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "FLAC"=".\FLAC\FLAC.dsp" - Package Owner=<4>
+Project: "_zdoom"=zdoom.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -15,7 +15,7 @@ Package=<4>
 
 ###############################################################################
 
-Project: "_zdoom"=".\zdoom.dsp" - Package Owner=<4>
+Project: "zlib"=zlib-1.1.4\zlib.dsp - Package Owner=<4>
 
 Package=<5>
 {{{
@@ -23,17 +23,11 @@ Package=<5>
 
 Package=<4>
 {{{
-    Begin Project Dependency
-    Project_Dep_Name FLAC
-    End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name zlib
-    End Project Dependency
 }}}
 
 ###############################################################################
 
-Project: "zlib"=".\zlib-1.1.4\zlib.dsp" - Package Owner=<4>
+Project: "FLAC"=FLAC\FLAC.dsp - Package Owner=<4>
 
 Package=<5>
 {{{

@@ -41,8 +41,8 @@ RSC=rc.exe
 # PROP Output_Dir ".\Release"
 # PROP Intermediate_Dir ".\Release"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MT /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen;flac" /Zd /W3 /Ox /Og /Ob2 /Oi /Ot /Oy /D "NDEBUG" /D "WIN32" /D "_WIN32" /D "_WINDOWS" /D "USEASM" /GF /Fo".\Release/" /Fd".\Release/" /Gr /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
-# ADD CPP /nologo /MT /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen;flac" /Zd /W3 /Ox /Og /Ob2 /Oi /Ot /Oy /D "NDEBUG" /D "WIN32" /D "_WIN32" /D "_WINDOWS" /D "USEASM" /GF /Fo".\Release/" /Fd".\Release/" /Gr /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
+# ADD BASE CPP /nologo /MT /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen;flac" /Zd /W3 /Ox /Og /Ob2 /Oi /Ot /Oy /D "NDEBUG" /D "WIN32" /D "_WIN32" /D "_WINDOWS" /D "USEASM" /GF PRECOMP_VC7_TOBEREMOVED /Fo".\Release/" /Fd".\Release/" /Gr /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
+# ADD CPP /nologo /MT /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen;flac" /Zd /W3 /Ox /Og /Ob2 /Oi /Ot /Oy /D "NDEBUG" /D "WIN32" /D "_WIN32" /D "_WINDOWS" /D "USEASM" /GF PRECOMP_VC7_TOBEREMOVED /Fo".\Release/" /Fd".\Release/" /Gr /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
 # ADD BASE MTL /nologo /D"NDEBUG" /mktyplib203 /tlb".\Release\zdoom.tlb" /win32 
 # ADD MTL /nologo /D"NDEBUG" /mktyplib203 /tlb".\Release\zdoom.tlb" /win32 
 # ADD BASE RSC /l 1033 /d "NDEBUG" 
@@ -4173,6 +4173,18 @@ SOURCE=sound\sample_flac.cpp
 # Begin Source File
 
 SOURCE=sound\sample_flac.h
+# End Source File
+# End Group
+# Begin Group "Strife Game"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\g_strife\a_strifeplayer.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_strifestuff.cpp
 # End Source File
 # End Group
 # Begin Source File

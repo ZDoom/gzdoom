@@ -26,6 +26,7 @@ public:
 
 	void PlayPickupSound (AActor *toucher);
 	void SetDormant ();
+	bool ShouldStay ();
 };
 
 IMPLEMENT_STATELESS_ACTOR (APuzzleItem, Any, -1, 0)
@@ -58,6 +59,11 @@ void APuzzleItem::SetDormant ()
 	{
 		Destroy ();
 	}
+}
+
+bool APuzzleItem::ShouldStay ()
+{
+	return !!multiplayer;
 }
 
 // Yorick's Skull -----------------------------------------------------------

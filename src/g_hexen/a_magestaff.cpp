@@ -519,15 +519,18 @@ void AMageWeaponPiece::BeginPlay ()
 
 static AActor *FrontBlockCheck (AActor *mo, int index)
 {
-	AActor *link;
+	FBlockNode *link;
 
-	for (link = blocklinks[index]; link != NULL; link = link->bnext)
+	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
 	{
-		if (link != mo &&
-			P_PointOnDivlineSide (mo->x, mo->y, &BlockCheckLine) == 0 &&
-			mo->IsOkayToAttack (link))
+		if (link->Me != mo && link->Me->validcount != validcount)
 		{
-			return link;
+			link->Me->validcount = validcount;
+			if (P_PointOnDivlineSide (link->Me->x, link->Me->y, &BlockCheckLine) == 0 &&
+				mo->IsOkayToAttack (link->Me))
+			{
+				return link->Me;
+			}
 		}
 	}
 	return NULL;

@@ -2072,6 +2072,7 @@ void FMultiPatchTexture::SetFrontSkyLayer ()
 	{
 		Parts[i].Texture->SetFrontSkyLayer ();
 	}
+	bNoRemap0 = true;
 }
 
 void FMultiPatchTexture::Unload ()
@@ -2518,17 +2519,19 @@ void R_SetDefaultColormap (const char *name)
 			// [RH] The colormap may not have been designed for the specific
 			// palette we are using, so remap it to match the current palette.
 			memcpy (remap, GPalette.Remap, 256);
-			remap[0] = 0;	// Mapping to color 0 is okay.
+			memset (unremap, 0, 256);
 			for (i = 0; i < 256; ++i)
 			{
 				unremap[remap[i]] = i;
 			}
+			// Mapping to color 0 is okay, because the colormap won't be used to
+			// produce a masked texture.
+			remap[0] = 0;
 			for (i = 0; i < NUMCOLORMAPS; ++i)
 			{
 				BYTE *map2 = &realcolormaps[i*256];
 				lumpr.Read (map, 256);
-				map2[0] = 0;
-				for (j = 1; j < 256; ++j)
+				for (j = 0; j < 256; ++j)
 				{
 					map2[j] = remap[map[unremap[j]]];
 				}
@@ -2563,15 +2566,17 @@ void R_InitColormaps ()
 
 	if (numfakecmaps > 1)
 	{
-		BYTE unremap[256], mapin[256];
+		BYTE unremap[256], remap[256], mapin[256];
 		int i;
 		size_t j;
 
+		memcpy (remap, GPalette.Remap, 256);
+		memset (unremap, 0, 256);
 		for (i = 0; i < 256; ++i)
 		{
-			unremap[GPalette.Remap[i]] = i;
+			unremap[remap[i]] = i;
 		}
-
+		remap[0] = 0;
 		for (i = ++firstfakecmap, j = 1; j < numfakecmaps; i++, j++)
 		{
 			if (Wads.LumpLength (i) >= (NUMCOLORMAPS+1)*256)
@@ -2587,7 +2592,7 @@ void R_InitColormaps ()
 					map2[0] = 0;
 					for (r = 1; r < 256; ++r)
 					{
-						map2[r] = GPalette.Remap[mapin[unremap[r]]];
+						map2[r] = remap[mapin[unremap[r]]];
 					}
 				}
 

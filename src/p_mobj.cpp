@@ -2649,6 +2649,10 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 		{
 			p->cls = TypeInfo::FindType ("HereticPlayer");
 		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			p->cls = TypeInfo::FindType ("StrifePlayer");
+		}
 		else
 		{
 			static const char *classes[3] = { "FighterPlayer", "ClericPlayer", "MagePlayer" };
@@ -2758,8 +2762,14 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 		Spawn ("TeleportFog", mobj->x+20*finecosine[an], mobj->y+20*finesine[an], mobj->z + TELEFOGHEIGHT);
 	}
 
+	// "Fix" for one of the starts on exec.wad MAP01: If you start inside the ceiling,
+	// drop down below it, even if that means sinking into the floor.
+	if (mobj->z + mobj->height > mobj->ceilingz)
+	{
+		mobj->z = mobj->ceilingz - mobj->height;
+	}
+
 	// [RH] If someone is in the way, kill them
-	//P_TeleportMove (mobj, mobj->x, mobj->y, ONFLOORZ, true);
 	P_TeleportMove (mobj, mobj->x, mobj->y, mobj->z, true);
 
 	// [BC] Do script stuff
@@ -2804,6 +2814,13 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	{
 		deathmatchstarts.Push (*mthing);
 		return;
+	}
+
+	// Convert Strife starts to Hexen-style starts
+	if (gameinfo.gametype == GAME_Strife && mthing->type >= 118 && mthing->type <= 127)
+	{
+		mthing->args[0] = mthing->type - 117;
+		mthing->type = 1;
 	}
 
 	// [RH] Record polyobject-related things

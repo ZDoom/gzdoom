@@ -1983,7 +1983,7 @@ void UpdateJoystickMenu ()
 			JoystickItems[line].label = JoyAxisMapNames[i+1].name;
 			JoystickItems[line].a.cvar = cvars2[i];
 			JoystickItems[line].b.min = 0.0;
-			JoystickItems[line].c.max = 2.0;
+			JoystickItems[line].c.max = 4.0;
 			JoystickItems[line].d.step = 0.2;
 			line++;
 

@@ -112,7 +112,7 @@ public:
 	bool IsGood ();
 	BYTE *FindChunk (DWORD id) const;
 	BYTE *NextChunk (BYTE *chunk) const;
-	int *FindScript (int number) const;
+	const ScriptPtr *FindScript (int number) const;
 	WORD GetScriptFlags (int number) const;
 	void PrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
 	void StartTypedScripts (WORD type, AActor *activator);
@@ -126,6 +126,7 @@ public:
 	int FindMapVarName (const char *varname) const;
 	int FindMapArray (const char *arrayname) const;
 	int GetLibraryID () const { return LibraryID; }
+	int *GetScriptAddress (const ScriptPtr *ptr) const { return (int *)(ptr->Address + Data); }
 
 	SDWORD *MapVars[NUM_MAPVARS];
 
@@ -135,7 +136,7 @@ public:
 	static FBehavior *StaticGetModule (int lib);
 	static void StaticSerializeModuleStates (FArchive &arc);
 
-	static int *StaticFindScript (int script, FBehavior *&module);
+	static const ScriptPtr *StaticFindScript (int script, FBehavior *&module);
 	static const char *StaticLookupString (DWORD index);
 	static const char *StaticLocalizeString (DWORD index);
 	static void StaticPrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
@@ -501,7 +502,7 @@ public:
 		SCRIPT_PleaseRemove
 	};
 
-	DLevelScript (AActor *who, line_t *where, int num, int *code, FBehavior *module,
+	DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
 		int lineSide, int arg0, int arg1, int arg2, int always, bool delay);
 
 	void Serialize (FArchive &arc);

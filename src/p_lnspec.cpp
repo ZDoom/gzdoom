@@ -47,6 +47,7 @@
 #include "statnums.h"
 #include "s_sound.h"
 #include "templates.h"
+#include "gi.h"
 
 #define FUNC(a) static bool a (line_t *ln, AActor *it, int arg0, int arg1, \
 							   int arg2, int arg3, int arg4)
@@ -692,7 +693,7 @@ FUNC(LS_Exit_Secret)
 FUNC(LS_Teleport_NewMap)
 // Teleport_NewMap (map, position)
 {
-	if (!TeleportSide)
+	if (TeleportSide == 0 || gameinfo.gametype == GAME_Strife)
 	{
 		level_info_t *info = FindLevelByNum (arg0);
 

@@ -241,14 +241,16 @@ void A_VileChase (AActor *self)
 		yh = (viletryy - bmaporgy + MAXRADIUS*2)>>MAPBLOCKSHIFT;
 		
 		vileobj = self;
-		for (bx=xl ; bx<=xh ; bx++)
+		validcount++;
+
+		for (bx = xl; bx <= xh; bx++)
 		{
-			for (by=yl ; by<=yh ; by++)
+			for (by = yl; by <= yh; by++)
 			{
 				// Call PIT_VileCheck to check
 				// whether object is a corpse
 				// that canbe raised.
-				if (!P_BlockThingsIterator(bx,by,PIT_VileCheck))
+				if (!P_BlockThingsIterator (bx, by, PIT_VileCheck))
 				{
 					// got one!
 					temp = self->target;

@@ -283,21 +283,41 @@ void APoisonCloud::GetExplodeParms (int &damage, int &distance, bool &hurtSource
 	distance = 40;
 }
 
-int APoisonCloud::DoSpecialDamage (AActor *target, int damage)
+int APoisonCloud::DoSpecialDamage (AActor *victim, int damage)
 {
-	if (target->player)
+	if (victim->player)
 	{
-		if (target->player->poisoncount < 4)
-		{
-			P_PoisonDamage (target->player, this,
-				15+(pr_poisoncloudd()&15), false); // Don't play painsound
-			P_PoisonPlayer (target->player, this, 50);
+		bool mate = (target != NULL && victim->player != target->player && victim->IsTeammate (target));
+		bool dopoison;
 
-			S_Sound (target, CHAN_VOICE, "*poison", 1, ATTN_NORM);
+		if (!mate)
+		{
+			dopoison = victim->player->poisoncount < 4;
+		}
+		else
+		{
+			dopoison = victim->player->poisoncount < (int)(4.f * teamdamage);
+		}
+
+		if (dopoison)
+		{
+			int damage = 15 + (pr_poisoncloudd()&15);
+			if (mate)
+			{
+				damage = (int)((float)damage * teamdamage);
+			}
+			if (damage > 0)
+			{
+				P_PoisonDamage (victim->player, this,
+					15+(pr_poisoncloudd()&15), false); // Don't play painsound
+				P_PoisonPlayer (victim->player, this, this->target, 50);
+
+				S_Sound (victim, CHAN_VOICE, "*poison", 1, ATTN_NORM);
+			}
 		}	
 		return -1;
 	}
-	else if (!(target->flags3 & MF3_ISMONSTER))
+	else if (!(victim->flags3 & MF3_ISMONSTER))
 	{ // only damage monsters/players with the poison cloud
 		return -1;
 	}

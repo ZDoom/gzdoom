@@ -639,11 +639,14 @@ BOOL P_LookForMonsters (AActor *actor)
 
 AActor *LookForTIDinBlock (AActor *lookee, int index)
 {
+	FBlockNode *block;
 	AActor *link;
 	AActor *other;
 	
-	for (link = blocklinks[index]; link != NULL; link = link->bnext)
+	for (block = blocklinks[index]; block != NULL; block = block->NextActor)
 	{
+		link = block->Me;
+
         if (!(link->flags & MF_SHOOTABLE))
 			continue;			// not shootable (observer or dead)
 
@@ -1332,6 +1335,19 @@ void A_XScream (AActor *actor)
 		S_Sound (actor, CHAN_VOICE, "*gibbed", 1, ATTN_NORM);
 	else
 		S_Sound (actor, CHAN_VOICE, "misc/gibbed", 1, ATTN_NORM);
+}
+
+// Strife's version of A_XScrem
+void A_XXScream (AActor *actor)
+{
+	if (!(actor->flags & MF_NOBLOOD) || actor->DeathSound == 0)
+	{
+		A_XScream (actor);
+	}
+	else
+	{
+		S_SoundID (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NORM);
+	}
 }
 
 //---------------------------------------------------------------------------

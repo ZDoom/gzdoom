@@ -1084,17 +1084,24 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 //
 //==========================================================================
 
-void P_PoisonPlayer (player_t *player, AActor *poisoner, int poison)
+void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison)
 {
 	if((player->cheats&CF_GODMODE) || player->powers[pw_invulnerability])
 	{
 		return;
 	}
-	player->poisoncount += poison;
-	player->poisoner = poisoner;
-	if(player->poisoncount > 100)
+	if (source != NULL && source->player != player && player->mo->IsTeammate (source))
 	{
-		player->poisoncount = 100;
+		poison = (int)((float)poison * teamdamage);
+	}
+	if (poison > 0)
+	{
+		player->poisoncount += poison;
+		player->poisoner = poisoner;
+		if(player->poisoncount > 100)
+		{
+			player->poisoncount = 100;
+		}
 	}
 }
 

@@ -449,7 +449,7 @@ void WI_drawLF ()
 	{
 		WI_DrawName (lnametexts[0], lnamewidths[0], 3);
 		screen->DrawText (CR_UNTRANSLATED,
-			160 - BigFont->StringWidth ("FINISHED")/2, 25, "FINISHED",
+			160 - SmallFont->StringWidth ("FINISHED")/2, 25, "FINISHED",
 			DTA_Clean, true, TAG_DONE);
 	}
 }
@@ -484,7 +484,7 @@ void WI_drawEL ()
 	else
 	{
 		screen->DrawText (CR_UNTRANSLATED,
-			(SCREENWIDTH - BigFont->StringWidth ("NOW ENTERING:") * CleanXfac)/2, 10, "NOW ENTERING:",
+			(SCREENWIDTH - SmallFont->StringWidth ("NOW ENTERING:") * CleanXfac)/2, 10, "NOW ENTERING:",
 			DTA_CleanNoMove, true, TAG_DONE);
 		WI_DrawName (lnametexts[1], lnamewidths[1], 10+10*CleanYfac, true);
 	}
@@ -584,7 +584,7 @@ void WI_initAnimatedBack ()
 	else if (state == ShowNextLoc)
 	{
 		char name[9];
-		sprintf (name, "MAPE%d", epsd - 9);
+		sprintf (name, "MAPE%d", epsd + 1);
 		background = TexMan[name];
 	}
 }

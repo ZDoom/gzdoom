@@ -41,8 +41,8 @@ RSC=rc.exe
 # PROP Output_Dir "Debug"
 # PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /Gm /GZ /c /GX 
-# ADD CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /Gm /GZ /c /GX 
+# ADD BASE CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /Gm PRECOMP_VC7_TOBEREMOVED /GZ /c /GX 
+# ADD CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /Gm PRECOMP_VC7_TOBEREMOVED /GZ /c /GX 
 # ADD BASE MTL /nologo /win32 
 # ADD MTL /nologo /win32 
 # ADD BASE RSC /l 1033 
@@ -66,8 +66,8 @@ LIB32=link.exe -lib
 # PROP Output_Dir "Release"
 # PROP Intermediate_Dir "Release"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MT /Zi /W3 /O2 /Ob1 /Oy /D "WIN32" /D "NDEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /GF /Gy /c /GX 
-# ADD CPP /nologo /MT /Zi /W3 /O2 /Ob1 /Oy /D "WIN32" /D "NDEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /GF /Gy /c /GX 
+# ADD BASE CPP /nologo /MT /Zi /W3 /O2 /Ob1 /Oy /D "WIN32" /D "NDEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /GF /Gy PRECOMP_VC7_TOBEREMOVED /c /GX 
+# ADD CPP /nologo /MT /Zi /W3 /O2 /Ob1 /Oy /D "WIN32" /D "NDEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /GF /Gy PRECOMP_VC7_TOBEREMOVED /c /GX 
 # ADD BASE MTL /nologo /win32 
 # ADD MTL /nologo /win32 
 # ADD BASE RSC /l 1033 

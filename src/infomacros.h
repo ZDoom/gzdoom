@@ -213,6 +213,7 @@ public:
 #define PROP_XScale(x)			ADD_BYTE_PROP(ADEF_XScale,x)
 #define PROP_YScale(x)			ADD_BYTE_PROP(ADEF_YScale,x)
 #define PROP_SpawnHealth(x)		ADD_WORD_PROP(ADEF_SpawnHealth,x)
+#define PROP_SpawnHealthLong(x)	ADD_LONG_PROP(ADEF_SpawnHealth,x)
 #define PROP_ReactionTime(x)	ADD_BYTE_PROP(ADEF_ReactionTime,x)
 #define PROP_PainChance(x)		ADD_BYTE_PROP(ADEF_PainChance,x)
 #define PROP_MaxPainChance		ADD_WORD_PROP(ADEF_PainChance,256)

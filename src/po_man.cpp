@@ -1076,6 +1076,7 @@ static void LinkPolyobj (polyobj_t *po)
 
 static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 {
+	FBlockNode *block;
 	AActor *mobj;
 	int i, j;
 	int left, right, top, bottom;
@@ -1091,6 +1092,7 @@ static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 	right = (ld->bbox[BOXRIGHT]-bmaporgx+MAXRADIUS)>>MAPBLOCKSHIFT;
 
 	blocked = false;
+	validcount++;
 
 	bottom = bottom < 0 ? 0 : bottom;
 	bottom = bottom >= bmapheight ? bmapheight-1 : bottom;
@@ -1105,8 +1107,14 @@ static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 	{
 		for (i = left; i <= right; i++)
 		{
-			for (mobj = blocklinks[j+i]; mobj; mobj = mobj->bnext)
+			for (block = blocklinks[j+i]; block != NULL; block = block->NextActor)
 			{
+				mobj = block->Me;
+				if (mobj->validcount == validcount)
+				{
+					continue;
+				}
+				mobj->validcount = validcount;
 				if ((mobj->flags&MF_SOLID) && !(mobj->flags&MF_NOCLIP))
 				{
 					tmbbox[BOXTOP] = mobj->y+mobj->radius;

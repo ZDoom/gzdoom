@@ -178,7 +178,7 @@ void A_RestoreSpecialThing2 (AActor *thing)
 }
 
 /***************************************************************************/
-/* AItemFog, shown for respawning Doom items							   */
+/* AItemFog, shown for respawning Doom and Strife items					   */
 /***************************************************************************/
 
 class AItemFog : public AActor

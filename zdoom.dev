@@ -1,7 +1,7 @@
 [Project]
 FileName=ZDoom.dev
 Name=ZDoom
-UnitCount=470
+UnitCount=472
 Type=0
 Ver=1
 ObjFiles=""
@@ -19,7 +19,7 @@ ObjectOutput=devcobj
 OverrideOutput=1
 OverrideOutputName=zdoomgcc.exe
 HostApplication=
-Folders="Assembly Files",Audio,FLAC,"Game: Common","Game: Common Raven","Game: Doom","Game: Heretic","Game: Hexen","Header Files","OPL Synth","Source Files","Win32 Files",zlib,zzDocs
+Folders="Assembly Files",Audio,FLAC,"Game: Common","Game: Common Raven","Game: Doom","Game: Heretic","Game: Hexen","Game: Strife","Header Files","OPL Synth","Source Files","Win32 Files",zlib,zzDocs
 CommandLine=
 IncludeVersionInfo=0
 SupportXPThemes=0
@@ -4737,6 +4737,26 @@ BuildCmd=
 FileName=src\files.h
 CompileCpp=0
 Folder=Header Files
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit471]
+FileName=src\g_strife\a_strifestuff.cpp
+CompileCpp=0
+Folder=Game: Strife
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit472]
+FileName=src\g_strife\a_strifeplayer.cpp
+CompileCpp=0
+Folder=Game: Strife
 Compile=1
 Link=1
 Priority=1000

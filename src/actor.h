@@ -311,6 +311,22 @@ enum ERenderStyle
 #define HX_SHADOW			(0x9800)
 #define HX_ALTSHADOW		(0x6800)
 
+// [RH] Like msecnode_t, but for the blockmap
+struct FBlockNode
+{
+	AActor *Me;						// actor this node references
+	int BlockIndex;					// index into blocklinks for the block this node is in
+	FBlockNode **PrevActor;			// previous actor in this block
+	FBlockNode *NextActor;			// next actor in this block
+	FBlockNode **PrevBlock;			// previous block this actor is in
+	FBlockNode *NextBlock;			// next block this actor is in
+
+	static FBlockNode *Create (AActor *who, int x, int y);
+	void Release ();
+
+	static FBlockNode *FreeBlocks;
+};
+
 class FDecalBase;
 
 inline AActor *GetDefaultByName (const char *name)
@@ -459,7 +475,7 @@ public:
 
 // interaction info
 	fixed_t			pitch, roll;
-	AActor			*bnext, **bprev;	// links in blocks (if needed)
+	FBlockNode		*BlockNode;			// links in blocks (if needed)
 	struct sector_t	*Sector;
 	fixed_t			floorz, ceilingz;	// closest together of contacted secs
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.

@@ -70,6 +70,18 @@ FState ATeleportFog::States[] =
 	S_BRIGHT (TELE, 'E',    6, NULL                         , &States[S_HTFOG+11]),
 	S_BRIGHT (TELE, 'D',    6, NULL                         , &States[S_HTFOG+12]),
 	S_BRIGHT (TELE, 'C',    6, NULL                         , NULL),
+
+#define S_STFOG (S_HTFOG+13)
+	S_BRIGHT (TFOG, 'A',	6, NULL 						, &States[S_STFOG+1]),
+	S_BRIGHT (TFOG, 'B',	6, NULL 						, &States[S_STFOG+2]),
+	S_BRIGHT (TFOG, 'C',	6, NULL 						, &States[S_STFOG+3]),
+	S_BRIGHT (TFOG, 'D',	6, NULL 						, &States[S_STFOG+4]),
+	S_BRIGHT (TFOG, 'E',	6, NULL 						, &States[S_STFOG+5]),
+	S_BRIGHT (TFOG, 'F',	6, NULL 						, &States[S_STFOG+6]),
+	S_BRIGHT (TFOG, 'E',	6, NULL 						, &States[S_STFOG+7]),
+	S_BRIGHT (TFOG, 'D',	6, NULL 						, &States[S_STFOG+8]),
+	S_BRIGHT (TFOG, 'C',	6, NULL 						, &States[S_STFOG+9]),
+	S_BRIGHT (TFOG, 'B',	6, NULL 						, NULL),
 };
 
 IMPLEMENT_ACTOR (ATeleportFog, Any, -1, 0)
@@ -82,8 +94,18 @@ AT_GAME_SET (TeleportFog)
 {
 	ATeleportFog *def = GetDefault<ATeleportFog>();
 
-	def->SpawnState = &ATeleportFog::States[
-		gameinfo.gametype == GAME_Doom ? S_DTFOG : S_HTFOG];
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		def->SpawnState = &ATeleportFog::States[S_DTFOG];
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		def->SpawnState = &ATeleportFog::States[S_STFOG];
+	}
+	else
+	{
+		def->SpawnState = &ATeleportFog::States[S_HTFOG];
+	}
 }
 
 void ATeleportFog::PostBeginPlay ()

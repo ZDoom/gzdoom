@@ -306,21 +306,21 @@ void AActor::UnlinkFromWorld ()
 		
 	if (!(flags & MF_NOBLOCKMAP))
 	{
-		// killough 8/11/98: simpler scheme using pointers-to-pointers for prev
-		// pointers, allows head node pointers to be treated like everything else
-		//
-		// Also more robust, since it doesn't depend on current position for
-		// unlinking. Old method required computing head node based on position
-		// at time of unlinking, assuming it was the same position as during
-		// linking.
+		// [RH] Unlink from all blocks this actor uses
+		FBlockNode *block = this->BlockNode;
 
-		AActor *_bnext, **_bprev = bprev;
-		if (_bprev && (*_bprev = _bnext = bnext))
-		{ // unlink from block map
-			_bnext->bprev = _bprev;
+		while (block != NULL)
+		{
+			if (block->NextActor != NULL)
+			{
+				block->NextActor->PrevActor = block->PrevActor;
+			}
+			*(block->PrevActor) = block->NextActor;
+			FBlockNode *next = block->NextBlock;
+			block->Release ();
+			block = next;
 		}
-		bnext = NULL;
-		bprev = NULL;
+		BlockNode = NULL;
 	}
 }
 
@@ -378,30 +378,47 @@ void AActor::LinkToWorld (bool buggy)
     }
 
 	
-	// link into blockmap
+	// link into blockmap (inert things don't need to be in the blockmap)
 	if ( !(flags & MF_NOBLOCKMAP) )
 	{
-		// inert things don't need to be in blockmap
-		int blockx = (x - bmaporgx)>>MAPBLOCKSHIFT;
-		int blocky = (y - bmaporgy)>>MAPBLOCKSHIFT;
+		int x1 = (x - radius - bmaporgx)>>MAPBLOCKSHIFT;
+		int x2 = (x + radius - bmaporgx)>>MAPBLOCKSHIFT;
+		int y1 = (y - radius - bmaporgy)>>MAPBLOCKSHIFT;
+		int y2 = (y + radius - bmaporgy)>>MAPBLOCKSHIFT;
 
-		if ((unsigned int)blockx < (unsigned int)bmapwidth &&
-			(unsigned int)blocky < (unsigned int)bmapheight)
-        {
-			// killough 8/11/98: simpler scheme using pointer-to-pointer prev
-			// pointers, allows head nodes to be treated like everything else
-
-			AActor **link = &blocklinks[blocky*bmapwidth+blockx];
-			AActor *_bnext = *link;
-
-			if ((bnext = _bnext))
-				_bnext->bprev = &bnext;
-			bprev = link;
-			*link = this;
+		if (x1 >= bmapwidth || x2 < 0 || y1 >= bmapheight || y2 < 0)
+		{ // thing is off the map
+			BlockNode = NULL;
 		}
 		else
-		{ // thing is off the map
-			bnext = NULL, bprev = NULL;
+        { // [RH] Link into every block this actor touches, not just the center one
+			FBlockNode **alink = &this->BlockNode;
+			x1 = MAX (0, x1);
+			y1 = MAX (0, y1);
+			x2 = MIN (bmapwidth - 1, x2);
+			y2 = MIN (bmapheight - 1, y2);
+			for (int y = y1; y <= y2; ++y)
+			{
+				for (int x = x1; x <= x2; ++x)
+				{
+					FBlockNode **link = &blocklinks[y*bmapwidth + x];
+					FBlockNode *node = FBlockNode::Create (this, x, y);
+
+					// Link in to block
+					if ((node->NextActor = *link) != NULL)
+					{
+						(*link)->PrevActor = &node->NextActor;
+					}
+					node->PrevActor = link;
+					*link = node;
+
+					// Link in to actor
+					node->PrevBlock = alink;
+					node->NextBlock = NULL;
+					(*alink) = node;
+					alink = &node->NextBlock;
+				}
+			}
 		}
 	}
 }
@@ -533,6 +550,35 @@ void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz)
 	ceilingz = Sector->ceilingplane.ZatPoint (ix, iy);
 }
 
+FBlockNode *FBlockNode::FreeBlocks = NULL;
+
+FBlockNode *FBlockNode::Create (AActor *who, int x, int y)
+{
+	FBlockNode *block;
+
+	if (FreeBlocks != NULL)
+	{
+		block = FreeBlocks;
+		FreeBlocks = block->NextBlock;
+	}
+	else
+	{
+		block = new FBlockNode;
+	}
+	block->BlockIndex = x + y*bmapwidth;
+	block->Me = who;
+	block->NextActor = NULL;
+	block->PrevActor = NULL;
+	block->PrevBlock = NULL;
+	block->NextBlock = NULL;
+	return block;
+}
+
+void FBlockNode::Release ()
+{
+	NextBlock = FreeBlocks;
+	FreeBlocks = this;
+}
 
 //
 // BLOCK MAP ITERATORS
@@ -621,22 +667,44 @@ BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*))
 //
 BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), AActor *actor)
 {
-	if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
+	if ((unsigned int)x >= (unsigned int)bmapwidth ||
+		(unsigned int)y >= (unsigned int)bmapheight)
 	{
 		return true;
 	}
 	else
 	{
+		FBlockNode *block;
+		int index = y*bmapwidth + x;
+
 		if (actor == NULL)
 		{
-			actor = blocklinks[y*bmapwidth+x];
+			block = blocklinks[index];
 		}
-		while (actor != NULL)
+		else
 		{
-			AActor *next = actor->bnext;
-			if (!func (actor))
-				return false;
-			actor = next;
+			block = actor->BlockNode;
+			while (block != NULL && block->BlockIndex != index)
+			{
+				block = block->NextBlock;
+			}
+			if (block != NULL)
+			{
+				block = block->NextActor;
+			}
+		}
+		while (block != NULL)
+		{
+			FBlockNode *next = block->NextActor;
+			if (block->Me->validcount != validcount)
+			{
+				block->Me->validcount = validcount;
+				if (!func (block->Me))
+				{
+					return false;
+				}
+			}
+			block = next;
 		}
 	}
 	return true;
@@ -721,6 +789,68 @@ BOOL PIT_AddLineIntercepts (line_t *ld)
 //
 BOOL PIT_AddThingIntercepts (AActor* thing)
 {
+	divline_t line;
+	int i;
+
+	for (i = 0; i < 4; ++i)
+	{
+		switch (i)
+		{
+		case 0:		// Top edge
+			line.x = thing->x + thing->radius;
+			line.y = thing->y + thing->radius;
+			line.dx = -thing->radius * 2;
+			line.dy = 0;
+			break;
+
+		case 1:		// Right edge
+			line.x = thing->x + thing->radius;
+			line.y = thing->y - thing->radius;
+			line.dx = 0;
+			line.dy = thing->radius * 2;
+			break;
+
+		case 2:		// Bottom edge
+			line.x = thing->x - thing->radius;
+			line.y = thing->y - thing->radius;
+			line.dx = thing->radius * 2;
+			line.dy = 0;
+			break;
+
+		case 3:		// Left edge
+			line.x = thing->x - thing->radius;
+			line.y = thing->y + thing->radius;
+			line.dx = 0;
+			line.dy = thing->radius * -2;
+			break;
+		}
+		// Check if this side is facing the trace origin
+		if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
+		{
+			// If it is, see if the trace crosses it
+			if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
+				P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
+			{
+				// It's a hit
+				fixed_t frac = P_InterceptVector (&trace, &line);
+				if (frac < 0)
+				{ // behind source
+					return true;
+				}
+
+				intercept_t newintercept;
+				newintercept.frac = frac;
+				newintercept.isaline = false;
+				newintercept.d.thing = thing;
+				intercepts.Push (newintercept);
+				return true;	// keep going
+			}
+		}
+	}
+
+	// Didn't hit it
+	return true;
+#if 0
 	fixed_t 		x1;
 	fixed_t 		y1;
 	fixed_t 		x2;
@@ -737,7 +867,8 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 		
 	tracepositive = (trace.dx ^ trace.dy)>0;
 				
-	// check a corner to corner crossection for hit
+	// [RH] Don't check a corner to corner crossection for hit.
+	// Instead, check against the actual bounding box
 	if (tracepositive)
 	{
 		x1 = thing->x - thing->radius;
@@ -778,6 +909,7 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 	intercepts.Push (newintercept);
 
 	return true;				// keep going
+#endif
 }
 
 
@@ -924,7 +1056,7 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 	
 	// Step through map blocks.
 	// Count is present to prevent a round off error
-	// from skipping the break.
+	// from skipping the break statement.
 	mapx = xt1;
 	mapy = yt1;
 		
@@ -991,6 +1123,7 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 
 	startX = (mo->x-bmaporgx)>>MAPBLOCKSHIFT;
 	startY = (mo->y-bmaporgy)>>MAPBLOCKSHIFT;
+	validcount++;
 	
 	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
 	{
@@ -1072,13 +1205,17 @@ AActor *P_BlockmapSearch (AActor *mo, int distance, AActor *(*check)(AActor*, in
 
 static AActor *RoughBlockCheck (AActor *mo, int index)
 {
-	AActor *link;
+	FBlockNode *link;
 
-	for (link = blocklinks[index]; link != NULL; link = link->bnext)
+	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
 	{
-		if (link != mo && mo->IsOkayToAttack (link))
+		if (link->Me != mo && link->Me->validcount != validcount)
 		{
-			return link;
+			link->Me->validcount = validcount;
+			if (mo->IsOkayToAttack (link->Me))
+			{
+				return link->Me;
+			}
 		}
 	}
 	return NULL;

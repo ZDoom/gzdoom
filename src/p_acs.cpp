@@ -82,7 +82,7 @@ struct CallReturn
 
 static SDWORD Stack[STACK_SIZE];
 
-static bool P_GetScriptGoing (AActor *who, line_t *where, int num, int *code, FBehavior *module,
+static bool P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
 	int lineSide, int arg0, int arg1, int arg2, int always, bool delay);
 
 struct FBehavior::ArrayInfo
@@ -1257,19 +1257,19 @@ bool FBehavior::IsGood ()
 	return !bad;
 }
 
-int *FBehavior::FindScript (int script) const
+const ScriptPtr *FBehavior::FindScript (int script) const
 {
 	const ScriptPtr *ptr = BinarySearch<ScriptPtr, WORD>
 		((ScriptPtr *)Scripts, NumScripts, &ScriptPtr::Number, (WORD)script);
 
-	return ptr ? (int *)(ptr->Address + Data) : NULL;
+	return ptr;
 }
 
-int *FBehavior::StaticFindScript (int script, FBehavior *&module)
+const ScriptPtr *FBehavior::StaticFindScript (int script, FBehavior *&module)
 {
 	for (DWORD i = 0; i < StaticModules.Size(); ++i)
 	{
-		int *code = StaticModules[i]->FindScript (script);
+		const ScriptPtr *code = StaticModules[i]->FindScript (script);
 		if (code != NULL)
 		{
 			module = StaticModules[i];
@@ -1590,7 +1590,7 @@ void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator)
 
 void FBehavior::StartTypedScripts (WORD type, AActor *activator)
 {
-	ScriptPtr *ptr;
+	const ScriptPtr *ptr;
 	int i;
 
 	for (i = 0; i < NumScripts; ++i)
@@ -1599,7 +1599,7 @@ void FBehavior::StartTypedScripts (WORD type, AActor *activator)
 		if (ptr->Type == type)
 		{
 			P_GetScriptGoing (activator, NULL, ptr->Number,
-				(int *)(ptr->Address + Data), this, 0, 0, 0, 0, 0, true);
+				ptr, this, 0, 0, 0, 0, 0, true);
 		}
 	}
 }
@@ -3134,7 +3134,12 @@ void DLevelScript::RunScript ()
 			break;
 
 		case PCD_RESTART:
-			pc = activeBehavior->FindScript (script);
+			{
+				const ScriptPtr *scriptp;
+
+				scriptp = activeBehavior->FindScript (script);
+				pc = activeBehavior->GetScriptAddress (scriptp);
+			}
 			break;
 
 		case PCD_ANDLOGICAL:
@@ -4150,7 +4155,7 @@ void DLevelScript::RunScript ()
 
 #undef PushtoStack
 
-static bool P_GetScriptGoing (AActor *who, line_t *where, int num, int *code, FBehavior *module,
+static bool P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
 	int lineSide, int arg0, int arg1, int arg2, int always, bool delay)
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
@@ -4170,7 +4175,7 @@ static bool P_GetScriptGoing (AActor *who, line_t *where, int num, int *code, FB
 	return true;
 }
 
-DLevelScript::DLevelScript (AActor *who, line_t *where, int num, int *code, FBehavior *module,
+DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
 							int lineside, int arg0, int arg1, int arg2, int always, bool delay)
 	: activeBehavior (module)
 {
@@ -4181,8 +4186,8 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, int *code, FBeh
 	localvars[0] = arg0;
 	localvars[1] = arg1;
 	localvars[2] = arg2;
-	memset (localvars+3, 0, sizeof(localvars)-3*sizeof(int));
-	pc = code;
+	memset (localvars+code->ArgCount, 0, sizeof(localvars)-code->ArgCount*sizeof(int));
+	pc = module->GetScriptAddress (code);
 	activator = who;
 	activationline = where;
 	lineSide = lineside;
@@ -4219,7 +4224,7 @@ static void SetScriptState (int script, DLevelScript::EScriptState state)
 void P_DoDeferedScripts ()
 {
 	acsdefered_t *def;
-	int *scriptdata;
+	const ScriptPtr *scriptdata;
 	FBehavior *module;
 
 	// Handle defered scripts in this step, too
@@ -4296,7 +4301,7 @@ bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineS
 	if (map == NULL || 0 == strnicmp (level.mapname, map, 8))
 	{
 		FBehavior *module = NULL;
-		int *scriptdata;
+		const ScriptPtr *scriptdata;
 
 		if ((scriptdata = FBehavior::StaticFindScript (script, module)) != NULL)
 		{

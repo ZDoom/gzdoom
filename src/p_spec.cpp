@@ -144,6 +144,8 @@ TArray<FAnimDef *> Anims;
 // killough 3/7/98: Initialize generalized scrolling
 static void P_SpawnScrollers();
 
+static void P_FixAnimatedFrontSkies ();
+
 static void P_SpawnFriction ();		// phares 3/16/98
 static void P_SpawnPushers ();		// phares 3/20/98
 
@@ -202,7 +204,22 @@ static void P_InitAnimDefs ()
 				int picnum = TexMan.CheckForTexture (sc_String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall);
 				if (picnum != -1)
 				{
-					TexMan.ReplaceTexture (picnum, new FWarpTexture (TexMan[picnum]), false);
+					FTexture *warper = new FWarpTexture (TexMan[picnum]);
+					TexMan.ReplaceTexture (picnum, warper, false);
+
+					// No decals on warping textures, by default
+					warper->bNoDecals = true;
+					if (SC_GetString ())
+					{
+						if (SC_Compare ("allowdecals"))
+						{
+							warper->bNoDecals = false;
+						}
+						else
+						{
+							SC_UnGet ();
+						}
+					}
 				}
 			}
 			else
@@ -436,6 +453,7 @@ void P_InitPicAnims (void)
 	}
 	// [RH] Load any ANIMDEFS lumps
 	P_InitAnimDefs ();
+	P_FixAnimatedFrontSkies ();
 }
 
 void P_AddSimpleAnim (int picnum, int animcount, int animtype, int animspeed)
@@ -451,6 +469,53 @@ void P_AddSimpleAnim (int picnum, int animcount, int animtype, int animspeed)
 	anim->Frames[0].FramePic = anim->BasePic;
 	anim->Countdown = anim->Frames[0].SpeedMin - 1;
 	Anims.Push (anim);
+}
+
+// [RH] Copy the "front sky" flag from an animated texture to the rest
+// of the textures in the animation.
+static void P_FixAnimatedFrontSkies ()
+{
+	size_t i;
+	int j;
+
+	for (i = 0; i < Anims.Size(); ++i)
+	{
+		FAnimDef *anim = Anims[i];
+		if (anim->bUniqueFrames)
+		{
+			if (TexMan[anim->BasePic]->bNoRemap0)
+			{
+				for (j = 0; j < anim->NumFrames; ++j)
+				{
+					TexMan[anim->Frames[j].FramePic]->SetFrontSkyLayer ();
+				}
+			}
+		}
+		else
+		{
+			bool noremap = false;
+			const char *name;
+
+			name = TexMan[anim->BasePic]->Name;
+			name=name;
+			for (j = 0; j < anim->NumFrames; ++j)
+			{
+				FTexture *tex = TexMan[anim->BasePic + j];
+				if (tex->bNoRemap0)
+				{
+					noremap = true;
+					break;
+				}
+			}
+			if (noremap)
+			{
+				for (j = 0; j < anim->NumFrames; ++j)
+				{
+					TexMan[anim->BasePic + j]->SetFrontSkyLayer ();
+				}
+			}
+		}
+	}
 }
 
 // [RH] Check dmflags for noexit and respond accordingly
@@ -741,6 +806,10 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		mo->flags & MF_MISSILE)
 	{ // Let missiles use regular player teleports
 		lineActivation = SPAC_PCROSS;
+	}
+	if (lineActivation == SPAC_CROSS && activationType == SPAC_OTHERCROSS)
+	{
+		return (line->flags & ML_MONSTERSCANACTIVATE) != 0;
 	}
 	if (lineActivation != activationType &&
 		!(activationType == SPAC_MCROSS && lineActivation == SPAC_CROSS))
@@ -2077,6 +2146,8 @@ void DPusher::Tick ()
 		tmbbox[BOXBOTTOM] = m_Y - radius;
 		tmbbox[BOXRIGHT]  = m_X + radius;
 		tmbbox[BOXLEFT]   = m_X - radius;
+
+		validcount++;
 
 		xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
 		xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;

@@ -1,3 +1,65 @@
+October 29, 2003
+- Added a few Strife things.
+- Fixed another Doom bug/oversimplification: PIT_AddThingIntercepts() checked
+  the trace against a line running through the middle of the thing. Now it
+  checks against the thing's actual bounding box, so chainsawing big things
+  like the Spider Mastermind is much easier now. This also means
+  P_LineAttack() doesn't need to position puffs/bullet splats closer along the
+  trace since the hit location won't be inside the thing anymore.
+- Changed blockmap thing linking so that things link to every block they touch
+  and not just the block at their center, fixing an old Doom bug.
+- Changed the summon command so that it spawns things in front of you based on
+  their radius rather than a fixed 64 units away.
+- Fixed: The joystick read rate was determined by the framerate instead of
+  being a constant 35 Hz.
+
+October 28, 2003
+- Changed: Decals are not allowed on warping textures by default. You can allow
+  them by appending "allowdecals" to the warp statement in ANIMDEFS. (e.g.
+  "warp texture foofoo allowdecals")
+- Fixed: Bots whose teams were defined by name instead of numbers would always
+  be on the red team (team 0).
+- Fixed: Puzzle items need to stick around in multiplayer games.
+- Fixed: Saving in multiplayer games would try to save to the same full path
+  on all machines, even if the different machines had ZDoom installed in
+  different directories. The only one who was guaranteed to be able to save
+  because of this was the person who used the save command.
+- Fixed: Poison damage in multiplayer games did not respect the teamdamage
+  setting.
+- Added a minimum size limit of 1024 bytes for MOD/stream songs to work around
+  a bug in the current version of FMOD 3.70.
+- Fixed: Sprites with weird rotation flipping (e.g. the Hell Knight) did not
+  display properly.
+- Fixed: Even things that are not monsters could activate monster-allowed
+  lines in BOOM (and presumably DOOM).
+- Fixed: Compat_useblocking also needs to block non-use lines with specials,
+  not just use lines.
+- Fixed: Assigning a special to a line that would normally block the use of
+  lines behind it would enable those lines to be used.
+- Fixed: If a texture had the bNoRemap0 flag set and it was part of an
+  animation sequence, the flag would not be propagated to the other
+  textures in the sequence.
+- Added a check for a NULL SaveComment in the for loop that draws the comment
+  on the save/load menus.
+- Fixed: Hexen does not always pass the three ACS script arguments as the
+  first three variables as a script. Instead, it looks at the number of
+  used arguments and only copies the arguments that are used, initializing
+  the rest to 0.
+- Fixed the COLORMAP fixer so that it works correctly for palettes where
+  an exact match for color 0 does not exist.
+- Added a check for empty VERTEXES lumps to the map loader.
+
+October 27, 2003
+- Fixed: You could not override the levelnums of the IWAD maps with levelnums
+  pointing to differently named maps because levelnums were search first to
+  last, and there was no check done to make sure that previous matching
+  levelnums were removed.
+- Moved the R_Init() call before DecalLibray.ReadAllDecals() so that decals
+  can use any textures (including the plasma ball sprite).
+- Fixed Heretic intermission problems: The maps were not shown because the
+  cluster numbers changed when I moved its MAPINFO into zdoom.wad, and the
+  "Now entering:" and "Finished" texts were incorrectly centered.
+
 October 25, 2003
 - Increased MAX_ACS_TRANSLATIONS to 255.
 - Added APROP_Invulnerable.

@@ -321,7 +321,7 @@ gameinfo_t StrifeGameInfo =
 	49,
 	"F_PAVE01",
 	&StrifeBorder,
-	32*FRACUNIT,
+	0,
 	GAME_Strife,
 	150
 };

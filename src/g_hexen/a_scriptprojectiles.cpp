@@ -112,7 +112,7 @@ int APoisonDart::DoSpecialDamage (AActor *victim, int damage)
 {
 	if (victim->player)
 	{
-		P_PoisonPlayer (victim->player, this, 20);
+		P_PoisonPlayer (victim->player, this, this->target, 20);
 		damage >>= 1;
 	}
 	return damage;

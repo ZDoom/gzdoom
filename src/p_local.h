@@ -54,7 +54,7 @@
 // MAXRADIUS is for precalculated sector block boxes
 // the spider demon is larger,
 // but we do not have any moving sectors nearby
-#define MAXRADIUS		32*FRACUNIT
+#define MAXRADIUS		0/*32*FRACUNIT*/
 
 //#define GRAVITY 		FRACUNIT
 #define MAXMOVE 		(30*FRACUNIT)
@@ -188,7 +188,7 @@ inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 
 //==========================================================================
 //
-// P_PointOnDivLineSide
+// P_PointOnDivlineSide
 //
 // Same as P_PointOnLineSide except it uses divlines
 // [RH] inlined, stripped down, and made more precise
@@ -338,7 +338,7 @@ extern int				bmapwidth;
 extern int				bmapheight; 	// in mapblocks
 extern fixed_t			bmaporgx;
 extern fixed_t			bmaporgy;		// origin of block map
-extern AActor** 		blocklinks; 	// for thing chains
+extern FBlockNode**		blocklinks; 	// for thing chains
 
 
 
@@ -358,7 +358,7 @@ bool P_GiveArmor (player_t *player, armortype_t armortype, int amount);
 bool P_GiveBody (player_t *player, int num);
 bool P_GivePower (player_t *player, powertype_t power);
 bool P_MorphPlayer (player_t *player, const TypeInfo *morphClass);
-void P_PoisonPlayer (player_t *player, AActor *poisoner, int poison);
+void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
 
 #define DMG_NO_ARMOR		1

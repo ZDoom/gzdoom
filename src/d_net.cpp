@@ -2147,8 +2147,9 @@ void Net_DoCommand (int type, byte **stream, int player)
 				}
 				else
 				{
-					Spawn (type, source->x + 64 * finecosine[source->angle>>ANGLETOFINESHIFT],
-								source->y + 64 * finesine[source->angle>>ANGLETOFINESHIFT],
+					const AActor *def = GetDefaultByType (type);
+					Spawn (type, source->x + FixedMul (def->radius * 2 + source->radius, finecosine[source->angle>>ANGLETOFINESHIFT]),
+								source->y + FixedMul (def->radius * 2 + source->radius, finesine[source->angle>>ANGLETOFINESHIFT]),
 								source->z + 8 * FRACUNIT);
 				}
 			}
@@ -2173,7 +2174,31 @@ void Net_DoCommand (int type, byte **stream, int player)
 		savegamefile = ReadString (stream);
 		s = ReadString (stream);
 		memset (savedescription, 0, sizeof(savedescription));
-		strcpy (savedescription, s);
+		strncpy (savedescription, s, sizeof(savedescription));
+		if (player != consoleplayer)
+		{
+			// Paths sent over the network will be valid for the system that sent
+			// the save command. For other systems, the path needs to be changed.
+			char *fileonly = savegamefile;
+			char *slash = strrchr (savegamefile, '\\');
+			if (slash != NULL)
+			{
+				fileonly = slash + 1;
+			}
+			slash = strrchr (fileonly, '/');
+			if (slash != NULL)
+			{
+				fileonly = slash + 1;
+			}
+			if (fileonly != savegamefile)
+			{
+				char newname[PATH_MAX];
+
+				G_BuildSaveName (newname, fileonly, -1);
+				delete[] savegamefile;
+				savegamefile = copystring(newname);
+			}
+		}
 		gameaction = ga_savegame;
 		break;
 

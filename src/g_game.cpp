@@ -471,6 +471,17 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		JoyAxes[JOYAXIS_FORWARD] = 0;
 	}
 
+	if (JoyAxes[JOYAXIS_PITCH] != 0)
+	{
+		G_AddViewPitch (int((JoyAxes[JOYAXIS_PITCH] * 2048) / 256));
+		LocalKeyboardTurner = true;
+	}
+	if (JoyAxes[JOYAXIS_YAW] != 0)
+	{
+		G_AddViewAngle (int((-1280 * JoyAxes[JOYAXIS_YAW]) / 256));
+		LocalKeyboardTurner = true;
+	}
+
 	side += int((MAXPLMOVE * JoyAxes[JOYAXIS_SIDE]) / 256);
 	forward += int((JoyAxes[JOYAXIS_FORWARD] * MAXPLMOVE) / 256);
 	fly += int(JoyAxes[JOYAXIS_UP] * 8);
@@ -1175,7 +1186,7 @@ static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, size_t selections
 {
 	size_t i, j;
 
-	for (j=0; j < 20; j++)
+	for (j = 0; j < 20; j++)
 	{
 		i = pr_dmspawn() % selections;
 		if (G_CheckSpot (playernum, &deathmatchstarts[i]) )

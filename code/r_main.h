@@ -31,6 +31,8 @@
 //
 // POV related.
 //
+extern DCanvas			*RenderTarget;
+extern bool				bRenderingToCanvas;
 extern fixed_t			viewcos;
 extern fixed_t			viewsin;
 extern fixed_t			viewtancos;
@@ -88,7 +90,7 @@ extern int				loopcount;
 
 // Convert a shade and visibility to a clamped colormap index.
 // Result is not fixed point.
-#define GETPALOOKUP(vis,shade)	(clamp (((shade)-(vis))>>FRACBITS, 0, NUMCOLORMAPS-1))
+#define GETPALOOKUP(vis,shade)	(clamp<int> (((shade)-(vis))>>FRACBITS, 0, NUMCOLORMAPS-1))
 
 extern fixed_t			GlobVis;
 
@@ -151,7 +153,10 @@ void R_InitTextureMapping ();
 //
 
 // Called by G_Drawer.
-void R_RenderPlayerView (player_t *player);
+void R_RenderPlayerView (player_t *player, void (*lengthyCallback)());
+void R_RefreshViewBorder ();
+
+void R_RenderViewToCanvas (player_t *player, DCanvas *canvas, int x, int y, int width, int height);
 
 // Called by startup code.
 void R_Init (void);

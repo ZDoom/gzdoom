@@ -145,10 +145,8 @@ inline	FArchive& operator<< (SQWORD &i) { return operator<< ((QWORD &)i); }
 inline	FArchive& operator<< (unsigned char *&str) { return operator<< ((char *&)str); }
 inline	FArchive& operator<< (signed char *&str) { return operator<< ((char *&)str); }
 inline	FArchive& operator<< (bool &b) { return operator<< ((BYTE &)b); }
-#ifndef ALPHA
 inline	FArchive& operator<< (int &i) { return operator<< ((DWORD &)i); }
 inline	FArchive& operator<< (unsigned int &i) { return operator<< ((DWORD &)i); }
-#endif
 inline  FArchive& operator<< (DObject* &object) { return ReadObject (object, RUNTIME_CLASS(DObject)); }
 
 protected:
@@ -174,6 +172,8 @@ protected:
 		{
 			const TypeInfo *toCurrent;	// maps archive type index to execution type index
 			DWORD toArchive;		// maps execution type index to archive type index
+
+			enum { NO_INDEX = 0xffffffff};
 		} *m_TypeMap;
 		struct ObjectMap
 		{

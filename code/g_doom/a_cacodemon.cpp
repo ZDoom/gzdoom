@@ -123,7 +123,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (CacodemonBall, speed)
 {
-	SimpleSpeedSetter<ACacodemonBall, 10*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (ACacodemonBall, 10*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 void A_HeadAttack (AActor *self)

@@ -293,6 +293,20 @@ CVAR (Flag, sv_barrelrespawn,	dmflags2, DF2_BARRELS_RESPAWN);
 
 //==========================================================================
 //
+// D_NetUpdate
+//
+// Calls NetUpdate() during a rendering pass
+//
+//==========================================================================
+
+void D_NetUpdate ()
+{
+	screen->Unlock ();
+	NetUpdate ();	// check for new console commands.
+	screen->Relock ();
+}
+
+//==========================================================================
 //
 // D_Display
 //
@@ -324,10 +338,6 @@ void D_Display (bool screenshot)
 	// [RH] change the screen mode if needed
 	if (setmodeneeded)
 	{
-		int oldwidth = SCREENWIDTH;
-		int oldheight = SCREENHEIGHT;
-		int oldbits = DisplayBits;
-
 		// Change screen mode.
 		if (V_SetResolution (NewWidth, NewHeight, NewBits))
 		{
@@ -342,6 +352,8 @@ void D_Display (bool screenshot)
 			crosshair = *crosshair;
 		}
 	}
+
+	RenderTarget = screen;
 
 	// change the view size if needed
 	if (setsizeneeded)
@@ -391,9 +403,15 @@ void D_Display (bool screenshot)
 			break;
 
 		if (viewactive)
-			R_RenderPlayerView (&players[consoleplayer]);
+		{
+			R_RefreshViewBorder ();
+			R_RenderPlayerView (&players[consoleplayer], D_NetUpdate);
+			R_DetailDouble ();		// [RH] Apply detail mode expansion
+		}
 		if (automapactive)
+		{
 			AM_Drawer ();
+		}
 		if (realviewheight == SCREENHEIGHT && viewactive)
 		{
 			StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
@@ -929,7 +947,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
-	int i;
+	size_t i;
 	wadinfo_t header;
 	FILE *f;
 
@@ -943,10 +961,10 @@ static EIWADType ScanIWAD (const char *iwad)
 			header.numlumps = LONG(header.numlumps);
 			if (0 == fseek (f, LONG(header.infotableofs), SEEK_SET))
 			{
-				for (i = 0; i < header.numlumps; i++)
+				for (i = 0; i < (size_t)header.numlumps; i++)
 				{
 					filelump_t lump;
-					int j;
+					size_t j;
 
 					if (0 == fread (&lump, sizeof(lump), 1, f))
 						break;
@@ -1117,9 +1135,9 @@ static EIWADType IdentifyVersion (void)
 	WadStuff wads[sizeof(IWADNames)/sizeof(char *)];
 	const char *iwadparm = Args.CheckValue ("-iwad");
 	char *homepath = NULL;
-	int numwads;
+	size_t numwads;
 	int pickwad;
-	int i;
+	size_t i;
 	bool iwadparmfound = false;
 
 	memset (wads, 0, sizeof(wads));
@@ -1413,7 +1431,7 @@ void D_DoomMain (void)
 			}
 			else
 			{
-				Printf (PRINT_HIGH, "Can't find '%s'\n", files->GetArg (i));
+				Printf ("Can't find '%s'\n", files->GetArg (i));
 			}
 		}
 	}
@@ -1437,6 +1455,16 @@ void D_DoomMain (void)
 	// Base systems have been inited; enable cvar callbacks
 	FBaseCVar::EnableCallbacks ();
 
+	// [RH] Now that all text strings are set up,
+	// insert them into the level and cluster data.
+	G_SetLevelStrings ();
+	
+	// [RH] Parse through all loaded mapinfo lumps
+	G_ParseMapInfo ();
+
+	// [RH] Parse any SNDINFO lumps
+	S_ParseSndInfo ();
+
 	FActorInfo::StaticInit ();
 	FActorInfo::StaticGameSet ();
 
@@ -1456,7 +1484,7 @@ void D_DoomMain (void)
 			{
 				if (stricmp (key, "Path") == 0 && FileExists (value))
 				{
-					Printf (PRINT_HIGH, "Applying patch %s\n", value);
+					Printf ("Applying patch %s\n", value);
 					DoDehPatch (value, true);
 				}
 			}
@@ -1466,11 +1494,11 @@ void D_DoomMain (void)
 	}
 
 	// [RH] User-configurable startup strings. Because BOOM does.
-	if (GStrings(STARTUP1)[0])	Printf (PRINT_HIGH, "%s\n", GStrings(STARTUP1));
-	if (GStrings(STARTUP2)[0])	Printf (PRINT_HIGH, "%s\n", GStrings(STARTUP2));
-	if (GStrings(STARTUP3)[0])	Printf (PRINT_HIGH, "%s\n", GStrings(STARTUP3));
-	if (GStrings(STARTUP4)[0])	Printf (PRINT_HIGH, "%s\n", GStrings(STARTUP4));
-	if (GStrings(STARTUP5)[0])	Printf (PRINT_HIGH, "%s\n", GStrings(STARTUP5));
+	if (GStrings(STARTUP1)[0])	Printf ("%s\n", GStrings(STARTUP1));
+	if (GStrings(STARTUP2)[0])	Printf ("%s\n", GStrings(STARTUP2));
+	if (GStrings(STARTUP3)[0])	Printf ("%s\n", GStrings(STARTUP3));
+	if (GStrings(STARTUP4)[0])	Printf ("%s\n", GStrings(STARTUP4));
+	if (GStrings(STARTUP5)[0])	Printf ("%s\n", GStrings(STARTUP5));
 
 	//Added by MC:
 	bglobal.getspawned = Args.GatherFiles ("-bots", "", true);
@@ -1551,12 +1579,12 @@ void D_DoomMain (void)
 		autostart = true;
 	}
 	if (devparm)
-		Printf (PRINT_HIGH, GStrings(D_DEVSTR));
+		Printf (GStrings(D_DEVSTR));
 
 #ifndef UNIX
 	if (Args.CheckParm("-cdrom"))
 	{
-		Printf (PRINT_HIGH, GStrings(D_CDROM));
+		Printf (GStrings(D_CDROM));
 		mkdir ("c:\\zdoomdat", 0);
 	}
 #endif
@@ -1569,7 +1597,7 @@ void D_DoomMain (void)
 		if (value.String == NULL)
 			value.String = "100";
 		else
-			Printf (PRINT_HIGH, "turbo scale: %s%\n", value.String);
+			Printf ("turbo scale: %s%%\n", value.String);
 
 		turbo.SetGenericRepDefault (value, CVAR_String);
 	}
@@ -1578,49 +1606,39 @@ void D_DoomMain (void)
 	if (v)
 	{
 		double time = strtod (v, NULL);
-		Printf (PRINT_HIGH, "Levels will end after %g minute%s.\n", time, time > 1 ? "s" : "");
+		Printf ("Levels will end after %g minute%s.\n", time, time > 1 ? "s" : "");
 		timelimit = (float)time;
 	}
 
 	v = Args.CheckValue ("-avg");
 	if (v)
 	{
-		Printf (PRINT_HIGH, "Austin Virtual Gaming: Levels will end after 20 minutes\n");
+		Printf ("Austin Virtual Gaming: Levels will end after 20 minutes\n");
 		timelimit = 20.f;
 	}
-
-	// [RH] Now that all text strings are set up,
-	// insert them into the level and cluster data.
-	G_SetLevelStrings ();
-	
-	// [RH] Parse through all loaded mapinfo lumps
-	G_ParseMapInfo ();
-
-	// [RH] Parse any SNDINFO lumps
-	S_ParseSndInfo();
 
 	// Check for -file in shareware
 	if (modifiedgame && (gameinfo.flags & GI_SHAREWARE))
 		I_FatalError ("You cannot -file with the shareware version. Register!");
 	
-	Printf (PRINT_HIGH, "Init miscellaneous info.\n");
+	Printf ("Init miscellaneous info.\n");
 	M_Init ();
 
-	Printf (PRINT_HIGH, "Init DOOM refresh subsystem.\n");
+	Printf ("Init DOOM refresh subsystem.\n");
 	R_Init ();
 
-	Printf (PRINT_HIGH, "Init Playloop state.\n");
+	Printf ("Init Playloop state.\n");
 	P_Init ();
 
-	Printf (PRINT_HIGH, "Setting up sound.\n");
+	Printf ("Setting up sound.\n");
 	S_Init ((int)*snd_sfxvolume /* *8 */, (int)*snd_musicvolume /* *8*/ );
 
 	I_FinishClockCalibration ();
 
-	Printf (PRINT_HIGH, "Checking network game status.\n");
+	Printf ("Checking network game status.\n");
 	D_CheckNetGame ();
 
-	Printf (PRINT_HIGH, "Init status bar.\n");
+	Printf ("Init status bar.\n");
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		StatusBar = CreateDoomStatusBar ();
@@ -1667,8 +1685,7 @@ void D_DoomMain (void)
 	v = Args.CheckValue ("-loadgame");
 	if (v)
 	{
-		G_BuildSaveName (file, v[0] - '0');
-		G_LoadGame (file);
+		G_LoadGame (v);
 	}
 
 	// [RH] Initialize items. Still only used for the give command. :-(
@@ -1708,7 +1725,7 @@ void D_DoomMain (void)
 	{
 		char	filename[20];
 		sprintf (filename,"debug%i.txt",consoleplayer);
-		Printf (PRINT_HIGH, "debug output to: %s\n",filename);
+		Printf ("debug output to: %s\n",filename);
 		debugfile = fopen (filename,"w");
 	}
 

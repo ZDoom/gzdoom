@@ -18,7 +18,7 @@ class FHelperThread
 
 public:
 	FHelperThread ();
-	~FHelperThread ();
+	virtual ~FHelperThread ();
 	void DestroyThread ();
 
 	bool LaunchThread ();

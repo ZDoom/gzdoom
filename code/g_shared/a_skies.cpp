@@ -62,7 +62,7 @@ void ASkyPicker::PostBeginPlay ()
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "Can't find SkyViewpoint %d for sector %d\n",
+			Printf ("Can't find SkyViewpoint %d for sector %d\n",
 				args[0], subsector->sector - sectors);
 		}
 	}

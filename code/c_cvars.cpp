@@ -129,7 +129,7 @@ void FBaseCVar::SetGenericRep (UCVarValue value, ECVarType type)
 	{
 		if (netgame && consoleplayer != Net_Arbitrator)
 		{
-			Printf (PRINT_HIGH, "Only player %d can change %s\n", Net_Arbitrator+1, Name);
+			Printf ("Only player %d can change %s\n", Net_Arbitrator+1, Name);
 			return;
 		}
 		D_SendServerInfoChange (this, value, type);
@@ -160,8 +160,10 @@ bool FBaseCVar::ToBool (UCVarValue value, ECVarType type)
 			return false;
 		else
 			return !!strtol (value.String, NULL, 0);
+
+	default:
+		return false;
 	}
-	return false;
 }
 
 int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
@@ -179,8 +181,10 @@ int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 
 	case CVAR_String:
 		return strtol (value.String, NULL, 0);
+
+	default:
+		return 0;
 	}
-	return 0;
 }
 
 float FBaseCVar::ToFloat (UCVarValue value, ECVarType type)
@@ -198,18 +202,22 @@ float FBaseCVar::ToFloat (UCVarValue value, ECVarType type)
 
 	case CVAR_String:
 		return strtod (value.String, NULL);
+
+	default:
+		return 0.f;
 	}
-	return 0.f;
 }
 
 static char cstrbuf[32];
+static char truestr[] = "true";
+static char falsestr[] = "false";
 
 char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
 {
 	switch (type)
 	{
 	case CVAR_Bool:
-		return value.Bool ? "true" : "false";
+		return value.Bool ? truestr : falsestr;
 
 	case CVAR_String:
 		return value.String;
@@ -220,6 +228,10 @@ char *FBaseCVar::ToString (UCVarValue value, ECVarType type)
 
 	case CVAR_Float:
 		sprintf (cstrbuf, "%g", value.Float);
+		break;
+
+	default:
+		strcpy (cstrbuf, "<huh?>");
 		break;
 	}
 	return cstrbuf;
@@ -244,7 +256,10 @@ UCVarValue FBaseCVar::FromBool (bool value, ECVarType type)
 		break;
 
 	case CVAR_String:
-		ret.String = value ? "true" : "false";
+		ret.String = value ? truestr : falsestr;
+		break;
+
+	default:
 		break;
 	}
 
@@ -273,6 +288,9 @@ UCVarValue FBaseCVar::FromInt (int value, ECVarType type)
 		sprintf (cstrbuf, "%i", value);
 		ret.String = cstrbuf;
 		break;
+
+	default:
+		break;
 	}
 
 	return ret;
@@ -299,6 +317,9 @@ UCVarValue FBaseCVar::FromFloat (float value, ECVarType type)
 	case CVAR_String:
 		sprintf (cstrbuf, "%g", value);
 		ret.String = cstrbuf;
+		break;
+
+	default:
 		break;
 	}
 
@@ -330,6 +351,9 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 
 	case CVAR_String:
 		ret.String = const_cast<char *>(value);
+		break;
+
+	default:
 		break;
 	}
 
@@ -1068,7 +1092,7 @@ CCMD (set)
 {
 	if (argc != 3)
 	{
-		Printf (PRINT_HIGH, "usage: set <variable> <value>\n");
+		Printf ("usage: set <variable> <value>\n");
 	}
 	else
 	{
@@ -1083,9 +1107,9 @@ CCMD (set)
 		var->SetGenericRep (val, CVAR_String);
 
 		if (var->GetFlags() & CVAR_NOSET)
-			Printf (PRINT_HIGH, "%s is write protected.\n", argv[1]);
+			Printf ("%s is write protected.\n", argv[1]);
 		else if (var->GetFlags() & CVAR_LATCH)
-			Printf (PRINT_HIGH, "%s will be changed for next game.\n", argv[1]);
+			Printf ("%s will be changed for next game.\n", argv[1]);
 	}
 }
 
@@ -1093,7 +1117,7 @@ CCMD (unset)
 {
 	if (argc != 2)
 	{
-		Printf (PRINT_HIGH, "usage: unset <variable>\n");
+		Printf ("usage: unset <variable>\n");
 	}
 	else
 	{
@@ -1106,7 +1130,7 @@ CCMD (unset)
 			}
 			else
 			{
-				Printf (PRINT_HIGH, "Cannot unset %s\n", argv[1]);
+				Printf ("Cannot unset %s\n", argv[1]);
 			}
 		}
 	}
@@ -1122,16 +1146,16 @@ CCMD (get)
 		{
 			UCVarValue val;
 			val = var->GetGenericRep (CVAR_String);
-			Printf (PRINT_HIGH, "\"%s\" is \"%s\"\n", var->GetName, val.String);
+			Printf ("\"%s\" is \"%s\"\n", var->GetName(), val.String);
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "\"%s\" is unset\n", argv[1]);
+			Printf ("\"%s\" is unset\n", argv[1]);
 		}
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "get: need variable name\n");
+		Printf ("get: need variable name\n");
 	}
 }
 
@@ -1147,7 +1171,7 @@ CCMD (toggle)
 			val = var->GetGenericRep (CVAR_Bool);
 			val.Bool = !val.Bool;
 			var->SetGenericRep (val, CVAR_Bool);
-			Printf (PRINT_HIGH, "\"%s\" is \"%s\"\n", var->GetName(),
+			Printf ("\"%s\" is \"%s\"\n", var->GetName(),
 				val.Bool ? "true" : "false");
 		}
 	}
@@ -1165,7 +1189,7 @@ CCMD (cvarlist)
 
 		count++;
 		val = var->GetGenericRep (CVAR_String);
-		Printf (PRINT_HIGH, "%c%c%c%c %s \"%s\"\n",
+		Printf ("%c%c%c%c %s \"%s\"\n",
 				flags & CVAR_ARCHIVE ? 'A' : ' ',
 				flags & CVAR_USERINFO ? 'U' : ' ',
 				flags & CVAR_SERVERINFO ? 'S' : ' ',
@@ -1176,5 +1200,5 @@ CCMD (cvarlist)
 				val.String);
 		var = var->m_Next;
 	}
-	Printf (PRINT_HIGH, "%d cvars\n", count);
+	Printf ("%d cvars\n", count);
 }

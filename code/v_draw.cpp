@@ -315,7 +315,7 @@ void DCanvas::DrawWrapper (EWrapperCode drawer, const patch_t *patch, int x, int
 		|| y<0
 		|| y+SHORT(patch->height)>Height)
 	{
-	  // Printf (PRINT_HIGH, "Patch at %d,%d exceeds LFB\n", x,y );
+	  // Printf ("Patch at %d,%d exceeds LFB\n", x,y );
 	  // No I_Error abort - what is up with TNT.WAD?
 	  DPrintf ("DCanvas::DrawWrapper: bad patch (ignored)\n");
 	  return;
@@ -337,13 +337,14 @@ void DCanvas::DrawWrapper (EWrapperCode drawer, const patch_t *patch, int x, int
 		// step through the posts in a column
 		while (column->topdelta != 0xff )
 		{
-			drawfunc ((byte *)column + 3,
-					  desttop + column->topdelta * Pitch,
-					  column->length,
-					  Pitch);
-
-			column = (column_t *)(	(byte *)column + column->length
-									+ 4 );
+			if (column->length != 0)
+			{
+				drawfunc ((byte *)column + 3,
+						  desttop + column->topdelta * Pitch,
+						  column->length,
+						  Pitch);
+			}
+			column = (column_t *)((byte *)column + column->length + 4);
 		}
 	}
 }
@@ -416,15 +417,22 @@ void DCanvas::DrawSWrapper (EWrapperCode drawer, const patch_t *patch, int x0, i
 		// step through the posts in a column
 		while (column->topdelta != 0xff)
 		{
-			int top = column->topdelta * ymul;
-			int bot = top + column->length * ymul;
-			bot = (bot - top + 0x8000) >> 16;
-			if (bot > 0)
+			if (column->length != 0)
 			{
-				top = (top) >> 16;
-				drawfunc ((byte *)column + 3, desttop + top * Pitch,
-					bot, Pitch, yinc);
-				column = (column_t *)((byte *)column + column->length + 4);
+				int top = column->topdelta * ymul;
+				int bot = top + column->length * ymul;
+				bot = (bot - top + 0x8000) >> 16;
+				if (bot > 0)
+				{
+					top = (top) >> 16;
+					drawfunc ((byte *)column + 3, desttop + top * Pitch,
+						bot, Pitch, yinc);
+					column = (column_t *)((byte *)column + column->length + 4);
+				}
+			}
+			else
+			{
+				column = (column_t *)((byte *)column + 4);
 			}
 		}
 	}
@@ -537,13 +545,15 @@ void DCanvas::DrawPatchFlipped (const patch_t *patch, int x0, int y0) const
 		// step through the posts in a column
 		while (column->topdelta != 0xff )
 		{
-			drawfunc ((byte *)column + 3,
-					  desttop + (((column->topdelta * ymul)) >> 16) * Pitch,
-					  (column->length * ymul) >> 16,
-					  Pitch,
-					  yinc);
-			column = (column_t *)(	(byte *)column + column->length
-									+ 4 );
+			if (column->length != 0)
+			{
+				drawfunc ((byte *)column + 3,
+						  desttop + (((column->topdelta * ymul)) >> 16) * Pitch,
+						  (column->length * ymul) >> 16,
+						  Pitch,
+						  yinc);
+			}
+			column = (column_t *)((byte *)column + column->length + 4);
 		}
 	}
 }

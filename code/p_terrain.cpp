@@ -163,7 +163,7 @@ static const char *DamageKeywords[] =
 
 static FGenericParse SplashParser[] =
 {
-	{ GEN_End, 0 },
+	{ GEN_End,	  {0} },
 	{ GEN_Sound,  {myoffsetof(FSplashDef, SmallSplashSound)} },
 	{ GEN_Fixed,  {myoffsetof(FSplashDef, SmallSplashClip)} },
 	{ GEN_Sound,  {myoffsetof(FSplashDef, NormalSplashSound)} },
@@ -178,7 +178,7 @@ static FGenericParse SplashParser[] =
 
 static FGenericParse TerrainParser[] =
 {
-	{ GEN_End, 0 },
+	{ GEN_End,	  {0} },
 	{ GEN_Splash, {myoffsetof(FTerrainDef, Splash)} },
 	{ GEN_Int,    {myoffsetof(FTerrainDef, DamageAmount)} },
 	{ GEN_Custom, {(size_t)ParseDamage} },
@@ -510,19 +510,19 @@ static void ParseSounds (int keyword, void *fields)
 			int id = S_FindSound (sc_String);
 			if (id == -1)
 			{
-				Printf (PRINT_HIGH, "Unknown sound %s in terrain %s\n",
+				Printf ("Unknown sound %s in terrain %s\n",
 					sc_String, def->Name);
 			}
 			else
 			{
 				array[*count] = id;
-				*count++;
+				count++;
 			}
 		}
 		else if (!warned)
 		{
 			warned = true;
-			Printf (PRINT_HIGH, "Terrain %s has too many %s footstep sounds\n",
+			Printf ("Terrain %s has too many %s footstep sounds\n",
 				def->Name, (keyword == TR_LEFTSTEPSOUNDS) ? "left" : "right");
 		}
 	} while (notdone);
@@ -561,9 +561,9 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 			SC_MustGetString ();
 			val = S_FindSound (sc_String);
 			SET_FIELD (int, val);
-			if (val == -1)
+			if (val == 0)
 			{
-				Printf (PRINT_HIGH, "Unknown sound %s in %s %s\n",
+				Printf ("Unknown sound %s in %s %s\n",
 					sc_String, type, name);
 			}
 			break;
@@ -578,13 +578,13 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 			info = TypeInfo::IFindType (sc_String);
 			if (!info->IsDescendantOf (RUNTIME_CLASS(AActor)))
 			{
-				Printf (PRINT_HIGH, "%s is not an Actor (in %s %s)\n",
+				Printf ("%s is not an Actor (in %s %s)\n",
 					sc_String, type, name);
 				info = NULL;
 			}
 			else if (info == NULL)
 			{
-				Printf (PRINT_HIGH, "Unknown actor %s in %s %s\n",
+				Printf ("Unknown actor %s in %s %s\n",
 					sc_String, type, name);
 			}
 			SET_FIELD (const TypeInfo *, info);
@@ -596,7 +596,7 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 			SET_FIELD (int, val);
 			if (val == -1)
 			{
-				Printf (PRINT_HIGH, "Splash %s is not defined yet (in %s %s)\n",
+				Printf ("Splash %s is not defined yet (in %s %s)\n",
 					sc_String, type, name);
 			}
 			break;
@@ -642,7 +642,7 @@ static void ParseFloor ()
 	lump = W_CheckNumForName (sc_String, ns_flats);
 	if (lump == -1)
 	{
-		Printf (PRINT_HIGH, "Unknown flat %s\n", sc_String);
+		Printf ("Unknown flat %s\n", sc_String);
 		SC_MustGetString ();
 		return;
 	}
@@ -650,7 +650,7 @@ static void ParseFloor ()
 	terrain = FindTerrain (sc_String);
 	if (terrain == -1)
 	{
-		Printf (PRINT_HIGH, "Unknown terrain %s\n", sc_String);
+		Printf ("Unknown terrain %s\n", sc_String);
 		terrain = 0;
 	}
 	TerrainTypes[lump - firstflat] = terrain;

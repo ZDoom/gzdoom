@@ -21,7 +21,7 @@
 //-----------------------------------------------------------------------------
 
 
-
+#include "templates.h"
 #include "i_system.h"
 #include "doomdef.h"
 #include "p_local.h"
@@ -132,7 +132,7 @@ void P_InitSwitchList ()
 				def2 = (FSwitchDef *)Z_Malloc (sizeof(FSwitchDef), PU_STATIC, 0);
 				def1->PreTexture = def2->u.Textures[2] = R_CheckTextureNumForName (list_p /* .name1 */);
 				def2->PreTexture = def1->u.Textures[2] = R_CheckTextureNumForName (list_p + 9);
-				def1->Sound = def2->Sound = -1;
+				def1->Sound = def2->Sound = 0;
 				def1->NumFrames = def2->NumFrames = 1;
 				def1->u.Times[0] = def2->u.Times[0] = 0;
 				def2->PairIndex = AddSwitchDef (def1);
@@ -287,7 +287,7 @@ FSwitchDef *ParseSwitchDef ()
 	SWORD sound;
 
 	numframes = 0;
-	sound = -1;
+	sound = 0;
 
 	while (SC_GetString ())
 	{
@@ -445,7 +445,7 @@ void P_ChangeSwitchTexture (side_t *side, int useAgain, byte special)
 	}
 
 	// EXIT SWITCH?
-	if (SwitchList[i]->Sound >= 0)
+	if (SwitchList[i]->Sound != 0)
 	{
 		sound = SwitchList[i]->Sound;
 	}
@@ -497,7 +497,7 @@ DActiveButton::DActiveButton (side_t *side, EWhere where, WORD switchnum,
 	bFlippable = useagain;
 
 	m_SwitchDef = switchnum;
-	m_Frame = -1;
+	m_Frame = 65535;
 	AdvanceFrame ();
 }
 
@@ -530,11 +530,11 @@ void DActiveButton::RunThink ()
 			if (m_SwitchDef != 65535)
 			{
 				def = SwitchList[def->PairIndex];
-				m_Frame = -1;
+				m_Frame = 65535;
 				pt[0] = m_X;
 				pt[1] = m_Y;
 				S_SoundID (pt, CHAN_VOICE|CHAN_LISTENERZ|CHAN_IMMOBILE,
-					def->Sound != -1 ? def->Sound
+					def->Sound != 0 ? def->Sound
 					: S_FindSound ("switches/normbutn"), 1, ATTN_STATIC);
 				bFlippable = false;
 			}

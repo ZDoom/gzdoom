@@ -11,6 +11,9 @@ EXTERN_CVAR (Float, autoaim)
 #define GENDER_FEMALE	1
 #define GENDER_NEUTER	2
 
+int D_GenderToInt (const char *gender);
+extern const char *GenderNames[3];
+
 struct userinfo_s
 {
 	char		netname[MAXPLAYERNAME+1];

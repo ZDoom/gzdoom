@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "d_main.h"
 #include "m_alloc.h"
 #include "g_level.h"
@@ -97,7 +98,10 @@ int starttime;
 
 
 // ACS variables with world scope
-int WorldVars[NUM_WORLDVARS];
+int ACS_WorldVars[NUM_WORLDVARS];
+
+// ACS variables with global scope
+int ACS_GlobalVars[NUM_GLOBALVARS];
 
 
 extern BOOL netdemo;
@@ -703,7 +707,7 @@ CCMD (map)
 	if (argc > 1)
 	{
 		if (W_CheckNumForName (argv[1]) == -1)
-			Printf (PRINT_HIGH, "No map %s\n", argv[1]);
+			Printf ("No map %s\n", argv[1]);
 		else
 			G_DeferedInitNew (argv[1]);
 	}
@@ -796,7 +800,8 @@ void G_InitNew (char *mapname)
 	if (!savegamerestore)
 	{
 		M_ClearRandom ();
-		memset (WorldVars, 0, sizeof(WorldVars));
+		memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
+		memset (ACS_GlobalVars, 0, sizeof(ACS_GlobalVars));
 		level.time = 0;
 
 		// force players to be initialized upon first level load
@@ -961,7 +966,7 @@ void G_DoCompleted (void)
 
 		if (mode == FINISH_NextHub)
 		{
-			memset (WorldVars, 0, sizeof(WorldVars));
+			memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
 			P_RemoveDefereds ();
 			G_ClearSnapshots ();
 		}
@@ -1014,7 +1019,7 @@ void G_DoLoadLevel (int position)
 	G_InitLevelLocals ();
 	StatusBar->DetachAllMessages ();
 
-	Printf (PRINT_HIGH, 
+	Printf (
 			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n"
 			TEXTCOLOR_BOLD "%s\n\n",
@@ -1168,7 +1173,7 @@ void G_DoWorldDone (void)
 	{
 		// Don't crash if no next map is given,
 		// just repeat the current one.
-		Printf (PRINT_HIGH, "No next map specified.\n");
+		Printf ("No next map specified.\n");
 	}
 	else
 	{

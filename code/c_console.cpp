@@ -1,4 +1,5 @@
 #include "m_alloc.h"
+#include "templates.h"
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
@@ -629,6 +630,18 @@ int STACK_ARGS Printf (int printlevel, const char *format, ...)
 	return count;
 }
 
+int STACK_ARGS Printf (const char *format, ...)
+{
+	va_list argptr;
+	int count;
+
+	va_start (argptr, format);
+	count = VPrintf (PRINT_HIGH, format, argptr);
+	va_end (argptr);
+
+	return count;
+}
+
 int STACK_ARGS Printf_Bold (const char *format, ...)
 {
 	va_list argptr;
@@ -1025,9 +1038,10 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 		break;
 
 	case GK_PGUP:
-		if (ev->data3 & GKM_SHIFT)
-		{ // Move to top of console buffer
-			RowAdjust = CONSOLELINES;
+		if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
+		{ // Scroll console buffer up one page
+			RowAdjust += (SCREENHEIGHT-4) /
+				((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? 8 : 16) - 3;
 		}
 		else if (RowAdjust < CONSOLELINES)
 		{ // Scroll console buffer up
@@ -1036,9 +1050,18 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 		break;
 
 	case GK_PGDN:
-		if (ev->data3 & GKM_SHIFT)
-		{ // Move to bottom of console buffer
-			RowAdjust = 0;
+		if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
+		{ // Scroll console buffer down one page
+			const int scrollamt = (SCREENHEIGHT-4) /
+				((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? 8 : 16) - 3;
+			if (RowAdjust < scrollamt)
+			{
+				RowAdjust = 0;
+			}
+			else
+			{
+				RowAdjust -= scrollamt;
+			}
 		}
 		else if (RowAdjust > 0)
 		{ // Scroll console buffer down
@@ -1047,14 +1070,26 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 		break;
 
 	case GK_HOME:
-		// Move cursor to start of line
-		buffer[1] = buffer[len+4] = 0;
+		if (ev->data3 & GKM_CTRL)
+		{ // Move to top of console buffer
+			RowAdjust = CONSOLELINES;
+		}
+		else
+		{ // Move cursor to start of line
+			buffer[1] = buffer[len+4] = 0;
+		}
 		break;
 
 	case GK_END:
-		// Move cursor to end of line
-		buffer[1] = buffer[0];
-		makestartposgood ();
+		if (ev->data3 & GKM_CTRL)
+		{ // Move to bottom of console buffer
+			RowAdjust = 0;
+		}
+		else
+		{ // Move cursor to end of line
+			buffer[1] = buffer[0];
+			makestartposgood ();
+		}
 		break;
 
 	case GK_LEFT:
@@ -1209,7 +1244,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 	case GK_ESCAPE:
 		// Close console and clear command line. But if we're in the
 		// fullscreen console mode, there's nothing to fall back on
-		// if it's closed.
+		// if it's closed, so open the main menu instead.
 		if (gamestate == GS_STARTUP)
 		{
 			return false;
@@ -1335,7 +1370,7 @@ CCMD (history)
 
 	while (hist)
 	{
-		Printf (PRINT_HIGH, "   %s\n", hist->String);
+		Printf ("   %s\n", hist->String);
 		hist = hist->Newer;
 	}
 }
@@ -1351,7 +1386,7 @@ CCMD (echo)
 	if (argc > 1)
 	{
 		char *str = BuildString (argc - 1, argv + 1);
-		Printf (PRINT_HIGH, "%s\n", str);
+		Printf ("%s\n", str);
 		delete[] str;
 	}
 }
@@ -1416,7 +1451,7 @@ void C_AddTabCommand (const char *name)
 {
 	int pos;
 
-	if (FindTabCommand (name, &pos, MAXINT))
+	if (FindTabCommand (name, &pos, INT_MAX))
 	{
 		TabCommands[pos].UseCount++;
 	}
@@ -1436,7 +1471,7 @@ void C_RemoveTabCommand (const char *name)
 {
 	int pos;
 
-	if (FindTabCommand (name, &pos, MAXINT))
+	if (FindTabCommand (name, &pos, INT_MAX))
 	{
 		if (--TabCommands[pos].UseCount == 0)
 		{

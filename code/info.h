@@ -28,36 +28,115 @@
 #include "dthinker.h"
 #include "farchive.h"
 
+/* Important restrictions because of the way FState is structured:
+ *
+ * The range of Frame is [0,63]. Since sprite naming conventions
+ * are even more restrictive than this, this isn't something to
+ * really worry about.
+ *
+ * The range of Tics is [-1,65534]. If Misc1 is important, then
+ * the range of Tics is reduced to [-1,254], because Misc1 also
+ * doubles as the high byte of the tic.
+ *
+ * The range of Misc1 is [-128,127] and Misc2's range is [0,255].
+ *
+ * When compiled with Visual C++, this struct is 16 bytes. With
+ * any other compiler (assuming a 32-bit architecture), it is 20 bytes.
+ * This is because with VC++, I can use the charizing operator to
+ * initialize the name array to exactly 4 chars. If GCC would
+ * compile something like char t = "PLYR"[0]; as char t = 'P'; then GCC
+ * could also use the 16-byte version. Unfortunately, GCC compiles it
+ * more like:
+ *
+ * char t;
+ * void initializer () {
+ *     static const char str[]="PLYR";
+ *     t = str[0];
+ * }
+ *
+ * While this does allow the use of a 16-byte FState, the additional
+ * code amounts to more than 4 bytes.
+ *
+ * If C++ would allow char name[4] = "PLYR"; without an error (as C does),
+ * I could just initialize the name as a regular string and be done with it.
+ */
+
+const BYTE SF_FULLBRIGHT = 0x40;
+const BYTE SF_BIGTIC	 = 0x80;
+
 struct FState
 {
 	union
 	{
+#if _MSC_VER
 		char name[4];
+#else
+		char name[8];	// 4 for name, 1 for '\0', 3 for pad
+#endif
 		int index;
 	} sprite;
-	BYTE		frame;
-	WORD		fullbright;
-	SWORD		tics;
-	actionf_t 	action;
-	FState		*nextstate;
-	int			misc1, misc2;
+	BYTE		Tics;
+	SBYTE		Misc1;
+	BYTE		Misc2;
+	BYTE		Frame;
+	actionf_t	Action;
+	FState		*NextState;
+
+	inline int GetFrame() const
+	{
+		return Frame & ~(SF_FULLBRIGHT|SF_BIGTIC);
+	}
+	inline int GetFullbright() const
+	{
+		return Frame & SF_FULLBRIGHT ? 0x10 /*RF_FULLBRIGHT*/ : 0;
+	}
+	inline int GetTics() const
+	{
+#ifdef __BIG_ENDIAN__
+		return Frame & SF_BIGTIC ? (Tics|((BYTE)Misc1<<8))-1 : Tics-1;
+#else
+		// Use some trickery to help the compiler create this without
+		// using any jumps.
+		return ((*(int *)&Tics) & ((*(int *)&Tics) < 0 ? 0xffff : 0xff)) - 1;
+#endif
+	}
+	inline int GetMisc1() const
+	{
+		return Frame & SF_BIGTIC ? 0 : Misc1;
+	}
+	inline int GetMisc2() const
+	{
+		return Misc2;
+	}
+	inline FState *GetNextState() const
+	{
+		return NextState;
+	}
+	inline actionf_t GetAction() const
+	{
+		return Action;
+	}
 };
 
 FArchive &operator<< (FArchive &arc, FState *&state);
 
 #if _MSC_VER
-#define _S__COMMON_(spr) \
+#define _S__SPRITE_(spr) \
 	{ {{(char)(#@spr>>24),(char)(#@spr>>16),(char)(#@spr>>8),(char)#@spr}}
 #else
-#define _S__COMMON_(spr) \
-	{ {#spr}
+#define _S__SPRITE_(spr) \
+	{ {{#spr}}
 #endif
 
-#define _S_N_COMMON_(spr,frm,tic,cmd,next) \
-	_S__COMMON_(spr), (frm) - 'A', 0, tic, {cmd}, next
+#define _S__FR_TIC_(spr,frm,tic,m1,m2,cmd,next) \
+	_S__SPRITE_(spr), (tic+1)&255, m1|((tic+1)>>8), m2, (tic>254)?SF_BIGTIC|(frm):(frm), \
+	{cmd}, next }
 
-#define _S_B_COMMON_(spr,frm,tic,cmd,next) \
-	_S__COMMON_(spr), (frm) - 'A', RF_FULLBRIGHT, tic, {cmd}, next
+#define S_NORMAL2(spr,frm,tic,cmd,next,m1,m2) \
+	_S__FR_TIC_(spr, (frm) - 'A', tic, m1, m2, (void *)cmd, next)
+
+#define S_BRIGHT2(spr,frm,tic,cmd,next,m1,m2) \
+	_S__FR_TIC_(spr, (frm) - 'A' | SF_FULLBRIGHT, tic, m1, m2, (void *)cmd, next)
 
 /* <winbase.h> #defines its own, completely unrelated S_NORMAL.
  * Since winbase.h will only be included in Win32-specific files that
@@ -65,18 +144,9 @@ FArchive &operator<< (FArchive &arc, FState *&state);
  */
 
 #ifndef S_NORMAL
-#define S_NORMAL(spr,frm,tic,cmd,next) \
-	_S_N_COMMON_(spr,frm,tic,cmd,next), 0, 0}
+#define S_NORMAL(spr,frm,tic,cmd,next)	S_NORMAL2(spr,frm,tic,(void *)cmd,next,0,0)
 #endif
-
-#define S_BRIGHT(spr,frm,tic,cmd,next) \
-	_S_B_COMMON_(spr,frm,tic,cmd,next), 0, 0}
-
-#define S_NORMAL2(spr,frm,tic,cmd,next,m1,m2) \
-	_S_N_COMMON_(spr,frm,tic,cmd,next), m1, m2}
-
-#define S_BRIGHT2(spr,frm,tic,cmd,next,m1,m2) \
-	_S_B_COMMON_(spr,frm,tic,cmd,next), m1, m2}
+#define S_BRIGHT(spr,frm,tic,cmd,next)	S_BRIGHT2(spr,frm,tic,(void *)cmd,next,0,0)
 
 
 #ifndef EGAMETYPE
@@ -200,6 +270,8 @@ private:
 	};
 
 	static FDoomEdEntry *DoomEdHash[DOOMED_HASHSIZE];
+
+	friend void Cmd_dumpmapthings (int,char **,const char *,AActor *);
 };
 
 extern FDoomEdMap DoomEdMap;

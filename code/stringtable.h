@@ -23,12 +23,12 @@ class FStringTable
 public:
 	FStringTable () :
 		StringStatus(NULL),
+		NumStrings (0),
 		Names(NULL),
 		Strings(NULL),
 		CompactBase(NULL),
 		CompactSize(0),
-		LumpNum (-1),
-		NumStrings (0) {}
+		LumpNum (-1) {}
 	~FStringTable () { FreeData (); }
 
 	void LoadStrings (int lump, int expectedSize, bool enuOnly);

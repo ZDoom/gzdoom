@@ -23,6 +23,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "templates.h"
 #include "m_alloc.h"
 #include "i_system.h"
 #include "z_zone.h"
@@ -192,11 +193,11 @@ void AActor::Serialize (FArchive &arc)
 		<< renderflags
 		<< picnum
 		<< RenderStyle
-		<< const_cast<char *&>(SeeSound)
-		<< const_cast<char *&>(AttackSound)
-		<< const_cast<char *&>(PainSound)
-		<< const_cast<char *&>(DeathSound)
-		<< const_cast<char *&>(ActiveSound)
+		<< AR_SOUNDW(SeeSound)
+		<< AR_SOUNDW(AttackSound)
+		<< AR_SOUNDW(PainSound)
+		<< AR_SOUNDW(DeathSound)
+		<< AR_SOUNDW(ActiveSound)
 		<< ReactionTime
 		<< Speed
 		<< Mass
@@ -211,7 +212,9 @@ void AActor::Serialize (FArchive &arc)
 		<< XDeathState
 		<< BDeathState
 		<< IDeathState
-		<< RaiseState;
+		<< RaiseState
+		<< gear
+		<< dropoffz;
 	arc.SerializePointer (translationtables, (BYTE **)&translation, 256);
 	spawnpoint.Serialize (arc);
 
@@ -233,12 +236,12 @@ void MapThing::Serialize (FArchive &arc)
 		<< args[0] << args[1] << args[2] << args[3] << args[4];
 }
 
-AActor::AActor ()
+AActor::AActor () throw()
 {
 	memset (&x, 0, (byte *)&this[1] - (byte *)&x);
 }
 
-AActor::AActor (const AActor &other)
+AActor::AActor (const AActor &other) throw()
 {
 	memcpy (&x, &other.x, (byte *)&this[1] - (byte *)&x);
 }
@@ -269,18 +272,18 @@ bool AActor::SetState (FState *newstate)
 		}
 
 		state = newstate;
-		tics = newstate->tics;
-		frame = newstate->frame;
-		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->fullbright;
+		tics = newstate->GetTics();
+		frame = newstate->GetFrame();
+		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 
 		// [RH] Only change sprite if not using a skin
 		if (skin == NULL)
 			sprite = newstate->sprite.index;
 
-		if (newstate->action.acp1)
-			newstate->action.acp1 (this);
+		if (newstate->GetAction().acp1)
+			newstate->GetAction().acp1 (this);
 
-		newstate = newstate->nextstate;
+		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
 	return true;
@@ -305,13 +308,13 @@ bool AActor::SetStateNF (FState *newstate)
 			return false;
 		}
 		state = newstate;
-		tics = newstate->tics;
-		frame = newstate->frame;
-		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->fullbright;
+		tics = newstate->GetTics();
+		frame = newstate->GetFrame();
+		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 		// [RH] Only change sprite if not using a skin
 		if (skin == NULL)
 			sprite = newstate->sprite.index;
-		newstate = newstate->nextstate;
+		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
 	return true;
@@ -356,7 +359,7 @@ void P_ExplodeMissile (AActor *mo)
 		mo->flags &= ~MF_MISSILE;
 
 		if (mo->DeathSound)
-			S_Sound (mo, CHAN_VOICE, mo->DeathSound, 1, ATTN_NORM);
+			S_SoundID (mo, CHAN_VOICE, mo->DeathSound, 1, ATTN_NORM);
 	}
 }
 
@@ -422,7 +425,7 @@ void P_FloorBounceMissile (AActor *mo)
 	mo->momy = 2*mo->momy/3;
 	if (mo->SeeSound)
 	{
-		S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
+		S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
 	}
 	if (!(mo->flags & MF_NOGRAVITY) && (mo->momz < 3*FRACUNIT))
 		mo->flags2 &= ~MF2_FLOORBOUNCE;
@@ -566,7 +569,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 	bool walkplane;
 	static const int windTab[3] = {2048*5, 2048*10, 2048*25};
 
-	int maxmove = (mo->waterlevel < 2) || (mo->flags & MF_MISSILE) ? MAXMOVE : MAXMOVE/4;
+	fixed_t maxmove = (mo->waterlevel < 2) || (mo->flags & MF_MISSILE) ? MAXMOVE : MAXMOVE/4;
 
 	xmove = mo->momx = clamp (mo->momx, -maxmove, maxmove);
 	ymove = mo->momy = clamp (mo->momy, -maxmove, maxmove);
@@ -699,7 +702,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 								mo->momy = FixedMul (speed, finesine[angle]);
 								if (mo->SeeSound)
 								{
-									S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
+									S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
 								}
 								return;
 							}
@@ -715,7 +718,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 							P_BounceWall (mo);
 							if (mo->SeeSound)
 							{
-								S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
+								S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_IDLE);
 							}
 							return;
 						}
@@ -784,7 +787,8 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 		return;
 	}
 
-	if (mo->flags & MF_CORPSE)
+	// killough 9/15/98: add objects falling off ledges
+	if (mo->flags & (MF_CORPSE|MF_FALLING))
 	{ // Don't stop sliding if halfway off a step with some momentum
 		if (mo->momx > FRACUNIT/4 || mo->momx < -FRACUNIT/4
 			|| mo->momy > FRACUNIT/4 || mo->momy < -FRACUNIT/4)
@@ -1012,7 +1016,7 @@ void P_ZMovement (AActor *mo)
 					mo->player->deltaviewheight = mo->momz >> 3;
 					if (!mo->player->morphTics)
 					{
-						S_Sound (mo, CHAN_AUTO, "*land1", 1, ATTN_NORM);
+						S_Sound (mo, CHAN_AUTO, "*land", 1, ATTN_NORM);
 					}
 				}
 			}
@@ -1048,7 +1052,7 @@ void P_ZMovement (AActor *mo)
 			mo->momz = FixedMul (mo->momz, (fixed_t)(-0.75*FRACUNIT));
 			if (mo->SeeSound)
 			{
-				S_Sound (mo, CHAN_BODY, mo->SeeSound, 1, ATTN_IDLE);
+				S_SoundID (mo, CHAN_BODY, mo->SeeSound, 1, ATTN_IDLE);
 			}
 			return;
 		}
@@ -1084,7 +1088,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	mo->player->deltaviewheight = mo->momz>>3;
 	if (!mo->player->morphTics)
 	{
-		S_Sound (mo, CHAN_AUTO, "*land1", 1, ATTN_IDLE);
+		S_Sound (mo, CHAN_AUTO, "*land", 1, ATTN_IDLE);
 	}
 //	mo->player->centering = true;
 }
@@ -1221,10 +1225,6 @@ void AActor::RemoveFromHash ()
 angle_t AActor::AngleIncrements ()
 {
 	return ANGLE_45;
-}
-
-void AActor::PostBeginPlay ()
-{
 }
 
 int AActor::GetMOD ()
@@ -1376,7 +1376,7 @@ void AActor::RunThink ()
 		if (bglobal.thingnum >= MAXTHINGS)
 		{
 			bglobal.itemsdone = true;
-			Printf (PRINT_HIGH, "Warning: Number of items known to the bot limited to %d.\n", MAXTHINGS);
+			Printf ("Warning: Number of items known to the bot limited to %d.\n", MAXTHINGS);
 		}
 		else if (flags & MF_SPECIAL)
 		{
@@ -1567,7 +1567,7 @@ void AActor::RunThink ()
 
 	if (flags2 & MF2_FLOATBOB)
 	{ // Floating item bobbing motion
-		z = clamp (z - FloatBobDiffs[((int)this/4 + gametic) & 63], floorz, ceilingz);
+		z = z + FloatBobDiffs[((int)this/4 + level.time) & 63];
 	}
 	if ((z != floorz && !(flags2 & MF2_FLOATBOB)) || momz || BlockingMobj)
 	{	// Handle Z momentum and gravity
@@ -1651,6 +1651,23 @@ void AActor::RunThink ()
 		P_HitWater (this, subsector->sector);
 	}
 
+	// killough 9/12/98: objects fall off ledges if they are hanging off
+	// slightly push off of ledge if hanging more than halfway off
+
+	if (!(flags & MF_NOGRAVITY) &&	// Only objects which fall
+		!(flags2 & MF2_FLOATBOB) &&
+		z > dropoffz &&				// Only objects contacting dropoff
+		// [RH] Be more restrictive to avoid pushing monsters/players down steps
+		(SeeState == NULL || health <= 0 || (flags & MF_COUNTKILL && z - dropoffz > 24*FRACUNIT)))
+	{
+		P_ApplyTorque (this);	// Apply torque
+	}
+	else
+	{
+		flags &= ~MF_FALLING;
+		gear = 0;			// Reset torque
+	}
+
 	if (flags2 & MF2_DORMANT)
 		return;
 
@@ -1661,7 +1678,7 @@ void AActor::RunThink ()
 				
 		// you can cycle through multiple states in a tic
 		if (!tics)
-			if (!SetState (state->nextstate))
+			if (!SetState (state->GetNextState()))
 				return; 		// freed itself
 	}
 	else
@@ -1705,7 +1722,7 @@ FState AActor::States[] =
 {
 	S_NORMAL (TNT1, 'A', -1, NULL, NULL),
 	S_NORMAL (TNT1, 'E', 1050, A_FreeTargMobj, NULL),
-	S_NORMAL (TNT1, 'A', 1, NULL, NULL)		// S_NULL
+	S_NORMAL (TNT1, 'A', 1, NULL, NULL),	// S_NULL
 };
 
 BEGIN_DEFAULTS (AActor, Any, -1, 0)
@@ -1749,7 +1766,6 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	actor->y = iy;
 	actor->z = iz;
 	actor->picnum = 0xffff;
-	actor->ObjectFlags |= OF_JustSpawned;
 
 	pr_class_t rngclass = bglobal.m_Thinking ? pr_botspawnmobj : pr_spawnmobj;
 
@@ -1763,14 +1779,15 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	// routine, it will not be called.
 	FState *st = actor->SpawnState;
 	actor->state = st;
-	actor->tics = st->tics;
+	actor->tics = st->GetTics();
 	actor->sprite = st->sprite.index;
-	actor->frame = st->frame;
-	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | st->fullbright;
+	actor->frame = st->GetFrame();
+	actor->renderflags = (actor->renderflags & ~RF_FULLBRIGHT) | st->GetFullbright();
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
 
 	// set subsector and/or block links
 	actor->LinkToWorld ();
+	actor->dropoffz =			// killough 11/98: for tracking dropoffs
 	actor->floorz = actor->subsector->sector->floorplane.ZatPoint (ix, iy);
 	actor->ceilingz = actor->subsector->sector->ceilingplane.ZatPoint (ix, iy);
 	actor->floorsector = actor->subsector->sector;
@@ -1796,9 +1813,10 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 			actor->z = actor->floorz;
 		}
 	}
-	else if (actor->flags2 & MF2_FLOATBOB)
+	if (actor->flags2 & MF2_FLOATBOB)
 	{
-		actor->z += actor->floorz;		// artifact z passed in as height
+		// Prime the bobber
+		actor->z += FloatBobOffsets[((int)actor/4 + level.time - 1) & 63];
 	}
 	if (actor->flags2 & MF2_FLOORCLIP)
 	{
@@ -1885,7 +1903,7 @@ void AActor::Destroy ()
 void AActor::AdjustFloorClip ()
 {
 	fixed_t oldclip = floorclip;
-	fixed_t shallowestclip = MAXINT;
+	fixed_t shallowestclip = FIXED_MAX;
 	const msecnode_t *m;
 
 	// [RH] clip based on shallowest floor player is standing on
@@ -1903,7 +1921,7 @@ void AActor::AdjustFloorClip ()
 			}
 		}
 	}
-	if (shallowestclip == MAXINT)
+	if (shallowestclip == FIXED_MAX)
 	{
 		floorclip = 0;
 	}
@@ -2151,7 +2169,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 
 		if (type > 63)
 		{
-			Printf (PRINT_HIGH, "Sound sequence %d out of range\n", type);
+			Printf ("Sound sequence %d out of range\n", type);
 		}
 		else
 		{
@@ -2205,7 +2223,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	if (i == NULL)
 	{
 		// [RH] Don't die if the map tries to spawn an unknown thing
-		Printf (PRINT_HIGH, "Unknown type %i at (%i, %i)\n",
+		Printf ("Unknown type %i at (%i, %i)\n",
 				 mthing->type,
 				 mthing->x, mthing->y);
 		i = RUNTIME_CLASS(AUnknown);
@@ -2218,7 +2236,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		if (defaults->SpawnState == NULL ||
 			sprites[defaults->SpawnState->sprite.index].numframes == 0)
 		{
-			Printf (PRINT_HIGH, "%s at (%i, %i) has no frames\n",
+			Printf ("%s at (%i, %i) has no frames\n",
 					i->Name+1, mthing->x, mthing->y);
 			i = RUNTIME_CLASS(AUnknown);
 		}
@@ -2283,8 +2301,6 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		z = ONCEILINGZ;
 	else if (info->flags2 & MF2_SPAWNFLOAT)
 		z = FLOATRANDZ;
-	else if (info->flags2 & MF2_FLOATBOB)
-		z = mthing->z << FRACBITS;
 	else
 		z = ONFLOORZ;
 
@@ -2307,7 +2323,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	mobj->tid = mthing->thingid;
 	mobj->AddToHash ();
 
-	mobj->angle = (DWORD)((mthing->angle * (QWORD)0x100000000) / 360);
+	mobj->angle = (DWORD)((mthing->angle * UCONST64(0x100000000)) / 360);
 	mobj->BeginPlay ();
 	if (mobj->ObjectFlags & OF_MassDestruction)
 	{
@@ -2346,8 +2362,8 @@ void P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool
 			FState *state = puff->state;
 			int i;
 
-			for (i = 0; i < 2 && state->nextstate; i++)
-				state = state->nextstate;
+			for (i = 0; i < 2 && state->GetNextState(); i++)
+				state = state->GetNextState();
 
 			puff->SetState (state);
 		}
@@ -2360,11 +2376,11 @@ void P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool
 
 	if (linetarget && puff->SeeSound)
 	{ // Hit thing sound
-		S_Sound (puff, CHAN_BODY, puff->SeeSound, 1, ATTN_NORM);
+		S_SoundID (puff, CHAN_BODY, puff->SeeSound, 1, ATTN_NORM);
 	}
 	else if (puff->AttackSound)
 	{
-		S_Sound (puff, CHAN_BODY, puff->AttackSound, 1, ATTN_NORM);
+		S_SoundID (puff, CHAN_BODY, puff->AttackSound, 1, ATTN_NORM);
 	}
 }
 
@@ -2663,7 +2679,7 @@ AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const TypeInfo
 	AActor *th = Spawn (type, source->x, source->y, z);
 	
 	if (th->SeeSound)
-		S_Sound (th, CHAN_VOICE, th->SeeSound, 1, ATTN_NORM);
+		S_SoundID (th, CHAN_VOICE, th->SeeSound, 1, ATTN_NORM);
 
 	th->target = source;		// where it came from
 
@@ -2732,7 +2748,7 @@ AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z,
 	mo = Spawn (type, source->x, source->y, z);
 	if (mo->SeeSound)
 	{
-		S_Sound (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
+		S_SoundID (mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
 	}
 	mo->target = source; // Originator
 	mo->angle = angle;
@@ -2796,7 +2812,7 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 
 	if (MissileActor->SeeSound)
 	{
-		S_Sound (MissileActor, CHAN_VOICE, MissileActor->SeeSound, 1, ATTN_NORM);
+		S_SoundID (MissileActor, CHAN_VOICE, MissileActor->SeeSound, 1, ATTN_NORM);
 	}
 	MissileActor->target = source;
 	MissileActor->angle = an;
@@ -2849,4 +2865,35 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 	{
 		return damage;
 	}
+}
+
+FArchive &operator<< (FArchive &arc, FSoundIndex &snd)
+{
+	if (arc.IsStoring ())
+	{
+		arc.WriteString (snd.Index ? S_sfx[snd.Index].name : NULL);
+	}
+	else
+	{
+		char *name = NULL;
+		arc << name;
+		if (name != NULL)
+		{
+			snd.Index = S_FindSound (name);
+			delete[] name;
+		}
+		else
+		{
+			snd.Index = 0;
+		}
+	}
+	return arc;
+}
+
+FArchive &operator<< (FArchive &arc, FSoundIndexWord &snd)
+{
+	FSoundIndex snd2 = { snd.Index };
+	arc << snd2;
+	snd.Index = snd2.Index;
+	return arc;
 }

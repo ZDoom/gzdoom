@@ -161,7 +161,7 @@ void M_FindResponseFile (void)
 			if (!handle)
 				I_FatalError ("\nNo such response file!");
 
-			Printf (PRINT_HIGH, "Found response file %s!\n", Args.GetArg(i) + 1);
+			Printf ("Found response file %s!\n", Args.GetArg(i) + 1);
 			fseek (handle, 0, SEEK_END);
 			size = ftell (handle);
 			fseek (handle, 0, SEEK_SET);
@@ -197,9 +197,9 @@ void M_FindResponseFile (void)
 			delete[] file;
 		
 			// DISPLAY ARGS
-			Printf (PRINT_HIGH, "%d command-line args:\n", Args.NumArgs ());
+			Printf ("%d command-line args:\n", Args.NumArgs ());
 			for (k = 1; k < Args.NumArgs (); k++)
-				Printf (PRINT_HIGH, "%s\n", Args.GetArg (k));
+				Printf ("%s\n", Args.GetArg (k));
 
 			break;
 		}
@@ -326,7 +326,7 @@ void WritePCXfile (char *filename, DCanvas *canvas, const PalEntry *palette)
 	file = fopen (filename, "wb");
 	if (file == NULL)
 	{
-		Printf (PRINT_HIGH, "Could not open %s\n", filename);
+		Printf ("Could not open %s\n", filename);
 		return;
 	}
 
@@ -469,7 +469,7 @@ void M_ScreenShot (char *filename)
 		}
 		if (!FindFreeName (lbmname, "pcx"))
 		{
-			Printf (PRINT_HIGH, "M_ScreenShot: Delete some screenshots\n");
+			Printf ("M_ScreenShot: Delete some screenshots\n");
 			return;
 		}
 		filename = autoname;
@@ -481,7 +481,7 @@ void M_ScreenShot (char *filename)
 
 	if (!*screenshot_quiet)
 	{
-		Printf (PRINT_HIGH, "Captured %s\n", lbmname);
+		Printf ("Captured %s\n", lbmname);
 	}
 }
 

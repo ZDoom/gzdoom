@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "sbar.h"
 #include "c_cvars.h"
 #include "v_video.h"
@@ -74,6 +75,8 @@ CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, crosshairhealth, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, crosshairscale, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, crosshairgrow, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+
+CVAR (Bool, idmypos, false, 0);
 
 // [RH] Amount of red flash for up to 114 damage points. Calculated by hand
 //		using a logarithmic scale and my trusty HP48G.
@@ -161,7 +164,7 @@ void FBaseStatusBar::SetScaled (bool scale)
 	{
 		ST_X = 0;
 		ST_Y = 200 - RelTop;
-		::ST_Y = (ST_Y * SCREENHEIGHT) / 200;
+		::ST_Y = SCREENHEIGHT - Scale (RelTop, SCREENHEIGHT, 200);
 		if (ScaleCopy == NULL)
 		{
 			ScaleCopy = new DSimpleCanvas (320, RelTop);
@@ -1123,6 +1126,7 @@ void FBaseStatusBar::DrawMessages (int bottom) const
 void FBaseStatusBar::Draw (EHudState state)
 {
 	float blend[4];
+	char line[64+10];
 
 	blend[0] = blend[1] = blend[2] = blend[3] = 0;
 	BlendView (blend);
@@ -1132,13 +1136,29 @@ void FBaseStatusBar::Draw (EHudState state)
 		RefreshBackground ();
 	}
 
+	if (*idmypos)
+	{ // Draw current coordinates
+		int height = screen->Font->GetHeight();
+		int y = ::ST_Y - height;
+		char labels[3] = { 'X', 'Y', 'Z' };
+		fixed_t *value;
+		int i;
+
+		value = &CPlayer->mo->z;
+		for (i = 2, value = &CPlayer->mo->z; i >= 0; y -= height, --value, --i)
+		{
+			sprintf (line, "%c: %d", labels[i], *value >> FRACBITS);
+			screen->DrawText (CR_GREEN, SCREENWIDTH - 80, y, line);
+			BorderNeedRefresh = screen->GetPageCount();
+		}
+	}
+
 	if (viewactive)
 	{
 		DrawCrosshair ();
 	}
 	else if (automapactive)
 	{
-		char line[64+10];
 		int y, i, time = level.time / TICRATE, height;
 		EColorRange highlight = (gameinfo.gametype == GAME_Doom) ?
 			CR_UNTRANSLATED : CR_YELLOW;

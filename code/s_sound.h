@@ -33,23 +33,26 @@ class AActor;
 //
 // SoundFX struct.
 //
-typedef struct sfxinfo_struct sfxinfo_t;
-
-struct sfxinfo_struct
+struct sfxinfo_t
 {
 	char		name[MAX_SNDNAME+1];	// [RH] Sound name defined in SNDINFO
 	int 		lumpnum;				// lump number of sfx
 
-	// Next five fields are for use by i_sound.cpp. Non-null data means the
+	// Next five fields are for use by i_sound.cpp. A non-null data means the
 	// sound has been loaded. The other fields are dependant on whether MIDAS
 	// or FMOD is used for sound.
 	void*		data;
 	void*		altdata;
 	long		normal;
 	long		looping;
-	bool		bHaveLoop;
+	WORD		bHaveLoop:1;
 
-	int			link;
+	WORD		bRandomHeader:1;
+	WORD		bPlayerReserve:1;
+
+	WORD		link;
+
+	enum { NO_LINK = 0xffff };
 
 	// this is checked every second to see if sound
 	// can be thrown out (if 0, then decrement, if -1,
@@ -59,8 +62,7 @@ struct sfxinfo_struct
 	unsigned int ms;					// [RH] length of sfx in milliseconds
 	unsigned int next, index;			// [RH] For hashing
 	unsigned int frequency;				// [RH] Preferred playback rate
-	unsigned int length;				// [RH] Length of the sound in samples or bytes
-										//		(FSOUND or MIDAS respectively)
+	unsigned int length;				// [RH] Length of the sound in samples
 };
 
 // the complete set of sound effects
@@ -116,6 +118,7 @@ bool S_CheckSound (int sfxid);
 #define ATTN_STATIC				3	// diminish very rapidly with distance
 #define ATTN_SURROUND			4	// like ATTN_NONE, but plays in surround sound
 
+int S_PickReplacement (int refid);
 
 // [RH] From Hexen.
 //		Prevents too many of the same sound from playing simultaneously.
@@ -169,10 +172,17 @@ void S_ParseSndInfo ();
 
 void S_HashSounds ();
 int S_FindSound (const char *logicalname);
+int S_LookupPlayerSound (const char *playerclass, int gender, const char *logicalname);
+int S_LookupPlayerSound (const char *playerclass, int gender, int refid);
 int S_FindSkinnedSound (AActor *actor, const char *logicalname);
+int S_FindSkinnedSound (AActor *actor, int refid);
 int S_FindSoundByLump (int lump);
-int S_AddSound (char *logicalname, char *lumpname);	// Add sound by lumpname
-int S_AddSoundLump (char *logicalname, int lump);	// Add sound by lump index
+int S_AddSound (const char *logicalname, const char *lumpname);	// Add sound by lumpname
+int S_AddSoundLump (const char *logicalname, int lump);	// Add sound by lump index
+int S_AddPlayerSound (const char *playerclass, const int gender, int refid, const char *lumpname);
+int S_AddPlayerSound (const char *playerclass, const int gender, int refid, int lumpnum);
+int S_AddPlayerSoundExisting (const char *playerclass, const int gender, int refid, int aliasto);
+void S_ShrinkPlayerSoundLists ();
 
 // [RH] Prints sound debug info to the screen.
 //		Modelled after Hexen's noise cheat.

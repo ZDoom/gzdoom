@@ -25,9 +25,9 @@ int clipammo[NUMAMMO] =
 
 // Clip --------------------------------------------------------------------
 
-class AClip : public AInventory
+class AClip : public AAmmo
 {
-	DECLARE_ACTOR (AClip, AInventory)
+	DECLARE_ACTOR (AClip, AAmmo)
 protected:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -62,9 +62,9 @@ AT_GAME_SET (Clip)
 
 // Clip box ----------------------------------------------------------------
 
-class AClipBox : public AInventory
+class AClipBox : public AAmmo
 {
-	DECLARE_ACTOR (AClipBox, AInventory)
+	DECLARE_ACTOR (AClipBox, AAmmo)
 protected:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -91,9 +91,9 @@ END_DEFAULTS
 
 // Rocket ------------------------------------------------------------------
 
-class ARocketAmmo : public AInventory
+class ARocketAmmo : public AAmmo
 {
-	DECLARE_ACTOR (ARocketAmmo, AInventory)
+	DECLARE_ACTOR (ARocketAmmo, AAmmo)
 protected:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -125,9 +125,9 @@ AT_GAME_SET (RocketAmmo)
 
 // Rocket box --------------------------------------------------------------
 
-class ARocketBox : public AInventory
+class ARocketBox : public AAmmo
 {
-	DECLARE_ACTOR (ARocketBox, AInventory)
+	DECLARE_ACTOR (ARocketBox, AAmmo)
 protected:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -154,9 +154,9 @@ END_DEFAULTS
 
 // Cell --------------------------------------------------------------------
 
-class ACell : public AInventory
+class ACell : public AAmmo
 {
-	DECLARE_ACTOR (ACell, AInventory)
+	DECLARE_ACTOR (ACell, AAmmo)
 protected:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -188,9 +188,9 @@ AT_GAME_SET (Cell)
 
 // Cell pack ---------------------------------------------------------------
 
-class ACellPack : public AInventory
+class ACellPack : public AAmmo
 {
-	DECLARE_ACTOR (ACellPack, AInventory)
+	DECLARE_ACTOR (ACellPack, AAmmo)
 protected:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -217,9 +217,9 @@ END_DEFAULTS
 
 // Shells ------------------------------------------------------------------
 
-class AShell : public AInventory
+class AShell : public AAmmo
 {
-	DECLARE_ACTOR (AShell, AInventory)
+	DECLARE_ACTOR (AShell, AAmmo)
 protected:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -251,9 +251,9 @@ AT_GAME_SET (Shell)
 
 // Shell box ---------------------------------------------------------------
 
-class AShellBox : public AInventory
+class AShellBox : public AAmmo
 {
-	DECLARE_ACTOR (AShellBox, AInventory)
+	DECLARE_ACTOR (AShellBox, AAmmo)
 protected:
 	virtual bool TryPickup (AActor *toucher)
 	{

@@ -103,7 +103,7 @@ IMPLEMENT_ACTOR (ABishop, Hexen, 114, 19)
 	PROP_ActiveSound ("BishopActive")
 END_DEFAULTS
 
-void ABishop::GetExplodeParms (int &damage, fixed_t &distance, bool &hurtSource)
+void ABishop::GetExplodeParms (int &damage, int &distance, bool &hurtSource)
 {
 	damage = 25 + (P_Random() & 15);
 }
@@ -238,7 +238,7 @@ void A_BishopAttack (AActor *actor)
 	{
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
 		P_DamageMobj (actor->target, actor, actor, HITDICE(4));

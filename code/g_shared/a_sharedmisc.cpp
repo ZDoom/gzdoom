@@ -40,7 +40,7 @@ FState ABlood::States[] =
 #define S_HBLOOD (S_DBLOOD+3)
 	S_NORMAL (BLOD, 'C',	8, NULL							, &States[S_HBLOOD+1]),
 	S_NORMAL (BLOD, 'B',	8, NULL							, &States[S_HBLOOD+2]),
-	S_NORMAL (BLOD, 'A',	8, NULL,						, NULL),
+	S_NORMAL (BLOD, 'A',	8, NULL							, NULL)
 };
 
 IMPLEMENT_ACTOR (ABlood, Any, -1, 130)

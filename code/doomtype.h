@@ -24,6 +24,7 @@
 #ifndef __DOOMTYPE__
 #define __DOOMTYPE__
 
+#include <limits.h>
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__
@@ -31,13 +32,14 @@
 #if !defined(_WINDEF_) && !defined(__wtypes_h__)
 typedef int BOOL;
 #endif
-#ifndef __cplusplus
-#define false (0)
-#define true (1)
-#endif
 typedef unsigned char byte;
 #endif
 
+#ifdef __GNUC__
+#define GCCPRINTF(stri,firstargi)	__attribute__((format(printf,stri,firstargi)))
+#else
+#define GCCPRINTF(a,b)
+#endif
 
 
 #if defined(_MSC_VER) || defined(__WATCOMC__)
@@ -52,57 +54,9 @@ typedef unsigned char byte;
 #define NOVTABLE
 #endif
 
-// Predefined with some OS.
-#ifndef _MSC_VER
-#include <values.h>
-#endif
-
-#if defined(__GNUC__) && !defined(OSF1)
+#if defined(__GNUC__)
 #define __int64 long long
 #endif
-
-#ifdef OSF1
-#define __int64 long
-#endif
-
-#ifndef MAXCHAR
-#define MAXCHAR 		((char)0x7f)
-#endif
-#ifndef MAXSHORT
-#define MAXSHORT		((short)0x7fff)
-#endif
-
-// Max pos 32-bit int.
-#ifndef MAXINT
-#define MAXINT			((int)0x7fffffff)
-#endif
-#ifndef MAXLONG
-#ifndef ALPHA
-#define MAXLONG 		((long)0x7fffffff)
-#else
-#define MAXLONG			((long)0x7fffffffffffffff)
-#endif
-#endif
-
-#ifndef MINCHAR
-#define MINCHAR 		((char)0x80)
-#endif
-#ifndef MINSHORT
-#define MINSHORT		((short)0x8000)
-#endif
-
-// Max negative 32-bit integer.
-#ifndef MININT
-#define MININT			((int)0x80000000)
-#endif
-#ifndef MINLONG
-#ifndef ALPHA
-#define MINLONG 		((long)0x80000000)
-#else
-#define MINLONG			((long)0x8000000000000000)
-#endif
-#endif
-
 
 typedef unsigned char		BYTE;
 typedef signed char			SBYTE;
@@ -110,18 +64,34 @@ typedef signed char			SBYTE;
 typedef unsigned short		WORD;
 typedef signed short		SWORD;
 
-#ifdef ALPHA
-typedef unsigned int		DWORD;
-typedef signed int			SDWORD;
-#else
 typedef unsigned long		DWORD;
 typedef signed long			SDWORD;
-#endif
 
 typedef unsigned __int64	QWORD;
 typedef signed __int64		SQWORD;
 
+// a 64-bit constant
+#ifdef __GNUC__
+#define CONST64(v) (v##LL)
+#define UCONST64(v) (v##ULL)
+#else
+#define CONST64(v) ((SQWORD)(v))
+#define UCONST64(v) ((QWORD)(v))
+#endif
+
 typedef DWORD				BITFIELD;
+
+//
+// Fixed point, 32bit as 16.16.
+//
+#define FRACBITS			16
+#define FRACUNIT			(1<<FRACBITS)
+
+typedef SDWORD				fixed_t;
+typedef DWORD				dsfixed_t;		// fixedpt used by span drawer
+
+#define FIXED_MAX			0x7fffffff
+#define FIXED_MIN			0x80000000
 
 #ifndef NOASM
 #ifndef USEASM
@@ -133,12 +103,12 @@ typedef DWORD				BITFIELD;
 #endif
 #endif
 
-
-
 // [RH] This gets used all over; define it here:
-int STACK_ARGS Printf (int printlevel, const char *, ...);
+int STACK_ARGS Printf (int printlevel, const char *, ...) GCCPRINTF(2,3);
+int STACK_ARGS Printf (const char *, ...) GCCPRINTF(1,2);
+
 // [RH] Same here:
-int STACK_ARGS DPrintf (const char *, ...);
+int STACK_ARGS DPrintf (const char *, ...) GCCPRINTF(1,2);
 
 // game print flags
 #define	PRINT_LOW			0		// pickup messages
@@ -146,18 +116,5 @@ int STACK_ARGS DPrintf (const char *, ...);
 #define	PRINT_HIGH			2		// critical messages
 #define	PRINT_CHAT			3		// chat messages
 #define PRINT_TEAMCHAT		4		// chat messages from a teammate
-
-#define MIN(a,b)	((a)<(b)?(a):(b))
-#define MAX(a,b)	((a)>(b)?(a):(b))
-
-template<class T> T clamp (const T in, const T min, const T max)
-{
-	return in <= min ? min : in >= max ? max : in;
-}
-
-template<class T> void swap (T &a, T &b)
-{
-	T temp = a; a = b; b = temp;
-}
 
 #endif

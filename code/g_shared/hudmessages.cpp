@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "doomdef.h"
 #include "sbar.h"
 #include "c_cvars.h"
@@ -64,7 +65,7 @@ void FHUDMessage::ResetText (const char *text)
 		for (; Lines[NumLines].width != -1; NumLines++)
 		{
 			Height += SmallFont->GetHeight ();
-			Width = MAX (Width, Lines[NumLines].width);
+			Width = MAX<int> (Width, Lines[NumLines].width);
 		}
 	}
 }

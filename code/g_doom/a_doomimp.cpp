@@ -86,9 +86,9 @@ IMPLEMENT_ACTOR (ADoomImp, Doom, 3001, 5)
 	PROP_XDeathState (S_TROO_XDIE)
 	PROP_RaiseState (S_TROO_RAISE)
 
-	PROP_SeeSound ("imp/sight1")
+	PROP_SeeSound ("imp/sight")
 	PROP_PainSound ("imp/pain")
-	PROP_DeathSound ("imp/death1")
+	PROP_DeathSound ("imp/death")
 	PROP_ActiveSound ("imp/active")
 END_DEFAULTS
 
@@ -141,7 +141,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (ADoomImpBall, speed)
 {
-	SimpleSpeedSetter<ADoomImpBall, 10*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (ADoomImpBall, 10*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 //

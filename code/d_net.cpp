@@ -52,8 +52,8 @@
 #define NCMD_CHECKSUM			0x0fffffff
 
 extern byte		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
-extern char		savedescription[32];
-extern int		savegameslot;
+extern char		savedescription[SAVESTRINGSIZE];
+extern char		*savegamefile;
 
 doomcom_t*		doomcom;		
 doomdata_t* 	netbuffer;		// points inside doomcom
@@ -483,13 +483,13 @@ void GetPackets (void)
 
 			if (*deathmatch)
 			{
-				Printf (PRINT_HIGH, "%s left the game with %d frags\n",
+				Printf ("%s left the game with %d frags\n",
 						 players[netconsole].userinfo.netname,
 						 players[netconsole].fragcount);
 			}
 			else
 			{
-				Printf (PRINT_HIGH, "%s left the game\n", players[netconsole].userinfo.netname);
+				Printf ("%s left the game\n", players[netconsole].userinfo.netname);
 			}
 
 			// [RH] Make the player disappear
@@ -499,7 +499,7 @@ void GetPackets (void)
 			if (netconsole == Net_Arbitrator)
 			{
 				bglobal.RemoveAllBots (true);
-				Printf (PRINT_HIGH, "Removed all bots\n");
+				Printf ("Removed all bots\n");
 
 				// Pick a new network arbitrator
 				for (int i = 0; i < MAXPLAYERS; i++)
@@ -507,7 +507,7 @@ void GetPackets (void)
 					if (playeringame[i] && !players[i].isbot)
 					{
 						Net_Arbitrator = i;
-						Printf (PRINT_HIGH, "%s is the new arbitrator\n",
+						Printf ("%s is the new arbitrator\n",
 							players[i].userinfo.netname);
 						break;
 					}
@@ -656,7 +656,7 @@ void NetUpdate (void)
 		if (maketic - gameticdiv >= BACKUPTICS/2-1)
 			break;			// can't hold any more
 		
-		//Printf (PRINT_HIGH, "mk:%i ",maketic);
+		//Printf ("mk:%i ",maketic);
 		int block = maketic%BACKUPTICS;
 		G_BuildTiccmd (&localcmds[block]);
 		//Added by MC: For some of that bot stuff. The main bot function.
@@ -764,7 +764,7 @@ BOOL CheckAbort (void)
 {
 	event_t *ev;
 
-	Printf (PRINT_HIGH, "");	// [RH] Give the console a chance to redraw itself
+	Printf ("");	// [RH] Give the console a chance to redraw itself
 	// This WaitForTic is to avoid flooding the network with packets on startup.
 	I_WaitForTic (I_GetTime () + TICRATE/4);
 	I_StartTic ();
@@ -802,7 +802,7 @@ void D_ArbitrateNetStart (void)
 	nodesdetected[0] = 1;	// Detect ourselves
 
 	// [RH] Rewrote this loop based on Doom Legacy 1.11's code.
-	Printf (PRINT_HIGH, "Waiting for %d more player%s...\n",
+	Printf ("Waiting for %d more player%s...\n",
 		doomcom->numnodes - 1, (doomcom->numnodes == 2) ? "" : "s");
 	do 
 	{
@@ -848,7 +848,7 @@ void D_ArbitrateNetStart (void)
 
 							D_ReadUserInfoStrings (netbuffer->player, &stream, false);
 
-							Printf (PRINT_HIGH, "%s connected (node %d, player %d)\n",
+							Printf ("%s connected (node %d, player %d)\n",
 									players[netbuffer->player].userinfo.netname,
 									doomcom->remotenode,
 									netbuffer->player);
@@ -942,7 +942,7 @@ void D_CheckNetGame (void)
 	for (i = 0; i < doomcom->numnodes; i++)
 		nodeingame[i] = true;
 
-	Printf (PRINT_HIGH, "player %i of %i (%i nodes)\n",
+	Printf ("player %i of %i (%i nodes)\n",
 			consoleplayer+1, doomcom->numplayers, doomcom->numnodes);
 }
 
@@ -996,7 +996,7 @@ void TryRunTics (void)
 	// get available tics
 	NetUpdate ();
 
-	lowtic = MAXINT;
+	lowtic = INT_MAX;
 	numplaying = 0;
 	for (i=0 ; i<doomcom->numnodes ; i++)
 	{
@@ -1065,7 +1065,7 @@ void TryRunTics (void)
 	while (lowtic < gametic/ticdup + counts)
 	{
 		NetUpdate ();
-		lowtic = MAXINT;
+		lowtic = INT_MAX;
 
 		for (i=0 ; i<doomcom->numnodes ; i++)
 			if (nodeingame[i] && nettics[i] < lowtic)
@@ -1235,7 +1235,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 	case DEM_PRINT:
 		s = ReadString (stream);
-		Printf (PRINT_HIGH, s);
+		Printf (s);
 		break;
 
 	case DEM_CENTERPRINT:
@@ -1281,7 +1281,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 	case DEM_KILLBOTS:
 		bglobal.RemoveAllBots (true);
-		Printf (PRINT_HIGH, "Removed all bots\n");
+		Printf ("Removed all bots\n");
 		break;
 
 	case DEM_INVSEL:
@@ -1412,9 +1412,10 @@ void Net_DoCommand (int type, byte **stream, int player)
 		break;
 
 	case DEM_SAVEGAME:
-		if (!savedescription[0])
-			strcpy (savedescription, "NET GAME");
-		savegameslot = ReadByte (stream);
+		savegamefile = ReadString (stream);
+		s = ReadString (stream);
+		memset (savedescription, 0, sizeof(savedescription));
+		strcpy (savedescription, s);
 		gameaction = ga_savegame;
 		break;
 
@@ -1453,10 +1454,14 @@ void Net_SkipCommand (int type, byte **stream)
 		case DEM_DROPPLAYER:
 		case DEM_INVSEL:
 		case DEM_INVUSE:
-		case DEM_SAVEGAME:
 		case DEM_WEAPSEL:
 		case DEM_WEAPSLOT:
 			skip = 1;
+			break;
+
+		case DEM_SAVEGAME:
+			skip = strlen ((char *)(*stream)) + 1;
+			skip += strlen ((char *)(*stream) + skip) + 1;
 			break;
 
 		case DEM_SINFCHANGED:
@@ -1490,6 +1495,6 @@ CCMD (pings)
 
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (playeringame[i])
-			Printf (PRINT_HIGH, "% 4u %s\n", currrecvtime[i] - lastrecvtime[i],
+			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],
 					players[i].userinfo.netname);
 }

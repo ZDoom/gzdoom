@@ -126,7 +126,7 @@ CCMD (dumpclasses)
 		root = TypeInfo::IFindType (argv[1]);
 		if (root == NULL)
 		{
-			Printf (PRINT_HIGH, "Class '%s' not found\n", argv[1]);
+			Printf ("Class '%s' not found\n", argv[1]);
 			return;
 		}
 		if (stricmp (argv[1], "Actor") == 0)
@@ -150,7 +150,7 @@ CCMD (dumpclasses)
 			 (showall || TypeInfo::m_Types[i] == root ||
 			  TypeInfo::m_Types[i]->ActorInfo != root->ActorInfo)))
 		{
-			Printf (PRINT_HIGH, " %s\n", TypeInfo::m_Types[i]->Name + 1);
+			Printf (" %s\n", TypeInfo::m_Types[i]->Name + 1);
 			shown++;
 		}
 		else
@@ -158,7 +158,7 @@ CCMD (dumpclasses)
 			omitted++;
 		}
 	}
-	Printf (PRINT_HIGH, "%d classes shown, %d omitted\n", shown, omitted);
+	Printf ("%d classes shown, %d omitted\n", shown, omitted);
 }
 
 TArray<DObject *> DObject::Objects;
@@ -228,7 +228,7 @@ void DObject::EndFrame ()
 	if (ToDestroy.Size ())
 	{
 		DestroyScan ();
-		//Printf (PRINT_HIGH, "Destroyed %d objects\n", ToDestroy.Size());
+		//Printf ("Destroyed %d objects\n", ToDestroy.Size());
 
 		DObject *obj;
 		while (ToDestroy.Pop (obj))
@@ -274,7 +274,7 @@ void DObject::DestroyScan (DObject *obj)
 				const size_t *offsets = info->Pointers;
 				if (offsets)
 				{
-					while (*offsets != ~0)
+					while (*offsets != (size_t)~0)
 					{
 						if (*((DObject **)(((byte *)current) + *offsets)) == obj)
 						{
@@ -331,7 +331,7 @@ void DObject::DestroyScan ()
 				const size_t *offsets = info->Pointers;
 				if (offsets)
 				{
-					while (*offsets != ~0)
+					while (*offsets != (size_t)~0)
 					{
 						j = destroycount;
 						do

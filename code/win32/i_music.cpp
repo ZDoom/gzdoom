@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
-#include <stdexcpt.h>
 #include <ctype.h>
 #include <assert.h>
 
@@ -178,7 +177,7 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 	if ((*var >= (signed)nummididevices) || (*var < -1.0f))
 	{
-		Printf (PRINT_HIGH, "ID out of range. Using MIDI mapper.\n");
+		Printf ("ID out of range. Using MIDI mapper.\n");
 		var = -1;
 		return;
 	}
@@ -254,11 +253,11 @@ CCMD (snd_listmididevices)
 
 	if (nummididevices)
 	{
-		Printf (PRINT_HIGH, "-1. MIDI Mapper\n");
+		Printf ("-1. MIDI Mapper\n");
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "No MIDI devices installed.\n");
+		Printf ("No MIDI devices installed.\n");
 		return;
 	}
 
@@ -272,7 +271,7 @@ CCMD (snd_listmididevices)
 		else if (res != MMSYSERR_NOERROR)
 			continue;
 
-		Printf (PRINT_HIGH, "% 2d. %s\n", id, caps.szPname);
+		Printf ("% 2d. %s\n", id, caps.szPname);
 	}
 }
 
@@ -280,7 +279,7 @@ void I_InitMusic (void)
 {
 	static bool setatterm = false;
 
-	Printf (PRINT_HIGH, "I_InitMusic\n");
+	Printf ("I_InitMusic\n");
 	
 	nummididevices = midiOutGetNumDevs ();
 	nummididevicesset = true;
@@ -293,7 +292,7 @@ void I_InitMusic (void)
 	{
 		if ((BufferReturnEvent = CreateEvent (NULL, FALSE, FALSE, NULL)) == NULL)
 		{
-			Printf (PRINT_HIGH, "Could not create MIDI callback event.\nMIDI music will be disabled.\n");
+			Printf ("Could not create MIDI callback event.\nMIDI music will be disabled.\n");
 			nomusic = true;
 		}
 	}
@@ -331,7 +330,7 @@ void MIDISong::MCIError (MMRESULT res, const char *descr)
 
 	mciGetErrorString (res, errorStr, 255);
 	Printf_Bold ("An error occured while %s:\n", descr);
-	Printf (PRINT_HIGH, "%s\n", errorStr);
+	Printf ("%s\n", errorStr);
 }
 
 void MIDISong::UnprepareHeaders ()
@@ -572,7 +571,7 @@ void MIDISong::Play (bool looping)
 		MCIError (res, "opening MIDI stream");
 		if (*snd_mididevice != -1)
 		{
-			Printf (PRINT_HIGH, "Trying again with MIDI mapper\n");
+			Printf ("Trying again with MIDI mapper\n");
 			snd_mididevice = -1;
 		}
 		else

@@ -97,7 +97,7 @@ void FCompressedFile::PostOpen ()
 			m_File = NULL;
 			if (sig[0] == LZOSig[0] && sig[1] == LZOSig[1] && sig[2] == LZOSig[2] && sig[3] == LZOSig[3])
 			{
-				Printf (PRINT_HIGH, "Compressed files from older ZDooms are not supported.\n");
+				Printf ("Compressed files from older ZDooms are not supported.\n");
 			}
 		}
 		else
@@ -246,7 +246,7 @@ void FCompressedFile::Implode ()
 		} while (r == Z_BUF_ERROR);
 
 		// If the data could not be compressed, store it as-is.
-		if (r != Z_OK || outlen > len)
+		if (r != Z_OK || outlen >= len)
 		{
 			DPrintf ("cfile could not be deflated\n");
 			outlen = 0;
@@ -745,7 +745,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 			id[0] = NULL_OBJ;
 			Write (id, 1);
 		}
-		else if (m_TypeMap[type->TypeIndex].toArchive == ~0)
+		else if (m_TypeMap[type->TypeIndex].toArchive == TypeMap::NO_INDEX)
 		{
 			// No instances of this class have been written out yet.
 			// Write out the class, then write out the object. If this
@@ -778,7 +778,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 			// controlled actor, remember that.
 			DWORD index = FindObjectIndex (obj);
 
-			if (index == ~0)
+			if (index == TypeMap::NO_INDEX)
 			{
 				if (obj->IsKindOf (RUNTIME_CLASS (AActor)) &&
 					(player = static_cast<AActor *>(obj)->player) &&
@@ -895,7 +895,7 @@ DWORD FArchive::WriteClass (const TypeInfo *info)
 		I_Error ("Too many unique classes have been written.\nOnly %u were registered\n",
 			TypeInfo::m_NumTypes);
 	}
-	if (m_TypeMap[info->TypeIndex].toArchive != ~0)
+	if (m_TypeMap[info->TypeIndex].toArchive != TypeMap::NO_INDEX)
 	{
 		I_Error ("Attempt to write '%s' twice.\n", info->Name);
 	}
@@ -996,7 +996,7 @@ DWORD FArchive::HashObject (const DObject *obj) const
 DWORD FArchive::FindObjectIndex (const DObject *obj) const
 {
 	size_t index = m_ObjectHash[HashObject (obj)];
-	while (index != ~0 && m_ObjectMap[index].object != obj)
+	while (index != TypeMap::NO_INDEX && m_ObjectMap[index].object != obj)
 	{
 		index = m_ObjectMap[index].hashNext;
 	}
@@ -1014,7 +1014,7 @@ void FArchive::UserWriteClass (const TypeInfo *type)
 	}
 	else
 	{
-		if (m_TypeMap[type->TypeIndex].toArchive == ~0)
+		if (m_TypeMap[type->TypeIndex].toArchive == TypeMap::NO_INDEX)
 		{
 			id = 1;
 			Write (&id, 1);

@@ -81,6 +81,13 @@ IMPLEMENT_ACTOR (ADemon, Doom, 3002, 8)
 	PROP_ActiveSound ("demon/active")
 END_DEFAULTS
 
+static void SetTics (FState *state, int count)
+{
+	state->Tics = (count+1) & 255;
+	state->Misc1 = state->GetMisc1() | ((count+1)>>8);
+	state->Frame = (state->Frame & ~SF_BIGTIC) | (count > 254 ? SF_BIGTIC : 0);
+}
+
 AT_GAME_SET (Demon)
 {
 	static bool isFast = false;
@@ -90,13 +97,13 @@ AT_GAME_SET (Demon)
 	{
 		isFast = true;
 		for (i = S_SARG_RUN; i < S_SARG_PAIN; i++)
-			ADemon::States[i].tics >>= 1;
+			SetTics (&ADemon::States[i], ADemon::States[i].GetTics() >> 1);
 	}
 	else if (GameSpeed == SPEED_Normal && isFast)
 	{
 		isFast = false;
 		for (i = S_SARG_RUN; i < S_SARG_PAIN; i++)
-			ADemon::States[i].tics <<= 1;
+			SetTics (&ADemon::States[i], ADemon::States[i].GetTics() << 1);
 	}
 }
 
@@ -125,6 +132,12 @@ IMPLEMENT_STATELESS_ACTOR (ASpectre, Doom, 58, 9)
 	PROP_FlagsSet (MF_SHADOW)
 	PROP_RenderStyle (STYLE_OptFuzzy)
 	PROP_Alpha (FRACUNIT/5)
+
+	PROP_SeeSound ("spectre/sight")
+	PROP_AttackSound ("spectre/melee")
+	PROP_PainSound ("spectre/pain")
+	PROP_DeathSound ("spectre/death")
+	PROP_ActiveSound ("spectre/active")
 END_DEFAULTS
 
 void A_SargAttack (AActor *self)

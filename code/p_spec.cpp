@@ -35,6 +35,7 @@
 
 #include <stdlib.h>
 
+#include "templates.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "gstrings.h"
@@ -397,7 +398,7 @@ BOOL CheckIfExitIsGood (AActor *self)
 		return false;
 	}
 	if (*deathmatch)
-		Printf (PRINT_HIGH, "%s exited the level.\n", self->player->userinfo.netname);
+		Printf ("%s exited the level.\n", self->player->userinfo.netname);
 	return true;
 }
 
@@ -566,18 +567,14 @@ BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote)
 	// so print an appropriate message and grunt.
 	if (p->mo == players[consoleplayer].camera)
 	{
-		int keytrysound = S_FindSound ("misc/keytry");
-		if (keytrysound > -1)
-			S_SoundID (p->mo, CHAN_VOICE, keytrysound, 1, ATTN_NORM);
-		else
-			S_Sound (p->mo, CHAN_VOICE, "*usefail", 1, ATTN_NORM);
+		S_Sound (p->mo, CHAN_VOICE, "misc/keytry", 1, ATTN_NORM);
 		if (gameinfo.gametype == GAME_Heretic)
 		{
 			if (msg == PD_REDK)
 				msg = TXT_NEEDGREENKEY;
 			else if (msg == PD_BLUEK)
 				msg = TXT_NEEDBLUEKEY;
-			else if (msg = PD_YELLOWK)
+			else if (msg == PD_YELLOWK)
 				msg = TXT_NEEDYELLOWKEY;
 		}
 		C_MidPrint (GStrings(msg));
@@ -907,7 +904,7 @@ void P_UpdateSpecials ()
 	{
 		if (level.time >= (int)(*timelimit * TICRATE * 60))
 		{
-			Printf (PRINT_HIGH, "%s\n", GStrings(TXT_TIMELIMIT));
+			Printf ("%s\n", GStrings(TXT_TIMELIMIT));
 			G_ExitLevel(0);
 		}
 	}

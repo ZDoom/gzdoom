@@ -63,7 +63,7 @@ protected:
 	UINT DeviceID;
 };
 
-#define NOT_INITED		0x80000000
+#define NOT_INITED		((signed)0x80000000)
 
 static FCDThread *CDThread;
 static int Inited = NOT_INITED;
@@ -246,19 +246,19 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 			return TRUE;
 		}
 
-		mciSendCommand (DeviceID, MCI_CLOSE, 0, NULL);
+		mciSendCommand (DeviceID, MCI_CLOSE, 0, 0);
 		return FALSE;
 
 	case CDM_Close:
 		Dispatch (CDM_Stop);
-		mciSendCommand (DeviceID, MCI_CLOSE, 0, NULL);
+		mciSendCommand (DeviceID, MCI_CLOSE, 0, 0);
 		DeviceID = 0;
 		return 0;
 
 	case CDM_Play:
 		if (!IsTrackAudio (parm1))
 		{
-			//Printf (PRINT_HIGH, "Track %d is not audio\n", track);
+			//Printf ("Track %d is not audio\n", track);
 			return FALSE;
 		}
 
@@ -322,16 +322,16 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 			(DWORD)&playParms);
 
 	case CDM_Stop:
-		return mciSendCommand (DeviceID, MCI_STOP, 0, NULL);
+		return mciSendCommand (DeviceID, MCI_STOP, 0, 0);
 
 	case CDM_Eject:
-		return mciSendCommand (DeviceID, MCI_SET, MCI_SET_DOOR_OPEN, NULL);
+		return mciSendCommand (DeviceID, MCI_SET, MCI_SET_DOOR_OPEN, 0);
 
 	case CDM_UnEject:
-		return mciSendCommand (DeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, NULL);
+		return mciSendCommand (DeviceID, MCI_SET, MCI_SET_DOOR_CLOSED, 0);
 
 	case CDM_Pause:
-		return mciSendCommand (DeviceID, MCI_PAUSE, 0, NULL);
+		return mciSendCommand (DeviceID, MCI_PAUSE, 0, 0);
 
 	case CDM_Resume:
 		playParms.dwTo = PlayTo;

@@ -310,7 +310,7 @@ AActor *DCajunMaster::Choose_Mate (AActor *bot)
 	}
 
 	target = NULL;
-	closest_dist = MAXINT;
+	closest_dist = FIXED_MAX;
 	if (*bot_observer)
 		observer = players[consoleplayer].mo;
 	else
@@ -385,7 +385,7 @@ AActor *DCajunMaster::Find_enemy (AActor *bot)
 	bot->player->allround = false;
 
 	target = NULL;
-	closest_dist = MAXINT;
+	closest_dist = FIXED_MAX;
 	if (*bot_observer)
 		observer = players[consoleplayer].mo;
 	else

@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 
+#include "templates.h"
 #include "m_alloc.h"
 #include "doomdef.h"
 #include "i_system.h"
@@ -145,7 +146,7 @@ void R_DrawColumnP_C (void)
 	if (dc_x >= screen->width
 		|| dc_yl < 0
 		|| dc_yh >= screen->height) {
-		Printf (PRINT_HIGH, "R_DrawColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
+		Printf ("R_DrawColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
 		return;
 	}
 #endif
@@ -206,7 +207,7 @@ void R_StretchColumnP_C (void)
 	if (dc_x >= screen->width
 		|| dc_yl < 0
 		|| dc_yh >= screen->height) {
-		Printf (PRINT_HIGH, "R_StretchColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
+		Printf ("R_StretchColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
 		return;
 	}
 #endif
@@ -246,7 +247,7 @@ void R_FillColumnP (void)
 	if (dc_x >= screen->width
 		|| dc_yl < 0
 		|| dc_yh >= screen->height) {
-		Printf (PRINT_HIGH, "R_StretchColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
+		Printf ("R_StretchColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
 		return;
 	}
 #endif
@@ -620,7 +621,7 @@ void R_DrawShadedColumnP_C (void)
 	if (dc_x >= screen->width
 		|| dc_yl < 0
 		|| dc_yh >= screen->height) {
-		Printf (PRINT_HIGH, "R_DrawShadedColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
+		Printf ("R_DrawShadedColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
 		return;
 	}
 #endif
@@ -922,7 +923,7 @@ void R_InitTranslationTables ()
 		for (j = 0; j < 256; j++)
 		{
 			BYTE v = ((j * a) + 256) >> 10;
-			translationtables[j+(MAXPLAYERS*2+3+i)*256] = MIN (v, 64);
+			translationtables[j+(MAXPLAYERS*2+3+i)*256] = MIN<BYTE> (v, 64);
 		}
 	}
 }
@@ -1008,28 +1009,17 @@ void R_BuildPlayerTranslation (int player, int color)
 }
 
 //
-// R_InitBuffer 
-// Creates lookup tables that avoid
-//	multiplies and other hassles
-//	for getting the framebuffer address
-//	of a pixel to draw.
+// R_InitBuffer
+//
+// Creates lookup tables that avoid multiplies and other hassles
+// for getting the framebuffer address of a pixel to draw.
 //
 void R_InitBuffer (int width, int height)
 {
-	int i;
-
-	// Handle resize,
-	//	e.g. smaller view windows
-	//	with border and/or status bar.
-	viewwindowx = (SCREENWIDTH-(width<<detailxshift))>>1;
-
-	// Column offset. For windows
-	for (i = 0; i < width; i++)
+	// Column offset for windows. (This should go away.)
+	// [Row offsets are calculated in R_SetupBuffer()]
+	for (int i = 0; i < width; i++)
 		columnofs[i] = viewwindowx + (i << detailxshift);
-
-	// Same with base row offset.
-	viewwindowy = ((width<<detailxshift) == SCREENWIDTH) ?
-		0 : (ST_Y-(height<<detailyshift)) >> 1;
 }
 
 
@@ -1062,13 +1052,10 @@ void R_DrawBorder (int x1, int y1, int x2, int y2)
 int BorderNeedRefresh;
 
 void V_MarkRect (int x, int y, int width, int height);
+void M_DrawFrame (int x, int y, int width, int height);
 
 void R_DrawViewBorder (void)
 {
-	int x, y;
-	int offset, size;
-	gameborder_t *border;
-
 	// [RH] Redraw the status bar if SCREENWIDTH > status bar width.
 	// Will draw borders around itself, too.
 	if (SCREENWIDTH > 320)
@@ -1081,42 +1068,12 @@ void R_DrawViewBorder (void)
 		return;
 	}
 
-	border = gameinfo.border;
-	offset = border->offset;
-	size = border->size;
-
 	R_DrawBorder (0, 0, SCREENWIDTH, viewwindowy);
 	R_DrawBorder (0, viewwindowy, viewwindowx, realviewheight + viewwindowy);
 	R_DrawBorder (viewwindowx + realviewwidth, viewwindowy, SCREENWIDTH, realviewheight + viewwindowy);
 	R_DrawBorder (0, viewwindowy + realviewheight, SCREENWIDTH, ST_Y);
 
-	for (x = viewwindowx; x < viewwindowx + realviewwidth; x += size)
-	{
-		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->t, PU_CACHE),
-			x, viewwindowy - offset);
-		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->b, PU_CACHE),
-			x, viewwindowy + realviewheight);
-	}
-	for (y = viewwindowy; y < viewwindowy + realviewheight; y += size)
-	{
-		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->l, PU_CACHE),
-			viewwindowx - offset, y);
-		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->r, PU_CACHE),
-			viewwindowx + realviewwidth, y);
-	}
-	// Draw beveled edge.
-	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->tl, PU_CACHE),
-		viewwindowx-offset, viewwindowy-offset);
-	
-	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->tr, PU_CACHE),
-		viewwindowx+realviewwidth, viewwindowy-offset);
-	
-	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->bl, PU_CACHE),
-		viewwindowx-offset, viewwindowy+realviewheight);
-	
-	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->br, PU_CACHE),
-		viewwindowx+realviewwidth, viewwindowy+realviewheight);
-
+	M_DrawFrame (viewwindowx, viewwindowy, realviewwidth, realviewheight);
 	V_MarkRect (0, 0, SCREENWIDTH, ST_Y);
 }
 
@@ -1265,6 +1222,7 @@ void R_InitColumnDrawers ()
 // [RH] Choose column drawers in a single place
 EXTERN_CVAR (Bool, r_drawfuzz)
 EXTERN_CVAR (Float, transsouls)
+CVAR (Bool, r_drawtrans, true, 0)
 
 static BYTE *basecolormapsave;
 
@@ -1276,7 +1234,7 @@ static BYTE *basecolormapsave;
 
 static bool R_SetBlendFunc (fixed_t fglevel, fixed_t bglevel)
 {
-	if (fglevel == BL_ONE && bglevel == BL_ZERO)
+	if (!*r_drawtrans || (fglevel == BL_ONE && bglevel == BL_ZERO))
 	{
 		if (dc_translation == NULL)
 		{
@@ -1347,7 +1305,7 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, BYTE *translation, DWORD c
 
 	if (style == STYLE_OptFuzzy)
 	{
-		style = *r_drawfuzz ? STYLE_Fuzzy : STYLE_Translucent;
+		style = (*r_drawfuzz || !*r_drawtrans) ? STYLE_Fuzzy : STYLE_Translucent;
 	}
 	else if (style == STYLE_SoulTrans)
 	{
@@ -1355,7 +1313,7 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, BYTE *translation, DWORD c
 		alpha = (fixed_t)(FRACUNIT * *transsouls);
 	}
 
-	alpha = clamp (alpha, 0, (fixed_t)FRACUNIT);
+	alpha = clamp<fixed_t> (alpha, 0, FRACUNIT);
 
 	dc_translation = translation;
 	basecolormapsave = basecolormap;

@@ -335,7 +335,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 				char buff[256];
 
 				player->fragcount--;
-				if (player->spreecount >= 5 && *cl_showsprees)
+				if (*deathmatch && player->spreecount >= 5 && *cl_showsprees)
 				{
 					SexMessage (GStrings(SPREEKILLSELF), buff,
 						player->userinfo.gender, player->userinfo.netname,
@@ -348,7 +348,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			{
 				++source->player->fragcount;
 				++source->player->spreecount;
-				if (*cl_showsprees)
+				if (*deathmatch && *cl_showsprees)
 				{
 					const char *spreemsg;
 					char buff[256];
@@ -385,7 +385,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					else if (spreemsg != NULL)
 					{
 						SexMessage (spreemsg, buff, player->userinfo.gender,
-							player->userinfo.netname, player->userinfo.netname);
+							player->userinfo.netname, source->player->userinfo.netname);
 						StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
 							1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
 					}
@@ -401,7 +401,9 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					source->player->multicount = 1;
 				}
 
-				if (source->player->mo == players[consoleplayer].camera && *cl_showmultikills)
+				if (*deathmatch &&
+					source->player->mo == players[consoleplayer].camera &&
+					*cl_showmultikills)
 				{
 					const char *multimsg;
 
@@ -425,7 +427,11 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					}
 					if (multimsg != NULL)
 					{
-						StatusBar->AttachMessage (new FHUDMessageFadeOut (multimsg,
+						char buff[256];
+
+						SexMessage (multimsg, buff, player->userinfo.gender,
+							player->userinfo.netname, source->player->userinfo.netname);
+						StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
 							1.5f, 0.8f, CR_RED, 3.f, 0.5f), 'MKIL');
 					}
 				}
@@ -436,7 +442,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			if (*deathmatch && *fraglimit &&
 				*fraglimit == source->player->fragcount)
 			{
-				Printf (PRINT_HIGH, "%s\n", GStrings(TXT_FRAGLIMIT));
+				Printf ("%s\n", GStrings(TXT_FRAGLIMIT));
 				G_ExitLevel (0);
 			}
 		}
@@ -703,6 +709,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			{
 				target->momx += FixedMul (thrust, finecosine[ang]);
 				target->momy += FixedMul (thrust, finesine[ang]);
+			}
+			// killough 11/98: thrust objects hanging off ledges
+			if (target->flags & MF_FALLING && target->gear >= MAXGEAR)
+			{
+				target->gear = 0;
 			}
 		}
 	}

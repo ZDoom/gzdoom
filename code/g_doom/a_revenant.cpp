@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -102,7 +103,7 @@ bool ARevenant::SuggestMissileAttack (fixed_t dist)
 {
 	if (dist < 196*FRACUNIT)
 		return false;		// close for fist attack
-	return P_Random (pr_checkmissilerange) >= MIN (dist >> (FRACBITS + 1), 200);
+	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 200);
 }
 
 class AStealthRevenant : public ARevenant

@@ -321,7 +321,7 @@ castinfo_t castorder[] =
 	{CC_CYBER,		"Cyberdemon"},
 	{CC_HERO,		"DoomPlayer"},
 
-	{NULL, NULL}
+	{0, NULL}
 };
 
 struct
@@ -421,7 +421,7 @@ void F_StartCast (void)
 		castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
 	else
 		castsprite = caststate->sprite.index;
-	casttics = caststate->tics;
+	casttics = caststate->GetTics ();
 	castdeath = false;
 	finalestage = 3;
 	castframes = 0;
@@ -441,12 +441,12 @@ void F_CastTicker (void)
 	if (--casttics > 0)
 		return; 				// not time to change state yet
 				
-	if (caststate->tics == -1 || caststate->nextstate == NULL)
+	if (caststate->GetTics() == -1 || caststate->GetNextState() == NULL)
 	{
 		// switch from deathstate to next monster
 		castnum++;
 		castdeath = false;
-		if (castorder[castnum].name == NULL)
+		if (castorder[castnum].name == 0)
 			castnum = 0;
 		if (castorder[castnum].info->SeeSound)
 		{
@@ -454,7 +454,7 @@ void F_CastTicker (void)
 				atten = ATTN_SURROUND;
 			else
 				atten = ATTN_NONE;
-			S_Sound (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, atten);
+			S_SoundID (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, atten);
 		}
 		caststate = castorder[castnum].info->SeeState;
 		if (castnum == 16)
@@ -468,7 +468,7 @@ void F_CastTicker (void)
 		// just advance to next state in animation
 		if (caststate == advplayerstate)
 			goto stopattack;	// Oh, gross hack!
-		caststate = caststate->nextstate;
+		caststate = caststate->GetNextState();
 		castframes++;
 		
 		// sound hacks....
@@ -518,7 +518,7 @@ void F_CastTicker (void)
 		}
 	}
 		
-	casttics = caststate->tics;
+	casttics = caststate->GetTics();
 	if (casttics == -1)
 		casttics = 15;
 }
@@ -541,7 +541,7 @@ BOOL F_CastResponder (event_t* ev)
 	// go into death frame
 	castdeath = true;
 	caststate = castorder[castnum].info->DeathState;
-	casttics = caststate->tics;
+	casttics = caststate->GetTics();
 	castframes = 0;
 	castattacking = false;
 	if (castorder[castnum].info->DeathSound)
@@ -559,15 +559,21 @@ BOOL F_CastResponder (event_t* ev)
 
 			sprintf (nametest, sndtemplate, skins[players[consoleplayer].userinfo.skin].name);
 			sndnum = S_FindSound (nametest);
-			if (sndnum == -1) {
+			if (sndnum == 0)
+			{
 				sprintf (nametest, sndtemplate, genders[players[consoleplayer].userinfo.gender]);
 				sndnum = S_FindSound (nametest);
-				if (sndnum == -1)
+				if (sndnum == 0)
+				{
 					sndnum = S_FindSound ("player/male/death1");
+				}
 			}
 			S_SoundID (CHAN_VOICE, sndnum, 1, ATTN_NONE);
-		} else
-			S_Sound (CHAN_VOICE, castorder[castnum].info->DeathSound, 1, attn);
+		}
+		else
+		{
+			S_SoundID (CHAN_VOICE, castorder[castnum].info->DeathSound, 1, attn);
+		}
 	}
 		
 	return true;
@@ -593,7 +599,7 @@ void F_CastDrawer (void)
 	
 	// draw the current frame in the middle of the screen
 	sprdef = &sprites[castsprite];
-	sprframe = &sprdef->spriteframes[caststate->frame];
+	sprframe = &sprdef->spriteframes[caststate->GetFrame()];
 	lump = sprframe->lump[0];
 	flip = (BOOL)sprframe->flip[0];
 						

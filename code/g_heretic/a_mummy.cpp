@@ -210,7 +210,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (MummyFX1, speed)
 {
-	SimpleSpeedSetter<AMummyFX1, 9*FRACUNIT, 18*FRACUNIT> (speed);
+	SimpleSpeedSetter (AMummyFX1, 9*FRACUNIT, 18*FRACUNIT, speed);
 }
 
 //----------------------------------------------------------------------------
@@ -231,7 +231,7 @@ void A_MummyAttack (AActor *actor)
 		S_Sound (actor, CHAN_WEAPON, "mummy/attack2", 1, ATTN_NORM);
 		return;
 	}
-	S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 }
 
 //----------------------------------------------------------------------------

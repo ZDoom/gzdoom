@@ -4,6 +4,7 @@
 #include <math.h>
 #include <ctype.h>
 
+#include "templates.h"
 #include "doomtype.h"
 #include "m_swap.h"
 #include "v_font.h"
@@ -55,7 +56,7 @@ FFont::FFont (const char *nametemplate, int first, int count, int start)
 		sprintf (buffer, nametemplate, i + start);
 		lump = W_CheckNumForName (buffer);
 		if (gameinfo.gametype == GAME_Doom && lump >= 0 &&
-			i + start == 121 && lumpinfo[lump].handle == 1)
+			i + start == 121 && lumpinfo[lump].wadnum == 1)
 		{ // HACKHACK: Don't load STCFN121 in doom(2).wad, because
 		  // it's not really a lower-case 'y'
 			lump = -1;
@@ -89,7 +90,7 @@ FFont::FFont (const char *nametemplate, int first, int count, int start)
 		sprintf (buffer, nametemplate, i + start);
 		lump = W_CheckNumForName (buffer);
 		if (gameinfo.gametype == GAME_Doom && lump >= 0 &&
-			i + start == 121 && lumpinfo[lump].handle == 1)
+			i + start == 121 && lumpinfo[lump].wadnum == 1)
 		{ // HACKHACK: See above
 			lump = -1;
 		}
@@ -151,7 +152,6 @@ void RecordPatchColors (patch_t *patch, byte *usedcolors)
 void RawDrawPatch (patch_t *patch, byte *out, byte *tlate)
 {
 	int width = SHORT(patch->width);
-	int height = SHORT(patch->height);
 	byte *desttop = out;
 	int x;
 
@@ -451,7 +451,7 @@ FConsoleFont::FConsoleFont (int lump)
 				data_p += code+1;
 				destSize -= code+1;
 			}
-			else if (code != 0x80)
+			else if (code != -128)
 			{
 				memset (dest, *data_p, (-code)+1);
 				dest += (-code)+1;

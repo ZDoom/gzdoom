@@ -26,6 +26,10 @@
 #include "stringtable.h"
 #include "doomstat.h"
 #include "c_cvars.h"
+#include "i_system.h"
+#include "g_level.h"
+#include "p_local.h"
+#include "p_acs.h"
 
 // Localizable strings
 FStringTable	GStrings;
@@ -46,6 +50,19 @@ CVAR (Bool, var_pushers, true, CVAR_SERVERINFO);
 
 CVAR (Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
 CVAR (Float, teamdamage, 0.f, CVAR_SERVERINFO);
+
+CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
+{
+	SetLanguageIDs ();
+	if (level.behavior != NULL)
+	{
+		level.behavior->PrepLocale (LanguageIDs[0], LanguageIDs[1],
+			LanguageIDs[2], LanguageIDs[3]);
+	}
+	GStrings.ReloadStrings ();
+	GStrings.Compact ();
+	G_SetLevelStrings ();
+}
 
 // [RH] Network arbitrator
 int Net_Arbitrator = 0;

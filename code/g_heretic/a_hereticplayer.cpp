@@ -104,9 +104,6 @@ IMPLEMENT_ACTOR (AHereticPlayer, Heretic, -1, 0)
 	PROP_DeathState (S_PLAY_DIE)
 	PROP_XDeathState (S_PLAY_XDIE)
 	PROP_BDeathState (S_PLAY_FDTH)
-
-	PROP_PainSound ("*pain100_1")
-	PROP_DeathSound ("*death1")
 END_DEFAULTS
 
 void AHereticPlayer::GiveDefaultInventory ()

@@ -60,8 +60,12 @@ bool ASectorAction::CheckTrigger (AActor *triggerer) const
 		 ((flags & MF_AMBUSH) && (triggerer->flags2 & MF2_MCROSS)) ||
 		 ((flags2 & MF2_DORMANT) && (triggerer->flags2 & MF2_PCROSS))))
 	{
-		return LineSpecials[special] (NULL, triggerer, args[0], args[1],
+		int savedSide = TeleportSide;
+		TeleportSide = 0;
+		bool res = LineSpecials[special] (NULL, triggerer, args[0], args[1],
 			args[2], args[3], args[4]);
+		TeleportSide = savedSide;
+		return res;
 	}
 	return false;
 }

@@ -229,12 +229,12 @@ BOOL P_SightTraverseIntercepts ()
 // go through in order
 //
 	in = 0;					// shut up compiler warning
-	openbottom = MININT;
-	opentop = MAXINT;
+	openbottom = FIXED_MIN;
+	opentop = FIXED_MAX;
 
 	while (count--)
 	{
-		dist = MAXINT;
+		dist = FIXED_MAX;
 		for (scanpos = 0; scanpos < intercepts.Size (); scanpos++)
 		{
 			scan = &intercepts[scanpos];
@@ -247,7 +247,7 @@ BOOL P_SightTraverseIntercepts ()
 
 		if (!PTR_SightTraverse (in))
 			return false;					// don't bother going farther
-		in->frac = MAXINT;
+		in->frac = FIXED_MAX;
 	}
 
 	return true;			// everything was traversed

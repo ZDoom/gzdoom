@@ -212,14 +212,14 @@ void DSeqNode::Serialize (FArchive &arc)
 			<< m_Volume
 			<< m_Atten
 			<< m_Next
-			<< m_Prev;
-			arc.WriteString (S_sfx[m_CurrentSoundID].name);
-			arc.WriteString (Sequences[m_Sequence]->name);
+			<< m_Prev
+			<< AR_SOUND(m_CurrentSoundID);
+		arc.WriteString (Sequences[m_Sequence]->name);
 	}
 	else
 	{
-		char *seqName = NULL, *soundName = NULL;
-		int delayTics = 0;
+		char *seqName = NULL;
+		int delayTics = 0, id;
 		float volume;
 		int atten = ATTN_NORM;
 
@@ -229,7 +229,7 @@ void DSeqNode::Serialize (FArchive &arc)
 			<< atten
 			<< m_Next
 			<< m_Prev
-			<< soundName
+			<< AR_SOUND(id)
 			<< seqName;
 
 		int i;
@@ -245,9 +245,8 @@ void DSeqNode::Serialize (FArchive &arc)
 		if (i == NumSequences)
 			I_Error ("Unknown sound sequence '%s'\n", seqName);
 
-		ChangeData (seqOffset, delayTics, volume, S_FindSound (soundName));
+		ChangeData (seqOffset, delayTics, volume, id);
 
-		delete[] soundName;
 		delete[] seqName;
 	}
 }
@@ -367,7 +366,7 @@ void S_ParseSndSeq (void)
 
 	// be gone, compiler warnings
 	cursize = 0;
-	stopsound = -1;
+	stopsound = 0;
 
 	memset (SeqTrans, -1, sizeof(SeqTrans));
 	lastlump = 0;
@@ -404,7 +403,7 @@ void S_ParseSndSeq (void)
 					Sequences = (sndseq_t **)Realloc (Sequences, MaxSequences * sizeof(*Sequences));
 				}
 				memset (ScriptTemp, 0, sizeof(*ScriptTemp) * ScriptTempSize);
-				stopsound = -1;
+				stopsound = 0;
 				cursize = 0;
 				continue;
 			}
@@ -478,7 +477,7 @@ void S_ParseSndSeq (void)
 
 				case SS_STRING_NOSTOPCUTOFF:
 					VerifySeqPtr (cursize, 1);
-					stopsound = -2;
+					stopsound = -1;
 					ScriptTemp[cursize++] = SS_CMD_STOPSOUND << 24;
 					break;
 
@@ -493,7 +492,7 @@ void S_ParseSndSeq (void)
 					Sequences[curseq] = (sndseq_t *)Z_Malloc (sizeof(sndseq_t) + sizeof(int)*cursize, PU_STATIC, 0);
 					strcpy (Sequences[curseq]->name, name);
 					memcpy (Sequences[curseq]->script, ScriptTemp, sizeof(int)*cursize);
-					Sequences[curseq]->script[cursize] = SS_CMD_END;
+					Sequences[curseq]->script[cursize] = SS_CMD_END << 24;
 					Sequences[curseq]->stopsound = stopsound;
 					curseq = -1;
 					break;
@@ -554,7 +553,7 @@ void DSeqNode::ActivateSequence (int sequence)
 	m_Sequence = sequence;
 	m_DelayTics = 0;
 	m_StopSound = Sequences[sequence]->stopsound;
-	m_CurrentSoundID = -1;
+	m_CurrentSoundID = 0;
 	m_Volume = 1;			// Start at max volume...
 	m_Atten = ATTN_IDLE;	// ...and idle attenuation
 
@@ -703,25 +702,25 @@ void SN_DoStop (void *source)
 
 DSeqActorNode::~DSeqActorNode ()
 {
-	if (m_StopSound >= -1)
-		S_StopSound (m_Actor, CHAN_BODY);
 	if (m_StopSound >= 0)
+		S_StopSound (m_Actor, CHAN_BODY);
+	if (m_StopSound >= 1)
 		S_SoundID (m_Actor, CHAN_BODY, m_StopSound, m_Volume, m_Atten);
 }
 
 DSeqSectorNode::~DSeqSectorNode ()
 {
-	if (m_StopSound >= -1)
-		S_StopSound (m_Sector->soundorg, CHAN_BODY);
 	if (m_StopSound >= 0)
+		S_StopSound (m_Sector->soundorg, CHAN_BODY);
+	if (m_StopSound >= 1)
 		S_SoundID (m_Sector->soundorg, CHAN_BODY, m_StopSound, m_Volume, m_Atten);
 }
 
 DSeqPolyNode::~DSeqPolyNode ()
 {
-	if (m_StopSound >= -1)
-		S_StopSound (m_Poly->startSpot, CHAN_BODY);
 	if (m_StopSound >= 0)
+		S_StopSound (m_Poly->startSpot, CHAN_BODY);
+	if (m_StopSound >= 1)
 		S_SoundID (m_Poly->startSpot, CHAN_BODY, m_StopSound, m_Volume, m_Atten);
 }
 
@@ -759,7 +758,7 @@ void DSeqNode::RunThink ()
 		if (!sndPlaying)
 		{
 			m_SequencePtr++;
-			m_CurrentSoundID = -1;
+			m_CurrentSoundID = 0;
 		}
 		break;
 
@@ -782,14 +781,14 @@ void DSeqNode::RunThink ()
 	case SS_CMD_DELAY:
 		m_DelayTics = GetData(*m_SequencePtr);
 		m_SequencePtr++;
-		m_CurrentSoundID = -1;
+		m_CurrentSoundID = 0;
 		break;
 
 	case SS_CMD_DELAYRAND:
 		m_DelayTics = GetData(*m_SequencePtr)+
 			P_Random(pr_ssdelay)%(*(m_SequencePtr+1)-GetData(*m_SequencePtr));
 		m_SequencePtr += 2;
-		m_CurrentSoundID = -1;
+		m_CurrentSoundID = 0;
 		break;
 
 	case SS_CMD_VOLUME:
@@ -843,7 +842,7 @@ void SN_StopAllSequences (void)
 	for (node = DSeqNode::FirstSequence(); node; )
 	{
 		DSeqNode *next = node->NextSequence();
-		node->m_StopSound = -1; // don't play any stop sounds
+		node->m_StopSound = 0; // don't play any stop sounds
 		node->Destroy ();
 		node = next;
 	}

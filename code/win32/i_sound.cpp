@@ -89,6 +89,7 @@ static unsigned int DriverCaps;
 static int OutputType;
 static float ListenPos[3], ListenVel[3];
 
+#if 0
 static const char *FmodErrors[] =
 {
 	"No errors",
@@ -111,6 +112,7 @@ static const char *FmodErrors[] =
 	"Tried to use an EAX command on a non EAX enabled channel or output.",
 	"Failed to allocate a new channel"
 };
+#endif
 
 // Simple file loader for FSOUND using an already-opened
 // file handle. Also supports loading from a WAD opened
@@ -307,21 +309,15 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 			continue;
 		}
 
-		// Assume the sample is some format FMOD understands.
-		// If that fails, load it as DMX.
-		*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)new FileHandle (sfx->lumpnum), samplemode, 0);
-		if (*slot == NULL)
-		{ // DMX sound (presumably)
-			byte *sfxdata = (byte *)W_CacheLumpNum (sfx->lumpnum, PU_CACHE);
-			SDWORD len = ((SDWORD *)sfxdata)[1];
+		// Try the sound as DMX format first.
+		// If that fails, let FMOD try and figure it out.
+		byte *sfxdata = (byte *)W_CacheLumpNum (sfx->lumpnum, PU_CACHE);
+		SDWORD len = ((SDWORD *)sfxdata)[1];
+
+		if (((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8)
+		{
 			FSOUND_SAMPLE *sample;
 			unsigned int bits;
-
-			if (len > size - 8)
-			{
-				Printf (PRINT_HIGH, "%s is missing %d bytes\n", sfx->name, sfx->length - size + 8);
-				len = size - 8;
-			}
 
 			sfx->frequency = ((WORD *)sfxdata)[1];
 			if (sfx->frequency == 0)
@@ -355,14 +351,19 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 		}
 		else
 		{
-			int probe;
+			*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata,
+				samplemode|FSOUND_LOADMEMORY, size);
+			if (*slot != NULL)
+			{
+				int probe;
 
-			FSOUND_Sample_GetDefaults ((FSOUND_SAMPLE *)sfx->data, &probe,
-				NULL, NULL, NULL);
+				FSOUND_Sample_GetDefaults ((FSOUND_SAMPLE *)sfx->data, &probe,
+					NULL, NULL, NULL);
 
-			sfx->frequency = probe;
-			sfx->ms = FSOUND_Sample_GetLength ((FSOUND_SAMPLE *)sfx->data);
-			sfx->length = sfx->ms;
+				sfx->frequency = probe;
+				sfx->ms = FSOUND_Sample_GetLength ((FSOUND_SAMPLE *)sfx->data);
+				sfx->length = sfx->ms;
+			}
 		}
 		break;
 	}
@@ -376,36 +377,21 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 
 static void getsfx (sfxinfo_t *sfx)
 {
-	char sndtemp[128];
 	unsigned int i;
 
 	// Get the sound data from the WAD and register it with sound library
 
-	// If the sound doesn't exist, try a generic male sound (if
-	// this is a player sound) or the empty sound.
+	// If the sound doesn't exist, replace it with the empty sound.
 	if (sfx->lumpnum == -1)
 	{
-		char *basename;
-		int sfx_id;
-
-		if (!strnicmp (sfx->name, "player/", 7) &&
-			 (basename = strchr (sfx->name + 7, '/')))
-		{
-			sprintf (sndtemp, "player/male/%s", basename+1);
-			sfx_id = S_FindSound (sndtemp);
-			if (sfx_id != -1)
-				sfx->lumpnum = S_sfx[sfx_id].lumpnum;
-		}
-
-		if (sfx->lumpnum == -1)
-			sfx->lumpnum = W_GetNumForName ("dsempty");
+		sfx->lumpnum = W_GetNumForName ("dsempty");
 	}
 	
 	// See if there is another sound already initialized with this lump. If so,
 	// then set this one up as a link, and don't load the sound again.
 	for (i = 0; i < S_sfx.Size (); i++)
 	{
-		if (S_sfx[i].data && S_sfx[i].link == -1 && S_sfx[i].lumpnum == sfx->lumpnum)
+		if (S_sfx[i].data && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum)
 		{
 			DPrintf ("Linked to %s (%d)\n", S_sfx[i].name, i);
 			sfx->link = i;
@@ -740,7 +726,7 @@ void I_UpdateListener (float pos[3], float vel[3], float forward[3], float up[3]
 	}
 }
 
-void I_LoadSound (struct sfxinfo_struct *sfx)
+void I_LoadSound (sfxinfo_t *sfx)
 {
 	if (_nosound)
 		return;
@@ -776,11 +762,11 @@ static char FModLog (char success)
 {
 	if (success)
 	{
-		Printf (PRINT_HIGH, " succeeded\n");
+		Printf (" succeeded\n");
 	}
 	else
 	{
-		Printf (PRINT_HIGH, " failed (error %d)\n", FSOUND_GetError());
+		Printf (" failed (error %d)\n", FSOUND_GetError());
 	}
 	return success;
 }
@@ -819,7 +805,7 @@ void I_InitSound ()
 		}
 	}
 
-	Printf (PRINT_HIGH, "I_InitSound: Initializing FMOD\n");
+	Printf ("I_InitSound: Initializing FMOD\n");
 	FSOUND_SetHWND (Window);
 
 	while (!_nosound)
@@ -830,11 +816,11 @@ void I_InitSound ()
 			long outtype = trya3d ? FSOUND_OUTPUT_A3D
 				: outtypes[outindex+trynum];
 
-			Printf (PRINT_HIGH, "  Setting %s output", OutputNames[outtype]);
+			Printf ("  Setting %s output", OutputNames[outtype]);
 			FModLog (FSOUND_SetOutput (outtype));
 			if (FSOUND_GetOutput() != outtype)
 			{
-				Printf (PRINT_HIGH, "  Got %s output instead.\n",
+				Printf ("  Got %s output instead.\n",
 					OutputNames[FSOUND_GetOutput()]);
 				if (trya3d)
 				{
@@ -846,11 +832,11 @@ void I_InitSound ()
 				}
 				continue;
 			}
-			Printf (PRINT_HIGH, "  Setting driver %d", *snd_driver);
+			Printf ("  Setting driver %d", *snd_driver);
 			FModLog (FSOUND_SetDriver (*snd_driver));
 			if (FSOUND_GetOutput() != outtype)
 			{
-				Printf (PRINT_HIGH, "   Output changed to %s\n   Trying driver 0",
+				Printf ("   Output changed to %s\n   Trying driver 0",
 					OutputNames[FSOUND_GetOutput()]);
 				FSOUND_SetOutput (outtype);
 				FModLog (FSOUND_SetDriver (0));
@@ -858,11 +844,11 @@ void I_InitSound ()
 //			FSOUND_GetDriverCaps (FSOUND_GetDriver(), &DriverCaps);
 			if (*snd_buffersize)
 			{
-				Printf (PRINT_HIGH, "  Setting buffer size %d", *snd_buffersize);
+				Printf ("  Setting buffer size %d", *snd_buffersize);
 				FModLog (FSOUND_SetBufferSize (*snd_buffersize));
 			}
 //FSOUND_SetMinHardwareChannels (32);
-			Printf (PRINT_HIGH, "  Initialization");
+			Printf ("  Initialization");
 			if (!FModLog (FSOUND_Init (*snd_samplerate, 64, 0)))
 			{
 				if (trya3d)
@@ -911,7 +897,7 @@ void I_InitSound ()
 			FSOUND_3D_Listener_SetDopplerFactor (DOPPLER3D);
 			if (!(DriverCaps & FSOUND_CAPS_HARDWARE))
 			{
-				Printf (PRINT_HIGH, "Using software 3D sound\n");
+				Printf ("Using software 3D sound\n");
 			}
 		}
 		else
@@ -952,8 +938,7 @@ void STACK_ARGS I_ShutdownSound (void)
 {
 	if (!_nosound)
 	{
-		unsigned int i, c = 0;
-		size_t len = 0;
+		size_t i;
 
 		FSOUND_StopSound (FSOUND_ALL);
 
@@ -966,23 +951,6 @@ void STACK_ARGS I_ShutdownSound (void)
 		// Free all loaded samples
 		for (i = 0; i < S_sfx.Size (); i++)
 		{
-#if 0
-			// Since the samples were not allocated with FSOUND_UNMANAGED,
-			// FSOUND_Close () will free them for us.
-			if (S_sfx[i].link == -1 && S_sfx[i].data)
-			{
-				if (S_sfx[i].data)
-				{
-					FSOUND_Sample_Free ((FSOUND_SAMPLE *)S_sfx[i].data);
-					len += S_sfx[i].length;
-					c++;
-				}
-				if (S_sfx[i].altdata)
-				{
-					FSOUND_Sample_Free ((FSOUND_SAMPLE *)S_sfx[i].altdata);
-				}
-			}
-#endif
 			S_sfx[i].data = NULL;
 			S_sfx[i].altdata = NULL;
 			S_sfx[i].bHaveLoop = false;
@@ -996,7 +964,7 @@ CCMD (snd_status)
 {
 	if (_nosound)
 	{
-		Printf (PRINT_HIGH, "sound is not active\n");
+		Printf ("sound is not active\n");
 		return;
 	}
 
@@ -1004,17 +972,17 @@ CCMD (snd_status)
 	int driver = FSOUND_GetDriver ();
 	int mixer = FSOUND_GetMixer ();
 
-	Printf (PRINT_HIGH, "Output: %s\n", OutputNames[output]);
-	Printf (PRINT_HIGH, "Driver: %d (%s)\n", driver,
+	Printf ("Output: %s\n", OutputNames[output]);
+	Printf ("Driver: %d (%s)\n", driver,
 		FSOUND_GetDriverName (driver));
-	Printf (PRINT_HIGH, "Mixer: %s\n", MixerNames[mixer]);
+	Printf ("Mixer: %s\n", MixerNames[mixer]);
 	if (DriverCaps)
 	{
-		Printf (PRINT_HIGH, "Driver caps: 0x%x\n", DriverCaps);
+		Printf ("Driver caps: 0x%x\n", DriverCaps);
 	}
 	if (Sound3D)
 	{
-		Printf (PRINT_HIGH, "Using 3D sound\n");
+		Printf ("Using 3D sound\n");
 	}
 }
 
@@ -1034,7 +1002,7 @@ CCMD (snd_listdrivers)
 
 	for (i = 0; i < numdrivers; i++)
 	{
-		Printf (PRINT_HIGH, "%ld. %s\n", i, FSOUND_GetDriverName (i));
+		Printf ("%ld. %s\n", i, FSOUND_GetDriverName (i));
 	}
 }
 

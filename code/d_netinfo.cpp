@@ -43,6 +43,8 @@ const char *TeamNames[NUM_TEAMS] =
 	"Red", "Blue", "Green", "Gold"
 };
 
+const char *GenderNames[3] = { "male", "female", "cyborg" };
+
 static const char *UserInfoStrings[] =
 {
 	"name",
@@ -127,6 +129,7 @@ static const char *SetServerVar (char *name, ECVarType type, byte **stream)
 	case CVAR_Int:		value.Int = ReadLong (stream);			break;
 	case CVAR_Float:	value.Float = ReadFloat (stream);		break;
 	case CVAR_String:	value.String = ReadString (stream);		break;
+	default: break;	// Silence GCC
 	}
 
 	if (var)
@@ -163,6 +166,7 @@ void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType 
 	case CVAR_Int:		Net_WriteLong (value.Int);		break;
 	case CVAR_Float:	Net_WriteFloat (value.Float);	break;
 	case CVAR_String:	Net_WriteString (value.String);	break;
+	default: break; // Silence GCC
 	}
 }
 
@@ -184,7 +188,7 @@ void D_DoServerInfoChange (byte **stream)
 
 	if ( (value = SetServerVar (name, (ECVarType)type, stream)) && netgame)
 	{
-		Printf (PRINT_HIGH, "%s changed to %s\n", name, value);
+		Printf ("%s changed to %s\n", name, value);
 	}
 }
 
@@ -311,7 +315,7 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 					info->netname[MAXPLAYERNAME] = 0;
 
 					if (update)
-						Printf (PRINT_HIGH, "%s is now known as %s\n", oldname, info->netname);
+						Printf ("%s is now known as %s\n", oldname, info->netname);
 				}
 				break;
 
@@ -322,9 +326,9 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 				if (update)
 				{
 					if (info->team != TEAM_None)
-						Printf (PRINT_HIGH, "%s is now on %s\n", info->netname, TeamNames[info->team]);
+						Printf ("%s is now on %s\n", info->netname, TeamNames[info->team]);
 					else
-						Printf (PRINT_HIGH, "%s is now a loner\n", info->netname);
+						Printf ("%s is now a loner\n", info->netname);
 				}
 				break;
 
@@ -407,19 +411,19 @@ CCMD (playerinfo)
 		{
 			if (playeringame[i])
 			{
-				Printf (PRINT_HIGH, "%d. %s\n", i, players[i].userinfo.netname);
+				Printf ("%d. %s\n", i, players[i].userinfo.netname);
 			}
 		}
 	}
 	else
 	{
 		int i = atoi (argv[1]);
-		Printf (PRINT_HIGH, "Name:        %s\n", players[i].userinfo.netname);
-		Printf (PRINT_HIGH, "Team:        %d\n", players[i].userinfo.team);
-		Printf (PRINT_HIGH, "Aimdist:     %d\n", players[i].userinfo.aimdist);
-		Printf (PRINT_HIGH, "Color:       %06x\n", players[i].userinfo.color);
-		Printf (PRINT_HIGH, "Skin:        %d\n", players[i].userinfo.skin);
-		Printf (PRINT_HIGH, "Gender:      %d\n", players[i].userinfo.gender);
-		Printf (PRINT_HIGH, "NeverSwitch: %d\n", players[i].userinfo.neverswitch);
+		Printf ("Name:        %s\n", players[i].userinfo.netname);
+		Printf ("Team:        %d\n", players[i].userinfo.team);
+		Printf ("Aimdist:     %d\n", players[i].userinfo.aimdist);
+		Printf ("Color:       %06x\n", players[i].userinfo.color);
+		Printf ("Skin:        %d\n", players[i].userinfo.skin);
+		Printf ("Gender:      %d\n", players[i].userinfo.gender);
+		Printf ("NeverSwitch: %d\n", players[i].userinfo.neverswitch);
 	}
 }

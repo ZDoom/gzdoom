@@ -149,6 +149,7 @@ protected:
 	FImageCollection AmmoImages;
 	FImageCollection ArtiImages;
 	FImageCollection ArmorImages;
+	DCanvas *ScaleCopy;
 
 	player_s *CPlayer;
 
@@ -159,7 +160,6 @@ private:
 
 	fixed_t ScaleX, ScaleY;
 	fixed_t ScaleIX, ScaleIY;
-	DCanvas *ScaleCopy;
 
 	static byte DamageToAlpha[114];
 

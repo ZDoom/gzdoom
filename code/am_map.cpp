@@ -24,6 +24,7 @@
 #include <stdio.h>
 
 #include "doomdef.h"
+#include "templates.h"
 #include "g_level.h"
 #include "z_zone.h"
 #include "doomdef.h"
@@ -396,8 +397,8 @@ void AM_findMinMaxBoundaries ()
 	fixed_t a;
 	fixed_t b;
 
-	min_x = min_y =  MAXINT;
-	max_x = max_y = -MAXINT;
+	min_x = min_y = FIXED_MAX;
+	max_x = max_y = FIXED_MIN;
   
 	for (i=0;i<numvertexes;i++) {
 		if (vertexes[i].x < min_x)
@@ -432,7 +433,7 @@ void AM_changeWindowLoc ()
 {
 	if (m_paninc.x || m_paninc.y) {
 		followplayer = 0;
-		f_oldloc.x = MAXINT;
+		f_oldloc.x = FIXED_MAX;
 	}
 
 	m_x += m_paninc.x;
@@ -462,7 +463,7 @@ void AM_initVariables ()
 
 	automapactive = true;
 
-	f_oldloc.x = MAXINT;
+	f_oldloc.x = FIXED_MAX;
 	amclock = 0;
 
 	m_paninc.x = m_paninc.y = 0;
@@ -813,20 +814,20 @@ BOOL AM_Responder (event_t *ev)
 			{
 			case AM_FOLLOWKEY:
 				followplayer = !followplayer;
-				f_oldloc.x = MAXINT;
-				Printf (PRINT_HIGH, "%s\n", GStrings(followplayer ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF));
+				f_oldloc.x = FIXED_MAX;
+				Printf ("%s\n", GStrings(followplayer ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF));
 				break;
 			case AM_GRIDKEY:
 				grid = !grid;
-				Printf (PRINT_HIGH, "%s\n", GStrings(grid ? AMSTR_GRIDON : AMSTR_GRIDOFF));
+				Printf ("%s\n", GStrings(grid ? AMSTR_GRIDON : AMSTR_GRIDOFF));
 				break;
 			case AM_MARKKEY:
-				Printf (PRINT_HIGH, "%s %d\n", GStrings(AMSTR_MARKEDSPOT), markpointnum);
+				Printf ("%s %d\n", GStrings(AMSTR_MARKEDSPOT), markpointnum);
 				AM_addMark();
 				break;
 			case AM_CLEARMARKKEY:
 				AM_clearMarks();
-				Printf (PRINT_HIGH, "%s\n", GStrings(AMSTR_MARKSCLEARED));
+				Printf ("%s\n", GStrings(AMSTR_MARKSCLEARED));
 				break;
 			default:
 				cheatstate = 0;

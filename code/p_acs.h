@@ -6,7 +6,7 @@
 #include "dobject.h"
 #include "doomtype.h"
 
-#define STACK_SIZE	200
+#define STACK_SIZE	64
 #define LOCAL_SIZE	10
 
 struct ScriptPtr
@@ -254,7 +254,16 @@ public:
 		PCD_PUSH3BYTES,
 		PCD_PUSH4BYTES,
 		PCD_PUSH5BYTES,
-		PCD_SETTHINGSPECIAL,
+/*180*/	PCD_SETTHINGSPECIAL,
+		PCD_ASSIGNGLOBALVAR,
+		PCD_PUSHGLOBALVAR,
+		PCD_ADDGLOBALVAR,
+		PCD_SUBGLOBALVAR,
+		PCD_MULGLOBALVAR,
+		PCD_DIVGLOBALVAR,
+		PCD_MODGLOBALVAR,
+		PCD_INCGLOBALVAR,
+		PCD_DECGLOBALVAR,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -365,7 +374,7 @@ inline void DLevelScript::PushToStack (int val)
 {
 	if (sp == STACK_SIZE)
 	{
-		Printf (PRINT_HIGH, "Stack overflow in script %d\n", script);
+		Printf ("Stack overflow in script %d\n", script);
 		state = SCRIPT_PleaseRemove;
 	}
 	stack[sp++] = val;

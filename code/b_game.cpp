@@ -131,7 +131,7 @@ void DCajunMaster::Main (int buf)
 	//Check if player should go observer. Or un observe
 	if (*bot_observer && !observer)
 	{
-		Printf (PRINT_HIGH, "%s is now observer\n", players[consoleplayer].userinfo.netname);
+		Printf ("%s is now observer\n", players[consoleplayer].userinfo.netname);
 		observer = true;
 		players[consoleplayer].mo->UnlinkFromWorld ();
 		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_SHADOW|MF_NOTDMATCH|MF_NOGRAVITY;
@@ -140,7 +140,7 @@ void DCajunMaster::Main (int buf)
 	}
 	else if (!*bot_observer && observer) //Go back
 	{
-		Printf (PRINT_HIGH, "%s returned to the fray\n", players[consoleplayer].userinfo.netname);
+		Printf ("%s returned to the fray\n", players[consoleplayer].userinfo.netname);
 		observer = false;
 		players[consoleplayer].mo->UnlinkFromWorld ();
 		players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH;
@@ -284,7 +284,7 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 
 	if (i == MAXPLAYERS)
 	{
-		Printf (PRINT_HIGH, "The maximum of %d players/bots has been reached\n", MAXPLAYERS);
+		Printf ("The maximum of %d players/bots has been reached\n", MAXPLAYERS);
 		return false;
 	}
 
@@ -302,12 +302,12 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 
 		if (thebot == NULL)
 		{
-   		 	Printf (PRINT_HIGH, "couldn't find %s in %s\n", name, BOTFILENAME);
+   		 	Printf ("couldn't find %s in %s\n", name, BOTFILENAME);
 			return false;
 		}
 		else if (thebot->inuse)
 		{
-   		 	Printf (PRINT_HIGH, "%s is already in the thick\n", name);
+   		 	Printf ("%s is already in the thick\n", name);
 			return false;
 		}
 	}
@@ -326,7 +326,7 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "Couldn't spawn bot; no bot left in %s\n", BOTFILENAME);
+		Printf ("Couldn't spawn bot; no bot left in %s\n", BOTFILENAME);
 		return false;
 	}
 
@@ -380,8 +380,7 @@ void DCajunMaster::DoAddBot (int bnum, char *info)
 	D_ReadUserInfoStrings (bnum, (byte **)&info, false);
 	if (!*deathmatch && playerstarts[bnum].type == 0)
 	{
-		Printf (PRINT_HIGH,
-			"%s tried to join, but there was no player %d start\n",
+		Printf ("%s tried to join, but there was no player %d start\n",
 			players[bnum].userinfo.netname, bnum+1);
 	}
 	else
@@ -392,7 +391,7 @@ void DCajunMaster::DoAddBot (int bnum, char *info)
 		players[bnum].mo = NULL;
 		players[bnum].playerstate = PST_ENTER;
 		botingame[bnum] = true;
-		Printf (PRINT_HIGH, "%s joined the game\n", players[bnum].userinfo.netname);
+		Printf ("%s joined the game\n", players[bnum].userinfo.netname);
 		G_DoReborn (bnum, true);
 	}
 	waitingforspawn[bnum] = false;
@@ -598,7 +597,7 @@ bool DCajunMaster::LoadBots ()
 	}
 	SC_Close ();
 
-	Printf (PRINT_HIGH, "%d bots read from %s\n", bglobal.loaded_bots, BOTFILENAME);
+	Printf ("%d bots read from %s\n", bglobal.loaded_bots, BOTFILENAME);
 
 	return true;
 }

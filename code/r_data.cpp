@@ -328,8 +328,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
 		{
 			if (!count[x].patches)				// killough 4/9/98
 			{
-				Printf (PRINT_HIGH,
-						"\nR_GenerateLookup: Column %d is without a patch in texture %.8s",
+				Printf ("\nR_GenerateLookup: Column %d is without a patch in texture %.8s",
 						x, texture->name);
 						++*errors;
 			}
@@ -512,7 +511,7 @@ void R_InitTextures (void)
 			patch->patch = patchlookup[SHORT(mpatch->patch)];
 			if (patch->patch == -1)
 			{
-				Printf (PRINT_HIGH, "R_InitTextures: Missing patch in texture %s\n", texture->name);
+				Printf ("R_InitTextures: Missing patch in texture %s\n", texture->name);
 				errors++;
 			}
 		}
@@ -724,7 +723,7 @@ DWORD R_ColormapNumForName (const char *name)
 DWORD R_BlendForColormap (DWORD map)
 {
 	return APART(map) ? map : 
-		   map < numfakecmaps ? fakecmaps[map].blend : 0;
+		   map < numfakecmaps ? DWORD(fakecmaps[map].blend) : 0;
 }
 
 //
@@ -741,7 +740,7 @@ void R_InitTiles ()
 
 	for (i = 0; i < numlumps; i++)
 	{
-		TileSizes[i].Width = -1;
+		TileSizes[i].Width = 0xffff;
 		TileCache[i] = NULL;
 	}
 }
@@ -835,8 +834,7 @@ int R_TextureNumForName (const char *name)
 		strncpy (namet, name, 8);
 		namet[8] = 0;
 		//I_Error ("R_TextureNumForName: %s not found", namet);
-		// [RH] Return default texture if it wasn't found.
-		Printf (PRINT_HIGH, "Texture %s not found\n", namet);
+		// [RH] Return default texture if it wasn't found.		Printf ("Texture %s not found\n", namet);
 		return 1;
 	}
 

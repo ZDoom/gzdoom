@@ -5,6 +5,7 @@
 #include <stddef.h>
 
 #include "doomtype.h"
+#include "templates.h"
 #include "doomstat.h"
 #include "info.h"
 #include "d_dehacked.h"
@@ -122,89 +123,89 @@ static CodePtrMap *CodePtrNames;
 static int NumCodePtrs;
 static const actionf_t CodePtrs[] =
 {
-	(actionf_p1)NULL,
-	(actionf_p1)A_MonsterRail,
-	(actionf_p1)A_FireRailgun,
-	(actionf_p1)A_FireRailgunLeft,
-	(actionf_p1)A_FireRailgunRight,
-	(actionf_p1)A_RailWait,
-	(actionf_p1)A_Light0,
-	(actionf_p1)A_WeaponReady,
-	(actionf_p1)A_Lower,
-	(actionf_p1)A_Raise,
-	(actionf_p1)A_Punch,
-	(actionf_p1)A_ReFire,
-	(actionf_p1)A_FirePistol,
-	(actionf_p1)A_Light1,
-	(actionf_p1)A_FireShotgun,
-	(actionf_p1)A_Light2,
-	(actionf_p1)A_FireShotgun2,
-	(actionf_p1)A_CheckReload,
-	(actionf_p1)A_OpenShotgun2,
-	(actionf_p1)A_LoadShotgun2,
-	(actionf_p1)A_CloseShotgun2,
-	(actionf_p1)A_FireCGun,
-	(actionf_p1)A_GunFlash,
-	(actionf_p1)A_FireMissile,
-	(actionf_p1)A_Saw,
-	(actionf_p1)A_FirePlasma,
-	(actionf_p1)A_BFGsound,
-	(actionf_p1)A_FireBFG,
-	(actionf_p1)A_BFGSpray,
-	(actionf_p1)A_Explode,
-	(actionf_p1)A_Pain,
-	(actionf_p1)A_PlayerScream,
-	(actionf_p1)A_NoBlocking,
-	(actionf_p1)A_XScream,
-	(actionf_p1)A_Look,
-	(actionf_p1)A_Chase,
-	(actionf_p1)A_FaceTarget,
-	(actionf_p1)A_PosAttack,
-	(actionf_p1)A_Scream,
-	(actionf_p1)A_SPosAttack,
-	(actionf_p1)A_VileChase,
-	(actionf_p1)A_VileStart,
-	(actionf_p1)A_VileTarget,
-	(actionf_p1)A_VileAttack,
-	(actionf_p1)A_StartFire,
-	(actionf_p1)A_Fire,
-	(actionf_p1)A_FireCrackle,
-	(actionf_p1)A_Tracer,
-	(actionf_p1)A_SkelWhoosh,
-	(actionf_p1)A_SkelFist,
-	(actionf_p1)A_SkelMissile,
-	(actionf_p1)A_FatRaise,
-	(actionf_p1)A_FatAttack1,
-	(actionf_p1)A_FatAttack2,
-	(actionf_p1)A_FatAttack3,
-	(actionf_p1)A_BossDeath,
-	(actionf_p1)A_CPosAttack,
-	(actionf_p1)A_CPosRefire,
-	(actionf_p1)A_TroopAttack,
-	(actionf_p1)A_SargAttack,
-	(actionf_p1)A_HeadAttack,
-	(actionf_p1)A_BruisAttack,
-	(actionf_p1)A_SkullAttack,
-	(actionf_p1)A_Metal,
-	(actionf_p1)A_SpidRefire,
-	(actionf_p1)A_BabyMetal,
-	(actionf_p1)A_BspiAttack,
-	(actionf_p1)A_Hoof,
-	(actionf_p1)A_CyberAttack,
-	(actionf_p1)A_PainAttack,
-	(actionf_p1)A_PainDie,
-	(actionf_p1)A_KeenDie,
-	(actionf_p1)A_BrainPain,
-	(actionf_p1)A_BrainScream,
-	(actionf_p1)A_BrainDie,
-	(actionf_p1)A_BrainAwake,
-	(actionf_p1)A_BrainSpit,
-	(actionf_p1)A_SpawnSound,
-	(actionf_p1)A_SpawnFly,
-	(actionf_p1)A_BrainExplode,
-	(actionf_p1)A_Die,
-	(actionf_p1)A_Detonate,
-	(actionf_p1)A_Mushroom,
+	{(actionf_p1)NULL},
+	{(actionf_p1)A_MonsterRail},
+	{(actionf_p1)A_FireRailgun},
+	{(actionf_p1)A_FireRailgunLeft},
+	{(actionf_p1)A_FireRailgunRight},
+	{(actionf_p1)A_RailWait},
+	{(actionf_p1)A_Light0},
+	{(actionf_p1)A_WeaponReady},
+	{(actionf_p1)A_Lower},
+	{(actionf_p1)A_Raise},
+	{(actionf_p1)A_Punch},
+	{(actionf_p1)A_ReFire},
+	{(actionf_p1)A_FirePistol},
+	{(actionf_p1)A_Light1},
+	{(actionf_p1)A_FireShotgun},
+	{(actionf_p1)A_Light2},
+	{(actionf_p1)A_FireShotgun2},
+	{(actionf_p1)A_CheckReload},
+	{(actionf_p1)A_OpenShotgun2},
+	{(actionf_p1)A_LoadShotgun2},
+	{(actionf_p1)A_CloseShotgun2},
+	{(actionf_p1)A_FireCGun},
+	{(actionf_p1)A_GunFlash},
+	{(actionf_p1)A_FireMissile},
+	{(actionf_p1)A_Saw},
+	{(actionf_p1)A_FirePlasma},
+	{(actionf_p1)A_BFGsound},
+	{(actionf_p1)A_FireBFG},
+	{(actionf_p1)A_BFGSpray},
+	{(actionf_p1)A_Explode},
+	{(actionf_p1)A_Pain},
+	{(actionf_p1)A_PlayerScream},
+	{(actionf_p1)A_NoBlocking},
+	{(actionf_p1)A_XScream},
+	{(actionf_p1)A_Look},
+	{(actionf_p1)A_Chase},
+	{(actionf_p1)A_FaceTarget},
+	{(actionf_p1)A_PosAttack},
+	{(actionf_p1)A_Scream},
+	{(actionf_p1)A_SPosAttack},
+	{(actionf_p1)A_VileChase},
+	{(actionf_p1)A_VileStart},
+	{(actionf_p1)A_VileTarget},
+	{(actionf_p1)A_VileAttack},
+	{(actionf_p1)A_StartFire},
+	{(actionf_p1)A_Fire},
+	{(actionf_p1)A_FireCrackle},
+	{(actionf_p1)A_Tracer},
+	{(actionf_p1)A_SkelWhoosh},
+	{(actionf_p1)A_SkelFist},
+	{(actionf_p1)A_SkelMissile},
+	{(actionf_p1)A_FatRaise},
+	{(actionf_p1)A_FatAttack1},
+	{(actionf_p1)A_FatAttack2},
+	{(actionf_p1)A_FatAttack3},
+	{(actionf_p1)A_BossDeath},
+	{(actionf_p1)A_CPosAttack},
+	{(actionf_p1)A_CPosRefire},
+	{(actionf_p1)A_TroopAttack},
+	{(actionf_p1)A_SargAttack},
+	{(actionf_p1)A_HeadAttack},
+	{(actionf_p1)A_BruisAttack},
+	{(actionf_p1)A_SkullAttack},
+	{(actionf_p1)A_Metal},
+	{(actionf_p1)A_SpidRefire},
+	{(actionf_p1)A_BabyMetal},
+	{(actionf_p1)A_BspiAttack},
+	{(actionf_p1)A_Hoof},
+	{(actionf_p1)A_CyberAttack},
+	{(actionf_p1)A_PainAttack},
+	{(actionf_p1)A_PainDie},
+	{(actionf_p1)A_KeenDie},
+	{(actionf_p1)A_BrainPain},
+	{(actionf_p1)A_BrainScream},
+	{(actionf_p1)A_BrainDie},
+	{(actionf_p1)A_BrainAwake},
+	{(actionf_p1)A_BrainSpit},
+	{(actionf_p1)A_SpawnSound},
+	{(actionf_p1)A_SpawnFly},
+	{(actionf_p1)A_BrainExplode},
+	{(actionf_p1)A_Die},
+	{(actionf_p1)A_Detonate},
+	{(actionf_p1)A_Mushroom},
 };
 
 // Miscellaneous info that used to be constant
@@ -385,14 +386,19 @@ int FindName (const char *name)
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lexx = strcmp (GetName (mid), name);
-
+		int lexx = stricmp (GetName (mid), name);
 		if (lexx == 0)
+		{
 			return mid;
+		}
 		else if (lexx < 0)
+		{
 			min = mid + 1;
+		}
 		else
+		{
 			max = mid - 1;
+		}
 	}
 	return -1;
 }
@@ -408,7 +414,7 @@ static int HandleMode (const char *mode, int num)
 		return Modes[i].func (num);
 
 	// Handle unknown or unimplemented data
-	Printf (PRINT_HIGH, "Unknown chunk %s encountered. Skipping.\n", mode);
+	Printf ("Unknown chunk %s encountered. Skipping.\n", mode);
 	do
 		i = GetLine ();
 	while (i == 1);
@@ -673,7 +679,7 @@ static int PatchThing (int thingy)
 	if (thingy > NumInfos || thingy <= 0)
 	{
 		info = &dummy;
-		Printf (PRINT_HIGH, "Thing %d out of range.\n", thingy);
+		Printf ("Thing %d out of range.\n", thingy);
 	}
 	else
 	{
@@ -685,7 +691,7 @@ static int PatchThing (int thingy)
 			{
 				info = &dummy;
 				ednum = &dummyed;
-				Printf (PRINT_HIGH, "Could not find thing %s (index %d)\n",
+				Printf ("Could not find thing %s (index %d)\n",
 					GetName (InfoNames[thingy - 1]), thingy);
 			}
 			else
@@ -777,22 +783,23 @@ static int PatchThing (int thingy)
 				}
 				else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 				{
-					char *snd;
+					int snd;
 					
-					if (val == 0 || val >= NumSounds)
+					if (val == 0 || val >= (unsigned long)NumSounds)
 					{
 						if (endptr == Line2)
 						{ // Sound was not a number, so treat it as an actual sound name
-							snd = copystring (Line2);
+							stripwhite (Line2);
+							snd = S_FindSound (Line2);
 						}
 						else
 						{
-							snd = NULL;
+							snd = 0;
 						}
 					}
 					else
 					{
-						snd = copystring (GetName (SoundMap[val-1]));
+						snd = S_FindSound (GetName (SoundMap[val-1]));
 					}
 
 					if (!strnicmp (Line1, "Alert", 5))
@@ -805,8 +812,6 @@ static int PatchThing (int thingy)
 						info->DeathSound = snd;
 					else if (!strnicmp (Line1, "Action", 6))
 						info->ActiveSound = snd;
-					else
-						delete[] snd;
 				}
 			}
 			else if (linelen == 4)
@@ -896,7 +901,7 @@ static int PatchThing (int thingy)
 					*ednum = val;
 				}
 			}
-			else Printf (PRINT_HIGH, unknown_str, Line1, "Thing", thingy);
+			else Printf (unknown_str, Line1, "Thing", thingy);
 		}
 		else if (!stricmp (Line1, "Height"))
 		{
@@ -995,80 +1000,110 @@ static int PatchSound (int soundNum)
 
 static int PatchFrame (int frameNum)
 {
-	static const struct Key keys[] =
-	{
-		{ "Duration",			myoffsetof(FState,tics) },
-		{ "Unknown 1",			myoffsetof(FState,misc1) },
-		{ "Unknown 2",			myoffsetof(FState,misc2) },
-		{ NULL, }
-	};
 	int result;
+	int tics, misc1, frame;
 	FState *info, dummy;
 
 	info = FindState (frameNum);
 	if (info)
 	{
 		DPrintf ("Frame %d\n", frameNum);
-	} else
+		tics = info->GetTics ();
+		misc1 = info->GetMisc1 ();
+		frame = info->GetFrame () | (info->GetFullbright() ? 0x8000 : 0);
+	}
+	else
 	{
 		info = &dummy;
-		Printf (PRINT_HIGH, "Frame %d out of range\n", frameNum);
+		Printf ("Frame %d out of range\n", frameNum);
 	}
 
 	while ((result = GetLine ()) == 1)
 	{
 		int val = atoi (Line2);
+		int keylen = strlen (Line1);
 
-		if (HandleKey (keys, info, Line1, val))
+		if (keylen == 8 && stricmp (Line1, "Duration") == 0)
 		{
-			if (stricmp (Line1, "Sprite number") == 0)
+			tics = clamp (val, -1, 65534);
+		}
+		else if (keylen == 9 && stricmp (Line1, "Unknown 1") == 0)
+		{
+			if (val < -128 || val > 127)
 			{
-				int i;
+				Printf ("Frame %d: misc1 is out of range\n", frameNum);
+			}
+			else
+			{
+				misc1 = val;
+			}
+		}
+		else if (keylen == 9 && stricmp (Line1, "Unknown 2") == 0)
+		{
+			if (val < 0 || val > 255)
+			{
+				Printf ("Frame %d: misc2 is out of range\n", frameNum);
+			}
+			else
+			{
+				info->Misc2 = val;
+			}
+		}
+		else if (keylen == 13 && stricmp (Line1, "Sprite number") == 0)
+		{
+			size_t i;
 
-				if (val < NumSprites)
+			if (val < NumSprites)
+			{
+				for (i = 0; i < sprites.Size(); i++)
 				{
-					for (i = 0; i < sprites.Size(); i++)
+					if (memcmp (OrgSprNames[val], sprites[i].name, 4) == 0)
 					{
-						if (memcmp (OrgSprNames[val], sprites[i].name, 4) == 0)
-						{
-							info->sprite.index = i;
-							break;
-						}
-					}
-					if (i == sprites.Size ())
-					{
-						Printf (PRINT_HIGH, "Frame %d: Sprite %d (%s) is undefined\n",
-							frameNum, val, OrgSprNames[val]);
+						info->sprite.index = i;
+						break;
 					}
 				}
-				else
+				if (i == sprites.Size ())
 				{
-					Printf (PRINT_HIGH, "Frame %d: Sprite %d out of range\n", frameNum, val);
-				}
-			}
-			else if (stricmp (Line1, "Next frame") == 0)
-			{
-				info->nextstate = FindState (val);
-			}
-			else if (stricmp (Line1, "Sprite subnumber") == 0)
-			{
-				short framenum = atoi (Line2);
-				if (framenum & 0x8000)
-				{
-					info->frame = framenum & 0x7fff;
-					info->fullbright = RF_FULLBRIGHT;
-				}
-				else
-				{
-					info->frame = framenum;
-					info->fullbright = 0;
+					Printf ("Frame %d: Sprite %d (%s) is undefined\n",
+						frameNum, val, OrgSprNames[val]);
 				}
 			}
 			else
 			{
-				Printf (PRINT_HIGH, unknown_str, Line1, "Frame", frameNum);
+				Printf ("Frame %d: Sprite %d out of range\n", frameNum, val);
 			}
 		}
+		else if (keylen == 10 && stricmp (Line1, "Next frame") == 0)
+		{
+			info->NextState = FindState (val);
+		}
+		else if (keylen == 16 && stricmp (Line1, "Sprite subnumber") == 0)
+		{
+			frame = val;
+		}
+		else
+		{
+			Printf (unknown_str, Line1, "Frame", frameNum);
+		}
+	}
+
+	if (info != &dummy)
+	{
+		if (misc1 != 0 && tics > 254)
+		{
+			Printf ("Frame %d: Misc1 must be 0 if tics >254\n", frameNum);
+			misc1 = 0;
+		}
+		if ((unsigned)(frame & 0x7fff) > 63)
+		{
+			Printf ("Frame %d: Subnumber must be in range [0,63]\n", frameNum);
+		}
+		info->Tics = (tics+1) & 255;
+		info->Misc1 = ((tics+1)>>8) | misc1;
+		info->Frame = (frame & 0x3f) |
+			(frame & 0x8000 ? SF_FULLBRIGHT : 0) |
+			(tics > 254 ? SF_BIGTIC : 0);
 	}
 
 	return result;
@@ -1085,7 +1120,7 @@ static int PatchSprite (int sprNum)
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "Sprite %d out of range.\n", sprNum);
+		Printf ("Sprite %d out of range.\n", sprNum);
 		sprNum = -1;
 	}
 
@@ -1093,7 +1128,7 @@ static int PatchSprite (int sprNum)
 	{
 		if (!stricmp ("Offset", Line1))
 			offset = atoi (Line2);
-		else Printf (PRINT_HIGH, unknown_str, Line1, "Sprite", sprNum);
+		else Printf (unknown_str, Line1, "Sprite", sprNum);
 	}
 
 	if (offset > 0 && sprNum != -1)
@@ -1109,7 +1144,7 @@ static int PatchSprite (int sprNum)
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "Sprite name %d out of range.\n", offset);
+			Printf ("Sprite name %d out of range.\n", offset);
 		}
 	}
 
@@ -1132,7 +1167,7 @@ static int PatchAmmo (int ammoNum)
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "Ammo %d out of range.\n", ammoNum);
+		Printf ("Ammo %d out of range.\n", ammoNum);
 		max = per = &dummy;
 	}
 
@@ -1142,7 +1177,7 @@ static int PatchAmmo (int ammoNum)
 	{
 			 CHECKKEY ("Max ammo", *max)
 		else CHECKKEY ("Per ammo", *per)
-		else Printf (PRINT_HIGH, unknown_str, Line1, "Ammo", ammoNum);
+		else Printf (unknown_str, Line1, "Ammo", ammoNum);
 	}
 
 	if (oldclip != *per)
@@ -1173,7 +1208,7 @@ static int PatchWeapon (int weapNum)
 	else
 	{
 		info = &dummy;
-		Printf (PRINT_HIGH, "Weapon %d out of range.\n", weapNum);
+		Printf ("Weapon %d out of range.\n", weapNum);
 	}
 
 	while ((result = GetLine ()) == 1)
@@ -1204,12 +1239,12 @@ static int PatchWeapon (int weapNum)
 			}
 			else
 			{
-				Printf (PRINT_HIGH, unknown_str, Line1, "Weapon", weapNum);
+				Printf (unknown_str, Line1, "Weapon", weapNum);
 			}
 		}
 		else
 		{
-			Printf (PRINT_HIGH, unknown_str, Line1, "Weapon", weapNum);
+			Printf (unknown_str, Line1, "Weapon", weapNum);
 		}
 	}
 
@@ -1223,28 +1258,28 @@ static int PatchPointer (int ptrNum)
 	if (ptrNum >= 0 && ptrNum < 448) {
 		DPrintf ("Pointer %d\n", ptrNum);
 	} else {
-		Printf (PRINT_HIGH, "Pointer %d out of range.\n", ptrNum);
+		Printf ("Pointer %d out of range.\n", ptrNum);
 		ptrNum = -1;
 	}
 
 	while ((result = GetLine ()) == 1)
 	{
-		if ((unsigned)ptrNum < NumCodeP && (!stricmp (Line1, "Codep Frame")))
+		if ((unsigned)ptrNum < (unsigned)NumCodeP && (!stricmp (Line1, "Codep Frame")))
 		{
 			FState *state = FindState (CodePConv[ptrNum]);
 			if (state)
 			{
-				if ((unsigned)(atoi (Line2)) >= NumActions)
-					state->action.acvoid = NULL;
+				if ((unsigned)(atoi (Line2)) >= (unsigned)NumActions)
+					state->Action.acvoid = NULL;
 				else
-					state->action = CodePtrs[ActionList[atoi (Line2)]];
+					state->Action = CodePtrs[ActionList[atoi (Line2)]];
 			}
 			else
 			{
-				Printf (PRINT_HIGH, "Bad code pointer %d\n", ptrNum);
+				Printf ("Bad code pointer %d\n", ptrNum);
 			}
 		}
-		else Printf (PRINT_HIGH, unknown_str, Line1, "Pointer", ptrNum);
+		else Printf (unknown_str, Line1, "Pointer", ptrNum);
 	}
 	return result;
 }
@@ -1297,7 +1332,7 @@ static int PatchMisc (int dummy)
 			}
 			else
 			{
-				Printf (PRINT_HIGH, "Unknown miscellaneous info %s.\n", Line2);
+				Printf ("Unknown miscellaneous info %s.\n", Line2);
 			}
 		}
 	}
@@ -1325,7 +1360,7 @@ static int PatchPars (int dummy)
 	while ( (result = GetLine()) ) {
 		// Argh! .bex doesn't follow the same rules as .deh
 		if (result == 1) {
-			Printf (PRINT_HIGH, "Unknown key in [PARS] section: %s\n", Line1);
+			Printf ("Unknown key in [PARS] section: %s\n", Line1);
 			continue;
 		}
 		if (stricmp ("par", Line1))
@@ -1334,7 +1369,7 @@ static int PatchPars (int dummy)
 		space = strchr (Line2, ' ');
 
 		if (!space) {
-			Printf (PRINT_HIGH, "Need data after par.\n");
+			Printf ("Need data after par.\n");
 			continue;
 		}
 
@@ -1356,7 +1391,7 @@ static int PatchPars (int dummy)
 		}
 
 		if (!(info = FindLevelInfo (mapname)) ) {
-			Printf (PRINT_HIGH, "No map %s\n", mapname);
+			Printf ("No map %s\n", mapname);
 			continue;
 		}
 
@@ -1381,7 +1416,7 @@ static int PatchCodePtrs (int dummy)
 
 			if (state == NULL)
 			{
-				Printf (PRINT_HIGH, "Frame %d out of range\n", frame);
+				Printf ("Frame %d out of range\n", frame);
 			}
 			else
 			{
@@ -1396,8 +1431,8 @@ static int PatchCodePtrs (int dummy)
 
 				if (name == -1)
 				{
-					state->action.acp1 = NULL;
-					DPrintf ("Unknown code pointer: %s\n", Line2);
+					state->Action.acp1 = NULL;
+					Printf ("Frame %d: Unknown code pointer: %s\n", frame, Line2);
 				}
 				else
 				{
@@ -1417,12 +1452,12 @@ static int PatchCodePtrs (int dummy)
 					}
 					if (min > max)
 					{
-						state->action.acp1 = NULL;
-						DPrintf ("Unknown code pointer: %s\n", Line2);
+						state->Action.acp1 = NULL;
+						Printf ("Frame %d: Unknown code pointer: %s\n", frame, Line2);
 					}
 					else
 					{
-						state->action.acp1 = CodePtrs[CodePtrNames[mid].num].acp1;
+						state->Action.acp1 = CodePtrs[CodePtrNames[mid].num].acp1;
 						DPrintf ("Frame %d set to %s\n", frame, GetName (CodePtrNames[mid].name));
 					}
 				}
@@ -1451,7 +1486,7 @@ static int PatchText (int oldSize)
 
 	if (*temp == 0)
 	{
-		Printf (PRINT_HIGH, "Text chunk is missing size of new string.\n");
+		Printf ("Text chunk is missing size of new string.\n");
 		return 2;
 	}
 	newSize = atoi (temp);
@@ -1461,7 +1496,7 @@ static int PatchText (int oldSize)
 
 	if (!oldStr || !newStr)
 	{
-		Printf (PRINT_HIGH, "Out of memory.\n");
+		Printf ("Out of memory.\n");
 		goto donewithtext;
 	}
 
@@ -1472,13 +1507,13 @@ static int PatchText (int oldSize)
 	{
 		delete[] newStr;
 		delete[] oldStr;
-		Printf (PRINT_HIGH, "Unexpected end-of-file.\n");
+		Printf ("Unexpected end-of-file.\n");
 		return 0;
 	}
 
 	if (includenotext)
 	{
-		Printf (PRINT_HIGH, "Skipping text chunk in included patch.\n");
+		Printf ("Skipping text chunk in included patch.\n");
 		goto donewithtext;
 	}
 
@@ -1580,7 +1615,7 @@ static int PatchStrings (int dummy)
 
 		if (i == -1)
 		{
-			Printf (PRINT_HIGH, "Unknown string: %s\n", Line1);
+			Printf ("Unknown string: %s\n", Line1);
 		}
 		else
 		{
@@ -1622,13 +1657,13 @@ static int DoInclude (int dummy)
 
 	if (including)
 	{
-		Printf (PRINT_HIGH, "Sorry, can't nest includes\n");
+		Printf ("Sorry, can't nest includes\n");
 		return GetLine();
 	}
 
 	data = Line2;
 	while (*data > ' ')
-		*data++;
+		++data;
 
 	if (*data != 0)
 	{
@@ -1637,7 +1672,7 @@ static int DoInclude (int dummy)
 
 		*data++ = 0;
 		while (*data && *data <= ' ')
-			*data++;
+			++data;
 		if (stricmp (Line2, "notext") == 0)
 		{
 			includenotext = true;
@@ -1651,7 +1686,7 @@ static int DoInclude (int dummy)
 
 	if (*data == 0)
 	{
-		Printf (PRINT_HIGH, "Include directive is missing filename\n");
+		Printf ("Include directive is missing filename\n");
 	}
 	else
 	{
@@ -1700,6 +1735,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 	if (lump >= 0 && autoloading)
 	{
 		// Execute the DEHACKED lump as a patch.
+		strcpy (file, "DEHACKED lump");
 		filelen = W_LumpLength (lump);
 		if ( (PatchFile = new char[filelen + 1]) )
 		{
@@ -1707,7 +1743,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "Not enough memory to apply patch\n");
+			Printf ("Not enough memory to apply patch\n");
 			return;
 		}
 	}
@@ -1755,7 +1791,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 				}
 				else
 				{
-					Printf (PRINT_HIGH, "Not enough memory to apply patch\n");
+					Printf ("Not enough memory to apply patch\n");
 					return;
 				}
 			}
@@ -1763,7 +1799,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 
 		if (!PatchFile)
 		{
-			Printf (PRINT_HIGH, "Could not open DeHackEd patch \"%s\"\n", file);
+			Printf ("Could not open DeHackEd patch \"%s\"\n", file);
 			return;
 		}
 	}
@@ -1780,7 +1816,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 
 	if (gameinfo.gametype != GAME_Doom)
 	{
-		Printf (PRINT_HIGH, "DeHackEd/BEX patches are only supported for DOOM mode\n");
+		Printf ("DeHackEd/BEX patches are only supported for DOOM mode\n");
 		delete[] PatchFile;
 		return;
 	}
@@ -1797,7 +1833,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 		if (!cont || dversion == -1 || pversion == -1)
 		{
 			delete[] PatchFile;
-			Printf (PRINT_HIGH, "\"%s\" is not a DeHackEd patch file\n");
+			Printf ("\"%s\" is not a DeHackEd patch file\n", file);
 			return;
 		}
 	}
@@ -1813,7 +1849,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 
 	if (pversion != 6)
 	{
-		Printf (PRINT_HIGH, "DeHackEd patch version is %d.\nUnexpected results may occur.\n", pversion);
+		Printf ("DeHackEd patch version is %d.\nUnexpected results may occur.\n", pversion);
 	}
 
 	if (dversion == 16)
@@ -1828,13 +1864,13 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 		dversion = 4;
 	else
 	{
-		Printf (PRINT_HIGH, "Patch created with unknown DOOM version.\nAssuming version 1.9.\n");
+		Printf ("Patch created with unknown DOOM version.\nAssuming version 1.9.\n");
 		dversion = 3;
 	}
 
 	if (!LoadDehSupp ())
 	{
-		Printf (PRINT_HIGH, "Could not load DEH support data\n");
+		Printf ("Could not load DEH support data\n");
 		delete[] PatchFile;
 		UnloadDehSupp ();
 		return;
@@ -1844,7 +1880,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 	{
 		if (cont == 1)
 		{
-			Printf (PRINT_HIGH, "Key %s encountered out of context\n", Line1);
+			Printf ("Key %s encountered out of context\n", Line1);
 			cont = 0;
 		}
 		else if (cont == 2)
@@ -1855,7 +1891,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 
 	UnloadDehSupp ();
 	delete[] PatchFile;
-	Printf (PRINT_HIGH, "Patch installed\n");
+	Printf ("Patch installed\n");
 
 }
 
@@ -1873,7 +1909,7 @@ static inline short GetWord (const BYTE *in)
 static short *GetWordSpace (void *in, size_t size)
 {
 	short *ptr;
-	int i;
+	size_t i;
 
 	if ((size_t)in & 1)
 	{
@@ -1938,9 +1974,9 @@ static bool LoadDehSupp ()
 		else if (CompareLabel ("ACTF", supp))
 		{
 			NumCodePtrs = GetWord (supp + 4);
-			if (NumCodePtrs > sizeof(CodePtrs)/sizeof(CodePtrs[0]))
+			if ((unsigned)NumCodePtrs > sizeof(CodePtrs)/sizeof(CodePtrs[0]))
 			{
-				Printf (PRINT_HIGH, "DEHSUPP defines %d code pointers, but there are only %d\n",
+				Printf ("DEHSUPP defines %d code pointers, but there are only %d\n",
 					NumCodePtrs, sizeof(CodePtrs)/sizeof(CodePtrs[0]));
 				return false;
 			}
@@ -1984,7 +2020,7 @@ static bool LoadDehSupp ()
 		{
 			if (!gotnames)
 			{
-				Printf (PRINT_HIGH, "Names must come before state map\n");
+				Printf ("Names must come before state map\n");
 				return false;
 			}
 			NumStateMaps = GetWord (supp + 4);
@@ -1995,12 +2031,12 @@ static bool LoadDehSupp ()
 				const TypeInfo *type = TypeInfo::FindType (name);
 				if (type == NULL)
 				{
-					Printf (PRINT_HIGH, "Can't find type %s\n", name);
+					Printf ("Can't find type %s\n", name);
 					return false;
 				}
 				else if (type->ActorInfo == NULL)
 				{
-					Printf (PRINT_HIGH, "%s has no ActorInfo\n", name);
+					Printf ("%s has no ActorInfo\n", name);
 					return false;
 				}
 				else
@@ -2065,7 +2101,7 @@ static bool LoadDehSupp ()
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "Unknown block %c%c%c%c in DEHSUPP\n",
+			Printf ("Unknown block %c%c%c%c in DEHSUPP\n",
 				supp[0], supp[1], supp[2], supp[3]);
 			return false;
 		}

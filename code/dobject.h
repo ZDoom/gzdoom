@@ -175,7 +175,7 @@ enum EObjectFlags
 {
 	OF_MassDestruction	= 0x00000001,	// Object is queued for deletion
 	OF_Cleanup			= 0x00000002,	// Object is being deconstructed as a result of a queued deletion
-	OF_JustSpawned		= 0x00000004,	// Actor was spawned this tic
+	OF_JustSpawned		= 0x00000004,	// Thinker was spawned this tic
 	OF_SerialSuccess	= 0x10000000	// For debugging Serialize() calls
 };
 

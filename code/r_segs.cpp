@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 
+#include "templates.h"
 #include "i_system.h"
 
 #include "doomdef.h"
@@ -66,7 +67,8 @@ static int		midtexture;
 int OWallMost (short *mostbuf, fixed_t z);
 int WallMost (short *mostbuf, const secplane_t &plane);
 void PrepWall (fixed_t *swall, fixed_t *lwall, int walxrepeat);
-extern fixed_t WallSZ1, WallSZ2, WallSX1, WallSX2, WallTX1, WallTX2, WallTY1, WallTY2;
+extern fixed_t WallSZ1, WallSZ2, WallTX1, WallTX2, WallTY1, WallTY2;
+extern int WallSX1, WallSX2;
 extern float WallUoverZorg, WallUoverZstep, WallInvZorg, WallInvZstep, WallDepthScale, WallDepthOrg;
 
 static int		wallshade;
@@ -99,23 +101,12 @@ fixed_t			rw_lightleft;
 
 static int		rw_x;
 static int		rw_stopx;
-static angle_t	rw_centerangle;
 static fixed_t	rw_offset;
 static fixed_t	rw_scale;
 static fixed_t	rw_scalestep;
 static fixed_t	rw_midtexturemid;
 static fixed_t	rw_toptexturemid;
 static fixed_t	rw_bottomtexturemid;
-
-static int		worldtop;
-static int		worldbottom;
-static int		worldhigh;
-static int		worldlow;
-
-static fixed_t	pixhigh;
-static fixed_t	pixlow;
-static fixed_t	pixhighstep;
-static fixed_t	pixlowstep;
 
 static fixed_t	topfrac;
 static fixed_t	topstep;
@@ -147,7 +138,7 @@ fixed_t *MaskedSWall;
 
 static void BlastMaskedColumn (void (*blastfunc)(column_t *, int), int texnum)
 {
-	if (maskedtexturecol[dc_x] != MAXSHORT)
+	if (maskedtexturecol[dc_x] != SHRT_MAX)
 	{
 		// calculate lighting
 		if (!fixedcolormap)
@@ -167,8 +158,8 @@ static void BlastMaskedColumn (void (*blastfunc)(column_t *, int), int texnum)
 		// when forming multipatched textures (see r_data.c).
 
 		// draw the texture
-		blastfunc ((column_t *)((byte *)R_GetColumn(texnum, maskedtexturecol[dc_x]) -3), MAXINT);
-		maskedtexturecol[dc_x] = MAXSHORT;
+		blastfunc ((column_t *)((byte *)R_GetColumn(texnum, maskedtexturecol[dc_x]) -3), FIXED_MAX);
+		maskedtexturecol[dc_x] = SHRT_MAX;
 	}
 	rw_light += rw_lightstep;
 	spryscale += rw_scalestep;
@@ -254,7 +245,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		(MulScale12 (globaluclip, ds->neardepth) > textureheight[texnum] - dc_texturemid &&
 		 MulScale12 (globaluclip, ds->fardepth) > textureheight[texnum] - dc_texturemid))
 	{
-		clearbufshort (&maskedtexturecol[x1], x2 - x1 + 1, MAXSHORT);
+		clearbufshort (&maskedtexturecol[x1], x2 - x1 + 1, SHRT_MAX);
 		R_FinishSetPatchStyle ();
 		return;
 	}
@@ -967,7 +958,8 @@ void R_StoreWallRange (int start, int stop)
 		// [RH] Don't just allocate the space; fill it in too.
 		if (sidedef->midtexture &&
 			(rw_ceilstat != 12 || sidedef->toptexture == 0) &&
-			(rw_floorstat != 3 || sidedef->bottomtexture == 0))
+			(rw_floorstat != 3 || sidedef->bottomtexture == 0) &&
+			(WallSZ1 >= 3072 && WallSZ2 >= 3072))
 		{
 			fixed_t *swal;
 			short *lwal;
@@ -981,7 +973,7 @@ void R_StoreWallRange (int start, int stop)
 			swal = (fixed_t *)(openings + ds_p->swall);
 			for (i = start; i < stop; i++)
 			{
-				*lwal++ = (lwall[i] + rw_offset) >> FRACBITS;
+				*lwal++ = (short)((lwall[i] + rw_offset) >> FRACBITS);
 				*swal++ = MulScale5 (swall[i], WALLYREPEAT);
 			}
 			ds_p->light = rw_light;
@@ -1001,6 +993,7 @@ void R_StoreWallRange (int start, int stop)
 			istart = DivScale32 (1, istart);
 			iend = DivScale32 (1, iend);
 			ds_p->iscale = istart;
+
 			if (stop - start > 1)
 			{
 				ds_p->iscalestep = (iend - istart) / (stop - start - 1);
@@ -1132,7 +1125,7 @@ int OWallMost (short *mostbuf, fixed_t z)
 	y = Scale (z, InvZtoScale, iy1);
 	if (ix2 == ix1)
 	{
-		mostbuf[ix1] = (y + centeryfrac) >> FRACBITS;
+		mostbuf[ix1] = (short)((y + centeryfrac) >> FRACBITS);
 	}
 	else
 	{
@@ -1289,7 +1282,7 @@ int WallMost (short *mostbuf, const secplane_t &plane)
 	y = Scale (z1>>4, InvZtoScale, iy1);
 	if (ix2 == ix1)
 	{
-		mostbuf[ix1] = (y + centeryfrac) >> FRACBITS;
+		mostbuf[ix1] = (short)((y + centeryfrac) >> FRACBITS);
 	}
 	else
 	{

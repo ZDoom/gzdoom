@@ -24,7 +24,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
+#ifdef _MSC_VER
 #include <eh.h>
+#endif
 #include "resource.h"
 
 #include <stdio.h>
@@ -90,11 +92,13 @@ static void STACK_ARGS call_terms (void)
 	}
 }
 
+#ifdef _MSC_VER
 static int STACK_ARGS NewFailure (size_t size)
 {
 	I_FatalError ("Failed to allocate %d bytes from system heap\n(Try using a smaller -heapsize)");
 	return 0;
 }
+#endif
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
@@ -103,7 +107,9 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	RECT cRect;
 	TIMECAPS tc;
 
+#ifdef _MSC_VER
 	_set_new_handler (NewFailure);
+#endif
 
 	try
 	{
@@ -179,7 +185,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 
 		C_InitConsole (((WinWidth / 8) + 2) * 8, (WinHeight / 12) * 8, false);
 
-		Printf (PRINT_HIGH, "Heapsize: %g megabytes\n", mb_used);
+		Printf ("Heapsize: %g megabytes\n", mb_used);
 
 		I_DetectOS ();
 

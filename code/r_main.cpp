@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "templates.h"
 #include "m_alloc.h"
 #include "doomdef.h"
 #include "d_net.h"
@@ -124,6 +125,8 @@ int 			centerx;
 int				centery;
 }
 
+DCanvas			*RenderTarget;		// [RH] canvas to render to
+bool			bRenderingToCanvas;	// [RH] True if rendering to a special canvas
 fixed_t			globaluclip, globaldclip;
 fixed_t 		centerxfrac;
 fixed_t 		centeryfrac;
@@ -422,7 +425,6 @@ void R_InitTextureMapping ()
 	FocalLengthY = Scale (centerxfrac, yaspectmul, hitan);
 	FocalLengthXfloat = (float)FocalLengthX / 65536.f;
 
-
 	// Now generate xtoviewangle for sky texture mapping.
 	// [RH] Do not generate viewangletox, because texture mapping is no
 	// longer done with trig, so it's not needed.
@@ -514,7 +516,7 @@ CUSTOM_CVAR (Int, r_detail, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 	if (*var < 0 || *var > 3.0)
 	{
-		Printf (PRINT_HIGH, "Bad detail mode. (Use 0-3)\n");
+		Printf ("Bad detail mode. (Use 0-3)\n");
 		badrecovery = true;
 		var = (detailyshift << 1) | detailxshift;
 		return;
@@ -526,69 +528,67 @@ CUSTOM_CVAR (Int, r_detail, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 //==========================================================================
 //
-// R_ExecuteSetViewSize
+// R_SetDetail
 //
 //==========================================================================
 
-void R_ExecuteSetViewSize ()
+void R_SetDetail (int detail)
 {
-	int i;
-	int virtheight, virtwidth;
-
-	setsizeneeded = false;
-	BorderNeedRefresh = screen->GetPageCount ();
-
-	if (setdetail >= 0)
+	if (!*r_columnmethod)
 	{
-		if (!*r_columnmethod)
-		{
-			R_RenderSegLoop = R_RenderSegLoop1;
-			// [RH] x-doubling only works with the standard column drawer
-			detailxshift = setdetail & 1;
-		}
-		else
-		{
-			R_RenderSegLoop = R_RenderSegLoop2;
-			detailxshift = 0;
-		}
-		detailyshift = (setdetail >> 1) & 1;
-		setdetail = -1;
+		R_RenderSegLoop = R_RenderSegLoop1;
+		// [RH] x-doubling only works with the standard column drawer
+		detailxshift = detail & 1;
 	}
-
+	else
+	{
+		R_RenderSegLoop = R_RenderSegLoop2;
+		detailxshift = 0;
+	}
+	detailyshift = (detail >> 1) & 1;
 	ds_colsize = 1 << detailxshift;
 #ifdef USEASM
 	ASM_PatchColSize ();
 #endif
+}
 
-	if (setblocks == 11 || setblocks == 12)
+//==========================================================================
+//
+// R_SetWindow
+//
+//==========================================================================
+
+void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
+{
+	int virtheight, virtwidth;
+
+	if (windowSize >= 11)
 	{
-		realviewwidth = SCREENWIDTH;
-		freelookviewheight = realviewheight = SCREENHEIGHT;
+		realviewwidth = fullWidth;
+		freelookviewheight = realviewheight = fullHeight;
 	}
-	else if (setblocks == 10)
+	else if (windowSize == 10)
 	{
-		realviewwidth = SCREENWIDTH;
-		realviewheight = ST_Y;
-		freelookviewheight = SCREENHEIGHT;
+		realviewwidth = fullWidth;
+		realviewheight = stHeight;
+		freelookviewheight = fullHeight;
 	}
 	else
 	{
-		realviewwidth = ((setblocks*SCREENWIDTH)/10) & (~15);
-		realviewheight = ((setblocks*ST_Y)/10)&~7;
-		freelookviewheight = ((setblocks*SCREENHEIGHT)/10)&~7;
+		realviewwidth = ((setblocks*fullWidth)/10) & (~15);
+		realviewheight = ((setblocks*stHeight)/10)&~7;
+		freelookviewheight = ((setblocks*fullHeight)/10)&~7;
 	}
 
-	if (setblocks == 11)
-		DrawFSHUD = true;
-	else
-		DrawFSHUD = false;
+	DrawFSHUD = (windowSize == 11);
 	
 	viewwidth = realviewwidth >> detailxshift;
 	viewheight = realviewheight >> detailyshift;
 	freelookviewheight >>= detailyshift;
 	halfviewwidth = (viewwidth >> 1) - 1;
 
-	{
+	if (!bRenderingToCanvas)
+	{ // Set r_viewsize cvar to reflect the current view size
 		UCVarValue value;
 		char temp[16];
 
@@ -603,8 +603,8 @@ void R_ExecuteSetViewSize ()
 	centerxfrac = centerx<<FRACBITS;
 	centeryfrac = centery<<FRACBITS;
 
-	virtwidth = SCREENWIDTH >> detailxshift;
-	virtheight = SCREENHEIGHT >> detailyshift;
+	virtwidth = fullWidth >> detailxshift;
+	virtheight = fullHeight >> detailyshift;
 
 	yaspectmul = Scale ((320<<FRACBITS), virtheight, 200 * virtwidth);
 	iyaspectmulfloat = (float)virtwidth * 0.625f / (float)virtheight;	// 0.625 = 200/320
@@ -612,6 +612,51 @@ void R_ExecuteSetViewSize ()
 
 	WallTMapScale = (float)centerx * 32.f;
 	WallTMapScale2 = iyaspectmulfloat * 2.f / (float)centerx;
+
+	// psprite scales
+	pspritexscale = centerxfrac / 160;
+	pspriteyscale = FixedMul (pspritexscale, yaspectmul);
+	pspritexiscale = FixedDiv (FRACUNIT, pspritexscale);
+
+	// thing clipping
+	clearbufshort (screenheightarray, viewwidth, (WORD)viewheight);
+
+	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
+	R_InitSkyMap ();
+
+	R_InitTextureMapping ();
+
+	// Reset r_*Visibility vars
+	r_visibility = *r_visibility;
+}
+
+//==========================================================================
+//
+// R_ExecuteSetViewSize
+//
+//==========================================================================
+
+void R_ExecuteSetViewSize ()
+{
+	setsizeneeded = false;
+	BorderNeedRefresh = screen->GetPageCount ();
+
+	if (setdetail >= 0)
+	{
+		R_SetDetail (setdetail);
+		setdetail = -1;
+	}
+
+	R_SetWindow (setblocks, SCREENWIDTH, SCREENHEIGHT, ST_Y);
+
+	// Handle resize, e.g. smaller view windows with border and/or status bar.
+	viewwindowx = (screen->GetWidth() - (viewwidth<<detailxshift))>>1;
+
+	// Same with base row offset.
+	viewwindowy = ((viewwidth<<detailxshift) == screen->GetWidth()) ?
+		0 : (ST_Y-(viewheight<<detailyshift)) >> 1;
+
+	R_InitBuffer (viewwidth, viewheight);
 
 	colfunc = basecolfunc = R_DrawColumn;
 	fuzzcolfunc = R_DrawFuzzColumn;
@@ -623,23 +668,6 @@ void R_ExecuteSetViewSize ()
 	hcolfunc_post1 = rt_map1col;
 	hcolfunc_post2 = rt_map2cols;
 	hcolfunc_post4 = rt_map4cols;
-
-	R_InitBuffer (viewwidth, viewheight);
-	R_InitTextureMapping ();
-	
-	// psprite scales
-	pspritexscale = centerxfrac / 160;
-	pspriteyscale = FixedMul (pspritexscale, yaspectmul);
-	pspritexiscale = FixedDiv (FRACUNIT, pspritexscale);
-
-	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
-	R_InitSkyMap ();
-
-	// thing clipping
-	for (i = 0; i < viewwidth; i++)
-		screenheightarray[i] = (short)viewheight;
-
-	r_visibility = *r_visibility;	// Reset r_*Visibility vars
 }
 
 //==========================================================================
@@ -738,11 +766,6 @@ void R_SetupFrame (player_t *player)
 	unsigned int newblend;
 	
 	camera = player->camera;	// [RH] Use camera instead of viewplayer
-
-	//camera->x = -95159293;
-	//camera->y = -125297843;
-	//camera->player->viewz = 27852800;
-	//camera->angle = 692060160;
 
 	if (player->cheats & CF_CHASECAM)
 	{
@@ -937,24 +960,32 @@ void R_SetupFrame (player_t *player)
 		
 	framecount++;
 	validcount++;
+}
 
-	if (BorderNeedRefresh)
+//==========================================================================
+//
+// R_RefreshViewBorder
+//
+// Draws the border around the player view, if needed.
+//
+//==========================================================================
+
+void R_RefreshViewBorder ()
+{
+	if (setblocks < 10)
 	{
-		BorderNeedRefresh--;
-		if (BorderTopRefresh)
+		if (BorderNeedRefresh)
 		{
-			BorderTopRefresh--;
-		}
-		if (setblocks < 10)
-		{
+			BorderNeedRefresh--;
+			if (BorderTopRefresh)
+			{
+				BorderTopRefresh--;
+			}
 			R_DrawViewBorder();
 		}
-	}
-	else if (BorderTopRefresh)
-	{
-		BorderTopRefresh--;
-		if (setblocks < 10)
+		else if (BorderTopRefresh)
 		{
+			BorderTopRefresh--;
 			R_DrawTopBorder();
 		}
 	}
@@ -978,6 +1009,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 
 	vertex_t *v1 = ds->curline->v1;
 
+	// Reflect the current view behind the mirror.
 	if (ds->curline->linedef->dx == 0)
 	{ // vertical mirror
 		viewx = 2*v1->x - startx;
@@ -987,7 +1019,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 		viewy = 2*v1->y - starty;
 	}
 	else
-	{ // any mirror; use floats to avoid integer overflow
+	{ // any mirror--use floats to avoid integer overflow
 		vertex_t *v2 = ds->curline->v2;
 
 		float dx = FIXED2FLOAT(v2->x - v1->x);
@@ -1062,19 +1094,18 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 
 //==========================================================================
 //
-// R_RenderView
+// R_SetupBuffer
+//
+// Precalculate all row offsets and fuzz table.
 //
 //==========================================================================
 
-void R_RenderPlayerView (player_t *player)
+static void R_SetupBuffer ()
 {
-	size_t i;
-
-	// Precalculate all row offsets and fuzz table.
-	// [RH] Do these here, because pitch and buffer pointer could change.
 	static BYTE *lastbuff = NULL;
-	int pitch = screen->GetPitch() << detailyshift;
-	BYTE *lineptr = screen->GetBuffer() + viewwindowy*pitch;
+
+	int pitch = RenderTarget->GetPitch() << detailyshift;
+	BYTE *lineptr = RenderTarget->GetBuffer() + viewwindowy*pitch;
 
 	if (dc_pitch != pitch || lineptr != lastbuff)
 	{
@@ -1086,13 +1117,24 @@ void R_RenderPlayerView (player_t *player)
 			ASM_PatchPitch ();
 #endif
 		}
-		for (i = 0; i < (size_t)viewheight; i++, lineptr += pitch)
+		for (size_t i = 0; i < (size_t)viewheight; i++, lineptr += pitch)
 		{
 			ylookup[i] = lineptr;
 		}
 	}
+}
 
+//==========================================================================
+//
+// R_RenderPlayerView
+//
+//==========================================================================
+
+void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
+{
 	WallCycles = PlaneCycles = MaskedCycles = 0;
+
+	R_SetupBuffer ();
 	R_SetupFrame (player);
 
 	// Clear buffers.
@@ -1101,9 +1143,7 @@ void R_RenderPlayerView (player_t *player)
 	R_ClearPlanes (true);
 	R_ClearSprites ();
 
-	screen->Unlock ();
-	NetUpdate ();	// check for new console commands.
-	screen->Relock ();
+	if (lengthyCallback != NULL)	lengthyCallback ();
 
 	// [RH] Show off segs if r_drawflat is 1
 	if (*r_drawflat)
@@ -1155,9 +1195,7 @@ void R_RenderPlayerView (player_t *player)
 		}
 	}
 
-	screen->Unlock ();
-	NetUpdate ();	// Check for new console commands.
-	screen->Relock ();
+	if (lengthyCallback != NULL)	lengthyCallback ();
 
 	clock (PlaneCycles);
 	R_DrawPlanes ();
@@ -1166,7 +1204,7 @@ void R_RenderPlayerView (player_t *player)
 
 	// [RH] Walk through mirrors
 	size_t lastmirror = WallMirrors.Size ();
-	for (i = 0; i < lastmirror; i++)
+	for (size_t i = 0; i < lastmirror; i++)
 	{
 		R_EnterMirror (drawsegs + WallMirrors[i], 0);
 	}
@@ -1174,20 +1212,47 @@ void R_RenderPlayerView (player_t *player)
 
 	spanfunc = R_DrawSpan;
 
-	screen->Unlock ();
-	NetUpdate ();	// Check for new console commands.
-	screen->Relock ();
+	if (lengthyCallback != NULL)	lengthyCallback ();
 	
 	clock (MaskedCycles);
 	R_DrawMasked ();
 	unclock (MaskedCycles);
 
-	screen->Unlock ();
-	NetUpdate ();	// Check for new console commands.
-	screen->Relock ();
+	if (lengthyCallback != NULL)	lengthyCallback ();
+}
 
-	// [RH] Apply detail mode doubling
-	R_DetailDouble ();
+//==========================================================================
+//
+// R_RenderViewToCanvas
+//
+// Pre: Canvas is already locked.
+//
+//==========================================================================
+
+void R_RenderViewToCanvas (player_t *player, DCanvas *canvas,
+	int x, int y, int width, int height)
+{
+	const int saveddetail = detailxshift | (detailyshift << 1);
+
+	detailxshift = detailyshift = 0;
+	R_RenderSegLoop = *r_columnmethod ? R_RenderSegLoop2 : R_RenderSegLoop1;
+	realviewwidth = viewwidth = width;
+
+	RenderTarget = canvas;
+	bRenderingToCanvas = true;
+
+	R_SetDetail (0);
+	R_SetWindow (12, width, height, height);
+	viewwindowx = x;
+	viewwindowy = y;
+	R_InitBuffer (width, height);
+
+	R_RenderPlayerView (player, NULL);
+
+	RenderTarget = screen;
+	bRenderingToCanvas = false;
+	R_SetDetail (saveddetail);
+	R_ExecuteSetViewSize ();
 }
 
 //==========================================================================
@@ -1198,7 +1263,7 @@ void R_RenderPlayerView (player_t *player)
 //
 //==========================================================================
 
-void R_MultiresInit (void)
+void R_MultiresInit ()
 {
 	R_PlaneInitData ();
 	R_OldBlend = ~0;

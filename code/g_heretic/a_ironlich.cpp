@@ -124,7 +124,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (HeadFX1, speed)
 {
-	SimpleSpeedSetter<AHeadFX1, 13*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (AHeadFX1, 13*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 // Head FX 2 ----------------------------------------------------------------
@@ -198,7 +198,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (HeadFX3, speed)
 {
-	SimpleSpeedSetter<AHeadFX3, 10*FRACUNIT, 18*FRACUNIT> (speed);
+	SimpleSpeedSetter (AHeadFX3, 10*FRACUNIT, 18*FRACUNIT, speed);
 }
 
 // Whirlwind ----------------------------------------------------------------

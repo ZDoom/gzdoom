@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "actor.h"
 #include "info.h"
 #include "s_sound.h"
@@ -62,11 +63,6 @@ bool P_AutoUseChaosDevice (player_t *player)
 // Base Heretic weapon class ------------------------------------------------
 
 IMPLEMENT_ABSTRACT_ACTOR (AHereticWeapon)
-
-void AHereticWeapon::PlayPickupSound (AActor *toucher)
-{
-	S_Sound (toucher, CHAN_VOICE, "*weaponlaugh", 1, ATTN_NORM);
-}
 
 // --- Staff ----------------------------------------------------------------
 
@@ -281,9 +277,9 @@ void A_FireGoldWandPL2 (player_t *, pspdef_t *);
 
 // Wimpy ammo ---------------------------------------------------------------
 
-class AGoldWandAmmo : public AInventory
+class AGoldWandAmmo : public AAmmo
 {
-	DECLARE_ACTOR (AGoldWandAmmo, AInventory)
+	DECLARE_ACTOR (AGoldWandAmmo, AAmmo)
 public:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -313,9 +309,9 @@ AT_GAME_SET (GoldWandAmmo)
 
 // Hefty ammo ---------------------------------------------------------------
 
-class AGoldWandHefty : public AInventory
+class AGoldWandHefty : public AAmmo
 {
-	DECLARE_ACTOR (AGoldWandHefty, AInventory)
+	DECLARE_ACTOR (AGoldWandHefty, AAmmo)
 public:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -583,9 +579,9 @@ void A_BoltSpark (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
 
-class ACrossbowAmmo : public AInventory
+class ACrossbowAmmo : public AAmmo
 {
-	DECLARE_ACTOR (ACrossbowAmmo, AInventory)
+	DECLARE_ACTOR (ACrossbowAmmo, AAmmo)
 public:
 	bool TryPickup (AActor *toucher)
 	{
@@ -616,9 +612,9 @@ AT_GAME_SET (CrossbowAmmo)
 
 // Hefty ammo ---------------------------------------------------------------
 
-class ACrossbowHefty : public AInventory
+class ACrossbowHefty : public AAmmo
 {
-	DECLARE_ACTOR (ACrossbowHefty, AInventory)
+	DECLARE_ACTOR (ACrossbowHefty, AAmmo)
 public:
 	bool TryPickup (AActor *toucher)
 	{
@@ -940,9 +936,9 @@ void A_DeathBallImpact (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
 
-class AMaceAmmo : public AInventory
+class AMaceAmmo : public AAmmo
 {
-	DECLARE_ACTOR (AMaceAmmo, AInventory)
+	DECLARE_ACTOR (AMaceAmmo, AAmmo)
 protected:
 	bool TryPickup (AActor *toucher)
 	{
@@ -972,9 +968,9 @@ AT_GAME_SET (MaceAmmo)
 
 // Hefty ammo ---------------------------------------------------------------
 
-class AMaceHefty : public AInventory
+class AMaceHefty : public AAmmo
 {
-	DECLARE_ACTOR (AMaceHefty, AInventory)
+	DECLARE_ACTOR (AMaceHefty, AAmmo)
 protected:
 	bool TryPickup (AActor *toucher)
 	{
@@ -1207,6 +1203,7 @@ IMPLEMENT_ACTOR (AMaceFX3, Heretic, -1, 0)
 	PROP_Flags2 (MF2_LOGRAV|MF2_FLOORBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 
 	PROP_SpawnState (S_MACEFX3)
+	PROP_STATE_BASE (AMaceFX1)
 	PROP_DeathState (S_MACEFXI1)
 END_DEFAULTS
 
@@ -1875,7 +1872,7 @@ void A_GauntletAttack (player_t *player, pspdef_t *psp)
 		linetarget->x, linetarget->y);
 	if (angle-player->mo->angle > ANG180)
 	{
-		if (angle-player->mo->angle < -ANG90/20)
+		if ((int)(angle-player->mo->angle) < -ANG90/20)
 			player->mo->angle = angle+ANG90/21;
 		else
 			player->mo->angle -= ANG90/20;
@@ -1898,9 +1895,9 @@ void A_SpawnRippers (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
 
-class ABlasterAmmo : public AInventory
+class ABlasterAmmo : public AAmmo
 {
-	DECLARE_ACTOR (ABlasterAmmo, AInventory)
+	DECLARE_ACTOR (ABlasterAmmo, AAmmo)
 protected:
 	bool TryPickup (AActor *toucher)
 	{
@@ -1933,9 +1930,9 @@ AT_GAME_SET (BlasterAmmo)
 
 // Hefty ammo ---------------------------------------------------------------
 
-class ABlasterHefty : public AInventory
+class ABlasterHefty : public AAmmo
 {
-	DECLARE_ACTOR (ABlasterHefty, AInventory)
+	DECLARE_ACTOR (ABlasterHefty, AAmmo)
 protected:
 	bool TryPickup (AActor *toucher)
 	{
@@ -2361,7 +2358,7 @@ void ABlasterFX1::RunThink ()
 			}
 			if (changexy && (P_Random() < 64))
 			{
-				Spawn<ABlasterSmoke> (x, y, MAX (z - 8 * FRACUNIT, floorz));
+				Spawn<ABlasterSmoke> (x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz));
 			}
 		}
 	}
@@ -2371,7 +2368,7 @@ void ABlasterFX1::RunThink ()
 		tics--;
 		while (!tics)
 		{
-			if (!SetState (state->nextstate))
+			if (!SetState (state->GetNextState ()))
 			{ // mobj was removed
 				return;
 			}
@@ -2391,9 +2388,9 @@ void A_RainImpact (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
 
-class ASkullRodAmmo : public AInventory
+class ASkullRodAmmo : public AAmmo
 {
-	DECLARE_ACTOR (ASkullRodAmmo, AInventory)
+	DECLARE_ACTOR (ASkullRodAmmo, AAmmo)
 protected:
 	bool TryPickup (AActor *toucher)
 	{
@@ -2424,9 +2421,9 @@ AT_GAME_SET (SkullRodAmmo)
 
 // Hefty ammo ---------------------------------------------------------------
 
-class ASkullRodHefty : public AInventory
+class ASkullRodHefty : public AAmmo
 {
-	DECLARE_ACTOR (ASkullRodHefty, AInventory)
+	DECLARE_ACTOR (ASkullRodHefty, AAmmo)
 protected:
 	bool TryPickup (AActor *toucher)
 	{
@@ -2710,7 +2707,7 @@ void A_FireSkullRodPL1 (player_t *player, pspdef_t *psp)
 	// Randomize the first frame
 	if (mo && P_Random() > 128)
 	{
-		mo->SetState (mo->state->nextstate);
+		mo->SetState (mo->state->GetNextState());
 	}
 }
 
@@ -2901,9 +2898,9 @@ void A_FloatPuff (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
 
-class APhoenixRodAmmo : public AInventory
+class APhoenixRodAmmo : public AAmmo
 {
-	DECLARE_ACTOR (APhoenixRodAmmo, AInventory)
+	DECLARE_ACTOR (APhoenixRodAmmo, AAmmo)
 protected:
 	bool TryPickup (AActor *toucher)
 	{
@@ -2935,9 +2932,9 @@ AT_GAME_SET (PhoenixRodAmmo)
 
 // Hefty ammo ---------------------------------------------------------------
 
-class APhoenixRodHefty : public AInventory
+class APhoenixRodHefty : public AAmmo
 {
-	DECLARE_ACTOR (APhoenixRodHefty, AInventory)
+	DECLARE_ACTOR (APhoenixRodHefty, AAmmo)
 protected:
 	bool TryPickup (AActor *toucher)
 	{
@@ -3255,7 +3252,7 @@ void A_FirePhoenixPL2 (player_t *player, pspdef_t *psp)
 
 	if (--player->flamecount == 0)
 	{ // Out of flame
-		P_SetPsprite (player, ps_weapon, &APhoenixFX2::States[S_PHOENIXATK2+3]);
+		P_SetPsprite (player, ps_weapon, &APhoenixRod::States[S_PHOENIXATK2+3]);
 		player->refire = 0;
 		S_StopSound (player->mo, CHAN_WEAPON);
 		return;

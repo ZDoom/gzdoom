@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "templates.h"
 #include "vectors.h"
 
 #include "m_alloc.h"
@@ -189,7 +190,7 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	tmceilingz = newsubsec->sector->ceilingplane.ZatPoint (x, y);
 	tmfloorpic = newsubsec->sector->floorpic;
 	tmfloorsector = newsubsec->sector;
-						
+					
 	validcount++;
 	spechit.Clear ();
 
@@ -211,6 +212,7 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	thing->floorz = tmfloorz;
 	thing->ceilingz = tmceilingz;
 	thing->floorsector = tmfloorsector;
+	thing->dropoffz = tmdropoffz;        // killough 11/98
 
 	return true;
 }
@@ -496,10 +498,10 @@ BOOL PIT_CheckThing (AActor *thing)
 	// don't clip against self
 	if (thing == tmthing)
 		return true;
-	
+
 	if (!(thing->flags & (MF_SOLID|MF_SPECIAL|MF_SHOOTABLE)) )
 		return true;	// can't hit thing
-	
+
 	blockdist = thing->radius + tmthing->radius;
 	if (abs(thing->x - tmx) >= blockdist || abs(thing->y - tmy) >= blockdist)
 	{
@@ -621,7 +623,8 @@ BOOL PIT_CheckThing (AActor *thing)
 		if (damage)
 		{
 			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->GetMOD ());
-			if (!(thing->flags & MF_NOBLOOD) &&
+			if (gameinfo.gametype != GAME_Doom &&
+				!(thing->flags & MF_NOBLOOD) &&
 				!(thing->flags2 & MF2_REFLECTIVE) &&
 				!(thing->flags2 & MF2_INVULNERABLE) &&
 				(P_Random () < 192))
@@ -1197,6 +1200,12 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			thing->z = oldz;
 			return false;
 		}
+		// killough 11/98: prevent falling objects from going up too many steps
+		if (thing->flags & MF_FALLING && tmfloorz - thing->z >
+			DMulScale16 (thing->momx, thing->momx, thing->momy, thing->momy))
+		{
+			return false;
+		}
 		
 		//Added by MC: To prevent bot from getting into dangerous sectors.
 		if (thing->player && thing->player->isbot && thing->flags & MF_SHOOTABLE)
@@ -1221,6 +1230,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 	oldy = thing->y;
 	thing->floorz = tmfloorz;
 	thing->ceilingz = tmceilingz;
+	thing->dropoffz = tmdropoffz;		// killough 11/98: keep track of dropoffs
 	thing->floorpic = tmfloorpic;
 	thing->floorsector = tmfloorsector;
 	thing->x = x;
@@ -1312,6 +1322,133 @@ pushline:
 }
 
 //
+// killough 9/12/98:
+//
+// Apply "torque" to objects hanging off of ledges, so that they
+// fall off. It's not really torque, since Doom has no concept of
+// rotation, but it's a convincing effect which avoids anomalies
+// such as lifeless objects hanging more than halfway off of ledges,
+// and allows objects to roll off of the edges of moving lifts, or
+// to slide up and then back down stairs, or to fall into a ditch.
+// If more than one linedef is contacted, the effects are cumulative,
+// so balancing is possible.
+//
+
+static BOOL PIT_ApplyTorque (line_t *ld)
+{
+	if (ld->backsector &&		// If thing touches two-sided pivot linedef
+		tmbbox[BOXRIGHT]  > ld->bbox[BOXLEFT]  &&
+		tmbbox[BOXLEFT]   < ld->bbox[BOXRIGHT] &&
+		tmbbox[BOXTOP]    > ld->bbox[BOXBOTTOM] &&
+		tmbbox[BOXBOTTOM] < ld->bbox[BOXTOP] &&
+		P_BoxOnLineSide(tmbbox, ld) == -1)
+	{
+		AActor *mo = tmthing;
+
+		fixed_t dist =								// lever arm
+	  + (ld->dx >> FRACBITS) * (mo->y >> FRACBITS)
+	  - (ld->dy >> FRACBITS) * (mo->x >> FRACBITS) 
+	  - (ld->dx >> FRACBITS) * (ld->v1->y >> FRACBITS)
+	  + (ld->dy >> FRACBITS) * (ld->v1->x >> FRACBITS);
+
+		if (dist < 0 ?								// dropoff direction
+			ld->frontsector->floorplane.ZatPoint (mo->x, mo->y) < mo->z &&
+			ld->backsector->floorplane.ZatPoint (mo->x, mo->y) >= mo->z :
+				ld->backsector->floorplane.ZatPoint (mo->x, mo->y) < mo->z &&
+				ld->frontsector->floorplane.ZatPoint (mo->x, mo->y) >= mo->z)
+		{
+		// At this point, we know that the object straddles a two-sided
+		// linedef, and that the object's center of mass is above-ground.
+
+			fixed_t x = abs(ld->dx), y = abs(ld->dy);
+
+			if (y > x)
+			{
+				fixed_t t = x;
+				x = y;
+				y = t;
+			}
+
+			y = finesine[(tantoangle[FixedDiv(y,x)>>DBITS] +
+				ANG90) >> ANGLETOFINESHIFT];
+
+			// Momentum is proportional to distance between the
+			// object's center of mass and the pivot linedef.
+			//
+			// It is scaled by 2^(OVERDRIVE - gear). When gear is
+			// increased, the momentum gradually decreases to 0 for
+			// the same amount of pseudotorque, so that oscillations
+			// are prevented, yet it has a chance to reach equilibrium.
+
+			dist = FixedDiv(FixedMul(dist, (mo->gear < OVERDRIVE) ?
+							y << -(mo->gear - OVERDRIVE) :
+							y >> +(mo->gear - OVERDRIVE)), x);
+
+			// Apply momentum away from the pivot linedef.
+
+			x = FixedMul(ld->dy, dist);
+			y = FixedMul(ld->dx, dist);
+
+			// Avoid moving too fast all of a sudden (step into "overdrive")
+
+			dist = FixedMul(x,x) + FixedMul(y,y);
+
+			while (dist > FRACUNIT*4 && mo->gear < MAXGEAR)
+				++mo->gear, x >>= 1, y >>= 1, dist >>= 1;
+
+			mo->momx -= x;
+			mo->momy += y;
+		}
+	}
+	return true;
+}
+
+//
+// killough 9/12/98
+//
+// Applies "torque" to objects, based on all contacted linedefs
+//
+
+void P_ApplyTorque (AActor *mo)
+{
+	int xl = ((tmbbox[BOXLEFT] = 
+			mo->x - mo->radius) - bmaporgx) >> MAPBLOCKSHIFT;
+	int xh = ((tmbbox[BOXRIGHT] = 
+			mo->x + mo->radius) - bmaporgx) >> MAPBLOCKSHIFT;
+	int yl = ((tmbbox[BOXBOTTOM] =
+			mo->y - mo->radius) - bmaporgy) >> MAPBLOCKSHIFT;
+	int yh = ((tmbbox[BOXTOP] = 
+			mo->y + mo->radius) - bmaporgy) >> MAPBLOCKSHIFT;
+	int bx,by;
+	int flags = mo->flags;	//Remember the current state, for gear-change
+
+	tmthing = mo;
+	++validcount; // prevents checking same line twice
+
+	for (bx = xl ; bx <= xh ; bx++)
+		for (by = yl ; by <= yh ; by++)
+			P_BlockLinesIterator (bx, by, PIT_ApplyTorque);
+
+	// If any momentum, mark object as 'falling' using engine-internal flags
+	if (mo->momx | mo->momy)
+		mo->flags |= MF_FALLING;
+	else  // Clear the engine-internal flag indicating falling object.
+		mo->flags &= ~MF_FALLING;
+
+	// If the object has been moving, step up the gear.
+	// This helps reach equilibrium and avoid oscillations.
+	//
+	// Doom has no concept of potential energy, much less
+	// of rotation, so we have to creatively simulate these 
+	// systems somehow :)
+
+	if (!((mo->flags | flags) & MF_FALLING))	// If not falling for a while,
+		mo->gear = 0;							// Reset it to full strength
+	else if (mo->gear < MAXGEAR)				// Else if not at max gear,
+		mo->gear++;								// move up a gear
+}
+
+//
 // SLIDE MOVE
 // Allows the player to slide along any angled walls.
 //
@@ -1367,7 +1504,7 @@ void P_HitSlideLine (line_t* ld)
 		{
 			tmxmove /= 2; // absorb half the momentum
 			tmymove = -tmymove/2;
-			S_Sound (slidemo, CHAN_VOICE, "*grunt1", 1, ATTN_IDLE); // oooff!
+			S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
 		}
 		else
 			tmymove = 0; // no more movement in the Y direction
@@ -1380,7 +1517,7 @@ void P_HitSlideLine (line_t* ld)
 		{
 			tmxmove = -tmxmove/2; // absorb half the momentum
 			tmymove /= 2;
-			S_Sound (slidemo, CHAN_VOICE, "*grunt1", 1, ATTN_IDLE); // oooff!	//   ^
+			S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!	//   ^
 		}																		//   |
 		else																	// phares
 			tmxmove = 0; // no more movement in the X direction
@@ -1407,7 +1544,7 @@ void P_HitSlideLine (line_t* ld)
 	{
 		moveangle = lineangle - deltaangle;
 		movelen /= 2; // absorb
-		S_Sound (slidemo, CHAN_VOICE, "*grunt1", 1, ATTN_IDLE); // oooff!
+		S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
 		moveangle >>= ANGLETOFINESHIFT;
 		tmxmove = FixedMul (movelen, finecosine[moveangle]);
 		tmymove = FixedMul (movelen, finesine[moveangle]);
@@ -1980,7 +2117,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		AActor *puffDefaults = GetDefaultByType (PuffType);
 		if (puffDefaults->ActiveSound)
 		{ // Play miss sound
-			S_Sound (t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
+			S_SoundID (t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
 		}
 		if (puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{ // Spawn the puff anyway
@@ -2625,7 +2762,6 @@ static int moveamt;
 int		crushchange;
 static sector_t *movesec;
 bool 	nofit;
-static int pushdist;
 TArray<AActor *> intersectors;
 
 EXTERN_CVAR (Int, cl_bloodtype)
@@ -2641,6 +2777,7 @@ BOOL P_AdjustFloorCeil (AActor *thing)
 	BOOL isgood = P_CheckPosition (thing, thing->x, thing->y);
 	thing->floorz = tmfloorz;
 	thing->ceilingz = tmceilingz;
+	thing->dropoffz = tmdropoffz;		// killough 11/98: remember dropoffs
 	thing->floorpic = tmfloorpic;
 	thing->floorsector = tmfloorsector;
 	return isgood;
@@ -2983,7 +3120,7 @@ void PIT_FloorDrop (AActor *thing)
 	  // and only do it if the drop is slow enough.
 		if (thing->flags2 & MF2_FLOATBOB)
 		{
-			thing->z = MAX (thing->z - oldfloorz + thing->floorz, thing->floorz);
+			thing->z = thing->z - oldfloorz + thing->floorz;
 		}
 		else if (moveamt < 24*FRACUNIT && thing->z - thing->floorz <= moveamt)
 		{
@@ -3010,15 +3147,21 @@ void PIT_FloorRaise (AActor *thing)
 	{
 		intersectors.Clear ();
 		fixed_t oldz = thing->z;
-		if (!(thing->flags2 & MF2_FLOATBOB) || (thing->flags & MF_NOGRAVITY))
+		if (!(thing->flags2 & MF2_FLOATBOB))
 		{
-			thing->z = thing->floorz;
+			if (!(thing->flags & MF_NOGRAVITY))
+			{
+				thing->z = thing->floorz;
+				// killough 11/98: Possibly upset balance of objects hanging off ledges
+				if (thing->flags & MF_FALLING && thing->gear >= MAXGEAR)
+				{
+					thing->gear = 0;
+				}
+			}
 		}
 		else
 		{
-			thing->z = MIN (thing->z - oldfloorz + thing->floorz, thing->floorz);
-			if (thing->z > thing->ceilingz)
-				thing->z = thing->ceilingz;
+			thing->z = thing->z - oldfloorz + thing->floorz;
 		}
 		switch (P_PushUp (thing))
 		{

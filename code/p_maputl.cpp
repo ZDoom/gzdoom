@@ -273,7 +273,7 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 	// that imprecisions in the plane equation mean there is a
 	// good chance that even if a slope and non-slope look like
 	// they line up, they won't be perfectly aligned.
-	if (refx == MININT || abs (ff-bf) > 256)
+	if (refx == FIXED_MIN || abs (ff-bf) > 256)
 	{
 		usefront = (ff > bf);
 	}
@@ -554,9 +554,10 @@ BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), AActor *actor)
 		}
 		while (actor != NULL)
 		{
+			AActor *next = actor->bnext;
 			if (!func (actor))
 				return false;
-			actor = actor->bnext;
+			actor = next;
 		}
 	}
 	return true;
@@ -718,7 +719,7 @@ BOOL P_TraverseIntercepts (traverser_t func, fixed_t maxfrac)
 
 	while (count--)
 	{
-		dist = MAXINT;
+		dist = FIXED_MAX;
 		for (scanpos = 0; scanpos < intercepts.Size (); scanpos++)
 		{
 			scan = &intercepts[scanpos];
@@ -735,7 +736,7 @@ BOOL P_TraverseIntercepts (traverser_t func, fixed_t maxfrac)
 		if (!func (in))
 			return false;		// don't bother going farther
 
-		in->frac = MAXINT;
+		in->frac = FIXED_MAX;
 	}
 		
 	return true;				// everything was traversed

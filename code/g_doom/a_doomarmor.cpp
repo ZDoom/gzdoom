@@ -47,8 +47,6 @@ END_DEFAULTS
 
 // Green armor --------------------------------------------------------------
 
-IMPLEMENT_ABSTRACT_ACTOR (AArmor)
-
 class AGreenArmor : public AArmor
 {
 	DECLARE_ACTOR (AGreenArmor, AArmor)

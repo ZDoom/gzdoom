@@ -140,7 +140,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (BeastBall, speed)
 {
-	SimpleSpeedSetter<ABeastBall, 12*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (ABeastBall, 12*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 // Puffy --------------------------------------------------------------------
@@ -182,7 +182,7 @@ void A_BeastAttack (AActor *actor)
 	{
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
 		P_DamageMobj (actor->target, actor, actor, HITDICE(3), MOD_HIT);

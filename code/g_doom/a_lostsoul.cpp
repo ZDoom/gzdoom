@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -71,7 +72,7 @@ const char *ALostSoul::GetObituary ()
 
 bool ALostSoul::SuggestMissileAttack (fixed_t dist)
 {
-	return P_Random (pr_checkmissilerange) >= MIN (dist >> (FRACBITS + 1), 200);
+	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 200);
 }
 
 void ALostSoul::Die (AActor *source, AActor *inflictor)
@@ -98,7 +99,7 @@ void A_SkullAttack (AActor *self)
 	dest = self->target;		
 	self->flags |= MF_SKULLFLY;
 
-	S_Sound (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
+	S_SoundID (self, CHAN_VOICE, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
 	self->momx = FixedMul (SKULLSPEED, finecosine[an]);

@@ -63,15 +63,7 @@ typedef void (*voidfunc_)();
 	__declspec(allocate(".sreg$u")) void (*ns##_gsr)(EGameSpeed) = ns##_ss; \
 	void ns##_ss (EGameSpeed varname)
 
-template<class T,int normalSpeed,int fastSpeed>
-inline
-void SimpleSpeedSetter (int speed)
-{
-	T *def = GetDefault<T>();
-	def->Speed = (speed == SPEED_Fast) ? fastSpeed : normalSpeed;
-}
-
-#elif define(__GNUC__)
+#elif defined(__GNUC__)
 
 // GCC macros
 
@@ -87,7 +79,7 @@ void SimpleSpeedSetter (int speed)
 #define BEGIN_DEFAULTS_POST(actor,game,ednum,id) \
 	GAME_##game, id, ednum };
 
-#define END_DEFAULTS 0 }; }
+#define END_DEFAULTS BYTE endoflist = 0; }
 
 #define ADD_BYTE_PROP(prop,val) extern BYTE prop##_1, prop##_2; BYTE prop##_1 = prop|ADEFTYPE_Byte; BYTE prop##_2 = val;
 #define ADD_FIXD_PROP(prop,val) extern BYTE prop##_1, prop##_2; BYTE prop##_1 = prop|ADEFTYPE_FixedMul; BYTE prop##_2 = val;
@@ -100,6 +92,13 @@ void SimpleSpeedSetter (int speed)
 	voidfunc_ ns##_gsr __attribute__((section("greg"))) = ns##_gs; \
 	void ns##_gs ()
 
+//typedef void (*speedfunc)(EGameSpeed);
+
+#define AT_SPEED_SET(ns,varname) \
+	extern void ns##_ss(EGameSpeed); \
+	void (*ns##_gsr)(EGameSpeed) __attribute__((section(".sreg"))) = ns##_ss; \
+	void ns##_ss (EGameSpeed varname)
+
 #else
 
 #error Actor default lists are only implemented for Visual C++ and GCC
@@ -108,12 +107,16 @@ void SimpleSpeedSetter (int speed)
 
 // Common macros
 
+#define SimpleSpeedSetter(T,normalSpeed,fastSpeed,speed) \
+	{ GetDefault<T>()->Speed = (speed == SPEED_Fast) ? fastSpeed : normalSpeed; }
+
 #define AT_GAME_SET_FRIEND(ns)	friend void ns##_gs();
 
 #define DECLARE_STATELESS_ACTOR(cls,parent) \
 	DECLARE_CLASS(cls,parent) \
-public: \
-	cls () {} \
+protected: \
+	cls () throw() {} \
+public:
 
 #define DECLARE_ACTOR(cls,parent) \
 	DECLARE_STATELESS_ACTOR(cls,parent) \

@@ -72,9 +72,6 @@ IMPLEMENT_ACTOR (ADoomPlayer, Doom, -1, 0)
 	PROP_MissileState (S_PLAY_ATK)
 	PROP_DeathState (S_PLAY_DIE)
 	PROP_XDeathState (S_PLAY_XDIE)
-
-	PROP_PainSound ("*pain100_1")
-	PROP_DeathSound ("*death1")
 END_DEFAULTS
 
 void ADoomPlayer::GiveDefaultInventory ()
@@ -102,33 +99,29 @@ int ADoomPlayer::GetMOD ()
 
 void A_PlayerScream (AActor *self)
 {
-	char nametemp[128];
 	const char *sound;
 
+	// Handle the different player death screams
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		if (self->health < -50)
-		{
-			// IF THE PLAYER DIES LESS THAN -50% WITHOUT GIBBING
-			sound = "*xdeath1";
+		{ // IF THE PLAYER DIES LESS THAN -50% WITHOUT GIBBING
+			sound = "*xdeath";
 		}
 		else
 		{
-			// [RH] More variety in death sounds
-			sprintf (nametemp, "*death%d", (P_Random (pr_playerscream)&3) + 1);
-			sound = nametemp;
+			sound = "*death";
 		}
 	}
 	else
 	{	// Heretic
-		// Handle the different player death screams
 		if (self->special1 < 10)
 		{ // Wimpy death sound
 			sound = "*wimpydeath";
 		}
 		else if (self->health > -50)
 		{ // Normal death sound
-			sound = self->DeathSound;
+			sound = "*death";
 		}
 		else if (self->health > -100)
 		{ // Crazy death sound

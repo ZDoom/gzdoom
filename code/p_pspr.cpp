@@ -90,24 +90,24 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 			break;
 		}
 		psp->state = state;
-		psp->tics = state->tics; // could be 0
-		if (state->misc1)
+		psp->tics = state->GetTics(); // could be 0
+		if (state->GetMisc1())
 		{ // Set coordinates.
-			psp->sx = state->misc1<<FRACBITS;
+			psp->sx = state->GetMisc1()<<FRACBITS;
 		}
-		if (state->misc2)
+		if (state->GetMisc2())
 		{
-			psp->sy = state->misc2<<FRACBITS;
+			psp->sy = state->GetMisc2()<<FRACBITS;
 		}
-		if (state->action.acp2)
+		if (state->GetAction().acp2)
 		{ // Call action routine.
-			state->action.acp2 (player, psp);
+			state->GetAction().acp2 (player, psp);
 			if (!psp->state)
 			{
 				break;
 			}
 		}
-		state = psp->state->nextstate;
+		state = psp->state->GetNextState();
 	} while (!psp->tics); // An initial state of 0 could cycle through.
 }
 
@@ -131,16 +131,16 @@ void P_SetPspriteNF (player_t *player, int position, FState *state)
 			break;
 		}
 		psp->state = state;
-		psp->tics = state->tics; // could be 0
-		if (state->misc1)
+		psp->tics = state->GetTics(); // could be 0
+		if (state->GetMisc1())
 		{ // Set coordinates.
-			psp->sx = state->misc1<<FRACBITS;
+			psp->sx = state->GetMisc1()<<FRACBITS;
 		}
-		if (state->misc2)
+		if (state->GetMisc2())
 		{
-			psp->sy = state->misc2<<FRACBITS;
+			psp->sy = state->GetMisc2()<<FRACBITS;
 		}
-		state = psp->state->nextstate;
+		state = psp->state->GetNextState();
 	} while (!psp->tics); // An initial state of 0 could cycle through.
 }
 
@@ -671,7 +671,7 @@ void P_MovePsprites (player_t *player)
 				psp->tics--;
 				if(!psp->tics)
 				{
-					P_SetPsprite (player, i, psp->state->nextstate);
+					P_SetPsprite (player, i, psp->state->GetNextState());
 				}
 			}
 		}

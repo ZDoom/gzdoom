@@ -1667,6 +1667,9 @@ void WI_Ticker ()
 	case NoState:
 		WI_updateNoState ();
 		break;
+
+	case LeavingIntermission:
+		break;	// Silence GCC
 	}
 }
 

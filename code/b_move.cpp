@@ -151,7 +151,7 @@ void DCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
     if (!actor->player->dest)
 	{
 #ifndef BOT_RELEASE_COMPILE
-        Printf (PRINT_HIGH, "Bot tried move without destination\n");
+        Printf ("Bot tried move without destination\n");
 #endif
 		return;
 	}

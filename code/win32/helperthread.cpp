@@ -208,10 +208,7 @@ DWORD FHelperThread::ThreadLoop ()
 		{
 		case WAIT_OBJECT_0+1:
 			// We should quit now.
-			if (Deinit != NULL)
-			{
-				Deinit ();
-			}
+			Deinit ();
 			ExitThread (0);
 			break;
 

@@ -23,6 +23,7 @@
 //
 //-----------------------------------------------------------------------------
 
+#include "templates.h"
 #include "doomdef.h"
 #include "d_event.h"
 #include "p_local.h"
@@ -104,6 +105,17 @@ void APlayerPawn::BeginPlay ()
 	ChangeStatNum (STAT_PLAYER);
 }
 
+const char *APlayerPawn::GetSoundClass ()
+{
+	if (player != NULL &&
+		player->userinfo.skin != 0 &&
+		(unsigned)player->userinfo.skin < numskins)
+	{
+		return skins[player->userinfo.skin].name;
+	}
+	return "player";
+}
+
 void APlayerPawn::PlayIdle ()
 {
 	if (state >= SeeState && state < MissileState)
@@ -147,11 +159,6 @@ int APlayerPawn::GetAutoArmorSave ()
 fixed_t APlayerPawn::GetArmorIncrement (int armortype)
 {
 	return 10*FRACUNIT;
-}
-
-const char *APlayerPawn::BaseSoundName ()
-{
-	return NULL;
 }
 
 fixed_t APlayerPawn::GetJumpZ ()
@@ -703,7 +710,7 @@ void P_PlayerThink (player_t *player)
 		}
 		else
 		{
-			float zoom = MAX(7, fabsf (player->FOV - player->DesiredFOV) * 0.025f);
+			float zoom = MAX(7.f, fabsf (player->FOV - player->DesiredFOV) * 0.025f);
 			if (player->FOV > player->DesiredFOV)
 			{
 				player->FOV = player->FOV - zoom;
@@ -845,7 +852,7 @@ void P_PlayerThink (player_t *player)
 			else if (!(*dmflags & DF_NO_JUMP) && onground && !player->jumpTics)
 			{
 				player->mo->momz += player->mo->GetJumpZ ();
-				S_Sound (player->mo, CHAN_BODY, "*jump1", 1, ATTN_NORM);
+				S_Sound (player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
 				player->mo->flags2 &= ~MF2_ONMOBJ;
 				player->jumpTics = 18;
 			}
@@ -893,7 +900,7 @@ void P_PlayerThink (player_t *player)
 		&& player->mo->momz >= -40*FRACUNIT && !player->morphTics)
 	{
 		int id = S_FindSkinnedSound (player->mo, "*falling");
-		if (id != -1 && !S_GetSoundPlayingInfo (player->mo, id))
+		if (id != 0 && !S_GetSoundPlayingInfo (player->mo, id))
 		{
 			S_SoundID (player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
 		}
@@ -938,7 +945,7 @@ void P_PlayerThink (player_t *player)
 			}
 			if (!(level.time & 31))
 			{
-				if (player->mo->alpha = 0)
+				if (player->mo->alpha == 0)
 				{
 					player->mo->flags2 &= ~MF2_NONSHOOTABLE;
 					player->mo->alpha = HX_ALTSHADOW;

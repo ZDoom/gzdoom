@@ -131,7 +131,7 @@ void FActorInfo::StaticInit ()
 		if (reg->OwnedStates &&
 			(unsigned)reg->OwnedStates->sprite.index < sprites.Size ())
 		{
-			Printf (PRINT_HIGH, "\x81+%s is stateless. Fix its default list.\n",
+			Printf ("\x81+%s is stateless. Fix its default list.\n",
 				reg->Class->Name + 1);
 		}
 		ProcessStates (reg->OwnedStates, reg->NumOwnedStates);
@@ -256,38 +256,47 @@ const TypeInfo *FDoomEdMap::FindType (int doomednum) const
 	return entry ? entry->Type : NULL;
 }
 
+struct EdSorting
+{
+	const TypeInfo *Type;
+	int DoomEdNum;
+};
+
 static int STACK_ARGS sortnums (const void *a, const void *b)
 {
-	return (*((const TypeInfo **)a))->ActorInfo->DoomEdNum -
-		(*((const TypeInfo **)b))->ActorInfo->DoomEdNum;
+	return ((const EdSorting *)a)->DoomEdNum -
+		((const EdSorting *)b)->DoomEdNum;
 }
 
 CCMD (dumpmapthings)
 {
-	TArray<const TypeInfo *> infos (TypeInfo::m_NumTypes);
+	TArray<EdSorting> infos (TypeInfo::m_NumTypes);
 	int i;
 
-	for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+	for (i = 0; i < FDoomEdMap::DOOMED_HASHSIZE; ++i)
 	{
-		if (TypeInfo::m_Types[i]->ActorInfo &&
-			TypeInfo::m_Types[i]->ActorInfo->DoomEdNum != -1)
+		FDoomEdMap::FDoomEdEntry *probe = FDoomEdMap::DoomEdHash[i];
+
+		while (probe != NULL)
 		{
-			infos.Push (TypeInfo::m_Types[i]);
+			EdSorting sorting = { probe->Type, probe->DoomEdNum };
+			infos.Push (sorting);
+			probe = probe->HashNext;
 		}
 	}
 
 	if (infos.Size () == 0)
 	{
-		Printf (PRINT_HIGH, "No map things registered\n");
+		Printf ("No map things registered\n");
 	}
 	else
 	{
-		qsort (&infos[0], infos.Size (), sizeof(TypeInfo *), sortnums);
+		qsort (&infos[0], infos.Size (), sizeof(EdSorting), sortnums);
 
 		for (i = 0; i < (int)infos.Size (); ++i)
 		{
-			Printf (PRINT_HIGH, "%6d %s\n",
-				infos[i]->ActorInfo->DoomEdNum, infos[i]->Name + 1);
+			Printf ("%6d %s\n",
+				infos[i].DoomEdNum, infos[i].Type->Name + 1);
 		}
 	}
 }
@@ -305,7 +314,7 @@ CCMD (summon)
 		const TypeInfo *type = TypeInfo::IFindType (argv[1]);
 		if (type == NULL)
 		{
-			Printf (PRINT_HIGH, "Unknown class '%s'\n", argv[1]);
+			Printf ("Unknown class '%s'\n", argv[1]);
 			return;
 		}
 		Net_WriteByte (DEM_SUMMON);

@@ -289,7 +289,7 @@ void A_PotteryExplode (AActor *actor)
 	for(i = (P_Random()&3)+3; i; i--)
 	{
 		mo = Spawn<APotteryBit> (actor->x, actor->y, actor->z);
-		mo->SetState (actor->SpawnState + (P_Random()%5));
+		mo->SetState (mo->SpawnState + (P_Random()%5));
 		if (mo)
 		{
 			mo->momz = ((P_Random()&7)+5)*(3*FRACUNIT/4);
@@ -520,7 +520,7 @@ void A_CorpseExplode (AActor *actor)
 		mo->momx = PS_Random()<<(FRACBITS-6);
 		mo->momy = PS_Random()<<(FRACBITS-6);
 	}
-	S_Sound (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_IDLE);
+	S_SoundID (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_IDLE);
 	actor->Destroy ();
 }
 
@@ -817,7 +817,7 @@ FState AZShrub1::States[] =
 IMPLEMENT_ACTOR (AZShrub1, Hexen, 8101, 0)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (24)
-	PROP_MassLong (MAXINT)
+	PROP_MassLong (FIXED_MAX)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
 
 	PROP_SpawnState (S_ZSHRUB1)
@@ -854,7 +854,7 @@ FState AZShrub2::States[] =
 IMPLEMENT_ACTOR (AZShrub2, Hexen, 8102, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (40)
-	PROP_MassLong (MAXINT)
+	PROP_MassLong (FIXED_MAX)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
 
 	PROP_SpawnState (S_ZSHRUB2)
@@ -1087,7 +1087,7 @@ void A_SoAExplode (AActor *actor)
 				actor->x, actor->y, actor->z);
 		}
 	}
-	S_Sound (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_NORM);
 	actor->Destroy ();
 }
 

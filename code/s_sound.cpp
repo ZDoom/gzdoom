@@ -293,7 +293,7 @@ void S_Init (int sfxVolume, int musicVolume)
 	SoundCurve = (byte *)W_CacheLumpNum (curvelump, PU_STATIC);
 	MAX_SND_DIST = W_LumpLength (curvelump);
 
-	Printf (PRINT_HIGH, "S_Init: default sfx volume %d\n", sfxVolume);
+	Printf ("S_Init: default sfx volume %d\n", sfxVolume);
 
 	// [RH] Read in sound sequences
 	S_ParseSndSeq ();
@@ -323,7 +323,7 @@ void S_Init (int sfxVolume, int musicVolume)
 	mus_paused = 0;
 
 	// Note that sounds have not been cached (yet).
-	for (i=1; i < S_sfx.Size (); i++)
+	for (i=1; (size_t)i < S_sfx.Size (); i++)
 		S_sfx[i].usefulness = -1;
 }
 
@@ -420,8 +420,9 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	static int sndcount = 0;
 	int chan;
 
-	if (sound_id == -1 || volume <= 0)
+	if (sound_id == 0 || volume <= 0)
 		return;
+
 	if (pt == NULL)
 	{
 		if (attenuation > 0)
@@ -473,14 +474,29 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	}
 
 	sfx = &S_sfx[sound_id];
-	if (sfx->link >= 0)
+
+	// Resolve player sounds, random sounds, and aliases
+	while (sfx->link != sfxinfo_t::NO_LINK)
 	{
-		sfx = &S_sfx[sfx->link];
+		if (sfx->bPlayerReserve)
+		{
+			sound_id = S_FindSkinnedSound (mover, sound_id);
+		}
+		else if (sfx->bRandomHeader)
+		{
+			sound_id = S_PickReplacement (sound_id);
+		}
+		else
+		{
+			sound_id = sfx->link;
+		}
+		sfx = &S_sfx[sound_id];
 	}
+	
 	if (!sfx->data)
 	{
 		I_LoadSound (sfx);
-		if (sfx->link >= 0)
+		if (sfx->link != sfxinfo_t::NO_LINK)
 		{
 			sfx = &S_sfx[sfx->link];
 		}
@@ -744,8 +760,8 @@ void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel,
 		return;
 	}
 
-	sfx_id = S_FindSkinnedSound (ent, name);
-	if (sfx_id == -1)
+	sfx_id = S_FindSound (name);
+	if (sfx_id == 0)
 		DPrintf ("Unknown sound %s\n", name);
 
 	if (ent)
@@ -928,10 +944,13 @@ bool S_GetSoundPlayingInfo (fixed_t *pt, int sound_id)
 {
 	int i;
 
-	for (i = 0; i < numChannels; i++)
+	if (sound_id != 0)
 	{
-		if (Channel[i].pt == pt && Channel[i].sound_id == sound_id)
-			return true;
+		for (i = 0; i < numChannels; i++)
+		{
+			if (Channel[i].pt == pt && Channel[i].sound_id == sound_id)
+				return true;
+		}
 	}
 	return false;
 }
@@ -1130,7 +1149,7 @@ void S_SetMusicVolume (int volume)
 {
 	if (volume < 0 || volume > 64)
 	{
-		Printf (PRINT_HIGH, "Attempt to set music volume at %d\n", volume);
+		Printf ("Attempt to set music volume at %d\n", volume);
 	}
 	else
 	{
@@ -1148,7 +1167,7 @@ void S_SetSfxVolume (int volume)
 {
 
 	if (volume < 0 || volume > 127)
-		Printf (PRINT_HIGH, "Attempt to set sfx volume at %d\n", volume);
+		Printf ("Attempt to set sfx volume at %d\n", volume);
 	else
 		I_SetSfxVolume (volume);
 }
@@ -1174,7 +1193,7 @@ void S_ActivatePlayList ()
 		{
 			delete PlayList;
 			PlayList = NULL;
-			Printf (PRINT_HIGH, "Can't play anything in the playlist.\n");
+			Printf ("Can't play anything in the playlist.\n");
 			return;
 		}
 	}
@@ -1277,12 +1296,12 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		{
 			if ((lumpnum = W_CheckNumForName (musicname)) == -1)
 			{
-				Printf (PRINT_HIGH, "Music \"%s\" not found\n", musicname);
+				Printf ("Music \"%s\" not found\n", musicname);
 				return false;
 			}
 			else
 			{
-				handle = W_FileHandleFromWad (lumpinfo[lumpnum].handle);
+				handle = W_FileHandleFromWad (lumpinfo[lumpnum].wadnum);
 				pos = lumpinfo[lumpnum].position;
 				len = lumpinfo[lumpnum].size;
 			}
@@ -1427,6 +1446,20 @@ static void S_StopChannel (int cnum)
 
 //==========================================================================
 //
+// CCMD playsound
+//
+//==========================================================================
+
+CCMD (playsound)
+{
+	if (argc > 1)
+	{
+		S_Sound (CHAN_AUTO, argv[1], 1.f, ATTN_NONE);
+	}
+}
+
+//==========================================================================
+//
 // CCMD idmus
 //
 //==========================================================================
@@ -1446,7 +1479,7 @@ CCMD (idmus)
 				map = CalcMapName (0, l);
 			else
 			{
-				Printf (PRINT_HIGH, "%s\n", GStrings(STSTR_NOMUS));
+				Printf ("%s\n", GStrings(STSTR_NOMUS));
 				return;
 			}
 		}
@@ -1460,12 +1493,12 @@ CCMD (idmus)
 			if (info->music)
 			{
 				S_ChangeMusic (info->music, info->musicorder);
-				Printf (PRINT_HIGH, "%s\n", GStrings(STSTR_MUS));
+				Printf ("%s\n", GStrings(STSTR_MUS));
 			}
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "%s\n", GStrings(STSTR_NOMUS));
+			Printf ("%s\n", GStrings(STSTR_NOMUS));
 		}
 	}
 }
@@ -1588,7 +1621,7 @@ CCMD (playlist)
 {
 	if (argc < 2 || argc > 3)
 	{
-		Printf (PRINT_HIGH, "playlist <playlist.m3u> [position]\n");
+		Printf ("playlist <playlist.m3u> [position]\n");
 	}
 	else
 	{
@@ -1626,7 +1659,7 @@ CCMD (playlistpos)
 {
 	if (PlayList == NULL)
 	{
-		Printf (PRINT_HIGH, "No playlist is playing.\n");
+		Printf ("No playlist is playing.\n");
 	}
 	else if (argc > 1)
 	{
@@ -1645,11 +1678,11 @@ CCMD (playliststatus)
 {
 	if (PlayList == NULL)
 	{
-		Printf (PRINT_HIGH, "No playlist is playing.\n");
+		Printf ("No playlist is playing.\n");
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "Song %d of %d:\n%s\n",
+		Printf ("Song %d of %d:\n%s\n",
 			PlayList->GetPosition () + 1,
 			PlayList->GetNumSongs (),
 			PlayList->GetSong (PlayList->GetPosition ()));

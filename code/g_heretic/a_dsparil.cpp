@@ -177,7 +177,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (SorcererFX1, speed)
 {
-	SimpleSpeedSetter<ASorcererFX1, 20*FRACUNIT, 28*FRACUNIT> (speed);
+	SimpleSpeedSetter (ASorcererFX1, 20*FRACUNIT, 28*FRACUNIT, speed);
 }
 
 // Sorcerer 2 (D'Sparil without his serpent) --------------------------------
@@ -338,10 +338,10 @@ END_DEFAULTS
 
 AT_SPEED_SET (Sorcerer2FX1, speed)
 {
-	SimpleSpeedSetter<ASorcerer2FX1, 20*FRACUNIT, 28*FRACUNIT> (speed);
+	SimpleSpeedSetter (ASorcerer2FX1, 20*FRACUNIT, 28*FRACUNIT, speed);
 }
 
-void ASorcerer2FX1::GetExplodeParms (int &damage, fixed_t &distance, bool &hurtSource)
+void ASorcerer2FX1::GetExplodeParms (int &damage, int &distance, bool &hurtSource)
 {
 	damage = 80 + (P_Random() & 31);
 }
@@ -473,7 +473,7 @@ void A_Srcr1Attack (AActor *actor)
 	{
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (actor))
 	{
 		P_DamageMobj (actor->target, actor, actor, HITDICE(8), MOD_HIT);
@@ -614,7 +614,7 @@ void A_Srcr2Attack (AActor *actor)
 	{
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NONE);
+	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NONE);
 	if (P_CheckMeleeRange(actor))
 	{
 		P_DamageMobj (actor->target, actor, actor, HITDICE(20), MOD_HIT);

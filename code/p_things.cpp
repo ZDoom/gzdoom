@@ -17,7 +17,6 @@ const TypeInfo *SpawnableThings[MAX_SPAWNABLES];
 
 bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 {
-	fixed_t z;
 	int rtn = 0;
 	const TypeInfo *kind;
 	AActor *spot, *mobj;
@@ -34,12 +33,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 
 	while ( (spot = iterator.Next ()) )
 	{
-		if (GetDefaultByType (kind)->flags2 & MF2_FLOATBOB)
-			z = spot->z - spot->floorz;
-		else
-			z = spot->z;
-
-		mobj = Spawn (kind, spot->x, spot->y, z);
+		mobj = Spawn (kind, spot->x, spot->y, spot->z);
 
 		if (mobj)
 		{
@@ -127,7 +121,9 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 		if (mobj)
 		{
 			if (mobj->SeeSound)
-				S_Sound (mobj, CHAN_VOICE, mobj->SeeSound, 1, ATTN_NORM);
+			{
+				S_SoundID (mobj, CHAN_VOICE, mobj->SeeSound, 1, ATTN_NORM);
+			}
 			if (gravity)
 			{
 				mobj->flags &= ~MF_NOGRAVITY;
@@ -163,7 +159,7 @@ CCMD (dumpspawnables)
 	{
 		if (SpawnableThings[i] != NULL)
 		{
-			Printf (PRINT_HIGH, "%d %s\n", i, SpawnableThings[i]->Name + 1);
+			Printf ("%d %s\n", i, SpawnableThings[i]->Name + 1);
 		}
 	}
 }

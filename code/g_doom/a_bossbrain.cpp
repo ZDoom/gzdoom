@@ -18,17 +18,23 @@ void A_BrainSpit (AActor *);
 void A_SpawnFly (AActor *);
 void A_SpawnSound (AActor *);
 
-class ABossTarget;
+
+class ABossTarget : public AActor
+{
+	DECLARE_STATELESS_ACTOR (ABossTarget, AActor)
+public:
+	void BeginPlay ();
+};
 
 class DBrainState : public DThinker
 {
 	DECLARE_CLASS (DBrainState, DThinker)
 public:
 	DBrainState ()
-		: Targets (STAT_BOSSTARGET),
-		  Easy (false),
-		  DThinker (STAT_BOSSTARGET),
-		  SerialTarget (NULL)
+		: DThinker (STAT_BOSSTARGET),
+		  Targets (STAT_BOSSTARGET),
+		  SerialTarget (NULL),
+		  Easy (false)
 	{}
 	void Serialize (FArchive &arc);
 	ABossTarget *GetTarget ();
@@ -99,7 +105,6 @@ FState ABossEye::States[] =
 };
 
 BEGIN_DEFAULTS (ABossEye, Doom, 89, 0)
-	PROP_RadiusFixed (20)
 	PROP_HeightFixed (32)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
 
@@ -125,16 +130,7 @@ void ABossEye::BeginPlay ()
 	}
 }
 
-class ABossTarget : public AActor
-{
-	DECLARE_STATELESS_ACTOR (ABossTarget, AActor)
-public:
-	void BeginPlay ();
-};
-
-
 IMPLEMENT_STATELESS_ACTOR (ABossTarget, Doom, 87, 0)
-	PROP_RadiusFixed (20)
 	PROP_HeightFixed (32)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
 END_DEFAULTS
@@ -190,7 +186,6 @@ FState ASpawnFire::States[] =
 };
 
 IMPLEMENT_ACTOR (ASpawnFire, Doom, -1, 0)
-	PROP_RadiusFixed (20)
 	PROP_HeightFixed (78)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Add)
@@ -266,8 +261,17 @@ void A_BrainSpit (AActor *self)
 		if (spit != NULL)
 		{
 			spit->target = targ;
-			spit->reactiontime =
-				((targ->y - self->y)/spit->momy) / spit->state->tics;
+			// [RH] Do this correctly for any trajectory. Doom would divide by 0
+			// if the target had the same y coordinate as the spitter.
+			if (spit->momy != 0)
+			{
+				spit->reactiontime = (targ->y - self->y) / spit->momy;
+			}
+			else
+			{
+				spit->reactiontime = (targ->x - self->x) / spit->momx;
+			}
+			spit->reactiontime /= spit->state->GetTics();
 		}
 
 		S_Sound (self, CHAN_WEAPON, "brain/spit", 1, ATTN_SURROUND);

@@ -24,9 +24,6 @@
 #include "c_console.h"
 #include "c_cvars.h"
 #include "i_system.h"
-#include "i_video.h"
-#include "p_acs.h"
-#include "gstrings.h"
 
 #include "s_sound.h"
 
@@ -57,6 +54,7 @@ extern BOOL vidactive;
 extern HWND Window;
 
 EXTERN_CVAR (Bool, fullscreen)
+EXTERN_CVAR (String, language)
 
 
 // [RH] As of 1.14, ZDoom no longer needs to be linked with dinput.lib.
@@ -226,15 +224,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_SETTINGCHANGE:
 		// In case regional settings were changed, reget preferred languages
-		SetLanguageIDs ();
-		if (level.behavior != NULL)
-		{
-			level.behavior->PrepLocale (LanguageIDs[0], LanguageIDs[1],
-				LanguageIDs[2], LanguageIDs[3]);
-		}
-		GStrings.ReloadStrings ();
-		GStrings.Compact ();
-		G_SetLevelStrings ();
+		language.Callback ();
 		return 0;
 
 	case WM_KILLFOCUS:
@@ -622,7 +612,7 @@ void I_ResumeMouse ()
 	}
 }
 
-/****** Stuff from Andy Bay's mymouse.c ******
+/****** Stuff from Andy Bay's mymouse.c ******/
 
 /****************************************************************************
  *
@@ -704,7 +694,7 @@ static BOOL I_GetDIMouse ()
 
 	if (FAILED(hr))
 	{
-		Printf (PRINT_HIGH, "Could not set mouse buffer size");
+		Printf ("Could not set mouse buffer size");
 		g_pMouse->Release ();
 		g_pMouse = NULL;
 		return FALSE;
@@ -899,7 +889,6 @@ static void MouseRead_Win32 ()
 
 static void MouseRead_DI ()
 {
-	static int lastx = 0, lasty = 0;
 	DIDEVICEOBJECTDATA od;
 	DWORD dwElements;
 	HRESULT hr;

@@ -123,7 +123,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (SnakeProjA, speed)
 {
-	SimpleSpeedSetter<ASnakeProjA, 14*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (ASnakeProjA, 14*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 void ASnake::NoBlockingSet ()
@@ -164,7 +164,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (SnakeProjB, speed)
 {
-	SimpleSpeedSetter<ASnakeProjB, 14*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (ASnakeProjB, 14*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 //----------------------------------------------------------------------------
@@ -180,7 +180,7 @@ void A_SnakeAttack (AActor *actor)
 		actor->SetState (actor->SeeState);
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (actor);
 	P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(ASnakeProjA));
 }
@@ -198,7 +198,7 @@ void A_SnakeAttack2 (AActor *actor)
 		actor->SetState (actor->SeeState);
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (actor);
 	P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(ASnakeProjB));
 }

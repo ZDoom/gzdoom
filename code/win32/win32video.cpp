@@ -15,6 +15,7 @@
 #define __BYTEBOOL__
 #include "doomtype.h"
 
+#include "templates.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "v_video.h"
@@ -27,7 +28,7 @@
 #define true TRUE
 #define false FALSE
 
-#if 1
+#if 0
 #define STARTLOG		{ if (!dbg) dbg = fopen ("f:/vid.log", "w"); }
 #define STOPLOG			{ if (dbg) { fclose (dbg); dbg=NULL; } }
 #define LOG(x)			{ if (dbg) { fprintf (dbg, x); fflush (dbg); } }
@@ -991,7 +992,6 @@ bool DDrawFB::LockSurf (LPRECT lockrect)
 	}
 	Buffer = (BYTE *)desc.lpSurface;
 	Pitch = *pitch ? *pitch : desc.lPitch;
-	LOG3 ("Lock pitch %d (%d) @ %08x\n", Pitch, desc.lPitch, Buffer);
 	BufferingNow = false;
 	return wasLost;
 }

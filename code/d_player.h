@@ -62,7 +62,7 @@ public:
 	virtual void GiveDefaultInventory ();
 	virtual int GetAutoArmorSave ();
 	virtual fixed_t GetArmorIncrement (int armortype);
-	virtual const char *BaseSoundName ();
+	virtual const char *GetSoundClass ();
 	virtual fixed_t GetJumpZ ();
 
 	virtual void NoBlockingSet ();

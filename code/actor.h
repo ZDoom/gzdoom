@@ -41,6 +41,11 @@
 
 #include "doomdef.h"
 
+// killough 11/98:
+// For torque simulation:
+
+#define OVERDRIVE 6
+#define MAXGEAR (OVERDRIVE+16)
 
 
 //
@@ -150,6 +155,7 @@ enum
 	MF_TRANSSHIFT	= 26,			// table for player colormaps
 
 	MF_UNMORPHED	= 0x10000000,	// [RH] Actor is the unmorphed version of something else
+	MF_FALLING		= 0x20000000,
 	MF_STEALTH		= 0x40000000,	// [RH] Andy Baker's stealth monsters
 	MF_ICECORPSE	= 0x80000000,	// a frozen corpse (for blasting) [RH] was 0x800000
 
@@ -302,8 +308,8 @@ class AActor : public DThinker
 	DECLARE_CLASS (AActor, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	AActor ();
-	AActor (const AActor &other);
+	AActor () throw();
+	AActor (const AActor &other) throw();
 	AActor &operator= (const AActor &other);
 	void Destroy ();
 	~AActor ();
@@ -321,8 +327,6 @@ public:
 	virtual void BeginPlay ();
 	// LevelSpawned: Called after BeginPlay if this actor was spawned by the world
 	virtual void LevelSpawned ();
-	// PostBeginPlay: Called just before the actor's first think
-	virtual void PostBeginPlay ();
 
 	virtual void Activate (AActor *activator);
 	virtual void Deactivate (AActor *activator);
@@ -403,6 +407,8 @@ public:
 	AActor			*bnext, **bprev;	// links in blocks (if needed)
 	struct subsector_s		*subsector;
 	fixed_t			floorz, ceilingz;	// closest together of contacted secs
+	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
+
 	struct sector_t	*floorsector;
 	int				floorpic;			// contacted sec floorpic
 	fixed_t			radius, height;		// for movement checking
@@ -442,6 +448,7 @@ public:
 	AActor			*goal;			// Monster's goal if not chasing anything
 	FPlayerSkin		*skin;			// Sprite override
 	byte			waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
+	SWORD			gear;			// killough 11/98: used in torque simulation
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98
@@ -450,11 +457,11 @@ public:
 	int id;							// Player ID (for items, # in list.)
 
 	// [RH] Stuff that used to be part of an Actor Info
-	const char *SeeSound;
-	const char *AttackSound;
-	const char *PainSound;
-	const char *DeathSound;
-	const char *ActiveSound;
+	WORD SeeSound;
+	WORD AttackSound;
+	WORD PainSound;
+	WORD DeathSound;
+	WORD ActiveSound;
 
 	int ReactionTime;
 	fixed_t Speed;
@@ -556,5 +563,21 @@ inline T *Spawn (fixed_t x, fixed_t y, fixed_t z)
 }
 
 #define S_FREETARGMOBJ	1
+
+struct FSoundIndex
+{
+	int Index;
+};
+
+struct FSoundIndexWord
+{
+	WORD Index;
+};
+
+FArchive &operator<< (FArchive &arc, FSoundIndex &snd);
+FArchive &operator<< (FArchive &arc, FSoundIndexWord &snd);
+
+#define AR_SOUND(id) (*(FSoundIndex *)&(id))
+#define AR_SOUNDW(id) (*(FSoundIndexWord *)&(id))
 
 #endif // __P_MOBJ_H__

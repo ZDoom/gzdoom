@@ -81,7 +81,7 @@ enum EDemoCommand
 	DEM_INVSEL,			// Byte: inventory item to select, for status bar
 	DEM_INVUSE,			// Byte: inventory item to use
 	DEM_PAUSE,			// Pause game
-	DEM_SAVEGAME,		// Byte: Savegame slot to use
+	DEM_SAVEGAME,		// String: Filename, String: Description
 	DEM_WEAPSEL,		// Byte: weapontype_t to change to
 	DEM_WEAPSLOT,		// Byte: Weapon slot to pick a weapon from
 	DEM_WEAPNEXT,		// Select next weapon

@@ -135,7 +135,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (BaronBall, speed)
 {
-	SimpleSpeedSetter<ABaronBall, 15*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (ABaronBall, 15*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 class AHellKnight : public ABaronOfHell

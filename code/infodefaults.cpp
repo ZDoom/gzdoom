@@ -1,5 +1,6 @@
 #include "actor.h"
 #include "info.h"
+#include "s_sound.h"
 
 void FActorInfo::BuildDefaults ()
 {
@@ -65,6 +66,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 	int dataint;
 	FState *datastate;
 	BYTE defnum;
+	int datasound;
 
 	while ((defnum = *parser) != ADEF_EOL)
 	{
@@ -75,6 +77,10 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		{
 			datastr = (const char *)(parser + 1);
 			parser = (const BYTE *)datastr + strlen (datastr) + 1;
+			if (defnum <= ADEF_ActiveSound)
+			{
+				datasound = S_FindSound (datastr);
+			}
 		}
 		else if (defnum >= ADEF_FirstCommand)
 		{
@@ -124,11 +130,11 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 
 		switch (defnum)
 		{
-		case ADEF_SeeSound:		actor->SeeSound = datastr;		break;
-		case ADEF_AttackSound:	actor->AttackSound = datastr;	break;
-		case ADEF_PainSound:	actor->PainSound = datastr;		break;
-		case ADEF_DeathSound:	actor->DeathSound = datastr;	break;
-		case ADEF_ActiveSound:	actor->ActiveSound = datastr;	break;
+		case ADEF_SeeSound:		actor->SeeSound = datasound;	break;
+		case ADEF_AttackSound:	actor->AttackSound = datasound;	break;
+		case ADEF_PainSound:	actor->PainSound = datasound;	break;
+		case ADEF_DeathSound:	actor->DeathSound = datasound;	break;
+		case ADEF_ActiveSound:	actor->ActiveSound = datasound;	break;
 
 		case ADEF_XScale:		actor->xscale = dataint;		break;
 		case ADEF_YScale:		actor->yscale = dataint;		break;

@@ -64,7 +64,6 @@ extern byte UsedPatches[256];
 
 PSTREAMBUF	mid2strmConvert (BYTE *inFile, DWORD inSize);
 void		mid2strmCleanup (void);
-LPBYTE		GetOutStreamBytes (DWORD tkNow, DWORD cbNeeded);
 BOOL		AddEventToStream (MEVENT *pMe);
 
 #endif //__MID2STRM_H__

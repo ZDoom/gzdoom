@@ -23,7 +23,7 @@
 #ifndef __R_BSP__
 #define __R_BSP__
 
-#include <tarray.h>
+#include "tarray.h"
 #include <stddef.h>
 
 struct drawseg_s

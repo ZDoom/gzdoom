@@ -240,6 +240,7 @@ class AHealth : public AInventory
 	DECLARE_CLASS (AHealth, AInventory)
 protected:
 	AHealth () {}
+	virtual void PlayPickupSound (AActor *toucher);
 };
 
 // Armor gives the player armor when picked up.
@@ -248,6 +249,7 @@ class AArmor : public AInventory
 	DECLARE_CLASS (AArmor, AInventory)
 protected:
 	AArmor () {}
+	virtual void PlayPickupSound (AActor *toucher);
 };
 
 class AAmmo : public AInventory
@@ -255,6 +257,7 @@ class AAmmo : public AInventory
 	DECLARE_CLASS (AAmmo, AInventory)
 protected:
 	AAmmo () {}
+	virtual void PlayPickupSound (AActor *toucher);
 };
 
 // A key is something the player can use to unlock something

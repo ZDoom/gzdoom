@@ -227,9 +227,11 @@ void A_VileChase (AActor *self)
 		
 	if (self->movedir != DI_NODIR)
 	{
+		const fixed_t absSpeed = abs (self->Speed);
+
 		// check for corpses to raise
-		viletryx = self->x + FixedMul (self->Speed, xspeed[self->movedir]);
-		viletryy = self->y + FixedMul (self->Speed, yspeed[self->movedir]);
+		viletryx = self->x + FixedMul (absSpeed, xspeed[self->movedir]);
+		viletryy = self->y + FixedMul (absSpeed, yspeed[self->movedir]);
 
 		xl = (viletryx - bmaporgx - MAXRADIUS*2)>>MAPBLOCKSHIFT;
 		xh = (viletryx - bmaporgx + MAXRADIUS*2)>>MAPBLOCKSHIFT;

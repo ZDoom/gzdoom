@@ -8,6 +8,7 @@
 
 #define NUM_MAPVARS				128
 #define NUM_WORLDVARS			256
+#define NUM_GLOBALVARS			64
 
 #define LEVEL_NOINTERMISSION	0x00000001
 #define	LEVEL_DOUBLESKY			0x00000004
@@ -96,6 +97,7 @@ struct level_locals_s
 	level_info_t *info;
 	int			cluster;
 	int			levelnum;
+	int			lumpnum;
 	char		level_name[64];			// the descriptive name (Outer Base, etc)
 	char		mapname[8];				// the server name (base1, etc)
 	char		nextmap[8];				// go here when fraglimit is hit
@@ -180,7 +182,8 @@ extern level_locals_t level;
 extern level_info_t LevelInfos[];
 extern cluster_info_t ClusterInfos[];
 
-extern int WorldVars[NUM_WORLDVARS];
+extern int ACS_WorldVars[NUM_WORLDVARS];
+extern int ACS_GlobalVars[NUM_GLOBALVARS];
 
 extern BOOL savegamerestore;
 extern BOOL HexenHack;		// Semi-Hexen-compatibility mode

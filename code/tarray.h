@@ -20,6 +20,22 @@ public:
 		Count = 0;
 		Array = (T *)Malloc (sizeof(T)*max);
 	}
+	TArray (const TArray<T> &other)
+	{
+		DoCopy (other);
+	}
+	TArray<T> &operator= (const TArray<T> &other)
+	{
+		if (&other != this)
+		{
+			if (Array != NULL)
+			{
+				free (Array);
+			}
+			DoCopy (other);
+		}
+		return *this;
+	}
 	~TArray ()
 	{
 		if (Array)
@@ -29,11 +45,11 @@ public:
 	{
 		return Array[index];
 	}
-	size_t Push (T item)
+	size_t Push (const T &item)
 	{
 		if (Count >= Most)
 		{
-			Most = Most ? Most * 2 : 16;
+			Most = (Most >= 16) ? Most + Most / 2 : 16;
 			Array = (T *)Realloc (Array, sizeof(T)*Most);
 		}
 		Array[Count] = item;
@@ -74,11 +90,11 @@ public:
 			}
 		}
 	}
-	size_t Size ()
+	size_t Size () const
 	{
 		return Count;
 	}
-	size_t Max ()
+	size_t Max () const
 	{
 		return Most;
 	}
@@ -90,6 +106,23 @@ private:
 	T *Array;
 	size_t Most;
 	size_t Count;
+
+	void DoCopy (const TArray<T> &other)
+	{
+		Most = Count = other.Count;
+		if (Count != 0)
+		{
+			Array = (T *)Malloc (sizeof(T)*Most);
+			for (size_t i = 0; i < Count; ++i)
+			{
+				Array[i] = other.Array[i];
+			}
+		}
+		else
+		{
+			Array = NULL;
+		}
+	}
 };
 
 #endif //__TARRAY_H__

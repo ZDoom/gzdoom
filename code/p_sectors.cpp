@@ -81,7 +81,7 @@ fixed_t sector_t::FindHighestFloorSurrounding (vertex_t **v) const
 	vertex_t *spot;
 
 	spot = lines[0]->v1;
-	floor = MININT;
+	floor = FIXED_MIN;
 
 	for (i = 0; i < linecount; i++)
 	{
@@ -131,7 +131,7 @@ fixed_t sector_t::FindNextHighestFloor (vertex_t **v) const
 
 	spot = lines[0]->v1;
 	height = floorplane.ZatPoint (spot);
-	heightdiff = MAXINT;
+	heightdiff = FIXED_MAX;
 
 	for (i = 0; i < linecount; i++)
 	{
@@ -184,7 +184,7 @@ fixed_t sector_t::FindNextLowestFloor (vertex_t **v) const
 
 	spot = lines[0]->v1;
 	height = floorplane.ZatPoint (spot);
-	heightdiff = MAXINT;
+	heightdiff = FIXED_MAX;
 
 	for (i = 0; i < linecount; i++)
 	{
@@ -238,7 +238,7 @@ fixed_t sector_t::FindNextLowestCeiling (vertex_t **v) const
 
 	spot = lines[0]->v1;
 	height = ceilingplane.ZatPoint (spot);
-	heightdiff = MAXINT;
+	heightdiff = FIXED_MAX;
 
 	for (i = 0; i < linecount; i++)
 	{
@@ -290,7 +290,7 @@ fixed_t sector_t::FindNextHighestCeiling (vertex_t **v) const
 
 	spot = lines[0]->v1;
 	height = ceilingplane.ZatPoint (spot);
-	heightdiff = MAXINT;
+	heightdiff = FIXED_MAX;
 
 	for (i = 0; i < linecount; i++)
 	{
@@ -333,7 +333,7 @@ fixed_t sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
 	int i;
 
 	spot = lines[0]->v1;
-	height = MAXINT;
+	height = FIXED_MAX;
 
 	for (i = 0; i < linecount; i++)
 	{
@@ -373,7 +373,7 @@ fixed_t sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 	int i;
 
 	spot = lines[0]->v1;
-	height = MININT;
+	height = FIXED_MIN;
 
 	for (i = 0; i < linecount; i++)
 	{
@@ -409,7 +409,7 @@ fixed_t sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 //
 fixed_t sector_t::FindShortestTextureAround () const
 {
-	int minsize = MAXINT;
+	int minsize = FIXED_MAX;
 	side_t *side;
 	int i;
 
@@ -441,7 +441,7 @@ fixed_t sector_t::FindShortestTextureAround () const
 //
 fixed_t sector_t::FindShortestUpperAround () const
 {
-	int minsize = MAXINT;
+	int minsize = FIXED_MAX;
 	side_t *side;
 	int i;
 
@@ -559,7 +559,7 @@ fixed_t sector_t::FindHighestFloorPoint (vertex_t **v) const
 {
 	int i;
 	line_t *line;
-	fixed_t height = MININT;
+	fixed_t height = FIXED_MIN;
 	fixed_t probeheight;
 	vertex_t *spot = NULL;
 
@@ -598,7 +598,7 @@ fixed_t sector_t::FindLowestCeilingPoint (vertex_t **v) const
 {
 	int i;
 	line_t *line;
-	fixed_t height = MAXINT;
+	fixed_t height = FIXED_MAX;
 	fixed_t probeheight;
 	vertex_t *spot = NULL;
 

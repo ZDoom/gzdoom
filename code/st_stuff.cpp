@@ -103,14 +103,16 @@ static BYTE CheatVisit[] =		{ 'v','i','s','i','t',0,0,255 };
 static BYTE CheatPig[] =		{ 'd','e','l','i','v','e','r','a','n','c','e',255 };
 static BYTE CheatButcher[] =	{ 'b','u','t','c','h','e','r',255 };
 static BYTE CheatConan[] =		{ 'c','o','n','a','n',255 };
+static BYTE CheatMapsco[] =		{ 'm','a','p','s','c','o',255 };
+static BYTE CheatWhere[] =		{ 'w','h','e','r','e',255 };
+#if 0
 static BYTE CheatClass1[] =		{ 's','h','a','d','o','w','c','a','s','t','e','r',255 };
 static BYTE CheatClass2[] =		{ 's','h','a','d','o','w','c','a','s','t','e','r',0,255 };
 static BYTE CheatInit[] =		{ 'i','n','i','t',255 };
-static BYTE CheatWhere[] =		{ 'w','h','e','r','e',255 };
 static BYTE CheatScript1[] =	{ 'p','u','k','e',255 };
 static BYTE CheatScript2[] =	{ 'p','u','k','e',0,255 };
 static BYTE CheatScript3[] =	{ 'p','u','k','e',0,0,255 };
-static BYTE CheatMapsco[] =		{ 'm','a','p','s','c','o',255 };
+#endif
 
 static cheatseq_t DoomCheats[] =
 {
@@ -296,7 +298,7 @@ static BOOL Cht_Music (cheatseq_t *cheat)
 
 static BOOL Cht_BeholdMenu (cheatseq_t *cheat)
 {
-	Printf (PRINT_HIGH, "%s\n", GStrings(STSTR_BEHOLD));
+	Printf ("%s\n", GStrings(STSTR_BEHOLD));
 	return false;
 }
 
@@ -332,7 +334,7 @@ static BOOL Cht_MyPos (cheatseq_t *cheat)
 static BOOL Cht_Ticker (cheatseq_t *cheat)
 {
 	ticker = !*ticker;
-	Printf (PRINT_HIGH, "%s\n", GStrings (*ticker ?
+	Printf ("%s\n", GStrings (*ticker ?
 		TXT_CHEATTICKERON : TXT_CHEATTICKEROFF));
 	return true;
 }
@@ -340,7 +342,7 @@ static BOOL Cht_Ticker (cheatseq_t *cheat)
 static BOOL Cht_Sound (cheatseq_t *cheat)
 {
 	noisedebug = !*noisedebug;
-	Printf (PRINT_HIGH, "%s\n", GStrings (*noisedebug ?
+	Printf ("%s\n", GStrings (*noisedebug ?
 		TXT_CHEATSOUNDON : TXT_CHEATSOUNDOFF));
 	return true;
 }

@@ -50,12 +50,12 @@ void I_SetSfxVolume (int volume);
 void I_SetChannels (int);
 
 // load a sound from disk
-void I_LoadSound (struct sfxinfo_struct *sfx);
+void I_LoadSound (sfxinfo_t *sfx);
 
 // Starts a sound in a particular sound channel.
 long
 I_StartSound
-( struct sfxinfo_struct *sfx,
+( sfxinfo_t		*sfx,
   int			vol,
   int			sep,
   int			pitch,
@@ -64,7 +64,7 @@ I_StartSound
 
 long
 I_StartSound3D
-( struct sfxinfo_struct *sfx,
+( sfxinfo_t		*sfx,
   float			vol,
   int			pitch,
   int			channel,
@@ -92,9 +92,9 @@ void I_UpdateSoundParams3D (int handle, float pos[3], float vel[3]);
 struct FileHandle
 {
 	FileHandle (int hndl, int start, int size)
-		: base (start),
-		  len (size),
+		: len (size),
 		  pos (0),
+		  base (start),
 		  bNeedClose (true)
 	{
 		handle = dup (hndl);
@@ -104,7 +104,7 @@ struct FileHandle
 		: pos (0),
 		  bNeedClose (false)
 	{
-		handle = W_FileHandleFromWad (lumpinfo[lump].handle);
+		handle = W_FileHandleFromWad (lumpinfo[lump].wadnum);
 		base = lumpinfo[lump].position;
 		len = lumpinfo[lump].size;
 	}

@@ -8,7 +8,25 @@
 #include "sbar.h"
 
 IMPLEMENT_ABSTRACT_ACTOR (AHealth)
+
+void AHealth::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_ITEM, "misc/health_pkup", 1, ATTN_NORM);
+}
+
+IMPLEMENT_ABSTRACT_ACTOR (AArmor)
+
+void AArmor::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_ITEM, "misc/armor_pkup", 1, ATTN_NORM);
+}
+
 IMPLEMENT_ABSTRACT_ACTOR (AAmmo)
+
+void AAmmo::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_ITEM, "misc/ammo_pkup", 1, ATTN_NORM);
+}
 
 const char *AmmoPics[NUMAMMO];
 const char *ArmorPics[NUMARMOR];
@@ -72,9 +90,6 @@ bool P_GiveArmor (player_t *player, armortype_t armortype, int amount)
 
 void P_GiveKey (player_t *player, keytype_t key)
 {
-	extern int playerkeys;
-	extern vertex_t KeyPoints[];
-	
 	if (player->keys[key])
 	{
 		return;

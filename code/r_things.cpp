@@ -23,8 +23,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <search.h>
 
+#include "templates.h"
 #include "m_alloc.h"
 #include "doomdef.h"
 #include "m_swap.h"
@@ -210,7 +210,7 @@ static void R_InstallSprite (int num)
 //
 void R_InitSpriteDefs () 
 { 
-	int i;
+	size_t i;
 	int l;
 	int intname;
 	int start;
@@ -260,24 +260,18 @@ void R_InitSpriteDefs ()
 //
 #define NUMSKINSOUNDS 9
 static const char *skinsoundnames[NUMSKINSOUNDS][2] = {
-	{ "dsplpain",	NULL },
-	{ "dspldeth",	NULL },
-	{ "dspdiehi",	"xdeath1" },
-	{ "dsoof",		"land1" },
-	{ "dsoof",		"grunt1" },
-	{ "dsnoway",	"usefail" },
-	{ "dsslop",		"gibbed" },
-	{ "dspunch",	"fist" },
-	{ "dsjump",		"jump1" }
+	{ "dsplpain",	"*pain100" },
+	{ "dspldeth",	"*death" },
+	{ "dspdiehi",	"*xdeath" },
+	{ "dsoof",		"*land" },
+	{ "dsoof",		"*grunt" },
+	{ "dsnoway",	"*usefail" },
+	{ "dsslop",		"*gibbed" },
+	{ "dspunch",	"*fist" },
+	{ "dsjump",		"*jump" }
 };
-
-static char facenames[8][8] = {
-	"xxxTR", "xxxTL", "xxxOUCH", "xxxEVL", "xxxKILL", "xxxGOD0",
-	"xxxST", { 'x','x','x','D','E','A','D','0' }
-};
-static const int facelens[8] = {
-	5, 5, 7, 6, 7, 7, 5, 8
-};
+static const char painname[3][8] = { "*pain25", "*pain50", "*pain75" };
+static WORD playersoundrefs[NUMSKINSOUNDS+3];
 
 static int STACK_ARGS skinsorter (const void *a, const void *b)
 {
@@ -287,7 +281,6 @@ static int STACK_ARGS skinsorter (const void *a, const void *b)
 void R_InitSkins (void)
 {
 	spritedef_t temp;
-	char sndname[128];
 	int sndlumps[NUMSKINSOUNDS];
 	char key[10];
 	int intname;
@@ -298,6 +291,15 @@ void R_InitSkins (void)
 	key[9] = 0;
 	i = 0;
 	lastlump = 0;
+
+	for (j = 0; j < NUMSKINSOUNDS; ++j)
+	{
+		playersoundrefs[j] = S_FindSound (skinsoundnames[j][1]);
+	}
+	for (j = 0; j < 3; ++j)
+	{
+		playersoundrefs[j+NUMSKINSOUNDS] = S_FindSound (painname[j]);
+	}
 
 	while ((base = W_FindLump ("S_SKIN", &lastlump)) != -1)
 	{
@@ -349,6 +351,10 @@ void R_InitSkins (void)
 				for (j = 2; j >= 0; j--)
 					skins[i].face[j] = toupper (sc_String[j]);
 			}
+			else if (0 == stricmp (key, "gender"))
+			{
+				skins[i].gender = D_GenderToInt (sc_String);
+			}
 			else
 			{
 				for (j = 0; j < NUMSKINSOUNDS; j++)
@@ -363,7 +369,7 @@ void R_InitSkins (void)
 					}
 				}
 				//if (j == 8)
-				//	Printf (PRINT_HIGH, "Funny info for skin %i: %s = %s\n", i, key, sc_String);
+				//	Printf ("Funny info for skin %i: %s = %s\n", i, key, sc_String);
 			}
 		}
 
@@ -380,7 +386,7 @@ void R_InitSkins (void)
 		memset (sprtemp, -1, sizeof(sprtemp));
 		maxframe = -1;
 
-		for (k = base + 1; lumpinfo[k].handle == lumpinfo[base].handle; k++)
+		for (k = base + 1; lumpinfo[k].wadnum == lumpinfo[base].wadnum; k++)
 		{
 			if (*(int *)lumpinfo[k].name == intname)
 			{
@@ -415,32 +421,16 @@ void R_InitSkins (void)
 		{
 			if (sndlumps[j] != -1)
 			{
-				if (j > 1)
-				{
-					sprintf (sndname, "player/%s/%s", skins[i].name, skinsoundnames[j][1]);
-					S_AddSoundLump (sndname, sndlumps[j]);
-				}
-				else if (j == 1)
-				{
-					int r;
+				int aliasid;
 
-					for (r = 1; r <= 4; r++)
-					{
-						sprintf (sndname, "player/%s/death%d", skins[i].name, r);
-						S_AddSoundLump (sndname, sndlumps[j]);
-					}
-				}
-				else	// j == 0
+				aliasid = S_AddPlayerSound (skins[i].name, skins[i].gender,
+					playersoundrefs[j], sndlumps[j]);
+				if (j == 0)
 				{
-					int l, r;
-
-					for (l =  1; l <= 4; l++)
+					for (int l = 3; l > 0; --l)
 					{
-						for (r = 1; r <= 2; r++)
-						{
-							sprintf (sndname, "player/%s/pain%d_%d", skins[i].name, l*25, r);
-							S_AddSoundLump (sndname, sndlumps[j]);
-						}
+						S_AddPlayerSoundExisting (skins[i].name, skins[i].gender,
+							playersoundrefs[NUMSKINSOUNDS-1+l], aliasid);
 					}
 				}
 			}
@@ -458,6 +448,7 @@ void R_InitSkins (void)
 	if (numskins > 1)
 	{ // The sound table may have changed, so rehash it.
 		S_HashSounds ();
+		S_ShrinkPlayerSoundLists ();
 	}
 }
 
@@ -495,7 +486,7 @@ CCMD (skins)
 	int i;
 
 	for (i = 0; i < (int)numskins; i++)
-		Printf (PRINT_HIGH, "% 3d %s\n", i, skins[i].name);
+		Printf ("% 3d %s\n", i, skins[i].name);
 }
 
 //
@@ -518,7 +509,7 @@ void R_InitSprites ()
 {
 	byte rangestart, rangeend;
 	int lump, lastlump;
-	int i;
+	size_t i;
 
 	for (i = 0; i < MAXWIDTH; i++)
 	{
@@ -734,7 +725,7 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 	}
 	else
 	{
-		baseclip = MAXINT;
+		baseclip = FIXED_MAX;
 	}
 
 #ifdef RANGECHECK
@@ -924,7 +915,6 @@ void R_ProjectSprite (AActor *thing)
 	}
 #endif
 	sprdef = &sprites[thing->sprite];
-#ifdef RANGECHECK
 	if (thing->frame >= sprdef->numframes)
 	{
 		DPrintf ("R_ProjectSprite: invalid sprite frame %c%c%c%c: %c (max %c)\n",
@@ -932,7 +922,6 @@ void R_ProjectSprite (AActor *thing)
 			thing->frame + 'A', sprdef->numframes + 'A' - 1);
 		return;
 	}
-#endif
 	sprframe = &sprdef->spriteframes[thing->frame];
 
 	if (sprframe->rotate)
@@ -1122,19 +1111,21 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	
 	// decide which patch to use
 #ifdef RANGECHECK
-	if ( (unsigned)psp->state->sprite.index >= (unsigned)sprites.Size ()) {
-		DPrintf ("R_DrawPSprite: invalid sprite number %i\n", psp->state->sprite);
+	if ( (unsigned)psp->state->sprite.index >= (unsigned)sprites.Size ())
+	{
+		DPrintf ("R_DrawPSprite: invalid sprite number %i\n", psp->state->sprite.index);
 		return;
 	}
 #endif
 	sprdef = &sprites[psp->state->sprite.index];
 #ifdef RANGECHECK
-	if (psp->state->frame >= sprdef->numframes) {
-		DPrintf ("R_DrawPSprite: invalid sprite frame %i : %i\n", psp->state->sprite, psp->state->frame);
+	if (psp->state->GetFrame() >= sprdef->numframes)
+	{
+		DPrintf ("R_DrawPSprite: invalid sprite frame %i : %i\n", psp->state->sprite.index, psp->state->GetFrame());
 		return;
 	}
 #endif
-	sprframe = &sprdef->spriteframes[psp->state->frame];
+	sprframe = &sprdef->spriteframes[psp->state->GetFrame()];
 
 	lump = sprframe->lump[0];
 	flip = (BOOL)sprframe->flip[0];
@@ -1167,8 +1158,9 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	vis->floorclip = 0;
 	vis->texturemid = (BASEYCENTER<<FRACBITS) -
 		(psp->sy - (TileSizes[lump].TopOffset << FRACBITS));
-	if (camera->player && (realviewheight == SCREENHEIGHT ||
-		(SCREENWIDTH > 320 && !*st_scale)))
+	if (camera->player && (RenderTarget != screen ||
+		realviewheight == RenderTarget->GetHeight() ||
+		(RenderTarget->GetWidth() > 320 && !*st_scale)))
 	{	// Adjust PSprite for fullscreen views
 		FWeaponInfo *weapon;
 		if (camera->player->powers[pw_weaponlevel2])
@@ -1177,7 +1169,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 			weapon = wpnlev1info[camera->player->readyweapon];
 		if (weapon && weapon->yadjust)
 		{
-			if (realviewheight == SCREENHEIGHT)
+			if (RenderTarget != screen || realviewheight == RenderTarget->GetHeight())
 			{
 				vis->texturemid -= weapon->yadjust;
 			}
@@ -1220,7 +1212,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 		// fixed color
 		vis->colormap = fixedcolormap;
 	}
-	else if (psp->state->fullbright & RF_FULLBRIGHT)
+	else if (psp->state->GetFullbright())
 	{
 		// full bright
 		vis->colormap = basecolormap;	// [RH] use basecolormap
@@ -1443,8 +1435,8 @@ void R_DrawSprite (vissprite_t *spr)
 			continue;
 		}
 
-		r1 = MAX(ds->x1, spr->x1);
-		r2 = MIN(ds->x2, spr->x2);
+		r1 = MAX<int> (ds->x1, spr->x1);
+		r2 = MIN<int> (ds->x2, spr->x2);
 
 		if (ds->neardepth > spr->depth || (ds->fardepth > spr->depth &&
 					!R_PointOnSegSide (spr->gx, spr->gy, ds->curline)))
@@ -1620,8 +1612,8 @@ void R_ProjectParticle (particle_t *particle)
 	// calculate edges of the shape
 	int psize = particle->size << (12-3);
 
-	x1 = MAX (WindowLeft, (centerxfrac + MulScale12 (tx-psize, xscale)) >> FRACBITS);
-	x2 = MIN (WindowRight, (centerxfrac + MulScale12 (tx+psize, xscale)) >> FRACBITS);
+	x1 = MAX<int> (WindowLeft, (centerxfrac + MulScale12 (tx-psize, xscale)) >> FRACBITS);
+	x2 = MIN<int> (WindowRight, (centerxfrac + MulScale12 (tx+psize, xscale)) >> FRACBITS);
 
 	if (x1 > x2)
 		return;

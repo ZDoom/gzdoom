@@ -159,12 +159,12 @@ struct secplane_t
 
 	fixed_t PointToDist (fixed_t x, fixed_t y, fixed_t z) const
 	{
-		return -TMulScale16 (a, x, b, y, c, z);
+		return -TMulScale16 (a, x, y, b, z, c);
 	}
 
 	fixed_t PointToDist (const vertex_t *v, fixed_t z) const
 	{
-		return -TMulScale16 (a, v->x, b, v->y, c, z);
+		return -TMulScale16 (a, v->x, b, v->y, z, c);
 	}
 };
 
@@ -570,7 +570,7 @@ class FPlayerSkin
 public:
 	char		name[17];	// 16 chars + NULL
 	char		face[3];
-	byte		gender;		// This skin's gender (not used)
+	byte		gender;		// This skin's gender (not really used)
 	byte		range0start;
 	byte		range0end;
 	int			sprite;

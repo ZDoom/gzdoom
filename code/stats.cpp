@@ -44,7 +44,7 @@ void FStat::SelectStat (const char *name)
 	if (stat)
 		SelectStat (stat);
 	else
-		Printf (PRINT_HIGH, "Unknown stat: %s\n", name);
+		Printf ("Unknown stat: %s\n", name);
 }
 
 void FStat::SelectStat (FStat *stat)
@@ -59,7 +59,7 @@ void FStat::ToggleStat (const char *name)
 	if (stat)
 		ToggleStat (stat);
 	else
-		Printf (PRINT_HIGH, "Unknown stat: %s\n", name);
+		Printf ("Unknown stat: %s\n", name);
 }
 
 void FStat::ToggleStat (FStat *stat)
@@ -88,10 +88,10 @@ void FStat::DumpRegisteredStats ()
 {
 	FStat *stat = m_FirstStat;
 
-	Printf (PRINT_HIGH, "Available stats:\n");
+	Printf ("Available stats:\n");
 	while (stat)
 	{
-		Printf (PRINT_HIGH, "  %s\n", stat->m_Name);
+		Printf ("  %s\n", stat->m_Name);
 		stat = stat->m_Next;
 	}
 }
@@ -100,7 +100,7 @@ CCMD (stat)
 {
 	if (argc != 2)
 	{
-		Printf (PRINT_HIGH, "Usage: stat <statistics>\n");
+		Printf ("Usage: stat <statistics>\n");
 		FStat::DumpRegisteredStats ();
 	}
 	else

@@ -179,11 +179,11 @@ void W_AddFile (char *filename)
 	// open the file and add to directory
 	if ((handle = open (name, O_RDONLY|O_BINARY)) == -1)
 	{ // Didn't find file
-		Printf (PRINT_HIGH, " couldn't open %s\n",filename);
+		Printf (" couldn't open %s\n",filename);
 		return;
 	}
 
-	Printf (PRINT_HIGH, " adding %s", name);
+	Printf (" adding %s", name);
 	startlump = numlumps;
 
 	// [RH] Determine if file is a WAD based on its signature, not its name.
@@ -199,7 +199,7 @@ void W_AddFile (char *filename)
 		lseek (handle, header.infotableofs, SEEK_SET);
 		read (handle, fileinfo, length);
 		numlumps += header.numlumps;
-		Printf (PRINT_HIGH, " (%d lumps)", header.numlumps);
+		Printf (" (%d lumps)", header.numlumps);
 	}
 	else
 	{ // This is just a single lump file
@@ -213,14 +213,14 @@ void W_AddFile (char *filename)
 		strncpy (singleinfo.name, name, 8);
 		numlumps++;
 	}
-	Printf (PRINT_HIGH, "\n");
+	Printf ("\n");
 
 	// Fill in lumpinfo
 	lumpinfo = (lumpinfo_t *)Realloc (lumpinfo, numlumps*sizeof(lumpinfo_t));
 	lump_p = &lumpinfo[startlump];
-	for (i = startlump; i < numlumps; i++, lump_p++, fileinfo++)
+	for (i = startlump; i < (unsigned)numlumps; i++, lump_p++, fileinfo++)
 	{
-		lump_p->handle = ActiveWads.Size ();
+		lump_p->wadnum = ActiveWads.Size ();
 		lump_p->position = LONG(fileinfo->filepos);
 		lump_p->size = LONG(fileinfo->size);
 		lump_p->namespc = ns_global;
@@ -342,7 +342,7 @@ static void PutWadToFront (int wadnum, int oldpos)
 
 //==========================================================================
 //
-// FileHandleFromWad
+// W_FileHandleFromWad
 //
 // Returns a file handle to access the specified wad with. If the wad was
 // not open, it gets opened and added to the list of open wads, possibly
@@ -379,6 +379,65 @@ int W_FileHandleFromWad (int wadnum)
 		PutWadToFront (wadnum, ActiveWads[wadnum].ActivePos);
 	}
 	return ActiveWads[wadnum].Handle;
+}
+
+//==========================================================================
+//
+// W_GetWadName
+//
+// Returns the name of the given wad.
+//
+//==========================================================================
+
+const char *W_GetWadName (int wadnum)
+{
+	const char *name, *slash;
+
+	if ((unsigned int)wadnum >= ActiveWads.Size ())
+	{
+		return NULL;
+	}
+
+	name = ActiveWads[wadnum].Name;
+	slash = strrchr (name, '/');
+	return slash != NULL ? slash+1 : name;
+}
+
+//==========================================================================
+//
+// W_CheckIfWadLoaded
+//
+// Returns true if the specified wad is loaded, false otherwise.
+// If a fully-qualified path is specified, then the wad must match exactly.
+// Otherwise, any wad with that name will work, whatever its path.
+//
+//==========================================================================
+
+bool W_CheckIfWadLoaded (const char *name)
+{
+	size_t i;
+
+	if (strrchr (name, '/') != NULL)
+	{
+		for (i = 0; i < ActiveWads.Size(); ++i)
+		{
+			if (stricmp (ActiveWads[i].Name, name) == 0)
+			{
+				return true;
+			}
+		}
+	}
+	else
+	{
+		for (i = 0; i < ActiveWads.Size(); ++i)
+		{
+			if (stricmp (W_GetWadName (i), name) == 0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 //==========================================================================
@@ -475,7 +534,7 @@ void W_ReadLump (int lump, void *dest)
 		I_Error ("W_ReadLump: %i >= numlumps",lump);
 	}
 	l = lumpinfo + lump;
-	handle = W_FileHandleFromWad (l->handle);
+	handle = W_FileHandleFromWad (l->wadnum);
 	lseek (handle, l->position, SEEK_SET);
 	c = read (handle, dest, l->size);
 	if (c < l->size)
@@ -496,7 +555,7 @@ void *W_CacheLumpNum (int lump, int tag)
 	byte *ptr;
 	int lumplen;
 
-	if ((unsigned)lump >= numlumps)
+	if ((unsigned)lump >= (unsigned)numlumps)
 	{
 		I_Error ("W_CacheLumpNum: %u >= numlumps",lump);
 	}
@@ -571,7 +630,7 @@ void W_InitHashChains (void)
 	memset (NextLumpIndex, 255, numlumps*sizeof(FirstLumpIndex[0]));
 
 	// Now set up the chains
-	for (i = 0; i < numlumps; i++)
+	for (i = 0; i < (unsigned)numlumps; i++)
 	{
 		uppercopy (name, lumpinfo[i].name);
 		j = W_LumpNameHash (name) % (unsigned) numlumps;
@@ -654,7 +713,7 @@ void W_MergeLumps (const char *start, const char *end, int space)
 				{
 					newlumps++;
 					strncpy (newlumpinfos[0].name, ustart, 8);
-					newlumpinfos[0].handle = -1;
+					newlumpinfos[0].wadnum = -1;
 					newlumpinfos[0].position =
 						newlumpinfos[0].size = 0;
 					newlumpinfos[0].namespc = ns_global;
@@ -689,7 +748,7 @@ void W_MergeLumps (const char *start, const char *end, int space)
 					}
 				}
 			}
-			else if (i && lumpinfo[i].handle != lumpinfo[i-1].handle)
+			else if (i && lumpinfo[i].wadnum != lumpinfo[i-1].wadnum)
 			{
 				// Blocks cannot span multiple files
 				insideBlock = false;
@@ -722,7 +781,7 @@ void W_MergeLumps (const char *start, const char *end, int space)
 		numlumps = oldlumps + newlumps;
 		
 		strncpy (lumpinfo[numlumps].name, uend, 8);
-		lumpinfo[numlumps].handle = -1;
+		lumpinfo[numlumps].wadnum = -1;
 		lumpinfo[numlumps].position =
 			lumpinfo[numlumps].size = 0;
 		lumpinfo[numlumps].namespc = ns_global;

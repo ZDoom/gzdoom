@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -9,7 +10,7 @@
 
 void A_SpidRefire (AActor *);
 void A_Metal (AActor *);
-void A_SPosAttack (AActor *);
+void A_SPosAttackUseAtkSound (AActor *);
 
 class ASpiderMastermind : public AActor
 {
@@ -41,8 +42,8 @@ FState ASpiderMastermind::States[] =
 
 #define S_SPID_ATK (S_SPID_RUN+12)
 	S_BRIGHT (SPID, 'A',   20, A_FaceTarget 				, &States[S_SPID_ATK+1]),
-	S_BRIGHT (SPID, 'G',	4, A_SPosAttack 				, &States[S_SPID_ATK+2]),
-	S_BRIGHT (SPID, 'H',	4, A_SPosAttack 				, &States[S_SPID_ATK+3]),
+	S_BRIGHT (SPID, 'G',	4, A_SPosAttackUseAtkSound		, &States[S_SPID_ATK+2]),
+	S_BRIGHT (SPID, 'H',	4, A_SPosAttackUseAtkSound		, &States[S_SPID_ATK+3]),
 	S_BRIGHT (SPID, 'H',	1, A_SpidRefire 				, &States[S_SPID_ATK+1]),
 
 #define S_SPID_PAIN (S_SPID_ATK+4)
@@ -89,7 +90,7 @@ END_DEFAULTS
 
 bool ASpiderMastermind::SuggestMissileAttack (fixed_t dist)
 {
-	return P_Random (pr_checkmissilerange) >= MIN (dist >> (FRACBITS + 1), 200);
+	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 200);
 }
 
 void A_SpidRefire (AActor *self)

@@ -9,6 +9,7 @@
 */
 
 #include "m_alloc.h"
+#include "templates.h"
 
 #include "doomdef.h"
 #include "gstrings.h"
@@ -1024,6 +1025,47 @@ void M_OptResponder (event_t *ev)
 			if (CurrentMenu->items[CurrentItem].type == screenres)
 				CurrentMenu->items[CurrentItem].a.selmode = modecol;
 
+			S_Sound (CHAN_VOICE, "menu/cursor", 1, ATTN_NONE);
+		}
+		break;
+
+	case GK_PGUP:
+		if (CanScrollUp)
+		{
+			CurrentMenu->scrollpos -= VisBottom - CurrentMenu->scrollpos - CurrentMenu->scrolltop;
+			if (CurrentMenu->scrollpos < 0)
+			{
+				CurrentMenu->scrollpos = 0;
+			}
+			CurrentItem = CurrentMenu->scrolltop + CurrentMenu->scrollpos + 1;
+			while (CurrentMenu->items[CurrentItem].type == redtext ||
+				   CurrentMenu->items[CurrentItem].type == whitetext ||
+				   (CurrentMenu->items[CurrentItem].type == screenres &&
+					!CurrentMenu->items[CurrentItem].b.res1))
+			{
+				++CurrentItem;
+			}
+			S_Sound (CHAN_VOICE, "menu/cursor", 1, ATTN_NONE);
+		}
+		break;
+
+	case GK_PGDN:
+		if (CanScrollDown)
+		{
+			int pagesize = VisBottom - CurrentMenu->scrollpos - CurrentMenu->scrolltop;
+			CurrentMenu->scrollpos += pagesize;
+			if (CurrentMenu->scrollpos + CurrentMenu->scrolltop + pagesize > CurrentMenu->numitems)
+			{
+				CurrentMenu->scrollpos = CurrentMenu->numitems - CurrentMenu->scrolltop - pagesize;
+			}
+			CurrentItem = CurrentMenu->scrolltop + CurrentMenu->scrollpos + 1;
+			while (CurrentMenu->items[CurrentItem].type == redtext ||
+				   CurrentMenu->items[CurrentItem].type == whitetext ||
+				   (CurrentMenu->items[CurrentItem].type == screenres &&
+					!CurrentMenu->items[CurrentItem].b.res1))
+			{
+				++CurrentItem;
+			}
 			S_Sound (CHAN_VOICE, "menu/cursor", 1, ATTN_NONE);
 		}
 		break;

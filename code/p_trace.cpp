@@ -25,12 +25,7 @@ bool Trace (fixed_t x, fixed_t y, fixed_t z, sector_t *sector,
 {
 	int ptflags;
 
-	ptflags = PT_ADDLINES;
-
-	if (ActorMask != 0)
-	{
-		ptflags |= PT_ADDTHINGS;
-	}
+	ptflags = actorMask ? PT_ADDLINES|PT_ADDTHINGS : PT_ADDLINES;
 
 	StartZ = z;
 	Vx = vx;

@@ -349,7 +349,7 @@ void A_ChicPain (AActor *actor)
 	{
 		return;
 	}
-	S_Sound (actor, CHAN_BODY, actor->PainSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_BODY, actor->PainSound, 1, ATTN_NORM);
 }
 
 //----------------------------------------------------------------------------
@@ -445,6 +445,7 @@ void A_BeakRaise (player_t *player, pspdef_t *psp)
 
 void P_PlayPeck (AActor *chicken)
 {
+	S_Sound (chicken, CHAN_VOICE, "chicken/peck", 1, ATTN_NORM);
 	switch (P_Random () % 3)
 	{
 	case 0:

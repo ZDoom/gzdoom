@@ -26,23 +26,12 @@
 #include <stdlib.h>
 #include "doomtype.h"
 
-//
-// Fixed point, 32bit as 16.16.
-//
-#define FRACBITS				16
-#define FRACUNIT				(1<<FRACBITS)
-
-typedef int fixed_t;		// fixed 16.16
-typedef unsigned int dsfixed_t;	// fixedpt used by span drawer
-
 extern "C" fixed_t FixedMul_ASM				(fixed_t a, fixed_t b);
 extern "C" fixed_t STACK_ARGS FixedDiv_ASM	(fixed_t a, fixed_t b);
 fixed_t FixedMul_C				(fixed_t a, fixed_t b);
 fixed_t FixedDiv_C				(fixed_t a, fixed_t b);
 
-#if defined(ALPHA)
-#include "alphainlines.h"
-#elif defined(__GNUG__)
+#if defined(__GNUG__)
 #include "gccinlines.h"
 #elif defined(_MSC_VER)
 #include "mscinlines.h"
@@ -54,7 +43,7 @@ fixed_t FixedDiv_C				(fixed_t a, fixed_t b);
 	inline SDWORD SafeDivScale##x (SDWORD a, SDWORD b) \
 	{ \
 		if (abs(a) >> (31-x) >= abs (b)) \
-			return (a^b)<0 ? MININT : MAXINT; \
+			return (a^b)<0 ? FIXED_MIN : FIXED_MAX; \
 		return DivScale##x (a, b); \
 	}
 
@@ -88,18 +77,23 @@ MAKESAFEDIVSCALE(27)
 MAKESAFEDIVSCALE(28)
 MAKESAFEDIVSCALE(29)
 MAKESAFEDIVSCALE(30)
-MAKESAFEDIVSCALE(31)
-MAKESAFEDIVSCALE(32)
 #undef MAKESAFEDIVSCALE
 
-inline fixed_t FixedMul (fixed_t a, fixed_t b)
+inline SDWORD SafeDivScale31 (SDWORD a, SDWORD b)
 {
-	return MulScale16 (a, b);
+	if (abs(a) >= abs (b))
+		return (a^b)<0 ? FIXED_MIN : FIXED_MAX;
+	return DivScale32 (a, b);
 }
 
-inline fixed_t FixedDiv (fixed_t a, fixed_t b)
+inline SDWORD SafeDivScale32 (SDWORD a, SDWORD b)
 {
-	return SafeDivScale16 (a, b);
+	if (abs(a) >= abs (b) >> 1)
+		return (a^b)<0 ? FIXED_MIN : FIXED_MAX;
+	return DivScale32 (a, b);
 }
+
+#define FixedMul MulScale16
+#define FixedDiv SafeDivScale16
 
 #endif

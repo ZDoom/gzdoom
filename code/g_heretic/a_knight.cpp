@@ -146,7 +146,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (KnightAxe, speed)
 {
-	SimpleSpeedSetter<AKnightAxe, 9*FRACUNIT, 18*FRACUNIT> (speed);
+	SimpleSpeedSetter (AKnightAxe, 9*FRACUNIT, 18*FRACUNIT, speed);
 }
 
 // Red axe ------------------------------------------------------------------
@@ -178,7 +178,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (RedAxe, speed)
 {
-	SimpleSpeedSetter<ARedAxe, 9*FRACUNIT, 18*FRACUNIT> (speed);
+	SimpleSpeedSetter (ARedAxe, 9*FRACUNIT, 18*FRACUNIT, speed);
 }
 
 //----------------------------------------------------------------------------
@@ -219,7 +219,7 @@ void A_KnightAttack (AActor *actor)
 		return;
 	}
 	// Throw axe
-	S_Sound (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (actor->flags & MF_SHADOW || P_Random () < 40)
 	{ // Red axe
 		P_SpawnMissileZ (actor, actor->z + 36*FRACUNIT, actor->target, RUNTIME_CLASS(ARedAxe));

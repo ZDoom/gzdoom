@@ -27,8 +27,8 @@
 
 
 #include <stdlib.h>
-#include <search.h>
 
+#include "templates.h"
 #include "m_alloc.h"
 
 #include "doomdef.h"
@@ -86,7 +86,7 @@ fixed_t			WallTZ1, WallTZ2;	// z coords at left, right of wall in view space
 fixed_t			WallCX1, WallCX2;	// x coords at left, right of wall in view space
 fixed_t			WallCY1, WallCY2;	// y coords at left, right of wall in view space
 
-fixed_t			WallSX1, WallSX2;	// x coords at left, right of wall in screen space
+int				WallSX1, WallSX2;	// x coords at left, right of wall in screen space
 fixed_t			WallSZ1, WallSZ2;	// depth at left, right of wall in screen space
 
 float			WallDepthOrg, WallDepthScale;
@@ -136,7 +136,6 @@ typedef struct {
 // newend is one past the last valid seg
 static cliprange_t     *newend;
 static cliprange_t		solidsegs[MAXWIDTH/2+2];
-static cliprange_t		*lastsolidseg;
 
 
 

@@ -2,12 +2,6 @@
 #include <windows.h>
 
 #include "hardware.h"
-#undef MINCHAR
-#undef MAXCHAR
-#undef MINSHORT
-#undef MAXSHORT
-#undef MINLONG
-#undef MAXLONG
 #include "win32iface.h"
 #include "i_video.h"
 #include "i_system.h"
@@ -197,11 +191,11 @@ CCMD (vid_listmodes)
 			if (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits)
 				Printf_Bold ("%4d x%5d x%3d\n", width, height, bits);
 			else
-				Printf (PRINT_HIGH, "%4d x%5d x%3d\n", width, height, bits);
+				Printf ("%4d x%5d x%3d\n", width, height, bits);
 	}
 }
 
 CCMD (vid_currentmode)
 {
-	Printf (PRINT_HIGH, "%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
+	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }

@@ -34,6 +34,7 @@
 
 #include <stdlib.h>
 
+#include "templates.h"
 #include "i_system.h"
 #include "z_zone.h"
 #include "w_wad.h"
@@ -430,7 +431,7 @@ void R_ClearPlanes (bool fullclear)
 			floorclip[i] = clipval;
 		}
 		// [RH] clip ceiling to console bottom
-		clipval = ConBottom > viewwindowy
+		clipval = ConBottom > viewwindowy && !bRenderingToCanvas
 			? ((ConBottom - viewwindowy) >> detailyshift) - 1 : -1;
 		for (i = 0; i < viewwidth; i++)
 		{

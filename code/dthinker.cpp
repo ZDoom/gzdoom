@@ -12,6 +12,7 @@ IMPLEMENT_CLASS (DThinker)
 static Node *NextToThink;
 
 List DThinker::Thinkers[MAX_STATNUM+1];
+List DThinker::FreshThinkers[MAX_STATNUM+1];
 bool DThinker::bSerialOverride = false;
 
 void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
@@ -81,7 +82,7 @@ void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
 	}
 }
 
-DThinker::DThinker (int statnum)
+DThinker::DThinker (int statnum) throw()
 {
 	if (bSerialOverride)
 	{ // The serializer will insert us into the right list
@@ -89,11 +90,12 @@ DThinker::DThinker (int statnum)
 		return;
 	}
 
+	ObjectFlags |= OF_JustSpawned;
 	if ((unsigned)statnum > MAX_STATNUM)
 	{
 		statnum = MAX_STATNUM;
 	}
-	Thinkers[statnum].AddTail (this);
+	FreshThinkers[statnum].AddTail (this);
 }
 
 DThinker::~DThinker ()
@@ -117,6 +119,10 @@ void DThinker::Destroy ()
 	Super::Destroy ();
 }
 
+void DThinker::PostBeginPlay ()
+{
+}
+
 void DThinker::ChangeStatNum (int statnum)
 {
 	if ((unsigned)statnum > MAX_STATNUM)
@@ -124,7 +130,14 @@ void DThinker::ChangeStatNum (int statnum)
 		statnum = MAX_STATNUM;
 	}
 	Remove ();
-	Thinkers[statnum].AddTail (this);
+	if (ObjectFlags & OF_JustSpawned)
+	{
+		FreshThinkers[statnum].AddTail (this);
+	}
+	else
+	{
+		Thinkers[statnum].AddTail (this);
+	}
 }
 
 // Destroy every thinker
@@ -134,17 +147,8 @@ void DThinker::DestroyAllThinkers ()
 
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
-		Node *node = Thinkers[i].Head;
-		while (node->Succ != NULL)
-		{
-			Node *next = node->Succ;
-			DObject::BeginFrame ();
-			static_cast<DThinker *> (node)->Destroy ();
-			DObject::EndFrame ();
-			node = next;
-		}
-		// Should already be empty from the Destroys
-		//Thinkers[i].MakeEmpty ();
+		DestroyThinkersInList (Thinkers[i].Head);
+		DestroyThinkersInList (FreshThinkers[i].Head);
 	}
 }
 
@@ -157,60 +161,95 @@ void DThinker::DestroyMostThinkers ()
 
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
-		if (i != STAT_PLAYER)
+		DestroyMostThinkersInList (Thinkers[i], i);
+		DestroyMostThinkersInList (FreshThinkers[i], i);
+	}
+}
+
+void DThinker::DestroyThinkersInList (Node *node)
+{
+	while (node->Succ != NULL)
+	{
+		Node *next = node->Succ;
+		DObject::BeginFrame ();
+		static_cast<DThinker *> (node)->Destroy ();
+		DObject::EndFrame ();
+		node = next;
+	}
+}
+
+void DThinker::DestroyMostThinkersInList (List &list, int stat)
+{
+	if (stat != STAT_PLAYER)
+	{
+		DestroyThinkersInList (list.Head);
+	}
+	else
+	{
+		Node *node = list.Head;
+		while (node->Succ != NULL)
 		{
-			Node *node = Thinkers[i].Head;
-			while (node->Succ != NULL)
-			{
-				Node *next = node->Succ;
-				DObject::BeginFrame ();
-				static_cast<DThinker *> (node)->Destroy ();
-				DObject::EndFrame ();
-				node = next;
-			}
-		}
-		else
-		{
-			Node *node = Thinkers[i].Head;
-			while (node->Succ != NULL)
-			{
-				Node *next = node->Succ;
-				node->Remove ();
-				node = next;
-			}
+			Node *next = node->Succ;
+			node->Remove ();
+			node = next;
 		}
 	}
 }
 
 void DThinker::RunThinkers ()
 {
-	int i;
+	int i, count;
 
 	ThinkCycles = BotSupportCycles = 0;
 
 	clock (ThinkCycles);
-	for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; i++)
+
+	// Tick every thinker left from last time
+	for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
 	{
-		Node *node = Thinkers[i].Head;
-		while (node->Succ != NULL)
-		{
-			NextToThink = node->Succ;
-			DThinker *thinker = static_cast<DThinker *> (node);
-			if (thinker->ObjectFlags & OF_JustSpawned)
-			{	// OF_JustSpawned is valid with actors only
-				thinker->ObjectFlags &= ~OF_JustSpawned;
-				static_cast<AActor *> (thinker)->PostBeginPlay ();
-				if (thinker->ObjectFlags & OF_MassDestruction)
-				{ // object destroyed itself
-					return;
-				}
-			}
-	//		Printf (PRINT_HIGH, "%d: %s\n", gametic, RUNTIME_TYPE(thinker)->Name);
-			thinker->RunThink ();
-			node = NextToThink;
-		}
+		TickThinkers (&Thinkers[i], NULL);
 	}
+
+	// Keep ticking the fresh thinkers until there are no new ones.
+	do
+	{
+		count = 0;
+		for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
+		{
+			count += TickThinkers (&FreshThinkers[i], &Thinkers[i]);
+		}
+	} while (count != 0);
+
 	unclock (ThinkCycles);
+}
+
+int DThinker::TickThinkers (List *list, List *dest)
+{
+	int count = 0;
+	Node *node = list->Head;
+
+	while (node->Succ != NULL)
+	{
+		++count;
+		NextToThink = node->Succ;
+		DThinker *thinker = static_cast<DThinker *> (node);
+		if (thinker->ObjectFlags & OF_JustSpawned)
+		{
+			thinker->ObjectFlags &= ~OF_JustSpawned;
+			if (dest != NULL)
+			{ // Move thinker from this list to the destination list
+				node->Remove ();
+				dest->AddTail (node);
+			}
+			thinker->PostBeginPlay ();
+		}
+		if (!(thinker->ObjectFlags & OF_MassDestruction))
+		{ // Only tick thinkers not scheduled for destruction
+			thinker->RunThink ();
+		}
+		node = NextToThink;
+	}
+	return count;
 }
 
 void DThinker::RunThink ()
@@ -222,8 +261,6 @@ void *DThinker::operator new (size_t size)
 	return Z_Malloc (size, PU_LEVSPEC, 0);
 }
 
-// Deallocation is lazy -- it will not actually be freed
-// until its thinking turn comes up.
 void DThinker::operator delete (void *mem)
 {
 	Z_Free (mem);
@@ -243,27 +280,36 @@ FThinkerIterator::FThinkerIterator (TypeInfo *type, int statnum)
 	}
 	m_ParentType = type;
 	m_CurrThinker = DThinker::Thinkers[m_Stat].Head;
+	m_SearchingFresh = false;
 }
 
 void FThinkerIterator::Reinit ()
 {
 	m_CurrThinker = DThinker::Thinkers[m_Stat].Head;
+	m_SearchingFresh = false;
 }
 
 DThinker *FThinkerIterator::Next ()
 {
 	do
 	{
-		while (m_CurrThinker->Succ)
+		do
 		{
-			DThinker *thinker = static_cast<DThinker *> (m_CurrThinker);
-			if (thinker->IsKindOf (m_ParentType))
+			while (m_CurrThinker->Succ)
 			{
+				DThinker *thinker = static_cast<DThinker *> (m_CurrThinker);
+				if (thinker->IsKindOf (m_ParentType))
+				{
+					m_CurrThinker = m_CurrThinker->Succ;
+					return thinker;
+				}
 				m_CurrThinker = m_CurrThinker->Succ;
-				return thinker;
 			}
-			m_CurrThinker = m_CurrThinker->Succ;
-		}
+			if ((m_SearchingFresh = !m_SearchingFresh))
+			{
+				m_CurrThinker = DThinker::FreshThinkers[m_Stat].Head;
+			}
+		} while (m_SearchingFresh);
 		if (m_SearchStats)
 		{
 			m_Stat++;
@@ -273,6 +319,7 @@ DThinker *FThinkerIterator::Next ()
 			}
 		}
 		m_CurrThinker = DThinker::Thinkers[m_Stat].Head;
+		m_SearchingFresh = false;
 	} while (m_SearchStats && m_Stat != STAT_FIRST_THINKING);
 	return NULL;
 }
@@ -281,4 +328,10 @@ ADD_STAT (think, out)
 {
 	sprintf (out, "Think time = %04.1f ms",
 		SecondsPerCycle * (double)ThinkCycles * 1000);
+}
+
+DThinker *it;
+void mine ()
+{
+	it = new DThinker;
 }

@@ -33,10 +33,7 @@ FState AInvulnerabilitySphere::States[] =
 };
 
 IMPLEMENT_ACTOR (AInvulnerabilitySphere, Doom, 2022, 133)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -87,10 +84,7 @@ FState ASoulsphere::States[] =
 };
 
 IMPLEMENT_ACTOR (ASoulsphere, Doom, 2013, 25)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -128,10 +122,7 @@ FState AMegasphere::States[] =
 };
 
 IMPLEMENT_ACTOR (AMegasphere, Doom, 83, 132)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -163,10 +154,7 @@ FState ABerserk::States[] =
 };
 
 IMPLEMENT_ACTOR (ABerserk, Doom, 2023, 134)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -206,11 +194,8 @@ FState ABlurSphere::States[] =
 };
 
 IMPLEMENT_ACTOR (ABlurSphere, Doom, 2024, 135)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_RenderStyle (STYLE_Translucent)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -236,10 +221,8 @@ FState ARadSuit::States[] =
 };
 
 IMPLEMENT_ACTOR (ARadSuit, Doom, 2025, 136)
-	PROP_RadiusFixed (20)
 	PROP_HeightFixed (46)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -266,10 +249,7 @@ FState AInfrared::States[] =
 };
 
 IMPLEMENT_ACTOR (AInfrared, Doom, 2045, 138)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -303,10 +283,7 @@ FState AAllmap::States[] =
 };
 
 IMPLEMENT_ACTOR (AAllmap, Doom, 2026, 137)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -314,6 +291,9 @@ END_DEFAULTS
 
 // The backpack is alsa pickup, because there's not much point to carrying
 // a backpack around unused.
+//
+// Okay, I have no idea what I meant when I wrote that. In particular,
+// what does "alsa" mean?
 
 class ABackpack : public AInventory
 {
@@ -331,7 +311,7 @@ protected:
 			player->backpack = true;
 		}
 		for (i = 0; i < NUMAMMO; i++)
-			P_GiveAmmo (player, (ammotype_t)i, 1);
+			P_GiveAmmo (player, (ammotype_t)i, clipammo[i]);
 		return true;
 	}
 	virtual const char *PickupMessage ()
@@ -346,9 +326,7 @@ FState ABackpack::States[] =
 };
 
 IMPLEMENT_ACTOR (ABackpack, Doom, 8, 144)
-	PROP_RadiusFixed (20)
 	PROP_HeightFixed (26)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (0)
 END_DEFAULTS

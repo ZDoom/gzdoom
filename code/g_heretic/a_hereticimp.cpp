@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -221,12 +222,12 @@ END_DEFAULTS
 
 AT_SPEED_SET (HereticImpBall, speed)
 {
-	SimpleSpeedSetter<AHereticImpBall, 10*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (AHereticImpBall, 10*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 bool AHereticImp::SuggestMissileAttack (fixed_t dist)
 { // Imps fly attack from far away
-	return P_Random (pr_checkmissilerange) >= MIN (dist >> (FRACBITS + 1), 200);
+	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 200);
 }
 
 //----------------------------------------------------------------------------
@@ -266,7 +267,7 @@ void A_ImpMeAttack (AActor *self)
 	{
 		return;
 	}
-	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (self))
 	{
 		P_DamageMobj (self->target, self, self, 5+(P_Random()&7), MOD_HIT);
@@ -292,7 +293,7 @@ void A_ImpMsAttack (AActor *self)
 	}
 	dest = self->target;
 	self->flags |= MF_SKULLFLY;
-	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
 	an = self->angle >> ANGLETOFINESHIFT;
 	self->momx = FixedMul (12*FRACUNIT, finecosine[an]);
@@ -320,7 +321,7 @@ void A_ImpMsAttack2 (AActor *self)
 	{
 		return;
 	}
-	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (self))
 	{
 		P_DamageMobj (self->target, self, self, 5+(P_Random()&7), MOD_HIT);

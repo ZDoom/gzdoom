@@ -72,7 +72,7 @@ typedef struct lumpinfo_s
 	int			size;
 	int			namespc;
 
-	int			handle;
+	int			wadnum;
 } lumpinfo_t;
 
 // [RH] Namespaces from BOOM.
@@ -93,6 +93,8 @@ extern	WORD		*NextLumpIndex;		// lumpinfo structure
 void W_InitMultipleFiles (wadlist_t **filenames);
 
 int W_FileHandleFromWad (int wadnum);
+const char *W_GetWadName (int wadnum);
+bool W_CheckIfWadLoaded (const char *wadname);
 
 int W_CheckNumForName (const char *name, int namespc);
 int W_GetNumForName (const char *name);

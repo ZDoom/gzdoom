@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "templates.h"
 #include "doomtype.h"
 #include "cmdlib.h"
 #include "c_console.h"
@@ -176,8 +177,8 @@ static int ListActionCommands (void)
 
 	for (i = 0; i < NUM_ACTIONS; i++)
 	{
-		Printf (PRINT_HIGH, "+%s\n", actionbits[i].name);
-		Printf (PRINT_HIGH, "-%s\n", actionbits[i].name);
+		Printf ("+%s\n", actionbits[i].name);
+		Printf ("-%s\n", actionbits[i].name);
 	}
 	return NUM_ACTIONS * 2;
 }
@@ -199,27 +200,14 @@ unsigned int MakeKey (const char *s)
 // GetActionBit scans through the actionbits[] array
 // for a matching key and returns an index or -1 if
 // the key could not be found. This uses binary search,
-// actionbits[] must be sorted in ascending order.
+// so actionbits[] must be sorted in ascending order.
 
 int GetActionBit (unsigned int key)
 {
-	int min = 0;
-	int max = NUM_ACTIONS - 1;
+	const ActionBits *bit;
 
-	while (min <= max)
-	{
-		int mid = (min + max) / 2;
-		unsigned int seekey = actionbits[mid].key;
-
-		if (seekey == key)
-			return actionbits[mid].index;
-		else if (seekey < key)
-			min = mid + 1;
-		else
-			max = mid - 1;
-	}
-	
-	return -1;
+	bit = BinarySearch (actionbits, NUM_ACTIONS, &ActionBits::key, key);
+	return bit ? bit->index : -1;
 }
 
 void C_DoCommand (char *cmd)
@@ -307,14 +295,13 @@ void C_DoCommand (char *cmd)
 			else
 			{
 				UCVarValue val = var->GetGenericRep (CVAR_String);
-				Printf (PRINT_HIGH, "\"%s\" is \"%s\"\n",
-					var->GetName(), val);
+				Printf ("\"%s\" is \"%s\"\n", var->GetName(), val.String);
 			}
 		}
 		else
 		{
 			// We don't know how to handle this command
-			Printf (PRINT_HIGH, "Unknown command \"%s\"\n", argv[0]);
+			Printf ("Unknown command \"%s\"\n", argv[0]);
 		}
 	}
 	free (argv);
@@ -581,7 +568,7 @@ FConsoleCommand::FConsoleCommand (const char *name, CCmdRun runFunc)
 	m_Name = copystring (name);
 
 	if (!AddToHash (Commands))
-		Printf (PRINT_HIGH, "FConsoleCommand c'tor: %s exists\n", name);
+		Printf ("FConsoleCommand c'tor: %s exists\n", name);
 	else
 		C_AddTabCommand (name);
 }
@@ -709,7 +696,7 @@ CCMD (alias)
 
 	if (argc == 1)
 	{
-		Printf (PRINT_HIGH, "Current alias commands:\n");
+		Printf ("Current alias commands:\n");
 		DumpHash (Commands, true);
 	}
 	else
@@ -747,7 +734,7 @@ CCMD (cmdlist)
 
 	count = ListActionCommands ();
 	count += DumpHash (Commands, false);
-	Printf (PRINT_HIGH, "%d commands\n", count);
+	Printf ("%d commands\n", count);
 }
 
 CCMD (key)
@@ -756,11 +743,11 @@ CCMD (key)
 	{
 		while (argc > 1)
 		{
-			Printf (PRINT_HIGH, " %08x", MakeKey (argv[1]));
+			Printf (" %08x", MakeKey (argv[1]));
 			argc--;
 			argv++;
 		}
-		Printf (PRINT_HIGH, "\n");
+		Printf ("\n");
 	}
 }
 

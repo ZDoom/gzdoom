@@ -1,3 +1,4 @@
+#include "templates.h"
 #include "actor.h"
 #include "info.h"
 #include "m_random.h"
@@ -85,7 +86,7 @@ END_DEFAULTS
 
 bool ACyberdemon::SuggestMissileAttack (fixed_t dist)
 {
-	return P_Random (pr_checkmissilerange) >= MIN (dist >> (FRACBITS + 1), 160);
+	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 160);
 }
 
 void A_CyberAttack (AActor *self)

@@ -8,7 +8,7 @@
 #include "a_action.h"
 
 void A_PosAttack (AActor *);
-void A_SPosAttack (AActor *);
+void A_SPosAttackUseAtkSound (AActor *);
 void A_CPosAttack (AActor *);
 void A_CPosRefire (AActor *);
 
@@ -90,10 +90,10 @@ IMPLEMENT_ACTOR (AZombieMan, Doom, 3004, 4)
 	PROP_XDeathState (S_POSS_XDIE)
 	PROP_RaiseState (S_POSS_RAISE)
 
-	PROP_SeeSound ("grunt/sight1")
+	PROP_SeeSound ("grunt/sight")
 	PROP_AttackSound ("grunt/attack")
 	PROP_PainSound ("grunt/pain")
-	PROP_DeathSound ("grunt/death1")
+	PROP_DeathSound ("grunt/death")
 	PROP_ActiveSound ("grunt/active")
 END_DEFAULTS
 
@@ -180,7 +180,7 @@ FState AShotgunGuy::States[] =
 
 #define S_SPOS_ATK (S_SPOS_RUN+8)
 	S_NORMAL (SPOS, 'E',   10, A_FaceTarget 				, &States[S_SPOS_ATK+1]),
-	S_BRIGHT (SPOS, 'F',   10, A_SPosAttack 				, &States[S_SPOS_ATK+2]),
+	S_BRIGHT (SPOS, 'F',   10, A_SPosAttackUseAtkSound		, &States[S_SPOS_ATK+2]),
 	S_NORMAL (SPOS, 'E',   10, NULL 						, &States[S_SPOS_RUN+0]),
 
 #define S_SPOS_PAIN (S_SPOS_ATK+3)
@@ -231,9 +231,10 @@ IMPLEMENT_ACTOR (AShotgunGuy, Doom, 9, 1)
 	PROP_XDeathState (S_SPOS_XDIE)
 	PROP_RaiseState (S_SPOS_RAISE)
 
-	PROP_SeeSound ("shotguy/sight1")
+	PROP_SeeSound ("shotguy/sight")
+	PROP_AttackSound ("shotguy/attack")
 	PROP_PainSound ("shotguy/pain")
-	PROP_DeathSound ("shotguy/death1")
+	PROP_DeathSound ("shotguy/death")
 	PROP_ActiveSound ("shotguy/active")
 END_DEFAULTS
 
@@ -255,16 +256,12 @@ IMPLEMENT_STATELESS_ACTOR (AStealthShotgunGuy, Doom, 9060, 103)
 	PROP_Alpha (0)
 END_DEFAULTS
 
-void A_SPosAttack (AActor *self)
+static void A_SPosAttack2 (AActor *self)
 {
 	int i;
 	int bangle;
 	int slope;
 		
-	if (!self->target)
-		return;
-
-	S_Sound (self, CHAN_WEAPON, "shotguy/attack", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	bangle = self->angle;
 	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
@@ -275,6 +272,26 @@ void A_SPosAttack (AActor *self)
 		int damage = ((P_Random (pr_sposattack)%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage);
     }
+}
+
+void A_SPosAttackUseAtkSound (AActor *self)
+{
+	if (!self->target)
+		return;
+
+	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+	A_SPosAttack2 (self);
+}
+
+// This version of the function, which uses a hard-coded sound, is
+// meant for Dehacked only.
+void A_SPosAttack (AActor *self)
+{
+	if (!self->target)
+		return;
+
+	S_Sound (self, CHAN_WEAPON, "shotguy/attack", 1, ATTN_NORM);
+	A_SPosAttack2 (self);
 }
 
 // Dead shotgun guy --------------------------------------------------------
@@ -372,9 +389,9 @@ IMPLEMENT_ACTOR (AChaingunGuy, Doom, 65, 2)
 	PROP_XDeathState (S_CPOS_XDIE)
 	PROP_RaiseState (S_CPOS_RAISE)
 
-	PROP_SeeSound ("chainguy/sight1")
+	PROP_SeeSound ("chainguy/sight")
 	PROP_PainSound ("chainguy/pain")
-	PROP_DeathSound ("chainguy/death1")
+	PROP_DeathSound ("chainguy/death")
 	PROP_ActiveSound ("chainguy/active")
 END_DEFAULTS
 

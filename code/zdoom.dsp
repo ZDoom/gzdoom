@@ -536,10 +536,6 @@ SOURCE=.\actor.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\alphainlines.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\am_map.h
 # End Source File
 # Begin Source File
@@ -905,6 +901,10 @@ SOURCE=.\Tables.h
 # Begin Source File
 
 SOURCE=.\tarray.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\templates.h
 # End Source File
 # Begin Source File
 

@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <zlib.h>
 
 #if defined(_WIN32)
 #include <io.h>
@@ -58,12 +59,13 @@
 #include "v_text.h"
 #include "st_stuff.h"
 #include "d_gui.h"
+#include "version.h"
 
+#include "lists.h"
 #include "gi.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define SAVESTRINGSIZE		24
 #define SKULLXOFF			-32
 #define SELECTOR_XOFFSET	(-28)
 #define SELECTOR_YOFFSET	(-1)
@@ -71,6 +73,12 @@
 #define NUM_MENU_ITEMS(m)	(sizeof(m)/sizeof(m[0]))
 
 // TYPES -------------------------------------------------------------------
+
+struct FSaveGameNode : public Node
+{
+	char Title[SAVESTRINGSIZE];
+	char *Filename;
+};
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -96,11 +104,15 @@ static void M_QuitDOOM (int choice);
 static void M_GameFiles (int choice);
 
 static void M_FinishReadThis (int choice);
-static void M_LoadSelect (int choice);
-static void M_SaveSelect (int choice);
-static void M_ReadSaveStrings ();
 static void M_QuickSave ();
 static void M_QuickLoad ();
+static void M_LoadSelect (const FSaveGameNode *file);
+static void M_SaveSelect (const FSaveGameNode *file);
+static void M_ReadSaveStrings ();
+static void M_ExtractSaveData (const FSaveGameNode *file);
+static void M_UnloadSaveData ();
+static BOOL M_SaveLoadResponder (event_t *ev);
+static void M_DeleteSaveResponse (int choice);
 
 static void M_DrawMainMenu ();
 static void M_DrawReadThis ();
@@ -112,7 +124,9 @@ static void M_DrawSave ();
 static void M_DrawHereticMainMenu ();
 static void M_DrawFiles ();
 
+void M_DrawFrame (int x, int y, int width, int height);
 static void M_DrawSaveLoadBorder (int x,int y, int len);
+static void M_DrawSaveLoadCommon ();
 static void M_SetupNextMenu (oldmenu_t *menudef);
 static void M_StartMessage (const char *string, void(*routine)(int), bool input);
 
@@ -123,7 +137,7 @@ static void M_PlayerSetupDrawer ();
 static void M_DrawPlayerBackdrop (int x, int y);
 static void M_EditPlayerName (int choice);
 static void M_ChangePlayerTeam (int choice);
-static void M_PlayerNameChanged (int choice);
+static void M_PlayerNameChanged (FSaveGameNode *dummy);
 static void M_SlidePlayerRed (int choice);
 static void M_SlidePlayerGreen (int choice);
 static void M_SlidePlayerBlue (int choice);
@@ -153,7 +167,7 @@ bool			OptionsActive;
 static char		tempstring[80];
 static char		underscore[2];
 
-static int 		quickSaveSlot;			// -1 = no quicksave slot picked!
+static FSaveGameNode *quickSaveSlot;	// NULL = no quicksave slot picked!
 static int 		messageToPrint;			// 1 = message to be printed
 static const char *messageString;		// ...and here is the message string!
 static bool		messageLastMenuActive;
@@ -162,14 +176,13 @@ static void	  (*messageRoutine)(int response);
 
 static int 		genStringEnter;	// we are going to be entering a savegame string
 static int		genStringLen;	// [RH] Max # of chars that can be entered
-static void	  (*genStringEnd)(int slot);
+static void	  (*genStringEnd)(FSaveGameNode *);
 static int 		saveSlot;		// which slot to save in
 static int 		saveCharIndex;	// which char we're editing
-static char		saveOldString[SAVESTRINGSIZE];	// old save description before edit
 
 static int		LINEHEIGHT;
 
-static char		savegamestrings[10][SAVESTRINGSIZE];
+static char		savegamestring[SAVESTRINGSIZE];
 static char		endstring[160];
 
 static short	itemOn; 			// menu item skull is on
@@ -191,6 +204,13 @@ static const TypeInfo *PlayerClass;
 static FState	*PlayerState;
 static int		PlayerTics;
 static int		PlayerRotation;
+
+static DCanvas			*SavePic;
+static brokenlines_t	*SaveComment;
+static List				SaveGames;
+static FSaveGameNode	*TopSaveGame;
+static FSaveGameNode	*SelSaveGame;
+static FSaveGameNode	NewSaveNode;
 
 // PRIVATE MENU DEFINITIONS ------------------------------------------------
 
@@ -237,6 +257,33 @@ static oldmenu_t HereticMainDef =
 	M_DrawHereticMainMenu,
 	110, 56,
 	0
+};
+
+//
+// HEXEN "NEW GAME" MENU
+//
+static void M_ImSorry (int choice)
+{
+	M_PopMenuStack ();
+}
+
+static oldmenuitem_t SorryMenu[]=
+{
+	{-1,1,0,"Sorry. Hexen support",NULL},
+	{-1,1,0,"is incomplete. Use the",NULL},
+	{-1,1,0,"console to start a new",NULL},
+	{-1,1,0,"game if you really want",NULL},
+	{-1,1,0,"to see what's done.",NULL},
+	{ 1,1,0,"",M_ImSorry}
+};
+
+static oldmenu_t SorryDef =
+{
+	6,
+	SorryMenu,
+	M_DrawEpisode,
+	48,40,
+	5
 };
 
 //
@@ -386,14 +433,14 @@ static oldmenu_t ReadDef =
 //
 static oldmenuitem_t LoadMenu[]=
 {
-	{1,0,'1',NULL, M_LoadSelect},
-	{1,0,'2',NULL, M_LoadSelect},
-	{1,0,'3',NULL, M_LoadSelect},
-	{1,0,'4',NULL, M_LoadSelect},
-	{1,0,'5',NULL, M_LoadSelect},
-	{1,0,'6',NULL, M_LoadSelect},
-	{1,0,'7',NULL, M_LoadSelect},
-	{1,0,'8',NULL, M_LoadSelect},
+	{1,0,'1',NULL, NULL},
+	{1,0,'2',NULL, NULL},
+	{1,0,'3',NULL, NULL},
+	{1,0,'4',NULL, NULL},
+	{1,0,'5',NULL, NULL},
+	{1,0,'6',NULL, NULL},
+	{1,0,'7',NULL, NULL},
+	{1,0,'8',NULL, NULL},
 };
 
 static oldmenu_t LoadDef =
@@ -410,14 +457,14 @@ static oldmenu_t LoadDef =
 //
 static oldmenuitem_t SaveMenu[] =
 {
-	{1,0,'1',NULL, M_SaveSelect},
-	{1,0,'2',NULL, M_SaveSelect},
-	{1,0,'3',NULL, M_SaveSelect},
-	{1,0,'4',NULL, M_SaveSelect},
-	{1,0,'5',NULL, M_SaveSelect},
-	{1,0,'6',NULL, M_SaveSelect},
-	{1,0,'7',NULL, M_SaveSelect},
-	{1,0,'8',NULL, M_SaveSelect},
+	{1,0,'1',NULL, NULL},
+	{1,0,'2',NULL, NULL},
+	{1,0,'3',NULL, NULL},
+	{1,0,'4',NULL, NULL},
+	{1,0,'5',NULL, NULL},
+	{1,0,'6',NULL, NULL},
+	{1,0,'7',NULL, NULL},
+	{1,0,'8',NULL, NULL},
 };
 
 static oldmenu_t SaveDef =
@@ -515,7 +562,7 @@ CCMD (bumpgamma)
 		newgamma = 1.0;
 
 	Gamma = newgamma;
-	Printf (PRINT_HIGH, "Gamma correction level %g\n", *Gamma);
+	Printf ("Gamma correction level %g\n", *Gamma);
 }
 
 void M_ActivateMenuInput ()
@@ -539,67 +586,113 @@ void M_GameFiles (int choice)
 
 //
 // M_ReadSaveStrings
-//	read the strings from the savegame files
+//
+// Find savegames and read their titles
 //
 void M_ReadSaveStrings ()
 {
-	FILE *handle;
-	int count;
-	int i;
-	char name[256];
-		
-	for (i = 0; i < NUM_MENU_ITEMS(LoadMenu); i++)
+	if (SaveGames.IsEmpty ())
 	{
-		G_BuildSaveName (name, i);
+		long filefirst;
+		findstate_t c_file;
 
-		handle = fopen (name, "rb");
-		if (handle == NULL)
+		filefirst = I_FindFirst ("*.zds", &c_file);
+		if (filefirst != -1)
 		{
-			strcpy (&savegamestrings[i][0], GStrings(EMPTYSTRING));
-			LoadMenu[i].status = 0;
+			do
+			{
+				FILE *file = fopen (I_FindName (&c_file), "rb");
+				if (file != NULL)
+				{
+					char sig[MAX_PATH];
+
+					if (fread (sig, 1, 16, file) == 16 &&
+						strncmp (sig, SAVESIG, 16) == 0)
+					{
+						char title[SAVESTRINGSIZE];
+						int i, c;
+
+						fread (title, 1, SAVESTRINGSIZE, file);
+						fseek (file, 8, SEEK_CUR);		// skip map name
+
+						// Check if it's for the current game.
+						// If it is, add it. Otherwise, ignore it.
+						i = 0;
+						do
+						{
+							c = fgetc (file);
+							sig[i++] = c;
+						} while (c != EOF && c != 0);
+						if (c != EOF && stricmp (sig, W_GetWadName (1)) == 0)
+						{
+							FSaveGameNode *node = new FSaveGameNode;
+							node->Filename = copystring (I_FindName (&c_file));
+							memcpy (node->Title, title, SAVESTRINGSIZE);
+							SaveGames.AddTail (node);
+						}
+					}
+					fclose (file);
+				}
+			} while (I_FindNext (filefirst, &c_file) == 0);
+			I_FindClose (filefirst);
 		}
-		else
-		{
-			count = fread (&savegamestrings[i], SAVESTRINGSIZE, 1, handle);
-			fclose (handle);
-			LoadMenu[i].status = 1;
-		}
+	}
+	if (SelSaveGame == NULL || SelSaveGame->Succ == NULL)
+	{
+		SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
 	}
 }
 
+void M_NotifyNewSave (const char *file, const char *title)
+{
+	FSaveGameNode *node;
+
+	// See if the file is already in our list
+	for (node = static_cast<FSaveGameNode *>(SaveGames.Head);
+		 node->Succ != NULL;
+		 node = static_cast<FSaveGameNode *>(node->Succ))
+	{
+#ifdef UNIX
+		if (strcmp (node->Filename, file) == 0)
+#else
+		if (stricmp (node->Filename, file) == 0)
+#endif
+		{
+			strcpy (node->Title, title);
+			return;
+		}
+	}
+
+	node = new FSaveGameNode;
+	strcpy (node->Title, title);
+	node->Filename = copystring (file);
+	SaveGames.AddHead (node);
+
+	if (quickSaveSlot == NULL)
+	{
+		quickSaveSlot = node;
+	}
+}
 
 //
 // M_LoadGame & Cie.
 //
 void M_DrawLoad (void)
 {
-	int i;
-	int x, y;
-
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		screen->DrawPatchClean ((patch_t *)W_CacheLumpName ("M_LOADG",PU_CACHE), 72, 28);
+		patch_t *title = (patch_t *)W_CacheLumpName ("M_LOADG", PU_CACHE);
+		screen->DrawPatchCleanNoMove (title,
+			(SCREENWIDTH-SHORT(title)->width*CleanXfac)/2, 20*CleanYfac);
 	}
 	else
 	{
-		screen->DrawTextCleanMove (CR_UNTRANSLATED,
-			160 - screen->StringWidth ("LOAD GAME")/2, 10,
+		screen->DrawTextClean (CR_UNTRANSLATED,
+			(SCREENWIDTH - screen->StringWidth ("LOAD GAME")*CleanXfac)/2, 10*CleanYfac,
 			"LOAD GAME");
 	}
 	screen->SetFont (SmallFont);
-	x = currentMenu->x;
-	y = currentMenu->y;
-	if (gameinfo.gametype != GAME_Doom)
-	{
-		x += 5;
-		y += 5;
-	}
-	for (i = 0; i < NUM_MENU_ITEMS(LoadMenu); i++)
-	{
-		M_DrawSaveLoadBorder (x, currentMenu->y+LINEHEIGHT*i, 24);
-		screen->DrawTextCleanMove (CR_UNTRANSLATED, x,
-			y + LINEHEIGHT*i, savegamestrings[i]);
-	}
+	M_DrawSaveLoadCommon ();
 }
 
 
@@ -630,24 +723,277 @@ void M_DrawSaveLoadBorder (int x, int y, int len)
 	}
 }
 
-
-
-//
-// User wants to load this game
-//
-void M_LoadSelect (int choice)
+static void M_ExtractSaveData (const FSaveGameNode *node)
 {
-	char name[256];
+	FILE *file;
 
-	G_BuildSaveName (name, choice);
-	G_LoadGame (name);
-	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
-	M_ClearMenus ();
-	BorderNeedRefresh = screen->GetPageCount ();
-	if (quickSaveSlot == -2)
+	M_UnloadSaveData ();
+
+	if (node->Succ != NULL &&
+		node->Filename != NULL &&
+		(file = fopen (node->Filename, "rb")) != NULL)
 	{
-		quickSaveSlot = choice;
+		WORD x, y;
+		int i;
+
+		fseek (file, 16+SAVESTRINGSIZE+8, SEEK_SET);
+
+		// Skip wad names
+		x = 1;
+		do
+		{
+			i = fgetc (file);
+			if (i == EOF)
+			{
+				return;
+			}
+			else if (i == 0)
+			{
+				x = x + 1;
+			}
+			else
+			{
+				x = 0;
+			}
+		} while (x != 2);
+
+		x = y = 0;
+
+		// Extract comment
+		fread (&x, 2, 1, file);
+		x = SHORT(x);
+		if (x != 0)
+		{
+			char *comment = new char[x];
+			if (fread (comment, 1, x, file) == x)
+			{
+				SaveComment = V_BreakLines (216*screen->GetWidth()/640/CleanXfac, comment);
+			}
+			delete[] comment;
+		}
+
+		// Extract pic
+		fread (&x, 2, 1, file);
+		fread (&y, 2, 1, file);
+		x = SHORT(x);
+		y = SHORT(y);
+		if (x * y != 0)
+		{
+			DWORD len = 0;
+			fread (&len, 4, 1, file);
+			SavePic = new DSimpleCanvas (x, y);
+			if (len == 0)
+			{
+				SavePic->Lock ();
+				fread (SavePic->GetBuffer(), 1, x * y, file);
+				SavePic->Unlock ();
+			}
+			else
+			{
+				uLong newlen = x * y;
+				int r;
+				Byte *cprpic = new Byte[len];
+
+				fread (cprpic, 1, len, file);
+				SavePic->Lock ();
+				r = uncompress (SavePic->GetBuffer(), &newlen, cprpic, len);
+				SavePic->Unlock ();
+				if (r != Z_OK || newlen != (uLong)(x * y))
+				{
+					delete SavePic;
+					SavePic = NULL;
+				}
+				delete[] cprpic;
+			}
+		}
+		fclose (file);
 	}
+}
+
+static void M_UnloadSaveData ()
+{
+	if (SavePic != NULL)
+	{
+		delete SavePic;
+	}
+	if (SaveComment != NULL)
+	{
+		V_FreeBrokenLines (SaveComment);
+	}
+
+	SavePic = NULL;
+	SaveComment = NULL;
+}
+
+static void M_DrawSaveLoadCommon ()
+{
+	const int savepicLeft = 10;
+	const int savepicTop = 54*CleanYfac;
+	const int savepicWidth = 216*screen->GetWidth()/640;
+	const int savepicHeight = 135*screen->GetHeight()/400;
+
+	const int rowHeight = (SmallFont->GetHeight() + 1) * CleanYfac;
+	const int listboxLeft = savepicLeft + savepicWidth + 14;
+	const int listboxTop = savepicTop;
+	const int listboxWidth = screen->GetWidth() - listboxLeft - 10;
+	const int listboxHeight1 = screen->GetHeight() - listboxTop - 10;
+	const int listboxRows = (listboxHeight1 - 1) / rowHeight;
+	const int listboxHeight = listboxRows * rowHeight + 1;
+	const int listboxRight = listboxLeft + listboxWidth;
+	const int listboxBottom = listboxTop + listboxHeight;
+
+	const int commentLeft = savepicLeft;
+	const int commentTop = savepicTop + savepicHeight + 16;
+	const int commentWidth = savepicWidth;
+	const int commentHeight = 51*CleanYfac;
+	const int commentRight = commentLeft + commentWidth;
+	const int commentBottom = commentTop + commentHeight;
+
+	FSaveGameNode *node;
+	int i;
+	bool didSeeSelected = false;
+
+	// Draw picture area
+	M_DrawFrame (savepicLeft, savepicTop, savepicWidth, savepicHeight);
+	if (SavePic != NULL)
+	{
+		SavePic->Blit (0, 0, SavePic->GetWidth(), SavePic->GetHeight(),
+			screen, savepicLeft, savepicTop, savepicWidth, savepicHeight);
+	}
+	else
+	{
+		const int textlen = screen->StringWidth ("No Picture")*CleanXfac;
+
+		screen->Clear (savepicLeft, savepicTop,
+			savepicLeft+savepicWidth, savepicTop+savepicHeight, 0);
+		screen->DrawTextClean (CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
+			savepicTop+(savepicHeight-rowHeight)/2, "No Picture");
+	}
+
+	// Draw comment area
+	M_DrawFrame (commentLeft, commentTop, commentWidth, commentHeight);
+	screen->Clear (commentLeft, commentTop, commentRight, commentBottom, 0);
+	if (SaveComment != NULL)
+	{
+		for (i = 0; SaveComment[i].width != -1 && i < 6; ++i)
+		{
+			screen->DrawTextClean (CR_GOLD, commentLeft, commentTop
+				+ SmallFont->GetHeight()*i*CleanYfac, SaveComment[i].string);
+		}
+	}
+
+	// Draw file area
+	M_DrawFrame (listboxLeft, listboxTop, listboxWidth, listboxHeight);
+	screen->Clear (listboxLeft, listboxTop, listboxRight, listboxBottom, 0);
+
+	if (SaveGames.IsEmpty ())
+	{
+		const int textlen = screen->StringWidth ("No files")*CleanXfac;
+
+		screen->DrawTextClean (CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
+			listboxTop+(listboxHeight-rowHeight)/2, "No files");
+		return;
+	}
+
+	do
+	{
+		for (i = 0, node = TopSaveGame;
+			 i < listboxRows && node->Succ != NULL;
+			 ++i, node = static_cast<FSaveGameNode *>(node->Succ))
+		{
+			if (node == SelSaveGame)
+			{
+				screen->Clear (listboxLeft, listboxTop+rowHeight*i,
+					listboxRight, listboxTop+rowHeight*(i+1),
+					ColorMatcher.Pick (genStringEnter ? 255 : 0, 0, genStringEnter ? 0 : 255));
+				didSeeSelected = true;
+				if (!genStringEnter)
+				{
+					screen->DrawTextClean (CR_WHITE, listboxLeft+1,
+						listboxTop+rowHeight*i+CleanYfac, node->Title);
+				}
+				else
+				{
+					screen->DrawTextClean (CR_WHITE, listboxLeft+1,
+						listboxTop+rowHeight*i+CleanYfac, savegamestring);
+					screen->DrawTextClean (CR_WHITE,
+						listboxLeft+1+screen->StringWidth (savegamestring)*CleanXfac,
+						listboxTop+rowHeight*i+CleanYfac, underscore);
+				}
+			}
+			else
+			{
+				screen->DrawTextClean (CR_TAN, listboxLeft+1,
+					listboxTop+rowHeight*i+CleanYfac, node->Title);
+			}
+		}
+
+		// This is dumb: If the selected node was not visible,
+		// scroll down and redraw. M_SaveLoadResponder()
+		// guarantees that if the node is not visible, it will
+		// always be below the visible list instead of above it.
+		// This should not really be done here, but I don't care.
+
+		if (!didSeeSelected)
+		{
+			for (i = 0; node->Succ != NULL && node != SelSaveGame; ++i)
+			{
+				node = static_cast<FSaveGameNode *>(node->Succ);
+			}
+			if (node->Succ == NULL)
+			{ // SelSaveGame is invalid
+				didSeeSelected = true;
+			}
+			else
+			{
+				do
+				{
+					TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Succ);
+				} while (--i);
+			}
+		}
+	} while (!didSeeSelected);
+}
+
+// Draw a frame around the specified area using the view border
+// frame graphics. The border is drawn outside the area, not in it.
+void M_DrawFrame (int left, int top, int width, int height)
+{
+	gameborder_t *border = gameinfo.border;
+	int offset = border->offset;
+	int size = border->size;
+	int x, y;
+
+	for (x = left; x < left + width; x += size)
+	{
+		if (x + size > left + width)
+			x = left + width - size;
+		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->t, PU_CACHE),
+			x, top - offset);
+		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->b, PU_CACHE),
+			x, top + height);
+	}
+	for (y = top; y < top + height; y += size)
+	{
+		if (y + size > top + height)
+			y = top + height - size;
+		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->l, PU_CACHE),
+			left - offset, y);
+		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->r, PU_CACHE),
+			left + width, y);
+	}
+	// Draw beveled edge.
+	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->tl, PU_CACHE),
+		left-offset, top-offset);
+	
+	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->tr, PU_CACHE),
+		left+width, top-offset);
+	
+	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->bl, PU_CACHE),
+		left-offset, top+height);
+	
+	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->br, PU_CACHE),
+		left+width, top+height);
 }
 
 //
@@ -662,79 +1008,64 @@ void M_LoadGame (int choice)
 	}
 		
 	M_SetupNextMenu (&LoadDef);
+	drawSkull = false;
 	M_ReadSaveStrings ();
+	TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
+	M_ExtractSaveData (SelSaveGame);
 }
 
 
 //
 //	M_SaveGame & Cie.
 //
-void M_DrawSave(void)
+void M_DrawSave()
 {
-	int i;
-	int x, y;
-
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		screen->DrawPatchClean ((patch_t *)W_CacheLumpName("M_SAVEG",PU_CACHE), 72, 28);
+		patch_t *title = (patch_t *)W_CacheLumpName ("M_SAVEG", PU_CACHE);
+		screen->DrawPatchCleanNoMove (title,
+			(SCREENWIDTH-SHORT(title)->width*CleanXfac)/2, 20*CleanYfac);
 	}
 	else
 	{
-		screen->DrawTextCleanMove (CR_UNTRANSLATED,
-			160 - screen->StringWidth ("SAVE GAME")/2, 10,
+		screen->DrawTextClean (CR_UNTRANSLATED,
+			(SCREENWIDTH - screen->StringWidth ("SAVE GAME")*CleanXfac)/2, 10*CleanYfac,
 			"SAVE GAME");
 	}
 	screen->SetFont (SmallFont);
-	x = currentMenu->x;
-	y = currentMenu->y;
-	if (gameinfo.gametype != GAME_Doom)
-	{
-		x += 5;
-		y += 5;
-	}
-	for (i = 0; i < NUM_MENU_ITEMS(LoadMenu); i++)
-	{
-		M_DrawSaveLoadBorder (x, currentMenu->y+LINEHEIGHT*i,24);
-		screen->DrawTextCleanMove (CR_UNTRANSLATED, x,
-			y+LINEHEIGHT*i, savegamestrings[i]);
-	}
-		
-	if (genStringEnter)
-	{
-		i = screen->StringWidth (savegamestrings[saveSlot]);
-		screen->DrawTextCleanMove (CR_UNTRANSLATED,
-			x + i, y+LINEHEIGHT*saveSlot, underscore);
-	}
+	M_DrawSaveLoadCommon ();
 }
 
 //
 // M_Responder calls this when user is finished
 //
-void M_DoSave (int slot)
+void M_DoSave (FSaveGameNode *node)
 {
-	G_SaveGame (slot,savegamestrings[slot]);
+	if (node != &NewSaveNode)
+	{
+		G_SaveGame (node->Filename, savegamestring);
+	}
+	else
+	{
+		// Find an unused filename, and save as that
+		char filename[24];
+		int i;
+		FILE *test;
+
+		for (i = 0;; ++i)
+		{
+			sprintf (filename, "save%d.zds", i);
+			test = fopen (filename, "rb");
+			if (test == NULL)
+			{
+				break;
+			}
+			fclose (test);
+		}
+		G_SaveGame (filename, savegamestring);
+	}
 	M_ClearMenus ();
 	BorderNeedRefresh = screen->GetPageCount ();
-	// PICK QUICKSAVE SLOT YET?
-	if (quickSaveSlot == -2)
-		quickSaveSlot = slot;
-}
-
-//
-// User wants to save. Start string input for M_Responder
-//
-void M_SaveSelect (int choice)
-{
-	// we are going to be intercepting all chars
-	genStringEnter = 1;
-	genStringEnd = M_DoSave;
-	genStringLen = SAVESTRINGSIZE-1;
-	
-	saveSlot = choice;
-	strcpy(saveOldString,savegamestrings[choice]);
-	if (!strcmp (savegamestrings[choice], GStrings(EMPTYSTRING)))
-		savegamestrings[choice][0] = 0;
-	saveCharIndex = strlen(savegamestrings[choice]);
 }
 
 //
@@ -752,7 +1083,20 @@ void M_SaveGame (int choice)
 		return;
 		
 	M_SetupNextMenu(&SaveDef);
+	drawSkull = false;
+
 	M_ReadSaveStrings();
+	SaveGames.AddHead (&NewSaveNode);
+	TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
+	if (quickSaveSlot == NULL)
+	{
+		SelSaveGame = &NewSaveNode;
+	}
+	else
+	{
+		SelSaveGame = quickSaveSlot;
+	}
+	M_ExtractSaveData (SelSaveGame);
 }
 
 
@@ -780,15 +1124,15 @@ void M_QuickSave ()
 	if (gamestate != GS_LEVEL)
 		return;
 		
-	if (quickSaveSlot < 0)
+	if (quickSaveSlot == NULL)
 	{
 		M_StartControlPanel(false);
 		M_ReadSaveStrings();
 		M_SetupNextMenu(&SaveDef);
-		quickSaveSlot = -2; 	// means to pick a slot now
+		quickSaveSlot = NULL; 	// means to pick a slot now
 		return;
 	}
-	sprintf (tempstring, GStrings(QSPROMPT), savegamestrings[quickSaveSlot]);
+	sprintf (tempstring, GStrings(QSPROMPT), quickSaveSlot->Title);
 	M_StartMessage (tempstring, M_QuickSaveResponse, true);
 }
 
@@ -821,7 +1165,7 @@ void M_QuickLoad ()
 		M_LoadGame (0);
 		return;
 	}
-	sprintf (tempstring, GStrings(QLPROMPT), savegamestrings[quickSaveSlot]);
+	sprintf (tempstring, GStrings(QLPROMPT), quickSaveSlot->Title);
 	M_StartMessage (tempstring, M_QuickLoadResponse, true);
 }
 
@@ -880,8 +1224,10 @@ void M_NewGame(int choice)
 		M_StartMessage (GStrings(NEWGAME), NULL, false);
 		return;
 	}
-		
-	if (gameinfo.flags & GI_MAPxx)
+
+	if (gameinfo.gametype == GAME_Hexen)
+		M_SetupNextMenu (&SorryDef);
+	else if (gameinfo.flags & GI_MAPxx)
 		M_SetupNextMenu (&NewDef);
 	else if (gameinfo.gametype == GAME_Doom)
 		M_SetupNextMenu (&EpiDef);
@@ -1048,7 +1394,7 @@ void M_QuitDOOM (int choice)
 	//  or one at random, between 1 and maximum number.
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		sprintf (endstring,"%s\n\n%s",
+		sprintf (endstring, "%s\n\n%s",
 			GStrings(QUITMSG + (gametic % NUM_QUITMESSAGES)), GStrings(DOSY));
 	}
 	else
@@ -1066,13 +1412,13 @@ void M_QuitDOOM (int choice)
 static void M_PlayerSetup (int choice)
 {
 	choice = 0;
-	strcpy (savegamestrings[0], *name);
+	strcpy (savegamestring, *name);
 	M_DemoNoPlay = true;
 	if (demoplayback)
 		G_CheckDemoStatus ();
 	M_SetupNextMenu (&PSetupDef);
 	PlayerState = GetDefaultByType (PlayerClass)->SeeState;
-	PlayerTics = PlayerState->tics;
+	PlayerTics = PlayerState->GetTics();
 	if (FireScreen == NULL)
 		FireScreen = new DSimpleCanvas (72, 72+5);
 }
@@ -1083,15 +1429,15 @@ static void M_PlayerSetupTicker (void)
 	if (--PlayerTics > 0)
 		return;
 
-	if (PlayerState->tics == -1 || PlayerState->nextstate == NULL)
+	if (PlayerState->GetTics() == -1 || PlayerState->GetNextState() == NULL)
 	{
 		PlayerState = GetDefaultByType (PlayerClass)->SeeState;
 	}
 	else
 	{
-		PlayerState = PlayerState->nextstate;
+		PlayerState = PlayerState->GetNextState();
 	}
-	PlayerTics = PlayerState->tics;
+	PlayerTics = PlayerState->GetTics();
 }
 
 static void M_PlayerSetupDrawer ()
@@ -1136,7 +1482,13 @@ static void M_PlayerSetupDrawer ()
 	// Draw player name box
 	screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y+yo, "Name");
 	M_DrawSaveLoadBorder (PSetupDef.x + 56, PSetupDef.y, MAXPLAYERNAME+1);
-	screen->DrawTextCleanMove (CR_UNTRANSLATED, PSetupDef.x + 56 + xo, PSetupDef.y+yo, savegamestrings[0]);
+	screen->DrawTextCleanMove (CR_UNTRANSLATED, PSetupDef.x + 56 + xo, PSetupDef.y+yo, savegamestring);
+
+	// Draw cursor for player name box
+	if (genStringEnter)
+		screen->DrawTextCleanMove (CR_UNTRANSLATED,
+			PSetupDef.x + screen->StringWidth(savegamestring) + 56+xo,
+			PSetupDef.y + yo, underscore);
 
 	// Draw player team setting
 	x = screen->StringWidth ("Team") + 8 + PSetupDef.x;
@@ -1144,12 +1496,6 @@ static void M_PlayerSetupDrawer ()
 	screen->DrawTextCleanMove (value, x, PSetupDef.y + LINEHEIGHT+yo,
 		players[consoleplayer].userinfo.team == TEAM_None ? "None" :
 		TeamNames[players[consoleplayer].userinfo.team]);
-
-	// Draw cursor for either of the above
-	if (genStringEnter)
-		screen->DrawTextCleanMove (CR_UNTRANSLATED,
-			PSetupDef.x + screen->StringWidth(savegamestrings[saveSlot]) + 56+xo,
-			PSetupDef.y + ((saveSlot == 0) ? 0 : LINEHEIGHT) + yo, underscore);
 
 	// Draw player character
 	{
@@ -1236,7 +1582,7 @@ static void M_PlayerSetupDrawer ()
 	}
 	{
 		spriteframe_t *sprframe =
-			&sprites[skins[players[consoleplayer].userinfo.skin].sprite].spriteframes[PlayerState->frame];
+			&sprites[skins[players[consoleplayer].userinfo.skin].sprite].spriteframes[PlayerState->GetFrame()];
 
 		V_ColorMap = translationtables + consoleplayer*256*2;
 		screen->DrawTranslatedPatchClean ((patch_t *)W_CacheLumpNum (
@@ -1246,7 +1592,7 @@ static void M_PlayerSetupDrawer ()
 		screen->DrawPatchClean ((patch_t *)W_CacheLumpName ("M_PBOX", PU_CACHE),
 			320 - 88 - 32 + 36 + xo, PSetupDef.y + LINEHEIGHT*3 + 22 + yo);
 
-		char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
+		const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
 		screen->DrawTextCleanMove (CR_GOLD, 320 - 52 - 32 -
 			screen->StringWidth (str)/2,
 			PSetupDef.y + LINEHEIGHT*3 + 76, str);
@@ -1403,17 +1749,14 @@ static void M_EditPlayerName (int choice)
 	genStringLen = MAXPLAYERNAME;
 	
 	saveSlot = 0;
-	strcpy(saveOldString,savegamestrings[0]);
-	if (!strcmp(savegamestrings[0],GStrings(EMPTYSTRING)))
-		savegamestrings[0][0] = 0;
-	saveCharIndex = strlen(savegamestrings[0]);
+	saveCharIndex = strlen (savegamestring);
 }
 
-static void M_PlayerNameChanged (int choice)
+static void M_PlayerNameChanged (FSaveGameNode *dummy)
 {
 	char command[SAVESTRINGSIZE+8];
 
-	sprintf (command, "name \"%s\"", savegamestrings[0]);
+	sprintf (command, "name \"%s\"", savegamestring);
 	AddCommandString (command);
 }
 
@@ -1612,36 +1955,36 @@ BOOL M_Responder (event_t *ev)
 			if (saveCharIndex > 0)
 			{
 				saveCharIndex--;
-				savegamestrings[saveSlot][saveCharIndex] = 0;
+				savegamestring[saveCharIndex] = 0;
 			}
 			break;
 
 		case GK_ESCAPE:
 			genStringEnter = 0;
 			M_ClearMenus ();
-			strcpy(&savegamestrings[saveSlot][0],saveOldString);
 			break;
 								
 		case '\r':
-			genStringEnter = 0;
-			if (messageToPrint)
-				M_ClearMenus ();
-			if (savegamestrings[saveSlot][0])
-				genStringEnd(saveSlot);	// [RH] Function to call when enter is pressed
+			if (savegamestring[0])
+			{
+				genStringEnter = 0;
+				if (messageToPrint)
+					M_ClearMenus ();
+				genStringEnd (SelSaveGame);	// [RH] Function to call when enter is pressed
+			}
 			break;
 
 		default:
-			ch = toupper (ch);
+			ch = ev->data2;
 			if (ch != ' ')
 				if (ch-HU_FONTSTART < 0 || ch-HU_FONTSTART >= HU_FONTSIZE)
 					break;
-			if (ch >= 32 && ch <= 127 &&
-				saveCharIndex < genStringLen &&
-				screen->StringWidth(savegamestrings[saveSlot]) <
+			if (saveCharIndex < genStringLen &&
+				screen->StringWidth (savegamestring) <
 				(genStringLen-1)*8)
 			{
-				savegamestrings[saveSlot][saveCharIndex++] = ch;
-				savegamestrings[saveSlot][saveCharIndex] = 0;
+				savegamestring[saveCharIndex] = ch;
+				savegamestring[++saveCharIndex] = 0;
 			}
 			break;
 		}
@@ -1671,6 +2014,20 @@ BOOL M_Responder (event_t *ev)
 		return true;
 	}
 
+	if (ch == GK_ESCAPE)
+	{
+		// [RH] Escape now moves back one menu instead of quitting
+		//		the menu system. Thus, backspace is ignored.
+		currentMenu->lastOn = itemOn;
+		M_PopMenuStack ();
+		return true;
+	}
+
+	if (currentMenu == &SaveDef || currentMenu == &LoadDef)
+	{
+		return M_SaveLoadResponder (ev);
+	}
+
 	// Keys usable within menu
 	switch (ch)
 	{
@@ -1681,7 +2038,7 @@ BOOL M_Responder (event_t *ev)
 				itemOn = 0;
 			else itemOn++;
 			S_Sound (CHAN_VOICE, "menu/cursor", 1, ATTN_NONE);
-		} while(currentMenu->menuitems[itemOn].status==-1);
+		} while(currentMenu->menuitems[itemOn].status==255);
 		return true;
 
 	case GK_UP:
@@ -1691,7 +2048,7 @@ BOOL M_Responder (event_t *ev)
 				itemOn = currentMenu->numitems-1;
 			else itemOn--;
 			S_Sound (CHAN_VOICE, "menu/cursor", 1, ATTN_NONE);
-		} while(currentMenu->menuitems[itemOn].status==-1);
+		} while(currentMenu->menuitems[itemOn].status==255);
 		return true;
 
 	case GK_LEFT:
@@ -1730,14 +2087,6 @@ BOOL M_Responder (event_t *ev)
 		}
 		return true;
 
-	  // [RH] Escape now moves back one menu instead of
-	  //	  quitting the menu system. Thus, backspace
-	  //	  is now ignored.
-	case GK_ESCAPE:
-		currentMenu->lastOn = itemOn;
-		M_PopMenuStack ();
-		return true;
-
 	case ' ':
 		if (currentMenu == &PSetupDef)
 		{
@@ -1773,7 +2122,140 @@ BOOL M_Responder (event_t *ev)
 	return (ev->subtype == EV_GUI_KeyDown);
 }
 
+BOOL M_SaveLoadResponder (event_t *ev)
+{
+	if (SelSaveGame != NULL && SelSaveGame->Succ != NULL)
+	{
+		switch (ev->data1)
+		{
+		case GK_UP:
+			if (SelSaveGame != SaveGames.Head)
+			{
+				if (SelSaveGame == TopSaveGame)
+				{
+					TopSaveGame = static_cast<FSaveGameNode *>(TopSaveGame->Pred);
+				}
+				SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
+			}
+			else
+			{
+				SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.TailPred);
+			}
+			M_UnloadSaveData ();
+			M_ExtractSaveData (SelSaveGame);
+			break;
 
+		case GK_DOWN:
+			if (SelSaveGame != SaveGames.TailPred)
+			{
+				SelSaveGame = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
+			}
+			else
+			{
+				SelSaveGame = TopSaveGame =
+					static_cast<FSaveGameNode *>(SaveGames.Head);
+			}
+			M_UnloadSaveData ();
+			M_ExtractSaveData (SelSaveGame);
+			break;
+
+		case GK_DEL:
+		case '\b':
+			if (SelSaveGame != &NewSaveNode)
+			{
+				sprintf (endstring, "Do you really want to delete the savegame\n"
+					TEXTCOLOR_WHITE "%s" TEXTCOLOR_NORMAL "?\n\nPress Y or N.",
+					SelSaveGame->Title);
+				M_StartMessage (endstring, M_DeleteSaveResponse, true);
+			}
+			break;
+
+		case 'N':
+			if (currentMenu == &SaveDef)
+			{
+				SelSaveGame = TopSaveGame = &NewSaveNode;
+				M_UnloadSaveData ();
+			}
+			break;
+
+		case '\r':
+			if (currentMenu == &LoadDef)
+			{
+				M_LoadSelect (SelSaveGame);
+			}
+			else
+			{
+				M_SaveSelect (SelSaveGame);
+			}
+		}
+	}
+
+	return (ev->subtype == EV_GUI_KeyDown);
+}
+
+static void M_LoadSelect (const FSaveGameNode *file)
+{
+	G_LoadGame (file->Filename);
+	if (gamestate == GS_FULLCONSOLE)
+	{
+		gamestate = GS_HIDECONSOLE;
+	}
+	M_ClearMenus ();
+	BorderNeedRefresh = screen->GetPageCount ();
+	if (quickSaveSlot == NULL)
+	{
+		quickSaveSlot = SelSaveGame;
+	}
+}
+
+//
+// User wants to save. Start string input for M_Responder
+//
+static void M_SaveSelect (const FSaveGameNode *file)
+{
+	// we are going to be intercepting all chars
+	genStringEnter = 1;
+	genStringEnd = M_DoSave;
+	genStringLen = SAVESTRINGSIZE-1;
+
+	if (file != &NewSaveNode)
+	{
+		strcpy (savegamestring, file->Title);
+	}
+	else
+	{
+		savegamestring[0] = 0;
+	}
+	saveCharIndex = strlen (savegamestring);
+}
+
+static void M_DeleteSaveResponse (int choice)
+{
+	if (choice == 'y')
+	{
+		FSaveGameNode *next = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
+		if (next->Succ == NULL)
+		{
+			next = static_cast<FSaveGameNode *>(SelSaveGame->Pred);
+		}
+
+		remove (SelSaveGame->Filename);
+		M_UnloadSaveData ();
+		if (SelSaveGame == TopSaveGame)
+		{
+			TopSaveGame = next;
+		}
+		if (quickSaveSlot == SelSaveGame)
+		{
+			quickSaveSlot = NULL;
+		}
+		SelSaveGame->Remove ();
+		delete[] SelSaveGame->Filename;
+		delete SelSaveGame;
+		SelSaveGame = next;
+		M_ExtractSaveData (SelSaveGame);
+	}
+}
 
 //
 // M_StartControlPanel
@@ -1892,6 +2374,23 @@ void M_Drawer ()
 }
 
 
+static void M_ClearSaveStuff ()
+{
+	M_UnloadSaveData ();
+	if (SaveGames.Head == &NewSaveNode)
+	{
+		SaveGames.RemHead ();
+		if (SelSaveGame == &NewSaveNode)
+		{
+			SelSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
+		}
+		if (TopSaveGame == &NewSaveNode)
+		{
+			TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
+		}
+	}
+}
+
 //
 // M_ClearMenus
 //
@@ -1902,6 +2401,7 @@ void M_ClearMenus ()
 		delete FireScreen;
 		FireScreen = NULL;
 	}
+	M_ClearSaveStuff ();
 	M_DeactivateMenuInput ();
 	MenuStackDepth = 0;
 	OptionsActive = false;
@@ -1936,6 +2436,7 @@ void M_PopMenuStack (void)
 {
 	M_DemoNoPlay = false;
 	InfoType = 0;
+	M_ClearSaveStuff ();
 	if (MenuStackDepth > 1)
 	{
 		I_PauseMouse ();
@@ -1953,7 +2454,7 @@ void M_PopMenuStack (void)
 			itemOn = currentMenu->lastOn;
 		}
 		drawSkull = MenuStack[MenuStackDepth].drawSkull;
-		MenuStackDepth++;
+		++MenuStackDepth;
 		S_Sound (CHAN_VOICE, "menu/backup", 1, ATTN_NONE);
 	}
 	else
@@ -2016,8 +2517,9 @@ void M_Init (void)
 	messageToPrint = 0;
 	messageString = NULL;
 	messageLastMenuActive = menuactive;
-	quickSaveSlot = -1;
+	quickSaveSlot = NULL;
 	SkullBaseLump = W_CheckNumForName ("M_SKL00");
+	strcpy (NewSaveNode.Title, "<New Save Game>");
 
 	underscore[0] = (gameinfo.gametype == GAME_Doom) ? '_' : '[';
 	underscore[1] = '\0';

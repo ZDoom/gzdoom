@@ -224,7 +224,7 @@ CCMD (unbind)
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "Unknown key \"%s\"\n", argv[1]);
+			Printf ("Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
 
@@ -238,20 +238,20 @@ CCMD (bind)
 	if (argc > 1) {
 		i = GetKeyFromName (argv[1]);
 		if (!i) {
-			Printf (PRINT_HIGH, "Unknown key \"%s\"\n", argv[1]);
+			Printf ("Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
 		if (argc == 2) {
-			Printf (PRINT_HIGH, "\"%s\" = \"%s\"\n", argv[1], (Bindings[i] ? Bindings[i] : ""));
+			Printf ("\"%s\" = \"%s\"\n", argv[1], (Bindings[i] ? Bindings[i] : ""));
 		} else {
 			ReplaceString (&Bindings[i], argv[2]);
 		}
 	} else {
-		Printf (PRINT_HIGH, "Current key bindings:\n");
+		Printf ("Current key bindings:\n");
 		
 		for (i = 0; i < NUM_KEYS; i++) {
 			if (Bindings[i])
-				Printf (PRINT_HIGH, "%s \"%s\"\n", KeyName (i), Bindings[i]);
+				Printf ("%s \"%s\"\n", KeyName (i), Bindings[i]);
 		}
 	}
 }
@@ -272,7 +272,7 @@ CCMD (undoublebind)
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "Unknown key \"%s\"\n", argv[1]);
+			Printf ("Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
 
@@ -288,12 +288,12 @@ CCMD (doublebind)
 		i = GetKeyFromName (argv[1]);
 		if (!i)
 		{
-			Printf (PRINT_HIGH, "Unknown key \"%s\"\n", argv[1]);
+			Printf ("Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
 		if (argc == 2)
 		{
-			Printf (PRINT_HIGH, "\"%s\" = \"%s\"\n", argv[1], (DoubleBindings[i] ? DoubleBindings[i] : ""));
+			Printf ("\"%s\" = \"%s\"\n", argv[1], (DoubleBindings[i] ? DoubleBindings[i] : ""));
 		}
 		else
 		{
@@ -302,12 +302,12 @@ CCMD (doublebind)
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "Current key doublebindings:\n");
+		Printf ("Current key doublebindings:\n");
 		
 		for (i = 0; i < NUM_KEYS; i++)
 		{
 			if (DoubleBindings[i])
-				Printf (PRINT_HIGH, "%s \"%s\"\n", KeyName (i), DoubleBindings[i]);
+				Printf ("%s \"%s\"\n", KeyName (i), DoubleBindings[i]);
 		}
 	}
 }

@@ -233,7 +233,7 @@ void AScriptedAmbientMaster::Serialize (FArchive &arc)
 
 byte AScriptedAmbientMaster::LocateSfx (long *ptr)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < NUMSNDSEQ; i++)
 	{
@@ -254,7 +254,7 @@ void AScriptedAmbientMaster::BeginPlay ()
 
 void AScriptedAmbientMaster::AddAmbient (int sfx)
 {
-	if (sfx < 0 || sfx >= NUMSNDSEQ)
+	if ((unsigned)sfx >= NUMSNDSEQ)
 		return;
 
 	long *ptr = BaseAmbientSfx[sfx];
@@ -329,7 +329,7 @@ void AScriptedAmbientMaster::RunThink ()
 			break;
 
 		default:
-			DPrintf ("P_AmbientSound: Unknown afxcmd %d", cmd);
+			DPrintf ("P_AmbientSound: Unknown afxcmd %ld", cmd);
 			break;
 		}
 	} while (done == false);
@@ -352,7 +352,8 @@ END_DEFAULTS
 
 void AScriptedAmbient::PostBeginPlay ()
 {
-	if (health >= 1200 && health - 1200 < NUMSNDSEQ)
+	const size_t ambientNum = health - 1200;
+	if (ambientNum < NUMSNDSEQ)
 	{
 		AScriptedAmbientMaster *master;
 		TThinkerIterator<AScriptedAmbientMaster> locater;
@@ -360,7 +361,7 @@ void AScriptedAmbient::PostBeginPlay ()
 		master = locater.Next ();
 		if (master == NULL)
 			master = Spawn<AScriptedAmbientMaster> (0, 0, 0);
-		master->AddAmbient (health - 1200);
+		master->AddAmbient (ambientNum);
 	}
 	Destroy ();
 }

@@ -108,14 +108,14 @@ public:
 			{
 				sprintf (names[facenum++], "%sST%d%d", prefix, i, j);
 			}
-			sprintf (names[facenum++], "%sTR%d0", prefix, i); // turn right
-			sprintf (names[facenum++], "%sTL%d0", prefix, i); // turn left
+			sprintf (names[facenum++], "%sTR%d0", prefix, i);  // turn right
+			sprintf (names[facenum++], "%sTL%d0", prefix, i);  // turn left
 			sprintf (names[facenum++], "%sOUCH%d", prefix, i); // ouch!
-			sprintf (names[facenum++], "%sEVL%d", prefix, i); // evil grin ;)
+			sprintf (names[facenum++], "%sEVL%d", prefix, i);  // evil grin ;)
 			sprintf (names[facenum++], "%sKILL%d", prefix, i); // pissed off
 		}
-		sprintf (names[facenum++], "%sGOD0", prefix, i);
-		sprintf (names[facenum++], "%sDEAD0", prefix, i);
+		sprintf (names[facenum++], "%sGOD0", prefix);
+		sprintf (names[facenum++], "%sDEAD0", prefix);
 
 		Faces.Uninit ();
 		Faces.Init (nameptrs, ST_NUMFACES, namespc);
@@ -160,9 +160,6 @@ public:
 		}
 		else if (state == HUD_StatusBar)
 		{
-			/*if (SB_state == screen->GetPageCount ())
-			{
-			}*/
 			if (SB_state != 0)
 			{
 				SB_state--;
@@ -242,6 +239,12 @@ private:
 			{
 				DrawPartialImage (Images, imgSBAR, 2, 3, 2, 3,
 					BigWidth*3, BigHeight);
+				if (Scaled)
+				{
+					ScaleCopy->Lock ();
+					CopyToScreen (2, 3, BigWidth*3, BigHeight);
+					ScaleCopy->Unlock ();
+				}
 			}
 		}
 	}
@@ -490,7 +493,6 @@ private:
 
 			do
 			{
-				byte *dest = desttop;
 				column_t *column = (column_t *)((byte *)arms + LONG(*ofs));
 
 				while (column->topdelta != 0xff)

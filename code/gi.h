@@ -64,7 +64,7 @@ typedef struct
 		struct
 		{
 			char basePage[8];
-			int numPages;
+			char numPages;
 		} indexed;
 	} info;
 	char **quitSounds;

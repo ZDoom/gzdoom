@@ -239,6 +239,13 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay)
 		m_Direction = -1;
 		DoorSound (false);
 		break;
+
+	case doorRaiseIn5Mins:
+		m_Direction = 2;
+		height = sec->FindLowestCeilingSurrounding (&spot);
+		m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4*FRACUNIT);
+		m_TopCountdown = 5 * 60 * TICRATE;
+		break;
 	}
 
 	height = sec->FindHighestFloorPoint (&m_BotSpot);
@@ -352,20 +359,6 @@ void P_SpawnDoorCloseIn30 (sector_t *sec)
 //
 void P_SpawnDoorRaiseIn5Mins (sector_t *sec)
 {
-	fixed_t height;
-	vertex_t *spot;
-	DDoor *door = new DDoor (sec);
-
 	sec->special = 0;
-
-	door->m_Direction = 2;
-	door->m_Type = DDoor::doorRaiseIn5Mins;
-	door->m_Speed = FRACUNIT * 2;
-	height = sec->FindLowestCeilingSurrounding (&spot);
-	door->m_TopDist = sec->ceilingplane.PointToDist (spot, height - 4*FRACUNIT);
-	height = sec->FindHighestFloorPoint (&door->m_BotSpot);
-	door->m_BotDist = sec->ceilingplane.PointToDist (door->m_BotSpot, height);
-	door->m_OldFloorDist = sec->floorplane.d;
-	door->m_TopWait = TICRATE*30/7;
-	door->m_TopCountdown = 5 * 60 * TICRATE;
+	new DDoor (sec, DDoor::doorRaiseIn5Mins, 2*FRACUNIT, TICRATE*30/7);
 }

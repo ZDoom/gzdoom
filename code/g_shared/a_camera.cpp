@@ -120,7 +120,7 @@ void AAimingCamera::PostBeginPlay ()
 	tracer = iterator.Next ();
 	if (tracer == NULL)
 	{
-		Printf (PRINT_HIGH, "AimingCamera %d: Can't find thing %d\n", tid, args[3]);
+		Printf ("AimingCamera %d: Can't find thing %d\n", tid, args[3]);
 	}
 }
 

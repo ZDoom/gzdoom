@@ -25,6 +25,7 @@
 
 #include <math.h>
 
+#include "templates.h"
 #include "m_alloc.h"
 #include "m_argv.h"
 #include "z_zone.h"
@@ -386,16 +387,6 @@ void P_LoadSectors (int lump)
 		ss->ceilingplane.d = ss->ceilingtexz;
 		ss->ceilingplane.c = -FRACUNIT;
 		ss->ceilingplane.ic = -FRACUNIT;
-#if 0
-			ss->floorplane.a = 0;//10631;
-			ss->floorplane.b = 46341;//10631;
-			ss->floorplane.c = 46341;//63788;
-			ss->floorplane.ic = 92682;
-			ss->ceilingplane.a = -ss->floorplane.a;
-			ss->ceilingplane.c = -ss->floorplane.c;
-			ss->ceilingplane.ic = -ss->floorplane.ic;
-
-#endif
 		ss->floorpic = (short)R_FlatNumForName(ms->floorpic);
 		ss->ceilingpic = (short)R_FlatNumForName(ms->ceilingpic);
 		ss->lightlevel = clamp (SHORT(ms->lightlevel), (short)0, (short)255);
@@ -555,7 +546,7 @@ void P_LoadThings2 (int lump, int position)
 	for ( ; mt < lastmt; mt++)
 	{
 		// [RH] At this point, monsters unique to Doom II were weeded out
-		//		if the IWAD wasn't for Doom II. R_SpawnMapThing() can now
+		//		if the IWAD wasn't for Doom II. P_SpawnMapThing() can now
 		//		handle these and more cases better, so we just pass it
 		//		everything and let it decide what to do with them.
 
@@ -810,7 +801,7 @@ static void P_AllocateSideDefs (int count)
 	}
 	if (count < numsides)
 	{
-		Printf (PRINT_HIGH, "Map has %d unused sidedefs\n", numsides - count);
+		Printf ("Map has %d unused sidedefs\n", numsides - count);
 	}
 	numsides = count;
 	sidecount = 0;
@@ -1064,7 +1055,8 @@ void P_SetSlopes ()
 static void P_CreateBlockMap ()
 {
 	register int i;
-	fixed_t minx = MAXINT, miny = MAXINT, maxx = MININT, maxy = MININT;
+	fixed_t minx = FIXED_MAX, miny = FIXED_MAX,
+			maxx = FIXED_MIN, maxy = FIXED_MIN;
 
 	// First find limits of map
 
@@ -1173,7 +1165,7 @@ static void P_CreateBlockMap ()
 	{
 		int count = tot+6;  // we need at least 1 word per block, plus reserved's
 
-		for (i = 0; i < tot; i++)
+		for (i = 0; (unsigned)i < tot; i++)
 			if (bmap[i].n)
 				count += bmap[i].n + 2; // 1 header word + 1 trailer word + blocklist
 
@@ -1189,7 +1181,7 @@ static void P_CreateBlockMap ()
 		blockmaplump[ndx++] = 0;	// Store an empty blockmap list at start
 		blockmaplump[ndx++] = -1;	// (Used for compression)
 
-		for (i = 4; i < tot; i++, bp++)
+		for (i = 4; (unsigned)i < tot; i++, bp++)
 		if (bp->n)											// Non-empty blocklist
 		{
 			blockmaplump[blockmaplump[i] = ndx++] = 0;		// Store index & header
@@ -1406,7 +1398,7 @@ void P_SetupLevel (char *lumpname, int position)
 	// UNUSED W_Profile ();
 
 	// find map num
-	lumpnum = W_GetNumForName (lumpname);
+	level.lumpnum = lumpnum = W_GetNumForName (lumpname);
 
 	// [RH] Check if this map is Hexen-style.
 	//		LINEDEFS and THINGS need to be handled accordingly.

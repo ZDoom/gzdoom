@@ -363,7 +363,9 @@ manual_ceiling:
 			ceiling->m_TopHeight = sec->ceilingplane.PointToDist (spot, targheight);
 			ceiling->m_Direction = 1;
 			break;
-		  
+
+		default:
+			break;	// Silence GCC
 		}
 				
 		ceiling->m_Tag = tag;

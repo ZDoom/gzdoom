@@ -43,7 +43,7 @@ fixed_t FixedMul_C (fixed_t a, fixed_t b)
 fixed_t FixedDiv_C (fixed_t a, fixed_t b)
 {
 	if ((abs (a) >> 14) >= abs (b))
-		return (a^b)<0 ? MININT : MAXINT;
+		return (a^b)<0 ? FIXED_MIN : FIXED_MAX;
 
 	{
 #if 0

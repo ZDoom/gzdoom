@@ -89,10 +89,10 @@ bool	P_UndoPlayerMorph (player_t *player, bool force=false);
 // P_MOBJ
 //
 
-#define ONFLOORZ		MININT
-#define ONCEILINGZ		MAXINT
-#define FLOATRANDZ		(MAXINT-1)
-#define FROMCEILINGZ128	(MAXINT-2)
+#define ONFLOORZ		FIXED_MIN
+#define ONCEILINGZ		FIXED_MAX
+#define FLOATRANDZ		(FIXED_MAX-1)
+#define FROMCEILINGZ128	(FIXED_MAX-2)
 
 extern fixed_t FloatBobOffsets[64];
 extern const TypeInfo *PuffType;
@@ -175,7 +175,7 @@ extern fixed_t			openbottom;
 extern fixed_t			openrange;
 extern fixed_t			lowfloor;
 
-void	P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=MININT, fixed_t refy=0);
+void	P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
 
 BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*));
 BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), AActor *start=NULL);
@@ -236,7 +236,7 @@ bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil);
 extern	AActor*	linetarget; 	// who got hit (or NULL)
 
 fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange=0);
-void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t slope, int damage);
+void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage);
 void	P_RailAttack (AActor *source, int damage, int offset);	// [RH] Shoot a railgun
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec);
@@ -253,6 +253,7 @@ void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
 void	P_CreateSecNodeList(AActor*,fixed_t,fixed_t);		// phares 3/14/98
 int		P_GetMoveFactor(const AActor *mo, int *frictionp);	// phares  3/6/98
 int		P_GetFriction(const AActor *mo, int *frictionfactor);
+void    P_ApplyTorque(AActor *mo);							// killough 9/12/98
 BOOL	Check_Sides(AActor *, int, int);					// phares
 
 // [RH] 

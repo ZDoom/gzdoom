@@ -311,7 +311,7 @@ char *V_GetColorStringByName (const char *name)
 	rgblump = W_CheckNumForName ("X11R6RGB");
 	if (rgblump == -1)
 	{
-		Printf (PRINT_HIGH, "X11R6RGB lump not found\n");
+		Printf ("X11R6RGB lump not found\n");
 		return NULL;
 	}
 
@@ -371,7 +371,7 @@ char *V_GetColorStringByName (const char *name)
 	}
 	if (rgb < rgbEnd)
 	{
-		Printf (PRINT_HIGH, "X11R6RGB lump is corrupt\n");
+		Printf ("X11R6RGB lump is corrupt\n");
 	}
 	return NULL;
 }
@@ -399,7 +399,7 @@ CCMD (setcolor)
 
 	if (argc < 3)
 	{
-		Printf (PRINT_HIGH, "Usage: setcolor <cvar> <color>\n");
+		Printf ("Usage: setcolor <cvar> <color>\n");
 		return;
 	}
 
@@ -583,7 +583,11 @@ void DFrameBuffer::DrawRateStuff ()
 			char fpsbuff[40];
 			int chars;
 
-			chars = sprintf (fpsbuff, "%I64d ms (%d fps)", howlong, LastCount);
+#if _MSC_VER
+			chars = sprintf (fpsbuff, "%I64d ms (%ld fps)", howlong, LastCount);
+#else
+			chars = sprintf (fpsbuff, "%Ld ms (%ld fps)", howlong, LastCount);
+#endif
 			Clear (0, screen->GetHeight() - 8, chars * 8, screen->GetHeight(), 0);
 			SetFont (ConFont);
 			DrawText (CR_WHITE, 0, screen->GetHeight() - 8, (char *)&fpsbuff[0]);
@@ -739,11 +743,11 @@ CCMD (vid_setmode)
 	}
 	else if (width)
 	{
-		Printf (PRINT_HIGH, "Unknown resolution %d x %d x %d\n", width, height, bits);
+		Printf ("Unknown resolution %d x %d x %d\n", width, height, bits);
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "Usage: vid_setmode <width> <height> <mode>\n");
+		Printf ("Usage: vid_setmode <width> <height> <mode>\n");
 	}
 }
 
@@ -810,7 +814,7 @@ void V_Init (void)
 	if (!V_SetResolution (width, height, bits))
 		I_FatalError ("Could not set resolution to %d x %d x %d", width, height, bits);
 	else
-		Printf (PRINT_HIGH, "Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
+		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	FBaseCVar::ResetColors ();
 	ConFont = new FConsoleFont (W_GetNumForName ("CONCHARS"));

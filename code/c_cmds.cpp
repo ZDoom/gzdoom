@@ -42,7 +42,7 @@ BOOL CheckCheatmode ()
 {
 	if (((*gameskill == sk_nightmare) || netgame || *deathmatch) && (*sv_cheats == 0.0))
 	{
-		Printf (PRINT_HIGH, "You must run the server with '+set sv_cheats 1' to enable this command.\n");
+		Printf ("You must run the server with '+set sv_cheats 1' to enable this command.\n");
 		return true;
 	}
 	else
@@ -206,7 +206,7 @@ CCMD (idclev)
 			return;
 
 		// So be it.
-		Printf (PRINT_HIGH, "%s\n", GStrings(STSTR_CLEV));
+		Printf ("%s\n", GStrings(STSTR_CLEV));
       	G_DeferedInitNew (mapname);
 	}
 }
@@ -215,13 +215,13 @@ CCMD (changemap)
 {
 	if (m_Instigator == NULL)
 	{
-		Printf (PRINT_HIGH, "Use the map command when not in a game.\n");
+		Printf ("Use the map command when not in a game.\n");
 		return;
 	}
 
 	if (m_Instigator->player - players != Net_Arbitrator && multiplayer)
 	{
-		Printf (PRINT_HIGH, "Only player %d can change the map.\n", Net_Arbitrator+1);
+		Printf ("Only player %d can change the map.\n", Net_Arbitrator+1);
 		return;
 	}
 
@@ -229,7 +229,7 @@ CCMD (changemap)
 	{
 		if (W_CheckNumForName (argv[1]) == -1)
 		{
-			Printf (PRINT_HIGH, "No map %s\n", argv[1]);
+			Printf ("No map %s\n", argv[1]);
 		}
 		else
 		{
@@ -259,7 +259,7 @@ CCMD (give)
 
 CCMD (gameversion)
 {
-	Printf (PRINT_HIGH, "%d.%d : " __DATE__ "\n", VERSION / 100, VERSION % 100);
+	Printf ("%d.%d : " __DATE__ "\n", VERSION / 100, VERSION % 100);
 }
 
 CCMD (exec)
@@ -286,13 +286,13 @@ CCMD (exec)
 		}
 		if (!feof (f))
 		{
-			Printf (PRINT_HIGH, "Error parsing \"%s\"\n", argv[1]);
+			Printf ("Error parsing \"%s\"\n", argv[1]);
 		}
 		fclose (f);
 	}
 	else
 	{
-		Printf (PRINT_HIGH, "Could not open \"%s\"\n", argv[1]);
+		Printf ("Could not open \"%s\"\n", argv[1]);
 	}
 }
 
@@ -320,7 +320,7 @@ CCMD (logfile)
 
 	if (Logfile)
 	{
-		Printf (PRINT_HIGH, "Log stopped: %s\n", timestr);
+		Printf ("Log stopped: %s\n", timestr);
 		fclose (Logfile);
 		Logfile = NULL;
 	}
@@ -329,11 +329,11 @@ CCMD (logfile)
 	{
 		if ( (Logfile = fopen (argv[1], "w")) )
 		{
-			Printf (PRINT_HIGH, "Log started: %s\n", timestr);
+			Printf ("Log started: %s\n", timestr);
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "Could not start log\n");
+			Printf ("Could not start log\n");
 		}
 	}
 }
@@ -344,7 +344,7 @@ bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineS
 CCMD (puke)
 {
 	if (argc < 2 || argc > 5) {
-		Printf (PRINT_HIGH, " puke <script> [arg1] [arg2] [arg3]\n");
+		Printf (" puke <script> [arg1] [arg2] [arg3]\n");
 	} else {
 		int script = atoi (argv[1]);
 		int arg0=0, arg1=0, arg2=0;
@@ -379,7 +379,7 @@ CCMD (dir)
 
 	if (!getcwd (curdir, 256))
 	{
-		Printf (PRINT_HIGH, "Current path too long\n");
+		Printf ("Current path too long\n");
 		return;
 	}
 
@@ -403,7 +403,7 @@ CCMD (dir)
 
 		if (chdir (dir))
 		{
-			Printf (PRINT_HIGH, "%s not found\n", dir);
+			Printf ("%s not found\n", dir);
 			return;
 		}
 	}
@@ -416,16 +416,16 @@ CCMD (dir)
 	}
 
 	if ( (file = I_FindFirst (match, &c_file)) == -1)
-		Printf (PRINT_HIGH, "Nothing matching %s%s\n", dir, match);
+		Printf ("Nothing matching %s%s\n", dir, match);
 	else
 	{
-		Printf (PRINT_HIGH, "Listing of %s%s:\n", dir, match);
+		Printf ("Listing of %s%s:\n", dir, match);
 		do
 		{
 			if (I_FindAttr (&c_file) & FA_DIREC)
 				Printf_Bold ("%s <dir>\n", I_FindName (&c_file));
 			else
-				Printf (PRINT_HIGH, "%s\n", I_FindName (&c_file));
+				Printf ("%s\n", I_FindName (&c_file));
 		} while (I_FindNext (file, &c_file) == 0);
 		I_FindClose (file);
 	}
@@ -439,7 +439,7 @@ CCMD (fov)
 		: &players[consoleplayer];
 
 	if (argc != 2)
-		Printf (PRINT_HIGH, "fov is %g\n", player->DesiredFOV);
+		Printf ("fov is %g\n", player->DesiredFOV);
 	else
 		player->DesiredFOV = atof (argv[1]);
 }

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "templates.h"
 #include "v_video.h"
 #include "m_alloc.h"
 #include "r_main.h"		// For lighting constants
@@ -129,28 +130,26 @@ void InitPalette ()
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		int grayint;
-
 		for (c = 0; c < 256; c++)
 		{
-			grayint = (int)(255.f * (1.f -
-				(GPalette.BaseColors[c].r * 0.00116796875f +
-				 GPalette.BaseColors[c].g * 0.00229296875f +
-				 GPalette.BaseColors[c].b * 0.0005625)));
+			grayint = (65535 -
+				(GPalette.BaseColors[c].r * 77 +
+				 GPalette.BaseColors[c].g * 143 +
+				 GPalette.BaseColors[c].b * 37)) >> 8;
 			*shade++ = ColorMatcher.Pick (grayint, grayint, grayint);
 		}
 	}
 	else
 	{
-		float intensity;
+		int intensity;
 
 		for (c = 0; c < 256; c++)
 		{
-			intensity = GPalette.BaseColors[c].r * 0.00116796875f +
-						GPalette.BaseColors[c].g * 0.00229296875f +
-						GPalette.BaseColors[c].b * 0.0005625f;
+			intensity = GPalette.BaseColors[c].r * 77 +
+						GPalette.BaseColors[c].g * 143 +
+						GPalette.BaseColors[c].b * 37;
 			*shade++ = ColorMatcher.Pick (
-				MIN (255, (int)(intensity * 383.f)),
-				(int)(intensity * 255.f), 0);
+				MIN (255, (intensity+intensity/2)>>8), intensity>>8, 0);
 		}
 	}
 }
@@ -246,7 +245,7 @@ CCMD (testblend)
 
 	if (argc < 3)
 	{
-		Printf (PRINT_HIGH, "testblend <color> <amount>\n");
+		Printf ("testblend <color> <amount>\n");
 	}
 	else
 	{
@@ -278,7 +277,7 @@ CCMD (testfade)
 
 	if (argc < 2)
 	{
-		Printf (PRINT_HIGH, "testfade <color>\n");
+		Printf ("testfade <color>\n");
 	}
 	else
 	{
@@ -406,7 +405,6 @@ void FDynamicColormap::BuildLights ()
 	int l, c;
 	int lr, lg, lb;
 	PalEntry colors[256];
-	PalEntry fade;
 	BYTE *shade;
 
 	// Scale light to the range 0-256, so we can avoid
@@ -477,7 +475,7 @@ CCMD (testcolor)
 
 	if (argc < 2)
 	{
-		Printf (PRINT_HIGH, "testcolor <color>\n");
+		Printf ("testcolor <color>\n");
 	}
 	else
 	{

@@ -181,6 +181,9 @@ bool P_GiveAmmo (player_t *player, ammotype_t ammo, int count)
 
 	case GAME_Hexen:
 		break;
+
+	default:
+		break;	// Silence GCC
 	}
 
 	return true;
@@ -203,7 +206,7 @@ bool P_GiveWeapon (player_t *player, weapontype_t weapon, BOOL dropped)
 	if (!wpnlev1info[weapon])
 		return false;
 	FState *state = wpnlev1info[weapon]->readystate;
-	if (state->frame >= sprites[state->sprite.index].numframes)
+	if (state->GetFrame() >= sprites[state->sprite.index].numframes)
 		return false;
 
 	if (multiplayer &&
@@ -380,7 +383,7 @@ static bool FindMostRecentWeapon (player_s *player, int *slot, int *index)
 {
 	if (player->pendingweapon != wp_nochange)
 	{
-		if (player->psprites[ps_weapon].state->action.acp2 == A_Raise)
+		if (player->psprites[ps_weapon].state->GetAction().acp2 == A_Raise)
 		{
 			if (FWeaponSlot::LocateWeapon (player->pendingweapon, slot, index))
 			{

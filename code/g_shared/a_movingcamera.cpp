@@ -64,7 +64,7 @@ void AInterpolationPoint::FormChain ()
 		Next = iterator.Next ();
 
 	if (Next == NULL && (args[3] | args[4]))
-		Printf (PRINT_HIGH, "Can't find target for camera node %d\n", tid);
+		Printf ("Can't find target for camera node %d\n", tid);
 
 	pitch = (signed int)((char)args[0]) * ANGLE_1;
 	if (pitch <= -ANGLE_90)
@@ -196,7 +196,7 @@ void APathFollower::PostBeginPlay ()
 
 	if (node == NULL)
 	{
-		Printf (PRINT_HIGH, "PathFollower %d: Can't find interpolation pt %d\n",
+		Printf ("PathFollower %d: Can't find interpolation pt %d\n",
 			tid, args[0] + 256 * args[1]);
 		return;
 	}
@@ -207,7 +207,7 @@ void APathFollower::PostBeginPlay ()
 	{	// linear path; need 2 nodes
 		if (node->Next == NULL)
 		{
-			Printf (PRINT_HIGH, "PathFollower %d: Path needs at least 2 nodes\n", tid);
+			Printf ("PathFollower %d: Path needs at least 2 nodes\n", tid);
 			return;
 		}
 		lastenemy = NULL;
@@ -218,7 +218,7 @@ void APathFollower::PostBeginPlay ()
 			node->Next->Next == NULL ||
 			node->Next->Next->Next == NULL)
 		{
-			Printf (PRINT_HIGH, "CameraPathMover %d: Path needs at least 4 nodes\n", tid);
+			Printf ("CameraPathMover %d: Path needs at least 4 nodes\n", tid);
 			return;
 		}
 		// If the first node is in a loop, we can start there.
@@ -484,7 +484,7 @@ void AActorMover::PostBeginPlay ()
 
 	if (tracer == NULL)
 	{
-		Printf (PRINT_HIGH, "ActorMover %d: Can't find target %d\n",
+		Printf ("ActorMover %d: Can't find target %d\n",
 			tid, args[3]);
 	}
 }
@@ -596,7 +596,7 @@ void AMovingCamera::PostBeginPlay ()
 		tracer = iterator.Next ();
 		if (tracer == NULL)
 		{
-			Printf (PRINT_HIGH, "MovingCamera %d: Can't find thing %d\n", tid, args[3]);
+			Printf ("MovingCamera %d: Can't find thing %d\n", tid, args[3]);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 // [RH] p_acs.c: New file to handle ACS scripts
 
+#include "templates.h"
 #include "z_zone.h"
 #include "doomdef.h"
 #include "p_local.h"
@@ -360,27 +361,10 @@ bool FBehavior::IsGood ()
 
 int *FBehavior::FindScript (int script) const
 {
-	if (NumScripts == 0)
-		return NULL;
+	const ScriptPtr *ptr = BinarySearch ((ScriptPtr *)Scripts, NumScripts,
+		&ScriptPtr::Number, (WORD)script);
 
-	int min = 0;
-	int max = NumScripts - 1;
-	int probe = NumScripts/2;
-	ScriptPtr *thisone;
-
-	while (min <= max)
-	{
-		thisone = (ScriptPtr *)(Scripts + 12*probe);
-		if (thisone->Number == script)
-			return (int *)(thisone->Address + Data);
-		else if (thisone->Number < script)
-			min = probe + 1;
-		else
-			max = probe - 1;
-		probe = (max + min) / 2;
-	}
-
-	return NULL;
+	return ptr ? (int *)(ptr->Address + Data) : NULL;
 }
 
 BYTE *FBehavior::FindChunk (DWORD id) const
@@ -560,7 +544,7 @@ DWORD FBehavior::FindLanguage (DWORD langid, bool ignoreregion) const
 void FBehavior::StartTypedScripts (WORD type, AActor *activator) const
 {
 	ScriptPtr *ptr;
-	DWORD i;
+	int i;
 
 	for (i = 0; i < NumScripts; i++)
 	{
@@ -914,10 +898,6 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 				actor->tid = tid;
 				actor->AddToHash ();
 				actor->flags |= MF_DROPPED;  // Don't respawn
-				if (actor->flags2 & MF2_FLOATBOB)
-				{
-					actor->special1 = actor->z - actor->floorz;
-				}
 			}
 			else
 			{
@@ -957,6 +937,7 @@ inline int getbyte (int *&pc)
 void DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
+	TeleportSide = lineSide;
 
 	switch (state)
 	{
@@ -1023,7 +1004,7 @@ void DLevelScript::RunScript ()
 	{
 		if (++runaway > 500000)
 		{
-			Printf (PRINT_HIGH, "Runaway script %d terminated\n", script);
+			Printf ("Runaway script %d terminated\n", script);
 			state = SCRIPT_PleaseRemove;
 			break;
 		}
@@ -1032,7 +1013,7 @@ void DLevelScript::RunScript ()
 		switch (pcd)
 		{
 			default:
-				Printf (PRINT_HIGH, "Unknown P-Code %d in script %d\n", pcd, script);
+				Printf ("Unknown P-Code %d in script %d\n", pcd, script);
 				// fall through
 			case PCD_TERMINATE:
 				state = SCRIPT_PleaseRemove;
@@ -1263,7 +1244,12 @@ void DLevelScript::RunScript ()
 				break;
 
 			case PCD_ASSIGNWORLDVAR:
-				WorldVars[NEXTBYTE] = STACK(1);
+				ACS_WorldVars[NEXTBYTE] = STACK(1);
+				sp--;
+				break;
+
+			case PCD_ASSIGNGLOBALVAR:
+				ACS_GlobalVars[NEXTBYTE] = STACK(1);
 				sp--;
 				break;
 
@@ -1276,7 +1262,11 @@ void DLevelScript::RunScript ()
 				break;
 
 			case PCD_PUSHWORLDVAR:
-				PushToStack (WorldVars[NEXTBYTE]);
+				PushToStack (ACS_WorldVars[NEXTBYTE]);
+				break;
+
+			case PCD_PUSHGLOBALVAR:
+				PushToStack (ACS_GlobalVars[NEXTBYTE]);
 				break;
 
 			case PCD_ADDSCRIPTVAR:
@@ -1290,8 +1280,12 @@ void DLevelScript::RunScript ()
 				break;
 
 			case PCD_ADDWORLDVAR:
-				WorldVars[NEXTBYTE] += STACK(1);
+				ACS_WorldVars[NEXTBYTE] += STACK(1);
 				sp--;
+				break;
+
+			case PCD_ADDGLOBALVAR:
+				ACS_GlobalVars[NEXTBYTE] += STACK(1);
 				break;
 
 			case PCD_SUBSCRIPTVAR:
@@ -1305,7 +1299,12 @@ void DLevelScript::RunScript ()
 				break;
 
 			case PCD_SUBWORLDVAR:
-				WorldVars[NEXTBYTE] -= STACK(1);
+				ACS_WorldVars[NEXTBYTE] -= STACK(1);
+				sp--;
+				break;
+
+			case PCD_SUBGLOBALVAR:
+				ACS_GlobalVars[NEXTBYTE] -= STACK(1);
 				sp--;
 				break;
 
@@ -1320,7 +1319,12 @@ void DLevelScript::RunScript ()
 				break;
 
 			case PCD_MULWORLDVAR:
-				WorldVars[NEXTBYTE] *= STACK(1);
+				ACS_WorldVars[NEXTBYTE] *= STACK(1);
+				sp--;
+				break;
+
+			case PCD_MULGLOBALVAR:
+				ACS_GlobalVars[NEXTBYTE] *= STACK(1);
 				sp--;
 				break;
 
@@ -1335,7 +1339,12 @@ void DLevelScript::RunScript ()
 				break;
 
 			case PCD_DIVWORLDVAR:
-				WorldVars[NEXTBYTE] /= STACK(1);
+				ACS_WorldVars[NEXTBYTE] /= STACK(1);
+				sp--;
+				break;
+
+			case PCD_DIVGLOBALVAR:
+				ACS_GlobalVars[NEXTBYTE] /= STACK(1);
 				sp--;
 				break;
 
@@ -1350,32 +1359,45 @@ void DLevelScript::RunScript ()
 				break;
 
 			case PCD_MODWORLDVAR:
-				WorldVars[NEXTBYTE] %= STACK(1);
+				ACS_WorldVars[NEXTBYTE] %= STACK(1);
+				sp--;
+				break;
+
+			case PCD_MODGLOBALVAR:
+				ACS_GlobalVars[NEXTBYTE] %= STACK(1);
 				sp--;
 				break;
 
 			case PCD_INCSCRIPTVAR:
-				locals[NEXTBYTE]++;
+				++locals[NEXTBYTE];
 				break;
 
 			case PCD_INCMAPVAR:
-				level.vars[NEXTBYTE]++;
+				++level.vars[NEXTBYTE];
 				break;
 
 			case PCD_INCWORLDVAR:
-				WorldVars[NEXTBYTE]++;
+				++ACS_WorldVars[NEXTBYTE];
+				break;
+
+			case PCD_INCGLOBALVAR:
+				++ACS_GlobalVars[NEXTBYTE];
 				break;
 
 			case PCD_DECSCRIPTVAR:
-				locals[NEXTBYTE]--;
+				--locals[NEXTBYTE];
 				break;
 
 			case PCD_DECMAPVAR:
-				level.vars[NEXTBYTE]--;
+				--level.vars[NEXTBYTE];
 				break;
 
 			case PCD_DECWORLDVAR:
-				WorldVars[NEXTBYTE]--;
+				--ACS_WorldVars[NEXTBYTE];
+				break;
+
+			case PCD_DECGLOBALVAR:
+				--ACS_GlobalVars[NEXTBYTE];
 				break;
 
 			case PCD_GOTO:
@@ -2141,7 +2163,7 @@ void P_DoDeferedScripts (void)
 					0, def->arg0, def->arg1, def->arg2,
 					def->type == acsdefered_t::defexealways, true);
 			} else
-				Printf (PRINT_HIGH, "P_DoDeferredScripts: Unknown script %d\n", def->script);
+				Printf ("P_DoDeferredScripts: Unknown script %d\n", def->script);
 			break;
 
 		case acsdefered_t::defsuspend:
@@ -2201,7 +2223,7 @@ bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineS
 		}
 		else
 		{
-			Printf (PRINT_HIGH, "P_StartScript: Unknown script %d\n", script);
+			Printf ("P_StartScript: Unknown script %d\n", script);
 		}
 	}
 	else

@@ -19,7 +19,7 @@ class AFighterPlayer : public APlayerPawn
 public:
 	void PlayAttacking2 ();
 	void GiveDefaultInventory ();
-	const char *BaseSoundName () { return "fighter"; }
+	const char *GetSoundClass ();
 	fixed_t GetJumpZ () { return 9*FRACUNIT; }
 };
 
@@ -119,6 +119,14 @@ IMPLEMENT_ACTOR (AFighterPlayer, Hexen, -1, 0)
 	PROP_PainSound ("PlayerFighterPain")
 END_DEFAULTS
 
+const char *AFighterPlayer::GetSoundClass ()
+{
+	if (player == NULL || player->userinfo.skin == 0)
+	{
+		return "fighter";
+	}
+	return Super::GetSoundClass ();
+}
 void AFighterPlayer::PlayAttacking2 ()
 {
 	SetState (MissileState);

@@ -102,7 +102,7 @@ void FImageCollection::Init (const char **patchNames, int numPatches, int namesp
 							source += code+1;
 							destSize -= code+1;
 						}
-						else if (code != 0x80)
+						else if (code != -128)
 						{
 							memset (dest, *source, (-code)+1);
 							dest += (-code)+1;

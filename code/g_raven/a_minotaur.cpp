@@ -160,14 +160,14 @@ END_DEFAULTS
 
 AT_SPEED_SET (MinotaurFX1, speed)
 {
-	SimpleSpeedSetter<AMinotaurFX1, 20*FRACUNIT, 26*FRACUNIT> (speed);
+	SimpleSpeedSetter (AMinotaurFX1, 20*FRACUNIT, 26*FRACUNIT, speed);
 }
 
 class AMinotaurFX2 : public AMinotaurFX1
 {
 	DECLARE_ACTOR (AMinotaurFX2, AMinotaurFX1)
 public:
-	void GetExplodeParms (int &damage, fixed_t &distance, bool &hurtSource)
+	void GetExplodeParms (int &damage, int &distance, bool &hurtSource)
 	{
 		damage = 24;
 	}
@@ -201,14 +201,14 @@ END_DEFAULTS
 
 AT_SPEED_SET (MinotaurFX2, speed)
 {
-	SimpleSpeedSetter<AMinotaurFX2, 14*FRACUNIT, 20*FRACUNIT> (speed);
+	SimpleSpeedSetter (AMinotaurFX2, 14*FRACUNIT, 20*FRACUNIT, speed);
 }
 
 class AMinotaurFX3 : public AMinotaurFX2
 {
 	DECLARE_ACTOR (AMinotaurFX3, AMinotaurFX2)
 public:
-	void GetExplodeParms (int &damage, fixed_t &distance, bool &hurtSource)
+	void GetExplodeParms (int &damage, int &distance, bool &hurtSource)
 	{
 		damage = 128;
 	}

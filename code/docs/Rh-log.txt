@@ -1,3 +1,191 @@
+April 12, 2001
+- Added a new game menu for Hexen that explains you cannot start Hexen from
+  a menu yet.
+- Made the names stored in DEHSUPP case-insensitive.
+- Fixed: R_RenderViewToCanvas() did not lower the Heretic weapons to the
+  bottom of the rendered area.
+- Fixed positioning of the save/load menu titles and the save game cursor
+  at high resolutions.
+- Fixed: Many ammo types were derived from AInventory and not AAmmo, so
+  they did not play the dedicated ammo-pickup sound.
+- Fixed AAmbientSound::Activate() to check that the ambient sound assigned
+  to it actually exists. If not, it destroys itself.
+- Changed doomtype.h to use the ANSI <limits.h> instead of defining its
+  own limits.
+
+April 10, 2001
+- Fixed: FindNextFileA() returns 0 on failure, which is the opposite of
+  _findnext(), and I did not realise that when I changed I_FindNext()
+  to use the Win32 API function.
+
+April 9, 2001
+- Made some code changes to allow for compilation with GCC again
+  (specifically, Cygwin's GCC). Fixed a few latent bugs in the process,
+  thanks to GCC's more stringent default warnings.
+- Fixed: FHelperThread must have a virtual destructor, which might
+  explain why I was having so much trouble with it before.
+
+April 7, 2001
+- Added r_drawtrans cvar to allow disabling the drawing of translucent
+  things.
+- Fixed: The stretched Doom status bar would not properly clear away the
+  big ammo count when switching to a weapon that does not use ammo.
+- Fixed: At certain screen heights, scaled status bars would not touch the
+  bottom of the screen because of inaccuracy in the calculation of ::ST_Y
+  in FBaseStatusBar::SetScaled().
+- Added separate pickup sounds for health, armor, and ammo items.
+- Improved sound link resolution in S_StartSound() so that regular sounds
+  can alias player sounds.
+- Reimplemented idmypos in a more useful manner.
+
+April 3, 2001
+- Fixed: DLevelScript::RunScript() sets TeleportSide according to its
+  lineSide property instead of assuming that it is already set correctly.
+- Fixed: ASectorAction::CheckTrigger() should set TeleportSide to 0 so that
+  teleports always work.
+
+March 29, 2001
+- Added language cvar.
+- Fixed: Float bobbing objects would warp to the floor when on a rising
+  platform.
+- Fixed: "Torque" should not be applied to float bob objects. (Hexen MAP11
+  is a good example of why not.)
+- Fixed: Spree messages should only be shown in deathmatch.
+- Changed sound effect loading to try the sound as DMX format first instead
+  of last. (FMOD was recognizing CHICPK2 in heretic.wad as some compressed
+  format.)
+- Made skins work with the new player sound system.
+
+March 28, 2001
+- Changed player sounds to exist separately from the main sound list (sort
+  of). The generic player sounds (e.g. "*death") now exist as actual sound
+  entries, but they only serve as a context for getting an index into a
+  separate list of class/gender specific sounds which index back into the
+  main sound list and provide the actual sound to play. This also reduces
+  the total number of sounds that need to be registered. Several new SNDINFO
+  commands were introduced to support this.
+- Fixed: When the tomed phoenix rod ran out of flame, the weapon disappeared.
+- Fixed: Intensity calculations in InitPalette() could overflow and cause
+  the invulnerability colormap to be wrong.
+
+March 27, 2001
+- Made the Ambients array in s_advsound.cpp a list of pointers to
+  AmbientSounds instead of a container of AmbientSounds, since the array is
+  usually nowhere near full and just wasting memory.
+
+March 26, 2001
+- Fixed: Using sound names in a dehacked Thing section works again.
+- Enhanced the soundlist command to show links and random lists.
+- Added an overloaded Printf() that does not take a print level, but just
+  prints at PRINT_HIGH.
+- Added the $random SNDINFO command.
+- Moved the template functions into templates.h and added the BinarySearch
+  template function.
+- Fixed: The spectre had sounds defined in SNDINFO, but its defaults didn't
+  specify any sounds, so it used the demon's sounds instead.
+- Implemented a suggestion from the message board to A_VileChase so that
+  negative speed archviles do not run away from corpses.
+
+March 24, 2001
+- Fixed: Monsters following a patrol path would not have their reactiontime
+  reset to 0 if they heard a player before seeing her.
+- Fixed: Picking up a thing by walking over it would remove it from the
+  blocklist and make it possible to walk into another thing near it, because
+  the P_BlockThingsIterator would not find anymore actors in that block for
+  that call.
+- Tried making DThinker::Delete() private so as to enforce the "use Destroy
+  with thinkers" rule, but it didn't work. If the object's constructor can
+  throw an exception, the caller of new needs to be able to call delete in
+  order to remove the partially constructed object. However, I did change
+  the definition of DECLARE_STATELESS_ACTOR so that all actors have nothrow
+  constructors (since they're not allowed to use a constructor), which should
+  help reduce the size of a lot of the CreateObject()s.
+- Split the Thinkers list into two in order to guarantee that every thinker
+  will have a chance to think during the same tic when it is created.
+- Fixed: A thinker that destroyed itself in PostBeginPlay() would block the
+  ticks for all actors after it for that game tic.
+
+March 23, 2001
+- Fixed: Float bobbing was not properly centered around the object's "ideal"
+  height.
+- Added A_SPosAttackUseAtkSound(). This is the same as A_SPosAttack(), except
+  it plays the actor's attack sound instead of being hardcoded to play
+  "shotguy/attack". Now changing spider/attack in SNDINFO can have an effect.
+
+March 22, 2001
+- Wrote a fully-functional gccinlines.h compatible with GCC 2.95.
+
+March 20, 2001
+- Undid: When I made float bobbing work for variable heights, I started
+  clamping bobbing objects to the floor/ceiling. Heretic and Hexen do not do
+  this, so I stopped clamping them.
+- Fixed: P_BloodSplatter() should only be called for Raven's games, not Doom.
+- Changed sound ID 0 to mean "no sound" instead of -1.
+- Changed actor default sounds from strings to IDs so that I don't have to
+  worry about tracking a bunch of pointers when loading/saving games, because
+  this information gets saved out now.
+- Fixed: Midtextures on two-sided lines are not drawn if they pass too close
+  to the player. What is considered "too close" was determined empirically.
+- Fixed typo: Wizard's spawnhealth should be 180, not 100.
+- Turned off monsters killing other monsters when the player is dead and
+  the game is Doom.
+- Added global ACS variables. These are like world variables, except they
+  do not get cleared when moving to a new hub.
+- Reduced the ACS stack size from 200 to 64.
+
+March 19, 2001
+- Added a list of needed wads to savegames.
+- Moved the SAVESTRINGSIZE definition into version.h so that I can be
+  sure all the files that use it use the same value. One file had it
+  at 32, and the rest used 24, which was causing crashes when switching
+  levels after saving a game.
+- Fixed a Doom bug: If a boss eye tried to shoot a cube at a boss target
+  with the same y-coordinate as itself, the game would crash with a divide
+  by 0 because only the difference in y-coordinates was used to determine
+  how long it would take for the cube to reach the target.
+
+March 17, 2001
+- Rewrote the save and load menus to support the new savegame features and
+  to also support far more files than before.
+- Fixed: The patch drawers in v_draw.cpp crashed with patches that had
+  useless 0-length posts.
+- Fixed: Sound sequence SS_CMD_END was being generated wrong.
+- Fixed: Sound sequences with no current sound were archived wrong.
+
+March 16, 2001
+- Added screenshots to save games, ala all the Build games I've played.
+  Also added comments that currently just indicate the time when the game
+  was saved.
+- Added R_RenderViewToCanvas() and rearranged r_main.cpp a little to
+  accomodate it.
+
+March 15, 2001
+- Added page up/down support for long options menus (i.e. controls menu).
+- Changed console paging keys: Ctrl-Home and Ctrl-End now move to top/bottom
+  of console buffer, and Shift-PageUp and Shift-PageDown move up/down by
+  pages.
+- Fixed: Trace() picked PT_ADDTHINGS based on ActorMask instead of actorMask.
+  The most obvious consequence of this was that hitscan weapons worked
+  sporadicly with the chasecam on.
+- Fixed: Backpack was only giving one of each ammo type instead of one clip
+  of each ammo type.
+
+March 14, 2001
+- Added MBF "torque" to fix "The items that the monsters drop when they die
+  sometimes float in the air (happens very often when the monsters die in
+  stairs)." Although it does fix this, I think it looks goofy to see ammo
+  clips go careening down the stairs at the beginning of MAP01. The better
+  solution to this particular situation would probably be to adjust the
+  pickupable items' radii to accurately reflect their physical sizes, but
+  I fear that might make them harder to grab. Maybe if they were noclip?
+- Fixed dumpmapthings command.
+- Space tuning: Shrank FState from 28 to 16 bytes.
+- Fixed spree and multikill messages to correctly display the killer.
+- Fixed DPusher::ChangeValues() to properly convert from byte angles to
+  fineangles.
+- Added PROP_STATE_BASE to AMaceFX3's defaults, so that it gets the right
+  death state.
+
 March 11, 2001
 - Changed bex string section handling to simulate old death messages
   (without %o and %k).
@@ -4482,7 +4670,7 @@ March 18, 1998
   totalitems to level.time, level.total_secrets, level.total_monsters,
   and level.total_items respectively. levelstarttic was never used;
   got rid of it.
-- Remaved mapnames* arrays from hu_stuff.c and some ST_MAP* #defines
+- Removed mapnames* arrays from hu_stuff.c and some ST_MAP* #defines
   in st_stuff.c.
 - Moved drawing of level name in automap out of hu_stuff.c into am_map.c.
 

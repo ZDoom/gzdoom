@@ -1435,7 +1435,7 @@ FUNC(LS_Sector_SetCeilingPanning)
 }
 
 FUNC(LS_Sector_SetFloorPanning)
-// Sector_SetCeilingPanning (tag, x-int, x-frac, y-int, y-frac)
+// Sector_SetFloorPanning (tag, x-int, x-frac, y-int, y-frac)
 {
 	int secnum = -1;
 	fixed_t xofs = arg1 * FRACUNIT + arg2 * (FRACUNIT/100);

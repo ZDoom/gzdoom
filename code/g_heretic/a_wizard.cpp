@@ -58,7 +58,7 @@ FState AWizard::States[] =
 };
 
 IMPLEMENT_ACTOR (AWizard, Heretic, 15, 0)
-	PROP_SpawnHealth (100)
+	PROP_SpawnHealth (180)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (68)
 	PROP_Mass (100)
@@ -135,7 +135,7 @@ END_DEFAULTS
 
 AT_SPEED_SET (WizardFX1, speed)
 {
-	SimpleSpeedSetter<AWizardFX1, 18*FRACUNIT, 24*FRACUNIT> (speed);
+	SimpleSpeedSetter (AWizardFX1, 18*FRACUNIT, 24*FRACUNIT, speed);
 }
 
 // --- Action functions -----------------------------------------------------
@@ -193,7 +193,7 @@ void A_WizAtk3 (AActor *actor)
 	{
 		return;
 	}
-	S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+	S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
 		P_DamageMobj (actor->target, actor, actor, HITDICE(4), MOD_HIT);

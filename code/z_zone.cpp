@@ -347,13 +347,13 @@ void Z_DumpHeap (int lowtag, int hightag)
 {
 	memblock_t *block;
 		
-	Printf (PRINT_HIGH, "zone size: %i  location: %p\n", mainzone->size,mainzone);
-	Printf (PRINT_HIGH, "tag range: %i to %i\n", lowtag, hightag);
+	Printf ("zone size: %i  location: %p\n", mainzone->size,mainzone);
+	Printf ("tag range: %i to %i\n", lowtag, hightag);
 		
 	for (block = mainzone->blocklist.next ; ; block = block->next)
 	{
 		if (block->tag >= lowtag && block->tag <= hightag)
-			Printf (PRINT_HIGH, "block:%p    size:%7i    user:%016p    tag:%3i\n",
+			Printf ("block:%p    size:%7i    user:%p    tag:%3i\n",
 					block, block->size, block->user, block->tag);
 				
 		if (block->next == &mainzone->blocklist)
@@ -363,13 +363,13 @@ void Z_DumpHeap (int lowtag, int hightag)
 		}
 		
 		if ( (byte *)block + block->size != (byte *)block->next)
-			Printf (PRINT_HIGH, "ERROR: block size does not touch the next block\n");
+			Printf ("ERROR: block size does not touch the next block\n");
 
 		if ( block->next->prev != block)
-			Printf (PRINT_HIGH, "ERROR: next block doesn't have proper back link\n");
+			Printf ("ERROR: next block doesn't have proper back link\n");
 
 		if (!block->user && !block->next->user)
-			Printf (PRINT_HIGH, "ERROR: two consecutive free blocks\n");
+			Printf ("ERROR: two consecutive free blocks\n");
 	}
 }
 
@@ -385,7 +385,7 @@ void Z_FileDumpHeap (FILE *f)
 		
 	for (block = mainzone->blocklist.next ; ; block = block->next)
 	{
-		fprintf (f,"block:%p    size:%7i    user:%016p    tag:%3i\n",
+		fprintf (f,"block:%p    size:%7i    user:%p    tag:%3i\n",
 				 block, block->size, block->user, block->tag);
 				
 		if (block->next == &mainzone->blocklist)
@@ -522,14 +522,12 @@ size_t Z_FreeMemory (void)
 CCMD (mem)
 {
 	Z_FreeMemory ();
-
-	Printf (PRINT_HIGH,
-			"%u blocks:\n"
-			"% 5u used      (%u, %u)\n"
-			" % 5u purgable (%u, %u)\n"
-			" % 5u locked   (%u, %u)\n"
-			"% 5u unused    (%u, %u)\n"
-			"% 5u p-free    (%u, %u)\n",
+	Printf ("%u blocks:\n"
+			"%5u used      (%u, %u)\n"
+			" %5u purgable (%u, %u)\n"
+			" %5u locked   (%u, %u)\n"
+			"%5u unused    (%u, %u)\n"
+			"%5u p-free    (%u, %u)\n",
 			numblocks,
 			usedpblocks+usedlblocks, pfree+lsize,
 			largestpfree > largestlsize ? largestpfree : largestlsize,

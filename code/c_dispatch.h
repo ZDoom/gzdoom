@@ -29,7 +29,7 @@ public:
 	FConsoleCommand (const char *name, CCmdRun RunFunc);
 	virtual ~FConsoleCommand ();
 	virtual bool IsAlias ();
-	void PrintCommand () { Printf (PRINT_HIGH, "%s\n", m_Name); }
+	void PrintCommand () { Printf ("%s\n", m_Name); }
 
 	virtual void Run (int argc, char **argv, const char *args, AActor *instigator);
 
@@ -57,7 +57,7 @@ public:
 	~FConsoleAlias ();
 	void Run (int argc, char **argv, const char *args, AActor *m_Instigator);
 	bool IsAlias ();
-	void PrintAlias () { Printf (PRINT_HIGH, "%s : %s\n", m_Name, m_Command); }
+	void PrintAlias () { Printf ("%s : %s\n", m_Name, m_Command); }
 	void Archive (FConfigFile *f);
 protected:
 	char *m_Command;

@@ -44,13 +44,9 @@ typedef union
 	actionf_p2	acp2;
 } actionf_t;
 
-// Historically, "think_t" is yet another
-// function pointer to a routine to handle an actor
-typedef actionf_t  think_t;
-
 class FThinkerIterator;
 
-enum { MAX_STATNUM = 255 };
+enum { MAX_STATNUM = 127 };
 
 // Doubly linked list of thinkers
 class DThinker : public DObject, protected Node
@@ -58,10 +54,11 @@ class DThinker : public DObject, protected Node
 	DECLARE_CLASS (DThinker, DObject)
 
 public:
-	DThinker (int statnum = MAX_STATNUM);
+	DThinker (int statnum = MAX_STATNUM) throw();
 	void Destroy ();
 	virtual ~DThinker ();
 	virtual void RunThink ();
+	virtual void PostBeginPlay ();	// Called just before the first tick
 
 	void *operator new (size_t size);
 	void operator delete (void *block);
@@ -75,10 +72,17 @@ public:
 	static void SerializeAll (FArchive &arc, bool keepPlayers);
 
 private:
-	static List Thinkers[MAX_STATNUM+1];
+	static void DestroyThinkersInList (Node *first);
+	static void DestroyMostThinkersInList (List &list, int stat);
+	static int TickThinkers (List *list, List *dest);	// Returns: # of thinkers ticked
+
+
+	static List Thinkers[MAX_STATNUM+1];		// Current thinkers
+	static List FreshThinkers[MAX_STATNUM+1];	// Newly created thinkers
 	static bool bSerialOverride;
 
 	friend class FThinkerIterator;
+	friend class DObject;
 };
 
 class FThinkerIterator
@@ -88,6 +92,7 @@ private:
 	Node *m_CurrThinker;
 	BYTE m_Stat;
 	bool m_SearchStats;
+	bool m_SearchingFresh;
 
 public:
 	FThinkerIterator (TypeInfo *type, int statnum=MAX_STATNUM+1);

@@ -27,13 +27,13 @@ CCMD (addbot)
 {
 	if (consoleplayer != Net_Arbitrator)
 	{
-		Printf (PRINT_HIGH, "Only player %d can add bots\n", Net_Arbitrator + 1);
+		Printf ("Only player %d can add bots\n", Net_Arbitrator + 1);
 		return;
 	}
 
 	if (argc > 2)
 	{
-		Printf (PRINT_HIGH, "addbot [botname] : add a bot to the game\n");
+		Printf ("addbot [botname] : add a bot to the game\n");
 		return;
 	}
 /*
@@ -78,12 +78,12 @@ CCMD (freeze)
 		if (bglobal.freeze)
 		{
 			bglobal.freeze = false;
-			Printf (PRINT_HIGH, "Freeze mode off\n");
+			Printf ("Freeze mode off\n");
 		}
 		else
 		{
 			bglobal.freeze = true;
-			Printf (PRINT_HIGH, "Freeze mode on\n");
+			Printf ("Freeze mode on\n");
 		}
 	}
 }
@@ -95,11 +95,11 @@ CCMD (listbots)
 
 	while (thebot)
 	{
-		Printf (PRINT_HIGH, "%s%s\n", thebot->name, thebot->inuse ? " (active)" : "");
+		Printf ("%s%s\n", thebot->name, thebot->inuse ? " (active)" : "");
 		thebot = thebot->next;
 		count++;
 	}
-	Printf (PRINT_HIGH, "> %d bots\n", count);
+	Printf ("> %d bots\n", count);
 }
 
 FArchive &operator<< (FArchive &arc, botskill_t &skill)

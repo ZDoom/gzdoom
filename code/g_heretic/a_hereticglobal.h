@@ -7,8 +7,6 @@
 class AHereticWeapon : public AWeapon
 {
 	DECLARE_STATELESS_ACTOR (AHereticWeapon, AWeapon)
-protected:
-	virtual void PlayPickupSound (AActor *toucher);
 };
 
 class APhoenixFX1 : public AActor

@@ -26,6 +26,7 @@
 
 #include <stdlib.h>
 
+#include "templates.h"
 #include "m_random.h"
 #include "m_alloc.h"
 #include "i_system.h"
@@ -129,7 +130,9 @@ void P_RecursiveSound (sector_t *sec, int soundblocks)
 				P_RecursiveSound (other, 1);
 		}
 		else
+		{
 			P_RecursiveSound (other, soundblocks);
+		}
 	}
 }
 
@@ -219,7 +222,7 @@ BOOL P_CheckMissileRange (AActor *actor)
 
 bool AActor::SuggestMissileAttack (fixed_t dist)
 {
-	return P_Random (pr_checkmissilerange) >= MIN (dist >> FRACBITS, 200);
+	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> FRACBITS, 200);
 }
 
 //
@@ -266,10 +269,15 @@ BOOL P_Move (AActor *actor)
 	// killough 10/98: make monsters get affected by ice and sludge too:
 	movefactor = P_GetMoveFactor (actor, &friction);
 
-	if (friction < ORIG_FRICTION &&		// sludge
-		!(speed = ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)
-		   * speed) / ORIG_FRICTION_FACTOR))
-		speed = 1;	// always give the monster a little bit of speed
+	if (friction < ORIG_FRICTION)
+	{ // sludge
+		speed = ((ORIG_FRICTION_FACTOR - (ORIG_FRICTION_FACTOR-movefactor)/2)
+		   * speed) / ORIG_FRICTION_FACTOR;
+		if (speed == 0)
+		{ // always give the monster a little bit of speed
+			speed = ksgn(actor->GetDefault()->Speed);
+		}
+	}
 #endif
 
 	tryx = (origx = actor->x) + (deltax = FixedMul (speed, xspeed[actor->movedir]));
@@ -538,7 +546,7 @@ BOOL P_LookForMonsters (AActor *actor)
 		{ // Skip
 			continue;
 		}
-		if (count++ > MONS_LOOK_LIMIT)
+		if (++count >= MONS_LOOK_LIMIT)
 		{ // Stop searching
 			return false;
 		}
@@ -577,7 +585,9 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 	angle_t 	an;
 	fixed_t 	dist;
 
-	if (!multiplayer && players[0].health <= 0)
+	if (gameinfo.gametype != GAME_Doom &&
+		!multiplayer &&
+		players[0].health <= 0)
 	{ // Single player game and player is dead; look for monsters
 		return P_LookForMonsters (actor);
 	}
@@ -591,20 +601,24 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 		if (!playeringame[actor->lastlook])
 			continue;
 						
-		if (c++ == 2 || actor->lastlook == stop)
+		if (++c == 3 || actor->lastlook == stop)
 		{
-			// done looking		// [RH] use goal as target
-			if (!actor->target && actor->goal)
+			// done looking
+			if (actor->target == NULL)
 			{
-				actor->target = actor->goal;
-				return true;
-			}
-			// Use last known enemy if no players sighted -- killough 2/15/98:
-			if (!actor->target && actor->lastenemy && actor->lastenemy->health > 0)
-			{
-				actor->target = actor->lastenemy;
-				actor->lastenemy = NULL;
-				return true;
+				// [RH] use goal as target
+				if (actor->goal != NULL)
+				{
+					actor->target = actor->goal;
+					return true;
+				}
+				// Use last known enemy if no players sighted -- killough 2/15/98:
+				if (actor->lastenemy != NULL && actor->lastenemy->health > 0)
+				{
+					actor->target = actor->lastenemy;
+					actor->lastenemy = NULL;
+					return true;
+				}
 			}
 			return false;
 		}
@@ -723,23 +737,14 @@ void A_Look (AActor *actor)
 	}
 	else if (actor->SeeSound)
 	{
-		char sound[MAX_SNDNAME];
-
-		strcpy (sound, actor->SeeSound);
-
-		if (sound[strlen(sound)-1] == '1')
-		{
-			sound[strlen(sound)-1] = P_Random(pr_look)%3 + '1';
-			if (S_FindSound (sound) == -1)
-				sound[strlen(sound)-1] = '1';
-		}
-
 		if (actor->flags2 & MF2_BOSS)
 		{ // full volume
-			S_Sound (actor, CHAN_VOICE, sound, 1, ATTN_SURROUND);
+			S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_SURROUND);
 		}
 		else
-			S_Sound (actor, CHAN_VOICE, sound, 1, ATTN_NORM);
+		{
+			S_SoundID (actor, CHAN_VOICE, actor->SeeSound, 1, ATTN_NORM);
+		}
 	}
 
 	if (actor->target)
@@ -773,7 +778,9 @@ void A_Chase (AActor *actor)
 	}
 
 	// [RH] Don't chase invisible targets
-	if (actor->target != NULL && actor->target->renderflags & RF_INVISIBLE)
+	if (actor->target != NULL &&
+		actor->target->renderflags & RF_INVISIBLE &&
+		actor->target != actor->goal)
 	{
 		actor->target = NULL;
 	}
@@ -868,7 +875,7 @@ void A_Chase (AActor *actor)
 		if (actor->MeleeState && P_CheckMeleeRange (actor))
 		{
 			if (actor->AttackSound)
-				S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+				S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 
 			actor->SetState (actor->MeleeState);
 			return;
@@ -911,7 +918,7 @@ void A_Chase (AActor *actor)
 	// make active sound
 	if (actor->ActiveSound && P_Random (pr_chase) < 3)
 	{
-		const char *sound;
+		int sound;
 
 		if ((actor->flags3 & MF3_SEEISALSOACTIVE) && P_Random (pr_chase) < 128)
 		{
@@ -923,7 +930,7 @@ void A_Chase (AActor *actor)
 		}
 		if (S_CheckSound (sound))
 		{ // [RH] Only play this sound if it won't cut out another of the same type.
-			S_Sound (actor, CHAN_VOICE, sound, 1,
+			S_SoundID (actor, CHAN_VOICE, sound, 1,
 				(actor->flags3 & MF3_FULLVOLACTIVE) ? ATTN_NONE : ATTN_IDLE);
 		}
 	}
@@ -997,25 +1004,16 @@ void A_Scream (AActor *actor)
 {
 	if (actor->DeathSound)
 	{
-		char sound[MAX_SNDNAME];
-
-		strcpy (sound, actor->DeathSound);
-
-		if (sound[strlen(sound)-1] == '1')
-		{
-			sound[strlen(sound)-1] = P_Random(pr_look)%3 + '1';
-			if (S_FindSound (sound) == -1)
-				sound[strlen(sound)-1] = '1';
-		}
-
 		// Check for bosses.
 		if (actor->flags2 & MF2_BOSS)
 		{
 			// full volume
-			S_Sound (actor, CHAN_VOICE, sound, 1, ATTN_SURROUND);
+			S_SoundID (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_SURROUND);
 		}
 		else
-			S_Sound (actor, CHAN_VOICE, sound, 1, ATTN_NORM);
+		{
+			S_SoundID (actor, CHAN_VOICE, actor->DeathSound, 1, ATTN_NORM);
+		}
 	}
 }
 
@@ -1052,11 +1050,11 @@ void P_DropItem (AActor *source, const TypeInfo *type, int special, int chance)
 
 void A_Pain (AActor *actor)
 {
-	// [RH] Have some variety in player pain sounds
+	// [RH] Vary player pain sounds depending on health (ala Quake2)
 	if (actor->player && actor->player->morphTics == 0)
 	{
-		int l, r = (P_Random (pr_playerpain) & 1) + 1;
-		char nametemp[128];
+		int l;
+		char nametemp[16];
 
 		if (actor->health < 25)
 			l = 25;
@@ -1067,12 +1065,12 @@ void A_Pain (AActor *actor)
 		else
 			l = 100;
 
-		sprintf (nametemp, "*pain%d_%d", l, r);
+		sprintf (nametemp, "*pain%d", l);
 		S_Sound (actor, CHAN_VOICE, nametemp, 1, ATTN_NORM);
 	}
 	else if (actor->PainSound)
 	{
-		S_Sound (actor, CHAN_VOICE, actor->PainSound, 1, ATTN_NORM);
+		S_SoundID (actor, CHAN_VOICE, actor->PainSound, 1, ATTN_NORM);
 	}
 }
 
@@ -1273,8 +1271,8 @@ int P_Massacre ()
 				deadstate = actor->DeathState;
 				if (deadstate != NULL)
 				{
-					while (deadstate->nextstate != NULL)
-						deadstate = deadstate->nextstate;
+					while (deadstate->GetNextState() != NULL)
+						deadstate = deadstate->GetNextState();
 					actor->SetState (deadstate);
 				}
 			}

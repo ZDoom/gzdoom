@@ -1,8 +1,23 @@
+January 23, 2002
+- Fixed: Deleting the most recently saved game and then dying would crash
+  because the game would try to load that game and fail because it no longer
+  exists.
+- Added disableautosave cvar to control when autosaves happen. At 0, autosaves
+  always happen. At 1, they only happen when an autosave special is activated.
+  At 2, they never happen. Also disabled autosaving when starting a new game.
+  Autosaves now happen only when advancing to a new map.
+- Fixed: Exiting a level in Heretic crashed.
+- Fixed: FSOUND_OUTPUT_WINMM was always used if snd_output was not set to
+  dsound. Also added "directsound" as a synonym for "dsound" when used with
+  this cvar.
+
 January 22, 2002
+- Changed the in-game priority class to normal so ZDoom won't give itself
+  a high priority when running.
+- Added "Ammo use" field for dehacked weapon modifications.
 - Fixed palette translation through Dehacked again. While I was at it, I
   decided to remove translation control from the actor's flags member
   entirely and just rely on the Translation member.
-- Added "Ammo use" field for dehacked weapon modifications.
 - Fixed: Bouncing a missile off a floor/ceiling near a wall could crash if
   no missiles had already bounced off a wall.
 - Fixed: PIT_RadiusAttack() only pushed things in directions with positive
@@ -24,7 +39,7 @@ January 20, 2002
 January 19, 2002
 - Added support for DeePsea's tall patches.
 - Fixed: Sky textures wider than 1024 could not scroll properly because the
-  sky position was always clamped to 255.
+  sky position was always clamped past 255.
 
 January 17, 2002
 - Added a new player property: PROP_INSTANTWEAPONSWITCH (2). When set, the

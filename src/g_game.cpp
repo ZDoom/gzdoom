@@ -744,7 +744,7 @@ void G_Ticker ()
 		switch (gameaction)
 		{
 		case ga_loadlevel:
-			G_DoLoadLevel (-1);
+			G_DoLoadLevel (-1, false);
 			break;
 		case ga_newgame2:	// Silence GCC (see above)
 		case ga_newgame:
@@ -1164,13 +1164,14 @@ void G_DoReborn (int playernum, bool freshbot)
 
 	if (!multiplayer)
 	{
-		if (BackupSaveName[0])
+		if (BackupSaveName[0] && FileExists (BackupSaveName))
 		{ // Load game from the last point it was saved
 			strcpy (savename, BackupSaveName);
 			gameaction = ga_loadgame;
 		}
 		else
 		{ // Reload the level from scratch
+			BackupSaveName[0] = 0;
 			gameaction = ga_loadlevel;
 		}
 	}
@@ -1442,12 +1443,14 @@ void G_BuildSaveName (char *name, int slot)
 }
 
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Int, disableautosave, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 extern void P_CalcHeight (player_t *);
 
 void G_DoAutoSave ()
 {
 	// Do not autosave in multiplayer games or demos
-	if (multiplayer || demoplayback)
+	if (multiplayer || demoplayback || disableautosave >= 2)
 	{
 		gameaction = ga_nothing;
 		return;

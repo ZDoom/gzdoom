@@ -1349,10 +1349,6 @@ static int PatchWeapon (int weapNum)
 				}
 				info->ammogive = clipammo[val];
 			}
-			else if (stricmp (Line1, "Ammo use") == 0)
-			{
-				info->ammouse = val;
-			}
 			else
 			{
 				Printf (unknown_str, Line1, "Weapon", weapNum);
@@ -1370,6 +1366,10 @@ static int PatchWeapon (int weapNum)
 			{
 				Printf ("Weapon %d: Unknown decal %s\n", weapNum, Line2);
 			}
+		}
+		else if (stricmp (Line1, "Ammo use") == 0)
+		{
+			info->ammouse = val;
 		}
 		else
 		{

@@ -352,7 +352,7 @@ void D_Display (bool screenshot)
 
 	if (gamestate == GS_LEVEL && viewactive)
 	{
-		R_SetFOV (players[consoleplayer].camera->player ?
+		R_SetFOV (players[consoleplayer].camera && players[consoleplayer].camera->player ?
 			players[consoleplayer].camera->player->FOV : 90.f);
 	}
 

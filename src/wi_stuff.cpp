@@ -919,22 +919,13 @@ void WI_drawShowNextLoc ()
 			return;
 		}
 
-		int ep;
-
-		if (gameinfo.gametype == GAME_Doom)
-		{
-			ep = epsd;
-		}
-		else
-		{
-			ep = epsd - 10;
-		}
+		int ep = (gameinfo.gametype == GAME_Doom) ? epsd : epsd - 10;
 
 		// draw a splat on taken cities.
 		for (i = 0; i < NUMMAPS; i++)
 		{
 			if (FindLevelInfo (names[ep][i])->flags & LEVEL_VISITED)
-				WI_drawOnLnode (i, &splat, ep);
+				WI_drawOnLnode (i, &splat, epsd);
 		}
 
 		// draw flashing ptr

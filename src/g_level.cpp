@@ -72,6 +72,7 @@
 
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
+EXTERN_CVAR (Int, disableautosave)
 
 #define lioffset(x)		myoffsetof(level_pwad_info_t,x)
 #define cioffset(x)		myoffsetof(cluster_info_t,x)
@@ -867,7 +868,7 @@ void G_InitNew (char *mapname)
 	BorderNeedRefresh = screen->GetPageCount ();
 
 	strncpy (level.mapname, mapname, 8);
-	G_DoLoadLevel (0);
+	G_DoLoadLevel (0, false);
 }
 
 //
@@ -1074,7 +1075,7 @@ void DAutosaver::Tick ()
 //
 extern gamestate_t 	wipegamestate; 
  
-void G_DoLoadLevel (int position) 
+void G_DoLoadLevel (int position, bool autosave)
 { 
 	static int lastposition = 0;
 	gamestate_t oldgs = gamestate;
@@ -1192,7 +1193,7 @@ void G_DoLoadLevel (int position)
 	C_FlushDisplay ();
 
 	// [RH] Always save the game when entering a new level.
-	if (!savegamerestore)
+	if (autosave && !savegamerestore && disableautosave < 1)
 	{
 		DAutosaver GCCNOWARN *dummy = new DAutosaver;
 	}
@@ -1258,7 +1259,7 @@ void G_DoWorldDone (void)
 	{
 		strncpy (level.mapname, wminfo.next, 8);
 	}
-	G_DoLoadLevel (startpos);
+	G_DoLoadLevel (startpos, true);
 	startpos = 0;
 	gameaction = ga_nothing;
 	viewactive = true; 

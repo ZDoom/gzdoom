@@ -919,11 +919,11 @@ void I_InitSound ()
 	int trynum;
 
 #ifdef _WIN32
-	if (stricmp (snd_output, "dsound") == 0)
+	if (stricmp (snd_output, "dsound") == 0 || stricmp (snd_output, "directsound") == 0)
 	{
 		outindex = 0;
 	}
-	else if (stricmp (snd_output, "winmm") == 0 || stricmp (snd_output, "waveout"))
+	else if (stricmp (snd_output, "winmm") == 0 || stricmp (snd_output, "waveout") == 0)
 	{
 		outindex = 1;
 	}

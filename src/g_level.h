@@ -242,7 +242,7 @@ void G_ExitLevel (int position);
 void G_SecretExitLevel (int position);
 void G_SetForEndGame (char *nextmap);
 
-void G_DoLoadLevel (int position);
+void G_DoLoadLevel (int position, bool autosave);
 
 void G_InitLevelLocals (void);
 

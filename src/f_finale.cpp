@@ -905,7 +905,7 @@ void F_DemonScroll ()
 
 void F_DrawUnderwater(void)
 {
-	extern bool menuactive;
+	extern EMenuState menuactive;
 
 	switch (FinaleStage)
 	{
@@ -933,7 +933,7 @@ void F_DrawUnderwater(void)
 		// intentional fall-through
 	case 2:
 		paused = false;
-		menuactive = false;
+		menuactive = MENU_Off;
 		break;
 
 	case 4:

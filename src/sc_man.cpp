@@ -68,6 +68,7 @@ static bool AlreadyGot = false;
 static bool FreeScript = false;
 static char *SavedScriptPtr;
 static int SavedScriptLine;
+static bool CMode;
 
 // CODE --------------------------------------------------------------------
 
@@ -156,6 +157,7 @@ static void SC_PrepareScript (void)
 	sc_String = StringBuffer;
 	AlreadyGot = false;
 	SavedScriptPtr = NULL;
+	CMode = false;
 }
 
 //==========================================================================
@@ -223,6 +225,20 @@ void SC_RestorePos (void)
 
 //==========================================================================
 //
+// SC_SetCMode
+//
+// Enables/disables C mode. In C mode, more characters are considered to
+// be whole words than in non-C mode.
+//
+//==========================================================================
+
+void SC_SetCMode (bool cmode)
+{
+	CMode = cmode;
+}
+
+//==========================================================================
+//
 // SC_GetString
 //
 //==========================================================================
@@ -247,7 +263,7 @@ BOOL SC_GetString (void)
 	}
 	while (foundToken == false)
 	{
-		while (*ScriptPtr <= 32)
+		while (*ScriptPtr <= ' ')
 		{
 			if (ScriptPtr >= ScriptEndPtr)
 			{
@@ -265,7 +281,7 @@ BOOL SC_GetString (void)
 			sc_End = true;
 			return false;
 		}
-		if (*ScriptPtr != ASCII_COMMENT &&
+		if ((CMode || *ScriptPtr != ASCII_COMMENT) &&
 			!(ScriptPtr[0] == CPP_COMMENT && ScriptPtr < ScriptEndPtr - 1 &&
 			  (ScriptPtr[1] == CPP_COMMENT || ScriptPtr[1] == C_COMMENT)))
 		{ // Found a token
@@ -323,14 +339,24 @@ BOOL SC_GetString (void)
 	}
 	else
 	{ // Normal string
-		if (strchr ("{}|=", *ScriptPtr))
+		static const char *stopchars;
+
+		if (CMode)
+		{
+			stopchars = "`~!@#$%^&*(){}[]/=\?+|;:<>,";
+		}
+		else
+		{
+			stopchars = "{}|=";
+		}
+		if (strchr (stopchars, *ScriptPtr))
 		{
 			*text++ = *ScriptPtr++;
 		}
 		else
 		{
-			while ((*ScriptPtr > 32) && (strchr ("{}|=", *ScriptPtr) == NULL)
-				&& (*ScriptPtr != ASCII_COMMENT)
+			while ((*ScriptPtr > 32) && (strchr (stopchars, *ScriptPtr) == NULL)
+				&& (CMode || *ScriptPtr != ASCII_COMMENT)
 				&& !(ScriptPtr[0] == CPP_COMMENT && (ScriptPtr < ScriptEndPtr - 1) &&
 					 (ScriptPtr[1] == CPP_COMMENT || ScriptPtr[1] == C_COMMENT)))
 			{

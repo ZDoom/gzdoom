@@ -394,6 +394,36 @@ inline fixed_t prevline1 (fixed_t vince, byte *colormap, int count, fixed_t vplc
 	return doprevline1 ();
 }
 
+/*
+esp+00 = edi
+esp+04 = ebx
+esp+08 = esi
+esp+0c = ebp
+esp+13 = bad
+esp+14 = light
+esp+18 = &uwal[x]
+esp+1c = &lwal[x]
+esp+20 =
+esp+24 = &dwal[x]
+esp+28 = 
+esp+2c = xoffset
+esp+30 = yrepeat
+esp+34 = texturemid
+esp+40 = y1ve[]
+esp+50 = y2ve[]
+esp+54 =
+esp+58 =
+esp+5c =
+esp+60 = <return address>
+esp+64 = uwal
+esp+68 = dwal
+esp+6c = swal
+esp+70 = lwal
+esp+74 = getcol
+esi = x
+ebp = x2
+*/
+
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
 			   const BYTE *(*getcol)(FTexture *tex, int x))
 {
@@ -403,8 +433,8 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	fixed_t light = rw_light - rw_lightstep;
 	SDWORD yrepeat, texturemid, xoffset;
 
-	// This function also gets used to draw skies. Unlike BUILD, skies are not
-	// drawn a wall at a time, so these checks are invalid.
+	// This function also gets used to draw skies. Unlike BUILD, skies are
+	// drawn by visplane instead of by bunch, so these checks are invalid.
 	//if ((uwal[x1] > viewheight) && (uwal[x2] > viewheight)) return;
 	//if ((dwal[x1] < 0) && (dwal[x2] < 0)) return;
 
@@ -628,7 +658,8 @@ void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, 
 // Can draw or mark the starting pixel of floor and ceiling textures.
 // CALLED: CORE LOOPING ROUTINE.
 //
-// [RH] Rewrote this to use Build's wallscan.
+// [RH] Rewrote this to use Build's wallscan, so it's quite far
+// removed from the original Doom routine.
 //
 
 void R_RenderSegLoop ()
@@ -666,9 +697,8 @@ void R_RenderSegLoop ()
 			short bottom = MIN (walltop[x], floorclip[x]);
 			if (top < bottom)
 			{
-				visplane_t *plane = ceilingplane;
-				plane->top[x] = top;
-				plane->bottom[x] = bottom;
+				ceilingplane->top[x] = top;
+				ceilingplane->bottom[x] = bottom;
 			}
 		}
 	}
@@ -682,9 +712,8 @@ void R_RenderSegLoop ()
 			short bottom = floorclip[x];
 			if (top < bottom)
 			{
-				visplane_t *plane = floorplane;
-				plane->top[x] = top;
-				plane->bottom[x] = bottom;
+				floorplane->top[x] = top;
+				floorplane->bottom[x] = bottom;
 			}
 		}
 	}
@@ -1027,7 +1056,7 @@ void R_NewWall ()
 int side_s::GetLightLevel (bool foggy, int baselight) const
 {
 	// [RH] Get wall light level
-	if (sidedef->Flags & WALLF_ABSLIGHTING)
+	if (this->Flags & WALLF_ABSLIGHTING)
 	{
 		return (BYTE)this->Light;
 	}

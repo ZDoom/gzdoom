@@ -759,13 +759,11 @@ AActor *LookForTIDinBlock (AActor *lookee, int index)
 //
 //============================================================================
 
-CVAR (Int, search, 0, 0)
-
 BOOL P_LookForTID (AActor *actor, BOOL allaround)
 {
 	AActor *other;
 
-	other = P_BlockmapSearch (actor, search, LookForTIDinBlock);
+	other = P_BlockmapSearch (actor, 0, LookForTIDinBlock);
 
 	if (other != NULL)
 	{

@@ -745,6 +745,8 @@ void FWadCollection::ScanForFlatHack (int startlump)
 
 void FWadCollection::RenameSprites (int startlump)
 {
+	bool renameAll;
+
 	static const DWORD HereticRenames[] =
 	{ MAKE_ID('H','E','A','D'), MAKE_ID('L','I','C','H'),		// Ironlich
 	};
@@ -760,7 +762,7 @@ void FWadCollection::RenameSprites (int startlump)
 	  MAKE_ID('T','R','E','2'), MAKE_ID('T','R','E','S'),		// ZTreeSwamp150
 	  MAKE_ID('C','A','N','D'), MAKE_ID('B','C','A','N'),		// ZBlueCandle
 	  MAKE_ID('R','O','C','K'), MAKE_ID('R','O','K','K'),		// rocks and dirt in a_debris.cpp
-	  MAKE_ID('W','A','T','R'), MAKE_ID('U','W','A','T'),		// this is unused but conflicts with Strife
+	  MAKE_ID('W','A','T','R'), MAKE_ID('H','W','A','T'),		// Strife also has WATR
 	  MAKE_ID('G','I','B','S'), MAKE_ID('P','O','L','5'),		// RealGibs
 	};
 
@@ -809,14 +811,16 @@ void FWadCollection::RenameSprites (int startlump)
 		break;
 	}
 
+	renameAll = !!Args.CheckParm ("-oldsprites");
+
 	for (int i = startlump + 1;
 		i < NumLumps && 
 		 *(DWORD *)LumpInfo[i].name != MAKE_ID('S','_','E','N') &&
 		 *(((DWORD *)LumpInfo[i].name) + 1) != MAKE_ID('D',0,0,0);
 		++i)
 	{
-		// Only sprites in the IWAD get renamed
-		if (LumpInfo[i].wadnum == IWAD_FILENUM)
+		// Only sprites in the IWAD normally get renamed
+		if (renameAll || LumpInfo[i].wadnum == IWAD_FILENUM)
 		{
 			for (int j = 0; j < numrenames; ++j)
 			{

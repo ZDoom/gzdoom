@@ -84,7 +84,6 @@ static FRandom pr_torchflicker ("TorchFlicker");
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
-CVAR (Bool, r_experimental, false, 0)
 
 fixed_t			r_BaseVisibility;
 fixed_t			r_WallVisibility;
@@ -299,33 +298,15 @@ void R_InitPointToAngle (void)
 
 //==========================================================================
 //
-// R_PointToDist
+// R_PointToDist2
 //
-// Returns the distance from the viewpoint to some other point. In a
+// Returns the distance from (0,0) to some other point. In a
 // floating point environment, we'd probably be better off using the
 // Pythagorean Theorem to determine the result.
 //
 // killough 5/2/98: simplified
 // [RH] Simplified further [sin (t + 90 deg) == cos (t)]
-//
-//==========================================================================
-
-fixed_t R_PointToDist (fixed_t x, fixed_t y)
-{
-	fixed_t dx = abs(x - viewx);
-	fixed_t dy = abs(y - viewy);
-
-	if (dy > dx)
-	{
-		swap (dx, dy);
-	}
-
-	return FixedDiv (dx, finecosine[tantoangle[FixedDiv (dy, dx) >> DBITS] >> ANGLETOFINESHIFT]);
-}
-
-//==========================================================================
-//
-// R_PointToDist2
+// Not used. Should it go away?
 //
 //==========================================================================
 
@@ -333,6 +314,11 @@ fixed_t R_PointToDist2 (fixed_t dx, fixed_t dy)
 {
 	dx = abs (dx);
 	dy = abs (dy);
+
+	if ((dx | dy) == 0)
+	{
+		return 0;
+	}
 
 	if (dy > dx)
 	{
@@ -1363,27 +1349,13 @@ void R_RenderPlayerView (player_t *player)
 		WORD savedflags = camera->renderflags;
 		camera->renderflags |= RF_INVISIBLE;
 //memset (screen->GetBuffer(), 255, screen->GetWidth()*screen->GetHeight());
-		if (!r_experimental)
-		{
-			R_RenderBSPNode (nodes + numnodes - 1);
-		}
-		else
-		{
-			R_RenderSubsectors ();
-		}
+		R_RenderBSPNode (nodes + numnodes - 1);
 		camera->renderflags = savedflags;
 	}
 	else
 	{	// The head node is the last node output.
 		// [[RH] Not that this tells me anything...]
-		if (!r_experimental)
-		{
-			R_RenderBSPNode (nodes + numnodes - 1);
-		}
-		else
-		{
-			R_RenderSubsectors ();
-		}
+		R_RenderBSPNode (nodes + numnodes - 1);
 	}
 	unclock (WallCycles);
 
@@ -1587,11 +1559,9 @@ void stopinterpolation(EInterpType type, void *posptr)
 	}
 }
 
-CVAR (Bool, interp, true, 0);
-
 void dointerpolations(fixed_t smoothratio)       //Stick at beginning of drawscreen
 {
-	if (smoothratio == FRACUNIT || !interp)
+	if (smoothratio == FRACUNIT)
 	{
 		didInterp = false;
 		return;

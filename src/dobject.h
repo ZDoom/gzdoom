@@ -233,7 +233,7 @@ public:
 
 	inline bool IsKindOf (const TypeInfo *base) const
 	{
-		return base->IsAncestorOf (StaticType ());
+		return base->IsAncestorOf (GetClass ());
 	}
 
 	inline bool IsA (const TypeInfo *type) const

@@ -112,8 +112,15 @@ EXTERN_CVAR (Float, snd_musicvolume)	// maximum volume for music
 // Status flags for refresh.
 //
 
+enum EMenuState
+{
+	MENU_Off,			// Menu is closed
+	MENU_On,			// Menu is opened
+	MENU_WaitKey		// Menu is opened and waiting for a key in the controls menu
+};
+
 extern	bool			automapactive;	// In AutoMap mode?
-extern	bool			menuactive; 	// Menu overlayed?
+extern	EMenuState		menuactive; 	// Menu overlayed?
 extern	int				paused; 		// Game Pause?
 
 

@@ -33,7 +33,7 @@ DIV.c
 	border-left: 1px solid;
 	padding-top: 0.2em;
 	border-bottom: 1px solid;
-	background-color: palegreen;
+	background-color: rgb(152,251,152);
 	margin-bottom: 0px;
 }
 DIV.b
@@ -46,12 +46,12 @@ DIV.b
 	border-left: 1px solid;
 	padding-top: 0.5em;
 	border-bottom: 2px solid;
-	background-color: honeydew;
+	background-color: rgb(240,255,240);
 	margin-top: 0px;
 }
 
 /* Variable Descriptions */
-DIV.v
+DIV.v, DIV.vf
 {
 	border-right: 2px solid;
 	padding-right: 0.4em;
@@ -63,9 +63,13 @@ DIV.v
 	border-left: 1px solid;
 	padding-top: 0.2em;
 	border-bottom: 1px solid;
-	background-color: paleturquoise;
+	background-color: rgb(175,238,238);
 }
-DIV.t
+DIV.vf
+{
+	background-color: rgb(175,200,238);
+}
+DIV.t, DIV.tf
 {
 	border-right: 2px solid;
 	padding-right: 1.2em;
@@ -75,9 +79,13 @@ DIV.t
 	border-left: 1px solid;
 	padding-top: 0.2em;
 	border-bottom: 1px solid;
-	background-color: lightcyan;
+	background-color: rgb(224,255,255);
 }
-DIV.d
+DIV.tf
+{
+	background-color: rgb(224,238,255);
+}
+DIV.d, DIV.df
 {
 	border-right: 2px solid;
 	padding-right: 1.2em;
@@ -87,7 +95,11 @@ DIV.d
 	border-left: 1px solid;
 	padding-top: 0.5em;
 	border-bottom: 2px solid;
-	background-color: azure;
+	background-color: rgb(240,255,255);
+}
+DIV.df
+{
+	background-color: rgb(240,248,255);
 }
 P
 {
@@ -97,6 +109,11 @@ P
 A
 {
 	color: Blue;
+	text-decoration: none;
+}
+A:hover
+{
+	text-decoration: underline;
 }
 H1, H2
 {
@@ -104,6 +121,12 @@ H1, H2
 	left: -0.8em;
 	font-family: Verdana, Arial, Helvetica, Sans-Serif;
 	position: relative;
+}
+H3, H4
+{
+	font-weight: bold;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	left: 0em;
 }
 BODY
 {
@@ -124,19 +147,13 @@ DIV.index
 	float: left;
 	padding-bottom: 1em;
 	overflow: auto;
-	clip: rect(auto auto auto auto);
+	clip: rect(auto,auto,auto,auto);
 	padding-top: 0.5em;
 	position: absolute;
 	top: 0px;
 	background-color: #ffffcc;
 	border-right: solid 1px #808080;
 	border-bottom: solid 1px #808080;
-}
-H3
-{
-	font-weight: bold;
-	font-family: Verdana, Arial, Helvetica, Sans-Serif;
-	left: 0em;
 }
 DIV.main
 {

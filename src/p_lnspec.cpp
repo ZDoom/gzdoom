@@ -892,10 +892,6 @@ FUNC(LS_DamageThing)
 		}
 		else if (arg0 > 0)
 		{
-			if (arg0 == 0)
-			{
-				arg0 = 1000000;
-			}
 			P_DamageMobj (it, NULL, NULL, arg0, MOD_UNKNOWN);
 		}
 		else

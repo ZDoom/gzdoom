@@ -354,7 +354,7 @@ char *DoomSpecificInfo (char *text, char *maxtext)
 		text += wsprintf (text, " %s", arg);
 	}
 
-	arg = Wads.GetWadName (1);
+	arg = Wads.GetWadName (FWadCollection::IWAD_FILENUM);
 	if (arg != NULL)
 	{
 		if (text + strlen(arg) + 10 >= maxtext)

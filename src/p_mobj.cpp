@@ -1502,9 +1502,10 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
 	{
 		return;
 	}
-	if (mo->Sector->heightsec != NULL && mo->Sector->SecActTarget != NULL)
+	sector_t *sec = mo->Sector;
+	if (sec->heightsec != NULL && sec->SecActTarget != NULL)
 	{
-		sector_t *hs = mo->Sector->heightsec;
+		sector_t *hs = sec->heightsec;
 		fixed_t waterz = hs->floorplane.ZatPoint (mo->x, mo->y);
 		fixed_t newz;
 		fixed_t viewheight;
@@ -1520,7 +1521,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
 
 		if (oldz > waterz && mo->z <= waterz)
 		{ // Feet hit fake floor
-			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFakeFloor);
+			sec->SecActTarget->TriggerAction (mo, SECSPAC_HitFakeFloor);
 		}
 
 		newz = mo->z + viewheight;
@@ -1528,11 +1529,11 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
 
 		if (oldz <= waterz && newz > waterz)
 		{ // View went above fake floor
-			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_EyesSurface);
+			sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesSurface);
 		}
 		else if (oldz > waterz && newz <= waterz)
 		{ // View went below fake floor
-			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_EyesDive);
+			sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesDive);
 		}
 
 		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
@@ -1540,11 +1541,11 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
 			waterz = hs->ceilingplane.ZatPoint (mo->x, mo->y);
 			if (oldz <= waterz && newz > waterz)
 			{ // View went above fake ceiling
-				mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_EyesAboveC);
+				sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesAboveC);
 			}
 			else if (oldz > waterz && newz <= waterz)
 			{ // View went below fake ceiling
-				mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_EyesBelowC);
+				sec->SecActTarget->TriggerAction (mo, SECSPAC_EyesBelowC);
 			}
 		}
 	}
@@ -2474,7 +2475,7 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 		if (space > 48*FRACUNIT)
 		{
 			space -= 40*FRACUNIT;
-			actor->z = ((space * rng())>>8) + actor->floorz + 40*FRACUNIT;
+			actor->z = MulScale8 (space, rng()) + actor->floorz + 40*FRACUNIT;
 		}
 		else
 		{

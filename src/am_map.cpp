@@ -1766,14 +1766,16 @@ void AM_drawWalls ()
 				if ((lines[i].special == Teleport ||
 					lines[i].special == Teleport_NoFog ||
 					lines[i].special == Teleport_Line) &&
-					GET_SPAC(lines[i].flags) != SPAC_MCROSS)
+					GET_SPAC(lines[i].flags) != SPAC_MCROSS &&
+					am_usecustomcolors)
 				{ // intra-level teleporters
 					AM_drawMline(&l, IntraTeleportColor);
 				}
-				else if (lines[i].special == Teleport_NewMap ||
+				else if ((lines[i].special == Teleport_NewMap ||
 						 lines[i].special == Teleport_EndGame ||
 						 lines[i].special == Exit_Normal ||
-						 lines[i].special == Exit_Secret)
+						 lines[i].special == Exit_Secret) &&
+						 am_usecustomcolors)
 				{ // inter-level/game-ending teleporters
 					AM_drawMline(&l, InterTeleportColor);
 				}

@@ -1332,3 +1332,23 @@ class AZCauldronUnlit : public AZCauldron
 IMPLEMENT_STATELESS_ACTOR (AZCauldronUnlit, Hexen, 8070, 0)
 	PROP_SpawnState (S_ZCAULDRON_U)
 END_DEFAULTS
+
+// Water Drip ---------------------------------------------------------------
+
+class AHWaterDrip : public AActor
+{
+	DECLARE_ACTOR (AHWaterDrip, AActor)
+};
+
+FState AHWaterDrip::States[] =
+{
+	S_NORMAL (HWAT, 'A', -1, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (AHWaterDrip, Hexen, -1, 95)
+	PROP_Flags (MF_MISSILE)
+	PROP_Flags2 (MF2_LOGRAV|MF2_NOTELEPORT)
+	PROP_Mass (1)
+	PROP_SpawnState (0)
+	PROP_DeathSound ("Drip")
+END_DEFAULTS

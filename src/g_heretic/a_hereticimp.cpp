@@ -221,7 +221,7 @@ IMPLEMENT_ACTOR (AHereticImpBall, Heretic, -1, 10)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (10)
 	PROP_Damage (1)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
+	PROP_Flags (MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_NOTELEPORT)
 	PROP_RenderStyle (STYLE_Add)
 
@@ -248,6 +248,8 @@ bool AHereticImp::SuggestMissileAttack (fixed_t dist)
 void A_ImpExplode (AActor *self)
 {
 	AActor *chunk;
+
+	self->flags &= ~MF_NOGRAVITY;
 
 	chunk = Spawn<AHereticImpChunk1> (self->x, self->y, self->z);
 	chunk->momx = pr_imp.Random2 () << 10;

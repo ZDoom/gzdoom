@@ -1,4 +1,56 @@
+February 6, 2004
+- Fixed: DObject::IsKindOf used StaticClass instead of GetClass.
+- Added Graf Zahl's thingdef.cpp implementation and modified it to work with
+  a more C-like mode in sc_man.
+- Fixed: P_CheckFakeFloorTriggers could crash if the action caused the player
+  to teleport to a new sector without any sector actions.
+- Fixed the Hexen armor depletion so that it doesn't overflow on very large
+  damage amounts.
+- Fixed: An extremely dead imp that crashes before executing A_ImpXDeath2 would
+  get stuck floating in the air.
+- Changed menuactive into an enum and merged WaitingForKey into it. Now closing
+  the menu automatically disables the menu's key waiting mode. Also fixed,
+  C_ToggleConsole so that the console can never be dropped down while the menu
+  is open. Before, it was possible to do this by pressing Esc and ` during the
+  same tic.
+
+February 5, 2004
+- Altered the BOOM pusher/puller/current effects to apply to anything with
+  MF2_WINDTHRUST and removed the restriction that it doesn't apply to things
+  with MF_NOGRAVITY. To make it work, I also had to remove MF_NOBLOCKMAP from
+  all the wind-thrustable Heretic/Hexen projectiles.
+- Fixed: Using the spray command with a non-existant decal crashed.
+
+February 3, 2004
+- Removed r_experimental.
+
+January 29, 2004
+- Added the -oldsprites command line argument to rename sprites in all
+  wads instead of just sprites in the IWAD.
+- Changed Heretic's knight sounds to be prefaced by hknight/ instead of
+  knight/.
+- Changed the Strife weapon names for the ACS inventory commands to match
+  their actor names.
+- Added Hexen's water drip (spawnnum 95). Changed the Hexen WATR->UWAT
+  renaming to WATR->HWAT.
+- Added a note to the map command that suggests you use changemap instead
+  while playing a network game.
+- Fixed: Chat mode could not be used outside of an actual level.
+- Fixed: The automap still tried to draw teleporters with custom colors even
+  when am_usecustomcolors was false.
+- Fixed the Hexen armor saves so that it doesn't overflow on very large damage
+  amounts.
+- Put back the AKey::TryPickup restriction on picking up more than one key of
+  the same type, but now it's restricted to multiplayer games only. Single
+  player will still be able to pick up more than one.
+
+January 26, 2004
+- Fixed: FLOATRANDZ overflowed when the space between ceiling and floor was
+  more than 297 units.
+
 January 22, 2004
+- Fixed: side_s::GetLightLevel() got the light of "sidedef" instead of "this".
+- 2.0.61
 - Optimized R_PrecacheLevel() so that it does not unload graphics that are
   definitely used on the level.
 - Optimized the primary loop in P_GroupLines() so that it is much faster on

@@ -3086,10 +3086,10 @@ CCMD (printspans)
 		Printf ("\n");
 	}
 }
-#endif
 
 CCMD (picnum)
 {
 	int picnum = TexMan.GetTexture (argv[1], FTexture::TEX_Any);
 	Printf ("%d: %s - %s\n", picnum, TexMan[picnum]->Name, TexMan(picnum)->Name);
 }
+#endif

@@ -127,7 +127,6 @@ static WORD		*linemap;
 // [RH] Set true if the map contains a BEHAVIOR lump
 BOOL			HasBehavior;
 
-EXTERN_CVAR(Bool, r_experimental)
 bool			UsingGLNodes;
 
 // BLOCKMAP
@@ -3066,8 +3065,8 @@ void P_SetupLevel (char *lumpname, int position)
 			sides, numsides,
 			lines, numlines
 		};
-		FNodeBuilder builder (leveldata, polyspots, anchors, r_experimental||genglnodes);
-		UsingGLNodes = r_experimental;
+		FNodeBuilder builder (leveldata, polyspots, anchors, genglnodes);
+		UsingGLNodes = genglnodes;
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, numsegs,
@@ -3214,6 +3213,7 @@ void P_Init ()
 	R_InitSprites ();
 }
 
+#if 0
 #include "c_dispatch.h"
 CCMD (lineloc)
 {
@@ -3231,3 +3231,4 @@ CCMD (lineloc)
 		lines[linenum].v2->x >> FRACBITS,
 		lines[linenum].v2->y >> FRACBITS);
 }
+#endif

@@ -105,18 +105,6 @@ WORD MirrorFlags;
 seg_t *ActiveWallMirror;
 TArray<size_t> WallMirrors;
 
-struct SubsectorList
-{
-	SubsectorList *Next;
-	subsector_t *Subsector;
-};
-SubsectorList *SubsectorQueue;
-SubsectorList *SubsectorListStore;
-
-static void AddSubsectorToQueue (subsector_t *);
-static void FlushSubsectorQueue ();
-static void RemoveSubsectorFromQueueStart ();
-
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 
 
@@ -559,7 +547,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 // and adds any visible pieces to the line list.
 //
 
-void R_AddLine (seg_t *line, bool add)
+void R_AddLine (seg_t *line)
 {
 	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 	bool			solid;
@@ -635,23 +623,6 @@ void R_AddLine (seg_t *line, bool add)
 
 	if (WallSX1 > WindowRight || WallSX2 < WindowLeft)
 		return;
-
-	if (add && line->PartnerSeg != NULL)
-	{
-		subsector_t *backsubsector = line->PartnerSeg->Subsector;
-
-		if (backsubsector->validcount != validcount)
-		{
-			for (int x = WallSX1; x < WallSX2; ++x)
-			{
-				if (floorclip[x] > ceilingclip[x])
-				{
-					AddSubsectorToQueue (backsubsector);
-					break;
-				}
-			}
-		}
-	}
 
 	if (line->linedef == NULL)
 	{
@@ -1047,7 +1018,7 @@ void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
 // Add sprites of things in sector.
 // Draw one or more line segments.
 //
-void R_Subsector (subsector_t *sub, bool add)
+void R_Subsector (subsector_t *sub)
 {
 	int 		 count;
 	seg_t*		 line;
@@ -1138,7 +1109,7 @@ void R_Subsector (subsector_t *sub, bool add)
 		seg_t **polySeg = sub->poly->segs;
 		while (polyCount--)
 		{
-			R_AddLine (*polySeg++, false);
+			R_AddLine (*polySeg++);
 		}
 	}
 
@@ -1146,7 +1117,7 @@ void R_Subsector (subsector_t *sub, bool add)
 	{
 		if (!line->bPolySeg)
 		{
-			R_AddLine (line, add);
+			R_AddLine (line);
 		}
 		line++;
 	}
@@ -1162,7 +1133,7 @@ void R_RenderBSPNode (void *node)
 {
 	if (numnodes == 0)
 	{
-		R_Subsector (subsectors, false);
+		R_Subsector (subsectors);
 		return;
 	}
 	while (!((size_t)node & 1))  // Keep going until found a subsector
@@ -1182,149 +1153,5 @@ void R_RenderBSPNode (void *node)
 
 		node = bsp->children[side];
 	}
-	R_Subsector ((subsector_t *)((BYTE *)node - 1), false);
-}
-
-bool R_SubsectorInFront (subsector_t *front, subsector_t *back)
-{
-	// Returns true if the first subsector is in front of the second one.
-	//
-	// In its current incarnation, it walks the BSP until it finds a node
-	// where each subsector is on different sides. Whichever subsector is
-	// on the same side as the viewer is the one that is in front.
-	//
-	// This is undesirable for a real implementation because it depends
-	// on the BSP tree. If we wanted to do that, R_RenderBSPNode works just
-	// fine and has a much better worst-case performance. What this function
-	// should do is project all the walls of each subsector into screen space
-	// and then compare as many lines of each subsector as necessary to
-	// decide which one is in front. Obviously, the subsectors should only
-	// be projected once. Some reorganization of R_Subsector, R_AddLine, and
-	// R_StoreWallRange could accommodate this, but that's more trouble than
-	// I want to go through for a prototype at this stage.
-	//
-	// The purpose of this routine at this stage is just to prove that I can
-	// walk between subsectors to render a scene without an explicit dependence
-	// on the BSP tree. Because the BSP's use is restricted to this function,
-	// this function can be changed without changing R_RenderSubsectors().
-
-	fixed_t fx, fy, bx, by;
-	node_t *node;
-	int fside, bside;
-
-	node = nodes + numnodes - 1;
-	fx = front->CenterX ;
-	fy = front->CenterY;
-	bx = back->CenterX;
-	by = back->CenterY;
-
-	do
-	{
-		fside = R_PointOnSide (fx, fy, node);
-		bside = R_PointOnSide (bx, by, node);
-		node = (node_t *)node->children[fside];
-	} while (fside == bside && !((size_t)node &1));
-
-	if (fside == bside)
-	{
-		// This really is not good enough. It is an attempt to catch "fix-up" nodes
-		// that were added to split off segs from convex regions that did not share
-		// the same sector as the rest of the region. The result is going to vary
-		// with the view angle because points don't carry around enough information
-		// to use them to determine which subsector is in front.
-		fixed_t tfy = DMulScale20 (fx - viewx, viewtancos, fy - viewy, viewtansin);
-		fixed_t fby = DMulScale20 (bx - viewx, viewtancos, by - viewy, viewtansin);
-		return tfy < fby;
-	}
-	else
-	{
-		return fside == R_PointOnSide (viewx, viewy, node);
-	}
-}
-
-extern bool UsingGLNodes;
-#include "v_video.h"
-
-void R_RenderSubsectors ()
-{
-	if (!UsingGLNodes)
-	{
-		screen->Clear (viewwindowx, viewwindowy,
-			viewwindowx+realviewwidth, viewwindowy+realviewheight, 123);
-	}
-
-	FlushSubsectorQueue ();
-	AddSubsectorToQueue (R_PointInSubsector (viewx, viewy));
-
-	while (SubsectorQueue != NULL)
-	{
-		subsector_t *subsector = SubsectorQueue->Subsector;
-		RemoveSubsectorFromQueueStart ();
-		R_Subsector (subsector, true);
-		//Printf ("%d ", subsector - subsectors);
-	}
-	//Printf ("\n");
-}
-
-static void AddSubsectorToQueue (subsector_t *ssec)
-{
-	SubsectorList *node, *probe, **prev;
-
-	if (SubsectorListStore != NULL)
-	{
-		node = SubsectorListStore;
-		SubsectorListStore = node->Next;
-	}
-	else
-	{
-		node = new SubsectorList;
-	}
-
-	node->Subsector = ssec;
-	ssec->validcount = validcount;
-
-	if (SubsectorQueue == NULL)
-	{
-		node->Next = NULL;
-		SubsectorQueue = node;
-	}
-	else
-	{
-		prev = &SubsectorQueue;
-		probe = *prev;
-
-		// Add the new subsector into the queue in front of the
-		// first subsector found to be behind it.
-		while (probe != NULL)
-		{
-			if (R_SubsectorInFront (ssec, probe->Subsector))
-			{
-				break;
-			}
-			prev = &probe->Next;
-			probe = probe->Next;
-		}
-		node->Next = *prev;
-		*prev = node;
-	}
-}
-
-static void FlushSubsectorQueue ()
-{
-	SubsectorList *probe = SubsectorQueue;
-	while (probe != NULL)
-	{
-		SubsectorList *next = probe;
-		probe->Next = SubsectorListStore;
-		SubsectorListStore = probe;
-		probe = next;
-	}
-}
-
-static void RemoveSubsectorFromQueueStart ()
-{
-	SubsectorList *next = SubsectorQueue->Next;
-	SubsectorQueue->Next = SubsectorListStore;
-	SubsectorListStore = SubsectorQueue;
-	SubsectorQueue = next;
+	R_Subsector ((subsector_t *)((BYTE *)node - 1));
 }

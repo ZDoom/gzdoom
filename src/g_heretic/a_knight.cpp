@@ -77,11 +77,11 @@ IMPLEMENT_ACTOR (AKnight, Heretic, 64, 6)
 	PROP_MissileState (S_KNIGHT_ATK)
 	PROP_DeathState (S_KNIGHT_DIE)
 
-	PROP_SeeSound ("knight/sight")
-	PROP_AttackSound ("knight/attack")
-	PROP_PainSound ("knight/pain")
-	PROP_DeathSound ("knight/death")
-	PROP_ActiveSound ("knight/active")
+	PROP_SeeSound ("hknight/sight")
+	PROP_AttackSound ("hknight/attack")
+	PROP_PainSound ("hknight/pain")
+	PROP_DeathSound ("hknight/death")
+	PROP_ActiveSound ("hknight/active")
 END_DEFAULTS
 
 void AKnight::NoBlockingSet ()
@@ -138,13 +138,13 @@ IMPLEMENT_ACTOR (AKnightAxe, Heretic, -1, 127)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (9)
 	PROP_Damage (2)
-	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
+	PROP_Flags (MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_NOTELEPORT|MF2_THRUGHOST)
 
 	PROP_SpawnState (S_SPINAXE)
 	PROP_DeathState (S_SPINAXEX)
 
-	PROP_DeathSound ("knight/hit")
+	PROP_DeathSound ("hknight/hit")
 END_DEFAULTS
 
 AT_SPEED_SET (KnightAxe, speed)
@@ -173,6 +173,7 @@ FState ARedAxe::States[] =
 
 IMPLEMENT_ACTOR (ARedAxe, Heretic, -1, 128)
 	PROP_Damage (7)
+	PROP_FlagsSet (MF_NOBLOCKMAP)
 	PROP_Flags2Clear (MF2_WINDTHRUST)
 
 	PROP_SpawnState (S_REDAXE)
@@ -220,7 +221,7 @@ void A_KnightAttack (AActor *actor)
 		int damage = pr_knightatk.HitDice (3);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
-		S_Sound (actor, CHAN_BODY, "knight/melee", 1, ATTN_NORM);
+		S_Sound (actor, CHAN_BODY, "hknight/melee", 1, ATTN_NORM);
 		return;
 	}
 	// Throw axe
@@ -242,5 +243,5 @@ void A_KnightAttack (AActor *actor)
 
 void A_AxeSound (AActor *actor)
 {
-	S_Sound (actor, CHAN_BODY, "knight/axewhoosh", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_BODY, "hknight/axewhoosh", 1, ATTN_NORM);
 }

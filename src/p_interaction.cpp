@@ -891,20 +891,29 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				{
 					if (player->armorpoints[i])
 					{
-						player->armorpoints[i] -= 
-							Scale (damage, player->mo->GetArmorIncrement (i), 300);
-						if (player->armorpoints[i] < 2*FRACUNIT)
+						// 300 damage always wipes out the armor unless some was added
+						// with the dragon skin bracers.
+						if (damage < 10000)
+						{
+							player->armorpoints[i] -= 
+								Scale (damage, player->mo->GetArmorIncrement (i), 300);
+							if (player->armorpoints[i] < 2*FRACUNIT)
+							{
+								player->armorpoints[i] = 0;
+							}
+						}
+						else
 						{
 							player->armorpoints[i] = 0;
 						}
 					}
 				}
-				saved = Scale (damage, savedPercent, 100);
-				if (saved > savedPercent*2)
+				saved = Scale (damage, savedPercent, 100*FRACUNIT);
+				if (saved > savedPercent >> (FRACBITS-1))
 				{	
-					saved = savedPercent*2;
+					saved = savedPercent >> (FRACBITS-1);
 				}
-				damage -= saved>>FRACBITS;
+				damage -= saved;
 			}
 		}
 		if (damage >= player->health

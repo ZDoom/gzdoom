@@ -2083,8 +2083,7 @@ DPusher *tmpusher; // pusher structure for blockmap searches
 
 BOOL PIT_PushThing (AActor *thing)
 {
-	if (thing->player &&
-		!(thing->flags & (MF_NOGRAVITY | MF_NOCLIP)))
+	if ((thing->flags2 & MF2_WINDTHRUST) && !(thing->flags & MF_NOCLIP))
 	{
 		int sx = tmpusher->m_X;
 		int sy = tmpusher->m_Y;
@@ -2154,6 +2153,7 @@ void DPusher::Tick ()
 	// Apply the effect to clipped players only for now.
 	//
 	// In Phase II, you can apply these effects to Things other than players.
+	// [RH] No Phase II, but it works with anything having MF2_WINDTHRUST now.
 
 	if (m_Type == p_push)
 	{
@@ -2185,7 +2185,7 @@ void DPusher::Tick ()
 	for ( ; node ; node = node->m_snext)
 	{
 		thing = node->m_thing;
-		if (!thing->player || (thing->flags & (MF_NOGRAVITY | MF_NOCLIP)))
+		if (!(thing->flags2 & MF2_WINDTHRUST) || (thing->flags & MF_NOCLIP))
 			continue;
 		if (m_Type == p_wind)
 		{

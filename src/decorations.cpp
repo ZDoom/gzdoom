@@ -182,6 +182,8 @@ END_DEFAULTS
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+void ProcessActor(void (*process)(FState *, int));
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void A_ScreamAndUnblock (AActor *);
@@ -351,6 +353,11 @@ static void ParseDecorate (void (*process)(FState *, int))
 	// Get actor class name. The A prefix is added automatically.
 	while (SC_GetString ())
 	{
+		if (SC_Compare ("Actor"))
+		{
+			ProcessActor (process);
+			continue;
+		}
 		if (SC_Compare ("Pickup"))
 		{
 			parent = RUNTIME_CLASS(AFakeInventory);
@@ -1014,7 +1021,7 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states)
 					states.Push (state);
 				}
 				firstState = false;
-				state.Frame = (rate > 256) ? (SF_BIGTIC | (*token-'A')) : (*token-'A');	
+				state.Frame = (rate >= 256) ? (SF_BIGTIC | (*token-'A')) : (*token-'A');	
 			}
 			++token;
 		}

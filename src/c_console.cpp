@@ -388,7 +388,8 @@ void C_AddNotifyString (int printlevel, const char *source)
 
 	if ((printlevel != 128 && !show_messages) ||
 		!(len = (int)strlen (source)) ||
-		gamestate != GS_LEVEL)
+		gamestate == GS_FULLCONSOLE ||
+		gamestate == GS_DEMOSCREEN)
 		return;
 
 	width = con_scaletext ? DisplayWidth / CleanXfac : DisplayWidth;
@@ -775,7 +776,7 @@ static void C_DrawNotifyText ()
 	int i, line, lineadv, color, j, skip;
 	bool canskip;
 	
-	if (gamestate != GS_LEVEL || menuactive)
+	if (gamestate == GS_FULLCONSOLE || gamestate == GS_DEMOSCREEN || menuactive != MENU_Off)
 		return;
 
 	line = NotifyTop;
@@ -964,7 +965,7 @@ void C_DrawConsole ()
 		}
 	}
 
-	if (menuactive)
+	if (menuactive != MENU_Off)
 	{
 		screen->SetFont (SmallFont);
 		return;
@@ -1059,7 +1060,7 @@ void C_ToggleConsole ()
 	{
 		gameaction = ga_fullconsole;
 	}
-	else if (!chatmodeon && (ConsoleState == c_up || ConsoleState == c_rising))
+	else if (!chatmodeon && (ConsoleState == c_up || ConsoleState == c_rising) && menuactive == MENU_Off)
 	{
 		ConsoleState = c_falling;
 		HistPos = NULL;
@@ -1502,7 +1503,7 @@ BOOL C_Responder (event_t *ev)
 	if (ev->type != EV_GUI_Event ||
 		ConsoleState == c_up ||
 		ConsoleState == c_rising ||
-		menuactive)
+		menuactive != MENU_Off)
 	{
 		return false;
 	}

@@ -709,10 +709,11 @@ BOOL G_Responder (event_t *ev)
 		return false;
 	}
 
+	if (CT_Responder (ev))
+		return true;			// chat ate the event
+
 	if (gamestate == GS_LEVEL)
 	{
-		if (CT_Responder (ev))
-			return true;		// chat ate the event
 		if (ST_Responder (ev))
 			return true;		// status window ate it
 		if (!viewactive && AM_Responder (ev))
@@ -1691,7 +1692,7 @@ static void PutSaveWads (FILE *file)
 	const char *name;
 
 	// Name of IWAD
-	name = Wads.GetWadName (1);
+	name = Wads.GetWadName (FWadCollection::IWAD_FILENUM);
 	M_AppendPNGText (file, "Game WAD", name);
 
 	// Name of wad the map resides in

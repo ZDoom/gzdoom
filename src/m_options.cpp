@@ -134,7 +134,6 @@ value_t OnOff[2] = {
 
 menu_t  *CurrentMenu;
 int		CurrentItem;
-int		WaitingForKey;
 static char	   *OldMessage;
 static itemtype OldType;
 
@@ -1124,7 +1123,7 @@ void M_OptDrawer ()
 
 			default:
 				x = CurrentMenu->indent - width;
-				color = (item->type == control && WaitingForKey && i == CurrentItem)
+				color = (item->type == control && menuactive == MENU_WaitKey && i == CurrentItem)
 					? CR_YELLOW : LabelColor;
 				break;
 			}
@@ -1244,7 +1243,7 @@ void M_OptDrawer ()
 				break;
 			}
 
-			if (i == CurrentItem && (skullAnimCounter < 6 || WaitingForKey))
+			if (i == CurrentItem && (skullAnimCounter < 6 || menuactive == MENU_WaitKey))
 			{
 				screen->SetFont (ConFont);
 				screen->DrawText (CR_RED, CurrentMenu->indent + 3, y-1+labelofs, "\xd",
@@ -1281,7 +1280,7 @@ void M_OptDrawer ()
 				}
 			}
 
-			if (i == CurrentItem && ((item->a.selmode != -1 && (skullAnimCounter < 6 || WaitingForKey)) || testingmode))
+			if (i == CurrentItem && ((item->a.selmode != -1 && (skullAnimCounter < 6 || menuactive == MENU_WaitKey)) || testingmode))
 			{
 				screen->SetFont (ConFont);
 				screen->DrawText (CR_RED, item->a.selmode * 104 + 8, y-1 + labelofs, "\xd",
@@ -1339,14 +1338,14 @@ void M_OptResponder (event_t *ev)
 
 	item = CurrentMenu->items + CurrentItem;
 
-	if (WaitingForKey && ev->type == EV_KeyDown)
+	if (menuactive == MENU_WaitKey && ev->type == EV_KeyDown)
 	{
 		if (ev->data1 != KEY_ESCAPE)
 		{
 			C_ChangeBinding (item->e.command, ev->data1);
 			M_BuildKeyList (CurrentMenu->items, CurrentMenu->numitems);
 		}
-		WaitingForKey = 0;
+		menuactive = MENU_On;
 		CurrentMenu->items[0].label = OldMessage;
 		CurrentMenu->items[0].type = OldType;
 		return;
@@ -1781,7 +1780,7 @@ void M_OptResponder (event_t *ev)
 		}
 		else if (item->type == control)
 		{
-			WaitingForKey = 1;
+			menuactive = MENU_WaitKey;
 			OldMessage = CurrentMenu->items[0].label;
 			OldType = CurrentMenu->items[0].type;
 			CurrentMenu->items[0].label = "Press new key for control, ESC to cancel";

@@ -153,9 +153,9 @@ static const char *WeaponNames[NUMWEAPONS] =
 	"FWeapAxe", "CWeapStaff", "MWeapFrost",
 	"FWeapHammer", "CWeapFlame", "MWeapLightning",
 	"FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge",
-	"Dagger", "ElectricCrossbow", "AssaultGun", "MiniMissileLauncher",
-	"HEGrenadeLauncher", "FlameThrower", "MaulerScatter",
-	"Sigil", "PoisonCrossbow", "PhGrenadeLauncher", "MaulerTorpedo"
+	"PunchDagger", "StrifeCrossbow", "AssaultGun", "MiniMissileLauncher",
+	"StrifeGrenadeLauncher", "FlameThrower", "Mauler",
+	"Sigil", "StrifeCrossbow2", "StrifeGrenadeLauncher2", "Mauler2"
 };
 
 static const char *HereticKeyNames[3] =

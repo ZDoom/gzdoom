@@ -1612,6 +1612,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\thingdef.cpp">
+			</File>
+			<File
 				RelativePath=".\v_collection.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -4397,6 +4400,9 @@
 				RelativePath="..\docs\rh-log.txt">
 			</File>
 			<File
+				RelativePath="..\docs\thingdef_doc.txt">
+			</File>
+			<File
 				RelativePath="..\docs\zdoom.txt">
 			</File>
 			<Filter
@@ -4444,7 +4450,7 @@
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						AssemblerOutput="4"/>
+						AssemblerOutput="0"/>
 				</FileConfiguration>
 			</File>
 			<File

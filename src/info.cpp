@@ -171,14 +171,6 @@ static void ProcessStates (FState *states, int numstates)
 	}
 }
 
-CCMD (slist)
-{
-	for (size_t i = 0; i < sprites.Size(); ++i)
-	{
-		Printf ("%3d. %s\n", i, sprites[i].name);
-	}
-}
-
 void FActorInfo::StaticInit ()
 {
 	TAutoSegIterator<FActorInfo *, &ARegHead, &ARegTail> reg;

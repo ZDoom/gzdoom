@@ -421,17 +421,20 @@ static void FlushDIKState (int low=0, int high=NUM_KEYS-1)
 	}
 }
 
-extern int WaitingForKey, chatmodeon;
+extern int chatmodeon;
 
 static void I_CheckGUICapture ()
 {
 	bool wantCapt;
 
-	wantCapt = 
-		ConsoleState == c_down ||
-		ConsoleState == c_falling ||
-		(menuactive && !WaitingForKey) ||
-		chatmodeon;
+	if (menuactive == MENU_Off)
+	{
+		wantCapt = ConsoleState == c_down || ConsoleState == c_falling || chatmodeon;
+	}
+	else
+	{
+		wantCapt = menuactive == MENU_On;
+	}
 
 	if (wantCapt != GUICapture)
 	{
@@ -832,7 +835,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			// If a new joystick was added and the joystick menu is open,
 			// switch to it.
-			if (menuactive && CurrentMenu == &JoystickMenu)
+			if (menuactive != MENU_Off && CurrentMenu == &JoystickMenu)
 			{
 				for (i = 0; i < JoystickNames.Size(); ++i)
 				{

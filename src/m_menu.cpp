@@ -164,7 +164,7 @@ extern int		flagsvar;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-bool			menuactive;
+EMenuState		menuactive;
 menustack_t		MenuStack[16];
 int				MenuStackDepth;
 int				skullAnimCounter;	// skull animation counter
@@ -181,7 +181,7 @@ static int		MenuPClass;
 static FSaveGameNode *quickSaveSlot;	// NULL = no quicksave slot picked!
 static int 		messageToPrint;			// 1 = message to be printed
 static const char *messageString;		// ...and here is the message string!
-static bool		messageLastMenuActive;
+static EMenuState messageLastMenuActive;
 static bool		messageNeedsInput;		// timed message = no input from user
 static void	  (*messageRoutine)(int response);
 
@@ -580,12 +580,12 @@ CCMD (bumpgamma)
 
 void M_ActivateMenuInput ()
 {
-	menuactive = true;
+	menuactive = MENU_On;
 }
 
 void M_DeactivateMenuInput ()
 {
-	menuactive = false;
+	menuactive = MENU_Off;
 }
 
 void M_DrawFiles ()
@@ -656,7 +656,7 @@ void M_ReadSaveStrings ()
 								char *iwad = M_GetPNGText (png, "Game WAD");
 								if (iwad != NULL)
 								{
-									if (stricmp (iwad, Wads.GetWadName (1)) == 0)
+									if (stricmp (iwad, Wads.GetWadName (FWadCollection::IWAD_FILENUM)) == 0)
 									{
 										addIt = true;
 										oldVer = false;
@@ -2369,8 +2369,10 @@ void M_StartMessage (const char *string, void (*routine)(int), bool input)
 	messageString = string;
 	messageRoutine = routine;
 	messageNeedsInput = input;
-	if (!menuactive)
+	if (menuactive == MENU_Off)
+	{
 		M_ActivateMenuInput ();
+	}
 	if (input)
 	{
 		S_StopSound ((AActor *)NULL, CHAN_VOICE);
@@ -2415,7 +2417,7 @@ BOOL M_Responder (event_t *ev)
 
 	ch = -1;
 
-	if (!menuactive && ev->type == EV_KeyDown)
+	if (menuactive == MENU_Off && ev->type == EV_KeyDown)
 	{
 		// Pop-up menu?
 		if (ev->data1 == KEY_ESCAPE)
@@ -2432,7 +2434,7 @@ BOOL M_Responder (event_t *ev)
 			return true;
 		}
 	}
-	else if (ev->type == EV_GUI_Event && menuactive && !chatmodeon)
+	else if (ev->type == EV_GUI_Event && menuactive == MENU_On && !chatmodeon)
 	{
 		if (ev->subtype == EV_GUI_KeyDown || ev->subtype == EV_GUI_KeyRepeat)
 		{
@@ -2507,8 +2509,10 @@ BOOL M_Responder (event_t *ev)
 		if (messageRoutine)
 			messageRoutine (ch);
 
-		if (!menuactive)
+		if (menuactive != MENU_Off)
+		{
 			M_DeactivateMenuInput ();
+		}
 		SB_state = screen->GetPageCount ();	// refresh the statbar
 		BorderNeedRefresh = screen->GetPageCount ();
 		S_Sound (CHAN_VOICE, "menu/dismiss", 1, ATTN_NONE);
@@ -2782,7 +2786,7 @@ static void M_DeleteSaveResponse (int choice)
 void M_StartControlPanel (bool makeSound)
 {
 	// intro might call this repeatedly
-	if (menuactive)
+	if (menuactive == MENU_On)
 		return;
 	
 	drawSkull = true;
@@ -2831,7 +2835,7 @@ void M_Drawer ()
 
 		V_FreeBrokenLines (lines);
 	}
-	else if (menuactive)
+	else if (menuactive != MENU_Off)
 	{
 		if (InfoType == 0)
 		{
@@ -3005,7 +3009,7 @@ void M_PopMenuStack (void)
 //
 void M_Ticker (void)
 {
-	if (!menuactive)
+	if (menuactive == MENU_Off)
 	{
 		return;
 	}
@@ -3042,7 +3046,7 @@ void M_Init (void)
 	}
 	PickPlayerClass ();
 	OptionsActive = false;
-	menuactive = 0;
+	menuactive = MENU_Off;
 	InfoType = 0;
 	itemOn = currentMenu->lastOn;
 	whichSkull = 0;

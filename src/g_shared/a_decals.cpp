@@ -465,9 +465,9 @@ AImpactDecal *AImpactDecal::StaticCreate (const char *name, fixed_t x, fixed_t y
 {
 	if (cl_maxdecals > 0)
 	{
-		const FDecal *decal = DecalLibrary.GetDecalByName (name)->GetDecal();
+		const FDecal *decal = DecalLibrary.GetDecalByName (name);
 
-		if (decal != NULL)
+		if (decal != NULL && (decal = decal->GetDecal()) != NULL)
 		{
 			return StaticCreate (decal, x, y, z, wall);
 		}

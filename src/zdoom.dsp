@@ -1344,6 +1344,10 @@ SOURCE=.\tempfiles.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\thingdef.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\v_collection.cpp
 
 !IF  "$(CFG)" == "_zdoom - Win32 Release"
@@ -3228,10 +3232,6 @@ SOURCE=.\g_heretic\heretic_sbar.cpp
 !ENDIF
 
 # End Source File
-# Begin Source File
-
-SOURCE=.\r_main.h
-# End Source File
 # End Group
 # Begin Group "Hexen Game"
 
@@ -4026,6 +4026,10 @@ SOURCE=.\r_local.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\r_main.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\r_plane.h
 # End Source File
 # Begin Source File
@@ -4079,6 +4083,10 @@ SOURCE=..\docs\rh-log.txt
 # End Source File
 # Begin Source File
 
+SOURCE=..\docs\thingdef_doc.txt
+# End Source File
+# Begin Source File
+
 SOURCE=..\docs\zdoom.txt
 # End Source File
 # Begin Group "Licenses"
@@ -4128,7 +4136,7 @@ SOURCE=oplsynth\fmopl.cpp
 
 !IF  "$(CFG)" == "_zdoom - Win32 Release"
 
-# ADD CPP /nologo /FAs /Fa"" /GX 
+# ADD CPP /nologo /GX 
 !ENDIF
 
 # End Source File

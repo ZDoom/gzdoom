@@ -265,7 +265,7 @@ void D_ProcessEvents (void)
 void D_PostEvent (const event_t *ev)
 {
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && !paused && !menuactive &&
+	if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off &&
 		ConsoleState != c_down && ConsoleState != c_falling)
 	{
 		if (Button_Mlook.bDown || freelook)
@@ -495,14 +495,17 @@ void D_Display (bool screenshot)
 
 	case GS_INTERMISSION:
 		WI_Drawer ();
+		CT_Drawer ();
 		break;
 
 	case GS_FINALE:
 		F_Drawer ();
+		CT_Drawer ();
 		break;
 
 	case GS_DEMOSCREEN:
 		D_PageDrawer ();
+		CT_Drawer ();
 		break;
 
 	default:
@@ -510,7 +513,7 @@ void D_Display (bool screenshot)
 	}
 
 	// draw pause pic
-	if (paused && !menuactive)
+	if (paused && menuactive == MENU_Off)
 	{
 		FTexture *tex;
 		int x;
@@ -648,7 +651,7 @@ void D_ErrorCleanup ()
 	playeringame[0] = 1;
 	players[0].playerstate = PST_LIVE;
 	gameaction = ga_fullconsole;
-	menuactive = false;
+	menuactive = MENU_Off;
 }
 
 //==========================================================================

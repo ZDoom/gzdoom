@@ -188,18 +188,18 @@ void CT_Drawer (void)
 		static const char *prompt = "Say: ";
 		int i, x, scalex, y, promptwidth;
 
+		y = (viewactive || gamestate != GS_LEVEL) ? -10 : -30;
 		if (con_scaletext)
 		{
 			scalex = CleanXfac;
-			y = (!viewactive ? -30 : -10) * CleanYfac;
+			y *= CleanYfac;
 		}
 		else
 		{
 			scalex = 1;
-			y = (!viewactive ? -30 : -10);
 		}
 
-		y += (SCREENHEIGHT == realviewheight && viewactive) ? SCREENHEIGHT : ST_Y;
+		y += ((SCREENHEIGHT == realviewheight && viewactive) || gamestate != GS_LEVEL) ? SCREENHEIGHT : ST_Y;
 
 		promptwidth = SmallFont->StringWidth (prompt) * scalex;
 		x = screen->Font->GetCharWidth ('_') * scalex * 2 + promptwidth;
@@ -433,7 +433,7 @@ static bool DoSubstitution (char *out, const char *in)
 
 CCMD (messagemode)
 {
-	if (!menuactive)
+	if (menuactive == MENU_Off)
 	{
 		chatmodeon = 1;
 		C_HideConsole ();
@@ -455,7 +455,7 @@ CCMD (say)
 
 CCMD (messagemode2)
 {
-	if (!menuactive)
+	if (menuactive == MENU_Off)
 	{
 		chatmodeon = 2;
 		C_HideConsole ();

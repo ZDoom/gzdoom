@@ -1,3 +1,9 @@
+February 10, 2004
+- Merged in Graf Zahl's additions to thingdef.cpp.
+- Fixed: Heretic wind specials would effect you while you were underwater.
+  Also turned off the Heretic wind for noclipping things.
+- Added a check for empty subsectors to P_LoadSubsectors.
+
 February 6, 2004
 - Fixed: DObject::IsKindOf used StaticClass instead of GetClass.
 - Added Graf Zahl's thingdef.cpp implementation and modified it to work with

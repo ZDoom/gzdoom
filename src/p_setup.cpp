@@ -730,6 +730,15 @@ void P_LoadSubsectors (int lump)
 
 		data >> numsegs >> firstseg;
 
+		if (numsegs == 0)
+		{
+			Printf ("Subsector %i is empty.\n", i);
+			delete[] subsectors;
+			delete[] nodes;
+			ForceNodeBuild = true;
+			return;
+		}
+
 		subsectors[i].numlines = numsegs;
 		subsectors[i].firstline = firstseg;
 

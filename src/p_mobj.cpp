@@ -827,7 +827,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 
 	fixed_t maxmove = (mo->waterlevel < 2) || (mo->flags & MF_MISSILE) ? MAXMOVE : MAXMOVE/4;
 
-	if (mo->flags2 & MF2_WINDTHRUST)
+	if (mo->flags2 & MF2_WINDTHRUST && mo->waterlevel < 2 && !(mo->flags & MF_NOCLIP))
 	{
 		int special = mo->Sector->special;
 		switch (special)

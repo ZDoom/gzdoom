@@ -87,6 +87,7 @@ and add this prototype to decorations,cpp (or a header it includes):
 static FRandom pr_camissile ("CustomActorfire");
 static FRandom pr_camelee ("CustomMelee");
 static FRandom pr_cabullet ("CustomBullet");
+static FRandom pr_cajump ("CustomJump");
 
 static const char * flagnames[]={
 	"*",			// Pickup items require special handling - don't set the flag explicitly
@@ -268,6 +269,16 @@ struct FDropItem
 };
 
 extern TArray<FActorInfo *> Decorations;
+
+struct FMissileAttack
+{
+	const char *MissileName;
+	fixed_t SpawnHeight;
+	fixed_t Spawnofs_XY;
+	angle_t Angle;
+};
+
+TArray<FMissileAttack> AttackList;
 
 //==========================================================================
 //
@@ -487,6 +498,56 @@ void A_BulletAttack (AActor *self)
 
 //==========================================================================
 //
+// State jump function
+//
+//==========================================================================
+void A_Jump(AActor * self)
+{
+	if (pr_cajump()<self->state->GetMisc2())
+		self->SetState(self->state+self->state->GetMisc1());
+}
+
+//==========================================================================
+//
+// The ultimate code pointer: Fully customizable missiles!
+//
+//==========================================================================
+void A_CustomMissile(AActor * self)
+{
+	int index=self->state->GetMisc2()+256*self->state->GetMisc1();
+
+	if (index>=0 && index<AttackList.Size())
+	{
+		FMissileAttack * att=&AttackList[index];
+
+		const TypeInfo * ti=TypeInfo::FindType(att->MissileName);
+		if (ti) 
+		{
+			angle_t ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
+			fixed_t x = self->x + att->Spawnofs_XY * finecosine[ang];
+			fixed_t y = self->y + att->Spawnofs_XY * finesine[ang];
+
+			// same adjustment as above - for better aiming!
+			self->z+=att->SpawnHeight-32*FRACUNIT;
+			AActor * missile = P_SpawnMissileXYZ(x,y,self->z+32*FRACUNIT, self, self->target, ti);
+			self->z-=att->SpawnHeight-32*FRACUNIT;
+
+			missile->angle += att->Angle;
+			ang = missile->angle >> ANGLETOFINESHIFT;
+			missile->momx = FixedMul (missile->Speed, finecosine[ang]);
+			missile->momy = FixedMul (missile->Speed, finesine[ang]);
+
+			// automatic handling of seeker missiles
+			if (missile && missile->flags2&MF2_SEEKERMISSILE)
+			{
+				missile->tracer=self->target;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // SC_CheckNumber
 // similar to SC_GetNumber but ungets the token if it isn't a number 
 // and does not print an error
@@ -653,6 +714,12 @@ static FActorInfo * CreateNewActor(FActorInfo ** parentc)
 	char * typeName;
 
 	SC_MustGetString();
+
+	if (TypeInfo::IFindType (sc_String) != NULL)
+	{
+		SC_ScriptError ("Actor %s is already defined.", (const char **)&sc_String);
+	}
+
 	typeName=new char[strlen(sc_String)+2];
 	sprintf(typeName,"A%s",sc_String);
 
@@ -714,6 +781,7 @@ static int ProcessStates(FActorInfo * actor, ACustomActor * defaults)
 	int lastlabel;
 	FState ** stp;
 	TArray<FState> StateArray;
+	int minrequiredstate=0;
 
 	statestring[255] = 0;
 
@@ -878,6 +946,67 @@ static int ProcessStates(FActorInfo * actor, ACustomActor * defaults)
 					state.Action.acvoid=A_SeekerMissile;
 					goto endofstate;
 				}
+				if (SC_Compare("A_Jump"))
+				{
+					if (strlen(statestring)>0)
+					{
+						SC_ScriptError("A_Jump may not be used on a multiple state definition!");
+					}
+					if (state.Frame&SF_BIGTIC)
+					{
+						SC_ScriptError("You cannot use A_Jump with a state duration larger than 254!");
+					}
+					SC_MustGetStringName("(");
+					SC_MustGetNumber();
+					state.Misc2=sc_Number;
+					if (sc_Number<0 || sc_Number>255)
+					{
+						SC_ScriptError("The first parameter of A_Jump must be in the range [0..255]");
+					}
+					SC_MustGetStringName (",");
+					SC_MustGetNumber();
+					if (sc_Number<=0)
+					{
+						SC_ScriptError("The second parameter of A_Jump must be greater than 0");
+					}
+					state.Misc1=sc_Number;
+					SC_MustGetStringName (")");
+					minrequiredstate=count+state.Misc1;
+					state.Action.acvoid=A_Jump;
+					goto endofstate;
+				}
+				if (SC_Compare("A_CustomMissile"))
+				{
+					FMissileAttack att;
+
+					if (state.Frame&SF_BIGTIC)
+					{
+						SC_ScriptError("You cannot use A_Jump with a state duration larger than 254!");
+					}
+					SC_MustGetStringName("(");
+					SC_MustGetString();
+					att.MissileName=strdup(sc_String);
+					SC_MustGetStringName (",");
+					SC_MustGetNumber();
+					att.SpawnHeight=sc_Number*FRACUNIT;
+					SC_MustGetStringName (",");
+					SC_MustGetNumber();
+					att.Spawnofs_XY=sc_Number;
+					SC_MustGetStringName (",");
+					SC_MustGetNumber();
+					if (sc_Number<-90 || sc_Number>90)
+					{
+						SC_ScriptError("The fourth parameter of A_CustomMissile must be in the range [-90..90]");
+					}
+					att.Angle=sc_Number*ANGLE_1;
+					SC_MustGetStringName (")");
+
+					int v=AttackList.Push(att);
+					state.Misc2=v&255;
+					state.Misc1=v>>8;
+					state.Action.acvoid=A_CustomMissile;
+					goto endofstate;
+				}
 
 				for(int i=0;AFTable[i].Name;i++) if (SC_Compare(AFTable[i].Name))
 				{
@@ -907,6 +1036,11 @@ endofstate:
 			count++;
 		}
 	}
+	if (count<=minrequiredstate)
+	{
+		SC_ScriptError("A_Jump offset out of range in %s",(const char **)&actor->Class->Name);
+	}
+
 	FState * realstates=new FState[count];
 	int i;
 
@@ -994,19 +1128,29 @@ static FState * CheckState(int statenum,FActorInfo * parent)
 
 			{
 				FState * basestate;
-				char * p=strtok(sc_String,"+");
-				char * q=strtok(NULL,"+");
-				int v=0;
-				if (q) v=strtol(q,NULL,0);
-
-				FState ** stp=FindState((AActor*)parent->Defaults,p);
+				FState ** stp=FindState((AActor*)parent->Defaults, sc_String);
+				int v = 0;
 
 				if (stp) basestate =*stp;
 				else 
 				{
-					SC_ScriptError("Unknown state label %s",(const char **)&p);
+					SC_ScriptError("Unknown state label %s",(const char **)&sc_String);
 					return NULL;
 				}
+
+				if (SC_GetString ())
+				{
+					if (SC_Compare ("+"))
+					{
+						SC_MustGetNumber ();
+						v = sc_Number;
+					}
+					else
+					{
+						SC_UnGet ();
+					}
+				}
+
 				if (!basestate && !v) return NULL;
 				basestate+=v;
 
@@ -1157,26 +1301,26 @@ void ProcessActor(void (*process)(FState *, int))
 				// create a linked list of dropitems
 				if (!dropitemset)
 				{
-					dropitemset=false;
+					dropitemset=true;
 					defaults->dropitemlist=NULL;
+				}
 
-					FDropItem * di=new FDropItem;
+				FDropItem * di=new FDropItem;
 
-					SC_MustGetString();
-					di->Name=strdup(sc_String);
-					di->probability=255;
-					di->amount=-1;
+				SC_MustGetString();
+				di->Name=strdup(sc_String);
+				di->probability=255;
+				di->amount=-1;
+				if (SC_CheckNumber())
+				{
+					di->probability=sc_Number;
 					if (SC_CheckNumber())
 					{
-						di->probability=sc_Number;
-						if (SC_CheckNumber())
-						{
-							di->amount=sc_Number;
-						}
+						di->amount=sc_Number;
 					}
-					di->Next=defaults->dropitemlist;
-					defaults->dropitemlist=di;
 				}
+				di->Next=defaults->dropitemlist;
+				defaults->dropitemlist=di;
 			}
 
 			else if (SC_Compare("SPAWN"))	defaults->SpawnState=CheckState(currentstate,parent);
@@ -1271,6 +1415,15 @@ void ProcessActor(void (*process)(FState *, int))
 			{
 				SC_MustGetFloat();
 				defaults->MissileHeight=sc_Float*FRACUNIT;
+			}
+			else if (SC_Compare ("Translation"))
+			{
+				SC_MustGetNumber ();
+				if (sc_Number < 0 || sc_Number > 2)
+				{
+					SC_ScriptError ("Translation must be in the range [0,2]");
+				}
+				defaults->Translation = TRANSLATION(TRANSLATION_Standard, sc_Number);
 			}
 
 

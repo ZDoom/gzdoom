@@ -567,20 +567,31 @@ A_BulletAttack          Hitscan attack
 The following functions use direct parameters:
 ----------------------------------------------
 
-A_PlaySound soundname       Plays the sound soundname
-A_PlayWeaponSound soundname Plays the sound soundname on the weapon channel
-                            Sounds played with A_PlaySound and A_PlayWeaponSound
-                            can occur simultaneously.
-A_SeekerMissile threshold maxturnangle
-                            Seeker missile handling. threshold and maxturnangle determine
-                            how 'aggressive' the missile will home in on its target. The larger
-                            the values the more precise it is. threshold specifies the angle
-                            inside which the missile will home in directly on its target.
-                            If the angle toward the target is larger than threshold it will
-                            change its movement angle only partially towards the target.
-                            maxturnangle is the maximum change of movement direction that 
-                            will be performed in one move. Maxturnangle should be larger
-                            than threshold. Both angles are specified in degrees and must be
-                            in the range [0, 90].
-                            Example: The flaming skull of Heretic's mummy uses an equivalent
-                            of A_SeekerMisile 20 30
+A_PlaySound ("soundname")       Plays the sound soundname
+A_PlayWeaponSound ("soundname") Plays the sound soundname on the weapon channel
+                                Sounds played with A_PlaySound and A_PlayWeaponSound
+                                can occur simultaneously.
+A_SeekerMissile (threshold, maxturnangle)
+                                Seeker missile handling. threshold and maxturnangle determine
+                                how 'aggressive' the missile will home in on its target. The larger
+                                the values the more precise it is. threshold specifies the angle
+                                inside which the missile will home in directly on its target.
+                                If the angle toward the target is larger than threshold it will
+                                change its movement angle only partially towards the target.
+                                maxturnangle is the maximum change of movement direction that 
+                                will be performed in one move. Maxturnangle should be larger
+                                than threshold. Both angles are specified in degrees and must be
+                                in the range [0, 90].
+                                Example: The flaming skull of Heretic's mummy uses an equivalent
+                                of A_SeekerMisile 20 30
+A_Jump (chance, distance)       Randomly advances to different state. Like painchance, the chance
+                                value can range between 0 and 255. A chance of 0 will never advance,
+                                while a chance of 255 will almost always advance. If the state is
+                                not advanced, then the one immediately following the A_Jump will
+                                be used as if A_Jump had not been present.
+A_CustomMissile ("missiletype", spawnheight, spawnofs_xy, angle)
+                                Spawns a missile attack where "missiletype" is the type of missile
+                                to shoot, spawnheight is how high from the monster's feet to shoot
+                                the missile, spawnofs_xy is how far the monster's center to shoot
+                                the missile, and angle is the direction relative to the monster's
+                                facing angle in which to shoot the missile.

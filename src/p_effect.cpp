@@ -394,7 +394,7 @@ void P_DrawRailTrail (vec3_t start, vec3_t end)
 
 	if (length)
 	{
-		// The railgun's sound is a special case. It gets played from the
+		// The railgun's sound is special. It gets played from the
 		// point on the slug's trail that is closest to the hearing player.
 		AActor *mo = players[consoleplayer].camera;
 		vec3_t point;
@@ -412,7 +412,7 @@ void P_DrawRailTrail (vec3_t start, vec3_t end)
 		{
 			// Only consider sound in 2D (for now, anyway)
 			r = ((start[1] - FIXED2FLOAT(mo->y)) * (-dir[1]) -
-					(start[0] - FIXED2FLOAT(mo->x)) * (dir[0])) * length * length;
+				 (start[0] - FIXED2FLOAT(mo->x)) * (dir[0])) * length * length;
 
 			dirz = dir[2];
 			dir[2] = 0;

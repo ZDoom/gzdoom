@@ -25,7 +25,7 @@ FState AExplosiveBarrel::States[] =
 	S_BRIGHT (BEXP, 'C',	5, NULL 						, &States[S_BEXP+3]),
 	S_BRIGHT (BEXP, 'D',   10, A_Explode					, &States[S_BEXP+4]),
 	S_BRIGHT (BEXP, 'E',   10, NULL 						, &States[S_BEXP+5]),
-	S_BRIGHT (BEXP, 'E', 50, A_BarrelDestroy				, &States[S_BEXP+6]),
+	S_BRIGHT (BEXP, 'E', 1050, A_BarrelDestroy				, &States[S_BEXP+6]),
 	S_BRIGHT (BEXP, 'E',    5, A_BarrelRespawn				, &States[S_BEXP+6])
 };
 

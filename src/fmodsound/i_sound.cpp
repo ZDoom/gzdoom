@@ -46,6 +46,8 @@ extern HINSTANCE hInstance;
 #define ROLLOFF3D	0.5f
 #define DOPPLER3D	1.f
 
+extern void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3], float vel[3]);
+
 static const char *OutputNames[] =
 {
 	"No sound",
@@ -317,19 +319,34 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 			continue;
 		}
 
-		// Try the sound as DMX format first.
-		// If that fails, let FMOD try and figure it out.
 		byte *sfxdata = (byte *)W_CacheLumpNum (sfx->lumpnum, PU_CACHE);
 		SDWORD len = ((SDWORD *)sfxdata)[1];
 
-		if (((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8)
+		// If the sound is raw, just load it as such.
+		// Otherwise, try the sound as DMX format.
+		// If that fails, let FMOD try and figure it out.
+		if (sfx->bLoadRAW ||
+			(((BYTE *)sfxdata)[0] == 3 && ((BYTE *)sfxdata)[1] == 0 && len <= size - 8))
 		{
 			FSOUND_SAMPLE *sample;
+			BYTE *sfxstart;
 			unsigned int bits;
 
-			sfx->frequency = ((WORD *)sfxdata)[1];
-			if (sfx->frequency == 0)
-				sfx->frequency = 11025;
+			if (sfx->bLoadRAW)
+			{
+				len = W_LumpLength (sfx->lumpnum);
+				sfx->frequency = (sfx->bForce22050 ? 22050 : 11025);
+				sfxstart = sfxdata;
+			}
+			else
+			{
+				sfx->frequency = ((WORD *)sfxdata)[1];
+				if (sfx->frequency == 0)
+				{
+					sfx->frequency = 11025;
+				}
+				sfxstart = sfxdata + 8;
+			}
 			sfx->ms = sfx->length = len;
 
 			bits = FSOUND_8BITS;
@@ -347,7 +364,7 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 				continue;
 			}
 
-			if (!PutSampleData (sample, sfxdata+8, len, samplemode))
+			if (!PutSampleData (sample, sfxstart, len, samplemode))
 			{
 				DPrintf ("Failed to upload sample: %d\n", FSOUND_GetError ());
 				FSOUND_Sample_Free (sample);
@@ -532,6 +549,7 @@ long I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOO
 	if (sep < 0)
 	{
 		pan = 128; // FSOUND_STEREOPAN is too loud relative to everything else
+				   // when we don't want positioned sounds, so use center panning instead.
 	}
 	else
 	{
@@ -541,13 +559,16 @@ long I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOO
 	freq = PITCH(sfx->frequency,pitch);
 	volume = vol;
 
-	chan = FSOUND_PlaySound3DAttrib (FSOUND_FREE, CheckLooping (sfx, looping),
-		freq, vol, pan, NULL, NULL);
+	chan = FSOUND_PlaySoundEx (FSOUND_FREE, CheckLooping (sfx, looping), NULL, true);
 	
 	if (chan != -1)
 	{
-		FSOUND_SetReserved (chan, TRUE);
+		//FSOUND_SetReserved (chan, TRUE);
 		FSOUND_SetSurround (chan, sep == -1 ? TRUE : FALSE);
+		FSOUND_SetFrequency (chan, freq);
+		FSOUND_SetVolume (chan, vol);
+		FSOUND_SetPan (chan, pan);
+		FSOUND_SetPaused (chan, false);
 		ChannelMap[channel].channelID = chan;
 		ChannelMap[channel].soundID = id;
 		ChannelMap[channel].bIsLooping = looping ? true : false;
@@ -556,7 +577,7 @@ long I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOO
 		return channel + 1;
 	}
 
-	DPrintf ("Sound failed to play: %d\n", FSOUND_GetError ());
+	DPrintf ("Sound %s failed to play: %d\n", sfx->name, FSOUND_GetError ());
 	return 0;
 }
 
@@ -580,12 +601,17 @@ long I_StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel,
 	lvel[1] = vel[1] * INVSCALE3D;
 	lvel[2] = vel[2] * INVSCALE3D;
 
-	chan = FSOUND_PlaySound3DAttrib (FSOUND_FREE, CheckLooping (sfx, looping),
-		freq, (int)(vol * 255.f), -1, lpos, lvel);
+	FSOUND_SAMPLE *sample = CheckLooping (sfx, looping);
+
+	chan = FSOUND_PlaySoundEx (channel+64, sample, NULL, true);
 
 	if (chan != -1)
 	{
-		FSOUND_SetReserved (chan, TRUE);
+		//FSOUND_SetReserved (chan, TRUE);
+		FSOUND_SetFrequency (chan, freq);
+		FSOUND_SetVolume (chan, (int)(vol * 255.f));
+		FSOUND_3D_SetAttributes (chan, lpos, lvel);
+		FSOUND_SetPaused (chan, false);
 		ChannelMap[channel].channelID = chan;
 		ChannelMap[channel].soundID = id;
 		ChannelMap[channel].bIsLooping = looping ? true : false;
@@ -593,11 +619,8 @@ long I_StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel,
 		ChannelMap[channel].bIs3D = true;
 		return channel + 1;
 	}
-	else
-	{
-		DPrintf ("Sound failed to play: %d\n", FSOUND_GetError ());
-	}
 
+	DPrintf ("Sound %s failed to play: %d (%d)\n", sfx->name, FSOUND_GetError (), FSOUND_GetChannelsPlaying ());
 	return 0;
 }
 
@@ -610,7 +633,7 @@ void I_StopSound (int handle)
 	if (ChannelMap[handle].soundID != -1)
 	{
 		FSOUND_StopSound (ChannelMap[handle].channelID);
-		FSOUND_SetReserved (ChannelMap[handle].channelID, FALSE);
+		//FSOUND_SetReserved (ChannelMap[handle].channelID, FALSE);
 		UncheckSound (&S_sfx[ChannelMap[handle].soundID], ChannelMap[handle].bIsLooping);
 		ChannelMap[handle].soundID = -1;
 	}
@@ -653,7 +676,7 @@ int I_SoundIsPlaying (int handle)
 		}
 		if (!is)
 		{
-			FSOUND_SetReserved (ChannelMap[handle].channelID, FALSE);
+			//FSOUND_SetReserved (ChannelMap[handle].channelID, FALSE);
 			UncheckSound (&S_sfx[ChannelMap[handle].soundID], ChannelMap[handle].bIsLooping);
 			ChannelMap[handle].soundID = -1;
 		}
@@ -703,40 +726,73 @@ void I_UpdateSoundParams3D (int handle, float pos[3], float vel[3])
 		return;
 
 	float lpos[3], lvel[3];
-	lpos[0] = pos[0]/SCALE3D;
-	lpos[1] = pos[1]/SCALE3D;
-	lpos[2] = pos[2]/SCALE3D;
-	lvel[0] = vel[0]/SCALE3D;
-	lvel[1] = vel[1]/SCALE3D;
-	lvel[2] = vel[2]/SCALE3D;
+	lpos[0] = pos[0] * INVSCALE3D;
+	lpos[1] = pos[1] * INVSCALE3D;
+	lpos[2] = pos[2] * INVSCALE3D;
+	lvel[0] = vel[0] * INVSCALE3D;
+	lvel[1] = vel[1] * INVSCALE3D;
+	lvel[2] = vel[2] * INVSCALE3D;
 	FSOUND_3D_SetAttributes (ChannelMap[handle].channelID, lpos, lvel);
 }
 
-void I_UpdateListener (float pos[3], float vel[3], float forward[3], float up[3])
+void I_UpdateListener (AActor *listener)
 {
+	float angle;
+	float vel[3];
+	float pos[3];
+	int environmentWant, environmentHave;
+
 	if (Sound3D)
 	{
-		int i;
+		vel[0] = listener->momx * (TICRATE*INVSCALE3D/65536.f);
+		vel[1] = listener->momy * (TICRATE*INVSCALE3D/65536.f);
+		vel[2] = listener->momz * (TICRATE*INVSCALE3D/65536.f);
+		pos[0] = listener->x * (INVSCALE3D/65536.f);
+		pos[2] = listener->y * (INVSCALE3D/65536.f);
+		pos[1] = listener->z * (INVSCALE3D/65536.f);
 
-		for (i = 0; i < 3; i++)
-		{
-			ListenPos[i] = pos[i]/SCALE3D;
-			ListenVel[i] = vel[i]/SCALE3D;
-		}
-		for (i = 0; i < numChannels; i++)
+		angle = (float)(listener->angle) * ((float)PI / 2147483648.f);
+
+		// Move sounds that are not meant to be heard in 3D so
+		// that they remain on top of the listener.
+
+		for (int i = 0; i < numChannels; i++)
 		{
 			if (ChannelMap[i].soundID != -1 && !ChannelMap[i].bIs3D)
 			{
 				FSOUND_3D_SetAttributes (ChannelMap[i].channelID,
-					ListenPos, ListenVel);
+					pos, vel);
 			}
 		}
 
-		FSOUND_3D_Listener_SetAttributes (ListenPos, ListenVel,
-			forward[0], forward[1], forward[2], up[0], up[1], up[2]);
+		FSOUND_3D_Listener_SetAttributes (pos, vel,
+			cosf (angle), 0.f, sinf (angle), 0.f, 1.f, 0.f);
+
+		if (DriverCaps & FSOUND_CAPS_EAX)
+		{
+			if (listener->waterlevel == 3)
+			{
+				environmentWant = FSOUND_ENVIRONMENT_UNDERWATER;
+			}
+			else
+			{
+				environmentWant = FSOUND_ENVIRONMENT_PLAIN;
+			}
+
+			if (FSOUND_Reverb_GetEnvironment (&environmentHave, NULL, NULL, NULL))
+			{
+				if (environmentHave != environmentWant)
+				{
+					DPrintf ("Reverb Environment %d\n", environmentWant);
+					FSOUND_Reverb_SetEnvironment (environmentWant,
+						FSOUND_REVERB_IGNOREPARAM,
+						FSOUND_REVERB_IGNOREPARAM,
+						FSOUND_REVERB_IGNOREPARAM);
+				}
+			}
+		}
 
 		FSOUND_3D_Update ();
-
 	}
 }
 
@@ -822,8 +878,10 @@ void I_InitSound ()
 	}
 	else
 	{
+		// If snd_3d is true, try for a3d output if snd_output was not recognized above.
+		// However, if running under NT 4.0, a3d will only be tried if specifically requested.
 		outindex = (OSPlatform == os_WinNT) ? 1 : 0;
-		if (stricmp (snd_output, "a3d") == 0)
+		if (stricmp (snd_output, "a3d") == 0 || (outindex == 0 && snd_3d))
 		{
 			trya3d = true;
 		}
@@ -882,13 +940,12 @@ void I_InitSound ()
 				FSOUND_SetOutput (outtype);
 				FModLog (FSOUND_SetDriver (0));
 			}
-//			FSOUND_GetDriverCaps (FSOUND_GetDriver(), &DriverCaps);
 			if (snd_buffersize)
 			{
 				Printf ("  Setting buffer size %d", *snd_buffersize);
 				FModLog (FSOUND_SetBufferSize (snd_buffersize));
 			}
-//FSOUND_SetMinHardwareChannels (32);
+			FSOUND_GetDriverCaps (FSOUND_GetDriver(), &DriverCaps);
 			Printf ("  Initialization");
 			if (!FModLog (FSOUND_Init (snd_samplerate, 64,
 				FSOUND_INIT_USEDEFAULTMIDISYNTH)))
@@ -939,7 +996,6 @@ void I_InitSound ()
 		if (snd_3d)
 		{
 			Sound3D = true;
-			//FSOUND_Reverb_SetEnvironment (FSOUND_PRESET_GENERIC);
 			FSOUND_3D_Listener_SetRolloffFactor (ROLLOFF3D);
 			FSOUND_3D_Listener_SetDopplerFactor (DOPPLER3D);
 			if (!(DriverCaps & FSOUND_CAPS_HARDWARE))
@@ -966,12 +1022,31 @@ void I_InitSound ()
 	snd_sfxvolume.Callback ();
 }
 
-void I_SetChannels (int numchannels)
+int I_SetChannels (int numchannels)
 {
 	int i;
 
 	if (_nosound)
-		return;
+	{
+		return numchannels;
+	}
+
+	// If using 3D sound, use all the hardware channels available,
+	// regardless of what the user sets with snd_channels. If there
+	// are fewer than 8 hardware channels, then force software.
+	if (Sound3D)
+	{
+		int hardChans = FSOUND_GetNumHardwareChannels ();
+
+		if (hardChans < 8)
+		{
+			Sound3D = false;
+		}
+		else
+		{
+			numchannels = hardChans;
+		}
+	}
 
 	ChannelMap = new ChanMap[numchannels];
 	for (i = 0; i < numchannels; i++)
@@ -980,6 +1055,7 @@ void I_SetChannels (int numchannels)
 	}
 
 	numChannels = numchannels;
+	return numchannels;
 }
 
 void STACK_ARGS I_ShutdownSound (void)
@@ -1024,13 +1100,17 @@ CCMD (snd_status)
 	Printf ("Driver: %d (%s)\n", driver,
 		FSOUND_GetDriverName (driver));
 	Printf ("Mixer: %s\n", MixerNames[mixer]);
-	if (DriverCaps)
-	{
-		Printf ("Driver caps: 0x%x\n", DriverCaps);
-	}
 	if (Sound3D)
 	{
 		Printf ("Using 3D sound\n");
+	}
+	if (DriverCaps)
+	{
+		Printf ("Driver caps: 0x%x\n", DriverCaps);
+		if (DriverCaps & FSOUND_CAPS_HARDWARE)
+		{
+			Printf ("Hardware channels: %d\n", FSOUND_GetNumHardwareChannels ());
+		}
 	}
 }
 
@@ -1039,7 +1119,7 @@ CCMD (snd_reset)
 	I_ShutdownMusic ();
 	I_ShutdownSound ();
 	I_InitSound ();
-	I_SetChannels (numChannels);
+	S_Init ();
 	S_RestartMusic ();
 }
 

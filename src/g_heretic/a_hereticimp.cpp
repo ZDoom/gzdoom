@@ -270,7 +270,9 @@ void A_ImpMeAttack (AActor *self)
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (self))
 	{
-		P_DamageMobj (self->target, self, self, 5+(P_Random()&7), MOD_HIT);
+		int damage = 5+(P_Random()&7);
+		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_TraceBleed (damage, self->target, self);
 	}
 }
 
@@ -324,7 +326,9 @@ void A_ImpMsAttack2 (AActor *self)
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (self))
 	{
-		P_DamageMobj (self->target, self, self, 5+(P_Random()&7), MOD_HIT);
+		int damage = 5+(P_Random()&7);
+		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_TraceBleed (damage, self->target, self);
 		return;
 	}
 	P_SpawnMissile (self, self->target, RUNTIME_CLASS(AHereticImpBall));

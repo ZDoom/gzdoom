@@ -1446,7 +1446,7 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	if (actor->picnum != 0xffff)
 	{
 		WallSpriteTile = actor->picnum;
-		flipx = false;
+		flipx = actor->renderflags & RF_XFLIP;
 	}
 	else
 	{
@@ -1662,7 +1662,6 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	// Draw it
 	R_CacheTileNum (WallSpriteTile, PU_CACHE);
 	dc_mask = 255;
-	dc_x = x1;
 
 	if (actor->renderflags & RF_YFLIP)
 	{
@@ -1679,6 +1678,8 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 
 	do
 	{
+		dc_x = x1;
+
 		switch (R_SetPatchStyle (actor->RenderStyle, actor->alpha,
 			actor->translation, actor->alphacolor))
 		{

@@ -238,6 +238,7 @@ void A_BruisAttack (AActor *self)
 		int damage = (P_Random (pr_bruisattack)%8+1)*10;
 		S_Sound (self, CHAN_WEAPON, "baron/melee", 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_TraceBleed (damage, self->target, self);
 		return;
 	}
 	

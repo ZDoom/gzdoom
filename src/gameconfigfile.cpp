@@ -46,6 +46,18 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", SHARE_DIR, true);
 #endif
 	}
+
+	// Set default search paths if none present
+	if (!SetSection ("FileSearch.Directories"))
+	{
+		SetSection ("FileSearch.Directories", true);
+#ifndef unix
+		SetValueForKey ("Path", "$PROGDIR", true);
+#else
+		SetValueForKey ("Path", SHARE_DIR, true);
+#endif
+		SetValueForKey ("Path", "$DOOMWADDIR", true);
+	}
 }
 
 FGameConfigFile::~FGameConfigFile ()

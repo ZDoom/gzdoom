@@ -35,6 +35,7 @@
 #define LOG1(x,y)		{ if (dbg) { fprintf (dbg, x, y); fflush (dbg); } }
 #define LOG2(x,y,z)		{ if (dbg) { fprintf (dbg, x, y, z); fflush (dbg); } }
 #define LOG3(x,y,z,zz)	{ if (dbg) { fprintf (dbg, x, y, z, zz); fflush (dbg); } }
+#define LOG4(x,y,z,a,b)	{ if (dbg) { fprintf (dbg, x, y, z, a, b); fflush (dbg); } }
 FILE *dbg;
 #else
 #define STARTLOG
@@ -43,6 +44,7 @@ FILE *dbg;
 #define LOG1(x,y)
 #define LOG2(x,y,z)
 #define LOG3(x,y,z,zz)
+#define LOG4(x,y,z,a,b)
 #endif
 
 // TYPES -------------------------------------------------------------------
@@ -65,16 +67,18 @@ public:
 	void UpdatePalette ();
 	bool SetGamma (float gamma);
 	bool SetFlash (PalEntry rgb, int amount);
+	void GetFlash (PalEntry &rgb, int &amount);
 	int GetPageCount ();
 	int QueryNewPalette ();
 	HRESULT GetHR () { return LastHR; }
+	bool IsFullscreen () { return !Windowed; }
 
 private:
 	bool CreateResources ();
 	void ReleaseResources ();
 	bool CreateSurfacesAttached ();
 	bool CreateSurfacesComplex ();
-	bool LockSurf (LPRECT lockrect);
+	enum LockSurfRes { NoGood, Good, GoodWasLost } LockSurf (LPRECT lockrect);
 	void RebuildColorTable ();
 	void CopyAndRemap ();
 	void MaybeCreatePalette ();
@@ -107,6 +111,7 @@ private:
 	bool BufferingNow;		// Most recent Lock was buffered
 	bool WasBuffering;		// Second most recent Lock was buffered
 	bool Write8bit;
+	bool UpdatePending;		// On final unlock, call Update()
 
 	friend class Win32Video;
 };
@@ -122,6 +127,7 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 extern HWND Window;
 extern IVideo *Video;
 extern BOOL AppActive;
+extern bool FullscreenReset;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -135,53 +141,21 @@ static IDirectDraw2 *DDraw;
 // CODE --------------------------------------------------------------------
 
 Win32Video::Win32Video (int parm)
+: m_CalledCoInitialize (false),
+  m_Modes (NULL),
+  m_Have320x200x8 (false),
+  m_Have320x240x8 (false),
+  m_IsFullscreen (false)
 {
 	STARTLOG
 
-	m_CalledCoInitialize = false;
-	m_Modes = NULL;
-	m_Have320x200x8 = false;
-	m_Have320x240x8 = false;
-	m_IsFullscreen = false;
-
-	InitDDraw ();
-}
-
-Win32Video::~Win32Video ()
-{
-	FreeModes ();
-
-	if (DDraw != NULL)
-	{
-		if (m_IsFullscreen)
-		{
-			DDraw->SetCooperativeLevel (NULL, DDSCL_NORMAL);
-		}
-		DDraw->Release();
-		DDraw = NULL;
-	}
-
-	if (m_CalledCoInitialize)
-	{
-		CoUninitialize ();
-		m_CalledCoInitialize = false;
-	}
-
-	ShowWindow (Window, SW_HIDE);
-
-	STOPLOG
-}
-
-void Win32Video::InitDDraw ()
-{
 	CBData cbdata;
 	HRESULT dderr;
 
 	CoInitialize (NULL);
 	m_CalledCoInitialize = true;
 
-	dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_INPROC_SERVER,
-		IID_IDirectDraw2, (void **)&DDraw);
+	dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_ALL, IID_IDirectDraw2, (void **)&DDraw);
 
 	if (FAILED(dderr))
 		I_FatalError ("Could not create DirectDraw object: %08x", dderr);
@@ -209,7 +183,9 @@ void Win32Video::InitDDraw ()
 	{
 		DDraw->Release ();
 		DDraw = NULL;
-		I_FatalError ("DirectDraw returned no display modes. Try rebooting.");
+		I_FatalError ("DirectDraw returned no display modes.\n\n"
+					  "If you started ZDoom from a fullscreen DOS box, run it from "
+					  "a DOS window instead. If that does not work, you may need to reboot.");
 	}
 	if (OSPlatform == os_Win95)
 	{
@@ -223,21 +199,66 @@ void Win32Video::InitDDraw ()
 	}
 }
 
-void Win32Video::GoFullscreen (bool yes)
+Win32Video::~Win32Video ()
 {
-	HRESULT hr;
+	FreeModes ();
 
-	LOG1 ("fullscreen: %d\n", yes);
-	if (m_IsFullscreen != yes)
+	if (DDraw != NULL)
 	{
-		m_IsFullscreen = yes;
-		hr = DDraw->SetCooperativeLevel (Window, !yes ? DDSCL_NORMAL :
+		if (m_IsFullscreen)
+		{
+			DDraw->SetCooperativeLevel (NULL, DDSCL_NORMAL);
+		}
+		DDraw->Release();
+		DDraw = NULL;
+	}
+
+	if (m_CalledCoInitialize)
+	{
+		CoUninitialize ();
+		m_CalledCoInitialize = false;
+	}
+
+	ShowWindow (Window, SW_HIDE);
+
+	STOPLOG
+}
+
+// Returns true if fullscreen, false otherwise
+bool Win32Video::GoFullscreen (bool yes)
+{
+	static const char *const yestypes[2] = { "windowed", "fullscreen" };
+	HRESULT hr[2];
+	int count;
+
+	if (m_IsFullscreen == yes)
+		return yes;
+
+	for (count = 0; count < 2; ++count)
+	{
+		LOG1 ("fullscreen: %d\n", yes);
+		hr[count] = DDraw->SetCooperativeLevel (Window, !yes ? DDSCL_NORMAL :
 			DDSCL_ALLOWMODEX | DDSCL_ALLOWREBOOT | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+		if (SUCCEEDED(hr[count]))
+		{
+			if (count != 0)
+			{
+// Ack! Cannot print because the screen does not exist right now.
+//				Printf ("Setting %s mode failed. Error %08x\n",
+//					yestypes[!yes], hr[0]);
+			}
+			m_IsFullscreen = yes;
+			return yes;
+		}
+		yes = !yes;
 	}
-	if (FAILED(hr))
-	{
-		I_FatalError ("Could not set %s mode: %08x", yes ? "fullscreen" : "windowed", hr);
-	}
+
+	I_FatalError ("Could not set %s mode: %08x\n",
+				  "Could not set %s mode: %08x\n",
+				  yestypes[yes], hr[0], yestypes[!yes], hr[1]);
+
+	// Appease the compiler, even though we never return if we get here.
+	return false;
 }
 
 // Mode enumeration --------------------------------------------------------
@@ -286,12 +307,9 @@ void Win32Video::FreeModes ()
 // This only changes how the iterator lists modes
 bool Win32Video::FullscreenChanged (bool fs)
 {
-	if (m_IteratorFS != fs)
-	{
-		m_IteratorFS = fs;
-		return true;
-	}
-	return false;
+	LOG1 ("FS-changed: %d\n", fs);
+	m_IteratorFS = fs;
+	return true;
 }
 
 int Win32Video::GetModeCount ()
@@ -333,8 +351,16 @@ bool Win32Video::NextMode (int *width, int *height)
 
 DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
 {
+	static int retry = 0;
+	static int owidth, oheight;
+
+	PalEntry flashColor;
+	int flashAmount;
+
+	LOG4 ("CreateFB %d %d %d %p\n", width, height, fullscreen, old);
+
 	if (old != NULL)
-	{ // Reuse the old framebuffer if it's attributes are the same
+	{ // Reuse the old framebuffer if its attributes are the same
 		DDrawFB *fb = static_cast<DDrawFB *> (old);
 		if (fb->Width == width &&
 			fb->Height == height &&
@@ -342,16 +368,79 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		{
 			return old;
 		}
+		old->GetFlash (flashColor, flashAmount);
 		delete old;
 	}
-	DDrawFB *fb = new DDrawFB (width, height, fullscreen);
-	if (!fb->IsValid ())
+	else
 	{
-		HRESULT hr = fb->GetHR ();
-		delete fb;
-		fb = NULL;
-		I_FatalError ("Could not create new screen (%d x %d): %08x", width, height, hr);
+		flashColor = 0;
+		flashAmount = 0;
 	}
+
+	DDrawFB *fb = new DDrawFB (width, height, fullscreen);
+	LOG1 ("New fb created @ %p\n", fb);
+
+	retry = 0;
+
+	// If we could not create the framebuffer, try again with slightly
+	// different parameters in this order:
+	// 1. Try with the closest size
+	// 2. Try in the opposite screen mode with the original size
+	// 3. Try in the opposite screen mode with the closest size
+	// This is a somewhat confusing mass of recursion here.
+
+	while (fb == NULL || !fb->IsValid ())
+	{
+		static HRESULT hr;
+
+		if (fb != NULL)
+		{
+			if (retry == 0)
+			{
+				hr = fb->GetHR ();
+			}
+			delete fb;
+
+			LOG1 ("fb is bad: %08x\n", hr);
+		}
+		else
+		{
+			LOG ("Could not create fb at all\n");
+		}
+
+		switch (retry)
+		{
+		case 0:
+			owidth = width;
+			oheight = height;
+		case 2:
+			// Try a different resolution. Hopefully that will work.
+			I_ClosestResolution (&width, &height, 8);
+			break;
+
+		case 1:
+			// Try changing fullscreen mode. Maybe that will work.
+			width = owidth;
+			height = oheight;
+			fullscreen = !fullscreen;
+			break;
+
+		default:
+			// I give up!
+			I_FatalError ("Could not create new screen (%d x %d): %08x", owidth, oheight, hr);
+		}
+
+		++retry;
+		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+	}
+
+	if (fb->IsFullscreen() != fullscreen)
+	{
+		Video->FullscreenChanged (!fullscreen);
+	}
+
+	fb->SetFlash (flashColor, flashAmount);
+
 	return fb;
 }
 
@@ -391,8 +480,9 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 	BufferingNow = false;
 	WasBuffering = false;
 	Write8bit = false;
+	UpdatePending = false;
+
 	FlashAmount = 0;
-	Windowed = !fullscreen;
 
 	for (i = 0; i < 256; i++)
 	{
@@ -405,7 +495,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 
 	MustBuffer = false;
 
-	static_cast<Win32Video *>(Video)->GoFullscreen (fullscreen);
+	Windowed = !(static_cast<Win32Video *>(Video)->GoFullscreen (fullscreen));
 
 	if (!CreateResources ())
 	{
@@ -887,6 +977,8 @@ bool DDrawFB::Lock (bool buffered)
 {
 	bool wasLost;
 
+	LOG2 ("  Lock (%d) <%d>\n", buffered, LockCount);
+
 	if (LockCount++ > 0)
 	{
 		return false;
@@ -902,7 +994,20 @@ bool DDrawFB::Lock (bool buffered)
 	}
 	else
 	{
-		wasLost = LockSurf (NULL);
+		LockSurfRes res = LockSurf (NULL);
+		
+		if (res == NoGood)
+		{ // We must have a surface locked before returning,
+		  // but we could not lock the hardware surface, so buffer
+		  // for this frame.
+			Buffer = MemBuffer;
+			Pitch = Width;
+			BufferingNow = true;
+		}
+		else
+		{
+			wasLost = (res == GoodWasLost);
+		}
 	}
 
 	wasLost = wasLost || (BufferingNow != WasBuffering);
@@ -917,12 +1022,18 @@ bool DDrawFB::Relock ()
 
 void DDrawFB::Unlock ()
 {
+	LOG1 ("Unlock     <%d>\n", LockCount);
+
 	if (LockCount == 0)
 	{
 		return;
 	}
 
-	if (--LockCount == 0)
+	if (UpdatePending && LockCount == 1)
+	{
+		Update ();
+	}
+	else if (--LockCount == 0)
 	{
 		if (!BufferingNow)
 		{
@@ -932,13 +1043,15 @@ void DDrawFB::Unlock ()
 	}
 }
 
-bool DDrawFB::LockSurf (LPRECT lockrect)
+DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect)
 {
 	HRESULT hr;
 	DDSURFACEDESC desc = { sizeof(desc), };
 	bool wasLost = false;
 
+	LOG ("LockSurf called\n");
 	hr = LockingSurf->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
+	LOG1 ("result = %08x\n", hr);
 
 	if (hr == DDERR_SURFACELOST)
 	{
@@ -949,12 +1062,14 @@ bool DDrawFB::LockSurf (LPRECT lockrect)
 			ReleaseResources ();
 			if (!CreateResources ())
 			{
-				I_FatalError ("Could not recreate framebuffer: %08x", LastHR);
+				LOG1 ("Could not recreate framebuffer: %08x", LastHR);
+				return NoGood;
 			}
 		}
 		else if (FAILED (hr))
 		{
-			I_FatalError ("Could not restore framebuffer: %08x", hr);
+			LOG1 ("Could not restore framebuffer: %08x", hr);
+			return NoGood;
 		}
 		if (BackSurf && FAILED(BackSurf->IsLost ()))
 		{
@@ -985,13 +1100,15 @@ bool DDrawFB::LockSurf (LPRECT lockrect)
 		}
 	}
 	if (FAILED (hr))
-	{
-		I_FatalError ("Could not lock framebuffer: %08x", hr);
+	{ // Still could not restore the surface, so don't draw anything
+		//I_FatalError ("Could not lock framebuffer: %08x", hr);
+		LOG1 ("Final result: %08x\n", hr);
+		return NoGood;
 	}
 	Buffer = (BYTE *)desc.lpSurface;
 	Pitch = desc.lPitch;
 	BufferingNow = false;
-	return wasLost;
+	return wasLost ? GoodWasLost : Good;
 }
 
 void DDrawFB::PartialUpdate (int x, int y, int width, int height)
@@ -1012,9 +1129,17 @@ void DDrawFB::Update ()
 	bool pchanged = false;
 	int i;
 
+	LOG1 ("Update     <%d>\n", LockCount);
+
 	if (LockCount != 1)
 	{
-		I_FatalError ("Framebuffer must have exactly 1 lock to be updated");
+		//I_FatalError ("Framebuffer must have exactly 1 lock to be updated");
+		if (LockCount > 0)
+		{
+			UpdatePending = true;
+			--LockCount;
+		}
+		return;
 	}
 
 	DrawRateStuff ();
@@ -1047,7 +1172,8 @@ void DDrawFB::Update ()
 			if (FlashAmount && GammaControl == NULL)
 			{
 				DoBlending ((PalEntry *)PalEntries, (PalEntry *)PalEntries,
-					256, Flash.b, Flash.g, Flash.r, FlashAmount);
+					256, GammaTable[Flash.b], GammaTable[Flash.g], GammaTable[Flash.r],
+					FlashAmount);
 			}
 			if (Palette != NULL)
 			{
@@ -1076,7 +1202,8 @@ void DDrawFB::Update ()
 			if (FlashAmount && GammaControl == NULL)
 			{
 				DoBlending ((PalEntry *)PalEntries, (PalEntry *)PalEntries,
-					256, Flash.r, Flash.g, Flash.b, FlashAmount);
+					256, GammaTable[Flash.r], GammaTable[Flash.g], GammaTable[Flash.b],
+					FlashAmount);
 			}
 			GPfx.SetPalette ((PalEntry *)PalEntries);
 		}
@@ -1100,25 +1227,24 @@ void DDrawFB::Update ()
 					// Use blit to copy/stretch to window's client rect
 					ClientToScreen (Window, (POINT*)&rect.left);
 					ClientToScreen (Window, (POINT*)&rect.right);
-					LockSurf (NULL);
-					GPfx.Convert (MemBuffer, Width,
-						Buffer, Pitch, Width, Height,
-						FRACUNIT, FRACUNIT, 0, 0);
-					LockingSurf->Unlock (NULL);
-					PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT, NULL);
+					if (LockSurf (NULL) != NoGood)
+					{
+						GPfx.Convert (MemBuffer, Width,
+							Buffer, Pitch, Width, Height,
+							FRACUNIT, FRACUNIT, 0, 0);
+						LockingSurf->Unlock (NULL);
+						PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT, NULL);
+					}
 				}
 			}
 		}
 		else if (AppActive)
 		{
-			LockSurf (NULL);
-			CopyFromBuff (MemBuffer, Width, Width, Height, Buffer);
-			//int y;
-			//for (y = 0; y < Height; y++)
-			//{
-			//	memset (Buffer + y*Pitch, (y*16+8)&255, Width);
-			//}
-			LockingSurf->Unlock (NULL);
+			if (LockSurf (NULL) != NoGood)
+			{
+				CopyFromBuff (MemBuffer, Width, Width, Height, Buffer);
+				LockingSurf->Unlock (NULL);
+			}
 		}
 	}
 	else
@@ -1127,6 +1253,7 @@ void DDrawFB::Update ()
 	}
 	Buffer = NULL;
 	LockCount = 0;
+	UpdatePending = false;
 
 	if (!Windowed && !MustBuffer)
 	{
@@ -1191,38 +1318,39 @@ void DDrawFB::CopyAndRemap ()
 	// under NT 4). Is there any way to stop this? As long as the other
 	// window can move while we draw, we might end up drawing on top of it.
 
-	LockSurf (&rgn->rdh.rcBound);
-
-	if (rect.right == Width && rect.bottom == Height)
+	if (LockSurf (&rgn->rdh.rcBound) != NoGood)
 	{
-		for (i = rgn->rdh.nCount, clip = (RECT *)rgn->Buffer; i != 0; i--, clip++)
+		if (rect.right == Width && rect.bottom == Height)
 		{
-			GPfx.Convert (
-				MemBuffer + (clip->left - rect.left) + (clip->top - rect.top) * Width, Width,
-				Buffer + (clip->left - rgn->rdh.rcBound.left) + (clip->top - rgn->rdh.rcBound.top) * Pitch, Pitch,
-				clip->right - clip->left, clip->bottom - clip->top,
-				FRACUNIT, FRACUNIT, 0, 0);
+			for (i = rgn->rdh.nCount, clip = (RECT *)rgn->Buffer; i != 0; i--, clip++)
+			{
+				GPfx.Convert (
+					MemBuffer + (clip->left - rect.left) + (clip->top - rect.top) * Width, Width,
+					Buffer + (clip->left - rgn->rdh.rcBound.left) + (clip->top - rgn->rdh.rcBound.top) * Pitch, Pitch,
+					clip->right - clip->left, clip->bottom - clip->top,
+					FRACUNIT, FRACUNIT, 0, 0);
+			}
 		}
-	}
-	else
-	{
-		fixed_t xstep = (Width << FRACBITS) / rect.right;
-		fixed_t ystep = (Height << FRACBITS) / rect.bottom;
-
-		for (i = rgn->rdh.nCount, clip = (RECT *)rgn->Buffer; i != 0; i--, clip++)
+		else
 		{
-			fixed_t xfrac = (clip->left - rect.left) * xstep;
-			fixed_t yfrac = (clip->top - rect.top) * ystep;
+			fixed_t xstep = (Width << FRACBITS) / rect.right;
+			fixed_t ystep = (Height << FRACBITS) / rect.bottom;
 
-			GPfx.Convert (
-				MemBuffer + (xfrac >> FRACBITS) + (yfrac >> FRACBITS) * Width, Width,
-				Buffer + (clip->left - rgn->rdh.rcBound.left) + (clip->top - rgn->rdh.rcBound.top) * Pitch, Pitch,
-				clip->right - clip->left, clip->bottom - clip->top,
-				xstep, ystep, xfrac & (FRACUNIT-1), yfrac & (FRACUNIT-1));
+			for (i = rgn->rdh.nCount, clip = (RECT *)rgn->Buffer; i != 0; i--, clip++)
+			{
+				fixed_t xfrac = (clip->left - rect.left) * xstep;
+				fixed_t yfrac = (clip->top - rect.top) * ystep;
+
+				GPfx.Convert (
+					MemBuffer + (xfrac >> FRACBITS) + (yfrac >> FRACBITS) * Width, Width,
+					Buffer + (clip->left - rgn->rdh.rcBound.left) + (clip->top - rgn->rdh.rcBound.top) * Pitch, Pitch,
+					clip->right - clip->left, clip->bottom - clip->top,
+					xstep, ystep, xfrac & (FRACUNIT-1), yfrac & (FRACUNIT-1));
+			}
 		}
-	}
 
-	LockingSurf->Unlock (&rgn->rdh.rcBound);
+		LockingSurf->Unlock (&rgn->rdh.rcBound);
+	}
 }
 
 PalEntry *DDrawFB::GetPalette ()
@@ -1237,6 +1365,7 @@ void DDrawFB::UpdatePalette ()
 
 bool DDrawFB::SetGamma (float gamma)
 {
+	LOG1 ("SetGamma %g\n", gamma);
 	Gamma = gamma;
 	NeedGammaUpdate = true;
 	return true;
@@ -1244,19 +1373,21 @@ bool DDrawFB::SetGamma (float gamma)
 
 bool DDrawFB::SetFlash (PalEntry rgb, int amount)
 {
+	Flash = rgb;
+	FlashAmount = amount;
 	if (GammaControl != NULL)
 	{
 		// FIXME
-		Flash = rgb;
-		FlashAmount = amount;
 	}
 	else
 	{
-		Flash.r = GammaTable[rgb.r];
-		Flash.g = GammaTable[rgb.g];
-		Flash.b = GammaTable[rgb.b];
-		FlashAmount = amount;
 		NeedPalUpdate = true;
 	}
 	return true;
+}
+
+void DDrawFB::GetFlash (PalEntry &rgb, int &amount)
+{
+	rgb = Flash;
+	amount = FlashAmount;
 }

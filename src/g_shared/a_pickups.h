@@ -45,6 +45,8 @@ typedef enum
 
 STREAM_ENUM (ammotype_t)
 
+#define MAX_MANA	200
+
 extern const char *AmmoPics[NUMAMMO];
 
 typedef enum

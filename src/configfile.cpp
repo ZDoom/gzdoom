@@ -401,3 +401,15 @@ void FConfigFile::FConfigEntry::SetValue (const char *value)
 	Value = new char[strlen (value)+1];
 	strcpy (Value, value);
 }
+
+void FConfigFile::GetPosition (FConfigFile::Position &pos) const
+{
+	pos.Section = CurrentSection;
+	pos.Entry = CurrentEntry;
+}
+
+void FConfigFile::SetPosition (const FConfigFile::Position &pos)
+{
+	CurrentSection = pos.Section;
+	CurrentEntry = pos.Entry;
+}

@@ -140,7 +140,7 @@ static void R_InstallSpriteLump (int lump, unsigned frame, char rot, BOOL flippe
         // allows doom to have a "no value set yet" boolean value!
 		int r;
 
-		for (r = 15; r >= 0; r--)
+		for (r = 14; r >= 0; r -= 2)
 		{
 			if (sprtemp[frame].lump[r] == -1)
 			{
@@ -284,7 +284,7 @@ void R_InitSpriteDefs ()
 	{
 		spritename = sprites[i].name;
 		memset (sprtemp, -1, sizeof(sprtemp));
-		for (int j = 0; j < 16; ++j)
+		for (int j = 0; j < MAX_SPRITE_FRAMES; ++j)
 		{
 			sprtemp[j].flip = 0;
 		}
@@ -446,7 +446,7 @@ void R_InitSkins (void)
 		}
 
 		memset (sprtemp, -1, sizeof(sprtemp));
-		for (k = 0; k < 16; ++k)
+		for (k = 0; k < MAX_SPRITE_FRAMES; ++k)
 		{
 			sprtemp[k].flip = 0;
 		}
@@ -723,12 +723,14 @@ void R_DrawMaskedColumn (column_t *column, int baseclip)
 			{
 				dc_texturefrac = (dc_yl*dc_iscale) - (column->topdelta << FRACBITS)
 					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
-				if (dc_texturefrac >= column->length << FRACBITS)
+				while (dc_texturefrac >= column->length << FRACBITS)
 				{
 					if (++dc_yl > dc_yh)
-						continue;
+						break;
 					dc_texturefrac += dc_iscale;
 				}
+				if (dc_yl > dc_yh)
+					continue;
 			}
 			else
 			{
@@ -933,18 +935,20 @@ void R_ProjectSprite (AActor *thing)
 	spriteframe_t*		sprframe;
 	int 				lump;
 	
-	unsigned			rot;
 	WORD 				flip;
 	
 	vissprite_t*		vis;
 	
-	angle_t 			ang;
 	fixed_t 			iscale;
 
 	sector_t*			heightsec;			// killough 3/27/98
 
-	if (thing->renderflags & RF_INVISIBLE || thing->alpha == 0)
+	if ((thing->renderflags & RF_INVISIBLE) ||
+		thing->RenderStyle == STYLE_None ||
+		(thing->RenderStyle >= STYLE_Translucent && thing->alpha == 0))
+	{
 		return;
+	}
 
 	// transform the origin point
 	tr_x = thing->x - viewx;
@@ -993,17 +997,15 @@ void R_ProjectSprite (AActor *thing)
 	if (sprframe->rotate)
 	{
 		// choose a different rotation based on player view
-		ang = R_PointToAngle (thing->x, thing->y);
-//		rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
-		rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>28;
-//		rot <<= 1;
+		angle_t ang = R_PointToAngle (thing->x, thing->y);
+		unsigned rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>28;
 		lump = sprframe->lump[rot];
 		flip = sprframe->flip & (1 << rot);
 	}
 	else
 	{
 		// use single rotation for all views
-		lump = sprframe->lump[rot = 0];
+		lump = sprframe->lump[0];
 		flip = sprframe->flip & 1;
 	}
 

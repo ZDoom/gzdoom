@@ -64,7 +64,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		return;
 	}
 
-	// See if this is a regular linetype
+	// Check if this is a regular linetype
 	if (tlate[0] == 'N' && tlate[1] == 'O' && tlate[2] == 'R' && tlate[3] == 'M')
 	{
 		int count = (tlate[4] << 8) | tlate[5];
@@ -105,7 +105,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		}
 	}
 
-	// See if this is a BOOM generalized linedef
+	// Check if this is a BOOM generalized linetype
 	if (tlate[0] == 'B' && tlate[1] == 'O' && tlate[2] == 'O' && tlate[3] == 'M')
 	{
 		int count = (tlate[4] << 8) | tlate[5];

@@ -1,13 +1,234 @@
+September 17, 2001
+- Added cl_missiledecals cvar to turn off decals left behind by missile
+  explosions.
+- Added cl_bloodsplats cvar to turn off blood splats while leaving other
+  decals alone.
+- Added -timerdelay parameter to specify how fast the game timer tics (in
+  milliseconds). This is just here so that when I occasionally get demos
+  illustrating problems, I can easily fast forward through them.
+- Made A3D the default for snd_3d again, because A3D has one more hardware
+  channel than DirectSound on my Vortex2 and because it seems to work
+  better than DirectSound.
+- Changed I_StartSound3D() so that it starts sounds on a specific channel
+  instead of using FSOUND_FREE, because it loses sounds with DirectSound
+  if I let FMOD pick a channel. Oddly, FSOUND_FREE with A3D works fine.
+  [Nevermind, that doesn't work with DirectSound, either. It seemed to be
+  working the first time I tried it, but when I tried again later, it
+  was not working anymore.] [Another footnote: A3D seems to position the
+  sounds wrong that DirectSound does not play. What's going on?]
+- Let I_SetChannels() change the number of channels available so that all
+  the available hardware channels can be used if using 3D audio.
+- Made CPU speed detection more accurate.
+- Added underwater reverb for hardware 3D sound.
+- Updated sound code for FMOD 3.4.
+- Fixed timer resolution checking in WinMain--my parentheses were misplaced.
+- Put SectorSilencer back at doomednum 9082. I don't know why I had changed
+  it to 9002.
+
+September 15, 2001
+- Fixed: Monsters that reached the end of a patrol path did not have their
+  reactiontime reset, so they would wait a very long time before attacking.
+- Fixed: STYLE_Shaded ignored special colormaps like invulnerability.
+- Added support for autoloading wads through the config file. Create a
+  section called [Game.Autoload] and place "Path=<file>" beneath it for each
+  file to be automatically loaded. They are loaded after the files in the
+  skins directory and before any files on the command line. Game can be
+  Global to load the files for any game. Global files are added before game-
+  specific files.
+- Fixed StreamSong when using 3D sound: The stream was not created with
+  FSOUND_2D, so it was being positioned in the world.
+
+September 14, 2001
+- Made the ACS spawn and spawnspot commands automatically prepend A to their
+  type names. They remain untested, however.
+- Added decals for all remaining Doom things. Heretic is next.
+- Fixed pitch calculation in P_TraceBleed() when a missile's velocity is used
+  to determine pitch.
+
+September 12, 2001
+- Added decal stretchers, sliders, combiners, and colorchangers. Also added
+  a few more decals.
+
+September 11, 2001
+- Fixed FDecalLib::GetDecalByNum() and ::GetDecalByName() so that they do not
+  crash if the decal is not found.
+- Tried putting back in the BSP-based sight checking code that was in the
+  Linux Doom 1.10 source, and the result was quite surprising. Using the BSP
+  to check sight was actually slower than using the blockmap, sometimes
+  significantly so--Vrack 2 spent between 4 and 6 times as much time checking
+  site using the BSP as it did without. In the best case, the BSP routines
+  were about as fast as the blockmap ones, so I took the BSP routines back
+  out, because they offer no benefit over the Hexen code I had ben using for
+  some time now.
+- Fixed: Maps with starts for players 5-8 would trample over memory
+  when saving the starts for those players.
+- Added blood splats for instant hit weapons.
+
+September 10, 2001
+- Made alpha affect STYLE_Shade.
+- Fixed: rt_shaded4cols sometimes drew texels too dark because it
+  calculated the value of fill wrong.
+- Fixed: Decals that used picnums (i.e. all of them) could not be flipped
+  horizontally.
+- Stopped using actors' memory locations as their phase shift for float
+  bob motion. This works fine for single player, but in multiplayer,
+  there's no way to ensure that the same actor will have the same phase
+  on different machines. Now I use the random number generator instead.
+
+September 8, 2001
+- Added decal faders so that decals that are likely to bog things down
+  (such as the plasma rifle's) can disappear sooner than if they wait for
+  cl_maxdecals to be hit and get cycled out.
+- Added the ability for missiles to leave behind decals on walls.
+- Fixed a sub-pixel alignment problem for vertically flipped sprites.
+- Fixed: Adding bots and then changing the map could crash because the bot's
+  "player" was still carrying around the actor from the previous level.
+- Bumped the barrel respawn time back up to 1050 tics--forgot I had dropped
+  it down to 50 for testing.
+- Added support for loading sounds from RFF files so that I can have the
+  Bloodbath announcer.
+
+September 7, 2001
+- Fixed: Dehacked patches that set weapons to ammo type 5 (what was once
+  am_noammo) would use am_crossbow, because that is type 5 now.
+
+September 5, 2001
+- Fixed: Trying to alias a command through the .ini file would crash
+  because the game would actually try to do it instead of giving a warning.
+
+September 4, 2001
+- Added the falling splat sound to A_PlayerScream().
+- Changed skin semantics in AActor::SetState() again so that players can
+  actually burn because the burn states use the FDTH sprite instead of
+  the normal player sprite. Now, if the actor is not a player, or the
+  player does not have a skin, or the state's sprite is not the same as
+  the sprite the player was spawned with, the state's sprite will be
+  used. Otherwise, the skin's sprite will be used.
+- Fixed burning and icy deaths to not crash.
+- Fixed a stack overflow in Heretic/Hexen that could happen after death
+  because A_Chase and A_Look would repeatedly cause the other function
+  to execute, ad nauseum.
+- Added Hexen's Ice Guy/Ice Golem.
+- The SkyboxViewPoint's angle is now used to adjust the yaw when drawing
+  a skybox. This means you can rotate a skybox by rotating its viewpoint
+  (which is courrently only possible with an actor mover and several
+  overlapping interpolation points).
+- Added simple Dolby Pro Logic surround support to s_sound.cpp using code
+  from a post on the message board.
+
+September 3, 2001
+- Fixed: The alias command will no longer try to set or remove aliases for
+  normal console commands.
+- Fixed an error in C_RemoveTabCommand() that moved one extra name down
+  at the end of the array.
+- Added Hexen's Serpent/Water Lurker, Centaur, Demons, and mana.
+
+September 1, 2001
+- Reintroduced MF_CRASHED, this time as MF3_CRASHED, so that I don't need a
+  special case to crash FireDemons that die on the floor.
+- Added Hexen's FireDemon/Fire Gargoyle/Imp, just because it's been so long
+  since I added anything from Hexen.
+
+August 29, 2001
+- Changed ADecal::StickToWall() to add decals to the end of the list so that
+  new decals get drawn on top of old ones.
+- Fixed: Actors with STYLE_None were still being projected to the screen,
+  needlessly wasting time.
+
+August 28, 2001
+- Fixed: Quicksaving into an existing slot would rename the quicksave to the
+  name of whatever was saved most recently instead of keeping the name
+  of the quicksave slot unchanged.
+- Fixed: PWADs that replaced sprite frames that originally only had a rotation
+  0 with multiple rotations would only show the first rotation.
+- Fixed: When the light to dark part of R_CalcTiltedLighting() clamped the
+  end of the range, it set lightfiller to a value calculated with
+  (NUMCOLORMAPS-1)<<FRACBITS. FRACBITS should have been COLORMAPSHIFT. The
+  result was strange colors at best and crashes at worst.
+- Fixed: Shuffling playlists crashed because I failed to clamp the result
+  of rand() to the number of songs in the playlist. Whoops!
+- Changed R_SetupFrame() so that the chasecam will only be used if the
+  current camera has an image.
+- Changed Win32 mouse grabbing so that when the mouse becomes ungrabbed,
+  it will return to the same place it was at before being grabbed.
+- Changed win32/i_input.cpp so that deactivating the window will pause the
+  game if the player is not in a network game.
+- Fixed Thing_Destroy to just hurt things enough to kill them instead of
+  giving them 10000 damage like massacre does. (This is the way it is
+  supposed to be.) For people who liked the accidental behavior, I added a
+  second argument that can be used to enable the massacre-like effect.
+- Fixed some entries to doomxlat.txt: Generalized floors and ceilings
+  can be set to allow monster activation now. Changed the delays for
+  generalized doors so that they more closely match the actual tic counts
+  used by BOOM instead of rounding them to the nearest second.
+- Fixed: Palette flashes were not carried over when creating a new frame
+  buffer. Also fixed palette flashes being gamma adjusted multiple times
+  whenever the framebuffer resources need to be recreated.
+- Fixed: After adding 16 sprite rotations, the player setup menu showed
+  the side view instead of the back view.
+
+August 20, 2001
+- Fixed: Sprite frames beyond P were always flipped.
+
+August 18, 2001
+- Fixed some sizes in Net_SkipCommand()--should elimate some out of sync
+  errors.
+- Reimplemented "give weapons" by having it silently spawn each weapon under
+  the player and faking a touch so that the player picks it up. Similarly,
+  the give command can now be passed actor names and will function like a
+  summon that automatically picks up the item spawned.
+- Changed Win32Video::GoFullscreen() and Win32Video::CreateFrameBuffer() so
+  that they try harder to allow the game to continue without putting up an
+  error. This is not tested very well, because I never had any problems with
+  it. Hopefully it will work as desired.
+- Changed DDrawFB::Update() and DDrawFB::Unlock() so that calling Update() when
+  the LockCount is greater than 1 no longer bombs out with an error. Instead,
+  it sets a flag that tells Unlock() to call Update() the next time LockCount
+  would drop from 1 to 0. This allows Update() to be safely used as an Unlock()
+  when the image on screen is desired to be updated but it cannot be
+  guaranteed that there is only one lock on the surface.
+- Changed R_SetupFrame() to not use floorz and ceilingz to clip viewz, because
+  not everything that can be viewed through sets these. (Specifically, moving
+  cameras do not touch them, and there's really no reason to bother setting
+  them, because they're more for physics than rendering.
+- New: DDrawFB::LockSurf() is not required to successfully lock the frame
+  buffer. This should help computers where Alt-Tab did not work before (though
+  I cannot test it myself, because I never had problems with it).
+- Remembered why I didn't use DIK_PAUSE as the pause key. DirectInput support
+  for the pause key is not universal, so I have to use the standard Windows
+  messages to detect it. Moved KEY_PAUSE back to 255, where I had it before.
+- Fixed: Quickload crashed if a game had not previously been quicksaved in the
+  same session.
+
+August 16, 2001
+- S_StartSound() keeps track of the sound id passed to it before it
+  follows links, so now S_GetSoundPlayingInfo() can use that to determine if
+  a sound is playing or not without having to resolve links.
+- Changed GrabMouse_Win32() to restrict the pointer to the window's client
+  rect and not the window's entire rect so the user can't accidentally click
+  buttons in the window's title bar while moving the mouse rapidly.
+- WndProc() now catches WM_MOVE and WM_SIZE messages to better ease
+  transitions to/from fullscreen when not using DirectInput.
+- Fixed: The mouse was not being grabbed if DirectInput was selected with
+  in_mouse. I just added "NativeMouse = true;" to the beginning of
+  I_InitInput() to force I_CheckNativeMouse() to grab the mouse when it
+  gets called.
+- Fixed: A_CorpseExplode used the exploding actor as the base for CorpseBit
+  frames and not the CorpseBit itself.
+
 August 15, 2001
-- Fixed: Wind in Hexen played wrong because it used S_GetSoundPlayingInfo(),
-  which has no way of following sound links. And now that I have random
-  sounds, I can't think of an easy way to make it work with those. Fixed it
-  by adding S_IsActorPlayingSomething() and using that instead. Changed a
-  few other places that called S_GetSoundPlayingInfo() to match.
+- Fixed: The wind sound in Hexen played wrong because it used
+  S_GetSoundPlayingInfo(), which has no way of following sound links. And now
+  that I have random sounds, I can't think of an easy way to make it work with
+  those. Fixed it by adding S_IsActorPlayingSomething() and using that
+  instead. Changed a few other places that called S_GetSoundPlayingInfo() to
+  match.
 - Fixed: Animating flats with an ANIMDEFS lump was broken.
 - Fixed: The values returned by MakeKey() changed with each rebuild because
   I was using the address of get_crc_table() as the CRC table instead of
-  actually calling the function to get the CRC table's location.
+  actually calling the function to get the CRC table's location. Now klook and
+  mlook hash uniquely without any need for twiddling the return value from
+  the CRC routine.
 - Changed falling damage so that it can't kill you if you have god mode on.
 - Added the filterstarts mapinfo flag to enable filtering out player starts
   based on skill/gametype.

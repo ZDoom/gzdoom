@@ -35,7 +35,6 @@ class player_s;
 // Item stuff: (this is d_items.h, right?)
 
 // gitem_t->flags
-#define IT_WEAPON				1				// use makes active weapon
 #define IT_AMMO 				2
 #define IT_ARMOR				4
 #define IT_KEY					8

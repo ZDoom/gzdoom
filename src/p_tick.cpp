@@ -47,6 +47,8 @@ void P_Ticker (void)
 	if (paused)
 		return;
 
+	P_ResetSightCounters (false);
+
 	// pause if in menu or console and at least one tic has been run
 	if ( !netgame
 		 && (menuactive || ConsoleState == c_down || ConsoleState == c_falling)

@@ -884,7 +884,12 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 	const char *typestr = level.behavior->LookupString (type);
 	if (typestr == NULL)
 		return 0;
-	const TypeInfo *info = TypeInfo::FindType (typestr);
+	char name[64];
+	name[0] = 'A';
+	name[63] = 0;
+	strncpy (name+1, typestr, 62);
+
+	const TypeInfo *info = TypeInfo::FindType (name);
 	AActor *actor = NULL;
 
 	if (info != NULL)

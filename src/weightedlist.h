@@ -31,7 +31,7 @@ class TWeightedList
 		}
 
 		void AddEntry (T value, WORD weight);
-		T PickEntry ();
+		T PickEntry () const;
 
 	private:
 		Choice<T> *Choices;
@@ -64,7 +64,7 @@ void TWeightedList<T>::AddEntry (T value, WORD weight)
 }
 
 template<class T>
-T TWeightedList<T>::PickEntry ()
+T TWeightedList<T>::PickEntry () const
 {
 	BYTE randomnum = P_Random (RandomClass);
 	Choice<T> *choice = Choices;

@@ -251,12 +251,12 @@ void STACK_ARGS R_CalcTiltedLighting (fixed_t lval, fixed_t lend, int width)
 			}
 			if (i > width)
 				return;
-			while (i <= width && lval < NUMCOLORMAPS*FRACUNIT)
+			while (i <= width && lval < (NUMCOLORMAPS-1)*FRACUNIT)
 			{
 				tiltlighting[i++] = basecolormap + ((lval >> FRACBITS) << COLORMAPSHIFT);
 				lval += lstep;
 			}
-			lightfiller = basecolormap + (NUMCOLORMAPS-1)*FRACUNIT;
+			lightfiller = basecolormap + ((NUMCOLORMAPS-1) << COLORMAPSHIFT);
 		}
 	}
 
@@ -960,6 +960,7 @@ void R_DrawSkyBoxes ()
 	fixed_t savedx = viewx;
 	fixed_t savedy = viewy;
 	fixed_t savedz = viewz;
+	angle_t savedangle = viewangle;
 	ptrdiff_t savedvissprite_p = vissprite_p - vissprites;
 	ptrdiff_t savedds_p = ds_p - drawsegs;
 	ptrdiff_t savedlastopening = lastopening;
@@ -984,6 +985,7 @@ void R_DrawSkyBoxes ()
 		viewx = sky->x;
 		viewy = sky->y;
 		viewz = sky->z;
+		R_SetViewAngle (savedangle + sky->angle);
 		validcount++;	// Make sure we see all sprites
 
 		r_visibility = sky->args[0] * 0.25f;
@@ -1044,6 +1046,7 @@ void R_DrawSkyBoxes ()
 	viewz = savedz;
 	r_visibility = savedvisibility;
 	extralight = savedextralight;
+	R_SetViewAngle (savedangle);
 
 	r_InSkyBox = false;
 

@@ -116,7 +116,7 @@ void FPlayList::Shuffle ()
 
 	for (i = 0; i < NumSongs; ++i)
 	{
-		swap (Songs[i], Songs[rand()]);
+		swap (Songs[i], Songs[(rand() % (NumSongs - i)) + i]);
 	}
 	Position = 0;
 }

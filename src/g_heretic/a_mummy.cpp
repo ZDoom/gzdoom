@@ -227,7 +227,9 @@ void A_MummyAttack (AActor *actor)
 	}
 	if (P_CheckMeleeRange (actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(2), MOD_HIT);
+		int damage = HITDICE(2);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 		S_Sound (actor, CHAN_WEAPON, "mummy/attack2", 1, ATTN_NORM);
 		return;
 	}
@@ -253,7 +255,9 @@ void A_MummyAttack2 (AActor *actor)
 	//S_StartSound(actor, actor->info->attacksound);
 	if (P_CheckMeleeRange (actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(2), MOD_HIT);
+		int damage = HITDICE(2);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
 	mo = P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(AMummyFX1));

@@ -84,8 +84,7 @@ FState AHereticPlayer::States[] =
 	S_BRIGHT (FDTH, 'P',	4, NULL 						, &States[S_PLAY_FDTH+16]),
 	S_BRIGHT (FDTH, 'Q',	5, NULL 						, &States[S_PLAY_FDTH+17]),
 	S_BRIGHT (FDTH, 'R',	4, NULL 						, &States[S_PLAY_FDTH+18]),
-	S_NORMAL (ACLO, 'E',   35, A_CheckBurnGone				, &States[S_PLAY_FDTH+19]),
-	S_NORMAL (ACLO, 'E',	8, NULL 						, NULL)
+	S_NORMAL (ACLO, 'E',   35, A_CheckBurnGone				, &States[S_PLAY_FDTH+18])
 };
 
 IMPLEMENT_ACTOR (AHereticPlayer, Heretic, -1, 0)
@@ -134,9 +133,6 @@ FState ABloodySkull::States[] =
 
 #define S_BLOODYSKULLX1 (S_BLOODYSKULL+5)
 	S_NORMAL (BSKL, 'F',   16, A_CheckSkullDone 			, &States[S_BLOODYSKULLX1]),
-
-#define S_BLOODYSKULLX2 (S_BLOODYSKULLX1+1)
-	S_NORMAL (BSKL, 'F', 1050, NULL 						, NULL)
 };
 
 IMPLEMENT_ACTOR (ABloodySkull, Heretic, -1, 0)
@@ -204,7 +200,7 @@ void A_CheckSkullDone (AActor *actor)
 {
 	if (actor->special2 == 666)
 	{
-		actor->SetState (&ABloodySkull::States[S_BLOODYSKULLX2]);
+		actor->Destroy ();
 	}
 }
 
@@ -218,7 +214,7 @@ void A_CheckBurnGone (AActor *actor)
 {
 	if (actor->special2 == 666)
 	{
-		actor->SetState (&AHereticPlayer::States[S_PLAY_FDTH+19]);
+		actor->Destroy ();
 	}
 }
 

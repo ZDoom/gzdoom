@@ -105,6 +105,7 @@ void D_DoAdvanceDemo ();
 
 void D_DoomLoop ();
 static void D_AddFile (const char *file);
+static const char *BaseFileSearch (const char *file, const char *ext);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -821,6 +822,43 @@ void D_AddFile (const char *file)
 
 //==========================================================================
 //
+// D_AddConfigWads
+//
+// Adds all files in the specified config file section.
+//
+//==========================================================================
+
+void D_AddConfigWads (const char *section)
+{
+	if (GameConfig->SetSection (section))
+	{
+		const char *key;
+		const char *value;
+		FConfigFile::Position pos;
+
+		while (GameConfig->NextInSection (key, value))
+		{
+			if (stricmp (key, "Path") == 0)
+			{
+				// BaseFileSearch resets GameConfig's position, so remember it
+				GameConfig->GetPosition (pos);
+
+				const char *wadfile = BaseFileSearch (value, "wad");
+
+				if (wadfile != NULL)
+				{
+					D_AddFile (wadfile);
+				}
+
+				// Reset GameConfig's position to get next wad
+				GameConfig->SetPosition (pos);
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // D_AddDirectory
 //
 // Add all .wad files in a directory. Does not descend into subdirectories.
@@ -957,21 +995,20 @@ static EIWADType ScanIWAD (const char *iwad)
 	if ( (f = fopen (iwad, "rb")) )
 	{
 		fread (&header, sizeof(header), 1, f);
-		if (header.identification == IWAD_ID ||
-			header.identification == PWAD_ID)
+		if (header.Magic == IWAD_ID || header.Magic == PWAD_ID)
 		{
-			header.numlumps = LONG(header.numlumps);
-			if (0 == fseek (f, LONG(header.infotableofs), SEEK_SET))
+			header.NumLumps = LONG(header.NumLumps);
+			if (0 == fseek (f, LONG(header.InfoTableOfs), SEEK_SET))
 			{
-				for (i = 0; i < (size_t)header.numlumps; i++)
+				for (i = 0; i < (size_t)header.NumLumps; i++)
 				{
-					filelump_t lump;
+					wadlump_t lump;
 					size_t j;
 
 					if (0 == fread (&lump, sizeof(lump), 1, f))
 						break;
 					for (j = 0; j < NUM_CHECKLUMPS; j++)
-						if (strnicmp (lump.name, checklumps[j], 8) == 0)
+						if (strnicmp (lump.Name, checklumps[j], 8) == 0)
 							lumpsfound[j]++;
 				}
 			}
@@ -1251,74 +1288,76 @@ static EIWADType IdentifyVersion (void)
 //
 // BaseFileSearch
 //
+// If a file does not exist at <file>, looks for it in the directories
+// specified in the config file. Returns the path to the file, if found,
+// or NULL if it could not be found.
+//
 //==========================================================================
 
 static const char *BaseFileSearch (const char *file, const char *ext)
 {
-	static char wad[256];
+	static char wad[PATH_MAX];
 
-	if (!FileExists (file))
+	if (FileExists (file))
 	{
-#ifndef unix
-		sprintf (wad, "%s%s", progdir, file);
-		if (!FileExists (wad))
-		{
-			char *doomwaddir = getenv ("DOOMWADDIR");
-			if (doomwaddir)
-			{
-				char dir[256];
-				strcpy (dir, doomwaddir);
-				FixPathSeperator (dir);
-				sprintf (wad, "%s%s%s",
-						 dir,
-						 dir[strlen (dir) - 1] != '/' ? "/" : "",
-						 file);
-				if (!FileExists (wad))
-					goto retry;
-			}
-			else
-				goto retry;
-		}
-#else
-		sprintf (wad, "%s%s", SHARE_DIR, file);
-		if (!FileExists (wad))
-		{
-			char *uwad = GetUserFile (file);
-			if (!FileExists (uwad))
-			{
-				char *doomwaddir = getenv ("DOOMWADDIR");
-				delete[] uwad;
-				if (doomwaddir)
-				{
-					char dir[256];
-					strcpy (dir, doomwaddir);
-					FixPathSeperator (dir);
-					sprintf (wad, "%s%s%s",
-							 dir,
-							 dir[strlen (dir) - 1] != '/' ? "/" : "",
-							 file);
-					if (!FileExists (wad))
-						goto retry;
-				}
-				else
-					goto retry;
-			}
-			else
-			{
-				strcpy (wad, uwad);
-				delete[] uwad;
-			}
-		}
-#endif
-	}
-	else
 		return file;
-	return wad;
+	}
 
- retry:
-	if (ext)
+	if (GameConfig->SetSection ("FileSearch.Directories"))
 	{
-		char tmp[256];
+		const char *key;
+		const char *value;
+
+		while (GameConfig->NextInSection (key, value))
+		{
+			if (stricmp (key, "Path") == 0)
+			{
+				const char *dir;
+				char *homepath = NULL;
+
+				if (*value == '$')
+				{
+					if (stricmp (value + 1, "progdir") == 0)
+					{
+						dir = progdir;
+					}
+					else
+					{
+						dir = getenv (value + 1);
+					}
+				}
+#ifdef unix
+				else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
+				{
+					homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
+					dir = homepath;
+				}
+#endif
+				else
+				{
+					dir = value;
+				}
+				if (dir != NULL)
+				{
+					sprintf (wad, "%s%s%s", dir, dir[strlen (dir) - 1] != '/' ? "/" : "", file);
+					if (homepath != NULL)
+					{
+						delete[] homepath;
+						homepath = NULL;
+					}
+					if (FileExists (wad))
+					{
+						return wad;
+					}
+				}
+			}
+		}
+	}
+
+	// Retry, this time with a default extension
+	if (ext != NULL)
+	{
+		char tmp[PATH_MAX];
 		strcpy (tmp, file);
 		DefaultExtension (tmp, ext);
 		return BaseFileSearch (tmp, NULL);
@@ -1364,7 +1403,6 @@ void D_DoomMain (void)
 	int p, flags;
 	char file[256];
 	char *v;
-	bool modifiedgame;
 
 #if defined(_MSC_VER) || defined(__GNUC__)
 	TypeInfo::StaticInit ();
@@ -1417,15 +1455,27 @@ void D_DoomMain (void)
 		D_AddDirectory (file);
 	}
 
-	modifiedgame = false;
+	if (!(gameinfo.flags & GI_SHAREWARE))
+	{
+		// Add common (global) wads
+		D_AddConfigWads ("Global.Autoload");
+
+		// Add game-specific wads
+		sprintf (file, "%s.Autoload", GameNames[gameinfo.gametype]);
+		D_AddConfigWads (file);
+	}
 
 	DArgs *files = Args.GatherFiles ("-file", ".wad", true);
 	if (files->NumArgs() > 0)
 	{
+		// Check for -file in shareware
+		if (gameinfo.flags & GI_SHAREWARE)
+		{
+			I_FatalError ("You cannot -file with the shareware version. Register!");
+		}
+
 		// the files gathered are wadfile/lump names
-		modifiedgame = true;			// homebrew levels
-		int i;
-		for (i = 0; i < files->NumArgs(); i++)
+		for (int i = 0; i < files->NumArgs(); i++)
 		{
 			const char *f = BaseFileSearch (files->GetArg (i), ".wad");
 			if (f)
@@ -1620,10 +1670,6 @@ void D_DoomMain (void)
 		timelimit = 20.f;
 	}
 
-	// Check for -file in shareware
-	if (modifiedgame && (gameinfo.flags & GI_SHAREWARE))
-		I_FatalError ("You cannot -file with the shareware version. Register!");
-
 	Printf ("Init miscellaneous info.\n");
 	M_Init ();
 
@@ -1635,8 +1681,6 @@ void D_DoomMain (void)
 
 	Printf ("Setting up sound.\n");
 	S_Init ();
-
-	I_FinishClockCalibration ();
 
 	Printf ("Checking network game status.\n");
 	D_CheckNetGame ();

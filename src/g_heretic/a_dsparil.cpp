@@ -476,7 +476,9 @@ void A_Srcr1Attack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(8), MOD_HIT);
+		int damage = HITDICE(8);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
 	if (actor->health > (actor->GetDefault()->health/3)*2)
@@ -617,7 +619,9 @@ void A_Srcr2Attack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NONE);
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(20), MOD_HIT);
+		int damage = HITDICE(20);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
 	chance = actor->health < actor->GetDefault()->health/2 ? 96 : 48;

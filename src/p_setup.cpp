@@ -45,6 +45,7 @@
 #include "c_console.h"
 #include "p_acs.h"
 #include "vectors.h"
+#include "announcer.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 
@@ -82,7 +83,22 @@ side_t* 		sides;
 int sidecount;
 struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 {
-	short tag, special, map;
+	union
+	{
+		// Used when unpacking sidedefs and assigning
+		// properties based on linedefs.
+		struct
+		{
+			short tag, special, map;
+		};
+
+		// Used when grouping sidedefs into loops.
+		struct
+		{
+			short first, next;
+			char lineside;
+		};
+	};
 }				*sidetemp;
 
 // [RH] Set true if the map contains a BEHAVIOR lump
@@ -798,7 +814,8 @@ static void P_AllocateSideDefs (int count)
 	sides = (side_t *)Z_Malloc (count*sizeof(side_t), PU_LEVEL, 0);
 	memset (sides, 0, count*sizeof(side_t));
 
-	sidetemp = (sidei_t *)Z_Malloc (count*sizeof(sidei_t), PU_LEVEL, 0);
+	sidetemp = (sidei_t *)Z_Malloc (MAX(count,numvertexes)
+		*sizeof(sidei_t), PU_LEVEL, 0);
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].special = sidetemp[i].tag = 0;
@@ -828,6 +845,118 @@ static void P_SetSideNum (short *sidenum_p, short sidenum)
 	{
 		I_Error ("%d sidedefs is not enough\n", sidecount);
 	}
+}
+
+// [RH] Group sidedefs into loops so that we can easily determine
+// what walls any particular wall neighbors.
+
+static void P_LoopSidedefs ()
+{
+	int i;
+
+	for (i = 0; i < numvertexes; ++i)
+	{
+		sidetemp[i].first = -1;
+		sidetemp[i].next = -1;
+	}
+	for (; i < numsides; ++i)
+	{
+		sidetemp[i].next = -1;
+	}
+
+	for (i = 0; i < numsides; ++i)
+	{
+		// For each vertex, build a list of sidedefs that use that vertex
+		// as their left edge.
+		line_t *line = &lines[sides[i].linenum];
+		int lineside = (line->sidenum[0] != i);
+		int vert = (lineside ? line->v2 : line->v1) - vertexes;
+		
+		sidetemp[i].lineside = lineside;
+		sidetemp[i].next = sidetemp[vert].first;
+		sidetemp[vert].first = i;
+
+		// Set each side so that it is the only member of its loop
+		sides[i].LeftSide = -1;
+		sides[i].RightSide = -1;
+	}
+
+	// For each side, find the side that is to its right and set the
+	// loop pointers accordingly. If two sides share a left vertex, the
+	// one that forms the smallest angle is assumed to be the right one.
+	for (i = 0; i < numsides; ++i)
+	{
+		int right;
+		line_t *line = &lines[sides[i].linenum];
+
+		// If the side's line only exists in a single sector,
+		// then consider that line to be a self-contained loop
+		// instead of as part of another loop
+		if (line->frontsector == line->backsector)
+		{
+			right = line->sidenum[!sidetemp[i].lineside];
+		}
+		else
+		{
+			if (sidetemp[i].lineside)
+			{
+				right = line->v1 - vertexes;
+			}
+			else
+			{
+				right = line->v2 - vertexes;
+			}
+
+			right = sidetemp[right].first;
+
+			if (sidetemp[right].next != -1)
+			{
+				int bestright;
+				angle_t bestang = ANGLE_MAX;
+				line_t *leftline, *rightline;
+				angle_t ang1, ang2, ang;
+
+				leftline = &lines[sides[i].linenum];
+				ang1 = R_PointToAngle (leftline->dx, leftline->dy);
+				if (!sidetemp[i].lineside)
+				{
+					ang1 += ANGLE_180;
+				}
+
+				while (right != -1)
+				{
+					if (sides[right].LeftSide == -1)
+					{
+						rightline = &lines[sides[right].linenum];
+						if (rightline->frontsector != rightline->backsector)
+						{
+							ang2 = R_PointToAngle (rightline->dx, rightline->dy);
+							if (sidetemp[right].lineside)
+							{
+								ang2 += ANGLE_180;
+							}
+
+							ang = ang2 - ang1;
+
+							if (ang != 0 && ang <= bestang)
+							{
+								bestright = right;
+								bestang = ang;
+							}
+						}
+					}
+					right = sidetemp[right].next;
+				}
+				right = bestright;
+			}
+		}
+		sides[i].RightSide = right;
+		sides[right].LeftSide = i;
+	}
+
+	// Throw away sidedef init info now that we're done with it
+	Z_Free (sidetemp);
+	sidetemp = NULL;
 }
 
 // killough 4/4/98: delay using texture names until
@@ -921,8 +1050,6 @@ void P_LoadSideDefs2 (int lump)
 		}
 	}
 	Z_Free (data);
-	Z_Free (sidetemp);	// [RH] Throw away sidedef init info
-	sidetemp = NULL;
 }
 
 // [RH] Set slopes for sectors, based on line specials
@@ -1404,11 +1531,17 @@ void P_SetupLevel (char *lumpname, int position)
 	wminfo.partime = 180;
 
 	if (!savegamerestore)
-		for (i = 0; i < MAXPLAYERS; i++)
+	{
+		for (i = 0; i < MAXPLAYERS; ++i)
 		{
 			players[i].killcount = players[i].secretcount 
 				= players[i].itemcount = 0;
 		}
+	}
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		players[i].mo = NULL;
+	}
 
 	// Initial height of PointOfView will be set by player think.
 	players[consoleplayer].viewz = 1; 
@@ -1458,6 +1591,7 @@ void P_SetupLevel (char *lumpname, int position)
 		P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);	// [RH] Load Hexen-style linedefs
 	P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
 	P_FinishLoadingLineDefs ();
+	P_LoopSidedefs ();
 	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
 	P_LoadSubsectors (lumpnum+ML_SSECTORS);
 	P_LoadNodes (lumpnum+ML_NODES);
@@ -1532,6 +1666,13 @@ void P_SetupLevel (char *lumpname, int position)
 	// preload graphics
 	if (precache)
 		R_PrecacheLevel ();
+
+	if (deathmatch)
+	{
+		AnnounceGameStart ();
+	}
+
+	P_ResetSightCounters (true);
 
 	//Printf ("free memory: 0x%x\n", Z_FreeMemory());
 }

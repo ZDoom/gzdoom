@@ -148,6 +148,8 @@ void R_SetFOV (float fov);
 float R_GetFOV ();
 void R_InitTextureMapping ();
 
+void R_SetViewAngle (angle_t ang);
+
 //
 // REFRESH - the actual rendering functions.
 //

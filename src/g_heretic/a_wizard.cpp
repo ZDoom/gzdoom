@@ -196,7 +196,9 @@ void A_WizAtk3 (AActor *actor)
 	S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(4), MOD_HIT);
+		int damage = HITDICE(4);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
 	mo = P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(AWizardFX1));

@@ -10,29 +10,17 @@
 
 /***************************** IceChunk ************************************/
 
-class AIceChunk : public APlayerPawn
+class AIceChunk : public AActor
 {
 	DECLARE_ACTOR (AIceChunk, APlayerPawn)
-public:
-	void PlayIdle () {}
-	void PlayRunning () {}
-	void PlayAttacking () {}
-	void PlayAttacking2 () {}
 };
 
 FState AIceChunk::States[] =
 {
-#define S_ICECHUNK 0
-	S_NORMAL (ICEC, 'A',   10, NULL 					, &States[S_ICECHUNK+1]),
-	S_NORMAL (ICEC, 'B',   10, A_IceSetTics 			, &States[S_ICECHUNK+2]),
-	S_NORMAL (ICEC, 'C',   10, A_IceSetTics 			, &States[S_ICECHUNK+3]),
+	S_NORMAL (ICEC, 'A',   10, NULL 					, &States[1]),
+	S_NORMAL (ICEC, 'B',   10, A_IceSetTics 			, &States[2]),
+	S_NORMAL (ICEC, 'C',   10, A_IceSetTics 			, &States[3]),
 	S_NORMAL (ICEC, 'D',   10, A_IceSetTics 			, NULL),
-
-#define S_ICECHUNK_HEAD (S_ICECHUNK+4)
-	S_NORMAL (ICEC, 'A',   10, A_IceCheckHeadDone		, &States[S_ICECHUNK_HEAD]),
-
-#define S_ICECHUNK_HEAD2 (S_ICECHUNK_HEAD+1)
-	S_NORMAL (ICEC, 'A', 1050, NULL 					, NULL)
 };
 
 IMPLEMENT_ACTOR (AIceChunk, Any, -1, 0)
@@ -41,10 +29,31 @@ IMPLEMENT_ACTOR (AIceChunk, Any, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF)
 	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH|MF2_FLOORCLIP)
 
-	PROP_SpawnState (S_ICECHUNK)
+	PROP_SpawnState (0)
 END_DEFAULTS
 
 /***************************************************************************/
+
+// A chunk of ice that is also a player -------------------------------------
+
+class AIceChunkHead : public APlayerPawn
+{
+	DECLARE_ACTOR (AIceChunkHead, APlayerPawn)
+};
+
+FState AIceChunkHead::States[] =
+{
+	S_NORMAL (ICEC, 'A',   10, A_IceCheckHeadDone		, &States[0])
+};
+
+IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
+	PROP_RadiusFixed (3)
+	PROP_HeightFixed (4)
+	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF)
+	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH|MF2_ICEDAMAGE)
+
+	PROP_SpawnState (0)
+END_DEFAULTS
 
 //----------------------------------------------------------------------------
 //
@@ -163,7 +172,7 @@ void A_IceCheckHeadDone (AActor *actor)
 {
 	if (actor->special2 == 666)
 	{
-		actor->SetState (&AIceChunk::States[S_ICECHUNK_HEAD2]);
+		actor->Destroy ();;
 	}
 }
 
@@ -217,19 +226,20 @@ void A_FreezeDeathChunks (AActor *actor)
 	}
 	if (actor->player)
 	{ // attach the player's view to a chunk of ice
-		AIceChunk *head = Spawn<AIceChunk> (actor->x, actor->y, actor->z+VIEWHEIGHT);
-		head->SetState (&AIceChunk::States[S_ICECHUNK_HEAD]);
+		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, actor->z+VIEWHEIGHT);
 		head->momz = FixedDiv(head->z-actor->z, actor->height)<<2;
 		head->momx = PS_Random() << (FRACBITS-7);
 		head->momy = PS_Random() << (FRACBITS-7);
-		head->flags2 |= MF2_ICEDAMAGE; // used to force blue palette
-		head->flags2 &= ~MF2_FLOORCLIP;
 		head->player = actor->player;
 		actor->player = NULL;
 		head->health = actor->health;
 		head->angle = actor->angle;
 		head->player->mo = head;
 		head->pitch = 0;
+		if (head->player->camera == actor)
+		{
+			head->player->camera = head;
+		}
 	}
 	actor->RemoveFromHash ();
 	actor->SetState (&AActor::States[S_FREETARGMOBJ]);
@@ -392,4 +402,94 @@ void A_DeQueueCorpse (AActor *actor)
 		queue = new DCorpseQueue;
 	}
 	queue->Dequeue (actor);
+}
+
+//============================================================================
+//
+// A_SetInvulnerable
+//
+//============================================================================
+
+void A_SetInvulnerable (AActor *actor)
+{
+	actor->flags2 |= MF2_INVULNERABLE;
+}
+
+//============================================================================
+//
+// A_UnSetInvulnerable
+//
+//============================================================================
+
+void A_UnSetInvulnerable (AActor *actor)
+{
+	actor->flags2 &= ~MF2_INVULNERABLE;
+}
+
+//============================================================================
+//
+// A_SetReflective
+//
+//============================================================================
+
+void A_SetReflective (AActor *actor)
+{
+	actor->flags2 |= MF2_REFLECTIVE;
+}
+
+//============================================================================
+//
+// A_UnSetReflective
+//
+//============================================================================
+
+void A_UnSetReflective (AActor *actor)
+{
+	actor->flags2 &= ~MF2_REFLECTIVE;
+}
+
+//============================================================================
+//
+// A_SetReflectiveInvulnerable
+//
+//============================================================================
+
+void A_SetReflectiveInvulnerable (AActor *actor)
+{
+	actor->flags2 |= MF2_REFLECTIVE|MF2_INVULNERABLE;
+}
+
+//============================================================================
+//
+// A_UnSetReflectiveInvulnerable
+//
+//============================================================================
+
+void A_UnSetReflectiveInvulnerable (AActor *actor)
+{
+	actor->flags2 &= ~(MF2_REFLECTIVE|MF2_INVULNERABLE);
+}
+
+//==========================================================================
+//
+// A_SetShootable
+//
+//==========================================================================
+
+void A_SetShootable (AActor *actor)
+{
+	actor->flags2 &= ~MF2_NONSHOOTABLE;
+	actor->flags |= MF_SHOOTABLE;
+}
+
+//==========================================================================
+//
+// A_UnSetShootable
+//
+//==========================================================================
+
+void A_UnSetShootable (AActor *actor)
+{
+	actor->flags2 |= MF2_NONSHOOTABLE;
+	actor->flags &= ~MF_SHOOTABLE;
 }

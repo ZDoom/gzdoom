@@ -55,11 +55,11 @@ static void SetCursorState (int visible);
 static bool GUICapture;
 static bool NativeMouse;
 static bool MakeMouseEvents;
+static POINT UngrabbedPointerPos;
 
 extern BOOL vidactive;
 extern HWND Window;
 
-EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (String, language)
 
 
@@ -80,8 +80,8 @@ typedef enum { win32, dinput } mousemode_t;
 static mousemode_t mousemode;
 
 extern BOOL paused;
-static bool HaveFocus = FALSE;
-static BOOL noidle = FALSE;
+static bool HaveFocus = false;
+static bool noidle = false;
 static int WheelMove;
 
 static LPDIRECTINPUT			g_pdi;
@@ -212,27 +212,31 @@ static void I_CheckGUICapture ()
 
 static void I_CheckNativeMouse ()
 {
-	bool wantNative = !HaveFocus || (!fullscreen && (GUICapture || paused));
+	bool wantNative = !HaveFocus ||
+		((!screen || !screen->IsFullscreen()) && (GUICapture || paused));
 
+//		Printf ("%d -> %d\n", NativeMouse, wantNative);
 	if (wantNative != NativeMouse)
 	{
 		NativeMouse = wantNative;
 		if (wantNative)
 		{
-			if (g_pMouse)
+			if (mousemode == dinput)
 			{
 				DI_Unacquire (g_pMouse);
 			}
 			else
 			{
 				UngrabMouse_Win32 ();
+				SetCursorPos (UngrabbedPointerPos.x, UngrabbedPointerPos.y);
 			}
 			FlushDIKState (KEY_MOUSE1, KEY_MOUSE4);
 		}
 		else
 		{
-			if (!g_pMouse)
+			if (mousemode == win32)
 			{
+				GetCursorPos (&UngrabbedPointerPos);
 				GrabMouse_Win32 ();
 			}
 			else
@@ -274,8 +278,14 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		FlushDIKState ();
 		HaveFocus = false;
 		I_CheckNativeMouse ();	// Make sure mouse gets released right away
-		if (!paused)
+		if (paused == 0)
+		{
 			S_PauseSound ();
+			if (!netgame)
+			{
+				paused = -1;
+			}
+		}
 		if (!noidle)
 			SetPriorityClass (GetCurrentProcess(), IDLE_PRIORITY_CLASS);
 		break;
@@ -285,8 +295,31 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (g_pKey)
 			DI_Acquire (g_pKey);
 		HaveFocus = true;
-		if (!paused)
+		if (paused <= 0)
+		{
 			S_ResumeSound ();
+			if (!netgame)
+			{
+				paused = 0;
+			}
+		}
+		break;
+
+	case WM_SIZE:
+		if (mousemode == win32 && !NativeMouse &&
+			(wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED))
+		{
+			CenterMouse_Win32 (-1, -1);
+			return 0;
+		}
+		break;
+
+	case WM_MOVE:
+		if (mousemode == win32 && !NativeMouse)
+		{
+			CenterMouse_Win32 (-1, -1);
+			return 0;
+		}
 		break;
 
 	// Being forced to separate my keyboard input handler into
@@ -635,7 +668,8 @@ static void I_GetWin32Mouse ()
 {
 	mousemode = win32;
 
-	if (g_pMouse) {
+	if (g_pMouse)
+	{
 		DI_Unacquire (g_pMouse);
 		g_pMouse->Release ();
 		g_pMouse = NULL;
@@ -721,7 +755,9 @@ BOOL I_InitInput (void *hwnd)
 
 	atterm (I_ShutdownInput);
 
-	noidle = Args.CheckParm ("-noidle");
+	NativeMouse = true;
+
+	noidle = !!Args.CheckParm ("-noidle");
 
 	// [RH] Removed dependence on existance of dinput.lib when linking.
 	DirectInputInstance = (HMODULE)LoadLibrary ("dinput.dll");
@@ -814,6 +850,16 @@ static void GrabMouse_Win32 ()
 
 	ClipCursor (NULL);		// helps with Win95?
 	GetWindowRect (Window, &rect);
+
+	// Reposition the rect so that it only covers the client area.
+	// Is there some way to actually get this information from
+	// the window itself instead of assuming that window metrics
+	// are the same across all windows?
+	rect.left += GetSystemMetrics (SM_CXFRAME);
+	rect.right -= GetSystemMetrics (SM_CXFRAME);
+	rect.top += GetSystemMetrics (SM_CYFRAME) + GetSystemMetrics (SM_CYCAPTION);
+	rect.bottom -= GetSystemMetrics (SM_CYFRAME);
+
 	ClipCursor (&rect);
 	SetCursorState (FALSE);
 	CenterMouse_Win32 (-1, -1);

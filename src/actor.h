@@ -184,8 +184,7 @@ enum
 	MF2_THRUGHOST		= 0x00004000,	// missile will pass through ghosts [RH] was 8
 	MF2_BOSS			= 0x00008000,	// mobj is a major boss
 	MF2_FIREDAMAGE		= 0x00010000,	// does fire damage
-	MF2_NODMGTHRUST		= 0x00020000,	// does not thrust target when
-										// damaging
+	MF2_NODMGTHRUST		= 0x00020000,	// does not thrust target when damaging
 	MF2_TELESTOMP		= 0x00040000,	// mobj can stomp another
 	MF2_FLOATBOB		= 0x00080000,	// use float bobbing z movement
 	MF2_IMPACT			= 0x00200000, 	// an MF_MISSILE mobj can activate SPAC_IMPACT
@@ -224,6 +223,7 @@ enum
 	MF3_NOTARGET		= 0x00040000,	// This actor not targetted when it hurts something else
 	MF3_DONTGIB			= 0x00080000,	// Don't gib this corpse
 	MF3_NOBLOCKMONST	= 0x00100000,	// Can cross ML_BLOCKMONSTERS lines
+	MF3_CRASHED			= 0x00200000,	// Actor entered its crash state
 
 // --- mobj.renderflags ---
 
@@ -244,6 +244,8 @@ enum
 	RF_CLIPMID			= 0x0800,	// Clip sprite to mid part of wall
 	RF_CLIPLOWER		= 0x0c00,	// Clip sprite to lower part of wall
 
+	RF_DECALMASK		= RF_RELMASK|RF_CLIPMASK,
+
 	RF_SPRITETYPEMASK	= 0x7000,	// ---Different sprite types, not all implemented
 	RF_FACESPRITE		= 0x0000,	// Face sprite
 	RF_WALLSPRITE		= 0x1000,	// Wall sprite
@@ -259,11 +261,11 @@ enum ERenderStyle
 	STYLE_Fuzzy,			// Draw silhouette using "fuzz" effect
 	STYLE_SoulTrans,		// Draw translucent with amount in r_transsouls
 	STYLE_OptFuzzy,			// Draw as fuzzy or translucent, based on user preference
-	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
 
 	// The following styles can affect visibility in P_CheckSight()
 	STYLE_Translucent=64,	// Draw translucent
 	STYLE_Add,				// Draw additive
+	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
 };
 
 #define TRANSLUC25			(FRACUNIT/4)
@@ -285,7 +287,6 @@ enum ERenderStyle
 #define HX_SHADOW			(0x9800)
 #define HX_ALTSHADOW		(0x6800)
 
-class FPlayerSkin;
 class FDecalBase;
 
 inline AActor *GetDefaultByName (const char *name)
@@ -449,7 +450,6 @@ public:
 
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	AActor			*goal;			// Monster's goal if not chasing anything
-	FPlayerSkin		*skin;			// Sprite override
 	byte			waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
 	BYTE			SpawnFlags;
 	SWORD			gear;			// killough 11/98: used in torque simulation
@@ -459,6 +459,8 @@ public:
 
 	//Added by MC:
 	int id;							// Player ID (for items, # in list.)
+
+	BYTE FloatBobPhase;
 
 	// [RH] Stuff that used to be part of an Actor Info
 	WORD SeeSound;

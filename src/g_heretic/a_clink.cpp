@@ -102,5 +102,6 @@ void A_ClinkAttack (AActor *actor)
 	{
 		damage = ((P_Random()%7)+3);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 	}
 }

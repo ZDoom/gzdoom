@@ -11,8 +11,6 @@
 
 extern constate_e ConsoleState;
 
-static bool MouseShouldBeGrabbed ();
-
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Float, vid_winscale)
@@ -72,15 +70,12 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 	}
 	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
 
+	/* Right now, CreateFrameBuffer cannot return NULL
 	if (res == NULL)
 	{
-		I_ClosestResolution (&width, &height, 8);
-		res = Video->CreateFrameBuffer (width, height, fs, old);
-		if (res == NULL)
-		{
-			I_FatalError ("Mode %dx%d is unavailable\n", width, height);
-		}
+		I_FatalError ("Mode %dx%d is unavailable\n", width, height);
 	}
+	*/
 	return res;
 }
 
@@ -88,7 +83,7 @@ bool I_CheckResolution (int width, int height, int bits)
 {
 	int twidth, theight;
 
-	Video->FullscreenChanged (fullscreen);
+	Video->FullscreenChanged (screen ? screen->IsFullscreen() : fullscreen);
 	Video->StartModeIterator (bits);
 	while (Video->NextMode (&twidth, &theight))
 	{
@@ -104,8 +99,17 @@ void I_ClosestResolution (int *width, int *height, int bits)
 	int cwidth = 0, cheight = 0;
 	int iteration;
 	DWORD closest = 4294967295u;
+	bool fs;
 
-	Video->FullscreenChanged (fullscreen ? true : false);
+	if (screen != NULL)
+	{
+		fs = screen->IsFullscreen ();
+	}
+	else
+	{
+		fs = fullscreen;
+	}
+	Video->FullscreenChanged (screen ? screen->IsFullscreen() : fullscreen);
 	for (iteration = 0; iteration < 2; iteration++)
 	{
 		Video->StartModeIterator (bits);

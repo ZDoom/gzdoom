@@ -141,8 +141,6 @@ unsigned int I_MSTime (void);
 // [RH] Title string to display at bottom of console during startup
 extern char DoomStartupTitle[256];
 
-void I_FinishClockCalibration ();
-
 
 // Directory searching routines
 

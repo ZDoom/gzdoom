@@ -158,6 +158,7 @@ void A_TroopAttack (AActor *self)
 		int damage = (P_Random (pr_troopattack)%8+1)*3;
 		S_Sound (self, CHAN_WEAPON, "imp/melee", 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_TraceBleed (damage, self->target, self);
 		return;
 	}
 	

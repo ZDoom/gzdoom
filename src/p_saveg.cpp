@@ -146,7 +146,11 @@ void P_SerializeWorld (FArchive &arc)
 				<< si->rowoffset
 				<< si->toptexture
 				<< si->bottomtexture
-				<< si->midtexture;
+				<< si->midtexture
+				<< si->Light
+				<< si->Flags
+				<< si->LeftSide
+				<< si->RightSide;
 			ADecal::SerializeChain (arc, &si->BoundActors);
 		}
 	}

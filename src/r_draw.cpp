@@ -888,7 +888,8 @@ void R_InitTranslationTables ()
 {
 	int i, j;
 		
-	translationtables = (byte *)Z_Malloc (256*(2*MAXPLAYERS+3+32)+255, PU_STATIC, NULL);
+	translationtables = (byte *)Z_Malloc (256*(2*MAXPLAYERS+3+
+		NUMCOLORMAPS*16)+255, PU_STATIC, NULL);
 	translationtables = (byte *)(((ptrdiff_t)translationtables + 255) & ~255);
 	
 	// [RH] Each player now gets their own translation table. These are set
@@ -921,17 +922,22 @@ void R_InitTranslationTables ()
 	}
 
 	// set up shading tables for shaded columns
-	for (j = 0; j < 256; j++)
+	// 16 colormap sets, progressing from full alpha to minimum visible alpha
+
+	BYTE *table = translationtables + (MAXPLAYERS*2+3)*256;
+
+	// Full alpha
+	for (i = 0; i < 16; ++i)
 	{
-		translationtables[j+(MAXPLAYERS*2+3)*256] = (j+1) >> 2;
-	}
-	for (i = 1; i < NUMCOLORMAPS; i++)
-	{
-		int a = (NUMCOLORMAPS - i) * (256 / NUMCOLORMAPS);
-		for (j = 0; j < 256; j++)
+		for (j = 0; j < NUMCOLORMAPS; ++j)
 		{
-			BYTE v = ((j * a) + 256) >> 10;
-			translationtables[j+(MAXPLAYERS*2+3+i)*256] = MIN<BYTE> (v, 64);
+			int a = (NUMCOLORMAPS - j) * (256 / NUMCOLORMAPS) * (16-i);
+			for (int k = 0; k < 256; ++k)
+			{
+				BYTE v = ((k * a) + 256) >> 14;
+				table[k] = MIN<BYTE> (v, 64);
+			}
+			table += 256;
 		}
 	}
 }
@@ -1346,9 +1352,16 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, BYTE *translation, DWORD c
 		return DoDraw0;
 
 	case STYLE_Shaded:
+		// Shaded drawer only gets 16 levels because it saves memory.
+		if ((alpha >>= 12) == 0)
+			return DontDraw;
 		colfunc = R_DrawShadedColumn;
-		dc_color = basecolormap[APART(color)];
-		dc_colormap = basecolormap = &translationtables[(MAXPLAYERS*2+3)*256];
+		dc_color = fixedcolormap ? fixedcolormap[APART(color)] : basecolormap[APART(color)];
+		dc_colormap = basecolormap = &translationtables[(MAXPLAYERS*2+3+(16-alpha)*NUMCOLORMAPS)*256];
+		if (fixedlightlev)
+		{
+			dc_colormap += fixedlightlev;
+		}
 		hcolfunc_post1 = rt_shaded1col;
 		hcolfunc_post2 = rt_shaded2cols;
 		hcolfunc_post4 = rt_shaded4cols;

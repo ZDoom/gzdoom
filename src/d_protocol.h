@@ -71,7 +71,7 @@ enum EDemoCommand
 	DEM_UINFCHANGED,	// User info changed
 	DEM_SINFCHANGED,	// Server/Host info changed
 	DEM_GENERICCHEAT,	// Next byte is cheat to apply (see next enum)
-	DEM_GIVECHEAT,		// String passed to give command
+	DEM_GIVECHEAT,		// String: item to give, Byte: quantity
 	DEM_SAY,			// Byte: who to talk to, String: message to display
 	DEM_DROPPLAYER,		// Not implemented, takes a byte
 	DEM_CHANGEMAP,		// Name of map to change to

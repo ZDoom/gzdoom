@@ -35,7 +35,7 @@ END_POINTERS
 
 BEGIN_STATELESS_DEFAULTS (AInterpolationPoint, Any, 9070, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderFlags (RF_INVISIBLE)
+	PROP_RenderStyle (STYLE_None)
 END_DEFAULTS
 
 void AInterpolationPoint::Serialize (FArchive &arc)
@@ -218,7 +218,7 @@ void APathFollower::PostBeginPlay ()
 			node->Next->Next == NULL ||
 			node->Next->Next->Next == NULL)
 		{
-			Printf ("CameraPathMover %d: Path needs at least 4 nodes\n", tid);
+			Printf ("PathFollower %d: Path needs at least 4 nodes\n", tid);
 			return;
 		}
 		// If the first node is in a loop, we can start there.

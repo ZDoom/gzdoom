@@ -109,9 +109,11 @@ void	P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
 void	P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
 void	P_RipperBlood (AActor *mo);
 int		P_GetThingFloorType (AActor *thing);
+void	P_ExplodeMissile (AActor *missile, line_t *explodeline);
 
 AActor *P_SpawnMissile (AActor* source, AActor* dest, const TypeInfo *type);
 AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, const TypeInfo *type);
+AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const TypeInfo *type);
 AActor *P_SpawnMissileAngle (AActor *source, const TypeInfo *type, angle_t angle, fixed_t momz);
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz);
 
@@ -226,7 +228,8 @@ BOOL	P_TryMove (AActor* thing, fixed_t x, fixed_t y, BOOL dropoff, bool onfloor 
 BOOL	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
 void	P_SlideMove (AActor* mo);
 void	P_BounceWall (AActor *mo);
-BOOL	P_CheckSight (const AActor* t1, const AActor* t2, BOOL ignoreInvisibility=false);
+bool	P_CheckSight (const AActor* t1, const AActor* t2, BOOL ignoreInvisibility=false);
+void	P_ResetSightCounters (bool full);
 void	P_UseLines (player_t* player);
 bool	P_UsePuzzleItem (player_t *player, int itemType);
 void	PIT_ThrustSpike (AActor *actor);
@@ -237,6 +240,10 @@ extern	AActor*	linetarget; 	// who got hit (or NULL)
 
 fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange=0);
 void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage);
+void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
+void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
+void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
+void	P_TraceBleed (int damage, AActor *target);		// random direction version
 void	P_RailAttack (AActor *source, int damage, int offset);	// [RH] Shoot a railgun
 bool	P_HitFloor (AActor *thing);
 bool	P_HitWater (AActor *thing, sector_t *sec);

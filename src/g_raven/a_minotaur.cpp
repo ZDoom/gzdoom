@@ -260,7 +260,9 @@ void A_MinotaurAtk1 (AActor *actor)
 	S_Sound (actor, CHAN_WEAPON, "minotaur/melee", 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(4));
+		int damage = HITDICE(4);
+		P_DamageMobj (actor->target, actor, actor, damage);
+		P_TraceBleed (damage, actor->target, actor);
 		if ((player = actor->target->player) != NULL)
 		{ // Squish the player
 			player->deltaviewheight = -16*FRACUNIT;
@@ -366,7 +368,9 @@ void A_MinotaurAtk2 (AActor *actor)
 	S_Sound (actor, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(5));
+		int damage = HITDICE(5);
+		P_DamageMobj (actor->target, actor, actor, damage);
+		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
 	z = actor->z + 40*FRACUNIT;
@@ -402,7 +406,9 @@ void A_MinotaurAtk3 (AActor *actor)
 	}
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(5));
+		int damage = HITDICE(5);
+		P_DamageMobj (actor->target, actor, actor, damage);
+		P_TraceBleed (damage, actor->target, actor);
 		if ((player = actor->target->player) != NULL)
 		{ // Squish the player
 			player->deltaviewheight = -16*FRACUNIT;
@@ -453,13 +459,16 @@ void P_MinotaurSlam (AActor *source, AActor *target)
 {
 	angle_t angle;
 	fixed_t thrust;
+	int damage;
 
 	angle = R_PointToAngle2 (source->x, source->y, target->x, target->y);
 	angle >>= ANGLETOFINESHIFT;
 	thrust = 16*FRACUNIT+(P_Random()<<10);
 	target->momx += FixedMul (thrust, finecosine[angle]);
 	target->momy += FixedMul (thrust, finesine[angle]);
-	P_DamageMobj (target, NULL, NULL, HITDICE(6));
+	damage = HITDICE(6);
+	P_DamageMobj (target, NULL, NULL, damage);
+	P_TraceBleed (damage, target, angle, 0);
 	if (target->player)
 	{
 		target->reactiontime = 14+(P_Random()&7);

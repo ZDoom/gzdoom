@@ -28,6 +28,7 @@
 #include "r_defs.h"
 #include "d_player.h"
 #include "r_main.h"
+#include "templates.h"
 
 extern FILE *Logfile;
 
@@ -245,7 +246,11 @@ CCMD (give)
 		return;
 
 	Net_WriteByte (DEM_GIVECHEAT);
-	Net_WriteString (argv.AllButFirstArg ());
+	Net_WriteString (argv[1]);
+	if (argv.argc() > 2)
+		Net_WriteByte (clamp (atoi (argv[2]), 1, 255));
+	else
+		Net_WriteByte (0);
 }
 
 CCMD (gameversion)

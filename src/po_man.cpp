@@ -647,6 +647,7 @@ void ThrustMobj (AActor *actor, seg_t *seg, polyobj_t *po)
 		if (!P_CheckPosition (actor, actor->x + thrustX, actor->y + thrustY))
 		{
 			P_DamageMobj (actor, NULL, NULL, 3, MOD_CRUSH);
+			P_TraceBleed (3, actor);
 		}
 	}
 }

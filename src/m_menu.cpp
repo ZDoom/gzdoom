@@ -1210,6 +1210,7 @@ void M_QuickSave ()
 		return;
 	}
 	sprintf (tempstring, GStrings(QSPROMPT), quickSaveSlot->Title);
+	strcpy (savegamestring, quickSaveSlot->Title);
 	M_StartMessage (tempstring, M_QuickSaveResponse, true);
 }
 
@@ -1236,7 +1237,7 @@ void M_QuickLoad ()
 		return;
 	}
 		
-	if (quickSaveSlot < 0)
+	if (quickSaveSlot == NULL)
 	{
 		M_StartControlPanel(false);
 		M_LoadGame (0);
@@ -2167,7 +2168,7 @@ BOOL M_Responder (event_t *ev)
 	case ' ':
 		if (currentMenu == &PSetupDef)
 		{
-			PlayerRotation ^= 4;
+			PlayerRotation ^= 8;
 			break;
 		}
 		// intentional fall-through

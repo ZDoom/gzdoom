@@ -75,11 +75,14 @@ fixed_t yspeed[8] = {0,47000,FRACUNIT,47000,0,-47000,-FRACUNIT,-47000};
 //
 
 
+//----------------------------------------------------------------------------
+//
+// PROC P_RecursiveSound
 //
 // Called by P_NoiseAlert.
 // Recursively traverse adjacent sectors,
 // sound blocking lines cut off traversal.
-//
+//----------------------------------------------------------------------------
 
 AActor *soundtarget;
 
@@ -138,11 +141,15 @@ void P_RecursiveSound (sector_t *sec, int soundblocks)
 
 
 
+//----------------------------------------------------------------------------
 //
-// P_NoiseAlert
-// If a monster yells at a player,
-// it will alert other monsters to the player.
+// PROC P_NoiseAlert
 //
+// If a monster yells at a player, it will alert other monsters to the
+// player.
+//
+//----------------------------------------------------------------------------
+
 void P_NoiseAlert (AActor *target, AActor *emmiter)
 {
 	if (target->player && (target->player->cheats & CF_NOTARGET))
@@ -156,9 +163,12 @@ void P_NoiseAlert (AActor *target, AActor *emmiter)
 
 
 
+//----------------------------------------------------------------------------
 //
-// P_CheckMeleeRange
+// FUNC P_CheckMeleeRange
 //
+//----------------------------------------------------------------------------
+
 BOOL P_CheckMeleeRange (AActor *actor)
 {
 	AActor *pl;
@@ -187,6 +197,42 @@ BOOL P_CheckMeleeRange (AActor *actor)
 		return false;
 														
 	return true;				
+}
+
+//----------------------------------------------------------------------------
+//
+// FUNC P_CheckMeleeRange2
+//
+//----------------------------------------------------------------------------
+
+bool P_CheckMeleeRange2 (AActor *actor)
+{
+	AActor *mo;
+	fixed_t dist;
+
+	if (!actor->target)
+	{
+		return false;
+	}
+	mo = actor->target;
+	dist = P_AproxDistance (mo->x-actor->x, mo->y-actor->y);
+	if (dist >= MELEERANGE*2 || dist < MELEERANGE-20*FRACUNIT + mo->radius)
+	{
+		return false;
+	}
+	if (mo->z > actor->z+actor->height)
+	{ // Target is higher than the attacker
+		return false;
+	}
+	else if (actor->z > mo->z+mo->height)
+	{ // Attacker is higher
+		return false;
+	}
+	if (!P_CheckSight(actor, mo))
+	{
+		return false;
+	}
+	return true;
 }
 
 //
@@ -702,6 +748,12 @@ void A_Look (AActor *actor)
 	actor->threshold = 0;		// any shot will wake up
 	targ = actor->subsector->sector->soundtarget;
 
+	// [RH] If the soundtarget is dead, don't chase it
+	if (targ != NULL && targ->health <= 0)
+	{
+		targ = NULL;
+	}
+
 	if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
 		return;
 
@@ -857,8 +909,15 @@ void A_Chase (AActor *actor)
 		{
 			// reached the goal
 			TActorIterator<APatrolPoint> iterator (actor->goal->args[0]);
-			actor->reactiontime = actor->goal->args[1] * TICRATE + level.time;
 			actor->goal = iterator.Next ();
+			if (actor->goal != NULL)
+			{
+				actor->reactiontime = actor->goal->args[1] * TICRATE + level.time;
+			}
+			else
+			{
+				actor->reactiontime = actor->GetDefault()->reactiontime;
+			}
 			actor->target = NULL;
 			actor->flags |= MF_JUSTATTACKED;
 			actor->SetState (actor->SpawnState);

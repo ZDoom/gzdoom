@@ -79,7 +79,7 @@ public:
 	void Destroy ();
 };
 
-IMPLEMENT_STATELESS_ACTOR (ASectorSilencer, Any, 9002, 0)
+IMPLEMENT_STATELESS_ACTOR (ASectorSilencer, Any, 9082, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_None)
 END_DEFAULTS

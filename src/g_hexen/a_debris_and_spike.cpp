@@ -317,6 +317,7 @@ BOOL PIT_ThrustStompThing (AActor *thing)
 		return true;	// don't clip against self
 
 	P_DamageMobj (thing, tsthing, tsthing, 10001);
+	P_TraceBleed (10001, thing);
 	tsthing->args[1] = 1;	// Mark thrust thing as bloody
 
 	return true;

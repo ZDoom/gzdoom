@@ -240,7 +240,21 @@ void cht_DoCheat (player_t *player, int cheat)
 		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
 }
 
-void cht_Give (player_t *player, char *name)
+static void GiveSpawner (player_t *player, const TypeInfo *type)
+{
+	AInventory *item = static_cast<AInventory *>
+		(Spawn (type, player->mo->x, player->mo->y, player->mo->z));
+	if (item != NULL)
+	{
+		item->Touch (player->mo);
+		if (!(item->ObjectFlags & OF_MassDestruction))
+		{
+			item->Destroy ();
+		}
+	}
+}
+
+void cht_Give (player_t *player, char *name, int amount)
 {
 	BOOL giveall;
 	int i;
@@ -254,17 +268,22 @@ void cht_Give (player_t *player, char *name)
 	else
 		giveall = false;
 
-	if (giveall || strnicmp (name, "health", 6) == 0) {
-		int h;
-
-		if (0 < (h = atoi (name + 6))) {
-			if (player->mo) {
-				player->mo->health += h;
+	if (giveall || stricmp (name, "health") == 0)
+	{
+		if (amount > 0)
+		{
+			if (player->mo)
+			{
+				player->mo->health += amount;
 	  			player->health = player->mo->health;
-			} else {
-				player->health += h;
 			}
-		} else {
+			else
+			{
+				player->health += amount;
+			}
+		}
+		else
+		{
 			if (player->mo)
 				player->mo->health = deh.GodHealth;
 	  
@@ -275,8 +294,10 @@ void cht_Give (player_t *player, char *name)
 			return;
 	}
 
-	if (giveall || stricmp (name, "backpack") == 0) {
-		if (!player->backpack) {
+	if (giveall || stricmp (name, "backpack") == 0)
+	{
+		if (!player->backpack)
+		{
 			for (i=0 ; i<NUMAMMO ; i++)
 			player->maxammo[i] *= 2;
 			player->backpack = true;
@@ -288,7 +309,8 @@ void cht_Give (player_t *player, char *name)
 			return;
 	}
 
-	if (giveall || stricmp (name, "ammo") == 0) {
+	if (giveall || stricmp (name, "ammo") == 0)
+	{
 		for (i=0;i<NUMAMMO;i++)
 			player->ammo[i] = player->maxammo[i];
 
@@ -296,7 +318,8 @@ void cht_Give (player_t *player, char *name)
 			return;
 	}
 
-	if (giveall || stricmp (name, "armor") == 0) {
+	if (giveall || stricmp (name, "armor") == 0)
+	{
 		player->armorpoints[0] = 200;
 		player->armortype = 2;
 
@@ -304,9 +327,25 @@ void cht_Give (player_t *player, char *name)
 			return;
 	}
 
-	if (giveall || stricmp (name, "keys") == 0) {
+	if (giveall || stricmp (name, "keys") == 0)
+	{
 		for (i=0;i<NUMKEYS;i++)
 			player->keys[i] = true;
+
+		if (!giveall)
+			return;
+	}
+
+	if (giveall || stricmp (name, "weapons") == 0)
+	{
+		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+		{
+			const TypeInfo *const type = TypeInfo::m_Types[i];
+			if (type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+			{
+				GiveSpawner (player, type);
+			}
+		}
 
 		if (!giveall)
 			return;
@@ -316,30 +355,43 @@ void cht_Give (player_t *player, char *name)
 		return;
 
 	it = FindItem (name);
-	if (!it) {
+	if (!it)
+	{
 		it = FindItemByClassname (name);
-		if (!it) {
-			if (player == &players[consoleplayer])
-				Printf ("Unknown item\n");
+		if (!it)
+		{
+			const TypeInfo *type = TypeInfo::IFindType (name);
+			if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS(AInventory)))
+			{
+				if (player == &players[consoleplayer])
+					Printf ("Unknown item \"%s\"\n", name);
+			}
+			else
+			{
+				for (i = amount ? amount : 1; i; --i)
+				{
+					GiveSpawner (player, type);
+				}
+			}
 			return;
 		}
 	}
 
-	if (it->flags & IT_AMMO) {
-		int howmuch;
-
-	/*	if (argc == 3)
-			howmuch = atoi (argv[2]);
-		else */
-			howmuch = it->quantity;
-
-		P_GiveAmmo (player, (ammotype_t)it->offset, howmuch);
-	} else if (it->flags & IT_WEAPON) {
-	} else if (it->flags & IT_KEY) {
+	if (it->flags & IT_AMMO)
+	{
+		P_GiveAmmo (player, (ammotype_t)it->offset,
+			amount != 0 ? amount : it->quantity);
+	}
+	else if (it->flags & IT_KEY)
+	{
 		P_GiveKey (player, (keytype_t)it->offset);
-	} else if (it->flags & IT_POWERUP) {
+	}
+	else if (it->flags & IT_POWERUP)
+	{
 		P_GivePower (player, (powertype_t)it->offset);
-	} else if (it->flags & IT_ARMOR) {
+	}
+	else if (it->flags & IT_ARMOR)
+	{
 		P_GiveArmor (player, (armortype_t)it->offset, it->offset * 100);
 	}
 }

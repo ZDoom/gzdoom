@@ -16,6 +16,13 @@
 #include "r_things.h"
 #include "v_video.h"
 
+// I should have commented this stuff better.
+//
+// dc_temp is the buffer R_DrawColumnHoriz writes into.
+// dc_tspans points into it.
+// dc_ctspan points into dc_tspans.
+// But what is horizspan, and what is its relation with dc_ctspan?
+
 byte dc_temp[1200*4];
 unsigned int dc_tspans[4][256];
 unsigned int *dc_ctspan[4];
@@ -693,7 +700,7 @@ void rt_shaded4cols (int sx, int yl, int yh)
 	source = &dc_temp[yl*4];
 	pitch = dc_pitch;
 	{
-		DWORD val = fgstart[64] | 0x1f07c1f;
+		DWORD val = fgstart[64<<8] | 0x1f07c1f;
 		fill = RGB32k[0][0][val & (val>>15)];
 	}
 	
@@ -1413,12 +1420,14 @@ void R_DrawMaskedColumnHoriz (column_t *column, int baseclip)
 			{
 				dc_texturefrac = (dc_yl*dc_iscale) - (column->topdelta << FRACBITS)
 					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
-				if (dc_texturefrac >= column->length << FRACBITS)
+				while (dc_texturefrac >= column->length << FRACBITS)
 				{
 					if (++dc_yl > dc_yh)
-						continue;
+						break;
 					dc_texturefrac += dc_iscale;
 				}
+				if (dc_yl > dc_yh)
+					continue;
 			}
 			else
 			{

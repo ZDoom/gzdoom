@@ -75,6 +75,16 @@ enum SICommands
 	SI_IfHexen
 };
 
+struct FBloodSFX
+{
+	DWORD	RelVol;		// volume, 0-255
+	fixed_t	Pitch;		// pitch change
+	fixed_t	PitchRange;	// range of random pitch
+	DWORD	Format;		// format of audio 1=11025 5=22050
+	SDWORD	LoopStart;	// loop position (-1 means no looping)
+	char	RawName[9];	// name of RAW resource
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
@@ -91,6 +101,9 @@ static int S_AddPlayerGender (int classnum, int gender);
 static int S_FindPlayerClass (const char *name);
 static int S_LookupPlayerSound (int classidx, int gender, int refid);
 static void S_ParsePlayerSoundCommon (char pclass[MAX_SNDNAME+1], int &gender, int &refid);
+static void S_AddSNDINFO (int lumpnum);
+static void S_AddBloodSFX (int lumpnum);
+static int S_AddSound (const char *logicalname, int lumpnum);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -296,11 +309,15 @@ int S_FindSoundTentative (const char *name)
 
 int S_AddSound (const char *logicalname, const char *lumpname)
 {
+	return S_AddSound (logicalname,
+		lumpname ? W_CheckNumForName (lumpname) : -1);
+}
+
+static int S_AddSound (const char *logicalname, int lumpnum)
+{
 	int sfxid;
-	int lumpnum;
 
 	sfxid = S_FindSoundNoHash (logicalname);
-	lumpnum = lumpname ? W_CheckNumForName (lumpname) : -1;
 
 	if (sfxid > 0)
 	{ // If the sound has already been defined, change the old definition
@@ -398,268 +415,27 @@ int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref)
 // S_ParseSndInfo
 //
 // Parses all loaded SNDINFO lumps.
+// Also registers Blood SFX files.
 //==========================================================================
 
 void S_ParseSndInfo ()
 {
-	int lastlump, lump;
-	bool skipToEndIf;
-	TArray<WORD> list;
+	int lump;
 
-	lastlump = 0;
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
-	while ((lump = W_FindLump ("SNDINFO", &lastlump)) != -1)
+	for (lump = 0; lump < numlumps; ++lump)
 	{
-		SC_OpenLumpNum (lump, "SNDINFO");
-		skipToEndIf = false;
-
-		while (SC_GetString ())
+		if (lumpinfo[lump].namespc == ns_bloodsfx)
 		{
-			if (skipToEndIf)
-			{
-				if (SC_Compare ("$endif"))
-				{
-					skipToEndIf = false;
-				}
-				continue;
-			}
-
-			if (sc_String[0] == '$')
-			{ // Got a command
-				switch (SC_MatchString (SICommandStrings))
-				{
-				case SI_Ambient: {
-					// $ambient <num> <logical name> [point [atten]|surround] <type> [secs] <relative volume>
-					AmbientSound *ambient, dummy;
-
-					SC_MustGetNumber ();
-					if (sc_Number < 0 || sc_Number > 255)
-					{
-						Printf ("Bad ambient index (%d)\n", sc_Number);
-						ambient = &dummy;
-					}
-					else
-					{
-						ambient = (AmbientSound *)Z_Malloc (sizeof(AmbientSound), PU_STATIC, NULL);
-						Ambients[sc_Number] = ambient;
-					}
-					memset (ambient, 0, sizeof(AmbientSound));
-
-					SC_MustGetString ();
-					strncpy (ambient->sound, sc_String, MAX_SNDNAME);
-					ambient->sound[MAX_SNDNAME] = 0;
-					ambient->attenuation = 0;
-
-					SC_MustGetString ();
-					if (SC_Compare ("point"))
-					{
-						float attenuation;
-
-						ambient->type = POSITIONAL;
-						SC_MustGetString ();
-						attenuation = (float)atof (sc_String);
-						if (attenuation > 0)
-						{
-							ambient->attenuation = attenuation;
-							SC_MustGetString ();
-						}
-						else
-						{
-							ambient->attenuation = 1;
-						}
-					}
-					else if (SC_Compare ("surround"))
-					{
-						ambient->type = SURROUND;
-						SC_MustGetString ();
-						ambient->attenuation = -1;
-					}
-					else
-					{ // World is an optional keyword
-						if (SC_Compare ("world"))
-						{
-							SC_MustGetString ();
-						}
-					}
-
-					if (SC_Compare ("continuous"))
-					{
-						ambient->type |= CONTINUOUS;
-					}
-					else if (SC_Compare ("random"))
-					{
-						ambient->type |= RANDOM;
-						SC_MustGetFloat ();
-						ambient->periodmin = (int)(sc_Float * TICRATE);
-						SC_MustGetFloat ();
-						ambient->periodmax = (int)(sc_Float * TICRATE);
-					}
-					else if (SC_Compare ("periodic"))
-					{
-						ambient->type |= PERIODIC;
-						SC_MustGetFloat ();
-						ambient->periodmin = (int)(sc_Float * TICRATE);
-					}
-					else
-					{
-						Printf ("Unknown ambient type (%s)\n", sc_String);
-					}
-
-					SC_MustGetFloat ();
-					ambient->volume = sc_Float;
-					if (ambient->volume > 1)
-						ambient->volume = 1;
-					else if (ambient->volume < 0)
-						ambient->volume = 0;
-					}
-					break;
-
-				case SI_Map: {
-					// Hexen-style $MAP command
-					level_info_t *info;
-					char temp[16];
-
-					SC_MustGetNumber ();
-					sprintf (temp, "MAP%02d", sc_Number);
-					info = FindLevelInfo (temp);
-					SC_MustGetString ();
-					if (info->mapname[0])
-					{
-						ReplaceString (&info->music, sc_String);
-					}
-					}
-					break;
-
-				case SI_Registered:
-					break;
-
-				case SI_ArchivePath:
-					SC_MustGetString ();	// Unused for now
-					break;
-
-				case SI_PlayerReserve:
-					// $playerreserve <logical name>
-					if (DoneReserving)
-					{
-						SC_ScriptError ("All $playerreserves must come before any $playersounds or $playeraliases", NULL);
-					}
-					else
-					{
-						SC_MustGetString ();
-						int id = S_AddSound (sc_String, NULL);
-						S_sfx[id].link = NumPlayerReserves++;
-						S_sfx[id].bPlayerReserve = true;
-					}
-					break;
-
-				case SI_PlayerSound: {
-					// $playersound <player class> <gender> <logical name> <lump name>
-					char pclass[MAX_SNDNAME+1];
-					int gender, refid;
-
-					S_ParsePlayerSoundCommon (pclass, gender, refid);
-					S_AddPlayerSound (pclass, gender, refid, sc_String);
-					}
-					break;
-
-				case SI_PlayerSoundDup: {
-					// $playersounddup <player class> <gender> <logical name> <target sound name>
-					char pclass[MAX_SNDNAME+1];
-					int gender, refid, targid;
-
-					S_ParsePlayerSoundCommon (pclass, gender, refid);
-					targid = S_FindSoundNoHash (sc_String);
-					if (!S_sfx[targid].bPlayerReserve)
-					{
-						const char *name = sc_String;
-						SC_ScriptError ("%s is not a player sound", &name);
-					}
-					S_DupPlayerSound (pclass, gender, refid, targid);
-					}
-					break;
-
-				case SI_PlayerAlias: {
-					// $playeralias <player class> <gender> <logical name> <logical name of existing sound>
-					char pclass[MAX_SNDNAME+1];
-					int gender, refid;
-
-					S_ParsePlayerSoundCommon (pclass, gender, refid);
-					S_AddPlayerSoundExisting (pclass, gender, refid,
-						S_FindSoundTentative (sc_String));
-					}
-					break;
-
-				case SI_Alias: {
-					int sfxfrom;
-
-					SC_MustGetString ();
-					sfxfrom = S_AddSound (sc_String, NULL);
-					SC_MustGetString ();
-					S_sfx[sfxfrom].link = S_FindSoundTentative (sc_String);
-					}
-					break;
-
-				case SI_Random: {
-					// $random <logical name> { <logical name> ... }
-					FRandomSoundList random;
-
-					list.Clear ();
-					SC_MustGetString ();
-					random.SfxHead = S_AddSound (sc_String, NULL);
-					SC_MustGetStringName ("{");
-					while (SC_GetString () && !SC_Compare ("}"))
-					{
-						WORD sfxto = S_FindSoundTentative (sc_String);
-						list.Push (sfxto);
-					}
-					if (list.Size() == 1)
-					{ // Only one sound: treat as $alias
-						S_sfx[random.SfxHead].link = list[0];
-					}
-					else if (list.Size() > 1)
-					{ // Only add non-empty random lists
-						random.NumSounds = list.Size();
-						random.Sounds = new WORD[random.NumSounds];
-						memcpy (random.Sounds, &list[0], sizeof(WORD)*random.NumSounds);
-						S_sfx[random.SfxHead].link = S_rnd.Push (random);
-						S_sfx[random.SfxHead].bRandomHeader = true;
-					}
-					}
-					break;
-
-				case SI_IfDoom:
-					if (gameinfo.gametype != GAME_Doom)
-					{
-						skipToEndIf = true;
-					}
-					break;
-
-				case SI_IfHeretic:
-					if (gameinfo.gametype != GAME_Heretic)
-					{
-						skipToEndIf = true;
-					}
-					break;
-
-				case SI_IfHexen:
-					if (gameinfo.gametype != GAME_Hexen)
-					{
-						skipToEndIf = true;
-					}
-					break;
-				}
-			}
-			else
-			{ // Got a logical sound mapping
-				char name[MAX_SNDNAME+1];
-
-				strncpy (name, sc_String, MAX_SNDNAME);
-				name[MAX_SNDNAME] = 0;
-				SC_MustGetString ();
-				S_AddSound (name, sc_String);
-			}
+			S_AddBloodSFX (lump);
+		}
+		else if (lumpinfo[lump].namespc == ns_global &&
+			strcmp (lumpinfo[lump].name, "SNDINFO") == 0)
+		{
+			S_AddSNDINFO (lump);
 		}
 	}
+
 	S_HashSounds ();
 	S_sfx.ShrinkToFit ();
 
@@ -679,6 +455,307 @@ void S_ParseSndInfo ()
 	sfx_tink = S_FindSound ("misc/chat2");
 
 	sfx_empty = W_CheckNumForName ("dsempty");
+}
+
+//==========================================================================
+//
+// S_AddSNDINFO
+//
+// Reads a SNDINFO and does what it says.
+//
+//==========================================================================
+
+static void S_AddSNDINFO (int lump)
+{
+	bool skipToEndIf;
+	TArray<WORD> list;
+
+	SC_OpenLumpNum (lump, "SNDINFO");
+	skipToEndIf = false;
+
+	while (SC_GetString ())
+	{
+		if (skipToEndIf)
+		{
+			if (SC_Compare ("$endif"))
+			{
+				skipToEndIf = false;
+			}
+			continue;
+		}
+
+		if (sc_String[0] == '$')
+		{ // Got a command
+			switch (SC_MatchString (SICommandStrings))
+			{
+			case SI_Ambient: {
+				// $ambient <num> <logical name> [point [atten]|surround] <type> [secs] <relative volume>
+				AmbientSound *ambient, dummy;
+
+				SC_MustGetNumber ();
+				if (sc_Number < 0 || sc_Number > 255)
+				{
+					Printf ("Bad ambient index (%d)\n", sc_Number);
+					ambient = &dummy;
+				}
+				else
+				{
+					ambient = (AmbientSound *)Z_Malloc (sizeof(AmbientSound), PU_STATIC, NULL);
+					Ambients[sc_Number] = ambient;
+				}
+				memset (ambient, 0, sizeof(AmbientSound));
+
+				SC_MustGetString ();
+				strncpy (ambient->sound, sc_String, MAX_SNDNAME);
+				ambient->sound[MAX_SNDNAME] = 0;
+				ambient->attenuation = 0;
+
+				SC_MustGetString ();
+				if (SC_Compare ("point"))
+				{
+					float attenuation;
+
+					ambient->type = POSITIONAL;
+					SC_MustGetString ();
+					attenuation = (float)atof (sc_String);
+					if (attenuation > 0)
+					{
+						ambient->attenuation = attenuation;
+						SC_MustGetString ();
+					}
+					else
+					{
+						ambient->attenuation = 1;
+					}
+				}
+				else if (SC_Compare ("surround"))
+				{
+					ambient->type = SURROUND;
+					SC_MustGetString ();
+					ambient->attenuation = -1;
+				}
+				else
+				{ // World is an optional keyword
+					if (SC_Compare ("world"))
+					{
+						SC_MustGetString ();
+					}
+				}
+
+				if (SC_Compare ("continuous"))
+				{
+					ambient->type |= CONTINUOUS;
+				}
+				else if (SC_Compare ("random"))
+				{
+					ambient->type |= RANDOM;
+					SC_MustGetFloat ();
+					ambient->periodmin = (int)(sc_Float * TICRATE);
+					SC_MustGetFloat ();
+					ambient->periodmax = (int)(sc_Float * TICRATE);
+				}
+				else if (SC_Compare ("periodic"))
+				{
+					ambient->type |= PERIODIC;
+					SC_MustGetFloat ();
+					ambient->periodmin = (int)(sc_Float * TICRATE);
+				}
+				else
+				{
+					Printf ("Unknown ambient type (%s)\n", sc_String);
+				}
+
+				SC_MustGetFloat ();
+				ambient->volume = sc_Float;
+				if (ambient->volume > 1)
+					ambient->volume = 1;
+				else if (ambient->volume < 0)
+					ambient->volume = 0;
+				}
+				break;
+
+			case SI_Map: {
+				// Hexen-style $MAP command
+				level_info_t *info;
+				char temp[16];
+
+				SC_MustGetNumber ();
+				sprintf (temp, "MAP%02d", sc_Number);
+				info = FindLevelInfo (temp);
+				SC_MustGetString ();
+				if (info->mapname[0])
+				{
+					ReplaceString (&info->music, sc_String);
+				}
+				}
+				break;
+
+			case SI_Registered:
+				break;
+
+			case SI_ArchivePath:
+				SC_MustGetString ();	// Unused for now
+				break;
+
+			case SI_PlayerReserve:
+				// $playerreserve <logical name>
+				if (DoneReserving)
+				{
+					SC_ScriptError ("All $playerreserves must come before any $playersounds or $playeraliases", NULL);
+				}
+				else
+				{
+					SC_MustGetString ();
+					int id = S_AddSound (sc_String, NULL);
+					S_sfx[id].link = NumPlayerReserves++;
+					S_sfx[id].bPlayerReserve = true;
+				}
+				break;
+
+			case SI_PlayerSound: {
+				// $playersound <player class> <gender> <logical name> <lump name>
+				char pclass[MAX_SNDNAME+1];
+				int gender, refid;
+
+				S_ParsePlayerSoundCommon (pclass, gender, refid);
+				S_AddPlayerSound (pclass, gender, refid, sc_String);
+				}
+				break;
+
+			case SI_PlayerSoundDup: {
+				// $playersounddup <player class> <gender> <logical name> <target sound name>
+				char pclass[MAX_SNDNAME+1];
+				int gender, refid, targid;
+
+				S_ParsePlayerSoundCommon (pclass, gender, refid);
+				targid = S_FindSoundNoHash (sc_String);
+				if (!S_sfx[targid].bPlayerReserve)
+				{
+					const char *name = sc_String;
+					SC_ScriptError ("%s is not a player sound", &name);
+				}
+				S_DupPlayerSound (pclass, gender, refid, targid);
+				}
+				break;
+
+			case SI_PlayerAlias: {
+				// $playeralias <player class> <gender> <logical name> <logical name of existing sound>
+				char pclass[MAX_SNDNAME+1];
+				int gender, refid;
+
+				S_ParsePlayerSoundCommon (pclass, gender, refid);
+				S_AddPlayerSoundExisting (pclass, gender, refid,
+					S_FindSoundTentative (sc_String));
+				}
+				break;
+
+			case SI_Alias: {
+				int sfxfrom;
+
+				SC_MustGetString ();
+				sfxfrom = S_AddSound (sc_String, NULL);
+				SC_MustGetString ();
+				S_sfx[sfxfrom].link = S_FindSoundTentative (sc_String);
+				}
+				break;
+
+			case SI_Random: {
+				// $random <logical name> { <logical name> ... }
+				FRandomSoundList random;
+
+				list.Clear ();
+				SC_MustGetString ();
+				random.SfxHead = S_AddSound (sc_String, NULL);
+				SC_MustGetStringName ("{");
+				while (SC_GetString () && !SC_Compare ("}"))
+				{
+					WORD sfxto = S_FindSoundTentative (sc_String);
+					list.Push (sfxto);
+				}
+				if (list.Size() == 1)
+				{ // Only one sound: treat as $alias
+					S_sfx[random.SfxHead].link = list[0];
+				}
+				else if (list.Size() > 1)
+				{ // Only add non-empty random lists
+					random.NumSounds = list.Size();
+					random.Sounds = new WORD[random.NumSounds];
+					memcpy (random.Sounds, &list[0], sizeof(WORD)*random.NumSounds);
+					S_sfx[random.SfxHead].link = S_rnd.Push (random);
+					S_sfx[random.SfxHead].bRandomHeader = true;
+				}
+				}
+				break;
+
+			case SI_IfDoom:
+				if (gameinfo.gametype != GAME_Doom)
+				{
+					skipToEndIf = true;
+				}
+				break;
+
+			case SI_IfHeretic:
+				if (gameinfo.gametype != GAME_Heretic)
+				{
+					skipToEndIf = true;
+				}
+				break;
+
+			case SI_IfHexen:
+				if (gameinfo.gametype != GAME_Hexen)
+				{
+					skipToEndIf = true;
+				}
+				break;
+			}
+		}
+		else
+		{ // Got a logical sound mapping
+			char name[MAX_SNDNAME+1];
+
+			strncpy (name, sc_String, MAX_SNDNAME);
+			name[MAX_SNDNAME] = 0;
+			SC_MustGetString ();
+			S_AddSound (name, sc_String);
+		}
+	}
+	SC_Close ();
+}
+
+//==========================================================================
+//
+// S_AddBloodSFX
+//
+// Registers a new sound with the name <lumpname>.sfx
+// Actual sound data is searched for in the ns_bloodraw namespace.
+//
+//==========================================================================
+
+static void S_AddBloodSFX (int lumpnum)
+{
+	char name[13];
+	FBloodSFX *sfx = (FBloodSFX *)W_CacheLumpNum (lumpnum, PU_CACHE);
+	int rawlump = W_CheckNumForName (sfx->RawName, ns_bloodraw);
+	int sfxnum;
+
+	if (rawlump == -1)
+	{
+		return;
+	}
+
+	strncpy (name, lumpinfo[lumpnum].name, 8);
+	name[8] = 0;
+	strcat (name, ".SFX");
+	sfxnum = S_AddSound (name, rawlump);
+	if (sfx->Format == 5)
+	{
+		S_sfx[sfxnum].bForce22050 = true;
+	}
+	else // I don't know any other formats for this
+	{
+		S_sfx[sfxnum].bForce11025 = true;
+	}
+	S_sfx[sfxnum].bLoadRAW = true;
 }
 
 //==========================================================================

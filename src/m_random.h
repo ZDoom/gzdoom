@@ -131,6 +131,22 @@ typedef enum {
 	pr_decal,					// 79
 	pr_lightning,				// 80
 	pr_decalchoice,				// 81
+	pr_firedemonrock,			// 82
+	pr_firedemonsplotch,		// 83
+	pr_firedemonchase,			// 84
+	pr_smbounce,				// 85
+	pr_serpenthump,				// 86
+	pr_serpentattack,			// 87
+	pr_serpentgibs,				// 88
+	pr_centaurattack,			// 89
+	pr_centaurdrop,				// 90
+	pr_centaurdefend,			// 91
+	pr_demonchunks,				// 92
+	pr_iceguylook,				// 93
+	pr_iceguychase,				// 94
+	pr_bbannounce,				// 95
+	pr_floatbobphase,			// 96
+	pr_tracebleed,				// 97
 	// Start new entries -- add new entries below
 
 	// End of new entries

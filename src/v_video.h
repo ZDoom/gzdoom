@@ -646,8 +646,14 @@ public:
 	// be flashed.)
 	virtual bool SetFlash (PalEntry rgb, int amount) = 0;
 
+	// Converse of SetFlash
+	virtual void GetFlash (PalEntry &rgb, int &amount) = 0;
+
 	// Returns the number of video pages the frame buffer is using.
 	virtual int GetPageCount () = 0;
+
+	// Returns true if running fullscreen.
+	virtual bool IsFullscreen () = 0;
 
 #ifdef _WIN32
 	virtual int QueryNewPalette () = 0;

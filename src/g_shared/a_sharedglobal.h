@@ -5,6 +5,8 @@
 #include "info.h"
 
 class FDecal;
+struct vertex_s;
+struct side_s;
 
 class AUnknown : public AActor
 {
@@ -55,8 +57,14 @@ class AImpactDecal : public ADecal
 public:
 	static AImpactDecal *StaticCreate (const char *name, fixed_t x, fixed_t y, fixed_t z, side_s *wall);
 	static AImpactDecal *StaticCreate (const FDecal *decal, fixed_t x, fixed_t y, fixed_t z, side_s *wall);
+
 	void BeginPlay ();
 	void Destroy ();
+
+protected:
+	AImpactDecal *CloneSelf (const FDecal *decal, fixed_t x, fixed_t y, fixed_t z, side_s *wall) const;
+	static void SpreadLeft (fixed_t r, vertex_s *v1, side_s *feelwall);
+	static void SpreadRight (fixed_t r, side_s *feelwall, fixed_t wallsize);
 };
 
 class AWaterSplashBase : public AActor

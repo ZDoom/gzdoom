@@ -145,6 +145,7 @@ IMPLEMENT_STATELESS_ACTOR (AEttinMash, Hexen, -1, 102)
 
 	PROP_DeathState (~0)
 	PROP_XDeathState (~0)
+	PROP_IDeathState (~0)
 END_DEFAULTS
 
 //============================================================================
@@ -155,7 +156,9 @@ void A_EttinAttack (AActor *actor)
 {
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(2));
+		int damage = HITDICE(2);
+		P_DamageMobj (actor->target, actor, actor, damage);
+		P_TraceBleed (damage, actor->target, actor);
 	}
 }
 

@@ -70,12 +70,11 @@ extern "C"
 {
 	BOOL		HaveRDTSC = 0;
 	BOOL		HaveCMOV = 0;
-	double		SecondsPerCycle = 1e-6;
-	double		CyclesPerSecond = 1e6;
+	double		SecondsPerCycle = 1e-8;
+	double		CyclesPerSecond = 1e8;		// 100 MHz
 	byte		CPUFamily, CPUModel, CPUStepping;
 }
 
-static LARGE_INTEGER PerformanceFreq, PerformanceBase;
 static cycle_t ClockCalibration;
 
 extern HWND Window;
@@ -86,6 +85,7 @@ UINT TimerPeriod;
 UINT TimerEventID;
 HANDLE NewTicArrived;
 DWORD LanguageIDs[4];
+void CalculateCPUSpeed ();
 
 float mb_used = 8.0;
 
@@ -327,36 +327,30 @@ void I_Init (void)
 	else
 		Printf ("not using MMX)\n");
 
-	Printf ("-> family %d, model %d, stepping %d\n", CPUFamily, CPUModel, CPUStepping);
-	Printf ("-> Processor %s RDTSC\n", HaveRDTSC ? "has" : "does not have");
-	if (HaveRDTSC)
-	{
-		QueryPerformanceFrequency (&PerformanceFreq);
-		if (PerformanceFreq.QuadPart == 0)
-		{
-			SetPriorityClass (GetCurrentProcess (), REALTIME_PRIORITY_CLASS);
-			clock (ClockCalibration);
-			Sleep (100);
-			unclock (ClockCalibration);
-			SetPriorityClass (GetCurrentProcess (), NORMAL_PRIORITY_CLASS);
-			CyclesPerSecond = (float)ClockCalibration * 10.0f;
-			SecondsPerCycle = 1.0f / CyclesPerSecond;
-		}
-		else
-		{
-			clock (ClockCalibration);
-			QueryPerformanceCounter (&PerformanceBase);
-		}
-	}
+	Printf ("       family %d, model %d, stepping %d\n", CPUFamily, CPUModel, CPUStepping);
+	CalculateCPUSpeed ();
 #endif
 
 	// Use a timer event if possible
 	NewTicArrived = CreateEvent (NULL, FALSE, FALSE, NULL);
 	if (NewTicArrived)
 	{
+		UINT delay;
+		char *cmdDelay;
+
+		cmdDelay = Args.CheckValue ("-timerdelay");
+		delay = 0;
+		if (cmdDelay != 0)
+		{
+			delay = atoi (cmdDelay);
+		}
+		if (delay == 0)
+		{
+			delay = 1000/TICRATE;
+		}
 		TimerEventID = timeSetEvent
 			(
-				1000/TICRATE,
+				delay,
 				0,
 				TimerTicked,
 				0,
@@ -369,7 +363,7 @@ void I_Init (void)
 		I_WaitForTic = I_WaitForTicEvent;
 	}
 	else
-	{	// Otherwise, busy-loop with timeGetTime
+	{	// If no timer event, busy-loop with timeGetTime
 		I_GetTime = I_GetTimePolled;
 		I_WaitForTic = I_WaitForTicPolled;
 	}
@@ -379,23 +373,52 @@ void I_Init (void)
 	I_InitHardware ();
 }
 
-void I_FinishClockCalibration ()
+void CalculateCPUSpeed ()
 {
-	if (HaveRDTSC)
+	LARGE_INTEGER freq;
+
+	QueryPerformanceFrequency (&freq);
+
+	if (freq.QuadPart != 0 && HaveRDTSC)
 	{
-		if (PerformanceFreq.QuadPart != 0)
+		LARGE_INTEGER count1, count2;
+		DWORD minDiff;
+
+		// Count cycles for at least 55 milliseconds.
+		// The performance counter is very low resolution compared to CPU
+		// speeds today, so the longer we count, the more accurate our estimate.
+		// On the other hand, we don't want to count too long, because we don't
+		// want the user to notice us spend time here, since most users will
+		// probably never use the performance statistics.
+		minDiff = freq.LowPart * 11 / 200;
+
+		// Minimize the chance of task switching during the testing by going very
+		// high priority. This is another reason to avoid timing for too long.
+		SetPriorityClass (GetCurrentProcess (), REALTIME_PRIORITY_CLASS);
+		SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_TIME_CRITICAL);
+		ClockCalibration = 0;
+		clock (ClockCalibration);
+		QueryPerformanceCounter (&count1);
+		do
 		{
-			LARGE_INTEGER end;
+			QueryPerformanceCounter (&count2);
+		} while ((DWORD)((unsigned __int64)count2.QuadPart - (unsigned __int64)count1.QuadPart) < minDiff);
+		unclock (ClockCalibration);
+		QueryPerformanceCounter (&count2);
+		SetPriorityClass (GetCurrentProcess (), NORMAL_PRIORITY_CLASS);
+		SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_NORMAL);
 
-			unclock (ClockCalibration);
-			QueryPerformanceCounter (&end);
-			CyclesPerSecond = (double)ClockCalibration * (double)PerformanceFreq.QuadPart
-				/ (double)(end.QuadPart - PerformanceBase.QuadPart);
-			SecondsPerCycle = 1.0 / CyclesPerSecond;
-
-		}
-		Printf ("CPU Frequency: ~%f MHz\n", CyclesPerSecond / 1e6);
+		CyclesPerSecond = (double)ClockCalibration *
+			(double)freq.QuadPart /
+			(double)((unsigned __int64)count2.QuadPart - (unsigned __int64)count1.QuadPart);
+		SecondsPerCycle = 1.0 / CyclesPerSecond;
 	}
+	else
+	{
+		Printf ("Can't determine CPU speed, so pretending.\n");
+	}
+
+	Printf ("CPU Speed: %f MHz\n", CyclesPerSecond / 1e6);
 }
 
 //
@@ -440,7 +463,8 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 		va_list argptr;
 		va_start (argptr, error);
 		index = vsprintf (errortext, error, argptr);
-		sprintf (errortext + index, "\nGetLastError = %ld", GetLastError());
+// GetLastError() is usually useless because we don't do a lot of Win32 stuff
+//		sprintf (errortext + index, "\nGetLastError = %ld", GetLastError());
 		va_end (argptr);
 
 		// Record error to log (if logging)

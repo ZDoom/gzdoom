@@ -185,7 +185,9 @@ void A_BeastAttack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(3), MOD_HIT);
+		int damage = HITDICE(3);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
 	P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(ABeastBall));

@@ -372,6 +372,7 @@ void A_VileAttack (AActor *actor)
 
 	S_Sound (actor, CHAN_WEAPON, "vile/stop", 1, ATTN_NORM);
 	P_DamageMobj (actor->target, actor, actor, 20, MOD_UNKNOWN);
+	P_TraceBleed (20, actor->target);
 	actor->target->momz = 1000 * FRACUNIT / actor->target->Mass;
 		
 	an = actor->angle >> ANGLETOFINESHIFT;

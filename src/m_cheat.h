@@ -30,7 +30,7 @@
 // [RH] Functions that actually perform the cheating
 class player_s;
 void cht_DoCheat (player_s *player, int cheat);
-void cht_Give (player_s *player, char *item);
+void cht_Give (player_s *player, char *item, int amount=1);
 void cht_Suicide (player_s *player);
 
 #endif

@@ -322,12 +322,13 @@ struct side_s
 	fixed_t 	textureoffset;	// add this to the calculated texture column
 	fixed_t 	rowoffset;		// add this to the calculated texture top
 	sector_t*	sector;			// Sector the SideDef is facing.
+	AActor*		BoundActors;	// [RH] Wall sprites bound to the wall (aka decals)
 	short		toptexture, bottomtexture, midtexture;	// texture indices
 	short		linenum;
+	short		LeftSide, RightSide;	// [RH] Group walls into loops
 	WORD		TexelLength;
 	SBYTE		Light;
 	BYTE		Flags;
-	AActor*		BoundActors;	// [RH] Wall sprites bound to the wall (aka decals)
 };
 typedef struct side_s side_t;
 

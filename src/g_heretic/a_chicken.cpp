@@ -303,7 +303,9 @@ void A_ChicAttack (AActor *actor)
 	}
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, 1+(P_Random()&1), MOD_HIT);
+		int damage = 1 + (P_Random() & 1);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 	}
 }
 

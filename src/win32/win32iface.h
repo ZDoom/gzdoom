@@ -21,7 +21,7 @@ class Win32Video : public IVideo
 	void StartModeIterator (int bits);
 	bool NextMode (int *width, int *height);
 
-	void GoFullscreen (bool yes);
+	bool GoFullscreen (bool yes);
 
  private:
 	struct ModeInfo
@@ -54,7 +54,6 @@ class Win32Video : public IVideo
 	void AddMode (int x, int y, int bits, ModeInfo **lastmode);
 	void FreeModes ();
 
-	void InitDDraw ();
 	void NewDDMode (int x, int y);
 	struct CBData
 	{

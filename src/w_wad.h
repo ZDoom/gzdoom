@@ -28,59 +28,88 @@
 #ifdef __BIG_ENDIAN__
 #define IWAD_ID (('I'<<24)|('W'<<16)|('A'<<8)|('D'))
 #define PWAD_ID (('P'<<24)|('W'<<16)|('A'<<8)|('D'))
+#define RFF_ID (('R'<<24)|('F'<<16)|('F'<<8)|(0x1a))
 #else
 #define IWAD_ID (('I')|('W'<<8)|('A'<<16)|('D'<<24))
 #define PWAD_ID (('P')|('W'<<8)|('A'<<16)|('D'<<24))
+#define RFF_ID (('R')|('F'<<8)|('F'<<16)|(0x1a<<24))
 #endif
 
 // [RH] Remove limit on number of WAD files
-typedef struct wadlist_s {
-	struct wadlist_s *next;
+struct wadlist_t
+{
+	wadlist_t *next;
 	char name[1];	// +size of string
-} wadlist_t;
+};
 extern wadlist_t *wadfiles;
 
 
 //
 // TYPES
 //
-typedef struct
+struct wadinfo_t
 {
 	// Should be "IWAD" or "PWAD".
-	unsigned	identification;
-	int			numlumps;
-	int			infotableofs;
+	DWORD		Magic;
+	DWORD		NumLumps;
+	DWORD		InfoTableOfs;
+};
 
-} wadinfo_t;
-
-
-typedef struct
+struct rffinfo_t
 {
-	int			filepos;
-	int			size;
-	char		name[8];
+	// Should be "RFF\x18"
+	DWORD		Magic;
+	DWORD		Version;
+	DWORD		DirOfs;
+	DWORD		NumLumps;
+};
 
-} filelump_t;
+struct wadlump_t
+{
+	DWORD		FilePos;
+	DWORD		Size;
+	char		Name[8];
+};
+
+struct rfflump_t
+{
+	BYTE		IDontKnow[16];
+	DWORD		FilePos;
+	DWORD		Size;
+	BYTE		IStillDontKnow[8];
+	BYTE		Flags;
+	char		Extension[3];
+	char		Name[8];
+	BYTE		WhatIsThis[4];
+};
 
 //
 // WADFILE I/O related stuff.
 //
-typedef struct lumpinfo_s
+struct lumpinfo_t
 {
 	char		name[8];
 	int			position;
 	int			size;
 	int			namespc;
+	short		wadnum;
+	WORD		flags;
+};
 
-	int			wadnum;
-} lumpinfo_t;
+enum
+{
+	LUMPF_BLOODCRYPT = 1	// Lump uses Blood-style encryption
+};
 
 // [RH] Namespaces from BOOM.
 typedef enum {
 	ns_global = 0,
 	ns_sprites,
 	ns_flats,
-	ns_colormaps
+	ns_colormaps,
+	ns_bloodraw,
+	ns_bloodsfx,
+	ns_bloodmisc
 } namespace_t;
 
 extern	void**		lumpcache;

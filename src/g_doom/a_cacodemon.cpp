@@ -136,6 +136,7 @@ void A_HeadAttack (AActor *self)
 	{
 		int damage = (P_Random (pr_headattack)%6+1)*10;
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+		P_TraceBleed (damage, self->target, self);
 		return;
 	}
 	

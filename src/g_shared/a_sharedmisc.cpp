@@ -25,7 +25,7 @@ IMPLEMENT_STATELESS_ACTOR (APatrolPoint, Any, 9024, 0)
 	PROP_HeightFixed (8)
 	PROP_Mass (10)
 	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_RenderFlags (RF_INVISIBLE)
+	PROP_RenderStyle (STYLE_None)
 END_DEFAULTS
 
 // Blood sprite - adjusts itself for each game -----------------------------
@@ -59,7 +59,7 @@ AT_GAME_SET (Blood)
 
 IMPLEMENT_STATELESS_ACTOR (AMapSpot, Any, 9001, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
-	PROP_RenderFlags (RF_INVISIBLE)
+	PROP_RenderStyle (STYLE_None)
 END_DEFAULTS
 
 // Map spot with gravity ---------------------------------------------------

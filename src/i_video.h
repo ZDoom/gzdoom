@@ -27,10 +27,6 @@
 #include "v_video.h"
 
 
-// [RH] True if the display is not in a window
-extern BOOL Fullscreen;
-
-
 // [RH] Set the display mode
 DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old);
 

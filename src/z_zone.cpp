@@ -47,8 +47,8 @@ automatically if needed
 ==============================================================================
 */
 
-#define ZONEID	0x1d4a11
-
+#define ZONEID		0x1d4a11
+#define TRASHID		0xf51a4d16
 
 typedef struct
 {
@@ -135,16 +135,23 @@ void Z_Free (void *ptr)
 //	Z_CheckHeap ();
 //#endif
 
+	if (ptr == NULL)
+	{ // [RH] Allow NULL pointers
+		return;
+	}
+
 	block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
 
 	if (block->id != ZONEID)
 		I_FatalError ("Z_Free: freed a pointer without ZONEID");
+	if (block->user == NULL)
+		I_FatalError ("Z_Free: freed a freed pointer");
+	if (*(int *)((byte *)block + block->size - 4) != TRASHID)
+		I_FatalError ("Z_Free: memory changed past end of block");
 
-	if (block->user > (void **)0x100)
+	if (block->user > (void **)2)
 	{
-		// smaller values are not pointers
-		// Note: OS-dependent?
-		
+		// smaller values are not pointers [Note: OS-dependent?]
 		// clear the user's mark
 		*block->user = NULL;
 	}
@@ -206,16 +213,16 @@ void *Z_Malloc (size_t size, int tag, void *user)
 //	Z_CheckHeap ();
 //#endif
 
-	size = (size + ALIGN - 1) & ~(ALIGN - 1);
-
 //
 // scan through the block list, looking for the first free block
 // of sufficient size, throwing out any purgable blocks along the way.
 //
 	size += sizeof(memblock_t);	// account for size of block header
+	size += 4;					// space for memory trash tester
+	size = (size + ALIGN - 1) & ~(ALIGN - 1);
 
 //
-// if there is a free block behind the rover, back up over them
+// if there is a free block behind the rover, back up over it
 //
 	base = mainzone->rover;
 	if (!base->prev->user)
@@ -292,6 +299,9 @@ void *Z_Malloc (size_t size, int tag, void *user)
 	mainzone->rover = base->next;	// next allocation will start looking here
 
 	base->id = ZONEID;
+
+	// marker for memory trash testing
+	*(int *)((byte *)base + base->size - 4) = TRASHID;
 
 //#ifdef _DEBUG
 //	Z_CheckHeap ();

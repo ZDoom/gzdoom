@@ -58,6 +58,8 @@
 #define WATER_SINK_SPEED		(FRACUNIT/2)
 #define WATER_JUMP_SPEED		(FRACUNIT*7/2)
 
+CVAR (Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
+
 static void CheckForPushSpecial (line_t *line, int side, AActor *mobj);
 
 fixed_t 		tmbbox[4];
@@ -526,6 +528,7 @@ BOOL PIT_CheckThing (AActor *thing)
 	{
 		damage = ((P_Random(pr_checkthing)%8)+1) * tmthing->damage;
 		P_DamageMobj (thing, tmthing, tmthing, damage);
+		P_TraceBleed (damage, thing, tmthing);
 		tmthing->flags &= ~MF_SKULLFLY;
 		tmthing->momx = tmthing->momy = tmthing->momz = 0;
 		tmthing->SetState (tmthing->SeeState);
@@ -544,8 +547,10 @@ BOOL PIT_CheckThing (AActor *thing)
 			{
 				damage = (tmthing->Mass / 100) + 1;
 				P_DamageMobj (thing, tmthing, tmthing, damage);
+				P_TraceBleed (damage, thing, tmthing);
 				damage = (thing->Mass / 100) + 1;
 				P_DamageMobj (tmthing, thing, thing, damage >> 2);
+				P_TraceBleed (damage, tmthing, thing);
 			}
 			return false;
 		}
@@ -608,6 +613,7 @@ BOOL PIT_CheckThing (AActor *thing)
 			S_Sound (tmthing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
 			damage = ((P_Random()&3)+2)*tmthing->damage;
 			P_DamageMobj (thing, tmthing, tmthing->target, damage);
+			P_TraceBleed (damage, thing, tmthing);
 			if(thing->flags2&MF2_PUSHABLE
 				&& !(tmthing->flags2&MF2_CANNOTPUSH))
 			{ // Push thing
@@ -622,6 +628,7 @@ BOOL PIT_CheckThing (AActor *thing)
 		if (damage)
 		{
 			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->GetMOD ());
+			P_TraceBleed (damage, thing, tmthing);
 			if (gameinfo.gametype != GAME_Doom &&
 				!(thing->flags & MF_NOBLOOD) &&
 				!(thing->flags2 & MF2_REFLECTIVE) &&
@@ -2118,6 +2125,8 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
+	angle_t srcangle = angle;
+	int srcpitch = pitch;
 
 	angle >>= ANGLETOFINESHIFT;
 	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
@@ -2161,8 +2170,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				shootz + FixedMul (vz, closer), angle - ANG90, 0);
 
 			// [RH] Spawn a decal
-			if (trace.HitType == TRACE_HitWall &&
-				!(sides[trace.Line->sidenum[trace.Side]].Flags & WALLF_NOAUTODECALS))
+			if (trace.HitType == TRACE_HitWall)
 			{
 				FDecalBase *decalbase = NULL;
 
@@ -2240,9 +2248,113 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				{
 					P_DamageMobj (trace.Actor, t1, t1, damage, t1->GetMOD ());
 				}
+				// [RH] Stick blood to walls
+				P_TraceBleed (damage, trace.X, trace.Y, trace.Z,
+					trace.Actor, srcangle, srcpitch);
 			}
 		}
 	}
+}
+
+void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, angle_t angle, int pitch)
+{
+	if (!cl_bloodsplats)
+		return;
+
+	const char *bloodType = "BloodSplat";
+	int count;
+	int noise;
+
+	if ((actor->flags & MF_NOBLOOD) || (actor->flags2 & MF2_INVULNERABLE))
+	{
+		return;
+	}
+	if (damage < 15)
+	{	// For low damages, there is a chance to not spray blood at all
+		if (damage <= 10)
+		{
+			if (P_Random (pr_tracebleed) < 160)
+			{
+				return;
+			}
+		}
+		count = 1;
+		noise = 18;
+	}
+	else if (damage < 25)
+	{
+		count = 2;
+		noise = 19;
+	}
+	else
+	{	// For high damages, there is a chance to spray just one big glob of blood
+		if (P_Random (pr_tracebleed) < 24)
+		{
+			bloodType = "BloodSmear";
+			count = 1;
+			noise = 20;
+		}
+		else
+		{
+			count = 3;
+			noise = 20;
+		}
+	}
+
+	for (; count; --count)
+	{
+		FTraceResults bleedtrace;
+
+		angle_t bleedang = (angle + ((P_Random (pr_tracebleed)-128) << noise)) >> ANGLETOFINESHIFT;
+		angle_t bleedpitch = (angle_t)(pitch + ((P_Random (pr_tracebleed)-128) << noise)) >> ANGLETOFINESHIFT;
+		fixed_t vx = FixedMul (finecosine[bleedpitch], finecosine[bleedang]);
+		fixed_t vy = FixedMul (finecosine[bleedpitch], finesine[bleedang]);
+		fixed_t vz = -finesine[bleedpitch];
+
+		if (Trace (x, y, z, actor->subsector->sector,
+					vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, actor,
+					bleedtrace, TRACE_NoSky))
+		{
+			if (bleedtrace.HitType == TRACE_HitWall)
+			{
+				AImpactDecal::StaticCreate (bloodType,
+					bleedtrace.X, bleedtrace.Y, bleedtrace.Z,
+					sides + bleedtrace.Line->sidenum[bleedtrace.Side]);
+			}
+		}
+	}
+}
+
+void P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch)
+{
+	P_TraceBleed (damage, target->x, target->y, target->z + target->height/2,
+		target, angle, pitch);
+}
+
+void P_TraceBleed (int damage, AActor *target, AActor *missile)
+{
+	int pitch;
+
+	if (missile->momz != 0)
+	{
+		double aim;
+
+		aim = atan ((double)missile->momz / (double)P_AproxDistance (missile->x - target->x, missile->y - target->y));
+		pitch = -(int)(aim * ANGLE_180/PI);
+	}
+	else
+	{
+		pitch = 0;
+	}
+	P_TraceBleed (damage, target->x, target->y, target->z + target->height/2,
+		target, R_PointToAngle2 (missile->x, missile->y, target->x, target->y),
+		pitch);
+}
+
+void P_TraceBleed (int damage, AActor *target)
+{
+	P_TraceBleed (damage, target->x, target->y, target->z + target->height/2,
+		target, P_Random(pr_tracebleed) << 24, (P_Random()-128)<<16);
 }
 
 //
@@ -2327,6 +2439,7 @@ void P_RailAttack (AActor *source, int damage, int offset)
 			P_SpawnBlood (x, y, z, source->angle - ANG180, damage);
 		}
 		P_DamageMobj (RailHits[i].HitActor, source, source, damage, MOD_RAILGUN);
+		P_TraceBleed (damage, x, y, z, RailHits[i].HitActor, angle, pitch);
 	}
 
 	VectorFixedSet (end, trace.X, trace.Y, trace.Z);
@@ -2683,8 +2796,10 @@ BOOL PIT_RadiusAttack (AActor *thing)
 			float thrust;
 			fixed_t momx = thing->momx;
 			fixed_t momy = thing->momy;
+			int damage = (int)points;
 
-			P_DamageMobj (thing, bombspot, bombsource, (int)points, bombmod);
+			P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
+			P_TraceBleed (damage, thing, bombspot);
 
 			thrust = points * 0.5f / (float)thing->Mass;
 			if (bombsource == thing)
@@ -2731,6 +2846,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 				damage >>= 2;
 			}
 			P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
+			P_TraceBleed (damage, thing, bombspot);
 		}
 	}
 	return true;
@@ -3054,6 +3170,7 @@ void P_DoCrunch (AActor *thing)
 	if ((crushchange > 0) && !(level.time & 3))
 	{
 		P_DamageMobj (thing, NULL, NULL, crushchange, MOD_CRUSH);
+		P_TraceBleed (crushchange, thing);
 
 		// spray blood in a random direction
 		if ((!(thing->flags&MF_NOBLOOD)) &&

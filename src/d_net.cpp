@@ -1248,7 +1248,8 @@ void Net_DoCommand (int type, byte **stream, int player)
 		break;
 
 	case DEM_GIVECHEAT:
-		cht_Give (&players[player], s = ReadString (stream));
+		s = ReadString (stream);
+		cht_Give (&players[player], s, ReadByte (stream));
 		break;
 
 	case DEM_GENERICCHEAT:
@@ -1431,17 +1432,20 @@ void Net_SkipCommand (int type, byte **stream)
 	{
 		case DEM_SAY:
 		case DEM_ADDBOT:
-			skip = strlen ((char *)(*stream + 1)) + 1;
+			skip = strlen ((char *)(*stream + 1)) + 2;
+			break;
+
+		case DEM_GIVECHEAT:
+			skip = strlen ((char *)(*stream)) + 2;
 			break;
 
 		case DEM_MUSICCHANGE:
 		case DEM_PRINT:
 		case DEM_CENTERPRINT:
 		case DEM_UINFCHANGED:
-		case DEM_GIVECHEAT:
 		case DEM_CHANGEMAP:
 		case DEM_SUMMON:
-			skip = strlen ((char *)(*stream));
+			skip = strlen ((char *)(*stream)) + 1;
 			break;
 
 		case DEM_GENERICCHEAT:
@@ -1470,7 +1474,7 @@ void Net_SkipCommand (int type, byte **stream)
 				skip += 4;
 				break;
 			case CVAR_String:
-				skip += strlen ((char *)(*stream + skip));
+				skip += strlen ((char *)(*stream + skip)) + 1;
 				break;
 			}
 			break;

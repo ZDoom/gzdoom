@@ -1236,7 +1236,14 @@ static int PatchWeapon (int weapNum)
 			}
 			else if (stricmp (Line1, "Ammo type") == 0)
 			{
-				info->ammo = (ammotype_t)val;
+				if (val == 5)
+				{
+					info->ammo = am_noammo;
+				}
+				else
+				{
+					info->ammo = (ammotype_t)val;
+				}
 				info->ammogive = clipammo[val];
 			}
 			else

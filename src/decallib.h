@@ -7,12 +7,13 @@
 
 class AActor;
 class FDecal;
+struct FDecalAnimator;
 
 class FDecalBase
 {
 	friend class FDecalLib;
 public:
-	virtual FDecal *GetDecal ();
+	virtual const FDecal *GetDecal () const;
 	
 protected:
 	FDecalBase ();
@@ -30,7 +31,7 @@ public:
 	FDecal () : Translation (NULL) {}
 
 	void ApplyToActor (AActor *actor) const;
-	FDecal *GetDecal ();
+	const FDecal *GetDecal () const;
 
 	DWORD ShadeColor;
 	BYTE *Translation;
@@ -39,6 +40,8 @@ public:
 	WORD PicNum;
 	WORD RenderFlags;
 	WORD Alpha;				// same as (actor->alpha >> 1)
+	const FDecalAnimator *Animator;
+	const FDecalBase *LowerDecal;
 
 	enum { DECAL_RandomFlipX = 0x100, DECAL_RandomFlipY = 0x200 };
 };
@@ -65,11 +68,17 @@ private:
 	FTranslation *GenerateTranslation (DWORD start, DWORD end);
 	void AddDecal (const char *name, byte num, const FDecal &decal);
 	void AddDecal (FDecalBase *decal);
+	FDecalAnimator *FindAnimator (const char *name);
 
 	BYTE GetDecalID ();
 	void ParseDecal ();
 	void ParseDecalGroup ();
 	void ParseGenerator ();
+	void ParseFader ();
+	void ParseStretcher ();
+	void ParseSlider ();
+	void ParseCombiner ();
+	void ParseColorchanger ();
 
 	FDecalBase *Root;
 	FTranslation *Translations;

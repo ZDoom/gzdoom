@@ -229,6 +229,8 @@ public:
 
 	fixed_t		oldx;
 	fixed_t		oldy;
+
+	FPlayerSkin	*skin;		// Sprite override
 };
 
 typedef player_s player_t;

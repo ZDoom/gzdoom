@@ -241,7 +241,9 @@ void A_BishopAttack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(4));
+		int damage = HITDICE(4);
+		P_DamageMobj (actor->target, actor, actor, damage);
+		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
 	actor->special1 = (P_Random() & 3) + 5;

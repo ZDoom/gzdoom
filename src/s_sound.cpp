@@ -16,6 +16,7 @@
 //
 //
 // DESCRIPTION:  none
+// Dolby Pro Logic code by Gavino.
 //
 //-----------------------------------------------------------------------------
 
@@ -87,7 +88,8 @@ typedef struct
 	fixed_t		x,y,z;		// Origin if pt is NULL
 	sfxinfo_t*	sfxinfo;	// sound information (if null, channel avail.)
 	long 		handle;		// handle of the sound being played
-	int			sound_id;
+	int			sound_id;	// sound id of playing sound
+	int			org_id;		// sound id of sound used to start this channel
 	int			entchannel;	// entity's sound channel
 	int			basepriority;
 	float		attenuation;
@@ -108,15 +110,17 @@ struct MusPlayingInfo
 	bool  loop;
 };
 
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static fixed_t P_AproxDistance2 (fixed_t *listener, fixed_t x, fixed_t y);
 static void S_StopChannel (int cnum);
-static void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3],
-	float vel[3]);
 static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	int sound_id, float volume, float attenuation, BOOL looping, int tag=0);
 static void S_ActivatePlayList (bool goBack);
+static void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3],
+	float vel[3]);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -142,7 +146,8 @@ int numChannels;
 CVAR (Bool, snd_surround, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// [RH] Use surround sounds?
 FBoolCVar noisedebug ("noise", false, 0);	// [RH] Print sound debugging info?
 CVAR (Int, snd_channels, 12, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// number of channels available
-CVAR (Bool, sv_ihatesounds, false, 0)
+CVAR (Bool, sv_ihatesounds, false, CVAR_SERVERINFO)
+CVAR (Bool, snd_dolby, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
 
@@ -169,7 +174,7 @@ static fixed_t P_AproxDistance2 (fixed_t *listener, fixed_t x, fixed_t y)
 
 static fixed_t P_AproxDistance2 (AActor *listener, fixed_t x, fixed_t y)
 {
-	return P_AproxDistance2 (&listener->x, x, y);
+	return listener ? P_AproxDistance2 (&listener->x, x, y) : 0;
 }
 
 //==========================================================================
@@ -267,23 +272,20 @@ void S_Init ()
 	// [RH] Read in sound sequences
 	S_ParseSndSeq ();
 
-	// Allocating the internal channels for mixing
-	// (the maximum numer of sounds rendered
-	// simultaneously) within zone memory.
-	numChannels = snd_channels;
-	Channel = (channel_t *) Z_Malloc (numChannels*sizeof(channel_t), PU_STATIC, 0);
+	// Allocating the virtual channels in zone memory
+	numChannels = I_SetChannels (snd_channels);
+	Z_FreeTags (PU_SOUNDCHANNELS, PU_SOUNDCHANNELS);
+	Channel = (channel_t *) Z_Malloc (numChannels*sizeof(channel_t), PU_SOUNDCHANNELS, 0);
+
+	// Free all channels for use
 	for (i = 0; i < numChannels; i++)
 	{
 		Channel[i].pt = NULL;
 		Channel[i].handle = 0;
 		Channel[i].sound_id = -1;
 		Channel[i].priority = 0;
-	}
-	I_SetChannels (numChannels);
-	
-	// Free all channels for use
-	for (i=0 ; i<numChannels ; i++)
 		Channel[i].sfxinfo = 0;
+	}
 	
 	// no sounds are playing, and they are not paused
 	mus_paused = 0;
@@ -334,8 +336,8 @@ void S_Start ()
 // Calculates a sounds position and velocity for 3D sounds.
 //=========================================================================
 
-static void CalcPosVel (fixed_t *pt, AActor *mover, int constz,
-						float pos[3], float vel[3])
+void CalcPosVel (fixed_t *pt, AActor *mover, int constz,
+				 float pos[3], float vel[3])
 {
 	if (mover != NULL && 0)
 	{
@@ -380,6 +382,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	int chanflags;
 	int basepriority, priority;
 	int sep;
+	int org_id;
 	fixed_t x, y, z;
 	angle_t angle;
 
@@ -388,6 +391,8 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 
 	if (sound_id == 0 || volume <= 0)
 		return;
+
+	org_id = sound_id;
 
 	if (pt == NULL)
 	{
@@ -600,7 +605,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	if (sep == -3)
 	{
 		AActor *listener = players[consoleplayer].camera;
-		if (!listener)
+		if (listener == NULL)
 		{
 			sep = NONE_SEP;
 		}
@@ -617,6 +622,16 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 				angle = angle + (ANGLE_MAX - listener->angle);
 			angle >>= ANGLETOFINESHIFT;
 			sep = NORM_SEP - (FixedMul (S_STEREO_SWING, finesine[angle])>>FRACBITS);
+			if (snd_dolby)
+			{
+				int rearsep = NORM_SEP -
+					(FixedMul (S_STEREO_SWING, finecosine[angle])>>FRACBITS);
+				if (rearsep > 128)
+				{
+					sep = -1;
+					attenuation = -1;
+				}
+			}
 		}
 	}
 
@@ -656,6 +671,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		Channel[i].constz = true;
 	}
 	Channel[i].sound_id = sound_id;
+	Channel[i].org_id = org_id;
 	Channel[i].mover = mover;
 	Channel[i].pt = pt ? pt : &Channel[i].x;
 	Channel[i].sfxinfo = sfx;
@@ -924,7 +940,7 @@ bool S_GetSoundPlayingInfo (fixed_t *pt, int sound_id)
 	{
 		for (i = 0; i < numChannels; i++)
 		{
-			if (Channel[i].pt == pt && Channel[i].sound_id == sound_id)
+			if (Channel[i].pt == pt && Channel[i].org_id == sound_id)
 				return true;
 		}
 	}
@@ -1005,11 +1021,13 @@ void S_ResumeSound ()
 
 void S_UpdateSounds (void *listener_p)
 {
-	fixed_t *listener = &((AActor *)listener_p)->x;
+	fixed_t *listener;
 	fixed_t x, y;
 	int i, dist, vol;
 	angle_t angle;
 	int sep;
+
+	listener = listener_p ? &((AActor *)listener_p)->x : NULL;
 
 	// [RH] Update playlist
 	if (PlayList &&
@@ -1073,6 +1091,15 @@ void S_UpdateSounds (void *listener_p)
 					angle = angle + (ANGLE_MAX - players[consoleplayer].camera->angle);
 				angle >>= ANGLETOFINESHIFT;
 				sep = NORM_SEP - (FixedMul (S_STEREO_SWING, finesine[angle])>>FRACBITS);
+				if (snd_dolby)
+				{
+					int rearsep = NORM_SEP -
+						(FixedMul (S_STEREO_SWING, finecosine[angle])>>FRACBITS);
+					if (rearsep > 128)
+					{
+						sep = -1;
+					}
+				}
 			}
 			else
 			{
@@ -1096,22 +1123,7 @@ void S_UpdateSounds (void *listener_p)
 
 	if (Sound3D && players[consoleplayer].camera)
 	{
-		AActor *camera = players[consoleplayer].camera;
-		double angle;
-		float pos[3], vel[3], fwd[3], up[3];
-
-		CalcPosVel (&camera->x, camera, 0, pos, vel);
-
-		angle = (double)camera->angle * PI / 2147483648.0;
-		fwd[0] = (float)cos (angle);
-		fwd[1] = 0.f;
-		fwd[2] = (float)sin (angle);
-
-		up[0] = 0.f;
-		up[1] = 1.f;
-		up[2] = 0.f;
-
-		I_UpdateListener (pos, vel, fwd, up);
+		I_UpdateListener (players[consoleplayer].camera);
 	}
 }
 

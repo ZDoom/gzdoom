@@ -35,17 +35,20 @@ int WeaponValue[] =
 
 int maxammo[NUMAMMO] =
 {
-	200,	// bullets
-	50,		// shells
-	300,	// cells
-	50,		// rockets
+	200,		// bullets
+	50,			// shells
+	300,		// cells
+	50,			// rockets
 
-	100,	// gold wand
-	50,		// crossbow
-	200,	// blaster
-	200,	// skull rod
-	20,		// phoenix rod
-	150		// mace
+	100,		// gold wand
+	50,			// crossbow
+	200,		// blaster
+	200,		// skull rod
+	20,			// phoenix rod
+	150,		// mace
+
+	MAX_MANA,	// blue mana
+	MAX_MANA	// green mana
 };
 
 static weapontype_t GetAmmoChange[] =
@@ -182,6 +185,7 @@ bool P_GiveAmmo (player_t *player, ammotype_t ammo, int count)
 			break;
 
 		case GAME_Hexen:
+			// Hexen never switches weapons when picking up mana
 			break;
 
 		default:

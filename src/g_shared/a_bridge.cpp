@@ -177,7 +177,7 @@ FState AInvisibleBridge::States[] =
 };
 
 IMPLEMENT_ACTOR (AInvisibleBridge, Any, 9990, 0)
-	PROP_RenderFlags (RF_INVISIBLE)
+	PROP_RenderStyle (STYLE_None)
 	PROP_SpawnState (0)
 	PROP_RadiusFixed (32)
 	PROP_HeightFixed (4)

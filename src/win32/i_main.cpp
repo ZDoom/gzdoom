@@ -118,7 +118,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		Args.SetArgs (__argc, __argv);
 
 		// Set the timer to be as accurate as possible
-		if (timeGetDevCaps (&tc, sizeof(tc) != TIMERR_NOERROR))
+		if (timeGetDevCaps (&tc, sizeof(tc)) != TIMERR_NOERROR)
 			TimerPeriod = 1;	// Assume minimum resolution of 1 ms
 		else
 			TimerPeriod = tc.wPeriodMin;
@@ -204,7 +204,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 				"ZDOOM Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
 		exit (-1);
 	}
-#ifndef _DEBUG
+#if !defined(_DEBUG)
 	catch (...)
 	{
 		// If an exception is thrown, be sure to do a proper shutdown.

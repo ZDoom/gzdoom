@@ -82,7 +82,7 @@ FState AFighterPlayer::States[] =
 	S_BRIGHT (FDTH, 'T',	4, NULL 					, &States[S_PLAY_FDTH+14]),
 	S_BRIGHT (FDTH, 'U',	5, NULL 					, &States[S_PLAY_FDTH+15]),
 	S_BRIGHT (FDTH, 'V',	4, NULL 					, &States[S_PLAY_FDTH+16]),
-	S_NORMAL (ACLO, 'E',   35, A_CheckBurnGone			, &States[S_PLAY_FDTH+17]),
+	S_NORMAL (ACLO, 'E',   35, A_CheckBurnGone			, &States[S_PLAY_FDTH+16]),
 	S_NORMAL (ACLO, 'E',	8, NULL 					, NULL),
 
 #define S_PLAY_F_FDTH (S_PLAY_FDTH+18)

@@ -32,7 +32,7 @@ protected:
 
 IMPLEMENT_STATELESS_ACTOR (ASecurityCamera, Any, 9025, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderFlags (RF_INVISIBLE)
+	PROP_RenderStyle (STYLE_None)
 END_DEFAULTS
 
 void ASecurityCamera::Serialize (FArchive &arc)

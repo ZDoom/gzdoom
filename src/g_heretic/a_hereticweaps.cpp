@@ -2327,8 +2327,6 @@ void A_SpawnRippers (AActor *actor)
 //
 //----------------------------------------------------------------------------
 
-extern void P_ExplodeMissile (AActor *);
-
 void ABlasterFX1::RunThink ()
 {
 	int i;
@@ -2350,7 +2348,7 @@ void ABlasterFX1::RunThink ()
 			{
 				if (!P_TryMove (this, x + xfrac, y + yfrac, true))
 				{ // Blocked move
-					P_ExplodeMissile (this);
+					P_ExplodeMissile (this, BlockingLine);
 					return;
 				}
 			}
@@ -2359,13 +2357,13 @@ void ABlasterFX1::RunThink ()
 			{ // Hit the floor
 				z = floorz;
 				P_HitFloor (this);
-				P_ExplodeMissile (this);
+				P_ExplodeMissile (this, NULL);
 				return;
 			}
 			if (z + height > ceilingz)
 			{ // Hit the ceiling
 				z = ceilingz - height;
-				P_ExplodeMissile (this);
+				P_ExplodeMissile (this, NULL);
 				return;
 			}
 			if (changexy && (P_Random() < 64))

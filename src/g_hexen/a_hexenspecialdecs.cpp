@@ -504,7 +504,7 @@ void A_CorpseExplode (AActor *actor)
 	for (i = (P_Random()&3)+3; i; i--)
 	{
 		mo = Spawn<ACorpseBit> (actor->x, actor->y, actor->z);
-		mo->SetState (actor->SpawnState + (P_Random()%3));
+		mo->SetState (mo->SpawnState + (P_Random()%3));
 		if (mo)
 		{
 			mo->momz = ((P_Random()&7)+5)*(3*FRACUNIT/4);
@@ -514,7 +514,7 @@ void A_CorpseExplode (AActor *actor)
 	}
 	// Spawn a skull
 	mo = Spawn<ACorpseBit> (actor->x, actor->y, actor->z);
-	mo->SetState (actor->SpawnState + 3);
+	mo->SetState (mo->SpawnState + 3);
 	if (mo)
 	{
 		mo->momz = ((P_Random()&7)+5)*(3*FRACUNIT/4);

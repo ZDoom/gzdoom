@@ -345,8 +345,12 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 				info->skin = R_FindSkin (value);
 				if (players[i].mo != NULL)
 				{
-					players[i].mo->sprite = skins[info->skin].sprite;
-					players[i].mo->skin = &skins[info->skin];
+					if (players[i].mo->state->sprite.index ==
+						GetDefaultByType (players[i].cls)->SpawnState->sprite.index)
+					{ // Only change the sprite if the player is using a standard one
+						players[i].mo->sprite = skins[info->skin].sprite;
+					}
+					players[i].skin = &skins[info->skin];
 				}
 				if (StatusBar != NULL && i == displayplayer)
 				{

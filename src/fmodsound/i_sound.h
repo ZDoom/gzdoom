@@ -51,7 +51,7 @@ void I_SetSfxVolume (int volume);
 //
 
 // Initialize channels
-void I_SetChannels (int);
+int I_SetChannels (int);
 
 // load a sound from disk
 void I_LoadSound (sfxinfo_t *sfx);
@@ -76,8 +76,7 @@ I_StartSound3D
   float			pos[3],
   float			vel[3] );
 
-void I_UpdateListener (float pos[3], float vel[3],
-					   float forward[3], float up[3]);
+void I_UpdateListener (AActor *listener);
 
 // Stops a sound channel.
 void I_StopSound (int handle);

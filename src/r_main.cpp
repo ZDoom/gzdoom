@@ -747,6 +747,23 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 
 //==========================================================================
 //
+// R_SetViewAngle
+//
+//==========================================================================
+
+void R_SetViewAngle (angle_t ang)
+{
+	viewangle = ang;
+
+	viewsin = finesine[ang>>ANGLETOFINESHIFT];
+	viewcos = finecosine[ang>>ANGLETOFINESHIFT];
+
+	viewtansin = FixedMul (FocalTangent, viewsin);
+	viewtancos = FixedMul (FocalTangent, viewcos);
+}
+
+//==========================================================================
+//
 // R_SetupFrame
 //
 //==========================================================================
@@ -757,7 +774,10 @@ void R_SetupFrame (player_t *player)
 	
 	camera = player->camera;	// [RH] Use camera instead of viewplayer
 
-	if (player->cheats & CF_CHASECAM)
+	if ((player->cheats & CF_CHASECAM) &&
+		(camera->RenderStyle != STYLE_None) &&
+		!(camera->renderflags & RF_INVISIBLE) &&
+		camera->sprite != 0)	// Sprite 0 is always TNT1
 	{
 		// [RH] Use chasecam view
 		P_AimCamera (camera);
@@ -772,16 +792,20 @@ void R_SetupFrame (player_t *player)
 		viewz = camera->player ? camera->player->viewz : camera->z;
 	}
 
-	if (viewz > camera->ceilingz - 4*FRACUNIT)
+	// Keep the view within the sector's floor and ceiling
+	fixed_t theZ = camera->subsector->sector->ceilingplane.ZatPoint
+		(camera->x, camera->y) - 4*FRACUNIT;
+	if (viewz > theZ)
 	{
-		viewz = camera->ceilingz - 4*FRACUNIT;
-	}
-	if (viewz < camera->floorz + 4*FRACUNIT)
-	{
-		viewz = camera->floorz + 4*FRACUNIT;
+		viewz = theZ;
 	}
 
-	viewangle = camera->angle + viewangleoffset;
+	theZ = camera->subsector->sector->floorplane.ZatPoint
+		(camera->x, camera->y) + 4*FRACUNIT;
+	if (viewz < theZ)
+	{
+		viewz = theZ;
+	}
 
 	if (camera->player && camera->player->xviewshift && !paused)
 	{
@@ -794,12 +818,8 @@ void R_SetupFrame (player_t *player)
 
 	extralight = camera->player ? camera->player->extralight : 0;
 
-	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
-	viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
+	R_SetViewAngle (camera->angle + viewangleoffset);
 
-	viewtansin = FixedMul (FocalTangent, viewsin);
-	viewtancos = FixedMul (FocalTangent, viewcos);
-		
 	// killough 3/20/98, 4/4/98: select colormap based on player status
 	// [RH] Can also select a blend
 
@@ -1185,6 +1205,7 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	}
 	else
 	{	// The head node is the last node output.
+		// [[RH] Not that this tells me anything...]
 		R_RenderBSPNode (numnodes - 1);
 	}
 	unclock (WallCycles);

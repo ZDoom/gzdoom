@@ -47,6 +47,9 @@ struct sfxinfo_t
 
 	WORD		bRandomHeader:1;
 	WORD		bPlayerReserve:1;
+	WORD		bForce11025:1;
+	WORD		bForce22050:1;
+	WORD		bLoadRAW:1;
 
 	WORD		link;
 

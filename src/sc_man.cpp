@@ -396,8 +396,9 @@ BOOL SC_GetNumber (void)
 			sc_Number = strtol (sc_String, &stopper, 0);
 			if (*stopper != 0)
 			{
-				I_Error ("SC_GetNumber: Bad numeric constant \"%s\".\n"
-					"Script %s, Line %d\n", sc_String, ScriptName, sc_Line);
+				const char *args;
+				args = sc_String;
+				SC_ScriptError ("SC_GetNumber: Bad numeric constant \"%s\".", &args);
 			}
 		}
 		sc_Float = (float)sc_Number;

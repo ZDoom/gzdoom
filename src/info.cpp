@@ -91,7 +91,9 @@ static void ProcessStates (FState *states, int numstates)
 
 	if (states == NULL)
 		return;
-
+if (states->sprite.name[0] == 'D' && states->sprite.name[1] == 'E'
+	&& states->sprite.name[2] == 'M')
+states=states;
 	while (--numstates >= 0)
 	{
 		if (sprite == -1 || strncmp (sprites[sprite].name, states->sprite.name, 4) != 0)
@@ -131,7 +133,7 @@ void FActorInfo::StaticInit ()
 		if (reg->OwnedStates &&
 			(unsigned)reg->OwnedStates->sprite.index < sprites.Size ())
 		{
-			Printf ("\x1f+%s is stateless. Fix its default list.\n",
+			Printf ("\x1c+%s is stateless. Fix its default list.\n",
 				reg->Class->Name + 1);
 		}
 		ProcessStates (reg->OwnedStates, reg->NumOwnedStates);

@@ -603,8 +603,6 @@ _R_DrawColumnHorizP_ASM:
 	push	edi
 	push	esi
 
-; dest = ylookup[dc_yl] + dc_x;
-
 	inc	eax			; make 0 count mean 0 pixels
 	 and	edx,3
 	push	eax

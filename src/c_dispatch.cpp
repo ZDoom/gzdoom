@@ -879,6 +879,11 @@ void C_SetAlias (const char *name, const char *cmd)
 	alias = ScanChainForName (*chain, name, strlen (name), &prev);
 	if (alias != NULL)
 	{
+		if (!alias->IsAlias ())
+		{
+			//Printf_Bold ("%s is a command and cannot be an alias.\n", name);
+			return;
+		}
 		delete alias;
 	}
 	new FConsoleAlias (name, cmd);
@@ -900,18 +905,34 @@ CCMD (alias)
 		if (argv.argc() == 2)
 		{ // Remove the alias
 
-			if ( (alias = ScanChainForName (*chain, argv[1], strlen (argv[1]), &prev)) )
+			if ( (alias = ScanChainForName (*chain, argv[1], strlen (argv[1]), &prev)))
 			{
-				delete alias;
+				if (alias->IsAlias ())
+				{
+					delete alias;
+				}
+				else
+				{
+					Printf ("%s is a normal command\n", alias->m_Name);
+				}
 			}
 		}
 		else
 		{ // Add/change the alias
 
 			alias = ScanChainForName (*chain, argv[1], strlen (argv[1]), &prev);
-			if (alias)
-				delete alias;
-
+			if (alias != NULL)
+			{
+				if (alias->IsAlias ())
+				{
+					delete alias;
+				}
+				else
+				{
+					Printf ("%s is a normal command\n", alias->m_Name);
+					return;
+				}
+			}
 			if (argv.argc() > 3)
 				new FConsoleAlias (argv[1], copystring (argv.AllButFirstArg(2)));
 			else

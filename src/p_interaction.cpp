@@ -32,6 +32,7 @@
 
 #include "m_random.h"
 #include "i_system.h"
+#include "announcer.h"
 
 #include "am_map.h"
 
@@ -195,6 +196,20 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	message = NULL;
 	messagenum = 0;
 
+	if (attacker == NULL || attacker->player != NULL)
+	{
+		if (mod == MOD_TELEFRAG)
+		{
+			if (AnnounceTelefrag (attacker, self))
+				return;
+		}
+		else
+		{
+			if (AnnounceKill (attacker, self))
+				return;
+		}
+	}
+
 	switch (mod)
 	{
 	case MOD_SUICIDE:		messagenum = OB_SUICIDE;	break;
@@ -294,13 +309,12 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 // KillMobj
 //
 EXTERN_CVAR (Int, fraglimit)
-extern void P_ExplodeMissile (AActor *);
 
 void AActor::Die (AActor *source, AActor *inflictor)
 {
 	if (flags & MF_MISSILE)
 	{ // [RH] When missiles die, they just explode
-		P_ExplodeMissile (this);
+		P_ExplodeMissile (this, NULL);
 		return;
 	}
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY|MF_NOGRAVITY);
@@ -378,17 +392,23 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 					if (spreemsg == NULL && player->spreecount >= 5)
 					{
-						SexMessage (GStrings(SPREEOVER), buff, player->userinfo.gender,
-							player->userinfo.netname, source->player->userinfo.netname);
-						StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
-							1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
+						if (!AnnounceSpreeLoss (this))
+						{
+							SexMessage (GStrings(SPREEOVER), buff, player->userinfo.gender,
+								player->userinfo.netname, source->player->userinfo.netname);
+							StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
+								1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
+						}
 					}
 					else if (spreemsg != NULL)
 					{
-						SexMessage (spreemsg, buff, player->userinfo.gender,
-							player->userinfo.netname, source->player->userinfo.netname);
-						StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
-							1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
+						if (!AnnounceSpree (source))
+						{
+							SexMessage (spreemsg, buff, player->userinfo.gender,
+								player->userinfo.netname, source->player->userinfo.netname);
+							StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
+								1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
+						}
 					}
 				}
 			}
@@ -430,10 +450,13 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					{
 						char buff[256];
 
-						SexMessage (multimsg, buff, player->userinfo.gender,
-							player->userinfo.netname, source->player->userinfo.netname);
-						StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
-							1.5f, 0.8f, CR_RED, 3.f, 0.5f), 'MKIL');
+						if (!AnnounceMultikill (source))
+						{
+							SexMessage (multimsg, buff, player->userinfo.gender,
+								player->userinfo.netname, source->player->userinfo.netname);
+							StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
+								1.5f, 0.8f, CR_RED, 3.f, 0.5f), 'MKIL');
+						}
 					}
 				}
 			}

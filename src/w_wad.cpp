@@ -37,6 +37,7 @@
 #include "cmdlib.h"
 #include "w_wad.h"
 #include "m_crc32.h"
+#include "templates.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -65,6 +66,13 @@ struct FWadFileHandle
 	int ActivePos;
 };
 
+union MergedHeader
+{
+	DWORD magic;
+	wadinfo_t wad;
+	rffinfo_t rff;
+};
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -73,6 +81,7 @@ struct FWadFileHandle
 
 static void W_SkinHack (int baselump);
 static void PutWadToFront (int wadnum, int oldpos);
+static void BloodCrypt (void *data, int key, int len);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -156,14 +165,13 @@ void W_AddFile (char *filename)
 {
 	FWadFileHandle	wadhandle;
 	char			name[256];
-	wadinfo_t		header;
+	MergedHeader	header;
 	lumpinfo_t*		lump_p;
 	unsigned		i;
 	int				handle;
-	int				length;
 	int				startlump;
-	filelump_t*		fileinfo, *fileinfo2free;
-	filelump_t		singleinfo;
+	wadlump_t*		fileinfo, *fileinfo2free;
+	wadlump_t		singleinfo;
 
 	// [RH] Automatically append .wad extension if none is specified.
 	FixPathSeperator (filename);
@@ -192,47 +200,101 @@ void W_AddFile (char *filename)
 
 	wadhandle.Name = copystring (name);
 
-	if (header.identification == IWAD_ID || header.identification == PWAD_ID)
+	if (header.magic == IWAD_ID || header.magic == PWAD_ID)
 	{ // This is a WAD file
 
-		header.numlumps = LONG(header.numlumps);
-		header.infotableofs = LONG(header.infotableofs);
-		length = header.numlumps * sizeof(filelump_t);
-		fileinfo = fileinfo2free = new filelump_t[header.numlumps];
-		lseek (handle, header.infotableofs, SEEK_SET);
-		read (handle, fileinfo, length);
-		numlumps += header.numlumps;
-		Printf (" (%d lumps)", header.numlumps);
+		header.wad.NumLumps = LONG(header.wad.NumLumps);
+		header.wad.InfoTableOfs = LONG(header.wad.InfoTableOfs);
+		fileinfo = fileinfo2free = new wadlump_t[header.wad.NumLumps];
+		lseek (handle, header.wad.InfoTableOfs, SEEK_SET);
+		read (handle, fileinfo, header.wad.NumLumps * sizeof(wadlump_t));
+		numlumps += header.wad.NumLumps;
+		Printf (" (%d lumps)", header.wad.NumLumps);
+	}
+	else if (header.magic == RFF_ID)
+	{ // This is a Blood RFF file
+
+		rfflump_t *lumps, *rff_p;
+		int skipped = 0;
+
+		header.rff.NumLumps = LONG(header.rff.NumLumps);
+		header.rff.DirOfs = LONG(header.rff.DirOfs);
+		lumps = new rfflump_t[header.rff.NumLumps];
+		lseek (handle, header.rff.DirOfs, SEEK_SET);
+		read (handle, lumps, header.rff.NumLumps * sizeof(rfflump_t));
+		BloodCrypt (lumps, header.rff.DirOfs, header.rff.NumLumps * sizeof(rfflump_t));
+
+		numlumps += header.rff.NumLumps;
+		lumpinfo = (lumpinfo_t *)Realloc (lumpinfo, numlumps*sizeof(lumpinfo_t));
+		lump_p = &lumpinfo[startlump];
+
+		for (i = 0, rff_p = lumps; i < header.rff.NumLumps; ++i, ++rff_p)
+		{
+			if (rff_p->Extension[0] == 'S' && rff_p->Extension[1] == 'F' &&
+				rff_p->Extension[2] == 'X')
+			{
+				lump_p->namespc = ns_bloodsfx;
+			}
+			else if (rff_p->Extension[0] == 'R' && rff_p->Extension[1] == 'A' &&
+				rff_p->Extension[2] == 'W')
+			{
+				lump_p->namespc = ns_bloodraw;
+			}
+			else
+			{
+				//lump_p->namespc = ns_bloodmisc;
+				--numlumps;
+				++skipped;
+				continue;
+			}
+			uppercopy (lump_p->name, rff_p->Name);
+			lump_p->wadnum = ActiveWads.Size ();
+			lump_p->position = LONG(rff_p->FilePos);
+			lump_p->size = LONG(rff_p->Size);
+			lump_p->flags = (rff_p->Flags & 0x10) >> 4;
+			lump_p++;
+		}
+		delete[] lumps;
+		if (skipped != 0)
+		{
+			lumpinfo = (lumpinfo_t *)Realloc (lumpinfo, numlumps*sizeof(lumpinfo_t));
+		}
 	}
 	else
 	{ // This is just a single lump file
 
 		fileinfo2free = NULL;
 		fileinfo = &singleinfo;
-		singleinfo.filepos = 0;
-		singleinfo.size = LONG(filelength(handle));
+		singleinfo.FilePos = 0;
+		singleinfo.Size = LONG(filelength(handle));
 		ExtractFileBase (filename, name);
 		strupr (name);
-		strncpy (singleinfo.name, name, 8);
+		strncpy (singleinfo.Name, name, 8);
 		numlumps++;
 	}
 	Printf ("\n");
 
 	// Fill in lumpinfo
-	lumpinfo = (lumpinfo_t *)Realloc (lumpinfo, numlumps*sizeof(lumpinfo_t));
-	lump_p = &lumpinfo[startlump];
-	for (i = startlump; i < (unsigned)numlumps; i++, lump_p++, fileinfo++)
+	if (header.magic != RFF_ID)
 	{
-		lump_p->wadnum = ActiveWads.Size ();
-		lump_p->position = LONG(fileinfo->filepos);
-		lump_p->size = LONG(fileinfo->size);
-		lump_p->namespc = ns_global;
-		// [RH] Convert name to uppercase during copy
-		uppercopy (lump_p->name, fileinfo->name);
-	}
+		lumpinfo = (lumpinfo_t *)Realloc (lumpinfo, numlumps*sizeof(lumpinfo_t));
+		lump_p = &lumpinfo[startlump];
+		for (i = startlump; i < (unsigned)numlumps; i++, lump_p++, fileinfo++)
+		{
+			// [RH] Convert name to uppercase during copy
+			uppercopy (lump_p->name, fileinfo->Name);
+			lump_p->wadnum = ActiveWads.Size ();
+			lump_p->position = LONG(fileinfo->FilePos);
+			lump_p->size = LONG(fileinfo->Size);
+			lump_p->namespc = ns_global;
+			lump_p->flags = 0;
+		}
 
-	if (fileinfo2free)
-		delete[] fileinfo2free;
+		if (fileinfo2free)
+		{
+			delete[] fileinfo2free;
+		}
+	}
 
 	wadhandle.Handle = handle;
 	wadhandle.FirstLump = startlump;
@@ -523,7 +585,7 @@ int W_LumpLength (int lump)
 // W_ReadLump
 //
 // Loads the lump into the given buffer, which must be >= W_LumpLength().
-// R
+//
 //==========================================================================
 
 void W_ReadLump (int lump, void *dest)
@@ -543,6 +605,10 @@ void W_ReadLump (int lump, void *dest)
 	{
 		I_Error ("W_ReadLump: only read %i of %i on lump %i\n(%s)",
 			c, l->size, lump, strerror(errno));	
+	}
+	if (l->flags & LUMPF_BLOODCRYPT)
+	{
+		BloodCrypt (dest, 0, MIN(l->size, 256));
 	}
 }
 
@@ -940,5 +1006,15 @@ static void W_SkinHack (int baselump)
 				}
 			}
 		}
+	}
+}
+
+static void BloodCrypt (void *data, int key, int len)
+{
+	int p = (BYTE)key, i;
+
+	for (i = 0; i < len; ++i)
+	{
+		((BYTE *)data)[i] ^= (unsigned char)(p+(i>>1));
 	}
 }

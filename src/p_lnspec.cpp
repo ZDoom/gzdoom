@@ -850,7 +850,7 @@ FUNC(LS_Thing_Remove)
 }
 
 FUNC(LS_Thing_Destroy)
-// Thing_Destroy (tid)
+// Thing_Destroy (tid, extreme)
 {
 	if (arg0 == 0)
 	{
@@ -866,7 +866,7 @@ FUNC(LS_Thing_Destroy)
 		{
 			AActor *temp = iterator.Next ();
 			if (actor->flags & MF_SHOOTABLE)
-				P_DamageMobj (actor, NULL, it, 10000, MOD_UNKNOWN);
+				P_DamageMobj (actor, NULL, it, arg1 ? 10000 : actor->health, MOD_UNKNOWN);
 			actor = temp;
 		}
 	}

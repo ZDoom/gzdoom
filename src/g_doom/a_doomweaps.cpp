@@ -1490,6 +1490,7 @@ void A_BFGSpray (AActor *mo)
 			damage += (P_Random (pr_bfgspray) & 7) + 1;
 
 		P_DamageMobj (linetarget, mo->target, mo->target, damage, MOD_BFG_SPLASH);
+		P_TraceBleed (damage, linetarget, mo->target);
 	}
 }
 

@@ -101,9 +101,23 @@ int ADoomPlayer::GetMOD ()
 void A_PlayerScream (AActor *self)
 {
 	const char *sound;
+	int chan = CHAN_VOICE;
+
+	if (self->player == NULL || self->player->morphTics != 0)
+	{
+		S_SoundID (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
+		return;
+	}
 
 	// Handle the different player death screams
-	if (gameinfo.gametype == GAME_Doom)
+	if ((((level.flags >> 15) | (dmflags)) &
+		(DF_FORCE_FALLINGZD | DF_FORCE_FALLINGHX)) &&
+		self->momz <= -39*FRACUNIT)
+	{
+		sound = "*splat";
+		chan = CHAN_BODY;
+	}
+	else if (gameinfo.gametype == GAME_Doom)
 	{
 		if (self->health < -50)
 		{ // IF THE PLAYER DIES LESS THAN -50% WITHOUT GIBBING
@@ -115,8 +129,8 @@ void A_PlayerScream (AActor *self)
 		}
 	}
 	else
-	{	// Heretic
-		if (self->special1 < 10)
+	{
+		if (gameinfo.gametype == GAME_Heretic && self->special1 < 10)
 		{ // Wimpy death sound
 			sound = "*wimpydeath";
 		}
@@ -131,6 +145,18 @@ void A_PlayerScream (AActor *self)
 		else
 		{ // Extreme death sound
 			sound = "*gibbed";
+			chan = CHAN_BODY;
+		}
+	}
+	if (chan != CHAN_VOICE)
+	{
+		for (int i = 0; i < 8; ++i)
+		{ // Stop most playing sounds from this player.
+		  // This is mainly to stop *land from messing up *splat.
+			if (i != CHAN_WEAPON && i != CHAN_VOICE)
+			{
+				S_StopSound (self, i);
+			}
 		}
 	}
 	S_Sound (self, CHAN_VOICE, sound, 1, ATTN_NORM);

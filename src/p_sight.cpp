@@ -33,6 +33,9 @@
 // State.
 #include "r_state.h"
 
+#include "stats.h"
+
+
 /*
 ==============================================================================
 
@@ -43,10 +46,13 @@ This uses specialized forms of the maputils routines for optimized performance
 ==============================================================================
 */
 
-fixed_t sightzstart;			// eye z of looker
-fixed_t topslope, bottomslope;	// slopes to top and bottom of target
+static fixed_t sightzstart;				// eye z of looker
+static fixed_t topslope, bottomslope;	// slopes to top and bottom of target
 
-int sightcounts[3];
+// Performance meters
+static int sightcounts[4];
+static cycle_t SightCycles;
+static cycle_t MaxSightCycles;
 
 /*
 ==============
@@ -56,7 +62,7 @@ int sightcounts[3];
 ==============
 */
 
-BOOL PTR_SightTraverse (intercept_t *in)
+static bool PTR_SightTraverse (intercept_t *in)
 {
 	line_t  *li;
 	fixed_t slope;
@@ -102,18 +108,58 @@ BOOL PTR_SightTraverse (intercept_t *in)
 /*
 ==================
 =
+= P_SightCheckLine
+=
+===================
+*/
+
+static bool P_SightCheckLine (line_t *ld)
+{
+	divline_t dl;
+
+	if (ld->validcount == validcount)
+	{
+		return true;
+	}
+	ld->validcount = validcount;
+	if (P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace) ==
+		P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace))
+	{
+		return true;		// line isn't crossed
+	}
+	P_MakeDivline (ld, &dl);
+	if (P_PointOnDivlineSide (trace.x, trace.y, &dl) ==
+		P_PointOnDivlineSide (trace.x+trace.dx, trace.y+trace.dy, &dl))
+	{
+		return true;		// line isn't crossed
+	}
+
+// try to early out the check
+	if (!ld->backsector)
+		return false;	// stop checking
+
+	sightcounts[3]++;
+// store the line for later intersection testing
+	intercept_t newintercept;
+	newintercept.isaline = true;
+	newintercept.d.line = ld;
+	intercepts.Push (newintercept);
+
+	return true;
+}
+
+/*
+==================
+=
 = P_SightBlockLinesIterator
 =
 ===================
 */
 
-BOOL P_SightBlockLinesIterator (int x, int y)
+static bool P_SightBlockLinesIterator (int x, int y)
 {
 	int offset;
 	int *list;
-	line_t *ld;
-	int s1, s2;
-	divline_t dl;
 
 	polyblock_t *polyLink;
 	seg_t **segList;
@@ -123,42 +169,19 @@ BOOL P_SightBlockLinesIterator (int x, int y)
 	offset = y*bmapwidth+x;
 
 	polyLink = PolyBlockMap[offset];
-	while(polyLink)
+	while (polyLink)
 	{
-		if(polyLink->polyobj)
+		if (polyLink->polyobj)
 		{ // only check non-empty links
-			if(polyLink->polyobj->validcount != validcount)
+			if (polyLink->polyobj->validcount != validcount)
 			{
-				segList = polyLink->polyobj->segs;
-				for(i = 0; i < polyLink->polyobj->numsegs; i++, segList++)
-				{
-					ld = (*segList)->linedef;
-					if(ld->validcount == validcount)
-					{
-						continue;
-					}
-					ld->validcount = validcount;
-					s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace);
-					s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace);
-					if (s1 == s2)
-						continue;		// line isn't crossed
-					P_MakeDivline (ld, &dl);
-					s1 = P_PointOnDivlineSide (trace.x, trace.y, &dl);
-					s2 = P_PointOnDivlineSide (trace.x+trace.dx, trace.y+trace.dy, &dl);
-					if (s1 == s2)
-						continue;		// line isn't crossed
-
-				// try to early out the check
-					if (!ld->backsector)
-						return false;	// stop checking
-
-				// store the line for later intersection testing
-					intercept_t newintercept;
-					newintercept.isaline = true;
-					newintercept.d.line = ld;
-					intercepts.Push (newintercept);
-				}
 				polyLink->polyobj->validcount = validcount;
+				segList = polyLink->polyobj->segs;
+				for (i = 0; i < polyLink->polyobj->numsegs; i++, segList++)
+				{
+					if (!P_SightCheckLine ((*segList)->linedef))
+						return false;
+				}
 			}
 		}
 		polyLink = polyLink->next;
@@ -168,30 +191,8 @@ BOOL P_SightBlockLinesIterator (int x, int y)
 
 	for (list = blockmaplump + offset; *list != -1; list++)
 	{
-		ld = &lines[*list];
-		if (ld->validcount == validcount)
-			continue;				// line has already been checked
-		ld->validcount = validcount;
-
-		s1 = P_PointOnDivlineSide (ld->v1->x, ld->v1->y, &trace);
-		s2 = P_PointOnDivlineSide (ld->v2->x, ld->v2->y, &trace);
-		if (s1 == s2)
-			continue;				// line isn't crossed
-		P_MakeDivline (ld, &dl);
-		s1 = P_PointOnDivlineSide (trace.x, trace.y, &dl);
-		s2 = P_PointOnDivlineSide (trace.x+trace.dx, trace.y+trace.dy, &dl);
-		if (s1 == s2)
-			continue;				// line isn't crossed
-
-	// try to early out the check
-		if (!ld->backsector)
-			return false;	// stop checking
-
-	// store the line for later intersection testing
-		intercept_t newintercept;
-		newintercept.isaline = true;
-		newintercept.d.line = ld;
-		intercepts.Push (newintercept);
+		if (!P_SightCheckLine (&lines[*list]))
+			return false;
 	}
 
 	return true;			// everything was checked
@@ -206,7 +207,7 @@ BOOL P_SightBlockLinesIterator (int x, int y)
 ====================
 */
 
-BOOL P_SightTraverseIntercepts ()
+static bool P_SightTraverseIntercepts ()
 {
 	int count;
 	fixed_t dist;
@@ -260,12 +261,12 @@ BOOL P_SightTraverseIntercepts ()
 =
 = P_SightPathTraverse
 =
-= Traces a line from x1,y1 to x2,y2, calling the traverser function for each
+= Traces a line from x1,y1 to x2,y2, calling the traverser function for each block
 = Returns true if the traverser function returns true for all lines
 ==================
 */
 
-BOOL P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
+static bool P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 {
 	fixed_t xt1,yt1,xt2,yt2;
 	fixed_t xstep,ystep;
@@ -357,7 +358,7 @@ sightcounts[1]++;
 			return false;	// early out
 		}
 
-		if (mapxstep == 0 && mapystep == 0)
+		if ((mapxstep | mapystep) == 0)
 			break;
 
 		if ( (yintercept >> FRACBITS) == mapy)
@@ -386,8 +387,6 @@ sightcounts[2]++;
 	return P_SightTraverseIntercepts ( );
 }
 
-
-
 /*
 =====================
 =
@@ -396,11 +395,17 @@ sightcounts[2]++;
 = Returns true if a straight line between t1 and t2 is unobstructed
 = look from eyes of t1 to any part of t2
 =
+= killough 4/20/98: cleaned up, made to use new LOS struct
+=
 =====================
 */
 
-BOOL P_CheckSight (const AActor *t1, const AActor *t2, BOOL ignoreInvisibility)
+bool P_CheckSight (const AActor *t1, const AActor *t2, BOOL ignoreInvisibility)
 {
+	clock (SightCycles);
+
+	bool res;
+
 	const sector_t *s1 = t1->subsector->sector;
 	const sector_t *s2 = t2->subsector->sector;
 	int pnum = (s1 - sectors) * numsectors + (s2 - sectors);
@@ -408,9 +413,11 @@ BOOL P_CheckSight (const AActor *t1, const AActor *t2, BOOL ignoreInvisibility)
 //
 // check for trivial rejection
 //
-	if (rejectmatrix[pnum>>3] & (1 << (pnum & 7))) {
+	if (rejectmatrix[pnum>>3] & (1 << (pnum & 7)))
+	{
 sightcounts[0]++;
-		return false;			// can't possibly be connected
+		res = false;			// can't possibly be connected
+		goto done;
 	}
 
 //
@@ -424,7 +431,10 @@ sightcounts[0]++;
 		 (t2->renderflags & RF_INVISIBLE)))
 	{ // small chance of an attack being made anyway
 		if (P_Random (bglobal.m_Thinking ? pr_botchecksight : pr_checksight) > 50)
-			return false;
+		{
+			res = false;
+			goto done;
+		}
 	}
 
 	// killough 4/19/98: make fake floors and ceilings block monster view
@@ -441,16 +451,52 @@ sightcounts[0]++;
 		  (t2->z >= s2->heightsec->ceilingplane.ZatPoint (t2->x, t2->y) &&
 		   t1->z + t2->height <= s2->heightsec->ceilingplane.ZatPoint (t1->x, t1->y)))))
 	{
-		return false;
+		res = false;
+		goto done;
 	}
 
 	// killough 11/98: shortcut for melee situations
-	if (t1->subsector == t2->subsector)     // same subsector? obviously visible
-		return true;
+	if (t1->subsector == t2->subsector)
+	{ // same subsector? obviously visible
+sightcounts[0]++;
+		res = true;
+		goto done;
+	}
 
-	sightzstart = t1->z + t1->height - (t1->height >> 2);
-	bottomslope = (t2->z) - sightzstart;
+	// An unobstructed LOS is possible.
+	// Now look from eyes of t1 to any part of t2.
+
+	validcount++;
+
+	sightzstart = t1->z + t1->height - (t1->height>>2);
+	bottomslope = t2->z - sightzstart;
 	topslope = bottomslope + t2->height;
 
-	return P_SightPathTraverse (t1->x, t1->y, t2->x, t2->y);
+	res = P_SightPathTraverse (t1->x, t1->y, t2->x, t2->y);
+
+done:
+	unclock (SightCycles);
+	return res;
+}
+
+ADD_STAT (sight, out)
+{
+	sprintf (out, "%04.1f ms (%04.1f max), %5d %2d %3d %3d\n",
+		(double)SightCycles * 1000 * SecondsPerCycle,
+		(double)MaxSightCycles * 1000 * SecondsPerCycle,
+		sightcounts[3], sightcounts[0], sightcounts[1], sightcounts[2]);
+}
+
+void P_ResetSightCounters (bool full)
+{
+	if (full)
+	{
+		MaxSightCycles = 0;
+	}
+	if (SightCycles > MaxSightCycles)
+	{
+		MaxSightCycles = SightCycles;
+	}
+	SightCycles = 0;
+	sightcounts[0] = sightcounts[1] = sightcounts[2] = sightcounts[3] = 0;
 }

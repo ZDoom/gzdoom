@@ -1450,8 +1450,10 @@ void C_AddTabCommand (const char *name)
 		NumTabCommands++;
 		TabCommands = (TabData *)Realloc (TabCommands, sizeof(struct TabData) * NumTabCommands);
 		if (pos < NumTabCommands - 1)
+		{
 			memmove (TabCommands + pos + 1, TabCommands + pos,
 					 (NumTabCommands - pos - 1) * sizeof(struct TabData));
+		}
 		TabCommands[pos].Name = copystring (name);
 		TabCommands[pos].UseCount = 1;
 	}
@@ -1467,9 +1469,11 @@ void C_RemoveTabCommand (const char *name)
 		{
 			NumTabCommands--;
 			delete[] TabCommands[pos].Name;
-			if (pos < NumTabCommands)
+			if (pos < NumTabCommands - 1)
+			{
 				memmove (TabCommands + pos, TabCommands + pos + 1,
-						 (NumTabCommands - pos) * sizeof(struct TabData));
+						 (NumTabCommands - pos - 1) * sizeof(struct TabData));
+			}
 		}
 	}
 }

@@ -304,7 +304,9 @@ void A_LichAttack (AActor *actor)
 	A_FaceTarget (actor);
 	if (P_CheckMeleeRange (actor))
 	{
-		P_DamageMobj (target, actor, actor, HITDICE(6), MOD_HIT);
+		int damage = HITDICE(6);
+		P_DamageMobj (target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, target, actor);
 		return;
 	}
 	dist = P_AproxDistance (actor->x-target->x, actor->y-target->y)

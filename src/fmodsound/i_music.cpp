@@ -38,6 +38,9 @@
 
 #include <fmod.h>
 
+void Enable_FSOUND_IO_Loader ();
+void Disable_FSOUND_IO_Loader ();
+
 extern int _nosound;
 
 class MusInfo
@@ -183,8 +186,22 @@ public:
 	bool SetPosition (int order);
 
 protected:
+	MODSong () {}
+
 	FMUSIC_MODULE *m_Module;
 };
+
+#ifdef _WIN32
+// MIDI song played with DirectMusic by FMOD
+class DMusSong : public MODSong
+{
+public:
+	DMusSong (int handle, int pos, int len);
+
+protected:
+	FTempFileName DiskName;
+};
+#endif // _WIN32
 
 // OGG/MP3/WAV or some other format streamed through FMOD
 class StreamSong : public MusInfo
@@ -780,11 +797,12 @@ void StreamSong::Play (bool looping)
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	m_Channel = FSOUND_Stream_Play3DAttrib (FSOUND_FREE, m_Stream, -1,
-		m_Volume, FSOUND_STEREOPAN, NULL, NULL);
+	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
 	if (m_Channel != -1)
 	{
+		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
 		FSOUND_SetVolumeAbsolute (m_Channel, m_Volume);
+		FSOUND_SetPaused (m_Channel, false);
 		m_Status = STATE_Playing;
 		m_LastPos = 0;
 	}
@@ -799,16 +817,14 @@ void TimiditySong::Play (bool looping)
 	{
 		if (m_Stream != NULL)
 		{
-			printf ("start stream\n");
-			m_Channel = FSOUND_Stream_Play3DAttrib (FSOUND_FREE, m_Stream, -1,
-				m_Volume, FSOUND_STEREOPAN, NULL, NULL);
+			m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
 			if (m_Channel != -1)
 			{
-				FSOUND_SetVolumeAbsolute (m_Channel, m_Volume);
 				FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
+				FSOUND_SetVolumeAbsolute (m_Channel, m_Volume);
+				FSOUND_SetPaused (m_Channel, false);
 				m_Status = STATE_Playing;
 			}
-			else printf ("start failed\n");
 		}
 		else
 		{ // Assume success if not mixing with FMOD
@@ -860,7 +876,7 @@ void StreamSong::Pause ()
 {
 	if (m_Status == STATE_Playing && m_Stream != NULL)
 	{
-		if (FSOUND_Stream_SetPaused (m_Stream, TRUE))
+		if (FSOUND_SetPaused (m_Channel, TRUE))
 			m_Status = STATE_Paused;
 	}
 }
@@ -916,7 +932,7 @@ void StreamSong::Resume ()
 {
 	if (m_Status == STATE_Paused && m_Stream != NULL)
 	{
-		if (FSOUND_Stream_SetPaused (m_Stream, FALSE))
+		if (FSOUND_SetPaused (m_Channel, FALSE))
 			m_Status = STATE_Playing;
 	}
 }
@@ -1035,8 +1051,11 @@ MIDISong::~MIDISong ()
 MODSong::~MODSong ()
 {
 	Stop ();
-	FMUSIC_FreeSong (m_Module);
-	m_Module = NULL;
+	if (m_Module != NULL)
+	{
+		FMUSIC_FreeSong (m_Module);
+		m_Module = NULL;
+	}
 }
 
 StreamSong::~StreamSong ()
@@ -1105,37 +1124,40 @@ long I_RegisterSong (int handle, int pos, int len)
 	lseek (handle, pos, SEEK_SET);
 	read (handle, &id, 4);
 
-#ifdef _WIN32
-	if (snd_mididevice != -3)
-#endif
+	if (id == (('M')|(('U')<<8)|(('S')<<16)|((0x1a)<<24)))
 	{
-		if (id == (('M')|(('U')<<8)|(('S')<<16)|((0x1a)<<24)))
-		{
-			// This is a mus file
+		// This is a mus file
 #ifdef _WIN32
-			if (snd_mididevice != -2)
-			{
-				info = new MUSSong (handle, pos, len);
-			}
-			else
-#endif // _WIN32
-			{
-				info = new TimiditySong (handle, pos, len);
-			}
+		if (snd_mididevice == -3)
+		{
+			info = new DMusSong (handle, pos, len);
 		}
-		else if (id == (('M')|(('T')<<8)|(('h')<<16)|(('d')<<24)))
+		else if (snd_mididevice != -2)
 		{
-			// This is a midi file
-#ifdef _WIN32
-			if (snd_mididevice != -2)
-			{
-				info = new MIDISong (handle, pos, len);
-			}
-			else
+			info = new MUSSong (handle, pos, len);
+		}
+		else
 #endif // _WIN32
-			{
-				info = new TimiditySong (handle, pos, len);
-			}
+		{
+			info = new TimiditySong (handle, pos, len);
+		}
+	}
+	else if (id == (('M')|(('T')<<8)|(('h')<<16)|(('d')<<24)))
+	{
+		// This is a midi file
+#ifdef _WIN32
+		if (snd_mididevice == -3)
+		{
+			info = new DMusSong (handle, pos, len);
+		}
+		else if (snd_mididevice != -2)
+		{
+			info = new MIDISong (handle, pos, len);
+		}
+		else
+#endif // _WIN32
+		{
+			info = new TimiditySong (handle, pos, len);
 		}
 	}
 
@@ -1229,11 +1251,59 @@ MODSong::MODSong (int handle, int pos, int len)
 	m_Module = FMUSIC_LoadSong ((char *)new FileHandle (handle, pos, len));
 }
 
+#ifdef _WIN32
+DMusSong::DMusSong (int handle, int pos, int len)
+: DiskName ("zmid")
+{
+	FILE *f = fopen (DiskName, "wb");
+	if (f == NULL)
+	{
+		Printf_Bold ("Could not open temp music file\n");
+		return;
+	}
+
+	BYTE *buf = new BYTE[len];
+	bool success;
+
+	if (lseek (handle, pos, SEEK_SET) == -1 || read (handle, buf, len) != len)
+	{
+		fclose (f);
+		Printf_Bold ("Could not read source music file\n");
+		return;
+	}
+
+	// The file type has already been checked before this class instance was
+	// created, so we only need to check one character to determine if this
+	// is a MUS or MIDI file and write it to disk as appropriate.
+	if (buf[1] == 'T')
+	{
+		success = (fwrite (buf, 1, len, f) == (size_t)len);
+	}
+	else
+	{
+		success = ProduceMIDI (buf, f);
+	}
+	fclose (f);
+	delete[] buf;
+
+	if (success)
+	{
+		Disable_FSOUND_IO_Loader ();
+		m_Module = FMUSIC_LoadSong (DiskName);
+		Enable_FSOUND_IO_Loader ();
+	}
+	else
+	{
+		m_Module = NULL;
+	}
+}
+#endif
+
 StreamSong::StreamSong (int handle, int pos, int len)
 : m_Channel (-1)
 {
 	m_Stream = FSOUND_Stream_OpenFile ((char *)new FileHandle (handle, pos, len),
-		FSOUND_LOOP_NORMAL|FSOUND_NORMAL, 0);
+		FSOUND_LOOP_NORMAL|FSOUND_NORMAL|FSOUND_2D, 0);
 }
 
 TimiditySong::TimiditySong (int handle, int pos, int len)

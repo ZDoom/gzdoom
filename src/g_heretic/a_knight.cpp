@@ -214,7 +214,9 @@ void A_KnightAttack (AActor *actor)
 	}
 	if (P_CheckMeleeRange (actor))
 	{
-		P_DamageMobj (actor->target, actor, actor, HITDICE(3), MOD_HIT);
+		int damage = HITDICE(3);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
+		P_TraceBleed (damage, actor->target, actor);
 		S_Sound (actor, CHAN_BODY, "knight/melee", 1, ATTN_NORM);
 		return;
 	}

@@ -47,6 +47,7 @@
 #include "sbar.h"
 #include "p_acs.h"
 #include "cmdlib.h"
+#include "decallib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -80,7 +81,8 @@ CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO)
 	level.gravity = self;
 }
 
-CVAR (Float, sv_friction, 0.90625f, CVAR_SERVERINFO);
+CVAR (Float, sv_friction, 0.90625f, CVAR_SERVERINFO)
+CVAR (Bool, cl_missiledecals, true, CVAR_ARCHIVE)
 
 fixed_t FloatBobOffsets[64] =
 {
@@ -150,7 +152,7 @@ void AActor::Serialize (FArchive &arc)
 
 	if (flags2 & MF2_FLOATBOB)
 	{ // Serialize the center of bobbing rather than the current position
-		z -= FloatBobOffsets[((int)this/4 + level.time - 1) & 63];
+		z -= FloatBobOffsets[(FloatBobPhase + level.time - 1) & 63];
 	}
 
 	arc << x
@@ -226,12 +228,13 @@ void AActor::Serialize (FArchive &arc)
 		<< gear
 		<< dropoffz
 		<< SpawnPoint[0] << SpawnPoint[1] << SpawnPoint[2]
-		<< SpawnAngle << SpawnFlags;
+		<< SpawnAngle << SpawnFlags
+		<< FloatBobPhase;
 	arc.SerializePointer (translationtables, (BYTE **)&translation, 256);
 
 	if (flags2 & MF2_FLOATBOB)
 	{
-		int offs = (int)this/4 + level.time;
+		int offs = FloatBobPhase + level.time;
 		if (arc.IsLoading())
 			--offs;
 		z += FloatBobOffsets[offs & 63];
@@ -244,7 +247,7 @@ void AActor::Serialize (FArchive &arc)
 		AddToHash ();
 		if (player && playeringame[player - players])
 		{ // Give player back the skin
-			skin = &skins[player->userinfo.skin];
+			player->skin = &skins[player->userinfo.skin];
 		}
 	}
 }
@@ -295,13 +298,22 @@ bool AActor::SetState (FState *newstate)
 		frame = newstate->GetFrame();
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
 
-		// [RH] Only change sprite if not using a skin
-		if (skin == NULL)
+		// [RH] Handle skins for players
+		if (player == NULL ||
+			player->skin == NULL ||
+			newstate->sprite.index != GetDefaultByType (player->cls)->SpawnState->sprite.index)
+		{
 			sprite = newstate->sprite.index;
+		}
+		else
+		{
+			sprite = player->skin->sprite;
+		}
 
 		if (newstate->GetAction().acp1)
+		{
 			newstate->GetAction().acp1 (this);
-
+		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
@@ -330,9 +342,17 @@ bool AActor::SetStateNF (FState *newstate)
 		tics = newstate->GetTics();
 		frame = newstate->GetFrame();
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
-		// [RH] Only change sprite if not using a skin
-		if (skin == NULL)
+		// [RH] Handle skins for players
+		if (player == NULL ||
+			player->skin == NULL ||
+			newstate->sprite.index != GetDefaultByType (player->cls)->SpawnState->sprite.index)
+		{
 			sprite = newstate->sprite.index;
+		}
+		else
+		{
+			sprite = player->skin->sprite;
+		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
@@ -345,7 +365,7 @@ bool AActor::SetStateNF (FState *newstate)
 //
 //----------------------------------------------------------------------------
 
-void P_ExplodeMissile (AActor *mo)
+void P_ExplodeMissile (AActor *mo, line_t *line)
 {
 	if (mo->flags3 & MF3_EXPLOCOUNT)
 	{
@@ -355,6 +375,38 @@ void P_ExplodeMissile (AActor *mo)
 		}
 	}
 	mo->SetState (mo->DeathState);
+
+	if (line != NULL && cl_missiledecals)
+	{
+		int side = P_PointOnLineSide (mo->x, mo->y, line);
+		if (line->sidenum[side] != -1)
+		{
+			FDecalBase *base = mo->DecalGenerator;
+			if (base != NULL)
+			{
+				// Find the nearest point on the line, and stick a decal there
+				fixed_t x, y, z;
+				SQWORD num, den;
+
+				den = (SQWORD)line->dx*line->dx + (SQWORD)line->dy*line->dy;
+				if (den != 0)
+				{
+					num = (SQWORD)(mo->x-line->v1->x)*line->dx+(SQWORD)(mo->y-line->v1->y)*line->dy;
+					if (num <= den)
+					{
+						SDWORD frac = num / (den>>30);
+
+						x = line->v1->x + MulScale30 (line->dx, frac);
+						y = line->v1->y + MulScale30 (line->dy, frac);
+						z = mo->z;
+
+						AImpactDecal::StaticCreate (base->GetDecal (),
+							x, y, z, sides + line->sidenum[side]);
+					}
+				}
+			}
+		}
+	}
 
 	mo->momx = mo->momy = mo->momz = 0;
 	mo->effects = 0;		// [RH]
@@ -726,9 +778,8 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 								return;
 							}
 							else
-							{
-								// Struck a player/creature
-								P_ExplodeMissile (mo);
+							{ // Struck a player/creature
+								P_ExplodeMissile (mo, NULL);
 							}
 						}
 						else
@@ -777,7 +828,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 					mo->Destroy ();
 					return;
 				}
-				P_ExplodeMissile (mo);
+				P_ExplodeMissile (mo, BlockingLine);
 			}
 			else
 			{
@@ -1005,7 +1056,7 @@ void P_ZMovement (AActor *mo)
 					return;
 				}
 				P_HitFloor (mo);
-				P_ExplodeMissile (mo);
+				P_ExplodeMissile (mo, NULL);
 				return;
 			}
 		}
@@ -1052,10 +1103,12 @@ void P_ZMovement (AActor *mo)
 		{ // The skull slammed into something
 			mo->momz = -mo->momz;
 		}
-		if (mo->CrashState &&
+		if (mo->CrashState) if (
 			(mo->flags & MF_CORPSE) &&
+			!(mo->flags3 & MF3_CRASHED) &&
 			!(mo->flags2 & MF2_ICEDAMAGE))
 		{
+			mo->flags3 |= MF3_CRASHED;
 			mo->SetState (mo->CrashState);
 		}
 	}
@@ -1097,7 +1150,7 @@ void P_ZMovement (AActor *mo)
 				mo->Destroy ();
 				return;
 			}
-			P_ExplodeMissile (mo);
+			P_ExplodeMissile (mo, NULL);
 			return;
 		}
 	}
@@ -1113,14 +1166,14 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 {
 	mo->player->deltaviewheight = mo->momz>>3;
 	P_FallingDamage (mo);
-	if (mo->momz < -23*FRACUNIT)
-	{
-	}
 	if (!mo->player->morphTics)
 	{
 		if (mo->momz < (fixed_t)(level.gravity * mo->subsector->sector->gravity * -983.04f))
 		{
-			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
+			if (mo->health > 0)
+			{ // [RH] only grunt if alive
+				S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
+			}
 		}
 		if (onmobj != NULL ||
 			!Terrains[P_GetThingFloorType (mo)].IsLiquid)
@@ -1624,7 +1677,7 @@ void AActor::RunThink ()
 
 	if (flags2 & MF2_FLOATBOB)
 	{ // Floating item bobbing motion
-		z += FloatBobDiffs[((int)this/4 + level.time) & 63];
+		z += FloatBobDiffs[(FloatBobPhase + level.time) & 63];
 	}
 	if ((z != floorz && !(flags2 & MF2_FLOATBOB)) || momz || BlockingMobj)
 	{	// Handle Z momentum and gravity
@@ -1734,7 +1787,9 @@ void AActor::RunThink ()
 		tics--;
 				
 		// you can cycle through multiple states in a tic
-		if (!tics)
+		// [RH] Use <= 0 instead of == 0 so that spawnstates
+		// of 0 tics work as expected.
+		if (tics <= 0)
 			if (!SetState (state->GetNextState()))
 				return; 		// freed itself
 	}
@@ -1872,7 +1927,8 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	}
 	if (actor->flags2 & MF2_FLOATBOB)
 	{ // Prime the bobber
-		actor->z += FloatBobOffsets[((int)actor/4 + level.time - 1) & 63];
+		actor->FloatBobPhase = P_Random (pr_floatbobphase);
+		actor->z += FloatBobOffsets[(actor->FloatBobPhase + level.time - 1) & 63];
 	}
 	if (actor->flags2 & MF2_FLOORCLIP)
 	{
@@ -1916,13 +1972,25 @@ void AActor::BeginPlay ()
 void AActor::Activate (AActor *activator)
 {
 	if (flags & MF_COUNTKILL)
-		flags2 &= ~(MF2_DORMANT | MF2_INVULNERABLE);
+	{
+		if (flags2 & MF2_DORMANT)
+		{
+			flags2 &= ~MF2_DORMANT;
+			tics = 1;
+		}
+	}
 }
 
 void AActor::Deactivate (AActor *activator)
 {
 	if (flags & MF_COUNTKILL)
-		flags2 |= MF2_DORMANT | MF2_INVULNERABLE;
+	{
+		if (!(flags2 & MF2_DORMANT))
+		{
+			flags2 |= MF2_DORMANT;
+			tics = -1;
+		}
+	}
 }
 
 //
@@ -2056,8 +2124,8 @@ void P_SpawnPlayer (mapthing2_t *mthing)
     mobj->id = playernum;
 
 	// [RH] Set player sprite based on skin
-	mobj->skin = &skins[p->userinfo.skin];
-	mobj->sprite = mobj->skin->sprite;
+	p->skin = &skins[p->userinfo.skin];
+	mobj->sprite = p->skin->sprite;
 
 	p->DesiredFOV = p->FOV = 90.f;
 	p->camera = p->mo;
@@ -2232,7 +2300,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 			return;
 
 		// save spots for respawning in network games
-		playerstarts[mthing->type-1] = *mthing;
+		playerstarts[pnum] = *mthing;
 		if (!deathmatch)
 			P_SpawnPlayer (mthing);
 
@@ -2704,7 +2772,7 @@ bool P_CheckMissileSpawn (AActor* th)
 
 	if (!P_TryMove (th, th->x, th->y, false))
 	{
-		P_ExplodeMissile (th);
+		P_ExplodeMissile (th, NULL);
 		return false;
 	}
 	return true;
@@ -2722,10 +2790,17 @@ bool P_CheckMissileSpawn (AActor* th)
 
 AActor *P_SpawnMissile (AActor *source, AActor *dest, const TypeInfo *type)
 {
-	return P_SpawnMissileZ (source, source->z + 32*FRACUNIT, dest, type);
+	return P_SpawnMissileXYZ (source->x, source->y, source->z + 32*FRACUNIT,
+		source, dest, type);
 }
 
 AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const TypeInfo *type)
+{
+	return P_SpawnMissileXYZ (source->x, source->y, z, source, dest, type);
+}
+
+AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
+	AActor *source, AActor *dest, const TypeInfo *type)
 {
 	int defflags3 = GetDefaultByType (type)->flags3;
 
@@ -2742,23 +2817,29 @@ AActor *P_SpawnMissileZ (AActor *source, fixed_t z, AActor *dest, const TypeInfo
 		z -= source->floorclip;
 	}
 
-	AActor *th = Spawn (type, source->x, source->y, z);
+	AActor *th = Spawn (type, x, y, z);
 	
 	if (th->SeeSound)
 		S_SoundID (th, CHAN_VOICE, th->SeeSound, 1, ATTN_NORM);
 
-	th->target = source;		// where it came from
+	th->target = source;		// record missile's originator
 
 	vec3_t velocity;
-	float speed = FIXED2FLOAT (th->Speed);
+	float speed = (float)(th->Speed);
 
-	velocity[0] = FIXED2FLOAT(dest->x - source->x);
-	velocity[1] = FIXED2FLOAT(dest->y - source->y);
-	velocity[2] = FIXED2FLOAT(dest->z - source->z);
+	// [RH]
+	// Hexen calculates the missile velocity based on the source's location.
+	// Would it be more useful to base it on the actual position of the
+	// missile? I'll leave it like this for now.
+	// Answer. No, because this way, you can set up sets of parallel missiles.
+
+	velocity[0] = (float)(dest->x - source->x);
+	velocity[1] = (float)(dest->y - source->y);
+	velocity[2] = (float)(dest->z - source->z);
 	VectorNormalize (velocity);
-	th->momx = FLOAT2FIXED(velocity[0] * speed);
-	th->momy = FLOAT2FIXED(velocity[1] * speed);
-	th->momz = FLOAT2FIXED(velocity[2] * speed);
+	th->momx = (fixed_t)(velocity[0] * speed);
+	th->momy = (fixed_t)(velocity[1] * speed);
+	th->momz = (fixed_t)(velocity[2] * speed);
 
 	// invisible target: rotate velocity vector in 2D
 	if (dest->flags & MF_SHADOW)

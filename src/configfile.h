@@ -63,6 +63,18 @@ private:
 	FConfigEntry *FindEntry (FConfigSection *section, const char *key) const;
 	FConfigSection *NewConfigSection (const char *name);
 	FConfigEntry *NewConfigEntry (FConfigSection *section, const char *key, const char *value);
+
+public:
+	class Position
+	{
+		friend class FConfigFile;
+
+		FConfigSection *Section;
+		FConfigEntry *Entry;
+	};
+
+	void GetPosition (Position &pos) const;
+	void SetPosition (const Position &pos);
 };
 
 #endif //__CONFIGFILE_H__

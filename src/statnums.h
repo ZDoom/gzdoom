@@ -15,4 +15,5 @@ enum
 	STAT_PLAYER,							// A player actor
 	STAT_BOSSTARGET,						// A boss brain target
 	STAT_LIGHTNING,							// The lightning thinker
+	STAT_DECALTHINKER,						// An object that thinks for a decal
 };

@@ -22,6 +22,7 @@ extern fixed_t xspeed[8], yspeed[8];
 void P_RecursiveSound (sector_t *sec, int soundblocks);
 void P_NoiseAlert (AActor *target, AActor *emmiter);
 BOOL P_CheckMeleeRange (AActor *actor);
+bool P_CheckMeleeRange2 (AActor *actor);
 BOOL P_Move (AActor *actor);
 BOOL P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);

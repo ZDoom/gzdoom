@@ -93,6 +93,9 @@ typedef struct
 	//		(possibly quite considerably for larger levels)
 	int			index;
 	int			next;
+
+	// [RH] Fix bad textures (see R_GenerateLookup)
+	bool		BadPatched;	
 	
 	// All the patches[patchcount]
 	//	are drawn back to front into the cached texture.
@@ -155,21 +158,31 @@ int*			texturetranslation;
 //
 
 void R_DrawColumnInCache (const column_t *patch, byte *cache,
-						  int originy, int cacheheight, byte *marks)
+						  int originy, int cacheheight, byte *marks,
+						  bool bad)
 {
 	int top = -1; // [RH] DeePsea tall patches
 
 	while (patch->topdelta != 0xff)
 	{
-		if (patch->topdelta <= top)
+		int count;
+		if (bad)
 		{
-			top += patch->topdelta;
+			top = 0;
+			count = cacheheight;
 		}
 		else
 		{
-			top = patch->topdelta;
+			if (patch->topdelta <= top)
+			{
+				top += patch->topdelta;
+			}
+			else
+			{
+				top = patch->topdelta;
+			}
+			count = patch->length;
 		}
-		int count = patch->length;
 		int position = originy + top;
 		int adv = 0;
 
@@ -195,6 +208,10 @@ void R_DrawColumnInCache (const column_t *patch, byte *cache,
 			memset (marks + position, 0xff, count);
 		}
 
+		if (bad)
+		{
+			return;
+		}
 		patch = (column_t *)((byte *) patch + patch->length + 4);
 	}
 }
@@ -234,7 +251,7 @@ void R_GenerateComposite (int texnum)
 				// killough 1/25/98, 4/9/98: Fix medusa bug.
 				R_DrawColumnInCache((column_t*)((byte*)realpatch+LONG(cofs[x1])),
 									block+colofs[x1],patch->originy,texture->height,
-									marks + x1 * texture->height);
+									marks + x1 * texture->height,texture->BadPatched);
 	}
 
 	// killough 4/9/98: Next, convert multipatched columns into true columns,
@@ -294,7 +311,7 @@ void R_GenerateComposite (int texnum)
 
 static void R_GenerateLookup(int texnum, int *const errors)
 {
-	const texture_t *texture = textures[texnum];
+	texture_t *texture = textures[texnum];
 
 	// Composited texture not created yet.
 
@@ -311,12 +328,51 @@ static void R_GenerateLookup(int texnum, int *const errors)
 	int i = texture->patchcount;
 	const texpatch_t *patch = texture->patches;
 	bool mustComposite = false;
+	bool mustFix = false;
 
 	// [RH] Some wads (I forget which!) have single-patch textures 256
 	// pixels tall that have patch lengths recorded as 0. I can't think of
 	// any good reason for them to do this, and since I didn't make note
 	// of which wad made me hack in support for them, the hack is gone
 	// because I've added support for DeePsea's true tall patches.
+	//
+	// Okay, I found a wad with crap patches: Pleiades.wad's sky patches almost
+	// fit this description and are a big mess, but they're not single patch!
+	if (texture->height == 256)
+	{
+		// Check if this patch is likely to be a problem.
+		// It must be 256 pixels tall, and all its columns must have exactly
+		// one post, where each post has a supposed length of 0.
+		const patch_t *realpatch = (patch_t *)W_CacheLumpNum (patch->patch, PU_CACHE);
+		const int *cofs = realpatch->columnofs;
+		int x, x2 = SHORT(realpatch->width);
+
+		// Note that only the first patch is checked. It's assumed that if one of
+		// them is a problem, they all are, because Doom would not have rendered
+		// the texture as intended if it was used on a two-sided line.
+		if (SHORT(realpatch->height) == 256)
+		{
+			for (x = 0; x < x2; ++x)
+			{
+				const column_t *col = (column_t*)((byte*)realpatch+LONG(cofs[x]));
+				if (col->topdelta != 0 || col->length != 0)
+				{
+					break;	// It's not bad!
+				}
+				col = (column_t *)((byte *)col + 256 + 4);
+				if (col->topdelta != 0xff)
+				{
+					break;	// More than one post in a column!
+				}
+			}
+			if (x == x2)
+			{ // If all columns were checked, it needs fixing.
+				mustComposite = true;
+				mustFix = true;
+			}
+		}
+	}
+
 	while (--i >= 0)
 	{
 		int pat = patch->patch;
@@ -343,9 +399,16 @@ static void R_GenerateLookup(int texnum, int *const errors)
 			// killough 4/9/98: keep a count of the number of posts in column,
 			// to fix Medusa bug while allowing for transparent multipatches.
 
-			const column_t *col = (column_t*)((byte*)realpatch+LONG(cofs[x]));
-			for (;col->topdelta != 0xff; count[x].posts++)
-				col = (column_t *)((byte *)col + col->length + 4);
+			if (!mustFix)
+			{
+				const column_t *col = (column_t*)((byte*)realpatch+LONG(cofs[x]));
+				for (;col->topdelta != 0xff; count[x].posts++)
+					col = (column_t *)((byte *)col + col->length + 4);
+			}
+			else
+			{
+				count[x].posts++;
+			}
 			count[x].patches++;
 			collump[x] = pat;
 			colofs[x] = LONG(cofs[x])+3;
@@ -378,6 +441,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
 
 		if (texture->patchcount > 1 || texture->height > 254 || mustComposite)
 		{
+			texture->BadPatched = mustFix;
 			texturetype2[texnum] = 1;
 			x = texture->width;
 			csize = 0;

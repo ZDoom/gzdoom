@@ -392,6 +392,7 @@ public:
 	void Play (bool looping);
 	bool IsPlaying ();
 	bool IsValid () const;
+	void ResetChips ();
 
 protected:
 	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
@@ -408,6 +409,16 @@ CUSTOM_CVAR (Int, opl_frequency, 11025, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 }
 
 CVAR (Bool, opl_enable, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+static bool OPL_Active;
+
+CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (OPL_Active && currSong != NULL)
+	{
+		static_cast<OPLMUSSong *>(currSong)->ResetChips ();
+	}
+}
 
 
 // CD track/disk played through the multimedia system
@@ -509,6 +520,44 @@ void MIDISong::SetStreamVolume ()
 	DWORD vol;
 	MMRESULT ret;
 
+#if 0 // Damn you, Creative! I can't send midiOutLongMsg to MIDI streams
+	  // like the docs say because your drivers suck! It looks like I will
+	  // have to write my own sequencer after all just so I can get volume
+	  // changes working with Creative's cards. A MUS sequencer is easy.
+	  // A MIDI file sequencer is a bit more complicated, so I want to delay
+	  // that endeavor for another day.
+
+	// Send a master volume SysEx message to the MIDI device.
+	BYTE volmess[] = { 0xf0, 0x7f, 0x7f, 0x04, 0x01,
+		midivolume & 0x7f, (midivolume>>7) & 0x7f, 0xf7 };
+	MIDIHDR hdr = { (LPSTR)volmess, sizeof(volmess), };
+
+	ret = midiOutPrepareHeader ((HMIDIOUT)m_MidiStream, &hdr, sizeof(hdr));
+	if (ret == MMSYSERR_NOERROR)
+	{
+		midiStreamPause (m_MidiStream);
+		ret = midiOutLongMsg ((HMIDIOUT)m_MidiStream, &hdr, sizeof(hdr));
+		if (ret != MMSYSERR_NOERROR)
+		{
+			Printf ("long msg says: %08x\n", ret);
+		}
+		while (MIDIERR_STILLPLAYING == (ret = midiOutUnprepareHeader ((HMIDIOUT)m_MidiStream, &hdr, sizeof(hdr))))
+		{
+			Printf ("still playing\n");
+			Sleep (10);
+		}
+		midiStreamRestart (m_MidiStream);
+		if (ret != MMSYSERR_NOERROR)
+		{
+			Printf ("unprep says: %08x\n", ret);
+		}
+	}
+	else
+	{
+		Printf ("prep says: %08x\n", ret);
+	}
+
+#elif 1
 	ret = midiOutGetVolume ((HMIDIOUT)mididevice, &vol);
 	if (m_bVolGood)
 	{
@@ -556,6 +605,7 @@ void MIDISong::SetStreamVolume ()
 		Printf (PRINT_BOLD, "Could not set MIDI volume:\n%s\n", err);
 		m_bVolGood = false;
 	}
+#endif
 }
 
 void MIDISong::UnsetStreamVolume ()
@@ -957,9 +1007,9 @@ void MIDISong::Play (bool looping)
 				if (UsedPatches[i])
 				{
 					DPrintf (" %d", i);
-					midiOutShortMsg ((HMIDIOUT)m_MidiStream,
+					res = midiOutShortMsg ((HMIDIOUT)m_MidiStream,
 									 MIDI_PRGMCHANGE | (i<<8) | j);
-					midiOutShortMsg ((HMIDIOUT)m_MidiStream,
+					res = midiOutShortMsg ((HMIDIOUT)m_MidiStream,
 									 MIDI_NOTEON | (60<<8) | (1<<16) | j);
 					++j;
 					if (j == 10)
@@ -2459,10 +2509,12 @@ OPLMUSSong::OPLMUSSong (int handle, int pos, int len)
 		delete Music;
 		return;
 	}
+	OPL_Active = true;
 }
 
 OPLMUSSong::~OPLMUSSong ()
 {
+	OPL_Active = false;
 	Stop ();
 	if (Music != NULL)
 	{
@@ -2473,6 +2525,11 @@ OPLMUSSong::~OPLMUSSong ()
 bool OPLMUSSong::IsValid () const
 {
 	return m_Stream != NULL;
+}
+
+void OPLMUSSong::ResetChips ()
+{
+	Music->ResetChips ();
 }
 
 bool OPLMUSSong::IsPlaying ()

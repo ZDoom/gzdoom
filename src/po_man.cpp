@@ -224,6 +224,10 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 	while ( (mirror = GetPolyobjMirror( polyNum)) )
 	{
 		poly = GetPolyobj(mirror);
+		if (poly == NULL)
+		{
+			I_Error ("EV_RotatePoly: Invalid polyobj num: %d\n", polyNum);
+		}
 		if (poly && poly->specialdata && !overRide)
 		{ // mirroring poly is already in motion
 			break;
@@ -244,14 +248,6 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 		else
 		{
 			pe->m_Dist = ANGLE_MAX-1;
-		}
-		if( (poly = GetPolyobj(polyNum)) )
-		{
-			poly->specialdata = pe;
-		}
-		else
-		{
-			I_Error ("EV_RotatePoly: Invalid polyobj num: %d\n", polyNum);
 		}
 		direction = -direction;
 		pe->m_Speed = (speed*direction*(ANGLE_90/64))>>3;

@@ -1,8 +1,24 @@
+December 13, 2002
+- Added a hack for 256-tall textures with patches that mark their post
+  lengths as 0. This lets pleiades.wad and its skies work.
+- Multiplied the output of the OPL chips by two so that they aren't so
+  quiet.
+- Gave opl_onechip a callback so that changes to it can take effect
+  immediately.
+- Fixed: findFreeChannel() in mlopl.cpp could crash when going from two
+  chips to one, because it did not reset the value of last.
+
 December 12, 2002
+- Fixed an original Hexen bug: EV_RotatePoly() set the first polyobject's
+  special data to a rotator, then it created a new rotator and assigned it
+  to the mirror polyobject's specialdata, and then it also assigned the
+  second rotator to the first polyobject. This left the first rotator
+  forgotten, and if a player got in the way of one of the polyobjects so
+  the other one destroyed the rotator, it could crash.
 - Uploaded 24.cab. Why cab? Because LZX compression is better than ZIP, and
   I'm stuck uploading files with a 56k modem. That's why. The source code
   archive alone is almost 700k smaller as a cab than as a zip. That's at
-  least three fewer minutes I need to wait uploading it.
+  least four or five fewer minutes that I need to wait uploading it.
 - Fixed: Bloodscourge projectiles would not pass through non-boss monsters
   because AMageStaffFX2::SpecialMissileHit() was incomplete. It is a much
   more dangerous weapon now.

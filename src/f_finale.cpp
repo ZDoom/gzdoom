@@ -998,7 +998,7 @@ void F_AdvanceSlideshow ()
 	case -1:
 		wipegamestate = GS_FORCEWIPEFADE;
 		FinaleStage = 6;
-		S_StartMusic ("D_INTRO");
+		S_StartMusic ("D_FAST");
 		break;
 
 		// Macil's speech on map 3 about the Programmer.

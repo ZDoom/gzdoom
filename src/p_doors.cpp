@@ -555,7 +555,10 @@ void DAnimatedDoor::Tick ()
 
 			m_Line1->flags |= ML_BLOCKING;
 			m_Line2->flags |= ML_BLOCKING;
-			SN_StartSequence (m_Sector, ani.CloseSound);
+			if (ani.CloseSound != NULL)
+			{
+				SN_StartSequence (m_Sector, ani.CloseSound);
+			}
 
 			m_Status = Closing;
 			m_Timer = m_Speed;
@@ -679,7 +682,10 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay)
 	m_Line2->flags |= ML_BLOCKING;
 	m_BotDist = m_Sector->ceilingplane.d;
 	MoveCeiling (2048*FRACUNIT, topdist, 1);
-	SN_StartSequence (m_Sector, DoorAnimations[m_WhichDoorIndex].OpenSound);
+	if (DoorAnimations[m_WhichDoorIndex].OpenSound != NULL)
+	{
+		SN_StartSequence (m_Sector, DoorAnimations[m_WhichDoorIndex].OpenSound);
+	}
 }
 
 //============================================================================
@@ -763,6 +769,8 @@ void P_ParseAnimatedDoor()
 
 	SC_MustGetString();
 	anim.BaseTexture = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall, texflags);
+	anim.OpenSound = NULL;
+	anim.CloseSound = NULL;
 
 	if (anim.BaseTexture == -1)
 	{

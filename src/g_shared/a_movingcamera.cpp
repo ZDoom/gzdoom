@@ -3,7 +3,7 @@
 ** Cameras that move and related neat stuff
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@ class AInterpolationPoint : public AActor
 	HAS_OBJECT_POINTERS
 public:
 	void BeginPlay ();
+	void HandleSpawnFlags ();
 	void Tick () {}		// Nodes do no thinking
 	AInterpolationPoint *ScanForLoop ();
 	void FormChain ();
@@ -82,6 +83,11 @@ void AInterpolationPoint::BeginPlay ()
 {
 	Super::BeginPlay ();
 	Next = NULL;
+}
+
+void AInterpolationPoint::HandleSpawnFlags ()
+{
+	// Spawn flags mean nothing to an interpolation point
 }
 
 void AInterpolationPoint::FormChain ()
@@ -114,11 +120,12 @@ void AInterpolationPoint::FormChain ()
 AInterpolationPoint *AInterpolationPoint::ScanForLoop ()
 {
 	AInterpolationPoint *node = this;
-	while (node->Next && node->Next != this)
+	while (node->Next && node->Next != this && node->special1 == 0)
 	{
+		node->special1 = 1;
 		node = node->Next;
 	}
-	return node->Next ? node : NULL;
+	return node->Next == this ? node : NULL;
 }
 
 /*
@@ -575,6 +582,12 @@ void AActorMover::Activate (AActor *activator)
 	{
 		tracer->flags2 |= MF2_INVULNERABLE | MF2_DORMANT;
 	}
+	// Don't let the renderer interpolate between the actor's
+	// old position and its new position.
+	Interpolate ();
+	tracer->PrevX = tracer->x;
+	tracer->PrevY = tracer->y;
+	tracer->PrevZ = tracer->z;
 }
 
 void AActorMover::Deactivate (AActor *activator)

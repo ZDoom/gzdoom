@@ -116,7 +116,7 @@ esac
 
 # Check for FMOD, first in the path, then in ~/fomdapi
 AC_MSG_CHECKING([a suitable version of FMOD])
-LIBS="$LIBS -lfmod-3.71"
+LIBS="$LIBS -lfmod-3.74"
 AC_LINK_IFELSE(
 [AC_LANG_PROGRAM([[#include <fmod.h>]],
  [[FSOUND_Init (44100, 64, FSOUND_INIT_STREAM_FROM_MAIN_THREAD);
@@ -133,7 +133,7 @@ AC_LINK_IFELSE(
     FSOUND_Stream_Open ("dummy", 0, 0, 100);]])],
   AC_MSG_RESULT([in ~/fmodapi]),
   AC_MSG_RESULT([no])
-  AC_MSG_FAILURE([Could not find FMOD 3.70 or a compatible version.])))
+  AC_MSG_FAILURE([Could not find FMOD 3.74 or a compatible version.])))
 
 # Check for zlib
 AC_CHECK_LIB(z, deflate,, AC_MSG_FAILURE([You need zlib to build ZDoom. See http://www.gzip.org/zlib/]))

@@ -55,7 +55,7 @@ class ASoulsphere : public AInventory
 {
 	DECLARE_ACTOR (ASoulsphere, AInventory)
 public:
-	virtual bool Use ()
+	virtual bool Use (bool pickup)
 	{
 		player_t *player = Owner->player;
 		player->health += deh.SoulsphereHealth;
@@ -94,7 +94,7 @@ class AMegasphere : public APowerupGiver
 {
 	DECLARE_ACTOR (AMegasphere, APowerupGiver)
 public:
-	virtual bool Use ()
+	virtual bool Use (bool pickup)
 	{
 		player_t *player = Owner->player;
 

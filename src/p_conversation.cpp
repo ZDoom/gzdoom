@@ -68,6 +68,7 @@ const TypeInfo *StrifeTypes[344];
 static menu_t ConversationMenu;
 static TArray<menuitem_t> ConversationItems;
 static int ConversationPauseTic;
+static bool ShowGold;
 
 static void LoadScriptFile (const char *name);
 static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, DWORD &prevSpeakerType);
@@ -77,7 +78,7 @@ static void DrawConversationMenu ();
 static void PickConversationReply ();
 static void CleanupConversationMenu ();
 
-static FStrifeDialogueNode *CurNode;
+static FStrifeDialogueNode *CurNode, *PrevNode;
 static brokenlines_t *DialogueLines;
 static AActor *ConversationNPC, *ConversationPC;
 static angle_t ConversationNPCAngle;
@@ -227,6 +228,7 @@ void P_FreeStrifeConversations ()
 	}
 
 	CurNode = NULL;
+	PrevNode = NULL;
 }
 
 //============================================================================
@@ -518,10 +520,12 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 
 			sprintf (moneystr, "%s for %lu", rsp->Reply, rsp->Count[0]);
 			reply->Reply = copystring (moneystr);
+			reply->NeedsGold = true;
 		}
 		else
 		{
 			reply->Reply = copystring (rsp->Reply);
+			reply->NeedsGold = false;
 		}
 
 		// QuickYes messages are shown when you meet the item checks.
@@ -700,7 +704,10 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	}
 
 	npc->reactiontime = 2;
-	npc->target = pc;
+	if (!(npc->flags & MF_FRIENDLY) && !(npc->flags4 & MF4_NOHATEPLAYERS))
+	{
+		npc->target = pc;
+	}
 	ConversationNPCAngle = npc->angle;
 	A_FaceTarget (npc);
 	pc->angle = R_PointToAngle2 (pc->x, pc->y, npc->x, npc->y);
@@ -746,6 +753,7 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	DialogueLines = V_BreakLines (screen->GetWidth()/CleanXfac-24*2, toSay);
 
 	// Fill out the possible choices
+	ShowGold = false;
 	item.type = numberedmore;
 	item.e.mfunc = PickConversationReply;
 	for (reply = CurNode->Children, i = 1; reply != NULL; reply = reply->Next)
@@ -754,6 +762,7 @@ void P_StartConversation (AActor *npc, AActor *pc)
 		{
 			continue;
 		}
+		ShowGold |= reply->NeedsGold;
 		reply->ReplyLines = V_BreakLines (320-50-10, reply->Reply);
 		for (j = 0; reply->ReplyLines[j].width != -1; ++j)
 		{
@@ -784,7 +793,11 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	// Finish setting up the menu
 	ConversationMenu.items = &ConversationItems[0];
 	ConversationMenu.numitems = ConversationItems.Size();
-	ConversationMenu.lastOn = 0;
+	if (CurNode != PrevNode)
+	{ // Only reset the selection if showing a different menu.
+		ConversationMenu.lastOn = 0;
+		PrevNode = CurNode;
+	}
 	ConversationMenu.DontDim = true;
 
 	// Give the NPC a chance to play a brief animation
@@ -819,14 +832,14 @@ void P_ResumeConversation ()
 // DrawConversationMenu
 //
 //============================================================================
-static bool inDrawer;
+
 static void DrawConversationMenu ()
 {
 	int i, x, y, linesize;
 
 	assert (DialogueLines != NULL);
 	assert (CurNode != NULL);
-inDrawer = true;
+
 	if (CurNode == NULL)
 	{
 		M_ClearMenus ();
@@ -877,7 +890,22 @@ inDrawer = true;
 			DTA_CleanNoMove, true, TAG_DONE);
 		y += linesize;
 	}
-	inDrawer = false;
+
+	if (ShowGold)
+	{
+		AInventory *coin = ConversationPC->FindInventory (RUNTIME_CLASS(ACoin));
+		char goldstr[32];
+
+		sprintf (goldstr, "%d", coin != NULL ? coin->Amount : 0);
+		screen->DrawText (CR_GRAY, 21, 191, goldstr, DTA_320x200, true,
+			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
+		screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
+			3, 190, DTA_320x200, true,
+			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW, TAG_DONE);
+		screen->DrawText (CR_GRAY, 20, 190, goldstr, DTA_320x200, true, TAG_DONE);
+		screen->DrawTexture (TexMan(((AInventory *)GetDefaultByType (RUNTIME_CLASS(ACoin)))->Icon),
+			2, 189, DTA_320x200, true, TAG_DONE);
+	}
 }
 
 //============================================================================
@@ -998,8 +1026,6 @@ void CleanupConversationMenu ()
 {
 	FStrifeDialogueReply *reply;
 
-	if (inDrawer)
-		inDrawer = inDrawer;
 	if (CurNode != NULL)
 	{
 		for (reply = CurNode->Children; reply != NULL; reply = reply->Next)

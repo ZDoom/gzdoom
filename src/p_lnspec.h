@@ -340,6 +340,7 @@ typedef enum {
 	dScroll_EastLavaDamage = 84,
 
 	// And here are some for Strife
+	sLight_Strobe_Hurt = 104,
 	sDamage_Hellslime = 105,
 	Damage_InstantDeath = 115,
 	sDamage_SuperHellslime = 116,

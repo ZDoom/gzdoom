@@ -797,7 +797,7 @@ private:
 		{
 			for (i = 0; i < 4; i++)
 			{
-				if (armor->Slots[i] > 0)
+				if (armor->Slots[i] > 0 && armor->SlotsIncrement[i] > 0)
 				{
 					DrawFadedImage (Images[imgARMSLOT1+i], 150+31*i, 2,
 						MIN<fixed_t> (OPAQUE, Scale (armor->Slots[i], OPAQUE,

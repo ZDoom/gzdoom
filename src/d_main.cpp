@@ -500,10 +500,12 @@ void D_Display (bool screenshot)
 		if (realviewheight == SCREENHEIGHT && viewactive)
 		{
 			StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
+			StatusBar->DrawTopStuff (DrawFSHUD ? HUD_Fullscreen : HUD_None);
 		}
 		else
 		{
 			StatusBar->Draw (HUD_StatusBar);
+			StatusBar->DrawTopStuff (HUD_StatusBar);
 		}
 		CT_Drawer ();
 		break;
@@ -862,7 +864,7 @@ void D_DoStrifeAdvanceDemo ()
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
 		S_Sound (CHAN_VOICE, voices[0], 1, ATTN_NORM);
-		S_StartMusic (gameinfo.flags & GI_SHAREWARE ? "d_intro" : "d_darker");
+		S_StartMusic ("d_intro");
 		break;
 
 	case 4:

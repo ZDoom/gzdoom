@@ -736,7 +736,7 @@ void R_DrawSpanP_C (void)
 		do
 		{
 			// Current texture index in u,v.
-			spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
+			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
 
 			// Lookup pixel from flat texture tile,
 			//  re-index using light/colormap.
@@ -799,7 +799,7 @@ void R_DrawSpanMaskedP_C (void)
 		{
 			BYTE texdata;
 
-			spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
+			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
 			texdata = source[spot];
 			if (texdata != 0)
 			{
@@ -862,7 +862,7 @@ void R_DrawSpanTranslucentP_C (void)
 		// 64x64 is the most common case by far, so special case it.
 		do
 		{
-			spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
+			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
 			DWORD fg = colormap[source[spot]];
 			DWORD bg = *dest;
 			fg = fg2rgb[fg];
@@ -924,7 +924,7 @@ void R_DrawSpanMaskedTranslucentP_C (void)
 		{
 			BYTE texdata;
 
-			spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
+			spot = ((xfrac>>(32-6-6))&(63*64)) + (yfrac>>(32-6));
 			texdata = source[spot];
 			if (texdata != 0)
 			{
@@ -1305,8 +1305,9 @@ void R_InitTranslationTables ()
 		}
 		for (i = 0x50; i <= 0x5F; ++i)
 		{
+			// Merchant hair
 			translationtables[TRANSLATION_Standard][i+4*256] = 0x80 + (i&0xf);
-			translationtables[TRANSLATION_Standard][i+5*256] = 0x90 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+5*256] = 0x10 + (i&0xf);
 			translationtables[TRANSLATION_Standard][i+6*256] = 0x40 + (i&0xf);
 		}
 		for (i = 0x80; i <= 0x8F; ++i)

@@ -685,11 +685,33 @@ BOOL P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{ // clear the special on non-retriggerable lines
 		line->special = 0;
 	}
-	if ((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT || lineActivation == SPAC_USETHROUGH) 
-		&& buttonSuccess)
+// Graf Zahl says: "If you check out the WolfenDoom WAD Operation Rheingold 2
+// you will find that there are lots of shoot triggers that don't have any
+// attached sector. In Doom2.exe such switches are changed and this WAD uses
+// this to create a lot of shootable stuff on walls (like clocks that get
+// destroyed etc.) None of those work in ZDoom. Interestingly this works in
+// almost no source port."
+// begin of changed code
+	if (buttonSuccess)
+	{
+		if (lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT || lineActivation == SPAC_USETHROUGH)
+
+		{
+			P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
+		}
+	}
+
+	// some old WADs use this method to create walls that change the texture when shot.
+	else if (lineActivation == SPAC_IMPACT &&					// only for shootable triggers
+		!(level.flags & LEVEL_HEXENFORMAT) &&					// only in Doom-format maps
+		!repeat &&												// only non-repeatable triggers
+		(special<Generic_Floor || special>Generic_Crusher) &&	// not for Boom's generalized linedefs
+		line->args[0] &&										// only if there's a tag (all types that are used by Doom-format maps use args[0] as tag)
+		P_FindSectorFromTag (line->args[0], -1) == -1)			// only if no sector is tagged to this linedef
 	{
 		P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
 	}
+// end of changed code
 	if (developer && buttonSuccess)
 	{
 		Printf ("Line special %d activated\n", special);
@@ -744,7 +766,7 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	if (!mo->player &&
 		!(mo->flags & MF_MISSILE) &&
 		!(line->flags & ML_MONSTERSCANACTIVATE) &&
-		activationType != SPAC_MCROSS)
+		(activationType != SPAC_MCROSS || lineActivation != SPAC_MCROSS))
 	{ // [RH] monsters' ability to activate this line depends on its type
 		// In Hexen, only MCROSS lines could be activated by monsters. With
 		// lax activation checks, monsters can also activate certain lines
@@ -845,6 +867,11 @@ void P_PlayerInSpecialSector (player_t *player)
 	{
 		switch (special)
 		{
+		case Damage_InstantDeath:
+			// Strife's instant death sector
+			P_DamageMobj (player->mo, NULL, NULL, 999, MOD_UNKNOWN);
+			break;
+
 		case dDamage_Hellslime:
 			// HELLSLIME DAMAGE
 			if (ironfeet == NULL && !(level.time&0x1f))
@@ -853,8 +880,9 @@ void P_PlayerInSpecialSector (player_t *player)
 
 		case dDamage_Nukage:
 			// NUKAGE DAMAGE
+		case sLight_Strobe_Hurt:
 			if (ironfeet == NULL && !(level.time&0x1f))
-					P_DamageMobj (player->mo, NULL, NULL, 5, MOD_SLIME);
+				P_DamageMobj (player->mo, NULL, NULL, 5, MOD_SLIME);
 			break;
 
 		case dDamage_SuperHellslime:
@@ -1257,6 +1285,7 @@ void P_SpawnSpecials (void)
 			break;
 
 		case dLight_Strobe_Hurt:
+		case sLight_Strobe_Hurt:
 			// STROBE FAST/DEATH SLIME
 			new DStrobe (sector, STROBEBRIGHT, FASTDARK, false);
 			break;
@@ -1455,7 +1484,7 @@ void P_SpawnSpecials (void)
 		}
 
 	// [RH] Start running any open scripts on this map
-	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL);
+	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL, false);
 }
 
 // killough 2/28/98:

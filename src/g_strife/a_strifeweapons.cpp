@@ -341,7 +341,11 @@ int APoisonBolt::DoSpecialDamage (AActor *target, int damage)
 	{
 		return -1;
 	}
-	return target->health + 10;
+	if (target->health < 1000000)
+	{
+		return target->health + 10;
+	}
+	return 1;
 }
 
 // Strife's Crossbow --------------------------------------------------------

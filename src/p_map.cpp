@@ -313,10 +313,10 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	tmy = y;
 	tmz = z;
 		
-	tmbbox[BOXTOP] = y + tmthing->radius;
-	tmbbox[BOXBOTTOM] = y - tmthing->radius;
-	tmbbox[BOXRIGHT] = x + tmthing->radius;
-	tmbbox[BOXLEFT] = x - tmthing->radius;
+	tmfbbox[BOXTOP] = tmbbox[BOXTOP] = y + tmthing->radius;
+	tmfbbox[BOXBOTTOM] = tmbbox[BOXBOTTOM] = y - tmthing->radius;
+	tmfbbox[BOXRIGHT] = tmbbox[BOXRIGHT] = x + tmthing->radius;
+	tmfbbox[BOXLEFT] = tmbbox[BOXLEFT] = x - tmthing->radius;
 
 	newsubsec = R_PointInSubsector (x,y);
 	ceilingline = NULL;
@@ -345,11 +345,24 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	{
 		for (by=yl ; by<=yh ; by++)
 		{
-			if (!P_BlockThingsIterator(bx,by,PIT_StompThing,telebt))
+			if (!P_BlockLinesIterator(bx,by,PIT_FindFloorCeiling))
 			{
 				return false;
 			}
-			if (!P_BlockLinesIterator(bx,by,PIT_FindFloorCeiling))
+		}
+	}
+
+	fixed_t savefloorz = tmffloorz;
+	fixed_t saveceilingz = tmfceilingz;
+	sector_t *savesector = tmffloorsector;
+	int savepic = tmffloorpic;
+	fixed_t savedropoff = tmfdropoffz;
+
+	for (bx=xl ; bx<=xh ; bx++)
+	{
+		for (by=yl ; by<=yh ; by++)
+		{
+			if (!P_BlockThingsIterator(bx,by,PIT_StompThing,telebt))
 			{
 				return false;
 			}
@@ -358,11 +371,11 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	
 	// the move is ok, so link the thing into its new position
 	thing->SetOrigin (x, y, z);
-	thing->floorz = tmffloorz;
-	thing->ceilingz = tmfceilingz;
-	thing->floorsector = tmffloorsector;
-	thing->floorpic = tmffloorpic;
-	thing->dropoffz = tmfdropoffz;        // killough 11/98
+	thing->floorz = savefloorz;
+	thing->ceilingz = saveceilingz;
+	thing->floorsector = savesector;
+	thing->floorpic = savepic;
+	thing->dropoffz = savedropoff;        // killough 11/98
 
 	if (thing->flags2 & MF2_FLOORCLIP)
 	{

@@ -77,6 +77,7 @@ zdoom_SOURCES = \
 	$(srcdir)/p_acs.cpp \
 	$(srcdir)/p_buildmap.cpp \
 	$(srcdir)/p_ceiling.cpp \
+	$(srcdir)/p_conversation.cpp \
 	$(srcdir)/p_doors.cpp \
 	$(srcdir)/p_effect.cpp \
 	$(srcdir)/p_enemy.cpp \
@@ -142,6 +143,7 @@ zdoom_SOURCES = \
 	$(srcdir)/g_shared/a_flashfader.cpp \
 	$(srcdir)/g_shared/a_fountain.cpp \
 	$(srcdir)/g_shared/a_hatetarget.cpp \
+	$(srcdir)/g_shared/a_keys.cpp \
 	$(srcdir)/g_shared/a_lightning.cpp \
 	$(srcdir)/g_shared/a_movingcamera.cpp \
 	$(srcdir)/g_shared/a_pickups.cpp \
@@ -211,7 +213,6 @@ zdoom_SOURCES = \
 	$(srcdir)/g_hexen/a_bishop.cpp \
 	$(srcdir)/g_hexen/a_blastradius.cpp \
 	$(srcdir)/g_hexen/a_boostarmor.cpp \
-	$(srcdir)/g_hexen/a_boostmana.cpp \
 	$(srcdir)/g_hexen/a_centaur.cpp \
 	$(srcdir)/g_hexen/a_clericboss.cpp \
 	$(srcdir)/g_hexen/a_clericflame.cpp \
@@ -258,11 +259,23 @@ zdoom_SOURCES = \
 	$(srcdir)/g_hexen/a_wraith.cpp \
 	$(srcdir)/g_hexen/hexen_sbar.cpp \
 	$(srcdir)/g_strife/a_acolyte.cpp \
+	$(srcdir)/g_strife/a_alienspectres.cpp \
 	$(srcdir)/g_strife/a_beggars.cpp \
+	$(srcdir)/g_strife/a_coin.cpp \
+	$(srcdir)/g_strife/a_entityboss.cpp \
+	$(srcdir)/g_strife/a_loremaster.cpp \
+	$(srcdir)/g_strife/a_macil.cpp \
 	$(srcdir)/g_strife/a_merchants.cpp \
+	$(srcdir)/g_strife/a_oracle.cpp \
 	$(srcdir)/g_strife/a_peasant.cpp \
+	$(srcdir)/g_strife/a_programmer.cpp \
+	$(srcdir)/g_strife/a_questitems.cpp \
 	$(srcdir)/g_strife/a_rebels.cpp \
+	$(srcdir)/g_strife/a_sentinel.cpp \
+	$(srcdir)/g_strife/a_spectral.cpp \
 	$(srcdir)/g_strife/a_strifeammo.cpp \
+	$(srcdir)/g_strife/a_strifeitems.cpp \
+	$(srcdir)/g_strife/a_strifekeys.cpp \
 	$(srcdir)/g_strife/a_strifeplayer.cpp \
 	$(srcdir)/g_strife/a_strifestuff.cpp \
 	$(srcdir)/g_strife/a_strifeweapons.cpp \

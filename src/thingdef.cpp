@@ -564,7 +564,8 @@ void A_BulletAttack (AActor *self)
     {
 		int angle = bangle + (pr_cabullet.Random2() << 20);
 		int damage = ((pr_cabullet()%5)+1)*3;
-		P_LineAttack(self, angle, MISSILERANGE, slope, damage, MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
+		P_LineAttack(self, angle, MISSILERANGE, slope, damage,
+			GetDefaultByType(RUNTIME_CLASS(ABulletPuff))->DamageType, RUNTIME_CLASS(ABulletPuff));
     }
 }
 
@@ -622,7 +623,7 @@ void A_ExplodeParms (AActor *self)
 	bool hurtSource = true;
 	size_t index = self->state->GetMisc1_2();
 
-	if (index < AttackList.Size())
+	if (index < ExplodeList.Size())
 	{
 		FExplodeParms *parms = &ExplodeList[index];
 
@@ -637,7 +638,7 @@ void A_ExplodeParms (AActor *self)
 		hurtSource = parms->HurtShooter;
 	}
 
-	P_RadiusAttack (self, self->target, damage, self->DamageType, distance, hurtSource);
+	P_RadiusAttack (self, self->target, damage, distance, self->DamageType, hurtSource);
 	if (self->z <= self->floorz + (distance<<FRACBITS))
 	{
 		P_HitFloor (self);
@@ -812,7 +813,7 @@ void A_CustomBulletAttack (AActor *self)
 			int angle = bangle + pr_cabullet.Random2() * att->Spread_XY * (ANGLE_1/255);
 			int slope = bslope + pr_cabullet.Random2() * att->Spread_Z * (ANGLE_1/255);
 			int damage = ((pr_cabullet()%3)+1)*att->DamagePerBullet;
-			P_LineAttack(self, angle, MISSILERANGE, slope, damage, MOD_UNKNOWN, pufftype);
+			P_LineAttack(self, angle, MISSILERANGE, slope, damage, GetDefaultByType(pufftype)->DamageType, pufftype);
 		}
     }
 }
@@ -1379,7 +1380,6 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 	{
 		FLnSpec ls = { spec->Special };
 
-		memset(&ls,0,sizeof(ls));
 		if (state.Frame&SF_BIGTIC)
 		{
 			SC_ScriptError("You cannot use a special with a state duration larger than 254!");
@@ -1432,7 +1432,6 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 			SC_MustGetNumber ();
 			local_eparms.HurtShooter = !!sc_Number;
 			SC_MustGetStringName (")");
-			state.SetMisc1_2 (ExplodeList.Push (local_eparms));
 		}
 		else
 		{

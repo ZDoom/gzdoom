@@ -61,6 +61,9 @@
 #include "a_strifeglobal.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "r_sky.h"
+
+extern FILE *Logfile;
 
 FRandom pr_acs ("ACS");
 
@@ -1491,27 +1494,30 @@ DWORD FBehavior::FindLanguage (DWORD langid, bool ignoreregion) const
 	return 0;
 }
 
-void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator)
+void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow)
 {
 	for (size_t i = 0; i < StaticModules.Size(); ++i)
 	{
-		StaticModules[i]->StartTypedScripts (type, activator);
+		StaticModules[i]->StartTypedScripts (type, activator, always, arg1, runNow);
 	}
 }
 
-void FBehavior::StartTypedScripts (WORD type, AActor *activator)
+void FBehavior::StartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow)
 {
 	const ScriptPtr *ptr;
 	int i;
-	bool always = type != SCRIPT_Open && type != SCRIPT_Lightning;
 
 	for (i = 0; i < NumScripts; ++i)
 	{
 		ptr = &Scripts[i];
 		if (ptr->Type == type)
 		{
-			P_GetScriptGoing (activator, NULL, ptr->Number,
-				ptr, this, 0, 0, 0, 0, always, true);
+			DLevelScript *runningScript = P_GetScriptGoing (activator, NULL, ptr->Number,
+				ptr, this, 0, arg1, 0, 0, always, true);
+			if (runNow)
+			{
+				runningScript->RunScript ();
+			}
 		}
 	}
 }
@@ -1720,6 +1726,11 @@ int DLevelScript::Random (int min, int max)
 {
 	int num1, num2, num3, num4;
 	unsigned int num;
+
+	if (max < min)
+	{
+		swap (max, min);
+	}
 
 	if (max - min > 255)
 	{
@@ -2523,23 +2534,25 @@ int DLevelScript::RunScript ()
 		case PCD_DIVIDE:
 			if (STACK(1) == 0)
 			{
-				Printf ("Divide by zero in script %d\n", script);
-				state = SCRIPT_PleaseRemove;
-				break;
+				state = SCRIPT_DivideBy0;
 			}
-			STACK(2) = STACK(2) / STACK(1);
-			sp--;
+			else
+			{
+				STACK(2) = STACK(2) / STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_MODULUS:
 			if (STACK(1) == 0)
 			{
-				Printf ("Modulus by zero in script %d\n", script);
-				state = SCRIPT_PleaseRemove;
-				break;
+				state = SCRIPT_ModulusBy0;
 			}
-			STACK(2) = STACK(2) % STACK(1);
-			sp--;
+			else
+			{
+				STACK(2) = STACK(2) % STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_EQ:
@@ -2778,26 +2791,59 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DIVSCRIPTVAR:
-			locals[NEXTBYTE] /= STACK(1);
-			sp--;
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
+			{
+				locals[NEXTBYTE] /= STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_DIVMAPVAR:
-			*(activeBehavior->MapVars[NEXTBYTE]) /= STACK(1);
-			sp--;
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
+			{
+				*(activeBehavior->MapVars[NEXTBYTE]) /= STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_DIVWORLDVAR:
-			ACS_WorldVars[NEXTBYTE] /= STACK(1);
-			sp--;
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
+			{
+				ACS_WorldVars[NEXTBYTE] /= STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_DIVGLOBALVAR:
-			ACS_GlobalVars[NEXTBYTE] /= STACK(1);
-			sp--;
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
+			{
+				ACS_GlobalVars[NEXTBYTE] /= STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_DIVMAPARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(2);
@@ -2807,6 +2853,11 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DIVWORLDARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
 			{
 				int a = NEXTBYTE;
 				int i = STACK(2);
@@ -2816,6 +2867,11 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_DIVGLOBALARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_DivideBy0;
+			}
+			else
 			{
 				int a = NEXTBYTE;
 				int i = STACK(2);
@@ -2825,26 +2881,59 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_MODSCRIPTVAR:
-			locals[NEXTBYTE] %= STACK(1);
-			sp--;
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
+			{
+				locals[NEXTBYTE] %= STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_MODMAPVAR:
-			*(activeBehavior->MapVars[NEXTBYTE]) %= STACK(1);
-			sp--;
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
+			{
+				*(activeBehavior->MapVars[NEXTBYTE]) %= STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_MODWORLDVAR:
-			ACS_WorldVars[NEXTBYTE] %= STACK(1);
-			sp--;
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
+			{
+				ACS_WorldVars[NEXTBYTE] %= STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_MODGLOBALVAR:
-			ACS_GlobalVars[NEXTBYTE] %= STACK(1);
-			sp--;
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
+			{
+				ACS_GlobalVars[NEXTBYTE] %= STACK(1);
+				sp--;
+			}
 			break;
 
 		case PCD_MODMAPARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
 			{
 				int a = *(activeBehavior->MapVars[NEXTBYTE]);
 				int i = STACK(2);
@@ -2854,6 +2943,11 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_MODWORLDARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
 			{
 				int a = NEXTBYTE;
 				int i = STACK(2);
@@ -2863,6 +2957,11 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_MODGLOBALARRAY:
+			if (STACK(1) == 0)
+			{
+				state = SCRIPT_ModulusBy0;
+			}
+			else
 			{
 				int a = NEXTBYTE;
 				int i = STACK(2);
@@ -3359,14 +3458,22 @@ int DLevelScript::RunScript ()
 					StatusBar->AttachMessage (msg, id ? 0xff000000|id : 0);
 					if (type & HUDMSG_LOG)
 					{
-						static char bar[] = TEXTCOLOR_ORANGE "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+						static const char bar[] = TEXTCOLOR_ORANGE "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 					"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
+						static const char logbar[] = "\n<------------------------------->\n";
 
 						workreal[0] = '\x1c';
 						workreal[1] = color >= CR_BRICK && color <= CR_YELLOW ? 'A' + color : '-';
 						AddToConsole (-1, bar);
 						AddToConsole (-1, workreal);
 						AddToConsole (-1, bar);
+						if (Logfile)
+						{
+							fputs (logbar, Logfile);
+							fputs (workreal, Logfile);
+							fputs (logbar, Logfile);
+							fflush (Logfile);
+						}
 					}
 				}
 			}
@@ -4120,6 +4227,28 @@ int DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_PLAYERINGAME:
+			if (STACK(1) < 0 || STACK(1) > MAXPLAYERS)
+			{
+				STACK(1) = false;
+			}
+			else
+			{
+				STACK(1) = playeringame[STACK(1)];
+			}
+			break;
+
+		case PCD_PLAYERISBOT:
+			if (STACK(1) < 0 || STACK(1) > MAXPLAYERS || !playeringame[STACK(1)])
+			{
+				STACK(1) = false;
+			}
+			else
+			{
+				STACK(1) = players[STACK(1)].isbot;
+			}
+			break;
+
 		case PCD_ACTIVATORTID:
 			if (activator == NULL)
 			{
@@ -4180,7 +4309,6 @@ int DLevelScript::RunScript ()
 		case PCD_GETLEVELINFO:
 			switch (STACK(1))
 			{
-			case LEVELINFO_START_TIME:		STACK(1) = level.starttime;			break;
 			case LEVELINFO_PAR_TIME:		STACK(1) = level.partime;			break;
 			case LEVELINFO_CLUSTERNUM:		STACK(1) = level.cluster;			break;
 			case LEVELINFO_LEVELNUM:		STACK(1) = level.levelnum;			break;
@@ -4192,9 +4320,40 @@ int DLevelScript::RunScript ()
 			case LEVELINFO_KILLED_MONSTERS:	STACK(1) = level.killed_monsters;	break;
 			default:						STACK(1) = 0;						break;
 			}
+			break;
+
+		case PCD_CHANGESKY:
+			{
+				const char *sky1name, *sky2name;
+
+				sky1name = FBehavior::StaticLookupString (STACK(2));
+				sky2name = FBehavior::StaticLookupString (STACK(1));
+				if (sky1name[0] != 0)
+				{
+					strncpy (level.skypic1, sky1name, 8);
+					sky1texture = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+				}
+				if (sky2name[0] != 0)
+				{
+					strncpy (level.skypic2, sky2name, 8);
+					sky2texture = TexMan.GetTexture (sky2name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+				}
+				R_InitSkyMap ();
+			}
+			break;
 		}
 	}
 
+	if (state == SCRIPT_DivideBy0)
+	{
+		Printf ("Divide by zero in script %d\n", script);
+		state = SCRIPT_PleaseRemove;
+	}
+	else if (state == SCRIPT_ModulusBy0)
+	{
+		Printf ("Modulus by zero in script %d\n", script);
+		state = SCRIPT_PleaseRemove;
+	}
 	if (state == SCRIPT_PleaseRemove)
 	{
 		Unlink ();

@@ -151,6 +151,10 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 		if (TempFourthWeapon != NULL)
 		{
 			gaveWeapon = TempFourthWeapon->TryPickup (toucher);
+			if (!gaveWeapon)
+			{
+				TempFourthWeapon->GoAwayAndDie ();
+			}
 		}
 		else
 		{
@@ -166,11 +170,6 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 
 bool AFourthWeaponPiece::ShouldStay ()
 {
-	if (TempFourthWeapon != NULL)
-	{
-		TempFourthWeapon->Destroy ();
-		TempFourthWeapon = NULL;
-	}
 	return PrivateShouldStay ();
 }
 

@@ -43,6 +43,7 @@ struct FStrifeDialogueReply
 	int NextNode;	// index into StrifeDialogues
 	int LogNumber;
 	char *QuickNo;
+	bool NeedsGold;
 
 	brokenlines_t *ReplyLines;
 };

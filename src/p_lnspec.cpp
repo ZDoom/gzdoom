@@ -469,7 +469,7 @@ FUNC(LS_Ceiling_CrushAndRaise)
 FUNC(LS_Ceiling_LowerAndCrush)
 // Ceiling_LowerAndCrush (tag, speed, crush)
 {
-	return EV_DoCeiling (DCeiling::ceilLowerAndCrush, ln, arg0, SPEED(arg1), SPEED(arg1)/2, 0, arg2, 0, 0);
+	return EV_DoCeiling (DCeiling::ceilLowerAndCrush, ln, arg0, SPEED(arg1), SPEED(arg1), 0, arg2, 0, 0);
 }
 
 FUNC(LS_Ceiling_CrushStop)
@@ -2199,9 +2199,23 @@ FUNC(LS_SetPlayerProperty)
 	if (arg0 == 0)
 	{
 		if (arg1)
+		{
 			it->player->cheats |= mask;
+			if (arg2 == PROP_FLY)
+			{
+				it->flags2 |= MF2_FLY;
+				it->flags |= MF_NOGRAVITY;
+			}
+		}
 		else
+		{
 			it->player->cheats &= ~mask;
+			if (arg2 == PROP_FLY)
+			{
+				it->flags2 &= ~MF2_FLY;
+				it->flags &= ~MF_NOGRAVITY;
+			}
+		}
 	}
 	else
 	{
@@ -2213,9 +2227,23 @@ FUNC(LS_SetPlayerProperty)
 				continue;
 
 			if (arg1)
+			{
 				players[i].cheats |= mask;
+				if (arg2 == PROP_FLY)
+				{
+					players[i].mo->flags2 |= MF2_FLY;
+					players[i].mo->flags |= MF_NOGRAVITY;
+				}
+			}
 			else
+			{
 				players[i].cheats &= ~mask;
+				if (arg2 == PROP_FLY)
+				{
+					players[i].mo->flags2 &= ~MF2_FLY;
+					players[i].mo->flags &= ~MF_NOGRAVITY;
+				}
+			}
 		}
 	}
 
@@ -2417,6 +2445,7 @@ IMPLEMENT_ACTOR (AGlassJunk, Any, -1, 0)
 END_DEFAULTS
 
 FUNC(LS_GlassBreak)
+// GlassBreak (bNoJunk)
 {
 	bool switched;
 	bool quest1, quest2;
@@ -2434,32 +2463,34 @@ FUNC(LS_GlassBreak)
 	}
 	if (switched)
 	{
-		// Break some glass
-		fixed_t x, y;
-		AActor *glass;
-		angle_t an;
-		int speed;
+		if (!arg0)
+		{ // Break some glass
+			fixed_t x, y;
+			AActor *glass;
+			angle_t an;
+			int speed;
 
-		x = ln->v1->x + ln->dx/2;
-		y = ln->v1->y + ln->dy/2;
-		x += (ln->frontsector->soundorg[0] - x) / 5;
-		y += (ln->frontsector->soundorg[1] - y) / 5;
+			x = ln->v1->x + ln->dx/2;
+			y = ln->v1->y + ln->dy/2;
+			x += (ln->frontsector->soundorg[0] - x) / 5;
+			y += (ln->frontsector->soundorg[1] - y) / 5;
 
-		for (int i = 0; i < 7; ++i)
-		{
-			glass = Spawn<AGlassJunk> (x, y, ONFLOORZ);
+			for (int i = 0; i < 7; ++i)
+			{
+				glass = Spawn<AGlassJunk> (x, y, ONFLOORZ);
 
-			glass->z += 24 * FRACUNIT;
-			glass->SetState (&AGlassJunk::States[3 + pr_glass() % 3]);
-			an = pr_glass() << (32-8);
-			glass->angle = an;
-			an >>= ANGLETOFINESHIFT;
-			speed = pr_glass() & 3;
-			glass->momx = finecosine[an] * speed;
-			glass->momy = finesine[an] * speed;
-			glass->momz = (pr_glass() & 7) << FRACBITS;
-			// [RH] Let the shards stick around longer than they did in Strife.
-			glass->tics += pr_glass();
+				glass->z += 24 * FRACUNIT;
+				glass->SetState (&AGlassJunk::States[3 + pr_glass() % 3]);
+				an = pr_glass() << (32-8);
+				glass->angle = an;
+				an >>= ANGLETOFINESHIFT;
+				speed = pr_glass() & 3;
+				glass->momx = finecosine[an] * speed;
+				glass->momy = finesine[an] * speed;
+				glass->momz = (pr_glass() & 7) << FRACBITS;
+				// [RH] Let the shards stick around longer than they did in Strife.
+				glass->tics += pr_glass();
+			}
 		}
 		if (quest1 || quest2)
 		{ // Up stats and signal this mission is complete

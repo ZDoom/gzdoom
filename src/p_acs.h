@@ -108,6 +108,8 @@ enum
 	SCRIPT_RedReturn	= 7,
 	SCRIPT_WhiteReturn	= 8,
 	SCRIPT_Lightning	= 12,
+	SCRIPT_Unloading	= 13,
+	SCRIPT_Disconnect	= 14
 };
 
 // Script flags
@@ -129,7 +131,7 @@ public:
 	BYTE *NextChunk (BYTE *chunk) const;
 	const ScriptPtr *FindScript (int number) const;
 	void PrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
-	void StartTypedScripts (WORD type, AActor *activator);
+	void StartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow);
 	DWORD PC2Ofs (int *pc) const { return (DWORD)((BYTE *)pc - Data); }
 	int *Ofs2PC (DWORD ofs) const {	return (int *)(Data + ofs); }
 	ACSFormat GetFormat() const { return Format; }
@@ -154,7 +156,7 @@ public:
 	static const char *StaticLookupString (DWORD index);
 	static const char *StaticLocalizeString (DWORD index);
 	static void StaticPrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
-	static void StaticStartTypedScripts (WORD type, AActor *activator);
+	static void StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1=0, bool runNow=false);
 
 private:
 	struct ArrayInfo;
@@ -472,6 +474,9 @@ public:
 		PCD_LSPEC5RESULT,
 		PCD_GETSIGILPIECES,
 		PCD_GETLEVELINFO,
+		PCD_CHANGESKY,
+		PCD_PLAYERINGAME,
+		PCD_PLAYERISBOT,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -513,7 +518,6 @@ public:
 		BLOCK_EVERYTHING =		2
 	};
 	enum {
-		LEVELINFO_START_TIME,
 		LEVELINFO_PAR_TIME,
 		LEVELINFO_CLUSTERNUM,
 		LEVELINFO_LEVELNUM,
@@ -534,7 +538,9 @@ public:
 		SCRIPT_PolyWait,
 		SCRIPT_ScriptWaitPre,
 		SCRIPT_ScriptWait,
-		SCRIPT_PleaseRemove
+		SCRIPT_PleaseRemove,
+		SCRIPT_DivideBy0,
+		SCRIPT_ModulusBy0,
 	};
 
 	DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,

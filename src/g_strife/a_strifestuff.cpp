@@ -685,10 +685,14 @@ void A_KlaxonBlare (AActor *self)
 	}
 	if (self->reactiontime == 2)
 	{
+		/*
 		for (AActor *actor = self->Sector->thinglist; actor != NULL; actor = actor->snext)
 		{
 			actor->LastHeard = NULL;
 		}
+		*/
+		// [RH] Unalert monsters near the alarm and not just those in the same sector as it.
+		P_NoiseAlert (NULL, self, false);
 	}
 	else if (self->reactiontime > 50)
 	{
@@ -2758,7 +2762,7 @@ FState AMeat::States[] =
 
 IMPLEMENT_ACTOR (AMeat, Any, -1, 0)
 	PROP_SpawnState (0)
-	PROP_Flags (MF_NOCLIP|MF_NOBLOCKMAP)
+	PROP_Flags (MF_NOCLIP)
 END_DEFAULTS
 
 // Gibs for things that don't bleed -----------------------------------------
@@ -2794,7 +2798,7 @@ FState AJunk::States[] =
 
 IMPLEMENT_ACTOR (AJunk, Any, -1, 0)
 	PROP_SpawnState (0)
-	PROP_Flags (MF_NOCLIP|MF_NOBLOCKMAP)
+	PROP_Flags (MF_NOCLIP)
 END_DEFAULTS
 
 //==========================================================================
@@ -2876,6 +2880,8 @@ END_DEFAULTS
 
 void A_ItBurnsItBurns (AActor *);
 void A_DropFire (AActor *);
+void A_CrispyPlayer (AActor *);
+void A_HandLower (AActor *);
 
 FState AStrifeHumanoid::States[] =
 {
@@ -2924,7 +2930,13 @@ FState AStrifeHumanoid::States[] =
 	S_NORMAL (DISR, 'H', 4, NULL,				&States[S_HUMAN_ZAPDEATH+8]),
 	S_NORMAL (DISR, 'I', 4, NULL,				&States[S_HUMAN_ZAPDEATH+9]),
 	S_NORMAL (DISR, 'J', 4, NULL,				&States[S_HUMAN_ZAPDEATH+10]),
-	S_NORMAL (MEAT, 'D',700,NULL,				NULL)
+	S_NORMAL (MEAT, 'D',700,NULL,				NULL),
+
+#define S_FIREHANDS2 (S_HUMAN_ZAPDEATH+11)
+	S_BRIGHT (WAVE, 'A', 3, A_HandLower,		&States[S_FIREHANDS2+1]),
+	S_BRIGHT (WAVE, 'B', 3, A_HandLower,		&States[S_FIREHANDS2+2]),
+	S_BRIGHT (WAVE, 'C', 3, A_HandLower,		&States[S_FIREHANDS2+3]),
+	S_BRIGHT (WAVE, 'D', 3, A_HandLower,		&States[S_FIREHANDS2]),
 };
 
 IMPLEMENT_ACTOR (AStrifeHumanoid, Any, -1, 0)
@@ -2940,12 +2952,13 @@ void A_ItBurnsItBurns (AActor *self)
 		self->DeathSound = burnsound;
 	}
 	A_Scream (self);
-	if (self->player != NULL)
+	if (self->player != NULL && self->player->mo == self)
 	{
 		P_SetPsprite (self->player, ps_weapon, &AStrifeHumanoid::States[S_FIREHANDS]);
 		P_SetPsprite (self->player, ps_flash, NULL);
 		self->player->ReadyWeapon = NULL;
 		self->player->PendingWeapon = WP_NOCHANGE;
+		self->player->playerstate = PST_LIVE;
 	}
 }
 
@@ -2954,4 +2967,27 @@ void A_DropFire (AActor *self)
 	AActor *drop = Spawn<AFireDroplet> (self->x, self->y, self->z + 24*FRACUNIT);
 	drop->momz = -FRACUNIT;
 	P_RadiusAttack (self, self, 64, 64, MOD_FIRE, false);
+}
+
+void A_CrispyPlayer (AActor *self)
+{
+	if (self->player != NULL && self->player->mo == self)
+	{
+		self->player->playerstate = PST_DEAD;
+		P_SetPsprite (self->player, ps_weapon, &AStrifeHumanoid::States[S_FIREHANDS2 +
+			(self->player->psprites[ps_weapon].state - &AStrifeHumanoid::States[S_FIREHANDS])]);
+	}
+}
+
+void A_HandLower (AActor *self)
+{
+	if (self->player != NULL)
+	{
+		pspdef_t *psp = &self->player->psprites[ps_weapon];
+		psp->sy += FRACUNIT*9;
+		if (psp->sy > WEAPONBOTTOM*2)
+		{
+			P_SetPsprite (self->player, ps_weapon, NULL);
+		}
+	}
 }

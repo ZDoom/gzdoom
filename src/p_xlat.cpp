@@ -422,7 +422,7 @@ int P_TranslateSectorSpecial (int special)
 		{
 			if (gameinfo.gametype == GAME_Strife)
 			{
-				if (special == 5 || special == 15 || special == 16 || special == 18)
+				if (special == 4 || special == 5 || special == 15 || special == 16 || special == 18)
 				{
 					return high | (special + 100);
 				}

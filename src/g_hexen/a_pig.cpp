@@ -200,7 +200,10 @@ void APigPlayer::ActivateMorphWeapon ()
 	{
 		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (RUNTIME_CLASS(ASnout)));
 	}
-	P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+	if (player->ReadyWeapon != NULL)
+	{
+		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+	}
 }
 
 // Pig (non-player) ---------------------------------------------------------

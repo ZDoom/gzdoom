@@ -120,8 +120,7 @@ protected:
 	{
 		return "You picked up the map";
 	}
-	// Which sound does it play in Strife? Powerup or normal pickup?
-	// Does Strife even have a powerup sound?
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AStrifeMap::States[] =
@@ -137,6 +136,17 @@ IMPLEMENT_ACTOR (AStrifeMap, Strife, 2026, 137)
 	PROP_StrifeTeaserType (160)
 	PROP_StrifeTeaserType2 (163)
 END_DEFAULTS
+
+//===========================================================================
+//
+// AStrifeMap :: PlayPickupSound
+//
+//===========================================================================
+
+void AStrifeMap::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1, ATTN_NORM);
+}
 
 // Degnin Ore ---------------------------------------------------------------
 
@@ -385,6 +395,7 @@ class AShadowArmor : public APowerupGiver
 	DECLARE_ACTOR (AShadowArmor, APowerupGiver)
 public:
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AShadowArmor::States[] =
@@ -412,6 +423,17 @@ const char *AShadowArmor::PickupMessage ()
 	return "You picked up the Shadow armor.";
 }
 
+//===========================================================================
+//
+// AShadowArmor :: PlayPickupSound
+//
+//===========================================================================
+
+void AShadowArmor::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
+}
+
 // Environmental suit -------------------------------------------------------
 
 class AEnvironmentalSuit : public APowerupGiver
@@ -419,6 +441,7 @@ class AEnvironmentalSuit : public APowerupGiver
 	DECLARE_ACTOR (AEnvironmentalSuit, APowerupGiver)
 public:
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AEnvironmentalSuit::States[] =
@@ -442,6 +465,18 @@ const char *AEnvironmentalSuit::PickupMessage ()
 {
 	return "You picked up the Environmental Suit.";
 }
+
+//===========================================================================
+//
+// AEnvironmentalSuit :: PlayPickupSound
+//
+//===========================================================================
+
+void AEnvironmentalSuit::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
+}
+
 
 // Guard Uniform ------------------------------------------------------------
 
@@ -646,6 +681,7 @@ class ATargeter : public APowerupGiver
 	DECLARE_ACTOR (ATargeter, APowerupGiver)
 public:
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState ATargeter::States[] =
@@ -670,6 +706,17 @@ const char *ATargeter::PickupMessage ()
 	return "You picked up the Targeter.";
 }
 
+//===========================================================================
+//
+// ATargeter :: PlayPickupSound
+//
+//===========================================================================
+
+void ATargeter::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
+}
+
 // Scanner ------------------------------------------------------------------
 
 class AScanner : public APowerupGiver
@@ -677,6 +724,7 @@ class AScanner : public APowerupGiver
 	DECLARE_ACTOR (AScanner, APowerupGiver)
 public:
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 	bool Use (bool pickup);
 };
 
@@ -699,6 +747,17 @@ END_DEFAULTS
 const char *AScanner::PickupMessage ()
 {
 	return "You picked up the scanner.";
+}
+
+//===========================================================================
+//
+// AScanner :: PlayPickupSound
+//
+//===========================================================================
+
+void AScanner::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
 }
 
 bool AScanner::Use (bool pickup)

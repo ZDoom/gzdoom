@@ -48,6 +48,7 @@
 #include "gameconfigfile.h"
 #include "d_gui.h"
 #include "templates.h"
+#include "p_acs.h"
 
 int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
 					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);
@@ -619,6 +620,8 @@ void PlayerIsGone (int netnode, int netconsole)
 	P_DisconnectEffect (players[netconsole].mo);
 	players[netconsole].mo->Destroy ();
 	players[netconsole].mo = NULL;
+	// [RH] Let the scripts know the player left
+	FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, netconsole);
 	if (netconsole == Net_Arbitrator)
 	{
 		bglobal.RemoveAllBots (true);

@@ -137,7 +137,7 @@ void DLightningThinker::LightningFlash ()
 
 	level.flags |= LEVEL_SWAPSKIES;	// set alternate sky
 	S_Sound (CHAN_AUTO, "world/thunder", 1.0, ATTN_NONE);
-	FBehavior::StaticStartTypedScripts (SCRIPT_Lightning, NULL);	// [RH] Run lightning scripts
+	FBehavior::StaticStartTypedScripts (SCRIPT_Lightning, NULL, false);	// [RH] Run lightning scripts
 
 	// Calculate the next lighting flash
 	if (!NextLightningFlash)

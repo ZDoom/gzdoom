@@ -14,6 +14,7 @@ void A_TossGib (AActor *);
 
 void A_ItBurnsItBurns (AActor *);
 void A_DropFire (AActor *);
+void A_CrispyPlayer (AActor *);
 void A_Wander (AActor *);
 
 // The player ---------------------------------------------------------------
@@ -81,7 +82,7 @@ FState AStrifePlayer::States[] =
 	S_BRIGHT (BURN, 'K', 5, A_Wander,			&States[S_PLAY_BURNDEATH+11]),
 	S_BRIGHT (BURN, 'L', 5, A_Wander,			&States[S_PLAY_BURNDEATH+12]),
 	S_BRIGHT (BURN, 'M', 3, A_DropFire,			&States[S_PLAY_BURNDEATH+13]),
-	S_BRIGHT (BURN, 'N', 3, NULL,				&States[S_PLAY_BURNDEATH+14]),
+	S_BRIGHT (BURN, 'N', 3, A_CrispyPlayer,		&States[S_PLAY_BURNDEATH+14]),
 	S_BRIGHT (BURN, 'O', 5, NULL,				&States[S_PLAY_BURNDEATH+15]),
 	S_BRIGHT (BURN, 'P', 5, NULL,				&States[S_PLAY_BURNDEATH+16]),
 	S_BRIGHT (BURN, 'Q', 5, NULL,				&States[S_PLAY_BURNDEATH+17]),

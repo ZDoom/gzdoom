@@ -1344,7 +1344,20 @@ void G_DoReborn (int playernum, bool freshbot)
 					int oldtype = playerstarts[i].type;
 
 					// fake as other player
-					playerstarts[i].type = (playernum < 4) ? playernum + 1 : playernum + 4001 - 4;
+					// [RH] These numbers should be common across all games. Or better yet, not
+					// used at all outside P_SpawnMapThing().
+					if (playernum < 4 || gameinfo.gametype == GAME_Strife)
+					{
+						playerstarts[i].type = playernum + 1;
+					}
+					else if (gameinfo.gametype == GAME_Hexen)
+					{
+						playerstarts[i].type = playernum + 9100 - 4;
+					}
+					else
+					{
+						playerstarts[i].type = playernum + 4001 - 4;
+					}
 					P_SpawnPlayer (&playerstarts[i]);
 					playerstarts[i].type = oldtype; 			// restore 
 					return;

@@ -1133,7 +1133,16 @@ void FBaseStatusBar::Draw (EHudState state)
 	{
 		S_NoiseDebug ();
 	}
+}
 
+//---------------------------------------------------------------------------
+//
+// DrawTopStuff
+//
+//---------------------------------------------------------------------------
+
+void FBaseStatusBar::DrawTopStuff (EHudState state)
+{
 	if (demoplayback && demover != GAMEVER)
 	{
 		screen->DrawText (CR_TAN, 0, ST_Y - 40 * CleanYfac,

@@ -1326,6 +1326,7 @@ void A_SpawnBishop(AActor *actor)
 			mo->LastLook = master->LastLook;
 			mo->flags3 |= master->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
 			mo->flags4 |= master->flags4 & MF4_NOHATEPLAYERS;
+			mo->flags = (mo->flags & ~MF_FRIENDLY) | (actor->flags & MF_FRIENDLY);
 		}
 	}
 	actor->Destroy ();

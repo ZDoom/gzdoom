@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "info.h"
 #include "m_random.h"
 #include "p_local.h"
@@ -130,14 +132,17 @@ bool AAmmo::HandlePickup (AInventory *item)
 			// to a weapon that uses it, but only if the player doesn't already
 			// have a weapon pending.
 
-			if (oldamount == 0 && Owner->player != NULL &&
+			assert (Owner != NULL);
+
+			if (oldamount == 0 && Owner != NULL && Owner->player != NULL &&
 				!Owner->player->userinfo.neverswitch &&
-				(Owner->player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON) &&
-				Owner->player->PendingWeapon == WP_NOCHANGE)
+				Owner->player->PendingWeapon == WP_NOCHANGE && 
+				(Owner->player->ReadyWeapon == NULL ||
+				 (Owner->player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)))
 			{
 				AWeapon *best = static_cast<APlayerPawn *>(Owner)->BestWeapon (GetClass());
-				if (best != NULL &&
-					best->SelectionOrder < Owner->player->ReadyWeapon->SelectionOrder)
+				if (best != NULL && (Owner->player->ReadyWeapon == NULL ||
+					best->SelectionOrder < Owner->player->ReadyWeapon->SelectionOrder))
 				{
 					Owner->player->PendingWeapon = best;
 				}
@@ -1886,4 +1891,15 @@ END_DEFAULTS
 const char *ACommunicator::PickupMessage ()
 {
 	return "You picked up the Communicator";
+}
+
+//===========================================================================
+//
+// ACommunicator :: PlayPickupSound
+//
+//===========================================================================
+
+void ACommunicator::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1, ATTN_NORM);
 }

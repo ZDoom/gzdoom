@@ -715,6 +715,7 @@ void A_GenWizard (AActor *actor)
 			mo->LastLook = master->LastLook;
 			mo->flags3 |= master->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
 			mo->flags4 |= master->flags4 & MF4_NOHATEPLAYERS;
+			mo->flags = (mo->flags & ~MF_FRIENDLY) | (master->flags & MF_FRIENDLY);
 
 			actor->momx = actor->momy = actor->momz = 0;
 			actor->SetState (actor->DeathState);

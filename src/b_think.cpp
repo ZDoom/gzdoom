@@ -151,7 +151,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 
 		b->dest = NULL; //To let bot turn right
 
-		if (!(b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+		if (b->ReadyWeapon != NULL && !(b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
 			actor->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
 
 		if (!(b->enemy->flags3 & MF3_ISMONSTER))
@@ -169,7 +169,8 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 
 		b->angle = R_PointToAngle2(actor->x, actor->y, b->enemy->x, b->enemy->y);
 
-		if (P_AproxDistance(actor->x-b->enemy->x, actor->y-b->enemy->y) >
+		if (b->ReadyWeapon == NULL ||
+			P_AproxDistance(actor->x-b->enemy->x, actor->y-b->enemy->y) >
 			b->ReadyWeapon->MoveCombatDist)
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
@@ -238,7 +239,8 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 			{
 				if (b->enemy->player)
 				{
-					if (((b->enemy->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE) || (pr_botmove()%100)>b->skill.isp) && !(b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
+					if (((b->enemy->player->ReadyWeapon != NULL && b->enemy->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE) ||
+						(pr_botmove()%100)>b->skill.isp) && b->ReadyWeapon != NULL && !(b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
 						b->dest = b->enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
 					else //hide while b->t_fight, but keep view at enemy.
 						b->angle = R_PointToAngle2(actor->x, actor->y, b->enemy->x, b->enemy->y);

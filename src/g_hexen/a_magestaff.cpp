@@ -302,7 +302,7 @@ int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 		!victim->player &&
 		!(victim->flags2 & MF2_BOSS))
 	{
-		P_DamageMobj (victim, this, target, 10, MOD_UNKNOWN);
+		P_DamageMobj (victim, this, target, 10, MOD_FIRE);
 		return 1;	// Keep going
 	}
 	return -1;

@@ -556,7 +556,10 @@ void APowerLightAmp::DoEffect ()
 	{
 		if (EffectTics > BLINKTHRESHOLD || (EffectTics & 8))
 		{	// almost full bright
-			Owner->player->fixedcolormap = 1;
+			if (Owner->player->fixedcolormap != NUMCOLORMAPS)
+			{
+				Owner->player->fixedcolormap = 1;
+			}
 		}
 		else
 		{
@@ -605,7 +608,7 @@ void APowerTorch::Serialize (FArchive &arc)
 
 void APowerTorch::DoEffect ()
 {
-	if (EffectTics <= BLINKTHRESHOLD)
+	if (EffectTics <= BLINKTHRESHOLD || Owner->player->fixedcolormap == NUMCOLORMAPS)
 	{
 		Super::DoEffect ();
 	}

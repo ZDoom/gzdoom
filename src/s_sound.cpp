@@ -632,7 +632,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	}
 	priority = basepriority * (PRIORITY_MAX_ADJUST - (dist/DIST_ADJUST));
 
-	if (pt != NULL && !S_StopSoundID (sound_id, priority, sfx->MaxChannels, x, y))
+	if (pt != NULL && !S_StopSoundID (sound_id, priority, sfx->MaxChannels, sfx->bSingular, x, y))
 		return;	// other sounds have greater priority
 
 	if (pt)
@@ -943,7 +943,7 @@ void S_LoopedSound (AActor *ent, int channel, const char *name, float volume, in
 // Stops more than <limit> copies of the sound from playing at once.
 //==========================================================================
 
-BOOL S_StopSoundID (int sound_id, int priority, int limit, fixed_t x, fixed_t y)
+BOOL S_StopSoundID (int sound_id, int priority, int limit, bool singular, fixed_t x, fixed_t y)
 {
 	int i;
 	int lp; //least priority
@@ -958,15 +958,22 @@ BOOL S_StopSoundID (int sound_id, int priority, int limit, fixed_t x, fixed_t y)
 	found = 0;
 	for (i = 0; i < numChannels; i++)
 	{
-		if (Channel[i].sound_id == sound_id &&
-			Channel[i].sfxinfo &&
-			P_AproxDistance (Channel[i].pt[0] - x, Channel[i].pt[1] - y) < 256*FRACUNIT)
+		if (Channel[i].sound_id == sound_id)
 		{
-			found++; //found one.  Now, should we replace it??
-			if (priority > Channel[i].priority)
-			{ // if we're gonna kill one, then this'll be it
-				lp = i;
-				priority = Channel[i].priority;
+			if (singular)
+			{
+				// This sound is already playing, so don't start it again.
+				return false;
+			}
+			if (Channel[i].sfxinfo &&
+				P_AproxDistance (Channel[i].pt[0] - x, Channel[i].pt[1] - y) < 256*FRACUNIT)
+			{
+				found++; //found one.  Now, should we replace it??
+				if (priority > Channel[i].priority)
+				{ // if we're gonna kill one, then this'll be it
+					lp = i;
+					priority = Channel[i].priority;
+				}
 			}
 		}
 	}

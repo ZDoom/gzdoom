@@ -33,7 +33,7 @@ FState AIceChunk::States[] =
 IMPLEMENT_ACTOR (AIceChunk, Any, -1, 0)
 	PROP_RadiusFixed (3)
 	PROP_HeightFixed (4)
-	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF)
+	PROP_Flags (MF_DROPOFF)
 	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH|MF2_FLOORCLIP)
 
 	PROP_SpawnState (0)
@@ -58,7 +58,7 @@ IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
 	PROP_RadiusFixed (3)
 	PROP_HeightFixed (4)
 	PROP_DamageType (MOD_ICE)
-	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF)
+	PROP_Flags (MF_DROPOFF)
 	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH)
 
 	PROP_SpawnState (0)

@@ -168,7 +168,6 @@ FState AHereticImpChunk1::States[] =
 IMPLEMENT_ACTOR (AHereticImpChunk1, Heretic, -1, 0)
 	PROP_Mass (5)
 	PROP_Radius (4)
-	PROP_Flags (MF_NOBLOCKMAP)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -190,7 +189,6 @@ FState AHereticImpChunk2::States[] =
 IMPLEMENT_ACTOR (AHereticImpChunk2, Heretic, -1, 0)
 	PROP_Mass (5)
 	PROP_Radius (4)
-	PROP_Flags (MF_NOBLOCKMAP)
 
 	PROP_SpawnState (0)
 END_DEFAULTS

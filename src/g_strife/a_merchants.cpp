@@ -18,6 +18,11 @@ public:
 	void ConversationAnimation (int animnum);
 };
 
+void A_PainCatch (AActor *m)
+{
+	m=m;
+}
+
 FState AMerchant::States[] =
 {
 #define S_MERCHANT_YES 0
@@ -54,7 +59,7 @@ FState AMerchant::States[] =
 	S_NORMAL (MRBD, 'F',	6, NULL,				&States[S_MERCHANT_STND]),
 
 #define S_MERCHANT_PAIN (S_MERCHANT_BD+10)
-	S_NORMAL (MRPN, 'A',	3, NULL,				&States[S_MERCHANT_PAIN+1]),
+	S_NORMAL (MRPN, 'A',	3, A_PainCatch,				&States[S_MERCHANT_PAIN+1]),
 	S_NORMAL (MRPN, 'B',	3, A_Pain,				&States[S_MERCHANT_PAIN+2]),
 	S_NORMAL (MRPN, 'C',	3, NULL,				&States[S_MERCHANT_PAIN+3]),
 	S_NORMAL (MRPN, 'D',	9, A_CloseUpShop,		&States[S_MERCHANT_PAIN+4]),

@@ -55,6 +55,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "stats.h"
 #include "m_misc.h"
 #include "sbar.h"
+#include "p_acs.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 
@@ -396,6 +397,7 @@ void DCajunMaster::RemoveAllBots (bool fromlist)
 				}
 			}
 			ClearPlayer (i, !fromlist);
+			FBehavior::StaticStartTypedScripts (SCRIPT_Disconnect, NULL, true, i);
 		}
 	}
 

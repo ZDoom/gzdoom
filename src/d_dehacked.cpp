@@ -972,6 +972,17 @@ static int PatchThing (int thingy)
 						// instead of DOOMBOUNCE.
 						info->flags2 |= MF2_BOUNCE2;
 					}
+					// Damage types that once were flags but now are not
+					if (info->flags2 & 0x20000000)
+					{
+						info->DamageType = MOD_ICE;
+						info->flags2 &= ~0x20000000;
+					}
+					if (info->flags2 & 0x10000)
+					{
+						info->DamageType = MOD_FIRE;
+						info->flags2 &= ~0x10000;
+					}
 				}
 				if (vchanged[2])
 				{

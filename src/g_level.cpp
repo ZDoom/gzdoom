@@ -1284,6 +1284,9 @@ static void goOn (int position, bool keepFacing)
 	gameaction = ga_completed;
 	bglobal.End();	//Added by MC:
 
+	// [RH] Give scripts a chance to do something
+	FBehavior::StaticStartTypedScripts (SCRIPT_Unloading, NULL, false, 0, true);
+
 	if (thiscluster && (thiscluster->flags & CLUSTER_HUB))
 	{
 		if ((level.flags & LEVEL_NOINTERMISSION) || (nextcluster == thiscluster))
@@ -2130,6 +2133,20 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		<< level.killed_monsters
 		<< level.gravity
 		<< level.aircontrol;
+
+	if (arc.IsStoring ())
+	{
+		arc.WriteName (level.skypic1);
+		arc.WriteName (level.skypic2);
+	}
+	else if (SaveVersion >= 225)
+	{
+		strncpy (level.skypic1, arc.ReadName(), 8);
+		strncpy (level.skypic2, arc.ReadName(), 8);
+		sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+		sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+		R_InitSkyMap ();
+	}
 
 	G_AirControlChanged ();
 

@@ -299,4 +299,5 @@ void A_ProgrammerDeath (AActor *self)
 			break;
 		}
 	}
+	P_StartScript (self, NULL, 250, NULL, 0, 0, 0, 0, false, false);
 }

@@ -29,6 +29,7 @@
 #include "s_sndseq.h"
 #include "doomstat.h"
 #include "r_state.h"
+#include "gi.h"
 
 //
 // CEILINGS
@@ -249,7 +250,11 @@ manual_ceiling:
 		case DCeiling::ceilCrushRaiseAndStay:
 			ceiling->m_TopHeight = sec->ceilingplane.d;
 		case DCeiling::ceilLowerAndCrush:
-			targheight = 8*FRACUNIT + sec->FindHighestFloorPoint (&spot);
+			targheight = sec->FindHighestFloorPoint (&spot);
+			if (type != DCeiling::ceilLowerAndCrush || gameinfo.gametype != GAME_Strife)
+			{
+				targheight += 8*FRACUNIT;
+			}
 			ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 			ceiling->m_Direction = -1;
 			break;

@@ -198,7 +198,10 @@ void AChickenPlayer::ActivateMorphWeapon ()
 	{
 		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (RUNTIME_CLASS(ABeak)));
 	}
-	P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+	if (player->ReadyWeapon != NULL)
+	{
+		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+	}
 }
 
 void AChickenPlayer::TweakSpeeds (int &forward, int &side)

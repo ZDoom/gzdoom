@@ -390,6 +390,7 @@ class ACommunicator : public AInventory
 	DECLARE_ACTOR (ACommunicator, AInventory)
 public:
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 #endif //__A_PICKUPS_H__

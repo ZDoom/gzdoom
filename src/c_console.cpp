@@ -1539,20 +1539,28 @@ CCMD (echo)
 
 CVAR (Float, con_midtime, 3.f, CVAR_ARCHIVE)
 
+static const char bar1[] = TEXTCOLOR_RED "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_TAN "\n";
+static const char bar2[] = TEXTCOLOR_RED "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_GREEN "\n";
+static const char bar3[] = TEXTCOLOR_RED "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
+static const char logbar[] = "\n<------------------------------->\n";
+
 void C_MidPrint (const char *msg)
 {
 	if (msg)
 	{
-		char buff[1024];
-		sprintf (buff, TEXTCOLOR_RED
-			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-			"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_TAN
-			"\n\n%s\n" TEXTCOLOR_RED
-			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-			"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n\n" ,
-			msg);
-
-		AddToConsole (-1, buff);
+		AddToConsole (-1, bar1);
+		AddToConsole (-1, msg);
+		AddToConsole (-1, bar3);
+		if (Logfile)
+		{
+			fputs (logbar, Logfile);
+			fputs (msg, Logfile);
+			fputs (logbar, Logfile);
+			fflush (Logfile);
+		}
 
 		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f, 0, 0,
 			(EColorRange)PrintColors[PRINTLEVELS], con_midtime), MAKE_ID('C','N','T','R'));
@@ -1567,16 +1575,16 @@ void C_MidPrintBold (const char *msg)
 {
 	if (msg)
 	{
-		char buff[1024];
-		sprintf (buff, TEXTCOLOR_RED
-			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-			"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_GREEN
-			"\n\n%s\n" TEXTCOLOR_RED
-			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-			"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n\n" ,
-			msg);
-
-		AddToConsole (-1, buff);
+		AddToConsole (-1, bar2);
+		AddToConsole (-1, msg);
+		AddToConsole (-1, bar3);
+		if (Logfile)
+		{
+			fputs (logbar, Logfile);
+			fputs (msg, Logfile);
+			fputs (logbar, Logfile);
+			fflush (Logfile);
+		}
 
 		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f, 0, 0,
 			(EColorRange)PrintColors[PRINTLEVELS+1], con_midtime), MAKE_ID('C','N','T','R'));

@@ -1,3 +1,173 @@
+November 18, 2004
+- New ACS stuff:
+    bool playeringame (int playernumber);
+        Returns true if the player [0..7] is in the game and false if not.
+
+    bool playerisbot (int playernumber);
+        Returns true if the player [0..7] is a bot and false if not.
+
+    script <x> unloading
+    {
+        ...
+    }
+        Executed by the level just before it unloads because the players are
+        about to move to another one. Everything up until the first latent
+        function will have a chance to execute. If the script needs to wait,
+        it will continue execution when the players return to the map. Since
+        this type of script is executed with the equivalent of ACS_Execute
+        and not ACS_ExecuteAlways, it can block itself from executing the
+        next time the level is unloaded if it hasn't finished with its
+        business yet.
+        
+    script <x> (int playernumber) disconnect
+    {
+        ...
+    }
+        This type of script is executed when a player disconnects in a
+        multiplayer game (including bots). THIS SCRIPT IS EXECUTED BY THE
+        WORLD, NOT BY THE PLAYER WHO LEFT. By the time the script is run,
+        the player is already gone, so you can't do anything to that player.
+        The number of the player who left is passed as the only argument to
+        this script.
+- Selecting a conversation choice that stays at the same dialogue node no
+  longer moves the current selection.
+- Added a gold display when talking to merchants.
+- Fixed: Poison bolts shouldn't kill merchants.
+- Fixed: An ActorMover didn't prevent the renderer from interpolating the
+  actor when it was moved onto the path to start off.
+- Fixed: AInterpolationPoint::ScanForLoop() got stuck if the path looped, but
+  the initial point wasn't part of the loop.
+- Fixed: Giving an interpolation point the ambush flag in an editor would
+  cause it to not join a path.
+- Added Graf Zahl's fix for shootable walls with invalid sector tags that
+  some wads use to make things you can break. Also added a parameter to the
+  GlassBreak special that you can set to 1 if you don't want it to throw out
+  any shards.
+- Fixed: MF3_NOTARGET should only be respected my monsters of the same
+  friendliness.
+- Fixed: D'Sparil and the Heresiarch always summoned hostile helpers even if
+  they were friendly.
+- Fixed: DCajunMaster::ThinkForMove() needed more NULL checks for the
+  player's ready weapon.
+- Fixed: When using the Tome of Power, only the first weapon in a slot could
+  be selected with the slot command, because FWeaponSlot::PickWeapon() didn't
+  consider the powered-up version as a match for the current weapon.
+- Fixed: If a player is telefragged and drops a weapon (or anything else), it
+  can mess up the floor/ceiling determination in P_TeleportMove() thanks to
+  the heavy reliance on global variables in the physics code. Those make it
+  very much non-reentrant.
+- Fixed: Monsters did not activate player-cross lines when strict checking
+  was turned off.
+- Fixed divide by 0 in the Hexen status bar's DrawKeyBar() method when the
+  armor slot increments are 0.
+- Changed the ACS random command so you can specify the max and min as either
+  parameter. This fixes a divide by 0 when the maximum is one less than the
+  minimum (because now the maximum cannot be less than the minimum).
+- Fixed PROP_FLY with SetPlayerProperty.
+- Removed MF_NOBLOCKMAP from IceChunk, IceChunkHead, the Heretic imp chunks,
+  Meat, and Junk.
+- Removed LEVELINFO_START_TIME, since it's useless outside of timedemo.
+- Fixed log HUD messages (and print statements) were logged to the console but
+  not to the log file.
+- Fixed scrolling bounds when automap rotation is on and follow is off. Issues
+  remaining: The grid in rotation mode only works well if follow is on, and 
+  rotation is relative to the player rather than the center of the screen. I'm
+  tempted to just rewrite the whole map package to be more rotation friendly
+  (and be more modular so there could be multiple instances on the HUD, as was
+  requested a couple of times in the past).
+
+November 17, 2004
+- Corrected movement of the automap background when map rotate and follow are
+  turned on.
+
+November 16, 2004
+- Separated the drawing of HUD messages from the main status bar pass. Now HUD
+  messages that are meant to be drawn on top of the status bar are drawn on top
+  of the status bar.
+
+November 13, 2004
+- Fixed: Dehacked's PatchThing() needs to translate the old damage type flags to
+  the new damage type value.
+- Changed AActor::Die() so it doesn't reset the target if the source is NULL.
+- Changed A_CustomBulletAttack() and A_BulletAttack() back to getting their damage
+  type from the puff, like they (indirectly) did before.
+- Added division/modulus by zero checks to all the PCD_DIV/MOD* p-codes.
+- New SNDINFO command to deal with several Strife sounds: $singular <sound name>.
+  Use this, and only one copy of the sound will play *anywhere*. This is different
+  from $limit, which is distance based and can stop currently playing sounds. There
+  are actually a lot of singular sounds in Strife. I only chose to make a few of
+  them singular, in particular the alarm. TBD: Should new singular sounds cut off
+  an already playing copy or not play at all?
+- Klaxon tweaks: Now klaxons clear off the LastHeard property using the same
+  recursion that sets it (with P_NoiseAlert).
+- Fixed: G_DoReborn() could only fake as players 5-8 when playing Doom or Heretic.
+- Fixed: P_SpawnMapThing() calculated the player number wrong for player starts > 4.
+- Fixed: AWeapon::AttachToOwner() did not call the status bar's
+  ReceivedWeapon method.
+- Fixed: Even though I fixed the A_CallSpecial parsing, I broke its handling.
+
+November 5, 2004
+- Corrected the pickup sounds for Strife items.
+- Added the MF3_NORADIUSDMG flag to the Inquisitor so he won't kill
+  himself so readily.
+- Fixed: Armorer hair color was wrong. (Cyan instead of gray.)
+- Fixed: Starting the game from a fullscreen console with fullscreen false
+  prevented anything from being drawn, becaues the primary surface would be
+  lost by the time DDrawFB::PaintToWindow() was reached.
+
+November 4, 2004
+- Fixed: The C span drawers all drew 64x64 textures in row-major order
+  instead of column-major order. (They were correct for other sizes, though.)
+- Changed the Oracle's spectre (#3) to have MF_SPAWNCEILING and not bob in
+  its spawn states. Now it behaves more like the Strife original despite
+  being defined even less like it.
+- Increased the opacity of alien spectres to 66%.
+- Fixed: A_ExplodeParms() checked against the size of AttackList instead
+  of ExplodeList, and it had the distance and damage type parameters to
+  P_RadiusAttack() swapped.
+- Fixed player morphing crashing when using the morphme command in a game
+  that doesn't normally have morphed players.
+- Made the Strife burning player more correct: You can run around for a bit
+  before collapsing, and then you stop flailing your arms around.
+- Fixed: I forgot to change the prototype for the Soulsphere's Use function,
+  so it did nothing.
+- Fixed: The AFourthWeaponPiece class destroyed the fourth weapon after giving
+  it to you if weapon stay was off.
+- Fixed: Picking up a torch or light amp while invulnerable cancelled out
+  the special colormap for the invulnerability effect.
+- Fixed: In Doom, you didn't raise your weapon at the start of a new game if
+  you had neverswitchonpickup on.
+- Added the ChangeSky ACS command so that I can remedy another slight Strife
+  problem: The sky on all maps should become gloomy after killing the
+  Programmer.
+- Fixed: The post-closing Strife slideshow music should be D_FAST, not D_INTRO.
+- Fixed: The opening Strife slideshow is supposed to play D_INTRO, not D_DARKER.
+- Changed Ceiling_LowerAndCrush so that it uses the same speed for down and
+  "up", so crushers that stay down can slow down when they hit something. Fixes
+  the Templar crushers on Strife MAP12.
+- Fixed: In Strife, crushing ceilings that don't go back up are supposed to
+  go to the floor.
+- Fixed: Strife linetype 180 didn't copy the sector properties.
+- Fixed: Strife instant death sectors were not implemented for the player, and
+  the damage done by sector type 4 (strobe and hurt) was wrong.
+
+November 3, 2004
+- Fixed: Talking to friendly PCs made them hate you.
+- Fixed: When P_SpawnPlayer() moved a voodoo doll's inventory to the new
+  player, it didn't fix the items' Owner links.
+- Fixed: AAmmo::HandlePickup() didn't check for a NULL ReadyWeapon when
+  picking up ammo that you had previously run out of.
+- Fixed: New check in PlayerLandedOnThing() prevents both *grunt and *land
+  from being played if they are defined as the same sound.
+- Fixed: The minimum velocity P_ZMovement() checks against to decide if your
+  view should be squatted should not vary with gravity. Same for grunting in
+  PlayerLandedOnThing().
+- Fixed: The Archvile and Boss Brain did not transfer their friendliness.
+- Fixed: Animated door Open/CloseSounds were left uninitialized if the
+  definition didn't specify them.
+- Fixed: AMageStaffFX2::SpecialMissileHit() did the wrong damage type.
+- Fixed: Forgot to change the prototype for the Megasphere's Use function.
+
 November 2, 2004
 - Added HUDMSG_FADEINOUT style HUD messages.
 - Added the GetLevelInfo ACS command, which can be used to collect information

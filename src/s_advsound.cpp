@@ -3,7 +3,7 @@
 ** Routines for managing SNDINFO lumps and ambient sounds
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -94,6 +94,7 @@ enum SICommands
 	SI_PlayerAlias,
 	SI_Alias,
 	SI_Limit,
+	SI_Singular,
 	SI_PitchShift,
 	SI_PitchShiftRange,
 	SI_Map,
@@ -163,6 +164,7 @@ static const char *SICommandStrings[] =
 	"$playeralias",
 	"$alias",
 	"$limit",
+	"$singular",
 	"$pitchshift",
 	"$pitchshiftrange",
 	"$map",
@@ -785,6 +787,16 @@ static void S_AddSNDINFO (int lump)
 				}
 				break;
 
+			case SI_Singular: {
+				// $singular <logical name>
+				int sfx;
+
+				SC_MustGetString ();
+				sfx = S_FindSoundTentative (sc_String);
+				S_sfx[sfx].bSingular = true;
+				}
+				break;
+
 			case SI_PitchShift: {
 				// $pitchshift <logical name> <pitch shift amount>
 				int sfx;
@@ -1149,6 +1161,64 @@ static int S_LookupPlayerSound (int classidx, int gender, int refid)
 		}
 	}
 	return sndnum;
+}
+
+//==========================================================================
+//
+// S_AreSoundsEquivalent
+//
+// Returns true if two sounds are essentially the same thing
+//==========================================================================
+
+bool S_AreSoundsEquivalent (AActor *actor, const char *name1, const char *name2)
+{
+	return S_AreSoundsEquivalent (actor, S_FindSound (name1), S_FindSound (name2));
+}
+
+bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
+{
+	sfxinfo_t *sfx;
+
+	if (id1 == id2)
+	{
+		return true;
+	}
+	if (id1 == 0 || id2 == 0)
+	{
+		return false;
+	}
+	// Dereference aliases, but not random or player sounds
+	while ((sfx = &S_sfx[id1])->link != sfxinfo_t::NO_LINK)
+	{
+		if (sfx->bPlayerReserve)
+		{
+			id1 = S_FindSkinnedSound (actor, id1);
+		}
+		else if (sfx->bRandomHeader)
+		{
+			break;
+		}
+		else
+		{
+			id1 = sfx->link;
+		}
+	}
+	while ((sfx = &S_sfx[id2])->link != sfxinfo_t::NO_LINK)
+	{
+		if (sfx->bPlayerReserve)
+		{
+			id2 = S_FindSkinnedSound (actor, id2);
+		}
+		else if (sfx->bRandomHeader)
+		{
+			break;
+		}
+		else
+		{
+			id2 = sfx->link;
+		}
+	}
+	return id1 == id2;
 }
 
 //==========================================================================

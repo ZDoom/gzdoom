@@ -310,6 +310,17 @@ void A_SpawnFly (AActor *self)
 	newmobj = Spawn (type, targ->x, targ->y, targ->z);
 	if (newmobj != NULL)
 	{
+		// Make the new monster hate what the boss eye hates
+		AActor *eye = self->target;
+
+		if (eye != NULL)
+		{
+			newmobj->TIDtoHate = eye->TIDtoHate;
+			newmobj->LastLook = eye->LastLook;
+			newmobj->flags3 |= eye->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
+			newmobj->flags4 |= eye->flags4 & MF4_NOHATEPLAYERS;
+			newmobj->flags = (newmobj->flags & ~MF_FRIENDLY) | (eye->flags & MF_FRIENDLY);
+		}
 		if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true))
 			newmobj->SetState (newmobj->SeeState);
 

@@ -1682,7 +1682,8 @@ void P_ZMovement (AActor *mo)
 			if (mo->momz < 0)
 			{
 				// [RH] avoid integer roundoff by doing comparisons with floats
-				float minmom = level.gravity * mo->Sector->gravity * -655.36f;
+				// I can't think of any good reason why this varied with gravity
+				float minmom = 800.f /*level.gravity * mo->Sector->gravity*/ * -655.36f;
 				float mom = (float)mo->momz;
 
 				// Spawn splashes, etc.
@@ -1838,6 +1839,8 @@ void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
 
 static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 {
+	bool grunted;
+
 	if (!mo->player)
 		return;
 
@@ -1854,13 +1857,19 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	// [RH] only make noise if alive
 	if (!mo->player->morphTics && mo->health > 0)
 	{
-		if (mo->momz < (fixed_t)(level.gravity * mo->Sector->gravity * -983.04f) && mo->health > 0)
+		grunted = false;
+		// Why should this number vary by gravity?
+		if (mo->momz < (fixed_t)(800.f /*level.gravity * mo->Sector->gravity*/ * -983.04f) && mo->health > 0)
 		{
 			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
+			grunted = true;
 		}
 		if (onmobj != NULL || !Terrains[P_GetThingFloorType (mo)].IsLiquid)
 		{
-			S_Sound (mo, CHAN_AUTO, "*land", 1, ATTN_NORM);
+			if (!grunted || !S_AreSoundsEquivalent (mo, "*grunt", "*land"))
+			{
+				S_Sound (mo, CHAN_AUTO, "*land", 1, ATTN_NORM);
+			}
 		}
 	}
 //	mo->player->centering = true;
@@ -3050,6 +3059,13 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 		// Move the voodoo doll's inventory to the new player.
 		mobj->Inventory = oldactor->Inventory;
 		oldactor->Inventory = NULL;
+
+		AInventory *item = mobj->Inventory;
+		while (item != NULL)
+		{
+			item->Owner = mobj;
+			item = item->Inventory;
+		}
 	}
 
 	// [RH] Be sure the player has the right translation
@@ -3155,11 +3171,11 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	{
 		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
-			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo);
+			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo, true);
 		}
 		else if (state == PST_REBORN)
 		{
-			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo);
+			FBehavior::StaticStartTypedScripts (SCRIPT_Respawn, p->mo, true);
 		}
 	}
 }
@@ -3249,7 +3265,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 
 		if (mthing->type >= base && mthing->type < base + MAXPLAYERS - 4)
 		{
-			pnum = mthing->type - base + 3;
+			pnum = mthing->type - base + 4;
 		}
 	}
 

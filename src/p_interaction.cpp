@@ -356,7 +356,10 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		return;
 	}
 	// [RH] Set the target to the thing that killed it. Strife apparently does this.
-	target = source;
+	if (source != NULL)
+	{
+		target = source;
+	}
 
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
 	if (!(flags4 & MF4_DONTFALL)) flags&=~MF_NOGRAVITY;
@@ -554,7 +557,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		ClientObituary (this, inflictor, source);
 
 		// Death script execution, care of Skull Tag
-		FBehavior::StaticStartTypedScripts (SCRIPT_Death, this);
+		FBehavior::StaticStartTypedScripts (SCRIPT_Death, this, true);
 
 		// [RH] Force a delay between death and respawn
 		player->respawn_time = level.time + TICRATE;
@@ -1139,7 +1142,9 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 {
 	if (other == this)
 		return false;		// [RH] Don't hate self (can happen when shooting barrels)
-	if ((other->flags3 & MF3_NOTARGET) && (other->tid != TIDtoHate || TIDtoHate == 0))
+	if ((other->flags3 & MF3_NOTARGET) &&
+		(other->tid != TIDtoHate || TIDtoHate == 0) &&
+		((other->flags ^ flags) & MF_FRIENDLY) == 0)
 		return false;
 	if (threshold != 0 && !(flags4 & MF4_QUICKTORETALIATE))
 		return false;

@@ -178,10 +178,10 @@ void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soun
 
 void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash)
 {
-	if (target == NULL || emmiter == NULL)
+	if (emmiter == NULL)
 		return;
 
-	if (target->player && (target->player->cheats & CF_NOTARGET))
+	if (target != NULL && target->player && (target->player->cheats & CF_NOTARGET))
 		return;
 
 	validcount++;
@@ -1320,12 +1320,12 @@ void A_Look2 (AActor *self)
 		if ((level.flags & LEVEL_NOALLIES) ||
 			(self->flags & MF_FRIENDLY) != (targ->flags & MF_FRIENDLY))
 		{
-			self->target = targ;
 			if (self->flags & MF_AMBUSH)
 			{
 				if (!P_CheckSight (self, targ, 2))
 					goto nosee;
 			}
+			self->target = targ;
 			self->threshold = 10;
 			self->SetState (self->SeeState);
 			return;

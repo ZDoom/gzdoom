@@ -140,7 +140,7 @@ void AHereticPlayer::GiveDefaultInventory ()
 	// Adding the gold wand automatically adds its ammo
 	ammo = player->mo->FindInventory (TypeInfo::FindType ("GoldWandAmmo"));
 	ammo->Amount = 50;
-	player->ReadyWeapon = static_cast<AWeapon *> (wand);
+	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *> (wand);
 }
 
 // The player's skull -------------------------------------------------------

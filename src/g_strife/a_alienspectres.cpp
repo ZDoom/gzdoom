@@ -116,7 +116,7 @@ IMPLEMENT_ACTOR (AAlienSpectre1, Strife, 129, 0)
 	PROP_Flags4 (MF4_INCOMBAT|MF4_LOOKALLAROUND|MF4_SPECTRAL|MF4_NOICEDEATH)
 	PROP_MinMissileChance (150)
 	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (TRANSLUC33)
+	PROP_Alpha (TRANSLUC66)
 	PROP_SeeSound ("alienspectre/sight")
 	PROP_AttackSound ("alienspectre/blade")
 	PROP_PainSound ("alienspectre/pain")
@@ -158,21 +158,22 @@ void AAlienSpectre2::NoBlockingSet ()
 }
 
 // Alien Spectre 3 ----------------------------------------------------------
+// This is the Oracle's personal spectre, so it's a little different.
 
 FState AAlienSpectre3::States[] =
 {
 #define S_ALIEN3_STND 0						// 855
-	S_NORMAL (ALN1, 'A',	5, A_SentinelBob,		&States[S_ALIEN3_STND+1]),
-	S_NORMAL (ALN1, 'B',	5, A_SentinelBob,		&States[S_ALIEN3_STND+2]),
-	S_NORMAL (ALN1, 'C',	5, A_SentinelBob,		&States[S_ALIEN3_STND+3]),
-	S_NORMAL (ALN1, 'D',	5, A_SentinelBob,		&States[S_ALIEN3_STND+4]),
-	S_NORMAL (ALN1, 'E',	5, A_SentinelBob,		&States[S_ALIEN3_STND+5]),
-	S_NORMAL (ALN1, 'F',	5, A_SentinelBob,		&States[S_ALIEN3_STND+6]),
-	S_NORMAL (ALN1, 'G',	5, A_SentinelBob,		&States[S_ALIEN3_STND+7]),
-	S_NORMAL (ALN1, 'H',	5, A_SentinelBob,		&States[S_ALIEN3_STND+8]),
-	S_NORMAL (ALN1, 'I',	5, A_SentinelBob,		&States[S_ALIEN3_STND+9]),
-	S_NORMAL (ALN1, 'J',	5, A_SentinelBob,		&States[S_ALIEN3_STND+10]),
-	S_NORMAL (ALN1, 'K',	5, A_SentinelBob,		&States[S_ALIEN3_STND]),
+	S_NORMAL (ALN1, 'A',	5, NULL,		&States[S_ALIEN3_STND+1]),
+	S_NORMAL (ALN1, 'B',	5, NULL,		&States[S_ALIEN3_STND+2]),
+	S_NORMAL (ALN1, 'C',	5, NULL,		&States[S_ALIEN3_STND+3]),
+	S_NORMAL (ALN1, 'D',	5, NULL,		&States[S_ALIEN3_STND+4]),
+	S_NORMAL (ALN1, 'E',	5, NULL,		&States[S_ALIEN3_STND+5]),
+	S_NORMAL (ALN1, 'F',	5, NULL,		&States[S_ALIEN3_STND+6]),
+	S_NORMAL (ALN1, 'G',	5, NULL,		&States[S_ALIEN3_STND+7]),
+	S_NORMAL (ALN1, 'H',	5, NULL,		&States[S_ALIEN3_STND+8]),
+	S_NORMAL (ALN1, 'I',	5, NULL,		&States[S_ALIEN3_STND+9]),
+	S_NORMAL (ALN1, 'J',	5, NULL,		&States[S_ALIEN3_STND+10]),
+	S_NORMAL (ALN1, 'K',	5, NULL,		&States[S_ALIEN3_STND]),
 
 #define S_ALIEN3_CHASE (S_ALIEN3_STND+11)	// 866
 	S_NORMAL (ALN1, 'A',	5, A_Chase,				&States[S_ALIEN3_CHASE+1]),
@@ -211,6 +212,7 @@ IMPLEMENT_ACTOR (AAlienSpectre3, Strife, 76, 0)
 	PROP_MeleeState (S_ALIEN3_MELEE)
 	PROP_MissileState (S_ALIEN3_MISSILE)
 	PROP_RadiusFixed (24)
+	PROP_FlagsSet (MF_SPAWNCEILING)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 END_DEFAULTS
 

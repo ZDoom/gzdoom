@@ -12,6 +12,7 @@
 #include "gameconfigfile.h"
 #include "cmdlib.h"
 #include "templates.h"
+#include "sbar.h"
 
 #define BONUSADD 6
 
@@ -227,9 +228,16 @@ void AWeapon::AttachToOwner (AActor *other)
 	Ammo1 = AddAmmo (Owner, AmmoType1, AmmoGive1);
 	Ammo2 = AddAmmo (Owner, AmmoType2, AmmoGive2);
 	SisterWeapon = AddWeapon (SisterWeaponType);
-	if (Owner->player != NULL && !Owner->player->userinfo.neverswitch)
+	if (Owner->player != NULL)
 	{
-		Owner->player->PendingWeapon = this;
+		if (!Owner->player->userinfo.neverswitch)
+		{
+			Owner->player->PendingWeapon = this;
+		}
+		if (Owner->player->mo == players[consoleplayer].camera)
+		{
+			StatusBar->ReceivedWeapon (this);
+		}
 	}
 }
 
@@ -584,7 +592,10 @@ AWeapon *FWeaponSlot::PickWeapon (player_t *player)
 	{
 		for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
 		{
-			if (Weapons[i] == player->ReadyWeapon->GetClass())
+			if (Weapons[i] == player->ReadyWeapon->GetClass() ||
+				(player->ReadyWeapon->WeaponFlags & WIF_POWERED_UP &&
+				 player->ReadyWeapon->SisterWeapon != NULL &&
+				 player->ReadyWeapon->SisterWeapon->GetClass() == Weapons[i]))
 			{
 				for (j = (unsigned)(i - 1) % MAX_WEAPONS_PER_SLOT;
 					j != i;

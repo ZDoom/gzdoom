@@ -435,6 +435,7 @@ static void CheckIfVideo ()
 		StatusBar->AttachMessage (message);
 		screen->Lock (false);
 		StatusBar->Draw (HUD_None);
+		StatusBar->DrawTopStuff (HUD_None);
 		screen->Update ();
 		StatusBar->DetachMessage (message);
 		delete message;

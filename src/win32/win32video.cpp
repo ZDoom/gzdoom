@@ -1549,6 +1549,7 @@ bool DDrawFB::PaintToWindow ()
 {
 	if (Windowed && LockCount == 0)
 	{
+		HRESULT hr;
 		RECT rect;
 		GetClientRect (Window, &rect);
 		if (rect.right != 0 && rect.bottom != 0)
@@ -1563,8 +1564,14 @@ bool DDrawFB::PaintToWindow ()
 					Buffer, Pitch, Width, Height,
 					FRACUNIT, FRACUNIT, 0, 0);
 				LockingSurf->Unlock (NULL);
-				if (FAILED (PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT|DDBLT_ASYNC, NULL)))
+				if (FAILED (hr = PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT|DDBLT_ASYNC, NULL)))
+				{
+					if (hr == DDERR_SURFACELOST)
+					{
+						PrimarySurf->Restore ();
+					}
 					PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT, NULL);
+				}
 			}
 			LOG ("Did paint to window\n");
 		}

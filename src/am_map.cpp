@@ -282,10 +282,7 @@ static fixed_t	m_w;
 static fixed_t	m_h;
 
 // based on level size
-static fixed_t	min_x;
-static fixed_t	min_y; 
-static fixed_t	max_x;
-static fixed_t	max_y;
+static fixed_t	min_x, min_y, max_x, max_y;
 
 static fixed_t	max_w; // max_x-min_x,
 static fixed_t	max_h; // max_y-min_y
@@ -329,8 +326,8 @@ private:
 };
 
 static FAutomapTexture *mapback;	// the automap background
-static int mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
-static int mapxstart=0; //x-value for the bitmap.
+static fixed_t mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
+static fixed_t mapxstart=0; //x-value for the bitmap.
 
 static BOOL stopped = true;
 
@@ -443,7 +440,7 @@ bool AM_addMark ()
 // Determines bounding box of all vertices,
 // sets global variables controlling zoom range.
 //
-void AM_findMinMaxBoundaries ()
+static void AM_findMinMaxBoundaries ()
 {
 	int i;
 	fixed_t a;
@@ -478,16 +475,64 @@ void AM_findMinMaxBoundaries ()
 	max_scale_mtof = MapDiv (SCREENHEIGHT << MAPBITS, 2*PLAYERRADIUS);
 }
 
-
-static void AM_ScrollParchment (int dmapx, int dmapy)
+static void AM_ClipRotatedExtents ()
 {
-	mapxstart -= dmapx;
-	mapystart -= dmapy;
+	fixed_t rmin_x, rmin_y, rmax_x, rmax_y;
+
+	if (!am_rotate)
+	{
+		rmin_x = min_x;
+		rmin_y = min_y;
+		rmax_x = max_x;
+		rmax_y = max_y;
+	}
+	else
+	{
+		fixed_t xs[4], ys[4];
+		int i;
+
+		xs[0] = min_x;	ys[0] = min_y;
+		xs[1] = max_x;	ys[1] = min_y;
+		xs[2] = max_x;	ys[2] = max_y;
+		xs[3] = min_x;	ys[3] = max_y;
+
+		for (i = 0; i < 4; ++i)
+		{
+			AM_rotatePoint (&xs[i], &ys[i]);
+		}
+		rmin_x = rmin_y = FIXED_MAX;
+		rmax_x = rmax_y = FIXED_MIN;
+		for (i = 0; i < 4; ++i)
+		{
+			if (xs[i] < rmin_x)	rmin_x = xs[i];
+			if (xs[i] > rmax_x) rmax_x = xs[i];
+			if (ys[i] < rmin_y) rmin_y = ys[i];
+			if (ys[i] > rmax_y) rmax_y = ys[i];
+		}
+	}
+	if (m_x + m_w/2 > rmax_x)
+		m_x = rmax_x - m_w/2;
+	else if (m_x + m_w/2 < rmin_x)
+		m_x = rmin_x - m_w/2;
+  
+	if (m_y + m_h/2 > rmax_y)
+		m_y = rmax_y - m_h/2;
+	else if (m_y + m_h/2 < rmin_y)
+		m_y = rmin_y - m_h/2;
+
+	m_x2 = m_x + m_w;
+	m_y2 = m_y + m_h;
+}
+
+static void AM_ScrollParchment (fixed_t dmapx, fixed_t dmapy)
+{
+	mapxstart -= MulScale12 (dmapx, scale_mtof);
+	mapystart -= MulScale12 (dmapy, scale_mtof);
 
 	if (mapback != NULL)
 	{
-		int pwidth = mapback->GetWidth();
-		int pheight = mapback->GetHeight();
+		int pwidth = mapback->GetWidth() << MAPBITS;
+		int pheight = mapback->GetHeight() << MAPBITS;
 
 		while(mapxstart > 0)
 			mapxstart -= pwidth;
@@ -516,20 +561,8 @@ void AM_changeWindowLoc ()
 	m_x += Scale (m_paninc.x, SCREENWIDTH, 320);
 	m_y += Scale (m_paninc.y, SCREENHEIGHT, 200);
 
-	if (m_x + m_w/2 > max_x)
-		m_x = max_x - m_w/2;
-	else if (m_x + m_w/2 < min_x)
-		m_x = min_x - m_w/2;
-  
-	if (m_y + m_h/2 > max_y)
-		m_y = max_y - m_h/2;
-	else if (m_y + m_h/2 < min_y)
-		m_y = min_y - m_h/2;
-
-	m_x2 = m_x + m_w;
-	m_y2 = m_y + m_h;
-
-	AM_ScrollParchment (MTOF(m_x-oldmx), MTOF(oldmy-m_y));
+	AM_ClipRotatedExtents ();
+	AM_ScrollParchment (m_x-oldmx, oldmy-m_y);
 }
 
 
@@ -993,21 +1026,28 @@ void AM_changeWindowScale ()
 //
 void AM_doFollowPlayer ()
 {
+	fixed_t sx, sy;
+
     if (players[consoleplayer].camera != NULL &&
-		(f_oldloc.x != (players[consoleplayer].camera->x >> FRACTOMAPBITS) ||
-		 f_oldloc.y != (players[consoleplayer].camera->y >> FRACTOMAPBITS)))
+		(f_oldloc.x != players[consoleplayer].camera->x ||
+		 f_oldloc.y != players[consoleplayer].camera->y))
 	{
-		m_x = FTOM(MTOF(players[consoleplayer].camera->x >> FRACTOMAPBITS)) - m_w/2;
-		m_y = FTOM(MTOF(players[consoleplayer].camera->y >> FRACTOMAPBITS)) - m_h/2;
+		m_x = (players[consoleplayer].camera->x >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[consoleplayer].camera->y >> FRACTOMAPBITS) - m_h/2;
 		m_x2 = m_x + m_w;
 		m_y2 = m_y + m_h;
 
   		// do the parallax parchment scrolling.
-		AM_ScrollParchment (MTOF(players[consoleplayer].camera->x >> FRACTOMAPBITS)-MTOF(f_oldloc.x),
-			MTOF(f_oldloc.y)-MTOF(players[consoleplayer].camera->y >> FRACTOMAPBITS));
+		sx = (players[consoleplayer].camera->x - f_oldloc.x) >> FRACTOMAPBITS;
+		sy = (f_oldloc.y - players[consoleplayer].camera->y) >> FRACTOMAPBITS;
+		if (am_rotate)
+		{
+			AM_rotate (&sx, &sy, players[consoleplayer].camera->angle - ANG90);
+		}
+		AM_ScrollParchment (sx, sy);
 
-		f_oldloc.x = players[consoleplayer].camera->x >> FRACTOMAPBITS;
-		f_oldloc.y = players[consoleplayer].camera->y >> FRACTOMAPBITS;
+		f_oldloc.x = players[consoleplayer].camera->x;
+		f_oldloc.y = players[consoleplayer].camera->y;
 	}
 }
 
@@ -1029,7 +1069,7 @@ void AM_Ticker ()
 		AM_changeWindowScale();
 
 	// Change x,y location
-	if (m_paninc.x || m_paninc.y)
+	//if (m_paninc.x || m_paninc.y)
 		AM_changeWindowLoc();
 }
 
@@ -1050,9 +1090,9 @@ void AM_clearFB (int color)
 		int x, y;
 
 		//blit the automap background to the screen.
-		for (y = mapystart; y < f_h; y += pheight)
+		for (y = mapystart >> MAPBITS; y < f_h; y += pheight)
 		{
-			for (x = mapxstart; x < f_w; x += pwidth)
+			for (x = mapxstart >> MAPBITS; x < f_w; x += pwidth)
 			{
 				screen->DrawTexture (mapback, x, y, DTA_ClipBottom, f_h, TAG_DONE);
 			}

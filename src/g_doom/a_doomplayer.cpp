@@ -109,8 +109,8 @@ void ADoomPlayer::GiveDefaultInventory ()
 	{
 		bullets->Amount = deh.StartBullets;		// [RH] Used to be 50
 	}
-//	player->ReadyWeapon = player->PendingWeapon =
-//		static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
+	player->ReadyWeapon = player->PendingWeapon =
+		static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
 }
 
 void A_PlayerScream (AActor *self)

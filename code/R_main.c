@@ -77,7 +77,6 @@ fixed_t					skytopfrac;
 // just for profiling purposes
 int 					framecount; 	
 
-int 					sscount;
 int 					linecount;
 int 					loopcount;
 
@@ -392,38 +391,6 @@ R_PointToAngle2
 	
 	return R_PointToAngle (x2, y2);
 }
-
-
-fixed_t
-R_PointToDist
-( fixed_t		x,
-  fixed_t		y )
-{
-	int 		angle;
-	fixed_t 	dx;
-	fixed_t 	dy;
-	fixed_t 	temp;
-	fixed_t 	dist;
-		
-	dx = abs(x - viewx);
-	dy = abs(y - viewy);
-		
-	if (dy>dx)
-	{
-		temp = dx;
-		dx = dy;
-		dy = temp;
-	}
-		
-	angle = (tantoangle[ FixedDiv(dy,dx)>>DBITS ]+ANG90) >> ANGLETOFINESHIFT;
-
-	// use as cosine
-	dist = FixedDiv (dx, finesine[angle] ); 	
-		
-	return dist;
-}
-
-
 
 
 //
@@ -929,8 +896,6 @@ void R_SetupFrame (player_t* player)
 
 	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
 	viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
-		
-	sscount = 0;
 		
 	if (player->fixedcolormap)
 	{

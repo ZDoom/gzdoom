@@ -467,6 +467,7 @@ void R_ProjectSprite (mobj_t* thing)
 	fixed_t 			gxt;
 	fixed_t 			gyt;
 	
+	fixed_t				gzt;				// killough 3/27/98
 	fixed_t 			tx;
 	fixed_t 			tz;
 
@@ -481,7 +482,7 @@ void R_ProjectSprite (mobj_t* thing)
 	int 				lump;
 	
 	unsigned			rot;
-	BOOL 			flip;
+	BOOL 				flip;
 	
 	int 				index;
 
@@ -489,6 +490,9 @@ void R_ProjectSprite (mobj_t* thing)
 	
 	angle_t 			ang;
 	fixed_t 			iscale;
+
+	int					heightsec;			// killough 3/27/98
+
 
 	// [RH] Andy Baker's stealth monsters
 	if (thing->invisible == true)
@@ -564,15 +568,48 @@ void R_ProjectSprite (mobj_t* thing)
 	// off the left side
 	if (x2 < 0)
 		return;
-	
+
+	gzt = thing->z + spritetopoffset[lump];
+
+	// killough 4/9/98: clip things which are out of view due to height
+// [RH] This doesn't work too well with freelook
+//	if (thing->z > viewz + FixedDiv(centeryfrac, yscale) ||
+//		gzt      < viewz - FixedDiv(centeryfrac-viewheight, yscale))
+//		return;
+
+	// killough 3/27/98: exclude things totally separated
+	// from the viewer, by either water or fake ceilings
+	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
+
+	heightsec = thing->subsector->sector->heightsec;
+
+	if (heightsec != -1)	// only clip things which are in special sectors
+	{
+		int phs = viewplayer->mo->subsector->sector->heightsec;
+
+		if (phs != -1 && viewz < sectors[phs].floorheight ?
+			thing->z >= sectors[heightsec].floorheight :
+			gzt < sectors[heightsec].floorheight)
+		  return;
+		if (phs != -1 && viewz > sectors[phs].ceilingheight ?
+			gzt < sectors[heightsec].ceilingheight &&
+			viewz >= sectors[heightsec].ceilingheight :
+			thing->z >= sectors[heightsec].ceilingheight)
+		  return;
+	}
+
 	// store information in a vissprite
 	vis = R_NewVisSprite ();
+
+	// killough 3/27/98: save sector for special clipping later
+	vis->heightsec = heightsec;
+
 	vis->mobjflags = thing->flags;
 	vis->scale = yscale;
 	vis->gx = thing->x;
 	vis->gy = thing->y;
 	vis->gz = thing->z;
-	vis->gzt = thing->z + spritetopoffset[lump];
+	vis->gzt = gzt;		// killough 3/27/98
 	vis->texturemid = vis->gzt - viewz;
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
@@ -876,21 +913,25 @@ void R_DrawSprite (vissprite_t* spr)
 	int 				r2;
 	fixed_t 			scale;
 	fixed_t 			lowscale;
-	int 				silhouette;
 
 	for (x = spr->x1 ; x<=spr->x2 ; x++)
 		r_dsclipbot[x] = r_dscliptop[x] = -2;
 	
 	// Scan drawsegs from end to start for obscuring segs.
-	// The first drawseg that has a greater scale
-	//	is the clip seg.
-	for (ds=ds_p-1 ; ds >= drawsegs ; ds--)
+	// The first drawseg that has a greater scale is the clip seg.
+
+	// Modified by Lee Killough:
+	// (pointer check was originally nonportable
+	// and buggy, by going past LEFT end of array):
+
+	//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
+
+	for (ds = ds_p ; ds-- > drawsegs ; )  // new -- killough
 	{
 		// determine if the drawseg obscures the sprite
 		if (ds->x1 > spr->x2
 			|| ds->x2 < spr->x1
-			|| (!ds->silhouette
-				&& !ds->maskedtexturecol) )
+			|| (!ds->silhouette && !ds->maskedtexturecol) )
 		{
 			// does not cover sprite
 			continue;
@@ -923,42 +964,62 @@ void R_DrawSprite (vissprite_t* spr)
 
 		
 		// clip this piece of the sprite
-		silhouette = ds->silhouette;
-		
-		if (spr->gz >= ds->bsilheight)
-			silhouette &= ~SIL_BOTTOM;
+		// killough 3/27/98: optimized and made much shorter
 
-		if (spr->gzt <= ds->tsilheight)
-			silhouette &= ~SIL_TOP;
-						
-		if (silhouette == 1)
-		{
-			// bottom sil
+		if (ds->silhouette&SIL_BOTTOM && spr->gz < ds->bsilheight) //bottom sil
 			for (x=r1 ; x<=r2 ; x++)
 				if (r_dsclipbot[x] == -2)
 					r_dsclipbot[x] = ds->sprbottomclip[x];
-		}
-		else if (silhouette == 2)
-		{
-			// top sil
+
+		if (ds->silhouette&SIL_TOP && spr->gzt > ds->tsilheight)   // top sil
 			for (x=r1 ; x<=r2 ; x++)
-				if (r_dscliptop[x] == -2)
-					r_dscliptop[x] = ds->sprtopclip[x];
+			if (r_dscliptop[x] == -2)
+				r_dscliptop[x] = ds->sprtopclip[x];
+	}
+
+	// killough 3/27/98:
+	// Clip the sprite against deep water and/or fake ceilings.
+	// killough 4/9/98: optimize by adding mh
+	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
+
+	if (spr->heightsec != -1)	// only things in specially marked sectors
+	{
+		fixed_t h,mh;
+		int phs = viewplayer->mo->subsector->sector->heightsec;
+		if ((mh = sectors[spr->heightsec].floorheight) > spr->gz &&
+			(h = centeryfrac - FixedMul(mh-=viewz, spr->scale)) >= 0 &&
+			(h >>= FRACBITS) < viewheight)
+		if (mh <= 0 || (phs != -1 && viewz > sectors[phs].floorheight))
+		{							// clip bottom
+			for (x=spr->x1 ; x<=spr->x2 ; x++)
+				if (r_dsclipbot[x] == -2 || h < r_dsclipbot[x])
+					r_dsclipbot[x] = h;
 		}
-		else if (silhouette == 3)
+		else						// clip top
+			for (x=spr->x1 ; x<=spr->x2 ; x++)
+				if (r_dscliptop[x] == -2 || h > r_dscliptop[x])
+					r_dscliptop[x] = h;
+
+		if ((mh = sectors[spr->heightsec].ceilingheight) < spr->gzt &&
+			(h = centeryfrac - FixedMul(mh-viewz, spr->scale)) >= 0 &&
+			(h >>= FRACBITS) < viewheight)
 		{
-			// both
-			for (x=r1 ; x<=r2 ; x++)
-			{
-				if (r_dsclipbot[x] == -2)
-					r_dsclipbot[x] = ds->sprbottomclip[x];
-				if (r_dscliptop[x] == -2)
-					r_dscliptop[x] = ds->sprtopclip[x];
+			if (phs != -1 && viewz >= sectors[phs].ceilingheight)
+			{						// clip bottom
+				for (x=spr->x1 ; x<=spr->x2 ; x++)
+					if (r_dsclipbot[x] == -2 || h < r_dsclipbot[x])
+						r_dsclipbot[x] = h;
+			}
+			else
+			{						// clip top
+				for (x=spr->x1 ; x<=spr->x2 ; x++)
+					if (r_dscliptop[x] == -2 || h > r_dscliptop[x])
+						r_dscliptop[x] = h;
 			}
 		}
-				
 	}
-	
+	// killough 3/27/98: end special clipping for deep water / fake ceilings
+
 	// all clipping has been performed, so draw the sprite
 
 	// check for unclipped columns
@@ -1043,7 +1104,14 @@ void R_DrawMasked (void)
 	}
 
 	// render any remaining masked mid textures
-	for (ds=ds_p-1 ; ds >= drawsegs ; ds--)
+
+	// Modified by Lee Killough:
+	// (pointer check was originally nonportable
+	// and buggy, by going past LEFT end of array):
+
+	//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
+
+	for (ds=ds_p ; ds-- > drawsegs ; )	// new -- killough
 		if (ds->maskedtexturecol)
 			R_RenderMaskedSegRange (ds, ds->x1, ds->x2);
 	

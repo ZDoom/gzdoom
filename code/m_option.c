@@ -741,7 +741,8 @@ BOOL M_OptResponder (event_t *ev)
 	}
 
 	if (item->type == bitflag && flagsvar &&
-		(ch == KEY_LEFTARROW || ch == KEY_RIGHTARROW || ch == KEY_ENTER)) {
+		(ch == KEY_LEFTARROW || ch == KEY_RIGHTARROW || ch == KEY_ENTER)
+		&& !demoplayback) {
 			int newflags = *item->e.flagint ^ item->a.flagmask;
 			char val[16];
 

@@ -126,6 +126,7 @@ void G_SetLevelStrings (void);
 
 cluster_info_t *FindClusterInfo (int cluster);
 level_info_t *FindLevelInfo (char *mapname);
+level_info_t *FindLevelByNum (int num);
 
 char *CalcMapName (int episode, int level);
 

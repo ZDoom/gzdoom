@@ -102,7 +102,7 @@ void D_DoServerInfoChange (byte **stream)
 		if ( (breakpt = strchr (value, '\\')) )
 			*breakpt = 0;
 
-		if (SetServerVar (ptr, value))
+		if (SetServerVar (ptr, value) && netgame)
 			Printf ("%s changed to %s\n", ptr, value);
 
 		*(value - 1) = '\\';

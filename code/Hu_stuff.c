@@ -83,59 +83,29 @@ extern BOOL			automapactive;
 
 static BOOL			headsupactive = false;
 
-const char english_shiftxform[] =
-{
-
-	0,
-	1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-	11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-	21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
-	31,
-	' ', '!', '"', '#', '$', '%', '&',
-	'"', // shift-'
-	'(', ')', '*', '+',
-	'<', // shift-,
-	'_', // shift--
-	'>', // shift-.
-	'?', // shift-/
-	')', // shift-0
-	'!', // shift-1
-	'@', // shift-2
-	'#', // shift-3
-	'$', // shift-4
-	'%', // shift-5
-	'^', // shift-6
-	'&', // shift-7
-	'*', // shift-8
-	'(', // shift-9
-	':',
-	':', // shift-;
-	'<',
-	'+', // shift-=
-	'>', '?', '@',
-	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-	'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-	'[', // shift-[
-	'!', // shift-backslash - OH MY GOD DOES WATCOM SUCK
-	']', // shift-]
-	'"', '_',
-	'\'', // shift-`
-	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-	'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-	'{', '|', '}', '~', 127
-};
-
 void HU_Init(void)
 {
 	int 	i;
 	int 	j;
 	char	buffer[9];
+	char	*tplate;
+	int		sub;
 
 	// load the heads-up font
 	j = HU_FONTSTART;
+
+	// [RH] Quick hack to handle the FONTA of Heretic and Hexen
+	if (W_CheckNumForName ("FONTA01") >= 0) {
+		tplate = "FONTA%02u";
+		sub = HU_FONTSTART - 1;
+	} else {
+		tplate = "STCFN%.3d";
+		sub = 0;
+	}
+
 	for (i=0;i<HU_FONTSIZE;i++)
 	{
-		sprintf(buffer, "STCFN%.3d", j++);
+		sprintf(buffer, tplate, j++ - sub);
 		hu_font[i] = (patch_t *) W_CacheLumpName(buffer, PU_STATIC);
 	}
 }
@@ -306,8 +276,7 @@ BOOL HU_Responder (event_t *ev)
 		}
 		else
 		{
-			if (shiftdown || (c >= 'a' && c <= 'z'))
-				c = english_shiftxform[c];
+			c = toupper (c);
 
 			eatkey = HUlib_keyInIText(&w_chat, c);
 

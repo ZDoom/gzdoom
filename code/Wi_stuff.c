@@ -440,7 +440,7 @@ static int WI_DrawName (char *str, int x, int y)
 	char charname[9];
 
 	while (*str) {
-		sprintf (charname, "WICHAR%02x", toupper(*str));
+		sprintf (charname, "FONTB%02u", toupper(*str) - 32);
 		lump = W_CheckNumForName (charname);
 		if (lump != -1) {
 			p = W_CacheLumpNum (lump, PU_CACHE);
@@ -452,7 +452,8 @@ static int WI_DrawName (char *str, int x, int y)
 		str++;
 	}
 
-	return p ? (5*SHORT(p->height))/4 : 0;
+	p = W_CacheLumpName ("FONTB39", PU_CACHE);
+	return (5*(SHORT(p->height)-SHORT(p->topoffset)))/4;
 }
 
 
@@ -1630,7 +1631,7 @@ static int WI_CalcWidth (char *str)
 		return 0;
 
 	while (*str) {
-		sprintf (charname, "WICHAR%02x", toupper(*str));
+		sprintf (charname, "FONTB%02u", toupper(*str) - 32);
 		lump = W_CheckNumForName (charname);
 		if (lump != -1) {
 			p = W_CacheLumpNum (lump, PU_CACHE);
@@ -1682,11 +1683,6 @@ void WI_loadData(void)
 
 	for (i = 0; i < 2; i++) {
 		char *lname = (i == 0 ? wbs->lname0 : wbs->lname1);
-
-		if (lnames[i]) {
-			Z_Free (lnames[i]);
-			lnames[i] = NULL;
-		}
 
 		if (lname)
 			j = W_CheckNumForName (lname);
@@ -1820,6 +1816,13 @@ void WI_unloadData(void)
 
 	for (i=0 ; i<10 ; i++)
 		Z_ChangeTag(num[i], PU_CACHE);
+
+	for (i = 0; i < 2; i++) {
+		if (lnames[i]) {
+			Z_ChangeTag (lnames[i], PU_CACHE);
+			lnames[i] = NULL;
+		}
+	}
 	
 	if (gamemode != commercial)
 	{

@@ -88,6 +88,14 @@ void G_ParseMapInfo (void)
 		mapinfo = W_CacheLumpNum (lump, PU_CACHE);
 
 		while ( (data = COM_Parse (mapinfo)) ) {
+			if (com_token[0] == ';') {
+				// Handle comments from Hexen MAPINFO lumps
+				while (*mapinfo && *mapinfo != ';')
+					mapinfo++;
+				while (*mapinfo && *mapinfo != '\n')
+					mapinfo++;
+				continue;
+			}
 			if (!stricmp (com_token, "map")) {
 				// map <MAPNAME> <Nice Name>
 				if (levelindex > -1) {
@@ -97,6 +105,12 @@ void G_ParseMapInfo (void)
 				levelflags = 0;
 				clusterindex = -1;
 				data = COM_Parse (data);
+				if (IsNum (com_token)) {
+					// Handle Hexen MAPINFO map commands
+					int map = atoi (com_token);
+					sprintf (com_token, "MAP%02u", map);
+					SKYFLATNAME[5] = 0;
+				}
 				if ((levelindex = FindWadLevelInfo (com_token)) == -1)
 				{
 					levelindex = numwadlevelinfos++;
@@ -110,7 +124,8 @@ void G_ParseMapInfo (void)
 
 				mapinfo = data;
 			} else if (levelindex > -1) {
-				if (!stricmp (com_token, "levelnum")) {
+				if (!stricmp (com_token, "levelnum") ||
+					!stricmp (com_token, "warptrans")) {
 					// levelnum <levelnum>
 					mapinfo = COM_Parse (data);
 					levelinfo->levelnum = atoi (com_token);
@@ -118,6 +133,11 @@ void G_ParseMapInfo (void)
 				} else if (!stricmp (com_token, "next")) {
 					// next <MAPNAME>
 					mapinfo = COM_Parse (data);
+					if (IsNum (com_token)) {
+						// Handle Hexen MAPINFO next entries
+						int map = atoi (com_token);
+						sprintf (com_token, "MAP%02u", map);
+					}
 					strncpy (levelinfo->nextmap, com_token, 8);
 
 				} else if (!stricmp (com_token, "secretnext")) {
@@ -225,6 +245,20 @@ void G_ParseMapInfo (void)
 					// specialaction_lowerfloor
 					mapinfo = data;
 					levelflags = (levelflags & (~LEVEL_SPECACTIONSMASK)) | LEVEL_SPECLOWERFLOOR;
+
+				} else if (!stricmp (com_token, "lightning")) {
+					// lightning
+					mapinfo = data;
+
+				} else if (!stricmp (com_token, "cdtrack") ||
+						   !stricmp (com_token, "fadetable") ||
+						   !stricmp (com_token, "cd_start_track") ||
+						   !stricmp (com_token, "cd_end1_track") ||
+						   !stricmp (com_token, "cd_end2_track") ||
+						   !stricmp (com_token, "cd_end3_track") ||
+						   !stricmp (com_token, "cd_intermission_track") ||
+						   !stricmp (com_token, "cd_title_track")) {
+					mapinfo = COM_Parse (data);
 
 				}
 			}
@@ -360,7 +394,7 @@ void G_InitNew (char *mapname)
 		I_Error ("Could not start map %s\n", mapname);
 	}
 
-	if (gameskill->value == sk_nightmare || dmflags & DF_MONSTERS_RESPAWN )
+	if ((gameskill->value == sk_nightmare) || (dmflags & DF_MONSTERS_RESPAWN) )
 		respawnmonsters = true;
 	else
 		respawnmonsters = false;
@@ -450,7 +484,9 @@ void G_DoCompleted (void)
 	strncpy (wminfo.lname0, level.info->pname, 8);
 	strncpy (wminfo.current, level.mapname, 8);
 
-	if (deathmatch->value && dmflags & DF_SAME_LEVEL) {
+	if (deathmatch->value &&
+		(dmflags & DF_SAME_LEVEL) &&
+		!(level.flags & LEVEL_CHANGEMAPCHEAT)) {
 		strncpy (wminfo.next, level.mapname, 8);
 		strncpy (wminfo.lname1, level.info->pname, 8);
 	} else {
@@ -544,7 +580,18 @@ void G_DoLoadLevel (void)
 			players[i].playerstate = PST_REBORN; 
 		memset (players[i].frags,0,sizeof(players[i].frags)); 
 		players[i].fragcount = 0;
-	} 
+	}
+
+	// initialize the msecnode_t freelist.					phares 3/25/98
+	// any nodes in the freelist are gone by now, cleared
+	// by Z_FreeTags() when the previous level ended or player
+	// died.
+
+	{
+		extern msecnode_t *headsecnode; // phares 3/25/98
+		headsecnode = NULL;
+	}
+
 
 	S_ClearAmbients ();							// [RH] Clear all ambient sounds
 	P_SetupLevel (level.mapname);	 
@@ -713,6 +760,26 @@ level_info_t *FindLevelInfo (char *mapname)
 		return (level_info_t *)(wadlevelinfos + i);
 	else
 		return FindDefLevelInfo (mapname);
+}
+
+level_info_t *FindLevelByNum (int num)
+{
+	{
+		int i;
+
+		for (i = 0; i < numwadlevelinfos; i++)
+			if (wadlevelinfos[i].levelnum == num)
+				return (level_info_t *)(wadlevelinfos + i);
+	}
+	{
+		level_info_t *i = LevelInfos;
+		while (i->level_name) {
+			if (i->levelnum == num)
+				return i;
+			i++;
+		}
+		return NULL;
+	}
 }
 
 static cluster_info_t *FindDefClusterInfo (int cluster)

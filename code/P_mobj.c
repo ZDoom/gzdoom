@@ -229,9 +229,14 @@ void P_XYMovement (mobj_t* mo)
 
 	if (mo->flags & (MF_MISSILE | MF_SKULLFLY) )
 		return; 		// no friction for missiles ever
-				
-	if (!P_FindFloor (mo))	// [RH] Z-Check
-		return; 		// no friction when airborne
+
+	if (olddemo) { 		// no friction when airborne
+		if (mo->z > mo->floorz)
+			return;
+	} else {
+		if (!P_FindFloor (mo))	// [RH] Z-Check
+			return;
+	}
 
 	if (mo->flags & MF_CORPSE)
 	{
@@ -311,9 +316,16 @@ void P_ZMovement (mobj_t* mo)
 	}
 	
 	// clip movement
-	other = P_FindFloor (mo);			// [RH] Z-Check
-	if ((mo->flags & MF_MISSILE) && (other == mo->target) && (gametic < (signed)mo->targettic))
-		other = NULL;
+	if (olddemo) {
+		if (mo->z <= mo->floorz)
+			other = (mobj_t *)-1;
+		else
+			other = NULL;
+	} else {
+		other = P_FindFloor (mo);			// [RH] Z-Check
+		if ((mo->flags & MF_MISSILE) && (other == mo->target) && (gametic < (signed)mo->targettic))
+			other = NULL;
+	}
 
 	if (other) {
 		// hit the floor ([RH] or something else)
@@ -399,10 +411,17 @@ void P_ZMovement (mobj_t* mo)
 		else
 			mo->momz -= (fixed_t)(sv_gravity->value * 81.92);
 	}
-		
-	other = P_FindCeiling (mo);			// [RH] Z-Check
-	if ((mo->flags & MF_MISSILE) && (other == mo->target) && (gametic < (signed)mo->targettic))
-		other = NULL;
+
+	if (olddemo) {
+		if (mo->z + mo->height > mo->ceilingz)
+			other = (mobj_t *) -1;
+		else
+			other = NULL;
+	} else {
+		other = P_FindCeiling (mo);			// [RH] Z-Check
+		if ((mo->flags & MF_MISSILE) && (other == mo->target) && (gametic < (signed)mo->targettic))
+			other = NULL;
+	}
 
 	if (other)
 	{
@@ -603,6 +622,7 @@ mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int onflo
 	mobj->tics = st->tics;
 	mobj->sprite = st->sprite;
 	mobj->frame = st->frame;
+	mobj->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
 
 	// set subsector and/or block links
 	P_SetThingPosition (mobj);
@@ -656,7 +676,15 @@ void P_RemoveMobj (mobj_t* mobj)
 		
 	// unlink from sector and block lists
 	P_UnsetThingPosition (mobj);
-	
+
+	// Delete all nodes on the current sector_list			phares 3/16/98
+
+	if (sector_list)
+	{
+		P_DelSeclist(sector_list);
+		sector_list = NULL;
+	}
+
 	// stop any playing sound
 	S_StopSound (mobj);
 	

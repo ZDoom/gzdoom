@@ -1212,7 +1212,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_vildth,		// deathsound
 	15,		// speed
 	20*FRACUNIT,		// radius
-	76*FRACUNIT,		// height
+	56*FRACUNIT,		// height
 	500,		// mass
 	0,		// damage
 	sfx_vilact,		// activesound
@@ -1264,7 +1264,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_skedth,		// deathsound
 	10,		// speed
 	20*FRACUNIT,		// radius
-	80*FRACUNIT,		// height
+	56*FRACUNIT,		// height
 	500,		// mass
 	0,		// damage
 	sfx_skeact,		// activesound
@@ -1394,7 +1394,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_podth2,		// deathsound
 	8,		// speed
 	20*FRACUNIT,		// radius
-	60*FRACUNIT,		// height
+	56*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_posact,		// activesound
@@ -1524,7 +1524,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_brsdth,		// deathsound
 	8,		// speed
 	24*FRACUNIT,		// radius
-	74*FRACUNIT,		// height
+	64*FRACUNIT,		// height
 	1000,		// mass
 	0,		// damage
 	sfx_dmact,		// activesound
@@ -1576,7 +1576,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_kntdth,		// deathsound
 	8,		// speed
 	24*FRACUNIT,		// radius
-	74*FRACUNIT,		// height
+	64*FRACUNIT,		// height
 	1000,		// mass
 	0,		// damage
 	sfx_dmact,		// activesound
@@ -1628,7 +1628,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_spidth,		// deathsound
 	12,		// speed
 	128*FRACUNIT,		// radius
-	110*FRACUNIT,		// height
+	100*FRACUNIT,		// height
 	1000,		// mass
 	0,		// damage
 	sfx_dmact,		// activesound
@@ -1654,7 +1654,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_bspdth,		// deathsound
 	12,		// speed
 	64*FRACUNIT,		// radius
-	56*FRACUNIT,		// height
+	64*FRACUNIT,		// height
 	600,		// mass
 	0,		// damage
 	sfx_bspact,		// activesound
@@ -4698,7 +4698,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_bspdth,  // deathsound
 	12,  // speed
 	64*FRACUNIT,  // radius
-	56*FRACUNIT,  // height
+	64*FRACUNIT,  // height
 	600,  // mass
 	0,  // damage
 	sfx_bspact,  // activesound
@@ -4724,7 +4724,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_vildth,  // deathsound
 	15,  // speed
 	20*FRACUNIT,  // radius
-	76*FRACUNIT,  // height
+	56*FRACUNIT,  // height
 	500,  // mass
 	0,  // damage
 	sfx_vilact,  // activesound
@@ -4750,7 +4750,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_brsdth,  // deathsound
 	8,  // speed
 	24*FRACUNIT,  // radius
-	74*FRACUNIT,  // height
+	64*FRACUNIT,  // height
 	1000,  // mass
 	0,  // damage
 	sfx_dmact,  // activesound
@@ -4802,7 +4802,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_podth2,  // deathsound
 	8,  // speed
 	20*FRACUNIT,  // radius
-	60*FRACUNIT,  // height
+	56*FRACUNIT,  // height
 	100,  // mass
 	0,  // damage
 	sfx_posact,  // activesound
@@ -4854,7 +4854,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_kntdth,  // deathsound
 	8,  // speed
 	24*FRACUNIT,  // radius
-	74*FRACUNIT,  // height
+	64*FRACUNIT,  // height
 	1000,  // mass
 	0,  // damage
 	sfx_dmact,  // activesound
@@ -4932,7 +4932,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_skedth,  // deathsound
 	10,  // speed
 	20*FRACUNIT,  // radius
-	80*FRACUNIT,  // height
+	56*FRACUNIT,  // height
 	500,  // mass
 	0,  // damage
 	sfx_skeact,  // activesound
@@ -5222,7 +5222,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
-	0,		// flags
+	MF_NOGRAVITY,		// flags
 	S_NULL		// raisestate
     },
 

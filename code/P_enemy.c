@@ -1936,7 +1936,11 @@ void A_BrainSpit (mobj_t *mo)
 	mobj_t* 	newmobj;
 	
 	static int	easy = 0;
-		
+
+	// [RH] Do nothing if there are no brain targets.
+	if (numbraintargets == 0)
+		return;
+
 	easy ^= 1;
 	if (gameskill->value <= sk_easy && (!easy))
 		return;
@@ -2015,7 +2019,7 @@ void A_SpawnFly (mobj_t* mo)
 		P_SetMobjState (newmobj, newmobj->info->seestate);
 		
 	// telefrag anything in this spot
-	P_TeleportMove (newmobj, newmobj->x, newmobj->y);
+	P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);
 
 	// remove self (i.e., cube).
 	P_RemoveMobj (mo);

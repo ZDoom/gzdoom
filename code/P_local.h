@@ -211,13 +211,13 @@ void P_SetThingPosition (mobj_t* thing);
 extern BOOL				floatok;
 extern fixed_t			tmfloorz;
 extern fixed_t			tmceilingz;
-
+extern msecnode_t		*sector_list;		// phares 3/16/98
 
 extern	line_t* 		ceilingline;
 
 BOOL	P_CheckPosition (mobj_t *thing, fixed_t x, fixed_t y);
 BOOL	P_TryMove (mobj_t* thing, fixed_t x, fixed_t y);
-BOOL	P_TeleportMove (mobj_t* thing, fixed_t x, fixed_t y);
+BOOL	P_TeleportMove (mobj_t* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
 void	P_SlideMove (mobj_t* mo);
 BOOL	P_CheckSight (const mobj_t* t1, const mobj_t* t2);
 void	P_UseLines (player_t* player);
@@ -232,6 +232,14 @@ void	P_LineAttack (mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, i
 
 // [RH] Means of death
 void	P_RadiusAttack (mobj_t *spot, mobj_t *source, int damage, int mod);
+
+//jff 3/19/98 P_CheckSector(): new routine to replace P_ChangeSector()
+BOOL	P_CheckSector(sector_t *sector, BOOL crunch);
+void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
+void	P_CreateSecNodeList(mobj_t*,fixed_t,fixed_t);		// phares 3/14/98
+int		P_GetMoveFactor(mobj_t* mo);						// phares  3/6/98
+BOOL	Check_Sides(mobj_t *, int, int);					// phares
+
 
 // [RH] Finds the mobj thing is standing on/in.
 // Returns NULL if nothing, -1 if the ground,

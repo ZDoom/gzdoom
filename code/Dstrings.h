@@ -32,7 +32,7 @@ void ReplaceString (char **ptr, char *str);
 
 
 // Misc. other strings.
-#define SAVEGAMENAME	"doomsav"
+#define SAVEGAMENAME	"zdoomsv"
 
 // QuitDOOM messages
 #define NUM_QUITMESSAGES   14

@@ -1,4 +1,83 @@
+July 26, 1998
+- If FONTA?? is available, it is now used in deference to STCFN??? (i.e.
+  -file heretic)
+- Renamed all the WICHAR?? in zdoom.wad to FONTB?? to match the naming
+  convention used by Heretic and Hexen.
+
+July 23, 1998
+- I must be an idiot! I took a fix from BOOM for freeing the lnames array too
+  soon and stuck it into ZDoom without really thinking about it. In BOOM (and
+  DOOM) lnames[] is dynamically allocated. In ZDoom, it's static since it
+  only needs to contain two items (the patch of the level just left and the
+  patch of the level being entered).
+- Using the changemap command no longer says you are leaving the map you're
+  entering when no title patch is provided. (Unless they're one and the same.)
+
+July 22, 1998
+- Added a z parameter to P_TeleportMove() to properly handle checks in the
+  third dimension. Previously, I was checking for this, too, but against the
+  thing's original position. Now I check against the desired z location. This
+  prevents monsters from teleporting inside of each other.
+
+July 19, 1998
+- Improved handling of international keymaps (such as the French one) by
+  moving all responsibility for determining the shifted state of keys into
+  i_input.c. C_consol.c no longer maintains a ShiftLOT since .data3 of the
+  key event will contain a character that is sensitive of the current state
+  of modifier keys. (i.e. .data3 contains 'a' when the A key is pressed and
+  'A' when SHIFT-A is pressed.)
+- Made some changes to D_DoAdvanceDemo() and G_CheckDemoStatus() so that
+  using the player setup menu during demo playback is now safe.
+- Added a check to C_BackupCVars() so that it doesn't back up CVAR_LATCH
+  cvars are not saved. This is unnecessary since they don't actually
+  change until a new game anyway. The primary advantage of this is that
+  starting a new game during demo playback now uses the selected skill
+  level (again).
+- Anything spawned by a boss shooter will now always telefrag even if
+  LEVEL_MONSTERSTELEFRAG is not set.
+- Modifed PIT_RadiusAttack() (again) so that when a barrel is doing the
+  exploding, the original damage code is used.
+- Removed the bitwise and against 0xff for angle in R_DrawSky() and
+  R_DrawMaskedSky(). Some skies in various PWADs are wider than this, and
+  R_GetColumn() masks it to the proper width for us anyway.
+
+July 18, 1998
+- Changed the unknown thing to have no gravity so that it stays at the
+  height it was spawned at (useful with Hexen).
+- Discovered the source of a memory leak: When I added the thing_list code
+  from BOOM, I left out some from P_UnsetThingPosition(), so
+  P_SetThingPosition() was always creating a new thing_list and letting the
+  old one waste space. Conveyors even work now! Yay!
+- Removed support for repeating the left and right arrow keys in m_menu.c
+  since some people had trouble with it.
+- Changed D_DoServerInfoChange() so that it doesn't print messages in
+  single player games.
+
+July 16, 1998
+- Added entries for Heretic to SWITCHES and ANIMATED lumps (because I can).
+- Did equivalent things for BOOM SWITCHES lumps.
+- Removed MAXANIMS limit by scanning through the AnimDefs array to find out
+  how many entries it contains and then allocating that many anim_t's. Also
+  added support for BOOM ANIMATED lumps.
+- Reduced the Revenant's height from 80 back to 56 to fix a problem with a
+  trap on DOOM2 MAP27. The new height caused the revenants heads to get
+  stuck in the ceiling, so the platforms they were on wouldn't lower. Since
+  there are probably other situations like this elsewhere, I went and gave
+  all the monsters their original heights back.
+- Fixed a problem with BOOM's openings limit removal. Pointers to openings
+  get stored in drawsegs, and the realloc() of the openings didn't bother
+  to adjust those pointers. A simple fix in r_segs.c once I figured out what
+  the problem was.
+- Incorporated BOOM's Medusa fix.
+
+July 15, 1998
+- Added Lee Killough's generalized scrollers from BOOM.
+- Added Rand Phares' thing list stuff from BOOM.
+- Finished support for BOOM's multiple sector thinkers and threw in the
+  elevator code in the process (but nothing that calls it).
+
 July 14, 1998
+- Started adding support for BOOM's multiple actions per sector.
 - Uploaded the 1.14 binaries and source to notgod.com.
 - Fixed bug that caused the bunny scroller to crash: Using 0 instead of
   &screens[0] in the calls to F_DrawPatchCol().

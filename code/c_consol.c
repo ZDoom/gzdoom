@@ -33,7 +33,7 @@ extern int		gametic;
 extern BOOL		automapactive;	// in AM_map.c
 
 typedef enum cstate_t {
-	up=0, down, falling, rising
+	up=0, down=1, falling=2, rising=3
 } constate;
 
 
@@ -43,7 +43,7 @@ BOOL		vidactive = false, gotconback = false;
 BOOL		cursoron = false;
 int			ShowRows, SkipRows, ConsoleTicker, ConBottom, ConScroll, RowAdjust;
 int			CursorTicker, ScrollState = 0;
-constate	ConsoleState = up;
+int			ConsoleState = up;
 char		VersionString[8];
 
 event_t		RepeatEvent;		// always type ev_keydown
@@ -80,15 +80,6 @@ static int HistSize;
 
 cvar_t *NotifyTime;
 static byte NotifyStrings[4][256];
-
-static char ShiftLOT[] = {
-	'\"', '(', ')', '*', '+', '<', '_', '>', '?',							//  9 39->
-	')', '!', '@', '#', '$', '%', '^', '&', '*', '(', ':', ':', '<', '+',	// 14 ->61
-
-	'{', '|', '}', '^', '_', '~', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',	// 14 91->
-	'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',	// 14 ...
-	'W', 'X', 'Y', 'Z'														//  4 ->122
-};
 
 FILE *Logfile = NULL;
 
@@ -752,7 +743,7 @@ void C_HandleKey (event_t *ev, byte *buffer, int len)
 				buffer[0] = buffer[1] = buffer[len+4] = 0;
 				AddCommandString (&buffer[2]);
 				TabbedLast = false;
-			} else if (ev->data3 == '`' || ev->data1 == KEY_ESCAPE) {
+			} else if (ev->data2 == '`' || ev->data1 == KEY_ESCAPE) {
 				// Close console, both ` and ESC clear command line
 
 				buffer[0] = buffer[1] = buffer[len+4] = 0;
@@ -765,13 +756,6 @@ void C_HandleKey (event_t *ev, byte *buffer, int len)
 
 				if (buffer[0] < len) {
 					char data = ev->data3;
-
-					if (KeysShifted) {
-						if (data >= 39 && data <= 61)
-							data = ShiftLOT[data-39];
-						else if (data >= 91 && data <= 122)
-							data = ShiftLOT[data-68];
-					}
 
 					if (buffer[1] == buffer[0]) {
 						buffer[buffer[0] + 2] = data;

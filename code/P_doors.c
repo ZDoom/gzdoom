@@ -127,15 +127,14 @@ void T_VerticalDoor (vldoor_t* door)
 			{
 			  case blazeRaise:
 			  case blazeClose:
-				door->sector->specialdata = NULL;
+				door->sector->ceilingdata = NULL;  //jff 2/22/98
 				P_RemoveThinker (&door->thinker);  // unlink and free
-				S_StartSound((mobj_t *)&door->sector->soundorg,
-							 sfx_bdcls);
+				S_StartSound((mobj_t *)&door->sector->soundorg, sfx_bdcls);
 				break;
 				
 			  case normal:
 			  case close:
-				door->sector->specialdata = NULL;
+				door->sector->ceilingdata = NULL;  //jff 2/22/98
 				P_RemoveThinker (&door->thinker);  // unlink and free
 				break;
 				
@@ -185,7 +184,7 @@ void T_VerticalDoor (vldoor_t* door)
 			  case close30ThenOpen:
 			  case blazeOpen:
 			  case open:
-				door->sector->specialdata = NULL;
+				door->sector->ceilingdata = NULL;  //jff 2/22/98
 				P_RemoveThinker (&door->thinker);  // unlink and free
 				break;
 				
@@ -254,10 +253,7 @@ EV_DoLockedDoor
 }
 
 
-int
-EV_DoDoor
-( line_t*		line,
-  vldoor_e		type )
+int EV_DoDoor (line_t *line, vldoor_e type)
 {
 	int 		secnum,rtn;
 	sector_t*	sec;
@@ -269,15 +265,15 @@ EV_DoDoor
 	while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
 	{
 		sec = &sectors[secnum];
-		if (sec->specialdata)
+		// if the ceiling already moving, don't start the door action
+		if (P_SectorActive(ceiling_special,sec)) //jff 2/22/98
 			continue;
-				
-		
+
 		// new door thinker
 		rtn = 1;
 		door = Z_Malloc (sizeof(*door), PU_LEVSPEC, 0);
 		P_AddThinker (&door->thinker);
-		sec->specialdata = door;
+		sec->ceilingdata = door;	//jff 2/22/98
 
 		door->thinker.function.acp1 = (actionf_p1) T_VerticalDoor;
 		door->sector = sec;
@@ -344,10 +340,7 @@ EV_DoDoor
 //
 // EV_VerticalDoor : open a door manually, no tag value
 //
-void
-EV_VerticalDoor
-( line_t*		line,
-  mobj_t*		thing )
+void EV_VerticalDoor (line_t *line, mobj_t *thing)
 {
 	player_t*	player;
 	int 		secnum;
@@ -403,13 +396,21 @@ EV_VerticalDoor
 		break;
 	}
 		
-	// if the sector has an active thinker, use it
-	sec = sides[ line->sidenum[side^1]] .sector;
+	// if the wrong side of door is pushed, give oof sound
+	if (line->sidenum[1]==-1)				// killough
+	{
+		S_StartSound(player->mo,sfx_oof);	// killough 3/20/98
+		return /*0*/;
+	}
+
+	// get the sector on the second side of activating linedef
+	sec = sides[line->sidenum[1]].sector;
 	secnum = sec-sectors;
 
-	if (sec->specialdata)
+	// if door already has a thinker, use it
+	if (sec->ceilingdata)			//jff 2/22/98
 	{
-		door = sec->specialdata;
+		door = sec->ceilingdata;	//jff 2/22/98
 		switch(line->special)
 		{
 		  case	1: // ONLY FOR "RAISE" DOORS, NOT "OPEN"s
@@ -452,7 +453,7 @@ EV_VerticalDoor
 	// new door thinker
 	door = Z_Malloc (sizeof(*door), PU_LEVSPEC, 0);
 	P_AddThinker (&door->thinker);
-	sec->specialdata = door;
+	sec->ceilingdata = door;	//jff 2/22/98
 	door->thinker.function.acp1 = (actionf_p1) T_VerticalDoor;
 	door->sector = sec;
 	door->direction = 1;
@@ -504,7 +505,7 @@ void P_SpawnDoorCloseIn30 (sector_t* sec)
 
 	P_AddThinker (&door->thinker);
 
-	sec->specialdata = door;
+	sec->ceilingdata = door;	//jff 2/22/98
 	sec->special = 0;
 
 	door->thinker.function.acp1 = (actionf_p1)T_VerticalDoor;
@@ -526,7 +527,7 @@ void P_SpawnDoorRaiseIn5Mins (sector_t *sec, int secnum)
 	
 	P_AddThinker (&door->thinker);
 
-	sec->specialdata = door;
+	sec->ceilingdata = door;	//jff 2/22/98
 	sec->special = 0;
 
 	door->thinker.function.acp1 = (actionf_p1)T_VerticalDoor;
@@ -554,7 +555,7 @@ void P_SpawnDoorRaiseIn5Mins (sector_t *sec, int secnum)
 
 slideframe_t slideFrames[MAXSLIDEDOORS];
 
-void P_InitSlidingDoorFrames(void)
+void P_InitSlidingDoorFrames (void)
 {
 	int 		i;
 	int 		f1;
@@ -598,7 +599,7 @@ void P_InitSlidingDoorFrames(void)
 // Return index into "slideFrames" array
 // for which door type to use
 //
-int P_FindSlidingDoorType(line_t*		line)
+int P_FindSlidingDoorType (line_t *line)
 {
 	int 		i;
 	int 		val;
@@ -613,7 +614,7 @@ int P_FindSlidingDoorType(line_t*		line)
 	return -1;
 }
 
-void T_SlidingDoor (slidedoor_t*		door)
+void T_SlidingDoor (slidedoor_t *door)
 {
 	switch(door->status)
 	{
@@ -700,10 +701,7 @@ void T_SlidingDoor (slidedoor_t*		door)
 
 
 
-void
-EV_SlidingDoor
-( line_t*		line,
-  mobj_t*		thing )
+void EV_SlidingDoor (line_t *line, mobj_t *thing)
 {
 	sector_t*			sec;
 	slidedoor_t*		door;

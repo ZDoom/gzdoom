@@ -547,7 +547,11 @@ void D_AdvanceDemo (void)
 // This cycles through the demo sequences.
 // FIXME - version dependend demo numbers?
 //
- void D_DoAdvanceDemo (void)
+// [RH] If M_DemoNoPlay is true, then any
+//		demos are skipped.
+extern M_DemoNoPlay;
+
+void D_DoAdvanceDemo (void)
 {
 	players[consoleplayer].playerstate = PST_LIVE;	// not reborn
 	advancedemo = false;
@@ -575,16 +579,20 @@ void D_AdvanceDemo (void)
 		  S_StartMusic ("d_intro");
 		break;
 	  case 1:
-		G_DeferedPlayDemo ("demo1");
-		break;
+		if (!M_DemoNoPlay) {
+		  G_DeferedPlayDemo ("demo1");
+		  break;
+		}
 	  case 2:
 		pagetic = 200;
 		gamestate = GS_DEMOSCREEN;
 		pagename = "CREDIT";
 		break;
 	  case 3:
-		G_DeferedPlayDemo ("demo2");
-		break;
+		if (!M_DemoNoPlay) {
+		  G_DeferedPlayDemo ("demo2");
+		  break;
+		}
 	  case 4:
 		gamestate = GS_DEMOSCREEN;
 		if ( gamemode == commercial)
@@ -604,11 +612,17 @@ void D_AdvanceDemo (void)
 		}
 		break;
 	  case 5:
-		G_DeferedPlayDemo ("demo3");
+		if (M_DemoNoPlay)
+		  advancedemo = true;
+		else
+		  G_DeferedPlayDemo ("demo3");
 		break;
 		// THE DEFINITIVE DOOM Special Edition demo
 	  case 6:
-		G_DeferedPlayDemo ("demo4");
+		if (M_DemoNoPlay)
+		  advancedemo = true;
+		else
+		  G_DeferedPlayDemo ("demo4");
 		break;
 	}
 }
@@ -1094,12 +1108,21 @@ void D_DoomMain (void)
 	// [RH] Apply any DeHackEd patch
 	{
 		int hack;
+		cvar_t *autopatch;
 
 		hack = M_CheckParm ("-deh");
 		if (hack && hack < myargc - 1)
-			DoDehPatch (myargv[hack + 1]);
-		else
-			DoDehPatch (NULL);		// See if there's a patch in a PWAD
+			// Use patch from command line
+			DoDehPatch (myargv[hack + 1], false);
+		else {
+			autopatch = cvar ("def_patch", "", CVAR_ARCHIVE);
+			if (FileExists (autopatch->string))
+				// Use patch specified by def_patch.
+				// (Any patches in a PWAD take precedence.)
+				DoDehPatch (autopatch->string, true);
+			else
+				DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
+		}
 	}
 
 	// [RH] Now that all text strings are set up,
@@ -1138,7 +1161,8 @@ void D_DoomMain (void)
 		// but w/o all the lumps of the registered version. 
 		if (gamemode == registered || gamemode == retail)
 			for (i = 0;i < 23; i++)
-				if (W_CheckNumForName(name[i])<0)
+				if (W_CheckNumForName(name[i])<0 &&
+					(W_CheckNumForName)(name[i],ns_sprites)<0)
 					I_Error("\nThis is not the registered version.");
 	}
 	

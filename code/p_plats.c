@@ -136,11 +136,7 @@ void T_PlatRaise(plat_t* plat)
 // Do Platforms
 //	"amount" is only used for SOME platforms.
 //
-int
-EV_DoPlat
-( line_t*		line,
-  plattype_e	type,
-  int			amount )
+int EV_DoPlat (line_t *line, plattype_e type, int amount)
 {
 	plat_t* 	plat;
 	int 		secnum;
@@ -150,9 +146,8 @@ EV_DoPlat
 	secnum = -1;
 	rtn = 0;
 
-	
 	//	Activate all <type> plats that are in_stasis
-	switch(type)
+	switch (type)
 	{
 	  case perpetualRaise:
 		P_ActivateInStasis(line->tag);
@@ -166,7 +161,7 @@ EV_DoPlat
 	{
 		sec = &sectors[secnum];
 
-		if (sec->specialdata)
+		if (P_SectorActive (floor_special, sec))	//jff 2/23/98 multiple thinkers
 			continue;
 		
 		// Find lowest & highest floors around sector
@@ -176,11 +171,15 @@ EV_DoPlat
 				
 		plat->type = type;
 		plat->sector = sec;
-		plat->sector->specialdata = plat;
+		plat->sector->floordata = plat;	//jff 2/23/98 multiple thinkers
 		plat->thinker.function.acp1 = (actionf_p1) T_PlatRaise;
 		plat->crush = false;
 		plat->tag = line->tag;
-		
+
+		//jff 1/26/98 Avoid raise plat bouncing a head off a ceiling and then
+		//going down forever -- default low to plat height when triggered
+		plat->low = sec->floorheight;
+
 		switch(type)
 		{
 		  case raiseToNearestAndChange:
@@ -258,7 +257,7 @@ EV_DoPlat
 
 void P_ActivateInStasis(int tag)
 {
-	int 		i;
+	int i;
 		
 	for (i = 0;i < MaxPlats;i++)
 		if (activeplats[i]
@@ -273,7 +272,7 @@ void P_ActivateInStasis(int tag)
 
 void EV_StopPlat(line_t* line)
 {
-	int 		j;
+	int j;
 		
 	for (j = 0;j < MaxPlats;j++)
 		if (activeplats[j]
@@ -288,7 +287,7 @@ void EV_StopPlat(line_t* line)
 
 void P_AddActivePlat(plat_t* plat)
 {
-	int 		i;
+	int i;
 	
 	for (i = 0;i < MaxPlats;i++)
 		if (activeplats[i] == NULL)
@@ -308,11 +307,12 @@ void P_AddActivePlat(plat_t* plat)
 
 void P_RemoveActivePlat(plat_t* plat)
 {
-	int 		i;
+	int i;
+
 	for (i = 0;i < MaxPlats;i++)
 		if (plat == activeplats[i])
 		{
-			(activeplats[i])->sector->specialdata = NULL;
+			(activeplats[i])->sector->floordata = NULL;		// [RH]
 			P_RemoveThinker(&(activeplats[i])->thinker);
 			activeplats[i] = NULL;
 			

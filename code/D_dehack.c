@@ -700,16 +700,29 @@ donewithtext:
 }
 	
 
-void DoDehPatch (char *patchfile)
+void DoDehPatch (char *patchfile, BOOL autoloading)
 {
 	char file[256];
 	int cont;
 	int filelen;
+	int lump;
 
 	BackUpData ();
 	PatchFile = NULL;
 
-	if (patchfile) {
+	lump = W_CheckNumForName ("DEHACKED");
+
+	if (lump >= 0 && autoloading) {
+		// Execute the DEHACKED lump as a patch.
+		filelen = W_LumpLength (lump);
+		if ( (PatchFile = malloc (filelen + 1)) ) {
+			W_ReadLump (lump, PatchFile);
+		} else {
+			Printf ("Not enough memory to apply internal DeHackEd patch\n");
+			return;
+		}
+	} else if (patchfile) {
+		// Try to execute patchfile as a patch.
 		FILE *deh;
 
 		strcpy (file, patchfile);
@@ -728,22 +741,9 @@ void DoDehPatch (char *patchfile)
 			return;
 		}
 	} else {
-		int lump = W_CheckNumForName ("DEHACKED");
-
-		if (lump < 0)
-			return;
-
-		filelen = W_LumpLength (lump);
-		if ( (PatchFile = malloc (filelen + 1)) ) {
-			W_ReadLump (lump, PatchFile);
-		} else {
-			Printf ("Not enough memory to apply internal DeHackEd patch\n");
-			return;
-		}
-	}
-
-	if (!PatchFile)
+		// Nothing to do.
 		return;
+	}
 
 	// End lump with a NULL for our parser
 	PatchFile[filelen] = 0;

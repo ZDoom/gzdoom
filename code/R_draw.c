@@ -875,25 +875,15 @@ void R_FillBackScreen (void)
 	int 		x;
 	int 		y;
 	patch_t*	patch;
-
-	// DOOM border patch.
-	//char		name1[] = "FLOOR7_2";
-
-	// DOOM II border patch.
-	//char		name2[] = "GRNROCK";	
-
-	char*		name;
-
-	// [RH] Always draws something now.
-
-	if ( gamemode == commercial)
-		name = "GRNROCK";
-	else
-		name = "FLOOR7_2";
 	
 	V_LockScreen (&screens[1]);
 
-	V_FlatFill (0,0,screens[1].width,screens[1].height,&screens[1],W_CacheLumpName (name, PU_CACHE));
+	{
+		int lump = R_FlatNumForName ((gamemode == commercial) ? "GRNROCK" : "FLOOR7_2");
+		V_FlatFill (0,0,screens[1].width,screens[1].height,&screens[1],
+					W_CacheLumpNum (lump + firstflat, PU_CACHE));
+	}
+
 
 	if (realviewwidth != screens[0].width) {
 		patch = W_CacheLumpName ("brdr_b",PU_CACHE);

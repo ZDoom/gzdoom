@@ -190,7 +190,7 @@ void W_AddFile (char *filename)
 //
 void W_InitMultipleFiles (char** filenames)
 {
-	int size;
+	int i;
 
 	// open all the files, load headers, and count lumps
 	numlumps = 0;
@@ -204,20 +204,25 @@ void W_InitMultipleFiles (char** filenames)
 	if (!numlumps)
 		I_Error ("W_InitFiles: no files found");
 
+	// [RH] Set namespace markers to global for everything
+	for (i = 0; i < numlumps; i++)
+		lumpinfo[i].namespc = ns_global;
+
 	// [RH] Merge sprite and flat groups.
 	//		(We don't need to bother with patches, since
 	//		Doom doesn't use markers to identify them.)
 
-	W_MergeLumps ("S_START", "S_END");
-	W_MergeLumps ("F_START", "F_END");
+	W_MergeLumps ("S_START", "S_END", ns_sprites);
+	W_MergeLumps ("F_START", "F_END", ns_flats);
+	W_MergeLumps ("C_START", "C_END", ns_colormaps);
 
 	// [RH] Set up hash table
 	W_InitHashChains ();
 
 	// set up caching
-	size = numlumps * sizeof(*lumpcache);
-	lumpcache = Malloc (size);
-	memset (lumpcache, 0, size);
+	i = numlumps * sizeof(*lumpcache);
+	lumpcache = Z_Malloc (i, PU_STATIC, 0);
+	memset (lumpcache, 0, i);
 }
 
 
@@ -229,7 +234,7 @@ void W_InitMultipleFiles (char** filenames)
 //
 void W_InitFile (char* filename)
 {
-	char*	names[2];
+	char *names[2];
 
 	names[0] = filename;
 	names[1] = NULL;
@@ -253,8 +258,9 @@ int W_NumLumps (void)
 // Returns -1 if name not found.
 //
 // [RH] Changed to use hash lookup ala BOOM instead of a linear search
+//		and namespace parameter
 //
-int W_CheckNumForName (const char *name)
+int (W_CheckNumForName) (const char *name, int space)
 {
 	char uname[8];
 	int i;
@@ -263,7 +269,7 @@ int W_CheckNumForName (const char *name)
 	i = lumpinfo[W_LumpNameHash (uname) % (unsigned)numlumps].index;
 
 	while (i != -1) {
-		if (!strncmp (lumpinfo[i].name, uname, 8))
+		if (!strncmp (lumpinfo[i].name, uname, 8) && lumpinfo[i].namespc == space)
 			break;
 		i = lumpinfo[i].next;
 	}
@@ -429,7 +435,7 @@ static BOOL IsMarker (const char *name, const char *marker)
 //
 // Basically from Boom, too, although I tried to write
 // it independently.
-void W_MergeLumps (const char *start, const char *end)
+void W_MergeLumps (const char *start, const char *end, int space)
 {
 	char ustart[8], uend[8];
 	lumpinfo_t *newlumpinfos;
@@ -460,6 +466,7 @@ void W_MergeLumps (const char *start, const char *end)
 					newlumpinfos[0].handle =
 						newlumpinfos[0].position =
 						newlumpinfos[0].size = 0;
+					newlumpinfos[0].namespc = ns_global;
 				}
 			} else {
 				// Copy lumpinfo down this list
@@ -473,7 +480,8 @@ void W_MergeLumps (const char *start, const char *end)
 				haveEndMarker = true;
 				insideBlock = false;
 			} else {
-				newlumpinfos[newlumps++] = lumpinfo[i];
+				newlumpinfos[newlumps] = lumpinfo[i];
+				newlumpinfos[newlumps++].namespc = space;
 			}
 		}
 	}
@@ -487,6 +495,7 @@ void W_MergeLumps (const char *start, const char *end)
 		newlumpinfos[newlumps].handle =
 			newlumpinfos[newlumps].position =
 			newlumpinfos[newlumps].size = 0;
+		newlumpinfos[newlumps].namespc = ns_global;
 		newlumps++;
 	}
 

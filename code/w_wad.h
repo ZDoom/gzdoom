@@ -68,9 +68,16 @@ typedef struct lumpinfo_s
 	int			next;
 	int			index;
 
-	int			pad;	// [RH] Pad to 32 bytes
+	int			namespc;
 } lumpinfo_t;
 
+// [RH] Namespaces from BOOM.
+typedef enum {
+	ns_global = 0,
+	ns_sprites,
+	ns_flats,
+	ns_colormaps
+} namespace_t;
 
 extern	void**		lumpcache;
 extern	lumpinfo_t*	lumpinfo;
@@ -78,7 +85,8 @@ extern	int			numlumps;
 
 void	W_InitMultipleFiles (char** filenames);
 
-int		W_CheckNumForName (const char *name);
+#define W_CheckNumForName(name) (W_CheckNumForName)(name, ns_global)
+int		(W_CheckNumForName) (const char *name, int);
 int		W_GetNumForName (const char *name);
 
 int		W_LumpLength (int lump);
@@ -88,7 +96,7 @@ void   *W_CacheLumpNum (int lump, int tag);
 
 // [RH] W_CacheLumpName() is now a macro
 #define W_CacheLumpName(name,tag) \
-		W_CacheLumpNum (W_GetNumForName(name), tag)
+		W_CacheLumpNum (W_GetNumForName(name), (tag))
 
 void	W_Profile (void);
 
@@ -99,7 +107,7 @@ unsigned W_LumpNameHash (const char *name);				// [RH] Create hash key from an 8
 void	W_InitHashChains (void);						// [RH] Set up the lumpinfo hashing
 
 // [RH] Combine multiple marked ranges of lumps into one.
-void	W_MergeLumps (const char *start, const char *end);
+void	W_MergeLumps (const char *start, const char *end, int);
 
 // Copy an 8-char string and uppercase it.
 void uppercopy (char *to, const char *from);

@@ -986,7 +986,6 @@ void Net_DoCommand (int type, byte **stream, int player)
 		case DEM_CHANGEMAP:
 			// Change to another map without disconnecting other players
 			s = ReadString (stream);
-			strncpy (level.mapname, s, 8);
 			strncpy (level.nextmap, s, 8);
 			// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
 			level.flags |= LEVEL_CHANGEMAPCHEAT;

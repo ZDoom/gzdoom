@@ -27,6 +27,36 @@
 #define __P_SPEC__
 
 
+//jff 2/23/98 identify the special classes that can share sectors
+
+typedef enum
+{
+	floor_special,
+	ceiling_special,
+	lighting_special,
+} special_e;
+
+// killough 3/7/98: Add generalized scroll effects
+
+typedef struct {
+	thinker_t thinker;		// Thinker structure for scrolling
+	fixed_t dx, dy;			// (dx,dy) scroll speeds
+	int affectee;			// Number of affected sidedef, sector, tag, or whatever
+	int control;			// Control sector (-1 if none) used to control scrolling
+	fixed_t last_height;	// Last known height of control sector
+	fixed_t vdx, vdy;		// Accumulated velocity if accelerative
+	int accel;				// Whether it's accelerative
+	enum
+	{
+		sc_side,
+		sc_floor,
+		sc_ceiling,
+		sc_carry,
+		sc_carry_ceiling,	// killough 4/11/98: carry objects hanging on ceilings
+	} type;					// Type of scroll effect
+} scroll_t;
+
+
 // Define values for map objects
 #define MO_TELEPORTMAN			14
 
@@ -64,6 +94,7 @@ fixed_t	P_FindLowestFloorSurrounding (sector_t *sec);
 fixed_t	P_FindHighestFloorSurrounding (sector_t *sec);
 
 fixed_t	P_FindNextHighestFloor (sector_t *sec, int currentheight);
+fixed_t P_FindNextLowestFloor (sector_t* sec, int currentheight);
 
 fixed_t	P_FindLowestCeilingSurrounding (sector_t *sec);
 fixed_t	P_FindHighestCeilingSurrounding (sector_t *sec);
@@ -73,6 +104,9 @@ int		P_FindSectorFromLineTag (line_t *line, int start);
 int		P_FindMinSurroundingLight (sector_t *sector, int max);
 
 sector_t *getNextSector (line_t *line, sector_t *sec);
+
+
+void	T_Scroll (scroll_t *);		// killough 3/7/98: scroll effect thinker
 
 
 //
@@ -191,11 +225,8 @@ typedef struct
 
 
 
- // max # of wall switches in a level
-#define MAXSWITCHES 	50
-
  // 4 players, 4 buttons each at once, max.
-#define MAXBUTTONS		16
+#define MAXBUTTONS		(MAXPLAYERS*4)
 
  // 1 second, in ticks. 
 #define BUTTONTIME		TICRATE
@@ -244,7 +275,7 @@ typedef struct
 	int 		count;
 	plat_e		status;
 	plat_e		oldstatus;
-	BOOL 	crush;
+	BOOL 		crush;
 	int 		tag;
 	plattype_e	type;
 	
@@ -463,41 +494,23 @@ void	P_ActivateInStasisCeiling(line_t *line);
 //
 typedef enum
 {
-	// lower floor to highest surrounding floor
-	lowerFloor,
-	
-	// lower floor to lowest surrounding floor
-	lowerFloorToLowest,
-	
-	// lower floor to highest surrounding floor VERY FAST
-	turboLower,
-	
-	// raise floor to lowest surrounding CEILING
-	raiseFloor,
-	
-	// raise floor to next highest surrounding floor
-	raiseFloorToNearest,
-
-	// raise floor to shortest height texture around it
-	raiseToTexture,
-	
-	// lower floor to lowest surrounding floor
-	//	and change floorpic
-	lowerAndChange,
+	lowerFloor,				// lower floor to highest surrounding floor
+	lowerFloorToLowest,		// lower floor to lowest surrounding floor
+	turboLower,				// lower floor to highest surrounding floor VERY FAST
+	raiseFloor,				// raise floor to lowest surrounding CEILING
+	raiseFloorToNearest,	// raise floor to next highest surrounding floor
+	raiseToTexture,			// raise floor to shortest height texture around it
+	lowerAndChange,			// lower floor to lowest surrounding floor and change floorpic
 
 	raiseFloor24,
 	raiseFloor24AndChange,
 	raiseFloorCrush,
 
-	// raise to next highest floor, turbo-speed
-	raiseFloorTurbo,
+	raiseFloorTurbo,		// raise to next highest floor, turbo-speed
 	donutRaise,
 	raiseFloor512
 	
 } floor_e;
-
-
-
 
 typedef enum
 {
@@ -506,7 +519,12 @@ typedef enum
 	
 } stair_e;
 
-
+typedef enum
+{
+	elevateUp,
+	elevateDown,
+	elevateCurrent,
+} elevator_e;
 
 typedef struct
 {
@@ -522,9 +540,20 @@ typedef struct
 
 } floormove_t;
 
+typedef struct
+{
+  thinker_t thinker;
+  elevator_e type;
+  sector_t* sector;
+  int direction;
+  fixed_t floordestheight;
+  fixed_t ceilingdestheight;
+  fixed_t speed;
+} elevator_t;
 
 
-#define FLOORSPEED				FRACUNIT
+#define ELEVATORSPEED	(FRACUNIT*4)
+#define FLOORSPEED		FRACUNIT
 
 typedef enum
 {
@@ -537,20 +566,23 @@ typedef enum
 result_e T_MovePlane (sector_t *sector, fixed_t speed, fixed_t dest,
 					  BOOL crush, int floorOrCeiling, int direction);
 
+int EV_DoElevator (line_t *line, ceiling_e type);
+
 int EV_BuildStairs (line_t *line, stair_e type);
 
 int EV_DoFloor (line_t *line, floor_e floortype);
 
 void T_MoveFloor (floormove_t *floor);
 
+void T_MoveElevator (elevator_t *elevator);
+
+
 //
 // P_TELEPT
 //
 int		EV_Teleport (line_t *line, int side, mobj_t *thing);
 
+
+int P_SectorActive (special_e t, sector_t *s);	// [RH] from BOOM
+
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

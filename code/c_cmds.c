@@ -348,6 +348,7 @@ void Cmd_Limits (player_t *plyr, int argc, char **argv)
 	extern int MaxSegs;
 	extern int MaxVisPlanes;
 	extern int MaxVisSprites;
+	extern int maxopenings;
 
 	Printf_Bold ("Note that the following values are\n"
 				 "dynamic and will increase as needed.\n\n");

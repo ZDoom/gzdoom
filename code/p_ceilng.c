@@ -169,10 +169,7 @@ void T_MoveCeiling (ceiling_t* ceiling)
 // EV_DoCeiling
 // Move a ceiling up/down and all around!
 //
-int
-EV_DoCeiling
-( line_t*		line,
-  ceiling_e 	type )
+int EV_DoCeiling (line_t *line, ceiling_e type)
 {
 	int 		secnum;
 	int 		rtn;
@@ -183,6 +180,7 @@ EV_DoCeiling
 	rtn = 0;
 	
 	//	Reactivate in-stasis ceilings...for certain types.
+	// This restarts a crusher after it has been stopped
 	switch(type)
 	{
 	  case fastCrushAndRaise:
@@ -193,17 +191,19 @@ EV_DoCeiling
 		break;
 	}
 		
+	// affects all sectors with the same tag as the linedef
 	while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
 	{
 		sec = &sectors[secnum];
-		if (sec->specialdata)
+		// if ceiling already moving, don't start a second function on it
+		if (P_SectorActive (ceiling_special,sec))	//jff 2/22/98
 			continue;
 		
 		// new door thinker
 		rtn = 1;
 		ceiling = Z_Malloc (sizeof(*ceiling), PU_LEVSPEC, 0);
 		P_AddThinker (&ceiling->thinker);
-		sec->specialdata = ceiling;
+		sec->ceilingdata = ceiling;					//jff 2/22/98
 		ceiling->thinker.function.acp1 = (actionf_p1)T_MoveCeiling;
 		ceiling->sector = sec;
 		ceiling->crush = false;
@@ -277,13 +277,13 @@ void P_AddActiveCeiling(ceiling_t* c)
 //
 void P_RemoveActiveCeiling(ceiling_t* c)
 {
-	int 		i;
+	int i;
 		
 	for (i = 0;i < MaxCeilings;i++)
 	{
 		if (activeceilings[i] == c)
 		{
-			activeceilings[i]->sector->specialdata = NULL;
+			activeceilings[i]->sector->ceilingdata = NULL;	// [RH]
 			P_RemoveThinker (&activeceilings[i]->thinker);
 			activeceilings[i] = NULL;
 			break;

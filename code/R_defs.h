@@ -104,29 +104,39 @@ struct sector_s
 	short		special;
 	short		tag;
 
-	// 0 = untraversed, 1,2 = sndlines -1
-	int 		soundtraversed;
-
-	// thing that made a sound (or null)
-	mobj_t* 	soundtarget;
-
-	// mapblock bounding box for height changes
-	int 		blockbox[4];
-
-	// origin for any sounds played by the sector
-	degenmobj_t soundorg;
-
-	// if == validcount, already checked
-	int 		validcount;
-
-	// list of mobjs in sector
-	mobj_t* 	thinglist;
+	int 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
+	mobj_t* 	soundtarget;	// thing that made a sound (or null)
+	int 		blockbox[4];	// mapblock bounding box for height changes
+	degenmobj_t soundorg;		// origin for any sounds played by the sector
+	int 		validcount;		// if == validcount, already checked
+	mobj_t* 	thinglist;		// list of mobjs in sector
 
 	// thinker_t for reversable actions
-	void*		specialdata;
+	void *floordata;			// jff 2/22/98 make thinkers on
+	void *ceilingdata;			// floors, ceilings, lighting,
+	void *lightingdata;			// independent of one another
 
-	int 				linecount;
-	struct line_s** 	lines;	// [linecount] size
+	// jff 2/26/98 lockout machinery for stairbuilding
+	int stairlock;		// -2 on first locked -1 after thinker done 0 normally
+	int prevsec;		// -1 or number of sector for previous step
+	int nextsec;		// -1 or number of next step sector
+
+	// killough 3/7/98: floor and ceiling texture offsets
+	fixed_t   floor_xoffs,   floor_yoffs;
+	fixed_t ceiling_xoffs, ceiling_yoffs;
+
+	// killough 3/7/98: support flat heights drawn at another sector's heights
+	int heightsec;		// other sector, or -1 if no other sector
+
+	// killough 4/11/98: support for lightlevels coming from another sector
+	int floorlightsec, ceilinglightsec;
+
+	// list of mobjs that are at least partially in the sector
+	// thinglist is a subset of touching_thinglist
+	struct msecnode_s *touching_thinglist;				// phares 3/14/98
+
+	int linecount;
+	struct line_s **lines;		// [linecount] size
 	
 };
 typedef struct sector_s sector_t;
@@ -186,6 +196,7 @@ struct line_s
 	short		flags;
 	short		special;
 	short		tag;
+	byte		args[5];	// [RH] Hexen-style arguments
 
 	// Visual appearance: SideDefs.
 	//	sidenum[1] will be -1 if one sided
@@ -229,6 +240,32 @@ struct subsector_s
 };
 typedef struct subsector_s subsector_t;
 
+// phares 3/14/98
+//
+// Sector list node showing all sectors an object appears in.
+//
+// There are two threads that flow through these nodes. The first thread
+// starts at touching_thinglist in a sector_t and flows through the m_snext
+// links to find all mobjs that are entirely or partially in the sector.
+// The second thread starts at touching_sectorlist in an mobj_t and flows
+// through the m_tnext links to find all sectors a thing touches. This is
+// useful when applying friction or push effects to sectors. These effects
+// can be done as thinkers that act upon all objects touching their sectors.
+// As an mobj moves through the world, these nodes are created and
+// destroyed, with the links changed appropriately.
+//
+// For the links, NULL means top or end of list.
+
+typedef struct msecnode_s
+{
+	sector_t			*m_sector;	// a sector containing this object
+	struct mobj_s		*m_thing;	// this object
+	struct msecnode_s	*m_tprev;	// prev msecnode_t for this thing
+	struct msecnode_s	*m_tnext;	// next msecnode_t for this thing
+	struct msecnode_s	*m_sprev;	// prev msecnode_t for this sector
+	struct msecnode_s	*m_snext;	// next msecnode_t for this sector
+	BOOL visited;	// killough 4/4/98, 4/7/98: used in search algorithms
+} msecnode_t;
 
 //
 // The LineSeg.
@@ -403,6 +440,9 @@ struct vissprite_s
 	//		Currently this is just a translation table and not a palette.
 	struct palette_s	*palette;
 
+	// killough 3/27/98: height sector for underwater/fake ceiling support
+	int heightsec;
+
 };
 typedef struct vissprite_s vissprite_t;
 
@@ -459,6 +499,8 @@ struct visplane_s
   fixed_t				height;
   int					picnum;
   int					lightlevel;
+  fixed_t				xoffs;
+  fixed_t				yoffs;
   int					minx;
   int					maxx;
   

@@ -64,130 +64,127 @@
 typedef struct
 {
 	BOOL 	istexture;
-	int 		picnum;
-	int 		basepic;
-	int 		numpics;
-	int 		speed;
-	
+	int 	picnum;
+	int 	basepic;
+	int 	numpics;
+	int 	speed;
 } anim_t;
 
 //
-//		source animation definition
+// source animation definition
+//
+// [RH] Note that in BOOM's ANIMATED lump, this is an array packed to
+//		byte boundaries. Total size: 23 bytes per entry.
 //
 typedef struct
 {
-	BOOL 		istexture;		// if false, it is a flat
-	char		endname[9];
-	char		startname[9];
-	int 		speed;
+	byte 	istexture;		// if false, it is a flat
+	char	endname[9];
+	char	startname[9];
+	int 	speed;
 } animdef_t;
 
 
 
-#define MAXANIMS				32
+static anim_t*  lastanim;
+static anim_t*  anims;
 
-extern anim_t	anims[MAXANIMS];
-extern anim_t*	lastanim;
-
-//
-// P_InitPicAnims
-//
-
-// Floor/ceiling animation sequences,
-//	defined by first and last frame,
-//	i.e. the flat (64x64 tile) name to
-//	be used.
-// The full animation sequence is given
-//	using all the flats between the start
-//	and end entry, in the order found in
-//	the WAD file.
-//
-animdef_t				animdefs[] =
-{
-	{false, 	"NUKAGE3",		"NUKAGE1",		8},
-	{false, 	"FWATER4",		"FWATER1",		8},
-	{false, 	"SWATER4",		"SWATER1",		8},
-	{false, 	"LAVA4",		"LAVA1",		8},
-	{false, 	"BLOOD3",		"BLOOD1",		8},
-
-	// DOOM II flat animations.
-	{false, 	"RROCK08",		"RROCK05",		8}, 			
-	{false, 	"SLIME04",		"SLIME01",		8},
-	{false, 	"SLIME08",		"SLIME05",		8},
-	{false, 	"SLIME12",		"SLIME09",		8},
-
-	{true,		"BLODGR4",		"BLODGR1",		8},
-	{true,		"SLADRIP3", 	"SLADRIP1", 	8},
-
-	{true,		"BLODRIP4", 	"BLODRIP1", 	8},
-	{true,		"FIREWALL", 	"FIREWALA", 	8},
-	{true,		"GSTFONT3", 	"GSTFONT1", 	8},
-	{true,		"FIRELAVA", 	"FIRELAV3", 	8},
-	{true,		"FIREMAG3", 	"FIREMAG1", 	8},
-	{true,		"FIREBLU2", 	"FIREBLU1", 	8},
-	{true,		"ROCKRED3", 	"ROCKRED1", 	8},
-
-	{true,		"BFALL4",		"BFALL1",		8},
-	{true,		"SFALL4",		"SFALL1",		8},
-	{true,		"WFALL4",		"WFALL1",		8},
-	{true,		"DBRAIN4",		"DBRAIN1",		8},
-		
-	{-1}
-};
-
-anim_t			anims[MAXANIMS];
-anim_t* 		lastanim;
-
+// killough 3/7/98: Initialize generalized scrolling
+static void P_SpawnScrollers(void);
 
 //
 //		Animating line specials
 //
-#define MAXLINEANIMS			64
+//#define MAXLINEANIMS			64
 
-extern	short	numlinespecials;
-extern	line_t* linespeciallist[MAXLINEANIMS];
+//extern	short	numlinespecials;
+//extern	line_t* linespeciallist[MAXLINEANIMS];
 
 
-
+//
+// P_InitPicAnims
+//
+// Load the table of animation definitions, checking for existence of
+// the start and end of each frame. If the start doesn't exist the sequence
+// is skipped, if the last doesn't exist, BOOM exits.
+//
+// Wall/Flat animation sequences, defined by name of first and last frame,
+// The full animation sequence is given using all lumps between the start
+// and end entry, in the order found in the WAD file.
+//
+// This routine modified to read its data from a predefined lump or
+// PWAD lump called ANIMATED rather than a static table in this module to
+// allow wad designers to insert or modify animation sequences.
+//
+// Lump format is an array of byte packed animdef_t structures, terminated
+// by a structure with istexture == -1. The lump can be generated from a
+// text source file using SWANTBLS.EXE, distributed with the BOOM utils.
+// The standard list of switches and animations is contained in the example
+// source text file DEFSWANI.DAT also in the BOOM util distribution.
+//
+// [RH] Rewritten to support BOOM ANIMATED lump but also make absolutely
+//		no assumptions about how the compiler packs the animdefs array.
+//
 void P_InitPicAnims (void)
 {
-	int i;
+	byte *animdefs = W_CacheLumpName ("ANIMATED", PU_STATIC);
+	byte *anim_p;
 
-	
-	//	Init animation
-	lastanim = anims;
-	for (i=0 ; animdefs[i].istexture != -1 ; i++)
+	// Init animation
+
+	// [RH] Figure out maximum size of anims array
 	{
-		if (animdefs[i].istexture)
+		int i;
+
+		for (i = 0, anim_p = animdefs; *anim_p != 255; anim_p += 23, i++)
+			;
+
+		if (i == 0) {
+			// No animdefs
+			anims = lastanim = NULL;
+			Z_Free (animdefs);
+			return;
+		}
+
+		lastanim = anims = Z_Malloc (i*sizeof(*anims), PU_STATIC, 0);
+	}
+
+	for (anim_p = animdefs; *anim_p != 255; anim_p += 23)
+	{
+		if (*anim_p /* .istexture */)
 		{
 			// different episode ?
-			if (R_CheckTextureNumForName(animdefs[i].startname) == -1)
+			if (R_CheckTextureNumForName (anim_p + 10 /* .startname */) == -1)
 				continue;		
 
-			lastanim->picnum = R_TextureNumForName (animdefs[i].endname);
-			lastanim->basepic = R_TextureNumForName (animdefs[i].startname);
+			lastanim->picnum = R_TextureNumForName (anim_p + 1 /* .endname */);
+			lastanim->basepic = R_TextureNumForName (anim_p + 10 /* .startname */);
 		}
 		else
 		{
-			if (W_CheckNumForName(animdefs[i].startname) == -1)
+			if ((W_CheckNumForName)(anim_p + 10 /* .startname */, ns_flats) == -1)
 				continue;
 
-			lastanim->picnum = R_FlatNumForName (animdefs[i].endname);
-			lastanim->basepic = R_FlatNumForName (animdefs[i].startname);
+			lastanim->picnum = R_FlatNumForName (anim_p + 1 /* .endname */);
+			lastanim->basepic = R_FlatNumForName (anim_p + 10 /* .startname */);
 		}
 
-		lastanim->istexture = animdefs[i].istexture;
+		lastanim->istexture = *anim_p /* .istexture */;
 		lastanim->numpics = lastanim->picnum - lastanim->basepic + 1;
 
 		if (lastanim->numpics < 2)
 			I_Error ("P_InitPicAnims: bad cycle from %s to %s",
-					 animdefs[i].startname,
-					 animdefs[i].endname);
+					 anim_p + 10 /* .startname */,
+					 anim_p + 1 /* .endname */);
 		
-		lastanim->speed = animdefs[i].speed;
+		lastanim->speed = /* .speed */
+						  (anim_p[19] << 0) |
+						  (anim_p[20] << 8) |
+						  (anim_p[21] << 16) |
+						  (anim_p[22] << 24);
 		lastanim++;
 	}
-		
+	Z_Free (animdefs);
 }
 
 
@@ -263,6 +260,34 @@ sector_t *getNextSector (line_t *line, sector_t *sec)
 	return line->frontsector;
 }
 
+//
+// P_SectorActive()
+//
+// Passed a linedef special class (floor, ceiling, lighting) and a sector
+// returns whether the sector is already busy with a linedef special of the
+// same class. If old demo compatibility true, all linedef special classes
+// are the same.
+//
+// jff 2/23/98 added to prevent old demos from
+//  succeeding in starting multiple specials on one sector
+//
+int P_SectorActive(special_e t,sector_t *sec)
+{
+	if (olddemo) {	// return whether any thinker is active
+		return sec->floordata || sec->ceilingdata || sec->lightingdata;
+	} else {
+		switch (t)	// return whether thinker of same type is active
+		{
+			case floor_special:
+				return (int)sec->floordata;
+			case ceiling_special:
+				return (int)sec->ceilingdata;
+			case lighting_special:
+				return (int)sec->lightingdata;
+		}
+		return 1;	// don't know which special, must be active, shouldn't be here
+	}
+}
 
 
 //
@@ -320,44 +345,75 @@ fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
 
 
 //
-// P_FindNextHighestFloor
-// FIND NEXT HIGHEST FLOOR IN SURROUNDING SECTORS
-
-fixed_t
-P_FindNextHighestFloor
-( sector_t* 	sec,
-  int			currentheight )
+// P_FindNextHighestFloor()
+//
+// Passed a sector and a floor height, returns the fixed point value
+// of the smallest floor height in a surrounding sector larger than
+// the floor height passed. If no such height exists the floorheight
+// passed is returned.
+//
+// Rewritten by Lee Killough to avoid fixed array and to be faster
+//
+fixed_t P_FindNextHighestFloor(sector_t *sec, int currentheight)
 {
-	int 				i;
-	line_t* 			check;
-	sector_t*			other;
-	fixed_t				min;
-
-	min = MAXINT;
+	sector_t *other;
+	int i;
 
 	for (i = 0; i < sec->linecount; i++) {
-		check = sec->lines[i];
-		other = getNextSector (check, sec);
+		if ((other = getNextSector(sec->lines[i],sec)) &&
+			 other->floorheight > currentheight) {
+			int height = other->floorheight;
 
-		if (!other)
-			continue;
-
-		if (other->floorheight > currentheight && other->floorheight < min)
-			min = other->floorheight;
+			while (++i < sec->linecount) {
+				if ((other = getNextSector(sec->lines[i],sec)) &&
+					 other->floorheight < height &&
+					 other->floorheight > currentheight) {
+					height = other->floorheight;
+				}
+			}
+			return height;
+		}
 	}
-
-	if (min == MAXINT)
-		return currentheight;
-	else
-		return min;
+	return currentheight;
 }
 
 
 //
+// P_FindNextLowestFloor()
+//
+// Passed a sector and a floor height, returns the fixed point value
+// of the largest floor height in a surrounding sector smaller than
+// the floor height passed. If no such height exists the floorheight
+// passed is returned.
+//
+// jff 02/03/98 Twiddled Lee's P_FindNextHighestFloor to make this
+//
+fixed_t P_FindNextLowestFloor(sector_t *sec, int currentheight)
+{
+	sector_t *other;
+	int i;
+
+	for (i = 0; i < sec->linecount; i++)
+	if ((other = getNextSector(sec->lines[i],sec)) &&
+		 other->floorheight < currentheight) {
+		int height = other->floorheight;
+
+		while (++i < sec->linecount) {
+			if ((other = getNextSector(sec->lines[i],sec)) &&
+				 other->floorheight > height &&
+				 other->floorheight < currentheight) {
+				height = other->floorheight;
+			}
+		}
+		return height;
+	}
+	return currentheight;
+}
+
+//
 // FIND LOWEST CEILING IN THE SURROUNDING SECTORS
 //
-fixed_t
-P_FindLowestCeilingSurrounding(sector_t* sec)
+fixed_t P_FindLowestCeilingSurrounding (sector_t *sec)
 {
 	int 				i;
 	line_t* 			check;
@@ -382,7 +438,7 @@ P_FindLowestCeilingSurrounding(sector_t* sec)
 //
 // FIND HIGHEST CEILING IN THE SURROUNDING SECTORS
 //
-fixed_t P_FindHighestCeilingSurrounding(sector_t* sec)
+fixed_t P_FindHighestCeilingSurrounding (sector_t *sec)
 {
 	int 		i;
 	line_t* 	check;
@@ -408,10 +464,7 @@ fixed_t P_FindHighestCeilingSurrounding(sector_t* sec)
 //
 // RETURN NEXT SECTOR # THAT LINE TAG REFERS TO
 //
-int
-P_FindSectorFromLineTag
-( line_t*		line,
-  int			start )
+int P_FindSectorFromLineTag (line_t *line, int start)
 {
 	int i;
 		
@@ -422,16 +475,22 @@ P_FindSectorFromLineTag
 	return -1;
 }
 
+int P_FindLineFromLineTag (line_t *line, int start)
+{
+	int i;
 
+	for (i = start+1; i < numlines; i++)
+		if (lines[i].tag == line->tag)
+			return i;
+
+	return -1;
+}
 
 
 //
 // Find minimum light from an adjacent sector
 //
-int
-P_FindMinSurroundingLight
-( sector_t* 	sector,
-  int			max )
+int P_FindMinSurroundingLight (sector_t *sector, int max)
 {
 	int 		i;
 	int 		min;
@@ -466,11 +525,7 @@ P_FindMinSurroundingLight
 // Called every time a thing origin is about
 //	to cross a line with a non 0 special.
 //
-void
-P_CrossSpecialLine
-( int			linenum,
-  int			side,
-  mobj_t*		thing )
+void P_CrossSpecialLine (int linenum, int side, mobj_t *thing)
 {
 	line_t* 	line;
 	int 		ok;
@@ -935,12 +990,9 @@ P_CrossSpecialLine
 // P_ShootSpecialLine - IMPACT SPECIALS
 // Called when a thing shoots a special line.
 //
-void
-P_ShootSpecialLine
-( mobj_t*		thing,
-  line_t*		line )
+void P_ShootSpecialLine (mobj_t *thing, line_t *line)
 {
-	int 		ok;
+	int ok;
 	
 	//	Impacts that other things can activate.
 	if (!thing->player)
@@ -1067,7 +1119,6 @@ void P_UpdateSpecials (void)
 	anim_t* 	anim;
 	int 		pic;
 	int 		i;
-	line_t* 	line;
 
 	
 	//	LEVEL TIMER
@@ -1096,20 +1147,7 @@ void P_UpdateSpecials (void)
 	sky1pos = (sky1pos + level.skyspeed1) & 0xffffff;
 	sky2pos = (sky2pos + level.skyspeed2) & 0xffffff;
 	
-	//	ANIMATE LINE SPECIALS
-	for (i = 0; i < numlinespecials; i++)
-	{
-		line = linespeciallist[i];
-		switch(line->special)
-		{
-		  case 48:
-			// EFFECT FIRSTCOL SCROLL +
-			sides[line->sidenum[0]].textureoffset += FRACUNIT;
-			break;
-		}
-	}
 
-	
 	//	DO BUTTONS
 	for (i = 0; i < MAXBUTTONS; i++)
 		if (buttonlist[i].btimer)
@@ -1160,14 +1198,17 @@ int EV_DoDonut(line_t*	line)
 	rtn = 0;
 	while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
 	{
-		s1 = &sectors[secnum];
+		s1 = &sectors[secnum];					// s1 is pillar's sector
 				
 		// ALREADY MOVING?	IF SO, KEEP GOING...
-		if (s1->specialdata)
+		if (P_SectorActive (floor_special, s1))	//jff 2/22/98
 			continue;
 						
 		rtn = 1;
-		s2 = getNextSector(s1->lines[0],s1);
+		s2 = getNextSector(s1->lines[0],s1);	// s2 is pool's sector
+		if (!s2)								// note lowest numbered line around
+			continue;							// pillar must be two-sided
+
 		for (i = 0;i < s2->linecount;i++)
 		{
 			if ((!s2->lines[i]->flags & ML_TWOSIDED) ||
@@ -1178,7 +1219,7 @@ int EV_DoDonut(line_t*	line)
 			//	Spawn rising slime
 			floor = Z_Malloc (sizeof(*floor), PU_LEVSPEC, 0);
 			P_AddThinker (&floor->thinker);
-			s2->specialdata = floor;
+			s2->floordata = floor;	//jff 2/22/98
 			floor->thinker.function.acp1 = (actionf_p1) T_MoveFloor;
 			floor->type = donutRaise;
 			floor->crush = false;
@@ -1192,7 +1233,7 @@ int EV_DoDonut(line_t*	line)
 			//	Spawn lowering donut-hole
 			floor = Z_Malloc (sizeof(*floor), PU_LEVSPEC, 0);
 			P_AddThinker (&floor->thinker);
-			s1->specialdata = floor;
+			s1->floordata = floor;	//jff 2/22/98
 			floor->thinker.function.acp1 = (actionf_p1) T_MoveFloor;
 			floor->type = lowerFloor;
 			floor->crush = false;
@@ -1217,11 +1258,7 @@ int EV_DoDonut(line_t*	line)
 // After the map has been loaded, scan for specials
 //	that spawn thinkers
 //
-short			numlinespecials;
-line_t* 		linespeciallist[MAXLINEANIMS];
 
-
-// Parses command line parameters.
 void P_SpawnSpecials (void)
 {
 	sector_t*	sector;
@@ -1293,22 +1330,8 @@ void P_SpawnSpecials (void)
 			break;
 			
 		  case 17:
+			// fire flickering
 			P_SpawnFireFlicker(sector);
-			break;
-		}
-	}
-
-	
-	//	Init line EFFECTs
-	numlinespecials = 0;
-	for (i = 0;i < numlines; i++)
-	{
-		switch(lines[i].special)
-		{
-		  case 48:
-			// EFFECT FIRSTCOL SCROLL+
-			linespeciallist[numlinespecials] = &lines[i];
-			numlinespecials++;
 			break;
 		}
 	}
@@ -1334,4 +1357,281 @@ void P_SpawnSpecials (void)
 
 	// UNUSED: no horizonal sliders.
 	//	P_InitSlidingDoorFrames();
+
+	P_SpawnScrollers(); // killough 3/7/98: Add generalized scrollers
+
+	for (i=0; i<numlines; i++)
+		switch (lines[i].special)
+		{
+			int s, sec;
+
+			// killough 3/7/98:
+			// support for drawn heights coming from different sector
+			case 242:
+				sec = sides[*lines[i].sidenum].sector-sectors;
+				for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
+					sectors[s].heightsec = sec;
+				break;
+
+			// killough 3/16/98: Add support for setting
+			// floor lighting independently (e.g. lava)
+			case 213:
+				sec = sides[*lines[i].sidenum].sector-sectors;
+				for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
+					sectors[s].floorlightsec = sec;
+				break;
+
+			// killough 4/11/98: Add support for setting
+			// ceiling lighting independently
+			case 261:
+				sec = sides[*lines[i].sidenum].sector-sectors;
+				for (s = -1; (s = P_FindSectorFromLineTag(lines+i,s)) >= 0;)
+					sectors[s].ceilinglightsec = sec;
+				break;
+		}
 }
+
+// killough 2/28/98:
+//
+// This function, with the help of r_plane.c and r_bsp.c, supports generalized
+// scrolling floors and walls, with optional mobj-carrying properties, e.g.
+// conveyor belts, rivers, etc. A linedef with a special type affects all
+// tagged sectors the same way, by creating scrolling and/or object-carrying
+// properties. Multiple linedefs may be used on the same sector and are
+// cumulative, although the special case of scrolling a floor and carrying
+// things on it, requires only one linedef. The linedef's direction determines
+// the scrolling direction, and the linedef's length determines the scrolling
+// speed. This was designed so that an edge around the sector could be used to
+// control the direction of the sector's scrolling, which is usually what is
+// desired.
+//
+// Process the active scrollers.
+//
+// This is the main scrolling code
+// killough 3/7/98
+
+void T_Scroll(scroll_t *s)
+{
+	fixed_t dx = s->dx, dy = s->dy;
+
+	if (s->control != -1)
+	{	// compute scroll amounts based on a sector's height changes
+		fixed_t height = sectors[s->control].floorheight +
+		sectors[s->control].ceilingheight;
+		fixed_t delta = height - s->last_height;
+		s->last_height = height;
+		dx = FixedMul(dx, delta);
+		dy = FixedMul(dy, delta);
+	}
+
+	// killough 3/14/98: Add acceleration
+	if (s->accel)
+	{
+		s->vdx = dx += s->vdx;
+		s->vdy = dy += s->vdy;
+	}
+
+	if (!(dx | dy))			// no-op if both (x,y) offsets 0
+		return;
+
+	switch (s->type)
+	{
+		side_t *side;
+		sector_t *sec;
+		fixed_t height, waterheight;	// killough 4/4/98: add waterheight
+		msecnode_t *node;
+		mobj_t *thing;
+
+		case sc_side:					// killough 3/7/98: Scroll wall texture
+			side = sides + s->affectee;
+			side->textureoffset += dx;
+			side->rowoffset += dy;
+			break;
+
+		case sc_floor:						// killough 3/7/98: Scroll floor texture
+			sec = sectors + s->affectee;
+			sec->floor_xoffs += dx;
+			sec->floor_yoffs += dy;
+			break;
+
+		case sc_ceiling:					// killough 3/7/98: Scroll ceiling texture
+			sec = sectors + s->affectee;
+			sec->ceiling_xoffs += dx;
+			sec->ceiling_yoffs += dy;
+			break;
+
+		case sc_carry:
+
+			// killough 3/7/98: Carry things on floor
+			// killough 3/20/98: use new sector list which reflects true members
+			// killough 3/27/98: fix carrier bug
+			// killough 4/4/98: Underwater, carry things even w/o gravity
+
+			sec = sectors + s->affectee;
+			height = sec->floorheight;
+			waterheight = sec->heightsec != -1 &&
+			sectors[sec->heightsec].floorheight > height ?
+			sectors[sec->heightsec].floorheight : MININT;
+
+			for (node = sec->touching_thinglist; node; node = node->m_snext)
+				if (!((thing = node->m_thing)->flags & MF_NOCLIP) &&
+					(!(thing->flags & MF_NOGRAVITY || thing->z > height) ||
+					 thing->z < waterheight))
+				  {
+					// Move objects only if on floor or underwater,
+					// non-floating, and clipped.
+					thing->momx += dx;
+					thing->momy += dy;
+				  }
+			break;
+
+		case sc_carry_ceiling:       // to be added later
+			break;
+	}
+}
+
+//
+// Add_Scroller()
+//
+// Add a generalized scroller to the thinker list.
+//
+// type: the enumerated type of scrolling: floor, ceiling, floor carrier,
+//   wall, floor carrier & scroller
+//
+// (dx,dy): the direction and speed of the scrolling or its acceleration
+//
+// control: the sector whose heights control this scroller's effect
+//   remotely, or -1 if no control sector
+//
+// affectee: the index of the affected object (sector or sidedef)
+//
+// accel: non-zero if this is an accelerative effect
+//
+
+static void Add_Scroller(int type, fixed_t dx, fixed_t dy,
+						 int control, int affectee, int accel)
+{
+	scroll_t *s = Z_Malloc(sizeof *s, PU_LEVSPEC, 0);
+	s->thinker.function.acp1 = (actionf_p1) T_Scroll;
+	s->type = type;
+	s->dx = dx;
+	s->dy = dy;
+	s->accel = accel;
+	s->vdx = s->vdy = 0;
+	if ((s->control = control) != -1)
+		s->last_height =
+			sectors[control].floorheight + sectors[control].ceilingheight;
+	s->affectee = affectee;
+	P_AddThinker(&s->thinker);
+}
+
+// Adds wall scroller. Scroll amount is rotated with respect to wall's
+// linedef first, so that scrolling towards the wall in a perpendicular
+// direction is translated into vertical motion, while scrolling along
+// the wall in a parallel direction is translated into horizontal motion.
+//
+// killough 5/25/98: cleaned up arithmetic to avoid drift due to roundoff
+
+static void Add_WallScroller(fixed_t dx, fixed_t dy, const line_t *l,
+							 int control, int accel)
+{
+	fixed_t x = abs(l->dx), y = abs(l->dy), d;
+	if (y > x)
+	d = x, x = y, y = d;
+	d = FixedDiv(x, finesine[(tantoangle[FixedDiv(y,x) >> DBITS] + ANG90)
+						  >> ANGLETOFINESHIFT]);
+	x = -FixedDiv(FixedMul(dy, l->dy) + FixedMul(dx, l->dx), d);
+	y = -FixedDiv(FixedMul(dx, l->dy) - FixedMul(dy, l->dx), d);
+	Add_Scroller(sc_side, x, y, control, *l->sidenum, accel);
+}
+
+// Amount (dx,dy) vector linedef is shifted right to get scroll amount
+#define SCROLL_SHIFT 5
+
+// Factor to scale scrolling effect into mobj-carrying properties = 3/32.
+// (This is so scrolling floors and objects on them can move at same speed.)
+#define CARRYFACTOR ((fixed_t)(FRACUNIT*.09375))
+
+// Initialize the scrollers
+static void P_SpawnScrollers(void)
+{
+  int i;
+  line_t *l = lines;
+
+  for (i=0;i<numlines;i++,l++)
+	{
+	  fixed_t dx = l->dx >> SCROLL_SHIFT;  // direction and speed of scrolling
+	  fixed_t dy = l->dy >> SCROLL_SHIFT;
+	  int control = -1, accel = 0;         // no control sector or acceleration
+	  int special = l->special;
+
+	  // killough 3/7/98: Types 245-249 are same as 250-254 except that the
+	  // first side's sector's heights cause scrolling when they change, and
+	  // this linedef controls the direction and speed of the scrolling. The
+	  // most complicated linedef since donuts, but powerful :)
+	  //
+	  // killough 3/15/98: Add acceleration. Types 214-218 are the same but
+	  // are accelerative.
+
+	  if (special >= 245 && special <= 249)         // displacement scrollers
+		{
+		  special += 250-245;
+		  control = sides[*l->sidenum].sector - sectors;
+		}
+	  else
+		if (special >= 214 && special <= 218)       // accelerative scrollers
+		  {
+			accel = 1;
+			special += 250-214;
+			control = sides[*l->sidenum].sector - sectors;
+		  }
+
+	  switch (special)
+		{
+		  register int s;
+
+		case 250:   // scroll effect ceiling
+		  for (s=-1; (s = P_FindSectorFromLineTag(l,s)) >= 0;)
+			Add_Scroller(sc_ceiling, -dx, dy, control, s, accel);
+		  break;
+
+		case 251:   // scroll effect floor
+		case 253:   // scroll and carry objects on floor
+		  for (s=-1; (s = P_FindSectorFromLineTag(l,s)) >= 0;)
+			Add_Scroller(sc_floor, -dx, dy, control, s, accel);
+		  if (special != 253)
+			break;
+
+		case 252: // carry objects on floor
+		  dx = FixedMul(dx,CARRYFACTOR);
+		  dy = FixedMul(dy,CARRYFACTOR);
+		  for (s=-1; (s = P_FindSectorFromLineTag(l,s)) >= 0;)
+			Add_Scroller(sc_carry, dx, dy, control, s, accel);
+		  break;
+
+		  // killough 3/1/98: scroll wall according to linedef
+		  // (same direction and speed as scrolling floors)
+		case 254:
+		  for (s=-1; (s = P_FindLineFromLineTag(l,s)) >= 0;)
+			if (s != i)
+			  Add_WallScroller(dx, dy, lines+s, control, accel);
+		  break;
+
+		case 255:    // killough 3/2/98: scroll according to sidedef offsets
+		  s = lines[i].sidenum[0];
+		  Add_Scroller(sc_side, -sides[s].textureoffset,
+					   sides[s].rowoffset, -1, s, accel);
+		  break;
+
+		case 48:                  // scroll first side
+		  Add_Scroller(sc_side,  FRACUNIT, 0, -1, lines[i].sidenum[0], accel);
+		  break;
+
+		case 85:                  // jff 1/30/98 2-way scroll
+		  Add_Scroller(sc_side, -FRACUNIT, 0, -1, lines[i].sidenum[0], accel);
+		  break;
+		}
+	}
+}
+
+// killough 3/7/98 -- end generalized scroll effects

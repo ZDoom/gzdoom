@@ -55,7 +55,7 @@ visplane_t 				*floorplane;
 visplane_t 				*ceilingplane;
 
 // ?
-#define MAXOPENINGS 	(screens[0].width*64)
+size_t					maxopenings;
 short					*openings;
 short					*lastopening;
 
@@ -86,6 +86,7 @@ fixed_t 				*yslope;
 fixed_t 				*distscale;
 fixed_t 				basexscale;
 fixed_t 				baseyscale;
+static fixed_t			xoffs, yoffs;	// killough 2/28/98: flat offsets
 
 fixed_t 				*cachedheight;
 fixed_t 				*cacheddistance;
@@ -151,6 +152,8 @@ static void GetMoreVisPlanes (visplane_t **toupdate)
 //	baseyscale
 //	viewx
 //	viewy
+//	xoffs
+//	yoffs
 //
 // BASIC PRIMITIVE
 //
@@ -186,8 +189,10 @@ void R_MapPlane (int y, int x1, int x2)
 
 	length = FixedMul (distance,distscale[x1]);
 	angle = (viewangle + xtoviewangle[x1])>>ANGLETOFINESHIFT;
-	ds_xfrac = viewx + FixedMul(finecosine[angle], length);
-	ds_yfrac = -viewy - FixedMul(finesine[angle], length);
+
+	// killough 2/28/98: Add offsets
+	ds_xfrac = viewx + FixedMul(finecosine[angle], length) + xoffs;
+	ds_yfrac = -viewy - FixedMul(finesine[angle], length) + yoffs;
 
 	if (fixedcolormap)
 		ds_colormap = fixedcolormap;
@@ -246,27 +251,29 @@ void R_ClearPlanes (void)
 //
 // R_FindPlane
 //
-visplane_t *R_FindPlane (fixed_t height, int picnum, int lightlevel)
+// killough 2/28/98: Add offsets
+
+visplane_t *R_FindPlane (fixed_t height, int picnum, int lightlevel,
+						 fixed_t xoffs, fixed_t yoffs)
 {
-	visplane_t* check;
-		
+	visplane_t *check;
+
 	if (picnum == skyflatnum)
-	{
-		height = 0; 					// all skys map together
-		lightlevel = 0;
-	}
+		height = lightlevel = 0;		// all skys map together
 		
 	for (check=visplanes; check<lastvisplane; check++)
 	{
 		if (height == check->height
 			&& picnum == check->picnum
-			&& lightlevel == check->lightlevel)
+			&& lightlevel == check->lightlevel
+			&& xoffs == check->xoffs
+			&& yoffs == check->yoffs
+			)
 		{
 			break;
 		}
 	}
-	
-						
+
 	if (check < lastvisplane)
 		return check;
 				
@@ -278,6 +285,8 @@ visplane_t *R_FindPlane (fixed_t height, int picnum, int lightlevel)
 	check->height = height;
 	check->picnum = picnum;
 	check->lightlevel = lightlevel;
+	check->xoffs = xoffs;		// killough 2/28/98: Save offsets
+	check->yoffs = yoffs;
 	check->minx = screens[0].width;
 	check->maxx = -1;
 	
@@ -341,6 +350,8 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 	lastvisplane->height = pl->height;
 	lastvisplane->picnum = pl->picnum;
 	lastvisplane->lightlevel = pl->lightlevel;
+    lastvisplane->xoffs = pl->xoffs;			// killough 2/28/98
+    lastvisplane->yoffs = pl->yoffs;
 	
 	pl = lastvisplane++;
 
@@ -405,7 +416,7 @@ static void R_DrawMaskedSky (int skytexture, int skypos, fixed_t scale, fixed_t 
 	for (x=pl->minx ; x <= pl->maxx ; x++)
 	{
 		dc_x = x;
-		angle = ((((viewangle + xtoviewangle[x])>>(ANGLETOSKYSHIFT-16)) + skypos)>>16)&0xff;
+		angle = ((((viewangle + xtoviewangle[x])>>(ANGLETOSKYSHIFT-16)) + skypos)>>16);
 		column = (column_t *) ((byte *)R_GetColumn(skytexture, angle) - 3);
 
 		if (column->topdelta == 0xff)
@@ -467,7 +478,7 @@ static void R_DrawSky (int skytexture, int skypos, visplane_t *pl)
 		dc_yh = pl->bottom[x];
 
 		if (dc_yl <= dc_yh)	{
-			angle = ((((viewangle + xtoviewangle[x])>>(ANGLETOSKYSHIFT-16)) + skypos)>>16)&0xff;
+			angle = ((((viewangle + xtoviewangle[x])>>(ANGLETOSKYSHIFT-16)) + skypos)>>16);
 			dc_x = x;
 			dc_source = R_GetColumn(skytexture, angle);
 			colfunc ();
@@ -524,6 +535,8 @@ void R_DrawPlanes (void)
 								   flattranslation[pl->picnum],
 								   PU_STATIC);
 		
+		xoffs = pl->xoffs;	// killough 2/28/98: Add offsets
+		yoffs = pl->yoffs;
 		planeheight = abs(pl->height-viewz);
 		light = (pl->lightlevel >> LIGHTSEGSHIFT)+extralight;
 
@@ -554,7 +567,6 @@ void R_DrawPlanes (void)
 
 BOOL R_PlaneInitData (void)
 {
-	if (openings)		free (openings);
 	if (floorclip)		free (floorclip);
 	if (ceilingclip)	free (ceilingclip);
 	if (spanstart)		free (spanstart);
@@ -565,7 +577,6 @@ BOOL R_PlaneInitData (void)
 	if (cachedxstep)	free (cachedxstep);
 	if (cachedystep)	free (cachedystep);
 
-	openings = Calloc (MAXOPENINGS, sizeof(short));
 	floorclip = Calloc (screens[0].width, sizeof(short));
 	ceilingclip = Calloc (screens[0].width, sizeof(short));
 

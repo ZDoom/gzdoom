@@ -308,6 +308,9 @@ typedef struct mobj_s
 	// than a full-fledged palette.
 	struct palette_s	*palette;
 
+    // a linked list of sectors where this object appears
+    struct msecnode_s	*touching_sectorlist;				// phares 3/14/98
+
 } mobj_t;
 
 

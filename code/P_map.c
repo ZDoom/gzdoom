@@ -44,12 +44,14 @@
 // Data.
 #include "sounds.h"
 
+#include "z_zone.h"
 
 fixed_t 		tmbbox[4];
 mobj_t* 		tmthing;
 int 			tmflags;
 fixed_t 		tmx;
 fixed_t 		tmy;
+fixed_t			tmz;	// [RH] Needed for third dimension of teleporters
 
 
 // If "floatok" true, move would be ok
@@ -72,6 +74,9 @@ int				MaxSpecialCross = 0;
 line_t** 		spechit;
 int 			numspechit;
 
+// Temporary holder for thing_sectorlist threads
+msecnode_t* sector_list = NULL;		// phares 3/16/98
+
 
 
 //
@@ -81,6 +86,8 @@ int 			numspechit;
 //
 // PIT_StompThing
 //
+static BOOL StompAlwaysFrags;
+
 BOOL PIT_StompThing (mobj_t* thing)
 {
 	fixed_t 	blockdist;
@@ -102,25 +109,32 @@ BOOL PIT_StompThing (mobj_t* thing)
 	}
 
 	// [RH] Z-Check
-    if (tmthing->z > thing->z + thing->height)
-        return true;        // overhead
-    if (tmthing->z+tmthing->height < thing->z)
-        return true;        // underneath
+	if (!olddemo) {
+		if (tmz > thing->z + thing->height)
+			return true;        // overhead
+		if (tmz+tmthing->height < thing->z)
+			return true;        // underneath
+	}
 
 	// monsters don't stomp things except on boss level
-	if ( !tmthing->player && !(level.flags & LEVEL_MONSTERSTELEFRAG) )
-		return false;	
-				
-	P_DamageMobj (thing, tmthing, tmthing, 10000, MOD_TELEFRAG);
-		
-	return true;
+	if (StompAlwaysFrags) {
+		P_DamageMobj (thing, tmthing, tmthing, 10000, MOD_TELEFRAG);
+		return true;
+	}
+	return false;
 }
 
 
 //
 // P_TeleportMove
 //
-BOOL P_TeleportMove (mobj_t *thing, fixed_t x, fixed_t y)
+// [RH] Added telefrag parameter: When true, anything in the spawn spot
+//		will always be telefragged, and the move will be successful.
+//		Added z parameter. Originally, the thing's z was set *after* the
+//		move was made, so the height checking I added for 1.13 could
+//		potentially erroneously indicate the move was okay if the thing
+//		was being teleported between two non-overlapping height ranges.
+BOOL P_TeleportMove (mobj_t *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag)
 {
 	int 				xl;
 	int 				xh;
@@ -137,6 +151,7 @@ BOOL P_TeleportMove (mobj_t *thing, fixed_t x, fixed_t y)
 		
 	tmx = x;
 	tmy = y;
+	tmz = z;
 		
 	tmbbox[BOXTOP] = y + tmthing->radius;
 	tmbbox[BOXBOTTOM] = y - tmthing->radius;
@@ -155,7 +170,10 @@ BOOL P_TeleportMove (mobj_t *thing, fixed_t x, fixed_t y)
 						
 	validcount++;
 	numspechit = 0;
-	
+
+	StompAlwaysFrags = tmthing->player || (level.flags & LEVEL_MONSTERSTELEFRAG) ||
+						(!olddemo && telefrag);
+
 	// stomp on any things contacted
 	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
 	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
@@ -177,7 +195,9 @@ BOOL P_TeleportMove (mobj_t *thing, fixed_t x, fixed_t y)
 	thing->y = y;
 
 	P_SetThingPosition (thing);
-		
+
+	thing->z = z;
+	
 	return true;
 }
 
@@ -1401,7 +1421,9 @@ BOOL PIT_RadiusAttack (mobj_t *thing)
 	if (thing->type == MT_CYBORG || thing->type == MT_SPIDER)
 		return true;	
 
-	if (!olddemo) {
+	// Barrels always use the original code, since this makes
+	// them far too "active."
+	if (!olddemo && bombspot->type != MT_BARREL && thing->type != MT_BARREL) {
 		// [RH] New code (based on stuff in Q2)
 		float points;
 		vec3_t thingvec;
@@ -1410,8 +1432,11 @@ BOOL PIT_RadiusAttack (mobj_t *thing)
 		thingvec[2] += (float)(thing->height >> (FRACBITS+1));
 		{
 			vec3_t v;
+			float len;
+
 			VectorSubtract (bombvec, thingvec, v);
-			points = bombdamagefloat - VectorLength (v);
+			len = VectorLength (v);
+			points = bombdamagefloat - len;
 		}
 		if (thing == bombsource)
 			points = points * 0.5f;
@@ -1518,7 +1543,7 @@ BOOL 		nofit;
 //
 // PIT_ChangeSector
 //
-BOOL PIT_ChangeSector (mobj_t*		thing)
+BOOL PIT_ChangeSector (mobj_t *thing)
 {
 	mobj_t *mo;
 	int t;
@@ -1584,13 +1609,10 @@ BOOL PIT_ChangeSector (mobj_t*		thing)
 //
 // P_ChangeSector
 //
-BOOL
-P_ChangeSector
-( sector_t* 	sector,
-  BOOL		crunch )
+BOOL P_ChangeSector (sector_t *sector, BOOL crunch)
 {
-	int 		x;
-	int 		y;
+	int x;
+	int y;
 		
 	nofit = false;
 	crushchange = crunch;
@@ -1600,7 +1622,294 @@ P_ChangeSector
 		for (y=sector->blockbox[BOXBOTTOM];y<= sector->blockbox[BOXTOP] ; y++)
 			P_BlockThingsIterator (x, y, PIT_ChangeSector);
 		
-		
 	return nofit;
 }
 
+//
+// P_CheckSector
+// jff 3/19/98 added to just check monsters on the periphery
+// of a moving sector instead of all in bounding box of the
+// sector. Both more accurate and faster.
+//
+
+BOOL P_CheckSector (sector_t *sector, BOOL crunch)
+{
+	msecnode_t *n;
+
+	if (olddemo) // use the old routine for old demos though
+		return P_ChangeSector(sector,crunch);
+
+	nofit = false;
+	crushchange = crunch;
+
+	// killough 4/4/98: scan list front-to-back until empty or exhausted,
+	// restarting from beginning after each thing is processed. Avoids
+	// crashes, and is sure to examine all things in the sector, and only
+	// the things which are in the sector, until a steady-state is reached.
+	// Things can arbitrarily be inserted and removed and it won't mess up.
+	//
+	// killough 4/7/98: simplified to avoid using complicated counter
+
+	// Mark all things invalid
+
+	for (n=sector->touching_thinglist; n; n=n->m_snext)
+		n->visited = false;
+
+	do
+		for (n=sector->touching_thinglist; n; n=n->m_snext)	// go through list
+			if (!n->visited)								// unprocessed thing found
+			{
+				n->visited	= true; 						// mark thing as processed
+				if (!(n->m_thing->flags & MF_NOBLOCKMAP))	//jff 4/7/98 don't do these
+					PIT_ChangeSector(n->m_thing); 			// process it
+				break;										// exit and start over
+			}
+	while (n);	// repeat from scratch until all things left are marked valid
+
+	return nofit;
+}
+
+
+// phares 3/21/98
+//
+// Maintain a freelist of msecnode_t's to reduce memory allocs and frees.
+
+msecnode_t *headsecnode = NULL;
+
+// P_GetSecnode() retrieves a node from the freelist. The calling routine
+// should make sure it sets all fields properly.
+
+msecnode_t *P_GetSecnode()
+{
+	msecnode_t *node;
+
+	if (headsecnode)
+	{
+		node = headsecnode;
+		headsecnode = headsecnode->m_snext;
+	}
+	else
+		node = Z_Malloc (sizeof(*node), PU_LEVEL, NULL);
+	return(node);
+}
+
+// P_PutSecnode() returns a node to the freelist.
+
+void P_PutSecnode (msecnode_t* node)
+{
+	node->m_snext = headsecnode;
+	headsecnode = node;
+}
+
+// phares 3/16/98
+//
+// P_AddSecnode() searches the current list to see if this sector is
+// already there. If not, it adds a sector node at the head of the list of
+// sectors this object appears in. This is called when creating a list of
+// nodes that will get linked in later. Returns a pointer to the new node.
+
+msecnode_t* P_AddSecnode(sector_t* s, mobj_t* thing, msecnode_t* nextnode)
+{
+	msecnode_t* node;
+
+	node = nextnode;
+	while (node)
+	{
+		if (node->m_sector == s)	// Already have a node for this sector?
+		{
+			node->m_thing = thing;	// Yes. Setting m_thing says 'keep it'.
+			return(nextnode);
+		}
+		node = node->m_tnext;
+	}
+
+	// Couldn't find an existing node for this sector. Add one at the head
+	// of the list.
+
+	node = P_GetSecnode();
+
+	// killough 4/4/98, 4/7/98: mark new nodes unvisited.
+	node->visited = 0;
+
+	node->m_sector = s; 			// sector
+	node->m_thing  = thing; 		// mobj
+	node->m_tprev  = NULL;			// prev node on Thing thread
+	node->m_tnext  = nextnode;		// next node on Thing thread
+	if (nextnode)
+		nextnode->m_tprev = node;	// set back link on Thing
+
+	// Add new node at head of sector thread starting at s->touching_thinglist
+
+	node->m_sprev  = NULL;			// prev node on sector thread
+	node->m_snext  = s->touching_thinglist; // next node on sector thread
+	if (s->touching_thinglist)
+		node->m_snext->m_sprev = node;
+	s->touching_thinglist = node;
+	return(node);
+}
+
+
+// P_DelSecnode() deletes a sector node from the list of
+// sectors this object appears in. Returns a pointer to the next node
+// on the linked list, or NULL.
+
+msecnode_t* P_DelSecnode(msecnode_t* node)
+{
+	msecnode_t* tp;  // prev node on thing thread
+	msecnode_t* tn;  // next node on thing thread
+	msecnode_t* sp;  // prev node on sector thread
+	msecnode_t* sn;  // next node on sector thread
+
+	if (node)
+	{
+
+		// Unlink from the Thing thread. The Thing thread begins at
+		// sector_list and not from mobj_t->touching_sectorlist.
+
+		tp = node->m_tprev;
+		tn = node->m_tnext;
+		if (tp)
+			tp->m_tnext = tn;
+		if (tn)
+			tn->m_tprev = tp;
+
+		// Unlink from the sector thread. This thread begins at
+		// sector_t->touching_thinglist.
+
+		sp = node->m_sprev;
+		sn = node->m_snext;
+		if (sp)
+			sp->m_snext = sn;
+		else
+			node->m_sector->touching_thinglist = sn;
+		if (sn)
+			sn->m_sprev = sp;
+
+		// Return this node to the freelist
+
+		P_PutSecnode(node);
+		return(tn);
+	}
+	return(NULL);
+} 														// phares 3/13/98
+
+// Delete an entire sector list
+
+void P_DelSeclist(msecnode_t* node)
+{
+	while (node)
+		node = P_DelSecnode(node);
+}
+
+
+// phares 3/14/98
+//
+// PIT_GetSectors
+// Locates all the sectors the object is in by looking at the lines that
+// cross through it. You have already decided that the object is allowed
+// at this location, so don't bother with checking impassable or
+// blocking lines.
+
+BOOL PIT_GetSectors(line_t* ld)
+{
+	if (tmbbox[BOXRIGHT]	  <= ld->bbox[BOXLEFT]	 ||
+			tmbbox[BOXLEFT]   >= ld->bbox[BOXRIGHT]  ||
+			tmbbox[BOXTOP]	  <= ld->bbox[BOXBOTTOM] ||
+			tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+		return true;
+
+	if (P_BoxOnLineSide(tmbbox, ld) != -1)
+		return true;
+
+	// This line crosses through the object.
+
+	// Collect the sector(s) from the line and add to the
+	// sector_list you're examining. If the Thing ends up being
+	// allowed to move to this position, then the sector_list
+	// will be attached to the Thing's mobj_t at touching_sectorlist.
+
+	sector_list = P_AddSecnode(ld->frontsector,tmthing,sector_list);
+
+	// Don't assume all lines are 2-sided, since some Things
+	// like MT_TFOG are allowed regardless of whether their radius takes
+	// them beyond an impassable linedef.
+
+	// killough 3/27/98, 4/4/98:
+	// Use sidedefs instead of 2s flag to determine two-sidedness.
+
+	if (ld->backsector)
+		sector_list = P_AddSecnode(ld->backsector, tmthing, sector_list);
+
+	return true;
+}
+
+
+// phares 3/14/98
+//
+// P_CreateSecNodeList alters/creates the sector_list that shows what sectors
+// the object resides in.
+
+void P_CreateSecNodeList(mobj_t* thing,fixed_t x,fixed_t y)
+{
+	int xl;
+	int xh;
+	int yl;
+	int yh;
+	int bx;
+	int by;
+	msecnode_t* node;
+
+	// First, clear out the existing m_thing fields. As each node is
+	// added or verified as needed, m_thing will be set properly. When
+	// finished, delete all nodes where m_thing is still NULL. These
+	// represent the sectors the Thing has vacated.
+
+	node = sector_list;
+	while (node)
+	{
+		node->m_thing = NULL;
+		node = node->m_tnext;
+	}
+
+	tmthing = thing;
+	tmflags = thing->flags;
+
+	tmx = x;
+	tmy = y;
+
+	tmbbox[BOXTOP]	= y + tmthing->radius;
+	tmbbox[BOXBOTTOM] = y - tmthing->radius;
+	tmbbox[BOXRIGHT]	= x + tmthing->radius;
+	tmbbox[BOXLEFT] 	= x - tmthing->radius;
+
+	validcount++; // used to make sure we only process a line once
+
+	xl = (tmbbox[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
+	xh = (tmbbox[BOXRIGHT] - bmaporgx)>>MAPBLOCKSHIFT;
+	yl = (tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
+	yh = (tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
+
+	for (bx=xl ; bx<=xh ; bx++)
+		for (by=yl ; by<=yh ; by++)
+			P_BlockLinesIterator(bx,by,PIT_GetSectors);
+
+	// Add the sector of the (x,y) point to sector_list.
+
+	sector_list = P_AddSecnode(thing->subsector->sector,thing,sector_list);
+
+	// Now delete any nodes that won't be used. These are the ones where
+	// m_thing is still NULL.
+
+	node = sector_list;
+	while (node)
+	{
+		if (node->m_thing == NULL)
+		{
+			if (node == sector_list)
+				sector_list = node->m_tnext;
+			node = P_DelSecnode(node);
+		}
+		else
+			node = node->m_tnext;
+	}
+}

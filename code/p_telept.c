@@ -64,7 +64,6 @@ int EV_Teleport (line_t *line, int side, mobj_t *thing)
 	if (side == 1)				
 		return 0;		
 
-	
 	tag = line->tag;
 	for (i = 0; i < numsectors; i++)
 	{
@@ -94,10 +93,9 @@ int EV_Teleport (line_t *line, int side, mobj_t *thing)
 				oldy = thing->y;
 				oldz = thing->z;
 								
-				if (!P_TeleportMove (thing, m->x, m->y))
+				if (!P_TeleportMove (thing, m->x, m->y, m->z, false))
 					return 0;
 				
-				thing->z = thing->floorz;  //fixme: not needed?
 				if (thing->player)
 					thing->player->viewz = thing->z+thing->player->viewheight;
 								

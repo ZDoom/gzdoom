@@ -261,7 +261,8 @@ void C_BackupCVars (void)
 	cvar_t *cvar = CVars;
 
 	while (cvar) {
-		if ((cvar->flags & CVAR_SERVERINFO) || (cvar->flags & CVAR_DEMOSAVE)) {
+		if (((cvar->flags & CVAR_SERVERINFO) || (cvar->flags & CVAR_DEMOSAVE))
+			&& !(cvar->flags & CVAR_LATCH)) {
 			if (backup == &CVarBackups[MAX_DEMOCVARS])
 				I_Error ("C_BackupDemoCVars: Too many cvars to save (%d)", MAX_DEMOCVARS);
 			backup->name = copystring (cvar->name);

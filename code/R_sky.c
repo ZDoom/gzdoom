@@ -56,6 +56,7 @@ fixed_t					sky2pos=0,		sky2speed=0;
 // [RH] Stretch sky texture if not taller than 128 pixels?
 cvar_t					*r_stretchsky;
 
+char SKYFLATNAME[8] = "F_SKY1";
 
 //
 // R_InitSkyMap

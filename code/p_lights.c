@@ -210,7 +210,7 @@ P_SpawnStrobeFlash
 //
 // Start strobing lights (usually from a trigger)
 //
-void EV_StartLightStrobing(line_t*		line)
+void EV_StartLightStrobing (line_t *line)
 {
 	int 		secnum;
 	sector_t*	sec;
@@ -219,7 +219,7 @@ void EV_StartLightStrobing(line_t*		line)
 	while ((secnum = P_FindSectorFromLineTag(line,secnum)) >= 0)
 	{
 		sec = &sectors[secnum];
-		if (sec->specialdata)
+		if (P_SectorActive (lighting_special, sec))	//jff 2/22/98
 			continue;
 		
 		P_SpawnStrobeFlash (sec,SLOWDARK, 0);

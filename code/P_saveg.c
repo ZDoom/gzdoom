@@ -184,9 +184,11 @@ void P_UnArchiveWorld (void)
 		sec->floorpic = *get++;
 		sec->ceilingpic = *get++;
 		sec->lightlevel = *get++;
-		sec->special = *get++;			// needed?
-		sec->tag = *get++;				// needed?
-		sec->specialdata = 0;
+		sec->special = *get++;
+		sec->tag = *get++;
+		sec->ceilingdata = 0;	//jff 2/22/98 now three thinker fields not two
+		sec->floordata = 0;
+		sec->lightingdata = 0;
 		sec->soundtarget = 0;
 	}
 	
@@ -337,6 +339,8 @@ enum
 	tc_strobe,
 	tc_glow,
 	tc_fireflicker,
+	tc_elevator,
+	tc_scroll,
 	tc_endspecials
 } specials_e;	
 
@@ -353,6 +357,8 @@ enum
 // T_Glow, (glow_t: sector_t *),
 // T_PlatRaise, (plat_t: sector_t *), - active list
 // T_FireFlicker (fireflicker_t: sector_t * swizze),	[RH] Was missed in original code
+// T_MoveElevator, (plat_t: sector_t *), - active list	// jff 2/22/98
+// T_Scroll												// killough 3/7/98
 //
 void P_ArchiveSpecials (void)
 {
@@ -462,6 +468,27 @@ void P_ArchiveSpecials (void)
 			save_p += sizeof(*flick);
 			flick->sector = (sector_t *)(flick->sector - sectors);
 		}
+		else if (th->function.acp1 == (actionf_p1) T_MoveElevator)
+		{		//jff 2/22/98 new case for elevators
+
+			elevator_t *elevator;		//jff 2/22/98
+
+			*save_p++ = tc_elevator;
+			PADSAVEP();
+			elevator = (elevator_t *)save_p;
+			memcpy (elevator, th, sizeof(*elevator));
+			save_p += sizeof(*elevator);
+			elevator->sector = (sector_t *)(elevator->sector - sectors);
+		}
+		else if (th->function.acp1 == (actionf_p1) T_Scroll)
+		{		// killough 3/7/98: Scroll effect thinkers
+
+			*save_p++ = tc_scroll;
+			memcpy (save_p, th, sizeof(scroll_t));
+			save_p += sizeof(scroll_t);
+			continue;
+		}
+
 	}
 
 	// add a terminating marker
@@ -501,7 +528,7 @@ void P_UnArchiveSpecials (void)
 			memcpy (ceiling, save_p, sizeof(*ceiling));
 			save_p += sizeof(*ceiling);
 			ceiling->sector = &sectors[(int)ceiling->sector];
-			ceiling->sector->specialdata = ceiling;
+			ceiling->sector->ceilingdata = ceiling;	//jff 2/22/98
 
 			if (ceiling->thinker.function.acp1)
 				ceiling->thinker.function.acp1 = (actionf_p1)T_MoveCeiling;
@@ -516,7 +543,7 @@ void P_UnArchiveSpecials (void)
 			memcpy (door, save_p, sizeof(*door));
 			save_p += sizeof(*door);
 			door->sector = &sectors[(int)door->sector];
-			door->sector->specialdata = door;
+			door->sector->ceilingdata = door;	//jff 2/22/98
 			door->thinker.function.acp1 = (actionf_p1)T_VerticalDoor;
 			P_AddThinker (&door->thinker);
 			break;
@@ -527,7 +554,7 @@ void P_UnArchiveSpecials (void)
 			memcpy (floor, save_p, sizeof(*floor));
 			save_p += sizeof(*floor);
 			floor->sector = &sectors[(int)floor->sector];
-			floor->sector->specialdata = floor;
+			floor->sector->floordata = floor;	//jff 2/22/98
 			floor->thinker.function.acp1 = (actionf_p1)T_MoveFloor;
 			P_AddThinker (&floor->thinker);
 			break;
@@ -538,7 +565,7 @@ void P_UnArchiveSpecials (void)
 			memcpy (plat, save_p, sizeof(*plat));
 			save_p += sizeof(*plat);
 			plat->sector = &sectors[(int)plat->sector];
-			plat->sector->specialdata = plat;
+			plat->sector->floordata = plat;		//jff 2/22/98
 
 			if (plat->thinker.function.acp1)
 				plat->thinker.function.acp1 = (actionf_p1)T_PlatRaise;
@@ -586,6 +613,31 @@ void P_UnArchiveSpecials (void)
 			flick->thinker.function.acp1 = (actionf_p1)T_FireFlicker;
 			P_AddThinker (&flick->thinker);
 			break;
+
+		  //jff 2/22/98 new case for elevators
+		  case tc_elevator:
+			PADSAVEP();
+			{
+			  elevator_t *elevator = Z_Malloc (sizeof(*elevator), PU_LEVEL, NULL);
+			  memcpy (elevator, save_p, sizeof(*elevator));
+			  save_p += sizeof(*elevator);
+			  elevator->sector = &sectors[(int)elevator->sector];
+			  elevator->sector->floordata = elevator; //jff 2/22/98
+			  elevator->sector->ceilingdata = elevator; //jff 2/22/98
+			  elevator->thinker.function.acp1 = (actionf_p1) T_MoveElevator;
+			  P_AddThinker (&elevator->thinker);
+			  break;
+			}
+
+		  case tc_scroll:       // killough 3/7/98: scroll effect thinkers
+			{
+			  scroll_t *scroll = Z_Malloc (sizeof(scroll_t), PU_LEVEL, NULL);
+			  memcpy (scroll, save_p, sizeof(scroll_t));
+			  save_p += sizeof(scroll_t);
+			  scroll->thinker.function.acp1 = (actionf_p1) T_Scroll;
+			  P_AddThinker(&scroll->thinker);
+			  break;
+			}
 
 		  default:
 			I_Error ("P_UnarchiveSpecials:Unknown tclass %i "

@@ -74,7 +74,9 @@ LPDIRECTINPUTDEVICE		g_pKey;
 LPDIRECTINPUTDEVICE		g_pMouse;
 
 //Other globals
-int MouseCurX,MouseCurY,GDx,GDy;
+int GDx,GDy;
+
+extern int ConsoleState;
 
 cvar_t *i_remapkeypad;
 cvar_t *usejoystick;
@@ -103,9 +105,15 @@ static const byte Convert []={
 };
 
 // Convert DIK_* code to ASCII using user keymap (built at run-time)
-static byte Convert2[256];
+// New on 19.7.1998 - Now has 8 tables for each possible combination
+// of CTRL, ALT, and SHIFT.
+static byte Convert2[256][8];
 
-static BOOL altdown = FALSE;
+#define SHIFT_SHIFT 0
+#define CTRL_SHIFT 1
+#define ALT_SHIFT 2
+
+static BOOL altdown, shiftdown, ctrldown;
 
 LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -141,6 +149,18 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				altdown = FALSE;
 				event.type = ev_keyup;
 				event.data1 = DIK_LALT;
+				D_PostEvent (&event);
+			}
+			if (shiftdown) {
+				shiftdown = FALSE;
+				event.type = ev_keyup;
+				event.data1 = DIK_LSHIFT;
+				D_PostEvent (&event);
+			}
+			if (ctrldown) {
+				ctrldown = FALSE;
+				event.type = ev_keyup;
+				event.data1 = DIK_LCONTROL;
 				D_PostEvent (&event);
 			}
 			havefocus = FALSE;
@@ -194,15 +214,21 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					break;
 				case VK_TAB:
 					event.data1 = DIK_TAB;
+					event.data2 = '\t';
+					event.data3 = Convert2[DIK_TAB][(shiftdown << SHIFT_SHIFT) |
+													(ctrldown << CTRL_SHIFT) |
+													(altdown << ALT_SHIFT)];
 					break;
 				case VK_NUMLOCK:
 					event.data1 = DIK_NUMLOCK;
 					break;
 				case VK_SHIFT:
 					event.data1 = KEY_LSHIFT;
+					shiftdown = (event.type == ev_keydown);
 					break;
 				case VK_CONTROL:
 					event.data1 = KEY_LCTRL;
+					ctrldown = (event.type == ev_keydown);
 					break;
 			}
 			if (event.data1)
@@ -221,6 +247,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				WPARAM cmdType = wParam & 0xfff0;
 
+				// Prevent activation of the window menu with Alt-Space
 				if (cmdType != SC_KEYMENU)
 					return DefWindowProc (hWnd, message, wParam, lParam);
 			}
@@ -249,10 +276,19 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 static void BuildCvt2Table (void)
 {
+	byte vk2scan[256];
 	int i;
 
+	memset (vk2scan, 0, 256);
 	for (i = 0; i < 256; i++)
-		Convert2[i] = tolower ((byte)MapVirtualKey (MapVirtualKey (i, 1), 2));
+		vk2scan[MapVirtualKey (i, 1)] = i;
+
+	vk2scan[0] = 0;
+
+	for (i = 0; i < 256; i++) {
+		int code = VkKeyScan ((TCHAR)i);
+		Convert2[vk2scan[code & 0xff]][(code >> 8) & 7] =  i;
+	}
 }
 
 /****** Stuff from Andy Bay's myjoy.c ******/
@@ -804,7 +840,6 @@ static void KeyRead (void) {
 					event.type = ev_keyup;
 				}
 
-				event.data3 = Convert2[key];
 				switch (key) {
 					case DIK_NUMPADENTER:	// These keys always translated
 						key = DIK_RETURN;
@@ -821,7 +856,9 @@ static void KeyRead (void) {
 						key = 0;
 						break;
 					default:
-						if (i_remapkeypad->value) {
+						// Don't remap the keypad if the console is accepting input.
+						if (i_remapkeypad->value &&
+							ConsoleState != 1 && ConsoleState != 2) {
 							switch (key) {
 								case DIK_NUMPAD4:
 									key = DIK_LEFT;
@@ -860,7 +897,9 @@ static void KeyRead (void) {
 				if (key) {
 					event.data1 = key;
 					event.data2 = Convert[key];
-					event.data3 = Convert2[key];
+					event.data3 = Convert2[key][(altdown << ALT_SHIFT) |
+												(shiftdown << SHIFT_SHIFT) |
+												(ctrldown << CTRL_SHIFT)];
 					D_PostEvent (&event);
 					if (key == DIK_LALT)
 						altdown = (event.type == ev_keydown);

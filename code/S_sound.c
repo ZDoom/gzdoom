@@ -854,12 +854,22 @@ void S_ParseSndInfo (void)
 	int lastlump, lump;
 	char *sndinfo;
 	char *logicalname;
+	char *data;
 
 	lastlump = 0;
 	while ((lump = W_FindLump ("SNDINFO", &lastlump)) != -1) {
 		sndinfo = W_CacheLumpNum (lump, PU_CACHE);
 
-		while ( (sndinfo = COM_Parse (sndinfo)) ) {
+		while ( (data = COM_Parse (sndinfo)) ) {
+			if (com_token[0] == ';') {
+				// Handle comments from Hexen MAPINFO lumps
+				while (*sndinfo && *sndinfo != ';')
+					sndinfo++;
+				while (*sndinfo && *sndinfo != '\n')
+					sndinfo++;
+				continue;
+			}
+			sndinfo = data;
 			if (com_token[0] == '$') {
 				// com_token is a command
 
@@ -924,6 +934,16 @@ void S_ParseSndInfo (void)
 						ambient->volume = 255;
 					else if (ambient->volume < 0)
 						ambient->volume = 0;
+				} else if (!stricmp (com_token + 1, "map")) {
+					// Hexen-style $MAP command
+					level_info_t *info;
+
+					sndinfo = COM_Parse (sndinfo);
+					sprintf (com_token, "MAP%02d", atoi (com_token));
+					info = FindLevelInfo (com_token);
+					sndinfo = COM_Parse (sndinfo);
+					if (info->mapname[0])
+						uppercopy (info->music, com_token);
 				} else {
 					Printf ("Unknown SNDINFO command %s\n", com_token);
 					while (*sndinfo != '\n' && *sndinfo != '\0')

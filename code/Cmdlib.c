@@ -179,6 +179,10 @@ BOOL FileExists (char *filename)
 {
 	FILE	*f;
 
+	// [RH] Empty filenames are never there
+	if (*filename == 0)
+		return false;
+
 	f = fopen (filename, "r");
 	if (!f)
 		return false;

@@ -1047,7 +1047,7 @@ void G_DoLoadGame (void)
 
 	// skip the description field
 	memset (vcheck,0,sizeof(vcheck));
-	sprintf (vcheck,"version %i",VERSION);
+	sprintf (vcheck,"version %ia",VERSION);
 	if (strcmp (save_p, vcheck))
 		return; 						// bad version
 	save_p += VERSIONSIZE;
@@ -1116,7 +1116,7 @@ void G_DoSaveGame (void)
 	memcpy (save_p, description, SAVESTRINGSIZE);
 	save_p += SAVESTRINGSIZE;
 	memset (name2,0,sizeof(name2));
-	sprintf (name2,"version %i",VERSION);
+	sprintf (name2,"version %ia",VERSION);
 	memcpy (save_p, name2, VERSIONSIZE);
 	save_p += VERSIONSIZE;
 
@@ -1583,8 +1583,17 @@ void G_TimeDemo (char* name)
 ===================
 */
 
+extern cvar_t *name;
+extern cvar_t *autoaim;
+extern cvar_t *color;
+
 BOOL G_CheckDemoStatus (void)
 {
+	// [RH] Restore the player's userinfo settings.
+	D_UserInfoChanged (name);
+	D_UserInfoChanged (autoaim);
+	D_UserInfoChanged (color);
+
 	if (timingdemo)
 	{
 		extern int starttime;

@@ -219,10 +219,7 @@ static void M_SlidePlayerRed (int choice);
 static void M_SlidePlayerGreen (int choice);
 static void M_SlidePlayerBlue (int choice);
 static void M_ChangeAutoAim (int choice);
-
-
-// [RH] Used to make left and right arrows repeat.
-static int Lefting = -1, Righting = -1;
+BOOL M_DemoNoPlay;
 
 
 //
@@ -1121,6 +1118,9 @@ static void M_PlayerSetup (int choice)
 	choice = 0;
 	strncpy (savegamestrings[0], name->string, 23);
 	savegamestrings[0][23] = 0;
+	M_DemoNoPlay = true;
+	if (demoplayback)
+		G_CheckDemoStatus ();
 	M_SetupNextMenu (&PSetupDef);
 	PlayerState = &states[mobjinfo[MT_PLAYER].seestate];
 	PlayerTics = PlayerState->tics;
@@ -1398,20 +1398,7 @@ BOOL M_Responder (event_t* ev)
 		ch2 = ev->data2;		// ASCII
 	}
 	
-	// [RH] Repeat left and right arrow keys
-	if (ev->type == ev_keydown) {
-		if (ev->data1 == KEY_LEFTARROW)
-			Lefting = KeyRepeatDelay >> 1;
-		else if (ev->data1 == KEY_RIGHTARROW)
-			Righting = KeyRepeatDelay >> 1;
-	} else if (ev->type == ev_keyup) {
-		if (ev->data1 == KEY_LEFTARROW)
-			Lefting = -1;
-		else if (ev->data1 == KEY_RIGHTARROW)
-			Righting = -1;
-	}
-
-	if (ch == -1 && !menuactive && Lefting == -1 && Righting == -1)
+	if (ch == -1 && !menuactive)
 		return false;
 
 	if (menuactive && OptionsActive) {
@@ -1569,8 +1556,13 @@ BOOL M_Responder (event_t* ev)
 		currentMenu->lastOn = itemOn;
 		if (currentMenu->prevMenu)
 		{
+			M_DemoNoPlay = false;
 			currentMenu = currentMenu->prevMenu;
 			itemOn = currentMenu->lastOn;
+			// [RH] Make sure the skull is always visible on the
+			//		main menu (for backing out of Read This!.
+			if (currentMenu == &MainDef)
+				drawSkull = true;
 			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
 		} else {
 			M_ClearMenus ();
@@ -1713,6 +1705,7 @@ void M_ClearMenus (void)
 	menuactive = 0;
 	drawSkull = true;
 	I_ResumeMouse ();		// [RH] Recapture the mouse in windowed modes.
+	M_DemoNoPlay = false;
 	// if (!netgame && usergame && paused)
 	//		 sendpause = true;
 }
@@ -1743,23 +1736,6 @@ void M_Ticker (void)
 	}
 	if (currentMenu == &PSetupDef)
 		M_PlayerSetupTicker ();
-
-	// [RH] Make left and right arrow keys repeat
-	if (Lefting != -1 && --Lefting == 0) {
-		event_t ev;
-
-		ev.type = ev_keydown;
-		ev.data1 = KEY_LEFTARROW;
-		Lefting = 2;
-		M_Responder (&ev);
-	} else if (Righting != -1 && --Righting == 0) {
-		event_t ev;
-
-		ev.type = ev_keydown;
-		ev.data1 = KEY_RIGHTARROW;
-		Righting = 2;
-		M_Responder (&ev);
-	}
 }
 
 

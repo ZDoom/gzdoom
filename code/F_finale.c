@@ -133,7 +133,7 @@ void F_Ticker (void)
 	
 	// check for skipping
 	// [RH] Non-commercial can be skipped now, too
-	if (finalecount > 50) {
+	if (finalecount > 50 && finalestage != 1) {
 		// go on to the next level
 		// [RH] or just reveal the entire message if we're still ticking it
 		for (i=0 ; i<MAXPLAYERS ; i++)
@@ -191,7 +191,11 @@ void F_TextWrite (void)
 	int 		cy;
 	
 	// erase the entire screen to a tiled background
-	V_FlatFill (0,0,screens[0].width,screens[0].height,&screens[0],W_CacheLumpName (finaleflat , PU_CACHE));
+	{
+		int lump = R_FlatNumForName (finaleflat) + firstflat;
+		V_FlatFill (0,0,screens[0].width,screens[0].height,&screens[0],
+					W_CacheLumpNum (lump, PU_CACHE));
+	}
 	V_MarkRect (0, 0, screens[0].width, screens[0].height);
 	
 	// draw some of the text onto the screen

@@ -48,7 +48,7 @@ void ST_initNew (void)
 	}
 */
 	for (i = 0; i < 4; i++) {
-		if ((lump = W_CheckNumForName (ammopatches[i])) != -1)
+		if ((lump = (W_CheckNumForName) (ammopatches[i], ns_sprites)) != -1)
 			ammos[i] = W_CacheLumpNum (lump, PU_STATIC);
 	}
 

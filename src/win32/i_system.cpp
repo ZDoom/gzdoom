@@ -57,35 +57,34 @@
 #include "i_input.h"
 #include "i_system.h"
 #include "c_dispatch.h"
+#include "templates.h"
 
 #include "stats.h"
 
 EXTERN_CVAR (String, language)
 
 #ifdef USEASM
-extern "C" BOOL STACK_ARGS CheckMMX (char *vendorid);
+extern "C" void STACK_ARGS CheckMMX (CPUInfo *cpu);
 #endif
 
 extern "C"
 {
-	BOOL		HaveRDTSC = 0;
-	BOOL		HaveCMOV = 0;
 	double		SecondsPerCycle = 1e-8;
 	double		CyclesPerSecond = 1e8;		// 100 MHz
-	byte		CPUFamily, CPUModel, CPUStepping;
+	CPUInfo		CPU;
 }
 
 extern HWND Window;
 extern HINSTANCE g_hInst;
 
-BOOL UseMMX;
 UINT TimerPeriod;
 UINT TimerEventID;
+UINT MillisecondsPerTic;
 HANDLE NewTicArrived;
 DWORD LanguageIDs[4];
 void CalculateCPUSpeed ();
 
-int (*I_GetTime) (void);
+int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
 
 os_t OSPlatform;
@@ -116,17 +115,26 @@ unsigned int I_MSTime (void)
 	return tm - basetime;
 }
 
+static DWORD TicStart;
+static DWORD TicNext;
+
 //
 // I_GetTime
 // returns time in 1/35th second tics
 //
-int I_GetTimePolled (void)
+int I_GetTimePolled (bool saveMS)
 {
 	DWORD tm;
 
 	tm = timeGetTime();
 	if (!basetime)
 		basetime = tm;
+
+	if (saveMS)
+	{
+		TicStart = tm;
+		TicNext = (tm * TICRATE / 1000 + 1) * 1000 / TICRATE;
+	}
 
 	return ((tm-basetime)*TICRATE)/1000;
 }
@@ -135,7 +143,7 @@ int I_WaitForTicPolled (int prevtic)
 {
 	int time;
 
-	while ((time = I_GetTimePolled()) <= prevtic)
+	while ((time = I_GetTimePolled(false)) <= prevtic)
 		;
 
 	return time;
@@ -143,9 +151,15 @@ int I_WaitForTicPolled (int prevtic)
 
 
 static int tics;
+DWORD ted_start, ted_next;
 
-int I_GetTimeEventDriven (void)
+int I_GetTimeEventDriven (bool saveMS)
 {
+	if (saveMS)
+	{
+		TicStart = ted_start;
+		TicNext = ted_next;
+	}
 	return tics;
 }
 
@@ -162,7 +176,26 @@ int I_WaitForTicEvent (int prevtic)
 void CALLBACK TimerTicked (UINT id, UINT msg, DWORD user, DWORD dw1, DWORD dw2)
 {
 	tics++;
+	ted_start = timeGetTime ();
+	ted_next = ted_start + MillisecondsPerTic;
 	SetEvent (NewTicArrived);
+}
+
+// Returns the fractional amount of a tic passed since the most recent tic
+fixed_t I_GetTimeFrac (DWORD *ms)
+{
+	DWORD now = timeGetTime();
+	if (ms) *ms = TicNext;
+	DWORD step = TicNext - TicStart;
+	if (step == 0)
+	{
+		return FRACUNIT;
+	}
+	else
+	{
+		fixed_t frac = clamp<fixed_t> ((now - TicStart)*FRACUNIT/step, 0, FRACUNIT);
+		return frac;
+	}
 }
 
 void I_WaitVBL (int count)
@@ -304,26 +337,55 @@ void SetLanguageIDs ()
 void I_Init (void)
 {
 #ifndef USEASM
-	UseMMX = 0;
+	memset (&CPU, 0, sizeof(CPU));
 #else
-	char vendorid[13];
-
-	vendorid[0] = vendorid[12] = 0;
-	UseMMX = CheckMMX (vendorid);
-	if (Args.CheckParm ("-nommx"))
-		UseMMX = 0;
-
-	if (vendorid[0])
-		Printf ("CPUID: %s  (", vendorid);
-
-	if (UseMMX)
-		Printf ("using MMX)\n");
-	else
-		Printf ("not using MMX)\n");
-
-	Printf ("       family %d, model %d, stepping %d\n", CPUFamily, CPUModel, CPUStepping);
+	CheckMMX (&CPU);
 	CalculateCPUSpeed ();
+
+	// Why does Intel right-justify this string?
+	char *f = CPU.CPUString, *t = f;
+
+	while (*f == ' ')
+	{
+		++f;
+	}
+	if (f != t)
+	{
+		while (*f != 0)
+		{
+			*t++ = *f++;
+		}
+	}
+
 #endif
+	if (CPU.VendorID[0])
+	{
+		Printf ("CPU Vendor ID: %s\n", CPU.VendorID);
+		if (CPU.CPUString[0])
+		{
+			Printf ("  Name: %s\n", CPU.CPUString);
+		}
+		if (CPU.bIsAMD)
+		{
+			Printf ("  Family %d (%d), Model %d, Stepping %d\n",
+				CPU.Family, CPU.AMDFamily, CPU.AMDModel, CPU.AMDStepping);
+		}
+		else
+		{
+			Printf ("  Family %d, Model %d, Stepping %d\n",
+				CPU.Family, CPU.Model, CPU.Stepping);
+		}
+		Printf ("  Features:");
+		if (CPU.bMMX)		Printf (" MMX");
+		if (CPU.bMMXPlus)	Printf (" MMX+");
+		if (CPU.bSSE)		Printf (" SSE");
+		if (CPU.bSSE2)		Printf (" SSE2");
+		if (CPU.bSSE3)		Printf (" SSE3");
+		if (CPU.b3DNow)		Printf (" 3DNow!");
+		if (CPU.b3DNowPlus)	Printf (" 3DNow!+");
+		Printf ("\n");
+	}
+
 
 	// Use a timer event if possible
 	NewTicArrived = CreateEvent (NULL, FALSE, FALSE, NULL);
@@ -350,6 +412,7 @@ void I_Init (void)
 				0,
 				TIME_PERIODIC
 			);
+		MillisecondsPerTic = delay;
 	}
 	if (TimerEventID != 0)
 	{
@@ -373,7 +436,7 @@ void CalculateCPUSpeed ()
 
 	QueryPerformanceFrequency (&freq);
 
-	if (freq.QuadPart != 0 && HaveRDTSC)
+	if (freq.QuadPart != 0 && CPU.bRDTSC)
 	{
 		LARGE_INTEGER count1, count2;
 		DWORD minDiff;

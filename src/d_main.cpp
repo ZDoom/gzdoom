@@ -162,7 +162,8 @@ event_t events[MAXEVENTS];
 int eventhead;
 int eventtail;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
-DCanvas *page;
+FTexture *Page;
+FTexture *Advisory;
 
 cycle_t FrameCycles;
 
@@ -227,7 +228,7 @@ void D_ProcessEvents (void)
 		{
 			M_SetDefaultMode ();
 		}
-		else if (testingmode <= I_GetTime())
+		else if (testingmode <= I_GetTime(false))
 		{
 			M_RestoreMode ();
 		}
@@ -269,7 +270,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 {
 	// In case DF_NO_FREELOOK was changed, reinitialize the sky
 	// map. (If no freelook, then no need to stretch the sky.)
-	if (textureheight)
+	if (sky1texture != 0)
 		R_InitSkyMap ();
 
 	if (self & DF_NO_FREELOOK)
@@ -433,7 +434,7 @@ void D_Display (bool screenshot)
 		if (viewactive)
 		{
 			R_RefreshViewBorder ();
-			R_RenderPlayerView (&players[consoleplayer], NetUpdate);
+			R_RenderPlayerView (&players[consoleplayer]);
 			R_DetailDouble ();		// [RH] Apply detail mode expansion
 		}
 		if (automapactive)
@@ -470,36 +471,26 @@ void D_Display (bool screenshot)
 	// draw pause pic
 	if (paused && !menuactive)
 	{
-		int lump;
+		FTexture *tex;
+		int x;
 
-		if (gameinfo.gametype == GAME_Doom)
-		{
-			lump = W_CheckNumForName ("M_PAUSE");
-		}
-		else
-		{
-			lump = W_CheckNumForName ("PAUSED");
-		}
-		if (lump >= 0)
-		{
-			const patch_t *pause = TileCache[R_CacheTileNum (lump)];
-			int x = (SCREENWIDTH - SHORT(pause->width)*CleanXfac)/2 +
-				SHORT(pause->leftoffset)*CleanXfac;
-			screen->DrawPatchCleanNoMove (pause, x, 4);
-		}
+		tex = TexMan[gameinfo.gametype == GAME_Doom ? "M_PAUSE" : "PAUSED"];
+		x = (SCREENWIDTH - tex->GetWidth()*CleanXfac)/2 +
+			tex->LeftOffset*CleanXfac;
+		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
 	}
 
 	// [RH] Draw icon, if any
 	if (D_DrawIcon)
 	{
-		int lump = W_CheckNumForName (D_DrawIcon);
+		int picnum = TexMan.CheckForTexture (D_DrawIcon, FTexture::TEX_MiscPatch);
 
 		D_DrawIcon = NULL;
-		if (lump >= 0)
+		if (picnum >= 0)
 		{
-			const patch_t *p = (patch_t *)W_MapLumpNum (lump);
-			screen->DrawPatchIndirect (p, 160-SHORT(p->width)/2, 100-SHORT(p->height)/2);
-			W_UnMapLump (p);
+			FTexture *tex = TexMan[picnum];
+			screen->DrawTexture (tex, 160-tex->GetWidth()/2, 100-tex->GetHeight()/2,
+				DTA_320x200, true, TAG_DONE);
 		}
 		NoWipe = 10;
 	}
@@ -524,13 +515,13 @@ void D_Display (bool screenshot)
 		wipe_EndScreen ();
 		screen->Unlock ();
 
-		wipestart = I_GetTime () - 1;
+		wipestart = I_GetTime (false) - 1;
 
 		do
 		{
 			do
 			{
-				nowtime = I_GetTime ();
+				nowtime = I_GetTime (false);
 				tics = nowtime - wipestart;
 			} while (!tics);
 			wipestart = nowtime;
@@ -647,18 +638,22 @@ void D_DoomLoop ()
 				//Added by MC: For some of that bot stuff. The main bot function.
 				int i;
 				for (i = 0; i < MAXPLAYERS; i++)
+				{
 					if (playeringame[i] && players[i].isbot && players[i].mo)
 					{
 						players[i].savedyaw = players[i].mo->angle;
 						players[i].savedpitch = players[i].mo->pitch;
 					}
+				}
 				bglobal.Main (maketic%BACKUPTICS);
 				for (i = 0; i < MAXPLAYERS; i++)
+				{
 					if (playeringame[i] && players[i].isbot && players[i].mo)
 					{
 						players[i].mo->angle = players[i].savedyaw;
 						players[i].mo->pitch = players[i].savedpitch;
 					}
+				}
 				if (advancedemo)
 					D_DoAdvanceDemo ();
 				C_Ticker ();
@@ -709,15 +704,21 @@ void D_PageTicker (void)
 
 void D_PageDrawer (void)
 {
-	if (page)
+	if (Page != NULL)
 	{
-		page->Blit (0, 0, page->GetWidth(), page->GetHeight(),
-			screen, 0, 0, SCREENWIDTH, SCREENHEIGHT);
+		screen->DrawTexture (Page, 0, 0,
+			DTA_DestWidth, screen->GetWidth(),
+			DTA_DestHeight, screen->GetHeight(),
+			TAG_DONE);
 	}
 	else
 	{
 		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0);
-		screen->DrawText (CR_WHITE, 0, 0, "Page graphic goes here");
+		screen->DrawText (CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);
+	}
+	if (Advisory != NULL)
+	{
+		screen->DrawTexture (Advisory, 4, 160, DTA_320x200, true, TAG_DONE);
 	}
 }
 
@@ -758,14 +759,7 @@ void D_DoAdvanceDemo (void)
 	case 3:
 		if (gameinfo.advisoryTime)
 		{
-			if (page)
-			{
-				page->Lock ();
-				const patch_t *p = (patch_t *)W_MapLumpName ("ADVISOR");
-				page->DrawPatch (p, 4, 160);
-				W_UnMapLump (p);
-			}
-			page->Unlock ();
+			Advisory = TexMan["ADVISOR"];
 			demosequence = 1;
 			pagetic = (int)(gameinfo.advisoryTime * TICRATE);
 			break;
@@ -773,6 +767,7 @@ void D_DoAdvanceDemo (void)
 		// fall through to case 1 if no advisory notice
 
 	case 1:
+		Advisory = NULL;
 		if (!M_DemoNoPlay)
 		{
 			BorderNeedRefresh = screen->GetPageCount ();
@@ -817,38 +812,11 @@ void D_DoAdvanceDemo (void)
 
 	if (pagename)
 	{
-		int width, height;
-		const patch_t *data;
-
-		if (gameinfo.flags & GI_PAGESARERAW)
+		if (Page != NULL)
 		{
-			data = (patch_t *)W_MapLumpName (pagename);
-			width = 320;
-			height = 200;
+			Page->Unload ();
 		}
-		else
-		{
-			data = (patch_t *)W_MapLumpName (pagename);
-			width = SHORT(data->width);
-			height = SHORT(data->height);
-		}
-
-		if (page && (page->GetWidth() != width || page->GetHeight() != height))
-		{
-			delete page;
-			page = NULL;
-		}
-
-		if (page == NULL)
-			page = I_NewStaticCanvas (width, height);
-
-		page->Lock ();
-		if (gameinfo.flags & GI_PAGESARERAW)
-			page->DrawBlock (0, 0, 320, 200, (byte *)data);
-		else
-			page->DrawPatch (data, 0, 0);
-		page->Unlock ();
-		W_UnMapLump (data);
+		Page = TexMan[pagename];
 	}
 }
 
@@ -1802,6 +1770,10 @@ void D_DoomMain (void)
 	DecalLibrary.Clear ();
 	DecalLibrary.ReadAllDecals ();
 
+	// [RH] Set standard powerup blends
+	PowerupColors[pw_ironfeet] = MAKEARGB (32, 0, 255, 0);
+	PowerupColors[pw_strength] = MAKEARGB (128, 255, 0, 0);
+
 	// [RH] Try adding .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.
 
@@ -2070,14 +2042,6 @@ void D_DoomMain (void)
 	if (demorecording)
 		G_BeginRecording ();
 				
-	if (Args.CheckParm ("-debugfile"))
-	{
-		char	filename[20];
-		sprintf (filename,"debug%i.txt",consoleplayer);
-		Printf ("debug output to: %s\n",filename);
-		debugfile = fopen (filename,"w");
-	}
-
 	atterm (D_QuitNetGame);		// killough
 
 	D_DoomLoop ();		// never returns
@@ -2132,7 +2096,7 @@ CCMD (clearwallcycles)
 	bestwallcycles = INT_MAX;
 }
 
-#if 0
+#if 1
 // To use these, also uncomment the clock/unclock in wallscan
 static cycle_t bestscancycles = INT_MAX;
 

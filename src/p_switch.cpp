@@ -129,8 +129,8 @@ void P_InitSwitchList ()
 
 	if (lump != -1)
 	{
-		const byte *alphSwitchList = (byte *)W_MapLumpNum (lump);
-		const byte *list_p;
+		const char *alphSwitchList = (const char *)W_MapLumpNum (lump);
+		const char *list_p;
 		FSwitchDef *def1, *def2;
 
 		for (list_p = alphSwitchList; list_p[18] || list_p[19]; list_p += 20)
@@ -138,12 +138,12 @@ void P_InitSwitchList ()
 			// [RH] Skip this switch if its texture can't be found.
 			if (((gameinfo.maxSwitch & 15) >= (list_p[18] & 15)) &&
 				((gameinfo.maxSwitch & ~15) == (list_p[18] & ~15)) &&
-				R_CheckTextureNumForName (list_p /* .name1 */) >= 0)
+				TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall) >= 0)
 			{
 				def1 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
 				def2 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
-				def1->PreTexture = def2->u.Textures[2] = R_CheckTextureNumForName (list_p /* .name1 */);
-				def2->PreTexture = def1->u.Textures[2] = R_CheckTextureNumForName (list_p + 9);
+				def1->PreTexture = def2->u.Textures[2] = TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall);
+				def2->PreTexture = def1->u.Textures[2] = TexMan.CheckForTexture (list_p + 9, FTexture::TEX_Wall);
 				def1->Sound = def2->Sound = 0;
 				def1->NumFrames = def2->NumFrames = 1;
 				def1->u.Times[0] = def2->u.Times[0] = 0;
@@ -230,7 +230,7 @@ void P_ProcessSwitchDef ()
 		max |= sc_Number & 15;
 	}
 	SC_MustGetString ();
-	picnum = R_CheckTextureNumForName (sc_String);
+	picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall);
 	picname = copystring (sc_String);
 	while (SC_GetString ())
 	{
@@ -334,7 +334,7 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 				SC_ScriptError ("Switch has too many frames");
 			}
 			SC_MustGetString ();
-			picnum = R_CheckTextureNumForName (sc_String);
+			picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall);
 			if (picnum < 0 && !ignoreBad)
 			{
 				Printf ("Unknown switch texture %s\n", sc_String);

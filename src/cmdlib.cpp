@@ -11,6 +11,7 @@
 #include "i_system.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include "m_alloc.h"
 
@@ -295,4 +296,22 @@ void FormatGUID (char *text, const GUID &guid)
 		guid.Data4[2], guid.Data4[3],
 		guid.Data4[4], guid.Data4[5],
 		guid.Data4[6], guid.Data4[7]);
+}
+
+// [RH] Returns the current local time as ASCII, even if it's too early
+char *myasctime ()
+{
+	time_t clock;
+	struct tm *lt;
+
+	time (&clock);
+	lt = localtime (&clock);
+	if (lt != NULL)
+	{
+		return asctime (lt);
+	}
+	else
+	{
+		return "Pre Jan 01 00:00:00 1970\n";
+	}
 }

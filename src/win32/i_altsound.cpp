@@ -742,7 +742,7 @@ static void CopyAndClip (SWORD *buffer, DWORD count, DWORD start)
 {
 	SDWORD *from = RenderBuffer + start;
 #if defined(_MSC_VER) && defined(USEASM)
-	if (HaveCMOV)
+	if (CPU.bCMOV)
 	{
 		__asm
 		{

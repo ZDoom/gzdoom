@@ -27,6 +27,9 @@ EXTERN_CVAR (Bool, r_drawfuzz);
 bool (*ArtiDispatch[NUMARTIFACTS]) (player_t *, artitype_t);
 const char *ArtiPics[NUMARTIFACTS];
 
+// The palette blendings to use for an activated powerup.
+DWORD PowerupColors[NUMPOWERS];
+
 IMPLEMENT_ABSTRACT_ACTOR (APowerup)
 
 static int PowerTics[NUMPOWERS] =

@@ -365,6 +365,15 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 		thing->AdjustFloorClip ();
 	}
 
+	if (thing == players[consoleplayer].camera)
+	{
+		R_ResetViewInterpolation ();
+	}
+
+	thing->PrevX = x;
+	thing->PrevY = y;
+	thing->PrevZ = z;
+
 	return true;
 }
 
@@ -1463,6 +1472,12 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		thing->AdjustFloorClip ();
 	}
 
+	// [RH] Don't activate anything if just predicting
+	if (thing->player && (thing->player->cheats & CF_PREDICTING))
+	{
+		return true;
+	}
+
 	// if any special lines were hit, do the effect
 	if (!(thing->flags & (MF_TELEPORT|MF_NOCLIP)))
 	{
@@ -1555,6 +1570,12 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 	return true;
 
 pushline:
+	// [RH] Don't activate anything if just predicting
+	if (thing->player && (thing->player->cheats & CF_PREDICTING))
+	{
+		return false;
+	}
+
 	thing->z = oldz;
 	if (!(thing->flags&(MF_TELEPORT|MF_NOCLIP)))
 	{
@@ -1632,7 +1653,7 @@ void P_HitSlideLine (line_t* ld)
 		{
 			tmxmove /= 2; // absorb half the momentum
 			tmymove = -tmymove/2;
-			if (slidemo->player && slidemo->health > 0)
+			if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
 			{
 				S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
 			}
@@ -1648,7 +1669,7 @@ void P_HitSlideLine (line_t* ld)
 		{
 			tmxmove = -tmxmove/2; // absorb half the momentum
 			tmymove /= 2;
-			if (slidemo->player && slidemo->health > 0)
+			if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
 			{
 				S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!//   ^
 			}
@@ -1678,7 +1699,7 @@ void P_HitSlideLine (line_t* ld)
 	{
 		moveangle = lineangle - deltaangle;
 		movelen /= 2; // absorb
-		if (slidemo->player && slidemo->health > 0)
+		if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
 		{
 			S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
 		}
@@ -2741,7 +2762,7 @@ bool foundline;
 
 BOOL PTR_UseTraverse (intercept_t *in)
 {
-	if (!in->d.line->special)
+	if (in->d.line->special == 0)
 	{
 		P_LineOpening (in->d.line, trace.x + FixedMul (trace.dx, in->frac),
 			trace.y + FixedMul (trace.dy, in->frac));
@@ -2762,7 +2783,8 @@ BOOL PTR_UseTraverse (intercept_t *in)
 	}
 		
 	if (P_PointOnLineSide (usething->x, usething->y, in->d.line) == 1)
-		return false;			// don't use back side
+		// [RH] continue traversal for two-sided lines
+		return in->d.line->backsector != NULL;		// don't use back side
 		
 	P_ActivateLine (in->d.line, usething, 0, SPAC_USE);
 

@@ -40,6 +40,7 @@
 #include "m_misc.h"
 #include "m_menu.h"
 #include "m_random.h"
+#include "m_crc32.h"
 #include "i_system.h"
 #include "p_setup.h"
 #include "p_saveg.h"
@@ -377,7 +378,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	base = I_BaseTiccmd (); 			// empty, or external driver
 	*cmd = *base;
 
-	cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
+	cmd->consistancy = consistancy[consoleplayer][(maketic/ticdup)%BACKUPTICS];
 
 	strafe = Button_Strafe.bDown;
 	speed = Button_Speed.bDown ^ (int)cl_run;
@@ -475,7 +476,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	{
 		int val;
 
-		val = (int)((float)(mousey * 16) * m_pitch) / ticdup;
+		val = (int)((float)(mousey * 16) * m_pitch);
 		if (invertmouse)
 			look -= val;
 		else
@@ -508,7 +509,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (strafe || lookstrafe)
 		side += (int)((float)mousex * m_side);
 	else
-		cmd->ucmd.yaw -= (int)((float)(mousex*0x8) * m_yaw) / ticdup;
+		cmd->ucmd.yaw -= (int)((float)(mousex*0x8) * m_yaw);
 
 	mousex = mousey = 0;
 
@@ -734,7 +735,7 @@ BOOL G_Responder (event_t *ev)
 // G_Ticker
 // Make ticcmd_ts for the players.
 //
-extern DCanvas *page;
+extern FTexture *Page;
 
 
 void G_Ticker ()
@@ -819,10 +820,10 @@ void G_Ticker ()
 
 	if (oldgamestate != gamestate)
 	{
-		if (oldgamestate == GS_DEMOSCREEN && page)
+		if (oldgamestate == GS_DEMOSCREEN && Page != NULL)
 		{
-			delete page;
-			page = NULL;
+			Page->Unload();
+			Page = NULL;
 		}
 		else if (oldgamestate == GS_FINALE)
 		{
@@ -833,6 +834,10 @@ void G_Ticker ()
 	// get commands, check consistancy, and build new consistancy check
 	int buf = (gametic/ticdup)%BACKUPTICS;
 
+	// [RH] Include all random seeds and player stuff in the consistancy
+	// check, not just the player's x position like BOOM.
+	DWORD rngsum = FRandom::StaticSumSeeds ();
+
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
@@ -840,7 +845,10 @@ void G_Ticker ()
 			ticcmd_t *cmd = &players[i].cmd;
 			ticcmd_t *newcmd = &netcmds[i][buf];
 
-			RunNetSpecs (i, buf);
+			if ((gametic % ticdup) == 0)
+			{
+				RunNetSpecs (i, buf);
+			}
 			if (demorecording)
 			{
 				G_WriteDemoTiccmd (newcmd, i, buf);
@@ -865,16 +873,24 @@ void G_Ticker ()
 				Printf ("%s is turbo!\n", players[i].userinfo.netname);
 			}
 
-			if (netgame && !players[i].isbot && !netdemo && !(gametic%ticdup))
+			if (netgame && !players[i].isbot && !netdemo && (gametic%ticdup) == 0)
 			{
-				if (gametic > BACKUPTICS && consistancy[i][buf] != cmd->consistancy)
+				//players[i].inconsistant = 0;
+				if (gametic > BACKUPTICS*ticdup && consistancy[i][buf] != cmd->consistancy)
 				{
-					players[i].inconsistant = 1;
+					players[i].inconsistant = gametic - BACKUPTICS*ticdup;
 				}
 				if (players[i].mo)
-					consistancy[i][buf] = players[i].mo->x;
+				{
+					DWORD sum = rngsum + players[i].mo->x + players[i].mo->y + players[i].mo->z
+						+ players[i].mo->angle + players[i].mo->pitch;
+					sum ^= players[i].health;
+					consistancy[i][buf] = sum;
+				}
 				else
-					consistancy[i][buf] = 0; // killough 2/14/98
+				{
+					consistancy[i][buf] = rngsum;
+				}
 			}
 		}
 	}
@@ -1635,8 +1651,6 @@ void G_DoAutoSave ()
 	// Keep up to four autosaves at a time
 	UCVarValue num;
 	char name[PATH_MAX];
-	time_t utcTime;
-	struct tm *now;
 	char *readableTime;
 	
 	num.Int = (autosavenum + 1) & 3;
@@ -1645,9 +1659,7 @@ void G_DoAutoSave ()
 	G_BuildSaveName (name, "auto", num.Int);
 	savegamefile = copystring (name);
 
-	time (&utcTime);
-	now = localtime (&utcTime);
-	readableTime = asctime (now);
+	readableTime = myasctime ();
 	strcpy (savedescription, "Autosave ");
 	strncpy (savedescription+9, readableTime+4, 12);
 	savedescription[9+12] = 0;
@@ -1675,16 +1687,12 @@ static void PutSaveWads (FILE *file)
 static void PutSaveComment (FILE *file)
 {
 	char comment[256];
-	time_t utcTime;
-	struct tm *now;
 	char *readableTime;
 	WORD len;
 	int levelTime;
 
 	// Get the current date and time
-	time (&utcTime);
-	now = localtime (&utcTime);
-	readableTime = asctime (now);
+	readableTime = myasctime ();
 
 	strncpy (comment, readableTime, 10);
 	strncpy (comment+10, readableTime+19, 5);
@@ -1792,8 +1800,6 @@ static void WriteArrayVars (FILE *file, TArray<SDWORD> *vars, size_t count, DWOR
 
 void G_DoSaveGame (bool okForQuicksave)
 {
-	char name[9];
-
 	if (demoplayback)
 	{
 		gameaction = ga_nothing;
@@ -1818,9 +1824,7 @@ void G_DoSaveGame (bool okForQuicksave)
 	M_AppendPNGText (stdfile, "Software", "ZDoom " DOTVERSIONSTR);
 	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
 	M_AppendPNGText (stdfile, "Title", savedescription);
-	strncpy (name, level.mapname, 8);
-	name[9] = 0;
-	M_AppendPNGText (stdfile, "Current Map", name);
+	M_AppendPNGText (stdfile, "Current Map", level.mapname);
 	PutSaveWads (stdfile);
 	PutSaveComment (stdfile);
 
@@ -1879,7 +1883,7 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 {
 	int id = DEM_BAD;
 
-	while (id != DEM_USERCMD)
+	while (id != DEM_USERCMD && id != DEM_EMPTYUSERCMD)
 	{
 		if (!demorecording && demo_p >= zdembodyend)
 		{
@@ -1899,6 +1903,10 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 
 		case DEM_USERCMD:
 			UnpackUserCmd (&cmd->ucmd, &cmd->ucmd, &demo_p);
+			break;
+
+		case DEM_EMPTYUSERCMD:
+			// leave cmd->ucmd unchanged
 			break;
 
 		case DEM_DROPPLAYER:
@@ -2303,7 +2311,7 @@ BOOL G_CheckDemoStatus (void)
 		int endtime = 0;
 
 		if (timingdemo)
-			endtime = I_GetTimePolled () - starttime;
+			endtime = I_GetTime (false) - starttime;
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 

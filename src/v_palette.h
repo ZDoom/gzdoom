@@ -98,9 +98,9 @@ extern FPalette GPalette;
 extern "C" {
 extern FDynamicColormap NormalLight;
 }
-extern int Near0;		// A color near 0 in appearance, but not 0
+extern int Near255;		// A color near 255 in appearance, but not 255
 
-int BestColor (const DWORD *pal, int r, int g, int b, int first = 0);
+int BestColor (const DWORD *pal, int r, int g, int b, int first = 0, int num=256);
 
 void InitPalette ();
 

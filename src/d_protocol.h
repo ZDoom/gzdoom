@@ -98,38 +98,39 @@ enum
 // and Net_DoCommand() in d_net.cpp.
 enum EDemoCommand
 {
-	DEM_BAD,			// Bad command
-	DEM_USERCMD,		// Player movement
-	DEM_UNDONE1,
+	DEM_BAD,			//  0 Bad command
+	DEM_USERCMD,		//  1 Player movement
+	DEM_EMPTYUSERCMD,	//  2 Equivalent to [DEM_USERCMD, 0]
 	DEM_UNDONE2,
-	DEM_MUSICCHANGE,	// Followed by name of new music
-	DEM_PRINT,			// Print string to console
-	DEM_CENTERPRINT,	// Print string to middle of screen
-	DEM_STOP,			// End of demo
-	DEM_UINFCHANGED,	// User info changed
-	DEM_SINFCHANGED,	// Server/Host info changed
-	DEM_GENERICCHEAT,	// Next byte is cheat to apply (see next enum)
-	DEM_GIVECHEAT,		// String: item to give, Byte: quantity
-	DEM_SAY,			// Byte: who to talk to, String: message to display
-	DEM_DROPPLAYER,		// Not implemented, takes a byte
-	DEM_CHANGEMAP,		// Name of map to change to
-	DEM_SUICIDE,		// Player wants to die
-	DEM_ADDBOT,			// Byte: player#, String: userinfo for bot
-	DEM_KILLBOTS,		// Remove all bots from the world
-	DEM_INVSEL,			// Byte: inventory item to select, for status bar
-	DEM_INVUSE,			// Byte: inventory item to use
-	DEM_PAUSE,			// Pause game
-	DEM_SAVEGAME,		// String: Filename, String: Description
-	DEM_WEAPSEL,		// Byte: weapontype_t to change to
-	DEM_WEAPSLOT,		// Byte: Weapon slot to pick a weapon from
-	DEM_WEAPNEXT,		// Select next weapon
-	DEM_WEAPPREV,		// Select previous weapon
-	DEM_SUMMON,			// String: Thing to fabricate
-	DEM_FOV,			// Byte: New FOV for all players
-	DEM_MYFOV,			// Byte: New FOV for this player
-	DEM_CHANGEMAP2,		// Byte: Position in new map, String: name of new map
-	DEM_SLOTSCHANGE,	// Stream: New weapon slot assignments
-	DEM_SLOTCHANGE,		// Byte: Slot, Stream: Weapon assigments
+	DEM_MUSICCHANGE,	//  4 Followed by name of new music
+	DEM_PRINT,			//  5 Print string to console
+	DEM_CENTERPRINT,	//  6 Print string to middle of screen
+	DEM_STOP,			//  7 End of demo
+	DEM_UINFCHANGED,	//  8 User info changed
+	DEM_SINFCHANGED,	//  9 Server/Host info changed
+	DEM_GENERICCHEAT,	// 10 Next byte is cheat to apply (see next enum)
+	DEM_GIVECHEAT,		// 11 String: item to give, Byte: quantity
+	DEM_SAY,			// 12 Byte: who to talk to, String: message to display
+	DEM_DROPPLAYER,		// 13 Not implemented, takes a byte
+	DEM_CHANGEMAP,		// 14 Name of map to change to
+	DEM_SUICIDE,		// 15 Player wants to die
+	DEM_ADDBOT,			// 16 Byte: player#, String: userinfo for bot
+	DEM_KILLBOTS,		// 17 Remove all bots from the world
+	DEM_INVSEL,			// 18 Byte: inventory item to select, for status bar
+	DEM_INVUSE,			// 19 Byte: inventory item to use
+	DEM_PAUSE,			// 20 Pause game
+	DEM_SAVEGAME,		// 21 String: Filename, String: Description
+	DEM_WEAPSEL,		// 22 Byte: weapontype_t to change to
+	DEM_WEAPSLOT,		// 23 Byte: Weapon slot to pick a weapon from
+	DEM_WEAPNEXT,		// 24 Select next weapon
+	DEM_WEAPPREV,		// 25 Select previous weapon
+	DEM_SUMMON,			// 26 String: Thing to fabricate
+	DEM_FOV,			// 27 Byte: New FOV for all players
+	DEM_MYFOV,			// 28 Byte: New FOV for this player
+	DEM_CHANGEMAP2,		// 29 Byte: Position in new map, String: name of new map
+	DEM_SLOTSCHANGE,	// 30 Stream: New weapon slot assignments
+	DEM_SLOTCHANGE,		// 31 Byte: Slot, Stream: Weapon assigments
+	DEM_RUNSCRIPT,		// 32 Word: Script#, Byte: # of args; each arg is a 4-byte int
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

@@ -91,6 +91,17 @@ extern fixed_t			finetangent[FINEANGLES/2];
 
 typedef DWORD			angle_t;
 
+// Avoid "ambiguous call to overloaded function" errors
+// Only to be used when you have subtracted two angles.
+inline angle_t abs (angle_t ang)
+{
+	return (angle_t)abs((SDWORD)ang);
+}
+
+inline int sqrt (int foo)
+{
+	return (int)sqrt((double)foo);
+}
 
 // Effective size is 2049;
 // The +1 size is to handle the case when x==y

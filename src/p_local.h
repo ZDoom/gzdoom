@@ -84,6 +84,8 @@ void P_PostMorphWeapon (player_t *player, weapontype_t weapon);
 void	P_FallingDamage (AActor *ent);
 void	P_PlayerThink (player_t *player);
 bool	P_UndoPlayerMorph (player_t *player, bool force=false);
+void	P_PredictPlayer (player_t *player);
+void	P_UnPredictPlayer ();
 
 //
 // P_MOBJ
@@ -92,7 +94,6 @@ bool	P_UndoPlayerMorph (player_t *player, bool force=false);
 #define ONFLOORZ		FIXED_MIN
 #define ONCEILINGZ		FIXED_MAX
 #define FLOATRANDZ		(FIXED_MAX-1)
-#define FROMCEILINGZ128	(FIXED_MAX-2)
 
 extern fixed_t FloatBobOffsets[64];
 extern const TypeInfo *PuffType;
@@ -133,7 +134,8 @@ extern const TypeInfo *SpawnableThings[MAX_SPAWNABLES];
 
 bool	P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, int type, angle_t angle,
-			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid);
+			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, int gravity, int newtid,
+			bool leadTarget);
 bool	P_Thing_Move (int tid, int mapspot);
 
 //
@@ -388,12 +390,15 @@ class DPolyAction : public DThinker
 	DECLARE_CLASS (DPolyAction, DThinker)
 public:
 	DPolyAction (int polyNum);
+	~DPolyAction ();
 	void Serialize (FArchive &arc);
 protected:
 	DPolyAction ();
 	int m_PolyObj;
 	int m_Speed;
 	int m_Dist;
+
+	void SetInterpolation ();
 
 	friend void ThrustMobj (AActor *actor, seg_t *seg, polyobj_t *po);
 };
@@ -479,7 +484,8 @@ extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
 
 BOOL PO_MovePolyobj (int num, int x, int y);
 BOOL PO_RotatePolyobj (int num, angle_t angle);
-void PO_Init (void);
+void PO_Init ();
+void PO_DeInit ();
 BOOL PO_Busy (int polyobj);
 
 //

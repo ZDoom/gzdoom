@@ -164,9 +164,13 @@ GLOBAL	SetTiltedSpanSize
 
 SetTiltedSpanSize:
 ;ret
+	push	ecx
+	mov	cl,dl
 	neg	cl
 	mov	eax,1
 	shl	eax,cl
+	mov	cl,[esp]
+	neg	cl
 	mov	[x1+2],cl
 	mov	[x2+2],cl
 	mov	[x3+2],cl
@@ -178,23 +182,20 @@ SetTiltedSpanSize:
 	mov	[x9+2],cl
 	mov	[x10+2],cl
 	
-	push	edx
-	neg	dl
-	add	dl,cl
-	neg	cl
+	sub	cl,dl
 	dec	eax
-	mov	[y1+2],dl
-	mov	[y2+2],dl
-	mov	[y3+2],dl
-	mov	[y4+2],dl
-	mov	[y5+2],dl
-	mov	[y6+2],dl
-	mov	[y7+2],dl
-	mov	[y8+2],dl
-	mov	[y9+2],dl
-	mov	[y10+2],dl
+	mov	[y1+2],cl
+	mov	[y2+2],cl
+	mov	[y3+2],cl
+	mov	[y4+2],cl
+	mov	[y5+2],cl
+	mov	[y6+2],cl
+	mov	[y7+2],cl
+	mov	[y8+2],cl
+	mov	[y9+2],cl
+	mov	[y10+2],cl
 	not	eax
-	pop	edx
+	pop	ecx
 	
 	mov	[m1+2],eax
 	mov	[m2+2],eax
@@ -209,7 +210,8 @@ SetTiltedSpanSize:
 	
 	ret
 
-	section .data
+	SECTION .rtext	progbits alloc exec write align=64
+
 GLOBAL	R_DrawTiltedPlane_ASM
 GLOBAL	@R_DrawTiltedPlane_ASM@8
 
@@ -360,7 +362,7 @@ FullSpan:
 	jmp	StartDiv
 
 NextIsShort:
-	cmp	ebx,8			; if span is no more than 1 pixel, then we already
+	cmp	ebx,8			; if next span is no more than 1 pixel, then we already
 	jle	DrawFullSpan		; know everything we need to draw it
 
 	fld	dword [sz_i]		; sz.i | u | v | v/z | 1/z | u/z
@@ -385,8 +387,8 @@ DrawFullSpan
 	add	ecx,[pviewy]
 	add	edx,[pviewx]
 
-	mov	esi,ecx
-	mov	ebp,edx
+	mov	esi,edx
+	mov	ebp,ecx
 x1	shr	ebp,26
 m1	and	esi,0xfc000000
 y1	shr	esi,20
@@ -394,9 +396,9 @@ y1	shr	esi,20
 	add	edx,[step_u]
 fetch1	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4]
-	mov	esi,ecx
+	mov	esi,edx
 	mov	al,[ebp+eax]
-	mov	ebp,edx
+	mov	ebp,ecx
 	mov	[edi+0],al
 
 x2	shr	ebp,26
@@ -406,9 +408,9 @@ y2	shr	esi,20
 	add	edx,[step_u]
 fetch2	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4-4]
-	mov	esi,ecx
+	mov	esi,edx
 	mov	al,[ebp+eax]
-	mov	ebp,edx
+	mov	ebp,ecx
 	mov	[edi+1],al
 
 x3	shr	ebp,26
@@ -418,9 +420,9 @@ y3	shr	esi,20
 	add	edx,[step_u]
 fetch3	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4-8]
-	mov	esi,ecx
+	mov	esi,edx
 	mov	al,[ebp+eax]
-	mov	ebp,edx
+	mov	ebp,ecx
 	mov	[edi+2],al
 
 x4	shr	ebp,26
@@ -430,9 +432,9 @@ y4	shr	esi,20
 	add	edx,[step_u]
 fetch4	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4-12]
-	mov	esi,ecx
+	mov	esi,edx
 	mov	al,[ebp+eax]
-	mov	ebp,edx
+	mov	ebp,ecx
 	mov	[edi+3],al
 
 x5	shr	ebp,26
@@ -442,9 +444,9 @@ y5	shr	esi,20
 	add	edx,[step_u]
 fetch5	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4-16]
-	mov	esi,ecx
+	mov	esi,edx
 	mov	al,[ebp+eax]
-	mov	ebp,edx
+	mov	ebp,ecx
 	mov	[edi+4],al
 
 x6	shr	ebp,26
@@ -454,9 +456,9 @@ y6	shr	esi,20
 	add	edx,[step_u]
 fetch6	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4-20]
-	mov	esi,ecx
+	mov	esi,edx
 	mov	al,[ebp+eax]
-	mov	ebp,edx
+	mov	ebp,ecx
 	mov	[edi+5],al
 
 x7	shr	ebp,26
@@ -466,12 +468,12 @@ y7	shr	esi,20
 	add	edx,[step_u]
 fetch7	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4-24]
-x8	shr	edx,26
+x8	shr	ecx,26
 	mov	al,[ebp+eax]
-m8	and	ecx,0xfc000000
+m8	and	edx,0xfc000000
 	mov	[edi+6],al
 
-y8	shr	ecx,20
+y8	shr	edx,20
 	mov	ebp,[tiltlighting+ebx*4-28]
 fetch8	mov	al,[edx+ecx+SPACEFILLER4]
 	mov	al,[ebp+eax]
@@ -515,10 +517,10 @@ OnlyOnePixelAtEnd:
 	fistp	qword [start_v]
 
 OnlyOnePixel:
-	mov	edx,[start_u]
-	mov	ecx,[start_v]
-	add	edx,[pviewx]
-	add	ecx,[pviewy]
+	mov	edx,[start_v]
+	mov	ecx,[start_u]
+	add	edx,[pviewy]
+	add	ecx,[pviewx]
 x9	shr	edx,26
 m9	and	ecx,0xfc000000
 y9	shr	ecx,20
@@ -583,8 +585,8 @@ CalcPartialSteps:
 	add	ecx,[pviewy]
 	add	edx,[pviewx]
 
-	mov	esi,ecx
-	mov	ebp,edx
+	mov	esi,edx
+	mov	ebp,ecx
 endloop
 x10	shr	ebp,26
 m10	and	esi,0xfc000000
@@ -598,11 +600,11 @@ y10	shr	esi,20
 fetch10	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4]
 
-	mov	esi,ecx
+	mov	esi,edx
 	dec	ebx
 
 	mov	al,[ebp+eax]
-	mov	ebp,edx
+	mov	ebp,ecx
 
 	mov	[edi-1],al
 	jge	endloop

@@ -202,16 +202,16 @@ void S_NoiseDebug (void)
 
 	y = 32 * CleanYfac;
 	if (gametic & 16)
-		screen->DrawText (CR_TAN, 0, y, "*** SOUND DEBUG INFO ***");
+		screen->DrawText (CR_TAN, 0, y, "*** SOUND DEBUG INFO ***", TAG_DONE);
 	y += 8;
 
-	screen->DrawText (CR_GREY, 0, y, "name");
-	screen->DrawText (CR_GREY, 70, y, "x");
-	screen->DrawText (CR_GREY, 120, y, "y");
-	screen->DrawText (CR_GREY, 170, y, "vol");
-	screen->DrawText (CR_GREY, 200, y, "pri");
-	screen->DrawText (CR_GREY, 240, y, "dist");
-	screen->DrawText (CR_GREY, 280, y, "chan");
+	screen->DrawText (CR_GREY, 0, y, "name", TAG_DONE);
+	screen->DrawText (CR_GREY, 70, y, "x", TAG_DONE);
+	screen->DrawText (CR_GREY, 120, y, "y", TAG_DONE);
+	screen->DrawText (CR_GREY, 170, y, "vol", TAG_DONE);
+	screen->DrawText (CR_GREY, 200, y, "pri", TAG_DONE);
+	screen->DrawText (CR_GREY, 240, y, "dist", TAG_DONE);
+	screen->DrawText (CR_GREY, 280, y, "chan", TAG_DONE);
 	y += 8;
 
 	for (i = 0; i < numChannels && y < SCREENHEIGHT - 16; i++, y += 8)
@@ -239,23 +239,23 @@ void S_NoiseDebug (void)
 			color = Channel[i].loop ? CR_BROWN : CR_GREY;
 			strcpy (temp, lumpinfo[Channel[i].sfxinfo->lumpnum].name);
 			temp[8] = 0;
-			screen->DrawText (color, 0, y, temp);
+			screen->DrawText (color, 0, y, temp, TAG_DONE);
 			sprintf (temp, "%ld", ox / FRACUNIT);
-			screen->DrawText (color, 70, y, temp);
+			screen->DrawText (color, 70, y, temp, TAG_DONE);
 			sprintf (temp, "%ld", oy / FRACUNIT);
-			screen->DrawText (color, 120, y, temp);
+			screen->DrawText (color, 120, y, temp, TAG_DONE);
 			sprintf (temp, "%g", Channel[i].volume);
-			screen->DrawText (color, 170, y, temp);
+			screen->DrawText (color, 170, y, temp, TAG_DONE);
 			sprintf (temp, "%d", Channel[i].priority);
-			screen->DrawText (color, 200, y, temp);
+			screen->DrawText (color, 200, y, temp, TAG_DONE);
 			sprintf (temp, "%ld", P_AproxDistance2 (players[consoleplayer].camera, ox, oy) / FRACUNIT);
-			screen->DrawText (color, 240, y, temp);
+			screen->DrawText (color, 240, y, temp, TAG_DONE);
 			sprintf (temp, "%d", Channel[i].entchannel);
-			screen->DrawText (color, 280, y, temp);
+			screen->DrawText (color, 280, y, temp, TAG_DONE);
 		}
 		else
 		{
-			screen->DrawText (CR_GREY, 0, y, "------");
+			screen->DrawText (CR_GREY, 0, y, "------", TAG_DONE);
 		}
 	}
 	BorderNeedRefresh = screen->GetPageCount ();

@@ -43,6 +43,7 @@
 #define NUM_GLOBALVARS			64
 
 #define LEVEL_NOINTERMISSION	0x00000001
+#define LEVEL_NOINVENTORYBAR	0x00000002		// This effects Doom only, since it's the only one without a standard inventory bar.
 #define	LEVEL_DOUBLESKY			0x00000004
 
 #define LEVEL_MAP07SPECIAL		0x00000010
@@ -164,9 +165,9 @@ struct level_locals_s
 	int			levelnum;
 	int			lumpnum;
 	char		level_name[64];			// the descriptive name (Outer Base, etc)
-	char		mapname[8];				// the server name (base1, etc)
-	char		nextmap[8];				// go here when fraglimit is hit
-	char		secretmap[8];			// map to go to when used secret exit
+	char		mapname[9];				// the server name (base1, etc)
+	char		nextmap[9];				// go here when fraglimit is hit
+	char		secretmap[9];			// map to go to when used secret exit
 
 	DWORD		flags;
 
@@ -177,8 +178,8 @@ struct level_locals_s
 	int			musicorder;
 	int			cdtrack;
 	unsigned int cdid;
-	char		skypic1[8];
-	char		skypic2[8];
+	char		skypic1[9];
+	char		skypic2[9];
 
 	fixed_t		skyspeed1;				// Scrolling speed of first sky texture
 	fixed_t		skyspeed2;

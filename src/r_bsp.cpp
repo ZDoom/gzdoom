@@ -1071,6 +1071,11 @@ void R_Subsector (subsector_t *sub, bool add)
 	basecolormap = frontsector->ColorMap->Maps;
 	R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);
 
+	// [RH] set foggy flag
+	foggy = level.fadeto || frontsector->ColorMap->Fade;
+	r_actualextralight = foggy ? 0 : extralight << 4;
+	basecolormap = frontsector->ColorMap->Maps;
+
 	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
 		frontsector->ceilingpic == skyflatnum ||
 		(frontsector->heightsec && 
@@ -1080,7 +1085,7 @@ void R_Subsector (subsector_t *sub, bool add)
 					frontsector->ceilingpic == skyflatnum &&  // killough 10/98
 						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
 						frontsector->ceilingpic,
-					ceilinglightlevel,				// killough 4/11/98
+					ceilinglightlevel + r_actualextralight,				// killough 4/11/98
 					frontsector->ceiling_xoffs,		// killough 3/7/98
 					frontsector->ceiling_yoffs + frontsector->base_ceiling_yoffs,
 					frontsector->ceiling_xscale,
@@ -1103,7 +1108,7 @@ void R_Subsector (subsector_t *sub, bool add)
 					frontsector->floorpic == skyflatnum &&  // killough 10/98
 						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
 						frontsector->floorpic,
-					floorlightlevel,				// killough 3/16/98
+					floorlightlevel + r_actualextralight,				// killough 3/16/98
 					frontsector->floor_xoffs,		// killough 3/7/98
 					frontsector->floor_yoffs + frontsector->base_floor_yoffs,
 					frontsector->floor_xscale,
@@ -1112,15 +1117,13 @@ void R_Subsector (subsector_t *sub, bool add)
 					frontsector->SkyBox
 					) : NULL;
 
-	// [RH] set foggy flag
-	foggy = level.fadeto || frontsector->ColorMap->Fade;
-	r_actualextralight = foggy ? 0 : extralight << 4;
-	basecolormap = frontsector->ColorMap->Maps;
-
 	// killough 9/18/98: Fix underwater slowdown, by passing real sector 
 	// instead of fake one. Improve sprite lighting by basing sprite
 	// lightlevels on floor & ceiling lightlevels in the surrounding area.
-	R_AddSprites (sub->sector, (floorlightlevel + ceilinglightlevel) / 2, FakeSide);
+	// [RH] Handle sprite lighting like Duke 3D: If the ceiling is a sky, sprites are lit by
+	// it, otherwise they are lit by the floor.
+	R_AddSprites (sub->sector, frontsector->ceilingpic == skyflatnum ?
+		ceilinglightlevel : floorlightlevel, FakeSide);
 
 	// [RH] Add particles
 	int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);

@@ -316,6 +316,10 @@ void ACFlameMissile::Tick ()
 	bool changexy;
 	AActor *mo;
 
+	PrevX = x;
+	PrevY = y;
+	PrevZ = z;
+
 	// Handle movement
 	if (momx || momy ||	(z != floorz) || momz)
 	{

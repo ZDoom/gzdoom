@@ -190,6 +190,7 @@ class AChicken : public AActor
 public:
 	void Destroy ();
 	const char *GetObituary ();
+	void Die (AActor *source, AActor *inflictor);
 };
 
 FState AChicken::States[] =
@@ -228,9 +229,9 @@ IMPLEMENT_ACTOR (AChicken, Heretic, -1, 122)
 	PROP_Mass (40)
 	PROP_SpeedFixed (4)
 	PROP_PainChance (200)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL)
-	PROP_Flags3 (MF3_DONTMORPH)
+	PROP_Flags3 (MF3_DONTMORPH|MF3_ISMONSTER)
 
 	PROP_SpawnState (S_CHICKEN_LOOK)
 	PROP_SeeState (S_CHICKEN_WALK)
@@ -257,6 +258,15 @@ void AChicken::Destroy ()
 const char *AChicken::GetObituary ()
 {
 	return GStrings(OB_CHICKEN);
+}
+
+void AChicken::Die (AActor *source, AActor *inflictor)
+{
+	Super::Die (source, inflictor);
+	if (tracer != NULL && (tracer->flags & MF_UNMORPHED))
+	{
+		tracer->Die (source, inflictor);
+	}
 }
 
 // Feather ------------------------------------------------------------------

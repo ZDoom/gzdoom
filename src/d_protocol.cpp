@@ -231,8 +231,35 @@ FArchive &operator<< (FArchive &arc, usercmd_t &cmd)
 
 int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, byte **stream)
 {
-	WriteByte (DEM_USERCMD, stream);
-	return PackUserCmd (ucmd, basis, stream) + 1;
+	if (basis == NULL)
+	{
+		if (ucmd->buttons != 0 ||
+			ucmd->pitch != 0 ||
+			ucmd->yaw != 0 ||
+			ucmd->forwardmove != 0 ||
+			ucmd->sidemove != 0 ||
+			ucmd->upmove != 0 ||
+			ucmd->roll != 0)
+		{
+			WriteByte (DEM_USERCMD, stream);
+			return PackUserCmd (ucmd, basis, stream) + 1;
+		}
+	}
+	else
+	if (ucmd->buttons != basis->buttons ||
+		ucmd->pitch != basis->pitch ||
+		ucmd->yaw != basis->yaw ||
+		ucmd->forwardmove != basis->forwardmove ||
+		ucmd->sidemove != basis->sidemove ||
+		ucmd->upmove != basis->upmove ||
+		ucmd->roll != basis->roll)
+	{
+		WriteByte (DEM_USERCMD, stream);
+		return PackUserCmd (ucmd, basis, stream) + 1;
+	}
+
+	WriteByte (DEM_EMPTYUSERCMD, stream);
+	return 1;
 }
 
 
@@ -263,6 +290,10 @@ int SkipTicCmd (byte **stream, int count)
 				if (*flow & UCMDF_ROLL)			skip += 2;
 				flow += skip;
 			}
+			else if (type == DEM_EMPTYUSERCMD)
+			{
+				moreticdata = false;
+			}
 			else
 			{
 				Net_SkipCommand (type, &flow);
@@ -276,25 +307,45 @@ int SkipTicCmd (byte **stream, int count)
 	return skip;
 }
 
+#include <assert.h>
+extern short consistancy[MAXPLAYERS][BACKUPTICS];
 void ReadTicCmd (byte **stream, int player, int tic)
 {
 	int type;
 	byte *start;
 	ticcmd_t *tcmd;
 
-	tic %= BACKUPTICS;
+	int ticmod = tic % BACKUPTICS;
 
-	tcmd = &netcmds[player][tic];
+	tcmd = &netcmds[player][ticmod];
 	tcmd->consistancy = ReadWord (stream);
 
 	start = *stream;
 
-	while ((type = ReadByte (stream)) != DEM_USERCMD)
+	while ((type = ReadByte (stream)) != DEM_USERCMD && type != DEM_EMPTYUSERCMD)
 		Net_SkipCommand (type, stream);
 
-	NetSpecs[player][tic].SetData (start, *stream - start - 1);
-	UnpackUserCmd (&tcmd->ucmd,
-		tic ? &netcmds[player][(tic-1)%BACKUPTICS].ucmd : NULL, stream);
+	NetSpecs[player][ticmod].SetData (start, *stream - start - 1);
+
+	if (type == DEM_USERCMD)
+	{
+		UnpackUserCmd (&tcmd->ucmd,
+			tic ? &netcmds[player][(tic-1)%BACKUPTICS].ucmd : NULL, stream);
+	}
+	else
+	{
+		if (tic)
+		{
+			memcpy (&tcmd->ucmd, &netcmds[player][(tic-1)%BACKUPTICS].ucmd, sizeof(tcmd->ucmd));
+		}
+		else
+		{
+			memset (&tcmd->ucmd, 0, sizeof(tcmd->ucmd));
+		}
+	}
+
+	if (player==consoleplayer&&tic>BACKUPTICS)
+		assert(consistancy[player][ticmod] == tcmd->consistancy);
 }
 
 void RunNetSpecs (int player, int buf)

@@ -110,7 +110,7 @@ struct FActionMap
 static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char *name, size_t namelen);
 static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, size_t namelen, FConsoleCommand **prev);
 
-FConsoleCommand *Commands[HASH_SIZE];
+FConsoleCommand *Commands[FConsoleCommand::HASH_SIZE];
 
 FButtonStatus Button_Mlook, Button_Klook, Button_Use,
 	Button_Attack, Button_Speed, Button_MoveRight, Button_MoveLeft,
@@ -745,7 +745,7 @@ static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char
 {
 	FConsoleCommand *dummy;
 
-	return ScanChainForName (table[MakeKey (name, namelen) % HASH_SIZE], name, namelen, &dummy);
+	return ScanChainForName (table[MakeKey (name, namelen) % FConsoleCommand::HASH_SIZE], name, namelen, &dummy);
 }
 
 bool FConsoleCommand::AddToHash (FConsoleCommand **table)
@@ -887,7 +887,7 @@ static int DumpHash (FConsoleCommand **table, BOOL aliases, const char *pattern=
 	int bucket, count;
 	FConsoleCommand *cmd;
 
-	for (bucket = count = 0; bucket < HASH_SIZE; bucket++)
+	for (bucket = count = 0; bucket < FConsoleCommand::HASH_SIZE; bucket++)
 	{
 		cmd = table[bucket];
 		while (cmd)
@@ -940,7 +940,7 @@ void C_ArchiveAliases (FConfigFile *f)
 	int bucket;
 	FConsoleCommand *alias;
 
-	for (bucket = 0; bucket < HASH_SIZE; bucket++)
+	for (bucket = 0; bucket < FConsoleCommand::HASH_SIZE; bucket++)
 	{
 		alias = Commands[bucket];
 		while (alias)
@@ -957,7 +957,7 @@ void C_SetAlias (const char *name, const char *cmd)
 {
 	FConsoleCommand *prev, *alias, **chain;
 
-	chain = &Commands[MakeKey (name) % HASH_SIZE];
+	chain = &Commands[MakeKey (name) % FConsoleCommand::HASH_SIZE];
 	alias = ScanChainForName (*chain, name, strlen (name), &prev);
 	if (alias != NULL)
 	{
@@ -982,7 +982,7 @@ CCMD (alias)
 	}
 	else
 	{
-		chain = &Commands[MakeKey (argv[1]) % HASH_SIZE];
+		chain = &Commands[MakeKey (argv[1]) % FConsoleCommand::HASH_SIZE];
 
 		if (argv.argc() == 2)
 		{ // Remove the alias

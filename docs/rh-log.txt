@@ -1,3 +1,417 @@
+July 2, 2003
+- Removed the FROMCEILINGZ128 #define in p_local.h. I'm not sure what that was.
+- Added support for properly tiling wall textures whose widths are not a power
+  of 2.
+- Fixed: Heretic and Hexen status bars' artifact flash effect was tied to the
+  framerate instead of the ticrate.
+- Changed the IMGZ loader so that it maps color 0 to 255 and color 255 to 254.
+- Changed the cast finale so that it draws "our hero" using the player's suit
+  color instead of the default green.
+- Changed the BOSSBACK drawing so you can make it some size other than 320x200
+  if you want.
+- Moved StringWidth() out of DCanvas and into FFont, where it really belongs.
+
+July 1, 2003
+- Changed FPatchTexture::MakeTexture() so if it is loading a patch used by a
+  decal it remaps color 255 to 254 rather than to whatever is the closest
+  matching color in the palette. This is because decals are usually shade
+  maps rather than paletted graphics, so changing color 255 to something
+  in the middle of the palette looks bad. I also changed it so that it
+  contstructs spans from the existing column data instead of rescanning the
+  image for the transparent color, so it should be slightly faster, although
+  it probably doesn't matter, since each patch will only be loaded at most
+  once per level.
+- Added a fix for sprites that have some, but not all, of their frames
+  defined. I found this one when I tried to play Doom Raider. Ironically,
+  it worked in 2.0.47 because I had a bug in the code that detected
+  undefined frames. To fix, any undefined frames are made into copies of
+  the first defined frame.
+
+June 30, 2003
+- Added a check to P_TestActivateLine() so that doors faster than 32 cannot
+  be opened by monsters.
+- Fixed: If only the right-most texture column of a wall is visible, the
+  left-most texture column would be drawn instead.
+- Added the ability for the SetFont ACS command to load normal pictures as
+  fonts. When used this way, it creates a new font with only the letter A
+  defined, and the letter A is drawn as whatever the picture is. This
+  effectively allows you to use HudMessage like a HudPic command. The
+  drawback to this method is that you cannot use any color translations, as
+  you can with real fonts.
+
+June 28, 2003
+- Removed i_remapkeypad cvar. The keypad is now always considered separate
+  from the main keyboard. This was really just something I had left over from
+  the very early days of ZDoom before it even had Quake-style keybinding.
+- Added prioritization of HUD messages. Lower-numbered IDs are drawn in front
+  of higher-numbered IDs. An ID of -1 is identical to 0, except it gets drawn
+  behind everything else.
+- Made the puke console command work across the network.
+- Fixed a crash bug in the node builder when the back side of a line
+  shares endpoints with another seg, but the front side does not.
+- Reimplemented texture warping for the new texture system. You should
+  even be able to warp sprites if you make their widths and heights
+  powers of 2, but I did not bother creating any such sprites to test
+  with.
+- Added another BOOM fix I just now became aware of: Donuts in Doom would start
+  even if the pool sector was already moving. 
+
+June 26, 2003
+- Removed all the masked block functions, since they are no longer used.
+- Changed fonts into collections of textures.
+- Extended my CPUID code to gather more information.
+- Spent enough time with a P4 to find out which of the vlinetallasm4
+  routines works best with it. Answer: They are about the same, and both
+  are about 20% slower than the Athlon version running on an Athlon.
+
+June 25, 2003
+- Moved all the self-modifying code out of the .data section and into the
+  .rtext section. Unfortunately, NASM does not support creating writeable
+  code sections (even though the object file format does support this), so
+  I create them as regular read-only code sections in NASM and then modify
+  them to be writeable using VirtualProtect() at run-time.
+- Tried unrolling vlinetallasm4 to see if I could eek out some more
+  performance from it. Unfortunately, it was slower at first and about the
+  same at best, so I decided not to keep the unrolled version.
+
+June 23, 2003
+- Tried writing an optimized version of DFrameBuffer::CopyFromBuff() using
+  prefetchnta and movntq, but it performed just as well as memcpy. Probably
+  because video memory is much slower than system memory, so you don't really
+  notice any of the inefficiencies of the rep movsd instruction that memcpy
+  uses.
+- Modified vlinetallasm4 slightly so that it executes in about 65%-81% of the
+  time it used to take on my Athlon XP (depending on resolution) by reordering
+  the instructions for parallelism. Note that this is the exact same
+  optimization I tried earlier that reduced performance on a Pentium III-M.
+  Also, the old version of the function still uses fewer cycles on a P3 than
+  the new version uses on an Athlon XP. (7 cycles/pixel compared to 4.8
+  cycles/pixel at 800x600). I am curious which version a Pentium 4 likes more.
+  I will keep them both around and only select the new version for people with
+  AMD processors belonging to family 6 or higher. The K6 might also like the
+  Athlon version, but I don't have a K6 to test with, so I will leave it as
+  it is now.
+
+June 21, 2003
+- Modified R_DrawColumnP_ASM() so that it has an alternate version of the
+  inner loop without any writes to ch and hence, no partial register stalls.
+- Removed the R_StretchColumn() function.
+- Consolidated all the different patch drawing functions from DCanvas into a
+  single DrawTexture() function. Amiga-style tag lists are used to pass it
+  optional parameters to produce the same results as the old functions.
+
+June 20, 2003
+- Changed FImageCollection so that it is nothing more than an array of
+  texture indices.
+
+June 19, 2003
+- Finished moving everything to the new texture system. There is still a
+  little work yet to do, but at least the only place where patches are used
+  any more is in the texture loaders.
+
+June 13, 2003
+- BTW, with the new texture system, you don't need to have every single texture
+  defined in a single TEXTURE1 or TEXTURE2 lump. You do need to restrict
+  yourself to just one TEXTURE1 and/or TEXTURE2 lump per wad, but they don't
+  need to contain definitions for all the textures from the IWAD, since each
+  wad's texture definitions are loaded separately.
+- Fixed decals for the new texture system. 
+- Added support for the rotation information Blood added to the art files.
+
+June 12, 2003
+- Changed screenshot capturing slightly so that it does not need to redraw the
+  screen, so now it can capture the framerate in the corner.
+- Added support for animating Build tiles.
+- Added a new thing to use for spawning sprites in Build maps.
+- Got sprites working with the new texture system.
+
+June 11, 2003
+- Fixed X-Y scale of Build maps. I had it twice as big as it should have been.
+- Fixed the assembly slope drawer to work with non-square textures.
+
+June 10, 2003
+- After putting it off for far too long, I finally started working on a unified
+  texture system that will let me treat sprites, flats, and wall textures all
+  the same. Sprites are not done yet, but now Build maps can be viewed with
+  the correct floors and ceilings. One consequence of this change is that flats
+  are now stored in column-major format instead of row-major format, so I had
+  to changed the span drawers to account for this.
+- Added a new MAPINFO flag: NoInventoryBar - prevents the inventory bar from
+  ever appearing in a Doom map. Also changed the Doom inventory bar so that it
+  won't be drawn if you have no inventory items, even if you press the inventory
+  selection keys.
+- Changed PTR_UseTraverse() to continue traversal when a backward-facing line
+  is encountered.
+
+June 9, 2003
+- Fixed: Batman Doom no longer crashes during the cast finale. 
+- Made the texture error checking slightly more lax. It seems there is some tool
+  that likes to write to unused areas of the texture directory meaninglessly.
+- Fixed a prediction bug caused by moving between sectors with different friction
+  levels. P_GetFriction() is sensitive to the ordering of the touching_sectorlist,
+  so I need to preserve this ordering before and after prediction.
+
+June 7, 2003
+- Changed my transparent color from 0 to 255. An analysis of the original Doom,
+  Heretic, and Hexen graphics revealed that this color was never used. It was
+  probably going to be the transparent color before the Doom engine switched to
+  using spans. But the real reason for the switch is because 255 is the color
+  the Build engine uses for transparency, so I can draw its sprites without
+  doing anything special.
+
+June 6, 2003
+- Made a slight fix to the frame interpolation: The time when the game tic is
+  run is the base time I need to use for interpolation. Otherwise, the display
+  could glitch if a tic passes between the time the gametic is run and the time
+  it is displayed.
+- Added a workaround for NT 4: Somebody goofed, and the default registry entry
+  for CLSID_DirectInput under NT 4 has the wrong GUID. Two of the hexits are
+  swapped so that it is stored in the registry as
+  {25E609E0-B259-11CF-BFC7-444535540000} instead of as
+  {25E609E0-B259-11CF-BFC7-444553540000}. You can fix this by running
+  "regsvr32 dinput.dll" from a command prompt, or you can bypass it by loading
+  dinput.dll and using DirectInputCreate to obtain an interface. Since I can't
+  expect everybody running NT 4 to run regsvr32, I have to do the latter. :-(
+- Fixed: Killing a morphed monster left an inert copy of the original monster
+  around, so scripts that depended on being able to use thingcount() to determine
+  when all the monsters of a certain type are dead would fail.
+- Changed the Pig's and Chicken's MF_COUNTKILL bit to MF3_ISMONSTER, so morphing
+  a monster does not add to the total number of monsters on the level.
+- Fixed: FDoomStatusBar::DrawToSBar could create a partially transparent status
+  bar because it left color 0 alone. I use color 0 as a transparent color for
+  image blocks like this. (Though the status bar doesn't really need to be
+  drawn with transparent parts, it was convenient to do it that way.)
+- Changed the tid and TIDtoHate members of AActor from unsigned to signed, so
+  that you can use negative tags with your teleporters.
+
+June 2, 2003
+- Fixed: Absolute lighting on walls was very dark. I don't think I have this
+  feature accessable through Doom/Hexen maps, so you only notice it if you
+  try to load a BUILD map.
+- Added some command-line parameters to help make BUILD maps look better:
+   -art   Specifies the directory with the TILESxxx.ART files.
+   -bpal  Specifies the palette.dat file.
+  So if I want to look at the Blood maps, I can do this:
+   zdoom -art d:\games\blood -bpal d:\games\blood\palette.dat -file d:\games\blood\*.map
+  (assuming that I have already extracted all the maps from the RFF file).
+  Unfortunately, the tiles only show up on walls. I need to create a unified
+  texture system so that wall textures and flats can be used identically.
+- Fixed: Bots would only move on the arbitrator's computer in a net game.
+- Fixed: If foggy and non-foggy areas were visible simultaneously, gun
+  flashes would sometimes light the foggy area.
+- Fixed: R_ResetViewInterpolation did not actually work.
+- Fixed: Line-to-line teleporters did net reset the view interpolation.
+- Fixed: The super-fast projectiles in Heretic and Hexen with custom Tickers
+  did not update their previous positions, so they could not be interpolated
+  correctly by the renderer.
+
+May 31, 2003
+- Added support for loading Blood maps. They are no more playable than
+  normal BUILD maps, but since I can already load Blood sounds and BUILD maps,
+  it seemed like the thing to do.
+- Fixed: Loading BUILD maps was broken because they did not initialize
+  sectors' ZoneNumber.
+- Changed the default for vid_vsync from true to false, becuase with the
+  unlimited framerate, no vsync actually produces better control.
+
+May 30, 2003
+- Added interpolation for moving polyobjects.
+- Optimized SpawnPolyobj() and IterFindPolySegs() so that they are loads
+  faster.
+
+May 29, 2003
+- Fixed Dehacked support for patches that swap sprite names instead of
+  changing them to something completely new.
+- Fixed the new net code to recover properly in situations where there is
+  high packet loss. Except for one instance: If a player quits with -netmode
+  1, and the packet with that quit notification gets dropped, it never gets
+  sent again, so any players left will hang waiting for tic updates for a
+  player who is no longer there.
+- Rewrote D_ArbitrateNetStart() so that all data passes through the host.
+  This should allow computers on separate networks to play together as long
+  as they can all talk to the host and you use -netmode 1.
+- Bumped BACKUPTICS up from 12 to 36.
+- Finally finished decoupling -dup from the game ticker. Getting it to work
+  without consistancy failures was a lot more work than I expected.
+  Fortunately, I think it was worth it. I can notice little difference now
+  between -dup 5 and no -dup (aka -dup 1). Before, doing that would take
+  your framerate down to 7 FPS, rendering the game practically unplayable.
+
+May 28, 2003
+- Started decoupling -dup from the framerate.
+- Fixed an obscure crash bug caused by drawing past the bottom of composite
+  textures whose heights are not powers of 2. If the composite texture was
+  constructed at the end of a page, the game could read into the next page,
+  which is bad if the next page is not mapped in.
+
+May 27, 2003
+- Framerates above 35 FPS should now be done. Whether or not it's good in a
+  net game, I'm not sure, since they require rather precise timing to play
+  smoothly.
+- Added interpolation for every actor in the game, after I watched a rocket
+  flying and it was obvious that its position was updating less often than
+  the view.
+- Added functions from BUILD for interpolating floor and ceiling movement.
+- Added some view interpolation to allow frame rates above 35 FPS. It looks
+  very nice (and playing at 35 FPS now looks very bad), _except_ it sometimes
+  misses a tic so you get an annoying hiccup that is worse than just keeping
+  things locked at 35 FPS. This is despite my sprinkling NetUpdate calls to
+  some of the most frequently used rendering functions. [edit: It seems the
+  hiccups were because I had a background program running; even at idle
+  priority, it still stole a little time away from ZDoom every now and then.]
+
+May 23, 2003
+- Got a crash in R_SetWindow() when it was setting the value of the r_viewsize
+  cvar. After recompiling with the _CRTDBG_CHECK_ALWAYS_DF flag, I could not
+  reproduce it to find out why it happened. Poo.
+- Added player movement prediction to make network games feel more responsive
+  when gametic is lagging behind maketic. You can turn it off by setting
+  cl_noprediction to true.
+- Fixed: Using -extratic with the packet server crashed because it tried
+  to send tic -1, which doesn't exist. I don't know why it didn't cause
+  problems with the regular peer mode.
+- Stopped using all named RNGs to check game consistancy. I have too many
+  named ones that aren't all used in the gameplay loop. Now I just pick a
+  few key RNGs and use those.
+- Added another byte to the packets sent from the master to the slaves that
+  contains the master's maketic. This is so that the slaves speed up or
+  slow down to match the master instead of each other.
+
+May 22, 2003
+- Corrected my misunderstanding of how the frameskip array is used in
+  d_net.cpp.
+- I found out how to make three player games perform fine on XP: Set the
+  processor scheduling back from "Background services" to "Programs".
+  Here's a link to an article that explains the values for the
+  HKEY_LOCAL_MACHINE\SYSTEM\ControlSet001\Control\PriorityControl\
+  Win32PrioritySeparation key that this setting changes:
+  <http://www.mcpmag.com/columns/article.asp?EditorialsID=405>. I think
+  it's probably more the short time slices than anything else that makes
+  it perform well. Why had I changed it from "Programs" in the first place?
+  Because I was having trouble with background console programs sucking
+  up all the CPU time, so I wanted to give everything equal time slices.
+  I now have the registry key set to 0x20, which is short, fixed time slices.
+  Not quite the same as the "Programs" setting. - Using the release build
+  instead of the debug build obviously helps performance, too.
+
+May 21, 2003
+- Tried playing a multiplayer game on two machines for the first time in
+  ages, and it went out of sync very quickly. It turns out that my laptop
+  had genblockmap false, and my desktop had genblockmap true. Since this
+  obviously makes it go out of sync, I'll have to make it a server var.
+  Gennodes will need the same treatment, since it also implies genblockmap
+  even if genblockmap is false. For ZDoomGL, however... I suppose I'll need
+  to disable the blockmap regeneration if the nodes are only being built
+  to get GL information.
+- Wrote some code to let the net arbitrator function as a packet server. It
+  makes everybody jerky, but that might just be because I'm running two
+  clients on XP, and XP seems to do much worse at dividing processor time
+  up equally between processes than NT 4. A two player game on one machine
+  runs fine after a second or two, but three players is crap.
+  [Okay, tried it on three separate machines, and it wasn't jerky, so that's
+  a relief. Gametic was lagging behind maketic by 4 on the host, however, so
+  it wasn't quite as responsive as I would have liked. That's opposite what
+  I would have expected, since the host gets the ticcmds from the other
+  players first. Maybe I need to investigate the code where it "speeds up
+  time" some more. Or maybe I need to have the master send as many tics as
+  it has for the other machines instead of the lowest common number of tics;
+  e.g. If it has 1 tic from one machine and 2 tics from another, it should
+  send all of them to a third machine instead of just 1 tic each from the
+  first two machines. For comparison, a 2 player game (which is effectively
+  always peer-to-peer even with packet server turned on), had gametic lag
+  behind maketic by 2.]
+- Removed the names from these RNGs: pr_chainwiggle, pr_afx, pr_decal, and
+  pr_decalchoice. I don't know why it happens, but they can sometimes
+  disagree with each other in a network game, particularly pr_decal. Since
+  they don't have any real impact on game sync, removing their names keeps
+  them from affecting the sync check, but it also means they won't be
+  remembered across save games.
+- Added DEM_EMPTYUSERCMD so that if a player's input doesn't change from one
+  tic to the next, I can save one byte in the network packet. That makes the
+  minimum packet size for one tic 5 bytes: 2 for the header, 2 for
+  consistancy, and 1 for the tic itself. I'd call that a big improvement over
+  the previous minimum size of 14 bytes (8 header, 2 to hold the list of
+  players in that packet, 2 for consistancy, and 2 for the tic).
+- Fixed: Damaging a monster would not reset its threshold value, so it would
+  be more willing to switch targets than it should have been.
+- Changed AActor::StaticSpawn() to not initialize the LastLook member for
+  non-monsters. This caused the game to go out of sync when non-essential
+  actors were spawned on one machine and not another (e.g. decals and bot
+  aiming helpers).
+
+May 20, 2003
+- Beefed up the consistancy checking so that it now considers more than just
+  the players' X positions.
+
+May 19, 2003
+- Optimized the size of the network packets some. The minimum header size is
+  now 2 bytes instead of 10. Note that I removed the checksum from the header.
+  The network transport should already be doing error checking and not provide
+  us with any corrupt packets. In the highly unlikely event that somebody ports
+  this back to DOS, they'll need to add a checksum in there. Also made some
+  corrections to the packets that get sent around before the game begins.
+
+May 16, 2003
+- Made active powerup colors customizable via dehacked misc section.
+- Changed the netbuffer checksum to use CRC32 (which gets used like a CRC28
+  because the top 4 bits are chopped off to make room for some command bits).
+  I could probably get rid of the checksum entirely, since UDP packets
+  already include their own checksum field.
+- Fixed: When one player in a network game unexpectedly quit, everybody else
+  would bomb out with ECONNRESET. Now the i_net.cpp code pretends that those
+  players sent out NCMD_EXIT packets. Why a connectionless protocol like UDP
+  would return a connection-oriented error code, I do not know.
+- Starting a network game with the -join parameter before the host started
+  would fail with ECONNRESET. This is no longer an error, so you don't
+  need to start the host first anymore.
+- Added MF2_NOTELEPORT to TeleportFog.
+
+May 5, 2003
+- Fixed: P_Move() used the actor's default speed instead of the actor's
+  speed.
+
+May 2, 2003
+- Added mousewheel support to the console.
+
+April 26, 2003
+- Uploaded 2.0.47.
+- Added support for custom episode definitions (for all games, not just
+  those that are already divided into episodes).
+- Fixed: Doom Shareware does not have an ENDPIC graphic, so don't try to
+  show it.
+- Added a visible inventory bar for Doom.
+
+April 25, 2003
+- Added APROP_Ambush for Set/GetActorProperty.
+- Added myasctime() function, which is equivalent to
+  asctime(localtime(&time(NULL))), except it doesn't crash when the current
+  time is before Jan 1, 1970 (which makes localtime return NULL).
+
+April 20, 2003
+- Added a NULL file check to M_NotifyNewSave(). I was sent a crash report
+  where this appears to have been the cause.
+- Fixed: Using teleporters with actor hits ceiling/floor triggers was
+  problematic because the actor would still be clipped to its new ceiling
+  or floor even if the teleport made it unnecessary
+- Finished Thing_ProjectileIntercept so that it works in three dimensions.
+  Big thanks to all those on the notgod phorum who helped me with the math.
+
+April 16, 2003
+- Extended my speedup trick for 1024x768 so that it also gets used for
+  2048x1536 and 512x384. I can now play the beginning of MAP01 in 2048x1536
+  at ~28 fps instead of 14 fps. 512x384 is so small that it doesn't really
+  matter, but I think it is a few tenths of a millisecond faster now. What
+  I think is going on: If the screen's pitch is a power of 2, then drawing
+  columns (which Doom does a lot of in its renderer unless you're looking at
+  the floor) will flush the cache lines a bunch and bring performance
+  plummetting, as it has to transfer much more data to and from main memory.
+  By making the pitch slightly larger so that it isn't a power of 2, the
+  cache gets utilized better, so performance goes up.
+- Started adding Thing_ProjectileIntercept special (175). It is identical to
+  Thing_ProjectileAimed, except it leads the target.
+- Fixed: Activating SoundEnvironment actors did not work, because I forgot
+  to include the AActor * parameter in the prototypes.
+
 April 14, 2003
 - Uploaded 2.0.46.
 - Added support for adding new projectiles to DECORATE.

@@ -32,6 +32,8 @@
 **
 */
 
+#include <stdlib.h>
+#include <stdarg.h>
 #include <ctype.h>
 
 #include "v_text.h"
@@ -57,7 +59,7 @@ void DCanvas::SetFont (FFont *font)
 	Font = font;
 }
 
-void DCanvas::CharWrapper (EWrapperCode drawer, int normalcolor, int x, int y, byte character) const
+void DCanvas::DrawChar (int normalcolor, int x, int y, byte character, DWORD tags, ...)
 {
 	if (Font == NULL)
 		return;
@@ -65,72 +67,28 @@ void DCanvas::CharWrapper (EWrapperCode drawer, int normalcolor, int x, int y, b
 	if (normalcolor >= NUM_TEXT_COLORS)
 		normalcolor = CR_UNTRANSLATED;
 
-	const byte *data;
-	int w, h, xo, yo;
-	const byte *range = Font->GetColorTranslation ((EColorRange)normalcolor);
+	FTexture *pic;
+	int dummy;
 
-	if ((data = Font->GetChar (character, &w, &h, &xo, &yo)))
+	if (NULL != (pic = Font->GetChar (character, &dummy)))
 	{
-		x -= xo;
-		y -= yo;
-		switch (drawer)
-		{
-		default:
-		case ETWrapper_Normal:
-			DrawMaskedBlock (x, y, w, h, data, range);
-			break;
-		case ETWrapper_Translucent:
-			DrawTranslucentMaskedBlock (x, y, w, h, data, range, V_TextTrans);
-			break;
-		case ETWrapper_Shadow:
-			DrawShadowedMaskedBlock (x, y, w, h, data, range, TRANSLUC50);
-			break;
-		}
-	}
-}
-
-void DCanvas::CharSWrapper (EWrapperCode drawer, int normalcolor, int x, int y, byte character) const
-{
-	if (Font == NULL)
-		return;
-
-	if (normalcolor >= NUM_TEXT_COLORS)
-		normalcolor = CR_UNTRANSLATED;
-
-	const byte *data;
-	int w, h, xo, yo;
-	const byte *range = Font->GetColorTranslation ((EColorRange)normalcolor);
-
-	if ((data = Font->GetChar (character, &w, &h, &xo, &yo)))
-	{
-		int sw = w * CleanXfac;
-		int sh = h * CleanYfac;
-		x -= xo * CleanXfac;
-		y -= yo * CleanYfac;
-		switch (drawer)
-		{
-		default:
-			case ETWrapper_Normal:
-				ScaleMaskedBlock (x, y, w, h, sw, sh, data, range);
-				break;
-			case ETWrapper_Translucent:
-				ScaleTranslucentMaskedBlock (x, y, w, h, sw, sh, data, range, V_TextTrans);
-				break;
-			case ETWrapper_Shadow:
-				ScaleShadowedMaskedBlock (x, y, w, h, sw, sh, data, range, TRANSLUC50);
-				break;
-		}
+		const BYTE *range = Font->GetColorTranslation ((EColorRange)normalcolor);
+		DrawTexture (pic, x, y, DTA_Translation, range, TAG_MORE, &tags);
 	}
 }
 
 //
-// V_DrawText
+// DrawText
 //
 // Write a string using the current font
 //
-void DCanvas::TextWrapper (EWrapperCode drawer, int normalcolor, int x, int y, const byte *string) const
+void DCanvas::DrawText (int normalcolor, int x, int y, const char *string, DWORD tags_first, ...)
 {
-	int 		w, h, xo, yo;
+	va_list tags;
+	DWORD tag;
+	BOOL boolval;
+
+	int 		w, maxwidth;
 	const byte *ch;
 	int 		c;
 	int 		cx;
@@ -138,7 +96,8 @@ void DCanvas::TextWrapper (EWrapperCode drawer, int normalcolor, int x, int y, c
 	int			boldcolor;
 	const byte *range;
 	int			height;
-	const byte *data;
+	int			scalex, scaley;
+	FTexture *pic;
 
 	if (Font == NULL || string == NULL)
 		return;
@@ -150,9 +109,78 @@ void DCanvas::TextWrapper (EWrapperCode drawer, int normalcolor, int x, int y, c
 	range = Font->GetColorTranslation ((EColorRange)normalcolor);
 	height = Font->GetHeight () + 1;
 
-	ch = string;
+	ch = (const byte *)string;
 	cx = x;
 	cy = y;
+
+	// Parse the tag list to see if we need to adjust for scaling.
+	bool scaled = false;
+	maxwidth = Width;
+	scalex = scaley = 1;
+
+	va_start (tags, tags_first);
+	tag = tags_first;
+
+	while (tag != TAG_DONE)
+	{
+		DWORD *more_p;
+		DWORD data;
+		void *ptrval;
+
+		switch (tag)
+		{
+		case TAG_IGNORE:
+		default:
+			data = va_arg (tags, DWORD);
+			break;
+
+		case TAG_MORE:
+			more_p = va_arg (tags, DWORD *);
+			va_end (tags);
+			va_start (tags, *more_p);
+			tag = *more_p;
+			continue;
+
+		case DTA_DestWidth:
+		case DTA_DestHeight:
+			*(DWORD *)tags = TAG_IGNORE;
+			data = va_arg (tags, DWORD);
+			break;
+
+		case DTA_Translation:
+			*(DWORD *)tags = TAG_IGNORE;
+			ptrval = va_arg (tags, void*);
+			break;
+
+		case DTA_CleanNoMove:
+			boolval = va_arg (tags, BOOL);
+			if (boolval)
+			{
+				scalex = CleanXfac;
+				scaley = CleanYfac;
+				maxwidth = Width - (Width % CleanYfac);
+			}
+			break;
+
+		case DTA_Clean:
+		case DTA_320x200:
+			boolval = va_arg (tags, BOOL);
+			if (boolval)
+			{
+				scalex = scaley = 1;
+				maxwidth = 320;
+			}
+			break;
+
+		case DTA_VirtualWidth:
+			maxwidth = va_arg (tags, int);
+			scalex = scaley = 1;
+			break;
+		}
+		tag = va_arg (tags, DWORD);
+	}
+
+	height *= scaley;
 		
 	for (;;)
 	{
@@ -195,139 +223,18 @@ void DCanvas::TextWrapper (EWrapperCode drawer, int normalcolor, int x, int y, c
 			continue;
 		}
 
-		if ((data = Font->GetChar (c, &w, &h, &xo, &yo)))
+		if (NULL != (pic = Font->GetChar (c, &w)))
 		{
-			if (cx + w > Width)
-				break;
-
-			if (w == 0 || h == 0)
-			{
-				printf ("char %c (%d) has dimensions %dx%d\n", c, c, w, h);
-				continue;
-			}
-
-			switch (drawer)
-			{
-			default:
-			case ETWrapper_Normal:
-				DrawMaskedBlock (cx - xo, cy - yo, w, h, data, range);
-				break;
-			case ETWrapper_Translucent:
-				DrawTranslucentMaskedBlock (cx - xo, cy - yo, w, h, data, range, V_TextTrans);
-				break;
-			case ETWrapper_Shadow:
-				DrawShadowedMaskedBlock (cx - xo, cy - yo, w, h, data, range, TRANSLUC50);
-				break;
-			}
+			DrawTexture (pic, cx, cy, DTA_Translation, range, TAG_MORE, &tags_first);
 		}
-		
-		cx += w;
-	}
-}
-
-void DCanvas::TextSWrapper (EWrapperCode drawer, int normalcolor, int x, int y, const byte *string) const
-{
-	int 		w, h, xo, yo;
-	const byte *ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-	int			boldcolor;
-	const byte *range;
-	int			height;
-	const byte *data;
-
-	if (Font == NULL || string == NULL)
-		return;
-
-	if (normalcolor > NUM_TEXT_COLORS)
-		normalcolor = CR_UNTRANSLATED;
-	boldcolor = normalcolor ? normalcolor - 1 : NUM_TEXT_COLORS - 1;
-
-	range = Font->GetColorTranslation ((EColorRange)normalcolor);
-	height = (Font->GetHeight () + 1) * CleanYfac;
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	for (;;)
-	{
-		c = *ch++;
-		if (!c)
-			break;
-
-		if (c == TEXTCOLOR_ESCAPE)
-		{
-			int newcolor = toupper(*ch++);
-
-			if (newcolor == 0)
-			{
-				return;
-			}
-			else if (newcolor == '-')
-			{
-				newcolor = normalcolor;
-			}
-			else if (newcolor >= 'A' && newcolor < 'A' + NUM_TEXT_COLORS)
-			{
-				newcolor -= 'A';
-			}
-			else if (newcolor == '+')
-			{
-				newcolor = boldcolor;
-			}
-			else
-			{
-				continue;
-			}
-			range = Font->GetColorTranslation ((EColorRange)newcolor);
-			continue;
-		}
-		
-		if (c == '\n')
-		{
-			cx = x;
-			cy += height;
-			continue;
-		}
-
-		if ((data = Font->GetChar (c, &w, &h, &xo, &yo)))
-		{
-			int sw = w * CleanXfac;
-
-//			if (cx + sw > Width)
-//				break;
-
-			switch (drawer)
-			{
-			default:
-			case ETWrapper_Normal:
-				ScaleMaskedBlock (cx - xo * CleanXfac, cy - yo * CleanYfac, w, h,
-					sw, h * CleanYfac, data, range);
-				break;
-			case ETWrapper_Translucent:
-				ScaleTranslucentMaskedBlock (cx - xo * CleanXfac, cy - yo * CleanYfac, w, h,
-					sw, h * CleanYfac, data, range, V_TextTrans);
-				break;
-			case ETWrapper_Shadow:
-				ScaleShadowedMaskedBlock (cx - xo * CleanXfac, cy - yo * CleanYfac, w, h,
-					sw, h * CleanYfac, data, range, TRANSLUC50);
-				break;
-			}
-			cx += sw;
-		}
-		else
-		{
-			cx += w * CleanXfac;
-		}
+		cx += w * scalex;
 	}
 }
 
 //
-// Find string width using current font
+// Find string width using this font
 //
-int DCanvas::StringWidth (const BYTE *string) const
+int FFont::StringWidth (const BYTE *string) const
 {
 	int w = 0;
 	int maxw = 0;
@@ -349,7 +256,7 @@ int DCanvas::StringWidth (const BYTE *string) const
 		}
 		else
 		{
-			w += Font->GetCharWidth (*string++);
+			w += GetCharWidth (*string++);
 		}
 	}
 				
@@ -371,7 +278,7 @@ static void breakit (brokenlines_t *line, const byte *start, const byte *string,
 	line->string = new char[string - start + 1];
 	strncpy (line->string, (char *)start, string - start);
 	line->string[string - start] = 0;
-	line->width = screen->StringWidth (line->string);
+	line->width = screen->Font->StringWidth (line->string);
 }
 
 brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)

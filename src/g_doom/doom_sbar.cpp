@@ -10,6 +10,7 @@
 #include "st_stuff.h"
 #include "r_local.h"
 #include "m_swap.h"
+#include "templates.h"
 
 #define ST_EVILGRINCOUNT		(2*TICRATE)
 #define ST_STRAIGHTFACECOUNT	(TICRATE/2)
@@ -34,12 +35,12 @@ public:
 			"STYSNUM2",	"STYSNUM3",	"STYSNUM4",	"STYSNUM5",	"STYSNUM6",
 			"STYSNUM7",	"STYSNUM8",	"STYSNUM9"
 		};
-
-		int dummy;
+		FTexture *tex;
 
 		FBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
-		FBaseStatusBar::Images.GetImage (imgBNumbers+3, &BigWidth, &BigHeight,
-			&dummy, &dummy);
+		tex = FBaseStatusBar::Images[imgBNumbers+3];
+		BigWidth = tex->GetWidth();
+		BigHeight = tex->GetHeight();
 
 		DoCommonInit ();
 		memset (FaceWeaponsOwned, 0, sizeof(FaceWeaponsOwned));
@@ -122,7 +123,7 @@ public:
 		if (multiplayer)
 		{
 			// draw face background
-			DrawToSBar ("STFBANY", 143, 1,
+			StatusBarTex.DrawToBar ("STFBANY", 143, 1,
 				translationtables[TRANSLATION_Players] + (CPlayer - players)*256);
 		}
 	}
@@ -136,7 +137,7 @@ public:
 		if (multiplayer)
 		{
 			// draw face background
-			DrawToSBar ("STFBANY", 143, 1,
+			StatusBarTex.DrawToBar ("STFBANY", 143, 1,
 				translationtables[TRANSLATION_Players] + (CPlayer - players)*256);
 		}
 		for (i = 0; i < NUMWEAPONS; i++)
@@ -166,7 +167,7 @@ public:
 			if (SB_state != 0)
 			{
 				SB_state--;
-				DrawImage (Images, imgSBAR, 0, 0);
+				DrawImage (&StatusBarTex, 0, 0);
 				memset (OldArms, 255, sizeof(OldArms));
 				memset (OldKeys, 255, sizeof(OldKeys));
 				memset (OldAmmo, 255, sizeof(OldAmmo));
@@ -179,29 +180,54 @@ public:
 				FaceHealth = -9999;
 			}
 			DrawMainBar ();
+			if (CPlayer->inventorytics > 0 && !(level.flags & LEVEL_NOINVENTORYBAR))
+			{
+				DrawInventoryBar ();
+				SB_state = screen->GetPageCount ();
+			}
 		}
 	}
 
 private:
+	struct FDoomStatusBarTexture : public FPatchTexture
+	{
+	public:
+		FDoomStatusBarTexture ();
+		void DrawToBar (const char *name, int x, int y, BYTE *colormap_in = NULL);
+	}
+	StatusBarTex;
+
 	void DoCommonInit ()
 	{
 		static const char *doomLumpNames[] =
 		{
 			"STKEYS0",	"STKEYS1",	"STKEYS2",	"STKEYS3",	"STKEYS4",
-			"STKEYS5",	"STKEYS6",	"STKEYS7",	"STKEYS8",	"STBAR",
+			"STKEYS5",	"STKEYS6",	"STKEYS7",	"STKEYS8",
 			"STGNUM2",	"STGNUM3",	"STGNUM4",	"STGNUM5",	"STGNUM6",
-			"STGNUM7",	"MEDIA0",
+			"STGNUM7",	"MEDIA0",	"ARTIBOX",	"SELECTBO",	"INVGEML1",
+			"INVGEML2",	"INVGEMR1",	"INVGEMR2",
 		};
 
 		Images.Init (doomLumpNames, NUM_DOOMSB_IMAGES);
 
-		if (!deathmatch)
+		// In case somebody wants to use the Heretic status bar graphics...
 		{
-			DrawToSBar ("STARMS", 104, 0);
+			FTexture *artibox = Images[imgARTIBOX];
+			FTexture *selectbox = Images[imgSELECTBOX];
+			if (artibox != NULL && selectbox != NULL)
+			{
+				selectbox->LeftOffset = artibox->LeftOffset;
+				selectbox->TopOffset = artibox->TopOffset;
+			}
 		}
 
-		DrawToSBar ("STTPRCNT", 90, 3);		// Health %
-		DrawToSBar ("STTPRCNT", 221, 3);	// Armor %
+		if (!deathmatch)
+		{
+			StatusBarTex.DrawToBar ("STARMS", 104, 0);
+		}
+
+		StatusBarTex.DrawToBar ("STTPRCNT", 90, 3);		// Health %
+		StatusBarTex.DrawToBar ("STTPRCNT", 221, 3);	// Armor %
 
 		SB_state = screen->GetPageCount ();
 	}
@@ -264,8 +290,7 @@ private:
 			}
 			else
 			{
-				DrawPartialImage (Images, imgSBAR, 2, 3, 2, 3,
-					BigWidth*3, BigHeight);
+				DrawPartialImage (&StatusBarTex, 2, 3, 2, 3, BigWidth*3, BigHeight);
 				if (Scaled)
 				{
 					ScaleCopy->Lock ();
@@ -317,14 +342,14 @@ private:
 				int x = 111 + (i % 3) * 12;
 				int y = 4 + (i / 3) * 10;
 
-				DrawPartialImage (Images, imgSBAR, x, y, x, y, 6, 6);
+				DrawPartialImage (&StatusBarTex, x, y, x, y, 6, 6);
 				if (arms[i])
 				{
-					DrawImage (FBaseStatusBar::Images, imgSmNumbers+2+i, x, y);
+					DrawImage (FBaseStatusBar::Images[imgSmNumbers+2+i], x, y);
 				}
 				else
 				{
-					DrawImage (Images, imgGNUM2+i, x, y);
+					DrawImage (Images[imgGNUM2+i], x, y);
 				}
 			}
 		}
@@ -367,13 +392,13 @@ private:
 			if (AmmoRefresh[i])
 			{
 				AmmoRefresh[i]--;
-				DrawPartialImage (Images, imgSBAR, 276, y, 276, y, 4*3, 6);
+				DrawPartialImage (&StatusBarTex, 276, y, 276, y, 4*3, 6);
 				DrSmallNumber (ammo[i], 276, y);
 			}
 			if (MaxAmmoRefresh[i])
 			{
 				MaxAmmoRefresh[i]--;
-				DrawPartialImage (Images, imgSBAR, 302, y, 302, y, 4*3, 6);
+				DrawPartialImage (&StatusBarTex, 302, y, 302, y, 4*3, 6);
 				DrSmallNumber (maxammo[i], 302, y);
 			}
 		}
@@ -381,17 +406,34 @@ private:
 
 	void DrawFace ()
 	{
+		// If a player has an inventory item selected, it takes the place of the
+		// face, for lack of a better place to put it.
 		if (OldFaceIndex != FaceIndex)
 		{
 			FaceRefresh = screen->GetPageCount ();
 			OldFaceIndex = FaceIndex;
 		}
-		if (FaceRefresh)
+		if (FaceRefresh || CPlayer->inventory[CPlayer->readyArtifact] != 0)
 		{
-			FaceRefresh--;
-			DrawPartialImage (Images, imgSBAR, 142, 0, 142, 0, 37, 32);
-			DrawImageNoUpdate (Faces, FaceIndex, 143, 0);
-			UpdateRect (142, 0, 37, 32);
+			if (FaceRefresh)
+			{
+				FaceRefresh--;
+			}
+			DrawPartialImage (&StatusBarTex, 142, 0, 142, 0, 37, 32);
+			if (CPlayer->inventory[CPlayer->readyArtifact] == 0)
+			{
+				DrawImageNoUpdate (Faces[FaceIndex], 143, 0);
+				UpdateRect (142, 0, 37, 32);
+			}
+			else
+			{
+				DrawImageNoUpdate (ArtiImages[CPlayer->readyArtifact], 144, 0);
+				UpdateRect (142, 0, 37, 32);
+				if (CPlayer->inventory[CPlayer->readyArtifact] != 1)
+				{
+					DrSmallNumber (CPlayer->inventory[CPlayer->readyArtifact], 165, 24);
+				}
+			}
 		}
 	}
 
@@ -430,29 +472,91 @@ private:
 
 				int y = 3 + i*10;
 
-				DrawPartialImage (Images, imgSBAR, 239, y, 239, y, 8, 5);
+				DrawPartialImage (&StatusBarTex, 239, y, 239, y, 8, 5);
 				if (keys[i] != 255)
 				{
-					DrawImage (Images, imgKEYS0+keys[i], 239, y);
+					DrawImage (Images[imgKEYS0+keys[i]], 239, y);
 				}
 			}
 		}
 	}
 
-	void DrawNumber (int val, int x, int y, int size=3) const
+//---------------------------------------------------------------------------
+//
+// PROC DrawInventoryBar
+//
+//---------------------------------------------------------------------------
+
+	void DrawInventoryBar ()
 	{
-		DrawPartialImage (Images, imgSBAR, x-1, y, x-1, y,
-			size*BigWidth+2, BigHeight);
+		int i;
+		int x;
+		bool left, right;
+
+		// If the player has no artifacts, don't draw the bar
+		for (i = 0; i < NUMINVENTORYSLOTS; ++i)
+		{
+			if (CPlayer->inventory[i] != 0)
+			{
+				break;
+			}
+		}
+		if (i == NUMINVENTORYSLOTS)
+		{
+			return;
+		}
+
+		FindInventoryPos (x, left, right);
+		if (x > 0)
+		{
+			for (i = 0; i < 7 && x < NUMINVENTORYSLOTS; x++)
+			{
+				if (CPlayer->inventory[x])
+				{
+					DrawImage (Images[imgARTIBOX], 50+i*31, 2);
+					DrawImage (ArtiImages[x], 50+i*31, 2);
+					if (CPlayer->inventory[x] != 1)
+					{
+						DrSmallNumber (CPlayer->inventory[x], 66+i*31, 24);
+					}
+					if (x == CPlayer->readyArtifact)
+					{
+						DrawImage (Images[imgSELECTBOX], 50+i*31, 2);
+					}
+					i++;
+				}
+			}
+			if (i > 0)
+			{
+				for (; i < 7; ++i)
+				{
+					DrawImage (Images[imgARTIBOX], 50+i*31, 2);
+				}
+				if (left)
+				{
+					DrawImage (Images[!(level.time & 4) ? imgINVLFGEM1 : imgINVLFGEM2], 38, 2);
+				}
+				if (right)
+				{
+					DrawImage (Images[!(level.time & 4) ? imgINVRTGEM1 : imgINVRTGEM2], 269, 2);
+				}
+			}
+		}
+	}
+
+	void DrawNumber (int val, int x, int y, int size=3)
+	{
+		DrawPartialImage (&StatusBarTex, x-1, y, x-1, y, size*BigWidth+2, BigHeight);
 		DrBNumber (val, x, y, size);
 	}
 
 	void DrawFullScreenStuff ()
 	{
-		int i;
+		int i, x;
 
 		// Draw health
 		OverrideImageOrigin (true);
-		DrawOuterImage (Images, imgMEDI, 20, -2);
+		DrawOuterImage (Images[imgMEDI], 20, -2);
 		OverrideImageOrigin (false);
 		DrBNumberOuter (CPlayer->health, 40, -BigHeight-4);
 
@@ -460,20 +564,29 @@ private:
 		if (CPlayer->armortype && CPlayer->armorpoints[0])
 		{
 			OverrideImageOrigin (true);
-			DrawOuterImage (ArmorImages, (CPlayer->armortype != deh.GreenAC),
-				20, -24);
+			DrawOuterImage (ArmorImages[CPlayer->armortype != deh.GreenAC], 20, -24);
 			OverrideImageOrigin (false);
 			DrBNumberOuter (CPlayer->armorpoints[0], 40, -39);
 		}
 
 		// Draw ammo
 		i = wpnlev1info[CPlayer->readyweapon]->ammo;
-		if (i < NUMAMMO)
+		if (i < NUMAMMO || i == MANA_BOTH)
 		{
+			int amt;
+
 			OverrideImageOrigin (true);
-			DrawOuterImage (AmmoImages, i, -14, -4);
+			DrawOuterImage (AmmoImages[i], -14, -4);
 			OverrideImageOrigin (false);
-			DrBNumberOuter (CPlayer->ammo[i], -67, -BigHeight-4);
+			if (i < NUMAMMO)
+			{
+				amt = CPlayer->ammo[i];
+			}
+			else
+			{
+				amt = MIN (CPlayer->ammo[MANA_1], CPlayer->ammo[MANA_2]);
+			}
+			DrBNumberOuter (amt, -67, -BigHeight-4);
 		}
 
 		if (deathmatch)
@@ -486,7 +599,7 @@ private:
 			{
 				if (CPlayer->keys[i])
 				{
-					DrawOuterImage (Images, imgKEYS0+i, -10, 2+i*10);
+					DrawOuterImage (Images[imgKEYS0+i], -10, 2+i*10);
 				}
 			}
 			for (; i < 6; i++)
@@ -503,92 +616,66 @@ private:
 					{
 						x = -10;
 					}
-					DrawOuterImage (Images, imgKEYS0+i, x, -29+i*10);
+					DrawOuterImage (Images[imgKEYS0+i], x, -29+i*10);
 				}
 			}
 		}
-	}
 
-	void DrawToSBar (const char *name, int x, int y, BYTE *colormap=NULL) const
-	{
-		int dummy;
-		byte *desttop = Images.GetImage (imgSBAR,
-			&dummy, &dummy, &dummy, &dummy);
-
-		if (desttop != NULL)
+		// Draw inventory
+		if (!(level.flags & LEVEL_NOINVENTORYBAR))
 		{
-			const patch_t *arms = (patch_t *)W_MapLumpName (name);
-			int w = SHORT(arms->width);
-			const int *ofs = &arms->columnofs[0];
-			desttop += x + 320*y;
-
-			if (colormap == NULL)
+			if (CPlayer->inventorytics == 0)
 			{
-				do
+				if (CPlayer->inventory[CPlayer->readyArtifact] > 0)
 				{
-					column_t *column = (column_t *)((byte *)arms + LONG(*ofs));
-					int top = -1;
-
-					while (column->topdelta != 0xff)
-					{
-						if  (column->topdelta <= top)
-						{
-							top += column->topdelta;
-						}
-						else
-						{
-							top = column->topdelta;
-						}
-						byte *source = (byte *)column + 3;
-						byte *dest = desttop + top * 320;
-						int count = column->length;
-
-						do
-						{
-							*dest = *source++;
-							dest += 320;
-						} while (--count);
-
-						column = (column_t *)(source + 1);
-					}
-					ofs++;
-					desttop++;
-				} while (--w);
+					OverrideImageOrigin (true);
+					DrawOuterImage (ArtiImages[CPlayer->readyArtifact], -14, -24);
+					OverrideImageOrigin (false);
+					DrBNumberOuter (CPlayer->inventory[CPlayer->readyArtifact], -67, -41);
+				}
 			}
 			else
 			{
-				do
+				SetHorizCentering (true);
+				bool left, right;
+
+				FindInventoryPos (x, left, right);
+				for (i = 0; i < 7 && x < NUMINVENTORYSLOTS; x++)
 				{
-					column_t *column = (column_t *)((byte *)arms + LONG(*ofs));
-					int top = -1;
-
-					while (column->topdelta != 0xff)
+					if (CPlayer->inventory[x])
 					{
-						if  (column->topdelta <= top)
+						DrawOuterFadedImage (Images[imgARTIBOX], -106+i*31, -32, TRANSLUC50);
+						DrawOuterImage (ArtiImages[x], -105+i*31, -32);
+						if (CPlayer->inventory[x] != 1)
 						{
-							top += column->topdelta;
+							DrSmallNumberOuter (CPlayer->inventory[x], -90+i*31, -10);
 						}
-						else
+						if (x == CPlayer->readyArtifact)
 						{
-							top = column->topdelta;
+							OverrideImageOrigin (true);
+							DrawOuterImage (Images[imgSELECTBOX], -91+i*31, -3);
+							OverrideImageOrigin (false);
 						}
-						byte *source = (byte *)column + 3;
-						byte *dest = desttop + top * 320;
-						int count = column->length;
-
-						do
-						{
-							*dest = colormap[*source++];
-							dest += 320;
-						} while (--count);
-
-						column = (column_t *)(source + 1);
+						i++;
 					}
-					ofs++;
-					desttop++;
-				} while (--w);
+				}
+				if (i > 0)
+				{
+					for (; i < 7; i++)
+					{
+						DrawOuterFadedImage (Images[imgARTIBOX], -106+i*31, -32, TRANSLUC50);
+					}
+					if (left)
+					{
+						DrawOuterImage (Images[!(level.time & 4) ? imgINVLFGEM1 : imgINVLFGEM2], -118, -33);
+					}
+					if (right)
+					{
+						DrawOuterImage (Images[!(level.time & 4) ? imgINVRTGEM1 : imgINVRTGEM2], 113, -33);
+					}
+				}
+				SetHorizCentering (false);
 			}
-			W_UnMapLump (arms);
 		}
 	}
 
@@ -794,7 +881,6 @@ private:
 		imgKEYS6,
 		imgKEYS7,
 		imgKEYS8,
-		imgSBAR,
 		imgGNUM2,
 		imgGNUM3,
 		imgGNUM4,
@@ -802,6 +888,12 @@ private:
 		imgGNUM6,
 		imgGNUM7,
 		imgMEDI,
+		imgARTIBOX,
+		imgSELECTBOX,
+		imgINVLFGEM1,
+		imgINVLFGEM2,
+		imgINVRTGEM1,
+		imgINVRTGEM2,
 
 		NUM_DOOMSB_IMAGES
 	};
@@ -856,6 +948,39 @@ private:
 
 	bool FaceWeaponsOwned[NUMWEAPONS];
 };
+
+FDoomStatusBar::FDoomStatusBarTexture::FDoomStatusBarTexture ()
+: FPatchTexture (W_GetNumForName ("STBAR"), FTexture::TEX_MiscPatch)
+{
+}
+
+void FDoomStatusBar::FDoomStatusBarTexture::DrawToBar (const char *name, int x, int y, BYTE *colormap_in)
+{
+	BYTE colormap[256];
+
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+
+	if (colormap_in != NULL)
+	{
+		for (int i = 0; i < 256; ++i)
+		{
+			colormap[i] = colormap_in[i] == 255 ? Near255 : colormap_in[i];
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 255; ++i)
+		{
+			colormap[i] = i;
+		}
+		colormap[255] = Near255;
+	}
+
+	TexMan[name]->CopyToBlock (Pixels, Width, Height, x, y, colormap);
+}
 
 FBaseStatusBar *CreateDoomStatusBar ()
 {

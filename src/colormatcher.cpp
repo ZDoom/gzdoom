@@ -62,7 +62,7 @@ struct FColorMatcher::PalEntry
 #endif
 };
 
-extern int BestColor (const DWORD *palette, int r, int g, int b, int first = 0);
+extern int BestColor (const DWORD *palette, int r, int g, int b, int first = 0, int num = 256);
 
 FColorMatcher::FColorMatcher ()
 {

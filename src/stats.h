@@ -34,36 +34,33 @@
 #ifndef __STATS_H__
 #define __STATS_H__
 
-extern "C" BOOL HaveRDTSC;
+#include "i_system.h"
 extern "C" double SecondsPerCycle;
 extern "C" double CyclesPerSecond;
 
-typedef DWORD cycle_t;
-
 #if _MSC_VER
+
+typedef QWORD cycle_t;
+
 inline cycle_t GetClockCycle ()
 {
-	if (HaveRDTSC)
+	if (CPU.bRDTSC)
 	{
-		cycle_t res;
-		__asm {
-			xor		eax,eax
-			xor		edx,edx
-			_emit	0x0f
-			_emit	0x31
-			mov		res,eax
-		}
-		return res;
+		__asm rdtsc
 	}
 	else
 	{
 		return 0;
 	}
 }
+
 #elif (defined __GNUG__)
-inline cycle_t GetClockCycle ()
+
+typedef DWORD cycle_t;
+
+inline cycle_t GetClockCycle()
 {
-	if (HaveRDTSC)
+	if (CPU.bRDTSC)
 	{
 		cycle_t res;
 		asm volatile ("rdtsc" : "=a" (res) : : "%edx");
@@ -74,7 +71,11 @@ inline cycle_t GetClockCycle ()
 		return 0;
 	}	
 }
+
 #else
+
+typedef DWORD cycle_t;
+
 inline cycle_t GetClockCycle ()
 {
 	return 0;

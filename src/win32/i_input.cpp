@@ -133,6 +133,8 @@ extern DWORD SessionID;
 extern void ShowEAXEditor ();
 extern bool SpawnEAXWindow;
 
+static HMODULE DInputDLL;
+
 static void KeyRead ();
 static BOOL DI_Init2 ();
 static void MouseRead_DI ();
@@ -220,7 +222,6 @@ extern constate_e ConsoleState;
 BOOL AppActive = TRUE;
 int SessionState = 0;
 
-CVAR (Bool,  i_remapkeypad,			true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -694,7 +695,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 
 	case WM_MOUSEWHEEL:
-		if (MakeMouseEvents && mousemode == win32)
+		if ((MakeMouseEvents || NativeMouse) && mousemode == win32)
 		{
 			WheelMove += (short) HIWORD(wParam);
 			WheelMoved ();
@@ -722,10 +723,13 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_ACTIVATEAPP:
 		AppActive = wParam;
-		if (!noidle)
+		if (wParam)
 		{
-			SetPriorityClass (GetCurrentProcess(),
-				wParam ? INGAME_PRIORITY_CLASS : IDLE_PRIORITY_CLASS);
+			SetPriorityClass (GetCurrentProcess (), INGAME_PRIORITY_CLASS);
+		}
+		else if (!noidle && !netgame)
+		{
+			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
 		SetSoundPaused (wParam);
 		break;
@@ -1443,16 +1447,47 @@ BOOL I_InitInput (void *hwnd)
 	if (g_pdi == NULL)
 	{
 		hr = CoCreateInstance (CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER, IID_IDirectInputA, (void**)&g_pdi3);
-		if (FAILED(hr))
+		if (hr == REGDB_E_CLASSNOTREG)
 		{
-			I_FatalError ("Could not create DirectInput interface: %08x", hr);
+			// NT 4 has the wrong GUID in the registry for CLSID_DirectInput unless somebody has already
+			// used "regsvr32 dinput.dll" to properly register the class. This means the only sure way to
+			// obtain an IDirectInputA interface under NT 4 is to actually load the DLL and use
+			// the function it provides. Grrr.
+			DInputDLL = LoadLibrary ("dinput.dll");
+			if (DInputDLL == NULL)
+			{
+				I_FatalError ("Could not load dinput.dll: %08x", GetLastError());
+			}
+
+			typedef HRESULT (*blah)(HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
+			blah dic = (blah)GetProcAddress (DInputDLL, "DirectInputCreateA");
+
+			if (dic == NULL)
+			{
+				I_FatalError ("dinput.dll is corrupt");
+			}
+
+			hr = dic (g_hInst, 0x0300, &g_pdi3, NULL);
+			if (FAILED(hr))
+			{
+				I_FatalError ("Could not create DirectInput interface: %08x", hr);
+			}
+
+			Printf ("Tip for NT 4: \"regsvr32 dinput.dll\"\n");
 		}
-		hr = g_pdi3->Initialize (g_hInst, 0x0300);
-		if (FAILED(hr))
+		else
 		{
-			g_pdi3->Release ();
-			g_pdi3 = NULL;
-			I_FatalError ("Could not initialize DirectInput interface: %08x", hr);
+			if (FAILED(hr))
+			{
+				I_FatalError ("Could not create DirectInput interface: %08x", hr);
+			}
+			hr = g_pdi3->Initialize (g_hInst, 0x0300);
+			if (FAILED(hr))
+			{
+				g_pdi3->Release ();
+				g_pdi3 = NULL;
+				I_FatalError ("Could not initialize DirectInput interface: %08x", hr);
+			}
 		}
 	}
 
@@ -1493,6 +1528,11 @@ void STACK_ARGS I_ShutdownInput ()
 	{
 		g_pdi3->Release ();
 		g_pdi3 = NULL;
+		if (DInputDLL != NULL)
+		{
+			FreeLibrary (DInputDLL);
+			DInputDLL = NULL;
+		}
 	}
 }
 
@@ -1604,6 +1644,9 @@ static void WheelMoved ()
 			dir = -WHEEL_DELTA;
 			event.subtype = EV_GUI_WheelUp;
 		}
+		event.data3 = ((KeyState[VK_SHIFT]&128) ? GKM_SHIFT : 0) |
+					  ((KeyState[VK_CONTROL]&128) ? GKM_CTRL : 0) |
+					  ((KeyState[VK_MENU]&128) ? GKM_ALT : 0);
 		while (abs (WheelMove) >= WHEEL_DELTA)
 		{
 			D_PostEvent (&event);
@@ -1705,7 +1748,7 @@ static void MouseRead_DI ()
 		case DIMOFS_Y:	GDy += od.dwData;						break;
 		case DIMOFS_Z:	WheelMove += od.dwData; WheelMoved ();	break;
 
-		/* [RH] Mouse button events now keydown/up events */
+		/* [RH] Mouse button events mimic keydown/up events */
 		case DIMOFS_BUTTON0:
 		case DIMOFS_BUTTON1:
 		case DIMOFS_BUTTON2:
@@ -1824,31 +1867,6 @@ static void KeyRead ()
 	toState[DIK_RCONTROL]	 = 0;
 	toState[DIK_RSHIFT]		 = 0;
 
-	if (i_remapkeypad)
-	{
-		toState[DIK_LEFT]	|= toState[DIK_NUMPAD4];
-		toState[DIK_RIGHT]	|= toState[DIK_NUMPAD6];
-		toState[DIK_UP]		|= toState[DIK_NUMPAD8];
-		toState[DIK_DOWN]	|= toState[DIK_NUMPAD2];
-		toState[DIK_HOME]	|= toState[DIK_NUMPAD7];
-		toState[DIK_PRIOR]	|= toState[DIK_NUMPAD9];
-		toState[DIK_NEXT]	|= toState[DIK_NUMPAD3];
-		toState[DIK_END]	|= toState[DIK_NUMPAD1];
-		toState[DIK_INSERT]	|= toState[DIK_NUMPAD0];
-		toState[DIK_DELETE]	|= toState[DIK_DECIMAL];
-
-		toState[DIK_NUMPAD4] = 0;
-		toState[DIK_NUMPAD6] = 0;
-		toState[DIK_NUMPAD8] = 0;
-		toState[DIK_NUMPAD2] = 0;
-		toState[DIK_NUMPAD7] = 0;
-		toState[DIK_NUMPAD9] = 0;
-		toState[DIK_NUMPAD3] = 0;
-		toState[DIK_NUMPAD1] = 0;
-		toState[DIK_NUMPAD0] = 0;
-		toState[DIK_DECIMAL] = 0;
-	}
-
 	// Now generate events for any keys that differ between the states
 	if (!GUICapture)
 	{
@@ -1859,6 +1877,9 @@ static void KeyRead ()
 				event.type = toState[i] ? EV_KeyDown : EV_KeyUp;
 				event.data1 = i;
 				event.data2 = Convert[i];
+				event.data3 = (toState[DIK_LSHIFT] ? GKM_SHIFT : 0) |
+							  (toState[DIK_LCONTROL] ? GKM_CTRL : 0) |
+							  (toState[DIK_LMENU] ? GKM_ALT : 0);
 				D_PostEvent (&event);
 			}
 		}

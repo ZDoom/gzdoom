@@ -47,7 +47,7 @@ STREAM_ENUM (ammotype_t)
 
 #define MAX_MANA	200
 
-extern const char *AmmoPics[NUMAMMO];
+extern const char *AmmoPics[MANA_BOTH+1];
 
 typedef enum
 {

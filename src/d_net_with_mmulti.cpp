@@ -22,6 +22,10 @@
 //
 //-----------------------------------------------------------------------------
 
+// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
+// Ken Silverman's official web site: "http://www.advsys.net/ken"
+// See the included license file "BUILDLIC.TXT" for license info.
+
 #include <stddef.h>
 
 #include "version.h"
@@ -48,9 +52,6 @@
 #include "gameconfigfile.h"
 #include "d_gui.h"
 #include "templates.h"
-
-bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
-					int arg0, int arg1, int arg2, int always);
 
 //#define SIMULATEERRORS		(RAND_MAX/3)
 #define SIMULATEERRORS			0
@@ -96,6 +97,27 @@ doomcom_t*		doomcom;
 enum { NET_PeerToPeer, NET_PacketServer };
 BYTE NetMode = NET_PeerToPeer;
 
+
+#define BAKSIZ 32768
+
+void dosendpackets(int other);
+void sendpacket(int other, BYTE *bufptr, int messleng);
+int getpacket (int *other, BYTE *bufptr);
+
+static int incnt[MAXNETNODES], outcntplc[MAXNETNODES], outcntend[MAXNETNODES];
+static BYTE errorgotnum[MAXNETNODES];
+static BYTE errorfixnum[MAXNETNODES];
+static BYTE errorresendnum[MAXNETNODES];
+static BYTE lasterrorgotnum[MAXNETNODES];
+
+static BYTE lastpacket[1400], inlastpacket = 0;
+static short lastpacketfrom, lastpacketleng;
+
+static long timeoutcount = 60, resendagaincount = 4, lastsendtime[MAXNETNODES];
+
+static short bakpacketptr[MAXNETNODES][256], bakpacketlen[MAXNETNODES][256];
+static BYTE bakpacketbuf[BAKSIZ];
+static long bakpacketplc = 0;
 
 
 //
@@ -401,6 +423,9 @@ int ExpandTics (int low)
 //
 void HSendPacket (int node, int len)
 {
+	sendpacket (node, doomcom->data, len);
+	return;
+
 	if (debugfile && node != 0)
 	{
 		int i, k, realretrans;
@@ -495,6 +520,13 @@ void HSendPacket (int node, int len)
 //
 BOOL HGetPacket (void)
 {
+	int other, len;
+	len = getpacket (&other, doomcom->data);
+	if (len < 0)
+		return false;
+	doomcom->remotenode = other;
+	return true;
+
 	if (reboundpacket)
 	{
 		memcpy (netbuffer, reboundstore, reboundpacket);
@@ -893,7 +925,7 @@ void NetUpdate (void)
 	bool	resendOnly;
 
 	// check time
-	nowtime = I_GetTime (false);
+	nowtime = I_GetTime ();
 	newtics = nowtime - gametime;
 	gametime = nowtime;
 
@@ -1246,7 +1278,7 @@ BOOL CheckAbort (void)
 
 	PrintString (PRINT_HIGH, "");	// [RH] Give the console a chance to redraw itself
 	// This WaitForTic is to avoid flooding the network with packets on startup.
-	I_WaitForTic (I_GetTime (false) + TICRATE/4);
+	I_WaitForTic (I_GetTime () + TICRATE/4);
 	I_StartTic ();
 	for ( ; eventtail != eventhead 
 		  ; eventtail = (++eventtail)&(MAXEVENTS-1) ) 
@@ -1556,6 +1588,11 @@ void D_CheckNetGame (void)
 		nettics[i] = 0;
 		remoteresend[i] = false;		// set when local needs tics
 		resendto[i] = 0;				// which tic to start sending
+		incnt[i] = 0;
+		outcntplc[i] = 0;
+		outcntend[i] = 0;
+		bakpacketlen[i][255] = -1;
+		lastsendtime[i] = I_GetTime ();
 	}
 
 	// I_InitNetwork sets doomcom and netgame
@@ -1676,7 +1713,7 @@ void TryRunTics (void)
 	}
 	else
 	{
-		entertic = I_GetTime (false);
+		entertic = I_GetTime ();
 	}
 	realtics = entertic - oldentertics;
 	oldentertics = entertic;
@@ -1793,7 +1830,7 @@ void TryRunTics (void)
 			I_Error ("TryRunTics: lowtic < gametic");
 
 		// don't stay in here forever -- give the menu a chance to work
-		if (I_GetTime (false) - entertic >= TICRATE/3)
+		if (I_GetTime () - entertic >= TICRATE/3)
 		{
 			C_Ticker ();
 			M_Ticker ();
@@ -1816,7 +1853,6 @@ void TryRunTics (void)
 		DObject::BeginFrame ();
 		C_Ticker ();
 		M_Ticker ();
-		I_GetTime (true);
 		G_Ticker ();
 		DObject::EndFrame ();
 		gametic++;
@@ -2198,20 +2234,6 @@ void Net_DoCommand (int type, byte **stream, int player)
 		players[player].DesiredFOV = (float)ReadByte (stream);
 		break;
 
-	case DEM_RUNSCRIPT:
-		{
-			int snum = ReadWord (stream);
-			int argn = ReadByte (stream);
-			int arg[3] = { 0, 0, 0 };
-			
-			for (i = 0; i < argn; ++i)
-			{
-				arg[i] = ReadLong (stream);
-			}
-			P_StartScript (players[player].mo, NULL, snum, level.mapname, 0, arg[0], arg[1], arg[2], false);
-		}
-		break;
-
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;
@@ -2291,10 +2313,6 @@ void Net_SkipCommand (int type, byte **stream)
 			}
 			break;
 
-		case DEM_RUNSCRIPT:
-			skip = 3 + *(*stream + 2) * 4;
-			break;
-
 		default:
 			return;
 	}
@@ -2311,4 +2329,261 @@ CCMD (pings)
 		if (playeringame[i])
 			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],
 					players[i].userinfo.netname);
+}
+
+
+void sendpacket(int other, BYTE *bufptr, int messleng)
+{
+	int i, j;
+
+	if (other == 0)
+	{
+		memcpy (reboundstore, bufptr, messleng);
+		reboundpacket = messleng;
+		return;
+	}
+
+	if (demoplayback)
+		return;
+
+	if (!netgame)
+		I_Error ("Tried to transmit to another node");
+
+	i = 0;
+	if (bakpacketlen[other][(outcntend[other]-1)&255] == messleng)
+	{
+		j = bakpacketptr[other][(outcntend[other]-1)&255];
+		for(i=messleng-1;i>=0;i--)
+			if (bakpacketbuf[(i+j)&(BAKSIZ-1)] != bufptr[i]) break;
+	}
+	bakpacketlen[other][outcntend[other]&255] = messleng;
+
+	if (i < 0)   //Point to last packet to save space on bakpacketbuf
+		bakpacketptr[other][outcntend[other]&255] = j;
+	else
+	{
+		bakpacketptr[other][outcntend[other]&255] = bakpacketplc;
+		for(i=0;i<messleng;i++)
+			bakpacketbuf[(bakpacketplc+i)&(BAKSIZ-1)] = bufptr[i];
+		bakpacketplc = ((bakpacketplc+messleng)&(BAKSIZ-1));
+	}
+	outcntend[other]++;
+
+	lastsendtime[other] = I_GetTime();
+	dosendpackets(other);
+}
+
+void dosendpackets(int other)
+{
+	int i, j, k, messleng;
+
+	if (outcntplc[other] == outcntend[other]) return;
+
+	if (debugfile && errorgotnum[other] > lasterrorgotnum[other])
+	{
+		lasterrorgotnum[other]++;
+		fprintf(debugfile, " MeWant %ld\n",incnt[other]&255);
+	}
+
+	if (outcntplc[other]+1 == outcntend[other])
+	{     //Send 1 sub-packet
+		k = 0;
+		doomcom->data[k++] = BYTE(outcntplc[other]&255);
+		doomcom->data[k++] = BYTE(errorgotnum[other]&7)+((errorresendnum[other]&7)<<3);
+		doomcom->data[k++] = BYTE(incnt[other]&255);
+
+		j = bakpacketptr[other][outcntplc[other]&255];
+		messleng = bakpacketlen[other][outcntplc[other]&255];
+		for(i=0;i<messleng;i++)
+			doomcom->data[k++] = bakpacketbuf[(i+j)&(BAKSIZ-1)];
+		outcntplc[other]++;
+	}
+	else
+	{     //Send 2 sub-packets
+		k = 0;
+		doomcom->data[k++] = BYTE(outcntplc[other]&255);
+		doomcom->data[k++] = BYTE(errorgotnum[other]&7)+((errorresendnum[other]&7)<<3)+128;
+		doomcom->data[k++] = BYTE(incnt[other]&255);
+
+			//First half-packet
+		j = bakpacketptr[other][outcntplc[other]&255];
+		messleng = bakpacketlen[other][outcntplc[other]&255];
+		doomcom->data[k++] = (BYTE)(messleng&255);
+		doomcom->data[k++] = (BYTE)(messleng>>8);
+		for(i=0;i<messleng;i++)
+			doomcom->data[k++] = bakpacketbuf[(i+j)&(BAKSIZ-1)];
+		outcntplc[other]++;
+
+			//Second half-packet
+		j = bakpacketptr[other][outcntplc[other]&255];
+		messleng = bakpacketlen[other][outcntplc[other]&255];
+		for(i=0;i<messleng;i++)
+			doomcom->data[k++] = bakpacketbuf[(i+j)&(BAKSIZ-1)];
+		outcntplc[other]++;
+
+	}
+
+	doomcom->remotenode = other;
+	doomcom->datalength = k;
+
+	if (debugfile)
+	{
+		fprintf(debugfile, "Send(%ld): ",doomcom->remotenode);
+		fprintf(debugfile, "[%3d %d-%d-%d %3d] ", doomcom->data[0],
+			doomcom->data[1]>>7, (doomcom->data[1]>>3)&7, doomcom->data[1]&7,
+			doomcom->data[2]);
+		for(i=3;i<doomcom->remotenode;i++) fprintf(debugfile, "%2x ",doomcom->data[i]);
+		fprintf(debugfile, "\n");
+	}
+
+#if (SIMULATEERRORS != 0)
+	if (rand()&SIMULATEERRORS)
+#endif
+		{ doomcom->command = CMD_SEND; I_NetCmd (); }
+}
+
+int getpacket (int *other, BYTE *bufptr)
+{
+	long i, messleng;
+
+	if (reboundpacket)
+	{
+		memcpy (bufptr, reboundstore, sizeof(reboundstore));
+		*other = 0;
+		messleng = reboundpacket;
+		reboundpacket = 0;
+		return messleng;
+	}
+
+	for(i = 1; i < doomcom->numnodes; ++i)
+	{
+		int time = I_GetTime ();
+		if (time < lastsendtime[i]) lastsendtime[i] = time;
+		if (time > lastsendtime[i]+timeoutcount)
+		{
+			if (debugfile)
+				fprintf(debugfile, " TimeOut!\n");
+			errorgotnum[i] = errorfixnum[i]+1;
+
+			if ((outcntplc[i] == outcntend[i]) && (outcntplc[i] > 0))
+				{ outcntplc[i]--; lastsendtime[i] = time; }
+			else
+				lastsendtime[i] += resendagaincount;
+			dosendpackets(i);
+		}
+	}
+
+	if (inlastpacket != 0)
+	{
+			//2ND half of good double-packet
+		inlastpacket = 0;
+		*other = lastpacketfrom;
+		memcpy(bufptr,lastpacket,lastpacketleng);
+		return(lastpacketleng);
+	}
+
+retry:
+	doomcom->command = CMD_GET;
+	I_NetCmd ();
+
+	if (debugfile && doomcom->remotenode != -1)
+	{
+		fprintf(debugfile, " Get(%ld): ",doomcom->remotenode);
+		fprintf(debugfile, "[%3d %d-%d-%d %3d] ", doomcom->data[0],
+			doomcom->data[1]>>7, (doomcom->data[1]>>3)&7, doomcom->data[1]&7,
+			doomcom->data[2]);
+		for(i=3;i<doomcom->datalength;i++) fprintf(debugfile, "%2x ",doomcom->data[i]);
+		fprintf(debugfile, "\n");
+	}
+
+	if (doomcom->remotenode < 0) return -1;
+
+	messleng = doomcom->datalength;
+
+	// [RH] Messages shorter than this can't possibly be packets we're
+	// interested in.
+	if (messleng < 5)
+	{
+		if (debugfile)
+			fprintf(debugfile, "Superfluous %d byte packet received from %d\n",
+			messleng, doomcom->remotenode);
+		goto retry;
+	}
+
+	*other = doomcom->remotenode;
+
+	while ((errorfixnum[*other]&7) != ((doomcom->data[1]>>3)&7))
+		errorfixnum[*other]++;
+
+	if ((doomcom->data[1]&7) != (errorresendnum[*other]&7))
+	{
+		errorresendnum[*other]++;
+		outcntplc[*other] = (outcntend[*other]&(~0xff))+doomcom->data[2];
+		if (outcntplc[*other] > outcntend[*other]) outcntplc[*other] -= 256;
+	}
+
+	if (doomcom->data[0] != (incnt[*other]&255))   //CNT check
+	{
+		if (((incnt[*other]-doomcom->data[0])&255) > 32)
+		{
+			errorgotnum[*other] = errorfixnum[*other]+1;
+			if (debugfile)
+				fprintf(debugfile, "%ld CNT\n",doomcom->data[0]);
+		}
+		else if (debugfile)
+		{
+			if (!(doomcom->data[1]&128))           //single else double packet
+			{
+				fprintf(debugfile, "%ld cnt\n",doomcom->data[0]);
+			}
+			else
+			{
+				if (((doomcom->data[0]+1)&255) == (incnt[*other]&255))
+				{
+								 //GOOD! Take second half of double packet
+					fprintf(debugfile, "%ld-%ld .¬ \n",doomcom->data[0],(doomcom->data[0]+1)&255);
+
+					messleng = ((long)doomcom->data[3]) + (((long)doomcom->data[4])<<8);
+					lastpacketleng = (short)(doomcom->datalength - 5 - messleng);
+					memcpy(bufptr,&doomcom->data[messleng+5],lastpacketleng);
+					incnt[*other]++;
+					return(lastpacketleng);
+				}
+				else
+				{
+					if (debugfile)
+						fprintf(debugfile, "%ld-%ld cnt \n",doomcom->data[0],(doomcom->data[0]+1)&255);
+				}
+			}
+		}
+		goto retry;
+	}
+
+		//PACKET WAS GOOD!
+	if ((doomcom->data[1]&128) == 0)           //Single packet
+	{
+		if (debugfile)
+			fprintf(debugfile, "%ld ¬  \n",doomcom->data[0]);
+
+		messleng = doomcom->datalength - 3;
+
+		memcpy(bufptr,&doomcom->data[3],messleng);
+
+		incnt[*other]++;
+		return short(messleng);
+	}
+
+														 //Double packet
+	if (debugfile)
+		fprintf(debugfile, "%ld-%ld ¬ \n",doomcom->data[0],(doomcom->data[0]+1)&255);
+
+	messleng = (doomcom->data[3]) + (doomcom->data[4]<<8);
+	lastpacketleng = (short)(doomcom->datalength - 5 - messleng);
+	inlastpacket = 1; lastpacketfrom = *other;
+
+	memcpy(bufptr,&doomcom->data[5],messleng);
+	memcpy(lastpacket,&doomcom->data[messleng+5],lastpacketleng);
+
+	incnt[*other] += 2;
+	return short(messleng);
 }

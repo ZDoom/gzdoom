@@ -175,6 +175,7 @@ bool	CheckIfExitIsGood (AActor *self);
 
 // at game start
 void	P_InitPicAnims (void);
+void	P_AddSimpleAnim (int picnum, int animcount, int animtype, int animspeed);
 
 // at map load
 void	P_SpawnSpecials (void);

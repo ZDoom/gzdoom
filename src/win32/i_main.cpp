@@ -29,10 +29,14 @@
 #include <mmsystem.h>
 #include <objbase.h>
 #include <commctrl.h>
+
 #ifndef NOWTS
 //#include <wtsapi32.h>
 #define NOTIFY_FOR_THIS_SESSION 0
 #endif
+
+#include <malloc.h>
+#include "m_alloc.h"
 #ifdef _MSC_VER
 #include <eh.h>
 #include <new.h>
@@ -61,7 +65,6 @@
 
 
 #include <assert.h>
-#include <malloc.h>
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 
@@ -186,10 +189,41 @@ void DoMain (HINSTANCE hInstance)
 			pIsDebuggerPresent = (BOOL(*)())GetProcAddress (kernel, "IsDebuggerPresent");
 		}
 
-#if 0
-		// Load the DirectX Graphics library if available, but don't depend on it.
-		hd3d8 = LoadLibraryA ("d3d8.dll");
-		atterm (CloseD3D8);
+		// NASM does not support creating writeable code sections (even though this
+		// is a perfectly valid configuration for Microsoft's COFF format), so I
+		// need to make the self-modifying code writeable after it's already loaded.
+#ifdef USEASM
+	{
+		BYTE *module = (BYTE *)GetModuleHandle (NULL);
+		IMAGE_DOS_HEADER *dosHeader = (IMAGE_DOS_HEADER *)module;
+		IMAGE_NT_HEADERS *ntHeaders = (IMAGE_NT_HEADERS *)(module + dosHeader->e_lfanew);
+		IMAGE_SECTION_HEADER *sections = IMAGE_FIRST_SECTION (ntHeaders);
+		int i;
+		LPVOID *start;
+		SIZE_T size;
+		DWORD oldprotect;
+
+		for (i = 0; i < ntHeaders->FileHeader.NumberOfSections; ++i)
+		{
+			if (memcmp (sections[i].Name, ".rtext\0", 8) == 0)
+			{
+				start = (LPVOID *)(sections[i].VirtualAddress + module);
+				size = sections[i].Misc.VirtualSize;
+				break;
+			}
+		}
+
+		// I think these pages need to be mapped PAGE_EXECUTE_WRITECOPY (based on the
+		// description of PAGE_WRITECOPY), but PAGE_EXECUTE_READWRITE seems to work
+		// just as well; two instances of the program can be running with different
+		// resolutions at the same time either way. Perhaps the file mappings for
+		// executables are created with PAGE_WRITECOPY, so any attempts to give them
+		// write access are automatically transformed to copy-on-write?
+		if (!VirtualProtect (start, size, PAGE_EXECUTE_WRITECOPY, &oldprotect))
+		{
+			I_FatalError ("The self-modifying code section code not be made writeable.");
+		}
+	}
 #endif
 
 		// Let me see fancy visual styles under XP

@@ -157,7 +157,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 	samples1 = SampleBuff;
 
 #if defined(_MSC_VER) && defined(USEASM)
-	if (HaveCMOV && numsamples > 1)
+	if (CPU.bCMOV && numsamples > 1)
 	{
 		__asm
 		{

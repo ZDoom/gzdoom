@@ -105,7 +105,7 @@ static void HU_DrawSingleScores (player_t *player, player_t *sortedplayers[MAXPL
 	{
 		if (playeringame[i])
 		{
-			int width = screen->StringWidth (players[i].userinfo.netname);
+			int width = SmallFont->StringWidth (players[i].userinfo.netname);
 			if (width > maxwidth)
 				maxwidth = width;
 		}
@@ -182,8 +182,8 @@ static void HU_DrawTeamScores (player_t *player, player_t *sorted[MAXPLAYERS])
 								(56-100)*CleanYfac+(SCREENHEIGHT/2));
 
 			sprintf (str, "%s %d", TeamNames[i], teamScore[i]);
-			screen->DrawTextClean (teamColors[i], teamX[j],
-				teamY[j] - 20*CleanYfac, str);
+			screen->DrawText (teamColors[i], teamX[j],
+				teamY[j] - 20*CleanYfac, str, DTA_CleanNoMove, true, TAG_DONE);
 
 			j++;
 		}
@@ -224,8 +224,8 @@ static void HU_DrawTimeRemaining (int y)
 		else
 			sprintf (str, "Level ends in %02d:%02d", minutes, seconds);
 		
-		screen->DrawTextClean (CR_GREY, SCREENWIDTH/2 - screen->StringWidth (str)/2*CleanXfac,
-			y, str);
+		screen->DrawText (CR_GREY, SCREENWIDTH/2 - SmallFont->StringWidth (str)/2*CleanXfac,
+			y, str, DTA_CleanNoMove, true, TAG_DONE);
 	}
 
 }
@@ -247,17 +247,13 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 	if (gameinfo.gametype == GAME_Hexen &&
 		player->CurrentPlayerClass < 3)
 	{
-		int lump = W_CheckNumForName (FaceNames[player->CurrentPlayerClass]);
-		if (lump != -1)
-		{
-			const patch_t *face = (patch_t *)W_MapLumpNum (lump);
-			screen->DrawPatchCleanNoMove (face, x+(pack?20:32)*CleanXfac, y);
-			W_UnMapLump (face);
-		}
+		screen->DrawTexture (TexMan[FaceNames[player->CurrentPlayerClass]], x+(pack?20:32)*CleanXfac, y,
+			DTA_CleanNoMove, true, TAG_DONE);
 	}
 
 	sprintf (str, "%d", player->fragcount);
-	screen->DrawTextClean (highlight ? CR_GREEN : CR_BRICK, x+(pack?28:40)*CleanXfac, y, str);
+	screen->DrawText (highlight ? CR_GREEN : CR_BRICK, x+(pack?28:40)*CleanXfac, y, str,
+		DTA_CleanNoMove, true, TAG_DONE);
 
 	if (!highlight)
 	{
@@ -268,5 +264,6 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 		color = CR_GREEN;
 	}
 
-	screen->DrawTextClean (color, x + (pack?54:72)*CleanXfac, y, player->userinfo.netname);
+	screen->DrawText (color, x + (pack?54:72)*CleanXfac, y, player->userinfo.netname,
+		DTA_CleanNoMove, true, TAG_DONE);
 }

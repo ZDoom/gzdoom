@@ -38,6 +38,7 @@
 #include "m_png.h"
 #include "m_crc32.h"
 #include "i_system.h"
+#include "c_dispatch.h"
 
 #define RAND_ID MAKE_ID('r','a','N','d')
 
@@ -159,6 +160,19 @@ void FRandom::StaticClearRandom ()
 	}
 }
 
+// This function produces a DWORD that can be used to check the consistancy
+// of network games between different machines. Only a select few RNGs are
+// used for the sum, because not all RNGs are important to network sync.
+
+extern FRandom pr_spawnmobj;
+extern FRandom pr_acs;
+extern FRandom pr_chase;
+
+DWORD FRandom::StaticSumSeeds ()
+{
+	return pr_spawnmobj.Seed + pr_acs.Seed + pr_chase.Seed;
+}
+
 void P_SerializeRNGState (FILE *file, bool saving)
 {
 	FRandom *rng;
@@ -209,3 +223,21 @@ void P_SerializeRNGState (FILE *file, bool saving)
 		}
 	}
 }
+
+#ifdef _DEBUG
+void FRandom::StaticPrintSeeds ()
+{
+	FRandom *rng = RNGList;
+
+	while (rng != NULL)
+	{
+		Printf ("%s: %08x\n", rng->Name, rng->Seed);
+		rng = rng->Next;
+	}
+}
+
+CCMD (showrngs)
+{
+	FRandom::StaticPrintSeeds ();
+}
+#endif

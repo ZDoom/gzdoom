@@ -42,8 +42,8 @@ class ASoundEnvironment : public AActor
 	DECLARE_STATELESS_ACTOR (ASoundEnvironment, AActor)
 public:
 	void PostBeginPlay ();
-	void Deactivate ();
-	void Activate ();
+	void Deactivate (AActor *activator);
+	void Activate (AActor *deactivator);
 };
 
 IMPLEMENT_STATELESS_ACTOR (ASoundEnvironment, Any, 9048, 0)
@@ -55,11 +55,11 @@ void ASoundEnvironment::PostBeginPlay ()
 	Super::PostBeginPlay ();
 	if (!(flags2 & MF2_DORMANT))
 	{
-		Activate ();
+		Activate (this);
 	}
 }
 
-void ASoundEnvironment::Activate ()
+void ASoundEnvironment::Activate (AActor *activator)
 {
 	zones[Sector->ZoneNumber].Environment = S_FindEnvironment ((args[0]<<8) | (args[1]));
 }
@@ -68,7 +68,7 @@ void ASoundEnvironment::Activate ()
 // and not have it take effect. This is so you can use multiple environments in
 // a single zone, with only one set not-dormant, so you know which one will take
 // effect at the start.
-void ASoundEnvironment::Deactivate ()
+void ASoundEnvironment::Deactivate (AActor *deactivator)
 {
 	flags2 |= MF2_DORMANT;
 }

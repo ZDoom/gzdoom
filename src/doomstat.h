@@ -245,14 +245,11 @@ extern int				skyflatnum;
 
 // Netgame stuff (buffers and pointers, i.e. indices).
 
-// This is ???
+// This is the interface to the packet driver, a separate program
+// in DOS, but just an abstraction here.
 extern	doomcom_t*		doomcom;
 
-// This points inside doomcom.
-extern	doomdata_t* 	netbuffer;		
-
-
-extern	struct ticcmd_t		localcmds[BACKUPTICS];
+extern	struct ticcmd_t	localcmds[LOCALCMDTICS];
 
 extern	int 			maketic;
 extern	int 			nettics[MAXNETNODES];
@@ -269,23 +266,6 @@ extern bool ToggleFullscreen;
 extern float JoyAxes[6];
 
 extern int Net_Arbitrator;
-
-// Use MMX routines? (Only if USEASM is defined)
-extern	BOOL			UseMMX;
-
-// Have conditional move instructions? (x86 only)
-extern "C" BOOL			HaveCMOV;
-
-#ifdef USEASM
-extern "C" void EndMMX (void);
-
-#ifdef _MSC_VER
-#define ENDMMX if (UseMMX) __asm emms;
-#else
-#define ENDMMX if (UseMMX) EndMMX();
-#endif
-
-#endif
 
 EXTERN_CVAR (Bool, var_friction)
 EXTERN_CVAR (Bool, var_pushers)

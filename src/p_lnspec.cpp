@@ -1051,14 +1051,14 @@ FUNC(LS_Thing_Projectile)
 // Thing_Projectile (tid, type, angle, speed, vspeed)
 {
 	return P_Thing_Projectile (arg0, arg1, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
-		arg4<<(FRACBITS-3), 0, NULL, 0, 0);
+		arg4<<(FRACBITS-3), 0, NULL, 0, 0, false);
 }
 
 FUNC(LS_Thing_ProjectileGravity)
 // Thing_ProjectileGravity (tid, type, angle, speed, vspeed)
 {
 	return P_Thing_Projectile (arg0, arg1, BYTEANGLE(arg2), arg3<<(FRACBITS-3),
-		arg4<<(FRACBITS-3), 0, NULL, 1, 0);
+		arg4<<(FRACBITS-3), 0, NULL, 1, 0, false);
 }
 
 FUNC(LS_Thing_Hate)
@@ -1223,7 +1223,13 @@ FUNC(LS_Thing_Hate)
 FUNC(LS_Thing_ProjectileAimed)
 // Thing_ProjectileAimed (tid, type, speed, target, newtid)
 {
-	return P_Thing_Projectile (arg0, arg1, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4);
+	return P_Thing_Projectile (arg0, arg1, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, false);
+}
+
+FUNC(LS_Thing_ProjectileIntercept)
+// Thing_ProjectileIntercept (tid, type, speed, target, newtid)
+{
+	return P_Thing_Projectile (arg0, arg1, 0, arg2<<(FRACBITS-3), 0, arg3, it, 0, arg4, true);
 }
 
 // [BC] added newtid for next two
@@ -2288,7 +2294,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 172
 	LS_NOP,		// 173
 	LS_NOP,		// 174
-	LS_NOP,		// 175
+	LS_Thing_ProjectileIntercept,
 	LS_Thing_ChangeTID,
 	LS_Thing_Hate,
 	LS_Thing_ProjectileAimed,

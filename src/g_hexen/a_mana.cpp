@@ -152,3 +152,11 @@ IMPLEMENT_ACTOR (AMana3, Hexen, 8004, 75)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
+
+
+AT_GAME_SET (ManaPics)
+{
+	AmmoPics[MANA_1] = "MAN1I0";
+	AmmoPics[MANA_2] = "MAN2G0";
+	AmmoPics[MANA_BOTH] = "MAN3L0";
+}

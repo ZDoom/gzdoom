@@ -32,38 +32,10 @@
 //	for rendering.
 //
 
-// needed for texture pegging
-extern fixed_t* 		textureheight;
-
-// [RH] needed for wallscan
-extern byte*			textureheightlog2;
-extern int*				texturewidthmask;
-
-// [RH] needed for texture scaling
-extern byte*			texturescalex;
-extern byte*			texturescaley;
-
-// [RH] texture uses 2 bytes for column lengths if true
-extern byte*			texturetype2;
-
-// [RH] don't slap decals on top of textures marked true
-extern byte*			texturenodecals;
-
 extern "C" int			viewwidth;
 extern "C" int			realviewwidth;
 extern "C" int			viewheight;
 extern "C" int			realviewheight;
-
-extern int				firstflat;
-extern int				numflats;
-
-// for global animation
-extern bool*			flatwarp;
-extern byte**			warpedflats;
-extern int*				flatwarpedwhen;
-extern int*				flattranslation;
-		
-extern int* 			texturetranslation; 	
 
 // Sprite....
 extern int				firstspritelump;

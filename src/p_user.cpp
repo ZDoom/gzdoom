@@ -49,7 +49,24 @@ static FRandom pr_healradius ("HealRadius");
 extern void P_UpdateBeak (AActor *, pspdef_t *);
 
 // [RH] # of ticks to complete a turn180
-#define TURN180_TICKS	9
+#define TURN180_TICKS	((TICRATE / 4) + 1)
+
+// Variables for prediction
+CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+static player_t PredictionPlayerBackup;
+static BYTE PredictionActorBackup[sizeof(AActor)];
+static TArray<sector_t *> PredictionTouchingSectorsBackup;
+
+#include "c_dispatch.h"
+CCMD (fooba)
+{
+	for (int i = 0; i < 2; ++i)
+	{
+		AActor *a = players[i].mo;
+		Printf ("%d::::X=%d  Y=%d  Z=%d\n", i, a->x, a->y, a->z);
+		Printf ("Angle=%u  Pitch=%d\n", a->angle, a->pitch);
+	}
+}
 
 //
 // Movement.
@@ -522,7 +539,24 @@ void P_MovePlayer (player_t *player)
 			P_SideThrust (player, mo->angle, sidemove);
 		}
 
-		player->mo->PlayRunning ();
+		if (debugfile)
+		{
+			fprintf (debugfile, "move player for pl %d%c: (%d,%d,%d) (%d,%d) %d %d w%d [", player-players,
+				player->cheats&CF_PREDICTING?'p':' ',
+				player->mo->x, player->mo->y, player->mo->z,forwardmove, sidemove, movefactor, friction, player->mo->waterlevel);
+			msecnode_t *n = player->mo->touching_sectorlist;
+			while (n != NULL)
+			{
+				fprintf (debugfile, "%d ", n->m_sector-sectors);
+				n = n->m_tnext;
+			}
+			fprintf (debugfile, "]\n");
+		}
+
+		if (!(player->cheats & CF_PREDICTING))
+		{
+			player->mo->PlayRunning ();
+		}
 
 		if (player->cheats & CF_REVERTPLEASE)
 		{
@@ -790,6 +824,15 @@ void P_PlayerThink (player_t *player)
 		I_Error ("No player %d start\n", player - players + 1);
 	}
 
+	if (debugfile && !(player->cheats & CF_PREDICTING))
+	{
+		fprintf (debugfile, "tic %d for pl %d: (%d, %d, %d, %u) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
+			gametic, player-players, player->mo->x, player->mo->y, player->mo->z,
+			player->mo->angle>>ANGLETOFINESHIFT, player->cmd.ucmd.buttons,
+			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
+			player->cmd.ucmd.sidemove, player->cmd.ucmd.upmove);
+	}
+
 	player->xviewshift = 0;		// [RH] Make sure view is in right place
 
 	// [RH] Zoom the player's FOV
@@ -927,7 +970,7 @@ void P_PlayerThink (player_t *player)
 		P_MovePlayer (player);
 		AActor *pmo = player->mo;
 
-		if (player->powers[pw_speed] && !(level.time & 1)
+		if (!(player->cheats & CF_PREDICTING) && player->powers[pw_speed] && !(level.time & 1)
 			&& P_AproxDistance (pmo->momx, pmo->momy) > 12*FRACUNIT)
 		{
 			AActor *speedMo;
@@ -992,7 +1035,7 @@ void P_PlayerThink (player_t *player)
 					}
 				}
 			}
-			else if (cmd->ucmd.upmove > 0)
+			else if (cmd->ucmd.upmove > 0 && !(player->cheats & CF_PREDICTING))
 			{
 				P_PlayerUseArtifact (player, arti_fly);
 			}
@@ -1001,219 +1044,307 @@ void P_PlayerThink (player_t *player)
 
 	P_CalcHeight (player);
 
-	if (player->mo->Sector->special || player->mo->Sector->damage)
+	if (!(player->cheats & CF_PREDICTING))
 	{
-		P_PlayerInSpecialSector (player);
-	}
-	P_PlayerOnSpecialFlat (player, P_GetThingFloorType (player->mo));
-	if (player->mo->momz <= -35*FRACUNIT
-		&& player->mo->momz >= -40*FRACUNIT && !player->morphTics)
-	{
-		int id = S_FindSkinnedSound (player->mo, "*falling");
-		if (id != 0 && !S_GetSoundPlayingInfo (player->mo, id))
+		if (player->mo->Sector->special || player->mo->Sector->damage)
 		{
-			S_SoundID (player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
+			P_PlayerInSpecialSector (player);
 		}
-	}
-	// check for use
-	if ((cmd->ucmd.buttons & BT_USE) && !(player->oldbuttons & BT_USE))
-	{
-		P_UseLines (player);
-	}
-	// Morph counter
-	if (player->morphTics)
-	{
-		if (player->chickenPeck)
-		{ // Chicken attack counter
-			player->chickenPeck -= 3;
-		}
-		if (!--player->morphTics)
-		{ // Attempt to undo the chicken/pig
-			P_UndoPlayerMorph (player);
-		}
-	}
-	// Cycle psprites
-	P_MovePsprites (player);
-	// Other Counters
-	if (player->powers[pw_invulnerability])
-	{
-		player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Active);
-		if (!(--player->powers[pw_invulnerability]))
+		P_PlayerOnSpecialFlat (player, P_GetThingFloorType (player->mo));
+		if (player->mo->momz <= -35*FRACUNIT
+			&& player->mo->momz >= -40*FRACUNIT && !player->morphTics)
 		{
-			player->mo->flags2 &= ~MF2_INVULNERABLE;
-			player->mo->effects &= ~FX_RESPAWNINVUL;
-			player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Stop);
-		}
-	}
-	// Strength counts up to diminish fade.
-	if (player->powers[pw_strength])
-		player->powers[pw_strength]++;
-
-	if (player->powers[pw_invisibility])
-	{
-		if (!--player->powers[pw_invisibility])
-		{
-			player->mo->flags &= ~MF_SHADOW;
-			player->mo->flags3 &= ~MF3_GHOST;
-			player->mo->RenderStyle = STYLE_Normal;
-			player->mo->alpha = OPAQUE;
-		}
-	}
-
-	if (player->powers[pw_infrared])
-		player->powers[pw_infrared]--;
-
-	if (player->powers[pw_ironfeet])
-		player->powers[pw_ironfeet]--;
-
-	if (player->powers[pw_minotaur])
-		player->powers[pw_minotaur]--;
-
-	if (player->powers[pw_speed])
-		player->powers[pw_speed]--;
-
-	if (player->powers[pw_flight] && (multiplayer || !(level.clusterflags & CLUSTER_HUB)))
-	{
-		// [RH] Methinks this check is not right.
-		//if ((player->mo->flags2 & MF2_FLY) && (player->mo->waterlevel < 2))))
-		{
-			if (!--player->powers[pw_flight])
+			int id = S_FindSkinnedSound (player->mo, "*falling");
+			if (id != 0 && !S_GetSoundPlayingInfo (player->mo, id))
 			{
-				if (player->mo->z != player->mo->floorz)
+				S_SoundID (player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
+			}
+		}
+		// check for use
+		if ((cmd->ucmd.buttons & BT_USE) && !(player->oldbuttons & BT_USE))
+		{
+			P_UseLines (player);
+		}
+		// Morph counter
+		if (player->morphTics)
+		{
+			if (player->chickenPeck)
+			{ // Chicken attack counter
+				player->chickenPeck -= 3;
+			}
+			if (!--player->morphTics)
+			{ // Attempt to undo the chicken/pig
+				P_UndoPlayerMorph (player);
+			}
+		}
+		// Cycle psprites
+		P_MovePsprites (player);
+		// Other Counters
+		if (player->powers[pw_invulnerability])
+		{
+			player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Active);
+			if (!(--player->powers[pw_invulnerability]))
+			{
+				player->mo->flags2 &= ~MF2_INVULNERABLE;
+				player->mo->effects &= ~FX_RESPAWNINVUL;
+				player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Stop);
+			}
+		}
+		// Strength counts up to diminish fade.
+		if (player->powers[pw_strength])
+			player->powers[pw_strength]++;
+
+		if (player->powers[pw_invisibility])
+		{
+			if (!--player->powers[pw_invisibility])
+			{
+				player->mo->flags &= ~MF_SHADOW;
+				player->mo->flags3 &= ~MF3_GHOST;
+				player->mo->RenderStyle = STYLE_Normal;
+				player->mo->alpha = OPAQUE;
+			}
+		}
+
+		if (player->powers[pw_infrared])
+			player->powers[pw_infrared]--;
+
+		if (player->powers[pw_ironfeet])
+			player->powers[pw_ironfeet]--;
+
+		if (player->powers[pw_minotaur])
+			player->powers[pw_minotaur]--;
+
+		if (player->powers[pw_speed])
+			player->powers[pw_speed]--;
+
+		if (player->powers[pw_flight] && (multiplayer || !(level.clusterflags & CLUSTER_HUB)))
+		{
+			// [RH] Methinks this check is not right.
+			//if ((player->mo->flags2 & MF2_FLY) && (player->mo->waterlevel < 2))))
+			{
+				if (!--player->powers[pw_flight])
 				{
-					player->centering = true;
+					if (player->mo->z != player->mo->floorz)
+					{
+						player->centering = true;
+					}
+					player->mo->flags2 &= ~MF2_FLY;
+					player->mo->flags &= ~MF_NOGRAVITY;
+					BorderTopRefresh = screen->GetPageCount (); //make sure the sprite's cleared out
 				}
-				player->mo->flags2 &= ~MF2_FLY;
-				player->mo->flags &= ~MF_NOGRAVITY;
-				BorderTopRefresh = screen->GetPageCount (); //make sure the sprite's cleared out
 			}
 		}
-	}
 
-	if (player->powers[pw_weaponlevel2])
-	{
-		if (!--player->powers[pw_weaponlevel2])
+		if (player->powers[pw_weaponlevel2])
 		{
-			if ((player->readyweapon == wp_phoenixrod)
-				&& (player->psprites[ps_weapon].state
-					!= wpnlev2info[wp_phoenixrod]->readystate)
-				&& (player->psprites[ps_weapon].state
-					!= wpnlev2info[wp_phoenixrod]->upstate))
+			if (!--player->powers[pw_weaponlevel2])
 			{
-				P_SetPsprite (player, ps_weapon,
-					wpnlev1info[wp_phoenixrod]->readystate);
-				player->UseAmmo ();
-				player->refire = 0;
-				S_StopSound (player->mo, CHAN_WEAPON);
+				if ((player->readyweapon == wp_phoenixrod)
+					&& (player->psprites[ps_weapon].state
+						!= wpnlev2info[wp_phoenixrod]->readystate)
+					&& (player->psprites[ps_weapon].state
+						!= wpnlev2info[wp_phoenixrod]->upstate))
+				{
+					P_SetPsprite (player, ps_weapon,
+						wpnlev1info[wp_phoenixrod]->readystate);
+					player->UseAmmo ();
+					player->refire = 0;
+					S_StopSound (player->mo, CHAN_WEAPON);
+				}
+				else if ((player->readyweapon == wp_gauntlets)
+					|| (player->readyweapon == wp_staff))
+				{
+					player->pendingweapon = player->readyweapon;
+				}
+				BorderTopRefresh = screen->GetPageCount ();
 			}
-			else if ((player->readyweapon == wp_gauntlets)
-				|| (player->readyweapon == wp_staff))
+		}
+
+		if (player->damagecount)
+			player->damagecount--;
+
+		if (player->bonuscount)
+			player->bonuscount--;
+
+		if (player->poisoncount && !(level.time & 15))
+		{
+			player->poisoncount -= 5;
+			if (player->poisoncount < 0)
 			{
-				player->pendingweapon = player->readyweapon;
+				player->poisoncount = 0;
 			}
-			BorderTopRefresh = screen->GetPageCount ();
+			P_PoisonDamage (player, player->poisoner, 1, true);
 		}
-	}
 
-	if (player->damagecount)
-		player->damagecount--;
-
-	if (player->bonuscount)
-		player->bonuscount--;
-
-	if (player->poisoncount && !(level.time & 15))
-	{
-		player->poisoncount -= 5;
-		if (player->poisoncount < 0)
+		// Handling colormaps.
+		if (player->powers[pw_invulnerability] && gameinfo.gametype != GAME_Hexen)
 		{
-			player->poisoncount = 0;
-		}
-		P_PoisonDamage (player, player->poisoner, 1, true);
-	}
-
-	// Handling colormaps.
-	if (player->powers[pw_invulnerability] && gameinfo.gametype != GAME_Hexen)
-	{
-		if ((player->powers[pw_invulnerability] > BLINKTHRESHOLD
-			|| (player->powers[pw_invulnerability] & 8)) &&
-			!(player->mo->effects & FX_RESPAWNINVUL))
-		{
-			player->fixedcolormap = NUMCOLORMAPS;
-		}
-		else
-		{
-			player->fixedcolormap = 0;
-		}
-	}
-	else if (player->powers[pw_infrared])		
-	{
-		if (gameinfo.gametype == GAME_Doom)
-		{
-			if (player->powers[pw_infrared] > BLINKTHRESHOLD
-				|| (player->powers[pw_infrared] & 8))
-			{	// almost full bright
-				player->fixedcolormap = 1;
+			if ((player->powers[pw_invulnerability] > BLINKTHRESHOLD
+				|| (player->powers[pw_invulnerability] & 8)) &&
+				!(player->mo->effects & FX_RESPAWNINVUL) &&
+				!APART(PowerupColors[pw_invulnerability]))	// [RH] No special colormap if there is a blend
+			{
+				player->fixedcolormap = NUMCOLORMAPS;
 			}
 			else
 			{
 				player->fixedcolormap = 0;
 			}
 		}
-		else
+		else if (player->powers[pw_infrared])		
 		{
-			if (player->powers[pw_infrared] <= BLINKTHRESHOLD)
+			if (gameinfo.gametype == GAME_Doom)
 			{
-				if (player->powers[pw_infrared] & 8)
+				if (player->powers[pw_infrared] > BLINKTHRESHOLD
+					|| (player->powers[pw_infrared] & 8))
+				{	// almost full bright
+					player->fixedcolormap = 1;
+				}
+				else
 				{
 					player->fixedcolormap = 0;
 				}
-				else
-				{
-					player->fixedcolormap = 1;
-				}
 			}
-			else if (!(level.time & 16) &&
-				player->mo == players[consoleplayer].camera)
+			else
 			{
-				if (newtorch)
+				if (player->powers[pw_infrared] <= BLINKTHRESHOLD)
 				{
-					if (player->fixedcolormap + newtorchdelta > 7
-						|| player->fixedcolormap + newtorchdelta < 1
-						|| newtorch == player->fixedcolormap)
+					if (player->powers[pw_infrared] & 8)
 					{
-						newtorch = 0;
+						player->fixedcolormap = 0;
 					}
 					else
 					{
-						player->fixedcolormap += newtorchdelta;
+						player->fixedcolormap = 1;
 					}
 				}
-				else
+				else if (!(level.time & 16) &&
+					player->mo == players[consoleplayer].camera)
 				{
-					newtorch = (pr_torch() & 7) + 1;
-					newtorchdelta = (newtorch == player->fixedcolormap) ?
-						0 : ((newtorch > player->fixedcolormap) ? 1 : -1);
+					if (newtorch)
+					{
+						if (player->fixedcolormap + newtorchdelta > 7
+							|| player->fixedcolormap + newtorchdelta < 1
+							|| newtorch == player->fixedcolormap)
+						{
+							newtorch = 0;
+						}
+						else
+						{
+							player->fixedcolormap += newtorchdelta;
+						}
+					}
+					else
+					{
+						newtorch = (pr_torch() & 7) + 1;
+						newtorchdelta = (newtorch == player->fixedcolormap) ?
+							0 : ((newtorch > player->fixedcolormap) ? 1 : -1);
+					}
 				}
 			}
 		}
-	}
-	else
-	{
-		player->fixedcolormap = 0;
-	}
+		else
+		{
+			player->fixedcolormap = 0;
+		}
 
-	// Handle air supply
-	if (player->mo->waterlevel < 3 || player->powers[pw_ironfeet])
-	{
-		player->air_finished = level.time + 10*TICRATE;
-	}
-	else if (player->air_finished <= level.time && !(level.time & 31))
-	{
-		P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), MOD_WATER, DMG_NO_ARMOR);
+		// Handle air supply
+		if (player->mo->waterlevel < 3 || player->powers[pw_ironfeet])
+		{
+			player->air_finished = level.time + 10*TICRATE;
+		}
+		else if (player->air_finished <= level.time && !(level.time & 31))
+		{
+			P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), MOD_WATER, DMG_NO_ARMOR);
+		}
 	}
 
 	// Save buttons
 	player->oldbuttons = cmd->ucmd.buttons;
+}
+
+fixed_t smox, smoy;
+
+void P_PredictPlayer (player_t *player)
+{
+	int maxtic;
+
+	if (cl_noprediction ||
+		singletics ||
+		demoplayback ||
+		player->mo == NULL ||
+		player != &players[consoleplayer] ||
+		player->playerstate != PST_LIVE ||
+		!netgame ||
+		player->morphTics ||
+		(player->cheats & CF_PREDICTING))
+	{
+		return;
+	}
+
+	maxtic = maketic;
+
+	if (gametic == maxtic)
+	{
+		return;
+	}
+
+	// Save original values for restoration later
+	PredictionPlayerBackup = *player;
+
+	AActor *act = player->mo;
+	memcpy (PredictionActorBackup, &act->x, sizeof(AActor)-((BYTE *)&act->x-(BYTE *)act));
+
+	smox = act->momx;
+	smoy = act->momy;
+
+	act->flags &= ~MF_PICKUP;
+	act->flags2 &= ~MF2_PUSHWALL;
+	player->cheats |= CF_PREDICTING;
+
+	// The ordering of the touching_sectorlist needs to remain unchanged
+	msecnode_t *mnode = act->touching_sectorlist;
+	PredictionTouchingSectorsBackup.Clear ();
+
+	while (mnode != NULL)
+	{
+		PredictionTouchingSectorsBackup.Push (mnode->m_sector);
+		mnode = mnode->m_tnext;
+	}
+
+	for (int i = gametic; i < maxtic; ++i)
+	{
+		player->cmd = localcmds[i % LOCALCMDTICS];
+		P_PlayerThink (player);
+		player->mo->Tick ();
+	}
+}
+
+extern msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode);
+
+void P_UnPredictPlayer ()
+{
+	player_t *player = &players[consoleplayer];
+
+	if (player->cheats & CF_PREDICTING)
+	{
+		AActor *act = player->mo;
+
+		*player = PredictionPlayerBackup;
+
+		act->UnlinkFromWorld ();
+		memcpy (&act->x, PredictionActorBackup, sizeof(AActor)-((BYTE *)&act->x-(BYTE *)act));
+
+		// Make the sector_list match the player's touching_sectorlist before it got predicted.
+		P_DelSeclist (sector_list);
+		sector_list = NULL;
+		for (size_t i = PredictionTouchingSectorsBackup.Size (); i-- > 0; )
+		{
+			sector_list = P_AddSecnode (PredictionTouchingSectorsBackup[i], act, sector_list);
+		}
+
+		act->LinkToWorld ();
+	}
 }
 
 void player_s::Serialize (FArchive &arc)

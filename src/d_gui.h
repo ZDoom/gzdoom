@@ -53,8 +53,8 @@ enum EGUIEvent
 	EV_GUI_RButtonDown,
 	EV_GUI_RButtonUp,
 	EV_GUI_RButtonDblClick,
-	EV_GUI_WheelUp,
-	EV_GUI_WheelDown
+	EV_GUI_WheelDown,		// data3: shift/ctrl/alt
+	EV_GUI_WheelUp			// data3: shift/ctrl/alt
 };
 
 enum GUIKeyModifiers
@@ -67,8 +67,8 @@ enum GUIKeyModifiers
 // Special codes for some GUI keys, including a few real ASCII codes.
 enum ESpecialGUIKeys
 {
-	GK_PGUP		= 1,
-	GK_PGDN		= 2,
+	GK_PGDN		= 1,
+	GK_PGUP		= 2,
 	GK_HOME		= 3,
 	GK_END		= 4,
 	GK_LEFT		= 5,

@@ -37,8 +37,8 @@
 #include "doomtype.h"
 #include "farchive.h"
 
-struct patch_t;
 class DCanvas;
+class FTexture;
 
 enum EColorRange
 {
@@ -72,13 +72,17 @@ public:
 	FFont (const char *fontname, const char *nametemplate, int first, int count, int base);
 	~FFont ();
 
-	byte *GetChar (int code, int *const width, int *const height, int *const xoffs, int *const yoffs) const;
+	FTexture *GetChar (int code, int *const width) const;
 	int GetCharWidth (int code) const;
 	byte *GetColorTranslation (EColorRange range) const;
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
 
 	static FFont *FindFont (const char *fontname);
+
+	// Return width of string in pixels (unscaled)
+	int StringWidth (const byte *str) const;
+	inline int StringWidth (const char *str) const { return StringWidth ((const byte *)str); }
 
 protected:
 	FFont ();
@@ -92,26 +96,25 @@ protected:
 	int FontHeight;
 	struct CharData
 	{
-		WORD Width;
-		SWORD XOffs;
-		byte *Data;
+		FTexture *Pic;
 	} *Chars;
-	byte *Bitmaps;
 	int ActiveColors;
-	byte *Ranges;
+	BYTE *Ranges;
+	BYTE *PatchRemap;
 
 	char *Name;
 	FFont *Next;
+
 	static FFont *FirstFont;
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && _MSC_VER < 1310
 	template<> friend FArchive &operator<< (FArchive &arc, FFont* &font);
 #else
 	friend FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font);
 #endif
 };
 
-#ifndef _MSC_VER
+#if !defined(_MSC_VER) || _MSC_VER >= 1310
 template<> inline FArchive &operator<< <FFont> (FArchive &arc, FFont* &font)
 {
 	return SerializeFFontPtr (arc, font);
@@ -126,12 +129,12 @@ public:
 protected:
 	void BuildTranslations2 ();
 	void FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette, bool rescale);
-	void LoadFON1 (const BYTE *data);
-	void LoadFON2 (const BYTE *data);
+	void LoadFON1 (int lump, const BYTE *data);
+	void LoadFON2 (int lump, const BYTE *data);
+	void CreateFontFromPic (int picnum);
 };
 
-void RawDrawPatch (const patch_t *patch, byte *output, byte *tlate);
-void RecordPatchColors (const patch_t *patch, byte *colorsused);
+void RecordTextureColors (FTexture *pic, byte *colorsused);
 
 extern FFont *SmallFont, *BigFont, *ConFont;
 

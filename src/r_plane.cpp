@@ -33,6 +33,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stdlib.h>
+#include <float.h>
 
 #include "templates.h"
 #include "i_system.h"
@@ -123,10 +124,10 @@ static DWORD			xstepscale, ystepscale;
 static DWORD			basexfrac, baseyfrac;
 
 #ifdef USEASM
-extern "C" void R_SetSpanSource_ASM (byte *flat);
+extern "C" void R_SetSpanSource_ASM (const byte *flat);
 extern "C" void R_SetSpanSize_ASM (int xbits, int ybits);
 extern "C" void R_SetSpanColormap_ASM (byte *colormap);
-extern "C" void R_SetTiltedSpanSource_ASM (byte *flat);
+extern "C" void R_SetTiltedSpanSource_ASM (const byte *flat);
 extern "C" byte *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
 #endif
 
@@ -303,9 +304,9 @@ void R_MapTiltedPlane (int y, int x1)
 
 	fb = ylookup[y] + x1;
 
-	BYTE ushift = 32 - ds_xbits;
-	BYTE vshift = ushift - ds_ybits;
-	int vmask = ((1 << ds_ybits) - 1) << ds_xbits;
+	BYTE vshift = 32 - ds_ybits;
+	BYTE ushift = vshift - ds_xbits;
+	int umask = ((1 << ds_xbits) - 1) << ds_ybits;
 
 #if 0		// The "perfect" reference version of this routine. Pretty slow.
 			// Use it only to see how things are supposed to look.
@@ -317,7 +318,7 @@ void R_MapTiltedPlane (int y, int x1)
 		u = toint (uz*z) + pviewx;
 		v = toint (vz*z) + pviewy;
 		ds_colormap = tiltlighting[i];
-		fb[i++] = ds_colormap[ds_source[(u >> ushift) | ((v >> vshift) & vmask)]];
+		fb[i++] = ds_colormap[ds_source[(v >> vshift) | ((u >> ushift) & umask)]];
 		iz += plane_sz[0];
 		uz += plane_su[0];
 		vz += plane_sv[0];
@@ -357,7 +358,7 @@ void R_MapTiltedPlane (int y, int x1)
 
 		for (i = SPANSIZE-1; i >= 0; i--)
 		{
-			fb[x1] = *(tiltlighting[x1] + ds_source[(u >> ushift) | ((v >> vshift) & vmask)]);
+			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
 			x1++;
 			u += stepu;
 			v += stepv;
@@ -373,7 +374,7 @@ void R_MapTiltedPlane (int y, int x1)
 		{
 			u = toint (startu);
 			v = toint (startv);
-			fb[x1] = *(tiltlighting[x1] + ds_source[(u >> ushift) | ((v >> vshift) & vmask)]);
+			fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
 		}
 		else
 		{
@@ -393,7 +394,7 @@ void R_MapTiltedPlane (int y, int x1)
 
 			for (; width != 0; width--)
 			{
-				fb[x1] = *(tiltlighting[x1] + ds_source[(u >> ushift) | ((v >> vshift) & vmask)]);
+				fb[x1] = *(tiltlighting[x1] + ds_source[(v >> vshift) | ((u >> ushift) & umask)]);
 				x1++;
 				u += stepu;
 				v += stepv;
@@ -651,7 +652,7 @@ inline void R_MakeSpans (int x, int t1, int b1, int t2, int b2, void (*mapfunc)(
 //
 //==========================================================================
 
-static int frontskytex, backskytex;
+static FTexture *frontskytex, *backskytex;
 static angle_t skyflip;
 static int frontpos, backpos;
 static int frontxscale, backxscale;
@@ -660,7 +661,7 @@ static int frontyscale, frontiscale;
 extern fixed_t swall[MAXWIDTH];
 extern fixed_t lwall[MAXWIDTH];
 extern fixed_t rw_offset;
-extern int rw_picnum;
+extern FTexture *rw_pic;
 
 // Allow for layer skies up to 512 pixels tall. This is overkill,
 // since the most anyone can ever see of the sky is 500 pixels.
@@ -670,16 +671,15 @@ static DWORD lastskycol[4];
 static int skycolplace;
 
 // Get a column of sky when there is only one sky texture.
-static const BYTE *R_GetOneSkyColumn (int fronttex, int x)
+static const BYTE *R_GetOneSkyColumn (FTexture *fronttex, int x)
 {
 	angle_t column = MulScale3 (frontxscale, viewangle + xtoviewangle[x]);
 
-	return R_GetColumn (fronttex,
-		(((column^skyflip) >> sky1shift) + frontpos) >> FRACBITS);
+	return fronttex->GetColumn ((((column^skyflip) >> sky1shift) + frontpos) >> FRACBITS, NULL);
 }
 
 // Get a column of sky when there are two overlapping sky textures
-static const BYTE *R_GetTwoSkyColumns (int fronttex, int x)
+static const BYTE *R_GetTwoSkyColumns (FTexture *fronttex, int x)
 {
 	DWORD ang = (viewangle + xtoviewangle[x])^skyflip;
 	DWORD angle1 = (((DWORD)MulScale3 (frontxscale, ang) >> sky1shift) + frontpos) >> FRACBITS;
@@ -705,10 +705,10 @@ static const BYTE *R_GetTwoSkyColumns (int fronttex, int x)
 	// The ordering of the following code has been tuned to allow VC++ to optimize
 	// it well. In particular, this arrangement lets it keep count in a register
 	// instead of on the stack.
-	const BYTE *front = R_GetColumn (fronttex, angle1);
-	const BYTE *back = R_GetColumn (backskytex, angle2);
+	const BYTE *front = fronttex->GetColumn (angle1, NULL);
+	const BYTE *back = backskytex->GetColumn (angle2, NULL);
 
-	int count = MIN<int> (512, MIN (textureheight[backskytex], textureheight[fronttex]) >> FRACBITS);
+	int count = MIN<int> (512, MIN (backskytex->GetHeight(), fronttex->GetHeight()));
 	i = 0;
 	do
 	{
@@ -756,26 +756,26 @@ static void R_DrawSky (visplane_t *pl)
 		lastskycol[x] = 0xffffffff;
 	}
 
-	rw_picnum = frontskytex;
+	rw_pic = frontskytex;
 	rw_offset = 0;
 
-	frontxscale = texturescalex[rw_picnum] ? texturescalex[rw_picnum] : tx;
-	if (backskytex >= 0)
+	frontxscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
+	if (backskytex != NULL)
 	{
-		backxscale = texturescalex[backskytex] ? texturescalex[backskytex] : tx;
+		backxscale = backskytex->ScaleX ? backskytex->ScaleX : tx;
 	}
 
-	frontyscale = texturescaley[rw_picnum] ? texturescaley[rw_picnum] : ty;
+	frontyscale = rw_pic->ScaleY ? rw_pic->ScaleY : ty;
 	dc_texturemid = MulScale3 (skytexturemid/*-viewz*/, frontyscale);
 
-	if (1 << (textureheightlog2[frontskytex]+FRACBITS) == textureheight[frontskytex])
+	if (1 << frontskytex->HeightBits == frontskytex->GetHeight())
 	{ // The texture tiles nicely
 		for (x = 0; x < 4; ++x)
 		{
 			lastskycol[x] = 0xffffffff;
 		}
 		wallscan (pl->minx, pl->maxx, (short *)pl->top, (short *)pl->bottom, swall, lwall, 
-			backskytex == -1 ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
+			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 	}
 	else
 	{ // The texture does not tile nicely
@@ -788,7 +788,7 @@ static void R_DrawSky (visplane_t *pl)
 static void R_DrawSkyStriped (visplane_t *pl)
 {
 	fixed_t centerysave = centeryfrac;
-	short drawheight = (short)MulScale32 (textureheight[frontskytex], frontyscale);
+	short drawheight = (short)MulScale16 (frontskytex->GetHeight(), frontyscale);
 	fixed_t topfrac;
 	fixed_t iscale = frontiscale;
 	short top[MAXWIDTH], bot[MAXWIDTH];
@@ -798,10 +798,10 @@ static void R_DrawSkyStriped (visplane_t *pl)
 	// So that I don't have to worry about fractional precision, chop off the
 	// fractional part of centeryfrac.
 	centeryfrac = centery << FRACBITS;
-	topfrac = (skytexturemid + iscale * (1-centery)) % textureheight[frontskytex];
-	if (topfrac < 0) topfrac += textureheight[frontskytex];
+	topfrac = (skytexturemid + iscale * (1-centery)) % (frontskytex->GetHeight() << FRACBITS);
+	if (topfrac < 0) topfrac += frontskytex->GetHeight() << FRACBITS;
 	yl = 0;
-	yh = (short)MulScale32 (textureheight[frontskytex] - topfrac, frontyscale);
+	yh = (short)MulScale32 ((frontskytex->GetHeight() << FRACBITS) - topfrac, frontyscale);
 	dc_texturemid = topfrac - iscale * (1-centery);
 
 	while (yl < viewheight)
@@ -816,7 +816,7 @@ static void R_DrawSkyStriped (visplane_t *pl)
 			lastskycol[x] = 0xffffffff;
 		}
 		wallscan (pl->minx, pl->maxx, top, bot, swall, lwall, 
-			backskytex == -1 ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
+			backskytex == NULL ? R_GetOneSkyColumn : R_GetTwoSkyColumns);
 		yl = yh;
 		yh += drawheight;
 		dc_texturemid = iscale * (centery-yl-1);
@@ -833,11 +833,12 @@ static void R_DrawSkyStriped (visplane_t *pl)
 //==========================================================================
 
 CVAR (Bool, tilt, false, 0);
+//CVAR (Int, pa, 0, 0)
 
 void R_DrawPlanes ()
 {
 	visplane_t *pl;
-	int i, x;
+	int i;
 	int vpcount;
 
 	ds_color = 3;
@@ -847,6 +848,8 @@ void R_DrawPlanes ()
 		for (pl = visplanes[i]; pl; pl = pl->next)
 		{
 			vpcount++;
+
+//			pl->angle = pa<<ANGLETOFINESHIFT;
 
 			if (pl->minx > pl->maxx)
 				continue;
@@ -862,50 +865,27 @@ void R_DrawPlanes ()
 			}
 			else
 			{ // regular flat
-				int useflatnum = flattranslation[pl->picnum];
-				int lumplen;
-				byte *flatInWad;
+				FTexture *tex = TexMan(pl->picnum);
 
-				ds_source = (byte *)W_MapLumpNum (firstflat + useflatnum);
-				flatInWad = ds_source;
-				lumplen = W_LumpLength (firstflat + useflatnum);
-
-				switch (lumplen)
+				tex->GetWidth ();
+				ds_xbits = tex->WidthBits;
+				ds_ybits = tex->HeightBits;
+				if ((1 << ds_xbits) > tex->GetWidth())
 				{
-				case 64:		// 8x8
-					ds_xbits = ds_ybits = 3;
-					break;
-
-				case 256:		// 16x16
-					ds_xbits = ds_ybits = 4;
-					break;
-
-				case 1024:		// 32x32
-					ds_xbits = ds_ybits = 5;
-					break;
-
-				case 4096:		// 64x64
-				default:
-					ds_xbits = ds_ybits = 6;
-					break;
-
-				case 16384:		// 128x128
-					ds_xbits = ds_ybits = 7;
-					pl->xscale <<= 1;
-					pl->yscale <<= 1;
-					break;
-
-				case 65536:		// 256x256
-					ds_xbits = ds_ybits = 8;
-					pl->xscale <<= 2;
-					pl->yscale <<= 2;
-					break;
+					ds_xbits--;
 				}
+				if ((1 << ds_ybits) > tex->GetHeight())
+				{
+					ds_ybits--;
+				}
+				pl->xscale = MulScale3 (pl->xscale, tex->ScaleX ? tex->ScaleX : 8);
+				pl->yscale = MulScale3 (pl->yscale, tex->ScaleY ? tex->ScaleY : 8);
 #ifdef USEASM
 				R_SetSpanSize_ASM (ds_xbits, ds_ybits);
 #endif
 
 				// [RH] warp a flat if desired
+#if 0 // FIXME
 				if (flatwarp[useflatnum])
 				{
 					if (!warpedflats[useflatnum])
@@ -948,9 +928,11 @@ void R_DrawPlanes ()
 					}
 					ds_source = warpedflats[useflatnum];
 				}
+#endif
+				ds_source = tex->GetPixels ();
 
 				basecolormap = pl->colormap;
-				planeshade = LIGHT2SHADE(pl->lightlevel + r_actualextralight);
+				planeshade = LIGHT2SHADE(pl->lightlevel);
 
 				if (r_drawflat || (pl->height.a == 0 && pl->height.b == 0) && !tilt)
 				{
@@ -960,9 +942,8 @@ void R_DrawPlanes ()
 				{
 					R_DrawTiltedPlane (pl);
 				}
-
-				W_UnMapLump (flatInWad);
 			}
+			NetUpdate ();
 		}
 	}
 }
@@ -1027,7 +1008,8 @@ void R_DrawSkyBoxes ()
 		viewz = sky->z;
 		camera = sky;
 		viewsector = sky->Sector;
-		R_SetViewAngle (savedangle + sky->angle);
+		viewangle = savedangle + sky->angle;
+		R_SetViewAngle ();
 		validcount++;	// Make sure we see all sprites
 
 		R_SetVisibility (sky->args[0] * 0.25f);
@@ -1090,7 +1072,8 @@ void R_DrawSkyBoxes ()
 	viewz = savedz;
 	R_SetVisibility (savedvisibility);
 	extralight = savedextralight;
-	R_SetViewAngle (savedangle);
+	viewangle = savedangle;
+	R_SetViewAngle ();
 
 	r_InSkyBox = false;
 
@@ -1121,19 +1104,19 @@ void R_DrawSkyPlane (visplane_t *pl)
 
 	if (pl->picnum == skyflatnum)
 	{	// use sky1
-		frontskytex = texturetranslation[sky1tex];
+		frontskytex = TexMan(sky1tex);
 		if (level.flags & LEVEL_DOUBLESKY)
-			backskytex = texturetranslation[sky2tex];
+			backskytex = TexMan(sky2tex);
 		else
-			backskytex = -1;
+			backskytex = NULL;
 		skyflip = 0;
 		frontpos = sky1pos;
 		backpos = sky2pos;
 	}
 	else if (pl->picnum == PL_SKYFLAT)
 	{	// use sky2
-		frontskytex = texturetranslation[sky2tex];
-		backskytex = -1;
+		frontskytex = TexMan(sky2tex);
+		backskytex = NULL;
 		skyflip = 0;
 		frontpos = sky2pos;
 	}
@@ -1149,13 +1132,13 @@ void R_DrawSkyPlane (visplane_t *pl)
 		// [RH] If swapping skies, then use the lower sidedef
 		if (level.flags & LEVEL_SWAPSKIES)
 		{
-			frontskytex = texturetranslation[s->bottomtexture];
+			frontskytex = TexMan(s->bottomtexture);
 		}
 		else
 		{
-			frontskytex = texturetranslation[s->toptexture];
+			frontskytex = TexMan(s->toptexture);
 		}
-		backskytex = -1;
+		backskytex = NULL;
 
 		// Horizontal offset is turned into an angle offset,
 		// to allow sky rotation as well as careful positioning.
@@ -1285,24 +1268,17 @@ void R_DrawTiltedPlane (visplane_t *pl)
 	// p is the texture origin in view space
 	// Don't add in the offsets at this stage, because doing so can result in
 	// errors if the flat is rotated.
-/*
-	lxscale = FIXED2FLOAT(pl->xscale);
-	lyscale = FIXED2FLOAT(pl->yscale);
-	xscale = (1<<ds_xbits)/lxscale;
-	yscale = (1<<ds_ybits)/lyscale;
-	lxscale = lxscale * floatpow2[ds_xbits];
-	lyscale = lyscale * floatpow2[ds_ybits];
-*/
+
 	lxscale = FIXED2FLOAT(pl->xscale) * ifloatpow2[ds_xbits];
 	lyscale = FIXED2FLOAT(pl->yscale) * ifloatpow2[ds_ybits];
 	xscale = 64.f / lxscale;
 	yscale = 64.f / lyscale;
 	ixscale = quickertoint(xscale*65536.f);
 	iyscale = quickertoint(yscale*65536.f);
-	zeroheight = pl->height.ZatPoint (0, 0);
+	zeroheight = pl->height.ZatPoint (viewx, viewy);
 
-	pviewx = MulScale6 (pl->xoffs, pl->xscale);
-	pviewy = MulScale6 (pl->yoffs, pl->yscale);
+	pviewx = MulScale (pl->xoffs, pl->xscale, ds_xbits);
+	pviewy = MulScale (pl->yoffs, pl->yscale, ds_ybits);
 
 	ang = (ANG270 - viewangle) >> ANGLETOFINESHIFT;
 	p[0] = FIXED2FLOAT(DMulScale16 (viewx, finecosine[ang], -viewy, finesine[ang]));
@@ -1325,12 +1301,12 @@ void R_DrawTiltedPlane (visplane_t *pl)
 
 	ang = pl->angle >> ANGLETOFINESHIFT;
 	m[1] = FIXED2FLOAT(pl->height.ZatPoint (
-		MulScale16 (iyscale, finesine[ang]),
-		MulScale16 (iyscale, finecosine[ang])) - zeroheight);
+		viewx + MulScale16 (iyscale, finesine[ang]),
+		viewy + MulScale16 (iyscale, finecosine[ang])) - zeroheight);
 	ang = (pl->angle + ANGLE_90) >> ANGLETOFINESHIFT;
 	n[1] = FIXED2FLOAT(pl->height.ZatPoint (
-		MulScale16 (ixscale, finesine[ang]),
-		MulScale16 (ixscale, finecosine[ang])) - zeroheight);
+		viewx + MulScale16 (ixscale, finesine[ang]),
+		viewy + MulScale16 (ixscale, finecosine[ang])) - zeroheight);
 
 	CrossProduct (p, m, plane_su);
 	CrossProduct (p, n, plane_sv);
@@ -1369,13 +1345,13 @@ void R_DrawTiltedPlane (visplane_t *pl)
 
 	if (!plane_shade)
 	{
-		for (int i = 0; i < viewwidth; i++)
+		for (int i = 0; i < viewwidth; ++i)
 		{
 			tiltlighting[i] = ds_colormap;
 		}
 	}
 
-#if defined(USEASM)
+#if defined(USEASM) && 0
 	if (ds_source != ds_curtiltedsource)
 		R_SetTiltedSpanSource_ASM (ds_source);
 	R_MapVisPlane (pl, R_DrawTiltedPlane_ASM);

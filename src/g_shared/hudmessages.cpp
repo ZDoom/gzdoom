@@ -212,14 +212,7 @@ void DHUDMessage::DrawSetup ()
 void DHUDMessage::DoDraw (int linenum, int x, int y, int xscale, int yscale,
 						  bool clean)
 {
-	if (clean)
-	{
-		screen->DrawTextClean (TextColor, x, y, Lines[linenum].string);
-	}
-	else
-	{
-		screen->DrawText (TextColor, x, y, Lines[linenum].string);
-	}
+	screen->DrawText (TextColor, x, y, Lines[linenum].string, DTA_CleanNoMove, clean, TAG_DONE);
 }
 
 //
@@ -265,16 +258,8 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, int xscale,
 	else
 	{
 		fixed_t trans = -(Tics - FadeOutTics) * FRACUNIT / FadeOutTics;
-		if (clean)
-		{
-			screen->DrawTextCleanLuc (TextColor, x, y, Lines[linenum].string,
-				trans);
-		}
-		else
-		{
-			screen->DrawTextLuc (TextColor, x, y, Lines[linenum].string,
-				trans);
-		}
+		screen->DrawText (TextColor, x, y, Lines[linenum].string,
+			DTA_CleanNoMove, clean, DTA_Alpha, trans, TAG_DONE);
 		BorderNeedRefresh = screen->GetPageCount ();
 	}
 }
@@ -364,14 +349,7 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, int xscale,
 
 			stop = Lines[linenum].string[LineVisible];
 			Lines[linenum].string[LineVisible] = 0;
-			if (clean)
-			{
-				screen->DrawTextClean (TextColor, x, y, Lines[linenum].string);
-			}
-			else
-			{
-				screen->DrawText (TextColor, x, y, Lines[linenum].string);
-			}
+			screen->DrawText (TextColor, x, y, Lines[linenum].string, DTA_CleanNoMove, clean, TAG_DONE);
 			Lines[linenum].string[LineVisible] = stop;
 		}
 	}

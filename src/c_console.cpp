@@ -75,7 +75,8 @@ static void C_TabComplete (bool goForward);
 static BOOL TabbedLast;		// Last key pressed was tab
 
 
-static DCanvas *conback;
+static int conback;
+static BYTE conshade[256];
 
 extern int		gametic;
 extern bool		automapactive;	// in AM_map.c
@@ -195,7 +196,7 @@ static void maybedrawnow (bool tick, bool force)
 		|| gamestate == GS_STARTUP))
 	{
 		static size_t lastprinttime = 0;
-		size_t nowtime = I_GetTime();
+		size_t nowtime = I_GetTime(false);
 
 		if (nowtime - lastprinttime > 1 || force)
 		{
@@ -213,80 +214,24 @@ void C_InitConsole (int width, int height, BOOL ingame)
 	{
 		if (!gotconback)
 		{
-			bool stylize = false;
-			BOOL isRaw = false;
-			patch_t *bg;
-			int num, pitch;
+			conback = TexMan.CheckForTexture ("CONBACK", FTexture::TEX_MiscPatch);
 
-			num = W_CheckNumForName ("CONBACK");
-			if (num == -1)
+			if (conback <= 0)
 			{
-				stylize = true;
-				num = W_GetNumForName (gameinfo.titlePage);
-				isRaw = gameinfo.flags & GI_PAGESARERAW;
+				conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
+
+				const BYTE *palookup = (const BYTE *)W_MapLumpName ("COLORMAP");
+				memcpy (conshade, palookup+22*256, 256);
+				W_UnMapLump (palookup);
+			}
+			else
+			{
+				for (int i = 0; i < 256; ++i)
+				{
+					conshade[i] = i;
+				}
 			}
 
-			bg = (patch_t *)W_MapLumpNum (num);
-
-			if (isRaw)
-				conback = I_NewStaticCanvas (320, 200);
-			else
-				conback = I_NewStaticCanvas (SHORT(bg->width), SHORT(bg->height));
-
-			conback->Lock ();
-
-			if (isRaw)
-				conback->DrawBlock (0, 0, 320, 200, (byte *)bg);
-			else
-				conback->DrawPatch (bg, 0, 0);
-
-			W_UnMapLump (bg);
-
-			if (stylize)
-			{
-				byte *fadetable = (byte *)W_MapLumpName ("COLORMAP"), *i;
-				int x, y, s;
-				byte *v;
-
-				pitch = conback->GetPitch();
-				v = fadetable + 22*256;
-				for (y = 8; y < conback->GetHeight() - 8; ++y)
-				{
-					i = conback->GetBuffer() + pitch * y + 8;
-					for (x = conback->GetWidth() - 16; x > 0; --x)
-					{
-						*i = v[*i];
-						++i;
-					}
-				}
-
-				for (s = 0; s < 8; ++s)
-				{
-					byte *j;
-
-					v = fadetable + (30 - s) * 256;
-					i = conback->GetBuffer() + pitch * s + s;
-					j = conback->GetBuffer() + pitch * (conback->GetHeight() - s - 1) + s;
-					for (x = s; x < conback->GetWidth() - s; ++x)
-					{
-						*i = v[*i];
-						*j = v[*j];
-						++i;
-						++j;
-					}
-					i = conback->GetBuffer() + pitch * (s + 1) + s;
-					x = conback->GetWidth() - 2*s - 1;
-					for (y = s; y < conback->GetHeight() - s - 2; ++y)
-					{
-						*i = v[*i];
-						*(i+x) = v[*(i+x)];
-						i += pitch;
-					}
-				}
-
-				W_UnMapLump (fadetable);
-			}
-			conback->Unlock ();
 			sprintf (VersionString, "v" DOTVERSIONSTR);
 			gotconback = true;
 		}
@@ -649,7 +594,7 @@ int PrintString (int printlevel, const char *outline)
 	}
 
 	AddToConsole (printlevel, outline);
-	if (vidactive && screen)
+	if (vidactive && screen && screen->Font)
 	{
 		C_AddNotifyString (printlevel, outline);
 		maybedrawnow (false, false);
@@ -800,21 +745,22 @@ static void C_DrawNotifyText ()
 			if (con_scaletext)
 			{
 				if (!center)
-					screen->DrawTextClean (color, 0, line, NotifyStrings[i].text);
+					screen->DrawText (color, 0, line, (char *)NotifyStrings[i].text,
+					DTA_CleanNoMove, true, TAG_DONE);
 				else
-					screen->DrawTextClean (color, (SCREENWIDTH -
-						screen->StringWidth (NotifyStrings[i].text)*CleanXfac)/2,
-						line, NotifyStrings[i].text);
+					screen->DrawText (color, (SCREENWIDTH -
+						SmallFont->StringWidth (NotifyStrings[i].text)*CleanXfac)/2,
+						line, (char *)NotifyStrings[i].text, DTA_CleanNoMove, true, TAG_DONE);
 				line += 8 * CleanYfac;
 			}
 			else
 			{
 				if (!center)
-					screen->DrawText (color, 0, line, NotifyStrings[i].text);
+					screen->DrawText (color, 0, line, (char *)NotifyStrings[i].text, TAG_DONE);
 				else
 					screen->DrawText (color, (SCREENWIDTH -
-						screen->StringWidth (NotifyStrings[i].text))/2,
-						line, NotifyStrings[i].text);
+						SmallFont->StringWidth (NotifyStrings[i].text))/2,
+						line, (char *)NotifyStrings[i].text, TAG_DONE);
 				line += 8;
 			}
 		}
@@ -868,20 +814,24 @@ void C_DrawConsole ()
 	else if (ConBottom)
 	{
 		int visheight, realheight;
+		FTexture *conpic = TexMan[conback];
 
 		visheight = ConBottom;
-		realheight = (visheight * conback->GetHeight()) / SCREENHEIGHT;
+		realheight = (visheight * conpic->GetHeight()) / SCREENHEIGHT;
 
-		conback->Blit (0, conback->GetHeight() - realheight, conback->GetWidth(), realheight,
-			screen, 0, 0, SCREENWIDTH, visheight);
+		screen->DrawTexture (conpic, 0, visheight - screen->GetHeight(),
+			DTA_DestWidth, screen->GetWidth(),
+			DTA_DestHeight, screen->GetHeight(),
+			DTA_Translation, conshade,
+			TAG_DONE);
 
 		if (ConBottom >= 12)
 		{
 			screen->SetFont (ConFont);
 			screen->DrawText (CR_ORANGE, SCREENWIDTH - 8 -
-				screen->StringWidth (VersionString),
+				ConFont->StringWidth (VersionString),
 				ConBottom - ConFont->GetHeight() - 4,
-				VersionString);
+				VersionString, TAG_DONE);
 			if (TickerMax)
 			{
 				char tickstr[256];
@@ -901,11 +851,11 @@ void C_DrawConsole ()
 				tickstr[tickend + 1] = 0x12;
 				tickstr[tickend + 2] = ' ';
 				sprintf (tickstr + tickend + 3, "%lu%%", Scale (TickerAt, 100, TickerMax));
-				screen->DrawText (CR_BROWN, 8, tickerY, tickstr);
+				screen->DrawText (CR_BROWN, 8, tickerY, tickstr, TAG_DONE);
 
 				// Draw the marker
 				i = 8+5+tickbegin*8 + Scale (TickerAt, (SDWORD)(tickend - tickbegin)*8, TickerMax);
-				screen->DrawChar (CR_ORANGE, (int)i, tickerY, 0x13);
+				screen->DrawChar (CR_ORANGE, (int)i, tickerY, 0x13, TAG_DONE);
 
 				TickerVisible = true;
 			}
@@ -949,7 +899,7 @@ void C_DrawConsole ()
 			if (Lines[pos] != NULL)
 			{
 				screen->DrawText (CR_TAN, 8, offset + lines * ConFont->GetHeight(),
-					Lines[pos]);
+					Lines[pos], TAG_DONE);
 			}
 			lines--;
 		} while (pos != TopLine && lines > 0);
@@ -957,30 +907,25 @@ void C_DrawConsole ()
 		{
 			if (gamestate == GS_STARTUP)
 			{
-				screen->DrawText (CR_GREEN, 8, bottomline, DoomStartupTitle);
+				screen->DrawText (CR_GREEN, 8, bottomline, DoomStartupTitle, TAG_DONE);
 			}
 			else
 			{
 				CmdLine[2+CmdLine[0]] = 0;
-				screen->DrawChar (CR_ORANGE, left, bottomline, '\x1c');
+				screen->DrawChar (CR_ORANGE, left, bottomline, '\x1c', TAG_DONE);
 				screen->DrawText (CR_ORANGE, left + 8, bottomline,
-					(char *)&CmdLine[2+CmdLine[259]]);
+					(char *)&CmdLine[2+CmdLine[259]], TAG_DONE);
 			}
 			if (cursoron)
 			{
 				screen->DrawChar (CR_YELLOW, left + 8 + (CmdLine[1] - CmdLine[259])* 8,
-					bottomline, '\xb');
+					bottomline, '\xb', TAG_DONE);
 			}
 			if (RowAdjust && ConBottom >= 28)
 			{
-				byte *data;
-				int w, h, xo, yo;
-
 				// Indicate that the view has been scrolled up (10)
 				// and if we can scroll no further (12)
-				data = ConFont->GetChar (pos == TopLine ? 12 : 10, &w, &h, &xo, &yo);
-				screen->DrawMaskedBlock (-xo, bottomline-yo, w, h, data,
-					ConFont->GetColorTranslation (CR_GREEN));
+				screen->DrawChar (CR_GREEN, 0, bottomline, pos == TopLine ? 12 : 10, TAG_DONE);
 			}
 		}
 	}
@@ -1069,9 +1014,15 @@ static void makestartposgood ()
 static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 {
 	int i;
+	int data1 = ev->data1;
 
-	if (ev->subtype == EV_GUI_Char)
-	{ // Add keypress to command line
+	switch (ev->subtype)
+	{
+	default:
+		return false;
+
+	case EV_GUI_Char:
+		// Add keypress to command line
 		if (buffer[0] < len)
 		{
 			if (buffer[1] == buffer[0])
@@ -1096,10 +1047,23 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			HistPos = NULL;
 		}
 		TabbedLast = false;
-	}
-	else
-	{
-		switch (ev->data1)
+		break;
+
+	case EV_GUI_WheelUp:
+	case EV_GUI_WheelDown:
+		if (!(ev->data3 & GKM_SHIFT))
+		{
+			data1 = GK_PGDN + ev->subtype - EV_GUI_WheelDown;
+		}
+		else
+		{
+			data1 = GK_DOWN + ev->subtype - EV_GUI_WheelDown;
+		}
+		// Intentional fallthrough
+
+	case EV_GUI_KeyDown:
+	case EV_GUI_KeyRepeat:
+		switch (data1)
 		{
 		case '\t':
 			// Try to do tab-completion
@@ -1114,7 +1078,14 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			}
 			else if (RowAdjust < CONSOLELINES)
 			{ // Scroll console buffer up
-				RowAdjust++;
+				if (ev->subtype == EV_GUI_WheelUp)
+				{
+					RowAdjust += 3;
+				}
+				else
+				{
+					RowAdjust++;
+				}
 			}
 			break;
 
@@ -1134,7 +1105,14 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			}
 			else if (RowAdjust > 0)
 			{ // Scroll console buffer down
-				RowAdjust--;
+				if (ev->subtype == EV_GUI_WheelDown)
+				{
+					RowAdjust = MAX (0, RowAdjust - 3);
+				}
+				else
+				{
+					RowAdjust--;
+				}
 			}
 			break;
 
@@ -1201,7 +1179,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			break;
 
 		case GK_DEL:
-			// Erase charater under cursor
+			// Erase character under cursor
 			if (buffer[1] < buffer[0])
 			{
 				char *c, *e;
@@ -1362,7 +1340,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			TabbedLast = false;
 			if (ev->data3 & GKM_CTRL)
 			{
-				if (ev->data1 == 'C')
+				if (data1 == 'C')
 				{ // copy to clipboard
 					if (buffer[0] > 0)
 					{
@@ -1406,6 +1384,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			break;
 		}
 	}
+	// Ensure that the cursor is always visible while typing
 	CursorTicker = C_BLINKRATE;
 	cursoron = 1;
 	return true;
@@ -1421,14 +1400,7 @@ BOOL C_Responder (event_t *ev)
 		return false;
 	}
 
-	if (ev->subtype == EV_GUI_KeyDown ||
-		ev->subtype == EV_GUI_KeyRepeat ||
-		ev->subtype == EV_GUI_Char)
-	{
-		return C_HandleKey (ev, CmdLine, 255);
-	}
-
-	return false;
+	return C_HandleKey (ev, CmdLine, 255);
 }
 
 CCMD (history)

@@ -23,7 +23,6 @@
 //-----------------------------------------------------------------------------
 
 
-
 #include <stdio.h>
 
 #include "m_alloc.h"
@@ -523,10 +522,54 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 	}
 }
 
+CUSTOM_CVAR (Int, ff, 0, CVAR_NOINITCALL)
+{
+	if (screen != NULL)
+	{
+		char foo[256];
+		sprintf (foo, "vid_setmode %d %d", screen->GetWidth(), screen->GetHeight());
+		AddCommandString (foo);
+	}
+}
+
 DSimpleCanvas::DSimpleCanvas (int width, int height)
 	: DCanvas (width, height)
 {
-	Pitch = width==1024?1032:width;
+	// Making the pitch a power of 2 is very bad for performance
+	// Try to maximize the number of cache lines that can be filled
+	// for each column drawing operation by making the pitch slightly
+	// longer than the width. Assumptions about the size and number
+	// of cache lines are based on the PMMX/PII/PIII, which have 512
+	// 32-byte cache lines, which are 4-way set associative, so any data
+	// access 4K apart will be in the same cache set. By minimizing
+	// the number of cache sets assigned to each cache line, we should
+	// be able to maximize the number of cache lines used. The important
+	// thing here is that cache lines are 32 bytes in size. Other
+	// processors are different. For instance, an Athlon has a 16-way
+	// set associative cache with 1024 64-byte cache lines. And the P4
+	// has 128-byte cache lines (don't know about its associativity).
+	// For simplicity, I just assume 32-byte cache lines here.
+
+	Pitch = width;
+	if (ff <= -10)
+	{
+		Pitch = ff * -64;
+	}
+	else if (ff == -2)
+	{
+		Pitch = (width & ~63) + 64;
+	}
+	else if (ff == -1)
+	{
+		Pitch = 1;
+		while (Pitch < width)
+			Pitch <<= 1;
+		Pitch += 64;
+	}
+	else if (ff > 0)
+	{
+		Pitch = width | (8*ff);
+	}
 	MemBuffer = new BYTE[Pitch * height];
 }
 
@@ -582,13 +625,13 @@ void DFrameBuffer::DrawRateStuff ()
 			int chars;
 
 #if _MSC_VER
-			chars = sprintf (fpsbuff, "%I64d ms (%ld fps)", howlong, LastCount);
+			chars = sprintf (fpsbuff, "%2I64d ms (%3ld fps)", howlong, LastCount);
 #else
-			chars = sprintf (fpsbuff, "%Ld ms (%ld fps)", howlong, LastCount);
+			chars = sprintf (fpsbuff, "%2Ld ms (%3ld fps)", howlong, LastCount);
 #endif
 			Clear (0, screen->GetHeight() - 8, chars * 8, screen->GetHeight(), 0);
 			SetFont (ConFont);
-			DrawText (CR_WHITE, 0, screen->GetHeight() - 8, (char *)&fpsbuff[0]);
+			DrawText (CR_WHITE, 0, screen->GetHeight() - 8, (char *)&fpsbuff[0], TAG_DONE);
 			SetFont (SmallFont);
 
 			DWORD thisSec = ms/1000;
@@ -606,7 +649,7 @@ void DFrameBuffer::DrawRateStuff ()
 	// draws little dots on the bottom of the screen
 	if (ticker)
 	{
-		int i = I_GetTime();
+		int i = I_GetTime(false);
 		int tics = i - LastTic;
 		BYTE *buffer = GetBuffer () + (GetHeight()-1)*GetPitch();
 
@@ -671,6 +714,11 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	R_InitColumnDrawers ();
 	R_MultiresInit ();
+
+	RenderTarget = screen;
+	screen->Lock (true);
+	R_SetupBuffer ();
+	screen->Unlock ();
 
 	M_RefreshModesList ();
 
@@ -832,7 +880,6 @@ void V_Init (void)
 
 	FBaseCVar::ResetColors ();
 	ConFont = new FSingleLumpFont ("ConsoleFont", W_GetNumForName ("CONFONT"));
-	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);
 
 	BuildTransTable (GPalette.BaseColors);
 }

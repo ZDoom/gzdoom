@@ -92,6 +92,8 @@ typedef enum
 
 STREAM_ENUM (powertype_t)
 
+extern DWORD PowerupColors[NUMPOWERS];
+
 // An artifact is something the player can pickup and carry around
 // in his/her inventory.
 class AArtifact : public AInventory

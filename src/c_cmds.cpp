@@ -375,11 +375,7 @@ CCMD (exec)
 
 CCMD (logfile)
 {
-	time_t clock;
-	char *timestr;
-
-	time (&clock);
-	timestr = asctime (localtime (&clock));
+	char *timestr = myasctime ();
 
 	if (Logfile)
 	{
@@ -401,9 +397,6 @@ CCMD (logfile)
 	}
 }
 
-bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
-					int arg0, int arg1, int arg2, int always);
-
 CCMD (puke)
 {
 	int argc = argv.argc();
@@ -415,21 +408,21 @@ CCMD (puke)
 	else
 	{
 		int script = atoi (argv[1]);
-		int arg0=0, arg1=0, arg2=0;
+		int arg[3] = { 0, 0, 0 };
+		int argn = MIN (argc - 2, 3), i;
 
-		if (argc > 2)
+		for (i = 0; i < argn; ++i)
 		{
-			arg0 = atoi (argv[2]);
-			if (argc > 3)
-			{
-				arg1 = atoi (argv[3]);
-				if (argc > 4)
-				{
-					arg2 = atoi (argv[4]);
-				}
-			}
+			arg[i] = atoi (argv[2+i]);
 		}
-		P_StartScript (m_Instigator, NULL, script, level.mapname, 0, arg0, arg1, arg2, false);
+
+		Net_WriteByte (DEM_RUNSCRIPT);
+		Net_WriteWord (script);
+		Net_WriteByte (argn);
+		for (i = 0; i < argn; ++i)
+		{
+			Net_WriteLong (arg[i]);
+		}
 	}
 }
 

@@ -122,6 +122,8 @@ void DDoor::Tick ()
 			case doorRaise:
 			case doorClose:
 				m_Sector->ceilingdata = NULL;	//jff 2/22/98
+				stopinterpolation (&m_Sector->ceilingplane.d);
+				stopinterpolation (&m_Sector->ceilingtexz);
 				Destroy ();						// unlink and free
 				break;
 				
@@ -166,6 +168,8 @@ void DDoor::Tick ()
 			case doorCloseWaitOpen:
 			case doorOpen:
 				m_Sector->ceilingdata = NULL;	//jff 2/22/98
+				stopinterpolation (&m_Sector->ceilingplane.d);
+				stopinterpolation (&m_Sector->ceilingtexz);
 				Destroy ();						// unlink and free
 				break;
 				

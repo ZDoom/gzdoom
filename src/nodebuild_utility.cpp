@@ -201,7 +201,7 @@ void FNodeBuilder::MakeSegsFromSides ()
 					Segs[j].partner = j-1;
 				}
 			}
-			else if (share2->linedef != share1->linedef)
+			else if (share1 == NULL || share2->linedef != share1->linedef)
 			{
 				Printf ("Linedefs %d and %d share endpoints.\n", i, share2->linedef);
 			}

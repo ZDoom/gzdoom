@@ -35,10 +35,13 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
+#include <io.h>
+#include <fcntl.h>
 
 #include "templates.h"
 #include "v_video.h"
 #include "m_alloc.h"
+#include "i_system.h"
 #include "r_main.h"		// For lighting constants
 #include "w_wad.h"
 #include "i_video.h"
@@ -52,7 +55,7 @@ FDynamicColormap NormalLight;
 }
 FPalette GPalette;
 BYTE *InvulnerabilityColormap;
-int Near0;
+int Near255;
 
 FColorMatcher ColorMatcher;
 
@@ -89,19 +92,20 @@ extern "C"
 	byte BestColor_MMX (DWORD rgb, const DWORD *pal);
 }
 
-int BestColor (const DWORD *pal_in, int r, int g, int b, int first)
+int BestColor (const DWORD *pal_in, int r, int g, int b, int first, int num)
 {
 #ifdef USEASM
-	if (UseMMX)
+	if (CPU.bMMX)
 	{
-		return BestColor_MMX ((first<<24)|(r<<16)|(g<<8)|b, pal_in);
+		int pre = 256 - num;
+		return BestColor_MMX (((first+pre)<<24)|(r<<16)|(g<<8)|b, pal_in-pre);
 	}
 #endif
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	int bestcolor = first;
 	int bestdist = 257*257+257*257+257*257;
 
-	for (int color = first; color < 256; color++)
+	for (int color = first; color < num; color++)
 	{
 		int dist = (r-pal[color].r)*(r-pal[color].r)+
 				   (g-pal[color].g)*(g-pal[color].g)+
@@ -142,14 +146,41 @@ void InitPalette ()
 	const BYTE *pal;
 	BYTE *shade;
 	int c;
+	const char *buildPal;
 
-	pal = (BYTE *)W_MapLumpName ("PLAYPAL");
-	GPalette.SetPalette (pal);
-	W_UnMapLump (pal);
+	buildPal = Args.CheckValue ("-bpal");
+	if (buildPal != NULL)
+	{
+		BYTE bpal[768];
+		int f = open (buildPal, _O_BINARY | _O_RDONLY);
+		if (f >= 0 && read (f, bpal, 768) == 768)
+		{
+			for (c = 0; c < 768; c++)
+			{
+				bpal[c] = (bpal[c] << 2) | (bpal[c] >> 4);
+			}
+			GPalette.SetPalette (bpal);
+		}
+		else
+		{
+			buildPal = NULL;
+		}
+		if (f >= 0)
+		{
+			close (f);
+		}
+	}
+
+	if (buildPal == NULL)
+	{
+		pal = (BYTE *)W_MapLumpName ("PLAYPAL");
+		GPalette.SetPalette (pal);
+		W_UnMapLump (pal);
+	}
 
 	ColorMatcher.SetPalette ((DWORD *)GPalette.BaseColors);
-	Near0 = BestColor ((DWORD *)GPalette.BaseColors,
-		GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1);
+	Near255 = BestColor ((DWORD *)GPalette.BaseColors,
+		GPalette.BaseColors[255].r, GPalette.BaseColors[255].g, GPalette.BaseColors[255].b, 0, 255);
 
 // NormalLight.Maps will be set to realcolormaps no later than G_InitLevelLocals()
 // (which occurs before it is ever needed)
@@ -214,7 +245,7 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		}
 	}
 #ifdef USEASM
-	else if (UseMMX && !(count & 1))
+	else if (CPU.bMMX && !(count & 1))
 	{
 		DoBlending_MMX (from, to, count, r, g, b, a);
 	}

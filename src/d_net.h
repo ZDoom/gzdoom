@@ -36,7 +36,10 @@
 
 #define DOOMCOM_ID		0x12345678l
 #define MAXNETNODES		8	// max computers in a game
-#define BACKUPTICS		12	// number of tics to remember
+#define BACKUPTICS		36	// number of tics to remember
+#define MAXTICDUP		5
+#define LOCALCMDTICS	(BACKUPTICS*MAXTICDUP)
+
 
 #ifdef DJGPP
 // The DOS drivers provide a pretty skimpy buffer.
@@ -52,15 +55,6 @@
 //
 // Network packet data.
 //
-typedef struct
-{
-	unsigned	checksum;					// high bit is retransmit request
-	byte		retransmitfrom;				// only valid if NCMD_RETRANSMIT
-	byte		starttic;
-	byte		player, numtics;
-	byte		cmds[MAX_MSGLEN-8];
-} doomdata_t;
-
 typedef struct
 {
 	DWORD	id;				// should be DOOMCOM_ID
@@ -88,7 +82,7 @@ typedef struct
 #endif
 
 // packet data to be sent
-	doomdata_t	data;
+	BYTE	data[MAX_MSGLEN];
 	
 } doomcom_t;
 

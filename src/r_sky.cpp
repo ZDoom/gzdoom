@@ -32,6 +32,7 @@
 #include "c_cvars.h"
 #include "g_level.h"
 #include "r_sky.h"
+#include "r_main.h"
 #include "gi.h"
 
 extern int *texturewidthmask;
@@ -73,20 +74,24 @@ extern fixed_t freelookviewheight;
 void R_InitSkyMap ()
 {
 	fixed_t fskyheight;
+	FTexture *skytex1, *skytex2;
 
-	if (textureheight == NULL)
+	skytex1 = TexMan[sky1texture];
+	skytex2 = TexMan[sky2texture];
+
+	if (skytex1 == NULL)
 		return;
 
-	if (textureheight[sky1texture] != textureheight[sky2texture])
+	if (skytex1->GetHeight() != skytex2->GetHeight())
 	{
 		Printf ("\x1f+Both sky textures must be the same height.\x1f-\n");
 		sky2texture = sky1texture;
 	}
 
-	fskyheight = textureheight[sky1texture];
+	fskyheight = skytex1->GetHeight() << FRACBITS;
 	if (fskyheight <= (128 << FRACBITS))
 	{
-		skytexturemid = 200/2*FRACUNIT;
+		skytexturemid = r_Yaspect/2*FRACUNIT;
 		skystretch = (r_stretchsky
 					  && !(dmflags & DF_NO_FREELOOK)
 					  && !(level.flags & LEVEL_FORCENOSKYSTRETCH)) ? 1 : 0;
@@ -100,9 +105,9 @@ void R_InitSkyMap ()
 
 	if (viewwidth && viewheight)
 	{
-		skyiscale = (200*FRACUNIT) / (((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
+		skyiscale = (r_Yaspect*FRACUNIT) / (((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
 		skyscale = ((((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift)) << FRACBITS) /
-					(200);
+					(r_Yaspect);
 
 		skyiscale = Scale (skyiscale, FieldOfView, 2048);
 		skyscale = Scale (skyscale, 2048, FieldOfView);
@@ -111,9 +116,9 @@ void R_InitSkyMap ()
 	// The (standard Doom) sky map is 256*128*4 maps.
 	sky1shift = 22+skystretch-16;
 	sky2shift = 22+skystretch-16;
-	if (texturewidthmask[sky1texture] >= 256*2-1)
+	if (skytex1->WidthBits >= 9)
 		sky1shift -= skystretch;
-	if (texturewidthmask[sky2texture] >= 256*2-1)
+	if (skytex2->WidthBits >= 9)
 		sky2shift -= skystretch;
 }
 

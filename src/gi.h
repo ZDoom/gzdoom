@@ -78,31 +78,31 @@ typedef struct
 typedef struct
 {
 	int flags;
-	char titlePage[8];
-	char creditPage1[8];
-	char creditPage2[8];
-	char titleMusic[8];
+	char titlePage[9];
+	char creditPage1[9];
+	char creditPage2[9];
+	char titleMusic[9];
 	float titleTime;
 	float advisoryTime;
 	float pageTime;
 	char chatSound[16];
-	char finaleMusic[8];
-	char finaleFlat[8];
-	char finalePage1[8];
-	char finalePage2[8];
-	char finalePage3[8];
+	char finaleMusic[9];
+	char finaleFlat[9];
+	char finalePage1[9];
+	char finalePage2[9];
+	char finalePage3[9];
 	union
 	{
-		char infoPage[2][8];
+		char infoPage[2][9];
 		struct
 		{
-			char basePage[8];
+			char basePage[9];
 			char numPages;
 		} indexed;
 	} info;
 	char **quitSounds;
 	int maxSwitch;
-	char borderFlat[8];
+	char borderFlat[9];
 	gameborder_t *border;
 	int telefogheight;
 	EGameType gametype;

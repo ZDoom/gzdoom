@@ -36,7 +36,7 @@ ammotype_t AAmmo::GetAmmoType () const
 	return NUMAMMO;
 }
 
-const char *AmmoPics[NUMAMMO];
+const char *AmmoPics[MANA_BOTH+1];
 const char *ArmorPics[NUMARMOR];
 
 /* Keys *******************************************************************/

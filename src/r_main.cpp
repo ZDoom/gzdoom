@@ -66,6 +66,7 @@ extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 extern short *openings;
 extern bool r_fakingunderwater;
 EXTERN_CVAR (Bool, r_particles)
+EXTERN_CVAR (Bool, cl_capfps)
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
 
@@ -87,6 +88,10 @@ float			r_TiltVisibility;
 fixed_t			r_SpriteVisibility;
 fixed_t			r_ParticleVisibility;
 fixed_t			r_SkyVisibility;
+
+fixed_t			r_TicFrac;			// [RH] Fractional tic to render
+DWORD			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
+bool			r_NoInterpolate;
 
 fixed_t			GlobVis;
 fixed_t			FocalTangent;
@@ -120,17 +125,22 @@ int 			framecount;
 int 			linecount;
 int 			loopcount;
 
-fixed_t 		viewx;
-fixed_t 		viewy;
-fixed_t 		viewz;
+fixed_t 		viewx, oviewx, nviewx;
+fixed_t 		viewy, oviewy, nviewy;
+fixed_t 		viewz, oviewz, nviewz;
+int				viewpitch, oviewpitch, nviewpitch;
+AActor			*oviewer;
+int				otic;
 
-angle_t 		viewangle;
+angle_t 		viewangle, oviewangle, nviewangle;
 sector_t		*viewsector;
 
 fixed_t 		viewcos, viewtancos;
 fixed_t 		viewsin, viewtansin;
 
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
+
+int				r_Yaspect = 200;
 
 //
 // precalculated math tables
@@ -169,6 +179,7 @@ cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int lastcenteryfrac;
+static bool NoInterpolateView;
 
 // CODE --------------------------------------------------------------------
 
@@ -466,7 +477,7 @@ void R_SetVisibility (float vis)
 	else
 		r_WallVisibility = r_BaseVisibility;
 
-	r_WallVisibility = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(200<<detailyshift),
+	r_WallVisibility = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(r_Yaspect<<detailyshift),
 		(viewwidth<<detailxshift)*SCREENHEIGHT), FixedMul (r_WallVisibility, FocalTangent));
 
 	// Prevent overflow on floors/ceilings. Note that the calculation of
@@ -611,8 +622,8 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	virtwidth = fullWidth >> detailxshift;
 	virtheight = fullHeight >> detailyshift;
 
-	yaspectmul = Scale ((320<<FRACBITS), virtheight, 200 * virtwidth);
-	iyaspectmulfloat = (float)virtwidth * 0.625f / (float)virtheight;	// 0.625 = 200/320
+	yaspectmul = Scale ((320<<FRACBITS), virtheight, r_Yaspect * virtwidth);
+	iyaspectmulfloat = (float)virtwidth * r_Yaspect / 320.f / (float)virtheight;
 	InvZtoScale = yaspectmul * centerx;
 
 	WallTMapScale = (float)centerx * 32.f;
@@ -624,14 +635,14 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	pspritexiscale = FixedDiv (FRACUNIT, pspritexscale);
 
 	// thing clipping
-	clearbufshort (screenheightarray, viewwidth, (WORD)viewheight);
+	clearbufshort (screenheightarray, viewwidth, (short)viewheight);
 
 	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
 	R_InitSkyMap ();
 
 	R_InitTextureMapping ();
 
-	MaxVisForWall = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(200<<detailyshift),
+	MaxVisForWall = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(r_Yaspect<<detailyshift),
 		(viewwidth<<detailxshift)*SCREENHEIGHT), FocalTangent);
 	MaxVisForWall = FixedDiv (0x7fff0000, MaxVisForWall);
 	MaxVisForFloor = Scale (FixedDiv (0x7fff0000, viewheight<<(FRACBITS-2)), FocalLengthY, 160*FRACUNIT);
@@ -766,16 +777,54 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 
 //==========================================================================
 //
+// R_InterpolateView
+//
+//==========================================================================
+
+//CVAR (Int, tf, 0, 0)
+
+void R_InterpolateView (fixed_t frac)
+{
+//	frac = tf;
+	if (NoInterpolateView)
+	{
+		NoInterpolateView = false;
+		oviewx = nviewx;
+		oviewy = nviewy;
+		oviewz = nviewz;
+		oviewpitch = nviewpitch;
+		oviewangle = nviewangle;
+	}
+	viewx = oviewx + FixedMul (frac, nviewx - oviewx);
+	viewy = oviewy + FixedMul (frac, nviewy - oviewy);
+	viewz = oviewz + FixedMul (frac, nviewz - oviewz);
+	viewpitch = oviewpitch + FixedMul (frac, nviewpitch - oviewpitch);
+	viewangle = oviewangle + FixedMul (frac, nviewangle - oviewangle);
+}
+
+//==========================================================================
+//
+// R_ResetViewInterpolation
+//
+//==========================================================================
+
+void R_ResetViewInterpolation ()
+{
+	NoInterpolateView = true;
+}
+
+//==========================================================================
+//
 // R_SetViewAngle
 //
 //==========================================================================
 
-void R_SetViewAngle (angle_t ang)
+void R_SetViewAngle ()
 {
-	viewangle = ang;
+	angle_t ang = viewangle >> ANGLETOFINESHIFT;
 
-	viewsin = finesine[ang>>ANGLETOFINESHIFT];
-	viewcos = finecosine[ang>>ANGLETOFINESHIFT];
+	viewsin = finesine[ang];
+	viewcos = finecosine[ang];
 
 	viewtansin = FixedMul (FocalTangent, viewsin);
 	viewtancos = FixedMul (FocalTangent, viewcos);
@@ -786,9 +835,7 @@ void R_SetViewAngle (angle_t ang)
 // R_SetupFrame
 //
 //==========================================================================
-#include "a_sharedglobal.h"
-#include "w_wad.h"
-#include "decallib.h"
+
 void R_SetupFrame (player_t *player)
 {
 	unsigned int newblend;
@@ -805,18 +852,21 @@ void R_SetupFrame (player_t *player)
 		I_Error ("You lost your body. Bad dehacked work is likely to blame.");
 	}
 
-#if 0	// DEBUG
-	static bool first = 0;
-	if (!first)
+	if (camera == player->mo)
 	{
-		first = 1;
-		players[0].mo->SetOrigin (53474678, -144813982, 2687414);
-		players[0].mo->angle = 988938240;
-		ADecal *decal = AImpactDecal::StaticCreate (DecalLibrary.GetDecalByName("BulletChip1"), 53477376, -143874293, -2727933, sides+lines[598].sidenum[0]);
-		decal->picnum = W_GetNumForName ("ASCRG2");
-		decal->renderflags = 0x1500;
+		P_PredictPlayer (player);
 	}
-#endif	// DEBUG
+
+	int nowtic = I_GetTime (false);
+	if (nowtic > otic)
+	{
+		otic = nowtic;
+		oviewx = nviewx;
+		oviewy = nviewy;
+		oviewz = nviewz;
+		oviewpitch = nviewpitch;
+		oviewangle = nviewangle;
+	}
 
 	if (((player->cheats & CF_CHASECAM) || (camera->health <= 0)) &&
 		(camera->RenderStyle != STYLE_None) &&
@@ -825,24 +875,41 @@ void R_SetupFrame (player_t *player)
 	{
 		// [RH] Use chasecam view
 		P_AimCamera (camera);
-		viewx = CameraX;
-		viewy = CameraY;
-		viewz = CameraZ;
+		nviewx = CameraX;
+		nviewy = CameraY;
+		nviewz = CameraZ;
 		viewsector = CameraSector;
 	}
 	else
 	{
-		viewx = camera->x;
-		viewy = camera->y;
-		viewz = camera->player ? camera->player->viewz : camera->z;
+		nviewx = camera->x;
+		nviewy = camera->y;
+		nviewz = camera->player ? camera->player->viewz : camera->z;
 		viewsector = camera->Sector;
 	}
+	nviewpitch = camera->pitch;
 	if (camera->player != 0)
 	{
 		player = camera->player;
 	}
 
-	R_SetViewAngle (camera->angle + viewangleoffset);
+	nviewangle = camera->angle + viewangleoffset;
+	if (camera != oviewer || r_NoInterpolate)
+	{
+		R_ResetViewInterpolation ();
+		oviewer = camera;
+	}
+
+	r_TicFrac = I_GetTimeFrac (&r_FrameTime);
+	if (cl_capfps || r_NoInterpolate/* || netgame*/)
+	{
+		r_TicFrac = FRACUNIT;
+	}
+
+	R_InterpolateView (r_TicFrac);
+	R_SetViewAngle ();
+
+	dointerpolations (r_TicFrac);
 
 	// Keep the view within the sector's floor and ceiling
 	fixed_t theZ = viewsector->ceilingplane.ZatPoint (viewx, viewy) - 4*FRACUNIT;
@@ -932,7 +999,7 @@ void R_SetupFrame (player_t *player)
 		
 		if (camera != NULL)
 		{
-			dy = FixedMul (FocalLengthY, finetangent[(ANGLE_90-camera->pitch)>>ANGLETOFINESHIFT]);
+			dy = FixedMul (FocalLengthY, finetangent[(ANGLE_90-viewpitch)>>ANGLETOFINESHIFT]);
 		}
 		else
 		{
@@ -1034,7 +1101,8 @@ void R_SetupFrame (player_t *player)
 		}
 		lastcenteryfrac = centeryfrac;
 	}
-		
+
+	P_UnPredictPlayer ();
 	framecount++;
 	validcount++;
 }
@@ -1167,7 +1235,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 //
 //==========================================================================
 
-static void R_SetupBuffer ()
+void R_SetupBuffer ()
 {
 	static BYTE *lastbuff = NULL;
 
@@ -1190,7 +1258,7 @@ static void R_SetupBuffer ()
 			ASM_PatchPitch ();
 #endif
 		}
-		for (size_t i = 0; i < (size_t)viewheight; i++, lineptr += pitch)
+		for (int i = 0; i < screen->GetHeight(); i++, lineptr += pitch)
 		{
 			ylookup[i] = lineptr;
 		}
@@ -1203,7 +1271,7 @@ static void R_SetupBuffer ()
 //
 //==========================================================================
 
-void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
+void R_RenderPlayerView (player_t *player)
 {
 	WallCycles = PlaneCycles = MaskedCycles = WallScanCycles = 0;
 
@@ -1216,7 +1284,7 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	R_ClearPlanes (true);
 	R_ClearSprites ();
 
-	if (lengthyCallback != NULL)	lengthyCallback ();
+	NetUpdate ();
 
 	// [RH] Show off segs if r_drawflat is 1
 	if (r_drawflat)
@@ -1240,7 +1308,7 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	WindowRight = viewwidth - 1;
 	MirrorFlags = 0;
 	ActiveWallMirror = NULL;
-	
+
 	// [RH] Hack to make windows into underwater areas possible
 	r_fakingunderwater = false;
 
@@ -1278,7 +1346,7 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	}
 	unclock (WallCycles);
 
-	if (lengthyCallback != NULL)	lengthyCallback ();
+	NetUpdate ();
 
 	clock (PlaneCycles);
 	R_DrawPlanes ();
@@ -1293,13 +1361,15 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	}
 	WallMirrors.Clear ();
 
-	if (lengthyCallback != NULL)	lengthyCallback ();
+	NetUpdate ();
 	
 	clock (MaskedCycles);
 	R_DrawMasked ();
 	unclock (MaskedCycles);
 
-	if (lengthyCallback != NULL)	lengthyCallback ();
+	NetUpdate ();
+
+	restoreinterpolations ();
 }
 
 //==========================================================================
@@ -1326,7 +1396,7 @@ void R_RenderViewToCanvas (player_t *player, DCanvas *canvas,
 	viewwindowx = x;
 	viewwindowy = y;
 
-	R_RenderPlayerView (player, NULL);
+	R_RenderPlayerView (player);
 
 	RenderTarget = screen;
 	bRenderingToCanvas = false;
@@ -1346,4 +1416,85 @@ void R_MultiresInit ()
 {
 	R_PlaneInitData ();
 	R_OldBlend = ~0;
+}
+
+// Stuff from BUILD to interpolate floors and ceilings
+//
+// "Build Engine & Tools" Copyright (c) 1993-1997 Ken Silverman
+// Ken Silverman's official web site: "http://www.advsys.net/ken"
+// See the included license file "BUILDLIC.TXT" for license info.
+
+int numinterpolations = 0, startofdynamicinterpolations = 0;
+fixed_t oldipos[MAXINTERPOLATIONS];
+fixed_t bakipos[MAXINTERPOLATIONS];
+fixed_t *curipos[MAXINTERPOLATIONS];
+
+static bool didInterp;
+
+void updateinterpolations()  //Stick at beginning of domovethings
+{
+	int i;
+
+	for(i=numinterpolations-1;i>=0;i--) oldipos[i] = *curipos[i];
+}
+
+void setinterpolation(fixed_t *posptr)
+{
+	int i;
+
+	if (numinterpolations >= MAXINTERPOLATIONS) return;
+	for(i=numinterpolations-1;i>=0;i--)
+		if (curipos[i] == posptr) return;
+	curipos[numinterpolations] = posptr;
+	oldipos[numinterpolations] = *posptr;
+	numinterpolations++;
+}
+
+void stopinterpolation(fixed_t *posptr)
+{
+	int i;
+
+	for(i=numinterpolations-1;i>=startofdynamicinterpolations;i--)
+	{
+		if (curipos[i] == posptr)
+		{
+			numinterpolations--;
+			oldipos[i] = oldipos[numinterpolations];
+			bakipos[i] = bakipos[numinterpolations];
+			curipos[i] = curipos[numinterpolations];
+			break;
+		}
+	}
+}
+
+CVAR (Bool, interp, true, 0);
+
+void dointerpolations(fixed_t smoothratio)       //Stick at beginning of drawscreen
+{
+	int i;
+
+	if (smoothratio == FRACUNIT || !interp)
+	{
+		didInterp = false;
+		return;
+	}
+
+	didInterp = true;
+
+	for(i=numinterpolations-1;i>=0;i--)
+	{
+		fixed_t pos = bakipos[i] = *curipos[i];
+		*curipos[i] = oldipos[i] + FixedMul(pos - oldipos[i], smoothratio);
+	}
+}
+
+void restoreinterpolations()  //Stick at end of drawscreen
+{
+	if (didInterp)
+	{
+		int i;
+
+		didInterp = false;
+		for(i=numinterpolations-1;i>=0;i--) *curipos[i] = bakipos[i];
+	}
 }

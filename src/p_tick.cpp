@@ -41,6 +41,9 @@ void P_Ticker (void)
 {
 	int i;
 
+	updateinterpolations ();
+	r_NoInterpolate = true;
+
 	// run the tic
 	if (paused)
 		return;
@@ -57,6 +60,9 @@ void P_Ticker (void)
 	{
 		return;
 	}
+
+	// Since things will be moving, it's okay to interpolate them in the renderer.
+	r_NoInterpolate = false;
 
 	if (!bglobal.freeze)
 	{

@@ -198,4 +198,10 @@ extern int MenuStackDepth;
 extern menu_t  *CurrentMenu;
 extern int		CurrentItem;
 
+#define MAX_EPISODES	8
+
+extern oldmenuitem_t EpisodeMenu[MAX_EPISODES];
+extern char EpisodeMaps[MAX_EPISODES][8];
+extern oldmenu_t EpiDef;
+
 #endif

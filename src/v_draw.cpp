@@ -3,7 +3,7 @@
 ** Draw patches and blocks to a canvas
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2003 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,16 +32,25 @@
 **
 */
 
+#include <stdio.h>
+#include <stdarg.h>
+
 #include "doomtype.h"
 #include "v_video.h"
 #include "m_swap.h"
+#include "r_defs.h"
+#include "r_draw.h"
+#include "r_things.h"
 
 #include "i_system.h"
 #include "i_video.h"
+#include "templates.h"
 
-// [RH] Stretch values for V_DrawPatchClean()
+// [RH] Stretch values to make a 320x200 image best fit the screen
+// without using fractional steppings
 int CleanXfac, CleanYfac;
-// [RH] Virtual screen sizes as perpetuated by V_DrawPatchClean()
+
+// [RH] Effective screen sizes that the above scale values give you
 int CleanWidth, CleanHeight;
 
 fixed_t V_Fade = 0x8000;
@@ -52,7 +61,7 @@ DCanvas::vdrawsfunc *DCanvas::m_Drawsfuncs;
 
 
 // Palettized versions of the column drawers
-DCanvas::vdrawfunc DCanvas::Pfuncs[6] =
+DCanvas::vdrawfunc DCanvas::Pfuncs[DCanvas::EWRAPPER_NUM] =
 {
 	DCanvas::DrawPatchP,
 	DCanvas::DrawLucentPatchP,
@@ -60,18 +69,20 @@ DCanvas::vdrawfunc DCanvas::Pfuncs[6] =
 	DCanvas::DrawTlatedLucentPatchP,
 	DCanvas::DrawColoredPatchP,
 	DCanvas::DrawColorLucentPatchP,
+	DCanvas::DrawAlphaPatchP,
 };
-DCanvas::vdrawsfunc DCanvas::Psfuncs[6] =
+DCanvas::vdrawsfunc DCanvas::Psfuncs[DCanvas::EWRAPPER_NUM] =
 {
 	DCanvas::DrawPatchSP,
 	DCanvas::DrawLucentPatchSP,
 	DCanvas::DrawTranslatedPatchSP,
 	DCanvas::DrawTlatedLucentPatchSP,
 	DCanvas::DrawColoredPatchSP,
-	DCanvas::DrawColorLucentPatchSP
+	DCanvas::DrawColorLucentPatchSP,
+	DCanvas::DrawAlphaPatchSP,
 };
 
-byte *V_ColorMap;
+const BYTE *V_ColorMap;
 int V_ColorFill;
 
 // Palette lookup table for direct modes
@@ -190,7 +201,7 @@ void DCanvas::DrawTranslatedPatchSP (const byte *source, byte *dest, int count, 
 void DCanvas::DrawTlatedLucentPatchP (const byte *source, byte *dest, int count, int pitch)
 {
 	DWORD *fg2rgb, *bg2rgb;
-	byte *colormap = V_ColorMap;
+	const BYTE *colormap = V_ColorMap;
 
 	{
 		fixed_t fglevel, bglevel;
@@ -218,7 +229,7 @@ void DCanvas::DrawTlatedLucentPatchSP (const byte *source, byte *dest, int count
 {
 	int c = 0;
 	DWORD *fg2rgb, *bg2rgb;
-	byte *colormap = V_ColorMap;
+	const BYTE *colormap = V_ColorMap;
 
 	{
 		fixed_t fglevel, bglevel;
@@ -315,6 +326,418 @@ void DCanvas::DrawColorLucentPatchSP (const byte *source, byte *dest, int count,
 	} while (--count);
 }
 
+// Alpha patch drawers
+//
+void DCanvas::DrawAlphaPatchP (const byte *source, byte *dest, int count, int pitch)
+{
+	DWORD *fgstart = &Col2RGB8[0][V_ColorFill];
+
+	do
+	{
+		DWORD val = (*source++ + 2) >> 2;
+		if (val != 0)
+		{
+			DWORD fg = fgstart[val<<8];
+			val = Col2RGB8[64-val][*dest];
+			val = (val + fg) | 0x1f07c1f;
+			*dest = RGB32k[0][0][val & (val>>15)];
+		}
+		dest += pitch; 
+	} while (--count);
+}
+
+void DCanvas::DrawAlphaPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc)
+{
+	DWORD *fgstart = &Col2RGB8[0][V_ColorFill];
+	int c = 0;
+
+	do
+	{
+		DWORD val = (source[c >> 16] + 2) >> 2;
+		if (val != 0)
+		{
+			DWORD fg = fgstart[val<<8];
+			val = Col2RGB8[64-val][*dest];
+			val = (fg + val) | 0x1f07c1f;
+			*dest = RGB32k[0][0][val & (val>>15)];
+		}
+		dest += pitch;
+		c += yinc;
+	} while (--count);
+}
+
+
+void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
+{
+	static BYTE identitymap[256];
+	static short bottomclipper[MAXWIDTH];
+	va_list tags;
+	DWORD tag;
+	BOOL boolval;
+	int intval;
+
+	int destwidth = img->GetWidth() << FRACBITS;
+	int destheight = img->GetHeight() << FRACBITS;
+	int top = img->TopOffset;
+	int left = img->LeftOffset;
+	fixed_t alpha = FRACUNIT;
+	int fillcolor = -1;
+	const BYTE *translation = NULL;
+	BOOL alphaChannel = false;
+	BOOL flipX = false;
+	EWrapperCode drawer;
+	fixed_t shadowAlpha = 0;
+	int shadowColor = 0;
+
+	x0 <<= FRACBITS;
+	y0 <<= FRACBITS;
+
+	// Parse the tag list for attributes
+	va_start (tags, tags_first);
+	tag = tags_first;
+
+	while (tag != TAG_DONE)
+	{
+		DWORD *more_p;
+		DWORD data;
+
+		switch (tag)
+		{
+		case TAG_IGNORE:
+		default:
+			data = va_arg (tags, DWORD);
+			break;
+
+		case TAG_MORE:
+			more_p = va_arg (tags, DWORD *);
+			va_end (tags);
+			va_start (tags, *more_p);
+			tag = *more_p;
+			continue;
+
+		case DTA_DestWidth:
+			destwidth = va_arg (tags, int) << FRACBITS;
+			break;
+
+		case DTA_DestHeight:
+			destheight = va_arg (tags, int) << FRACBITS;
+			break;
+
+		case DTA_Clean:
+			boolval = va_arg (tags, BOOL);
+			if (boolval)
+			{
+				x0 = (x0 - 160*FRACUNIT) * CleanXfac + (Width * (FRACUNIT/2));
+				y0 = (y0 - 100*FRACUNIT) * CleanYfac + (Height * (FRACUNIT/2));
+				destwidth = img->GetWidth() * CleanXfac * FRACUNIT;
+				destheight = img->GetHeight() * CleanYfac * FRACUNIT;
+			}
+			break;
+
+		case DTA_CleanNoMove:
+			boolval = va_arg (tags, BOOL);
+			if (boolval)
+			{
+				destwidth = img->GetWidth() * CleanXfac * FRACUNIT;
+				destheight = img->GetHeight() * CleanYfac * FRACUNIT;
+			}
+			break;
+
+		case DTA_320x200:
+			boolval = va_arg (tags, BOOL);
+			if (boolval)
+			{
+				x0 = Scale (Width, x0, 320);
+				y0 = Scale (Height, y0, 200);
+				destwidth = FixedDiv (Width * img->GetWidth(), 320);
+				destheight = FixedDiv (Height * img->GetHeight(), 200);
+			}
+			break;
+
+		case DTA_VirtualWidth:
+			intval = va_arg (tags, int);
+			x0 = Scale (Width, x0, intval);
+			destwidth = FixedDiv (Width * img->GetWidth(), intval);
+			break;
+			
+		case DTA_VirtualHeight:
+			intval = va_arg (tags, int);
+			y0 = Scale (Width, y0, intval);
+			destheight = FixedDiv (Height * img->GetHeight(), intval);
+			break;
+
+		case DTA_Alpha:
+			alpha = MIN<fixed_t> (FRACUNIT, va_arg (tags, fixed_t));
+			break;
+
+		case DTA_AlphaChannel:
+			alphaChannel = va_arg (tags, BOOL);
+			break;
+
+		case DTA_FillColor:
+			fillcolor = va_arg (tags, int);
+			break;
+
+		case DTA_Translation:
+			translation = va_arg (tags, const BYTE *);
+			break;
+
+		case DTA_FlipX:
+			flipX = va_arg (tags, BOOL);
+			break;
+
+		case DTA_TopOffset:
+			top = va_arg (tags, int);
+			break;
+
+		case DTA_LeftOffset:
+			left = va_arg (tags, int);
+			break;
+
+		case DTA_ShadowAlpha:
+			shadowAlpha = MIN<fixed_t> (FRACUNIT, va_arg (tags, fixed_t));
+			break;
+
+		case DTA_ShadowColor:
+			shadowColor = va_arg (tags, int);
+			break;
+
+		case DTA_Shadow:
+			boolval = va_arg (tags, BOOL);
+			if (boolval)
+			{
+				shadowAlpha = FRACUNIT/2;
+				shadowColor = 0;
+			}
+			else
+			{
+				shadowAlpha = 0;
+			}
+			break;
+		}
+		tag = va_arg (tags, DWORD);
+	}
+	va_end (tags);
+
+#if 0
+	// Determine which routine to use for drawing
+	if (fillcolor >= 0)
+	{
+		if (alphaChannel)
+		{
+			drawer = EWrapper_Alpha;
+		}
+		else if (alpha < FRACUNIT)
+		{
+			drawer = EWrapper_ColoredLucent;
+		}
+		else
+		{
+			drawer = EWrapper_Colored;
+		}
+	}
+	else if (alpha < FRACUNIT)
+	{
+		if (translation != NULL)
+		{
+			drawer = EWrapper_TlatedLucent;
+		}
+		else
+		{
+			drawer = EWrapper_Lucent;
+		}
+	}
+	else if (translation != NULL)
+	{
+		drawer = EWrapper_Translated;
+	}
+	else
+	{
+		drawer = EWrapper_Normal;
+	}
+
+	V_ColorMap = translation;
+
+	if (destwidth == img->GetWidth() && destheight == img->GetHeight())
+	{
+		x0 -= left;
+		y0 -= top;
+		if (shadowAlpha > 0)
+		{
+			V_ColorFill = shadowColor;
+			V_Fade = shadowAlpha;
+			DrawWrapper (EWrapper_ColoredLucent, img, x0+2, y0+2, flipX);
+		}
+		V_ColorFill = fillcolor;
+		V_Fade = alpha;
+		DrawWrapper (drawer, img, x0, y0, flipX);
+	}
+	else
+	{
+		x0 -= left * destwidth / img->GetWidth();
+		y0 -= top * destheight / img->GetHeight();
+		if (shadowAlpha > 0)
+		{
+			V_ColorFill = shadowColor;
+			V_Fade = shadowAlpha;
+			DrawSWrapper (EWrapper_ColoredLucent, img, x0+2, y0+2, destwidth, destheight, flipX);
+		}
+		V_ColorFill = fillcolor;
+		V_Fade = alpha;
+		DrawSWrapper (drawer, img, x0, y0, destwidth, destheight, flipX);
+	}
+#endif
+
+	ERenderStyle style;
+
+	if (fillcolor >= 0)
+	{
+		if (alphaChannel)
+		{
+			style = STYLE_Shaded;
+		}
+		else if (alpha < FRACUNIT)
+		{
+			style = STYLE_TranslucentStencil;
+		}
+		else
+		{
+			style = STYLE_Stencil;
+		}
+	}
+	else if (alpha < FRACUNIT)
+	{
+		style = STYLE_Translucent;
+	}
+	else
+	{
+		style = STYLE_Normal;
+	}
+
+	ESPSResult mode = R_SetPatchStyle (style, alpha, 0, fillcolor<<24);
+
+	x0 -= Scale (left, destwidth, img->GetWidth());
+	y0 -= Scale (top, destheight, img->GetHeight());
+
+	if (style != STYLE_Shaded)
+	{
+		if (translation != NULL)
+		{
+			dc_colormap = (lighttable_t *)translation;
+		}
+		else
+		{
+			dc_colormap = identitymap;
+		}
+	}
+
+	if (mode != DontDraw)
+	{
+		const BYTE *pixels;
+		const FTexture::Span *spans;
+		int stop4;
+
+		fixed_t centeryback = 0;
+		centeryfrac = 0;
+
+		sprtopscreen = y0;
+		spryscale = destheight / img->GetHeight();
+
+		// Fix precision errors that are noticeable at some resolutions
+		if ((spryscale * img->GetHeight()) >> FRACBITS != destheight >> FRACBITS)
+			spryscale++;
+
+		sprflipvert = false;
+		dc_iscale = 0xffffffffu / (unsigned)spryscale;
+		dc_texturemid = FixedMul (-y0, dc_iscale);
+		fixed_t frac = 0;
+		fixed_t xiscale = DivScale32 (img->GetWidth(), destwidth);
+		int x2 = (x0 + destwidth) >> FRACBITS;
+
+		if (bottomclipper[0] != screen->GetHeight())
+		{
+			clearbufshort (bottomclipper, screen->GetWidth(), (short)screen->GetHeight());
+			if (identitymap[1] != 1)
+			{
+				for (int i = 1; i < 256; ++i)
+				{
+					identitymap[i] = i;
+				}
+			}
+		}
+		mceilingclip = negonearray;
+		mfloorclip = bottomclipper;
+
+		if (flipX)
+		{
+			frac = (img->GetWidth() << FRACBITS) - 1;
+			xiscale = -xiscale;
+		}
+
+		dc_x = x0 >> FRACBITS;
+		if (dc_x < 0)
+		{
+			frac += -dc_x * xiscale;
+			dc_x = 0;
+		}
+
+		if (destheight < 32*FRACUNIT)
+		{
+			mode = DoDraw0;
+		}
+
+		if (mode == DoDraw0)
+		{
+			// One column at a time
+			stop4 = dc_x;
+		}
+		else	 // DoDraw1
+		{
+			// Up to four columns at a time
+			stop4 = (x2 + 1) & ~3;
+		}
+
+		if (dc_x < x2)
+		{
+			while ((dc_x < stop4) && (dc_x & 3))
+			{
+				pixels = img->GetColumn (frac >> FRACBITS, &spans);
+				R_DrawMaskedColumn (pixels, spans);
+				dc_x++;
+				frac += xiscale;
+			}
+
+			while (dc_x < stop4)
+			{
+				rt_initcols();
+				for (int zz = 4; zz; --zz)
+				{
+					pixels = img->GetColumn (frac >> FRACBITS, &spans);
+					R_DrawMaskedColumnHoriz (pixels, spans);
+					dc_x++;
+					frac += xiscale;
+				}
+				rt_draw4cols (dc_x - 4);
+			}
+
+			while (dc_x < x2)
+			{
+				pixels = img->GetColumn (frac >> FRACBITS, &spans);
+				R_DrawMaskedColumn (pixels, spans);
+				dc_x++;
+				frac += xiscale;
+			}
+		}
+
+		centeryfrac = centeryback;
+	}
+	R_FinishSetPatchStyle ();
+
+	if (ticdup != 0)
+	{
+		NetUpdate ();
+	}
+}
 
 /******************************/
 /*							  */
@@ -326,22 +749,19 @@ void DCanvas::DrawColorLucentPatchSP (const byte *source, byte *dest, int count,
 // V_DrawWrapper
 // Masks a column based masked pic to the screen. 
 //
-void DCanvas::DrawWrapper (EWrapperCode drawer, const patch_t *patch, int x, int y) const
+void DCanvas::DrawWrapper (EWrapperCode drawer, FTexture *tex, int x, int y, BOOL flipX) const
 {
 	int 		col;
-	int			colstep;
-	column_t*	column;
+	const BYTE *column;
+	const FTexture::Span *spans;
 	byte*		desttop;
 	int 		w;
 	vdrawfunc	drawfunc;
 
-	y -= SHORT(patch->topoffset);
-	x -= SHORT(patch->leftoffset);
+	w = tex->GetWidth ();
 #ifdef RANGECHECK 
-	if (x<0
-		||x+SHORT(patch->width) > Width
-		|| y<0
-		|| y+SHORT(patch->height)>Height)
+	if (x < 0 || x + w > Width ||
+		y < 0 || y + tex->GetHeight() > Height)
 	{
 	  // Printf ("Patch at %d,%d exceeds LFB\n", x,y );
 	  // No I_Error abort - what is up with TNT.WAD?
@@ -351,47 +771,19 @@ void DCanvas::DrawWrapper (EWrapperCode drawer, const patch_t *patch, int x, int
 #endif
 
 	drawfunc = Pfuncs[drawer];
-	colstep = 1;
 
-	col = 0;
-	desttop = Buffer + y*Pitch + x * colstep;
+	desttop = Buffer + y*Pitch + x;
+	w--;
 
-	w = SHORT(patch->width);
-
-	for ( ; col<w ; x++, col++, desttop += colstep)
+	for (col = 0; col <= w; x++, col++, desttop++)
 	{
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col]));
-		int top = -1;
+		column = tex->GetColumn (flipX ? w - col : col, &spans);
 
 		// step through the posts in a column
-		while (column->topdelta != 0xff)
+		while (spans->Length != 0)
 		{
-			if (column->topdelta <= top)
-			{
-				top += column->topdelta;
-			}
-			else
-			{
-				top = column->topdelta;
-			}
-			int len = column->length;
-			if (len != 0)
-			{
-				if (top + len > patch->height)
-				{
-					len = patch->height - top;
-					if (len > 0)
-					{
-						drawfunc ((byte *)column + 3, desttop + top * Pitch, len, Pitch);
-						break;
-					}
-				}
-				else
-				{
-					drawfunc ((byte *)column + 3, desttop + top * Pitch, len, Pitch);
-				}
-			}
-			column = (column_t *)((byte *)column + column->length + 4);
+			drawfunc (column + spans->TopOffset, desttop + spans->TopOffset * Pitch, spans->Length, Pitch);
+			spans++;
 		}
 	}
 }
@@ -401,48 +793,39 @@ void DCanvas::DrawWrapper (EWrapperCode drawer, const patch_t *patch, int x, int
 // Masks a column based masked pic to the screen
 // stretching it to fit the given dimensions.
 //
-extern void F_DrawPatchCol (int, const patch_t *, int, const DCanvas *);
+extern void F_DrawPatchCol (int, FTexture *, int, const DCanvas *);
 
-void DCanvas::DrawSWrapper (EWrapperCode drawer, const patch_t *patch, int x0, int y0, int destwidth, int destheight) const
+void DCanvas::DrawSWrapper (EWrapperCode drawer, FTexture *tex, int x0, int y0, int destwidth, int destheight, BOOL flipX) const
 {
-	column_t*	column; 
+	const BYTE *column; 
+	const FTexture::Span *spans;
 	byte*		desttop;
 	vdrawsfunc	drawfunc;
-	int			colstep;
 	int			maxy;
 
 	int			xinc, yinc, col, w, ymul, xmul;
 
-	if (destwidth == SHORT(patch->width) && destheight == SHORT(patch->height))
-	{
-		DrawWrapper (drawer, patch, x0, y0);
-		return;
-	}
+	w = tex->GetWidth ();
 
 	if (destwidth == Width && destheight == Height &&
-		SHORT(patch->width) == 320 && SHORT(patch->height) == 200
-		&& drawer == EWrapper_Normal)
+		w == 320 && tex->GetHeight() == 200 &&
+		drawer == EWrapper_Normal)
 	{
 		// Special case: Drawing a full-screen patch, so use
 		// F_DrawPatchCol in f_finale.c, since it's faster.
 		for (w = 0; w < 320; w++)
-			F_DrawPatchCol (w, patch, w, this);
+			F_DrawPatchCol (w, tex, w, this);
 		return;
 	}
 
-	xinc = (SHORT(patch->width) << 16) / destwidth;
-	yinc = (SHORT(patch->height) << 16) / destheight;
-	xmul = (destwidth << 16) / SHORT(patch->width);
-	ymul = (destheight << 16) / SHORT(patch->height);
-
-	y0 -= (SHORT(patch->topoffset) * ymul) >> 16;
-	x0 -= (SHORT(patch->leftoffset) * xmul) >> 16;
+	xinc = (w << 16) / destwidth;
+	yinc = (tex->GetHeight() << 16) / destheight;
+	xmul = (destwidth << 16) / w;
+	ymul = (destheight << 16) / tex->GetHeight();
 
 #ifdef RANGECHECK 
-	if (x0<0
-		|| x0+destwidth > Width
-		|| y0<0
-		|| y0+destheight> Height)
+	if (x0 < 0 || x0 + destwidth > Width ||
+		y0 < 0 || y0 + destheight > Height)
 	{
 		//Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
 		DPrintf ("DCanvas::DrawSWrapper: bad patch (ignored)\n");
@@ -451,179 +834,48 @@ void DCanvas::DrawSWrapper (EWrapperCode drawer, const patch_t *patch, int x0, i
 #endif
 
 	drawfunc = Psfuncs[drawer];
-	colstep = 1;
 
-	col = 0;
-	desttop = Buffer + y0*Pitch + x0 * colstep;
+	desttop = Buffer + y0*Pitch + x0;
 
 	w = destwidth * xinc;
-	maxy = SHORT(patch->height);
+	maxy = tex->GetHeight();
 
-	for ( ; col<w ; col += xinc, desttop += colstep)
+	if (flipX)
 	{
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col >> 16]));
-		int htop = -1;
+		xinc = -xinc;
+		col = w + xinc;
+	}
+	else
+	{
+		col = 0;
+	}
+
+	for (; flipX ? col >= 0 : col < w; col += xinc, desttop++)
+	{
+		column = tex->GetColumn (col >> 16, &spans);
 
 		// step through the posts in a column
-		while (column->topdelta != 0xff)
+		while (spans->Length != 0)
 		{
-			if (column->topdelta <= htop)
+			int top = spans->TopOffset * ymul;
+			int bot = top + spans->Length * ymul;
+			bot = (bot - top + 0x8000) >> 16;
+			if (bot > 0)
 			{
-				htop += column->topdelta;
+				top >>= 16;
+				drawfunc (column + spans->TopOffset, desttop + top * Pitch,
+					bot, Pitch, yinc);
 			}
-			else
-			{
-				htop = column->topdelta;
-			}
-			if (column->length != 0)
-			{
-				int top = htop * ymul;
-				int bot = top + column->length * ymul;
-				bot = (bot - top + 0x8000) >> 16;
-				if (bot > 0)
-				{
-					top = (top) >> 16;
-					drawfunc ((byte *)column + 3, desttop + top * Pitch,
-						bot, Pitch, yinc);
-				}
-				column = (column_t *)((byte *)column + column->length + 4);
-			}
-			else
-			{
-				column = (column_t *)((byte *)column + 4);
-			}
+			spans++;
 		}
 	}
 }
-
-//
-// V_DrawIWrapper
-// Like V_DrawWrapper except it will stretch the patches as
-// needed for non-320x200 screens.
-//
-void DCanvas::DrawIWrapper (EWrapperCode drawer, const patch_t *patch, int x0, int y0) const
-{
-	if (Width == 320 && Height == 200)
-		DrawWrapper (drawer, patch, x0, y0);
-	else
-		DrawSWrapper (drawer, patch,
-			 (Width * x0) / 320, (Height * y0) / 200,
-			 (Width * SHORT(patch->width)) / 320, (Height * SHORT(patch->height)) / 200);
-}
-
-//
-// V_DrawCWrapper
-// Like V_DrawIWrapper, except it only uses integral multipliers.
-//
-void DCanvas::DrawCWrapper (EWrapperCode drawer, const patch_t *patch, int x0, int y0) const
-{
-	if (CleanXfac == 1 && CleanYfac == 1)
-		DrawWrapper (drawer, patch, (x0-160) + (Width/2), (y0-100) + (Height/2));
-	else
-		DrawSWrapper (drawer, patch,
-			(x0-160)*CleanXfac+(Width/2), (y0-100)*CleanYfac+(Height/2),
-			SHORT(patch->width) * CleanXfac, SHORT(patch->height) * CleanYfac);
-}
-
-//
-// V_DrawCNMWrapper
-// Like V_DrawCWrapper, except it doesn't adjust the x and y coordinates.
-//
-void DCanvas::DrawCNMWrapper (EWrapperCode drawer, const patch_t *patch, int x0, int y0) const
-{
-	if (CleanXfac == 1 && CleanYfac == 1)
-		DrawWrapper (drawer, patch, x0, y0);
-	else
-		DrawSWrapper (drawer, patch, x0, y0,
-						SHORT(patch->width) * CleanXfac,
-						SHORT(patch->height) * CleanYfac);
-}
-
 
 /********************************/
 /*								*/
 /* Other miscellaneous routines */
 /*								*/
 /********************************/
-
-//
-// V_DrawPatchFlipped
-// Masks a column based masked pic to the screen.
-// Flips horizontally, e.g. to mirror face.
-//
-// Like V_DrawIWrapper except it only uses one drawing function and draws
-// the patch flipped horizontally.
-//
-void DCanvas::DrawPatchFlipped (const patch_t *patch, int x0, int y0) const
-{
-	column_t*	column; 
-	byte*		desttop;
-	vdrawsfunc	drawfunc;
-	int			colstep;
-	int			destwidth, destheight;
-
-	int			xinc, yinc, col, w, ymul, xmul;
-
-	x0 = (Width * x0) / 320;
-	y0 = (Height * y0) / 200;
-	destwidth = (Width * SHORT(patch->width)) / 320;
-	destheight = (Height * SHORT(patch->height)) / 200;
-
-	xinc = (SHORT(patch->width) << 16) / destwidth;
-	yinc = (SHORT(patch->height) << 16) / destheight;
-	xmul = (destwidth << 16) / SHORT(patch->width);
-	ymul = (destheight << 16) / SHORT(patch->height);
-
-	y0 -= (SHORT(patch->topoffset) * ymul) >> 16;
-	x0 -= (SHORT(patch->leftoffset) * xmul) >> 16;
-
-#ifdef RANGECHECK 
-	if (x0<0
-		|| x0+destwidth > Width
-		|| y0<0
-		|| y0+destheight> Height)
-	{
-		//Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
-		DPrintf ("DCanvas::DrawPatchFlipped: bad patch (ignored)\n");
-		return;
-	}
-#endif
-
-	drawfunc = Psfuncs[EWrapper_Normal];
-	colstep = 1;
-
-	w = destwidth * xinc;
-	col = w - xinc;
-	desttop = Buffer + y0*Pitch + x0 * colstep;
-
-	for ( ; col >= 0 ; col -= xinc, desttop += colstep)
-	{
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col >> 16]));
-		int top = -1;
-
-		// step through the posts in a column
-		while (column->topdelta != 0xff)
-		{
-			if (column->topdelta <= top)
-			{
-				top += column->topdelta;
-			}
-			else
-			{
-				top = column->topdelta;
-			}
-			if (column->length != 0)
-			{
-				drawfunc ((byte *)column + 3,
-						  desttop + ((top * ymul) >> 16) * Pitch,
-						  (column->length * ymul) >> 16,
-						  Pitch,
-						  yinc);
-			}
-			column = (column_t *)((byte *)column + column->length + 4);
-		}
-	}
-}
 
 
 //
@@ -731,831 +983,6 @@ void DCanvas::GetBlock (int x, int y, int _width, int _height, byte *dest) const
 		src += Pitch;
 		dest += _width;
 	}
-}
-
-typedef void (STACK_ARGS *DrawRemapFn)   (const byte *src, byte *dest, const byte *remap, int srcpitch, int destpitch, int w, int h);
-typedef void (STACK_ARGS *DrawNomapFn)	 (const byte *src, byte *dest, int srcpitch, int destpitch, int w, int h);
-typedef void (STACK_ARGS *DrawTRemapFn)  (const byte *src, byte *dest, const byte *remap, int srcpitch, int destpitch, int w, int h, DWORD *fg2rgb, DWORD *bg2rgb);
-typedef void (STACK_ARGS *DrawTNomapFn)  (const byte *src, byte *dest, int srcpitch, int destpitch, int w, int h, DWORD *fg2rgb, DWORD *bg2rgb);
-typedef void (STACK_ARGS *DrawSRemapFn)  (const byte *src, byte *dest, const byte *remap, int srcpitch, int destpitch, int w, int h, DWORD fg, DWORD *bg2rgb);
-typedef void (STACK_ARGS *DrawSNomapFn)  (const byte *src, byte *dest, int srcpitch, int destpitch, int w, int h, DWORD fg, DWORD *bg2rgb);
-typedef void (STACK_ARGS *DrawAlphaFn)   (const byte *src, byte *dest, int srcpitch, int destpitch, int w, int h, DWORD *fgstart);
-
-typedef void (STACK_ARGS *ScaleRemapFn)  (const byte *src, byte *dest, const byte *remap, int srcpitch, int destpitch, fixed_t xinc, fixed_t yinc, fixed_t xstart, fixed_t err, int w, int h);
-typedef void (STACK_ARGS *ScaleNomapFn)  (const byte *src, byte *dest, int srcpitch, int destpitch, fixed_t xinc, fixed_t yinc, fixed_t xstart, fixed_t err, int w, int h);
-typedef void (STACK_ARGS *ScaleTRemapFn) (const byte *src, byte *dest, const byte *remap, int srcpitch, int destpitch, fixed_t xinc, fixed_t yinc, fixed_t xstart, fixed_t err, int w, int h, DWORD *fg2rgb, DWORD *bg2rgb);
-typedef void (STACK_ARGS *ScaleTNomapFn) (const byte *src, byte *dest, int srcpitch, int destpitch, fixed_t xinc, fixed_t yinc, fixed_t xstart, fixed_t err, int w, int h, DWORD *fg2rgb, DWORD *bg2rgb);
-typedef void (STACK_ARGS *ScaleSRemapFn) (const byte *src, byte *dest, const byte *remap, int srcpitch, int destpitch, fixed_t xinc, fixed_t yinc, fixed_t xstart, fixed_t err, int w, int h, DWORD fg, DWORD *bg2rgb);
-typedef void (STACK_ARGS *ScaleSNomapFn) (const byte *src, byte *dest, int srcpitch, int destpitch, fixed_t xinc, fixed_t yinc, fixed_t xstart, fixed_t err, int w, int h, DWORD fg, DWORD *bg2rgb);
-typedef void (STACK_ARGS *ScaleAlphaFn)  (const byte *src, byte *dest, int srcpitch, int destpitch, fixed_t xinc, fixed_t yinc, fixed_t xstart, fixed_t err, int w, int h, DWORD *fgstart);
-
-// Key to naming (because this fixed linker probs at first):
-// 1st char: D = Draw, S = Scale
-// 2nd char: M = Masked
-// 3rd char: P = Plain, T = Translucent, S = Shadowed, A = Alpha
-// 4th char: R = Remapped, U = Unmapped
-// 5th char: P = Palettized output
-
-extern "C" 
-{
-	extern struct
-	{
-		DrawRemapFn DMPRP;
-		DrawNomapFn DMPUP;
-		ScaleRemapFn SMPRP;
-		ScaleNomapFn SMPUP;
-
-		DrawTRemapFn DMTRP;
-		DrawTNomapFn DMTUP;
-		ScaleTRemapFn SMTRP;
-		ScaleTNomapFn SMTUP;
-
-		DrawSRemapFn DMSRP;
-		DrawSNomapFn DMSUP;
-		ScaleSRemapFn SMSRP;
-		ScaleSNomapFn SMSUP;
-
-		DrawAlphaFn DMAUP;
-		ScaleAlphaFn SMAUP;
-	} MaskedBlockFunctions;
-}
-
-//
-// 
-void DCanvas::DrawMaskedBlock (int x, int y, int _width, int _height,
-	const byte *src, const byte *colors) const
-{
-	int srcpitch = _width;
-	int destpitch;
-	byte *dest;
-
-	if (ClipBox (x, y, _width, _height, src, srcpitch))
-	{
-		return;		// Nothing to draw
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*destpitch + x;
-
-	if (colors != NULL)
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.DMPRP (src, dest, colors, srcpitch, destpitch, _width, _height);
-#else
-		do
-		{
-			int i, j;
-
-			i = _width;
-			j = 0;
-
-			do
-			{
-				byte val = src[j];
-				if (val != 0)
-				{
-					dest[j] = colors[val];
-				}
-			} while (++j, --i);
-			dest += destpitch;
-			src += srcpitch;
-		}
-		while (--_height);
-#endif
-	}
-	else
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.DMPUP (src, dest, srcpitch, destpitch, _width, _height);
-#else
-		do
-		{
-			int i, j;
-
-			i = _width;
-			j = 0;
-
-			do
-			{
-				byte val = src[j];
-				if (val != 0)
-				{
-					dest[j] = val;
-				}
-			} while (++j, --i);
-			dest += destpitch;
-			src += srcpitch;
-		}
-		while (--_height);
-#endif
-	}
-}
-
-void DCanvas::ScaleMaskedBlock (int x, int y, int _width, int _height,
-	int dwidth, int dheight, const byte *src, const byte *colors) const
-{
-	byte *dest;
-	int srcpitch;
-	int destpitch;
-	fixed_t err;
-	fixed_t xinc, yinc;
-	fixed_t xstart;
-
-	if (dwidth == _width && dheight == _height)
-	{
-		DrawMaskedBlock (x, y, _width, _height, src, colors);
-		return;
-	}
-
-	srcpitch = _width;
-
-	if (ClipScaleBox (x, y, _width, _height, dwidth, dheight, src, srcpitch, xinc, yinc, xstart, err))
-	{
-		return;		// Nothing to draw
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*destpitch + x;
-
-	if (colors != NULL)
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.SMPRP (src, dest, colors, srcpitch, destpitch, xinc, yinc, xstart, err, dwidth, dheight);
-#else
-		do
-		{
-			int i, x;
-
-			i = 0;
-			x = xstart;
-
-			do
-			{
-				byte in = src[x >> FRACBITS];
-				if (in)
-				{
-					dest[i] = colors[in];
-				}
-				x += xinc;
-			} while (++i < dwidth);
-			dest += destpitch;
-			err += yinc;
-			while (err >= FRACUNIT)
-			{
-				src += srcpitch;
-				err -= FRACUNIT;
-			}
-		}
-		while (--dheight);
-#endif
-	}
-	else
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.SMPUP (src, dest, srcpitch, destpitch, xinc, yinc, xstart, err, dwidth, dheight);
-#else
-		do
-		{
-			int i, x;
-
-			i = 0;
-			x = xstart;
-
-			do
-			{
-				byte in = src[x >> FRACBITS];
-				if (in)
-				{
-					dest[i] = in;
-				}
-				x += xinc;
-			} while (++i < dwidth);
-			dest += destpitch;
-			err += yinc;
-			while (err >= FRACUNIT)
-			{
-				src += srcpitch;
-				err -= FRACUNIT;
-			}
-		}
-		while (--dheight);
-#endif
-	}
-}
-
-void DCanvas::DrawTranslucentMaskedBlock (int x, int y, int _width, int _height,
-	const byte *src, const byte *colors, fixed_t fade) const
-{
-	int srcpitch = _width;
-	int destpitch;
-	byte *dest;
-
-	if (ClipBox (x, y, _width, _height, src, srcpitch))
-	{
-		return;		// Nothing to draw
-	}
-
-	DWORD *fg2rgb, *bg2rgb;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = fade & ~0x3ff;
-		bglevel = FRACUNIT - fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*destpitch + x;
-
-	if (colors != NULL)
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.DMTRP (src, dest, colors, srcpitch, destpitch, _width, _height, fg2rgb, bg2rgb);
-#else
-		do
-		{
-			int i, j;
-
-			i = _width;
-			j = 0;
-
-			do
-			{
-				byte val = src[j];
-				if (val)
-				{
-					DWORD fg;
-					fg = (fg2rgb[colors[val]] + bg2rgb[dest[j]]) | 0x1f07c1f;
-					dest[j] = RGB32k[0][0][fg & (fg>>15)];
-				}
-			} while (++j, --i);
-			dest += destpitch;
-			src += srcpitch;
-		}
-		while (--_height);
-#endif
-	}
-	else
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.DMTUP (src, dest, srcpitch, destpitch, _width, _height, fg2rgb, bg2rgb);
-#else
-		do
-		{
-			int i, j;
-
-			i = _width;
-			j = 0;
-
-			do
-			{
-				byte val = src[j];
-				if (val)
-				{
-					DWORD fg;
-					fg = (fg2rgb[val] + bg2rgb[dest[j]]) | 0x1f07c1f;
-					dest[j] = RGB32k[0][0][fg & (fg>>15)];
-				}
-			} while (++j, --i);
-			dest += destpitch;
-			src += srcpitch;
-		}
-		while (--_height);
-#endif
-	}
-}
-
-void DCanvas::ScaleTranslucentMaskedBlock (int x, int y, int _width, int _height,
-	int dwidth, int dheight, const byte *src, const byte *colors, fixed_t fade) const
-{
-	byte *dest;
-	int srcpitch;
-	int destpitch;
-	fixed_t err;
-	fixed_t xinc, yinc;
-	fixed_t xstart;
-
-	if (dwidth == _width && dheight == _height)
-	{
-		DrawTranslucentMaskedBlock (x, y, _width, _height, src, colors, fade);
-		return;
-	}
-
-	srcpitch = _width;
-
-	if (ClipScaleBox (x, y, _width, _height, dwidth, dheight, src, srcpitch, xinc, yinc, xstart, err))
-	{
-		return;		// Nothing to draw
-	}
-
-	DWORD *fg2rgb, *bg2rgb;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = fade & ~0x3ff;
-		bglevel = FRACUNIT - fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*destpitch + x;
-
-	if (colors != NULL)
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.SMTRP (src, dest, colors, srcpitch, destpitch, xinc, yinc, xstart, err, dwidth, dheight, fg2rgb, bg2rgb);
-#else
-		do
-		{
-			int i, x;
-
-			i = 0;
-			x = xstart;
-
-			do
-			{
-				byte in = src[x >> FRACBITS];
-				if (in)
-				{
-					DWORD fg;
-					fg = (fg2rgb[colors[in]] + bg2rgb[dest[i]]) | 0x1f07c1f;
-					dest[i] = RGB32k[0][0][fg & (fg>>15)];
-				}
-				x += xinc;
-			} while (++i < dwidth);
-			dest += destpitch;
-			err += yinc;
-			while (err >= FRACUNIT)
-			{
-				src += srcpitch;
-				err -= FRACUNIT;
-			}
-		}
-		while (--dheight);
-#endif
-	}
-	else
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.SMTUP (src, dest, srcpitch, destpitch, xinc, yinc, xstart, err, dwidth, dheight, fg2rgb, bg2rgb);
-#else
-		do
-		{
-			int i, x;
-
-			i = 0;
-			x = xstart;
-
-			do
-			{
-				byte in = src[x >> FRACBITS];
-				if (in)
-				{
-					DWORD fg;
-					fg = (fg2rgb[in] + bg2rgb[dest[i]]) | 0x1f07c1f;
-					dest[i] = RGB32k[0][0][fg & (fg>>15)];
-				}
-				x += xinc;
-			} while (++i < dwidth);
-			dest += destpitch;
-			err += yinc;
-			while (err >= FRACUNIT)
-			{
-				src += srcpitch;
-				err -= FRACUNIT;
-			}
-		}
-		while (--dheight);
-#endif
-	}
-}
-
-void DCanvas::DrawShadowedMaskedBlock (int x, int y, int _width, int _height,
-	const byte *src, const byte *colors, fixed_t shade) const
-{
-	int srcpitch = _width;
-	int destpitch;
-	byte *dest;
-
-	if (ClipBox (x, y, _width, _height, src, srcpitch))
-	{
-		return;		// Nothing to draw
-	}
-
-	if (y + _height + 2 > Height || x + _width + 2 > Width)
-	{
-		// Shadow extends past edge of canvas
-		DrawShadowBlock (x+2, y+2, srcpitch, _height, src, shade);
-		DrawMaskedBlock (x, y, srcpitch, _height, src, colors);
-		return;
-	}
-
-	DWORD fg, *bg2rgb;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = shade & ~0x3ff;
-		bglevel = FRACUNIT - fglevel;
-		fg = Col2RGB8[fglevel>>10][0];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*Pitch + x;
-
-	if (colors != NULL)
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.DMSRP (src, dest, colors, srcpitch, destpitch, _width, _height, fg, bg2rgb);
-#else
-		do
-		{
-			int i, j;
-
-			i = _width;
-			j = 0;
-
-			do
-			{
-				byte val = src[j];
-				if (val)
-				{
-					DWORD bg = bg2rgb[dest[j+destpitch*2+2]];
-					bg = (fg + bg) | 0x1f07c1f;
-					dest[j+destpitch*2+2] = RGB32k[0][0][bg & (bg>>15)];
-					dest[j] = colors[val];
-				}
-			} while (++j, --i);
-			dest += destpitch;
-			src += srcpitch;
-		}
-		while (--_height);
-#endif
-	}
-	else
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.DMSUP (src, dest, srcpitch, destpitch, _width, _height, fg, bg2rgb);
-		//MaskedBlockFunctions.DMPUP (src, dest, srcpitch, destpitch, _width, _height);
-#else
-		do
-		{
-			int i, j;
-
-			i = _width;
-			j = 0;
-
-			do
-			{
-				byte val = src[j];
-				if (val)
-				{
-					DWORD bg = bg2rgb[dest[j+destpitch*2+2]];
-					bg = (fg + bg) | 0x1f07c1f;
-					dest[j+destpitch*2+2] = RGB32k[0][0][bg & (bg>>15)];
-					dest[j] = val;
-				}
-			} while (++j, --i);
-			dest += destpitch;
-			src += srcpitch;
-		}
-		while (--_height);
-#endif
-	}
-}
-
-void DCanvas::ScaleShadowedMaskedBlock (int x, int y, int _width, int _height,
-	int dwidth, int dheight, const byte *src, const byte *colors, fixed_t shade) const
-{
-	byte *dest;
-	int srcpitch;
-	int destpitch;
-	fixed_t err;
-	fixed_t xinc, yinc;
-	fixed_t xstart;
-
-	if (dwidth == _width && dheight == _height)
-	{
-		DrawShadowedMaskedBlock (x, y, _width, _height, src, colors, shade);
-		return;
-	}
-
-	srcpitch = _width;
-
-	if (ClipScaleBox (x, y, _width, _height, dwidth, dheight, src, srcpitch, xinc, yinc, xstart, err))
-	{
-		return;		// Nothing to draw
-	}
-
-	if (y + dheight + 2 > Height || x + dwidth + 2 > Width)
-	{
-		// Shadow extends past end of canvas
-		ScaleShadowBlock (x+2, y+2, srcpitch, _height, dwidth, dheight, src, shade);
-		ScaleMaskedBlock (x, y, srcpitch, _height, dwidth, dheight, src, colors);
-		return;
-	}
-
-	DWORD fg, *bg2rgb;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = shade & ~0x3ff;
-		bglevel = FRACUNIT - fglevel;
-		fg = Col2RGB8[fglevel>>10][0];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*destpitch + x;
-
-	if (colors != NULL)
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.SMSRP (src, dest, colors, srcpitch, destpitch, xinc, yinc, xstart, err, dwidth, dheight, fg, bg2rgb);
-#else
-		do
-		{
-			int i, x;
-
-			i = 0;
-			x = xstart;
-
-			do
-			{
-				byte in = src[x >> FRACBITS];
-				if (in)
-				{
-					DWORD bg;
-					bg = (fg + bg2rgb[dest[i+destpitch*2+2]]) | 0x1f07c1f;
-					dest[i+destpitch*2+2] = RGB32k[0][0][bg & (bg>>15)];
-					dest[i] = colors[in];
-				}
-				x += xinc;
-			} while (++i < dwidth);
-			dest += destpitch;
-			err += yinc;
-			while (err >= FRACUNIT)
-			{
-				src += _width;
-				err -= FRACUNIT;
-			}
-		}
-		while (--dheight);
-#endif
-	}
-	else
-	{
-#ifdef USEASM
-		MaskedBlockFunctions.SMSUP (src, dest, srcpitch, destpitch, xinc, yinc, xstart, err, dwidth, dheight, fg, bg2rgb);
-#else
-		do
-		{
-			int i, x;
-
-			i = 0;
-			x = xstart;
-
-			do
-			{
-				byte in = src[x >> FRACBITS];
-				if (in)
-				{
-					DWORD bg;
-					bg = (fg + bg2rgb[dest[i+destpitch*2+2]]) | 0x1f07c1f;
-					dest[i+destpitch*2+2] = RGB32k[0][0][bg & (bg>>15)];
-					dest[i] = in;
-				}
-				x += xinc;
-			} while (++i < dwidth);
-			dest += destpitch;
-			err += yinc;
-			while (err >= FRACUNIT)
-			{
-				src += _width;
-				err -= FRACUNIT;
-			}
-		}
-		while (--dheight);
-#endif
-	}
-}
-
-void DCanvas::DrawShadowBlock (int x, int y, int w, int h, const byte *src, fixed_t shade) const
-{
-	int srcpitch = w;
-
-	if (ClipBox (x, y, w, h, src, srcpitch))
-	{
-		return;		// Nothing to draw
-	}
-
-	DWORD fg, *bg2rgb;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = shade & ~0x3ff;
-		bglevel = FRACUNIT - fglevel;
-		fg = Col2RGB8[fglevel>>10][0];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	int destpitch = Pitch;
-	BYTE *dest = Buffer + y*Pitch + x;
-
-	do
-	{
-		int i, j;
-
-		i = w;
-		j = 0;
-
-		do
-		{
-			byte val = src[j];
-			if (val)
-			{
-				DWORD bg = bg2rgb[dest[j]];
-				bg = (fg + bg) | 0x1f07c1f;
-				dest[j] = RGB32k[0][0][bg & (bg>>15)];
-			}
-		} while (++j, --i);
-		dest += destpitch;
-		src += srcpitch;
-	}
-	while (--h);
-}
-
-void DCanvas::ScaleShadowBlock (int x, int y, int w, int h, int dwidth, int dheight, const byte *src, fixed_t shade) const
-{
-	DWORD fg, *bg2rgb;
-	byte *dest;
-	int srcpitch;
-	int destpitch;
-	fixed_t err;
-	fixed_t xinc, yinc;
-	fixed_t xstart;
-
-	srcpitch = w;
-
-	if (ClipScaleBox (x, y, w, h, dwidth, dheight, src, srcpitch, xinc, yinc, xstart, err))
-	{
-		return;		// Nothing to draw
-	}
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = shade & ~0x3ff;
-		bglevel = FRACUNIT - fglevel;
-		fg = Col2RGB8[fglevel>>10][0];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*destpitch + x;
-
-	do
-	{
-		int i, x;
-
-		i = 0;
-		x = xstart;
-
-		do
-		{
-			byte in = src[x >> FRACBITS];
-			if (in)
-			{
-				DWORD bg;
-				bg = (fg + bg2rgb[dest[i]]) | 0x1f07c1f;
-				dest[i] = RGB32k[0][0][bg & (bg>>15)];
-			}
-			x += xinc;
-		} while (++i < dwidth);
-		dest += destpitch;
-		err += yinc;
-		while (err >= FRACUNIT)
-		{
-			src += w;
-			err -= FRACUNIT;
-		}
-	}
-	while (--dheight);
-}
-
-void DCanvas::DrawAlphaMaskedBlock (int x, int y, int _width, int _height,
-	const byte *src, int color) const
-{
-	int srcpitch = _width;
-	int destpitch;
-	byte *dest;
-
-	if (ClipBox (x, y, _width, _height, src, srcpitch))
-	{
-		return;		// Nothing to draw
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*destpitch + x;
-	DWORD *fgstart = &Col2RGB8[0][color];
-
-#ifdef USEASM
-	MaskedBlockFunctions.DMAUP (src, dest, srcpitch, destpitch, _width, _height, fgstart);
-#else
-	do
-	{
-		int i, j;
-
-		i = _width;
-		j = 0;
-
-		do
-		{
-			DWORD val = src[j];
-			if (val)
-			{
-				val = (val + 1) >> 2;
-				DWORD fg = fgstart[val<<8];
-				val = Col2RGB8[64-val][dest[j]];
-				val = (val + fg) | 0x1f07c1f;
-				dest[j] = RGB32k[0][0][val & (val>>15)];
-			}
-		} while (++j, --i);
-		src += srcpitch;
-		dest += destpitch;
-	}
-	while (--_height);
-#endif
-}
-
-void DCanvas::ScaleAlphaMaskedBlock (int x, int y, int _width, int _height,
-	int dwidth, int dheight, const byte *src, int color) const
-{
-	byte *dest;
-	int srcpitch;
-	int destpitch;
-	fixed_t err;
-	fixed_t xinc, yinc;
-	fixed_t xstart;
-
-	if (dwidth == _width && dheight == _height)
-	{
-		DrawAlphaMaskedBlock (x, y, _width, _height, src, color);
-		return;
-	}
-
-	srcpitch = _width;
-
-	if (ClipScaleBox (x, y, _width, _height, dwidth, dheight, src, srcpitch, xinc, yinc, xstart, err))
-	{
-		return;		// Nothing to draw
-	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*destpitch + x;
-
-	DWORD *fgstart = &Col2RGB8[0][color];
-
-#ifdef USEASM
-	MaskedBlockFunctions.SMAUP (src, dest, srcpitch, destpitch, xinc, yinc, xstart, err, dwidth, dheight, fgstart);
-#else
-	do
-	{
-		int i, x;
-
-		i = 0;
-		x = xstart;
-
-		do
-		{
-			DWORD val = src[x >> FRACBITS];
-			if (val)
-			{
-				val = (val + 2) >> 2;
-				DWORD fg = fgstart[val<<8];
-				val = Col2RGB8[64-val][dest[i]];
-				val = (fg + val) | 0x1f07c1f;
-				dest[i] = RGB32k[0][0][val & (val>>15)];
-			}
-			x += xinc;
-		} while (++i < dwidth);
-		dest += destpitch;
-		err += yinc;
-		while (err >= FRACUNIT)
-		{
-			src += srcpitch;
-			err -= FRACUNIT;
-		}
-	}
-	while (--dheight);
-#endif
 }
 
 // Returns true if the box was completely clipped. False otherwise.

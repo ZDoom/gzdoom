@@ -126,6 +126,10 @@ int 			dccount;
 
 cycle_t			DetailDoubleCycles;
 
+int dc_fillcolor;
+byte *dc_translation;
+byte *translationtables[NUM_TRANSLATION_TABLES];
+
 /************************************/
 /*									*/
 /* Palettized drawers (C versions)	*/
@@ -154,16 +158,6 @@ void R_DrawColumnP_C (void)
 		return;
 
 	count++;
-
-#ifdef RANGECHECK 
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height)
-	{
-		Printf ("R_DrawColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
-		return;
-	}
-#endif
 
 	// Framebuffer destination address.
 	// Use ylookup LUT to avoid multiply with ScreenWidth.
@@ -198,50 +192,6 @@ void R_DrawColumnP_C (void)
 } 
 #endif	// USEASM
 
-
-// [RH] Same as R_DrawColumnP_C except that it doesn't do any colormapping.
-//		Used by the sky drawer because the sky is always fullbright.
-void R_StretchColumnP_C (void)
-{
-	int 				count;
-	byte*				dest;
-	fixed_t 			frac;
-	fixed_t 			fracstep;
-
-	count = dc_yh - dc_yl;
-
-	if (count < 0)
-		return;
-
-	count++;
-
-#ifdef RANGECHECK 
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height)
-	{
-		Printf ("R_StretchColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
-		return;
-	}
-#endif
-
-	dest = ylookup[dc_yl] + dc_x;
-	fracstep = dc_iscale; 
-	frac = dc_texturefrac;
-
-	{
-		const byte *source = dc_source;
-		int pitch = dc_pitch;
-
-		do
-		{
-			*dest = source[frac>>FRACBITS];
-			dest += pitch;
-			frac += fracstep;
-		} while (--count);
-	}
-} 
-
 // [RH] Just fills a column with a color
 void R_FillColumnP (void)
 {
@@ -255,16 +205,6 @@ void R_FillColumnP (void)
 
 	count++;
 
-#ifdef RANGECHECK 
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height)
-	{
-		Printf ("R_StretchColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
-		return;
-	}
-#endif
-
 	dest = ylookup[dc_yl] + dc_x;
 
 	{
@@ -277,7 +217,35 @@ void R_FillColumnP (void)
 			dest += pitch;
 		} while (--count);
 	}
-} 
+}
+
+void R_FillAddColumn (void)
+{
+	int count;
+	BYTE *dest;
+
+	count = dc_yh - dc_yl;
+	if (count < 0)
+		return;
+
+	count++;
+	dest = ylookup[dc_yl] + dc_x;
+	DWORD *bg2rgb;
+	DWORD fg;
+
+	bg2rgb = dc_destblend;
+	fg = dc_srcblend[dc_color];
+	int pitch = dc_pitch;
+
+	do
+	{
+		DWORD bg;
+		bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
+		*dest = RGB32k[0][0][bg & (bg>>15)];
+		dest += pitch; 
+	} while (--count);
+
+}
 
 //
 // Spectre/Invisibility.
@@ -346,16 +314,6 @@ void R_DrawFuzzColumnP_C (void)
 		return;
 
 	count++;
-
-#ifdef RANGECHECK
-	if (dc_x >= screen->width
-		|| dc_yl < 0 || dc_yh >= screen->height)
-	{
-		I_Error ("R_DrawFuzzColumnP_C: %i to %i at %i",
-				 dc_yl, dc_yh, dc_x);
-	}
-#endif
-
 
 	dest = ylookup[dc_yl] + dc_x;
 
@@ -466,16 +424,6 @@ void R_DrawAddColumnP_C (void)
 		return;
 	count++;
 
-#ifdef RANGECHECK
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height)
-	{
-		I_Error ( "R_DrawTranslucentColumnP_C: %i to %i at %i",
-				  dc_yl, dc_yh, dc_x);
-	}
-#endif 
-
 	dest = ylookup[dc_yl] + dc_x;
 
 	fracstep = dc_iscale;
@@ -510,8 +458,6 @@ void R_DrawAddColumnP_C (void)
 // version of the BaronOfHell, the HellKnight, uses	identical sprites, kinda
 // brightened up.
 //
-byte *dc_translation;
-byte *translationtables[NUM_TRANSLATION_TABLES];
 
 void R_DrawTranslatedColumnP_C (void)
 { 
@@ -524,17 +470,6 @@ void R_DrawTranslatedColumnP_C (void)
 	if (count < 0) 
 		return;
 	count++;
-
-#ifdef RANGECHECK 
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height)
-	{
-		I_Error ( "R_DrawTranslatedColumnP_C: %i to %i at %i",
-				  dc_yl, dc_yh, dc_x);
-	}
-	
-#endif 
 
 	dest = ylookup[dc_yl] + dc_x;
 
@@ -570,17 +505,6 @@ void R_DrawTlatedAddColumnP_C (void)
 	if (count < 0)
 		return;
 	count++;
-
-#ifdef RANGECHECK
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height)
-	{
-		I_Error ( "R_DrawTlatedLucentColumnP_C: %i to %i at %i",
-				  dc_yl, dc_yh, dc_x);
-	}
-	
-#endif 
 
 	dest = ylookup[dc_yl] + dc_x;
 
@@ -625,15 +549,6 @@ void R_DrawShadedColumnP_C (void)
 
 	count++;
 
-#ifdef RANGECHECK 
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height) {
-		Printf ("R_DrawShadedColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
-		return;
-	}
-#endif
-
 	dest = ylookup[dc_yl] + dc_x;
 
 	fracstep = dc_iscale; 
@@ -670,16 +585,6 @@ void R_DrawAddClampColumnP_C ()
 	if (count < 0)
 		return;
 	count++;
-
-#ifdef RANGECHECK
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height)
-	{
-		I_Error ( "R_DrawAddColumnP_C: %i to %i at %i",
-				  dc_yl, dc_yh, dc_x);
-	}
-#endif 
 
 	dest = ylookup[dc_yl] + dc_x;
 
@@ -723,16 +628,6 @@ void R_DrawAddClampTranslatedColumnP_C ()
 	if (count < 0)
 		return;
 	count++;
-
-#ifdef RANGECHECK
-	if (dc_x >= screen->width
-		|| dc_yl < 0
-		|| dc_yh >= screen->height)
-	{
-		I_Error ( "R_DrawAddColumnP_C: %i to %i at %i",
-				  dc_yl, dc_yh, dc_x);
-	}
-#endif 
 
 	dest = ylookup[dc_yl] + dc_x;
 
@@ -796,7 +691,7 @@ int						ds_xbits;
 int						ds_ybits;
 
 // start of a 64*64 tile image 
-byte*					ds_source;		
+const byte*				ds_source;		
 
 // just for profiling
 int 					dscount;
@@ -804,7 +699,7 @@ int 					dscount;
 
 //
 // Draws the actual span.
-#ifndef USEASM
+#if !defined(USEASM)
 void R_DrawSpanP_C (void)
 {
 	dsfixed_t			xfrac;
@@ -829,7 +724,6 @@ void R_DrawSpanP_C (void)
 
 	dest = ylookup[ds_y] + ds_x1;
 
-	// We do not check for zero spans here?
 	count = ds_x2 - ds_x1 + 1;
 
 	xstep = ds_xstep;
@@ -856,12 +750,12 @@ void R_DrawSpanP_C (void)
 	{
 		do
 		{
-			BYTE xshift = 32 - ds_xbits;
-			BYTE yshift = xshift - ds_ybits;
-			int ymask = ((1 << ds_ybits) - 1) << ds_xbits;
+			BYTE yshift = 32 - ds_ybits;
+			BYTE xshift = yshift - ds_xbits;
+			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
 		
 			// Current texture index in u,v.
-			spot = ((yfrac >> yshift) & ymask) + (xfrac >> xshift);
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
 			// Lookup pixel from flat texture tile,
 			//  re-index using light/colormap.
@@ -877,18 +771,6 @@ void R_DrawSpanP_C (void)
 // [RH] Just fill a span with a color
 void R_FillSpan (void)
 {
-#ifdef RANGECHECK
-	if (ds_x2 < ds_x1
-		|| ds_x1<0
-		|| ds_x2>=screen->width
-		|| ds_y>screen->height)
-	{
-		I_Error( "R_FillSpan: %i to %i at %i",
-				 ds_x1,ds_x2,ds_y);
-	}
-//		dscount++;
-#endif
-
 	memset (ylookup[ds_y] + ds_x1, ds_color, ds_x2 - ds_x1 + 1);
 }
 
@@ -916,6 +798,7 @@ DWORD STACK_ARGS vlinetallasm1 ();
 DWORD STACK_ARGS prevlinetallasm1 ();
 void STACK_ARGS vlineasm4 ();
 void STACK_ARGS vlinetallasm4 ();
+void STACK_ARGS vlinetallasmathlon4 ();
 void STACK_ARGS setupvlineasm (int);
 void STACK_ARGS setupvlinetallasm (int);
 }
@@ -928,7 +811,7 @@ void (STACK_ARGS *dovline4)() = vlinetallasm4;
 void setupvline (int fracbits)
 {
 #ifdef USEASM
-	if (CPUFamily <= 5)
+	if (CPU.Family <= 5)
 	{
 		if (fracbits >= 24)
 		{
@@ -948,6 +831,10 @@ void setupvline (int fracbits)
 	else
 	{
 		setupvlinetallasm (fracbits);
+		if (CPU.bIsAMD && CPU.AMDFamily >= 7)
+		{
+			dovline4 = vlinetallasmathlon4;
+		}
 	}
 #else
 	vlinebits = fracbits;
@@ -1241,10 +1128,10 @@ void R_InitTranslationTables ()
 	{
 		for (j = 0; j < NUMCOLORMAPS; ++j)
 		{
-			int a = (NUMCOLORMAPS - j) * (256 / NUMCOLORMAPS) * (16-i);
+			int a = (NUMCOLORMAPS - j) * 256 / NUMCOLORMAPS * (16-i);
 			for (int k = 0; k < 256; ++k)
 			{
-				BYTE v = ((k * a) + 256) >> 14;
+				BYTE v = (((k+2) * a) + 256) >> 14;
 				table[k] = MIN<BYTE> (v, 64);
 			}
 			table += 256;
@@ -1485,7 +1372,7 @@ int BorderTopRefresh;
 
 void R_DrawTopBorder ()
 {
-	const patch_t *p1, *p2;
+	FTexture *p1, *p2;
 	int x, y;
 	int offset;
 	int size;
@@ -1499,30 +1386,25 @@ void R_DrawTopBorder ()
 
 	if (viewwindowy < 35)
 	{
-		p1 = (patch_t *)W_MapLumpName(gameinfo.border->t);
+		p1 = TexMan(gameinfo.border->t);
 		for (x = viewwindowx; x < viewwindowx + realviewwidth; x += size)
 		{
-			screen->DrawPatch (p1, x, viewwindowy - offset);
+			screen->DrawTexture (p1, x, viewwindowy - offset, TAG_DONE);
 		}
-		W_UnMapLump (p1);
 
-		p1 = (patch_t *)W_MapLumpName (gameinfo.border->l);
-		p2 = (patch_t *)W_MapLumpName (gameinfo.border->r);
+		p1 = TexMan(gameinfo.border->l);
+		p2 = TexMan(gameinfo.border->r);
 		for (y = viewwindowy; y < 35; y += size)
 		{
-			screen->DrawPatch (p1, viewwindowx - offset, y);
-			screen->DrawPatch (p2, viewwindowx + realviewwidth, y);
+			screen->DrawTexture (p1, viewwindowx - offset, y, TAG_DONE);
+			screen->DrawTexture (p2, viewwindowx + realviewwidth, y, TAG_DONE);
 		}
-		W_UnMapLump (p1);
-		W_UnMapLump (p2);
 
-		p1 = (patch_t *)W_MapLumpName(gameinfo.border->tl);
-		screen->DrawPatch (p1, viewwindowx-offset, viewwindowy - offset);
-		W_UnMapLump (p1);
+		p1 = TexMan(gameinfo.border->tl);
+		screen->DrawTexture (p1, viewwindowx-offset, viewwindowy - offset, TAG_DONE);
 
-		p1 = (patch_t *)W_MapLumpName(gameinfo.border->tr);
-		screen->DrawPatch (p1, viewwindowx+realviewwidth, viewwindowy - offset);
-		W_UnMapLump (p1);
+		p1 = TexMan(gameinfo.border->tr);
+		screen->DrawTexture (p1, viewwindowx+realviewwidth, viewwindowy - offset, TAG_DONE);
 	}
 }
 
@@ -1557,7 +1439,7 @@ void R_DetailDouble ()
 
 	case 2:		// x-double
 #ifdef USEASM
-		if (UseMMX && (viewwidth&15)==0)
+		if (CPU.bMMX && (viewwidth&15)==0)
 		{
 			DoubleHoriz_MMX (viewheight, viewwidth, ylookup[0]+viewwidth, RenderTarget->GetPitch());
 		}
@@ -1585,7 +1467,7 @@ void R_DetailDouble ()
 
 	case 3:		// x- and y-double
 #ifdef USEASM
-		if (UseMMX && (viewwidth&15)==0 && 0)
+		if (CPU.bMMX && (viewwidth&15)==0 && 0)
 		{
 			DoubleHorizVert_MMX (viewheight, viewwidth, ylookup[0]+viewwidth, RenderTarget->GetPitch());
 		}
@@ -1633,7 +1515,7 @@ void R_InitColumnDrawers ()
 	R_DrawTranslatedColumn	= R_DrawTranslatedColumnP_C;
 	R_DrawShadedColumn		= R_DrawShadedColumnP_C;
 	R_DrawSpan				= R_DrawSpanP_ASM;
-	if (CPUFamily <= 5)
+	if (CPU.Family <= 5)
 	{
 		rt_map4cols			= rt_map4cols_asm2;
 	}
@@ -1665,11 +1547,19 @@ static BYTE *basecolormapsave;
 #define BL_SRC_ALPHA		alpha
 #define BL_INV_SRC_ALPHA	(BL_ONE-alpha)
 
+static bool stencilling;
+
 static bool R_SetBlendFunc (fixed_t fglevel, fixed_t bglevel)
 {
 	if (!r_drawtrans || (fglevel == BL_ONE && bglevel == BL_ZERO))
 	{
-		if (dc_translation == NULL)
+		if (stencilling)
+		{
+			colfunc = R_FillColumnP;
+			hcolfunc_post1 = rt_copy1col;
+			hcolfunc_post4 = rt_copy4cols;
+		}
+		else if (dc_translation == NULL)
 		{
 			colfunc = basecolfunc;
 			hcolfunc_post1 = rt_map1col;
@@ -1691,7 +1581,13 @@ static bool R_SetBlendFunc (fixed_t fglevel, fixed_t bglevel)
 	{ // Colors won't overflow when added
 		dc_srcblend = Col2RGB8[fglevel>>10];
 		dc_destblend = Col2RGB8[bglevel>>10];
-		if (dc_translation == NULL)
+		if (stencilling)
+		{
+			colfunc = R_FillAddColumn;
+			hcolfunc_post1 = rt_add1col;
+			hcolfunc_post4 = rt_add4cols;
+		}
+		else if (dc_translation == NULL)
 		{
 			colfunc = R_DrawAddColumnP_C;
 			hcolfunc_post1 = rt_add1col;
@@ -1750,6 +1646,8 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 		dc_translation = NULL;
 	}
 	basecolormapsave = basecolormap;
+	stencilling = false;
+	hcolfunc_pre = R_DrawColumnHoriz;
 
 	switch (style)
 	{
@@ -1774,11 +1672,17 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 		return r_columnmethod ? DoDraw1 : DoDraw0;
 
 		// Standard modes
+	case STYLE_Stencil:
+		dc_color = APART(color);
+		stencilling = true;
 	case STYLE_Normal:
 		fglevel = BL_ONE;
 		bglevel = BL_ZERO;
 		break;
 
+	case STYLE_TranslucentStencil:
+		dc_color = APART(color);
+		stencilling = true;
 	case STYLE_Translucent:
 		fglevel = BL_SRC_ALPHA;
 		bglevel = BL_INV_SRC_ALPHA;
@@ -1792,6 +1696,12 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 	default:
 		return DontDraw;
 	}
+
+	if (stencilling)
+	{
+		hcolfunc_pre = R_FillColumnHorizP;
+	}
+
 	return R_SetBlendFunc (fglevel, bglevel) ?
 		(r_columnmethod ? DoDraw1 : DoDraw0) : DontDraw;
 }

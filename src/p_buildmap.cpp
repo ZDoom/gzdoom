@@ -13,10 +13,14 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "vectors.h"
+#include "r_sky.h"
+#include "r_main.h"
+#include "r_defs.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define SHADE2LIGHT(s) (clamp (160-2*(s), 0, 255))
+//#define SHADE2LIGHT(s) (clamp (160-2*(s), 0, 255))
+#define SHADE2LIGHT(s) (clamp (255-2*s, 0, 255))
 
 // TYPES -------------------------------------------------------------------
 
@@ -120,11 +124,14 @@ void P_AdjustLine (line_t *line);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static bool P_LoadBloodMap (BYTE *data, size_t len, mapthing2_t **sprites, int *numsprites);
 static void LoadSectors (sectortype *bsectors);
 static void LoadWalls (walltype *walls, int numwalls, sectortype *bsectors);
+static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsectors, mapthing2_t *mapthings);
 static vertex_t *FindVertex (fixed_t x, fixed_t y);
 static void CreateStartSpot (fixed_t *pos, mapthing2_t *start);
 static void CalcPlane (SlopeWork &slope, secplane_t &plane);
+static void Decrypt (void *to, const void *from, int len, int key);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -140,14 +147,22 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane);
 //
 //==========================================================================
 
-bool P_LoadBuildMap (BYTE *data, size_t len, mapthing2_t *buildstart)
+bool P_LoadBuildMap (BYTE *data, size_t len, mapthing2_t **sprites, int *numspr)
 {
 	if (len < 26)
 	{
 		return false;
 	}
+
+	// Check for a Blood map.
+	if (*(DWORD *)data == MAKE_ID('B','L','M','\x1a'))
+	{
+		return P_LoadBloodMap (data, len, sprites, numspr);
+	}
+
 	numsectors = SHORT(*(WORD *)(data + 20));
 	int numwalls;
+	int numsprites;
 
 	if (len < 26 + numsectors*sizeof(sectortype) ||
 		(numwalls = SHORT(*(WORD *)(data + 22 + numsectors*sizeof(sectortype))),
@@ -161,7 +176,140 @@ bool P_LoadBuildMap (BYTE *data, size_t len, mapthing2_t *buildstart)
 	LoadSectors ((sectortype *)(data + 22));
 	LoadWalls ((walltype *)(data + 24 + numsectors*sizeof(sectortype)), numwalls,
 		(sectortype *)(data + 22));
-	CreateStartSpot ((fixed_t *)(data + 4), buildstart);
+
+	numsprites = *(WORD *)(data + 24 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype));
+	*sprites = new mapthing2_t[numsprites + 1];
+	CreateStartSpot ((fixed_t *)(data + 4), *sprites);
+	*numspr = 1 + LoadSprites ((spritetype *)(data + 26 + numsectors*sizeof(sectortype) + numwalls*sizeof(walltype)),
+		numsprites, (sectortype *)(data + 22), *sprites + 1);
+
+	return true;
+}
+
+//==========================================================================
+//
+// P_LoadBloodMap
+//
+//==========================================================================
+
+static bool P_LoadBloodMap (BYTE *data, size_t len, mapthing2_t **mapthings, int *numspr)
+{
+	BYTE infoBlock[37];
+	int mapver = data[5];
+	DWORD matt;
+	int numRevisions, numWalls, numsprites, skyLen;
+	int i;
+	int k;
+
+	if (mapver != 6 && mapver != 7)
+	{
+		return false;
+	}
+
+	matt = *(DWORD *)(data + 28);
+	if (matt != 0 &&
+		matt != MAKE_ID('M','a','t','t') &&
+		matt != MAKE_ID('t','t','a','M'))
+	{
+		Decrypt (infoBlock, data + 6, 37, 0x7474614d);
+	}
+	else
+	{
+		memcpy (infoBlock, data + 6, 37);
+	}
+	numRevisions = *(DWORD *)(infoBlock + 27);
+	numsectors = *(WORD *)(infoBlock + 31);
+	numWalls = *(WORD *)(infoBlock + 33);
+	numsprites = *(WORD *)(infoBlock + 35);
+	skyLen = 2 << *(WORD *)(infoBlock + 16);
+
+	if (mapver == 7)
+	{
+		// Version 7 has some extra stuff after the info block. This
+		// includes a copyright, and I have no idea what the rest of
+		// it is.
+		data += 171;
+	}
+	else
+	{
+		data += 43;
+	}
+
+	// Skip the sky info.
+	data += skyLen;
+
+	sectortype *bsec = new sectortype[numsectors];
+	walltype *bwal = new walltype[numWalls];
+	spritetype *bspr = new spritetype[numsprites];
+
+	// Read sectors
+	k = numRevisions * sizeof(sectortype);
+	for (i = 0; i < numsectors; ++i)
+	{
+		if (mapver == 7)
+		{
+			Decrypt (&bsec[i], data, sizeof(sectortype), k);
+		}
+		else
+		{
+			memcpy (&bsec[i], data, sizeof(sectortype));
+		}
+		data += sizeof(sectortype);
+		if (bsec[i].extra > 0)	// skip Xsector
+		{
+			data += 60;
+		}
+	}
+
+	// Read walls
+	k |= 0x7474614d;
+	for (i = 0; i < numWalls; ++i)
+	{
+		if (mapver == 7)
+		{
+			Decrypt (&bwal[i], data, sizeof(walltype), k);
+		}
+		else
+		{
+			memcpy (&bwal[i], data, sizeof(walltype));
+		}
+		data += sizeof(walltype);
+		if (bwal[i].extra > 0)	// skip Xwall
+		{
+			data += 24;
+		}
+	}
+
+	// Read sprites
+	k = (numRevisions * sizeof(spritetype)) | 0x7474614d;
+	for (i = 0; i < numsprites; ++i)
+	{
+		if (mapver == 7)
+		{
+			Decrypt (&bspr[i], data, sizeof(spritetype), k);
+		}
+		else
+		{
+			memcpy (&bspr[i], data, sizeof(spritetype));
+		}
+		data += sizeof(spritetype);
+		if (bspr[i].extra > 0)	// skip Xsprite
+		{
+			data += 56;
+		}
+	}
+
+	// Now convert to Doom format, since we've extracted all the standard
+	// BUILD info from the map we need. (Sprites are ignored.)
+	LoadSectors (bsec);
+	LoadWalls (bwal, numWalls, bsec);
+	*mapthings = new mapthing2_t[numsprites + 1];
+	CreateStartSpot ((fixed_t *)infoBlock, *mapthings);
+	*numspr = 1 + LoadSprites (bspr, numsprites, bsec, *mapthings + 1);
+
+	delete[] bsec;
+	delete[] bwal;
+	delete[] bspr;
 
 	return true;
 }
@@ -176,6 +324,7 @@ static void LoadSectors (sectortype *bsec)
 {
 	FDynamicColormap *map = GetSpecialLights (PalEntry (255,255,255), level.fadeto);
 	sector_t *sec;
+	char tnam[9];
 
 	sec = sectors = new sector_t[numsectors];
 	memset (sectors, 0, sizeof(sector_t)*numsectors);
@@ -191,11 +340,11 @@ static void LoadSectors (sectortype *bsec)
 		sec->floorplane.d = -sec->floortexz;
 		sec->floorplane.c = FRACUNIT;
 		sec->floorplane.ic = FRACUNIT;
-		sec->floorpic = (bsec->floorstat & 1) ? skyflatnum :
-			(WORD(bsec->floorpicnum) % numflats);
-		sec->floor_xscale = (bsec->floorstat & 8) ? FRACUNIT/2 : FRACUNIT;
-		sec->floor_yscale = (bsec->floorstat & 8) ? FRACUNIT/2 : FRACUNIT;
-		sec->floor_xoffs = bsec->floorxpanning << FRACBITS;
+		sprintf (tnam, "BTIL%04d", SHORT(bsec->floorpicnum));
+		sec->floorpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
+		sec->floor_xscale = (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT;
+		sec->floor_yscale = (bsec->floorstat & 8) ? FRACUNIT*2 : FRACUNIT;
+		sec->floor_xoffs = (bsec->floorxpanning << FRACBITS) + (32 << FRACBITS);
 		sec->floor_yoffs = bsec->floorypanning << FRACBITS;
 		sec->FloorLight = SHADE2LIGHT (bsec->floorshade);
 		sec->FloorFlags = SECF_ABSLIGHTING;
@@ -204,11 +353,16 @@ static void LoadSectors (sectortype *bsec)
 		sec->ceilingplane.d = sec->ceilingtexz;
 		sec->ceilingplane.c = -FRACUNIT;
 		sec->ceilingplane.ic = -FRACUNIT;
-		sec->ceilingpic = (bsec->ceilingstat & 1) ? skyflatnum :
-			(WORD(bsec->ceilingpicnum) % numflats);
-		sec->ceiling_xscale = (bsec->ceilingstat & 8) ? FRACUNIT/2 : FRACUNIT;
-		sec->ceiling_yscale = (bsec->ceilingstat & 8) ? FRACUNIT/2 : FRACUNIT;
-		sec->ceiling_xoffs = bsec->ceilingxpanning << FRACBITS;
+		sprintf (tnam, "BTIL%04d", SHORT(bsec->ceilingpicnum));
+		sec->ceilingpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
+		if (bsec->ceilingstat & 1)
+		{
+			sky1texture = sky2texture = sec->ceilingpic;
+			sec->ceilingpic = skyflatnum;
+		}
+		sec->ceiling_xscale = (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT;
+		sec->ceiling_yscale = (bsec->ceilingstat & 8) ? FRACUNIT*2 : FRACUNIT;
+		sec->ceiling_xoffs = (bsec->ceilingxpanning << FRACBITS) + (32 << FRACBITS);
 		sec->ceiling_yoffs = bsec->ceilingypanning << FRACBITS;
 		sec->CeilingLight = SHADE2LIGHT (bsec->ceilingshade);
 		sec->CeilingFlags = SECF_ABSLIGHTING;
@@ -222,10 +376,12 @@ static void LoadSectors (sectortype *bsec)
 		sec->friction = ORIG_FRICTION;
 		sec->movefactor = ORIG_FRICTION_FACTOR;
 		sec->ColorMap = map;
+		sec->ZoneNumber = 0xFFFF;
 
 		if (bsec->floorstat & 4)
 		{
 			sec->floor_angle = ANGLE_90;
+			sec->floor_xscale = -sec->floor_xscale;
 		}
 		if (bsec->floorstat & 16)
 		{
@@ -239,6 +395,7 @@ static void LoadSectors (sectortype *bsec)
 		if (bsec->ceilingstat & 4)
 		{
 			sec->ceiling_angle = ANGLE_90;
+			sec->floor_yscale = -sec->floor_yscale;
 		}
 		if (bsec->ceilingstat & 16)
 		{
@@ -247,23 +404,6 @@ static void LoadSectors (sectortype *bsec)
 		if (bsec->ceilingstat & 32)
 		{
 			sec->ceiling_yscale = -sec->ceiling_yscale;
-		}
-
-		while (sec->floorpic == 0 || W_LumpLength (firstflat + sec->floorpic) != 4096)
-		{
-			sec->floorpic++;
-			if (sec->floorpic >= numflats)
-			{
-				sec->floorpic = 1;
-			}
-		}
-		while (sec->ceilingpic == 0 || W_LumpLength (firstflat + sec->ceilingpic) != 4096)
-		{
-			sec->ceilingpic++;
-			if (sec->ceilingpic >= numflats)
-			{
-				sec->ceilingpic = 1;
-			}
 		}
 	}
 }
@@ -304,6 +444,14 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	// Now copy wall properties to their matching sidedefs
 	for (i = 0; i < numwalls; ++i)
 	{
+		char tnam[9];
+		int overpic, pic;
+
+		sprintf (tnam, "BTIL%04d", SHORT(walls[i].picnum));
+		pic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
+		sprintf (tnam, "BTIL%04d", SHORT(walls[i].overpicnum));
+		overpic = TexMan.GetTexture (tnam, FTexture::TEX_Build);
+
 		walls[i].x = LONG(walls[i].x);
 		walls[i].y = LONG(walls[i].y);
 		walls[i].point2 = SHORT(walls[i].point2);
@@ -313,15 +461,21 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 
 		sides[i].textureoffset = walls[i].xpanning << FRACBITS;
 		sides[i].rowoffset = walls[i].ypanning << FRACBITS;
-		sides[i].toptexture = sides[i].bottomtexture = /*SHORT(walls[i].overpicnum)+*/1;
-		if ((walls[i].cstat & (16|32)) || walls[i].nextsector < 0)
+
+		sides[i].toptexture = sides[i].bottomtexture = pic;
+		if (walls[i].nextsector < 0 || (walls[i].cstat & 32))
 		{
-			sides[i].midtexture = /*SHORT(walls[i].picnum)+*/1;
+			sides[i].midtexture = pic;
+		}
+		else if (walls[i].cstat & 16)
+		{
+			sides[i].midtexture = overpic;
 		}
 		else
 		{
 			sides[i].midtexture = 0;
 		}
+
 		sides[i].TexelLength = walls[i].xrepeat * 8;
 		sides[i].Light = SHADE2LIGHT(walls[i].shade);
 		sides[i].Flags = WALLF_ABSLIGHTING;
@@ -380,9 +534,23 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		{
 			lines[j].flags |= ML_BLOCKING;
 		}
-		if (walls[i].cstat & 4)
+		if (walls[i].nextwall < 0)
 		{
-			lines[j].flags |= ML_DONTPEGTOP;
+			if (walls[i].cstat & 4)
+			{
+				lines[j].flags |= ML_DONTPEGBOTTOM;
+			}
+		}
+		else
+		{
+			if (walls[i].cstat & 4)
+			{
+				lines[j].flags |= ML_DONTPEGTOP;
+			}
+			else
+			{
+				lines[j].flags |= ML_DONTPEGBOTTOM;
+			}
 		}
 		if (walls[i].cstat & 64)
 		{
@@ -431,6 +599,46 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 
 //==========================================================================
 //
+// LoadSprites
+//
+//==========================================================================
+
+static int LoadSprites (spritetype *sprites, int numsprites, sectortype *bsectors,
+						 mapthing2_t *mapthings)
+{
+	char name[9];
+	int picnum;
+	int count = 0;
+
+	for (int i = 0; i < numsprites; ++i)
+	{
+		if (sprites[i].cstat & (16|32|32768)) continue;
+		if (sprites[i].xrepeat == 0 || sprites[i].yrepeat == 0) continue;
+
+		sprintf (name, "BTIL%04d", sprites[i].picnum);
+		picnum = TexMan.GetTexture (name, FTexture::TEX_Build);
+
+		mapthings[count].thingid = 0;
+		mapthings[count].x = (short)(sprites[i].x >> 4);
+		mapthings[count].y = -(short)(sprites[i].y >> 4);
+		mapthings[count].z = (short)((bsectors[sprites[i].sectnum].floorz - sprites[i].z) >> 8);
+		mapthings[count].angle = (((2048-sprites[i].ang) & 2047) * 360) >> 11;
+		mapthings[count].type = 9988;
+		mapthings[count].flags = MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH|MTF_EASY|MTF_NORMAL|MTF_HARD;
+		mapthings[count].special = 0;
+
+		mapthings[count].args[0] = picnum & 255;
+		mapthings[count].args[1] = picnum >> 8;
+		mapthings[count].args[2] = sprites[i].xrepeat;
+		mapthings[count].args[3] = sprites[i].yrepeat;
+		mapthings[count].args[4] = (sprites[i].cstat & 14) | ((sprites[i].cstat >> 9) & 1);
+		count++;
+	}
+	return count;
+}
+
+//==========================================================================
+//
 // FindVertex
 //
 //==========================================================================
@@ -439,8 +647,8 @@ vertex_t *FindVertex (fixed_t x, fixed_t y)
 {
 	int i;
 
-	x <<= 13;
-	y = -(y << 13);
+	x <<= 12;
+	y = -(y << 12);
 
 	for (i = 0; i < numvertexes; ++i)
 	{
@@ -463,10 +671,11 @@ vertex_t *FindVertex (fixed_t x, fixed_t y)
 
 static void CreateStartSpot (fixed_t *pos, mapthing2_t *start)
 {
+	short angle = SHORT(*(WORD *)(&pos[3]));
 	mapthing2_t mt =
 	{
-		0, short(LONG(pos[0])>>3), short((-LONG(pos[1]))>>3), 0,// tid, x, y, z
-		short(Scale (SHORT(*(WORD *)(&pos[3])), 360, 2048)), 1,	// angle, type
+		0, short(LONG(pos[0])>>4), short((-LONG(pos[1]))>>4), 0,// tid, x, y, z
+		short(Scale ((2048-angle)&2047, 360, 2048)), 1,	// angle, type
 		7|MTF_SINGLE|224,										// flags
 		// special and args are 0
 	};
@@ -507,7 +716,7 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 
 	pt[1][0] = float(slope.x[2] - slope.x[0]);
 	pt[1][1] = float(slope.y[0] - slope.y[2]);
-	pt[1][2] = float(slope.z[2] - slope.z[0]) / 32.f;
+	pt[1][2] = float(slope.z[2] - slope.z[0]) / 16.f;
 
 	CrossProduct (pt[0], pt[1], pt[2]);
 	VectorNormalize (pt[2]);
@@ -525,5 +734,71 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane)
 	plane.c = fixed_t(pt[2][2]*65536.f);
 	plane.ic = fixed_t(65536.f/pt[2][2]);
 	plane.d = -TMulScale8
-		(plane.a, slope.x[0]<<5, plane.b, (-slope.y[0])<<5, plane.c, slope.z[0]);
+		(plane.a, slope.x[0]<<4, plane.b, (-slope.y[0])<<4, plane.c, slope.z[0]);
+}
+
+//==========================================================================
+//
+// Decrypt
+//
+//==========================================================================
+
+static void Decrypt (void *to_, const void *from_, int len, int key)
+{
+	BYTE *to = (BYTE *)to_;
+	const BYTE *from = (const BYTE *)from_;
+
+	while (len > 0)
+	{
+		*to = *from ^ key;
+		to++;
+		from++;
+		key++;
+		len--;
+	}
+}
+
+//==========================================================================
+//
+// Just an actor to make the Build sprites show up. It doesn't do anything
+// with them other than display them.
+//
+//==========================================================================
+
+class ACustomSprite : public AActor
+{
+	DECLARE_ACTOR (ACustomSprite, AActor);
+public:
+	void BeginPlay ();
+};
+
+FState ACustomSprite::States[] =
+{
+	S_NORMAL (TNT1, 'A', -1, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (ACustomSprite, Any, 9988, 0)
+ PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+ PROP_SpawnState (0)
+END_DEFAULTS
+
+void ACustomSprite::BeginPlay ()
+{
+	Super::BeginPlay ();
+	picnum = args[0] + args[1]*256;
+	xscale = args[2] - 1;
+	yscale = args[3] - 1;
+
+	if (args[4] & 2)
+	{
+		RenderStyle = STYLE_Translucent;
+		if (args[4] & 1)
+			alpha = TRANSLUC66;
+		else
+			alpha = TRANSLUC33;
+	}
+	if (args[4] & 4)
+		renderflags |= RF_XFLIP;
+	if (args[4] & 8)
+		renderflags |= RF_YFLIP;
 }

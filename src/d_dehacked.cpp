@@ -61,6 +61,7 @@
 #include "c_dispatch.h"
 #include "decallib.h"
 #include "r_draw.h"
+#include "v_palette.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -159,6 +160,9 @@ END_DEFAULTS
 
 TArray<TypeInfo *> DehackedPickups;
 TArray<TypeInfo *> TouchedActors;
+
+char *UnchangedSpriteNames;
+int NumUnchangedSprites;
 
 // Sprite<->Class map for ADehackedPickup::DetermineType
 static struct DehSpriteMap
@@ -416,14 +420,14 @@ static BOOL HandleKey (const struct Key *keys, void *structure, const char *key,
 
 static int FindSprite (const char *sprname)
 {
-	size_t i;
+	int i;
 	DWORD nameint = *((DWORD *)sprname);
 
-	for (i = 0; i < sprites.Size (); i++)
+	for (i = 0; i < NumUnchangedSprites; ++i)
 	{
-		if (*((DWORD *)&sprites[i].name) == nameint)
+		if (*((DWORD *)&UnchangedSpriteNames[i*4]) == nameint)
 		{
-			return (int)i;
+			return i;
 		}
 	}
 	return -1;
@@ -1474,9 +1478,58 @@ static int PatchMisc (int dummy)
 			{
 				infighting = atoi (Line2) ? -1 : 0;
 			}
+			else if (strnicmp (Line1, "Powerup Color ", 14) == 0)
+			{
+				static const char * const names[NUMPOWERS] =
+				{
+					"Invulnerability",
+					"Berserk",
+					"Invisibility",
+					"Radiation Suit",
+					"All Map",
+					"Infrared",
+					"Tome of Power",
+					"Wings of Wrath",
+					NULL,
+					NULL,
+					"Speed",
+					"Minotaur"
+				};
+				int i;
+
+				for (i = 0; i < NUMPOWERS; ++i)
+				{
+					if (names[i] != NULL && stricmp (Line1 + 14, names[i]) == 0)
+					{
+						break;
+					}
+				}
+				if (i == NUMPOWERS)
+				{
+					Printf ("Unknown miscellaneous info %s.\n", Line1);
+				}
+				else
+				{
+					int r, g, b;
+					float a;
+
+					if (4 != sscanf (Line2, "%d %d %d %f", &r, &g, &b, &a))
+					{
+						Printf ("Bad powerup color description \"%s\" for %s\n", Line2, Line1);
+					}
+					else
+					{
+						PowerupColors[i] = MAKEARGB(
+							BYTE(clamp(a,0.f,1.f)*255.f),
+							clamp(r,0,255),
+							clamp(g,0,255),
+							clamp(b,0,255));
+					}
+				}
+			}
 			else
 			{
-				Printf ("Unknown miscellaneous info %s.\n", Line2);
+				Printf ("Unknown miscellaneous info %s.\n", Line1);
 			}
 		}
 	}
@@ -1665,14 +1718,14 @@ static int PatchText (int oldSize)
 	DPrintf ("Searching for text:\n%s\n", oldStr);
 	good = false;
 
-	// Search through sprite names, they are always 4 chars
+	// Search through sprite names; they are always 4 chars
 	if (oldSize == 4)
 	{
 		i = FindSprite (oldStr);
 		if (i != -1)
 		{
 			strncpy (sprites[i].name, newStr, 4);
-			if (strncmp (deh.PlayerSprite, oldStr, 4) == 0)
+			if (strncmp ("PLAY", oldStr, 4) == 0)
 			{
 				strncpy (deh.PlayerSprite, newStr, 4);
 			}
@@ -2138,6 +2191,12 @@ static void UnloadDehSupp ()
 			delete[] StyleNames;
 			StyleNames = NULL;
 		}
+		if (UnchangedSpriteNames != NULL)
+		{
+			delete[] UnchangedSpriteNames;
+			UnchangedSpriteNames = NULL;
+			NumUnchangedSprites = 0;
+		}
 		GStrings.FlushNames ();
 		GStrings.Compact ();
 		G_SetLevelStrings ();
@@ -2159,6 +2218,16 @@ static bool LoadDehSupp ()
 	if (++DehUseCount > 1)
 	{
 		return true;
+	}
+
+	if (UnchangedSpriteNames == NULL)
+	{
+		UnchangedSpriteNames = new char[sprites.Size()*4];
+		NumUnchangedSprites = sprites.Size();
+		for (i = 0; i < NumUnchangedSprites; ++i)
+		{
+			memcpy (UnchangedSpriteNames+i*4, &sprites[i].name, 4);
+		}
 	}
 
 	if (DehSuppLump != NULL)

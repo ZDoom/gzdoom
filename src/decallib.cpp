@@ -52,8 +52,12 @@ static TArray<BYTE> DecalTranslations;
 // A decal group holds multiple decals and returns one randomly
 // when GetDecal() is called.
 
-static FRandom pr_decalchoice ("DecalChoice");
-static FRandom pr_decal ("Decal");
+// Do not give these names, or you could get a consistancy failure!
+// Sometimes two machines in a game will disagree on the state of
+// decals. I do not know why.
+
+static FRandom pr_decalchoice;
+static FRandom pr_decal;
 
 class FDecalGroup : public FDecalBase
 {
@@ -399,7 +403,7 @@ void FDecalLib::ParseDecal ()
 	char decalName[64];
 	byte decalNum;
 	FDecal newdecal;
-	int code;
+	int code, picnum;
 
 	SC_MustGetString ();
 	strcpy (decalName, sc_String);
@@ -433,7 +437,12 @@ void FDecalLib::ParseDecal ()
 
 		case DECAL_PIC:
 			SC_MustGetString ();
-			newdecal.PicNum = R_CheckTileNumForName (sc_String, TILE_Patch);
+			picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Any);
+			if (picnum < 0 && (picnum = W_CheckNumForName (sc_String)) >= 0)
+			{
+				picnum = TexMan.AddTexture (new FPatchTexture (picnum, FTexture::TEX_Decal));
+			}
+			newdecal.PicNum = picnum;
 			break;
 
 		case DECAL_SOLID:

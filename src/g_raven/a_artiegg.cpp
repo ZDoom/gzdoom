@@ -179,8 +179,8 @@ bool P_MorphMonster (AActor *actor, const TypeInfo *spawntype)
 	morphed->tracer = actor;
 	morphed->special1 = MORPHTICS + pr_morphmonst();
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
-	morphed->special = actor->special;
-	memcpy (morphed->args, actor->args, sizeof(actor->args));
+	//morphed->special = actor->special;
+	//memcpy (morphed->args, actor->args, sizeof(actor->args));
 	if (actor->renderflags & RF_INVISIBLE)
 	{
 		morphed->special2 |= MF_JUSTHIT;

@@ -82,7 +82,7 @@ void WI_unloadData ();
 
 // NET GAME STUFF
 #define NG_STATSY				50
-#define NG_STATSX				(32 + SHORT(star->width)/2 + 32*!dofrags)
+#define NG_STATSX				(32 + star->GetWidth()/2 + 32*!dofrags)
 
 #define NG_SPACINGX 			64
 
@@ -121,7 +121,7 @@ typedef struct
 	int 		nanims;	// number of animation frames
 	yahpt_t 	loc;	// location of animation
 	int 		data;	// ALWAYS: n/a, RANDOM: period deviation (<256)
-	patch_t*	p[3];	// actual graphics for frames of animations
+	FTexture*	p[3];	// actual graphics for frames of animations
 
 	// following must be initialized to zero before use!
 	int 		nexttic;	// next value of bcnt (used in conjunction with period)
@@ -282,7 +282,6 @@ static char names[NUMEPISODES][NUMMAPS][8] =
 //
 // Locally used stuff.
 //
-#define FB (screen)
 
 
 // States for single-player
@@ -317,36 +316,37 @@ static int				cnt_pause;
 //		GRAPHICS
 //
 
-static patch_t* 		yah[2];		// You Are Here graphic
-static patch_t* 		splat;		// splat
-static patch_t* 		percent;	// %, : graphics
-static patch_t* 		colon;
-static patch_t*			slash;
-static patch_t* 		num[10];	// 0-9 graphic
-static patch_t* 		wiminus;	// minus sign
-static patch_t* 		finished;	// "Finished!" graphics
-static patch_t* 		entering;	// "Entering" graphic
-static patch_t* 		sp_secret;	// "secret"
-static patch_t* 		kills;		// "Kills", "Scrt", "Items", "Frags"
-static patch_t* 		secret;
-static patch_t* 		items;
-static patch_t* 		frags;
-static patch_t* 		timepic;	// Time sucks.
-static patch_t* 		par;
-static patch_t* 		sucks;
-static patch_t* 		killers;	// "killers", "victims"
-static patch_t* 		victims;
-static patch_t* 		total;		// "Total", your face, your dead face
-static patch_t* 		star;
-static patch_t* 		bstar;
-static patch_t* 		p;			// Player graphic
-static patch_t*			lnames[2];	// Name graphics of each level (centered)
+static FTexture* 		yah[2];		// You Are Here graphic
+static FTexture* 		splat;		// splat
+static FTexture* 		percent;	// %, : graphics
+static FTexture* 		colon;
+static FTexture*		slash;
+static FTexture* 		num[10];	// 0-9 graphic
+static FTexture* 		wiminus;	// minus sign
+static FTexture* 		finished;	// "Finished!" graphics
+static FTexture* 		entering;	// "Entering" graphic
+static FTexture* 		sp_secret;	// "secret"
+static FTexture* 		kills;		// "Kills", "Scrt", "Items", "Frags"
+static FTexture* 		secret;
+static FTexture* 		items;
+static FTexture* 		frags;
+static FTexture* 		timepic;	// Time sucks.
+static FTexture* 		par;
+static FTexture* 		sucks;
+static FTexture* 		killers;	// "killers", "victims"
+static FTexture* 		victims;
+static FTexture* 		total;		// "Total", your face, your dead face
+static FTexture* 		star;
+static FTexture* 		bstar;
+static FTexture* 		p;			// Player graphic
+static FTexture*		lnames[2];	// Name graphics of each level (centered)
 
 // [RH] Info to dynamically generate the level name graphics
 static int				lnamewidths[2];
 static char				*lnametexts[2];
 
-static DCanvas			*background;
+static FTexture			*background;
+static bool				DrawFoM;	// [RH] Make the Fortress of Mystery permanent after visiting it
 
 //
 // CODE
@@ -356,8 +356,11 @@ void WI_slamBackground ()
 {
 	if (background)
 	{
-		background->Blit (0, 0, background->GetWidth(), background->GetHeight(),
-			FB, 0, 0, SCREENWIDTH, SCREENHEIGHT);
+		screen->DrawTexture (background, 0, 0, DTA_DestWidth, SCREENWIDTH, DTA_DestHeight, SCREENHEIGHT);
+		if (DrawFoM)
+		{
+			screen->DrawTexture (anims[1][7].p[2], anims[1][7].loc.x, anims[1][7].loc.y, DTA_320x200, true, TAG_DONE);
+		}
 	}
 	else if (state != NoState)
 	{
@@ -365,26 +368,22 @@ void WI_slamBackground ()
 		if (lump >= 0)
 		{
 			const byte *flat = (byte *)W_MapLumpNum (lump);
-			FB->FlatFill (0, 0, SCREENWIDTH, SCREENHEIGHT, flat);
+			screen->FlatFill (0, 0, SCREENWIDTH, SCREENHEIGHT, flat);
 			W_UnMapLump (flat);
 		}
 		else
 		{
-			FB->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0);
+			screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0);
 		}
 	}
 }
 
-static void WI_DrawCharPatch (patch_t *patch, int x, int y)
+static void WI_DrawCharPatch (FTexture *patch, int x, int y)
 {
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		FB->DrawPatchClean (patch, x, y);
-	}
-	else
-	{
-		FB->DrawShadowedPatchClean (patch, x, y);
-	}
+	screen->DrawTexture (patch, x, y,
+		DTA_Clean, true,
+		DTA_ShadowAlpha, (gameinfo.gametype == GAME_Doom) ? 0 : FRACUNIT/2,
+		TAG_DONE);
 }
 
 static int WI_DrawName (char *str, int x, int y, bool nomove=false)
@@ -393,26 +392,18 @@ static int WI_DrawName (char *str, int x, int y, bool nomove=false)
 	if (nomove)
 	{
 		x = (SCREENWIDTH - x*CleanXfac) / 2;
-		if (gameinfo.gametype == GAME_Doom)
-		{
-			screen->DrawTextClean (CR_UNTRANSLATED, x, y, str);
-		}
-		else
-		{
-			screen->DrawTextCleanShadow (CR_UNTRANSLATED, x, y, str);
-		}
+		screen->DrawText (CR_UNTRANSLATED, x, y, str,
+			DTA_CleanNoMove, true,
+			DTA_Shadow, gameinfo.gametype == GAME_Doom,
+			TAG_DONE);
 	}
 	else
 	{
 		x = 160 - x/2;
-		if (gameinfo.gametype == GAME_Doom)
-		{
-			screen->DrawTextCleanMove (CR_UNTRANSLATED, x, y, str);
-		}
-		else
-		{
-			screen->DrawTextCleanShadowMove (CR_UNTRANSLATED, x, y, str);
-		}
+		screen->DrawText (CR_UNTRANSLATED, x, y, str,
+			DTA_Clean, true,
+			DTA_Shadow, gameinfo.gametype == GAME_Doom,
+			TAG_DONE);
 	}
 	screen->SetFont (SmallFont);
 	return BigFont->GetHeight()*5/4;
@@ -425,9 +416,7 @@ static int WI_CalcWidth (char *str)
 	if (!str)
 		return 0;
 
-	screen->SetFont (BigFont);
-	w = screen->StringWidth (str);
-	screen->SetFont (SmallFont);
+	w = BigFont->StringWidth (str);
 
 	return w;
 }
@@ -446,8 +435,8 @@ void WI_drawLF ()
 
 		if (lnames[0])
 		{ // draw <LevelName> 
-			FB->DrawPatchClean (lnames[0], (320 - SHORT(lnames[0]->width))/2, y);
-			y += (5*SHORT(lnames[0]->height))/4;
+			screen->DrawTexture (lnames[0], (320 - lnames[0]->GetWidth()) / 2, y, DTA_Clean, true, TAG_DONE);
+			y += (5*lnames[0]->GetHeight())/4;
 		}
 		else
 		{ // [RH] draw a dynamic title string
@@ -455,13 +444,14 @@ void WI_drawLF ()
 		}
 
 		// draw "Finished!"
-		FB->DrawPatchClean (finished, (320 - SHORT(finished->width))/2, y);
+		screen->DrawTexture (finished, (320 - finished->GetWidth()) / 2, y, DTA_Clean, true, TAG_DONE);
 	}
 	else
 	{
 		WI_DrawName (lnametexts[0], lnamewidths[0], 3);
-		screen->DrawTextCleanMove (CR_UNTRANSLATED,
-			160 - screen->StringWidth ("FINISHED")/2, 25, "FINISHED");
+		screen->DrawText (CR_UNTRANSLATED,
+			160 - BigFont->StringWidth ("FINISHED")/2, 25, "FINISHED",
+			DTA_Clean, true, TAG_DONE);
 	}
 }
 
@@ -478,14 +468,14 @@ void WI_drawEL ()
 		y = WI_TITLEY;
 
 		// draw "Entering"
-		FB->DrawPatchCleanNoMove (entering, (SCREENWIDTH - SHORT(entering->width)*CleanXfac)/2, y);
+		screen->DrawTexture (entering, (SCREENWIDTH - entering->GetWidth() * CleanXfac) / 2, y, DTA_CleanNoMove, true, TAG_DONE);
 
 		// [RH] Changed to adjust by height of entering patch instead of title
-		y += (5*SHORT(entering->height))/4*CleanYfac;
+		y += (5*entering->GetHeight())/4*CleanYfac;
 
 		if (lnames[1])
 		{ // draw level
-			FB->DrawPatchCleanNoMove (lnames[1], (SCREENWIDTH - SHORT(lnames[1]->width)*CleanXfac)/2, y);
+			screen->DrawTexture (lnames[1], (SCREENWIDTH - lnames[1]->GetWidth()*CleanXfac)/2, y, DTA_CleanNoMove, true, TAG_DONE);
 		}
 		else
 		{ // [RH] draw a dynamic title string
@@ -494,8 +484,9 @@ void WI_drawEL ()
 	}
 	else
 	{
-		screen->DrawTextClean (CR_UNTRANSLATED,
-			(SCREENWIDTH - screen->StringWidth ("NOW ENTERING:") * CleanXfac)/2, 10, "NOW ENTERING:");
+		screen->DrawText (CR_UNTRANSLATED,
+			(SCREENWIDTH - BigFont->StringWidth ("NOW ENTERING:") * CleanXfac)/2, 10, "NOW ENTERING:",
+			DTA_CleanNoMove, true, TAG_DONE);
 		WI_DrawName (lnametexts[1], lnamewidths[1], 10+10*CleanYfac, true);
 	}
 }
@@ -517,7 +508,7 @@ int WI_MapToIndex (char *map, int ep)
 	return i;
 }
 
-void WI_drawOnLnode (int n, patch_t *c[], int episode)
+void WI_drawOnLnode (int n, FTexture *c[], int episode)
 {
 
 	int 	i;
@@ -534,10 +525,12 @@ void WI_drawOnLnode (int n, patch_t *c[], int episode)
 	i = 0;
 	do
 	{
-		left = lnodes[episode][n].x - SHORT(c[i]->leftoffset);
-		top = lnodes[episode][n].y - SHORT(c[i]->topoffset);
-		right = left + SHORT(c[i]->width);
-		bottom = top + SHORT(c[i]->height);
+		right = c[i]->GetWidth();
+		bottom = c[i]->GetHeight();
+		left = lnodes[episode][n].x - c[i]->LeftOffset;
+		top = lnodes[episode][n].y - c[i]->TopOffset;
+		right += left;
+		bottom += top;
 
 		if (left >= 0 && right < 320 && top >= 0 && bottom < 200)
 		{
@@ -551,7 +544,7 @@ void WI_drawOnLnode (int n, patch_t *c[], int episode)
 
 	if (fits && i<2)
 	{
-		FB->DrawPatchIndirect (c[i], lnodes[episode][n].x, lnodes[episode][n].y);
+		screen->DrawTexture (c[i], lnodes[episode][n].x, lnodes[episode][n].y, DTA_320x200, true, TAG_DONE);
 	}
 	else
 	{ // DEBUG
@@ -592,27 +585,14 @@ void WI_initAnimatedBack ()
 	else if (state == ShowNextLoc)
 	{
 		char name[9];
-		const patch_t *bg;
-		int lump;
-
 		sprintf (name, "MAPE%d", epsd - 9);
-		lump = W_CheckNumForName (name);
-		if (lump >= 0)
-		{
-			bg = (patch_t *)W_MapLumpNum (lump);
-			background = I_NewStaticCanvas (SHORT(bg->width), SHORT(bg->height));
-			background->Lock ();
-			background->DrawPatch (bg, 0, 0);
-			background->Unlock ();
-			W_UnMapLump (bg);
-		}
+		background = TexMan[name];
 	}
 }
 
 void WI_DrawDoomBack ()
 {
 	char name[9];
-	const patch_t *bg;
 
 	if ((gamemode == commercial) ||
 		(gamemode == retail && epsd >= 3))
@@ -621,31 +601,17 @@ void WI_DrawDoomBack ()
 		sprintf (name, "WIMAP%d", epsd);
 
 	// background
-	bg = (patch_t *)W_MapLumpName (name);
-	if (background != NULL &&
-		(SHORT(bg->width) != background->GetWidth() ||
-		 SHORT(bg->height) != background->GetHeight()))
-	{
-		delete background;
-		background = NULL;
-	}
-	if (background == NULL)
-	{
-		background = I_NewStaticCanvas (SHORT(bg->width), SHORT(bg->height));
-	}
-	background->Lock ();
-	background->DrawPatch (bg, 0, 0);
+	background = TexMan (name);
 	if (FindLevelInfo ("E2M9")->flags & LEVEL_VISITED && epsd == 1)
-	{ // Add the Fortress of Mystery if it has been visited
-		background->DrawPatch (anims[1][7].p[2], anims[1][7].loc.x, anims[1][7].loc.y);
+	{ // [RH] Add the Fortress of Mystery if it has been visited
+		DrawFoM = true;
 		// anims[1][7].data = 800;	// Don't animate it again if the user uses changemap E2M9
 	}
 	else
 	{
+		DrawFoM = false;
 		anims[1][7].data = 8;
 	}
-	background->Unlock ();
-	W_UnMapLump (bg);
 }
 
 void WI_updateAnimatedBack (void)
@@ -698,22 +664,20 @@ void WI_drawAnimatedBack (void)
 	int i;
 	in_anim_t *a;
 
+	WI_slamBackground ();
+
 	if (gameinfo.gametype == GAME_Doom &&
 		gamemode != commercial &&
 		epsd <= 2)
 	{
-		background->Lock ();
 		for (i = 0; i < NUMANIMS[epsd]; i++)
 		{
 			a = &anims[epsd][i];
 
 			if (a->ctr >= 0)
-				background->DrawPatch (a->p[a->ctr], a->loc.x, a->loc.y);
+				screen->DrawTexture (a->p[a->ctr], a->loc.x, a->loc.y, DTA_320x200, true, TAG_DONE);
 		}
-		background->Unlock ();
 	}
-
-	WI_slamBackground ();
 }
 
 //
@@ -729,7 +693,7 @@ int WI_drawNum (int x, int y, int n, int digits, bool leadingzeros = true)
 	if (n == 1994)
 		return 0;
 
-	int fontwidth = SHORT(num[3]->width);
+	int fontwidth = num[3]->GetWidth();
 	int xofs;
 	char text[8];
 	char *text_p;
@@ -768,8 +732,8 @@ int WI_drawNum (int x, int y, int n, int digits, bool leadingzeros = true)
 	{
 		if (*text_p >= '0' && *text_p <= '9')
 		{
-			patch_t *p = num[*text_p - '0'];
-			WI_DrawCharPatch (p, xofs + (fontwidth - SHORT(p->width))/2, y);
+			FTexture *p = num[*text_p - '0'];
+			WI_DrawCharPatch (p, xofs + (fontwidth - p->GetWidth())/2, y);
 		}
 		text_p++;
 		xofs += fontwidth;
@@ -785,7 +749,7 @@ void WI_drawPercent (int x, int y, int p, int b)
 
 	if (wi_percents)
 	{
-		FB->DrawPatchClean (percent, x, y);
+		screen->DrawTexture (percent, x, y, DTA_Clean, true, TAG_DONE);
 		if (b == 0)
 			WI_drawNum (x, y, 100, -1, false);
 		else
@@ -793,10 +757,11 @@ void WI_drawPercent (int x, int y, int p, int b)
 	}
 	else
 	{
-		int y2 = y + percent->height - screen->Font->GetHeight ();
+		int y2 = y + percent->GetHeight() - screen->Font->GetHeight ();
 		x = WI_drawNum (x, y, b, -1, false);
-		x -= screen->StringWidth (" OF ");
-		screen->DrawTextCleanMove (CR_UNTRANSLATED, x, y2, " OF");
+		x -= SmallFont->StringWidth (" OF ");
+		screen->DrawText (CR_UNTRANSLATED, x, y2, " OF",
+			DTA_Clean, true, TAG_DONE);
 		WI_drawNum (x, y, p, -1, false);
 	}
 }
@@ -840,7 +805,7 @@ void WI_drawTime (int x, int y, int t)
 	}
 	else
 	{ // "sucks"
-		FB->DrawPatchClean (sucks, x - SHORT(sucks->width), y); 
+		screen->DrawTexture (sucks, x - sucks->GetWidth(), y, DTA_Clean, true, TAG_DONE); 
 	}
 }
 
@@ -848,11 +813,6 @@ void WI_End ()
 {
 	state = LeavingIntermission;
 	WI_unloadData ();
-	if (background)
-	{
-		delete background;
-		background = NULL;
-	}
 
 	//Added by mc
 	if (deathmatch)
@@ -1378,7 +1338,7 @@ void WI_updateNetgameStats ()
 void WI_drawNetgameStats ()
 {
 	int i, x, y;
-	int pwidth = SHORT(percent->width);
+	int pwidth = percent->GetWidth();
 
 	// draw animated background
 	WI_drawAnimatedBack(); 
@@ -1388,15 +1348,15 @@ void WI_drawNetgameStats ()
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		// draw stat titles (top line)
-		FB->DrawPatchClean (kills, NG_STATSX+NG_SPACINGX-SHORT(kills->width), NG_STATSY);
-		FB->DrawPatchClean (items, NG_STATSX+2*NG_SPACINGX-SHORT(items->width), NG_STATSY);
-		FB->DrawPatchClean (secret, NG_STATSX+3*NG_SPACINGX-SHORT(secret->width), NG_STATSY);
+		screen->DrawTexture (kills, NG_STATSX+NG_SPACINGX-kills->GetWidth(), NG_STATSY, DTA_Clean, true, TAG_DONE);
+		screen->DrawTexture (items, NG_STATSX+2*NG_SPACINGX-items->GetWidth(), NG_STATSY, DTA_Clean, true, TAG_DONE);
+		screen->DrawTexture (secret, NG_STATSX+3*NG_SPACINGX-secret->GetWidth(), NG_STATSY, DTA_Clean, true, TAG_DONE);
 
 		if (dofrags)
-			FB->DrawPatchClean (frags, NG_STATSX+4*NG_SPACINGX-SHORT(frags->width), NG_STATSY);
+			screen->DrawTexture (frags, NG_STATSX+4*NG_SPACINGX-frags->GetWidth(), NG_STATSY, DTA_Clean, true, TAG_DONE);
 
 		// draw stats
-		y = NG_STATSY + SHORT(kills->height);
+		y = NG_STATSY + kills->GetHeight();
 
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
@@ -1408,11 +1368,16 @@ void WI_drawNetgameStats ()
 
 			x = NG_STATSX;
 			// [RH] Only use one graphic for the face backgrounds
-			V_ColorMap = translationtables[TRANSLATION_Players] + i*256;
-			FB->DrawTranslatedPatchClean (p, x-SHORT(p->width), y);
+			screen->DrawTexture (p, x - p->GetWidth(), y,
+				DTA_Translation, translationtables[TRANSLATION_Players] + i*256,
+				DTA_Clean, true,
+				TAG_DONE);
 
 			if (i == me)
-				FB->DrawTranslatedPatchClean (star, x-SHORT(p->width), y);
+				screen->DrawTexture (star, x - p->GetWidth(), y,
+					DTA_Translation, translationtables[TRANSLATION_Players] + i*256,
+					DTA_Clean, true,
+					TAG_DONE);
 
 			x += NG_SPACINGX;
 			WI_drawPercent (x-pwidth, y+10, cnt_kills[i], wbs->maxkills);	x += NG_SPACINGX;
@@ -1427,10 +1392,10 @@ void WI_drawNetgameStats ()
 	}
 	else
 	{
-		FB->SetFont (BigFont);
-		FB->DrawTextCleanShadowMove (CR_UNTRANSLATED, 95, 35, "KILLS");
-		FB->DrawTextCleanShadowMove (CR_UNTRANSLATED, 155, 35, "BONUS");
-		FB->DrawTextCleanShadowMove (CR_UNTRANSLATED, 232, 35, "SECRET");
+		screen->SetFont (BigFont);
+		screen->DrawText (CR_UNTRANSLATED, 95, 35, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (CR_UNTRANSLATED, 155, 35, "BONUS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (CR_UNTRANSLATED, 232, 35, "SECRET", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 		WI_drawLF ();
 
 		y = 50;
@@ -1440,8 +1405,10 @@ void WI_drawNetgameStats ()
 				break;
 			if (!playeringame[i])
 				continue;
-			V_ColorMap = translationtables[TRANSLATION_Players] + i*256;
-			screen->DrawTranslatedPatchClean (star, 25, y);
+			screen->DrawTexture (star, 25, y,
+				DTA_Translation, translationtables[TRANSLATION_Players] + i*256,
+				DTA_Clean, true,
+				TAG_DONE);
 			WI_drawPercent (127, y+10, cnt_kills[i], wbs->maxkills);
 			if (ng_state >= 4)
 			{
@@ -1590,7 +1557,7 @@ void WI_drawStats (void)
 	// line height
 	int lh; 	
 
-	lh = (3*SHORT(num[0]->height))/2;
+	lh = (3*num[0]->GetHeight())/2;
 
 	// draw animated background
 	WI_drawAnimatedBack();
@@ -1599,52 +1566,62 @@ void WI_drawStats (void)
 
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		FB->DrawPatchClean (kills, SP_STATSX, SP_STATSY);
+		screen->DrawTexture (kills, SP_STATSX, SP_STATSY, DTA_Clean, true, TAG_DONE);
 		WI_drawPercent (320 - SP_STATSX, SP_STATSY, cnt_kills[0], wbs->maxkills);
 
-		FB->DrawPatchClean (items, SP_STATSX, SP_STATSY+lh);
+		screen->DrawTexture (items, SP_STATSX, SP_STATSY+lh, DTA_Clean, true, TAG_DONE);
 		WI_drawPercent (320 - SP_STATSX, SP_STATSY+lh, cnt_items[0], wbs->maxitems);
 
-		FB->DrawPatchClean (sp_secret, SP_STATSX, SP_STATSY+2*lh);
+		screen->DrawTexture (sp_secret, SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true, TAG_DONE);
 		WI_drawPercent(320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs->maxsecret);
 
-		FB->DrawPatchClean (timepic, SP_TIMEX, SP_TIMEY);
+		screen->DrawTexture (timepic, SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
 		WI_drawTime (160 - SP_TIMEX, SP_TIMEY, cnt_time);
 
 		if (wbs->partime)
 		{
-			FB->DrawPatchClean (par, 160 + SP_TIMEX, SP_TIMEY);
+			screen->DrawTexture (par, 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true, TAG_DONE);
 			WI_drawTime (320 - SP_TIMEX, SP_TIMEY, cnt_par);
 		}
 	}
 	else
 	{
 		screen->SetFont (BigFont);
-		screen->DrawTextCleanShadowMove (CR_UNTRANSLATED, 50, 65, "KILLS");
-		screen->DrawTextCleanShadowMove (CR_UNTRANSLATED, 50, 90, "ITEMS");
-		screen->DrawTextCleanShadowMove (CR_UNTRANSLATED, 50, 115, "SECRETS");
+		screen->DrawText (CR_UNTRANSLATED, 50, 65, "KILLS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (CR_UNTRANSLATED, 50, 90, "ITEMS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
+		screen->DrawText (CR_UNTRANSLATED, 50, 115, "SECRETS", DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 
 		if (sp_state >= 2)
 		{
 			WI_drawNum (200, 65, cnt_kills[0], 3, false);
-			screen->DrawShadowedPatchClean (slash, 237, 65);
+			screen->DrawTexture (slash, 237, 65,
+				DTA_ShadowAlpha, FRACUNIT/2,
+				DTA_Clean, true,
+				TAG_DONE);
 			WI_drawNum (248, 65, wbs->maxkills, 3, false);
 		}
 		if (sp_state >= 4)
 		{
 			WI_drawNum (200, 90, cnt_items[0], 3, false);
-			screen->DrawShadowedPatchClean (slash, 237, 90);
+			screen->DrawTexture (slash, 237, 90,
+				DTA_ShadowAlpha, FRACUNIT/2,
+				DTA_Clean, true,
+				TAG_DONE);
 			WI_drawNum (248, 90, wbs->maxitems, 3, false);
 		}
 		if (sp_state >= 6)
 		{
 			WI_drawNum (200, 115, cnt_secret[0], 3, false);
-			screen->DrawShadowedPatchClean (slash, 237, 115);
+			screen->DrawTexture (slash, 237, 115,
+				DTA_ShadowAlpha, FRACUNIT/2,
+				DTA_Clean, true,
+				TAG_DONE);
 			WI_drawNum (248, 115, wbs->maxsecret, 3, false);
 		}
 		if (sp_state >= 8)
 		{
-			screen->DrawTextCleanShadowMove (CR_UNTRANSLATED, 85, 160, "TIME");
+			screen->DrawText (CR_UNTRANSLATED, 85, 160, "TIME",
+				DTA_Clean, true, DTA_Shadow, true, TAG_DONE);
 			WI_drawTime (249, 160, cnt_time);
 		}
 		screen->SetFont (SmallFont);
@@ -1733,12 +1710,7 @@ void WI_loadData ()
 		}
 		if (gameinfo.gametype == GAME_Hexen)
 		{
-			const byte *bg = (byte *)W_MapLumpName ("INTERPIC");
-			background = I_NewStaticCanvas (320, 200);
-			background->Lock ();
-			background->DrawPageBlock (bg);
-			background->Unlock ();
-			W_UnMapLump (bg);
+			background = TexMan["INTERPIC"];
 			return;
 		}
 	}
@@ -1757,7 +1729,7 @@ void WI_loadData ()
 				{
 					// animations
 					sprintf (name, "WIA%d%.2d%.2d", epsd, j, i);  
-					a->p[i] = (patch_t *)W_MapLumpName (name);
+					a->p[i] = TexMan[name];
 				}
 				else
 				{
@@ -1776,11 +1748,11 @@ void WI_loadData ()
 		{
 			char *lname = (i == 0 ? wbs->lname0 : wbs->lname1);
 
-			j = lname ? W_CheckNumForName (lname) : -1;
+			j = lname ? TexMan.CheckForTexture (lname, FTexture::TEX_MiscPatch) : -1;
 
-			if (j >= 0)
+			if (j > 0)
 			{
-				lnames[i] = (patch_t *)W_MapLumpNum (j);
+				lnames[i] = TexMan[j];
 			}
 			else
 			{
@@ -1807,119 +1779,60 @@ void WI_loadData ()
 	{
 		if (gamemode != commercial)
 		{
-			yah[0] = (patch_t *)W_MapLumpName ("WIURH0");	// you are here
-			yah[1] = (patch_t *)W_MapLumpName ("WIURH1");	// you are here (alt.)
-			splat = (patch_t *)W_MapLumpName ("WISPLAT");	// splat
+			yah[0] = TexMan["WIURH0"];	// you are here
+			yah[1] = TexMan["WIURH1"];	// you are here (alt.]
+			splat = TexMan["WISPLAT"];	// splat
 		}
-		wiminus = (patch_t *)W_MapLumpName ("WIMINUS");		// minus sign
-		percent = (patch_t *)W_MapLumpName ("WIPCNT");		// percent sign
-		finished = (patch_t *)W_MapLumpName ("WIF");		// "finished"
-		entering = (patch_t *)W_MapLumpName ("WIENTER");	// "entering"
-		kills = (patch_t *)W_MapLumpName ("WIOSTK");		// "kills"
-		secret = (patch_t *)W_MapLumpName ("WIOSTS");		// "scrt"
-		sp_secret = (patch_t *)W_MapLumpName ("WISCRT2");	// "secret"
-		items = (patch_t *)W_MapLumpName ("WIOSTI");		// "items"
-		frags = (patch_t *)W_MapLumpName ("WIFRGS");		// "frgs"
-		colon = (patch_t *)W_MapLumpName ("WICOLON");		// ":"
-		timepic = (patch_t *)W_MapLumpName ("WITIME");		// "time"
-		sucks = (patch_t *)W_MapLumpName ("WISUCKS");		// "sucks"
-		par = (patch_t *)W_MapLumpName ("WIPAR");			// "par"
-		killers = (patch_t *)W_MapLumpName ("WIKILRS");		// "killers" (vertical)
-		victims = (patch_t *)W_MapLumpName ("WIVCTMS");		// "victims" (horiz)
-		total = (patch_t *)W_MapLumpName ("WIMSTT");		// "total"
-		star = (patch_t *)W_MapLumpName ("STFST01");		// your face
-		bstar = (patch_t *)W_MapLumpName("STFDEAD0");		// dead face
-		p = (patch_t *)W_MapLumpName ("STPBANY");
+		wiminus = TexMan["WIMINUS"];		// minus sign
+		percent = TexMan["WIPCNT"];		// percent sign
+		finished = TexMan["WIF"];		// "finished"
+		entering = TexMan["WIENTER"];	// "entering"
+		kills = TexMan["WIOSTK"];		// "kills"
+		secret = TexMan["WIOSTS"];		// "scrt"
+		sp_secret = TexMan["WISCRT2"];	// "secret"
+		items = TexMan["WIOSTI"];		// "items"
+		frags = TexMan["WIFRGS"];		// "frgs"
+		colon = TexMan["WICOLON"];		// ":"
+		timepic = TexMan["WITIME"];		// "time"
+		sucks = TexMan["WISUCKS"];		// "sucks"
+		par = TexMan["WIPAR"];			// "par"
+		killers = TexMan["WIKILRS"];		// "killers" (vertical]
+		victims = TexMan["WIVCTMS"];		// "victims" (horiz]
+		total = TexMan["WIMSTT"];		// "total"
+		star = TexMan["STFST01"];		// your face
+		bstar = TexMan["STFDEAD0"];		// dead face
+		p = TexMan["STPBANY"];
 
 		for (i = 0; i < 10; i++)
 		{ // numbers 0-9
 			sprintf (name, "WINUM%d", i);	 
-			num[i] = (patch_t *)W_MapLumpName (name);
+			num[i] = TexMan[name];
 		}
 	}
 	else
 	{
 		yah[0] =
-		yah[1] = (patch_t *)W_MapLumpName ("IN_YAH");
-		splat = (patch_t *)W_MapLumpName ("IN_X");
-		wiminus = (patch_t *)W_MapLumpName ("FONTB13");
-		percent = (patch_t *)W_MapLumpName ("FONTB05");
-		colon = (patch_t *)W_MapLumpName ("FONTB26");
-		slash = (patch_t *)W_MapLumpName ("FONTB15");
-		star = (patch_t *)W_MapLumpName ("FACEA0");
-		bstar = (patch_t *)W_MapLumpName ("FACEB0");
+		yah[1] = TexMan["IN_YAH"];
+		splat = TexMan["IN_X"];
+		wiminus = TexMan["FONTB13"];
+		percent = TexMan["FONTB05"];
+		colon = TexMan["FONTB26"];
+		slash = TexMan["FONTB15"];
+		star = TexMan["FACEA0"];
+		bstar = TexMan["FACEB0"];
 
 		for (i = 0; i < 10; i++)
 		{
 			sprintf (name, "FONTB%d", 16 + i);
-			num[i] = (patch_t *)W_MapLumpName (name);
+			num[i] = TexMan[name];
 		}
 	}
 }
 
 void WI_unloadData ()
 {
-	int i, j;
-
-	if (gameinfo.gametype == GAME_Hexen)
-	{
-		return;
-	}
-
-	W_UnMapLump (wiminus);
-
-	for (i = 0; i < 10; i++)
-	{
-		W_UnMapLump (num[i]);
-	}
-
-	for (i = 0; i < 2; i++)
-	{
-		if (lnames[i])
-		{
-			W_UnMapLump (lnames[i]);
-			lnames[i] = NULL;
-		}
-	}
-	
-	if (gamemode != commercial)
-	{
-		W_UnMapLump (yah[0]);
-		W_UnMapLump (yah[1]);
-		W_UnMapLump (splat);
-		
-		if (gameinfo.gametype == GAME_Doom && epsd < 3)
-		{
-			for (j = 0; j < NUMANIMS[epsd]; j++)
-			{
-				if (epsd != 1 || j != 8)
-				{
-					for (i = 0; i < anims[epsd][j].nanims; i++)
-						W_UnMapLump (anims[epsd][j].p[i]);
-				}
-			}
-		}
-	}
-
-	if (percent)	{ W_UnMapLump (percent);	percent = NULL; }
-	if (colon)		{ W_UnMapLump (colon);		colon = NULL; }
-	if (finished)	{ W_UnMapLump (finished);	finished = NULL; }
-	if (entering)	{ W_UnMapLump (entering);	entering = NULL; }
-	if (kills)		{ W_UnMapLump (kills);		kills = NULL; }
-	if (secret)		{ W_UnMapLump (secret);		secret = NULL; }
-	if (sp_secret)	{ W_UnMapLump (sp_secret);	sp_secret = NULL; }
-	if (items)		{ W_UnMapLump (items);		items = NULL; }
-	if (frags)		{ W_UnMapLump (frags);		frags = NULL; }
-	if (timepic)	{ W_UnMapLump (timepic);	timepic = NULL; }
-	if (sucks)		{ W_UnMapLump (sucks);		sucks = NULL; }
-	if (par)		{ W_UnMapLump (par);		par = NULL; }
-	if (victims)	{ W_UnMapLump (victims);	victims = NULL; }
-	if (killers)	{ W_UnMapLump (killers);	killers = NULL; }
-	if (total)		{ W_UnMapLump (total);		total = NULL; }
-	if (p)			{ W_UnMapLump (p);			p = NULL; }
-	if (slash)		{ W_UnMapLump (slash);		slash = NULL; }
-	if (star)		{ W_UnMapLump (star);		star = NULL; }
-	if (bstar)		{ W_UnMapLump (bstar);		bstar = NULL; }
+	// [RH] The texture data gets unloaded at pre-map time, so there's nothing to do here
+	return;
 }
 
 void WI_Drawer (void)
@@ -1958,6 +1871,7 @@ void WI_initVariables (wbstartstruct_t *wbstartstruct)
 	me = wbs->pnum;
 	plrs = wbs->plyr;
 	epsd = wbs->finished_ep;
+	DrawFoM = false;
 }
 
 void WI_Start (wbstartstruct_t *wbstartstruct)

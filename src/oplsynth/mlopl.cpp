@@ -81,8 +81,6 @@ ulong MLtime;
 
 #define MOD_MIN		40		/* vibrato threshold */
 
-#define MAKE_ID(ch, mus) ((uchar)(ch)|((uchar)(mus)<<8))
-
 
 //#define HIGHEST_NOTE 102
 #define HIGHEST_NOTE 127

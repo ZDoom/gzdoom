@@ -17,8 +17,8 @@ CFG=FLAC - Win32 Debug
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "FLAC - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE "FLAC - Win32 Debug" (based on "Win32 (x86) Static Library")
+!MESSAGE "FLAC - Win32 Release" (based on "Win32 (x86) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -26,109 +26,114 @@ CFG=FLAC - Win32 Debug
 # PROP Scc_ProjName ""
 # PROP Scc_LocalPath ""
 CPP=cl.exe
+MTL=midl.exe
 RSC=rc.exe
 
-!IF  "$(CFG)" == "FLAC - Win32 Release"
-
-# PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 0
-# PROP BASE Output_Dir "FLAC___Win32_Release"
-# PROP BASE Intermediate_Dir "FLAC___Win32_Release"
-# PROP BASE Target_Dir ""
-# PROP Use_MFC 0
-# PROP Use_Debug_Libraries 0
-# PROP Output_Dir "FLAC___Win32_Release"
-# PROP Intermediate_Dir "FLAC___Win32_Release"
-# PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_MBCS" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /YX /FD /c
-# ADD BASE RSC /l 0x409 /d "NDEBUG"
-# ADD RSC /l 0x409 /d "NDEBUG"
-BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
-LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo
-
-!ELSEIF  "$(CFG)" == "FLAC - Win32 Debug"
+!IF  "$(CFG)" == "FLAC - Win32 Debug"
 
 # PROP BASE Use_MFC 0
 # PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "FLAC___Win32_Debug"
-# PROP BASE Intermediate_Dir "FLAC___Win32_Debug"
+# PROP BASE Output_Dir "Debug"
+# PROP BASE Intermediate_Dir "Debug"
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
 # PROP Use_Debug_Libraries 1
-# PROP Output_Dir "FLAC___Win32_Debug"
-# PROP Intermediate_Dir "FLAC___Win32_Debug"
+# PROP Output_Dir "Debug"
+# PROP Intermediate_Dir "Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /YX /FD /GZ /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_MBCS" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /YX /FD /GZ /c
-# ADD BASE RSC /l 0x409 /d "_DEBUG"
-# ADD RSC /l 0x409 /d "_DEBUG"
+# ADD BASE CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /Gm PRECOMP_VC7_TOBEREMOVED /GZ /c /GX 
+# ADD CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /Gm PRECOMP_VC7_TOBEREMOVED /GZ /c /GX 
+# ADD BASE MTL /nologo /win32 
+# ADD MTL /nologo /win32 
+# ADD BASE RSC /l 1033 
+# ADD RSC /l 1033 
 BSC32=bscmake.exe
-# ADD BASE BSC32 /nologo
-# ADD BSC32 /nologo
+# ADD BASE BSC32 /nologo 
+# ADD BSC32 /nologo 
 LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo
+# ADD BASE LIB32 /nologo /out:"Debug\FLAC.lib" 
+# ADD LIB32 /nologo /out:"Debug\FLAC.lib" 
 
-!ENDIF 
+!ELSEIF  "$(CFG)" == "FLAC - Win32 Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "Release"
+# PROP BASE Intermediate_Dir "Release"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "Release"
+# PROP Intermediate_Dir "Release"
+# PROP Target_Dir ""
+# ADD BASE CPP /nologo /MT /Zi /W3 /O2 /Ob1 /Oy /D "WIN32" /D "NDEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /GF /Gy PRECOMP_VC7_TOBEREMOVED /c /GX 
+# ADD CPP /nologo /MT /Zi /W3 /O2 /Ob1 /Oy /D "WIN32" /D "NDEBUG" /D "_LIB" /D "FLAC__CPU_IA32" /D "FLAC__HAS_NASM" /D "FLAC__SSE_OS" /D "FLAC__USE_3DNOW" /D "_MBCS" /GF /Gy PRECOMP_VC7_TOBEREMOVED /c /GX 
+# ADD BASE MTL /nologo /win32 
+# ADD MTL /nologo /win32 
+# ADD BASE RSC /l 1033 
+# ADD RSC /l 1033 
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo 
+# ADD BSC32 /nologo 
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo /out:"Release\FLAC.lib" 
+# ADD LIB32 /nologo /out:"Release\FLAC.lib" 
+
+!ENDIF
 
 # Begin Target
 
-# Name "FLAC - Win32 Release"
 # Name "FLAC - Win32 Debug"
+# Name "FLAC - Win32 Release"
 # Begin Group "Source Files"
 
-# PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# PROP Default_Filter "cpp;c;cxx;def;odl;idl;hpj;bat;asm"
 # Begin Source File
 
-SOURCE=.\bitbuffer.c
+SOURCE=bitbuffer.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\bitmath.c
+SOURCE=bitmath.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\cpu.c
+SOURCE=cpu.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\crc.c
+SOURCE=crc.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\fixed.c
+SOURCE=fixed.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\format.c
+SOURCE=format.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\lpc.c
+SOURCE=lpc.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\stream_decoder.c
+SOURCE=stream_decoder.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\stream_decoder_pp.cpp
+SOURCE=stream_decoder_pp.cpp
 # End Source File
 # End Group
 # Begin Group "Header Files"
 
-# PROP Default_Filter "h;hpp;hxx;hm;inl"
+# PROP Default_Filter "h;hpp;hxx;hm;inl;inc"
 # Begin Group "Protected"
 
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\protected\stream_decoder.h
+SOURCE=protected\stream_decoder.h
 # End Source File
 # End Group
 # Begin Group "Private"
@@ -136,31 +141,31 @@ SOURCE=.\protected\stream_decoder.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\private\bitbuffer.h
+SOURCE=private\bitbuffer.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\private\bitmath.h
+SOURCE=private\bitmath.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\private\cpu.h
+SOURCE=private\cpu.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\private\crc.h
+SOURCE=private\crc.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\private\fixed.h
+SOURCE=private\fixed.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\private\format.h
+SOURCE=private\format.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\private\lpc.h
+SOURCE=private\lpc.h
 # End Source File
 # End Group
 # Begin Group "FLAC"
@@ -168,23 +173,23 @@ SOURCE=.\private\lpc.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\FLAC\assert.h
+SOURCE=FLAC\assert.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\FLAC\export.h
+SOURCE=FLAC\export.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\FLAC\format.h
+SOURCE=FLAC\format.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\FLAC\ordinals.h
+SOURCE=FLAC\ordinals.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\FLAC\stream_decoder.h
+SOURCE=FLAC\stream_decoder.h
 # End Source File
 # End Group
 # Begin Group "FLAC++"
@@ -192,11 +197,11 @@ SOURCE=.\FLAC\stream_decoder.h
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=".\FLAC++\decoder.h"
+SOURCE=FLAC++\decoder.h
 # End Source File
 # Begin Source File
 
-SOURCE=".\FLAC++\export.h"
+SOURCE=FLAC++\export.h
 # End Source File
 # End Group
 # End Group
@@ -205,105 +210,118 @@ SOURCE=".\FLAC++\export.h"
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\ia32\cpu_asm.nasm
+SOURCE=ia32\cpu_asm.nasm
 
-!IF  "$(CFG)" == "FLAC - Win32 Release"
+!IF  "$(CFG)" == "FLAC - Win32 Debug"
 
-# Begin Custom Build
-IntDir=.\FLAC___Win32_Release
-InputPath=.\ia32\cpu_asm.nasm
-InputName=cpu_asm
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Assembling $(InputPath)...
+SOURCE="$(InputPath)"
 
-"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+BuildCmds= \
+	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath) \
 
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "FLAC - Win32 Debug"
-
-# Begin Custom Build
-IntDir=.\FLAC___Win32_Debug
-InputPath=.\ia32\cpu_asm.nasm
-InputName=cpu_asm
 
 "$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
-
+   $(BuildCmds)
 # End Custom Build
 
-!ENDIF 
+!ELSEIF  "$(CFG)" == "FLAC - Win32 Release"
+
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Assembling $(InputPath)...
+SOURCE="$(InputPath)"
+
+BuildCmds= \
+	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath) \
+
+
+"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+# End Custom Build
+
+!ENDIF
 
 # End Source File
 # Begin Source File
 
-SOURCE=.\ia32\fixed_asm.nasm
+SOURCE=ia32\fixed_asm.nasm
 
-!IF  "$(CFG)" == "FLAC - Win32 Release"
+!IF  "$(CFG)" == "FLAC - Win32 Debug"
 
-# Begin Custom Build
-IntDir=.\FLAC___Win32_Release
-InputPath=.\ia32\fixed_asm.nasm
-InputName=fixed_asm
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Assembling $(InputPath)...
+SOURCE="$(InputPath)"
 
-"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+BuildCmds= \
+	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath) \
 
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "FLAC - Win32 Debug"
-
-# Begin Custom Build
-IntDir=.\FLAC___Win32_Debug
-InputPath=.\ia32\fixed_asm.nasm
-InputName=fixed_asm
 
 "$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
-
+   $(BuildCmds)
 # End Custom Build
 
-!ENDIF 
+!ELSEIF  "$(CFG)" == "FLAC - Win32 Release"
+
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Assembling $(InputPath)...
+SOURCE="$(InputPath)"
+
+BuildCmds= \
+	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath) \
+
+
+"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+# End Custom Build
+
+!ENDIF
 
 # End Source File
 # Begin Source File
 
-SOURCE=.\ia32\lpc_asm.nasm
+SOURCE=ia32\lpc_asm.nasm
 
-!IF  "$(CFG)" == "FLAC - Win32 Release"
+!IF  "$(CFG)" == "FLAC - Win32 Debug"
 
-# Begin Custom Build
-IntDir=.\FLAC___Win32_Release
-InputPath=.\ia32\lpc_asm.nasm
-InputName=lpc_asm
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Assembling $(InputPath)...
+SOURCE="$(InputPath)"
 
-"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
+BuildCmds= \
+	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath) \
 
-# End Custom Build
-
-!ELSEIF  "$(CFG)" == "FLAC - Win32 Debug"
-
-# Begin Custom Build
-IntDir=.\FLAC___Win32_Debug
-InputPath=.\ia32\lpc_asm.nasm
-InputName=lpc_asm
 
 "$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath)
-
+   $(BuildCmds)
 # End Custom Build
 
-!ENDIF 
+!ELSEIF  "$(CFG)" == "FLAC - Win32 Release"
+
+# PROP Ignore_Default_Tool 1
+# Begin Custom Build - Assembling $(InputPath)...
+SOURCE="$(InputPath)"
+
+BuildCmds= \
+	nasmw -o $(IntDir)\$(InputName).obj -d OBJ_FORMAT_win32 -f win32 $(InputPath) \
+
+
+"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+   $(BuildCmds)
+# End Custom Build
+
+!ENDIF
 
 # End Source File
 # Begin Source File
 
-SOURCE=.\ia32\nasm.h
+SOURCE=ia32\nasm.h
 # End Source File
 # End Group
 # Begin Source File
 
-SOURCE=.\ReadMe.txt
+SOURCE=ReadMe.txt
 # End Source File
 # End Target
 # End Project
+

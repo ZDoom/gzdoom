@@ -12,6 +12,99 @@
 #include "templates.h"
 #include "a_hexenglobal.h"
 
+class FManaBar : public FTexture
+{
+public:
+	FManaBar ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+	void SetVial (FTexture *pic, int level);
+
+protected:
+	BYTE Pixels[5*24];
+	static const Span DummySpan[2];
+
+	FTexture *VialPic;
+	int VialLevel;
+	bool NeedRefresh;
+
+	void MakeTexture ();
+};
+
+const FTexture::Span FManaBar::DummySpan[2] = { { 0, 24 }, { 0, 0 } };
+
+FManaBar::FManaBar ()
+: VialPic(0), VialLevel(0), NeedRefresh(false)
+{
+	Width = 5;
+	Height = 24;
+	WidthBits = 2;
+	HeightBits = 5;
+	WidthMask = 3;
+}
+
+void FManaBar::Unload ()
+{
+	if (VialPic != 0)
+	{
+		VialPic->Unload ();
+	}
+}
+
+const BYTE *FManaBar::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (NeedRefresh)
+	{
+		MakeTexture ();
+	}
+	if (column > 4)
+	{
+		column = 4;
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = DummySpan;
+	}
+	return Pixels + column*24;
+}
+
+const BYTE *FManaBar::GetPixels ()
+{
+	if (NeedRefresh)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+void FManaBar::SetVial (FTexture *pic, int level)
+{
+	if (level > 22)
+	{
+		level = 22;
+	}
+	if (VialPic != pic || VialLevel != level)
+	{
+		VialPic = pic;
+		VialLevel = level;
+		NeedRefresh = true;
+	}
+}
+
+void FManaBar::MakeTexture ()
+{
+	int run = 22 - VialLevel;
+
+	NeedRefresh = false;
+	VialPic->CopyToBlock (Pixels, 5, 24, 0, 0);
+	memset (Pixels + 25, 0, run);
+	memset (Pixels + 25+24, 0, run);
+	memset (Pixels + 25+24+24, 0, run);
+}
+
 class FHexenStatusBar : public FBaseStatusBar
 {
 public:
@@ -122,6 +215,11 @@ public:
 		{
 			HealthMarker += clamp ((curHealth - HealthMarker) >> 2, 1, 6);
 		}
+
+		if (ArtifactFlash > 0)
+		{
+			ArtifactFlash--;
+		}
 	}
 
 	void Draw (EHudState state)
@@ -137,7 +235,7 @@ public:
 		{
 			if (SB_state > 0)
 			{
-				DrawImage (Images, imgH2BAR, 0, -999999);
+				DrawImage (Images[imgH2BAR], 0, -999999);
 				oldhealth = -1;
 			}
 			DrawCommonBar ();
@@ -151,7 +249,7 @@ public:
 				{
 					// Main interface
 					//SB_state--;
-					DrawImage (Images, !automapactive ? imgSTATBAR : imgKEYBAR, 38, 1);
+					DrawImage (Images[!automapactive ? imgSTATBAR : imgKEYBAR], 38, 1);
 					oldarti = 0;
 					oldmana1 = -1;
 					oldmana2 = -1;
@@ -184,11 +282,6 @@ public:
 				}
 				DrawInventoryBar ();
 			}
-		}
-
-		if (ArtifactFlash > 0)
-		{
-			ArtifactFlash--;
 		}
 
 		DrawAnimatedIcons ();
@@ -234,7 +327,7 @@ private:
 	{
 		int frame;
 		static bool hitCenterFrame;
-		const patch_t *patch;
+		int picnum;
 
 		// Flight icons
 		if (CPlayer->powers[pw_flight])
@@ -242,20 +335,18 @@ private:
 			if (CPlayer->powers[pw_flight] > BLINKTHRESHOLD
 				|| !(CPlayer->powers[pw_flight] & 16))
 			{
+				picnum = TexMan.GetTexture ("SPFLY0", FTexture::TEX_MiscPatch);
 				frame = (level.time/3) & 15;
+
 				if (CPlayer->mo->flags2 & MF2_FLY)
 				{
 					if (hitCenterFrame && (frame != 15 && frame != 0))
 					{
-						patch = (patch_t *)W_MapLumpNum (SpinFlyLump+15);
-						DrawOuterPatch (patch, 20, 19);
-						W_UnMapLump (patch);
+						DrawOuterTexture (TexMan[picnum+15], 20, 19);
 					}
 					else
 					{
-						patch = (patch_t *)W_MapLumpNum (SpinFlyLump+frame);
-						DrawOuterPatch (patch, 20, 19);
-						W_UnMapLump (patch);
+						DrawOuterTexture (TexMan[picnum+frame], 20, 19);
 						hitCenterFrame = false;
 					}
 				}
@@ -263,16 +354,12 @@ private:
 				{
 					if (!hitCenterFrame && (frame != 15 && frame != 0))
 					{
-						patch = (patch_t *)W_MapLumpNum (SpinFlyLump+frame);
-						DrawOuterPatch (patch, 20, 19);
-						W_UnMapLump (patch);
+						DrawOuterTexture (TexMan[picnum+frame], 20, 19);
 						hitCenterFrame = false;
 					}
 					else
 					{
-						patch = (patch_t *)W_MapLumpNum (SpinFlyLump+15);
-						DrawOuterPatch (patch, 20, 19);
-						W_UnMapLump (patch);
+						DrawOuterTexture (TexMan[picnum+15], 20, 19);
 						hitCenterFrame = true;
 					}
 				}
@@ -286,10 +373,9 @@ private:
 			if (CPlayer->powers[pw_speed] > BLINKTHRESHOLD
 				|| !(CPlayer->powers[pw_speed] & 16))
 			{
+				picnum = TexMan.GetTexture ("SPBOOT0", FTexture::TEX_MiscPatch);
 				frame = (level.time/3)&15;
-				patch = (patch_t *)W_MapLumpNum (SpinSpeedLump+frame);
-				DrawOuterPatch (patch, 60, 19);
-				W_UnMapLump (patch);
+				DrawOuterTexture (TexMan[picnum+frame], 60, 19);
 			}
 			BorderTopRefresh = screen->GetPageCount ();
 		}
@@ -301,9 +387,8 @@ private:
 				|| !(CPlayer->powers[pw_invulnerability] & 16))
 			{
 				frame = (level.time/3)&15;
-				patch = (patch_t *)W_MapLumpNum (SpinDefenseLump+frame);
-				DrawOuterPatch (patch, -60, 19);
-				W_UnMapLump (patch);
+				picnum = TexMan.GetTexture ("SPSHLD0", FTexture::TEX_MiscPatch);
+				DrawOuterTexture (TexMan[picnum+frame], -60, 19);
 			}
 			BorderTopRefresh = screen->GetPageCount ();
 		}
@@ -315,9 +400,8 @@ private:
 				|| !(CPlayer->powers[pw_minotaur]&16))
 			{
 				frame = (level.time/3)&15;
-				patch = (patch_t *)W_MapLumpNum (SpinMinotaurLump+frame);
-				DrawOuterPatch (patch, -20, 19);
-				W_UnMapLump (patch);
+				picnum = TexMan.GetTexture ("SPMINO0", FTexture::TEX_MiscPatch);
+				DrawOuterTexture (TexMan[picnum+frame], -20, 19);
 			}
 			BorderTopRefresh = screen->GetPageCount ();
 		}
@@ -333,7 +417,7 @@ private:
 	{
 		int healthPos;
 
-		DrawImage (Images, imgH2TOP, 0, -26);
+		DrawImage (Images[imgH2TOP], 0, -26);
 
 		if (oldhealth != HealthMarker)
 		{
@@ -344,11 +428,11 @@ private:
 		{
 			HealthRefresh--;
 			healthPos = clamp (HealthMarker, 0, 100);
-			DrawImage (ClassImages[LifeBarClass], imgCHAIN, 35+((healthPos*196/100)%9), 32);
-			DrawImage (ClassImages[LifeBarClass], imgLIFEGEM, 7+(healthPos*11/5), 32, multiplayer ?
+			DrawImage (ClassImages[LifeBarClass][imgCHAIN], 35+((healthPos*196/100)%9), 32);
+			DrawImage (ClassImages[LifeBarClass][imgLIFEGEM], 7+(healthPos*11/5), 32, multiplayer ?
 				translationtables[TRANSLATION_PlayersExtra] + (CPlayer-players)*256 : NULL);
-			DrawImage (Images, imgLFEDGE, 0, 32);
-			DrawImage (Images, imgRTEDGE, 277, 32);
+			DrawImage (Images[imgLFEDGE], 0, 32);
+			DrawImage (Images[imgRTEDGE], 277, 32);
 		}
 	}
 
@@ -365,8 +449,8 @@ private:
 		// Ready artifact
 		if (ArtifactFlash)
 		{
-			DrawImage (Images, imgARTICLEAR, 144, 0);
-			DrawImage (Images, imgUSEARTIA + ArtifactFlash, 148, 3);
+			DrawImage (Images[imgARTICLEAR], 144, 0);
+			DrawImage (Images[imgUSEARTIA + ArtifactFlash], 148, 3);
 			oldarti = -1; // so that the correct artifact fills in after the flash
 		}
 		else if (oldarti != CPlayer->readyArtifact
@@ -379,10 +463,10 @@ private:
 		if (ArtiRefresh)
 		{
 			ArtiRefresh--;
-			DrawImage (Images, imgARTICLEAR, 144, 0);
+			DrawImage (Images[imgARTICLEAR], 144, 0);
 			if (CPlayer->inventory[oldarti] > 0)
 			{
-				DrawImage (ArtiImages, oldarti, 143, 3);
+				DrawImage (ArtiImages[oldarti], 143, 3);
 				if (oldartiCount != 1)
 				{
 					DrSmallNumber (oldartiCount, 162, 24);
@@ -402,7 +486,7 @@ private:
 			if (FragHealthRefresh)
 			{
 				FragHealthRefresh--;
-				DrawImage (Images, imgKILLS, 38, 2);
+				DrawImage (Images[imgKILLS], 38, 2);
 				DrINumber (temp, 40, 16);
 			}
 		}
@@ -417,7 +501,7 @@ private:
 			if (FragHealthRefresh)
 			{
 				FragHealthRefresh--;
-				DrawImage (Images, imgARMCLEAR, 41, 17);
+				DrawImage (Images[imgARMCLEAR], 41, 17);
 				DrINumber (temp, 40, 15, temp >= 25 ? imgINumbers : NUM_BASESB_IMAGES);
 			}
 		}
@@ -440,7 +524,7 @@ private:
 		if (Mana1Refresh)
 		{
 			Mana1Refresh--;
-			DrawImage (Images, imgMANACLEAR, 77, 17);
+			DrawImage (Images[imgMANACLEAR], 77, 17);
 			DrSmallNumber (temp, 79, 20);
 			if (temp == 0)
 			{ // Draw Dim Mana icon
@@ -462,7 +546,7 @@ private:
 		if (Mana2Refresh)
 		{
 			Mana2Refresh--;
-			DrawImage (Images, imgMANACLEAR, 109, 17);
+			DrawImage (Images[imgMANACLEAR], 109, 17);
 			DrSmallNumber (temp, 111, 20);
 			if (temp == 0)
 			{ // Draw Dim Mana icon
@@ -521,12 +605,13 @@ private:
 				manaVialPatch2 = imgMANAVIALDIM2;
 			}
 
-			DrawImage (Images, manaPatch1, 77, 3);
-			DrawImage (Images, manaPatch2, 110, 3);
-			DrawImage (Images, manaVialPatch1, 94, 3);
-			ClearRect (95, 4, 3, 22-(22*CPlayer->ammo[MANA_1])/MAX_MANA, 0);
-			DrawImage (Images, manaVialPatch2, 102, 3);
-			ClearRect (103, 4, 3, 22-(22*CPlayer->ammo[MANA_2])/MAX_MANA, 0);
+			DrawImage (Images[manaPatch1], 77, 3);
+			DrawImage (Images[manaPatch2], 110, 3);
+
+			ManaVial1Pic.SetVial (Images[manaVialPatch1], 22*CPlayer->ammo[MANA_1]/MAX_MANA);
+			ManaVial2Pic.SetVial (Images[manaVialPatch2], 22*CPlayer->ammo[MANA_2]/MAX_MANA);
+			DrawImage (&ManaVial1Pic, 94, 3);
+			DrawImage (&ManaVial2Pic, 102, 3);
 			oldweapon = CPlayer->readyweapon;
 		}
 
@@ -542,7 +627,7 @@ private:
 		if (ArmorRefresh)
 		{
 			ArmorRefresh--;
-			DrawImage (Images, imgARMCLEAR, 255, 17);
+			DrawImage (Images[imgARMCLEAR], 255, 17);
 			DrINumber (temp / (5*FRACUNIT), 250, 15);
 		}
 
@@ -566,7 +651,7 @@ private:
 		int x;
 		bool left, right;
 
-		DrawImage (Images, imgINVBAR, 38, 1);
+		DrawImage (Images[imgINVBAR], 38, 1);
 		FindInventoryPos (x, left, right);
 		if (x > 0)
 		{
@@ -574,27 +659,27 @@ private:
 			{
 				if (CPlayer->inventory[x])
 				{
-					DrawImage (ArtiImages, x, 50+i*31, 2);
+					DrawImage (ArtiImages[x], 50+i*31, 2);
 					if (CPlayer->inventory[x] != 1)
 					{
 						DrSmallNumber (CPlayer->inventory[x], 68+i*31, 24);
 					}
 					if (x == CPlayer->readyArtifact)
 					{
-						DrawImage (Images, imgSELECTBOX, 51+i*31, 2);
+						DrawImage (Images[imgSELECTBOX], 51+i*31, 2);
 					}
 					i++;
 				}
 			}
 			if (left)
 			{
-				DrawImage (Images, !(level.time & 4) ?
-					imgINVLFGEM1 : imgINVLFGEM2, 42, 2);
+				DrawImage (Images[!(level.time & 4) ?
+					imgINVLFGEM1 : imgINVLFGEM2], 42, 2);
 			}
 			if (right)
 			{
-				DrawImage (Images, !(level.time & 4) ?
-					imgINVRTGEM1 : imgINVRTGEM2, 269, 2);
+				DrawImage (Images[!(level.time & 4) ?
+					imgINVRTGEM1 : imgINVRTGEM2], 269, 2);
 			}
 		}
 	}
@@ -636,7 +721,7 @@ private:
 			{
 				if (CPlayer->keys[i])
 				{
-					DrawImage (Images, imgKEYSLOT1+i, xPosition, 3);
+					DrawImage (Images[imgKEYSLOT1+i], xPosition, 3);
 					xPosition += 20;
 				}
 			}
@@ -650,7 +735,7 @@ private:
 			{
 				if (CPlayer->armorpoints[i] > 0)
 				{
-					DrawFadedImage (Images, imgARMSLOT1+i, 150+31*i, 3,
+					DrawFadedImage (Images[imgARMSLOT1+i], 150+31*i, 3,
 						MIN<fixed_t> (OPAQUE, Scale (CPlayer->armorpoints[i], OPAQUE,
 											CPlayer->mo->GetArmorIncrement (i))));
 				}
@@ -677,21 +762,21 @@ private:
 
 		if (pieces == 7)
 		{
-			DrawImage (ClassImages[FourthWeaponClass], imgWEAPONFULL, 190, 1);
+			DrawImage (ClassImages[FourthWeaponClass][imgWEAPONFULL], 190, 1);
 			return;
 		}
-		DrawImage (ClassImages[FourthWeaponClass], imgWEAPONSLOT, 190, 1);
+		DrawImage (ClassImages[FourthWeaponClass][imgWEAPONSLOT], 190, 1);
 		if (pieces & WPIECE1)
 		{
-			DrawImage (ClassImages[FourthWeaponClass], imgPIECE1, PieceX[FourthWeaponClass][0], 1);
+			DrawImage (ClassImages[FourthWeaponClass][imgPIECE1], PieceX[FourthWeaponClass][0], 1);
 		}
 		if (pieces & WPIECE2)
 		{
-			DrawImage (ClassImages[FourthWeaponClass], imgPIECE2, PieceX[FourthWeaponClass][1], 1);
+			DrawImage (ClassImages[FourthWeaponClass][imgPIECE2], PieceX[FourthWeaponClass][1], 1);
 		}
 		if (pieces & WPIECE3)
 		{
-			DrawImage (ClassImages[FourthWeaponClass], imgPIECE3, PieceX[FourthWeaponClass][2], 1);
+			DrawImage (ClassImages[FourthWeaponClass][imgPIECE3], PieceX[FourthWeaponClass][2], 1);
 		}
 	}
 
@@ -715,13 +800,13 @@ private:
 		{
 			if (ArtifactFlash)
 			{
-				DrawOuterFadedImage (Images, imgARTIBOX, -80, -30, HX_SHADOW);
-				DrawOuterImage (Images, imgUSEARTIA + ArtifactFlash, -76, -26);
+				DrawOuterFadedImage (Images[imgARTIBOX], -80, -30, HX_SHADOW);
+				DrawOuterImage (Images[imgUSEARTIA + ArtifactFlash], -76, -26);
 			}
 			else if (CPlayer->inventory[CPlayer->readyArtifact] > 0)
 			{
-				DrawOuterFadedImage (Images, imgARTIBOX, -80, -30, HX_SHADOW);
-				DrawOuterImage (ArtiImages, CPlayer->readyArtifact, -82, -31);
+				DrawOuterFadedImage (Images[imgARTIBOX], -80, -30, HX_SHADOW);
+				DrawOuterImage (ArtiImages[CPlayer->readyArtifact], -82, -31);
 				if (CPlayer->inventory[CPlayer->readyArtifact] != 1)
 				{
 					DrSmallNumberOuter (CPlayer->inventory[CPlayer->readyArtifact],
@@ -739,32 +824,32 @@ private:
 			{
 				if (CPlayer->inventory[x])
 				{
-					DrawOuterFadedImage (Images, imgARTIBOX, -106+i*31, -32, HX_SHADOW);
-					DrawOuterImage (ArtiImages, x, -108+i*31, -33);
+					DrawOuterFadedImage (Images[imgARTIBOX], -106+i*31, -32, HX_SHADOW);
+					DrawOuterImage (ArtiImages[x], -108+i*31, -33);
 					if (CPlayer->inventory[x] != 1)
 					{
 						DrSmallNumberOuter (CPlayer->inventory[x], -90+i*31, -12);
 					}
 					if (x == CPlayer->readyArtifact)
 					{
-						DrawOuterImage (Images, imgSELECTBOX, -107+i*31, -33);
+						DrawOuterImage (Images[imgSELECTBOX], -107+i*31, -33);
 					}
 					i++;
 				}
 			}
 			for (; i < 7; i++)
 			{
-				DrawOuterFadedImage (Images, imgARTIBOX, -106+i*31, -32, HX_SHADOW);
+				DrawOuterFadedImage (Images[imgARTIBOX], -106+i*31, -32, HX_SHADOW);
 			}
 			if (left)
 			{
-				DrawOuterImage (Images, !(level.time & 4) ?
-					imgINVLFGEM1 : imgINVLFGEM2, -118, -33);
+				DrawOuterImage (Images[!(level.time & 4) ?
+					imgINVLFGEM1 : imgINVLFGEM2], -118, -33);
 			}
 			if (right)
 			{
-				DrawOuterImage (Images, !(level.time & 4) ?
-					imgINVRTGEM1 : imgINVRTGEM2, 113, -33);
+				DrawOuterImage (Images[!(level.time & 4) ?
+					imgINVRTGEM1 : imgINVRTGEM2], 113, -33);
 			}
 			SetHorizCentering (false);
 		}
@@ -786,80 +871,14 @@ private:
 		i = CPlayer->ammo[MANA_1];
 		manaImage = ((ammo == MANA_1 || ammo == MANA_BOTH) && i > 0)
 			? imgMANABRIGHT1 : imgMANADIM1;
-		DrawOuterImage (Images, manaImage, -17, -30);
+		DrawOuterImage (Images[manaImage], -17, -30);
 		DrINumberOuter (i, -47, -30);
 
 		i = CPlayer->ammo[MANA_2];
 		manaImage = ((ammo == MANA_2 || ammo == MANA_BOTH) && i > 0)
 			? imgMANABRIGHT2 : imgMANADIM2;
-		DrawOuterImage (Images, manaImage, -17, -15);
+		DrawOuterImage (Images[manaImage], -17, -15);
 		DrINumberOuter (i, -47, -15);
-	}
-
-//---------------------------------------------------------------------------
-//
-// PROC FindInventoryPos
-//
-//---------------------------------------------------------------------------
-
-	void FindInventoryPos (int &pos, bool &moreleft, bool &moreright) const
-	{
-		int i, x;
-		int countleft, countright;
-		int lowest;
-
-		countleft = 0;
-		countright = 0;
-		lowest = 1;
-
-		x = CPlayer->readyArtifact - 1;
-		for (i = 0; i < 3 && x > 0; x--)
-		{
-			if (CPlayer->inventory[x])
-			{
-				lowest = x;
-				i++;
-			}
-		}
-		pos = lowest;
-		countleft = i;
-		if (x > 0)
-		{
-			for (i = x; i > 0; i--)
-			{
-				if (CPlayer->inventory[i])
-				{
-					countleft++;
-					lowest = i;
-				}
-			}
-		}
-		for (x = CPlayer->readyArtifact + 1; x < NUMINVENTORYSLOTS; x++)
-		{
-			if (CPlayer->inventory[x])
-				countright++;
-		}
-		if (countleft + countright <= 6)
-		{
-			pos = lowest;
-			moreleft = false;
-			moreright = false;
-			return;
-		}
-		if (countright < 3 && countleft > 3)
-		{
-			for (i = pos - 1; i > 0 && countright < 3; i--)
-			{
-				if (CPlayer->inventory[x])
-				{
-					pos = i;
-					countleft--;
-					countright++;
-				}
-			}
-		}
-		moreleft = (countleft > 3);
-		moreright = (countright > 3);
 	}
 
 //---------------------------------------------------------------------------
@@ -974,6 +993,9 @@ private:
 	char HealthRefresh;
 	char Mana1Refresh;
 	char Mana2Refresh;
+
+	FManaBar ManaVial1Pic;
+	FManaBar ManaVial2Pic;
 };
 
 FBaseStatusBar *CreateHexenStatusBar ()

@@ -562,7 +562,8 @@ void M_ScreenShot (char *filename)
 	}
 
 	// save the screenshot
-	D_Display (true);
+	screen->Lock (true);
+	//D_Display (true);
 
 	PalEntry palette[256];
 	screen->GetFlashedPalette (palette);

@@ -138,7 +138,7 @@ bool DCajunMaster::Check_LOS (AActor *from, AActor *to, angle_t vangle)
 	if (vangle == 0)
 		return false; //Looker seems to be blind.
 
-	return abs (R_PointToAngle2 (from->x, from->y, to->x, to->y) - from->angle) <= (int)vangle/2;
+	return abs (R_PointToAngle2 (from->x, from->y, to->x, to->y) - from->angle) <= vangle/2;
 }
 
 //-------------------------------------
@@ -222,15 +222,38 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	case wp_mstaff:
 		//Here goes the prediction.
 		dist = P_AproxDistance (actor->x - enemy->x, actor->y - enemy->y);
-		m = (dist/FRACUNIT);
-		if (actor->player->readyweapon == wp_plasma)
+		m = dist;
+		switch (actor->player->readyweapon)
+		{
+		case wp_plasma:
 			m /= GetDefaultByName ("PlasmaBall")->Speed;
-		else if (actor->player->readyweapon == wp_skullrod)
+			break;
+		case wp_skullrod:
 			m /= GetDefaultByName ("HornRodFX1")->Speed;
-		else
+			break;
+		case wp_crossbow:
 			m /= GetDefaultByName ("CrossbowFX1")->Speed;
-		SetBodyAt (enemy->x + FixedMul (enemy->momx, (m*2*FRACUNIT)),
-				   enemy->y + FixedMul (enemy->momy, (m*2*FRACUNIT)), ONFLOORZ, 1);
+			break;
+		case wp_cstaff:
+			m /= GetDefaultByName ("CStaffMissile")->Speed;
+			break;
+		case wp_mfrost:
+			m /= GetDefaultByName ("FrostMissile")->Speed;
+			break;
+		case wp_mlightning:
+			m /= GetDefaultByName ("LightningCeiling")->Speed;
+			break;
+		case wp_fsword:
+			m /= GetDefaultByName ("FSwordMissile")->Speed;
+			break;
+		case wp_choly:
+			m /= GetDefaultByName ("HolySpirit")->Speed;
+			break;
+		case wp_mstaff:
+			m /= GetDefaultByName ("MageStaffFX2")->Speed;
+			break;
+		}
+		SetBodyAt (enemy->x + enemy->momx*m*2, enemy->y + enemy->momy*m*2, ONFLOORZ, 1);
 		actor->player->angle = R_PointToAngle2 (actor->x, actor->y, body1->x, body1->y);
 		if (Check_LOS (actor, enemy, SHOOTFOV))
 			no_fire = false;

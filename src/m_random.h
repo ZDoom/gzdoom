@@ -70,6 +70,11 @@ public:
 	}
 
 	static void StaticClearRandom ();
+	static DWORD StaticSumSeeds ();
+
+#ifdef _DEBUG
+	static void StaticPrintSeeds ();
+#endif
 
 private:
 	DWORD Seed;
@@ -87,7 +92,7 @@ private:
 
 extern DWORD rngseed;			// The starting seed (not part of state)
 
-// M_Random can be used for numbers that do not effect gameplay
+// M_Random can be used for numbers that do not affect gameplay
 extern FRandom M_Random;
 
 #endif

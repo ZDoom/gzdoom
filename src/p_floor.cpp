@@ -180,6 +180,8 @@ void DFloor::Tick ()
 			}
 
 			m_Sector->floordata = NULL; //jff 2/22/98
+			stopinterpolation (&m_Sector->floorplane.d);
+			stopinterpolation (&m_Sector->floortexz);
 
 			//jff 2/26/98 implement stair retrigger lockout while still building
 			// note this only applies to the retriggerable generalized stairs
@@ -249,6 +251,10 @@ void DElevator::Tick ()
 
 		m_Sector->floordata = NULL;		//jff 2/22/98
 		m_Sector->ceilingdata = NULL;	//jff 2/22/98
+		stopinterpolation (&m_Sector->floorplane.d);
+		stopinterpolation (&m_Sector->ceilingplane.d);
+		stopinterpolation (&m_Sector->floortexz);
+		stopinterpolation (&m_Sector->ceilingtexz);
 		Destroy ();		// remove elevator from actives
 	}
 }
@@ -860,6 +866,9 @@ bool EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 		if (!s2)								// note lowest numbered line around
 			continue;							// pillar must be two-sided
 
+		if (s2->floordata)
+			continue;
+
 		for (i = 0; i < s2->linecount; i++)
 		{
 			if (!(s2->lines[i]->flags & ML_TWOSIDED) ||
@@ -901,6 +910,10 @@ DElevator::DElevator (sector_t *sec)
 {
 	sec->floordata = this;
 	sec->ceilingdata = this;
+	setinterpolation (&sec->floorplane.d);
+	setinterpolation (&sec->ceilingplane.d);
+	setinterpolation (&sec->floortexz);
+	setinterpolation (&sec->ceilingtexz);
 }
 
 //
@@ -1051,10 +1064,14 @@ void DWaggleBase::DoWaggle (bool ceiling)
 			if (ceiling)
 			{
 				m_Sector->ceilingdata = NULL;
+				stopinterpolation (&m_Sector->ceilingplane.d);
+				stopinterpolation (&m_Sector->ceilingtexz);
 			}
 			else
 			{
 				m_Sector->floordata = NULL;
+				stopinterpolation (&m_Sector->floorplane.d);
+				stopinterpolation (&m_Sector->floortexz);
 			}
 			Destroy ();
 			return;
@@ -1094,6 +1111,8 @@ DFloorWaggle::DFloorWaggle (sector_t *sec)
 	: Super (sec)
 {
 	sec->floordata = this;
+	setinterpolation (&sec->floorplane.d);
+	setinterpolation (&sec->floortexz);
 }
 
 void DFloorWaggle::Tick ()
@@ -1115,6 +1134,8 @@ DCeilingWaggle::DCeilingWaggle (sector_t *sec)
 	: Super (sec)
 {
 	sec->ceilingdata = this;
+	setinterpolation (&sec->ceilingplane.d);
+	setinterpolation (&sec->ceilingtexz);
 }
 
 void DCeilingWaggle::Tick ()

@@ -3,7 +3,7 @@
 ** Base status bar implementation
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2003 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,7 @@
 #include "templates.h"
 #include "sbar.h"
 #include "c_cvars.h"
+#include "c_dispatch.h"
 #include "v_video.h"
 #include "m_swap.h"
 #include "r_draw.h"
@@ -42,6 +43,7 @@
 #include "v_text.h"
 #include "s_sound.h"
 #include "gi.h"
+#include "p_effect.h"
 #include "../version.h"
 
 #define XHAIRSHRINKSIZE		(FRACUNIT/18)
@@ -59,7 +61,7 @@ CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 int ST_X, ST_Y;
 int SB_state = 3;
 
-static FImageCollection CrosshairImage;
+static FTexture *CrosshairImage;
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;
@@ -79,12 +81,15 @@ CUSTOM_CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	int num = self;
 	char name[16], size;
-	const char *namelist;
 	int lump;
 
+	if (CrosshairImage != NULL)
+	{
+		CrosshairImage->Unload ();
+	}
 	if (num == 0)
 	{
-		CrosshairImage.Uninit ();
+		CrosshairImage = NULL;
 		return;
 	}
 	if (num < 0)
@@ -101,8 +106,7 @@ CUSTOM_CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 			strcpy (name, "XHAIRS1");
 		}
 	}
-	namelist = name;
-	CrosshairImage.Init (&namelist, 1);
+	CrosshairImage = TexMan[TexMan.AddPatch (name)];
 }
 
 CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -143,7 +147,7 @@ FBaseStatusBar::FBaseStatusBar (int reltop)
 	Displacement = 0;
 
 	SetScaled (st_scale);
-	AmmoImages.Init (AmmoPics, NUMAMMO);
+	AmmoImages.Init (AmmoPics, MANA_BOTH+1);
 	ArtiImages.Init (ArtiPics, NUMARTIFACTS);
 	ArmorImages.Init (ArmorPics, NUMARMOR);
 }
@@ -273,15 +277,27 @@ void FBaseStatusBar::Tick ()
 void FBaseStatusBar::AttachMessage (DHUDMessage *msg, DWORD id)
 {
 	DHUDMessage *old = NULL;
+	DHUDMessage **prev;
 
-	old = (id == 0) ? NULL : DetachMessage (id);
+	old = (id == 0 || id == 0xFFFFFFFF) ? NULL : DetachMessage (id);
 	if (old != NULL)
 	{
 		delete old;
 	}
-	msg->Next = Messages;
+
+	prev = &Messages;
+
+	// The ID serves as a priority, where lower numbers appear in front of
+	// higher numbers. (i.e. The list is sorted in descending order, since
+	// it gets drawn back to front.)
+	while (*prev != NULL && (*prev)->SBarID > id)
+	{
+		prev = &(*prev)->Next;
+	}
+
+	msg->Next = *prev;
 	msg->SBarID = id;
-	Messages = msg;
+	*prev = msg;
 }
 
 //---------------------------------------------------------------------------
@@ -389,6 +405,7 @@ void FBaseStatusBar::ShowPlayerName ()
 
 void FBaseStatusBar::CopyToScreen (int x, int y, int w, int h) const
 {
+return;
 	fixed_t ix = ScaleIX;
 	fixed_t iy = ScaleIY;
 	int nx = (x * ScaleX) >> FRACBITS;
@@ -462,12 +479,10 @@ void FBaseStatusBar::UpdateRect (int x, int y, int w, int h) const
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawImageNoUpdate (const FImageCollection &coll, int img,
+void FBaseStatusBar::DrawImageNoUpdate (FTexture *img,
 	int x, int y, byte *translation) const
 {
-	int w, h, xo, yo;
-	byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
-	if (data)
+	if (img != NULL)
 	{
 		bool main;
 
@@ -475,48 +490,50 @@ void FBaseStatusBar::DrawImageNoUpdate (const FImageCollection &coll, int img,
 		{ // Hack for Hexen status bar, which duplicates the top part of the
 		  // bar in the main bar graphic.
 			main = true;
-			y = RelTop - h;
+			y = RelTop - img->GetHeight();
 		}
 		else
 		{
-			y -= yo;
-			main = (y >= 0);
+			main = (y >= img->TopOffset);
 		}
-		x -= xo;
-		if (Scaled)
+		if (Scaled && 0)
 		{
 			if (!main)
 			{
-				screen->ScaleMaskedBlock (x * screen->GetWidth() / 320,
-					::ST_Y + y * screen->GetHeight() / 200, w, h,
-					(w * screen->GetWidth()) / 320, (h * screen->GetHeight()) / 200,
-					data, NULL);
+				screen->DrawTexture (img,
+					x * screen->GetWidth() / 320,
+					::ST_Y + y * screen->GetHeight() / 200,
+					DTA_DestWidth, (img->GetWidth() * screen->GetWidth()) / 320,
+					DTA_DestHeight, (img->GetHeight() * screen->GetHeight()) / 200,
+					DTA_Translation, translation,
+					TAG_DONE);
 			}
 			else
 			{
 				ScaleCopy->Lock ();
-				ScaleCopy->DrawMaskedBlock (x, y, w, h, data, translation);
+				ScaleCopy->DrawTexture (img, x, y, DTA_Translation, translation, TAG_DONE);
 				ScaleCopy->Unlock ();
 			}
 		}
 		else
 		{
-			screen->DrawMaskedBlock (x + ST_X, y + ST_Y, w, h, data, translation);
+			screen->DrawTexture (img, x + ST_X, y + ST_Y,
+				DTA_Translation, translation,
+				DTA_320x200, Scaled,
+				TAG_DONE);
 		}
 	}
 }
 
-void FBaseStatusBar::DrawImage (const FImageCollection &coll, int img,
+void FBaseStatusBar::DrawImage (FTexture *img,
 	int x, int y, byte *translation) const
 {
-	DrawImageNoUpdate (coll, img, x, y, translation);
-	if (Scaled)
+	DrawImageNoUpdate (img, x, y, translation);
+/*	if (Scaled)
 	{
-		int w, h, xo, yo;
-		byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
-		if (data != NULL)
+		if (img != NULL)
 		{
-			x -= xo;
+			int h = img->GetHeight ();
 			if (y == -999999)
 			{
 				y = 0;
@@ -524,16 +541,16 @@ void FBaseStatusBar::DrawImage (const FImageCollection &coll, int img,
 			}
 			else
 			{
-				y -= yo;
+				y -= img->TopOffset;
 			}
-			if (data && y >= 0)
+			if (y >= 0)
 			{
 				ScaleCopy->Lock ();
-				CopyToScreen (x, y, w, h);
+				CopyToScreen (x, y, img->GetWidth(), h);
 				ScaleCopy->Unlock ();
 			}
 		}
-	}
+	}*/
 }
 
 //---------------------------------------------------------------------------
@@ -545,35 +562,39 @@ void FBaseStatusBar::DrawImage (const FImageCollection &coll, int img,
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawFadedImage (const FImageCollection &coll, int img,
+void FBaseStatusBar::DrawFadedImage (FTexture *img,
 	int x, int y, fixed_t shade) const
 {
-	int w, h, xo, yo;
-	byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
-	if (data)
+	if (img != NULL)
 	{
-		y -= yo;
-		x -= xo;
-		if (Scaled)
+		if (Scaled && 0)
 		{
+			int w = img->GetWidth ();
+			int h = img->GetHeight ();
 			if (y < 0)
 			{
-				screen->ScaleTranslucentMaskedBlock (x * screen->GetWidth() / 320,
-					::ST_Y + y * screen->GetHeight() / 200, w, h,
-					(w * screen->GetWidth()) / 320, (h * screen->GetHeight()) / 200,
-					data, NULL, shade);
+				screen->DrawTexture (img,
+					x * screen->GetWidth() / 320,
+					::ST_Y + y * screen->GetHeight() / 200,
+					DTA_DestWidth, (w * screen->GetWidth()) / 320,
+					DTA_DestHeight, (h * screen->GetHeight()) / 200,
+					DTA_Alpha, shade,
+					TAG_DONE);
 			}
 			else
 			{
 				ScaleCopy->Lock ();
-				ScaleCopy->DrawTranslucentMaskedBlock (x, y, w, h, data, NULL, shade);
-				CopyToScreen (x, y, w, h);
+				ScaleCopy->DrawTexture (img, x, y, DTA_Alpha, shade, TAG_DONE);
+				CopyToScreen (x - img->LeftOffset, y - img->TopOffset, w, h);
 				ScaleCopy->Unlock ();
 			}
 		}
 		else
 		{
-			screen->DrawTranslucentMaskedBlock (x + ST_X, y + ST_Y, w, h, data, NULL, shade);
+			screen->DrawTexture (img, x + ST_X, y + ST_Y,
+				DTA_Alpha, shade,
+				DTA_320x200, Scaled,
+				TAG_DONE);
 		}
 	}
 }
@@ -587,17 +608,17 @@ void FBaseStatusBar::DrawFadedImage (const FImageCollection &coll, int img,
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawPartialImage (const FImageCollection &coll, int img,
+void FBaseStatusBar::DrawPartialImage (FTexture *img,
 	int x, int y, int wx, int wy, int ww, int wh) const
 {
-	int w, h, xo, yo;
-	byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
-	if (data)
+	if (img != NULL)
 	{
+		const BYTE *data = img->GetPixels ();
+		int h = img->GetHeight ();
 		byte *dest;
-		int pitch;
+		int pitch, pitch_rew;
 
-		data += wx + wy*w;
+		data += wx*h + wy;
 
 		if (Scaled)
 		{
@@ -611,12 +632,18 @@ void FBaseStatusBar::DrawPartialImage (const FImageCollection &coll, int img,
 			pitch = screen->GetPitch();
 		}
 
+		pitch_rew = pitch * wh - 1;
+
 		do
 		{
-			memcpy (dest, data, ww);
-			dest += pitch;
-			data += w;
-		} while (--wh);
+			for (int i = 0; i < wh; ++i)
+			{
+				*dest = data[i];
+				dest += pitch;
+			}
+			data += h;
+			dest -= pitch_rew;
+		} while (--ww);
 
 		if (Scaled)
 		{
@@ -639,8 +666,8 @@ bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
 {
 	if (FixedOrigin)
 	{
-		xo = w / 2;
-		yo = h;
+		x += xo - w / 2;
+		y += yo - h;
 	}
 	if (hud_scale)
 	{
@@ -649,11 +676,9 @@ bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
 			x += SCREENWIDTH / 2;
 		else if (x < 0)
 			x = SCREENWIDTH + x;
-		x -= xo * CleanXfac;
 		y *= CleanYfac;
 		if (y < 0)
 			y = SCREENHEIGHT + y;
-		y -= yo * CleanYfac;
 		return true;
 	}
 	else
@@ -664,8 +689,6 @@ bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
 			x = SCREENWIDTH + x;
 		if (y < 0)
 			y = SCREENHEIGHT + y;
-		x -= xo;
-		y -= yo;
 		return false;
 	}
 }
@@ -674,26 +697,19 @@ bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
 //
 // PROC DrawOuterFadedImage
 //
-// Draws a translucenct image outside the status bar, possibly scaled.
+// Draws a translucent image outside the status bar, possibly scaled.
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawOuterFadedImage (const FImageCollection &coll, int img,
-	int x, int y, fixed_t shade) const
+void FBaseStatusBar::DrawOuterFadedImage (FTexture *img, int x, int y, fixed_t shade) const
 {
-	int w, h, xo, yo;
-	byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
-	if (data)
+	if (img != NULL)
 	{
-		if (RepositionCoords (x, y, xo, yo, w, h))
-		{
-			screen->ScaleTranslucentMaskedBlock (x, y, w, h, w * CleanXfac,
-				h * CleanYfac, data, NULL, shade);
-		}
-		else
-		{
-			screen->DrawTranslucentMaskedBlock (x, y, w, h, data, NULL, shade);
-		}
+		int w = img->GetWidth ();
+		int h = img->GetHeight ();
+		bool cnm = RepositionCoords (x, y, img->LeftOffset, img->TopOffset, w, h);
+
+		screen->DrawTexture (img, x, y, DTA_Alpha, shade, DTA_CleanNoMove, cnm, TAG_DONE);
 	}
 }
 
@@ -705,22 +721,19 @@ void FBaseStatusBar::DrawOuterFadedImage (const FImageCollection &coll, int img,
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawShadowedImage (const FImageCollection &coll, int img,
-	int x, int y, fixed_t shade) const
+void FBaseStatusBar::DrawShadowedImage (FTexture *img, int x, int y, fixed_t shade) const
 {
-	int w, h, xo, yo;
-	byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
-	if (data)
+	if (img != NULL)
 	{
-		if (RepositionCoords (x, y, xo, yo, w, h))
-		{
-			screen->ScaleShadowedMaskedBlock (x, y, w, h, w * CleanXfac,
-				h * CleanYfac, data, NULL, shade);
-		}
-		else
-		{
-			screen->DrawShadowedMaskedBlock (x, y, w, h, data, NULL, shade);
-		}
+		int w = img->GetWidth ();
+		int h = img->GetHeight ();
+		bool cnm = RepositionCoords (x, y, img->LeftOffset, img->TopOffset, w, h);
+
+		screen->DrawTexture (img, x, y,
+			DTA_CleanNoMove, cnm,
+			DTA_ShadowAlpha, shade,
+			DTA_ShadowColor, 0,
+			TAG_DONE);
 	}
 }
 
@@ -732,46 +745,33 @@ void FBaseStatusBar::DrawShadowedImage (const FImageCollection &coll, int img,
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawOuterImage (const FImageCollection &coll, int img,
-	int x, int y) const
+void FBaseStatusBar::DrawOuterImage (FTexture *img, int x, int y) const
 {
-	int w, h, xo, yo;
-	byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
-	if (data)
+	if (img != NULL)
 	{
-		if (RepositionCoords (x, y, xo, yo, w, h))
-		{
-			screen->ScaleMaskedBlock (x, y, w, h, w * CleanXfac,
-				h * CleanYfac, data, NULL);
-		}
-		else
-		{
-			screen->DrawMaskedBlock (x, y, w, h, data, NULL);
-		}
+		int w = img->GetWidth ();
+		int h = img->GetHeight ();
+		bool cnm = RepositionCoords (x, y, img->LeftOffset, img->TopOffset, w, h);
+
+		screen->DrawTexture (img, x, y, DTA_CleanNoMove, cnm, TAG_DONE);
 	}
 }
 
 //---------------------------------------------------------------------------
 //
-// PROC DrawOuterPatch
+// PROC DrawOuterTexture
 //
-// Draws a patch outside the status bar, possibly scaled.
+// Draws a texture outside the status bar, possibly scaled.
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawOuterPatch (const patch_t *patch, int x, int y) const
+void FBaseStatusBar::DrawOuterTexture (FTexture *tex, int x, int y) const
 {
-	if (patch)
+	if (tex)
 	{
-		if (RepositionCoords (x, y, 0, 0, 0, 0))
-		{
-			screen->DrawPatchStretched (patch, x, y,
-				SHORT(patch->width) * CleanXfac, SHORT(patch->height) * CleanYfac);
-		}
-		else
-		{
-			screen->DrawPatch (patch, x, y);
-		}
+		bool cnm = RepositionCoords (x, y, 0, 0, 0, 0);
+
+		screen->DrawTexture (tex, x, y, DTA_CleanNoMove, cnm, TAG_DONE);
 	}
 }
 
@@ -794,25 +794,25 @@ void FBaseStatusBar::DrINumber (signed int val, int x, int y, int imgBase) const
 	{
 		if (val < -9)
 		{
-			DrawImage (Images, imgLAME, x+1, y+1);
+			DrawImage (Images[imgLAME], x+1, y+1);
 			return;
 		}
 		val = -val;
-		DrawImage (Images, imgBase+val, x+18, y);
-		DrawImage (Images, imgNEGATIVE, x+9, y);
+		DrawImage (Images[imgBase+val], x+18, y);
+		DrawImage (Images[imgNEGATIVE], x+9, y);
 		return;
 	}
 	if (val > 99)
 	{
-		DrawImage (Images, imgBase+val/100, x, y);
+		DrawImage (Images[imgBase+val/100], x, y);
 	}
 	val = val % 100;
 	if (val > 9 || oldval > 99)
 	{
-		DrawImage (Images, imgBase+val/10, x+9, y);
+		DrawImage (Images[imgBase+val/10], x+9, y);
 	}
 	val = val % 10;
-	DrawImage (Images, imgBase+val, x+18, y);
+	DrawImage (Images[imgBase+val], x+18, y);
 }
 
 //---------------------------------------------------------------------------
@@ -831,9 +831,17 @@ void FBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
 	bool neg;
 	int i;
 	int power;
+	FTexture *pic = Images[imgBNumbers+3];
 
-	w = Images.GetImageWidth (imgBNumbers+3);
-	h = Images.GetImageHeight (imgBNumbers+3);
+	if (pic != NULL)
+	{
+		w = pic->GetWidth ();
+		h = pic->GetHeight ();
+	}
+	else
+	{
+		w = h = 0;
+	}
 
 	if (Scaled)
 	{
@@ -868,8 +876,8 @@ void FBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
 	}
 	if (val == 0)
 	{
-		DrawImage (Images, imgBNumbers,
-			xpos - Images.GetImageWidth (imgBNumbers)/2 - w, y);
+		pic = Images[imgBNumbers];
+		DrawImage (pic, xpos - pic->GetWidth()/2 - w, y);
 		return;
 	}
 	while (val != 0 && size--)
@@ -878,13 +886,14 @@ void FBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
 		int oldval = val;
 		val /= 10;
 		index = imgBNumbers + (oldval - val*10);
-		DrawImage (Images, index, xpos - Images.GetImageWidth (index)/2, y);
+		pic = Images[index];
+		DrawImage (pic, xpos - pic->GetWidth()/2, y);
 	}
 	if (neg)
 	{
 		xpos -= w;
-		DrawImage (Images, imgBNEGATIVE,
-			xpos - Images.GetImageWidth (imgBNEGATIVE)/2, y);
+		pic = Images[imgBNEGATIVE];
+		DrawImage (pic, xpos - pic->GetWidth()/2, y);
 	}
 }
 
@@ -913,16 +922,16 @@ void FBaseStatusBar::DrSmallNumber (int val, int x, int y) const
 	if (val > 99)
 	{
 		digit = val / 100;
-		DrawImage (Images, imgSmNumbers + digit, x, y);
+		DrawImage (Images[imgSmNumbers + digit], x, y);
 		val -= digit * 100;
 	}
 	if (val > 9 || digit)
 	{
 		digit = val / 10;
-		DrawImage (Images, imgSmNumbers + digit, x+4, y);
+		DrawImage (Images[imgSmNumbers + digit], x+4, y);
 		val -= digit * 10;
 	}
-	DrawImage (Images, imgSmNumbers + val, x+8, y);
+	DrawImage (Images[imgSmNumbers + val], x+8, y);
 }
 
 //---------------------------------------------------------------------------
@@ -946,25 +955,25 @@ void FBaseStatusBar::DrINumberOuter (signed int val, int x, int y) const
 	{
 		if (val < -9)
 		{
-			DrawOuterImage (Images, imgLAME, x+1, y+1);
+			DrawOuterImage (Images[imgLAME], x+1, y+1);
 			return;
 		}
 		val = -val;
-		DrawOuterImage (Images, imgINumbers+val, x+18, y);
-		DrawOuterImage (Images, imgNEGATIVE, x+9, y);
+		DrawOuterImage (Images[imgINumbers+val], x+18, y);
+		DrawOuterImage (Images[imgNEGATIVE], x+9, y);
 		return;
 	}
 	if (val > 99)
 	{
-		DrawOuterImage (Images, imgINumbers+val/100, x, y);
+		DrawOuterImage (Images[imgINumbers+val/100], x, y);
 	}
 	val = val % 100;
 	if (val > 9 || oldval > 99)
 	{
-		DrawOuterImage (Images, imgINumbers+val/10, x+9, y);
+		DrawOuterImage (Images[imgINumbers+val/10], x+9, y);
 	}
 	val = val % 10;
-	DrawOuterImage (Images, imgINumbers+val, x+18, y);
+	DrawOuterImage (Images[imgINumbers+val], x+18, y);
 }
 
 //---------------------------------------------------------------------------
@@ -983,9 +992,17 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 	int div;
 	bool neg;
 	int first;
+	FTexture *pic;
 
-	Images.GetImage (imgBNumbers+3, &w, &xpos, &xpos, &xpos);
-	w = Images.GetImageWidth (imgBNumbers+3);
+	pic = Images[imgBNumbers+3];
+	if (pic != NULL)
+	{
+		w = pic->GetWidth();
+	}
+	else
+	{
+		w = 0;
+	}
 
 	div = 1;
 	for (i = size-1; i>0; i--)
@@ -995,8 +1012,8 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 
 	if (val == 0)
 	{
-		DrawShadowedImage (Images, imgBNumbers,
-			xpos - Images.GetImageWidth (imgBNumbers)/2 + w*(size-1), y, HR_SHADOW);
+		pic = Images[imgBNumbers];
+		DrawShadowedImage (pic, xpos - pic->GetWidth()/2 + w*(size-1), y, HR_SHADOW);
 		return;
 	}
 
@@ -1025,8 +1042,8 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 			{
 				first = xpos;
 			}
-			DrawShadowedImage (Images, i + imgBNumbers,
-				xpos - Images.GetImageWidth (i + imgBNumbers)/2, y, HR_SHADOW);
+			pic = Images[i + imgBNumbers];
+			DrawShadowedImage (pic, xpos - pic->GetWidth()/2, y, HR_SHADOW);
 			val -= i * div;
 		}
 		div /= 10;
@@ -1034,8 +1051,8 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 	}
 	if (neg)
 	{
-		DrawShadowedImage (Images, imgBNEGATIVE,
-			first - Images.GetImageWidth (imgBNEGATIVE)/2 - w, y, HR_SHADOW);
+		pic = Images[imgBNEGATIVE];
+		DrawShadowedImage (pic, first - pic->GetWidth()/2 - w, y, HR_SHADOW);
 	}
 }
 
@@ -1058,98 +1075,16 @@ void FBaseStatusBar::DrSmallNumberOuter (int val, int x, int y) const
 	if (val > 99)
 	{
 		digit = val / 100;
-		DrawOuterImage (Images, imgSmNumbers + digit, x, y);
+		DrawOuterImage (Images[imgSmNumbers + digit], x, y);
 		val -= digit * 100;
 	}
 	if (val > 9 || digit)
 	{
 		digit = val / 10;
-		DrawOuterImage (Images, imgSmNumbers + digit, x+4, y);
+		DrawOuterImage (Images[imgSmNumbers + digit], x+4, y);
 		val -= digit * 10;
 	}
-	DrawOuterImage (Images, imgSmNumbers + val, x+8, y);
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC ShadeChain
-//
-//---------------------------------------------------------------------------
-
-void FBaseStatusBar::ShadeChain (int left, int right, int top, int height) const
-{
-	int i;
-	int pitch;
-	int diff;
-	byte *top_p;
-
-	if (Scaled)
-	{
-		ScaleCopy->Lock ();
-		pitch = ScaleCopy->GetPitch();
-		top_p = ScaleCopy->GetBuffer();
-	}
-	else
-	{
-		top += ST_Y;
-		left += ST_X;
-		right += ST_X;
-		pitch = screen->GetPitch();
-		top_p = screen->GetBuffer();
-	}
-	top_p += top*pitch + left;
-	diff = right+15-left;
-
-	for (i = 0; i < 16; i++)
-	{
-		DWORD *darkener = Col2RGB8[18 + i*2];
-		int h = height;
-		byte *dest = top_p;
-		do
-		{
-			unsigned int lbg = darkener[*dest] | 0x1f07c1f;
-			unsigned int rbg = darkener[*(dest+diff)] | 0x1f07c1f;
-			*dest = RGB32k[0][0][lbg & (lbg>>15)];
-			*(dest+diff) = RGB32k[0][0][rbg & (rbg>>15)];
-			dest += pitch;
-		} while (--h);
-		top_p++;
-		diff -= 2;
-	}
-
-	if (Scaled)
-	{
-		CopyToScreen (left, top, 16, height);
-		CopyToScreen (right, top, 16, height);
-		ScaleCopy->Unlock ();
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC ClearRect
-//
-//---------------------------------------------------------------------------
-
-void FBaseStatusBar::ClearRect (int left, int top, int width, int height, int color) const
-{
-	if (width <= 0 || height <= 0)
-	{
-		return;
-	}
-	if (Scaled)
-	{
-		ScaleCopy->Lock ();
-		ScaleCopy->Clear (left, top, left + width, top + height, color);
-		CopyToScreen (left, top, width, height);
-		ScaleCopy->Unlock ();
-	}
-	else
-	{
-		top += ST_Y;
-		left += ST_X;
-		screen->Clear (left, top, left + width, top + height, color);
-	}
+	DrawOuterImage (Images[imgSmNumbers + val], x+8, y);
 }
 
 //---------------------------------------------------------------------------
@@ -1181,8 +1116,6 @@ void FBaseStatusBar::DrawCrosshair ()
 	DWORD color;
 	fixed_t size;
 	int w, h;
-	int iw, ih, iox, ioy;
-	byte *image;
 
 	if (CrosshairSize > FRACUNIT)
 	{
@@ -1197,9 +1130,8 @@ void FBaseStatusBar::DrawCrosshair ()
 	if (players[consoleplayer].cheats & CF_CHASECAM)
 		return;
 
-	image = CrosshairImage.GetImage (0, &iw, &ih, &iox, &ioy);
 	// Don't draw the crosshair if there is none
-	if (image == NULL)
+	if (CrosshairImage == NULL)
 	{
 		return;
 	}
@@ -1217,8 +1149,8 @@ void FBaseStatusBar::DrawCrosshair ()
 	{
 		size = FixedMul (size, CrosshairSize);
 	}
-	w = (iw * size) >> FRACBITS;
-	h = (ih * size) >> FRACBITS;
+	w = (CrosshairImage->GetWidth() * size) >> FRACBITS;
+	h = (CrosshairImage->GetHeight() * size) >> FRACBITS;
 
 	if (crosshairhealth)
 	{
@@ -1260,10 +1192,14 @@ void FBaseStatusBar::DrawCrosshair ()
 		palettecolor = ColorMatcher.Pick (RPART(color), GPART(color), BPART(color));
 	}
 
-	screen->ScaleAlphaMaskedBlock (
-		realviewwidth / 2 + viewwindowx - ((iox * size) >> FRACBITS),
-		realviewheight / 2  + viewwindowy- ((ioy * size) >> FRACBITS),
-		iw, ih, w, h, image, palettecolor);
+	screen->DrawTexture (CrosshairImage,
+		realviewwidth / 2 + viewwindowx,
+		realviewheight / 2 + viewwindowy,
+		DTA_DestWidth, w,
+		DTA_DestHeight, h,
+		DTA_AlphaChannel, true,
+		DTA_FillColor, palettecolor,
+		TAG_DONE);
 }
 
 //---------------------------------------------------------------------------
@@ -1324,7 +1260,7 @@ void FBaseStatusBar::Draw (EHudState state)
 		for (i = 2, value = &CPlayer->mo->z; i >= 0; y -= height, --value, --i)
 		{
 			sprintf (line, "%c: %ld", labels[i], *value >> FRACBITS);
-			screen->DrawText (CR_GREEN, SCREENWIDTH - 80, y, line);
+			screen->DrawText (CR_GREEN, SCREENWIDTH - 80, y, line, TAG_DONE);
 			BorderNeedRefresh = screen->GetPageCount();
 		}
 	}
@@ -1345,7 +1281,7 @@ void FBaseStatusBar::Draw (EHudState state)
 		if (am_showtime)
 		{
 			sprintf (line, "%02d:%02d:%02d", time/3600, (time%3600)/60, time%60);	// Time
-			screen->DrawTextClean (CR_GREY, SCREENWIDTH - 80*CleanXfac, 8, line);
+			screen->DrawText (CR_GREY, SCREENWIDTH - 80*CleanXfac, 8, line, DTA_CleanNoMove, true, TAG_DONE);
 		}
 
 		// Draw map name
@@ -1376,19 +1312,14 @@ void FBaseStatusBar::Draw (EHudState state)
 		i = 0;
 		if (cluster == NULL || !(cluster->flags & CLUSTER_HUB))
 		{
-			while (i < 8 && level.mapname[i])
-			{
-				line[i++] = level.mapname[i];
-			}
-			line[i] = ':';
-			line[i+1] = ' ';
-			i += 2;
+			i = sprintf (line, "%s: ", level.mapname);
 		}
 		line[i] = TEXTCOLOR_ESCAPE;
 		line[i+1] = CR_GREY + 'A';
 		strcpy (&line[i+2], level.level_name);
-		screen->DrawTextClean (highlight,
-			(SCREENWIDTH - screen->StringWidth (line)*CleanXfac)/2, y, line);
+		screen->DrawText (highlight,
+			(SCREENWIDTH - SmallFont->StringWidth (line)*CleanXfac)/2, y, line,
+			DTA_CleanNoMove, true, TAG_DONE);
 
 		if (!deathmatch)
 		{
@@ -1400,7 +1331,8 @@ void FBaseStatusBar::Draw (EHudState state)
 				sprintf (line, "MONSTERS:"
 							   TEXTCOLOR_GREY " %d/%d",
 							   level.killed_monsters, level.total_monsters);
-				screen->DrawTextClean (highlight, 8, y, line);
+				screen->DrawText (highlight, 8, y, line,
+					DTA_CleanNoMove, true, TAG_DONE);
 				y += height;
 			}
 
@@ -1410,7 +1342,8 @@ void FBaseStatusBar::Draw (EHudState state)
 				sprintf (line, "SECRETS:"
 							   TEXTCOLOR_GREY " %d/%d",
 							   level.found_secrets, level.total_secrets);
-				screen->DrawTextClean (highlight, 8, y, line);
+				screen->DrawText (highlight, 8, y, line,
+					DTA_CleanNoMove, true, TAG_DONE);
 				y += height;
 			}
 
@@ -1420,7 +1353,8 @@ void FBaseStatusBar::Draw (EHudState state)
 				sprintf (line, "ITEMS:"
 							   TEXTCOLOR_GREY " %d/%d",
 							   level.found_items, level.total_items);
-				screen->DrawTextClean (highlight, 8, y, line);
+				screen->DrawText (highlight, 8, y, line,
+					DTA_CleanNoMove, true, TAG_DONE);
 			}
 		}
 	}
@@ -1432,9 +1366,10 @@ void FBaseStatusBar::Draw (EHudState state)
 
 	if (demoplayback && demover != GAMEVER)
 	{
-		screen->DrawTextClean (CR_TAN, 0, ST_Y - 40 * CleanYfac,
+		screen->DrawText (CR_TAN, 0, ST_Y - 40 * CleanYfac,
 			"Demo was recorded with a different version\n"
-			"of ZDoom. Expect it to go out of sync.");
+			"of ZDoom. Expect it to go out of sync.",
+			DTA_CleanNoMove, true, TAG_DONE);
 	}
 
 	if (state == HUD_StatusBar)
@@ -1478,30 +1413,62 @@ void FBaseStatusBar::AddBlend (float r, float g, float b, float a, float v_blend
 
 void FBaseStatusBar::BlendView (float blend[4])
 {
-	int cnt;
+	int cnt, i;
 
 	AddBlend (BaseBlendR / 255.f, BaseBlendG / 255.f, BaseBlendB / 255.f, BaseBlendA, blend);
 
-	if (CPlayer->powers[pw_ironfeet] > 4*32 || CPlayer->powers[pw_ironfeet]&8)
+	// [RH] All powerups can effect the screen blending now
+	for (i = 0; i < NUMPOWERS; ++i)
 	{
-		AddBlend (0.0f, 1.0f, 0.0f, 0.125f, blend);
+		if (i == pw_invulnerability && (CPlayer->mo->effects & FX_RESPAWNINVUL))
+		{ // Don't show effect if it's just temporary from respawning
+			continue;
+		}
+		if (i == pw_strength)
+		{ // berserk is different
+			continue;
+		}
+		if (CPlayer->powers[i] <= 0 ||
+			(CPlayer->powers[i] <= 4*32 && !(CPlayer->powers[i]&8)))
+		{
+			continue;
+		}
+
+		int a = APART(PowerupColors[i]);
+
+		if (a == 0)
+		{
+			continue;
+		}
+
+		AddBlend (RPART(PowerupColors[i])/255.f,
+			GPART(PowerupColors[i])/255.f,
+			BPART(PowerupColors[i])/255.f,
+			a/255.f, blend);
 	}
+
 	if (CPlayer->bonuscount)
 	{
 		cnt = CPlayer->bonuscount << 3;
 		AddBlend (0.8431f, 0.7333f, 0.2706f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
 	}
 
-	cnt = DamageToAlpha[MIN (113, CPlayer->damagecount)];
-
-	if (CPlayer->powers[pw_strength])
+	if (CPlayer->powers[pw_strength] && APART(PowerupColors[pw_strength]))
 	{
 		// slowly fade the berzerk out
-		int bzc = 128 - ((CPlayer->powers[pw_strength]>>3) & (~0x1f));
+		cnt = 128 - ((CPlayer->powers[pw_strength]>>3) & (~0x1f));
 
-		if (bzc > cnt)
-			cnt = bzc;
+		if (cnt > 0)
+		{
+			AddBlend (RPART(PowerupColors[pw_strength])/255.f,
+					  GPART(PowerupColors[pw_strength])/255.f,
+					  BPART(PowerupColors[pw_strength])/255.f,
+					  (APART(PowerupColors[pw_strength])*cnt)/(255.f*128.f),
+					  blend);
+		}
 	}
+
+	cnt = DamageToAlpha[MIN (113, CPlayer->damagecount)];
 		
 	if (cnt)
 	{
@@ -1547,6 +1514,7 @@ void FBaseStatusBar::BlendView (float blend[4])
 
 void FBaseStatusBar::DrawConsistancy () const
 {
+	static bool firsttime = true;
 	int i;
 	char conbuff[64], *buff_p;
 
@@ -1560,19 +1528,33 @@ void FBaseStatusBar::DrawConsistancy () const
 		{
 			if (buff_p == NULL)
 			{
-				strcpy (conbuff, "Consistency failure: ");
-				buff_p = conbuff + 21;
+				strcpy (conbuff, "Out of sync with:");
+				buff_p = conbuff + 17;
 			}
-			*buff_p++ = '0' + i;
+			*buff_p++ = ' ';
+			*buff_p++ = '1' + i;
 			*buff_p = 0;
 		}
 	}
 
 	if (buff_p != NULL)
 	{
-		screen->DrawTextClean (CR_GREEN, 
-			(screen->GetWidth() - screen->StringWidth (conbuff)*CleanXfac) / 2,
-			0, conbuff);
+		if (firsttime)
+		{
+			firsttime = false;
+			if (debugfile)
+			{
+				fprintf (debugfile, "%s as of tic %d (%d)\n", conbuff,
+					players[1-consoleplayer].inconsistant,
+					players[1-consoleplayer].inconsistant/ticdup);
+			}
+#ifdef _DEBUG
+			AddCommandString ("showrngs");
+#endif
+		}
+		screen->DrawText (CR_GREEN, 
+			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
+			0, conbuff, DTA_CleanNoMove, true, TAG_DONE);
 		BorderTopRefresh = screen->GetPageCount ();
 	}
 }
@@ -1610,3 +1592,70 @@ void FBaseStatusBar::ScreenSizeChanged ()
 		message = message->Next;
 	}
 }
+
+//---------------------------------------------------------------------------
+//
+// PROC FindInventoryPos
+//
+//---------------------------------------------------------------------------
+
+void FBaseStatusBar::FindInventoryPos (int &pos, bool &moreleft, bool &moreright) const
+{
+	int i, x;
+	int countleft, countright;
+	int lowest;
+
+	countleft = 0;
+	countright = 0;
+	lowest = 1;
+
+	x = CPlayer->readyArtifact - 1;
+	for (i = 0; i < 3 && x > 0; x--)
+	{
+		if (CPlayer->inventory[x])
+		{
+			lowest = x;
+			i++;
+		}
+	}
+	pos = lowest;
+	countleft = i;
+	if (x > 0)
+	{
+		for (i = x; i > 0; i--)
+		{
+			if (CPlayer->inventory[i])
+			{
+				countleft++;
+				lowest = i;
+			}
+		}
+	}
+	for (x = CPlayer->readyArtifact + 1; x < NUMINVENTORYSLOTS; x++)
+	{
+		if (CPlayer->inventory[x])
+			countright++;
+	}
+	if (countleft + countright <= 6)
+	{
+		pos = lowest;
+		moreleft = false;
+		moreright = false;
+		return;
+	}
+	if (countright < 3 && countleft > 3)
+	{
+		for (i = pos - 1; i > 0 && countright < 3; i--)
+		{
+			if (CPlayer->inventory[x])
+			{
+				pos = i;
+				countleft--;
+				countright++;
+			}
+		}
+	}
+	moreleft = (countleft > 3);
+	moreright = (countright > 3);
+}
+

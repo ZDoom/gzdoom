@@ -280,11 +280,13 @@ enum ERenderStyle
 	STYLE_Fuzzy,			// Draw silhouette using "fuzz" effect
 	STYLE_SoulTrans,		// Draw translucent with amount in r_transsouls
 	STYLE_OptFuzzy,			// Draw as fuzzy or translucent, based on user preference
+	STYLE_Stencil,			// Fill image interior with alphacolor
 
 	// The following styles can affect visibility in P_CheckSight()
 	STYLE_Translucent=64,	// Draw translucent
 	STYLE_Add,				// Draw additive
 	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
+	STYLE_TranslucentStencil
 };
 
 #define TRANSLUC25			(FRACUNIT/4)
@@ -447,7 +449,7 @@ public:
 	BYTE			RenderStyle;		// Style to draw this actor with
 	WORD			renderflags;		// Different rendering flags
 	WORD			picnum;				// Draw this instead of sprite if != 0xffff
-	WORD			TIDtoHate;			// TID of things to hate (0 if none)
+	SWORD			TIDtoHate;			// TID of things to hate (0 if none)
 	DWORD			effects;			// [RH] see p_effect.h
 	fixed_t			alpha;
 	DWORD			alphacolor;			// Color to draw when STYLE_Shaded
@@ -495,7 +497,7 @@ public:
 	WORD			SpawnAngle;
 	AActor			*tracer;		// Thing being chased/attacked for tracers
 	fixed_t			floorclip;		// value to use for floor clipping
-	WORD			tid;			// thing identifier
+	SWORD			tid;			// thing identifier
 	BYTE			special;		// special
 	BYTE			args[5];		// special arguments
 
@@ -539,6 +541,9 @@ public:
 
 	// [RH] Decal(s) this weapon/projectile generates on impact.
 	FDecalBase *DecalGenerator;
+
+	// [RH] Used to interpolate the view to get >35 FPS
+	fixed_t PrevX, PrevY, PrevZ;
 
 	// Public functions
 	bool IsTeammate (AActor *other);

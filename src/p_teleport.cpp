@@ -74,6 +74,7 @@ FState ATeleportFog::States[] =
 
 IMPLEMENT_ACTOR (ATeleportFog, Any, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
 
@@ -436,6 +437,11 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 			if (!P_TeleportMove (thing, x, y, z, false))
 			{
 				return false;
+			}
+
+			if (thing == players[consoleplayer].camera)
+			{
+				R_ResetViewInterpolation ();
 			}
 
 			// Rotate thing's orientation according to difference in linedef angles

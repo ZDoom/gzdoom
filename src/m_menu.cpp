@@ -198,8 +198,6 @@ static char		endstring[160];
 
 static short	itemOn; 			// menu item skull is on
 static short	whichSkull; 		// which skull to draw
-static int		SkullBaseLump;		// Heretic's spinning skull
-static int		MauloBaseLump;		// Hexen's maulotaur menu graphic
 static int		MenuTime;
 static int		InfoType;
 
@@ -223,6 +221,8 @@ static List				SaveGames;
 static FSaveGameNode	*TopSaveGame;
 static FSaveGameNode	*SelSaveGame;
 static FSaveGameNode	NewSaveNode;
+
+static int 	epi;				// Selected episode
 
 // PRIVATE MENU DEFINITIONS ------------------------------------------------
 
@@ -289,44 +289,29 @@ static oldmenu_t ClassMenu =
 };
 
 //
-// DOOM EPISODE SELECT
+// EPISODE SELECT
 //
-static oldmenuitem_t EpisodeMenu[]=
+oldmenuitem_t EpisodeMenu[MAX_EPISODES] =
 {
-	{1,0,'k',"M_EPI1", M_Episode},
-	{1,0,'t',"M_EPI2", M_Episode},
-	{1,0,'i',"M_EPI3", M_Episode},
-	{1,0,'t',"M_EPI4", M_Episode}
+	{1,0,0, NULL, M_Episode},
+	{1,0,0, NULL, M_Episode},
+	{1,0,0, NULL, M_Episode},
+	{1,0,0, NULL, M_Episode},
+	{1,0,0, NULL, M_Episode},
+	{1,0,0, NULL, M_Episode},
+	{1,0,0, NULL, M_Episode},
+	{1,0,0, NULL, M_Episode},
 };
 
-static oldmenu_t EpiDef =
+char EpisodeMaps[MAX_EPISODES][8];
+
+oldmenu_t EpiDef =
 {
-	3,
+	0,
 	EpisodeMenu,		// oldmenuitem_t ->
 	M_DrawEpisode,		// drawing routine ->
 	48,63,				// x,y
 	0	 				// lastOn
-};
-
-//
-// HERETIC EPISODE SELECT
-//
-static oldmenuitem_t HereticEpisodeMenu[] =
-{
-	{1,1,'c',"CITY OF THE DAMNED",M_Episode},
-	{1,1,'h',"HELL'S MAW",M_Episode},
-	{1,1,'d',"THE DOME OF D'SPARIL",M_Episode},
-	{1,1,'o',"THE OSSUARY",M_Episode},
-	{1,1,'s',"THE STAGNANT DEMESNE",M_Episode}
-};
-
-static oldmenu_t HereticEpiDef =
-{
-	3,
-	HereticEpisodeMenu,
-	M_DrawEpisode,
-	80,50,
-	0
 };
 
 //
@@ -766,6 +751,9 @@ void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
 {
 	FSaveGameNode *node;
 
+	if (file == NULL)
+		return;
+
 	M_ReadSaveStrings ();
 
 	// See if the file is already in our list
@@ -808,16 +796,16 @@ void M_DrawLoad (void)
 {
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		const patch_t *title = (patch_t *)W_MapLumpName ("M_LOADG");
-		screen->DrawPatchCleanNoMove (title,
-			(SCREENWIDTH-SHORT(title)->width*CleanXfac)/2, 20*CleanYfac);
-		W_UnMapLump (title);
+		FTexture *title = TexMan["M_LOADG"];
+		screen->DrawTexture (title,
+			(SCREENWIDTH-title->GetWidth()*CleanXfac)/2, 20*CleanYfac,
+			DTA_CleanNoMove, true, TAG_DONE);
 	}
 	else
 	{
-		screen->DrawTextClean (CR_UNTRANSLATED,
-			(SCREENWIDTH - screen->StringWidth ("LOAD GAME")*CleanXfac)/2, 10*CleanYfac,
-			"LOAD GAME");
+		screen->DrawText (CR_UNTRANSLATED,
+			(SCREENWIDTH - BigFont->StringWidth ("LOAD GAME")*CleanXfac)/2, 10*CleanYfac,
+			"LOAD GAME", DTA_CleanNoMove, true, TAG_DONE);
 	}
 	screen->SetFont (SmallFont);
 	M_DrawSaveLoadCommon ();
@@ -831,33 +819,23 @@ void M_DrawLoad (void)
 //
 void M_DrawSaveLoadBorder (int x, int y, int len)
 {
-	const patch_t *patch;
-
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		int i;
 
-		patch = (patch_t *)W_MapLumpName ("M_LSLEFT");
-		screen->DrawPatchClean (patch, x-8, y+7);
-		W_UnMapLump (patch);
-			
-		patch = (patch_t *)W_MapLumpName ("M_LSCNTR");
+		screen->DrawTexture (TexMan["M_LSLEFT"], x-8, y+7, DTA_Clean, true, TAG_DONE);
+
 		for (i = 0; i < len; i++)
 		{
-			screen->DrawPatchClean (patch, x, y+7);
+			screen->DrawTexture (TexMan["M_LSCNTR"], x, y+7, DTA_Clean, true, TAG_DONE);
 			x += 8;
 		}
-		W_UnMapLump (patch);
 
-		patch = (patch_t *)W_MapLumpName ("M_LSRGHT");
-		screen->DrawPatchClean (patch, x, y+7);
-		W_UnMapLump (patch);
+		screen->DrawTexture (TexMan["M_LSRGHT"], x, y+7, DTA_Clean, true, TAG_DONE);
 	}
 	else
 	{
-		patch = (patch_t *)W_MapLumpName ("M_FSLOT");
-		screen->DrawPatchClean (patch, x, y+1);
-		W_UnMapLump (patch);
+		screen->DrawTexture (TexMan["M_FSLOT"], x, y+1, DTA_Clean, true, TAG_DONE);
 	}
 }
 
@@ -866,6 +844,10 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 	FILE *file;
 
 	M_UnloadSaveData ();
+
+	// When breaking comment strings below, be sure to get the spacing from
+	// the small font instead of some other font.
+	screen->SetFont (SmallFont);
 
 	if (node != NULL &&
 		node->Succ != NULL &&
@@ -976,10 +958,11 @@ static void M_DrawSaveLoadCommon ()
 			const char *text =
 				(SelSaveGame == NULL || !SelSaveGame->bOldVersion)
 				? "No Picture" : "Different\nVersion";
-			const int textlen = screen->StringWidth (text)*CleanXfac;
+			const int textlen = SmallFont->StringWidth (text)*CleanXfac;
 
-			screen->DrawTextClean (CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
-				savepicTop+(savepicHeight-rowHeight)/2, text);
+			screen->DrawText (CR_GOLD, savepicLeft+(savepicWidth-textlen)/2,
+				savepicTop+(savepicHeight-rowHeight)/2, text,
+				DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
 
@@ -990,8 +973,9 @@ static void M_DrawSaveLoadCommon ()
 	{
 		for (i = 0; SaveComment[i].width != -1 && i < 6; ++i)
 		{
-			screen->DrawTextClean (CR_GOLD, commentLeft, commentTop
-				+ SmallFont->GetHeight()*i*CleanYfac, SaveComment[i].string);
+			screen->DrawText (CR_GOLD, commentLeft, commentTop
+				+ SmallFont->GetHeight()*i*CleanYfac, SaveComment[i].string,
+				DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
 
@@ -1003,10 +987,11 @@ static void M_DrawSaveLoadCommon ()
 
 		if (SaveGames.IsEmpty ())
 		{
-			const int textlen = screen->StringWidth ("No files")*CleanXfac;
+			const int textlen = SmallFont->StringWidth ("No files")*CleanXfac;
 
-			screen->DrawTextClean (CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
-				listboxTop+(listboxHeight-rowHeight)/2, "No files");
+			screen->DrawText (CR_GOLD, listboxLeft+(listboxWidth-textlen)/2,
+				listboxTop+(listboxHeight-rowHeight)/2, "No files",
+				DTA_CleanNoMove, true, TAG_DONE);
 			return;
 		}
 
@@ -1022,24 +1007,28 @@ static void M_DrawSaveLoadCommon ()
 				didSeeSelected = true;
 				if (!genStringEnter)
 				{
-					screen->DrawTextClean (
+					screen->DrawText (
 						SelSaveGame->bOldVersion ? CR_BLUE : CR_WHITE, listboxLeft+1,
-						listboxTop+rowHeight*i+CleanYfac, node->Title);
+						listboxTop+rowHeight*i+CleanYfac, node->Title,
+						DTA_CleanNoMove, true, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawTextClean (CR_WHITE, listboxLeft+1,
-						listboxTop+rowHeight*i+CleanYfac, savegamestring);
-					screen->DrawTextClean (CR_WHITE,
-						listboxLeft+1+screen->StringWidth (savegamestring)*CleanXfac,
-						listboxTop+rowHeight*i+CleanYfac, underscore);
+					screen->DrawText (CR_WHITE, listboxLeft+1,
+						listboxTop+rowHeight*i+CleanYfac, savegamestring,
+						DTA_CleanNoMove, true, TAG_DONE);
+					screen->DrawText (CR_WHITE,
+						listboxLeft+1+SmallFont->StringWidth (savegamestring)*CleanXfac,
+						listboxTop+rowHeight*i+CleanYfac, underscore,
+						DTA_CleanNoMove, true, TAG_DONE);
 				}
 			}
 			else
 			{
-				screen->DrawTextClean (
+				screen->DrawText (
 					node->bOldVersion ? CR_BLUE : CR_TAN, listboxLeft+1,
-					listboxTop+rowHeight*i+CleanYfac, node->Title);
+					listboxTop+rowHeight*i+CleanYfac, node->Title,
+					DTA_CleanNoMove, true, TAG_DONE);
 			}
 		}
 
@@ -1074,52 +1063,37 @@ static void M_DrawSaveLoadCommon ()
 // frame graphics. The border is drawn outside the area, not in it.
 void M_DrawFrame (int left, int top, int width, int height)
 {
-	const patch_t *p1, *p2;
+	FTexture *p1, *p2;
 	gameborder_t *border = gameinfo.border;
 	int offset = border->offset;
 	int size = border->size;
 	int x, y;
 
-	p1 = (patch_t *)W_MapLumpName (border->t);
-	p2 = (patch_t *)W_MapLumpName (border->b);
+	p1 = TexMan[border->t];
+	p2 = TexMan[border->b];
 	for (x = left; x < left + width; x += size)
 	{
 		if (x + size > left + width)
 			x = left + width - size;
-		screen->DrawPatch (p1, x, top - offset);
-		screen->DrawPatch (p2, x, top + height);
+		screen->DrawTexture (p1, x, top - offset, TAG_DONE);
+		screen->DrawTexture (p2, x, top + height, TAG_DONE);
 	}
-	W_UnMapLump (p1);
-	W_UnMapLump (p2);
 
-	p1 = (patch_t *)W_MapLumpName (border->l);
-	p2 = (patch_t *)W_MapLumpName (border->r);
+	p1 = TexMan[border->l];
+	p2 = TexMan[border->r];
 	for (y = top; y < top + height; y += size)
 	{
 		if (y + size > top + height)
 			y = top + height - size;
-		screen->DrawPatch (p1, left - offset, y);
-		screen->DrawPatch (p2, left + width, y);
+		screen->DrawTexture (p1, left - offset, y, TAG_DONE);
+		screen->DrawTexture (p2, left + width, y, TAG_DONE);
 	}
-	W_UnMapLump (p1);
-	W_UnMapLump (p2);
 
 	// Draw beveled edge.
-	p1 = (patch_t *)W_MapLumpName (border->tl);
-	screen->DrawPatch (p1, left-offset, top-offset);
-	W_UnMapLump (p1);
-
-	p1 = (patch_t *)W_MapLumpName (border->tr);
-	screen->DrawPatch (p1, left+width, top-offset);
-	W_UnMapLump (p1);
-
-	p1 = (patch_t *)W_MapLumpName (border->bl);
-	screen->DrawPatch (p1, left-offset, top+height);
-	W_UnMapLump (p1);
-
-	p1 = (patch_t *)W_MapLumpName (border->br);
-	screen->DrawPatch (p1, left+width, top+height);
-	W_UnMapLump (p1);
+	screen->DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
+	screen->DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
+	screen->DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
+	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
 }
 
 //
@@ -1148,16 +1122,17 @@ void M_DrawSave()
 {
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		patch_t *title = (patch_t *)W_MapLumpName ("M_SAVEG");
-		screen->DrawPatchCleanNoMove (title,
-			(SCREENWIDTH-SHORT(title)->width*CleanXfac)/2, 20*CleanYfac);
+		FTexture *title = TexMan["M_SAVEG"];
+		screen->DrawTexture (title,
+			(SCREENWIDTH-title->GetWidth()*CleanXfac)/2, 20*CleanYfac,
+			DTA_CleanNoMove, true, TAG_DONE);
 		W_UnMapLump (title);
 	}
 	else
 	{
-		screen->DrawTextClean (CR_UNTRANSLATED,
-			(SCREENWIDTH - screen->StringWidth ("SAVE GAME")*CleanXfac)/2, 10*CleanYfac,
-			"SAVE GAME");
+		screen->DrawText (CR_UNTRANSLATED,
+			(SCREENWIDTH - BigFont->StringWidth ("SAVE GAME")*CleanXfac)/2, 10*CleanYfac,
+			"SAVE GAME", DTA_CleanNoMove, true, TAG_DONE);
 	}
 	screen->SetFont (SmallFont);
 	M_DrawSaveLoadCommon ();
@@ -1302,21 +1277,23 @@ void M_QuickLoad ()
 //
 void M_DrawReadThis ()
 {
-	if (gameinfo.flags & GI_PAGESARERAW)
+	FTexture *tex;
+
+	if (gameinfo.flags & GI_INFOINDEXED)
 	{
-		const byte *title = (byte *)W_MapLumpNum (
-			W_GetNumForName (gameinfo.info.indexed.basePage) +
-			InfoType);
-		screen->DrawPageBlock (title);
-		W_UnMapLump (title);
+		char name[9];
+		W_GetLumpName (name, W_GetNumForName (gameinfo.info.indexed.basePage) + InfoType);
+		name[8] = 0;
+		tex = TexMan[name];
 	}
 	else
 	{
-		const patch_t *title = (patch_t *)W_MapLumpName (
-			gameinfo.info.infoPage[InfoType-1]);
-		screen->DrawPatchIndirect (title, 0, 0);
-		W_UnMapLump (title);
+		tex = TexMan[gameinfo.info.infoPage[InfoType-1]];
 	}
+	screen->DrawTexture (tex, 0, 0,
+		DTA_DestWidth, screen->GetWidth(),
+		DTA_DestHeight, screen->GetHeight(),
+		TAG_DONE);
 }
 
 //
@@ -1324,42 +1301,34 @@ void M_DrawReadThis ()
 //
 void M_DrawMainMenu (void)
 {
-	const patch_t *patch = (patch_t *)W_MapLumpName("M_DOOM");
-	screen->DrawPatchClean (patch, 94, 2);
-	W_UnMapLump (patch);
+	screen->DrawTexture (TexMan["M_DOOM"], 94, 2, DTA_Clean, true, TAG_DONE);
 }
 
 void M_DrawHereticMainMenu ()
 {
-	const patch_t *patch;
+	char name[9];
 
-	patch = (patch_t *)W_MapLumpName("M_HTIC");
-	screen->DrawPatchClean (patch, 88, 0);
-	W_UnMapLump (patch);
+	screen->DrawTexture (TexMan["M_HTIC"], 88, 0, DTA_Clean, true, TAG_DONE);
 
 	if (gameinfo.gametype == GAME_Hexen)
 	{
 		int frame = (MenuTime / 5) % 7;
 
-		patch = (patch_t *)W_MapLumpNum(MauloBaseLump+(frame+2)%7);
-		screen->DrawPatchClean (patch, 37, 80);
-		W_UnMapLump (patch);
+		sprintf (name, "FBUL%c0", (frame+2)%7 + 'A');
+		screen->DrawTexture (TexMan[name], 37, 80, DTA_Clean, true, TAG_DONE);
 
-		patch = (patch_t *)W_MapLumpNum(MauloBaseLump+frame);
-		screen->DrawPatchClean (patch, 278, 80);
-		W_UnMapLump (patch);
+		sprintf (name, "FBUL%c0", frame + 'A');
+		screen->DrawTexture (TexMan[name], 278, 80, DTA_Clean, true, TAG_DONE);
 	}
 	else
 	{
 		int frame = (MenuTime / 3) % 18;
 
-		patch = (patch_t *)W_MapLumpNum(SkullBaseLump+(17-frame));
-		screen->DrawPatchClean (patch, 40, 10);
-		W_UnMapLump (patch);
+		sprintf (name, "M_SKL%.2d", 17 - frame);
+		screen->DrawTexture (TexMan[name], 40, 10, DTA_Clean, true, TAG_DONE);
 
-		patch = (patch_t *)W_MapLumpNum(SkullBaseLump+frame);
-		screen->DrawPatchClean (patch, 232, 10);
-		W_UnMapLump (patch);
+		sprintf (name, "M_SKL%.2d", frame);
+		screen->DrawTexture (TexMan[name], 232, 10, DTA_Clean, true, TAG_DONE);
 	}
 }
 
@@ -1368,17 +1337,10 @@ void M_DrawHereticMainMenu ()
 //
 void M_DrawNewGame(void)
 {
-	const patch_t *patch;
-
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		patch = (patch_t *)W_MapLumpName("M_NEWG");
-		screen->DrawPatchClean (patch, 96, 14);
-		W_UnMapLump (patch);
-
-		patch = (patch_t *)W_MapLumpName("M_SKILL");
-		screen->DrawPatchClean (patch, 54, 38);
-		W_UnMapLump (patch);
+		screen->DrawTexture (TexMan["M_NEWG"], 96, 14, DTA_Clean, true, TAG_DONE);
+		screen->DrawTexture (TexMan["M_SKILL"], 54, 38, DTA_Clean, true, TAG_DONE);
 	}
 }
 
@@ -1390,6 +1352,23 @@ void M_NewGame(int choice)
 		return;
 	}
 
+	// Set up episode menu positioning
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		EpiDef.x = 48;
+		EpiDef.y = 63;
+	}
+	else
+	{
+		EpiDef.x = 80;
+		EpiDef.y = 50;
+	}
+	if (EpiDef.numitems > 4)
+	{
+		EpiDef.y -= LINEHEIGHT;
+	}
+	epi = 0;
+
 	if (gameinfo.gametype == GAME_Hexen)
 	{ // [RH] Make the default entry the last class the player used.
 		ClassMenu.lastOn = players[consoleplayer].userinfo.PlayerClass;
@@ -1399,17 +1378,23 @@ void M_NewGame(int choice)
 		}
 		M_SetupNextMenu (&ClassMenu);
 	}
-	else if (gameinfo.flags & GI_MAPxx)
-	{
-		M_SetupNextMenu (&NewDef);
-	}
-	else if (gameinfo.gametype == GAME_Doom)
-	{
-		M_SetupNextMenu (&EpiDef);
-	}
 	else
 	{
-		M_SetupNextMenu (&HereticEpiDef);
+		if (EpiDef.numitems <= 1)
+		{
+			if (gameinfo.gametype == GAME_Doom)
+			{
+				M_SetupNextMenu (&NewDef);
+			}
+			else
+			{
+				M_SetupNextMenu (&HereticSkillMenu);
+			}
+		}
+		else
+		{
+			M_SetupNextMenu (&EpiDef);
+		}
 	}
 }
 
@@ -1421,36 +1406,32 @@ void M_NewGame(int choice)
 
 static void DrawClassMenu(void)
 {
-	const patch_t *patch;
+	char name[9];
 	int classnum;
 
-	static char *boxLumpName[3] =
+	static const char boxLumpName[3][7] =
 	{
-		"m_fbox",
-		"m_cbox",
-		"m_mbox"
+		"M_FBOX",
+		"M_CBOX",
+		"M_MBOX"
 	};
-	static char *walkLumpName[3] =
+	static const char walkLumpName[3][10] =
 	{
-		"m_fwalk1",
-		"m_cwalk1",
-		"m_mwalk1"
+		"M_FWALK%d",
+		"M_CWALK%d",
+		"M_MWALK%d"
 	};
 
-	screen->DrawTextCleanMove (CR_UNTRANSLATED, 34, 24, "CHOOSE CLASS:");
+	screen->DrawText (CR_UNTRANSLATED, 34, 24, "CHOOSE CLASS:", DTA_Clean, true, TAG_DONE);
 	classnum = itemOn;
 	if (classnum > 2)
 	{
 		classnum = (MenuTime>>2) % 3;
 	}
-	patch = (patch_t *)W_MapLumpName(boxLumpName[classnum]);
-	screen->DrawPatchClean (patch, 174, 8);
-	W_UnMapLump (patch);
+	screen->DrawTexture (TexMan[boxLumpName[classnum]], 174, 8, DTA_Clean, true, TAG_DONE);
 
-	patch = (patch_t *)W_MapLumpNum(W_GetNumForName(walkLumpName[classnum])
-		+((MenuTime>>3)&3));
-	screen->DrawPatchClean (patch, 174+24, 8+12);
-	W_UnMapLump (patch);
+	sprintf (name, walkLumpName[classnum], ((MenuTime >> 3) & 3) + 1);
+	screen->DrawTexture (TexMan[name], 174+24, 8+12, DTA_Clean, true, TAG_DONE);
 }
 
 //---------------------------------------------------------------------------
@@ -1461,22 +1442,18 @@ static void DrawClassMenu(void)
 
 static void DrawHexenSkillMenu()
 {
-	screen->DrawTextCleanMove (CR_UNTRANSLATED, 74, 16, "CHOOSE SKILL LEVEL:");
+	screen->DrawText (CR_UNTRANSLATED, 74, 16, "CHOOSE SKILL LEVEL:", DTA_Clean, true, TAG_DONE);
 }
 
 
 //
 //		M_Episode
 //
-int 	epi;
-
 void M_DrawEpisode ()
 {
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		const patch_t *patch = (patch_t *)W_MapLumpName ("M_EPISOD");
-		screen->DrawPatchClean (patch, 54, 38);
-		W_UnMapLump (patch);
+		screen->DrawTexture (TexMan["M_EPISOD"], 54, 38, DTA_Clean, true, TAG_DONE);
 	}
 }
 
@@ -1504,14 +1481,8 @@ void M_ChooseSkill (int choice)
 	if (gameinfo.gametype == GAME_Hexen)
 	{
 		playerclass = PlayerClassNames[MenuPClass+1];
-		// "&wt@01" is a magic name that will become whatever map has
-		// warptrans 1.
-		G_DeferedInitNew ("&wt@01");
 	}
-	else
-	{
-		G_DeferedInitNew (CalcMapName (epi+1, 1));
-	}
+	G_DeferedInitNew (EpisodeMaps[epi]);
 	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
 	M_ClearMenus ();
 }
@@ -1521,13 +1492,15 @@ void M_Episode (int choice)
 	if ((gameinfo.flags & GI_SHAREWARE) && choice)
 	{
 		M_StartMessage(GStrings(SWSTRING),NULL,false);
-		M_SetupNextMenu(&ReadDef);
+		//M_SetupNextMenu(&ReadDef);
 		return;
 	}
 
 	epi = choice;
 	if (gameinfo.gametype == GAME_Doom)
 		M_SetupNextMenu (&NewDef);
+	else if (gameinfo.gametype == GAME_Hexen)
+		M_SetupNextMenu (&HexenSkillMenu);
 	else
 		M_SetupNextMenu (&HereticSkillMenu);
 }
@@ -1583,7 +1556,14 @@ static void SCClass (int option)
 		HexenSkillItems[4].name = HereticSkillItems[4].name;
 		break;
 	}
-	M_SetupNextMenu (&HexenSkillMenu);
+	if (EpiDef.numitems > 1)
+	{
+		M_SetupNextMenu (&EpiDef);
+	}
+	else
+	{
+		M_SetupNextMenu (&HexenSkillMenu);
+	}
 }
 
 
@@ -1642,7 +1622,7 @@ void M_ReadThis (int choice)
 void M_ReadThisMore (int choice)
 {
 	InfoType++;
-	if (gameinfo.flags & GI_PAGESARERAW)
+	if (gameinfo.flags & GI_INFOINDEXED)
 	{
 		if (InfoType >= gameinfo.info.indexed.numPages)
 		{
@@ -1771,30 +1751,33 @@ static void M_PlayerSetupDrawer ()
 	}
 
 	// Draw title
-	screen->DrawTextCleanMove (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
-		160 - screen->StringWidth ("PLAYER SETUP")/2,
+	screen->DrawText (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
+		160 - BigFont->StringWidth ("PLAYER SETUP")/2,
 		15,
-		"PLAYER SETUP");
+		"PLAYER SETUP", DTA_Clean, true, TAG_DONE);
 
 	screen->SetFont (SmallFont);
 
 	// Draw player name box
-	screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y+yo, "Name");
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y+yo, "Name", DTA_Clean, true, TAG_DONE);
 	M_DrawSaveLoadBorder (PSetupDef.x + 56, PSetupDef.y, MAXPLAYERNAME+1);
-	screen->DrawTextCleanMove (CR_UNTRANSLATED, PSetupDef.x + 56 + xo, PSetupDef.y+yo, savegamestring);
+	screen->DrawText (CR_UNTRANSLATED, PSetupDef.x + 56 + xo, PSetupDef.y+yo, savegamestring,
+		DTA_Clean, true, TAG_DONE);
 
 	// Draw cursor for player name box
 	if (genStringEnter)
-		screen->DrawTextCleanMove (CR_UNTRANSLATED,
-			PSetupDef.x + screen->StringWidth(savegamestring) + 56+xo,
-			PSetupDef.y + yo, underscore);
+		screen->DrawText (CR_UNTRANSLATED,
+			PSetupDef.x + SmallFont->StringWidth(savegamestring) + 56+xo,
+			PSetupDef.y + yo, underscore, DTA_Clean, true, TAG_DONE);
 
 	// Draw player team setting
-	x = screen->StringWidth ("Team") + 8 + PSetupDef.x;
-	screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT+yo, "Team");
-	screen->DrawTextCleanMove (value, x, PSetupDef.y + LINEHEIGHT+yo,
+	x = SmallFont->StringWidth ("Team") + 8 + PSetupDef.x;
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT+yo, "Team",
+		DTA_Clean, true, TAG_DONE);
+	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT+yo,
 		players[consoleplayer].userinfo.team == TEAM_None ? "None" :
-		TeamNames[players[consoleplayer].userinfo.team]);
+			TeamNames[players[consoleplayer].userinfo.team],
+		DTA_Clean, true, TAG_DONE);
 
 	// Draw player character
 	{
@@ -1834,34 +1817,40 @@ static void M_PlayerSetupDrawer ()
 
 		if (sprframe != NULL)
 		{
-			V_ColorMap = translationtables[TRANSLATION_Players] + consoleplayer*256;
-			const patch_t *patch = (patch_t *)W_MapLumpNum (sprframe->lump[PlayerRotation]);
-			int dw = MulScale6 (SHORT(patch->width) * CleanXfac, scale);
-			int dh = MulScale6 (SHORT(patch->height) * CleanYfac, scale);
-			screen->DrawTranslatedPatchStretched (patch,
+			FTexture *tex = TexMan(sprframe->Texture[0]);
+			if (tex->Rotations != 0xFFFF)
+			{
+				tex = TexMan(SpriteFrames[tex->Rotations].Texture[PlayerRotation]);
+			}
+			screen->DrawTexture (tex,
 				(320 - 52 - 32 + xo - 160)*CleanXfac + (SCREENWIDTH)/2,
-				(PSetupDef.y + LINEHEIGHT*3 + 57 - 100)*CleanYfac + (SCREENHEIGHT/2), dw, dh);
-			W_UnMapLump (patch);
+				(PSetupDef.y + LINEHEIGHT*3 + 57 - 104)*CleanYfac + (SCREENHEIGHT/2),
+				DTA_DestWidth, MulScale6 (tex->GetWidth() * CleanXfac, scale),
+				DTA_DestHeight, MulScale6 (tex->GetHeight() * CleanYfac, scale),
+				DTA_Translation, translationtables[TRANSLATION_Players] + consoleplayer*256,
+				TAG_DONE);
 		}
 
 		const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
-		screen->DrawTextCleanMove (CR_GOLD, 320 - 52 - 32 -
-			screen->StringWidth (str)/2,
-			PSetupDef.y + LINEHEIGHT*3 + 76, str);
+		screen->DrawText (CR_GOLD, 320 - 52 - 32 -
+			SmallFont->StringWidth (str)/2,
+			PSetupDef.y + LINEHEIGHT*3 + 76, str,
+			DTA_Clean, true, TAG_DONE);
 		str = PlayerRotation ? "TO SEE FRONT" : "TO SEE BACK";
-		screen->DrawTextCleanMove (CR_GOLD, 320 - 52 - 32 -
-			screen->StringWidth (str)/2,
-			PSetupDef.y + LINEHEIGHT*3 + 76 + SmallFont->GetHeight (), str);
+		screen->DrawText (CR_GOLD, 320 - 52 - 32 -
+			SmallFont->StringWidth (str)/2,
+			PSetupDef.y + LINEHEIGHT*3 + 76 + SmallFont->GetHeight (), str,
+			DTA_Clean, true, TAG_DONE);
 	}
 
 	// Draw player color sliders
 	//V_DrawTextCleanMove (CR_GREY, PSetupDef.x, PSetupDef.y + LINEHEIGHT, "Color");
 
-	screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*2+yo, "Red");
-	screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*3+yo, "Green");
-	screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*4+yo, "Blue");
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*2+yo, "Red", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*3+yo, "Green", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*4+yo, "Blue", DTA_Clean, true, TAG_DONE);
 
-	x = screen->StringWidth ("Green") + 8 + PSetupDef.x;
+	x = SmallFont->StringWidth ("Green") + 8 + PSetupDef.x;
 	color = players[consoleplayer].userinfo.color;
 
 	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*2+yo, 0.0f, 255.0f, RPART(color));
@@ -1869,38 +1858,39 @@ static void M_PlayerSetupDrawer ()
 	M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*4+yo, 0.0f, 255.0f, BPART(color));
 
 	// Draw gender setting
-	x = screen->StringWidth ("Gender") + 8 + PSetupDef.x;
-	screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*5+yo, "Gender");
-	screen->DrawTextCleanMove (value, x, PSetupDef.y + LINEHEIGHT*5+yo,
-		genders[players[consoleplayer].userinfo.gender]);
+	x = SmallFont->StringWidth ("Gender") + 8 + PSetupDef.x;
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*5+yo, "Gender", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*5+yo,
+		genders[players[consoleplayer].userinfo.gender], DTA_Clean, true, TAG_DONE);
 
 	// Draw skin setting
 	if (gameinfo.gametype != GAME_Hexen)
 	{
-		x = screen->StringWidth ("Skin") + 8 + PSetupDef.x;
-		screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Skin");
-		screen->DrawTextCleanMove (value, x, PSetupDef.y + LINEHEIGHT*6+yo,
-			skins[players[consoleplayer].userinfo.skin].name);
+		x = SmallFont->StringWidth ("Skin") + 8 + PSetupDef.x;
+		screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Skin", DTA_Clean, true, TAG_DONE);
+		screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*6+yo,
+			skins[players[consoleplayer].userinfo.skin].name, DTA_Clean, true, TAG_DONE);
 	}
 	else
 	{
-		x = screen->StringWidth ("Class") + 8 + PSetupDef.x;
-		screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Class");
-		screen->DrawTextCleanMove (value, x, PSetupDef.y + LINEHEIGHT*6+yo,
-			PlayerClassNames[players[consoleplayer].userinfo.PlayerClass+1]);
+		x = SmallFont->StringWidth ("Class") + 8 + PSetupDef.x;
+		screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*6+yo, "Class", DTA_Clean, true, TAG_DONE);
+		screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*6+yo,
+			PlayerClassNames[players[consoleplayer].userinfo.PlayerClass+1], DTA_Clean, true, TAG_DONE);
 	}
 
 	// Draw autoaim setting
-	x = screen->StringWidth ("Autoaim") + 8 + PSetupDef.x;
+	x = SmallFont->StringWidth ("Autoaim") + 8 + PSetupDef.x;
 
-	screen->DrawTextCleanMove (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*7+yo, "Autoaim");
-	screen->DrawTextCleanMove (value, x, PSetupDef.y + LINEHEIGHT*7+yo,
+	screen->DrawText (label, PSetupDef.x, PSetupDef.y + LINEHEIGHT*7+yo, "Autoaim", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (value, x, PSetupDef.y + LINEHEIGHT*7+yo,
 		autoaim == 0 ? "Never" :
 		autoaim <= 0.25 ? "Very Low" :
 		autoaim <= 0.5 ? "Low" :
 		autoaim <= 1 ? "Medium" :
 		autoaim <= 2 ? "High" :
-		autoaim <= 3 ? "Very High" : "Always");
+		autoaim <= 3 ? "Very High" : "Always",
+		DTA_Clean, true, TAG_DONE);
 }
 
 // Something cut out from a scan and resized to fit in 32x32. Guess what it is.
@@ -2387,7 +2377,7 @@ BOOL M_Responder (event_t *ev)
 		{
 			ch = ev->data1;
 			if (saveCharIndex < genStringLen &&
-				(size_t)screen->StringWidth (savegamestring) < (genStringLen-1)*8)
+				(size_t)SmallFont->StringWidth (savegamestring) < (genStringLen-1)*8)
 			{
 				savegamestring[saveCharIndex] = ch;
 				savegamestring[++saveCharIndex] = 0;
@@ -2752,7 +2742,6 @@ void M_StartControlPanel (bool makeSound)
 //
 void M_Drawer ()
 {
-	const patch_t *patch;
 	int i, x, y, max;
 
 	// Horiz. & Vertically center string and print it.
@@ -2770,7 +2759,8 @@ void M_Drawer ()
 
 		for (i = 0; lines[i].width != -1; i++)
 		{
-			screen->DrawTextCleanMove (CR_UNTRANSLATED, 160 - lines[i].width/2, y, lines[i].string);
+			screen->DrawText (CR_UNTRANSLATED, 160 - lines[i].width/2, y, lines[i].string,
+				DTA_Clean, true, TAG_DONE);
 			y += screen->Font->GetHeight ();
 		}
 
@@ -2791,7 +2781,7 @@ void M_Drawer ()
 			screen->SetFont (BigFont);
 			if (currentMenu->routine)
 				currentMenu->routine(); 		// call Draw routine
-		
+
 			// DRAW MENU
 			x = currentMenu->x;
 			y = currentMenu->y;
@@ -2803,14 +2793,19 @@ void M_Drawer ()
 				{
 					if (currentMenu->menuitems[i].fulltext)
 					{
-						screen->DrawTextCleanMove (CR_UNTRANSLATED, x, y,
-							currentMenu->menuitems[i].name);
+						int color = CR_UNTRANSLATED;
+						if (currentMenu == &EpiDef && gameinfo.gametype == GAME_Doom)
+						{
+							color = CR_RED;
+						}
+						screen->DrawText (color, x, y,
+							currentMenu->menuitems[i].name,
+							DTA_Clean, true, TAG_DONE);
 					}
 					else
 					{
-						patch = (patch_t *)W_MapLumpName (currentMenu->menuitems[i].name);
-						screen->DrawPatchClean (patch, x, y);
-						W_UnMapLump (patch);
+						screen->DrawTexture (TexMan[currentMenu->menuitems[i].name], x, y,
+							DTA_Clean, true, TAG_DONE);
 					}
 				}
 				y += LINEHEIGHT;
@@ -2822,19 +2817,16 @@ void M_Drawer ()
 			{
 				if (gameinfo.gametype == GAME_Doom)
 				{
-					patch = (patch_t *)W_MapLumpName (skullName[whichSkull]);
-					screen->DrawPatchClean (patch,
-						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT);
-					W_UnMapLump (patch);
+					screen->DrawTexture (TexMan[skullName[whichSkull]],
+						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT,
+						DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
-					patch = (patch_t *)W_MapLumpName (
-						MenuTime & 16 ? "M_SLCTR1" : "M_SLCTR2");
-					screen->DrawPatchClean (patch,
+					screen->DrawTexture (TexMan[MenuTime & 16 ? "M_SLCTR1" : "M_SLCTR2"],
 						x + SELECTOR_XOFFSET,
-						currentMenu->y + itemOn*LINEHEIGHT + SELECTOR_YOFFSET);
-					W_UnMapLump (patch);
+						currentMenu->y + itemOn*LINEHEIGHT + SELECTOR_YOFFSET,
+						DTA_Clean, true, TAG_DONE);
 				}
 			}
 		}
@@ -2986,8 +2978,6 @@ void M_Init (void)
 	messageString = NULL;
 	messageLastMenuActive = menuactive;
 	quickSaveSlot = NULL;
-	SkullBaseLump = W_CheckNumForName ("M_SKL00");
-	MauloBaseLump = W_CheckNumForName ("FBULA0", ns_sprites);
 	strcpy (NewSaveNode.Title, "<New Save Game>");
 
 	underscore[0] = (gameinfo.gametype == GAME_Doom) ? '_' : '[';
@@ -3002,12 +2992,6 @@ void M_Init (void)
 		LINEHEIGHT = 20;
 	}
 
-	if (gameinfo.flags & GI_SHAREWARE)
-	{
-		EpiDef.numitems = 1;
-		HereticEpiDef.numitems = 1;
-	}
-
 	switch (gameinfo.flags & GI_MENUHACK)
 	{
 	case GI_MENUHACK_COMMERCIAL:
@@ -3018,14 +3002,6 @@ void M_Init (void)
 		ReadDef.x = 330;
 		ReadDef.y = 165;
 		ReadMenu[0].routine = M_FinishReadThis;
-		break;
-	case GI_MENUHACK_RETAIL:
-		// add the fourth episode.
-		EpiDef.numitems++;
-		break;
-	case GI_MENUHACK_EXTENDED:
-		HereticEpiDef.numitems = 5;
-		HereticEpiDef.y -= LINEHEIGHT;
 		break;
 	default:
 		break;

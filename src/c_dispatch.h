@@ -38,8 +38,6 @@
 
 class FConfigFile;
 
-#define HASH_SIZE	251				// I think this is prime
-
 void C_ExecCmdLineParams ();
 
 // Add commands to the console as if they were typed in. Can handle wait
@@ -92,6 +90,8 @@ public:
 
 	FConsoleCommand *m_Next, **m_Prev;
 	char *m_Name;
+
+	enum { HASH_SIZE = 251 };	// Is this prime?
 
 protected:
 	FConsoleCommand ();

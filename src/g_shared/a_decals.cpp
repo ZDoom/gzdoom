@@ -627,8 +627,9 @@ AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_
 			return NULL;
 
 		int stickypic = actor->StickToWall (wall);
+		FTexture *tex = TexMan(stickypic);
 
-		if (stickypic >= 0 && texturenodecals[stickypic])
+		if (tex != NULL && tex->bNoDecals)
 		{
 			actor->Destroy ();
 			return NULL;
@@ -647,16 +648,14 @@ AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_
 		GetWallStuff (wall, v1, ldx, ldy);
 		rorg = Length (x - v1->x, y - v1->y);
 
-		if (TileSizes[actor->picnum].Width == 0xffff)
-		{
-			R_CacheTileNum (actor->picnum);
-		}
+		tex = TexMan[actor->picnum];
+		int dwidth = tex->GetWidth ();
 
 		xscale = (actor->xscale + 1) << (FRACBITS - 6);
 		yscale = (actor->yscale + 1) << (FRACBITS - 6);
 
-		DecalWidth = TileSizes[actor->picnum].Width * xscale;
-		DecalLeft = TileSizes[actor->picnum].LeftOffset * xscale;
+		DecalWidth = dwidth * xscale;
+		DecalLeft = tex->LeftOffset * xscale;
 		DecalRight = DecalWidth - DecalLeft;
 		SpreadSource = actor;
 		SpreadDecal = decal;

@@ -136,6 +136,7 @@ public:
 
 	void Blank ();
 	bool PaintToWindow ();
+	void DoSpeedTest ();
 
 private:
 	bool CreateResources ();

@@ -35,12 +35,6 @@ BITS 32
 
 %ifndef M_TARGET_LINUX
 
-%define	HaveRDTSC	_HaveRDTSC
-%define HaveCMOV	_HaveCMOV
-%define	CPUFamily	_CPUFamily
-%define	CPUModel	_CPUModel
-%define CPUStepping	_CPUStepping
-
 %define FixedMul_ASM	_FixedMul_ASM
 %define FixedDiv_ASM	_FixedDiv_ASM
 %define CheckMMX	_CheckMMX
@@ -52,12 +46,6 @@ BITS 32
 %define DoubleVert_ASM	_DoubleVert_ASM
 
 %endif
-
-extern	HaveRDTSC
-extern	HaveCMOV
-extern	CPUFamily
-extern	CPUModel
-extern	CPUStepping
 
 %ifdef M_TARGET_WATCOM
   SEGMENT DATA PUBLIC ALIGN=16 CLASS=DATA USE32
@@ -178,12 +166,18 @@ FixedDiv_ASM:
 
 GLOBAL	CheckMMX
 
-; boolean CheckMMX (char *vendorid)
+; void CheckMMX (struct CPUInfo *)
 
 CheckMMX:
 	xor	eax,eax
+	mov	ecx,92/4
 	push	ebx
-	push	eax		; Will be set true if MMX is present
+	push	edi
+	mov	edi,[esp+12]
+	rep	stosd
+	sub	edi,92
+
+	mov	[edi+88],byte 32; Assume a 32-byte cache line
 
 	pushfd			; save EFLAGS
 	pop	eax		; store EFLAGS in EAX
@@ -194,38 +188,121 @@ CheckMMX:
 	pushfd			; push EFLAGS to TOS
 	pop	eax		; store EFLAGS in EAX
 	cmp	eax,ebx		; see if bit 21 has changed
-	jz	.nommx		; if no change, no CPUID
+	jz	near .noid	; if no change, then no CPUID
 
-	mov	eax,0		; setup function 0
-	CPUID			; call the function
-	mov	eax,[esp+12]	; fill in the vendorid string
-	mov	[eax],ebx
-	mov	[eax+4],edx
-	mov	[eax+8],ecx
-
+; Get vendor ID
 	xor	eax,eax
-	mov	eax,1		; setup function 1
-	CPUID			; call the function
-	and	ah,0xf
-	mov	[CPUFamily],ah
-	mov	ah,al
-	shr	ah,4
-	and	al,0xf
-	mov	[CPUModel],ah
-	mov	[CPUStepping],al
-	xor	eax,eax
-	test	edx,0x00000010	; test for RDTSC
-	setnz	al		; al=1 if RDTSC is available
-	mov	[HaveRDTSC],eax
-	test	edx,0x00001000	; test for CMOV
-	setnz	al		; al=1 if CMOV is available
-	mov	[HaveCMOV],eax
+	CPUID
+	mov	[edi],ebx
+	mov	[edi+4],edx
+	mov	[edi+8],ecx
 
-	test	edx,0x00800000	; test 23rd bit
-	jz	.nommx
+	cmp	ebx,0x68747541	; 'htuA'
+	jne	.notamd
+	cmp	edx,0x69746e65	; 'itne'
+	jne	.notamd
+	cmp	ecx,0x444d4163	; 'DMAc'
+	jne	.notamd
+	inc	byte [edi+87]
+.notamd
 
-	inc	dword [esp]
-.nommx	pop	eax
+; Get features flags and other info
+	mov	eax,1
+	CPUID
+	mov	[edi+68],ebx	; Store brand index and other stuff
+	mov	[edi+72],ecx	; Store extended feature flags
+	mov	[edi+76],edx	; Store feature flags
+
+	test	edx,(1<<19)	; If CLFLUSH instruction is supported,
+	jz	.noclf
+	shl	bh,3		; get the real cache line size.
+	mov	[edi+88],bh
+
+.noclf	mov	bl,al		; Extract stepping
+	and	bl,0x0F
+	mov	[edi+64],bl
+
+	mov	bl,ah		; Extract processor type
+	shr	bl,4		; (Valid for Intel only)
+	and	bl,0x03
+	mov	[edi+67],bl
+
+	shr	al,4		; Extract model and family
+	and	ah,0x0F		; model in al and family in ah
+	cmp	ah,15
+	jne	.noex
+
+	mov	ebx,eax		; Add extended model and family
+	shr	ebx,12
+	and	bl,0xF0
+	add	ah,bh
+	or	al,bl
+
+.noex	mov	[edi+65],al
+	mov	[edi+66],ah
+
+; Check for processor brand string
+	mov	eax,0x80000000
+	CPUID
+	cmp	eax,0x80000001
+	je	.feat2
+	jb	near .noid
+	cmp	eax,0x80000004
+	jb	.feat2
+	cmp	eax,0x80000005
+	jb	.brand
+
+; Get data L1 cache info
+	mov	eax,0x80000005
+	CPUID
+	mov	[edi+88],ecx
+
+; Get processor brand string
+.brand	mov	eax,0x80000002
+	CPUID
+	mov	[edi+16],eax
+	mov	[edi+20],ebx
+	mov	[edi+24],ecx
+	mov	[edi+28],edx
+	mov	eax,0x80000003
+	CPUID
+	mov	[edi+32],eax
+	mov	[edi+36],ebx
+	mov	[edi+40],ecx
+	mov	[edi+44],edx
+	mov	eax,0x80000004
+	CPUID
+	mov	[edi+48],eax
+	mov	[edi+52],ebx
+	mov	[edi+56],ecx
+	mov	[edi+60],edx
+
+; Get AMD-specific feature flags
+.feat2	cmp	byte [edi+87],0
+	jz	.noid
+	mov	eax,0x80000001
+	CPUID
+	mov	[edi+80],edx
+
+	mov	bl,al		; Extract stepping
+	and	bl,0x0F
+	mov	[edi+84],bl
+
+	shr	al,4		; Extract model and family
+	and	ah,0x0F		; model in al and family in ah
+	cmp	ah,15
+	jne	.noex2
+
+	mov	ebx,eax		; Add extended model and family
+	shr	ebx,12
+	and	bl,0xF0
+	add	ah,bh
+	or	al,bl
+
+.noex2	mov	[edi+85],al
+	mov	[edi+86],ah
+
+.noid	pop	edi
 	pop	ebx
 	ret
 
@@ -233,7 +310,8 @@ CheckMMX:
 ;
 ; EndMMX
 ;
-; Signal the end of MMX code
+; Signal the end of MMX code for compilers that can't
+; do inline assembly. Currently unused.
 ;
 ;-----------------------------------------------------------
 

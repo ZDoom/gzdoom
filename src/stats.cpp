@@ -114,7 +114,7 @@ void FStat::PrintStat ()
 		m_CurrStat->GetStats (stattext);
 		screen->SetFont (ConFont);
 		screen->DrawText (CR_GREEN, 5, SCREENHEIGHT -
-			SmallFont->GetHeight(), stattext);
+			SmallFont->GetHeight(), stattext, TAG_DONE);
 		screen->SetFont (SmallFont);
 		SB_state = screen->GetPageCount ();
 	}

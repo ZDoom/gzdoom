@@ -138,7 +138,11 @@ void AMageWandMissile::Tick ()
 	fixed_t hitz;
 	bool changexy;
 
-	// [RH] Ripping is a little different
+	PrevX = x;
+	PrevY = y;
+	PrevZ = z;
+
+	// [RH] Ripping is a little different than it was in Hexen
 	DoRipping = true;
 
 	// Handle movement

@@ -38,18 +38,14 @@
 #define DIRECTDRAW_VERSION 0x0300
 #define WIN32_LEAN_AND_MEAN
 
-//#ifdef __GNUC__
-//#define INITGUID
-//#endif
-
 #include <windows.h>
 #include <ddraw.h>
-//#include <d3d8.h>
 #include <stdio.h>
 
 #define __BYTEBOOL__
 #include "doomtype.h"
 
+#include "c_dispatch.h"
 #include "templates.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -122,7 +118,7 @@ static DWORD FlipFlags;
 CVAR (Bool, vid_palettehack, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, vid_attachedsurfaces, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, vid_noblitter, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CUSTOM_CVAR (Bool, vid_vsync, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Bool, vid_vsync, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	LOG1 ("vid_vsync set to %d\n", *self);
 	FlipFlags = self ? DDFLIP_WAIT : DDFLIP_WAIT|DDFLIP_NOVSYNC;
@@ -399,13 +395,13 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
 		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
-		if (fb->Width == width &&
+/*		if (fb->Width == width &&
 			fb->Height == height &&
 			fb->Windowed == !fullscreen)
 		{
 			return old;
 		}
-		old->GetFlash (flashColor, flashAmount);
+*/		old->GetFlash (flashColor, flashAmount);
 		delete old;
 	}
 	else
@@ -1232,7 +1228,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		toLock = LockingSurf;
 	}
 
-	hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
+	hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
 	LOG3 ("LockSurf %p (%d): %08lx\n", toLock, lockingLocker, hr);
 
 	if (hr == DDERR_SURFACELOST)
@@ -1263,7 +1259,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 			toLock = LockingSurf;
 		}
 		LOG ("Trying to lock again\n");
-		hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
+		hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
 		if (hr == DDERR_SURFACELOST && Windowed)
 		{ // If this is NT, the user probably opened the Windows NT Security dialog.
 		  // If this is not NT, trying to recreate everything from scratch won't hurt.
@@ -1290,7 +1286,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 			{
 				toLock = LockingSurf;
 			}
-			hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
+			hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
 		}
 	}
 	if (FAILED (hr))
@@ -1436,7 +1432,7 @@ void DDrawFB::Update ()
 	if (BufferingNow)
 	{
 		LockCount = 0;
-		if (AppActive && !SessionState && !PaintToWindow())
+		if ((Windowed || AppActive) && !SessionState && !PaintToWindow())
 		{
 			if (LockSurf (NULL, NULL) != NoGood)
 			{
@@ -1595,6 +1591,57 @@ void DDrawFB::Blank ()
 		blitFX.dwFillColor = 0;
 		DDraw->FlipToGDISurface ();
 		PrimarySurf->Blt (NULL, NULL, NULL, DDBLT_COLORFILL, &blitFX);
+	}
+}
+
+void DDrawFB::DoSpeedTest ()
+{
+	static const int testarea = 2048*1536*60;
+	LARGE_INTEGER start, end, diff, speed;
+	unsigned long vspeed, mspeed;
+	int area, realtestarea, repetitions;
+
+	if (LockSurf (NULL, NULL) == NoGood)
+	{
+		Printf ("Failed to lock video memory\n");
+	}
+
+	area = Width * Height;
+	repetitions = testarea / area;
+	realtestarea = repetitions * area;
+
+	QueryPerformanceCounter (&start);
+	do
+	{
+		memset (Buffer, repetitions, area);
+	} while (--repetitions);
+	QueryPerformanceCounter (&end);
+	LockingSurf->Unlock (NULL);
+
+	QueryPerformanceFrequency (&speed);
+	diff.QuadPart = end.QuadPart - start.QuadPart;
+	vspeed = (unsigned long)(realtestarea * speed.QuadPart / diff.QuadPart);
+
+	repetitions = testarea / area;
+	QueryPerformanceCounter (&start);
+	do
+	{
+		memset (MemBuffer, repetitions, area);
+	} while (--repetitions);
+	QueryPerformanceCounter (&end);
+
+	diff.QuadPart = end.QuadPart - start.QuadPart;
+	mspeed = (unsigned long)(realtestarea * speed.QuadPart / diff.QuadPart);
+
+	Printf ("Write to vid mem:%9luk/sec\n", vspeed / 1024);
+	Printf ("Write to sys mem:%9luk/sec\n", mspeed / 1024);
+}
+
+CCMD (vid_speedtest)
+{
+	if (screen != NULL)
+	{
+		static_cast<DDrawFB *>(screen)->DoSpeedTest ();
 	}
 }
 

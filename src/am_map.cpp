@@ -98,8 +98,6 @@ CVAR (Color, am_intralevelcolor,	0x0000ff,	CVAR_ARCHIVE);
 CVAR (Color, am_interlevelcolor,	0xff0000,	CVAR_ARCHIVE);
 
 // drawing stuff
-#define	FB		(screen)
-
 #define AM_PANDOWNKEY	KEY_DOWNARROW
 #define AM_PANUPKEY		KEY_UPARROW
 #define AM_PANRIGHTKEY	KEY_RIGHTARROW
@@ -634,11 +632,7 @@ void AM_loadPics ()
 	for (i = 0; i < 10; i++)
 	{
 		sprintf (namebuf, "AMMNUM%d", i);
-		marknums[i] = R_CheckTileNumForName (namebuf, TILE_Patch);
-		if (marknums[i] != -1)
-		{
-			R_CacheTileNum (marknums[i]);
-		}
+		marknums[i] = TexMan.CheckForTexture (namebuf, FTexture::TEX_MiscPatch);
 	}
 }
 
@@ -692,14 +686,14 @@ void AM_Stop ()
 //
 void AM_Start ()
 {
-	static char lastmap[8] = "";
+	static char lastmap[sizeof(level.mapname)] = "";
 
 	if (!stopped) AM_Stop();
 	stopped = false;
-	if (strncmp (lastmap, level.mapname, 8))
+	if (strcmp (lastmap, level.mapname))
 	{
 		AM_LevelInit();
-		strncpy (lastmap, level.mapname, 8);
+		strcpy (lastmap, level.mapname);
 	}
 	AM_initVariables();
 	AM_loadPics();
@@ -1878,7 +1872,7 @@ void AM_drawMarks ()
 			fy = CYMTOF(pt.y) - 3;
 
 			if (fx >= f_x && fx <= f_w - w && fy >= f_y && fy <= f_h - h && marknums[i] != -1)
-				FB->DrawPatchCleanNoMove (TileCache[marknums[i]], fx, fy);
+				screen->DrawTexture (TexMan(marknums[i]), fx, fy, DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
 }

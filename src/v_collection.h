@@ -35,19 +35,7 @@
 #define __V_COLLECTION_H__
 
 #include "doomtype.h"
-
-struct patch_t;
-
-struct RawImageHeader
-{
-	BYTE Magic[4];
-	WORD Width;
-	WORD Height;
-	SWORD LeftOffset;
-	SWORD TopOffset;
-	BYTE Compression;
-	BYTE Reserved[11];
-};
+#include "r_defs.h"
 
 class FImageCollection
 {
@@ -59,21 +47,18 @@ public:
 	void Init (const char **patchnames, int numPatches, int namespc=0);
 	void Uninit ();
 
-	byte *GetImage (int index, int *const width, int *const height, int *const xoffs, int *const yoffs) const;
-	int GetImageWidth (int index) const;
-	int GetImageHeight (int index) const;
+	FTexture *operator[] (int index) const
+	{
+		if ((unsigned int)index >= (unsigned int)NumImages)
+		{
+			return NULL;
+		}
+		return ImageMap[index] < 0 ? NULL : TexMan[ImageMap[index]];
+	}
 
 protected:
-	static const patch_t *CachePatch (const char *name, int namespc);
-
 	int NumImages;
-	struct ImageData
-	{
-		WORD Width, Height;
-		SWORD XOffs, YOffs;
-		byte *Data;
-	} *Images;
-	byte *Bitmaps;
+	int *ImageMap;
 };
 
 #endif //__V_COLLECTION_H__

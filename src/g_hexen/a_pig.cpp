@@ -200,6 +200,7 @@ class APig : public AActor
 public:
 	void Destroy ();
 	const char *GetObituary ();
+	void Die (AActor *source, AActor *inflictor);
 };
 
 FState APig::States[] =
@@ -243,9 +244,9 @@ IMPLEMENT_ACTOR (APig, Hexen, -1, 0)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (22)
 	PROP_Mass (60)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
-	PROP_Flags3 (MF3_DONTMORPH)
+	PROP_Flags3 (MF3_DONTMORPH|MF3_ISMONSTER)
 
 	PROP_SpawnState (S_PIG_LOOK1)
 	PROP_SeeState (S_PIG_WALK1)
@@ -273,6 +274,15 @@ const char *APig::GetObituary ()
 {
 	//return GStrings(OB_CHICKEN);
 	return Super::GetObituary ();
+}
+
+void APig::Die (AActor *source, AActor *inflictor)
+{
+	Super::Die (source, inflictor);
+	if (tracer != NULL && (tracer->flags & MF_UNMORPHED))
+	{
+		tracer->Die (source, inflictor);
+	}
 }
 
 //============================================================================

@@ -121,15 +121,22 @@ struct FAnimDef
 	WORD 	BasePic;
 	WORD	NumFrames;
 	WORD	CurFrame;
-	BYTE 	bIsTexture:1;
 	BYTE	bUniqueFrames:1;
+	BYTE	AnimType:2;
 	BYTE	Countdown;
 	struct FAnimFrame
 	{
 		BYTE	SpeedMin;
 		BYTE	SpeedRange;
 		WORD	FramePic;
-	}		Frames[1];
+	} Frames[1];
+	enum
+	{
+		ANIM_Forward,
+		ANIM_Backward,
+		ANIM_OscillateUp,
+		ANIM_OscillateDown,
+	};
 };
 
 TArray<FAnimDef *> Anims;
@@ -145,10 +152,7 @@ static void ParseAnim (byte istex);
 //
 //		Animating line specials
 //
-//#define MAXLINEANIMS			64
 
-//extern	short	numlinespecials;
-//extern	line_t* linespeciallist[MAXLINEANIMS];
 
 //
 // [RH] P_InitAnimDefs
@@ -179,22 +183,28 @@ static void P_InitAnimDefs ()
 			}
 			else if (SC_Compare ("warp"))
 			{
+				bool isflat;
 				SC_MustGetString ();
 				if (SC_Compare ("flat"))
 				{
 					SC_MustGetString ();
-					flatwarp[R_FlatNumForName (sc_String)] = true;
+					isflat = true;
+					// FIXME
+//					flatwarp[R_FlatNumForName (sc_String)] = true;
 				}
 				else if (SC_Compare ("texture"))
 				{
+					isflat = false;
 					// TODO: Make texture warping work with wall textures
 					SC_MustGetString ();
-					R_TextureNumForName (sc_String);
+//					R_TextureNumForName (sc_String);
 				}
 				else
 				{
 					SC_ScriptError (NULL, NULL);
 				}
+				int picnum = TexMan.CheckForTexture (sc_String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall);
+				TexMan.ReplaceTexture (picnum, new FWarpTexture (TexMan[picnum]), false);
 			}
 			else
 			{
@@ -217,27 +227,25 @@ static void ParseAnim (byte istex)
 	size_t i;
 
 	SC_MustGetString ();
-	picnum = istex ? R_CheckTextureNumForName (sc_String)
-		: W_CheckNumForName (sc_String, ns_flats) - firstflat;
+	picnum = TexMan.CheckForTexture (sc_String, istex ? FTexture::TEX_Wall : FTexture::TEX_Flat);
 
 	sink.CurFrame = 0;
 	sink.BasePic = picnum;
 	sink.bUniqueFrames = true;
-	sink.bIsTexture = istex;
 
 	// no decals on animating textures, by default
-	if (istex && picnum >= 0)
+	if (picnum >= 0)
 	{
-		texturenodecals[picnum] = 1;
+		TexMan[picnum]->bNoDecals = true;
 	}
 
 	while (SC_GetString ())
 	{
 		if (SC_Compare ("allowdecals"))
 		{
-			if (istex && picnum >= 0)
+			if (picnum >= 0)
 			{
-				texturenodecals[picnum] = 0;
+				TexMan[picnum]->bNoDecals = false;
 			}
 			continue;
 		}
@@ -304,7 +312,7 @@ static void ParseAnim (byte istex)
 		// If so, replace it
 		for (i = Anims.Size(); i-- > 0; )
 		{
-			if (Anims[i]->BasePic == picnum && Anims[i]->bIsTexture == istex)
+			if (Anims[i]->BasePic == picnum)
 			{
 				free (Anims[i]);
 				Anims[i] = newAnim;
@@ -344,47 +352,46 @@ void P_InitPicAnims (void)
 	if (W_CheckNumForName ("ANIMATED") != -1)
 	{
 		FAnimDef anim, *newAnim;
-		const byte *animdefs = (byte *)W_MapLumpName ("ANIMATED");
-		const byte *anim_p;
+		const char *animdefs = (const char *)W_MapLumpName ("ANIMATED");
+		const char *anim_p;
+		int pic1, pic2;
 
 		// Init animation
 
 		anim.bUniqueFrames = false;
 		anim.CurFrame = 0;
+		anim.AnimType = FAnimDef::ANIM_Forward;
 
-		for (anim_p = animdefs; *anim_p != 255; anim_p += 23)
+		for (anim_p = animdefs; *anim_p != -1; anim_p += 23)
 		{
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
-				if (R_CheckTextureNumForName (anim_p + 10 /* .startname */) == -1 ||
-					R_CheckTextureNumForName (anim_p + 1 /* .endname */) == -1)
+				if ((pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Wall)) == -1 ||
+					(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .endname */, FTexture::TEX_Wall)) == -1)
 					continue;		
 
-				anim.BasePic = R_TextureNumForName (anim_p + 10 /* .startname */);
-				anim.NumFrames = R_TextureNumForName (anim_p + 1 /* .endname */)
-								 - anim.BasePic + 1;
+				anim.BasePic = pic1;
+				anim.NumFrames = pic2 - anim.BasePic + 1;
 				if (*anim_p & 2)
 				{ // [RH] Bit 1 set means allow decals on walls with this texture
-					texturenodecals[anim.BasePic] = 0;
+					TexMan[anim.BasePic]->bNoDecals = false;
 				}
 				else
 				{
-					texturenodecals[anim.BasePic] = 1;
+					TexMan[anim.BasePic]->bNoDecals = true;
 				}
 			}
 			else
 			{
-				if (W_CheckNumForName (anim_p + 10 /* .startname */, ns_flats) == -1 ||
-					W_CheckNumForName (anim_p + 1 /* .startname */, ns_flats) == -1)
+				if ((pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Flat)) == -1 ||
+					(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat)) == -1)
 					continue;
 
-				anim.BasePic = R_FlatNumForName (anim_p + 10 /* .startname */);
-				anim.NumFrames = R_FlatNumForName (anim_p + 1 /* .endname */)
-								 - anim.BasePic + 1;
+				anim.BasePic = pic1;
+				anim.NumFrames = pic2 - anim.BasePic + 1;
 			}
 
-			anim.bIsTexture = *anim_p /* .istexture */;
 			anim.bUniqueFrames = false;
 			anim.CurFrame = 0;
 
@@ -412,6 +419,21 @@ void P_InitPicAnims (void)
 	}
 	// [RH] Load any ANIMDEFS lumps
 	P_InitAnimDefs ();
+}
+
+void P_AddSimpleAnim (int picnum, int animcount, int animtype, int animspeed)
+{
+	FAnimDef *anim = (FAnimDef *)Malloc (sizeof(FAnimDef));
+	anim->bUniqueFrames = false;
+	anim->CurFrame = 0;
+	anim->BasePic = picnum;
+	anim->NumFrames = animcount;
+	anim->AnimType = animtype;
+	anim->Frames[0].SpeedMin = animspeed;
+	anim->Frames[0].SpeedRange = 0;
+	anim->Frames[0].FramePic = anim->BasePic;
+	anim->Countdown = anim->Frames[0].SpeedMin - 1;
+	Anims.Push (anim);
 }
 
 // [RH] Check dmflags for noexit and respond accordingly
@@ -730,10 +752,14 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 			case SPAC_CROSS:
 				switch (line->special)
 				{
+				case Door_Raise:
+					if (line->args[1] > 32)
+					{
+						break;
+					}
 				case Teleport:
 				case Teleport_NoFog:
 				case Teleport_Line:
-				case Door_Raise:
 				case Plat_DownWaitUpStayLip:
 				case Plat_DownWaitUpStay:
 					noway = false;
@@ -976,7 +1002,39 @@ void P_UpdateSpecials ()
 		{
 			int speedframe;
 
-			anim->CurFrame = (anim->CurFrame + 1) % anim->NumFrames;
+			switch (anim->AnimType)
+			{
+			case FAnimDef::ANIM_Forward:
+				anim->CurFrame = (anim->CurFrame + 1) % anim->NumFrames;
+				break;
+
+			case FAnimDef::ANIM_Backward:
+				if (anim->CurFrame == 0)
+				{
+					anim->CurFrame = anim->NumFrames - 1;
+				}
+				else
+				{
+					anim->CurFrame -= 1;
+				}
+				break;
+
+			case FAnimDef::ANIM_OscillateUp:
+				anim->CurFrame = anim->CurFrame + 1;
+				if (anim->CurFrame >= anim->NumFrames - 1)
+				{
+					anim->AnimType = FAnimDef::ANIM_OscillateDown;
+				}
+				break;
+
+			case FAnimDef::ANIM_OscillateDown:
+				anim->CurFrame = anim->CurFrame - 1;
+				if (anim->CurFrame == 0)
+				{
+					anim->AnimType = FAnimDef::ANIM_OscillateUp;
+				}
+				break;
+			}
 			
 			speedframe = (anim->bUniqueFrames) ? anim->CurFrame : 0;
 
@@ -995,23 +1053,16 @@ void P_UpdateSpecials ()
 		{
 			int pic = anim->Frames[anim->CurFrame].FramePic;
 
-			if (anim->bIsTexture)
-				for (i = 0; i < anim->NumFrames; i++)
-					texturetranslation[anim->Frames[i].FramePic] = pic;
-			else
-				for (i = 0; i < anim->NumFrames; i++)
-					flattranslation[anim->Frames[i].FramePic] = pic;
+			for (i = 0; i < anim->NumFrames; i++)
+				TexMan.SetTranslation (anim->Frames[i].FramePic, pic);
 		}
 		else
 		{
+			int pic = anim->BasePic + anim->CurFrame;
+
 			for (i = anim->BasePic; i < anim->BasePic + anim->NumFrames; i++)
 			{
-				int pic = anim->BasePic + (anim->CurFrame + i) % anim->NumFrames;
-
-				if (anim->bIsTexture)
-					texturetranslation[i] = pic;
-				else
-					flattranslation[i] = pic;
+				TexMan.SetTranslation (i, pic);
 			}
 		}
 	}

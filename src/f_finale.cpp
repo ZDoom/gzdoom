@@ -36,6 +36,7 @@
 #include "gstrings.h"
 #include "doomstat.h"
 #include "r_state.h"
+#include "r_draw.h"
 #include "hu_stuff.h"
 
 #include "gi.h"
@@ -317,13 +318,13 @@ static void FadePic ()
 //
 void F_TextWrite (void)
 {
-	int w, h, xo, yo;
+	FTexture *pic;
+	int w;
 	size_t count;
 	const char *ch;
 	int c;
 	int cx;
 	int cy;
-	const byte *data;
 	const byte *range;
 	int leftmargin;
 	int rowheight;
@@ -364,24 +365,27 @@ void F_TextWrite (void)
 			continue;
 		}
 
-		data = screen->Font->GetChar (c, &w, &h, &xo, &yo);
+		pic = screen->Font->GetChar (c, &w);
 		if (cx+w > SCREENWIDTH)
 			continue;
-		if (data != NULL)
+		if (pic != NULL)
 		{
 			if (scale)
 			{
-				screen->ScaleMaskedBlock (
-					(cx - xo) * CleanXfac + SCREENWIDTH / 2,
-					(cy - yo) * CleanYfac + SCREENHEIGHT / 2,
-					w, h, w * CleanXfac, h * CleanYfac, data, range);
+				screen->DrawTexture (pic,
+					cx * CleanXfac + SCREENWIDTH / 2,
+					cy * CleanYfac + SCREENHEIGHT / 2,
+					DTA_Translation, range,
+					DTA_Clean, true,
+					TAG_DONE);
 			}
 			else
 			{
-				screen->DrawMaskedBlock (
-					(cx - xo) + SCREENWIDTH / 2,
-					(cy - yo) + SCREENHEIGHT / 2,
-					w, h, data, range);
+				screen->DrawTexture (pic,
+					cx + SCREENWIDTH / 2,
+					cy + SCREENHEIGHT / 2,
+					DTA_Translation, range,
+					TAG_DONE);
 			}
 		}
 		cx += w;
@@ -464,7 +468,8 @@ struct
 
 int 			castnum;
 int 			casttics;
-int				castsprite;	// [RH] For overriding the player sprite with a skin
+int				castsprite;			// [RH] For overriding the player sprite with a skin
+const BYTE *	casttranslation;	// [RH] Draw "our hero" with their chosen suit color
 FState*			caststate;
 BOOL	 		castdeath;
 int 			castframes;
@@ -517,10 +522,8 @@ void F_StartCast (void)
 	wipegamestate = GS_FORCEWIPE;
 	castnum = 0;
 	caststate = castorder[castnum].info->SeeState;
-	if (castnum == 16)
-		castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
-	else
-		castsprite = caststate->sprite.index;
+	castsprite = caststate->sprite.index;
+	casttranslation = NULL;
 	casttics = caststate->GetTics ();
 	castdeath = false;
 	FinaleStage = 3;
@@ -544,23 +547,33 @@ void F_CastTicker (void)
 	if (caststate->GetTics() == -1 || caststate->GetNextState() == NULL)
 	{
 		// switch from deathstate to next monster
-		castnum++;
-		castdeath = false;
-		if (castorder[castnum].name == 0)
-			castnum = 0;
-		if (castorder[castnum].info->SeeSound)
+		do
 		{
-			if (castorder[castnum].info->flags2 & MF2_BOSS)
-				atten = ATTN_SURROUND;
-			else
-				atten = ATTN_NONE;
-			S_SoundID (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, atten);
+			castnum++;
+			castdeath = false;
+			if (castorder[castnum].name == 0)
+				castnum = 0;
+			if (castorder[castnum].info->SeeSound)
+			{
+				if (castorder[castnum].info->flags2 & MF2_BOSS)
+					atten = ATTN_SURROUND;
+				else
+					atten = ATTN_NONE;
+				S_SoundID (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, atten);
+			}
+			caststate = castorder[castnum].info->SeeState;
 		}
-		caststate = castorder[castnum].info->SeeState;
+		while (caststate == NULL);
 		if (castnum == 16)
+		{
 			castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
+			casttranslation = translationtables[TRANSLATION_Players] + 256*consoleplayer;
+		}
 		else
+		{
 			castsprite = caststate->sprite.index;
+			casttranslation = NULL;
+		}
 		castframes = 0;
 	}
 	else
@@ -684,43 +697,41 @@ BOOL F_CastResponder (event_t* ev)
 //
 void F_CastDrawer (void)
 {
-	spritedef_t*		sprdef;
 	spriteframe_t*		sprframe;
-	int 				lump;
-	BOOL	 			flip;
-	const patch_t*		patch;
+	FTexture*			pic;
 	
 	// erase the entire screen to a background
-	patch = (patch_t *)W_MapLumpName ("BOSSBACK");
-	screen->DrawPatchIndirect (patch, 0, 0);
-	W_UnMapLump (patch);
+	screen->DrawTexture (TexMan["BOSSBACK"], 0, 0,
+		DTA_DestWidth, screen->GetWidth(),
+		DTA_DestHeight, screen->GetHeight(),
+		TAG_DONE);
 
-	screen->DrawTextClean (CR_RED,
-		(SCREENWIDTH - screen->StringWidth (GStrings(castorder[castnum].name)) * CleanXfac)/2,
-		(SCREENHEIGHT * 180) / 200, GStrings(castorder[castnum].name));
+	screen->DrawText (CR_RED,
+		(SCREENWIDTH - SmallFont->StringWidth (GStrings(castorder[castnum].name)) * CleanXfac)/2,
+		(SCREENHEIGHT * 180) / 200,
+		GStrings(castorder[castnum].name),
+		DTA_CleanNoMove, true, TAG_DONE);
 	
 	// draw the current frame in the middle of the screen
-	sprdef = &sprites[castsprite];
-	sprframe = &SpriteFrames[sprdef->spriteframes + caststate->GetFrame()];
-	lump = sprframe->lump[0];
-	flip = (BOOL)sprframe->flip & 1;
-						
-	patch = (patch_t *)W_MapLumpNum (lump);
-	if (flip)
-		screen->DrawPatchFlipped (patch, 160, 170);
-	else
-		screen->DrawPatchIndirect (patch, 160, 170);
-	W_UnMapLump (patch);
+	sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
+	pic = TexMan(sprframe->Texture[0]);
+
+	screen->DrawTexture (pic, 160, 170,
+		DTA_320x200, true,
+		DTA_FlipX, sprframe->Flip & 1,
+		DTA_Translation, casttranslation,
+		TAG_DONE);
 }
 
 
 //
 // F_DrawPatchCol
 //
-void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
+void F_DrawPatchCol (int x, FTexture *tex, int col, const DCanvas *scrn)
 {
-	column_t*	column;
-	byte*		source;
+	const BYTE *column;
+	const FTexture::Span *spans;
+	const BYTE *source;
 	byte*		dest;
 	byte*		desttop;
 	unsigned	count;
@@ -738,7 +749,7 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 	mul = SCREENWIDTH / 320.f;
 	fx = (float)x;
 	repeat = (int)(floor (mul*(fx+1)) - floor(mul*fx));
-	if (repeat == 0)
+	if (repeat <= 0)
 		return;
 
 	// [RH] Remap virtual-x to real-x
@@ -748,61 +759,65 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 	step = (200<<16) / SCREENHEIGHT;
 	invstep = (SCREENHEIGHT<<16) / 200;
 
-	column = (column_t *)((byte *)patch + LONG(patch->columnofs[col]));
+	column = tex->GetColumn (col, &spans);
 	desttop = scrn->GetBuffer() + x;
 	pitch = scrn->GetPitch();
 
 	// step through the posts in a column
-	int top = 0;	// DeePsea tall patches support
-	while (column->topdelta != 0xff)
+	while (spans->Length != 0)
 	{
-		if (column->topdelta <= top)
-		{
-			top += column->topdelta;
-		}
-		else
-		{
-			top = column->topdelta;
-		}
-		if (column->length != 0)
-		{
-			count = (column->length * invstep) >> 16;
-			source = (byte *)column + 3;
-			dest = desttop + ((top*invstep)>>16)*pitch;
-			c = 0;
+		count = (spans->Length * invstep) >> 16;
+		source = column + spans->TopOffset;
+		dest = desttop + ((spans->TopOffset*invstep)>>16)*pitch;
+		c = 0;
 
-			switch (repeat)
+		switch (repeat)
+		{
+		case 1:
+			do
 			{
-			case 1:
-				do
-				{
-					*dest = source[c>>16];
-					dest += pitch;
-					c += step;
-				} while (--count);
-				break;
-			case 2:
-				do
-				{
-					p = source[c>>16];
-					dest[0] = p;
-					dest[1] = p;
-					dest += pitch;
-					c += step;
-				} while (--count);
-				break;
-			case 3:
-				do
-				{
-					p = source[c>>16];
-					dest[0] = p;
-					dest[1] = p;
-					dest[2] = p;
-					dest += pitch;
-					c += step;
-				} while (--count);
-				break;
-			case 4:
+				*dest = source[c>>16];
+				dest += pitch;
+				c += step;
+			} while (--count);
+			break;
+		case 2:
+			do
+			{
+				p = source[c>>16];
+				dest[0] = p;
+				dest[1] = p;
+				dest += pitch;
+				c += step;
+			} while (--count);
+			break;
+		case 3:
+			do
+			{
+				p = source[c>>16];
+				dest[0] = p;
+				dest[1] = p;
+				dest[2] = p;
+				dest += pitch;
+				c += step;
+			} while (--count);
+			break;
+		case 4:
+			do
+			{
+				p = source[c>>16];
+				dest[0] = p;
+				dest[1] = p;
+				dest[2] = p;
+				dest[3] = p;
+				dest += pitch;
+				c += step;
+			} while (--count);
+			break;
+		default:
+			{
+				int count2;
+
 				do
 				{
 					p = source[c>>16];
@@ -810,29 +825,17 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 					dest[1] = p;
 					dest[2] = p;
 					dest[3] = p;
+					for (count2 = repeat-4; count2; count2--)
+					{
+						dest[count2+4] = p;
+					}
 					dest += pitch;
 					c += step;
 				} while (--count);
-				break;
-			default:
-				{
-					int count2;
-
-					do
-					{
-						p = source[c>>16];
-						for (count2 = repeat; count2; count2--)
-						{
-							dest[count2] = p;
-						}
-						dest += pitch;
-						c += step;
-					} while (--count);
-				}
-				break;
 			}
+			break;
 		}
-		column = (column_t *)((byte *)column + column->length + 4);
+		spans++;
 	}
 }
 
@@ -946,8 +949,8 @@ void F_BunnyScroll (void)
 {
 	int 		scrolled;
 	int 		x;
-	const patch_t*p1;
-	const patch_t*p2;
+	FTexture	*p1;
+	FTexture	*p2;
 	char		name[10];
 	size_t 		stage;
 	static size_t laststage;
@@ -960,8 +963,8 @@ void F_BunnyScroll (void)
 	else if (scrolled < 0)
 		scrolled = 0;
 
-	p1 = (patch_t *)W_MapLumpName ("PFUB2");
-	p2 = (patch_t *)W_MapLumpName ("PFUB1");
+	p1 = TexMan["PFUB2"];
+	p2 = TexMan["PFUB1"];
 
 	for (x = 0; x < 320; x++)
 	{
@@ -970,8 +973,6 @@ void F_BunnyScroll (void)
 		else
 			F_DrawPatchCol (x, p2, x+scrolled - 320, screen);
 	}
-	W_UnMapLump (p1);
-	W_UnMapLump (p2);
 
 	if (FinaleCount < 1130)
 	{
@@ -979,8 +980,7 @@ void F_BunnyScroll (void)
 	}
 	if (FinaleCount < 1180)
 	{
-		p1 = (patch_t *)W_MapLumpName ("END0");
-		screen->DrawPatchIndirect (p1, (320-13*8)/2, (200-8*8)/2);
+		screen->DrawTexture (TexMan["END0"], (320-13*8)/2, (200-8*8)/2, DTA_320x200, true, TAG_DONE);
 		W_UnMapLump (p1);
 		laststage = 0;
 		return;
@@ -995,9 +995,8 @@ void F_BunnyScroll (void)
 		laststage = stage;
 	}
 
-	sprintf (name,"END%i",stage);
-	p1 = (patch_t *)W_MapLumpName (name);
-	screen->DrawPatchIndirect (p1, (320-13*8)/2, (200-8*8)/2);
+	sprintf (name, "END%i", stage);
+	screen->DrawTexture (TexMan[name], (320-13*8)/2, (200-8*8)/2, DTA_320x200, true, TAG_DONE);
 }
 
 
@@ -1007,7 +1006,6 @@ void F_BunnyScroll (void)
 void F_Drawer (void)
 {
 	const char *picname = NULL;
-	const patch_t *patch;
 
 	switch (FinaleStage)
 	{
@@ -1042,18 +1040,15 @@ void F_Drawer (void)
 		default:
 		case END_Pic1:
 			picname = gameinfo.finalePage1;
-			patch = (patch_t *)W_MapLumpName (gameinfo.finalePage1);
-			screen->DrawPatchIndirect (patch, 0, 0);
+			screen->DrawTexture (TexMan[picname], 0, 0, DTA_320x200, true, TAG_DONE);
 			break;
 		case END_Pic2:
 			picname = gameinfo.finalePage2;
-			patch = (patch_t *)W_MapLumpName (gameinfo.finalePage2);
-			screen->DrawPatchIndirect (patch, 0, 0);
+			screen->DrawTexture (TexMan[picname], 0, 0, DTA_320x200, true, TAG_DONE);
 			break;
 		case END_Pic3:
 			picname = gameinfo.finalePage3;
-			patch = (patch_t *)W_MapLumpName (gameinfo.finalePage3);
-			screen->DrawPatchIndirect (patch, 0, 0);
+			screen->DrawTexture (TexMan[picname], 0, 0, DTA_320x200, true, TAG_DONE);
 			break;
 		case END_Pic:
 			picname = EndSequences[FinaleSequence].PicName;
@@ -1091,34 +1086,20 @@ void F_Drawer (void)
 	}
 	if (picname != NULL)
 	{
-		const patch_t *patch;
-
-		if (gameinfo.flags & GI_PAGESARERAW)
-		{
-			const byte *data = (byte *)W_MapLumpName (picname);
-			screen->DrawPageBlock (data);
-			W_UnMapLump (data);
-		}
-		else
-		{
-			patch = (patch_t *)W_MapLumpName (picname);
-			screen->DrawPatchIndirect (patch, 0, 0);
-			W_UnMapLump (patch);
-		}
+		screen->DrawTexture (TexMan[picname], 0, 0,
+			DTA_DestWidth, screen->GetWidth(),
+			DTA_DestHeight, screen->GetHeight(),
+			TAG_DONE);
 		if (FinaleStage >= 14)
 		{ // Chess pic, draw the correct character graphic
 			if (multiplayer)
 			{
-				patch = (patch_t *)W_MapLumpName ("chessall");
-				screen->DrawPatchIndirect (patch, 20, 0);
-				W_UnMapLump (patch);
+				screen->DrawTexture (TexMan["CHESSALL"], 20, 0, DTA_320x200, true, TAG_DONE);
 			}
 			else if (players[consoleplayer].userinfo.PlayerClass > 0)
 			{
-				patch = (patch_t *)W_MapLumpNum (W_GetNumForName ("chessc")+
-					players[consoleplayer].userinfo.PlayerClass-1);
-				screen->DrawPatchIndirect (patch, 60, 0);
-				W_UnMapLump (patch);
+				picname = players[consoleplayer].userinfo.PlayerClass == 1 ? "CHESSC" : "CHESSM";
+				screen->DrawTexture (TexMan[picname], 60, 0, DTA_320x200, true, TAG_DONE);
 			}
 		}
 	}

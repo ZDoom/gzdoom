@@ -785,8 +785,8 @@ void rt_draw4cols (int sx)
 	// max/min calculations below.
 	for (x = 0; x < 4; ++x)
 	{
-		dc_ctspan[x][0] = viewheight+1;
-		dc_ctspan[x][1] = viewheight;
+		dc_ctspan[x][0] = screen->GetHeight()+1;
+		dc_ctspan[x][1] = screen->GetHeight();
 	}
 
 	for (;;)
@@ -1032,115 +1032,14 @@ void R_FillColumnHorizP (void)
 	} while (--count);
 }
 
-// Same as R_DrawMaskedColumn() except that it always uses
-// R_DrawColumnHoriz().
+// Same as R_DrawMaskedColumn() except that it always uses R_DrawColumnHoriz().
 
-void R_DrawMaskedColumnHoriz (column_t *column)
+void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *span)
 {
-	int top = 0;
-
-	while (column->topdelta != 0xff)
+	while (span->Length != 0)
 	{
-		if (column->topdelta <= top)
-		{
-			top += column->topdelta;
-		}
-		else
-		{
-			top = column->topdelta;
-		}
-		if (column->length == 0)
-		{
-			goto nextpost;
-		}
-		// calculate unclipped screen coordinates for post
-		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
-		dc_yh = (sprtopscreen + spryscale * (top + column->length) - FRACUNIT) >> FRACBITS;
-
-		if (sprflipvert)
-		{
-			swap (dc_yl, dc_yh);
-		}
-
-		if (dc_yh >= mfloorclip[dc_x])
-		{
-			dc_yh = mfloorclip[dc_x] - 1;
-		}
-		if (dc_yl < mceilingclip[dc_x])
-		{
-			dc_yl = mceilingclip[dc_x];
-		}
-
-		if (dc_yl <= dc_yh)
-		{
-			if (sprflipvert)
-			{
-				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
-				const fixed_t maxfrac = column->length << FRACBITS;
-				while (dc_texturefrac >= maxfrac)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				while (endfrac < 0)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			else
-			{
-				dc_texturefrac = dc_texturemid - (top << FRACBITS)
-					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
-				while (dc_texturefrac < 0)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				const fixed_t maxfrac = column->length << FRACBITS;
-				while (endfrac >= maxfrac)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			dc_source = (byte *)column + 3;
-			hcolfunc_pre ();
-		}
-nextpost:
-		column = (column_t *)((byte *)column + column->length + 4);
-	}
-
-	if (sprflipvert)
-	{
-		unsigned int *front = horizspan[dc_x&3];
-		unsigned int *back = dc_ctspan[dc_x&3] - 2;
-
-		// Reorder the posts so that they get drawn top-to-bottom
-		// instead of bottom-to-top.
-		while (front < back)
-		{
-			swap (front[0], back[0]);
-			swap (front[1], back[1]);
-			front += 2;
-			back -= 2;
-		}
-	}
-}
-
-void R_DrawMaskedColumnHoriz2 (column2_t *column)
-{
-	while (column->Length != 0)
-	{
-		const int length = column->Length;
-		const int top = column->TopDelta;
+		const int length = span->Length;
+		const int top = span->TopOffset;
 
 		// calculate unclipped screen coordinates for post
 		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
@@ -1200,11 +1099,11 @@ void R_DrawMaskedColumnHoriz2 (column2_t *column)
 					endfrac -= dc_iscale;
 				}
 			}
-			dc_source = (byte *)column + 4;
+			dc_source = column + top;
 			hcolfunc_pre ();
 		}
 nextpost:
-		column = (column2_t *)((byte *)column + length + 4);
+		span++;
 	}
 
 	if (sprflipvert)

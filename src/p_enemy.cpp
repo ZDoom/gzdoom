@@ -53,7 +53,7 @@ static FRandom pr_newchasedir ("NewChaseDir");
 static FRandom pr_lookformonsters ("LookForMonsters");
 static FRandom pr_lookforplayers ("LookForPlayers");
 static FRandom pr_scaredycat ("Anubis");
-static FRandom pr_chase ("Chase");
+	   FRandom pr_chase ("Chase");
 static FRandom pr_facetarget ("FaceTarget");
 static FRandom pr_railface ("RailFace");
 static FRandom pr_dropitem ("DropItem");
@@ -327,7 +327,7 @@ BOOL P_Move (AActor *actor)
 	if ((unsigned)actor->movedir >= 8)
 		I_Error ("Weird actor->movedir!");
 
-	speed = actor->GetDefault()->Speed;
+	speed = actor->Speed;
 
 #if 0	// [RH] I'm not so sure this is such a good idea
 	// killough 10/98: make monsters get affected by ice and sludge too:
@@ -339,7 +339,7 @@ BOOL P_Move (AActor *actor)
 		   * speed) / ORIG_FRICTION_FACTOR;
 		if (speed == 0)
 		{ // always give the monster a little bit of speed
-			speed = ksgn(actor->GetDefault()->Speed);
+			speed = ksgn(actor->Speed);
 		}
 	}
 #endif

@@ -23,7 +23,6 @@
 #ifndef __R_DEFS_H__
 #define __R_DEFS_H__
 
-// Screenwidth.
 #include "doomdef.h"
 
 // Some more or less basic data types
@@ -565,12 +564,6 @@ typedef struct post_s post_t;
 // column_t is a list of 0 or more post_t, (byte)-1 terminated
 typedef post_t	column_t;
 
-// [RH] Columns that allow for longer runs
-struct column2_t
-{
-	WORD		Length;			// 0 is the last post in a column
-	WORD		TopDelta;
-};
 
 
 //
@@ -585,13 +578,162 @@ typedef byte lighttable_t;	// This could be wider for >8 bit display.
 // textures from the TEXTURE1/2 lists of patches.
 struct patch_t
 { 
-	short			width;			// bounding box size 
-	short			height; 
-	short			leftoffset; 	// pixels to the left of origin 
-	short			topoffset;		// pixels below the origin 
-	int 			columnofs[8];	// only [width] used
+	SWORD			width;			// bounding box size 
+	SWORD			height; 
+	SWORD			leftoffset; 	// pixels to the left of origin 
+	SWORD			topoffset;		// pixels below the origin 
+	DWORD 			columnofs[8];	// only [width] used
 	// the [0] is &columnofs[width] 
 };
+
+// Base texture class
+class FTexture
+{
+public:
+	FTexture ();
+	virtual ~FTexture ();
+
+	SWORD LeftOffset, TopOffset;
+
+	BYTE WidthBits, HeightBits;
+	BYTE ScaleX, ScaleY;
+
+	char Name[9];
+	BYTE UseType;	// This texture's primary purpose
+
+	BYTE bNoDecals:1;
+	BYTE bModified:1;
+
+	WORD Rotations;
+
+	enum // UseTypes
+	{
+		TEX_Any,
+		TEX_Wall,
+		TEX_Flat,
+		TEX_Sprite,
+		TEX_WallPatch,
+		TEX_Build,
+		TEX_SkinSprite,
+		TEX_Decal,
+		TEX_MiscPatch,
+		TEX_FontChar,
+		TEX_Null,
+	};
+
+	struct Span
+	{
+		WORD TopOffset;
+		WORD Length;	// A length of 0 terminates this column
+	};
+
+	// Returns a single column of the texture
+	virtual const BYTE *GetColumn (unsigned int column, const Span **spans_out) = 0;
+
+	// Returns the whole texture, stored in column-major order
+	virtual const BYTE *GetPixels () = 0;
+
+	virtual void Unload () = 0;
+
+	int GetWidth () { if (Width == 0xFFFF) { GetDimensions(); } return Width; }
+	int GetHeight () { if (Width == 0xFFFF) { GetDimensions(); } return Height; }
+
+	void CopyToBlock (BYTE *dest, int dwidth, int dheight, int x, int y, const BYTE *translation=NULL);
+
+protected:
+	WORD Width, Height, WidthMask;
+
+	virtual void GetDimensions ();
+
+	Span **CreateSpans (const BYTE *pixels) const;
+	void FreeSpans (Span **spans) const;
+	void CalcBitSize ();
+
+	static void FlipSquareBlock (BYTE *block, int x, int y);
+};
+
+// Texture manager
+class FTextureManager
+{
+public:
+	FTextureManager ();
+	~FTextureManager ();
+
+	// Get texture without translation
+	FTexture *operator[] (int texnum)
+	{
+		if ((size_t)texnum >= Textures.Size()) return NULL;
+		return Textures[texnum].Texture;
+	}
+	FTexture *operator[] (const char *texname)
+	{
+		int texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
+		return Textures[texnum].Texture;
+	}
+
+	// Get texture with translation
+	FTexture *operator() (int texnum)
+	{
+		if ((size_t)texnum >= Textures.Size()) return NULL;
+		return Textures[Translation[texnum]].Texture;
+	}
+	FTexture *operator() (const char *texname)
+	{
+		int texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
+		return Textures[Translation[texnum]].Texture;
+	}
+
+	void SetTranslation (int fromtexnum, int totexnum)
+	{
+		if ((size_t)fromtexnum < Translation.Size())
+		{
+			if ((size_t)totexnum >= Textures.Size())
+			{
+				totexnum = fromtexnum;
+			}
+			Translation[fromtexnum] = totexnum;
+		}
+	}
+
+	int CheckForTexture (const char *name, int usetype, bool tryany=true);
+	int GetTexture (const char *name, int usetype);
+
+	void AddTexturesLump (int lumpnum, int patcheslump, bool texture1);
+	void AddFlats ();
+	void AddSprites ();
+	void AddPatches (int lumpnum);
+	void AddTiles (const void *tileFile);
+
+	int AddTexture (FTexture *texture);
+	int AddPatch (const char *patchname, int namespc=0);
+
+	// Replaces one texture with another. The new texture will be assigned
+	// the same name, slot, and use type as the texture as it is replacing.
+	// The old texture will no longer be managed. Set free true if you want
+	// the old texture to be deleted or set it false if you it texture to
+	// be left alone in memory. You will still need to delete it at some
+	// point, because the texture manager no longer knows about it.
+	// This function can be used for such things as warping textures.
+	void ReplaceTexture (int picnum, FTexture *newtexture, bool free);
+
+	void UnloadAll ();
+
+	int NumTextures () const { return (int)Textures.Size(); }
+
+private:
+	struct TextureHash
+	{
+		FTexture *Texture;
+		WORD HashNext;
+	};
+	enum { HASH_END = 0xFFFF, HASH_SIZE = 1027 };
+	TArray<TextureHash> Textures;
+	TArray<WORD> Translation;
+	WORD HashFirst[HASH_SIZE];
+	int DefaultTexture;
+};
+
+extern FTextureManager TexMan;
 
 
 // A vissprite_t is a thing
@@ -613,7 +755,7 @@ struct vissprite_t
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	fixed_t			alpha;
 	fixed_t			floorclip;
-	short			picnum;
+	FTexture		*pic;
 	short 			renderflags;
 	BYTE			RenderStyle;
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
@@ -639,9 +781,8 @@ enum
 //
 struct spriteframe_t
 {
-	byte	 	rotate;		// if false, use 0 for any position.
-	short		lump[16];	// lump to use for view angles 0-15
-	WORD		flip;		// flip (1 = flip) to use for view angles 0-15.
+	WORD Texture[16];	// texture to use for view angles 0-15
+	WORD Flip;			// flip (1 = flip) to use for view angles 0-15.
 };
 
 //
@@ -650,9 +791,9 @@ struct spriteframe_t
 //
 struct spritedef_t
 {
-	char			name[5];
-	BYTE			numframes;
-	WORD			spriteframes;
+	char name[5];
+	BYTE numframes;
+	WORD spriteframes;
 };
 
 extern TArray<spriteframe_t> SpriteFrames;

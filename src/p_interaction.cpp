@@ -333,6 +333,17 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	effects &= ~FX_RESPAWNINVUL;
 	//flags &= ~MF_INVINCIBLE;
 
+	if (debugfile && this->player)
+	{
+		static int dieticks[MAXPLAYERS];
+		int pnum = this->player-players;
+		if (dieticks[pnum] == gametic)
+			gametic=gametic;
+		dieticks[pnum] = gametic;
+		fprintf (debugfile, "died (%d) on tic %d (%s)\n", pnum, gametic,
+		this->player->cheats&CF_PREDICTING?"predicting":"real");
+	}
+
 	if (flags & MF_MISSILE)
 	{ // [RH] When missiles die, they just explode
 		P_ExplodeMissile (this, NULL);
@@ -556,6 +567,15 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		}
 	}
 
+	// [RH] If this is the unmorphed version of another monster, destroy this
+	// actor, because the morphed version is the one that will stick around in
+	// the level.
+	if (flags & MF_UNMORPHED)
+	{
+		Destroy ();
+		return;
+	}
+
 	if (flags2 & MF2_FIREDAMAGE && BDeathState)
 	{ // Burn death
 		SetState (BDeathState);
@@ -681,7 +701,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if (target->health <= 0)
 	{
-		if (inflictor && inflictor->flags2 & MF2_ICEDAMAGE)
+		if (inflictor && (inflictor->flags2 & MF2_ICEDAMAGE))
 		{
 			return;
 		}
@@ -992,28 +1012,37 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 	}
 	target->reactiontime = 0;			// we're awake now...	
-	if (source &&
-		source != target->target &&
-		target->OkayToSwitchTarget (source))
+	if (source)
 	{
-		// Target actor is not intent on another actor,
-		// so make him chase after source
-
-		// killough 2/15/98: remember last enemy, to prevent
-		// sleeping early; 2/21/98: Place priority on players
-
-		if (target->lastenemy == NULL ||
-			(target->lastenemy->player == NULL && target->TIDtoHate == 0) ||
-			target->lastenemy->health <= 0)
+		if (source == target->target)
 		{
-			target->lastenemy = target->target; // remember last enemy - killough
+			target->threshold = BASETHRESHOLD;
+			if (target->state == target->SpawnState && target->SeeState != NULL)
+			{
+				target->SetState (target->SeeState);
+			}
 		}
-		target->target = source;
-		target->threshold = BASETHRESHOLD;
-		if (target->state == target->SpawnState &&
-			target->SeeState != NULL)
+		else if (source != target->target &&
+			target->OkayToSwitchTarget (source))
 		{
-			target->SetState (target->SeeState);
+			// Target actor is not intent on another actor,
+			// so make him chase after source
+
+			// killough 2/15/98: remember last enemy, to prevent
+			// sleeping early; 2/21/98: Place priority on players
+
+			if (target->lastenemy == NULL ||
+				(target->lastenemy->player == NULL && target->TIDtoHate == 0) ||
+				target->lastenemy->health <= 0)
+			{
+				target->lastenemy = target->target; // remember last enemy - killough
+			}
+			target->target = source;
+			target->threshold = BASETHRESHOLD;
+			if (target->state == target->SpawnState && target->SeeState != NULL)
+			{
+				target->SetState (target->SeeState);
+			}
 		}
 	}
 }

@@ -68,6 +68,7 @@
 #include "m_png.h"
 #include "m_random.h"
 #include "version.h"
+#include "m_menu.h"
 
 #include "gi.h"
 
@@ -90,6 +91,7 @@ static cluster_info_t *FindDefClusterInfo (int cluster);
 static int FindEndSequence (int type, const char *picname);
 static void SetEndSequence (char *nextmap, int type);
 static void InitPlayerClasses ();
+static void ParseEpisodeInfo ();
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -183,6 +185,8 @@ static const char *MapInfoTopLevel[] =
 	"map",
 	"defaultmap",
 	"clusterdef",
+	"episode",
+	"clearepisodes",
 	NULL
 };
 
@@ -190,7 +194,9 @@ enum
 {
 	MITL_MAP,
 	MITL_DEFAULTMAP,
-	MITL_CLUSTERDEF
+	MITL_CLUSTERDEF,
+	MITL_EPISODE,
+	MITL_CLEAREPISODES
 };
 
 static const char *MapInfoMapLevel[] =
@@ -251,6 +257,7 @@ static const char *MapInfoMapLevel[] =
 	"filterstarts",
 	"activateowndeathspecials",
 	"killeractivatesdeathspecials",
+	"noinventorybar",
 	NULL
 };
 
@@ -338,6 +345,7 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_FILTERSTARTS, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_NOINVENTORYBAR, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -504,11 +512,29 @@ void G_ParseMapInfo ()
 				clusterinfo->cluster = sc_Number;
 				ParseMapInfoLower (ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0);
 				break;
+
+			case MITL_EPISODE:
+				ParseEpisodeInfo ();
+				break;
+
+			case MITL_CLEAREPISODES:
+				for (int i = 0; i < EpiDef.numitems; ++i)
+				{
+					delete[] EpisodeMenu[i].name;
+					EpisodeMenu[i].name = NULL;
+				}
+				EpiDef.numitems = 0;
+				break;
 			}
 		}
 		SC_Close ();
 	}
 	EndSequences.ShrinkToFit ();
+
+	if (EpiDef.numitems == 0)
+	{
+		I_FatalError ("You cannot use clearepisodes in a MAPINFO if you do not define any new episodes after it.");
+	}
 }
 
 static void ParseMapInfoLower (MapInfoHandler *handlers,
@@ -721,6 +747,124 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 	else
 	{
 		clusterinfo->flags = flags;
+	}
+}
+
+// Episode definitions start with the header "episode <start-map>"
+// and then can be followed by any of the following:
+//
+// name "Episode name as text"
+// picname "Picture to display the episode name"
+// key "Shortcut key for the menu"
+// remove
+
+static void ParseEpisodeInfo ()
+{
+	int i;
+	char map[9];
+	char *pic = NULL;
+	bool picisgfx;
+	bool remove;
+	char key = 0;
+	bool addedgfx = false;
+
+	// Get map name
+	SC_MustGetString ();
+	uppercopy (map, sc_String);
+	map[8] = 0;
+
+	SC_MustGetString ();
+	do
+	{
+		if (SC_Compare ("name"))
+		{
+			SC_MustGetString ();
+			ReplaceString (&pic, sc_String);
+			picisgfx = false;
+		}
+		else if (SC_Compare ("picname"))
+		{
+			SC_MustGetString ();
+			ReplaceString (&pic, sc_String);
+			picisgfx = true;
+		}
+		else if (SC_Compare ("remove"))
+		{
+			remove = true;
+		}
+		else if (SC_Compare ("key"))
+		{
+			SC_MustGetString ();
+			key = sc_String[0];
+		}
+		else
+		{
+			SC_UnGet ();
+			break;
+		}
+	}
+	while (SC_GetString ());
+
+	for (i = 0; i < EpiDef.numitems; ++i)
+	{
+		if (strncmp (EpisodeMaps[i], map, 8) == 0)
+		{
+			break;
+		}
+	}
+
+	if (remove)
+	{
+		// If the remove property is given for an episode, remove it.
+		if (i < EpiDef.numitems)
+		{
+			if (i+1 < EpiDef.numitems)
+			{
+				memmove (&EpisodeMaps[i], &EpisodeMaps[i+1],
+					sizeof(EpisodeMaps[0])*(EpiDef.numitems - i - 1));
+				memmove (&EpisodeMenu[i], &EpisodeMenu[i+1],
+					sizeof(EpisodeMenu[0])*(EpiDef.numitems - i - 1));
+			}
+			EpiDef.numitems--;
+		}
+	}
+	else
+	{
+		if (pic == NULL)
+		{
+			pic = copystring (map);
+			picisgfx = false;
+		}
+
+		if (i == EpiDef.numitems)
+		{
+			if (EpiDef.numitems == MAX_EPISODES)
+			{
+				i = EpiDef.numitems - 1;
+			}
+			else
+			{
+				i = EpiDef.numitems++;
+			}
+		}
+		else
+		{
+			delete[] EpisodeMenu[i].name;
+		}
+
+		EpisodeMenu[i].name = pic;
+		EpisodeMenu[i].alphaKey = tolower(key);
+		EpisodeMenu[i].fulltext = !picisgfx;
+		strncpy (EpisodeMaps[i], map, 8);
+
+		if (picisgfx)
+		{
+			if (TexMan.CheckForTexture (pic, FTexture::TEX_MiscPatch, false) == -1)
+			{
+				TexMan.AddPatch (pic);
+				addedgfx = true;
+			}
+		}
 	}
 }
 
@@ -998,6 +1142,7 @@ void G_InitNew (char *mapname)
 	BorderNeedRefresh = screen->GetPageCount ();
 
 	strncpy (level.mapname, mapname, 8);
+	level.mapname[8] = 0;
 	G_DoLoadLevel (0, false);
 }
 
@@ -1248,13 +1393,13 @@ void G_DoLoadLevel (int position, bool autosave)
 	//	a flat. The data is in the WAD only because
 	//	we look for an actual index, instead of simply
 	//	setting one.
-	skyflatnum = R_FlatNumForName (SKYFLATNAME);
+	skyflatnum = TexMan.GetTexture (SKYFLATNAME, FTexture::TEX_Flat);
 
 	// DOOM determines the sky texture to be used
-	// depending on the current episode, and the game version.
+	// depending on the current episode and the game version.
 	// [RH] Fetch sky parameters from level_locals_t.
-	sky1texture = R_TextureNumForName (level.skypic1);
-	sky2texture = R_TextureNumForName (level.skypic2);
+	sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall);
+	sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall);
 
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap ();
@@ -1319,7 +1464,7 @@ void G_DoLoadLevel (int position, bool autosave)
 
 		if (firstTime)
 		{
-			starttime = I_GetTimePolled ();
+			starttime = I_GetTime (false);
 			firstTime = false;
 		}
 	}
@@ -1490,10 +1635,14 @@ void G_InitLevelLocals ()
 
 		strncpy (level.level_name, info->level_name, 63);
 		strncpy (level.nextmap, info->nextmap, 8);
+		level.nextmap[8] = 0;
 		strncpy (level.secretmap, info->secretmap, 8);
+		level.secretmap[8] = 0;
 		strncpy (level.skypic1, info->skypic1, 8);
+		level.skypic1[8] = 0;
 		if (!level.skypic2[0])
 			strncpy (level.skypic2, level.skypic1, 8);
+		level.skypic2[8] = 0;
 	}
 	else
 	{
@@ -1502,8 +1651,8 @@ void G_InitLevelLocals ()
 		level.nextmap[0] =
 			level.secretmap[0] = 0;
 		level.music = NULL;
-		strncpy (level.skypic1, "SKY1", 8);
-		strncpy (level.skypic2, "SKY1", 8);
+		strcpy (level.skypic1, "SKY1");
+		strcpy (level.skypic2, "SKY1");
 		level.flags = 0;
 		level.levelnum = 1;
 	}
@@ -1759,6 +1908,85 @@ void G_SetLevelStrings (void)
 
 	if (level.info)
 		strncpy (level.level_name, level.info->level_name, 63);
+
+	// Set the default episodes
+	if (EpiDef.numitems == 0)
+	{
+		static const char eps[5][8] =
+		{
+			"E1M1", "E2M1", "E3M1", "E4M1", "E5M1"
+		};
+		static const char depinames[4][7] =
+		{
+			"M_EPI1", "M_EPI2", "M_EPI3", "M_EPI4"
+		};
+		static const char depikeys[4] = { 'k', 't', 'i', 't' };
+
+		static const char *hepinames[5] =
+		{
+			"CITY OF THE DAMNED",
+			"HELL'S MAW",
+			"THE DOME OF D'SPARIL",
+			"THE OSSUARY",
+			"THE STAGNANT DEMESNE",
+		};
+		static const char hepikeys[5] = { 'c', 'h', 'd', 'o', 's' };
+
+		if (gameinfo.flags & GI_MAPxx)
+		{
+			if (gameinfo.gametype == GAME_Hexen)
+			{
+				// "&wt@01" is a magic name that will become whatever map has
+				// warptrans 1.
+				strcpy (EpisodeMaps[0], "&wt@01");
+				EpisodeMenu[0].name = copystring ("Hexen");
+			}
+			else
+			{
+				strcpy (EpisodeMaps[0], "MAP01");
+				EpisodeMenu[0].name = copystring ("Hell on Earth");
+			}
+			EpisodeMenu[0].alphaKey = 'h';
+			EpisodeMenu[0].fulltext = true;
+			EpiDef.numitems = 1;
+		}
+		else if (gameinfo.gametype == GAME_Doom)
+		{
+			memcpy (EpisodeMaps, eps, 4*8);
+			for (i = 0; i < 4; ++i)
+			{
+				EpisodeMenu[i].name = copystring (depinames[i]);
+				EpisodeMenu[i].fulltext = false;
+				EpisodeMenu[i].alphaKey = depikeys[i];
+			}
+			if (gameinfo.flags & GI_MENUHACK_RETAIL)
+			{
+				EpiDef.numitems = 4;
+			}
+			else
+			{
+				EpiDef.numitems = 3;
+			}
+		}
+		else
+		{
+			memcpy (EpisodeMaps, eps, 5*8);
+			for (i = 0; i < 5; ++i)
+			{
+				EpisodeMenu[i].name = copystring (hepinames[i]);
+				EpisodeMenu[i].fulltext = true;
+				EpisodeMenu[i].alphaKey = hepikeys[i];
+			}
+			if (gameinfo.flags & GI_MENUHACK_EXTENDED)
+			{
+				EpiDef.numitems = 5;
+			}
+			else
+			{
+				EpiDef.numitems = 3;
+			}
+		}
+	}
 }
 
 void G_AirControlChanged ()

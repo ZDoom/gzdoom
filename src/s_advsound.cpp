@@ -104,6 +104,9 @@ enum SICommands
 	SI_IfHexen
 };
 
+// Blood was a cool game. If Monolith ever releases the source for it,
+// you can bet I'll port it.
+
 struct FBloodSFX
 {
 	DWORD	RelVol;		// volume, 0-255

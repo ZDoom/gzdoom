@@ -265,7 +265,7 @@ void P_InitTerrainTypes ()
 	int lump;
 	int size;
 
-	size = (numflats+1)*sizeof(byte);
+	size = (TexMan.NumTextures()+1)*sizeof(byte);
 	TerrainTypes = (byte *)Malloc (size);
 	memset (TerrainTypes, 0, size);
 
@@ -650,12 +650,12 @@ static void GenericParse (FGenericParse *parser, const char **keywords,
 
 static void ParseFloor ()
 {
-	int lump;
+	int picnum;
 	int terrain;
 
 	SC_MustGetString ();
-	lump = W_CheckNumForName (sc_String, ns_flats);
-	if (lump == -1)
+	picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Flat);
+	if (picnum == -1)
 	{
 		Printf ("Unknown flat %s\n", sc_String);
 		SC_MustGetString ();
@@ -668,7 +668,7 @@ static void ParseFloor ()
 		Printf ("Unknown terrain %s\n", sc_String);
 		terrain = 0;
 	}
-	TerrainTypes[lump - firstflat] = terrain;
+	TerrainTypes[picnum] = terrain;
 }
 
 //==========================================================================

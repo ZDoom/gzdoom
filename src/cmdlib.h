@@ -47,4 +47,6 @@ bool CheckWildcards (const char *pattern, const char *text);
 
 void FormatGUID (char *text, const GUID &guid);
 
+char *myasctime ();
+
 #endif

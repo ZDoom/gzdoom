@@ -67,6 +67,7 @@ extern int				validcount;
 extern int				linecount;
 extern int				loopcount;
 
+extern int				r_Yaspect;
 
 //
 // Lighting.
@@ -104,6 +105,10 @@ extern float			r_TiltVisibility;
 extern fixed_t			r_SpriteVisibility;
 extern fixed_t			r_ParticleVisibility;
 extern fixed_t			r_SkyVisibility;
+
+extern fixed_t			r_TicFrac;
+extern DWORD			r_FrameTime;
+extern bool				r_NoInterpolate;
 
 extern int				extralight, r_actualextralight;
 extern bool				foggy;
@@ -162,17 +167,20 @@ void R_SetFOV (float fov);
 float R_GetFOV ();
 void R_InitTextureMapping ();
 
-void R_SetViewAngle (angle_t ang);
+void R_SetViewAngle ();
 
 //
 // REFRESH - the actual rendering functions.
 //
 
 // Called by G_Drawer.
-void R_RenderPlayerView (player_t *player, void (*lengthyCallback)());
+void R_RenderPlayerView (player_t *player);
 void R_RefreshViewBorder ();
+void R_SetupBuffer ();
 
 void R_RenderViewToCanvas (player_t *player, DCanvas *canvas, int x, int y, int width, int height);
+
+void R_ResetViewInterpolation ();
 
 // Called by startup code.
 void R_Init (void);
@@ -182,5 +190,19 @@ void R_SetViewSize (int blocks);
 
 // [RH] Initialize multires stuff for renderer
 void R_MultiresInit (void);
+
+// BUILD stuff for interpolating between frames
+#define MAXINTERPOLATIONS 2048
+
+extern int numinterpolations;
+extern fixed_t oldipos[MAXINTERPOLATIONS];
+extern fixed_t bakipos[MAXINTERPOLATIONS];
+extern fixed_t *curipos[MAXINTERPOLATIONS];
+
+extern void updateinterpolations();
+extern void setinterpolation(fixed_t *posptr);
+extern void stopinterpolation(fixed_t *posptr);
+extern void dointerpolations(fixed_t smoothratio);
+extern void restoreinterpolations();
 
 #endif // __R_MAIN_H__

@@ -35,12 +35,7 @@ BITS 32
 
 ; Segment/section definition macros. 
 
-%ifdef M_TARGET_WATCOM
-  SEGMENT DATA PUBLIC ALIGN=16 CLASS=DATA USE32
-  SEGMENT DATA
-%else
-  SECTION .data
-%endif
+	SECTION .data
 
 %define SPACEFILLER4 (0x44444444)
 
@@ -55,6 +50,7 @@ EXTERN fuzzpos
 EXTERN fuzzoffset
 EXTERN NormalLight
 EXTERN realviewheight
+EXTERN CPU
 
 EXTERN dc_pitch
 EXTERN dc_colormap
@@ -89,6 +85,7 @@ EXTERN _fuzzpos
 EXTERN _fuzzoffset
 EXTERN _NormalLight
 EXTERN _realviewheight
+EXTERN _CPU
 
 EXTERN _dc_pitch
 EXTERN _dc_colormap
@@ -121,6 +118,7 @@ GLOBAL _ds_curcolormap
 %define fuzzoffset	_fuzzoffset
 %define NormalLight	_NormalLight
 %define realviewheight	_realviewheight
+%define CPU		_CPU
 
 %define dc_pitch	_dc_pitch
 %define dc_colormap	_dc_colormap
@@ -163,12 +161,7 @@ ds_curcolormap:
 lastAddress	DD 0
 pixelcount	DD 0
 
-%ifdef M_TARGET_WATCOM
-  SEGMENT DATA PUBLIC ALIGN=16 CLASS=CODE USE32
-  SEGMENT DATA
-%else
-  SECTION .data
-%endif
+	SECTION .text
 
 
 GLOBAL @R_SetSpanSource_ASM@4
@@ -211,8 +204,8 @@ GLOBAL R_SetSpanSize_ASM
 EXTERN	SetTiltedSpanSize
 
 R_SetSpanSize_ASM:
-	mov	ecx,[esp+4]
-	mov	edx,[esp+8]
+	mov	ecx,[esp+8]
+	mov	edx,[esp+4]
 	
 @R_SetSpanSize_ASM@8:
 	call	SetTiltedSpanSize
@@ -253,14 +246,16 @@ R_SetSpanSize_ASM:
 	
 aret:	ret
 
+	SECTION .rtext	progbits alloc exec write align=64
+
 GLOBAL @R_DrawSpanP_ASM@0
 GLOBAL _R_DrawSpanP_ASM
 GLOBAL R_DrawSpanP_ASM
 
 ; eax: scratch
 ; ebx: zero
-; ecx: xfrac at top end, yfrac int part in low end3
-; edx: yfrac frac part at top end
+; ecx: yfrac at top end, xfrac int part in low end3
+; edx: xfrac frac part at top end
 ; edi: dest
 ; ebp: scratch
 ; esi: count
@@ -283,21 +278,21 @@ R_DrawSpanP_ASM:
 	mov	edi,ecx
 	 mov	ecx,[ds_y]
 	add	edi,[ylookup+ecx*4]
-	 mov	edx,[ds_ystep]
+	 mov	edx,[ds_xstep]
 dsy1:	shl	edx,6
-	 mov	ebp,[ds_ystep]
+	 mov	ebp,[ds_xstep]
 dsy3:	shr	ebp,26
 	 xor	ebx,ebx
 	lea	esi,[eax+1]
-	 mov	[ds_ystep],edx
-	mov	edx,[ds_xstep]
-	 mov	ecx,[ds_yfrac]
+	 mov	[ds_xstep],edx
+	mov	edx,[ds_ystep]
+	 mov	ecx,[ds_xfrac]
 dsy4:	shr	ecx,26
 dsm8:	 and	edx,0xffffffc0
 	or	ebp,edx
-	 mov	[ds_xstep],ebp
-	mov	ebp,[ds_xfrac]
-	 mov	edx,[ds_yfrac]
+	 mov	[ds_ystep],ebp
+	mov	ebp,[ds_yfrac]
+	 mov	edx,[ds_xfrac]
 dsy2:	shl	edx,6
 dsm9:	 and	ebp,0xffffffc0
 	or	ecx,ebp
@@ -309,8 +304,8 @@ dsm9:	 and	ebp,0xffffffc0
 		mov	ebp,ecx
 dsx1:		rol	ebp,6
 dsm1:		and	ebp,0xfff
-		 add	edx,[ds_ystep]
-		adc	ecx,[ds_xstep]
+		 add	edx,[ds_xstep]
+		adc	ecx,[ds_ystep]
 spreada		 mov	bl,[ebp+SPACEFILLER4]
 spmapa		mov	bl,[ebx+SPACEFILLER4]
 		mov	[edi],bl
@@ -321,13 +316,13 @@ dseven1		shr	esi,1
 
 ; do two more pixels
 		mov	ebp,ecx
-		 add	edx,[ds_ystep]
-		adc	ecx,[ds_xstep]
+		 add	edx,[ds_xstep]
+		adc	ecx,[ds_ystep]
 dsm2:		 and	ebp,0xfc00003f
 dsx2:		rol	ebp,6
 		mov	eax,ecx
-		 add	edx,[ds_ystep]
-		adc	ecx,[ds_xstep]
+		 add	edx,[ds_xstep]
+		adc	ecx,[ds_ystep]
 spreadb		 mov	bl,[ebp+SPACEFILLER4]	;read texel1
 dsx3:		rol	eax,6
 dsm6:		and	eax,0xfff
@@ -346,13 +341,13 @@ dsrest		test	esi,esi
 		align 16
 
 dsloop		mov	ebp,ecx
-spstep1d	 add	edx,[ds_ystep]
-spstep2d	adc	ecx,[ds_xstep]
+spstep1d	 add	edx,[ds_xstep]
+spstep2d	adc	ecx,[ds_ystep]
 dsm3:		 and	ebp,0xfc00003f
 dsx4:		rol	ebp,6
 		mov	eax,ecx
-spstep1e	 add	edx,[ds_ystep]
-spstep2e	adc	ecx,[ds_xstep]
+spstep1e	 add	edx,[ds_xstep]
+spstep2e	adc	ecx,[ds_ystep]
 spreadd		 mov	bl,[ebp+SPACEFILLER4]	;read texel1
 dsx5:		rol	eax,6
 dsm5:		and	eax,0xfff
@@ -360,8 +355,8 @@ spmapd		 mov	bl,[ebx+SPACEFILLER4]	;map texel1
 		mov	[edi],bl		;store texel1
 		 mov	ebp,ecx
 spreade		mov	bl,[eax+SPACEFILLER4]	;read texel2
-spstep1f	 add	edx,[ds_ystep]
-spstep2f	adc	ecx,[ds_xstep]
+spstep1f	 add	edx,[ds_xstep]
+spstep2f	adc	ecx,[ds_ystep]
 dsm4:		 and	ebp,0xfc00003f
 dsx6:		rol	ebp,6
 spmape		mov	bl,[ebx+SPACEFILLER4]	;map texel2
@@ -374,8 +369,8 @@ dsx7:		rol	eax,6
 dsm7:		and	eax,0xfff
 		 mov	[edi-2],bl		;store texel3
 spreadg		mov	bl,[eax+SPACEFILLER4]	;read texel4
-spstep1g	 add	edx,[ds_ystep]
-spstep2g	adc	ecx,[ds_xstep]
+spstep1g	 add	edx,[ds_xstep]
+spstep2g	adc	ecx,[ds_ystep]
 spmapg		 mov	bl,[ebx+SPACEFILLER4]	;map texel4
 		dec	esi
 		 mov	[edi-1],bl		;store texel4
@@ -432,10 +427,14 @@ _R_DrawColumnP_ASM:
 rdcp1:	 sub	edi,SPACEFILLER4
 	mov	eax,[dc_colormap]
 
-; pad this out to a 16 byte boundary while retaining pairing on a Pentium
-	 mov	edx,edx
-	mov	ebp,ebp
-	 nop
+	cmp	BYTE [CPU+66],byte 5
+	jg	rdcploop2
+
+; need 12 bytes of filler to make it aligned
+	db	0x8D,0x80,0,0,0,0	; lea eax,[eax+00000000]
+	db	0x8D,0xBF,0,0,0,0	; lea edi,[edi+00000000]
+
+	align 16
 
 ; The registers should now look like this:
 ;
@@ -448,11 +447,14 @@ rdcp1:	 sub	edi,SPACEFILLER4
 ; edi	[destination screen pointer ]
 ; ebp	[counter		    ]
 ;
+
+
 ; Note the partial register stalls on anything better than a Pentium
+; That's why there are two versions of this loop.
 
 rdcploop:
 	mov	cl,[esi+ecx]		; Fetch texel
-	 mov	ch,0
+	 xor	ch,ch
 	add	ebx,edx			; increment frac
 rdcp2:	 add	edi,SPACEFILLER4	; increment destination pointer
 	mov	cl,[eax+ecx]		; colormap texel
@@ -468,6 +470,27 @@ rdcp2:	 add	edi,SPACEFILLER4	; increment destination pointer
 	 pop	ebp
 rdcpret:
 	ret
+	
+	align 16
+
+rdcploop2:
+	movzx	ecx,byte [esi+ecx]	; Fetch texel
+	add	ebx,edx			; increment frac
+	mov	cl,[eax+ecx]		; colormap texel
+rdcp3:	add	edi,SPACEFILLER4	; increment destination pointer
+	mov	[edi],cl		; Store texel
+	mov	ecx,ebx
+	shr	ecx,16
+	dec	ebp
+	jnz	rdcploop2		; loop
+
+	pop	esi
+	pop	edi
+	pop	ebx
+	pop	ebp
+	ret
+	
+
 
 ;*----------------------------------------------------------------------
 ;*
@@ -1245,12 +1268,7 @@ _rt_map4cols_asm2:
 
 ;************************
 
-%ifdef M_TARGET_WATCOM
-  SEGMENT CODE PUBLIC ALIGN=16 CLASS=CODE USE32
-  SEGMENT CODE
-%else
-  SECTION .text
-%endif
+	SECTION .text
 
 EXTERN setvlinebpl_
 EXTERN setpitch3
@@ -1262,10 +1280,11 @@ GLOBAL	ASM_PatchPitch
 ASM_PatchPitch:
 _ASM_PatchPitch:
 @ASM_PatchPitch@0:
-	mov		eax,[dc_pitch]
-	mov		[rdcp1+2],eax
-	mov		[rdcp2+2],eax
+	mov	eax,[dc_pitch]
+	mov	[rdcp1+2],eax
+	mov	[rdcp2+2],eax
+	mov	[rdcp3+2],eax
 	call	setpitch3
-	jmp		setvlinebpl_
+	jmp	setvlinebpl_
 
 

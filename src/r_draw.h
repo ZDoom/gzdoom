@@ -23,6 +23,7 @@
 #ifndef __R_DRAW__
 #define __R_DRAW__
 
+#include "r_data.h"
 
 
 extern "C" byte*		ylookup[MAXHEIGHT];
@@ -79,13 +80,12 @@ extern void (*R_DrawShadedColumn)(void);
 //	Green/Red/Blue/Indigo shirts.
 extern void (*R_DrawTranslatedColumn)(void);
 
-// Span blitting for rows, floor/ceiling. No Sepctre effect needed.
+// Span drawing for rows, floor/ceiling. No Sepctre effect needed.
 extern void (*R_DrawSpan)(void);
 
 // [RH] Span blit into an interleaved intermediate buffer
 extern void (*R_DrawColumnHoriz)(void);
-void R_DrawMaskedColumnHoriz (column_t *column);
-void R_DrawMaskedColumnHoriz2 (column2_t *column);
+void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *spans);
 
 // [RH] Initialize the above pointers
 void R_InitColumnDrawers ();
@@ -157,8 +157,6 @@ extern "C" void	R_DrawSpanP_ASM (void);
 
 void	R_DrawTlatedLucentColumnP_C (void);
 #define R_DrawTlatedLucentColumn R_DrawTlatedLucentColumnP_C
-void	R_StretchColumnP_C (void);
-#define R_StretchColumn R_StretchColumnP_C
 
 void	R_FillColumnP (void);
 void	R_FillColumnHorizP (void);
@@ -178,7 +176,7 @@ extern "C" int				ds_xbits;
 extern "C" int				ds_ybits;
 
 // start of a 64*64 tile image
-extern "C" byte*			ds_source;
+extern "C" const byte*		ds_source;
 
 extern "C" int				ds_color;		// [RH] For flat color (no texturing)
 
@@ -245,7 +243,10 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 // style was STYLE_Shade
 void R_FinishSetPatchStyle ();
 
-extern const byte *R_GetColumn (int tex, int col);
-void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, const byte *(*getcol)(int tex, int col)=R_GetColumn);
+// Retrieve column data for wallscan. Should probably be removed
+// to just use the texture's GetColumn() method. It just exists
+// for double-layer skies.
+const BYTE *R_GetColumn (FTexture *tex, int col);
+void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, const byte *(*getcol)(FTexture *tex, int col)=R_GetColumn);
 
 #endif

@@ -5,7 +5,11 @@
 #include "s_sound.h"
 #include "m_random.h"
 
-static FRandom pr_afx ("AFX");
+// I've had an instance where two machines got different values for
+// this RNG. I don't know how, so I've just removed the name so that
+// it won't count towards game consistancy.
+
+static FRandom pr_afx;
 
 // Scripted ambients --------------------------------------------------------
 

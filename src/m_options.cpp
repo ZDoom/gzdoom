@@ -969,7 +969,7 @@ static void CalcIndent (menu_t *menu)
 		item = menu->items + i;
 		if (item->type != whitetext && item->type != redtext)
 		{
-			thiswidth = screen->StringWidth (item->label);
+			thiswidth = SmallFont->StringWidth (item->label);
 			if (thiswidth > widest)
 				widest = thiswidth;
 		}
@@ -1017,8 +1017,8 @@ void M_DrawSlider (int x, int y, float min, float max, float cur)
 	cur -= min;
 
 	screen->SetFont (ConFont);
-	screen->DrawTextCleanMove (CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-	screen->DrawTextCleanMove (CR_ORANGE, x + 5 + (int)((cur * 78.f) / range), y, "\x13");
+	screen->DrawText (CR_WHITE, x, y, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12", DTA_Clean, true, TAG_DONE);
+	screen->DrawText (CR_ORANGE, x + 5 + (int)((cur * 78.f) / range), y, "\x13", DTA_Clean, true, TAG_DONE);
 	screen->SetFont (SmallFont);
 }
 
@@ -1054,11 +1054,9 @@ void M_OptDrawer ()
 
 	if (BigFont && CurrentMenu->texttitle)
 	{
-		screen->SetFont (BigFont);
-		screen->DrawTextCleanMove (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
-			160-screen->StringWidth (CurrentMenu->texttitle)/2, 10,
-			CurrentMenu->texttitle);
-		screen->SetFont (SmallFont);
+		screen->DrawText (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
+			160-BigFont->StringWidth (CurrentMenu->texttitle)/2, 10,
+			CurrentMenu->texttitle, DTA_Clean, true, TAG_DONE);
 		y = 15 + BigFont->GetHeight ();
 	}
 	else
@@ -1091,7 +1089,7 @@ void M_OptDrawer ()
 
 		if (item->type != screenres)
 		{
-			width = screen->StringWidth (item->label);
+			width = SmallFont->StringWidth (item->label);
 			switch (item->type)
 			{
 			case more:
@@ -1120,7 +1118,7 @@ void M_OptDrawer ()
 					? CR_YELLOW : LabelColor;
 				break;
 			}
-			screen->DrawTextCleanMove (color, x, y, item->label);
+			screen->DrawText (color, x, y, item->label, DTA_Clean, true, TAG_DONE);
 
 			switch (item->type)
 			{
@@ -1144,14 +1142,14 @@ void M_OptDrawer ()
 
 				if (v == vals)
 				{
-					screen->DrawTextCleanMove (ValueColor, CurrentMenu->indent + 14, y, "Unknown");
+					screen->DrawText (ValueColor, CurrentMenu->indent + 14, y, "Unknown",
+						DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
-					if (item->type == cdiscrete)
-						screen->DrawTextCleanMove (v, CurrentMenu->indent + 14, y, item->e.values[v].name);
-					else
-						screen->DrawTextCleanMove (ValueColor, CurrentMenu->indent + 14, y, item->e.values[v].name);
+					screen->DrawText (item->type == cdiscrete ? v : ValueColor,
+						CurrentMenu->indent + 14, y, item->e.values[v].name,
+						DTA_Clean, true, TAG_DONE);
 				}
 
 			}
@@ -1167,19 +1165,20 @@ void M_OptDrawer ()
 				if (v == vals)
 				{
 					UCVarValue val = item->a.guidcvar->GetGenericRep (CVAR_String);
-					screen->DrawTextCleanMove (ValueColor, CurrentMenu->indent + 14, y, val.String);
+					screen->DrawText (ValueColor, CurrentMenu->indent + 14, y, val.String, DTA_Clean, true, TAG_DONE);
 				}
 				else
 				{
-					screen->DrawTextCleanMove (ValueColor, CurrentMenu->indent + 14, y, item->e.guidvalues[v].Name);
+					screen->DrawText (ValueColor, CurrentMenu->indent + 14, y, item->e.guidvalues[v].Name,
+						DTA_Clean, true, TAG_DONE);
 				}
 
 			}
 			break;
 
 			case nochoice:
-				screen->DrawTextCleanMove (CR_GOLD, CurrentMenu->indent + 14, y,
-										   (item->e.values[(int)item->b.min]).name);
+				screen->DrawText (CR_GOLD, CurrentMenu->indent + 14, y,
+					(item->e.values[(int)item->b.min]).name, DTA_Clean, true, TAG_DONE);
 				break;
 
 			case slider:
@@ -1198,8 +1197,8 @@ void M_OptDrawer ()
 
 				C_NameKeys (description, item->b.key1, item->c.key2);
 				screen->SetFont (ConFont);
-				screen->DrawTextCleanMove (CR_WHITE,
-					CurrentMenu->indent + 14, y-1+labelofs, description);
+				screen->DrawText (CR_WHITE,
+					CurrentMenu->indent + 14, y-1+labelofs, description, DTA_Clean, true, TAG_DONE);
 				screen->SetFont (SmallFont);
 			}
 			break;
@@ -1226,8 +1225,8 @@ void M_OptDrawer ()
 					str = "???";
 				}
 
-				screen->DrawTextCleanMove (ValueColor,
-					CurrentMenu->indent + 14, y, str);
+				screen->DrawText (ValueColor,
+					CurrentMenu->indent + 14, y, str, DTA_Clean, true, TAG_DONE);
 			}
 			break;
 
@@ -1238,7 +1237,8 @@ void M_OptDrawer ()
 			if (i == CurrentItem && (skullAnimCounter < 6 || WaitingForKey))
 			{
 				screen->SetFont (ConFont);
-				screen->DrawTextCleanMove (CR_RED, CurrentMenu->indent + 3, y-1+labelofs, "\xd");
+				screen->DrawText (CR_RED, CurrentMenu->indent + 3, y-1+labelofs, "\xd",
+					DTA_Clean, true, TAG_DONE);
 				screen->SetFont (SmallFont);
 			}
 		}
@@ -1267,14 +1267,15 @@ void M_OptDrawer ()
 					else
 						color = LabelColor;
 
-					screen->DrawTextCleanMove (color, 104 * x + 20, y, str);
+					screen->DrawText (color, 104 * x + 20, y, str, DTA_Clean, true, TAG_DONE);
 				}
 			}
 
 			if (i == CurrentItem && ((item->a.selmode != -1 && (skullAnimCounter < 6 || WaitingForKey)) || testingmode))
 			{
 				screen->SetFont (ConFont);
-				screen->DrawTextCleanMove (CR_RED, item->a.selmode * 104 + 8, y-1 + labelofs, "\xd");
+				screen->DrawText (CR_RED, item->a.selmode * 104 + 8, y-1 + labelofs, "\xd",
+					DTA_Clean, true, TAG_DONE);
 				screen->SetFont (SmallFont);
 			}
 		}
@@ -1287,11 +1288,11 @@ void M_OptDrawer ()
 	screen->SetFont (ConFont);
 	if (CanScrollUp)
 	{
-		screen->DrawTextCleanMove (CR_ORANGE, 3, ytop + labelofs, "\x1a");
+		screen->DrawText (CR_ORANGE, 3, ytop + labelofs, "\x1a", DTA_Clean, true, TAG_DONE);
 	}
 	if (CanScrollDown)
 	{
-		screen->DrawTextCleanMove (CR_ORANGE, 3, y - 8 + labelofs, "\x1b");
+		screen->DrawText (CR_ORANGE, 3, y - 8 + labelofs, "\x1b", DTA_Clean, true, TAG_DONE);
 	}
 	screen->SetFont (SmallFont);
 
@@ -1314,8 +1315,9 @@ void M_OptDrawer ()
 				fillptr += sprintf (fillptr, "%s = %d", vars[i]->GetName (), **vars[i]);
 			}
 		}
-		screen->DrawTextCleanMove (ValueColor,
-			160 - (screen->StringWidth (flagsblah) >> 1), 0, flagsblah);
+		screen->DrawText (ValueColor,
+			160 - (SmallFont->StringWidth (flagsblah) >> 1), 0, flagsblah,
+			DTA_Clean, true, TAG_DONE);
 	}
 }
 
@@ -1815,7 +1817,7 @@ void M_OptResponder (event_t *ev)
 				OldBits = DisplayBits;
 				NewBits = BitTranslate[DummyDepthCvar];
 				setmodeneeded = true;
-				testingmode = I_GetTime() + 5 * TICRATE;
+				testingmode = I_GetTime(false) + 5 * TICRATE;
 				S_Sound (CHAN_VOICE, "menu/choose", 1, ATTN_NONE);
 				SetModesMenu (NewWidth, NewHeight, NewBits);
 			}
@@ -1983,7 +1985,10 @@ void UpdateJoystickMenu ()
 	{
 		JoystickMenu.lastOn = line - 1;
 	}
-	CalcIndent (&JoystickMenu);
+	if (screen != NULL)
+	{
+		CalcIndent (&JoystickMenu);
+	}
 }
 
 static void JoystickOptions ()

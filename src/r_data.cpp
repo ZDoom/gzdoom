@@ -34,6 +34,8 @@
 #endif
 
 #include <stddef.h>
+#include <malloc.h>
+
 #include "i_system.h"
 #include "m_alloc.h"
 
@@ -48,12 +50,32 @@
 #include "doomstat.h"
 #include "r_sky.h"
 
-
+#include "c_dispatch.h"
+#include "c_console.h"
 #include "r_data.h"
 
 #include "v_palette.h"
 #include "v_video.h"
 #include "gi.h"
+#include "cmdlib.h"
+#include "templates.h"
+
+static void R_InitPatches ();
+
+// [RH] Just a format I invented to avoid WinTex's palette remapping
+// when I wanted to insert some alpha maps.
+
+struct FIMGZTexture::ImageHeader
+{
+	BYTE Magic[4];
+	WORD Width;
+	WORD Height;
+	SWORD LeftOffset;
+	SWORD TopOffset;
+	BYTE Compression;
+	BYTE Reserved[11];
+};
+
 
 //
 // Graphics.
@@ -63,267 +85,1553 @@
 // a patch or sprite is composed of zero or more columns.
 // 
 
-// A single patch from a texture definition,
-//	basically a rectangular area within
-//	the texture rectangle.
-typedef struct
-{
-	// Block origin (always UL),
-	// which has already accounted
-	// for the internal origin of the patch.
-	int 		originx;		
-	int 		originy;
-	int 		patch;
-} texpatch_t;
-
-
-// A maptexturedef_t describes a rectangular texture,
-//	which is composed of one or more mappatch_t structures
-//	that arrange graphic patches.
-typedef struct
-{
-	// Keep name for switch changing, etc.
-	char		name[8];
-	short		width;
-	short		height;
-
-	// [RH] Use a hash table similar to the one now used
-	//		in w_wad.c, thus speeding up level loads.
-	//		(possibly quite considerably for larger levels)
-	int			index;
-	int			next;
-
-	// [RH] Fix bad textures (see R_GenerateLookup)
-	bool		BadPatched;	
-	
-	// All the patches[patchcount]
-	//	are drawn back to front into the cached texture.
-	short		patchcount;
-	texpatch_t	patches[1];
-	
-} texture_t;
-
-FTileSize		*TileSizes;
-const patch_t	**TileCache;
-
-int 			firstflat;
-int 			lastflat;
-int				numflats;
-
-int 			firstspritelump;
-int 			lastspritelump;
-int				numspritelumps;
-
-int				numtextures;
-texture_t** 	textures;
-
-
-int*			texturewidthmask;
-byte*			textureheightlog2;		// [RH] Tutti-Frutti fix
-fixed_t*		textureheight;			// needed for texture pegging
-static int*		texturecompositesize;
-static short** 	texturecolumnlump;
-static unsigned **texturecolumnofs;	// killough 4/9/98: make 32-bit
-static byte**	texturecomposite;
-byte*			texturenodecals;
-byte*			texturescalex;			// [RH] Texture scales
-byte*			texturescaley;
-byte*			texturetype2;			// [RH] Texture uses 2 bytes for column lengths
-
 // for global animation
 bool*			flatwarp;
 byte**			warpedflats;
 int*			flatwarpedwhen;
-int*			flattranslation;
-
-int*			texturetranslation;
-
-
-//
-// MAPTEXTURE_T CACHING
-// When a texture is first needed,
-//	it counts the number of composite columns
-//	required in the texture and allocates space
-//	for a column directory and any new columns.
-// The directory will simply point inside other patches
-//	if there is only one patch in a given column,
-//	but any columns with multiple patches
-//	will have new column_ts generated.
-//
 
 
 
-// Rewritten by Lee Killough for performance and to fix Medusa bug
-//
+FTextureManager TexMan;
 
-void R_DrawColumnInCache (const column_t *patch, byte *cache,
-						  int originy, int cacheheight, byte *marks,
-						  bool bad)
+FTextureManager::FTextureManager ()
 {
-	int top = -1; // [RH] DeePsea tall patches
+	memset (HashFirst, -1, sizeof(HashFirst));
+	// Texture 0 is a dummy texture used to indicate "no texture"
+	AddTexture (new FDummyTexture);
+}
 
-	while (patch->topdelta != 0xff)
+FTextureManager::~FTextureManager ()
+{
+	for (size_t i = 0; i < Textures.Size(); ++i)
 	{
-		int count;
-		if (bad)
+		delete Textures[i].Texture;
+	}
+}
+
+int FTextureManager::CheckForTexture (const char *name, int usetype, bool tryany)
+{
+	int i;
+
+	if (name == NULL)
+	{
+		return -1;
+	}
+	// [RH] Doom counted anything beginning with '-' as "no texture"
+	if (name[0] == '-' && name[1] == '\0')
+	{
+		return 0;
+	}
+	i = HashFirst[MakeKey (name) % HASH_SIZE];
+
+	while (i != HASH_END)
+	{
+		const FTexture *tex = Textures[i].Texture;
+
+		if (stricmp (tex->Name, name) == 0 &&
+			(usetype == FTexture::TEX_Any || tex->UseType == usetype))
 		{
-			top = 0;
-			count = cacheheight;
+			return i;
+		}
+		i = Textures[i].HashNext;
+	}
+
+	if (tryany && usetype != FTexture::TEX_Any)
+	{
+		return CheckForTexture (name, FTexture::TEX_Any, false);
+	}
+
+	return -1;
+}
+
+int FTextureManager::GetTexture (const char *name, int usetype)
+{
+	int i = CheckForTexture (name, usetype, true);
+
+	if (i == -1)
+	{
+		// Use a default texture instead of aborting like Doom did
+		i = DefaultTexture;
+	}
+	return i;
+}
+
+void FTextureManager::UnloadAll ()
+{
+	for (size_t i = 0; i < Textures.Size(); ++i)
+	{
+		Textures[i].Texture->Unload ();
+	}
+}
+
+int FTextureManager::AddTexture (FTexture *texture)
+{
+	// Later textures take precedence over earlier ones
+	size_t bucket = MakeKey (texture->Name) % HASH_SIZE;
+	TextureHash hasher = { texture, HashFirst[bucket] };
+	WORD trans = Textures.Push (hasher);
+	Translation.Push (trans);
+	HashFirst[bucket] = trans;
+	return trans;
+}
+
+void FTextureManager::ReplaceTexture (int picnum, FTexture *newtexture, bool free)
+{
+	if ((size_t)picnum >= Textures.Size())
+		return;
+
+	FTexture *oldtexture = Textures[picnum].Texture;
+
+	strcpy (newtexture->Name, oldtexture->Name);
+	newtexture->UseType = oldtexture->UseType;
+	Textures[picnum].Texture = newtexture;
+
+	if (free)
+	{
+		delete oldtexture;
+	}
+}
+
+int FTextureManager::AddPatch (const char *patchname, int namespc)
+{
+	if (patchname == NULL)
+	{
+		return -1;
+	}
+	int picnum = CheckForTexture (patchname, FTexture::TEX_MiscPatch, false);
+
+	if (picnum >= 0)
+	{
+		return picnum;
+	}
+	picnum = W_CheckNumForName (patchname, namespc);
+	if (picnum < 0)
+	{
+		return -1;
+	}
+
+	enum { t_patch, t_raw, t_imgz } type = t_patch;
+	const BYTE *data = (const BYTE *)W_MapLumpNum (picnum);
+
+	if (data[0] == 'I' && data[1] == 'M' && data[2] == 'G' && data[3] == 'Z')
+	{
+		type = t_imgz;
+	}
+	else if (gameinfo.flags & GI_PAGESARERAW && W_LumpLength (picnum) == 64000)
+	{
+		// This is probably a raw page graphic, but do some checking to be sure
+		const patch_t *foo = (const patch_t *)data;
+		int height = SHORT(foo->height);
+		int width = SHORT(foo->width);
+
+		if (height > 0 && height < 510 && width > 0 && width < 15997)
+		{
+			// The dimensions seem like they might be valid for a patch, so
+			// check the column directory for extra security. At least one
+			// column must begin exactly at the end of the column directory,
+			// and none of them must point past the end of the patch.
+			bool gapAtStart = true;
+			int x;
+
+			for (x = 0; x < width; ++x)
+			{
+				DWORD ofs = LONG(foo->columnofs[x]);
+				if (ofs == width * 4 + 8)
+				{
+					gapAtStart = false;
+				}
+				else if (ofs >= 64000-1)	// Need one byte for an empty column
+				{
+					break;
+				}
+				else
+				{
+					// Ensure this column does not extend beyond the end of the patch
+					const BYTE *foo2 = (const BYTE *)foo;
+					while (ofs < 64000)
+					{
+						if (foo2[ofs] == 255)
+						{
+							break;
+						}
+						ofs += foo2[ofs+1] + 4;
+					}
+					if (ofs >= 64000)
+					{
+						break;
+					}
+				}
+			}
+			if (gapAtStart || (x != width))
+			{
+				type = t_raw;
+			}
 		}
 		else
 		{
-			if (patch->topdelta <= top)
+			type = t_raw;
+		}
+	}
+
+	W_UnMapLump (data);
+
+	switch (type)
+	{
+	default:		return AddTexture (new FPatchTexture (picnum, FTexture::TEX_MiscPatch));
+	case t_raw:		return AddTexture (new FRawPageTexture (picnum));
+	case t_imgz:	return AddTexture (new FIMGZTexture (picnum));
+	}
+}
+
+void FTextureManager::AddFlats ()
+{
+	int firstflat = W_GetNumForName ("F_START") + 1;
+	int lastflat = W_GetNumForName ("F_END") - 1;
+	int i;
+
+	for (i = firstflat; i <= lastflat; ++i)
+	{
+		AddTexture (new FFlatTexture (i));
+	}
+	DefaultTexture = CheckForTexture ("-NOFLAT-", FTexture::TEX_Flat, false);
+}
+
+void FTextureManager::AddSprites ()
+{
+	int firstsprite = W_GetNumForName ("S_START") + 1;
+	int lastsprite = W_GetNumForName ("S_END") - 1;
+	int i;
+
+	for (i = firstsprite; i <= lastsprite; ++i)
+	{
+		AddTexture (new FPatchTexture (i, FTexture::TEX_Sprite));
+	}
+}
+
+void FTextureManager::AddTiles (const void *tiles)
+{
+	int numtiles = LONG(((DWORD *)tiles)[1]);	// This value is not reliable
+	int tilestart = LONG(((DWORD *)tiles)[2]);
+	int tileend = LONG(((DWORD *)tiles)[3]);
+	const WORD *tilesizx = &((const WORD *)tiles)[8];
+	const WORD *tilesizy = &tilesizx[tileend - tilestart + 1];
+	const DWORD *picanm = (const DWORD *)&tilesizy[tileend - tilestart + 1];
+	const BYTE *tiledata = (const BYTE *)&picanm[tileend - tilestart + 1];
+
+	for (int i = tilestart; i <= tileend; ++i)
+	{
+		int pic = i - tilestart;
+		int width = SHORT(tilesizx[pic]);
+		int height = SHORT(tilesizy[pic]);
+		DWORD anm = LONG(picanm[pic]);
+		int xoffs = (SBYTE)((anm >> 8) & 255) + width/2;
+		int yoffs = (SBYTE)((anm >> 16) & 255) + height/2;
+		int texnum;
+		FTexture *tex;
+
+		if (width <= 0 || height <= 0) continue;
+
+		tex = new FBuildTexture (i, tiledata, width, height, xoffs, yoffs);
+		texnum = AddTexture (tex);
+		tiledata += width * height;
+
+		if ((picanm[pic] & 63) && (picanm[pic] & 192))
+		{
+			int type, speed;
+
+			switch (picanm[pic] & 192)
 			{
-				top += patch->topdelta;
+			case 64:	type = 2;	break;
+			case 128:	type = 0;	break;
+			case 192:	type = 1;	break;
+			}
+
+			speed = (anm >> 24) & 15;
+			speed = MAX (1, (1 << speed) * TICRATE / 120);
+
+			P_AddSimpleAnim (texnum, picanm[pic] & 63, type, speed);
+		}
+
+		// Blood's rotation types:
+		// 0 - Single
+		// 1 - 5 Full
+		// 2 - 8 Full
+		// 3 - Bounce (looks no different from Single; seems to signal bouncy sprites)
+		// 4 - 5 Half (not used in game)
+		// 5 - 3 Flat (not used in game)
+		// 6 - Voxel
+		// 7 - Spin Voxel
+
+		int rotType = (anm >> 28) & 7;
+		if (rotType == 1)
+		{
+			spriteframe_t rot;
+			rot.Texture[0] = texnum;
+			rot.Texture[1] = texnum;
+			for (int j = 1; j < 4; ++j)
+			{
+				rot.Texture[j*2] = texnum + j;
+				rot.Texture[j*2+1] = texnum + j;
+				rot.Texture[16-j*2] = texnum + j;
+				rot.Texture[17-j*2] = texnum + j;
+			}
+			rot.Texture[8] = texnum + 4;
+			rot.Texture[9] = texnum + 4;
+			rot.Flip = 0x00FC;
+			tex->Rotations = SpriteFrames.Push (rot);
+		}
+		else if (rotType == 2)
+		{
+			spriteframe_t rot;
+			rot.Texture[0] = texnum;
+			rot.Texture[1] = texnum;
+			for (int j = 1; j < 8; ++j)
+			{
+				rot.Texture[16-j*2] = texnum + j;
+				rot.Texture[17-j*2] = texnum + j;
+			}
+			rot.Flip = 0;
+			tex->Rotations = SpriteFrames.Push (rot);
+		}
+	}
+}
+
+void FTextureManager::AddPatches (int lumpnum)
+{
+	const char *pnames = (const char *)W_MapLumpNum (lumpnum);
+	const char *pnames_p = pnames + 4;
+	char name[9];
+	int numpatches = LONG(*((DWORD *)pnames));
+	int i;
+
+	name[8] = 0;
+
+	for (i = 0; i < numpatches; ++i)
+	{
+		strncpy (name, pnames_p, 8);
+		pnames_p += 8;
+
+		if (CheckForTexture (name, FTexture::TEX_WallPatch, false) == -1)
+		{
+			AddTexture (new FPatchTexture (W_CheckNumForName (name), FTexture::TEX_WallPatch));
+		}
+	}
+
+	W_UnMapLump (pnames);
+}
+
+void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool texture1)
+{
+	FTexture **patchlookup;
+	char name[9];
+	int i, j;
+
+	const char *pnames = (const char *)W_MapLumpNum (patcheslump);
+	const char *pnames_p = pnames + 4;
+	int numpatches = LONG(*((DWORD *)pnames));
+
+	name[8] = 0;
+
+	// Catalog the patches these textures use so we know which
+	// textures they represent.
+	patchlookup = (FTexture **)alloca (numpatches * sizeof(FTexture*));
+
+	for (i = 0; i < numpatches; ++i)
+	{
+		strncpy (name, pnames_p, 8);
+		pnames_p += 8;
+
+		j = CheckForTexture (name, FTexture::TEX_WallPatch);
+		if (j >= 0)
+		{
+			patchlookup[i] = Textures[j].Texture;
+		}
+		else
+		{
+			patchlookup[i] = NULL;
+		}
+	}
+
+	W_UnMapLump (pnames);
+
+	bool isStrife = false;
+	int errors = 0;
+	const DWORD *maptex, *directory;
+	int maxoff;
+	int numtextures;
+	DWORD offset;
+
+	maptex = (const DWORD *)W_MapLumpNum (lumpnum);
+	numtextures = LONG(*maptex);
+	maxoff = W_LumpLength (lumpnum);
+
+	if (maxoff < (numtextures+1)*4)
+	{
+		I_FatalError ("Texture directory is too short");
+	}
+
+	// Scan the texture lump to decide if it contains Doom or Strife textures
+	for (i = 0, directory = maptex+1; i < numtextures; ++i)
+	{
+		offset = LONG(directory[i]);
+		if (offset > maxoff)
+		{
+			I_FatalError ("Bad texture directory");
+		}
+
+		maptexture_t *tex = (maptexture_t *)((BYTE *)maptex + offset);
+
+		// There is bizzarely a Doom editing tool that writes to the
+		// first two elements of columndirectory, so I can't check those.
+		if (SAFESHORT(tex->patchcount) <= 0 ||
+			tex->columndirectory[2] != 0 ||
+			tex->columndirectory[3] != 0)
+		{
+			isStrife = true;
+			break;
+		}
+	}
+
+
+	// Textures defined earlier in the lump take precedence over those defined later,
+	// but later TEXTUREx lumps take precedence over earlier ones.
+	for (i = 0, directory = maptex; i <= numtextures; ++i)
+	{
+		if (i == 0 && texture1)
+		{
+			// The very first texture is just a dummy. Copy its dimensions to texture 0,
+			// but do nothing else with it.
+			const maptexture_t *tex = (const maptexture_t *)((const BYTE *)maptex + offset);
+			FDummyTexture *tex0 = static_cast<FDummyTexture *>(Textures[0].Texture);
+			tex0->SetSize (SAFESHORT(tex->width), SAFESHORT(tex->height));
+			continue;
+		}
+
+		offset = LONG(directory[i]);
+		if (offset > maxoff)
+		{
+			I_FatalError ("Bad texture directory");
+		}
+
+		// If this texture was defined already in this lump, skip it
+		// This could cause problems with animations that use the same name for intermediate
+		// textures. Should I be worried?
+		for (j = i-1; j > 0; --j)
+		{
+			if (strnicmp ((const char *)maptex + offset, (const char *)maptex + LONG(directory[j]), 8) == 0)
+				break;
+		}
+		if (j == 0)
+		{
+			int num = AddTexture (new FMultiPatchTexture ((const BYTE *)maptex + offset, patchlookup, isStrife));
+		}
+	}
+	W_UnMapLump (maptex);
+}
+
+
+
+
+FTexture::FTexture ()
+: LeftOffset(0), TopOffset(0),
+  WidthBits(0), HeightBits(0), ScaleX(8), ScaleY(8),
+  UseType(TEX_Any), bNoDecals(false), bModified(false),
+  Rotations(0xFFFF), Width(0xFFFF), Height(0), WidthMask(0)
+{
+}
+
+FTexture::~FTexture ()
+{
+}
+
+void FTexture::GetDimensions ()
+{
+	Width = 0;
+}
+
+void FTexture::CalcBitSize ()
+{
+	// WidthBits is rounded down, and HeightBits is rounded up
+	int i;
+
+	for (i = 0; (1 << i) < Width; ++i)
+	{ }
+
+	WidthBits = i;
+
+	// Having WidthBits that would allow for columns past the end of the
+	// texture is not allowed, even if it means the entire texture is
+	// not drawn.
+	if (Width < (1 << WidthBits))
+	{
+		WidthBits--;
+	}
+	WidthMask = (1 << WidthBits) - 1;
+
+	// The minimum height is 2, because we cannot shift right 32 bits.
+	for (i = 1; (1 << i) < Height; ++i)
+	{ }
+
+	HeightBits = i;
+}
+
+FTexture::Span **FTexture::CreateSpans (const BYTE *pixels) const
+{
+	int numcols = Width;
+	int numrows = Height;
+	int numspans = numcols;	// One span to terminate each column
+	const BYTE *data_p;
+	Span **spans, *span;
+	bool newspan;
+	int x, y;
+
+	data_p = pixels;
+
+	// Count the number of spans in this texture
+	for (x = numcols; x > 0; --x)
+	{
+		newspan = true;
+		for (y = numrows; y > 0; --y)
+		{
+			if (*data_p++ == 255)
+			{
+				if (!newspan)
+				{
+					newspan = true;
+				}
+			}
+			else if (newspan)
+			{
+				newspan = false;
+				numspans++;
+			}
+		}
+	}
+
+	// Allocate space for the spans
+	spans = (Span **)Malloc (sizeof(Span*)*numcols + sizeof(Span)*numspans);
+
+	// Fill in the spans
+	for (x = 0, span = (Span *)&spans[numcols], data_p = pixels; x < numcols; ++x)
+	{
+		newspan = true;
+		spans[x] = span;
+		for (y = 0; y < numrows; ++y)
+		{
+			if (*data_p++ == 255)
+			{
+				if (!newspan)
+				{
+					newspan = true;
+					span++;
+				}
 			}
 			else
 			{
-				top = patch->topdelta;
-			}
-			count = patch->length;
-		}
-		int position = originy + top;
-		int adv = 0;
-
-		if (position < 0)
-		{
-			// [RH] Correctly draw columns that start above the texture
-			adv = -position;
-			count += position;
-			position = 0;
-		}
-
-		if (position + count > cacheheight)
-			count = cacheheight - position;
-
-		if (count > 0)
-		{
-			memcpy (cache + position, (byte *)patch + adv + 3, count);
-
-			// killough 4/9/98: remember which cells in column have been drawn,
-			// so that column can later be converted into a series of posts, to
-			// fix the Medusa bug.
-
-			memset (marks + position, 0xff, count);
-		}
-
-		if (bad)
-		{
-			return;
-		}
-		patch = (column_t *)((byte *) patch + patch->length + 4);
-	}
-}
-
-//
-// R_GenerateComposite
-// Using the texture definition,
-//	the composite texture is created from the patches,
-//	and each column is cached.
-//
-// Rewritten by Lee Killough for performance and to fix Medusa bug
-
-void R_GenerateComposite (int texnum)
-{
-	texturecomposite[texnum] = new byte[texturecompositesize[texnum]];
-	byte *block = texturecomposite[texnum];
-	texture_t *texture = textures[texnum];
-	// Composite the columns together.
-	texpatch_t *patch = texture->patches;
-	short *collump = texturecolumnlump[texnum];
-	unsigned *colofs = texturecolumnofs[texnum]; // killough 4/9/98: make 32-bit
-	int i = texture->patchcount;
-	// killough 4/9/98: marks to identify transparent regions in merged textures
-	byte *marks = (byte *)Calloc (texture->width, texture->height), *source;
-
-	for (; --i >=0; patch++)
-	{
-		const patch_t *realpatch = (patch_t *)W_MapLumpNum (patch->patch);
-		int x1 = patch->originx, x2 = x1 + SHORT(realpatch->width);
-		const int *cofs = realpatch->columnofs-x1;
-		if (x1<0)
-			x1 = 0;
-		if (x2 > texture->width)
-			x2 = texture->width;
-		for (; x1<x2 ; x1++)
-			if (collump[x1] == -1)			// Column has multiple patches?
-				// killough 1/25/98, 4/9/98: Fix medusa bug.
-				R_DrawColumnInCache((column_t*)((byte*)realpatch+LONG(cofs[x1])),
-									block+colofs[x1],patch->originy,texture->height,
-									marks + x1 * texture->height,texture->BadPatched);
-		W_UnMapLump (realpatch);
-	}
-
-	// killough 4/9/98: Next, convert multipatched columns into true columns,
-	// to fix Medusa bug while still allowing for transparent regions.
-	// [RH] The patches constructed use two bytes for column lengths and offsets
-	// each and do not have padding for precision errors like normal Doom patches.
-	// This lets them work with tall textures.
-
-	source = new byte[texture->height]; 	// temporary column
-	for (i = 0; i < texture->width; i++)
-	{
-		if (collump[i] == -1) 				// process only multipatched columns
-		{
-			column2_t *col = (column2_t *)(block + colofs[i] - 4); // cached column
-			const byte *mark = marks + i * texture->height;
-			int j = 0;
-
-			// save column in temporary so we can shuffle it around
-			memcpy (source, (byte *)col + 4, texture->height);
-
-			for (;;)	// reconstruct the column by scanning transparency marks
-			{
-				while (j < texture->height && !mark[j]) // skip transparent cells
-					j++;
-				if (j >= texture->height) 				// if at end of column
+				if (newspan)
 				{
-					col->Length = 0;					// end-of-column marker
-					break;
+					newspan = false;
+					span->TopOffset = y;
+					span->Length = 1;
 				}
-				col->TopDelta = j;						// starting offset of post
-				col->Length = 0;
-				do										// count opaque cells
+				else
 				{
-					col->Length++;
-					j++;
-				} while (j < texture->height && mark[j]);
-				// copy opaque cells from the temporary back into the column
-				memcpy ((byte *)col + 4, source + col->TopDelta, col->Length);
-				col = (column2_t *)((byte *)col + col->Length + 4); // next post
+					span->Length++;
+				}
 			}
 		}
+		if (!newspan)
+		{
+			span++;
+		}
+		span->TopOffset = 0;
+		span->Length = 0;
+		span++;
 	}
-	delete[] source;			// free temporary column
-	free(marks);				// free transparency marks
+
+	return spans;
 }
 
-//
-// R_GenerateLookup
-//
-// Rewritten by Lee Killough for performance and to fix Medusa bug
-//
-
-static void R_GenerateLookup(int texnum, int *const errors)
+void FTexture::FreeSpans (Span **spans) const
 {
-	texture_t *texture = textures[texnum];
+	free (spans);
+}
 
-	// Composited texture not created yet.
+void FTexture::CopyToBlock (BYTE *dest, int dwidth, int dheight, int xpos, int ypos, const BYTE *translation)
+{
+	int x1 = xpos, x2 = x1 + GetWidth(), xo = -x1;
 
-	short *collump = texturecolumnlump[texnum];
-	unsigned *colofs = texturecolumnofs[texnum]; // killough 4/9/98: make 32-bit
+	if (x1 < 0)
+	{
+		x1 = 0;
+	}
+	if (x2 > dwidth)
+	{
+		x2 = dwidth;
+	}
+	for (; x1 < x2; ++x1)
+	{
+		const BYTE *data;
+		const Span *span;
+		BYTE *outtop = &dest[dheight * x1];
 
-	// killough 4/9/98: keep count of posts in addition to patches.
-	// Part of fix for medusa bug for multipatched 2s normals.
+		data = GetColumn (x1 + xo, &span);
 
-	struct cs {
-		unsigned short patches, posts;
-	} *count = (cs *)Calloc (sizeof *count, texture->width);
+		while (span->Length != 0)
+		{
+			int len = span->Length;
+			int y = ypos + span->TopOffset;
+			int adv = span->TopOffset;
 
-	int i = texture->patchcount;
-	const texpatch_t *patch = texture->patches;
-	bool mustComposite = false;
-	bool mustFix = false;
+			if (y < 0)
+			{
+				adv -= y;
+				len += y;
+				y = 0;
+			}
+			if (y + len > dheight)
+			{
+				len = dheight - y;
+			}
+			if (len > 0)
+			{
+				if (translation == NULL)
+				{
+					memcpy (outtop + y, data + adv, len);
+				}
+				else
+				{
+					for (int j = 0; j < len; ++j)
+					{
+						outtop[y+j] = translation[data[adv+j]];
+					}
+				}
+			}
+			span++;
+		}
+	}
+}
+
+// Converts a texture between row-major and column-major format
+// by flipping it about the X=Y axis.
+
+void FTexture::FlipSquareBlock (BYTE *block, int x, int y)
+{
+	int i, j;
+
+	if (x != y) return;
+
+	for (i = 0; i < x; ++i)
+	{
+		BYTE *corner = block + x*i + i;
+		int count = x - i;
+		if (count & 1)
+		{
+			count--;
+			swap<BYTE> (corner[count], corner[count*x]);
+		}
+		for (j = 0; j < count; j += 2)
+		{
+			swap<BYTE> (corner[j], corner[j*x]);
+			swap<BYTE> (corner[j+1], corner[(j+1)*x]);
+		}
+	}
+}
+
+
+FDummyTexture::FDummyTexture ()
+{
+	Width = 64;
+	Height = 64;
+	HeightBits = 6;
+	WidthBits = 6;
+	WidthMask = 63;
+	Name[0] = 0;
+	UseType = TEX_Null;
+}
+
+void FDummyTexture::Unload ()
+{
+}
+
+void FDummyTexture::SetSize (int width, int height)
+{
+	Width = width;
+	Height = height;
+	CalcBitSize ();
+}
+
+// This must never be called
+const BYTE *FDummyTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	return NULL;
+}
+
+// And this also must never be called
+const BYTE *FDummyTexture::GetPixels ()
+{
+	return NULL;
+}
+
+FPatchTexture::FPatchTexture (int lumpnum, int usetype)
+: SourceLump(lumpnum), Pixels(0), Spans(0)
+{
+	UseType = usetype;
+	W_GetLumpName (Name, lumpnum);
+	Name[8] = 0;
+}
+
+FPatchTexture::~FPatchTexture ()
+{
+	Unload ();
+	if (Spans != NULL)
+	{
+		FreeSpans (Spans);
+	}
+}
+
+void FPatchTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+
+const BYTE *FPatchTexture::GetPixels ()
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = Spans[column];
+	}
+	return Pixels + column*Height;
+}
+
+void FPatchTexture::GetDimensions ()
+{
+	const patch_t *patch = (const patch_t *)W_MapLumpNum (SourceLump);
+
+	Width = SHORT(patch->width);
+	Height = SHORT(patch->height);
+	LeftOffset = SHORT(patch->leftoffset);
+	TopOffset = SHORT(patch->topoffset);
+
+	W_UnMapLump (patch);
+
+	CalcBitSize ();
+}
+
+void FPatchTexture::MakeTexture ()
+{
+	const patch_t *patch = (const patch_t *)W_MapLumpNum (SourceLump);
+	Span *spanstuffer;
+	int numspans;
+	int x;
+	BYTE switch255 = Near255;
+
+	Width = SHORT(patch->width);
+	Height = SHORT(patch->height);
+	LeftOffset = SHORT(patch->leftoffset);
+	TopOffset = SHORT(patch->topoffset);
+	CalcBitSize ();
+
+	// Add a little extra space at the end if the texture's height is not
+	// a power of 2, in case somebody accidentally makes it repeat vertically.
+	int numpix = Width * Height + (1 << HeightBits) - Height;
+
+	numspans = Width;
+	if (UseType == TEX_Decal)
+	{
+		switch255 = 254;
+	}
+
+	Pixels = new BYTE[numpix];
+	memset (Pixels, 255, numpix);
+
+	// Draw the image to the buffer
+	for (x = 0; x < Width; ++x)
+	{
+		BYTE *outtop = Pixels + x*Height;
+		const column_t *column = (const column_t *)((const BYTE *)patch + LONG(patch->columnofs[x]));
+		int top = -1;
+
+		while (column->topdelta != 0xFF)
+		{
+			if (column->topdelta <= top)
+			{
+				top += column->topdelta;
+			}
+			else
+			{
+				top = column->topdelta;
+			}
+
+			int len = column->length;
+			BYTE *out = outtop + top;
+
+			if (len != 0)
+			{
+				if (top + len > Height)	// Clip posts that extend past the bottom
+				{
+					len = Height - top;
+				}
+				if (len > 0)
+				{
+					numspans++;
+
+					const BYTE *in = (const BYTE *)column + 3;
+					for (int i = 0; i < len; ++i)
+					{
+						out[i] = in[i] != 255 ? in[i] : switch255;
+					}
+				}
+			}
+			column = (const column_t *)((const BYTE *)column + column->length + 4);
+		}
+	}
+	W_UnMapLump (patch);
+
+	// Create the spans
+	Spans = (Span **)Malloc (sizeof(Span*)*Width + sizeof(Span)*numspans);
+	spanstuffer = (Span *)((BYTE *)Spans + sizeof(Span*)*Width);
+
+	for (x = numspans = 0; x < Width; ++x)
+	{
+		const column_t *column = (const column_t *)((const BYTE *)patch + LONG(patch->columnofs[x]));
+		int top = -1;
+
+		Spans[x] = spanstuffer;
+
+		while (column->topdelta != 0xFF)
+		{
+			if (column->topdelta <= top)
+			{
+				top += column->topdelta;
+			}
+			else
+			{
+				top = column->topdelta;
+			}
+
+			int len = column->length;
+
+			if (len != 0)
+			{
+				if (top + len > Height)	// Clip posts that extend past the bottom
+				{
+					len = Height - top;
+				}
+				if (len > 0)
+				{
+					// There is something of this post to draw. If it starts at the same
+					// place where the previous span ends, add it to that one. Otherwise,
+					// create another span.
+					if (numspans > 1 && (spanstuffer - 1)->Length != 0 &&
+						(spanstuffer - 1)->TopOffset + (spanstuffer - 1)->Length == top)
+					{
+						(spanstuffer - 1)->Length += len;
+					}
+					else
+					{
+						spanstuffer->TopOffset = top;
+						spanstuffer->Length = len;
+						spanstuffer++;
+					}
+				}
+			}
+			column = (const column_t *)((const BYTE *)column + column->length + 4);
+		}
+
+		spanstuffer->Length = spanstuffer->TopOffset = 0;
+		spanstuffer++;
+	}
+}
+
+// Fix for certain special patches on single-patch textures.
+void FPatchTexture::HackHack (int newheight)
+{
+	const patch_t *patch = (const patch_t *)W_MapLumpNum (SourceLump);
+	BYTE *out;
+	int x;
+
+	Unload ();
+	if (Spans != NULL)
+	{
+		FreeSpans (Spans);
+	}
+
+	Width = SHORT(patch->width);
+	Height = newheight;
+	LeftOffset = 0;
+	TopOffset = 0;
+
+	Pixels = new BYTE[Width * Height];
+
+	// Draw the image to the buffer
+	for (x = 0, out = Pixels; x < Width; ++x)
+	{
+		const BYTE *in = (const BYTE *)patch + LONG(patch->columnofs[x]) + 3;
+
+		for (int y = newheight; y > 0; --y)
+		{
+			*out = *in != 255 ? *in : Near255;
+			out++, in++;
+		}
+		out += newheight;
+	}
+	W_UnMapLump (patch);
+
+	// Create the spans
+	Spans = (Span **)Malloc (sizeof(Span *)*Width + sizeof(Span)*Width*2);
+
+	Span *span = (Span *)&Spans[Width];
+
+	for (x = 0; x < Width; ++x)
+	{
+		Spans[x] = span;
+		span[0].Length = newheight;
+		span[0].TopOffset = 0;
+		span[1].Length = 0;
+		span[1].TopOffset = 0;
+		span += 2;
+	}
+}
+
+FFlatTexture::FFlatTexture (int lumpnum)
+: SourceLump(lumpnum), Pixels(0)
+{
+	int area;
+	int bits;
+
+	W_GetLumpName (Name, lumpnum);
+	Name[8] = 0;
+	area = W_LumpLength (lumpnum);
+
+	switch (area)
+	{
+	default:
+	case 64*64:		bits = 6;	break;
+	case 8*8:		bits = 3;	break;
+	case 16*16:		bits = 4;	break;
+	case 32*32:		bits = 5;	break;
+	case 128*128:	bits = 7;	break;
+	case 256*256:	bits = 8;	break;
+	}
+
+	WidthBits = HeightBits = bits;
+	Width = Height = 1 << bits;
+	WidthMask = (1 << bits) - 1;
+	DummySpans[0].TopOffset = 0;
+	DummySpans[0].Length = Height;
+	DummySpans[1].TopOffset = 0;
+	DummySpans[1].Length = 0;
+
+	if (bits > 6)
+	{
+		ScaleX = ScaleY = 8 << (bits - 6);
+	}
+
+	UseType = TEX_Flat;
+}
+
+FFlatTexture::~FFlatTexture ()
+{
+	Unload ();
+}
+
+void FFlatTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+
+const BYTE *FFlatTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = DummySpans;
+	}
+	return Pixels + column*Height;
+}
+
+const BYTE *FFlatTexture::GetPixels ()
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+void FFlatTexture::MakeTexture ()
+{
+	const BYTE *source = (const BYTE *)W_MapLumpNum (SourceLump);
+
+	Pixels = new BYTE[Width*Height];
+	memcpy (Pixels, source, Width*Height);
+	W_UnMapLump (source);
+	FlipSquareBlock (Pixels, Width, Height);
+}
+
+const FTexture::Span FRawPageTexture::DummySpans[2] =
+{
+	{ 0, 200 }, { 0, 0 }
+};
+
+FRawPageTexture::FRawPageTexture (int lumpnum)
+: SourceLump(lumpnum), Pixels(0)
+{
+	W_GetLumpName (Name, lumpnum);
+	Name[8] = 0;
+
+	Width = 320;
+	Height = 200;
+	WidthBits = 8;
+	HeightBits = 8;
+	WidthMask = 255;
+
+	UseType = TEX_MiscPatch;
+}
+
+FRawPageTexture::~FRawPageTexture ()
+{
+	Unload ();
+}
+
+void FRawPageTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+
+const BYTE *FRawPageTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		column %= 320;
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = DummySpans;
+	}
+	return Pixels + column*Height;
+}
+
+const BYTE *FRawPageTexture::GetPixels ()
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+void FRawPageTexture::MakeTexture ()
+{
+	const BYTE *source = (const BYTE *)W_MapLumpNum (SourceLump);
+	const BYTE *source_p = source;
+	BYTE *dest_p;
+
+	Pixels = new BYTE[Width*Height];
+	dest_p = Pixels;
+
+	// Convert the source image from row-major to column-major format
+	for (int y = 200; y != 0; --y)
+	{
+		for (int x = 320; x != 0; --x)
+		{
+			*dest_p = *source_p;
+			dest_p += 200;
+			source_p++;
+		}
+		dest_p -= 200*320-1;
+	}
+
+	W_UnMapLump (source);
+}
+
+FIMGZTexture::FIMGZTexture (int lumpnum)
+: SourceLump(lumpnum), Pixels(0), Spans(0)
+{
+	W_GetLumpName (Name, lumpnum);
+	Name[8] = 0;
+
+	UseType = TEX_MiscPatch;
+}
+
+FIMGZTexture::~FIMGZTexture ()
+{
+	Unload ();
+	if (Spans != NULL)
+	{
+		FreeSpans (Spans);
+	}
+}
+
+void FIMGZTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+
+const BYTE *FIMGZTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = Spans[column];
+	}
+	return Pixels + column*Height;
+}
+
+const BYTE *FIMGZTexture::GetPixels ()
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+void FIMGZTexture::GetDimensions ()
+{
+	const ImageHeader *imgz = (const ImageHeader *)W_MapLumpNum (SourceLump);
+
+	Width = SHORT(imgz->Width);
+	Height = SHORT(imgz->Height);
+	LeftOffset = SHORT(imgz->LeftOffset);
+	TopOffset = SHORT(imgz->TopOffset);
+
+	W_UnMapLump (imgz);
+
+	CalcBitSize ();
+}
+
+void FIMGZTexture::MakeTexture ()
+{
+	const ImageHeader *imgz = (const ImageHeader *)W_MapLumpNum (SourceLump);
+	const BYTE *data = (const BYTE *)&imgz[1];
+
+	Width = SHORT(imgz->Width);
+	Height = SHORT(imgz->Height);
+	LeftOffset = SHORT(imgz->LeftOffset);
+	TopOffset = SHORT(imgz->TopOffset);
+
+	BYTE *dest_p;
+	int dest_adv = Height;
+	int dest_rew = Width * Height - 1;
+
+	CalcBitSize ();
+	Pixels = new BYTE[Width*Height];
+	dest_p = Pixels;
+
+	// Convert the source image from row-major to column-major format
+	if (!imgz->Compression)
+	{
+		for (int y = Height; y != 0; --y)
+		{
+			for (int x = Width; x != 0; --x)
+			{
+				BYTE color = *data;
+				if (color == 0) color = 255;
+				else if (color == 255) color = 254;
+				*dest_p = *data;
+				dest_p += dest_adv;
+				data++;
+			}
+			dest_p -= dest_rew;
+		}
+	}
+	else
+	{
+		// IMGZ compression is the same RLE used by IFF ILBM files
+		int runlen = 0, setlen = 0;
+		BYTE setval;
+
+		for (int y = Height; y != 0; --y)
+		{
+			for (int x = Width; x != 0; )
+			{
+				if (runlen != 0)
+				{
+					BYTE color = *data;
+					if (color == 0) color = 255;
+					else if (color == 255) color = 254;
+					*dest_p = color;
+					dest_p += dest_adv;
+					data++;
+					x--;
+					runlen--;
+				}
+				else if (setlen != 0)
+				{
+					*dest_p = setval;
+					dest_p += dest_adv;
+					x--;
+					setlen--;
+				}
+				else
+				{
+					SBYTE code = *data++;
+					if (code >= 0)
+					{
+						runlen = code + 1;
+					}
+					else if (code != -128)
+					{
+						setlen = (-code) + 1;
+						setval = *data++;
+						if (setval == 0) setval = 255;
+						else if (setval == 255) setval = 254;
+					}
+				}
+			}
+			dest_p -= dest_rew;
+		}
+	}
+	W_UnMapLump (imgz);
+
+	Spans = CreateSpans (Pixels);
+}
+
+
+FBuildTexture::FBuildTexture (int tilenum, const BYTE *pixels, int width, int height, int left, int top)
+: Pixels (pixels), Spans (NULL)
+{
+	Width = width;
+	Height = height;
+	LeftOffset = left;
+	TopOffset = top;
+	CalcBitSize ();
+	sprintf (Name, "BTIL%04d", tilenum);
+	UseType = TEX_Build;
+}
+
+FBuildTexture::~FBuildTexture ()
+{
+	if (Spans != NULL)
+	{
+		FreeSpans (Spans);
+	}
+}
+
+void FBuildTexture::Unload ()
+{
+	// Nothing to do, since the pixels are accessed from memory-mapped files directly
+}
+
+const BYTE *FBuildTexture::GetPixels ()
+{
+	return Pixels;
+}
+
+const BYTE *FBuildTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (column >= Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != NULL)
+	{
+		if (Spans == NULL)
+		{
+			Spans = CreateSpans (Pixels);
+		}
+		*spans_out = Spans[column];
+	}
+	return Pixels + column*Height;
+}
+
+FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FTexture **patchlookup, bool strife)
+: Pixels (0), Spans(0), Parts(0), bRedirect(false)
+{
+	union
+	{
+		const maptexture_t			*d;
+		const strifemaptexture_t	*s;
+	}
+	mtexture;
+
+	union
+	{
+		const mappatch_t			*d;
+		const strifemappatch_t		*s;
+	}
+	mpatch;
+
+	int i;
+
+	mtexture.d = (const maptexture_t *)texdef;
+
+	if (strife)
+	{
+		NumParts = SAFESHORT(mtexture.s->patchcount);
+	}
+	else
+	{
+		NumParts = SAFESHORT(mtexture.d->patchcount);
+	}
+
+	if (NumParts <= 0)
+	{
+		I_FatalError ("Bad texture directory");
+	}
+
+	UseType = FTexture::TEX_Wall;
+	Parts = new TexPart[NumParts];
+	Width = SAFESHORT(mtexture.d->width);
+	Height = SAFESHORT(mtexture.d->height);
+	strncpy (Name, mtexture.d->name, 8);
+	Name[8] = 0;
+
+	CalcBitSize ();
+
+	// [RH] Special for beta 29: Values of 0 will use the tx/ty cvars
+	// to determine scaling instead of defaulting to 8. I will likely
+	// remove this once I finish the betas, because by then, users
+	// should be able to actually create scaled textures.
+	// 10-June-2003: It's still here long after beta 29. Heh.
+
+	ScaleX = mtexture.d->ScaleX ? mtexture.d->ScaleX : 0;
+	ScaleY = mtexture.d->ScaleY ? mtexture.d->ScaleY : 0;
+
+	if (strife)
+	{
+		mpatch.s = &mtexture.s->patches[0];
+	}
+	else
+	{
+		mpatch.d = &mtexture.d->patches[0];
+	}
+
+	for (i = 0; i < NumParts; ++i)
+	{
+		Parts[i].OriginX = SHORT(mpatch.d->originx);
+		Parts[i].OriginY = SHORT(mpatch.d->originy);
+		Parts[i].Texture = patchlookup[SHORT(mpatch.d->patch)];
+		if (Parts[i].Texture == NULL)
+		{
+			Printf ("Unknown patch in texture %s\n", Name);
+			NumParts--;
+			i--;
+		}
+		if (strife)
+			mpatch.s++;
+		else
+			mpatch.d++;
+	}
+	if (NumParts == 0)
+	{
+		Printf ("Texture %s is left without any patches\n", Name);
+	}
+
+	CheckForHacks ();
+
+	// If this texture is just a wrapper around a single patch, we can simply
+	// forward GetPixels() and GetColumn() calls to that patch.
+	if (NumParts == 1)
+	{
+		if (Parts->OriginX == 0 && Parts->OriginY == 0 &&
+			Parts->Texture->GetWidth() == Width &&
+			Parts->Texture->GetHeight() == Height)
+		{
+			bRedirect = true;
+		}
+	}
+}
+
+FMultiPatchTexture::~FMultiPatchTexture ()
+{
+	if (Parts != NULL)
+	{
+		delete[] Parts;
+	}
+	if (Spans != NULL)
+	{
+		FreeSpans (Spans);
+	}
+}
+
+void FMultiPatchTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+
+const BYTE *FMultiPatchTexture::GetPixels ()
+{
+	if (bRedirect)
+	{
+		return Parts->Texture->GetPixels ();
+	}
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+const BYTE *FMultiPatchTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (bRedirect)
+	{
+		return Parts->Texture->GetColumn (column, spans_out);
+	}
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = Spans[column];
+	}
+	return Pixels + column*Height;
+}
+
+void FMultiPatchTexture::MakeTexture ()
+{
+	// Add a little extra space at the end if the texture's height is not
+	// a power of 2, in case somebody accidentally makes it repeat vertically.
+	int numpix = Width * Height + (1 << HeightBits) - Height;
+
+	Pixels = new BYTE[numpix];
+	memset (Pixels, 255, numpix);
+
+	for (int i = 0; i < NumParts; ++i)
+	{
+		Parts[i].Texture->CopyToBlock (Pixels, Width, Height,
+			Parts[i].OriginX, Parts[i].OriginY);
+	}
+
+	Spans = CreateSpans (Pixels);
+}
+
+void FMultiPatchTexture::CheckForHacks ()
+{
+	if (NumParts <= 0)
+	{
+		return;
+	}
+
+	// Heretic sky textures are marked as only 128 pixels tall,
+	// even though they are really 200 pixels tall.
+	if (gameinfo.gametype == GAME_Heretic &&
+		Name[0] == 'S' &&
+		Name[1] == 'K' &&
+		Name[2] == 'Y' &&
+		Name[4] == 0 &&
+		Name[3] >= '1' &&
+		Name[3] <= '3' &&
+		Height == 128)
+	{
+		Height = 200;
+		HeightBits = 8;
+		return;
+	}
+
+	// The Doom E1 sky has its patch's y offset at -8 instead of 0.
+	if (gameinfo.gametype == GAME_Doom &&
+		!(gameinfo.flags & GI_MAPxx) &&
+		NumParts == 1 &&
+		Height == 128 &&
+		Parts->OriginY == -8 &&
+		Name[0] == 'S' &&
+		Name[1] == 'K' &&
+		Name[2] == 'Y' &&
+		Name[3] == '1' &&
+		Name[4] == 0)
+	{
+		Parts->OriginY = 0;
+		return;
+	}
 
 	// [RH] Some wads (I forget which!) have single-patch textures 256
 	// pixels tall that have patch lengths recorded as 0. I can't think of
@@ -333,550 +1641,272 @@ static void R_GenerateLookup(int texnum, int *const errors)
 	//
 	// Okay, I found a wad with crap patches: Pleiades.wad's sky patches almost
 	// fit this description and are a big mess, but they're not single patch!
-	if (texture->height == 256)
+	if (Height == 256)
 	{
-		// Check if this patch is likely to be a problem.
-		// It must be 256 pixels tall, and all its columns must have exactly
-		// one post, where each post has a supposed length of 0.
-		const patch_t *realpatch = (patch_t *)W_MapLumpNum (patch->patch);
-		const int *cofs = realpatch->columnofs;
-		int x, x2 = SHORT(realpatch->width);
+		int i;
 
-		// Note that only the first patch is checked. It's assumed that if one of
-		// them is a problem, they all are, because Doom would not have rendered
-		// the texture as intended if it was used on a two-sided line.
-		if (SHORT(realpatch->height) == 256)
+		// All patches must be at the top of the texture for this fix
+		for (i = 0; i < NumParts; ++i)
 		{
-			for (x = 0; x < x2; ++x)
+			if (Parts[i].OriginX != 0)
 			{
-				const column_t *col = (column_t*)((byte*)realpatch+LONG(cofs[x]));
-				if (col->topdelta != 0 || col->length != 0)
-				{
-					break;	// It's not bad!
-				}
-				col = (column_t *)((byte *)col + 256 + 4);
-				if (col->topdelta != 0xff)
-				{
-					break;	// More than one post in a column!
-				}
-			}
-			if (x == x2)
-			{ // If all columns were checked, it needs fixing.
-				mustComposite = true;
-				mustFix = true;
+				break;
 			}
 		}
-		W_UnMapLump (realpatch);
+
+		if (i == NumParts)
+		{
+			for (i = 0; i < NumParts; ++i)
+			{
+				FPatchTexture *tex = (FPatchTexture *)Parts[i].Texture;
+				// Check if this patch is likely to be a problem.
+				// It must be 256 pixels tall, and all its columns must have exactly
+				// one post, where each post has a supposed length of 0.
+				const patch_t *realpatch = (patch_t *)W_MapLumpNum (tex->SourceLump);
+				const DWORD *cofs = realpatch->columnofs;
+				int x, x2 = SHORT(realpatch->width);
+
+				if (SHORT(realpatch->height) == 256)
+				{
+					for (x = 0; x < x2; ++x)
+					{
+						const column_t *col = (column_t*)((byte*)realpatch+LONG(cofs[x]));
+						if (col->topdelta != 0 || col->length != 0)
+						{
+							break;	// It's not bad!
+						}
+						col = (column_t *)((byte *)col + 256 + 4);
+						if (col->topdelta != 0xFF)
+						{
+							break;	// More than one post in a column!
+						}
+					}
+					if (x == x2)
+					{ // If all the columns were checked, it needs fixing.
+						tex->HackHack (Height);
+					}
+				}
+				W_UnMapLump (realpatch);
+			}
+		}
 	}
+}
 
-	while (--i >= 0)
+
+FWarpTexture::FWarpTexture (FTexture *source)
+: SourcePic (source), Pixels (0), Spans (0), GenTime (0)
+{
+	Width = source->GetWidth ();
+	Height = source->GetHeight ();
+	LeftOffset = source->LeftOffset;
+	TopOffset = source->TopOffset;
+	WidthBits = source->WidthBits;
+	HeightBits = source->HeightBits;
+	WidthMask = (1 << WidthBits) - 1;
+	ScaleX = source->ScaleX;
+	ScaleY = source->ScaleY;
+	bNoDecals = source->bNoDecals;
+	Rotations = source->Rotations;
+}
+
+FWarpTexture::~FWarpTexture ()
+{
+	Unload ();
+	delete SourcePic;
+}
+
+void FWarpTexture::Unload ()
+{
+	if (Pixels != NULL)
 	{
-		int pat = patch->patch;
-		const patch_t *realpatch = (patch_t *)W_MapLumpNum (pat);
-		int x1 = patch->originx, x2 = x1 + SHORT(realpatch->width), x = x1;
-		const int *cofs = realpatch->columnofs-x1;
-
-		// [RH] Force composite generation if a patch starts above the top of
-		// the texture or does not cover the entire height of the texture.
-		if ((patch->originy < 0 || patch->originy > 0 ||
-			 SHORT(realpatch->height) < texture->height))
-		{
-			mustComposite = true;
-		}
-
-		patch++;
-
-		if (x2 > texture->width)
-			x2 = texture->width;
-		if (x1 < 0)
-			x = 0;
-		for (; x < x2; x++)
-		{
-			// killough 4/9/98: keep a count of the number of posts in column,
-			// to fix Medusa bug while allowing for transparent multipatches.
-
-			if (!mustFix)
-			{
-				const column_t *col = (column_t*)((byte*)realpatch+LONG(cofs[x]));
-				for (;col->topdelta != 0xff; count[x].posts++)
-					col = (column_t *)((byte *)col + col->length + 4);
-			}
-			else
-			{
-				count[x].posts++;
-			}
-			count[x].patches++;
-			collump[x] = pat;
-			colofs[x] = LONG(cofs[x])+3;
-		}
-		W_UnMapLump (realpatch);
+		delete[] Pixels;
+		Pixels = NULL;
 	}
-
-	// Now count the number of columns that are covered by more than one patch.
-	// Fill in the lump / offset, so columns with only a single patch are all done.
-
-	texturecomposite[texnum] = 0;
-
+	if (Spans != NULL)
 	{
-		int x = texture->width;
-		int height = texture->height;
-		int csize;
+		FreeSpans (Spans);
+		Spans = NULL;
+	}
+	SourcePic->Unload ();
+}
 
-		while (--x >= 0)
+const BYTE *FWarpTexture::GetPixels ()
+{
+	DWORD time = r_FrameTime;
+
+	if (Pixels == NULL || time != GenTime)
+	{
+		MakeTexture (time);
+	}
+	return Pixels;
+}
+
+const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	DWORD time = r_FrameTime;
+
+	if (Pixels == NULL || time != GenTime)
+	{
+		MakeTexture (time);
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
 		{
-			if (!count[x].patches)				// killough 4/9/98
-			{
-				mustComposite = true;
-				//Printf ("\nR_GenerateLookup: Column %d is without a patch in texture %.8s",
-				//		x, texture->name);
-				//		++*errors;
-			}
-		}
-
-		// [RH] Always create a composite texture for multipatch textures
-		// or tall textures in order to keep things simpler.
-
-		if (texture->patchcount > 1 || texture->height > 254 || mustComposite)
-		{
-			texture->BadPatched = mustFix;
-			texturetype2[texnum] = 1;
-			x = texture->width;
-			csize = 0;
-			while (--x >= 0)
-			{
-				if (!count[x].patches)				// killough 4/9/98
-				{
-					//Printf ("\nR_GenerateLookup: Column %d is without a patch in texture %.8s",
-					//		x, texture->name);
-					//		++*errors;
-					collump[x] = -1;
-					colofs[x] = csize + 4;
-					csize += 6;
-				}
-				else
-				{
-					// killough 1/25/98, 4/9/98:
-					//
-					// Fix Medusa bug, by adding room for column header
-					// and trailer bytes for each post in merged column.
-					// For now, just allocate conservatively 4 bytes
-					// per post per patch per column, since we don't
-					// yet know how many posts the merged column will
-					// require, and it's bounded above by this limit.
-
-					collump[x] = -1;				// mark lump as multipatched
-					colofs[x] = csize + 4;			// four header bytes in a column
-					csize += 4*count[x].posts+2+height;	// 2 stop bytes plus 4 bytes per post
-				}
-			}
+			column &= WidthMask;
 		}
 		else
 		{
-			csize = texture->width*height;
+			column %= Width;
 		}
-		texturecompositesize[texnum] = csize;
 	}
-	free(count);								// killough 4/9/98
-}
-
-//
-// R_GetColumn
-//
-const byte *R_GetColumn (int tex, int col)
-{
-	int lump;
-	int ofs;
-
-	col &= texturewidthmask[tex];
-	lump = texturecolumnlump[tex][col];
-	ofs = texturecolumnofs[tex][col];
-	
-	if (lump > 0)
-		//return (byte *)W_MapLumpNum(lump)+ofs;
+	if (spans_out != NULL)
 	{
-		if (TileCache[lump] == NULL)
+		if (Spans == NULL)
 		{
-			R_CacheTileNum (lump);
+			Spans = CreateSpans (Pixels);
 		}
-		return (const byte *)TileCache[lump]+ofs;
+		*spans_out = Spans[column];
 	}
-
-	if (!texturecomposite[tex])
-		R_GenerateComposite (tex);
-
-	return texturecomposite[tex] + ofs;
+	return Pixels + column*Height;
 }
 
+void FWarpTexture::MakeTexture (DWORD time)
+{
+	const BYTE *otherpix = SourcePic->GetPixels ();
 
+	if (Pixels == NULL)
+	{
+		Pixels = new BYTE[Width * Height];
+	}
+	if (Spans != NULL)
+	{
+		FreeSpans (Spans);
+		Spans = NULL;
+	}
 
+	GenTime = time;
+
+	byte buffer[256];
+	int xsize = Width;
+	int ysize = Height;
+	int xmask = WidthMask;
+	int ymask = Height - 1;
+	int xbits = WidthBits;
+	int ybits = HeightBits;
+	int x, y;
+
+	if ((1 << ybits) > Height)
+	{
+		ybits--;
+	}
+
+	DWORD timebase = time * 32 / 28;
+	for (y = ysize-1; y >= 0; y--)
+	{
+		int xt, xf = (finesine[(timebase+y*128)&FINEMASK]>>13) & xmask;
+		const BYTE *source = otherpix + y;
+		BYTE *dest = Pixels + y;
+		for (xt = xsize; xt; xt--, xf = (xf+1)&xmask, dest += ysize)
+			*dest = source[xf << ybits];
+	}
+	timebase = time * 23 / 28;
+	for (x = xsize-1; x >= 0; x--)
+	{
+		int yt, yf = (finesine[(time+(x+17)*128)&FINEMASK]>>13) & ymask;
+		const BYTE *source = Pixels + (x << ybits);
+		BYTE *dest = buffer;
+		for (yt = ysize; yt; yt--, yf = (yf+1)&ymask)
+			*dest++ = source[yf];
+		memcpy (Pixels+(x<<ybits), buffer, ysize);
+	}
+}
 
 //
 // R_InitTextures
-// Initializes the texture list
-//	with the textures from the world map.
+// Initializes the texture list with the textures from the world map.
 //
 void R_InitTextures (void)
 {
-	union
+	int lastlump = 0, lump;
+	int texlump1 = -1, texlump2 = -1, texlump;
+	int i;
+
+	// For each PNAMES lump, load the TEXTURE1 and/or TEXTURE2 lumps from the same wad.
+	while ((lump = W_FindLump ("PNAMES", &lastlump)) != -1)
 	{
-		maptexture_t	*d;
-		strifemaptexture_t *s;
-	} mtexture;
-	union
-	{
-		mappatch_t		*d;
-		strifemappatch_t *s;
-	} mpatch;
+		int pfile = W_GetLumpFile (lump);
 
-	texture_t*			texture;
-	texpatch_t* 		patch;
-
-	int					i;
-	int 				j;
-	int					patchCount;
-
-	const int*			maptex;
-	const int*			maptex2;
-	const int*			maptex1;
-	
-	int*				patchlookup;
-	
-	int 				totalwidth;
-	int					nummappatches;
-	int 				offset;
-	int 				maxoff;
-	int 				maxoff2;
-	int					numtextures1;
-	int					numtextures2;
-
-	const int*			directory;
-
-	int					errors = 0;
-	bool				bStrifeTextures = false;
-
-	
-	// Load the patch names from pnames.lmp.
-	{
-		const char *names = (char *)W_MapLumpName ("PNAMES");
-		const char *name_p = names+4;
-
-		nummappatches = LONG ( *((int *)names) );
-		patchlookup = new int[nummappatches];
-	
-		for (i = 0; i < nummappatches; i++)
+		TexMan.AddPatches (lump);
+		if ((texlump1 = W_CheckNumForName ("TEXTURE1", ns_global, pfile)) >= 0)
 		{
-			patchlookup[i] = W_CheckNumForName (name_p + i*8);
-			if (patchlookup[i] == -1)
-			{
-				// killough 4/17/98:
-				// Some wads use sprites as wall patches, so repeat check and
-				// look for sprites this time, but only if there were no wall
-				// patches found. This is the same as allowing for both, except
-				// that wall patches always win over sprites, even when they
-				// appear first in a wad. This is a kludgy solution to the wad
-				// lump namespace problem.
-
-				patchlookup[i] = W_CheckNumForName (name_p + i*8, ns_sprites);
-			}
+			TexMan.AddTexturesLump (texlump1, lump, true);
 		}
-		W_UnMapLump (names);
-	}
-	
-	// Load the map texture definitions from textures.lmp.
-	// The data is contained in one or two lumps,
-	//	TEXTURE1 for shareware, plus TEXTURE2 for commercial.
-	maptex = maptex1 = (int *)W_MapLumpName ("TEXTURE1");
-	numtextures1 = LONG(*maptex);
-	maxoff = W_LumpLength (W_GetNumForName ("TEXTURE1"));
-	directory = maptex+1;
-		
-	if (W_CheckNumForName ("TEXTURE2") != -1)
-	{
-		maptex2 = (int *)W_MapLumpName ("TEXTURE2");
-		numtextures2 = LONG(*maptex2);
-		maxoff2 = W_LumpLength (W_GetNumForName ("TEXTURE2"));
-	}
-	else
-	{
-		maptex2 = NULL;
-		numtextures2 = 0;
-		maxoff2 = 0;
+		if ((texlump2 = W_CheckNumForName ("TEXTURE2", ns_global, pfile)) >= 0)
+		{
+			TexMan.AddTexturesLump (texlump2, lump, false);
+		}
 	}
 
-	numtextures = numtextures1 + numtextures2;
-
-	textures = new texture_t *[numtextures];
-	texturecolumnlump = new short *[numtextures];
-	texturecolumnofs = new unsigned int *[numtextures];
-	texturecomposite = new byte *[numtextures];
-	texturecompositesize = new int[numtextures];
-	texturewidthmask = new int[numtextures];
-	textureheightlog2 = new byte[numtextures];
-	textureheight = new fixed_t[numtextures];
-	texturenodecals = new byte[numtextures];
-	texturescalex = new byte[numtextures];
-	texturescaley = new byte[numtextures];
-	texturetype2 = new byte[numtextures];
-
-	memset (texturenodecals, 0, numtextures);
-	memset (texturetype2, 0, numtextures);
-
-	totalwidth = 0;
-
-	i = 0;
-restart:
-	for (j = 0; j < i; ++j)
+	// If the final TEXTURE1 and/or TEXTURE2 lumps are in a wad without a PNAMES lump,
+	// they have not been loaded yet, so load them now.
+	if ((texlump = W_CheckNumForName ("TEXTURE1")) >= 0 && texlump != texlump1)
 	{
-		if (textures[j] != NULL)
-		{
-			free (textures[j]);
-		}
-		textures[j] = NULL;
+		TexMan.AddTexturesLump (texlump, W_GetNumForName ("PNAMES"), true);
 	}
-
-	for (i = 0; i < numtextures; i++, directory++)
+	if ((texlump = W_CheckNumForName ("TEXTURE2")) >= 0 && texlump != texlump2)
 	{
-		if (i == numtextures1)
-		{
-			// Start looking in second texture file.
-			maptex = maptex2;
-			maxoff = maxoff2;
-			directory = maptex+1;
-		}
-
-		offset = LONG(*directory);
-
-		if (offset > maxoff)
-		{
-			if (bStrifeTextures)
-			{
-				I_FatalError ("R_InitTextures: bad texture directory");
-			}
-			else
-			{
-				bStrifeTextures = true;
-				goto restart;
-			}
-		}
-		
-		mtexture.d = (maptexture_t *) ((byte *)maptex + offset);
-
-		if (!bStrifeTextures)
-		{
-			patchCount = SAFESHORT(mtexture.d->patchcount);
-			if (patchCount <= 0 ||
-				mtexture.d->columndirectory[0] != 0 ||
-				mtexture.d->columndirectory[1] != 0 ||
-				mtexture.d->columndirectory[2] != 0 ||
-				mtexture.d->columndirectory[3] != 0)
-			{
-				bStrifeTextures = true;
-				goto restart;
-			}
-		}
-		else
-		{
-			patchCount = SAFESHORT(mtexture.s->patchcount);
-			if (patchCount <= 0)
-			{
-				I_FatalError ("R_InitTextures: bad texture directory");
-			}
-		}
-
-		texture = textures[i] = (texture_t *)
-			Malloc (sizeof(texture_t)
-					  + sizeof(texpatch_t)*(patchCount-1));
-
-		texture->width = SAFESHORT(mtexture.d->width);
-		texture->height = SAFESHORT(mtexture.d->height);
-		texture->patchcount = patchCount;
-		uppercopy (texture->name, mtexture.d->name);
-
-		if (!bStrifeTextures)
-		{
-			mpatch.d = &mtexture.d->patches[0];
-		}
-		else
-		{
-			mpatch.s = &mtexture.s->patches[0];
-		}
-		patch = &texture->patches[0];
-
-		for (j = 0; j < texture->patchcount; j++, patch++)
-		{
-			patch->originx = SHORT(mpatch.d->originx);
-			patch->originy = SHORT(mpatch.d->originy);
-			patch->patch = patchlookup[SHORT(mpatch.d->patch)];
-			if (patch->patch == -1)
-			{
-				char name[9];
-				memcpy (name, texture->name, 8);
-				name[8] = 0;
-				Printf ("R_InitTextures: Missing patch in texture %s\n", name);
-				--texture->patchcount;
-				--patch;
-				--j;
-				//errors++;
-			}
-			if (bStrifeTextures)
-				mpatch.s++;
-			else
-				mpatch.d++;
-		}
-		if (texture->patchcount == 0)
-		{
-			char name[9];
-			memcpy (name, texture->name, 8);
-			name[8] = 0;
-			Printf ("R_InitTextures: Texture %s is left without any patches\n", name);
-			//errors++;
-		}
-
-		// [RH] Heretic sky textures are marked as only 128 pixels tall,
-		// even though they are really 200 pixels tall. Hack around this.
-		if (gameinfo.gametype == GAME_Heretic &&
-			texture->name[0] == 'S' &&
-			texture->name[1] == 'K' &&
-			texture->name[2] == 'Y' &&
-			texture->name[4] == 0 &&
-			texture->name[3] >= '1' &&
-			texture->name[3] <= '3' &&
-			texture->height == 128)
-		{
-			texture->height = 200;
-		}
-		// [RH] The Doom E1 sky has its patch's y offset at -8 instead of 0.
-		else if (gameinfo.gametype == GAME_Doom &&
-			!(gameinfo.flags & GI_MAPxx) &&
-			texture->height == 128 &&
-			texture->patchcount == 1 &&
-			texture->patches->originy == -8 &&
-			texture->name[0] == 'S' &&
-			texture->name[1] == 'K' &&
-			texture->name[2] == 'Y' &&
-			texture->name[3] == '1' &&
-			texture->name[4] == 0)
-		{
-			texture->patches->originy = 0;
-		}
-
-		texturecolumnlump[i] = new short[texture->width];
-		texturecolumnofs[i] = new unsigned int[texture->width];
-
-		for (j = 1; j*2 <= texture->width; j <<= 1)
-			;
-		texturewidthmask[i] = j-1;
-
-		// [RH] Tutti-Frutti fix
-		// Sorry, only power-of-2 tall textures are actually fixed.
-		// For performance reasons, I have no intention of changing this.
-		for (j = 0; (1<<j) < texture->height; ++j)
-			;
-		textureheightlog2[i] = j;
-		textureheight[i] = texture->height<<FRACBITS;
-
-		// [RH] Special for beta 29: Values of 0 will use the tx/ty cvars
-		// to determine scaling instead of defaulting to 8. I will likely
-		// remove this once I finish the betas, because by then, users
-		// should be able to actually create scaled textures.
-		texturescalex[i] = mtexture.d->ScaleX ? mtexture.d->ScaleX : 0;
-		texturescaley[i] = mtexture.d->ScaleY ? mtexture.d->ScaleY : 0;
-
-		totalwidth += texture->width;
+		TexMan.AddTexturesLump (texlump, W_GetNumForName ("PNAMES"), false);
 	}
-	delete[] patchlookup;
-
-	W_UnMapLump (maptex1);
-	if (maptex2)
-		W_UnMapLump (maptex2);
-	
-	if (errors)
-		I_FatalError ("%d errors in R_InitTextures.", errors);
-
-	// [RH] Setup hash chains. Go from back to front so that if
-	//		duplicates are found, the first one gets used instead
-	//		of the last (thus mimicing the original behavior
-	//		of R_CheckTextureNumForName().
-	for (i = 0; i < numtextures; i++)
-		textures[i]->index = -1;
-
-	for (i = numtextures - 1; i >= 0; i--)
-	{
-		j = W_LumpNameHash (textures[i]->name) % (unsigned) numtextures;
-		textures[i]->next = textures[j]->index;
-		textures[j]->index = i;
-	}
-
-	// Precalculate whatever possible.	
-	for (i = 0; i < numtextures; i++)
-		R_GenerateLookup (i, &errors);
-
-	if (errors)
-		I_FatalError ("%d errors encountered during texture generation.", errors);
-	
-	// Create translation table for global animation.
-	texturetranslation = new int[numtextures+1];
-	
-	for (i = 0; i < numtextures; i++)
-		texturetranslation[i] = i;
 
 	// The Hexen scripts use BLANK as a blank texture, even though it's really not.
 	// I guess the Doom renderer must have clipped away the line at the bottom of
-	// the texture so it wasn't visible. I'll just map it to 0, so it really is blakn.
+	// the texture so it wasn't visible. I'll just map it to 0, so it really is blank.
 	if (gameinfo.gametype == GAME_Hexen &&
-		0 <= (i = R_CheckTextureNumForName ("BLANK")))
+		0 <= (i = TexMan.CheckForTexture ("BLANK", FTexture::TEX_Wall, false)))
 	{
-		texturetranslation[i] = 0;
+		TexMan.SetTranslation (i, 0);
 	}
 }
 
-
-
 //
-// R_InitFlats
+// R_InitBuildTiles
 //
-void R_InitFlats (void)
+// [RH] Support Build tiles!
+//
+
+void R_InitBuildTiles ()
 {
-	int i;
-		
-	firstflat = W_GetNumForName ("F_START") + 1;
-	lastflat = W_GetNumForName ("F_END") - 1;
-	numflats = lastflat - firstflat + 1;
-		
-	// Create translation table for global animation.
-	flattranslation = new int[numflats+1];
-	
-	for (i = 0; i < numflats; i++)
-		flattranslation[i] = i;
+	const char *artdir;
+	int numartfiles;
 
-	flatwarp = new bool[numflats+1];
-	memset (flatwarp, 0, sizeof(bool) * (numflats+1));
+	if (NULL != (artdir = Args.CheckValue ("-art")))
+	{
+		char lastchar = artdir[strlen(artdir)-1];
+		const char *optslash = (lastchar == '/' || lastchar == '\\') ? "" : "/";
+		char artpath[PATH_MAX];
 
-	warpedflats = new byte *[numflats+1];
-	memset (warpedflats, 0, sizeof(byte *) * (numflats+1));
+		for (numartfiles = 0; ; numartfiles++)
+		{
+			sprintf (artpath, "%s%stiles%03d.art", artdir, optslash, numartfiles);
+			if (!FileExists (artpath))
+			{
+				break;
+			}
 
-	flatwarpedwhen = new int[numflats+1];
-	memset (flatwarpedwhen, 0xff, sizeof(int) * (numflats+1));
-}
+			int x = W_FakeLump (artpath);
 
+			const void *art = W_MapLumpNum (x);
 
-//
-// R_InitSpriteLumps
-// Finds the width and hoffset of all sprites in the wad,
-//	so the sprite does not need to be cached completely
-//	just for having the header info ready during rendering.
-//
-void R_InitSpriteLumps (void)
-{
-	firstspritelump = W_GetNumForName ("S_START") + 1;
-	lastspritelump = W_GetNumForName ("S_END") - 1;
+			if (LONG(*(DWORD *)art) != 1)
+			{
+				W_UnMapLump (art);
+				break;
+			}
 
-	numspritelumps = lastspritelump - firstspritelump + 1;
-
-	// [RH] Rather than maintaining separate spritewidth, spriteoffset,
-	//		and spritetopoffset arrays, this data has now been moved into
-	//		the sprite frame definition and gets initialized by
-	//		R_InstallSpriteLump(), so there really isn't anything to do here.
+			TexMan.AddTiles (art);
+		}
+	}
 }
 
 
@@ -895,12 +1925,26 @@ void R_SetDefaultColormap (const char *name)
 	{
 		int lump;
 
-		lump = W_CheckNumForName (name, ns_colormaps);
-		if (lump == -1)
-			lump = W_CheckNumForName (name, ns_global);
-		const byte *data = (byte *)W_MapLumpNum (lump);
-		memcpy (realcolormaps, data, NUMCOLORMAPS*256);
-		W_UnMapLump (data);
+		// [RH] If using BUILD's palette.dat, generate the colormap
+		if (Args.CheckValue ("-bpal") != NULL)
+		{
+			FDynamicColormap foo;
+
+			foo.Color = 0xFFFFFF;
+			foo.Fade = 0;
+			foo.Maps = realcolormaps;
+			foo.BuildLights ();
+		}
+		else
+		{
+			lump = W_CheckNumForName (name, ns_colormaps);
+			if (lump == -1)
+				lump = W_CheckNumForName (name, ns_global);
+			const byte *data = (byte *)W_MapLumpNum (lump);
+			memcpy (realcolormaps, data, NUMCOLORMAPS*256);
+			W_UnMapLump (data);
+		}
+
 		uppercopy (fakecmaps[0].name, name);
 		fakecmaps[0].blend = 0;
 	}
@@ -986,234 +2030,82 @@ DWORD R_BlendForColormap (DWORD map)
 }
 
 //
-// [RH] R_InitTiles
-//
-// Initialize the tile cache.
-//
-static int NumTileLumps;
-
-void R_InitTiles ()
-{
-	int i;
-
-	NumTileLumps = numlumps;
-
-	TileSizes = new FTileSize[NumTileLumps];
-	TileCache = new const patch_t *[NumTileLumps];
-
-	for (i = 0; i < NumTileLumps; i++)
-	{
-		TileSizes[i].Width = 0xffff;
-		TileCache[i] = NULL;
-	}
-}
-
-//
 // R_InitData
 // Locates all the lumps that will be used by all views
 // Must be called after W_Init.
 //
 void R_InitData ()
 {
-	R_InitTiles ();
+	TexMan.AddSprites ();
+	R_InitPatches ();
 	R_InitTextures ();
-	R_InitFlats ();
-	R_InitSpriteLumps ();
+	TexMan.AddFlats ();
+	R_InitBuildTiles ();
 	R_InitColormaps ();
+	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);
 }
 
 
-
-//
-// R_FlatNumForName
-// Retrieval, get a flat number for a flat name.
-//
-int R_FlatNumForName (const char* name)
-{
-	int i = W_CheckNumForName (name, ns_flats);
-
-	if (i == -1)	// [RH] Default flat for not found ones
-		i = W_CheckNumForName ("-NOFLAT-", ns_flats);
-
-	if (i == -1) {
-		char namet[9];
-
-		strncpy (namet, name, 8);
-		namet[8] = 0;
-
-		I_Error ("R_FlatNumForName: %s not found", namet);
-	}
-
-	return i - firstflat;
-}
-
-
-
-
-//
-// R_CheckTextureNumForName
-// Check whether texture is available.
-// Filter out NoTexture indicator.
-//
-int R_CheckTextureNumForName (const char *name)
-{
-	char uname[8];
-	int  i;
-
-	// "NoTexture" marker.
-	if (name[0] == '-') 		
-		return 0;
-
-	// [RH] Use a hash table instead of linear search
-	uppercopy (uname, name);
-	i = textures[W_LumpNameHash (uname) % (unsigned) numtextures]->index;
-
-	while (i != -1)
-	{
-		if (!strncmp (textures[i]->name, uname, 8))
-			break;
-		i = textures[i]->next;
-	}
-
-	return i;
-}
-
-const char *R_GetTextureName (int texnum)
-{
-	if (texnum <= 0 || texnum >= numtextures)
-	{
-		return "-";
-	}
-	return textures[texnum]->name;
-}
-
-
-//
-// R_TextureNumForName
-// Calls R_CheckTextureNumForName,
-//	aborts with error message.
-//
-int R_TextureNumForName (const char *name)
-{
-	int i;
-		
-	i = R_CheckTextureNumForName (name);
-
-	if (i==-1)
-	{
-		char namet[9];
-		strncpy (namet, name, 8);
-		namet[8] = 0;
-		//I_Error ("R_TextureNumForName: %s not found", namet);
-		// [RH] Return default texture if it wasn't found.		Printf ("Texture %s not found\n", namet);
-		return 1;
-	}
-
-	return i;
-}
-
-//
-// R_CheckTileNumForName
-//
-int R_CheckTileNumForName (const char *name, ETileType type)
-{
-	static const namespace_t spaces[2][2] =
-	{ {ns_global,ns_sprites}, {ns_sprites,ns_global} };
-
-	const namespace_t *space = spaces[type];
-	int i;
-	int lump = -1;
-
-	for (i = 0; i < NUM_TILE_TYPES; i++)
-	{
-		lump = W_CheckNumForName (name, space[i]);
-		if (lump != -1)
-			break;
-	}
-	return lump;
-}
-
-//
-// R_CacheTileNum
-//
-int R_CacheTileNum (int picnum)
-{
-	if (TileCache[picnum] != NULL)
-	{
-		return picnum;
-	}
-	TileCache[picnum] = (const patch_t *)W_MapLumpNum (picnum);
-	TileSizes[picnum].Width = SHORT(TileCache[picnum]->width);
-	TileSizes[picnum].Height = SHORT(TileCache[picnum]->height);
-	TileSizes[picnum].LeftOffset = SHORT(TileCache[picnum]->leftoffset);
-	TileSizes[picnum].TopOffset = SHORT(TileCache[picnum]->topoffset);
-	return picnum;
-}
-
-//
-// R_CacheTileName
-//
-int R_CacheTileName (const char *name, ETileType type)
-{
-	int picnum = R_CheckTileNumForName (name, type);
-	if (picnum == -1)
-	{
-		I_Error ("Can't find tile \"%s\"\n", name);
-	}
-	return R_CacheTileNum (picnum);
-}
 
 //
 // R_PrecacheLevel
 // Preloads all relevant graphics for the level.
 //
-// [RH] Rewrote this using Lee Killough's code in BOOM as an example.
 
 void R_PrecacheLevel (void)
 {
-	byte *hitlist;
+	BYTE *hitlist;
+	BYTE *spritelist;
 	int i;
 
 	if (demoplayback)
 		return;
 
-	// Unmap all loaded tiles (if they are memory-mapped, this does nothing)
-	for (i = NumTileLumps - 1; i >= 0; --i)
-	{
-		if (TileCache[i] != NULL)
-		{
-			W_UnMapLump (TileCache[i]);
-			TileCache[i] = NULL;
-		}
-	}
 	// Decommit composite textures.
-	for (i = numtextures - 1; i >= 0; --i)
+	TexMan.UnloadAll ();
+
+	hitlist = new BYTE[TexMan.NumTextures()];
+	spritelist = new BYTE[sprites.Size()];
+	
+	// Precache textures (and sprites).
+	memset (hitlist, 0, TexMan.NumTextures());
+	memset (spritelist, 0, sprites.Size());
+
 	{
-		if (texturecomposite[i] != NULL)
+		AActor *actor;
+		TThinkerIterator<AActor> iterator;
+
+		while ( (actor = iterator.Next ()) )
+			spritelist[actor->sprite] = 1;
+	}
+
+	for (i = (int)(sprites.Size () - 1); i >= 0; i--)
+	{
+		if (spritelist[i])
 		{
-			delete[] texturecomposite[i];
-			texturecomposite[i] = NULL;
+			int j, k;
+			for (j = 0; j < sprites[i].numframes; j++)
+			{
+				const spriteframe_t *frame = &SpriteFrames[sprites[i].spriteframes + j];
+
+				for (k = 0; k < 16; k++)
+				{
+					int pic = frame->Texture[k];
+					if (pic != 0xFFFF)
+					{
+						hitlist[pic] = 1;
+					}
+				}
+			}
 		}
 	}
 
-	{
-		int size = (numflats > (int)sprites.Size ()) ? numflats : (int)sprites.Size ();
-
-		hitlist = new byte[(numtextures > size) ? numtextures : size];
-	}
-	
-	// Precache flats.
-	memset (hitlist, 0, numflats);
+	delete[] spritelist;
 
 	for (i = numsectors - 1; i >= 0; i--)
+	{
 		hitlist[sectors[i].floorpic] = hitlist[sectors[i].ceilingpic] = 1;
-		
-	for (i = numflats - 1; i >= 0; i--)
-		if (hitlist[i])
-			W_MapLumpNum (firstflat + i);
-	
-	// Precache textures.
-	memset (hitlist, 0, numtextures);
+	}
 
 	for (i = numsides - 1; i >= 0; i--)
 	{
@@ -1226,54 +2118,250 @@ void R_PrecacheLevel (void)
 	// Note that F_SKY1 is the name used to
 	//	indicate a sky floor/ceiling as a flat,
 	//	while the sky texture is stored like
-	//	a wall texture, with an episode dependend
+	//	a wall texture, with an episode dependant
 	//	name.
-	//
-	// [RH] Possibly two sky textures now.
 
-	hitlist[sky1texture] =
+	if (sky1texture >= 0)
+	{
+		hitlist[sky1texture] = 1;
+	}
+	if (sky2texture >= 0)
+	{
 		hitlist[sky2texture] = 1;
+	}
 
-	for (i = numtextures - 1; i >= 0; i--)
+	for (i = TexMan.NumTextures() - 1; i >= 0; i--)
 	{
 		if (hitlist[i])
 		{
-			int j;
-			texture_t *texture = textures[i];
-
-			for (j = texture->patchcount - 1; j > 0; j--)
-				R_CacheTileNum (texture->patches[j].patch);
-		}
-	}
-
-	// Precache sprites.
-	memset (hitlist, 0, sprites.Size ());
-		
-	{
-		AActor *actor;
-		TThinkerIterator<AActor> iterator;
-
-		while ( (actor = iterator.Next ()) )
-			hitlist[actor->sprite] = 1;
-	}
-
-	for (i = (int)(sprites.Size () - 1); i >= 0; i--)
-	{
-		if (hitlist[i])
-		{
-			int j, k;
-			for (j = 0; j < sprites[i].numframes; j++)
+			FTexture *tex = TexMan[i];
+			if (tex != NULL)
 			{
-				for (k = 0; k < 8; k++)
-				{
-					if (SpriteFrames[sprites[i].spriteframes + j].lump[k] != -1)
-					{
-						R_CacheTileNum (SpriteFrames[sprites[i].spriteframes + j].lump[k]);
-					}
-				}
+				tex->GetPixels ();
 			}
 		}
 	}
 
 	delete[] hitlist;
+}
+
+const BYTE *R_GetColumn (FTexture *tex, int col)
+{
+	return tex->GetColumn (col, NULL);
+}
+
+// Add all the miscellaneous 2D patches that are used to the texture manager
+// Unfortunately, the wad format does not provide an elegant way to express
+// which lumps are patches unless they are used in a wall texture, so I have
+// to list them all here.
+
+static void R_InitPatches ()
+{
+	static const char patches[][9] = 
+	{
+		"CONBACK",
+		"ADVISOR",
+		"BOSSBACK",
+		"PFUB1",
+		"PFUB2",
+		"END0",
+		"END1",
+		"END2",
+		"END3",
+		"END4",
+		"END5",
+		"END6",
+		"FINALE1",
+		"FINALE2",
+		"FINALE3",
+		"CHESSALL",
+		"CHESSC",
+		"CHESSM",
+		"FITEFACE",
+		"CLERFACE",
+		"MAGEFACE",
+		"M_NGAME",
+		"M_OPTION",
+		"M_RDTHIS",
+		"M_QUITG",
+		"M_JKILL",
+		"M_ROUGH",
+		"M_HURT",
+		"M_ULTRA",
+		"M_NMARE",
+		"M_LOADG",
+		"M_LSLEFT",
+		"M_LSCNTR",
+		"M_LSRGHT",
+		"M_FSLOT",
+		"M_SAVEG",
+		"M_DOOM",
+		"M_HTIC",
+		"M_NEWG",
+		"M_SKILL",
+		"M_EPISOD",
+		"M_EPI1",
+		"M_EPI2",
+		"M_EPI3",
+		"M_EPI4",
+		"MAPE1",
+		"MAPE2",
+		"MAPE3",
+		"WIMAP0",
+		"WIURH0",
+		"WIURH1",
+		"WISPLAT",
+		"WIMAP1",
+		"WIMAP2",
+		"INTERPIC",
+		"WIOSTK",
+		"WIOSTI",
+		"WIF",
+		"WIMSTT",
+		"WIOSTS",
+		"WIOSTF",
+		"WITIME",
+		"WIPAR",
+		"WIMSTAR",
+		"WIMINUS",
+		"WIPCNT",
+		"WICOLON",
+		"WISUCKS",
+		"WIFRGS",
+		"WISCRT2",
+		"WIENTER",
+		"WIKILRS",
+		"WIVCTMS",
+		"IN_YAH",
+		"IN_X",
+		"FONTB13",
+		"FONTB05",
+		"FONTB26",
+		"FONTB15",
+		"FACEA0",
+		"FACEB0",
+		"STFDEAD0",
+		"STBANY",
+		"M_PAUSE",
+		"PAUSED",
+		"M_SKULL1",
+		"M_SKULL2",
+		"M_SLCTR1",
+		"M_SLCTR2",
+		"BRDR_TL",
+		"BRDR_T",
+		"BRDR_TR",
+		"BRDR_L",
+		"BRDR_R",
+		"BRDR_BL",
+		"BRDR_B",
+		"BRDR_BR",
+		"BORDTL",
+		"BORDT",
+		"BORDTR",
+		"BORDL",
+		"BORDR",
+		"BORDBL",
+		"BORDB",
+		"BORDBR",
+		"TITLE",
+		"CREDIT",
+		"ORDER",
+		"HELP",
+		"HELP1",
+		"HELP2",
+		"TITLEPIC",
+		"ENDPIC",
+		"FINALE1",
+		"FINALE2",
+		"FINALE3",
+		"STTPRCNT",
+		"STARMS",
+		"VICTORY2"
+	};
+	static const char spinners[][9] =
+	{
+		"SPINBK%d",
+		"SPFLY%d",
+		"SPSHLD%d",
+		"SPBOOT%d",
+		"SPMINO%d"
+	};
+	static const char classChars[3] = { 'F', 'C', 'M' };
+
+	int i, j;
+	char name[9];
+
+	for (i = sizeof(patches)/sizeof(patches[0]); i >= 0; --i)
+	{
+		TexMan.AddPatch (patches[i]);
+	}
+
+	// Some digits
+	for (i = 9; i >= 0; --i)
+	{
+		sprintf (name, "WINUM%d", i);
+		TexMan.AddPatch (name);
+		sprintf (name, "FONTB%d", i + 16);
+		TexMan.AddPatch (name);
+		sprintf (name, "AMMNUM%d", i);
+		TexMan.AddPatch (name);
+	}
+
+	// Spinning power up icons for Heretic and Hexen
+	for (j = sizeof(spinners)/sizeof(spinners[0])-1; j >= 0; --j)
+	{
+		for (i = 0; i <= 15; ++i)
+		{
+			sprintf (name, spinners[j], i);
+			TexMan.AddPatch (name);
+		}
+	}
+
+	// Animating overlays for the Doom E1 map
+	for (i = 9; i >= 0; --i)
+	{
+		for (j = (i == 6) ? 3 : 2; j >= 0; --j)
+		{
+			sprintf (name, "WIA0%.2d%.2d", i, j);
+			TexMan.AddPatch (name);
+		}
+	}
+	// Animating overlays for the Doom E2 map
+	for (i = 7; i >= 0; --i)
+	{
+		for (j = (i == 7) ? 2 : 0; j >= 0; --j)
+		{
+			sprintf (name, "WIA1%.2d%.2d", i, j);
+			TexMan.AddPatch (name);
+		}
+	}
+	// Animating overlays for the Doom E3 map
+	for (i = 5; i >= 0; --i)
+	{
+		for (j = 2; j >= 0; --j)
+		{
+			sprintf (name, "WIA2%.2d%.2d", i, j);
+			TexMan.AddPatch (name);
+		}
+	}
+
+	// Player class animations for the Hexen new game menu
+	for (i = 2; i >= 0; --i)
+	{
+		sprintf (name, "M_%cBOX", classChars[i]);
+		TexMan.AddPatch (name);
+		for (j = 4; j >= 1; --j)
+		{
+			sprintf (name, "M_%cWALK%d", classChars[i], j);
+			TexMan.AddPatch (name);
+		}
+	}
+
+	// The spinning skull in Heretic's top-level menu
+	for (i = 0; i <= 17; ++i)
+	{
+		sprintf (name, "M_SKL%.2d", i);
+		TexMan.AddPatch (name);
+	}
 }

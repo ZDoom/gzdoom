@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <malloc.h>
 
 #include "templates.h"
 #include "m_alloc.h"
@@ -89,7 +90,11 @@ TArray<spritedef_t> sprites;
 TArray<spriteframe_t> SpriteFrames;
 size_t			NumStdSprites;		// The first x sprites that don't belong to skins.
 
-spriteframe_t	sprtemp[MAX_SPRITE_FRAMES];
+struct : public spriteframe_t
+{
+	int rotate;
+}
+sprtemp[MAX_SPRITE_FRAMES];
 int 			maxframe;
 char*			spritename;
 
@@ -146,12 +151,12 @@ static void R_InstallSpriteLump (int lump, unsigned frame, char rot, BOOL flippe
 
 		for (r = 14; r >= 0; r -= 2)
 		{
-			if (sprtemp[frame].lump[r] == -1)
+			if (sprtemp[frame].Texture[r] == 0xFFFF)
 			{
-				sprtemp[frame].lump[r] = (short)(lump);
+				sprtemp[frame].Texture[r] = (short)(lump);
 				if (flipped)
 				{
-					sprtemp[frame].flip |= 1 << r;
+					sprtemp[frame].Flip |= 1 << r;
 				}
 				sprtemp[frame].rotate = false;
 			}
@@ -168,13 +173,13 @@ static void R_InstallSpriteLump (int lump, unsigned frame, char rot, BOOL flippe
 			rotation = (rotation - 9) * 2 + 1;
 		}
 
-		if (sprtemp[frame].lump[rotation] == -1)
+		if (sprtemp[frame].Texture[rotation] == 0xFFFF)
 		{
 			// the lump is only used for one rotation
-			sprtemp[frame].lump[rotation] = (short)(lump);
+			sprtemp[frame].Texture[rotation] = lump;
 			if (flipped)
 			{
-				sprtemp[frame].flip |= 1 << rotation;
+				sprtemp[frame].Flip |= 1 << rotation;
 			}
 			sprtemp[frame].rotate = true;
 		}
@@ -186,6 +191,8 @@ static void R_InstallSpriteLump (int lump, unsigned frame, char rot, BOOL flippe
 static void R_InstallSprite (int num)
 {
 	int frame;
+	int framestart;
+	int undefinedFix;
 
 	if (maxframe == -1)
 	{
@@ -194,14 +201,26 @@ static void R_InstallSprite (int num)
 	}
 
 	maxframe++;
-	
-	for (frame = 0; frame < maxframe; frame++)
+
+	// [RH] If any frames are undefined, but there are some defined frames, map
+	// them to the first defined frame. This is a fix for Doom Raider, which actually
+	// worked with ZDoom 2.0.47, because of a bug here. It does not define frames A,
+	// B, or C for the sprite PSBG, but because I had sprtemp[].rotate defined as a
+	// bool, this code never detected that it was not actually present. After switching
+	// to the unified texture system, this caused it to crash while loading the wad.
+
+	for (frame = 0; frame < maxframe && sprtemp[frame].rotate == -1; ++frame)
+	{ }
+
+	undefinedFix = frame;
+
+	for (frame = 0; frame < maxframe; ++frame)
 	{
-		switch ((int)sprtemp[frame].rotate)
+		switch (sprtemp[frame].rotate)
 		{
 		case -1:
 			// no rotations were found for that frame at all
-			I_FatalError ("R_InstallSprite: No patches found for %s frame %c", sprites[num].name, frame+'A');
+			//I_FatalError ("R_InstallSprite: No patches found for %s frame %c", sprites[num].name, frame+'A');
 			break;
 			
 		case 0:
@@ -215,42 +234,63 @@ static void R_InstallSprite (int num)
 
 				for (rot = 0; rot < 8; ++rot)
 				{
-					if (sprtemp[frame].lump[rot*2+1] == -1)
+					if (sprtemp[frame].Texture[rot*2+1] == 0xFFFF)
 					{
-						sprtemp[frame].lump[rot*2+1] = sprtemp[frame].lump[rot*2];
-						if (sprtemp[frame].flip & (1 << (rot*2)))
+						sprtemp[frame].Texture[rot*2+1] = sprtemp[frame].Texture[rot*2];
+						if (sprtemp[frame].Flip & (1 << (rot*2)))
 						{
-							sprtemp[frame].flip |= 1 << (rot*2+1);
+							sprtemp[frame].Flip |= 1 << (rot*2+1);
 						}
 					}
-					if (sprtemp[frame].lump[rot*2] == -1)
+					if (sprtemp[frame].Texture[rot*2] == 0xFFFF)
 					{
-						sprtemp[frame].lump[rot*2] = sprtemp[frame].lump[rot*2+1];
-						if (sprtemp[frame].flip & (1 << (rot*2+1)))
+						sprtemp[frame].Texture[rot*2] = sprtemp[frame].Texture[rot*2+1];
+						if (sprtemp[frame].Flip & (1 << (rot*2+1)))
 						{
-							sprtemp[frame].flip |= 1 << (rot*2);
+							sprtemp[frame].Flip |= 1 << (rot*2);
 						}
 					}
 
 				}
 				for (rot = 0; rot < 16; ++rot)
 				{
-					if (sprtemp[frame].lump[rot] == -1)
-						I_FatalError ("R_InstallSprite: Sprite %c%c%c%c frame %c is missing rotations",
-									  sprites[num].name[0],
-									  sprites[num].name[1],
-									  sprites[num].name[2],
-									  sprites[num].name[3], frame+'A');
+					if (sprtemp[frame].Texture[rot] == -1)
+						I_FatalError ("R_InstallSprite: Sprite %s frame %c is missing rotations",
+									  sprites[num].name, frame+'A');
 				}
 			}
 			break;
 		}
 	}
+
+	for (frame = 0; frame < maxframe; ++frame)
+	{
+		if (sprtemp[frame].rotate == -1)
+		{
+			sprtemp[frame] = sprtemp[undefinedFix];
+		}
+	}
 	
 	// allocate space for the frames present and copy sprtemp to it
 	sprites[num].numframes = maxframe;
-	sprites[num].spriteframes = (WORD)SpriteFrames.Reserve (maxframe);
-	memcpy (&SpriteFrames[sprites[num].spriteframes], sprtemp, maxframe*sizeof(spriteframe_t));
+	sprites[num].spriteframes = WORD(framestart = SpriteFrames.Reserve (maxframe));
+	for (frame = 0; frame < maxframe; ++frame)
+	{
+		memcpy (SpriteFrames[framestart+frame].Texture, sprtemp[frame].Texture, sizeof(sprtemp[frame].Texture));
+		SpriteFrames[framestart+frame].Flip = sprtemp[frame].Flip;
+	}
+
+	// Let the textures know about the rotations
+	for (frame = 0; frame < maxframe; ++frame)
+	{
+		if (sprtemp[frame].rotate == 1)
+		{
+			for (int rot = 0; rot < 16; ++rot)
+			{
+				TexMan[sprtemp[frame].Texture[rot]]->Rotations = framestart + frame;
+			}
+		}
+	}
 }
 
 
@@ -270,48 +310,57 @@ static void R_InstallSprite (int num)
 // The rotation character can be 0 to signify no rotations.
 //
 void R_InitSpriteDefs () 
-{ 
-	size_t i;
-	int l;
-	int intname;
-	int start;
-	int end;
-				
-	start = firstspritelump - 1;
-	end = lastspritelump + 1;
-		
-	// scan all the lump names for each of the names,
-	//	noting the highest frame letter.
-	// Just compare 4 characters as ints
-	for (i = 0; i < sprites.Size (); i++)
+{
+	struct Hasher
 	{
-		spritename = sprites[i].name;
-		memset (sprtemp, -1, sizeof(sprtemp));
+		WORD Head, Next;
+	} *hashes;
+	size_t i, max;
+	DWORD intname;
+
+	// Create a hash table to speed up the process
+	max = TexMan.NumTextures();
+	hashes = (Hasher *)alloca (sizeof(Hasher) * max);
+	for (i = 0; i < max; ++i)
+	{
+		hashes[i].Head = 0xFFFF;
+	}
+	for (i = 0; i < max; ++i)
+	{
+		FTexture *tex = TexMan[i];
+		if (tex->UseType == FTexture::TEX_Sprite && strlen (tex->Name) >= 6)
+		{
+			DWORD bucket = *(DWORD *)tex->Name % max;
+			hashes[i].Next = hashes[bucket].Head;
+			hashes[bucket].Head = i;
+		}
+	}
+
+	// scan all the lump names for each of the names, noting the highest frame letter.
+	for (i = 0; i < sprites.Size(); ++i)
+	{
+		memset (sprtemp, 0xFF, sizeof(sprtemp));
 		for (int j = 0; j < MAX_SPRITE_FRAMES; ++j)
 		{
-			sprtemp[j].flip = 0;
+			sprtemp[j].Flip = 0;
 		}
 				
 		maxframe = -1;
-		intname = *(int *)spritename;
+		intname = *(DWORD *)sprites[i].name;
 		
-		// scan the lumps,
-		//	filling in the frames for whatever is found
-		for (l = lastspritelump; l >= firstspritelump; l--)
+		// scan the lumps, filling in the frames for whatever is found
+		int hash = hashes[intname % max].Head;
+		while (hash != 0xFFFF)
 		{
-			if (*(int *)lumpinfo[l].name == intname)
+			FTexture *tex = TexMan[hash];
+			if (*(DWORD *)tex->Name == intname)
 			{
-				R_InstallSpriteLump (l, 
-									 lumpinfo[l].name[4] - 'A',
-									 lumpinfo[l].name[5],
-									 false);
+				R_InstallSpriteLump (hash, tex->Name[4] - 'A', tex->Name[5], false);
 
-				if (lumpinfo[l].name[6])
-					R_InstallSpriteLump (l,
-									 lumpinfo[l].name[6] - 'A',
-									 lumpinfo[l].name[7],
-									 true);
+				if (tex->Name[6])
+					R_InstallSpriteLump (hash, tex->Name[6] - 'A', tex->Name[7], true);
 			}
+			hash = hashes[hash].Next;
 		}
 		
 		R_InstallSprite ((int)i);
@@ -362,7 +411,7 @@ void R_InitSkins (void)
 	spritedef_t temp;
 	int sndlumps[NUMSKINSOUNDS];
 	char key[65];
-	int intname;
+	DWORD intname;
 	size_t i;
 	int j, k, base;
 	int lastlump;
@@ -420,7 +469,7 @@ void R_InitSkins (void)
 			{
 				for (j = 3; j >= 0; j--)
 					sc_String[j] = toupper (sc_String[j]);
-				intname = *((int *)sc_String);
+				intname = *((DWORD *)sc_String);
 			}
 			else if (0 == stricmp (key, "face"))
 			{
@@ -498,27 +547,28 @@ void R_InitSkins (void)
 		// specified, use whatever immediately follows the specifier lump.
 		if (intname == 0)
 		{
-			intname = *(int *)(lumpinfo[base+1].name);
+			intname = *(DWORD *)(lumpinfo[base+1].name);
 		}
 
-		memset (sprtemp, -1, sizeof(sprtemp));
+		memset (sprtemp, 0xFFFF, sizeof(sprtemp));
 		for (k = 0; k < MAX_SPRITE_FRAMES; ++k)
 		{
-			sprtemp[k].flip = 0;
+			sprtemp[k].Flip = 0;
 		}
 		maxframe = -1;
 
 		for (k = base + 1; lumpinfo[k].wadnum == lumpinfo[base].wadnum; k++)
 		{
-			if (*(int *)lumpinfo[k].name == intname)
+			if (*(DWORD *)lumpinfo[k].name == intname)
 			{
-				R_InstallSpriteLump (k, 
+				int picnum = TexMan.AddTexture (new FPatchTexture (k, FTexture::TEX_SkinSprite));
+				R_InstallSpriteLump (picnum, 
 									 lumpinfo[k].name[4] - 'A',
 									 lumpinfo[k].name[5],
 									 false);
 
 				if (lumpinfo[k].name[6])
-					R_InstallSpriteLump (k,
+					R_InstallSpriteLump (picnum,
 									 lumpinfo[k].name[6] - 'A',
 									 lumpinfo[k].name[7],
 									 true);
@@ -786,102 +836,16 @@ fixed_t 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumn (column_t *column)
+void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 {
-	int top = -1;
-
-	while (column->topdelta != 0xff)
+	while (span->Length != 0)
 	{
-		if (column->topdelta <= top)
-		{
-			top += column->topdelta;
-		}
-		else
-		{
-			top = column->topdelta;
-		}
-
-		if (column->length == 0)
-		{
-			goto nextpost;
-		}
+		const int length = span->Length;
+		const int top = span->TopOffset;
 
 		// calculate unclipped screen coordinates for post
 		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
-		dc_yh = (sprtopscreen + spryscale * (top + column->length) - FRACUNIT) >> FRACBITS;
-
-		if (sprflipvert)
-		{
-			swap (dc_yl, dc_yh);
-		}
-
-		if (dc_yh >= mfloorclip[dc_x])
-		{
-			dc_yh = mfloorclip[dc_x] - 1;
-		}
-		if (dc_yl < mceilingclip[dc_x])
-		{
-			dc_yl = mceilingclip[dc_x];
-		}
-
-		if (dc_yl <= dc_yh)
-		{
-			if (sprflipvert)
-			{
-				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
-					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
-				const fixed_t maxfrac = column->length << FRACBITS;
-				while (dc_texturefrac >= maxfrac)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				while (endfrac < 0)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			else
-			{
-				dc_texturefrac = dc_texturemid - (top << FRACBITS)
-					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
-				while (dc_texturefrac < 0)
-				{
-					if (++dc_yl > dc_yh)
-						goto nextpost;
-					dc_texturefrac += dc_iscale;
-				}
-				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
-				const fixed_t maxfrac = column->length << FRACBITS;
-				while (endfrac >= maxfrac)
-				{
-					if (--dc_yh < dc_yl)
-						goto nextpost;
-					endfrac -= dc_iscale;
-				}
-			}
-			dc_source = (byte *)column + 3;
-			colfunc ();
-		}
-nextpost:
-		column = (column_t *)((byte *)column + column->length + 4);
-	}
-}
-
-void R_DrawMaskedColumn2 (column2_t *column)
-{
-	while (column->Length != 0)
-	{
-		const int length = column->Length;
-		const int top = column->TopDelta;
-
-		// calculate unclipped screen coordinates for post
-		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
-		dc_yh = (sprtopscreen + spryscale * (top + length) - FRACUNIT) >> FRACBITS;
+		dc_yh = ((sprtopscreen + spryscale * (top + length)) >> FRACBITS) - 1;
 
 		if (sprflipvert)
 		{
@@ -937,11 +901,11 @@ void R_DrawMaskedColumn2 (column2_t *column)
 					endfrac -= dc_iscale;
 				}
 			}
-			dc_source = (byte *)column + 4;
+			dc_source = column + top;
 			colfunc ();
 		}
 nextpost:
-		column = (column2_t *)((byte *)column + length + 4);
+		span++;
 	}
 }
 
@@ -951,8 +915,10 @@ nextpost:
 //
 void R_DrawVisSprite (vissprite_t *vis)
 {
+	const BYTE *pixels;
+	const FTexture::Span *spans;
 	fixed_t 		frac;
-	const patch_t*	patch;
+	FTexture		*tex;
 	int				x2, stop4;
 	fixed_t			xiscale;
 	ESPSResult		mode;
@@ -974,7 +940,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 			stop4 = (vis->x2 + 1) & ~3;
 		}
 
-		patch = TileCache[R_CacheTileNum (vis->picnum)];
+		tex = vis->pic;
 		spryscale = vis->yscale;
 		sprflipvert = false;
 		dc_iscale = 0xffffffffu / (unsigned)vis->yscale;
@@ -991,7 +957,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 		{
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
-				R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
+				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
+				R_DrawMaskedColumn (pixels, spans);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -1001,7 +968,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
 				{
-					R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
+					pixels = tex->GetColumn (frac >> FRACBITS, &spans);
+					R_DrawMaskedColumnHoriz (pixels, spans);
 					dc_x++;
 					frac += xiscale;
 				}
@@ -1010,7 +978,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 
 			while (dc_x < x2)
 			{
-				R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
+				pixels = tex->GetColumn (frac >> FRACBITS, &spans);
+				R_DrawMaskedColumn (pixels, spans);
 				dc_x++;
 				frac += xiscale;
 			}
@@ -1018,6 +987,8 @@ void R_DrawVisSprite (vissprite_t *vis)
 	}
 
 	R_FinishSetPatchStyle ();
+
+	NetUpdate ();
 }
 
 //
@@ -1026,6 +997,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 //
 void R_ProjectSprite (AActor *thing, int fakeside)
 {
+	fixed_t				fx, fy, fz;
 	fixed_t 			tr_x;
 	fixed_t 			tr_y;
 	
@@ -1039,9 +1011,9 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	int 				x1;
 	int 				x2;
 
-	spritedef_t*		sprdef;
-	spriteframe_t*		sprframe;
-	int 				lump;
+	int 				picnum;
+	FTexture			*tex;
+	int					picwidth;
 	
 	WORD 				flip;
 	
@@ -1058,9 +1030,14 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		return;
 	}
 
+	// [RH] Interpolate the sprite's position to make it look smooth
+	fx = thing->PrevX + FixedMul (r_TicFrac, thing->x - thing->PrevX);
+	fy = thing->PrevY + FixedMul (r_TicFrac, thing->y - thing->PrevY);
+	fz = thing->PrevZ + FixedMul (r_TicFrac, thing->z - thing->PrevZ);
+
 	// transform the origin point
-	tr_x = thing->x - viewx;
-	tr_y = thing->y - viewy;
+	tr_x = fx - viewx;
+	tr_y = fy - viewy;
 
 	tz = DMulScale20 (tr_x, viewtancos, tr_y, viewtansin);
 
@@ -1085,47 +1062,62 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	xscale = DivScale12 (centerxfrac, tz);
 
-	// decide which patch to use for the sprite, based on angle to player
-#ifdef RANGECHECK
-	if ((unsigned)thing->sprite >= (unsigned)sprites.Size ())
+	if (thing->picnum != 0xFFFF)
 	{
-		DPrintf ("R_ProjectSprite: invalid sprite number %i\n", thing->sprite);
-		return;
-	}
-#endif
-	sprdef = &sprites[thing->sprite];
-	if (thing->frame >= sprdef->numframes)
-	{
-		DPrintf ("R_ProjectSprite: invalid sprite frame %c%c%c%c: %c (max %c)\n",
-			sprdef->name[0], sprdef->name[1], sprdef->name[2], sprdef->name[3],
-			thing->frame + 'A', sprdef->numframes + 'A' - 1);
-		return;
-	}
-	sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
-
-	if (sprframe->rotate)
-	{
-		// choose a different rotation based on player view
-		angle_t ang = R_PointToAngle (thing->x, thing->y);
-		unsigned rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>28;
-		lump = sprframe->lump[rot];
-		flip = sprframe->flip & (1 << rot);
+		picnum = thing->picnum;
 	}
 	else
 	{
-		// use single rotation for all views
-		lump = sprframe->lump[0];
-		flip = sprframe->flip & 1;
+		// decide which texture to use for the sprite
+#ifdef RANGECHECK
+		if ((unsigned)thing->sprite >= (unsigned)sprites.Size ())
+		{
+			DPrintf ("R_ProjectSprite: invalid sprite number %i\n", thing->sprite);
+			return;
+		}
+#endif
+		spritedef_t *sprdef = &sprites[thing->sprite];
+		if (thing->frame >= sprdef->numframes)
+		{
+			// If there are no frames at all for this sprite, don't draw it.
+			// If there are some frames, then use the "unknown" sprite.
+			if (sprdef->numframes > 0)
+			{
+				DPrintf ("R_ProjectSprite: invalid sprite frame %s: %c (max %c)\n",
+					sprdef->name, thing->frame + 'A', sprdef->numframes + 'A' - 1);
+				picnum = TexMan.GetTexture ("UNKNA0", FTexture::TEX_Sprite);
+			}
+			else
+			{
+				return;
+			}
+		}
+		else
+		{
+			picnum = SpriteFrames[sprdef->spriteframes + thing->frame].Texture[0];
+		}
 	}
 
-	if (TileSizes[lump].Width == 0xffff)
+	tex = TexMan(picnum);	// <- Look! You could animate sprites if ANIMDEFS supported it!
+	flip = 0;
+
+	if (tex->Rotations != 0xFFFF)
 	{
-		R_CacheTileNum (lump);	// [RH] get sprite's size
+		// choose a different rotation based on player view
+		spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
+		angle_t ang = R_PointToAngle (fx, fy);
+		angle_t rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+		picnum = sprframe->Texture[rot];
+		flip = sprframe->Flip & (1 << rot);
+		tex = TexMan[picnum];	// Do not animate the rotation
 	}
-	
+
+	// Getting the width now ensures that the texture's dimensions are loaded
+	picwidth = tex->GetWidth ();
+
 	// [RH] Added scaling
-	gzt = thing->z + (TileSizes[lump].TopOffset << (FRACBITS-6)) * (thing->yscale+1);
-	gzb = thing->z + ((TileSizes[lump].TopOffset - TileSizes[lump].Height) << (FRACBITS-6)) * (thing->yscale+1);
+	gzt = fz + (tex->TopOffset << (FRACBITS-6-3)) * (thing->yscale+1) * tex->ScaleX;
+	gzb = fz + ((tex->TopOffset - tex->GetHeight()) << (FRACBITS-6-3)) * (thing->yscale+1) * tex->ScaleY;
 
 	// [RH] Reject sprites that are off the top or bottom of the screen
 	if (MulScale12 (globaluclip, tz) > viewz - gzb ||
@@ -1135,24 +1127,24 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 
 	// calculate edges of the shape
-	const fixed_t thingxscalemul = (thing->xscale+1) << (16-6);
+	const fixed_t thingxscalemul = ((thing->xscale+1) * tex->ScaleX) << (16-6-3);
 
-	tx -= TileSizes[lump].LeftOffset * thingxscalemul;
+	tx -= tex->LeftOffset * thingxscalemul;
 	x1 = centerx + MulScale32 (tx, xscale);
 
 	// off the right side?
 	if (x1 > WindowRight)
 		return;
 
-	tx += TileSizes[lump].Width * thingxscalemul;
+	tx += tex->GetWidth() * thingxscalemul;
 	x2 = centerx + MulScale32 (tx, xscale);
 
 	// off the left side or too small?
 	if (x2 < WindowLeft || x2 <= x1)
 		return;
 
-	xscale = MulScale6 (thing->xscale+1, xscale);
-	iscale = (TileSizes[lump].Width << FRACBITS) / (x2 - x1);
+	xscale = MulScale9 (thing->xscale+1, xscale * tex->ScaleX);
+	iscale = (tex->GetWidth() << FRACBITS) / (x2 - x1);
 	x2--;
 
 	// killough 3/27/98: exclude things totally separated
@@ -1170,19 +1162,19 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	{
 		if (fakeside == FAKED_AboveCeiling)
 		{
-			if (gzt < heightsec->ceilingplane.ZatPoint (thing->x, thing->y))
+			if (gzt < heightsec->ceilingplane.ZatPoint (fx, fy))
 				return;
 		}
 		else if (fakeside == FAKED_BelowFloor)
 		{
-			if (gzb >= heightsec->floorplane.ZatPoint (thing->x, thing->y))
+			if (gzb >= heightsec->floorplane.ZatPoint (fx, fy))
 				return;
 		}
 		else
 		{
-			if (gzt < heightsec->floorplane.ZatPoint (thing->x, thing->y))
+			if (gzt < heightsec->floorplane.ZatPoint (fx, fy))
 				return;
-			if (gzb >= heightsec->ceilingplane.ZatPoint (thing->x, thing->y))
+			if (gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
 				return;
 		}
 	}
@@ -1203,26 +1195,26 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->RenderStyle = thing->RenderStyle;
 	vis->AlphaColor = thing->alphacolor;
 	vis->xscale = xscale;
-	vis->yscale = Scale (InvZtoScale, (thing->yscale+1)<<6, tz);
+	vis->yscale = Scale (InvZtoScale, ((thing->yscale+1) * tex->ScaleY) << (6-3), tz);
 	vis->depth = tz;
 	vis->cx = tx2;
-	vis->gx = thing->x;
-	vis->gy = thing->y;
+	vis->gx = fx;
+	vis->gy = fy;
 	vis->gz = gzb;		// [RH] use gzb, not thing->z
 	vis->gzt = gzt;		// killough 3/27/98
-	vis->floorclip = SafeDivScale6 (thing->floorclip, (thing->yscale+1));
-	vis->texturemid = (TileSizes[lump].TopOffset << FRACBITS)
-		- SafeDivScale6 (viewz-thing->z+thing->floorclip, (thing->yscale+1));
+	vis->floorclip = SafeDivScale9 (thing->floorclip, (thing->yscale+1) * tex->ScaleY);
+	vis->texturemid = (tex->TopOffset << FRACBITS)
+		- SafeDivScale9 (viewz-fz+thing->floorclip, (thing->yscale+1) * tex->ScaleY);
 	vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 	vis->x2 = x2 > WindowRight ? WindowRight : x2;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
 	vis->FakeFlatStat = fakeside;
 	vis->alpha = thing->alpha;
-	vis->picnum = lump;
+	vis->pic = tex;
 
 	if (flip)
 	{
-		vis->startfrac = (TileSizes[lump].Width << FRACBITS) - 1;
+		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
 		vis->xiscale = -iscale;
 	}
 	else
@@ -1298,8 +1290,10 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	int 				x2;
 	spritedef_t*		sprdef;
 	spriteframe_t*		sprframe;
-	int 				lump;
-	BOOL 				flip;
+	int 				picnum;
+	int					picwidth;
+	WORD				flip;
+	FTexture*			tex;
 	vissprite_t*		vis;
 	vissprite_t 		avis;
 	
@@ -1321,25 +1315,23 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 #endif
 	sprframe = &SpriteFrames[sprdef->spriteframes + psp->state->GetFrame()];
 
-	lump = sprframe->lump[0];
-	flip = (BOOL)sprframe->flip & 1;
+	picnum = sprframe->Texture[0];
+	flip = sprframe->Flip & 1;
+	tex = TexMan(picnum);
 
-	if (TileSizes[lump].Width == 0xffff)
-	{
-		R_CacheTileNum (lump);
-	}
+	picwidth = tex->GetWidth ();
 
 	// calculate edges of the shape
 	tx = psp->sx-((320/2)<<FRACBITS);
 		
-	tx -= TileSizes[lump].LeftOffset << FRACBITS;
+	tx -= tex->LeftOffset << FRACBITS;
 	x1 = (centerxfrac + FixedMul (tx, pspritexscale)) >>FRACBITS;
 
 	// off the right side
 	if (x1 > viewwidth)
 		return; 
 
-	tx += TileSizes[lump].Width << FRACBITS;
+	tx += tex->GetWidth() << FRACBITS;
 	x2 = ((centerxfrac + FixedMul (tx, pspritexscale)) >>FRACBITS) - 1;
 
 	// off the left side
@@ -1350,8 +1342,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	vis = &avis;
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
-	vis->texturemid = (BASEYCENTER<<FRACBITS) -
-		(psp->sy - (TileSizes[lump].TopOffset << FRACBITS));
+	vis->texturemid = (BASEYCENTER<<FRACBITS) - (psp->sy - (tex->TopOffset << FRACBITS));
 	if (camera->player && (RenderTarget != screen ||
 		realviewheight == RenderTarget->GetHeight() ||
 		(RenderTarget->GetWidth() > 320 && !st_scale)))
@@ -1381,12 +1372,12 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	vis->Translation = 0;		// [RH] Use default colors
 	vis->alpha = owner->alpha;
 	vis->RenderStyle = owner->RenderStyle;
-	vis->picnum = lump;
+	vis->pic = tex;
 
 	if (flip)
 	{
 		vis->xiscale = -pspritexiscale;
-		vis->startfrac = (TileSizes[lump].Width << FRACBITS) - 1;
+		vis->startfrac = (tex->GetWidth() << FRACBITS) - 1;
 	}
 	else
 	{
@@ -1551,7 +1542,7 @@ void R_DrawSprite (vissprite_t *spr)
 	short *clip1, *clip2;
 
 	// [RH] Check for particles
-	if (spr->picnum == -1)
+	if (spr->pic == NULL)
 	{
 		R_DrawParticle (spr);
 		return;
@@ -1618,12 +1609,8 @@ void R_DrawSprite (vissprite_t *spr)
 	// killough 3/27/98: end special clipping for deep water / fake ceilings
 	else if (spr->floorclip)
 	{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
-		if (TileSizes[spr->picnum].Width == 0xffff)
-		{
-			R_CacheTileNum (spr->picnum);
-		}
 		int clip = ((centeryfrac - FixedMul (spr->texturemid -
-			(TileSizes[spr->picnum].Height<<FRACBITS) +
+			(spr->pic->GetHeight() << FRACBITS) +
 			spr->floorclip, spr->yscale)) >> FRACBITS);
 		if (clip < botclip)
 		{
@@ -1946,7 +1933,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	vis->x2 = x2;
 	vis->Translation = 0;
 	vis->startfrac = particle->color;
-	vis->picnum = -1;
+	vis->pic = NULL;
 	vis->renderflags = particle->trans;
 	vis->FakeFlatStat = fakeside;
 	vis->floorclip = 0;

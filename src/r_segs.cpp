@@ -42,6 +42,7 @@
 
 #include "m_swap.h"
 #include "w_wad.h"
+#include "stats.h"
 
 #define WALLYREPEAT 8
 
@@ -66,9 +67,9 @@ extern fixed_t globaluclip, globaldclip;
 static BOOL		segtextured;	// True if any of the segs textures might be visible.
 static bool		markfloor;		// False if the back side is the same plane.
 static bool		markceiling;
-static int		toptexture;
-static int		bottomtexture;
-static int		midtexture;
+static FTexture *toptexture;
+static FTexture *bottomtexture;
+static FTexture *midtexture;
 
 int OWallMost (short *mostbuf, fixed_t z);
 int WallMost (short *mostbuf, const secplane_t &plane);
@@ -115,13 +116,13 @@ static fixed_t	rw_midtexturemid;
 static fixed_t	rw_toptexturemid;
 static fixed_t	rw_bottomtexturemid;
 
-int				rw_picnum;
+FTexture		*rw_pic;
 
 static short	*maskedtexturecol;
-static int		WallSpriteTile;
+static FTexture	*WallSpriteTile;
 
 static void R_RenderBoundWallSprite (AActor *first, drawseg_t *clipper, int pass);
-static void WallSpriteColumn (void (*drawfunc)(column_t *));
+static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans));
 
 //=============================================================================
 //
@@ -154,7 +155,7 @@ CVAR(Bool, r_drawmirrors, true, 0)
 //
 fixed_t *MaskedSWall;
 
-static void BlastMaskedColumn (void (*blastfunc)(column_t *), int texnum)
+static void BlastMaskedColumn (void (*blastfunc)(const BYTE *pixels, const FTexture::Span *spans), FTexture *tex)
 {
 	if (maskedtexturecol[dc_x] != SHRT_MAX)
 	{
@@ -176,34 +177,9 @@ static void BlastMaskedColumn (void (*blastfunc)(column_t *), int texnum)
 		// when forming multipatched textures (see r_data.c).
 
 		// draw the texture
-		blastfunc ((column_t *)((byte *)R_GetColumn(texnum, maskedtexturecol[dc_x]) -3));
-		maskedtexturecol[dc_x] = SHRT_MAX;
-	}
-	rw_light += rw_lightstep;
-	spryscale += rw_scalestep;
-}
-
-//
-// BlastMaskedColumn2
-//
-// [RH] This function draws masked columns that use words to store run
-// lengths and offsets.
-//
-static void BlastMaskedColumn2 (void (*blastfunc)(column2_t *), int texnum)
-{
-	if (maskedtexturecol[dc_x] != SHRT_MAX)
-	{
-		// calculate lighting
-		if (!fixedcolormap)
-		{
-			dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
-		}
-
-		dc_iscale = MaskedSWall[dc_x];
-		sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
-		
-		// draw the texture
-		blastfunc ((column2_t *)((byte *)R_GetColumn(texnum, maskedtexturecol[dc_x]) - 4));
+		const FTexture::Span *spans;
+		const BYTE *pixels = tex->GetColumn (maskedtexturecol[dc_x], &spans);
+		blastfunc (pixels, spans);
 		maskedtexturecol[dc_x] = SHRT_MAX;
 	}
 	rw_light += rw_lightstep;
@@ -213,7 +189,7 @@ static void BlastMaskedColumn2 (void (*blastfunc)(column2_t *), int texnum)
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 {
 	int 		lightnum;
-	int 		texnum;
+	FTexture	*tex;
 	int			i;
 	sector_t	tempsec;		// killough 4/13/98
 	fixed_t		texheight, textop, scaley;
@@ -225,7 +201,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// killough 4/11/98: draw translucent 2s normal textures
 	// [RH] modified because we don't use user-definable translucency maps
 	ESPSResult drawmode;
-	
+
 	drawmode = R_SetPatchStyle (curline->sidedef->Flags & WALLF_ADDTRANS ? STYLE_Add : STYLE_Translucent,
 		curline->linedef->alpha < 255 ? curline->linedef->alpha<<8 : FRACUNIT,
 		0, 0);
@@ -235,10 +211,12 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		return;
 	}
 
+	NetUpdate ();
+
 	frontsector = curline->frontsector;
 	backsector = curline->backsector;
 
-	texnum = texturetranslation[curline->sidedef->midtexture];
+	tex = TexMan(curline->sidedef->midtexture);
 
 	basecolormap = frontsector->ColorMap->Maps;	// [RH] Set basecolormap
 
@@ -285,7 +263,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 	{
 		dc_texturemid = MAX (frontsector->floortexz, backsector->floortexz);
-		dc_texturemid += textureheight[texnum];
+		dc_texturemid += tex->GetHeight() << FRACBITS;
 	}
 	else
 	{
@@ -296,7 +274,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// from the solid texture positioning in R_NewWall().
 	dc_texturemid += curline->sidedef->rowoffset - viewz;
 	textop = dc_texturemid;
-	scaley = texturescaley[texnum] ? texturescaley[texnum] : ty;
+	scaley = tex->ScaleY ? tex->ScaleY : ty;
 	dc_texturemid = MulScale3 (dc_texturemid, scaley);
 
 	// [RH] Don't bother drawing segs that are completely offscreen
@@ -306,7 +284,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		goto clearfog;
 	}
 
-	texheight = SafeDivScale3 (textureheight[texnum], scaley);
+	texheight = SafeDivScale19 (tex->GetHeight(), scaley);
 	if (MulScale12 (globaluclip, ds->neardepth) > texheight - textop &&
 		MulScale12 (globaluclip, ds->fardepth) > texheight - textop)
 	{ // Texture bottom is above the top of the screen
@@ -338,19 +316,13 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		dc_colormap = basecolormap + fixedlightlev;
 	else if (fixedcolormap)
 		dc_colormap = fixedcolormap;
-	
+
 	// draw the columns one at a time
 	if (drawmode == DoDraw0)
 	{
-		if (texturetype2[texnum])
+		for (dc_x = x1; dc_x <= x2; ++dc_x)
 		{
-			for (dc_x = x1; dc_x <= x2; dc_x++)
-				BlastMaskedColumn2 (R_DrawMaskedColumn2, texnum);
-		}
-		else
-		{
-			for (dc_x = x1; dc_x <= x2; dc_x++)
-				BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+			BlastMaskedColumn (R_DrawMaskedColumn, tex);
 		}
 	}
 	else
@@ -359,59 +331,31 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		int stop = (x2+1) & ~3;
 
 		if (x1 >= x2)
-			return;
+			goto clearfog;
 
 		dc_x = x1;
 
-		if (texturetype2[texnum])
+		while ((dc_x < stop) && (dc_x & 3))
 		{
-			while ((dc_x < stop) && (dc_x & 3))
-			{
-				BlastMaskedColumn2 (R_DrawMaskedColumn2, texnum);
-				dc_x++;
-			}
-
-			while (dc_x < stop)
-			{
-				rt_initcols();
-				BlastMaskedColumn2 (R_DrawMaskedColumnHoriz2, texnum); dc_x++;
-				BlastMaskedColumn2 (R_DrawMaskedColumnHoriz2, texnum); dc_x++;
-				BlastMaskedColumn2 (R_DrawMaskedColumnHoriz2, texnum); dc_x++;
-				BlastMaskedColumn2 (R_DrawMaskedColumnHoriz2, texnum);
-				rt_draw4cols (dc_x - 3);
-				dc_x++;
-			}
-
-			while (dc_x <= x2)
-			{
-				BlastMaskedColumn2 (R_DrawMaskedColumn2, texnum);
-				dc_x++;
-			}
+			BlastMaskedColumn (R_DrawMaskedColumn, tex);
+			dc_x++;
 		}
-		else
+
+		while (dc_x < stop)
 		{
-			while ((dc_x < stop) && (dc_x & 3))
-			{
-				BlastMaskedColumn (R_DrawMaskedColumn, texnum);
-				dc_x++;
-			}
+			rt_initcols();
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex); dc_x++;
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, tex);
+			rt_draw4cols (dc_x - 3);
+			dc_x++;
+		}
 
-			while (dc_x < stop)
-			{
-				rt_initcols();
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum); dc_x++;
-				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
-				rt_draw4cols (dc_x - 3);
-				dc_x++;
-			}
-
-			while (dc_x <= x2)
-			{
-				BlastMaskedColumn (R_DrawMaskedColumn, texnum);
-				dc_x++;
-			}
+		while (dc_x <= x2)
+		{
+			BlastMaskedColumn (R_DrawMaskedColumn, tex);
+			dc_x++;
 		}
 	}
 
@@ -438,9 +382,8 @@ inline fixed_t prevline1 (fixed_t vince, byte *colormap, int count, fixed_t vplc
 	return doprevline1 ();
 }
 
-//extern cycle_t WallScanCycles;
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-			   const BYTE *(*getcol)(int tex, int x))
+			   const BYTE *(*getcol)(FTexture *tex, int x))
 {
 	long x, shiftval;
 	long y1ve[4], y2ve[4], u4, d4, z;
@@ -448,14 +391,23 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 	fixed_t light = rw_light - rw_lightstep;
 	SDWORD yrepeat, texturemid, xoffset;
 
+	// This function also gets used to draw skies. Unlike BUILD, skies are not
+	// drawn a wall at a time, so these checks are invalid.
 	//if ((uwal[x1] > viewheight) && (uwal[x2] > viewheight)) return;
 	//if ((dwal[x1] < 0) && (dwal[x2] < 0)) return;
 
-	//clock (WallScanCycles);
+	if (rw_pic->UseType == FTexture::TEX_Null)
+	{
+		return;
+	}
 
-	shiftval = textureheightlog2[rw_picnum];
+//extern cycle_t WallScanCycles;
+//clock (WallScanCycles);
+
+	rw_pic->GetHeight();	// Make sure texture size is loaded
+	shiftval = rw_pic->HeightBits;
 	setupvline (32-shiftval);
-	yrepeat = (texturescaley[rw_picnum] ? texturescaley[rw_picnum] : ty) << (11 - shiftval);
+	yrepeat = (rw_pic->ScaleY ? rw_pic->ScaleY : ty) << (11 - shiftval);
 	texturemid = dc_texturemid << (16 - shiftval);
 	xoffset = rw_offset;
 
@@ -482,7 +434,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 		}
 
-		dc_source = getcol (rw_picnum, (lwal[x] + xoffset) >> FRACBITS);
+		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + x;
 		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
@@ -500,7 +452,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			y2ve[z] = dwal[x+z];//min(dwal[x+z],dmost[x+z])-1;
 			if (y2ve[z] <= y1ve[z]) { bad += 1<<z; continue; }
 
-			bufplce[z] = getcol (rw_picnum, (lwal[x+z] + xoffset) >> FRACBITS);
+			bufplce[z] = getcol (rw_pic, (lwal[x+z] + xoffset) >> FRACBITS);
 			vince[z] = swal[x+z] * yrepeat;
 			vplce[z] = texturemid + FixedMul (vince[z], (y1ve[z]<<FRACBITS)-centeryfrac+FRACUNIT);
 		}
@@ -571,7 +523,7 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 			dc_colormap = basecolormap + (GETPALOOKUP (light, wallshade) << COLORMAPSHIFT);
 		}
 
-		dc_source = getcol (rw_picnum, (lwal[x] + xoffset) >> FRACBITS);
+		dc_source = getcol (rw_pic, (lwal[x] + xoffset) >> FRACBITS);
 		dc_dest = ylookup[y1ve[0]] + x;
 		dc_iscale = swal[x] * yrepeat;
 		dc_count = y2ve[0] - y1ve[0];
@@ -580,7 +532,9 @@ void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t 
 		dovline1();
 	}
 
-	//unclock (WallScanCycles);
+//unclock (WallScanCycles);
+
+	NetUpdate ();
 }
 
 void wallscan_striped (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal)
@@ -725,36 +679,39 @@ void R_RenderSegLoop ()
 	// draw the wall tiers
 	if (midtexture)
 	{ // one sided line
-		dc_texturemid = rw_midtexturemid;
-		rw_picnum = midtexture;
-		xscale = texturescalex[rw_picnum] ? texturescalex[rw_picnum] : tx;
-		if (xscale != lwallscale)
+		if (midtexture->UseType != FTexture::TEX_Null)
 		{
-			PrepLWall (lwall, (curline->sidedef->TexelLength*xscale) << (FRACBITS-3));
-			lwallscale = xscale;
-		}
-		if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
-		{
-			wallscan (x1, x2-1, walltop, wallbottom, swall, lwall);
-		}
-		else
-		{
-			wallscan_striped (x1, x2-1, walltop, wallbottom, swall, lwall);
+			dc_texturemid = rw_midtexturemid;
+			rw_pic = midtexture;
+			xscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
+			if (xscale != lwallscale)
+			{
+				PrepLWall (lwall, (curline->sidedef->TexelLength*xscale) << (FRACBITS-3));
+				lwallscale = xscale;
+			}
+			if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
+			{
+				wallscan (x1, x2-1, walltop, wallbottom, swall, lwall);
+			}
+			else
+			{
+				wallscan_striped (x1, x2-1, walltop, wallbottom, swall, lwall);
+			}
 		}
 		clearbufshort (ceilingclip+x1, x2-x1, viewheight);
 		clearbufshort (floorclip+x1, x2-x1, 0xffff);
 	}
 	else
 	{ // two sided line
-		if (toptexture)
+		if (toptexture != NULL && toptexture->UseType != FTexture::TEX_Null)
 		{ // top wall
 			for (x = x1; x < x2; ++x)
 			{
 				wallupper[x] = MAX (MIN (wallupper[x], floorclip[x]), walltop[x]);
 			}
 			dc_texturemid = rw_toptexturemid;
-			rw_picnum = toptexture;
-			xscale = texturescalex[rw_picnum] ? texturescalex[rw_picnum] : tx;
+			rw_pic = toptexture;
+			xscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
 			if (xscale != lwallscale)
 			{
 				PrepLWall (lwall, (curline->sidedef->TexelLength*xscale) << (FRACBITS-3));
@@ -776,15 +733,15 @@ void R_RenderSegLoop ()
 		}
 
 		
-		if (bottomtexture)
+		if (bottomtexture != NULL && bottomtexture->UseType != FTexture::TEX_Null)
 		{ // bottom wall
 			for (x = x1; x < x2; ++x)
 			{
 				walllower[x] = MIN (MAX (walllower[x], ceilingclip[x]), wallbottom[x]);
 			}
 			dc_texturemid = rw_bottomtexturemid;
-			rw_picnum = bottomtexture;
-			xscale = texturescalex[rw_picnum] ? texturescalex[rw_picnum] : tx;
+			rw_pic = bottomtexture;
+			xscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
 			if (xscale != lwallscale)
 			{
 				PrepLWall (lwall, (curline->sidedef->TexelLength*xscale) << (FRACBITS-3));
@@ -830,10 +787,10 @@ void R_NewWall ()
 			// [RH] Horizon lines do not need to be textured
 			if (linedef->special != Line_Horizon)
 			{
-				midtexture = texturetranslation[sidedef->midtexture];
+				midtexture = TexMan(sidedef->midtexture);
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
-					rw_midtexturemid = frontsector->floortexz + textureheight[midtexture];
+					rw_midtexturemid = frontsector->floortexz + (midtexture->GetHeight() << FRACBITS);
 				}
 				else
 				{ // top of texture at top
@@ -842,7 +799,7 @@ void R_NewWall ()
 				// rowoffset is added outside the multiply so that it positions the texture
 				// by texels instead of world units.
 				rw_midtexturemid = MulScale3 (rw_midtexturemid - viewz,
-					texturescaley[midtexture] ? texturescaley[midtexture] : ty)
+					midtexture->ScaleY ? midtexture->ScaleY : ty)
 					+ sidedef->rowoffset;
 			}
 		}
@@ -929,8 +886,8 @@ void R_NewWall ()
 
 		if (rw_havehigh)
 		{ // top texture
-			toptexture = texturetranslation[sidedef->toptexture];
-			const int scale = texturescaley[toptexture] ? texturescaley[toptexture] : ty;
+			toptexture = TexMan(sidedef->toptexture);
+			const int scale = toptexture->ScaleY ? toptexture->ScaleY : ty;
 
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // top of texture at top
@@ -938,13 +895,13 @@ void R_NewWall ()
 			}
 			else
 			{ // bottom of texture at bottom
-				rw_toptexturemid = MulScale3 (backsector->ceilingtexz - viewz, scale) + textureheight[toptexture];
+				rw_toptexturemid = MulScale3 (backsector->ceilingtexz - viewz, scale) + (toptexture->GetHeight() << FRACBITS);
 			}
 			rw_toptexturemid += sidedef->rowoffset;
 		}
 		if (rw_havelow)
 		{ // bottom texture
-			bottomtexture = texturetranslation[sidedef->bottomtexture];
+			bottomtexture = TexMan(sidedef->bottomtexture);
 
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // bottom of texture at bottom
@@ -955,7 +912,7 @@ void R_NewWall ()
 				rw_bottomtexturemid = backsector->floortexz;
 			}
 			rw_bottomtexturemid = MulScale3 (rw_bottomtexturemid - viewz,
-				texturescaley[bottomtexture] ? texturescaley[bottomtexture] : ty)
+				bottomtexture->ScaleY ? bottomtexture->ScaleY : ty)
 				+ sidedef->rowoffset;
 		}
 	}
@@ -974,14 +931,14 @@ void R_NewWall ()
 			markceiling = false;
 	}
 
-	segtextured = texturetranslation[sidedef->midtexture] | toptexture | bottomtexture;
+	segtextured = TexMan(sidedef->midtexture) != NULL || toptexture != NULL || bottomtexture != NULL;
 
 	// calculate light table
 	if (segtextured || (backsector && IsFogBoundary (frontsector, backsector)))
 	{
-		lwallscale = texturetranslation[sidedef->midtexture] ? texturescalex[texturetranslation[sidedef->midtexture]] :
-					 toptexture ? texturescalex[toptexture] :
-					 bottomtexture ? texturescalex[bottomtexture] : 0;
+		lwallscale = TexMan(sidedef->midtexture) ? TexMan(sidedef->midtexture)->ScaleX :
+							toptexture ? toptexture->ScaleX :
+							bottomtexture ? bottomtexture->ScaleX : 0;
 		if (lwallscale == 0)
 		{
 			lwallscale = tx;
@@ -1009,7 +966,7 @@ int side_s::GetLightLevel (bool foggy, int baselight) const
 	// [RH] Get wall light level
 	if (sidedef->Flags & WALLF_ABSLIGHTING)
 	{
-		return sidedef->Light;
+		return (BYTE)sidedef->Light;
 	}
 	else
 	{
@@ -1180,7 +1137,7 @@ void R_StoreWallRange (int start, int stop)
 
 		// allocate space for masked texture tables, if needed
 		// [RH] Don't just allocate the space; fill it in too.
-		if ((texturetranslation[sidedef->midtexture] || IsFogBoundary (frontsector, backsector)) &&
+		if ((TexMan(sidedef->midtexture) || IsFogBoundary (frontsector, backsector)) &&
 			(rw_ceilstat != 12 || sidedef->toptexture == 0) &&
 			(rw_floorstat != 3 || sidedef->bottomtexture == 0) &&
 			(WallSZ1 >= TOO_CLOSE_Z && WallSZ2 >= TOO_CLOSE_Z))
@@ -1192,15 +1149,15 @@ void R_StoreWallRange (int start, int stop)
 			maskedtexture = true;
 
 			ds_p->bFogBoundary = IsFogBoundary (frontsector, backsector);
-			if (texturetranslation[sidedef->midtexture])
+			if (sidedef->midtexture != 0)
 			{
 				ds_p->maskedtexturecol = R_NewOpening (stop - start);
 				ds_p->swall = R_NewOpening ((stop - start) * 2);
 
 				lwal = openings + ds_p->maskedtexturecol;
 				swal = (fixed_t *)(openings + ds_p->swall);
-				int scaley = texturescaley[texturetranslation[sidedef->midtexture]] ?
-					texturescaley[texturetranslation[sidedef->midtexture]] : ty;
+				int scaley = TexMan(sidedef->midtexture)->ScaleY ?
+					TexMan(sidedef->midtexture)->ScaleY : ty;
 				int xoffset = rw_offset;
 				for (i = start; i < stop; i++)
 				{
@@ -1610,15 +1567,18 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 	// fix for rounding errors
 	walxrepeat -= FRACUNIT;
 	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat : 0;
-	for (x = WallSX1; x < WallSX2; x++)
+	if (WallSX1 > 0)
 	{
-		if ((unsigned)lwall[x] > (unsigned)walxrepeat)
+		for (x = WallSX1; x < WallSX2; x++)
 		{
-			lwall[x] = fix;
-		}
-		else
-		{
-			break;
+			if ((unsigned)lwall[x] > (unsigned)walxrepeat)
+			{
+				lwall[x] = fix;
+			}
+			else
+			{
+				break;
+			}
 		}
 	}
 	fix = walxrepeat - fix;
@@ -1689,15 +1649,18 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 	// fix for rounding errors
 	walxrepeat -= FRACUNIT;
 	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat : 0;
-	for (x = WallSX1; x < WallSX2; x++)
+	if (WallSX1 > 0)
 	{
-		if ((unsigned)lwall[x] > (unsigned)walxrepeat)
+		for (x = WallSX1; x < WallSX2; x++)
 		{
-			lwall[x] = fix;
-		}
-		else
-		{
-			break;
+			if ((unsigned)lwall[x] > (unsigned)walxrepeat)
+			{
+				lwall[x] = fix;
+			}
+			else
+			{
+				break;
+			}
 		}
 	}
 	fix = walxrepeat - fix;
@@ -1781,26 +1744,23 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 
 	if (actor->picnum != 0xffff)
 	{
-		WallSpriteTile = actor->picnum;
+		WallSpriteTile = TexMan(actor->picnum);
 		flipx = actor->renderflags & RF_XFLIP;
 	}
 	else
 	{
-		WallSpriteTile = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].lump[0];
-		flipx = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].flip & 1;
+		//WallSpriteTile = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].lump[0];
+		//flipx = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].flip & 1;
+		return;
 	}
 
 	// Determine left and right edges of sprite. Since this sprite is bound
 	// to a wall, we use the wall's angle instead of the actor's. This is
 	// pretty much the same as what R_AddLine() does.
 
-	if (TileSizes[WallSpriteTile].Width == 0xffff)
-	{
-		R_CacheTileNum (WallSpriteTile);
-	}
-
-	x1 = TileSizes[WallSpriteTile].LeftOffset;
-	x2 = TileSizes[WallSpriteTile].Width - x1;
+	x2 = WallSpriteTile->GetWidth();
+	x1 = WallSpriteTile->LeftOffset;
+	x2 = x2 - x1;
 
 	x1 *= xscale;
 	x2 *= xscale;
@@ -1936,7 +1896,7 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 		break;
 	}
 
-	topoff = TileSizes[WallSpriteTile].TopOffset << FRACBITS;
+	topoff = WallSpriteTile->TopOffset << FRACBITS;
 	dc_texturemid = topoff + SafeDivScale6 (zpos - viewz, yscale);
 
 	// Scale the texture size
@@ -1958,14 +1918,14 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 
 	swap (x1, WallSX1);
 	swap (x2, WallSX2);
-	PrepWall (swall, lwall, TileSizes[WallSpriteTile].Width << FRACBITS);
+	PrepWall (swall, lwall, WallSpriteTile->GetWidth() << FRACBITS);
 	swap (x1, WallSX1);
 	swap (x2, WallSX2);
 
 	if (flipx)
 	{
 		int i;
-		int right = (TileSizes[WallSpriteTile].Width << FRACBITS) - 1;
+		int right = (WallSpriteTile->GetWidth() << FRACBITS) - 1;
 
 		for (i = x1; i < x2; i++)
 		{
@@ -1987,13 +1947,11 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 		calclighting = true;
 
 	// Draw it
-	R_CacheTileNum (WallSpriteTile);
-
 	if (actor->renderflags & RF_YFLIP)
 	{
 		sprflipvert = true;
 		yscale = -yscale;
-		dc_texturemid = dc_texturemid - (TileSizes[WallSpriteTile].Height<<FRACBITS);
+		dc_texturemid = dc_texturemid - (WallSpriteTile->GetHeight() << FRACBITS);
 	}
 	else
 	{
@@ -2079,24 +2037,21 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	R_FinishSetPatchStyle ();
 }
 
-static void WallSpriteColumn (void (*drawfunc)(column_t *))
+static void WallSpriteColumn (void (*drawfunc)(const BYTE *column, const FTexture::Span *spans))
 {
 	unsigned int texturecolumn = lwall[dc_x] >> FRACBITS;
 #if 0
-	if (texturecolumn >= (unsigned)TileCache[WallSpriteTile]->width)
+	if (texturecolumn >= (unsigned)WallSpriteTile->GetWidth())
 	{
-		char lump[9];
-		lump[8] = 0;
-		W_GetLumpName (lump, WallSpriteTile);
 		I_FatalError ("WallSpriteColumn tried to draw part of a decal that didn't exist.\n"
 			"Please report all of the following information, because\n"
 			"I want to get this fixed, yet I just can't get it happen to me:\n\n"
 			"%d->%d/%d"
-			"  %d(%s)  %04x  %d\n"
+			"  %s  %04x  %d\n"
 			"%d  %d  %d\n"
 			"%d  %d  %d  %u\n",
 			dc_x, texturecolumn, TileCache[WallSpriteTile]->width,
-			WallSpriteTile, lump, DecalActorForDebug->renderflags, DecalActorForDebug->RenderStyle,
+			WallSpriteTile->Name, DecalActorForDebug->renderflags, DecalActorForDebug->RenderStyle,
 			DecalActorForDebug->x, DecalActorForDebug->y, DecalActorForDebug->z,
 			viewx, viewy, viewz, viewangle);
 		texturecolumn = TileCache[WallSpriteTile]->width-1;
@@ -2108,8 +2063,10 @@ static void WallSpriteColumn (void (*drawfunc)(column_t *))
 		sprtopscreen = centeryfrac + FixedMul (dc_texturemid, spryscale);
 	else
 		sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
-	drawfunc ((column_t *)(LONG(TileCache[WallSpriteTile]->columnofs[texturecolumn])
-		+ (byte *)TileCache[WallSpriteTile]));
 
+	const BYTE *column;
+	const FTexture::Span *spans;
+	column = WallSpriteTile->GetColumn (texturecolumn, &spans);
+	drawfunc (column, spans);
 	rw_light += rw_lightstep;
 }

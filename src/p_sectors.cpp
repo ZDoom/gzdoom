@@ -436,8 +436,9 @@ static inline void CheckShortestTex (int texnum, fixed_t &minsize)
 {
 	if (texnum > 0 || (texnum == 0 && (compatflags & COMPATF_SHORTTEX)))
 	{
-		int yscale = texturescaley[texnum] ? texturescaley[texnum] : 8;
-		fixed_t h = DivScale3 (textureheight[texnum], yscale);
+		FTexture *tex = TexMan[texnum];
+		int yscale = tex->ScaleY ? tex->ScaleY : 8;
+		fixed_t h = DivScale3 (tex->GetHeight(), yscale);
 		if (h < minsize)
 		{
 			minsize = h;

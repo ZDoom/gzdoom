@@ -121,6 +121,20 @@ static int WriteLINEDEFS (FILE *file)
 	return numlines * sizeof(mld);
 }
 
+static const char *GetTextureName (int texnum)
+{
+	FTexture *tex = TexMan[texnum];
+
+	if (tex != NULL)
+	{
+		return tex->Name;
+	}
+	else
+	{
+		return "-";
+	}
+}
+
 static int WriteSIDEDEFS (FILE *file)
 {
 	mapsidedef_t msd;
@@ -130,9 +144,9 @@ static int WriteSIDEDEFS (FILE *file)
 		msd.textureoffset = SHORT(short(sides[i].textureoffset >> FRACBITS));
 		msd.rowoffset = SHORT(short(sides[i].rowoffset >> FRACBITS));
 		msd.sector = SHORT(short(sides[i].sector - sectors));
-		uppercopy (msd.toptexture, R_GetTextureName (sides[i].toptexture));
-		uppercopy (msd.bottomtexture, R_GetTextureName (sides[i].bottomtexture));
-		uppercopy (msd.midtexture, R_GetTextureName (sides[i].midtexture));
+		uppercopy (msd.toptexture, GetTextureName (sides[i].toptexture));
+		uppercopy (msd.bottomtexture, GetTextureName (sides[i].bottomtexture));
+		uppercopy (msd.midtexture, GetTextureName (sides[i].midtexture));
 		fwrite (&msd, sizeof(msd), 1, file);
 	}
 	return numsides * sizeof(msd);
@@ -221,8 +235,8 @@ static int WriteSECTORS (FILE *file)
 	{
 		ms.floorheight = SHORT(short(sectors[i].floortexz >> FRACBITS));
 		ms.ceilingheight = SHORT(short(sectors[i].ceilingtexz >> FRACBITS));
-		W_GetLumpName (ms.floorpic, firstflat + sectors[i].floorpic);
-		W_GetLumpName (ms.ceilingpic, firstflat + sectors[i].ceilingpic);
+		uppercopy (ms.floorpic, GetTextureName (sectors[i].floorpic));
+		uppercopy (ms.ceilingpic, GetTextureName (sectors[i].ceilingpic));
 		ms.lightlevel = SHORT(sectors[i].lightlevel);
 		ms.special = SHORT(sectors[i].special);
 		ms.tag = SHORT(sectors[i].tag);

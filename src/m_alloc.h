@@ -47,14 +47,12 @@ void *Realloc (void *memblock, size_t size);
 
 #else
 
-// Make the debug heap record more info
-#define CRTDBG_MAP_ALLOC
 #include <stdlib.h>
 #include <crtdbg.h>
 
-#define Malloc malloc
-#define Calloc calloc
-#define Realloc realloc
+inline void *Malloc(size_t size) { return malloc (size); }
+inline void *Calloc(size_t num, size_t size) { return calloc (num, size); }
+inline void *Realloc(void *memblock, size_t size) { return realloc (memblock, size); }
 #endif
 
 #endif //__M_ALLOC_H__

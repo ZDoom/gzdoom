@@ -2476,6 +2476,10 @@ void ABlasterFX1::Tick ()
 	fixed_t zfrac;
 	int changexy;
 
+	PrevX = x;
+	PrevY = y;
+	PrevZ = z;
+
 	// Handle movement
 	if (momx || momy || (z != floorz) || momz)
 	{

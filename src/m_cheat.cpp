@@ -126,7 +126,7 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	case CHT_CHAINSAW:
 		player->weaponowned[wp_chainsaw] = true;
-		player->powers[pw_invulnerability] = true;
+		player->powers[pw_invulnerability] = true;	// [RH] This isn't going to do much
 		msg = GStrings(STSTR_CHOPPERS);
 		break;
 

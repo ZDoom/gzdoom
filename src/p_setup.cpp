@@ -53,7 +53,7 @@
 #include "stats.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
-extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t *start);
+extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);
 
 extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
 extern void P_TranslateTeleportThings (void);
@@ -61,9 +61,9 @@ extern int	P_TranslateSectorSpecial (int);
 
 extern unsigned int R_OldBlend;
 
-CVAR (Bool, genblockmap, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR (Bool, gennodes, false, CVAR_GLOBALCONFIG);
-CVAR (Bool, genglnodes, false, 0);
+CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
+CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
+CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
 
 static void P_InitTagLists ();
 
@@ -168,11 +168,14 @@ static void P_AllocateSideDefs (int count);
 static void P_SetSideNum (WORD *sidenum_p, WORD sidenum);
 
 // [RH] Figure out blends for deep water sectors
-static void SetTexture (short *texture, DWORD *blend, char *name)
+static void SetTexture (short *texture, DWORD *blend, char *name8)
 {
+	char name[9];
+	strncpy (name, name8, 8);
+	name[8] = 0;
 	if ((*blend = R_ColormapNumForName (name)) == 0)
 	{
-		if ((*texture = R_CheckTextureNumForName (name)) == -1)
+		if ((*texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall)) == -1)
 		{
 			char name2[9];
 			char *stop;
@@ -192,9 +195,12 @@ static void SetTexture (short *texture, DWORD *blend, char *name)
 	}
 }
 
-static void SetTextureNoErr (short *texture, DWORD *color, char *name)
+static void SetTextureNoErr (short *texture, DWORD *color, char *name8)
 {
-	if ((*texture = R_CheckTextureNumForName (name)) == -1)
+	char name[9];
+	strncpy (name, name8, 8);
+	name[8] = 0;
+	if ((*texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall)) == -1)
 	{
 		char name2[9];
 		char *stop;
@@ -501,6 +507,7 @@ void P_LoadSubsectors (int lump)
 void P_LoadSectors (int lump)
 {
 	const byte*			data;
+	char				fname[9];
 	int 				i;
 	mapsector_t*		ms;
 	sector_t*			ss;
@@ -518,6 +525,7 @@ void P_LoadSectors (int lump)
 		defSeqType = -1;
 
 	fogMap = normMap = NULL;
+	fname[8] = 0;
 
 	ms = (mapsector_t *)data;
 	ss = sectors;
@@ -531,8 +539,10 @@ void P_LoadSectors (int lump)
 		ss->ceilingplane.d = ss->ceilingtexz;
 		ss->ceilingplane.c = -FRACUNIT;
 		ss->ceilingplane.ic = -FRACUNIT;
-		ss->floorpic = (short)R_FlatNumForName(ms->floorpic);
-		ss->ceilingpic = (short)R_FlatNumForName(ms->ceilingpic);
+		strncpy (fname, ms->floorpic, 8);
+		ss->floorpic = TexMan.GetTexture (fname, FTexture::TEX_Flat);
+		strncpy (fname, ms->ceilingpic, 8);
+		ss->ceilingpic = TexMan.GetTexture (fname, FTexture::TEX_Flat);
 		ss->lightlevel = clamp (SHORT(ms->lightlevel), (short)0, (short)255);
 		if (HasBehavior)
 			ss->special = SHORT(ms->special);
@@ -1419,8 +1429,11 @@ static void P_LoopSidedefs ()
 
 void P_LoadSideDefs2 (int lump)
 {
+	char name[9];
 	const byte *data = (byte *)W_MapLumpNum (lump);
 	int  i;
+
+	name[8] = 0;
 
 	for (i = 0; i < numsides; i++)
 	{
@@ -1469,7 +1482,8 @@ void P_LoadSideDefs2 (int lump)
 
 				SetTextureNoErr (&sd->bottomtexture, &fog, msd->bottomtexture);
 				SetTextureNoErr (&sd->toptexture, &color, msd->toptexture);
-				sd->midtexture = R_TextureNumForName (msd->midtexture);
+				strncpy (name, msd->midtexture, 8);
+				sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall);
 
 				if (fog != 0x000000 || color != 0xffffff)
 				{
@@ -1499,9 +1513,12 @@ void P_LoadSideDefs2 (int lump)
 			break;
 */
 		default:			// normal cases
-			sd->midtexture = R_TextureNumForName(msd->midtexture);
-			sd->toptexture = R_TextureNumForName(msd->toptexture);
-			sd->bottomtexture = R_TextureNumForName(msd->bottomtexture);
+			strncpy (name, msd->midtexture, 8);
+			sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall);
+			strncpy (name, msd->toptexture, 8);
+			sd->toptexture = TexMan.GetTexture (name, FTexture::TEX_Wall);
+			strncpy (name, msd->bottomtexture, 8);
+			sd->bottomtexture = TexMan.GetTexture (name, FTexture::TEX_Wall);
 			break;
 		}
 	}
@@ -2544,7 +2561,8 @@ void P_FreeLevelData ()
 // [RH] position indicates the start spot to spawn at
 void P_SetupLevel (char *lumpname, int position)
 {
-	mapthing2_t buildstart;
+	mapthing2_t *buildthings;
+	int numbuildthings;
 	int i, lumpnum;
 	bool buildmap;
 
@@ -2596,7 +2614,7 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		BYTE *mapdata = new BYTE[W_LumpLength (lumpnum)];
 		W_ReadLump (lumpnum, mapdata);
-		buildmap = P_LoadBuildMap (mapdata, W_LumpLength (lumpnum), &buildstart);
+		buildmap = P_LoadBuildMap (mapdata, W_LumpLength (lumpnum), &buildthings, &numbuildthings);
 		delete[] mapdata;
 	}
 
@@ -2691,7 +2709,7 @@ void P_SetupLevel (char *lumpname, int position)
 	for (i = 0; i < BODYQUESIZE; i++)
 		bodyque[i] = NULL;
 
-	po_NumPolyobjs = 0;
+	PO_DeInit ();	// Flush polyobjs from previous map
 
 	deathmatchstarts.Clear ();
 
@@ -2707,7 +2725,11 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 	else
 	{
-		P_SpawnMapThing (&buildstart, 0);
+		for (i = 0; i < numbuildthings; ++i)
+		{
+			P_SpawnMapThing (&buildthings[i], 0);
+		}
+		delete[] buildthings;
 	}
 
 	PO_Init ();	// Initialize the polyobjs

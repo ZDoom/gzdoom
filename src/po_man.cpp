@@ -46,10 +46,12 @@ static void UnLinkPolyobj (polyobj_t *po);
 static void LinkPolyobj (polyobj_t *po);
 static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po);
 static void InitBlockMap (void);
-static void IterFindPolySegs (int x, int y, seg_t **segList);
+static void IterFindPolySegs (vertex_t *v1, vertex_t *v2, seg_t **segList);
 static void SpawnPolyobj (int index, int tag, BOOL crush);
 static void TranslateToStartSpot (int tag, int originX, int originY);
 static void DoMovePolyobj (polyobj_t *po, int x, int y);
+static void InitSegLists ();
+static void KillSegLists ();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -65,8 +67,9 @@ polyspawns_t *polyspawns; // [RH] Let P_SpawnMapThings() find our thingies for u
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int PolySegCount;
-static fixed_t PolyStartX;
-static fixed_t PolyStartY;
+
+static SDWORD *SegListHead;	// contains numvertexes elements
+static TArray<SDWORD> KnownPolySegs;
 
 // CODE --------------------------------------------------------------------
 
@@ -83,6 +86,10 @@ void DPolyAction::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_PolyObj << m_Speed << m_Dist;
+	if (arc.IsLoading ())
+	{
+		SetInterpolation ();
+	}
 }
 
 DPolyAction::DPolyAction (int polyNum)
@@ -90,6 +97,40 @@ DPolyAction::DPolyAction (int polyNum)
 	m_PolyObj = polyNum;
 	m_Speed = 0;
 	m_Dist = 0;
+	SetInterpolation ();
+}
+
+DPolyAction::~DPolyAction ()
+{
+	polyobj_t *poly = GetPolyobj (m_PolyObj);
+	int i;
+
+	if (poly->specialdata == NULL || poly->specialdata == this)
+	{
+		poly->specialdata = NULL;
+
+		for (i = 0; i < poly->numsegs; ++i)
+		{
+			stopinterpolation (&poly->segs[i]->v1->x);
+			stopinterpolation (&poly->segs[i]->v1->y);
+			stopinterpolation (&poly->segs[i]->v2->x);
+			stopinterpolation (&poly->segs[i]->v2->x);
+		}
+	}
+}
+
+void DPolyAction::SetInterpolation ()
+{
+	polyobj_t *poly = GetPolyobj (m_PolyObj);
+	int i;
+
+	for (i = 0; i < poly->numsegs; ++i)
+	{
+		setinterpolation (&poly->segs[i]->v1->x);
+		setinterpolation (&poly->segs[i]->v1->y);
+		setinterpolation (&poly->segs[i]->v2->x);
+		setinterpolation (&poly->segs[i]->v2->x);
+	}
 }
 
 DRotatePoly::DRotatePoly ()
@@ -775,8 +816,7 @@ void DoMovePolyobj (polyobj_t *po, int x, int y)
 				ADecal::MoveChain (sides[linedef->sidenum[1]].BoundActors, x, y);
 			linedef->validcount = validcount;
 		}
-		for (veryTempSeg = po->segs; veryTempSeg != segList;
-			veryTempSeg++)
+		for (veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
 		{
 			if ((*veryTempSeg)->v1 == (*segList)->v1)
 			{
@@ -1106,39 +1146,90 @@ static void InitBlockMap (void)
 
 //==========================================================================
 //
+// InitSegLists [RH]
+//
+// Group segs by vertex and collect segs that are known to belong to a
+// polyobject so that they can be initialized fast.
+//==========================================================================
+
+static void InitSegLists ()
+{
+	SDWORD i;
+
+	SegListHead = new SDWORD[numvertexes];
+
+	clearbuf (SegListHead, numvertexes, -1);
+
+	for (i = 0; i < numsegs; ++i)
+	{
+		SegListHead[segs[i].v1 - vertexes] = i;
+		if (segs[i].linedef != NULL &&
+			(segs[i].linedef->special == PO_LINE_START ||
+			 segs[i].linedef->special == PO_LINE_EXPLICIT))
+		{
+			KnownPolySegs.Push (i);
+		}
+	}
+}
+
+//==========================================================================
+//
+// KilSegLists [RH]
+//
+//==========================================================================
+
+static void KillSegLists ()
+{
+	delete[] SegListHead;
+	SegListHead = NULL;
+	KnownPolySegs.Clear ();
+	KnownPolySegs.ShrinkToFit ();
+}
+
+//==========================================================================
+//
 // IterFindPolySegs
 //
 // Passing NULL for segList will cause IterFindPolySegs to count the
-// number of segs in the polyobj.
+// number of segs in the polyobj. v1 is the vertex to stop at, and v2
+// is the vertex to start at.
 //==========================================================================
 
-static void IterFindPolySegs (int x, int y, seg_t **segList)
+static void IterFindPolySegs (vertex_t *v1, vertex_t *v2p, seg_t **segList)
 {
+	SDWORD j;
+	int v2 = v2p - vertexes;
 	int i;
 
-	if (x == PolyStartX && y == PolyStartY)
-	{
-		return;
-	}
+	// This for loop exists solely to avoid infinitely looping on badly
+	// formed polyobjects.
 	for (i = 0; i < numsegs; i++)
 	{
-		if (segs[i].linedef != NULL)
+		j = SegListHead[v2];
+
+		if (j < 0)
 		{
-			if (segs[i].v1->x == x && segs[i].v1->y == y)
+			break;
+		}
+
+		if (segs[j].v1 == v1)
+		{
+			return;
+		}
+
+		if (segs[j].linedef != NULL)
+		{
+			if (segList == NULL)
 			{
-				if (!segList)
-				{
-					PolySegCount++;
-				}
-				else
-				{
-					*segList++ = &segs[i];
-					segs[i].bPolySeg = true;
-				}
-				IterFindPolySegs (segs[i].v2->x, segs[i].v2->y, segList);
-				return;
+				PolySegCount++;
+			}
+			else
+			{
+				*segList++ = &segs[j];
+				segs[j].bPolySeg = true;
 			}
 		}
+		v2 = segs[j].v2 - vertexes;
 	}
 	I_Error ("IterFindPolySegs: Non-closed Polyobj located.\n");
 }
@@ -1152,16 +1243,22 @@ static void IterFindPolySegs (int x, int y, seg_t **segList)
 
 static void SpawnPolyobj (int index, int tag, BOOL crush)
 {
+	size_t ii;
 	int i;
 	int j;
 	int psIndex;
 	int psIndexOld;
 	seg_t *polySegList[PO_MAXPOLYSEGS];
 
-	for (i = 0; i < numsegs; i++)
+	for (ii = 0; ii < KnownPolySegs.Size(); ++ii)
 	{
-		if (segs[i].linedef != NULL &&
-			segs[i].linedef->special == PO_LINE_START &&
+		i = KnownPolySegs[ii];
+		if (i < 0)
+		{
+			continue;
+		}
+		
+		if (segs[i].linedef->special == PO_LINE_START &&
 			segs[i].linedef->args[0] == tag)
 		{
 			if (polyobjs[index].segs)
@@ -1172,14 +1269,12 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 			segs[i].linedef->args[0] = 0;
 			segs[i].bPolySeg = true;
 			PolySegCount = 1;
-			PolyStartX = segs[i].v1->x;
-			PolyStartY = segs[i].v1->y;
-			IterFindPolySegs(segs[i].v2->x, segs[i].v2->y, NULL);
+			IterFindPolySegs(segs[i].v1, segs[i].v2, NULL);
 
 			polyobjs[index].numsegs = PolySegCount;
 			polyobjs[index].segs = new seg_t *[PolySegCount];
 			polyobjs[index].segs[0] = &segs[i]; // insert the first seg
-			IterFindPolySegs (segs[i].v2->x, segs[i].v2->y, polyobjs[index].segs+1);
+			IterFindPolySegs (segs[i].v1, segs[i].v2, polyobjs[index].segs+1);
 			polyobjs[index].crush = crush;
 			polyobjs[index].tag = tag;
 			polyobjs[index].seqType = segs[i].linedef->args[2];
@@ -1197,9 +1292,11 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 		for (j = 1; j < PO_MAXPOLYSEGS; j++)
 		{
 			psIndexOld = psIndex;
-			for (i = 0; i < numsegs; i++)
+			for (ii = 0; ii < KnownPolySegs.Size(); ++ii)
 			{
-				if (segs[i].linedef != NULL &&
+				i = KnownPolySegs[ii];
+
+				if (i >= 0 &&
 					segs[i].linedef->special == PO_LINE_EXPLICIT &&
 					segs[i].linedef->args[0] == tag)
 				{
@@ -1222,24 +1319,27 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 			}
 			// Clear out any specials for these segs...we cannot clear them out
 			// 	in the above loop, since we aren't guaranteed one seg per linedef.
-			for (i = 0; i < numsegs; i++)
+			for (ii = 0; ii < KnownPolySegs.Size(); ++ii)
 			{
-				if (segs[i].linedef != NULL &&
+				i = KnownPolySegs[ii];
+				if (i >= 0 &&
 					segs[i].linedef->special == PO_LINE_EXPLICIT &&
 					segs[i].linedef->args[0] == tag && segs[i].linedef->args[1] == j)
 				{
 					segs[i].linedef->special = 0;
 					segs[i].linedef->args[0] = 0;
 					segs[i].bPolySeg = true;
+					KnownPolySegs[ii] = -1;
 				}
 			}
 			if (psIndex == psIndexOld)
-			{ // Check if an explicit line order has been skipped
-				// A line has been skipped if there are any more explicit
-				// lines with the current tag value
-				for (i = 0; i < numsegs; i++)
+			{ // Check if an explicit line order has been skipped.
+			  // A line has been skipped if there are any more explicit
+			  // lines with the current tag value. [RH] Can this actually happen?
+				for (ii = 0; ii < KnownPolySegs.Size(); ++ii)
 				{
-					if (segs[i].linedef != NULL &&
+					i = KnownPolySegs[ii];
+					if (i >= 0 &&
 						segs[i].linedef->special == PO_LINE_EXPLICIT &&
 						segs[i].linedef->args[0] == tag)
 					{
@@ -1366,10 +1466,13 @@ void PO_Init (void)
 {
 	// [RH] Hexen found the polyobject-related things by reloading the map's
 	//		THINGS lump here and scanning through it. I have P_SpawnMapThing()
-	//		record those things instead, so that in here, we simply need to
+	//		record those things instead, so that in here we simply need to
 	//		look at the polyspawns list.
 	polyspawns_t *polyspawn, **prev;
 	int polyIndex;
+
+	// [RH] Make this faster
+	InitSegLists ();
 
 	polyobjs = new polyobj_t[po_NumPolyobjs];
 	memset (polyobjs, 0, po_NumPolyobjs*sizeof(polyobj_t));
@@ -1415,6 +1518,30 @@ void PO_Init (void)
 		}
 	}
 	InitBlockMap();
+
+	// [RH] Don't need the seg lists anymore
+	KillSegLists ();
+}
+
+//==========================================================================
+//
+// PO_DeInit
+//
+//==========================================================================
+
+void PO_DeInit ()
+{
+	po_NumPolyobjs = 0;
+	if (polyobjs != NULL)
+	{
+		delete[] polyobjs;
+		polyobjs = NULL;
+	}
+	if (PolyBlockMap != NULL)
+	{
+		delete[] PolyBlockMap;
+		PolyBlockMap = NULL;
+	}
 }
 
 //==========================================================================

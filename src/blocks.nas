@@ -136,7 +136,7 @@ DMPRP:
 	mov	edi,[esp+height]
 
 .loop	mov	al,[ecx+ebx]
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 	mov	al,[eax+ebp]
@@ -176,7 +176,7 @@ DMPUP:
 	mov	ebp,[esp+4*5+12]
 
 .loop	mov	al,[ecx+ebx]
-	test	eax,eax
+	cmp	al,255
 	jz	.skip
 
 	mov	[edx+ebx],al
@@ -219,7 +219,7 @@ DMTRP:
 	mov	edx,[esp+8*4+20]	; edx = bg2rgb and scratch
 
 .loop	mov	al,[esi+ebp]
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 	mov	al,[ebx+eax]		; remap foreground
@@ -276,7 +276,7 @@ DMTUP:
 	mov	edx,[esp+7*4+20]	; edx = bg2rgb and scratch
 
 .loop	mov	al,[esi+ebp]
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 	mov	ecx,[ecx+eax*4]		; get foreground RGB
@@ -333,7 +333,7 @@ DMSRP:
 	mov	ecx,[esp+8*4+20]	; ecx = bg2rgb and scratch
 
 .loop	mov	al,[esi+ebp]
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 	mov	al,[edx+eax]		; remap color
@@ -393,7 +393,7 @@ DMSUP:
 	mov	ecx,[esp+7*4+20]	; ecx = bg2rgb
 
 .loop	mov	al,[esi+ebp]
-	test	eax,eax
+	cmp	al,255
 	jz	.skip
 
 	mov	[edi+ebp],al
@@ -451,7 +451,7 @@ DMAUP:
 	xor	ebx,ebx
 
 .loop	mov	al,[esi+ebp]
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 	add	eax,1
@@ -528,7 +528,7 @@ SMPRP:
 .loop	mov	al,[esi+ebx]
 	mov	ebx,[esp+2*4+20]
 	add	edx,ecx
-	test	eax,eax
+	cmp	eax,255
 	mov	al,[ebx+eax]
 	jz	.skip
 
@@ -593,7 +593,7 @@ SMPUP:
 
 .loop	mov	al,[esi+ebx]
 	add	edx,ecx
-	test	eax,eax
+	cmp	al,255
 	jz	.skip
 
 	mov	[edi+ebp],al
@@ -655,7 +655,7 @@ SMAUP:
 
 .loop	mov	al,[esi+ebx]
 	add	edx,ecx
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 	add	eax,2
@@ -752,7 +752,7 @@ SMTRP:
 
 .loop	mov	al,[esi+ebx]
 	add	edx,ecx
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 .map	mov	al,[SPACEFILLER4+eax]		; remap
@@ -830,7 +830,7 @@ SMTUP:
 
 .loop	mov	al,[esi+ebx]
 	add	edx,ecx
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 .fg	mov	ebx,[SPACEFILLER4+eax*4]	; fg2rgb
@@ -915,7 +915,7 @@ SMSRP:
 
 .loop	mov	al,[esi+ebx]
 	add	edx,ecx
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 .map	mov	al,[SPACEFILLER4+eax]
@@ -999,7 +999,7 @@ SMSUP:
 
 .loop	mov	al,[esi+ebx]
 	add	edx,ecx
-	test	eax,eax
+	cmp	eax,255
 	jz	.skip
 
 	mov	[edi+ebp],al

@@ -635,7 +635,7 @@ static menuitem_t ModesItems[] = {
 //	{ discrete, "Screen mode",			{&DummyDepthCvar},		{0.0}, {0.0},	{0.0}, {Depths} },
 	{ discrete, "Aspect ratio",			{&menu_screenratios},	{4.0}, {0.0},	{0.0}, {Ratios} },
 	{ discrete, "Fullscreen",			{&fullscreen},			{2.0}, {0.0},	{0.0}, {YesNo} },
-	{ discrete, "Monitor is a TFT display", {&vid_tft},			{2.0}, {0.0},	{0.0}, {YesNo} },
+	{ discrete, "Enable 5:4 aspect ratio",{&vid_tft},			{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
@@ -1498,7 +1498,14 @@ void M_OptResponder (event_t *ev)
 					  !CurrentMenu->items[CurrentItem].b.position));
 
 			if (CurrentMenu->items[CurrentItem].type == screenres)
+			{
+				item = &CurrentMenu->items[CurrentItem];
+				while ((modecol == 2 && !item->d.res3) || (modecol == 1 && !item->c.res2))
+				{
+					modecol--;
+				}
 				CurrentMenu->items[CurrentItem].a.selmode = modecol;
+			}
 
 			S_Sound (CHAN_VOICE, "menu/cursor", 1, ATTN_NONE);
 		}

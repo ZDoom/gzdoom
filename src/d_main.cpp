@@ -409,7 +409,7 @@ void D_Display (bool screenshot)
 		players[consoleplayer].camera = players[consoleplayer].mo;
 	}
 
-	if (gamestate == GS_LEVEL && viewactive)
+	if (viewactive)
 	{
 		R_SetFOV (players[consoleplayer].camera && players[consoleplayer].camera->player ?
 			players[consoleplayer].camera->player->FOV : 90.f);
@@ -424,7 +424,10 @@ void D_Display (bool screenshot)
 			// Recalculate various view parameters.
 			setsizeneeded = true;
 			// Let the status bar know the screen size changed
-			StatusBar->ScreenSizeChanged ();
+			if (StatusBar != NULL)
+			{
+				StatusBar->ScreenSizeChanged ();
+			}
 			// Refresh the console.
 			C_NewModeAdjust ();
 			// Reload crosshair if transitioned to a different size
@@ -435,7 +438,7 @@ void D_Display (bool screenshot)
 	RenderTarget = screen;
 
 	// change the view size if needed
-	if (setsizeneeded)
+	if (setsizeneeded && StatusBar != NULL)
 	{
 		R_ExecuteSetViewSize ();
 		setmodeneeded = false;
@@ -455,7 +458,7 @@ void D_Display (bool screenshot)
 		wipe = false;
 		wipegamestate = gamestate;
 	}
-	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE)
+	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
 	{ // save the current screen if about to wipe
 		BorderNeedRefresh = screen->GetPageCount ();
 		wipe = true;
@@ -484,17 +487,15 @@ void D_Display (bool screenshot)
 		return;
 
 	case GS_LEVEL:
+	case GS_TITLELEVEL:
 		if (!gametic)
 			break;
 
-		if (1 || viewactive)
-		{
-			R_RefreshViewBorder ();
-			R_RenderActorView (players[consoleplayer].mo);
-			R_DetailDouble ();		// [RH] Apply detail mode expansion
-			// [RH] Let cameras draw onto textures that were visible this frame.
-			FCanvasTextureInfo::UpdateAll ();
-		}
+		R_RefreshViewBorder ();
+		R_RenderActorView (players[consoleplayer].mo);
+		R_DetailDouble ();		// [RH] Apply detail mode expansion
+		// [RH] Let cameras draw onto textures that were visible this frame.
+		FCanvasTextureInfo::UpdateAll ();
 		if (automapactive)
 		{
 			AM_Drawer ();
@@ -950,6 +951,14 @@ void D_DoAdvanceDemo (void)
 	usergame = false;				// no save / end game here
 	paused = 0;
 	gameaction = ga_nothing;
+
+	// [RH] If you want something more dynamic for your title, create a map
+	// and name it TITLEMAP. That map will be loaded and used as the title.
+	if (Wads.CheckNumForName ("TITLEMAP") >= 0)
+	{
+		G_InitNew ("TITLEMAP", true);
+		return;
+	}
 
 	if (gameinfo.gametype == GAME_Strife)
 	{
@@ -2198,29 +2207,6 @@ void D_DoomMain (void)
 	Printf ("Checking network game status.\n");
 	D_CheckNetGame ();
 
-	Printf ("Init status bar.\n");
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		StatusBar = CreateDoomStatusBar ();
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		StatusBar = CreateHereticStatusBar ();
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		StatusBar = CreateHexenStatusBar ();
-	}
-	else if (gameinfo.gametype == GAME_Strife)
-	{
-		StatusBar = CreateStrifeStatusBar ();
-	}
-	else
-	{
-		StatusBar = new FBaseStatusBar (0);
-	}
-	StatusBar->AttachToPlayer (&players[consoleplayer]);
-
 	// [RH] Lock any cvars that should be locked now that we're
 	// about to begin the game.
 	FBaseCVar::EnableNoSet ();
@@ -2281,7 +2267,7 @@ void D_DoomMain (void)
 		if (autostart || netgame)
 		{
 			CheckWarpTransMap (startmap, true);
-			G_InitNew (startmap);
+			G_InitNew (startmap, false);
 		}
 		else
 		{

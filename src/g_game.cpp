@@ -594,6 +594,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 void G_AddViewPitch (int look)
 {
+	if (gamestate == GS_TITLELEVEL)
+	{
+		return;
+	}
 	if (dmflags & DF_NO_FREELOOK)
 	{
 		LocalViewPitch = 0;
@@ -610,6 +614,10 @@ void G_AddViewPitch (int look)
 
 void G_AddViewAngle (int yaw)
 {
+	if (gamestate == GS_TITLELEVEL)
+	{
+		return;
+	}
 	LocalViewAngle -= yaw << 16;
 	if (yaw != 0)
 	{
@@ -689,7 +697,7 @@ BOOL G_Responder (event_t *ev)
 	// any other key pops up menu if in demos
 	// [RH] But only if the key isn't bound to a "special" command
 	if (gameaction == ga_nothing && 
-		(demoplayback || gamestate == GS_DEMOSCREEN))
+		(demoplayback || gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL))
 	{
 		char *cmd = C_GetBinding (ev->data1);
 
@@ -943,6 +951,10 @@ void G_Ticker ()
 		AM_Ticker ();
 		break;
 
+	case GS_TITLELEVEL:
+		P_Ticker ();
+		break;
+
 	case GS_INTERMISSION:
 		WI_Ticker ();
 		break;
@@ -1091,8 +1103,11 @@ void G_PlayerReborn (int player)
 	p->oldbuttons = 255;	// don't do anything immediately
 	p->playerstate = PST_LIVE;
 
-	actor->GiveDefaultInventory ();
-	p->ReadyWeapon = p->PendingWeapon;
+	if (gamestate != GS_TITLELEVEL)
+	{
+		actor->GiveDefaultInventory ();
+		p->ReadyWeapon = p->PendingWeapon;
+	}
 
     //Added by MC: Init bot structure.
     if (bglobal.botingame[player])
@@ -1298,7 +1313,7 @@ void G_DoReborn (int playernum, bool freshbot)
 		else
 		{ // Reload the level from scratch
 			BackupSaveName[0] = 0;
-			G_InitNew (level.mapname);
+			G_InitNew (level.mapname, false);
 //			gameaction = ga_loadlevel;
 		}
 	}
@@ -1610,7 +1625,7 @@ void G_DoLoadGame ()
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
-	G_InitNew (map);
+	G_InitNew (map, false);
 	delete[] map;
 	savegamerestore = false;
 
@@ -2324,7 +2339,7 @@ void G_DoPlayDemo (void)
 		// don't spend a lot of time in loadlevel 
 		precache = false;
 		demonew = true;
-		G_InitNew (mapname);
+		G_InitNew (mapname, false);
 		C_HideConsole ();
 		demonew = false;
 		precache = true;

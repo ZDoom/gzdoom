@@ -244,9 +244,6 @@ private:
 	void DrawMessages (int bottom) const;
 	void DrawConsistancy () const;
 
-	fixed_t ScaleX, ScaleY;
-	fixed_t ScaleIX, ScaleIY;
-
 	static byte DamageToAlpha[114];
 
 	DHUDMessage *Messages;

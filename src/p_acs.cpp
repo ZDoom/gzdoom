@@ -187,7 +187,7 @@ static void DoGiveInv (AActor *actor, const TypeInfo *info, int amount)
 	}
 	else if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
 	{
-		static_cast<ABasicArmorBonus*>(item)->SaveAmount = amount;
+		static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
 	}
 	else
 	{

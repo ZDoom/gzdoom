@@ -1708,6 +1708,8 @@ DScroller::DScroller (fixed_t dx, fixed_t dy, const line_t *l,
 		m_LastHeight = sectors[control].CenterFloor() + sectors[control].CenterCeiling();
 	m_Affectee = *l->sidenum;
 	sides[m_Affectee].Flags |= WALLF_NOAUTODECALS;
+
+	setinterpolation (INTERP_WallPanning, &sides[m_Affectee]);
 }
 
 // Amount (dx,dy) vector linedef is shifted right to get scroll amount

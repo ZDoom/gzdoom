@@ -113,9 +113,9 @@ void ADoomPlayer::GiveDefaultInventory ()
 		static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
 }
 
-void A_FireScreamReplace (AActor *self)
+void A_FireScream (AActor *self)
 {
-	self->DeathSound = S_FindSkinnedSound (self, "*burndeath");
+	S_Sound (self, CHAN_BODY, "*burndeath", 1, ATTN_NORM);
 }
 
 void A_PlayerScream (AActor *self)

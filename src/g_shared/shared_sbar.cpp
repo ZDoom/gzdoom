@@ -202,10 +202,6 @@ void FBaseStatusBar::SetScaled (bool scale)
 		ST_X = 0;
 		ST_Y = 200 - RelTop;
 		::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);
-		ScaleX = (SCREENWIDTH << (FRACBITS+2)) / basewidth;
-		ScaleY = (SCREENHEIGHT << FRACBITS) / 200;
-		ScaleIX = (basewidth << (FRACBITS-2)) / SCREENWIDTH;
-		ScaleIY = (200 << FRACBITS) / SCREENHEIGHT;
 		Displacement = 0;
 	}
 	::ST_X = ST_X;
@@ -905,17 +901,24 @@ void FBaseStatusBar::DrSmallNumberOuter (int val, int x, int y, bool center) con
 
 void FBaseStatusBar::RefreshBackground () const
 {
-	int x, y, i, ratio;
+	int x, x2, y, i, ratio;
 
 	if (SCREENWIDTH > 320)
 	{
 		ratio = CheckRatio (SCREENWIDTH, SCREENHEIGHT);
-		x = !(ratio & 3) ? ST_X : SCREENWIDTH/8;
+		x = !(ratio & 3) || !Scaled ? ST_X : SCREENWIDTH*(48-BaseRatioSizes[ratio][3])/(48*2);
 		if (x > 0)
 		{
 			y = x == ST_X ? ST_Y : ::ST_Y;
+			x2 = !(ratio & 3) || !Scaled ? ST_X+320 :
+				SCREENWIDTH - (SCREENWIDTH*(48-BaseRatioSizes[ratio][3])+48*2-1)/(48*2);
 			R_DrawBorder (0, y, x, SCREENHEIGHT);
-			R_DrawBorder (SCREENWIDTH - x, y, SCREENWIDTH, SCREENHEIGHT);
+			R_DrawBorder (x2, y, SCREENWIDTH, SCREENHEIGHT);
+
+			if (Scaled && ::ST_Y + RelTop*SCREENHEIGHT/200 != SCREENHEIGHT)
+			{ // Fill the thin line beneath the status bar that we got thanks to rounding error
+				R_DrawBorder (x, SCREENHEIGHT-1, x2, SCREENHEIGHT);
+			}
 
 			if (setblocks >= 10)
 			{
@@ -925,7 +928,7 @@ void FBaseStatusBar::RefreshBackground () const
 				{
 					screen->DrawTexture (TexMan[border->b], i, y, TAG_DONE);
 				}
-				for (i = SCREENWIDTH - x; i < SCREENWIDTH; i += border->size)
+				for (i = x2; i < SCREENWIDTH; i += border->size)
 				{
 					screen->DrawTexture (TexMan[border->b], i, y, TAG_DONE);
 				}
@@ -963,7 +966,7 @@ void FBaseStatusBar::DrawCrosshair ()
 		return;
 
 	// Don't draw the crosshair if there is none
-	if (CrosshairImage == NULL)
+	if (CrosshairImage == NULL || gamestate == GS_TITLELEVEL)
 	{
 		return;
 	}

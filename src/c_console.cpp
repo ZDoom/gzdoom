@@ -891,8 +891,10 @@ void C_DrawConsole ()
 		offset = -ConFont->GetHeight();
 	}
 
-	if ((ConBottom < oldbottom) && (gamestate == GS_LEVEL) && (viewwindowx || viewwindowy)
-		&& viewactive)
+	if ((ConBottom < oldbottom) &&
+		(gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL) &&
+		(viewwindowx || viewwindowy) &&
+		viewactive)
 	{
 		BorderNeedRefresh = screen->GetPageCount ();
 	}

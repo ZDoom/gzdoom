@@ -365,6 +365,7 @@ const char *AArtiPoisonBag::PickupMessage ()
 
 void AArtiPoisonBag::BeginPlay ()
 {
+	Super::BeginPlay ();
 	// If a subclass's specific icon is not defined, let it use the base class's.
 	if (Icon <= 0)
 	{

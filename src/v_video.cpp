@@ -696,8 +696,25 @@ bool V_DoModeSetup (int width, int height, int bits)
 	screen->SetFont (SmallFont);
 	screen->SetGamma (Gamma);
 
-	CleanXfac = MAX (width / 320, 1);
-	CleanYfac = MAX (height / 200, 1);
+	{
+		int ratio;
+		int cwidth;
+		int cheight;
+
+		ratio = CheckRatio (width, height);
+		if (ratio & 4)
+		{
+			cwidth = width;
+			cheight = height * BaseRatioSizes[ratio][3] / 48;
+		}
+		else
+		{
+			cwidth = width * BaseRatioSizes[ratio][3] / 48;
+			cheight = height;
+		}
+		CleanXfac = MAX (cwidth / 320, 1);
+		CleanYfac = MAX (cheight / 200, 1);
+	}
 
 	if (CleanXfac > 1 && CleanYfac > 1 && CleanXfac != CleanYfac)
 	{

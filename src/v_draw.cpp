@@ -325,8 +325,6 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 		  // those if somebody expresses a desire to use them.
 			x0 = Scale (Width*960, x0-virtWidth*FRACUNIT/2, virtWidth*BaseRatioSizes[myratio][0]) + Width*FRACUNIT/2;
 			y0 = Scale (Height, y0, virtHeight);
-			//destwidth = FixedDiv (Width*3 * img->GetWidth(), 1280);
-			//destheight = FixedDiv (Height * img->GetHeight(), 200);
 			destwidth = FixedDiv (Width*960 * img->GetWidth(), virtWidth*BaseRatioSizes[myratio][0]);
 			destheight = FixedDiv (Height * img->GetHeight(), virtHeight);
 		}

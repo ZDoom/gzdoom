@@ -365,7 +365,7 @@ void GiveSpawner (player_t *player, const TypeInfo *type, int amount)
 			}
 			else if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
 			{
-				static_cast<ABasicArmorBonus*>(item)->SaveAmount = amount;
+				static_cast<ABasicArmorBonus*>(item)->SaveAmount *= amount;
 			}
 			else
 			{

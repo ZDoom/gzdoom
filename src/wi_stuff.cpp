@@ -356,14 +356,11 @@ void WI_slamBackground ()
 {
 	if (background)
 	{
+		screen->DrawTexture (background, 0, 0, DTA_320x200, true, TAG_DONE);
+		screen->FillBorder (NULL);
 		if (DrawFoM)
 		{
-			screen->DrawTexture (background, 0, 0, DTA_320x200, true, TAG_DONE);
 			screen->DrawTexture (anims[1][7].p[2], anims[1][7].loc.x, anims[1][7].loc.y, DTA_320x200, true, TAG_DONE);
-		}
-		else
-		{
-			screen->DrawTexture (background, 0, 0, DTA_DestWidth, SCREENWIDTH, DTA_DestHeight, SCREENHEIGHT, TAG_DONE);
 		}
 	}
 	else if (state != NoState)

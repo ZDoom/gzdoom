@@ -47,7 +47,7 @@ void A_Detonate (AActor *mo);
 void A_Explode (AActor *thing);
 void A_Mushroom (AActor *actor);
 void A_BossDeath (AActor *actor);
-void A_FireScreamReplace (AActor *mo);
+void A_FireScream (AActor *mo);
 void A_PlayerScream (AActor *mo);
 void A_ClassBossHealth (AActor *);
 

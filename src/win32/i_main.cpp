@@ -423,7 +423,7 @@ char *DoomSpecificInfo (char *text, char *maxtext)
 		text += wsprintf (text, "\r\nIWAD: %s", arg);
 	}
 
-	if (gamestate != GS_LEVEL)
+	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 	{
 		if (text + 32 < maxtext)
 			text += wsprintf (text, "\r\n\r\nNot in a level.");

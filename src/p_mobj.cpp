@@ -2496,12 +2496,6 @@ void AActor::Tick ()
 				}
 				if (onmo->z + onmo->height - z <= gameinfo.StepHeight)
 				{
-					if (player && player->mo == this && player->deltaviewheight == 0)
-					{
-						player->viewheight -= onmo->z + onmo->height - z;
-						player->deltaviewheight =
-							(VIEWHEIGHT - player->viewheight)>>3;
-					}
 					if (player && player->mo == this)
 					{
 						player->viewheight -= onmo->z + onmo->height - z;
@@ -3082,7 +3076,9 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	{
 		// Move the voodoo doll's inventory to the new player.
 		mobj->Inventory = oldactor->Inventory;
+		mobj->InventoryID = oldactor->InventoryID;
 		oldactor->Inventory = NULL;
+		oldactor->InventoryID = 0;
 
 		AInventory *item = mobj->Inventory;
 		while (item != NULL)

@@ -62,18 +62,9 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	{
 		morphed->special2 |= MF_JUSTHIT;
 	}
-	if (actor->flags2 & MF2_FLY)
-	{
-		morphed->flags2 |= MF2_FLY;
-	}
-	if (actor->flags3 & MF3_GHOST)
-	{
-		morphed->flags3 |= MF3_GHOST;
-	}
-	if (actor->flags & MF_SHADOW)
-	{
-		morphed->flags |= MF_SHADOW;
-	}
+	morphed->flags  |= actor->flags & (MF_SHADOW|MF_NOGRAVITY);
+	morphed->flags2 |= actor->flags2 & MF2_FLY;
+	morphed->flags3 |= actor->flags3 & MF3_GHOST;
 	Spawn<ATeleportFog> (actor->x, actor->y, actor->z + TELEFOGHEIGHT);
 	actor->player = NULL;
 	actor->flags &= ~(MF_SOLID|MF_SHOOTABLE);
@@ -146,6 +137,9 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	{
 		mo->renderflags &= ~RF_INVISIBLE;
 	}
+	mo->flags  = (mo->flags & ~(MF_SHADOW|MF_NOGRAVITY)) | (pmo->flags & (MF_SHADOW|MF_NOGRAVITY));
+	mo->flags2 = (mo->flags2 & ~MF2_FLY) | (pmo->flags2 & MF2_FLY);
+	mo->flags3 = (mo->flags3 & ~MF3_GHOST) | (pmo->flags3 & MF3_GHOST);
 
 	player->morphTics = 0;
 	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
@@ -202,18 +196,12 @@ bool P_MorphMonster (AActor *actor, const TypeInfo *spawntype)
 	morphed->TIDtoHate = actor->TIDtoHate;
 	morphed->LastLook = actor->LastLook;
 	morphed->LastHeard = actor->LastHeard;
-	morphed->flags |= actor->flags & MF_FRIENDLY;
-	morphed->flags3 |= actor->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
+	morphed->flags |= actor->flags & (MF_FRIENDLY | MF_SHADOW);
+	morphed->flags3 |= actor->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS | MF3_GHOST);
 	morphed->flags4 |= actor->flags4 & MF4_NOHATEPLAYERS;
 	if (actor->renderflags & RF_INVISIBLE)
 	{
 		morphed->special2 |= MF_JUSTHIT;
-	}
-	if (actor->flags3 & MF3_GHOST)
-	{
-		morphed->flags3 |= MF3_GHOST;
-		if (actor->flags & MF_SHADOW)
-			morphed->flags |= MF_SHADOW;
 	}
 	morphed->AddToHash ();
 	actor->RemoveFromHash ();
@@ -258,6 +246,10 @@ bool P_UpdateMorphedMonster (AActor *beast, int tics)
 	actor->angle = beast->angle;
 	actor->target = beast->target;
 	actor->flags = beast->special2 & ~MF_JUSTHIT;
+	actor->flags  = (actor->flags & ~(MF_FRIENDLY|MF_SHADOW)) | (beast->flags & (MF_FRIENDLY|MF_SHADOW));
+	actor->flags3 = (actor->flags3 & ~(MF3_NOSIGHTCHECK|MF3_HUNTPLAYERS|MF3_GHOST))
+					| (beast->flags3 & (MF3_NOSIGHTCHECK|MF3_HUNTPLAYERS|MF3_GHOST));
+	actor->flags4 = (actor->flags4 & ~MF4_NOHATEPLAYERS) | (beast->flags4 & MF4_NOHATEPLAYERS);
 	if (!(beast->special2 & MF_JUSTHIT))
 		actor->renderflags &= ~RF_INVISIBLE;
 	actor->health = actor->GetDefault()->health;

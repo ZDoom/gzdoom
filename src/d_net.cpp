@@ -2130,46 +2130,52 @@ void Net_DoCommand (int type, byte **stream, int player)
 		break;
 
 	case DEM_PAUSE:
-		if (paused)
+		if (gamestate == GS_LEVEL)
 		{
-			paused = 0;
-			S_ResumeSound ();
+			if (paused)
+			{
+				paused = 0;
+				S_ResumeSound ();
+			}
+			else
+			{
+				paused = player + 1;
+				S_PauseSound ();
+			}
+			BorderNeedRefresh = screen->GetPageCount ();
 		}
-		else
-		{
-			paused = player + 1;
-			S_PauseSound ();
-		}
-		BorderNeedRefresh = screen->GetPageCount ();
 		break;
 
 	case DEM_SAVEGAME:
-		savegamefile = ReadString (stream);
-		s = ReadString (stream);
-		memset (savedescription, 0, sizeof(savedescription));
-		strncpy (savedescription, s, sizeof(savedescription));
-		if (player != consoleplayer)
+		if (gamestate == GS_LEVEL)
 		{
-			// Paths sent over the network will be valid for the system that sent
-			// the save command. For other systems, the path needs to be changed.
-			char *fileonly = savegamefile;
-			char *slash = strrchr (savegamefile, '\\');
-			if (slash != NULL)
+			savegamefile = ReadString (stream);
+			s = ReadString (stream);
+			memset (savedescription, 0, sizeof(savedescription));
+			strncpy (savedescription, s, sizeof(savedescription));
+			if (player != consoleplayer)
 			{
-				fileonly = slash + 1;
-			}
-			slash = strrchr (fileonly, '/');
-			if (slash != NULL)
-			{
-				fileonly = slash + 1;
-			}
-			if (fileonly != savegamefile)
-			{
-				char newname[PATH_MAX];
+				// Paths sent over the network will be valid for the system that sent
+				// the save command. For other systems, the path needs to be changed.
+				char *fileonly = savegamefile;
+				char *slash = strrchr (savegamefile, '\\');
+				if (slash != NULL)
+				{
+					fileonly = slash + 1;
+				}
+				slash = strrchr (fileonly, '/');
+				if (slash != NULL)
+				{
+					fileonly = slash + 1;
+				}
+				if (fileonly != savegamefile)
+				{
+					char newname[PATH_MAX];
 
-				G_BuildSaveName (newname, fileonly, -1);
-				delete[] savegamefile;
-				savegamefile = copystring(newname);
+					G_BuildSaveName (newname, fileonly, -1);
+					delete[] savegamefile;
+					savegamefile = copystring(newname);
+				}
 			}
 		}
 		gameaction = ga_savegame;

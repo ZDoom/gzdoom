@@ -84,6 +84,7 @@ typedef enum
 	GS_FULLCONSOLE,		// [RH]	Fullscreen console
 	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
 	GS_STARTUP,			// [RH] Console is fullscreen, and game is just starting
+	GS_TITLELEVEL,		// [RH] A combination of GS_LEVEL and GS_DEMOSCREEN
 
 	GS_FORCEWIPE = -1,
 	GS_FORCEWIPEFADE = -2

@@ -1,3 +1,34 @@
+December 24, 2004
+- New: Instead of using a static image as a title, you can now use a map.
+  Just create it as normal, being sure to do something interesting with
+  scripting, and rename it TITLEMAP. It will load just like a normal map,
+  but it will behave like a title picture.
+- Fixed: The intermission did not compensate for non-4:3 aspect ratios.
+- Fixed status bar border for widescreen ratios other than 16:9.
+- Corrected clean scaling calculations for widescreens.
+- Changed: Giving a BasicArmorBonus now also multiplies the original amount
+  by the specified amount instead of just using the specified amount.
+- Fixed: When P_SpawnPlayer() transfers a voodoo doll's inventory to the new
+  player, it also needs to transfer the InventoryID property so that items
+  picked up later won't receive the same ID as an item they already have.
+- Fixed: ArtiPoisonBag::BeginPlay() did not call the superclass's version of
+  the function.
+- Changed A_FireScreamReplace to A_FireScream. Now it plays the sound itself.
+  On a related note, moved A_ClericBurnScream to the start of the ClericBoss's
+  flaming death and changed the old instance back to A_Scream.
+- Fixed: Forgot to delete some old code in AActor::Tick().
+- Fixed: The second sidedef-only constructor for DScroller did not set up an
+  interpolation.
+- Fixed: R_DrawSkyBoxes() initialized the clipping drawseg's siz values to
+  1<<31, which is actually INT_MIN, not INT_MAX!
+- Fixed: Some properties were not properly transferred when unmorphing an
+  actor.
+- Fixed: You got HOM around the status bar in widescreen mode if you didn't
+  scale the status bar.
+- Fixed: You could use the down arrow key to select blank entries on the last
+  line in the video mode menu if that line was not full.
+- Fixed: The backpack handled pickups for everything after you got one.
+
 December 23, 2004
 - Made the bottom of the viewborder visible when the status bar doesn't cover
   the full width of the screen and no border would normally be visible.

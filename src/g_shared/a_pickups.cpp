@@ -789,7 +789,12 @@ void AInventory::Hide ()
 void AInventory::Touch (AActor *toucher)
 {
 	// If a voodoo doll touches something, pretend the real player touched it instead.
-	if (!TryPickup (toucher->player ? toucher->player->mo : toucher))
+	if (toucher->player != NULL)
+	{
+		toucher = toucher->player->mo;
+	}
+
+	if (!TryPickup (toucher))
 		return;
 
 	if (!(ItemFlags & IF_QUIET))
@@ -1795,24 +1800,34 @@ bool ABackpack::HandlePickup (AInventory *item)
 	// kind of ammo in your inventory, so we don't need to look at the
 	// entire TypeInfo list to discover what kinds of ammo exist, and we don't
 	// have to alter the MaxAmount either.
-	for (AInventory *probe = Owner->Inventory; probe != NULL; probe = probe->Inventory)
+	if (item->IsKindOf (RUNTIME_CLASS(ABackpack)))
 	{
-		if (probe->GetClass()->ParentType == RUNTIME_CLASS(AAmmo))
+		for (AInventory *probe = Owner->Inventory; probe != NULL; probe = probe->Inventory)
 		{
-			if (probe->Amount < probe->MaxAmount)
+			if (probe->GetClass()->ParentType == RUNTIME_CLASS(AAmmo))
 			{
-				probe->Amount += static_cast<AAmmo*>(probe->GetDefault())->BackpackAmount;
-				if (probe->Amount > probe->MaxAmount)
+				if (probe->Amount < probe->MaxAmount)
 				{
-					probe->Amount = probe->MaxAmount;
+					probe->Amount += static_cast<AAmmo*>(probe->GetDefault())->BackpackAmount;
+					if (probe->Amount > probe->MaxAmount)
+					{
+						probe->Amount = probe->MaxAmount;
+					}
 				}
 			}
 		}
+		// The pickup always succeeds, even if you didn't get anything
+		item->ItemFlags |= IF_PICKUPGOOD;
+		return true;
 	}
-
-	// The pickup always succeeds, even if you didn't get anything
-	item->ItemFlags |= IF_PICKUPGOOD;
-	return true;
+	else if (Inventory != NULL)
+	{
+		return Inventory->HandlePickup (item);
+	}
+	else
+	{
+		return false;
+	}
 }
 
 //===========================================================================

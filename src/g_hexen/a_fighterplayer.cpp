@@ -58,7 +58,7 @@ FState AFighterPlayer::States[] =
 	S_NORMAL (PLAY, 'X',	1, A_FreezeDeathChunks		, &States[S_FPLAY_ICE+1]),
 
 #define S_PLAY_FDTH (S_FPLAY_ICE+2)
-	S_BRIGHT (FDTH, 'G',	5, A_FireScreamReplace		, &States[S_PLAY_FDTH+1]),
+	S_BRIGHT (FDTH, 'G',	5, A_FireScream				, &States[S_PLAY_FDTH+1]),
 	S_BRIGHT (FDTH, 'H',	4, A_PlayerScream 			, &States[S_PLAY_FDTH+2]),
 	S_BRIGHT (FDTH, 'I',	5, NULL 					, &States[S_PLAY_FDTH+3]),
 	S_BRIGHT (FDTH, 'J',	4, NULL 					, &States[S_PLAY_FDTH+4]),

@@ -1156,11 +1156,11 @@ void G_DoNewGame (void)
 {
 	G_NewInit ();
 	playeringame[consoleplayer] = 1;
-	G_InitNew (d_mapname);
+	G_InitNew (d_mapname, false);
 	gameaction = ga_nothing;
 }
 
-void G_InitNew (char *mapname)
+void G_InitNew (char *mapname, bool bTitleLevel)
 {
 	EGameSpeed oldSpeed;
 	bool wantFast;
@@ -1191,7 +1191,37 @@ void G_InitNew (char *mapname)
 		S_ResumeSound ();
 	}
 
+	if (StatusBar != NULL)
+	{
+		delete StatusBar;
+	}
+	if (bTitleLevel)
+	{
+		StatusBar = new FBaseStatusBar (0);
+	}
+	else if (gameinfo.gametype == GAME_Doom)
+	{
+		StatusBar = CreateDoomStatusBar ();
+	}
+	else if (gameinfo.gametype == GAME_Heretic)
+	{
+		StatusBar = CreateHereticStatusBar ();
+	}
+	else if (gameinfo.gametype == GAME_Hexen)
+	{
+		StatusBar = CreateHexenStatusBar ();
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		StatusBar = CreateStrifeStatusBar ();
+	}
+	else
+	{
+		StatusBar = new FBaseStatusBar (0);
+	}
+	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	StatusBar->NewGame ();
+	setsizeneeded = true;
 
 	// [RH] If this map doesn't exist, bomb out
 	if (Wads.CheckNumForName (mapname) == -1)
@@ -1251,7 +1281,7 @@ void G_InitNew (char *mapname)
 			players[i].playerstate = PST_ENTER;	// [BC]
 	}
 
-	usergame = true;				// will be set false if a demo
+	usergame = !bTitleLevel;		// will be set false if a demo
 	paused = 0;
 	demoplayback = false;
 	automapactive = false;
@@ -1260,6 +1290,14 @@ void G_InitNew (char *mapname)
 
 	strncpy (level.mapname, mapname, 8);
 	level.mapname[8] = 0;
+	if (bTitleLevel)
+	{
+		gamestate = GS_TITLELEVEL;
+	}
+	else if (gamestate != GS_STARTUP)
+	{
+		gamestate = GS_LEVEL;
+	}
 	G_DoLoadLevel (0, false);
 }
 
@@ -1522,10 +1560,13 @@ void G_DoLoadLevel (int position, bool autosave)
 			TEXTCOLOR_BOLD "%s\n\n",
 			level.level_name);
 
-	if (wipegamestate == GS_LEVEL) 
+	if (wipegamestate == GS_LEVEL)
 		wipegamestate = GS_FORCEWIPE;
 
-	gamestate = GS_LEVEL; 
+	if (gamestate != GS_TITLELEVEL)
+	{
+		gamestate = GS_LEVEL; 
+	}
 
 	// Set the sky map.
 	// First thing, we have a dummy sky texture name,
@@ -1594,7 +1635,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
-	if (demoplayback || oldgs == GS_STARTUP)
+	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
 		C_HideConsole ();
 
 	C_FlushDisplay ();

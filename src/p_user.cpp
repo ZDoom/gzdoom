@@ -980,9 +980,16 @@ void P_PlayerThink (player_t *player)
 	}
 
 	// [RH] Being totally frozen zeros out most input parameters.
-	if (player->cheats & CF_TOTALLYFROZEN)
+	if (player->cheats & CF_TOTALLYFROZEN || gamestate == GS_TITLELEVEL)
 	{
-		cmd->ucmd.buttons &= BT_USE;
+		if (gamestate == GS_TITLELEVEL)
+		{
+			cmd->ucmd.buttons = 0;
+		}
+		else
+		{
+			cmd->ucmd.buttons &= BT_USE;
+		}
 		cmd->ucmd.pitch = 0;
 		cmd->ucmd.yaw = 0;
 		cmd->ucmd.roll = 0;

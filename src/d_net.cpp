@@ -1433,9 +1433,17 @@ void Net_DoCommand (int type, byte **stream, int player)
 			if (type != NULL && type->ActorInfo != NULL)
 			{
 				AActor *source = players[player].mo;
-				Spawn (type, source->x + 64 * finecosine[source->angle>>ANGLETOFINESHIFT],
-							 source->y + 64 * finesine[source->angle>>ANGLETOFINESHIFT],
-							 source->z + 8 * FRACUNIT);
+				if (GetDefaultByType (type)->flags & MF_MISSILE)
+				{
+					P_SpawnPlayerMissile (source, type);
+				}
+				else
+				{
+					AActor *newone =
+						Spawn (type, source->x + 64 * finecosine[source->angle>>ANGLETOFINESHIFT],
+									source->y + 64 * finesine[source->angle>>ANGLETOFINESHIFT],
+									source->z + 8 * FRACUNIT);
+				}
 			}
 		}
 		break;

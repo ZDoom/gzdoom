@@ -772,7 +772,8 @@ static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, BOO
 		plane->a = FLOAT2FIXED (cross[0]);
 		plane->b = FLOAT2FIXED (cross[1]);
 		plane->c = FLOAT2FIXED (cross[2]);
-		plane->ic = FLOAT2FIXED (1.f/cross[2]);
+		//plane->ic = FLOAT2FIXED (1.f/cross[2]);
+		plane->ic = DivScale32 (1, plane->c);
 		plane->d = -TMulScale16 (plane->a, x,
 								 plane->b, y,
 								 plane->c, z);
@@ -823,7 +824,7 @@ void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
 	{
 		zang = Scale (zangi, ANGLE_90, 90);
 	}
-	if (!setCeil)
+	if (setCeil)
 	{
 		zang += ANGLE_180;
 	}
@@ -840,7 +841,8 @@ void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
 	plane->a = (int)(norm[0] * 65536.f);
 	plane->b = (int)(norm[1] * 65536.f);
 	plane->c = (int)(norm[2] * 65536.f);
-	plane->ic = (int)(65536.f / norm[2]);
+	//plane->ic = (int)(65536.f / norm[2]);
+	plane->ic = DivScale32 (1, plane->c);
 	plane->d = -TMulScale16 (plane->a, x,
 							 plane->b, y,
 							 plane->c, z);
@@ -1593,7 +1595,8 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 	srcplane->a = FLOAT2FIXED (cross[0]);
 	srcplane->b = FLOAT2FIXED (cross[1]);
 	srcplane->c = FLOAT2FIXED (cross[2]);
-	srcplane->ic = FLOAT2FIXED (1.f/cross[2]);
+	//srcplane->ic = FLOAT2FIXED (1.f/cross[2]);
+	srcplane->ic = DivScale32 (1, srcplane->c);
 	srcplane->d = -TMulScale16 (srcplane->a, line->v1->x,
 								srcplane->b, line->v1->y,
 								srcplane->c, destheight);

@@ -166,14 +166,6 @@ extern menu_t JoystickMenu;
 EXTERN_CVAR (String, language)
 
 
-// [RH] As of 1.14, ZDoom no longer needs to be linked with dinput.lib.
-//		We now go straight to the DLL ourselves.
-
-typedef HRESULT (WINAPI *DIRECTINPUTCREATE_FUNCTION) (HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
-typedef HRESULT (WINAPI *DIRECTINPUT8CREATE_FUNCTION) (HINSTANCE, DWORD, REFIID, LPDIRECTINPUT8*, LPUNKNOWN);
-
-static HMODULE DirectInputInstance;
-
 typedef enum { win32, dinput } mousemode_t;
 static mousemode_t mousemode;
 
@@ -495,7 +487,9 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_SETFOCUS:
 		if (g_pKey)
-			DI_Acquire (g_pKey);
+		{
+			g_pKey->Acquire();
+		}
 		HaveFocus = true;
 		break;
 
@@ -1286,16 +1280,13 @@ static HRESULT InitJoystick ()
 
 static void DI_Acquire (LPDIRECTINPUTDEVICE8 mouse)
 {
-	mouse->Acquire ();
-	if (!NativeMouse)
-		SetCursorState (FALSE);
-	else
-		SetCursorState (TRUE);
+	HRESULT hr = mouse->Acquire ();
+	SetCursorState (NativeMouse);
 }
 
 static void DI_Unacquire (LPDIRECTINPUTDEVICE8 mouse)
 {
-	mouse->Unacquire ();
+	HRESULT hr = mouse->Unacquire ();
 	SetCursorState (TRUE);
 }
 
@@ -1324,7 +1315,7 @@ static void I_GetWin32Mouse ()
 }
 
 // [RH] Used to obtain DirectInput access to the mouse.
-//		(Preferred for Win95, but buggy under NT.)
+//		(Preferred for Win95, but buggy under NT 4.)
 static BOOL I_GetDIMouse ()
 {
 	HRESULT hr;
@@ -1349,13 +1340,13 @@ static BOOL I_GetDIMouse ()
 		return FALSE;
 
 	// Obtain an interface to the system mouse device.
-	if (g_pdi)
+	if (g_pdi3)
 	{
-		hr = g_pdi->CreateDevice (GUID_SysMouse, &g_pMouse, NULL);
+		hr = g_pdi3->CreateDevice (GUID_SysMouse, (LPDIRECTINPUTDEVICE*)&g_pMouse, NULL);
 	}
 	else
 	{
-		hr = g_pdi3->CreateDevice (GUID_SysMouse, (LPDIRECTINPUTDEVICE*)&g_pMouse, NULL);
+		hr = g_pdi->CreateDevice (GUID_SysMouse, &g_pMouse, NULL);
 	}
 
 	if (FAILED(hr))
@@ -1422,8 +1413,6 @@ static BOOL I_GetDIMouse ()
 
 BOOL I_InitInput (void *hwnd)
 {
-	DIRECTINPUTCREATE_FUNCTION create;
-	DIRECTINPUT8CREATE_FUNCTION create8;
 	HRESULT hr;
 
 	atterm (I_ShutdownInput);
@@ -1434,43 +1423,36 @@ BOOL I_InitInput (void *hwnd)
 	g_pdi = NULL;
 	g_pdi3 = NULL;
 
-	// Register with DirectInput and get an interface to play with.
 	// Try for DirectInput 8 first, then DirectInput 3 for NT 4's benefit.
 
-	DirectInputInstance = (HMODULE)LoadLibrary ("dinput8.dll");
-	if (DirectInputInstance != NULL)
+	hr = CoCreateInstance (CLSID_DirectInput8, NULL, CLSCTX_INPROC_SERVER, IID_IDirectInput8A, (void**)&g_pdi);
+	if (FAILED(hr))
 	{
-		create8 = (DIRECTINPUT8CREATE_FUNCTION)GetProcAddress (DirectInputInstance, "DirectInput8Create");
-		if (create8 != NULL)
+		g_pdi = NULL;
+	}
+	else
+	{
+		hr = g_pdi->Initialize (g_hInst, 0x0800);
+		if (FAILED (hr))
 		{
-			hr = create8 (g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, &g_pdi, NULL);
-			if (FAILED(hr))
-			{
-				g_pdi = NULL;
-				FreeLibrary (DirectInputInstance);
-				DirectInputInstance = NULL;
-			}
+			g_pdi->Release ();
+			g_pdi = NULL;
 		}
 	}
-	if (DirectInputInstance == NULL)
+
+	if (g_pdi == NULL)
 	{
-		DirectInputInstance = (HMODULE)LoadLibrary ("dinput.dll");
-		if (DirectInputInstance == NULL)
-		{
-			I_FatalError ("Sorry, you need at least DirectX 3 installed.\n\n"
-						  "For Windows NT 4, this is included in the latest Service Pack.\n"
-						  "For other versions of Windows Go grab it at http://www.microsoft.com/directx\n");
-		}
-
-		create = (DIRECTINPUTCREATE_FUNCTION)GetProcAddress (DirectInputInstance, "DirectInputCreateA");
-		if (create == NULL)
-			I_FatalError ("Could not get address of DirectInputCreateA");
-
-		hr = create (g_hInst, 0x300, &g_pdi3, NULL);
-
+		hr = CoCreateInstance (CLSID_DirectInput, NULL, CLSCTX_INPROC_SERVER, IID_IDirectInputA, (void**)&g_pdi3);
 		if (FAILED(hr))
 		{
-			I_FatalError ("Could not obtain DirectInput interface");
+			I_FatalError ("Could not create DirectInput interface: %08x", hr);
+		}
+		hr = g_pdi3->Initialize (g_hInst, 0x0300);
+		if (FAILED(hr))
+		{
+			g_pdi3->Release ();
+			g_pdi3 = NULL;
+			I_FatalError ("Could not initialize DirectInput interface: %08x", hr);
 		}
 	}
 
@@ -1511,12 +1493,6 @@ void STACK_ARGS I_ShutdownInput ()
 	{
 		g_pdi3->Release ();
 		g_pdi3 = NULL;
-	}
-	// [RH] Close dinput.dll
-	if (DirectInputInstance)
-	{
-		FreeLibrary (DirectInputInstance);
-		DirectInputInstance = NULL;
 	}
 }
 
@@ -1698,20 +1674,22 @@ static void MouseRead_DI ()
 	GDx=0;
 	GDy=0;
 
-	if (!g_pMouse)
+	if (!HaveFocus || NativeMouse || !g_pMouse)
 		return;
 
 	memset (&event, 0, sizeof(event));
 	for (;;)
 	{
 		dwElements = 1;
-		hr = g_pMouse->GetDeviceData (sizeof(DIDEVICEOBJECTDATA), &od,
-							 &dwElements, 0);
-		if (hr == DIERR_INPUTLOST)
+		hr = g_pMouse->GetDeviceData (
+			g_pdi3 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA),
+			&od, &dwElements, 0);
+		if (hr == DIERR_INPUTLOST || hr == DIERR_NOTACQUIRED)
 		{
 			DI_Acquire (g_pMouse);
-			hr = g_pMouse->GetDeviceData (sizeof(DIDEVICEOBJECTDATA), &od,
-								 &dwElements, 0);
+			hr = g_pMouse->GetDeviceData (
+				g_pdi3 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA),
+				(LPDIDEVICEOBJECTDATA)&od, &dwElements, 0);
 		}
 
 		/* Unable to read data or no data available */
@@ -1727,7 +1705,7 @@ static void MouseRead_DI ()
 		case DIMOFS_Y:	GDy += od.dwData;						break;
 		case DIMOFS_Z:	WheelMove += od.dwData; WheelMoved ();	break;
 
-		/* [RH] Mouse button events now mimic keydown/up events */
+		/* [RH] Mouse button events now keydown/up events */
 		case DIMOFS_BUTTON0:
 		case DIMOFS_BUTTON1:
 		case DIMOFS_BUTTON2:
@@ -1760,16 +1738,16 @@ static void MouseRead_DI ()
 // Initialize the keyboard
 static BOOL DI_Init2 (void)
 {
-	int hr;
+	HRESULT hr;
 
 	// Obtain an interface to the system key device.
-	if (g_pdi)
+	if (g_pdi3)
 	{
-		hr = g_pdi->CreateDevice (GUID_SysKeyboard, &g_pKey, NULL);
+		hr = g_pdi3->CreateDevice (GUID_SysKeyboard, (LPDIRECTINPUTDEVICE*)&g_pKey, NULL);
 	}
 	else
 	{
-		hr = g_pdi3->CreateDevice (GUID_SysKeyboard, (LPDIRECTINPUTDEVICE*)&g_pKey, NULL);
+		hr = g_pdi->CreateDevice (GUID_SysKeyboard, &g_pKey, NULL);
 	}
 
 	if (FAILED(hr))
@@ -1919,10 +1897,6 @@ void I_GetEvent ()
 		else
 			MouseRead_Win32 ();
 	}
-	if (use_joystick)
-	{
-		DI_JoyCheck ();
-	}
 }
 
 
@@ -1942,6 +1916,10 @@ void I_StartTic ()
 //
 void I_StartFrame ()
 {
+	if (use_joystick)
+	{
+		DI_JoyCheck ();
+	}
 }
 
 void I_PutInClipboard (const char *str)

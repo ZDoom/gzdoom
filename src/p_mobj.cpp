@@ -880,6 +880,9 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 		ptryx = startx + Scale (xmove, step, steps);
 		ptryy = starty + Scale (ymove, step, steps);
 
+/*		if (mo->player)
+		Printf ("%d,%d/%d: %d %d %d %d %d %d %d\n", level.time, step, steps, startxmove, Scale(xmove,step,steps), startymove, Scale(ymove,step,steps), mo->x, mo->y, mo->z);
+*/
 		// [RH] If walking on a slope, stay on the slope
 		// killough 3/15/98: Allow objects to drop off
 		if (!P_TryMove (mo, ptryx, ptryy, true, walkplane))

@@ -1,4 +1,39 @@
+April 14, 2003
+- Uploaded 2.0.46.
+- Added support for adding new projectiles to DECORATE.
+- Changed the summon cheat so that it can be used to shoot projectiles
+  and not just spawn them in place.
+- Made the Lost Souls spawned by Pain Elementals inherit the Pain
+  Elementals' hate information.
+- Fixed the poison dart's poison application.
+- Added a NULL-actor check to P_DisconnectEffect(), because I received a
+  crash log where it was called with a NULL actor.
+
+April 12, 2003
+- Fixed: The calulation of secplane_t::ic was different in p_setup.cpp's
+  slope spawners than it was in secplane_t's serializer, so if a demo was
+  made on a level with slopes, and the game was saved during the course of
+  the demo, the demo would desync if the player went on a slope after the
+  save.
+- Fixed: If a DirectInput 8 interface could not be obtained, the game would
+  hang while trying to read mouse input using the DirectInput 3 interface.
+  This is because DI8 has a DIDEVICEOBJECTDATA structure that is 4 bytes
+  larger than DI3's. Unfortunately, IDirectInputDevice::GetDeviceData() does
+  not do anything useful when passed a structure larger than it recognizes.
+  It leaves the buffer alone, does not touch *pdwInOut, and returns DI_OK,
+  which is quite misleading. I had to step into DirectInput before I
+  realized what was going on, although I could have also discovered it by
+  browsing dinput.h more thoroughly.
+
+April 11, 2003
+- Moved joystick reading out of I_GetEvent() and into I_StartFrame(). That's
+  where it was in the original DOS Doom, because reading a traditional
+  gameport can be an expensive operation (though I think USB is much faster).
+
 April 9, 2003
+- note to self: Remove BOOGA s
+- Fixed: Thing_Projectile2 wasn't shifting the zspeed over.
+- Fixed: The slopes created with P_SetSlope() had their orientations inverted.
 - Time to upload 2.0.45.
 - Made "cyborg" a synonym for the "other" gender, for compatibility reasons.
 - Fixed: Forget "== 0" after stricmp (Line1, "No Ice Death").

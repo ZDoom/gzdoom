@@ -313,11 +313,14 @@ void A_SpawnFly (AActor *self)
 	else			  type = "BaronOfHell";
 
 	newmobj = Spawn (type, targ->x, targ->y, targ->z);
-	if (P_LookForPlayers (newmobj, true))
-		newmobj->SetState (newmobj->SeeState);
+	if (newmobj != NULL)
+	{
+		if (P_LookForPlayers (newmobj, true))
+			newmobj->SetState (newmobj->SeeState);
 		
-	// telefrag anything in this spot
-	P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);
+		// telefrag anything in this spot
+		P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);
+	}
 
 	// remove self (i.e., cube).
 	self->Destroy ();

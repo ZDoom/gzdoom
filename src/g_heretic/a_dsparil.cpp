@@ -708,7 +708,7 @@ void A_GenWizard (AActor *actor)
 			mo->target = master->target;
 			mo->TIDtoHate = master->TIDtoHate;
 			mo->LastLook = master->LastLook;
-			mo->flags3 |= master->flags3 & MF3_HUNTPLAYERS;
+			mo->flags3 |= master->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
 			mo->flags4 |= master->flags4 & MF4_NOHATEPLAYERS;
 
 			actor->momx = actor->momy = actor->momz = 0;

@@ -48,6 +48,7 @@
 #include "p_lnspec.h"
 #include "p_enemy.h"
 #include "a_action.h"
+#include "decallib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -57,11 +58,13 @@ enum EDefinitionType
 {
 	DEF_Decoration,
 	DEF_BreakableDecoration,
-	DEF_Pickup
+	DEF_Pickup,
+	DEF_Projectile,
 };
 
 struct FExtraInfo
 {
+	char DeathSprite[5];
 	size_t SpawnStart, SpawnEnd;
 	size_t DeathStart, DeathEnd;
 	size_t IceDeathStart, IceDeathEnd;
@@ -69,6 +72,8 @@ struct FExtraInfo
 	bool bSolidOnDeath, bSolidOnBurn;
 	bool bBurnAway, bDiesAway, bGenericIceDeath;
 	fixed_t DeathHeight, BurnHeight;
+	int ExplosionRadius, ExplosionDamage;
+	bool ExplosionShooterImmune;
 };
 
 class ADecoration : public AActor
@@ -105,6 +110,28 @@ public:
 	fixed_t BurnHeight;
 };
 IMPLEMENT_ABSTRACT_ACTOR (ABreakableDecoration)
+
+class ASimpleProjectile : public ADecoration
+{
+	DECLARE_STATELESS_ACTOR (ASimpleProjectile, ADecoration);
+public:
+	void Serialize (FArchive &arc)
+	{
+		Super::Serialize (arc);
+		arc << HurtShooter << ExplosionRadius << ExplosionDamage;
+	}
+
+	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+	{
+		damage = ExplosionDamage;
+		dist = ExplosionRadius;
+		hurtSource = HurtShooter;
+	}
+
+	bool HurtShooter;
+	int ExplosionRadius, ExplosionDamage;
+};
+IMPLEMENT_ABSTRACT_ACTOR (ASimpleProjectile)
 
 class AFakeInventory : public AInventory
 {
@@ -220,7 +247,7 @@ static const char *FlagNames1[] =
 	"*",
 	"*",
 
-	"Missile",
+	"*",
 	"*",
 	"Shadow",
 	"NoBlood",
@@ -345,6 +372,12 @@ static void ParseDecorate (void (*process)(FState *, int))
 			def = DEF_BreakableDecoration;
 			SC_MustGetString ();
 		}
+		else if (SC_Compare ("Projectile"))
+		{
+			parent = RUNTIME_CLASS(ASimpleProjectile);
+			def = DEF_Projectile;
+			SC_MustGetString ();
+		}
 		else
 		{
 			parent = RUNTIME_CLASS(ADecoration);
@@ -459,7 +492,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 				{
 					info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
 				}
-				if (extra.bDiesAway)
+				if (extra.bDiesAway || def == DEF_Projectile)
 				{
 					info->OwnedStates[i].NextState = NULL;
 				}
@@ -470,29 +503,39 @@ static void ParseDecorate (void (*process)(FState *, int))
 					info->OwnedStates[i].Frame &= ~SF_BIGTIC;
 				}
 
-				// The first frame plays the death sound and
-				// the second frame makes it nonsolid.
-				info->OwnedStates[extra.DeathStart].Action.acp1 = A_Scream;
-				if (extra.bSolidOnDeath)
+				if (def == DEF_Projectile)
 				{
-				}
-				else if (extra.DeathStart + 1 < extra.DeathEnd)
-				{
-					info->OwnedStates[extra.DeathStart+1].Action.acp1 = A_NoBlocking;
+					if (extra.ExplosionRadius > 0)
+					{
+						info->OwnedStates[extra.DeathStart].Action.acp1 = A_Explode;
+					}
 				}
 				else
 				{
-					info->OwnedStates[extra.DeathStart].Action.acp1 = A_ScreamAndUnblock;
-				}
+					// The first frame plays the death sound and
+					// the second frame makes it nonsolid.
+					info->OwnedStates[extra.DeathStart].Action.acp1 = A_Scream;
+					if (extra.bSolidOnDeath)
+					{
+					}
+					else if (extra.DeathStart + 1 < extra.DeathEnd)
+					{
+						info->OwnedStates[extra.DeathStart+1].Action.acp1 = A_NoBlocking;
+					}
+					else
+					{
+						info->OwnedStates[extra.DeathStart].Action.acp1 = A_ScreamAndUnblock;
+					}
 
-				if (extra.DeathHeight == 0)
-				{
-					((ABreakableDecoration *)(info->Defaults))->DeathHeight =
-						((ABreakableDecoration *)(info->Defaults))->height;
-				}
-				else
-				{
-					((ABreakableDecoration *)(info->Defaults))->DeathHeight = extra.DeathHeight;
+					if (extra.DeathHeight == 0)
+					{
+						((ABreakableDecoration *)(info->Defaults))->DeathHeight =
+							((ABreakableDecoration *)(info->Defaults))->height;
+					}
+					else
+					{
+						((ABreakableDecoration *)(info->Defaults))->DeathHeight = extra.DeathHeight;
+					}
 				}
 				((AActor *)(info->Defaults))->DeathState = &info->OwnedStates[extra.DeathStart];
 			}
@@ -571,6 +614,19 @@ static void ParseDecorate (void (*process)(FState *, int))
 		{
 			((AActor *)(info->Defaults))->flags |= MF_SHOOTABLE;
 		}
+		if (def == DEF_Projectile)
+		{
+			if (extra.ExplosionRadius > 0)
+			{
+				((ASimpleProjectile *)(info->Defaults))->ExplosionRadius =
+					extra.ExplosionRadius;
+				((ASimpleProjectile *)(info->Defaults))->ExplosionDamage =
+					extra.ExplosionDamage > 0 ? extra.ExplosionDamage : extra.ExplosionRadius;
+				((ASimpleProjectile *)(info->Defaults))->HurtShooter =
+					!extra.ExplosionShooterImmune;
+			}
+			((AActor *)(info->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
+		}
 		((AActor *)(info->Defaults))->SpawnState = &info->OwnedStates[extra.SpawnStart];
 		process (info->OwnedStates, info->NumOwnedStates);
 	}
@@ -611,14 +667,25 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			}
 			info->SpawnID = (BYTE)sc_Number;
 		}
-		else if (SC_Compare ("Sprite"))
+		else if (SC_Compare ("Sprite") || (
+			(def == DEF_BreakableDecoration || def == DEF_Projectile) &&
+			SC_Compare ("DeathSprite") &&
+			(extra.DeathSprite[0] = 1))	// This is intentionally = and not ==
+			)
 		{
 			SC_MustGetString ();
 			if (strlen (sc_String) != 4)
 			{
 				SC_ScriptError ("Sprite name must be exactly four characters long");
 			}
-			memcpy (sprite, sc_String, 4);
+			if (extra.DeathSprite[0] == 1)
+			{
+				memcpy (extra.DeathSprite, sc_String, 4);
+			}
+			else
+			{
+				memcpy (sprite, sc_String, 4);
+			}
 		}
 		else if (SC_Compare ("Frames"))
 		{
@@ -627,7 +694,8 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			ParseSpriteFrames (info, states);
 			extra.SpawnEnd = states.Size();
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("DeathFrames"))
+		else if ((def == DEF_BreakableDecoration || def == DEF_Projectile) &&
+			SC_Compare ("DeathFrames"))
 		{
 			SC_MustGetString ();
 			extra.DeathStart = states.Size();
@@ -704,6 +772,53 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			SC_MustGetNumber ();
 			defaults->health = sc_Number;
 		}
+		else if (def == DEF_Projectile && SC_Compare ("ExplosionRadius"))
+		{
+			SC_MustGetNumber ();
+			extra.ExplosionRadius = sc_Number;
+		}
+		else if (def == DEF_Projectile && SC_Compare ("ExplosionDamage"))
+		{
+			SC_MustGetNumber ();
+			extra.ExplosionDamage = sc_Number;
+		}
+		else if (def == DEF_Projectile && SC_Compare ("DoNotHurtShooter"))
+		{
+			extra.ExplosionShooterImmune = true;
+		}
+		else if (def == DEF_Projectile && SC_Compare ("Damage"))
+		{
+			SC_MustGetNumber ();
+			defaults->damage = sc_Number;
+		}
+		else if (def == DEF_Projectile && SC_Compare ("DamageType"))
+		{
+			SC_MustGetString ();
+			if (SC_Compare ("Normal"))
+			{
+				defaults->flags2 &= ~(MF2_ICEDAMAGE|MF2_FIREDAMAGE);
+			}
+			else if (SC_Compare ("Ice"))
+			{
+				defaults->flags2 &= ~MF2_FIREDAMAGE;
+				defaults->flags2 |= MF2_ICEDAMAGE;
+			}
+			else if (SC_Compare ("Fire"))
+			{
+				defaults->flags2 &= ~MF2_ICEDAMAGE;
+				defaults->flags2 |= MF2_FIREDAMAGE;
+			}
+			else
+			{
+				const char *foo = sc_String;
+				SC_ScriptError ("Unknown damage type \"%s\"", &foo);
+			}
+		}
+		else if (def == DEF_Projectile && SC_Compare ("Speed"))
+		{
+			SC_MustGetFloat ();
+			defaults->Speed = sc_Float * 65536.f;
+		}
 		else if (SC_Compare ("Mass"))
 		{
 			SC_MustGetFloat ();
@@ -729,7 +844,8 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			}
 			defaults->Translation = TRANSLATION(TRANSLATION_LevelScripted, sc_Number);
 		}
-		else if (def == DEF_BreakableDecoration && SC_Compare ("DeathSound"))
+		else if ((def == DEF_BreakableDecoration || def == DEF_Projectile) &&
+			SC_Compare ("DeathSound"))
 		{
 			SC_MustGetString ();
 			defaults->DeathSound = S_FindSound (sc_String);
@@ -738,6 +854,11 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		{
 			SC_MustGetString ();
 			defaults->ActiveSound = S_FindSound (sc_String);
+		}
+		else if (def == DEF_Projectile && SC_Compare ("SpawnSound"))
+		{
+			SC_MustGetString ();
+			defaults->SeeSound = S_FindSound (sc_String);
 		}
 		else if (def == DEF_Pickup && SC_Compare ("PickupSound"))
 		{
@@ -788,9 +909,18 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		SC_MustGetString ();
 	}
 
-	for (size_t i = 0; i < states.Size(); ++i)
+	size_t i;
+
+	for (i = 0; i < states.Size(); ++i)
 	{
 		memcpy (states[i].sprite.name, sprite, 4);
+	}
+	if (extra.DeathSprite[0] && extra.DeathEnd != 0)
+	{
+		for (i = extra.DeathStart; i < extra.DeathEnd; ++i)
+		{
+			memcpy (states[i].sprite.name, extra.DeathSprite, 4);
+		}
 	}
 }
 

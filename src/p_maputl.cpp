@@ -210,6 +210,8 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 	bc = back->ceilingplane.ZatPoint (x, y);
 	bf = back->floorplane.ZatPoint (x, y);
 
+	/*Printf ("]]]]]] %d %d\n", ff, bf);*/
+
 	opentop = fc < bc ? fc : bc;
 
 	bool usefront;

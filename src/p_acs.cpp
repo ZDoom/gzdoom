@@ -4011,7 +4011,7 @@ void DLevelScript::RunScript ()
 			// projectile a TID.
 			// Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
 			P_Thing_Projectile (STACK(7), STACK(6), ((angle_t)(STACK(5)<<24)),
-				STACK(4)<<(FRACBITS-3), STACK(3), 0, NULL, STACK(2), STACK(1));
+				STACK(4)<<(FRACBITS-3), STACK(3)<<(FRACBITS-3), 0, NULL, STACK(2), STACK(1));
 			break;
 		}
 	}

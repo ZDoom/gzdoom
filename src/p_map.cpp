@@ -602,6 +602,15 @@ BOOL PIT_CheckLine (line_t *ld)
 		fixed_t r = (fixed_t)(((float)(tmx - ld->v1->x) * dx +
 				 			   (float)(tmy - ld->v1->y) * dy) /
 							  (dx*dx + dy*dy) * 16777216.f);
+/*		Printf ("%d:%d: %d  (%d %d %d %d)  (%d %d %d %d)\n", level.time, ld-lines, r,
+			ld->frontsector->floorplane.a,
+			ld->frontsector->floorplane.b,
+			ld->frontsector->floorplane.c,
+			ld->frontsector->floorplane.ic,
+			ld->backsector->floorplane.a,
+			ld->backsector->floorplane.b,
+			ld->backsector->floorplane.c,
+			ld->backsector->floorplane.ic);*/
 		if (r <= 0)
 		{
 			P_LineOpening (ld, sx=ld->v1->x, sy=ld->v1->y, tmx, tmy);
@@ -615,6 +624,7 @@ BOOL PIT_CheckLine (line_t *ld)
 			P_LineOpening (ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
 				sy=ld->v1->y + MulScale24 (r, ld->dy), tmx, tmy);
 		}
+	/*	Printf ("    %d %d %d\n", sx, sy, openbottom);*/
 	}
 
 	// adjust floor / ceiling heights

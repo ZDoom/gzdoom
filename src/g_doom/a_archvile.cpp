@@ -276,7 +276,7 @@ void A_VileChase (AActor *self)
 					// You are the Archvile's minion now, so hate what it hates
 					corpsehit->TIDtoHate = self->TIDtoHate;
 					corpsehit->LastLook = self->LastLook;
-					corpsehit->flags3 |= self->flags3 & MF3_HUNTPLAYERS;
+					corpsehit->flags3 |= self->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
 					corpsehit->flags4 |= self->flags4 & MF4_NOHATEPLAYERS;
 
 					// [RH] If it's a monster, it gets to count as another kill

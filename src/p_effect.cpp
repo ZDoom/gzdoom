@@ -544,6 +544,9 @@ void P_DisconnectEffect (AActor *actor)
 {
 	int i;
 
+	if (actor == NULL)
+		return;
+
 	for (i = 64; i; i--)
 	{
 		particle_t *p = JitterParticle (TICRATE*2);

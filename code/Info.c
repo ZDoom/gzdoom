@@ -23,8 +23,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: info.c,v 1.3 1997/01/26 07:45:00 b1 Exp $";
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4113)
@@ -34,9 +32,6 @@ rcsid[] = "$Id: info.c,v 1.3 1997/01/26 07:45:00 b1 Exp $";
 #include "sounds.h"
 #include "m_fixed.h"
 
-#ifdef __GNUG__
-#pragma implementation "info.h"
-#endif
 #include "info.h"
 
 #include "p_mobj.h"
@@ -55,12 +50,13 @@ char *sprnames[NUMSPRITES] = {
     "POL3","POL1","POL6","GOR2","GOR3","GOR4","GOR5","SMIT","COL1","COL2",
     "COL3","COL4","CAND","CBRA","COL6","TRE1","TRE2","ELEC","CEYE","FSKU",
     "COL5","TBLU","TGRN","TRED","SMBT","SMGT","SMRT","HDB1","HDB2","HDB3",
-    "HDB4","HDB5","HDB6","POB1","POB2","BRS1","TLMP","TLP2"
+    "HDB4","HDB5","HDB6","POB1","POB2","BRS1","TLMP","TLP2","GIB0","GIB1",
+	"GIB2","GIB3","GIB4","GIB5","GIB6","GIB7","UNKN"
 };
 
 
 // Doesn't work with g++, needs actionf_p1
-void  A_Light0();
+void A_Light0();
 void A_WeaponReady();
 void A_Lower();
 void A_Raise();
@@ -134,6 +130,7 @@ void A_BrainSpit();
 void A_SpawnSound();
 void A_SpawnFly();
 void A_BrainExplode();
+void A_Ambient();	// [RH] Play ambient sound
 
 
 state_t	states[NUMSTATES] = {
@@ -1103,7 +1100,17 @@ state_t	states[NUMSTATES] = {
     {SPR_TLP2,32768,4,{NULL},S_TECH2LAMP2,0,0},	// S_TECH2LAMP
     {SPR_TLP2,32769,4,{NULL},S_TECH2LAMP3,0,0},	// S_TECH2LAMP2
     {SPR_TLP2,32770,4,{NULL},S_TECH2LAMP4,0,0},	// S_TECH2LAMP3
-    {SPR_TLP2,32771,4,{NULL},S_TECH2LAMP,0,0}	// S_TECH2LAMP4
+    {SPR_TLP2,32771,4,{NULL},S_TECH2LAMP,0,0},	// S_TECH2LAMP4
+    {SPR_GIB0,0,-1,{NULL},S_NULL,0,0},	// S_GIB0
+    {SPR_GIB1,0,-1,{NULL},S_NULL,0,0},	// S_GIB1
+    {SPR_GIB2,0,-1,{NULL},S_NULL,0,0},	// S_GIB2
+    {SPR_GIB3,0,-1,{NULL},S_NULL,0,0},	// S_GIB3
+    {SPR_GIB4,0,-1,{NULL},S_NULL,0,0},	// S_GIB4
+    {SPR_GIB5,0,-1,{NULL},S_NULL,0,0},	// S_GIB5
+    {SPR_GIB6,0,-1,{NULL},S_NULL,0,0},	// S_GIB6
+    {SPR_GIB7,0,-1,{NULL},S_NULL,0,0},	// S_GIB7
+	{SPR_TROO,0,1,{A_Ambient},S_AMBIENTSOUND,0,0},	// S_AMBIENTSOUND
+	{SPR_UNKN,0,-1,{NULL},S_NULL,0,0}	// S_UNKNOWNTHING
 };
 
 
@@ -1205,7 +1212,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_vildth,		// deathsound
 	15,		// speed
 	20*FRACUNIT,		// radius
-	56*FRACUNIT,		// height
+	76*FRACUNIT,		// height
 	500,		// mass
 	0,		// damage
 	sfx_vilact,		// activesound
@@ -1257,7 +1264,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_skedth,		// deathsound
 	10,		// speed
 	20*FRACUNIT,		// radius
-	56*FRACUNIT,		// height
+	80*FRACUNIT,		// height
 	500,		// mass
 	0,		// damage
 	sfx_skeact,		// activesound
@@ -1361,7 +1368,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_firxpl,		// deathsound
 	20*FRACUNIT,		// speed
 	6*FRACUNIT,		// radius
-	8*FRACUNIT,		// height
+	32*FRACUNIT,		// height
 	100,		// mass
 	8,		// damage
 	sfx_None,		// activesound
@@ -1387,7 +1394,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_podth2,		// deathsound
 	8,		// speed
 	20*FRACUNIT,		// radius
-	56*FRACUNIT,		// height
+	60*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_posact,		// activesound
@@ -1517,7 +1524,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_brsdth,		// deathsound
 	8,		// speed
 	24*FRACUNIT,		// radius
-	64*FRACUNIT,		// height
+	74*FRACUNIT,		// height
 	1000,		// mass
 	0,		// damage
 	sfx_dmact,		// activesound
@@ -1543,7 +1550,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_firxpl,		// deathsound
 	15*FRACUNIT,		// speed
 	6*FRACUNIT,		// radius
-	8*FRACUNIT,		// height
+	16*FRACUNIT,		// height
 	100,		// mass
 	8,		// damage
 	sfx_None,		// activesound
@@ -1569,7 +1576,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_kntdth,		// deathsound
 	8,		// speed
 	24*FRACUNIT,		// radius
-	64*FRACUNIT,		// height
+	74*FRACUNIT,		// height
 	1000,		// mass
 	0,		// damage
 	sfx_dmact,		// activesound
@@ -1621,7 +1628,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_spidth,		// deathsound
 	12,		// speed
 	128*FRACUNIT,		// radius
-	100*FRACUNIT,		// height
+	110*FRACUNIT,		// height
 	1000,		// mass
 	0,		// damage
 	sfx_dmact,		// activesound
@@ -1647,7 +1654,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_bspdth,		// deathsound
 	12,		// speed
 	64*FRACUNIT,		// radius
-	64*FRACUNIT,		// height
+	56*FRACUNIT,		// height
 	600,		// mass
 	0,		// damage
 	sfx_bspact,		// activesound
@@ -1777,7 +1784,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_bosdth,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	86*FRACUNIT,		// height
 	10000000,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -1881,7 +1888,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	78*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -1907,7 +1914,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_barexp,		// deathsound
 	0,		// speed
 	10*FRACUNIT,		// radius
-	42*FRACUNIT,		// height
+	34*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2301,7 +2308,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
-	MF_SPECIAL|MF_COUNTITEM,		// flags
+	MF_SPECIAL|MF_COUNTITEM|MF_TRANSLUC75,		// flags
 	S_NULL		// raisestate
     },
 
@@ -2661,7 +2668,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	46*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2713,7 +2720,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	10*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2765,7 +2772,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	10*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2817,7 +2824,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	26*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2869,7 +2876,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	10*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2895,7 +2902,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	18*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2921,7 +2928,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	8*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2947,7 +2954,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	10*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2973,7 +2980,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	26*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -2999,7 +3006,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	20*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3181,7 +3188,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	80*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3207,7 +3214,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	60*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3233,7 +3240,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	48*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3259,7 +3266,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	52*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3285,7 +3292,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	40*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3311,7 +3318,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	52*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3337,7 +3344,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	40*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3363,7 +3370,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	40*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3389,7 +3396,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	40*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3415,7 +3422,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	54*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3441,7 +3448,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	26*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3467,7 +3474,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	56*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3493,7 +3500,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	68*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3519,7 +3526,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	68*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3545,7 +3552,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	68*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3571,7 +3578,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	34*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3597,7 +3604,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	34*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3623,7 +3630,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	34*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3649,7 +3656,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	40*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3675,7 +3682,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	128*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3701,7 +3708,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	14*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -3727,7 +3734,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	60*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4013,7 +4020,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	38*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4039,7 +4046,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	12*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4065,7 +4072,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	14*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4091,7 +4098,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	14*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4143,7 +4150,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	18*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4195,7 +4202,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	8*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4221,7 +4228,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	8*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4247,7 +4254,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	64*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4273,7 +4280,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	8*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4299,7 +4306,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	56*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4325,7 +4332,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	42*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4351,7 +4358,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	64*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4377,7 +4384,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	64*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4403,7 +4410,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	32*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	108*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4429,7 +4436,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	16*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	32*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4611,7 +4618,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	4*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4637,7 +4644,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	1*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4663,7 +4670,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_None,		// deathsound
 	0,		// speed
 	20*FRACUNIT,		// radius
-	16*FRACUNIT,		// height
+	4*FRACUNIT,		// height
 	100,		// mass
 	0,		// damage
 	sfx_None,		// activesound
@@ -4691,7 +4698,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_bspdth,  // deathsound
 	12,  // speed
 	64*FRACUNIT,  // radius
-	64*FRACUNIT,  // height
+	56*FRACUNIT,  // height
 	600,  // mass
 	0,  // damage
 	sfx_bspact,  // activesound
@@ -4717,7 +4724,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_vildth,  // deathsound
 	15,  // speed
 	20*FRACUNIT,  // radius
-	56*FRACUNIT,  // height
+	76*FRACUNIT,  // height
 	500,  // mass
 	0,  // damage
 	sfx_vilact,  // activesound
@@ -4743,7 +4750,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_brsdth,  // deathsound
 	8,  // speed
 	24*FRACUNIT,  // radius
-	64*FRACUNIT,  // height
+	74*FRACUNIT,  // height
 	1000,  // mass
 	0,  // damage
 	sfx_dmact,  // activesound
@@ -4795,7 +4802,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_podth2,  // deathsound
 	8,  // speed
 	20*FRACUNIT,  // radius
-	56*FRACUNIT,  // height
+	60*FRACUNIT,  // height
 	100,  // mass
 	0,  // damage
 	sfx_posact,  // activesound
@@ -4847,11 +4854,11 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_kntdth,  // deathsound
 	8,  // speed
 	24*FRACUNIT,  // radius
-	64*FRACUNIT,  // height
+	74*FRACUNIT,  // height
 	1000,  // mass
 	0,  // damage
 	sfx_dmact,  // activesound
-	MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL,  // flags
+	MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH,  // flags
 	S_BOS2_RAISE1  // raisestate
 	},
 
@@ -4925,7 +4932,7 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_skedth,  // deathsound
 	10,  // speed
 	20*FRACUNIT,  // radius
-	56*FRACUNIT,  // height
+	80*FRACUNIT,  // height
 	500,  // mass
 	0,  // damage
 	sfx_skeact,  // activesound
@@ -4983,7 +4990,434 @@ mobjinfo_t mobjinfo[NUMMOBJTYPES] = {
 	sfx_posact,  // activesound
 	MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STEALTH,             // flags
 	S_POSS_RAISE1  // raisestate
-	}
+	},
 
+	{		// MT_GIB0
+	-1,		// doomednum
+	S_GIB0,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	16*FRACUNIT,		// radius
+	4*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	MF_DROPOFF|MF_CORPSE,		// flags
+	S_NULL		// raisestate
+    },
+
+	{		// MT_GIB1
+	-1,		// doomednum
+	S_GIB1,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	16*FRACUNIT,		// radius
+	4*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	MF_DROPOFF|MF_CORPSE,		// flags
+	S_NULL		// raisestate
+    },
+
+	{		// MT_GIB2
+	-1,		// doomednum
+	S_GIB2,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	16*FRACUNIT,		// radius
+	4*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	MF_DROPOFF|MF_CORPSE,		// flags
+	S_NULL		// raisestate
+    },
+
+	{		// MT_GIB3
+	-1,		// doomednum
+	S_GIB3,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	16*FRACUNIT,		// radius
+	4*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	MF_DROPOFF|MF_CORPSE,		// flags
+	S_NULL		// raisestate
+    },
+
+	{		// MT_GIB4
+	-1,		// doomednum
+	S_GIB4,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	16*FRACUNIT,		// radius
+	4*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	MF_DROPOFF|MF_CORPSE,		// flags
+	S_NULL		// raisestate
+    },
+
+	{		// MT_GIB5
+	-1,		// doomednum
+	S_GIB5,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	16*FRACUNIT,		// radius
+	4*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	MF_DROPOFF|MF_CORPSE,		// flags
+	S_NULL		// raisestate
+    },
+
+	{		// MT_GIB6
+	-1,		// doomednum
+	S_GIB6,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	16*FRACUNIT,		// radius
+	4*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	MF_DROPOFF|MF_CORPSE,		// flags
+	S_NULL		// raisestate
+    },
+
+	{		// MT_GIB7
+	-1,		// doomednum
+	S_GIB7,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	16*FRACUNIT,		// radius
+	4*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	MF_DROPOFF|MF_CORPSE,		// flags
+	S_NULL		// raisestate
+    },
+
+	{		// MT_UNKNOWNTHING
+	-1,		// doomednum
+	S_UNKNOWNTHING,		// spawnstate
+	1000,		// spawnhealth
+	S_NULL,		// seestate
+	sfx_None,		// seesound
+	8,		// reactiontime
+	sfx_None,		// attacksound
+	S_NULL,		// painstate
+	0,		// painchance
+	sfx_None,		// painsound
+	S_NULL,		// meleestate
+	S_NULL,		// missilestate
+	S_NULL,		// deathstate
+	S_NULL,		// xdeathstate
+	sfx_None,		// deathsound
+	0,		// speed
+	32*FRACUNIT,		// radius
+	56*FRACUNIT,		// height
+	100,		// mass
+	0,		// damage
+	sfx_None,		// activesound
+	0,		// flags
+	S_NULL		// raisestate
+    },
+
+	// [RH] MT_AMBIENT0 - MT_AMBIENT63
+	{ 14001, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14002, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14003, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14004, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14005, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14006, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14007, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14008, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14009, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14010, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14011, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14012, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14013, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14014, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14015, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14016, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14017, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14018, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14019, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14020, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14021, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14022, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14023, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14024, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14025, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14026, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14027, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14028, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14029, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14030, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14031, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14032, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14033, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14034, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14035, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14036, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14037, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14038, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14039, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14040, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14041, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14042, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14043, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14044, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14045, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14046, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14047, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14048, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14049, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14050, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14051, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14052, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14053, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14054, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14055, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14056, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14057, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14058, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14059, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14060, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14061, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14062, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14063, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL },
+	{ 14064, S_NULL, 1000, S_NULL, sfx_None, 8, sfx_None, S_NULL, 0, sfx_None,
+	  S_NULL, S_NULL, S_NULL, S_NULL, sfx_None, 0, 16*FRACUNIT, 16*FRACUNIT,
+	  100, 0, sfx_None, MF_NOBLOCKMAP|MF_NOSECTOR, S_NULL }
 };
 

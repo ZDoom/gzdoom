@@ -24,8 +24,6 @@
 //-----------------------------------------------------------------------------
 
 
-static const char
-rcsid[] = "$Id: r_plane.c,v 1.4 1997/02/03 16:47:55 b1 Exp $";
 
 #include <stdlib.h>
 
@@ -40,6 +38,7 @@ rcsid[] = "$Id: r_plane.c,v 1.4 1997/02/03 16:47:55 b1 Exp $";
 #include "r_sky.h"
 
 #include "m_alloc.h"
+#include "v_video.h"
 
 planefunction_t 		floorfunc;
 planefunction_t 		ceilingfunc;
@@ -56,7 +55,7 @@ visplane_t 				*floorplane;
 visplane_t 				*ceilingplane;
 
 // ?
-#define MAXOPENINGS 	(SCREENWIDTH*64)
+#define MAXOPENINGS 	(screens[0].width*64)
 short					*openings;
 short					*lastopening;
 
@@ -100,9 +99,9 @@ static void PrepVisPlanes (int min)
 	unsigned short *stuff;
 
 	for (i = min; i < MaxVisPlanes; i++) {
-		stuff = (unsigned short *)Calloc (SCREENWIDTH * 2 + 4, sizeof(unsigned short));
+		stuff = (unsigned short *)Calloc (screens[0].width * 2 + 4, sizeof(unsigned short));
 		visplanes[i].top = stuff + 1;
-		visplanes[i].bottom = stuff + SCREENWIDTH + 3;
+		visplanes[i].bottom = stuff + screens[0].width + 3;
 	}
 }
 
@@ -127,7 +126,7 @@ static void GetMoreVisPlanes (visplane_t **toupdate)
 	MaxVisPlanes += 32;
 	visplanes = (visplane_t *)Realloc (visplanes, (MaxVisPlanes) * sizeof(visplane_t));
 
-	DEVONLY (Printf, "MaxVisPlanes increased to %d\n", MaxVisPlanes, 0);
+	DPrintf ("MaxVisPlanes increased to %d\n", MaxVisPlanes);
 	
 	PrepVisPlanes (oldMax);
 
@@ -223,7 +222,7 @@ void R_ClearPlanes (void)
 	// opening / clipping determination
 	for (i=0 ; i<viewwidth ; i++)
 	{
-		floorclip[i] = viewheight;
+		floorclip[i] = (short)viewheight;
 		ceilingclip[i] = -1;
 	}
 
@@ -231,7 +230,7 @@ void R_ClearPlanes (void)
 	lastopening = openings;
 	
 	// texture calculation
-	memset (cachedheight, 0, sizeof(fixed_t) * SCREENHEIGHT);
+	memset (cachedheight, 0, sizeof(fixed_t) * screens[0].height);
 
 	// left to right mapping
 	angle = (viewangle-ANG90)>>ANGLETOFINESHIFT;
@@ -279,10 +278,10 @@ visplane_t *R_FindPlane (fixed_t height, int picnum, int lightlevel)
 	check->height = height;
 	check->picnum = picnum;
 	check->lightlevel = lightlevel;
-	check->minx = SCREENWIDTH;
+	check->minx = screens[0].width;
 	check->maxx = -1;
 	
-	memset (check->top,0xff,sizeof(short) * SCREENWIDTH);
+	memset (check->top,0xff,sizeof(short) * screens[0].width);
 				
 	return check;
 }
@@ -348,7 +347,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 	pl->minx = start;
 	pl->maxx = stop;
 
-	memset (pl->top,0xff,sizeof(short) * SCREENWIDTH);
+	memset (pl->top,0xff,sizeof(short) * screens[0].width);
 				
 	return pl;
 }
@@ -386,7 +385,95 @@ void R_MakeSpans (int x, int t1, int b1, int t2, int b2)
 		}
 }
 
+// [RH] This was separated from R_DrawPlanes() on 11.5.1998.
+//		Also added support for columns with holes since double skies
+//		opens up that possibility (modified from R_DrawMaskedColumn).
+//		One implication of this is that the sky will always wrap
+//		properly, provided that it is tall enough.
 
+static void R_DrawMaskedSky (int skytexture, int skypos, fixed_t scale, fixed_t height, visplane_t *pl)
+{
+	int x, angle;
+	column_t *col, *column;
+	fixed_t basetexturemid = dc_texturemid;
+	fixed_t yl, yh, topscreen;
+	int min_yl, max_yh;
+	unsigned int top, bottom;
+
+	height = FixedMul (height, scale);
+
+	for (x=pl->minx ; x <= pl->maxx ; x++)
+	{
+		dc_x = x;
+		angle = ((((viewangle + xtoviewangle[x])>>(ANGLETOSKYSHIFT-16)) + skypos)>>16)&0xff;
+		column = (column_t *) ((byte *)R_GetColumn(skytexture, angle) - 3);
+
+		if (column->topdelta == 0xff)
+			// empty colum
+			continue;
+
+		top = pl->top[x];
+		bottom = pl->bottom[x];
+
+		if (top <= bottom) {
+			min_yl = MAXINT;
+			max_yh = MININT;
+
+			topscreen = FixedMul (skytopfrac, scale);
+			while (topscreen > (signed)(top << FRACBITS))
+				topscreen -= height;
+
+			while (max_yh < (signed)bottom) {
+				col = column;
+				
+				while (col->topdelta != 0xff) {
+					yl = scale * col->topdelta;
+					yh = yl + scale * col->length;
+
+					dc_yl = (yl + FRACUNIT - 1 + topscreen) >> FRACBITS;
+					dc_yh = (yh - 1 + topscreen) >> FRACBITS;
+
+					if (dc_yl < (signed)top)
+						dc_yl = top;
+					if ((unsigned)dc_yh > bottom)
+						dc_yh = bottom;
+
+					if (dc_yl <= dc_yh)
+					{
+						if (dc_yh > max_yh)
+							max_yh = dc_yh;
+
+						dc_source = (byte *)col + 3;
+						dc_texturemid = basetexturemid - (col->topdelta<<FRACBITS);
+						colfunc ();
+					}
+
+					col = (column_t *) ((byte *)col + col->length + 4);
+				}
+				topscreen += height;
+			}
+		}
+	}
+
+	dc_texturemid = basetexturemid;
+}
+
+static void R_DrawSky (int skytexture, int skypos, visplane_t *pl)
+{
+	int x, angle;
+
+	for (x=pl->minx ; x <= pl->maxx ; x++) {
+		dc_yl = pl->top[x];
+		dc_yh = pl->bottom[x];
+
+		if (dc_yl <= dc_yh)	{
+			angle = ((((viewangle + xtoviewangle[x])>>(ANGLETOSKYSHIFT-16)) + skypos)>>16)&0xff;
+			dc_x = x;
+			dc_source = R_GetColumn(skytexture, angle);
+			colfunc ();
+		}
+	}
+}
 
 //
 // R_DrawPlanes
@@ -398,54 +485,37 @@ void R_DrawPlanes (void)
 	int 				light;
 	int 				x;
 	int 				stop;
-	int 				angle;
-								
-#ifdef RANGECHECK
-	if (ds_p - drawsegs > MaxDrawSegs)
-		// [RH] Should never get here
-		I_Error ("R_DrawPlanes: drawsegs overflow (%i)",
-				 ds_p - drawsegs);
 	
-	if (lastvisplane - visplanes > MaxVisPlanes)
-		// [RH] Should not get here
-		I_Error ("R_DrawPlanes: visplane overflow (%i)",
-				 lastvisplane - visplanes);
-	
-	if (lastopening - openings > MAXOPENINGS)
-		I_Error ("R_DrawPlanes: opening overflow (%i)",
-				 lastopening - openings);
-#endif
-
 	for (pl = visplanes ; pl < lastvisplane ; pl++)
 	{
 		if (pl->minx > pl->maxx)
 			continue;
-
 		
 		// sky flat
 		if (pl->picnum == skyflatnum)
 		{
-			dc_iscale = skyiscale;
-			
 			// Sky is allways drawn full bright,
 			//	i.e. colormaps[0] is used.
 			// Because of this hack, sky is not affected
 			//	by INVUL inverse mapping.
-			dc_colormap = colormaps;
-			dc_texturemid = skytexturemid;
-			for (x=pl->minx ; x <= pl->maxx ; x++)
-			{
-				dc_yl = pl->top[x];
-				dc_yh = pl->bottom[x];
+			dc_colormap = DefaultPalette->maps.colormaps;
 
-				if (dc_yl <= dc_yh)
-				{
-					angle = (viewangle + xtoviewangle[x])>>ANGLETOSKYSHIFT;
-					dc_x = x;
-					dc_source = R_GetColumn(skytexture, angle);
-					colfunc ();
-				}
+			if (level.flags & LEVEL_DOUBLESKY) {
+				dc_iscale = sky2iscale >> sky2stretch;
+				dc_texturemid = sky2texturemid;
+				if (textureheight[sky2texture] == (128<<FRACBITS))
+					R_DrawSky (sky2texture, sky2pos, pl);
+				else
+					R_DrawMaskedSky (sky2texture, sky2pos, sky2scale, sky2height, pl);
 			}
+
+			dc_iscale = sky1iscale >> sky1stretch;
+			dc_texturemid = sky1texturemid;
+			if ((level.flags & LEVEL_DOUBLESKY) || (textureheight[sky1texture] != (128<<FRACBITS)))
+				R_DrawMaskedSky (sky1texture, sky1pos, sky1scale, sky1height, pl);
+			else
+				R_DrawSky (sky1texture, sky1pos, pl);
+
 			continue;
 		}
 		
@@ -482,32 +552,41 @@ void R_DrawPlanes (void)
 	}
 }
 
-boolean R_PlaneInitData (void)
+BOOL R_PlaneInitData (void)
 {
-	fixed_t *fixeds;
-
 	if (openings)		free (openings);
 	if (floorclip)		free (floorclip);
 	if (ceilingclip)	free (ceilingclip);
 	if (spanstart)		free (spanstart);
 	if (yslopetab)		free (yslopetab);
+	if (distscale)		free (distscale);
+	if (cachedheight)	free (cachedheight);
+	if (cacheddistance)	free (cacheddistance);
+	if (cachedxstep)	free (cachedxstep);
+	if (cachedystep)	free (cachedystep);
 
 	openings = Calloc (MAXOPENINGS, sizeof(short));
-	floorclip = Calloc (SCREENWIDTH, sizeof(short));
-	ceilingclip = Calloc (SCREENWIDTH, sizeof(short));
+	floorclip = Calloc (screens[0].width, sizeof(short));
+	ceilingclip = Calloc (screens[0].width, sizeof(short));
 
-	spanstart = Calloc (SCREENHEIGHT, sizeof(int));
-	spanstop = Calloc (SCREENHEIGHT, sizeof(int));
+	spanstart = Calloc (screens[0].height, sizeof(int));
+	spanstop = Calloc (screens[0].height, sizeof(int));
 
-	// In retrospect, this is probably a dumb thing to do.
-	fixeds = Calloc (SCREENHEIGHT * 6 + SCREENWIDTH, sizeof(fixed_t));
+	yslopetab = Calloc ((screens[0].height<<1)+(screens[0].height>>1), sizeof(fixed_t));
+	distscale = Calloc (screens[0].width, sizeof(fixed_t));
+	cachedheight = Calloc (screens[0].height, sizeof(fixed_t));
+	cacheddistance = Calloc (screens[0].height, sizeof(fixed_t));
+	cachedxstep = Calloc (screens[0].height, sizeof(fixed_t));
+	cachedystep = Calloc (screens[0].height, sizeof(fixed_t));
 
-	yslopetab = fixeds;
-	distscale = yslopetab + SCREENHEIGHT * 2;
-	cachedheight = distscale + SCREENWIDTH;
-	cacheddistance = cachedheight + SCREENHEIGHT;
-	cachedxstep = cacheddistance + SCREENHEIGHT;
-	cachedystep = cachedxstep + SCREENHEIGHT;
+	if (visplanes) {
+		int i;
+
+		for (i = 0; i < MaxVisPlanes; i++)
+			free (visplanes[i].top - 1);
+
+		PrepVisPlanes (0);
+	}
 
 	return true;
 }

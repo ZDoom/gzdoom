@@ -20,8 +20,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: p_doors.c,v 1.4 1997/02/03 16:47:53 b1 Exp $";
 
 
 #include "z_zone.h"
@@ -39,7 +37,7 @@ rcsid[] = "$Id: p_doors.c,v 1.4 1997/02/03 16:47:53 b1 Exp $";
 #include "dstrings.h"
 #include "sounds.h"
 
-#include "c_console.h"
+#include "c_consol.h"
 
 #if 0
 //
@@ -143,7 +141,7 @@ void T_VerticalDoor (vldoor_t* door)
 				
 			  case close30ThenOpen:
 				door->direction = 0;
-				door->topcountdown = 35*30;
+				door->topcountdown = TICRATE*30;
 				break;
 				
 			  default:
@@ -222,8 +220,6 @@ EV_DoLockedDoor
 	{
 	  case 99:	// Blue Lock
 	  case 133:
-		if ( !p )
-			return 0;
 		if (!p->cards[it_bluecard] && !p->cards[it_blueskull])
 		{
 			C_MidPrint (PD_BLUEO);
@@ -234,8 +230,6 @@ EV_DoLockedDoor
 		
 	  case 134: // Red Lock
 	  case 135:
-		if ( !p )
-			return 0;
 		if (!p->cards[it_redcard] && !p->cards[it_redskull])
 		{
 			C_MidPrint (PD_REDO);
@@ -246,8 +240,6 @@ EV_DoLockedDoor
 		
 	  case 136: // Yellow Lock
 	  case 137:
-		if ( !p )
-			return 0;
 		if (!p->cards[it_yellowcard] &&
 			!p->cards[it_yellowskull])
 		{
@@ -520,19 +512,16 @@ void P_SpawnDoorCloseIn30 (sector_t* sec)
 	door->direction = 0;
 	door->type = normal;
 	door->speed = VDOORSPEED;
-	door->topcountdown = 30 * 35;
+	door->topcountdown = 30 * TICRATE;
 }
 
 //
 // Spawn a door that opens after 5 minutes
 //
-void
-P_SpawnDoorRaiseIn5Mins
-( sector_t* 	sec,
-  int			secnum )
+void P_SpawnDoorRaiseIn5Mins (sector_t *sec, int secnum)
 {
 	vldoor_t*	door;
-		
+
 	door = Z_Malloc ( sizeof(*door), PU_LEVSPEC, 0);
 	
 	P_AddThinker (&door->thinker);
@@ -548,7 +537,7 @@ P_SpawnDoorRaiseIn5Mins
 	door->topheight = P_FindLowestCeilingSurrounding(sec);
 	door->topheight -= 4*FRACUNIT;
 	door->topwait = VDOORWAIT;
-	door->topcountdown = 5 * 60 * 35;
+	door->topcountdown = 5 * 60 * TICRATE;
 }
 
 
@@ -572,16 +561,16 @@ void P_InitSlidingDoorFrames(void)
 	int 		f2;
 	int 		f3;
 	int 		f4;
-		
+
 	// DOOM II ONLY...
 	if ( gamemode != commercial)
 		return;
-		
+
 	for (i = 0;i < MAXSLIDEDOORS; i++)
 	{
 		if (!slideFrameNames[i].frontFrame1[0])
 			break;
-						
+
 		f1 = R_TextureNumForName(slideFrameNames[i].frontFrame1);
 		f2 = R_TextureNumForName(slideFrameNames[i].frontFrame2);
 		f3 = R_TextureNumForName(slideFrameNames[i].frontFrame3);
@@ -591,7 +580,7 @@ void P_InitSlidingDoorFrames(void)
 		slideFrames[i].frontFrames[1] = f2;
 		slideFrames[i].frontFrames[2] = f3;
 		slideFrames[i].frontFrames[3] = f4;
-				
+
 		f1 = R_TextureNumForName(slideFrameNames[i].backFrame1);
 		f2 = R_TextureNumForName(slideFrameNames[i].backFrame2);
 		f3 = R_TextureNumForName(slideFrameNames[i].backFrame3);
@@ -613,14 +602,14 @@ int P_FindSlidingDoorType(line_t*		line)
 {
 	int 		i;
 	int 		val;
-		
+
 	for (i = 0;i < MAXSLIDEDOORS;i++)
 	{
 		val = sides[line->sidenum[0]].midtexture;
 		if (val == slideFrames[i].frontFrames[0])
 			return i;
 	}
-		
+
 	return -1;
 }
 
@@ -637,14 +626,14 @@ void T_SlidingDoor (slidedoor_t*		door)
 				sides[door->line->sidenum[0]].midtexture = 0;
 				sides[door->line->sidenum[1]].midtexture = 0;
 				door->line->flags &= ML_BLOCKING^0xff;
-										
+
 				if (door->type == sdt_openOnly)
 				{
 					door->frontsector->specialdata = NULL;
 					P_RemoveThinker (&door->thinker);
 					break;
 				}
-										
+
 				door->timer = SDOORWAIT;
 				door->status = sd_waiting;
 			}
@@ -652,7 +641,7 @@ void T_SlidingDoor (slidedoor_t*		door)
 			{
 				// IF DOOR NEEDS TO ANIMATE TO NEXT FRAME...
 				door->timer = SWAITTICS;
-										
+
 				sides[door->line->sidenum[0]].midtexture =
 					slideFrames[door->whichDoorIndex].
 					frontFrames[door->frame];
@@ -662,7 +651,7 @@ void T_SlidingDoor (slidedoor_t*		door)
 			}
 		}
 		break;
-						
+
 	  case sd_waiting:
 		// IF DOOR IS DONE WAITING...
 		if (!door->timer--)

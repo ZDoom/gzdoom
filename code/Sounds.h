@@ -58,7 +58,10 @@ struct sfxinfo_struct
 	int 		usefulness;
 
 	// lump number of sfx
-	int 		lumpnum;				
+	int 		lumpnum;
+
+	// [RH] length of sfx in milliseconds
+	unsigned	ms;
 };
 
 
@@ -182,7 +185,73 @@ typedef enum
 	sfx_skesit,
 	sfx_skeatk,
 	sfx_radio,
+	// [RH] Sound played when entering secret sector
 	sfx_secret,
+	// [RH] Up to 64 ambient sounds
+	sfx_ambient0,
+	sfx_ambient1,
+	sfx_ambient2,
+	sfx_ambient3,
+	sfx_ambient4,
+	sfx_ambient5,
+	sfx_ambient6,
+	sfx_ambient7,
+	sfx_ambient8,
+	sfx_ambient9,
+	sfx_ambient10,
+	sfx_ambient11,
+	sfx_ambient12,
+	sfx_ambient13,
+	sfx_ambient14,
+	sfx_ambient15,
+	sfx_ambient16,
+	sfx_ambient17,
+	sfx_ambient18,
+	sfx_ambient19,
+	sfx_ambient20,
+	sfx_ambient21,
+	sfx_ambient22,
+	sfx_ambient23,
+	sfx_ambient24,
+	sfx_ambient25,
+	sfx_ambient26,
+	sfx_ambient27,
+	sfx_ambient28,
+	sfx_ambient29,
+	sfx_ambient30,
+	sfx_ambient31,
+	sfx_ambient32,
+	sfx_ambient33,
+	sfx_ambient34,
+	sfx_ambient35,
+	sfx_ambient36,
+	sfx_ambient37,
+	sfx_ambient38,
+	sfx_ambient39,
+	sfx_ambient40,
+	sfx_ambient41,
+	sfx_ambient42,
+	sfx_ambient43,
+	sfx_ambient44,
+	sfx_ambient45,
+	sfx_ambient46,
+	sfx_ambient47,
+	sfx_ambient48,
+	sfx_ambient49,
+	sfx_ambient50,
+	sfx_ambient51,
+	sfx_ambient52,
+	sfx_ambient53,
+	sfx_ambient54,
+	sfx_ambient55,
+	sfx_ambient56,
+	sfx_ambient57,
+	sfx_ambient58,
+	sfx_ambient59,
+	sfx_ambient60,
+	sfx_ambient61,
+	sfx_ambient62,
+	sfx_ambient63,
 	NUMSFX
 } sfxenum_t;
 

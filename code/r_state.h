@@ -29,12 +29,6 @@
 
 
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
-
-
 //
 // Refresh internal data structures,
 //	for rendering.
@@ -52,13 +46,14 @@ extern fixed_t* 		spritetopoffset;
 extern lighttable_t*	colormaps;
 
 extern int				viewwidth;
-extern int				scaledviewwidth;
+extern int				realviewwidth;
 extern int				viewheight;
+extern int				realviewheight;
 
 extern int				firstflat;
 
 // for global animation
-extern int* 			flattranslation;		
+extern int*				flattranslation;		
 extern int* 			texturetranslation; 	
 
 
@@ -113,7 +108,7 @@ extern angle_t			clipangle;
 
 extern int				viewangletox[FINEANGLES/2];
 extern angle_t			*xtoviewangle;
-//extern fixed_t				finetangent[FINEANGLES/2];
+//extern fixed_t		finetangent[FINEANGLES/2];
 
 extern fixed_t			rw_distance;
 extern angle_t			rw_normalangle;

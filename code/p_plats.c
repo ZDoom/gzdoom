@@ -21,8 +21,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: p_plats.c,v 1.5 1997/02/03 22:45:12 b1 Exp $";
 
 
 #include "m_alloc.h"
@@ -215,7 +213,7 @@ EV_DoPlat
 				plat->low = sec->floorheight;
 
 			plat->high = sec->floorheight;
-			plat->wait = 35*PLATWAIT;
+			plat->wait = TICRATE * PLATWAIT;
 			plat->status = down;
 			S_StartSound((mobj_t *)&sec->soundorg,sfx_pstart);
 			break;
@@ -228,7 +226,7 @@ EV_DoPlat
 				plat->low = sec->floorheight;
 
 			plat->high = sec->floorheight;
-			plat->wait = 35*PLATWAIT;
+			plat->wait = TICRATE * PLATWAIT;
 			plat->status = down;
 			S_StartSound((mobj_t *)&sec->soundorg,sfx_pstart);
 			break;
@@ -245,8 +243,8 @@ EV_DoPlat
 			if (plat->high < sec->floorheight)
 				plat->high = sec->floorheight;
 
-			plat->wait = 35*PLATWAIT;
-			plat->status = P_Random()&1;
+			plat->wait = TICRATE * PLATWAIT;
+			plat->status = P_Random (pr_doplat) & 1;
 
 			S_StartSound((mobj_t *)&sec->soundorg,sfx_pstart);
 			break;

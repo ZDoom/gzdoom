@@ -1,0 +1,2913 @@
+diff -c -d ptc-073b/globals.h ptc/source/GLOBALS.H
+*** ptc-073b/globals.h	Thu May 28 20:03:10 1998
+--- ptc/source/GLOBALS.H	Tue May 05 23:29:34 1998
+***************
+*** 37,42 ****
+--- 37,43 ----
+  // output types
+  const FULLSCREEN = 40;
+  const WINDOWED   = 41;
++ const FSDBLBUFF  = 42;	// [RH] Fullscreen double-buffering
+  
+  // coordinate systems
+  const ABSOLUTE   = 50;
+***************
+*** 123,128 ****
+--- 124,134 ----
+  
+  
+  
++ // [RH]
++ #if defined(_WIN32) && defined (_DEBUG)
++ #define HAVEDPRINTF
++ void Dprintf (char *fmt, ...);
++ #endif
+  
+  
+  
+diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
+*** ptc-073b/idirectx.cpp	Mon Jun 08 13:21:36 1998
+--- ptc/source/Idirectx.cpp	Wed Jul 08 20:49:18 1998
+***************
+*** 23,30 ****
+  IDirectX::IDirectX(WINDOW window)
+           :IWin32(window)
+  {
+!     // debug
+!     //printf("IDirectX::IDirectX\n"); 
+  
+      // clear status
+      Status=0;
+--- 23,32 ----
+  IDirectX::IDirectX(WINDOW window)
+           :IWin32(window)
+  {
+! 	// debug
+! #ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::IDirectX\n");
+! #endif
+  
+      // clear status
+      Status=0;
+***************
+*** 34,40 ****
+      Frequency=UNKNOWN;
+      PrimaryFlag=0;
+      Primary=NULL;
+!     PrimaryBackup=NULL;
+      
+      // directx data
+      lpDD=NULL;
+--- 36,42 ----
+      Frequency=UNKNOWN;
+      PrimaryFlag=0;
+      Primary=NULL;
+! 	PrimaryBackup=NULL;
+      
+      // directx data
+      lpDD=NULL;
+***************
+*** 42,52 ****
+      DirectDrawInstance=NULL;
+  
+      // initialize directdraw
+!     if (!InitDirectDraw()) 
+!     {
+!         //printf("InitDirectDraw failed\n");
+!         return;
+!     }
+  
+      // get display format
+  
+--- 44,56 ----
+      DirectDrawInstance=NULL;
+  
+      // initialize directdraw
+!     if (!InitDirectDraw())
+! 	{
+! #ifdef HAVEDPRINTF
+! 		Dprintf("InitDirectDraw failed\n");
+! #endif
+! 		return;
+! 	}
+  
+      // get display format
+  
+***************
+*** 56,63 ****
+          // register window classes
+          RegisterWindowClasses();
+  
+!         // setup mode list
+!         SetupModeList();
+  
+          // windowed display mode
+      }
+--- 60,67 ----
+          // register window classes
+          RegisterWindowClasses();
+  
+! 		// setup mode list
+! 		SetupModeList();
+  
+          // windowed display mode
+      }
+***************
+*** 65,71 ****
+      // success
+      Status=1;
+  
+!     //printf("IDirectX::IDirectX ok\n");
+  
+      // set process priority to high
+      SetPriorityClass(GetCurrentProcess(),HIGH_PRIORITY_CLASS);
+--- 69,77 ----
+      // success
+      Status=1;
+  
+! #ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::IDirectX ok\n");
+! #endif
+  
+      // set process priority to high
+      SetPriorityClass(GetCurrentProcess(),HIGH_PRIORITY_CLASS);
+***************
+*** 115,123 ****
+  
+  int IDirectX::SetMode(int x,int y,int id,int output,int frequency,int layout)
+  {
+!     // debug
+!     //printf("IDirectX::SetMode\n");
+! 
+      // DIRECT -> VIRTUAL32
+      if (id==DIRECT) id=VIRTUAL32;
+  
+--- 121,130 ----
+  
+  int IDirectX::SetMode(int x,int y,int id,int output,int frequency,int layout)
+  {
+! 	// debug
+! #ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::SetMode\n");
+! #endif
+      // DIRECT -> VIRTUAL32
+      if (id==DIRECT) id=VIRTUAL32;
+  
+***************
+*** 125,134 ****
+      if (id==INDEXED) id=VIRTUAL8;
+  
+      // try modeset from virtual mode / bits per pixel
+!     if (InitDisplay(x,y,id,layout,frequency,layout)) return 1;
+      
+      // attempt modeset from format id
+!     if (InitDisplay(x,y,FORMAT(id),layout,frequency,layout)) return 1;
+  
+      // failure
+      return 0;
+--- 132,141 ----
+      if (id==INDEXED) id=VIRTUAL8;
+  
+      // try modeset from virtual mode / bits per pixel
+!     if (InitDisplay(x,y,id,output/*[RH] layout*/,frequency,layout)) return 1;
+      
+      // attempt modeset from format id
+!     if (InitDisplay(x,y,FORMAT(id),output/*[RH] layout*/,frequency,layout)) return 1;
+  
+      // failure
+      return 0;
+***************
+*** 137,152 ****
+  
+  int IDirectX::SetMode(int x,int y,FORMAT const &format,int output,int frequency,int layout)
+  {
+!     // debug
+!     //printf("IDirectX::SetMode\n");
+! 
+      // initialize display
+      if (InitDisplay(x,y,format,output,frequency,layout))
+!     {
+!         //printf("IDirectX::SetMode ok\n");
+!         return 1;
+!     }
+!     else return 0;
+  }
+  
+  
+--- 144,162 ----
+  
+  int IDirectX::SetMode(int x,int y,FORMAT const &format,int output,int frequency,int layout)
+  {
+! 	// debug
+! #ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::SetMode\n");
+! #endif
+      // initialize display
+      if (InitDisplay(x,y,format,output,frequency,layout))
+! 	{
+! #ifdef HAVEDPRINTF
+! 		Dprintf("IDirectX::SetMode ok\n");
+! #endif
+! 		return 1;
+! 	}
+! 	else return 0;
+  }
+  
+  
+***************
+*** 196,202 ****
+          // grab primary surface palette object
+          HRESULT result=~DD_OK;
+          LPDIRECTDRAWPALETTE lpDDPalette=NULL;
+!         if (surface->lpDDS2) result=surface->lpDDS2->GetPalette(&lpDDPalette);
+          else if (surface->lpDDS) result=surface->lpDDS->GetPalette(&lpDDPalette);
+          else goto DONE;
+  
+--- 206,213 ----
+          // grab primary surface palette object
+          HRESULT result=~DD_OK;
+          LPDIRECTDRAWPALETTE lpDDPalette=NULL;
+! 		if (surface->lpFDDS) result=surface->lpFDDS->GetPalette(&lpDDPalette);
+!         else if (surface->lpDDS2) result=surface->lpDDS2->GetPalette(&lpDDPalette);
+          else if (surface->lpDDS) result=surface->lpDDS->GetPalette(&lpDDPalette);
+          else goto DONE;
+  
+***************
+*** 204,211 ****
+          if (result==DDERR_NOPALETTEATTACHED)
+          {
+              // debug
+!             //printf("no palette attached: creating new lpDDPalette\n");
+! 
+              // create palette object
+              if (lpDD2)
+              {
+--- 215,223 ----
+          if (result==DDERR_NOPALETTEATTACHED)
+          {
+              // debug
+! #ifdef HAVEDPRINTF
+!             Dprintf("no palette attached: creating new lpDDPalette\n");
+! #endif
+              // create palette object
+              if (lpDD2)
+              {
+***************
+*** 213,219 ****
+                  result=lpDD2->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256,(LPPALETTEENTRY)data,&lpDDPalette,NULL);
+                  if (result!=DD_OK)
+                  {
+!                     //printf("lpDD2->CreatePalette failed\n");
+                      goto DONE;
+                  }
+              }
+--- 225,233 ----
+                  result=lpDD2->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256,(LPPALETTEENTRY)data,&lpDDPalette,NULL);
+                  if (result!=DD_OK)
+                  {
+! #ifdef HAVEDPRINTF
+!                     Dprintf("lpDD2->CreatePalette failed\n");
+! #endif
+                      goto DONE;
+                  }
+              }
+***************
+*** 223,242 ****
+                  result=lpDD->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256,(LPPALETTEENTRY)data,&lpDDPalette,NULL);
+                  if (result!=DD_OK)
+                  {
+!                     //printf("lpDD->CreatePalette failed\n");
+                      goto DONE;
+                  }
+              }
+              
+              // attach palette object to primary surface
+              result=~DD_OK;
+!             if (surface->lpDDS2) result=surface->lpDDS2->SetPalette(lpDDPalette);
+              else if (surface->lpDDS) result=surface->lpDDS->SetPalette(lpDDPalette);
+              
+              // check result
+              if (result!=DD_OK)
+              {
+!                 //printf("failed to attach palette to primary surface\n");
+                  goto DONE;
+              }
+          }
+--- 237,261 ----
+                  result=lpDD->CreatePalette(DDPCAPS_8BIT | DDPCAPS_ALLOW256,(LPPALETTEENTRY)data,&lpDDPalette,NULL);
+                  if (result!=DD_OK)
+                  {
+! #ifdef HAVEDPRINTF
+!                     Dprintf("lpDD->CreatePalette failed\n");
+! #endif
+                      goto DONE;
+                  }
+              }
+              
+              // attach palette object to primary surface
+              result=~DD_OK;
+! 			if (surface->lpFDDS) result=surface->lpFDDS->SetPalette(lpDDPalette);
+!             else if (surface->lpDDS2) result=surface->lpDDS2->SetPalette(lpDDPalette);
+              else if (surface->lpDDS) result=surface->lpDDS->SetPalette(lpDDPalette);
+              
+              // check result
+              if (result!=DD_OK)
+              {
+! #ifdef HAVEDPRINTF
+!                 Dprintf("failed to attach palette to primary surface\n");
+! #endif
+                  goto DONE;
+              }
+          }
+***************
+*** 246,255 ****
+          result=lpDDPalette->SetEntries(0,0,256,(LPPALETTEENTRY)data);
+          if (result!=DD_OK) goto DONE;
+  
+!         // update primary palette
+!         PrimaryPalette=palette;
+  
+!         // success
+          success=1;
+      }  
+      
+--- 265,274 ----
+          result=lpDDPalette->SetEntries(0,0,256,(LPPALETTEENTRY)data);
+          if (result!=DD_OK) goto DONE;
+  
+! 		// update primary palette
+! 		PrimaryPalette=palette;
+  
+!         // success!
+          success=1;
+      }  
+      
+***************
+*** 272,278 ****
+          // check primary surface
+          if (!Primary)
+          {
+!             //printf("bad primary\n");
+              goto DONE;
+          }
+  
+--- 291,299 ----
+          // check primary surface
+          if (!Primary)
+          {
+! #ifdef HAVEDPRINTF
+!             Dprintf("bad primary\n");
+! #endif
+              goto DONE;
+          }
+  
+***************
+*** 280,286 ****
+          SURFACE *surface=(SURFACE*)Primary->InternalSurface;
+          if (!surface)
+          {
+!             //printf("bad internal surface\n");
+              goto DONE;
+          }
+  
+--- 301,309 ----
+          SURFACE *surface=(SURFACE*)Primary->InternalSurface;
+          if (!surface)
+          {
+! #ifdef HAVEDPRINTF
+!             Dprintf("bad internal surface\n");
+! #endif
+              goto DONE;
+          }
+  
+***************
+*** 291,297 ****
+          else if (surface->lpDDS) result=surface->lpDDS->GetPalette(&lpDDPalette);
+          if (result!=DD_OK) 
+          {
+!             //printf("GetPalette failed\n");
+              goto DONE;
+          }
+  
+--- 314,322 ----
+          else if (surface->lpDDS) result=surface->lpDDS->GetPalette(&lpDDPalette);
+          if (result!=DD_OK) 
+          {
+! #ifdef HAVEDPRINTF
+!             Dprintf("GetPalette failed\n");
+! #endif
+              goto DONE;
+          }
+  
+***************
+*** 299,305 ****
+          uint *data=(uint*)palette.Lock();
+          if (!data)
+          {
+!             //printf("bad palette lock\n");
+              goto DONE;
+          }
+  
+--- 324,332 ----
+          uint *data=(uint*)palette.Lock();
+          if (!data)
+          {
+! #ifdef HAVEDPRINTF
+!             Dprintf("bad palette lock\n");
+! #endif
+              goto DONE;
+          }
+  
+***************
+*** 307,313 ****
+          result=lpDDPalette->GetEntries(0,0,256,(LPPALETTEENTRY)data);
+          if (result!=DD_OK)
+          {
+!             //printf("lpDDPalette->GetEntries failed\n");
+              goto DONE;
+          }
+  
+--- 334,342 ----
+          result=lpDDPalette->GetEntries(0,0,256,(LPPALETTEENTRY)data);
+          if (result!=DD_OK)
+          {
+! #ifdef HAVEDPRINTF
+!             Dprintf("lpDDPalette->GetEntries failed\n");
+! #endif
+              goto DONE;
+          }
+  
+***************
+*** 523,534 ****
+  
+  IDirectX::SURFACE::SURFACE(IDirectX &i,int &width,int &height,FORMAT &format,int &type,int &orientation,int &advance,int &layout)
+  {
+!     // debug
+!     //printf("IDirectX::SURFACE::SURFACE\n");
+! 
+      // defaults
+      Buffer=NULL;
+!     lpDDS=NULL;
+      lpDDS2=NULL;
+      Count=0;
+      Primary=0;
+--- 552,565 ----
+  
+  IDirectX::SURFACE::SURFACE(IDirectX &i,int &width,int &height,FORMAT &format,int &type,int &orientation,int &advance,int &layout)
+  {
+! 	// debug
+! #ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::SURFACE::SURFACE\n");
+! #endif
+      // defaults
+      Buffer=NULL;
+! 	lpFDDS=NULL;
+! 	lpDDS=NULL;
+      lpDDS2=NULL;
+      Count=0;
+      Primary=0;
+***************
+*** 539,549 ****
+      // check parameters
+      if ((width<=0 || height<=0) || (type!=SYSTEM && type!=VIDEO && type!=OFFSCREEN && type!=DEFAULT) ||
+          (orientation!=TOPDOWN && orientation!=DEFAULT) ||
+!         (advance!=DEFAULT && advance<0) || (layout!=LINEAR && layout!=DEFAULT)) 
+!     {
+!         //printf("bad parameters\n");
+!         return;
+!     }
+  
+      // setup new type
+      int new_type=type;
+--- 570,582 ----
+      // check parameters
+      if ((width<=0 || height<=0) || (type!=SYSTEM && type!=VIDEO && type!=OFFSCREEN && type!=DEFAULT) ||
+          (orientation!=TOPDOWN && orientation!=DEFAULT) ||
+!         (advance!=DEFAULT && advance<0) || (layout!=LINEAR && layout!=DEFAULT))
+! 	{
+! #ifdef HAVEDPRINTF
+! 		Dprintf("bad parameters\n");
+! #endif
+! 		return;
+! 	}
+  
+      // setup new type
+      int new_type=type;
+***************
+*** 564,641 ****
+      // setup surface descriptor
+      if (new_type==SYSTEM)
+      {
+!         // check pixel format
+!         if (!format.ok() || (format.type==DIRECT && format.model!=RGBA)) 
+!         {
+!             //printf("bad color model\n");
+!             return;
+!         }
+  
+!         // setup surface format information
+!         i.Translate(format,desc.ddpfPixelFormat);
+  
+          // system surface
+          desc.dwFlags=DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+!         desc.ddsCaps.dwCaps=DDSCAPS_SYSTEMMEMORY;
+          desc.dwWidth=width;
+          desc.dwHeight=height;
+      }
+      else if (new_type==VIDEO)
+      {
+          // check primary flag
+!         if (i.PrimaryFlag)
+          {
+              // primary surface
+              desc.dwFlags=DDSD_CAPS;
+              desc.ddsCaps.dwCaps=DDSCAPS_PRIMARYSURFACE;        // todo: handle primary in system memory on some cards?
+!             desc.dwWidth=width;
+!             desc.dwHeight=height;
+  
+              // set primary
+              Primary=1;
+          }
+          else
+          {
+              // VIDEO surface
+!             //printf("VIDEO surfaces are not supported\n");
+              return;
+          }
+      }
+          
+      // create directdraw surface
+      HRESULT result=~DD_OK;
+      if (i.lpDD2) result=i.lpDD2->CreateSurface(&desc,&lpDDS,NULL);
+      else if (i.lpDD) result=i.lpDD->CreateSurface(&desc,&lpDDS,NULL);
+   
+!     /*
+      // print error infomation
+      switch (result)
+      {
+!         case DDERR_INCOMPATIBLEPRIMARY: printf("DDERR_INCOMPATIBLEPRIMARY\n"); break;
+!         case DDERR_INVALIDCAPS: printf("DDERR_INVALIDCAPS\n"); break;
+!         case DDERR_INVALIDOBJECT: printf("DDERR_INVALIDOBJECT\n"); break;
+!         case DDERR_INVALIDPARAMS: printf("DDERR_INVALIDPARAMS\n"); break;
+!         case DDERR_INVALIDPIXELFORMAT: printf("DDERR_INVALIDPIXELFORMAT\n"); break;
+!         case DDERR_NOALPHAHW: printf("DDERR_NOALPHAHW\n"); break;
+!         case DDERR_NOCOOPERATIVELEVELSET: printf("DDERR_NOCOOPERATIVELEVELSET\n"); break;
+!         case DDERR_NODIRECTDRAWHW: printf("DDERR_NODIRECTDRAWHW\n"); break;
+!         case DDERR_NOEMULATION: printf("DDERR_NOEMULATION\n"); break;
+!         case DDERR_NOEXCLUSIVEMODE: printf("DDERR_NOEXCLUSIVEMODE\n"); break; 
+!         case DDERR_NOFLIPHW: printf("DDERR_NOFLIPHW\n"); break; 
+!         case DDERR_NOMIPMAPHW: printf("DDERR_NOMIPMAPHW\n"); break; 
+!         case DDERR_NOZBUFFERHW: printf("DDERR_NOZBUFFERHW\n"); break; 
+!         case DDERR_OUTOFMEMORY: printf("DDERR_OUTOFMEMORY\n"); break; 
+!         case DDERR_OUTOFVIDEOMEMORY: printf("DDERR_OUTOFVIDEOMEMORY\n"); break; 
+!         case DDERR_PRIMARYSURFACEALREADYEXISTS: printf("DDERR_PRIMARYSURFACEALREADYEXISTS\n"); break; 
+!         case DDERR_UNSUPPORTEDMODE: printf("DDERR_UNSUPPORTEDMODE\n"); break;
+      }
+!     */
+      
+      // check result
+      if (result!=DD_OK)
+      {
+          // failure
+!         //printf("result!=DD_OK\n");
+          lpDDS=NULL;
+          return;
+      }
+--- 597,702 ----
+      // setup surface descriptor
+      if (new_type==SYSTEM)
+      {
+! 		// check pixel format
+! 		if (!format.ok() || (format.type==DIRECT && format.model!=RGBA))
+! 		{
+! #ifdef HAVEDPRINTF
+! 			Dprintf("bad color model\n");
+! #endif
+! 			return;
+! 		}
+  
+! 		// setup surface format information
+! 		i.Translate(format,desc.ddpfPixelFormat);
+  
+          // system surface
+          desc.dwFlags=DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+!         desc.ddsCaps.dwCaps=DDSCAPS_OFFSCREENPLAIN|DDSCAPS_SYSTEMMEMORY;
+          desc.dwWidth=width;
+          desc.dwHeight=height;
+      }
+      else if (new_type==VIDEO)
+      {
+          // check primary flag
+!         if (i.PrimaryFlag == 1)
+          {
+              // primary surface
+              desc.dwFlags=DDSD_CAPS;
+              desc.ddsCaps.dwCaps=DDSCAPS_PRIMARYSURFACE;        // todo: handle primary in system memory on some cards?
+! //          desc.dwWidth=width;
+! //          desc.dwHeight=height;
+  
+              // set primary
+              Primary=1;
+          }
++ 		// [RH]
++ 		else if (i.PrimaryFlag == 2)
++ 		{
++ 			// primary surface
++ 			desc.dwFlags=DDSD_CAPS|DDSD_BACKBUFFERCOUNT;
++ 			desc.ddsCaps.dwCaps=DDSCAPS_PRIMARYSURFACE|DDSCAPS_FLIP|DDSCAPS_COMPLEX;
++ 			desc.dwBackBufferCount = 1;
++ //			desc.dwWidth=width;
++ //			desc.dwHeight=height;
++ 
++ 			// set primary
++ 			Primary=1;
++ 		}
+          else
+          {
+              // VIDEO surface
+! #ifdef HAVEDPRINTF
+! 			Dprintf("VIDEO surfaces are not supported\n");
+! #endif
+              return;
+          }
+      }
+          
++     // setup surface format information
++     if (!i.Translate(format,desc.ddpfPixelFormat))
++ 	{
++ #ifdef HAVEDPRINTF
++ 		Dprintf ("Pixel format translation failed\n");
++ #endif
++ 		desc.dwFlags &= ~DDSD_PIXELFORMAT;
++ 	}
++ 
+      // create directdraw surface
+      HRESULT result=~DD_OK;
+      if (i.lpDD2) result=i.lpDD2->CreateSurface(&desc,&lpDDS,NULL);
+      else if (i.lpDD) result=i.lpDD->CreateSurface(&desc,&lpDDS,NULL);
+   
+! #ifdef HAVEDPRINTF
+      // print error infomation
+      switch (result)
+      {
+!         case DDERR_INCOMPATIBLEPRIMARY: Dprintf("DDERR_INCOMPATIBLEPRIMARY\n"); break;
+!         case DDERR_INVALIDCAPS: Dprintf("DDERR_INVALIDCAPS\n"); break;
+!         case DDERR_INVALIDOBJECT: Dprintf("DDERR_INVALIDOBJECT\n"); break;
+!         case DDERR_INVALIDPARAMS: Dprintf("DDERR_INVALIDPARAMS\n"); break;
+!         case DDERR_INVALIDPIXELFORMAT: Dprintf("DDERR_INVALIDPIXELFORMAT\n"); break;
+!         case DDERR_NOALPHAHW: Dprintf("DDERR_NOALPHAHW\n"); break;
+!         case DDERR_NOCOOPERATIVELEVELSET: Dprintf("DDERR_NOCOOPERATIVELEVELSET\n"); break;
+!         case DDERR_NODIRECTDRAWHW: Dprintf("DDERR_NODIRECTDRAWHW\n"); break;
+!         case DDERR_NOEMULATION: Dprintf("DDERR_NOEMULATION\n"); break;
+!         case DDERR_NOEXCLUSIVEMODE: Dprintf("DDERR_NOEXCLUSIVEMODE\n"); break; 
+!         case DDERR_NOFLIPHW: Dprintf("DDERR_NOFLIPHW\n"); break; 
+!         case DDERR_NOMIPMAPHW: Dprintf("DDERR_NOMIPMAPHW\n"); break; 
+!         case DDERR_NOZBUFFERHW: Dprintf("DDERR_NOZBUFFERHW\n"); break; 
+!         case DDERR_OUTOFMEMORY: Dprintf("DDERR_OUTOFMEMORY\n"); break; 
+!         case DDERR_OUTOFVIDEOMEMORY: Dprintf("DDERR_OUTOFVIDEOMEMORY\n"); break; 
+!         case DDERR_PRIMARYSURFACEALREADYEXISTS: Dprintf("DDERR_PRIMARYSURFACEALREADYEXISTS\n"); break; 
+!         case DDERR_UNSUPPORTEDMODE: Dprintf("DDERR_UNSUPPORTEDMODE\n"); break;
+      }
+! #endif
+      
+      // check result
+      if (result!=DD_OK)
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+! 		Dprintf("result!=DD_OK\n");
+! #endif
+          lpDDS=NULL;
+          return;
+      }
+***************
+*** 645,651 ****
+      if (lpDDS->GetSurfaceDesc(&desc)!=DD_OK)
+      {
+          // failure
+!         //printf("couldnt get surface descriptor\n");
+          if (lpDDS) lpDDS->Release();
+          lpDDS=NULL;
+          return;
+--- 706,714 ----
+      if (lpDDS->GetSurfaceDesc(&desc)!=DD_OK)
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+! 		Dprintf("couldnt get surface descriptor\n");
+! #endif
+          if (lpDDS) lpDDS->Release();
+          lpDDS=NULL;
+          return;
+***************
+*** 658,664 ****
+      if (lpDDS->GetPixelFormat(&ddpf)!=DD_OK) 
+      {
+          // failure
+!         //printf("lpDDS->GetPixelFormat failed\n");
+          lpDDS->Release();
+          lpDDS=NULL;
+          return;
+--- 721,729 ----
+      if (lpDDS->GetPixelFormat(&ddpf)!=DD_OK) 
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+!         Dprintf("lpDDS->GetPixelFormat failed\n");
+! #endif
+          lpDDS->Release();
+          lpDDS=NULL;
+          return;
+***************
+*** 668,674 ****
+      if (!i.Translate(ddpf,format)) 
+      {
+          // failure
+!         //printf("format translation failed\n");
+          lpDDS->Release();
+          lpDDS=NULL;
+          return;
+--- 733,741 ----
+      if (!i.Translate(ddpf,format)) 
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+!         Dprintf("format translation failed\n");
+! #endif
+          lpDDS->Release();
+          lpDDS=NULL;
+          return;
+***************
+*** 676,694 ****
+  
+      // calculate directx advance
+      int directx_advance=desc.lPitch-width*format.bytes;
+!     //printf("directx_advance=%d\n",directx_advance);
+  
+      // check directx advance against requested advance
+      if (directx_advance!=new_advance && new_advance==DEFAULT) new_advance=directx_advance;
+      else
+      {
+          // advance doesnt match
+!         //printf("advance doesnt match\n");
+          if (lpDDS) lpDDS->Release();
+          lpDDS=NULL;
+          return;
+      }
+  
+      // setup IID_IDirectDrawSurface2
+      GUID IID_IDirectDrawSurface2;
+      IID_IDirectDrawSurface2.Data1=1468029061;
+--- 743,796 ----
+  
+      // calculate directx advance
+      int directx_advance=desc.lPitch-width*format.bytes;
+! #ifdef HAVEDPRINTF
+!     Dprintf("directx_advance=%d\n",directx_advance);
+! #endif
+  
+      // check directx advance against requested advance
+      if (directx_advance!=new_advance && new_advance==DEFAULT) new_advance=directx_advance;
+      else
+      {
+          // advance doesnt match
+! #ifdef HAVEDPRINTF
+!         Dprintf("advance doesnt match\n");
+! #endif
+          if (lpDDS) lpDDS->Release();
+          lpDDS=NULL;
+          return;
+      }
+  
++ 	// [RH]
++ 	if (i.PrimaryFlag == 2)
++ 	{
++ 		lpFDDS = lpDDS;
++ 
++ #ifdef HAVEDPRINTF
++ 		Dprintf ("Getting backbuffer\n");
++ #endif
++ 		// get back buffer
++ 		DDSCAPS caps;
++ 
++ 		caps.dwCaps = DDSCAPS_BACKBUFFER;
++ 		result = lpFDDS->GetAttachedSurface (&caps, &lpDDS);
++ 		if (result != DD_OK)
++ 		{
++ 			if (lpFDDS) lpFDDS->Release();
++ 			lpFDDS = lpDDS = NULL;
++ 
++ #ifdef HAVEDPRINTF
++ 			switch (result) {
++ 				case DDERR_INVALIDOBJECT: Dprintf ("DDERR_INVALIDOBJECT\n"); break;
++ 				case DDERR_INVALIDPARAMS: Dprintf ("DDERR_INVALIDPARAMS\n"); break;
++ 				case DDERR_NOTFOUND: Dprintf ("DDERR_NOTFOUND\n"); break;
++ 				case DDERR_SURFACELOST: Dprintf ("DDERR_SURFACELOST\n"); break;
++ 			}
++ #endif
++ 
++ 			return;
++ 		}
++ 	}
++ 
+      // setup IID_IDirectDrawSurface2
+      GUID IID_IDirectDrawSurface2;
+      IID_IDirectDrawSurface2.Data1=1468029061;
+***************
+*** 707,713 ****
+      if (lpDDS->QueryInterface(IID_IDirectDrawSurface2,(LPVOID*)&lpDDS2)!=DD_OK)
+      {
+          // failure
+!         //printf("failed to query lpDDS2\n");
+          lpDDS2=NULL;
+      }
+  
+--- 809,817 ----
+      if (lpDDS->QueryInterface(IID_IDirectDrawSurface2,(LPVOID*)&lpDDS2)!=DD_OK)
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+!         Dprintf("failed to query lpDDS2\n");
+! #endif
+          lpDDS2=NULL;
+      }
+  
+***************
+*** 738,746 ****
+      orientation=new_orientation;
+      advance=new_advance;
+      layout=LINEAR;
+- 
+-     // debug
+-     //printf("IDirectX::SURFACE::SURFACE ok\n");
+  }
+  
+  
+--- 842,847 ----
+***************
+*** 750,762 ****
+      if (lpDDS2) lpDDS2->Release();
+  
+      // free directdraw surface
+!     if (lpDDS) lpDDS->Release();
+  }
+  
+  
+  void* IDirectX::SURFACE::Lock(int wait)
+  {
+!     //printf("IDirectX::SURFACE::Lock\n");
+  
+      // todo: properly handle the "wait" parameter
+  
+--- 851,866 ----
+      if (lpDDS2) lpDDS2->Release();
+  
+      // free directdraw surface
+!     if (lpFDDS) lpFDDS->Release();	// [RH] Frees lpDDS, too.
+! 	else if (lpDDS) lpDDS->Release();
+  }
+  
+  
+  void* IDirectX::SURFACE::Lock(int wait)
+  {
+! #ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::SURFACE::Lock\n");
+! #endif
+  
+      // todo: properly handle the "wait" parameter
+  
+***************
+*** 770,816 ****
+          if (lpDDS2) result=lpDDS2->Lock(NULL,&ddsd,DDLOCK_WAIT,NULL);
+          else if (lpDDS) result=lpDDS->Lock(NULL,&ddsd,DDLOCK_WAIT,NULL);
+          else 
+!         {
+!             //printf("no lpDDS2 or lpDDS found\n");
+!             return NULL;
+!         }
+  
+          // auto-restore if primary
+          if (Primary && result==DDERR_SURFACELOST)
+          {
+!             //printf("attempting to restore primary\n");
+  
+              // restore
+!             if (!Restore()) 
+!             {
+!                 //printf("primary restore failed\n");
+!                 Sleep(10);
+!                 return NULL;
+!             }
+  
+!             // check local interface
+!             if (LocalInterface)
+!             {
+!                 // restore primary palette
+!                 LocalInterface->SetPalette(LocalInterface->PrimaryPalette);
+!             }
+  
+              // try to lock again
+              if (lpDDS2) result=lpDDS2->Lock(NULL,&ddsd,DDLOCK_WAIT,NULL);
+              else if (lpDDS) result=lpDDS->Lock(NULL,&ddsd,DDLOCK_WAIT,NULL);
+!             else 
+!             {
+!                 //printf("no lpDDS2 or lpDDS found (2)\n");
+!                 return NULL;
+!             }
+          }
+  
+          // check result
+!         if (result!=DD_OK) 
+!         {
+!             //printf("lock failed\n");
+!             return NULL;
+!         }
+  
+          // update Buffer
+          Buffer=ddsd.lpSurface;
+--- 874,930 ----
+          if (lpDDS2) result=lpDDS2->Lock(NULL,&ddsd,DDLOCK_WAIT,NULL);
+          else if (lpDDS) result=lpDDS->Lock(NULL,&ddsd,DDLOCK_WAIT,NULL);
+          else 
+! 		{
+! #ifdef HAVEDPRINTF
+! 			Dprintf("no lpDDS2 or lpDDS found\n");
+! #endif
+! 			return NULL;
+! 		}
+  
+          // auto-restore if primary
+          if (Primary && result==DDERR_SURFACELOST)
+          {
+! #ifdef HAVEDPRINTF
+! 			Dprintf("attempting to restore primary\n");
+! #endif
+  
+              // restore
+!             if (!Restore())
+! 			{
+! #ifdef HAVEDPRINTF
+! 				Dprintf("primary restore failed\n");
+! #endif
+! 				Sleep(10);
+! 				return NULL;
+! 			}
+  
+! 			// check local interface
+! 			if (LocalInterface)
+! 			{
+! 				// restore primary palette
+! 				LocalInterface->SetPalette(LocalInterface->PrimaryPalette);
+! 			}
+  
+              // try to lock again
+              if (lpDDS2) result=lpDDS2->Lock(NULL,&ddsd,DDLOCK_WAIT,NULL);
+              else if (lpDDS) result=lpDDS->Lock(NULL,&ddsd,DDLOCK_WAIT,NULL);
+!             else
+! 			{
+! #ifdef HAVEDPRINTF
+! 				Dprintf("no lpDDS2 or lpDDS found (2)\n");
+! #endif
+! 				return NULL;
+! 			}
+          }
+  
+          // check result
+!         if (result!=DD_OK)
+! 		{
+! #ifdef HAVEDPRINTF
+! 			Dprintf("lock failed\n");
+! #endif
+! 			return NULL;
+! 		}
+  
+          // update Buffer
+          Buffer=ddsd.lpSurface;
+***************
+*** 818,844 ****
+          // increment lock count
+          Count++;
+  
+!         //printf("IDirectX::SURFACE::Lock ok\n");
+  
+          // return locked buffer
+          return ddsd.lpSurface;
+      }
+      else
+      {
+!         //printf("previously locked buffer\n");
+  
+          // check previously locked buffer
+!         if (!Buffer) 
+!         {
+!             //printf("!Buffer\n");
+!             return NULL;
+!         }
+  
+          // check surface
+          if (!ok())
+          {
+!             //printf("surface !ok\n");
+! 
+              // clear
+              Count=0;
+              Buffer=NULL;
+--- 932,965 ----
+          // increment lock count
+          Count++;
+  
+! #ifdef HAVEDPRINTF
+! 		Dprintf("IDirectX::SURFACE::Lock ok\n");
+! #endif
+  
+          // return locked buffer
+          return ddsd.lpSurface;
+      }
+      else
+      {
+! #ifdef HAVEDPRINTF
+! 		Dprintf("previously locked buffer\n");
+! #endif
+  
+          // check previously locked buffer
+!         if (!Buffer)
+! 		{
+! #ifdef HAVEDPRINTF
+! 			Dprintf("!Buffer\n");
+! #endif
+! 			return NULL;
+! 		}
+  
+          // check surface
+          if (!ok())
+          {
+! #ifdef HAVEDPRINTF
+! 			Dprintf("surface !ok\n");
+! #endif
+              // clear
+              Count=0;
+              Buffer=NULL;
+***************
+*** 848,860 ****
+          // increment lock count
+          Count++;
+  
+!         //printf("IDirectX::SURFACE::Lock ok\n");
+  
+          // return previously locked buffer
+          return Buffer;
+      }
+! 
+!     //printf("IDirectX::SURFACE::Lock failed\n");
+      return NULL;
+  }   
+  
+--- 969,984 ----
+          // increment lock count
+          Count++;
+  
+! #ifdef HAVEDPRINTF
+!         Dprintf("IDirectX::SURFACE::Lock ok\n");
+! #endif
+  
+          // return previously locked buffer
+          return Buffer;
+      }
+! #ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::SURFACE::Lock failed\n");
+! #endif
+      return NULL;
+  }   
+  
+***************
+*** 870,875 ****
+--- 994,1001 ----
+  
+          // clear buffer
+          Buffer=NULL;
++ 
++ 		if (lpFDDS) lpFDDS->Flip (NULL, DDFLIP_WAIT);
+      }
+  
+      // decrement lock count
+***************
+*** 893,919 ****
+  
+  int IDirectX::SURFACE::Restore()
+  {
+-     //printf("IDirectX::SURFACE::Restore\n");
+- 
+      // restore surface
+!     if (lpDDS2 && lpDDS2->Restore()!=DD_OK) 
+!     {
+!         // failure
+!         //printf("lpDDS2->Restore failed\n");
+!         return 0;
+!     }
+!     else if (lpDDS && lpDDS->Restore()!=DD_OK)
+!     {
+!         //printf("lpDDS->Restore failed\n");
+!         return 0;
+!     }
+!     else 
+!     {
+!         //printf("no valid lpDD2 or lpDD found\n");
+!         return 0;
+!     }
+! 
+!     //printf("IDirectX::SURFACE::Restore ok\n");
+  
+      // success
+      return 1;
+--- 1019,1029 ----
+  
+  int IDirectX::SURFACE::Restore()
+  {
+      // restore surface
+! 	if (lpFDDS && lpFDDS->Restore()!=DD_OK) return 0;
+!     else if (lpDDS2 && lpDDS2->Restore()!=DD_OK) return 0;
+!     else if (lpDDS && lpDDS->Restore()!=DD_OK) return 0;
+!     else return 0;
+  
+      // success
+      return 1;
+***************
+*** 1008,1041 ****
+  
+  int IDirectX::InitDisplay(int x,int y,int id,int output,int frequency,int layout)
+  {
+!     //printf("IDirectX::InitDisplay\n");
+  
+      // fail on windowed output
+      if (output==WINDOWED)
+      {
+!         //printf("no WINDOWED output is allowed\n");
+          return 0;
+      }
+  
+      // check display mode
+      if (!CheckDisplayMode(x,y,id,frequency)) 
+      {
+!         //printf("check display mode failed\n");
+          return 0;
+      }
+      
+      // attempt direct mode set
+      if (EnterDisplayMode(x,y,id,frequency)) 
+      {
+!         //printf("direct mode set succeeded!\n");
+          return 1;
+      }
+      
+      // init display start setup
+      if (!InitDisplayStart(x,y,output,frequency,layout)) 
+      {
+          // failure
+!         //printf("InitDisplayStart failed\n");
+          CloseDisplay();
+          return 0;
+      }
+--- 1118,1163 ----
+  
+  int IDirectX::InitDisplay(int x,int y,int id,int output,int frequency,int layout)
+  {
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::InitDisplay\n");
+! 	#endif
+  
+      // fail on windowed output
+      if (output==WINDOWED)
+      {
+! 		#ifdef HAVEDPRINTF
+!         Dprintf("no WINDOWED output is allowed\n");
+! 		#endif
+          return 0;
+      }
+  
+      // check display mode
+      if (!CheckDisplayMode(x,y,id,frequency)) 
+      {
+! 		#ifdef HAVEDPRINTF
+!         Dprintf("check display mode failed\n");
+! 		#endif
+          return 0;
+      }
+      
+      // attempt direct mode set
++ 	/* [RH] Let's not
+      if (EnterDisplayMode(x,y,id,frequency)) 
+      {
+! 	#ifdef HAVEDPRINTF
+!         Dprintf("direct mode set succeeded!\n");
+! 		#endif
+          return 1;
+      }
++ 	*/
+      
+      // init display start setup
+      if (!InitDisplayStart(x,y,output,frequency,layout)) 
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+! 		Dprintf ("InitDisplayStart failed\n");
+! #endif
+          CloseDisplay();
+          return 0;
+      }
+***************
+*** 1044,1106 ****
+      if (!EnterDisplayMode(x,y,id,frequency)) 
+      {
+          // failure
+!         //printf("EnterDisplayMode failed\n");
+          CloseDisplay();
+          return 0;
+      }
+  
+      // get ddraw pixel format
+!     /*
+      FORMAT format=GetDisplayFormat();
+      if (!format.ok())
+      {
+          // failure
+!         printf("bad display format!\n");
+          CloseDisplay();
+          return 0;
+      }
+!     */
+  
+!     // hack
+!     FORMAT format=0;
+  
+      // init display finish setup
+      if (!InitDisplayFinish(x,y,format,output,frequency,layout)) 
+      {
+          // failure
+!         //printf("InitDisplayFinish failed\n");
+          CloseDisplay();
+          return 0;
+      }
+  
+      // success
+!     //printf("IDirectX::InitDisplay ok\n");
+      return 1;
+  }
+  
+  
+  int IDirectX::InitDisplay(int x,int y,FORMAT const &format,int output,int frequency,int layout)
+  {
+!     //printf("IDirectX::InitDisplay(2)\n");
+  
+      // fail on windowed output
+!     if (output==WINDOWED) 
+      {
+!         //printf("no WINDOWED output ya dorq!\n");
+          return 0;
+      }
+  
+      // check display mode
+      if (!CheckDisplayMode(x,y,format,frequency)) 
+      {
+!         //printf("check display mode failure\n");
+          return 0;
+      }
+      
+      // attempt direct mode set
+      if (EnterDisplayMode(x,y,format,frequency))
+      {
+!         //printf("direct mode set succeeded\n");
+          return 1;
+      }
+      
+--- 1166,1244 ----
+      if (!EnterDisplayMode(x,y,id,frequency)) 
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+! 		Dprintf ("EnterDisplayMode failed\n");
+! #endif
+          CloseDisplay();
+          return 0;
+      }
+  
+      // get ddraw pixel format
+! 	/*
+      FORMAT format=GetDisplayFormat();
+      if (!format.ok())
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+!         Dprintf("bad display format\n");
+! #endif
+          CloseDisplay();
+          return 0;
+      }
+! 	*/
+  
+! 	// hack
+! 	FORMAT format=0;
+  
+      // init display finish setup
+      if (!InitDisplayFinish(x,y,format,output,frequency,layout)) 
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+! 		Dprintf ("InitDisplayFinish failed\n");
+! #endif
+          CloseDisplay();
+          return 0;
+      }
+  
+      // success
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::InitDisplay ok\n");
+! 	#endif
+      return 1;
+  }
+  
+  
+  int IDirectX::InitDisplay(int x,int y,FORMAT const &format,int output,int frequency,int layout)
+  {
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::InitDisplay(2)\n");
+! 	#endif
+  
+      // fail on windowed output
+!     if (output==WINDOWED)
+      {
+! 		#ifdef HAVEDPRINTF
+!         Dprintf("no WINDOWED output ya dorq!\n");
+! 		#endif
+          return 0;
+      }
+  
+      // check display mode
+      if (!CheckDisplayMode(x,y,format,frequency)) 
+      {
+! 		#ifdef HAVEDPRINTF
+!         Dprintf("check display mode failure\n");
+! 		#endif
+          return 0;
+      }
+      
+      // attempt direct mode set
+      if (EnterDisplayMode(x,y,format,frequency))
+      {
+! 		#ifdef HAVEDPRINTF
+!         Dprintf("direct mode set succeeded\n");
+! 		#endif
+          return 1;
+      }
+      
+***************
+*** 1108,1114 ****
+      if (!InitDisplayStart(x,y,output,frequency,layout))
+      {
+          // failure
+!         //printf("init display start failed\n");
+          CloseDisplay();
+          return 0;
+      }
+--- 1246,1254 ----
+      if (!InitDisplayStart(x,y,output,frequency,layout))
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+! 		Dprintf ("InitDisplayStart failed\n");
+! #endif
+          CloseDisplay();
+          return 0;
+      }
+***************
+*** 1117,1123 ****
+      if (!EnterDisplayMode(x,y,format,frequency)) 
+      {
+          // failure
+!         //printf("enter display mode failed\n");
+          CloseDisplay();
+          return 0;
+      }
+--- 1257,1265 ----
+      if (!EnterDisplayMode(x,y,format,frequency)) 
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+! 		Dprintf ("EnterDisplayMode failed\n");
+! #endif
+          CloseDisplay();
+          return 0;
+      }
+***************
+*** 1126,1145 ****
+      if (!InitDisplayFinish(x,y,format,output,frequency,layout)) 
+      {
+          // failure
+!         //printf("init display finish failed\n");
+          CloseDisplay();
+          return 0;
+      }
+  
+      // success
+!     //printf("IDirectX::InitDisplay(2) ok\n");
+      return 1;
+  }
+  
+  
+  void IDirectX::CloseDisplay()
+! {   
+!     //printf("IDirectX::CloseDisplay\n");
+  
+      // leave display mode
+      LeaveDisplayMode();
+--- 1268,1293 ----
+      if (!InitDisplayFinish(x,y,format,output,frequency,layout)) 
+      {
+          // failure
+! 		#ifdef HAVEDPRINTF
+! 		Dprintf("init display finish failed\n");
+! 		#endif
+          CloseDisplay();
+          return 0;
+      }
+  
+      // success
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::InitDisplay(2) ok\n");
+! 	#endif
+      return 1;
+  }
+  
+  
+  void IDirectX::CloseDisplay()
+! {
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::CloseDisplay\n");
+! 	#endif
+  
+      // leave display mode
+      LeaveDisplayMode();
+***************
+*** 1150,1156 ****
+      // close display Window
+      CloseDisplayWindow();
+  
+!     //printf("IDirectX::CloseDisplay ok\n");
+  }
+  
+  
+--- 1298,1306 ----
+      // close display Window
+      CloseDisplayWindow();
+  
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::CloseDisplay ok\n");
+! 	#endif
+  }
+  
+  
+***************
+*** 1160,1172 ****
+  
+  
+  int IDirectX::EnterDisplayMode(int x,int y,int id,int frequency)
+! { 
+!     //printf("IDirectX::EnterDisplayMode\n");
+  
+      // enter exclusive mode
+      if (!EnterExclusiveMode())
+      {
+!         //printf("EnterExclusiveMode failed\n");
+          return 0;
+      }
+  
+--- 1310,1326 ----
+  
+  
+  int IDirectX::EnterDisplayMode(int x,int y,int id,int frequency)
+! {
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::EnterDisplayMode\n");
+! 	#endif
+  
+      // enter exclusive mode
+      if (!EnterExclusiveMode())
+      {
+! #ifdef HAVEDPRINTF
+!         Dprintf("EnterExclusiveMode failed\n");
+! #endif
+          return 0;
+      }
+  
+***************
+*** 1195,1211 ****
+      }
+  
+      // set by bits per pixel
+!     if (SetDisplayMode(x,y,id,frequency)) return 1;
+   
+      // failure
+!     //printf("EnterDisplayMode fail!\n");
+      return 0;
+  }
+  
+  
+  int IDirectX::EnterDisplayMode(int x,int y,FORMAT const &format,int frequency)
+! {   
+!     //printf("IDirectX::EnterDisplayMode\n");
+  
+      // check format
+      if (!format.ok()) return 0;
+--- 1349,1369 ----
+      }
+  
+      // set by bits per pixel
+!     if (SetDisplayMode(x,y,FORMAT(id),frequency)) return 1;
+   
+      // failure
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("EnterDisplayMode fail!\n");
+! 	#endif
+      return 0;
+  }
+  
+  
+  int IDirectX::EnterDisplayMode(int x,int y,FORMAT const &format,int frequency)
+! {
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::EnterDisplayMode(2)\n");
+! 	#endif
+  
+      // check format
+      if (!format.ok()) return 0;
+***************
+*** 1213,1244 ****
+      // enter exclusive mode
+      if (!EnterExclusiveMode())
+      {
+!         //printf("EnterExclusiveMode failed\n");
+          return 0;
+      }
+  
+      // set display mode
+      if (!SetDisplayMode(x,y,format,frequency)) return 0;
+  
+!     //printf("IDirectX::EnterDisplayMode ok\n");
+  
+!     // success
+      return 1;
+  }
+  
+  
+  int IDirectX::SetDisplayMode(int x,int y,int bits,int frequency)
+  {
+      // set display mode
+      if (lpDD2)
+      {
+          // lpDD2
+!         if (lpDD2->SetDisplayMode(x,y,bits,0,0)!=DD_OK) return 0;
+      }
+      else if (lpDD)
+      {
+          // lpDD
+!         if (lpDD->SetDisplayMode(x,y,bits)!=DD_OK) return 0;
+      }
+      else return 0;
+      
+--- 1371,1439 ----
+      // enter exclusive mode
+      if (!EnterExclusiveMode())
+      {
+! #ifdef HAVEDPRINTF
+!         Dprintf("EnterExclusiveMode(2) failed\n");
+! #endif
+          return 0;
+      }
+  
+      // set display mode
+      if (!SetDisplayMode(x,y,format,frequency)) return 0;
+  
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::EnterDisplayMode(2) ok\n");
+! 	#endif
+  
+! 	// success
+      return 1;
+  }
+  
++ #ifdef HAVEDPRINTF
++ static void dumpsdmerr (HRESULT err)
++ {
++ 	switch (err) {
++ 		case DDERR_GENERIC: Dprintf ("DDERR_GENERIC\n"); break;
++ 		case DDERR_INVALIDMODE: Dprintf ("DDERR_INVALIDMODE\n"); break;
++ 		case DDERR_INVALIDOBJECT: Dprintf ("DDERR_INVALIDOBJECT\n"); break;
++ 		case DDERR_INVALIDPARAMS: Dprintf ("DDERR_INVALIDPARAMS\n"); break;
++ 		case DDERR_LOCKEDSURFACES: Dprintf ("DDERR_LOCKEDSURFACES\n"); break;
++ 		case DDERR_NOEXCLUSIVEMODE: Dprintf ("DDERR_NOEXCLUSIVEMODE\n"); break;
++ 		case DDERR_SURFACEBUSY: Dprintf ("DDERR_SURFACEBUSY\n"); break;
++ 		case DDERR_UNSUPPORTED: Dprintf ("DDERR_UNSUPPORTED\n"); break;
++ 		case DDERR_UNSUPPORTEDMODE: Dprintf ("DDERR_UNSUPPORTEDMODE\n"); break;
++ 		case DDERR_WASSTILLDRAWING: Dprintf ("DDERR_WASSTILLDRAWING\n"); break;
++ 	}
++ }
++ #endif
+  
+  int IDirectX::SetDisplayMode(int x,int y,int bits,int frequency)
+  {
++ 	HRESULT err;
++ 
++ #ifdef HAVEDPRINTF
++ 	Dprintf ("SetDisplayMode: %dx%dx%d\n", x, y, bits);
++ #endif
++ 
+      // set display mode
+      if (lpDD2)
+      {
+          // lpDD2
+!         if ((err = lpDD2->SetDisplayMode(x,y,bits,0,0)) != DD_OK) {
+! #ifdef HAVEDPRINTF
+! 			dumpsdmerr (err);
+! #endif
+! 			return 0;
+! 		}
+      }
+      else if (lpDD)
+      {
+          // lpDD
+!         if ((err = lpDD->SetDisplayMode(x,y,bits)) != DD_OK) {
+! #ifdef HAVEDPRINTF
+! 			dumpsdmerr (err);
+! #endif
+! 			return 0;
+! 		}
+      }
+      else return 0;
+      
+***************
+*** 1249,1277 ****
+  
+  int IDirectX::SetDisplayMode(int x,int y,FORMAT const &format,int frequency)
+  {
+!     // set display mode
+      if (lpDD2)
+      {
+          // lpDD2
+!         if (lpDD2->SetDisplayMode(x,y,format.bits,0,0)!=DD_OK) return 0;
+      }
+      else if (lpDD)
+      {
+          // lpDD
+!         if (lpDD->SetDisplayMode(x,y,format.bits)!=DD_OK) return 0;
+      }
+      else return 0;
+  
+      // check display format matches requested format
+!     /*
+      FORMAT display_format=GetDisplayFormat();
+      if (!display_format.ok() || display_format!=format)
+      {
+          // failure
+!         printf("display format and requested format dont match!\n");
+          return 0;
+      }
+!     */
+  
+      // success
+      return 1;
+--- 1444,1490 ----
+  
+  int IDirectX::SetDisplayMode(int x,int y,FORMAT const &format,int frequency)
+  {
+! 	HRESULT err;
+! 
+! #ifdef HAVEDPRINTF
+!  	Dprintf ("SetDisplayMode: %dx%dx%d\n", x, y, format.bits);
+! #endif
+! 
+! 	// set display mode
+      if (lpDD2)
+      {
+          // lpDD2
+!         if ((err = lpDD2->SetDisplayMode(x,y,format.bits,0,0)) != DD_OK) {
+! #ifdef HAVEDPRINTF
+! 			dumpsdmerr (err);
+! #endif
+! 			return 0;
+! 		}
+      }
+      else if (lpDD)
+      {
+          // lpDD
+!         if ((err = lpDD->SetDisplayMode(x,y,format.bits)) != DD_OK) {
+! #ifdef HAVEDPRINTF
+! 			dumpsdmerr (err);
+! #endif
+! 			return 0;
+! 		}
+      }
+      else return 0;
+  
+      // check display format matches requested format
+! 	/*
+      FORMAT display_format=GetDisplayFormat();
+      if (!display_format.ok() || display_format!=format)
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+!         Dprintf("display format and requested format dont match!\n");
+! #endif
+          return 0;
+      }
+! 	*/
+  
+      // success
+      return 1;
+***************
+*** 1421,1463 ****
+  
+  int IDirectX::EnterExclusiveMode()
+  {   
+!     //printf("IDirectX::EnterExclusiveMode\n");
+  
+      // get managed window
+      HWND window=GetManagedWindow();
+      if (!window)
+!     {
+!         //printf("no managed window found\n");
+!         return 0;
+!     }
+  
+      // enter directdraw exclusive mode
+      HRESULT result;
+!     if (lpDD2) result=lpDD2->SetCooperativeLevel(window,DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+!     else if (lpDD) result=lpDD->SetCooperativeLevel(window,DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+      else
+!     {
+!         //printf("no valid lpDD?\n");
+!         return 0;
+!     }
+      
+      // check result
+      if (result!=DD_OK)
+      {
+-         /*
+          // debug
+          switch (result)
+          {
+!             case DDERR_EXCLUSIVEMODEALREADYSET: printf("DDERR_EXCLUSIVEMODEALREADYSET\n"); break;
+!             case DDERR_HWNDALREADYSET: printf("DDERR_HWNDALREADYSET\n"); break;
+!             case DDERR_HWNDSUBCLASSED: printf("DDERR_HWNDSUBCLASSED\n"); break;
+!             case DDERR_INVALIDOBJECT: printf("DDERR_INVALIDOBJECT\n"); break;
+!             case DDERR_INVALIDPARAMS: printf("DDERR_INVALIDPARAMS\n"); break;
+!             case DDERR_OUTOFMEMORY: printf("DDERR_OUTOFMEMORY\n"); break;
+          }
+!         */
+  
+!         // check for stupid dx bug...
+          if (result==DDERR_HWNDALREADYSET)
+          {
+              // close old
+--- 1634,1682 ----
+  
+  int IDirectX::EnterExclusiveMode()
+  {   
+! #ifdef HAVEDPRINTF
+!     Dprintf("IDirectX::EnterExclusiveMode\n");
+! #endif
+  
+      // get managed window
+      HWND window=GetManagedWindow();
+      if (!window)
+! 	{
+! 		#ifdef HAVEDPRINTF
+! 		Dprintf("no managed window found\n");
+! 		#endif
+! 		return 0;
+! 	}
+  
+      // enter directdraw exclusive mode
+      HRESULT result;
+!     if (lpDD2) result=lpDD2->SetCooperativeLevel(window,DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_ALLOWREBOOT | DDSCL_ALLOWMODEX);
+!     else if (lpDD) result=lpDD->SetCooperativeLevel(window,DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_ALLOWREBOOT | DDSCL_ALLOWMODEX);
+      else
+! 	{
+! 		#ifdef HAVEDPRINTF
+! 		Dprintf("no valid lpDD?\n");
+! 		#endif
+! 		return 0;
+! 	}
+      
+      // check result
+      if (result!=DD_OK)
+      {
+          // debug
++ #ifdef HAVEDPRINTF
+          switch (result)
+          {
+!             case DDERR_EXCLUSIVEMODEALREADYSET: Dprintf("DDERR_EXCLUSIVEMODEALREADYSET\n"); break;
+!             case DDERR_HWNDALREADYSET: Dprintf("DDERR_HWNDALREADYSET\n"); break;
+!             case DDERR_HWNDSUBCLASSED: Dprintf("DDERR_HWNDSUBCLASSED\n"); break;
+!             case DDERR_INVALIDOBJECT: Dprintf("DDERR_INVALIDOBJECT\n"); break;
+!             case DDERR_INVALIDPARAMS: Dprintf("DDERR_INVALIDPARAMS\n"); break;
+!             case DDERR_OUTOFMEMORY: Dprintf("DDERR_OUTOFMEMORY\n"); break;
+          }
+! #endif
+  
+! 		// check for stupid dx bug...
+          if (result==DDERR_HWNDALREADYSET)
+          {
+              // close old
+***************
+*** 1466,1506 ****
+              // reinitialize directdraw
+              if (!InitDirectDraw()) 
+              {
+!                 //printf("InitDirectDraw failed\n");
+                  return 0;
+              }
+  
+              // reattempt exclusive mode
+!             if (lpDD2) result=lpDD2->SetCooperativeLevel(window,DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+!             else if (lpDD) result=lpDD->SetCooperativeLevel(window,DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+              else
+!             {
+!                 //printf("failed to re-enter exclusive mode\n");
+!                 return 0;
+!             }
+          }
+  
+-         /*
+          // check result
+          if (result!=DD_OK)
+          {
+              // debug
+              switch (result)
+              {
+!                 case DDERR_EXCLUSIVEMODEALREADYSET: printf("DDERR_EXCLUSIVEMODEALREADYSET\n"); break;
+!                 case DDERR_HWNDALREADYSET: printf("DDERR_HWNDALREADYSET\n"); break;
+!                 case DDERR_HWNDSUBCLASSED: printf("DDERR_HWNDSUBCLASSED\n"); break;
+!                 case DDERR_INVALIDOBJECT: printf("DDERR_INVALIDOBJECT\n"); break;
+!                 case DDERR_INVALIDPARAMS: printf("DDERR_INVALIDPARAMS\n"); break;
+!                 case DDERR_OUTOFMEMORY: printf("DDERR_OUTOFMEMORY\n"); break;
+              }
+              return 0;
+          }
+-         */
+      }
+  
+      // success
+!     //printf("IDirectX::EnterExclusiveMode ok\n");
+      return 1;
+  }
+  
+--- 1685,1731 ----
+              // reinitialize directdraw
+              if (!InitDirectDraw()) 
+              {
+! #ifdef HAVEDPRINTF
+!                 Dprintf("InitDirectDraw failed\n");
+! #endif
+                  return 0;
+              }
+  
+              // reattempt exclusive mode
+!             if (lpDD2) result=lpDD2->SetCooperativeLevel(window,DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_ALLOWREBOOT | DDSCL_ALLOWMODEX);
+!             else if (lpDD) result=lpDD->SetCooperativeLevel(window,DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN | DDSCL_ALLOWREBOOT | DDSCL_ALLOWMODEX);
+              else
+! 			{
+! 				#ifdef HAVEDPRINTF
+! 				Dprintf("failed to re-enter exclusive mode\n");
+! 				#endif
+! 				return 0;
+! 			}
+          }
+  
+          // check result
+          if (result!=DD_OK)
+          {
+              // debug
++ #ifdef HAVEDPRINTF
+              switch (result)
+              {
+!                 case DDERR_EXCLUSIVEMODEALREADYSET: Dprintf("DDERR_EXCLUSIVEMODEALREADYSET\n"); break;
+!                 case DDERR_HWNDALREADYSET: Dprintf("DDERR_HWNDALREADYSET\n"); break;
+!                 case DDERR_HWNDSUBCLASSED: Dprintf("DDERR_HWNDSUBCLASSED\n"); break;
+!                 case DDERR_INVALIDOBJECT: Dprintf("DDERR_INVALIDOBJECT\n"); break;
+!                 case DDERR_INVALIDPARAMS: Dprintf("DDERR_INVALIDPARAMS\n"); break;
+!                 case DDERR_OUTOFMEMORY: Dprintf("DDERR_OUTOFMEMORY\n"); break;
+              }
++ #endif
+              return 0;
+          }
+      }
+  
+      // success
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::EnterExclusiveMode ok\n");
+! 	#endif
+      return 1;
+  }
+  
+***************
+*** 1508,1520 ****
+  void IDirectX::LeaveExclusiveMode()
+  {
+      // debug
+!     //printf("IDirectX::LeaveExclusiveMode\n");
+  
+      // leave exclusive mode
+      if (lpDD2) lpDD2->SetCooperativeLevel(NULL,DDSCL_NORMAL);
+      else if (lpDD) lpDD->SetCooperativeLevel(NULL,DDSCL_NORMAL);
+  
+!     //printf("IDirectX::LeaveExclusiveMode ok\n");
+  }
+  
+  
+--- 1733,1749 ----
+  void IDirectX::LeaveExclusiveMode()
+  {
+      // debug
+! 	#ifdef HAVEDPRINTF
+!     Dprintf("IDirectX::LeaveExclusiveMode\n");
+! 	#endif
+  
+      // leave exclusive mode
+      if (lpDD2) lpDD2->SetCooperativeLevel(NULL,DDSCL_NORMAL);
+      else if (lpDD) lpDD->SetCooperativeLevel(NULL,DDSCL_NORMAL);
+  
+! 	#ifdef HAVEDPRINTF
+!     Dprintf("IDirectX::LeaveExclusiveMode ok\n");
+! 	#endif
+  }
+  
+  
+***************
+*** 1525,1531 ****
+  
+  int IDirectX::InitDirectDraw()
+  {
+!     //printf("IDirectX::InitDirectDraw\n");
+  
+      // close old
+      CloseDirectDraw();
+--- 1754,1762 ----
+  
+  int IDirectX::InitDirectDraw()
+  {
+! #ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::InitDirectDraw\n");
+! #endif
+  
+      // close old
+      CloseDirectDraw();
+***************
+*** 1534,1540 ****
+      DirectDrawInstance=(HMODULE)LoadLibrary("ddraw.dll");
+      if (!DirectDrawInstance)
+      {
+!         //printf("LoadLibrary failed\n");
+          return 0;
+      }
+  
+--- 1765,1773 ----
+      DirectDrawInstance=(HMODULE)LoadLibrary("ddraw.dll");
+      if (!DirectDrawInstance)
+      {
+! #ifdef HAVEDPRINTF
+!         Dprintf("LoadLibrary failed\n");
+! #endif
+          return 0;
+      }
+  
+***************
+*** 1542,1556 ****
+      DIRECTDRAWCREATE_FUNCTION DirectDrawCreateFunction = (DIRECTDRAWCREATE_FUNCTION) GetProcAddress(DirectDrawInstance,"DirectDrawCreate");    
+      if (!DirectDrawCreateFunction)
+      {
+!         //printf("GetProcAddress failed\n");
+!         return 0;
+      }
+  
+      // contruct directdraw object
+      HRESULT result=(*DirectDrawCreateFunction)(NULL,&lpDD,NULL);
+      if (result!=DD_OK)
+      {
+!         //printf("DirectDrawCreate failed\n");
+          if (lpDD) lpDD->Release();
+          lpDD=NULL;
+          return 0;
+--- 1775,1793 ----
+      DIRECTDRAWCREATE_FUNCTION DirectDrawCreateFunction = (DIRECTDRAWCREATE_FUNCTION) GetProcAddress(DirectDrawInstance,"DirectDrawCreate");    
+      if (!DirectDrawCreateFunction)
+      {
+! #ifdef HAVEDPRINTF
+!         Dprintf("GetProcAddress failed\n");
+! #endif
+! 		return 0;
+      }
+  
+      // contruct directdraw object
+      HRESULT result=(*DirectDrawCreateFunction)(NULL,&lpDD,NULL);
+      if (result!=DD_OK)
+      {
+! #ifdef HAVEDPRINTF
+!         Dprintf("DirectDrawCreate failed\n");
+! #endif
+          if (lpDD) lpDD->Release();
+          lpDD=NULL;
+          return 0;
+***************
+*** 1575,1586 ****
+      if (result!=DD_OK) 
+      {
+          // failure
+!         //printf("failed to query lpDD2\n");
+          lpDD2=NULL;    
+      }
+  
+      // success
+!     //printf("IDirectX::InitDirectDraw ok\n");
+      return 1;
+  }
+  
+--- 1812,1829 ----
+      if (result!=DD_OK) 
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+!         Dprintf("failed to query lpDD2\n");
+! #endif
+          lpDD2=NULL;    
+      }
+  
++ 	LeaveExclusiveMode ();
++ 
+      // success
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::InitDirectDraw ok\n");
+! 	#endif
+      return 1;
+  }
+  
+***************
+*** 1602,1608 ****
+      lpDD2=NULL;    
+  
+      // release ddraw.dll
+!     if (DirectDrawInstance) FreeLibrary(DirectDrawInstance);
+  }
+  
+  
+--- 1845,1854 ----
+      lpDD2=NULL;    
+  
+      // release ddraw.dll
+!     if (DirectDrawInstance) {
+! 		FreeLibrary(DirectDrawInstance);
+! 		DirectDrawInstance = NULL;
+! 	}
+  }
+  
+  
+***************
+*** 1622,1628 ****
+          // resize existing window
+          if (ResizeDisplayWindow(width,height,output)) return 1;
+      }
+!     else if (window && output==FULLSCREEN)
+      {
+          // todo: fix mode changes fullscreen->fullscreen
+      }
+--- 1868,1874 ----
+          // resize existing window
+          if (ResizeDisplayWindow(width,height,output)) return 1;
+      }
+!     else if (window && (output==FULLSCREEN || output==FSDBLBUFF))
+      {
+          // todo: fix mode changes fullscreen->fullscreen
+      }
+***************
+*** 1633,1640 ****
+      // adjust window size
+      AdjustWindowSize(width,height,output);
+  
+!     // force active window
+!     ForceActiveWindow=1;
+  
+      // specific initialization
+      if (output==WINDOWED)
+--- 1879,1886 ----
+      // adjust window size
+      AdjustWindowSize(width,height,output);
+  
+! 	// force active window
+! 	ForceActiveWindow=1;
+  
+      // specific initialization
+      if (output==WINDOWED)
+***************
+*** 1642,1651 ****
+          // create windowed output window
+          if (!CreateManagedWindow("PTC_DIRECTX_WINDOWED",WS_OVERLAPPEDWINDOW,SW_NORMAL,CW_USEDEFAULT,CW_USEDEFAULT,width,height)) return 0;
+      }
+!     else if (output==FULLSCREEN)
+      {
+          // create fullscreen output window
+!         if (!CreateManagedWindow("PTC_DIRECTX_FULLSCREEN",WS_POPUP|WS_SYSMENU,SW_HIDE,0,0,0,0)) return 0;
+      }
+      else return 0;
+  
+--- 1888,1897 ----
+          // create windowed output window
+          if (!CreateManagedWindow("PTC_DIRECTX_WINDOWED",WS_OVERLAPPEDWINDOW,SW_NORMAL,CW_USEDEFAULT,CW_USEDEFAULT,width,height)) return 0;
+      }
+!     else if (output==FULLSCREEN || output==FSDBLBUFF)
+      {
+          // create fullscreen output window
+!         if (!CreateManagedWindow("PTC_DIRECTX_FULLSCREEN",WS_POPUP,SW_HIDE,0,0,0,0)) return 0;
+      }
+      else return 0;
+  
+***************
+*** 1690,1698 ****
+  
+  
+  
+! int IDirectX::InitPrimary()           
+  {
+!     //printf("IDirectX::InitPrimary\n");
+  
+      // enter critical section
+      EnterWindowCriticalSection();
+--- 1936,1946 ----
+  
+  
+  
+! int IDirectX::InitPrimary(int dblbuff)           
+  {
+! #ifdef HAVEDPRINTF
+! 	Dprintf ("InitPrimary\n");
+! #endif
+  
+      // enter critical section
+      EnterWindowCriticalSection();
+***************
+*** 1704,1710 ****
+      int result=1;
+  
+      // set primary flag
+!     PrimaryFlag=1;
+  
+      // initialize new video memory surface (primary)
+      Primary=new Surface(this,XResolution,YResolution,Format,VIDEO);
+--- 1952,1958 ----
+      int result=1;
+  
+      // set primary flag
+!     PrimaryFlag=dblbuff+1;
+  
+      // initialize new video memory surface (primary)
+      Primary=new Surface(this,XResolution,YResolution,Format,VIDEO);
+***************
+*** 1721,1730 ****
+      // leave critical section
+      LeaveWindowCriticalSection();
+      
+!     /*
+!     if (!result) printf("IDirectX::InitPrimary failed\n");
+!     else printf("IDirectX::InitPrimary ok\n");
+!     */
+  
+      // finished
+      return result;
+--- 1969,1978 ----
+      // leave critical section
+      LeaveWindowCriticalSection();
+      
+! #ifdef HAVEDPRINTF
+!     if (!result) Dprintf("IDirectX::InitPrimary failed\n");
+!     else Dprintf("IDirectX::InitPrimary ok\n");
+! #endif
+  
+      // finished
+      return result;
+***************
+*** 1758,1765 ****
+      // enumerate directx modes
+      if (lpDD2) if (lpDD2->EnumDisplayModes(0,NULL,(LPVOID)this,(LPDDENUMMODESCALLBACK)EnumDisplayModesCallback)==DD_OK) return 1;
+      else if (lpDD) if (lpDD->EnumDisplayModes(0,NULL,(LPVOID)this,(LPDDENUMMODESCALLBACK)EnumDisplayModesCallback)==DD_OK) return 1;
+!     
+!     // failure
+      return 0;
+  }
+  
+--- 2006,2013 ----
+      // enumerate directx modes
+      if (lpDD2) if (lpDD2->EnumDisplayModes(0,NULL,(LPVOID)this,(LPDDENUMMODESCALLBACK)EnumDisplayModesCallback)==DD_OK) return 1;
+      else if (lpDD) if (lpDD->EnumDisplayModes(0,NULL,(LPVOID)this,(LPDDENUMMODESCALLBACK)EnumDisplayModesCallback)==DD_OK) return 1;
+! 
+! 	// failure
+      return 0;
+  }
+  
+***************
+*** 1826,1832 ****
+          // indexed 8bit color
+          return format.init(INDEX8);
+      }
+!     else return 0;
+  }
+  
+  
+--- 2074,2080 ----
+          // indexed 8bit color
+          return format.init(INDEX8);
+      }
+! 	else return 0;
+  }
+  
+  
+***************
+*** 1868,1874 ****
+      }
+  
+      // failure
+!     //printf("failed to translate FORMAT -> DDPIXELFORMAT\n");
+      return 0;
+  }
+  
+--- 2116,2124 ----
+      }
+  
+      // failure
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("failed to translate FORMAT -> DDPIXELFORMAT\n");
+! 	#endif
+      return 0;
+  }
+  
+***************
+*** 1881,1911 ****
+  int IDirectX::InitDisplayStart(int &x,int &y,int &output,int &frequency,int &layout)
+  {
+      // debug
+!     //printf("IDirectX::InitDisplayStart\n");
+  
+      // fail if not managed
+!     if (!ManagedWindow()) 
+!     {
+!         //printf("no window found\n");
+!         return 0;
+!     }
+  
+      // no windowed output yet...
+      if (output==WINDOWED) 
+      {
+!         //printf("no windowed output yet!\n");
+          return 0;
+      }
+  
+      // fail on bad output parameter
+!     if (output!=DEFAULT && output!=FULLSCREEN && output!=WINDOWED) 
+      {
+!         //printf("bad output parameter\n");
+          return 0;
+      }
+  
+!     // default output is fullscreen
+!     if (output==DEFAULT) output=FULLSCREEN;
+  
+      // default frequency is UNKNOWN (?)
+      if (frequency==DEFAULT) frequency=UNKNOWN;
+--- 2131,2171 ----
+  int IDirectX::InitDisplayStart(int &x,int &y,int &output,int &frequency,int &layout)
+  {
+      // debug
+! 	#ifdef HAVEDPRINTF
+!     Dprintf("IDirectX::InitDisplayStart\n");
+! 	#endif
+  
+      // fail if not managed
+! 	/* [RH] Doesn't work with client-provided windows
+!     if (!ManagedWindow())
+! 	{
+! 	#ifdef HAVEDPRINTF
+! 		Dprintf("no window found\n");
+! 		#endif
+! 		return 0;
+! 	}
+! 	*/
+  
+      // no windowed output yet...
+      if (output==WINDOWED) 
+      {
+! 		#ifdef HAVEDPRINTF
+!         Dprintf("no windowed output yet!\n");
+! 		#endif
+          return 0;
+      }
+  
+      // fail on bad output parameter
+!     if (output!=DEFAULT && output!=FULLSCREEN && output!=WINDOWED && output!=FSDBLBUFF)
+      {
+! 		#ifdef HAVEDPRINTF
+!         Dprintf("bad output parameter\n");
+! 		#endif
+          return 0;
+      }
+  
+!     // default output is fullscreen [RH] double-buffered
+!     if (output==DEFAULT) output=FSDBLBUFF;
+  
+      // default frequency is UNKNOWN (?)
+      if (frequency==DEFAULT) frequency=UNKNOWN;
+***************
+*** 1913,1990 ****
+      // check layout
+      if (layout!=DEFAULT && layout!=LINEAR) 
+      {
+!         //printf("bad layout parameter\n");
+          return 0;
+      }
+  
+      // todo: recycle window if already in a mode...
+  
+      // create display window
+!     if (!CreateDisplayWindow(x,y,output)) 
+!     {
+!         //printf("CreateDisplayWindow failed\n");
+!         return 0;
+!     }
+  
+      // success
+!     //printf("IDirectX::InitDisplayStart ok\n");
+      return 1;
+  }
+  
+  
+  int IDirectX::InitDisplayFinish(int &x,int &y,FORMAT const &format,int &output,int &frequency,int &layout)
+  {
+!     // debug
+!     //printf("IDirectX::InitDisplayFinish\n");
+  
+      // setup data
+      XResolution=x;
+      YResolution=y;
+  
+      // initialize primary
+!     if (!InitPrimary()) 
+!     {
+!         //printf("InitPrimary failed\n");
+!         return 0;
+!     }
+  
+!     // get primary surface pixel format
+!     Surface *primary=GetPrimary();
+!     FORMAT primary_format=primary->GetFormat();
+!     
+!     // check pixel format match
+!     if (format.ok() && format!=primary_format)
+!     {
+!         //printf("requested mode format does not match primary surface format!\n");
+!         return 0;
+!     }
+  
+      // get managed window
+      HWND window=GetManagedWindow();
+!     if (!window) 
+!     {
+!         //printf("no managed window found\n");
+!         return 0;
+!     }
+  
+      // register window for interface lookup
+!     if (!RegisterWindow(window)) 
+!     {
+!         //printf("failed to register window\n");
+!         return 0;
+!     }
+  
+      // reallow window deactivation
+      EnterWindowCriticalSection();
+      ForceActiveWindow=0;
+      LeaveWindowCriticalSection();
+  
+!     // setup data
+!     XResolution=x;
+!     YResolution=y;
+!     Format=primary_format;
+!     Output=output;
+!     Frequency=frequency;
+  
+      // clear primary palette
+      uint *data=(uint*)PrimaryPalette.Lock();
+--- 2173,2267 ----
+      // check layout
+      if (layout!=DEFAULT && layout!=LINEAR) 
+      {
+! 		#ifdef HAVEDPRINTF
+!         Dprintf("bad layout parameter\n");
+! 		#endif
+          return 0;
+      }
+  
+      // todo: recycle window if already in a mode...
+  
+      // create display window
+! 	// [RH] Only if PTC is providing the window
+!     if (ManagedWindow ())
+! 		if (!CreateDisplayWindow(x,y,output))
+! 		{
+! 			#ifdef HAVEDPRINTF
+! 			Dprintf("CreateDisplayWindow failed\n");
+! 			#endif
+! 			return 0;
+! 		}
+  
+      // success
+! 		#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::InitDisplayStart ok\n");
+! 	#endif
+      return 1;
+  }
+  
+  
+  int IDirectX::InitDisplayFinish(int &x,int &y,FORMAT const &format,int &output,int &frequency,int &layout)
+  {
+! #ifdef HAVEDPRINTF
+! 	Dprintf ("IDirectX::InitDisplayFinish\n");
+! #endif
+  
+      // setup data
+      XResolution=x;
+      YResolution=y;
+  
+      // initialize primary
+!     if (!InitPrimary(output == FSDBLBUFF))
+! 	{
+! 		#ifdef HAVEDPRINTF
+! 		Dprintf("InitPrimary failed\n");
+! 		#endif
+! 		return 0;
+! 	}
+  
+! 	// get primary surface pixel format
+! 	Surface *primary=GetPrimary();
+! 	FORMAT primary_format=primary->GetFormat();
+! 
+! 	// check pixel format match
+! 	if (format.ok() && format!=primary_format)
+! 	{
+! 		#ifdef HAVEDPRINTF
+! 		Dprintf("requested mode format does not match primary surface format!\n");
+! 		#endif
+! 		return 0;
+! 	}
+  
+      // get managed window
+      HWND window=GetManagedWindow();
+!     if (!window)
+! 	{
+! 		#ifdef HAVEDPRINTF
+! 		Dprintf("no managed window found\n");
+! 		#endif
+! 		return 0;
+! 	}
+  
+      // register window for interface lookup
+!     if (!RegisterWindow(window))
+! 	{
+! 		#ifdef HAVEDPRINTF
+! 		Dprintf("failed to register window\n");
+! 		#endif
+! 		return 0;
+! 	}
+  
+      // reallow window deactivation
+      EnterWindowCriticalSection();
+      ForceActiveWindow=0;
+      LeaveWindowCriticalSection();
+  
+! 	// setup data
+! 	XResolution=x;
+! 	YResolution=y;
+! 	Format=primary_format;
+! 	Output=output;
+! 	Frequency=frequency;
+  
+      // clear primary palette
+      uint *data=(uint*)PrimaryPalette.Lock();
+***************
+*** 1998,2081 ****
+      }
+  
+      // success
+!     //printf("IDirectX::InitDisplayFinish ok\n");
+      return 1;
+  }
+  
+  
+  FORMAT IDirectX::GetDisplayFormat()
+  {
+!     // debug
+!     //printf("IDirectX::GetDisplayFormat\n");
+  
+!     /*
+      // setup directdraw surface descriptor
+      DDSURFACEDESC desc;
+      memset(&desc,0,sizeof(desc));
+      desc.dwSize=sizeof(desc);
+!     desc.dwFlags=DDSD_CAPS;
+!     desc.ddsCaps.dwCaps=DDSCAPS_PRIMARYSURFACE;
+!         
+!     // create directdraw primary surface
+!     LPDIRECTDRAWSURFACE lpDDS=NULL;
+!     if (lpDD2) 
+!     {
+!         // lpDD2
+!         if (lpDD2->CreateSurface(&desc,&lpDDS,NULL)!=DD_OK) 
+!         {
+!             // failure
+!             //printf("lpDD2->CreateSurface failed\n");
+!             return 0;
+!         }
+!     }
+!     else if (lpDD)
+!     {
+!         // lpDD
+!         if (lpDD->CreateSurface(&desc,&lpDDS,NULL)!=DD_OK)
+!         {
+!             // failure
+!             printf("lpDD->CreateSurface failed\n");
+!             return 0;
+!         }
+!     }
+!     else
+!     {
+!         // failure
+!         printf("no valid lpDD object!\n");
+!         return 0;
+!     }
+  
+      // get pixel format
+!     DDPIXELFORMAT ddpf;
+!     memset(&ddpf,0,sizeof(ddpf));
+!     ddpf.dwSize=sizeof(ddpf);
+!     if (lpDDS->GetPixelFormat(&ddpf)!=DD_OK) 
+!     {
+!         // failure
+!         printf("lpDDS->GetPixelFormat failed\n");
+!         lpDDS->Release();
+!         return 0;
+!     }
+  
+      // translate to FORMAT
+      FORMAT format;
+!     if (!Translate(ddpf,format)) 
+      {
+          // failure
+!         printf("format translation failed\n");
+!         lpDDS->Release();
+          return 0;
+      }
+! 
+!     // release surface
+!     lpDDS->Release();
+!     */
+! 
+      // this function is now obsolete!
+      FORMAT format=0;
+  
+      // success
+-     //printf("IDirectX::GetDisplayFormat ok\n");
+      return format;
+  }
+  
+--- 2275,2347 ----
+      }
+  
+      // success
+! 	#ifdef HAVEDPRINTF
+!     Dprintf("IDirectX::InitDisplayFinish ok\n");
+! 	#endif
+      return 1;
+  }
+  
+  
+  FORMAT IDirectX::GetDisplayFormat()
+  {
+! 	// debug
+! 	#ifdef HAVEDPRINTF
+! 	Dprintf("IDirectX::GetDisplayFormat\n");
+! 	#endif
+  
+! 	/*
+      // setup directdraw surface descriptor
+      DDSURFACEDESC desc;
+      memset(&desc,0,sizeof(desc));
+      desc.dwSize=sizeof(desc);
+! 
+! 	// [RH] Changed this so it calls GetDisplayMode() instead
+! 	//		of creating a primary surface and querying that.
+! 	if (lpDD2) {
+! 		if (lpDD2->GetDisplayMode (&desc) != DD_OK) {
+! #ifdef HAVEDPRINTF
+! 			Dprintf ("lpDD2->GetDisplayMode failed\n");
+! #endif
+! 			return 0;
+! 		}
+! 	} else if (lpDD) {
+! 		if (lpDD->GetDisplayMode (&desc) != DD_OK) {
+! #ifdef HAVEDPRINTF
+! 			Dprintf ("lpDD->GetDisplayMode failed\n");
+! #endif
+! 			return 0;
+! 		}
+! 	} else {
+! #ifdef HAVEDPRINTF
+! 		Dprintf ("no valid lpDD object!\n");
+! #endif
+! 		return 0;
+! 	}
+  
+      // get pixel format
+! 	if (!(desc.dwFlags & DDSD_PIXELFORMAT)) {
+! 		// failure
+! #ifdef HAVEDPRINTF
+! 		Dprintf ("Surface descriptor did not contain pixel format info\n");
+! #endif
+! 		return 0;
+! 	}
+  
+      // translate to FORMAT
+      FORMAT format;
+!     if (!Translate(desc.ddpfPixelFormat,format)) 
+      {
+          // failure
+! #ifdef HAVEDPRINTF
+!         Dprintf("format translation failed\n");
+! #endif
+          return 0;
+      }
+! */
+      // this function is now obsolete!
+      FORMAT format=0;
+  
+      // success
+      return format;
+  }
+  
+***************
+*** 2124,2130 ****
+          // next
+          current=iterator.next();
+      }
+! 
+      // leave critical section
+      LeaveStaticCriticalSection();
+      return result;
+--- 2390,2396 ----
+          // next
+          current=iterator.next();
+      }
+!     
+      // leave critical section
+      LeaveStaticCriticalSection();
+      return result;
+***************
+*** 2299,2306 ****
+      switch (message) 
+      { 
+          case WM_CREATE:
+!     
+!             //printf("IDirectX::WndProcFullscreen - WM_CREATE\n");
+  
+              // hide cursor
+              SetCursor(NULL);
+--- 2565,2574 ----
+      switch (message) 
+      { 
+          case WM_CREATE:
+! 
+! 			#ifdef HAVEDPRINTF
+! 			Dprintf("IDirectX::WndProcFullscreen - WM_CREATE\n");
+! 			#endif
+  
+              // hide cursor
+              SetCursor(NULL);
+***************
+*** 2308,2314 ****
+  
+          case WM_PAINT:
+  
+!             //printf("IDirectX::WndProcFullscreen - WM_PAINT\n");
+  
+              /*
+              // check primary surface
+--- 2576,2584 ----
+  
+          case WM_PAINT:
+  
+! 			#ifdef HAVEDPRINTF
+!             Dprintf("IDirectX::WndProcFullscreen - WM_PAINT\n");
+! 			#endif
+  
+              /*
+              // check primary surface
+***************
+*** 2357,2376 ****
+  
+          case WM_SETCURSOR: 
+              
+!             //printf("IDirectX::WndProcFullscreen - WM_SETCURSOR\n");
+! 
+              // hide cursor
+              SetCursor(NULL);
+              break;
+          
+          case WM_ACTIVATE:
+  
+!             //printf("IDirectX::WndProcFullscreen - WM_ACTIVATE\n");
+  
+              // handle focus switching
+              if (LOWORD(wParam)==WA_ACTIVE || LOWORD(wParam)==WA_CLICKACTIVE)
+              {
+!                 //printf("window activation\n");
+  
+                  // hide cursor
+                  SetCursor(NULL);
+--- 2627,2652 ----
+  
+          case WM_SETCURSOR: 
+              
+! 			#ifdef HAVEDPRINTF
+!             Dprintf("IDirectX::WndProcFullscreen - WM_SETCURSOR\n");
+! 			#endif
+!             
+              // hide cursor
+              SetCursor(NULL);
+              break;
+          
+          case WM_ACTIVATE:
+  
+! 			#ifdef HAVEDPRINTF
+!             Dprintf("IDirectX::WndProcFullscreen - WM_ACTIVATE\n");
+! 			#endif
+  
+              // handle focus switching
+              if (LOWORD(wParam)==WA_ACTIVE || LOWORD(wParam)==WA_CLICKACTIVE)
+              {
+! 				#ifdef HAVEDPRINTF
+!                 Dprintf("window activation\n");
+! 				#endif
+  
+                  // hide cursor
+                  SetCursor(NULL);
+***************
+*** 2380,2392 ****
+              }
+              else
+              {
+!                 //printf("window deactivation\n");
+!                  
+                  // check active window force flag
+                  if (i && i->ForceActiveWindow)
+                  {
+!                     //printf("disabling window deactivation\n");
+!     
+                      // disable window deactivation
+                      SetActiveWindow(hWnd);
+                      SetForegroundWindow(hWnd);
+--- 2656,2670 ----
+              }
+              else
+              {
+! 				#ifdef HAVEDPRINTF
+!                 Dprintf("window deactivation\n");
+! 				#endif                 
+                  // check active window force flag
+                  if (i && i->ForceActiveWindow)
+                  {
+! #ifdef HAVEDPRINTF
+!                     Dprintf("disabling window deactivation\n");
+! #endif
+                      // disable window deactivation
+                      SetActiveWindow(hWnd);
+                      SetForegroundWindow(hWnd);
+***************
+*** 2394,2401 ****
+                  else
+                  {
+                      // allow window deactivation
+!                     //printf("deactivating window\n");
+! 
+                      // check
+                      if (i)
+                      {
+--- 2672,2680 ----
+                  else
+                  {
+                      // allow window deactivation
+! #ifdef HAVEDPRINTF
+!                     Dprintf("deactivating window\n");
+! #endif
+                      // check
+                      if (i)
+                      {
+***************
+*** 2437,2443 ****
+                  }
+  
+              }
+-             break;
+  
+          default:
+  
+--- 2716,2721 ----
+diff -c -d ptc-073b/idirectx.h ptc/source/idirectx.h
+*** ptc-073b/idirectx.h	Sun Jun 07 16:26:52 1998
+--- ptc/source/idirectx.h	Tue Jun 09 16:26:02 1998
+***************
+*** 121,126 ****
+--- 121,127 ----
+                  void *Buffer;                   // surface buffer
+                  LPDIRECTDRAWSURFACE lpDDS;      // directdraw surface
+                  LPDIRECTDRAWSURFACE2 lpDDS2;    // directdraw surface 2
++ 				LPDIRECTDRAWSURFACE lpFDDS;		// [RH] front directdraw surface (when double buffering)
+                  int Count;                      // surface lock count
+                  int Primary;                    // primary surface flag
+                  IDirectX *LocalInterface;       // local interface
+***************
+*** 159,165 ****
+          void CloseDisplayWindow();
+  
+          // primary management
+!         int InitPrimary();
+          void ClosePrimary();
+  
+          // modelist routines
+--- 160,166 ----
+          void CloseDisplayWindow();
+  
+          // primary management
+!         int InitPrimary(int dblbuff);
+          void ClosePrimary();
+  
+          // modelist routines
+diff -c -d ptc-073b/iwin32.cpp ptc/source/Iwin32.cpp
+*** ptc-073b/iwin32.cpp	Mon Jun 08 13:09:24 1998
+--- ptc/source/Iwin32.cpp	Tue Jun 09 16:39:50 1998
+***************
+*** 417,429 ****
+  
+          // leave critical section
+          LeaveWindowCriticalSection();
+! 
+!         //printf("waiting for window thread to exit...\n");
+! 
+          // wait for window thread to exit
+          WindowThread->WaitForExit(INFINITE);
+  
+!         //printf("window thread has exited.\n");
+  
+          // cleanup
+          delete WindowThread;
+--- 416,430 ----
+  
+          // leave critical section
+          LeaveWindowCriticalSection();
+! #ifdef HAVEDPRINTF
+!         Dprintf("waiting for window thread to exit...");
+! #endif
+          // wait for window thread to exit
+          WindowThread->WaitForExit(INFINITE);
+  
+! #ifdef HAVEDPRINTF
+!         Dprintf("window thread has exited.\n");
+! #endif
+  
+          // cleanup
+          delete WindowThread;
+***************
+*** 864,866 ****
+--- 865,883 ----
+  
+  
+  #endif
++ 
++ 
++ // [RH] Debugginf printf for Win32 debuggers
++ #ifdef HAVEDPRINTF
++ void Dprintf (char *fmt, ...)
++ {
++ 	va_list argptr;
++ 	char outline[8192];
++ 
++ 	va_start (argptr, fmt);
++ 	vsprintf (outline, fmt, argptr);
++ 	va_end (argptr);
++ 
++ 	OutputDebugString (outline);
++ }
++ #endif
+\ No newline at end of file

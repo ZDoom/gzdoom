@@ -55,6 +55,43 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICON1               ICON    DISCARDABLE     "icon1.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_MIDASINITERROR DIALOG DISCARDABLE  0, 0, 186, 129
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "MIDAS Initialization Error"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "Retry",IDOK,7,108,50,14
+    PUSHBUTTON      "No Sound",IDC_NOSOUND,68,108,50,14
+    PUSHBUTTON      "Quit",IDQUIT,129,108,50,14
+    EDITTEXT        IDC_ERRORMESSAGE,7,7,172,94,ES_MULTILINE | ES_READONLY | 
+                    NOT WS_TABSTOP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_MIDASINITERROR, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 122
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

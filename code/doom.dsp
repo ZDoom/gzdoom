@@ -42,7 +42,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /G5 /MT /W3 /GX /O2 /I "e:\ptc\source" /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -52,8 +52,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ddraw.lib winmm.lib dinput.lib dxguid.lib f:\games\doom\midas\lib\win32\vcretail\midas.lib wsock32.lib /nologo /subsystem:windows /pdb:none /machine:I386 /nodefaultlib:"libc" /out:"../zdoom.exe"
-# SUBTRACT LINK32 /verbose /map /debug
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib f:\games\doom\midas\lib\win32\vcretail\midas.lib wsock32.lib E:\ptc\library\win32\vc5.x\release.lib winmm.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /out:"../zdoom.exe"
+# SUBTRACT LINK32 /verbose /profile /debug
 
 !ELSEIF  "$(CFG)" == "doom - Win32 Debug"
 
@@ -69,7 +69,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
+# ADD CPP /nologo /G5 /MTd /W3 /Gm /GX /Zi /Od /I "e:\ptc\source" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FAs /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -79,7 +79,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ddraw.lib winmm.lib dinput.lib dxguid.lib f:\games\doom\midas\lib\win32\vcretail\midas.lib wsock32.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../doomdbg.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ddraw.lib winmm.lib dinput.lib dxguid.lib f:\games\doom\midas\lib\win32\vcretail\midas.lib wsock32.lib e:\ptc\library\win32\vc5.x\debug.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../doomdbg.exe"
 # SUBTRACT LINK32 /profile
 
 !ENDIF 
@@ -90,322 +90,981 @@ LINK32=link.exe
 # Name "doom - Win32 Debug"
 # Begin Group "Source Files"
 
-# PROP Default_Filter "*.c"
+# PROP Default_Filter "*.c; *.cpp"
 # Begin Source File
 
 SOURCE=.\am_map.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_bindings.c
+SOURCE=.\c_bind.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_commands.c
+SOURCE=.\c_cmds.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_console.c
+SOURCE=.\c_consol.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\c_cvars.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_dispatch.c
+SOURCE=.\c_dispch.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_varinit.c
+SOURCE=.\c_varini.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\cmdlib.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\d_dehack.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\d_items.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\d_main.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\d_net.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_netinfo.c
+SOURCE=.\d_netinf.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_protocol.c
+SOURCE=.\d_proto.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\doomdef.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\doomstat.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\dstrings.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\dxcrap.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\f_finale.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\f_wipe.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\g_game.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\g_level.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\hu_lib.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\hu_stuff.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\i_input.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\i_main.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\i_music.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\i_net.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\i_sound.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\i_system.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\i_video.c
+SOURCE=.\i_video.cpp
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\info.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_alloc.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_argv.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_bbox.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_cheat.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_fixed.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_menu.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_misc.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
-SOURCE=.\m_options.c
+SOURCE=.\m_option.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_random.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\m_swap.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_ceilng.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_doors.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_enemy.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_floor.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_inter.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_lights.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_map.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_maputl.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_mobj.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_plats.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_pspr.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_saveg.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_setup.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_sight.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_spec.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_switch.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_telept.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_tick.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\p_user.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\Qmus2mid.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\r_bsp.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\r_data.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\r_draw.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\r_main.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\r_plane.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\r_segs.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\r_sky.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\r_things.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\s_sound.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\sounds.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\st_lib.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\st_new.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\st_stuff.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\tables.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\v_draw.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\v_palett.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\v_text.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\v_video.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\vectors.c
 # End Source File
 # Begin Source File
 
 SOURCE=.\w_wad.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\wi_stuff.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # Begin Source File
 
 SOURCE=.\z_zone.c
+
+!IF  "$(CFG)" == "doom - Win32 Release"
+
+# ADD CPP /FAs
+
+!ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+!ENDIF 
+
 # End Source File
 # End Group
 # Begin Group "Header Files"
@@ -417,15 +1076,15 @@ SOURCE=.\am_map.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_bindings.h
+SOURCE=.\c_bind.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_commands.h
+SOURCE=.\c_cmds.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_console.h
+SOURCE=.\c_consol.h
 # End Source File
 # Begin Source File
 
@@ -433,15 +1092,11 @@ SOURCE=.\c_cvars.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\c_dispatch.h
+SOURCE=.\c_dispch.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\cmdlib.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\conchars.h
 # End Source File
 # Begin Source File
 
@@ -473,7 +1128,7 @@ SOURCE=.\d_net.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_netinfo.h
+SOURCE=.\d_netinf.h
 # End Source File
 # Begin Source File
 
@@ -481,7 +1136,7 @@ SOURCE=.\d_player.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_protocol.h
+SOURCE=.\d_proto.h
 # End Source File
 # Begin Source File
 
@@ -565,7 +1220,7 @@ SOURCE=.\i_video.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\info.h
+SOURCE=.\Info.h
 # End Source File
 # Begin Source File
 
@@ -685,6 +1340,10 @@ SOURCE=.\r_things.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\resource.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\s_sound.h
 # End Source File
 # Begin Source File
@@ -701,11 +1360,23 @@ SOURCE=.\st_stuff.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\tables.h
+SOURCE=.\Tables.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\v_palett.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\v_text.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\v_video.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\vectors.h
 # End Source File
 # Begin Source File
 
@@ -723,10 +1394,6 @@ SOURCE=.\z_zone.h
 # Begin Source File
 
 SOURCE=..\commands.txt
-# End Source File
-# Begin Source File
-
-SOURCE=.\cursor1.cur
 # End Source File
 # Begin Source File
 

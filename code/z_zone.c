@@ -21,8 +21,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: z_zone.c,v 1.4 1997/02/03 16:47:58 b1 Exp $";
 
 #include "z_zone.h"
 #include "i_system.h"
@@ -122,19 +120,19 @@ void Z_Init (void)
 //
 // Z_Free
 //
-void Z_Free (void* ptr)
+void Z_Free2 (void* ptr, char *f, int l)
 {
 	memblock_t* 		block;
 	memblock_t* 		other;
 		
-#ifdef _DEBUG
-	Z_CheckHeap ();
-#endif
+//#ifdef _DEBUG
+//	Z_CheckHeap ();
+//#endif
 
 	block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
 
 	if (block->id != ZONEID)
-		I_Error ("Z_Free: freed a pointer without ZONEID");
+		I_Error ("Z_Free: freed a pointer without ZONEID\n%s, line %i", f, l);
 				
 	if (block->user > (void **)0x100)
 	{
@@ -199,9 +197,9 @@ Z_Malloc
 	memblock_t* newblock;
 	memblock_t* base;
 
-#ifdef _DEBUG
-	Z_CheckHeap ();
-#endif
+//#ifdef _DEBUG
+//	Z_CheckHeap ();
+//#endif
 
 	size = (size + 3) & ~3;
 	
@@ -296,9 +294,9 @@ Z_Malloc
 		
 	base->id = ZONEID;
 	
-#ifdef _DEBUG
-	Z_CheckHeap ();
-#endif
+//#ifdef _DEBUG
+//	Z_CheckHeap ();
+//#endif
 
 	return (void *) ((byte *)base + sizeof(memblock_t));
 }
@@ -316,9 +314,9 @@ Z_FreeTags
 	memblock_t* block;
 	memblock_t* next;
 		
-#ifdef _DEBUG
-	Z_CheckHeap ();
-#endif
+//#ifdef _DEBUG
+//	Z_CheckHeap ();
+//#endif
 
 	for (block = mainzone->blocklist.next ;
 		 block != &mainzone->blocklist ;
@@ -475,9 +473,9 @@ int Z_FreeMemory (void)
 		
 	free = 0;
 	
-#ifdef _DEBUG
-	Z_CheckHeap ();
-#endif
+//#ifdef _DEBUG
+//	Z_CheckHeap ();
+//#endif
 
 	for (block = mainzone->blocklist.next ;
 		 block != &mainzone->blocklist;

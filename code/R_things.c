@@ -22,12 +22,12 @@
 //-----------------------------------------------------------------------------
 
 
-static const char
-rcsid[] = "$Id: r_things.c,v 1.5 1997/02/03 16:47:56 b1 Exp $";
 
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <search.h>
+
 #include "m_alloc.h"
 
 #include "doomdef.h"
@@ -55,6 +55,7 @@ rcsid[] = "$Id: r_things.c,v 1.5 1997/02/03 16:47:56 b1 Exp $";
 //void R_DrawFuzzColumn (void);
 
 cvar_t *crosshair;
+cvar_t *r_drawfuzz;
 
 
 typedef struct
@@ -80,7 +81,8 @@ typedef struct
 fixed_t 		pspritescale;
 fixed_t 		pspriteiscale;
 fixed_t			pspriteyscale;		// [RH] Aspect ratio handling (from doom3)
-fixed_t			skyiscale;			// [RH] Sky scale factor
+fixed_t			sky1scale;			// [RH] Sky 1 scale factor
+fixed_t			sky2scale;			// [RH] Sky 2 scale factor
 
 lighttable_t**	spritelights;
 
@@ -89,8 +91,10 @@ lighttable_t**	spritelights;
 short			*negonearray;
 short			*screenheightarray;
 
+#define MAX_SPRITE_FRAMES 29		// [RH] Macro-ized as in BOOM.
 
-cvar_t *r_drawplayersprites;
+
+cvar_t *r_drawplayersprites;		// [RH] Draw player sprites?
 
 //
 // INITIALIZATION FUNCTIONS
@@ -99,32 +103,11 @@ cvar_t *r_drawplayersprites;
 // variables used to look up
 //	and range check thing_t sprites patches
 spritedef_t*	sprites;
-int 			numsprites;
+int				numsprites;
 
-spriteframe_t	sprtemp[29];
+spriteframe_t	sprtemp[MAX_SPRITE_FRAMES];
 int 			maxframe;
 char*			spritename;
-
-//
-// Define MHFX_LAXSPRITEROTATIONS for a temporary fix to the problem
-// of PWADS that define sprite rotations in different orders. This
-// should be regarded as a temporary fix only and might not work
-// properly in all cases. See README.sprites for details and
-// ESPECIALLY before using "-sprnolim" - you have been warned!
-//
-// Basically, this works by removing the checks on two WAD entries that
-// map to the same sprite, having both a "no rotations" version of a
-// sprite and various rotations of a sprite, and so forth. I cannot, so
-// far, see any reason for Doom to check for this internally, as it seems
-// to use the most recently loaded version of a sprite (which is, after all,
-// what we want), so I assume that it is designed to protect against a
-// corrupted IWAD or a buggy PWAD, or something like that.
-//
-#define MHFX_LAXSPRITEROTATIONS
-
-#ifdef MHFX_LAXSPRITEROTATIONS
-int  lax_sprite_rotations=0;
-#endif
 
 
 
@@ -132,77 +115,35 @@ int  lax_sprite_rotations=0;
 // R_InstallSpriteLump
 // Local function for R_InitSprites.
 //
-void
-R_InstallSpriteLump
-( int			lump,
-  unsigned		frame,
-  unsigned		rotation,
-  boolean		flipped )
+// [RH] Removed checks for coexistance of rotation 0 with other
+//		rotations and made it look more like BOOM's version.
+//
+void R_InstallSpriteLump (int lump, unsigned frame, unsigned rotation, BOOL flipped)
 {
-	int 		r;
-		
-	if (frame >= 29 || rotation > 8)
-		I_Error("R_InstallSpriteLump: "
-				"Bad frame characters in lump %i", lump);
+	if (frame >= MAX_SPRITE_FRAMES || rotation > 8)
+		I_Error("R_InstallSpriteLump: Bad frame characters in lump %i", lump);
 		
 	if ((int)frame > maxframe)
 		maxframe = frame;
 				
-	if (rotation == 0)
-	{
+	if (rotation == 0) {
 		// the lump should be used for all rotations
         // false=0, true=1, but array initialised to -1
         // allows doom to have a "no value set yet" boolean value!
+		int r;
 
-		if ( (sprtemp[frame].rotate == false)
-#ifdef MHFX_LAXSPRITEROTATIONS
-            && (!lax_sprite_rotations)
-#endif
-			)
-			I_Error ("R_InitSprites: Sprite %s frame %c has "
-					 "multip rot=0 lump", spritename, 'A'+frame);
-
-		if ( (sprtemp[frame].rotate == true)
-#ifdef MHFX_LAXSPRITEROTATIONS
-            && (!lax_sprite_rotations)
-#endif
-			)
-			I_Error ("R_InitSprites: Sprite %s frame %c has rotations "
-					 "and a rot=0 lump", spritename, 'A'+frame);
-						
-		sprtemp[frame].rotate = false;
-		for (r=0 ; r<8 ; r++)
-		{
-			sprtemp[frame].lump[r] = lump - firstspritelump;
-			sprtemp[frame].flip[r] = (byte)flipped;
-		}
-		return;
+		for (r = 7; r >= 0; r--)
+			if (sprtemp[frame].lump[r] == -1) {
+				sprtemp[frame].lump[r] = (short)(lump - firstspritelump);
+				sprtemp[frame].flip[r] = (byte)flipped;
+				sprtemp[frame].rotate = false;
+			}
+	} else if (sprtemp[frame].lump[--rotation] == -1) {
+		// the lump is only used for one rotation
+		sprtemp[frame].lump[rotation] = (short)(lump - firstspritelump);
+		sprtemp[frame].flip[rotation] = (byte)flipped;
+		sprtemp[frame].rotate = true;
 	}
-		
-	// the lump is only used for one rotation
-	if ((sprtemp[frame].rotate == false)
-#ifdef MHFX_LAXSPRITEROTATIONS
-            && (!lax_sprite_rotations)
-#endif
-		)
-		I_Error ("R_InitSprites: Sprite %s frame %c has rotations "
-				 "and a rot=0 lump", spritename, 'A'+frame);
-				
-	sprtemp[frame].rotate = true;
-
-	// make 0 based
-	rotation--; 		
-	if ((sprtemp[frame].lump[rotation] != -1)
-#ifdef MHFX_LAXSPRITEROTATIONS
-            && (!lax_sprite_rotations)
-#endif
-		)
-		I_Error ("R_InitSprites: Sprite %s : %c : %c "
-				 "has two lumps mapped to it",
-				 spritename, 'A'+frame, '1'+rotation);
-				
-	sprtemp[frame].lump[rotation] = lump - firstspritelump;
-	sprtemp[frame].flip[rotation] = (byte)flipped;
 }
 
 
@@ -225,64 +166,51 @@ R_InstallSpriteLump
 //
 void R_InitSpriteDefs (char** namelist) 
 { 
-	char**		check;
-	int 		i;
+	int			i;
 	int 		l;
 	int 		intname;
-	int 		frame;
-	int 		rotation;
 	int 		start;
 	int 		end;
-	int 		patched;
 				
 	// count the number of sprite names
-	check = namelist;
-	while (*check != NULL)
-		check++;
-
-	numsprites = check-namelist;
+	for (numsprites = 0; namelist[numsprites]; numsprites++)
+		;
 		
 	if (!numsprites)
 		return;
 				
-	sprites = Z_Malloc(numsprites *sizeof(*sprites), PU_STATIC, NULL);
+	sprites = Z_Malloc (numsprites * sizeof(*sprites), PU_STATIC, NULL);
 		
-	start = firstspritelump-1;
-	end = lastspritelump+1;
+	start = firstspritelump - 1;
+	end = lastspritelump + 1;
 		
 	// scan all the lump names for each of the names,
 	//	noting the highest frame letter.
 	// Just compare 4 characters as ints
-	for (i=0 ; i<numsprites ; i++)
+	for (i = 0; i < numsprites; i++)
 	{
 		spritename = namelist[i];
-		memset (sprtemp,-1, sizeof(sprtemp));
+		memset (sprtemp, -1, sizeof(sprtemp));
 				
 		maxframe = -1;
 		intname = *(int *)namelist[i];
 		
 		// scan the lumps,
 		//	filling in the frames for whatever is found
-		for (l=start+1 ; l<end ; l++)
+		for (l = lastspritelump; l >= firstspritelump; l--)
 		{
 			if (*(int *)lumpinfo[l].name == intname)
 			{
-				frame = lumpinfo[l].name[4] - 'A';
-				rotation = lumpinfo[l].name[5] - '0';
-
-				if (modifiedgame)
-					patched = W_GetNumForName (lumpinfo[l].name);
-				else
-					patched = l;
-
-				R_InstallSpriteLump (patched, frame, rotation, false);
+				R_InstallSpriteLump (l, 
+									 lumpinfo[l].name[4] - 'A',
+									 lumpinfo[l].name[5] - '0',
+									 false);
 
 				if (lumpinfo[l].name[6])
-				{
-					frame = lumpinfo[l].name[6] - 'A';
-					rotation = lumpinfo[l].name[7] - '0';
-					R_InstallSpriteLump (l, frame, rotation, true);
-				}
+					R_InstallSpriteLump (l,
+									 lumpinfo[l].name[6] - 'A',
+									 lumpinfo[l].name[7] - '0',
+									 true);
 			}
 		}
 		
@@ -295,28 +223,36 @@ void R_InitSpriteDefs (char** namelist)
 				
 		maxframe++;
 		
-		for (frame = 0 ; frame < maxframe ; frame++)
 		{
-			switch ((int)sprtemp[frame].rotate)
+			int frame;
+
+			for (frame = 0 ; frame < maxframe ; frame++)
 			{
-			  case -1:
-				// no rotations were found for that frame at all
-				I_Error ("R_InitSprites: No patches found "
-						 "for %s frame %c", namelist[i], frame+'A');
-				break;
-				
-			  case 0:
-				// only the first rotation is needed
-				break;
-						
-			  case 1:
-				// must have all 8 frames
-				for (rotation=0 ; rotation<8 ; rotation++)
-					if (sprtemp[frame].lump[rotation] == -1)
-						I_Error ("R_InitSprites: Sprite %s frame %c "
-								 "is missing rotations",
-								 namelist[i], frame+'A');
-				break;
+				switch ((int)sprtemp[frame].rotate)
+				{
+				  case -1:
+					// no rotations were found for that frame at all
+					I_Error ("R_InitSprites: No patches found "
+							 "for %s frame %c", namelist[i], frame+'A');
+					break;
+					
+				  case 0:
+					// only the first rotation is needed
+					break;
+							
+				  case 1:
+					// must have all 8 frames
+					{
+						int rotation;
+
+						for (rotation=0 ; rotation<8 ; rotation++)
+							if (sprtemp[frame].lump[rotation] == -1)
+								I_Error ("R_InitSprites: Sprite %s frame %c "
+										 "is missing rotations",
+										 namelist[i], frame+'A');
+					}
+					break;
+				}
 			}
 		}
 		
@@ -335,7 +271,7 @@ void R_InitSpriteDefs (char** namelist)
 //
 // GAME FUNCTIONS
 //
-int MaxVisSprites;
+int				MaxVisSprites;
 vissprite_t 	*vissprites;
 vissprite_t		*vissprite_p;
 vissprite_t		*lastvissprite;
@@ -349,24 +285,9 @@ int 			newvissprite;
 //
 void R_InitSprites (char** namelist)
 {
-	int 		i;
-		
-	negonearray = Malloc (sizeof(short) * SCREENWIDTH);
-
-	for (i=0 ; i<SCREENWIDTH ; i++)
-	{
-		negonearray[i] = -1;
-	}
-
 	MaxVisSprites = 128;	// [RH] This is the initial default value. It grows as needed.
 	vissprites = Malloc (MaxVisSprites * sizeof(vissprite_t));
 	lastvissprite = &vissprites[MaxVisSprites];
-
-#ifdef MHFX_LAXSPRITEROTATIONS
-    lax_sprite_rotations=( M_CheckParm("-gfixall")
-                          ||
-                           M_CheckParm("-gignrot") );
-#endif
 
 	R_InitSpriteDefs (namelist);
 }
@@ -391,11 +312,11 @@ vissprite_t* R_NewVisSprite (void)
 	if (vissprite_p == lastvissprite) {
 		int prevvisspritenum = vissprite_p - vissprites;
 
-		MaxVisSprites += 32;
+		MaxVisSprites += 64;
 		vissprites = Realloc (vissprites, MaxVisSprites * sizeof(vissprite_t));
 		lastvissprite = &vissprites[MaxVisSprites];
 		vissprite_p = &vissprites[prevvisspritenum];
-		DEVONLY (Printf, "MaxVisSprites increased to %d\n", MaxVisSprites, 0);
+		DPrintf ("MaxVisSprites increased to %d\n", MaxVisSprites);
 	}
 	
 	vissprite_p++;
@@ -461,17 +382,14 @@ void R_DrawMaskedColumn (column_t* column)
 // R_DrawVisSprite
 //	mfloorclip and mceilingclip should also be set.
 //
-void
-R_DrawVisSprite
-( vissprite_t*			vis,
-  int					x1,
-  int					x2 )
+void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 {
-	column_t*			column;
 	int 				texturecolumn;
 	fixed_t 			frac;
 	patch_t*			patch;
-		
+
+	// [RH] Tutti-Frutti fix (also allows sprites up to 256 pixels tall)
+	dc_mask = 0xff;
 		
 	patch = W_CacheLumpNum (vis->patch+firstspritelump, PU_CACHE);
 
@@ -480,7 +398,21 @@ R_DrawVisSprite
 	if (!dc_colormap)
 	{
 		// NULL colormap = shadow draw
-		colfunc = fuzzcolfunc;
+		if (!r_drawfuzz->value && TransTable) {
+			dc_colormap = DefaultPalette->maps.colormaps;
+			colfunc = lucentcolfunc;
+			dc_transmap = TransTable + 65536;
+		} else {
+			colfunc = fuzzcolfunc;
+		}
+	}
+	else if (vis->palette)
+	{
+		// [RH] MF_TRANSLATION is still available for DeHackEd patches that
+		//		used it, but the prefered way to change a thing's colors
+		//		is now with the palette field.
+		colfunc = R_DrawTranslatedColumn;
+		dc_translation = (byte *)vis->palette;
 	}
 	else if (vis->mobjflags & MF_TRANSLATION)
 	{
@@ -503,18 +435,18 @@ R_DrawVisSprite
 		
 	for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
 	{
+		byte *column;
 		texturecolumn = frac>>FRACBITS;
 
 #ifdef RANGECHECK
 		if ((unsigned)texturecolumn >= (unsigned)SHORT(patch->width)) {
-			DEVONLY (Printf, "R_DrawSpriteRange: bad texturecolumn (%d)\n", texturecolumn, 0);
+			DPrintf ("R_DrawSpriteRange: bad texturecolumn (%d)\n", texturecolumn);
 			continue;
 		}
 #endif
 
-		column = (column_t *) ((byte *)patch +
-							   LONG(patch->columnofs[texturecolumn]));
-		R_DrawMaskedColumn (column);
+		column = (byte *)patch + LONG(patch->columnofs[texturecolumn]);
+		R_DrawMaskedColumn ((column_t *)column);
 	}
 
 	colfunc = basecolfunc;
@@ -549,7 +481,7 @@ void R_ProjectSprite (mobj_t* thing)
 	int 				lump;
 	
 	unsigned			rot;
-	boolean 			flip;
+	BOOL 			flip;
 	
 	int 				index;
 
@@ -589,15 +521,17 @@ void R_ProjectSprite (mobj_t* thing)
 	
 	// decide which patch to use for sprite relative to player
 #ifdef RANGECHECK
-	if ((unsigned)thing->sprite >= (unsigned)numsprites)
-		I_Error ("R_ProjectSprite: invalid sprite number %i ",
-				 thing->sprite);
+	if ((unsigned)thing->sprite >= (unsigned)numsprites) {
+		DPrintf ("R_ProjectSprite: invalid sprite number %i\n", thing->sprite);
+		return;
+	}
 #endif
 	sprdef = &sprites[thing->sprite];
 #ifdef RANGECHECK
-	if ( (thing->frame&FF_FRAMEMASK) >= sprdef->numframes )
-		I_Error ("R_ProjectSprite: invalid sprite frame %i : %i ",
-				 thing->sprite, thing->frame);
+	if ( (thing->frame&FF_FRAMEMASK) >= sprdef->numframes ) {
+		DPrintf ("R_ProjectSprite: invalid sprite frame %i : %i\n ", thing->sprite, thing->frame);
+		return;
+	}
 #endif
 	sprframe = &sprdef->spriteframes[ thing->frame & FF_FRAMEMASK];
 
@@ -607,13 +541,13 @@ void R_ProjectSprite (mobj_t* thing)
 		ang = R_PointToAngle (thing->x, thing->y);
 		rot = (ang-thing->angle+(unsigned)(ANG45/2)*9)>>29;
 		lump = sprframe->lump[rot];
-		flip = (boolean)sprframe->flip[rot];
+		flip = (BOOL)sprframe->flip[rot];
 	}
 	else
 	{
 		// use single rotation for all views
 		lump = sprframe->lump[0];
-		flip = (boolean)sprframe->flip[0];
+		flip = (BOOL)sprframe->flip[0];
 	}
 	
 	// calculate edges of the shape
@@ -641,7 +575,8 @@ void R_ProjectSprite (mobj_t* thing)
 	vis->gzt = thing->z + spritetopoffset[lump];
 	vis->texturemid = vis->gzt - viewz;
 	vis->x1 = x1 < 0 ? 0 : x1;
-	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;		
+	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
+	vis->palette = thing->palette;		// [RH] thing palette
 	iscale = FixedDiv (FRACUNIT, xscale);
 
 	if (flip)
@@ -673,7 +608,7 @@ void R_ProjectSprite (mobj_t* thing)
 	else if (thing->frame & FF_FULLBRIGHT)
 	{
 		// full bright
-		vis->colormap = colormaps;
+		vis->colormap = DefaultPalette->maps.colormaps;
 	}
 	
 	else
@@ -697,8 +632,8 @@ void R_ProjectSprite (mobj_t* thing)
 //
 void R_AddSprites (sector_t* sec)
 {
-	mobj_t* 			thing;
-	int 				lightnum;
+	mobj_t *thing;
+	int 	lightnum;
 
 	// BSP is traversed by subsector.
 	// A sector might have been split into several
@@ -728,7 +663,7 @@ void R_AddSprites (sector_t* sec)
 //
 // R_DrawPSprite
 //
-void R_DrawPSprite (pspdef_t* psp)
+void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 {
 	fixed_t 			tx;
 	int 				x1;
@@ -736,26 +671,28 @@ void R_DrawPSprite (pspdef_t* psp)
 	spritedef_t*		sprdef;
 	spriteframe_t*		sprframe;
 	int 				lump;
-	boolean 			flip;
+	BOOL 				flip;
 	vissprite_t*		vis;
 	vissprite_t 		avis;
 	
 	// decide which patch to use
 #ifdef RANGECHECK
-	if ( (unsigned)psp->state->sprite >= (unsigned)numsprites)
-		I_Error ("R_ProjectSprite: invalid sprite number %i ",
-				 psp->state->sprite);
+	if ( (unsigned)psp->state->sprite >= (unsigned)numsprites) {
+		DPrintf ("R_DrawPSprite: invalid sprite number %i\n", psp->state->sprite);
+		return;
+	}
 #endif
 	sprdef = &sprites[psp->state->sprite];
 #ifdef RANGECHECK
-	if ( (psp->state->frame & FF_FRAMEMASK)  >= sprdef->numframes)
-		I_Error ("R_ProjectSprite: invalid sprite frame %i : %i ",
-				 psp->state->sprite, psp->state->frame);
+	if ( (psp->state->frame & FF_FRAMEMASK)  >= sprdef->numframes) {
+		DPrintf ("R_ProjectSprite: invalid sprite frame %i : %i\n", psp->state->sprite, psp->state->frame);
+		return;
+	}
 #endif
 	sprframe = &sprdef->spriteframes[ psp->state->frame & FF_FRAMEMASK ];
 
 	lump = sprframe->lump[0];
-	flip = (boolean)sprframe->flip[0];
+	flip = (BOOL)sprframe->flip[0];
 	
 	// calculate edges of the shape
 	tx = psp->sx-((320/2)<<FRACBITS);
@@ -776,11 +713,12 @@ void R_DrawPSprite (pspdef_t* psp)
 	
 	// store information in a vissprite
 	vis = &avis;
-	vis->mobjflags = 0;
+	vis->mobjflags = flags;
 	vis->texturemid = (BASEYCENTER<<FRACBITS)+FRACUNIT/2-(psp->sy-spritetopoffset[lump]);
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;		
 	vis->scale = pspriteyscale;
+	vis->palette = NULL;		// [RH] Use default palette
 	
 	if (flip)
 	{
@@ -812,7 +750,7 @@ void R_DrawPSprite (pspdef_t* psp)
 	else if (psp->state->frame & FF_FULLBRIGHT)
 	{
 		// full bright
-		vis->colormap = colormaps;
+		vis->colormap = DefaultPalette->maps.colormaps;
 	}
 	else
 	{
@@ -820,7 +758,7 @@ void R_DrawPSprite (pspdef_t* psp)
 		vis->colormap = spritelights[MAXLIGHTSCALE-1];
 	}
 		
-		R_DrawVisSprite (vis, vis->x1, vis->x2);
+	R_DrawVisSprite (vis, vis->x1, vis->x2);
 }
 
 
@@ -863,8 +801,12 @@ void R_DrawPlayerSprites (void)
 				 i<NUMPSPRITES;
 				 i++,psp++)
 			{
-				if (psp->state)
-					R_DrawPSprite (psp);
+				if (psp->state) {
+					if (i == 1)
+						R_DrawPSprite (psp, MF_TRANSLUC75);
+					else
+						R_DrawPSprite (psp, 0);
+				}
 			}
 
 			centery = centerhack;
@@ -879,56 +821,44 @@ void R_DrawPlayerSprites (void)
 //
 // R_SortVisSprites
 //
-vissprite_t 	vsprsortedhead;
+// [RH] The old code for this function used a bubble sort, which was far less
+//		than optimal with large numbers of sprties. I changed it to use the
+//		stdlib qsort() function instead, and now it is a *lot* faster; the
+//		more vissprites that need to be sorted, the better the performance
+//		gain compared to the old function.
+//
+static struct vissort_s {
+	vissprite_t *sprite;
+	fixed_t		scale;
+}				*spritesorter;
+static int		spritesortersize = 0;
+static int		vsprcount;
 
+static int sv_compare (const void *arg1, const void *arg2)
+{
+	return ((struct vissort_s *)arg1)->scale - ((struct vissort_s *)arg2)->scale;
+}
 
 void R_SortVisSprites (void)
 {
-	int 				i;
-	int 				count;
-	vissprite_t*		ds;
-	vissprite_t*		best;
-	vissprite_t 		unsorted;
-	fixed_t 			bestscale;
+	int		i;
 
-	count = vissprite_p - vissprites;
-		
-	unsorted.next = unsorted.prev = &unsorted;
+	vsprcount = vissprite_p - vissprites;
 
-	if (!count)
+	if (!vsprcount)
 		return;
-				
-	for (ds=vissprites ; ds<vissprite_p ; ds++)
-	{
-		ds->next = ds+1;
-		ds->prev = ds-1;
+
+	if (spritesortersize < MaxVisSprites) {
+		spritesorter = Realloc (spritesorter, sizeof(struct vissort_s) * MaxVisSprites);
+		spritesortersize = MaxVisSprites;
 	}
-	
-	vissprites[0].prev = &unsorted;
-	unsorted.next = &vissprites[0];
-	(vissprite_p-1)->next = &unsorted;
-	unsorted.prev = vissprite_p-1;
-	
-	// pull the vissprites out by scale
-	vsprsortedhead.next = vsprsortedhead.prev = &vsprsortedhead;
-	for (i=0 ; i<count ; i++)
-	{
-		bestscale = MAXINT;
-		for (ds=unsorted.next ; ds!= &unsorted ; ds=ds->next)
-		{
-			if (ds->scale < bestscale)
-			{
-				bestscale = ds->scale;
-				best = ds;
-			}
-		}
-		best->next->prev = best->prev;
-		best->prev->next = best->next;
-		best->next = &vsprsortedhead;
-		best->prev = vsprsortedhead.prev;
-		vsprsortedhead.prev->next = best;
-		vsprsortedhead.prev = best;
+
+	for (i = 0; i < vsprcount; i++) {
+		spritesorter[i].sprite = &vissprites[i];
+		spritesorter[i].scale = vissprites[i].scale;
 	}
+
+	qsort (spritesorter, vsprcount, sizeof (struct vissort_s), sv_compare);
 }
 
 
@@ -1035,7 +965,7 @@ void R_DrawSprite (vissprite_t* spr)
 	for (x = spr->x1 ; x<=spr->x2 ; x++)
 	{
 		if (r_dsclipbot[x] == -2)			
-			r_dsclipbot[x] = viewheight;
+			r_dsclipbot[x] = (short)viewheight;
 
 		if (r_dscliptop[x] == -2)
 			r_dscliptop[x] = -1;
@@ -1051,7 +981,7 @@ static void R_DrawCrosshair (void)
 	static float lastXhair = 0.0;
 	static int xhair = -1;
 	static patch_t *patch = NULL;
-	static boolean transparent = false;
+	static BOOL transparent = false;
 
 	if (lastXhair != crosshair->value) {
 		int xhairnum = (int)crosshair->value;
@@ -1084,9 +1014,13 @@ static void R_DrawCrosshair (void)
 
 	if (patch) {
 		if (transparent)
-			V_DrawLucentPatch (viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, 0, patch);
+			V_DrawLucentPatch (realviewwidth / 2 + viewwindowx,
+							   realviewheight / 2 + viewwindowy,
+							   &screens[0], patch);
 		else
-			V_DrawPatch (viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, 0, patch);
+			V_DrawPatch (realviewwidth / 2 + viewwindowx,
+						 realviewheight / 2 + viewwindowy,
+						 &screens[0], patch);
 	}
 }
 
@@ -1095,23 +1029,19 @@ static void R_DrawCrosshair (void)
 //
 void R_DrawMasked (void)
 {
-	vissprite_t*		spr;
-	drawseg_t*			ds;
+	drawseg_t		 *ds;
+	struct vissort_s *sorttail;
 		
 	R_SortVisSprites ();
 
-	if (vissprite_p > vissprites)
-	{
-		// draw all vissprites back to front
-		for (spr = vsprsortedhead.next ;
-			 spr != &vsprsortedhead ;
-			 spr=spr->next)
-		{
-			
-			R_DrawSprite (spr);
-		}
+	if (vsprcount) {
+		sorttail = spritesorter + vsprcount;
+		vsprcount = -vsprcount;
+		do {
+			R_DrawSprite (sorttail[vsprcount].sprite);
+		} while (++vsprcount);
 	}
-	
+
 	// render any remaining masked mid textures
 	for (ds=ds_p-1 ; ds >= drawsegs ; ds--)
 		if (ds->maskedtexturecol)

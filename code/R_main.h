@@ -27,10 +27,6 @@
 #include "r_data.h"
 
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 
 //
 // POV related.
@@ -52,6 +48,9 @@ extern fixed_t			centerxfrac;
 extern fixed_t			centeryfrac;
 extern fixed_t			projection;
 extern fixed_t			projectiony;	// [RH] fix aspect ratio (from doom3)
+extern fixed_t			skytopfrac;		// [RH] virtual top of the sky (for freelooking)
+
+
 
 extern int				validcount;
 
@@ -86,6 +85,11 @@ extern lighttable_t*	fixedcolormap;
 // Number of diminishing brightness levels.
 // There a 0-31, i.e. 32 LUT in the COLORMAP lump.
 #define NUMCOLORMAPS			32
+
+
+// [RH] New detail modes
+extern int				detailxshift;
+extern int				detailyshift;
 
 
 //

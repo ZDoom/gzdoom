@@ -21,11 +21,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: p_sight.c,v 1.3 1997/01/28 22:08:28 b1 Exp $";
-
-#include <malloc.h>
-#include <crtdbg.h>
 
 #include "doomdef.h"
 
@@ -129,7 +124,7 @@ fixed_t P_InterceptVector2 (const divline_t *v2, const divline_t *v1)
 // Returns true
 //	if strace crosses the given subsector successfully.
 //
-boolean P_CrossSubsector (const int num)
+BOOL P_CrossSubsector (const int num)
 {
 	seg_t*				seg;
 	line_t* 			line;
@@ -254,7 +249,7 @@ boolean P_CrossSubsector (const int num)
 // Returns true
 //	if strace crosses the given node successfully.
 //
-boolean P_CrossBSPNode (const int bspnum)
+BOOL P_CrossBSPNode (const int bspnum)
 {
 	node_t* 	bsp;
 	int 		side;
@@ -296,7 +291,7 @@ boolean P_CrossBSPNode (const int bspnum)
 //	if a straight line between t1 and t2 is unobstructed.
 // Uses REJECT.
 //
-boolean P_CheckSight (const mobj_t *t1, const mobj_t *t2)
+BOOL P_CheckSight (const mobj_t *t1, const mobj_t *t2)
 {
 	int 		s1;
 	int 		s2;
@@ -306,9 +301,9 @@ boolean P_CheckSight (const mobj_t *t1, const mobj_t *t2)
 
 	// [RH] Andy Baker's stealth monsters
 	// Cannot see an invisible object
-	if (t2->invisible)			// [RH] was (t2->flags & MF_INVIS)
+	if (t2->invisible)
 	{
-		if ( P_Random() > 50 ) // small chance of an attack being made anyway
+		if (P_Random (pr_checksight) > 50)	// small chance of an attack being made anyway
 			return false;
 	}
 

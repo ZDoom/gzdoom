@@ -24,13 +24,11 @@
 #define __P_SETUP__
 
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 
 // NOT called by W_Ticker. Fixme.
-void P_SetupLevel (char *mapname, int playermask, skill_t skill);
+//
+// [RH] The only parameter used is mapname, so I removed playermask and skill.
+void P_SetupLevel (char *mapname);
 
 // Called by startup code.
 void P_Init (void);

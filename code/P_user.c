@@ -24,8 +24,6 @@
 //-----------------------------------------------------------------------------
 
 
-static const char
-rcsid[] = "$Id: p_user.c,v 1.3 1997/01/28 22:08:29 b1 Exp $";
 
 
 #include "doomdef.h"
@@ -48,22 +46,19 @@ rcsid[] = "$Id: p_user.c,v 1.3 1997/01/28 22:08:29 b1 Exp $";
 // 16 pixels of bob
 #define MAXBOB	0x100000		
 
-boolean 		onground;
+// [RH] Now a pointer since it uses P_FindFloor()
+mobj_t 		*onground;
 
 
 //
 // P_Thrust
 // Moves the given origin along a given angle.
 //
-void
-P_Thrust
-( player_t* 	player,
-  angle_t		angle,
-  fixed_t		move ) 
+void P_Thrust (player_t *player, angle_t angle, fixed_t move)
 {
 	angle >>= ANGLETOFINESHIFT;
 
-	player->mo->momx += FixedMul(move,finecosine[angle]); 
+	player->mo->momx += FixedMul(move,finecosine[angle]);
 	player->mo->momy += FixedMul(move,finesine[angle]);
 }
 
@@ -145,16 +140,14 @@ void P_CalcHeight (player_t* player)
 //
 // P_MovePlayer
 //
-void P_MovePlayer (player_t* player)
+void P_MovePlayer (player_t *player)
 {
-	ticcmd_t*			cmd;
-		
-	cmd = &player->cmd;
+	ticcmd_t *cmd = &player->cmd;
 		
 	player->mo->angle += (cmd->ucmd.yaw<<16);
 
 	// [RH] allow very limited movement if not on ground.
-	onground = (player->mo->z <= player->mo->floorz);
+	onground = P_FindFloor (player->mo);
 
 	if (onground) {
 		if (cmd->ucmd.forwardmove)
@@ -162,7 +155,7 @@ void P_MovePlayer (player_t* player)
 
 		if (cmd->ucmd.sidemove)
 			P_Thrust (player, player->mo->angle-ANG90, cmd->ucmd.sidemove*8);
-	} else {
+	} else if (!olddemo) {
 		if (cmd->ucmd.forwardmove)
 			P_Thrust (player, player->mo->angle, cmd->ucmd.forwardmove/8);
 
@@ -201,7 +194,7 @@ void P_DeathThink (player_t* player)
 		player->viewheight = 6*FRACUNIT;
 
 	player->deltaviewheight = 0;
-	onground = (player->mo->z <= player->mo->floorz);
+	onground = P_FindFloor (player->mo);
 	P_CalcHeight (player);
 		
 	if (player->attacker && player->attacker != player->mo)
@@ -231,8 +224,12 @@ void P_DeathThink (player_t* player)
 		player->damagecount--;
 		
 
-	if (player->cmd.ucmd.buttons & BT_USE)
-		player->playerstate = PST_REBORN;
+	// [RH] Delay rebirth slightly
+	if (level.time >= player->respawn_time) {
+		if (player->cmd.ucmd.buttons & BT_USE ||
+			(deathmatch->value && dmflags & DF_FORCE_RESPAWN))
+			player->playerstate = PST_REBORN;
+	}
 }
 
 
@@ -268,8 +265,10 @@ void P_PlayerThink (player_t* player)
 		return;
 	}
 
-	// Look up/down stuff
-	{
+	// [RH] Look up/down stuff
+	if (dmflags & DF_NO_FREELOOK) {
+		player->mo->pitch = 0;
+	} else {
 		int look = cmd->ucmd.pitch;
 
 		if (look) {
@@ -284,8 +283,8 @@ void P_PlayerThink (player_t* player)
 			} else {
 				// look down
 				player->mo->pitch -= look;
-				if (player->mo->pitch > FRACUNIT)
-					player->mo->pitch = FRACUNIT;
+				if (player->mo->pitch > (FRACUNIT<<1))
+					player->mo->pitch = FRACUNIT<<1;
 			}
 		}
 	}
@@ -361,9 +360,9 @@ void P_PlayerThink (player_t* player)
 
 	// [RH] check for jump
 	if ((cmd->ucmd.buttons & BT_JUMP) == BT_JUMP) {
-		if (!player->jumpdown) {
+		if (!player->jumpdown && !(dmflags & DF_NO_JUMP)) {
 			// only jump if we are on the ground
-			if (player->mo->z <= player->mo->floorz)
+			if (P_FindFloor (player->mo))
 				player->mo->momz += 8 * FRACUNIT;
 			player->jumpdown = true;
 		}

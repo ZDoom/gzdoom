@@ -11,6 +11,9 @@
 #include "g_level.h"
 #include "m_cheat.h"
 #include "cmdlib.h"
+#include "dstrings.h"
+#include "m_misc.h"
+#include "w_wad.h"
 
 
 // Miscellaneous info that used to be constant
@@ -29,8 +32,28 @@ int deh_FAAC = 2;
 int deh_KFAArmor = 200;
 int deh_KFAAC = 2;
 int deh_BFGCells = 40;
-int deh_Infight;		// Just where is this used?
+int deh_Infight = 0;
 
+// These are the original heights of every Doom 2 thing. They are used if a patch
+// specifies that a thing should be hanging from the ceiling but doesn't specify
+// a height for the thing, since these are the heights it probably wants.
+
+static byte OrgHeights[] = {
+	56, 56, 56, 56, 16, 56, 8, 16, 64, 8, 56, 56,
+	56, 56, 56, 64, 8, 64, 56, 100, 64, 110, 56, 56,
+	72, 16, 32, 32, 32, 16, 42, 8, 8, 8,
+	8, 8, 8, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 68, 84, 84,
+	68, 52, 84, 68, 52, 52, 68, 16, 16, 16,
+	16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
+	16, 16, 16, 16, 88, 88, 64, 64, 64, 64,
+	16, 16, 16
+};
 
 #define LINESIZE 2048
 
@@ -39,8 +62,8 @@ int deh_Infight;		// Just where is this used?
 #define CHECKKEY(a,b)		if (!stricmp (Line1, (a))) (b) = atoi(Line2);
 #define CHECKCHEAT(a,b,c)	if (!stricmp (Line1, (a))) ChangeCheat (Line2, (b), (c));
 
-static char *LineBuff, *Line1, *Line2;
-static FILE *deh;
+static char *PatchFile, *PatchPt;
+static char *Line1, *Line2;
 static int	 dversion, pversion;
 
 static const char *unknown_str = "Unknown key %s encountered in %s %d.\n";
@@ -99,13 +122,14 @@ static short codepconv[448] = {  1,    2,   3,   4,    6,   9,  10,   11,  12,  
 							 784, 785, 786, 787,	788, 789, 790,	791, 792, 793,
 							 794, 795, 796, 797,	798, 801, 809,	811};
 
-boolean BackedUpData = false;
+BOOL BackedUpData = false;
 // This is the original data before it gets replaced by a patch.
 char *OrgSfxNames[NUMSFX];
 char *OrgSprNames[NUMSPRITES];
 actionf_t OrgActionPtrs[NUMSTATES];
 
 
+extern byte cheat_mus_seq[9];
 extern byte cheat_choppers_seq[11];
 extern byte cheat_god_seq[6];
 extern byte cheat_ammo_seq[6];
@@ -135,7 +159,7 @@ void BackUpData (void)
 		OrgActionPtrs[i] = states[i].action;
 }
 
-void ChangeCheat (byte *newcheat, byte *cheatseq, boolean needsval)
+void ChangeCheat (byte *newcheat, byte *cheatseq, BOOL needsval)
 {
 	while (*cheatseq != 0xff && *cheatseq != 1 && *newcheat) {
 		*cheatseq++ = SCRAMBLE(*newcheat);
@@ -151,10 +175,9 @@ void ChangeCheat (byte *newcheat, byte *cheatseq, boolean needsval)
 	*cheatseq = 0xff;
 }
 
-static boolean ReadChars (char **stuff, int size)
+static BOOL ReadChars (char **stuff, int size)
 {
 	char *str = *stuff;
-	int character;
 
 	if (!size) {
 		*str = 0;
@@ -162,15 +185,35 @@ static boolean ReadChars (char **stuff, int size)
 	}
 
 	do {
-		character = fgetc (deh);
-		if (character == EOF)
-			return false;
+		// Ignore carriage returns
+		if (*PatchPt != '\r')
+			*str++ = *PatchPt;
+		else
+			size++;
 
-		*str++ = character;
+		PatchPt++;
 	} while (--size);
 
 	*str = 0;
 	return true;
+}
+
+static char *igets (void)
+{
+	char *line;
+
+	if (*PatchPt == '\0')
+		return NULL;
+
+	line = PatchPt;
+
+	while (*PatchPt != '\n' && *PatchPt != '\0')
+		PatchPt++;
+
+	if (*PatchPt == '\n')
+		*PatchPt++ = 0;
+
+	return line;
 }
 
 int GetLine (void)
@@ -178,7 +221,7 @@ int GetLine (void)
 	char *line, *line2;
 
 	do {
-		while (line = fgets (LineBuff, LINESIZE, deh))
+		while ( (line = igets ()) )
 			if (line[0] != '#')		// Skip comment lines
 				break;
 
@@ -235,18 +278,21 @@ int PatchThing (int thingNum)
 {
 	int result;
 	mobjinfo_t *info, dummy;
+	BOOL hadHeight = false;
 
-	if (thingNum >= 1 && thingNum <= NUMMOBJTYPES) {
-		info = &mobjinfo[thingNum - 1];
-		DEVONLY (Printf, "Thing %d\n", thingNum, 0);
+	thingNum--;
+	if (thingNum >= 0 && thingNum < NUMMOBJTYPES) {
+		info = &mobjinfo[thingNum];
+		DPrintf ("Thing %d\n", thingNum);
 	} else {
 		info = &dummy;
-		Printf ("Thing %d out of range.\n", thingNum);
+		Printf ("Thing %d out of range.\n", thingNum + 1);
 	}
 
 	// Turn off transparency for the mobj, since original DOOM
 	// didn't have any. If some is wanted, let the patch specify it.
-	info->flags &= ~MF_TRANSLUCBITS;
+	// Uncomment this if you want to make it so.
+	//info->flags &= ~MF_TRANSLUCBITS;
 
 	while ((result = GetLine ()) == 1) {
 			 CHECKKEY ("ID #",					info->doomednum)
@@ -266,6 +312,10 @@ int PatchThing (int thingNum)
 		else CHECKKEY ("Death sound",			info->deathsound)
 		else CHECKKEY ("Speed",					info->speed)
 		else CHECKKEY ("Width",					info->radius)
+		else if (!stricmp (Line1, "Height")) {
+			info->height = atoi (Line2);
+			hadHeight = true;
+		}
 		else CHECKKEY ("Height",				info->height)
 		else CHECKKEY ("Mass",					info->mass)
 		else CHECKKEY ("Missile damage",		info->damage)
@@ -274,6 +324,10 @@ int PatchThing (int thingNum)
 		else CHECKKEY ("Respawn frame",			info->raisestate)
 		else Printf (unknown_str, Line1, "Thing", thingNum);
 	}
+
+	if (info->flags & MF_SPAWNCEILING && !hadHeight && thingNum < sizeof(OrgHeights))
+		info->height = OrgHeights[thingNum] * FRACUNIT;
+
 	return result;
 }
 
@@ -285,7 +339,7 @@ int PatchSound (int soundNum)
 
 	if (soundNum >= 1 && soundNum <= NUMSFX) {
 		info = &S_sfx[soundNum];
-		DEVONLY (Printf, "Sound %d\n", soundNum, 0);
+		DPrintf ("Sound %d\n", soundNum);
 	} else {
 		info = &dummy;
 		Printf ("Sound %d out of range.\n");
@@ -335,7 +389,7 @@ int PatchFrame (int frameNum)
 
 	if (frameNum >= 0 && frameNum < NUMSTATES) {
 		info = &states[frameNum];
-		DEVONLY (Printf, "Frame %d\n", frameNum, 0);
+		DPrintf ("Frame %d\n", frameNum);
 	} else {
 		info = &dummy;
 		Printf ("Frame %d out of range\n", frameNum);
@@ -359,7 +413,7 @@ int PatchSprite (int sprNum)
 	int offset = 0;
 
 	if (sprNum >= 0 && sprNum < NUMSPRITES) {
-		DEVONLY (Printf, "Sprite %d\n", sprNum, 0);
+		DPrintf ("Sprite %d\n", sprNum);
 	} else {
 		Printf ("Sprite %d out of range.\n", sprNum);
 		sprNum = -1;
@@ -395,7 +449,7 @@ int PatchAmmo (int ammoNum)
 	int dummy;
 
 	if (ammoNum >= 0 && ammoNum < NUMAMMO) {
-		DEVONLY (Printf, "Ammo %d.\n", ammoNum, 0);
+		DPrintf ("Ammo %d.\n", ammoNum);
 		max = &maxammo[ammoNum];
 		per = &clipammo[ammoNum];
 	} else {
@@ -419,7 +473,7 @@ int PatchWeapon (int weapNum)
 
 	if (weapNum >= 0 && weapNum < NUMWEAPONS) {
 		info = &weaponinfo[weapNum];
-		DEVONLY (Printf, "Weapon %d\n", weapNum, 0);
+		DPrintf ("Weapon %d\n", weapNum);
 	} else {
 		info = &dummy;
 		Printf ("Weapon %d out of range.\n", weapNum);
@@ -442,7 +496,7 @@ int PatchPointer (int ptrNum)
 	int result;
 
 	if (ptrNum >= 0 && ptrNum < 448) {
-		DEVONLY (Printf, "Pointer %d\n", ptrNum, 0);
+		DPrintf ("Pointer %d\n", ptrNum);
 	} else {
 		Printf ("Pointer %d out of range.\n", ptrNum);
 		ptrNum = -1;
@@ -460,13 +514,10 @@ int PatchCheats (int dummy)
 {
 	int result;
 
-	// idmus cheat is (at least temporarily) removed
-	byte musEater[] = { 0xb2, 0x26, 0xb6, 0xae, 0xea, 1, 0, 0, 0xff };
-
-	DEVONLY (Printf, "Cheats\n", 0, 0);
+	DPrintf ("Cheats\n");
 
 	while ((result = GetLine ()) == 1) {
-			 CHECKCHEAT ("Change music",		musEater,					 true)
+			 CHECKCHEAT ("Change music",		cheat_mus_seq,				 true)
 		else CHECKCHEAT ("Chainsaw",			cheat_choppers_seq,			 false)
 		else CHECKCHEAT ("God mode",			cheat_god_seq,				 false)
 		else CHECKCHEAT ("Ammo & Keys",			cheat_ammo_seq,				 false)
@@ -493,7 +544,7 @@ int PatchMisc (int dummy)
 	int result;
 	gitem_t *item;
 
-	DEVONLY (Printf, "Misc", 0, 0);
+	DPrintf ("Misc");
 
 	while ((result = GetLine()) == 1) {
 			 CHECKKEY ("Initial Health",		deh_StartHealth)
@@ -515,11 +566,16 @@ int PatchMisc (int dummy)
 		else Printf ("Unknown miscellaneous info %s.\n", Line2);
 	}
 
-	if (item = FindItem ("Basic Armor"))
+	if ( (item = FindItem ("Basic Armor")) )
 		item->offset = deh_GreenAC;
 
-	if (item = FindItem ("Mega Armor"))
+	if ( (item = FindItem ("Mega Armor")) )
 		item->offset = deh_BlueAC;
+
+	if (deh_Infight == 0xDD)
+		deh_Infight = 1;		// Enable infighting
+	else
+		deh_Infight = 0;
 
 	return result;
 }
@@ -530,7 +586,7 @@ int PatchText (int oldSize)
 	char *oldStr;
 	char *newStr;
 	char *temp;
-	boolean good;
+	BOOL good;
 	int result;
 	int i;
 
@@ -559,18 +615,20 @@ int PatchText (int oldSize)
 		return 0;
 	}
 
-	DEVONLY (Printf, "Searching for text:\n%s\n", oldStr, 0);
+	DPrintf ("Searching for text:\n%s\n", oldStr);
 	good = false;
 
 
 	// Search through sfx names
 	for (i = 0; i < NUMSFX; i++) {
-		if (!strcmp (S_sfx[i].name, oldStr)) {
-			S_sfx[i].name = copystring (newStr);
-			good = true;
-			// Yes, we really need to check them all. A sound patch could
-			// have created two sounds that point to the same name, and
-			// stopping at the first would miss the change to the second.
+		if (S_sfx[i].name) {
+			if (!strcmp (S_sfx[i].name, oldStr)) {
+				S_sfx[i].name = copystring (newStr);
+				good = true;
+				// Yes, we really need to check them all. A sound patch could
+				// have created two sounds that point to the same name, and
+				// stopping at the first would miss the change to the second.
+			}
 		}
 	}
 
@@ -595,7 +653,7 @@ int PatchText (int oldSize)
 	// This is something of an even bigger hack
 	// since I changed the way music is handled.
 	if (oldSize < 7) {		// Music names are never >6 chars
-		if (temp = malloc (oldSize + 3)) {
+		if ( (temp = malloc (oldSize + 3)) ) {
 			level_info_t *info = LevelInfos;
 			sprintf (temp, "d_%s", oldStr);
 
@@ -614,48 +672,19 @@ int PatchText (int oldSize)
 	if (good)
 		goto donewithtext;
 
-
-	// Search through level names.
-	// This is even hackier than the music changing code.
-	if ( (oldStr[0] == 'E' && oldStr[2] == 'M' && oldStr[4] == ':' && oldStr[5] == ' ') ||
-		!strnicmp (oldStr, "level ", 6) ) {
-
-		temp = strchr (oldStr, ':') + 2;
-		if (temp != (char *)2) {
-			level_info_t *info = LevelInfos;
-
-			while (info->level_name) {
-				if (!stricmp (info->level_name, temp)) {
-					info->level_name = copystring (newStr);
-					good = true;
-				}
-				info++;
-			}
-		}
-	}
-
-	if (good)
-		goto donewithtext;
-
-
-	// Search through cluster entrance and exit texts.
-	{
-		cluster_info_t *info = ClusterInfos;
-
-		while (info->cluster) {
-			if (info->exittext && !stricmp (info->exittext, oldStr)) {
-				info->exittext = copystring (newStr);
-				good = true;
-			} else if (info->entertext && !stricmp (info->entertext, oldStr)) {
-				info->entertext = copystring (newStr);
-				good = true;
-			}
-			info++;
+	
+	// Search through most other texts
+	for (i = 0; i < NUMSTRINGS; i++) {
+		if (!stricmp (Strings[i].builtin, oldStr)) {
+			ReplaceString (&Strings[i].string, newStr);
+			Strings[i].type = str_patched;
+			good = true;
+			break;
 		}
 	}
 
 	if (!good)
-		DEVONLY (Printf, "   (Unmatched)\n", 0, 0);
+		DPrintf ("   (Unmatched)\n");
 
 donewithtext:
 	if (newStr)
@@ -673,44 +702,71 @@ donewithtext:
 
 void DoDehPatch (char *patchfile)
 {
+	char file[256];
 	int cont;
+	int filelen;
 
 	BackUpData ();
+	PatchFile = NULL;
 
-	deh = fopen (patchfile, "r");
-	if (!deh) {
-		Printf ("Could not open DeHackEd patch \"%s\"\n", patchfile);
-		return;
+	if (patchfile) {
+		FILE *deh;
+
+		strcpy (file, patchfile);
+		DefaultExtension (file, ".deh");
+
+		if ( (deh = fopen (file, "rb")) ) {
+			filelen = Q_filelength (deh);
+			if ( (PatchFile = malloc (filelen + 1)) ) {
+				fread (PatchFile, 1, filelen, deh);
+				fclose (deh);
+			}
+		}
+
+		if (!PatchFile) {
+			Printf ("Could not open DeHackEd patch \"%s\"\n", file);
+			return;
+		}
+	} else {
+		int lump = W_CheckNumForName ("DEHACKED");
+
+		if (lump < 0)
+			return;
+
+		filelen = W_LumpLength (lump);
+		if ( (PatchFile = malloc (filelen + 1)) ) {
+			W_ReadLump (lump, PatchFile);
+		} else {
+			Printf ("Not enough memory to apply internal DeHackEd patch\n");
+			return;
+		}
 	}
 
-	LineBuff = malloc (LINESIZE);
-	if (!LineBuff) {
-		fclose (deh);
-		Printf ("No memory for DeHackEd line buffer\n");
+	if (!PatchFile)
 		return;
-	}
+
+	// End lump with a NULL for our parser
+	PatchFile[filelen] = 0;
 
 	dversion = pversion = -1;
 
 	cont = 0;
-	if (fgets (LineBuff, LINESIZE, deh)) {
-		if (!strnicmp (LineBuff, "Patch File for DeHackEd v", 25)) {
-			while ((cont = GetLine()) == 1) {
-					 CHECKKEY ("Doom version", dversion)
-				else CHECKKEY ("Patch format", pversion)
-			}
+	if (!strnicmp (PatchFile, "Patch File for DeHackEd v", 25)) {
+		PatchPt = strchr (PatchFile, '\n');
+		while ((cont = GetLine()) == 1) {
+				 CHECKKEY ("Doom version", dversion)
+			else CHECKKEY ("Patch format", pversion)
 		}
 	}
 
 	if (!cont || dversion == -1 || pversion == -1) {
-		fclose (deh);
-		free (LineBuff);
+		free (PatchFile);
 		Printf ("\"%s\" is not a DeHackEd patch file\n");
 		return;
 	}
 
 	if (pversion != 6) {
-		Printf ("DeHackEd patch version is %d.\nUnexpected results may occur.\n");
+		Printf ("DeHackEd patch version is %d.\nUnexpected results may occur.\n", pversion);
 	}
 
 	if (dversion == 16)
@@ -755,7 +811,6 @@ void DoDehPatch (char *patchfile)
 		}
 	} while (cont);
 
-	fclose (deh);
-	free (LineBuff);
+	free (PatchFile);
 	Printf ("Patch installed\n");
 }

@@ -24,9 +24,7 @@
 #define __R_SKY__
 
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+#include "c_cvars.h"
 
 // SKY, store the number for name.
 #define 				SKYFLATNAME  "F_SKY1"
@@ -34,11 +32,18 @@
 // The sky map is 256*128*4 maps.
 #define ANGLETOSKYSHIFT 		22
 
-extern	int 			skytexture;
-extern int				skytexturemid;
+extern int 				sky1texture,	sky2texture;
+extern int				sky1texturemid, sky2texturemid;
+extern fixed_t			sky1pos,		sky2pos;
+extern int				sky1stretch,	sky2stretch;
+fixed_t					sky1iscale,		sky2iscale;
+fixed_t					sky1scale,		sky2scale;
+fixed_t					sky1height,		sky2height;
 
-// Called whenever the view size changes.
-void R_InitSkyMap (void);
+extern cvar_t			*r_stretchsky;
+
+// Called whenever the sky changes.
+void R_InitSkyMap		(cvar_t *stretchsky);
 
 #endif
 //-----------------------------------------------------------------------------

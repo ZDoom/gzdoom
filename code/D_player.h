@@ -40,9 +40,8 @@
 // as commands per game tick.
 #include "d_ticcmd.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
+#include "d_netinf.h"
+
 
 
 
@@ -73,7 +72,8 @@ typedef enum
 	CF_GODMODE			= 2,
 	// Not really a cheat, just a debug aid.
 	CF_NOMOMENTUM		= 4,
-		CF_NOTARGET 			= 8
+	// [RH] Monsters don't target
+	CF_NOTARGET			= 8
 
 } cheat_t;
 
@@ -107,17 +107,19 @@ typedef struct player_s
 
 	// Power ups. invinc and invis are tic counters.
 	int 				powers[NUMPOWERS];
-	boolean 			cards[NUMCARDS];
-	boolean 			backpack;
+	BOOL 				cards[NUMCARDS];
+	BOOL	 			backpack;
 	
 	// Frags, kills of other players.
 	int 				frags[MAXPLAYERS];
+	int					fragcount;			// [RH] Cumulative frags for this player
+
 	weapontype_t		readyweapon;
 	
 	// Is wp_nochange if not changing.
 	weapontype_t		pendingweapon;
 
-	boolean 			weaponowned[NUMWEAPONS];
+	BOOL	 			weaponowned[NUMWEAPONS];
 	int 				ammo[NUMAMMO];
 	int 				maxammo[NUMAMMO];
 
@@ -162,11 +164,11 @@ typedef struct player_s
 	// Overlay view sprites (gun, etc).
 	pspdef_t			psprites[NUMPSPRITES];
 
-	// True if secret level has been done.
-	boolean 			didsecret;
+	// [RH] Pointer to a userinfo struct
+	userinfo_t			*userinfo;
 
-	// [RH] Max vertical distance for autoaim to work
-	fixed_t				aimdist;
+	// [RH] Tic when respawning is allowed
+	int					respawn_time;
 
 } player_t;
 
@@ -177,14 +179,15 @@ typedef struct player_s
 //
 typedef struct
 {
-	boolean 	in; 	// whether the player is in game
+	BOOL	 	in; 	// whether the player is in game
 	
 	// Player stats, kills, collected items etc.
 	int 		skills;
 	int 		sitems;
 	int 		ssecret;
 	int 		stime; 
-	int 		frags[4];
+	int 		frags[MAXPLAYERS];
+	int			fragcount;	// [RH] Cumulative frags for this player
 	int 		score;	// current score on entry, modified on return
   
 } wbplayerstruct_t;
@@ -193,13 +196,12 @@ typedef struct
 {
 	int 		epsd;	// episode # (0-2)
 
-	// if true, splash the secret level
-	boolean 	didsecret;
-	
-	// previous and next levels, origin 0
-	int 		last;
-	// [RH] next is the actual name of the next map
+	// [RH] Name of map just finished
+	char		current[8];
+
+	// next level, [RH] actual map name
 	char 		next[8];
+
 	char		lname0[8];
 	char		lname1[8];
 	

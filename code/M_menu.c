@@ -22,32 +22,30 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: m_menu.c,v 1.7 1997/02/03 22:45:10 b1 Exp $";
 
-#if defined(NORMALUNIX)
+#include <ctype.h>
+#include <fcntl.h>
+#include <stdlib.h>
+
+#if defined(_WIN32)
+#include <io.h>
+#else
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <ctype.h>
-#elif defined(_WIN32)
-#include <io.h>
-#include <fcntl.h>
-#include <ctype.h>
 #endif
 
 
 #include "doomdef.h"
 #include "dstrings.h"
 
-#include "c_console.h"
-#include "c_dispatch.h"
+#include "c_consol.h"
+#include "c_dispch.h"
 
 #include "d_main.h"
 
 #include "i_system.h"
+#include "i_input.h"
 #include "i_video.h"
 #include "z_zone.h"
 #include "v_video.h"
@@ -72,50 +70,52 @@ rcsid[] = "$Id: m_menu.c,v 1.7 1997/02/03 22:45:10 b1 Exp $";
 
 #include "m_menu.h"
 
+#include "v_text.h"
 
 
-extern patch_t* 		hu_font[HU_FONTSIZE];
+extern patch_t* 	hu_font[HU_FONTSIZE];
 
-extern boolean			chat_on;				// in heads-up code
+extern BOOL			chat_on;				// in heads-up code
 
 // temp for screenblocks (0-9)
-int 					screenSize; 			
+int 				screenSize; 			
 
 // -1 = no quicksave slot picked!
-int 					quickSaveSlot;			
+int 				quickSaveSlot;			
 
  // 1 = message to be printed
-int 					messageToPrint;
+int 				messageToPrint;
 // ...and here is the message string!
-char*					messageString;			
+char*				messageString;			
 
 // message x & y
-int 					messx;					
-int 					messy;
-int 					messageLastMenuActive;
+int 				messx;					
+int 				messy;
+int 				messageLastMenuActive;
 
 // timed message = no input from user
-boolean 				messageNeedsInput;	   
+BOOL 				messageNeedsInput;	   
 
 void	(*messageRoutine)(int response);
 
 #define SAVESTRINGSIZE	24
 
 // we are going to be entering a savegame string
-int 					saveStringEnter;			  
-int 					saveSlot;		// which slot to save in
-int 					saveCharIndex;	// which char we're editing
+int 				genStringEnter;
+void	(*genStringEnd)(int slot);
+int 				saveSlot;		// which slot to save in
+int 				saveCharIndex;	// which char we're editing
 // old save description before edit
-char					saveOldString[SAVESTRINGSIZE];	
+char				saveOldString[SAVESTRINGSIZE];	
 
-boolean 				inhelpscreens;
-boolean 				menuactive;
+BOOL 				inhelpscreens;
+BOOL 				menuactive;
 
-#define SKULLXOFF		-32
-#define LINEHEIGHT		16
+#define SKULLXOFF	-32
+#define LINEHEIGHT	16
 
-extern boolean			sendpause;
-char					savegamestrings[10][SAVESTRINGSIZE];
+extern BOOL			sendpause;
+char				savegamestrings[10][SAVESTRINGSIZE];
 
 char	endstring[160];
 
@@ -125,7 +125,7 @@ char	endstring[160];
 //
 typedef struct
 {
-	// 0 = no cursor here, 1 = ok, 2 = arrows ok
+	// -1 = no cursor here, 1 = ok, 2 = arrows ok
 	short		status;
 	
 	char		name[10];
@@ -155,7 +155,7 @@ typedef struct menu_s
 short			itemOn; 				// menu item skull is on
 short			skullAnimCounter;		// skull animation counter
 short			whichSkull; 			// which skull to draw
-boolean			drawSkull;				// [RH] don't always draw skull
+BOOL			drawSkull;				// [RH] don't always draw skull
 
 // graphic name of skulls
 // warning: initializer-string for array of chars is too long
@@ -203,14 +203,26 @@ void M_DrawSaveLoadBorder(int x,int y);
 void M_SetupNextMenu(menu_t *menudef);
 void M_DrawEmptyCell(menu_t *menu,int item);
 void M_DrawSelCell(menu_t *menu,int item);
-int  M_StringWidth(char *string);
 int  M_StringHeight(char *string);
 void M_StartControlPanel(void);
-void M_StartMessage(char *string,void *routine,boolean input);
+void M_StartMessage(char *string,void *routine,BOOL input);
 void M_StopMessage(void);
 void M_ClearMenus (void);
 
+// [RH] For player setup menu.
+static void M_PlayerSetup (int choice);
+static void M_PlayerSetupTicker (void);
+static void M_PlayerSetupDrawer (void);
+static void M_EditPlayerName (int choice);
+static void M_PlayerNameChanged (int choice);
+static void M_SlidePlayerRed (int choice);
+static void M_SlidePlayerGreen (int choice);
+static void M_SlidePlayerBlue (int choice);
+static void M_ChangeAutoAim (int choice);
 
+
+// [RH] Used to make left and right arrows repeat.
+static int Lefting = -1, Righting = -1;
 
 
 //
@@ -219,9 +231,10 @@ void M_ClearMenus (void);
 enum
 {
 	newgame = 0,
-	options,
 	loadgame,
 	savegame,
+	options,						// [RH] Moved
+	playersetup,					// [RH] Player setup
 	readthis,
 	quitdoom,
 	main_end
@@ -230,9 +243,10 @@ enum
 menuitem_t MainMenu[]=
 {
 	{1,"M_NGAME",M_NewGame,'n'},
-	{1,"M_OPTION",M_Options,'o'},
 	{1,"M_LOADG",M_LoadGame,'l'},
 	{1,"M_SAVEG",M_SaveGame,'s'},
+	{1,"M_OPTION",M_Options,'o'},	// [RH] Moved
+	{1,"M_PSETUP",M_PlayerSetup,'p'},	// [RH] Player setup
 	// Another hickup with Special edition.
 	{1,"M_RDTHIS",M_ReadThis,'r'},
 	{1,"M_QUITG",M_QuitDOOM,'q'}
@@ -312,13 +326,50 @@ menu_t	NewDef =
 };
 
 
+//
+// [RH] Player Setup Menu
+//
+
+enum
+{
+	playername,
+	playerpad1,
+	playerpad2,
+	playerred,
+	playergreen,
+	playerblue,
+	playerpad3,
+	playeraim,
+	psetup_end
+} psetup_e;
+
+menuitem_t PlayerSetupMenu[] =
+{
+	{ 1,"", M_EditPlayerName, 'n' },
+	{ -1,"",NULL, 0 },
+	{ -1,"",NULL, 0 },
+	{ 2,"", M_SlidePlayerRed, 'r' },
+	{ 2,"", M_SlidePlayerGreen, 'g' },
+	{ 2,"", M_SlidePlayerBlue, 'b' },
+	{ -1,"",NULL, 0 },
+	{ 2,"", M_ChangeAutoAim, 'a' }
+};
+
+menu_t PSetupDef = {
+	psetup_end,
+	&MainDef,
+	PlayerSetupMenu,
+	M_PlayerSetupDrawer,
+	48,	63,
+	playername
+};
 
 //
 // OPTIONS MENU
 //
 // [RH] This menu is now handled in m_options.c
 //
-boolean OptionsActive;
+BOOL OptionsActive;
 
 menu_t	OptionsDef =
 {
@@ -386,6 +437,8 @@ enum
 	load4,
 	load5,
 	load6,
+	load7,
+	load8,
 	load_end
 } load_e;
 
@@ -396,7 +449,9 @@ menuitem_t LoadMenu[]=
 	{1,"", M_LoadSelect,'3'},
 	{1,"", M_LoadSelect,'4'},
 	{1,"", M_LoadSelect,'5'},
-	{1,"", M_LoadSelect,'6'}
+	{1,"", M_LoadSelect,'6'},
+	{1,"", M_LoadSelect,'7'},
+	{1,"", M_LoadSelect,'8'},
 };
 
 menu_t	LoadDef =
@@ -419,7 +474,9 @@ menuitem_t SaveMenu[]=
 	{1,"", M_SaveSelect,'3'},
 	{1,"", M_SaveSelect,'4'},
 	{1,"", M_SaveSelect,'5'},
-	{1,"", M_SaveSelect,'6'}
+	{1,"", M_SaveSelect,'6'},
+	{1,"", M_SaveSelect,'7'},
+	{1,"", M_SaveSelect,'8'}
 };
 
 menu_t	SaveDef =
@@ -507,20 +564,26 @@ void Cmd_Menu_Options (void *plyr, int argc, char **argv)
 	M_Options(0);
 }
 
+void Cmd_Menu_Player (void *plyr, int argc, char **argv)
+{
+	M_StartControlPanel ();
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_PlayerSetup(0);
+}
+
 void Cmd_Bumpgamma (void *plyr, int argc, char **argv)
 {
 	// [RH] Gamma correction tables are now generated
 	// on the fly for *any* gamma level.
 	// Q: What are reasonable limits to use here?
 
-	double newgamma = gammalevel + 0.1;
-	char cmd[32];
+	float newgamma = gammalevel->value + 0.1;
 
 	if (newgamma > 3.0)
 		newgamma = 1.0;
 
-	sprintf (cmd, "gamma %g", newgamma);
-	AddCommandString (cmd);
+	SetCVarFloat (gammalevel, newgamma);
+	Printf ("Gamma correction level %g\n", gammalevel->value);
 }
 
 //
@@ -529,12 +592,12 @@ void Cmd_Bumpgamma (void *plyr, int argc, char **argv)
 //
 void M_ReadSaveStrings(void)
 {
-	int 			handle;
-	int 			count;
-	int 			i;
+	int 	handle;
+	int 	count;
+	int 	i;
 	char	name[256];
 		
-	for (i = 0;i < load_end;i++)
+	for (i = 0; i < load_end;i++)
 	{
 		if (M_CheckParm("-cdrom"))
 			sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",i);
@@ -560,10 +623,10 @@ void M_ReadSaveStrings(void)
 //
 void M_DrawLoad(void)
 {
-	int 			i;
+	int i;
 		
-	V_DrawPatchClean (72,28,0,W_CacheLumpName("M_LOADG",PU_CACHE));
-	for (i = 0;i < load_end; i++)
+	V_DrawPatchClean (72,28,&screens[0],W_CacheLumpName("M_LOADG",PU_CACHE));
+	for (i = 0; i < load_end; i++)
 	{
 		M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
 		V_DrawRedTextClean(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
@@ -577,17 +640,17 @@ void M_DrawLoad(void)
 //
 void M_DrawSaveLoadBorder(int x,int y)
 {
-	int 			i;
+	int i;
 		
-	V_DrawPatchClean (x-8,y+7,0,W_CacheLumpName("M_LSLEFT",PU_CACHE));
+	V_DrawPatchClean (x-8,y+7,&screens[0],W_CacheLumpName("M_LSLEFT",PU_CACHE));
 		
 	for (i = 0;i < 24;i++)
 	{
-		V_DrawPatchClean (x,y+7,0,W_CacheLumpName("M_LSCNTR",PU_CACHE));
+		V_DrawPatchClean (x,y+7,&screens[0],W_CacheLumpName("M_LSCNTR",PU_CACHE));
 		x += 8;
 	}
 
-	V_DrawPatchClean (x,y+7,0,W_CacheLumpName("M_LSRGHT",PU_CACHE));
+	V_DrawPatchClean (x,y+7,&screens[0],W_CacheLumpName("M_LSRGHT",PU_CACHE));
 }
 
 
@@ -595,9 +658,9 @@ void M_DrawSaveLoadBorder(int x,int y)
 //
 // User wants to load this game
 //
-void M_LoadSelect(int choice)
+void M_LoadSelect (int choice)
 {
-	char	name[256];
+	char name[256];
 		
 	if (M_CheckParm("-cdrom"))
 		sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",choice);
@@ -628,18 +691,18 @@ void M_LoadGame (int choice)
 //
 void M_DrawSave(void)
 {
-	int 			i;
+	int i;
 		
-	V_DrawPatchClean (72,28,0,W_CacheLumpName("M_SAVEG",PU_CACHE));
-	for (i = 0;i < load_end; i++)
+	V_DrawPatchClean (72,28,&screens[0],W_CacheLumpName("M_SAVEG",PU_CACHE));
+	for (i = 0; i < load_end; i++)
 	{
 		M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
 		V_DrawRedTextClean(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
 	}
 		
-	if (saveStringEnter)
+	if (genStringEnter)
 	{
-		i = M_StringWidth(savegamestrings[saveSlot]);
+		i = V_StringWidth(savegamestrings[saveSlot]);
 		V_DrawRedTextClean(LoadDef.x + i,LoadDef.y+LINEHEIGHT*saveSlot,"_");
 	}
 }
@@ -663,7 +726,8 @@ void M_DoSave(int slot)
 void M_SaveSelect(int choice)
 {
 	// we are going to be intercepting all chars
-	saveStringEnter = 1;
+	genStringEnter = 1;
+	genStringEnd = M_DoSave;
 	
 	saveSlot = choice;
 	strcpy(saveOldString,savegamestrings[choice]);
@@ -774,12 +838,12 @@ void M_DrawReadThis1(void)
 	switch ( gamemode )
 	{
 	  case commercial:
-		V_DrawPatchIndirect (0,0,0,W_CacheLumpName("HELP",PU_CACHE));
+		V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP",PU_CACHE));
 		break;
 	  case shareware:
 	  case registered:
 	  case retail:
-		V_DrawPatchIndirect (0,0,0,W_CacheLumpName("HELP1",PU_CACHE));
+		V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP1",PU_CACHE));
 		break;
 	  default:
 		break;
@@ -800,11 +864,11 @@ void M_DrawReadThis2(void)
 	  case retail:
 	  case commercial:
 		// This hack keeps us from having to change menus.
-		V_DrawPatchIndirect (0,0,0,W_CacheLumpName("CREDIT",PU_CACHE));
+		V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("CREDIT",PU_CACHE));
 		break;
 	  case shareware:
 	  case registered:
-		V_DrawPatchIndirect (0,0,0,W_CacheLumpName("HELP2",PU_CACHE));
+		V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP2",PU_CACHE));
 		break;
 	  default:
 		break;
@@ -818,7 +882,7 @@ void M_DrawReadThis2(void)
 //
 void M_DrawMainMenu(void)
 {
-	V_DrawPatchClean (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
+	V_DrawPatchClean (94,2,&screens[0],W_CacheLumpName("M_DOOM",PU_CACHE));
 }
 
 
@@ -829,8 +893,8 @@ void M_DrawMainMenu(void)
 //
 void M_DrawNewGame(void)
 {
-	V_DrawPatchClean (96,14,0,W_CacheLumpName("M_NEWG",PU_CACHE));
-	V_DrawPatchClean (54,38,0,W_CacheLumpName("M_SKILL",PU_CACHE));
+	V_DrawPatchClean (96,14,&screens[0],W_CacheLumpName("M_NEWG",PU_CACHE));
+	V_DrawPatchClean (54,38,&screens[0],W_CacheLumpName("M_SKILL",PU_CACHE));
 }
 
 void M_NewGame(int choice)
@@ -855,15 +919,16 @@ int 	epi;
 
 void M_DrawEpisode(void)
 {
-	V_DrawPatchClean (54,38,0,W_CacheLumpName("M_EPISOD",PU_CACHE));
+	V_DrawPatchClean (54,38,&screens[0],W_CacheLumpName("M_EPISOD",PU_CACHE));
 }
 
 void M_VerifyNightmare(int ch)
 {
 	if (ch != 'y')
 		return;
-				
-	G_DeferedInitNew(nightmare,CalcMapName (epi+1, 1));
+		
+	SetCVarFloat (gameskill, nightmare);
+	G_DeferedInitNew (CalcMapName (epi+1, 1));
 	M_ClearMenus ();
 }
 
@@ -874,8 +939,9 @@ void M_ChooseSkill(int choice)
 		M_StartMessage(NIGHTMARE,M_VerifyNightmare,true);
 		return;
 	}
-		
-	G_DeferedInitNew((float)choice,CalcMapName (epi+1, 1));
+
+	SetCVarFloat (gameskill, (float)choice);
+	G_DeferedInitNew (CalcMapName (epi+1, 1));
 	M_ClearMenus ();
 }
 
@@ -906,12 +972,9 @@ void M_Episode(int choice)
 //
 // M_Options
 //
-char	msgNames[2][9]			= {"M_MSGOFF","M_MSGON"};
-
-
 void M_DrawOptions(void)
 {
-	V_DrawPatchClean (108,15,0,W_CacheLumpName("M_OPTTTL",PU_CACHE));
+	V_DrawPatchClean (108,15,&screens[0],W_CacheLumpName("M_OPTTTL",PU_CACHE));
 }
 
 void M_Options(int choice)
@@ -986,7 +1049,7 @@ void M_FinishReadThis(int choice)
 //
 // M_QuitDOOM
 //
-int 	quitsounds[8] =
+int quitsounds[8] =
 {
 	sfx_pldeth,
 	sfx_dmpain,
@@ -998,7 +1061,7 @@ int 	quitsounds[8] =
 	sfx_sgtatk
 };
 
-int 	quitsounds2[8] =
+int quitsounds2[8] =
 {
 	sfx_vilact,
 	sfx_getpow,
@@ -1030,48 +1093,254 @@ void M_QuitResponse(int ch)
 
 
 
-void M_QuitDOOM(int choice)
+void M_QuitDOOM (int choice)
 {
   // We pick index 0 which is language sensitive,
   //  or one at random, between 1 and maximum number.
   if (language != english )
-	sprintf(endstring,"%s\n\n"DOSY, endmsg[0] );
+	sprintf(endstring,"%s\n\n%s", endmsg[0], DOSY );
   else
-	sprintf(endstring,"%s\n\n"DOSY, endmsg[ (gametic%(NUM_QUITMESSAGES-2))+1 ]);
+	sprintf(endstring,"%s\n\n%s", endmsg[ (gametic%(NUM_QUITMESSAGES-2))+1 ], DOSY);
   
   M_StartMessage(endstring,M_QuitResponse,true);
 }
 
 
+//
+// [RH] Player Setup Menu code
+//
+void M_DrawSlider (int x, int y, float min, float max, float cur);
+
+static state_t *PlayerState;
+static int PlayerTics;
+
+extern cvar_t *name;
+
+static void M_PlayerSetup (int choice)
+{
+	choice = 0;
+	strncpy (savegamestrings[0], name->string, 23);
+	savegamestrings[0][23] = 0;
+	M_SetupNextMenu (&PSetupDef);
+	PlayerState = &states[mobjinfo[MT_PLAYER].seestate];
+	PlayerTics = PlayerState->tics;
+}
+
+static void M_PlayerSetupTicker (void)
+{
+	// Based on code in f_finale.c
+	if (--PlayerTics > 0)
+		return;
+
+	if (PlayerState->tics == -1 || PlayerState->nextstate == S_NULL) {
+		PlayerState = &states[mobjinfo[MT_PLAYER].seestate];
+	} else {
+		PlayerState = &states[PlayerState->nextstate];
+	}
+	PlayerTics = PlayerState->tics;
+}
+
+static void M_PlayerSetupDrawer (void)
+{
+	// Draw title
+	{
+		patch_t *patch = W_CacheLumpName ("M_PSTTL", PU_CACHE);
+
+		V_DrawPatchClean (160 - (SHORT(patch->width) >> 1),
+						  PSetupDef.y - (SHORT(patch->height) * 3),
+						  &screens[0], patch);
+	}
+
+	// Draw player name box
+	V_DrawWhiteTextClean (PSetupDef.x + 8, PSetupDef.y - 12, "Your name");
+	M_DrawSaveLoadBorder (PSetupDef.x + 8, PSetupDef.y);
+	V_DrawRedTextClean (PSetupDef.x + 8, PSetupDef.y, savegamestrings[0]);
+	if (genStringEnter)
+		V_DrawRedTextClean (PSetupDef.x + V_StringWidth(savegamestrings[0]) + 8, PSetupDef.y, "_");
+
+	// Draw player character
+	{
+		int x = 320 - 88 - 32, y = PSetupDef.y + LINEHEIGHT*3 - 20;
+
+		x = (x-160)*CleanXfac+(screens[0].width>>1);
+		y = (y-100)*CleanYfac+(screens[0].height>>1);
+		V_Clear (x, y, x + 72 * CleanXfac, y + 72 * CleanYfac, &screens[0], 0);
+	}
+	{
+		spriteframe_t *sprframe =
+			&sprites[PlayerState->sprite].spriteframes[PlayerState->frame & FF_FRAMEMASK];
+
+		V_ColorMap = translationtables + consoleplayer * 256;
+		V_DrawTranslatedPatchClean (320 - 52 - 32, PSetupDef.y + LINEHEIGHT*3 + 40,
+									&screens[0],
+									W_CacheLumpNum (sprframe->lump[0] + firstspritelump, PU_CACHE));
+	}
+	V_DrawPatchClean (320 - 88 - 32 + 36, PSetupDef.y + LINEHEIGHT*3 + 16,
+					  &screens[0],
+					  W_CacheLumpName ("M_PBOX", PU_CACHE));
+
+	// Draw player color sliders
+	V_DrawWhiteTextClean (PSetupDef.x, PSetupDef.y + LINEHEIGHT*2, "Your color");
+
+	V_DrawRedTextClean (PSetupDef.x, PSetupDef.y + LINEHEIGHT*3, "Red");
+	V_DrawRedTextClean (PSetupDef.x, PSetupDef.y + LINEHEIGHT*4, "Green");
+	V_DrawRedTextClean (PSetupDef.x, PSetupDef.y + LINEHEIGHT*5, "Blue");
+
+	{
+		int x = V_StringWidth ("Green") + 8 + PSetupDef.x;
+		int color = players[consoleplayer].userinfo->color;
+
+		M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*3, 0.0f, 255.0f, RPART(color));
+		M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*4, 0.0f, 255.0f, GPART(color));
+		M_DrawSlider (x, PSetupDef.y + LINEHEIGHT*5, 0.0f, 255.0f, BPART(color));
+	}
+
+	// Draw autoaim setting
+	{
+		int x = V_StringWidth ("Autoaim") + 8 + PSetupDef.x;
+		float aim = autoaim->value;
+
+		V_DrawRedTextClean (PSetupDef.x, PSetupDef.y + LINEHEIGHT*7, "Autoaim");
+		V_DrawWhiteTextClean (x, PSetupDef.y + LINEHEIGHT*7,
+			aim == 0 ? "Never" :
+			aim <= 0.25 ? "Very Low" :
+			aim <= 0.5 ? "Low" :
+			aim <= 1 ? "Medium" :
+			aim <= 2 ? "High" :
+			aim <= 3 ? "Very High" : "Always");
+	}
+}
+
+static void M_ChangeAutoAim (int choice)
+{
+	static const float ranges[] = { 0, 0.25, 0.5, 1, 2, 3, 5000 };
+	float aim = autoaim->value;
+	int i;
+
+	if (!choice) {
+		// Select a lower autoaim
+
+		for (i = 6; i >= 1; i--) {
+			if (aim >= ranges[i]) {
+				aim = ranges[i - 1];
+				break;
+			}
+		}
+	} else {
+		// Select a higher autoaim
+
+		for (i = 5; i >= 0; i--) {
+			if (aim >= ranges[i]) {
+				aim = ranges[i + 1];
+				break;
+			}
+		}
+	}
+
+	SetCVarFloat (autoaim, aim);
+}
+
+static void M_EditPlayerName (int choice)
+{
+	// we are going to be intercepting all chars
+	genStringEnter = 1;
+	genStringEnd = M_PlayerNameChanged;
+	
+	saveSlot = 0;
+	strcpy(saveOldString,savegamestrings[0]);
+	if (!strcmp(savegamestrings[0],EMPTYSTRING))
+		savegamestrings[0][0] = 0;
+	saveCharIndex = strlen(savegamestrings[0]);
+}
+
+static void M_PlayerNameChanged (int choice)
+{
+	char command[SAVESTRINGSIZE+8];
+
+	sprintf (command, "name \"%s\"", savegamestrings[0]);
+	AddCommandString (command);
+}
+
+static void SendNewColor (int red, int green, int blue)
+{
+	char command[24];
+
+	sprintf (command, "color \"%02x %02x %02x\"", red, green, blue);
+	AddCommandString (command);
+}
+
+static void M_SlidePlayerRed (int choice)
+{
+	int color = players[consoleplayer].userinfo->color;
+	int red = RPART(color);
+
+	if (choice == 0) {
+		red -= 16;
+		if (red < 0)
+			red = 0;
+	} else {
+		red += 16;
+		if (red > 255)
+			red = 255;
+	}
+
+	SendNewColor (red, GPART(color), BPART(color));
+}
+
+static void M_SlidePlayerGreen (int choice)
+{
+	int color = players[consoleplayer].userinfo->color;
+	int green = GPART(color);
+
+	if (choice == 0) {
+		green -= 16;
+		if (green < 0)
+			green = 0;
+	} else {
+		green += 16;
+		if (green > 255)
+			green = 255;
+	}
+
+	SendNewColor (RPART(color), green, BPART(color));
+}
+
+static void M_SlidePlayerBlue (int choice)
+{
+	int color = players[consoleplayer].userinfo->color;
+	int blue = BPART(color);
+
+	if (choice == 0) {
+		blue -= 16;
+		if (blue < 0)
+			blue = 0;
+	} else {
+		blue += 16;
+		if (blue > 255)
+			blue = 255;
+	}
+
+	SendNewColor (RPART(color), GPART(color), blue);
+}
 
 
 //
 //		Menu Functions
 //
-void
-M_DrawEmptyCell
-( menu_t*		menu,
-  int			item )
+void M_DrawEmptyCell (menu_t *menu, int item)
 {
-	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, 0,
+	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, &screens[0],
 					   W_CacheLumpName("M_CELL1",PU_CACHE));
 }
 
-void
-M_DrawSelCell
-( menu_t*		menu,
-  int			item )
+void M_DrawSelCell (menu_t *menu, int item)
 {
-	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, 0,
+	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, &screens[0],
 					   W_CacheLumpName("M_CELL2",PU_CACHE));
 }
 
 
-void
-M_StartMessage
-( char* 		string,
-  void* 		routine,
-  boolean		input )
+void M_StartMessage (char *string, void *routine, BOOL input)
 {
 	C_HideConsole ();
 	messageLastMenuActive = menuactive;
@@ -1085,33 +1354,11 @@ M_StartMessage
 
 
 
-void M_StopMessage(void)
+void M_StopMessage (void)
 {
 	menuactive = messageLastMenuActive;
 	messageToPrint = 0;
 }
-
-
-
-//
-// Find string width from hu_font chars
-//
-int M_StringWidth(char* string)
-{
-	int 			w = 0;
-	int 			c;
-		
-	while (*string) {
-		c = toupper((*string++) & 0x7f) - HU_FONTSTART;
-		if (c < 0 || c >= HU_FONTSIZE)
-			w += 4;
-		else
-			w += SHORT (hu_font[c]->width);
-	}
-				
-	return w;
-}
-
 
 
 //
@@ -1119,8 +1366,8 @@ int M_StringWidth(char* string)
 //
 int M_StringHeight(char* string)
 {
-	int 			h;
-	int 			height = SHORT(hu_font[0]->height);
+	int h;
+	int height = SHORT(hu_font[0]->height);
 		
 	h = height;
 	while (*string)
@@ -1139,109 +1386,50 @@ int M_StringHeight(char* string)
 //
 // M_Responder
 //
-boolean M_Responder (event_t* ev)
+BOOL M_Responder (event_t* ev)
 {
-	int 			ch, ch2;
-	int 			i;
-	static	int 	joywait = 0;
-	static	int 	mousewait = 0;
-	static	int 	mousey = 0;
-	static	int 	lasty = 0;
-	static	int 	mousex = 0;
-	static	int 	lastx = 0;
-		
+	int ch, ch2;
+	int i;
+
 	ch = ch2 = -1;
-		
+
+	if (ev->type == ev_keydown) {
+		ch = ev->data1; 		// scancode
+		ch2 = ev->data2;		// ASCII
+	}
+	
+	// [RH] Repeat left and right arrow keys
+	if (ev->type == ev_keydown) {
+		if (ev->data1 == KEY_LEFTARROW)
+			Lefting = KeyRepeatDelay >> 1;
+		else if (ev->data1 == KEY_RIGHTARROW)
+			Righting = KeyRepeatDelay >> 1;
+	} else if (ev->type == ev_keyup) {
+		if (ev->data1 == KEY_LEFTARROW)
+			Lefting = -1;
+		else if (ev->data1 == KEY_RIGHTARROW)
+			Righting = -1;
+	}
+
+	if (ch == -1 && !menuactive && Lefting == -1 && Righting == -1)
+		return false;
+
 	if (menuactive && OptionsActive) {
 		if (ev->type == ev_keydown) {
-			OptionsActive = M_OptResponder (ev->data1);
+			OptionsActive = M_OptResponder (ev);
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	if (ev->type == ev_joystick && joywait < I_GetTime())
-	{
-		if (ev->data3 == -1)
-		{
-			ch = KEY_UPARROW;
-			joywait = I_GetTime() + 5;
-		}
-		else if (ev->data3 == 1)
-		{
-			ch = KEY_DOWNARROW;
-			joywait = I_GetTime() + 5;
-		}
-				
-		if (ev->data2 == -1)
-		{
-			ch = KEY_LEFTARROW;
-			joywait = I_GetTime() + 2;
-		}
-		else if (ev->data2 == 1)
-		{
-			ch = KEY_RIGHTARROW;
-			joywait = I_GetTime() + 2;
-		}
-	}
-	else
-	{
-		if (ev->type == ev_mouse && mousewait < I_GetTime())
-		{
-			mousey += ev->data3;
-			if (mousey < lasty-30)
-			{
-				ch = KEY_DOWNARROW;
-				mousewait = I_GetTime() + 5;
-				mousey = lasty -= 30;
-			}
-			else if (mousey > lasty+30)
-			{
-				ch = KEY_UPARROW;
-				mousewait = I_GetTime() + 5;
-				mousey = lasty += 30;
-			}
-				
-			mousex += ev->data2;
-			if (mousex < lastx-30)
-			{
-				ch = KEY_LEFTARROW;
-				mousewait = I_GetTime() + 5;
-				mousex = lastx -= 30;
-			}
-			else if (mousex > lastx+30)
-			{
-				ch = KEY_RIGHTARROW;
-				mousewait = I_GetTime() + 5;
-				mousex = lastx += 30;
-			}
-		}
-		else
-			if (ev->type == ev_keydown)
-			{
-				switch (ev->data1) {
-					case KEY_JOY1:
-					case KEY_MOUSE1:
-						ch = KEY_ENTER;
-						break;
-					case KEY_JOY2:
-					case KEY_MOUSE2:
-						ch = KEY_BACKSPACE;
-						break;
-					default:
-						ch = ev->data1; 		// scancode
-						ch2 = ev->data2;		// ASCII
-				}
-			}
-	}
-	
-	if (ch == -1 && !menuactive)
+	// [RH] Ignore key up events totally.
+	if (ev->type == ev_keyup)
 		return false;
-
 	
 	// Save Game string input
-	if (saveStringEnter)
+	// [RH] and Player Name string input
+	if (genStringEnter)
 	{
 		switch(ch)
 		{
@@ -1252,26 +1440,26 @@ boolean M_Responder (event_t* ev)
 				savegamestrings[saveSlot][saveCharIndex] = 0;
 			}
 			break;
-								
+
 		  case KEY_ESCAPE:
-			saveStringEnter = 0;
+			genStringEnter = 0;
 			strcpy(&savegamestrings[saveSlot][0],saveOldString);
 			break;
 								
 		  case KEY_ENTER:
-			saveStringEnter = 0;
+			genStringEnter = 0;
 			if (savegamestrings[saveSlot][0])
-				M_DoSave(saveSlot);
+				genStringEnd(saveSlot);	// [RH] M_DoSave() or M_PlayerNameChanged
 			break;
 								
 		  default:
-			ch = toupper(ch2);
+			ch = toupper(ev->data3);	// [RH] Use user keymap
 			if (ch != 32)
 				if (ch-HU_FONTSTART < 0 || ch-HU_FONTSTART >= HU_FONTSIZE)
 					break;
 			if (ch >= 32 && ch <= 127 &&
 				saveCharIndex < SAVESTRINGSIZE-1 &&
-				M_StringWidth(savegamestrings[saveSlot]) <
+				V_StringWidth(savegamestrings[saveSlot]) <
 				(SAVESTRINGSIZE-2)*8)
 			{
 				savegamestrings[saveSlot][saveCharIndex++] = ch;
@@ -1299,14 +1487,8 @@ boolean M_Responder (event_t* ev)
 		return true;
 	}
 		
-	if (devparm && ch == KEY_F1)
-	{
-		G_ScreenShot ();
-		return true;
-	}
-				
-	
-	// [RH] F-Keys are now just normal keys that can be bound
+	// [RH] F-Keys are now just normal keys that can be bound,
+	//		so they aren't checked here anymore.
 	
 	// Pop-up menu?
 	if (!menuactive)
@@ -1380,19 +1562,19 @@ boolean M_Responder (event_t* ev)
 		}
 		return true;
 				
+	  // [RH] Escape now moves back one menu instead of
+	  //	  quitting the menu system. Thus, backspace
+	  //	  is now ignored.
 	  case KEY_ESCAPE:
-		currentMenu->lastOn = itemOn;
-		M_ClearMenus ();
-		S_StartSound(ORIGIN_AMBIENT,sfx_swtchx);
-		return true;
-				
-	  case KEY_BACKSPACE:
 		currentMenu->lastOn = itemOn;
 		if (currentMenu->prevMenu)
 		{
 			currentMenu = currentMenu->prevMenu;
 			itemOn = currentMenu->lastOn;
 			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+		} else {
+			M_ClearMenus ();
+			S_StartSound(ORIGIN_AMBIENT,sfx_swtchx);
 		}
 		return true;
 		
@@ -1438,6 +1620,7 @@ void M_StartControlPanel (void)
 	itemOn = currentMenu->lastOn;	// JDC
 	C_HideConsole ();				// [RH] Make sure console goes bye bye.
 	OptionsActive = false;			// [RH] Make sure none of the options menus appear.
+	I_PauseMouse ();				// [RH] Give the mouse back in windowed modes.
 }
 
 
@@ -1448,12 +1631,12 @@ void M_StartControlPanel (void)
 //
 void M_Drawer (void)
 {
-	static short		x;
-	static short		y;
-	short				i;
-	short				max;
-	char				string[40];
-	int 				start;
+	static short	x;
+	static short	y;
+	short			i;
+	short			max;
+	char			string[40];
+	int 			start;
 
 	inhelpscreens = false;
 
@@ -1461,7 +1644,7 @@ void M_Drawer (void)
 	// Horiz. & Vertically center string and print it.
 	if (messageToPrint)
 	{
-		V_DimScreen (0);
+		V_DimScreen (&screens[0]);
 		start = 0;
 		y = 100 - M_StringHeight(messageString)/2;
 		while(*(messageString+start))
@@ -1481,7 +1664,7 @@ void M_Drawer (void)
 				start += i;
 			}
 								
-			x = 160 - M_StringWidth(string)/2;
+			x = 160 - V_StringWidth(string)/2;
 			V_DrawRedTextClean(x,y,string);
 			y += SHORT(hu_font[0]->height);
 		}
@@ -1491,7 +1674,7 @@ void M_Drawer (void)
 	if (!menuactive)
 		return;
 
-	V_DimScreen (0);
+	V_DimScreen (&screens[0]);
 
 	if (OptionsActive) {
 		M_OptDrawer ();
@@ -1507,7 +1690,7 @@ void M_Drawer (void)
 		for (i=0;i<max;i++)
 		{
 			if (currentMenu->menuitems[i].name[0])
-				V_DrawPatchClean (x,y,0,
+				V_DrawPatchClean (x,y,&screens[0],
 								   W_CacheLumpName(currentMenu->menuitems[i].name ,PU_CACHE));
 			y += LINEHEIGHT;
 		}
@@ -1515,7 +1698,7 @@ void M_Drawer (void)
 		
 		// DRAW SKULL
 		if (drawSkull) {
-			V_DrawPatchClean(x + SKULLXOFF,currentMenu->y - 5 + itemOn*LINEHEIGHT, 0,
+			V_DrawPatchClean(x + SKULLXOFF,currentMenu->y - 5 + itemOn*LINEHEIGHT, &screens[0],
 							 W_CacheLumpName(skullName[whichSkull],PU_CACHE));
 		}
 	}
@@ -1529,6 +1712,7 @@ void M_ClearMenus (void)
 {
 	menuactive = 0;
 	drawSkull = true;
+	I_ResumeMouse ();		// [RH] Recapture the mouse in windowed modes.
 	// if (!netgame && usergame && paused)
 	//		 sendpause = true;
 }
@@ -1556,6 +1740,25 @@ void M_Ticker (void)
 	{
 		whichSkull ^= 1;
 		skullAnimCounter = 8;
+	}
+	if (currentMenu == &PSetupDef)
+		M_PlayerSetupTicker ();
+
+	// [RH] Make left and right arrow keys repeat
+	if (Lefting != -1 && --Lefting == 0) {
+		event_t ev;
+
+		ev.type = ev_keydown;
+		ev.data1 = KEY_LEFTARROW;
+		Lefting = 2;
+		M_Responder (&ev);
+	} else if (Righting != -1 && --Righting == 0) {
+		event_t ev;
+
+		ev.type = ev_keydown;
+		ev.data1 = KEY_RIGHTARROW;
+		Righting = 2;
+		M_Responder (&ev);
 	}
 }
 
@@ -1611,6 +1814,6 @@ void M_Init (void)
 	  default:
 		break;
 	}
-	
+	M_OptInit ();
 }
 

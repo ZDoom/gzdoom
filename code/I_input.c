@@ -1,249 +1,109 @@
 #define DIRECTINPUT_VERSION 0x300
 
 #define WIN32_LEAN_AND_MEAN
+#define __BYTEBOOL__
 #include <windows.h>
 #include <mmsystem.h>
 #include <stdio.h>
-#include "i_input.h"
+#include <stdlib.h>
+#include <ctype.h>
 
-#define __BYTEBOOL__
+#include <dinput.h>
+
+#include "m_argv.h"
+#include "i_input.h"
+#include "v_video.h"
+
 #include "i_music.h"
 
 #include "d_main.h"
 #include "c_cvars.h"
 #include "i_system.h"
-#include "doomdef.h"
+#include "i_video.h"
 
-extern void *DDBack;
+#include "s_sound.h"
+
+
+#define DINPUT_BUFFERSIZE           32
+
+extern HINSTANCE		g_hInst;					/* My instance handle */
+
+static void KeyRead (void);
+static BOOL DI_Init2 (void);
+static void MouseRead_DI (void);
+static void MouseRead_Win32 (void);
+static void GrabMouse_Win32 (void);
+static void UngrabMouse_Win32 (void);
+static BOOL I_GetDIMouse (void);
+static void I_GetWin32Mouse (void);
+static void CenterMouse_Win32 (void);
+
+static BOOL WindowActive;
+static BOOL MakeMouseEvents;
+
+extern BOOL vidactive;
 extern HWND Window;
 
-LPDIRECTINPUTDEVICE g_pMouse;
+
+// [RH] As of 1.14, ZDoom no longer needs to be linked with dinput.lib.
+//		We now go straight to the DLL ourselves.
+
+#ifndef __CYGNUS__
+typedef HRESULT (WINAPI *DIRECTINPUTCREATE_FUNCTION) (HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
+#else
+typedef HRESULT WINAPI (*DIRECTINPUTCREATE_FUNCTION) (HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
+#endif
+
+static HMODULE DirectInputInstance;
+
+extern void InitKeyboardObjectData (void);
+
+typedef enum { win32, dinput } mousemode_t;
+static mousemode_t mousemode;
+
+extern BOOL paused;
+static BOOL havefocus = FALSE;
+static BOOL noidle = FALSE;
+
+// Used by the console for making keys repeat
+int KeyRepeatDelay;
+int KeyRepeatRate;
+
+LPDIRECTINPUT			g_pdi;
+LPDIRECTINPUTDEVICE		g_pKey;
+LPDIRECTINPUTDEVICE		g_pMouse;
+
+//Other globals
+int MouseCurX,MouseCurY,GDx,GDy;
 
 cvar_t *i_remapkeypad;
 cvar_t *usejoystick;
 cvar_t *usemouse;
+cvar_t *in_mouse;
 
-static char Convert2[256];
-static const char Convert []={
-0,
-27,
-'1',
-'2',
-'3',
-'4',
-'5',
-'6',
-'7',
-'8',
-'9',
-'0',
-'-',
-'=',
-8,//Backspace
-9,//Tab
-'q',
-'w',
-'e',
-'r',
-'t',
-'y',
-'u',
-'i',
-'o',
-'p',
-'[',
-']',
-13,
-0,//DIK_LCONTROL		0x1D
-'a',
-'s',
-'d',
-'f',
-'g',
-'h',
-'j',
-'k',
-'l',
-';',
-39,//'
-'`',//DIK_GRAVE 		  0x29	  /* accent grave */
-0,//DIK_LSHIFT			0x2A
-'\\',//DIK_BACKSLASH	   0x2B
-'z',
-'x',
-'c',
-'v',
-'b',
-'n',
-'m',
-',',
-'.',
-'/',
-0,//DIK_RSHIFT			0x36
-'*',//DIK_MULTIPLY		  0x37	  /* * on numeric keypad */
-0,//DIK_LMENU			0x38	/* left Alt */
-' ',//DIK_SPACE 		  0x39
-0,//DIK_CAPITAL 		0x3A
-0,//DIK_F1				0x3B
-0,//DIK_F2				0x3C
-0,//DIK_F3				0x3D
-0,//DIK_F4				0x3E
-0,//DIK_F5				0x3F
-0,//DIK_F6				0x40
-0,//DIK_F7				0x41
-0,//DIK_F8				0x42
-0,//DIK_F9				0x43
-0,//DIK_F10 			0x44
-0,//DIK_NUMLOCK 		0x45
-0,//DIK_SCROLL			0x46	/* Scroll Lock */
-'7',//DIK_NUMPAD7		  0x47
-'8',//DIK_NUMPAD8		  0x48
-'9',//DIK_NUMPAD9		  0x49
-'-',//DIK_SUBTRACT		  0x4A	  /* - on numeric keypad */
-'4',//DIK_NUMPAD4		  0x4B
-'5',//DIK_NUMPAD5		  0x4C
-'6',//DIK_NUMPAD6		  0x4D
-'+',//DIK_ADD			  0x4E	  /* + on numeric keypad */
-'1',//DIK_NUMPAD1		  0x4F
-'2',//DIK_NUMPAD2		  0x50
-'3',//DIK_NUMPAD3		  0x51
-'0',//DIK_NUMPAD0		  0x52
-'.',//DIK_DECIMAL		  0x53	  /* . on numeric keypad */
-0,//DIK_NULL			 0x54
-0,//DIK_NULL			 0x55
-0,//DIK_NULL			 0x56
-0,//DIK_F11 			0x57
-0,//DIK_F12 			0x58
-0,//DIK_NULL			 0x59
-0,//DIK_NULL			 0x5a
-0,//DIK_NULL			 0x5b
-0,//DIK_NULL			 0x5c
-0,//DIK_NULL			 0x5d
-0,//DIK_NULL			 0x5e
-0,//DIK_NULL			 0x5f
-0,//DIK_NULL			 0x60
-0,//DIK_NULL			 0x61
-0,//DIK_NULL			 0x62
-0,//DIK_NULL			 0x63
-0,//DIK_F13 			0x64	/*					   (NEC PC98) */
-0,//DIK_F14 			0x65	/*					   (NEC PC98) */
-0,//DIK_F15 			0x66	/*					   (NEC PC98) */
-0,//DIK_NULL			 0x67
-0,//DIK_NULL			 0x68
-0,//DIK_NULL			 0x69
-0,//DIK_NULL			 0x6a
-0,//DIK_NULL			 0x6b
-0,//DIK_NULL			 0x6c
-0,//DIK_NULL			 0x6d
-0,//DIK_NULL			 0x6e
-0,//DIK_NULL			 0x6f
-0,//DIK_KANA			0x70	/* (Japanese keyboard)			  */
-0,//DIK_NULL			 0x71
-0,//DIK_NULL			 0x72
-0,//DIK_NULL			 0x73
-0,//DIK_NULL			 0x74
-0,//DIK_NULL			 0x75
-0,//DIK_NULL			 0x76
-0,//DIK_NULL			 0x77
-0,//DIK_NULL			 0x78
-0,//DIK_CONVERT 		0x79	/* (Japanese keyboard)			  */
-0,//DIK_NULL			 0x7a
-0,//DIK_NOCONVERT		0x7B	/* (Japanese keyboard)			  */
-0,//DIK_NULL			 0x7c
-0,//DIK_YEN 			0x7D	/* (Japanese keyboard)			  */
-0,//DIK_NULL			 0x7e
-0,//DIK_NULL			 0x7f
-0,//DIK_NULL			 0x80
-0,//DIK_NULL			 0x81
-0,//DIK_NULL			 0x82
-0,//DIK_NULL			 0x83
-0,//DIK_NULL			 0x84
-0,//DIK_NULL			 0x85
-0,//DIK_NULL			 0x86
-0,//DIK_NULL			 0x87
-0,//DIK_NULL			 0x88
-0,//DIK_NULL			 0x89
-0,//DIK_NULL			 0x8a
-0,//DIK_NULL			 0x8b
-0,//DIK_NULL			 0x8c
+// Convert DIK_* code to ASCII using Qwerty keymap
+static const byte Convert []={
+  //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
+	  0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',   8,   9, // 0
+	'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']',  13,   0, 'a', 's', // 1
+	'd', 'f', 'g', 'h', 'j', 'k', 'l', ';',  39, '`',   0,'\\', 'z', 'x', 'c', 'v', // 2
+	'b', 'n', 'm', ',', '.', '/',   0, '*',   0, ' ',   0,   0,   0,   0,   0,   0, // 3
+	  0,   0,   0,   0,   0,   0,   0, '7', '8', '9', '-', '4', '5', '6', '+', '1', // 4
+	'2', '3', '0', '.',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // 5
+	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // 6
+	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // 7
 
-'=',//DIK_NUMPADEQUALS	0x8D	/* = on numeric keypad (NEC PC98) */
-0,//DIK_NULL			 0x8e
-0,//DIK_NULL			 0x8f
-0,//DIK_CIRCUMFLEX		0x90	/* (Japanese keyboard)			  */
-'@',//DIK_AT				0x91	/*					   (NEC PC98) */
-':',//DIK_COLON 		  0x92	  /*					 (NEC PC98) */
-'_',//DIK_UNDERLINE 	  0x93	  /*					 (NEC PC98) */
-0,//DIK_KANJI			0x94	/* (Japanese keyboard)			  */
-0,//DIK_STOP			0x95	/*					   (NEC PC98) */
-0,//DIK_AX				0x96	/*					   (Japan AX) */
-0,//DIK_UNLABELED		0x97	/*						  (J3100) */
-0,//DIK_NULL			 0x98
-0,//DIK_NULL			 0x99
-0,//DIK_NULL			 0x9a
-0,//DIK_NULL			 0x9b
-13,//DIK_NUMPADENTER 	0x9C	/* Enter on numeric keypad */
-0,//DIK_RCONTROL		0x9D
-0,//DIK_NULL			 0x9e
-0,//DIK_NULL			 0x9f
-0,//DIK_NULL			 0xa0
-0,//DIK_NULL			 0xa1
-0,//DIK_NULL			 0xa2
-0,//DIK_NULL			 0xa3
-0,//DIK_NULL			 0xa4
-0,//DIK_NULL			 0xa5
-0,//DIK_NULL			 0xa6
-0,//DIK_NULL			 0xa7
-0,//DIK_NULL			 0xa8
-0,//DIK_NULL			 0xa9
-0,//DIK_NULL			 0xaa
-0,//DIK_NULL			 0xab
-0,//DIK_NULL			 0xac
-0,//DIK_NULL			 0xad
-0,//DIK_NULL			 0xae
-0,//DIK_NULL			 0xaf
-0,//DIK_NULL			 0xb0
-0,//DIK_NULL			 0xb1
-0,//DIK_NULL			 0xb2
-',',//DIK_NUMPADCOMMA	  0xB3	  /* , on numeric keypad (NEC PC98) */
-0,//DIK_NULL			 0xb4
-'/',//DIK_DIVIDE		  0xB5	  /* / on numeric keypad */
-0,//DIK_NULL			 0xb6
-0,//DIK_SYSRQ			 0xB7
-0,//DIK_RMENU			 0xB8	 /* right Alt */
-0,//DIK_NULL			 0xb9
-0,//DIK_NULL			 0xc0
-0,//DIK_NULL			 0xc1
-0,//DIK_NULL			 0xc2
-0,//DIK_NULL			 0xc3
-0,//DIK_NULL			 0xc4
-0,//DIK_NULL			 0xc5
-0,//DIK_NULL			 0xc6
-0,//DIK_HOME			 0xC7	 /* Home on arrow keypad */
-0,//DIK_UP				 0xC8	 /* UpArrow on arrow keypad */
-0,//DIK_PRIOR			 0xC9	 /* PgUp on arrow keypad */
-0,//DIK_NULL			 0xca
-0,//DIK_LEFT			 0xCB	 /* LeftArrow on arrow keypad */
-0,//DIK_NULL			 0xcc
-0,//DIK_RIGHT			 0xCD	 /* RightArrow on arrow keypad */
-0,//DIK_NULL			 0xce
-0,//DIK_END 			 0xCF	 /* End on arrow keypad */
-0,//DIK_DOWN			 0xD0	 /* DownArrow on arrow keypad */
-0,//DIK_NEXT			 0xD1	 /* PgDn on arrow keypad */
-0,//DIK_INSERT			 0xD2	 /* Insert on arrow keypad */
-0,//DIK_DELETE			 0xD3	 /* Delete on arrow keypad */
-0,//DIK_NULL			 0xd4
-0,//DIK_NULL			 0xd5
-0,//DIK_NULL			 0xd6
-0,//DIK_NULL			 0xd7
-0,//DIK_NULL			 0xd8
-0,//DIK_NULL			 0xd9
-0,//DIK_NULL			 0xda
-0,//DIK_LWIN			 0xDB	 /* Left Windows key */
-0,//DIK_RWIN			 0xDC	 /* Right Windows key */
-0//DIK_APPS 			 0xDD	 /* AppMenu key */
+	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, '=',   0,   0, // 8
+	  0, '@', ':', '_',   0,   0,   0,   0,   0,   0,   0,   0,  13,   0,   0,   0, // 9
+	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // A
+	  0,   0,   0, ',',   0, '/',   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // B
+	  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, // C
+	  0,   0,   0,   0,   0,   0,   0,   0
 
 };
+
+// Convert DIK_* code to ASCII using user keymap (built at run-time)
+static byte Convert2[256];
 
 static BOOL altdown = FALSE;
 
@@ -256,11 +116,13 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch(message) {
 		case WM_DESTROY:
 			PostQuitMessage (0);
-			exit (0);
+			break;
+
+		case WM_HOTKEY:
 			break;
 
 		case WM_PAINT:
-			if (!DDBack) {
+			if (!vidactive) {
 				I_PaintConsole ();
 			} else {
 				return DefWindowProc (hWnd, message, wParam, lParam);
@@ -271,22 +133,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (wParam == MCI_NOTIFY_SUCCESSFUL)
 				I_RestartSong ();
 			break;
-/*
-		case WM_ACTIVATE:
-			{
-				WORD fActive = LOWORD (wParam);
-			//	BOOL fMinimized = (BOOL) HIWORD (wParam);
 
-				if (fActive) {
-					if (g_pMouse) IDirectInputDevice_Acquire (g_pMouse);
-					if (g_pKey) IDirectInputDevice_Acquire (g_pKey);
-				} else {
-					if (g_pMouse) IDirectInputDevice_Unacquire (g_pMouse);
-					if (g_pKey) IDirectInputDevice_Unacquire (g_pKey);
-				}
-			}
-			break;
-*/
 		case WM_KILLFOCUS:
 			if (g_pKey) IDirectInputDevice_Unacquire (g_pKey);
 			if (g_pMouse) IDirectInputDevice_Unacquire (g_pMouse);
@@ -296,12 +143,36 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				event.data1 = DIK_LALT;
 				D_PostEvent (&event);
 			}
-//			paused = 1;
+			havefocus = FALSE;
+			if (!paused)
+				S_PauseSound ();
+			if (!noidle)
+				SetPriorityClass (GetCurrentProcess(), IDLE_PRIORITY_CLASS);
 			break;
 
 		case WM_SETFOCUS:
+			SetPriorityClass (GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 			if (g_pKey) IDirectInputDevice_Acquire (g_pKey);
-			if (g_pMouse) IDirectInputDevice_Acquire (g_pMouse);
+			havefocus = TRUE;
+			if ((Fullscreen || (!paused && !menuactive)) && g_pMouse) {
+				IDirectInputDevice_Acquire (g_pMouse);
+			}
+			if (!paused)
+				S_ResumeSound ();
+			break;
+
+		case WM_ACTIVATE:
+			if (LOWORD(wParam)) {
+				WindowActive = TRUE;
+				if (mousemode == win32 && MakeMouseEvents) {
+					GrabMouse_Win32 ();
+				}
+			} else {
+				WindowActive = FALSE;
+				if (mousemode == win32) {
+					UngrabMouse_Win32 ();
+				}
+			}
 			break;
 
 		// Being forced to separate my keyboard input handler into
@@ -312,7 +183,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				event.type = ev_keyup;
 			} else {
 				if (lParam & 0x40000000)
-					event.type = ev_keyrepeat;
+					return 0;
 				else
 					event.type = ev_keydown;
 			}
@@ -340,17 +211,40 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case WM_SYSKEYDOWN:
 			SendMessage (hWnd, WM_KEYDOWN, wParam, lParam);
-			return 0;
+			break;
 
 		case WM_SYSKEYUP:
 			SendMessage (hWnd, WM_KEYUP, wParam, lParam);
-			return 0;
+			break;
+
+		case WM_SYSCOMMAND:
+			{
+				WPARAM cmdType = wParam & 0xfff0;
+
+				if (cmdType != SC_KEYMENU)
+					return DefWindowProc (hWnd, message, wParam, lParam);
+			}
+			break;
+
+		case WM_LBUTTONDOWN:
+		case WM_LBUTTONUP:
+		case WM_RBUTTONDOWN:
+		case WM_RBUTTONUP:
+		case WM_MBUTTONDOWN:
+		case WM_MBUTTONUP:
+			if (MakeMouseEvents && mousemode == win32) {
+				event.type = ((message - WM_LBUTTONDOWN) % 3) ? ev_keyup : ev_keydown;
+				event.data1 = KEY_MOUSE1 + (message - WM_LBUTTONDOWN) / 3;
+				event.data2 = event.data3 = 0;
+				D_PostEvent (&event);
+			}
+			break;
 
 		default:
 			return DefWindowProc (hWnd, message, wParam, lParam);
 	}
 
-	return (long) 0;
+	return 0;
 }
 
 static void BuildCvt2Table (void)
@@ -358,7 +252,7 @@ static void BuildCvt2Table (void)
 	int i;
 
 	for (i = 0; i < 256; i++)
-		Convert2[i] = MapVirtualKey (MapVirtualKey (i, 1), 2);
+		Convert2[i] = tolower ((byte)MapVirtualKey (MapVirtualKey (i, 1), 2));
 }
 
 /****** Stuff from Andy Bay's myjoy.c ******/
@@ -373,19 +267,19 @@ JOYCAPS 	JoyCaps;
 
 void JoyFixBias (void)
 {
-	JoyBias.X = (JoyCaps.wXmin + JoyCaps.wXmax) / 2;
-	JoyBias.Y = (JoyCaps.wYmin + JoyCaps.wYmax) / 2;
-	JoyBias.Z = (JoyCaps.wZmin + JoyCaps.wZmax) / 2;
-	JoyBias.R = (JoyCaps.wRmin + JoyCaps.wRmax) / 2;
-	JoyBias.U = (JoyCaps.wUmin + JoyCaps.wUmax) / 2;
-	JoyBias.V = (JoyCaps.wVmin + JoyCaps.wVmax) / 2;
+	JoyBias.X = (JoyCaps.wXmin + JoyCaps.wXmax) >> 1;
+	JoyBias.Y = (JoyCaps.wYmin + JoyCaps.wYmax) >> 1;
+	JoyBias.Z = (JoyCaps.wZmin + JoyCaps.wZmax) >> 1;
+	JoyBias.R = (JoyCaps.wRmin + JoyCaps.wRmax) >> 1;
+	JoyBias.U = (JoyCaps.wUmin + JoyCaps.wUmax) >> 1;
+	JoyBias.V = (JoyCaps.wVmin + JoyCaps.wVmax) >> 1;
 }
 
 void DI_JoyCheck (void)
 {
 	event_t joyevent;
 
-	if (JoyActive) {		//need a real joystick
+	if (JoyActive) {
 		JoyStats.dwFlags = JOY_RETURNALL;
 		if (joyGetPosEx (0, &JoyStats)) {
 			JoyActive = 0;
@@ -454,6 +348,27 @@ BOOL DI_InitJoy (void)
 	return TRUE;
 }
 
+void I_PauseMouse (void)
+{
+	if (Fullscreen)
+		return;
+
+	if (g_pMouse) {
+		IDirectInputDevice_Unacquire (g_pMouse);
+	} else {
+		UngrabMouse_Win32 ();
+	}
+}
+
+void I_ResumeMouse (void)
+{
+	if (!g_pMouse) {
+		GrabMouse_Win32 ();
+	} else {
+		IDirectInputDevice_Acquire (g_pMouse);
+	}
+}
+
 /****** Stuff from Andy Bay's mymouse.c ******
 
 /****************************************************************************
@@ -464,7 +379,22 @@ BOOL DI_InitJoy (void)
  *
  ****************************************************************************/
 
-BOOL DI_Init(HWND hwnd)
+// [RH] Obtain the mouse using standard Win32 calls. Should always work.
+static void I_GetWin32Mouse (void)
+{
+	mousemode = win32;
+
+	if (g_pMouse) {
+		IDirectInputDevice_Unacquire (g_pMouse);
+		IDirectInputDevice_Release (g_pMouse);
+		g_pMouse = NULL;
+	}
+	GrabMouse_Win32 ();
+}
+
+// [RH] Used to obtain DirectInput access to the mouse.
+//		(Preferred for Win95, but buggy under NT.)
+static BOOL I_GetDIMouse (void)
 {
 	HRESULT hr;
 	DIPROPDWORD dipdw =
@@ -478,114 +408,202 @@ BOOL DI_Init(HWND hwnd)
 			DINPUT_BUFFERSIZE,				// dwData
 		};
 
-	Printf ("DI_Init: Initialize mouse\n");
+	if (mousemode == dinput)
+		return FALSE;
 
-	/*
-	 *	Register with DirectInput and get an IDirectInput to play with.
-	 */
-	hr = DirectInputCreate (g_hInst, DIRECTINPUT_VERSION, &g_pdi, NULL);
+	mousemode = win32;	// Assume failure
+	UngrabMouse_Win32 ();
 
-	if (FAILED(hr)) {
-		I_Error ("Could not obtain DirectInput interface\n");
-	}
+	if (in_mouse->value == 1 || (in_mouse->value == 0 && OSPlatform == os_WinNT))
+		return FALSE;
 
-	/*
-	 *	Obtain an interface to the system mouse device.
-	 */
+	// Obtain an interface to the system mouse device.
 	hr = IDirectInput_CreateDevice (g_pdi, &GUID_SysMouse, &g_pMouse, NULL);
 
-	if (FAILED(hr)) {
-		Printf ("Warning: Could not create mouse device\n");
-		goto nextinit;
-	}
+	if (FAILED(hr))
+		return FALSE;
 
-	/*
-	 *	Set the data format to "mouse format".
-	 */
+	// Set the data format to "mouse format".
 	hr = IDirectInputDevice_SetDataFormat (g_pMouse, &c_dfDIMouse);
 
 	if (FAILED(hr)) {
-		Printf ("Waring: Could not set mouse data format\n");
 		IDirectInputDevice_Release (g_pMouse);
 		g_pMouse = NULL;
-		goto nextinit;
+		return FALSE;
 	}
 
-	/*
-	 *	Set the cooperative level.
-	 */
-	hr = IDirectInputDevice_SetCooperativeLevel (g_pMouse,hwnd,
+	// Set the cooperative level.
+	hr = IDirectInputDevice_SetCooperativeLevel (g_pMouse,(HWND)Window,
 									   DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 
 	if (FAILED(hr)) {
-		Printf ("Warning: Could not set mouse cooperative level\n");
 		IDirectInputDevice_Release (g_pMouse);
 		g_pMouse = NULL;
-		goto nextinit;
+		return FALSE;
 	}
 
 
-	/*
-	 *	Set the buffer size to DINPUT_BUFFERSIZE elements.
-	 *	The buffer size is a DWORD property associated with the device.
-	 */
+	// Set the buffer size to DINPUT_BUFFERSIZE elements.
+	// The buffer size is a DWORD property associated with the device.
 	hr = IDirectInputDevice_SetProperty (g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
 
 	if (FAILED(hr)) {
-		Printf ("Could not set mouse buffer size\n");
+		Printf ("Could not set mouse buffer size");
 		IDirectInputDevice_Release (g_pMouse);
 		g_pMouse = NULL;
-		goto nextinit;
+		return FALSE;
 	}
 
 	IDirectInputDevice_Acquire (g_pMouse);
 
-nextinit:
+	mousemode = dinput;
+	return TRUE;
+}
+
+static void in_mouse_changed (cvar_t *var)
+{
+	if (var->value < 0) {
+		SetCVarFloat (var, 0);
+	} else if (var->value > 2) {
+		SetCVarFloat (var, 2);
+	} else {
+		int new_mousemode;
+
+		if (var->value == 1 || (var->value == 0 && OSPlatform == os_WinNT))
+			new_mousemode = win32;
+		else
+			new_mousemode = dinput;
+
+		if (new_mousemode != mousemode) {
+			if (new_mousemode == win32)
+				I_GetWin32Mouse ();
+			else
+				if (!I_GetDIMouse ())
+					I_GetWin32Mouse ();
+		}
+	}
+}
+
+BOOL I_InitInput (void *hwnd)
+{
+	DIRECTINPUTCREATE_FUNCTION DirectInputCreateFunction;
+	HRESULT hr;
+
+	noidle = M_CheckParm ("-noidle");
+
+	in_mouse = cvar ("in_mouse", "0", CVAR_ARCHIVE|CVAR_CALLBACK);
+	in_mouse->u.callback = in_mouse_changed;
+
+	Printf ("I_InitInput: Initialize DirectInput\n");
+
+	// [RH] Removed dependence on existance of dinput.lib when linking.
+
+	DirectInputInstance = (HMODULE)LoadLibrary ("dinput.dll");
+	if (!DirectInputInstance)
+		I_FatalError ("Sorry, you need Microsoft's DirectX installed.\n\n"
+					  "Go grab it at http://www.microsoft.com/directx\n");
+
+	DirectInputCreateFunction = (DIRECTINPUTCREATE_FUNCTION)GetProcAddress (DirectInputInstance, "DirectInputCreateA");
+	if (!DirectInputCreateFunction)
+		I_FatalError ("Could not get address of DirectInputCreateA");
+
+	// Register with DirectInput and get an IDirectInput to play with.
+	hr = DirectInputCreateFunction (g_hInst, DIRECTINPUT_VERSION, &g_pdi, NULL);
+
+	if (FAILED(hr))
+		I_FatalError ("Could not obtain DirectInput interface");
+
+	if (!I_GetDIMouse ())
+		I_GetWin32Mouse ();
+
 	DI_Init2();
 
 	return TRUE;
 }
 
-/****************************************************************************
- *
- *		DITerm
- *
- *		Terminate our usage of DirectInput.
- *
- ****************************************************************************/
 
-void DITerm(void)
+// Free all input resources
+void I_ShutdownInput (void)
 {
-	if (g_pKey) 		{ IDirectInputDevice_Release(g_pKey);		g_pKey		= NULL; }
-	if (g_pMouse)		{ IDirectInputDevice_Release(g_pMouse); 	g_pMouse	= NULL; }
-	if (g_hevtMouse)	{ CloseHandle(g_hevtMouse); 				g_hevtMouse = NULL; }
-	if (g_pdi)			{ IDirectInput_Release(g_pdi);				g_pdi		= NULL; }
+	if (g_pKey) {
+		IDirectInputDevice_Unacquire (g_pKey);
+		IDirectInputDevice_Release (g_pKey);
+		g_pKey = NULL;
+	}
+	if (g_pMouse) {
+		IDirectInputDevice_Unacquire (g_pMouse);
+		IDirectInputDevice_Release (g_pMouse);
+		g_pMouse = NULL;
+	}
+	UngrabMouse_Win32 ();
+	if (g_pdi) {
+		IDirectInput_Release(g_pdi);
+		g_pdi = NULL;
+	}
+	// [RH] Close dinput.dll
+	if (DirectInputInstance) {
+		FreeLibrary (DirectInputInstance);
+		DirectInputInstance = NULL;
+	}
 }
 
-void UpdateCursorPosition(int dx, int dy)
-{
+static LONG PrevX, PrevY;
 
-	/*
-	 *	Pick up any leftover fuzz from last time.  This is important
-	 *	when scaling down mouse motions.  Otherwise, the user can
-	 *	drag to the right extremely slow for the length of the table
-	 *	and not get anywhere.
-	 */
+static void CenterMouse_Win32 (void) {
+	RECT rect;
 
-	MouseCurX += dx;
-	MouseCurY -= dy;
-	if (dx) GDx += dx;
-	if (dy) GDy += dy;
-	/* Clip the cursor to our client area */
-	if (MouseCurX < 0)				MouseCurX = 0;
-	if (MouseCurX >= SCREENWIDTH)	MouseCurX = SCREENWIDTH;
-
-	if (MouseCurY < 0)				MouseCurY = 0;
-	if (MouseCurY >= SCREENHEIGHT)	MouseCurY = SCREENHEIGHT;
-
+	GetWindowRect (Window, &rect);
+	PrevX = (rect.left + rect.right) >> 1;
+	PrevY = (rect.top + rect.bottom) >> 1;
+	SetCursorPos (PrevX, PrevY);
 }
 
-void MouseRead (HWND hwnd) {
+static int showcount = 1;
+
+static void GrabMouse_Win32 (void) {
+	RECT rect;
+
+	ClipCursor (NULL);		// helps with Win95?
+	GetWindowRect (Window, &rect);
+	ClipCursor (&rect);
+	if (showcount) {
+		ShowCursor (FALSE);
+		showcount--;
+	}
+	CenterMouse_Win32 ();
+	MakeMouseEvents = TRUE;
+}
+
+static void UngrabMouse_Win32 (void) {
+	ClipCursor (NULL);
+	if (!showcount) {
+		ShowCursor (TRUE);
+		showcount++;
+	}
+	MakeMouseEvents = FALSE;
+}
+
+static void MouseRead_Win32 (void) {
+	POINT pt;
+	event_t ev;
+
+	if (!WindowActive || !MakeMouseEvents || !GetCursorPos (&pt))
+		return;
+
+	ev.data2 = (pt.x - PrevX) * 3;
+	ev.data3 = (PrevY - pt.y) << 1;
+
+	CenterMouse_Win32 ();
+
+	if (ev.data2 || ev.data3) {
+		ev.type = ev_mouse;
+		ev.data1 = 0;
+		D_PostEvent (&ev);
+	}
+}
+
+static void MouseRead_DI (void) {
+	static int lastx = 0, lasty = 0;
 	DIDEVICEOBJECTDATA od;
 	DWORD dwElements;
 	HRESULT hr;
@@ -624,14 +642,14 @@ void MouseRead (HWND hwnd) {
 
 		/* DIMOFS_X: Mouse horizontal motion */
 			case DIMOFS_X:
-				UpdateCursorPosition(od.dwData, 0);
+				GDx += od.dwData;
 				break;
 		/* DIMOFS_Y: Mouse vertical motion */
 			case DIMOFS_Y:
-				UpdateCursorPosition(0, od.dwData);
+				GDy += od.dwData;
 				break;
 
-		/* Mouse button events now mimic keydown/up events */
+		/* [RH] Mouse button events now mimic keydown/up events */
 			case DIMOFS_BUTTON0:
 				if(od.dwData & 0x80) {
 					event.type = ev_keydown;
@@ -678,24 +696,13 @@ void MouseRead (HWND hwnd) {
 		event.data3 = -GDy;
 		D_PostEvent (&event);
 	}
-
-	return;
 }
 
-/****** Stuff from Any Bay's mykey.c ******/
-/******   (Most of it changed now)   ******/
-
-/****************************************************************************
- *
- *		DIInit
- *
- *		Initialize the DirectInput variables.
- *
- ****************************************************************************/
-
-BOOL DI_Init2(void)
+// Initialize the keyboard
+static BOOL DI_Init2 (void)
 {
 	int hr;
+	DWORD repeatStuff;
 	DIPROPDWORD dipdw =
 		{
 			{
@@ -711,18 +718,35 @@ BOOL DI_Init2(void)
 
 	BuildCvt2Table ();
 
-	/*
-	 *	Obtain an interface to the system key device.
-	 */
+	// [RH] The timing values for these SPI_* parameters are described in
+	//		MS Knowledge Base article Q102978.
+	if (SystemParametersInfo (SPI_GETKEYBOARDDELAY, 0, &repeatStuff, 0)) {
+		// 0 = 250 ms, 3 = 1000 ms
+		KeyRepeatDelay = ((repeatStuff * 250 + 250) * TICRATE) / 1000;
+	} else {
+		KeyRepeatDelay = (250 * TICRATE) / 1000;
+	}
+	DPrintf ("KeyRepeatDelay = %u tics\n", KeyRepeatDelay);
+
+	if (SystemParametersInfo (SPI_GETKEYBOARDSPEED, 0, &repeatStuff, 0)) {
+		// 0 = 2/sec, 31 = 30/sec
+		KeyRepeatRate = TICRATE / (2 + repeatStuff);
+	} else {
+		KeyRepeatRate = TICRATE / 15;
+	}
+	DPrintf ("KeyRepeatRate = %u tics\n", KeyRepeatRate);
+
+	// Obtain an interface to the system key device.
 	hr = IDirectInput_CreateDevice (g_pdi, &GUID_SysKeyboard, &g_pKey, NULL);
 
 	if (FAILED(hr)) {
 		I_FatalError ("Could not create keyboard device");
 	}
 
-	/*
-	 *	Set the data format to "keyboard format".
-	 */
+	// [RH] Prepare c_dfDIKeyboard for use.
+	InitKeyboardObjectData ();
+
+	// Set the data format to "keyboard format".
 	hr = IDirectInputDevice_SetDataFormat (g_pKey,&c_dfDIKeyboard);
 
 	if (FAILED(hr)) {
@@ -730,9 +754,7 @@ BOOL DI_Init2(void)
 	}
 
 
-	/*
-	 *	Set the cooperative level.
-	 */
+	// Set the cooperative level.
 	hr = IDirectInputDevice_SetCooperativeLevel(g_pKey, Window,
 									   DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
 
@@ -740,10 +762,8 @@ BOOL DI_Init2(void)
 		I_FatalError("Could not set keyboard cooperative level");
 	}
 
-	/*
-	 *	Set the buffer size to DINPUT_BUFFERSIZE elements.
-	 *	The buffer size is a DWORD property associated with the device.
-	 */
+	// Set the buffer size to DINPUT_BUFFERSIZE elements.
+	// The buffer size is a DWORD property associated with the device.
 	hr = IDirectInputDevice_SetProperty (g_pKey, DIPROP_BUFFERSIZE, &dipdw.diph);
 
 	if (FAILED(hr)) {
@@ -756,7 +776,7 @@ BOOL DI_Init2(void)
 	return TRUE;
 }
 
-void KeyRead() {
+static void KeyRead (void) {
 	HRESULT  hr;
 	event_t event;
 
@@ -854,14 +874,28 @@ void I_GetEvent(void)
 {
 	MSG mess;
 
-	while (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE)) {
-		TranslateMessage (&mess);
-		DispatchMessage (&mess);
+//	while (1) {
+		while (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE)) {
+			if (mess.message == WM_QUIT)
+				I_Quit ();
+			TranslateMessage (&mess);
+			DispatchMessage (&mess);
+		}
+//		if (havefocus || netgame || gamestate != GS_LEVEL)
+//			break;
+//	}
+
+	KeyRead ();
+
+	if (usemouse->value) {
+		if (mousemode == dinput)
+			MouseRead_DI ();
+		else
+			MouseRead_Win32 ();
 	}
 
-	MouseRead (Window);
-	KeyRead ();
-	DI_JoyCheck ();
+	if (usejoystick->value)
+		DI_JoyCheck ();
 }
 
 

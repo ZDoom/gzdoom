@@ -17,24 +17,15 @@
 // $Log:$
 //
 // DESCRIPTION:
-//		Gamma correction LUT stuff.
 //		Functions to draw patches (by post) directly to screen.
 //		Functions to blit a block to the screen.
 //
 //-----------------------------------------------------------------------------
 
 
-static const char
-rcsid[] = "$Id: v_video.c,v 1.5 1997/02/03 22:45:13 b1 Exp $";
-
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
 
 #include <stdio.h>
 #include "m_alloc.h"
-#include <math.h>
 
 #include "i_system.h"
 #include "i_video.h"
@@ -54,73 +45,38 @@ rcsid[] = "$Id: v_video.c,v 1.5 1997/02/03 22:45:13 b1 Exp $";
 #include "m_swap.h"
 
 #include "v_video.h"
+#include "v_text.h"
 
 #include "w_wad.h"
 #include "z_zone.h"
 
 #include "c_cvars.h"
-#include "c_dispatch.h"
+#include "c_dispch.h"
 #include "cmdlib.h"
 
-static byte *ConChars;
 
-byte	*WhiteMap;
+extern void STACK_ARGS DimScreenPLoop (byte *colormap, byte *screen, int width, int modulo, int height);
 
-// Each screen is [SCREENWIDTH*SCREENHEIGHT]; 
-byte*	screens[5];
+
+// [RH] Screens are no longer mere byte arrays.
+screen_t screens[2];
  
 int 	dirtybox[4];
 
-cvar_t *vid_defwidth, *vid_defheight;
+cvar_t *vid_defwidth, *vid_defheight, *vid_defbpp;
 cvar_t *dimamount, *dimcolor;
 
 byte	*TransTable;
 
-byte	newgamma[256];
-double	gammalevel = 0.0;
+palette_t *DefaultPalette;
 
-// Stretch values for V_DrawPatchClean()
-int CleanXfac, CleanYfac;
-// Virtual screen sizes as perpetuated by V_DrawPatchClean()
-int CleanWidth, CleanHeight;
 
-void V_Archive (void *f)
-{
-	// Archive gamma correction level
-	fprintf ((FILE *)f, "gamma %g\n", gammalevel);
-}
+// [RH] Set true when vid_setmode command has been executed
+BOOL	setmodeneeded = false;
+// [RH] Resolution to change to when setmodeneeded is true
+int		NewWidth, NewHeight, NewBpp;
 
-void Cmd_Gamma (void *plyr, int argc, char **argv)
-{
-	static boolean firsttime = true;
-	double invgamma;
-	int i;
 
-	if (argc > 1) {
-		invgamma = atof (argv[1]);
-		if (gammalevel != invgamma && invgamma != 0.0) {
-			// Only recalculate the gamma table if the new gamma
-			// value is different from the old one and non-zero.
-			
-			// I found this formula on the web at
-			// http://panda.mostang.com/sane/sane-gamma.html
-
-			gammalevel = invgamma;
-			invgamma = 1.0 / invgamma;
-
-			for (i = 0; i < 256; i++) {
-				newgamma[i] = (byte)(255.0 * pow (i / 255.0, invgamma));
-			}
-			I_SetPalette (NULL);
-		}
-	}
-
-	if (!firsttime)
-		Printf ("Gamma correction level: %g\n", gammalevel);
-
-	firsttime = false;
-}
-						 
 //
 // V_MarkRect 
 // 
@@ -131,1003 +87,109 @@ void V_MarkRect (int x, int y, int width, int height)
 } 
  
 
-//
-// V_CopyRect 
-// 
-void V_CopyRect (int srcx, int srcy, int srcscrn, int width, int height, int destx, int desty, int destscrn)
-{ 
-	byte*		src;
-	byte*		dest; 
-		 
-#ifdef RANGECHECK 
-	if (srcx<0
-		||srcx+width >SCREENWIDTH
-		|| srcy<0
-		|| srcy+height>SCREENHEIGHT 
-		||destx<0||destx+width >SCREENWIDTH
-		|| desty<0
-		|| desty+height>SCREENHEIGHT 
-		|| (unsigned)srcscrn>4
-		|| (unsigned)destscrn>4)
-	{
-		I_Error ("Bad V_CopyRect");
-	}
-#endif 
-	V_MarkRect (destx, desty, width, height); 
-		 
-	src = screens[srcscrn]+SCREENPITCH*srcy+srcx; 
-	dest = screens[destscrn]+SCREENPITCH*desty+destx; 
 
-	for ( ; height>0 ; height--) 
-	{ 
-		memcpy (dest, src, width); 
-		src += SCREENPITCH; 
-		dest += SCREENPITCH; 
-	} 
-} 
- 
-
-//
-// V_DrawPatch
-// Masks a column based masked pic to the screen. 
-//
-void V_DrawPatch (int x, int y, int scrn, patch_t *patch)
-{ 
-
-	int 		count;
-	int 		col; 
-	column_t*	column; 
-	byte*		desttop;
-	byte*		dest;
-	byte*		source; 
-	int 		w; 
-		 
-
-	y -= SHORT(patch->topoffset); 
-	x -= SHORT(patch->leftoffset); 
-#ifdef RANGECHECK 
-	if (x<0
-		||x+SHORT(patch->width) >SCREENWIDTH
-		|| y<0
-		|| y+SHORT(patch->height)>SCREENHEIGHT 
-		|| (unsigned)scrn>4)
-	{
-	  // Printf ("Patch at %d,%d exceeds LFB\n", x,y );
-	  // No I_Error abort - what is up with TNT.WAD?
-	  Printf ("V_DrawPatch: bad patch (ignored)\n");
-	  return;
-	}
-#endif 
- 
-	if (!scrn)
-		V_MarkRect (x, y, SHORT(patch->width), SHORT(patch->height)); 
-
-	col = 0; 
-	desttop = screens[scrn]+y*SCREENWIDTH+x; 
-		 
-	w = SHORT(patch->width); 
-
-	for ( ; col<w ; x++, col++, desttop++)
-	{ 
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col])); 
- 
-		// step through the posts in a column 
-		while (column->topdelta != 0xff ) 
-		{ 
-			source = (byte *)column + 3; 
-			dest = desttop + column->topdelta*SCREENWIDTH; 
-			count = column->length; 
-						 
-			while (count--) 
-			{ 
-				*dest = *source++; 
-				dest += SCREENPITCH; 
-			} 
-			column = (column_t *)(	(byte *)column + column->length 
-									+ 4 ); 
-		} 
-	}					 
-} 
-
-void V_DrawLucentPatch (int x, int y, int scrn, patch_t *patch)
-{ 
-
-	int 		count;
-	int 		col; 
-	column_t*	column; 
-	byte*		desttop;
-	byte*		dest;
-	byte*		source;
-	byte*		map;
-	int 		w; 
-		 
-	if (!TransTable) {
-		V_DrawPatch (x, y, scrn, patch);
-		return;
-	}
-
-	map = TransTable + 65536 * 2;
-
-	y -= SHORT(patch->topoffset); 
-	x -= SHORT(patch->leftoffset); 
-#ifdef RANGECHECK 
-	if (x<0
-		||x+SHORT(patch->width) >SCREENWIDTH
-		|| y<0
-		|| y+SHORT(patch->height)>SCREENHEIGHT 
-		|| (unsigned)scrn>4)
-	{
-	  // Printf ("Patch at %d,%d exceeds LFB\n", x,y );
-	  // No I_Error abort - what is up with TNT.WAD?
-	  Printf ("V_DrawPatch: bad patch (ignored)\n");
-	  return;
-	}
-#endif 
- 
-	if (!scrn)
-		V_MarkRect (x, y, SHORT(patch->width), SHORT(patch->height)); 
-
-	col = 0; 
-	desttop = screens[scrn]+y*SCREENWIDTH+x; 
-		 
-	w = SHORT(patch->width); 
-
-	for ( ; col<w ; x++, col++, desttop++)
-	{ 
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col])); 
- 
-		// step through the posts in a column 
-		while (column->topdelta != 0xff ) 
-		{ 
-			source = (byte *)column + 3; 
-			dest = desttop + column->topdelta*SCREENWIDTH; 
-			count = column->length; 
-						 
-			while (count--) 
-			{ 
-				*dest = map[(*dest)|((*source++)<<8)]; 
-				dest += SCREENPITCH; 
-			} 
-			column = (column_t *)(	(byte *)column + column->length 
-									+ 4 ); 
-		} 
-	}					 
-} 
-
-void V_DrawTranslatedPatch (int x, int y, int scrn, patch_t *patch, byte *map)
-{ 
-
-	int 		count;
-	int 		col; 
-	column_t*	column; 
-	byte*		desttop;
-	byte*		dest;
-	byte*		source; 
-	int 		w; 
-		 
-
-	y -= SHORT(patch->topoffset); 
-	x -= SHORT(patch->leftoffset); 
-#ifdef RANGECHECK 
-	if (x<0
-		||x+SHORT(patch->width) >SCREENWIDTH
-		|| y<0
-		|| y+SHORT(patch->height)>SCREENHEIGHT 
-		|| (unsigned)scrn>4)
-	{
-	  Printf ("V_DrawPatch: bad patch (ignored)\n");
-	  return;
-	}
-#endif 
- 
-	if (!scrn)
-		V_MarkRect (x, y, SHORT(patch->width), SHORT(patch->height)); 
-
-	col = 0; 
-	desttop = screens[scrn]+y*SCREENWIDTH+x; 
-		 
-	w = SHORT(patch->width); 
-
-	for ( ; col<w ; x++, col++, desttop++) { 
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col])); 
- 
-		// step through the posts in a column 
-		while (column->topdelta != 0xff ) { 
-			source = (byte *)column + 3; 
-			dest = desttop + column->topdelta*SCREENWIDTH; 
-			count = column->length; 
-						 
-			while (count--) { 
-				*dest = *(map + *source++);
-				dest += SCREENPITCH; 
-			} 
-			column = (column_t *)(	(byte *)column + column->length
-									+ 4 );
-		}
-	}
-}
-
-
-//
-// V_DrawPatchFlipped 
-// Masks a column based masked pic to the screen.
-// Flips horizontally, e.g. to mirror face.
-//
-// [RH] This is only called in f_finale.c, so I changed it to behave
-// much like V_DrawPatchIndirect() instead of adding yet another function
-// solely to handle virtual stretching of this function.
-//
-void V_DrawPatchFlipped (int x0, int y0, int scrn, patch_t *patch)
+// [RH] Fill an area with a 64x64 flat texture
+//		right and bottom are one pixel *past* the boundaries they describe.
+void V_FlatFill (int left, int top, int right, int bottom, screen_t *scrn, byte *src)
 {
-	// I must be dumb or something...
-	V_DrawPatchIndirect (x0, y0, scrn, patch);
+	int x, y;
+	int advance;
+	int width;
 
-/*
-	int 		count;
-	column_t*	column; 
-	byte*		desttop;
-	byte*		dest;
-	byte*		source; 
+	width = right - left;
+	right = width >> 6;
 
-	int			xinc, yinc, col, w, c, ymul, xmul, destwidth, destheight;
+	if (scrn->is8bit) {
+		byte *dest;
 
-	destwidth = (SCREENWIDTH * SHORT(patch->width)) / 320;
-	destheight = (SCREENHEIGHT * SHORT(patch->height)) / 200;
+		advance = scrn->pitch - width;
+		dest = scrn->buffer + top * scrn->pitch + left;
 
-	xinc = (SHORT(patch->width) << 16) / destwidth;
-	yinc = (SHORT(patch->height) << 16) / destheight;
-	xmul = (destwidth << 16) / patch->width;
-	ymul = (destheight << 16) / patch->height;
-
-	y0 -= (SHORT(patch->topoffset) * ymul) >> 16;
-	x0 -= (SHORT(patch->leftoffset) * xmul) >> 16;
-
-#ifdef RANGECHECK 
-	if (x0<0
-		|| x0+destwidth >SCREENWIDTH
-		|| y0<0
-		|| y0+destheight>SCREENHEIGHT 
-		|| (unsigned)scrn>4)
-	{
-	  //Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
-	  Printf ("V_DrawPatchFlipped: bad patch (ignored)\n");
-	  return;
-	}
-#endif 
- 
-	if (!scrn)
-		V_MarkRect (x0, y0, destwidth, destheight);
-
-	col = 0;
-	desttop = screens[scrn]+y0*SCREENPITCH+x0;
-		 
-	w = destwidth * xinc;
-
-	for ( ; col<w ; col += xinc, desttop++)
-	{
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[SHORT(patch->width) - 1 - (col >> 16)]));
-
-		// step through the posts in a column
-		while (column->topdelta != 0xff ) 
-		{ 
-			source = (byte *)column + 3;
-			dest = desttop + ((column->topdelta * ymul) >> 16) * SCREENPITCH;
-			count = (column->length * ymul) >> 16;
-			c = 0;
-						 
-			do
-			{
-				*dest = source[c >> 16]; 
-				dest += SCREENPITCH;
-				c += yinc;
-			} while (--count);
-			column = (column_t *)(	(byte *)column + column->length 
-									+ 4 ); 
-		}
-	}
-*/
-}
-
-
-
-//
-// V_DrawPatchDirect
-// Draws directly to the screen on the pc. 
-//
-void V_DrawPatchDirect (int x, int y, int scrn, patch_t *patch)
-{
-	V_DrawPatch (x,y,scrn, patch); 
-} 
-
-
-void V_DrawTranslatedPatchStretched (int x0, int y0, int scrn, patch_t *patch, byte *map, int destwidth, int destheight)
-{
-	
-	int 		count;
-	column_t*	column; 
-	byte*		desttop;
-	byte*		dest;
-	byte*		source; 
-
-	int			xinc, yinc, col, w, c, ymul, xmul;
-
-	if (destwidth == patch->width && destheight == patch->height) {
-		V_DrawPatch (x0, y0, scrn, patch);
-		return;
-	}
-
-	xinc = (SHORT(patch->width) << 16) / SHORT(destwidth);
-	yinc = (SHORT(patch->height) << 16) / SHORT(destheight);
-	xmul = (destwidth << 16) / patch->width;
-	ymul = (destheight << 16) / patch->height;
-
-	y0 -= (SHORT(patch->topoffset) * ymul) >> 16;
-	x0 -= (SHORT(patch->leftoffset) * xmul) >> 16;
-
-#ifdef RANGECHECK 
-	if (x0<0
-		|| x0+destwidth >SCREENWIDTH
-		|| y0<0
-		|| y0+destheight>SCREENHEIGHT 
-		|| (unsigned)scrn>4)
-	{
-	  //Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
-	  Printf ("V_DrawPatchStretched: bad patch (ignored)\n");
-	  return;
-	}
-#endif 
- 
-	if (!scrn)
-		V_MarkRect (x0, y0, destwidth, destheight);
-
-	col = 0;
-	desttop = screens[scrn]+y0*SCREENPITCH+x0;
-		 
-	w = destwidth * xinc;
-
-	for ( ; col<w ; col += xinc, desttop++)
-	{
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col >> 16]));
-
-		// step through the posts in a column
-		while (column->topdelta != 0xff ) 
-		{ 
-			source = (byte *)column + 3;
-			dest = desttop + ((column->topdelta * ymul) >> 16) * SCREENPITCH;
-			count = (column->length * ymul) >> 16;
-			c = 0;
-						 
-			do
-			{
-				*dest = *(map + source[c>>16]);
-				dest += SCREENPITCH;
-				c += yinc;
-			} while (--count);
-			column = (column_t *)(	(byte *)column + column->length 
-									+ 4 ); 
-		}
-	}					 
-}
-
-//
-// V_DrawPatchStretched
-// Masks a column based masked pic to the screen
-// stretching it to fit the given dimensions.
-//
-void V_DrawPatchStretched (int x0, int y0, int scrn, patch_t *patch, int destwidth, int destheight)
-{
-	
-	int 		count;
-	column_t*	column; 
-	byte*		desttop;
-	byte*		dest;
-	byte*		source; 
-
-	int			xinc, yinc, col, w, c, ymul, xmul;
-
-	if (destwidth == SHORT(patch->width) && destheight == SHORT(patch->height)) {
-		V_DrawPatch (x0, y0, scrn, patch);
-		return;
-	}
-
-	if (destwidth == SCREENWIDTH && destheight == SCREENHEIGHT &&
-		SHORT(patch->width) == 320 && SHORT(patch->height) == 200) {
-		// Special case: Drawing a full-screen patch, so use
-		// F_DrawPatchCol in f_finale.c, since it's faster.
-		extern F_DrawPatchCol (int, patch_t *, int, int);
-
-		for (w = 0; w < 320; w++)
-			F_DrawPatchCol (w, patch, w, scrn);
-		return;
-	}
-
-	xinc = (SHORT(patch->width) << 16) / destwidth;
-	yinc = (SHORT(patch->height) << 16) / destheight;
-	xmul = (destwidth << 16) / patch->width;
-	ymul = (destheight << 16) / patch->height;
-
-	y0 -= (SHORT(patch->topoffset) * ymul) >> 16;
-	x0 -= (SHORT(patch->leftoffset) * xmul) >> 16;
-
-#ifdef RANGECHECK 
-	if (x0<0
-		|| x0+destwidth >SCREENWIDTH
-		|| y0<0
-		|| y0+destheight>SCREENHEIGHT 
-		|| (unsigned)scrn>4)
-	{
-	  //Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
-	  Printf ("V_DrawPatchStretched: bad patch (ignored)\n");
-	  return;
-	}
-#endif 
- 
-	if (!scrn)
-		V_MarkRect (x0, y0, destwidth, destheight);
-
-	col = 0;
-	desttop = screens[scrn]+y0*SCREENPITCH+x0;
-		 
-	w = destwidth * xinc;
-
-	for ( ; col<w ; col += xinc, desttop++)
-	{
-		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col >> 16]));
-
-		// step through the posts in a column
-		while (column->topdelta != 0xff ) 
-		{ 
-			source = (byte *)column + 3;
-			dest = desttop + ((column->topdelta * ymul) >> 16) * SCREENPITCH;
-			count = (column->length * ymul) >> 16;
-			c = 0;
-						 
-			do
-			{
-				*dest = source[c >> 16]; 
-				dest += SCREENPITCH;
-				c += yinc;
-			} while (--count);
-			column = (column_t *)(	(byte *)column + column->length 
-									+ 4 ); 
-		}
-	}
-}
-
-//
-// V_DrawPatchIndirect
-// Like V_DrawPatchDirect except it will stretch the patches as
-// needed for non-320x200 screens.
-//
-void V_DrawPatchIndirect (int x0, int y0, int scrn, patch_t *patch)
-{
-	if (SCREENWIDTH == 320 && SCREENHEIGHT == 200)
-		V_DrawPatch (x0, y0, scrn, patch);
-	else
-		V_DrawPatchStretched ((SCREENWIDTH * x0) / 320, (SCREENHEIGHT * y0) / 200, scrn, patch,
-					(SCREENWIDTH * patch->width) / 320, (SCREENHEIGHT * patch->height) / 200);
-}
-
-//
-// V_DrawPatchClean
-// Like V_DrawPatchIndirect, except it only uses integral multipliers.
-//
-void V_DrawPatchClean (int x0, int y0, int scrn, patch_t *patch)
-{
-	if (CleanXfac == 1 && CleanYfac == 1) {
-		V_DrawPatch ((x0-160) + (SCREENWIDTH/2), (y0-100) + (SCREENHEIGHT/2), scrn, patch);
-	} else {
-		V_DrawPatchStretched ((x0-160)*CleanXfac+(SCREENWIDTH/2),
-							  (y0-100)*CleanYfac+(SCREENHEIGHT/2),
-							  scrn, patch, patch->width * CleanXfac, patch->height * CleanYfac);
-	}
-}
-
-//
-// V_DrawPatchCleanNoMove
-// Like V_DrawPatchClean, except it doesn't adjust the x and y coordinates.
-//
-void V_DrawPatchCleanNoMove (int x0, int y0, int scrn, patch_t *patch)
-{
-	if (CleanXfac == 1 && CleanYfac == 1)
-		V_DrawPatch (x0, y0, scrn, patch);
-	else
-		V_DrawPatchStretched (x0, y0, scrn, patch, patch->width * CleanXfac, patch->height * CleanYfac);
-}
-		
-void V_DrawTranslatedPatchClean (int x0, int y0, int scrn, patch_t *patch, byte *map)
-{
-	if (CleanXfac == 1 && CleanYfac == 1) {
-		V_DrawTranslatedPatch ((x0-160) + (SCREENWIDTH/2), (y0-100) + (SCREENHEIGHT/2), scrn, patch, map);
-	} else {
-		V_DrawTranslatedPatchStretched ((x0-160)*CleanXfac+(SCREENWIDTH/2),
-							  (y0-100)*CleanYfac+(SCREENHEIGHT/2),
-							  scrn, patch, map, patch->width * CleanXfac, patch->height * CleanYfac);
-	}
-}
-
-void V_DrawTranslatedPatchCleanNoMove (int x0, int y0, int scrn, patch_t *patch, byte *map)
-{
-	if (CleanXfac == 1 && CleanYfac == 1) {
-		V_DrawTranslatedPatch (x0, y0, scrn, patch, map);
-	} else {
-		V_DrawTranslatedPatchStretched (x0, y0, scrn, patch, map, patch->width * CleanXfac, patch->height * CleanYfac);
-	}
-}
-
-
-//
-// V_DrawBlock
-// Draw a linear block of pixels into the view buffer.
-//
-void V_DrawBlock (int x, int y, int scrn, int width, int height, byte *src)
-{ 
-	byte*		dest; 
-		 
-#ifdef RANGECHECK 
-	if (x<0
-		||x+width >SCREENWIDTH
-		|| y<0
-		|| y+height>SCREENHEIGHT 
-		|| (unsigned)scrn>4 )
-	{
-		I_Error ("Bad V_DrawBlock");
-	}
-#endif 
- 
-	V_MarkRect (x, y, width, height);
- 
-	dest = screens[scrn] + y*SCREENPITCH+x;
-
-	if (width == SCREENWIDTH && SCREENWIDTH == SCREENPITCH) {
-		memcpy (dest, src, width * height);
-	} else {
-		while (height--)
+		for (y = top; y < bottom; y++)
 		{
-			memcpy (dest, src, width);
-			src += width;
-			dest += SCREENPITCH;
-		}
-	}
-} 
- 
-
-
-//
-// V_GetBlock
-// Gets a linear block of pixels from the view buffer.
-//
-void V_GetBlock (int x, int y, int scrn, int width, int height, byte *dest)
-{ 
-	byte*		src; 
-		 
-#ifdef RANGECHECK 
-	if (x<0
-		||x+width >SCREENWIDTH
-		|| y<0
-		|| y+height>SCREENHEIGHT 
-		|| (unsigned)scrn>4 )
-	{
-		I_Error ("Bad V_DrawBlock");
-	}
-#endif 
- 
-	src = screens[scrn] + y*SCREENPITCH+x; 
-
-	while (height--) 
-	{ 
-		memcpy (dest, src, width); 
-		src += SCREENPITCH; 
-		dest += width; 
-	} 
-} 
-
-//
-// V_PrintStr
-// Print a line of text using the console font
-//
-void V_PrintStr (int x, int y, byte *str, int count, byte ormask)
-{
-	byte *temp;
-	long *charimg;
-	
-	if (y > (SCREENHEIGHT - 8))
-		return;
-
-	if (x < 0) {
-		int skip;
-
-		skip = -(x - 7) / 8;
-		x += skip * 8;
-		if (count <= skip) {
-			return;
-		} else {
-			count -= skip;
-			str += skip;
-		}
-	}
-
-	x &= ~3;
-	temp = screens[0] + y * SCREENPITCH;
-
-	while (count && x <= (SCREENWIDTH - 8)) {
-		charimg = (long *)&ConChars[((*str) | ormask) * 128];
-		{
-#ifdef USEASM
-			extern PrintChar1P (long *charimg, byte *dest, int screenpitch);
-
-			PrintChar1P (charimg, temp + x, SCREENPITCH);
-#else
-			int z;
-			long *writepos;
-
-			writepos = (long *)(temp + x);
-			for (z = 0; z < 8; z++) {
-				*writepos = (*writepos & charimg[2]) ^ charimg[0];
-				writepos++;
-				*writepos = (*writepos & charimg[3]) ^ charimg[1];
-				writepos += (SCREENPITCH >> 2) - 1;
-				charimg += 4;
-			}
-#endif
-		}
-		str++;
-		count--;
-		x += 8;
-	}
-}
-
-//
-// V_PrintStr2
-// Same as V_PrintStr but doubles the size of every character.
-//
-void V_PrintStr2 (int x, int y, byte *str, int count, byte ormask)
-{
-	byte *temp;
-	long *charimg;
-	
-	if (y > (SCREENHEIGHT - 16))
-		return;
-
-	if (x < 0) {
-		int skip;
-
-		skip = -(x - 15) / 16;
-		x += skip * 16;
-		if (count <= skip) {
-			return;
-		} else {
-			count -= skip;
-			str += skip;
-		}
-	}
-
-	x &= ~3;
-	temp = screens[0] + y * SCREENPITCH;
-
-	while (count && x <= (SCREENWIDTH - 16)) {
-		charimg = (long *)&ConChars[((*str) | ormask) * 128];
-#ifdef USEASM
-		if (UseMMX) {
-			extern PrintChar2P_MMX (long *charimg, byte *dest, int screenpitch);
-
-			PrintChar2P_MMX (charimg, temp + x, SCREENPITCH);
-		} else
-#endif
-		{
-			int z;
-			byte *buildmask, *buildbits, *image;
-			unsigned int m1, s1;
-			unsigned int *writepos;
-
-			writepos = (long *)(temp + x);
-			buildbits = (byte *)&s1;
-			buildmask = (byte *)&m1;
-			image = (byte *)charimg;
-
-			for (z = 0; z < 8; z++) {
-				buildmask[0] = buildmask[1] = image[8];
-				buildmask[2] = buildmask[3] = image[9];
-				buildbits[0] = buildbits[1] = image[0];
-				buildbits[2] = buildbits[3] = image[1];
-				writepos[0] = (writepos[0] & m1) ^ s1;
-				writepos[SCREENPITCH/4] = (writepos[SCREENPITCH/4] & m1) ^ s1;
-
-				buildmask[0] = buildmask[1] = image[10];
-				buildmask[2] = buildmask[3] = image[11];
-				buildbits[0] = buildbits[1] = image[2];
-				buildbits[2] = buildbits[3] = image[3];
-				writepos[1] = (writepos[1] & m1) ^ s1;
-				writepos[1+SCREENPITCH/4] = (writepos[1+SCREENPITCH/4] & m1) ^ s1;
-
-				buildmask[0] = buildmask[1] = image[12];
-				buildmask[2] = buildmask[3] = image[13];
-				buildbits[0] = buildbits[1] = image[4];
-				buildbits[2] = buildbits[3] = image[5];
-				writepos[2] = (writepos[2] & m1) ^ s1;
-				writepos[2+SCREENPITCH/4] = (writepos[2+SCREENPITCH/4] & m1) ^ s1;
-
-				buildmask[0] = buildmask[1] = image[14];
-				buildmask[2] = buildmask[3] = image[15];
-				buildbits[0] = buildbits[1] = image[6];
-				buildbits[2] = buildbits[3] = image[7];
-				writepos[3] = (writepos[3] & m1) ^ s1;
-				writepos[3+SCREENPITCH/4] = (writepos[3+SCREENPITCH/4] & m1) ^ s1;
-
-				writepos += SCREENPITCH >> 1;
-				image += 16;
+			for (x = 0; x < right; x++)
+			{
+				memcpy (dest, src + ((y&63)<<6), 64);
+				dest += 64;
 			}
 
+			if (width & 63)
+			{
+				memcpy (dest, src + ((y&63)<<6), width & 63);
+				dest += width & 63;
+			}
+			dest += advance;
 		}
-		str++;
-		count--;
-		x += 16;
+	} else {
+		unsigned int *dest;
+		int z;
+		byte *l;
+
+		advance = (scrn->pitch - (width << 2)) >> 2;
+		dest = (unsigned int *)(scrn->buffer + top * scrn->pitch + (left << 2));
+
+		for (y = top; y < bottom; y++) {
+			l = src + ((y&63)<<6);
+			for (x = 0; x < right; x++) {
+				for (z = 0; z < 64; z += 4, dest += 4) {
+					// Try and let the optimizer pair this on a Pentium
+					// (even though VC++ doesn't anyway)
+					dest[0] = V_Palette[l[z]];
+					dest[1] = V_Palette[l[z+1]];
+					dest[2] = V_Palette[l[z+2]];
+					dest[3] = V_Palette[l[z+3]];
+				}
+			}
+
+			if (width & 63) {
+				// Do any odd pixel left over
+				if (width & 1)
+					*dest++ = V_Palette[l[0]];
+
+				// Do the rest of the pixels
+				for (z = 1; z < (width & 63); z += 2, dest += 2) {
+					dest[0] = V_Palette[l[z]];
+					dest[1] = V_Palette[l[z+1]];
+				}
+			}
+
+			dest += advance;
+		}
 	}
-#ifdef USEASM
-	EndMMX();
-#endif
 }
 
-//
-//		Write a string using the hu_font
-//
-extern patch_t *hu_font[HU_FONTSIZE];
 
-void V_DrawText (int x, int y, byte *string)
+// [RH] Set an area to a specified color
+void V_Clear (int left, int top, int right, int bottom, screen_t *scrn, int color)
 {
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-	byte*		map;
-				
+	int x, y;
 
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while(1) {
-		c = *ch++;
-		if (!c)
-			break;
-		if (c & 0x80) {
-			map = NULL;
-			c &= 0x7f;
-		} else {
-			map = WhiteMap;
-		}
+	if (scrn->is8bit) {
+		byte *dest;
 
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
+		dest = scrn->buffer + top * scrn->pitch + left;
+		x = right - left;
+		for (y = top; y < bottom; y++) {
+			memset (dest, color, x);
+			dest += scrn->pitch;
 		}
+	} else {
+		unsigned int *dest;
 
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
+		dest = (unsigned int *)(scrn->buffer + top * scrn->pitch + (left << 2));
+		right -= left;
+
+		for (y = top; y < bottom; y++) {
+			for (x = 0; x < right; x++) {
+				dest[x] = color;
+			}
+			dest += scrn->pitch >> 2;
 		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > SCREENWIDTH)
-			break;
-		if (!map) {
-			V_DrawPatch (cx, cy, 0, hu_font[c]);
-		} else {
-			V_DrawTranslatedPatch (cx, cy, 0, hu_font[c], map);
-		}
-		cx+=w;
 	}
 }
 
-void V_DrawTextClean (int x, int y, byte *string)
-{
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-	byte*		map;
-				
 
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while(1) {
-		c = *ch++;
-		if (!c)
-			break;
-		if (c & 0x80) {
-			map = NULL;
-			c &= 0x7f;
-		} else {
-			map = WhiteMap;
-		}
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12 * CleanYfac;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4 * CleanXfac;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width) * CleanXfac;
-		if (cx+w > SCREENWIDTH)
-			break;
-		if (!map) {
-			V_DrawPatchCleanNoMove (cx, cy, 0, hu_font[c]);
-		} else {
-			V_DrawTranslatedPatchCleanNoMove (cx, cy, 0, hu_font[c], map);
-		}
-		cx += w;
-	}
-}
-
-void V_DrawWhiteText (int x, int y, byte *string)
-{
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-				
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while(1) {
-		c = *ch++;
-		if (!c)
-			break;
-		c &= 0x7f;
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > SCREENWIDTH)
-			break;
-		V_DrawTranslatedPatch (cx, cy, 0, hu_font[c], WhiteMap);
-		cx+=w;
-	}
-}
-
-void V_DrawRedText (int x, int y, byte *string)
-{
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-				
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while (1) {
-		c = *ch++;
-		if (!c)
-			break;
-		c &= 0x7f;
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > SCREENWIDTH)
-			break;
-		V_DrawPatch (cx, cy, 0, hu_font[c]);
-		cx+=w;
-	}
-}
-
-void V_DrawWhiteTextClean (int x, int y, byte *string)
-{
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-				
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while(1) {
-		c = *ch++;
-		if (!c)
-			break;
-		c &= 0x7f;
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > 320)
-			break;
-		V_DrawTranslatedPatchClean (cx, cy, 0, hu_font[c], WhiteMap);
-		cx+=w;
-	}
-}
-
-void V_DrawRedTextClean (int x, int y, byte *string)
-{
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-				
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while (1) {
-		c = *ch++;
-		if (!c)
-			break;
-		c &= 0x7f;
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > 320)
-			break;
-		V_DrawPatchClean (cx, cy, 0, hu_font[c]);
-		cx+=w;
-	}
-}
-
-void V_DimScreen (int screen)
+void V_DimScreen (screen_t *screen)
 {
 	byte *fadetable;
 
@@ -1139,34 +201,67 @@ void V_DimScreen (int screen)
 	if (dimamount->value == 0.0)
 		return;
 
-	if (!TransTable)
-		fadetable = colormaps + 16 * 256;
-	else
-		fadetable = TransTable + 65536*(4-(int)dimamount->value) + 256*V_GetColorFromString (W_CacheLumpName ("PLAYPAL", PU_CACHE), dimcolor->string);
+	if (screen->is8bit) {
+		if (!TransTable)
+			fadetable = DefaultPalette->maps.colormaps + (NUMCOLORMAPS/2) * 256;
+		else
+			fadetable = TransTable + 65536*(4-(int)dimamount->value) +
+						256*V_GetColorFromString (DefaultPalette->basecolors, dimcolor->string);
 
-	{
+		{
 #ifdef	USEASM
-		extern DimScreenPLoop (byte *colormap, byte *screen, int width, int modulo, int height);
-
-		DimScreenPLoop (fadetable, screens[screen], SCREENWIDTH, SCREENPITCH-SCREENWIDTH, SCREENHEIGHT);
+			DimScreenPLoop (fadetable, screen->buffer, screen->width, screen->pitch-screen->width, screen->height);
 #else
-		unsigned int *spot, s;
-		int x, y;
-		byte a, b, c, d;
+			unsigned int *spot, s;
+			int x, y;
+			byte a, b, c, d;
 
-		spot = (unsigned int *)screens[screen];
-		for (y = 0; y < SCREENHEIGHT; y++) {
-			for (x = 0; x < (SCREENWIDTH >> 2); x++) {
-				s = *spot;
-				a = fadetable[s & 0xff];
-				b = fadetable[(s >> 8) & 0xff];
-				c = fadetable[(s >> 16) & 0xff];
-				d = fadetable[s >> 24];
-				*spot++ = a | (b << 8) | (c << 16) | (d << 24);
+			spot = (unsigned int *)(screen->buffer);
+			for (y = 0; y < screen->height; y++) {
+				for (x = 0; x < (screen->width >> 2); x++) {
+					s = *spot;
+					a = fadetable[s & 0xff];
+					b = fadetable[(s >> 8) & 0xff];
+					c = fadetable[(s >> 16) & 0xff];
+					d = fadetable[s >> 24];
+					*spot++ = a | (b << 8) | (c << 16) | (d << 24);
+				}
+				spot += (screen->pitch - screen->width) >> 2;
 			}
-			spot += (SCREENPITCH - SCREENWIDTH) >> 2;
-		}
 #endif
+		}
+	} else {
+		int x, y;
+		int *line;
+		int fill = V_GetColorFromString (NULL, dimcolor->string);
+
+		line = (int *)(screen->buffer);
+
+		if (dimamount->value == 1.0) {
+			fill = (fill >> 2) & 0x3f3f3f;
+			for (y = 0; y < screen->height; y++) {
+				for (x = 0; x < screen->width; x++) {
+					line[x] = (line[x] - ((line[x] >> 2) & 0x3f3f3f)) + fill;
+				}
+				line += screen->pitch >> 2;
+			}
+		} else if (dimamount->value == 2.0) {
+			fill = (fill >> 1) & 0x7f7f7f;
+			for (y = 0; y < screen->height; y++) {
+				for (x = 0; x < screen->width; x++) {
+					line[x] = ((line[x] >> 1) & 0x7f7f7f) + fill;
+				}
+				line += screen->pitch >> 2;
+			}
+		} else if (dimamount->value == 3.0) {
+			fill = fill - ((fill >> 2) & 0x3f3f3f);
+			for (y = 0; y < screen->height; y++) {
+				for (x = 0; x < screen->width; x++) {
+					line[x] = ((line[x] >> 2) & 0x3f3f3f) + fill;
+				}
+				line += screen->pitch >> 2;
+			}
+		}
 	}
 }
 
@@ -1176,7 +271,7 @@ BestColor
 (borrowed from Quake2 source: utils3/qdata/images.c)
 ===============
 */
-byte BestColor (const byte *palette, const int r, const int g, const int b)
+byte BestColor (const unsigned int *palette, const int r, const int g, const int b, const int numcolors)
 {
 	int		i;
 	int		dr, dg, db;
@@ -1189,12 +284,11 @@ byte BestColor (const byte *palette, const int r, const int g, const int b)
 	bestdistortion = 256*256*4;
 	bestcolor = 0;
 
-	for (i = 0; i <= 255; i++)
+	for (i = 0; i < numcolors; i++)
 	{
-		dr = r - (int)palette[0];
-		dg = g - (int)palette[1];
-		db = b - (int)palette[2];
-		palette += 3;
+		dr = r - RPART(palette[i]);
+		dg = g - GPART(palette[i]);
+		db = b - BPART(palette[i]);
 		distortion = dr*dr + dg*dg + db*db;
 		if (distortion < bestdistortion)
 		{
@@ -1209,7 +303,7 @@ byte BestColor (const byte *palette, const int r, const int g, const int b)
 	return bestcolor;
 }
 
-int V_GetColorFromString (const byte *palette, const char *cstr)
+int V_GetColorFromString (const unsigned int *palette, const char *cstr)
 {
 	int c[3], i, p;
 	char val[5];
@@ -1235,7 +329,12 @@ int V_GetColorFromString (const byte *palette, const char *cstr)
 			c[i] = ParseHex (val);
 		}
 	}
-	return BestColor (palette, c[0]>>8, c[1]>>8, c[2]>>8);
+	if (palette)
+		return BestColor (palette, c[0]>>8, c[1]>>8, c[2]>>8, 256);
+	else
+		return ((c[0] << 8) & 0xff0000) |
+			   ((c[1])      & 0x00ff00) |
+			   ((c[2] >> 8));
 }
 
 char *V_GetColorStringByName (const char *name)
@@ -1256,7 +355,7 @@ char *V_GetColorStringByName (const char *name)
 	data = strchr (rgbNames, '\n');
 	step = 0;
 
-	while (data = COM_Parse (data)) {
+	while ( (data = COM_Parse (data)) ) {
 		if (step < 3) {
 			c[step++] = atoi (com_token);
 		} else {
@@ -1279,7 +378,6 @@ char *V_GetColorStringByName (const char *name)
 			}
 		}
 	}
-	Printf ("Unknown color \"%s\"\n", name);
 	return NULL;
 }
 
@@ -1292,8 +390,8 @@ void Cmd_SetColor (void *plyr, int argc, char **argv)
 		return;
 	}
 
-	if (name = BuildString (argc - 2, argv + 2)) {
-		if (desc = V_GetColorStringByName (name)) {
+	if ( (name = BuildString (argc - 2, argv + 2)) ) {
+		if ( (desc = V_GetColorStringByName (name)) ) {
 			sprintf (setcmd, "set %s \"%s\"", argv[1], desc);
 			AddCommandString (setcmd);
 			free (desc);
@@ -1302,7 +400,7 @@ void Cmd_SetColor (void *plyr, int argc, char **argv)
 	}
 }
 
-void BuildTransTable (byte *transtab, byte *palette)
+void BuildTransTable (byte *transtab, unsigned int *palette)
 {
 	int a, b, c;
 	byte *trans25, *trans50, *trans75, *mtrans, *trans;
@@ -1317,9 +415,10 @@ void BuildTransTable (byte *transtab, byte *palette)
 		mtrans = trans50 + a;
 		for (b = 0; b < a; b++) {
 			c = BestColor (palette,
-							(palette[a*3+0] + palette[b*3+0]) >> 1,
-							(palette[a*3+1] + palette[b*3+1]) >> 1,
-							(palette[a*3+2] + palette[b*3+2]) >> 1);
+							(RPART(palette[a]) + RPART(palette[b])) >> 1,
+							(GPART(palette[a]) + GPART(palette[b])) >> 1,
+							(BPART(palette[a]) + BPART(palette[b])) >> 1,
+							256);
 			*trans++ = c;
 			*mtrans = c;
 			mtrans += 256;
@@ -1333,118 +432,162 @@ void BuildTransTable (byte *transtab, byte *palette)
 	for (a = 0; a < 256; a++) {
 		for (b = 0; b < 256; b++) {
 			c = BestColor (palette,
-							(palette[a*3+0] + palette[b*3+0] * 3) >> 2,
-							(palette[a*3+1] + palette[b*3+1] * 3) >> 2,
-							(palette[a*3+2] + palette[b*3+2] * 3) >> 2);
+							(RPART(palette[a]) + RPART(palette[b]) * 3) >> 2,
+							(GPART(palette[a]) + GPART(palette[b]) * 3) >> 2,
+							(BPART(palette[a]) + BPART(palette[b]) * 3) >> 2,
+							256);
 			*trans++ = c;
 			trans25[(b << 8) | a] = c;
 		}
 	}
 }
 
+void V_LockScreen (screen_t *screen)
+{
+	screen->lockcount++;
+	if (screen->lockcount == 1) {
+		I_LockScreen (screen);
+
+		if (screen == &screens[0]) {
+			if (dc_pitch != screen->pitch << detailyshift) {
+				dc_pitch = screen->pitch << detailyshift;
+				R_InitFuzzTable ();
+#ifdef USEASM
+				ASM_PatchPitch ();
+#endif
+			}
+
+			if ((screen->is8bit ? 1 : 4) << detailxshift != ds_colsize) {
+				ds_colsize = (screen->is8bit ? 1 : 4) << detailxshift;
+				ds_colshift = (screen->is8bit ? 0 : 2) + detailxshift;
+#ifdef USEASM
+				ASM_PatchColSize ();
+#endif
+			}
+		}
+	}
+}
+
+void V_UnlockScreen (screen_t *screen)
+{
+	if (screen->lockcount)
+		if (--screen->lockcount == 0)
+			I_UnlockScreen (screen);
+}
+
+void V_Blit (screen_t *src, int srcx, int srcy, int srcwidth, int srcheight,
+			 screen_t *dest, int destx, int desty, int destwidth, int destheight)
+{
+	I_Blit (src, srcx, srcy, srcwidth, srcheight, dest, destx, desty, destwidth, destheight);
+}
+
+
 //
 // V_SetResolution
 //
-boolean V_SetResolution (int width, int height)
+BOOL V_DoModeSetup (int width, int height, int bpp)
 {
 	int i;
 
-	if (!I_CheckResolution (width, height)) {					// Try specified resolution
-		if (!I_CheckResolution (SCREENWIDTH, SCREENHEIGHT)) {	// Try previous resolution (if any)
-			if (!I_CheckResolution (320, 200)) {				// Try "standard" resolution
-				if (!I_CheckResolution (640, 480)) {			// Try a resolution that *should* be available
-					return false;
-				} else {
-					width = 640;
-					height = 480;
-				}
-			} else {
-				width = 320;
-				height = 200;
-			}
-		} else {
-			width = SCREENWIDTH;
-			height = SCREENHEIGHT;
-		}
+	CleanXfac = width / 320;
+	CleanYfac = height / 200;
+	CleanWidth = width / CleanXfac;
+	CleanHeight = height / CleanYfac;
+
+	// [RH] Screens are no longer byte arrays
+	for (i = 0; i < 2; i++)
+		if (screens[i].impdata)
+			V_FreeScreen (&screens[i]);
+
+	I_SetMode (width, height, bpp);
+	bpp = (bpp == 8) ? bpp : 32;
+
+	for (i = 0; i < 2; i++) {
+		if (!I_AllocateScreen (&screens[i], width, height, bpp))
+			return false;
 	}
 
-	SCREENPITCH = SCREENWIDTH = width;
-	SCREENHEIGHT = height;
+	V_ForceBlend (0,0,0,0);
+	if (bpp == 8)
+		RefreshPalettes ();
 
-	CleanXfac = SCREENWIDTH / 320;
-	CleanYfac = SCREENHEIGHT / 200;
-	CleanWidth = SCREENWIDTH / CleanXfac;
-	CleanHeight = SCREENHEIGHT / CleanYfac;
-
-	if (screens[0])
-		free (screens[0]);
-
-	// stick these in low dos memory on PCs
-	if (screens[0] = I_AllocLow (SCREENWIDTH*SCREENHEIGHT*4)) {
-		for (i=1 ; i<4 ; i++)
-			screens[i] = screens[i-1] + SCREENWIDTH*SCREENHEIGHT;
-	} else {
-		return false;
-	}
-
+	R_InitColumnDrawers (screens[0].is8bit);
 	R_MultiresInit ();
-
-	if (screenheightarray)
-		free (screenheightarray);
-	screenheightarray = Malloc (sizeof(short) * SCREENWIDTH);
-
-	if (xtoviewangle)
-		free (xtoviewangle);
-	xtoviewangle = Malloc (sizeof(angle_t) * SCREENWIDTH);
-
-#ifdef USEASM
-	ASM_PatchRowBytes (SCREENPITCH);
-#endif
 
 	return true;
 }
 
-static void InitConChars (const byte transcolor)
+BOOL V_SetResolution (int width, int height, int Bpp)
 {
-	byte *d, *s, v, *src;
-	patch_t *chars;
-	int x, y, z, a;
+	int oldwidth, oldheight;
+	int oldBpp;
 
-	chars = W_CacheLumpName ("CONCHARS", PU_CACHE);
-	{
-		long *screen, fill;
-
-		fill = (transcolor << 24) | (transcolor << 16) | (transcolor << 8) | transcolor;
-		for (y = 0; y < 128; y++) {
-			screen = (long *)(screens[1] + SCREENPITCH * y);
-			for (x = 0; x < 128/4; x++) {
-				*screen++ = fill;
-			}
-		}
-		V_DrawPatch (0, 0, 1, chars);
+	if (screens[0].impdata) {
+		oldwidth = screens[0].width;
+		oldheight = screens[0].height;
+		oldBpp = screens[0].Bpp * 8;
+	} else {
+		// Harmless if screens[0] wasn't allocated
+		oldwidth = width;
+		oldheight = height;
+		oldBpp = Bpp;
 	}
-	src = screens[1];
-	if (ConChars = Malloc (256*8*8*2)) {
-		d = ConChars;
-		for (y = 0; y < 16; y++) {
-			for (x = 0; x < 16; x++) {
-				s = src + x * 8 + (y * 8 * SCREENPITCH);
-				for (z = 0; z < 8; z++) {
-					for (a = 0; a < 8; a++) {
-						v = s[a];
-						if (v == transcolor) {
-							d[a] = 0x00;
-							d[a+8] = 0xff;
-						} else {
-							d[a] = v;
-							d[a+8] = 0x00;
-						}
-					}
-					d += 16;
-					s += SCREENPITCH;
+
+	if (!I_CheckResolution (width, height, Bpp)) {				// Try specified resolution
+		if (!I_CheckResolution (oldwidth, oldheight, oldBpp)) {	// Try previous resolution (if any)
+			if (!I_CheckResolution (320, 200, 8)) {				// Try "standard" resolution
+				if (!I_CheckResolution (640, 480, 8)) {			// Try a resolution that *should* be available
+					return false;
+				} else {
+					width = 640;
+					height = 480;
+					Bpp = 8;
 				}
+			} else {
+				width = 320;
+				height = 200;
+				Bpp = 8;
 			}
+		} else {
+			width = oldwidth;
+			height = oldheight;
+			Bpp = oldBpp;
 		}
+	}
+
+	return V_DoModeSetup (width, height, Bpp);
+}
+
+void Cmd_Vid_SetMode (void *plyr, int argc, char **argv)
+{
+	BOOL	goodmode = false;
+	int		width = 0, height = screens[0].height, bpp = screens[0].Bpp * 8;
+
+	if (argc > 1) {
+		width = atoi (argv[1]);
+		if (argc > 2) {
+			height = atoi (argv[2]);
+			if (argc > 3)
+				bpp = atoi (argv[3]);
+		}
+	}
+
+	if (width) {
+		if (I_CheckResolution (width, height, bpp))
+			goodmode = true;
+	}
+
+	if (goodmode) {
+		// The actual change of resolution will take place
+		// near the beginning of D_Display().
+		setmodeneeded = true;
+		NewWidth = width;
+		NewHeight = height;
+		NewBpp = bpp;
+	} else if (width) {
+		Printf ("Unknown resolution %d x %d x %d\n", width, height, bpp);
+	} else {
+		Printf ("Usage: vid_setmode <width> <height> <bpp>\n");
 	}
 }
 
@@ -1453,19 +596,31 @@ static void InitConChars (const byte transcolor)
 // 
 void V_Init (void) 
 { 
-	int 		i;
+	int i;
+	int width, height, bpp;
 
-	int width, height;
+	// [RH] Setup gamma callback
+	gammalevel->u.callback = GammaCallback;
+	GammaCallback (gammalevel);
 
-	width = height = 0;
+	// [RH] Initialize palette subsystem
+	Printf ("InitPalettes\n");
+	if (!(DefaultPalette = InitPalettes ("PLAYPAL")))
+		I_FatalError ("Could not start palette subsystem");
 
-	if (i = M_CheckParm ("-width")) {
-		width = atoi (myargv[i + 1]);
-	}
+	width = height = bpp = 0;
 
-	if (i = M_CheckParm ("-height")) {
+	if ( (i = M_CheckParm ("-width")) )
+		if (i < myargc - 1)
+			width = atoi (myargv[i + 1]);
+
+	if ( (i = M_CheckParm ("-height")) )
+		if (i < myargc - 1)
 		height = atoi (myargv[i + 1]);
-	}
+
+	if ( (i = M_CheckParm ("-bpp")) )
+		if (i < myargc - 1)
+			bpp = atoi (myargv[i + 1]);
 
 	if (width == 0) {
 		if (height == 0) {
@@ -1478,18 +633,37 @@ void V_Init (void)
 		height = (width * 6) / 8;
 	}
 
-	if (!V_SetResolution (width, height)) {
-		I_FatalError ("Could not set resolution to %d x %d", width, height);
-	} else {
-		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
+	if (bpp == 0) {
+		bpp = (int)(vid_defbpp->value);
 	}
 
-	InitConChars (0xf7);
+	if (!V_SetResolution (width, height, bpp)) {
+		I_FatalError ("Could not set resolution to %d x %d x %d", width, height, bpp);
+	} else {
+		Printf ("Resolution: %d x %d x %d\n", screens[0].width, screens[0].height, screens[0].Bpp * 8);
+	}
+
+	V_InitConChars (0xf7);
+
+	{
+		static int palpoop[256];
+		byte *palette = W_CacheLumpName ("PLAYPAL", PU_CACHE);
+		int i;
+
+		for (i = 0; i < 256; i++) {
+			palpoop[i] = (palette[0] << 16) |
+						 (palette[1] << 8) |
+						 (palette[2]);
+			palette += 3;
+		}
+
+		V_Palette = palpoop;
+	}
 
 	if (!M_CheckParm ("-notrans")) {
 		char cachename[256];
 		byte *palette;
-		boolean isCached = false;
+		BOOL isCached = false;
 		FILE *cached;
 		int i;
 
@@ -1500,7 +674,7 @@ void V_Init (void)
 		i = M_CheckParm("-transfile");
 		if (i && i < myargc - 1) {
 			strcpy (cachename, myargv[i+1]);
-			DefaultExtension (cachename, ".cch");
+			DefaultExtension (cachename, ".tch");
 		} else {
 			sprintf (cachename, "%stranstab.tch", progdir);
 		}
@@ -1513,7 +687,7 @@ void V_Init (void)
 			if (cached) {
 				if (fread (cachepal, 1, 768, cached) == 768) {
 					if (memcmp (cachepal, palette, 768)) {
-						Printf ("Translucency cache is from another IWAD\n");
+						Printf ("Translucency cache was generated with a different palette\n");
 					} else {
 						isCached = (fread (TransTable, 1, 65536*3, cached) == 65536*3);
 					}
@@ -1526,7 +700,7 @@ void V_Init (void)
 
 		if (!isCached) {
 			Printf ("Creating translucency tables\n");
-			BuildTransTable (TransTable, W_CacheLumpName ("PLAYPAL", PU_CACHE));
+			BuildTransTable (TransTable, DefaultPalette->basecolors);
 			if (!cached) {
 				cached = fopen (cachename, "wb");
 				if (cached) {
@@ -1539,5 +713,24 @@ void V_Init (void)
 			fclose (cached);
 
 		TransTable -= 65536;
+	}
+}
+
+void V_AttachPalette (screen_t *scrn, palette_t *pal)
+{
+	if (scrn->palette == pal)
+		return;
+
+	V_DetachPalette (scrn);
+
+	pal->usecount++;
+	scrn->palette = pal;
+}
+
+void V_DetachPalette (screen_t *scrn)
+{
+	if (scrn->palette) {
+		FreePalette (scrn->palette);
+		scrn->palette = NULL;
 	}
 }

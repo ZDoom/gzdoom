@@ -25,10 +25,7 @@
 
 #include "d_player.h"
 
-
-#ifdef __GNUG__
-#pragma interface
-#endif
+#define MAX_MSGLEN				1400
 
 
 //
@@ -67,9 +64,10 @@ typedef struct
 	byte				retransmitfrom;
 	
 	byte				starttic;
-	byte				player;
 	byte				numtics;
-	ticcmd_t			cmds[BACKUPTICS];
+
+	byte				player;
+	byte				cmds[MAX_MSGLEN-8];
 
 } doomdata_t;
 
@@ -99,18 +97,11 @@ typedef struct
 	short				ticdup;
 	// Flag: 1 = send a backup tic in every packet.
 	short				extratics;
-	// Flag: 1 = deathmatch.
-	short				deathmatch;
-	// Flag: -1 = new game, 0-5 = load savegame
-	short				savegame;
-	short				episode;		// 1-3
-	short				map;			// 1-9
-	short				skill;			// 1-5
 
 	// Info specific to this node.
 	short				consoleplayer;
 	short				numplayers;
-	
+/*
 	// These are related to the 3-display mode,
 	//	in which two drones looking left and right
 	//	were used to render two additional views
@@ -120,7 +111,7 @@ typedef struct
 	short				angleoffset;
 	// 1 = drone
 	short				drone;			
-
+*/
 	// The packet data to be sent.
 	doomdata_t			data;
 	
@@ -138,6 +129,14 @@ void D_QuitNetGame (void);
 //? how many ticks to run?
 void TryRunTics (void);
 
+// [RH] Functions for making and using special "ticcmds"
+void Net_NewMakeTic (void);
+void Net_WriteByte (byte);
+void Net_WriteWord (short);
+void Net_WriteLong (int);
+void Net_WriteString (const char *);
+
+void Net_DoCommand (int type, byte **stream, int player);
 
 #endif
 

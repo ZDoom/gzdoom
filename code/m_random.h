@@ -1,7 +1,7 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select   -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// $Id: m_random.h,v 1.9 1998/05/01 14:20:31 killough Exp $
 //
 // Copyright (C) 1993-1996 by id Software, Inc.
 //
@@ -16,32 +16,114 @@
 //
 // DESCRIPTION:
 //
-//	  
+//		[RH] We now use BOOM's random number generator
+//
 //-----------------------------------------------------------------------------
 
 
 #ifndef __M_RANDOM__
 #define __M_RANDOM__
 
-
 #include "doomtype.h"
 
+// killough 1/19/98: rewritten to use to use a better random number generator
+// in the new engine, although the old one is available for compatibility.
 
+// killough 2/16/98:
+//
+// Make every random number generator local to each control-equivalent block.
+// Critical for demo sync. Changing the order of this list breaks all previous
+// versions' demos. The random number generators are made local to reduce the
+// chances of sync problems. In Doom, if a single random number generator call
+// was off, it would mess up all random number generators. This reduces the
+// chances of it happening by making each RNG local to a control flow block.
+//
+// Notes to developers: if you want to reduce your demo sync hassles, follow
+// this rule: for each call to P_Random you add, add a new class to the enum
+// type below for each block of code which calls P_Random. If two calls to
+// P_Random are not in "control-equivalent blocks", i.e. there are any cases
+// where one is executed, and the other is not, put them in separate classes.
+//
+// Keep all current entries in this list the same, and in the order
+// indicated by the #'s, because they're critical for preserving demo
+// sync. Do not remove entries simply because they become unused later.
+
+typedef enum {
+	pr_misc,					// 0
+	pr_all_in_one,				// 1
+	pr_dmspawn,					// 2
+	pr_checkmissilerange,		// 3
+	pr_trywalk,					// 4
+	pr_newchasedir,				// 5
+	pr_look,					// 6
+	pr_chase,					// 7
+	pr_facetarget,				// 8
+	pr_posattack,				// 9
+	pr_sposattack,				// 10
+	pr_cposattack,				// 11
+	pr_cposrefire,				// 12
+	pr_spidrefire,				// 13
+	pr_troopattack,				// 14
+	pr_sargattack,				// 15
+	pr_headattack,				// 16
+	pr_bruisattack,				// 17
+	pr_tracer,					// 18
+	pr_skelfist,				// 19
+	pr_scream,					// 20
+	pr_brainscream,				// 21
+	pr_brainexplode,			// 22
+	pr_spawnfly,				// 23
+	pr_killmobj,				// 24
+	pr_damagemobj,				// 25
+	pr_checkthing,				// 26
+	pr_changesector,			// 27
+	pr_explodemissile,			// 28
+	pr_mobjthinker,				// 29
+	pr_spawnmobj,				// 30
+	pr_spawnmapthing,			// 31
+	pr_spawnpuff,				// 32
+	pr_spawnblood,				// 33
+	pr_checkmissilespawn,		// 34
+	pr_spawnmissile,			// 35
+	pr_punch,					// 36
+	pr_saw,						// 37
+	pr_fireplasma,				// 38
+	pr_gunshot,					// 39
+	pr_fireshotgun2,			// 40
+	pr_bfgspray,				// 41
+	pr_checksight,				// 42
+	pr_playerinspecialsector,	// 43
+	pr_fireflicker,				// 44
+	pr_lightflash,				// 45
+	pr_spawnlightflash,			// 46
+	pr_spawnstrobeflash,		// 47
+	pr_doplat,					// 48
+	pr_throwgib,				// 49
+	pr_vel4dmg,					// 50
+	pr_gengib,					// 51
+	// Start new entries -- add new entries below
+
+	// End of new entries
+	NUMPRCLASS							// MUST be last item in list
+} pr_class_t;
+
+// The random number generator's state.
+typedef struct {
+	unsigned long seed[NUMPRCLASS];		// Each block's random seed
+	int rndindex, prndindex;			// For compatibility support
+} rng_t;
+
+extern rng_t rng;						// The rng's state
+
+extern unsigned long rngseed;			// The starting seed (not part of state)
 
 // Returns a number from 0 to 255,
-// from a lookup table.
-int M_Random (void);
+#define M_Random() P_Random(pr_misc)
 
-// As M_Random, but used only by the play simulation.
-int P_Random (void);
+// As M_Random, but used by the play simulation.
+int P_Random(pr_class_t);
 
 // Fix randoms for demos.
-void M_ClearRandom (void);
-
+void M_ClearRandom(void);
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

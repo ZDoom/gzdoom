@@ -24,10 +24,6 @@
 #define __P_TICK__
 
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 
 // Called by C_Ticker,
 // can call G_PlayerExited.

@@ -24,9 +24,10 @@ EXTERN	_ylookup
 EXTERN	_centery
 EXTERN	_fuzzpos
 EXTERN	_fuzzoffset
-EXTERN	_colormaps
-EXTERN	_viewheight
+EXTERN	_DefaultPalette
+EXTERN	_realviewheight
 
+EXTERN	_dc_pitch
 EXTERN	_dc_colormap
 EXTERN	_dc_transmap
 EXTERN	_dc_iscale
@@ -35,7 +36,10 @@ EXTERN	_dc_source
 EXTERN	_dc_yl
 EXTERN	_dc_yh
 EXTERN	_dc_x
+EXTERN	_dc_mask	; Tutti-Frutti fix
 
+EXTERN	_ds_colsize
+EXTERN	_ds_colshift
 EXTERN	_ds_xstep
 EXTERN	_ds_ystep
 EXTERN	_ds_colormap
@@ -53,7 +57,6 @@ FUZZTABLE	equ	64
 ; Local stuff:
 lastAddress	DD 0
 
-rowbytes	DD 0
 pixelcount	DD 0
 
 %ifdef M_TARGET_WATCOM
@@ -64,6 +67,17 @@ pixelcount	DD 0
 %endif
 
 
+GLOBAL	_ASM_PatchColSize
+
+_ASM_PatchColSize:
+	mov	ecx,[_ds_colshift]
+	mov	edx,[_ds_colsize]
+	mov	[s0+2],cl
+	mov	[s1+2],dl
+	add	edx,edx
+	mov	[s2+2],edx
+	ret
+
 ;*----------------------------------------------------------------------
 ;*
 ;* DrawSpan8Loop Written by Petteri Kangaslampi <pekangas@sci.fi>
@@ -71,33 +85,34 @@ pixelcount	DD 0
 ;*
 ;*----------------------------------------------------------------------
 
-GLOBAL _DrawSpan8Loop
+GLOBAL	_DrawSpan8Loop
 
 ;void DrawSpan8Loop(fixed_t xfrac, fixed_t yfrac, int count, byte *dest);
 
 _DrawSpan8Loop:
 	push	ebp
-	push	edi
+	 push	edi
 	push	esi
-	push	ebx
+	 push	ebx
 
-	mov	ebx,[esp+20]	; xfrac
-	mov	ecx,[esp+24]	; yfrac
 	mov	eax,[esp+28]	; count
-	mov	edi,[esp+32]	; dest
+	 mov	ebx,[esp+20]	; xfrac
+s0:	sal	eax,8
+	 mov	edi,[esp+32]	; dest
 	add	eax,edi
+	 mov	ecx,[esp+24]	; yfrac
 	mov	[lastAddress],eax
 	
-	mov	ebp,ebx
+	 mov	ebp,ebx
 	mov	edx,ecx
+	 and	ebp,65536*63
 	shr	edx,10
-	and	ebp,65536*63
 
-	shr	ebp,16
+	 shr	ebp,16
 	xor	eax,eax
+	 nop
 
-.loo:
-	and	edx,64*63
+ds8loo:	and	edx,64*63
 	mov	esi,[_ds_source]
 
 	or	ebp,edx
@@ -140,16 +155,16 @@ _DrawSpan8Loop:
 	mov	al,[esi+eax]
 
 	shr	edx,10
-	mov	[edi+1],al
+s1:	mov	[edi+1],al
 
 	shr	ebp,16
 	mov	esi,[lastAddress]
 
 	and	ebp,63
-	add	edi,2
+s2:	add	edi,2
 
 	cmp	edi,esi
-	jne	near .loo
+	jne	near ds8loo
 
 	pop	ebx
 	pop	esi
@@ -160,40 +175,34 @@ _DrawSpan8Loop:
 
 ;************************
 
-GLOBAL	_ASM_PatchRowBytes
+GLOBAL	_ASM_PatchPitch
 
-; void ASM_PatchRowBytes (int bytes);
+_ASM_PatchPitch:
+	mov	edx,[_dc_pitch]
 
-_ASM_PatchRowBytes:
-	mov	edx,[esp+4]
-	mov	[rowbytes],edx
-
-	; 1 * rowbytes
-	mov	[p1+2],edx
+	; 1 * dc_pitch
+	mov	[rdcp1+2],edx
 	mov	[f1a+3],edx
 	mov	[f1b+2],edx
 	mov	[l1a+2],edx
 	mov	[l1b+2],edx
 
-	; 2 * rowbytes
-	add	edx,[esp+4]
-	mov	[p2+2],edx
+	; 2 * dc_pitch
+	add	edx,[_dc_pitch]
 	mov	[f2a+3],edx
 	mov	[f2b+2],edx
 	mov	[l2a+2],edx
 	mov	[l2b+2],edx
 
-	; 3 * rowbytes
-	add	edx,[esp+4]
-	mov	[p3+2],edx
+	; 3 * dc_pitch
+	add	edx,[_dc_pitch]
 	mov	[f3a+3],edx
 	mov	[f3b+2],edx
 	mov	[l3a+2],edx
 	mov	[l3b+2],edx
 
-	; 4 * rowbytes
-	add	edx,[esp+4]
-	mov	[p4+2],edx
+	; 4 * dc_pitch
+	add	edx,[_dc_pitch]
 	mov	[f4+2],edx
 	mov	[l4+2],edx
 
@@ -202,180 +211,106 @@ _ASM_PatchRowBytes:
 
 ;*----------------------------------------------------------------------
 ;*
-;* R_DrawColumn
+;* R_DrawColumnP
 ;*
-;* Taken from Doom Legacy. Here's their info:
-;*
-;*   New optimised version 10-01-1998 by D.Fabrice and P.Boris
-;*   TO DO: optimise it much farther... should take at most 3 cycles/pix
-;*	    once it's fixed, add code to patch the offsets so that it
-;*	    works in every screen width.
+;* I don't use Doom Legacy's assembly R_DrawColumn() anymore.
+;* This routine avoids the AGI stalls of Legacy's routine, so on
+;* Pentium's it really isn't that much slower. On PPros and above
+;* it still suffers from just as many partial register stalls, though.
 ;*
 ;*----------------------------------------------------------------------
 
-GLOBAL _R_DrawColumn_ASM
+GLOBAL	_R_DrawColumnP_ASM
 
-_R_DrawColumn_ASM:
-;
-; dest = ylookup[dc_yl] + columnofs[dc_x];
-;
-; [RH] I interleaved this with the register saving. Pairs on a Pentium. (Woohoo!)
-	push	ebp
-	mov	ebp,[_dc_yl]
-	push	ebx
-	mov	ebx,ebp
-	push	edi
-	mov	edi,[_ylookup]
-	push	esi
-	mov	edi,[edi+ebx*4]
+_R_DrawColumnP_ASM:
 
-	mov	esi,[_columnofs]
-	mov	ebx,[_dc_x]
-	add	edi,[esi+ebx*4]			; edi = dest
+; count = dc_yh - dc_yl;
 
-;
-; pixelcount = yh - yl + 1
-;
 	mov	eax,[_dc_yh]
-	inc	eax
-	sub	eax,ebp				; pixel count
-	mov	[pixelcount],eax		; save for final pixel
-	jle	near vdone			; nothing to scale
+	 mov	ecx,[_dc_yl]
+	sub	eax,ecx
+	 mov	edx,[_ylookup]
 
+	jl	near rdcpret		; count < 0: nothing to do, so leave
+
+	push	ebp			; save registers
+	 push	ebx
+	push	edi
+	 push	esi
+
+; dest = ylookup[dc_yl] + columnofs[dc_x];
+
+	mov	edi,[edx+ecx*4]
+	 mov	edx,[_columnofs]
+	mov	ebx,[_dc_x]
+	 inc	eax			; make 0 count mean 0 pixels
+	add	edi,[edx+ebx*4]		; edi = top of destination column
+	 sub	ecx,[_centery]		; ecx = dc_yl - centery
+
+	imul	eax,[_dc_pitch]		; Start turning the counter into an index
+
+	add	edi,eax			; Point edi to the bottom of the destination column
+	 mov	edx,[_dc_iscale]
+
+; frac = dc_texturemid + (dc_yl - centery) * fracstep
+
+	imul	ecx,edx
+
+	shr	edx,16
+	 add	ecx,[_dc_texturemid]	; ecx = frac (all 32 bits)
+	mov	ebx,ecx
+	 mov	ebp,0
+	shl	ebx,16
+	 sub	ebp,eax			; ebp = counter (counts up to 0 in pitch increments)
+	shr	ecx,16
+	 mov	eax,[_dc_mask]
+	and	ecx,eax
+	 or	ebx,edx			; Put fracstep integral part into bl
+	shl	eax,8
+	 mov	edx,[_dc_iscale]
+	shl	edx,16
+	 mov	esi,[_dc_source]
+	or	ebx,eax			; Put mask byte into bh
+	 mov	eax,[_dc_colormap]
+	sub	edi,[_dc_pitch]
+
+; The registers should now look like this:
 ;
-; frac = dc_texturemid - (centery-dc_yl)*fracstep;
+;	[31  ..  16][15 .. 8][7 .. 0]
+; eax	[colormap	    ][texel ]
+; ebx	[yf	   ][mask   ][dyi   ]
+; ecx	[0		    ][yi    ]
+; edx	[dyf	   ][	    ][      ]
+; esi	[source texture column	    ]
+; edi	[destination screen pointer ]
+; ebp	[counter (adds up)	    ]
 ;
-	mov	ecx,[_dc_iscale]		; fracstep
-	mov	eax,[_centery]
-	sub	eax,ebp
-	imul	eax,ecx
-	mov	edx,[_dc_texturemid]
-	sub	edx,eax
-	mov	ebx,edx
-	shr	ebx,16				; frac int.
-	and	ebx,0x7f
-	shl	edx,16				; y frac up
+; Unfortunately, this arrangement is going to produce
+; lots of partial register stalls on anything better
+; than a Pentium. :-(
 
-	mov	ebp,ecx
-	shl	ebp,16				; fracstep f. up
-	shr	ecx,16				; fracstep i. ->cl
-	and	cl,0x7f
+	align	16
+rdcploop:
+	mov	al,[esi+ecx]		; Fetch texel
+	 add	ebx,edx			; increment frac fractional part
+	adc	cl,bl			; increment frac integral part
+rdcp1:	 add	ebp,0x12345678		; increment counter
+	mov	al,[eax]		; colormap texel
+	 and	cl,bh
+	mov	[edi+ebp],al		; Store texel
+	 test	ebp,ebp
+	jnz	rdcploop		; loop
 
-	mov	esi,[_dc_source]
-
-;
-; lets rock :) !
-;
-	mov	eax,[pixelcount]
-	mov	dh,al
-	shr	eax,2
-	mov	ch,al				; quad count
-	mov	eax,[_dc_colormap]
-	test	dh,3
-	jz	v4quadloop
-
-;
-;  do un-even pixel
-;
-	test	dh,1
-	jz	dc2
-
-	mov	al,[esi+ebx]			; prep un-even loops
-	 add	edx,ebp				; ypos f += ystep f
-	adc	bl,cl				; ypos i += ystep i
-	 mov	dl,[eax]			; colormap texel
-	and	bl,0x7f				; mask 0-127 texture index
-	 mov	[edi],dl			; output pixel
-	add	edi,[rowbytes]
-
-;
-;  do two non-quad-aligned pixels
-;
-dc2:
-	test	dh,2
-	jz	dc3
-
-	mov	al,[esi+ebx]			; prep un-even loops
-	 add	edx,ebp				; ypos f += ystep f
-	adc	bl,cl				; ypos i += ystep i
-	 mov	dl,[eax]			; colormap texel
-	and	bl,0x7f				; mask 0-127 texture index
-	 mov	[edi],dl			; output pixel
-
-	mov	al,[esi+ebx]			; prep un-even loops
-	 add	edx,ebp				; ypos f += ystep f
-	adc	bl,cl				; ypos i += ystep i
-	 mov	dl,[eax]			; colormap texel
-	and	bl,0x7f				; mask 0-127 texture index
-	 add	edi,[rowbytes]
-	mov	[edi],dl			; output pixel
-
-	add	edi,[rowbytes]
-
-;
-;  test if there was at least 4 pixels
-;
-dc3:
-	test	ch,0xff				; test quad count
-	jz	vdone
-
-;
-; ebp : ystep frac. upper 24 bits
-; edx : y     frac. upper 24 bits
-; ebx : y     i.    lower 7 bits,  masked for index
-; ecx : ch = counter, cl = y step i.
-; eax : colormap aligned 256
-; esi : source texture column
-; edi : dest screen
-;
-v4quadloop:
-	mov	dh,0x7f				; prep mask
-
-;	.align  4
-vquadloop:
-	mov	al,[esi+ebx]			; prep loop
-	 add	edx,ebp				; ypos f += ystep f
-	adc	bl,cl				; ypos i += ystep i
-	 mov	dl,[eax]			; colormap texel
-	mov	[edi],dl			; output pixel
-	 and	bl,dh				; mask 0-127 texture index
-
-	mov	al,[esi+ebx]			; fetch source texel
-	 add	edx,ebp				; ypos f += ystep f
-	adc	bl,cl				; ypos i += ystep i
-	 mov	dl,[eax]			; colormap texel
-p1:	mov	[edi+0x12345678],dl		; output pixel
-	 and	bl,dh				; mask 0-127 texture index
-
-	mov	al,[esi+ebx]			; fetch source texel
-	 add	edx,ebp
-	adc	bl,cl
-	 mov	dl,[eax]
-p2:	mov	[edi+2*0x12345678],dl
-	 and	bl,dh
-
-	mov	al,[esi+ebx]			; fetch source texel
-	 add	edx,ebp
-	adc	bl,cl
-	 mov	dl,[eax]
-p3:	mov	[edi+3*0x12345678],dl
-	 and	bl,dh
-
-p4:	add	edi,4*0x12345678
-
-	 dec	ch
-	jnz	vquadloop
-
-vdone:
 	pop	esi
-	pop	edi
+	 pop	edi
 	pop	ebx
-	pop	ebp
+	 pop	ebp
+rdcpret:
 	ret
 
 ;*----------------------------------------------------------------------
 ;*
-;* R_DrawFuzzColumn
+;* R_DrawFuzzColumnP
 ;*
 ;* Based very loosely on the above R_DrawColumn code. This assumes
 ;* that the fuzztable is some 2^n size, which it is not in the
@@ -383,51 +318,51 @@ vdone:
 ;*
 ;*----------------------------------------------------------------------
 
-GLOBAL _R_DrawFuzzColumn_ASM
+GLOBAL _R_DrawFuzzColumnP_ASM
 
-_R_DrawFuzzColumn_ASM:
+_R_DrawFuzzColumnP_ASM:
 ; Adjust borders. Low...
 	mov	eax,[_dc_yl]
-	push	ebx
+	 push	ebx
 	push	esi
-	push	edi
+	 push	edi
 
-	test	eax,eax
-	jne	.ylok
+	cmp	eax,0
+	 jg	.ylok
 
 	mov	eax,1
-	mov	[_dc_yl],eax		; Necessary?
 
 ; ...and high.
-.ylok	mov	edx,[_viewheight]
-	mov	ecx,[_dc_yh]
-	lea	esi,[edx-1]
-	cmp	ecx,esi
-	jne	.yhok
+.ylok	mov	edx,[_realviewheight]
+	 mov	esi,[_dc_yh]
+	lea	ecx,[edx-1]
+	cmp	esi,ecx
+	 jl	.yhok
 
-	lea	ecx,[edx-2]
-	mov	[_dc_yh],ecx		; Necessary?
+	lea	esi,[edx-2]
 
-.yhok	mov	esi,ecx
-	sub	esi,eax			; esi = count
+.yhok	sub	esi,eax			; esi = count
 	js	near dfcdone		; Zero length (or less)
 
 	mov	ecx,[_ylookup]
-	mov	edx,[_dc_yl]
-	mov	edi,[ecx+edx*4]
-	mov	edx,[_dc_x]
-	mov	ecx,[_columnofs]
+	 mov	edx,[_dc_x]
+	; AGI stall
+	mov	edi,[ecx+eax*4]
+	 mov	ecx,[_columnofs]
+	; AGI stall
 	mov	ebx,[ecx+edx*4]
+	 mov	eax,[_DefaultPalette]
 	mov	ecx,[_fuzzpos]
-	mov	eax,[_colormaps]
-	add	edi,ebx
+	 add	edi,ebx
 	inc	esi
-	add	eax,6*256
+	 mov	eax,[eax+8]
 
 	mov	ebx,esi
+	 add	eax,6*256
 	shr	esi,2
-	test	ebx,3
-	jz	fquadloop
+	 shl	ebx,8
+	test	bh,3
+	 jz	fquadloop
 ;
 ; esi = count
 ; edi = dest
@@ -436,8 +371,8 @@ _R_DrawFuzzColumn_ASM:
 ;
 
 ; do odd pixel (if any)
-	test	ebx,1
-	jz	.oddid
+	test	bh,1
+	 jz	.oddid
 
 	mov	edx,[_fuzzoffset+ecx*4]
 	 inc	ecx
@@ -445,11 +380,11 @@ _R_DrawFuzzColumn_ASM:
 	 and	ecx,FUZZTABLE-1
 	mov	bl,[eax]
 	mov	[edi],bl
-	 add	edi,[rowbytes]
+	 add	edi,[_dc_pitch]
 
 ; do two non-dword aligned pixels (if any)
-.oddid	test	ebx,2
-	jz	.undid
+.oddid	test	bh,2
+	 jz	.undid
 
 	mov	edx,[_fuzzoffset+ecx*4]
 	 inc	ecx
@@ -458,25 +393,25 @@ _R_DrawFuzzColumn_ASM:
 	mov	bl,[eax]
 	 mov	edx,[_fuzzoffset+ecx*4]
 	mov	[edi],bl
-	 add	edi,[rowbytes]
+	 add	edi,[_dc_pitch]
 
 	inc	ecx
 	 mov	al,[edi+edx]
 	and	ecx,FUZZTABLE-1
 	 mov	bl,[eax]
 	mov	[edi],bl
-	 add	edi,[rowbytes]
+	 add	edi,[_dc_pitch]
 
 ; make sure we still have some pixels left to do
 .undid	test	esi,esi
-	jz	savefuzzpos
+	 jz	savefuzzpos
 
 fquadloop:
 	mov	edx,[_fuzzoffset+ecx*4]
 	 inc	ecx
-	mov	al,[edi+edx]
+	mov	al,[edi+edx]		; AGI stall
 	 and	ecx,FUZZTABLE-1
-	mov	bl,[eax]
+	mov	bl,[eax]		; AGI stall
 	 mov	edx,[_fuzzoffset+ecx*4]
 	mov	[edi],bl
 
@@ -516,7 +451,7 @@ dfcdone:
 
 ;*----------------------------------------------------------------------
 ;*
-;* R_DrawTranslucentColumn
+;* R_DrawTranslucentColumnP
 ;*
 ;* This is a modified version of R_DrawColumn above. The actual
 ;* inner loop code is mine. Significantly, unlike the version of
@@ -525,35 +460,36 @@ dfcdone:
 ;*
 ;*----------------------------------------------------------------------
 
-GLOBAL _R_DrawTranslucentColumn_ASM
+GLOBAL _R_DrawTranslucentColumnP_ASM
 
-_R_DrawTranslucentColumn_ASM:
+_R_DrawTranslucentColumnP_ASM:
 ;
 ; dest = ylookup[dc_yl] + columnofs[dc_x];
 ;
 	push	ebp
-	mov	ebp,[_dc_yl]
 	push	ebx
-	mov	ebx,ebp
 	push	edi
-	mov	edi,[_ylookup]
 	push	esi
-	mov	edi,[edi+ebx*4]
 
+	mov	ebp,[_dc_yl]
+;
+; pixelcount = yh - yl + 1
+;
+	mov	eax,[_dc_yh]
+	mov	ebx,ebp
+	inc	eax
+	sub	eax,ebp				; pixel count
+	mov	[pixelcount],eax		; save for final pixel
+	jle	near ldone			; nothing to scale
+
+	mov	edi,[_ylookup]
 	push	ebp				; make space for ystep frac. later
+	mov	edi,[edi+ebx*4]
 
 	mov	esi,[_columnofs]
 	mov	ebx,[_dc_x]
 	add	edi,[esi+ebx*4]			; edi = dest
 
-;
-; pixelcount = yh - yl + 1
-;
-	mov	eax,[_dc_yh]
-	inc	eax
-	sub	eax,ebp				; pixel count
-	mov	[pixelcount],eax		; save for final pixel
-	jle	near ldone			; nothing to scale
 
 ;
 ; frac = dc_texturemid - (centery-dc_yl)*fracstep;
@@ -566,13 +502,13 @@ _R_DrawTranslucentColumn_ASM:
 	sub	edx,eax
 	mov	ebx,edx
 	shr	ebx,16				; frac int.
-	and	ebx,0x7f
+	and	ebx,[_dc_mask]
 	shl	edx,16				; y frac up
 
 	mov	ebp,ecx
 	shl	ebp,16				; fracstep f. up
 	shr	ecx,16				; fracstep i. ->cl
-	and	cl,0x7f
+	and	cl,[_dc_mask]
 
 	mov	esi,[_dc_source]
 
@@ -592,7 +528,7 @@ _R_DrawTranslucentColumn_ASM:
 ;
 ; [esp] : ystep frac. upper 24 bits
 ;  ebp  : y     frac. upper 24 bits
-;  ebx  : y     i.    lower 7 bits,  masked for index
+;  ebx  : y     i.    lower 8 bits,  masked for index
 ;  ecx  : ch = counter, cl = y step i.
 ;  eax  : colormap aligned 256
 ;  edx  : transtable aligned 65536
@@ -613,8 +549,8 @@ _R_DrawTranslucentColumn_ASM:
 	mov	al,[edx]
 	 adc	bl,cl
 	mov	[edi],al
-	 and	ebx,byte 0x7f
-	add	edi,[rowbytes]
+	 and	ebx,[_dc_mask]
+	add	edi,[_dc_pitch]
 
 
 ;
@@ -631,18 +567,18 @@ _R_DrawTranslucentColumn_ASM:
 	mov	al,[edx]
 	 adc	bl,cl
 	mov	[edi],al
-	 and	ebx,byte 0x7f
+	 and	ebx,[_dc_mask]
 
 	mov	al,[esi+ebx]
 	 mov	dh,[edi]
-	add	edi,[rowbytes]
+	add	edi,[_dc_pitch]
 	 mov	dl,[eax]
 	add	ebp,[esp]
 	 mov	al,[edx]
 	adc	bl,cl
 	 mov	[edi],al
-	and	ebx,byte 0x7f
-	 add	edi,[rowbytes]
+	and	ebx,[_dc_mask]
+	 add	edi,[_dc_pitch]
 
 ;
 ;  test if there were at least 4 pixels
@@ -651,7 +587,7 @@ _R_DrawTranslucentColumn_ASM:
 	mov	eax,[pixelcount]
 	shr	eax,2
 	test	eax,eax				; test quad count
-	jz	ldone
+	jz	near ldone
 
 .l4quadloop:
 	mov	ch,al
@@ -666,7 +602,7 @@ lquadloop:
 	mov	al,[edx]
 	 adc	bl,cl
 	mov	[edi],al
-	 and	ebx,byte 0x7f
+	 and	ebx,[_dc_mask]
 
 	mov	al,[esi+ebx]
 l1a:	 mov	dh,[edi+0x12345678]
@@ -675,7 +611,7 @@ l1a:	 mov	dh,[edi+0x12345678]
 	mov	al,[edx]
 	 adc	bl,cl
 l1b:	mov	[edi+0x12345678],al
-	 and	ebx,byte 0x7f
+	 and	ebx,[_dc_mask]
 
 	mov	al,[esi+ebx]
 l2a:	 mov	dh,[edi+2*0x12345678]
@@ -684,7 +620,7 @@ l2a:	 mov	dh,[edi+2*0x12345678]
 	mov	al,[edx]
 	 adc	bl,cl
 l2b:	mov	[edi+2*0x12345678],al
-	 and	ebx,byte 0x7f
+	 and	ebx,[_dc_mask]
 
 	mov	al,[esi+ebx]
 l3a:	 mov	dh,[edi+3*0x12345678]
@@ -693,7 +629,7 @@ l3a:	 mov	dh,[edi+3*0x12345678]
 	mov	al,[edx]
 	 adc	bl,cl
 l3b:	mov	[edi+3*0x12345678],al
-	 and	ebx,byte 0x7f
+	 and	ebx,[_dc_mask]
 
 l4:	add	edi,4*0x12345678
 

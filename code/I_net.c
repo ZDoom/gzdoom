@@ -29,8 +29,6 @@
 //
 //-----------------------------------------------------------------------------
 
-const char
-i_net_rcsid[] = "$Id: i_net.c,v 1.2 1997/12/29 19:50:54 pekangas Exp $";
 
 /* [Petteri] Check if compiling for Win32:	*/
 #if defined(__WINDOWS__) || defined(__NT__) || defined(_MSC_VER) || defined(_WIN32)
@@ -62,12 +60,10 @@ i_net_rcsid[] = "$Id: i_net.c,v 1.2 1997/12/29 19:50:54 pekangas Exp $";
 #include "d_net.h"
 #include "m_argv.h"
 #include "m_alloc.h"
+#include "m_swap.h"
 
 #include "doomstat.h"
 
-#ifdef __GNUG__
-#pragma implementation "i_net.h"
-#endif
 #include "i_net.h"
 
 
@@ -85,22 +81,8 @@ typedef int SOCKET;
 #endif
 
 
-// For some odd reason...
-#define ntohl(x) \
-		((unsigned long int)((((unsigned long int)(x) & 0x000000ffU) << 24) | \
-							 (((unsigned long int)(x) & 0x0000ff00U) <<  8) | \
-							 (((unsigned long int)(x) & 0x00ff0000U) >>  8) | \
-							 (((unsigned long int)(x) & 0xff000000U) >> 24)))
-
-#define ntohs(x) \
-		((unsigned short int)((((unsigned short int)(x) & 0x00ff) << 8) | \
-							  (((unsigned short int)(x) & 0xff00) >> 8))) \
-		  
-#define htonl(x) ntohl(x)
-#define htons(x) ntohs(x)
-
 void	NetSend (void);
-boolean NetListen (void);
+BOOL	NetListen (void);
 
 
 //
@@ -117,6 +99,10 @@ struct	sockaddr_in 	sendaddress[MAXNETNODES];
 void	(*netget) (void);
 void	(*netsend) (void);
 
+#ifdef __WIN32__
+char *neterror (void);
+#endif
+
 
 //
 // UDPsocket
@@ -129,7 +115,7 @@ int UDPsocket (void)
 	s = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 #ifdef __WIN32__
 	if ( s == INVALID_SOCKET )
-		I_Error ("can't create socket!");
+		I_Error ("can't create socket: %s", neterror());
 #else
 	if (s<0)
 		I_Error ("can't create socket: %s",strerror(errno));
@@ -141,10 +127,7 @@ int UDPsocket (void)
 //
 // BindToLocalPort
 //
-void
-BindToLocalPort
-( int	s,
-  int	port )
+void BindToLocalPort (int s, int port)
 {
 	int 				v;
 	struct sockaddr_in	address;
@@ -152,12 +135,12 @@ BindToLocalPort
 	memset (&address, 0, sizeof(address));
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = port;
+	address.sin_port = (USHORT)port;
 						
 	v = bind ((SOCKET) s, (void *)&address, sizeof(address));
 #ifdef __WIN32__
 	if (v == -1)
-		I_Error ("BindToPort: bind failed!");
+		I_Error ("BindToPort: bind: %s", neterror());
 #else
 	if (v == -1)
 		I_Error ("BindToPort: bind: %s", strerror(errno));
@@ -170,36 +153,18 @@ BindToLocalPort
 //
 void PacketSend (void)
 {
-	int 		c;
-	doomdata_t	sw;
+	int c;
 								
 	// byte swap
-	sw.checksum = htonl(netbuffer->checksum);
-	sw.player = netbuffer->player;
-	sw.retransmitfrom = netbuffer->retransmitfrom;
-	sw.starttic = netbuffer->starttic;
-	sw.numtics = netbuffer->numtics;
-	for (c=0 ; c< netbuffer->numtics ; c++)
-	{
-		sw.cmds[c].ucmd.msec = netbuffer->cmds[c].ucmd.msec;
-		sw.cmds[c].ucmd.buttons = netbuffer->cmds[c].ucmd.buttons;
-		sw.cmds[c].ucmd.pitch = htons(netbuffer->cmds[c].ucmd.pitch);
-		sw.cmds[c].ucmd.yaw = htons(netbuffer->cmds[c].ucmd.yaw);
-		sw.cmds[c].ucmd.roll = htons(netbuffer->cmds[c].ucmd.roll);
-		sw.cmds[c].ucmd.forwardmove = htons(netbuffer->cmds[c].ucmd.forwardmove);
-		sw.cmds[c].ucmd.sidemove = htons(netbuffer->cmds[c].ucmd.sidemove);
-		sw.cmds[c].ucmd.upmove = htons(netbuffer->cmds[c].ucmd.upmove);
-		sw.cmds[c].ucmd.impulse = netbuffer->cmds[c].ucmd.impulse;
-		sw.cmds[c].ucmd.lightlevel = netbuffer->cmds[c].ucmd.lightlevel;
-		sw.cmds[c].consistancy = htons(netbuffer->cmds[c].consistancy);
-		sw.cmds[c].chatchar = netbuffer->cmds[c].chatchar;
-	}
+	netbuffer->checksum = LONG(netbuffer->checksum);
 				
 	//printf ("sending %i\n",gametic);			
-	c = sendto (sendsocket , (const char*) &sw, doomcom->datalength
+	c = sendto (sendsocket , (const char*)netbuffer, doomcom->datalength
 				,0,(void *)&sendaddress[doomcom->remotenode]
 				,sizeof(sendaddress[doomcom->remotenode]));
-		
+
+	netbuffer->checksum = LONG(netbuffer->checksum);
+
 	//	if (c == -1)
 	//			I_Error ("SendPacket error: %s",strerror(errno));
 }
@@ -214,68 +179,47 @@ void PacketGet (void)
 	int 				c;
 	struct sockaddr_in	fromaddress;
 	int 				fromlen;
-	doomdata_t			sw;
 								
 	fromlen = sizeof(fromaddress);
-	c = recvfrom (insocket, (char*) &sw, sizeof(sw), 0
+	c = recvfrom (insocket, (char*)netbuffer, sizeof(doomdata_t), 0
 				  , (struct sockaddr *)&fromaddress, &fromlen );
 	if (c == -1 )
 	{
 #ifdef __WIN32__
 		if ( WSAGetLastError() != WSAEWOULDBLOCK )
-			I_Error("GetPacket: recvfrom() failed");
+			I_Error("GetPacket: %s",neterror());
 #else		 
 		if (errno != EWOULDBLOCK)
 			I_Error ("GetPacket: %s",strerror(errno));
 #endif		  
-		doomcom->remotenode = -1;				// no packet
+		doomcom->remotenode = -1;		// no packet
 		return;
 	}
 
 	{
 		static int first=1;
 		if (first)
-			Printf("len=%d:p=[0x%x 0x%x] \n", c, *(int*)&sw, *((int*)&sw+1));
+			Printf("len=%d:p=[0x%x]\n", c, netbuffer);
 		first = 0;
 	}
 
 	// find remote node number
-	for (i=0 ; i<doomcom->numnodes ; i++)
+	for (i = 0; i<doomcom->numnodes; i++)
 		if ( fromaddress.sin_addr.s_addr == sendaddress[i].sin_addr.s_addr )
 			break;
 
 	if (i == doomcom->numnodes)
 	{
 		// packet is not from one of the players (new game broadcast)
-		doomcom->remotenode = -1;				// no packet
+		doomcom->remotenode = -1;		// no packet
 		return;
 	}
 		
-	doomcom->remotenode = i;					// good packet from a game player
-	doomcom->datalength = c;
+	doomcom->remotenode = (short)i;			// good packet from a game player
+	doomcom->datalength = (short)c;
 		
 	// byte swap
-	netbuffer->checksum = ntohl(sw.checksum);
-	netbuffer->player = sw.player;
-	netbuffer->retransmitfrom = sw.retransmitfrom;
-	netbuffer->starttic = sw.starttic;
-	netbuffer->numtics = sw.numtics;
-
-	for (c=0 ; c< netbuffer->numtics ; c++)
-	{
-		netbuffer->cmds[c].ucmd.msec = sw.cmds[c].ucmd.msec;
-		netbuffer->cmds[c].ucmd.buttons = sw.cmds[c].ucmd.buttons;
-		netbuffer->cmds[c].ucmd.pitch = ntohs(sw.cmds[c].ucmd.pitch);
-		netbuffer->cmds[c].ucmd.yaw = ntohs(sw.cmds[c].ucmd.yaw);
-		netbuffer->cmds[c].ucmd.roll = ntohs(sw.cmds[c].ucmd.roll);
-		netbuffer->cmds[c].ucmd.forwardmove = ntohs(sw.cmds[c].ucmd.forwardmove);
-		netbuffer->cmds[c].ucmd.sidemove = ntohs(sw.cmds[c].ucmd.sidemove);
-		netbuffer->cmds[c].ucmd.upmove = ntohs(sw.cmds[c].ucmd.upmove);
-		netbuffer->cmds[c].ucmd.impulse = sw.cmds[c].ucmd.impulse;
-		netbuffer->cmds[c].ucmd.lightlevel = sw.cmds[c].ucmd.lightlevel;
-		netbuffer->cmds[c].consistancy = ntohs(sw.cmds[c].consistancy);
-		netbuffer->cmds[c].chatchar = sw.cmds[c].chatchar;
-	}
+	netbuffer->checksum = LONG(netbuffer->checksum);
 }
 
 
@@ -290,7 +234,7 @@ int GetLocalAddress (void)
 	v = gethostname (hostname, sizeof(hostname));
 #ifdef __WIN32__
 	if (v == -1)
-		I_Error ("GetLocalAddress : gethostname() failed!");
+		I_Error ("GetLocalAddress : gethostname: %s", neterror());
 #else
 	if (v == -1)
 		I_Error ("GetLocalAddress : gethostname: errno %d",errno);
@@ -299,7 +243,7 @@ int GetLocalAddress (void)
 	hostentry = gethostbyname (hostname);
 #ifdef __WIN32__
 	if (!hostentry)
-		I_Error ("GetLocalAddress : gethostbyname() failed!");
+		I_Error ("GetLocalAddress : gethostbyname: %s", neterror());
 #else
 	if (!hostentry)
 		I_Error ("GetLocalAddress : gethostbyname: couldn't get local host");
@@ -314,13 +258,13 @@ int GetLocalAddress (void)
 //
 void I_InitNetwork (void)
 {
-	boolean 			trueval = true;
+	u_long	 			trueval = true;
 	int 				i;
 	int 				p;
 	struct hostent* 	hostentry;		// host information entry
 
 #ifdef __WIN32__
-	WSADATA 	wsad;
+	WSADATA				wsad;
 #endif
 	
 	doomcom = Malloc (sizeof (*doomcom) );
@@ -330,7 +274,7 @@ void I_InitNetwork (void)
 	i = M_CheckParm ("-dup");
 	if (i && i< myargc-1)
 	{
-		doomcom->ticdup = myargv[i+1][0]-'0';
+		doomcom->ticdup = (short)(myargv[i+1][0]-'0');
 		if (doomcom->ticdup < 1)
 			doomcom->ticdup = 1;
 		if (doomcom->ticdup > 9)
@@ -360,7 +304,6 @@ void I_InitNetwork (void)
 		netgame = false;
 		doomcom->id = DOOMCOM_ID;
 		doomcom->numplayers = doomcom->numnodes = 1;
-		doomcom->deathmatch = false;
 		doomcom->consoleplayer = 0;
 		return;
 	}
@@ -374,31 +317,64 @@ void I_InitNetwork (void)
 	netgame = true;
 
 	// parse player number and host list
-	doomcom->consoleplayer = myargv[i+1][0]-'1';
+	doomcom->consoleplayer = (short)(myargv[i+1][0]-'1');
 	Printf ("Console player number: %d\n", doomcom->consoleplayer);
 
 	doomcom->numnodes = 1;		// this node for sure
 		
 	i++;
-	while (++i < myargc && myargv[i][0] != '-')
+	while (++i < myargc && myargv[i][0] != '-' && myargv[i][0] != '+')
 	{
+		int port;
+		char *portpart;
+		BOOL isnamed = false;
+		int curchar;
+		char c;
+
 		sendaddress[doomcom->numnodes].sin_family = AF_INET;
-		sendaddress[doomcom->numnodes].sin_port = htons(DOOMPORT);
-		if (myargv[i][0] == '.')
+
+		if (portpart = strchr (myargv[i], ':')) {
+			*portpart = 0;
+			port = atoi (portpart + 1);
+			if (!port) {
+				Printf ("Weird port: %s (using %d)\n", portpart + 1, DOOMPORT);
+				port = DOOMPORT;
+			}
+		} else {
+			port = DOOMPORT;
+		}
+		sendaddress[doomcom->numnodes].sin_port = (USHORT)port;
+
+		for (curchar = 0; c = myargv[i][curchar]; curchar++) {
+			if ((c < '0' || c > '9') && c != '.') {
+				isnamed = true;
+				break;
+			}
+		}
+
+		if (!isnamed)
 		{
 			sendaddress[doomcom->numnodes].sin_addr.s_addr 
-				= inet_addr (myargv[i]+1);
-			Printf ("Node number %d address %s\n", doomcom->numnodes, myargv[i]+1);
+				= inet_addr (myargv[i]);
+			Printf ("Node number %d address %s\n", doomcom->numnodes, myargv[i]);
 		}
 		else
 		{
 			hostentry = gethostbyname (myargv[i]);
 			if (!hostentry)
-				I_Error ("gethostbyname: couldn't find %s", myargv[i]);
+#ifdef __WIN32__
+				I_Error ("gethostbyname: couldn't find %s\n%s", myargv[i], neterror());
+#else
+				I_Error ("gethostbyname: couldn't find %s\n%s", myargv[i], strerror(errno));
+#endif
 			sendaddress[doomcom->numnodes].sin_addr.s_addr 
 				= *(int *)hostentry->h_addr_list[0];
-			Printf ("Node number %d hostname %s\n", doomcom->numnodes, myargv[i]);
+			Printf ("Node number %d hostname %s\n", doomcom->numnodes, hostentry->h_name);
 		}
+
+		if (portpart)
+			*portpart = ':';
+
 		doomcom->numnodes++;
 	}
 
@@ -409,7 +385,7 @@ void I_InitNetwork (void)
 	
 	// build message to receive
 	insocket = UDPsocket ();
-	BindToLocalPort (insocket,htons(DOOMPORT));
+	BindToLocalPort (insocket, DOOMPORT);
 #ifdef __WIN32__
 	ioctlsocket (insocket, FIONBIO, &trueval);
 #else
@@ -434,3 +410,69 @@ void I_NetCmd (void)
 		I_Error ("Bad net cmd: %i\n",doomcom->command);
 }
 
+#ifdef __WIN32__
+#ifdef _DEBUG
+char *neterror (void)
+{
+	static char neterr[16];
+	int			code;
+
+	switch (code = WSAGetLastError ()) {
+		case WSAEACCES:				return "Permission denied";
+		case WSAEADDRINUSE:			return "Address already in use";
+		case WSAEADDRNOTAVAIL:		return "Cannot assign requested address";
+		case WSAEAFNOSUPPORT:		return "Address family not supported by protocol family";
+		case WSAEALREADY:			return "Operation already in progress";
+		case WSAECONNABORTED:		return "Software caused connection abort";
+		case WSAECONNREFUSED:		return "Connection refused";
+		case WSAECONNRESET:			return "Connection reset by peer";
+		case WSAEDESTADDRREQ:		return "Destination address required";
+		case WSAEFAULT:				return "Bad address";
+		case WSAEHOSTDOWN:			return "Host is down";
+		case WSAEHOSTUNREACH:		return "No route to host";
+		case WSAEINPROGRESS:		return "Operation now in progress";
+		case WSAEINTR:				return "Interrupted function call";
+		case WSAEINVAL:				return "Invalid argument";
+		case WSAEISCONN:			return "Socket is already connected";
+		case WSAEMFILE:				return "Too many open files";
+		case WSAEMSGSIZE:			return "Message too long";
+		case WSAENETDOWN:			return "Network is down";
+		case WSAENETRESET:			return "Network dropped connection or reset";
+		case WSAENETUNREACH:		return "Network is unreachable";
+		case WSAENOBUFS:			return "No buffer space available";
+		case WSAENOPROTOOPT:		return "Bad protocol option";
+		case WSAENOTCONN:			return "Socket is not connected";
+		case WSAENOTSOCK:			return "Socket operation on non-socket";
+		case WSAEOPNOTSUPP:			return "Operation not supported";
+		case WSAEPFNOSUPPORT:		return "Protocol family not supported";
+		case WSAEPROCLIM:			return "Too many processes";
+		case WSAEPROTONOSUPPORT:	return "Protocol not supported";
+		case WSAEPROTOTYPE:			return "Protocol wrong type for socket";
+		case WSAESHUTDOWN:			return "Cannot send after socket shutdown";
+		case WSAESOCKTNOSUPPORT:	return "Socket type not supported";
+		case WSAETIMEDOUT:			return "Connection timed out";
+		case WSAEWOULDBLOCK:		return "Resource temporarily unavailable";
+		case WSAHOST_NOT_FOUND:		return "Host not found";
+		case WSANOTINITIALISED:		return "Successful WSAStartup not yet performed";
+		case WSANO_DATA:			return "Valid name, no data record of requested type";
+		case WSANO_RECOVERY:		return "This is a non-recoverable error";
+		case WSASYSNOTREADY:		return "Network subsystem is unavailable";
+		case WSATRY_AGAIN:			return "Non-authoritative host not found";
+		case WSAVERNOTSUPPORTED:	return "WINSOCK.DLL version out of range";
+		case WSAEDISCON:			return "Graceful shutdown in progress";
+
+		default:
+			sprintf (neterr, "%d", code);
+			return neterr;
+	}
+}
+#else
+char *neterror (void)
+{
+	static char neterr[16];
+
+	sprintf (neterr, "%d", WSAGetLastError ());
+	return neterr;
+}
+#endif
+#endif

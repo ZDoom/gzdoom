@@ -20,8 +20,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: p_ceilng.c,v 1.4 1997/02/03 16:47:53 b1 Exp $";
 
 
 #include "m_alloc.h"
@@ -269,7 +267,7 @@ void P_AddActiveCeiling(ceiling_t* c)
 	activeceilings = Realloc (activeceilings, MaxCeilings * sizeof(ceiling_t *));
 	activeceilings[i] = c;
 	activeceilings[i+1] = NULL;
-	DEVONLY (Printf, "MaxCeilings increased to %d\n", MaxCeilings, 0);
+	DPrintf ("MaxCeilings increased to %d\n", MaxCeilings);
 }
 
 

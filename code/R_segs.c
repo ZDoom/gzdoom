@@ -22,8 +22,6 @@
 //-----------------------------------------------------------------------------
 
 
-static const char
-rcsid[] = "$Id: r_segs.c,v 1.3 1997/01/29 20:10:19 b1 Exp $";
 
 
 
@@ -43,13 +41,13 @@ rcsid[] = "$Id: r_segs.c,v 1.3 1997/01/29 20:10:19 b1 Exp $";
 // OPTIMIZE: closed two sided lines as single sided
 
 // True if any of the segs textures might be visible.
-boolean 		segtextured;	
+BOOL	 		segtextured;	
 
 // False if the back side is the same plane.
-boolean 		markfloor;		
-boolean 		markceiling;
+BOOL	 		markfloor;		
+BOOL	 		markceiling;
 
-boolean 		maskedtexture;
+BOOL	 		maskedtexture;
 int 			toptexture;
 int 			bottomtexture;
 int 			midtexture;
@@ -99,11 +97,7 @@ short*			maskedtexturecol;
 //
 // R_RenderMaskedSegRange
 //
-void
-R_RenderMaskedSegRange
-( drawseg_t*	ds,
-  int			x1,
-  int			x2 )
+void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 {
 	unsigned	index;
 	column_t*	col;
@@ -371,10 +365,7 @@ void R_RenderSegLoop (void)
 // A wall segment will be drawn
 //	between start and stop pixels (inclusive).
 //
-void
-R_StoreWallRange
-( int	start,
-  int	stop )
+void R_StoreWallRange (int start, int stop)
 {
 	fixed_t 			hyp;
 	fixed_t 			sineval;
@@ -388,7 +379,7 @@ R_StoreWallRange
 		MaxDrawSegs += 32;
 		drawsegs = Realloc (drawsegs, MaxDrawSegs * sizeof(drawseg_t));
 		ds_p = &drawsegs[MaxDrawSegs - 32];
-		DEVONLY (Printf, "MaxDrawSegs increased to %d\n", MaxDrawSegs, 0);
+		DPrintf ("MaxDrawSegs increased to %d\n", MaxDrawSegs);
 	}
 				
 #ifdef RANGECHECK
@@ -627,8 +618,7 @@ R_StoreWallRange
 		
 		if (offsetangle > ANG180)
 			offsetangle = (unsigned)(-(int)offsetangle);
-
-		if (offsetangle > ANG90)
+		else if (offsetangle > ANG90)
 			offsetangle = ANG90;
 
 		sineval = finesine[offsetangle >>ANGLETOFINESHIFT];

@@ -22,14 +22,13 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: p_pspr.c,v 1.5 1997/02/03 22:45:12 b1 Exp $";
 
 #include <stdlib.h>
 
 #include "doomdef.h"
 #include "d_event.h"
 
+#include "c_cvars.h"
 
 #include "m_random.h"
 #include "p_local.h"
@@ -153,7 +152,7 @@ void P_BringUpWeapon (player_t *player)
 // Returns true if there is enough ammo to shoot.
 // If not, selects the next weapon to use.
 //
-boolean P_CheckAmmo (player_t *player)
+BOOL P_CheckAmmo (player_t *player)
 {
 	ammotype_t			ammo;
 	int 				count;
@@ -447,14 +446,17 @@ void A_Punch (player_t *player, pspdef_t *psp)
 	angle_t 	angle;
 	int 		damage;
 	int 		slope;
+	int			t;
 		
-	damage = (P_Random ()%10+1)<<1;
+	damage = (P_Random (pr_punch)%10+1)<<1;
 
 	if (player->powers[pw_strength])	
 		damage *= 10;
 
 	angle = player->mo->angle;
-	angle += (P_Random()-P_Random())<<18;
+
+	t = P_Random (pr_punch);
+	angle += (t - P_Random (pr_punch)) << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage);
 
@@ -478,10 +480,12 @@ void A_Saw (player_t *player, pspdef_t *psp)
 	angle_t 	angle;
 	int 		damage;
 	int 		slope;
+	int			t;
 
-	damage = 2*(P_Random ()%10+1);
+	damage = 2 * (P_Random (pr_saw)%10+1);
 	angle = player->mo->angle;
-	angle += (P_Random()-P_Random())<<18;
+	t = P_Random (pr_saw);
+	angle += (t - P_Random (pr_saw)) << 18;
 	
 	// use meleerange + 1 so the puff doesn't skip the flash
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE+1);
@@ -521,7 +525,8 @@ void A_Saw (player_t *player, pspdef_t *psp)
 //
 void A_FireMissile (player_t *player, pspdef_t *psp)
 {
-	player->ammo[weaponinfo[player->readyweapon].ammo]--;
+	if (!(dmflags & DF_INFINITE_AMMO))
+		player->ammo[weaponinfo[player->readyweapon].ammo]--;
 	P_SpawnPlayerMissile (player->mo, MT_ROCKET);
 }
 
@@ -531,7 +536,8 @@ void A_FireMissile (player_t *player, pspdef_t *psp)
 //
 void A_FireBFG (player_t *player, pspdef_t *psp)
 {
-	player->ammo[weaponinfo[player->readyweapon].ammo] -= deh_BFGCells;
+	if (!(dmflags & DF_INFINITE_AMMO))
+		player->ammo[weaponinfo[player->readyweapon].ammo] -= deh_BFGCells;
 	P_SpawnPlayerMissile (player->mo, MT_BFG);
 }
 
@@ -542,11 +548,12 @@ void A_FireBFG (player_t *player, pspdef_t *psp)
 //
 void A_FirePlasma (player_t *player, pspdef_t *psp)
 {
-	player->ammo[weaponinfo[player->readyweapon].ammo]--;
+	if (!(dmflags & DF_INFINITE_AMMO))
+		player->ammo[weaponinfo[player->readyweapon].ammo]--;
 
 	P_SetPsprite (player,
 				  ps_flash,
-				  weaponinfo[player->readyweapon].flashstate+(P_Random ()&1) );
+				  weaponinfo[player->readyweapon].flashstate+(P_Random (pr_fireplasma)&1) );
 
 	P_SpawnPlayerMissile (player->mo, MT_PLASMA);
 }
@@ -563,6 +570,9 @@ fixed_t 		bulletslope;
 void P_BulletSlope (mobj_t *mo)
 {
 	angle_t 	an;
+	fixed_t		pitchslope;
+
+	pitchslope = FixedMul (mo->pitch, -40960);
 	
 	// see which target is to be aimed at
 	an = mo->angle;
@@ -580,13 +590,14 @@ void P_BulletSlope (mobj_t *mo)
 			// determine bulletslope
 			if (!linetarget) {
 				an = mo->angle;
-				bulletslope = -mo->pitch / 2;
+				bulletslope = pitchslope;
 			}
 		}
 	}
 	if (linetarget && mo->player)
-		if (abs(bulletslope - mo->pitch/2) > mo->player->aimdist) {
-			bulletslope = -mo->pitch / 2;
+		if (!(dmflags & DF_NO_FREELOOK)
+			&& abs(bulletslope - pitchslope) > mo->player->userinfo->aimdist) {
+			bulletslope = pitchslope;
 			an = mo->angle;
 		}
 }
@@ -595,16 +606,18 @@ void P_BulletSlope (mobj_t *mo)
 //
 // P_GunShot
 //
-void P_GunShot (mobj_t *mo, boolean accurate)
+void P_GunShot (mobj_t *mo, BOOL accurate)
 {
 	angle_t 	angle;
 	int 		damage;
 		
-	damage = 5*(P_Random ()%3+1);
+	damage = 5*(P_Random (pr_gunshot)%3+1);
 	angle = mo->angle;
 
-	if (!accurate)
-		angle += (P_Random()-P_Random())<<18;
+	if (!accurate) {
+		int t = P_Random (pr_gunshot);
+		angle += (t - P_Random (pr_gunshot)) << 18;
+	}
 
 	P_LineAttack (mo, angle, MISSILERANGE, bulletslope, damage);
 }
@@ -621,7 +634,8 @@ A_FirePistol
 	S_StartSound (player->mo, sfx_pistol);
 
 	P_SetMobjState (player->mo, S_PLAY_ATK2);
-	player->ammo[weaponinfo[player->readyweapon].ammo]--;
+	if (!(dmflags & DF_INFINITE_AMMO))
+		player->ammo[weaponinfo[player->readyweapon].ammo]--;
 
 	P_SetPsprite (player,
 				  ps_flash,
@@ -645,7 +659,8 @@ A_FireShotgun
 	S_StartSound (player->mo, sfx_shotgn);
 	P_SetMobjState (player->mo, S_PLAY_ATK2);
 
-	player->ammo[weaponinfo[player->readyweapon].ammo]--;
+	if (!(dmflags & DF_INFINITE_AMMO))
+		player->ammo[weaponinfo[player->readyweapon].ammo]--;
 
 	P_SetPsprite (player,
 				  ps_flash,
@@ -670,12 +685,14 @@ A_FireShotgun2
 	int 		i;
 	angle_t 	angle;
 	int 		damage;
+	int			t;
 				
 		
 	S_StartSound (player->mo, sfx_dshtgn);
 	P_SetMobjState (player->mo, S_PLAY_ATK2);
 
-	player->ammo[weaponinfo[player->readyweapon].ammo]-=2;
+	if (!(dmflags & DF_INFINITE_AMMO))
+		player->ammo[weaponinfo[player->readyweapon].ammo]-=2;
 
 	P_SetPsprite (player,
 				  ps_flash,
@@ -685,13 +702,15 @@ A_FireShotgun2
 		
 	for (i=0 ; i<20 ; i++)
 	{
-		damage = 5*(P_Random ()%3+1);
+		damage = 5*(P_Random (pr_fireshotgun2)%3+1);
 		angle = player->mo->angle;
-		angle += (P_Random()-P_Random())<<19;
+		t = P_Random (pr_fireshotgun2);
+		angle += (t - P_Random (pr_fireshotgun2)) << 19;
+		t = P_Random (pr_fireshotgun2);
 		P_LineAttack (player->mo,
 					  angle,
 					  MISSILERANGE,
-					  bulletslope + ((P_Random()-P_Random())<<5), damage);
+					  bulletslope + ((t - P_Random (pr_fireshotgun2)) << 5), damage);
 	}
 }
 
@@ -710,7 +729,8 @@ A_FireCGun
 		return;
 				
 	P_SetMobjState (player->mo, S_PLAY_ATK2);
-	player->ammo[weaponinfo[player->readyweapon].ammo]--;
+	if (!(dmflags & DF_INFINITE_AMMO))
+		player->ammo[weaponinfo[player->readyweapon].ammo]--;
 
 	P_SetPsprite (player,
 				  ps_flash,
@@ -754,7 +774,11 @@ void A_BFGSpray (mobj_t* mo)
 	int 				j;
 	int 				damage;
 	angle_t 			an;
-		
+
+	// [RH] Needed for The New Breed
+	if (!mo->target)
+		return;
+
 	// offset angles from its attack angle
 	for (i=0 ; i<40 ; i++)
 	{
@@ -770,13 +794,14 @@ void A_BFGSpray (mobj_t* mo)
 		P_SpawnMobj (linetarget->x,
 					 linetarget->y,
 					 linetarget->z + (linetarget->height>>2),
-					 MT_EXTRABFG);
+					 MT_EXTRABFG,
+					 0);
 		
 		damage = 0;
 		for (j=0;j<15;j++)
-			damage += (P_Random()&7) + 1;
+			damage += (P_Random (pr_bfgspray) & 7) + 1;
 
-		P_DamageMobj (linetarget, mo->target,mo->target, damage);
+		P_DamageMobj (linetarget, mo->target,mo->target, damage, MOD_BFG_SPLASH);
 	}
 }
 

@@ -22,8 +22,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: p_tick.c,v 1.4 1997/02/03 16:47:55 b1 Exp $";
 
 #include "z_zone.h"
 #include "p_local.h"
@@ -88,7 +86,7 @@ void P_RemoveThinker (thinker_t* thinker)
 // P_AllocateThinker
 // Allocates memory and adds a new thinker at the end of the list.
 //
-void P_AllocateThinker (thinker_t*		thinker)
+void P_AllocateThinker (thinker_t *thinker)
 {
 }
 
@@ -99,7 +97,7 @@ void P_AllocateThinker (thinker_t*		thinker)
 //
 void P_RunThinkers (void)
 {
-	thinker_t*	currentthinker;
+	thinker_t *currentthinker;
 
 	currentthinker = thinkercap.next;
 	while (currentthinker != &thinkercap)
@@ -107,16 +105,20 @@ void P_RunThinkers (void)
 		if ( currentthinker->function.acv == (actionf_v)(-1) )
 		{
 			// time to remove it
+			thinker_t *nextthinker;
+
+			nextthinker = currentthinker->next;
 			currentthinker->next->prev = currentthinker->prev;
 			currentthinker->prev->next = currentthinker->next;
 			Z_Free (currentthinker);
+			currentthinker = nextthinker;
 		}
 		else
 		{
 			if (currentthinker->function.acp1)
 				currentthinker->function.acp1 (currentthinker);
+			currentthinker = currentthinker->next;
 		}
-		currentthinker = currentthinker->next;
 	}
 }
 

@@ -40,20 +40,13 @@
 // We also need the definition of a cvar
 #include "c_cvars.h"
 
-#ifdef __GNUG__
-#pragma interface
-#endif
 
 
 
 // ------------------------
 // Command line parameters.
 //
-extern	boolean nomonsters; 	// checkparm of -nomonsters
-extern	boolean respawnparm;	// checkparm of -respawn
-extern	int 			fastparm;		// checkparm of -fast
-
-extern	boolean devparm;		// DEBUG: launched with -devparm
+extern	BOOL			devparm;		// DEBUG: launched with -devparm
 
 
 
@@ -64,37 +57,33 @@ extern GameMode_t		gamemode;
 extern GameMission_t	gamemission;
 
 // Set if homebrew PWAD stuff has been added.
-extern	boolean modifiedgame;
+extern	BOOL			modifiedgame;
 
 
 // -------------------------------------------
 // Language.
-extern	Language_t	 language;
+extern	Language_t		language;
 
 
 // -------------------------------------------
 // Selected skill type, map etc.
 //
 
-// Defaults for menu, methinks.
-extern	skill_t 		startskill;
-extern	int 			startepisode;
-extern	int 			startmap;
+extern	char			startmap[8];		// [RH] Actual map name now
 
-extern	boolean 		autostart;
+extern	BOOL 			autostart;
 
 // Selected by user. 
 extern	cvar_t			*gameskill;
 
 // Nightmare mode flag, single player.
-extern	boolean 		respawnmonsters;
+extern	BOOL 			respawnmonsters;
 
 // Netgame? Only true if >1 player.
-extern	boolean netgame;
+extern	BOOL			netgame;
 
 // Flag: true only if started as net deathmatch.
-// An enum might handle altdeath/cooperative better.
-extern	boolean deathmatch; 	
+extern	cvar_t			*deathmatch; 	
 		
 // -------------------------
 // Internal parameters for sound rendering.
@@ -118,24 +107,27 @@ extern cvar_t *snd_MusicVolume;    // maximum volume for music
 // Depending on view size - no status bar?
 // Note that there is no way to disable the
 //	status bar explicitely.
-extern	boolean statusbaractive;
+extern	BOOL			statusbaractive;
 
-extern	boolean automapactive;	// In AutoMap mode?
-extern	boolean menuactive; 	// Menu overlayed?
-extern	boolean paused; 		// Game Pause?
+extern	BOOL			automapactive;	// In AutoMap mode?
+extern	BOOL			menuactive; 	// Menu overlayed?
+extern	BOOL			paused; 		// Game Pause?
 
 
-extern	boolean 		viewactive;
+extern	BOOL			viewactive;
 
-extern	boolean 		nodrawers;
-extern	boolean 		noblit;
+extern	BOOL	 		nodrawers;
+extern	BOOL	 		noblit;
 
 extern	int 			viewwindowx;
 extern	int 			viewwindowy;
 extern	int 			viewheight;
 extern	int 			viewwidth;
-extern	int 			scaledviewwidth;
 
+extern	int				realviewwidth;		// [RH] Physical width of view window
+extern	int				realviewheight;		// [RH] Physical height of view window
+extern	int				detailxshift;		// [RH] X shift for horizontal detail level
+extern	int				detailyshift;		// [RH] Y shift for vertical detail level
 
 
 
@@ -143,11 +135,11 @@ extern	int 			scaledviewwidth;
 
 // This one is related to the 3-screen display mode.
 // ANG90 = left side, ANG270 = right
-extern	int 	viewangleoffset;
+extern	int				viewangleoffset;
 
 // Player taking events, and displaying.
-extern	int 	consoleplayer;	
-extern	int 	displayplayer;
+extern	int				consoleplayer;	
+extern	int				displayplayer;
 
 
 extern level_locals_t level;
@@ -157,14 +149,14 @@ extern level_locals_t level;
 // DEMO playback/recording related stuff.
 // No demo, there is a human player in charge?
 // Disable save/end game?
-extern	boolean usergame;
+extern	BOOL			usergame;
 
 //?
-extern	boolean demoplayback;
-extern	boolean demorecording;
+extern	BOOL			demoplayback;
+extern	BOOL			demorecording;
 
 // Quit after playing a demo from cmdline.
-extern	boolean 		singledemo; 	
+extern	BOOL			singledemo; 	
 
 
 
@@ -192,20 +184,20 @@ extern	int 			gametic;
 extern	player_t		players[MAXPLAYERS];
 
 // Alive? Disconnected?
-extern	boolean 		playeringame[MAXPLAYERS];
+extern	BOOL	 		playeringame[MAXPLAYERS];
 
 
 // Player spawn spots for deathmatch.
 extern	int				MaxDeathmatchStarts;
-extern	mapthing_t		*deathmatchstarts;
-extern	mapthing_t* 	deathmatch_p;
+extern	mapthing2_t		*deathmatchstarts;
+extern	mapthing2_t* 	deathmatch_p;
 
 // Player spawn spots.
-extern	mapthing_t		playerstarts[MAXPLAYERS];
+extern	mapthing2_t		playerstarts[MAXPLAYERS];
 
 // Intermission stats.
 // Parameters for world map / intermission.
-extern	wbstartstruct_t 		wminfo; 
+extern	wbstartstruct_t wminfo; 
 
 
 // LUT of ammunition limits for each kind.
@@ -224,7 +216,7 @@ extern	int 			maxammo[NUMAMMO];
 extern	FILE*			debugfile;
 
 // if true, load all graphics at level load
-extern	boolean 		precache;
+extern	BOOL	 		precache;
 
 
 // wipegamestate can be set to -1
@@ -234,7 +226,7 @@ extern	gamestate_t 	wipegamestate;
 extern	cvar_t 			*mouseSensitivity;
 //?
 // debug flag to cancel adaptiveness
-extern	boolean 		singletics; 	
+extern	BOOL	 		singletics; 	
 
 extern	int 			bodyqueslot;
 
@@ -257,7 +249,6 @@ extern	doomdata_t* 	netbuffer;
 
 
 extern	ticcmd_t		localcmds[BACKUPTICS];
-extern	int 			rndindex;
 
 extern	int 			maketic;
 extern	int 			nettics[MAXNETNODES];
@@ -268,19 +259,27 @@ extern	int 			ticdup;
 
 // ---- [RH] ----
 extern	cvar_t			*developer;
-// Handy macro to print a string if developer cvar is set
-#define DEVONLY(f,a,b,c) if (developer->value) { f (a,b,c); }
-
 
 // Use MMX routines? (Only if USEASM is defined)
-extern	boolean			UseMMX;
+extern	BOOL			UseMMX;
+
+// True if ZDoom should try to behave like Doom 1.9
+extern	BOOL			olddemo;
+
 
 #ifdef USEASM
 void EndMMX (void);
+
+#ifdef _MSC_VER
+#define ENDMMX if (UseMMX) __asm emms;
+#else
+#define ENDMMX if (UseMMX) EndMMX();
+#endif
+
 #endif
 
 
-// Miscellaneous info for DeHackEd support
+// [RH] Miscellaneous info for DeHackEd support
 
 extern int deh_StartHealth;
 extern int deh_StartBullets;
@@ -299,6 +298,11 @@ extern int deh_KFAAC;
 extern int deh_BFGCells;
 extern int deh_Infight;
 
+
+// [RH] Deathmatch flags
+
+extern cvar_t *dmflagsvar;
+extern int	   dmflags;
 
 #endif
 //-----------------------------------------------------------------------------

@@ -5,7 +5,7 @@
 #include "m_argv.h"
 #include "i_music.h"
 #include "w_wad.h"
-#include "c_console.h"
+#include "c_consol.h"
 
 #include "../midas/include/midasdll.h"
 
@@ -30,7 +30,7 @@ struct MusInfo {
 		MIDASmodulePlayHandle handle;
 	};
 	char *filename;
-	boolean looping;
+	BOOL looping;
 };
 typedef struct MusInfo info_t;
 
@@ -46,7 +46,7 @@ static char		midName[512];
 static int		musicdies=-1;
 static int		musicvolume;
 
-void I_SetMusicVolume(int volume)
+void I_SetMusicVolume (int volume)
 {
 	if (volume != 127) {
 		// Internal state variable.
@@ -57,15 +57,16 @@ void I_SetMusicVolume(int volume)
 	}
 }
 
-void I_InitMusic(void)
+void I_InitMusic (void)
 {
 	char *temp;
 
 	Printf ("I_InitMusic\n");
 	
-	nomusic = !!M_CheckParm("-nomusic");
+	nomusic = !!M_CheckParm("-nomusic") || !!M_CheckParm("-nosound");
 
-	/* Create temporary file names: */	  
+	/* Create temporary file names: */
+
 	temp = getenv("TEMP");
 	if ( temp == NULL )
 		temp = ".";
@@ -76,6 +77,7 @@ void I_InitMusic(void)
 
 	strcat(musName, "\\");
 	strcpy(midName, musName);
+
 	strcat(musName, "doomtemp.mus");
 	strcat(midName, "doomtemp.mid");
 }
@@ -345,9 +347,8 @@ int I_QrySongPlaying(int handle)
 
 	if (!info)
 		return 0;
-
-	if (info->looping = 1)
+	else if (info->looping == 1)
 		return 1;
-
-	return info->status;
+	else
+		return info->status;
 }

@@ -21,8 +21,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: p_telept.c,v 1.3 1997/01/28 22:08:29 b1 Exp $";
 
 
 
@@ -44,11 +42,7 @@ rcsid[] = "$Id: p_telept.c,v 1.3 1997/01/28 22:08:29 b1 Exp $";
 //
 // TELEPORTATION
 //
-int
-EV_Teleport
-( line_t*		line,
-  int			side,
-  mobj_t*		thing )
+int EV_Teleport (line_t *line, int side, mobj_t *thing)
 {
 	int 		i;
 	int 		tag;
@@ -108,11 +102,11 @@ EV_Teleport
 					thing->player->viewz = thing->z+thing->player->viewheight;
 								
 				// spawn teleport fog at source and destination
-				fog = P_SpawnMobj (oldx, oldy, oldz, MT_TFOG);
+				fog = P_SpawnMobj (oldx, oldy, oldz, MT_TFOG, 0);
 				S_StartSound (fog, sfx_telept);
 				an = m->angle >> ANGLETOFINESHIFT;
 				fog = P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an]
-								   , thing->z, MT_TFOG);
+								   , thing->z, MT_TFOG, 0);
 
 				// emit sound, where?
 				S_StartSound (fog, sfx_telept);

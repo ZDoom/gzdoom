@@ -4,7 +4,11 @@
  * original i_sound.c from the source distribution.
  * 
  * Petteri Kangaslampi, pekangas@sci.fi
-*/
+ *
+ * [RH] Changed most of this to be more BOOM-like since the original
+ *		version kept around a lot of the Linux version's software
+ *		stuff which we can let MIDAS handle instead.
+ */
 
 
 /* Original file header: */
@@ -28,17 +32,18 @@
 //
 //-----------------------------------------------------------------------------
 
-const char
-midassound_rcsid[] = "$Id: midassound.c,v 1.5 1998/01/07 18:44:18 pekangas Exp $";
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
 
+#include "resource.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include <malloc.h>
 #include <math.h>
 
 /* We'll need to go below the MIDAS API level a bit */
@@ -55,53 +60,42 @@ midassound_rcsid[] = "$Id: midassound.c,v 1.5 1998/01/07 18:44:18 pekangas Exp $
 #include "m_misc.h"
 #include "w_wad.h"
 #include "i_video.h"
+#include "s_sound.h"
 
 #include "doomdef.h"
 
+extern HINSTANCE hInstance;
+
+BOOL MidasInited;
+
+// [RH] The mixing rate of the sounds.
 cvar_t *snd_samplerate;
 
-// The number of internal mixing channels,
-//	the samples calculated for each mixing step,
-//	the size of the 16bit, 2 hardware channel (stereo)
-//	mixing buffer, and the samplerate of the raw data.
+// [RH] The number of channels to use for sound effects.
+//		We always allocate 64 more than this if music is enabled.
+extern cvar_t *snd_channels;
 
-#define NUM_CHANNELS			8
+// killough 2/21/98: optionally use varying pitched sounds
 
-#define SAMPLERATE				11025	// Hz
-#define SAMPLESIZE				2		// 16bit
+cvar_t *snd_pitched;	// [RH] Use a cvar to control it!
+#define PITCH(f,x) (snd_pitched->value ? ((f)*(x))/128 : (f))
+
+// [RH] Not really the number of channels. That's
+//		defined with the snd_channels cvar.
+#define NUM_CHANNELS			256
+
+/* MIDAS sample play handles for all psuedo-channels: */
+static MIDASsamplePlayHandle channels[NUM_CHANNELS];
+
+// [RH] The sfx playing on each psuedo-channel.
+static int sfx_ids[NUM_CHANNELS];
 
 // The actual lengths of all sound effects.
-int 			lengths[NUMSFX];
+// [RH] I can't see that this is used anywhere.
+static unsigned int lengths[NUMSFX];
 
-// The channel data pointers, start and end.
-unsigned char*	channels[NUM_CHANNELS];
-
-
-// Time/gametic that the channel started playing,
-//	used to determine oldest, which automatically
-//	has lowest priority.
-// In case number of active sounds exceeds
-//	available channels.
-int 			channelstart[NUM_CHANNELS];
-
-// The sound in channel handles,
-//	determined on registration,
-//	might be used to unregister/stop/modify,
-//	currently unused.
-int 			channelhandles[NUM_CHANNELS];
-
-// SFX id of the playing sound effect.
-// Used to catch duplicates (like chainsaw).
-int 			channelids[NUM_CHANNELS];
-
-// Surround sounds must be played to completion
-boolean channelcritical[NUM_CHANNELS];
-
-/* MIDAS sample play handles for all channels: */
-MIDASsamplePlayHandle channelPlayHandles[NUM_CHANNELS];
-
-/* MIDAS sound device channels corresponding to virtual channels */
-DWORD midaschannel[NUM_CHANNELS];
+// [RH] The playback frequency of all sound effects.
+static unsigned int frequencies[NUMSFX];
 
 static int wavonly = 0;
 static int primarysound = 0;
@@ -120,20 +114,16 @@ void MIDASerror(void)
 
 /* Loads a sound and adds it to MIDAS - really returns a MIDAS
    sample handle */
-void*
-getsfx
-( char* 		sfxname,
-  int*			len,
-  int*			pitch)
+void *getsfx (char *sfxname, unsigned int *len, int *frequency, unsigned *ms)
 {
 	unsigned char*		sfx;
 	int 				size;
 	char				name[20];
 	int 				sfxlump;
 	
-	int 		error;
-	static sdSample smp;
-	unsigned sampleHandle;
+	int 				error;
+	static sdSample		smp;
+	unsigned			sampleHandle;
 
 	
 	// Get the sound data from the WAD, allocate lump
@@ -173,7 +163,9 @@ getsfx
 	smp.sampleType = MIDAS_SAMPLE_8BIT_MONO;
 	smp.sampleLength = size-8;
 
-	*pitch = ((unsigned short *)sfx)[1];		// Extract pitch from the sound header
+	*frequency = ((unsigned short *)sfx)[1];	// Extract sample rate from the sound header
+	if (*frequency == 0)
+		*frequency = 11025;
 
 	/* No loop: */
 	smp.loopMode = sdLoopNone;
@@ -194,132 +186,10 @@ getsfx
 	// Preserve padded length.
 	*len = size-8;
 
+	*ms = ((size - 8)*1000) / (*frequency);
+
 	/* Return sample handle: (damn ugly) */
 	return (void*) sampleHandle;
-}
-
-
-
-
-
-//
-// This function adds a sound to the
-//	list of currently active sounds,
-//	which is maintained as a given number
-//	(eight, usually) of internal channels.
-// Returns a handle.
-//
-int
-addsfx
-( int			sfxid,
-  int			volume,
-  int			seperation,
-  int			pitch )
-{
-	static unsigned short		handlenums = 0;
- 
-	int 		i;
-	int 		rc = -1;
-	
-	int 		oldest = gametic;
-	int 		oldestnum = 0;
-	int 		slot;
-
-	MIDASsamplePlayHandle playHandle;
-	int vol;
-	int pan;
-
-	// Chainsaw troubles.
-	// Play these sound effects only one at a time.
-	if ( sfxid == sfx_sawup
-		 || sfxid == sfx_sawidl
-		 || sfxid == sfx_sawful
-		 || sfxid == sfx_sawhit
-		 || sfxid == sfx_stnmov
-		 || sfxid == sfx_pistol  )
-	{
-		// Loop all channels, check.
-		for (i=0 ; i<NUM_CHANNELS ; i++)
-		{
-			// Active, and using the same SFX?
-			if ( (channels[i])
-				 && (channelids[i] == sfxid) )
-			{
-				// Reset.
-				channels[i] = 0;
-				// We are sure that iff,
-				//	there will only be one.
-				break;
-			}
-		}
-	}
-
-	// Loop all channels to find oldest SFX.
-	for (i=0; (i<NUM_CHANNELS) && (channels[i]); i++)
-	{
-		if (channelstart[i] < oldest /* && channelcritical[i] == false */)
-		{
-			oldestnum = i;
-			oldest = channelstart[i];
-		}
-	}
-
-	// Tales from the cryptic.
-	// If we found a channel, fine.
-	// If not, we simply overwrite the first one, 0.
-	// Probably only happens at startup.
-	if (i == NUM_CHANNELS)
-		slot = oldestnum;
-	else
-		slot = i;
-
-	// Okay, in the less recent channel,
-	//	we will handle the new SFX.
-	// Set pointer to raw data.
-	channels[slot] = (unsigned char *) S_sfx[sfxid].data;
-
-	// Reset current handle number, limited to 0..100.
-	if (!handlenums)
-		handlenums = 100;
-
-	// Assign current handle number.
-	// Preserved so sounds could be stopped (unused).
-	channelhandles[slot] = rc = handlenums++;
-
-	// Should be gametic, I presume.
-	channelstart[slot] = gametic;
-
-	/* Calculate MIDAS volume and panning from volume and separation: */
-	vol = ((int)(volume*volmul))/4;   /* original range 0-255, MIDAS range 0-64 */
-	if (seperation < 0) {
-		pan = MIDAS_PAN_SURROUND;
-		channelcritical[slot] = true;
-	} else {
-		pan = (seperation-128) / 2;  /* original 0-255(?), MIDAS -64-64 */
-		channelcritical[slot] = false;
-
-		/* Clamp: */
-		if ( pan < MIDAS_PAN_LEFT) pan = MIDAS_PAN_LEFT;
-		else if ( pan > MIDAS_PAN_RIGHT) pan = MIDAS_PAN_RIGHT;
-	}
-	if ( vol > 64 ) vol = 64;
-	else if ( vol < 0 ) vol = 0;
-
-	// Preserve sound SFX id,
-	//	e.g. for avoiding duplicates of chainsaw.
-	channelids[slot] = sfxid;
-
-	/* Play the sound: */
-	if ( (playHandle = MIDASplaySample((MIDASsample) S_sfx[sfxid].data,
-									   midaschannel[slot], 0, pitch, vol, pan)) == 0 )
-		MIDASerror();
-
-	channelPlayHandles[slot] = playHandle;
-
-	// You tell me.
-/*	[Petteri] We'll return the MIDAS sample playback handle instead
-	return rc;*/
-	return (int) playHandle;
 }
 
 
@@ -362,92 +232,91 @@ int I_GetSfxLumpNum(sfxinfo_t* sfx)
 
 //
 // Starting a sound means adding it
-//	to the current list of active sounds
-//	in the internal channels.
+//		to the current list of active sounds
+//		in the internal channels.
 // As the SFX info struct contains
-//	e.g. a pointer to the raw data,
-//	it is ignored.
-// As our sound handling does not handle
-//	priority, it is ignored.
-// Pitching (that is, increased speed of playback)
-//	is set, but currently not used by mixing.
+//		e.g. a pointer to the raw data,
+//		it is ignored.
+// [RH] Unlike the original Linux code, priority
+//		is now meaningful (Q: but is it really useful?).
+//		This code is based on the code from BOOM and NTDOOM.
 //
-int
-I_StartSound
-( int			id,
-  int			vol,
-  int			sep,
-  int			pitch,
-  int			priority )
+int I_StartSound (int id, int vol, int sep, int pitch, int priority)
 {
+	static int handle;
 
-  // UNUSED
-  priority = 0;
+	// move up one slot, with wraparound
+	if (++handle >= NUM_CHANNELS)
+		handle = 0;
 
-#ifdef DEBUGPRINT  
-  fprintf(stderr, "I_StartSound: vol %i, sep %i, pitch %i, pri %i\n",
-		  vol, sep, pitch, priority);
-#endif	
-  
-	// Returns a handle (not used).
-	id = addsfx( id, vol, sep, pitch );
+	// destroy anything still in the slot
+	if (channels[handle])
+		MIDASstopSample (channels[handle]);
 
-	return id;
+	// Start the sound
+	{
+		int volume;
+		int pan;
+
+		/* Calculate MIDAS volume and panning from volume and separation: */
+		volume = ((int)(vol*volmul))/4;   /* original range 0-255, MIDAS range 0-64 */
+		if ( volume > 64 ) volume = 64;
+		else if ( volume < 0 ) volume = 0;
+
+		if (sep < 0) {
+			pan = MIDAS_PAN_SURROUND;
+			priority = 255;		// [RH] Surround sounds are always high priority
+		} else {
+			priority = 128 - priority;	// [RH] Doom priorities are reverse of MIDAS.
+			pan = (sep-128) / 2;  /* original 0-255, MIDAS -64-64 */
+
+			/* Clamp: */
+			if ( pan < MIDAS_PAN_LEFT) pan = MIDAS_PAN_LEFT;
+			else if ( pan > MIDAS_PAN_RIGHT) pan = MIDAS_PAN_RIGHT;
+		}
+
+		channels[handle] = MIDASplaySample ((MIDASsample)S_sfx[id].data,
+											MIDAS_CHANNEL_AUTO,
+											priority,
+											PITCH(frequencies[id],pitch),
+											volume,
+											pan);
+		sfx_ids[handle] = id;
+	}
+
+	// Reference for s_sound.c to use when calling functions below
+	return handle;
 }
 
 
 
 void I_StopSound (int handle)
 {
-  // You need the handle returned by StartSound.
-  // Would be looping all channels,
-  //  tracking down the handle,
-  //  an setting the channel to zero.
-		int slot;
+	// You need the handle returned by StartSound.
+	// Would be looping all channels,
+	//  tracking down the handle,
+	//  an setting the channel to zero.
 
-#ifdef DEBUGPRINT	 
-	fprintf(stderr, "I_StopSound\n");
-#endif	  
 	/* [Petteri] We'll simply stop the sound with MIDAS (?): */
-	if ( !MIDASstopSample((MIDASsamplePlayHandle) handle) )
+	if ( !MIDASstopSample(channels[handle]) )
 		MIDASerror();
 
-	for (slot = 0; slot < NUM_CHANNELS; slot++) {
-		if (channelPlayHandles[slot] == (MIDASsamplePlayHandle) handle) {
-			channelcritical[slot] = false;
-			channelPlayHandles[slot] = 0;
-			break;
-		}
-	}
+	channels[handle] = 0;
 }
 
 
 int I_SoundIsPlaying(int handle)
 {
-	int slot;
-
 	int is;
-	is = (int) MIDASgetSamplePlayStatus((MIDASsamplePlayHandle) handle);
-#ifdef DEBUGPRINT	 
-	fprintf(stderr, "I_SoundIsPlaying: %i\n", is);
-#endif
 
-	if (!is) {
-		for (slot = 0; slot < NUM_CHANNELS; slot++) {
-			if (channelPlayHandles[slot] == (MIDASsamplePlayHandle) handle) {
-				channelcritical[slot] = false;
-				channelPlayHandles[slot] = 0;
-				break;
-			}
-		}
-	}
+	if (!channels[handle])
+		return 0;
+	else if (!(is = (int)MIDASgetSamplePlayStatus (channels[handle])))
+		channels[handle] = 0;
 
 	return is;
 }
 
-
-
-int I_QrySongPlaying(int handle);
 
 
 void I_UpdateSound( void )
@@ -463,27 +332,22 @@ void I_UpdateSound( void )
 // Mixing now done synchronous, and
 //	only output be done asynchronous?
 //
-void
-I_SubmitSound(void)
+void I_SubmitSound(void)
 {
-  // Write it to DSP device.
-/*	write(audio_fd, mixbuffer, SAMPLECOUNT*BUFMUL);*/
 }
 
 
 
-void
-I_UpdateSoundParams
-( int	handle,
-  int	vol,
-  int	sep,
-  int	pitch)
+void I_UpdateSoundParams (int handle, int vol, int sep, int pitch)
 {
 	int mvol, mpan;
 	
+	if (!channels[handle])
+		return;
+
 	/* Calculate MIDAS volume and panning from volume and separation: */
 	mvol = ((int)(vol*volmul))/4;	 /* original range 0-255, MIDAS range 0-64 */
-	mpan = (sep-128) / 2;  /* original 0-255(?), MIDAS -64-64 */
+	mpan = (sep-128) / 2;			 /* original 0-255, MIDAS -64-64 */
 
 	/* Clamp: */
 	if ( mvol > 64 ) mvol = 64;
@@ -492,40 +356,14 @@ I_UpdateSoundParams
 	if ( mpan > 64) mpan = 64;
 
 	/* Set: */
-	if ( !MIDASsetSampleVolume((MIDASsamplePlayHandle) handle, mvol) )
-		MIDASerror();
-	if ( !MIDASsetSamplePanning((MIDASsamplePlayHandle) handle, mpan) )
-		MIDASerror();
-	if ( !MIDASsetSampleRate((MIDASsamplePlayHandle) handle, pitch) )
-		MIDASerror();
-}
+	{
+		MIDASsamplePlayHandle sample = channels[handle];
 
-
-
-
-void I_ShutdownSound(void)
-{
-	unsigned i;
-
-	Printf("I_ShutdownSound: Stopping sounds\n");
-	for ( i = 0; i < NUM_CHANNELS; i++ ) {
-		MIDASstopSample (channelPlayHandles[i]);
+		if ( !MIDASsetSampleVolume(sample, mvol) ||
+			 !MIDASsetSamplePanning(sample, mpan) ||
+			 !MIDASsetSampleRate(sample, PITCH(frequencies[sfx_ids[handle]],pitch)) )
+			MIDASerror();
 	}
-
-	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (midaschannel[i] != MIDAS_ILLEGAL_CHANNEL)
-			MIDASfreeChannel (midaschannel[i]);
-	}
-	
-	Printf("I_ShutdownSound: Uninitializing MIDAS\n");
-
-	I_ShutdownMusic();
-	if ( !MIDASstopBackgroundPlay() )
-		MIDASerror();
-	if ( !MIDAScloseChannels() )
-		MIDASerror();
-	if ( !MIDASclose() )
-		MIDASerror();
 }
 
 
@@ -534,21 +372,61 @@ void I_ShutdownSound(void)
 extern DWORD Window;  /* window handle from i_main.c (actually HWND) */
 
 
-void
-I_InitSound()
+// [RH] Dialog procedure for the error dialog that appears if MIDAS
+//		could not be initialized for some reason.
+BOOL CALLBACK InitBoxCallback (HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static const char *messyTemplate =
+		"MIDAS could not be initialized.\r\n"
+		"(Reason: %s.)\r\n\r\n"
+		"If another program is using the sound card, you "
+		"can try stoping it and clicking \"Retry.\"\r\n\r\n"
+		"Otherwise, you can either click \"No Sound\" to use "
+		"ZDoom without sound or click \"Quit\" if you don't "
+		"really want to play ZDoom.";
+
+	switch (message) {
+		case WM_INITDIALOG:
+			{
+				char *midaserr = MIDASgetErrorMessage (MIDASgetLastError ());
+				char messyText[2048];
+
+				sprintf (messyText, messyTemplate, midaserr);
+
+				SetDlgItemText (hwndDlg, IDC_ERRORMESSAGE, messyText);
+			}
+			return TRUE;
+
+		case WM_COMMAND:
+			if (wParam == IDOK ||
+				wParam == IDC_NOSOUND ||
+				wParam == IDQUIT) {
+				EndDialog (hwndDlg, wParam);
+				return TRUE;
+			}
+			break;
+	}
+	return FALSE;
+}
+
+
+void I_InitSound (void)
+{
+	int needchannels;
 	unsigned i;
 
-	I_InitMusic();
+	// [RH] Parse any SNDINFO lumps
+	//		(This really isn't the place for this.)
+	S_ParseSndInfo();
 
-	for ( i = 0; i < NUM_CHANNELS; i++ ) {
-		midaschannel[i] = MIDAS_ILLEGAL_CHANNEL;
-	}
+	memset (channels, 0, NUM_CHANNELS * sizeof(MIDASsamplePlayHandle));
+
+	I_InitMusic();
 
 	/* Get command line options: */
 	wavonly = !!M_CheckParm("-wavonly");
 	primarysound = !!M_CheckParm("-primarysound");
-	nosound = !!M_CheckParm("-nosound");
+	nosound = !!M_CheckParm("-nosfx");
 	
 	Printf ("I_InitSound: Initializing MIDAS\n");
 	
@@ -569,25 +447,37 @@ I_InitSound()
 	if ( nosound )
 		MIDASsetOption(MIDAS_OPTION_FORCE_NO_SOUND, TRUE);	
 	
-	if ( !MIDASinit() )
-		MIDASerror();
+	while (!MIDASinit()) {
+		// [RH] If MIDAS can't be initialized, give the user some
+		//		choices other than quit.
+		switch (DialogBox (hInstance,
+						   MAKEINTRESOURCE(IDD_MIDASINITERROR),
+						   (HWND)Window,
+						   (DLGPROC)InitBoxCallback)) {
+			case IDC_NOSOUND:
+				MIDASsetOption (MIDAS_OPTION_FORCE_NO_SOUND, TRUE);
+				break;
+
+			case IDQUIT:
+				I_Quit ();
+				break;
+		}
+	}
+
+	MidasInited = true;
+
 	if ( !MIDASstartBackgroundPlay(100) )
 		MIDASerror();
-	{
-		int needchannels;
 
-		needchannels = NUM_CHANNELS;
-		if (!M_CheckParm ("-nomusic"))
-			needchannels += 64;
-		if ( !MIDASopenChannels(needchannels) )
-			MIDASerror();
-	}
+	needchannels = (int)(snd_channels->value);
 
-	for ( i = 0; i < NUM_CHANNELS; i++ ) {
-		channelPlayHandles[i] = 0;
-		if (MIDAS_ILLEGAL_CHANNEL == (midaschannel[i] = MIDASallocateChannel ()))
-			MIDASerror();
-	}
+	// [RH] Allocate 64 channels for MOD music
+	if (!MIDASopenChannels (needchannels + (M_CheckParm ("-nomusic") ? 0 : 64)))
+		MIDASerror();
+
+	// [RH] Let MIDAS decide what channels to play sfx on.
+	if (!MIDASallocAutoEffectChannels (needchannels))
+		MIDASerror ();
 
 	/* Simply preload all sounds and throw them at MIDAS: */
 	Printf("I_InitSound: Loading all sounds\n");
@@ -596,7 +486,7 @@ I_InitSound()
 		if ( !S_sfx[i].link )
 		{
 			/* Fine, not an alias, just load it */
-			S_sfx[i].data = getsfx(S_sfx[i].name, &lengths[i], &S_sfx[i].pitch);
+			S_sfx[i].data = getsfx(S_sfx[i].name, &lengths[i], &frequencies[i], &S_sfx[i].ms);
 			/* getsfx() actually returns a MIDAS sample handle */
 		}
 		else
@@ -607,8 +497,42 @@ I_InitSound()
 		}
 	}
 
-  MIDASsetAmplification (NUM_CHANNELS * 50);
+	// [RH] Don't play sfx really quiet.
+	//		Use less amplification for each new channel added.
+	MIDASsetAmplification ((int)(log((double)needchannels) * 144));
 
-  // Finished initialization.
-  Printf("I_InitSound: sound module ready\n");	
+	// Finished initialization.
+	Printf("I_InitSound: sound module ready\n");	
+}
+
+
+
+
+void I_ShutdownSound(void)
+{
+	unsigned i;
+
+	if (MidasInited) {
+		Printf("I_ShutdownSound: Stopping sounds\n");
+		for (i = 0; i < NUM_CHANNELS; i++ ) {
+			if (channels[i]) {
+				if (!MIDASstopSample (channels[i]))
+					MIDASerror ();
+				channels[i] = 0;
+			}
+		}
+
+		Printf("I_ShutdownSound: Uninitializing MIDAS\n");
+
+		I_ShutdownMusic();
+		if (!MIDASfreeAutoEffectChannels ())
+			MIDASerror ();
+		if ( !MIDASstopBackgroundPlay() )
+			MIDASerror();
+// [RH] This seems to cause problems with MIDASclose().
+//		if ( !MIDAScloseChannels() )
+//			MIDASerror();
+	}
+	if ( !MIDASclose() )
+		MIDASerror();
 }

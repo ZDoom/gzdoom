@@ -41,10 +41,6 @@
 
 
 
-#ifdef __GNUG__
-#pragma interface
-#endif
-
 
 
 //
@@ -209,7 +205,7 @@ typedef enum
 	MF_TRANSLUCBITS		= 0x60000000,
 	MF_TRANSLUC25		= 0x20000000,
 	MF_TRANSLUC50		= 0x40000000,
-	MF_TRANSLUC75		= 0x60000000
+	MF_TRANSLUC75		= 0x60000000,
 
 } mobjflag_t;
 
@@ -291,13 +287,26 @@ typedef struct mobj_s
 	int 				lastlook;		
 
 	// For nightmare respawn.
-	mapthing_t			spawnpoint; 	
+	mapthing2_t			spawnpoint; 	
 
 	// Thing being chased/attacked for tracers.
 	struct mobj_s*		tracer; 
 
 	// [RH] Andy Baker's stealth monsters
-	boolean invisible;
+	BOOL				invisible;
+
+	// [RH] Z-Check
+	// Gametic when a missile will be able to impact
+	// whoever shot it. Used to prevent the missile
+	// from blowing up in the shooter's face before
+	// it gets anywhere.
+	unsigned			targettic;
+
+	// [RH] Thing's palette.
+	// This is currently just a quick hack and actually
+	// points to an ordinary translation table rather
+	// than a full-fledged palette.
+	struct palette_s	*palette;
 
 } mobj_t;
 

@@ -22,8 +22,6 @@
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: p_lights.c,v 1.5 1997/02/03 22:45:11 b1 Exp $";
 
 
 #include "z_zone.h"
@@ -50,12 +48,12 @@ void T_FireFlicker (fireflicker_t* flick)
 	if (--flick->count)
 		return;
 		
-	amount = (P_Random()&3)*16;
+	amount = (P_Random (pr_fireflicker) & 3) << 4;
 	
 	if (flick->sector->lightlevel - amount < flick->minlight)
-		flick->sector->lightlevel = flick->minlight;
+		flick->sector->lightlevel = (short)flick->minlight;
 	else
-		flick->sector->lightlevel = flick->maxlight - amount;
+		flick->sector->lightlevel = (short)(flick->maxlight - amount);
 
 	flick->count = 4;
 }
@@ -102,13 +100,13 @@ void T_LightFlash (lightflash_t* flash)
 		
 	if (flash->sector->lightlevel == flash->maxlight)
 	{
-		flash-> sector->lightlevel = flash->minlight;
-		flash->count = (P_Random()&flash->mintime)+1;
+		flash-> sector->lightlevel = (short)flash->minlight;
+		flash->count = (P_Random (pr_lightflash) & flash->mintime) + 1;
 	}
 	else
 	{
-		flash-> sector->lightlevel = flash->maxlight;
-		flash->count = (P_Random()&flash->maxtime)+1;
+		flash-> sector->lightlevel = (short)flash->maxlight;
+		flash->count = (P_Random (pr_lightflash) & flash->maxtime) + 1;
 	}
 
 }
@@ -139,7 +137,7 @@ void P_SpawnLightFlash (sector_t*		sector)
 	flash->minlight = P_FindMinSurroundingLight(sector,sector->lightlevel);
 	flash->maxtime = 64;
 	flash->mintime = 7;
-	flash->count = (P_Random()&flash->maxtime)+1;
+	flash->count = (P_Random (pr_spawnlightflash) & flash->maxtime) + 1;
 }
 
 
@@ -159,12 +157,12 @@ void T_StrobeFlash (strobe_t*			flash)
 		
 	if (flash->sector->lightlevel == flash->minlight)
 	{
-		flash-> sector->lightlevel = flash->maxlight;
+		flash-> sector->lightlevel = (short)flash->maxlight;
 		flash->count = flash->brighttime;
 	}
 	else
 	{
-		flash-> sector->lightlevel = flash->minlight;
+		flash-> sector->lightlevel = (short)flash->minlight;
 		flash->count =flash->darktime;
 	}
 
@@ -203,7 +201,7 @@ P_SpawnStrobeFlash
 	sector->special = 0;		
 
 	if (!inSync)
-		flash->count = (P_Random()&7)+1;
+		flash->count = (P_Random (pr_spawnstrobeflash) & 7) + 1;
 	else
 		flash->count = 1;
 }
@@ -258,7 +256,7 @@ void EV_TurnTagLightsOff(line_t* line)
 				if (tsec->lightlevel < min)
 					min = tsec->lightlevel;
 			}
-			sector->lightlevel = min;
+			sector->lightlevel = (short)min;
 		}
 	}
 }
@@ -267,10 +265,7 @@ void EV_TurnTagLightsOff(line_t* line)
 //
 // TURN LINE'S TAG LIGHTS ON
 //
-void
-EV_LightTurnOn
-( line_t*		line,
-  int			bright )
+void EV_LightTurnOn (line_t *line, int bright)
 {
 	int 		i;
 	int 		j;
@@ -301,7 +296,7 @@ EV_LightTurnOn
 						bright = temp->lightlevel;
 				}
 			}
-			sector-> lightlevel = bright;
+			sector->lightlevel = (short)bright;
 		}
 	}
 }

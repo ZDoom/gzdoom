@@ -24,8 +24,6 @@
 //-----------------------------------------------------------------------------
 
 
-static const char rcsid[] = "$Id: r_main.c,v 1.5 1997/02/03 22:45:12 b1 Exp $";
-
 
 
 #include "m_alloc.h"
@@ -49,9 +47,10 @@ static const char rcsid[] = "$Id: r_main.c,v 1.5 1997/02/03 22:45:12 b1 Exp $";
 
 cvar_t *r_viewsize;
 
+extern int dmflags;
 
 // Fineangles in the SCREENWIDTH wide window.
-#define FIELDOFVIEW 			2048	
+#define FIELDOFVIEW 	2048	
 
 
 
@@ -72,6 +71,8 @@ fixed_t 				centeryfrac;
 fixed_t 				projection;
 // [RH] fixing the aspect ratio stuff (from doom legacy)...
 fixed_t 				projectiony;
+// [RH] virtual top of the sky (for freelooking)
+fixed_t					skytopfrac;
 
 // just for profiling purposes
 int 					framecount; 	
@@ -125,8 +126,9 @@ lighttable_t*			zlight[LIGHTLEVELS][MAXLIGHTZ];
 // bumped light from gun blasts
 int 					extralight;
 
-extern boolean DrawNewHUD;		// [RH] Defined in d_main.c.
+extern BOOL				DrawNewHUD;		// [RH] Defined in d_main.c.
 
+cvar_t					*r_detail;		// [RH] Detail mode
 
 
 void (*colfunc) (void);
@@ -296,10 +298,7 @@ R_PointOnSegSide
 
 
 
-angle_t
-R_PointToAngle
-( fixed_t		x,
-  fixed_t		y )
+angle_t R_PointToAngle (fixed_t x, fixed_t y)
 {		
 	x -= viewx;
 	y -= viewy;
@@ -378,7 +377,6 @@ R_PointToAngle
 			}
 		}
 	}
-	return 0;
 }
 
 
@@ -630,7 +628,7 @@ void R_InitLightTables (void)
 		startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
 		for (j=0 ; j<MAXLIGHTZ ; j++)
 		{
-			scale = FixedDiv ((SCREENWIDTH/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
+			scale = FixedDiv ((screens[0].width/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
 			scale >>= LIGHTSCALESHIFT;
 			level = startmap - scale/DISTMAP;
 			
@@ -640,7 +638,7 @@ void R_InitLightTables (void)
 			if (level >= NUMCOLORMAPS)
 				level = NUMCOLORMAPS-1;
 
-			zlight[i][j] = colormaps + level*256;
+			zlight[i][j] = DefaultPalette->maps.colormaps + level*256;
 		}
 	}
 }
@@ -653,8 +651,9 @@ void R_InitLightTables (void)
 //	because it might be in the middle of a refresh.
 // The change will take effect next refresh.
 //
-boolean 		setsizeneeded;
+BOOL	 		setsizeneeded;
 int 			setblocks;
+int				setdetail = -1;
 
 
 void R_SetViewSize (int blocks)
@@ -662,6 +661,31 @@ void R_SetViewSize (int blocks)
 	setsizeneeded = true;
 	setblocks = blocks;
 }
+
+
+// [RH] Change detailmode
+void R_DetailCallback (cvar_t *var)
+{
+	static BOOL badrecovery = false;
+
+	if (badrecovery) {
+		badrecovery = false;
+		return;
+	}
+
+	if (var->value < 0.0 || var->value > 3.0) {
+		Printf ("Bad detail mode. (Use 0-3)\n");
+		badrecovery = true;
+		SetCVarFloat (var, (float)((detailyshift << 1)|detailxshift));
+		return;
+	}
+
+	setdetail = (int)var->value;
+	setsizeneeded = true;
+}
+
+int freediff;
+fixed_t freelookviewheight;
 
 //
 // R_ExecuteSetViewSize
@@ -675,21 +699,30 @@ void R_ExecuteSetViewSize (void)
 	int 		level;
 	int 		startmap;
 	int			aspectx;
+	int			virtheight, virtwidth;
 
 	setsizeneeded = false;
 
+	if (setdetail >= 0) {
+		detailxshift = setdetail & 1;
+		detailyshift = (setdetail >> 1) & 1;
+		setdetail = -1;
+	}
+
 	if (setblocks == 11 || setblocks == 12)
 	{
-		scaledviewwidth = SCREENWIDTH;
-		viewheight = SCREENHEIGHT;
+		realviewwidth = screens[0].width;
+		freelookviewheight = realviewheight = screens[0].height;
 	}
 	else if (setblocks == 10) {
-		scaledviewwidth = SCREENWIDTH;
-		viewheight = ST_Y;
+		realviewwidth = screens[0].width;
+		realviewheight = ST_Y;
+		freelookviewheight = screens[0].height;
 	} else
 	{
-		scaledviewwidth = (setblocks*SCREENWIDTH)/10;
-		viewheight = ((setblocks*ST_Y)/10)&~7;
+		realviewwidth = ((setblocks*screens[0].width)/10) & (~(15>>(screens[0].is8bit ? 0 : 2)));
+		realviewheight = ((setblocks*ST_Y)/10)&~7;
+		freelookviewheight = ((setblocks*screens[0].height)/10)&~7;
 	}
 
 	if (setblocks == 11)
@@ -697,7 +730,10 @@ void R_ExecuteSetViewSize (void)
 	else
 		DrawNewHUD = false;
 	
-	viewwidth = scaledviewwidth;
+	freediff = (freelookviewheight - realviewheight) >> (detailyshift + 1);
+	viewwidth = realviewwidth >> detailxshift;
+	viewheight = realviewheight >> detailyshift;
+	freelookviewheight >>= detailyshift;
 
 	{
 		char temp[16];
@@ -711,8 +747,14 @@ void R_ExecuteSetViewSize (void)
 	centerxfrac = centerx<<FRACBITS;
 	centeryfrac = centery<<FRACBITS;
 
+	virtwidth = screens[0].width >> detailxshift;
+	virtheight = screens[0].height >> detailyshift;
+
+	// [RH] aspect ratio stuff (based Doom Legacy's)
+	aspectx = ((virtheight * centerx * 320) / 200) / virtwidth * FRACUNIT;
+
 	projection = centerxfrac;
-	projectiony = (((SCREENHEIGHT*centerx*320)/200)/SCREENWIDTH)<<FRACBITS;
+	projectiony = aspectx;
 
 	colfunc = basecolfunc = R_DrawColumn;
 	lucentcolfunc = R_DrawTranslucentColumn;
@@ -720,7 +762,7 @@ void R_ExecuteSetViewSize (void)
 	transcolfunc = R_DrawTranslatedColumn;
 	spanfunc = R_DrawSpan;
 
-	R_InitBuffer (scaledviewwidth, viewheight);
+	R_InitBuffer (viewwidth, viewheight);
 		
 	R_InitTextureMapping ();
 	
@@ -728,26 +770,28 @@ void R_ExecuteSetViewSize (void)
 	pspritescale = (viewwidth << FRACBITS) / 320;
 	pspriteiscale = (320 << FRACBITS) / viewwidth;
 	// [RH] Aspect ratio fix (from Doom Legacy)
-	pspriteyscale = (((SCREENHEIGHT * viewwidth) / SCREENWIDTH) << FRACBITS) / 200;
-	// [RH] Sky height fix for screens not 200 pixels tall
-	skyiscale = (200 << FRACBITS) / ((SCREENHEIGHT * viewwidth) / SCREENWIDTH);
+	pspriteyscale = (((virtheight * viewwidth) / virtwidth) << FRACBITS) / 200;
+	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
+	R_InitSkyMap (r_stretchsky);
 
 	// thing clipping
 	for (i=0 ; i<viewwidth ; i++)
-		screenheightarray[i] = viewheight;
+		screenheightarray[i] = (short)viewheight;
 	
 	// planes
 
-	// [RH] aspect ratio stuff (from Doom Legacy)
-	aspectx = (((SCREENHEIGHT * centerx * 320) / 200) / SCREENWIDTH);
 
-	// [RH] Calculates yslopes for twice the view height
-	// to allow for freelook (again from Doom Legacy)
-	for (i=0 ; i<viewheight*2 ; i++)
+	// [RH] Calculates yslopes for 2.5 times the view height
+	// to allow for freelook (based on Doom Legacy)
+	// This amount was got at after playing Blood for a
+	// little bit: You can look half a screen height up
+	// from straight ahead, and an entire screen height
+	// below from straight ahead.
+	for (i=0 ; i < (freelookviewheight<<1)+(freelookviewheight>>1) ; i++)
 	{
-		dy = ((i-viewheight)<<FRACBITS)+FRACUNIT/2;
+		dy = ((i-freelookviewheight)<<FRACBITS)+FRACUNIT/2;
 		dy = abs(dy);
-		yslopetab[i] = FixedDiv (aspectx * FRACUNIT, dy);
+		yslopetab[i] = FixedDiv (aspectx, dy);
 	}
 	yslope = yslopetab + (viewheight >> 1);
 		
@@ -764,7 +808,7 @@ void R_ExecuteSetViewSize (void)
 		startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
 		for (j=0 ; j<MAXLIGHTSCALE ; j++)
 		{
-			level = startmap - j*SCREENWIDTH/viewwidth/DISTMAP;
+			level = startmap - (j*screens[0].width)/((realviewwidth*DISTMAP)>>detailyshift);
 			
 			if (level < 0)
 				level = 0;
@@ -772,7 +816,7 @@ void R_ExecuteSetViewSize (void)
 			if (level >= NUMCOLORMAPS)
 				level = NUMCOLORMAPS-1;
 
-			scalelight[i][j] = colormaps + level*256;
+			scalelight[i][j] = DefaultPalette->maps.colormaps + level*256;
 		}
 	}
 }
@@ -784,27 +828,54 @@ void R_ExecuteSetViewSize (void)
 //
 extern cvar_t	*screenblocks;
 
+static void screenblocksCallback (cvar_t *var)
+{
+	if (var->value > 12.0) {
+		// SetCVarFloat() will call us again
+		SetCVarFloat (var, 12.0);
+		return;
+	} else if (var->value < 3.0) {
+		SetCVarFloat (var, 3.0);
+		return;
+	}
 
+	R_SetViewSize ((int)var->value);
+}
 
 void R_Init (void)
 {
+	// [RH] Automatically sense changes to screenblocks cvar
+	screenblocks->u.callback = screenblocksCallback;
+
+	// [RH] Automatically sense changes to r_detail cvar
+	r_detail->u.callback = R_DetailCallback;
+	// ...and apply it at startup.
+	R_DetailCallback (r_detail);
+
 	R_InitData ();
-	Printf ("\nR_InitData");
+	Printf (".");
+//	Printf ("\nR_InitData");
 	R_InitPointToAngle ();
-	Printf ("\nR_InitPointToAngle");
+	Printf (".");
+//	Printf ("\nR_InitPointToAngle");
 	R_InitTables ();
 	// viewwidth / viewheight are set by the defaults
-	Printf ("\nR_InitTables");
+	Printf (".");
+//	Printf ("\nR_InitTables");
 
 	R_SetViewSize ((int)screenblocks->value);
 	R_InitPlanes ();
-	Printf ("\nR_InitPlanes");
+	Printf (".");
+//	Printf ("\nR_InitPlanes");
 	R_InitLightTables ();
-	Printf ("\nR_InitLightTables");
-	R_InitSkyMap ();
-	Printf ("\nR_InitSkyMap");
+	Printf (".");
+//	Printf ("\nR_InitLightTables");
+//	R_InitSkyMap ();
+	Printf (".");
+//	Printf ("\nR_InitSkyMap");
 	R_InitTranslationTables ();
-	Printf ("\nR_InitTranslationsTables");
+	Printf (".");
+//	Printf ("\nR_InitTranslationsTables");
 		
 	framecount = 0;
 }
@@ -864,7 +935,7 @@ void R_SetupFrame (player_t* player)
 	if (player->fixedcolormap)
 	{
 		fixedcolormap =
-			colormaps
+			DefaultPalette->maps.colormaps
 			+ player->fixedcolormap*256*sizeof(lighttable_t);
 		
 		walllights = scalelightfixed;
@@ -876,10 +947,11 @@ void R_SetupFrame (player_t* player)
 		fixedcolormap = 0;
 
 	// [RH] freelook stuff
-	dy = FixedMul (viewheight << (FRACBITS/2), player->mo->pitch) >> 9;
-	yslope = yslopetab + (viewheight >> 1) + dy;
+	dy = FixedMul (freelookviewheight << (FRACBITS/2), player->mo->pitch) >> 9;
+	yslope = yslopetab + (freelookviewheight >> 1) + dy + freediff;
 	centery = (viewheight >> 1) - dy;
 	centeryfrac = centery << FRACBITS;
+	skytopfrac = centeryfrac - ((freelookviewheight + freediff) << (FRACBITS - 1));
 
 	framecount++;
 	validcount++;
@@ -917,32 +989,40 @@ void R_RenderPlayerView (player_t* player)
 	R_DrawMasked ();
 
 	// Check for new console commands.
-	NetUpdate ();								
+	NetUpdate ();
+
+	// [RH] Apply detail mode doubling
+	R_DetailDouble ();
 }
 
-// [RH] Do all multires stuff. Called from V_SetResolution
+// [RH] Do all multires stuff. Called from V_SetResolution()
 void R_MultiresInit (void)
 {
+	int i;
+
 	// in r_things.c
 	extern short *r_dscliptop, *r_dsclipbot;
 	// in r_draw.c
 	extern byte **ylookup;
 	extern int *columnofs;
 
+	ylookup = Realloc (ylookup, screens[0].height * sizeof(byte *));
+	columnofs = Realloc (columnofs, screens[0].width * sizeof(int));
+	r_dscliptop = Realloc (r_dscliptop, screens[0].width * sizeof(short));
+	r_dsclipbot = Realloc (r_dsclipbot, screens[0].width * sizeof(short));
+
+	// Moved from R_InitSprites()
+	negonearray = Realloc (negonearray, sizeof(short) * screens[0].width);
+
+	for (i=0 ; i<screens[0].width ; i++)
+	{
+		negonearray[i] = -1;
+	}
+
+	// These get set in R_ExecuteSetViewSize()
+	screenheightarray = Realloc (screenheightarray, sizeof(short) * screens[0].width);
+	xtoviewangle = Realloc (xtoviewangle, sizeof(angle_t) * (screens[0].width + 1));
+
 	R_InitFuzzTable ();
 	R_PlaneInitData ();
-
-	if (ylookup)
-		free (ylookup);
-	if (columnofs)
-		free (columnofs);
-	if (r_dscliptop)
-		free (r_dscliptop);
-	if (r_dsclipbot)
-		free (r_dsclipbot);
-
-	ylookup = Malloc (SCREENHEIGHT * sizeof(byte *));
-	columnofs = Malloc (SCREENWIDTH * sizeof(int));
-	r_dscliptop = Malloc (SCREENWIDTH * sizeof(short));
-	r_dsclipbot = Malloc (SCREENWIDTH * sizeof(short));
 }

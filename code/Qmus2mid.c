@@ -111,20 +111,20 @@ char LittleEndian(void)
 
 void TWriteByte( char MIDItrack, char byte, struct Track track[] )
 {
-  int4 pos ;
+  int4 pos;
 
-  pos = track[MIDItrack].current ;
+  pos = track[MIDItrack].current;
   if( pos < TRACKBUFFERSIZE )
-    track[MIDItrack].data[pos] = byte ;
+    track[MIDItrack].data[pos] = byte;
   else
     {
       Printf("ERROR : Track buffer full.\n"
-             "Increase the track buffer size (option -size).\n" ) ;
-      FreeTracks( track ) ;
+             "Increase the track buffer size (option -size).\n" );
+      FreeTracks( track );
       Close() ;
-      exit( EXIT_FAILURE ) ;
+      exit( EXIT_FAILURE );
     }
-  track[MIDItrack].current++ ;
+  track[MIDItrack].current++;
 }
 
 

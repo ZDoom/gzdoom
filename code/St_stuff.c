@@ -20,11 +20,10 @@
 //		Status bar code.
 //		Does the face/direction indicator animatin.
 //		Does palette indicators as well (red pain/berserk, bright pickup)
+//		[RH] Widget coordinates are relative to the console, not the screen!
 //
 //-----------------------------------------------------------------------------
 
-static const char
-rcsid[] = "$Id: st_stuff.c,v 1.6 1997/02/03 22:45:13 b1 Exp $";
 
 
 #include <stdio.h>
@@ -62,11 +61,22 @@ rcsid[] = "$Id: st_stuff.c,v 1.6 1997/02/03 22:45:13 b1 Exp $";
 #include "sounds.h"
 
 // Cheats and cvars
-#include "c_commands.h"
+#include "c_cmds.h"
 #include "c_cvars.h"
-#include "c_dispatch.h"
+#include "c_dispch.h"
 
 cvar_t *idmypos;
+cvar_t *st_scale;		// Stretch status bar to full screen width?
+
+// [RH] Needed when status bar scale changes
+BOOL setsizeneeded;
+BOOL automapactive;
+BOOL am_needtodrawstatusbar;
+
+// [RH] Status bar background screen
+screen_t stbarscreen;
+// [RH] Active status bar screen
+screen_t stnumscreen;
 
 
 // functions in st_new.c
@@ -96,11 +106,10 @@ void ST_newDraw (void);
 #define ST_TOGGLECHAT			KEY_ENTER
 
 // Location of status bar
-#define ST_X					(((SCREENWIDTH-320)/2)+0)
-#define ST_X2					(((SCREENWIDTH-320)/2)+104)
+#define ST_X2					(104)
 
-#define ST_FX					(((SCREENWIDTH-320)/2)+143)
-#define ST_FY					(SCREENHEIGHT-(200-169))
+#define ST_FX					(143)
+#define ST_FY					(1)
 
 // Should be set to patch width
 //	for tall numbers later on
@@ -127,8 +136,8 @@ void ST_newDraw (void);
 #define ST_GODFACE				(ST_NUMPAINFACES*ST_FACESTRIDE)
 #define ST_DEADFACE 			(ST_GODFACE+1)
 
-#define ST_FACESX				(((SCREENWIDTH-320)/2)+143)
-#define ST_FACESY				(SCREENHEIGHT-(200-168))
+#define ST_FACESX				(143)
+#define ST_FACESY				(0)
 
 #define ST_EVILGRINCOUNT		(2*TICRATE)
 #define ST_STRAIGHTFACECOUNT	(TICRATE/2)
@@ -148,112 +157,112 @@ void ST_newDraw (void);
 //		 or into the frame buffer?
 
 // AMMO number pos.
-#define ST_AMMOWIDTH			3		
-#define ST_AMMOX				(((SCREENWIDTH-320)/2)+44)
-#define ST_AMMOY				(SCREENHEIGHT-(200-171))
+#define ST_AMMOWIDTH			3
+#define ST_AMMOX				(44)
+#define ST_AMMOY				(3)
 
 // HEALTH number pos.
-#define ST_HEALTHWIDTH			3		
-#define ST_HEALTHX				(((SCREENWIDTH-320)/2)+90)
-#define ST_HEALTHY				(SCREENHEIGHT-(200-171))
+#define ST_HEALTHWIDTH			3
+#define ST_HEALTHX				(90)
+#define ST_HEALTHY				(3)
 
 // Weapon pos.
-#define ST_ARMSX				(((SCREENWIDTH-320)/2)+111)
-#define ST_ARMSY				(SCREENHEIGHT-(200-172))
-#define ST_ARMSBGX				(((SCREENWIDTH-320)/2)+104)
-#define ST_ARMSBGY				(SCREENHEIGHT-(200-168))
+#define ST_ARMSX				(111)
+#define ST_ARMSY				(4)
+#define ST_ARMSBGX				(104)
+#define ST_ARMSBGY				(0)
 #define ST_ARMSXSPACE			12
 #define ST_ARMSYSPACE			10
 
 // Frags pos.
-#define ST_FRAGSX				(((SCREENWIDTH-320)/2)+138)
-#define ST_FRAGSY				(SCREENHEIGHT-(200-171))
+#define ST_FRAGSX				(138)
+#define ST_FRAGSY				(3)
 #define ST_FRAGSWIDTH			2
 
 // ARMOR number pos.
 #define ST_ARMORWIDTH			3
-#define ST_ARMORX				(((SCREENWIDTH-320)/2)+221)
-#define ST_ARMORY				(SCREENHEIGHT-(200-171))
+#define ST_ARMORX				(221)
+#define ST_ARMORY				(3)
 
 // Key icon positions.
 #define ST_KEY0WIDTH			8
 #define ST_KEY0HEIGHT			5
-#define ST_KEY0X				(((SCREENWIDTH-320)/2)+239)
-#define ST_KEY0Y				(SCREENHEIGHT-(200-171))
+#define ST_KEY0X				(239)
+#define ST_KEY0Y				(3)
 #define ST_KEY1WIDTH			ST_KEY0WIDTH
-#define ST_KEY1X				(((SCREENWIDTH-320)/2)+239)
-#define ST_KEY1Y				(SCREENHEIGHT-(200-181))
+#define ST_KEY1X				(239)
+#define ST_KEY1Y				(13)
 #define ST_KEY2WIDTH			ST_KEY0WIDTH
-#define ST_KEY2X				(((SCREENWIDTH-320)/2)+239)
-#define ST_KEY2Y				(SCREENHEIGHT-(200-191))
+#define ST_KEY2X				(239)
+#define ST_KEY2Y				(23)
 
 // Ammunition counter.
 #define ST_AMMO0WIDTH			3
 #define ST_AMMO0HEIGHT			6
-#define ST_AMMO0X				(((SCREENWIDTH-320)/2)+288)
-#define ST_AMMO0Y				(SCREENHEIGHT-(200-173))
+#define ST_AMMO0X				(288)
+#define ST_AMMO0Y				(5)
 #define ST_AMMO1WIDTH			ST_AMMO0WIDTH
-#define ST_AMMO1X				(((SCREENWIDTH-320)/2)+288)
-#define ST_AMMO1Y				(SCREENHEIGHT-(200-179))
+#define ST_AMMO1X				(288)
+#define ST_AMMO1Y				(11)
 #define ST_AMMO2WIDTH			ST_AMMO0WIDTH
-#define ST_AMMO2X				(((SCREENWIDTH-320)/2)+288)
-#define ST_AMMO2Y				(SCREENHEIGHT-(200-191))
+#define ST_AMMO2X				(288)
+#define ST_AMMO2Y				(23)
 #define ST_AMMO3WIDTH			ST_AMMO0WIDTH
-#define ST_AMMO3X				(((SCREENWIDTH-320)/2)+288)
-#define ST_AMMO3Y				(SCREENHEIGHT-(200-185))
+#define ST_AMMO3X				(288)
+#define ST_AMMO3Y				(17)
 
 // Indicate maximum ammunition.
 // Only needed because backpack exists.
 #define ST_MAXAMMO0WIDTH		3
 #define ST_MAXAMMO0HEIGHT		5
-#define ST_MAXAMMO0X			(((SCREENWIDTH-320)/2)+314)
-#define ST_MAXAMMO0Y			(SCREENHEIGHT-(200-173))
+#define ST_MAXAMMO0X			(314)
+#define ST_MAXAMMO0Y			(5)
 #define ST_MAXAMMO1WIDTH		ST_MAXAMMO0WIDTH
-#define ST_MAXAMMO1X			(((SCREENWIDTH-320)/2)+314)
-#define ST_MAXAMMO1Y			(SCREENHEIGHT-(200-179))
+#define ST_MAXAMMO1X			(314)
+#define ST_MAXAMMO1Y			(11)
 #define ST_MAXAMMO2WIDTH		ST_MAXAMMO0WIDTH
-#define ST_MAXAMMO2X			(((SCREENWIDTH-320)/2)+314)
-#define ST_MAXAMMO2Y			(SCREENHEIGHT-(200-191))
+#define ST_MAXAMMO2X			(314)
+#define ST_MAXAMMO2Y			(23)
 #define ST_MAXAMMO3WIDTH		ST_MAXAMMO0WIDTH
-#define ST_MAXAMMO3X			(((SCREENWIDTH-320)/2)+314)
-#define ST_MAXAMMO3Y			(SCREENHEIGHT-(200-185))
+#define ST_MAXAMMO3X			(314)
+#define ST_MAXAMMO3Y			(17)
 
 // pistol
-#define ST_WEAPON0X 			(((SCREENWIDTH-320)/2)+110)
-#define ST_WEAPON0Y 			(SCREENHEIGHT-(200-172))
+#define ST_WEAPON0X 			(110)
+#define ST_WEAPON0Y 			(4)
 
 // shotgun
-#define ST_WEAPON1X 			(((SCREENWIDTH-320)/2)+122)
-#define ST_WEAPON1Y 			(SCREENHEIGHT-(200-172))
+#define ST_WEAPON1X 			(122)
+#define ST_WEAPON1Y 			(4)
 
 // chain gun
-#define ST_WEAPON2X 			(((SCREENWIDTH-320)/2)+134)
-#define ST_WEAPON2Y 			(SCREENHEIGHT-(200-172))
+#define ST_WEAPON2X 			(134)
+#define ST_WEAPON2Y 			(4)
 
 // missile launcher
-#define ST_WEAPON3X 			(((SCREENWIDTH-320)/2)+110)
-#define ST_WEAPON3Y 			(SCREENHEIGHT-(200-181))
+#define ST_WEAPON3X 			(110)
+#define ST_WEAPON3Y 			(13)
 
 // plasma gun
-#define ST_WEAPON4X 			(((SCREENWIDTH-320)/2)+122)
-#define ST_WEAPON4Y 			(SCREENHEIGHT-(200-181))
+#define ST_WEAPON4X 			(122)
+#define ST_WEAPON4Y 			(13)
 
  // bfg
-#define ST_WEAPON5X 			(((SCREENWIDTH-320)/2)+134)
-#define ST_WEAPON5Y 			(SCREENHEIGHT-(200-181))
+#define ST_WEAPON5X 			(134)
+#define ST_WEAPON5Y 			(13)
 
 // WPNS title
-#define ST_WPNSX				(((SCREENWIDTH-320)/2)+109)
-#define ST_WPNSY				(SCREENHEIGHT-(200-191))
+#define ST_WPNSX				(109)
+#define ST_WPNSY				(23)
 
  // DETH title
-#define ST_DETHX				(((SCREENWIDTH-320)/2)+109)
-#define ST_DETHY				(SCREENHEIGHT-(200-191))
+#define ST_DETHX				(109)
+#define ST_DETHY				(23)
 
 //Incoming messages window location
 //UNUSED
 // #define ST_MSGTEXTX	   (viewwindowx)
-// #define ST_MSGTEXTY	   (viewwindowy+viewheight-18)
+// #define ST_MSGTEXTY	   (viewwindowy+realviewheight-18)
 #define ST_MSGTEXTX 			0
 #define ST_MSGTEXTY 			0
 // Dimensions given in characters.
@@ -265,16 +274,26 @@ void ST_newDraw (void);
 #define ST_OUTTEXTY 			6
 
 // Width, in characters again.
-#define ST_OUTWIDTH 			52 
+#define ST_OUTWIDTH 			52
  // Height, in lines. 
 #define ST_OUTHEIGHT			1
+
+
+// [RH] Turned these into variables
+// Size of statusbar.
+// Now ([RH] truly) sensitive for scaling.
+int						ST_HEIGHT;
+int						ST_WIDTH;
+int						ST_X;
+int						ST_Y;
+
 
 // main player in game
 // [RH] not static
 player_t*				plyr; 
 
 // ST_Start() has just been called
-static boolean			st_firsttime;
+BOOL					st_firsttime;
 
 // used to execute ST_Init() only once
 static int				veryfirsttime = 1;
@@ -295,25 +314,25 @@ static st_chatstateenum_t		st_chatstate;
 static st_stateenum_t	st_gamestate;
 
 // whether left-side main status bar is active
-static boolean			st_statusbaron;
+static BOOL			st_statusbaron;
 
 // whether status bar chat is active
-static boolean			st_chat;
+static BOOL			st_chat;
 
 // value of st_chat before message popped up
-static boolean			st_oldchat;
+static BOOL			st_oldchat;
 
 // whether chat window has the cursor on
-static boolean			st_cursoron;
+static BOOL			st_cursoron;
 
 // !deathmatch
-static boolean			st_notdeathmatch; 
+static BOOL			st_notdeathmatch; 
 
 // !deathmatch && st_statusbaron
-static boolean			st_armson;
+static BOOL			st_armson;
 
 // !deathmatch
-static boolean			st_fragson; 
+static BOOL			st_fragson; 
 
 // main bar left
 static patch_t* 		sbar;
@@ -385,7 +404,7 @@ static int		st_fragscount;
 static int		st_oldhealth = -1;
 
 // used for evil grin
-static boolean	oldweaponsowned[NUMWEAPONS]; 
+static BOOL		oldweaponsowned[NUMWEAPONS]; 
 
  // count until face changes
 static int		st_facecount = 0;
@@ -405,6 +424,11 @@ static int		st_randomnumber;
 // Massive bunches of cheat shit
 //	to keep it from being easy to figure them out.
 // Yeah, right...
+unsigned char	cheat_mus_seq[] =
+{
+	0xb2, 0x26, 0xb6, 0xae, 0xea, 1, 0, 0, 0xff // idmus
+};
+
 unsigned char	cheat_choppers_seq[] =
 {
 	0xb2, 0x26, 0xe2, 0x32, 0xf6, 0x2a, 0x2a, 0xa6, 0x6a, 0xea, 0xff // id...
@@ -467,6 +491,7 @@ unsigned char	cheat_mypos_seq[] =
 
 
 // Now what?
+cheatseq_t		cheat_mus = { cheat_mus_seq, 0 };
 cheatseq_t		cheat_god = { cheat_god_seq, 0 };
 cheatseq_t		cheat_ammo = { cheat_ammo_seq, 0 };
 cheatseq_t		cheat_ammonokey = { cheat_ammonokey_seq, 0 };
@@ -496,41 +521,42 @@ void ST_Stop(void);
 
 void ST_refreshBackground(void)
 {
-	// [RH] Used to draw background around status bar
-	int side, ofs, i;
-
 	if (st_statusbaron)
 	{
-		// [RH] if SCREENWIDTH > 320, draw stuff around status bar
-		if (SCREENWIDTH > 320) {
-			ofs = (ST_Y) * SCREENPITCH;
-			side = (SCREENWIDTH - 320) / 2;
-			R_VideoErase (ofs, side);
-
-			ofs += SCREENWIDTH - side;
-			for (i = ST_Y; i < SCREENHEIGHT; i++) {
-				R_VideoErase (ofs, side << 1);
-				ofs += SCREENPITCH;
-			}
-			R_VideoErase (ofs, side);
+		// [RH] If screen is wider than the status bar,
+		//      draw stuff around status bar.
+		if (FG.width > ST_WIDTH) {
+			R_VideoErase (0, ST_Y, ST_X, FG.height);
+			R_VideoErase (FG.width - ST_X, ST_Y, FG.width, FG.height);
 		}
 
-		V_DrawPatch(ST_X, 0, BG, sbar);
+		V_DrawPatch(0, 0, &BG, sbar);
 
-		if (netgame)
-			V_DrawPatch(ST_FX, 0, BG, faceback);
+		if (netgame) {
+			// [RH] Always draw faceback with the player's color
+			//		using a translation rather than a different patch.
+			//		Use displayplayer instead of consoleplayer.
+			V_ColorMap = translationtables + displayplayer*256;
+			V_DrawTranslatedPatch (ST_FX, 0, &BG, faceback);
+		}
 
-		V_CopyRect(ST_X, 0, BG, ST_WIDTH, ST_HEIGHT, ST_X, ST_Y, FG);
+		V_Blit (&BG, 0, 0, 320, 32,
+				&stnumscreen, 0, 0, 320, 32);
+
+		if (!st_scale->value || ST_WIDTH == 320)
+			V_Blit (&stnumscreen, 0, 0, 320, 32,
+					&FG,		  ST_X, ST_Y, ST_WIDTH, ST_HEIGHT);
 	}
 }
 
 
+BOOL CheckCheatmode (void);
+
 // Respond to keyboard input events,
 //	intercept cheats.
-boolean
-ST_Responder (event_t* ev)
+BOOL ST_Responder (event_t *ev)
 {
-  int			i;
+  int i;
 	
   // Filter automap on/off.
   if (ev->type == ev_keyup
@@ -559,64 +585,71 @@ ST_Responder (event_t* ev)
 	  // 'dqd' cheat for toggleable god mode
 	  if (cht_CheckCheat(&cheat_god, (char)ev->data2))
 	  {
-		  char *iddqd = "iddqd";
+		  if (CheckCheatmode ())
+			  return false;
 
-		  Cmd_God (plyr, 1, &iddqd);
+		  Net_WriteByte (DEM_GENERICCHEAT);
+		  Net_WriteByte (CHT_IDDQD);
 	  }
 
 	  // 'fa' cheat for killer fucking arsenal
 	  else if (cht_CheckCheat(&cheat_ammonokey, (char)ev->data2))
 	  {
-		AddCommandString ("give backpack; give weapons; give ammo");
-		plyr->armorpoints = deh_FAArmor;
-		plyr->armortype = deh_FAAC;
-		plyr->message = STSTR_FAADDED;
+		  if (CheckCheatmode ())
+			  return false;
+
+		  Net_WriteByte (DEM_GENERICCHEAT);
+		  Net_WriteByte (CHT_IDFA);
 	  }
 
 	  // 'kfa' cheat for key full ammo
 	  else if (cht_CheckCheat(&cheat_ammo, (char)ev->data2))
 	  {
-		AddCommandString ("give backpack; give weapons; give ammo; give keys");
-		plyr->armorpoints = deh_KFAArmor;
-		plyr->armorpoints = deh_KFAAC;
-		plyr->message = STSTR_KFAADDED;
+		  if (CheckCheatmode ())
+			  return false;
+
+		  Net_WriteByte (DEM_GENERICCHEAT);
+		  Net_WriteByte (CHT_IDKFA);
 	  }
 
 	  // Simplified, accepting both "noclip" and "idspispopd".
 	  // no clipping mode cheat
 	  else if ( cht_CheckCheat(&cheat_noclip, (char)ev->data2) 
 				|| cht_CheckCheat(&cheat_commercial_noclip,(char)ev->data2) )
-	  { 
-		Cmd_Noclip (plyr, 0, NULL);
+	  {
+		  if (CheckCheatmode ())
+			  return false;
+
+		  Net_WriteByte (DEM_GENERICCHEAT);
+		  Net_WriteByte (CHT_NOCLIP);
 	  }
 	  // 'behold?' power-up cheats
 	  for (i=0;i<6;i++)
 	  {
 		if (cht_CheckCheat(&cheat_powerup[i], (char)ev->data2))
 		{
-		  if (!plyr->powers[i])
-			P_GivePower( plyr, i);
-		  else if (i!=pw_strength)
-			plyr->powers[i] = 1;
-		  else
-			plyr->powers[i] = 0;
-		  
-		  plyr->message = STSTR_BEHOLDX;
+			if (CheckCheatmode ())
+				return false;
+
+			Net_WriteByte (DEM_GENERICCHEAT);
+			Net_WriteByte ((byte)(CHT_BEHOLDV + i));
 		}
 	  }
 	  
 	  // 'behold' power-up menu
 	  if (cht_CheckCheat(&cheat_powerup[6], (char)ev->data2))
 	  {
-		plyr->message = STSTR_BEHOLD;
+		  if (CheckCheatmode ())
+			  return false;
+
+		  plyr->message = STSTR_BEHOLD;
 	  }
 
 	  // 'choppers' invulnerability & chainsaw
 	  else if (cht_CheckCheat(&cheat_choppers, (char)ev->data2))
 	  {
-		plyr->weaponowned[wp_chainsaw] = true;
-		plyr->powers[pw_invulnerability] = true;
-		plyr->message = STSTR_CHOPPERS;
+		  Net_WriteByte (DEM_GENERICCHEAT);
+		  Net_WriteByte (CHT_CHAINSAW);
 	  }
 
 	  // 'mypos' for player position
@@ -637,7 +670,19 @@ ST_Responder (event_t* ev)
 		argv[0] = "idclev";
 		argv[1] = buf;
 		Cmd_idclev (plyr, 2, argv);
-	  }    
+	  }
+
+	  // 'idmus' change-music cheat
+	  else if (cht_CheckCheat(&cheat_mus, (char)ev->data2))
+	  {
+		char buf[16];
+			  
+		cht_GetParam(&cheat_mus, buf);
+		buf[2] = 0;
+
+		sprintf (buf + 3, "idmus %s\n", buf);
+		AddCommandString (buf + 3);
+	  }
 	}
 
   return false;
@@ -675,7 +720,7 @@ void ST_updateFaceWidget(void)
 	angle_t 	diffang;
 	static int	lastattackdown = -1;
 	static int	priority = 0;
-	boolean 	doevilgrin;
+	BOOL	 	doevilgrin;
 
 	if (priority < 10)
 	{
@@ -881,22 +926,14 @@ void ST_updateWidgets(void)
 	ST_updateFaceWidget();
 
 	// used by the w_armsbg widget
-	st_notdeathmatch = !deathmatch;
+	st_notdeathmatch = !((int)deathmatch->value);
 	
 	// used by w_arms[] widgets
-	st_armson = st_statusbaron && !deathmatch; 
+	st_armson = st_statusbaron && !((int)deathmatch->value);
 
 	// used by w_frags widget
-	st_fragson = deathmatch && st_statusbaron; 
-	st_fragscount = 0;
-
-	for (i=0 ; i<MAXPLAYERS ; i++)
-	{
-		if (i != consoleplayer)
-			st_fragscount += plyr->frags[i];
-		else
-			st_fragscount -= plyr->frags[i];
-	}
+	st_fragson = (int)deathmatch->value && st_statusbaron; 
+	st_fragscount = plyr->fragcount;	// [RH] Just use cumulative total
 
 	// get rid of chat window if up because of message
 	if (!--st_msgcounter)
@@ -920,16 +957,15 @@ void ST_doPaletteStuff (void)
 {
 
 	int 		palette;
-	byte*		pal;
 	int 		cnt;
 	int 		bzc;
 
-	cnt = plyr->damagecount;
+	cnt = plyr->damagecount << 1;
 
 	if (plyr->powers[pw_strength])
 	{
 		// slowly fade the berzerk out
-		bzc = 12 - (plyr->powers[pw_strength]>>6);
+		bzc = 128 - ((plyr->powers[pw_strength]>>3) & (~0x1f));
 
 		if (bzc > cnt)
 			cnt = bzc;
@@ -937,48 +973,45 @@ void ST_doPaletteStuff (void)
 		
 	if (cnt)
 	{
-		palette = (cnt+7)>>3;
-		
-		if (palette >= NUMREDPALS)
-			palette = NUMREDPALS-1;
+		if (cnt > 228)
+			cnt = 228;
+		else if (cnt < 28)
+			cnt = 28;
 
-		palette += STARTREDPALS;
+		palette = MAKEARGB(cnt,255,0,0);
 	}
 
 	else if (plyr->bonuscount)
 	{
-		palette = (plyr->bonuscount+7)>>3;
+		cnt = plyr->bonuscount << 3;
 
-		if (palette >= NUMBONUSPALS)
-			palette = NUMBONUSPALS-1;
-
-		palette += STARTBONUSPALS;
+		palette = MAKEARGB((cnt > 128) ? 128 : cnt,215,186,69);
 	}
 
 	else if ( plyr->powers[pw_ironfeet] > 4*32
 			  || plyr->powers[pw_ironfeet]&8)
-		palette = RADIATIONPAL;
-	else
-		palette = 0;
-
-	if (palette != st_palette)
 	{
-		st_palette = palette;
-		pal = (byte *) W_CacheLumpNum (lu_palette, PU_CACHE)+palette*768;
-		I_SetPalette (pal);
+		palette = MAKEARGB(32,0,255,0);
 	}
+	
+	else 
+		palette = MAKEARGB(0,0,0,0);
 
+	if (palette != st_palette) {
+		st_palette = palette;
+		V_SetBlend (RPART(palette), GPART(palette), BPART(palette), APART(palette));
+	}
 }
 
-void ST_drawWidgets(boolean refresh)
+void ST_drawWidgets(BOOL refresh)
 {
-	int 		i;
+	int i;
 
 	// used by w_arms[] widgets
-	st_armson = st_statusbaron && !deathmatch;
+	st_armson = st_statusbaron && !((int)deathmatch->value);
 
 	// used by w_frags widget
-	st_fragson = deathmatch && st_statusbaron; 
+	st_fragson = (int)deathmatch->value && st_statusbaron; 
 
 	STlib_updateNum(&w_ready, refresh);
 
@@ -1003,6 +1036,9 @@ void ST_drawWidgets(boolean refresh)
 
 	STlib_updateNum(&w_frags, refresh);
 
+	if (st_scale->value && ST_WIDTH != 320 && st_statusbaron)
+		V_Blit (&stnumscreen, 0,	0,	  320,		32,
+				&FG,		  ST_X, ST_Y, ST_WIDTH, ST_HEIGHT);
 }
 
 void ST_doRefresh(void)
@@ -1024,7 +1060,7 @@ void ST_diffDraw(void)
 	ST_drawWidgets(false);
 }
 
-void ST_Drawer (boolean fullscreen, boolean refresh)
+void ST_Drawer (BOOL fullscreen, BOOL refresh)
 {
   
 	st_statusbaron = (!fullscreen) || automapactive;
@@ -1033,17 +1069,24 @@ void ST_Drawer (boolean fullscreen, boolean refresh)
 	// Do red-/gold-shifts from damage/items
 	ST_doPaletteStuff();
 
+	V_LockScreen (&stbarscreen);
+	V_LockScreen (&stnumscreen);
+
 	// If just after ST_Start(), refresh all
 	if (st_firsttime) ST_doRefresh();
 	// Otherwise, update as little as possible
 	else ST_diffDraw();
 
-	// Hey, it's somewhere to put the idmypos stuff!
+	V_UnlockScreen (&stnumscreen);
+	V_UnlockScreen (&stbarscreen);
+
+	// [RH] Hey, it's somewhere to put the idmypos stuff!
+	//		Use displayplayer instead of consoleplayer
 	if (idmypos->value)
-		Printf ("ang=%x;x,y=(%x,%x)\n",
-				players[consoleplayer].mo->angle,
-				players[consoleplayer].mo->x,
-				players[consoleplayer].mo->y);
+		Printf ("ang=%d;x,y=(%d,%d)\n",
+				players[displayplayer].mo->angle/FRACUNIT,
+				players[displayplayer].mo->x/FRACUNIT,
+				players[displayplayer].mo->y/FRACUNIT);
 }
 
 void ST_loadGraphics(void)
@@ -1092,8 +1135,9 @@ void ST_loadGraphics(void)
 	}
 
 	// face backgrounds for different color players
-	sprintf(namebuf, "STFB%d", consoleplayer);
-	faceback = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
+	// [RH] only one face background used for all players
+	//		different colors are accomplished with translations
+	faceback = (patch_t *) W_CacheLumpName("STFBANY", PU_STATIC);
 
 	// status bar background bits
 	sbar = (patch_t *) W_CacheLumpName("STBAR", PU_STATIC);
@@ -1175,10 +1219,10 @@ void ST_unloadData(void)
 void ST_initData(void)
 {
 
-	int 		i;
+	int i;
 
 	st_firsttime = true;
-	plyr = &players[consoleplayer];
+	plyr = &players[displayplayer];		// [RH] Not consoleplayer
 
 	st_clock = 0;
 	st_chatstate = StartChatState;
@@ -1365,7 +1409,7 @@ void ST_createWidgets(void)
 
 }
 
-static boolean	st_stopped = true;
+static BOOL	st_stopped = true;
 
 
 void ST_Start (void)
@@ -1385,14 +1429,52 @@ void ST_Stop (void)
 	if (st_stopped)
 		return;
 
-	I_SetPalette (W_CacheLumpNum (lu_palette, PU_CACHE));
+	V_SetBlend (0,0,0,0);
 
 	st_stopped = true;
+}
+
+// [RH] Enable/disable scaling of status bar
+void ST_ChangeScale (cvar_t *var)
+{
+	if (var->value) {
+		// Stretch status bar to fill fill width of screen
+
+		ST_WIDTH = screens[0].width;
+		if (ST_WIDTH == 320) {
+			// Do not scale height for 320 x 2X0 screens
+			ST_HEIGHT = 32;
+		} else {
+			ST_HEIGHT = (32 * screens[0].height) / 200;
+		}
+	} else {
+		// Do not stretch status bar
+
+		ST_WIDTH = 320;
+		ST_HEIGHT = 32;
+	}
+
+	ST_X = (screens[0].width-ST_WIDTH)/2;
+	ST_Y = screens[0].height - ST_HEIGHT;
+
+	setsizeneeded = true;
+
+	if (automapactive)
+		am_needtodrawstatusbar = true;
 }
 
 void ST_Init (void)
 {
 	veryfirsttime = 0;
+
+	if (!V_AllocScreen (&stbarscreen, 320, 32, 8) ||
+		!V_AllocScreen (&stnumscreen, 320, 32, 8))
+		I_FatalError ("Could not create status bar surface\n");
+
+	// [RH] Catch any changes to st_scale cvar...
+	st_scale->u.callback = ST_ChangeScale;
+	// [RH] ...and make sure the routine gets called at least once.
+	ST_ChangeScale (st_scale);
+
 	ST_loadData();
-	screens[4] = (byte *) Z_Malloc(SCREENPITCH*ST_HEIGHT, PU_STATIC, 0);
 }

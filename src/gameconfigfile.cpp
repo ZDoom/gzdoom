@@ -65,6 +65,9 @@ EXTERN_CVAR (Float, dimamount)
 EXTERN_CVAR (Int, msgmidcolor)
 EXTERN_CVAR (Int, msgmidcolor2)
 EXTERN_CVAR (Bool, snd_pitched)
+EXTERN_CVAR (Color, am_wallcolor)
+EXTERN_CVAR (Color, am_fdwallcolor)
+EXTERN_CVAR (Color, am_cdwallcolor)
 
 char *WeaponSection;
 
@@ -322,16 +325,14 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	}
 
 	strcpy (subsection, "ConsoleVariables");
-	if (!SetSection (section))
-	{ // Config file does not contain cvars for the given game
-		if (game != Doom)
-		{
-			SetRavenDefaults (game == Hexen);
-		}
-	}
-	else
+	if (SetSection (section))
 	{
 		ReadCVars (0);
+	}
+
+	if (game != Doom)
+	{
+		SetRavenDefaults (game == Hexen);
 	}
 
 	// The NetServerInfo section will be read when it's determined that
@@ -693,6 +694,22 @@ void FGameConfigFile::SetRavenDefaults (bool isHexen)
 	msgmidcolor.SetGenericRepDefault (val, CVAR_Int);
 	val.Int = CR_YELLOW;
 	msgmidcolor2.SetGenericRepDefault (val, CVAR_Int);
+
+	val.Int = 0x543b17;
+	am_wallcolor.SetGenericRepDefault (val, CVAR_Int);
+	val.Int = 0xd0b085;
+	am_fdwallcolor.SetGenericRepDefault (val, CVAR_Int);
+	val.Int = 0x734323;
+	am_cdwallcolor.SetGenericRepDefault (val, CVAR_Int);
+
+	// Fix the Heretic/Hexen automap colors so they are correct.
+	// (They were wrong on older versions.)
+	if (*am_wallcolor == 0x2c1808 && *am_fdwallcolor == 0x887058 && *am_cdwallcolor == 0x4c3820)
+	{
+		am_wallcolor.ResetToDefault ();
+		am_fdwallcolor.ResetToDefault ();
+		am_cdwallcolor.ResetToDefault ();
+	}
 
 	if (!isHexen)
 	{

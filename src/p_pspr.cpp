@@ -51,25 +51,17 @@ CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static weapontype_t DoomWeaponPrefs[] =
+static weapontype_t WeaponPrefs[] =
 {
-	wp_plasma, wp_supershotgun, wp_chaingun, wp_shotgun,
-	wp_pistol, wp_chainsaw, wp_missile, wp_bfg, wp_fist,
-	NUMWEAPONS
-};
-
-static weapontype_t HereticWeaponPrefs[] =
-{
-	wp_skullrod, wp_blaster, wp_crossbow, wp_mace,
-	wp_goldwand, wp_gauntlets, wp_phoenixrod, wp_staff,
-	NUMWEAPONS
-};
-
-static weapontype_t HexenWeaponPrefs[] =
-{
-	wp_fhammer, wp_faxe, wp_fsword, wp_ffist,
-	wp_cfire, wp_cstaff, wp_choly, wp_cmace,
-	wp_mlightning, wp_mfrost, wp_mstaff, wp_mwand,
+	wp_plasma, wp_skullrod,
+	wp_supershotgun, wp_blaster,
+	wp_chaingun, wp_crossbow, wp_fhammer, wp_cfire, wp_mlightning,
+	wp_shotgun, wp_mace, wp_faxe, wp_cstaff, wp_mfrost,
+	wp_pistol, wp_goldwand,
+	wp_chainsaw, wp_gauntlets,
+	wp_missile, wp_phoenixrod,
+	wp_bfg, wp_fsword, wp_choly, wp_mstaff,
+	wp_ffist, wp_cmace, wp_mwand, wp_fist, wp_staff,
 	NUMWEAPONS
 };
 
@@ -157,21 +149,6 @@ void P_SetPspriteNF (player_t *player, int position, FState *state)
 		state = psp->state->GetNextState();
 	} while (!psp->tics); // An initial state of 0 could cycle through.
 }
-
-//---------------------------------------------------------------------------
-//
-// PROC P_ActivateMorphWeapon
-//
-//---------------------------------------------------------------------------
-
-void P_ActivateMorphWeapon (player_t *player)
-{
-	player->pendingweapon = wp_nochange;
-	player->psprites[ps_weapon].sy = WEAPONTOP;
-	player->readyweapon = (gameinfo.gametype == GAME_Heretic ? wp_beak : wp_snout);
-	P_SetPsprite (player, ps_weapon, wpnlev1info[player->readyweapon]->readystate);
-}
-
 
 //---------------------------------------------------------------------------
 //
@@ -303,18 +280,7 @@ weapontype_t P_PickNewWeapon (player_t *player)
 		wpinfo = wpnlev1info;
 	}
 
-	if (gameinfo.gametype == GAME_Hexen)
-	{
-		prefs = HexenWeaponPrefs;
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		prefs = HereticWeaponPrefs;
-	}
-	else
-	{
-		prefs = DoomWeaponPrefs;
-	}
+	prefs = WeaponPrefs;
 	player->pendingweapon = wp_nochange;
 	do
 	{
@@ -444,12 +410,6 @@ void A_WeaponReady(AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	if (gameinfo.gametype == GAME_Heretic && player->morphTics)
-	{ // Change to the chicken beak
-		P_ActivateMorphWeapon (player);
-		return;
-	}
-
 	weapon = player->powers[pw_weaponlevel2] ?
 		wpnlev2info[player->readyweapon] : wpnlev1info[player->readyweapon];
 
@@ -471,7 +431,7 @@ void A_WeaponReady(AActor *actor, pspdef_t *psp)
 	
 	// Put the weapon away if the player has a pending weapon or has
 	// died.
-	if (player->pendingweapon != wp_nochange || player->health <= 0)
+	if ((player->morphTics == 0 && player->pendingweapon != wp_nochange) || player->health <= 0)
 	{
 		P_SetPsprite (player, ps_weapon, weapon->downstate);
 		return;
@@ -669,7 +629,7 @@ void P_GunShot (AActor *mo, BOOL accurate)
 		angle += pr_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, MISSILERANGE, bulletpitch, damage);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
 }
 
 void A_Light0 (AActor *actor, pspdef_t *psp)

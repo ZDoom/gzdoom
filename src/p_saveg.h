@@ -45,6 +45,7 @@ void P_SerializeThinkers (FArchive &arc, bool);
 void P_SerializePolyobjs (FArchive &arc);
 void P_SerializeSounds (FArchive &arc);
 
-void P_SerializeACSDefereds (FILE *file, bool saving);
+void P_ReadACSDefereds (PNGHandle *png);
+void P_WriteACSDefereds (FILE *file);
 
 #endif // __P_SAVEG_H__

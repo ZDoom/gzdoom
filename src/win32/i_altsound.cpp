@@ -497,11 +497,11 @@ void I_LoadSound_Simple (sfxinfo_t *sfx)
 	BYTE *sfxdata, *sfxstart;
 	SDWORD size;
 	
-	size = W_LumpLength (sfx->lumpnum);
+	size = Wads.LumpLength (sfx->lumpnum);
 	if (size == 0)
 	{
-		sfx->lumpnum = W_GetNumForName ("dsempty");
-		size = W_LumpLength (sfx->lumpnum);
+		sfx->lumpnum = Wads.GetNumForName ("dsempty");
+		size = Wads.LumpLength (sfx->lumpnum);
 		if (size == 0)
 		{
 			return;
@@ -509,7 +509,7 @@ void I_LoadSound_Simple (sfxinfo_t *sfx)
 	}
 
 	sfxdata = new BYTE[size];
-	W_ReadLump (sfx->lumpnum, sfxdata);
+	Wads.ReadLump (sfx->lumpnum, sfxdata);
 	sfxstart = NULL;
 	len = ((SDWORD *)sfxdata)[1];
 
@@ -629,7 +629,7 @@ void I_LoadSound_Simple (sfxinfo_t *sfx)
 	if (sfx->data == NULL)
 	{
 badwave:
-		sfx->lumpnum = W_GetNumForName ("dsempty");
+		sfx->lumpnum = Wads.GetNumForName ("dsempty");
 		I_LoadSound_Simple (sfx);
 	}
 	delete[] sfxdata;

@@ -831,6 +831,8 @@ void A_SorcBallOrbit(AActor *ball)
 	actor->x = x;
 	actor->y = y;
 	actor->z = parent->z - parent->floorclip + parent->height;
+	actor->floorz = parent->floorz;
+	actor->ceilingz = parent->ceilingz;
 }
 
 //============================================================================
@@ -1104,6 +1106,12 @@ void A_SorcOffense2(AActor *actor)
 	AActor *dest = parent->target;
 	int dist;
 
+	// [RH] If no enemy, then don't try to shoot.
+	if (dest == NULL)
+	{
+		return;
+	}
+
 	index = actor->args[4] << 5;
 	actor->args[4] += 15;
 	delta = (finesine[index])*SORCFX4_SPREAD_ANGLE;
@@ -1289,6 +1297,8 @@ void A_SorcFX2Orbit (AActor *actor)
 	actor->x = x;
 	actor->y = y;
 	actor->z = z;
+	actor->floorz = parent->floorz;
+	actor->ceilingz = parent->ceilingz;
 }
 
 //============================================================================

@@ -223,8 +223,8 @@ void CT_Drawer (void)
 		// draw the prompt, text, and cursor
 		ChatQueue[len] = gameinfo.gametype == GAME_Doom ? '_' : '[';
 		ChatQueue[len+1] = '\0';
-		screen->DrawText (CR_GREEN, 0, y, prompt, DTA_CleanNoMove, con_scaletext, TAG_DONE);
-		screen->DrawText (CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, con_scaletext, TAG_DONE);
+		screen->DrawText (CR_GREEN, 0, y, prompt, DTA_CleanNoMove, *con_scaletext, TAG_DONE);
+		screen->DrawText (CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, *con_scaletext, TAG_DONE);
 		ChatQueue[len] = '\0';
 
 		BorderTopRefresh = screen->GetPageCount ();

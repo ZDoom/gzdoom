@@ -90,7 +90,7 @@ TArray<spritedef_t> sprites;
 TArray<spriteframe_t> SpriteFrames;
 size_t			NumStdSprites;		// The first x sprites that don't belong to skins.
 
-struct : public spriteframe_t
+struct spriteframewithrotate : public spriteframe_t
 {
 	int rotate;
 }
@@ -192,7 +192,7 @@ static void R_InstallSprite (int num)
 {
 	int frame;
 	int framestart;
-	int undefinedFix;
+//	int undefinedFix;
 
 	if (maxframe == -1)
 	{
@@ -209,10 +209,12 @@ static void R_InstallSprite (int num)
 	// bool, this code never detected that it was not actually present. After switching
 	// to the unified texture system, this caused it to crash while loading the wad.
 
-	for (frame = 0; frame < maxframe && sprtemp[frame].rotate == -1; ++frame)
-	{ }
-
-	undefinedFix = frame;
+// [RH] Let undefined frames actually be blank because LWM uses this in at least
+// one of her wads.
+//	for (frame = 0; frame < maxframe && sprtemp[frame].rotate == -1; ++frame)
+//	{ }
+//
+//	undefinedFix = frame;
 
 	for (frame = 0; frame < maxframe; ++frame)
 	{
@@ -254,7 +256,7 @@ static void R_InstallSprite (int num)
 				}
 				for (rot = 0; rot < 16; ++rot)
 				{
-					if (sprtemp[frame].Texture[rot] == -1)
+					if (sprtemp[frame].Texture[rot] == 0xFFFF)
 						I_FatalError ("R_InstallSprite: Sprite %s frame %c is missing rotations",
 									  sprites[num].name, frame+'A');
 				}
@@ -267,7 +269,7 @@ static void R_InstallSprite (int num)
 	{
 		if (sprtemp[frame].rotate == -1)
 		{
-			sprtemp[frame] = sprtemp[undefinedFix];
+			memset (&sprtemp[frame], 0, sizeof(sprtemp[0]));
 		}
 	}
 	
@@ -426,17 +428,17 @@ void R_InitSkins (void)
 		playersoundrefs[j] = S_FindSound (skinsoundnames[j][1]);
 	}
 
-	while ((base = W_FindLump ("S_SKIN", &lastlump)) != -1)
+	while ((base = Wads.FindLump ("S_SKIN", &lastlump)) != -1)
 	{
 		// The player sprite has 23 frames. This means that the S_SKIN
 		// marker needs a minimum of 23 lumps after it.
-		if (base >= numlumps - 23 || base == -1)
+		if (base >= Wads.GetNumLumps() - 23 || base == -1)
 			continue;
 
 		i++;
 		for (j = 0; j < NUMSKINSOUNDS; j++)
 			sndlumps[j] = -1;
-		skins[i].namespc = lumpinfo[base].namespc;
+		skins[i].namespc = Wads.GetLumpNamespace (base);
 
 		SC_OpenLumpNum (base, "S_SKIN");
 		intname = 0;
@@ -495,10 +497,10 @@ void R_InitSkins (void)
 			}
 			else if (key[0] == '*')
 			{ // Player sound replacment (ZDoom extension)
-				int lump = W_CheckNumForName (sc_String, skins[i].namespc);
+				int lump = Wads.CheckNumForName (sc_String, skins[i].namespc);
 				if (lump == -1)
 				{
-					lump = W_CheckNumForName (sc_String);
+					lump = Wads.CheckNumForName (sc_String);
 				}
 				if (lump != -1)
 				{
@@ -528,10 +530,10 @@ void R_InitSkins (void)
 				{
 					if (stricmp (key, skinsoundnames[j][0]) == 0)
 					{
-						sndlumps[j] = W_CheckNumForName (sc_String, skins[i].namespc);
+						sndlumps[j] = Wads.CheckNumForName (sc_String, skins[i].namespc);
 						if (sndlumps[j] == -1)
 						{ // Replacement not found, try finding it in the global namespace
-							sndlumps[j] = W_CheckNumForName (sc_String);
+							sndlumps[j] = Wads.CheckNumForName (sc_String);
 						}
 					}
 				}
@@ -547,7 +549,9 @@ void R_InitSkins (void)
 		// specified, use whatever immediately follows the specifier lump.
 		if (intname == 0)
 		{
-			intname = *(DWORD *)(lumpinfo[base+1].name);
+			char name[9];
+			Wads.GetLumpName (name, base+1);
+			intname = *(DWORD *)name;
 		}
 
 		memset (sprtemp, 0xFFFF, sizeof(sprtemp));
@@ -557,21 +561,19 @@ void R_InitSkins (void)
 		}
 		maxframe = -1;
 
-		for (k = base + 1; lumpinfo[k].wadnum == lumpinfo[base].wadnum; k++)
+		int basens = Wads.GetLumpNamespace(base);
+
+		for (k = base + 1; Wads.GetLumpNamespace(k) == basens; k++)
 		{
-			if (*(DWORD *)lumpinfo[k].name == intname)
+			char lname[9];
+			Wads.GetLumpName (lname, k);
+			if (*(DWORD *)lname == intname)
 			{
 				int picnum = TexMan.AddTexture (new FPatchTexture (k, FTexture::TEX_SkinSprite));
-				R_InstallSpriteLump (picnum, 
-									 lumpinfo[k].name[4] - 'A',
-									 lumpinfo[k].name[5],
-									 false);
+				R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false);
 
-				if (lumpinfo[k].name[6])
-					R_InstallSpriteLump (picnum,
-									 lumpinfo[k].name[6] - 'A',
-									 lumpinfo[k].name[7],
-									 true);
+				if (lname[6])
+					R_InstallSpriteLump (picnum, lname[6] - 'A', lname[7], true);
 			}
 		}
 
@@ -584,7 +586,7 @@ void R_InitSkins (void)
 			continue;
 		}
 
-		strncpy (temp.name, lumpinfo[base+1].name, 4);
+		Wads.GetLumpName (temp.name, base+1);
 		temp.name[4] = 0;
 		skins[i].sprite = (int)sprites.Push (temp);
 		R_InstallSprite (skins[i].sprite);
@@ -673,16 +675,14 @@ int 			newvissprite;
 
 static void R_CreateSkinTranslation (const char *palname)
 {
-	const BYTE *otherPal = (BYTE *)W_MapLumpName (palname);
-	const BYTE *pal_p = otherPal;
-
+	FMemLump lump = Wads.ReadLump (palname);
+	const BYTE *otherPal = (BYTE *)lump.GetMem();
+ 
 	for (int i = 0; i < 256; ++i)
 	{
 		OtherGameSkinRemap[i] = ColorMatcher.Pick (otherPal[0], otherPal[1], otherPal[2]);
 		otherPal += 3;
 	}
-
-	W_UnMapLump (pal_p);
 }
 
 
@@ -736,7 +736,7 @@ void R_InitSprites ()
 	lastlump = 0;
 	if (gameinfo.gametype != GAME_Hexen)
 	{
-		while ((lump = W_FindLump ("S_SKIN", &lastlump)) != -1)
+		while ((lump = Wads.FindLump ("S_SKIN", &lastlump)) != -1)
 		{
 			numskins++;
 		}
@@ -845,7 +845,7 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 
 		// calculate unclipped screen coordinates for post
 		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
-		dc_yh = ((sprtopscreen + spryscale * (top + length)) >> FRACBITS) - 1;
+		dc_yh = (sprtopscreen + spryscale * (top + length) - FRACUNIT) >> FRACBITS;
 
 		if (sprflipvert)
 		{
@@ -894,7 +894,11 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 				}
 				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
 				const fixed_t maxfrac = length << FRACBITS;
-				while (endfrac >= maxfrac)
+				if (dc_yh < mfloorclip[dc_x]-1 && endfrac < maxfrac - dc_iscale)
+				{
+					dc_yh++;
+				}
+				else while (endfrac >= maxfrac)
 				{
 					if (--dc_yh < dc_yl)
 						goto nextpost;
@@ -902,6 +906,8 @@ void R_DrawMaskedColumn (const BYTE *column, const FTexture::Span *span)
 				}
 			}
 			dc_source = column + top;
+			dc_dest = ylookup[dc_yl] + dc_x + dc_destorg;
+			dc_count = dc_yh - dc_yl + 1;
 			colfunc ();
 		}
 nextpost:
@@ -1050,7 +1056,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	// [RH] Flip for mirrors
 	if (MirrorFlags & RF_XFLIP)
 	{
-		tx = viewwidth - tx - 1;
+		tx = -tx;
 	}
 	tx2 = tx >> 4;
 
@@ -1080,17 +1086,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		if (thing->frame >= sprdef->numframes)
 		{
 			// If there are no frames at all for this sprite, don't draw it.
-			// If there are some frames, then use the "unknown" sprite.
-			if (sprdef->numframes > 0)
-			{
-				DPrintf ("R_ProjectSprite: invalid sprite frame %s: %c (max %c)\n",
-					sprdef->name, thing->frame + 'A', sprdef->numframes + 'A' - 1);
-				picnum = TexMan.GetTexture ("UNKNA0", FTexture::TEX_Sprite);
-			}
-			else
-			{
-				return;
-			}
+			return;
 		}
 		else
 		{
@@ -1099,6 +1095,10 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 
 	tex = TexMan(picnum);	// <- Look! You could animate sprites if ANIMDEFS supported it!
+	if (tex->UseType == FTexture::TEX_Null)
+	{
+		return;
+	}
 	flip = 0;
 
 	if (tex->Rotations != 0xFFFF)
@@ -1397,7 +1397,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 		// fixed color
 		vis->colormap = fixedcolormap;
 	}
-	else if (psp->state->GetFullbright())
+	else if (!foggy && psp->state->GetFullbright())
 	{
 		// full bright
 		vis->colormap = basecolormap;	// [RH] use basecolormap
@@ -1442,7 +1442,7 @@ void R_DrawPlayerSprites (void)
 		&ceilinglight, false);
 
 	// [RH] set foggy flag
-	foggy = (level.fadeto || sec->ColorMap->Fade);
+	foggy = (level.fadeto || sec->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE));
 	r_actualextralight = foggy ? 0 : extralight << 4;
 
 	// [RH] set basecolormap
@@ -1565,10 +1565,12 @@ void R_DrawSprite (vissprite_t *spr)
 	if (spr->heightsec &&
 		!(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{ // only things in specially marked sectors
+		fixed_t scale = SafeDivScale12 (InvZtoScale, spr->depth);
 		if (spr->FakeFlatStat != FAKED_AboveCeiling)
 		{
 			fixed_t h = spr->heightsec->floorplane.ZatPoint (spr->gx, spr->gy);
-			h = (centeryfrac - FixedMul (h-viewz, spr->yscale)) >> FRACBITS;
+			//h = (centeryfrac - FixedMul (h-viewz, spr->yscale)) >> FRACBITS;
+			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
 
 			if (spr->FakeFlatStat == FAKED_BelowFloor)
 			{ // seen below floor: clip top
@@ -1588,7 +1590,7 @@ void R_DrawSprite (vissprite_t *spr)
 		if (spr->FakeFlatStat != FAKED_BelowFloor)
 		{
 			fixed_t h = spr->heightsec->ceilingplane.ZatPoint (spr->gx, spr->gy);
-			h = (centeryfrac - FixedMul (h-viewz, spr->yscale)) >> FRACBITS;
+			h = (centeryfrac - FixedMul (h-viewz, scale)) >> FRACBITS;
 
 			if (spr->FakeFlatStat == FAKED_AboveCeiling)
 			{ // seen above ceiling: clip bottom
@@ -1626,7 +1628,7 @@ void R_DrawSprite (vissprite_t *spr)
 		*clip1++ = botclip;
 		*clip2++ = topclip;
 	} while (--i);
-	
+
 	// Scan drawsegs from end to start for obscuring segs.
 	// The first drawseg that is closer than the sprite is the clip seg.
 
@@ -1842,7 +1844,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	x1 = MAX<int> (WindowLeft, (centerxfrac + MulScale12 (tx-psize, xscale)) >> FRACBITS);
 	x2 = MIN<int> (WindowRight, (centerxfrac + MulScale12 (tx+psize, xscale)) >> FRACBITS);
 
-	if (x1 > x2)
+	if (x1 >= x2)
 		return;
 
 	yscale = MulScale16 (yaspectmul, xscale);
@@ -1968,9 +1970,8 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 		{
 			continue;
 		}
-		if ((//ds->neardepth > vis->depth || (ds->fardepth > vis->depth &&
-			DMulScale24 (vis->depth - ds->cy, ds->cdx,
-						 ds->cdy, ds->cx - vis->cx) < 0))
+		if (DMulScale24 (vis->depth - ds->cy, ds->cdx,
+						 ds->cdy, ds->cx - vis->cx) < 0)
 		{
 			R_RenderMaskedSegRange (ds, MAX<int> (ds->x1, x1), MIN<int> (ds->x2, x2-1));
 		}
@@ -2004,7 +2005,7 @@ void R_DrawParticle (vissprite_t *vis)
 	}
 
 	spacing = (RenderTarget->GetPitch()<<detailyshift) - countbase;
-	dest = ylookup[yl] + x1;
+	dest = ylookup[yl] + x1 + dc_destorg;
 
 	do
 	{

@@ -9,11 +9,11 @@ FLACSampleLoader::FLACSampleLoader (sfxinfo_t *sfx)
 	  SampleBits	(0),
 	  SampleRate	(0),
 	  NumSamples	(0),
+	  File			(Wads.OpenLumpNum (sfx->lumpnum)),
 	  Sfx			(sfx)
 {
-	MemStart = (const FLAC__byte *)W_MapLumpNum (sfx->lumpnum);
-	MemEnd = MemStart + W_LumpLength (sfx->lumpnum);
-	MemPos = MemStart;
+	StartPos = File.Tell();
+	EndPos = StartPos + File.GetLength();
 
 	init ();
 	process_until_end_of_metadata ();
@@ -80,10 +80,6 @@ FSOUND_SAMPLE *FLACSampleLoader::LoadSample (unsigned int samplemode)
 
 FLACSampleLoader::~FLACSampleLoader ()
 {
-	if (MemStart != NULL)
-	{
-		W_UnMapLump (MemStart);
-	}
 }
 
 void FLACSampleLoader::CopyToSample (size_t ofs, FLAC__int32 **buffer, size_t ilen)
@@ -215,18 +211,19 @@ void FLACSampleLoader::CopyToSample (size_t ofs, FLAC__int32 **buffer, size_t il
 {
 	if (*bytes > 0)
 	{
-		if (MemPos == MemEnd)
+		long here = File.Tell();
+
+		if (here == EndPos)
 		{
 			return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
 		}
 		else
 		{
-			if (*bytes > (size_t)(MemEnd - MemPos))
+			if (*bytes > (size_t)(EndPos - here))
 			{
-				*bytes = MemEnd - MemPos;
+				*bytes = EndPos - here;
 			}
-			memcpy (buffer, MemPos, *bytes);
-			MemPos += *bytes;
+			File.Read (buffer, *bytes);
 			return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 		}
 	}

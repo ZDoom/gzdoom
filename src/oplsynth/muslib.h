@@ -14,6 +14,7 @@
 #ifndef __DEFTYPES_H_
   #include "deftypes.h"
 #endif
+#include "files.h"
 
 /* Global Definitions */
 
@@ -126,7 +127,7 @@ void OPLplayMusic(struct musicBlock *mus);
 void OPLstopMusic(struct musicBlock *mus);
 
 int	OPLdriverParam(uint message, uint param1, void *param2);
-int	OPLloadBank(const void *data);
+int	OPLloadBank(FileReader &data);
 
 extern ulong MLtime;
 

@@ -13,7 +13,6 @@
 #define IDD_EAXEDIT                     124
 #define IDD_DIALOG2                     125
 #define IDD_NEWEAX                      125
-#define IDI_EAX                         126
 #define IDD_DIALOG3                     127
 #define IDD_DIALOG4                     128
 #define IDD_SAVEEAX                     128

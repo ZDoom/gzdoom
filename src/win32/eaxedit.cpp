@@ -654,7 +654,7 @@ INT_PTR CALLBACK EAXProp (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void SuggestNewName (const ReverbContainer *env, HWND hEdit)
 {
-	const ReverbContainer *probe;
+	const ReverbContainer *probe = NULL;
 	char text[32];
 	size_t len;
 	int number, numdigits;
@@ -838,7 +838,7 @@ INT_PTR CALLBACK NewEAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				LVITEM item;
 
 				hWnd = GetDlgItem (hDlg, IDC_ENVIRONMENTLIST);
-				i = SendMessage (hWnd, LVM_GETNEXTITEM, -1, LVNI_ALL|LVNI_SELECTED);
+				i = SendMessage (hWnd, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_ALL|LVNI_SELECTED);
 
 				if (i == -1)
 				{

@@ -12,6 +12,7 @@
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
 #include "mus2midi.h"
+#include "files.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -21,7 +22,7 @@ void I_ShutdownMusicWin32 ();
 class MusInfo
 {
 public:
-	MusInfo () : m_Status(STATE_Stopped), m_LumpMem(0) {}
+	MusInfo () : m_Status(STATE_Stopped) {}
 	virtual ~MusInfo ();
 	virtual void SetVolume (float volume) = 0;
 	virtual void Play (bool looping) = 0;
@@ -40,7 +41,6 @@ public:
 		STATE_Paused
 	} m_Status;
 	bool m_Looping;
-	const void *m_LumpMem;
 };
 
 // MUS file played with MIDI output messages --------------------------------
@@ -48,7 +48,7 @@ public:
 class MUSSong2 : public MusInfo
 {
 public:
-	MUSSong2 (const void *mem, int len);
+	MUSSong2 (FileReader *file);
 	~MUSSong2 ();
 
 	void SetVolume (float volume);
@@ -79,8 +79,8 @@ protected:
 	DWORD SavedVolume;
 	bool VolumeWorks;
 
-	const BYTE *MusBuffer;
-	const MUSHeader *MusHeader;
+	BYTE *MusBuffer;
+	MUSHeader *MusHeader;
 	BYTE LastVelocity[16];
 	BYTE ChannelVolumes[16];
 	size_t MusP, MaxMusP;
@@ -91,7 +91,7 @@ protected:
 class MIDISong2 : public MusInfo
 {
 public:
-	MIDISong2 (const void *mem, int len);
+	MIDISong2 (FileReader *file);
 	~MIDISong2 ();
 
 	void SetVolume (float volume);
@@ -121,7 +121,7 @@ protected:
 	DWORD SavedVolume;
 	bool VolumeWorks;
 
-	const BYTE *MusHeader;
+	BYTE *MusHeader;
 	BYTE ChannelVolumes[16];
 	TrackInfo *Tracks;
 	TrackInfo *TrackDue;
@@ -137,7 +137,7 @@ protected:
 class MODSong : public MusInfo
 {
 public:
-	MODSong (const void *mem, int len);
+	MODSong (FileReader *file);
 	~MODSong ();
 	void SetVolume (float volume);
 	void Play (bool looping);
@@ -155,23 +155,12 @@ protected:
 	FMUSIC_MODULE *m_Module;
 };
 
-// MIDI song played with DirectMusic using FMOD -----------------------------
-
-class DMusSong : public MODSong
-{
-public:
-	DMusSong (const void *mem, int len);
-
-protected:
-	FTempFileName DiskName;
-};
-
 // OGG/MP3/WAV/other format streamed through FMOD ---------------------------
 
 class StreamSong : public MusInfo
 {
 public:
-	StreamSong (const void *mem, int len);
+	StreamSong (FileReader *file);
 	~StreamSong ();
 	void SetVolume (float volume);
 	void Play (bool looping);
@@ -183,18 +172,21 @@ public:
 	bool IsValid () const { return m_Stream != NULL; }
 
 protected:
-	StreamSong () : m_Stream (NULL), m_Channel (-1) {}
+	StreamSong () : m_Stream(NULL), m_Channel(-1), m_File(NULL) {}
 
 	FSOUND_STREAM *m_Stream;
 	int m_Channel;
 	int m_LastPos;
+
+	FileReader *m_File;
 };
 
 // SPC file, rendered with SNESAPU.DLL and streamed through FMOD ------------
 
-typedef void (__stdcall *SNESAPUInfo_TYPE) (DWORD&, DWORD&, DWORD&);
+typedef void (__stdcall *SNESAPUInfo_TYPE) (DWORD*, DWORD*, DWORD*);
 typedef void (__stdcall *GetAPUData_TYPE) (void**, BYTE**, BYTE**, DWORD**, void**, void**, DWORD**, DWORD**);
 typedef void (__stdcall *ResetAPU_TYPE) (DWORD);
+typedef void (__stdcall *SetDSPAmp_TYPE) (DWORD);
 typedef void (__stdcall *FixAPU_TYPE) (WORD, BYTE, BYTE, BYTE, BYTE, BYTE);
 typedef void (__stdcall *SetAPUOpt_TYPE) (DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
 typedef void *(__stdcall *EmuAPU_TYPE) (void *, DWORD, BYTE);
@@ -202,7 +194,7 @@ typedef void *(__stdcall *EmuAPU_TYPE) (void *, DWORD, BYTE);
 class SPCSong : public StreamSong
 {
 public:
-	SPCSong (const void *mem, int len);
+	SPCSong (FileReader *file);
 	~SPCSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -212,24 +204,26 @@ protected:
 	bool LoadEmu ();
 	void CloseEmu ();
 
-	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
 
 	HINSTANCE HandleAPU;
+	int APUVersion;
 
 	SNESAPUInfo_TYPE SNESAPUInfo;
 	GetAPUData_TYPE GetAPUData;
 	ResetAPU_TYPE ResetAPU;
+	SetDSPAmp_TYPE SetDSPAmp;
 	FixAPU_TYPE FixAPU;
 	SetAPUOpt_TYPE SetAPUOpt;
 	EmuAPU_TYPE EmuAPU;
 };
 
-// MIDI file played with Timidity and possible streamed through FMOD --------
+// MIDI file played with Timidity and possibly streamed through FMOD --------
 
 class TimiditySong : public StreamSong
 {
 public:
-	TimiditySong (const void *mem, int len);
+	TimiditySong (FileReader *file);
 	~TimiditySong ();
 	void Play (bool looping);
 	void Stop ();
@@ -255,7 +249,7 @@ protected:
 	char *CommandLine;
 	int LoopPos;
 
-	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
 #ifdef _WIN32
 	static const char EventName[];
 #endif
@@ -266,7 +260,7 @@ protected:
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (const void *mem, int len);
+	OPLMUSSong (FileReader *file);
 	~OPLMUSSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -274,7 +268,7 @@ public:
 	void ResetChips ();
 
 protected:
-	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
 
 	OPLmusicBlock *Music;
 };
@@ -284,14 +278,14 @@ protected:
 class FLACSong : public StreamSong
 {
 public:
-	FLACSong (const void *mem, int len);
+	FLACSong (FileReader *file);
 	~FLACSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
 	bool IsValid () const;
 
 protected:
-	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
 
 	class FLACStreamer;
 
@@ -326,7 +320,7 @@ protected:
 class CDDAFile : public CDSong
 {
 public:
-	CDDAFile (const void *mem, int len);
+	CDDAFile (FileReader *file);
 };
 
 // --------------------------------------------------------------------------

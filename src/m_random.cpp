@@ -39,6 +39,7 @@
 #include "m_crc32.h"
 #include "i_system.h"
 #include "c_dispatch.h"
+#include "files.h"
 
 #define RAND_ID MAKE_ID('r','a','N','d')
 
@@ -167,60 +168,62 @@ void FRandom::StaticClearRandom ()
 extern FRandom pr_spawnmobj;
 extern FRandom pr_acs;
 extern FRandom pr_chase;
+extern FRandom pr_lost;
+extern FRandom pr_slam;
 
 DWORD FRandom::StaticSumSeeds ()
 {
-	return pr_spawnmobj.Seed + pr_acs.Seed + pr_chase.Seed;
+	return pr_spawnmobj.Seed + pr_acs.Seed + pr_chase.Seed + pr_lost.Seed + pr_slam.Seed;
 }
 
-void P_SerializeRNGState (FILE *file, bool saving)
+void P_WriteRNGState (FILE *file)
+{
+	FRandom *rng;
+	const DWORD seed = rngseed*2+1;
+	FPNGChunkArchive arc (file, RAND_ID);
+
+	arc << rngseed;
+
+	// Only write those RNGs that have been used
+	for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
+	{
+		if (rng->NameCRC != 0 && rng->Seed != seed + rng->NameCRC)
+		{
+			arc << rng->NameCRC << rng->Seed;
+		}
+	}
+}
+
+void P_ReadRNGState (PNGHandle *png)
 {
 	FRandom *rng;
 
-	if (saving)
+	size_t len = M_FindPNGChunk (png, RAND_ID);
+
+	if (len != 0)
 	{
-		const DWORD seed = rngseed*2+1;
-		FPNGChunkArchive arc (file, RAND_ID);
+		const int rngcount = (int)((len-4) / 8);
+		int i;
+		DWORD crc;
+
+		FPNGChunkArchive arc (png->File->GetFile(), RAND_ID, len);
 
 		arc << rngseed;
+		FRandom::StaticClearRandom ();
 
-		// Only write those RNGs that have been used
-		for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
+		for (i = rngcount; i; --i)
 		{
-			if (rng->NameCRC != 0 && rng->Seed != seed + rng->NameCRC)
+			arc << crc;
+			for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
 			{
-				arc << rng->NameCRC << rng->Seed;
-			}
-		}
-	}
-	else
-	{
-		size_t len = M_FindPNGChunk (file, RAND_ID);
-
-		if (len != 0)
-		{
-			const int rngcount = (int)((len-4) / 8);
-			int i;
-			DWORD crc;
-
-			FPNGChunkArchive arc (file, RAND_ID, len);
-
-			arc << rngseed;
-			FRandom::StaticClearRandom ();
-
-			for (i = rngcount; i; --i)
-			{
-				arc << crc;
-				for (rng = FRandom::RNGList; rng != NULL; rng = rng->Next)
+				if (rng->NameCRC == crc)
 				{
-					if (rng->NameCRC == crc)
-					{
-						arc << rng->Seed;
-						break;
-					}
+					arc << rng->Seed;
+					break;
 				}
 			}
 		}
+		png->File->ResetFilePtr();
 	}
 }
 

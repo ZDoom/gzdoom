@@ -57,17 +57,26 @@
 #include "dobject.h"
 #include "r_local.h"
 
-#define NEW_OBJ				((BYTE)1)
-#define NEW_CLS_OBJ			((BYTE)2)
-#define OLD_OBJ				((BYTE)3)
-#define NULL_OBJ			((BYTE)4)
-#define NEW_PLYR_OBJ		((BYTE)5)
-#define NEW_PLYR_CLS_OBJ	((BYTE)6)
-#define NEW_NAME			((BYTE)27)
-#define OLD_NAME			((BYTE)28)
-#define NIL_NAME			((BYTE)33)
-#define NEW_SPRITE			((BYTE)11)
-#define OLD_SPRITE			((BYTE)12)
+// These are special tokens found in the data stream of an archive.
+// Whenever a new object is encountered, it gets created using new and
+// is then asked to serialize itself before processing of the previous
+// object continues. This can result in some very deep recursion if
+// you aren't careful about how you organize your data.
+
+#define NEW_OBJ				((BYTE)1)	// Data for a new object follows
+#define NEW_CLS_OBJ			((BYTE)2)	// Data for a new class and object follows
+#define OLD_OBJ				((BYTE)3)	// Reference to an old object follows
+#define NULL_OBJ			((BYTE)4)	// Load as NULL
+
+#define NEW_PLYR_OBJ		((BYTE)5)	// Data for a new player follows
+#define NEW_PLYR_CLS_OBJ	((BYTE)6)	// Data for a new class and player follows
+
+#define NEW_NAME			((BYTE)27)	// A new name follows
+#define OLD_NAME			((BYTE)28)	// Reference to an old name follows
+#define NIL_NAME			((BYTE)33)	// Load as NULL
+
+#define NEW_SPRITE			((BYTE)11)	// A new sprite name follows
+#define OLD_SPRITE			((BYTE)12)	// Reference to an old sprite name follows
 
 #ifdef __BIG_ENDIAN__
 #define SWAP_WORD(x)
@@ -485,7 +494,7 @@ void FCompressedMemFile::Serialize (FArchive &arc)
 		m_Mode = EReading;
 
 		char sig[4];
-		DWORD sizes[2];
+		DWORD sizes[2] = { 0, 0 };
 
 		arc.Read (sig, 4);
 

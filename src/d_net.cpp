@@ -50,7 +50,7 @@
 #include "templates.h"
 
 bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
-					int arg0, int arg1, int arg2, int always);
+					int arg0, int arg1, int arg2, int always, bool net);
 
 //#define SIMULATEERRORS		(RAND_MAX/3)
 #define SIMULATEERRORS			0
@@ -892,6 +892,11 @@ void NetUpdate (void)
 	byte	*cmddata;
 	bool	resendOnly;
 
+	if (ticdup == 0)
+	{
+		return;
+	}
+
 	// check time
 	nowtime = I_GetTime (false);
 	newtics = nowtime - gametime;
@@ -1373,7 +1378,7 @@ void D_ArbitrateNetStart (void)
 		{
 			if (netbuffer[0] == NCMD_EXIT)
 			{
-				I_FatalError ("The game was aborted\n", playerfornode[doomcom->remotenode]);
+				I_FatalError ("The game was aborted\n");
 			}
 
 			if (doomcom->remotenode == 0)
@@ -1440,7 +1445,7 @@ void D_ArbitrateNetStart (void)
 		if (consoleplayer == Net_Arbitrator)
 		{
 			for (i = 0; i < doomcom->numnodes; ++i)
-				if (playersdetected[i] != (1 << doomcom->numnodes) - 1 || !gotsetup[i])
+				if (playersdetected[i] != DWORD(1 << doomcom->numnodes) - 1 || !gotsetup[i])
 					break;
 
 			if (i == doomcom->numnodes)
@@ -1749,7 +1754,7 @@ void TryRunTics (void)
 			// if left unmodified from the P2P version, it can make the game
 			// very jerky. The way I have it written right now basically means
 			// that it won't adapt. Fortunately, player prediction helps
-			// aleveate the lag somewhat.
+			// alleviate the lag somewhat.
 
 			if (NetMode != NET_PacketServer)
 			{
@@ -2142,10 +2147,9 @@ void Net_DoCommand (int type, byte **stream, int player)
 				}
 				else
 				{
-					AActor *newone =
-						Spawn (type, source->x + 64 * finecosine[source->angle>>ANGLETOFINESHIFT],
-									source->y + 64 * finesine[source->angle>>ANGLETOFINESHIFT],
-									source->z + 8 * FRACUNIT);
+					Spawn (type, source->x + 64 * finecosine[source->angle>>ANGLETOFINESHIFT],
+								source->y + 64 * finesine[source->angle>>ANGLETOFINESHIFT],
+								source->z + 8 * FRACUNIT);
 				}
 			}
 		}
@@ -2208,7 +2212,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 			{
 				arg[i] = ReadLong (stream);
 			}
-			P_StartScript (players[player].mo, NULL, snum, level.mapname, 0, arg[0], arg[1], arg[2], false);
+			P_StartScript (players[player].mo, NULL, snum, level.mapname, 0, arg[0], arg[1], arg[2], false, true);
 		}
 		break;
 

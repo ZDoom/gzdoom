@@ -15,6 +15,9 @@ void A_DropBloodscourgePieces (AActor *);
 void A_MStaffAttack (AActor *actor, pspdef_t *);
 void A_MStaffPalette (AActor *actor, pspdef_t *);
 
+static AActor *FrontBlockCheck (AActor *mo, int index);
+static divline_t BlockCheckLine;
+
 //==========================================================================
 
 class AMageWeaponPiece : public AFourthWeaponPiece
@@ -362,7 +365,7 @@ void MStaffSpawn2 (AActor *actor, angle_t angle)
 	if (mo)
 	{
 		mo->target = actor;
-		mo->tracer = P_RoughMonsterSearch (mo, 10);
+		mo->tracer = P_BlockmapSearch (mo, 10, FrontBlockCheck);
 	}
 }
 
@@ -397,8 +400,7 @@ void MStaffSpawn (AActor *pmo, angle_t angle)
 	if (mo)
 	{
 		mo->target = pmo;
-		// [RH] Let's try and actually track what the player aimed at
-		mo->tracer = linetarget ? linetarget : P_RoughMonsterSearch (mo, 10);
+		mo->tracer = linetarget;
 	}
 }
 
@@ -424,6 +426,16 @@ void A_MStaffAttack (AActor *actor, pspdef_t *psp)
 		pmo = player->mo;
 		angle = pmo->angle;
 		
+		// [RH] Let's try and actually track what the player aimed at
+		P_AimLineAttack (pmo, angle, PLAYERMISSILERANGE, ANGLE_1*32);
+		if (linetarget == NULL)
+		{
+			BlockCheckLine.x = pmo->x;
+			BlockCheckLine.y = pmo->y;
+			BlockCheckLine.dx = -finesine[angle >> ANGLETOFINESHIFT];
+			BlockCheckLine.dy = -finecosine[angle >> ANGLETOFINESHIFT];
+			linetarget = P_BlockmapSearch (pmo, 10, FrontBlockCheck);
+		}
 		MStaffSpawn (pmo, angle);
 		MStaffSpawn (pmo, angle-ANGLE_1*5);
 		MStaffSpawn (pmo, angle+ANGLE_1*5);
@@ -495,4 +507,28 @@ void AMageWeaponPiece::BeginPlay ()
 {
 	Super::BeginPlay ();
 	FourthWeaponClass = RUNTIME_CLASS(AMWeapBloodscourge);
+}
+
+//============================================================================
+//
+// FrontBlockCheck
+//
+// [RH] Like RoughBlockCheck, but it won't return anything behind a line.
+//
+//============================================================================
+
+static AActor *FrontBlockCheck (AActor *mo, int index)
+{
+	AActor *link;
+
+	for (link = blocklinks[index]; link != NULL; link = link->bnext)
+	{
+		if (link != mo &&
+			P_PointOnDivlineSide (mo->x, mo->y, &BlockCheckLine) == 0 &&
+			mo->IsOkayToAttack (link))
+		{
+			return link;
+		}
+	}
+	return NULL;
 }

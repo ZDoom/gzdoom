@@ -1,7 +1,7 @@
 [Project]
 FileName=ZDoom.dev
 Name=ZDoom
-UnitCount=469
+UnitCount=470
 Type=0
 Ver=1
 ObjFiles=""
@@ -26,6 +26,8 @@ SupportXPThemes=0
 CompilerSet=0
 CompilerSettings=000001100100100000
 CppCompiler=-Wall -Wno-multichar -DI_DO_NOT_LIKE_BIG_DOWNLOADS -DUSEASM -mcpu=i686_@@_
+UseCustomMakefile=0
+CustomMakefile=
 
 [Unit1]
 FileName=src\am_map.cpp
@@ -4016,16 +4018,6 @@ Link=1
 Priority=1000
 
 [Unit399]
-FileName=src\win32\i_wad.cpp
-Folder=Win32 Files
-Compile=1
-CompileCpp=1
-OverrideBuildCmd=0
-BuildCmd=$(CPP) -c i_wad.cpp -o devcobj/i_wad.o $(CXXFLAGS)
-Link=1
-Priority=1000
-
-[Unit400]
 FileName=src\zlib-1.1.4\zutil.h
 Folder=zlib
 Compile=1
@@ -4035,7 +4027,7 @@ BuildCmd=
 Link=1
 Priority=1000
 
-[Unit401]
+[Unit400]
 FileName=src\zlib-1.1.4\adler32.c
 Folder=zlib
 Compile=1
@@ -4045,7 +4037,7 @@ BuildCmd=
 Link=1
 Priority=1000
 
-[Unit402]
+[Unit401]
 FileName=src\zlib-1.1.4\compress.c
 Folder=zlib
 Compile=1
@@ -4055,7 +4047,7 @@ BuildCmd=
 Link=1
 Priority=1000
 
-[Unit403]
+[Unit402]
 FileName=src\zlib-1.1.4\crc32.c
 Folder=zlib
 Compile=1
@@ -4065,7 +4057,7 @@ BuildCmd=
 Link=1
 Priority=1000
 
-[Unit404]
+[Unit403]
 FileName=src\zlib-1.1.4\deflate.c
 Folder=zlib
 Compile=1
@@ -4075,7 +4067,7 @@ BuildCmd=
 Link=1
 Priority=1000
 
-[Unit405]
+[Unit404]
 FileName=src\zlib-1.1.4\deflate.h
 Folder=zlib
 Compile=1
@@ -4085,7 +4077,7 @@ BuildCmd=
 Link=1
 Priority=1000
 
-[Unit406]
+[Unit405]
 FileName=src\zlib-1.1.4\gzio.c
 Folder=zlib
 Compile=1
@@ -4095,7 +4087,7 @@ BuildCmd=
 Link=1
 Priority=1000
 
-[Unit407]
+[Unit406]
 FileName=src\zlib-1.1.4\infblock.c
 Folder=zlib
 Compile=1
@@ -4105,8 +4097,18 @@ BuildCmd=
 Link=1
 Priority=1000
 
+[Unit407]
+FileName=src\zlib-1.1.4\infblock.h
+Folder=zlib
+Compile=1
+CompileCpp=0
+OverrideBuildCmd=0
+BuildCmd=
+Link=1
+Priority=1000
+
 [Unit410]
-FileName=src\zlib-1.1.4\infcodes.h
+FileName=src\zlib-1.1.4\inffast.c
 Folder=zlib
 Compile=1
 Link=1
@@ -4116,275 +4118,6 @@ BuildCmd=
 CompileCpp=0
 
 [Unit408]
-FileName=src\zlib-1.1.4\infblock.h
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit411]
-FileName=src\zlib-1.1.4\inffast.c
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit412]
-FileName=src\zlib-1.1.4\inffast.h
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit413]
-FileName=src\zlib-1.1.4\inffixed.h
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit414]
-FileName=src\zlib-1.1.4\inflate.c
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit415]
-FileName=src\zlib-1.1.4\inftrees.c
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit416]
-FileName=src\zlib-1.1.4\inftrees.h
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit417]
-FileName=src\zlib-1.1.4\infutil.c
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit418]
-FileName=src\zlib-1.1.4\infutil.h
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit419]
-FileName=src\zlib-1.1.4\trees.c
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit420]
-FileName=src\zlib-1.1.4\trees.h
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit421]
-FileName=src\zlib-1.1.4\uncompr.c
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit422]
-FileName=src\zlib-1.1.4\zconf.h
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit423]
-FileName=src\zlib-1.1.4\zlib.h
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit424]
-FileName=src\zlib-1.1.4\zutil.c
-CompileCpp=0
-Folder=zlib
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit425]
-FileName=src\g_shared\a_hatetarget.cpp
-CompileCpp=1
-Folder=Game: Common
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=$(CPP) -c a_hatetarget.cpp -o devcobj/a_hatetarget.o $(CXXFLAGS)
-
-[Unit426]
-FileName=src\win32\zdoom.rc
-CompileCpp=1
-Folder=Win32 Files
-Compile=1
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit427]
-FileName=src\win32\zdoom.exe.manifest
-CompileCpp=0
-Folder=Win32 Files
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit428]
-FileName=docs\zdoom.txt
-CompileCpp=0
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit429]
-FileName=docs\BUILDLIC.TXT
-CompileCpp=0
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit430]
-FileName=docs\classes.txt
-CompileCpp=0
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit431]
-FileName=docs\colors.txt
-CompileCpp=0
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit432]
-FileName=docs\console.css
-CompileCpp=0
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit433]
-FileName=docs\console.html
-CompileCpp=0
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit434]
-FileName=docs\doomlic.txt
-CompileCpp=1
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit435]
-FileName=docs\history.txt
-CompileCpp=0
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit436]
-FileName=docs\notes.txt
-Folder=zzDocs
-Compile=0
-Link=0
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit409]
 FileName=src\zlib-1.1.4\infcodes.c
 CompileCpp=0
 Folder=zlib
@@ -4394,7 +4127,257 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit437]
+[Unit411]
+FileName=src\zlib-1.1.4\inffast.h
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit412]
+FileName=src\zlib-1.1.4\inffixed.h
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit413]
+FileName=src\zlib-1.1.4\inflate.c
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit414]
+FileName=src\zlib-1.1.4\inftrees.c
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit415]
+FileName=src\zlib-1.1.4\inftrees.h
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit416]
+FileName=src\zlib-1.1.4\infutil.c
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit417]
+FileName=src\zlib-1.1.4\infutil.h
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit418]
+FileName=src\zlib-1.1.4\trees.c
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit419]
+FileName=src\zlib-1.1.4\trees.h
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit420]
+FileName=src\zlib-1.1.4\uncompr.c
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit421]
+FileName=src\zlib-1.1.4\zconf.h
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit422]
+FileName=src\zlib-1.1.4\zlib.h
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit423]
+FileName=src\zlib-1.1.4\zutil.c
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit424]
+FileName=src\g_shared\a_hatetarget.cpp
+CompileCpp=1
+Folder=Game: Common
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=$(CPP) -c a_hatetarget.cpp -o devcobj/a_hatetarget.o $(CXXFLAGS)
+
+[Unit425]
+FileName=src\win32\zdoom.rc
+CompileCpp=1
+Folder=Win32 Files
+Compile=1
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit426]
+FileName=src\win32\zdoom.exe.manifest
+CompileCpp=1
+Folder=Win32 Files
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit427]
+FileName=docs\zdoom.txt
+CompileCpp=0
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit428]
+FileName=docs\BUILDLIC.TXT
+CompileCpp=0
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit429]
+FileName=docs\classes.txt
+CompileCpp=0
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit430]
+FileName=docs\colors.txt
+CompileCpp=0
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit431]
+FileName=docs\console.css
+CompileCpp=0
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit432]
+FileName=docs\console.html
+CompileCpp=0
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit433]
+FileName=docs\doomlic.txt
+CompileCpp=0
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit434]
+FileName=docs\history.txt
+CompileCpp=1
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit435]
+FileName=docs\notes.txt
+CompileCpp=0
+Folder=zzDocs
+Compile=0
+Link=0
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit436]
 FileName=docs\README.asm
 Folder=zzDocs
 Compile=0
@@ -4403,7 +4386,17 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit438]
+[Unit409]
+FileName=src\zlib-1.1.4\infcodes.h
+CompileCpp=0
+Folder=zlib
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit437]
 FileName=docs\README.Carmack
 Folder=zzDocs
 Compile=0
@@ -4412,7 +4405,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit439]
+[Unit438]
 FileName=docs\README.gl
 Folder=zzDocs
 Compile=0
@@ -4421,7 +4414,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit440]
+[Unit439]
 FileName=docs\rh-log.txt
 Folder=zzDocs
 Compile=0
@@ -4430,7 +4423,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit441]
+[Unit440]
 FileName=src\sound\music_stream.cpp
 Folder=Audio
 Compile=1
@@ -4440,7 +4433,7 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit442]
+[Unit441]
 FileName=src\sound\i_music.cpp
 Folder=Audio
 Compile=1
@@ -4450,7 +4443,7 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit443]
+[Unit442]
 FileName=src\sound\i_music.h
 Folder=Audio
 Compile=1
@@ -4460,7 +4453,7 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit444]
+[Unit443]
 FileName=src\sound\i_musicinterns.h
 Folder=Audio
 Compile=1
@@ -4470,7 +4463,7 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit445]
+[Unit444]
 FileName=src\sound\i_sound.cpp
 Folder=Audio
 Compile=1
@@ -4480,7 +4473,7 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit446]
+[Unit445]
 FileName=src\sound\i_sound.h
 Folder=Audio
 Compile=1
@@ -4490,7 +4483,7 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit447]
+[Unit446]
 FileName=src\sound\music_cd.cpp
 Folder=Audio
 Compile=1
@@ -4500,7 +4493,7 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit448]
+[Unit447]
 FileName=src\sound\music_midi_midiout.cpp
 Folder=Audio
 Compile=1
@@ -4510,7 +4503,7 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit449]
+[Unit448]
 FileName=src\sound\music_midi_stream.cpp
 Folder=Audio
 Compile=1
@@ -4520,17 +4513,17 @@ OverrideBuildCmd=0
 BuildCmd=
 CompileCpp=0
 
-[Unit450]
+[Unit449]
 FileName=src\sound\music_midi_timidity.cpp
-CompileCpp=0
 Folder=Audio
 Compile=1
 Link=1
 Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
+CompileCpp=0
 
-[Unit451]
+[Unit450]
 FileName=src\sound\music_mod.cpp
 CompileCpp=0
 Folder=Audio
@@ -4540,7 +4533,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit452]
+[Unit451]
 FileName=src\sound\music_mus_midiout.cpp
 CompileCpp=0
 Folder=Audio
@@ -4550,7 +4543,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit453]
+[Unit452]
 FileName=src\sound\music_mus_opl.cpp
 CompileCpp=0
 Folder=Audio
@@ -4560,7 +4553,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit454]
+[Unit453]
 FileName=src\sound\music_spc.cpp
 CompileCpp=0
 Folder=Audio
@@ -4570,7 +4563,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit455]
+[Unit454]
 FileName=src\sound\sample_flac.h
 CompileCpp=0
 Folder=Audio
@@ -4580,7 +4573,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit456]
+[Unit455]
 FileName=src\sound\music_flac.cpp
 CompileCpp=0
 Folder=Audio
@@ -4590,7 +4583,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit457]
+[Unit456]
 FileName=src\sound\sample_flac.cpp
 CompileCpp=0
 Folder=Audio
@@ -4600,7 +4593,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit458]
+[Unit457]
 FileName=src\s_environment.cpp
 CompileCpp=0
 Folder=Source Files
@@ -4610,7 +4603,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit459]
+[Unit458]
 FileName=src\win32\eaxedit.cpp
 CompileCpp=0
 Folder=Win32 Files
@@ -4620,8 +4613,18 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit460]
+[Unit459]
 FileName=src\flac\stream_decoder_pp.cpp
+CompileCpp=0
+Folder=FLAC
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit460]
+FileName=src\flac\bitbuffer.c
 CompileCpp=0
 Folder=FLAC
 Compile=1
@@ -4641,16 +4644,6 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit461]
-FileName=src\flac\bitbuffer.c
-CompileCpp=0
-Folder=FLAC
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit462]
 FileName=src\flac\bitmath.c
 CompileCpp=0
 Folder=FLAC
@@ -4660,7 +4653,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit463]
+[Unit462]
 FileName=src\flac\cpu.c
 CompileCpp=0
 Folder=FLAC
@@ -4670,7 +4663,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit464]
+[Unit463]
 FileName=src\flac\crc.c
 CompileCpp=0
 Folder=FLAC
@@ -4680,7 +4673,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit465]
+[Unit464]
 FileName=src\flac\fixed.c
 CompileCpp=0
 Folder=FLAC
@@ -4690,7 +4683,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit466]
+[Unit465]
 FileName=src\flac\format.c
 CompileCpp=0
 Folder=FLAC
@@ -4700,7 +4693,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit467]
+[Unit466]
 FileName=src\flac\lpc.c
 CompileCpp=0
 Folder=FLAC
@@ -4710,7 +4703,7 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit468]
+[Unit467]
 FileName=src\flac\stream_decoder.c
 CompileCpp=0
 Folder=FLAC
@@ -4720,10 +4713,30 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit469]
+[Unit468]
 FileName=src\g_shared\a_soundenvironment.cpp
 CompileCpp=0
 Folder=Game: Common
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit469]
+FileName=src\files.cpp
+CompileCpp=0
+Folder=Source Files
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit470]
+FileName=src\files.h
+CompileCpp=0
+Folder=Header Files
 Compile=1
 Link=1
 Priority=1000

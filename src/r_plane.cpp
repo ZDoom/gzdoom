@@ -44,6 +44,7 @@
 
 #include "r_local.h"
 #include "r_sky.h"
+#include "stats.h"
 
 #include "m_alloc.h"
 #include "v_video.h"
@@ -71,7 +72,7 @@ static visplane_t		**freehead = &freetail;		// killough
 visplane_t 				*floorplane;
 visplane_t 				*ceilingplane;
 
-static bool				r_InSkyBox;
+//static bool			r_InSkyBox;
 
 // killough -- hash function for visplanes
 // Empirically verified to be fairly uniform:
@@ -125,7 +126,7 @@ static DWORD			basexfrac, baseyfrac;
 
 #ifdef USEASM
 extern "C" void R_SetSpanSource_ASM (const byte *flat);
-extern "C" void R_SetSpanSize_ASM (int xbits, int ybits);
+extern "C" void STACK_ARGS R_SetSpanSize_ASM (int xbits, int ybits);
 extern "C" void R_SetSpanColormap_ASM (byte *colormap);
 extern "C" void R_SetTiltedSpanSource_ASM (const byte *flat);
 extern "C" byte *ds_curcolormap, *ds_cursource, *ds_curtiltedsource;
@@ -302,7 +303,7 @@ void R_MapTiltedPlane (int y, int x1)
 	uz = plane_su[2] + plane_su[1]*(centery-y) + plane_su[0]*(x1-centerx);
 	vz = plane_sv[2] + plane_sv[1]*(centery-y) + plane_sv[0]*(x1-centerx);
 
-	fb = ylookup[y] + x1;
+	fb = ylookup[y] + x1 + dc_destorg;
 
 	BYTE vshift = 32 - ds_ybits;
 	BYTE ushift = vshift - ds_xbits;
@@ -412,7 +413,7 @@ void R_MapTiltedPlane (int y, int x1)
 
 void R_MapColoredPlane (int y, int x1)
 {
-	memset (ylookup[y] + x1, ds_color, spanend[y] - x1 + 1);
+	memset (ylookup[y] + x1 + dc_destorg, ds_color, spanend[y] - x1 + 1);
 }
 
 //==========================================================================
@@ -495,10 +496,19 @@ visplane_t *R_FindPlane (const secplane_t &height, int picnum, int lightlevel,
 	if (picnum == skyflatnum || picnum & PL_SKYFLAT)	// killough 10/98
 	{ // most skies map together
 		lightlevel = 0;
+		xoffs = 0;
+		yoffs = 0;
+		xscale = 0;
+		yscale = 0;
+		angle = 0;
 		plane.a = plane.b = plane.d = 0;
+		// [RH] Map floor skies and ceiling skies to separate visplanes. This isn't
+		// always necessary, but it is needed if a floor and ceiling sky are in the
+		// same column but separated by a wall. If they both try to reside in the
+		// same visplane, then only the floor sky will be drawn.
 		plane.c = height.c;
 		plane.ic = height.ic;
-		isskybox = (picnum == skyflatnum) && (skybox != NULL) && !r_InSkyBox;
+		isskybox = (picnum == skyflatnum) && (skybox != NULL) && !skybox->bInSkybox;
 	}
 	else
 	{
@@ -513,7 +523,7 @@ visplane_t *R_FindPlane (const secplane_t &height, int picnum, int lightlevel,
 	{
 		if (isskybox)
 		{
-			if (skybox == check->skybox)
+			if (skybox == check->skybox && plane == check->height)
 			{
 				return check;
 			}
@@ -602,7 +612,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		// make a new visplane
 		unsigned hash;
 
-		if (pl->picnum == skyflatnum && pl->skybox != NULL && !r_InSkyBox)
+		if (pl->picnum == skyflatnum && pl->skybox != NULL && !pl->skybox->bInSkybox)
 		{
 			hash = MAXVISPLANES;
 		}
@@ -883,52 +893,6 @@ void R_DrawPlanes ()
 #ifdef USEASM
 				R_SetSpanSize_ASM (ds_xbits, ds_ybits);
 #endif
-
-				// [RH] warp a flat if desired
-#if 0 // FIXME
-				if (flatwarp[useflatnum])
-				{
-					if (!warpedflats[useflatnum])
-					{
-						warpedflats[useflatnum] = new BYTE[lumplen];
-						flatwarpedwhen[useflatnum] = level.time+1;
-					}
-					if (flatwarpedwhen[useflatnum] != level.time)
-					{
-						static byte buffer[256];
-						int timebase = level.time*23;
-						int xsize = 1 << ds_xbits;
-						int ysize = 1 << ds_ybits;
-						int xmask = xsize - 1;
-						int ymask = ysize - 1;
-
-						flatwarpedwhen[useflatnum] = level.time;
-						byte *warped = warpedflats[useflatnum];
-
-						for (x = xsize-1; x >= 0; x--)
-						{
-							int yt, yf = (finesine[(timebase+(x+17)*128)&FINEMASK]>>13) & ymask;
-							byte *source = ds_source + x;
-							byte *dest = warped + x;
-							for (yt = ysize; yt; yt--, yf = (yf+1)&ymask, dest += xsize)
-								*dest = *(source+(yf<<ds_xbits));
-						}
-						timebase = level.time*32;
-						int y;
-						for (y = ysize-1; y >= 0; y--)
-						{
-							int xt, xf = (finesine[(timebase+y*128)&FINEMASK]>>13) & xmask;
-							byte *source = warped + (y<<ds_xbits);
-							byte *dest = buffer;
-							for (xt = xsize; xt; xt--, xf = (xf+1)&xmask)
-								*dest++ = *(source+xf);
-							memcpy (warped+y*xsize, buffer, xsize);
-						}
-						ds_source = warped;
-					}
-					ds_source = warpedflats[useflatnum];
-				}
-#endif
 				ds_source = tex->GetPixels ();
 
 				basecolormap = pl->colormap;
@@ -968,6 +932,8 @@ void R_DrawPlanes ()
 //   9. Put the camera back where it was to begin with.
 //
 //==========================================================================
+CVAR (Bool, r_skyboxes, true, 0)
+static int numskyboxes;
 
 void R_DrawSkyBoxes ()
 {
@@ -991,18 +957,37 @@ void R_DrawSkyBoxes ()
 	visplane_t *pl;
 
 	// Don't draw sky boxes inside sky boxes.
-	r_InSkyBox = true;
+//	r_InSkyBox = true;
 
 	// Don't let gun flashes brighten the sky box
 	extralight = 0;
 
-	for (pl = visplanes[MAXVISPLANES]; pl != NULL; pl = pl->next)
+	numskyboxes = 0;
+
+	for (pl = visplanes[MAXVISPLANES]; pl != NULL; pl = visplanes[MAXVISPLANES])
 	{
-		if (pl->maxx < pl->minx)
+		// Pop the visplane off the list now so that if this skybox adds more
+		// skyboxes to the list, they will be drawn instead of skipped (because
+		// new skyboxes go to the beginning of the list instead of the end).
+		visplanes[MAXVISPLANES] = pl->next;
+		pl->next = NULL;
+
+		if (pl->maxx < pl->minx || !r_skyboxes)
+		{
+			if (pl->maxx >= pl->minx)
+			{
+				R_DrawSkyPlane (pl);
+			}
+			*freehead = pl;
+			freehead = &pl->next;
 			continue;
+		}
+
+		numskyboxes++;
 
 		ASkyViewpoint *sky = pl->skybox;
 
+		sky->bInSkybox = true;
 		viewx = sky->x;
 		viewy = sky->y;
 		viewz = sky->z;
@@ -1063,6 +1048,11 @@ void R_DrawSkyBoxes ()
 		InterestingDrawsegs.Resize (FirstInterestingDrawseg);
 		FirstInterestingDrawseg = savedinteresting;
 		lastopening = savedlastopening;
+
+		sky->bInSkybox = false;
+
+		*freehead = pl;
+		freehead = &pl->next;
 	}
 
 	camera = savedcamera;
@@ -1075,10 +1065,15 @@ void R_DrawSkyBoxes ()
 	viewangle = savedangle;
 	R_SetViewAngle ();
 
-	r_InSkyBox = false;
+//	r_InSkyBox = false;
 
 	for (*freehead = visplanes[MAXVISPLANES], visplanes[MAXVISPLANES] = NULL; *freehead; )
 		freehead = &(*freehead)->next;
+}
+
+ADD_STAT(skyboxes, out)
+{
+	sprintf (out, "%d skybox planes", numskyboxes);
 }
 
 //==========================================================================
@@ -1192,7 +1187,6 @@ void R_DrawNormalPlane (visplane_t *pl)
 	angle_t planeang = pl->angle;
 	xscale = pl->xscale << (16 - ds_xbits);
 	yscale = pl->yscale << (16 - ds_ybits);
-
 	if (planeang != 0)
 	{
 		fixed_t cosine = finecosine[planeang >> ANGLETOFINESHIFT];
@@ -1351,7 +1345,7 @@ void R_DrawTiltedPlane (visplane_t *pl)
 		}
 	}
 
-#if defined(USEASM) && 0
+#if defined(USEASM) && 1
 	if (ds_source != ds_curtiltedsource)
 		R_SetTiltedSpanSource_ASM (ds_source);
 	R_MapVisPlane (pl, R_DrawTiltedPlane_ASM);

@@ -33,8 +33,7 @@
 
 EXTERN_CVAR (Bool, ticker);
 EXTERN_CVAR (Bool, noisedebug);
-
-extern int AutoMapCheat;
+EXTERN_CVAR (Int, am_cheat);
 
 struct cheatseq_t
 {
@@ -313,7 +312,7 @@ static BOOL Cht_AutoMap (cheatseq_t *cheat)
 {
 	if (automapactive)
 	{
-		AutoMapCheat = (AutoMapCheat + 1) % 3;
+		am_cheat = (am_cheat + 1) % 3;
 		return true;
 	}
 	else

@@ -2,11 +2,12 @@
 #include <windows.h>
 
 #include "muslib.h"
+#include "files.h"
 
 class OPLmusicBlock : protected musicBlock
 {
 public:
-	OPLmusicBlock (const void *mem, int len, int rate, int maxSamples);
+	OPLmusicBlock (FileReader *file, int rate, int maxSamples);
 	~OPLmusicBlock ();
 	bool IsValid () const;
 

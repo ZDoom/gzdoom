@@ -341,44 +341,7 @@ void AActor::LinkToWorld (bool buggy)
 	}
 	else
 	{
-		node_t *node;
-		int side;
-					
-		node = nodes + numnodes - 1;
-
-		do
-		{
-			// Use original buggy point-on-side test when spawning
-			// things at level load so that the map spots in the
-			// emerald key room of Hexen MAP01 are spawned on the
-			// window ledge instead of the blocking floor in front
-			// of it. Why do I consider it buggy? Because a point
-			// that lies directly on a line should always be
-			// considered as "in front" of the line. The orientation
-			// of the line should be irrelevant.
-			if (node->dx == 0)
-			{
-				if (x <= node->x)
-					side = node->dy > 0;
-				else
-					side = node->dy < 0;
-			}
-			else if (node->dy == 0)
-			{
-				if (y <= node->y)
-					side = node->dx < 0;
-				else
-					side = node->dx > 0;
-			}
-			else
-			{
-				side = R_PointOnSide (x, y, node);
-			}
-			node = (node_t *)node->children[side];
-		}
-		while (!((size_t)node & 1));
-			
-		sec = ((subsector_t *)((BYTE *)node - 1))->sector;
+		sec = LinkToWorldForMapThing ();
 	}
 	Sector = sec;
 
@@ -441,6 +404,122 @@ void AActor::LinkToWorld (bool buggy)
 			bnext = NULL, bprev = NULL;
 		}
 	}
+}
+
+//
+// [RH] LinkToWorldForMapThing
+//
+// Emulate buggy PointOnLineSide and fix actors that lie on
+// lines to compensate for some IWAD maps.
+//
+sector_t *AActor::LinkToWorldForMapThing ()
+{
+	node_t *node;
+	int side;
+				
+	node = nodes + numnodes - 1;
+
+	do
+	{
+		// Use original buggy point-on-side test when spawning
+		// things at level load so that the map spots in the
+		// emerald key room of Hexen MAP01 are spawned on the
+		// window ledge instead of the blocking floor in front
+		// of it. Why do I consider it buggy? Because a point
+		// that lies directly on a line should always be
+		// considered as "in front" of the line. The orientation
+		// of the line should be irrelevant.
+		if (node->dx == 0)
+		{
+			if (x <= node->x)
+				side = node->dy > 0;
+			else
+				side = node->dy < 0;
+		}
+		else if (node->dy == 0)
+		{
+			if (y <= node->y)
+				side = node->dx < 0;
+			else
+				side = node->dx > 0;
+		}
+		else
+		{
+			side = R_PointOnSide (x, y, node);
+		}
+		node = (node_t *)node->children[side];
+	}
+	while (!((size_t)node & 1));
+
+	subsector_t *ssec = (subsector_t *)((BYTE *)node - 1);
+
+	if (flags4 & MF4_FIXMAPTHINGPOS)
+	{
+		// If the thing is exactly on a line, move it into the subsector
+		// slightly in order to resolve clipping issues in the renderer.
+		// This check needs to use the blockmap, because an actor on a
+		// one-sided line might go into a subsector behind the line, so
+		// the line would not be included as one of its subsector's segs.
+
+		int blockx = (x - bmaporgx) >> MAPBLOCKSHIFT;
+		int blocky = (y - bmaporgy) >> MAPBLOCKSHIFT;
+
+		if ((unsigned int)blockx < (unsigned int)bmapwidth &&
+			(unsigned int)blocky < (unsigned int)bmapheight)
+		{
+			int *list;
+
+			for (list = blockmaplump + blockmap[blocky*bmapwidth + blockx] + 1; *list != -1; ++list)
+			{
+				line_t *ldef = &lines[*list];
+
+				if (ldef->frontsector == ldef->backsector)
+				{ // Skip two-sided lines inside a single sector
+					continue;
+				}
+				if (ldef->backsector != NULL)
+				{
+					if (ldef->frontsector->floorplane == ldef->backsector->floorplane &&
+						ldef->frontsector->ceilingplane == ldef->backsector->ceilingplane)
+					{ // Skip two-sided lines without any height difference on either side
+						continue;
+					}
+				}
+
+				if (DMulScale32 (y - ldef->v1->y, ldef->dx, ldef->v1->x - x, ldef->dy) == 0)
+				{
+					// It touches the infinite line; now make sure it touches the linedef
+					SQWORD num, den;
+
+					den = (SQWORD)ldef->dx*ldef->dx + (SQWORD)ldef->dy*ldef->dy;
+					if (den != 0)
+					{
+						num = (SQWORD)(x-ldef->v1->x)*ldef->dx+(SQWORD)(y-ldef->v1->y)*ldef->dy;
+						if (num >= 0 && num <= den)
+						{
+							DPrintf ("%s at (%ld,%ld) lies directly on line %d\n",
+								this->GetClass()->Name+1, x>>FRACBITS, y>>FRACBITS, ldef-lines);
+							angle_t finean = R_PointToAngle2 (0, 0, ldef->dx, ldef->dy);
+							if (ldef->backsector != NULL && ldef->backsector == ssec->sector)
+							{
+								finean += ANGLE_90;
+							}
+							else
+							{
+								finean -= ANGLE_90;
+							}
+							finean >>= ANGLETOFINESHIFT;
+							x += finecosine[finean] >> 2;
+							y += finesine[finean] >> 2;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return ssec->sector;
 }
 
 void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz)

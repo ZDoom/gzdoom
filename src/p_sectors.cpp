@@ -438,7 +438,7 @@ static inline void CheckShortestTex (int texnum, fixed_t &minsize)
 	{
 		FTexture *tex = TexMan[texnum];
 		int yscale = tex->ScaleY ? tex->ScaleY : 8;
-		fixed_t h = DivScale3 (tex->GetHeight(), yscale);
+		fixed_t h = DivScale19 (tex->GetHeight(), yscale);
 		if (h < minsize)
 		{
 			minsize = h;

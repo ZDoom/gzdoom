@@ -23,8 +23,8 @@ static FRandom pr_morphmonst ("MorphMonster");
 
 bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 {
-	AActor *morphed;
-	AActor *actor;
+	APlayerPawn *morphed;
+	APlayerPawn *actor;
 
 	actor = p->mo;
 	if (actor == NULL)
@@ -49,7 +49,7 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 		return false;
 	}
 
-	morphed = Spawn (spawntype, actor->x, actor->y, actor->z);
+	morphed = static_cast<APlayerPawn *>(Spawn (spawntype, actor->x, actor->y, actor->z));
 	DObject::PointerSubstitution (actor, morphed);
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
@@ -82,7 +82,7 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	p->health = morphed->health;
 	p->mo = static_cast<APlayerPawn *>(morphed);
 	memset (&p->armorpoints[0], 0, NUMARMOR*sizeof(int));
-	P_ActivateMorphWeapon (p);
+	morphed->ActivateMorphWeapon ();
 	if (p->camera == actor)
 	{
 		p->camera = morphed;

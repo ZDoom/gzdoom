@@ -107,7 +107,7 @@ void A_SpidRefire (AActor *self)
 
 	if (!self->target
 		|| self->target->health <= 0
-		|| !P_CheckSight (self, self->target, false) )
+		|| !P_CheckSight (self, self->target, 0) )
 	{
 		self->SetState (self->SeeState);
 	}

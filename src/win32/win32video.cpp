@@ -394,8 +394,8 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
-/*		if (fb->Width == width &&
+/*		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
+		if (fb->Width == width &&
 			fb->Height == height &&
 			fb->Windowed == !fullscreen)
 		{
@@ -1157,7 +1157,7 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 	}
 	else
 	{
-		HRESULT hr = BlitSurf->Flip (NULL, DDFLIP_WAIT);
+		HRESULT hr GCCNOWARN = BlitSurf->Flip (NULL, DDFLIP_WAIT);
 		LOG1 ("Blit flip = %08lx\n", hr);
 		LockSurfRes res = LockSurf (NULL, BlitSurf);
 		
@@ -1491,7 +1491,7 @@ void DDrawFB::Update ()
 		{
 			if (FlipFlags & DDFLIP_NOVSYNC)
 			{
-				LOG ("Flip apparently cannot handle NOVSYNC.\n");
+				Printf ("disabled vsync\n");
 				FlipFlags &= ~DDFLIP_NOVSYNC;
 				PrimarySurf->Flip (NULL, FlipFlags);
 			}

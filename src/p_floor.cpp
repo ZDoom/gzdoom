@@ -180,8 +180,7 @@ void DFloor::Tick ()
 			}
 
 			m_Sector->floordata = NULL; //jff 2/22/98
-			stopinterpolation (&m_Sector->floorplane.d);
-			stopinterpolation (&m_Sector->floortexz);
+			stopinterpolation (INTERP_SectorFloor, m_Sector);
 
 			//jff 2/26/98 implement stair retrigger lockout while still building
 			// note this only applies to the retriggerable generalized stairs
@@ -251,10 +250,8 @@ void DElevator::Tick ()
 
 		m_Sector->floordata = NULL;		//jff 2/22/98
 		m_Sector->ceilingdata = NULL;	//jff 2/22/98
-		stopinterpolation (&m_Sector->floorplane.d);
-		stopinterpolation (&m_Sector->ceilingplane.d);
-		stopinterpolation (&m_Sector->floortexz);
-		stopinterpolation (&m_Sector->ceilingtexz);
+		stopinterpolation (INTERP_SectorFloor, m_Sector);
+		stopinterpolation (INTERP_SectorCeiling, m_Sector);
 		Destroy ();		// remove elevator from actives
 	}
 }
@@ -490,6 +487,14 @@ manual_floor:
 
 		  default:
 			break;
+		}
+
+		// Do not interpolate instant movement floors.
+		// Note for ZDoomGL: Check to make sure that you update the sector
+		// after the floor moves, because it hasn't actually moved yet.
+		if (floor->m_Speed >= abs(sec->floorplane.d - floor->m_FloorDestDist))
+		{
+			stopinterpolation (INTERP_SectorFloor, sec);
 		}
 
 		if (change & 3)
@@ -910,10 +915,8 @@ DElevator::DElevator (sector_t *sec)
 {
 	sec->floordata = this;
 	sec->ceilingdata = this;
-	setinterpolation (&sec->floorplane.d);
-	setinterpolation (&sec->ceilingplane.d);
-	setinterpolation (&sec->floortexz);
-	setinterpolation (&sec->ceilingtexz);
+	setinterpolation (INTERP_SectorFloor, sec);
+	setinterpolation (INTERP_SectorCeiling, sec);
 }
 
 //
@@ -1064,14 +1067,12 @@ void DWaggleBase::DoWaggle (bool ceiling)
 			if (ceiling)
 			{
 				m_Sector->ceilingdata = NULL;
-				stopinterpolation (&m_Sector->ceilingplane.d);
-				stopinterpolation (&m_Sector->ceilingtexz);
+				stopinterpolation (INTERP_SectorCeiling, m_Sector);
 			}
 			else
 			{
 				m_Sector->floordata = NULL;
-				stopinterpolation (&m_Sector->floorplane.d);
-				stopinterpolation (&m_Sector->floortexz);
+				stopinterpolation (INTERP_SectorFloor, m_Sector);
 			}
 			Destroy ();
 			return;
@@ -1111,8 +1112,7 @@ DFloorWaggle::DFloorWaggle (sector_t *sec)
 	: Super (sec)
 {
 	sec->floordata = this;
-	setinterpolation (&sec->floorplane.d);
-	setinterpolation (&sec->floortexz);
+	setinterpolation (INTERP_SectorFloor, sec);
 }
 
 void DFloorWaggle::Tick ()
@@ -1134,8 +1134,7 @@ DCeilingWaggle::DCeilingWaggle (sector_t *sec)
 	: Super (sec)
 {
 	sec->ceilingdata = this;
-	setinterpolation (&sec->ceilingplane.d);
-	setinterpolation (&sec->ceilingtexz);
+	setinterpolation (INTERP_SectorCeiling, sec);
 }
 
 void DCeilingWaggle::Tick ()

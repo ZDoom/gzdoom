@@ -669,6 +669,7 @@ BOOL PIT_CheckLine (line_t *ld)
 static // killough 3/26/98: make static
 BOOL PIT_CheckThing (AActor *thing)
 {
+	fixed_t topz;
 	fixed_t blockdist;
 	BOOL 	solid;
 	int 	damage;
@@ -687,15 +688,22 @@ BOOL PIT_CheckThing (AActor *thing)
 		return true;	
 	}
 	BlockingMobj = thing;
+	topz = thing->z + thing->height;
+	if (!(compatflags & COMPATF_NO_PASSMOBJ) && !(tmthing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY)))
+	{
+		// [RH] Let monsters stand on actors as well as floors
+		if ((thing->flags & MF_SOLID) && topz > tmfloorz && topz <= tmthing->z + 24*FRACUNIT)
+		{
+			tmfloorz = topz;
+		}
+	}
 	if ((tmthing->flags2 & MF2_PASSMOBJ) && !(compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (tmthing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible
 			return false;
 		}
-		if (/*!(thing->flags & MF_SPECIAL) &&*/
-			((tmthing->z >= thing->z + thing->height ||
-			  tmthing->z + tmthing->height <= thing->z)))
+		if ((tmthing->z >= topz) || (tmthing->z + tmthing->height <= thing->z))
 		{
 			return true;
 		}
@@ -838,7 +846,8 @@ BOOL PIT_CheckThing (AActor *thing)
 		}
 		return false;		// don't traverse any more
 	}
-	if (thing->flags2 & MF2_PUSHABLE && !(tmthing->flags2 & MF2_CANNOTPUSH))
+	if (thing->flags2 & MF2_PUSHABLE && !(tmthing->flags2 & MF2_CANNOTPUSH) &&
+		(tmthing->player == NULL || !(tmthing->player->cheats & CF_PREDICTING)))
 	{ // Push thing
 		thing->momx += tmthing->momx >> 2;
 		thing->momy += tmthing->momy >> 2;
@@ -847,7 +856,11 @@ BOOL PIT_CheckThing (AActor *thing)
 			!(thing->flags & MF_NOCLIP) &&
 			(tmthing->flags & MF_SOLID);
 	// Check for special pickup
-	if ((thing->flags & MF_SPECIAL) && (tmflags & MF_PICKUP))
+	if ((thing->flags & MF_SPECIAL) && (tmflags & MF_PICKUP)
+		// [RH] The next condition is to compensate for the extra height
+		// that gets added by P_CheckPosition() so that you cannot pick
+		// up things that are above your true height.
+		&& thing->z < tmthing->z + tmthing->height - 24*FRACUNIT)
 	{ // Can be picked up by tmthing
 		P_TouchSpecialThing (thing, tmthing);	// can remove thing
 	}
@@ -1083,7 +1096,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 						thing->height = realheight;
 						return false;
 					}
-					else if (!BlockingMobj->player && thing->player &&
+					else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY)) &&
 						BlockingMobj->z+BlockingMobj->height-thing->z <= 24*FRACUNIT)
 					{
 						if (thingblocker == NULL ||
@@ -1148,10 +1161,15 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	yl = (tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
 	yh = (tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
 
+	fixed_t thingdropoffz = tmfloorz;
+	tmfloorz = tmdropoffz;
+
 	for (bx=xl ; bx<=xh ; bx++)
 		for (by=yl ; by<=yh ; by++)
 			if (!P_BlockLinesIterator (bx,by,PIT_CheckLine))
 				return false;
+
+	tmdropoffz = MAX(tmdropoffz, thingdropoffz);
 
 	return (BlockingMobj = thingblocker) == NULL;
 }
@@ -1188,9 +1206,6 @@ bool P_TestMobjZ (AActor *actor)
 	fixed_t x, y;
 
 	if (actor->flags & MF_NOCLIP)
-		return true;
-
-	if (!(actor->flags & MF_SOLID))
 		return true;
 
 	tmx = x = actor->x;
@@ -1404,12 +1419,21 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		}
 
 		// killough 3/15/98: Allow certain objects to drop off
-		if (!dropoff && !(thing->flags & (MF_DROPOFF|MF_FLOAT|MF_MISSILE))
-			&& tmfloorz - tmdropoffz > 24*FRACUNIT &&
-			!(thing->flags2 & MF2_BLASTED))
-		{ // Can't move over a dropoff unless it's been blasted
-			thing->z = oldz;
-			return false;
+		if (!dropoff && !(thing->flags & (MF_DROPOFF|MF_FLOAT|MF_MISSILE)))
+		{
+			fixed_t floorz = tmfloorz;
+			// [RH] If the thing is standing on something, use its current z as the floorz.
+			// This is so that it does not walk off of things onto a drop off.
+			if (thing->flags2 & MF2_ONMOBJ)
+			{
+				floorz = MAX(thing->z, tmfloorz);
+			}
+			if (floorz - tmdropoffz > 24*FRACUNIT &&
+				!(thing->flags2 & MF2_BLASTED))
+			{ // Can't move over a dropoff unless it's been blasted
+				thing->z = oldz;
+				return false;
+			}
 		}
 		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC
 			&& (tmfloorpic != thing->Sector->floorpic
@@ -2288,11 +2312,11 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vr
 		}
 		else
 		{
-			vrange = t1->player->userinfo.aimdist;
-			if (vrange > ANGLE_1*35)
-			{
-				vrange = ANGLE_1*35;
-			}
+			// 35 degrees is approximately what Doom used. You cannot have a
+			// vrange of 0 degrees, because then toppitch and bottompitch will
+			// be equal, and PTR_AimTraverse will never find anything to shoot at
+			// if it crosses a line.
+			vrange = clamp (t1->player->userinfo.aimdist, ANGLE_1/2, ANGLE_1*35);
 		}
 	}
 	toppitch = t1->pitch - vrange;
@@ -2377,7 +2401,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	}
 	else
 	{
-		fixed_t hitx, hity, hitz, closer;
+		fixed_t hitx = 0, hity = 0, hitz = 0, closer;
 		AActor *puff = NULL;
 
 		if (trace.HitType != TRACE_HitActor)
@@ -2666,13 +2690,28 @@ void P_RailAttack (AActor *source, int damage, int offset)
 		trace.Sector->heightsec == NULL)
 	{
 		fixed_t savex, savey, savez;
+		fixed_t savefloor, saveceil, savedropoff;
+		int savefloorpic;
+		sector_t *savefloorsec;
 
 		savex = source->x;
 		savey = source->y;
 		savez = source->z;
+		savefloor = source->floorz;
+		saveceil = source->ceilingz;
+		savedropoff = source->dropoffz;
+		savefloorpic = source->floorpic;
+		savefloorsec = source->floorsector;
+
 		source->SetOrigin (trace.X, trace.Y, trace.Z);
 		P_HitWater (source, trace.Sector);
 		source->SetOrigin (savex, savey, savez);
+
+		source->floorz = savefloor;
+		source->ceilingz = saveceil;
+		source->dropoffz = savedropoff;
+		source->floorpic = savefloorpic;
+		source->floorsector = savefloorsec;
 	}
 	if (trace.CrossedWater)
 	{
@@ -3065,7 +3104,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 				len = 0.f;
 		}
 		len /= FRACUNIT;
-		points = bombdamagefloat * (1.f - len * bombdistancefloat) + 1.f;
+		points = bombdamagefloat * (1.f - len * bombdistancefloat);
 		if (thing == bombsource)
 		{
 			points = points * splashfactor;
@@ -3074,7 +3113,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		{
 			points = points * 0.25f;
 		}
-		if (points > 0.f && P_CheckSight (thing, bombspot, true))
+		if (points > 0.f && P_CheckSight (thing, bombspot, 1))
 		{ // OK to damage; target is in direct path
 			float momz;
 			float thrust;
@@ -3124,9 +3163,9 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		if (dist >= bombdistance)
 			return true;  // out of range
 
-		if (P_CheckSight (thing, bombspot, true))
+		if (P_CheckSight (thing, bombspot, 1))
 		{ // OK to damage; target is in direct path
-			int damage = (bombdamage * (bombdistance-dist)/bombdistance) + 1;
+			int damage = Scale (bombdamage, bombdistance-dist, bombdistance);
 			damage = (int)((float)damage * splashfactor);
 			if (thing->player && gameinfo.gametype == GAME_Hexen)
 			{
@@ -4075,7 +4114,7 @@ void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
 	}
 }
 
-void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
+static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
 	fixed_t vx, fixed_t vy, fixed_t vz)
 {
 	fixed_t num, den, hitdist;

@@ -90,7 +90,7 @@ static FRandom pr_ripperblood ("RipperBlood");
 static FRandom pr_chunk ("Chunk");
 static FRandom pr_checkmissilespawn ("CheckMissileSpawn");
 static FRandom pr_spawnmissile ("SpawnMissile");
-static FRandom pr_slam ("SkullSlam");
+ FRandom pr_slam ("SkullSlam");
 static FRandom pr_multiclasschoice ("MultiClassChoice");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -375,7 +375,7 @@ bool AActor::SetState (FState *newstate)
 			// Sprite 1 is ----, which means "do not change the sprite"
 			frame = newstate->GetFrame();
 
-			if (newsprite == SpawnState->sprite.index)
+			if (!(flags4 & MF4_NOSKIN) && newsprite == SpawnState->sprite.index)
 			{ // [RH] If the new sprite is the same as the original sprite, and
 			// this actor is attached to a player, use the player's skin's
 			// sprite. If a player is not attached, do not change the sprite
@@ -385,7 +385,7 @@ bool AActor::SetState (FState *newstate)
 			// for Dehacked, I would move sprite changing out of the states
 			// altogether, since actors rarely change their sprites after
 			// spawning.
-				if (player != NULL && gameinfo.gametype != GAME_Hexen)
+				if (player != NULL)
 				{
 					sprite = skins[player->userinfo.skin].sprite;
 				}
@@ -446,7 +446,7 @@ bool AActor::SetStateNF (FState *newstate)
 			// Sprite 1 is ----, which means "do not change the sprite"
 
 			frame = newstate->GetFrame();
-			if (newsprite == SpawnState->sprite.index)
+			if (!(flags4 & MF4_NOSKIN) && newsprite == SpawnState->sprite.index)
 			{
 				if (player != NULL && gameinfo.gametype != GAME_Hexen)
 				{
@@ -486,6 +486,13 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 	mo->SetState (mo->DeathState);
 	if (mo->ObjectFlags & OF_MassDestruction)
 	{
+		return;
+	}
+
+	if (line != NULL && line->special == Line_Horizon)
+	{
+		// [RH] Don't explode missiles on horizon lines.
+		mo->Destroy ();
 		return;
 	}
 
@@ -1910,7 +1917,7 @@ void AActor::Tick ()
 					&& !players[i].enemy
 					&& player ? !IsTeammate (players[i].mo) : true
 					&& P_AproxDistance (players[i].mo->x-x, players[i].mo->y-y) < MAX_MONSTER_TARGET_DIST
-					&& P_CheckSight (players[i].mo, this))
+					&& P_CheckSight (players[i].mo, this, 2))
 				{ //Probably a monster, so go kill it.
 					players[i].enemy = this;
 				}
@@ -2446,6 +2453,11 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	{
 		level.total_monsters++;
 	}
+	// [RH] Same, for items
+	if (actor->flags & MF_COUNTITEM)
+	{
+		level.total_items++;
+	}
 	return actor;
 }
 
@@ -2453,8 +2465,6 @@ void AActor::LevelSpawned ()
 {
 	if (tics > 0)
 		tics = 1 + (pr_spawnmapthing() % tics);
-	if (flags & MF_COUNTITEM)
-		level.total_items++;
 	angle_t incs = AngleIncrements ();
 	angle -= angle % incs;
 	if (mapflags & MTF_AMBUSH)
@@ -2469,7 +2479,7 @@ void AActor::BeginPlay ()
 
 void AActor::Activate (AActor *activator)
 {
-	if (flags3 & MF3_ISMONSTER)
+	if ((flags3 & MF3_ISMONSTER) && health > 0)
 	{
 		if (flags2 & MF2_DORMANT)
 		{
@@ -2481,7 +2491,7 @@ void AActor::Activate (AActor *activator)
 
 void AActor::Deactivate (AActor *activator)
 {
-	if (flags3 & MF3_ISMONSTER)
+	if ((flags3 & MF3_ISMONSTER) && health > 0)
 	{
 		if (!(flags2 & MF2_DORMANT))
 		{
@@ -2788,7 +2798,8 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 
 	if (mthing->type == PO_ANCHOR_TYPE ||
 		mthing->type == PO_SPAWN_TYPE ||
-		mthing->type == PO_SPAWNCRUSH_TYPE)
+		mthing->type == PO_SPAWNCRUSH_TYPE ||
+		mthing->type == PO_SPAWNHURT_TYPE)
 	{
 		polyspawns_t *polyspawn = new polyspawns_t;
 		polyspawn->next = polyspawns;
@@ -3100,7 +3111,7 @@ AActor *P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, b
 		}
 	}
 
-	if (linetarget && puff->SeeSound)
+	if (hitthing && puff->SeeSound)
 	{ // Hit thing sound
 		S_SoundID (puff, CHAN_BODY, puff->SeeSound, 1, ATTN_NORM);
 	}
@@ -3246,7 +3257,7 @@ int P_GetThingFloorType (AActor *thing)
 
 bool P_HitWater (AActor *thing, sector_t *sec)
 {
-	if (thing->flags3 & MF3_DONTSPLASH)
+	if (thing->flags2 & MF2_FLOATBOB || thing->flags3 & MF3_DONTSPLASH)
 		return false;
 
 	if (thing->player && (thing->player->cheats & CF_PREDICTING))
@@ -3346,7 +3357,7 @@ bool P_HitFloor (AActor *thing)
 {
 	const msecnode_t *m;
 
-	if (thing->flags3 & MF3_DONTSPLASH)
+	if (thing->flags2 & MF2_FLOATBOB || thing->flags3 & MF3_DONTSPLASH)
 		return false;
 
 	// don't splash if landing on the edge above water/lava/etc....
@@ -3404,8 +3415,12 @@ bool P_CheckMissileSpawn (AActor* th)
 
 	if (!P_TryMove (th, th->x, th->y, false))
 	{
-		P_ExplodeMissile (th, NULL);
-		return false;
+		// [RH] Don't explode ripping missiles that spawn inside something
+		if (BlockingMobj == NULL || !(th->flags2 & MF2_RIP))
+		{
+			P_ExplodeMissile (th, NULL);
+			return false;
+		}
 	}
 	return true;
 }

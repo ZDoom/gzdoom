@@ -370,7 +370,6 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	int 		speed;
 	int 		forward;
 	int 		side;
-	int			look;
 	int			fly;
 
 	ticcmd_t	*base;
@@ -383,7 +382,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	strafe = Button_Strafe.bDown;
 	speed = Button_Speed.bDown ^ (int)cl_run;
 
-	forward = side = look = fly = 0;
+	forward = side = fly = 0;
 
 	// [RH] only use two stage accelerative turning on the keyboard
 	//		and not the joystick, since we treat the joystick as
@@ -409,15 +408,15 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 			tspeed *= 2;		// slow turn
 		
 		if (Button_Right.bDown)
-			cmd->ucmd.yaw -= angleturn[tspeed];
+			G_AddViewAngle (angleturn[tspeed]);
 		if (Button_Left.bDown)
-			cmd->ucmd.yaw += angleturn[tspeed];
+			G_AddViewAngle (-angleturn[tspeed]);
 	}
 
 	if (Button_LookUp.bDown)
-		look += lookspeed[speed];
+		G_AddViewPitch (lookspeed[speed]);
 	if (Button_LookDown.bDown)
-		look -= lookspeed[speed];
+		G_AddViewPitch (-lookspeed[speed]);
 
 	if (Button_MoveUp.bDown)
 		fly += flyspeed[speed];
@@ -427,9 +426,9 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (Button_Klook.bDown)
 	{
 		if (Button_Forward.bDown)
-			look += lookspeed[speed];
+			G_AddViewPitch (lookspeed[speed]);
 		if (Button_Back.bDown)
-			look -= lookspeed[speed];
+			G_AddViewPitch (-lookspeed[speed]);
 	}
 	else
 	{
@@ -467,22 +466,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	}
 
 	side += int((MAXPLMOVE * JoyAxes[JOYAXIS_SIDE]) / 256);
-	cmd->ucmd.yaw += short((1280 * JoyAxes[JOYAXIS_YAW]) / 256);
-	look += int((JoyAxes[JOYAXIS_PITCH] * 2048) / 256);
 	forward += int((JoyAxes[JOYAXIS_FORWARD] * MAXPLMOVE) / 256);
 	fly += int(JoyAxes[JOYAXIS_UP] * 8);
 
-	if (Button_Mlook.bDown || freelook)
-	{
-		int val;
-
-		val = (int)((float)(mousey * 16) * m_pitch);
-		if (invertmouse)
-			look -= val;
-		else
-			look += val;
-	}
-	else
+	if (!Button_Mlook.bDown && !freelook)
 	{
 		forward += (int)((float)mousey * m_forward);
 	}
@@ -490,14 +477,11 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (sendcenterview)
 	{
 		sendcenterview = false;
-		look = -32768;
+		cmd->ucmd.pitch = -32768;
 	}
 	else
 	{
-		if (look > 32767)
-			look = 32767;
-		else if (look < -32767)
-			look = -32767;
+		cmd->ucmd.pitch = LocalViewPitch >> 16;
 	}
 
 	if (SendLand)
@@ -508,8 +492,6 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 	if (strafe || lookstrafe)
 		side += (int)((float)mousex * m_side);
-	else
-		cmd->ucmd.yaw -= (int)((float)(mousex*0x8) * m_yaw);
 
 	mousex = mousey = 0;
 
@@ -524,8 +506,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 	cmd->ucmd.forwardmove += forward;
 	cmd->ucmd.sidemove += side;
-	cmd->ucmd.pitch = look;
+	cmd->ucmd.yaw = LocalViewAngle >> 16;
 	cmd->ucmd.upmove = fly;
+	LocalViewAngle = 0;
+	LocalViewPitch = 0;
 
 	// special buttons
 	if (sendturn180)
@@ -579,6 +563,15 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	cmd->ucmd.sidemove <<= 8;
 }
 
+void G_AddViewPitch (int look)
+{
+	LocalViewPitch += look << 16;
+}
+
+void G_AddViewAngle (int yaw)
+{
+	LocalViewAngle -= yaw << 16;
+}
 
 // [RH] Spy mode has been separated into two console commands.
 //		One goes forward; the other goes backward.
@@ -812,6 +805,10 @@ void G_Ticker ()
 			C_FullConsole ();
 			gameaction = ga_nothing;
 			break;
+		case ga_togglemap:
+			AM_ToggleMap ();
+			gameaction = ga_nothing;
+			break;
 		case ga_nothing:
 			break;
 		}
@@ -834,7 +831,7 @@ void G_Ticker ()
 	// get commands, check consistancy, and build new consistancy check
 	int buf = (gametic/ticdup)%BACKUPTICS;
 
-	// [RH] Include all random seeds and player stuff in the consistancy
+	// [RH] Include some random seeds and player stuff in the consistancy
 	// check, not just the player's x position like BOOM.
 	DWORD rngsum = FRandom::StaticSumSeeds ();
 
@@ -1354,7 +1351,7 @@ static bool CheckSingleWad (char *name, bool &printRequires)
 	{
 		return true;
 	}
-	if (!W_CheckIfWadLoaded (name))
+	if (!Wads.CheckIfWadLoaded (name))
 	{
 		if (!printRequires)
 		{
@@ -1373,14 +1370,14 @@ static bool CheckSingleWad (char *name, bool &printRequires)
 }
 
 // Return false if not all the needed wads have been loaded.
-static bool G_CheckSaveGameWads (FILE *file)
+static bool G_CheckSaveGameWads (PNGHandle *png)
 {
 	char *text;
 	bool printRequires = false;
 
-	text = M_GetPNGText (file, "Game WAD");
+	text = M_GetPNGText (png, "Game WAD");
 	CheckSingleWad (text, printRequires);
-	text = M_GetPNGText (file, "Map WAD");
+	text = M_GetPNGText (png, "Map WAD");
 	CheckSingleWad (text, printRequires);
 
 	if (printRequires)
@@ -1392,16 +1389,16 @@ static bool G_CheckSaveGameWads (FILE *file)
 	return true;
 }
 
-static void ReadVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
+static void ReadVars (PNGHandle *png, SDWORD *vars, size_t count, DWORD id)
 {
-	size_t len = M_FindPNGChunk (file, id);
+	size_t len = M_FindPNGChunk (png, id);
 	size_t used = 0;
 
 	if (len != 0)
 	{
 		DWORD var;
 		size_t i;
-		FPNGChunkArchive arc (file, id, len);
+		FPNGChunkArchive arc (png->File->GetFile(), id, len);
 		used = len / 4;
 
 		for (i = 0; i < used; ++i)
@@ -1409,6 +1406,7 @@ static void ReadVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
 			arc << var;
 			vars[i] = var;
 		}
+		png->File->ResetFilePtr();
 	}
 	if (used < count)
 	{
@@ -1416,9 +1414,9 @@ static void ReadVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
 	}
 }
 
-static void ReadArrayVars (FILE *file, TArray<SDWORD> *vars, size_t count, DWORD id)
+static void ReadArrayVars (PNGHandle *png, TArray<SDWORD> *vars, size_t count, DWORD id)
 {
-	size_t len = M_FindPNGChunk (file, id);
+	size_t len = M_FindPNGChunk (png, id);
 	size_t i, k;
 
 	for (i = 0; i < count; ++i)
@@ -1430,7 +1428,7 @@ static void ReadArrayVars (FILE *file, TArray<SDWORD> *vars, size_t count, DWORD
 	{
 		DWORD max, size;
 		DWORD var;
-		FPNGChunkArchive arc (file, id, len);
+		FPNGChunkArchive arc (png->File->GetFile(), id, len);
 
 		i = arc.ReadCount ();
 		max = arc.ReadCount ();
@@ -1448,11 +1446,13 @@ static void ReadArrayVars (FILE *file, TArray<SDWORD> *vars, size_t count, DWORD
 				vars[i][k] = var;
 			}
 		}
+		png->File->ResetFilePtr();
 	}
 }
 
 void G_DoLoadGame ()
 {
+	char sigcheck[16];
 	char *text = NULL;
 	char *map;
 
@@ -1465,22 +1465,25 @@ void G_DoLoadGame ()
 		return;
 	}
 
+	PNGHandle *png = M_VerifyPNG (stdfile);
+	if (png == NULL)
+	{
+		fclose (stdfile);
+		Printf ("'%s' is not a valid (PNG) savegame\n", savename);
+		return;
+	}
+
 	SaveVersion = 0;
 
-	if (!M_VerifyPNG (stdfile) ||
-		!(text = M_GetPNGText (stdfile, "ZDoom Save Version")) ||
-		0 != strncmp (text, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
-		(SaveVersion = atoi (text+9)) < MINSAVEVER)	// 200 is the minimum supported savever
+	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 16) ||
+		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
+		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)	// 200 is the minimum supported savever
 	{
 		Printf ("Savegame is from an incompatible version\n");
-		if (text != NULL)
-		{
-			delete[] text;
-		}
+		delete png;
 		fclose (stdfile);
 		return;
 	}
-	delete[] text;
 
 	// Version 205 saves are created by version 2.0.33-2.0.36 but are marked as version
 	// 204 because I did not realize I needed to change the save version when adding
@@ -1489,24 +1492,28 @@ void G_DoLoadGame ()
 	// never be any savegames that are actually marked as being version 205.
 	if (SaveVersion == 204)
 	{
-		text = M_GetPNGText (stdfile, "Software");
-		if (strncmp (text, "ZDoom 2.0.", 10) == 0)
+		text = M_GetPNGText (png, "Software");
+		if (text != NULL)
 		{
-			int revision = atoi (text+10);
-			if (revision >= 33 && revision <= 36)
+			if (strncmp (text, "ZDoom 2.0.", 10) == 0)
 			{
-				SaveVersion = 205;
+				int revision = atoi (text+10);
+				if (revision >= 33 && revision <= 36)
+				{
+					SaveVersion = 205;
+				}
 			}
+			delete[] text;
 		}
 	}
 
-	if (!G_CheckSaveGameWads (stdfile))
+	if (!G_CheckSaveGameWads (png))
 	{
 		fclose (stdfile);
 		return;
 	}
 
-	map = M_GetPNGText (stdfile, "Current Map");
+	map = M_GetPNGText (png, "Current Map");
 	if (map == NULL)
 	{
 		Printf ("Savegame is missing the current map\n");
@@ -1516,7 +1523,7 @@ void G_DoLoadGame ()
 
 	bglobal.RemoveAllBots (true);
 
-	text = M_GetPNGText (stdfile, "Important CVARs");
+	text = M_GetPNGText (png, "Important CVARs");
 	if (text != NULL)
 	{
 		byte *vars_p = (byte *)text;
@@ -1525,7 +1532,7 @@ void G_DoLoadGame ()
 	}
 
 	// dearchive all the modifications
-	if (M_FindPNGChunk (stdfile, MAKE_ID('p','t','I','c')) == 8)
+	if (M_FindPNGChunk (png, MAKE_ID('p','t','I','c')) == 8)
 	{
 		DWORD time[2];
 		fread (&time, 8, 1, stdfile);
@@ -1538,9 +1545,9 @@ void G_DoLoadGame ()
 		level.time = 0;
 	}
 
-	G_SerializeSnapshots (stdfile, false);
-	P_SerializeRNGState (stdfile, false);
-	P_SerializeACSDefereds (stdfile, false);
+	G_ReadSnapshots (png);
+	P_ReadRNGState (png);
+	P_ReadACSDefereds (png);
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
@@ -1548,13 +1555,13 @@ void G_DoLoadGame ()
 	delete[] map;
 	savegamerestore = false;
 
-	ReadVars (stdfile, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
-	ReadVars (stdfile, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
-	ReadArrayVars (stdfile, ACS_WorldArrays, NUM_WORLDVARS, MAKE_ID('w','a','R','r'));
-	ReadArrayVars (stdfile, ACS_GlobalArrays, NUM_GLOBALVARS, MAKE_ID('g','a','R','r'));
+	ReadVars (png, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
+	ReadVars (png, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
+	ReadArrayVars (png, ACS_WorldArrays, NUM_WORLDVARS, MAKE_ID('w','a','R','r'));
+	ReadArrayVars (png, ACS_GlobalArrays, NUM_GLOBALVARS, MAKE_ID('g','a','R','r'));
 
 	NextSkill = -1;
-	if (M_FindPNGChunk (stdfile, MAKE_ID('s','n','X','t')) == 1)
+	if (M_FindPNGChunk (png, MAKE_ID('s','n','X','t')) == 1)
 	{
 		BYTE next;
 		fread (&next, 1, 1, stdfile);
@@ -1570,6 +1577,9 @@ void G_DoLoadGame ()
 	}
 
 	strcpy (BackupSaveName, savename);
+
+	delete png;
+	fclose (stdfile);
 }
 
 
@@ -1673,13 +1683,13 @@ static void PutSaveWads (FILE *file)
 	const char *name;
 
 	// Name of IWAD
-	name = W_GetWadName (1);
+	name = Wads.GetWadName (1);
 	M_AppendPNGText (file, "Game WAD", name);
 
 	// Name of wad the map resides in
-	if (lumpinfo[level.lumpnum].wadnum != 1)
+	if (Wads.GetLumpFile (level.lumpnum) != 1)
 	{
-		name = W_GetWadName (lumpinfo[level.lumpnum].wadnum);
+		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
 		M_AppendPNGText (file, "Map WAD", name);
 	}
 }
@@ -1842,9 +1852,9 @@ void G_DoSaveGame (bool okForQuicksave)
 		M_AppendPNGChunk (stdfile, MAKE_ID('p','t','I','c'), (BYTE *)&time, 8);
 	}
 
-	G_SerializeSnapshots (stdfile, true);
-	P_SerializeRNGState (stdfile, true);
-	P_SerializeACSDefereds (stdfile, true);
+	G_WriteSnapshots (stdfile);
+	P_WriteRNGState (stdfile);
+	P_WriteACSDefereds (stdfile);
 
 	WriteVars (stdfile, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
 	WriteVars (stdfile, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
@@ -2214,12 +2224,12 @@ void G_DoPlayDemo (void)
 	gameaction = ga_nothing;
 
 	// [RH] Allow for demos not loaded as lumps
-	demolump = W_CheckNumForName (defdemoname);
+	demolump = Wads.CheckNumForName (defdemoname);
 	if (demolump >= 0)
 	{
-		int demolen = W_LumpLength (demolump);
+		int demolen = Wads.LumpLength (demolump);
 		demobuffer = new byte[demolen];
-		W_ReadLump (demolump, demobuffer);
+		Wads.ReadLump (demolump, demobuffer);
 	}
 	else
 	{

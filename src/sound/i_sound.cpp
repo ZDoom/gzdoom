@@ -58,7 +58,7 @@ extern HINSTANCE g_hInst;
 
 #include "m_swap.h"
 #include "stats.h"
-
+#include "files.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "i_system.h"
@@ -174,6 +174,30 @@ static const char *FmodErrors[] =
 };
 #endif
 
+static unsigned int F_CALLBACKAPI OpenCallback (const char *notreallyname)
+{
+	return (unsigned int)notreallyname;
+}
+
+static void F_CALLBACKAPI CloseCallback (unsigned int handle)
+{
+}
+
+static int F_CALLBACKAPI ReadCallback (void *buffer, int size, unsigned int handle)
+{
+	return ((FileReader *)handle)->Read (buffer, size);
+}
+
+static int F_CALLBACKAPI SeekCallback (unsigned int handle, int pos, signed char mode)
+{
+	return ((FileReader *)handle)->Seek (pos, mode);
+}
+
+static int F_CALLBACKAPI TellCallback (unsigned int handle)
+{
+	return ((FileReader *)handle)->Tell ();
+}
+
 // FSOUND_Sample_Upload seems to mess up the signedness of sound data when
 // uploading to hardware buffers. The pattern is not particularly predictable,
 // so this is a replacement for it that loads the data manually. Source data
@@ -251,7 +275,7 @@ static int PutSampleData (FSOUND_SAMPLE *sample, const BYTE *data, int len,
 
 static void DoLoad (void **slot, sfxinfo_t *sfx)
 {
-	const byte *sfxdata;
+	BYTE *sfxdata;
 	int size;
 	int errcount;
 	unsigned long samplemode;
@@ -264,21 +288,23 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 	{
 		if (sfxdata != NULL)
 		{
-			W_UnMapLump (sfxdata);
+			delete[] sfxdata;
 			sfxdata = NULL;
 		}
 
 		if (errcount)
-			sfx->lumpnum = W_GetNumForName ("dsempty");
+			sfx->lumpnum = Wads.GetNumForName ("dsempty");
 
-		size = W_LumpLength (sfx->lumpnum);
+		size = Wads.LumpLength (sfx->lumpnum);
 		if (size == 0)
 		{
 			errcount++;
 			continue;
 		}
 
-		sfxdata = (const byte *)W_MapLumpNum (sfx->lumpnum);
+		FWadLump wlump = Wads.OpenLumpNum (sfx->lumpnum);
+		sfxdata = new byte[size];
+		wlump.Read (sfxdata, size);
 		SDWORD len = ((SDWORD *)sfxdata)[1];
 
 		// If the sound is raw, just load it as such.
@@ -293,7 +319,7 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 
 			if (sfx->bLoadRAW)
 			{
-				len = W_LumpLength (sfx->lumpnum);
+				len = Wads.LumpLength (sfx->lumpnum);
 				sfx->frequency = (sfx->bForce22050 ? 22050 : 11025);
 				sfxstart = sfxdata;
 			}
@@ -343,17 +369,17 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 				if (*slot == NULL && FSOUND_GetError() == FMOD_ERR_CREATEBUFFER && samplemode == FSOUND_HW3D)
 				{
 					DPrintf ("Trying to fall back to software sample\n");
-					*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata, FSOUND_2D, size);
+					*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata, FSOUND_2D, 0, size);
 				}
 			}
 			else
 			{
 				*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata,
-					samplemode|FSOUND_LOADMEMORY, size);
+					samplemode|FSOUND_LOADMEMORY, 0, size);
 				if (*slot == NULL && FSOUND_GetError() == FMOD_ERR_CREATEBUFFER && samplemode == FSOUND_HW3D)
 				{
 					DPrintf ("Trying to fall back to software sample\n");
-					*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata, FSOUND_2D|FSOUND_LOADMEMORY, size);
+					*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata, FSOUND_2D|FSOUND_LOADMEMORY, 0, size);
 				}
 			}
 			if (*slot != NULL)
@@ -387,7 +413,7 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 
 	if (sfxdata != NULL)
 	{
-		W_UnMapLump (sfxdata);
+		delete[] sfxdata;
 	}
 }
 
@@ -400,7 +426,7 @@ static void getsfx (sfxinfo_t *sfx)
 	// If the sound doesn't exist, replace it with the empty sound.
 	if (sfx->lumpnum == -1)
 	{
-		sfx->lumpnum = W_GetNumForName ("dsempty");
+		sfx->lumpnum = Wads.GetNumForName ("dsempty");
 	}
 	
 	// See if there is another sound already initialized with this lump. If so,
@@ -1136,6 +1162,7 @@ void I_InitSound ()
 		SoundDown = false;
 	}
 
+	FSOUND_File_SetCallbacks (OpenCallback, CloseCallback, ReadCallback, SeekCallback, TellCallback);
 	I_InitMusic ();
 
 	snd_sfxvolume.Callback ();

@@ -63,16 +63,24 @@ protected:
 	friend class FMultiPatchTexture;
 };
 
+// In-memory representation of a single PNAMES lump entry
+struct FPatchLookup
+{
+	char Name[9];
+	FTexture *Texture;
+};
+
 // A texture defined in a TEXTURE1 or TEXTURE2 lump
 class FMultiPatchTexture : public FTexture
 {
 public:
-	FMultiPatchTexture (const void *texdef, FTexture **patchlookup, bool strife);
+	FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife);
 	~FMultiPatchTexture ();
 
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+	virtual void SetFrontSkyLayer ();
 
 protected:
 	BYTE *Pixels;
@@ -172,6 +180,37 @@ protected:
 	struct ImageHeader;
 };
 
+
+// A PNG image
+class FPNGTexture : public FTexture
+{
+public:
+	FPNGTexture (int lumpnum, int width, int height, BYTE bitdepth, BYTE colortype, BYTE interlace);
+	~FPNGTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+
+protected:
+	int SourceLump;
+	BYTE *Pixels;
+	Span **Spans;
+
+	BYTE BitDepth;
+	BYTE ColorType;
+	BYTE Interlace;
+
+	BYTE *PaletteMap;
+	int PaletteSize;
+	DWORD StartOfIDAT;
+
+	static BYTE GrayMap[256];
+
+	void MakeTexture ();
+};
+
+
 // A texture that returns a wiggly version of another texture.
 class FWarpTexture : public FTexture
 {
@@ -182,6 +221,7 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+	bool CheckModified ();
 
 protected:
 	FTexture *SourcePic;

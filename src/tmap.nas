@@ -60,6 +60,9 @@ EXTERN dc_source
 EXTERN dc_yl
 EXTERN dc_yh
 EXTERN dc_x
+EXTERN dc_count
+EXTERN dc_dest
+EXTERN dc_destorg
 
 EXTERN dc_ctspan
 EXTERN dc_temp
@@ -95,6 +98,9 @@ EXTERN _dc_source
 EXTERN _dc_yl
 EXTERN _dc_yh
 EXTERN _dc_x
+EXTERN _dc_count
+EXTERN _dc_dest
+EXTERN _dc_destorg
 
 EXTERN _dc_ctspan
 EXTERN _dc_temp
@@ -128,6 +134,9 @@ GLOBAL _ds_curcolormap
 %define dc_yl		_dc_yl
 %define dc_yh		_dc_yh
 %define dc_x		_dc_x
+%define dc_count	_dc_count
+%define dc_dest		_dc_dest
+%define dc_destorg	_dc_destorg
 
 %define dc_ctspan	_dc_ctspan
 %define dc_temp		_dc_temp
@@ -198,16 +207,13 @@ R_SetSpanColormap_ASM:
 	mov	[ds_curcolormap],ecx
 	ret
 
-GLOBAL @R_SetSpanSize_ASM@8
 GLOBAL R_SetSpanSize_ASM
 
 EXTERN	SetTiltedSpanSize
 
 R_SetSpanSize_ASM:
-	mov	ecx,[esp+8]
 	mov	edx,[esp+4]
-	
-@R_SetSpanSize_ASM@8:
+	mov	ecx,[esp+8]
 	call	SetTiltedSpanSize
 	
 	mov	[dsy1+2],dl
@@ -254,7 +260,7 @@ GLOBAL R_DrawSpanP_ASM
 
 ; eax: scratch
 ; ebx: zero
-; ecx: yfrac at top end, xfrac int part in low end3
+; ecx: yfrac at top end, xfrac int part at low end
 ; edx: xfrac frac part at top end
 ; edi: dest
 ; ebp: scratch
@@ -276,6 +282,7 @@ R_DrawSpanP_ASM:
 	push	esi
 
 	mov	edi,ecx
+	add	edi,[dc_destorg]
 	 mov	ecx,[ds_y]
 	add	edi,[ylookup+ecx*4]
 	 mov	edx,[ds_xstep]
@@ -402,29 +409,25 @@ _R_DrawColumnP_ASM:
 
 ; count = dc_yh - dc_yl;
 
-	mov	ecx,[dc_yh]
-	 mov	eax,[dc_yl]
-	sub	ecx,eax
-	 jl	near rdcpret		; count < 0: nothing to do, so leave
+	mov	ecx,[dc_count]
+	test	ecx,ecx
+	jle	near rdcpret		; count <= 0: nothing to do, so leave
 
 	push	ebp			; save registers
 	 push	ebx
 	push	edi
 	 push	esi
 
-; dest = ylookup[dc_yl] + dc_x;
+; dest = ylookup[dc_yl] + dc_x + dc_destorg;
 
-	lea	ebp,[ecx+1]		; make 0 count mean 0 pixels
-	 mov	esi,[dc_x]
-	mov	edi,[ylookup+eax*4]
-	 mov	ebx,[dc_texturefrac]	; ebx = frac
-	add	edi,esi			; edi = top of destination column
-	 mov	ecx,ebx
+	mov	edi,[dc_dest]
+	mov	ebp,ecx
+	mov	ebx,[dc_texturefrac]	; ebx = frac
+rdcp1:	sub	edi,SPACEFILLER4
+	mov	ecx,ebx
 	shr	ecx,16
-	 mov	esi,[dc_source]
+	mov	esi,[dc_source]
 	mov	edx,[dc_iscale]
-
-rdcp1:	 sub	edi,SPACEFILLER4
 	mov	eax,[dc_colormap]
 
 	cmp	BYTE [CPU+66],byte 5
@@ -537,15 +540,16 @@ _R_DrawFuzzColumnP_ASM:
 
 	mov	edi,[ylookup+eax*4]
 	 mov	ebx,edx
-	mov	eax,[NormalLight]
-	 mov	ecx,[fuzzpos]
-	add	edi,ebx
-	 add	eax,256*6
-	inc	esi
-	 mov	ebp,[dc_pitch]
-	mov	edx,FUZZTABLE
-	 test	ecx,ecx
-	je	.fuzz0
+	add	edi,[dc_destorg]
+	 mov	eax,[NormalLight]
+	mov	ecx,[fuzzpos]
+	 add	edi,ebx
+	add	eax,256*6
+	 inc	esi
+	mov	ebp,[dc_pitch]
+	 mov	edx,FUZZTABLE
+	test	ecx,ecx
+	 je	.fuzz0
 
 ;
 ; esi = count
@@ -900,6 +904,7 @@ _rt_copy1col_asm:
 	mov	edi,[ylookup+esi]
 	mov	esi,[dc_pitch]		; esi = pitch
 	add	eax,edi			; eax = dest
+	add	eax,[dc_destorg]
 
 	shr	ebx,1
 	jnc	.even
@@ -965,6 +970,7 @@ _rt_copy4cols_asm:
 	lea	ecx,[dc_temp+edx*4]	; ecx = source
 	mov	edx,[dc_pitch]		; edx = pitch
 	add	eax,esi			; eax = dest
+	add	eax,[dc_destorg]
 
 	shr	ebx,1
 	jnc	.even
@@ -1039,6 +1045,7 @@ _rt_map1col_asm:
 	add	eax,ecx				; eax = dest
 	xor	ecx,ecx
 	xor	edx,edx
+	add	eax,[dc_destorg]
 
 	shr	ebx,1
 	jnc	.even
@@ -1114,6 +1121,7 @@ _rt_map4cols_asm1:
 	lea	ebp,[dc_temp+edx]	; ebp = source
 	add	eax,edi			; eax = dest
 	mov	edi,[dc_pitch]		; edi = pitch
+	add	eax,[dc_destorg]
 	xor	ecx,ecx
 	xor	edx,edx
 
@@ -1207,6 +1215,7 @@ _rt_map4cols_asm2:
 	lea	ebp,[dc_temp+edx]	; ebp = source
 	add	eax,edi			; eax = dest
 	mov	edi,[dc_pitch]		; edi = pitch
+	add	eax,[dc_destorg]
 	xor	ecx,ecx
 	xor	edx,edx
 

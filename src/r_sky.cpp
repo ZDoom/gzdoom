@@ -89,7 +89,7 @@ void R_InitSkyMap ()
 	}
 
 	fskyheight = skytex1->GetHeight() << FRACBITS;
-	if (fskyheight <= (128 << FRACBITS))
+	if (DivScale3 (fskyheight, skytex1->ScaleY ? skytex1->ScaleY : 8) <= (128 << FRACBITS))
 	{
 		skytexturemid = r_Yaspect/2*FRACUNIT;
 		skystretch = (r_stretchsky
@@ -98,7 +98,7 @@ void R_InitSkyMap ()
 	}
 	else
 	{
-		skytexturemid = 199<<FRACBITS;//textureheight[sky1texture]-1;
+		skytexturemid = MulScale3 (199<<FRACBITS, skytex1->ScaleY);
 		skystretch = 0;
 	}
 	skyheight = fskyheight << skystretch;

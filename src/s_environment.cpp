@@ -568,7 +568,7 @@ void S_ParseSndEax ()
 {
 	int lump, lastlump = 0;
 
-	while ((lump = W_FindLump ("SNDEAX", &lastlump)) != -1)
+	while ((lump = Wads.FindLump ("SNDEAX", &lastlump)) != -1)
 	{
 		SC_OpenLumpNum (lump, "SNDEAX");
 		ReadEAX ();

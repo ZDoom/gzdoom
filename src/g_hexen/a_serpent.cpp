@@ -477,7 +477,7 @@ void A_SerpentChase (AActor *actor)
 //
 	if ((multiplayer || actor->TIDtoHate)
 		&& !actor->threshold
-		&& !P_CheckSight (actor, actor->target, false) )
+		&& !P_CheckSight (actor, actor->target, 0) )
 	{
 		bool lookForBetter = false;
 		BOOL gotNew;
@@ -694,7 +694,7 @@ void A_SerpentWalk (AActor *actor)
 //
 	if ((multiplayer || actor->TIDtoHate)
 		&& !actor->threshold
-		&& !P_CheckSight (actor, actor->target, false) )
+		&& !P_CheckSight (actor, actor->target, 0) )
 	{
 		bool lookForBetter = false;
 		BOOL gotNew;

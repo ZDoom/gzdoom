@@ -1758,6 +1758,7 @@ static int PatchText (int oldSize)
 		}
 	}
 
+#if 0
 	// Search through music names.
 	if (oldSize < 7)
 	{		// Music names are never >6 chars
@@ -1775,6 +1776,7 @@ static int PatchText (int oldSize)
 			info++;
 		}
 	}
+#endif
 
 	if (good)
 		goto donewithtext;
@@ -1964,16 +1966,16 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 	PatchFile = NULL;
 	PatchName = NULL;
 
-	lump = W_CheckNumForName ("DEHACKED");
+	lump = Wads.CheckNumForName ("DEHACKED");
 
 	if (lump >= 0 && autoloading)
 	{
 		// Execute the DEHACKED lump as a patch.
 		strcpy (file, "DEHACKED lump");
-		filelen = W_LumpLength (lump);
+		filelen = Wads.LumpLength (lump);
 		if ( (PatchFile = new char[filelen + 1]) )
 		{
-			W_ReadLump (lump, PatchFile);
+			Wads.ReadLump (lump, PatchFile);
 		}
 		else
 		{
@@ -2017,13 +2019,13 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 			FixPathSeperator (file);
 			ExtractFileBase (file, file);
 			file[8] = 0;
-			lump = W_CheckNumForName (file);
+			lump = Wads.CheckNumForName (file);
 			if (lump >= 0)
 			{
-				filelen = W_LumpLength (lump);
+				filelen = Wads.LumpLength (lump);
 				if ( (PatchFile = new char[filelen + 1]) )
 				{
-					W_ReadLump (lump, PatchFile);
+					Wads.ReadLump (lump, PatchFile);
 				}
 				else
 				{
@@ -2058,8 +2060,15 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 	}
 */
 	cont = 0;
-	if (!strncmp (PatchFile, "Patch File for DeHackEd v", 25))
+	if (0 == strncmp (PatchFile, "Patch File for DeHackEd v", 25))
 	{
+		if (PatchFile[25] < '3')
+		{
+			if (PatchName != NULL) delete[] PatchName;
+			delete[] PatchFile;
+			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", file);
+			return;
+		}
 		PatchPt = strchr (PatchFile, '\n');
 		while ((cont = GetLine()) == 1)
 		{
@@ -2070,7 +2079,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 		{
 			if (PatchName != NULL) delete[] PatchName;
 			delete[] PatchFile;
-			Printf ("\"%s\" is not a DeHackEd patch file\n", file);
+			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", file);
 			return;
 		}
 	}
@@ -2166,7 +2175,7 @@ static void UnloadDehSupp ()
 	if (--DehUseCount <= 0)
 	{
 		DehUseCount = 0;
-		W_UnMapLump (DehSuppLump);
+		delete[] DehSuppLump;
 		DehSuppLump = NULL;
 		if (OrgSprNames != NULL)
 		{
@@ -2205,7 +2214,7 @@ static void UnloadDehSupp ()
 
 static bool LoadDehSupp ()
 {
-	int lump = W_CheckNumForName ("DEHSUPP");
+	int lump = Wads.CheckNumForName ("DEHSUPP");
 	bool gotnames = false;
 	int i;
 	BYTE *supp;
@@ -2236,7 +2245,9 @@ static bool LoadDehSupp ()
 	}
 	else
 	{
-		supp = (BYTE *)W_MapLumpNum (lump, true);
+		int len = Wads.LumpLength (lump);
+		supp = new BYTE[len];
+		Wads.ReadLump (lump, supp);
 		DehSuppLump = supp;
 	}
 
@@ -2438,9 +2449,20 @@ void A_SpawnDehackedPickup (AActor *actor)
 	if ((size_t)actor->health < DehackedPickups.Size())
 	{
 		AActor *real = Spawn (DehackedPickups[actor->health], actor->x, actor->y, actor->z);
-		if (real != NULL && (actor->flags & MF_DROPPED))
+		if (real != NULL)
 		{
-			real->flags |= MF_DROPPED;
+			// Copy properties from the original item to the dehacked pickup it spawns
+			if (actor->flags & MF_DROPPED)
+			{
+				real->flags |= MF_DROPPED;
+			}
+			real->special = actor->special;
+			memcpy (real->args, actor->args, sizeof(real->args));
+			if (actor->tid != 0)
+			{
+				real->tid = actor->tid;
+				real->AddToHash ();
+			}
 		}
 	}
 }

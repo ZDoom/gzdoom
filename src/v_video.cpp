@@ -301,22 +301,24 @@ int V_GetColorFromString (const DWORD *palette, const char *cstr)
 
 char *V_GetColorStringByName (const char *name)
 {
-	char *rgbNames, *rgbEnd;
+	FMemLump rgbNames;
+	char *rgbEnd;
 	char *rgb, *endp;
 	char descr[5*3];
 	int rgblump;
 	int c[3], step;
 	size_t namelen;
 
-	rgblump = W_CheckNumForName ("X11R6RGB");
+	rgblump = Wads.CheckNumForName ("X11R6RGB");
 	if (rgblump == -1)
 	{
 		Printf ("X11R6RGB lump not found\n");
 		return NULL;
 	}
 
-	rgb = rgbNames = (char *)W_MapLumpNum (rgblump, true);
-	rgbEnd = rgbNames + W_LumpLength (rgblump);
+	rgbNames = Wads.ReadLump (rgblump);
+	rgb = (char *)rgbNames.GetMem();
+	rgbEnd = rgb + Wads.LumpLength (rgblump);
 	step = 0;
 	namelen = strlen (name);
 
@@ -373,7 +375,6 @@ char *V_GetColorStringByName (const char *name)
 	{
 		Printf ("X11R6RGB lump is corrupt\n");
 	}
-	W_UnMapLump (rgbNames);
 	return NULL;
 }
 
@@ -511,7 +512,8 @@ void DCanvas::Blit (int srcx, int srcy, int srcwidth, int srcheight,
 void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 {
 	// I found this formula on the web at
-	// <http://panda.mostang.com/sane/sane-gamma.html>
+	// <http://panda.mostang.com/sane/sane-gamma.html>,
+	// but that page no longer exits.
 
 	double invgamma = 1.f / gamma;
 	int i;
@@ -522,53 +524,37 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 	}
 }
 
-CUSTOM_CVAR (Int, ff, 0, CVAR_NOINITCALL)
-{
-	if (screen != NULL)
-	{
-		char foo[256];
-		sprintf (foo, "vid_setmode %d %d", screen->GetWidth(), screen->GetHeight());
-		AddCommandString (foo);
-	}
-}
-
 DSimpleCanvas::DSimpleCanvas (int width, int height)
 	: DCanvas (width, height)
 {
 	// Making the pitch a power of 2 is very bad for performance
 	// Try to maximize the number of cache lines that can be filled
 	// for each column drawing operation by making the pitch slightly
-	// longer than the width. Assumptions about the size and number
-	// of cache lines are based on the PMMX/PII/PIII, which have 512
-	// 32-byte cache lines, which are 4-way set associative, so any data
-	// access 4K apart will be in the same cache set. By minimizing
-	// the number of cache sets assigned to each cache line, we should
-	// be able to maximize the number of cache lines used. The important
-	// thing here is that cache lines are 32 bytes in size. Other
-	// processors are different. For instance, an Athlon has a 16-way
-	// set associative cache with 1024 64-byte cache lines. And the P4
-	// has 128-byte cache lines (don't know about its associativity).
-	// For simplicity, I just assume 32-byte cache lines here.
+	// longer than the width. The values used here are all based on
+	// empirical evidence.
 
-	Pitch = width;
-	if (ff <= -10)
+	if (width <= 640)
 	{
-		Pitch = ff * -64;
+		// For low resolutions, just keep the pitch the same as the width.
+		// Some speedup can be seen using the technique below, but the speedup
+		// is so marginal that I don't consider it worthwhile.
+		Pitch = width;
 	}
-	else if (ff == -2)
+	else
 	{
-		Pitch = (width & ~63) + 64;
-	}
-	else if (ff == -1)
-	{
-		Pitch = 1;
-		while (Pitch < width)
-			Pitch <<= 1;
-		Pitch += 64;
-	}
-	else if (ff > 0)
-	{
-		Pitch = width | (8*ff);
+		// The Athlon and P3 have very different caches, apparently.
+		// I am going to generalize the Athlon's performance to all AMD
+		// processor and the P3's to all non-AMD processors. I don't know
+		// how smart that is, but I don't have a vast plethora of
+		// processors to test with.
+		if (CPU.bIsAMD)
+		{
+			Pitch = width + CPU.DataL1LineSize;
+		}
+		else
+		{
+			Pitch = width + CPU.DataL1LineSize - 8;
+		}
 	}
 	MemBuffer = new BYTE[Pitch * height];
 }
@@ -618,17 +604,13 @@ void DFrameBuffer::DrawRateStuff ()
 	if (vid_fps)
 	{
 		QWORD ms = I_MSTime ();
-		QWORD howlong = ms - LastMS;
+		DWORD howlong = DWORD(ms - LastMS);
 		if (howlong > 0)
 		{
 			char fpsbuff[40];
 			int chars;
 
-#if _MSC_VER
-			chars = sprintf (fpsbuff, "%2I64d ms (%3ld fps)", howlong, LastCount);
-#else
-			chars = sprintf (fpsbuff, "%2Ld ms (%3ld fps)", howlong, LastCount);
-#endif
+			chars = sprintf (fpsbuff, "%2lu ms (%3lu fps)", howlong, LastCount);
 			Clear (0, screen->GetHeight() - 8, chars * 8, screen->GetHeight(), 0);
 			SetFont (ConFont);
 			DrawText (CR_WHITE, 0, screen->GetHeight() - 8, (char *)&fpsbuff[0], TAG_DONE);
@@ -717,7 +699,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	RenderTarget = screen;
 	screen->Lock (true);
-	R_SetupBuffer ();
+	R_SetupBuffer (false);
 	screen->Unlock ();
 
 	M_RefreshModesList ();
@@ -819,7 +801,7 @@ void V_Init (void)
 	InitPalette ();
 
 	// load the heads-up font
-	if (W_CheckNumForName ("FONTA_S") >= 0)
+	if (Wads.CheckNumForName ("FONTA_S") >= 0)
 	{
 		SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
 	}
@@ -827,9 +809,9 @@ void V_Init (void)
 	{
 		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
 	}
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Strife)
 	{
-		BigFont = new FSingleLumpFont ("BigFont", W_GetNumForName ("DBIGFONT"));
+		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
 	}
 	else
 	{
@@ -879,7 +861,7 @@ void V_Init (void)
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	FBaseCVar::ResetColors ();
-	ConFont = new FSingleLumpFont ("ConsoleFont", W_GetNumForName ("CONFONT"));
+	ConFont = new FSingleLumpFont ("ConsoleFont", Wads.GetNumForName ("CONFONT"));
 
 	BuildTransTable (GPalette.BaseColors);
 }

@@ -257,7 +257,9 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 		}
 		else if (attacker->player == NULL)
 		{
-			if (mod == MOD_HIT)
+			if (mod == MOD_TELEFRAG)
+				message = GStrings(OB_MONTELEFRAG);
+			else if (mod == MOD_HIT)
 				message = attacker->GetHitObituary ();
 			else
 				message = attacker->GetObituary ();
@@ -351,7 +353,6 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	}
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY|MF_NOGRAVITY);
 	flags |= MF_CORPSE|MF_DROPOFF;
-	//flags2 &= ~MF2_PASSMOBJ;
 	height >>= 2;
 
 	// [RH] If the thing has a special, execute and remove it
@@ -391,7 +392,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						player->userinfo.gender, player->userinfo.netname,
 						player->userinfo.netname);
 					StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
-							1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
+							1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), 'KSPR');
 				}
 			}
 			else
@@ -436,7 +437,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 							SexMessage (GStrings(SPREEOVER), buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
-								1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
+								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), 'KSPR');
 						}
 					}
 					else if (spreemsg != NULL)
@@ -446,7 +447,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 							SexMessage (spreemsg, buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
-								1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
+								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), 'KSPR');
 						}
 					}
 				}
@@ -494,7 +495,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 							SexMessage (multimsg, buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
-								1.5f, 0.8f, CR_RED, 3.f, 0.5f), 'MKIL');
+								1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), 'MKIL');
 						}
 					}
 				}
@@ -772,10 +773,18 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			ang = R_PointToAngle2 (inflictor->x, inflictor->y,
 				target->x, target->y);
 			thrust = damage*(FRACUNIT>>3)*kickback / target->Mass;
+			// [RH] If thrust overflows, use a more reasonable amount
+			if (thrust < 0)
+			{
+				thrust = 10*FRACUNIT;
+			}
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
 				 && (target->z - inflictor->z > 64*FRACUNIT)
-				 && (pr_damagemobj()&1))
+				 && (pr_damagemobj()&1)
+				 // [RH] But only if not too fast and not flying
+				 && thrust < 10*FRACUNIT
+				 && !(target->flags & MF_NOGRAVITY))
 			{
 				ang += ANG180;
 				thrust *= 4;

@@ -165,8 +165,6 @@ vlineasm4:
 		mov edi, [dc_dest]
 
 		mov eax, dword [ylookup+ecx*4-4]
-		mov ebx, dword [ylookup]
-		sub eax, ebx
 		add eax, edi
 		mov dword [machvline4end+2], eax
 		sub edi, eax

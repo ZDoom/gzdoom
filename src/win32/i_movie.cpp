@@ -431,7 +431,7 @@ static void CheckIfVideo ()
 		DHUDMessage *message = new DHUDMessage (
 			"This movie either does not contain a video stream "
 			"or no suitable decompressor could be found.",
-			1.5f, 0.375f, CR_RED, 1.f);
+			1.5f, 0.375f, 0, 0, CR_RED, 1.f);
 		StatusBar->AttachMessage (message);
 		screen->Lock (false);
 		StatusBar->Draw (HUD_None);

@@ -121,8 +121,17 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->FloorFlags
 			<< sec->CeilingFlags
 			<< sec->sky
-			<< sec->MoreFlags
-			<< sec->SkyBox;
+			<< sec->MoreFlags;
+		if (SaveVersion < 213)
+		{
+			ASkyViewpoint *skybox;
+			arc << skybox;
+			sec->FloorSkyBox = sec->CeilingSkyBox = skybox;
+		}
+		else
+		{
+			arc << sec->FloorSkyBox << sec->CeilingSkyBox;
+		}
 		if (SaveVersion >= 211)
 		{
 			arc << sec->ZoneNumber;
@@ -143,12 +152,23 @@ void P_SerializeWorld (FArchive &arc)
 		{
 			arc << sec->ColorMap->Color
 				<< sec->ColorMap->Fade;
+			BYTE sat = sec->ColorMap->Desaturate;
+			arc << sat;
 		}
 		else
 		{
 			PalEntry color, fade;
+			BYTE desaturate;
 			arc << color << fade;
-			sec->ColorMap = GetSpecialLights (color, fade);
+			if (SaveVersion < 214)
+			{
+				desaturate = 0;
+			}
+			else
+			{
+				arc << desaturate;
+			}
+			sec->ColorMap = GetSpecialLights (color, fade, desaturate);
 			if (SaveVersion < 201)
 			{ // Version 200 had separate colormaps for the floor and ceiling,
 			  // even though they were always the same.

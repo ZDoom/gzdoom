@@ -66,7 +66,6 @@ static bool ScriptOpen = false;
 static int ScriptSize;
 static bool AlreadyGot = false;
 static bool FreeScript = false;
-static bool UnMapScript = false;
 static char *SavedScriptPtr;
 static int SavedScriptLine;
 
@@ -80,7 +79,7 @@ static int SavedScriptLine;
 
 void SC_Open (const char *name)
 {
-	SC_OpenLumpNum (W_GetNumForName (name), name);
+	SC_OpenLumpNum (Wads.GetNumForName (name), name);
 }
 
 //==========================================================================
@@ -98,7 +97,6 @@ void SC_OpenFile (const char *name)
 	ScriptSize = M_ReadFile (name, (byte **)&ScriptBuffer);
 	ExtractFileBase (name, ScriptName);
 	FreeScript = true;
-	UnMapScript = false;
 	SC_PrepareScript ();
 }
 
@@ -118,7 +116,6 @@ void SC_OpenMem (const char *name, char *buffer, int size)
 	ScriptBuffer = buffer;
 	strcpy (ScriptName, name);
 	FreeScript = false;
-	UnMapScript = false;
 	SC_PrepareScript ();
 }
 
@@ -133,11 +130,11 @@ void SC_OpenMem (const char *name, char *buffer, int size)
 void SC_OpenLumpNum (int lump, const char *name)
 {
 	SC_Close ();
-	ScriptBuffer = (char *)W_MapLumpNum (lump);
-	ScriptSize = W_LumpLength (lump);
+	ScriptSize = Wads.LumpLength (lump);
+	ScriptBuffer = new char[ScriptSize];
+	Wads.ReadLump (lump, ScriptBuffer);
 	strcpy (ScriptName, name);
-	FreeScript = false;
-	UnMapScript = true;
+	FreeScript = true;
 	SC_PrepareScript ();
 }
 
@@ -176,10 +173,6 @@ void SC_Close (void)
 			if (FreeScript)
 			{
 				delete[] ScriptBuffer;
-			}
-			else if (UnMapScript)
-			{
-				W_UnMapLump (ScriptBuffer);
 			}
 		}
 		ScriptBuffer = NULL;

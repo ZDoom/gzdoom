@@ -1072,7 +1072,7 @@ void R_Subsector (subsector_t *sub, bool add)
 	R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);
 
 	// [RH] set foggy flag
-	foggy = level.fadeto || frontsector->ColorMap->Fade;
+	foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
 	r_actualextralight = foggy ? 0 : extralight << 4;
 	basecolormap = frontsector->ColorMap->Maps;
 
@@ -1091,7 +1091,7 @@ void R_Subsector (subsector_t *sub, bool add)
 					frontsector->ceiling_xscale,
 					frontsector->ceiling_yscale,
 					frontsector->ceiling_angle + frontsector->base_ceiling_angle,
-					frontsector->SkyBox
+					frontsector->CeilingSkyBox
 					) : NULL;
 
 	basecolormap = frontsector->ColorMap->Maps;
@@ -1114,7 +1114,7 @@ void R_Subsector (subsector_t *sub, bool add)
 					frontsector->floor_xscale,
 					frontsector->floor_yscale,
 					frontsector->floor_angle + frontsector->base_floor_angle,
-					frontsector->SkyBox
+					frontsector->FloorSkyBox
 					) : NULL;
 
 	// killough 9/18/98: Fix underwater slowdown, by passing real sector 

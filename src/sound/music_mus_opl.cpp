@@ -21,12 +21,12 @@ CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 }
 
 
-OPLMUSSong::OPLMUSSong (const void *mem, int len)
+OPLMUSSong::OPLMUSSong (FileReader *file)
 {
 	int rate = *opl_frequency;
 	int samples = rate/14;
 
-	Music = new OPLmusicBlock (mem, len, rate, samples);
+	Music = new OPLmusicBlock (file, rate, samples);
 
 	m_Stream = FSOUND_Stream_Create (FillStream, samples*2,
 		FSOUND_SIGNED | FSOUND_2D | FSOUND_MONO | FSOUND_16BITS,
@@ -85,7 +85,7 @@ void OPLMUSSong::Play (bool looping)
 	}
 }
 
-signed char STACK_ARGS OPLMUSSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+signed char F_CALLBACKAPI OPLMUSSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
 {
 	OPLMUSSong *song = (OPLMUSSong *)param;
 	song->Music->ServiceStream (buff, len);

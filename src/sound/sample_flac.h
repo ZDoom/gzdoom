@@ -1,6 +1,7 @@
 #include <fmod.h>
 #include <FLAC++/decoder.h>
 #include "s_sound.h"
+#include "files.h"
 
 class FLACSampleLoader : protected FLAC::Decoder::Stream
 {
@@ -20,9 +21,8 @@ protected:
 
 	void CopyToSample (size_t ofs, FLAC__int32 **buffer, size_t samples);
 
-	const FLAC__byte *MemStart;
-	const FLAC__byte *MemEnd;
-	const FLAC__byte *MemPos;
+	FileReader File;
+	long StartPos, EndPos;
 
 	void *SBuff, *SBuff2;
 	unsigned int SLen, SLen2;

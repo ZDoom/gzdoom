@@ -123,18 +123,25 @@ static TArray<FSwitchDef *> SwitchList;
 //		MAXSWITCHES limit.
 void P_InitSwitchList ()
 {
-	int lump = W_CheckNumForName ("SWITCHES");
+	int lump = Wads.CheckNumForName ("SWITCHES");
 	FSwitchDef **origMap;
 	int i, j;
 
 	if (lump != -1)
 	{
-		const char *alphSwitchList = (const char *)W_MapLumpNum (lump);
+		FMemLump lumpdata = Wads.ReadLump (lump);
+		const char *alphSwitchList = (const char *)lumpdata.GetMem();
 		const char *list_p;
 		FSwitchDef *def1, *def2;
 
 		for (list_p = alphSwitchList; list_p[18] || list_p[19]; list_p += 20)
 		{
+			// [RH] Check for switches that aren't really switches
+			if (stricmp (list_p, list_p+9) == 0)
+			{
+				Printf ("Switch %s in SWITCHES has the same 'on' state\n", list_p);
+				continue;
+			}
 			// [RH] Skip this switch if its texture can't be found.
 			if (((gameinfo.maxSwitch & 15) >= (list_p[18] & 15)) &&
 				((gameinfo.maxSwitch & ~15) == (list_p[18] & ~15)) &&
@@ -151,8 +158,6 @@ void P_InitSwitchList ()
 				def1->PairIndex = AddSwitchDef (def2);
 			}
 		}
-
-		W_UnMapLump (alphSwitchList);
 	}
 
 	SwitchList.ShrinkToFit ();
@@ -212,6 +217,10 @@ void P_ProcessSwitchDef ()
 	else if (SC_Compare ("hexen"))
 	{
 		max = 33;
+	}
+	else if (SC_Compare ("strife"))
+	{
+		max = 49;
 	}
 	else if (SC_Compare ("any"))
 	{

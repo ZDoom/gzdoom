@@ -93,6 +93,9 @@ fixed_t			r_TicFrac;			// [RH] Fractional tic to render
 DWORD			r_FrameTime;		// [RH] Time this frame started drawing (in ms)
 bool			r_NoInterpolate;
 
+angle_t			LocalViewAngle;
+int				LocalViewPitch;
+
 fixed_t			GlobVis;
 fixed_t			FocalTangent;
 fixed_t			FocalLengthX;
@@ -782,8 +785,9 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 //==========================================================================
 
 //CVAR (Int, tf, 0, 0)
+EXTERN_CVAR (Bool, cl_noprediction)
 
-void R_InterpolateView (fixed_t frac)
+void R_InterpolateView (player_t *player, fixed_t frac)
 {
 //	frac = tf;
 	if (NoInterpolateView)
@@ -798,8 +802,26 @@ void R_InterpolateView (fixed_t frac)
 	viewx = oviewx + FixedMul (frac, nviewx - oviewx);
 	viewy = oviewy + FixedMul (frac, nviewy - oviewy);
 	viewz = oviewz + FixedMul (frac, nviewz - oviewz);
-	viewpitch = oviewpitch + FixedMul (frac, nviewpitch - oviewpitch);
-	viewangle = oviewangle + FixedMul (frac, nviewangle - oviewangle);
+	if (player - players == consoleplayer &&
+		camera == player->mo &&
+		!demoplayback &&
+		nviewx == camera->x &&
+		nviewy == camera->y && 
+		!(player->cheats & (CF_TOTALLYFROZEN|CF_FROZEN)) &&
+		player->playerstate == PST_LIVE &&
+		player->mo->reactiontime == 0 &&
+		!NoInterpolateView &&
+		!paused &&
+		(!netgame || !cl_noprediction))
+	{
+		viewangle = nviewangle + (LocalViewAngle & 0xFFFF0000);
+		viewpitch = clamp<int> (nviewpitch - (LocalViewPitch & 0xFFFF0000), -ANGLE_1*32, +ANGLE_1*56);
+	}
+	else
+	{
+		viewpitch = oviewpitch + FixedMul (frac, nviewpitch - oviewpitch);
+		viewangle = oviewangle + FixedMul (frac, nviewangle - oviewangle);
+	}
 }
 
 //==========================================================================
@@ -906,7 +928,8 @@ void R_SetupFrame (player_t *player)
 		r_TicFrac = FRACUNIT;
 	}
 
-	R_InterpolateView (r_TicFrac);
+	R_InterpolateView (player, r_TicFrac);
+
 	R_SetViewAngle ();
 
 	dointerpolations (r_TicFrac);
@@ -1235,14 +1258,17 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 //
 //==========================================================================
 
-void R_SetupBuffer ()
+void R_SetupBuffer (bool inview)
 {
 	static BYTE *lastbuff = NULL;
 
 	int pitch = RenderTarget->GetPitch();
 	BYTE *lineptr = RenderTarget->GetBuffer() + viewwindowy*pitch + viewwindowx;
 
-	pitch <<= detailyshift;
+	if (inview)
+	{
+		pitch <<= detailyshift;
+	}
 	if (detailxshift)
 	{
 		lineptr += viewwidth;
@@ -1258,9 +1284,10 @@ void R_SetupBuffer ()
 			ASM_PatchPitch ();
 #endif
 		}
-		for (int i = 0; i < screen->GetHeight(); i++, lineptr += pitch)
+		dc_destorg = lineptr;
+		for (int i = 0; i < screen->GetHeight(); i++)
 		{
-			ylookup[i] = lineptr;
+			ylookup[i] = i * pitch;
 		}
 	}
 }
@@ -1275,7 +1302,7 @@ void R_RenderPlayerView (player_t *player)
 {
 	WallCycles = PlaneCycles = MaskedCycles = WallScanCycles = 0;
 
-	R_SetupBuffer ();
+	R_SetupBuffer (true);
 	R_SetupFrame (player);
 
 	// Clear buffers.
@@ -1370,6 +1397,15 @@ void R_RenderPlayerView (player_t *player)
 	NetUpdate ();
 
 	restoreinterpolations ();
+
+	// If there is vertical doubling, and the view window is not an even height,
+	// draw a black line at the bottom of the view window.
+	if (detailyshift && viewwindowy == 0 && (realviewheight & 1))
+	{
+		screen->Clear (0, realviewheight-1, realviewwidth, realviewheight, 0);
+	}
+
+	R_SetupBuffer (false);
 }
 
 //==========================================================================
@@ -1402,6 +1438,9 @@ void R_RenderViewToCanvas (player_t *player, DCanvas *canvas,
 	bRenderingToCanvas = false;
 	R_SetDetail (saveddetail);
 	R_ExecuteSetViewSize ();
+	screen->Lock (true);
+	R_SetupBuffer (false);
+	screen->Unlock ();
 }
 
 //==========================================================================
@@ -1425,42 +1464,109 @@ void R_MultiresInit ()
 // See the included license file "BUILDLIC.TXT" for license info.
 
 int numinterpolations = 0, startofdynamicinterpolations = 0;
-fixed_t oldipos[MAXINTERPOLATIONS];
-fixed_t bakipos[MAXINTERPOLATIONS];
-fixed_t *curipos[MAXINTERPOLATIONS];
+fixed_t oldipos[MAXINTERPOLATIONS][2];
+fixed_t bakipos[MAXINTERPOLATIONS][2];
+FActiveInterpolation curipos[MAXINTERPOLATIONS];
 
 static bool didInterp;
 
-void updateinterpolations()  //Stick at beginning of domovethings
+void CopyInterpToOld (int i)
 {
-	int i;
-
-	for(i=numinterpolations-1;i>=0;i--) oldipos[i] = *curipos[i];
+	switch (curipos[i].Type)
+	{
+	case INTERP_SectorFloor:
+		oldipos[i][0] = ((sector_t*)curipos[i].Address)->floorplane.d;
+		oldipos[i][1] = ((sector_t*)curipos[i].Address)->floortexz;
+		break;
+	case INTERP_SectorCeiling:
+		oldipos[i][0] = ((sector_t*)curipos[i].Address)->ceilingplane.d;
+		oldipos[i][1] = ((sector_t*)curipos[i].Address)->ceilingtexz;
+		break;
+	case INTERP_Vertex:
+		oldipos[i][0] = ((vertex_t*)curipos[i].Address)->x;
+		oldipos[i][1] = ((vertex_t*)curipos[i].Address)->y;
+		break;
+	}
 }
 
-void setinterpolation(fixed_t *posptr)
+void CopyBakToInterp (int i)
 {
-	int i;
+	switch (curipos[i].Type)
+	{
+	case INTERP_SectorFloor:
+		((sector_t*)curipos[i].Address)->floorplane.d = bakipos[i][0];
+		((sector_t*)curipos[i].Address)->floortexz = bakipos[i][1];
+		break;
+	case INTERP_SectorCeiling:
+		((sector_t*)curipos[i].Address)->ceilingplane.d = bakipos[i][0];
+		((sector_t*)curipos[i].Address)->ceilingtexz = bakipos[i][1];
+		break;
+	case INTERP_Vertex:
+		((vertex_t*)curipos[i].Address)->x = bakipos[i][0];
+		((vertex_t*)curipos[i].Address)->y = bakipos[i][1];
+		break;
+	}
+}
 
+void DoAnInterpolation (int i, fixed_t smoothratio)
+{
+	fixed_t *adr1, *adr2, pos;
+
+	switch (curipos[i].Type)
+	{
+	case INTERP_SectorFloor:
+		adr1 = &((sector_t*)curipos[i].Address)->floorplane.d;
+		adr2 = &((sector_t*)curipos[i].Address)->floortexz;
+		break;
+	case INTERP_SectorCeiling:
+		adr1 = &((sector_t*)curipos[i].Address)->ceilingplane.d;
+		adr2 = &((sector_t*)curipos[i].Address)->ceilingtexz;
+		break;
+	case INTERP_Vertex:
+		adr1 = &((vertex_t*)curipos[i].Address)->x;
+		adr2 = &((vertex_t*)curipos[i].Address)->y;
+		break;
+	default:
+		return;
+	}
+
+	pos = bakipos[i][0] = *adr1;
+	*adr1 = oldipos[i][0] + FixedMul (pos - oldipos[i][0], smoothratio);
+
+	pos = bakipos[i][1] = *adr2;
+	*adr2 = oldipos[i][1] + FixedMul (pos - oldipos[i][1], smoothratio);
+}
+
+void updateinterpolations()  //Stick at beginning of domovethings
+{
+	for (int i = numinterpolations-1; i >= 0; --i)
+	{
+		CopyInterpToOld (i);
+	}
+}
+
+void setinterpolation(EInterpType type, void *posptr)
+{
 	if (numinterpolations >= MAXINTERPOLATIONS) return;
-	for(i=numinterpolations-1;i>=0;i--)
-		if (curipos[i] == posptr) return;
-	curipos[numinterpolations] = posptr;
-	oldipos[numinterpolations] = *posptr;
+	for(int i = numinterpolations-1; i >= 0; i--)
+		if (curipos[i].Address == posptr && curipos[i].Type == type) return;
+	curipos[numinterpolations].Address = posptr;
+	curipos[numinterpolations].Type = type;
+	CopyInterpToOld (numinterpolations);
 	numinterpolations++;
 }
 
-void stopinterpolation(fixed_t *posptr)
+void stopinterpolation(EInterpType type, void *posptr)
 {
-	int i;
-
-	for(i=numinterpolations-1;i>=startofdynamicinterpolations;i--)
+	for(int i=numinterpolations-1; i>= startofdynamicinterpolations; --i)
 	{
-		if (curipos[i] == posptr)
+		if (curipos[i].Address == posptr && curipos[i].Type == type)
 		{
 			numinterpolations--;
-			oldipos[i] = oldipos[numinterpolations];
-			bakipos[i] = bakipos[numinterpolations];
+			oldipos[i][0] = oldipos[numinterpolations][0];
+			oldipos[i][1] = oldipos[numinterpolations][1];
+			bakipos[i][0] = bakipos[numinterpolations][0];
+			bakipos[i][1] = bakipos[numinterpolations][1];
 			curipos[i] = curipos[numinterpolations];
 			break;
 		}
@@ -1471,8 +1577,6 @@ CVAR (Bool, interp, true, 0);
 
 void dointerpolations(fixed_t smoothratio)       //Stick at beginning of drawscreen
 {
-	int i;
-
 	if (smoothratio == FRACUNIT || !interp)
 	{
 		didInterp = false;
@@ -1481,10 +1585,9 @@ void dointerpolations(fixed_t smoothratio)       //Stick at beginning of drawscr
 
 	didInterp = true;
 
-	for(i=numinterpolations-1;i>=0;i--)
+	for (int i = numinterpolations-1; i >= 0; --i)
 	{
-		fixed_t pos = bakipos[i] = *curipos[i];
-		*curipos[i] = oldipos[i] + FixedMul(pos - oldipos[i], smoothratio);
+		DoAnInterpolation (i, smoothratio);
 	}
 }
 
@@ -1492,9 +1595,76 @@ void restoreinterpolations()  //Stick at end of drawscreen
 {
 	if (didInterp)
 	{
+		didInterp = false;
+		for (int i = numinterpolations-1; i >= 0; --i)
+		{
+			CopyBakToInterp (i);
+		}
+	}
+}
+
+void SerializeInterpolations (FArchive &arc)
+{
+	if (SaveVersion < 216)
+	{
+		numinterpolations = 0;
+	}
+	else
+	{
 		int i;
 
-		didInterp = false;
-		for(i=numinterpolations-1;i>=0;i--) *curipos[i] = bakipos[i];
+		if (arc.IsStoring ())
+		{
+			arc.WriteCount (numinterpolations);
+		}
+		else
+		{
+			numinterpolations = arc.ReadCount ();
+		}
+		for (i = 0; i < numinterpolations; ++i)
+		{
+			arc << curipos[i];
+		}
 	}
+}
+
+FArchive &operator << (FArchive &arc, FActiveInterpolation &interp)
+{
+	BYTE type;
+	union
+	{
+		vertex_t *vert;
+		sector_t *sect;
+		void *ptr;
+	} ptr;
+
+	if (arc.IsStoring ())
+	{
+		type = interp.Type;
+		ptr.ptr = interp.Address;
+		arc << type;
+		if (type == INTERP_Vertex)
+		{
+			arc << ptr.vert;
+		}
+		else
+		{
+			arc << ptr.sect;
+		}
+	}
+	else
+	{
+		arc << type;
+		interp.Type = (EInterpType)type;
+		if (type == INTERP_Vertex)
+		{
+			arc << ptr.vert;
+		}
+		else
+		{
+			arc << ptr.sect;
+		}
+		interp.Address = ptr.ptr;
+	}
+	return arc;
 }

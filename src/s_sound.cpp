@@ -237,7 +237,7 @@ void S_NoiseDebug (void)
 				oy = Channel[i].y;
 			}
 			color = Channel[i].loop ? CR_BROWN : CR_GREY;
-			strcpy (temp, lumpinfo[Channel[i].sfxinfo->lumpnum].name);
+			Wads.GetLumpName (temp, Channel[i].sfxinfo->lumpnum);
 			temp[8] = 0;
 			screen->DrawText (color, 0, y, temp, TAG_DONE);
 			sprintf (temp, "%ld", ox / FRACUNIT);
@@ -277,12 +277,12 @@ void S_Init ()
 	Printf ("S_Init\n");
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
-	curvelump = W_CheckNumForName ("SNDCURVE");
+	curvelump = Wads.CheckNumForName ("SNDCURVE");
 	if (curvelump >= 0)
 	{
-		MAX_SND_DIST = W_LumpLength (curvelump);
+		MAX_SND_DIST = Wads.LumpLength (curvelump);
 		SoundCurve = new BYTE[MAX_SND_DIST];
-		W_ReadLump (curvelump, SoundCurve);
+		Wads.ReadLump (curvelump, SoundCurve);
 
 		// The maximum value in a SNDCURVE lump is 127, so scale it to
 		// fit our sound system's volume levels.
@@ -1311,18 +1311,20 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	else
 	{
 		int lumpnum = -1;
+		FileReader *file;
 
 		if (!FileExists (musicname))
 		{
-			if ((lumpnum = W_CheckNumForName (musicname)) == -1)
+			if ((lumpnum = Wads.CheckNumForName (musicname)) == -1)
 			{
 				Printf ("Music \"%s\" not found\n", musicname);
 				return false;
 			}
+			file = Wads.ReopenLumpNum (lumpnum);
 		}
 		else
 		{
-			lumpnum = W_FakeLump (musicname);
+			file = new FileReader (musicname);
 		}
 
 		// shutdown old music
@@ -1333,7 +1335,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		{
 			delete[] mus_playing.name;
 		}
-		mus_playing.handle = I_RegisterSong (lumpnum);
+		mus_playing.handle = I_RegisterSong (file);
 	}
 
 	mus_playing.loop = looping;

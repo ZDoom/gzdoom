@@ -131,7 +131,7 @@ bool DCajunMaster::Reachable (AActor *actor, AActor *target)
 //in doom is 90 degrees infront.
 bool DCajunMaster::Check_LOS (AActor *from, AActor *to, angle_t vangle)
 {
-	if (!P_CheckSight (from, to, false))
+	if (!P_CheckSight (from, to, 2))
 		return false; // out of sight
 	if (vangle == ANGLE_MAX)
 		return true;
@@ -251,6 +251,8 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 			break;
 		case wp_mstaff:
 			m /= GetDefaultByName ("MageStaffFX2")->Speed;
+			break;
+		default:
 			break;
 		}
 		SetBodyAt (enemy->x + enemy->momx*m*2, enemy->y + enemy->momy*m*2, ONFLOORZ, 1);
@@ -385,7 +387,7 @@ AActor *DCajunMaster::Choose_Mate (AActor *bot)
 			&& !p_leader[count]) //taken?
 		{
 
-			if (P_CheckSight (bot, client->mo, true))
+			if (P_CheckSight (bot, client->mo, 1))
 			{
 				test = P_AproxDistance (client->mo->x - bot->x,
 										client->mo->y - bot->y);
@@ -584,7 +586,7 @@ angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 			   enemy->y + FixedMul(enemy->momy, (m+2*FRACUNIT)), ONFLOORZ, 1);
 	dist = P_AproxDistance(actor->x-bglobal.body1->x, actor->y-bglobal.body1->y);
 	//try the predicted location
-	if (P_CheckSight (actor, bglobal.body1, true)) //See the predicted location, so give a test missile
+	if (P_CheckSight (actor, bglobal.body1, 1)) //See the predicted location, so give a test missile
 	{
 		if (SafeCheckPosition (bot, actor->x, actor->y))
 		{
@@ -596,7 +598,7 @@ angle_t DCajunMaster::FireRox (AActor *bot, AActor *enemy, ticcmd_t *cmd)
 		}
 	}
 	//Try fire straight.
-	if (P_CheckSight (actor, enemy, false))
+	if (P_CheckSight (actor, enemy, 0))
 	{
 		if (FakeFire (bot, enemy, cmd) >= SAFE_SELF_MISDIST)
 		{

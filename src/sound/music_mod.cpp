@@ -57,9 +57,9 @@ MODSong::~MODSong ()
 	}
 }
 
-MODSong::MODSong (const void *mem, int len)
+MODSong::MODSong (FileReader *file)
 {
-	m_Module = FMUSIC_LoadSongEx ((const char *)mem, len, FSOUND_LOADMEMORY, NULL, 0);
+	m_Module = FMUSIC_LoadSongEx ((const char *)file, 0, 0, FSOUND_LOOP_NORMAL, NULL, 0);
 }
 
 bool MODSong::IsPlaying ()

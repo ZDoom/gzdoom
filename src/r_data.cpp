@@ -40,6 +40,7 @@
 #include "m_alloc.h"
 
 #include "m_swap.h"
+#include "m_png.h"
 
 #include "w_wad.h"
 
@@ -76,7 +77,6 @@ struct FIMGZTexture::ImageHeader
 	BYTE Reserved[11];
 };
 
-
 //
 // Graphics.
 // DOOM graphics for walls and sprites
@@ -109,15 +109,17 @@ FTextureManager::~FTextureManager ()
 	}
 }
 
-int FTextureManager::CheckForTexture (const char *name, int usetype, bool tryany)
+int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD flags)
 {
 	int i;
 
-	if (name == NULL)
+	if (name == NULL || name[0] == '\0')
 	{
 		return -1;
 	}
-	// [RH] Doom counted anything beginning with '-' as "no texture"
+	// [RH] Doom counted anything beginning with '-' as "no texture".
+	// Hopefully nobody made use of that and had textures like "-EMPTY",
+	// because -NOFLAT- is a valid graphic for ZDoom.
 	if (name[0] == '-' && name[1] == '\0')
 	{
 		return 0;
@@ -128,29 +130,46 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, bool tryany
 	{
 		const FTexture *tex = Textures[i].Texture;
 
-		if (stricmp (tex->Name, name) == 0 &&
-			(usetype == FTexture::TEX_Any || tex->UseType == usetype))
+		if (stricmp (tex->Name, name) == 0)
 		{
-			return i;
+			// The name matches, so check the texture type
+			if ((flags & TEXMAN_NoStaticNames) && tex->bStaticName)
+			{
+				Printf ("Sorry, RandomLag says you should not be able to use %s as a texture.\n", tex->Name);
+				// Do not return i;
+			}
+			else if (usetype == FTexture::TEX_Any)
+			{
+				return i;
+			}
+			else if ((flags & TEXMAN_Overridable) && tex->UseType == FTexture::TEX_Override)
+			{
+				return i;
+			}
+			else if (tex->UseType == usetype)
+			{
+				return i;
+			}
 		}
 		i = Textures[i].HashNext;
 	}
 
-	if (tryany && usetype != FTexture::TEX_Any)
+	if ((flags & TEXMAN_TryAny) && usetype != FTexture::TEX_Any)
 	{
-		return CheckForTexture (name, FTexture::TEX_Any, false);
+		return CheckForTexture (name, FTexture::TEX_Any, flags & ~TEXMAN_TryAny);
 	}
 
 	return -1;
 }
 
-int FTextureManager::GetTexture (const char *name, int usetype)
+int FTextureManager::GetTexture (const char *name, int usetype, BITFIELD flags)
 {
-	int i = CheckForTexture (name, usetype, true);
+	int i = CheckForTexture (name, usetype, flags | TEXMAN_TryAny);
 
 	if (i == -1)
 	{
 		// Use a default texture instead of aborting like Doom did
+		Printf ("Unknown texture: %s\n", name);
 		i = DefaultTexture;
 	}
 	return i;
@@ -175,6 +194,154 @@ int FTextureManager::AddTexture (FTexture *texture)
 	return trans;
 }
 
+// Examines the lump contents to decide what type of texture to create,
+// creates the texture, and adds it to the manager.
+int FTextureManager::CreateTexture (int lumpnum, int usetype)
+{
+	FTexture *out = NULL;
+    enum { t_patch, t_raw, t_imgz, t_png } type = t_patch;
+
+	if (lumpnum < 0)
+	{
+		return -1;
+	}
+	else
+	{
+		FWadLump data = Wads.OpenLumpNum (lumpnum);
+		DWORD first4bytes;
+
+		data >> first4bytes;
+		if (first4bytes == MAKE_ID('I','M','G','Z'))
+		{
+			type = t_imgz;
+		}
+		else if (first4bytes == MAKE_ID(137,'P','N','G'))
+		{
+			DWORD width, height;
+			BYTE bitdepth, colortype, compression, filter, interlace;
+
+			// This is most likely a PNG, but make sure. (Note that if the
+			// first 4 bytes match, but later bytes don't, we assume it's
+			// a corrupt PNG.)
+			data >> first4bytes;
+			if (first4bytes != MAKE_ID(13,10,26,10))		return -1;
+			data >> first4bytes;
+			if (first4bytes != MAKE_ID(0,0,0,13))			return -1;
+			data >> first4bytes;
+			if (first4bytes != MAKE_ID('I','H','D','R'))	return -1;
+
+			// The PNG looks valid so far. Check the IHDR to make sure it's a
+			// type of PNG we support.
+			data >> width >> height
+				 >> bitdepth >> colortype >> compression >> filter >> interlace;
+
+			if (compression != 0 || filter != 0 || interlace != 0)
+			{
+				return -1;
+			}
+			if (colortype != 0 && colortype != 3)
+			{
+				return -1;
+			}
+
+			// Just for completeness, make sure the PNG has something more than an
+			// IHDR.
+			data >> first4bytes >> first4bytes;
+			if (first4bytes == 0)
+			{
+				data >> first4bytes;
+				if (first4bytes == MAKE_ID('I','E','N','D'))
+				{
+					return -1;
+				}
+			}
+
+			type = t_png;
+			out = new FPNGTexture (lumpnum, BELONG((int)width), BELONG((int)height),
+				bitdepth, colortype, interlace);
+		}
+		else if ((gameinfo.flags & GI_PAGESARERAW) && data.GetLength() == 64000)
+		{
+			// This is probably a raw page graphic, but do some checking to be sure
+			patch_t *foo;
+			int height;
+			int width;
+
+			foo = (patch_t *)Malloc (data.GetLength());
+			data.Seek (-4, SEEK_CUR);
+			data.Read (foo, data.GetLength());
+
+			height = SHORT(foo->height);
+			width = SHORT(foo->width);
+
+			if (height > 0 && height < 510 && width > 0 && width < 15997)
+			{
+				// The dimensions seem like they might be valid for a patch, so
+				// check the column directory for extra security. At least one
+				// column must begin exactly at the end of the column directory,
+				// and none of them must point past the end of the patch.
+				bool gapAtStart = true;
+				int x;
+
+				for (x = 0; x < width; ++x)
+				{
+					DWORD ofs = LONG(foo->columnofs[x]);
+					if (ofs == (DWORD)width * 4 + 8)
+					{
+						gapAtStart = false;
+					}
+					else if (ofs >= 64000-1)	// Need one byte for an empty column
+					{
+						break;
+					}
+					else
+					{
+						// Ensure this column does not extend beyond the end of the patch
+						const BYTE *foo2 = (const BYTE *)foo;
+						while (ofs < 64000)
+						{
+							if (foo2[ofs] == 255)
+							{
+								break;
+							}
+							ofs += foo2[ofs+1] + 4;
+						}
+						if (ofs >= 64000)
+						{
+							break;
+						}
+					}
+				}
+				if (gapAtStart || (x != width))
+				{
+					type = t_raw;
+				}
+			}
+			else
+			{
+				type = t_raw;
+			}
+			free (foo);
+		}
+	}
+	switch (type)
+	{
+	default:		out = new FPatchTexture (lumpnum, FTexture::TEX_MiscPatch); break;
+	case t_raw:		out = new FRawPageTexture (lumpnum); break;
+	case t_imgz:	out = new FIMGZTexture (lumpnum); break;
+	case t_png:		break;
+	}
+	if (out != NULL)
+	{
+		if (usetype != FTexture::TEX_Any)
+		{
+			out->UseType = usetype;
+		}
+		return AddTexture (out);
+	}
+	return -1;
+}
+
 void FTextureManager::ReplaceTexture (int picnum, FTexture *newtexture, bool free)
 {
 	if ((size_t)picnum >= Textures.Size())
@@ -192,131 +359,65 @@ void FTextureManager::ReplaceTexture (int picnum, FTexture *newtexture, bool fre
 	}
 }
 
-int FTextureManager::AddPatch (const char *patchname, int namespc)
+int FTextureManager::AddPatch (const char *patchname, bool staticname, int namespc)
 {
 	if (patchname == NULL)
 	{
 		return -1;
 	}
-	int picnum = CheckForTexture (patchname, FTexture::TEX_MiscPatch, false);
+	int lumpnum = CheckForTexture (patchname, FTexture::TEX_MiscPatch, false);
 
-	if (picnum >= 0)
+	if (lumpnum >= 0)
 	{
-		return picnum;
+		return lumpnum;
 	}
-	picnum = W_CheckNumForName (patchname, namespc);
-	if (picnum < 0)
+	lumpnum = Wads.CheckNumForName (patchname, namespc);
+	if (lumpnum < 0)
 	{
 		return -1;
 	}
 
-	enum { t_patch, t_raw, t_imgz } type = t_patch;
-	const BYTE *data = (const BYTE *)W_MapLumpNum (picnum);
-
-	if (data[0] == 'I' && data[1] == 'M' && data[2] == 'G' && data[3] == 'Z')
+	int picnum = CreateTexture (lumpnum);
+	if (picnum >= 0)
 	{
-		type = t_imgz;
+		TexMan[picnum]->bStaticName = true;
 	}
-	else if (gameinfo.flags & GI_PAGESARERAW && W_LumpLength (picnum) == 64000)
-	{
-		// This is probably a raw page graphic, but do some checking to be sure
-		const patch_t *foo = (const patch_t *)data;
-		int height = SHORT(foo->height);
-		int width = SHORT(foo->width);
-
-		if (height > 0 && height < 510 && width > 0 && width < 15997)
-		{
-			// The dimensions seem like they might be valid for a patch, so
-			// check the column directory for extra security. At least one
-			// column must begin exactly at the end of the column directory,
-			// and none of them must point past the end of the patch.
-			bool gapAtStart = true;
-			int x;
-
-			for (x = 0; x < width; ++x)
-			{
-				DWORD ofs = LONG(foo->columnofs[x]);
-				if (ofs == width * 4 + 8)
-				{
-					gapAtStart = false;
-				}
-				else if (ofs >= 64000-1)	// Need one byte for an empty column
-				{
-					break;
-				}
-				else
-				{
-					// Ensure this column does not extend beyond the end of the patch
-					const BYTE *foo2 = (const BYTE *)foo;
-					while (ofs < 64000)
-					{
-						if (foo2[ofs] == 255)
-						{
-							break;
-						}
-						ofs += foo2[ofs+1] + 4;
-					}
-					if (ofs >= 64000)
-					{
-						break;
-					}
-				}
-			}
-			if (gapAtStart || (x != width))
-			{
-				type = t_raw;
-			}
-		}
-		else
-		{
-			type = t_raw;
-		}
-	}
-
-	W_UnMapLump (data);
-
-	switch (type)
-	{
-	default:		return AddTexture (new FPatchTexture (picnum, FTexture::TEX_MiscPatch));
-	case t_raw:		return AddTexture (new FRawPageTexture (picnum));
-	case t_imgz:	return AddTexture (new FIMGZTexture (picnum));
-	}
+	return picnum;
 }
 
 void FTextureManager::AddFlats ()
 {
-	int firstflat = W_GetNumForName ("F_START") + 1;
-	int lastflat = W_GetNumForName ("F_END") - 1;
+	int firstflat = Wads.GetNumForName ("F_START") + 1;
+	int lastflat = Wads.GetNumForName ("F_END") - 1;
 	int i;
 
 	for (i = firstflat; i <= lastflat; ++i)
 	{
 		AddTexture (new FFlatTexture (i));
 	}
-	DefaultTexture = CheckForTexture ("-NOFLAT-", FTexture::TEX_Flat, false);
 }
 
 void FTextureManager::AddSprites ()
 {
-	int firstsprite = W_GetNumForName ("S_START") + 1;
-	int lastsprite = W_GetNumForName ("S_END") - 1;
+	int firstsprite = Wads.GetNumForName ("S_START") + 1;
+	int lastsprite = Wads.GetNumForName ("S_END") - 1;
 	int i;
 
 	for (i = firstsprite; i <= lastsprite; ++i)
 	{
-		AddTexture (new FPatchTexture (i, FTexture::TEX_Sprite));
+		CreateTexture (i, FTexture::TEX_Sprite);
 	}
 }
 
-void FTextureManager::AddTiles (const void *tiles)
+void FTextureManager::AddTiles (void *tiles)
 {
-	int numtiles = LONG(((DWORD *)tiles)[1]);	// This value is not reliable
+//	int numtiles = LONG(((DWORD *)tiles)[1]);	// This value is not reliable
 	int tilestart = LONG(((DWORD *)tiles)[2]);
 	int tileend = LONG(((DWORD *)tiles)[3]);
 	const WORD *tilesizx = &((const WORD *)tiles)[8];
 	const WORD *tilesizy = &tilesizx[tileend - tilestart + 1];
 	const DWORD *picanm = (const DWORD *)&tilesizy[tileend - tilestart + 1];
-	const BYTE *tiledata = (const BYTE *)&picanm[tileend - tilestart + 1];
+	BYTE *tiledata = (BYTE *)&picanm[tileend - tilestart + 1];
 
 	for (int i = tilestart; i <= tileend; ++i)
 	{
@@ -326,6 +427,7 @@ void FTextureManager::AddTiles (const void *tiles)
 		DWORD anm = LONG(picanm[pic]);
 		int xoffs = (SBYTE)((anm >> 8) & 255) + width/2;
 		int yoffs = (SBYTE)((anm >> 16) & 255) + height/2;
+		int size = width*height;
 		int texnum;
 		FTexture *tex;
 
@@ -333,7 +435,12 @@ void FTextureManager::AddTiles (const void *tiles)
 
 		tex = new FBuildTexture (i, tiledata, width, height, xoffs, yoffs);
 		texnum = AddTexture (tex);
-		tiledata += width * height;
+		while (size > 0)
+		{
+			*tiledata = 255 - *tiledata;
+			tiledata++;
+			size--;
+		}
 
 		if ((picanm[pic] & 63) && (picanm[pic] & 192))
 		{
@@ -344,6 +451,7 @@ void FTextureManager::AddTiles (const void *tiles)
 			case 64:	type = 2;	break;
 			case 128:	type = 0;	break;
 			case 192:	type = 1;	break;
+			default:    type = 0;   break;  // Won't happen, but GCC bugs me if I don't put this here.
 			}
 
 			speed = (anm >> 24) & 15;
@@ -396,76 +504,104 @@ void FTextureManager::AddTiles (const void *tiles)
 	}
 }
 
+void FTextureManager::AddExtraTextures ()
+{
+	int firsttx = Wads.CheckNumForName ("TX_START");
+	int lasttx = Wads.CheckNumForName ("TX_END");
+	char name[9];
+
+	if (firsttx == -1 || lasttx == -1)
+	{
+		return;
+	}
+
+	name[8] = 0;
+
+	// Go from last to first so that later ones override earlier ones,
+	// as is the custom for individual wad lumps.
+	for (lasttx -= 1; lasttx > firsttx; --lasttx)
+	{
+		Wads.GetLumpName (name, lasttx);
+
+		if (CheckForTexture (name, FTexture::TEX_Override, false) == -1)
+		{
+			CreateTexture (lasttx, FTexture::TEX_Override);
+		}
+	}
+	DefaultTexture = CheckForTexture ("-NOFLAT-", FTexture::TEX_Override, 0);
+}
+
 void FTextureManager::AddPatches (int lumpnum)
 {
-	const char *pnames = (const char *)W_MapLumpNum (lumpnum);
-	const char *pnames_p = pnames + 4;
+	FWadLump *file = Wads.ReopenLumpNum (lumpnum);
+	DWORD numpatches, i;
 	char name[9];
-	int numpatches = LONG(*((DWORD *)pnames));
-	int i;
 
+	*file >> numpatches;
 	name[8] = 0;
 
 	for (i = 0; i < numpatches; ++i)
 	{
-		strncpy (name, pnames_p, 8);
-		pnames_p += 8;
+		file->Read (name, 8);
 
 		if (CheckForTexture (name, FTexture::TEX_WallPatch, false) == -1)
 		{
-			AddTexture (new FPatchTexture (W_CheckNumForName (name), FTexture::TEX_WallPatch));
+			CreateTexture (Wads.CheckNumForName (name), FTexture::TEX_WallPatch);
 		}
 	}
 
-	W_UnMapLump (pnames);
+	delete file;
 }
 
 void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool texture1)
 {
-	FTexture **patchlookup;
-	char name[9];
+	FPatchLookup *patchlookup;
 	int i, j;
+	DWORD numpatches;
 
-	const char *pnames = (const char *)W_MapLumpNum (patcheslump);
-	const char *pnames_p = pnames + 4;
-	int numpatches = LONG(*((DWORD *)pnames));
-
-	name[8] = 0;
-
-	// Catalog the patches these textures use so we know which
-	// textures they represent.
-	patchlookup = (FTexture **)alloca (numpatches * sizeof(FTexture*));
-
-	for (i = 0; i < numpatches; ++i)
 	{
-		strncpy (name, pnames_p, 8);
-		pnames_p += 8;
+		FWadLump pnames = Wads.OpenLumpNum (patcheslump);
 
-		j = CheckForTexture (name, FTexture::TEX_WallPatch);
-		if (j >= 0)
+		pnames >> numpatches;
+
+		// Catalog the patches these textures use so we know which
+		// textures they represent.
+		patchlookup = (FPatchLookup *)alloca (numpatches * sizeof(*patchlookup));
+
+		for (DWORD i = 0; i < numpatches; ++i)
 		{
-			patchlookup[i] = Textures[j].Texture;
-		}
-		else
-		{
-			patchlookup[i] = NULL;
+			pnames.Read (patchlookup[i].Name, 8);
+			patchlookup[i].Name[8] = 0;
+
+			j = CheckForTexture (patchlookup[i].Name, FTexture::TEX_WallPatch);
+			if (j >= 0)
+			{
+				patchlookup[i].Texture = Textures[j].Texture;
+			}
+			else
+			{
+				// Shareware Doom has the same PNAMES lump as the registered
+				// Doom, so printing warnings for patches that don't really
+				// exist isn't such a good idea.
+				//Printf ("Patch %s not found.\n", patchlookup[i].Name);
+				patchlookup[i].Texture = NULL;
+			}
 		}
 	}
 
-	W_UnMapLump (pnames);
-
 	bool isStrife = false;
-	int errors = 0;
+	FMemLump memlump;
 	const DWORD *maptex, *directory;
-	int maxoff;
+	DWORD maxoff;
 	int numtextures;
-	DWORD offset;
+	DWORD offset = 0;   // Shut up, GCC!
 
-	maptex = (const DWORD *)W_MapLumpNum (lumpnum);
+	memlump = Wads.ReadLump (lumpnum);
+	maptex = (const DWORD *)memlump.GetMem();
 	numtextures = LONG(*maptex);
-	maxoff = W_LumpLength (lumpnum);
+	maxoff = Wads.LumpLength (lumpnum);
 
-	if (maxoff < (numtextures+1)*4)
+	if (maxoff < DWORD(numtextures+1)*4)
 	{
 		I_FatalError ("Texture directory is too short");
 	}
@@ -523,10 +659,9 @@ void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool textur
 		}
 		if (j == 0)
 		{
-			int num = AddTexture (new FMultiPatchTexture ((const BYTE *)maptex + offset, patchlookup, isStrife));
+			AddTexture (new FMultiPatchTexture ((const BYTE *)maptex + offset, patchlookup, numpatches, isStrife));
 		}
 	}
-	W_UnMapLump (maptex);
 }
 
 
@@ -535,7 +670,8 @@ void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool textur
 FTexture::FTexture ()
 : LeftOffset(0), TopOffset(0),
   WidthBits(0), HeightBits(0), ScaleX(8), ScaleY(8),
-  UseType(TEX_Any), bNoDecals(false), bModified(false),
+  UseType(TEX_Any), bNoDecals(false), bStaticName(false), bNoRemap0(false), bWorldPanning(false),
+  bMasked(true), bAlphaTexture(false),
   Rotations(0xFFFF), Width(0xFFFF), Height(0), WidthMask(0)
 {
 }
@@ -544,9 +680,20 @@ FTexture::~FTexture ()
 {
 }
 
+bool FTexture::CheckModified ()
+{
+	return false;
+}
+
 void FTexture::GetDimensions ()
 {
 	Width = 0;
+	Height = 0;
+}
+
+void FTexture::SetFrontSkyLayer ()
+{
+	bNoRemap0 = true;
 }
 
 void FTexture::CalcBitSize ()
@@ -577,78 +724,94 @@ void FTexture::CalcBitSize ()
 
 FTexture::Span **FTexture::CreateSpans (const BYTE *pixels) const
 {
-	int numcols = Width;
-	int numrows = Height;
-	int numspans = numcols;	// One span to terminate each column
-	const BYTE *data_p;
 	Span **spans, *span;
-	bool newspan;
-	int x, y;
 
-	data_p = pixels;
-
-	// Count the number of spans in this texture
-	for (x = numcols; x > 0; --x)
-	{
-		newspan = true;
-		for (y = numrows; y > 0; --y)
+	if (!bMasked)
+	{ // Texture does not have holes, so it can use a simpler span structure
+		spans = (Span **)Malloc (sizeof(Span*)*Width + sizeof(Span)*2);
+		span = (Span *)&spans[Width];
+		for (int x = 0; x < Width; ++x)
 		{
-			if (*data_p++ == 255)
-			{
-				if (!newspan)
-				{
-					newspan = true;
-				}
-			}
-			else if (newspan)
-			{
-				newspan = false;
-				numspans++;
-			}
+			spans[x] = span;
 		}
+		span[0].Length = Height;
+		span[0].TopOffset = 0;
+		span[1].Length = 0;
+		span[1].TopOffset = 0;
 	}
+	else
+	{ // Texture might have holes, so build a complete span structure
+		int numcols = Width;
+		int numrows = Height;
+		int numspans = numcols;	// One span to terminate each column
+		const BYTE *data_p;
+		bool newspan;
+		int x, y;
 
-	// Allocate space for the spans
-	spans = (Span **)Malloc (sizeof(Span*)*numcols + sizeof(Span)*numspans);
+		data_p = pixels;
 
-	// Fill in the spans
-	for (x = 0, span = (Span *)&spans[numcols], data_p = pixels; x < numcols; ++x)
-	{
-		newspan = true;
-		spans[x] = span;
-		for (y = 0; y < numrows; ++y)
+		// Count the number of spans in this texture
+		for (x = numcols; x > 0; --x)
 		{
-			if (*data_p++ == 255)
+			newspan = true;
+			for (y = numrows; y > 0; --y)
 			{
-				if (!newspan)
+				if (*data_p++ == 0)
 				{
-					newspan = true;
-					span++;
+					if (!newspan)
+					{
+						newspan = true;
+					}
 				}
-			}
-			else
-			{
-				if (newspan)
+				else if (newspan)
 				{
 					newspan = false;
-					span->TopOffset = y;
-					span->Length = 1;
+					numspans++;
+				}
+			}
+		}
+
+		// Allocate space for the spans
+		spans = (Span **)Malloc (sizeof(Span*)*numcols + sizeof(Span)*numspans);
+
+		// Fill in the spans
+		for (x = 0, span = (Span *)&spans[numcols], data_p = pixels; x < numcols; ++x)
+		{
+			newspan = true;
+			spans[x] = span;
+			for (y = 0; y < numrows; ++y)
+			{
+				if (*data_p++ == 0)
+				{
+					if (!newspan)
+					{
+						newspan = true;
+						span++;
+					}
 				}
 				else
 				{
-					span->Length++;
+					if (newspan)
+					{
+						newspan = false;
+						span->TopOffset = y;
+						span->Length = 1;
+					}
+					else
+					{
+						span->Length++;
+					}
 				}
 			}
-		}
-		if (!newspan)
-		{
+			if (!newspan)
+			{
+				span++;
+			}
+			span->TopOffset = 0;
+			span->Length = 0;
 			span++;
 		}
-		span->TopOffset = 0;
-		span->Length = 0;
-		span++;
 	}
-
 	return spans;
 }
 
@@ -738,6 +901,61 @@ void FTexture::FlipSquareBlock (BYTE *block, int x, int y)
 	}
 }
 
+void FTexture::FlipSquareBlockRemap (BYTE *block, int x, int y, const BYTE *remap)
+{
+	int i, j;
+	BYTE t;
+
+	if (x != y) return;
+
+	for (i = 0; i < x; ++i)
+	{
+		BYTE *corner = block + x*i + i;
+		int count = x - i;
+		if (count & 1)
+		{
+			count--;
+			t = remap[corner[count]];
+			corner[count] = remap[corner[count*x]];
+			corner[count*x] = t;
+		}
+		for (j = 0; j < count; j += 2)
+		{
+			t = remap[corner[j]];
+			corner[j] = remap[corner[j*x]];
+			corner[j*x] = t;
+			t = remap[corner[j+1]];
+			corner[j+1] = remap[corner[(j+1)*x]];
+			corner[(j+1)*x] = t;
+		}
+	}
+}
+
+void FTexture::FlipNonSquareBlock (BYTE *dst, const BYTE *src, int x, int y)
+{
+	int i, j;
+
+	for (i = 0; i < x; ++i)
+	{
+		for (j = 0; j < y; ++j)
+		{
+			dst[i*y+j] = src[i+j*x];
+		}
+	}
+}
+
+void FTexture::FlipNonSquareBlockRemap (BYTE *dst, const BYTE *src, int x, int y, const BYTE *remap)
+{
+	int i, j;
+
+	for (i = 0; i < x; ++i)
+	{
+		for (j = 0; j < y; ++j)
+		{
+			dst[i*y+j] = remap[src[i+j*x]];
+		}
+	}
+}
 
 FDummyTexture::FDummyTexture ()
 {
@@ -777,7 +995,7 @@ FPatchTexture::FPatchTexture (int lumpnum, int usetype)
 : SourceLump(lumpnum), Pixels(0), Spans(0)
 {
 	UseType = usetype;
-	W_GetLumpName (Name, lumpnum);
+	Wads.GetLumpName (Name, lumpnum);
 	Name[8] = 0;
 }
 
@@ -834,25 +1052,29 @@ const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_ou
 
 void FPatchTexture::GetDimensions ()
 {
-	const patch_t *patch = (const patch_t *)W_MapLumpNum (SourceLump);
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
 
-	Width = SHORT(patch->width);
-	Height = SHORT(patch->height);
-	LeftOffset = SHORT(patch->leftoffset);
-	TopOffset = SHORT(patch->topoffset);
+	patch_t dummy;
+	lump >> dummy.width >> dummy.height >> dummy.leftoffset >> dummy.topoffset;
 
-	W_UnMapLump (patch);
+	Width = dummy.width;
+	Height = dummy.height;
+	LeftOffset = dummy.leftoffset;
+	TopOffset = dummy.topoffset;
 
 	CalcBitSize ();
 }
 
 void FPatchTexture::MakeTexture ()
 {
-	const patch_t *patch = (const patch_t *)W_MapLumpNum (SourceLump);
-	Span *spanstuffer;
+	BYTE *remap, remaptable[256];
+	Span *spanstuffer, *spanstarter;
+	bool warned;
 	int numspans;
 	int x;
-	BYTE switch255 = Near255;
+
+	FMemLump lump = Wads.ReadLump (SourceLump);
+	const patch_t *patch = (const patch_t *)lump.GetMem();
 
 	Width = SHORT(patch->width);
 	Height = SHORT(patch->height);
@@ -865,13 +1087,20 @@ void FPatchTexture::MakeTexture ()
 	int numpix = Width * Height + (1 << HeightBits) - Height;
 
 	numspans = Width;
-	if (UseType == TEX_Decal)
-	{
-		switch255 = 254;
-	}
 
 	Pixels = new BYTE[numpix];
-	memset (Pixels, 255, numpix);
+	memset (Pixels, 0, numpix);
+
+	if (bNoRemap0)
+	{
+		memcpy (remaptable, GPalette.Remap, 256);
+		remaptable[0] = 0;
+		remap = remaptable;
+	}
+	else
+	{
+		remap = GPalette.Remap;
+	}
 
 	// Draw the image to the buffer
 	for (x = 0; x < Width; ++x)
@@ -907,25 +1136,26 @@ void FPatchTexture::MakeTexture ()
 					const BYTE *in = (const BYTE *)column + 3;
 					for (int i = 0; i < len; ++i)
 					{
-						out[i] = in[i] != 255 ? in[i] : switch255;
+						out[i] = remap[in[i]];
 					}
 				}
 			}
 			column = (const column_t *)((const BYTE *)column + column->length + 4);
 		}
 	}
-	W_UnMapLump (patch);
 
 	// Create the spans
 	Spans = (Span **)Malloc (sizeof(Span*)*Width + sizeof(Span)*numspans);
 	spanstuffer = (Span *)((BYTE *)Spans + sizeof(Span*)*Width);
+	warned = false;
 
-	for (x = numspans = 0; x < Width; ++x)
+	for (x = 0; x < Width; ++x)
 	{
 		const column_t *column = (const column_t *)((const BYTE *)patch + LONG(patch->columnofs[x]));
 		int top = -1;
 
 		Spans[x] = spanstuffer;
+		spanstarter = spanstuffer;
 
 		while (column->topdelta != 0xFF)
 		{
@@ -949,19 +1179,46 @@ void FPatchTexture::MakeTexture ()
 				if (len > 0)
 				{
 					// There is something of this post to draw. If it starts at the same
-					// place where the previous span ends, add it to that one. Otherwise,
-					// create another span.
-					if (numspans > 1 && (spanstuffer - 1)->Length != 0 &&
-						(spanstuffer - 1)->TopOffset + (spanstuffer - 1)->Length == top)
+					// place where the previous span ends, add it to that one. If it starts
+					// before the other one ends, that's bad, but deal with it. If it starts
+					// after the previous one ends, create another span.
+
+					// Assume we need to create another span.
+					spanstuffer->TopOffset = top;
+					spanstuffer->Length = len;
+
+					// Now check if that's really the case.
+					if (spanstuffer > spanstarter)
 					{
-						(spanstuffer - 1)->Length += len;
+						if ((spanstuffer - 1)->TopOffset + (spanstuffer - 1)->Length == top)
+						{
+							(--spanstuffer)->Length += len;
+						}
+						else
+						{
+							int prevbot;
+
+							while (spanstuffer > spanstarter &&
+								spanstuffer->TopOffset < (prevbot = 
+								(spanstuffer - 1)->TopOffset + (spanstuffer - 1)->Length))
+							{
+								if (spanstuffer->TopOffset < (spanstuffer - 1)->TopOffset)
+								{
+									(spanstuffer - 1)->TopOffset = spanstuffer->TopOffset;
+								}
+								(spanstuffer - 1)->Length = MAX(prevbot,
+									spanstuffer->TopOffset + spanstuffer->Length)
+									- (spanstuffer - 1)->TopOffset;
+								spanstuffer--;
+								if (!warned)
+								{
+									warned = true;
+									Printf (PRINT_BOLD, "Patch %s is malformed.\n", Name);
+								}
+							}
+						}
 					}
-					else
-					{
-						spanstuffer->TopOffset = top;
-						spanstuffer->Length = len;
-						spanstuffer++;
-					}
+					spanstuffer++;
 				}
 			}
 			column = (const column_t *)((const BYTE *)column + column->length + 4);
@@ -975,7 +1232,6 @@ void FPatchTexture::MakeTexture ()
 // Fix for certain special patches on single-patch textures.
 void FPatchTexture::HackHack (int newheight)
 {
-	const patch_t *patch = (const patch_t *)W_MapLumpNum (SourceLump);
 	BYTE *out;
 	int x;
 
@@ -985,26 +1241,30 @@ void FPatchTexture::HackHack (int newheight)
 		FreeSpans (Spans);
 	}
 
-	Width = SHORT(patch->width);
-	Height = newheight;
-	LeftOffset = 0;
-	TopOffset = 0;
-
-	Pixels = new BYTE[Width * Height];
-
-	// Draw the image to the buffer
-	for (x = 0, out = Pixels; x < Width; ++x)
 	{
-		const BYTE *in = (const BYTE *)patch + LONG(patch->columnofs[x]) + 3;
+		FMemLump lump = Wads.ReadLump (SourceLump);
+		const patch_t *patch = (const patch_t *)lump.GetMem();
 
-		for (int y = newheight; y > 0; --y)
+		Width = SHORT(patch->width);
+		Height = newheight;
+		LeftOffset = 0;
+		TopOffset = 0;
+
+		Pixels = new BYTE[Width * Height];
+
+		// Draw the image to the buffer
+		for (x = 0, out = Pixels; x < Width; ++x)
 		{
-			*out = *in != 255 ? *in : Near255;
-			out++, in++;
+			const BYTE *in = (const BYTE *)patch + LONG(patch->columnofs[x]) + 3;
+
+			for (int y = newheight; y > 0; --y)
+			{
+				*out = *in != 255 ? *in : Near255;
+				out++, in++;
+			}
+			out += newheight;
 		}
-		out += newheight;
 	}
-	W_UnMapLump (patch);
 
 	// Create the spans
 	Spans = (Span **)Malloc (sizeof(Span *)*Width + sizeof(Span)*Width*2);
@@ -1028,9 +1288,9 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	int area;
 	int bits;
 
-	W_GetLumpName (Name, lumpnum);
+	Wads.GetLumpName (Name, lumpnum);
 	Name[8] = 0;
-	area = W_LumpLength (lumpnum);
+	area = Wads.LumpLength (lumpnum);
 
 	switch (area)
 	{
@@ -1043,6 +1303,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	case 256*256:	bits = 8;	break;
 	}
 
+	bMasked = false;
 	WidthBits = HeightBits = bits;
 	Width = Height = 1 << bits;
 	WidthMask = (1 << bits) - 1;
@@ -1054,6 +1315,10 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	if (bits > 6)
 	{
 		ScaleX = ScaleY = 8 << (bits - 6);
+	}
+	else
+	{
+		ScaleX = ScaleY = 8;
 	}
 
 	UseType = TEX_Flat;
@@ -1108,12 +1373,10 @@ const BYTE *FFlatTexture::GetPixels ()
 
 void FFlatTexture::MakeTexture ()
 {
-	const BYTE *source = (const BYTE *)W_MapLumpNum (SourceLump);
-
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
 	Pixels = new BYTE[Width*Height];
-	memcpy (Pixels, source, Width*Height);
-	W_UnMapLump (source);
-	FlipSquareBlock (Pixels, Width, Height);
+	lump.Read (Pixels, Width*Height);
+	FlipSquareBlockRemap (Pixels, Width, Height, GPalette.Remap);
 }
 
 const FTexture::Span FRawPageTexture::DummySpans[2] =
@@ -1124,7 +1387,7 @@ const FTexture::Span FRawPageTexture::DummySpans[2] =
 FRawPageTexture::FRawPageTexture (int lumpnum)
 : SourceLump(lumpnum), Pixels(0)
 {
-	W_GetLumpName (Name, lumpnum);
+	Wads.GetLumpName (Name, lumpnum);
 	Name[8] = 0;
 
 	Width = 320;
@@ -1178,7 +1441,8 @@ const BYTE *FRawPageTexture::GetPixels ()
 
 void FRawPageTexture::MakeTexture ()
 {
-	const BYTE *source = (const BYTE *)W_MapLumpNum (SourceLump);
+	FMemLump lump = Wads.ReadLump (SourceLump);
+	const BYTE *source = (const BYTE *)lump.GetMem();
 	const BYTE *source_p = source;
 	BYTE *dest_p;
 
@@ -1190,20 +1454,18 @@ void FRawPageTexture::MakeTexture ()
 	{
 		for (int x = 320; x != 0; --x)
 		{
-			*dest_p = *source_p;
+			*dest_p = GPalette.Remap[*source_p];
 			dest_p += 200;
 			source_p++;
 		}
 		dest_p -= 200*320-1;
 	}
-
-	W_UnMapLump (source);
 }
 
 FIMGZTexture::FIMGZTexture (int lumpnum)
 : SourceLump(lumpnum), Pixels(0), Spans(0)
 {
-	W_GetLumpName (Name, lumpnum);
+	Wads.GetLumpName (Name, lumpnum);
 	Name[8] = 0;
 
 	UseType = TEX_MiscPatch;
@@ -1262,21 +1524,24 @@ const BYTE *FIMGZTexture::GetPixels ()
 
 void FIMGZTexture::GetDimensions ()
 {
-	const ImageHeader *imgz = (const ImageHeader *)W_MapLumpNum (SourceLump);
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	DWORD magic;
+	WORD w, h;
+	SWORD l, t;
 
-	Width = SHORT(imgz->Width);
-	Height = SHORT(imgz->Height);
-	LeftOffset = SHORT(imgz->LeftOffset);
-	TopOffset = SHORT(imgz->TopOffset);
+	lump >> magic >> w >> h >> l >> t;
 
-	W_UnMapLump (imgz);
-
+	Width = w;
+	Height = h;
+	LeftOffset = l;
+	TopOffset = t;
 	CalcBitSize ();
 }
 
 void FIMGZTexture::MakeTexture ()
 {
-	const ImageHeader *imgz = (const ImageHeader *)W_MapLumpNum (SourceLump);
+	FMemLump lump = Wads.ReadLump (SourceLump);
+	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
 	const BYTE *data = (const BYTE *)&imgz[1];
 
 	Width = SHORT(imgz->Width);
@@ -1299,9 +1564,6 @@ void FIMGZTexture::MakeTexture ()
 		{
 			for (int x = Width; x != 0; --x)
 			{
-				BYTE color = *data;
-				if (color == 0) color = 255;
-				else if (color == 255) color = 254;
 				*dest_p = *data;
 				dest_p += dest_adv;
 				data++;
@@ -1313,7 +1575,7 @@ void FIMGZTexture::MakeTexture ()
 	{
 		// IMGZ compression is the same RLE used by IFF ILBM files
 		int runlen = 0, setlen = 0;
-		BYTE setval;
+		BYTE setval = 0;  // Shut up, GCC
 
 		for (int y = Height; y != 0; --y)
 		{
@@ -1322,8 +1584,6 @@ void FIMGZTexture::MakeTexture ()
 				if (runlen != 0)
 				{
 					BYTE color = *data;
-					if (color == 0) color = 255;
-					else if (color == 255) color = 254;
 					*dest_p = color;
 					dest_p += dest_adv;
 					data++;
@@ -1348,16 +1608,241 @@ void FIMGZTexture::MakeTexture ()
 					{
 						setlen = (-code) + 1;
 						setval = *data++;
-						if (setval == 0) setval = 255;
-						else if (setval == 255) setval = 254;
 					}
 				}
 			}
 			dest_p -= dest_rew;
 		}
 	}
-	W_UnMapLump (imgz);
 
+	Spans = CreateSpans (Pixels);
+}
+
+
+BYTE FPNGTexture::GrayMap[256];
+
+FPNGTexture::FPNGTexture (int lumpnum, int width, int height,
+						  BYTE depth, BYTE colortype, BYTE interlace)
+: SourceLump(lumpnum), Pixels(0), Spans(0),
+  BitDepth(depth), ColorType(colortype), Interlace(interlace),
+  PaletteMap(0), PaletteSize(0), StartOfIDAT(0)
+{
+	union
+	{
+		DWORD palette[256];
+		BYTE pngpal[256][3];
+	};
+	BYTE trans[256];
+	bool havetRNS = false;
+	DWORD len, id;
+	int i;
+
+	Wads.GetLumpName (Name, lumpnum);
+	Name[8] = 0;
+
+	UseType = TEX_MiscPatch;
+	LeftOffset = 0;
+	TopOffset = 0;
+	bMasked = false;
+
+	Width = width;
+	Height = height;
+	CalcBitSize ();
+
+	memset (trans, 255, 256);
+
+	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	lump.Seek (33, SEEK_SET);
+
+	lump >> len >> id;
+	while (id != MAKE_ID('I','D','A','T') && id != MAKE_ID('I','E','N','D'))
+	{
+		len = BELONG((unsigned int)len);
+		switch (id)
+		{
+		default:
+			lump.Seek (len, SEEK_CUR);
+			break;
+
+		case MAKE_ID('g','r','A','b'):
+			// This is like GRAB found in an ILBM, except coordinates use 4 bytes
+			{
+				DWORD hotx, hoty;
+
+				lump >> hotx >> hoty;
+				LeftOffset = BELONG((int)hotx);
+				TopOffset = BELONG((int)hoty);
+			}
+			break;
+
+		case MAKE_ID('P','L','T','E'):
+			PaletteSize = MIN<int> (len / 3, 256);
+			lump.Read (pngpal, PaletteSize * 3);
+			if (PaletteSize * 3 != (int)len)
+			{
+				lump.Seek (len - PaletteSize * 3, SEEK_CUR);
+			}
+			for (i = PaletteSize - 1; i >= 0; --i)
+			{
+				palette[i] = MAKERGB(pngpal[i][0], pngpal[i][1], pngpal[i][2]);
+			}
+			break;
+
+		case MAKE_ID('t','R','N','S'):
+			lump.Read (trans, len);
+			havetRNS = true;
+			break;
+
+		case MAKE_ID('a','l','P','h'):
+			bAlphaTexture = true;
+			bMasked = true;
+			break;
+		}
+		lump >> len >> len;	// Skip CRC
+		id = MAKE_ID('I','E','N','D');
+		lump >> id;
+	}
+	StartOfIDAT = lump.Tell() - 8;
+
+	if (colortype == 3)
+	{
+		PaletteMap = new BYTE[PaletteSize];
+		GPalette.MakeRemap (palette, PaletteMap, trans, PaletteSize);
+		for (i = 0; i < PaletteSize; ++i)
+		{
+			if (trans[i] == 0)
+			{
+				bMasked = true;
+				PaletteMap[i] = 0;
+			}
+		}
+	}
+	else if (colortype == 0)
+	{
+		if (!bAlphaTexture)
+		{
+			if (GrayMap[0] == GrayMap[255])
+			{ // Initialize the GrayMap
+				for (i = 0; i < 256; ++i)
+				{
+					GrayMap[i] = ColorMatcher.Pick (i, i, i);
+				}
+			}
+			if (havetRNS && trans[0] != 0)
+			{
+				bMasked = true;
+				PaletteSize = 256;
+				PaletteMap = new BYTE[256];
+				memcpy (PaletteMap, GrayMap, 256);
+				PaletteMap[trans[0]] = 0;
+			}
+			else
+			{
+				PaletteMap = GrayMap;
+			}
+		}
+	}
+}
+
+FPNGTexture::~FPNGTexture ()
+{
+	Unload ();
+	if (Spans != NULL)
+	{
+		FreeSpans (Spans);
+	}
+	if (PaletteMap != NULL && PaletteMap != GrayMap)
+	{
+		delete[] PaletteMap;
+	}
+}
+
+void FPNGTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+
+const BYTE *FPNGTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = Spans[column];
+	}
+	return Pixels + column*Height;
+}
+
+const BYTE *FPNGTexture::GetPixels ()
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+void FPNGTexture::MakeTexture ()
+{
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+
+	Pixels = new BYTE[Width*Height];
+	if (StartOfIDAT == 0)
+	{
+		memset (Pixels, 0x99, Width*Height);
+	}
+	else
+	{
+		DWORD len, id;
+		lump.Seek (StartOfIDAT, SEEK_SET);
+		lump >> len >> id;
+		M_ReadIDAT (&lump, Pixels, Width, Height, Width, BitDepth, ColorType, Interlace, BELONG((unsigned int)len));
+
+		if (Width == Height)
+		{
+			if (PaletteMap != NULL)
+			{
+				FlipSquareBlockRemap (Pixels, Width, Height, PaletteMap);
+			}
+			else
+			{
+				FlipSquareBlock (Pixels, Width, Height);
+			}
+		}
+		else
+		{
+			BYTE *newpix = new BYTE[Width*Height];
+			if (PaletteMap != NULL)
+			{
+				FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, PaletteMap);
+			}
+			else
+			{
+				FlipNonSquareBlock (newpix, Pixels, Width, Height);
+			}
+			BYTE *oldpix = Pixels;
+			Pixels = newpix;
+			delete[] oldpix;
+		}
+	}
 	Spans = CreateSpans (Pixels);
 }
 
@@ -1416,7 +1901,7 @@ const BYTE *FBuildTexture::GetColumn (unsigned int column, const Span **spans_ou
 	return Pixels + column*Height;
 }
 
-FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FTexture **patchlookup, bool strife)
+FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife)
 : Pixels (0), Spans(0), Parts(0), bRedirect(false)
 {
 	union
@@ -1469,6 +1954,11 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FTexture **patchlook
 	ScaleX = mtexture.d->ScaleX ? mtexture.d->ScaleX : 0;
 	ScaleY = mtexture.d->ScaleY ? mtexture.d->ScaleY : 0;
 
+	if (mtexture.d->Flags & MAPTEXF_WORLDPANNING)
+	{
+		bWorldPanning = true;
+	}
+
 	if (strife)
 	{
 		mpatch.s = &mtexture.s->patches[0];
@@ -1480,12 +1970,17 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FTexture **patchlook
 
 	for (i = 0; i < NumParts; ++i)
 	{
+		if (unsigned(SHORT(mpatch.d->patch)) >= unsigned(maxpatchnum))
+		{
+			I_FatalError ("Bad PNAMES and/or texture directory:\n\nPNAMES has %d entries, but\n%s wants to use entry %d.",
+				maxpatchnum, Name, SHORT(mpatch.d->patch)+1);
+		}
 		Parts[i].OriginX = SHORT(mpatch.d->originx);
 		Parts[i].OriginY = SHORT(mpatch.d->originy);
-		Parts[i].Texture = patchlookup[SHORT(mpatch.d->patch)];
+		Parts[i].Texture = patchlookup[SHORT(mpatch.d->patch)].Texture;
 		if (Parts[i].Texture == NULL)
 		{
-			Printf ("Unknown patch in texture %s\n", Name);
+			Printf ("Unknown patch %s in texture %s\n", patchlookup[SHORT(mpatch.d->patch)].Name, Name);
 			NumParts--;
 			i--;
 		}
@@ -1523,6 +2018,14 @@ FMultiPatchTexture::~FMultiPatchTexture ()
 	if (Spans != NULL)
 	{
 		FreeSpans (Spans);
+	}
+}
+
+void FMultiPatchTexture::SetFrontSkyLayer ()
+{
+	for (int i = 0; i < NumParts; ++i)
+	{
+		Parts[i].Texture->SetFrontSkyLayer ();
 	}
 }
 
@@ -1583,7 +2086,7 @@ void FMultiPatchTexture::MakeTexture ()
 	int numpix = Width * Height + (1 << HeightBits) - Height;
 
 	Pixels = new BYTE[numpix];
-	memset (Pixels, 255, numpix);
+	memset (Pixels, 0, numpix);
 
 	for (int i = 0; i < NumParts; ++i)
 	{
@@ -1662,7 +2165,8 @@ void FMultiPatchTexture::CheckForHacks ()
 				// Check if this patch is likely to be a problem.
 				// It must be 256 pixels tall, and all its columns must have exactly
 				// one post, where each post has a supposed length of 0.
-				const patch_t *realpatch = (patch_t *)W_MapLumpNum (tex->SourceLump);
+				FMemLump lump = Wads.ReadLump (tex->SourceLump);
+				const patch_t *realpatch = (patch_t *)lump.GetMem();
 				const DWORD *cofs = realpatch->columnofs;
 				int x, x2 = SHORT(realpatch->width);
 
@@ -1686,7 +2190,6 @@ void FMultiPatchTexture::CheckForHacks ()
 						tex->HackHack (Height);
 					}
 				}
-				W_UnMapLump (realpatch);
 			}
 		}
 	}
@@ -1728,6 +2231,11 @@ void FWarpTexture::Unload ()
 		Spans = NULL;
 	}
 	SourcePic->Unload ();
+}
+
+bool FWarpTexture::CheckModified ()
+{
+	return r_FrameTime != GenTime;
 }
 
 const BYTE *FWarpTexture::GetPixels ()
@@ -1792,7 +2300,6 @@ void FWarpTexture::MakeTexture (DWORD time)
 	int ysize = Height;
 	int xmask = WidthMask;
 	int ymask = Height - 1;
-	int xbits = WidthBits;
 	int ybits = HeightBits;
 	int x, y;
 
@@ -1833,16 +2340,16 @@ void R_InitTextures (void)
 	int i;
 
 	// For each PNAMES lump, load the TEXTURE1 and/or TEXTURE2 lumps from the same wad.
-	while ((lump = W_FindLump ("PNAMES", &lastlump)) != -1)
+	while ((lump = Wads.FindLump ("PNAMES", &lastlump)) != -1)
 	{
-		int pfile = W_GetLumpFile (lump);
+		int pfile = Wads.GetLumpFile (lump);
 
 		TexMan.AddPatches (lump);
-		if ((texlump1 = W_CheckNumForName ("TEXTURE1", ns_global, pfile)) >= 0)
+		if ((texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, pfile)) >= 0)
 		{
 			TexMan.AddTexturesLump (texlump1, lump, true);
 		}
-		if ((texlump2 = W_CheckNumForName ("TEXTURE2", ns_global, pfile)) >= 0)
+		if ((texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, pfile)) >= 0)
 		{
 			TexMan.AddTexturesLump (texlump2, lump, false);
 		}
@@ -1850,13 +2357,13 @@ void R_InitTextures (void)
 
 	// If the final TEXTURE1 and/or TEXTURE2 lumps are in a wad without a PNAMES lump,
 	// they have not been loaded yet, so load them now.
-	if ((texlump = W_CheckNumForName ("TEXTURE1")) >= 0 && texlump != texlump1)
+	if ((texlump = Wads.CheckNumForName ("TEXTURE1")) >= 0 && texlump != texlump1)
 	{
-		TexMan.AddTexturesLump (texlump, W_GetNumForName ("PNAMES"), true);
+		TexMan.AddTexturesLump (texlump, Wads.GetNumForName ("PNAMES"), true);
 	}
-	if ((texlump = W_CheckNumForName ("TEXTURE2")) >= 0 && texlump != texlump2)
+	if ((texlump = Wads.CheckNumForName ("TEXTURE2")) >= 0 && texlump != texlump2)
 	{
-		TexMan.AddTexturesLump (texlump, W_GetNumForName ("PNAMES"), false);
+		TexMan.AddTexturesLump (texlump, Wads.GetNumForName ("PNAMES"), false);
 	}
 
 	// The Hexen scripts use BLANK as a blank texture, even though it's really not.
@@ -1866,6 +2373,21 @@ void R_InitTextures (void)
 		0 <= (i = TexMan.CheckForTexture ("BLANK", FTexture::TEX_Wall, false)))
 	{
 		TexMan.SetTranslation (i, 0);
+	}
+
+	// Hexen parallax skies use color 0 to indicate transparency on the front
+	// layer, so we must not remap color 0 on these textures. Unfortunately,
+	// the only way to identify these textures is to check the MAPINFO.
+	for (i = 0; i < numwadlevelinfos; ++i)
+	{
+		if (wadlevelinfos[i].flags & LEVEL_DOUBLESKY)
+		{
+			int picnum = TexMan.CheckForTexture (wadlevelinfos[i].skypic1, FTexture::TEX_Wall, false);
+			if (picnum > 0)
+			{
+				TexMan[picnum]->SetFrontSkyLayer ();
+			}
+		}
 	}
 }
 
@@ -1894,13 +2416,16 @@ void R_InitBuildTiles ()
 				break;
 			}
 
-			int x = W_FakeLump (artpath);
+			FileReader file (artpath);
 
-			const void *art = W_MapLumpNum (x);
+			// BADBAD: This memory is never explicitly deleted except when the
+			// version number is wrong.
+			BYTE *art = new BYTE[file.GetLength()];
+			file.Read (art, file.GetLength());
 
 			if (LONG(*(DWORD *)art) != 1)
 			{
-				W_UnMapLump (art);
+				delete[] art;
 				break;
 			}
 
@@ -1923,7 +2448,9 @@ void R_SetDefaultColormap (const char *name)
 {
 	if (strnicmp (fakecmaps[0].name, name, 8) != 0)
 	{
-		int lump;
+		int lump, i, j;
+		BYTE map[256];
+		BYTE unremap[256];
 
 		// [RH] If using BUILD's palette.dat, generate the colormap
 		if (Args.CheckValue ("-bpal") != NULL)
@@ -1937,12 +2464,27 @@ void R_SetDefaultColormap (const char *name)
 		}
 		else
 		{
-			lump = W_CheckNumForName (name, ns_colormaps);
+			lump = Wads.CheckNumForName (name, ns_colormaps);
 			if (lump == -1)
-				lump = W_CheckNumForName (name, ns_global);
-			const byte *data = (byte *)W_MapLumpNum (lump);
-			memcpy (realcolormaps, data, NUMCOLORMAPS*256);
-			W_UnMapLump (data);
+				lump = Wads.CheckNumForName (name, ns_global);
+			FWadLump lumpr = Wads.OpenLumpNum (lump);
+
+			// [RH] The colormap may not have been designed for the specific
+			// palette we are using, so remap it to match the current palette.
+			for (i = 0; i < 256; ++i)
+			{
+				unremap[GPalette.Remap[i]] = i;
+			}
+			for (i = 0; i < NUMCOLORMAPS; ++i)
+			{
+				BYTE *map2 = &realcolormaps[i*256];
+				lumpr.Read (map, 256);
+				map2[0] = 0;
+				for (j = 1; j < 256; ++j)
+				{
+					map2[j] = GPalette.Remap[map[unremap[j]]];
+				}
+			}
 		}
 
 		uppercopy (fakecmaps[0].name, name);
@@ -1958,15 +2500,14 @@ void R_InitColormaps ()
 	// [RH] Try and convert BOOM colormaps into blending values.
 	//		This is a really rough hack, but it's better than
 	//		not doing anything with them at all (right?)
-	int lastfakecmap = W_CheckNumForName ("C_END");
-	firstfakecmap = W_CheckNumForName ("C_START");
+	int lastfakecmap = Wads.CheckNumForName ("C_END");
+	firstfakecmap = Wads.CheckNumForName ("C_START");
 
 	if (firstfakecmap == -1 || lastfakecmap == -1)
 		numfakecmaps = 1;
 	else
 		numfakecmaps = lastfakecmap - firstfakecmap;
-	realcolormaps = new BYTE[256*NUMCOLORMAPS*numfakecmaps+255];
-	realcolormaps = (BYTE *)(((ptrdiff_t)realcolormaps + 255) & ~255);
+	realcolormaps = new BYTE[256*NUMCOLORMAPS*numfakecmaps];
 	fakecmaps = new FakeCmap[numfakecmaps];
 
 	fakecmaps[0].name[0] = 0;
@@ -1974,30 +2515,43 @@ void R_InitColormaps ()
 
 	if (numfakecmaps > 1)
 	{
+		BYTE unremap[256], mapin[256];
 		int i;
 		size_t j;
 
+		for (i = 0; i < 256; ++i)
+		{
+			unremap[GPalette.Remap[i]] = i;
+		}
+
 		for (i = ++firstfakecmap, j = 1; j < numfakecmaps; i++, j++)
 		{
-			if (W_LumpLength (i) >= (NUMCOLORMAPS+1)*256)
+			if (Wads.LumpLength (i) >= (NUMCOLORMAPS+1)*256)
 			{
 				int k, r, g, b;
-				const byte *map = (byte *)W_MapLumpNum (i);
+				FWadLump lump = Wads.OpenLumpNum (i);
+				BYTE *const map = realcolormaps + NUMCOLORMAPS*256*j;
 
-				memcpy (realcolormaps+NUMCOLORMAPS*256*j,
-						map, NUMCOLORMAPS*256);
-
-				W_UnMapLump (map);
+				for (k = 0; k < NUMCOLORMAPS; ++k)
+				{
+					BYTE *map2 = &map[k*256];
+					lump.Read (mapin, 256);
+					map2[0] = 0;
+					for (r = 1; r < 256; ++r)
+					{
+						map2[r] = GPalette.Remap[mapin[unremap[r]]];
+					}
+				}
 
 				r = g = b = 0;
 
-				W_GetLumpName (fakecmaps[j].name, i);
 				for (k = 0; k < 256; k++)
 				{
 					r += GPalette.BaseColors[map[k]].r;
 					g += GPalette.BaseColors[map[k]].g;
 					b += GPalette.BaseColors[map[k]].b;
 				}
+				Wads.GetLumpName (fakecmaps[j].name, i);
 				fakecmaps[j].blend = PalEntry (255, r/256, g/256, b/256);
 			}
 		}
@@ -2014,7 +2568,7 @@ DWORD R_ColormapNumForName (const char *name)
 
 	if (strnicmp (name, "COLORMAP", 8))
 	{	// COLORMAP always returns 0
-		if (-1 != (lump = W_CheckNumForName (name, ns_colormaps)) )
+		if (-1 != (lump = Wads.CheckNumForName (name, ns_colormaps)) )
 			blend = lump - firstfakecmap + 1;
 		else if (!strnicmp (name, "WATERMAP", 8))
 			blend = MAKEARGB (128,0,0x4f,0xa5);
@@ -2041,6 +2595,8 @@ void R_InitData ()
 	R_InitTextures ();
 	TexMan.AddFlats ();
 	R_InitBuildTiles ();
+	TexMan.AddExtraTextures ();
+
 	R_InitColormaps ();
 	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);
 }
@@ -2197,6 +2753,7 @@ static void R_InitPatches ()
 		"M_SAVEG",
 		"M_DOOM",
 		"M_HTIC",
+		"M_STRIFE",
 		"M_NEWG",
 		"M_SKILL",
 		"M_EPISOD",
@@ -2248,6 +2805,14 @@ static void R_InitPatches ()
 		"M_SKULL2",
 		"M_SLCTR1",
 		"M_SLCTR2",
+		"M_CURS1",
+		"M_CURS2",
+		"M_CURS3",
+		"M_CURS4",
+		"M_CURS5",
+		"M_CURS6",
+		"M_CURS7",
+		"M_CURS8",
 		"BRDR_TL",
 		"BRDR_T",
 		"BRDR_TR",
@@ -2270,6 +2835,8 @@ static void R_InitPatches ()
 		"HELP",
 		"HELP1",
 		"HELP2",
+		"HELP3",
+		"HELP0",
 		"TITLEPIC",
 		"ENDPIC",
 		"FINALE1",
@@ -2277,7 +2844,9 @@ static void R_InitPatches ()
 		"FINALE3",
 		"STTPRCNT",
 		"STARMS",
-		"VICTORY2"
+		"VICTORY2",
+		"STFBANY",
+		"STPBANY"
 	};
 	static const char spinners[][9] =
 	{
@@ -2365,3 +2934,32 @@ static void R_InitPatches ()
 		TexMan.AddPatch (name);
 	}
 }
+
+#if 0
+// Prints the spans generated for a texture. Only needed for debugging.
+CCMD (printspans)
+{
+	if (argv.argc() != 2)
+		return;
+
+	int picnum = TexMan.CheckForTexture (argv[1], FTexture::TEX_Any);
+	if (picnum < 0)
+	{
+		Printf ("Unknown texture %s\n", argv[1]);
+		return;
+	}
+	FTexture *tex = TexMan[picnum];
+	for (int x = 0; x < tex->GetWidth(); ++x)
+	{
+		const FTexture::Span *spans;
+		Printf ("%4d:", x);
+		tex->GetColumn (x, &spans);
+		while (spans->Length != 0)
+		{
+			Printf (" (%4d,%4d)", spans->TopOffset, spans->TopOffset+spans->Length-1);
+			spans++;
+		}
+		Printf ("\n");
+	}
+}
+#endif

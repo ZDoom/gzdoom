@@ -1,3 +1,525 @@
+October 22, 2003
+- Rewrote my TAG_MORE handling to use va_list and make GCC happy.
+- Fixed the default Heretic/Hexen automap wall colors so that they look
+  good on the parchment background.
+- Fixed: FindShortestTextureAround() and FindShortestUpperAround() returned
+  their results as ints (without a fractional part) instead of fixed_ts.
+- Changed the mapthing position fixing so that it only applies to those things
+  that request it (specifically, Heretic's WallTorch).
+- Moved all the default MAPINFO out of the executable and into zdoom.wad.
+  As a side effect, Dehacked patches can no longer change the music played
+  on a map. (Do any patches actually do this?)
+- Converted all the decals in zdoom.wad into PNGs. I was considering doing
+  the same for the crosshairs, but XHAIRB2 was the only one that got smaller
+  from the conversion from IMGZ to PNG.
+
+October 20, 2003
+- Added the CreateTexture() method to the texture manager. It checks the
+  contents of a lump to determine what type of image it contains, creates a
+  texture of the appropriate type, and adds it to the database. Everything
+  that was previously hard-coded to use patches now uses this instead. The
+  primary reason for this: PNG texture support. Just make sure your PNGs are
+  paletted. They do not need to have the exact same palette as the one
+  inside PLAYPAL, since they will be remapped to fit the game palette. ZDoom
+  also supports two proprietary PNG chunks:
+	grAb (8 bytes):
+	    SIGNED DWORD x
+	    SIGNED DWORD y
+	  grAb stores the offset information and works just like the
+	  equivalent information in a patch. The name is taken from the
+	  ILBM GRAB chunk, which does the same thing for ILBMs.
+	alPh (0 bytes)
+	  alPh is valid for grayscale images only (colortype 0). Its presence
+	  signifies that the image data is really an alpha channel and contains
+	  no color information. This is used by all of the decals in zdoom.wad.
+- Added the m_filter cvar (false by default) to smooth out mouse movement for
+  those unfortunate enough to be stuck with a mouse sampling rate of just 40 Hz.
+
+October 18, 2003
+- Added super-preliminary support for playing Strife as an IWAD.
+- Added fading "Read This!" screens.
+- Morphed players are now allowed to predict their positions.
+- Revisited the local player turning from October 10. My original
+  implementation had the players transmit the direction they wanted to face.
+  Unfortunately, this messes up the gauntlets and chainsaw, so I have reworked
+  it so that the players again send deltas. Any amount that accumulates between
+  packet sends is added to the player's local view angles. When they get sent,
+  they are zeroed.
+
+October 17, 2003
+- Fixed: GetLightLevel() used some globals instead of this to get the sidedef.
+
+October 16, 2003
+- Fixed: Using a cycling alias to rapidly change the player's color would
+  animate the player's status bar face at each color change.
+
+October 15, 2003
+- Updated to FMOD 3.70.
+- Did more cleanup for GCC. Its "variable might be used uninitialized"
+  warnings are very annoying. Oh well.
+- Did some cleanup so that Visual C++ 6 will compile without warnings. Alas,
+  it has some really weird errors where it complains about not being able
+  to #include .h files that are excluded inside an #ifdef block. They do not
+  effect the compilation any and seem to be generated before cl is even run;
+  it just looks untidy. Trivia, since I now have the opportunity to check:
+  When built with exactly the same settings, compared to the VC6 version, the
+  VC7 version is ~100k smaller, marginally faster, and takes slightly less
+  time to build from scratch.
+- Added the MAPTEXF_WORLDPANNING flag to indicate that a maptexture wants to
+  be panned by world units instead of texels, so you can create high-res
+  drop-in replacements for existing textures.
+- Fixed: The grid was not drawn properly on a rotated automap because the
+  x or y coordinates of the gridlines were not reset after being rotated. It
+  still looks bad if you turn off follow mode, but I'd rather not worry about
+  that.
+- Fixed: Movement prediction did not preserve the ordering of blockmap links,
+  so the local player would always be the first entry in his blockmap cell.
+  The effects of this were first noticed as Pain Elementals reliably causing
+  the game go out of sync eventually. I imagine it probably caused desyncs in
+  other cases, too.
+
+October 14, 2003
+- Fixed: You could push actors with the MF2_PUSHABLE flag while doing movement
+  prediction, which would almost invariably make network games go out of sync.
+- Uncommented the check that excluded the loading of STCFN121 only if it was
+  in the main IWAD. Note to anybody modding ZDoom who loads a resource wad
+  before the IWAD: This check in the FFont constructor assumes the IWAD is
+  at position 1. You will need to change this for your mod.
+- Fixed: Pig players could still change back to their original weapons.
+- Replaced the use A_BeakReady with A_WeaponReady. A_BeakReady was basically
+  just a stripped-down version of A_WeaponReady, so A_WeaponReady works just
+  as well.
+- Added the ActivateMorphWeapon method to APlayerPawn as a replacement for
+  P_ActivateMorphWeapon().
+
+October 13, 2003
+- Improved the error-checking in FPatchTexture::MakeTexture() so that it will
+  detect overlapping spans.
+- Fixed: Scaled, lower unpegged masked textures were positioned incorrectly
+  vertically.
+- Fixed vertical positioning of scaled sky textures.
+- Made MF_COUNTITEM actors dynamically counted like MF_COUNTKILL actors.
+- Fixed: Morphed players returned to their player skin unless playing Hexen.
+- Fixed: The chicken and pig players did not have MF3_NOBLOCKMONST set.
+- Moved P_MorphPlayerThink() into an overridable method of PlayerPawn.
+- Fixed: Colored sectors changed the color of the crosshair.
+
+October 11, 2003
+- Dropped MISSILERANGE back to its original value (2048 units) and added a new
+  PLAYERMISSILERANGE for player weapons, which is still at 20480 units.
+
+October 10, 2003
+- Fixed: Using the last inventory item in a Doom game would not redraw the
+  Doom guy's face on the status bar until the next time it animated.
+- Fixed: The view was interpolated when switching in and out of chasecam mode.
+- Changed player turning to be local. Also changed the mouse reading so that
+  it happens every frame instead of every tic. Together, these two changes
+  keep the mouse feeling responsive even when the framerate drops below 35 FPS.
+  It also helps a lot when playing with vsync enabled.
+- Modified the interpolation system so that it knows what it is interpolation
+  (beyond being just a generic fixed_t *). Now it can be stored in save games.
+- Fixed: Ceiling_CrushAndRaise and similar specials that passed a 0 height
+  to EV_DoCeiling/EV_DoFloor did not interpolate.
+- Fixed: Thing_Projectile2 did not pop its parameters off the stack.
+- Modified tab completion slightly. Pressing tab once now displays a list
+  of possible completions. Pressing tab multiple times will continue to
+  function as it did before.
+- Added the fading notify text I had written for my Duke port.
+
+October 8, 2003
+- Changed titlepic and conback drawing to always be unmasked, because
+  2nd_enc.wad's TITLEPIC has holes in it.
+- Stripped out a bunch of obsolete code from v_draw.cpp.
+- Moved the state of the automap cheat into the am_cheat cvar.
+- Changed P_TestActivateLine() so that monsters cannot activate Door_Raise
+  lines with speeds of 64 or above, in order to mimic Doom.
+- Fixed: Vertical view doubling crashed.
+- Made the secret wall color on the automap configurable through the 
+  am_secretwallcolor cvar.
+- Added a ga_togglemap gameaction, because the new parchment can cause
+  commands to dispatch while the background is drawing. If one of those
+  is togglemap and it gets handled right away, the mapback texture gets
+  unloaded, and AM_clearFB will crash.
+- Added the parchment background used by the Heretic and Hexen automaps.
+- Added some support for console fonts that don't use 8x8 character cells.
+- Fixed: A_WraithMissile was missing a NULL target check.
+- Fixed: The player did not make any noise during the cast finale.
+- Added the player's attack sound to the finale.
+- Added a check to the cast finale for monsters that have been dehacked to
+  have no attack states so that they won't crash the finale.
+
+October 7, 2003
+- Added DoomBounce, HereticBounce, and HexenBounce as valid properties for
+  DECORATE projectiles.
+- Fixed: Monster telefrags still reported that the monster had killed the
+  player normally. (Note: The only time a monster will normally be able to
+  telefrag a player is on Doom2 MAP30, although this can be changed with
+  MAPINFO.)
+- Made AM_changeWindowLoc scale the window movement so the automap will scroll
+  at the same rate no matter what resolution you play at.
+- Fixed: Reopening a door while it was closing would not play the opening
+  sound.
+- Fixed: You could still (de)activate dead monsters. Activating a dead monster
+  would make it disappear, because dead monsters usually have their next frame
+  set to NULL.
+- Fixed an off-by-one error for the vertical positioning of the elements on
+  the Hexen status bar.
+
+October 3, 2003
+- Fixed: Missing TAG_DONE is WI_slamBackground().
+- Fixed: ZDoom no longer tries to read non-V3.0 Dehacked patch files. Earlier
+  ones are apparently all binary, which has never been supported and could
+  make it crash.
+
+October 1, 2003
+- Added support for specifying animated texture sequences in ANIMDEFS by name
+  instead of by number. i.e. Instead of:
+	texture x_water1
+	pic 1 rand 5 12
+	pic 2 rand 5 12
+	pic 3 rand 5 12
+	pic 4 rand 5 12
+	
+  You can write:
+	texture x_water1
+	pic x_water1 rand 5 12
+	pic x_water2 rand 5 12
+	pic x_water3 rand 5 12
+	pic x_water4 rand 5 12
+- Added a check for the front sky layers of parallax skies so that the front
+  texture does not have color 0 remapped, because it really does use color 0
+  as transparent. (Note that since color 0 is now the transparent color for
+  everything, you can use normal transparent regions for front sky textures.)
+
+September 27, 2003
+- Changed the transparent color index from 255 back to 0. 0 is more convenient
+  because:
+   1) Images that are used as alpha masks (primarily decals) already
+      use color 0 as transparent, so they no longer need special processing.
+   2) PNG images need 255 fewer bytes to mark color 0 as transparent than they
+      need to mark color 255 as transparent. But this won't really be important
+      until I add support for PNG images (which will probably happen, but who
+      knows when).
+  The only reason I switched to 255 was because that was what BUILD used, so by
+  using the same transparent index, I could memory map its tiles read-only and
+  use them directly.
+
+September 26, 2003
+- Fixed: If a switch defined in a SWITCHES lump used the same "on" and "off"
+  graphics, the game would crash. Now it gets skipped, because it's not really
+  a switch if it doesn't change its image.
+
+September 25, 2003
+- Fixed: Using the MDK cheat always flung the dead things at you. Related, the
+  maximum thrust to have something fall forward on death is now 10 units/tic.
+- Fixed: ClearInventory always crashed because using GiveInventory to give a
+  weapon afterward would not bring the weapon up, so the player's ready weapon
+  would be left as something that doesn't exist.
+- Fixed: The overlayed automap showed statistics when not viewing through a
+  player's eyes.
+- Increased MISSILERANGE to 20480 (was 2048).
+- Changed the massacre code so that it sets the shootable bit for any monsters
+  that have it cleared (such as Serpents, usually), so they die too.
+- Fixed: Masked midtextures beneath a fake floor (or above a fake ceiling)
+  only inheritted their light level and not their light color from the control
+  sector.
+- Added code so that when a map thing is spawned directly on a line, it will
+  be moved 1/4 unit in toward the middle of the subsector so that it will be
+  clipped reliably by the renderer. See the torch right in front of the player
+  at the start of Heretic E1M1 for an example of this bad practice.
+- Changed: MF2_FLOATBOB actors no longer splash on liquids.
+- Fixed: P_AimLineAttack() clamped the player's vrange to 1 degree maximum
+  instead of 1 degree minimum, so it would not aim past any two-sided lines
+  if you were using 0 autoaim because the toppitch and bottompitch would be
+  the same before even entering PTR_AimTraverse. This was the cause of
+  chainsaw not always pulling you in and melee weapons sometimes missing
+  monsters that were clearly in range.
+- Fixed: P_SpawnPuff() used linetarget instead of its hitthing parameter
+  to determine if it should play the puff's SeeSound or AttackSound.
+- Improved(?) the Bloodscourge so that its initial target search only looks
+  in front of the player.
+- Fixed: MStaffSpawn used linetarget, but P_AimLineAttack was never called
+  to set it.
+- Fixed: P_CheckMissileSpawn would destroy ripping missiles if they spawned
+  inside something.
+- Fixed: Dark servants could not be morphed in Hexen.
+- Fixed: MageWandSmoke was not translucent.
+- Combined all the WeaponPrefs list for each game into a single list.
+- Added text skipping for the Hexen chess ending.
+- Fixed: The chessboard finale drawer looked at userinfo.PlayerClass instead
+  of CurrentPlayerClass to decide which chess piece to draw, so random players
+  would always appear as the fighter.
+- Fixed: When V_BreakLines() inserted newlines for word wraps, the default
+  text color was restored for the new lines. Now it adds color escape
+  sequences after any soft line breaks, but it leaves hard line breaks alone.
+- Added support for marking scripts that are "safe for multiplayer". To do
+  this, add net after the script header but before the script body. e.g.:
+	script 1 (void) net { ... }
+	script 1 open net { ... }
+	script 1 enter net { ... }
+	etc.
+- Added the sethudsize ACS command. It takes three parameters:
+  sethudsize (width, height, statusbar). The width and height is the size
+  of the screen that hudmessage thinks it's drawing on. If this is different
+  from the real screen size, the hudmessage will be scaled to make it fit.
+  If statusbar is 1, then the height parameter covers the status bar and you
+  can draw on top of the status bar. If it is 0, then the hud message will
+  be stretched differently depending on whether the status bar is visible or
+  not, because the height available to draw in is shorter when the status bar
+  is visible. (However, a value of 0 will still let you draw on the status
+  bar if the hud message extends below the height you specified.)
+  
+  After using sethudsize, hudmessage coordinates also behave differently.
+  You now need to specify actual pixel coordinates and not numbers in the
+  [0.0, 1.0] range. However, they are still fixed point, so you need to keep
+  the decimal point. e.g. If you used SetHudSize (320, 200, 1); and want to
+  draw a hudmessage at the center of the screen, you should pass it the
+  coordinates (160.0, 100.0) and not (0.5, 0.5).
+  
+  The fractional part of the coordinates effect what part of the hud message
+  you are positioning:
+	For x:	.0 = positions center of box
+		.1 = positions left edge of box
+		.2 = positions right edge of box
+		.4 = centers text inside box
+		     .4 can also be added to either .1 or .2 to get .5 or .6
+		
+	For y:	.0 = positions center of box
+		.1 = positions top edge of box
+		.2 = positions bottom edge of box
+
+  e.g. If you used SetHudSize (320, 200, 1);, then the coordinates (160.1, 100.1)
+  will position the upper-left corner of the hud message. The coordinates
+  (160.2, 100.2) will position its lower-right corner instead.
+  
+  To make hudmessage behave as normal, use SetHudSize (0, 0, 0);.
+  
+  In summary, use sethudsize for hud messages that are really graphics, and don't
+  use it for text (unless you want your text to appear the same size at all
+  resolutions, such as a title with a special font or something).
+  
+- Added the getcvar ACS command. It returns the value of a cvar as an int,
+  so scripts can alter their behavior based on cvars.
+- Added the strlen ACS command. It behaves just like its C counterpart.
+- Added support for loading compressed GL nodes when regular nodes are
+  unavailable.
+- Fixed: You could pick up items above your head because P_CheckPosition()
+  added an extra 24 units of height to detect when you might step up inside
+  another actor. It still does, but now PIT_CheckThing() takes this into
+  consideration before touching it.
+
+September 24, 2003
+- Fixed a crash bug in A_SorcOffense2: It did not check for a NULL target.
+- Added support for compressed nodes. Not only do they take up less space
+  on disk than regular nodes, but the also remove the limits on number of
+  segs, subsectors, and nodes that normal nodes have. They also store the
+  extra vertices as 16.16 fixed point numbers like GL nodes, so split segs
+  can have fractional end points.
+
+September 23, 2003
+- Finished switching from memory-mapped I/O to normal file I/O. Partly, this
+  was done for portability, because some systems don't support MMIO, but
+  mostly it was done because the in-memory format of textures no longer
+  matches their on-disk format, so I can't use the wads themselves as a
+  texture cache anymore. Since I can't do that anymore, there's not much
+  reason to dedicate any address space to them.
+
+September 13, 2003
+- Added r_skyboxes cvar so that skyboxes can be turned off.
+- Fixed: Using noinventorybar in MAPINFO still showed the selected artifact
+  in the Doom status bar.
+- Note to self: I am no longer using Whole Program Optimization because:
+  1. It makes the executable around 200k bigger right now.
+  2. Its performance improvements are debatable. In fact, ZDBSP is about
+     half a second slower on a big map when using it.
+  3. It makes the linking stage of a release build take a lot longer
+     (which would be worth it if it actually helped, but I haven't seen it).
+- Changed the PNG reader so that it caches all basic chunk information in
+  memory the first time the file is scanned so that chunk searches can be
+  much quicker. This means that when you have a lot of .zds files, the save
+  and load menus should hopefully appear faster the first time you use them.
+  In the process of implementing this, I discovered a glaring bug:
+  G_DoLoadGame() never closed the file after loading all the data from it.
+- Added a check to disallow predefined 2D images as textures on walls, floors,
+  and ceilings at map load time. I purposefully left this check out of ACS
+  because they *can* be useful, so it's nice to have some way to use them.
+- Added TX_START/TX_END markers for new graphics. They can override existing
+  wall textures and flats.
+
+September 9, 2003
+- Fixed: STFBANY was not added to the texture manager, so multiplayer Doom
+  games crashed when the status bar tried to draw it.
+- Fixed: Options menu titles were drawn using SmallFont instead of BigFont.
+
+September 6, 2003
+- Fixed: Trying to delay for 0 tics in a script would delay for 4294967296
+  tics instead.
+
+September 2, 2003
+- Fixed relative lighting was never applied to masked midtextures because I
+  had the check contingent upon the absence of a sector colormap. But every
+  sector always has a colormap; I should have been checking for a black
+  fade instead.
+
+August 28, 2003
+- Fixed: Spawning an item with ACS that was Dehacked would not transfer the
+  special or TID from the original item to the dehacked item.
+- Fixed: AnimType was left uninitialized when parsing ANIMDEFS.
+
+August 14, 2003
+- Fog boundaries alone are no longer sufficient to clip a sprite.
+
+August 13, 2003
+- Fixed mirror flipping in R_ProjectSprite(). I was treating tx as if it were
+  in screen coordinates, but it's not. This was generally unnoticable because
+  tx has 16 fractional bits, so subtracting it from viewwidth was vear near
+  subtracting it from 0.
+- Changed sprite clipping by slopes to be more like sprite clipping by unsloped
+  floors and ceilings.
+- Removed the check for MF_SOLID in P_TestMobjZ(). Nonsolid things should
+  still be blocked by invisible bridges. (So no more corpses will fall through
+  invisible bridges.)
+- Added the ability for monsters to walk on invisible bridges. Note that the
+  bridge's top must be below or at the monster's height. Bridges that require
+  even a slight step up will still be impassible to monsters. (For now. Maybe
+  some time in the future I will change that. Maybe.)
+- Fixed: R_ProjectParticle() could project 0-width particles. This could cause
+  a single column of a fog boundary behind the particle to be drawn more than
+  once.
+- Fixed a bug in R_RenderMaskedSegRange() that caused one-pixel wide ranges
+  to not be drawn when using r_columnmethod 1.
+- Added support for extended ID666 amplification tags in SPC files. Doing so,
+  I discovered one change from snesapu 0.95 to 0.98: SetDSPAmp's scale has
+  12 more fractional bits in 0.98 than it did in the earlier versions.
+- Updated SPC support for snesapu.dll version 1.01, meaning that I allowed for
+  a higher minimum version returned by SNESAPUInfo. Nothing else needed to
+  change, so I'm not sure why the minimum version got bumped. I did need to
+  change the mixer parameter of SetAPUOpt from 0 to -1, but 0 was also defined
+  as no mixer in snesapu 0.95, so I'm not sure why it worked with the older
+  DLL.
+- Added a check for textures that try to reference a patch not in the PNAMES
+  lump.
+
+August 11, 2003
+- Removed the +1 from the damage calculations in PIT_RadiusAttack(). I'm not
+  sure what that was doing there.
+- Changed the VirtualProtect() call that makes the self-modifying code
+  writable from PAGE_EXECUTE_WRITECOPY to PAGE_EXECUTE_READWRITE after
+  Timmie found out Win9x doesn't know what PAGE_EXECUTE_WRITECOPY is.
+
+August 5, 2003
+- Changed the ignoreInvisibility parameter of P_CheckSight() to a flags
+  parameter so that I can pass another flag (2) to indicate that the sight
+  check should see past "block everything" lines (the former default). By
+  default, sight checks no longer see past "block everything" lines, so
+  monsters will not be able to melee attack you through them, and explosions
+  will not be able to do splash damage through them.
+- Fixed: Hitscan weapons always triggered the front side of an impact line,
+  even when they struck the back side.
+- Added a fifth argument to Sector_SetColor to control how much the
+  palette should be desaturated. 0=leave it alone, and 255=shades of
+  gray. The palette is desaturated before it gets colored. The test color
+  console command can also take this parameter now.
+- Added a new polyobject start spot (#9303) that causes the polyobject to
+  deal damage whenever it touches a player.
+- Changed sprite loading so that you can have sprites with gaps in their
+  defined frame ranges again. (e.g. create frames A-D and H-N but not E-G)
+- Fixed: Minisegs were messing up the polyobject seg detection code when
+  GL nodes were used.
+- Fixed: Fullbright sprites would be drawn fullbright in levels with their
+  own fadtable (IOW, every foggy Hexen map) because g_level.cpp never made
+  a note for the renderer to look at discover that the level used a custom
+  fadetable.
+- Added separate floor and ceiling skyboxes. Set the sky picker's second
+  argument according to what you want to set: 0=floor and ceiling,
+  1=ceiling only, or 2=floor only.
+- Fixed: Undefined sky textures are once again replaced by the default
+  texture instead of the empty texture.
+- Fixed: Shooting a railgun while standing on a ledge could make you fall
+  through the ledge because the railgun invisible moves you to the hit
+  point in case it needs to make a water splash, then moves you back to
+  your start spot. However, when it moved you back, it did not restore
+  some important variables like floorz.
+- Changed the weaponless marines so that their spawn state does not cycle
+  between frames A and B. This holds even if you give them a weapon later
+  in a script, but it does not hold for marines that spawn with a weapon,
+  even if you take the weapon from them later.
+- Fixed: The Heresiarch's orbiting balls did not have their floorz updated
+  when the Heresiarch's changed, so if the Heresiarch's head went below its
+  original floor height, its balls would rapidly jump between its head height
+  and the old floor height. Since it seemed relevant, I also did the same
+  for ceilingz. I also did it for the SorcFX2 effect (invulnerability
+  indicator).
+- Added support for nested skyboxes. Now you can have one skybox look into
+  another skybox. The changes required were surprisingly minor.
+
+August 2, 2003
+- Fixed: Returning from one function to another function failed to take into
+  account the presence of the calling function's return info when it restored
+  its local variable pointer.
+
+July 31, 2003
+- Fixed a crash when using path followers with incomplete paths.
+
+July 30, 2003
+- Added CheckModified() method to FTexture for the benefit of ZDoomGL.
+- Added nonexistant texture check to the warping texture setup.
+
+July 28, 2003
+- Removed the ScaleCopy canvas from FBaseStatusBar, because everything is now
+  drawn to the screen directly even when the status bar is scaled.
+- Changed the pitch calculations in the DSimpleCanvas constructor to provide
+  better wall drawing performance at all resolutions.
+- Corrected ::ST_Y calculation so that a scaled status bar does not have its
+  topmost line overwritten by the view window at certain resolutions.
+
+July 25, 2003
+- Added DTA_WindowLeft and DTA_WindowRight tags for DCanvas::DrawTexture
+  to restrict the portion of the source texture that gets drawn to the
+  screen. Changed doom_sbar.cpp to use these, keeping in mind that they don't
+  clip the vertical range of the texture.
+- Improved the behavior of R_DrawMaskedColumn(Horiz) so that when using
+  non-integral scaling and drawing adjacent columns that end at different y
+  locations, the shorter column lines up better with the longer one.
+- Fixed: R_SetSpanSize_ASM had the x and y sizes swapped when called in a
+  release build but not a debug build. To fix, I just removed its __regargs
+  entry point.
+
+July 20, 2003
+- Disabled interpolation for sliding polyobjects that complete their movement
+  in fewer than three tics. (The moving crate effect in Massmouth 2 this fixes
+  needs two tics to reloop the crate.)
+- Turned off interpolation of instant movement floors and ceilings so as not
+  to ruin the fake moving sector effect used in a few wads.
+- Added a call to R_SetupBuffer() at the end of R_RenderViewToCanvas so that
+  the ylookup table will be correct if the game was saved while watching the
+  automap.
+- Fixed: Every two-sided line was storing midtexture information even if it
+  didn't have a midtexture.
+- Changed ylookup into an array of ints instead of BYTE*s so that I can still
+  use the common column drawers for everything even when the viewwindow does
+  not start at (0,0). If you were using "dc_ylookup[y]" before, now you need to
+  use "dc_ylookup[y] + dc_destorg" to get the same value.
+- Fixed: Skybox ceilings could sometimes be left undrawn if they were in the
+  same sector as a skybox floor because I was missing a check for plane height
+  in R_FindPlane. This only applies to skyboxes; the check was present for
+  normal skies.
+
+July 19, 2003
+- Fixed spacing of the characters on the finale text.
+- Fixed clipping of scaled sprites in deep water.
+
+July 18, 2003
+- Fixed: remove was uninitialized in ParseEpisodeInfo().
+
+July 17, 2003
+- Moved the P_LoadBlockmap() call so that it occurs after the nodes are
+  processed, so if a node build is necessitated, the blockmap gets rebuilt too.
+- Fixed detection of empty rejects.
+- Stopped loading REJECTs that are too small. They're probably caused by an
+  outdated node build, so there contents are invalid and using them it is wrong.
+- Added more checks for seg validity in P_LoadSegs().
+
 July 2, 2003
 - Removed the FROMCEILINGZ128 #define in p_local.h. I'm not sure what that was.
 - Added support for properly tiling wall textures whose widths are not a power
@@ -211,7 +733,7 @@ May 31, 2003
   it seemed like the thing to do.
 - Fixed: Loading BUILD maps was broken because they did not initialize
   sectors' ZoneNumber.
-- Changed the default for vid_vsync from true to false, becuase with the
+- Changed the default for vid_vsync from true to false, because with the
   unlimited framerate, no vsync actually produces better control.
 
 May 30, 2003
@@ -241,8 +763,8 @@ May 28, 2003
 - Started decoupling -dup from the framerate.
 - Fixed an obscure crash bug caused by drawing past the bottom of composite
   textures whose heights are not powers of 2. If the composite texture was
-  constructed at the end of a page, the game could read into the next page,
-  which is bad if the next page is not mapped in.
+  constructed at the end of a page of memory, the game could read into the
+  next page, which is bad if the next page is not mapped in.
 
 May 27, 2003
 - Framerates above 35 FPS should now be done. Whether or not it's good in a

@@ -98,10 +98,10 @@ CUSTOM_CVAR (Int, crosshair, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 	size = (SCREENWIDTH < 640) ? 'S' : 'B';
 	sprintf (name, "XHAIR%c%d", size, num);
-	if ((lump = W_CheckNumForName (name)) == -1)
+	if ((lump = Wads.CheckNumForName (name)) == -1)
 	{
 		sprintf (name, "XHAIR%c1", size);
-		if ((lump = W_CheckNumForName (name)) == -1)
+		if ((lump = Wads.CheckNumForName (name)) == -1)
 		{
 			strcpy (name, "XHAIRS1");
 		}
@@ -142,7 +142,6 @@ FBaseStatusBar::FBaseStatusBar (int reltop)
 	FixedOrigin = false;
 	CrosshairSize = FRACUNIT;
 	RelTop = reltop;
-	ScaleCopy = NULL;
 	Messages = NULL;
 	Displacement = 0;
 
@@ -162,10 +161,6 @@ FBaseStatusBar::~FBaseStatusBar ()
 {
 	DHUDMessage *msg;
 
-	if (ScaleCopy)
-	{
-		delete ScaleCopy;
-	}
 	msg = Messages;
 	while (msg)
 	{
@@ -202,11 +197,7 @@ void FBaseStatusBar::SetScaled (bool scale)
 	{
 		ST_X = 0;
 		ST_Y = 200 - RelTop;
-		::ST_Y = SCREENHEIGHT - Scale (RelTop, SCREENHEIGHT, 200);
-		if (ScaleCopy == NULL)
-		{
-			ScaleCopy = new DSimpleCanvas (320, RelTop);
-		}
+		::ST_Y = Scale (ST_Y, SCREENHEIGHT, 200);
 		ScaleX = (SCREENWIDTH << FRACBITS) / 320;
 		ScaleY = (SCREENHEIGHT << FRACBITS) / 200;
 		ScaleIX = (320 << FRACBITS) / SCREENWIDTH;
@@ -320,6 +311,8 @@ DHUDMessage *FBaseStatusBar::DetachMessage (DHUDMessage *msg)
 	{
 		*prev = probe->Next;
 		probe->Next = NULL;
+		// Redraw the status bar in case it was covered
+		SB_state = screen->GetPageCount ();
 	}
 	return probe;
 }
@@ -338,6 +331,8 @@ DHUDMessage *FBaseStatusBar::DetachMessage (DWORD id)
 	{
 		*prev = probe->Next;
 		probe->Next = NULL;
+		// Redraw the status bar in case it was covered
+		SB_state = screen->GetPageCount ();
 	}
 	return probe;
 }
@@ -389,86 +384,7 @@ void FBaseStatusBar::ShowPlayerName ()
 
 	color = (CPlayer == &players[consoleplayer]) ? CR_GOLD : CR_GREEN;
 	AttachMessage (new DHUDMessageFadeOut (CPlayer->userinfo.netname,
-		1.5f, 0.92f, color, 2.f, 0.35f), 'PNAM');
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC CopyToScreen
-//
-// Copies a region from ScaleCopy to the visible screen. We have to be
-// very careful with our texture coordinates so that the end result looks
-// like one continuous status bar instead of several individual pieces
-// slapped on top of a status bar.
-//
-//---------------------------------------------------------------------------
-
-void FBaseStatusBar::CopyToScreen (int x, int y, int w, int h) const
-{
-return;
-	fixed_t ix = ScaleIX;
-	fixed_t iy = ScaleIY;
-	int nx = (x * ScaleX) >> FRACBITS;
-	int ny = (y * ScaleY) >> FRACBITS;
-	fixed_t left = ix * nx;
-	fixed_t err = iy * ny;
-	w += x - (left >> FRACBITS);
-	h += y - (err >> FRACBITS);
-	int ow = (((x + w) * ScaleX) >> FRACBITS) - nx;
-	int oh = (((y + h) * ScaleY) >> FRACBITS) - ny;
-
-	if (ny + ::ST_Y + oh > SCREENHEIGHT)
-		oh = SCREENHEIGHT - ny - ::ST_Y;
-	if (nx + ow > SCREENWIDTH)
-		ow = SCREENWIDTH - nx;
-
-	if (oh <= 0 || ow <= 0)
-		return;
-
-	int frompitch = ScaleCopy->GetPitch();
-	byte *from = ScaleCopy->GetBuffer() + frompitch * (err >> FRACBITS) + (left >> FRACBITS);
-	err &= FRACUNIT-1;
-	left &= FRACUNIT-1;
-	byte *to = screen->GetBuffer() + nx + screen->GetPitch() * (ny + ::ST_Y);
-	int toskip = screen->GetPitch() - ow;
-
-	do
-	{
-		int l = ow;
-		fixed_t cx = left;
-		do
-		{
-			//*to++ = x;
-			*to++ = from[cx>>FRACBITS];
-			cx += ix;
-		} while (--l);
-		to += toskip;
-		err += iy;
-		if (err >= FRACUNIT)
-		{
-			from += frompitch;
-			err &= FRACUNIT-1;
-		}
-	} while (--oh);
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC UpdateRect
-//
-// If scaling, copies the given rectangle on the status bar to the screen.
-// If not scaling, does nothing.
-//
-//---------------------------------------------------------------------------
-
-void FBaseStatusBar::UpdateRect (int x, int y, int w, int h) const
-{
-	if (Scaled)
-	{
-		ScaleCopy->Lock ();
-		CopyToScreen (x, y, w, h);
-		ScaleCopy->Unlock ();
-	}
+		1.5f, 0.92f, 0, 0, color, 2.f, 0.35f), 'PNAM');
 }
 
 //---------------------------------------------------------------------------
@@ -479,78 +395,16 @@ void FBaseStatusBar::UpdateRect (int x, int y, int w, int h) const
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawImageNoUpdate (FTexture *img,
+void FBaseStatusBar::DrawImage (FTexture *img,
 	int x, int y, byte *translation) const
 {
 	if (img != NULL)
 	{
-		bool main;
-
-		if (y == -999999)
-		{ // Hack for Hexen status bar, which duplicates the top part of the
-		  // bar in the main bar graphic.
-			main = true;
-			y = RelTop - img->GetHeight();
-		}
-		else
-		{
-			main = (y >= img->TopOffset);
-		}
-		if (Scaled && 0)
-		{
-			if (!main)
-			{
-				screen->DrawTexture (img,
-					x * screen->GetWidth() / 320,
-					::ST_Y + y * screen->GetHeight() / 200,
-					DTA_DestWidth, (img->GetWidth() * screen->GetWidth()) / 320,
-					DTA_DestHeight, (img->GetHeight() * screen->GetHeight()) / 200,
-					DTA_Translation, translation,
-					TAG_DONE);
-			}
-			else
-			{
-				ScaleCopy->Lock ();
-				ScaleCopy->DrawTexture (img, x, y, DTA_Translation, translation, TAG_DONE);
-				ScaleCopy->Unlock ();
-			}
-		}
-		else
-		{
-			screen->DrawTexture (img, x + ST_X, y + ST_Y,
-				DTA_Translation, translation,
-				DTA_320x200, Scaled,
-				TAG_DONE);
-		}
+		screen->DrawTexture (img, x + ST_X, y + ST_Y,
+			DTA_Translation, translation,
+			DTA_320x200, Scaled,
+			TAG_DONE);
 	}
-}
-
-void FBaseStatusBar::DrawImage (FTexture *img,
-	int x, int y, byte *translation) const
-{
-	DrawImageNoUpdate (img, x, y, translation);
-/*	if (Scaled)
-	{
-		if (img != NULL)
-		{
-			int h = img->GetHeight ();
-			if (y == -999999)
-			{
-				y = 0;
-				h = MIN (RelTop, h);
-			}
-			else
-			{
-				y -= img->TopOffset;
-			}
-			if (y >= 0)
-			{
-				ScaleCopy->Lock ();
-				CopyToScreen (x, y, img->GetWidth(), h);
-				ScaleCopy->Unlock ();
-			}
-		}
-	}*/
 }
 
 //---------------------------------------------------------------------------
@@ -567,35 +421,10 @@ void FBaseStatusBar::DrawFadedImage (FTexture *img,
 {
 	if (img != NULL)
 	{
-		if (Scaled && 0)
-		{
-			int w = img->GetWidth ();
-			int h = img->GetHeight ();
-			if (y < 0)
-			{
-				screen->DrawTexture (img,
-					x * screen->GetWidth() / 320,
-					::ST_Y + y * screen->GetHeight() / 200,
-					DTA_DestWidth, (w * screen->GetWidth()) / 320,
-					DTA_DestHeight, (h * screen->GetHeight()) / 200,
-					DTA_Alpha, shade,
-					TAG_DONE);
-			}
-			else
-			{
-				ScaleCopy->Lock ();
-				ScaleCopy->DrawTexture (img, x, y, DTA_Alpha, shade, TAG_DONE);
-				CopyToScreen (x - img->LeftOffset, y - img->TopOffset, w, h);
-				ScaleCopy->Unlock ();
-			}
-		}
-		else
-		{
-			screen->DrawTexture (img, x + ST_X, y + ST_Y,
-				DTA_Alpha, shade,
-				DTA_320x200, Scaled,
-				TAG_DONE);
-		}
+		screen->DrawTexture (img, x + ST_X, y + ST_Y,
+			DTA_Alpha, shade,
+			DTA_320x200, Scaled,
+			TAG_DONE);
 	}
 }
 
@@ -604,51 +433,20 @@ void FBaseStatusBar::DrawFadedImage (FTexture *img,
 // PROC DrawPartialImage
 //
 // Draws a portion of an image with the status bar's upper-left corner as
-// the origin. The image must not have any mask bytes. Used for Doom's sbar.
+// the origin. The image should be the same size as the status bar.
+// Used for Doom's status bar.
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawPartialImage (FTexture *img,
-	int x, int y, int wx, int wy, int ww, int wh) const
+void FBaseStatusBar::DrawPartialImage (FTexture *img, int wx, int ww) const
 {
 	if (img != NULL)
 	{
-		const BYTE *data = img->GetPixels ();
-		int h = img->GetHeight ();
-		byte *dest;
-		int pitch, pitch_rew;
-
-		data += wx*h + wy;
-
-		if (Scaled)
-		{
-			ScaleCopy->Lock ();
-			dest = ScaleCopy->GetBuffer() + x + y*ScaleCopy->GetPitch();
-			pitch = ScaleCopy->GetPitch();
-		}
-		else
-		{
-			dest = screen->GetBuffer() + x+ST_X + (y+ST_Y)*screen->GetPitch();
-			pitch = screen->GetPitch();
-		}
-
-		pitch_rew = pitch * wh - 1;
-
-		do
-		{
-			for (int i = 0; i < wh; ++i)
-			{
-				*dest = data[i];
-				dest += pitch;
-			}
-			data += h;
-			dest -= pitch_rew;
-		} while (--ww);
-
-		if (Scaled)
-		{
-			ScaleCopy->Unlock ();
-		}
+		screen->DrawTexture (img, ST_X, ST_Y,
+			DTA_WindowLeft, wx,
+			DTA_WindowRight, wx + ww,
+			DTA_320x200, Scaled,
+			TAG_DONE);
 	}
 }
 
@@ -843,13 +641,6 @@ void FBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
 		w = h = 0;
 	}
 
-	if (Scaled)
-	{
-		ScaleCopy->Lock ();
-		CopyToScreen (x, y, size*w, h);
-		ScaleCopy->Unlock ();
-	}
-
 	xpos = x + w/2 + w*size;
 
 	for (i = size-1, power = 10; i > 0; i--)
@@ -909,12 +700,6 @@ void FBaseStatusBar::DrSmallNumber (int val, int x, int y) const
 {
 	int digit = 0;
 
-	if (Scaled)
-	{
-		ScaleCopy->Lock ();
-		CopyToScreen (x, y, 3*4, 6);
-		ScaleCopy->Unlock ();
-	}
 	if (val > 999)
 	{
 		val = 999;
@@ -1265,9 +1050,12 @@ void FBaseStatusBar::Draw (EHudState state)
 		}
 	}
 
-	if (viewactive && CPlayer && CPlayer->camera->player)
+	if (viewactive)
 	{
-		DrawCrosshair ();
+		if (CPlayer && CPlayer->camera->player)
+		{
+			DrawCrosshair ();
+		}
 	}
 	else if (automapactive)
 	{

@@ -42,11 +42,8 @@
 #include "v_palette.h"
 #include "v_video.h"
 
-static FRandom pr_morphplayerthink ("MorphPlayerThink");
 static FRandom pr_torch ("Torch");
 static FRandom pr_healradius ("HealRadius");
-
-extern void P_UpdateBeak (AActor *, pspdef_t *);
 
 // [RH] # of ticks to complete a turn180
 #define TURN180_TICKS	((TICRATE / 4) + 1)
@@ -56,17 +53,6 @@ CVAR (Bool, cl_noprediction, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 static player_t PredictionPlayerBackup;
 static BYTE PredictionActorBackup[sizeof(AActor)];
 static TArray<sector_t *> PredictionTouchingSectorsBackup;
-
-#include "c_dispatch.h"
-CCMD (fooba)
-{
-	for (int i = 0; i < 2; ++i)
-	{
-		AActor *a = players[i].mo;
-		Printf ("%d::::X=%d  Y=%d  Z=%d\n", i, a->x, a->y, a->z);
-		Printf ("Angle=%u  Pitch=%d\n", a->angle, a->pitch);
-	}
-}
 
 //
 // Movement.
@@ -196,6 +182,14 @@ int APlayerPawn::GetAutoArmorSave ()
 int APlayerPawn::GetArmorMax ()
 {
 	return 0;
+}
+
+void APlayerPawn::MorphPlayerThink ()
+{
+}
+
+void APlayerPawn::ActivateMorphWeapon ()
+{
 }
 
 fixed_t APlayerPawn::GetArmorIncrement (int armortype)
@@ -541,7 +535,7 @@ void P_MovePlayer (player_t *player)
 
 		if (debugfile)
 		{
-			fprintf (debugfile, "move player for pl %d%c: (%d,%d,%d) (%d,%d) %d %d w%d [", player-players,
+			fprintf (debugfile, "move player for pl %d%c: (%ld,%ld,%ld) (%ld,%ld) %d %d w%d [", player-players,
 				player->cheats&CF_PREDICTING?'p':' ',
 				player->mo->x, player->mo->y, player->mo->z,forwardmove, sidemove, movefactor, friction, player->mo->waterlevel);
 			msecnode_t *n = player->mo->touching_sectorlist;
@@ -753,62 +747,6 @@ void P_DeathThink (player_t *player)
 	}
 }
 
-
-//----------------------------------------------------------------------------
-//
-// PROC P_MorphPlayerThink
-//
-//----------------------------------------------------------------------------
-
-void P_MorphPlayerThink (player_t *player)
-{
-	APlayerPawn *pmo;
-
-	if (gameinfo.gametype == GAME_Heretic)
-	{ // Chicken think
-		if (player->health > 0)
-		{ // Handle beak movement
-			P_UpdateBeak (player->mo, &player->psprites[ps_weapon]);
-		}
-		if (player->morphTics & 15)
-		{
-			return;
-		}
-		pmo = player->mo;
-		if (!(pmo->momx + pmo->momy) && pr_morphplayerthink () < 160)
-		{ // Twitch view angle
-			pmo->angle += pr_morphplayerthink.Random2 () << 19;
-		}
-		if ((pmo->z <= pmo->floorz) && (pr_morphplayerthink() < 32))
-		{ // Jump and noise
-			pmo->momz += pmo->GetJumpZ ();
-			pmo->SetState (pmo->PainState);
-		}
-		if (pr_morphplayerthink () < 48)
-		{ // Just noise
-			S_Sound (pmo, CHAN_VOICE, "chicken/active", 1, ATTN_NORM);
-		}
-	}
-	else
-	{ // Pig think
-		if (player->morphTics&15)
-		{
-			return;
-		}
-		pmo = player->mo;
-		if(!(pmo->momx + pmo->momy) && pr_morphplayerthink() < 64)
-		{ // Snout sniff
-			P_SetPspriteNF (player, ps_weapon, wpnlev1info[wp_snout]->atkstate + 1);
-			S_Sound (pmo, CHAN_VOICE, "PigActive1", 1, ATTN_NORM); // snort
-			return;
-		}
-		if (pr_morphplayerthink() < 48)
-		{
-			S_Sound (pmo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
-		}
-	}
-}
-
 //----------------------------------------------------------------------------
 //
 // PROC P_PlayerThink
@@ -826,7 +764,7 @@ void P_PlayerThink (player_t *player)
 
 	if (debugfile && !(player->cheats & CF_PREDICTING))
 	{
-		fprintf (debugfile, "tic %d for pl %d: (%d, %d, %d, %u) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
+		fprintf (debugfile, "tic %d for pl %d: (%ld, %ld, %ld, %lu) b:%02x p:%d y:%d f:%d s:%d u:%d\n",
 			gametic, player-players, player->mo->x, player->mo->y, player->mo->z,
 			player->mo->angle>>ANGLETOFINESHIFT, player->cmd.ucmd.buttons,
 			player->cmd.ucmd.pitch, player->cmd.ucmd.yaw, player->cmd.ucmd.forwardmove,
@@ -913,9 +851,9 @@ void P_PlayerThink (player_t *player)
 	{
 		player->jumpTics--;
 	}
-	if (player->morphTics)
+	if (player->morphTics && !(player->cheats & CF_PREDICTING))
 	{
-		P_MorphPlayerThink (player);
+		player->mo->MorphPlayerThink ();
 	}
 
 	// [RH] Look up/down stuff
@@ -1263,8 +1201,6 @@ void P_PlayerThink (player_t *player)
 	player->oldbuttons = cmd->ucmd.buttons;
 }
 
-fixed_t smox, smoy;
-
 void P_PredictPlayer (player_t *player)
 {
 	int maxtic;
@@ -1276,7 +1212,7 @@ void P_PredictPlayer (player_t *player)
 		player != &players[consoleplayer] ||
 		player->playerstate != PST_LIVE ||
 		!netgame ||
-		player->morphTics ||
+		/*player->morphTics ||*/
 		(player->cheats & CF_PREDICTING))
 	{
 		return;
@@ -1294,9 +1230,6 @@ void P_PredictPlayer (player_t *player)
 
 	AActor *act = player->mo;
 	memcpy (PredictionActorBackup, &act->x, sizeof(AActor)-((BYTE *)&act->x-(BYTE *)act));
-
-	smox = act->momx;
-	smoy = act->momy;
 
 	act->flags &= ~MF_PICKUP;
 	act->flags2 &= ~MF2_PUSHWALL;
@@ -1343,7 +1276,19 @@ void P_UnPredictPlayer ()
 			sector_list = P_AddSecnode (PredictionTouchingSectorsBackup[i], act, sector_list);
 		}
 
+		// The blockmap ordering needs to remain unchanged, too. Right now, act has the right
+		// pointers, to temporarily set its MF_NOBLOCKMAP flag so that LinkToWorld() does not
+		// mess with them.
+		act->flags |= MF_NOBLOCKMAP;
 		act->LinkToWorld ();
+
+		// Now fix the pointers in the next and previous blockmap entries
+		act->flags &= ~MF_NOBLOCKMAP;
+		*(act->bprev) = act;
+		if (act->bnext)
+		{
+			act->bnext->bprev = &act->bnext;
+		}
 	}
 }
 

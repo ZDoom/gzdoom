@@ -107,7 +107,6 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.3f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 MusInfo::~MusInfo ()
 {
-	if (m_LumpMem != 0) W_UnMapLump (m_LumpMem);
 }
 
 bool MusInfo::SetPosition (int order)
@@ -210,40 +209,46 @@ void I_UnRegisterSong (void *handle)
 	}
 }
 
-void *I_RegisterSong (int lump)
+void *I_RegisterSong (FileReader *mem)
 {
-	const void *mem;
+	// When is the FileReader deleted? If the song loads all its data
+	// immediately, this function will delete it before returning.
+	// If the song streams its data while playing, the song object
+	// will delete it when it gets destroyed.
+
 	int len;
 	MusInfo *info = NULL;
 	DWORD id;
+	bool needdelete = true;
 
 	if (nomusic)
 	{
+		delete mem;
 		return 0;
 	}
 
-	mem = W_MapLumpNum (lump);
-	len = W_LumpLength (lump);
-	id = *(const DWORD *)mem;
+	len = mem->GetLength();
+	*mem >> id;
+	mem->Seek (-4, SEEK_CUR);
 
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
 		// This is a mus file
 		if (!nofmod && opl_enable)
 		{
-			info = new OPLMUSSong (mem, len);
+			info = new OPLMUSSong (mem);
 		}
 		if (info == NULL)
 		{
 #ifdef _WIN32
 			if (snd_mididevice != -2)
 			{
-				info = new MUSSong2 (mem, len);
+				info = new MUSSong2 (mem);
 			}
 			else if (!nofmod)
 #endif // _WIN32
 			{
-				info = new TimiditySong (mem, len);
+				info = new TimiditySong (mem);
 			}
 		}
 	}
@@ -253,48 +258,58 @@ void *I_RegisterSong (int lump)
 #ifdef _WIN32
 		if (snd_mididevice != -2)
 		{
-			info = new MIDISong2 (mem, len);
+			info = new MIDISong2 (mem);
 		}
 		else if (!nofmod)
 #endif // _WIN32
 		{
-			info = new TimiditySong (mem, len);
+			info = new TimiditySong (mem);
 		}
 	}
 	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
 	{
-		if (strncmp (((const char *)mem)+4, "-SPC700 Sound File Data", 23) == 0 &&
-			((const byte *)mem)[0x21] == 26 &&
-			((const byte *)mem)[0x22] == 26)
+		char header[0x23];
+
+		mem->Read (header, 0x23);
+		mem->Seek (-4, SEEK_CUR);
+		if (strncmp (header+4, "-SPC700 Sound File Data", 23) == 0 &&
+			header[0x21] == '\x1a' &&
+			header[0x22] == '\x1a')
 		{
-			info = new SPCSong (mem, len);
+			info = new SPCSong (mem);
 		}
 	}
 	else if (id == MAKE_ID('f','L','a','C'))
 	{
-		info = new FLACSong (mem, len);
+		needdelete = false;
+		info = new FLACSong (mem);
 	}
 
 	if (info == NULL)
 	{
 		if (id == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
 		{
-			DWORD subid = 0;
-			subid = ((DWORD *)mem)[2];
+			DWORD subid;
+
+			mem->Seek (8, SEEK_CUR);
+			*mem >> subid;
+			mem->Seek (-12, SEEK_CUR);
+
 			if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
 			{
 				// This is a CDDA file
-				info = new CDDAFile (mem, len);
+				info = new CDDAFile (mem);
 			}
 		}
 		if (info == NULL && !nofmod)	// no FMOD => no modules/streams
 		{
 			// First try loading it as MOD, then as a stream
-			info = new MODSong (mem, len);
+			info = new MODSong (mem);
 			if (!info->IsValid ())
 			{
 				delete info;
-				info = new StreamSong (mem, len);
+				needdelete = false;
+				info = new StreamSong (mem);
 			}
 		}
 	}
@@ -303,15 +318,12 @@ void *I_RegisterSong (int lump)
 	{
 		delete info;
 		info = NULL;
+		needdelete = true;
 	}
 
-	if (info != NULL)
+	if (needdelete)
 	{
-		info->m_LumpMem = mem;
-	}
-	else
-	{
-		W_UnMapLump (mem);
+		delete mem;
 	}
 
 	return info;

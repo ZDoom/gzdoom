@@ -331,7 +331,7 @@ void A_Fire (AActor *self)
 		return;
 				
 	// don't move it if the vile lost sight
-	if (!P_CheckSight (self->target, dest, false) )
+	if (!P_CheckSight (self->target, dest, 0) )
 		return;
 
 	an = dest->angle >> ANGLETOFINESHIFT;
@@ -381,7 +381,7 @@ void A_VileAttack (AActor *actor)
 	
 	A_FaceTarget (actor);
 
-	if (!P_CheckSight (actor, actor->target, false) )
+	if (!P_CheckSight (actor, actor->target, 0) )
 		return;
 
 	S_Sound (actor, CHAN_WEAPON, "vile/stop", 1, ATTN_NORM);

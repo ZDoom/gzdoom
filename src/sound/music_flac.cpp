@@ -6,7 +6,7 @@
 class FLACSong::FLACStreamer : protected FLAC::Decoder::Stream
 {
 public:
-	FLACStreamer (const void *mem, size_t len);
+	FLACStreamer (FileReader *file);
 	~FLACStreamer ();
 
 	signed char ServiceStream (void *buff, int len, bool loop);
@@ -21,9 +21,8 @@ protected:
 
 	void CopyToStream (void *&sbuff, FLAC__int32 **buffer, size_t ofs, size_t samples);
 
-	const FLAC__byte *MemStart;
-	const FLAC__byte *MemEnd;
-	const FLAC__byte *MemPos;
+	FileReader *File;
+	long StartPos, EndPos;
 
 	FLAC__int32 *SamplePool[2];
 	size_t PoolSize;
@@ -34,10 +33,11 @@ protected:
 	size_t SLen;
 };
 
-FLACSong::FLACSong (const void *mem, int len)
+FLACSong::FLACSong (FileReader *file)
 	: State (NULL)
 {
-	State = new FLACStreamer (mem, len);
+	State = new FLACStreamer (file);
+	m_File = file;
 
 	if (State->NumChannels > 0 && State->SampleBits > 0 && State->SampleRate > 0)
 	{
@@ -107,23 +107,23 @@ void FLACSong::Play (bool looping)
 	}
 }
 
-signed char STACK_ARGS FLACSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+signed char F_CALLBACKAPI FLACSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
 {
 	FLACSong *song = (FLACSong *)param;
 	return song->State->ServiceStream (buff, len, song->m_Looping);
 }
 
-FLACSong::FLACStreamer::FLACStreamer (const void *mem, size_t len)
+FLACSong::FLACStreamer::FLACStreamer (FileReader *file)
 	: NumChannels	(0),
 	  SampleBits	(0),
 	  SampleRate	(0),
-	  MemStart		((const FLAC__byte *)mem),
-	  MemEnd		((const FLAC__byte *)mem + len),
-	  MemPos		((const FLAC__byte *)mem),
+	  File			(file),
 	  PoolSize		(0),
 	  PoolUsed		(0),
 	  PoolPos		(0)
 {
+	StartPos = file->Tell();
+	EndPos = StartPos + file->GetLength();
 	init ();
 	process_until_end_of_metadata ();
 }
@@ -177,7 +177,7 @@ signed char FLACSong::FLACStreamer::ServiceStream (void *buff1, int len, bool lo
 			{
 				return FALSE;
 			}
-			MemPos = MemStart;
+			File->Seek (StartPos, SEEK_SET);
 			reset ();
 		}
 
@@ -242,18 +242,18 @@ void FLACSong::FLACStreamer::CopyToStream (void *&sbuff, FLAC__int32 **buffer, s
 {
 	if (*bytes > 0)
 	{
-		if (MemPos == MemEnd)
+		long here = File->Tell();
+		if (here == EndPos)
 		{
 			return FLAC__STREAM_DECODER_READ_STATUS_END_OF_STREAM;
 		}
 		else
 		{
-			if (*bytes > (size_t)(MemEnd - MemPos))
+			if (*bytes > (size_t)(EndPos - here))
 			{
-				*bytes = MemEnd - MemPos;
+				*bytes = EndPos - here;
 			}
-			memcpy (buffer, MemPos, *bytes);
-			MemPos += *bytes;
+			File->Read (buffer, *bytes);
 			return FLAC__STREAM_DECODER_READ_STATUS_CONTINUE;
 		}
 	}

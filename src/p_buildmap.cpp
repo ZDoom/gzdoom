@@ -322,7 +322,7 @@ static bool P_LoadBloodMap (BYTE *data, size_t len, mapthing2_t **mapthings, int
 
 static void LoadSectors (sectortype *bsec)
 {
-	FDynamicColormap *map = GetSpecialLights (PalEntry (255,255,255), level.fadeto);
+	FDynamicColormap *map = GetSpecialLights (PalEntry (255,255,255), level.fadeto, 0);
 	sector_t *sec;
 	char tnam[9];
 
@@ -567,7 +567,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 		slope.wal2 = &walls[slope.wal->point2];
 		slope.dx = slope.wal2->x - slope.wal->x;
 		slope.dy = slope.wal2->y - slope.wal->y;
-		slope.i = long (sqrt (slope.dx*slope.dx+slope.dy*slope.dy)) << 5;
+		slope.i = long (sqrt ((double)(slope.dx*slope.dx+slope.dy*slope.dy))) << 5;
 		if (slope.i == 0)
 		{
 			continue;

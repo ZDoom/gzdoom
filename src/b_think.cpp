@@ -117,7 +117,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 		if (b->enemy && Check_LOS (actor, b->enemy, SHOOTFOV)) 
 			Dofire (actor, cmd); //Order bot to fire current weapon
 	}
-	else if (b->enemy && P_CheckSight (actor, b->enemy, false)) //Fight!
+	else if (b->enemy && P_CheckSight (actor, b->enemy, 0)) //Fight!
 	{
 		Pitch (actor, b->enemy);
 

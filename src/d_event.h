@@ -68,6 +68,7 @@ typedef enum
 	ga_victory,
 	ga_worlddone,
 	ga_screenshot,
+	ga_togglemap,
 	ga_fullconsole
 } gameaction_t;
 

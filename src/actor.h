@@ -243,6 +243,8 @@ enum
 	MF4_NOICEDEATH		= 0x00000004,	// Actor never enters an ice death, not even the generic one
 	MF4_BOSSDEATH		= 0x00000008,	// A_FreezeDeathChunks calls A_BossDeath
 	MF4_RANDOMIZE		= 0x00000010,	// Missile has random initial tic count
+	MF4_NOSKIN			= 0x00000020,	// Player cannot use skins
+	MF4_FIXMAPTHINGPOS	= 0x00000040,	// Fix this actor's position when spawned as a map thing
 
 // --- mobj.renderflags ---
 
@@ -558,6 +560,8 @@ private:
 	static inline int TIDHASH (int key) { return key & 127; }
 
 	friend class FActorIterator;
+
+	sector_t *LinkToWorldForMapThing ();
 
 public:
 	void LinkToWorld (bool buggy=false);

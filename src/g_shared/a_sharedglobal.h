@@ -152,6 +152,7 @@ class ASkyViewpoint : public AActor
 	DECLARE_STATELESS_ACTOR (ASkyViewpoint, AActor)
 public:
 	void BeginPlay ();
+	bool bInSkybox;
 };
 
 class DFlashFader : public DThinker

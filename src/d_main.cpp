@@ -121,6 +121,11 @@ static void STACK_ARGS DoConsoleAtExit ();
 
 EXTERN_CVAR (Float, turbo)
 EXTERN_CVAR (Int, crosshair)
+EXTERN_CVAR (Bool, freelook)
+EXTERN_CVAR (Float, m_pitch)
+EXTERN_CVAR (Float, m_yaw)
+EXTERN_CVAR (Bool, invertmouse)
+EXTERN_CVAR (Bool, lookstrafe)
 
 extern gameinfo_t SharewareGameInfo;
 extern gameinfo_t RegisteredGameInfo;
@@ -130,6 +135,7 @@ extern gameinfo_t HereticGameInfo;
 extern gameinfo_t HereticSWGameInfo;
 extern gameinfo_t HexenGameInfo;
 extern gameinfo_t HexenDKGameInfo;
+extern gameinfo_t StrifeGameInfo;
 
 extern int testingmode;
 extern BOOL setmodeneeded;
@@ -179,7 +185,8 @@ const char *IWADTypeNames[NUM_IWAD_TYPES] =
 	"Heretic",
 	"DOOM Shareware",
 	"The Ultimate DOOM",
-	"DOOM Registered"
+	"DOOM Registered",
+	"Strife: Quest for the Sigil (Not even close to complete)"
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -201,6 +208,7 @@ static const char *IWADNames[] =
 	"heretic1.wad",
 	"hexen.wad",
 	"hexdd.wad",
+	"strife1.wad",
 	NULL
 };
 static GameAtExit *ExitCmdList;
@@ -257,6 +265,26 @@ void D_ProcessEvents (void)
 void D_PostEvent (const event_t *ev)
 {
 	events[eventhead] = *ev;
+	if (ev->type == EV_Mouse)
+	{
+		if (Button_Mlook.bDown || freelook)
+		{
+			int look = (int)(ev->y * m_pitch) << 4;
+			if (invertmouse)
+				look = -look;
+			G_AddViewPitch (look);
+			events[eventhead].y = 0;
+		}
+		if (!Button_Strafe.bDown && !lookstrafe)
+		{
+			G_AddViewAngle (int(ev->x * 8 * m_yaw));
+			events[eventhead].x = 0;
+		}
+		if ((events[eventhead].x | events[eventhead].y) == 0)
+		{
+			return;
+		}
+	}
 	eventhead = (++eventhead)&(MAXEVENTS-1);
 }
 
@@ -474,7 +502,7 @@ void D_Display (bool screenshot)
 		FTexture *tex;
 		int x;
 
-		tex = TexMan[gameinfo.gametype == GAME_Doom ? "M_PAUSE" : "PAUSED"];
+		tex = TexMan[gameinfo.gametype & (GAME_Doom|GAME_Strife) ? "M_PAUSE" : "PAUSED"];
 		x = (SCREENWIDTH - tex->GetWidth()*CleanXfac)/2 +
 			tex->LeftOffset*CleanXfac;
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
@@ -671,6 +699,7 @@ void D_DoomLoop ()
 			// [RH] Use the consoleplayer's camera to update sounds
 			S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 			// Update display, next frame, with current state.
+			I_StartTic ();
 			D_Display (false);
 		}
 		catch (CRecoverableError &error)
@@ -709,6 +738,7 @@ void D_PageDrawer (void)
 		screen->DrawTexture (Page, 0, 0,
 			DTA_DestWidth, screen->GetWidth(),
 			DTA_DestHeight, screen->GetHeight(),
+			DTA_Masked, false,
 			TAG_DONE);
 	}
 	else
@@ -773,7 +803,7 @@ void D_DoAdvanceDemo (void)
 			BorderNeedRefresh = screen->GetPageCount ();
 			democount++;
 			sprintf (demoname + 4, "%d", democount);
-			if (W_CheckNumForName (demoname) < 0)
+			if (Wads.CheckNumForName (demoname) < 0)
 			{
 				demosequence = 0;
 				democount = 0;
@@ -1037,7 +1067,8 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		{ retail,		&HereticGameInfo,		doom },			// Heretic
 		{ shareware,	&SharewareGameInfo,		doom },			// DoomShareware
 		{ retail,		&RetailGameInfo,		doom },			// UltimateDoom
-		{ registered,	&RegisteredGameInfo,	doom }			// DoomRegistered
+		{ registered,	&RegisteredGameInfo,	doom },			// DoomRegistered
+		{ commercial,	&StrifeGameInfo,		doom2 },		// Strife
 	};
 
 	D_AddFile (iwadpath);
@@ -1077,10 +1108,11 @@ static EIWADType ScanIWAD (const char *iwad)
 		"REDTNT2",
 		"CAMO1",
 		{ 'E','X','T','E','N','D','E','D'},
+		"ENDSTRF",
 		"E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
 		"E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		"DPHOOF","BFGGA0","HEADA1","CYBRA1",
-		{ 'S','P','I','D','A','1','D','1' }
+		{ 'S','P','I','D','A','1','D','1' },
 	};
 #define NUM_CHECKLUMPS (sizeof(checklumps)/8)
 	enum
@@ -1093,6 +1125,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_redtnt2,
 		Check_cam01,
 		Check_Extended,
+		Check_endstrf,
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
@@ -1138,6 +1171,10 @@ static EIWADType ScanIWAD (const char *iwad)
 		else if (lumpsfound[Check_cam01])
 		{
 			return IWAD_Doom2Plutonia;
+		}
+		else if (lumpsfound[Check_endstrf])
+		{
+			return IWAD_Strife;
 		}
 		else
 		{
@@ -1552,11 +1589,11 @@ void D_LoadWadSettings ()
 
 	ParsingKeyConf = true;
 
-	while ((lump = W_FindLump ("KEYCONF", &lastlump)) != -1)
+	while ((lump = Wads.FindLump ("KEYCONF", &lastlump)) != -1)
 	{
-		const char *data = (const char *)W_MapLumpNum (lump);
-		const char *eof = data + W_LumpLength (lump);
-		const char *conf = data;
+		FMemLump data = Wads.ReadLump (lump);
+		const char *eof = (char *)data.GetMem() + Wads.LumpLength (lump);
+		const char *conf = (char *)data.GetMem();
 
 		while (conf < eof)
 		{
@@ -1605,7 +1642,6 @@ void D_LoadWadSettings ()
 
 			AddCommandString (cmd);
 		}
-		W_UnMapLump (data);
 	}
 	ParsingKeyConf = false;
 }
@@ -1732,10 +1768,10 @@ void D_DoomMain (void)
 	}
 	delete files;
 
-	W_InitMultipleFiles (&wadfiles);
+	Wads.InitMultipleFiles (&wadfiles);
 
 	// [RH] Initialize localizable strings.
-	GStrings.LoadStrings (W_GetNumForName ("LANGUAGE"), STRING_TABLE_SIZE, false);
+	GStrings.LoadStrings (Wads.GetNumForName ("LANGUAGE"), STRING_TABLE_SIZE, false);
 	GStrings.Compact ();
 
 	//P_InitXlat ();
@@ -1883,7 +1919,7 @@ void D_DoomMain (void)
 	p = Args.CheckParm ("+map");
 	if (p && p < Args.NumArgs()-1)
 	{
-		if (W_CheckNumForName (Args.GetArg (p+1)) == -1)
+		if (Wads.CheckNumForName (Args.GetArg (p+1)) == -1)
 		{
 			Printf ("Can't find map %s\n", Args.GetArg (p+1));
 		}
@@ -2104,7 +2140,7 @@ ADD_STAT (scancycles, out)
 {
 	if (WallScanCycles && WallScanCycles < bestscancycles)
 		bestscancycles = WallScanCycles;
-	sprintf (out, "%d", bestscancycles);
+	sprintf (out, "%lu", bestscancycles);
 }
 
 CCMD (clearscancycles)

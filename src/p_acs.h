@@ -66,6 +66,12 @@ struct ScriptPtr2
 	DWORD ArgCount;
 };
 
+struct ScriptFlagsPtr
+{
+	WORD Number;
+	WORD Flags;
+};
+
 struct ScriptFunction
 {
 	BYTE ArgCount;
@@ -75,6 +81,7 @@ struct ScriptFunction
 	DWORD Address;
 };
 
+// Script types
 enum
 {
 	SCRIPT_Closed		= 0,
@@ -86,6 +93,12 @@ enum
 	SCRIPT_T1Return		= 6,
 	SCRIPT_T2Return		= 7,
 	SCRIPT_Lightning	= 12,
+};
+
+// Script flags
+enum
+{
+	SCRIPTF_Net = 0x0001	// Safe to "puke" in multiplayer
 };
 
 enum ACSFormat { ACS_Old, ACS_Enhanced, ACS_LittleEnhanced, ACS_Unknown };
@@ -100,6 +113,7 @@ public:
 	BYTE *FindChunk (DWORD id) const;
 	BYTE *NextChunk (BYTE *chunk) const;
 	int *FindScript (int number) const;
+	WORD GetScriptFlags (int number) const;
 	void PrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
 	void StartTypedScripts (WORD type, AActor *activator);
 	DWORD PC2Ofs (int *pc) const { return (DWORD)((BYTE *)pc - Data); }
@@ -138,6 +152,8 @@ private:
 	BYTE *Chunks;
 	BYTE *Scripts;
 	int NumScripts;
+	BYTE *ScriptFlags;
+	int NumFlaggedScripts;
 	BYTE *Functions;
 	int NumFunctions;
 	ArrayInfo *ArrayStore;
@@ -154,6 +170,7 @@ private:
 	static TArray<FBehavior *> StaticModules;
 
 	static int STACK_ARGS SortScripts (const void *a, const void *b);
+	static int STACK_ARGS SortScriptFlags (const void *a, const void *b);
 	void AddLanguage (DWORD lang);
 	DWORD FindLanguage (DWORD lang, bool ignoreregion) const;
 	DWORD *CheckIfInList (DWORD lang);
@@ -428,6 +445,9 @@ public:
 /*250*/	PCD_GETSCREENWIDTH,
 		PCD_GETSCREENHEIGHT,
 		PCD_THING_PROJECTILE2,
+		PCD_STRLEN,
+		PCD_SETHUDSIZE,
+		PCD_GETCVAR,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -501,6 +521,7 @@ protected:
 	line_t			*activationline;
 	int				lineSide;
 	FFont			*activefont;
+	int				hudwidth, hudheight;
 	FBehavior	    *activeBehavior;
 
 	void Link ();

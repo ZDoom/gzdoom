@@ -89,7 +89,7 @@ extern BOOL CheckAbort (void);
 // NETWORKING
 //
 
-static u_short DOOMPORT = (IPPORT_USERRESERVED + 0x1d);
+static u_short DOOMPORT = (IPPORT_USERRESERVED + 29);
 static SOCKET mysocket = INVALID_SOCKET;
 static sockaddr_in sendaddress[MAXNETNODES];
 static BYTE sendplayer[MAXNETNODES];
@@ -517,7 +517,7 @@ void HostGame (int i)
 		packet.numnodes = doomcom->numnodes - 2;
 		for (node = 1; node < doomcom->numnodes; node++)
 		{
-			int machine, spot;
+			int machine, spot = 0;
 
 			if (!gotack[node])
 			{

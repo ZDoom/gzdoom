@@ -908,7 +908,7 @@ void A_FireShotgun2 (AActor *actor, pspdef_t *psp)
 
 		P_LineAttack (actor,
 					  angle,
-					  MISSILERANGE,
+					  PLAYERMISSILERANGE,
 					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage);
 	}
 }

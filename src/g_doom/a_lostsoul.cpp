@@ -10,7 +10,7 @@
 #include "gstrings.h"
 #include "a_action.h"
 
-static FRandom pr_lost ("LostMissileRange");
+ FRandom pr_lost ("LostMissileRange");
 
 void A_SkullAttack (AActor *);
 

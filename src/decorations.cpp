@@ -331,7 +331,7 @@ void LoadDecorations (void (*process)(FState *, int))
 	int lastlump, lump;
 
 	lastlump = 0;
-	while ((lump = W_FindLump ("DECORATE", &lastlump)) != -1)
+	while ((lump = Wads.FindLump ("DECORATE", &lastlump)) != -1)
 	{
 		SC_OpenLumpNum (lump, "DECORATE");
 		ParseDecorate (process);
@@ -817,7 +817,7 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		else if (def == DEF_Projectile && SC_Compare ("Speed"))
 		{
 			SC_MustGetFloat ();
-			defaults->Speed = sc_Float * 65536.f;
+			defaults->Speed = fixed_t(sc_Float * 65536.f);
 		}
 		else if (SC_Compare ("Mass"))
 		{
@@ -859,6 +859,18 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 		{
 			SC_MustGetString ();
 			defaults->SeeSound = S_FindSound (sc_String);
+		}
+		else if (def == DEF_Projectile && SC_Compare ("DoomBounce"))
+		{
+			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_DOOMBOUNCE;
+		}
+		else if (def == DEF_Projectile && SC_Compare ("HereticBounce"))
+		{
+			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_HERETICBOUNCE;
+		}
+		else if (def == DEF_Projectile && SC_Compare ("HexenBounce"))
+		{
+			defaults->flags2 = (defaults->flags2 & ~MF2_BOUNCETYPE) | MF2_HEXENBOUNCE;
 		}
 		else if (def == DEF_Pickup && SC_Compare ("PickupSound"))
 		{

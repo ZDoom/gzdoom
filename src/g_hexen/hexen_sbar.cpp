@@ -20,6 +20,7 @@ public:
 	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
 	const BYTE *GetPixels ();
 	void Unload ();
+	bool CheckModified ();
 
 	void SetVial (FTexture *pic, int level);
 
@@ -52,6 +53,11 @@ void FManaBar::Unload ()
 	{
 		VialPic->Unload ();
 	}
+}
+
+bool FManaBar::CheckModified ()
+{
+	return NeedRefresh;
 }
 
 const BYTE *FManaBar::GetColumn (unsigned int column, const Span **spans_out)
@@ -97,18 +103,19 @@ void FManaBar::SetVial (FTexture *pic, int level)
 void FManaBar::MakeTexture ()
 {
 	int run = 22 - VialLevel;
+	BYTE color0 = GPalette.Remap[0];
 
 	NeedRefresh = false;
 	VialPic->CopyToBlock (Pixels, 5, 24, 0, 0);
-	memset (Pixels + 25, 0, run);
-	memset (Pixels + 25+24, 0, run);
-	memset (Pixels + 25+24+24, 0, run);
+	memset (Pixels + 25, color0, run);
+	memset (Pixels + 25+24, color0, run);
+	memset (Pixels + 25+24+24, color0, run);
 }
 
 class FHexenStatusBar : public FBaseStatusBar
 {
 public:
-	FHexenStatusBar () : FBaseStatusBar (39)
+	FHexenStatusBar () : FBaseStatusBar (38)
 	{
 		static const char *hexenLumpNames[NUM_HEXENSB_IMAGES] =
 		{
@@ -156,11 +163,6 @@ public:
 		ClassImages[0].Init (classLumpNames[0], NUM_HEXENCLASSSB_IMAGES);
 		ClassImages[1].Init (classLumpNames[1], NUM_HEXENCLASSSB_IMAGES);
 		ClassImages[2].Init (classLumpNames[2], NUM_HEXENCLASSSB_IMAGES);
-
-		SpinFlyLump		 = W_GetNumForName ("SPFLY0");
-		SpinMinotaurLump = W_GetNumForName ("SPMINO0");
-		SpinSpeedLump	 = W_GetNumForName ("SPBOOT0");
-		SpinDefenseLump	 = W_GetNumForName ("SPSHLD0");
 
 		oldarti = 0;
 		oldartiCount = 0;
@@ -235,7 +237,7 @@ public:
 		{
 			if (SB_state > 0)
 			{
-				DrawImage (Images[imgH2BAR], 0, -999999);
+				DrawImage (Images[imgH2BAR], 0, -27);
 				oldhealth = -1;
 			}
 			DrawCommonBar ();
@@ -248,8 +250,8 @@ public:
 				if (SB_state != 0)
 				{
 					// Main interface
-					//SB_state--;
-					DrawImage (Images[!automapactive ? imgSTATBAR : imgKEYBAR], 38, 1);
+					SB_state--;
+					DrawImage (Images[!automapactive ? imgSTATBAR : imgKEYBAR], 38, 0);
 					oldarti = 0;
 					oldmana1 = -1;
 					oldmana2 = -1;
@@ -417,7 +419,7 @@ private:
 	{
 		int healthPos;
 
-		DrawImage (Images[imgH2TOP], 0, -26);
+		DrawImage (Images[imgH2TOP], 0, -27);
 
 		if (oldhealth != HealthMarker)
 		{
@@ -428,11 +430,11 @@ private:
 		{
 			HealthRefresh--;
 			healthPos = clamp (HealthMarker, 0, 100);
-			DrawImage (ClassImages[LifeBarClass][imgCHAIN], 35+((healthPos*196/100)%9), 32);
-			DrawImage (ClassImages[LifeBarClass][imgLIFEGEM], 7+(healthPos*11/5), 32, multiplayer ?
+			DrawImage (ClassImages[LifeBarClass][imgCHAIN], 35+((healthPos*196/100)%9), 31);
+			DrawImage (ClassImages[LifeBarClass][imgLIFEGEM], 7+(healthPos*11/5), 31, multiplayer ?
 				translationtables[TRANSLATION_PlayersExtra] + (CPlayer-players)*256 : NULL);
-			DrawImage (Images[imgLFEDGE], 0, 32);
-			DrawImage (Images[imgRTEDGE], 277, 32);
+			DrawImage (Images[imgLFEDGE], 0, 31);
+			DrawImage (Images[imgRTEDGE], 277, 31);
 		}
 	}
 
@@ -449,8 +451,8 @@ private:
 		// Ready artifact
 		if (ArtifactFlash)
 		{
-			DrawImage (Images[imgARTICLEAR], 144, 0);
-			DrawImage (Images[imgUSEARTIA + ArtifactFlash], 148, 3);
+			DrawImage (Images[imgARTICLEAR], 144, -1);
+			DrawImage (Images[imgUSEARTIA + ArtifactFlash], 148, 2);
 			oldarti = -1; // so that the correct artifact fills in after the flash
 		}
 		else if (oldarti != CPlayer->readyArtifact
@@ -463,13 +465,13 @@ private:
 		if (ArtiRefresh)
 		{
 			ArtiRefresh--;
-			DrawImage (Images[imgARTICLEAR], 144, 0);
+			DrawImage (Images[imgARTICLEAR], 144, -1);
 			if (CPlayer->inventory[oldarti] > 0)
 			{
-				DrawImage (ArtiImages[oldarti], 143, 3);
+				DrawImage (ArtiImages[oldarti], 143, 2);
 				if (oldartiCount != 1)
 				{
-					DrSmallNumber (oldartiCount, 162, 24);
+					DrSmallNumber (oldartiCount, 162, 23);
 				}
 			}
 		}
@@ -486,8 +488,8 @@ private:
 			if (FragHealthRefresh)
 			{
 				FragHealthRefresh--;
-				DrawImage (Images[imgKILLS], 38, 2);
-				DrINumber (temp, 40, 16);
+				DrawImage (Images[imgKILLS], 38, 1);
+				DrINumber (temp, 40, 15);
 			}
 		}
 		else
@@ -501,8 +503,8 @@ private:
 			if (FragHealthRefresh)
 			{
 				FragHealthRefresh--;
-				DrawImage (Images[imgARMCLEAR], 41, 17);
-				DrINumber (temp, 40, 15, temp >= 25 ? imgINumbers : NUM_BASESB_IMAGES);
+				DrawImage (Images[imgARMCLEAR], 41, 16);
+				DrINumber (temp, 40, 14, temp >= 25 ? imgINumbers : NUM_BASESB_IMAGES);
 			}
 		}
 
@@ -524,8 +526,8 @@ private:
 		if (Mana1Refresh)
 		{
 			Mana1Refresh--;
-			DrawImage (Images[imgMANACLEAR], 77, 17);
-			DrSmallNumber (temp, 79, 20);
+			DrawImage (Images[imgMANACLEAR], 77, 16);
+			DrSmallNumber (temp, 79, 19);
 			if (temp == 0)
 			{ // Draw Dim Mana icon
 				manaPatch1 = imgMANADIM1;
@@ -546,8 +548,8 @@ private:
 		if (Mana2Refresh)
 		{
 			Mana2Refresh--;
-			DrawImage (Images[imgMANACLEAR], 109, 17);
-			DrSmallNumber (temp, 111, 20);
+			DrawImage (Images[imgMANACLEAR], 109, 16);
+			DrSmallNumber (temp, 111, 19);
 			if (temp == 0)
 			{ // Draw Dim Mana icon
 				manaPatch2 = imgMANADIM2;
@@ -605,13 +607,13 @@ private:
 				manaVialPatch2 = imgMANAVIALDIM2;
 			}
 
-			DrawImage (Images[manaPatch1], 77, 3);
-			DrawImage (Images[manaPatch2], 110, 3);
+			DrawImage (Images[manaPatch1], 77, 2);
+			DrawImage (Images[manaPatch2], 110, 2);
 
 			ManaVial1Pic.SetVial (Images[manaVialPatch1], 22*CPlayer->ammo[MANA_1]/MAX_MANA);
 			ManaVial2Pic.SetVial (Images[manaVialPatch2], 22*CPlayer->ammo[MANA_2]/MAX_MANA);
-			DrawImage (&ManaVial1Pic, 94, 3);
-			DrawImage (&ManaVial2Pic, 102, 3);
+			DrawImage (&ManaVial1Pic, 94, 2);
+			DrawImage (&ManaVial2Pic, 102, 2);
 			oldweapon = CPlayer->readyweapon;
 		}
 
@@ -627,8 +629,8 @@ private:
 		if (ArmorRefresh)
 		{
 			ArmorRefresh--;
-			DrawImage (Images[imgARMCLEAR], 255, 17);
-			DrINumber (temp / (5*FRACUNIT), 250, 15);
+			DrawImage (Images[imgARMCLEAR], 255, 16);
+			DrINumber (temp / (5*FRACUNIT), 250, 14);
 		}
 
 		// Weapon Pieces
@@ -651,7 +653,7 @@ private:
 		int x;
 		bool left, right;
 
-		DrawImage (Images[imgINVBAR], 38, 1);
+		DrawImage (Images[imgINVBAR], 38, 0);
 		FindInventoryPos (x, left, right);
 		if (x > 0)
 		{
@@ -659,14 +661,14 @@ private:
 			{
 				if (CPlayer->inventory[x])
 				{
-					DrawImage (ArtiImages[x], 50+i*31, 2);
+					DrawImage (ArtiImages[x], 50+i*31, 1);
 					if (CPlayer->inventory[x] != 1)
 					{
-						DrSmallNumber (CPlayer->inventory[x], 68+i*31, 24);
+						DrSmallNumber (CPlayer->inventory[x], 68+i*31, 23);
 					}
 					if (x == CPlayer->readyArtifact)
 					{
-						DrawImage (Images[imgSELECTBOX], 51+i*31, 2);
+						DrawImage (Images[imgSELECTBOX], 51+i*31, 1);
 					}
 					i++;
 				}
@@ -674,12 +676,12 @@ private:
 			if (left)
 			{
 				DrawImage (Images[!(level.time & 4) ?
-					imgINVLFGEM1 : imgINVLFGEM2], 42, 2);
+					imgINVLFGEM1 : imgINVLFGEM2], 42, 1);
 			}
 			if (right)
 			{
 				DrawImage (Images[!(level.time & 4) ?
-					imgINVRTGEM1 : imgINVRTGEM2], 269, 2);
+					imgINVRTGEM1 : imgINVRTGEM2], 269, 1);
 			}
 		}
 	}
@@ -721,7 +723,7 @@ private:
 			{
 				if (CPlayer->keys[i])
 				{
-					DrawImage (Images[imgKEYSLOT1+i], xPosition, 3);
+					DrawImage (Images[imgKEYSLOT1+i], xPosition, 2);
 					xPosition += 20;
 				}
 			}
@@ -735,7 +737,7 @@ private:
 			{
 				if (CPlayer->armorpoints[i] > 0)
 				{
-					DrawFadedImage (Images[imgARMSLOT1+i], 150+31*i, 3,
+					DrawFadedImage (Images[imgARMSLOT1+i], 150+31*i, 2,
 						MIN<fixed_t> (OPAQUE, Scale (CPlayer->armorpoints[i], OPAQUE,
 											CPlayer->mo->GetArmorIncrement (i))));
 				}
@@ -762,21 +764,21 @@ private:
 
 		if (pieces == 7)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgWEAPONFULL], 190, 1);
+			DrawImage (ClassImages[FourthWeaponClass][imgWEAPONFULL], 190, 0);
 			return;
 		}
-		DrawImage (ClassImages[FourthWeaponClass][imgWEAPONSLOT], 190, 1);
+		DrawImage (ClassImages[FourthWeaponClass][imgWEAPONSLOT], 190, 0);
 		if (pieces & WPIECE1)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgPIECE1], PieceX[FourthWeaponClass][0], 1);
+			DrawImage (ClassImages[FourthWeaponClass][imgPIECE1], PieceX[FourthWeaponClass][0], 0);
 		}
 		if (pieces & WPIECE2)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgPIECE2], PieceX[FourthWeaponClass][1], 1);
+			DrawImage (ClassImages[FourthWeaponClass][imgPIECE2], PieceX[FourthWeaponClass][1], 0);
 		}
 		if (pieces & WPIECE3)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgPIECE3], PieceX[FourthWeaponClass][2], 1);
+			DrawImage (ClassImages[FourthWeaponClass][imgPIECE3], PieceX[FourthWeaponClass][2], 0);
 		}
 	}
 
@@ -973,11 +975,6 @@ private:
 
 	FImageCollection Images;
 	FImageCollection ClassImages[3];
-
-	int SpinFlyLump;
-	int SpinMinotaurLump;
-	int SpinSpeedLump;
-	int SpinDefenseLump;
 
 	int HealthMarker;
 	char ArtifactFlash;

@@ -26,7 +26,7 @@
 #include "r_data.h"
 
 
-extern "C" byte*		ylookup[MAXHEIGHT];
+extern "C" int			ylookup[MAXHEIGHT];
 
 extern "C" int			dc_pitch;		// [RH] Distance between rows
 
@@ -44,7 +44,7 @@ extern "C" DWORD		*dc_destblend;
 // first pixel in a column
 extern "C" const byte*	dc_source;
 
-extern "C" byte*		dc_dest;
+extern "C" byte			*dc_dest, *dc_destorg;
 extern "C" int			dc_count;
 
 extern "C" DWORD		vplce[4];

@@ -77,7 +77,7 @@ EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
 
-#define lioffset(x)		myoffsetof(level_pwad_info_t,x)
+#define lioffset(x)		myoffsetof(level_info_t,x)
 #define cioffset(x)		myoffsetof(cluster_info_t,x)
 
 #define SNAP_ID			MAKE_ID('s','n','A','p')
@@ -86,12 +86,11 @@ EXTERN_CVAR (Int, disableautosave)
 #define RCLS_ID			MAKE_ID('r','c','L','s')
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
-static level_info_t *FindDefLevelInfo (char *mapname);
-static cluster_info_t *FindDefClusterInfo (int cluster);
 static int FindEndSequence (int type, const char *picname);
 static void SetEndSequence (char *nextmap, int type);
 static void InitPlayerClasses ();
 static void ParseEpisodeInfo ();
+static void G_DoParseMapInfo (int lump);
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -171,12 +170,16 @@ void *statcopy;					// for statistics driver
 
 level_locals_t level;			// info about current level
 
-static level_pwad_info_t *wadlevelinfos;
 static cluster_info_t *wadclusterinfos;
-static int numwadlevelinfos = 0;
 static int numwadclusterinfos = 0;
+level_info_t *wadlevelinfos;
+int numwadlevelinfos = 0;
 
 BOOL HexenHack;
+
+static level_info_t TheDefaultLevelInfo = { "", 0, "", "", "", "SKY1", 0, 0, 0, NULL, "Unnamed", "COLORMAP", +8, -8 };
+
+static cluster_info_t TheDefaultClusterInfo = { 0 };
 
 
 
@@ -377,7 +380,7 @@ MapInfoHandler ClusterHandlers[] =
 
 static void ParseMapInfoLower (MapInfoHandler *handlers,
 							   const char *strings[],
-							   level_pwad_info_t *levelinfo,
+							   level_info_t *levelinfo,
 							   cluster_info_t *clusterinfo,
 							   DWORD levelflags);
 
@@ -403,7 +406,7 @@ static int FindWadClusterInfo (int cluster)
 	return -1;
 }
 
-static void SetLevelDefaults (level_pwad_info_t *levelinfo)
+static void SetLevelDefaults (level_info_t *levelinfo)
 {
 	memset (levelinfo, 0, sizeof(*levelinfo));
 	levelinfo->snapshot = NULL;
@@ -421,114 +424,51 @@ static void SetLevelDefaults (level_pwad_info_t *levelinfo)
 void G_ParseMapInfo ()
 {
 	int lump, lastlump = 0;
-	level_pwad_info_t defaultinfo;
-	level_pwad_info_t *levelinfo;
-	int levelindex;
-	cluster_info_t *clusterinfo;
-	int clusterindex;
-	DWORD levelflags;
 
-	while ((lump = W_FindLump ("MAPINFO", &lastlump)) != -1)
+	// Parse the default MAPINFO for the current game.
+	switch (gameinfo.gametype)
 	{
-		SetLevelDefaults (&defaultinfo);
-		SC_OpenLumpNum (lump, "MAPINFO");
-		
-		while (SC_GetString ())
+	case GAME_Doom:
+		switch (gamemission)
 		{
-			switch (SC_MustMatchString (MapInfoTopLevel))
-			{
-			case MITL_DEFAULTMAP:
-				SetLevelDefaults (&defaultinfo);
-				ParseMapInfoLower (MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, 0);
-				break;
-
-			case MITL_MAP:		// map <MAPNAME> <Nice Name>
-				levelflags = defaultinfo.flags;
-				SC_MustGetString ();
-				if (IsNum (sc_String))
-				{	// MAPNAME is a number; assume a Hexen wad
-					int map = atoi (sc_String);
-					sprintf (sc_String, "MAP%02d", map);
-					SKYFLATNAME[5] = 0;
-					HexenHack = true;
-					// Hexen levels are automatically nointermission,
-					// no auto sound sequences, falling damage, and
-					// monsters activate their own specials.
-					levelflags |= LEVEL_NOINTERMISSION
-								| LEVEL_SNDSEQTOTALCTRL
-								| LEVEL_FALLDMG_HX
-								| LEVEL_ACTOWNSPECIAL;
-				}
-				levelindex = FindWadLevelInfo (sc_String);
-				if (levelindex == -1)
-				{
-					levelindex = numwadlevelinfos++;
-					wadlevelinfos = (level_pwad_info_t *)Realloc (wadlevelinfos, sizeof(level_pwad_info_t)*numwadlevelinfos);
-				}
-				levelinfo = wadlevelinfos + levelindex;
-				memcpy (levelinfo, &defaultinfo, sizeof(*levelinfo));
-				if (HexenHack)
-				{
-					levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
-				}
-				uppercopy (levelinfo->mapname, sc_String);
-				SC_MustGetString ();
-				ReplaceString (&levelinfo->level_name, sc_String);
-				// Set up levelnum now so that you can use Teleport_NewMap specials
-				// to teleport to maps with standard names without needing a levelnum.
-				if (!strnicmp (levelinfo->mapname, "MAP", 3) && levelinfo->mapname[5] == 0)
-				{
-					int mapnum = atoi (levelinfo->mapname + 3);
-
-					if (mapnum >= 1 && mapnum <= 99)
-						levelinfo->levelnum = mapnum;
-				}
-				else if (levelinfo->mapname[0] == 'E' &&
-					levelinfo->mapname[1] >= '0' && levelinfo->mapname[1] <= '9' &&
-					levelinfo->mapname[2] == 'M' &&
-					levelinfo->mapname[3] >= '0' && levelinfo->mapname[3] <= '9')
-				{
-					int mapnum = atoi (levelinfo->mapname + 3);
-					int epinum = levelinfo->mapname[1] - '0';
-					while (epinum < mapnum)
-					{
-						epinum *= 10;
-					}
-					levelinfo->levelnum = epinum + mapnum;
-				}
-				ParseMapInfoLower (MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
-				break;
-
-			case MITL_CLUSTERDEF:	// clusterdef <clusternum>
-				SC_MustGetNumber ();
-				clusterindex = FindWadClusterInfo (sc_Number);
-				if (clusterindex == -1)
-				{
-					clusterindex = numwadclusterinfos++;
-					wadclusterinfos = (cluster_info_t *)Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
-					memset (wadclusterinfos + clusterindex, 0, sizeof(cluster_info_t));
-				}
-				clusterinfo = wadclusterinfos + clusterindex;
-				clusterinfo->cluster = sc_Number;
-				ParseMapInfoLower (ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0);
-				break;
-
-			case MITL_EPISODE:
-				ParseEpisodeInfo ();
-				break;
-
-			case MITL_CLEAREPISODES:
-				for (int i = 0; i < EpiDef.numitems; ++i)
-				{
-					delete[] EpisodeMenu[i].name;
-					EpisodeMenu[i].name = NULL;
-				}
-				EpiDef.numitems = 0;
-				break;
-			}
+		case doom:
+			G_DoParseMapInfo (Wads.GetNumForName ("D1INFO"));
+			break;
+		case pack_plut:
+			G_DoParseMapInfo (Wads.GetNumForName ("PLUTINFO"));
+			break;
+		case pack_tnt:
+			G_DoParseMapInfo (Wads.GetNumForName ("TNTINFO"));
+			break;
+		default:
+			G_DoParseMapInfo (Wads.GetNumForName ("D2INFO"));
+			break;
 		}
-		SC_Close ();
+		break;
+
+	case GAME_Heretic:
+		G_DoParseMapInfo (Wads.GetNumForName ("HERINFO"));
+		break;
+
+	case GAME_Hexen:
+		// Hexen already has a MAPINFO.
+		break;
+
+	case GAME_Strife:
+		G_DoParseMapInfo (Wads.GetNumForName ("STRFINFO"));
+		break;
+
+	default:
+		break;
 	}
+
+	// Parse any extra MAPINFOs.
+	GStrings.LoadNames ();
+	while ((lump = Wads.FindLump ("MAPINFO", &lastlump)) != -1)
+	{
+		G_DoParseMapInfo (lump);
+	}
+	GStrings.FlushNames ();
 	EndSequences.ShrinkToFit ();
 
 	if (EpiDef.numitems == 0)
@@ -537,9 +477,155 @@ void G_ParseMapInfo ()
 	}
 }
 
+static void G_DoParseMapInfo (int lump)
+{
+	level_info_t defaultinfo;
+	level_info_t *levelinfo;
+	int levelindex;
+	cluster_info_t *clusterinfo;
+	int clusterindex;
+	DWORD levelflags;
+
+	SetLevelDefaults (&defaultinfo);
+	SC_OpenLumpNum (lump, "MAPINFO");
+	
+	while (SC_GetString ())
+	{
+		switch (SC_MustMatchString (MapInfoTopLevel))
+		{
+		case MITL_DEFAULTMAP:
+			SetLevelDefaults (&defaultinfo);
+			ParseMapInfoLower (MapHandlers, MapInfoMapLevel, &defaultinfo, NULL, 0);
+			break;
+
+		case MITL_MAP:		// map <MAPNAME> <Nice Name>
+			levelflags = defaultinfo.flags;
+			SC_MustGetString ();
+			if (IsNum (sc_String))
+			{	// MAPNAME is a number; assume a Hexen wad
+				int map = atoi (sc_String);
+				sprintf (sc_String, "MAP%02d", map);
+				SKYFLATNAME[5] = 0;
+				HexenHack = true;
+				// Hexen levels are automatically nointermission,
+				// no auto sound sequences, falling damage, and
+				// monsters activate their own specials.
+				levelflags |= LEVEL_NOINTERMISSION
+							| LEVEL_SNDSEQTOTALCTRL
+							| LEVEL_FALLDMG_HX
+							| LEVEL_ACTOWNSPECIAL;
+			}
+			levelindex = FindWadLevelInfo (sc_String);
+			if (levelindex == -1)
+			{
+				levelindex = numwadlevelinfos++;
+				wadlevelinfos = (level_info_t *)Realloc (wadlevelinfos, sizeof(level_info_t)*numwadlevelinfos);
+			}
+			levelinfo = wadlevelinfos + levelindex;
+			memcpy (levelinfo, &defaultinfo, sizeof(*levelinfo));
+			if (HexenHack)
+			{
+				levelinfo->WallHorizLight = levelinfo->WallVertLight = 0;
+			}
+			uppercopy (levelinfo->mapname, sc_String);
+			SC_MustGetString ();
+			if (SC_Compare ("lookup"))
+			{
+				const char *thename;
+				int strnum;
+
+				SC_MustGetString ();
+				strnum = GStrings.FindString (sc_String);
+				if (strnum < 0)
+				{
+					thename = sc_String;
+				}
+				else
+				{
+					const char *lookedup = GStrings(strnum);
+					char checkstring[32];
+
+					// Strip out the header from the localized string
+					if (levelinfo->mapname[0] == 'E' && levelinfo->mapname[2] == 'M')
+					{
+						sprintf (checkstring, "%s: ", levelinfo->mapname);
+					}
+					else if (levelinfo->mapname[0] == 'M' && levelinfo->mapname[1] == 'A' &&
+						levelinfo->mapname[2] == 'P')
+					{
+						sprintf (checkstring, "level %d: ", atoi(levelinfo->mapname + 3));
+					}
+					thename = strstr (lookedup, checkstring);
+					if (thename == NULL)
+					{
+						thename = lookedup;
+					}
+					else
+					{
+						thename += strlen (checkstring);
+					}
+				}
+				ReplaceString (&levelinfo->level_name, thename);
+			}
+			else
+			{
+				ReplaceString (&levelinfo->level_name, sc_String);
+			}
+			// Set up levelnum now so that you can use Teleport_NewMap specials
+			// to teleport to maps with standard names without needing a levelnum.
+			if (!strnicmp (levelinfo->mapname, "MAP", 3) && levelinfo->mapname[5] == 0)
+			{
+				int mapnum = atoi (levelinfo->mapname + 3);
+
+				if (mapnum >= 1 && mapnum <= 99)
+					levelinfo->levelnum = mapnum;
+			}
+			else if (levelinfo->mapname[0] == 'E' &&
+				levelinfo->mapname[1] >= '0' && levelinfo->mapname[1] <= '9' &&
+				levelinfo->mapname[2] == 'M' &&
+				levelinfo->mapname[3] >= '0' && levelinfo->mapname[3] <= '9')
+			{
+				int epinum = levelinfo->mapname[1] - '1';
+				int mapnum = levelinfo->mapname[3] - '0';
+				levelinfo->levelnum = epinum*10 + mapnum;
+			}
+			ParseMapInfoLower (MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
+			break;
+
+		case MITL_CLUSTERDEF:	// clusterdef <clusternum>
+			SC_MustGetNumber ();
+			clusterindex = FindWadClusterInfo (sc_Number);
+			if (clusterindex == -1)
+			{
+				clusterindex = numwadclusterinfos++;
+				wadclusterinfos = (cluster_info_t *)Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
+				memset (wadclusterinfos + clusterindex, 0, sizeof(cluster_info_t));
+			}
+			clusterinfo = wadclusterinfos + clusterindex;
+			clusterinfo->cluster = sc_Number;
+			ParseMapInfoLower (ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0);
+			break;
+
+		case MITL_EPISODE:
+			ParseEpisodeInfo ();
+			break;
+
+		case MITL_CLEAREPISODES:
+			for (int i = 0; i < EpiDef.numitems; ++i)
+			{
+				delete[] const_cast<char *>(EpisodeMenu[i].name);
+				EpisodeMenu[i].name = NULL;
+			}
+			EpiDef.numitems = 0;
+			break;
+		}
+	}
+	SC_Close ();
+}
+
 static void ParseMapInfoLower (MapInfoHandler *handlers,
 							   const char *strings[],
-							   level_pwad_info_t *levelinfo,
+							   level_info_t *levelinfo,
 							   cluster_info_t *clusterinfo,
 							   DWORD flags)
 {
@@ -713,6 +799,16 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 
 		case MITYPE_STRING:
 			SC_MustGetString ();
+			if (SC_Compare ("lookup"))
+			{
+				SC_MustGetString ();
+				int strnum = GStrings.FindString (sc_String);
+				if (strnum >= 0)
+				{
+					ReplaceString ((char **)(info + handler->data1), GStrings(strnum));
+					break;
+				}
+			}
 			ReplaceString ((char **)(info + handler->data1), sc_String);
 			break;
 
@@ -763,8 +859,8 @@ static void ParseEpisodeInfo ()
 	int i;
 	char map[9];
 	char *pic = NULL;
-	bool picisgfx;
-	bool remove;
+	bool picisgfx = false;	// Shut up, GCC!!!!
+	bool remove = false;
 	char key = 0;
 	bool addedgfx = false;
 
@@ -849,7 +945,7 @@ static void ParseEpisodeInfo ()
 		}
 		else
 		{
-			delete[] EpisodeMenu[i].name;
+			delete[] const_cast<char *>(EpisodeMenu[i].name);
 		}
 
 		EpisodeMenu[i].name = pic;
@@ -859,7 +955,7 @@ static void ParseEpisodeInfo ()
 
 		if (picisgfx)
 		{
-			if (TexMan.CheckForTexture (pic, FTexture::TEX_MiscPatch, false) == -1)
+			if (TexMan.CheckForTexture (pic, FTexture::TEX_MiscPatch, 0) == -1)
 			{
 				TexMan.AddPatch (pic);
 				addedgfx = true;
@@ -951,14 +1047,6 @@ void P_RemoveDefereds (void)
 			wadlevelinfos[i].defered = NULL;
 		}
 	}
-	for (i = 0; LevelInfos[i].mapname[0]; i++)
-	{
-		if (LevelInfos[i].defered)
-		{
-			zapDefereds (LevelInfos[i].defered);
-			LevelInfos[i].defered = NULL;
-		}
-	}
 }
 
 bool CheckWarpTransMap (char mapname[9], bool substitute)
@@ -1004,7 +1092,7 @@ CCMD (map)
 {
 	if (argv.argc() > 1)
 	{
-		if (W_CheckNumForName (argv[1]) == -1)
+		if (Wads.CheckNumForName (argv[1]) == -1)
 			Printf ("No map %s\n", argv[1]);
 		else
 			G_DeferedInitNew (argv[1]);
@@ -1057,9 +1145,6 @@ void G_InitNew (char *mapname)
 	{
 		for (i = 0; i < numwadlevelinfos; i++)
 			wadlevelinfos[i].flags &= ~LEVEL_VISITED;
-
-		for (i = 0; LevelInfos[i].mapname[0]; i++)
-			LevelInfos[i].flags &= ~LEVEL_VISITED;
 	}
 
 	UnlatchCVars ();
@@ -1080,7 +1165,7 @@ void G_InitNew (char *mapname)
 	StatusBar->NewGame ();
 
 	// [RH] If this map doesn't exist, bomb out
-	if (W_CheckNumForName (mapname) == -1)
+	if (Wads.CheckNumForName (mapname) == -1)
 	{
 		I_Error ("Could not find map %s\n", mapname);
 	}
@@ -1218,7 +1303,7 @@ void G_DoCompleted (void)
 		wminfo.next[0] = 0;
 		if (secretexit)
 		{
-			if (W_CheckNumForName (level.secretmap) != -1)
+			if (Wads.CheckNumForName (level.secretmap) != -1)
 			{
 				strncpy (wminfo.next, level.secretmap, 8);
 				strncpy (wminfo.lname1, FindLevelInfo (level.secretmap)->pname, 8);
@@ -1393,13 +1478,17 @@ void G_DoLoadLevel (int position, bool autosave)
 	//	a flat. The data is in the WAD only because
 	//	we look for an actual index, instead of simply
 	//	setting one.
-	skyflatnum = TexMan.GetTexture (SKYFLATNAME, FTexture::TEX_Flat);
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		strncpy (SKYFLATNAME, "F_SKY001", 8);
+	}
+	skyflatnum = TexMan.GetTexture (SKYFLATNAME, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 
 	// DOOM determines the sky texture to be used
 	// depending on the current episode and the game version.
 	// [RH] Fetch sky parameters from level_locals_t.
-	sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall);
-	sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall);
+	sky1texture = TexMan.GetTexture (level.skypic1, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+	sky2texture = TexMan.GetTexture (level.skypic2, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap ();
@@ -1453,6 +1542,8 @@ void G_DoLoadLevel (int position, bool autosave)
 	SendItemUse = arti_none;
 	mousex = mousey = 0; 
 	sendpause = sendsave = sendcenterview = sendturn180 = SendLand = false;
+	LocalViewAngle = 0;
+	LocalViewPitch = 0;
 	paused = 0;
 
 	//Added by MC: Initialize bots.
@@ -1560,7 +1651,6 @@ void G_DoWorldDone (void)
 void G_InitLevelLocals ()
 {
 	level_info_t *info;
-	int i;
 
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
 	NormalLight.Maps = realcolormaps;
@@ -1568,55 +1658,43 @@ void G_InitLevelLocals ()
 
 	level.gravity = sv_gravity * 35/TICRATE;
 	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);
+	level.flags = 0;
 
-	if ((i = FindWadLevelInfo (level.mapname)) > -1)
+	info = FindLevelInfo (level.mapname);
+
+	level.info = info;
+	level.skyspeed1 = info->skyspeed1;
+	level.skyspeed2 = info->skyspeed2;
+	info = (level_info_t *)info;
+	strncpy (level.skypic2, info->skypic2, 8);
+	level.fadeto = info->fadeto;
+	level.cdtrack = info->cdtrack;
+	level.cdid = info->cdid;
+	if (level.fadeto == 0)
 	{
-		level_pwad_info_t *pinfo = wadlevelinfos + i;
-
-		level.info = (level_info_t *)pinfo;
-		level.skyspeed1 = pinfo->skyspeed1;
-		level.skyspeed2 = pinfo->skyspeed2;
-		info = (level_info_t *)pinfo;
-		strncpy (level.skypic2, pinfo->skypic2, 8);
-		level.fadeto = pinfo->fadeto;
-		level.cdtrack = pinfo->cdtrack;
-		level.cdid = pinfo->cdid;
-		if (level.fadeto == 0)
+		R_SetDefaultColormap (info->fadetable);
+		if (strnicmp (info->fadetable, "COLORMAP", 8) != 0)
 		{
-			R_SetDefaultColormap (pinfo->fadetable);
-			/*
+			level.flags |= LEVEL_HASFADETABLE;
 		}
-		else
-		{
-			NormalLight.ChangeFade (level.fadeto);
-			*/
-		}
-		level.outsidefog = pinfo->outsidefog;
-		level.flags |= LEVEL_DEFINEDINMAPINFO;
-		level.WallVertLight = pinfo->WallVertLight;
-		level.WallHorizLight = pinfo->WallHorizLight;
-		if (pinfo->gravity != 0.f)
-		{
-			level.gravity = pinfo->gravity * 35/TICRATE;
-		}
-		if (pinfo->aircontrol != 0.f)
-		{
-			level.aircontrol = (fixed_t)(pinfo->aircontrol * 65536.f);
-		}
+		/*
 	}
 	else
 	{
-		info = FindDefLevelInfo (level.mapname);
-		level.info = info;
-		level.skyspeed1 =  level.skyspeed2 = 0;
-		level.fadeto = 0;
-		level.outsidefog = 0xff000000;	// 0xff000000 signals not to handle it special
-		level.skypic2[0] = 0;
-		level.cdtrack = 0;
-		level.cdid = 0;
-		level.WallVertLight = +8;
-		level.WallHorizLight = -8;
-		R_SetDefaultColormap ("COLORMAP");
+		NormalLight.ChangeFade (level.fadeto);
+		*/
+	}
+	level.outsidefog = info->outsidefog;
+	level.flags |= LEVEL_DEFINEDINMAPINFO;
+	level.WallVertLight = info->WallVertLight;
+	level.WallHorizLight = info->WallHorizLight;
+	if (info->gravity != 0.f)
+	{
+		level.gravity = info->gravity * 35/TICRATE;
+	}
+	if (info->aircontrol != 0.f)
+	{
+		level.aircontrol = (fixed_t)(info->aircontrol * 65536.f);
 	}
 
 	G_AirControlChanged ();
@@ -1628,7 +1706,7 @@ void G_InitLevelLocals ()
 		level.partime = info->partime;
 		level.cluster = info->cluster;
 		level.clusterflags = clus ? clus->flags : 0;
-		level.flags = info->flags;
+		level.flags |= info->flags;
 		level.levelnum = info->levelnum;
 		level.music = info->music;
 		level.musicorder = info->musicorder;
@@ -1698,20 +1776,6 @@ char *CalcMapName (int episode, int level)
 	return lumpname;
 }
 
-static level_info_t *FindDefLevelInfo (char *mapname)
-{
-	level_info_t *i;
-
-	i = LevelInfos;
-	while (i->mapname[0])
-	{
-		if (!strnicmp (i->mapname, mapname, 8))
-			return i;
-		i++;
-	}
-	return i;
-}
-
 level_info_t *FindLevelInfo (char *mapname)
 {
 	int i;
@@ -1719,39 +1783,18 @@ level_info_t *FindLevelInfo (char *mapname)
 	if ((i = FindWadLevelInfo (mapname)) > -1)
 		return (level_info_t *)(wadlevelinfos + i);
 	else
-		return FindDefLevelInfo (mapname);
+		return &TheDefaultLevelInfo;
 }
 
 level_info_t *FindLevelByNum (int num)
 {
-	{
-		int i;
+	int i;
 
-		for (i = 0; i < numwadlevelinfos; i++)
-			if (wadlevelinfos[i].levelnum == num)
-				return (level_info_t *)(wadlevelinfos + i);
-	}
-	{
-		level_info_t *i = LevelInfos;
-		while (i->mapname[0])
-		{
-			if (i->levelnum == num && W_CheckNumForName (i->mapname) != -1)
-				return i;
-			i++;
-		}
-		return NULL;
-	}
-}
+	for (i = 0; i < numwadlevelinfos; i++)
+		if (wadlevelinfos[i].levelnum == num)
+			return (level_info_t *)(wadlevelinfos + i);
 
-static cluster_info_t *FindDefClusterInfo (int cluster)
-{
-	cluster_info_t *i;
-
-	i = ClusterInfos;
-	while (i->cluster && i->cluster != cluster)
-		i++;
-
-	return i;
+	return NULL;
 }
 
 cluster_info_t *FindClusterInfo (int cluster)
@@ -1761,150 +1804,12 @@ cluster_info_t *FindClusterInfo (int cluster)
 	if ((i = FindWadClusterInfo (cluster)) > -1)
 		return wadclusterinfos + i;
 	else
-		return FindDefClusterInfo (cluster);
+		return &TheDefaultClusterInfo;
 }
 
 void G_SetLevelStrings (void)
 {
-	char temp[8];
-	const char *namepart;
-	int i, start;
-
-	temp[0] = '0';
-	temp[1] = ':';
-	temp[2] = 0;
-	for (i = HUSTR_E1M1; i <= HUSTR_E4M9; ++i)
-	{
-		if (temp[0] < '9')
-			temp[0]++;
-		else
-			temp[0] = '1';
-
-		if ( (namepart = strstr (GStrings(i), temp)) )
-		{
-			namepart += 2;
-			while (*namepart && *namepart <= ' ')
-				namepart++;
-		}
-		else
-		{
-			namepart = GStrings(i);
-		}
-
-		if (gameinfo.gametype != GAME_Heretic)
-		{
-			ReplaceString (&LevelInfos[i-HUSTR_E1M1].level_name, namepart);
-			ReplaceString (&LevelInfos[i-HUSTR_E1M1].music, Musics1[i-HUSTR_E1M1]);
-		}
-	}
-
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		for (i = 0; i < 4*9; i++)
-		{
-			ReplaceString (&LevelInfos[i].level_name, GStrings(HHUSTR_E1M1+i));
-			ReplaceString (&LevelInfos[i].music, Musics2[i]);
-			LevelInfos[i].cluster = 11 + (i / 9);
-			LevelInfos[i].pname[0] = 0;
-		}
-		for (i = 0; i < 9; i++)
-		{
-			strcpy (LevelInfos[i+3*9].skypic1, "SKY1");
-		}
-		LevelInfos[7].flags = LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_HEADSPECIAL;
-		LevelInfos[16].flags = LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_SPECKILLMONSTERS|LEVEL_MINOTAURSPECIAL;
-		LevelInfos[25].flags = LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_SPECKILLMONSTERS|LEVEL_SORCERER2SPECIAL;
-		LevelInfos[34].flags = LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_SPECKILLMONSTERS|LEVEL_HEADSPECIAL;
-
-		SetEndSequence (LevelInfos[16].nextmap, END_Underwater);
-		SetEndSequence (LevelInfos[25].nextmap, END_Demon);
-
-		LevelInfos[8].nextmap[3] = LevelInfos[8].secretmap[3] = '7';
-		LevelInfos[17].nextmap[3] = LevelInfos[17].secretmap[3] = '5';
-		LevelInfos[26].nextmap[3] = LevelInfos[26].secretmap[3] = '5';
-		LevelInfos[35].nextmap[3] = LevelInfos[35].secretmap[3] = '5';
-	}
-	else if (gameinfo.gametype == GAME_Doom)
-	{
-		SetEndSequence (LevelInfos[16].nextmap, END_Pic2);
-		SetEndSequence (LevelInfos[25].nextmap, END_Bunny);
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		ClusterInfos[0].exittext = "clus1msg";
-		ClusterInfos[1].exittext = "clus2msg";
-		ClusterInfos[2].exittext = "clus3msg";
-		ClusterInfos[3].exittext = "clus4msg";
-		// Hexen could load a clus5msg lump even though it didn't use one itself.
-		ClusterInfos[4].exittext = "clus5msg";
-		for (i = 0; i < 5; ++i)
-		{
-			ClusterInfos[i].flags = CLUSTER_HUB | CLUSTER_EXITTEXTINLUMP | CLUSTER_FINALEPIC;
-			ClusterInfos[i].messagemusic = "hub";
-			strncpy (ClusterInfos[i].finaleflat, "INTERPIC", 8);
-		}
-	}
-
-	SetEndSequence (LevelInfos[7].nextmap, END_Pic1);
-	SetEndSequence (LevelInfos[34].nextmap, END_Pic3);
-	SetEndSequence (LevelInfos[43].nextmap, END_Pic3);
-	SetEndSequence (LevelInfos[77].nextmap, END_Cast);
-
-	for (i = 0; i < 12; i++)
-	{
-		if (i < 9)
-			ReplaceString (&LevelInfos[i+36].level_name, GStrings(HHUSTR_E5M1+i));
-		ReplaceString (&LevelInfos[i+36].music, Musics1[i+36]);
-	}
-
-	if (gameinfo.gametype != GAME_Hexen)
-	{
-		for (i = 0; i < 4; i++)
-			ReplaceString (&ClusterInfos[i].exittext, GStrings(E1TEXT+i));
-	}
-
-	if (gamemission == pack_plut)
-		start = PHUSTR_1;
-	else if (gamemission == pack_tnt)
-		start = THUSTR_1;
-	else
-		start = HUSTR_1;
-
-	for (i = 0; i < 32; i++)
-	{
-		sprintf (temp, "%d:", i + 1);
-		if ( (namepart = strstr (GStrings(i+start), temp)) )
-		{
-			namepart += strlen (temp);
-			while (*namepart && *namepart <= ' ')
-				namepart++;
-		}
-		else
-		{
-			namepart = GStrings(i+start);
-		}
-		ReplaceString (&LevelInfos[48+i].level_name, namepart);
-		ReplaceString (&LevelInfos[48+i].music, Musics3[i]);
-	}
-
-	if (gameinfo.gametype != GAME_Hexen)
-	{
-		if (gamemission == pack_plut)
-			start = P1TEXT;		// P1TEXT
-		else if (gamemission == pack_tnt)
-			start = T1TEXT;		// T1TEXT
-		else
-			start = C1TEXT;		// C1TEXT
-
-		for (i = 0; i < 4; i++)
-			ReplaceString (&ClusterInfos[4 + i].exittext, GStrings(start+i));
-		for (; i < 6; i++)
-			ReplaceString (&ClusterInfos[4 + i].entertext, GStrings(start+i));
-		for (i = HE1TEXT; i <= HE5TEXT; i++)
-			ReplaceString (&ClusterInfos[10 + i - HE1TEXT].exittext, GStrings(i));
-		for (i = 0; i < 15; i++)
-			ReplaceString (&ClusterInfos[i].messagemusic, Musics4[i]);
-	}
+	int i;
 
 	if (level.info)
 		strncpy (level.level_name, level.info->level_name, 63);
@@ -2046,6 +1951,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializePolyobjs (arc);
 	P_SerializeSounds (arc);
 	StatusBar->Serialize (arc);
+	SerializeInterpolations (arc);
 
 	if (SaveVersion >= 210)
 	{
@@ -2148,14 +2054,6 @@ void G_ClearSnapshots (void)
 			wadlevelinfos[i].snapshot = NULL;
 		}
 	}
-	for (i = 0; LevelInfos[i].mapname[0]; i++)
-	{
-		if (LevelInfos[i].snapshot)
-		{
-			delete LevelInfos[i].snapshot;
-			LevelInfos[i].snapshot = NULL;
-		}
-	}
 }
 
 static void writeMapName (FArchive &arc, const char *name)
@@ -2180,170 +2078,149 @@ static void writeSnapShot (FArchive &arc, level_info_t *i)
 	i->snapshot->Serialize (arc);
 }
 
-void G_SerializeSnapshots (FILE *file, bool storing)
+void G_WriteSnapshots (FILE *file)
 {
-	if (storing)
+	int i;
+
+	for (i = 0; i < numwadlevelinfos; i++)
 	{
-		int i;
-
-		for (i = 0; i < numwadlevelinfos; i++)
+		if (wadlevelinfos[i].snapshot)
 		{
-			if (wadlevelinfos[i].snapshot)
-			{
-				FPNGChunkArchive arc (file, SNAP_ID);
-				writeSnapShot (arc, (level_info_t *)&wadlevelinfos[i]);
-			}
+			FPNGChunkArchive arc (file, SNAP_ID);
+			writeSnapShot (arc, (level_info_t *)&wadlevelinfos[i]);
 		}
+	}
 
-		for (i = 0; LevelInfos[i].mapname[0]; i++)
-		{
-			if (LevelInfos[i].snapshot)
-			{
-				FPNGChunkArchive arc (file, SNAP_ID);
-				writeSnapShot (arc, &LevelInfos[i]);
-			}
-		}
-
-		FPNGChunkArchive *arc = NULL;
-		
-		// Write out which levels have been visited
-		for (i = 0; i < numwadlevelinfos; ++i)
-		{
-			if (wadlevelinfos[i].flags & LEVEL_VISITED)
-			{
-				if (arc == NULL)
-				{
-					arc = new FPNGChunkArchive (file, VIST_ID);
-				}
-				writeMapName (*arc, wadlevelinfos[i].mapname);
-			}
-		}
-
-		for (i = 0; LevelInfos[i].mapname[0]; ++i)
+	FPNGChunkArchive *arc = NULL;
+	
+	// Write out which levels have been visited
+	for (i = 0; i < numwadlevelinfos; ++i)
+	{
+		if (wadlevelinfos[i].flags & LEVEL_VISITED)
 		{
 			if (arc == NULL)
 			{
 				arc = new FPNGChunkArchive (file, VIST_ID);
 			}
-			if (LevelInfos[i].flags & LEVEL_VISITED)
-			{
-				writeMapName (*arc, LevelInfos[i].mapname);
-			}
-		}
-		if (arc != NULL)
-		{
-			BYTE zero = 0;
-			*arc << zero;
-			delete arc;
-		}
-
-		// Store player classes to be used when spawning a random class
-		if (multiplayer)
-		{
-			FPNGChunkArchive arc2 (file, RCLS_ID);
-			for (i = 0; i < MAXPLAYERS; ++i)
-			{
-				SBYTE cnum = SinglePlayerClass[i];
-				arc2 << cnum;
-			}
-		}
-
-		// Store player classes that are currently in use
-		FPNGChunkArchive arc3 (file, PCLS_ID);
-		for (i = 0; i < MAXPLAYERS; ++i)
-		{
-			BYTE pnum;
-			if (playeringame[i])
-			{
-				pnum = i;
-				arc3 << pnum;
-				arc3.UserWriteClass (players[i].cls);
-			}
-			pnum = 255;
-			arc3 << pnum;
+			writeMapName (*arc, wadlevelinfos[i].mapname);
 		}
 	}
-	else
+
+	if (arc != NULL)
 	{
-		DWORD chunkLen;
-		BYTE namelen;
-		char mapname[256];
-		level_info_t *i;
+		BYTE zero = 0;
+		*arc << zero;
+		delete arc;
+	}
 
-		G_ClearSnapshots ();
-
-		chunkLen = (DWORD)M_FindPNGChunk (file, SNAP_ID);
-		while (chunkLen != 0)
+	// Store player classes to be used when spawning a random class
+	if (multiplayer)
+	{
+		FPNGChunkArchive arc2 (file, RCLS_ID);
+		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			FPNGChunkArchive arc (file, SNAP_ID, chunkLen);
-			DWORD snapver;
+			SBYTE cnum = SinglePlayerClass[i];
+			arc2 << cnum;
+		}
+	}
 
-			if (SaveVersion < 203)
+	// Store player classes that are currently in use
+	FPNGChunkArchive arc3 (file, PCLS_ID);
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		BYTE pnum;
+		if (playeringame[i])
+		{
+			pnum = i;
+			arc3 << pnum;
+			arc3.UserWriteClass (players[i].cls);
+		}
+		pnum = 255;
+		arc3 << pnum;
+	}
+}
+
+void G_ReadSnapshots (PNGHandle *png)
+{
+	DWORD chunkLen;
+	BYTE namelen;
+	char mapname[256];
+	level_info_t *i;
+
+	G_ClearSnapshots ();
+
+	chunkLen = (DWORD)M_FindPNGChunk (png, SNAP_ID);
+	while (chunkLen != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), SNAP_ID, chunkLen);
+		DWORD snapver;
+
+		if (SaveVersion < 203)
+		{
+			snapver = SaveVersion;
+		}
+		else
+		{
+			arc << snapver;
+			// Fix version number for snapshots that should have been 205
+			if (snapver == 204 && SaveVersion == 205)
 			{
-				snapver = SaveVersion;
+				snapver = 205;
 			}
-			else
-			{
-				arc << snapver;
-				// Fix version number for snapshots that should have been 205
-				if (snapver == 204 && SaveVersion == 205)
-				{
-					snapver = 205;
-				}
-			}
-			arc << namelen;
+		}
+		arc << namelen;
+		arc.Read (mapname, namelen);
+		mapname[namelen] = 0;
+		i = FindLevelInfo (mapname);
+		i->snapshotVer = snapver;
+		i->snapshot = new FCompressedMemFile;
+		i->snapshot->Serialize (arc);
+		chunkLen = (DWORD)M_NextPNGChunk (png, SNAP_ID);
+	}
+
+	chunkLen = (DWORD)M_FindPNGChunk (png, VIST_ID);
+	if (chunkLen != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), VIST_ID, chunkLen);
+
+		arc << namelen;
+		while (namelen != 0)
+		{
 			arc.Read (mapname, namelen);
 			mapname[namelen] = 0;
 			i = FindLevelInfo (mapname);
-			i->snapshotVer = snapver;
-			i->snapshot = new FCompressedMemFile;
-			i->snapshot->Serialize (arc);
-			chunkLen = (DWORD)M_NextPNGChunk (file, SNAP_ID);
-		}
-
-		chunkLen = (DWORD)M_FindPNGChunk (file, VIST_ID);
-		if (chunkLen != 0)
-		{
-			FPNGChunkArchive arc (file, VIST_ID, chunkLen);
-
+			i->flags |= LEVEL_VISITED;
 			arc << namelen;
-			while (namelen != 0)
-			{
-				arc.Read (mapname, namelen);
-				mapname[namelen] = 0;
-				i = FindLevelInfo (mapname);
-				i->flags |= LEVEL_VISITED;
-				arc << namelen;
-			}
-		}
-
-		chunkLen = (DWORD)M_FindPNGChunk (file, RCLS_ID);
-		if (chunkLen != 0)
-		{
-			FPNGChunkArchive arc (file, PCLS_ID, chunkLen);
-			SBYTE cnum;
-
-			for (DWORD j = 0; j < chunkLen; ++j)
-			{
-				arc << cnum;
-				SinglePlayerClass[j] = cnum;
-			}
-		}
-
-		chunkLen = (DWORD)M_FindPNGChunk (file, PCLS_ID);
-		if (chunkLen != 0)
-		{
-			FPNGChunkArchive arc (file, RCLS_ID, chunkLen);
-			BYTE pnum;
-
-			arc << pnum;
-			while (pnum != 255)
-			{
-				arc.UserReadClass (players[pnum].cls);
-				arc << pnum;
-			}
 		}
 	}
+
+	chunkLen = (DWORD)M_FindPNGChunk (png, RCLS_ID);
+	if (chunkLen != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), PCLS_ID, chunkLen);
+		SBYTE cnum;
+
+		for (DWORD j = 0; j < chunkLen; ++j)
+		{
+			arc << cnum;
+			SinglePlayerClass[j] = cnum;
+		}
+	}
+
+	chunkLen = (DWORD)M_FindPNGChunk (png, PCLS_ID);
+	if (chunkLen != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), RCLS_ID, chunkLen);
+		BYTE pnum;
+
+		arc << pnum;
+		while (pnum != 255)
+		{
+			arc.UserReadClass (players[pnum].cls);
+			arc << pnum;
+		}
+	}
+	png->File->ResetFilePtr();
 }
 
 
@@ -2353,72 +2230,59 @@ static void writeDefereds (FArchive &arc, level_info_t *i)
 	arc << i->defered;
 }
 
-void P_SerializeACSDefereds (FILE *file, bool storing)
+void P_WriteACSDefereds (FILE *file)
 {
-	if (storing)
+	FPNGChunkArchive *arc = NULL;
+	int i;
+
+	for (i = 0; i < numwadlevelinfos; i++)
 	{
-		FPNGChunkArchive *arc = NULL;
-		int i;
-
-		for (i = 0; i < numwadlevelinfos; i++)
+		if (wadlevelinfos[i].defered)
 		{
-			if (wadlevelinfos[i].defered)
+			if (arc == NULL)
 			{
-				if (arc == NULL)
-				{
-					arc = new FPNGChunkArchive (file, ACSD_ID);
-				}
-				writeDefereds (*arc, (level_info_t *)&wadlevelinfos[i]);
+				arc = new FPNGChunkArchive (file, ACSD_ID);
 			}
-		}
-
-		for (i = 0; LevelInfos[i].mapname[0]; i++)
-		{
-			if (LevelInfos[i].defered)
-			{
-				if (arc == NULL)
-				{
-					arc = new FPNGChunkArchive (file, ACSD_ID);
-				}
-				writeDefereds (*arc, &LevelInfos[i]);
-			}
-		}
-
-		if (arc != NULL)
-		{
-			// Signal end of defereds
-			BYTE zero = 0;
-			*arc << zero;
-			delete arc;
+			writeDefereds (*arc, (level_info_t *)&wadlevelinfos[i]);
 		}
 	}
-	else
+
+	if (arc != NULL)
 	{
-		BYTE namelen;
-		char mapname[256];
-		size_t chunklen;
+		// Signal end of defereds
+		BYTE zero = 0;
+		*arc << zero;
+		delete arc;
+	}
+}
 
-		P_RemoveDefereds ();
+void P_ReadACSDefereds (PNGHandle *png)
+{
+	BYTE namelen;
+	char mapname[256];
+	size_t chunklen;
 
-		if ((chunklen = M_FindPNGChunk (file, ACSD_ID)) != 0)
+	P_RemoveDefereds ();
+
+	if ((chunklen = M_FindPNGChunk (png, ACSD_ID)) != 0)
+	{
+		FPNGChunkArchive arc (png->File->GetFile(), ACSD_ID, chunklen);
+
+		arc << namelen;
+		while (namelen)
 		{
-			FPNGChunkArchive arc (file, ACSD_ID, chunklen);
-
+			arc.Read (mapname, namelen);
+			mapname[namelen] = 0;
+			level_info_t *i = FindLevelInfo (mapname);
+			if (i == NULL)
+			{
+				I_Error ("Unknown map '%s' in savegame", mapname);
+			}
+			arc << i->defered;
 			arc << namelen;
-			while (namelen)
-			{
-				arc.Read (mapname, namelen);
-				mapname[namelen] = 0;
-				level_info_t *i = FindLevelInfo (mapname);
-				if (i == NULL)
-				{
-					I_Error ("Unknown map '%s' in savegame", mapname);
-				}
-				arc << i->defered;
-				arc << namelen;
-			}
 		}
 	}
+	png->File->ResetFilePtr();
 }
 
 
@@ -2465,920 +2329,3 @@ static void InitPlayerClasses ()
 		}
 	}
 }
-
-// Static level info from original game.
-// The level names, cluster messages, and music get filled in
-// by G_SetLevelStrings().
-
-level_info_t LevelInfos[] =
-{
-	// Registered/Retail Episode 1
-	{
-		"E1M1",
-		1,
-		"WILV00",
-		"E1M2",
-		"E1M9",
-		"SKY1",
-		1,
-		30,
-	},
-	{
-		"E1M2",
-		2,
-		"WILV01",
-		"E1M3",
-		"E1M9",
-		"SKY1",
-		1,
-		75,
-	},
-	{
-		"E1M3",
-		3,
-		"WILV02",
-		"E1M4",
-		"E1M9",
-		"SKY1",
-		1,
-		120,
-	},
-	{
-		"E1M4",
-		4,
-		"WILV03",
-		"E1M5",
-		"E1M9",
-		"SKY1",
-		1,
-		90,
-	},
-	{
-		"E1M5",
-		5,
-		"WILV04",
-		"E1M6",
-		"E1M9",
-		"SKY1",
-		1,
-		165,
-	},
-	{
-		"E1M6",
-		6,
-		"WILV05",
-		"E1M7",
-		"E1M9",
-		"SKY1",
-		1,
-		180,
-	},
-	{
-		"E1M7",
-		7,
-		"WILV06",
-		"E1M8",
-		"E1M9",
-		"SKY1",
-		1,
-		180,
-	},
-	{
-		"E1M8",
-		8,
-		"WILV07",
-		"",
-		"E1M9",
-		"SKY1",
-		1,
-		30,
-		LEVEL_NOINTERMISSION|LEVEL_BRUISERSPECIAL|LEVEL_SPECLOWERFLOOR,
-	},
-	{
-		"E1M9",
-		9,
-		"WILV08",
-		"E1M4",
-		"E1M4",
-		"SKY1",
-		1,
-		165,
-	},
-
-	// Registered/Retail Episode 2
-	{
-		"E2M1",
-		11,
-		"WILV10",
-		"E2M2",
-		"E2M9",
-		"SKY2",
-		2,
-		90,
-	},
-
-	{
-		"E2M2",
-		12,
-		"WILV11",
-		"E2M3",
-		"E2M9",
-		"SKY2",
-		2,
-		90,
-	},
-	{
-		"E2M3",
-		13,
-		"WILV12",
-		"E2M4",
-		"E2M9",
-		"SKY2",
-		2,
-		90,
-	},
-	{
-		"E2M4",
-		14,
-		"WILV13",
-		"E2M5",
-		"E2M9",
-		"SKY2",
-		2,
-		120,
-	},
-	{
-		"E2M5",
-		15,
-		"WILV14",
-		"E2M6",
-		"E2M9",
-		"SKY2",
-		2,
-		90,
-	},
-	{
-		"E2M6",
-		16,
-		"WILV15",
-		"E2M7",
-		"E2M9",
-		"SKY2",
-		2,
-		360,
-	},
-	{
-		"E2M7",
-		17,
-		"WILV16",
-		"E2M8",
-		"E2M9",
-		"SKY2",
-		2,
-		240,
-	},
-	{
-		"E2M8",
-		18,
-		"WILV17",
-		"",
-		"E2M9",
-		"SKY2",
-		2,
-		30,
-		LEVEL_NOINTERMISSION|LEVEL_CYBORGSPECIAL,
-	},
-	{
-		"E2M9",
-		19,
-		"WILV18",
-		"E2M6",
-		"E2M6",
-		"SKY2",
-		2,
-		170,
-	},
-
-	// Registered/Retail Episode 3
-
-	{
-		"E3M1",
-		21,
-		"WILV20",
-		"E3M2",
-		"E3M9",
-		"SKY3",
-		3,
-		90,
-	},
-	{
-		"E3M2",
-		22,
-		"WILV21",
-		"E3M3",
-		"E3M9",
-		"SKY3",
-		3,
-		45,
-	},
-	{
-		"E3M3",
-		23,
-		"WILV22",
-		"E3M4",
-		"E3M9",
-		"SKY3",
-		3,
-		90,
-	},
-	{
-		"E3M4",
-		24,
-		"WILV23",
-		"E3M5",
-		"E3M9",
-		"SKY3",
-		3,
-		150,
-	},
-	{
-		"E3M5",
-		25,
-		"WILV24",
-		"E3M6",
-		"E3M9",
-		"SKY3",
-		3,
-		90,
-	},
-	{
-		"E3M6",
-		26,
-		"WILV25",
-		"E3M7",
-		"E3M9",
-		"SKY3",
-		3,
-		90,
-	},
-	{
-		"E3M7",
-		27,
-		"WILV26",
-		"E3M8",
-		"E3M9",
-		"SKY3",
-		3,
-		165,
-	},
-	{
-		"E3M8",
-		28,
-		"WILV27",
-		"",
-		"E3M9",
-		"SKY3",
-		3,
-		30,
-		LEVEL_NOINTERMISSION|LEVEL_SPIDERSPECIAL,
-	},
-	{
-		"E3M9",
-		29,
-		"WILV28",
-		"E3M7",
-		"E3M7",
-		"SKY3",
-		3,
-		135,
-	},
-
-	// Retail Episode 4
-	{
-		"E4M1",
-		31,
-		"WILV30",
-		"E4M2",
-		"E4M9",
-		"SKY4",
-		4,
-	},
-	{
-		"E4M2",
-		32,
-		"WILV31",
-		"E4M3",
-		"E4M9",
-		"SKY4",
-		4,
-	},
-	{
-		"E4M3",
-		33,
-		"WILV32",
-		"E4M4",
-		"E4M9",
-		"SKY4",
-		4,
-	},
-	{
-		"E4M4",
-		34,
-		"WILV33",
-		"E4M5",
-		"E4M9",
-		"SKY4",
-		4,
-	},
-	{
-		"E4M5",
-		35,
-		"WILV34",
-		"E4M6",
-		"E4M9",
-		"SKY4",
-		4,
-	},
-	{
-		"E4M6",
-		36,
-		"WILV35",
-		"E4M7",
-		"E4M9",
-		"SKY4",
-		4,
-		0,
-		LEVEL_CYBORGSPECIAL|LEVEL_SPECOPENDOOR,
-	},
-	{
-		"E4M7",
-		37,
-		"WILV36",
-		"E4M8",
-		"E4M9",
-		"SKY4",
-		4,
-	},
-	{
-		"E4M8",
-		38,
-		"WILV37",
-		"",
-		"E4M9",
-		"SKY4",
-		4,
-		0,
-		LEVEL_NOINTERMISSION|LEVEL_SPIDERSPECIAL|LEVEL_SPECLOWERFLOOR,
-	},
-	{
-		"E4M9",
-		39,
-		"WILV38",
-		"E4M3",
-		"E4M3",
-		"SKY4",
-		4,
-	},
-
-	// Heretic Episode 5
-	{
-		"E5M1",
-		41,
-		{0},
-		"E5M2",
-		"E5M9",
-		"SKY3",
-		15,
-	},
-	{
-		"E5M2",
-		42,
-		{0},
-		"E5M3",
-		"E5M9",
-		"SKY3",
-		15,
-	},
-	{
-		"E5M3",
-		43,
-		{0},
-		"E5M4",
-		"E5M9",
-		"SKY3",
-		15,
-	},
-	{
-		"E5M4",
-		44,
-		{0},
-		"E5M5",
-		"E5M9",
-		"SKY3",
-		15,
-	},
-	{
-		"E5M5",
-		45,
-		{0},
-		"E5M6",
-		"E5M9",
-		"SKY3",
-		15,
-	},
-	{
-		"E5M6",
-		46,
-		{0},
-		"E5M7",
-		"E5M9",
-		"SKY3",
-		15,
-	},
-	{
-		"E5M7",
-		47,
-		{0},
-		"E5M8",
-		"E5M9",
-		"SKY3",
-		15,
-	},
-	{
-		"E5M8",
-		48,
-		{0},
-		"",
-		"E5M9",
-		"SKY3",
-		15,
-		0,
-		LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_SPECKILLMONSTERS|LEVEL_MINOTAURSPECIAL
-	},
-	{
-		"E5M9",
-		49,
-		{0},
-		"E5M4",
-		"E5M4",
-		"SKY3",
-		15,
-	},
-
-	// Heretic Episode 6
-	{
-		"E6M1",
-		51,
-		{0},
-		"E6M2",
-		"E6M2",
-		"SKY1",
-		16,
-		0,
-		0,
-		NULL,
-		"Untitled"
-	},
-	{
-		"E6M2",
-		52,
-		{0},
-		"E6M3",
-		"E6M3",
-		"SKY1",
-		16,
-		0,
-		0,
-		NULL,
-		"Untitled"
-	},
-	{
-		"E6M3",
-		53,
-		{0},
-		"E6M1",
-		"E6M1",
-		"SKY1",
-		16,
-		0,
-		0,
-		NULL,
-		"Untitled"
-	},
-
-	// DOOM 2 Levels
-
-	{
-		"MAP01",
-		1,
-		"CWILV00",
-		"MAP02",
-		"MAP02",
-		"SKY1",
-		5,
-		30,
-		0,
-	},
-	{
-		"MAP02",
-		2,
-		"CWILV01",
-		"MAP03",
-		"MAP03",
-		"SKY1",
-		5,
-		90,
-		0,
-	},
-	{
-		"MAP03",
-		3,
-		"CWILV02",
-		"MAP04",
-		"MAP04",
-		"SKY1",
-		5,
-		120,
-		0,
-	},
-	{
-		"MAP04",
-		4,
-		"CWILV03",
-		"MAP05",
-		"MAP05",
-		"SKY1",
-		5,
-		120,
-		0,
-	},
-	{
-		"MAP05",
-		5,
-		"CWILV04",
-		"MAP06",
-		"MAP06",
-		"SKY1",
-		5,
-		90,
-		0,
-	},
-	{
-		"MAP06",
-		6,
-		"CWILV05",
-		"MAP07",
-		"MAP07",
-		"SKY1",
-		5,
-		150,
-		0,
-	},
-	{
-		"MAP07",
-		7,
-		"CWILV06",
-		"MAP08",
-		"MAP08",
-		"SKY1",
-		6,
-		120,
-		LEVEL_MAP07SPECIAL,
-	},
-	{
-		"MAP08",
-		8,
-		"CWILV07",
-		"MAP09",
-		"MAP09",
-		"SKY1",
-		6,
-		120,
-		0,
-	},
-	{
-		"MAP09",
-		9,
-		"CWILV08",
-		"MAP10",
-		"MAP10",
-		"SKY1",
-		6,
-		270,
-		0,
-	},
-	{
-		"MAP10",
-		10,
-		"CWILV09",
-		"MAP11",
-		"MAP11",
-		"SKY1",
-		6,
-		90,
-		0,
-	},
-	{
-		"MAP11",
-		11,
-		"CWILV10",
-		"MAP12",
-		"MAP12",
-		"SKY1",
-		6,
-		210,
-		0,
-	},
-	{
-		"MAP12",
-		12,
-		"CWILV11",
-		"MAP13",
-		"MAP13",
-		"SKY2",
-		7,
-		150,
-		0,
-	},
-	{
-		"MAP13",
-		13,
-		"CWILV12",
-		"MAP14",
-		"MAP14",
-		"SKY2",
-		7,
-		150,
-		0,
-	},
-	{
-		"MAP14",
-		14,
-		"CWILV13",
-		"MAP15",
-		"MAP15",
-		"SKY2",
-		7,
-		150,
-		0,
-	},
-	{
-		"MAP15",
-		15,
-		"CWILV14",
-		"MAP16",
-		"MAP31",
-		"SKY2",
-		7,
-		210,
-		0,
-	},
-	{
-		"MAP16",
-		16,
-		"CWILV15",
-		"MAP17",
-		"MAP17",
-		"SKY2",
-		7,
-		150,
-		0,
-	},
-	{
-		"MAP17",
-		17,
-		"CWILV16",
-		"MAP18",
-		"MAP18",
-		"SKY2",
-		7,
-		420,
-		0,
-	},
-	{
-		"MAP18",
-		18,
-		"CWILV17",
-		"MAP19",
-		"MAP19",
-		"SKY2",
-		7,
-		150,
-		0,
-	},
-	{
-		"MAP19",
-		19,
-		"CWILV18",
-		"MAP20",
-		"MAP20",
-		"SKY2",
-		7,
-		210,
-		0,
-	},
-	{
-		"MAP20",
-		20,
-		"CWILV19",
-		"MAP21",
-		"MAP21",
-		"SKY2",
-		7,
-		150,
-		0,
-	},
-	{
-		"MAP21",
-		21,
-		"CWILV20",
-		"MAP22",
-		"MAP22",
-		"SKY3",
-		8,
-		240,
-		0,
-	},
-	{
-		"MAP22",
-		22,
-		"CWILV21",
-		"MAP23",
-		"MAP23",
-		"SKY3",
-		8,
-		150,
-		0,
-	},
-	{
-		"MAP23",
-		23,
-		"CWILV22",
-		"MAP24",
-		"MAP24",
-		"SKY3",
-		8,
-		180,
-		0,
-	},
-	{
-		"MAP24",
-		24,
-		"CWILV23",
-		"MAP25",
-		"MAP25",
-		"SKY3",
-		8,
-		150,
-		0,
-	},
-	{
-		"MAP25",
-		25,
-		"CWILV24",
-		"MAP26",
-		"MAP26",
-		"SKY3",
-		8,
-		150,
-		0,
-	},
-	{
-		"MAP26",
-		26,
-		"CWILV25",
-		"MAP27",
-		"MAP27",
-		"SKY3",
-		8,
-		300,
-		0,
-	},
-	{
-		"MAP27",
-		27,
-		"CWILV26",
-		"MAP28",
-		"MAP28",
-		"SKY3",
-		8,
-		330,
-		0,
-	},
-	{
-		"MAP28",
-		28,
-		"CWILV27",
-		"MAP29",
-		"MAP29",
-		"SKY3",
-		8,
-		420,
-		0,
-	},
-	{
-		"MAP29",
-		29,
-		"CWILV28",
-		"MAP30",
-		"MAP30",
-		"SKY3",
-		8,
-		300,
-		0,
-	},
-	{
-		"MAP30",
-		30,
-		"CWILV29",
-		"",
-		"",
-		"SKY3",
-		8,
-		180,
-		LEVEL_MONSTERSTELEFRAG,
-	},
-	{
-		"MAP31",
-		31,
-		"CWILV30",
-		"MAP16",
-		"MAP32",
-		"SKY3",
-		9,
-		120,
-		0,
-	},
-	{
-		"MAP32",
-		32,
-		"CWILV31",
-		"MAP16",
-		"MAP16",
-		"SKY3",
-		10,
-		30,
-		0,
-	},
-
-	// End-of-list marker
-	{
-		"", 0, "", "", "", "SKY1", 0, 0, 0, NULL, "Unnamed"
-	}
-};
-
-
-// Episode/Cluster information
-cluster_info_t ClusterInfos[] =
-{
-	{		// DOOM Episode 1
-		1,	{ 'F','L','O','O','R','4','_','8' },
-	},
-	{		// DOOM Episode 2
-		2,	"SFLR6_1",
-	},
-	{		// DOOM Episode 3
-		3,	"MFLR8_4",
-	},
-	{		// DOOM Episode 4
-		4,	"MFLR8_3",
-	},
-	{		// DOOM II first cluster (up thru level 6)
-		5,	"SLIME16",
-	},
-	{		// DOOM II second cluster (up thru level 11)
-		6,	"RROCK14",
-	},
-	{		// DOOM II third cluster (up thru level 20)
-		7,	"RROCK07",
-	},
-	{		// DOOM II fourth cluster (up thru level 30)
-		8,	"RROCK17",
-	},
-	{		// DOOM II fifth cluster (level 31)
-		9,	"RROCK13",
-	},
-	{		// DOOM II sixth cluster (level 32)
-		10,	"RROCK19",
-	},
-	{		// Heretic episode 1
-		11,	"FLOOR25",
-	},
-	{		// Heretic episode 2
-		12,	{'F','L','A','T','H','U','H','1'},
-	},
-	{		// Heretic episode 3
-		13,	{'F','L','T','W','A','W','A','2'},
-	},
-	{		// Heretic episode 4
-		14,	"FLOOR28",
-	},
-	{		// Heretic episode 5
-		15,	"FLOOR08",
-	},
-	{		// Heretic episode 6
-		16, "FLOOR25",
-	},
-
-	{ 0 }		// End-of-clusters marker
-};

@@ -590,7 +590,7 @@ void A_FireGoldWandPL1 (AActor *actor, pspdef_t *psp)
 		angle += pr_fgw.Random2() << 18;
 	}
 	PuffType = RUNTIME_CLASS(AGoldWandPuff1);
-	P_LineAttack (mo, angle, MISSILERANGE, bulletpitch, damage);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
 
@@ -626,7 +626,7 @@ void A_FireGoldWandPL2 (AActor *actor, pspdef_t *psp)
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (mo, angle, MISSILERANGE, bulletpitch, damage);
+		P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
 		angle += ((ANG45/8)*2)/4;
 	}
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
@@ -1679,7 +1679,7 @@ void A_DeathBallImpact (AActor *ball)
 {
 	int i;
 	AActor *target;
-	angle_t angle;
+	angle_t angle = 0;
 	bool newAngle;
 
 	if ((ball->z <= ball->floorz) && P_HitFloor (ball))
@@ -2409,7 +2409,7 @@ void A_FireBlasterPL1 (AActor *actor, pspdef_t *psp)
 	}
 	PuffType = RUNTIME_CLASS(ABlasterPuff1);
 	HitPuffType = RUNTIME_CLASS(ABlasterPuff2);
-	P_LineAttack (mo, angle, MISSILERANGE, bulletpitch, damage);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
 	HitPuffType = NULL;
 	S_Sound (mo, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 }

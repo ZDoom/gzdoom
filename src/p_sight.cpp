@@ -37,6 +37,7 @@ This uses specialized forms of the maputils routines for optimized performance
 
 static fixed_t sightzstart;				// eye z of looker
 static fixed_t topslope, bottomslope;	// slopes to top and bottom of target
+static int SeePastBlockEverything;
 
 // Performance meters
 static int sightcounts[4];
@@ -119,6 +120,9 @@ static bool P_SightCheckLine (line_t *ld)
 // try to early out the check
 	if (!ld->backsector)
 		return false;	// stop checking
+
+	if (!SeePastBlockEverything && (ld->flags & ML_BLOCKEVERYTHING))
+		return false;	// don't see past block everything lines
 
 	sightcounts[3]++;
 // store the line for later intersection testing
@@ -380,7 +384,7 @@ sightcounts[2]++;
 =====================
 */
 
-bool P_CheckSight (const AActor *t1, const AActor *t2, BOOL ignoreInvisibility)
+bool P_CheckSight (const AActor *t1, const AActor *t2, int flags)
 {
 	clock (SightCycles);
 
@@ -416,7 +420,7 @@ sightcounts[0]++;
 //
 	// [RH] Andy Baker's stealth monsters:
 	// Cannot see an invisible object
-	if (!ignoreInvisibility &&
+	if ((flags & 1) == 0 &&
 		(t2->RenderStyle == STYLE_None ||
 		 (t2->RenderStyle >= STYLE_Translucent && t2->alpha == 0) ||
 		 (t2->renderflags & RF_INVISIBLE)))
@@ -455,7 +459,9 @@ sightcounts[0]++;
 	bottomslope = t2->z - sightzstart;
 	topslope = bottomslope + t2->height;
 
+	SeePastBlockEverything = flags & 2;
 	res = P_SightPathTraverse (t1->x, t1->y, t2->x, t2->y);
+	SeePastBlockEverything = 0;
 
 done:
 	unclock (SightCycles);

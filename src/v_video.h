@@ -90,6 +90,10 @@ enum
 	DTA_VirtualHeight,	// pretend the canvas is this tall
 	DTA_TopOffset,		// override texture's top offset
 	DTA_LeftOffset,		// override texture's left offset
+	DTA_WindowLeft,		// don't draw anything left of this column (on source, not dest)
+	DTA_WindowRight,	// don't draw anything at or to the right of this column (on source, not dest)
+	DTA_ClipBottom,		// don't draw anything at or below this row (on dest, not source)
+	DTA_Masked,			// true(default)=use masks from texture, false=ignore masks
 };
 
 
@@ -105,18 +109,6 @@ class DCanvas : public DObject
 {
 	DECLARE_ABSTRACT_CLASS (DCanvas, DObject)
 public:
-	enum EWrapperCode
-	{
-		EWrapper_Normal = 0,		// Just draws the patch as is
-		EWrapper_Lucent = 1,		// Mixes the patch with the background
-		EWrapper_Translated = 2,	// Color translates the patch and draws it
-		EWrapper_TlatedLucent = 3,	// Translates the patch and mixes it with the background
-		EWrapper_Colored = 4,		// Fills the patch area with a solid color
-		EWrapper_ColoredLucent = 5,	// Mixes a solid color in the patch area with the background
-		EWrapper_Alpha = 6,			// Source texture contains alpha data instead of color data
-		EWRAPPER_NUM,
-	};
-
 	FFont *Font;
 
 	DCanvas (int width, int height);
@@ -161,11 +153,11 @@ public:
 	virtual void SetFont (FFont *font);
 
 	// 2D Texture drawing
-	void DrawTexture (FTexture *img, int x, int y, DWORD tags, ...);
+	void STACK_ARGS DrawTexture (FTexture *img, int x, int y, DWORD tags, ...);
 
 	// 2D Text drawing
-	void DrawText (int normalcolor, int x, int y, const char *string, DWORD tags, ...);
-	void DrawChar (int normalcolor, int x, int y, BYTE character, DWORD tags, ...);
+	void STACK_ARGS DrawText (int normalcolor, int x, int y, const char *string, ...);
+	void STACK_ARGS DrawChar (int normalcolor, int x, int y, BYTE character, ...);
 
 protected:
 	BYTE *Buffer;
@@ -174,37 +166,8 @@ protected:
 	int Pitch;
 	int LockCount;
 
-	void DCanvas::DrawWrapper (EWrapperCode drawer, FTexture *tex, int x, int y, BOOL flipX) const;
-	void DCanvas::DrawSWrapper (EWrapperCode drawer, FTexture *tex, int x, int y, int destwidth, int destheight, BOOL flipX) const;
 	bool ClipBox (int &left, int &top, int &width, int &height, const byte *&src, const int srcpitch) const;
 	bool ClipScaleBox (int &left, int &top, int &width, int &height, int &dwidth, int &dheight, const byte *&src, const int srcpitch, fixed_t &xinc, fixed_t &yinc, fixed_t &xstart, fixed_t &yerr) const;
-
-	static void DrawPatchP (const byte *source, byte *dest, int count, int pitch);
-	static void DrawLucentPatchP (const byte *source, byte *dest, int count, int pitch);
-	static void DrawTranslatedPatchP (const byte *source, byte *dest, int count, int pitch);
-	static void DrawTlatedLucentPatchP (const byte *source, byte *dest, int count, int pitch);
-	static void DrawColoredPatchP (const byte *source, byte *dest, int count, int pitch);
-	static void DrawColorLucentPatchP (const byte *source, byte *dest, int count, int pitch);
-	static void DrawAlphaPatchP (const byte *source, byte *dest, int count, int pitch);
-
-	static void DrawPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
-	static void DrawLucentPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
-	static void DrawTranslatedPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
-	static void DrawTlatedLucentPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
-	static void DrawColoredPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
-	static void DrawColorLucentPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
-	static void DrawAlphaPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc);
-
-	typedef void (*vdrawfunc) (const byte *source, byte *dest, int count, int pitch);
-	typedef void (*vdrawsfunc) (const byte *source, byte *dest, int count, int pitch, int yinc);
-
-	// Palettized versions of the column drawers
-	static vdrawfunc Pfuncs[EWRAPPER_NUM];
-	static vdrawsfunc Psfuncs[EWRAPPER_NUM];
-
-	// The current set of column drawers (set in V_SetResolution)
-	static vdrawfunc *m_Drawfuncs;
-	static vdrawsfunc *m_Drawsfuncs;
 
 private:
 	// Keep track of canvases, for automatic destruction at exit
@@ -213,17 +176,6 @@ private:
 
 	friend void STACK_ARGS FreeCanvasChain ();
 };
-
-// The color to fill with for #4 and #5 above
-extern int V_ColorFill;
-
-// Fade amount used by the translucent patch drawers
-extern fixed_t V_Fade;
-
-// The color map for #1 and #2 above
-extern const BYTE *V_ColorMap;
-
-extern fixed_t V_TextTrans;
 
 // A canvas in system memory.
 

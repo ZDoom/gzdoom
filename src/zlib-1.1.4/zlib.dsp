@@ -41,8 +41,8 @@ RSC=rc.exe
 # PROP Output_Dir ".\Debug"
 # PROP Intermediate_Dir ".\Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "_MBCS" /YX /Fp".\Debug/zlib.pch" /Fo".\Debug/" /Fd".\Debug/" /GZ /c /GX 
-# ADD CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "_MBCS" /YX /Fp".\Debug/zlib.pch" /Fo".\Debug/" /Fd".\Debug/" /GZ /c /GX 
+# ADD BASE CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "_MBCS" /Fo".\Debug/" /Fd".\Debug/" /GZ /c /GX 
+# ADD CPP /nologo /MTd /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_LIB" /D "_MBCS" /Fo".\Debug/" /Fd".\Debug/" /GZ /c /GX 
 # ADD BASE MTL /nologo /win32 
 # ADD MTL /nologo /win32 
 # ADD BASE RSC /l 1033 /d "_DEBUG" 
@@ -66,8 +66,8 @@ LIB32=link.exe -lib
 # PROP Output_Dir ".\Release"
 # PROP Intermediate_Dir ".\Release"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MT /W3 /Ob1 /D "WIN32" /D "NDEBUG" /D "_LIB" /D "_MBCS" /GF /Gy /YX /Fp".\Release/zlib.pch" /Fo".\Release/" /Fd".\Release/" /Gr /c /GX 
-# ADD CPP /nologo /MT /W3 /Ob1 /D "WIN32" /D "NDEBUG" /D "_LIB" /D "_MBCS" /GF /Gy /YX /Fp".\Release/zlib.pch" /Fo".\Release/" /Fd".\Release/" /Gr /c /GX 
+# ADD BASE CPP /nologo /MT /W3 /Ob1 /D "WIN32" /D "NDEBUG" /D "_LIB" /D "_MBCS" /GF /Gy /Fo".\Release/" /Fd".\Release/" /Gr /c /GX 
+# ADD CPP /nologo /MT /W3 /Ob1 /D "WIN32" /D "NDEBUG" /D "_LIB" /D "_MBCS" /GF /Gy /Fo".\Release/" /Fd".\Release/" /Gr /c /GX 
 # ADD BASE MTL /nologo /win32 
 # ADD MTL /nologo /win32 
 # ADD BASE RSC /l 1033 /d "NDEBUG" 

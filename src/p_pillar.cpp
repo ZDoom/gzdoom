@@ -100,10 +100,8 @@ DPillar::DPillar (sector_t *sector, EPillar type, fixed_t speed,
 	vertex_t *spot;
 
 	sector->floordata = sector->ceilingdata = this;
-	setinterpolation (&sector->floorplane.d);
-	setinterpolation (&sector->ceilingplane.d);
-	setinterpolation (&sector->floortexz);
-	setinterpolation (&sector->ceilingtexz);
+	setinterpolation (INTERP_SectorFloor, sector);
+	setinterpolation (INTERP_SectorCeiling, sector);
 
 	m_Type = type;
 	m_Crush = crush;

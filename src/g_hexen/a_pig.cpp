@@ -15,6 +15,7 @@
 
 static FRandom pr_snoutattack ("SnoutAttack");
 static FRandom pr_pigattack ("PigAttack");
+static FRandom pr_pigplayerthink ("PigPlayerThink");
 
 extern void AdjustPlayerAngle (AActor *);
 
@@ -115,6 +116,8 @@ public:
 	int GetArmorMax () { return 1; }
 	int GetAutoArmorSave () { return 0; }
 	fixed_t GetArmorIncrement (int armortype) { return 0; }
+	void MorphPlayerThink ();
+	void ActivateMorphWeapon ();
 };
 
 FState APigPlayer::States[] =
@@ -159,6 +162,8 @@ IMPLEMENT_ACTOR (APigPlayer, Hexen, -1, 0)
 	PROP_SpeedFixed (1)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOTDMATCH)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_SLIDE|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
+	PROP_Flags3 (MF3_NOBLOCKMONST)
+	PROP_Flags4 (MF4_NOSKIN)
 
 	PROP_SpawnState (S_PIGPLAY)
 	PROP_SeeState (S_PIGPLAY_RUN1)
@@ -190,6 +195,32 @@ void APigPlayer::TweakSpeeds (int &forward, int &side)
 	{
 		side = side * 0x27 / 0x28;
 	}
+}
+
+void APigPlayer::MorphPlayerThink ()
+{
+	if (player->morphTics&15)
+	{
+		return;
+	}
+	if(!(momx | momy) && pr_pigplayerthink() < 64)
+	{ // Snout sniff
+		P_SetPspriteNF (player, ps_weapon, wpnlev1info[wp_snout]->atkstate + 1);
+		S_Sound (this, CHAN_VOICE, "PigActive1", 1, ATTN_NORM); // snort
+		return;
+	}
+	if (pr_pigplayerthink() < 48)
+	{
+		S_Sound (this, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
+	}
+}
+
+void APigPlayer::ActivateMorphWeapon ()
+{
+	player->pendingweapon = wp_nochange;
+	player->psprites[ps_weapon].sy = WEAPONTOP;
+	player->readyweapon = wp_snout;
+	P_SetPsprite (player, ps_weapon, wpnlev1info[player->readyweapon]->readystate);
 }
 
 // Pig (non-player) ---------------------------------------------------------

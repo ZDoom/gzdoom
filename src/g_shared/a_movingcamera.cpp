@@ -314,6 +314,14 @@ void APathFollower::Tick ()
 	if (HoldTime > gametic)
 		return;
 
+	// Splines must have a previous node.
+	if (PrevNode == NULL && !(args[2] & 1))
+	{
+		bActive = false;
+		return;
+	}
+
+	// All paths must have a current node.
 	if (CurrNode->Next == NULL)
 	{
 		bActive = false;
@@ -353,7 +361,7 @@ void APathFollower::NewNode ()
 
 bool APathFollower::Interpolate ()
 {
-	fixed_t dx, dy, dz;
+	fixed_t dx = 0, dy = 0, dz = 0;
 
 	if ((args[2] & 8) && Time > 0.f)
 	{

@@ -356,7 +356,7 @@ void WI_slamBackground ()
 {
 	if (background)
 	{
-		screen->DrawTexture (background, 0, 0, DTA_DestWidth, SCREENWIDTH, DTA_DestHeight, SCREENHEIGHT);
+		screen->DrawTexture (background, 0, 0, DTA_DestWidth, SCREENWIDTH, DTA_DestHeight, SCREENHEIGHT, TAG_DONE);
 		if (DrawFoM)
 		{
 			screen->DrawTexture (anims[1][7].p[2], anims[1][7].loc.x, anims[1][7].loc.y, DTA_320x200, true, TAG_DONE);
@@ -364,12 +364,11 @@ void WI_slamBackground ()
 	}
 	else if (state != NoState)
 	{
-		int lump = W_CheckNumForName ("FLOOR16", ns_flats);
-		if (lump >= 0)
+		int picnum = TexMan.CheckForTexture ("FLOOR16", FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+		if (picnum >= 0)
 		{
-			const byte *flat = (byte *)W_MapLumpNum (lump);
-			screen->FlatFill (0, 0, SCREENWIDTH, SCREENHEIGHT, flat);
-			W_UnMapLump (flat);
+			FTexture *pic = TexMan(picnum);
+			screen->FlatFill (0, 0, SCREENWIDTH, SCREENHEIGHT, pic->GetPixels());
 		}
 		else
 		{
@@ -1801,7 +1800,7 @@ void WI_loadData ()
 		total = TexMan["WIMSTT"];		// "total"
 		star = TexMan["STFST01"];		// your face
 		bstar = TexMan["STFDEAD0"];		// dead face
-		p = TexMan["STPBANY"];
+ 		p = TexMan["STPBANY"];
 
 		for (i = 0; i < 10; i++)
 		{ // numbers 0-9

@@ -517,14 +517,20 @@ static void Convert32 (BYTE *src, int srcpitch,
 		srcpitch -= destwidth;
 		for (y = destheight; y != 0; y--)
 		{
-			for (savedx = x = destwidth, x >>= 1; x != 0; x--)
+			for (savedx = x = destwidth, x >>= 3; x != 0; x--)
 			{
 				dest[0] = GPfxPal.Pal32[src[0]];
 				dest[1] = GPfxPal.Pal32[src[1]];
-				dest += 2;
-				src += 2;
+				dest[2] = GPfxPal.Pal32[src[2]];
+				dest[3] = GPfxPal.Pal32[src[3]];
+				dest[4] = GPfxPal.Pal32[src[4]];
+				dest[5] = GPfxPal.Pal32[src[5]];
+				dest[6] = GPfxPal.Pal32[src[6]];
+				dest[7] = GPfxPal.Pal32[src[7]];
+				dest += 8;
+				src += 8;
 			}
-			if (savedx & 1)
+			for (x = savedx & 7; x != 0; x--)
 			{
 				*dest++ = GPfxPal.Pal32[*src++];
 			}

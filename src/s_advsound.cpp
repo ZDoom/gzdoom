@@ -101,7 +101,8 @@ enum SICommands
 	SI_ArchivePath,
 	SI_IfDoom,
 	SI_IfHeretic,
-	SI_IfHexen
+	SI_IfHexen,
+	SI_IfStrife
 };
 
 // Blood was a cool game. If Monolith ever releases the source for it,
@@ -169,6 +170,7 @@ static const char *SICommandStrings[] =
 	"$ifdoom",
 	"$ifheretic",
 	"$ifhexen",
+	"$ifstrife",
 	NULL
 };
 
@@ -353,7 +355,7 @@ int S_FindSoundTentative (const char *name)
 int S_AddSound (const char *logicalname, const char *lumpname)
 {
 	return S_AddSound (logicalname,
-		lumpname ? W_CheckNumForName (lumpname) : -1);
+		lumpname ? Wads.CheckNumForName (lumpname) : -1);
 }
 
 static int S_AddSound (const char *logicalname, int lumpnum)
@@ -407,7 +409,7 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 	const char *lumpname)
 {
 	return S_AddPlayerSound (pclass, gender, refid,
-		lumpname ? W_CheckNumForName (lumpname) : -1);
+		lumpname ? Wads.CheckNumForName (lumpname) : -1);
 }
 
 int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum)
@@ -474,14 +476,14 @@ void S_ParseSndInfo ()
 
 	CurrentPitchMask = 0;
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
-	for (lump = 0; lump < numlumps; ++lump)
+	for (lump = 0; lump < Wads.GetNumLumps(); ++lump)
 	{
-		if (lumpinfo[lump].namespc == ns_bloodsfx)
+		if (Wads.GetLumpNamespace (lump) == ns_bloodsfx)
 		{
 			S_AddBloodSFX (lump);
 		}
-		else if (lumpinfo[lump].namespc == ns_global &&
-			strcmp (lumpinfo[lump].name, "SNDINFO") == 0)
+		else if (Wads.GetLumpNamespace (lump) == ns_global &&
+			Wads.CheckLumpName (lump, "SNDINFO"))
 		{
 			S_AddSNDINFO (lump);
 		}
@@ -505,7 +507,7 @@ void S_ParseSndInfo ()
 	sfx_itemup = S_FindSound ("misc/i_pkup");
 	sfx_tink = S_FindSound ("misc/chat2");
 
-	sfx_empty = W_CheckNumForName ("dsempty");
+	sfx_empty = Wads.CheckNumForName ("dsempty");
 }
 
 //==========================================================================
@@ -805,6 +807,13 @@ static void S_AddSNDINFO (int lump)
 				}
 				break;
 
+			case SI_IfStrife:
+				if (gameinfo.gametype != GAME_Strife)
+				{
+					skipToEndIf = true;
+				}
+				break;
+
 			case SI_IfHeretic:
 				if (gameinfo.gametype != GAME_Heretic)
 				{
@@ -845,30 +854,27 @@ static void S_AddSNDINFO (int lump)
 static void S_AddBloodSFX (int lumpnum)
 {
 	char name[13];
-	const FBloodSFX *sfx = (FBloodSFX *)W_MapLumpNum (lumpnum);
-	int rawlump = W_CheckNumForName (sfx->RawName, ns_bloodraw);
+	FMemLump sfxlump = Wads.ReadLump (lumpnum);
+	const FBloodSFX *sfx = (FBloodSFX *)sfxlump.GetMem();
+	int rawlump = Wads.CheckNumForName (sfx->RawName, ns_bloodraw);
 	int sfxnum;
 
-	if (rawlump == -1)
+	if (rawlump != -1)
 	{
-		W_UnMapLump (sfx);
-		return;
+		Wads.GetLumpName (name, lumpnum);
+		name[8] = 0;
+		strcat (name, ".SFX");
+		sfxnum = S_AddSound (name, rawlump);
+		if (sfx->Format == 5)
+		{
+			S_sfx[sfxnum].bForce22050 = true;
+		}
+		else // I don't know any other formats for this
+		{
+			S_sfx[sfxnum].bForce11025 = true;
+		}
+		S_sfx[sfxnum].bLoadRAW = true;
 	}
-
-	strncpy (name, lumpinfo[lumpnum].name, 8);
-	name[8] = 0;
-	strcat (name, ".SFX");
-	sfxnum = S_AddSound (name, rawlump);
-	if (sfx->Format == 5)
-	{
-		S_sfx[sfxnum].bForce22050 = true;
-	}
-	else // I don't know any other formats for this
-	{
-		S_sfx[sfxnum].bForce11025 = true;
-	}
-	S_sfx[sfxnum].bLoadRAW = true;
-	W_UnMapLump (sfx);
 }
 
 //==========================================================================
@@ -1164,7 +1170,7 @@ CCMD (soundlist)
 		}
 		else if (S_sfx[i].lumpnum != -1)
 		{
-			strncpy (lumpname, lumpinfo[sfx->lumpnum].name, 8);
+			Wads.GetLumpName (lumpname, sfx->lumpnum);
 			Printf ("%3d. %s (%s)\n", i, sfx->name, lumpname);
 		}
 		else if (S_sfx[i].link != sfxinfo_t::NO_LINK)

@@ -162,7 +162,7 @@ TimiditySong::~TimiditySong ()
 	}
 }
 
-TimiditySong::TimiditySong (const void *mem, int len)
+TimiditySong::TimiditySong (FileReader *file)
 	: DiskName ("zmid"),
 #ifdef _WIN32
 	  ReadWavePipe (INVALID_HANDLE_VALUE), WriteWavePipe (INVALID_HANDLE_VALUE),
@@ -194,7 +194,9 @@ TimiditySong::TimiditySong (const void *mem, int len)
 		return;
 	}
 
-	const BYTE *buf = (const BYTE *)mem;
+	int len = file->GetLength();
+	BYTE *buf = new BYTE[len];
+	file->Read (buf, len);
 
 	// The file type has already been checked before this class instance was
 	// created, so we only need to check one character to determine if this
@@ -208,6 +210,7 @@ TimiditySong::TimiditySong (const void *mem, int len)
 		success = ProduceMIDI (buf, f);
 	}
 	fclose (f);
+	delete[] buf;
 
 	if (success)
 	{
@@ -523,7 +526,7 @@ bool TimiditySong::LaunchTimidity ()
 #endif // _WIN32
 }
 
-signed char STACK_ARGS TimiditySong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+signed char F_CALLBACKAPI TimiditySong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
 {
 	TimiditySong *song = (TimiditySong *)param;
 	

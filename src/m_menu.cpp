@@ -200,8 +200,13 @@ static short	itemOn; 			// menu item skull is on
 static short	whichSkull; 		// which skull to draw
 static int		MenuTime;
 static int		InfoType;
+static int		InfoTic;
 
 static const char skullName[2][9] = {"M_SKULL1", "M_SKULL2"};	// graphic name of skulls
+static const char cursName[8][8] =	// graphic names of Strife menu selector
+{
+	"M_CURS1", "M_CURS2", "M_CURS3", "M_CURS4", "M_CURS5", "M_CURS6", "M_CURS7", "M_CURS8"
+};
 
 static oldmenu_t *currentMenu;		// current menudef
 static oldmenu_t *TopLevelMenu;		// The main menu everything hangs off of
@@ -618,8 +623,9 @@ void M_ReadSaveStrings ()
 
 				if (file != NULL)
 				{
+					PNGHandle *png;
 					char sig[16];
-					char title[SAVESTRINGSIZE];
+					char title[SAVESTRINGSIZE+1];
 					bool oldVer = true;
 					bool addIt = false;
 
@@ -630,18 +636,14 @@ void M_ReadSaveStrings ()
 					// Old savegame versions are always added to the menu so
 					// the user can easily delete them if desired.
 
-					if (M_VerifyPNG (file))
+					title[SAVESTRINGSIZE] = 0;
+
+					if (NULL != (png = M_VerifyPNG (file)))
 					{
-						char *ver = M_GetPNGText (file, "ZDoom Save Version");
+						char *ver = M_GetPNGText (png, "ZDoom Save Version");
 						if (ver != NULL)
 						{
-							size_t titlelen = M_FindPNGText (file, "Title");
-							if (titlelen != 0)
-							{
-								memset (title, 0, SAVESTRINGSIZE);
-								fread (title, 1, MIN<size_t> (titlelen, SAVESTRINGSIZE), file);
-							}
-							else
+							if (!M_GetPNGText (png, "Title", title, SAVESTRINGSIZE))
 							{
 								strncpy (title, I_FindName(&c_file), SAVESTRINGSIZE);
 							}
@@ -651,10 +653,10 @@ void M_ReadSaveStrings ()
 								// Was saved with a compatible ZDoom version,
 								// so check if it's for the current game.
 								// If it is, add it. Otherwise, ignore it.
-								char *iwad = M_GetPNGText (file, "Game WAD");
+								char *iwad = M_GetPNGText (png, "Game WAD");
 								if (iwad != NULL)
 								{
-									if (stricmp (iwad, W_GetWadName (1)) == 0)
+									if (stricmp (iwad, Wads.GetWadName (1)) == 0)
 									{
 										addIt = true;
 										oldVer = false;
@@ -668,6 +670,7 @@ void M_ReadSaveStrings ()
 							}
 							delete[] ver;
 						}
+						delete png;
 					}
 					else
 					{
@@ -761,6 +764,12 @@ void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
 		 node->Succ != NULL;
 		 node = static_cast<FSaveGameNode *>(node->Succ))
 	{
+		// Why would the node's filename be NULL? I don't know, but I saw one
+		// crash report where it happened.
+		if (node->Filename == NULL)
+		{
+			continue;
+		}
 #ifdef unix
 		if (strcmp (node->Filename, file) == 0)
 #else
@@ -794,7 +803,7 @@ void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
 //
 void M_DrawLoad (void)
 {
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		FTexture *title = TexMan["M_LOADG"];
 		screen->DrawTexture (title,
@@ -819,7 +828,7 @@ void M_DrawLoad (void)
 //
 void M_DrawSaveLoadBorder (int x, int y, int len)
 {
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		int i;
 
@@ -842,6 +851,7 @@ void M_DrawSaveLoadBorder (int x, int y, int len)
 static void M_ExtractSaveData (const FSaveGameNode *node)
 {
 	FILE *file;
+	PNGHandle *png;
 
 	M_UnloadSaveData ();
 
@@ -855,45 +865,59 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 		!node->bOldVersion &&
 		(file = fopen (node->Filename, "rb")) != NULL)
 	{
-		char *time, *comment;
-		size_t commentlen, totallen, timelen;
+		if (NULL != (png = M_VerifyPNG (file)))
+		{
+			char *time, *pcomment, *comment;
+			size_t commentlen, totallen, timelen;
 
-		// Extract comment
-		time = M_GetPNGText (file, "Creation Time");
-		commentlen = M_FindPNGText (file, "Comment");
-		if (time != NULL)
-		{
-			timelen = strlen (time);
-			totallen = timelen + commentlen + 3;
-		}
-		else
-		{
-			timelen = 0;
-			totallen = commentlen + 1;
-		}
-		if (totallen != 0)
-		{
-			comment = new char[totallen];
-
-			if (timelen)
+			// Extract comment
+			time = M_GetPNGText (png, "Creation Time");
+			pcomment = M_GetPNGText (png, "Comment");
+			if (pcomment != NULL)
 			{
-				memcpy (comment, time, timelen);
-				comment[timelen] = '\n';
-				comment[timelen+1] = '\n';
-				timelen += 2;
+				commentlen = strlen (pcomment);
 			}
-			if (commentlen)
+			else
 			{
-				fread (comment + timelen, 1, commentlen, file);
+				commentlen = 0;
 			}
-			comment[timelen+commentlen] = 0;
-			SaveComment = V_BreakLines (216*screen->GetWidth()/640/CleanXfac, comment);
-			delete[] comment;
+			if (time != NULL)
+			{
+				timelen = strlen (time);
+				totallen = timelen + commentlen + 3;
+			}
+			else
+			{
+				timelen = 0;
+				totallen = commentlen + 1;
+			}
+			if (totallen != 0)
+			{
+				comment = new char[totallen];
+
+				if (timelen)
+				{
+					memcpy (comment, time, timelen);
+					comment[timelen] = '\n';
+					comment[timelen+1] = '\n';
+					timelen += 2;
+				}
+				if (commentlen)
+				{
+					memcpy (comment + timelen, pcomment, commentlen);
+				}
+				comment[timelen+commentlen] = 0;
+				SaveComment = V_BreakLines (216*screen->GetWidth()/640/CleanXfac, comment);
+				delete[] comment;
+				delete[] time;
+				delete[] pcomment;
+			}
+
+			// Extract pic
+			SavePic = M_CreateCanvasFromPNG (png);
+
+			delete png;
 		}
-
-		// Extract pic
-		SavePic = M_CreateCanvasFromPNG (file);
-
 		fclose (file);
 	}
 }
@@ -1120,13 +1144,12 @@ void M_LoadGame (int choice)
 //
 void M_DrawSave()
 {
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		FTexture *title = TexMan["M_SAVEG"];
 		screen->DrawTexture (title,
 			(SCREENWIDTH-title->GetWidth()*CleanXfac)/2, 20*CleanYfac,
 			DTA_CleanNoMove, true, TAG_DONE);
-		W_UnMapLump (title);
 	}
 	else
 	{
@@ -1277,22 +1300,41 @@ void M_QuickLoad ()
 //
 void M_DrawReadThis ()
 {
-	FTexture *tex;
+	FTexture *tex, *prevpic = NULL;
+	fixed_t alpha;
 
 	if (gameinfo.flags & GI_INFOINDEXED)
 	{
 		char name[9];
-		W_GetLumpName (name, W_GetNumForName (gameinfo.info.indexed.basePage) + InfoType);
 		name[8] = 0;
+		Wads.GetLumpName (name, Wads.GetNumForName (gameinfo.info.indexed.basePage) + InfoType);
 		tex = TexMan[name];
+		if (InfoType > 1)
+		{
+			Wads.GetLumpName (name, Wads.GetNumForName (gameinfo.info.indexed.basePage) + InfoType - 1);
+			prevpic = TexMan[name];
+		}
 	}
 	else
 	{
 		tex = TexMan[gameinfo.info.infoPage[InfoType-1]];
+		if (InfoType > 1)
+		{
+			prevpic = TexMan[gameinfo.info.infoPage[InfoType-2]];
+		}
+	}
+	alpha = MIN<fixed_t> (Scale (gametic - InfoTic, OPAQUE, TICRATE/3), OPAQUE);
+	if (alpha < OPAQUE && prevpic != NULL)
+	{
+		screen->DrawTexture (prevpic, 0, 0,
+			DTA_DestWidth, screen->GetWidth(),
+			DTA_DestHeight, screen->GetHeight(),
+			TAG_DONE);
 	}
 	screen->DrawTexture (tex, 0, 0,
 		DTA_DestWidth, screen->GetWidth(),
 		DTA_DestHeight, screen->GetHeight(),
+		DTA_Alpha, alpha,
 		TAG_DONE);
 }
 
@@ -1301,7 +1343,14 @@ void M_DrawReadThis ()
 //
 void M_DrawMainMenu (void)
 {
-	screen->DrawTexture (TexMan["M_DOOM"], 94, 2, DTA_Clean, true, TAG_DONE);
+	if (gameinfo.gametype == GAME_Doom)
+	{
+        screen->DrawTexture (TexMan["M_DOOM"], 94, 2, DTA_Clean, true, TAG_DONE);
+	}
+	else
+	{
+        screen->DrawTexture (TexMan["M_STRIFE"], 94, 2, DTA_Clean, true, TAG_DONE);
+	}
 }
 
 void M_DrawHereticMainMenu ()
@@ -1337,9 +1386,12 @@ void M_DrawHereticMainMenu ()
 //
 void M_DrawNewGame(void)
 {
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
-		screen->DrawTexture (TexMan["M_NEWG"], 96, 14, DTA_Clean, true, TAG_DONE);
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			screen->DrawTexture (TexMan["M_NEWG"], 96, 14, DTA_Clean, true, TAG_DONE);
+		}
 		screen->DrawTexture (TexMan["M_SKILL"], 54, 38, DTA_Clean, true, TAG_DONE);
 	}
 }
@@ -1353,7 +1405,7 @@ void M_NewGame(int choice)
 	}
 
 	// Set up episode menu positioning
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		EpiDef.x = 48;
 		EpiDef.y = 63;
@@ -1382,7 +1434,7 @@ void M_NewGame(int choice)
 	{
 		if (EpiDef.numitems <= 1)
 		{
-			if (gameinfo.gametype == GAME_Doom)
+			if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 			{
 				M_SetupNextMenu (&NewDef);
 			}
@@ -1451,7 +1503,7 @@ static void DrawHexenSkillMenu()
 //
 void M_DrawEpisode ()
 {
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		screen->DrawTexture (TexMan["M_EPISOD"], 54, 38, DTA_Clean, true, TAG_DONE);
 	}
@@ -1470,7 +1522,7 @@ void M_VerifyNightmare (int ch)
 
 void M_ChooseSkill (int choice)
 {
-	if (gameinfo.gametype == GAME_Doom && choice == NewDef.numitems - 1)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife) && choice == NewDef.numitems - 1)
 	{
 		M_StartMessage (GStrings(NIGHTMARE), M_VerifyNightmare, true);
 		return;
@@ -1497,7 +1549,7 @@ void M_Episode (int choice)
 	}
 
 	epi = choice;
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 		M_SetupNextMenu (&NewDef);
 	else if (gameinfo.gametype == GAME_Hexen)
 		M_SetupNextMenu (&HexenSkillMenu);
@@ -1616,12 +1668,14 @@ void M_ReadThis (int choice)
 {
 	drawSkull = false;
 	InfoType = 1;
+	InfoTic = gametic;
 	M_SetupNextMenu (&ReadDef);
 }
 
 void M_ReadThisMore (int choice)
 {
 	InfoType++;
+	InfoTic = gametic;
 	if (gameinfo.flags & GI_INFOINDEXED)
 	{
 		if (InfoType >= gameinfo.info.indexed.numPages)
@@ -2768,7 +2822,10 @@ void M_Drawer ()
 	}
 	else if (menuactive)
 	{
-		screen->Dim ();
+		if (InfoType == 0)
+		{
+			screen->Dim ();
+		}
 		BorderNeedRefresh = screen->GetPageCount ();
 		SB_state = screen->GetPageCount ();
 
@@ -2818,6 +2875,12 @@ void M_Drawer ()
 				if (gameinfo.gametype == GAME_Doom)
 				{
 					screen->DrawTexture (TexMan[skullName[whichSkull]],
+						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT,
+						DTA_Clean, true, TAG_DONE);
+				}
+				else if (gameinfo.gametype == GAME_Strife)
+				{
+					screen->DrawTexture (TexMan[cursName[(MenuTime >> 2) & 7]],
 						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT,
 						DTA_Clean, true, TAG_DONE);
 				}
@@ -2955,7 +3018,7 @@ void M_Init (void)
 {
 	int i;
 
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		TopLevelMenu = currentMenu = &MainDef;
 	}
@@ -2980,10 +3043,10 @@ void M_Init (void)
 	quickSaveSlot = NULL;
 	strcpy (NewSaveNode.Title, "<New Save Game>");
 
-	underscore[0] = (gameinfo.gametype == GAME_Doom) ? '_' : '[';
+	underscore[0] = (gameinfo.gametype & (GAME_Doom|GAME_Strife)) ? '_' : '[';
 	underscore[1] = '\0';
 
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		LINEHEIGHT = 16;
 	}
@@ -3028,7 +3091,7 @@ void M_Init (void)
 
 static void PickPlayerClass ()
 {
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		PlayerClass = TypeInfo::FindType ("DoomPlayer");
 	}

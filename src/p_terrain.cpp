@@ -272,7 +272,7 @@ void P_InitTerrainTypes ()
 	MakeDefaultTerrain ();
 
 	lastlump = 0;
-	while (-1 != (lump = W_FindLump ("TERRAIN", &lastlump)) )
+	while (-1 != (lump = Wads.FindLump ("TERRAIN", &lastlump)) )
 	{
 		SC_OpenLumpNum (lump, "TERRAIN");
 		ParseOuter ();

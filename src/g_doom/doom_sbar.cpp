@@ -130,10 +130,14 @@ public:
 
 	void AttachToPlayer (player_t *player)
 	{
+		player_t *oldplayer = CPlayer;
 		int i;
 
 		FBaseStatusBar::AttachToPlayer (player);
-		SetFace (&skins[CPlayer->userinfo.skin]);
+		if (oldplayer != CPlayer)
+		{
+			SetFace (&skins[CPlayer->userinfo.skin]);
+		}
 		if (multiplayer)
 		{
 			// draw face background
@@ -290,13 +294,7 @@ private:
 			}
 			else
 			{
-				DrawPartialImage (&StatusBarTex, 2, 3, 2, 3, BigWidth*3, BigHeight);
-				if (Scaled)
-				{
-					ScaleCopy->Lock ();
-					CopyToScreen (2, 3, BigWidth*3, BigHeight);
-					ScaleCopy->Unlock ();
-				}
+				DrawPartialImage (&StatusBarTex, 2, BigWidth*3);
 			}
 		}
 	}
@@ -326,30 +324,37 @@ private:
 		{
 			if (arms[i] != OldArms[i])
 			{
-				ArmsRefresh[i] = screen->GetPageCount ();
+				ArmsRefresh[i%3] = screen->GetPageCount ();
 			}
 		}
 
 		// Remember the arms state for next time
 		memcpy (OldArms, arms, sizeof(arms));
 
-		for (i = 0; i < 6; i++)
+		for (i = 0; i < 3; i++)
 		{
 			if (ArmsRefresh[i])
 			{
 				ArmsRefresh[i]--;
+				int x = 111 + i * 12;
+				DrawPartialImage (&StatusBarTex, x, 6);
 
-				int x = 111 + (i % 3) * 12;
-				int y = 4 + (i / 3) * 10;
 
-				DrawPartialImage (&StatusBarTex, x, y, x, y, 6, 6);
 				if (arms[i])
 				{
-					DrawImage (FBaseStatusBar::Images[imgSmNumbers+2+i], x, y);
+					DrawImage (FBaseStatusBar::Images[imgSmNumbers+2+i], x, 4);
 				}
 				else
 				{
-					DrawImage (Images[imgGNUM2+i], x, y);
+					DrawImage (Images[imgGNUM2+i], x, 4);
+				}
+				if (arms[i+3])
+				{
+					DrawImage (FBaseStatusBar::Images[imgSmNumbers+2+i+3], x, 14);
+				}
+				else
+				{
+					DrawImage (Images[imgGNUM2+i+3], x, 14);
 				}
 			}
 		}
@@ -373,11 +378,11 @@ private:
 		{
 			if (ammo[i] != OldAmmo[i])
 			{
-				AmmoRefresh[i] = screen->GetPageCount ();
+				AmmoRefresh = screen->GetPageCount ();
 			}
 			if (maxammo[i] != OldMaxAmmo[i])
 			{
-				MaxAmmoRefresh[i] = screen->GetPageCount ();
+				MaxAmmoRefresh = screen->GetPageCount ();
 			}
 		}
 
@@ -385,21 +390,22 @@ private:
 		memcpy (OldAmmo, ammo, sizeof(ammo));
 		memcpy (OldMaxAmmo, maxammo, sizeof(ammo));
 
-		for (i = 0; i < 4; i++)
+		if (AmmoRefresh)
 		{
-			int y = 5 + 6*i;
-			
-			if (AmmoRefresh[i])
+			AmmoRefresh--;
+			DrawPartialImage (&StatusBarTex, 276, 4*3);
+			for (i = 0; i < 4; i++)
 			{
-				AmmoRefresh[i]--;
-				DrawPartialImage (&StatusBarTex, 276, y, 276, y, 4*3, 6);
-				DrSmallNumber (ammo[i], 276, y);
+				DrSmallNumber (ammo[i], 276, 5 + 6*i);
 			}
-			if (MaxAmmoRefresh[i])
+		}
+		if (MaxAmmoRefresh)
+		{
+			MaxAmmoRefresh--;
+			DrawPartialImage (&StatusBarTex, 302, 4*3);
+			for (i = 0; i < 4; i++)
 			{
-				MaxAmmoRefresh[i]--;
-				DrawPartialImage (&StatusBarTex, 302, y, 302, y, 4*3, 6);
-				DrSmallNumber (maxammo[i], 302, y);
+				DrSmallNumber (maxammo[i], 302, 5 + 6*i);
 			}
 		}
 	}
@@ -413,26 +419,25 @@ private:
 			FaceRefresh = screen->GetPageCount ();
 			OldFaceIndex = FaceIndex;
 		}
-		if (FaceRefresh || CPlayer->inventory[CPlayer->readyArtifact] != 0)
+		if (FaceRefresh || (CPlayer->inventory[CPlayer->readyArtifact] != 0 && !(level.flags & LEVEL_NOINVENTORYBAR)))
 		{
 			if (FaceRefresh)
 			{
 				FaceRefresh--;
 			}
-			DrawPartialImage (&StatusBarTex, 142, 0, 142, 0, 37, 32);
-			if (CPlayer->inventory[CPlayer->readyArtifact] == 0)
+			DrawPartialImage (&StatusBarTex, 142, 37);
+			if (CPlayer->inventory[CPlayer->readyArtifact] == 0 || (level.flags & LEVEL_NOINVENTORYBAR))
 			{
-				DrawImageNoUpdate (Faces[FaceIndex], 143, 0);
-				UpdateRect (142, 0, 37, 32);
+				DrawImage (Faces[FaceIndex], 143, 0);
 			}
 			else
 			{
-				DrawImageNoUpdate (ArtiImages[CPlayer->readyArtifact], 144, 0);
-				UpdateRect (142, 0, 37, 32);
+				DrawImage (ArtiImages[CPlayer->readyArtifact], 144, 0);
 				if (CPlayer->inventory[CPlayer->readyArtifact] != 1)
 				{
 					DrSmallNumber (CPlayer->inventory[CPlayer->readyArtifact], 165, 24);
 				}
+				OldFaceIndex = -1;
 			}
 		}
 	}
@@ -457,25 +462,22 @@ private:
 		{
 			if (keys[i] != OldKeys[i])
 			{
-				KeysRefresh[i] = screen->GetPageCount ();
+				KeysRefresh = screen->GetPageCount ();
 			}
 		}
 
 		// Remember keys for next time
 		memcpy (OldKeys, keys, sizeof(keys));
 
-		for (i = 0; i < 3; i++)
+		if (KeysRefresh)
 		{
-			if (KeysRefresh[i])
+			KeysRefresh--;
+			DrawPartialImage (&StatusBarTex, 239, 8);
+			for (i = 0; i < 3; i++)
 			{
-				KeysRefresh[i]--;
-
-				int y = 3 + i*10;
-
-				DrawPartialImage (&StatusBarTex, 239, y, 239, y, 8, 5);
 				if (keys[i] != 255)
 				{
-					DrawImage (Images[imgKEYS0+keys[i]], 239, y);
+					DrawImage (Images[imgKEYS0+keys[i]], 239, 3 + i*10);
 				}
 			}
 		}
@@ -546,7 +548,7 @@ private:
 
 	void DrawNumber (int val, int x, int y, int size=3)
 	{
-		DrawPartialImage (&StatusBarTex, x-1, y, x-1, y, size*BigWidth+2, BigHeight);
+		DrawPartialImage (&StatusBarTex, x-1, size*BigWidth+2);
 		DrBNumber (val, x, y, size);
 	}
 
@@ -940,17 +942,17 @@ private:
 	char ArmorRefresh;
 	char ActiveAmmoRefresh;
 	char FragsRefresh;
-	char ArmsRefresh[6];
-	char AmmoRefresh[4];
-	char MaxAmmoRefresh[4];
+	char ArmsRefresh[3];
+	char AmmoRefresh;
+	char MaxAmmoRefresh;
 	char FaceRefresh;
-	char KeysRefresh[3];
+	char KeysRefresh;
 
 	bool FaceWeaponsOwned[NUMWEAPONS];
 };
 
 FDoomStatusBar::FDoomStatusBarTexture::FDoomStatusBarTexture ()
-: FPatchTexture (W_GetNumForName ("STBAR"), FTexture::TEX_MiscPatch)
+: FPatchTexture (Wads.GetNumForName ("STBAR"), FTexture::TEX_MiscPatch)
 {
 }
 

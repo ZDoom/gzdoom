@@ -163,7 +163,7 @@ static void P_InitAnimDefs ()
 {
 	int lump, lastlump = 0;
 	
-	while ((lump = W_FindLump ("ANIMDEFS", &lastlump)) != -1)
+	while ((lump = Wads.FindLump ("ANIMDEFS", &lastlump)) != -1)
 	{
 		SC_OpenLumpNum (lump, "ANIMDEFS");
 
@@ -183,28 +183,27 @@ static void P_InitAnimDefs ()
 			}
 			else if (SC_Compare ("warp"))
 			{
-				bool isflat;
+				bool isflat = false;
 				SC_MustGetString ();
 				if (SC_Compare ("flat"))
 				{
-					SC_MustGetString ();
 					isflat = true;
-					// FIXME
-//					flatwarp[R_FlatNumForName (sc_String)] = true;
+					SC_MustGetString ();
 				}
 				else if (SC_Compare ("texture"))
 				{
 					isflat = false;
-					// TODO: Make texture warping work with wall textures
 					SC_MustGetString ();
-//					R_TextureNumForName (sc_String);
 				}
 				else
 				{
 					SC_ScriptError (NULL, NULL);
 				}
 				int picnum = TexMan.CheckForTexture (sc_String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall);
-				TexMan.ReplaceTexture (picnum, new FWarpTexture (TexMan[picnum]), false);
+				if (picnum != -1)
+				{
+					TexMan.ReplaceTexture (picnum, new FWarpTexture (TexMan[picnum]), false);
+				}
 			}
 			else
 			{
@@ -232,6 +231,7 @@ static void ParseAnim (byte istex)
 	sink.CurFrame = 0;
 	sink.BasePic = picnum;
 	sink.bUniqueFrames = true;
+	sink.AnimType = FAnimDef::ANIM_Forward;
 
 	// no decals on animating textures, by default
 	if (picnum >= 0)
@@ -257,8 +257,20 @@ static void ParseAnim (byte istex)
 
 		min = max = 1;
 		
-		SC_MustGetNumber ();
-		framenum = sc_Number;
+		SC_MustGetString ();
+		if (IsNum (sc_String))
+		{
+			framenum = picnum + atoi(sc_String) - 1;
+		}
+		else
+		{
+			framenum = TexMan.CheckForTexture (sc_String, istex ? FTexture::TEX_Wall : FTexture::TEX_Flat);
+			if (framenum < 0)
+			{
+				const char *parm = sc_String;
+				SC_ScriptError ("Unknown texture %s", &parm);
+			}
+		}
 		SC_MustGetString ();
 		if (SC_Compare ("tics"))
 		{
@@ -285,7 +297,7 @@ static void ParseAnim (byte istex)
 		{
 			frame.SpeedMin = min;
 			frame.SpeedRange = max - min;
-			frame.FramePic = picnum + framenum - 1;
+			frame.FramePic = framenum;
 			frames.Push (frame);
 		}
 	}
@@ -349,10 +361,11 @@ static void ParseAnim (byte istex)
 //
 void P_InitPicAnims (void)
 {
-	if (W_CheckNumForName ("ANIMATED") != -1)
+	if (Wads.CheckNumForName ("ANIMATED") != -1)
 	{
 		FAnimDef anim, *newAnim;
-		const char *animdefs = (const char *)W_MapLumpName ("ANIMATED");
+		FMemLump animatedlump = Wads.ReadLump ("ANIMATED");
+		const char *animdefs = (const char *)animatedlump.GetMem();
 		const char *anim_p;
 		int pic1, pic2;
 
@@ -415,7 +428,6 @@ void P_InitPicAnims (void)
 			*newAnim = anim;
 			Anims.Push (newAnim);
 		}
-		W_UnMapLump (animdefs);
 	}
 	// [RH] Load any ANIMDEFS lumps
 	P_InitAnimDefs ();
@@ -771,7 +783,7 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 				switch (line->special)
 				{
 				case Door_Raise:
-					if (line->args[0] == 0)
+					if (line->args[0] == 0 && line->args[1] < 64)
 						noway = false;
 					break;
 				case Teleport:
@@ -1990,7 +2002,7 @@ BOOL PIT_PushThing (AActor *thing)
 		// If speed <= 0, you're outside the effective radius. You also have
 		// to be able to see the push/pull source point.
 
-		if ((speed > 0) && (P_CheckSight (thing, tmpusher->m_Source, true)))
+		if ((speed > 0) && (P_CheckSight (thing, tmpusher->m_Source, 1)))
 		{
 			angle_t pushangle = R_PointToAngle2 (thing->x, thing->y, sx, sy);
 			if (tmpusher->m_Source->IsA (RUNTIME_CLASS(APointPusher)))

@@ -80,6 +80,7 @@ CVAR (Float, am_ovtrans,			1.f,		CVAR_ARCHIVE);
 CVAR (Color, am_backcolor,			0x6c5440,	CVAR_ARCHIVE);
 CVAR (Color, am_yourcolor,			0xfce8d8,	CVAR_ARCHIVE);
 CVAR (Color, am_wallcolor,			0x2c1808,	CVAR_ARCHIVE);
+CVAR (Color, am_secretwallcolor,	0x000000,	CVAR_ARCHIVE);
 CVAR (Color, am_tswallcolor,		0x888888,	CVAR_ARCHIVE);
 CVAR (Color, am_fdwallcolor,		0x887058,	CVAR_ARCHIVE);
 CVAR (Color, am_cdwallcolor,		0x4c3820,	CVAR_ARCHIVE);
@@ -216,8 +217,16 @@ mline_t thintriangle_guy[] = {
 
 
 
+EXTERN_CVAR (Bool, sv_cheats)
+CUSTOM_CVAR (Int, am_cheat, 0, 0)
+{
+	// No automap cheat in net games when cheats are disabled!
+	if (netgame && !sv_cheats && self != 0)
+	{
+		self = 0;
+	}
+}
 
-int			AutoMapCheat = 0;
 static int 	grid = 0;
 
 static int 	leveljuststarted = 1; 	// kluge until AM_LevelInit() is called
@@ -284,6 +293,27 @@ static int markpointnum = 0; // next point to be assigned
 
 static int followplayer = 1; // specifies whether to follow the player around
 
+class FAutomapTexture : public FTexture
+{
+public:
+	FAutomapTexture (int lumpnum);
+	~FAutomapTexture ();
+
+	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
+	const BYTE *GetPixels ();
+	void Unload ();
+	void MakeTexture ();
+
+private:
+	BYTE *Pixels;
+	Span DummySpan[2];
+	int LumpNum;
+};
+
+static FAutomapTexture *mapback;	// the automap background
+static int mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
+static int mapxstart=0; //x-value for the bitmap.
+
 static BOOL stopped = true;
 
 
@@ -301,6 +331,7 @@ static byte antialias[NUMALIASES][NUMWEIGHTS];
 
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
+void AM_rotate (fixed_t *x, fixed_t *y, angle_t an);
 
 void DrawWuLine (int X0, int Y0, int X1, int Y1, byte *BaseColor);
 void DrawTransWuLine (int X0, int Y0, int X1, int Y1, byte BaseColor);
@@ -378,11 +409,16 @@ void AM_restoreScaleAndLoc ()
 //
 // adds a marker at the current location
 //
-void AM_addMark ()
+bool AM_addMark ()
 {
-	markpoints[markpointnum].x = m_x + m_w/2;
-	markpoints[markpointnum].y = m_y + m_h/2;
-	markpointnum = (markpointnum + 1) % AM_NUMMARKPOINTS;
+	if (marknums[0] != -1)
+	{
+		markpoints[markpointnum].x = m_x + m_w/2;
+		markpoints[markpointnum].y = m_y + m_h/2;
+		markpointnum = (markpointnum + 1) % AM_NUMMARKPOINTS;
+		return true;
+	}
+	return false;
 }
 
 //
@@ -424,18 +460,42 @@ void AM_findMinMaxBoundaries ()
 }
 
 
+static void AM_ScrollParchment (int dmapx, int dmapy)
+{
+	mapxstart -= dmapx;
+	mapystart -= dmapy;
+
+	if (mapback != NULL)
+	{
+		int pwidth = mapback->GetWidth();
+		int pheight = mapback->GetHeight();
+
+		while(mapxstart > 0)
+			mapxstart -= pwidth;
+		while(mapxstart <= -pwidth)
+			mapxstart += pwidth;
+		while(mapystart > 0)
+			mapystart -= pheight;
+		while(mapystart <= -pheight)
+			mapystart += pheight;
+	}
+}
+
 //
 //
 //
 void AM_changeWindowLoc ()
 {
-	if (m_paninc.x || m_paninc.y) {
+	if (0 != (m_paninc.x | m_paninc.y))
+	{
 		followplayer = 0;
 		f_oldloc.x = FIXED_MAX;
 	}
 
-	m_x += m_paninc.x;
-	m_y += m_paninc.y;
+	int oldmx = m_x, oldmy = m_y;
+
+	m_x += Scale (m_paninc.x, SCREENWIDTH, 320);
+	m_y += Scale (m_paninc.y, SCREENHEIGHT, 200);
 
 	if (m_x + m_w/2 > max_x)
 		m_x = max_x - m_w/2;
@@ -449,6 +509,8 @@ void AM_changeWindowLoc ()
 
 	m_x2 = m_x + m_w;
 	m_y2 = m_y + m_h;
+
+	AM_ScrollParchment (MTOF(m_x-oldmx), MTOF(oldmy-m_y));
 }
 
 
@@ -532,7 +594,8 @@ static void AM_initColors (BOOL overlayed)
 		/* Use the custom colors in the am_* cvars */
 		Background = am_backcolor.GetIndex ();
 		YourColor = am_yourcolor.GetIndex ();
-		SecretWallColor = WallColor = am_wallcolor.GetIndex ();
+		SecretWallColor = am_secretwallcolor.GetIndex ();
+		WallColor = am_wallcolor.GetIndex ();
 		TSWallColor = am_tswallcolor.GetIndex ();
 		FDWallColor = am_fdwallcolor.GetIndex ();
 		CDWallColor = am_cdwallcolor.GetIndex ();
@@ -628,25 +691,38 @@ void AM_loadPics ()
 {
 	int i;
 	char namebuf[9];
-  
+
 	for (i = 0; i < 10; i++)
 	{
 		sprintf (namebuf, "AMMNUM%d", i);
 		marknums[i] = TexMan.CheckForTexture (namebuf, FTexture::TEX_MiscPatch);
 	}
+
+	if (mapback == NULL)
+	{
+		i = Wads.CheckNumForName ("AUTOPAGE");
+		if (i >= 0)
+		{
+			mapback = new FAutomapTexture (i);
+		}
+	}
 }
 
 void AM_unloadPics ()
 {
+	if (mapback != NULL)
+	{
+		delete mapback;
+		mapback = NULL;
+	}
 }
 
-void AM_clearMarks ()
+bool AM_clearMarks ()
 {
-	int i;
-
-	for (i = AM_NUMMARKPOINTS-1; i >= 0; i--)
+	for (int i = AM_NUMMARKPOINTS-1; i >= 0; i--)
 		markpoints[i].x = -1; // means empty
 	markpointnum = 0;
+	return marknums[0] != -1;
 }
 
 //
@@ -719,6 +795,11 @@ void AM_maxOutWindowScale ()
 
 
 CCMD (togglemap)
+{
+	gameaction = ga_togglemap;
+}
+
+void AM_ToggleMap ()
 {
 	if (gamestate != GS_LEVEL)
 		return;
@@ -816,12 +897,24 @@ BOOL AM_Responder (event_t *ev)
 				Printf ("%s\n", GStrings(grid ? AMSTR_GRIDON : AMSTR_GRIDOFF));
 				break;
 			case AM_MARKKEY:
-				Printf ("%s %d\n", GStrings(AMSTR_MARKEDSPOT), markpointnum);
-				AM_addMark();
+				if (AM_addMark())
+				{
+					Printf ("%s %d\n", GStrings(AMSTR_MARKEDSPOT), markpointnum);
+				}
+				else
+				{
+					rc = false;
+				}
 				break;
 			case AM_CLEARMARKKEY:
-				AM_clearMarks();
-				Printf ("%s\n", GStrings(AMSTR_MARKSCLEARED));
+				if (AM_clearMarks())
+				{
+					Printf ("%s\n", GStrings(AMSTR_MARKSCLEARED));
+				}
+				else
+				{
+					rc = false;
+				}
 				break;
 			default:
 				cheatstate = 0;
@@ -889,6 +982,11 @@ void AM_doFollowPlayer ()
 		m_y = FTOM(MTOF(players[consoleplayer].camera->y)) - m_h/2;
 		m_x2 = m_x + m_w;
 		m_y2 = m_y + m_h;
+
+  		// do the parallax parchment scrolling.
+		AM_ScrollParchment (MTOF(players[consoleplayer].camera->x)-MTOF(f_oldloc.x),
+			MTOF(f_oldloc.y)-MTOF(players[consoleplayer].camera->y));
+
 		f_oldloc.x = players[consoleplayer].camera->x;
 		f_oldloc.y = players[consoleplayer].camera->y;
 	}
@@ -922,7 +1020,25 @@ void AM_Ticker ()
 //
 void AM_clearFB (int color)
 {
-	screen->Clear (0, 0, f_w, f_h, color);
+	if (mapback == NULL)
+	{
+		screen->Clear (0, 0, f_w, f_h, color);
+	}
+	else
+	{
+		int pwidth = mapback->GetWidth();
+		int pheight = mapback->GetHeight();
+		int x, y;
+
+		//blit the automap background to the screen.
+		for (y = mapystart; y < f_h; y += pheight)
+		{
+			for (x = mapxstart; x < f_w; x += pwidth)
+			{
+				screen->DrawTexture (mapback, x, y, DTA_ClipBottom, f_h, TAG_DONE);
+			}
+		}
+	}
 }
 
 
@@ -1540,21 +1656,32 @@ void AM_drawGrid (int color)
 	fixed_t x, y;
 	fixed_t start, end;
 	mline_t ml;
+	fixed_t minlen, extx, exty;
+	fixed_t minx, miny;
+
+	// [RH] Calculate a minimum for how long the grid lines should be so that
+	// they cover the screen at any rotation.
+	minlen = (fixed_t)sqrtf ((float)m_w*(float)m_w + (float)m_h*(float)m_h);
+	extx = (minlen - m_w) / 2;
+	exty = (minlen - m_h) / 2;
+
+	minx = m_x;
+	miny = m_y;
 
 	// Figure out start of vertical gridlines
-	start = m_x;
+	start = minx - extx;
 	if ((start-bmaporgx)%(MAPBLOCKUNITS<<FRACBITS))
 		start += (MAPBLOCKUNITS<<FRACBITS)
 			- ((start-bmaporgx)%(MAPBLOCKUNITS<<FRACBITS));
-	end = m_x + m_w;
+	end = minx + minlen - extx;
 
 	// draw vertical gridlines
-	ml.a.y = m_y;
-	ml.b.y = m_y+m_h;
 	for (x = start; x < end; x += (MAPBLOCKUNITS<<FRACBITS))
 	{
 		ml.a.x = x;
 		ml.b.x = x;
+		ml.a.y = miny - exty;
+		ml.b.y = ml.a.y + minlen;
 		if (am_rotate)
 		{
 			AM_rotatePoint (&ml.a.x, &ml.a.y);
@@ -1564,17 +1691,17 @@ void AM_drawGrid (int color)
 	}
 
 	// Figure out start of horizontal gridlines
-	start = m_y;
+	start = miny - exty;
 	if ((start-bmaporgy)%(MAPBLOCKUNITS<<FRACBITS))
 		start += (MAPBLOCKUNITS<<FRACBITS)
 			- ((start-bmaporgy)%(MAPBLOCKUNITS<<FRACBITS));
-	end = m_y + m_h;
+	end = miny + minlen - exty;
 
 	// draw horizontal gridlines
-	ml.a.x = m_x;
-	ml.b.x = m_x + m_w;
 	for (y=start; y<end; y+=(MAPBLOCKUNITS<<FRACBITS))
 	{
+		ml.a.x = minx - extx;
+		ml.b.x = ml.a.x + minlen;
 		ml.a.y = y;
 		ml.b.y = y;
 		if (am_rotate)
@@ -1608,9 +1735,9 @@ void AM_drawWalls ()
 			AM_rotatePoint (&l.b.x, &l.b.y);
 		}
 
-		if (AutoMapCheat || (lines[i].flags & ML_MAPPED))
+		if (am_cheat != 0 || (lines[i].flags & ML_MAPPED))
 		{
-			if ((lines[i].flags & ML_DONTDRAW) && !AutoMapCheat)
+			if ((lines[i].flags & ML_DONTDRAW) && am_cheat == 0)
 				continue;
 			if (!lines[i].backsector)
 			{
@@ -1634,7 +1761,7 @@ void AM_drawWalls ()
 				}
 				else if (lines[i].flags & ML_SECRET)
 				{ // secret door
-					if (AutoMapCheat)
+					if (am_cheat != 0)
 						AM_drawMline(&l, SecretWallColor);
 				    else
 						AM_drawMline(&l, WallColor);
@@ -1654,7 +1781,7 @@ void AM_drawWalls ()
 				{
 					AM_drawMline(&l, CDWallColor); // ceiling level change
 				}
-				else if (AutoMapCheat)
+				else if (am_cheat != 0)
 				{
 					AM_drawMline(&l, TSWallColor);
 				}
@@ -1677,14 +1804,9 @@ void AM_rotate (fixed_t *x, fixed_t *y, angle_t a)
 {
 	fixed_t tmpx;
 
-	tmpx =
-		FixedMul(*x,finecosine[a>>ANGLETOFINESHIFT])
-		- FixedMul(*y,finesine[a>>ANGLETOFINESHIFT]);
-
-	*y =
-		FixedMul(*x,finesine[a>>ANGLETOFINESHIFT])
-		+ FixedMul(*y,finecosine[a>>ANGLETOFINESHIFT]);
-
+	a >>= ANGLETOFINESHIFT;
+	tmpx = DMulScale16 (*x,finecosine[a],*y,-finesine[a]);
+	*y = DMulScale16 (*x,finesine[a],*y,finecosine[a]);
 	*x = tmpx;
 }
 
@@ -1755,7 +1877,7 @@ void AM_drawPlayers ()
 		else
 			angle = players[consoleplayer].camera->angle;
 
-		if (AutoMapCheat)
+		if (am_cheat != 0)
 			AM_drawLineCharacter
 			(cheat_player_arrow, NUMCHEATPLYRLINES, 0,
 			 angle, YourColor, players[consoleplayer].camera->x, players[consoleplayer].camera->y);
@@ -1922,11 +2044,82 @@ void AM_Drawer ()
 
 	AM_drawWalls();
 	AM_drawPlayers();
-	if (AutoMapCheat >= 2)
+	if (am_cheat >= 2)
 		AM_drawThings(ThingColor);
 
 	if (!viewactive)
 		AM_drawCrosshair(XHairColor);
 
 	AM_drawMarks();
+}
+
+FAutomapTexture::FAutomapTexture (int lumpnum)
+: Pixels(NULL), LumpNum(lumpnum)
+{
+	UseType = TEX_MiscPatch;
+	Width = 320;
+	Height = Wads.LumpLength(lumpnum) / 320;
+	CalcBitSize ();
+
+	DummySpan[0].TopOffset = 0;
+	DummySpan[0].Length = Height;
+	DummySpan[1].TopOffset = 0;
+	DummySpan[1].Length = 0;
+}
+
+FAutomapTexture::~FAutomapTexture ()
+{
+	Unload ();
+}
+
+void FAutomapTexture::Unload ()
+{
+	if (Pixels != NULL)
+	{
+		delete[] Pixels;
+		Pixels = NULL;
+	}
+}
+
+void FAutomapTexture::MakeTexture ()
+{
+	int x, y;
+	FMemLump data = Wads.ReadLump (LumpNum);
+	const BYTE *indata = (const BYTE *)data.GetMem();
+
+	Pixels = new BYTE[Width * Height];
+
+	for (x = 0; x < Width; ++x)
+	{
+		for (y = 0; y < Height; ++y)
+		{
+			Pixels[x*Height+y] = indata[x+320*y];
+		}
+	}
+}
+
+const BYTE *FAutomapTexture::GetPixels ()
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	return Pixels;
+}
+
+const BYTE *FAutomapTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	if (Pixels == NULL)
+	{
+		MakeTexture ();
+	}
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		column %= Width;
+	}
+	if (spans_out != NULL)
+	{
+		*spans_out = DummySpan;
+	}
+	return Pixels + column*Height;
 }

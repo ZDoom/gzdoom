@@ -53,8 +53,8 @@ class DHUDMessage : public DObject
 {
 	DECLARE_CLASS (DHUDMessage, DObject)
 public:
-	DHUDMessage (const char *text, float x, float y, EColorRange textColor,
-		float holdTime);
+	DHUDMessage (const char *text, float x, float y, int hudwidth, int hudheight,
+		EColorRange textColor, float holdTime);
 	virtual ~DHUDMessage ();
 
 	virtual void Serialize (FArchive &arc);
@@ -62,7 +62,7 @@ public:
 	void Draw (int bottom);
 	virtual void ResetText (const char *text);
 	virtual void DrawSetup ();
-	virtual void DoDraw (int linenum, int x, int y, int xscale, int yscale, bool clean);
+	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
 	virtual bool Tick ();	// Returns true to indicate time for removal
 	virtual void ScreenSizeChanged ();
 
@@ -74,6 +74,7 @@ protected:
 	int HoldTics;
 	int Tics;
 	int State;
+	int HUDWidth, HUDHeight;
 	EColorRange TextColor;
 	FFont *Font;
 
@@ -91,11 +92,11 @@ class DHUDMessageFadeOut : public DHUDMessage
 {
 	DECLARE_CLASS (DHUDMessageFadeOut, DHUDMessage)
 public:
-	DHUDMessageFadeOut (const char *text, float x, float y, EColorRange textColor,
-		float holdTime, float fadeOutTime);
+	DHUDMessageFadeOut (const char *text, float x, float y, int hudwidth, int hudheight,
+		EColorRange textColor, float holdTime, float fadeOutTime);
 
 	virtual void Serialize (FArchive &arc);
-	virtual void DoDraw (int linenum, int x, int y, int xscale, int yscale, bool clean);
+	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
 	virtual bool Tick ();
 
 protected:
@@ -108,11 +109,11 @@ class DHUDMessageTypeOnFadeOut : public DHUDMessageFadeOut
 {
 	DECLARE_CLASS (DHUDMessageTypeOnFadeOut, DHUDMessageFadeOut)
 public:
-	DHUDMessageTypeOnFadeOut (const char *text, float x, float y, EColorRange textColor,
-		float typeTime, float holdTime, float fadeOutTime);
+	DHUDMessageTypeOnFadeOut (const char *text, float x, float y, int hudwidth, int hudheight,
+		EColorRange textColor, float typeTime, float holdTime, float fadeOutTime);
 
 	virtual void Serialize (FArchive &arc);
-	virtual void DoDraw (int linenum, int x, int y, int xscale, int yscale, bool clean);
+	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
 	virtual bool Tick ();
 	virtual void ScreenSizeChanged ();
 
@@ -160,9 +161,8 @@ public:
 protected:
 	void UpdateRect (int x, int y, int width, int height) const;
 	void DrawImage (FTexture *image, int x, int y, byte *translation=NULL) const;
-	void DrawImageNoUpdate (FTexture *image, int x, int y, byte *translation=NULL) const;
 	void DrawFadedImage (FTexture *image, int x, int y, fixed_t shade) const;
-	void DrawPartialImage (FTexture *image, int x, int y, int wx, int wy, int ww, int wh) const;
+	void DrawPartialImage (FTexture *image, int wx, int ww) const;
 
 	void SetHorizCentering (bool which) { Centering = which; }
 	void OverrideImageOrigin (bool which) { FixedOrigin = which; }
@@ -182,7 +182,6 @@ protected:
 
 	void DrawCrosshair ();
 
-	void CopyToScreen (int x, int y, int w, int h) const;
 	void RefreshBackground () const;
 
 	void FindInventoryPos (int &pos, bool &moreleft, bool &moreright) const;
@@ -212,7 +211,6 @@ protected:
 	FImageCollection AmmoImages;
 	FImageCollection ArtiImages;
 	FImageCollection ArmorImages;
-	DCanvas *ScaleCopy;
 
 	player_s *CPlayer;
 

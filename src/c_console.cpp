@@ -72,11 +72,14 @@
 #define BOTTOMARGIN 12
 
 static void C_TabComplete (bool goForward);
-static BOOL TabbedLast;		// Last key pressed was tab
-
+static bool C_TabCompleteList ();
+static bool TabbedLast;		// True if last key pressed was tab
+static bool TabbedList;		// True if tab list was shown
+CVAR (Bool, con_notablist, false, CVAR_ARCHIVE)
 
 static int conback;
 static BYTE conshade[256];
+static bool conline;
 
 extern int		gametic;
 extern bool		automapactive;	// in AM_map.c
@@ -128,7 +131,6 @@ static byte CmdLine[260];
 static struct History *HistHead = NULL, *HistTail = NULL, *HistPos = NULL;
 static int HistSize;
 
-#define NUMNOTIFIES 4
 
 CVAR (Float, con_notifytime, 3.f, CVAR_ARCHIVE)
 CVAR (Bool, con_centernotify, false, CVAR_ARCHIVE)
@@ -137,12 +139,17 @@ CVAR (Bool, con_scaletext, false, CVAR_ARCHIVE)		// Scale notify text at high re
 // Command to run when Ctrl-D is pressed at start of line
 CVAR (String, con_ctrl_d, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+#define NUMNOTIFIES 4
+#define NOTIFYFADETIME 6
+
 static struct NotifyText
 {
 	int timeout;
 	int printlevel;
 	byte text[256];
 } NotifyStrings[NUMNOTIFIES];
+
+static int NotifyTop, NotifyTopGoal;
 
 #define PRINTLEVELS 5
 int PrintColors[PRINTLEVELS+2] = { CR_RED, CR_GOLD, CR_GRAY, CR_GREEN, CR_GREEN, CR_GOLD };
@@ -220,9 +227,10 @@ void C_InitConsole (int width, int height, BOOL ingame)
 			{
 				conback = TexMan.GetTexture (gameinfo.titlePage, FTexture::TEX_MiscPatch);
 
-				const BYTE *palookup = (const BYTE *)W_MapLumpName ("COLORMAP");
-				memcpy (conshade, palookup+22*256, 256);
-				W_UnMapLump (palookup);
+				FWadLump palookup = Wads.OpenLumpName ("COLORMAP");
+				palookup.Seek (22*256, SEEK_CUR);
+				palookup.Read (conshade, 256);
+				conline = true;
 			}
 			else
 			{
@@ -230,6 +238,7 @@ void C_InitConsole (int width, int height, BOOL ingame)
 				{
 					conshade[i] = i;
 				}
+				conline = false;
 			}
 
 			sprintf (VersionString, "v" DOTVERSIONSTR);
@@ -237,8 +246,19 @@ void C_InitConsole (int width, int height, BOOL ingame)
 		}
 	}
 
-	ConCols = (width - LEFTMARGIN - RIGHTMARGIN) / 8;
-	PhysRows = height / 8;
+	int cwidth, cheight;
+
+	if (ConFont != NULL)
+	{
+		cwidth = ConFont->GetCharWidth ('M');
+		cheight = ConFont->GetHeight();
+	}
+	else
+	{
+		cwidth = cheight = 8;
+	}
+	ConCols = (width - LEFTMARGIN - RIGHTMARGIN) / cwidth;
+	PhysRows = height / cheight;
 
 	// If there is some text in the console buffer, reformat it
 	// for the new resolution.
@@ -388,6 +408,8 @@ void C_AddNotifyString (int printlevel, const char *source)
 	case '\n':	addtype = NEWLINE;		break;
 	default:	addtype = APPENDLINE;	break;
 	}
+
+	NotifyTopGoal = 0;
 }
 
 static int FlushLines (const char *start, const char *stop)
@@ -716,26 +738,59 @@ void C_Ticker ()
 	}
 
 	lasttic = gametic;
+
+	if (NotifyTopGoal > NotifyTop)
+	{
+		NotifyTop++;
+	}
+	else if (NotifyTopGoal < NotifyTop)
+	{
+		NotifyTop--;
+	}
 }
 
 static void C_DrawNotifyText ()
 {
 	bool center = (con_centernotify != 0.f);
-	int i, line, color;
+	int i, line, lineadv, color, j, skip;
+	bool canskip;
 	
 	if (gamestate != GS_LEVEL || menuactive)
 		return;
 
-	line = 0;
+	line = NotifyTop;
+	skip = 0;
+	canskip = true;
+
+	lineadv = SmallFont->GetHeight ();
+	if (con_scaletext)
+	{
+		lineadv *= CleanYfac;
+	}
 
 	BorderTopRefresh = screen->GetPageCount ();
 
 	for (i = 0; i < NUMNOTIFIES; i++)
 	{
-		if (NotifyStrings[i].timeout > gametic)
+		if (NotifyStrings[i].timeout == 0)
+			continue;
+
+		j = NotifyStrings[i].timeout - gametic;
+		if (j > 0)
 		{
 			if (!show_messages && NotifyStrings[i].printlevel != 128)
 				continue;
+
+			fixed_t alpha;
+
+			if (j < NOTIFYFADETIME)
+			{
+				alpha = OPAQUE * j / NOTIFYFADETIME;
+			}
+			else
+			{
+				alpha = OPAQUE;
+			}
 
 			if (NotifyStrings[i].printlevel >= PRINTLEVELS)
 				color = CR_UNTRANSLATED;
@@ -746,24 +801,41 @@ static void C_DrawNotifyText ()
 			{
 				if (!center)
 					screen->DrawText (color, 0, line, (char *)NotifyStrings[i].text,
-					DTA_CleanNoMove, true, TAG_DONE);
+					DTA_CleanNoMove, true, DTA_Alpha, alpha, TAG_DONE);
 				else
 					screen->DrawText (color, (SCREENWIDTH -
 						SmallFont->StringWidth (NotifyStrings[i].text)*CleanXfac)/2,
-						line, (char *)NotifyStrings[i].text, DTA_CleanNoMove, true, TAG_DONE);
-				line += 8 * CleanYfac;
+						line, (char *)NotifyStrings[i].text, DTA_CleanNoMove, true,
+						DTA_Alpha, alpha, TAG_DONE);
 			}
 			else
 			{
 				if (!center)
-					screen->DrawText (color, 0, line, (char *)NotifyStrings[i].text, TAG_DONE);
+					screen->DrawText (color, 0, line, (char *)NotifyStrings[i].text,
+						DTA_Alpha, alpha, TAG_DONE);
 				else
 					screen->DrawText (color, (SCREENWIDTH -
 						SmallFont->StringWidth (NotifyStrings[i].text))/2,
-						line, (char *)NotifyStrings[i].text, TAG_DONE);
-				line += 8;
+						line, (char *)NotifyStrings[i].text,
+						DTA_Alpha, alpha, TAG_DONE);
 			}
+			line += lineadv;
+			canskip = false;
 		}
+		else
+		{
+			if (canskip)
+			{
+				NotifyTop += lineadv;
+				line += lineadv;
+				skip++;
+			}
+			NotifyStrings[i].timeout = 0;
+		}
+	}
+	if (canskip)
+	{
+		NotifyTop = NotifyTopGoal;
 	}
 }
 
@@ -786,16 +858,16 @@ void C_DrawConsole ()
 	static int oldbottom = 0;
 	int lines, left, offset;
 
-	left = 8;
-	lines = (ConBottom-16)/8;
-	if (-8 + lines*8 > ConBottom - 28)
+	left = LEFTMARGIN;
+	lines = (ConBottom-ConFont->GetHeight()*2)/ConFont->GetHeight();
+	if (-ConFont->GetHeight() + lines*ConFont->GetHeight() > ConBottom - ConFont->GetHeight()*7/2)
 	{
-		offset = -4;
+		offset = -ConFont->GetHeight()/2;
 		lines--;
 	}
 	else
 	{
-		offset = -8;
+		offset = -ConFont->GetHeight();
 	}
 
 	if ((ConBottom < oldbottom) && (gamestate == GS_LEVEL) && (viewwindowx || viewwindowy)
@@ -823,7 +895,12 @@ void C_DrawConsole ()
 			DTA_DestWidth, screen->GetWidth(),
 			DTA_DestHeight, screen->GetHeight(),
 			DTA_Translation, conshade,
+			DTA_Masked, false,
 			TAG_DONE);
+		if (conline && visheight < screen->GetHeight())
+		{
+			screen->Clear (0, visheight, screen->GetWidth(), visheight+1, 0);
+		}
 
 		if (ConBottom >= 12)
 		{
@@ -836,25 +913,26 @@ void C_DrawConsole ()
 			{
 				char tickstr[256];
 				const int tickerY = ConBottom - ConFont->GetHeight() - 4;
-				size_t i, tickend = ConCols - SCREENWIDTH / 90 - 6;
-				size_t tickbegin = 0;
+				size_t i;
+				int tickend = ConCols - SCREENWIDTH / 90 - 6;
+				int tickbegin = 0;
 
 				if (TickerLabel)
 				{
 					tickbegin = strlen (TickerLabel) + 2;
 					sprintf (tickstr, "%s: ", TickerLabel);
 				}
-				if (tickend > 256 - 8)
-					tickend = 256 - 8;
+				if (tickend > 256 - ConFont->GetCharWidth(0x12))
+					tickend = 256 - ConFont->GetCharWidth(0x12);
 				tickstr[tickbegin] = 0x10;
 				memset (tickstr + tickbegin + 1, 0x11, tickend - tickbegin);
 				tickstr[tickend + 1] = 0x12;
 				tickstr[tickend + 2] = ' ';
 				sprintf (tickstr + tickend + 3, "%lu%%", Scale (TickerAt, 100, TickerMax));
-				screen->DrawText (CR_BROWN, 8, tickerY, tickstr, TAG_DONE);
+				screen->DrawText (CR_BROWN, LEFTMARGIN, tickerY, tickstr, TAG_DONE);
 
 				// Draw the marker
-				i = 8+5+tickbegin*8 + Scale (TickerAt, (SDWORD)(tickend - tickbegin)*8, TickerMax);
+				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (SDWORD)(tickend - tickbegin)*8, TickerMax);
 				screen->DrawChar (CR_ORANGE, (int)i, tickerY, 0x13, TAG_DONE);
 
 				TickerVisible = true;
@@ -898,7 +976,7 @@ void C_DrawConsole ()
 			pos = (pos - 1) & LINEMASK;
 			if (Lines[pos] != NULL)
 			{
-				screen->DrawText (CR_TAN, 8, offset + lines * ConFont->GetHeight(),
+				screen->DrawText (CR_TAN, LEFTMARGIN, offset + lines * ConFont->GetHeight(),
 					Lines[pos], TAG_DONE);
 			}
 			lines--;
@@ -907,21 +985,21 @@ void C_DrawConsole ()
 		{
 			if (gamestate == GS_STARTUP)
 			{
-				screen->DrawText (CR_GREEN, 8, bottomline, DoomStartupTitle, TAG_DONE);
+				screen->DrawText (CR_GREEN, LEFTMARGIN, bottomline, DoomStartupTitle, TAG_DONE);
 			}
 			else
 			{
 				CmdLine[2+CmdLine[0]] = 0;
 				screen->DrawChar (CR_ORANGE, left, bottomline, '\x1c', TAG_DONE);
-				screen->DrawText (CR_ORANGE, left + 8, bottomline,
+				screen->DrawText (CR_ORANGE, left + ConFont->GetCharWidth(0x1c), bottomline,
 					(char *)&CmdLine[2+CmdLine[259]], TAG_DONE);
 			}
 			if (cursoron)
 			{
-				screen->DrawChar (CR_YELLOW, left + 8 + (CmdLine[1] - CmdLine[259])* 8,
+				screen->DrawChar (CR_YELLOW, left + ConFont->GetCharWidth(0x1c) + (CmdLine[1] - CmdLine[259])* ConFont->GetCharWidth(0xb),
 					bottomline, '\xb', TAG_DONE);
 			}
-			if (RowAdjust && ConBottom >= 28)
+			if (RowAdjust && ConBottom >= ConFont->GetHeight()*7/2)
 			{
 				// Indicate that the view has been scrolled up (10)
 				// and if we can scroll no further (12)
@@ -940,6 +1018,7 @@ void C_FullConsole ()
 	ConsoleState = c_down;
 	HistPos = NULL;
 	TabbedLast = false;
+	TabbedList = false;
 	if (gamestate != GS_STARTUP)
 	{
 		gamestate = GS_FULLCONSOLE;
@@ -965,6 +1044,7 @@ void C_ToggleConsole ()
 		ConsoleState = c_falling;
 		HistPos = NULL;
 		TabbedLast = false;
+		TabbedList = false;
 	}
 	else if (gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP)
 	{
@@ -1047,6 +1127,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			HistPos = NULL;
 		}
 		TabbedLast = false;
+		TabbedList = false;
 		break;
 
 	case EV_GUI_WheelUp:
@@ -1074,7 +1155,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer up one page
 				RowAdjust += (SCREENHEIGHT-4) /
-					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? 8 : 16) - 3;
+					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? ConFont->GetHeight() : ConFont->GetHeight()*2) - 3;
 			}
 			else if (RowAdjust < CONSOLELINES)
 			{ // Scroll console buffer up
@@ -1093,7 +1174,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer down one page
 				const int scrollamt = (SCREENHEIGHT-4) /
-					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? 8 : 16) - 3;
+					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? ConFont->GetHeight() : ConFont->GetHeight()*2) - 3;
 				if (RowAdjust < scrollamt)
 				{
 					RowAdjust = 0;
@@ -1176,6 +1257,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 				makestartposgood ();
 			}
 			TabbedLast = false;
+			TabbedList = false;
 			break;
 
 		case GK_DEL:
@@ -1194,6 +1276,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 				makestartposgood ();
 			}
 			TabbedLast = false;
+			TabbedList = false;
 			break;
 
 		case GK_UP:
@@ -1216,6 +1299,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			}
 
 			TabbedLast = false;
+			TabbedList = false;
 			break;
 
 		case GK_DOWN:
@@ -1235,6 +1319,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			buffer[len+4] = 0;
 			makestartposgood();
 			TabbedLast = false;
+			TabbedList = false;
 			break;
 
 		case 'D':
@@ -1312,6 +1397,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			buffer[0] = buffer[1] = buffer[len+4] = 0;
 			AddCommandString ((char *)&buffer[2]);
 			TabbedLast = false;
+			TabbedList = false;
 			break;
 		
 		case '`':
@@ -1338,6 +1424,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 		case 'C':
 		case 'V':
 			TabbedLast = false;
+			TabbedList = false;
 			if (ev->data3 & GKM_CTRL)
 			{
 				if (data1 == 'C')
@@ -1448,7 +1535,7 @@ void C_MidPrint (const char *msg)
 
 		AddToConsole (-1, buff);
 
-		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f,
+		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f, 0, 0,
 			(EColorRange)PrintColors[PRINTLEVELS], con_midtime), 'CNTR');
 	}
 	else
@@ -1472,7 +1559,7 @@ void C_MidPrintBold (const char *msg)
 
 		AddToConsole (-1, buff);
 
-		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f,
+		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f, 0, 0,
 			(EColorRange)PrintColors[PRINTLEVELS+1], con_midtime), 'CNTR');
 	}
 	else
@@ -1568,6 +1655,8 @@ static void C_TabComplete (bool goForward)
 
 	if (!TabbedLast)
 	{
+		bool cancomplete;
+
 		// Skip any spaces at beginning of command line
 		if (CmdLine[2] == ' ')
 		{
@@ -1590,6 +1679,17 @@ static void C_TabComplete (bool goForward)
 		if (!FindTabCommand ((char *)(CmdLine + TabStart), &TabPos, TabSize))
 			return;		// No initial matches
 
+		// Show a list of possible completions, if more than one.
+		if (TabbedList || con_notablist)
+		{
+			cancomplete = true;
+		}
+		else
+		{
+			cancomplete = C_TabCompleteList ();
+			TabbedList = true;
+		}
+
 		if (goForward)
 		{ // Position just before the list of completions so that when TabPos
 		  // gets advanced below, it will be at the first one.
@@ -1606,6 +1706,10 @@ static void C_TabComplete (bool goForward)
 			}
 		}
 		TabbedLast = true;
+		if (!cancomplete)
+		{
+			return;
+		}
 	}
 
 	if ((goForward && ++TabPos == NumTabCommands) ||
@@ -1633,4 +1737,47 @@ static void C_TabComplete (bool goForward)
 	}
 
 	makestartposgood ();
+}
+
+static bool C_TabCompleteList ()
+{
+	int nummatches, maxwidth, i;
+
+	nummatches = 0;
+	maxwidth = 0;
+
+	for (i = TabPos; i < NumTabCommands; ++i)
+	{
+		if (FindDiffPoint (TabCommands[i].Name, (char *)(CmdLine + TabStart)) < TabSize)
+		{
+			break;
+		}
+		else
+		{
+			nummatches++;
+			maxwidth = MAX<int> (maxwidth, strlen (TabCommands[i].Name));
+		}
+	}
+	if (nummatches > 1)
+	{
+		int x = 0;
+		maxwidth += 3;
+		Printf (TEXTCOLOR_BLUE "Completions for %s:\n", CmdLine+2);
+		for (i = TabPos; nummatches > 0; ++i, --nummatches)
+		{
+			Printf ("%*s", -maxwidth, TabCommands[i].Name);
+			x += maxwidth;
+			if (x > ConCols - maxwidth)
+			{
+				x = 0;
+				Printf ("\n");
+			}
+		}
+		if (x != 0)
+		{
+			Printf ("\n");
+		}
+		return false;
+	}
+	return true;
 }

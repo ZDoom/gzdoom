@@ -105,7 +105,8 @@ void FStringTable::FreeStandardStrings ()
 #include "doomerrors.h"
 void FStringTable::LoadStrings (int lump, int expectedSize, bool enuOnly)
 {
-	BYTE *strData = (BYTE *)W_MapLumpNum (lump, true);
+	FMemLump strlump = Wads.ReadLump (lump);
+	BYTE *strData = (BYTE *)strlump.GetMem();
 	int lumpLen = LONG(((Header *)strData)->FileSize);
 	int nameCount = SHORT(((Header *)strData)->NameCount);
 	int nameLen = SHORT(((Header *)strData)->NameLen);
@@ -117,7 +118,7 @@ void FStringTable::LoadStrings (int lump, int expectedSize, bool enuOnly)
 	{
 		char name[9];
 
-		W_GetLumpName (name, lump);
+		Wads.GetLumpName (name, lump);
 		name[8] = 0;
 		I_FatalError ("%s had %d strings.\nThis version of ZDoom expects it to have %d.",
 			name, nameCount, expectedSize);
@@ -169,8 +170,6 @@ void FStringTable::LoadStrings (int lump, int expectedSize, bool enuOnly)
 	{
 		I_FatalError ("Loaded %d strings (expected %d)", loadedCount, nameCount);
 	}
-
-	W_UnMapLump (strData);
 }
 
 void FStringTable::ReloadStrings ()
@@ -283,13 +282,15 @@ int FStringTable::SumStringSizes () const
 
 void FStringTable::LoadNames () const
 {
-	const BYTE *lump = (BYTE *)W_MapLumpNum (LumpNum);
-	int nameLen = SHORT(((Header *)lump)->NameLen);
+	Header head;
+	FWadLump lump = Wads.OpenLumpNum (LumpNum);
+
+	lump.Read (&head, sizeof(head));
+	int nameLen = SHORT(head.NameLen);
 
 	FlushNames ();
 	Names = new BYTE[nameLen + 4*NumStrings];
-	memcpy (Names, lump + sizeof(Header), nameLen + 4*NumStrings);
-	W_UnMapLump (lump);
+	lump.Read (Names, nameLen + 4*NumStrings);
 }
 
 void FStringTable::FlushNames () const

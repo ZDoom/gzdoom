@@ -189,10 +189,7 @@ static int releaseSustain(struct musicBlock *mus, uint channel)
 
 static int findFreeChannel(struct musicBlock *mus, uint flag, uint channel, uchar note)
 {
-	static uint last = 1000000;
 	uint i;
-	uint oldest = 1000000;
-	ulong oldesttime = MLtime;
 
 	ulong bestfit = 0;
 	uint bestvoice = 0;
@@ -438,16 +435,19 @@ int OPLdriverParam(uint message, uint param1, void *param2)
 	return 0;
 }
 
-int OPLloadBank (const void *data)
+int OPLloadBank (FileReader &data)
 {
-	static uchar masterhdr[8] = { '#','O','P','L','_','I','I','#' };
+	static const uchar masterhdr[8] = { '#','O','P','L','_','I','I','#' };
 	struct OP2instrEntry *instruments;
 
-	if (memcmp(data, masterhdr, 8))
+	uchar filehdr[8];
+
+	data.Read (filehdr, 8);
+	if (memcmp(filehdr, masterhdr, 8))
 		return -2;			/* bad instrument file */
 	if ( (instruments = (struct OP2instrEntry *)calloc(OP2INSTRCOUNT, OP2INSTRSIZE)) == NULL)
 		return -3;			/* not enough memory */
-	memcpy (instruments, (BYTE *)data + 8, OP2INSTRSIZE * OP2INSTRCOUNT);
+	data.Read (instruments, OP2INSTRSIZE * OP2INSTRCOUNT);
 	if (OPLinstruments != NULL)
 	{
 		free(OPLinstruments);

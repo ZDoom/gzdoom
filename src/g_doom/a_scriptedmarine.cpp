@@ -39,7 +39,11 @@ void A_M_FireBFG (AActor *);
 
 FState AScriptedMarine::States[] =
 {
-#define S_MPLAY 0
+#define S_MPLAYSTILL 0
+	S_NORMAL (PLAY, 'A',	4, A_MarineLook 				, &States[S_MPLAYSTILL+1]),
+	S_NORMAL (PLAY, 'A',	4, A_MarineNoise 				, &States[S_MPLAYSTILL]),
+
+#define S_MPLAY (S_MPLAYSTILL+2)
 	S_NORMAL (PLAY, 'A',	4, A_MarineLook 				, &States[S_MPLAY+1]),
 	S_NORMAL (PLAY, 'A',	4, A_MarineNoise 				, &States[S_MPLAY+2]),
 	S_NORMAL (PLAY, 'A',	4, A_MarineLook 				, &States[S_MPLAY+3]),
@@ -181,7 +185,7 @@ IMPLEMENT_ACTOR (AScriptedMarine, Doom, 9100, 151)
 	PROP_Translation (TRANSLATION_Standard,0)	// Scripted marines wear black
 	PROP_Damage (100)
 
-	PROP_SpawnState (S_MPLAY)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_SeeState (S_MPLAY_RUN)
 	PROP_PainState (S_MPLAY_PAIN)
 	PROP_MissileState (S_MPLAY_ATK)
@@ -807,6 +811,7 @@ class AMarineFist : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineFist, Doom, 9101, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (S_MPLAY_ATK_FIST)
 	PROP_MissileState (255)
 END_DEFAULTS
@@ -819,6 +824,7 @@ class AMarineBerserk : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineBerserk, Doom, 9102, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (S_MPLAY_ATK_BERSERK)
 	PROP_MissileState (255)
 END_DEFAULTS
@@ -831,6 +837,7 @@ class AMarineChainsaw : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineChainsaw, Doom, 9103, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (S_MPLAY_ATK_CHAINSAW)
 	PROP_MissileState (S_MPLAY_ATK_CHAINSAW)
 END_DEFAULTS
@@ -843,6 +850,7 @@ class AMarinePistol : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarinePistol, Doom, 9104, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_PISTOL)
 END_DEFAULTS
@@ -855,6 +863,7 @@ class AMarineShotgun : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineShotgun, Doom, 9105, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_SHOTGUN)
 END_DEFAULTS
@@ -867,6 +876,7 @@ class AMarineSSG : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineSSG, Doom, 9106, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_DSHOTGUN)
 END_DEFAULTS
@@ -879,6 +889,7 @@ class AMarineChaingun : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineChaingun, Doom, 9107, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_CHAINGUN)
 END_DEFAULTS
@@ -891,6 +902,7 @@ class AMarineRocket : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineRocket, Doom, 9108, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_ROCKET)
 END_DEFAULTS
@@ -903,6 +915,7 @@ class AMarinePlasma : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarinePlasma, Doom, 9109, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_PLASMA)
 END_DEFAULTS
@@ -915,6 +928,7 @@ class AMarineRailgun : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineRailgun, Doom, 9110, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_RAILGUN)
 END_DEFAULTS
@@ -927,6 +941,7 @@ class AMarineBFG : public AScriptedMarine
 };
 
 IMPLEMENT_STATELESS_ACTOR (AMarineBFG, Doom, 9111, 0)
+	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_BFG)
 END_DEFAULTS

@@ -179,24 +179,31 @@ BOOL F_Responder (event_t *event)
 void F_Ticker ()
 {
 	int i;
-	
+	bool interrupt = false;
+
 	// check for skipping
-	// [RH] Non-commercial can be skipped now, too
-	if (FinaleCount > 50 && FinaleStage == 0)
+	for (i = 0; i < MAXPLAYERS; i++)
 	{
-		// go on to the next level
-		// [RH] or just reveal the entire message if we're still ticking it
-		for (i = 0; i < MAXPLAYERS; i++)
+		// Only for buttons going down
+		if (!interrupt)
 		{
-			if ((players[i].cmd.ucmd.buttons ^ players[i].oldbuttons)
-				&& ((players[i].cmd.ucmd.buttons & players[i].oldbuttons)
-					== players[i].oldbuttons))
+			for (size_t j = 0; j < sizeof(players[i].cmd.ucmd.buttons)*8; ++j)
 			{
-				break;
+				if (((players[i].cmd.ucmd.buttons >> j) & 1) &&
+					!((players[i].oldbuttons >> j) & 1))
+				{
+					interrupt = true;
+					break;
+				}
 			}
 		}
-
-		if (i < MAXPLAYERS ||
+		players[i].oldbuttons = players[i].cmd.ucmd.buttons;
+	}
+	
+	// [RH] Non-commercial can be skipped now, too
+	if (FinaleStage == 0)
+	{
+		if (interrupt ||
 			(gamemode != commercial && FinaleCount > FinaleTextLen*TEXTSPEED+TEXTWAIT))
 		{
 			if (FinaleCount < FinaleTextLen*TEXTSPEED)
@@ -226,8 +233,8 @@ void F_Ticker ()
 							if (DemonBuffer == NULL)
 							{
 								DemonBuffer = new BYTE[128000];
-								W_ReadLump (W_GetNumForName ("FINAL2"), DemonBuffer);
-								W_ReadLump (W_GetNumForName ("FINAL1"), DemonBuffer+64000);
+								Wads.ReadLump (Wads.GetNumForName ("FINAL2"), DemonBuffer);
+								Wads.ReadLump (Wads.GetNumForName ("FINAL1"), DemonBuffer+64000);
 							}
 						}
 					}
@@ -238,14 +245,29 @@ void F_Ticker ()
 				}
 			}
 		}
-
-		for (i = 0; i < MAXPLAYERS; i++)
-		{
-			players[i].oldbuttons = players[i].cmd.ucmd.buttons;
-		}
 	}
 	else if (FinaleStage >= 10)
 	{
+		// Hexen chess ending with three pages of text.
+		// [RH] This can be interrupted to speed it up.
+		if (interrupt)
+		{
+			if (FinaleStage == 11 || FinaleStage == 12 || FinaleStage == 15)
+			{ // Stages that display text
+				if (FinaleCount < FinaleEndCount-TEXTWAIT)
+				{
+					FinaleCount = FinaleEndCount-TEXTWAIT;
+				}
+				else
+				{
+					FinaleCount = FinaleEndCount;
+				}
+			}
+			else if (FinaleCount < 69)
+			{ // Stages that fade pictures
+				FinaleCount = 69;
+			}
+		}
 		if (FinaleStage < 15 && FinaleCount >= FinaleEndCount)
 		{
 			FinaleCount = 0;
@@ -373,8 +395,8 @@ void F_TextWrite (void)
 			if (scale)
 			{
 				screen->DrawTexture (pic,
-					cx * CleanXfac + SCREENWIDTH / 2,
-					cy * CleanYfac + SCREENHEIGHT / 2,
+					cx + 320 / 2,
+					cy + 200 / 2,
 					DTA_Translation, range,
 					DTA_Clean, true,
 					TAG_DONE);
@@ -382,8 +404,8 @@ void F_TextWrite (void)
 			else
 			{
 				screen->DrawTexture (pic,
-					cx + SCREENWIDTH / 2,
-					cy + SCREENHEIGHT / 2,
+					cx + 320 / 2,
+					cy + 200 / 2,
 					DTA_Translation, range,
 					TAG_DONE);
 			}
@@ -541,10 +563,10 @@ void F_CastTicker (void)
 {
 	int atten;
 
-	if (--casttics > 0)
+	if (--casttics > 0 && caststate != NULL)
 		return; 				// not time to change state yet
 				
-	if (caststate->GetTics() == -1 || caststate->GetNextState() == NULL)
+	if (caststate == NULL || caststate->GetTics() == -1 || caststate->GetNextState() == NULL)
 	{
 		// switch from deathstate to next monster
 		do
@@ -562,6 +584,12 @@ void F_CastTicker (void)
 				S_SoundID (CHAN_VOICE, castorder[castnum].info->SeeSound, 1, atten);
 			}
 			caststate = castorder[castnum].info->SeeState;
+			// [RH] Skip monsters that have been hacked to no longer have attack states
+			if (castorder[castnum].info->MissileState == NULL &&
+				castorder[castnum].info->MeleeState == NULL)
+			{
+				caststate = NULL;
+			}
 		}
 		while (caststate == NULL);
 		if (castnum == 16)
@@ -578,14 +606,8 @@ void F_CastTicker (void)
 	}
 	else
 	{
-		// just advance to next state in animation
-		if (caststate == advplayerstate)
-			goto stopattack;	// Oh, gross hack!
-		caststate = caststate->GetNextState();
-		castframes++;
-		
 		// sound hacks....
-		if (caststate)
+		if (caststate != NULL)
 		{
 			int i;
 
@@ -599,6 +621,13 @@ void F_CastTicker (void)
 				}
 			}
 		}
+
+		// just advance to next state in animation
+		if (caststate == advplayerstate)
+			goto stopattack;	// Oh, gross hack!
+
+		caststate = caststate->GetNextState();
+		castframes++;
 	}
 		
 	if (castframes == 12)
@@ -643,8 +672,6 @@ void F_CastTicker (void)
 
 BOOL F_CastResponder (event_t* ev)
 {
-	int attn;
-
 	if (ev->type != EV_KeyDown)
 		return false;
 				
@@ -654,38 +681,19 @@ BOOL F_CastResponder (event_t* ev)
 	// go into death frame
 	castdeath = true;
 	caststate = castorder[castnum].info->DeathState;
-	casttics = caststate->GetTics();
-	castframes = 0;
-	castattacking = false;
-	if (castorder[castnum].info->DeathSound)
+	if (caststate != NULL)
 	{
-		if (castnum == 15 || castnum == 14)
-			attn = ATTN_SURROUND;
-		else
-			attn = ATTN_NONE;
+		casttics = caststate->GetTics();
+		castframes = 0;
+		castattacking = false;
 		if (castnum == 16)
 		{
-			static const char sndtemplate[] = "player/%s/death1";
-			static const char *genders[] = { "male", "female", "other" };
-			char nametest[128];
-			int sndnum;
-
-			sprintf (nametest, sndtemplate, skins[players[consoleplayer].userinfo.skin].name);
-			sndnum = S_FindSound (nametest);
-			if (sndnum == 0)
-			{
-				sprintf (nametest, sndtemplate, genders[players[consoleplayer].userinfo.gender]);
-				sndnum = S_FindSound (nametest);
-				if (sndnum == 0)
-				{
-					sndnum = S_FindSound ("player/male/death1");
-				}
-			}
-			S_SoundID (CHAN_VOICE, sndnum, 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE, "*death", 1, ATTN_NONE);
 		}
-		else
+		else if (castorder[castnum].info->DeathSound)
 		{
-			S_SoundID (CHAN_VOICE, castorder[castnum].info->DeathSound, 1, attn);
+			S_SoundID (CHAN_VOICE, castorder[castnum].info->DeathSound, 1,
+				castnum == 15 || castnum == 14 ? ATTN_SURROUND : ATTN_NONE);
 		}
 	}
 		
@@ -713,14 +721,17 @@ void F_CastDrawer (void)
 		DTA_CleanNoMove, true, TAG_DONE);
 	
 	// draw the current frame in the middle of the screen
-	sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
-	pic = TexMan(sprframe->Texture[0]);
+	if (caststate != NULL)
+	{
+		sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
+		pic = TexMan(sprframe->Texture[0]);
 
-	screen->DrawTexture (pic, 160, 170,
-		DTA_320x200, true,
-		DTA_FlipX, sprframe->Flip & 1,
-		DTA_Translation, casttranslation,
-		TAG_DONE);
+		screen->DrawTexture (pic, 160, 170,
+			DTA_320x200, true,
+			DTA_FlipX, sprframe->Flip & 1,
+			DTA_Translation, casttranslation,
+			TAG_DONE);
+	}
 }
 
 
@@ -891,21 +902,21 @@ void F_DrawUnderwater(void)
 	case 1:
 		{
 		PalEntry *palette;
+		FMemLump lump;
 		const byte *orgpal;
-		const byte *pic;
 		int i;
 
-		orgpal = (byte *)W_MapLumpName ("E2PAL");
+		lump = Wads.ReadLump ("E2PAL");
+		orgpal = (byte *)lump.GetMem();
 		palette = screen->GetPalette ();
 		for (i = 256; i > 0; i--, orgpal += 3)
 		{
 			*palette++ = PalEntry (orgpal[0], orgpal[1], orgpal[2]);
 		}
-		W_UnMapLump (orgpal);
 		screen->UpdatePalette ();
-		pic = (byte *)W_MapLumpName ("E2END");
-		screen->DrawPageBlock (pic);
-		W_UnMapLump (pic);
+
+		lump = Wads.ReadLump ("E2END");
+		screen->DrawPageBlock ((byte *)lump.GetMem());
 		FinaleStage = 2;
 		}
 
@@ -918,21 +929,21 @@ void F_DrawUnderwater(void)
 	case 4:
 		{
 		PalEntry *palette;
+		FMemLump lump;
 		const byte *orgpal;
-		const byte *pic;
 		int i;
 
-		orgpal = (byte *)W_MapLumpName ("PLAYPAL");
+		lump = Wads.ReadLump ("PLAYPAL");
+		orgpal = (byte *)lump.GetMem();
 		palette = screen->GetPalette ();
 		for (i = 256; i > 0; i--, orgpal += 3)
 		{
 			*palette++ = PalEntry (orgpal[0], orgpal[1], orgpal[2]);
 		}
-		W_UnMapLump (orgpal);
+
 		screen->UpdatePalette ();
-		pic = (byte *)W_MapLumpName ("TITLE");
-		screen->DrawPageBlock (pic);
-		W_UnMapLump (pic);
+		lump = Wads.ReadLump ("TITLE");
+		screen->DrawPageBlock ((byte *)lump.GetMem());
 		break;
 		}
 	}
@@ -981,7 +992,6 @@ void F_BunnyScroll (void)
 	if (FinaleCount < 1180)
 	{
 		screen->DrawTexture (TexMan["END0"], (320-13*8)/2, (200-8*8)/2, DTA_320x200, true, TAG_DONE);
-		W_UnMapLump (p1);
 		laststage = 0;
 		return;
 	}
@@ -1013,12 +1023,11 @@ void F_Drawer (void)
 		// erase the entire screen to a tiled background (or picture)
 		if (!FinaleHasPic)
 		{
-			int lump = W_CheckNumForName (FinaleFlat, ns_flats);
-			if (lump >= 0)
+			int picnum = TexMan.CheckForTexture (FinaleFlat, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+			if (picnum >= 0)
 			{
-				const byte *flat = (byte *)W_MapLumpNum (lump);
-				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, flat);
-				W_UnMapLump (flat);
+				FTexture *pic = TexMan(picnum);
+				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, pic->GetPixels());
 			}
 			else
 			{
@@ -1096,9 +1105,9 @@ void F_Drawer (void)
 			{
 				screen->DrawTexture (TexMan["CHESSALL"], 20, 0, DTA_320x200, true, TAG_DONE);
 			}
-			else if (players[consoleplayer].userinfo.PlayerClass > 0)
+			else if (players[consoleplayer].CurrentPlayerClass > 0)
 			{
-				picname = players[consoleplayer].userinfo.PlayerClass == 1 ? "CHESSC" : "CHESSM";
+				picname = players[consoleplayer].CurrentPlayerClass == 1 ? "CHESSC" : "CHESSM";
 				screen->DrawTexture (TexMan[picname], 60, 0, DTA_320x200, true, TAG_DONE);
 			}
 		}
@@ -1124,12 +1133,12 @@ static void GetFinaleText (const char *msgLumpName)
 {
 	int msgLump;
 
-	msgLump = W_CheckNumForName(msgLumpName);
+	msgLump = Wads.CheckNumForName(msgLumpName);
 	if (msgLump != -1)
 	{
-		FinaleTextLen = W_LumpLength(msgLump);
+		FinaleTextLen = Wads.LumpLength(msgLump);
 		FinaleText = new char[FinaleTextLen];
-		W_ReadLump (msgLump, FinaleText);
+		Wads.ReadLump (msgLump, FinaleText);
 	}
 	else
 	{

@@ -53,6 +53,8 @@
 // This makes adding new RNGs easier, because I don't need to recompile every
 // file that uses random numbers.
 
+struct PNGHandle;
+
 class FRandom
 {
 public:
@@ -87,7 +89,8 @@ private:
 
 	static FRandom *RNGList;
 
-	friend void P_SerializeRNGState (FILE *file, bool saving);
+	friend void P_ReadRNGState (PNGHandle *png);
+	friend void P_WriteRNGState (FILE *file);
 };
 
 extern DWORD rngseed;			// The starting seed (not part of state)

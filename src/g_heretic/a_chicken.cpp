@@ -13,12 +13,12 @@
 #include "ravenshared.h"
 #include "gstrings.h"
 
+static FRandom pr_chickenplayerthink ("ChickenPlayerThink");
 static FRandom pr_chicattack ("ChicAttack");
 static FRandom pr_feathers ("Feathers");
 static FRandom pr_beakatkpl1 ("BeakAtkPL1");
 static FRandom pr_beakatkpl2 ("BeakAtkPL2");
 
-void A_BeakReady (AActor *, pspdef_t *);
 void A_BeakRaise (AActor *, pspdef_t *);
 void A_BeakAttackPL1 (AActor *, pspdef_t *);
 void A_BeakAttackPL2 (AActor *, pspdef_t *);
@@ -28,6 +28,8 @@ void A_ChicLook (AActor *);
 void A_ChicChase (AActor *);
 void A_ChicPain (AActor *);
 void A_ChicAttack (AActor *);
+
+void P_UpdateBeak (AActor *, pspdef_t *);
 
 // Beak puff ----------------------------------------------------------------
 
@@ -61,7 +63,7 @@ class ABeak : public AWeapon
 FState ABeak::States[] =
 {
 #define S_BEAKREADY 0
-	S_NORMAL (BEAK, 'A',	1, A_BeakReady				, &States[S_BEAKREADY]),
+	S_NORMAL (BEAK, 'A',	1, A_WeaponReady			, &States[S_BEAKREADY]),
 
 #define S_BEAKDOWN (S_BEAKREADY+1)
 	S_NORMAL (BEAK, 'A',	1, A_Lower					, &States[S_BEAKDOWN]),
@@ -78,7 +80,7 @@ FState ABeak::States[] =
 
 FWeaponInfo ABeak::WeaponInfo1 =
 {
-	0,
+	WIF_DONTBOB,
 	am_noammo,
 	am_noammo,
 	0,
@@ -100,7 +102,7 @@ FWeaponInfo ABeak::WeaponInfo1 =
 
 FWeaponInfo ABeak::WeaponInfo2 =
 {
-	0,
+	WIF_DONTBOB,
 	am_noammo,
 	am_noammo,
 	0,
@@ -132,6 +134,8 @@ class AChickenPlayer : public APlayerPawn
 	DECLARE_ACTOR (AChickenPlayer, APlayerPawn)
 public:
 	fixed_t GetJumpZ () { return FRACUNIT; }
+	void MorphPlayerThink ();
+	void ActivateMorphWeapon ();
 };
 
 FState AChickenPlayer::States[] =
@@ -171,6 +175,8 @@ IMPLEMENT_ACTOR (AChickenPlayer, Heretic, -1, 0)
 	PROP_SpeedFixed (1)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOTDMATCH)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP|MF2_LOGRAV|MF2_TELESTOMP)
+	PROP_Flags3 (MF3_NOBLOCKMONST)
+	PROP_Flags4 (MF4_NOSKIN)
 
 	PROP_SpawnState (S_CHICPLAY)
 	PROP_SeeState (S_CHICPLAY_RUN)
@@ -181,6 +187,39 @@ IMPLEMENT_ACTOR (AChickenPlayer, Heretic, -1, 0)
 	PROP_PainSound ("chicken/pain")
 	PROP_DeathSound ("chicken/death")
 END_DEFAULTS
+
+void AChickenPlayer::MorphPlayerThink ()
+{
+	if (health > 0)
+	{ // Handle beak movement
+		P_UpdateBeak (this, &player->psprites[ps_weapon]);
+	}
+	if (player->morphTics & 15)
+	{
+		return;
+	}
+	if (!(momx | momy) && pr_chickenplayerthink () < 160)
+	{ // Twitch view angle
+		angle += pr_chickenplayerthink.Random2 () << 19;
+	}
+	if ((z <= floorz) && (pr_chickenplayerthink() < 32))
+	{ // Jump and noise
+		momz += GetJumpZ ();
+		SetState (PainState);
+	}
+	if (pr_chickenplayerthink () < 48)
+	{ // Just noise
+		S_Sound (this, CHAN_VOICE, "chicken/active", 1, ATTN_NORM);
+	}
+}
+
+void AChickenPlayer::ActivateMorphWeapon ()
+{
+	player->pendingweapon = wp_nochange;
+	player->psprites[ps_weapon].sy = WEAPONTOP;
+	player->readyweapon = wp_beak;
+	P_SetPsprite (player, ps_weapon, wpnlev1info[player->readyweapon]->readystate);
+}
 
 // Chicken (non-player) -----------------------------------------------------
 
@@ -414,42 +453,6 @@ void P_UpdateBeak (AActor *actor, pspdef_t *psp)
 	if (actor->player != NULL)
 	{
 		psp->sy = WEAPONTOP + (actor->player->chickenPeck << (FRACBITS-1));
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC A_BeakReady
-//
-//---------------------------------------------------------------------------
-
-void A_BeakReady (AActor *actor, pspdef_t *psp)
-{
-	player_t *player;
-
-	if (NULL == (player = actor->player))
-	{
-		return;
-	}
-	if (player->cmd.ucmd.buttons & BT_ATTACK)
-	{ // Chicken beak attack
-		player->mo->SetState (player->mo->MissileState);
-		if (player->powers[pw_weaponlevel2])
-		{
-			P_SetPsprite (player, ps_weapon, wpnlev2info[wp_beak]->atkstate);
-		}
-		else
-		{
-			P_SetPsprite (player, ps_weapon, wpnlev1info[wp_beak]->atkstate);
-		}
-		P_NoiseAlert (player->mo, player->mo);
-	}
-	else
-	{
-		if (player->mo->state == player->mo->MissileState)
-		{ // Take out of attack state
-			player->mo->SetState (player->mo->SpawnState);
-		}
 	}
 }
 

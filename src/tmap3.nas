@@ -118,7 +118,6 @@ vlinetallasm4:
 	mov	ecx, [dc_count]
 	mov	edi, [dc_dest]
 	mov	eax, dword [ylookup+ecx*4-4]
-	sub	eax, dword [ylookup]
 	add	eax, edi
 	sub	edi, eax
 	mov	[write1+2],eax
@@ -210,7 +209,6 @@ vlinetallasmathlon4:
 	mov	ecx, [dc_count]
 	mov	edi, [dc_dest]
 	mov	eax, dword [ylookup+ecx*4-4]
-	sub	eax, dword [ylookup]
 	add	eax, edi
 	sub	edi, eax
 	mov	[write1a+2],eax

@@ -41,8 +41,8 @@ RSC=rc.exe
 # PROP Output_Dir ".\Release"
 # PROP Intermediate_Dir ".\Release"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MT /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen;flac" /Zd /W3 /Ox /Og /Ob2 /Oi /Ot /Oy /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /GF PRECOMP_VC7_TOBEREMOVED /Fp".\Release/zdoom.pch" /Fo".\Release/" /Fd".\Release/" /Gr /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
-# ADD CPP /nologo /MT /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen;flac" /Zd /W3 /Ox /Og /Ob2 /Oi /Ot /Oy /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /GF PRECOMP_VC7_TOBEREMOVED /Fp".\Release/zdoom.pch" /Fo".\Release/" /Fd".\Release/" /Gr /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
+# ADD BASE CPP /nologo /MT /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen;flac" /Zd /W3 /Ox /Og /Ob2 /Oi /Ot /Oy /D "NDEBUG" /D "WIN32" /D "_WIN32" /D "_WINDOWS" /D "USEASM" /GF /Fo".\Release/" /Fd".\Release/" /Gr /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
+# ADD CPP /nologo /MT /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen;flac" /Zd /W3 /Ox /Og /Ob2 /Oi /Ot /Oy /D "NDEBUG" /D "WIN32" /D "_WIN32" /D "_WINDOWS" /D "USEASM" /GF /Fo".\Release/" /Fd".\Release/" /Gr /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
 # ADD BASE MTL /nologo /D"NDEBUG" /mktyplib203 /tlb".\Release\zdoom.tlb" /win32 
 # ADD MTL /nologo /D"NDEBUG" /mktyplib203 /tlb".\Release\zdoom.tlb" /win32 
 # ADD BASE RSC /l 1033 /d "NDEBUG" 
@@ -66,8 +66,8 @@ LINK32=link.exe
 # PROP Output_Dir ".\Debug"
 # PROP Intermediate_Dir ".\Debug"
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /MTd /I "win32" /I "sound" /I "." /I ""zlib-1.1.4"" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /I "flac" /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "USEASM" /D "_CRTDBG_MAP_ALLOC" /Gm /Gy /Fp".\Debug/zdoom.pch" /Fo".\Debug/" /Fd".\Debug/" /GZ /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
-# ADD CPP /nologo /MTd /I "win32" /I "sound" /I "." /I ""zlib-1.1.4"" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /I "flac" /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "USEASM" /D "_CRTDBG_MAP_ALLOC" /Gm /Gy /Fp".\Debug/zdoom.pch" /Fo".\Debug/" /Fd".\Debug/" /GZ /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
+# ADD BASE CPP /nologo /MTd /I "win32" /I "sound" /I "." /I ""zlib-1.1.4"" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /I "flac" /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_WIN32" /D "_WINDOWS" /D "USEASM" /D "_CRTDBG_MAP_ALLOC" /Gm /Gy /Fo".\Debug/" /Fd".\Debug/" /GZ /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
+# ADD CPP /nologo /MTd /I "win32" /I "sound" /I "." /I ""zlib-1.1.4"" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /I "flac" /ZI /W3 /Od /D "WIN32" /D "_DEBUG" /D "_WIN32" /D "_WINDOWS" /D "USEASM" /D "_CRTDBG_MAP_ALLOC" /Gm /Gy /Fo".\Debug/" /Fd".\Debug/" /GZ /c "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
 # ADD BASE MTL /nologo /D"_DEBUG" /mktyplib203 /tlb".\Debug\zdoom.tlb" /win32 
 # ADD MTL /nologo /D"_DEBUG" /mktyplib203 /tlb".\Debug\zdoom.tlb" /win32 
 # ADD BASE RSC /l 1033 /d "_DEBUG" 
@@ -520,6 +520,10 @@ SOURCE=.\farchive.cpp
 # ADD CPP /nologo /GZ "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc"  "  /I /fmod/api/inc" /GX 
 !ENDIF
 
+# End Source File
+# Begin Source File
+
+SOURCE=.\files.cpp
 # End Source File
 # Begin Source File
 
@@ -1618,6 +1622,10 @@ SOURCE=.\farchive.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\files.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\g_game.h
 # End Source File
 # Begin Source File
@@ -2194,10 +2202,6 @@ SOURCE=.\win32\I_system.cpp
 # Begin Source File
 
 SOURCE=.\win32\I_system.h
-# End Source File
-# Begin Source File
-
-SOURCE=win32\i_wad.cpp
 # End Source File
 # Begin Source File
 

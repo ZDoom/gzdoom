@@ -97,6 +97,11 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 				{
 					level.total_monsters--;
 				}
+				// Same, for items
+				if (mobj->flags & MF_COUNTITEM)
+				{
+					level.total_items--;
+				}
 				mobj->Destroy ();
 				rtn = false;
 			}
@@ -304,6 +309,11 @@ nolead:
 						if (mobj->flags & MF_COUNTKILL)
 						{
 							level.total_monsters--;
+						}
+						// Same, for items
+						if (mobj->flags & MF_COUNTITEM)
+						{
+							level.total_items--;
 						}
 						mobj->Destroy ();
 					}

@@ -47,8 +47,6 @@
 #include "doomstat.h"
 #include "templates.h"
 
-fixed_t V_TextTrans;
-
 //
 // SetFont
 //
@@ -59,7 +57,7 @@ void DCanvas::SetFont (FFont *font)
 	Font = font;
 }
 
-void DCanvas::DrawChar (int normalcolor, int x, int y, byte character, DWORD tags, ...)
+void STACK_ARGS DCanvas::DrawChar (int normalcolor, int x, int y, byte character, ...)
 {
 	if (Font == NULL)
 		return;
@@ -73,7 +71,10 @@ void DCanvas::DrawChar (int normalcolor, int x, int y, byte character, DWORD tag
 	if (NULL != (pic = Font->GetChar (character, &dummy)))
 	{
 		const BYTE *range = Font->GetColorTranslation ((EColorRange)normalcolor);
-		DrawTexture (pic, x, y, DTA_Translation, range, TAG_MORE, &tags);
+		va_list taglist;
+		va_start (taglist, character);
+		DrawTexture (pic, x, y, DTA_Translation, range, TAG_MORE, taglist);
+		va_end (taglist);
 	}
 }
 
@@ -82,7 +83,7 @@ void DCanvas::DrawChar (int normalcolor, int x, int y, byte character, DWORD tag
 //
 // Write a string using the current font
 //
-void DCanvas::DrawText (int normalcolor, int x, int y, const char *string, DWORD tags_first, ...)
+void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *string, ...)
 {
 	va_list tags;
 	DWORD tag;
@@ -114,16 +115,15 @@ void DCanvas::DrawText (int normalcolor, int x, int y, const char *string, DWORD
 	cy = y;
 
 	// Parse the tag list to see if we need to adjust for scaling.
-	bool scaled = false;
-	maxwidth = Width;
+ 	maxwidth = Width;
 	scalex = scaley = 1;
 
-	va_start (tags, tags_first);
-	tag = tags_first;
+	va_start (tags, string);
+	tag = va_arg (tags, DWORD);
 
 	while (tag != TAG_DONE)
 	{
-		DWORD *more_p;
+		va_list more_p;
 		DWORD data;
 		void *ptrval;
 
@@ -135,11 +135,10 @@ void DCanvas::DrawText (int normalcolor, int x, int y, const char *string, DWORD
 			break;
 
 		case TAG_MORE:
-			more_p = va_arg (tags, DWORD *);
+			more_p = va_arg (tags, va_list);
 			va_end (tags);
-			va_start (tags, *more_p);
-			tag = *more_p;
-			continue;
+			tags = more_p;
+			break;;
 
 		case DTA_DestWidth:
 		case DTA_DestHeight:
@@ -225,7 +224,10 @@ void DCanvas::DrawText (int normalcolor, int x, int y, const char *string, DWORD
 
 		if (NULL != (pic = Font->GetChar (c, &w)))
 		{
-			DrawTexture (pic, cx, cy, DTA_Translation, range, TAG_MORE, &tags_first);
+			va_list taglist;
+			va_start (taglist, string);
+			DrawTexture (pic, cx, cy, DTA_Translation, range, TAG_MORE, taglist);
+			va_end (taglist);
 		}
 		cx += w * scalex;
 	}
@@ -266,8 +268,10 @@ int FFont::StringWidth (const BYTE *string) const
 //
 // Break long lines of text into multiple lines no longer than maxwidth pixels
 //
-static void breakit (brokenlines_t *line, const byte *start, const byte *string, bool keepspace)
+static void breakit (brokenlines_t *line, const byte *start, const byte *string, bool keepspace, char linecolor)
 {
+	int extra;
+
 	// Leave out trailing white space
 	if (!keepspace)
 	{
@@ -275,9 +279,23 @@ static void breakit (brokenlines_t *line, const byte *start, const byte *string,
 			string--;
 	}
 
-	line->string = new char[string - start + 1];
-	strncpy (line->string, (char *)start, string - start);
-	line->string[string - start] = 0;
+	if (linecolor == 0)
+	{
+		extra = 0;
+	}
+	else
+	{
+		extra = 2;
+	}
+
+	line->string = new char[string - start + extra + 1];
+	if (linecolor)
+	{
+		line->string[0] = TEXTCOLOR_ESCAPE;
+		line->string[1] = linecolor;
+	}
+	strncpy (line->string + extra, (char *)start, string - start);
+	line->string[string - start + extra] = 0;
 	line->width = screen->Font->StringWidth (line->string);
 }
 
@@ -287,16 +305,19 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 
 	const byte *space = NULL, *start = string;
 	int i, c, w, nw;
+	char lastcolor = 0, linecolor = 0;
 	BOOL lastWasSpace = false;
 
 	i = w = 0;
 
-	while ( (c = *string++) )
+	while ( (c = *string++) && i < 128 )
 	{
 		if (c == TEXTCOLOR_ESCAPE)
 		{
 			if (*string)
-				string++;
+			{
+				lastcolor = *string++;
+			}
 			continue;
 		}
 
@@ -321,7 +342,15 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 				space = string - 1;
 
 			lines[i].nlterminated = (c == '\n');
-			breakit (&lines[i], start, space, keepspace);
+			breakit (&lines[i], start, space, keepspace, linecolor);
+			if (c == '\n')
+			{
+				linecolor = lastcolor = 0;
+			}
+			else
+			{
+				linecolor = lastcolor;
+			}
 
 			i++;
 			w = 0;
@@ -354,7 +383,7 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 			{
 				lines[i].nlterminated = (*s == '\n');
 				s++;
-				breakit (&lines[i++], start, string, keepspace);
+				breakit (&lines[i++], start, string, keepspace, linecolor);
 				break;
 			}
 			s++;

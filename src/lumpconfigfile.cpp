@@ -41,6 +41,7 @@
 #include "lumpconfigfile.h"
 #include "w_wad.h"
 
+#if 0
 FLumpConfigFile::FLumpConfigFile (int lump)
 {
 	State.lump = lump;
@@ -82,3 +83,4 @@ char *FLumpConfigFile::ReadLine (char *string, int n, void *file) const
 	state->pos += n;
 	return string;
 }
+#endif

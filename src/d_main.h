@@ -68,6 +68,7 @@ enum EIWADType
 	IWAD_DoomShareware,
 	IWAD_UltimateDoom,
 	IWAD_DoomRegistered,
+	IWAD_Strife,
 
 	NUM_IWAD_TYPES
 };

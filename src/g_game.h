@@ -71,6 +71,12 @@ enum EFinishLevelType
 
 void G_PlayerFinishLevel (int player, EFinishLevelType mode);
 
+// Adds pitch to consoleplayer's viewpitch and clamps it
+void G_AddViewPitch (int look);
+
+// Adds to consoleplayer's viewangle if allowed
+void G_AddViewAngle (int yaw);
+
 #define BODYQUESIZE 	32
 class AActor;
 extern AActor *bodyque[BODYQUESIZE]; 

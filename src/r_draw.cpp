@@ -61,11 +61,12 @@ extern "C" {
 int 			viewwidth;
 int				halfviewwidth;
 int 			viewheight;
+int				ylookup[MAXHEIGHT];
+BYTE			*dc_destorg;
 }
 int 			scaledviewwidth;
 int 			viewwindowx;
 int 			viewwindowy;
-byte*			ylookup[MAXHEIGHT];
 
 extern "C" {
 int				realviewwidth;		// [RH] Physical width of view window
@@ -151,17 +152,14 @@ void R_DrawColumnP_C (void)
 	fixed_t 			frac;
 	fixed_t 			fracstep;
 
-	count = dc_yh - dc_yl;
+	count = dc_count;
 
 	// Zero length, column does not exceed a pixel.
-	if (count < 0)
+	if (count <= 0)
 		return;
 
-	count++;
-
 	// Framebuffer destination address.
-	// Use ylookup LUT to avoid multiply with ScreenWidth.
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 
 	// Determine scaling,
 	//	which is the only mapping to be done.
@@ -172,7 +170,7 @@ void R_DrawColumnP_C (void)
 		// [RH] Get local copies of these variables so that the compiler
 		//		has a better chance of optimizing this well.
 		byte *colormap = dc_colormap;
-		byte *source = dc_source;
+		const byte *source = dc_source;
 		int pitch = dc_pitch;
 
 		// Inner loop that does the actual texture mapping,
@@ -198,14 +196,12 @@ void R_FillColumnP (void)
 	int 				count;
 	byte*				dest;
 
-	count = dc_yh - dc_yl;
+	count = dc_count;
 
-	if (count < 0)
+	if (count <= 0)
 		return;
 
-	count++;
-
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 
 	{
 		int pitch = dc_pitch;
@@ -224,12 +220,11 @@ void R_FillAddColumn (void)
 	int count;
 	BYTE *dest;
 
-	count = dc_yh - dc_yl;
-	if (count < 0)
+	count = dc_count;
+	if (count <= 0)
 		return;
 
-	count++;
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 	DWORD *bg2rgb;
 	DWORD fg;
 
@@ -300,7 +295,7 @@ void R_DrawFuzzColumnP_C (void)
 	byte *dest;
 
 	// Adjust borders. Low...
-	if (!dc_yl)
+	if (dc_yl == 0)
 		dc_yl = 1;
 
 	// .. and high.
@@ -315,7 +310,7 @@ void R_DrawFuzzColumnP_C (void)
 
 	count++;
 
-	dest = ylookup[dc_yl] + dc_x;
+	dest = ylookup[dc_yl] + dc_x + dc_destorg;
 
 	// colormap #6 is used for shading (of 0-31, a bit brighter than average)
 	{
@@ -419,12 +414,11 @@ void R_DrawAddColumnP_C (void)
 	fixed_t frac;
 	fixed_t fracstep;
 
-	count = dc_yh - dc_yl;
-	if (count < 0)
+	count = dc_count;
+	if (count <= 0)
 		return;
-	count++;
 
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
@@ -466,12 +460,11 @@ void R_DrawTranslatedColumnP_C (void)
 	fixed_t 			frac;
 	fixed_t 			fracstep;
 
-	count = dc_yh - dc_yl;
-	if (count < 0) 
+	count = dc_count;
+	if (count <= 0) 
 		return;
-	count++;
 
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
@@ -501,12 +494,11 @@ void R_DrawTlatedAddColumnP_C (void)
 	fixed_t frac;
 	fixed_t fracstep;
 
-	count = dc_yh - dc_yl;
-	if (count < 0)
+	count = dc_count;
+	if (count <= 0)
 		return;
-	count++;
 
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
@@ -542,14 +534,12 @@ void R_DrawShadedColumnP_C (void)
 	byte *dest;
 	fixed_t frac, fracstep;
 
-	count = dc_yh - dc_yl;
+	count = dc_count;
 
-	if (count < 0)
+	if (count <= 0)
 		return;
 
-	count++;
-
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 
 	fracstep = dc_iscale; 
 	frac = dc_texturefrac;
@@ -581,12 +571,11 @@ void R_DrawAddClampColumnP_C ()
 	fixed_t frac;
 	fixed_t fracstep;
 
-	count = dc_yh - dc_yl;
-	if (count < 0)
+	count = dc_count;
+	if (count <= 0)
 		return;
-	count++;
 
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
@@ -624,12 +613,11 @@ void R_DrawAddClampTranslatedColumnP_C ()
 	fixed_t frac;
 	fixed_t fracstep;
 
-	count = dc_yh - dc_yl;
-	if (count < 0)
+	count = dc_count;
+	if (count <= 0)
 		return;
-	count++;
 
-	dest = ylookup[dc_yl] + dc_x;
+	dest = dc_dest;
 
 	fracstep = dc_iscale;
 	frac = dc_texturefrac;
@@ -674,24 +662,32 @@ void R_DrawAddClampTranslatedColumnP_C ()
 // In consequence, flats are not stored by column (like walls),
 //	and the inner loop has to step in texture space u and v.
 //
+// [RH] I'm not sure who wrote this, but floor/ceiling mapping
+// *is* perspective correct for spans of constant z depth, which
+// Doom guarantees because it does not let you change your pitch.
+// Also, because of the new texture system, flats *are* stored by
+// column to make it easy to use them on walls too. To accomodate
+// this, the use of x/u and y/v in R_DrawSpan just needs to be
+// swapped.
+//
 extern "C" {
 int						ds_color;				// [RH] color for non-textured spans
 
-int 					ds_y; 
-int 					ds_x1; 
+int 					ds_y;
+int 					ds_x1;
 int 					ds_x2;
 
-lighttable_t*			ds_colormap; 
+lighttable_t*			ds_colormap;
 
-dsfixed_t 				ds_xfrac; 
-dsfixed_t 				ds_yfrac; 
-dsfixed_t 				ds_xstep; 
+dsfixed_t 				ds_xfrac;
+dsfixed_t 				ds_yfrac;
+dsfixed_t 				ds_xstep;
 dsfixed_t 				ds_ystep;
 int						ds_xbits;
 int						ds_ybits;
 
-// start of a 64*64 tile image 
-const byte*				ds_source;		
+// start of a floor/ceiling tile image 
+const byte*				ds_source;
 
 // just for profiling
 int 					dscount;
@@ -722,7 +718,7 @@ void R_DrawSpanP_C (void)
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
 
-	dest = ylookup[ds_y] + ds_x1;
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
 
 	count = ds_x2 - ds_x1 + 1;
 
@@ -771,7 +767,7 @@ void R_DrawSpanP_C (void)
 // [RH] Just fill a span with a color
 void R_FillSpan (void)
 {
-	memset (ylookup[ds_y] + ds_x1, ds_color, ds_x2 - ds_x1 + 1);
+	memset (ylookup[ds_y] + ds_x1 + dc_destorg, ds_color, ds_x2 - ds_x1 + 1);
 }
 
 /****************************************************/
@@ -848,7 +844,7 @@ DWORD STACK_ARGS vlinec1 ()
 	DWORD frac = dc_texturefrac;
 	BYTE *colormap = dc_colormap;
 	int count = dc_count;
-	BYTE *source = dc_source;
+	const BYTE *source = dc_source;
 	BYTE *dest = dc_dest;
 	int bits = vlinebits;
 	int pitch = dc_pitch;
@@ -889,7 +885,7 @@ extern int wallshade;
 static void R_DrawFogBoundarySection (int y, int y2, int x1)
 {
 	BYTE *colormap = dc_colormap;
-	BYTE *dest = ylookup[y];
+	BYTE *dest = ylookup[y] + dc_destorg;
 
 	for (; y < y2; ++y)
 	{
@@ -907,7 +903,7 @@ static void R_DrawFogBoundaryLine (int y, int x)
 {
 	int x2 = spanend[y];
 	BYTE *colormap = dc_colormap;
-	BYTE *dest = ylookup[y];
+	BYTE *dest = ylookup[y] + dc_destorg;
 	do
 	{
 		dest[x] = colormap[dest[x]];
@@ -1306,14 +1302,13 @@ void R_BuildPlayerTranslation (int player)
 
 void R_DrawBorder (int x1, int y1, int x2, int y2)
 {
-	int lump;
+	int picnum;
 
-	lump = W_CheckNumForName (gameinfo.borderFlat, ns_flats);
-	if (lump >= 0)
+	picnum = TexMan.CheckForTexture (gameinfo.borderFlat, FTexture::TEX_Flat);
+	if (picnum >= 0)
 	{
-		byte *flat = (byte *)W_MapLumpNum (lump);
+		const BYTE *flat = TexMan[picnum]->GetPixels ();
 		screen->FlatFill (x1 & ~63, y1, x2, y2, flat);
-		W_UnMapLump (flat);
 	}
 	else
 	{
@@ -1420,7 +1415,7 @@ void R_DetailDouble ()
 	{
 	case 1:		// y-double
 #ifdef USEASM
-		DoubleVert_ASM (viewheight, viewwidth, ylookup[0], RenderTarget->GetPitch());
+		DoubleVert_ASM (viewheight, viewwidth, dc_destorg, RenderTarget->GetPitch());
 #else
 		{
 			int rowsize = realviewwidth;
@@ -1428,7 +1423,7 @@ void R_DetailDouble ()
 			int y;
 			byte *line;
 
-			line = ylookup[0];
+			line = dc_destorg;
 			for (y = viewheight; y != 0; --y, line += pitch<<1)
 			{
 				memcpy (line+pitch, line, rowsize);
@@ -1441,7 +1436,7 @@ void R_DetailDouble ()
 #ifdef USEASM
 		if (CPU.bMMX && (viewwidth&15)==0)
 		{
-			DoubleHoriz_MMX (viewheight, viewwidth, ylookup[0]+viewwidth, RenderTarget->GetPitch());
+			DoubleHoriz_MMX (viewheight, viewwidth, dc_destorg+viewwidth, RenderTarget->GetPitch());
 		}
 		else
 #endif
@@ -1451,7 +1446,7 @@ void R_DetailDouble ()
 			int y,x;
 			byte *linefrom, *lineto;
 
-			linefrom = ylookup[0];
+			linefrom = dc_destorg;
 			for (y = viewheight; y != 0; --y, linefrom += pitch)
 			{
 				lineto = linefrom - viewwidth;
@@ -1469,7 +1464,7 @@ void R_DetailDouble ()
 #ifdef USEASM
 		if (CPU.bMMX && (viewwidth&15)==0 && 0)
 		{
-			DoubleHorizVert_MMX (viewheight, viewwidth, ylookup[0]+viewwidth, RenderTarget->GetPitch());
+			DoubleHorizVert_MMX (viewheight, viewwidth, dc_destorg+viewwidth, RenderTarget->GetPitch());
 		}
 		else
 #endif
@@ -1480,7 +1475,7 @@ void R_DetailDouble ()
 			int y,x;
 			byte *linefrom, *lineto;
 
-			linefrom = ylookup[0];
+			linefrom = dc_destorg;
 			for (y = viewheight; y != 0; --y, linefrom += pitch)
 			{
 				lineto = linefrom - viewwidth;

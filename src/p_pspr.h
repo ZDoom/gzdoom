@@ -83,7 +83,6 @@ class player_s;
 void P_SetPsprite (player_s *player, int position, FState *state);
 void P_SetPspriteNF (player_s *player, int position, FState *state);
 void P_CalcSwing (player_s *player);
-void P_ActivateMorphWeapon (player_s *player);
 void P_PostMorphWeapon (player_s *player, weapontype_t weapon);
 void P_BringUpWeapon (player_s *player);
 bool P_CheckAmmo (player_s *player);

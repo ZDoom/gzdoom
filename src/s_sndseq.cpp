@@ -386,7 +386,7 @@ void S_ParseSndSeq (void)
 	ScriptTemp = (unsigned int *)Malloc (MAX_SEQSIZE * sizeof(*ScriptTemp));
 	ScriptTempSize = MAX_SEQSIZE;
 
-	while ((lump = W_FindLump ("SNDSEQ", &lastlump)) != -1)
+	while ((lump = Wads.FindLump ("SNDSEQ", &lastlump)) != -1)
 	{
 		SC_OpenLumpNum (lump, "SNDSEQ");
 		while (SC_GetString ())

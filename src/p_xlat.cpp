@@ -63,7 +63,8 @@ typedef enum
 
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 {
-	const BYTE *tlate, *tlatebase;
+	static FMemLump tlatebase;
+	const BYTE *tlate;
 	short special = SHORT(mld->special);
 	short tag = SHORT(mld->tag);
 	short flags = SHORT(mld->flags);
@@ -88,15 +89,22 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		return;
 	}
 
-	if (gameinfo.gametype == GAME_Doom)
+	if (tlatebase.GetMem() == NULL)
 	{
-		tlatebase = (BYTE *)W_MapLumpName ("DOOMX");
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			tlatebase = Wads.ReadLump ("DOOMX");
+		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			tlatebase = Wads.ReadLump ("STRIFEX");
+		}
+		else
+		{
+			tlatebase = Wads.ReadLump ("HERETICX");
+		}
 	}
-	else
-	{
-		tlatebase = (BYTE *)W_MapLumpName ("HERETICX");
-	}
-	tlate = tlatebase;
+	tlate = (const BYTE *)tlatebase.GetMem();
 
 	passthrough = (flags & ML_PASSUSE_BOOM);
 
@@ -134,7 +142,6 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 				case 0x80: case 0x40:		// First argument is a tag
 					ld->args[0] = tag;
 				}
-				W_UnMapLump (tlatebase);
 				return;
 			}
 			tlate += (high - low + 1) * 7;
@@ -285,7 +292,6 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			if (special >= low && special <= high)
 			{ // Really found it, so we're done
 				ld->flags = flags;
-				W_UnMapLump (tlatebase);
 				return;
 			}
 
@@ -298,7 +304,6 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	ld->special = 0;
 	ld->flags = flags;
 	memset (ld->args, 0, sizeof(ld->args));
-	W_UnMapLump (tlatebase);
 }
 
 // The teleport specials that use things as destinations also require

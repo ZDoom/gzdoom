@@ -392,7 +392,10 @@ void A_WraithMelee (AActor *actor)
 
 void A_WraithMissile (AActor *actor)
 {
-	P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(AWraithFX1));
+	if (actor->target != NULL)
+	{
+		P_SpawnMissile (actor, actor->target, RUNTIME_CLASS(AWraithFX1));
+	}
 }
 
 //============================================================================

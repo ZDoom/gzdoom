@@ -877,7 +877,7 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 //
 
 bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
-					int arg0, int arg1, int arg2, int always);
+					int arg0, int arg1, int arg2, int always, bool net=false);
 void P_SuspendScript (int script, char *map);
 void P_TerminateScript (int script, char *map);
 void P_DoDeferedScripts (void);

@@ -40,14 +40,12 @@ DSectorEffect::~DSectorEffect ()
 		if (m_Sector->floordata == this)
 		{
 			m_Sector->floordata = NULL;
-			stopinterpolation (&m_Sector->floorplane.d);
-			stopinterpolation (&m_Sector->floortexz);
+			stopinterpolation (INTERP_SectorFloor, m_Sector);
 		}
 		if (m_Sector->ceilingdata == this)
 		{
 			m_Sector->ceilingdata = NULL;
-			stopinterpolation (&m_Sector->ceilingplane.d);
-			stopinterpolation (&m_Sector->ceilingtexz);
+			stopinterpolation (INTERP_SectorCeiling, m_Sector);
 		}
 		if (m_Sector->lightingdata == this)
 		{
@@ -65,20 +63,6 @@ void DSectorEffect::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_Sector;
-
-	if (arc.IsLoading ())
-	{
-		if (m_Sector->floordata == this)
-		{
-			setinterpolation (&m_Sector->floorplane.d);
-			setinterpolation (&m_Sector->floortexz);
-		}
-		if (m_Sector->ceilingdata == this)
-		{
-			setinterpolation (&m_Sector->ceilingplane.d);
-			setinterpolation (&m_Sector->ceilingtexz);
-		}
-	}
 }
 
 IMPLEMENT_CLASS (DMover)
@@ -102,8 +86,7 @@ DMovingFloor::DMovingFloor (sector_t *sector)
 	: DMover (sector)
 {
 	sector->floordata = this;
-	setinterpolation (&sector->floorplane.d);
-	setinterpolation (&sector->floortexz);
+	setinterpolation (INTERP_SectorFloor, sector);
 }
 
 IMPLEMENT_CLASS (DMovingCeiling)
@@ -116,8 +99,7 @@ DMovingCeiling::DMovingCeiling (sector_t *sector)
 	: DMover (sector)
 {
 	sector->ceilingdata = this;
-	setinterpolation (&sector->ceilingplane.d);
-	setinterpolation (&sector->ceilingtexz);
+	setinterpolation (INTERP_SectorCeiling, sector);
 }
 
 //

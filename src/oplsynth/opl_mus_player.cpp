@@ -11,7 +11,7 @@
 
 EXTERN_CVAR (Bool, opl_onechip)
 
-OPLmusicBlock::OPLmusicBlock (const void *mem, int len, int rate, int maxSamples)
+OPLmusicBlock::OPLmusicBlock (FileReader *file, int rate, int maxSamples)
 	: SampleRate (rate), NextTickIn (0), Looping (false)
 {
 	static bool gotInstrs;
@@ -24,9 +24,8 @@ OPLmusicBlock::OPLmusicBlock (const void *mem, int len, int rate, int maxSamples
 
 	if (!gotInstrs)
 	{
-		const void *genmidi = W_MapLumpName ("GENMIDI");
-		int failed = OPLloadBank (genmidi);
-		W_UnMapLump (genmidi);
+		FWadLump data = Wads.OpenLumpName ("GENMIDI");
+		int failed = OPLloadBank (data);
 		if (failed)
 		{
 			return;
@@ -35,8 +34,8 @@ OPLmusicBlock::OPLmusicBlock (const void *mem, int len, int rate, int maxSamples
 
 	SampleBuff = new int[maxSamples];
 
-	scoredata = new BYTE[len];
-	memcpy (scoredata, mem, len);
+	scoredata = new BYTE[file->GetLength()];
+	file->Read (scoredata, file->GetLength());
 	if (OPLinit (TwoChips + 1, rate))
 	{
 		delete[] scoredata;

@@ -53,8 +53,13 @@ enum
 	ML_SECTORS,			// Sectors, from editing
 	ML_REJECT,			// LUT, sector-sector visibility
 	ML_BLOCKMAP,		// LUT, motion clipping, walls/grid element
-	ML_BEHAVIOR			// [RH] Hexen-style scripts. If present, THINGS
+	ML_BEHAVIOR,		// [RH] Hexen-style scripts. If present, THINGS
 						//		and LINEDEFS are also Hexen-style.
+
+	// [RH] These are compressed (and extended) nodes. They combine the data from
+	// vertexes, segs, ssectors, and nodes into a single lump.
+	ML_ZNODES = ML_NODES,
+	ML_GLZNODES = ML_SSECTORS
 };
 
 
@@ -274,7 +279,7 @@ typedef struct
 typedef struct
 {
 	char		name[8];
-	WORD		masked;				// [RH] Unused
+	WORD		Flags;				// [RH] Was unused
 	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
 	BYTE		ScaleY;				// [RH] Same as above
 	short		width;
@@ -283,6 +288,8 @@ typedef struct
 	short		patchcount;
 	mappatch_t	patches[1];
 } maptexture_t;
+
+#define MAPTEXF_WORLDPANNING	0x8000
 
 // [RH] Just for documentation purposes, here's what I think the
 // Strife versions of the above two structures are:
@@ -301,7 +308,7 @@ typedef struct
 typedef struct
 {
 	char		name[8];
-	WORD		masked;				// [RH] Unused
+	WORD		Flags;				// [RH] Was nused
 	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
 	BYTE		ScaleY;				// [RH] Same as above
 	short		width;

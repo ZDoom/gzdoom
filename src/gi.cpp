@@ -84,6 +84,14 @@ static gameborder_t HereticBorder =
 	"bordbl", "bordb", "bordbr"
 };
 
+static gameborder_t StrifeBorder =
+{
+	8, 8,
+	"brdr_tl", "brdr_t", "brdr_tr",
+	"brdr_l",			 "brdr_r",
+	"brdr_bl", "brdr_b", "brdr_br"
+};
+
 gameinfo_t HexenGameInfo =
 {
 	GI_PAGESARERAW | GI_MAPxx | GI_NOLOOPFINALEMUSIC | GI_INFOINDEXED | GI_ALWAYSFALLINGDAMAGE,
@@ -290,4 +298,30 @@ gameinfo_t CommercialGameInfo =
 	0,
 	GAME_Doom,
 	100
+};
+
+gameinfo_t StrifeGameInfo =
+{
+	GI_MAPxx | GI_INFOINDEXED | GI_ALWAYSFALLINGDAMAGE,
+	"TITLEPIC",
+	"CREDIT",
+	"CREDIT",
+	"D_LOGO",
+	280/35,
+	0,
+	200/35,
+	"Chat",
+	"hub",
+	"-NOFLAT",
+	"CREDIT",
+	"CREDIT",
+	"CREDIT",
+	{ { "CREDIT", {4} } },
+	NULL,
+	49,
+	"F_PAVE01",
+	&StrifeBorder,
+	32*FRACUNIT,
+	GAME_Strife,
+	150
 };

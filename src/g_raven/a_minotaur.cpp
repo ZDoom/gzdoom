@@ -272,6 +272,7 @@ IMPLEMENT_STATELESS_ACTOR (AMinotaurFriend, Hexen, -1, 0)
 	PROP_Flags2Clear (MF2_BOSS)
 	PROP_Flags2Set (MF2_TELESTOMP)
 	PROP_Flags3Set (MF3_STAYMORPHED)
+	PROP_Flags3Clear (MF3_DONTMORPH)
 END_DEFAULTS
 
 void AMinotaurFriend::BeginPlay ()

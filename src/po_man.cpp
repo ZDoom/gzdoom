@@ -47,7 +47,7 @@ static void LinkPolyobj (polyobj_t *po);
 static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po);
 static void InitBlockMap (void);
 static void IterFindPolySegs (vertex_t *v1, vertex_t *v2, seg_t **segList);
-static void SpawnPolyobj (int index, int tag, BOOL crush);
+static void SpawnPolyobj (int index, int tag, int type);
 static void TranslateToStartSpot (int tag, int originX, int originY);
 static void DoMovePolyobj (polyobj_t *po, int x, int y);
 static void InitSegLists ();
@@ -86,10 +86,6 @@ void DPolyAction::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << m_PolyObj << m_Speed << m_Dist;
-	if (arc.IsLoading ())
-	{
-		SetInterpolation ();
-	}
 }
 
 DPolyAction::DPolyAction (int polyNum)
@@ -103,33 +99,31 @@ DPolyAction::DPolyAction (int polyNum)
 DPolyAction::~DPolyAction ()
 {
 	polyobj_t *poly = GetPolyobj (m_PolyObj);
-	int i;
 
 	if (poly->specialdata == NULL || poly->specialdata == this)
 	{
 		poly->specialdata = NULL;
-
-		for (i = 0; i < poly->numsegs; ++i)
-		{
-			stopinterpolation (&poly->segs[i]->v1->x);
-			stopinterpolation (&poly->segs[i]->v1->y);
-			stopinterpolation (&poly->segs[i]->v2->x);
-			stopinterpolation (&poly->segs[i]->v2->x);
-		}
+		StopInterpolation ();
 	}
 }
 
 void DPolyAction::SetInterpolation ()
 {
 	polyobj_t *poly = GetPolyobj (m_PolyObj);
-	int i;
-
-	for (i = 0; i < poly->numsegs; ++i)
+	for (int i = 0; i < poly->numsegs; ++i)
 	{
-		setinterpolation (&poly->segs[i]->v1->x);
-		setinterpolation (&poly->segs[i]->v1->y);
-		setinterpolation (&poly->segs[i]->v2->x);
-		setinterpolation (&poly->segs[i]->v2->x);
+		setinterpolation (INTERP_Vertex, poly->segs[i]->v1);
+		setinterpolation (INTERP_Vertex, poly->segs[i]->v2);
+	}
+}
+
+void DPolyAction::StopInterpolation ()
+{
+	polyobj_t *poly = GetPolyobj (m_PolyObj);
+	for (int i = 0; i < poly->numsegs; ++i)
+	{
+		stopinterpolation (INTERP_Vertex, poly->segs[i]->v1);
+		stopinterpolation (INTERP_Vertex, poly->segs[i]->v2);
 	}
 }
 
@@ -367,6 +361,15 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 	pe->m_ySpeed = FixedMul (pe->m_Speed, finesine[pe->m_Angle]);
 	SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
 
+	// Do not interpolate very fast moving polyobjects. The minimum tic count is
+	// 3 instead of 2, because the moving crate effect in Massmouth 2, Hostitality
+	// that this fixes isn't quite fast enough to move the crate back to its start
+	// in just 1 tic.
+	if (dist/speed <= 2)
+	{
+		pe->StopInterpolation ();
+	}
+
 	while ( (mirror = GetPolyobjMirror(polyNum)) )
 	{
 		poly = GetPolyobj(mirror);
@@ -384,6 +387,10 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 		pe->m_ySpeed = FixedMul (pe->m_Speed, finesine[pe->m_Angle]);
 		polyNum = mirror;
 		SN_StartSequence (poly, poly->seqType, SEQ_DOOR);
+		if (dist/speed <= 2)
+		{
+			pe->StopInterpolation ();
+		}
 	}
 	return true;
 }
@@ -458,6 +465,7 @@ void DPolyDoor::Tick ()
 			}
 		}
 		break;
+
 	case PODOOR_SWING:
 		if (PO_RotatePolyobj (m_PolyObj, m_Speed))
 		{
@@ -504,6 +512,7 @@ void DPolyDoor::Tick ()
 			}
 		}			
 		break;
+
 	default:
 		break;
 	}
@@ -683,10 +692,10 @@ void ThrustMobj (AActor *actor, seg_t *seg, polyobj_t *po)
 	actor->momy += thrustY;
 	if (po->crush)
 	{
-		if (!P_CheckPosition (actor, actor->x + thrustX, actor->y + thrustY))
+		if (po->bHurtOnTouch || !P_CheckPosition (actor, actor->x + thrustX, actor->y + thrustY))
 		{
-			P_DamageMobj (actor, NULL, NULL, 3, MOD_CRUSH);
-			P_TraceBleed (3, actor);
+			P_DamageMobj (actor, NULL, NULL, po->crush, MOD_CRUSH);
+			P_TraceBleed (po->crush, actor);
 		}
 	}
 }
@@ -1162,12 +1171,14 @@ static void InitSegLists ()
 
 	for (i = 0; i < numsegs; ++i)
 	{
-		SegListHead[segs[i].v1 - vertexes] = i;
-		if (segs[i].linedef != NULL &&
-			(segs[i].linedef->special == PO_LINE_START ||
-			 segs[i].linedef->special == PO_LINE_EXPLICIT))
+		if (segs[i].linedef != NULL)
 		{
-			KnownPolySegs.Push (i);
+			SegListHead[segs[i].v1 - vertexes] = i;
+			if ((segs[i].linedef->special == PO_LINE_START ||
+				segs[i].linedef->special == PO_LINE_EXPLICIT))
+			{
+				KnownPolySegs.Push (i);
+			}
 		}
 	}
 }
@@ -1231,7 +1242,8 @@ static void IterFindPolySegs (vertex_t *v1, vertex_t *v2p, seg_t **segList)
 		}
 		v2 = segs[j].v2 - vertexes;
 	}
-	I_Error ("IterFindPolySegs: Non-closed Polyobj located.\n");
+	I_Error ("IterFindPolySegs: Non-closed Polyobj around (%ld,%ld).\n",
+		v1->x >> FRACBITS, v1->y >> FRACBITS);
 }
 
 
@@ -1241,7 +1253,7 @@ static void IterFindPolySegs (vertex_t *v1, vertex_t *v2p, seg_t **segList)
 //
 //==========================================================================
 
-static void SpawnPolyobj (int index, int tag, BOOL crush)
+static void SpawnPolyobj (int index, int tag, int type)
 {
 	size_t ii;
 	int i;
@@ -1275,7 +1287,8 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 			polyobjs[index].segs = new seg_t *[PolySegCount];
 			polyobjs[index].segs[0] = &segs[i]; // insert the first seg
 			IterFindPolySegs (segs[i].v1, segs[i].v2, polyobjs[index].segs+1);
-			polyobjs[index].crush = crush;
+			polyobjs[index].crush = (type != PO_SPAWN_TYPE) ? 3 : 0;
+			polyobjs[index].bHurtOnTouch = (type == PO_SPAWNHURT_TYPE);
 			polyobjs[index].tag = tag;
 			polyobjs[index].seqType = segs[i].linedef->args[2];
 			if (polyobjs[index].seqType < 0 || polyobjs[index].seqType > 63)
@@ -1352,7 +1365,8 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 		if (polyobjs[index].numsegs)
 		{
 			PolySegCount = polyobjs[index].numsegs; // PolySegCount used globally
-			polyobjs[index].crush = crush;
+			polyobjs[index].crush = (type != PO_SPAWN_TYPE) ? 3 : 0;
+			polyobjs[index].bHurtOnTouch = (type == PO_SPAWNHURT_TYPE);
 			polyobjs[index].tag = tag;
 			polyobjs[index].segs = new seg_t *[polyobjs[index].numsegs];
 			for (i = 0; i < polyobjs[index].numsegs; i++)
@@ -1481,12 +1495,14 @@ void PO_Init (void)
 	// Find the startSpot points, and spawn each polyobj
 	for (polyspawn = polyspawns, prev = &polyspawns; polyspawn;)
 	{
-		// 9301 (3001) = no crush, 9302 (3002) = crushing
-		if (polyspawn->type == PO_SPAWN_TYPE || polyspawn->type == PO_SPAWNCRUSH_TYPE)
+		// 9301 (3001) = no crush, 9302 (3002) = crushing, 9303 = hurting touch
+		if (polyspawn->type == PO_SPAWN_TYPE ||
+			polyspawn->type == PO_SPAWNCRUSH_TYPE ||
+			polyspawn->type == PO_SPAWNHURT_TYPE)
 		{ // Polyobj StartSpot Pt.
 			polyobjs[polyIndex].startSpot[0] = polyspawn->x;
 			polyobjs[polyIndex].startSpot[1] = polyspawn->y;
-			SpawnPolyobj(polyIndex, polyspawn->angle, (polyspawn->type == PO_SPAWNCRUSH_TYPE));
+			SpawnPolyobj(polyIndex, polyspawn->angle, polyspawn->type);
 			polyIndex++;
 			*prev = polyspawn->next;
 			delete polyspawn;

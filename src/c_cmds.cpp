@@ -206,6 +206,7 @@ CCMD (chase)
 			for (i = 0; i < MAXPLAYERS; i++)
 				players[i].cheats |= CF_CHASECAM;
 		}
+		R_ResetViewInterpolation ();
 	}
 	else
 	{
@@ -244,7 +245,7 @@ CCMD (idclev)
 
 		// Catch invalid maps.
 		mapname = CalcMapName (epsd, map);
-		if (W_CheckNumForName (mapname) == -1)
+		if (Wads.CheckNumForName (mapname) == -1)
 			return;
 
 		// So be it.
@@ -267,7 +268,7 @@ CCMD (hxvisit)
 		if (CheckWarpTransMap (mapname, false))
 		{
 			// Just because it's in MAPINFO doesn't mean it's in the wad.
-			if (W_CheckNumForName (mapname) != -1)
+			if (Wads.CheckNumForName (mapname) != -1)
 			{
 				// So be it.
 				Printf ("%s\n", GStrings(STSTR_CLEV));
@@ -295,7 +296,7 @@ CCMD (changemap)
 
 	if (argv.argc() > 1)
 	{
-		if (W_CheckNumForName (argv[1]) == -1)
+		if (Wads.CheckNumForName (argv[1]) == -1)
 		{
 			Printf ("No map %s\n", argv[1]);
 		}

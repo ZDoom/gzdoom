@@ -45,6 +45,7 @@
 #define LEVEL_NOINTERMISSION	0x00000001
 #define LEVEL_NOINVENTORYBAR	0x00000002		// This effects Doom only, since it's the only one without a standard inventory bar.
 #define	LEVEL_DOUBLESKY			0x00000004
+#define LEVEL_HASFADETABLE		0x00000008		// Level uses Hexen's fadetable mapinfo to get fog
 
 #define LEVEL_MAP07SPECIAL		0x00000010
 #define LEVEL_BRUISERSPECIAL	0x00000020
@@ -88,61 +89,35 @@ class FBehavior;
 
 struct level_info_s
 {
-	char		mapname[8];
+	char		mapname[9];
 	int			levelnum;
-	char		pname[8];
-	char		nextmap[8];
-	char		secretmap[8];
-	char		skypic1[8];
+	char		pname[9];
+	char		nextmap[9];
+	char		secretmap[9];
+	char		skypic1[9];
 	int			cluster;
 	int			partime;
 	DWORD		flags;
 	char		*music;
 	char		*level_name;
+	char		fadetable[9];
+	SBYTE		WallVertLight, WallHorizLight;
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
 	DWORD		snapshotVer;
 	struct acsdefered_s *defered;
-};
-typedef struct level_info_s level_info_t;
-
-// The start of level_pwad_info_s must be the same as level_info_s.
-// I previously just subclassed it from level_info_s, but that makes
-// GCC 3.2 treat it as a non-POD class and spew lots of warnings when
-// using offsetof on it for the MAPINFO parser in g_level.cpp.
-
-struct level_pwad_info_s
-{
-	char		mapname[8];
-	int			levelnum;
-	char		pname[8];
-	char		nextmap[8];
-	char		secretmap[8];
-	char		skypic1[8];
-	int			cluster;
-	int			partime;
-	DWORD		flags;
-	char		*music;
-	char		*level_name;
-	int			musicorder;
-	FCompressedMemFile	*snapshot;
-	DWORD		snapshotVer;
-	struct acsdefered_s *defered;
-//------------------------------------//
 	char		skypic2[8];
 	fixed_t		skyspeed1;
 	fixed_t		skyspeed2;
 	DWORD		fadeto;
-	char		fadetable[8];
 	DWORD		outsidefog;
 	int			cdtrack;
 	unsigned int cdid;
-	SBYTE		WallVertLight, WallHorizLight;
 	float		gravity;
 	float		aircontrol;
 	int			WarpTrans;
 };
-typedef struct level_pwad_info_s level_pwad_info_t;
+typedef struct level_info_s level_info_t;
 
 // [RH] These get zeroed every tic and are updated by thinkers.
 struct FSectorScrollValues
@@ -230,7 +205,7 @@ extern TArray<EndSequence> EndSequences;
 struct cluster_info_s
 {
 	int			cluster;
-	char		finaleflat[8];
+	char		finaleflat[9];
 	char		*exittext;
 	char		*entertext;
 	char		*messagemusic;
@@ -248,8 +223,9 @@ typedef struct cluster_info_s cluster_info_t;
 #define CLUSTER_FINALEPIC		0x00000008
 
 extern level_locals_t level;
-extern level_info_t LevelInfos[];
-extern cluster_info_t ClusterInfos[];
+
+extern level_info_t *wadlevelinfos;
+extern int numwadlevelinfos;
 
 extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
 extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
@@ -292,6 +268,8 @@ void G_ParseMapInfo (void);
 void G_ClearSnapshots (void);
 void G_SnapshotLevel (void);
 void G_UnSnapshotLevel (bool keepPlayers);
-void G_SerializeSnapshots (FILE *file, bool storing);
+struct PNGHandle;
+void G_ReadSnapshots (PNGHandle *png);
+void G_WriteSnapshots (FILE *file);
 
 #endif //__G_LEVEL_H__

@@ -55,7 +55,6 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICON1               ICON                    "icon1.ico"
-IDI_EAX                 ICON                    "icon2.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -135,7 +134,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,0,47,0
+ FILEVERSION 2,0,48,0
  PRODUCTVERSION 2,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -154,7 +153,7 @@ BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
             VALUE "CompanyName", " "
             VALUE "FileDescription", "ZDoom"
-            VALUE "FileVersion", "2.0.47i"
+            VALUE "FileVersion", "2.0.48"
             VALUE "InternalName", "ZDoom"
             VALUE "LegalCopyright", "Copyright © 1993-1996, id Software & 1998-2003, Randy Heit"
             VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."

@@ -75,6 +75,7 @@
 #ifdef __GNUC__
 // I don't know if the new MinGW DirectX 9 libs define these or not.
 const GUID IID_IDirectInput8A = { 0xBF798030,0x483A,0x4DA2,{0xAA,0x99,0x5D,0x64,0xED,0x36,0x97,0x00}};
+const GUID CLSID_DirectInput8 = { 0x25E609E4,0xB259,0x11CF,{0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00}};
 static DIOBJECTDATAFORMAT MouseObjectData2[11] =
 {
 	{&GUID_XAxis,  0, 0x00ffff03, 0},
@@ -105,7 +106,7 @@ const DIDATAFORMAT c_dfDIMouse2 =
 #include "v_video.h"
 #include "i_sound.h"
 #include "m_menu.h"
-
+#include "g_game.h"
 #include "d_main.h"
 #include "d_gui.h"
 #include "c_console.h"
@@ -214,9 +215,6 @@ static const size_t Axes[8] =
 };
 static const BYTE POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x09, 0x00 };
 
-//Other globals
-static int GDx,GDy;
-
 extern constate_e ConsoleState;
 
 BOOL AppActive = TRUE;
@@ -224,6 +222,7 @@ int SessionState = 0;
 
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR (Bool,  use_joystick,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -925,6 +924,9 @@ void DI_JoyCheck ()
 	JoyAxes[JOYAXIS_SIDE] *= joy_sidespeed;
 	JoyAxes[JOYAXIS_UP] *= joy_upspeed;
 
+	G_AddViewPitch (int((JoyAxes[JOYAXIS_PITCH] * 2048) / 256));
+	G_AddViewAngle (int((-1280 * JoyAxes[JOYAXIS_YAW]) / 256));
+
 	// Send button up/down events
 
 	event.data2 = event.data3 = 0;
@@ -972,91 +974,6 @@ void DI_JoyCheck ()
 		}
 		JoyPOV[i] = pov;
 	}
-
-#if 0
-	event_t joyevent;
-	fixed_t xscale, yscale;
-	int xdead, ydead;
-
-	if (JoyActive)
-	{
-		JoyStats.dwFlags = JOY_RETURNALL;
-		if (joyGetPosEx (JoyDevice, &JoyStats))
-		{
-			JoyActive = 0;
-			return;
-		}
-		memset (&joyevent, 0, sizeof(joyevent));
-		joyevent.type = EV_Joystick;
-		joyevent.x = JoyStats.dwXpos - JoyBias.X;
-		joyevent.y = JoyStats.dwYpos - JoyBias.Y;
-
-		xdead = (int)((float)JoyBias.X * joy_xthreshold);
-		ydead = (int)((float)JoyBias.Y * joy_ythreshold);
-		xscale = (int)(16777216 / ((float)JoyBias.X * (1 - joy_xthreshold)) * joy_xsensitivity * joy_speedmultiplier);
-		yscale = (int)(16777216 / ((float)JoyBias.Y * (1 - joy_ythreshold)) * joy_ysensitivity * joy_speedmultiplier);
-
-		if (abs (joyevent.x) < xdead)
-		{
-			joyevent.x = 0;
-		}
-		else if (joyevent.x > 0)
-		{
-			joyevent.x = FixedMul (joyevent.x - xdead, xscale);
-		}
-		else if (joyevent.x < 0)
-		{
-			joyevent.x = FixedMul (joyevent.x + xdead, xscale);
-		}
-		if (joyevent.x > 256)
-			joyevent.x = 256;
-		else if (joyevent.x < -256)
-			joyevent.x = -256;
-
-		if (abs (joyevent.y) < ydead)
-		{
-			joyevent.y = 0;
-		}
-		else if (joyevent.y > 0)
-		{
-			joyevent.y = FixedMul (joyevent.y - ydead, yscale);
-		}
-		else if (joyevent.y < 0)
-		{
-			joyevent.y = FixedMul (joyevent.y + ydead, yscale);
-		}
-		if (joyevent.y > 256)
-			joyevent.y = 256;
-		else if (joyevent.y < -256)
-			joyevent.y = -256;
-
-		D_PostEvent (&joyevent);
-
-		{	/* Send out button up/down events */
-			static DWORD oldButtons = 0;
-			int i;
-			DWORD buttons, mask;
-
-			buttons = JoyStats.dwButtons;
-			mask = buttons ^ oldButtons;
-
-			joyevent.data2 = joyevent.data3 = 0;
-			for (i = 0; i < 32; i++, buttons >>= 1, mask >>= 1)
-			{
-				if (mask & 1)
-				{
-					joyevent.data1 = KEY_JOY1 + i;
-					if (buttons & 1)
-						joyevent.type = EV_KeyDown;
-					else
-						joyevent.type = EV_KeyUp;
-					D_PostEvent (&joyevent);
-				}
-			}
-			oldButtons = JoyStats.dwButtons;
-		}
-	}
-#endif
 }
 
 bool SetJoystickSection (bool create)
@@ -1284,13 +1201,13 @@ static HRESULT InitJoystick ()
 
 static void DI_Acquire (LPDIRECTINPUTDEVICE8 mouse)
 {
-	HRESULT hr = mouse->Acquire ();
+	mouse->Acquire ();
 	SetCursorState (NativeMouse);
 }
 
 static void DI_Unacquire (LPDIRECTINPUTDEVICE8 mouse)
 {
-	HRESULT hr = mouse->Unacquire ();
+	mouse->Unacquire ();
 	SetCursorState (TRUE);
 }
 
@@ -1456,7 +1373,7 @@ BOOL I_InitInput (void *hwnd)
 			DInputDLL = LoadLibrary ("dinput.dll");
 			if (DInputDLL == NULL)
 			{
-				I_FatalError ("Could not load dinput.dll: %08x", GetLastError());
+				I_FatalError ("Could not load dinput.dll: %08lx", GetLastError());
 			}
 
 			typedef HRESULT (*blah)(HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
@@ -1470,7 +1387,7 @@ BOOL I_InitInput (void *hwnd)
 			hr = dic (g_hInst, 0x0300, &g_pdi3, NULL);
 			if (FAILED(hr))
 			{
-				I_FatalError ("Could not create DirectInput interface: %08x", hr);
+				I_FatalError ("Could not create DirectInput interface: %08lx", hr);
 			}
 
 			Printf ("Tip for NT 4: \"regsvr32 dinput.dll\"\n");
@@ -1479,14 +1396,14 @@ BOOL I_InitInput (void *hwnd)
 		{
 			if (FAILED(hr))
 			{
-				I_FatalError ("Could not create DirectInput interface: %08x", hr);
+				I_FatalError ("Could not create DirectInput interface: %08lx", hr);
 			}
 			hr = g_pdi3->Initialize (g_hInst, 0x0300);
 			if (FAILED(hr))
 			{
 				g_pdi3->Release ();
 				g_pdi3 = NULL;
-				I_FatalError ("Could not initialize DirectInput interface: %08x", hr);
+				I_FatalError ("Could not initialize DirectInput interface: %08lx", hr);
 			}
 		}
 	}
@@ -1676,10 +1593,31 @@ static void WheelMoved ()
 	}
 }
 
+static void PostMouseMove (int x, int y)
+{
+	static int lastx = 0, lasty = 0;
+	event_t ev = { 0 };
+
+	if (m_filter)
+	{
+		ev.x = (x + lastx) / 2;
+		ev.y = (y + lasty) / 2;
+	}
+	else
+	{
+		ev.x = x;
+		ev.y = y;
+	}
+	if (ev.x | ev.y)
+	{
+		ev.type = EV_Mouse;
+		D_PostEvent (&ev);
+	}
+}
+
 static void MouseRead_Win32 ()
 {
 	POINT pt;
-	event_t ev;
 	int x, y;
 
 	if (!HaveFocus || !MakeMouseEvents || !GetCursorPos (&pt))
@@ -1694,16 +1632,12 @@ static void MouseRead_Win32 ()
 		y *= 2;
 	}
 
-	CenterMouse_Win32 (pt.x, pt.y);
-
 	if (x | y)
 	{
-		memset (&ev, 0, sizeof(ev));
-		ev.x = x;
-		ev.y = y;
-		ev.type = EV_Mouse;
-		D_PostEvent (&ev);
+		CenterMouse_Win32 (pt.x, pt.y);
 	}
+
+	PostMouseMove (x, y);
 }
 
 static void MouseRead_DI ()
@@ -1712,10 +1646,11 @@ static void MouseRead_DI ()
 	DWORD dwElements;
 	HRESULT hr;
 	int count = 0;
-
+	int dx, dy;
 	event_t event;
-	GDx=0;
-	GDy=0;
+
+	dx = 0;
+	dy = 0;
 
 	if (!HaveFocus || NativeMouse || !g_pMouse)
 		return;
@@ -1744,8 +1679,8 @@ static void MouseRead_DI ()
 		/* Look at the element to see what happened */
 		switch (od.dwOfs)
 		{
-		case DIMOFS_X:	GDx += od.dwData;						break;
-		case DIMOFS_Y:	GDy += od.dwData;						break;
+		case DIMOFS_X:	dx += od.dwData;						break;
+		case DIMOFS_Y:	dy += od.dwData;						break;
 		case DIMOFS_Z:	WheelMove += od.dwData; WheelMoved ();	break;
 
 		/* [RH] Mouse button events mimic keydown/up events */
@@ -1768,14 +1703,7 @@ static void MouseRead_DI ()
 		}
 	}
 
-	if (count)
-	{
-		memset (&event, 0, sizeof(event));
-		event.type = EV_Mouse;
-		event.x = m_noprescale ? GDx : GDx<<2;
-		event.y = -GDy;
-		D_PostEvent (&event);
-	}
+	PostMouseMove (m_noprescale ? dx : dx<<2, -dy);
 }
 
 // Initialize the keyboard

@@ -233,7 +233,11 @@ static void DoGiveInv (player_t *player, const char *type, int amount)
 	}
 
 	// If the item was a weapon, don't bring it up automatically
-	player->pendingweapon = savedpendingweap;
+	if (savedpendingweap != NUMWEAPONS)
+	{
+		player->pendingweapon = savedpendingweap;
+		P_CheckAmmo (player);
+	}
 }
 
 static void GiveInventory (AActor *activator, const char *type, int amount)
@@ -744,10 +748,12 @@ FBehavior::FBehavior (int lumpnum)
 	int i;
 
 	NumScripts = 0;
+	NumFlaggedScripts = 0;
 	NumFunctions = 0;
 	NumArrays = 0;
 	NumTotalArrays = 0;
 	Scripts = NULL;
+	ScriptFlags = NULL;
 	Functions = NULL;
 	Arrays = NULL;
 	ArrayStore = NULL;
@@ -757,7 +763,7 @@ FBehavior::FBehavior (int lumpnum)
 	memset (MapVarStore, 0, sizeof(MapVarStore));
 	ModuleName[0] = 0;
 
-	len = W_LumpLength (lumpnum);
+	len = Wads.LumpLength (lumpnum);
 
 	// Any behaviors smaller than 32 bytes cannot possibly contain anything useful.
 	// (16 bytes for a completely empty behavior + 12 bytes for one script header
@@ -769,7 +775,7 @@ FBehavior::FBehavior (int lumpnum)
 	}
 
 	object = new byte[len];
-	W_ReadLump (lumpnum, object);
+	Wads.ReadLump (lumpnum, object);
 
 	if (object[0] != 'A' || object[1] != 'C' || object[2] != 'S')
 	{
@@ -791,7 +797,7 @@ FBehavior::FBehavior (int lumpnum)
 		return;
 	}
 
-	W_GetLumpName (ModuleName, lumpnum);
+	Wads.GetLumpName (ModuleName, lumpnum);
 	ModuleName[8] = 0;
 	Data = object;
 	DataSize = len;
@@ -859,6 +865,17 @@ FBehavior::FBehavior (int lumpnum)
 			}
 		}
 
+		ScriptFlags = FindChunk (MAKE_ID('S','F','L','G'));
+		if (ScriptFlags == NULL)
+		{
+			NumFlaggedScripts = 0;
+		}
+		else
+		{
+			NumFlaggedScripts = ((DWORD *)ScriptFlags)[1] / 4;
+			ScriptFlags += 8;
+		}
+
 		UnencryptStrings ();
 	}
 
@@ -866,6 +883,10 @@ FBehavior::FBehavior (int lumpnum)
 	if (NumScripts > 0)
 	{
 		qsort (Scripts, NumScripts, 8, SortScripts);
+	}
+	if (NumFlaggedScripts > 0)
+	{
+		qsort (ScriptFlags, NumFlaggedScripts, 4, SortScriptFlags);
 	}
 
 	if (Format == ACS_Old)
@@ -1016,7 +1037,7 @@ FBehavior::FBehavior (int lumpnum)
 				if (parse[i])
 				{
 					FBehavior *module = NULL;
-					int lump = W_CheckNumForName (&parse[i], ns_acslibrary);
+					int lump = Wads.CheckNumForName (&parse[i], ns_acslibrary);
 					if (lump < 0)
 					{
 						Printf ("Could not find ACS library %s.\n", &parse[i]);
@@ -1163,6 +1184,13 @@ int STACK_ARGS FBehavior::SortScripts (const void *a, const void *b)
 	return ptr1->Number - ptr2->Number;
 }
 
+int STACK_ARGS FBehavior::SortScriptFlags (const void *a, const void *b)
+{
+	ScriptFlagsPtr *ptr1 = (ScriptFlagsPtr *)a;
+	ScriptFlagsPtr *ptr2 = (ScriptFlagsPtr *)b;
+	return ptr1->Number - ptr2->Number;
+}
+
 void FBehavior::UnencryptStrings ()
 {
 	DWORD *prevchunk = NULL;
@@ -1249,6 +1277,13 @@ int *FBehavior::StaticFindScript (int script, FBehavior *&module)
 		}
 	}
 	return NULL;
+}
+
+WORD FBehavior::GetScriptFlags (int script) const
+{
+	const ScriptFlagsPtr *ptr = BinarySearch<ScriptFlagsPtr, WORD>
+		((ScriptFlagsPtr *)ScriptFlags, NumFlaggedScripts, &ScriptFlagsPtr::Number, (WORD)script);
+	return ptr ? ptr->Flags : 0;
 }
 
 ScriptFunction *FBehavior::GetFunction (int funcnum, FBehavior *&module) const
@@ -1692,6 +1727,15 @@ void DLevelScript::Serialize (FArchive &arc)
 	}
 
 	arc << activefont;
+
+	if (SaveVersion >= 215)
+	{
+		arc << hudwidth << hudheight;
+	}
+	else
+	{
+		hudwidth = hudheight = 0;
+	}
 }
 
 DLevelScript::DLevelScript ()
@@ -1841,7 +1885,7 @@ void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 	if (flatname == NULL)
 		return;
 
-	flat = TexMan.GetTexture (flatname, FTexture::TEX_Flat);
+	flat = TexMan.GetTexture (flatname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 
 	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
 	{
@@ -1881,10 +1925,7 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 
 	side = !!side;
 
-	texture = TexMan.CheckForTexture (texname, FTexture::TEX_Wall);
-
-	if (texture < 0)
-		return;
+	texture = TexMan.GetTexture (texname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
 	while ((linenum = P_FindLineFromID (lineid, linenum)) >= 0)
 	{
@@ -1938,6 +1979,11 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 				{
 					level.total_monsters--;
 				}
+				// Same, for items
+				if (actor->flags & MF_COUNTITEM)
+				{
+					level.total_items--;
+				}
 				actor->Destroy ();
 				actor = NULL;
 			}
@@ -1970,7 +2016,7 @@ void DLevelScript::DoFadeRange (int r1, int g1, int b1, int a1,
 	player_t *viewer;
 	float ftime = (float)time / 65536.f;
 	bool fadingFrom = a1 >= 0;
-	float fr1 GCCNOWARN, fg1, fb1, fa1;
+	float fr1 = 0, fg1 = 0, fb1 = 0, fa1 = 0;
 	float fr2, fg2, fb2, fa2;
 	int i;
 
@@ -2042,13 +2088,15 @@ void DLevelScript::DoSetFont (int fontnum)
 	activefont = FFont::FindFont (fontname);
 	if (activefont == NULL)
 	{
-		int num = W_CheckNumForName (fontname);
+		int num = Wads.CheckNumForName (fontname);
 		if (num != -1)
 		{
-			const BYTE *data = (const BYTE *)W_MapLumpNum (num);
-			bool fon = data[0] == 'F' && data[1] == 'O' && data[2] == 'N';
-			W_UnMapLump (data);
-			if (fon)
+			char head[3];
+			{
+				FWadLump lump = Wads.OpenLumpNum (num);
+				lump.Read (head, 3);
+			}
+			if (head[0] == 'F' && head[1] == 'O' && head[2] == 'N')
 			{
 				activefont = new FSingleLumpFont (fontname, num);
 			}
@@ -2523,7 +2571,7 @@ void DLevelScript::RunScript ()
 				}
 				else
 				{
-					locals = &Stack[sp - activeFunction->ArgCount - activeFunction->LocalCount];
+					locals = &Stack[sp - activeFunction->ArgCount - activeFunction->LocalCount - sizeof(CallReturn)/sizeof(int)];
 				}
 				if (!retState->bDiscardResult)
 				{
@@ -2989,19 +3037,28 @@ void DLevelScript::RunScript ()
 			break;
 
 		case PCD_DELAY:
-			state = SCRIPT_Delayed;
 			statedata = STACK(1);
+			if (statedata > 0)
+			{
+				state = SCRIPT_Delayed;
+			}
 			sp--;
 			break;
 
 		case PCD_DELAYDIRECT:
-			state = SCRIPT_Delayed;
 			statedata = NEXTWORD;
+			if (statedata > 0)
+			{
+				state = SCRIPT_Delayed;
+			}
 			break;
 
 		case PCD_DELAYDIRECTB:
-			state = SCRIPT_Delayed;
 			statedata = *(BYTE *)pc;
+			if (statedata > 0)
+			{
+				state = SCRIPT_Delayed;
+			}
 			pc = (int *)((BYTE *)pc + 1);
 			break;
 
@@ -3299,13 +3356,13 @@ void DLevelScript::RunScript ()
 					switch (type & ~HUDMSG_LOG)
 					{
 					default:	// normal
-						msg = new DHUDMessage (work, x, y, color, holdTime);
+						msg = new DHUDMessage (work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ?
 								FIXED2FLOAT(Stack[optstart]) : 0.5f;
-							msg = new DHUDMessageFadeOut (work, x, y, color, holdTime, fadeTime);
+							msg = new DHUDMessageFadeOut (work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
@@ -3314,7 +3371,7 @@ void DLevelScript::RunScript ()
 								FIXED2FLOAT(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ?
 								FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
-							msg = new DHUDMessageTypeOnFadeOut (work, x, y, color, typeTime, holdTime, fadeTime);
+							msg = new DHUDMessageTypeOnFadeOut (work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
 					}
@@ -4036,6 +4093,36 @@ void DLevelScript::RunScript ()
 			// Thing_Projectile2 (tid, type, angle, speed, vspeed, gravity, newtid);
 			P_Thing_Projectile (STACK(7), STACK(6), ((angle_t)(STACK(5)<<24)),
 				STACK(4)<<(FRACBITS-3), STACK(3)<<(FRACBITS-3), 0, NULL, STACK(2), STACK(1), false);
+			sp -= 7;
+			break;
+
+		case PCD_STRLEN:
+			STACK(1) = strlen(FBehavior::StaticLookupString (STACK(1)));
+			break;
+
+		case PCD_GETCVAR:
+			{
+				FBaseCVar *cvar = FindCVar (FBehavior::StaticLookupString (STACK(1)), NULL);
+				if (cvar == NULL)
+				{
+					STACK(1) = 0;
+				}
+				else
+				{
+					UCVarValue val = cvar->GetGenericRep (CVAR_Int);
+					STACK(1) = val.Int;
+				}
+			}
+			break;
+
+		case PCD_SETHUDSIZE:
+			hudwidth = abs (STACK(3));
+			hudheight = abs (STACK(2));
+			if (STACK(1) != 0)
+			{ // Negative height means to cover the status bar
+				hudheight = -hudheight;
+			}
+			sp -= 3;
 			break;
 		}
 	}
@@ -4096,6 +4183,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, int *code, FBeh
 	activationline = where;
 	lineSide = lineside;
 	activefont = SmallFont;
+	hudwidth = hudheight = 0;
 	if (delay)
 	{
 		// From Hexen: Give the world some time to set itself up before running open scripts.
@@ -4196,8 +4284,10 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, i
 	}
 }
 
+EXTERN_CVAR (Bool, sv_cheats)
+
 bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
-					int arg0, int arg1, int arg2, int always)
+					int arg0, int arg1, int arg2, int always, bool net)
 {
 	if (map == NULL || 0 == strnicmp (level.mapname, map, 8))
 	{
@@ -4206,13 +4296,27 @@ bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineS
 
 		if ((scriptdata = FBehavior::StaticFindScript (script, module)) != NULL)
 		{
+			if (net && netgame && !sv_cheats)
+			{
+				// If playing multiplayer and cheats are disallowed, check to
+				// make sure only net scripts are run.
+				if (!(module->GetScriptFlags (script) & SCRIPTF_Net))
+				{
+					Printf (PRINT_BOLD, "%s tried to puke script %d (%d, %d, %d)\n",
+						who->player->userinfo.netname, script, arg0, arg1, arg2);
+					return false;
+				}
+			}
 			return P_GetScriptGoing (who, where, script,
 									 scriptdata, module,
 									 lineSide, arg0, arg1, arg2, always, false);
 		}
 		else
 		{
-			Printf ("P_StartScript: Unknown script %d\n", script);
+			if (!net || who->player == &players[consoleplayer])
+			{
+				Printf ("P_StartScript: Unknown script %d\n", script);
+			}
 		}
 	}
 	else

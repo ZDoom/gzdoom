@@ -62,6 +62,8 @@ FColorMatcher ColorMatcher;
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;
 
+static int STACK_ARGS sortforremap (const void *a, const void *b);
+static int STACK_ARGS sortforremap2 (const void *a, const void *b);
 
 /**************************/
 /* Gamma correction stuff */
@@ -98,7 +100,7 @@ int BestColor (const DWORD *pal_in, int r, int g, int b, int first, int num)
 	if (CPU.bMMX)
 	{
 		int pre = 256 - num;
-		return BestColor_MMX (((first+pre)<<24)|(r<<16)|(g<<8)|b, pal_in-pre);
+		return BestColor_MMX (((first+pre)<<24)|(r<<16)|(g<<8)|b, pal_in-pre) - pre;
 	}
 #endif
 	const PalEntry *pal = (const PalEntry *)pal_in;
@@ -133,17 +135,161 @@ FPalette::FPalette (const BYTE *colors)
 
 void FPalette::SetPalette (const BYTE *colors)
 {
+	for (int i = 0; i < 256; i++, colors += 3)
+	{
+		BaseColors[i] = PalEntry (colors[0], colors[1], colors[2]);
+		Remap[i] = i;
+	}
+	GammaAdjust ();
+}
+
+// In ZDoom's new texture system, color 0 is used as the transparent color.
+// But color 0 is also a valid color for Doom engine graphics. What to do?
+// Simple. The default palette for every game has at least one duplicate
+// color, so find a duplicate pair of palette entries, make one of them a
+// duplicate of color 0, and remap every graphic so that it uses that entry
+// instead of entry 0.
+void FPalette::MakeGoodRemap ()
+{
+	PalEntry color0 = BaseColors[0];
 	int i;
 
-	for (i = 0; i < 256; i++, colors += 3)
-		BaseColors[i] = PalEntry (colors[0], colors[1], colors[2]);
+	// First try for an exact match of color 0. Only Hexen does not have one.
+	for (i = 1; i < 256; ++i)
+	{
+		if (BaseColors[i] == color0)
+		{
+			Remap[0] = i;
+			break;
+		}
+	}
 
-	GammaAdjust ();
+	// If there is no duplicate of color 0, find the first set of duplicate
+	// colors and make one of them a duplicate of color 0. In Hexen's PLAYPAL
+	// colors 209 and 229 are the only duplicates, but we cannot assume
+	// anything because the player might be using a custom PLAYPAL where those
+	// entries are not duplicates.
+	if (Remap[0] == 0)
+	{
+		PalEntry sortcopy[256];
+
+		for (i = 0; i < 256; ++i)
+		{
+			sortcopy[i] = BaseColors[i] | (i << 24);
+		}
+		qsort (sortcopy, 256, 4, sortforremap);
+		for (i = 255; i > 0; --i)
+		{
+			if ((sortcopy[i] & 0xFFFFFF) == (sortcopy[i-1] & 0xFFFFFF))
+			{
+				int new0 = sortcopy[i].a;
+				Remap[0] = new0;
+				Remap[new0] = sortcopy[i-1].a;
+				BaseColors[new0] = color0;
+				Colors[new0] = Colors[0];
+			}
+		}
+	}
+
+	// If there were no duplicates, InitPalette() will remap color 0 to the
+	// closest matching color. Hopefully nobody will use a palette where all
+	// 256 entries are different. :-)
+}
+
+static int STACK_ARGS sortforremap (const void *a, const void *b)
+{
+	return (*(const DWORD *)a & 0xFFFFFF) - (*(const DWORD *)b & 0xFFFFFF);
+}
+
+struct RemappingWork
+{
+	DWORD Color;
+	BYTE Foreign;	// 0 = local palette, 1 = foreign palette
+	BYTE PalEntry;	// Entry # in the palette
+	BYTE Pad[2];
+};
+
+void FPalette::MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, int numcolors) const
+{
+	RemappingWork workspace[255+256];
+	int i, j, k;
+
+	// Fill in workspace with the colors from the passed palette and this palette.
+	// By sorting this array, we can quickly find exact matches so that we can
+	// minimize the time spent calling BestColor for near matches.
+
+	for (i = 1; i < 256; ++i)
+	{
+		workspace[i-1].Color = DWORD(BaseColors[i]) & 0xFFFFFF;
+		workspace[i-1].Foreign = 0;
+		workspace[i-1].PalEntry = i;
+	}
+	for (i = k = 0, j = 255; i < numcolors; ++i)
+	{
+		if (useful == NULL || useful[i] != 0)
+		{
+			workspace[j].Color = colors[i] & 0xFFFFFF;
+			workspace[j].Foreign = 1;
+			workspace[j].PalEntry = i;
+			++j;
+			++k;
+		}
+		else
+		{
+			remap[i] = 0;
+		}
+	}
+	qsort (workspace, j, sizeof(RemappingWork), sortforremap2);
+
+	// Find exact matches
+	--j;
+	for (i = 0; i < j; ++i)
+	{
+		if (workspace[i].Foreign)
+		{
+			if (!workspace[i+1].Foreign && workspace[i].Color == workspace[i+1].Color)
+			{
+				remap[workspace[i].PalEntry] = workspace[i+1].PalEntry;
+				workspace[i].Foreign = 2;
+				++i;
+				--k;
+			}
+		}
+	}
+
+	// Find near matches
+	if (k > 0)
+	{
+		for (i = 0; i <= j; ++i)
+		{
+			if (workspace[i].Foreign == 1)
+			{
+				remap[workspace[i].PalEntry] = BestColor ((DWORD *)BaseColors,
+					RPART(workspace[i].Color), GPART(workspace[i].Color), BPART(workspace[i].Color),
+					0, 255);
+			}
+		}
+	}
+}
+
+static int STACK_ARGS sortforremap2 (const void *a, const void *b)
+{
+	const RemappingWork *ap = (const RemappingWork *)a;
+	const RemappingWork *bp = (const RemappingWork *)b;
+
+	if (ap->Color == bp->Color)
+	{
+		return bp->Foreign - ap->Foreign;
+	}
+	else
+	{
+		return ap->Color - bp->Color;
+	}
 }
 
 void InitPalette ()
 {
-	const BYTE *pal;
+	BYTE pal[768];
 	BYTE *shade;
 	int c;
 	const char *buildPal;
@@ -151,15 +297,26 @@ void InitPalette ()
 	buildPal = Args.CheckValue ("-bpal");
 	if (buildPal != NULL)
 	{
-		BYTE bpal[768];
 		int f = open (buildPal, _O_BINARY | _O_RDONLY);
-		if (f >= 0 && read (f, bpal, 768) == 768)
+		if (f >= 0 && read (f, pal, 768) == 768)
 		{
-			for (c = 0; c < 768; c++)
+			// Reverse the palette because BUILD used entry 255 as
+			// transparent, but we use 0 as transparent.
+			for (c = 0; c < 768/2; c += 3)
 			{
-				bpal[c] = (bpal[c] << 2) | (bpal[c] >> 4);
+				BYTE temp[3] =
+				{
+					(pal[c] << 2) | (pal[c] >> 4),
+					(pal[c+1] << 2) | (pal[c+1] >> 4),
+					(pal[c+2] << 2) | (pal[c+2] >> 4)
+				};
+				pal[c] = (pal[765-c] << 2) | (pal[765-c] >> 4);
+				pal[c+1] = (pal[766-c] << 2) | (pal[766-c] >> 4);
+				pal[c+2] = (pal[767-c] << 2) | (pal[767-c] >> 4);
+				pal[765-c] = temp[0];
+				pal[766-c] = temp[1];
+				pal[767-c] = temp[2];
 			}
-			GPalette.SetPalette (bpal);
 		}
 		else
 		{
@@ -173,14 +330,27 @@ void InitPalette ()
 
 	if (buildPal == NULL)
 	{
-		pal = (BYTE *)W_MapLumpName ("PLAYPAL");
-		GPalette.SetPalette (pal);
-		W_UnMapLump (pal);
+		FWadLump palump = Wads.OpenLumpName ("PLAYPAL");
+		palump.Read (pal, 768);
 	}
 
+	GPalette.SetPalette (pal);
+	GPalette.MakeGoodRemap ();
 	ColorMatcher.SetPalette ((DWORD *)GPalette.BaseColors);
-	Near255 = BestColor ((DWORD *)GPalette.BaseColors,
-		GPalette.BaseColors[255].r, GPalette.BaseColors[255].g, GPalette.BaseColors[255].b, 0, 255);
+
+	// The BUILD engine already has a transparent color, so it doesn't need any remapping.
+	if (buildPal == NULL)
+	{
+		if (GPalette.Remap[0] == 0)
+		{ // No duplicates, so settle for something close to color 0
+			GPalette.Remap[0] = BestColor ((DWORD *)GPalette.BaseColors,
+				GPalette.BaseColors[0].r, GPalette.BaseColors[255].g, GPalette.BaseColors[255].b, 0, 255);
+		}
+
+		// Make color 0 magenta
+		//GPalette.BaseColors[0] = PalEntry (255, 0, 255);
+		//GPalette.Colors[0] = PalEntry (newgamma[255], newgamma[0], newgamma[255]);
+	}
 
 // NormalLight.Maps will be set to realcolormaps no later than G_InitLevelLocals()
 // (which occurs before it is ever needed)
@@ -438,14 +608,16 @@ void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v)
 
 /****** Colored Lighting Stuffs ******/
 
-FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade)
+FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade, int desaturate)
 {
 	FDynamicColormap *colormap;
 
 	// If this colormap has already been created, just return it
 	for (colormap = &NormalLight; colormap != NULL; colormap = colormap->Next)
 	{
-		if (color == colormap->Color && fade == colormap->Fade)
+		if (color == colormap->Color &&
+			fade == colormap->Fade &&
+			desaturate == colormap->Desaturate)
 		{
 			return colormap;
 		}
@@ -457,6 +629,7 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade)
 	colormap->Next = NormalLight.Next;
 	colormap->Color = color;
 	colormap->Fade = fade;
+	colormap->Desaturate = desaturate;
 	NormalLight.Next = colormap;
 
 	colormap->BuildLights ();
@@ -468,8 +641,8 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade)
 void FDynamicColormap::BuildLights ()
 {
 	int l, c;
-	int lr, lg, lb;
-	PalEntry colors[256];
+	int lr, lg, lb, ld, ild;
+	PalEntry colors[256], basecolors[256];
 	BYTE *shade;
 
 	// Scale light to the range 0-256, so we can avoid
@@ -477,11 +650,37 @@ void FDynamicColormap::BuildLights ()
 	lr = Color.r*256/255;
 	lg = Color.g*256/255;
 	lb = Color.b*256/255;
+	ld = Desaturate*256/255;
+	if (ld < 0)	// No negative desaturations, please.
+	{
+		ld = -ld;
+	}
+	ild = 256-ld;
+
+	if (ld == 0)
+	{
+		memcpy (basecolors, GPalette.BaseColors, sizeof(basecolors));
+	}
+	else
+	{
+		// Desaturate the palette before lighting it.
+		for (c = 0; c < 256; c++)
+		{
+			int r = GPalette.BaseColors[c].r;
+			int g = GPalette.BaseColors[c].g;
+			int b = GPalette.BaseColors[c].b;
+			int intensity = ((r * 77 + g * 143 + b * 37) >> 8) * ld;
+			basecolors[c].r = (r*ild + intensity) >> 8;
+			basecolors[c].g = (g*ild + intensity) >> 8;
+			basecolors[c].b = (b*ild + intensity) >> 8;
+			basecolors[c].a = 0;
+		}
+	}
 
 	// build normal (but colored) light mappings
 	for (l = 0; l < NUMCOLORMAPS; l++)
 	{
-		DoBlending (GPalette.BaseColors, colors, 256,
+		DoBlending (basecolors, colors, 256,
 			Fade.r, Fade.g, Fade.b, l * (256 / NUMCOLORMAPS));
 
 		shade = Maps + 256*l;
@@ -505,11 +704,12 @@ void FDynamicColormap::BuildLights ()
 	}
 }
 
-void FDynamicColormap::ChangeColor (PalEntry lightcolor)
+void FDynamicColormap::ChangeColor (PalEntry lightcolor, int desaturate)
 {
-	if (lightcolor != Color)
+	if (lightcolor != Color || desaturate != Desaturate)
 	{
 		Color = lightcolor;
+		Desaturate = desaturate;
 		BuildLights ();
 	}
 }
@@ -537,10 +737,11 @@ CCMD (testcolor)
 {
 	char *colorstring;
 	DWORD color;
+	int desaturate;
 
 	if (argv.argc() < 2)
 	{
-		Printf ("testcolor <color>\n");
+		Printf ("testcolor <color> [desaturation]\n");
 	}
 	else
 	{
@@ -553,6 +754,14 @@ CCMD (testcolor)
 		{
 			color = V_GetColorFromString (NULL, argv[1]);
 		}
-		NormalLight.ChangeColor (color);
+		if (argv.argc() > 2)
+		{
+			desaturate = atoi (argv[2]);
+		}
+		else
+		{
+			desaturate = NormalLight.Desaturate;
+		}
+		NormalLight.ChangeColor (color, desaturate);
 	}
 }

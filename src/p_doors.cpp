@@ -122,8 +122,7 @@ void DDoor::Tick ()
 			case doorRaise:
 			case doorClose:
 				m_Sector->ceilingdata = NULL;	//jff 2/22/98
-				stopinterpolation (&m_Sector->ceilingplane.d);
-				stopinterpolation (&m_Sector->ceilingtexz);
+				stopinterpolation (INTERP_SectorCeiling, m_Sector);
 				Destroy ();						// unlink and free
 				break;
 				
@@ -168,8 +167,7 @@ void DDoor::Tick ()
 			case doorCloseWaitOpen:
 			case doorOpen:
 				m_Sector->ceilingdata = NULL;	//jff 2/22/98
-				stopinterpolation (&m_Sector->ceilingplane.d);
-				stopinterpolation (&m_Sector->ceilingtexz);
+				stopinterpolation (INTERP_SectorCeiling, m_Sector);
 				Destroy ();						// unlink and free
 				break;
 				
@@ -305,6 +303,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 					if (door->m_Direction == -1)
 					{
 						door->m_Direction = 1;	// go back up
+						door->DoorSound (true);	// [RH] Make noise
 					}
 					else if (GET_SPAC(line->flags) != SPAC_PUSH)
 						// [RH] activate push doors don't go back down when you

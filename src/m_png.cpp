@@ -50,6 +50,7 @@
 #include "v_video.h"
 #include "m_png.h"
 #include "templates.h"
+#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -69,6 +70,24 @@ struct IHDR
 	BYTE		Filter;
 	BYTE		Interlace;
 };
+
+PNGHandle::PNGHandle (FILE *file) : File(0), bDeleteFilePtr(true), ChunkPt(0)
+{
+	File = new FileReader(file);
+}
+
+PNGHandle::PNGHandle (FileReader *file) : File(file), bDeleteFilePtr(false), ChunkPt(0) {}
+PNGHandle::~PNGHandle ()
+{
+	for (size_t i = 0; i < TextChunks.Size(); ++i)
+	{
+		delete TextChunks[i];
+	}
+	if (bDeleteFilePtr)
+	{
+		delete File;
+	}
+}
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -251,106 +270,35 @@ bool M_AppendPNGText (FILE *file, const char *keyword, const char *text)
 // value of 0 indicates the chunk was either not present or had 0 length.
 // This means there is no way to conclusively determine if a chunk is not
 // present in a PNG file with this function, but since we're only
-// interested in chunks with content, that's okay.
+// interested in chunks with content, that's okay. The file pointer will
+// be left sitting at the start of the chunk's data if it was found.
 //
 //==========================================================================
 
-size_t M_FindPNGChunk (FILE *file, DWORD id)
+size_t M_FindPNGChunk (PNGHandle *png, DWORD id)
 {
-	if (fseek (file, 8, SEEK_SET) != 0)
-	{
-		return 0;
-	}
-	return M_NextPNGChunk (file, id);
+	png->ChunkPt = 0;
+	return M_NextPNGChunk (png, id);
 }
 
 //==========================================================================
 //
 // M_NextPNGChunk
 //
-// Like M_FindPNGChunk, but it starts it search at the current chunk. This
-// means the file pointer must be positioned at the length DWORD for a valid
-// chunk.
+// Like M_FindPNGChunk, but it starts it search at the current chunk.
 //
 //==========================================================================
 
-size_t M_NextPNGChunk (FILE *file, DWORD id)
+size_t M_NextPNGChunk (PNGHandle *png, DWORD id)
 {
-	DWORD data[2];
-
-	while (fread (&data, 1, 8, file) == 8)
+	for ( ; png->ChunkPt < png->Chunks.Size(); ++png->ChunkPt)
 	{
-		long len = BELONG((unsigned int)data[0]);
-
-		if (data[1] == id)
+		if (png->Chunks[png->ChunkPt].ID == id)
 		{ // Found the chunk
-			return len;
-		}
-		if (data[1] == MAKE_ID('I','E','N','D'))
-		{ // Chunk was not present
-			return 0;
-		}
-		// Advance to next chunk
-		if (fseek (file, len+4, SEEK_CUR) != 0)
-		{
-			return 0;
+			png->File->Seek (png->Chunks[png->ChunkPt++].Offset, SEEK_SET);
+			return png->Chunks[png->ChunkPt - 1].Size;
 		}
 	}
-	// End-of-file
-	return 0;
-}
-
-//==========================================================================
-//
-// M_FindPNGText
-//
-// Find a PNG text chunk with the given signature. The file will be positioned
-// at the start of the text (after the keyword), and the length of the text
-// is returned. This only supports tEXt, not zTXt.
-//
-//==========================================================================
-
-size_t M_FindPNGText (FILE *file, const char *keyword)
-{
-	DWORD data[2];
-
-	if (fseek (file, 8, SEEK_SET) != 0)
-	{
-		return 0;
-	}
-	while (fread (&data, 1, 8, file) == 8)
-	{
-		long len = BELONG((unsigned int)data[0]);
-
-		if (data[1] == MAKE_ID('t','E','X','t'))
-		{ // Found a tEXt chunk, so check the keyword
-			char keychar;
-			int keypos;
-
-			for (keypos = 0; keypos < 80 && len-- > 0; ++keypos)
-			{
-				keychar = fgetc (file);
-				if (keyword[keypos] != keychar)
-				{ // Not the right keyword
-					break;
-				}
-				if (keychar == 0)
-				{ // End of keyword, so it is found
-					return len;
-				}
-			}
-		}
-		if (data[1] == MAKE_ID('I','E','N','D'))
-		{ // Text was not present
-			return 0;
-		}
-		// Advance to next chunk
-		if (fseek (file, len+4, SEEK_CUR) != 0)
-		{
-			return 0;
-		}
-	}
-	// End-of-file
 	return 0;
 }
 
@@ -363,33 +311,58 @@ size_t M_FindPNGText (FILE *file, const char *keyword)
 //
 //==========================================================================
 
-char *M_GetPNGText (FILE *file, const char *keyword)
+char *M_GetPNGText (PNGHandle *png, const char *keyword)
 {
-	size_t len = M_FindPNGText (file, keyword);
-	if (len != 0)
+	size_t i, keylen, textlen;
+
+	for (i = 0; i < png->TextChunks.Size(); ++i)
 	{
-		char *str = new char[len+1];
-		if (fread (str, 1, len, file) == len)
+		if (strncmp (keyword, png->TextChunks[i], 80) == 0)
 		{
-			str[len] = 0;
+			// Woo! A match was found!
+			keylen = MIN<size_t> (80, strlen (keyword) + 1);
+			textlen = strlen (png->TextChunks[i] + keylen) + 1;
+			char *str = new char[textlen];
+			strcpy (str, png->TextChunks[i] + keylen);
 			return str;
 		}
-		delete[] str;
 	}
 	return NULL;
+}
+
+// This version copies it to a supplied buffer instead of allocating a new one.
+
+bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buffsize)
+{
+	size_t i, keylen;
+
+	for (i = 0; i < png->TextChunks.Size(); ++i)
+	{
+		if (strncmp (keyword, png->TextChunks[i], 80) == 0)
+		{
+			// Woo! A match was found!
+			keylen = MIN<size_t> (80, strlen (keyword) + 1);
+			strncpy (buffer, png->TextChunks[i] + keylen, buffsize);
+			return true;
+		}
+	}
+	return false;
 }
 
 //==========================================================================
 //
 // M_VerifyPNG
 //
-// Returns true if the file is a PNG or false if not. CRC checking of chunks
-// is not done in order to save time.
+// Returns a PNGHandle if the file is a PNG or NULL if not. CRC checking of
+// chunks is not done in order to save time.
 //
 //==========================================================================
 
-bool M_VerifyPNG (FILE *file)
+PNGHandle *M_VerifyPNG (FILE *file)
 {
+	PNGHandle::Chunk chunk;
+	FileReader *filer;
+	PNGHandle *png;
 	DWORD data[2];
 	bool sawIDAT = false;
 
@@ -409,26 +382,73 @@ bool M_VerifyPNG (FILE *file)
 	{ // IHDR must be the first chunk
 		return false;
 	}
-	while (fseek (file, BELONG((unsigned int)data[0])+4, SEEK_CUR) == 0)
+
+	// It looks like a PNG so far, so start creating a PNGHandle for it
+	png = new PNGHandle (file);
+	filer = png->File;
+	chunk.ID = data[1];
+	chunk.Offset = 16;
+	chunk.Size = BELONG((unsigned int)data[0]);
+	png->Chunks.Push (chunk);
+	filer->Seek (16, SEEK_SET);
+
+	while (filer->Seek (chunk.Size + 4, SEEK_CUR) == 0)
 	{
 		// If the file ended before an IEND was encountered, it's not a PNG.
-		if (fread (&data, 1, 8, file) != 8)
+		if (filer->Read (&data, 8) != 8)
 		{
-			return false;
+			break;
 		}
 		// An IEND chunk terminates the PNG and must be empty
 		if (data[1] == MAKE_ID('I','E','N','D'))
 		{
-			return data[0] == 0 && sawIDAT;
+			if (data[0] == 0 && sawIDAT)
+			{
+				return png;
+			}
+			break;
 		}
 		// A PNG must include an IDAT chunk
 		if (data[1] == MAKE_ID('I','D','A','T'))
 		{
 			sawIDAT = true;
 		}
+		chunk.ID = data[1];
+		chunk.Offset = ftell (file);
+		chunk.Size = BELONG((unsigned int)data[0]);
+		png->Chunks.Push (chunk);
+
+		// If this is a text chunk, also record its contents.
+		if (data[1] == MAKE_ID('t','E','X','t'))
+		{
+			char *str = new char[chunk.Size + 1];
+
+			if (filer->Read (str, chunk.Size) != (long)chunk.Size)
+			{
+				delete[] str;
+				break;
+			}
+			str[chunk.Size] = 0;
+			png->TextChunks.Push (str);
+			chunk.Size = 0;		// Don't try to seek past its contents again.
+		}
 	}
-	
+
+	delete png;
 	return false;
+}
+
+//==========================================================================
+//
+// M_FreePNG
+//
+// Just deletes the PNGHandle. The file is not closed.
+//
+//==========================================================================
+
+void M_FreePNG (PNGHandle *png)
+{
+	delete png;
 }
 
 //==========================================================================
@@ -440,18 +460,18 @@ bool M_VerifyPNG (FILE *file)
 //
 //==========================================================================
 
-DCanvas *M_CreateCanvasFromPNG (FILE *file)
+DCanvas *M_CreateCanvasFromPNG (PNGHandle *png)
 {
 	IHDR imageHeader;
 	DSimpleCanvas *canvas;
 	int width, height;
 	size_t chunklen;
 
-	if (M_FindPNGChunk (file, MAKE_ID('I','H','D','R')) == 0)
+	if (M_FindPNGChunk (png, MAKE_ID('I','H','D','R')) == 0)
 	{
 		return NULL;
 	}
-	if (fread (&imageHeader, sizeof(IHDR), 1, file) != 1)
+	if (png->File->Read (&imageHeader, sizeof(IHDR)) != sizeof(IHDR))
 	{
 		return NULL;
 	}
@@ -467,7 +487,7 @@ DCanvas *M_CreateCanvasFromPNG (FILE *file)
 	{
 		return NULL;
 	}
-	chunklen = M_FindPNGChunk (file, MAKE_ID('I','D','A','T'));
+	chunklen = M_FindPNGChunk (png, MAKE_ID('I','D','A','T'));
 	if (chunklen == 0)
 	{
 		return NULL;
@@ -481,7 +501,27 @@ DCanvas *M_CreateCanvasFromPNG (FILE *file)
 		return NULL;
 	}
 	canvas->Lock ();
+	bool success = M_ReadIDAT (png->File, canvas->GetBuffer(), width, height, canvas->GetPitch(), 8, 3, 0, chunklen);
+	canvas->Unlock ();
+	if (!success)
+	{
+		delete canvas;
+		canvas = NULL;
+	}
+	return canvas;
+}
 
+//==========================================================================
+//
+// ReadIDAT
+//
+// Reads image data out of a PNG
+//
+//==========================================================================
+
+bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitch,
+				 BYTE bitdepth, BYTE colortype, BYTE interlace, size_t chunklen)
+{
 	Byte *inputLine, *prev, *curr;
 	Byte chunkbuffer[4096];
 	z_stream stream;
@@ -500,11 +540,10 @@ DCanvas *M_CreateCanvasFromPNG (FILE *file)
 	err = inflateInit (&stream);
 	if (err != Z_OK)
 	{
-		delete canvas;
-		return NULL;
+		return false;
 	}
 	y = 0;
-	curr = canvas->GetBuffer ();
+	curr = buffer;
 	stream.next_out = inputLine;
 	stream.avail_out = width+1;
 	lastIDAT = false;
@@ -516,7 +555,7 @@ DCanvas *M_CreateCanvasFromPNG (FILE *file)
 			if (stream.avail_in == 0 && chunklen > 0)
 			{
 				stream.next_in = chunkbuffer;
-				stream.avail_in = (uInt)fread (chunkbuffer, 1, MIN(chunklen,sizeof(chunkbuffer)), file);
+				stream.avail_in = (uInt)file->Read (chunkbuffer, MIN(chunklen,sizeof(chunkbuffer)));
 				chunklen -= stream.avail_in;
 			}
 
@@ -524,15 +563,14 @@ DCanvas *M_CreateCanvasFromPNG (FILE *file)
 			if (err != Z_OK && err != Z_STREAM_END)
 			{ // something unexpected happened
 				inflateEnd (&stream);
-				delete canvas;
-				return NULL;
+				return false;
 			}
 
 			if (stream.avail_out == 0)
 			{
 				UnfilterRow (width, curr, inputLine, prev);
 				prev = curr;
-				curr += canvas->GetPitch ();
+				curr += pitch;
 				y++;
 				stream.next_out = inputLine;
 				stream.avail_out = width+1;
@@ -542,7 +580,7 @@ DCanvas *M_CreateCanvasFromPNG (FILE *file)
 			{
 				DWORD x[3];
 
-				if (fread (x, 1, 12, file) != 12)
+				if (file->Read (x, 12) != 12)
 				{
 					lastIDAT = true;
 				}
@@ -559,8 +597,7 @@ DCanvas *M_CreateCanvasFromPNG (FILE *file)
 	} while (err == Z_OK && y < height);
 
 	inflateEnd (&stream);
-	canvas->Unlock ();
-	return canvas;
+	return true;
 }
 
 // PRIVATE CODE ------------------------------------------------------------

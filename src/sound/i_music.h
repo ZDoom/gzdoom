@@ -35,8 +35,8 @@
 #define __I_MUSIC_H__
 
 #include "doomdef.h"
-
 #include "doomstat.h"
+#include "files.h"
 
 //
 //	MUSIC I/O
@@ -54,7 +54,7 @@ void I_PauseSong (void *handle);
 void I_ResumeSong (void *handle);
 
 // Registers a song handle to song data.
-void *I_RegisterSong (int lumpnum);
+void *I_RegisterSong (FileReader *file);
 void *I_RegisterCDSong (int track, int cdid = 0);
 
 // Called by anything that wishes to start music.

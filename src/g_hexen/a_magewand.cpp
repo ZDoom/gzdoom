@@ -92,6 +92,8 @@ IMPLEMENT_ACTOR (AMageWandSmoke, Hexen, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_SHADOW)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_CANNOTPUSH|MF2_NODMGTHRUST)
 	PROP_SpawnState (0)
+	PROP_RenderStyle (STYLE_Translucent)
+	PROP_Alpha (HX_SHADOW)
 END_DEFAULTS
 
 // Wand Missile -------------------------------------------------------------
@@ -182,7 +184,7 @@ void AMageWandMissile::Tick ()
 			}
 			if (changexy)
 			{
-				if (pr_smoke() < 128)
+				//if (pr_smoke() < 128)	// [RH] I think it looks better if it's consistant
 				{
 					hitz = z-8*FRACUNIT;
 					if (hitz < floorz)

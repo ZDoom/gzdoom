@@ -239,9 +239,9 @@ bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool
 	int count;
 	AActor *searcher;
 	fixed_t z;
-	angle_t angle;
-	fixed_t s, c;
-	fixed_t momx, momy;
+	angle_t angle = 0;
+	fixed_t s = 0, c = 0;
+	fixed_t momx = 0, momy = 0;
 	TActorIterator<ATeleportDest> iterator (tid);
 
 	if (thing == NULL)

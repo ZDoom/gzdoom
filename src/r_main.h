@@ -42,6 +42,9 @@ extern fixed_t			FocalLengthX, FocalLengthY;
 extern float			FocalLengthXfloat;
 extern fixed_t			InvZtoScale;
 
+extern angle_t			LocalViewAngle;		// [RH] Added to consoleplayer's angle
+extern int				LocalViewPitch;		// [RH] Used directly instead of consoleplayer's pitch
+
 extern float			WallTMapScale;
 extern float			WallTMapScale2;
 
@@ -176,7 +179,7 @@ void R_SetViewAngle ();
 // Called by G_Drawer.
 void R_RenderPlayerView (player_t *player);
 void R_RefreshViewBorder ();
-void R_SetupBuffer ();
+void R_SetupBuffer (bool inview);
 
 void R_RenderViewToCanvas (player_t *player, DCanvas *canvas, int x, int y, int width, int height);
 
@@ -191,18 +194,34 @@ void R_SetViewSize (int blocks);
 // [RH] Initialize multires stuff for renderer
 void R_MultiresInit (void);
 
-// BUILD stuff for interpolating between frames
+// BUILD stuff for interpolating between frames, but modified
 #define MAXINTERPOLATIONS 2048
 
+enum EInterpType
+{
+	INTERP_SectorFloor,		// Pass a sector_t *
+	INTERP_SectorCeiling,	// Pass a sector_t *
+	INTERP_Vertex,			// Pass a vertex_t *
+};
+
+struct FActiveInterpolation
+{
+	EInterpType Type;
+	void *Address;
+
+	friend FArchive &operator << (FArchive &arc, FActiveInterpolation &interp);
+};
+
 extern int numinterpolations;
-extern fixed_t oldipos[MAXINTERPOLATIONS];
-extern fixed_t bakipos[MAXINTERPOLATIONS];
-extern fixed_t *curipos[MAXINTERPOLATIONS];
+extern fixed_t oldipos[MAXINTERPOLATIONS][2];
+extern fixed_t bakipos[MAXINTERPOLATIONS][2];
+extern FActiveInterpolation curipos[MAXINTERPOLATIONS];
 
 extern void updateinterpolations();
-extern void setinterpolation(fixed_t *posptr);
-extern void stopinterpolation(fixed_t *posptr);
+extern void setinterpolation(EInterpType, void *interptr);
+extern void stopinterpolation(EInterpType, void *interptr);
 extern void dointerpolations(fixed_t smoothratio);
 extern void restoreinterpolations();
+extern void SerializeInterpolations (FArchive &arc);
 
 #endif // __R_MAIN_H__

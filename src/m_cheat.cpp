@@ -122,6 +122,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = "chasecam ON";
 		else
 			msg = "chasecam OFF";
+		R_ResetViewInterpolation ();
 		break;
 
 	case CHT_CHAINSAW:
@@ -225,8 +226,8 @@ void cht_DoCheat (player_t *player, int cheat)
 		// a very very cheap kill.
 		if (!deathmatch)
 		{
-			P_LineAttack (player->mo, player->mo->angle, MISSILERANGE,
-				P_AimLineAttack (player->mo, player->mo->angle, MISSILERANGE), 10000);
+			P_LineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE,
+				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), 10000);
 		}
 		break;
 	}
@@ -373,7 +374,7 @@ void cht_Give (player_t *player, char *name, int amount)
 		int pbagType = arti_poisonbag1 + (player->CurrentPlayerClass + 2) % 3;
 		for (i = arti_none+1; i < arti_firstpuzzitem; ++i)
 		{
-			if (W_CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
+			if (Wads.CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
 			{
 				if (i >= arti_poisonbag1 && i <= arti_poisonbag3)
 				{ // Hide the fact that there is more than one flechette artifact
@@ -396,7 +397,7 @@ void cht_Give (player_t *player, char *name, int amount)
 	{
 		for (i = arti_firstpuzzitem; i < NUMARTIFACTS; ++i)
 		{
-			if (W_CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
+			if (Wads.CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
 			{
 				P_GiveArtifact (player, (artitype_t)i);
 			}

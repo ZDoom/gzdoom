@@ -53,322 +53,10 @@ int CleanXfac, CleanYfac;
 // [RH] Effective screen sizes that the above scale values give you
 int CleanWidth, CleanHeight;
 
-fixed_t V_Fade = 0x8000;
-
-// The current set of column drawers (set in V_SetResolution)
-DCanvas::vdrawfunc *DCanvas::m_Drawfuncs;
-DCanvas::vdrawsfunc *DCanvas::m_Drawsfuncs;
-
-
-// Palettized versions of the column drawers
-DCanvas::vdrawfunc DCanvas::Pfuncs[DCanvas::EWRAPPER_NUM] =
+void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 {
-	DCanvas::DrawPatchP,
-	DCanvas::DrawLucentPatchP,
-	DCanvas::DrawTranslatedPatchP,
-	DCanvas::DrawTlatedLucentPatchP,
-	DCanvas::DrawColoredPatchP,
-	DCanvas::DrawColorLucentPatchP,
-	DCanvas::DrawAlphaPatchP,
-};
-DCanvas::vdrawsfunc DCanvas::Psfuncs[DCanvas::EWRAPPER_NUM] =
-{
-	DCanvas::DrawPatchSP,
-	DCanvas::DrawLucentPatchSP,
-	DCanvas::DrawTranslatedPatchSP,
-	DCanvas::DrawTlatedLucentPatchSP,
-	DCanvas::DrawColoredPatchSP,
-	DCanvas::DrawColorLucentPatchSP,
-	DCanvas::DrawAlphaPatchSP,
-};
-
-const BYTE *V_ColorMap;
-int V_ColorFill;
-
-// Palette lookup table for direct modes
-unsigned int *V_Palette;
-
-
-/*********************************/
-/*								 */
-/* The palletized column drawers */
-/*								 */
-/*********************************/
-
-// Normal patch drawers
-void DCanvas::DrawPatchP (const byte *source, byte *dest, int count, int pitch)
-{
-	do
-	{
-		*dest = *source++;
-		dest += pitch;
-	} while (--count);
-}
-
-void DCanvas::DrawPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc)
-{
-	int c = 0;
-
-	do
-	{
-		*dest = source[c >> 16]; 
-		dest += pitch;
-		c += yinc;
-	} while (--count);
-}
-
-
-// Translucent patch drawers (amount is in V_Fade)
-void DCanvas::DrawLucentPatchP (const byte *source, byte *dest, int count, int pitch)
-{
-	DWORD *fg2rgb, *bg2rgb;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = V_Fade & ~0x3ff;
-		bglevel = FRACUNIT-fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	do
-	{
-		DWORD fg = *source++;
-		DWORD bg = *dest;
-
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		*dest = RGB32k[0][0][fg & (fg>>15)];
-		dest += pitch; 
-	} while (--count);
-}
-
-void DCanvas::DrawLucentPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc)
-{
-	DWORD *fg2rgb, *bg2rgb;
-	int c = 0;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = V_Fade & ~0x3ff;
-		bglevel = FRACUNIT-fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	do
-	{
-		DWORD fg = source[c >> 16];
-		DWORD bg = *dest;
-
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		*dest = RGB32k[0][0][fg & (fg>>15)];
-		dest += pitch;
-		c += yinc;
-	} while (--count);
-}
-
-
-// Translated patch drawers
-void DCanvas::DrawTranslatedPatchP (const byte *source, byte *dest, int count, int pitch)
-{
-	do
-	{
-		*dest = V_ColorMap[*source++];
-		dest += pitch; 
-	} while (--count);
-}
-
-void DCanvas::DrawTranslatedPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc)
-{
-	int c = 0;
-
-	do
-	{
-		*dest = V_ColorMap[source[c >> 16]];
-		dest += pitch;
-		c += yinc;
-	} while (--count);
-}
-
-
-// Translated, translucent patch drawers
-void DCanvas::DrawTlatedLucentPatchP (const byte *source, byte *dest, int count, int pitch)
-{
-	DWORD *fg2rgb, *bg2rgb;
-	const BYTE *colormap = V_ColorMap;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = V_Fade & ~0x3ff;
-		bglevel = FRACUNIT-fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	do
-	{
-		DWORD fg = colormap[*source++];
-		DWORD bg = *dest;
-
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		*dest = RGB32k[0][0][fg & (fg>>15)];
-		dest += pitch; 
-	} while (--count);
-}
-
-void DCanvas::DrawTlatedLucentPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc)
-{
-	int c = 0;
-	DWORD *fg2rgb, *bg2rgb;
-	const BYTE *colormap = V_ColorMap;
-
-	{
-		fixed_t fglevel, bglevel;
-
-		fglevel = V_Fade & ~0x3ff;
-		bglevel = FRACUNIT-fglevel;
-		fg2rgb = Col2RGB8[fglevel>>10];
-		bg2rgb = Col2RGB8[bglevel>>10];
-	}
-
-	do
-	{
-		DWORD fg = colormap[source[c >> 16]];
-		DWORD bg = *dest;
-
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		*dest = RGB32k[0][0][fg & (fg>>15)];
-		dest += pitch;
-		c += yinc;
-	} while (--count);
-}
-
-
-// Colored patch drawer
-//
-void DCanvas::DrawColoredPatchP (const byte *source, byte *dest, int count, int pitch)
-{
-	byte fill = (byte)V_ColorFill;
-
-	do
-	{
-		*dest = fill;
-		dest += pitch; 
-	} while (--count);
-}
-
-void DCanvas::DrawColoredPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc)
-{
-	byte fill = (byte)V_ColorFill;
-
-	do
-	{
-		*dest = fill;
-		dest += pitch; 
-	} while (--count);
-}
-
-
-// Colored, translucent patch drawer
-//
-void DCanvas::DrawColorLucentPatchP (const byte *source, byte *dest, int count, int pitch)
-{
-	DWORD *bg2rgb;
-	DWORD fg;
-
-	{
-		fixed_t fglevel;
-
-		fglevel = V_Fade & ~0x3ff;
-		bg2rgb = Col2RGB8[(FRACUNIT-fglevel)>>10];
-		fg = Col2RGB8[fglevel>>10][V_ColorFill];
-	}
-
-	do
-	{
-		unsigned int bg;
-		bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
-		*dest = RGB32k[0][0][bg & (bg>>15)];
-		dest += pitch; 
-	} while (--count);
-}
-
-void DCanvas::DrawColorLucentPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc)
-{
-	DWORD *bg2rgb;
-	DWORD fg;
-
-	{
-		fixed_t fglevel;
-
-		fglevel = V_Fade & ~0x3ff;
-		bg2rgb = Col2RGB8[(FRACUNIT-fglevel)>>10];
-		fg = Col2RGB8[fglevel>>10][V_ColorFill];
-	}
-
-	do
-	{
-		DWORD bg;
-		bg = (fg + bg2rgb[*dest]) | 0x1f07c1f;
-		*dest = RGB32k[0][0][bg & (bg>>15)];
-		dest += pitch; 
-	} while (--count);
-}
-
-// Alpha patch drawers
-//
-void DCanvas::DrawAlphaPatchP (const byte *source, byte *dest, int count, int pitch)
-{
-	DWORD *fgstart = &Col2RGB8[0][V_ColorFill];
-
-	do
-	{
-		DWORD val = (*source++ + 2) >> 2;
-		if (val != 0)
-		{
-			DWORD fg = fgstart[val<<8];
-			val = Col2RGB8[64-val][*dest];
-			val = (val + fg) | 0x1f07c1f;
-			*dest = RGB32k[0][0][val & (val>>15)];
-		}
-		dest += pitch; 
-	} while (--count);
-}
-
-void DCanvas::DrawAlphaPatchSP (const byte *source, byte *dest, int count, int pitch, int yinc)
-{
-	DWORD *fgstart = &Col2RGB8[0][V_ColorFill];
-	int c = 0;
-
-	do
-	{
-		DWORD val = (source[c >> 16] + 2) >> 2;
-		if (val != 0)
-		{
-			DWORD fg = fgstart[val<<8];
-			val = Col2RGB8[64-val][*dest];
-			val = (fg + val) | 0x1f07c1f;
-			*dest = RGB32k[0][0][val & (val>>15)];
-		}
-		dest += pitch;
-		c += yinc;
-	} while (--count);
-}
-
-
-void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
-{
+	FTexture::Span unmaskedSpan[2];
+	const FTexture::Span **spanptr, *spans;
 	static BYTE identitymap[256];
 	static short bottomclipper[MAXWIDTH];
 	va_list tags;
@@ -376,7 +64,10 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 	BOOL boolval;
 	int intval;
 
-	int destwidth = img->GetWidth() << FRACBITS;
+	int windowleft = 0;
+	int windowright = img->GetWidth();
+	int dclip = this->GetHeight();
+	int destwidth = windowright << FRACBITS;
 	int destheight = img->GetHeight() << FRACBITS;
 	int top = img->TopOffset;
 	int left = img->LeftOffset;
@@ -385,12 +76,13 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 	const BYTE *translation = NULL;
 	BOOL alphaChannel = false;
 	BOOL flipX = false;
-	EWrapperCode drawer;
 	fixed_t shadowAlpha = 0;
 	int shadowColor = 0;
 
 	x0 <<= FRACBITS;
 	y0 <<= FRACBITS;
+
+	spanptr = &spans;
 
 	// Parse the tag list for attributes
 	va_start (tags, tags_first);
@@ -398,7 +90,7 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 
 	while (tag != TAG_DONE)
 	{
-		DWORD *more_p;
+		va_list more_p;
 		DWORD data;
 
 		switch (tag)
@@ -409,11 +101,10 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 			break;
 
 		case TAG_MORE:
-			more_p = va_arg (tags, DWORD *);
+			more_p = va_arg (tags, va_list);
 			va_end (tags);
-			va_start (tags, *more_p);
-			tag = *more_p;
-			continue;
+			tags = more_p;
+			break;
 
 		case DTA_DestWidth:
 			destwidth = va_arg (tags, int) << FRACBITS;
@@ -494,6 +185,22 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 			left = va_arg (tags, int);
 			break;
 
+		case DTA_WindowLeft:
+			windowleft = va_arg (tags, int);
+			break;
+
+		case DTA_WindowRight:
+			windowright = va_arg (tags, int);
+			break;
+
+		case DTA_ClipBottom:
+			dclip = va_arg (tags, int);
+			if (dclip > this->GetHeight())
+			{
+				dclip = this->GetHeight();
+			}
+			break;
+
 		case DTA_ShadowAlpha:
 			shadowAlpha = MIN<fixed_t> (FRACUNIT, va_arg (tags, fixed_t));
 			break;
@@ -514,79 +221,27 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 				shadowAlpha = 0;
 			}
 			break;
+
+		case DTA_Masked:
+			boolval = va_arg (tags, BOOL);
+			if (boolval)
+			{
+				spanptr = &spans;
+			}
+			else
+			{
+				spanptr = NULL;
+			}
+			break;
 		}
 		tag = va_arg (tags, DWORD);
 	}
 	va_end (tags);
 
-#if 0
-	// Determine which routine to use for drawing
-	if (fillcolor >= 0)
+	if (destwidth <= 0 || destheight <= 0)
 	{
-		if (alphaChannel)
-		{
-			drawer = EWrapper_Alpha;
-		}
-		else if (alpha < FRACUNIT)
-		{
-			drawer = EWrapper_ColoredLucent;
-		}
-		else
-		{
-			drawer = EWrapper_Colored;
-		}
+		return;
 	}
-	else if (alpha < FRACUNIT)
-	{
-		if (translation != NULL)
-		{
-			drawer = EWrapper_TlatedLucent;
-		}
-		else
-		{
-			drawer = EWrapper_Lucent;
-		}
-	}
-	else if (translation != NULL)
-	{
-		drawer = EWrapper_Translated;
-	}
-	else
-	{
-		drawer = EWrapper_Normal;
-	}
-
-	V_ColorMap = translation;
-
-	if (destwidth == img->GetWidth() && destheight == img->GetHeight())
-	{
-		x0 -= left;
-		y0 -= top;
-		if (shadowAlpha > 0)
-		{
-			V_ColorFill = shadowColor;
-			V_Fade = shadowAlpha;
-			DrawWrapper (EWrapper_ColoredLucent, img, x0+2, y0+2, flipX);
-		}
-		V_ColorFill = fillcolor;
-		V_Fade = alpha;
-		DrawWrapper (drawer, img, x0, y0, flipX);
-	}
-	else
-	{
-		x0 -= left * destwidth / img->GetWidth();
-		y0 -= top * destheight / img->GetHeight();
-		if (shadowAlpha > 0)
-		{
-			V_ColorFill = shadowColor;
-			V_Fade = shadowAlpha;
-			DrawSWrapper (EWrapper_ColoredLucent, img, x0+2, y0+2, destwidth, destheight, flipX);
-		}
-		V_ColorFill = fillcolor;
-		V_Fade = alpha;
-		DrawSWrapper (drawer, img, x0, y0, destwidth, destheight, flipX);
-	}
-#endif
 
 	ERenderStyle style;
 
@@ -614,10 +269,8 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 		style = STYLE_Normal;
 	}
 
+	fixedcolormap = identitymap;
 	ESPSResult mode = R_SetPatchStyle (style, alpha, 0, fillcolor<<24);
-
-	x0 -= Scale (left, destwidth, img->GetWidth());
-	y0 -= Scale (top, destheight, img->GetHeight());
 
 	if (style != STYLE_Shaded)
 	{
@@ -631,11 +284,25 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 		}
 	}
 
+	BYTE *destorgsave = dc_destorg;
+	dc_destorg = screen->GetBuffer();
+
+	x0 -= Scale (left, destwidth, img->GetWidth());
+	y0 -= Scale (top, destheight, img->GetHeight());
+
 	if (mode != DontDraw)
 	{
 		const BYTE *pixels;
-		const FTexture::Span *spans;
 		int stop4;
+
+		if (spanptr == NULL)
+		{ // Create a single span for forced unmasked images
+			spans = unmaskedSpan;
+			unmaskedSpan[0].TopOffset = 0;
+			unmaskedSpan[0].Length = img->GetHeight();
+			unmaskedSpan[1].TopOffset = 0;
+			unmaskedSpan[1].Length = 0;
+		}
 
 		fixed_t centeryback = 0;
 		centeryfrac = 0;
@@ -654,12 +321,12 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 		fixed_t xiscale = DivScale32 (img->GetWidth(), destwidth);
 		int x2 = (x0 + destwidth) >> FRACBITS;
 
-		if (bottomclipper[0] != screen->GetHeight())
+		if (bottomclipper[0] != dclip)
 		{
-			clearbufshort (bottomclipper, screen->GetWidth(), (short)screen->GetHeight());
+			clearbufshort (bottomclipper, screen->GetWidth(), (short)dclip);
 			if (identitymap[1] != 1)
 			{
-				for (int i = 1; i < 256; ++i)
+				for (int i = 0; i < 256; ++i)
 				{
 					identitymap[i] = i;
 				}
@@ -675,10 +342,21 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 		}
 
 		dc_x = x0 >> FRACBITS;
+		if (windowleft > 0 || windowright < img->GetWidth())
+		{
+			fixed_t xscale = destwidth / img->GetWidth();
+			dc_x += (windowleft * xscale) >> FRACBITS;
+			frac += windowleft << FRACBITS;
+			x2 -= ((img->GetWidth() - windowright) * xscale) >> FRACBITS;
+		}
 		if (dc_x < 0)
 		{
 			frac += -dc_x * xiscale;
 			dc_x = 0;
+		}
+		if (x2 > Width)
+		{
+			x2 = Width;
 		}
 
 		if (destheight < 32*FRACUNIT)
@@ -694,14 +372,14 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 		else	 // DoDraw1
 		{
 			// Up to four columns at a time
-			stop4 = (x2 + 1) & ~3;
+			stop4 = x2 & ~3;
 		}
 
 		if (dc_x < x2)
 		{
 			while ((dc_x < stop4) && (dc_x & 3))
 			{
-				pixels = img->GetColumn (frac >> FRACBITS, &spans);
+				pixels = img->GetColumn (frac >> FRACBITS, spanptr);
 				R_DrawMaskedColumn (pixels, spans);
 				dc_x++;
 				frac += xiscale;
@@ -712,7 +390,7 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 				rt_initcols();
 				for (int zz = 4; zz; --zz)
 				{
-					pixels = img->GetColumn (frac >> FRACBITS, &spans);
+					pixels = img->GetColumn (frac >> FRACBITS, spanptr);
 					R_DrawMaskedColumnHoriz (pixels, spans);
 					dc_x++;
 					frac += xiscale;
@@ -722,16 +400,17 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 
 			while (dc_x < x2)
 			{
-				pixels = img->GetColumn (frac >> FRACBITS, &spans);
+				pixels = img->GetColumn (frac >> FRACBITS, spanptr);
 				R_DrawMaskedColumn (pixels, spans);
 				dc_x++;
 				frac += xiscale;
 			}
 		}
-
 		centeryfrac = centeryback;
 	}
 	R_FinishSetPatchStyle ();
+
+	dc_destorg = destorgsave;
 
 	if (ticdup != 0)
 	{
@@ -739,137 +418,6 @@ void DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 	}
 }
 
-/******************************/
-/*							  */
-/* The patch drawing wrappers */
-/*							  */
-/******************************/
-
-//
-// V_DrawWrapper
-// Masks a column based masked pic to the screen. 
-//
-void DCanvas::DrawWrapper (EWrapperCode drawer, FTexture *tex, int x, int y, BOOL flipX) const
-{
-	int 		col;
-	const BYTE *column;
-	const FTexture::Span *spans;
-	byte*		desttop;
-	int 		w;
-	vdrawfunc	drawfunc;
-
-	w = tex->GetWidth ();
-#ifdef RANGECHECK 
-	if (x < 0 || x + w > Width ||
-		y < 0 || y + tex->GetHeight() > Height)
-	{
-	  // Printf ("Patch at %d,%d exceeds LFB\n", x,y );
-	  // No I_Error abort - what is up with TNT.WAD?
-	  DPrintf ("DCanvas::DrawWrapper: bad patch (ignored)\n");
-	  return;
-	}
-#endif
-
-	drawfunc = Pfuncs[drawer];
-
-	desttop = Buffer + y*Pitch + x;
-	w--;
-
-	for (col = 0; col <= w; x++, col++, desttop++)
-	{
-		column = tex->GetColumn (flipX ? w - col : col, &spans);
-
-		// step through the posts in a column
-		while (spans->Length != 0)
-		{
-			drawfunc (column + spans->TopOffset, desttop + spans->TopOffset * Pitch, spans->Length, Pitch);
-			spans++;
-		}
-	}
-}
-
-//
-// V_DrawSWrapper
-// Masks a column based masked pic to the screen
-// stretching it to fit the given dimensions.
-//
-extern void F_DrawPatchCol (int, FTexture *, int, const DCanvas *);
-
-void DCanvas::DrawSWrapper (EWrapperCode drawer, FTexture *tex, int x0, int y0, int destwidth, int destheight, BOOL flipX) const
-{
-	const BYTE *column; 
-	const FTexture::Span *spans;
-	byte*		desttop;
-	vdrawsfunc	drawfunc;
-	int			maxy;
-
-	int			xinc, yinc, col, w, ymul, xmul;
-
-	w = tex->GetWidth ();
-
-	if (destwidth == Width && destheight == Height &&
-		w == 320 && tex->GetHeight() == 200 &&
-		drawer == EWrapper_Normal)
-	{
-		// Special case: Drawing a full-screen patch, so use
-		// F_DrawPatchCol in f_finale.c, since it's faster.
-		for (w = 0; w < 320; w++)
-			F_DrawPatchCol (w, tex, w, this);
-		return;
-	}
-
-	xinc = (w << 16) / destwidth;
-	yinc = (tex->GetHeight() << 16) / destheight;
-	xmul = (destwidth << 16) / w;
-	ymul = (destheight << 16) / tex->GetHeight();
-
-#ifdef RANGECHECK 
-	if (x0 < 0 || x0 + destwidth > Width ||
-		y0 < 0 || y0 + destheight > Height)
-	{
-		//Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
-		DPrintf ("DCanvas::DrawSWrapper: bad patch (ignored)\n");
-		return;
-	}
-#endif
-
-	drawfunc = Psfuncs[drawer];
-
-	desttop = Buffer + y0*Pitch + x0;
-
-	w = destwidth * xinc;
-	maxy = tex->GetHeight();
-
-	if (flipX)
-	{
-		xinc = -xinc;
-		col = w + xinc;
-	}
-	else
-	{
-		col = 0;
-	}
-
-	for (; flipX ? col >= 0 : col < w; col += xinc, desttop++)
-	{
-		column = tex->GetColumn (col >> 16, &spans);
-
-		// step through the posts in a column
-		while (spans->Length != 0)
-		{
-			int top = spans->TopOffset * ymul;
-			int bot = top + spans->Length * ymul;
-			bot = (bot - top + 0x8000) >> 16;
-			if (bot > 0)
-			{
-				top >>= 16;
-				drawfunc (column + spans->TopOffset, desttop + top * Pitch,
-					bot, Pitch, yinc);
-			}
-			spans++;
-		}
-	}
-}
 
 /********************************/
 /*								*/

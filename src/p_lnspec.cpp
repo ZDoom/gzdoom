@@ -1065,7 +1065,7 @@ FUNC(LS_Thing_Hate)
 // Thing_Hate (hater, hatee, group/"xray"?)
 {
 	FActorIterator haterIt (arg0);
-	AActor *hater, *hatee;
+	AActor *hater, *hatee = NULL;
 	FActorIterator hateeIt (arg1);
 	bool nothingToHate = false;
 
@@ -1799,14 +1799,14 @@ FUNC(LS_Sector_SetGravity)
 }
 
 FUNC(LS_Sector_SetColor)
-// Sector_SetColor (tag, r, g, b)
+// Sector_SetColor (tag, r, g, b, desaturate)
 {
 	int secnum = -1;
 	PalEntry color = PalEntry (arg1, arg2, arg3);
 	
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
-		sectors[secnum].ColorMap = GetSpecialLights (color, sectors[secnum].ColorMap->Fade);
+		sectors[secnum].ColorMap = GetSpecialLights (color, sectors[secnum].ColorMap->Fade, arg4);
 	}
 
 	return true;
@@ -1820,7 +1820,7 @@ FUNC(LS_Sector_SetFade)
 
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
-		sectors[secnum].ColorMap = GetSpecialLights (sectors[secnum].ColorMap->Color, fade);
+		sectors[secnum].ColorMap = GetSpecialLights (sectors[secnum].ColorMap->Color, fade, sectors[secnum].ColorMap->Desaturate);
 	}
 	return true;
 }

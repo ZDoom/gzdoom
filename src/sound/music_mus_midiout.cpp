@@ -25,11 +25,14 @@ static const BYTE CtrlTranslate[15] =
 	121, // reset all controllers
 };
 
-MUSSong2::MUSSong2 (const void *mem, int len)
+MUSSong2::MUSSong2 (FileReader *file)
 : MidiOut (0), PlayerThread (0),
   PauseEvent (0), ExitEvent (0), VolumeChangeEvent (0),
-  MusBuffer (0), MusHeader ((const MUSHeader *)mem)
+  MusBuffer (0), MusHeader (0)
 {
+	MusHeader = (MUSHeader *)new BYTE[file->GetLength()];
+	file->Read (MusHeader, file->GetLength());
+
 	// Do some validation of the MUS file
 	if (MusHeader->Magic != MAKE_ID('M','U','S','\x1a'))
 		return;
@@ -55,8 +58,8 @@ MUSSong2::MUSSong2 (const void *mem, int len)
 		Printf (PRINT_BOLD, "Could not create pause event for MIDI playback\n");
 	}
 
-	MusBuffer = (const BYTE *)mem + SHORT(MusHeader->SongStart);
-	MaxMusP = MIN<int> (SHORT(MusHeader->SongLen), len - SHORT(MusHeader->SongStart));
+	MusBuffer = (BYTE *)MusHeader + SHORT(MusHeader->SongStart);
+	MaxMusP = MIN<int> (SHORT(MusHeader->SongLen), file->GetLength() - SHORT(MusHeader->SongStart));
 	MusP = 0;
 }
 
@@ -75,6 +78,10 @@ MUSSong2::~MUSSong2 ()
 	if (VolumeChangeEvent != NULL)
 	{
 		CloseHandle (VolumeChangeEvent);
+	}
+	if (MusHeader != 0)
+	{
+		delete[] ((BYTE *)MusHeader);
 	}
 }
 
@@ -278,7 +285,7 @@ int MUSSong2::SendCommand ()
 	{
 		BYTE mid1, mid2;
 		BYTE channel;
-		BYTE t, status;
+		BYTE t = 0, status;
 		
 		event = MusBuffer[MusP++];
 		

@@ -53,9 +53,13 @@ void ASkyViewpoint::BeginPlay ()
 
 		for (i = 0; i <numsectors; i++)
 		{
-			if (sectors[i].SkyBox == NULL)
+			if (sectors[i].FloorSkyBox == NULL)
 			{
-				sectors[i].SkyBox = this;
+				sectors[i].FloorSkyBox = this;
+			}
+			if (sectors[i].CeilingSkyBox == NULL)
+			{
+				sectors[i].CeilingSkyBox = this;
 			}
 		}
 	}
@@ -66,6 +70,11 @@ void ASkyViewpoint::BeginPlay ()
 // arg0 = tid of matching SkyViewpoint
 // A value of 0 means to use a regular stretched texture, in case
 // there is a default SkyViewpoint in the level.
+//
+// arg1 = 0: set both floor and ceiling skybox
+//		= 1: set only ceiling skybox
+//		= 2: set only floor skybox
+
 class ASkyPicker : public AActor
 {
 	DECLARE_STATELESS_ACTOR (ASkyPicker, AActor)
@@ -79,25 +88,33 @@ END_DEFAULTS
 
 void ASkyPicker::PostBeginPlay ()
 {
+	ASkyViewpoint *box;
 	Super::PostBeginPlay ();
 
 	if (args[0] == 0)
 	{
-		Sector->SkyBox = NULL;
+		box = NULL;
 	}
 	else
 	{
 		TActorIterator<ASkyViewpoint> iterator (args[0]);
-		ASkyViewpoint *box = iterator.Next ();
+		box = iterator.Next ();
+	}
 
-		if (box != NULL)
+	if (box == NULL && args[0] != 0)
+	{
+		Printf ("Can't find SkyViewpoint %d for sector %d\n",
+			args[0], Sector - sectors);
+	}
+	else
+	{
+		if (0 == (args[1] & 2))
 		{
-			Sector->SkyBox = box;
+			Sector->CeilingSkyBox = box;
 		}
-		else
+		if (0 == (args[1] & 1))
 		{
-			Printf ("Can't find SkyViewpoint %d for sector %d\n",
-				args[0], Sector - sectors);
+			Sector->FloorSkyBox = box;
 		}
 	}
 	Destroy ();

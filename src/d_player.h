@@ -65,6 +65,8 @@ public:
 	virtual fixed_t GetJumpZ ();
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
 	virtual bool DoHealingRadius (APlayerPawn *other);
+	virtual void MorphPlayerThink ();
+	virtual void ActivateMorphWeapon ();
 
 	enum EInvulState
 	{

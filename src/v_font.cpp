@@ -121,13 +121,15 @@ FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
 		font = FFont::FindFont (name);
 		if (font == NULL)
 		{
-			int lump = W_CheckNumForName (name);
+			int lump = Wads.CheckNumForName (name);
 			if (lump != -1)
 			{
-				const BYTE *data = (const BYTE *)W_MapLumpNum (lump);
-				bool fon = data[0] == 'F' && data[1] == 'O' && data[2] == 'N';
-				W_UnMapLump (data);
-				if (fon)
+				char head[3];
+				{
+					FWadLump lumpy = Wads.OpenLumpNum (lump);
+					lumpy.Read (head, 3);
+				}
+				if (head[0] == 'F' && head[1] == 'O' && head[2] == 'N')
 				{
 					font = new FSingleLumpFont (name, lump);
 				}
@@ -183,9 +185,9 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	for (i = 0; i < count; i++)
 	{
 		sprintf (buffer, nametemplate, i + start);
-		lump = W_CheckNumForName (buffer);
+		lump = Wads.CheckNumForName (buffer);
 		if (doomtemplate && lump >= 0 &&
-			i + start == 121/* && lumpinfo[lump].wadnum == 1*/)
+			i + start == 121 && Wads.GetLumpFile (lump) == 1)
 		{ // HACKHACK: Don't load STCFN121 in doom(2), because
 		  // it's not really a lower-case 'y' but an upper-case 'I'
 			lump = -1;
@@ -329,14 +331,14 @@ int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse
 
 	memset (translation, 0, 256);
 
-	for (i = 0, j = 0; i < 256; i++)
+	reverse[0] = 0;
+	for (i = 0, j = 1; i < 256; i++)
 	{
 		if (colorsused[i])
 		{
 			reverse[j++] = i;
 		}
 	}
-	reverse[255] = 255;
 
 	qsort (reverse, j, 1, compare);
 
@@ -547,7 +549,8 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 		I_FatalError ("%s is not a font or texture", name);
 	}
 
-	const byte *data = (byte *)W_MapLumpNum (lump);
+	FMemLump data1 = Wads.ReadLump (lump);
+	const BYTE *data = (const BYTE *)data1.GetMem();
 
 	if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
 		(data[3] != '1' && data[3] != '2'))
@@ -566,7 +569,6 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 			LoadFON2 (lump, data);
 			break;
 		}
-		W_UnMapLump (data);
 	}
 
 	Next = FirstFont;
@@ -733,10 +735,10 @@ void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BY
 	double minlum = 100000000.0;
 	double diver;
 
-	identity[255] = 255;
+	identity[0] = 0;
 	palette += 3;	// Skip the transparent color
 
-	for (i = 0; i < ActiveColors; ++i)
+	for (i = 1; i <= ActiveColors; ++i)
 	{
 		int r = palette[0];
 		int g = palette[1];
@@ -759,7 +761,7 @@ void FSingleLumpFont::FixupPalette (BYTE *identity, double *luminosity, const BY
 	{
 		diver = 1.0 / 255.0;
 	}
-	for (i = 0; i < ActiveColors; ++i)
+	for (i = 1; i <= ActiveColors; ++i)
 	{
 		luminosity[i] = (luminosity[i] - minlum) * diver;
 	}
@@ -918,21 +920,30 @@ const BYTE *FFontChar2::GetColumn (unsigned int column, const Span **spans_out)
 
 void FFontChar2::MakeTexture ()
 {
-	const BYTE *sourcestart = (const BYTE *)W_MapLumpNum (SourceLump);
-	const BYTE *data = sourcestart + SourcePos;
+	FWadLump lump = Wads.OpenLumpNum (SourceLump);
 	int destSize = Width * Height;
 	BYTE max = 255;
 
 	// This is to "fix" bad fonts
-	if (sourcestart[3] == '2')
 	{
-		max = sourcestart[10];
+		BYTE buff[8];
+		lump.Read (buff, 4);
+		if (buff[3] == '2')
+		{
+			lump.Read (buff, 7);
+			max = buff[6];
+			lump.Seek (SourcePos - 11, SEEK_CUR);
+		}
+		else
+		{
+			lump.Seek (SourcePos - 4, SEEK_CUR);
+		}
 	}
 
 	Pixels = new BYTE[destSize];
 
 	int runlen = 0, setlen = 0;
-	BYTE setval;
+	BYTE setval = 0;  // Shut up, GCC!
 	BYTE *dest_p = Pixels;
 	int dest_adv = Height;
 	int dest_rew = destSize - 1;
@@ -943,10 +954,11 @@ void FFontChar2::MakeTexture ()
 		{
 			if (runlen != 0)
 			{
-				BYTE color = *data - 1;
-				*dest_p = color != 255 ? MIN (color, max) : 255;
+				BYTE color;
+
+				lump >> color;
+				*dest_p = MIN (color, max);
 				dest_p += dest_adv;
-				data++;
 				x--;
 				runlen--;
 			}
@@ -959,29 +971,30 @@ void FFontChar2::MakeTexture ()
 			}
 			else
 			{
-				SBYTE code = *data++;
+				SBYTE code;
+
+				lump >> code;
 				if (code >= 0)
 				{
 					runlen = code + 1;
 				}
 				else if (code != -128)
 				{
-					BYTE color = *data - 1;
+					BYTE color;
+
+					lump >> color;
 					setlen = (-code) + 1;
-					setval = color != 255 ? MIN (color, max) : 255;
-					data++;
+					setval = MIN (color, max);
 				}
 			}
 		}
 		dest_p -= dest_rew;
 	}
 
-	W_UnMapLump (sourcestart);
-
 	if (destSize < 0)
 	{
 		char name[9];
-		W_GetLumpName (name, SourceLump);
+		Wads.GetLumpName (name, SourceLump);
 		name[8] = 0;
 		I_FatalError ("The font %s is corrupt", name);
 	}

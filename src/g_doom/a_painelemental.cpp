@@ -140,9 +140,12 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	// If it is, then we don't allow the spawn.						//   V
 
 	if (Check_Sides (self, x, y))
+	{
 		return;
+	}
 
 	other = Spawn<ALostSoul> (x, y, z);
+
 
 	// Check to see if the new Lost Soul's z value is above the
 	// ceiling of its new sector, or below the floor. If so, kill it.

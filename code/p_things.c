@@ -282,7 +282,7 @@ BOOL P_ActivateMobj (mobj_t *mobj)
 
 				P_DrawSplash (count, mobj->x, mobj->y, mobj->z, mobj->angle, 1);
 				sprintf (sound, "world/spark%d", 1+(M_Random() % 3));
-				S_Sound (mobj, CHAN_AUTO, sound, 1, ATTN_IDLE);
+				S_Sound (mobj, CHAN_AUTO, sound, 1, ATTN_STATIC);
 				break;
 			}
 			case MT_FOUNTAIN:

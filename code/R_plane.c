@@ -215,7 +215,7 @@ void R_ClearPlanes (void)
 	lastopening = openings;
 	
 	// texture calculation
-	memset (cachedheight, 0, sizeof(*cachedheight) * screens[0].height);
+	memset (cachedheight, 0, sizeof(*cachedheight) * screen.height);
 	angle = (viewangle - ANG90)>>ANGLETOFINESHIFT;	// left to right mapping
 	// scale will be unit scale at SCREENWIDTH/2 distance
 	basexscale = FixedDiv (finecosine[angle], centerxfrac);
@@ -235,8 +235,8 @@ static visplane_t *new_visplane(unsigned hash)
 	visplane_t *check = freetail;
 
 	if (!check) {
-		check = Calloc (1, sizeof(*check) + sizeof(*check->top)*(screens[0].width*2));
-		check->bottom = &check->top[screens[0].width+2];
+		check = Calloc (1, sizeof(*check) + sizeof(*check->top)*(screen.width*2));
+		check->bottom = &check->top[screen.width+2];
 	} else
 		if (!(freetail = freetail->next))
 			freehead = &freetail;
@@ -282,10 +282,10 @@ visplane_t *R_FindPlane (fixed_t height, int picnum, int lightlevel,
 	check->xoffs = xoffs;				// killough 2/28/98: Save offsets
 	check->yoffs = yoffs;
 	check->colormap = basecolormap;		// [RH] Save colormap
-	check->minx = screens[0].width;
+	check->minx = screen.width;
 	check->maxx = -1;
 	
-	memset (check->top, 0xff, sizeof(*check->top) * screens[0].width);
+	memset (check->top, 0xff, sizeof(*check->top) * screen.width);
 				
 	return check;
 }
@@ -348,7 +348,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		pl = new_pl;
 		pl->minx = start;
 		pl->maxx = stop;
-		memset (pl->top, 0xff, sizeof(*pl->top) * screens[0].width);
+		memset (pl->top, 0xff, sizeof(*pl->top) * screen.width);
 	}
 	return pl;
 }
@@ -612,18 +612,18 @@ BOOL R_PlaneInitData (void)
 	if (cachedxstep)	free (cachedxstep);
 	if (cachedystep)	free (cachedystep);
 
-	floorclip = Malloc (screens[0].width * sizeof(*floorclip));
-	ceilingclip = Malloc (screens[0].width * sizeof(*ceilingclip));
+	floorclip = Malloc (screen.width * sizeof(*floorclip));
+	ceilingclip = Malloc (screen.width * sizeof(*ceilingclip));
 
-	spanstart = Calloc (screens[0].height, sizeof(*spanstart));
-	spanstop = Calloc (screens[0].height, sizeof(*spanstop));
+	spanstart = Calloc (screen.height, sizeof(*spanstart));
+	spanstop = Calloc (screen.height, sizeof(*spanstop));
 
-	yslopetab = Calloc ((screens[0].height<<1)+(screens[0].height>>1), sizeof(*yslopetab));
-	distscale = Calloc (screens[0].width, sizeof(*distscale));
-	cachedheight = Calloc (screens[0].height, sizeof(*cachedheight));
-	cacheddistance = Calloc (screens[0].height, sizeof(*cacheddistance));
-	cachedxstep = Calloc (screens[0].height, sizeof(*cachedxstep));
-	cachedystep = Calloc (screens[0].height, sizeof(*cachedystep));
+	yslopetab = Calloc ((screen.height<<1)+(screen.height>>1), sizeof(*yslopetab));
+	distscale = Calloc (screen.width, sizeof(*distscale));
+	cachedheight = Calloc (screen.height, sizeof(*cachedheight));
+	cacheddistance = Calloc (screen.height, sizeof(*cacheddistance));
+	cachedxstep = Calloc (screen.height, sizeof(*cachedxstep));
+	cachedystep = Calloc (screen.height, sizeof(*cachedystep));
 
 	// Free all visplanes and let them be re-allocated as needed.
 	{

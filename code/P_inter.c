@@ -58,8 +58,18 @@ int 	clipammo[NUMAMMO] = {10, 4, 20, 1};
 
 static void PickupMessage (mobj_t *toucher, const char *message)
 {
-	if (toucher == players[consoleplayer].camera)
+	// Some maps have multiple items stacked on top of each other.
+	// It looks odd to display pickup messages for all of them.
+	static int lastmessagetic;
+	static const char *lastmessage = NULL;
+
+	if (toucher == players[consoleplayer].camera
+		&& (lastmessagetic != gametic || lastmessage != message))
+	{
+		lastmessagetic = gametic;
+		lastmessage = message;
 		Printf (PRINT_LOW, "%s\n", message);
+	}
 }
 
 //
@@ -653,18 +663,28 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 	}
 	P_RemoveMobj (special);
 	player->bonuscount += BONUSADD;
-	switch (sound) {
-		case 0:
-		case 3:
-			S_Sound (player->mo, CHAN_ITEM, "misc/i_pkup", 1, ATTN_NORM);
-			break;
-		case 1:
-			S_Sound (player->mo, CHAN_ITEM, "misc/p_pkup", 1,
-				(player->mo == players[consoleplayer].camera) ? ATTN_SURROUND : ATTN_NORM);
-			break;
-		case 2:
-			S_Sound (player->mo, CHAN_ITEM, "misc/w_pkup", 1, ATTN_NORM);
-			break;
+
+	{
+		mobj_t *ent;
+
+		if (player->mo == players[consoleplayer].camera)
+			ent = NULL;
+		else
+			ent = player->mo;
+
+		switch (sound) {
+			case 0:
+			case 3:
+				S_Sound (ent, CHAN_ITEM, "misc/i_pkup", 1, ATTN_NORM);
+				break;
+			case 1:
+				S_Sound (ent, CHAN_ITEM, "misc/p_pkup", 1,
+					!ent ? ATTN_SURROUND : ATTN_NORM);
+				break;
+			case 2:
+				S_Sound (ent, CHAN_ITEM, "misc/w_pkup", 1, ATTN_NORM);
+				break;
+		}
 	}
 }
 
@@ -1066,7 +1086,7 @@ void P_KillMobj (mobj_t *source, mobj_t *target, mobj_t *inflictor)
 		target->player->playerstate = PST_DEAD;
 		P_DropWeapon (target->player);
 
-		if (target->player == &players[consoleplayer] && automapactive)
+		if (target == players[consoleplayer].camera && automapactive)
 		{
 			// don't die in auto map, switch view prior to dying
 			AM_Stop ();

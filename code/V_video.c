@@ -69,8 +69,9 @@ extern int DisplayID;
 
 
 
-// [RH] Screens are no longer mere byte arrays.
-screen_t screens[1];
+// [RH] The framebuffer is no longer a mere byte array.
+// There's also only one, not four.
+screen_t screen;
 
 int 	dirtybox[4];
 
@@ -464,24 +465,24 @@ void BuildTransTable (byte *transtab, unsigned int *palette)
 	C_InitTicker (NULL, 0);
 }
 
-void V_LockScreen (screen_t *screen)
+void V_LockScreen (screen_t *scrn)
 {
-	screen->lockcount++;
-	if (screen->lockcount == 1) {
-		I_LockScreen (screen);
+	scrn->lockcount++;
+	if (scrn->lockcount == 1) {
+		I_LockScreen (scrn);
 
-		if (screen == &screens[0]) {
-			if (dc_pitch != screen->pitch << detailyshift) {
-				dc_pitch = screen->pitch << detailyshift;
+		if (scrn == &screen) {
+			if (dc_pitch != scrn->pitch << detailyshift) {
+				dc_pitch = scrn->pitch << detailyshift;
 				R_InitFuzzTable ();
 #ifdef USEASM
 				ASM_PatchPitch ();
 #endif
 			}
 
-			if ((screen->is8bit ? 1 : 4) << detailxshift != ds_colsize) {
-				ds_colsize = (screen->is8bit ? 1 : 4) << detailxshift;
-				ds_colshift = (screen->is8bit ? 0 : 2) + detailxshift;
+			if ((scrn->is8bit ? 1 : 4) << detailxshift != ds_colsize) {
+				ds_colsize = (scrn->is8bit ? 1 : 4) << detailxshift;
+				ds_colshift = (scrn->is8bit ? 0 : 2) + detailxshift;
 #ifdef USEASM
 				ASM_PatchColSize ();
 #endif
@@ -509,7 +510,6 @@ void V_Blit (screen_t *src, int srcx, int srcy, int srcwidth, int srcheight,
 //
 BOOL V_DoModeSetup (int width, int height, int id)
 {
-	int i;
 	int bpp;
 
 	CleanXfac = width / 320;
@@ -517,24 +517,20 @@ BOOL V_DoModeSetup (int width, int height, int id)
 	CleanWidth = width / CleanXfac;
 	CleanHeight = height / CleanYfac;
 
-	// [RH] Screens are no longer byte arrays
-	for (i = 0; i < 1; i++)
-		if (screens[i].impdata)
-			V_FreeScreen (&screens[i]);
+	// Free the virtual framebuffer
+	V_FreeScreen (&screen);
 
 	I_SetMode (width, height, id);
 	bpp = (id == 1010) ? 8 : 32;
 
-	for (i = 0; i < 1; i++) {
-		if (!I_AllocateScreen (&screens[i], width, height, bpp))
-			return false;
-	}
+	// Allocate a new virtual framebuffer
+	I_AllocateScreen (&screen, width, height, bpp);
 
 	V_ForceBlend (0,0,0,0);
 	if (bpp == 8)
 		RefreshPalettes ();
 
-	R_InitColumnDrawers (screens[0].is8bit);
+	R_InitColumnDrawers (screen.is8bit);
 	R_MultiresInit ();
 
 	return true;
@@ -545,12 +541,12 @@ BOOL V_SetResolution (int width, int height, int id)
 	int oldwidth, oldheight;
 	int oldID;
 
-	if (screens[0].impdata) {
-		oldwidth = screens[0].width;
-		oldheight = screens[0].height;
+	if (screen.impdata) {
+		oldwidth = screen.width;
+		oldheight = screen.height;
 		oldID = DisplayID;
 	} else {
-		// Harmless if screens[0] wasn't allocated
+		// Harmless if screen wasn't allocated
 		oldwidth = width;
 		oldheight = height;
 		oldID = id;
@@ -584,7 +580,7 @@ BOOL V_SetResolution (int width, int height, int id)
 void Cmd_Vid_SetMode (void *plyr, int argc, char **argv)
 {
 	BOOL	goodmode = false;
-	int		width = 0, height = screens[0].height;
+	int		width = 0, height = screen.height;
 	int		id = DisplayID;
 
 	if (argc > 1) {
@@ -692,11 +688,11 @@ void V_Init (void)
 	if (!V_SetResolution (width, height, id)) {
 		I_FatalError ("Could not set resolution to %d x %d (%s)", width, height, IdStrings[id-1000]);
 	} else {
-		Printf (PRINT_HIGH, "Resolution: %d x %d (%s)\n", screens[0].width, screens[0].height, IdStrings[id-1000]);
+		Printf (PRINT_HIGH, "Resolution: %d x %d (%s)\n", screen.width, screen.height, IdStrings[id-1000]);
 	}
 
 	V_InitConChars (0xf7);
-	C_InitConsole (screens[0].width, screens[0].height, true);
+	C_InitConsole (screen.width, screen.height, true);
 
 	V_Palette = DefaultPalette->colors;
 

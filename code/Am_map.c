@@ -81,7 +81,7 @@ cvar_t	*am_overlay;
 cvar_t	*am_showsecrets, *am_showmonsters, *am_showtime;
 
 // drawing stuff
-#define	FB		(screens[0])
+#define	FB		(screen)
 
 #define AM_PANDOWNKEY	KEY_DOWNARROW
 #define AM_PANUPKEY		KEY_UPARROW
@@ -278,7 +278,6 @@ static cheatseq_t cheat_amap = { cheat_amap_seq, 0 };
 static BOOL stopped = true;
 
 extern BOOL viewactive;
-//extern byte screens[][SCREENWIDTH*SCREENHEIGHT];
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y);
 
@@ -394,11 +393,11 @@ void AM_findMinMaxBoundaries(void)
 	min_w = 2*PLAYERRADIUS; // const? never changed?
 	min_h = 2*PLAYERRADIUS;
 
-	a = FixedDiv((screens[0].width)<<FRACBITS, max_w);
-	b = FixedDiv((screens[0].height)<<FRACBITS, max_h);
+	a = FixedDiv((screen.width)<<FRACBITS, max_w);
+	b = FixedDiv((screen.height)<<FRACBITS, max_h);
 
 	min_scale_mtof = a < b ? a : b;
-	max_scale_mtof = FixedDiv((screens[0].height)<<FRACBITS, 2*PLAYERRADIUS);
+	max_scale_mtof = FixedDiv((screen.height)<<FRACBITS, 2*PLAYERRADIUS);
 }
 
 
@@ -447,8 +446,8 @@ void AM_initVariables(void)
 	ftom_zoommul = FRACUNIT;
 	mtof_zoommul = FRACUNIT;
 
-	m_w = FTOM(screens[0].width);
-	m_h = FTOM(screens[0].height);
+	m_w = FTOM(screen.width);
+	m_h = FTOM(screen.height);
 
 	// find player to center on initially
 	if (!playeringame[pnum = consoleplayer])
@@ -475,7 +474,7 @@ void AM_initColors (BOOL overlayed)
 {
 	unsigned int *palette;
 	
-	if (screens[0].is8bit)
+	if (screen.is8bit)
 		palette = DefaultPalette->colors;
 	else
 		palette = NULL;
@@ -516,7 +515,7 @@ void AM_initColors (BOOL overlayed)
 			if (b < 0)
 				b += 32;
 
-			if (screens[0].is8bit)
+			if (screen.is8bit)
 				AlmostBackground = BestColor (DefaultPalette->basecolors, r, g , b, DefaultPalette->numcolors);
 			else
 				AlmostBackground = MAKERGB(r,g,b);
@@ -721,19 +720,19 @@ BOOL AM_Responder (event_t *ev)
 					case AM_FOLLOWKEY:
 						followplayer = !followplayer;
 						f_oldloc.x = MAXINT;
-						Printf (PRINT_HIGH, followplayer ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF);
+						Printf (PRINT_HIGH, "%s\n", followplayer ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF);
 						break;
 					case AM_GRIDKEY:
 						grid = !grid;
-						Printf (PRINT_HIGH, grid ? AMSTR_GRIDON : AMSTR_GRIDOFF);
+						Printf (PRINT_HIGH, "%s\n", grid ? AMSTR_GRIDON : AMSTR_GRIDOFF);
 						break;
 					case AM_MARKKEY:
-						Printf (PRINT_HIGH, "%s %d", AMSTR_MARKEDSPOT, markpointnum);
+						Printf (PRINT_HIGH, "%s %d\n", AMSTR_MARKEDSPOT, markpointnum);
 						AM_addMark();
 						break;
 					case AM_CLEARMARKKEY:
 						AM_clearMarks();
-						Printf (PRINT_HIGH, AMSTR_MARKSCLEARED);
+						Printf (PRINT_HIGH, "%s\n", AMSTR_MARKSCLEARED);
 						break;
 					default:
 						cheatstate=0;
@@ -836,7 +835,7 @@ void AM_clearFB (int color)
 {
 	int y;
 
-	if (screens[0].is8bit) {
+	if (screen.is8bit) {
 		if (f_w == f_p)
 			memset (fb, color, f_w*f_h);
 		else
@@ -1013,7 +1012,7 @@ void AM_drawFline (fline_t *fl, int color)
 
 	if (ax > ay) {
 		d = ay - ax/2;
-		if (screens[0].is8bit) {
+		if (screen.is8bit) {
 			while (1) {
 				PUTDOTP(x,y,(byte)color);
 				if (x == fl->b.x)
@@ -1040,7 +1039,7 @@ void AM_drawFline (fline_t *fl, int color)
 		}
 	} else {
 		d = ax - ay/2;
-		if (screens[0].is8bit) {
+		if (screen.is8bit) {
 			while (1) {
 				PUTDOTP(x, y, (byte)color);
 				if (y == fl->b.y)
@@ -1298,7 +1297,7 @@ void AM_drawPlayers(void)
 
 		if (p->powers[pw_invisibility])
 			color = AlmostBackground;
-		else if (screens[0].is8bit)
+		else if (screen.is8bit)
 			color = BestColor (DefaultPalette->basecolors,
 							   RPART(p->userinfo.color),
 							   GPART(p->userinfo.color),
@@ -1391,14 +1390,14 @@ void AM_Drawer (void)
 	if (!automapactive)
 		return;
 
-	fb = screens[0].buffer;
+	fb = screen.buffer;
 	if (!viewactive) {
 		// [RH] Set f_? here now to handle automap overlaying
 		// and view size adjustments.
 		f_x = f_y = 0;
-		f_w = screens[0].width;
+		f_w = screen.width;
 		f_h = ST_Y;
-		f_p = screens[0].pitch;
+		f_p = screen.pitch;
 
 		AM_clearFB(Background);
 	} else {
@@ -1406,7 +1405,7 @@ void AM_Drawer (void)
 		f_y = viewwindowy;
 		f_w = realviewwidth;
 		f_h = realviewheight;
-		f_p = screens[0].pitch;
+		f_p = screen.pitch;
 	}
 	AM_activateNewScale();
 
@@ -1446,7 +1445,7 @@ void AM_Drawer (void)
 				sprintf (line, TEXTCOLOR_RED "SECRETS:"
 							   TEXTCOLOR_NORMAL " %d / %d",
 							   level.found_secrets, level.total_secrets);
-				V_DrawTextClean (CR_GREY, screens[0].width - V_StringWidth (line) * CleanXfac, y, line);
+				V_DrawTextClean (CR_GREY, screen.width - V_StringWidth (line) * CleanXfac, y, line);
 			}
 
 			y += height;
@@ -1468,7 +1467,7 @@ void AM_Drawer (void)
 
 		if (am_showtime->value) {
 			sprintf (line, " %02d:%02d:%02d", time/3600, (time%3600)/60, time%60);	// Time
-			V_DrawTextClean (CR_RED, screens[0].width - V_StringWidth (line) * CleanXfac, y, line);
+			V_DrawTextClean (CR_RED, screen.width - V_StringWidth (line) * CleanXfac, y, line);
 		}
 
 	}

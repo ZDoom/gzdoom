@@ -15,7 +15,7 @@ struct palette_s {
 	struct palette_s *next, *prev;
 
 	union {
-		// Which of these is used is determined by screens[0].is8bit
+		// Which of these is used is determined by screen.is8bit
 
 		byte		*colormaps;		// Colormaps for 8-bit graphics
 		unsigned	*shades;		// ARGB8888 values for 32-bit graphics

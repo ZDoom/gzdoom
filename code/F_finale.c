@@ -26,7 +26,6 @@
 #include <ctype.h>
 #include <math.h>
 
-// Functions.
 #include "i_system.h"
 #include "m_swap.h"
 #include "z_zone.h"
@@ -34,19 +33,10 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "s_sound.h"
-
-// Data.
 #include "dstrings.h"
-
 #include "doomstat.h"
 #include "r_state.h"
-
 #include "hu_stuff.h"
-
-// ?
-//#include "doomstat.h"
-//#include "r_local.h"
-//#include "f_finale.h"
 
 // Stage of animation:
 //	0 = text, 1 = art screen, 2 = character cast
@@ -56,7 +46,6 @@ int	finalecount;
 
 #define TEXTSPEED		2
 #define TEXTWAIT		250
-static int TextSpeed;	// [RH] Var for (ha ha) compatibility with old demos
 
 char*	finaletext;
 char*	finaleflat;
@@ -107,8 +96,8 @@ void F_StartFinale (char *music, char *flat, char *text)
 
 	finalestage = 0;
 	finalecount = 0;
-
-	TextSpeed = TEXTSPEED;
+	V_SetBlend (0,0,0,0);
+	S_StopAllChannels ();
 }
 
 
@@ -139,8 +128,8 @@ void F_Ticker (void)
 				break;
 
 		if (i < MAXPLAYERS) {
-			if (finalecount < (signed)(strlen (finaletext)*TextSpeed)) {
-				finalecount = strlen (finaletext)*TextSpeed;
+			if (finalecount < (signed)(strlen (finaletext)*TEXTSPEED)) {
+				finalecount = strlen (finaletext)*TEXTSPEED;
 			} else {
 				if (!strncmp (level.nextmap, "EndGame", 7)) {
 					if (level.nextmap[7] == 'C') {
@@ -189,10 +178,10 @@ void F_TextWrite (void)
 	// erase the entire screen to a tiled background
 	{
 		int lump = R_FlatNumForName (finaleflat) + firstflat;
-		V_FlatFill (0,0,screens[0].width,screens[0].height,&screens[0],
+		V_FlatFill (0,0, screen.width, screen.height, &screen,
 					W_CacheLumpNum (lump, PU_CACHE));
 	}
-	V_MarkRect (0, 0, screens[0].width, screens[0].height);
+	V_MarkRect (0, 0, screen.width, screen.height);
 	
 	// draw some of the text onto the screen
 	cx = 10;
@@ -202,7 +191,7 @@ void F_TextWrite (void)
 	if (finalecount < 11)
 		return;
 
-	count = (finalecount - 10)/TextSpeed;
+	count = (finalecount - 10)/TEXTSPEED;
 	for ( ; count ; count-- )
 	{
 		c = *ch++;
@@ -223,9 +212,9 @@ void F_TextWrite (void)
 		}
 				
 		w = SHORT (hu_font[c]->width);
-		if (cx+w > screens[0].width)
+		if (cx+w > screen.width)
 			break;
-		V_DrawPatchClean(cx, cy, &screens[0], hu_font[c]);
+		V_DrawPatchClean(cx, cy, &screen, hu_font[c]);
 		cx+=w;
 	}
 		
@@ -489,19 +478,6 @@ BOOL F_CastResponder (event_t* ev)
 	return true;
 }
 
-
-void F_CastPrint (char *text)
-{
-	char text2[80], *t2 = text2;
-
-	while (*text)
-		*t2++ = *text++ ^ 0x80;
-	*t2 = 0;
-	V_DrawTextClean (CR_RED,
-					 (screens[0].width - V_StringWidth (text2) * CleanXfac) >> 1,
-					 (screens[0].height * 180) / 200, text2);
-}
-
 int V_DrawPatchFlipped (int, int, screen_t *, patch_t *);
 //
 // F_CastDrawer
@@ -515,21 +491,23 @@ void F_CastDrawer (void)
 	patch_t*			patch;
 	
 	// erase the entire screen to a background
-	V_DrawPatchIndirect (0,0,&screens[0], W_CacheLumpName ("BOSSBACK", PU_CACHE));
+	V_DrawPatchIndirect (0,0,&screen, W_CacheLumpName ("BOSSBACK", PU_CACHE));
 
-	F_CastPrint (castorder[castnum].name);
+	V_DrawTextClean (CR_RED,
+		(screen.width - V_StringWidth (castorder[castnum].name) * CleanXfac)/2,
+		(screen.height * 180) / 200, castorder[castnum].name);
 	
 	// draw the current frame in the middle of the screen
 	sprdef = &sprites[castsprite];
-	sprframe = &sprdef->spriteframes[ caststate->frame & FF_FRAMEMASK];
+	sprframe = &sprdef->spriteframes[caststate->frame & FF_FRAMEMASK];
 	lump = sprframe->lump[0];
 	flip = (BOOL)sprframe->flip[0];
 						
 	patch = W_CacheLumpNum (lump, PU_CACHE);
 	if (flip)
-		V_DrawPatchFlipped (160,170,&screens[0],patch);
+		V_DrawPatchFlipped (160,170,&screen,patch);
 	else
-		V_DrawPatchIndirect (160,170,&screens[0],patch);
+		V_DrawPatchIndirect (160,170,&screen,patch);
 }
 
 
@@ -653,7 +631,7 @@ void F_BunnyScroll (void)
 	p1 = W_CacheLumpName ("PFUB2", PU_LEVEL);
 	p2 = W_CacheLumpName ("PFUB1", PU_LEVEL);
 
-	V_MarkRect (0, 0, screens[0].width, screens[0].height);
+	V_MarkRect (0, 0, screen.width, screen.height);
 		
 	scrolled = 320 - (finalecount-230)/2;
 	if (scrolled > 320)
@@ -664,9 +642,9 @@ void F_BunnyScroll (void)
 	for ( x=0 ; x<320 ; x++)
 	{
 		if (x+scrolled < 320)
-			F_DrawPatchCol (x, p1, x+scrolled, &screens[0]);
+			F_DrawPatchCol (x, p1, x+scrolled, &screen);
 		else
-			F_DrawPatchCol (x, p2, x+scrolled - 320, &screens[0]);			
+			F_DrawPatchCol (x, p2, x+scrolled - 320, &screen);			
 	}
 		
 	if (finalecount < 1130)
@@ -674,7 +652,7 @@ void F_BunnyScroll (void)
 	if (finalecount < 1180)
 	{
 		V_DrawPatchIndirect ((320-13*8)/2,
-					 (200-8*8)/2,&screens[0], W_CacheLumpName ("END0",PU_CACHE));
+					 (200-8*8)/2,&screen, W_CacheLumpName ("END0",PU_CACHE));
 		laststage = 0;
 		return;
 	}
@@ -689,7 +667,7 @@ void F_BunnyScroll (void)
 	}
 		
 	sprintf (name,"END%i",stage);
-	V_DrawPatchIndirect ((320-13*8)/2, (200-8*8)/2,&screens[0], W_CacheLumpName (name,PU_CACHE));
+	V_DrawPatchIndirect ((320-13*8)/2, (200-8*8)/2,&screen, W_CacheLumpName (name,PU_CACHE));
 }
 
 
@@ -708,21 +686,21 @@ void F_Drawer (void)
 			{
 			  case '1':
 				if (gamemode == retail)
-				  V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("CREDIT",PU_CACHE));
+				  V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("CREDIT",PU_CACHE));
 				else
-				  V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP2",PU_CACHE));
+				  V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP2",PU_CACHE));
 				break;
 			  case '2':
-				V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("VICTORY2",PU_CACHE));
+				V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("VICTORY2",PU_CACHE));
 				break;
 			  case '3':
 				F_BunnyScroll ();
 				break;
 			  case '4':
-				V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("ENDPIC",PU_CACHE));
+				V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("ENDPIC",PU_CACHE));
 				break;
 			  default:
-				V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP2",PU_CACHE));
+				V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP2",PU_CACHE));
 				break;
 			}
 			break;

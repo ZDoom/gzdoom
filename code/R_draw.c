@@ -137,9 +137,9 @@ void R_DrawColumnP_C (void)
 	count++;
 
 #ifdef RANGECHECK 
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height) {
+		|| dc_yh >= screen.height) {
 		Printf (PRINT_HIGH, "R_DrawColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
 		return;
 	}
@@ -198,9 +198,9 @@ void R_StretchColumnP_C (void)
 	count++;
 
 #ifdef RANGECHECK 
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height) {
+		|| dc_yh >= screen.height) {
 		Printf (PRINT_HIGH, "R_StretchColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
 		return;
 	}
@@ -238,9 +238,9 @@ void R_FillColumnP (void)
 	count++;
 
 #ifdef RANGECHECK 
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height) {
+		|| dc_yh >= screen.height) {
 		Printf (PRINT_HIGH, "R_StretchColumnP_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
 		return;
 	}
@@ -265,7 +265,7 @@ void R_FillColumnP (void)
 //
 // [RH] FUZZTABLE changed from 50 to 64
 #define FUZZTABLE	64
-#define FUZZOFF		(screens[0].pitch)
+#define FUZZOFF		(screen.pitch)
 
 
 int 	fuzzoffset[FUZZTABLE];
@@ -297,9 +297,9 @@ void R_InitFuzzTable (void)
 	int i;
 	int fuzzoff;
 
-	V_LockScreen (&screens[0]);
+	V_LockScreen (&screen);
 	fuzzoff = FUZZOFF << detailyshift;
-	V_UnlockScreen (&screens[0]);
+	V_UnlockScreen (&screen);
 
 	for (i = 0; i < FUZZTABLE; i++)
 		fuzzoffset[i] = fuzzinit[i] * fuzzoff;
@@ -336,8 +336,8 @@ void R_DrawFuzzColumnP_C (void)
 	count++;
 
 #ifdef RANGECHECK
-	if (dc_x >= screens[0].width
-		|| dc_yl < 0 || dc_yh >= screens[0].height)
+	if (dc_x >= screen.width
+		|| dc_yl < 0 || dc_yh >= screen.height)
 	{
 		I_Error ("R_DrawFuzzColumnP_C: %i to %i at %i",
 				 dc_yl, dc_yh, dc_x);
@@ -395,9 +395,9 @@ void R_DrawTranslucentColumnP_C (void)
 	count++;
 
 #ifdef RANGECHECK
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height)
+		|| dc_yh >= screen.height)
 	{
 		I_Error ( "R_DrawTranslucentColumnP_C: %i to %i at %i",
 				  dc_yl, dc_yh, dc_x);
@@ -453,9 +453,9 @@ void R_DrawTranslatedColumnP_C (void)
 	count++;
 
 #ifdef RANGECHECK 
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height)
+		|| dc_yh >= screen.height)
 	{
 		I_Error ( "R_DrawTranslatedColumnP_C: %i to %i at %i",
 				  dc_yl, dc_yh, dc_x);
@@ -507,9 +507,9 @@ void R_DrawTlatedLucentColumnP_C (void)
 	count++;
 
 #ifdef RANGECHECK
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height)
+		|| dc_yh >= screen.height)
 	{
 		I_Error ( "R_DrawTlatedLucentColumnP_C: %i to %i at %i",
 				  dc_yl, dc_yh, dc_x);
@@ -588,8 +588,8 @@ void R_DrawSpanP (void)
 #ifdef RANGECHECK 
 	if (ds_x2 < ds_x1
 		|| ds_x1<0
-		|| ds_x2>=screens[0].width  
-		|| ds_y>screens[0].height)
+		|| ds_x2>=screen.width  
+		|| ds_y>screen.height)
 	{
 		I_Error( "R_DrawSpan: %i to %i at %i",
 				 ds_x1,ds_x2,ds_y);
@@ -647,8 +647,8 @@ void R_FillSpan (void)
 #ifdef RANGECHECK 
 	if (ds_x2 < ds_x1
 		|| ds_x1<0
-		|| ds_x2>=screens[0].width  
-		|| ds_y>screens[0].height)
+		|| ds_x2>=screen.width  
+		|| ds_y>screen.height)
 	{
 		I_Error( "R_FillSpan: %i to %i at %i",
 				 ds_x1,ds_x2,ds_y);
@@ -691,9 +691,9 @@ void R_DrawColumnD_C (void)
 	count++;
 
 #ifdef RANGECHECK 
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height) {
+		|| dc_yh >= screen.height) {
 		Printf (PRINT_HIGH, "R_DrawColumnD_C: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
 		return;
 	}
@@ -742,8 +742,8 @@ void R_DrawFuzzColumnD_C (void)
 	count++;
 
 #ifdef RANGECHECK
-	if (dc_x >= screens[0].width
-		|| dc_yl < 0 || dc_yh >= screens[0].height)
+	if (dc_x >= screen.width
+		|| dc_yl < 0 || dc_yh >= screen.height)
 	{
 		I_Error ("R_DrawFuzzColumnD_C: %i to %i at %i",
 				 dc_yl, dc_yh, dc_x);
@@ -786,9 +786,9 @@ void R_DrawTranslucentColumnD_C (void)
 	count++;
 
 #ifdef RANGECHECK
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height)
+		|| dc_yh >= screen.height)
 	{
 		I_Error ( "R_DrawTranslucentColumnD_C: %i to %i at %i",
 				  dc_yl, dc_yh, dc_x);
@@ -831,9 +831,9 @@ void R_DrawTranslatedColumnD_C (void)
 	count++;
 
 #ifdef RANGECHECK
-	if (dc_x >= screens[0].width
+	if (dc_x >= screen.width
 		|| dc_yl < 0
-		|| dc_yh >= screens[0].height)
+		|| dc_yh >= screen.height)
 	{
 		I_Error ( "R_DrawTranslatedColumnD_C: %i to %i at %i",
 				  dc_yl, dc_yh, dc_x);
@@ -876,8 +876,8 @@ void R_DrawSpanD (void)
 #ifdef RANGECHECK 
 	if (ds_x2 < ds_x1
 		|| ds_x1<0
-		|| ds_x2>=screens[0].width
-		|| ds_y>screens[0].height)
+		|| ds_x2>=screen.width
+		|| ds_y>screen.height)
 	{
 		I_Error( "R_DrawSpan: %i to %i at %i",
 				 ds_x1,ds_x2,ds_y);
@@ -1039,11 +1039,11 @@ void R_InitBuffer (int width, int height)
 	// Handle resize,
 	//	e.g. smaller view windows
 	//	with border and/or status bar.
-	viewwindowx = (screens[0].width-(width<<detailxshift))>>1;
+	viewwindowx = (screen.width-(width<<detailxshift))>>1;
 
 	// [RH] Adjust column offset according to bytes per pixel
 	//		and detail mode
-	xshift = (screens[0].is8bit) ? 0 : 2;
+	xshift = (screen.is8bit) ? 0 : 2;
 	xshift += detailxshift;
 
 	// Column offset. For windows
@@ -1051,15 +1051,15 @@ void R_InitBuffer (int width, int height)
 		columnofs[i] = viewwindowx + (i << xshift);
 
 	// Same with base row offset.
-	if ((width<<detailxshift) == screens[0].width)
+	if ((width<<detailxshift) == screen.width)
 		viewwindowy = 0;
 	else
 		viewwindowy = (ST_Y-(height<<detailyshift)) >> 1;
 
-	V_LockScreen (&screens[0]);
-	buffer = screens[0].buffer;
-	pitch = screens[0].pitch;
-	V_UnlockScreen (&screens[0]);
+	V_LockScreen (&screen);
+	buffer = screen.buffer;
+	pitch = screen.pitch;
+	V_UnlockScreen (&screen);
 
 	// Precalculate all row offsets.
 	for (i=0 ; i<height ; i++)
@@ -1072,7 +1072,7 @@ void R_DrawBorder (int x1, int y1, int x2, int y2)
 	int lump;
 
 	lump = R_FlatNumForName ((gamemode == commercial) ? "GRNROCK" : "FLOOR7_2");
-	V_FlatFill (x1 & ~63, y1, x2, y2, &screens[0],
+	V_FlatFill (x1 & ~63, y1, x2, y2, &screen,
 				W_CacheLumpNum (lump + firstflat, PU_CACHE));
 
 }
@@ -1097,52 +1097,52 @@ void R_DrawViewBorder (void)
 
 	// [RH] Redraw the status bar if SCREENWIDTH > status bar width.
 	// Will draw borders around itself, too.
-	if (screens[0].width > 320)
+	if (screen.width > 320)
 	{
 		SB_state = -1;
 	}
 
-	if (realviewwidth == screens[0].width) {
+	if (realviewwidth == screen.width) {
 		return;
 	}
 
-	R_DrawBorder (0, 0, screens[0].width, viewwindowy);
+	R_DrawBorder (0, 0, screen.width, viewwindowy);
 	R_DrawBorder (0, viewwindowy, viewwindowx, realviewheight + viewwindowy);
-	R_DrawBorder (viewwindowx + realviewwidth, viewwindowy, screens[0].width, realviewheight + viewwindowy);
-	R_DrawBorder (0, viewwindowy + realviewheight, screens[0].width, ST_Y);
+	R_DrawBorder (viewwindowx + realviewwidth, viewwindowy, screen.width, realviewheight + viewwindowy);
+	R_DrawBorder (0, viewwindowy + realviewheight, screen.width, ST_Y);
 
 	for (x = viewwindowx; x < viewwindowx + realviewwidth; x += 8)
 	{
-		V_DrawPatch (x, viewwindowy - 8, &screens[0], W_CacheLumpName ("brdr_t", PU_CACHE));
-		V_DrawPatch (x, viewwindowy + realviewheight, &screens[0], W_CacheLumpName ("brdr_b", PU_CACHE));
+		V_DrawPatch (x, viewwindowy - 8, &screen, W_CacheLumpName ("brdr_t", PU_CACHE));
+		V_DrawPatch (x, viewwindowy + realviewheight, &screen, W_CacheLumpName ("brdr_b", PU_CACHE));
 	}
 	for (y = viewwindowy; y < viewwindowy + realviewheight; y += 8)
 	{
-		V_DrawPatch (viewwindowx - 8, y, &screens[0], W_CacheLumpName ("brdr_l", PU_CACHE));
-		V_DrawPatch (viewwindowx + realviewwidth, y, &screens[0], W_CacheLumpName ("brdr_r", PU_CACHE));
+		V_DrawPatch (viewwindowx - 8, y, &screen, W_CacheLumpName ("brdr_l", PU_CACHE));
+		V_DrawPatch (viewwindowx + realviewwidth, y, &screen, W_CacheLumpName ("brdr_r", PU_CACHE));
 	}
 	// Draw beveled edge.
 	V_DrawPatch (viewwindowx-8,
 				 viewwindowy-8,
-				 &screens[0],
+				 &screen,
 				 W_CacheLumpName ("brdr_tl",PU_CACHE));
 	
 	V_DrawPatch (viewwindowx+realviewwidth,
 				 viewwindowy-8,
-				 &screens[0],
+				 &screen,
 				 W_CacheLumpName ("brdr_tr",PU_CACHE));
 	
 	V_DrawPatch (viewwindowx-8,
 				 viewwindowy+realviewheight,
-				 &screens[0],
+				 &screen,
 				 W_CacheLumpName ("brdr_bl",PU_CACHE));
 	
 	V_DrawPatch (viewwindowx+realviewwidth,
 				 viewwindowy+realviewheight,
-				 &screens[0],
+				 &screen,
 				 W_CacheLumpName ("brdr_br",PU_CACHE));
 
-	V_MarkRect (0,0,screens[0].width, ST_Y);
+	V_MarkRect (0,0,screen.width, ST_Y);
 }
 
 /*
@@ -1160,28 +1160,28 @@ void R_DrawTopBorder (void)
 {
 	int x, y;
 	
-	if (realviewwidth == screens[0].width)
+	if (realviewwidth == screen.width)
 		return;
 
-	R_DrawBorder (0, 0, screens[0].width, 34);
+	R_DrawBorder (0, 0, screen.width, 34);
 
 	if (viewwindowy < 35)
 	{
 		for (x = viewwindowx; x < viewwindowx + realviewwidth; x += 8)
 		{
-			V_DrawPatch (x, viewwindowy-8, &screens[0], W_CacheLumpName("brdr_t", PU_CACHE));
+			V_DrawPatch (x, viewwindowy-8, &screen, W_CacheLumpName("brdr_t", PU_CACHE));
 		}
 		for (y = viewwindowy; y < 35; y += 8)
 		{
-			V_DrawPatch(viewwindowx-8, y, &screens[0],
+			V_DrawPatch(viewwindowx-8, y, &screen,
 				W_CacheLumpName ("brdr_l", PU_CACHE));
-			V_DrawPatch(viewwindowx+realviewwidth, y, &screens[0],
+			V_DrawPatch(viewwindowx+realviewwidth, y, &screen,
 				W_CacheLumpName("brdr_r", PU_CACHE));
 		}
 
-		V_DrawPatch(viewwindowx-8, viewwindowy-8, &screens[0],
+		V_DrawPatch(viewwindowx-8, viewwindowy-8, &screen,
 			W_CacheLumpName("brdr_tl", PU_CACHE));
-		V_DrawPatch(viewwindowx+realviewwidth, viewwindowy-8, &screens[0],
+		V_DrawPatch(viewwindowx+realviewwidth, viewwindowy-8, &screen,
 			W_CacheLumpName("brdr_tr", PU_CACHE));
 	}
 }
@@ -1194,12 +1194,12 @@ void R_DetailDouble (void)
 	switch ((detailxshift << 1) | detailyshift) {
 		case 1:		// y-double
 		{
-			int rowsize = realviewwidth << ((screens[0].is8bit) ? 0 : 2);
-			int pitch = screens[0].pitch;
+			int rowsize = realviewwidth << ((screen.is8bit) ? 0 : 2);
+			int pitch = screen.pitch;
 			int y;
 			byte *line;
 
-			line = screens[0].buffer + viewwindowy*pitch + viewwindowx;
+			line = screen.buffer + viewwindowy*pitch + viewwindowx;
 			for (y = 0; y < viewheight; y++, line += pitch<<1) {
 				memcpy (line+pitch, line, rowsize);
 			}
@@ -1209,11 +1209,11 @@ void R_DetailDouble (void)
 		case 2:		// x-double
 		{
 			int rowsize = realviewwidth >> 2;
-			int pitch = screens[0].pitch >> (2-detailyshift);
+			int pitch = screen.pitch >> (2-detailyshift);
 			int y,x;
 			unsigned *line,a,b;
 
-			line = (unsigned *)(screens[0].buffer + viewwindowy*screens[0].pitch + viewwindowx);
+			line = (unsigned *)(screen.buffer + viewwindowy*screen.pitch + viewwindowx);
 			for (y = 0; y < viewheight; y++, line += pitch) {
 				for (x = 0; x < rowsize; x += 2) {
 					a = line[x+0];
@@ -1230,12 +1230,12 @@ void R_DetailDouble (void)
 		case 3:		// x- and y-double
 		{
 			int rowsize = realviewwidth >> 2;
-			int pitch = screens[0].pitch >> (2-detailyshift);
-			int realpitch = screens[0].pitch >> 2;
+			int pitch = screen.pitch >> (2-detailyshift);
+			int realpitch = screen.pitch >> 2;
 			int y,x;
 			unsigned *line,a,b;
 
-			line = (unsigned *)(screens[0].buffer + viewwindowy*screens[0].pitch + viewwindowx);
+			line = (unsigned *)(screen.buffer + viewwindowy*screen.pitch + viewwindowx);
 			for (y = 0; y < viewheight; y++, line += pitch) {
 				for (x = 0; x < rowsize; x += 2) {
 					a = line[x+0];
@@ -1258,7 +1258,7 @@ void R_InitColumnDrawers (BOOL is8bit)
 {
 	if (is8bit) {
 #ifdef USEASM
-		if (screens[0].height <= 240)
+		if (screen.height <= 240)
 			R_DrawColumn		= R_DrawColumnP_Unrolled;
 		else
 			R_DrawColumn		= R_DrawColumnP_ASM;
@@ -1266,7 +1266,7 @@ void R_InitColumnDrawers (BOOL is8bit)
 		R_DrawFuzzColumn		= R_DrawFuzzColumnP_ASM;
 		R_DrawTranslucentColumn = R_DrawTranslucentColumnP_ASM;
 		R_DrawTranslatedColumn	= R_DrawTranslatedColumnP_C;
-		if (screens[0].width <= 320)
+		if (screen.width <= 320)
 			R_DrawSpan			= R_DrawSpanP_Unrolled;
 		else
 			R_DrawSpan			= R_DrawSpanP;

@@ -320,3 +320,23 @@ void I_PrintStr (int xp, const char *cp, int count, BOOL scroll) {
 	fputs (string, stdout);
         fflush (stdout);
 }
+
+long I_FindFirst (char *filespec, findstate_t *fileinfo)
+{
+	int res;
+
+	res = findfirst (filespec, fileinfo, FA_RDONLY | FA_HIDDEN | FA_SYSTEM |
+										 FA_DIREC | FA_ARCH);
+
+	return res ? -1 : 1;
+}
+
+int I_FindNext (long handle, findstate_t *fileinfo)
+{
+	return findnext (fileinfo);
+}
+
+int I_FindClose (long handle)
+{
+	return 0;
+}

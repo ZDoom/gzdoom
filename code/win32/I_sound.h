@@ -55,7 +55,8 @@ I_StartSound
   int			vol,
   int			sep,
   int			pitch,
-  int			channel );
+  int			channel,
+  BOOL			looping );
 
 
 // Stops a sound channel.

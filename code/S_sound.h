@@ -38,6 +38,7 @@ struct sfxinfo_struct
 {
 	char		name[MAX_SNDNAME+1];	// [RH] Sound name defined in SNDINFO
 	void*		data;					// sound data
+	void*		loopdata;				// Sound data for looping sounds
 
 	struct sfxinfo_struct *link;
 
@@ -73,8 +74,10 @@ void S_Start(void);
 
 // Start sound for thing at <ent>
 void S_Sound (struct mobj_s *ent, int channel, char *name, float volume, int attenuation);
+void S_LoopedSound (struct mobj_s *ent, int channel, char *name, float volume, int attenuation);
 void S_PositionedSound (int x, int y, int channel, char *name, float volume, int attenuation);
 void S_SoundID (struct mobj_s *ent, int channel, int sfxid, float volume, int attenuation);
+void S_LoopedSoundID (struct mobj_s *ent, int channel, int sfxid, float volume, int attenuation);
 
 // sound channels
 // channel 0 never willingly overrides

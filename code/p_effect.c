@@ -292,7 +292,6 @@ void P_DrawSplash (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, in
 void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, int updown, int kind)
 {
 	int color1, color2, zvel, zspread, zadd;
-	angle_t perpan;
 
 	switch (kind) {
 		case 0:		// Blood
@@ -313,9 +312,7 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 
 	zvel = -128;
 	zspread = updown ? -6000 : 6000;
-	perpan = angle - ANG90;
 	zadd = (updown == 2) ? -128 : 0;
-
 
 	for (; count; count--) {
 		particle_t *p = NewParticle ();
@@ -339,7 +336,7 @@ void P_DrawSplash2 (int count, fixed_t x, fixed_t y, fixed_t z, angle_t angle, i
 			p->accy = p->vely >> 4;
 		}
 		p->z = z + (M_Random () + zadd) * zspread;
-		an = (perpan + ((M_Random() - 128) << 22)) >> ANGLETOFINESHIFT;
+		an = (angle + ((M_Random() - 128) << 22)) >> ANGLETOFINESHIFT;
 		p->x = x + (M_Random () & 31)*finecosine[an];
 		p->y = y + (M_Random () & 31)*finesine[an];
 	}
@@ -357,27 +354,30 @@ void P_DrawRailTrail (vec3_t start, vec3_t end)
 	steps = (int)(length*0.3333f);
 
 	if (length) {
-		// The railgun's sound is a special case. How loud it sounds to a player
-		// depends on how far the player is from the slug's path (not the start
-		// of the path). The sound is also not attenuated once it start's either.
+		// The railgun's sound is a special case. It gets played from the
+		// point on the slug's trail that is closest to the hearing player.
 		mobj_t *mo = players[consoleplayer].camera;
 		vec3_t point;
-		float dist;
+		float r;
+		float dirz;
 
 		length = 1 / length;
 
-		if ((mo->x & ~65535) == (FLOAT2FIXED(start[0]) & ~65535)
-			&& (mo->y & ~65535) == (FLOAT2FIXED(start[1]) & ~65535))
-		{ // This player fired the railgun
+		if (abs(mo->x - FLOAT2FIXED(start[0])) < 20 * FRACUNIT
+			&& (mo->y - FLOAT2FIXED(start[1])) < 20 * FRACUNIT)
+		{ // This player (probably) fired the railgun
 			S_Sound (mo, CHAN_WEAPON, "weapons/railgf", 1, ATTN_NORM);
 		}
 		else
 		{
 			// Only consider sound in 2D (for now, anyway)
-			dist = (float)fabs (((start[1] - FIXED2FLOAT(mo->y)) * (start[1] - end[1]) -
-					(start[0] - FIXED2FLOAT(mo->x)) * (start[0] - end[0])) * length);
+			r = ((start[1] - FIXED2FLOAT(mo->y)) * (-dir[1]) -
+					(start[0] - FIXED2FLOAT(mo->x)) * (dir[0])) * length * length;
 
-			VectorMA (start, dist, dir, point);
+			dirz = dir[2];
+			dir[2] = 0;
+			VectorMA (start, r, dir, point);
+			dir[2] = dirz;
 
 			S_PositionedSound (FLOAT2FIXED(point[0]), FLOAT2FIXED(point[1]),
 				CHAN_WEAPON, "weapons/railgf", 1, ATTN_NORM);

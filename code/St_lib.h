@@ -35,7 +35,7 @@
 extern screen_t stbarscreen;
 extern screen_t stnumscreen;
 #define BG (stbarscreen)
-#define FG (screens[0])
+#define FG (screen)
 
 
 

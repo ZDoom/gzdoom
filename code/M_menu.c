@@ -584,7 +584,7 @@ void M_DrawLoad(void)
 {
 	int i;
 		
-	V_DrawPatchClean (72, 28, &screens[0], W_CacheLumpName ("M_LOADG",PU_CACHE));
+	V_DrawPatchClean (72, 28, &screen, W_CacheLumpName ("M_LOADG",PU_CACHE));
 	for (i = 0; i < load_end; i++)
 	{
 		M_DrawSaveLoadBorder (LoadDef.x, LoadDef.y+LINEHEIGHT*i, 24);
@@ -602,15 +602,15 @@ void M_DrawSaveLoadBorder (int x, int y, int len)
 {
 	int i;
 		
-	V_DrawPatchClean (x-8, y+7, &screens[0], W_CacheLumpName ("M_LSLEFT",PU_CACHE));
+	V_DrawPatchClean (x-8, y+7, &screen, W_CacheLumpName ("M_LSLEFT",PU_CACHE));
 		
 	for (i = 0; i < len; i++)
 	{
-		V_DrawPatchClean (x, y+7, &screens[0], W_CacheLumpName ("M_LSCNTR",PU_CACHE));
+		V_DrawPatchClean (x, y+7, &screen, W_CacheLumpName ("M_LSCNTR",PU_CACHE));
 		x += 8;
 	}
 
-	V_DrawPatchClean (x, y+7, &screens[0], W_CacheLumpName ("M_LSRGHT",PU_CACHE));
+	V_DrawPatchClean (x, y+7, &screen, W_CacheLumpName ("M_LSRGHT",PU_CACHE));
 }
 
 
@@ -656,7 +656,7 @@ void M_DrawSave(void)
 {
 	int i;
 		
-	V_DrawPatchClean (72,28,&screens[0],W_CacheLumpName("M_SAVEG",PU_CACHE));
+	V_DrawPatchClean (72,28,&screen,W_CacheLumpName("M_SAVEG",PU_CACHE));
 	for (i = 0; i < load_end; i++)
 	{
 		M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i,24);
@@ -803,12 +803,12 @@ void M_DrawReadThis1(void)
 	switch ( gamemode )
 	{
 	  case commercial:
-		V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP",PU_CACHE));
+		V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP",PU_CACHE));
 		break;
 	  case shareware:
 	  case registered:
 	  case retail:
-		V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP1",PU_CACHE));
+		V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP1",PU_CACHE));
 		break;
 	  default:
 		break;
@@ -829,11 +829,11 @@ void M_DrawReadThis2(void)
 	  case retail:
 	  case commercial:
 		// This hack keeps us from having to change menus.
-		V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("CREDIT",PU_CACHE));
+		V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("CREDIT",PU_CACHE));
 		break;
 	  case shareware:
 	  case registered:
-		V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP2",PU_CACHE));
+		V_DrawPatchIndirect (0,0,&screen,W_CacheLumpName("HELP2",PU_CACHE));
 		break;
 	  default:
 		break;
@@ -847,7 +847,7 @@ void M_DrawReadThis2(void)
 //
 void M_DrawMainMenu(void)
 {
-	V_DrawPatchClean (94,2,&screens[0],W_CacheLumpName("M_DOOM",PU_CACHE));
+	V_DrawPatchClean (94,2,&screen,W_CacheLumpName("M_DOOM",PU_CACHE));
 }
 
 
@@ -858,8 +858,8 @@ void M_DrawMainMenu(void)
 //
 void M_DrawNewGame(void)
 {
-	V_DrawPatchClean (96,14,&screens[0],W_CacheLumpName("M_NEWG",PU_CACHE));
-	V_DrawPatchClean (54,38,&screens[0],W_CacheLumpName("M_SKILL",PU_CACHE));
+	V_DrawPatchClean (96,14,&screen,W_CacheLumpName("M_NEWG",PU_CACHE));
+	V_DrawPatchClean (54,38,&screen,W_CacheLumpName("M_SKILL",PU_CACHE));
 }
 
 void M_NewGame(int choice)
@@ -884,7 +884,7 @@ int 	epi;
 
 void M_DrawEpisode(void)
 {
-	V_DrawPatchClean (54,38,&screens[0],W_CacheLumpName("M_EPISOD",PU_CACHE));
+	V_DrawPatchClean (54,38,&screen,W_CacheLumpName("M_EPISOD",PU_CACHE));
 }
 
 void M_VerifyNightmare(int ch)
@@ -940,7 +940,7 @@ void M_Episode (int choice)
 //
 void M_DrawOptions(void)
 {
-	V_DrawPatchClean (108,15,&screens[0],W_CacheLumpName("M_OPTTTL",PU_CACHE));
+	V_DrawPatchClean (108,15,&screen,W_CacheLumpName("M_OPTTTL",PU_CACHE));
 }
 
 void M_Options(int choice)
@@ -1006,6 +1006,8 @@ void M_ReadThis2(int choice)
 void M_FinishReadThis(int choice)
 {
 	choice = 0;
+	drawSkull = true;
+	MenuStackDepth = 0;
 	M_SetupNextMenu(&MainDef);
 }
 
@@ -1121,7 +1123,7 @@ static void M_PlayerSetupDrawer (void)
 
 		V_DrawPatchClean (160 - (SHORT(patch->width) >> 1),
 						  PSetupDef.y - (SHORT(patch->height) * 3),
-						  &screens[0], patch);
+						  &screen, patch);
 	}
 
 	// Draw player name box
@@ -1142,10 +1144,10 @@ static void M_PlayerSetupDrawer (void)
 	{
 		int x = 320 - 88 - 32, y = PSetupDef.y + LINEHEIGHT*3 - 14;
 
-		x = (x-160)*CleanXfac+(screens[0].width>>1);
-		y = (y-100)*CleanYfac+(screens[0].height>>1);
+		x = (x-160)*CleanXfac+(screen.width>>1);
+		y = (y-100)*CleanYfac+(screen.height>>1);
 		if (!FireGood) {
-			V_Clear (x, y, x + 72 * CleanXfac, y + 72 * CleanYfac, &screens[0], 34);
+			V_Clear (x, y, x + 72 * CleanXfac, y + 72 * CleanYfac, &screen, 34);
 		} else {
 			// [RH] The following fire code is based on the PTC fire demo
 			int a, b;
@@ -1213,11 +1215,11 @@ static void M_PlayerSetupDrawer (void)
 			}
 
 			y--;
-			pitch = screens[0].pitch;
+			pitch = screen.pitch;
 			switch (CleanXfac) {
 				case 1:
 					for (b = 0; b < FireScreen.height; b++) {
-						byte *to = screens[0].buffer + y * screens[0].pitch + x;
+						byte *to = screen.buffer + y * screen.pitch + x;
 						from = FireScreen.buffer + b * FireScreen.pitch;
 						y += CleanYfac;
 
@@ -1231,7 +1233,7 @@ static void M_PlayerSetupDrawer (void)
 
 				case 2:
 					for (b = 0; b < FireScreen.height; b++) {
-						byte *to = screens[0].buffer + y * screens[0].pitch + x;
+						byte *to = screen.buffer + y * screen.pitch + x;
 						from = FireScreen.buffer + b * FireScreen.pitch;
 						y += CleanYfac;
 
@@ -1247,7 +1249,7 @@ static void M_PlayerSetupDrawer (void)
 
 				case 3:
 					for (b = 0; b < FireScreen.height; b++) {
-						byte *to = screens[0].buffer + y * screens[0].pitch + x;
+						byte *to = screen.buffer + y * screen.pitch + x;
 						from = FireScreen.buffer + b * FireScreen.pitch;
 						y += CleanYfac;
 
@@ -1265,7 +1267,7 @@ static void M_PlayerSetupDrawer (void)
 				case 4:
 				default:
 					for (b = 0; b < FireScreen.height; b++) {
-						byte *to = screens[0].buffer + y * screens[0].pitch + x;
+						byte *to = screen.buffer + y * screen.pitch + x;
 						from = FireScreen.buffer + b * FireScreen.pitch;
 						y += CleanYfac;
 
@@ -1290,11 +1292,11 @@ static void M_PlayerSetupDrawer (void)
 
 		V_ColorMap = translationtables + consoleplayer * 256;
 		V_DrawTranslatedPatchClean (320 - 52 - 32, PSetupDef.y + LINEHEIGHT*3 + 46,
-									&screens[0],
+									&screen,
 									W_CacheLumpNum (sprframe->lump[0], PU_CACHE));
 	}
 	V_DrawPatchClean (320 - 88 - 32 + 36, PSetupDef.y + LINEHEIGHT*3 + 22,
-					  &screens[0],
+					  &screen,
 					  W_CacheLumpName ("M_PBOX", PU_CACHE));
 
 	// Draw player color sliders
@@ -1511,13 +1513,13 @@ static void M_SlidePlayerBlue (int choice)
 //
 void M_DrawEmptyCell (oldmenu_t *menu, int item)
 {
-	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, &screens[0],
+	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, &screen,
 					   W_CacheLumpName("M_CELL1",PU_CACHE));
 }
 
 void M_DrawSelCell (oldmenu_t *menu, int item)
 {
-	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, &screens[0],
+	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, &screen,
 					   W_CacheLumpName("M_CELL2",PU_CACHE));
 }
 
@@ -1604,14 +1606,15 @@ BOOL M_Responder (event_t* ev)
 
 		  case KEY_ESCAPE:
 			genStringEnter = 0;
+			M_ClearMenus ();
 			strcpy(&savegamestrings[saveSlot][0],saveOldString);
 			break;
 								
 		  case KEY_ENTER:
 			genStringEnter = 0;
+			M_ClearMenus ();
 			if (savegamestrings[saveSlot][0])
 				genStringEnd(saveSlot);	// [RH] Function to call when enter is pressed
-			BorderNeedRefresh = true;
 			break;
 								
 		  default:
@@ -1809,7 +1812,7 @@ void M_Drawer (void)
 	// Horiz. & Vertically center string and print it.
 	if (messageToPrint)
 	{
-		V_DimScreen (&screens[0]);
+		V_DimScreen (&screen);
 		BorderNeedRefresh = true;
 		SB_state = -1;
 
@@ -1842,7 +1845,7 @@ void M_Drawer (void)
 	if (!menuactive)
 		return;
 
-	V_DimScreen (&screens[0]);
+	V_DimScreen (&screen);
 	BorderNeedRefresh = true;
 	SB_state = -1;
 
@@ -1860,7 +1863,7 @@ void M_Drawer (void)
 		for (i=0;i<max;i++)
 		{
 			if (currentMenu->menuitems[i].name[0])
-				V_DrawPatchClean (x,y,&screens[0],
+				V_DrawPatchClean (x,y,&screen,
 								   W_CacheLumpName(currentMenu->menuitems[i].name ,PU_CACHE));
 			y += LINEHEIGHT;
 		}
@@ -1868,7 +1871,7 @@ void M_Drawer (void)
 		
 		// DRAW SKULL
 		if (drawSkull) {
-			V_DrawPatchClean(x + SKULLXOFF,currentMenu->y - 5 + itemOn*LINEHEIGHT, &screens[0],
+			V_DrawPatchClean(x + SKULLXOFF,currentMenu->y - 5 + itemOn*LINEHEIGHT, &screen,
 							 W_CacheLumpName(skullName[whichSkull],PU_CACHE));
 		}
 	}
@@ -1886,9 +1889,10 @@ void M_ClearMenus (void)
 	}
 	menuactive = MenuStackDepth = 0;
 	drawSkull = true;
-	I_ResumeMouse ();		// [RH] Recapture the mouse in windowed modes.
 	M_DemoNoPlay = false;
 	C_HideConsole ();		// [RH] Hide the console if we can.
+	I_ResumeMouse ();		// [RH] Recapture the mouse in windowed modes.
+	BorderNeedRefresh = true;
 	// if (!netgame && usergame && paused)
 	//		 sendpause = true;
 }

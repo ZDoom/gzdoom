@@ -201,7 +201,7 @@ void I_ShutdownGraphics (void)
 //
 void I_BeginUpdate (void)
 {
-	V_LockScreen (&screens[0]);
+	V_LockScreen (&screen);
 }
 
 //
@@ -209,7 +209,7 @@ void I_BeginUpdate (void)
 //
 void I_FinishUpdateNoBlit (void)
 {
-	V_UnlockScreen (&screens[0]);
+	V_UnlockScreen (&screen);
 }
 
 //
@@ -229,14 +229,14 @@ void I_FinishUpdate (void)
 		if (tics > 20) tics = 20;
 
 		for (i = 0; i < tics * 2; i += 2)
-			screens[0].buffer[ (screens[0].height-1)*screens[0].pitch + i] = 0xff;
+			screen.buffer[ (screen.height-1)*screen.pitch + i] = 0xff;
 		for (; i < 20*2; i +=2 )
-			screens[0].buffer[ (screens[0].height-1)*screens[0].pitch + i] = 0x0;
+			screen.buffer[ (screen.height-1)*screen.pitch + i] = 0x0;
 	}
 
-	V_UnlockScreen (&screens[0]);
+	V_UnlockScreen (&screen);
 
-	((Surface *)(screens[0].impdata))->Update ();
+	((Surface *)(screen.impdata))->Update ();
 }
 
 
@@ -248,16 +248,16 @@ void I_ReadScreen (byte *scr)
 	int x, y;
 	byte *source;
 
-	V_LockScreen (&screens[0]);
+	V_LockScreen (&screen);
 
-	for (y = 0; y < screens[0].height; y++) {
-		source = screens[0].buffer + y * screens[0].pitch;
-		for (x = 0; x < screens[0].width; x++) {
+	for (y = 0; y < screen.height; y++) {
+		source = screen.buffer + y * screen.pitch;
+		for (x = 0; x < screen.width; x++) {
 			*scr++ = *source++;
 		}
 	}
 
-	V_UnlockScreen (&screens[0]);
+	V_UnlockScreen (&screen);
 }
 
 
@@ -284,8 +284,8 @@ void I_SetPalette (unsigned int *pal)
 
 	DisPal->Unlock ();
 
-	if (screens[0].is8bit)
-		((Surface *)(screens[0].impdata))->SetPalette (*DisPal);
+	if (screen.is8bit)
+		((Surface *)(screen.impdata))->SetPalette (*DisPal);
 
 	// Only set the display palette if it is indexed color
 	FORMAT format = ptc.GetFormat ();
@@ -320,8 +320,8 @@ void I_SetMode (int width, int height, int id)
 					mode.x, mode.y, IdStrings[DisplayID-1000]);
 	}
 
-	// cheapo hack to make sure current display BPP is stored in screens[0]
-	screens[0].Bpp = IdTobpp[DisplayID-1000] >> 3;
+	// cheapo hack to make sure current display BPP is stored in screen
+	screen.Bpp = IdTobpp[DisplayID-1000] >> 3;
 }
 
 static void refreshDisplay (void) {
@@ -414,7 +414,7 @@ void Cmd_Vid_DescribeModes (struct player_s *p, int argc, char **argv)
 
 void Cmd_Vid_DescribeCurrentMode (struct player_s *p, int argc, char **argv)
 {
-	Printf (PRINT_HIGH, "%dx%d (%s)\n", screens[0].width, screens[0].height, IdStrings[DisplayID-1000]);
+	Printf (PRINT_HIGH, "%dx%d (%s)\n", screen.width, screen.height, IdStrings[DisplayID-1000]);
 }
 
 
@@ -435,7 +435,7 @@ BOOL I_AllocateScreen (screen_t *scrn, int width, int height, int Bpp)
 	scrn->Bpp = IdTobpp[DisplayID-1000] >> 3;
 	scrn->palette = NULL;
 
-	if (scrn == &screens[0]) {
+	if (scrn == &screen) {
 		surface = new Surface (ptc, width, height, (Bpp == 8) ? INDEX8 : ARGB8888);
 	} else {
 		surface = new Surface (width, height, (Bpp == 8) ? INDEX8 : ARGB8888);

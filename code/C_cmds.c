@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <time.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "version.h"
 #include "c_consol.h"
 #include "c_cmds.h"
@@ -113,6 +119,7 @@ struct CmdDispatcher CmdList[] = {
 	{ "stop",					Cmd_Stop },
 	{ "soundlist",				Cmd_Soundlist },
 	{ "soundlinks",				Cmd_Soundlinks },
+	{ "dir",					Cmd_Dir },
 	{ NULL }
 };
 
@@ -283,13 +290,13 @@ void Cmd_idmus (player_t *plyr, int argc, char **argv)
 	char *map;
 	int l;
 
-	Printf (PRINT_HIGH, STSTR_NOMUS);
 	if (argc > 1) {
 		if (gamemode == commercial) {
 			l = atoi (argv[1]);
 			if (l <= 99)
 				map = CalcMapName (0, l);
 			else {
+				Printf (PRINT_HIGH, "%s\n", STSTR_NOMUS);
 				return;
 			}
 		} else {
@@ -301,7 +308,8 @@ void Cmd_idmus (player_t *plyr, int argc, char **argv)
 				S_ChangeMusic (info->music, 1);
 				Printf (PRINT_HIGH, "%s\n", STSTR_MUS);
 			}
-		}
+		} else
+			Printf (PRINT_HIGH, "%s\n", STSTR_NOMUS);
 	}
 }
 
@@ -441,4 +449,57 @@ void Cmd_Error (player_t *plyr, int argc, char **argv)
 	strcpy (textcopy, text);
 	free (text);
 	I_Error (textcopy);
+}
+
+void Cmd_Dir (player_t *plyr, int argc, char **argv)
+{
+	char dir[256], curdir[256];
+	char *match;
+	findstate_t c_file;
+	long file;
+
+	if (!getcwd (curdir, 256)) {
+		Printf (PRINT_HIGH, "Current path too long\n");
+		return;
+	}
+
+	if (argc == 1 || chdir (argv[1])) {
+		match = argc == 1 ? "./*" : argv[1];
+
+		ExtractFilePath (match, dir);
+		if (dir[0]) {
+			match += strlen (dir);
+		} else {
+			dir[0] = '.';
+			dir[1] = '/';
+			dir[2] = '\0';
+		}
+		if (!match[0])
+			match = "*";
+
+		if (chdir (dir)) {
+			Printf (PRINT_HIGH, "%s not found\n", dir);
+			return;
+		}
+	} else {
+		match = "*";
+		strcpy (dir, argv[1]);
+		if (dir[strlen(dir) - 1] != '/')
+			strcat (dir, "/");
+	}
+
+	if ( (file = I_FindFirst (match, &c_file)) == -1)
+		Printf (PRINT_HIGH, "Nothing matching %s%s\n", dir, match);
+	else {
+		Printf (PRINT_HIGH, "Listing of %s%s:\n", dir, match);
+		do {
+			if (I_FindAttr (&c_file) & FA_DIREC)
+				Printf_Bold ("%s <dir>\n", I_FindName (&c_file));
+			else
+				Printf (PRINT_HIGH, "%s\n", I_FindName (&c_file));
+		} while (I_FindNext (file, &c_file) == 0);
+		I_FindClose (file);
+	}
+
+	chdir (curdir);
 }

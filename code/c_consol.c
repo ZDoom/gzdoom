@@ -316,9 +316,9 @@ void C_AddNotifyString (int printlevel, const char *source)
 		return;
 
 	if (con_scaletext->value)
-		width = screens[0].width / CleanXfac;
+		width = screen.width / CleanXfac;
 	else
-		width = screens[0].width;
+		width = screen.width;
 
 	if (addtype == APPENDLINE && NotifyStrings[NUMNOTIFIES-1].printlevel == printlevel) {
 		sprintf (work, "%s%s", NotifyStrings[NUMNOTIFIES-1].text, source);
@@ -518,14 +518,14 @@ void C_FlushDisplay (void)
 void C_AdjustBottom (void)
 {
 	if (gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP)
-		ConBottom = screens[0].height;
-	else if (ConBottom > screens[0].height / 2 || ConsoleState == c_down)
-		ConBottom = screens[0].height / 2;
+		ConBottom = screen.height;
+	else if (ConBottom > screen.height / 2 || ConsoleState == c_down)
+		ConBottom = screen.height / 2;
 }
 
 void C_NewModeAdjust (void)
 {
-	C_InitConsole (screens[0].width, screens[0].height, true);
+	C_InitConsole (screen.width, screen.height, true);
 	C_FlushDisplay ();
 	C_AdjustBottom ();
 }
@@ -560,13 +560,13 @@ void C_Ticker (void)
 		}
 
 		if (ConsoleState == c_falling) {
-			ConBottom += (gametic - lasttic) * (screens[0].height*2/25);
-			if (ConBottom >= screens[0].height / 2) {
-				ConBottom = screens[0].height / 2;
+			ConBottom += (gametic - lasttic) * (screen.height*2/25);
+			if (ConBottom >= screen.height / 2) {
+				ConBottom = screen.height / 2;
 				ConsoleState = c_down;
 			}
 		} else if (ConsoleState == c_rising) {
-			ConBottom -= (gametic - lasttic) * (screens[0].height*2/25);
+			ConBottom -= (gametic - lasttic) * (screen.height*2/25);
 			if (ConBottom <= 0) {
 				ConsoleState = c_up;
 				ConBottom = 0;
@@ -661,18 +661,18 @@ void C_DrawConsole (void)
 		int visheight, realheight;
 
 		visheight = ConBottom;
-		realheight = (visheight * conback.height) / screens[0].height;
+		realheight = (visheight * conback.height) / screen.height;
 
 		V_Blit (&conback, 0, conback.height - realheight, conback.width, realheight,
-				&screens[0], 0, 0, screens[0].width, visheight);
+				&screen, 0, 0, screen.width, visheight);
 
 		if (ConBottom >= 12) {
-			V_PrintStr (screens[0].width - 8 - strlen(VersionString) * 8,
+			V_PrintStr (screen.width - 8 - strlen(VersionString) * 8,
 						ConBottom - 12,
 						VersionString, strlen (VersionString));
 			if (TickerMax) {
 				char tickstr[256];
-				unsigned int i, tickend = ConCols - screens[0].width / 90 - 6;
+				unsigned int i, tickend = ConCols - screen.width / 90 - 6;
 				unsigned int tickbegin = 0;
 
 				if (TickerLabel) {
@@ -1117,7 +1117,7 @@ void C_MidPrint (char *msg)
 	if (MidMsg)
 		V_FreeBrokenLines (MidMsg);
 
-	if ( (MidMsg = V_BreakLines (con_scaletext->value ? screens[0].width / CleanXfac : screens[0].width, msg)) ) {
+	if ( (MidMsg = V_BreakLines (con_scaletext->value ? screen.width / CleanXfac : screen.width, msg)) ) {
 		MidTicker = (int)(con_midtime->value * TICRATE) + gametic;
 
 		for (i = 0; MidMsg[i].width != -1; i++)
@@ -1143,7 +1143,7 @@ void C_DrawMid (void)
 		}
 
 		y = 8 * yscale;
-		x = screens[0].width >> 1;
+		x = screen.width >> 1;
 		for (i = 0, line = (ST_Y * 3) / 8 - MidLines * 4 * yscale; i < MidLines; i++, line += y) {
 			textfunc (PrintColors[PRINTLEVELS],
 				x - (MidMsg[i].width >> 1) * xscale,

@@ -72,7 +72,7 @@ void T_VerticalDoor (vldoor_t *door)
 		// WAITING
 		if (!--door->topcountdown)
 		{
-			switch(door->type)
+			switch (door->type)
 			{
 			  case doorRaise:
 				door->direction = -1; // time to go back down
@@ -94,7 +94,7 @@ void T_VerticalDoor (vldoor_t *door)
 		//	INITIAL WAIT
 		if (!--door->topcountdown)
 		{
-			switch(door->type)
+			switch (door->type)
 			{
 			  case doorRaiseIn5Mins:
 				door->direction = 1;
@@ -117,7 +117,7 @@ void T_VerticalDoor (vldoor_t *door)
 		if (res == pastdest)
 		{
 			SN_StopSequence ((mobj_t *)&door->sector->soundorg);
-			switch(door->type)
+			switch (door->type)
 			{
 			  case doorRaise:
 			  case doorClose:
@@ -136,7 +136,7 @@ void T_VerticalDoor (vldoor_t *door)
 		}
 		else if (res == crushed)
 		{
-			switch(door->type)
+			switch (door->type)
 			{
 			  case doorClose:				// DO NOT GO BACK UP!
 				break;
@@ -159,7 +159,7 @@ void T_VerticalDoor (vldoor_t *door)
 		if (res == pastdest)
 		{
 			SN_StopSequence ((mobj_t *)&door->sector->soundorg);
-			switch(door->type)
+			switch (door->type)
 			{
 			  case doorRaise:
 				door->direction = 0; // wait at top
@@ -254,12 +254,19 @@ BOOL EV_DoDoor (vldoor_e type, line_t *line, mobj_t *thing,
 		if (sec->ceilingdata)			//jff 2/22/98
 		{
 			vldoor_t *door = sec->ceilingdata;	//jff 2/22/98
-			if (type == doorRaise) {
-				// ONLY FOR "RAISE" DOORS, NOT "OPEN"s
-				if (door->direction == -1) {
+
+			// [RH] Make sure it really is a door
+			if (door->thinker.function.acp1 != (actionf_p1) T_VerticalDoor)
+				return false;
+
+			// ONLY FOR "RAISE" DOORS, NOT "OPEN"s
+			if (door->type == doorRaise && type == doorRaise)
+			{
+				if (door->direction == -1)
+				{
 					door->direction = 1;	// go back up
 				}
-				else if (GET_SPAC(line->flags) == SPAC_PUSH)
+				else if (GET_SPAC(line->flags) != SPAC_PUSH)
 					// [RH] activate push doors don't go back down when you
 					//		run into them (otherwise opening them would be
 					//		a real pain).
@@ -268,6 +275,12 @@ BOOL EV_DoDoor (vldoor_e type, line_t *line, mobj_t *thing,
 						return false;		// JDC: bad guys never close doors
 					
 					door->direction = -1;	// start going down immediately
+
+					// [RH] If this sector doesn't have a specific sound
+					// attached to it, start the door close sequence.
+					// Otherwise, just let the current one continue.
+					if (sec->seqType == -1)
+						DoorSound (door, door->speed, false);
 				}
 				return true;
 			}

@@ -14,14 +14,15 @@
 #include "c_consol.h"
 #include "s_sndseq.h"
 
+#define NEXTWORD	(*(script->pc)++)
+#define STACK(a)	(script->stack[script->sp - (a)])
+
+void strbin (char *str);
 
 script_t *LastScript;
 script_t *Scripts;
 script_t *RunningScripts[1000];
 
-
-#define NEXTWORD	(*(script->pc)++)
-#define STACK(a)	(script->stack[script->sp - (a)])
 
 void P_ClearScripts (void)
 {
@@ -784,7 +785,10 @@ static void T_ACS (script_t *script)
 					script->sp = script->stringstart;
 					if (pcd == PCD_ENDPRINTBOLD || script->activator == NULL ||
 						(script->activator->player - players == consoleplayer))
+					{
+						strbin (work);
 						C_MidPrint (work);
+					}
 				}
 				break;
 
@@ -1085,3 +1089,75 @@ void P_TerminateScript (int script, char *map)
 	else
 		SetScriptState (script, removeThisThingNow);
 }
+
+void strbin (char *str)
+{
+	char *p = str, c;
+	int i;
+
+	while ( (c = *p++) ) {
+		if (c != '\\') {
+			*str++ = c;
+		} else {
+			switch (*p) {
+				case 'c':
+					*str++ = '\x8a';
+					break;
+				case 'n':
+					*str++ = '\n';
+					break;
+				case 't':
+					*str++ = '\t';
+					break;
+				case 'r':
+					*str++ = '\r';
+					break;
+				case '\n':
+					break;
+				case 'x':
+				case 'X':
+					c = 0;
+					p++;
+					for (i = 0; i < 2; i++) {
+						c <<= 4;
+						if (*p >= '0' && *p <= '9')
+							c += *p-'0';
+						else if (*p >= 'a' && *p <= 'f')
+							c += 10 + *p-'a';
+						else if (*p >= 'A' && *p <= 'F')
+							c += 10 + *p-'A';
+						else
+							break;
+						p++;
+					}
+					*str++ = c;
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+					c = 0;
+					for (i = 0; i < 3; i++) {
+						c <<= 3;
+						if (*p >= '0' && *p <= '7')
+							c += *p-'0';
+						else
+							break;
+						p++;
+					}
+					*str++ = c;
+					break;
+				default:
+					*str++ = *p;
+					break;
+			}
+			p++;
+		}
+	}
+	*str = 0;
+}
+

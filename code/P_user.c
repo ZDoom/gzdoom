@@ -99,15 +99,19 @@ void P_CalcHeight (player_t *player)
 	// it causes bobbing jerkiness when the player moves from ice to non-ice,
 	// and vice-versa.
 
-	player->bob = FixedMul (player->momx,player->momx)
-				+ FixedMul (player->momy,player->momy);
-	player->bob >>= 2;
-
-	if (player->bob > MAXBOB)
-		player->bob = MAXBOB;
-
 	if ((player->mo->flags2 & MF2_FLY) && !onground)
+	{
 		player->bob = FRACUNIT / 2;
+	}
+	else
+	{
+		player->bob = FixedMul (player->momx, player->momx)
+					+ FixedMul (player->momy, player->momy);
+		player->bob >>= 2;
+
+		if (player->bob > MAXBOB)
+			player->bob = MAXBOB;
+	}
 
 	if (!onground || (player->cheats & CF_NOMOMENTUM))
 	{
@@ -132,8 +136,7 @@ void P_CalcHeight (player_t *player)
 			player->viewheight = VIEWHEIGHT;
 			player->deltaviewheight = 0;
 		}
-
-		if (player->viewheight < VIEWHEIGHT/2)
+		else if (player->viewheight < VIEWHEIGHT/2)
 		{
 			player->viewheight = VIEWHEIGHT/2;
 			if (player->deltaviewheight <= 0)
@@ -185,15 +188,12 @@ void P_MovePlayer (player_t *player)
 		int friction, movefactor;
 
 		movefactor = P_GetMoveFactor (mo, &friction);
+		bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
 		if (!onground && !(player->mo->flags2 & MF2_FLY))
 		{
 			// [RH] allow very limited movement if not on ground.
 			movefactor >>= 8;
-			bobfactor = 0;
-		}
-		else
-		{
-			bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
+			bobfactor >>= 8;
 		}
 		forwardmove = (cmd->ucmd.forwardmove * movefactor) >> 8;
 		sidemove = (cmd->ucmd.sidemove * movefactor) >> 8;
@@ -205,7 +205,7 @@ void P_MovePlayer (player_t *player)
 		}
 		if (sidemove)
 		{
-			P_Bob (player, mo->angle, (cmd->ucmd.sidemove * bobfactor) >> 8);
+			P_Bob (player, mo->angle-ANG90, (cmd->ucmd.sidemove * bobfactor) >> 8);
 			P_Thrust (player, mo->angle-ANG90, sidemove);
 		}
 

@@ -265,7 +265,7 @@ extern	mobj_t*	linetarget; 	// who got hit (or NULL)
 
 fixed_t P_AimLineAttack (mobj_t *t1, angle_t angle, fixed_t distance);
 void	P_LineAttack (mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, int damage);
-void	P_RailAttack (mobj_t *source, int damage);		// [RH] Shoot a railgun
+void	P_RailAttack (mobj_t *source, int damage, int offset);	// [RH] Shoot a railgun
 int		P_HitFloor (mobj_t *thing);
 
 // [RH] Position the chasecam

@@ -387,27 +387,27 @@ void M_ScreenShot (char *filename)
 		} else {
 			lbmname = autoname;
 		}
-		if (!FindFreeName (lbmname, "tga\0pcx" + (screens[0].is8bit << 2))) {
+		if (!FindFreeName (lbmname, "tga\0pcx" + (screen.is8bit << 2))) {
 			Printf (PRINT_HIGH, "M_ScreenShot: Delete some screenshots\n");
 			return;
 		}
 		filename = autoname;
 	}
 
-	if (screens[0].is8bit) {
+	if (screen.is8bit) {
 		// munge planar buffer to linear
-		linear = Malloc (screens[0].width * screens[0].height);
+		linear = Malloc (screen.width * screen.height);
 		I_ReadScreen (linear);
 		
 		// save the pcx file
 		WritePCXfile (filename, linear,
-					  screens[0].width, screens[0].height,
+					  screen.width, screen.height,
 					  IndexedPalette);
 
 		free (linear);
 	} else {
 		// save the tga file
-		//I_WriteTGAfile (filename, &screens[0]);
+		//I_WriteTGAfile (filename, &screen);
 	}
 	Printf (PRINT_HIGH, "screen shot\n");
 }

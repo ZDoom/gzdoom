@@ -36,13 +36,13 @@ void V_InitConChars (byte transcolor)
 
 	chars = W_CacheLumpName ("CONCHARS", PU_CACHE);
 	{
-		long *screen, fill;
+		long *scrn, fill;
 
 		fill = (transcolor << 24) | (transcolor << 16) | (transcolor << 8) | transcolor;
 		for (y = 0; y < 128; y++) {
-			screen = (long *)(temp.buffer + temp.pitch * y);
+			scrn = (long *)(temp.buffer + temp.pitch * y);
 			for (x = 0; x < 128/4; x++) {
-				*screen++ = fill;
+				*scrn++ = fill;
 			}
 		}
 		V_DrawPatch (0, 0, &temp, chars);
@@ -89,10 +89,10 @@ void V_PrintStr (int x, int y, const byte *str, int count)
 	byte *temp;
 	long *charimg;
 	
-	if (!screens[0].buffer)
+	if (!screen.buffer)
 		return;
 
-	if (y > (screens[0].height - 8) || y<0)
+	if (y > (screen.height - 8) || y<0)
 		return;
 
 	if (x < 0) {
@@ -109,13 +109,13 @@ void V_PrintStr (int x, int y, const byte *str, int count)
 	}
 
 	x &= ~3;
-	temp = screens[0].buffer + y * screens[0].pitch;
+	temp = screen.buffer + y * screen.pitch;
 
-	while (count && x <= (screens[0].width - 8)) {
+	while (count && x <= (screen.width - 8)) {
 		charimg = (long *)&ConChars[(*str) * 128];
-		if (screens[0].is8bit) {
+		if (screen.is8bit) {
 #ifdef USEASM
-			PrintChar1P (charimg, temp + x, screens[0].pitch);
+			PrintChar1P (charimg, temp + x, screen.pitch);
 #else
 			int z;
 			long *writepos;
@@ -125,7 +125,7 @@ void V_PrintStr (int x, int y, const byte *str, int count)
 				*writepos = (*writepos & charimg[2]) ^ charimg[0];
 				writepos++;
 				*writepos = (*writepos & charimg[3]) ^ charimg[1];
-				writepos += (screens[0].pitch >> 2) - 1;
+				writepos += (screen.pitch >> 2) - 1;
 				charimg += 4;
 			}
 #endif
@@ -151,7 +151,7 @@ void V_PrintStr (int x, int y, const byte *str, int count)
 				SPOT(7);
 #undef SPOT
 #undef BYTEIMG
-				writepos += screens[0].pitch >> 2;
+				writepos += screen.pitch >> 2;
 				charimg += 4;
 			}
 		}
@@ -170,7 +170,7 @@ void V_PrintStr2 (int x, int y, const byte *str, int count)
 	byte *temp;
 	long *charimg;
 	
-	if (y > (screens[0].height - 16))
+	if (y > (screen.height - 16))
 		return;
 
 	if (x < 0) {
@@ -187,13 +187,13 @@ void V_PrintStr2 (int x, int y, const byte *str, int count)
 	}
 
 	x &= ~3;
-	temp = screens[0].buffer + y * screens[0].pitch;
+	temp = screen.buffer + y * screen.pitch;
 
-	while (count && x <= (screens[0].width - 16)) {
+	while (count && x <= (screen.width - 16)) {
 		charimg = (long *)&ConChars[(*str) * 128];
 #ifdef USEASM
 		if (UseMMX) {
-			PrintChar2P_MMX (charimg, temp + x, screens[0].pitch);
+			PrintChar2P_MMX (charimg, temp + x, screen.pitch);
 		} else
 #endif
 		{
@@ -213,30 +213,30 @@ void V_PrintStr2 (int x, int y, const byte *str, int count)
 				buildbits[0] = buildbits[1] = image[0];
 				buildbits[2] = buildbits[3] = image[1];
 				writepos[0] = (writepos[0] & m1) ^ s1;
-				writepos[screens[0].pitch/4] = (writepos[screens[0].pitch/4] & m1) ^ s1;
+				writepos[screen.pitch/4] = (writepos[screen.pitch/4] & m1) ^ s1;
 
 				buildmask[0] = buildmask[1] = image[10];
 				buildmask[2] = buildmask[3] = image[11];
 				buildbits[0] = buildbits[1] = image[2];
 				buildbits[2] = buildbits[3] = image[3];
 				writepos[1] = (writepos[1] & m1) ^ s1;
-				writepos[1+screens[0].pitch/4] = (writepos[1+screens[0].pitch/4] & m1) ^ s1;
+				writepos[1+screen.pitch/4] = (writepos[1+screen.pitch/4] & m1) ^ s1;
 
 				buildmask[0] = buildmask[1] = image[12];
 				buildmask[2] = buildmask[3] = image[13];
 				buildbits[0] = buildbits[1] = image[4];
 				buildbits[2] = buildbits[3] = image[5];
 				writepos[2] = (writepos[2] & m1) ^ s1;
-				writepos[2+screens[0].pitch/4] = (writepos[2+screens[0].pitch/4] & m1) ^ s1;
+				writepos[2+screen.pitch/4] = (writepos[2+screen.pitch/4] & m1) ^ s1;
 
 				buildmask[0] = buildmask[1] = image[14];
 				buildmask[2] = buildmask[3] = image[15];
 				buildbits[0] = buildbits[1] = image[6];
 				buildbits[2] = buildbits[3] = image[7];
 				writepos[3] = (writepos[3] & m1) ^ s1;
-				writepos[3+screens[0].pitch/4] = (writepos[3+screens[0].pitch/4] & m1) ^ s1;
+				writepos[3+screen.pitch/4] = (writepos[3+screen.pitch/4] & m1) ^ s1;
 
-				writepos += screens[0].pitch >> 1;
+				writepos += screen.pitch >> 1;
 				image += 16;
 			}
 
@@ -313,10 +313,10 @@ static void drawtext (int drawer, int normalcolor, int x, int y, const byte *str
 		}
 				
 		w = SHORT (hu_font[c]->width);
-		if (cx+w > screens[0].width)
+		if (cx+w > screen.width)
 			break;
 
-		V_DrawWrapper (drawer, cx, cy, &screens[0], hu_font[c]);
+		V_DrawWrapper (drawer, cx, cy, &screen, hu_font[c]);
 		cx+=w;
 	}
 }
@@ -376,10 +376,10 @@ static void drawscaledtext (int drawer, int normalcolor, int x, int y, const byt
 		}
 				
 		w = SHORT (hu_font[c]->width) * CleanXfac;
-		if (cx+w > screens[0].width)
+		if (cx+w > screen.width)
 			break;
 
-		V_DrawCNMWrapper (drawer, cx, cy, &screens[0], hu_font[c]);
+		V_DrawCNMWrapper (drawer, cx, cy, &screen, hu_font[c]);
 		cx+=w;
 	}
 }
@@ -407,8 +407,8 @@ void V_DrawTextCleanLuc (int normalcolor, int x, int y, const byte *string)
 void V_DrawTextCleanMove (int normalcolor, int x, int y, const byte *string)
 {
 	drawscaledtext (V_DRAWTRANSLATEDPATCH, normalcolor,
-		(x - 160) * CleanXfac + screens[0].width / 2,
-		(y - 100) * CleanYfac + screens[0].height / 2,
+		(x - 160) * CleanXfac + screen.width / 2,
+		(y - 100) * CleanYfac + screen.height / 2,
 		string);
 }
 

@@ -492,12 +492,17 @@ void SN_UpdateActiveSequences (void)
 	}
 	for (node = SequenceListHead; node; node = node->next)
 	{
-		if (node->delayTics)
+		if (node->delayTics > 0)
 		{
 			node->delayTics--;
 			continue;
 		}
 		sndPlaying = S_GetSoundPlayingInfo (node->mobj, node->currentSoundID);
+		if (node->delayTics < 0 && sndPlaying)
+		{
+			node->delayTics++;
+			continue;
+		}
 		switch (GetCommand(*node->sequencePtr))
 		{
 			case SS_CMD_PLAY:
@@ -524,16 +529,16 @@ void SN_UpdateActiveSequences (void)
 					// Does not advance sequencePtr, so it will repeat
 					// as necessary
 					node->currentSoundID = GetData(*node->sequencePtr);
-					S_SoundID (node->mobj, CHAN_BODY, node->currentSoundID,
+					S_LoopedSoundID (node->mobj, CHAN_BODY, node->currentSoundID,
 						node->volume, node->atten);
 				}
 				break;
 
 			case SS_CMD_PLAYLOOP:
-				S_SoundID (node->mobj, CHAN_BODY, GetData(*node->sequencePtr),
+				node->currentSoundID = GetData(*node->sequencePtr);
+				S_LoopedSoundID (node->mobj, CHAN_BODY, node->currentSoundID,
 					node->volume, node->atten);
-				node->currentSoundID = -1;
-				node->delayTics = GetData(*(node->sequencePtr+1));
+				node->delayTics = -(signed)GetData(*(node->sequencePtr+1));
 				break;
 
 			case SS_CMD_DELAY:

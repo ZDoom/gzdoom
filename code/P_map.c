@@ -2005,12 +2005,17 @@ BOOL PTR_RailTraverse (intercept_t *in)
 	return true;
 }
 
-void P_RailAttack (mobj_t *source, int damage)
+void P_RailAttack (mobj_t *source, int damage, int offset)
 {
 	angle_t angle;
-	fixed_t x2, y2;
+	fixed_t x1, y1, x2, y2;
 	vec3_t start, end;
 
+	x1 = source->x;
+	y1 = source->y;
+	angle = (source->angle - ANG90) >> ANGLETOFINESHIFT;
+	x1 += offset*finecosine[angle];
+	y1 += offset*finesine[angle];
 	angle = source->angle >> ANGLETOFINESHIFT;
 	x2 = source->x + 8192*finecosine[angle];
 	y2 = source->y + 8192*finesine[angle];
@@ -2019,9 +2024,9 @@ void P_RailAttack (mobj_t *source, int damage)
 	aimslope = FixedMul (source->pitch, -40960);
 	shootthing = source;
 	NumRailHits = 0;
-	VectorFixedSet (start, source->x, source->y, shootz);
+	VectorFixedSet (start, x1, y1, shootz);
 
-	if (P_PathTraverse (source->x, source->y, x2, y2, PT_ADDLINES|PT_ADDTHINGS, PTR_RailTraverse)) {
+	if (P_PathTraverse (x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS, PTR_RailTraverse)) {
 		// Nothing hit, so just shoot the air
 		FixedAngleToVector (source->angle, source->pitch, end);
 		VectorMA (start, 8192, end, end);
@@ -2417,22 +2422,19 @@ void P_RadiusAttack (mobj_t *spot, mobj_t *source, int damage, int mod)
 //
 int		crushchange;
 BOOL 	nofit;
-
+extern	cvar_t *cl_bloodtype;
 
 //
 // PIT_ChangeSector
 //
 BOOL PIT_ChangeSector (mobj_t *thing)
 {
-	mobj_t *mo;
-	int t;
-		
 	if (P_ThingHeightClip (thing))
 	{
 		// keep checking
 		return true;
 	}
-	
+
 	// crunch bodies to giblets
 	if (thing->health <= 0)
 	{
@@ -2443,7 +2445,7 @@ BOOL PIT_ChangeSector (mobj_t *thing)
 		thing->radius = 0;
 
 		// keep checking
-		return true;			
+		return true;
 	}
 
 	// crunch dropped items
@@ -2452,15 +2454,15 @@ BOOL PIT_ChangeSector (mobj_t *thing)
 		P_RemoveMobj (thing);
 		
 		// keep checking
-		return true;			
+		return true;
 	}
 
 	if (! (thing->flags & MF_SHOOTABLE) )
 	{
 		// assume it is bloody gibs or something
-		return true;					
+		return true;
 	}
-	
+
 	nofit = true;
 
 	if ((crushchange >= 0) && !(level.time&3) )
@@ -2468,18 +2470,36 @@ BOOL PIT_ChangeSector (mobj_t *thing)
 		P_DamageMobj (thing, NULL, NULL, crushchange, MOD_CRUSH);
 
 		// spray blood in a random direction
-		mo = P_SpawnMobj (thing->x,
-						  thing->y,
-						  thing->z + thing->height/2, MT_BLOOD);
-		
-		t = P_Random (pr_changesector);
-		mo->momx = (t - P_Random (pr_changesector)) << 12;
-		t = P_Random (pr_changesector);
-		mo->momy = (t - P_Random (pr_changesector)) << 12;
+		if ((!(thing->flags&MF_NOBLOOD)) &&
+			(!(thing->flags2&MF2_INVULNERABLE)))
+		{
+			if (cl_bloodtype->value <= 1)
+			{
+				mobj_t *mo;
+				int t;
+
+				mo = P_SpawnMobj (thing->x,
+								  thing->y,
+								  thing->z + thing->height/2, MT_BLOOD);
+				
+				t = P_Random (pr_changesector);
+				mo->momx = (t - P_Random (pr_changesector)) << 12;
+				t = P_Random (pr_changesector);
+				mo->momy = (t - P_Random (pr_changesector)) << 12;
+			}
+			if (cl_bloodtype->value >= 1)
+			{
+				angle_t an;
+
+				an = (M_Random () - 128) << 24;
+				P_DrawSplash2 (32, thing->x, thing->y,
+							   thing->z + thing->height/2, an, 2, 0);
+			}
+		}
 	}
 
-	// keep checking (crush other things)		
-	return true;		
+	// keep checking (crush other things)
+	return true;
 }
 
 //

@@ -1830,6 +1830,15 @@ SOURCE=.\win32\resource.h
 # Begin Source File
 
 SOURCE=.\win32\zdoom.rc
+
+!IF  "$(CFG)" == "zdoom - Win32 Release"
+
+!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
+
+!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
+
+!ENDIF 
+
 # End Source File
 # End Group
 # End Target

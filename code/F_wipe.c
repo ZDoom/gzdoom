@@ -176,7 +176,7 @@ int wipe_doMelt (int width, int height, int ticks)
 			else if (y[i] < height)
 			{
 				dy = (y[i] < 16) ? y[i]+1 : 8;
-				dy = (dy * screens[0].height) / 200;
+				dy = (dy * screen.height) / 200;
 				if (y[i]+dy >= height) dy = height - y[i];
 				s = &wipe_scr_end[i*height+y[i]];
 				d = &((short *)wipe_scr->buffer)[y[i]*(wipe_scr->pitch/2)+i];
@@ -214,7 +214,7 @@ int wipe_exitMelt (int width, int height, int ticks)
 
 int wipe_StartScreen (int x, int y, int width, int height)
 {
-	wipe_scr = &screens[0];
+	wipe_scr = &screen;
 
 	if (wipe_scr->is8bit)
 		wipe_scr_start = (short *)Malloc (width * height);
@@ -254,7 +254,7 @@ int wipe_ScreenWipe (int wipeno, int x, int y, int width, int height, int ticks)
 	{
 		go = 1;
 		// wipe_scr = (byte *) Z_Malloc(width*height, PU_STATIC, 0); // DEBUG
-		wipe_scr = &screens[0];
+		wipe_scr = &screen;
 		(*wipes[wipeno*3])(width, height, ticks);
 	}
 

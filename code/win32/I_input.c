@@ -963,7 +963,8 @@ static void KeyRead (void) {
 						key = 0;
 						break;
 					default:
-						if (ConsoleState == c_falling || ConsoleState == c_down) {
+						if (!menuactive &&
+							(ConsoleState == c_falling || ConsoleState == c_down)) {
 							switch (key) {
 								case DIK_NUMPAD4:
 									key = DIK_4;
@@ -1095,9 +1096,6 @@ void I_GetEvent(void)
 		else
 			MouseRead_Win32 ();
 	}
-
-	if (usejoystick->value)
-		DI_JoyCheck ();
 }
 
 
@@ -1107,4 +1105,13 @@ void I_GetEvent(void)
 void I_StartTic (void)
 {
 	I_GetEvent ();
+}
+
+//
+// I_StartFrame
+//
+void I_StartFrame (void)
+{
+	if (usejoystick->value)
+		DI_JoyCheck ();
 }

@@ -92,6 +92,7 @@ CMD(Cmd_ChangeMap)
 CMD(Cmd_Quit)
 CMD(Cmd_Puke)
 CMD(Cmd_Error)
+CMD(Cmd_Dir)
 
 // d_net.c
 CMD(Cmd_Pings)

@@ -443,7 +443,7 @@ void P_LoadThings (int lump)
 		mt2.y = SHORT(mt->y);
 		mt2.angle = SHORT(mt->angle);
 		mt2.type = SHORT(mt->type);
-		
+
 		P_SpawnMapThing (&mt2, 0);
 	}
 		

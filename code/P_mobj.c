@@ -97,8 +97,8 @@ BOOL P_SetMobjState (mobj_t *mobj, statenum_t state)
 		st = &states[state];
 		mobj->state = st;
 		mobj->tics = st->tics;
-		if (!mobj->player)			// [RH] Only change sprite if not a player
-			mobj->sprite = st->sprite;
+		if (!mobj->player || st->sprite != SPR_PLAY)
+			mobj->sprite = st->sprite;	// [RH] Only change sprite if not a player
 		mobj->frame = st->frame;
 
 		// Modified handling.
@@ -286,13 +286,26 @@ void P_XYMovement (mobj_t *mo)
 					P_SlideMove (mo);
 				}
 				else
-				{ // slide againt mobj
+				{ // slide against mobj
 					if (P_TryMove (mo, mo->x, ptryy, true))
+					{
 						mo->momx = 0;
+					}
 					else if (P_TryMove (mo, ptryx, mo->y, true))
+					{
 						mo->momy = 0;
+					}
 					else
+					{
 						mo->momx = mo->momy = 0;
+					}
+					if (player && player->mo == mo)
+					{
+						if (mo->momx == 0)
+							player->momx = 0;
+						if (mo->momy == 0)
+							player->momy = 0;
+					}
 				}
 			}
 			else if (mo->flags & MF_MISSILE)
@@ -301,9 +314,9 @@ void P_XYMovement (mobj_t *mo)
 				{
 					if (BlockingMobj)
 					{
-						if ((BlockingMobj->flags2&MF2_REFLECTIVE) ||
+						if ((BlockingMobj->flags2 & MF2_REFLECTIVE) ||
 							((!BlockingMobj->player) &&
-							(!(BlockingMobj->flags&MF_COUNTKILL))))
+							(!(BlockingMobj->flags & MF_COUNTKILL))))
 						{
 							fixed_t speed;
 
@@ -408,28 +421,23 @@ void P_XYMovement (mobj_t *mo)
 
 	// killough 11/98:
 	// Stop voodoo dolls that have come to rest, despite any
-	// moving corresponding player, except in old demos:
-	if (mo->momx > -STOPSPEED
-		&& mo->momx < STOPSPEED
-		&& mo->momy > -STOPSPEED
-		&& mo->momy < STOPSPEED
-		&& (!player
-			|| !(player->cmd.ucmd.forwardmove | player->cmd.ucmd.sidemove) ||
-			(player->mo != mo)))
+	// moving corresponding player:
+	if (mo->momx > -STOPSPEED && mo->momx < STOPSPEED
+		&& mo->momy > -STOPSPEED && mo->momy < STOPSPEED
+		&& (!player || (player->mo != mo)
+			|| !(player->cmd.ucmd.forwardmove | player->cmd.ucmd.sidemove)))
 	{
 		// if in a walking frame, stop moving
-		if (player && (unsigned)((player->mo->state - states)- S_PLAY_RUN1) < 4)
-			P_SetMobjState (player->mo, S_PLAY);
-		
 		// killough 10/98:
 		// Don't affect main player when voodoo dolls stop:
-		if (player && (unsigned)(player->mo->state - states - S_PLAY_RUN1) < 4 
+		if (player && (unsigned)((player->mo->state - states) - S_PLAY_RUN1) < 4 
 			&& (player->mo == mo))
-		  P_SetMobjState (player->mo, S_PLAY);
+		{
+			P_SetMobjState (player->mo, S_PLAY);
+		}
 
 		mo->momx = mo->momy = 0;
 
-      
 		// killough 10/98: kill any bobbing momentum too (except in voodoo dolls)
 		if (player && player->mo == mo)
 			player->momx = player->momy = 0; 
@@ -506,7 +514,7 @@ void P_ZMovement (mobj_t *mo)
 	if (mo->z <= mo->floorz)
 	{
 		// hit the floor
-		if (mo->flags & MF_MISSILE)
+		if ((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
 		{
 			mo->z = mo->floorz;
 			if (mo->flags2 & MF2_FLOORBOUNCE)
@@ -583,12 +591,7 @@ void P_ZMovement (mobj_t *mo)
 			mo->momz -= (fixed_t)(sv_gravity->value * mo->subsector->sector->gravity * 81.92);
 	}
 
-	if (mo->z + mo->height > mo->ceilingz
-		// [RH] For some reason, the shots spawned by the brain on MAP30 are
-		// getting stuck in the ceiling. I have no idea why, since it worked
-		// the last time I checked (and that was *after* I integrated Hexen's
-		// z-checking code.
-		&& mo->type != MT_SPAWNSHOT)
+	if (mo->z + mo->height > mo->ceilingz)
 	{
 		// hit the ceiling
 		mo->z = mo->ceilingz - mo->height;
@@ -609,7 +612,7 @@ void P_ZMovement (mobj_t *mo)
 			// the skull slammed into something
 			mo->momz = -mo->momz;
 		}
-		if (mo->flags & MF_MISSILE)
+		if (mo->flags & MF_MISSILE && !(mo->flags & MF_NOCLIP))
 		{
 			if (mo->subsector->sector->ceilingpic == skyflatnum)
 			{

@@ -125,7 +125,7 @@ static void BlastMaskedColumn (void (*blastfunc)(column_t *column), int texnum)
 				(__int64) dc_texturemid * spryscale;
 // [RH] This doesn't work properly as-is with freelook. Probably just me.
 //				if (t + (__int64) textureheight[texnum] * spryscale < 0 ||
-//					 t > (__int64) screens[0].height << FRACBITS*2)
+//					 t > (__int64) screen.height << FRACBITS*2)
 //					continue;		// skip if the texture is out of screen's range
 			sprtopscreen = (long)(t >> FRACBITS);
 		}

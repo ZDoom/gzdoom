@@ -55,8 +55,6 @@
 BOOL STACK_ARGS CheckMMX (char *vendorid);
 #endif
 
-static void Cmd_Dir (void *plyr, int argc, char **argv);
-
 extern HWND Window;
 
 BOOL	UseMMX;
@@ -241,7 +239,6 @@ void I_Init (void)
 
 	I_InitSound();
 	I_InitInput (Window);
-	C_RegisterCommand ("dir", Cmd_Dir);
 }
 
 //
@@ -313,40 +310,6 @@ void STACK_ARGS I_Error (char *error, ...)
 
 char DoomStartupTitle[256] = { 0 };
 
-/*
-void I_PaintConsole (void)
-{
-	PAINTSTRUCT paint;
-	HDC dc;
-
-	if (dc = BeginPaint (Window, &paint)) {
-		if (paint.rcPaint.top < OemHeight) {
-			SetTextColor (dc, RGB(255,0,0));
-			SetBkColor (dc, RGB(195,195,195));
-			SetBkMode (dc, OPAQUE);
-
-			TextOut (dc, 0, 0, Title, ConCols);
-		}
-		if (Last && paint.rcPaint.bottom > OemHeight) {
-			char *row;
-			int line, last, top, bottom;
-
-			SetTextColor (dc, RGB(0,255,255));
-			SetBkMode (dc, TRANSPARENT);
-
-			top = (paint.rcPaint.top >= OemHeight) ? paint.rcPaint.top - OemHeight : 0;
-			bottom = paint.rcPaint.bottom - OemHeight - 1;
-			line = top / OemHeight;
-			last = bottom / OemHeight;
-			for (row = Last - (PhysRows - 2 - line) * (ConCols + 2); line <= last; line++) {
-				TextOut (dc, 0, (line + 1) * OemHeight, row + 2, row[1]);
-				row += ConCols + 2;
-			}
-		}
-		EndPaint (Window, &paint);
-	}
-}
-*/
 void I_SetTitleString (const char *title)
 {
 	int i;
@@ -356,74 +319,19 @@ void I_SetTitleString (const char *title)
 }
 
 void I_PrintStr (int xp, const char *cp, int count, BOOL scroll) {
-/*	MSG mess;
-	RECT rect;
-
-	if (count)
-		TextOut (WinDC, xp * OemWidth, WinHeight - OemHeight, cp, count);
-	if (scroll) {
-		rect.left = 0;
-		rect.top = OemHeight;
-		rect.right = WinWidth;
-		rect.bottom = WinHeight;
-		ScrollWindowEx (Window, 0, -OemHeight, NULL, &rect, NULL, NULL, SW_ERASE|SW_INVALIDATE);
-		UpdateWindow (Window);
-	}
-	while (PeekMessage (&mess, Window, 0, 0, PM_REMOVE)) {
-		if (mess.message == WM_QUIT)
-			exit (mess.wParam);
-		TranslateMessage (&mess);
-		DispatchMessage (&mess);
-	}
-*/
+	// used in the DOS version
 }
 
-static void Cmd_Dir (void *plyr, int argc, char **argv)
+long I_FindFirst (char *filespec, findstate_t *fileinfo)
 {
-	char dir[256], curdir[256];
-	char *match;
-	struct _finddata_t c_file;
-	long file;
+	return _findfirst (filespec, fileinfo);
+}
+int I_FindNext (long handle, findstate_t *fileinfo)
+{
+	return _findnext (handle, fileinfo);
+}
 
-	if (!getcwd (curdir, 256)) {
-		Printf (PRINT_HIGH, "Current path too long\n");
-		return;
-	}
-
-	if (argc == 1 || chdir (argv[1])) {
-		match = argc == 1 ? "./*" : argv[1];
-
-		ExtractFilePath (match, dir);
-		if (dir[0]) {
-			match += strlen (dir);
-		} else {
-			dir[0] = '.';
-			dir[1] = '/';
-			dir[2] = '\0';
-		}
-		if (!match[0])
-			match = "*";
-
-		if (chdir (dir)) {
-			Printf (PRINT_HIGH, "%s not found\n", dir);
-			return;
-		}
-	} else {
-		match = "*";
-		strcpy (dir, argv[1]);
-		if (dir[strlen(dir) - 1] != '/')
-			strcat (dir, "/");
-	}
-
-	if ( (file = _findfirst (match, &c_file)) == -1)
-		Printf (PRINT_HIGH, "Nothing matching %s%s\n", dir, match);
-	else {
-		Printf (PRINT_HIGH, "Listing of %s%s:\n", dir, match);
-		do {
-			Printf (PRINT_HIGH, "%s%s\n", c_file.name, c_file.attrib & _A_SUBDIR ? " <dir>" : "");
-		} while (_findnext (file, &c_file) == 0);
-		_findclose (file);
-	}
-
-	chdir (curdir);
+int I_FindClose (long handle)
+{
+	return _findclose (handle);
 }

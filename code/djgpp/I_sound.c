@@ -113,25 +113,16 @@ void MIDASerror(void)
 
 /* Loads a sound and adds it to MIDAS
  * Really returns a MIDAS sample handle */
-static void *getsfx (sfxinfo_t *sfx)
+static void getsfx (sfxinfo_t *sfx)
 {
 	char				sndtemp[128];
 	byte				*sfxdata;
+	byte				*sfxcopy;
 	int 				size;
 	
 	int					i;
 	int 				error;
 	static sdSample		smp;
-	unsigned			sampleHandle;
-
-	/* No loop: */
-	smp.loopMode = sdLoopNone;
-	smp.loop1Start = smp.loop1End = 0;
-	smp.loop1Type = loopNone;
-
-	/* No loop 2: */
-	smp.loop2Start = smp.loop2End = 0;
-	smp.loop2Type = loopNone;
 
 	// Get the sound data from the WAD and register it with MIDAS
 
@@ -161,7 +152,9 @@ badwave:
 			DPrintf ("Linked to %s (%d)\n", S_sfx[i].name, i);
 			sfx->link = S_sfx + i;
 			sfx->ms = S_sfx[i].ms;
-			return S_sfx[i].data;
+			sfx->data = S_sfx[i].data;
+			sfx->loopdata = S_sfx[i].loopdata;
+			return;
 		}
 
 	size = W_LumpLength (sfx->lumpnum);
@@ -277,30 +270,44 @@ badwave:
 		}
 	}
 
+	/* No loop 2: */
+	smp.loop2Start = smp.loop2End = 0;
+	smp.loop2Type = loopNone;
+
+	sfxcopy = Malloc (smp.sampleLength);
+	memcpy (sfxcopy, smp.sample, smp.sampleLength);
+	Z_Free (sfxdata);
+	smp.sample = sfxcopy;
+
 	/* Add the sample to the Sound Device: */
-#ifdef _MSC_VER
 	{
 		// Avoid using __fastcall for this function
-		typedef int (__cdecl *blargh_t)(sdSample*, int, unsigned *);
+		typedef int (STACK_ARGS *blargh_t)(sdSample*, int, unsigned *);
 		blargh_t blargh = (blargh_t)midasSD->AddSample;
 
-		if ( (error = blargh (&smp, 1, &sampleHandle)) != OK)
+		/* No loop: */
+		smp.loopMode = sdLoopNone;
+		smp.loop1Start = smp.loop1End = 0;
+		smp.loop1Type = loopNone;
+
+		if ( (error = blargh (&smp, 0, (unsigned *)&sfx->data)) != OK)
+			I_FatalError ("getsfx: AddSample failed: %s", MIDASgetErrorMessage(error));
+
+		/* With loop: */
+		smp.loopMode = sdLoop1;
+		smp.loop1Start = 0;
+		smp.loop1End = smp.sampleLength;
+		smp.loop1Type = loopUnidir;
+
+		if ( (error = blargh (&smp, 0, (unsigned *)&sfx->loopdata)) != OK)
 			I_FatalError ("getsfx: AddSample failed: %s", MIDASgetErrorMessage(error));
 	}
-#else
-	if ( (error = midasSD->AddSample (&smp, 1, &sampleHandle)) != OK)
-		I_FatalError ("getsfx: AddSample failed: %s", MIDASgetErrorMessage(error));
-#endif
 
 	// Remove the cached lump.
-	Z_Free (sfxdata);
 	
 	if (sfx->frequency == 0)
 		sfx->frequency = 11025;
 	sfx->ms = (sfx->ms * 1000) / (sfx->frequency);
-
-	/* Return sample handle: (damn ugly) */
-	return (void*) sampleHandle;
 }
 
 
@@ -354,7 +361,7 @@ void I_SetSfxVolume (int volume)
 //		e.g. a pointer to the raw data,
 //		it is ignored.
 //
-int I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel)
+int I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOOL looping)
 {
 	int id = sfx - S_sfx;
 	int volume;
@@ -375,7 +382,9 @@ int I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel)
 		else if ( pan > MIDAS_PAN_RIGHT) pan = MIDAS_PAN_RIGHT;
 	}
 
-	ChannelMap[channel].playHandle = MIDASplaySample ((MIDASsample)sfx->data,
+	ChannelMap[channel].playHandle = MIDASplaySample (
+									 looping ? (MIDASsample)sfx->loopdata
+										: (MIDASsample)sfx->data,
 									 ChannelMap[channel].midasChannel,
 									 0,
 									 PITCH(sfx->frequency,pitch),
@@ -451,7 +460,7 @@ void I_LoadSound (struct sfxinfo_struct *sfx)
 		int i = sfx - S_sfx;
 
 		DPrintf ("loading sound \"%s\" (%d)\n", sfx->name, i);
-		sfx->data = getsfx (sfx);
+		getsfx (sfx);
 	}
 }
 
@@ -602,10 +611,15 @@ void STACK_ARGS I_ShutdownSound (void)
 
 		// [RH] Free all loaded samples
 		for (i = 0; i < numsfx; i++) {
-			if (S_sfx[i].data && !S_sfx[i].link) {
-				MIDASfreeSample ((MIDASsample)S_sfx[i].data);
-				len += S_sfx[i].length;
-				c++;
+			if (!S_sfx[i].link) {
+				if (S_sfx[i].data) {
+					MIDASfreeSample ((MIDASsample)S_sfx[i].data);
+					len += S_sfx[i].length;
+					c++;
+				}
+				if (S_sfx[i].loopdata) {
+					MIDASfreeSample ((MIDASsample)S_sfx[i].loopdata);
+				}
 			}
 			S_sfx[i].data = S_sfx[i].link = NULL;
 		}

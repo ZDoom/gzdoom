@@ -1,4 +1,4 @@
-This is the source code for ZDoom 1.17 released on 17 February 1999.
+This is the source code for ZDoom 1.17a released on 21 February 1999.
 
 It is based on the Linux DOOM sources that were prepared by B. Krenheimer
 and generously released by John Carmack shortly before Christmas, 1997. If

@@ -105,7 +105,7 @@ float BaseBlendA;
 #define ST_FACESTRIDE \
 		  (ST_NUMSTRAIGHTFACES+ST_NUMTURNFACES+ST_NUMSPECIALFACES)
 
-#define ST_NUMEXTRAFACES				2
+#define ST_NUMEXTRAFACES		2
 
 #define ST_NUMFACES \
 		  (ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES)
@@ -856,7 +856,6 @@ void ST_updateFaceWidget(void)
 			st_facecount = 1;
 
 		}
-
 	}
 
 	// look left or look right if the facecount has timed out
@@ -1085,7 +1084,7 @@ void ST_Drawer (void)
 			"Demo was recorded with a different version\n"
 			"of ZDoom. Expect it to go out of sync.");
 
-	if (realviewheight == screens[0].height && viewactive)
+	if (realviewheight == screen.height && viewactive)
 	{
 		if (DrawNewHUD)
 			ST_newDraw ();
@@ -1114,7 +1113,7 @@ void ST_Drawer (void)
 	if (viewheight <= ST_Y)
 		ST_nameDraw (ST_Y - 11 * CleanYfac);
 	else
-		ST_nameDraw (screens[0].height - 11 * CleanYfac);
+		ST_nameDraw (screen.height - 11 * CleanYfac);
 
 	// Do red-/gold-shifts from damage/items
 	ST_doPaletteStuff();
@@ -1127,15 +1126,29 @@ void ST_Drawer (void)
 				players[consoleplayer].camera->y/FRACUNIT);
 }
 
+static patch_t *LoadFaceGraphic (char *name, int namespc)
+{
+	char othername[9];
+	int lump;
+
+	lump = (W_CheckNumForName)(name, namespc);
+	if (lump == -1) {
+		strcpy (othername, name);
+		othername[0] = 'S'; othername[1] = 'T'; othername[2] = 'F';
+		lump = W_GetNumForName (othername);
+	}
+	return W_CacheLumpNum (lump, PU_STATIC);
+}
+
 void ST_loadGraphics(void)
 {
 	playerskin_t *skin;
 	int i, j;
 	int namespc;
 	int facenum;
-	
 	char namebuf[9];
 
+	namebuf[8] = 0;
 	if (plyr)
 		skin = &skins[plyr->userinfo.skin];
 	else
@@ -1204,31 +1217,31 @@ void ST_loadGraphics(void)
 		for (j = 0; j < ST_NUMSTRAIGHTFACES; j++)
 		{
 			sprintf(namebuf+3, "ST%d%d", i, j);
-			faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+			faces[facenum++] = LoadFaceGraphic (namebuf, namespc);
 		}
 		sprintf(namebuf+3, "TR%d0", i);		// turn right
-		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		faces[facenum++] = LoadFaceGraphic (namebuf, namespc);
 		sprintf(namebuf+3, "TL%d0", i);		// turn left
-		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		faces[facenum++] = LoadFaceGraphic (namebuf, namespc);
 		sprintf(namebuf+3, "OUCH%d", i);		// ouch!
-		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		faces[facenum++] = LoadFaceGraphic (namebuf, namespc);
 		sprintf(namebuf+3, "EVL%d", i);		// evil grin ;)
-		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		faces[facenum++] = LoadFaceGraphic (namebuf, namespc);
 		sprintf(namebuf+3, "KILL%d", i);		// pissed off
-		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		faces[facenum++] = LoadFaceGraphic (namebuf, namespc);
 	}
 	strcpy (namebuf+3, "GOD0");
-	faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+	faces[facenum++] = LoadFaceGraphic (namebuf, namespc);
 	strcpy (namebuf+3, "DEAD0");
-	faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+	faces[facenum++] = LoadFaceGraphic (namebuf, namespc);
 }
 
-void ST_loadData(void)
+void ST_loadData (void)
 {
 	ST_loadGraphics();
 }
 
-void ST_unloadGraphics(void)
+void ST_unloadGraphics (void)
 {
 
 	int i;
@@ -1499,12 +1512,12 @@ void ST_ChangeScale (cvar_t *var)
 	if (var->value) {
 		// Stretch status bar to fill fill width of screen
 
-		ST_WIDTH = screens[0].width;
+		ST_WIDTH = screen.width;
 		if (ST_WIDTH == 320) {
 			// Do not scale height for 320 x 2X0 screens
 			ST_HEIGHT = 32;
 		} else {
-			ST_HEIGHT = (32 * screens[0].height) / 200;
+			ST_HEIGHT = (32 * screen.height) / 200;
 		}
 	} else {
 		// Do not stretch status bar
@@ -1513,8 +1526,8 @@ void ST_ChangeScale (cvar_t *var)
 		ST_HEIGHT = 32;
 	}
 
-	ST_X = (screens[0].width-ST_WIDTH)/2;
-	ST_Y = screens[0].height - ST_HEIGHT;
+	ST_X = (screen.width-ST_WIDTH)/2;
+	ST_Y = screen.height - ST_HEIGHT;
 
 	setsizeneeded = true;
 	SB_state = -1;

@@ -1,3 +1,82 @@
+February 21, 1999
+- Found a problem with sliding polyobj doors: If, when they try to close,
+  they can't move anywhere from their open position, they would move
+  slightly further open and leave a gap when they managed to close. Fixed.
+- Added support for auto-loading of skins if they're in a skins directory
+  in the same directory as the executable.
+- Added support for C-style formatting codes to ACS print statements.
+- Fixed a problem where, when a player turns into a pile of bloody gibs
+  (from e.g. a crushing ceiling), they would assume their standing position.
+  This is because the gibs are a different sprite, and I wasn't letting
+  player mobjs change their sprite.
+- Fixed ceilings so that they stop making noise when they get put in stasis.
+- PIT_ChangeSector() can spawn particle blood now.
+- Fixed R_DrawSplash2() so that it doesn't draw all the particles to the
+  left of the impact point.
+- Added an A_MonsterRail function so monsters can shoot a railgun too.
+- Fixed the railgun sound when you're not the one shooting it. My algorithm
+  for finding the closest point on the line was wrong and still should
+  remnants from when I was calculating the distance from the line.
+- Fixed some player bobbing problems.
+
+February 20, 1999
+- Changed sparks to play with static attenuation.
+- Found out why pickup messages would sometimes seemingly print several
+  times for a single item. Some maps have several of the same item on top
+  of each other so that a player can get more than they would normally
+  without even realizing it. I get around this by disallowing two identical
+  pickup messages from being printed back-to-back in a single tic.
+- Fixed transsouls. I wasn't calling its callback at initialization, so it
+  wouldn't take effect until the next time it was changed at the console.
+- Recompiled PTC with DDFLIP_WAIT enabled. I had accidentally left it off
+  from my testing run on January 8.
+- Dug up the DirectDraw code from 1.12 and used it to add DirectDraw support
+  back into the game. Now even people who can't get PTC to work should be
+  able to use it.
+  One interesting thing I noticed is that IDirectDrawSurface's Blt method
+  is horribly slow for blitting between system and video memory. I tried it,
+  thinking it would be optimized, but it wasn't even close.
+- Added the A_Die, A_Detonate, and A_Mushroom routines from MBF.
+- Removed the screens array and replaced it with a single variable named
+  (oddly enough) screen.
+- Added a V_SetBlend() to F_StartFinale() to get rid of any palette flashes
+  that might have been on screen (such as after finishing E1M8).
+- Discovered the real reason why the brain shooter wasn't working. DOOM
+  doesn't explode noclip missiles when they go above the ceiling or below
+  the floor; it just adjusts their positions. Hexen doesn't have that check
+  for noclip, so it will explode/remove it. I guess I didn't check MAP30
+  after adding Hexen's z-checking.
+
+February 19, 1999
+- Finally got around to fixing V_DrawPatchFlipped(). Wow, that was easy. I
+  wonder why I was having so much trouble with it the last time I touched it
+  many months ago.
+- Changed the item pickup sounds to play with a NULL entity for the local
+  player (like before), but still play on CHAN_ITEM for other players.
+- Fixed the problem of monster names not being drawn in the cast finale: I
+  was still xoring each character with 0x80 to make it red under the old
+  text system.
+- Changed the keyboard code so that the keypad isn't translated into number
+  keys in full console mode with the menu active.
+- Fixed the Read This! sequence of menus in Ultimate Doom. When it's
+  finished, it's supposed to re-enable the skull and empty the stack.
+- Fixed a problem with raise doors. In Doom, you can close them prematurely
+  by activating them again. I had the right idea:
+		if (GET_SPAC(line->flags) == SPAC_PUSH)
+  but it should have been
+		if (GET_SPAC(line->flags) != SPAC_PUSH)
+
+February 18, 1999
+- Release 1.17 again, hopefully this time for good.
+- Fixed some problems that were already found with 1.17:
+  * The cubes spawned by the boss on DOOM2/MAP30 would be in the ceiling and
+    disappear right away. (All I can say is that it worked before; I don't
+	know why it stopped.)
+  * Because of my quick hack for voodoo doll obituaries, getting killed by
+    the world would crash.
+  * Open scripts above 255 wouldn't properly restart when the level
+    reloaded because the game thought they were still running.
+
 February 17, 1999
 - Made a final "final" compile of 1.17.
 - Removed the hack that could transform normal exits into Teleport_NewMaps

@@ -238,7 +238,7 @@ static char names[NUMEPISODES][NUMMAPS][8] = {
 //
 // Locally used stuff.
 //
-#define FB (screens[0])
+#define FB (screen)
 
 
 // States for single-player
@@ -356,7 +356,7 @@ static screen_t			background;
 void WI_slamBackground (void)
 {
 	V_Blit (&background, 0, 0, background.width, background.height,
-			&screens[0], 0, 0, screens[0].width, screens[0].height);
+			&FB, 0, 0, FB.width, FB.height);
 }
 
 static int WI_DrawName (char *str, int x, int y)
@@ -1760,5 +1760,6 @@ void WI_Start (wbstartstruct_t *wbstartstruct)
 	else
 		WI_initStats();
 	V_SetBlend (0,0,0,0);
+	S_StopAllChannels ();
 	SN_StopAllSequences ();
 }

@@ -100,7 +100,6 @@ void T_RotatePoly (polyevent_t *pe)
 				poly->specialdata = NULL;
 			}
 			SN_StopSequence((mobj_t *)&poly->startSpot);
-//			P_PolyobjFinished(poly->tag);
 			P_RemoveThinker(&pe->thinker);
 		}
 		if(pe->dist < (unsigned)absSpeed)
@@ -223,7 +222,6 @@ void T_MovePoly (polyevent_t *pe)
 				poly->specialdata = NULL;
 			}
 			SN_StopSequence((mobj_t *)&poly->startSpot);
-//			P_PolyobjFinished(poly->tag);
 			P_RemoveThinker(&pe->thinker);
 		}
 		if(pe->dist < (unsigned)absSpeed)
@@ -322,7 +320,7 @@ void T_PolyDoor (polydoor_t *pd)
 	switch(pd->type)
 	{
 		case PODOOR_SLIDE:
-			if(PO_MovePolyobj(pd->polyobj, pd->xSpeed, pd->ySpeed))
+			if(pd->dist <= 0 || PO_MovePolyobj(pd->polyobj, pd->xSpeed, pd->ySpeed))
 			{
 				absSpeed = abs(pd->speed);
 				pd->dist -= absSpeed;
@@ -346,7 +344,6 @@ void T_PolyDoor (polydoor_t *pd)
 						{
 							poly->specialdata = NULL;
 						}
-//						P_PolyobjFinished(poly->tag);
 						P_RemoveThinker(&pd->thinker);
 					}
 				}
@@ -360,7 +357,7 @@ void T_PolyDoor (polydoor_t *pd)
 				}
 				else
 				{ // open back up
-					pd->dist = pd->totalDist-pd->dist;
+					pd->dist = pd->totalDist - pd->dist;
 					pd->direction = (ANGLE_MAX>>ANGLETOFINESHIFT)-
 						pd->direction;
 					pd->xSpeed = -pd->xSpeed;
@@ -397,7 +394,6 @@ void T_PolyDoor (polydoor_t *pd)
 						{
 							poly->specialdata = NULL;
 						}
-//						P_PolyobjFinished(poly->tag);
 						P_RemoveThinker(&pd->thinker);
 					}
 				}
@@ -1204,8 +1200,7 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 			polyobjs[index].crush = crush;
 			polyobjs[index].tag = tag;
 			polyobjs[index].seqType = segs[i].linedef->args[2];
-			if (polyobjs[index].seqType < 0 
-				|| polyobjs[index].seqType >= NumSequences)
+			if (polyobjs[index].seqType < 0 || polyobjs[index].seqType > 63)
 			{
 				polyobjs[index].seqType = 0;
 			}

@@ -229,8 +229,8 @@ void D_Display (void)
 	
 	// [RH] change the screen mode if needed
 	if (setmodeneeded) {
-		int oldwidth = screens[0].width;
-		int oldheight = screens[0].height;
+		int oldwidth = screen.width;
+		int oldheight = screen.height;
 		int oldid = DisplayID;
 
 		// Change screen mode.
@@ -269,7 +269,7 @@ void D_Display (void)
 		// save the current screen if about to wipe
 		BorderNeedRefresh = true;
 		wipe = true;
-		wipe_StartScreen(0, 0, screens[0].width, screens[0].height);
+		wipe_StartScreen(0, 0, screen.width, screen.height);
 		wipegamestate = gamestate;
 	}
 	else
@@ -317,7 +317,7 @@ void D_Display (void)
 		int y;
 
 		y = (automapactive && !viewactive) ? 4 : viewwindowy + 4;
-		V_DrawPatchCleanNoMove((screens[0].width-(pause->width)*CleanXfac)/2,y,&screens[0],pause);
+		V_DrawPatchCleanNoMove((screen.width-(pause->width)*CleanXfac)/2,y,&screen,pause);
 	}
 
 	// [RH] Draw icon, if any
@@ -329,7 +329,7 @@ void D_Display (void)
 			patch_t *p = W_CacheLumpNum (lump, PU_CACHE);
 
 			V_DrawPatchIndirect (160-SHORT(p->width)/2, 100-SHORT(p->height)/2,
-								 &screens[0], p);
+								 &screen, p);
 		}
 		NoWipe = 10;
 	}
@@ -346,7 +346,7 @@ void D_Display (void)
 		int wipestart, nowtime, tics;
 		BOOL done;
 
-		wipe_EndScreen(0, 0, screens[0].width, screens[0].height);
+		wipe_EndScreen(0, 0, screen.width, screen.height);
 		I_FinishUpdateNoBlit ();
 
 		wipestart = I_GetTime () - 1;
@@ -361,7 +361,7 @@ void D_Display (void)
 			wipestart = nowtime;
 			I_BeginUpdate ();
 			done = wipe_ScreenWipe(wipe_Melt,
-						0, 0, screens[0].width, screens[0].height, tics);
+						0, 0, screen.width, screen.height, tics);
 			C_DrawConsole ();
 			M_Drawer ();			// menu is drawn even on top of wipes
 			I_FinishUpdate ();		// page flip or blit buffer
@@ -487,7 +487,7 @@ void D_PageTicker (void)
 //
 void D_PageDrawer (void)
 {
-	V_DrawPatchIndirect (0,0, &screens[0], W_CacheLumpName(pagename, PU_CACHE));
+	V_DrawPatchIndirect (0,0, &screen, W_CacheLumpName(pagename, PU_CACHE));
 }
 
 
@@ -1021,23 +1021,48 @@ void D_DoomMain (void)
 	{
 		cvar_t *var = cvar ("transsouls", "0.75", CVAR_ARCHIVE|CVAR_CALLBACK);
 		var->u.callback = TransSoulsCallback;
+		TransSoulsCallback (var);
 	}
 
 	FindResponseFile ();
 	DoLooseFiles();  // Ty 08/29/98 - handle "loose" files on command line
 
 	{
-		// [RH] Make sure zdoom.wad is always loaded, since
-		// it contains stuff we need.
+		// [RH] Make sure zdoom.wad is always loaded,
+		// as it contains stuff we need.
 		char *zdoomwad = Z_Malloc (strlen (progdir) + 10, PU_STATIC, 0);
 		sprintf (zdoomwad, "%szdoom.wad", progdir);
 		D_AddFile (zdoomwad);
 
 		sprintf (zdoomwad, "%szvox.wad", progdir);
 		D_AddFile (zdoomwad);
+		Z_Free (zdoomwad);
 	}
 
 	I_SetTitleString (IdentifyVersion ());
+
+	// [RH] Add any .wad files in the skins directory
+	{
+		char skinname[256];
+		findstate_t findstate;
+		long handle;
+		int stuffstart;
+
+		stuffstart = sprintf (skinname, "%sskins/", progdir);
+		strcpy (skinname + stuffstart, "*.wad");
+		if ((handle = I_FindFirst (skinname, &findstate)) != -1)
+		{
+			do
+			{
+				if (!(I_FindAttr (&findstate) & FA_DIREC))
+				{
+					strcpy (skinname + stuffstart, I_FindName (&findstate));
+					D_AddFile (skinname);
+				}
+			} while (I_FindNext (handle, &findstate) == 0);
+			I_FindClose (handle);
+		}
+	}
 
 	modifiedgame = false;
 

@@ -22,6 +22,8 @@
 #ifndef __I_SYSTEM__
 #define __I_SYSTEM__
 
+#include <dir.h>
+
 #include "d_ticcmd.h"
 #include "d_event.h"
 
@@ -100,5 +102,16 @@ unsigned int I_MSTime (void);
 
 // [RH] Title string to display at bottom of console during startup
 extern char DoomStartupTitle[256];
+
+// Directory searching routines
+
+typedef struct ffblk findstate_t;
+
+long I_FindFirst (char *filespec, findstate_t *fileinfo);
+int I_FindNext (long handle, findstate_t *fileinfo);
+int I_FindClose (long handle);
+
+#define I_FindName(a)	((a)->ff_name)
+#define I_FindAttr(a)	((a)->ff_attrib)
 
 #endif

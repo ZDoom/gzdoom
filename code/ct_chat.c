@@ -199,14 +199,14 @@ void CT_Drawer (void)
 			drawfunc = V_DrawWrapper;
 		}
 
-		y += (screens[0].height == realviewheight && viewactive) ? screens[0].height : ST_Y;
+		y += (screen.height == realviewheight && viewactive) ? screen.height : ST_Y;
 
 		promptwidth = V_StringWidth (prompt) * scalex;
 		x = SHORT(hu_font['_' - HU_FONTSTART]->width) * scalex * 2 + promptwidth;
 
 		// figure out if the text is wider than the screen.
 		// if so, only draw the right-most portion of it.
-		for (i = len - 1; i >= 0 && x < screens[0].width; i--)
+		for (i = len - 1; i >= 0 && x < screen.width; i--)
 		{
 			c = toupper(ChatQueue[i] & 0x7f) - HU_FONTSTART;
 			if (c < 0 || c >= HU_FONTSIZE)
@@ -373,7 +373,7 @@ void HU_DrawScores (player_t *plyr)
 		}
 	}
 
-	x = (screens[0].width >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
+	x = (screen.width >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
 	margin = x + 40 * CleanXfac;
 
 	y = (ST_Y >> 1) - (MAXPLAYERS * 6);
@@ -397,19 +397,19 @@ void HU_DrawScores (player_t *plyr)
 		else
 			sprintf (str, "Level ends in %02d:%02d", minutes, seconds);
 		
-		V_DrawTextClean (CR_GREY, screens[0].width/2 - V_StringWidth (str)/2*CleanXfac, y - 12 * CleanYfac, str);
+		V_DrawTextClean (CR_GREY, screen.width/2 - V_StringWidth (str)/2*CleanXfac, y - 12 * CleanYfac, str);
 	}
 
 	for (i = 0; i < MAXPLAYERS && y < ST_Y - 12 * CleanYfac; i++) {
 		int color = players[sortedplayers[i]].userinfo.color;
 
 		if (playeringame[sortedplayers[i]]) {
-			if (screens[0].is8bit)
+			if (screen.is8bit)
 				color = BestColor (DefaultPalette->basecolors,
 								   RPART(color), GPART(color), BPART(color),
 								   DefaultPalette->numcolors);
 
-			V_Clear (x, y, x + 24 * CleanXfac, y + SHORT(hu_font[0]->height) * CleanYfac, &screens[0], color);
+			V_Clear (x, y, x + 24 * CleanXfac, y + SHORT(hu_font[0]->height) * CleanYfac, &screen, color);
 
 			sprintf (str, "%d", players[sortedplayers[i]].fragcount);
 			V_DrawTextClean (sortedplayers[i] == player ? CR_GREEN : CR_BRICK,

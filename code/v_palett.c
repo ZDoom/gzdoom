@@ -63,7 +63,7 @@ void GammaCallback (cvar_t *var)
 			newgamma[i] = (byte)(255.0 * pow (i / 255.0, invgamma));
 		}
 		GammaAdjustPalettes ();
-		if (screens[0].is8bit) {
+		if (screen.is8bit) {
 			DoBlending (DefPal.colors, IndexedPalette, DefPal.numcolors,
 						newgamma[BlendR], newgamma[BlendG], newgamma[BlendB], BlendA);
 			I_SetPalette (IndexedPalette);
@@ -286,7 +286,7 @@ void RefreshPalette (palette_t *pal)
 	unsigned l,c,r,g,b;
 	unsigned colors[256];
 
-	if (screens[0].is8bit) {
+	if (screen.is8bit) {
 		if (pal->flags & PALETTEF_SHADE) {
 			byte *shade;
 
@@ -428,7 +428,7 @@ void V_ForceBlend (int blendr, int blendg, int blendb, int blenda)
 	BlendB = blendb;
 	BlendA = blenda;
 
-	if (screens[0].is8bit) {
+	if (screen.is8bit) {
 		DoBlending (DefPal.colors, IndexedPalette, DefPal.numcolors,
 					newgamma[BlendR], newgamma[BlendG], newgamma[BlendB], BlendA);
 		I_SetPalette (IndexedPalette);
@@ -568,7 +568,7 @@ void BuildColoredLights (byte *maps, int lr, int lg, int lb, int r, int g, int b
 	byte *shade;
 
 	// The default palette is assumed to contain the maps for white light.
-	if (!screens[0].is8bit || !maps)
+	if (!screen.is8bit || !maps)
 		return;
 
 	// build normal (but colored) light mappings

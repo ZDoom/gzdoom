@@ -400,7 +400,7 @@ void V_DrawWrapper (int drawer, int x, int y, screen_t *scrn, patch_t *patch)
 
 	pitch = scrn->pitch;
 
-	if (scrn == &screens[0])
+	if (scrn == &screen)
 		V_MarkRect (x, y, SHORT(patch->width), SHORT(patch->height));
 
 	col = 0;
@@ -486,7 +486,7 @@ void V_DrawSWrapper (int drawer, int x0, int y0, screen_t *scrn, patch_t *patch,
 		colstep = 4;
 	}
 
-	if (scrn == &screens[0])
+	if (scrn == &screen)
 		V_MarkRect (x0, y0, destwidth, destheight);
 
 	col = 0;
@@ -594,14 +594,77 @@ void V_CopyRect (int srcx, int srcy, screen_t *srcscrn, int width, int height,
 // Masks a column based masked pic to the screen.
 // Flips horizontally, e.g. to mirror face.
 //
-// [RH] This is only called in f_finale.c, so I changed it to behave
-// much like V_DrawPatchIndirect() instead of adding yet another function
-// solely to handle virtual stretching of this function.
+// Like V_DrawIWrapper except it only uses one drawing function and draws
+// the patch flipped horizontally.
 //
 void V_DrawPatchFlipped (int x0, int y0, screen_t *scrn, patch_t *patch)
 {
-	// I must be dumb or something...
-	V_DrawPatchIndirect (x0, y0, scrn, patch);
+	column_t*	column; 
+	byte*		desttop;
+	int			pitch;
+	vdrawsfunc	drawfunc;
+	int			colstep;
+	int			destwidth, destheight;
+
+	int			xinc, yinc, col, w, ymul, xmul;
+
+	x0 = (scrn->width * x0) / 320;
+	y0 = (scrn->height * y0) / 200;
+	destwidth = (scrn->width * SHORT(patch->width)) / 320;
+	destheight = (scrn->height * SHORT(patch->height)) / 200;
+
+	xinc = (SHORT(patch->width) << 16) / destwidth;
+	yinc = (SHORT(patch->height) << 16) / destheight;
+	xmul = (destwidth << 16) / SHORT(patch->width);
+	ymul = (destheight << 16) / SHORT(patch->height);
+
+	y0 -= (SHORT(patch->topoffset) * ymul) >> 16;
+	x0 -= (SHORT(patch->leftoffset) * xmul) >> 16;
+
+#ifdef RANGECHECK 
+	if (x0<0
+		|| x0+destwidth > scrn->width
+		|| y0<0
+		|| y0+destheight> scrn->height)
+	{
+		//Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
+		DPrintf ("V_DrawPatchFlipped: bad patch (ignored)\n");
+		return;
+	}
+#endif
+
+	if (scrn->is8bit) {
+		drawfunc = vdrawsPfuncs[V_DRAWPATCH];
+		colstep = 1;
+	} else {
+		drawfunc = vdrawsDfuncs[V_DRAWPATCH];
+		colstep = 4;
+	}
+
+	if (scrn == &screen)
+		V_MarkRect (x0, y0, destwidth, destheight);
+
+	w = destwidth * xinc;
+	col = w - xinc;
+	pitch = scrn->pitch;
+	desttop = scrn->buffer + y0*scrn->pitch + x0 * colstep;
+
+	for ( ; col >= 0 ; col -= xinc, desttop += colstep)
+	{
+		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col >> 16]));
+
+		// step through the posts in a column
+		while (column->topdelta != 0xff )
+		{
+			drawfunc ((byte *)column + 3,
+					  desttop + (((column->topdelta * ymul)) >> 16) * pitch,
+					  (column->length * ymul) >> 16,
+					  pitch,
+					  yinc);
+			column = (column_t *)(	(byte *)column + column->length
+									+ 4 );
+		}
+	}
 }
 
 

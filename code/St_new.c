@@ -115,42 +115,42 @@ void ST_newDraw (void)
 	int y, i;
 	ammotype_t ammo = weaponinfo[plyr->readyweapon].ammo;
 
-	y = screens[0].height - (numheight + 4) * CleanYfac;
+	y = screen.height - (numheight + 4) * CleanYfac;
 
 	// Draw health
-	V_DrawPatchCleanNoMove (20 * CleanXfac, screens[0].height-2*CleanYfac,
-							 &screens[0], medi);
-	ST_DrawNum (40 * CleanXfac, y, &screens[0], plyr->health);
+	V_DrawPatchCleanNoMove (20 * CleanXfac, screen.height-2*CleanYfac,
+							 &screen, medi);
+	ST_DrawNum (40 * CleanXfac, y, &screen, plyr->health);
 
 	// Draw armor
 	if (plyr->armortype && plyr->armorpoints) {
 		if (armors[plyr->armortype])
 			V_DrawPatchCleanNoMove (20 * CleanXfac, y - 4*CleanYfac,
-									&screens[0], armors[plyr->armortype-1]);
+									&screen, armors[plyr->armortype-1]);
 		ST_DrawNum (40*CleanXfac, y - (SHORT(armors[0]->height)+3)*CleanYfac,
-					 &screens[0], plyr->armorpoints);
+					 &screen, plyr->armorpoints);
 	}
 
 	// Draw ammo
 	if (ammo < NUMAMMO) {
 		patch_t *ammopatch = ammos[weaponinfo[plyr->readyweapon].ammo];
 
-		V_DrawPatchCleanNoMove (screens[0].width - 14 * CleanXfac,
-								screens[0].height - 4 * CleanYfac,
-								&screens[0], ammopatch);
-		ST_DrawNumRight (screens[0].width - 25 * CleanXfac, y, &screens[0], plyr->ammo[ammo]);
+		V_DrawPatchCleanNoMove (screen.width - 14 * CleanXfac,
+								screen.height - 4 * CleanYfac,
+								&screen, ammopatch);
+		ST_DrawNumRight (screen.width - 25 * CleanXfac, y, &screen, plyr->ammo[ammo]);
 	}
 
 	if (deathmatch->value) {
 		// Draw frags (in DM)
-		ST_DrawNumRight (screens[0].width - 2, 1, &screens[0], plyr->fragcount);
+		ST_DrawNumRight (screen.width - 2, 1, &screen, plyr->fragcount);
 	} else {
 		// Draw keys (not DM)
 		y = CleanYfac;
 		for (i = 0; i < 6; i++) {
 			if (plyr->cards[i]) {
-				V_DrawPatchCleanNoMove (screens[0].width - 10*CleanXfac, y,
-										&screens[0], keys[i]);
+				V_DrawPatchCleanNoMove (screen.width - 10*CleanXfac, y,
+										&screen, keys[i]);
 				y += (8 + (i < 3 ? 0 : 2)) * CleanYfac;
 			}
 		}
@@ -169,7 +169,7 @@ void ST_nameDraw (int y)
 	else
 		color = CR_GREEN;
 
-	x = (screens[0].width - V_StringWidth (plyr->userinfo.netname)*CleanXfac) >> 1;
+	x = (screen.width - V_StringWidth (plyr->userinfo.netname)*CleanXfac) >> 1;
 	if (level.time < NameUp)
 		V_DrawTextClean (color, x, y, plyr->userinfo.netname);
 	else

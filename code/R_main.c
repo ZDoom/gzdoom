@@ -556,7 +556,7 @@ void R_InitLightTables (void)
 	int level;
 	int startmap;		
 	int scale;
-	int lightmapsize = 8 + (screens[0].is8bit ? 0 : 2);
+	int lightmapsize = 8 + (screen.is8bit ? 0 : 2);
 
 	// Calculate the light levels to use
 	//	for each level / distance combination.
@@ -578,7 +578,7 @@ void R_InitLightTables (void)
 		}
 	}
 
-	lightscalexmul = ((320<<detailyshift) * (1<<LIGHTSCALEMULBITS)) / screens[0].width;
+	lightscalexmul = ((320<<detailyshift) * (1<<LIGHTSCALEMULBITS)) / screen.width;
 }
 
 
@@ -638,7 +638,7 @@ void R_ExecuteSetViewSize (void)
 	int 		startmap;
 	int			aspectx;
 	int			virtheight, virtwidth;
-	int			lightmapsize = 8 + (screens[0].is8bit ? 0 : 2);
+	int			lightmapsize = 8 + (screen.is8bit ? 0 : 2);
 
 	setsizeneeded = false;
 	BorderNeedRefresh = true;
@@ -658,19 +658,19 @@ void R_ExecuteSetViewSize (void)
 
 	if (setblocks == 11 || setblocks == 12)
 	{
-		realviewwidth = screens[0].width;
-		freelookviewheight = realviewheight = screens[0].height;
+		realviewwidth = screen.width;
+		freelookviewheight = realviewheight = screen.height;
 	}
 	else if (setblocks == 10) {
-		realviewwidth = screens[0].width;
+		realviewwidth = screen.width;
 		realviewheight = ST_Y;
-		freelookviewheight = screens[0].height;
+		freelookviewheight = screen.height;
 	}
 	else
 	{
-		realviewwidth = ((setblocks*screens[0].width)/10) & (~(15>>(screens[0].is8bit ? 0 : 2)));
+		realviewwidth = ((setblocks*screen.width)/10) & (~(15>>(screen.is8bit ? 0 : 2)));
 		realviewheight = ((setblocks*ST_Y)/10)&~7;
-		freelookviewheight = ((setblocks*screens[0].height)/10)&~7;
+		freelookviewheight = ((setblocks*screen.height)/10)&~7;
 	}
 
 	if (setblocks == 11)
@@ -695,8 +695,8 @@ void R_ExecuteSetViewSize (void)
 	centerxfrac = centerx<<FRACBITS;
 	centeryfrac = centery<<FRACBITS;
 
-	virtwidth = screens[0].width >> detailxshift;
-	virtheight = screens[0].height >> detailyshift;
+	virtwidth = screen.width >> detailxshift;
+	virtheight = screen.height >> detailyshift;
 
 	// [RH] aspect ratio stuff (based on Doom Legacy's)
 	aspectx = ((virtheight * centerx * 320) / 200) / virtwidth * FRACUNIT;
@@ -767,7 +767,7 @@ void R_ExecuteSetViewSize (void)
 		startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
 		for (j=0 ; j<MAXLIGHTSCALE ; j++)
 		{
-			level = startmap - (j*(screens[0].width>>detailxshift))/((viewwidth*DISTMAP));
+			level = startmap - (j*(screen.width>>detailxshift))/((viewwidth*DISTMAP));
 			if (level < 0)
 				level = 0;
 			else if (level >= NUMCOLORMAPS)
@@ -919,7 +919,7 @@ void R_SetupFrame (player_t *player)
 		const sector_t *s = camera->subsector->sector->heightsec + sectors;
 		newblend = viewz < s->floorheight ? s->bottommap : viewz > s->ceilingheight ?
 				   s->topmap : s->midmap;
-		if (!screens[0].is8bit)
+		if (!screen.is8bit)
 			newblend = R_BlendForColormap (newblend);
 		else if (APART(newblend) == 0 && newblend >= numfakecmaps)
 			newblend = 0;
@@ -954,7 +954,7 @@ void R_SetupFrame (player_t *player)
 			fixedlightlev = player->fixedcolormap*256;
 			fixedcolormap = DefaultPalette->maps.colormaps;
 		} else {
-			if (screens[0].is8bit)
+			if (screen.is8bit)
 				fixedcolormap =
 					DefaultPalette->maps.colormaps
 					+ player->fixedcolormap*256;
@@ -1071,22 +1071,22 @@ void R_MultiresInit (void)
 	extern byte **ylookup;
 	extern int *columnofs;
 
-	ylookup = Realloc (ylookup, screens[0].height * sizeof(byte *));
-	columnofs = Realloc (columnofs, screens[0].width * sizeof(int));
-	r_dscliptop = Realloc (r_dscliptop, screens[0].width * sizeof(short));
-	r_dsclipbot = Realloc (r_dsclipbot, screens[0].width * sizeof(short));
+	ylookup = Realloc (ylookup, screen.height * sizeof(byte *));
+	columnofs = Realloc (columnofs, screen.width * sizeof(int));
+	r_dscliptop = Realloc (r_dscliptop, screen.width * sizeof(short));
+	r_dsclipbot = Realloc (r_dsclipbot, screen.width * sizeof(short));
 
 	// Moved from R_InitSprites()
-	negonearray = Realloc (negonearray, sizeof(short) * screens[0].width);
+	negonearray = Realloc (negonearray, sizeof(short) * screen.width);
 
-	for (i=0 ; i<screens[0].width ; i++)
+	for (i=0 ; i<screen.width ; i++)
 	{
 		negonearray[i] = -1;
 	}
 
 	// These get set in R_ExecuteSetViewSize()
-	screenheightarray = Realloc (screenheightarray, sizeof(short) * screens[0].width);
-	xtoviewangle = Realloc (xtoviewangle, sizeof(angle_t) * (screens[0].width + 1));
+	screenheightarray = Realloc (screenheightarray, sizeof(short) * screen.width);
+	xtoviewangle = Realloc (xtoviewangle, sizeof(angle_t) * (screen.width + 1));
 
 	R_InitFuzzTable ();
 	R_PlaneInitData ();

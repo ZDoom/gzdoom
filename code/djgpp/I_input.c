@@ -12,13 +12,19 @@
 #include "c_cvars.h"
 #include "i_video.h"
 
+// from allegro.h
+#define END_OF_FUNCTION(x)    void x##_end() { }
+#define LOCK_VARIABLE(x)      _go32_dpmi_lock_data((void *)&x, sizeof(x))
+#define LOCK_FUNCTION(x)      _go32_dpmi_lock_code(x, (long)x##_end - (long)x)
 
 static void I_StartupKeyboard (void);
 static void I_ShutdownKeyboard (void);
+static void I_StartupMouse (void);
+static void I_ShutdownMouse (void);
+#if 0
 static void I_StartupJoystick (void);
 static void I_JoystickEvents (void);
-static void mouse_init (void);
-static void mouse_uninit (void);
+#endif
 
 #define KEYBOARDINT		9
 
@@ -28,17 +34,47 @@ static void mouse_uninit (void);
 #define _inbyte(x) (inp(x))
 #define _inhword(x) (inpw(x))
 
-#define SC_RSHIFT		0x36
-#define SC_LSHIFT		0x2a
-#define SC_UPARROW		0x48
-#define SC_DOWNARROW	0x50
-#define SC_LEFTARROW	0x4b
-#define SC_RIGHTARROW	0x4d
-
+#define DIK_LSHIFT		0x2A
+#define DIK_RSHIFT		0x36
+#define DIK_MULTIPLY	0x37	/* * on numeric keypad */
+#define DIK_1			0x02
+#define DIK_2			0x03
+#define DIK_3			0x04
+#define DIK_4			0x05
+#define DIK_5			0x06
+#define DIK_6			0x07
+#define DIK_7			0x08
+#define DIK_8			0x09
+#define DIK_9			0x0A
+#define DIK_0			0x0B
+#define DIK_NUMPAD7 	0x47
+#define DIK_NUMPAD8 	0x48
+#define DIK_NUMPAD9 	0x49
+#define DIK_SUBTRACT	0x4A	/* - on numeric keypad */
+#define DIK_NUMPAD4 	0x4B
+#define DIK_NUMPAD5 	0x4C
+#define DIK_NUMPAD6 	0x4D
+#define DIK_ADD 		0x4E	/* + on numeric keypad */
+#define DIK_NUMPAD1 	0x4F
+#define DIK_NUMPAD2 	0x50
+#define DIK_NUMPAD3 	0x51
+#define DIK_NUMPAD0 	0x52
+#define DIK_DECIMAL 	0x53	/* . on numeric keypad */
+#define DIK_DIVIDE		0xB5    /* / on numeric keypad */
+#define DIK_HOME		0xC7	/* Home on arrow keypad */
+#define DIK_UP			0xC8	/* UpArrow on arrow keypad */
+#define DIK_PRIOR		0xC9	/* PgUp on arrow keypad */
+#define DIK_LEFT		0xCB	/* LeftArrow on arrow keypad */
+#define DIK_RIGHT		0xCD	/* RightArrow on arrow keypad */
+#define DIK_END 		0xCF	/* End on arrow keypad */
+#define DIK_DOWN		0xD0	/* DownArrow on arrow keypad */
+#define DIK_NEXT		0xD1	/* PgDn on arrow keypad */
+#define DIK_INSERT		0xD2	/* Insert on arrow keypad */
+#define DIK_DELETE		0xD3	/* Delete on arrow keypad */
 
 #define KBDQUESIZE 32
 static byte keyboardque[KBDQUESIZE];
-static int kbdtail, kbdhead;
+static unsigned int kbdtail, kbdhead;
 static BOOL shiftdown;
 
 // Used by the console for making keys repeat
@@ -46,6 +82,7 @@ int KeyRepeatDelay;
 int KeyRepeatRate;
 
 extern constate_e ConsoleState;
+extern BOOL menuactive;
 
 cvar_t *i_remapkeypad;
 cvar_t *usejoystick;
@@ -56,7 +93,7 @@ BOOL I_InitInput (void)
 	atexit (I_ShutdownInput);
 
 	Printf (PRINT_HIGH, "I_StartupMouse\n");
-	mouse_init ();
+	I_StartupMouse ();
 //	Printf (PRINT_HIGH, "I_StartupJoystick\n");
 //	I_StartupJoystick ();
 	Printf (PRINT_HIGH, "I_StartupKeyboard\n");
@@ -72,7 +109,7 @@ BOOL I_InitInput (void)
 // Free all input resources
 void I_ShutdownInput (void)
 {
-	mouse_uninit ();
+	I_ShutdownMouse ();
 	I_ShutdownKeyboard ();
 }
 
@@ -118,8 +155,6 @@ static const byte Convert_Shift [256] =
 static _go32_dpmi_seginfo oldkeyboardisr, newkeyboardisr;
 static BOOL keyboardinited;
 
-static int lastpress;
-
 /*
 ================
 =
@@ -133,7 +168,7 @@ void I_KeyboardISR (void)
 	asm volatile ("cli; pusha");
 // Get the scan code
 
-	keyboardque[kbdhead&(KBDQUESIZE-1)] = lastpress = _inbyte(0x60);
+	keyboardque[kbdhead&(KBDQUESIZE-1)] = _inbyte(0x60);
 	kbdhead++;
 
 // acknowledge the interrupt
@@ -141,16 +176,16 @@ void I_KeyboardISR (void)
 	_outbyte(0x20,0x20);
 	asm volatile ("popa; sti");
 }
-void __End_of_I_KeyboardISR (void) { }
+
+END_OF_FUNCTION(I_KeyboardISR)
 
 
 static void I_StartupKeyboard (void)
 {
 #ifndef NOKBD
-	_go32_dpmi_lock_code (I_KeyboardISR, (long)__End_of_I_KeyboardISR - (long)I_KeyboardISR);
-	_go32_dpmi_lock_data ((void *)keyboardque, sizeof(keyboardque));
-	_go32_dpmi_lock_data ((void *)kbdhead, sizeof(kbdhead));
-	_go32_dpmi_lock_data ((void *)lastpress, sizeof(lastpress));
+	LOCK_FUNCTION (I_KeyboardISR);
+	LOCK_VARIABLE (keyboardque);
+	LOCK_VARIABLE (kbdhead);
 
 	asm volatile ("cli");
 	newkeyboardisr.pm_offset = (int)I_KeyboardISR;
@@ -190,17 +225,13 @@ static void I_ReadKeyboard (void)
 		k = keyboardque[kbdtail&(KBDQUESIZE-1)];
 		kbdtail++;
 
-		if (k == lastk)
-			continue;	// ignore repeating keys
-
-		lastk = k;
 		// extended keyboard shift key bullshit
-		if ( (k&0x7f)==SC_LSHIFT || (k&0x7f)==SC_RSHIFT )
+		if ( (k&0x7f)==DIK_LSHIFT || (k&0x7f)==DIK_RSHIFT )
 		{
 			if ( keyboardque[(kbdtail-2)&(KBDQUESIZE-1)]==0xe0 )
 				continue;
 			k &= 0x80;
-			k |= SC_LSHIFT;
+			k |= DIK_LSHIFT;
 		}
 
 		if (k==0xe0)
@@ -245,16 +276,107 @@ static void I_ReadKeyboard (void)
 			}
 		}
 
-		ev.data1 = k;
+		if ((k | (ev.type<<8)) == lastk)
+			continue;	// ignore repeating keys
+
+		lastk = k | (ev.type<<8);
 		ev.data2 = 0;
 		switch (k)
 		{
-			case SC_LSHIFT:
+			case DIK_LSHIFT:
 				shiftdown = ev.type == ev_keydown;
 				break;
 			default:
+				if (!menuactive &&
+					(ConsoleState == c_falling || ConsoleState == c_down)) {
+					switch (k) {
+						case DIK_NUMPAD4:
+							k = DIK_4;
+							break;
+						case DIK_NUMPAD6:
+							k = DIK_6;
+							break;
+						case DIK_NUMPAD8:
+							k = DIK_8;
+							break;
+						case DIK_NUMPAD2:
+							k = DIK_2;
+							break;
+						case DIK_NUMPAD7:
+							k = DIK_7;
+							break;
+						case DIK_NUMPAD9:
+							k = DIK_9;
+							break;
+						case DIK_NUMPAD3:
+							k = DIK_3;
+							break;
+						case DIK_NUMPAD1:
+							k = DIK_1;
+							break;
+						case DIK_NUMPAD0:
+							k = DIK_0;
+							break;
+						case DIK_NUMPAD5:
+							k = DIK_5;
+							break;
+					}
+				} else if (i_remapkeypad->value) {
+					switch (k) {
+						case DIK_NUMPAD4:
+							k = DIK_LEFT;
+							break;
+						case DIK_NUMPAD6:
+							k = DIK_RIGHT;
+							break;
+						case DIK_NUMPAD8:
+							k = DIK_UP;
+							break;
+						case DIK_NUMPAD2:
+							k = DIK_DOWN;
+							break;
+						case DIK_NUMPAD7:
+							k = DIK_HOME;
+							break;
+						case DIK_NUMPAD9:
+							k = DIK_PRIOR;
+							break;
+						case DIK_NUMPAD3:
+							k = DIK_NEXT;
+							break;
+						case DIK_NUMPAD1:
+							k = DIK_END;
+							break;
+						case DIK_NUMPAD0:
+							k = DIK_INSERT;
+							break;
+						case DIK_DECIMAL:
+							k = DIK_DELETE;
+							break;
+					}
+				}
 				ev.data2 = Convert[k];
 				break;
+		}
+		ev.data1 = k;
+		if (ConsoleState == c_falling || ConsoleState == c_down) {
+			switch (k) {
+				case DIK_DIVIDE:
+					ev.data2 = '/';
+					break;
+				case DIK_MULTIPLY:
+					ev.data2 = '*';
+					break;
+				case DIK_ADD:
+					ev.data2 = '+';
+					break;
+				case DIK_SUBTRACT:
+					ev.data2 = '-';
+					break;
+				case DIK_DECIMAL:
+					ev.data2 = '.';
+					break;
+			}
 		}
 		if (shiftdown)
 			ev.data3 = Convert_Shift[k];
@@ -270,7 +392,7 @@ static void I_ReadKeyboard (void)
 static BOOL mouse_present;
 static int num_buttons;
 
-static void mouse_init (void)
+static void I_StartupMouse (void)
 {
 	__dpmi_regs r;
 
@@ -290,7 +412,7 @@ static void mouse_init (void)
 		num_buttons = 4;
 }
 
-static void mouse_uninit (void)
+static void I_ShutdownMouse (void)
 {
 	// We don't need to do anything here.
 }

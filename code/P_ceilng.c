@@ -453,6 +453,7 @@ void P_ActivateInStasisCeiling (int tag)
 		if (scan->tag == tag && scan->direction == 0) {
 			scan->direction = scan->olddirection;
 			scan->thinker.function.acp1 = (actionf_p1) T_MoveCeiling;
+			PlayCeilingSound (scan);
 		}
 		scan = scan->next;
 	}
@@ -472,6 +473,7 @@ BOOL EV_CeilingCrushStop (int tag)
 
 	while (scan) {
 		if (scan->tag == tag && scan->direction != 0) {
+			SN_StopSequence ((mobj_t *)&scan->sector->soundorg);
 			scan->olddirection = scan->direction;
 			scan->thinker.function.acv = (actionf_v) NULL;
 			scan->direction = 0;		// in-stasis;

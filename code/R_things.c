@@ -1474,11 +1474,11 @@ static void R_DrawCrosshair (void)
 		if (transparent)
 			V_DrawLucentPatch (realviewwidth / 2 + viewwindowx,
 							   realviewheight / 2 + viewwindowy,
-							   &screens[0], patch);
+							   &screen, patch);
 		else
 			V_DrawPatch (realviewwidth / 2 + viewwindowx,
 						 realviewheight / 2 + viewwindowy,
-						 &screens[0], patch);
+						 &screen, patch);
 	}
 }
 

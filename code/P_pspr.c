@@ -570,6 +570,8 @@ void A_FirePlasma (player_t *player, pspdef_t *psp)
 //
 // [RH] A_FireRailgun
 //
+static int RailOffset;
+
 void A_FireRailgun (player_t *player, pspdef_t *psp)
 {
 	int damage;
@@ -594,7 +596,20 @@ void A_FireRailgun (player_t *player, pspdef_t *psp)
 	else
 		damage = 150;
 
-	P_RailAttack (player->mo, damage);
+	P_RailAttack (player->mo, damage, RailOffset);
+	RailOffset = 0;
+}
+
+void A_FireRailgunRight (player_t *player, pspdef_t *psp)
+{
+	RailOffset = 10;
+	A_FireRailgun (player, psp);
+}
+
+void A_FireRailgunLeft (player_t *player, pspdef_t *psp)
+{
+	RailOffset = -10;
+	A_FireRailgun (player, psp);
 }
 
 void A_RailWait (player_t *player, pspdef_t *psp)

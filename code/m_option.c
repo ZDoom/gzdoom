@@ -589,12 +589,12 @@ void M_DrawSlider (int x, int y, float min, float max, float cur)
 
 	cur -= min;
 
-	V_DrawPatchClean (x, y, &screens[0], W_CacheLumpName ("LSLIDE", PU_CACHE));
+	V_DrawPatchClean (x, y, &screen, W_CacheLumpName ("LSLIDE", PU_CACHE));
 	for (i = 1; i < 11; i++)
-		V_DrawPatchClean (x + i*8, y, &screens[0], W_CacheLumpName ("MSLIDE", PU_CACHE));
-	V_DrawPatchClean (x + 88, y, &screens[0], W_CacheLumpName ("RSLIDE", PU_CACHE));
+		V_DrawPatchClean (x + i*8, y, &screen, W_CacheLumpName ("MSLIDE", PU_CACHE));
+	V_DrawPatchClean (x + 88, y, &screen, W_CacheLumpName ("RSLIDE", PU_CACHE));
 
-	V_DrawPatchClean (x + 5 + (int)((cur * 78.0) / range), y, &screens[0], W_CacheLumpName ("CSLIDE", PU_CACHE));
+	V_DrawPatchClean (x + 5 + (int)((cur * 78.0) / range), y, &screen, W_CacheLumpName ("CSLIDE", PU_CACHE));
 }
 
 int M_FindCurVal (float cur, value_t *values, int numvals)
@@ -617,7 +617,7 @@ void M_OptDrawer (void)
 
 	title = W_CacheLumpName (CurrentMenu->title, PU_CACHE);
 	
-	V_DrawPatchClean (160-title->width/2,10,&screens[0],title);
+	V_DrawPatchClean (160-title->width/2,10,&screen,title);
 
 //	for (i = 0, y = 20 + title->height; i < CurrentMenu->numitems; i++, y += 8)	{
 	for (i = 0, y = 15 + title->height; i < CurrentMenu->numitems; i++, y += 8)	{	// TIJ
@@ -710,7 +710,7 @@ void M_OptDrawer (void)
 			}
 
 			if (i == CurrentItem && (skullAnimCounter < 6 || WaitingForKey)) {
-				V_DrawPatchClean (CurrentMenu->indent + 3, y, &screens[0], W_CacheLumpName ("LITLCURS", PU_CACHE));
+				V_DrawPatchClean (CurrentMenu->indent + 3, y, &screen, W_CacheLumpName ("LITLCURS", PU_CACHE));
 			}
 
 		} else {
@@ -740,7 +740,7 @@ void M_OptDrawer (void)
 			}
 
 			if (i == CurrentItem && ((item->a.selmode != -1 && (skullAnimCounter < 6 || WaitingForKey)) || testingmode)) {
-				V_DrawPatchClean (item->a.selmode * 104 + 8, y, &screens[0], W_CacheLumpName ("LITLCURS", PU_CACHE));
+				V_DrawPatchClean (item->a.selmode * 104 + 8, y, &screen, W_CacheLumpName ("LITLCURS", PU_CACHE));
 			}
 
 		}
@@ -868,7 +868,7 @@ void M_OptResponder (event_t *ev)
 
 						// Hack hack. Rebuild list of resolutions
 						if (item->e.values == Depths)
-							BuildModesList (screens[0].width, screens[0].height, DisplayID);
+							BuildModesList (screen.width, screen.height, DisplayID);
 					}
 					S_Sound (NULL, CHAN_VOICE, "plats/pt1_mid", 1, ATTN_NONE);
 					break;
@@ -929,7 +929,7 @@ void M_OptResponder (event_t *ev)
 
 						// Hack hack. Rebuild list of resolutions
 						if (item->e.values == Depths)
-							BuildModesList (screens[0].width, screens[0].height, DisplayID);
+							BuildModesList (screen.width, screen.height, DisplayID);
 					}
 					S_Sound (NULL, CHAN_VOICE, "plats/pt1_mid", 1, ATTN_NONE);
 					break;
@@ -973,8 +973,8 @@ void M_OptResponder (event_t *ev)
 				SetCVarFloat (fullscreen, DummyFSCvar.value);
 #endif
 				if (!(item->type == screenres && GetSelectedSize (CurrentItem, &NewWidth, &NewHeight))) {
-					NewWidth = screens[0].width;
-					NewHeight = screens[0].height;
+					NewWidth = screen.width;
+					NewHeight = screen.height;
 				}
 				NewID = IDTranslate[(int)DummyDepthCvar.value];
 				setmodeneeded = true;
@@ -997,7 +997,7 @@ void M_OptResponder (event_t *ev)
 
 				// Hack hack. Rebuild list of resolutions
 				if (item->e.values == Depths)
-					BuildModesList (screens[0].width, screens[0].height, DisplayID);
+					BuildModesList (screen.width, screen.height, DisplayID);
 
 				S_Sound (NULL, CHAN_VOICE, "plats/pt1_mid", 1, ATTN_NONE);
 			} else if (item->type == control) {
@@ -1028,11 +1028,11 @@ void M_OptResponder (event_t *ev)
 					SetCVarFloat (fullscreen, DummyFSCvar.value);
 #endif
 					if (!(item->type == screenres && GetSelectedSize (CurrentItem, &NewWidth, &NewHeight))) {
-						NewWidth = screens[0].width;
-						NewHeight = screens[0].height;
+						NewWidth = screen.width;
+						NewHeight = screen.height;
 					}
-					OldWidth = screens[0].width;
-					OldHeight = screens[0].height;
+					OldWidth = screen.width;
+					OldHeight = screen.height;
 					OldID = DisplayID;
 					NewID = IDTranslate[(int)DummyDepthCvar.value];
 					setmodeneeded = true;
@@ -1042,10 +1042,10 @@ void M_OptResponder (event_t *ev)
 				}
 			} else if (ev->data2 == 'd' && CurrentMenu == &ModesMenu) {
 				// Make current resolution the default
-				SetCVarFloat (vid_defwidth, (float)screens[0].width);
-				SetCVarFloat (vid_defheight, (float)screens[0].height);
+				SetCVarFloat (vid_defwidth, (float)screen.width);
+				SetCVarFloat (vid_defheight, (float)screen.height);
 				SetCVar (vid_defid, IdStrings[DisplayID-1000]);
-				SetModesMenu (screens[0].width, screens[0].height, DisplayID);
+				SetModesMenu (screen.width, screen.height, DisplayID);
 			}
 			break;
 	}
@@ -1248,7 +1248,7 @@ void M_RestoreMode (void)
 
 static void SetVidMode (void)
 {
-	SetModesMenu (screens[0].width, screens[0].height, DisplayID);
+	SetModesMenu (screen.width, screen.height, DisplayID);
 	if (ModesMenu.items[ModesMenu.lastOn].type == screenres) {
 		if (ModesMenu.items[ModesMenu.lastOn].a.selmode == -1) {
 			ModesMenu.items[ModesMenu.lastOn].a.selmode++;

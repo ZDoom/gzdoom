@@ -66,6 +66,7 @@ typedef struct
 	float		volume;
 	int			pitch;
 	int			priority;
+	BOOL		loop;
 } channel_t;
 
 // [RH] Hacks for pitch variance
@@ -127,7 +128,7 @@ static fixed_t P_AproxDistance2 (mobj_t *listener, fixed_t x, fixed_t y)
 void S_NoiseDebug (void)
 {
 	fixed_t ox, oy;
-	int i, y;
+	int i, y, color;
 
 	y = 32 * CleanYfac;
 	if (gametic & 16)
@@ -143,7 +144,7 @@ void S_NoiseDebug (void)
 	V_DrawText (CR_GREY, 280, y, "chan");
 	y += 8;
 
-	for (i = 0; i < numChannels && y < screens[0].height - 16; i++, y += 8) {
+	for (i = 0; i < numChannels && y < screen.height - 16; i++, y += 8) {
 		if (Channel[i].sfxinfo) {
 			char temp[16];
 			mobj_t *origin = Channel[i].mo;
@@ -159,21 +160,22 @@ void S_NoiseDebug (void)
 				ox = Channel[i].x;
 				oy = Channel[i].y;
 			}
+			color = Channel[i].loop ? CR_BROWN : CR_GREY;
 			strcpy (temp, lumpinfo[Channel[i].sfxinfo->lumpnum].name);
 			temp[8] = 0;
-			V_DrawText (CR_GREY, 0, y, temp);
+			V_DrawText (color, 0, y, temp);
 			sprintf (temp, "%d", ox / FRACUNIT);
-			V_DrawText (CR_GREY, 70, y, temp);
+			V_DrawText (color, 70, y, temp);
 			sprintf (temp, "%d", oy / FRACUNIT);
-			V_DrawText (CR_GREY, 120, y, temp);
+			V_DrawText (color, 120, y, temp);
 			sprintf (temp, "%ld", Channel[i].sfxinfo - S_sfx);
-			V_DrawText (CR_GREY, 170, y, temp);
+			V_DrawText (color, 170, y, temp);
 			sprintf (temp, "%d", Channel[i].priority);
-			V_DrawText (CR_GREY, 200, y, temp);
+			V_DrawText (color, 200, y, temp);
 			sprintf (temp, "%d", P_AproxDistance2 (players[consoleplayer].camera, ox, oy) / FRACUNIT);
-			V_DrawText (CR_GREY, 240, y, temp);
+			V_DrawText (color, 240, y, temp);
 			sprintf (temp, "%d", Channel[i].entchannel);
-			V_DrawText (CR_GREY, 280, y, temp);
+			V_DrawText (color, 280, y, temp);
 		} else {
 			V_DrawText (CR_GREY, 0, y, "------");
 		}
@@ -283,7 +285,7 @@ void S_Start (void)
 //		be specified both by id and by name. Also borrowed some stuff from
 //		Hexen and parameters from Quake.
 static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
-						  int sound_id, float volume, int attenuation)
+						  int sound_id, float volume, int attenuation, BOOL looping)
 {
 	sfxinfo_t *sfx;
 	int dist, vol;
@@ -459,7 +461,7 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 	else
 		Channel[i].pitch = NORM_PITCH;
 
-	Channel[i].handle = I_StartSound (sfx, vol, sep, Channel[i].pitch, i);
+	Channel[i].handle = I_StartSound (sfx, vol, sep, Channel[i].pitch, i, looping);
 	Channel[i].sound_id = sound_id;
 	Channel[i].mo = ent;
 	Channel[i].sfxinfo = sfx;
@@ -470,6 +472,7 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 	Channel[i].volume = volume;
 	Channel[i].x = x;
 	Channel[i].y = y;
+	Channel[i].loop = looping;
 
 	if (sfx->usefulness < 0)
 		sfx->usefulness = 1;
@@ -479,11 +482,16 @@ static void S_StartSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 
 void S_SoundID (mobj_t *ent, int channel, int sound_id, float volume, int attenuation)
 {
-	S_StartSound (ent, 0, 0, channel, sound_id, volume, attenuation);
+	S_StartSound (ent, 0, 0, channel, sound_id, volume, attenuation, false);
+}
+
+void S_LoopedSoundID (mobj_t *ent, int channel, int sound_id, float volume, int attenuation)
+{
+	S_StartSound (ent, 0, 0, channel, sound_id, volume, attenuation, true);
 }
 
 static void S_StartNamedSound (mobj_t *ent, fixed_t x, fixed_t y, int channel, 
-							   char *name, float volume, int attenuation)
+							   char *name, float volume, int attenuation, BOOL looping)
 {
 	int sfx_id;
 	
@@ -513,17 +521,22 @@ static void S_StartNamedSound (mobj_t *ent, fixed_t x, fixed_t y, int channel,
 	if (sfx_id == -1)
 		DPrintf ("Unknown sound %s\n", name);
 
-	S_StartSound (ent, x, y, channel, sfx_id, volume, attenuation);
+	S_StartSound (ent, x, y, channel, sfx_id, volume, attenuation, looping);
 }
 
 void S_Sound (mobj_t *ent, int channel, char *name, float volume, int attenuation)
 {
-	S_StartNamedSound (ent, 0, 0, channel, name, volume, attenuation);
+	S_StartNamedSound (ent, 0, 0, channel, name, volume, attenuation, false);
+}
+
+void S_LoopedSound (mobj_t *ent, int channel, char *name, float volume, int attenuation)
+{
+	S_StartNamedSound (ent, 0, 0, channel, name, volume, attenuation, true);
 }
 
 void S_PositionedSound (fixed_t x, fixed_t y, int channel, char *name, float volume, int attenuation)
 {
-	S_StartNamedSound ((mobj_t *)(~0), x, y, channel, name, volume, attenuation);
+	S_StartNamedSound ((mobj_t *)(~0), x, y, channel, name, volume, attenuation, false);
 }
 
 // S_StopSoundID from Hexen (albeit, modified somewhat)
@@ -581,7 +594,6 @@ void S_StopSound (mobj_t *ent, int channel)
 			S_StopChannel (i);
 }
 
-// Used by the cast finale
 void S_StopAllChannels (void)
 {
 	int i;
@@ -1101,16 +1113,28 @@ void A_Ambient (mobj_t *actor)
 	{
 		if (S_GetSoundPlayingInfo (actor, S_FindSound (ambient->sound)))
 			return;
+
+		if (ambient->sound[0]) {
+			S_LoopedSound (actor, CHAN_BODY, ambient->sound, ambient->volume,
+						   ambient->type & POSITIONAL ? ATTN_NORM :
+						   (ambient->type & SURROUND ? ATTN_SURROUND : ATTN_NONE));
+
+			SetTicker (&actor->tics, ambient);
+		} else {
+			P_RemoveMobj (actor);
+		}
 	}
+	else
+	{
+		if (ambient->sound[0]) {
+			S_Sound (actor, CHAN_BODY, ambient->sound, ambient->volume,
+					 ambient->type & POSITIONAL ? ATTN_NORM :
+						(ambient->type & SURROUND ? ATTN_SURROUND : ATTN_NONE));
 
-	if (ambient->sound[0]) {
-		S_Sound (actor, CHAN_BODY, ambient->sound, ambient->volume,
-				 ambient->type & POSITIONAL ? ATTN_NORM :
-					(ambient->type & SURROUND ? ATTN_SURROUND : ATTN_NONE));
-
-		SetTicker (&actor->tics, ambient);
-	} else {
-		P_RemoveMobj (actor);
+			SetTicker (&actor->tics, ambient);
+		} else {
+			P_RemoveMobj (actor);
+		}
 	}
 }
 

@@ -246,6 +246,8 @@ char *SoundMap[] = {
 
 // Functions used in a .bex [CODEPTR] chunk
 void A_FireRailgun(player_t*, pspdef_t*);
+void A_FireRailgunLeft(player_t*, pspdef_t*);
+void A_FireRailgunRight(player_t*, pspdef_t*);
 void A_RailWait(player_t*, pspdef_t*);
 void A_Light0(player_t*, pspdef_t*);
 void A_WeaponReady(player_t*, pspdef_t*);
@@ -321,6 +323,10 @@ void A_BrainSpit(mobj_t*);
 void A_SpawnSound(mobj_t*);
 void A_SpawnFly(mobj_t*);
 void A_BrainExplode(mobj_t*);
+void A_Die(mobj_t*);
+void A_Detonate(mobj_t*);
+void A_Mushroom(mobj_t*);
+void A_MonsterRail(mobj_t*);
 
 struct CodePtr {
 	char *name;
@@ -329,7 +335,10 @@ struct CodePtr {
 
 static const struct CodePtr CodePtrs[] = {
 	{ "NULL",			{(actionf_p1)NULL} },
+	{ "MonsterRail",	{(actionf_p1)A_MonsterRail} },
 	{ "FireRailgun",	{(actionf_p1)A_FireRailgun} },
+	{ "FireRailgunLeft",{(actionf_p1)A_FireRailgunLeft} },
+	{ "FireRailgunRight",{(actionf_p1)A_FireRailgunRight} },
 	{ "RailWait",		{(actionf_p1)A_RailWait} },
 	{ "Light0",			{(actionf_p1)A_Light0} },
 	{ "WeaponReady",	{(actionf_p1)A_WeaponReady} },
@@ -405,6 +414,9 @@ static const struct CodePtr CodePtrs[] = {
 	{ "SpawnSound",		{(actionf_p1)A_SpawnSound} },
 	{ "SpawnFly",		{(actionf_p1)A_SpawnFly} },
 	{ "BrainExplode",	{(actionf_p1)A_BrainExplode} },
+	{ "Die",			{(actionf_p1)A_Die} },
+	{ "Detonate",		{(actionf_p1)A_Detonate} },
+	{ "Mushroom",		{(actionf_p1)A_Mushroom} },
 	{ NULL, }
 };
 

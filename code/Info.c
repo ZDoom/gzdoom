@@ -136,6 +136,8 @@ void A_BrainExplode(mobj_t*);
 void A_Ambient(mobj_t*);		// [RH] Play ambient sound
 void P_RemoveMobj(mobj_t*);		// [RH] Used by temporary switch mobj
 
+void A_MonsterRail(mobj_t*);
+
 state_t	states[NUMSTATES] = {
 	{SPR_TROO,0,-1,{NULL},S_NULL,0,0},	// S_NULL
 	{SPR_SHTG,4,0,{A_Light0},S_NULL,0,0},	// S_LIGHTDONE

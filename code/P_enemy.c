@@ -887,11 +887,50 @@ void A_FaceTarget (mobj_t *actor)
 	
 	if (actor->target->flags & MF_SHADOW)
     {
-      int t = P_Random(pr_facetarget);
-      actor->angle += (t-P_Random(pr_facetarget))<<21;
+		int t = P_Random(pr_facetarget);
+		actor->angle += (t-P_Random(pr_facetarget))<<21;
     }
 }
 
+//
+// [RH] A_MonsterRail
+//
+// New function to let monsters shoot a railgun
+//
+void A_MonsterRail (mobj_t *actor)
+{
+	if (!actor->target)
+		return;
+
+	// [RH] Andy Baker's stealth monsters
+	if (actor->flags & MF_STEALTH)
+	{
+		P_IncreaseVisibility(actor);
+	}
+
+	actor->flags &= ~MF_AMBUSH;
+		
+	actor->angle = R_PointToAngle2 (actor->x,
+									actor->y,
+									actor->target->x,
+									actor->target->y);
+
+	actor->pitch = FixedDiv (P_AimLineAttack (actor, actor->angle, MISSILERANGE), -40960);
+
+	// Let the aim trail behind the player
+	actor->angle = R_PointToAngle2 (actor->x,
+									actor->y,
+									actor->target->x - actor->target->momx * 3,
+									actor->target->y - actor->target->momy * 3);
+
+	if (actor->target->flags & MF_SHADOW)
+    {
+		int t = P_Random(pr_facetarget);
+		actor->angle += (t-P_Random(pr_facetarget))<<21;
+    }
+
+	P_RailAttack (actor, actor->damage, 0);
+}
 
 //
 // A_PosAttack
@@ -1719,8 +1758,6 @@ void A_Pain (mobj_t *actor)
 
 void A_Fall (mobj_t *actor)
 {
-	int n;
-
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
@@ -1733,13 +1770,35 @@ void A_Fall (mobj_t *actor)
 	// So change this if corpse objects
 	// are meant to be obstacles.
 
+#if 0
 	// [RH] Toss some gibs
 	//if (actor->health < -80)
-	if (testgibs->value)
-		for (n = 0; n < 6; n++)
-			ThrowGib (actor, MT_GIB0 + (int)(P_Random(pr_gengib) >> 5), -actor->health);
+	{
+		int n;
+
+		if (testgibs->value)
+			for (n = 0; n < 6; n++)
+				ThrowGib (actor, MT_GIB0 + (int)(P_Random(pr_gengib) >> 5), -actor->health);
+	}
+#endif
 }
 
+
+// killough 11/98: kill an object
+void A_Die (mobj_t *actor)
+{
+	P_DamageMobj (actor, NULL, NULL, actor->health, MOD_UNKNOWN);
+}
+
+//
+// A_Detonate
+// killough 8/9/98: same as A_Explode, except that the damage is variable
+//
+
+void A_Detonate (mobj_t *mo)
+{
+	P_RadiusAttack (mo, mo->target, mo->info->damage, MOD_UNKNOWN);
+}
 
 //
 // A_Explode
@@ -1764,6 +1823,34 @@ void A_Explode (mobj_t *thing)
 	P_RadiusAttack (thing, thing->target, 128, mod);
 }
 
+//
+// killough 9/98: a mushroom explosion effect, sorta :)
+// Original idea: Linguica
+//
+
+void A_Mushroom (mobj_t *actor)
+{
+	int i, j, n = actor->info->damage;
+
+	A_Explode (actor);	// First make normal explosion
+
+	// Now launch mushroom cloud
+	for (i = -n; i <= n; i += 8)
+	{
+		for (j = -n; j <= n; j += 8)
+		{
+			mobj_t target = *actor, *mo;
+			target.x += i << FRACBITS; // Aim in many directions from source
+			target.y += j << FRACBITS;
+			target.z += P_AproxDistance(i,j) << (FRACBITS+2); // Aim up fairly high
+			mo = P_SpawnMissile (actor, &target, MT_FATSHOT); // Launch fireball
+			mo->momx >>= 1;
+			mo->momy >>= 1;									  // Slow it down a bit
+			mo->momz >>= 1;
+			mo->flags &= ~MF_NOGRAVITY;   // Make debris fall under gravity
+		}
+	}
+}
 
 //
 // A_BossDeath

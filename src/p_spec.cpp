@@ -196,6 +196,10 @@ static void P_InitAnimDefs ()
 					SC_ScriptError (NULL, NULL);
 				}
 			}
+			else
+			{
+				SC_ScriptError (NULL, NULL);
+			}
 		}
 		SC_Close ();
 	}
@@ -304,13 +308,10 @@ static void ParseAnim (byte istex)
 			{
 				free (Anims[i]);
 				Anims[i] = newAnim;
-				break;
+				return;
 			}
 		}
-		if (i == 0-1)
-		{
-			Anims.Push (newAnim);
-		}
+		Anims.Push (newAnim);
 	}
 }
 

@@ -159,7 +159,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 			b->readyweapon != wp_goldwand && b->readyweapon != wp_staff)
 			actor->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
 
-		if (!(b->enemy->flags & MF_COUNTKILL))
+		if (!(b->enemy->flags3 & MF3_ISMONSTER))
 			b->t_fight = AFTERTICS;
 
 		if (b->t_strafe <= 0 &&
@@ -177,16 +177,16 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 		if (P_AproxDistance(actor->x-b->enemy->x, actor->y-b->enemy->y) > bglobal.combatdst[b->readyweapon])
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
-			cmd->ucmd.forwardmove = (b->enemy->flags & MF_COUNTKILL) ? FORWARDWALK : FORWARDRUN;
+			cmd->ucmd.forwardmove = (b->enemy->flags3 & MF3_ISMONSTER) ? FORWARDWALK : FORWARDRUN;
 		}
 		else if (!stuck) //Too close, so move away.
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
-			cmd->ucmd.forwardmove = (b->enemy->flags & MF_COUNTKILL) ? -FORWARDWALK : -FORWARDRUN;
+			cmd->ucmd.forwardmove = (b->enemy->flags3 & MF3_ISMONSTER) ? -FORWARDWALK : -FORWARDRUN;
 		}
 
 		//Strafing.
-		if (b->enemy->flags & MF_COUNTKILL) //It's just a monster so take it down cool.
+		if (b->enemy->flags & MF3_ISMONSTER) //It's just a monster so take it down cool.
 		{
 			cmd->ucmd.sidemove = b->sleft ? -SIDEWALK : SIDEWALK;
 		}

@@ -148,7 +148,7 @@ void A_FreezeDeath (AActor *actor)
 		actor->player->poisoncount = 0;
 		actor->player->bonuscount = 0;
 	}
-	else if (actor->flags&MF_COUNTKILL && actor->special)
+	else if (actor->flags3&MF3_ISMONSTER && actor->special)
 	{ // Initiate monster death actions
 		LineSpecials [actor->special] (NULL, actor, actor->args[0],
 			actor->args[1], actor->args[2], actor->args[3], actor->args[4]);

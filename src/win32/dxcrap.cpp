@@ -106,3 +106,4 @@ void InitKeyboardObjectData (void)
 		KeyboardObjectData[i].dwFlags = 0;
 	}
 }
+

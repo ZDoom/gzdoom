@@ -642,7 +642,7 @@ bool DCajunMaster::LoadBots ()
 
 ADD_STAT (bots, out)
 {
-	sprintf (out, "think = %04.1f ms  support = %04.1f ms  wtg = %u",
+	sprintf (out, "think = %04.1f ms  support = %04.1f ms  wtg = %lu",
 		(double)BotThinkCycles * 1000 * SecondsPerCycle,
 		(double)BotSupportCycles * 1000 * SecondsPerCycle,
 		BotWTG);

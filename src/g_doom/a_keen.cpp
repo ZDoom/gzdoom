@@ -62,12 +62,13 @@ void A_KeenDie (AActor *self)
 	A_NoBlocking (self);
 	
 	// scan the remaining thinkers to see if all Keens are dead
-	ACommanderKeen *other;
-	TThinkerIterator<ACommanderKeen> iterator;
+	AActor *other;
+	TThinkerIterator<AActor> iterator;
+	const TypeInfo *matchClass = self->GetClass ();
 
 	while ( (other = iterator.Next ()) )
 	{
-		if (other != self && other->health > 0)
+		if (other != self && other->health > 0 && other->IsA (matchClass))
 		{
 			// other Keen not dead
 			return;

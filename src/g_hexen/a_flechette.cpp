@@ -297,7 +297,7 @@ int APoisonCloud::DoSpecialDamage (AActor *target, int damage)
 		}	
 		return -1;
 	}
-	else if (!(target->flags & MF_COUNTKILL))
+	else if (!(target->flags3 & MF3_ISMONSTER))
 	{ // only damage monsters/players with the poison cloud
 		return -1;
 	}

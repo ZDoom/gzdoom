@@ -61,7 +61,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 	if ( (kind = SpawnableThings[type]) == NULL)
 		return false;
 
-	if ((GetDefaultByType (kind)->flags & MF_COUNTKILL) && (dmflags & DF_NO_MONSTERS))
+	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))
 		return false;
 
 	while ( (spot = iterator.Next ()) )
@@ -154,7 +154,7 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 	if ((kind = SpawnableThings[type]) == NULL)
 		return false;
 
-	if ((GetDefaultByType (kind)->flags & MF_COUNTKILL) && (dmflags & DF_NO_MONSTERS))
+	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))
 		return false;
 
 	while ( (spot = iterator.Next ()) )
@@ -176,7 +176,7 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 					if (gravity)
 					{
 						mobj->flags &= ~MF_NOGRAVITY;
-						if (!(mobj->flags & MF_COUNTKILL))
+						if (!(mobj->flags3 & MF3_ISMONSTER))
 						{
 							mobj->flags2 |= MF2_LOGRAV;
 						}

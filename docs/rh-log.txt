@@ -1,4 +1,73 @@
-February 2, 2002
+February 10, 2003
+- Fixed: When a MIDI or MUS song stopped because it reached the end of the song
+  (if it was nonlooping), the midiOut device would not be released.
+- Removed the DirectMusic MIDI option because it wasn't working, and Timidity++
+  is a better sounding solution if you can't do hardware wavetable MIDI.
+- Fixed: ProduceMIDI() crashed because it had the wrong header check.
+- Fixed looping problems with the new MUS player because I accidentally moved
+  some code in the wrong place. The new MUS and MIDI players also had semi-
+  random default channel volumes for the same reason.
+
+February 8, 2003
+- Uploaded 2.0.40.
+- Added support for Apogee's EMIDI controllers.
+
+February 7, 2003
+- Wrote new MUS and MIDI player routines that do not use MIDI streams. Instead,
+  they use a time critical thread and midiOutShortMsg to send MIDI messages to
+  the playback device. I have not tried this with a lesser OS like Win98, so I
+  hope it works okay there. I want to remove the old player code so I that I
+  just have one method to use for playing MIDI data. This approach offers two
+  advantages over the stream method as it was employed: 1) Minimal setup time,
+  so music changes can happen faster. 2) Volume support for everything that
+  supports channel volume controllers, which is everything I tried. I think I
+  might also add support for the Apogee Sound System's EMIDI files just because
+  I have some docs for it.
+
+February 6, 2003
+- Added mouse and joystick option menus. Also added an option not to
+  prescale the mouse movements. I've done this all along because it
+  feels like the vertical sensitivity is much higher than the horizontal
+  sensitivity, so the prescaling compensates for that perceived difference.
+  But it could be the reason some people gripe that "ZDoom's mouse feels
+  different from Doom's! It sux0rz delux0rz!" So now they can turn it off
+  with a single switch instead of messing with the various mouse sensitivities
+  to decompensate.
+- Fixed: The game did not give up the mouse if use_mouse was false.
+- Changed the default ID for lines without a Line_SetIdentification or
+  similar special to -1 instead of 0. This is so that you can use
+  Line_SetIdentification to give a line ID 0 and still tell it apart
+  from all the other lines on the map without IDs. This emulates standard
+  Hexen behavior and also fixes a bug on caldera.wad, MAP10 where almost
+  every line on the map would get set to a switch texture right after
+  you entered it.
+- Added support for Hexen's warptrans mapinfo command. I see now that it
+  gets used to determine which map you start on for a new game.
+- Changed MAPINFO parsing so that maps named ExMy will automatically get
+  their levelnum set to xy unless you specify something different. MAPxx
+  maps were already getting this treatment.
+- Added a syntax error message if you don't specify a valid keyword for a
+  block in ANIMDEFS.
+- Added a non-player check to the A_DoomSkinCheck and A_HereticSkinCheck
+  functions. I guess if somebody uses Dehacked to assign the player death
+  states to something else, they could get called by something that isn't
+  a player.
+
+February 5, 2003
+- Changed A_KeenDie() to search among whatever called it and not exclusively
+  among Keens.
+  
+February 4, 2003
+- I can now build a fully working version of ZDoom with MinGW. Perheps now it
+  is time for me to turn my attention back to Linux.
+
+February 3, 2003
+- Fixed a stupid bug I added to the tl_tab calculations in fmopl.cpp.
+- Fixed: Monsters that hated both players and monsters would crash if there
+  was more than one player in the game.
+- It's 2003 now, isn't it?
+
+February 2, 2003
 - Uploaded 39.cab.
 - Fixed: Dormant actors still bled.
 - Added a PatrolSpecial actor (doomednum 9047). It works like
@@ -9,7 +78,7 @@ February 2, 2002
   TID of the marine(s) to change and the name of an actor class to get the
   sprite from.
 
-February 1, 2002
+February 1, 2003
 - Fixed a Heretic/Hexen bug: Actors with a crash state would not crash if
   they died on the ground.
 - Changed I_InitInput to request a DirectInput 3 interface instead of
@@ -23,7 +92,7 @@ February 1, 2002
 - Fixed: In Hexen you can queue scripts for maps on other hubs. They don't
   get cleared along with the world variables, as I had mistakenly believed.
 
-January 31, 2002
+January 31, 2003
 - Removed the need to press D to set the default resolution at the video
   modes menu. This seemed to be a common point of confusion (despite having
   the directions right there in the menu), but more importantly it makes the
@@ -37,7 +106,7 @@ January 31, 2002
 - Removed the limit on the number of frames that can assigned to an
   animation sequence with ANIMDEFS.
 
-January 30, 2002
+January 30, 2003
 - Fixed: The old Thing_Hate behavior no longer worked.
 - Added the Thing_ChangeTID(oldtid, newtid) special to change the TID of
   anything with oldtid to newtid. If oldtid is zero, then whatever activates
@@ -62,7 +131,7 @@ January 30, 2002
   specified file in the same directory as the patch they are used from
   before they look in the current directory.
 
-January 29, 2002
+January 29, 2003
 - Changed: Just loading a game is no longer enough to assign a quicksave
   slot. You need to either save a game or quickload first.
 - New: The pullin command now looks for wads in the same directory as the
@@ -88,7 +157,7 @@ January 29, 2002
   the player had.
 - Added the cleric and mage Icon of the Defender behavior.
 
-January 27, 2002
+January 27, 2003
 - Fixed the finetuning of double-voice OPL2 instruments, so now the Heretic
   musics don't sound like crap.
 - Changed the OPL2 emulator to write data to the output buffer a voice at a
@@ -104,13 +173,13 @@ January 27, 2002
   each second, so that it interrupts the main thread more consistantly and
   has less of an impact on the game's "smoothness".
 
-January 25, 2002
+January 25, 2003
 - Changed the frequency calculations in the OPL2 player to match DMX's (or
   so I think).
 - Fixed an amplitude problem with the OPL2 synth I inadvertantly introduced
   while trying to optimize it.
 
-January 24, 2002
+January 24, 2003
 - Uploaded 38.cab.
 - Added a fix to prevent you from becoming a zombie player when there are
   voodoo dolls on a level, and each accumulates enough damage to kill you,
@@ -126,7 +195,7 @@ January 24, 2002
   weapon. There's also an ACS command to let you change their weapons at
   any time.
 
-January 23, 2002
+January 23, 2003
 - Added some more Thing_Hate types that can be used to make monsters that hunt
   both monsters and players or to ignore players that attack them.
 - Made Bishops spawned by Heresiarchs and Wizards spawned by D'Sparil inherit
@@ -147,12 +216,12 @@ January 23, 2002
   respawn chance back to ~1.6% instead of the 100% I had been using earlier
   for testing.
 
-January 22, 2002
+January 22, 2003
 - Uploaded 37.cab.
 - Played with A_Chase() a bit more so that monsters that hate monster groups
   will look for closer monsters on their way to a monster they can't see.
 
-January 21, 2002
+January 21, 2003
 - Improved Thing_Hate with a third parameter. Now we have Thing_Hate (tid1,
   tid2, type). If type is 0, it behaves just like before: Everything with tid1
   chases after the first thing with tid2 and then promptly forgets their hate
@@ -168,7 +237,7 @@ January 21, 2002
   tweaking until ZDoom was approximately the same. It is enough, at least, to
   make the clock gear in hexdd MAP57 accessible without the Wings of Wrath.
 
-January 20, 2002
+January 20, 2003
 - Fixed: Dormant monsters should not enter their SeeState when Thing_Hate is
   used on them.
 - Fixed: In Hexen, the Wings of Wrath do not expire at all in single player
@@ -178,7 +247,7 @@ January 20, 2002
 - Fixed: At the easiest difficulty, P_DamageMobj halves damage. If the damage
   was one, it would become zero. Now if the damage is one, it stays one.
 
-January 18, 2002
+January 18, 2003
 - Added a PointerSubstitution() method to DObject to replace all pointers
   to one object with pointers to another object. This is so that when
   something morhps or unmorphs, enemies targetting that actor will be
@@ -199,10 +268,10 @@ January 18, 2002
 - Fixed: Single player demos played back with different RNG seeds than they
   were recorded with.
 
-January 16, 2002
+January 16, 2003
 - Fixed assignment of partner segs in FNodeBuilder::FixSplitSharers().
 
-January 14, 2002
+January 14, 2003
 - Added NULL-actor checks to P_CheckSight().
 
 January 13, 2003

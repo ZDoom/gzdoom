@@ -23,8 +23,8 @@ CFG=zdoom - Win32 Debug
 
 # Begin Project
 # PROP AllowPerConfigDependencies 0
-# PROP Scc_ProjName ""
-# PROP Scc_LocalPath ""
+# PROP Scc_ProjName "Perforce Project"
+# PROP Scc_LocalPath ".."
 CPP=cl.exe
 MTL=midl.exe
 RSC=rc.exe
@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /Gr /MD /W3 /GX /O2 /I "f:\fmodapi360win32\api\inc" /I "win32" /I "fmodsound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /I /fmod/api/inc" " /c
+# ADD CPP /nologo /Gr /MD /W3 /GX /O2 /I "f:\fmodapi361win32\api\inc" /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /I /fmod/api/inc" " /c
 # SUBTRACT CPP /Fr
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 zlib-1.1.4/release/zlib.lib kernel32.lib user32.lib gdi32.lib comctl32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib winmm.lib wsock32.lib f:\fmodapi360win32/api/lib/fmodvc.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /nodefaultlib:"libcmt" /out:"../../zdoom.exe"
+# ADD LINK32 zlib-1.1.4/release/zlib.lib kernel32.lib user32.lib gdi32.lib comctl32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib winmm.lib wsock32.lib f:\fmodapi361win32/api/lib/fmodvc.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /nodefaultlib:"libcmt" /out:"../../zdoom.exe"
 # SUBTRACT LINK32 /verbose /profile /debug
 
 !ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
@@ -71,7 +71,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "f:\fmodapi360win32\api\inc" /I "win32" /I "fmodsound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /I /fmod/api/inc" " /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "f:\fmodapi361win32\api\inc" /I "win32" /I "sound" /I "." /I "zlib-1.1.4" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /I /fmod/api/inc" " /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -81,7 +81,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 odbc32.lib odbccp32.lib ddraw.lib zlib-1.1.4/debug/zlib.lib kernel32.lib user32.lib gdi32.lib comctl32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib winmm.lib wsock32.lib f:\fmodapi360win32/api/lib/fmodvc.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../../doomdbg.exe"
+# ADD LINK32 odbc32.lib odbccp32.lib ddraw.lib zlib-1.1.4/debug/zlib.lib kernel32.lib user32.lib gdi32.lib comctl32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib winmm.lib wsock32.lib f:\fmodapi361win32/api/lib/fmodvc.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../../doomdbg.exe"
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -1209,22 +1209,6 @@ SOURCE=.\win32\icon1.ico
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\mid2strm.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\win32\mid2strm.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\win32\mus2strm.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\win32\mus2strm.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\win32\resource.h
 # End Source File
 # Begin Source File
@@ -1840,26 +1824,6 @@ SOURCE=.\g_hexen\a_wraith.cpp
 SOURCE=.\g_hexen\hexen_sbar.cpp
 # End Source File
 # End Group
-# Begin Group "FMOD Audio Files"
-
-# PROP Default_Filter ""
-# Begin Source File
-
-SOURCE=.\fmodsound\i_music.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\fmodsound\i_music.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\fmodsound\i_sound.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\fmodsound\i_sound.h
-# End Source File
-# End Group
 # Begin Group "Render Core"
 
 # PROP Default_Filter ""
@@ -1986,6 +1950,82 @@ SOURCE=.\oplsynth\opl_mus_player.cpp
 # Begin Source File
 
 SOURCE=.\oplsynth\opl_mus_player.h
+# End Source File
+# End Group
+# Begin Group "Audio Files"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\sound\i_music.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\i_music.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\i_musicinterns.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\i_sound.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\i_sound.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\mid2strm.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\mid2strm.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\mus2strm.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\mus2strm.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_cd.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_midi_midiout.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_midi_stream.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_midi_timidity.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_mod.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_mus_midiout.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_mus_opl.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_spc.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\sound\music_stream.cpp
 # End Source File
 # End Group
 # Begin Source File

@@ -209,7 +209,7 @@ void A_FHammerAttack (player_t *player, pspdef_t *psp)
 		{
 			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage);
 			AdjustPlayerAngle(pmo);
-			if (linetarget->flags&MF_COUNTKILL || linetarget->player)
+			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
 			}
@@ -222,7 +222,7 @@ void A_FHammerAttack (player_t *player, pspdef_t *psp)
 		{
 			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage);
 			AdjustPlayerAngle(pmo);
-			if (linetarget->flags&MF_COUNTKILL || linetarget->player)
+			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj(linetarget, angle, power);
 			}

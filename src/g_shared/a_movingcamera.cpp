@@ -563,7 +563,7 @@ void AActorMover::Activate (AActor *activator)
 		tracer->flags &= ~MF_SOLID;
 		tracer->LinkToWorld ();
 	}
-	if (tracer->flags & MF_COUNTKILL)
+	if (tracer->flags3 & MF3_ISMONSTER)
 	{
 		tracer->flags2 |= MF2_INVULNERABLE | MF2_DORMANT;
 	}

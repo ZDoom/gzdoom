@@ -359,7 +359,7 @@ bool AHolySpirit::Slam (AActor *thing)
 			target = thing;
 			return true;
 		}
-		if (thing->flags&MF_COUNTKILL || thing->player)
+		if (thing->flags3&MF3_ISMONSTER || thing->player)
 		{
 			tracer = thing;
 		}
@@ -377,7 +377,7 @@ bool AHolySpirit::Slam (AActor *thing)
 			{
 				Spawn<AHolyPuff> (x, y, z);
 				S_Sound (this, CHAN_WEAPON, "SpiritAttack", 1, ATTN_NORM);
-				if (thing->flags&MF_COUNTKILL && pr_spiritslam() < 128)
+				if (thing->flags3&MF3_ISMONSTER && pr_spiritslam() < 128)
 				{
 					thing->Howl ();
 				}
@@ -403,7 +403,7 @@ bool AHolySpirit::SpecialBlastHandling (AActor *source, fixed_t strength)
 
 bool AHolySpirit::IsOkayToAttack (AActor *link)
 {
-	if ((link->flags&MF_COUNTKILL ||
+	if ((link->flags3&MF3_ISMONSTER ||
 		(link->player && link != target))
 		&& !(link->flags2&MF2_DORMANT))
 	{
@@ -720,7 +720,7 @@ static void CHolySeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax)
 		return;
 	}
 	if(!(target->flags&MF_SHOOTABLE) 
-	|| (!(target->flags&MF_COUNTKILL) && !target->player))
+	|| (!(target->flags3&MF3_ISMONSTER) && !target->player))
 	{ // Target died/target isn't a player or creature
 		actor->tracer = NULL;
 		actor->flags &= ~(MF_NOCLIP|MF_SKULLFLY);

@@ -55,6 +55,7 @@
 #include "i_video.h"
 #include "i_sound.h"
 #include "gccseh.h"
+#include "autosegs.h"
 
 #include "stats.h"
 
@@ -435,6 +436,10 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
+#ifdef REGEXEPEEK
+	InitAutoSegMarkers ();
+#endif
+
 	MainThread = INVALID_HANDLE_VALUE;
 	DuplicateHandle (GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &MainThread,
 		0, FALSE, DUPLICATE_SAME_ACCESS);

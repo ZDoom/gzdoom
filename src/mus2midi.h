@@ -64,7 +64,7 @@
 
 typedef struct
 {
-	char Magic[4];
+	DWORD Magic;
 	WORD SongLen;
 	WORD SongStart;
 	WORD NumChans;

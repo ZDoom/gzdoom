@@ -960,7 +960,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			else
 			{ // "electrocute" the target
 				target->renderflags |= RF_FULLBRIGHT;
-				if (target->flags & MF_COUNTKILL && pr_lightning() < 128)
+				if ((target->flags3 & MF3_ISMONSTER) && pr_lightning() < 128)
 				{
 					target->Howl ();
 				}
@@ -972,7 +972,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			target->SetState (target->PainState);	
 			if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(APoisonCloud)))
 			{
-				if (target->flags & MF_COUNTKILL && pr_poison() < 128)
+				if ((target->flags3 & MF3_ISMONSTER) && pr_poison() < 128)
 				{
 					target->Howl ();
 				}

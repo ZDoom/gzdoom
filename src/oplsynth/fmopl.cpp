@@ -10,7 +10,8 @@
 **
 
 [RH] The non-YM3816 and rhythm parts have been ripped out in the interest of trying
-to make this a bit faster, since Doom music doesn't need them.
+to make this a bit faster, since Doom music doesn't need them. And I also made it
+render the sound a voice at a time instead of a sample at a time.
 
 Revision History:
 
@@ -867,7 +868,7 @@ static int init_tables(void)
 						/* 11 bits here (rounded) */
 		n <<= 1;		/* 12 bits here (as in real chip) */
 		tl_tab[ x*2 + 0 ] = n;
-		tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 1 ];
+		tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ];
 
 		for (i=1; i<12; i++)
 		{

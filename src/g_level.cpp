@@ -330,7 +330,7 @@ MapHandlers[] =
 	{ MITYPE_EATNEXT,	0, 0 },
 	{ MITYPE_EATNEXT,	0, 0 },
 	{ MITYPE_EATNEXT,	0, 0 },
-	{ MITYPE_EATNEXT,	0, 0 },
+	{ MITYPE_INT,		lioffset(WarpTrans), 0 },
 	{ MITYPE_RELLIGHT,	lioffset(WallVertLight), 0 },
 	{ MITYPE_RELLIGHT,	lioffset(WallHorizLight), 0 },
 	{ MITYPE_FLOAT,		lioffset(gravity), 0 },
@@ -466,14 +466,27 @@ void G_ParseMapInfo ()
 				uppercopy (levelinfo->mapname, sc_String);
 				SC_MustGetString ();
 				ReplaceString (&levelinfo->level_name, sc_String);
-				// Set up levelnum now so that the Teleport_NewMap specials
-				// in hexen.wad work without modification.
+				// Set up levelnum now so that you can use Teleport_NewMap specials
+				// to teleport to maps with standard names without needing a levelnum.
 				if (!strnicmp (levelinfo->mapname, "MAP", 3) && levelinfo->mapname[5] == 0)
 				{
 					int mapnum = atoi (levelinfo->mapname + 3);
 
 					if (mapnum >= 1 && mapnum <= 99)
 						levelinfo->levelnum = mapnum;
+				}
+				else if (levelinfo->mapname[0] == 'E' &&
+					levelinfo->mapname[1] >= '0' && levelinfo->mapname[1] <= '9' &&
+					levelinfo->mapname[2] == 'M' &&
+					levelinfo->mapname[3] >= '0' && levelinfo->mapname[3] <= '9')
+				{
+					int mapnum = atoi (levelinfo->mapname + 3);
+					int epinum = levelinfo->mapname[1] - '0';
+					while (epinum < mapnum)
+					{
+						epinum *= 10;
+					}
+					levelinfo->levelnum = epinum + mapnum;
 				}
 				ParseMapInfoLower (MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
 				break;
@@ -556,7 +569,15 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			if (IsNum (sc_String))
 			{
 				int map = atoi (sc_String);
-				sprintf (sc_String, "MAP%02d", map);
+
+				if (HexenHack)
+				{
+					sprintf (sc_String, "&wt@%02d", map);
+				}
+				else
+				{
+					sprintf (sc_String, "MAP%02d", map);
+				}
 			}
 			if (strnicmp (sc_String, "EndGame", 7) == 0)
 			{
@@ -752,6 +773,17 @@ void G_SetForEndGame (char *nextmap)
 	}
 }
 
+level_info_t *FindLevelByWarpTrans (int num)
+{
+	int i;
+
+	for (i = 0; i < numwadlevelinfos; ++i)
+		if (wadlevelinfos[i].WarpTrans == num)
+			return (level_info_t *)(wadlevelinfos + i);
+
+	return NULL;
+}
+
 static void zapDefereds (acsdefered_t *def)
 {
 	while (def)
@@ -784,6 +816,23 @@ void P_RemoveDefereds (void)
 		}
 	}
 }
+
+bool CheckWarpTransMap (char mapname[9])
+{
+	if (mapname[0] == '&' && mapname[1] == 'w' &&
+		mapname[2] == 't' && mapname[3] == '@')
+	{
+		level_info_t *lev = FindLevelByWarpTrans (atoi (mapname + 4));
+		if (lev != NULL)
+		{
+			strncpy (mapname, lev->mapname, 8);
+			mapname[8] = 0;
+			return true;
+		}
+	}
+	return false;
+}
+
 //
 // G_InitNew
 // Can be called by the startup code or the menu task,
@@ -794,6 +843,7 @@ static char d_mapname[9];
 void G_DeferedInitNew (char *mapname)
 {
 	strncpy (d_mapname, mapname, 8);
+	CheckWarpTransMap (d_mapname);
 	gameaction = ga_newgame2;
 }
 
@@ -1030,6 +1080,8 @@ void G_DoCompleted (void)
 			strncpy (wminfo.lname1, FindLevelInfo (level.nextmap)->pname, 8);
 		}
 	}
+
+	CheckWarpTransMap (wminfo.next);
 
 	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
 	wminfo.maxkills = level.total_monsters;

@@ -146,11 +146,8 @@ static WORD frequencies[] =
 */
 void OPLwriteFreq(uint channel, uint freq, uint octave, uint keyon)
 {
-	//OPLwriteValue(0xA0, channel, (BYTE)freq);
-	//OPLwriteValue(0xB0, channel, (freq >> 8) | (octave << 2) | (keyon << 5));
-
 	int i;
-	WORD j = /*Mem5d2fc[parm[1]].Unknown0 +*/ (freq<<5) + octave;
+	int j = (freq<<5) + octave;
 	i = 0;
 	if (j < 0)
 	{

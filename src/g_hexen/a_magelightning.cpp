@@ -162,7 +162,7 @@ int ALightning::SpecialMissileHit (AActor *thing)
 			{
 				S_Sound (this, CHAN_WEAPON, "MageLightningZap", 1, ATTN_NORM);
 			}
-			if (thing->flags&MF_COUNTKILL && pr_hit() < 64)
+			if (thing->flags3&MF3_ISMONSTER && pr_hit() < 64)
 			{
 				thing->Howl ();
 			}

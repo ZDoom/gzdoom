@@ -58,6 +58,8 @@ static FRandom pr_facetarget ("FaceTarget");
 static FRandom pr_railface ("RailFace");
 static FRandom pr_dropitem ("DropItem");
 static FRandom pr_fastchase ("FastChase");
+static FRandom pr_look2 ("LookyLooky");
+static FRandom pr_look3 ("IGotHooky");
 
 //
 // P_NewChaseDir related LUT.
@@ -597,7 +599,7 @@ BOOL P_LookForMonsters (AActor *actor)
 	count = 0;
 	while ( (mo = iterator.Next ()) )
 	{
-		if (!(mo->flags&MF_COUNTKILL) || (mo == actor) || (mo->health <= 0))
+		if (!(mo->flags3 & MF3_ISMONSTER) || (mo == actor) || (mo->health <= 0))
 		{ // Not a valid monster
 			continue;
 		}
@@ -644,7 +646,7 @@ BOOL P_LookForTID (AActor *actor, BOOL allaround)
 	int c;
 	AActor *other;
 
-	c = 0;
+	c = (pr_look3() & 31) + 7;	// Look for between 7 and 38 hatees at a time
 	while ((other = iterator.Next()) != actor->LastLook.Actor)
 	{
 		if (other == NULL)
@@ -727,6 +729,7 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 {
 	int 		c;
 	int 		stop;
+	int			pnum;
 	player_t*	player;
 	angle_t 	an;
 	fixed_t 	dist;
@@ -751,16 +754,28 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 	}
 
 	c = 0;
-	stop = (actor->LastLook.PlayerNumber - 1) & (MAXPLAYERS-1);
+	if (actor->TIDtoHate != 0)
+	{
+		pnum = pr_look2() & (MAXPLAYERS-1);
+	}
+	else
+	{
+		pnum = actor->LastLook.PlayerNumber;
+	}
+	stop = (pnum - 1) & (MAXPLAYERS-1);
 		
 	for (;;)
 	{
-		actor->LastLook.PlayerNumber = (actor->LastLook.PlayerNumber + 1) & (MAXPLAYERS-1);
-
-		if (!playeringame[actor->LastLook.PlayerNumber])
+		pnum = (pnum + 1) & (MAXPLAYERS-1);
+		if (!playeringame[pnum])
 			continue;
 
-		if (++c == MAXPLAYERS-1 || actor->LastLook.PlayerNumber == stop)
+		if (actor->TIDtoHate == 0)
+		{
+			actor->LastLook.PlayerNumber = pnum;
+		}
+
+		if (++c == MAXPLAYERS-1 || pnum == stop)
 		{
 			// done looking
 			if (actor->target == NULL)
@@ -782,7 +797,7 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 			return false;
 		}
 
-		player = &players[actor->LastLook.PlayerNumber];
+		player = &players[pnum];
 
 		if (!(player->mo->flags & MF_SHOOTABLE))
 			continue;			// not shootable (observer or dead)
@@ -1103,7 +1118,7 @@ void A_Chase (AActor *actor)
 		&& !actor->threshold
 		&& !P_CheckSight (actor, actor->target, false) )
 	{
-		bool lookForBetter;
+		bool lookForBetter = false;
 		BOOL gotNew;
 		if (actor->flags3 & MF3_NOSIGHTCHECK)
 		{
@@ -1463,7 +1478,7 @@ int P_Massacre ()
 
 	while ( (actor = iterator.Next ()) )
 	{
-		if ((actor->flags & (MF_SHOOTABLE|MF_COUNTKILL)) == (MF_SHOOTABLE|MF_COUNTKILL))
+		if ((actor->flags & MF_SHOOTABLE) && (actor->flags3 & MF3_ISMONSTER))
 		{
 			// killough 3/6/98: kill even if PE is dead
 			if (actor->health > 0)
@@ -1652,7 +1667,7 @@ nomissile:
 		&& !actor->threshold
 		&& !P_CheckSight (actor, actor->target, false) )
 	{
-		bool lookForBetter;
+		bool lookForBetter = false;
 		BOOL gotNew;
 		if (actor->flags3 & MF3_NOSIGHTCHECK)
 		{

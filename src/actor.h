@@ -216,7 +216,7 @@ enum
 	MF3_DONTSQUASH		= 0x00000400,	// Death ball can't squash this actor
 	MF3_EXPLOCOUNT		= 0x00000800,	// Don't explode until special2 counts to special1
 	MF3_FULLVOLACTIVE	= 0x00001000,	// Active sound is played at full volume
-						//0x00002000
+	MF3_ISMONSTER		= 0x00002000,	// Actor is a monster
 	MF3_SKYEXPLODE		= 0x00004000,	// Explode missile when hitting sky
 	MF3_STAYMORPHED		= 0x00008000,	// Monster cannot unmorph
 	MF3_DONTBLAST		= 0x00010000,	// Actor cannot be pushed by blasting

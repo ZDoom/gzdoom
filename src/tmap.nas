@@ -389,25 +389,6 @@ dsdone	pop	esi
 rdspret	ret
 
 
-;************************
-
-EXTERN setvlinebpl_
-EXTERN setpitch3
-
-GLOBAL	@ASM_PatchPitch@0
-GLOBAL	_ASM_PatchPitch
-GLOBAL	ASM_PatchPitch
-
-ASM_PatchPitch:
-_ASM_PatchPitch:
-@ASM_PatchPitch@0:
-	mov		eax,[dc_pitch]
-	mov		[rdcp1+2],eax
-	mov		[rdcp2+2],eax
-	call	setpitch3
-	jmp		setvlinebpl_
-
-
 ;*----------------------------------------------------------------------
 ;*
 ;* R_DrawColumnP
@@ -1261,3 +1242,30 @@ _rt_map4cols_asm2:
 	pop	ebp
 	pop	ebx
 	ret	4
+
+;************************
+
+%ifdef M_TARGET_WATCOM
+  SEGMENT CODE PUBLIC ALIGN=16 CLASS=CODE USE32
+  SEGMENT CODE
+%else
+  SECTION .text
+%endif
+
+EXTERN setvlinebpl_
+EXTERN setpitch3
+
+GLOBAL	@ASM_PatchPitch@0
+GLOBAL	_ASM_PatchPitch
+GLOBAL	ASM_PatchPitch
+
+ASM_PatchPitch:
+_ASM_PatchPitch:
+@ASM_PatchPitch@0:
+	mov		eax,[dc_pitch]
+	mov		[rdcp1+2],eax
+	mov		[rdcp2+2],eax
+	call	setpitch3
+	jmp		setvlinebpl_
+
+

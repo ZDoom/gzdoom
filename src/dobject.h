@@ -84,7 +84,7 @@ struct TypeInfo
 {
 #if !defined(_MSC_VER) && !defined(__GNUC__)
 	TypeInfo () : Pointers (NULL) { RegisterType(); }
-	TypeInfo (Dobject *DObject::* const *p, const char *inName, TypeInfo *inParentType, unsigned int inSize)
+	TypeInfo (Dobject *DObject::*  *p, const char *inName, TypeInfo *inParentType, unsigned int inSize)
 		: Name (inName),
 		ParentType (inParentType),
 		SizeOf (inSize),
@@ -238,7 +238,7 @@ public:
 
 	inline bool IsA (const TypeInfo *type) const
 	{
-		return (type == StaticType());
+		return (type == GetClass());
 	}
 
 	virtual void Serialize (FArchive &arc);

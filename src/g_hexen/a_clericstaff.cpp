@@ -220,7 +220,7 @@ void A_CStaffCheck (player_t *player, pspdef_t *psp)
 			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage);
 			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
 				linetarget->x, linetarget->y);
-			if ((linetarget->player || linetarget->flags&MF_COUNTKILL)
+			if ((linetarget->player || linetarget->flags3&MF3_ISMONSTER)
 				&& (!(linetarget->flags2&(MF2_DORMANT+MF2_INVULNERABLE))))
 			{
 				newLife = player->health+(damage>>3);
@@ -238,7 +238,7 @@ void A_CStaffCheck (player_t *player, pspdef_t *psp)
 			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage);
 			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
 				linetarget->x, linetarget->y);
-			if (linetarget->player || linetarget->flags&MF_COUNTKILL)
+			if (linetarget->player || linetarget->flags3&MF3_ISMONSTER)
 			{
 				newLife = player->health+(damage>>4);
 				newLife = newLife > 100 ? 100 : newLife;

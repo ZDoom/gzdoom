@@ -162,6 +162,7 @@ int SessionState = 0;
 
 CVAR (Bool,  i_remapkeypad,			true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR (Bool,  use_joystick,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Float, joy_speedmultiplier,	1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -277,7 +278,7 @@ static void I_CheckGUICapture ()
 void I_CheckNativeMouse (bool preferNative)
 {
 	bool wantNative = !HaveFocus ||
-		((!screen || !screen->IsFullscreen()) && (GUICapture || paused || preferNative));
+		((!screen || !screen->IsFullscreen()) && (GUICapture || paused || preferNative || !use_mouse));
 
 //		Printf ("%d -> %d\n", NativeMouse, wantNative);
 	if (wantNative != NativeMouse)
@@ -1113,8 +1114,14 @@ static void MouseRead_Win32 ()
 	if (!HaveFocus || !MakeMouseEvents || !GetCursorPos (&pt))
 		return;
 
-	x = (pt.x - PrevX) * 3;
-	y = (PrevY - pt.y) << 1;
+	x = pt.x - PrevX;
+	y = PrevY - pt.y;
+
+	if (!m_noprescale)
+	{
+		x *= 3;
+		y *= 2;
+	}
 
 	CenterMouse_Win32 (pt.x, pt.y);
 
@@ -1192,7 +1199,7 @@ static void MouseRead_DI ()
 	{
 		memset (&event, 0, sizeof(event));
 		event.type = EV_Mouse;
-		event.x = GDx<<2;
+		event.x = m_noprescale ? GDx : GDx<<2;
 		event.y = -GDy;
 		D_PostEvent (&event);
 	}

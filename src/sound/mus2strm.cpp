@@ -117,7 +117,7 @@ static BOOL ReadMUSheader (MUSHeader *mush)
 
 	memcpy (mush, ifs.pFilePointer, sizeof(*mush));
 
-	if (strncmp (mush->Magic, MUSMAGIC, 4))
+	if (strncmp ((char *)&mush->Magic, MUSMAGIC, 4))
 		return FALSE;
 
 	mush->SongLen = SHORT(mush->SongLen);

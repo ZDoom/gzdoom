@@ -250,7 +250,8 @@ void A_FlameSnd (AActor *actor)
 
 void A_HereticSkinCheck1 (AActor *actor)
 {
-	if (skins[actor->player->userinfo.skin].game == GAME_Doom)
+	if (actor->player != NULL &&
+		skins[actor->player->userinfo.skin].game == GAME_Doom)
 	{
 		actor->SetState (&AHereticPlayer::States[S_DOOM_DIE]);
 	}
@@ -264,7 +265,8 @@ void A_HereticSkinCheck1 (AActor *actor)
 
 void A_HereticSkinCheck2 (AActor *actor)
 {
-	if (skins[actor->player->userinfo.skin].game == GAME_Doom)
+	if (actor->player != NULL &&
+		skins[actor->player->userinfo.skin].game == GAME_Doom)
 	{
 		actor->SetState (&AHereticPlayer::States[S_DOOM_XDIE]);
 	}
@@ -273,3 +275,4 @@ void A_HereticSkinCheck2 (AActor *actor)
 		A_PlayerScream (actor);
 	}
 }
+

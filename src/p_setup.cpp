@@ -1103,6 +1103,7 @@ void P_LoadLineDefs (int lump)
 
 		ld->v1 = &vertexes[SHORT(mld->v1)];
 		ld->v2 = &vertexes[SHORT(mld->v2)];
+		ld->id = -1;
 
 		P_SetSideNum (&ld->sidenum[0], SHORT(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidenum[1], SHORT(mld->sidenum[1]));
@@ -1173,6 +1174,7 @@ void P_LoadLineDefs2 (int lump)
 
 		ld->v1 = &vertexes[SHORT(mld->v1)];
 		ld->v2 = &vertexes[SHORT(mld->v2)];
+		ld->id = -1;
 
 		P_SetSideNum (&ld->sidenum[0], SHORT(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidenum[1], SHORT(mld->sidenum[1]));
@@ -2560,7 +2562,7 @@ void P_SetupLevel (char *lumpname, int position)
 	if (!ForceNodeBuild) P_LoadSegs (lumpnum+ML_SEGS);
 	if (ForceNodeBuild)
 	{
-		QWORD startTime, endTime;
+		unsigned int startTime, endTime;
 
 		startTime = I_MSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;

@@ -878,7 +878,9 @@ void I_InitSound ()
 	{ FSOUND_OUTPUT_ALSA, FSOUND_OUTPUT_OSS, FSOUND_OUTPUT_ESD };
 	const int maxtrynum = 3;
 #endif
+#if 0
 	bool trya3d = false;
+#endif
 
 	/* Get command line options: */
 	_nosound = !!Args.CheckParm ("-nosfx") || !!Args.CheckParm ("-nosound");

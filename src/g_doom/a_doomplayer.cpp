@@ -206,7 +206,8 @@ void A_PlayerScream (AActor *self)
 
 void A_DoomSkinCheck1 (AActor *actor)
 {
-	if (skins[actor->player->userinfo.skin].game != GAME_Doom)
+	if (actor->player != NULL &&
+		skins[actor->player->userinfo.skin].game != GAME_Doom)
 	{
 		actor->SetState (&ADoomPlayer::States[S_HTIC_DIE]);
 	}
@@ -220,7 +221,8 @@ void A_DoomSkinCheck1 (AActor *actor)
 
 void A_DoomSkinCheck2 (AActor *actor)
 {
-	if (skins[actor->player->userinfo.skin].game != GAME_Doom)
+	if (actor->player != NULL &&
+		skins[actor->player->userinfo.skin].game != GAME_Doom)
 	{
 		actor->SetState (&ADoomPlayer::States[S_HTIC_XDIE]);
 	}

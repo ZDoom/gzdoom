@@ -55,6 +55,7 @@
 #include "gstrings.h"
 #include "s_sound.h"
 #include "g_game.h"
+#include "g_level.h"
 #include "p_inter.h"
 #include "w_wad.h"
 #include "g_level.h"
@@ -249,6 +250,32 @@ CCMD (idclev)
 		// So be it.
 		Printf ("%s\n", GStrings(STSTR_CLEV));
       	G_DeferedInitNew (mapname);
+	}
+}
+
+CCMD (hxvisit)
+{
+	if (CheckCheatmode ())
+		return;
+
+	if ((argv.argc() > 1) && (*(argv[1] + 2) == 0) && *(argv[1] + 1) && *argv[1])
+	{
+		char mapname[9];
+
+		sprintf (mapname, "&wt@%c%c", argv[1][0], argv[1][1]);
+
+		if (CheckWarpTransMap (mapname))
+		{
+			// Just because it's in MAPINFO doesn't mean it's in the wad.
+			if (W_CheckNumForName (mapname) != -1)
+			{
+				// So be it.
+				Printf ("%s\n", GStrings(STSTR_CLEV));
+      			G_DeferedInitNew (mapname);
+				return;
+			}
+		}
+		Printf ("No such map found\n");
 	}
 }
 

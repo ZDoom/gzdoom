@@ -312,7 +312,7 @@ void A_PotteryExplode (AActor *actor)
 	if (SpawnableThings[actor->args[0]])
 	{ // Spawn an item
 		if (!(dmflags & DF_NO_MONSTERS) 
-		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags & MF_COUNTKILL))
+		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
 			Spawn (SpawnableThings[actor->args[0]],
 				actor->x, actor->y, actor->z);
@@ -685,18 +685,18 @@ void A_LeafCheck (AActor *actor)
 		actor->SetState (NULL);
 		return;
 	}
+	angle_t ang = actor->target ? actor->target->angle : actor->angle;
 	if (pr_leafcheck() > 64)
 	{
 		if (!actor->momx && !actor->momy)
 		{
-			P_ThrustMobj (actor, actor->target->angle,
-				(pr_leafcheck()<<9)+FRACUNIT);
+			P_ThrustMobj (actor, ang, (pr_leafcheck()<<9)+FRACUNIT);
 		}
 		return;
 	}
 	actor->SetState (actor->SpawnState + 7);
 	actor->momz = (pr_leafcheck()<<9)+FRACUNIT;
-	P_ThrustMobj (actor, actor->target->angle, (pr_leafcheck()<<9)+2*FRACUNIT);
+	P_ThrustMobj (actor, ang, (pr_leafcheck()<<9)+2*FRACUNIT);
 	actor->flags |= MF_MISSILE;
 }
 
@@ -1093,7 +1093,7 @@ void A_SoAExplode (AActor *actor)
 	if (SpawnableThings[actor->args[0]])
 	{ // Spawn an item
 		if (!(dmflags & DF_NO_MONSTERS) 
-		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags & MF_COUNTKILL))
+		|| !(GetDefaultByType (SpawnableThings[actor->args[0]])->flags3 & MF3_ISMONSTER))
 		{ // Only spawn monsters if not -nomonsters
 			Spawn (SpawnableThings[actor->args[0]],
 				actor->x, actor->y, actor->z);

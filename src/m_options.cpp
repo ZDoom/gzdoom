@@ -93,12 +93,8 @@ extern bool	OptionsActive;
 extern int	skullAnimCounter;
 
 EXTERN_CVAR (Bool, cl_run)
-EXTERN_CVAR (Bool, invertmouse)
-EXTERN_CVAR (Bool, lookspring)
-EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Int, crosshair)
 EXTERN_CVAR (Bool, freelook)
-EXTERN_CVAR (Bool, use_joystick)
 EXTERN_CVAR (Int, snd_buffersize)
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_3d)
@@ -158,6 +154,8 @@ static void GameplayOptions (void);
 static void CompatibilityOptions (void);
 static void VideoOptions (void);
 static void SoundOptions (void);
+static void MouseOptions (void);
+static void JoystickOptions (void);
 static void GoToConsole (void);
 void M_PlayerSetup (void);
 void Reset2Defaults (void);
@@ -168,7 +166,10 @@ static void SetVidMode (void);
 static menuitem_t OptionItems[] =
 {
 	{ more,		"Customize Controls",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CustomizeControls} },
-	{ more,		"Go to console",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GoToConsole} },
+	{ more,		"Mouse options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)MouseOptions} },
+	{ more,		"Joystick options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)JoystickOptions} },
+	{ discrete,	"Always Run",			{&cl_run},				{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ more,		"Player Setup",			{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)M_PlayerSetup} },
 	{ more,		"Gameplay Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GameplayOptions} },
 	{ more,		"Compatibility Options",{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CompatibilityOptions} },
@@ -176,16 +177,9 @@ static menuitem_t OptionItems[] =
 	{ more,		"Display Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)VideoOptions} },
 	{ more,		"Set video mode",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)SetVidMode} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ discrete,	"Enable Joystick",		{&use_joystick},		{2.0}, {0.0},	{0.0}, {YesNo} },
-	{ slider,	"Mouse speed",			{&mouse_sensitivity},	{0.5}, {2.5},	{0.1}, {NULL} },
-	{ discrete,	"Always Run",			{&cl_run},				{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ discrete, "Always Mouselook",		{&freelook},			{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ discrete, "Invert Mouse",			{&invertmouse},			{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ discrete, "Lookspring",			{&lookspring},			{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ discrete, "Lookstrafe",			{&lookstrafe},			{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ more,		"Reset to defaults",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)Reset2Defaults} },
-	{ more,		"Reset to last saved",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)Reset2Saved} }
+	{ more,		"Reset to last saved",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)Reset2Saved} },
+	{ more,		"Go to console",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GoToConsole} },
 };
 
 menu_t OptionMenu =
@@ -193,8 +187,91 @@ menu_t OptionMenu =
 	"OPTIONS",
 	0,
 	sizeof(OptionItems)/sizeof(OptionItems[0]),
-	177,
+	0,
 	OptionItems,
+};
+
+/*=======================================
+ *
+ * Mouse Menu
+ *
+ *=======================================*/
+
+EXTERN_CVAR (Bool, use_mouse)
+EXTERN_CVAR (Float, m_forward)
+EXTERN_CVAR (Float, m_pitch)
+EXTERN_CVAR (Float, m_side)
+EXTERN_CVAR (Float, m_yaw)
+EXTERN_CVAR (Bool, invertmouse)
+EXTERN_CVAR (Bool, lookspring)
+EXTERN_CVAR (Bool, lookstrafe)
+EXTERN_CVAR (Bool, m_noprescale)
+
+static menuitem_t MouseItems[] =
+{
+	{ discrete,	"Enable mouse",			{&use_mouse},			{2.0}, {0.0},	{0.0}, {YesNo} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ slider,	"Overall sensitivity",	{&mouse_sensitivity},	{0.5}, {2.5},	{0.1}, {NULL} },
+	{ discrete,	"Prescale mouse movement",{&m_noprescale},		{2.0}, {0.0},	{0.0}, {NoYes} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ slider,	"Turning speed",		{&m_yaw},				{0.5}, {2.5},	{0.1}, {NULL} },
+	{ slider,	"Mouselook speed",		{&m_pitch},				{0.5}, {2.5},	{0.1}, {NULL} },
+	{ slider,	"Forward/Backward speed",{&m_forward},			{0.5}, {2.5},	{0.1}, {NULL} },
+	{ slider,	"Strafing speed",		{&m_side},				{0.5}, {2.5},	{0.1}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ discrete, "Always Mouselook",		{&freelook},			{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Invert Mouse",			{&invertmouse},			{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Lookspring",			{&lookspring},			{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Lookstrafe",			{&lookstrafe},			{2.0}, {0.0},	{0.0}, {OnOff} },
+};
+
+menu_t MouseMenu =
+{
+	"MOUSE OPTIONS",
+	0,
+	sizeof(MouseItems)/sizeof(MouseItems[0]),
+	0,
+	MouseItems,
+};
+
+/*=======================================
+ *
+ * Joystick Menu
+ *
+ *=======================================*/
+
+EXTERN_CVAR (Bool, use_joystick)
+EXTERN_CVAR (Float, joy_speedmultiplier)
+EXTERN_CVAR (Float, joy_xsensitivity)
+EXTERN_CVAR (Float, joy_ysensitivity)
+EXTERN_CVAR (Float, joy_xthreshold)
+EXTERN_CVAR (Float, joy_ythreshold)
+
+static menuitem_t JoystickItems[] =
+{
+	{ discrete,	"Enable joystick",		{&use_joystick},		{2.0}, {0.0},	{0.0}, {YesNo} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ slider,	"Overall sensitivity",	{&joy_speedmultiplier},	{0.9}, {2.0},	{0.2}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ absslider,"Horizontal sensitivity",{&joy_xsensitivity},	{0.9}, {2.0},	{0.2}, {NULL} },
+	{ inverter,	"Flip horizontal axis",	{&joy_xsensitivity},	{0.0}, {0.0},	{0.0}, {YesNo} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ absslider,"Vertical sensitivity",	{&joy_ysensitivity},	{0.9}, {2.0},	{0.2}, {NULL} },
+	{ inverter,	"Flip vertical axis",	{&joy_ysensitivity},	{0.0}, {0.0},	{0.0}, {YesNo} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+
+	// Are these next two even meaningful under Windows?
+	{ slider,	"Horizontal dead zone",	{&joy_xthreshold},		{0.0}, {0.9},	{0.1}, {NULL} },
+	{ slider,	"Vertical dead zone",	{&joy_ythreshold},		{0.0}, {0.9},	{0.1}, {NULL} },
+};
+
+menu_t JoystickMenu =
+{
+	"JOYSTICK OPTIONS",
+	0,
+	sizeof(JoystickItems)/sizeof(JoystickItems[0]),
+	0,
+	JoystickItems,
 };
 
 
@@ -979,11 +1056,20 @@ void M_OptDrawer ()
 			{
 			case discrete:
 			case cdiscrete:
+			case inverter:
 			{
 				int v, vals;
 
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
-				vals = (int)item->b.min;
+				if (item->type == inverter)
+				{
+					value.Float = (value.Float < 0.f);
+					vals = 2;
+				}
+				else
+				{
+					vals = (int)item->b.min;
+				}
 				v = M_FindCurVal (value.Float, item->e.values, vals);
 
 				if (v == vals)
@@ -1009,6 +1095,11 @@ void M_OptDrawer ()
 			case slider:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
 				M_DrawSlider (CurrentMenu->indent + 14, y + labelofs, item->b.min, item->c.max, value.Float);
+				break;
+
+			case absslider:
+				value = item->a.cvar->GetGenericRep (CVAR_Float);
+				M_DrawSlider (CurrentMenu->indent + 14, y + labelofs, item->b.min, item->c.max, fabs(value.Float));
 				break;
 
 			case control:
@@ -1326,14 +1417,24 @@ void M_OptResponder (event_t *ev)
 		switch (item->type)
 		{
 			case slider:
+			case absslider:
 				{
 					UCVarValue newval;
+					bool reversed;
 
 					value = item->a.cvar->GetGenericRep (CVAR_Float);
-					newval.Float = value.Float - item->d.step;
+					reversed = item->type == absslider && value.Float < 0.f;
+					newval.Float = (reversed ? -value.Float : value.Float) - item->d.step;
 
 					if (newval.Float < item->b.min)
 						newval.Float = item->b.min;
+					else if (newval.Float > item->c.max)
+						newval.Float = item->c.max;
+
+					if (reversed)
+					{
+						newval.Float = -newval.Float;
+					}
 
 					if (item->e.cfunc)
 						item->e.cfunc (item->a.cvar, newval.Float);
@@ -1362,6 +1463,13 @@ void M_OptResponder (event_t *ev)
 					if (item->e.values == Depths)
 						BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 				}
+				S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
+				break;
+
+			case inverter:
+				value = item->a.cvar->GetGenericRep (CVAR_Float);
+				value.Float = -value.Float;
+				item->a.cvar->SetGenericRep (value, CVAR_Float);
 				S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
 				break;
 
@@ -1398,14 +1506,24 @@ void M_OptResponder (event_t *ev)
 		switch (item->type)
 		{
 			case slider:
+			case absslider:
 				{
 					UCVarValue newval;
+					bool reversed;
 
 					value = item->a.cvar->GetGenericRep (CVAR_Float);
-					newval.Float = value.Float + item->d.step;
+					reversed = item->type == absslider && value.Float < 0.f;
+					newval.Float = (reversed ? -value.Float : value.Float) + item->d.step;
 
 					if (newval.Float > item->c.max)
 						newval.Float = item->c.max;
+					else if (newval.Float < item->b.min)
+						newval.Float = item->b.min;
+
+					if (reversed)
+					{
+						newval.Float = -newval.Float;
+					}
 
 					if (item->e.cfunc)
 						item->e.cfunc (item->a.cvar, newval.Float);
@@ -1434,6 +1552,13 @@ void M_OptResponder (event_t *ev)
 					if (item->e.values == Depths)
 						BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 				}
+				S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
+				break;
+
+			case inverter:
+				value = item->a.cvar->GetGenericRep (CVAR_Float);
+				value.Float = -value.Float;
+				item->a.cvar->SetGenericRep (value, CVAR_Float);
 				S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
 				break;
 
@@ -1533,6 +1658,13 @@ void M_OptResponder (event_t *ev)
 			CurrentMenu->lastOn = CurrentItem;
 			S_Sound (CHAN_VOICE, "menu/choose", 1, ATTN_NONE);
 			item->e.lfunc (CurrentItem);
+		}
+		else if (item->type == inverter)
+		{
+			value = item->a.cvar->GetGenericRep (CVAR_Float);
+			value.Float = -value.Float;
+			item->a.cvar->SetGenericRep (value, CVAR_Float);
+			S_Sound (CHAN_VOICE, "menu/change", 1, ATTN_NONE);
 		}
 		else if (item->type == screenres)
 		{
@@ -1639,6 +1771,30 @@ CCMD (menu_compatibility)
 	M_StartControlPanel (true);
 	OptionsActive = true;
 	CompatibilityOptions ();
+}
+
+static void MouseOptions ()
+{
+	M_SwitchMenu (&MouseMenu);
+}
+
+CCMD (menu_mouse)
+{
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	MouseOptions ();
+}
+
+static void JoystickOptions ()
+{
+	M_SwitchMenu (&JoystickMenu);
+}
+
+CCMD (menu_joystick)
+{
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	JoystickOptions ();
 }
 
 static void SoundOptions ()

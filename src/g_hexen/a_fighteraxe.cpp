@@ -337,7 +337,7 @@ void A_FAxeAttack (player_t *player, pspdef_t *psp)
 		if (linetarget)
 		{
 			P_LineAttack (pmo, angle, AXERANGE, slope, damage);
-			if (linetarget->flags&MF_COUNTKILL || linetarget->player)
+			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
 			}
@@ -350,7 +350,7 @@ void A_FAxeAttack (player_t *player, pspdef_t *psp)
 		if (linetarget)
 		{
 			P_LineAttack (pmo, angle, AXERANGE, slope, damage);
-			if (linetarget->flags&MF_COUNTKILL)
+			if (linetarget->flags3&MF3_ISMONSTER)
 			{
 				P_ThrustMobj (linetarget, angle, power);
 			}

@@ -139,6 +139,7 @@ struct level_pwad_info_s
 	SBYTE		WallVertLight, WallHorizLight;
 	float		gravity;
 	float		aircontrol;
+	int			WarpTrans;
 };
 typedef struct level_pwad_info_s level_pwad_info_t;
 
@@ -256,6 +257,8 @@ extern TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern BOOL savegamerestore;
 extern BOOL HexenHack;		// Semi-Hexen-compatibility mode
+
+bool CheckWarpTransMap (char mapname[9]);	// mapname will be changed if it is a valid warptrans
 
 void G_InitNew (char *mapname);
 

@@ -41,7 +41,7 @@
 #include "nodebuild.h"
 #include "r_main.h"
 
-static inline void Warn (const char *format, ...)
+static inline void STACK_ARGS Warn (const char *format, ...)
 {
 }
 

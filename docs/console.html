@@ -1559,8 +1559,9 @@ default: 1.0
 				<div class="t">integer: 8</div>
 				<div class="d">The vertical scale for textures that don't specify their own.</div>
 				<div class="c" id="warp">warp <i>x-coordinate</i> <i>y-coordinate</i></div>
-				<div class="b">Sends you to the specified coordinates immediately. This can be used
-				with <a href="#idmypos">idmypos</a> to debug problems in a specific area of a map.</div>
+				<div class="b">Sends you to the specified coordinates immediately. This can be used 
+					with <a href="#idmypos">idmypos</a> to debug problems in a specific area of a 
+					map.</div>
 			</div>
 			<div id="effects">
 				<h2>Effects</h2>
@@ -2478,6 +2479,11 @@ alias -creep "joy_speedmultiplier 1.0"</pre>
 				<div class="b">Prints the most recently executed console commands that you can 
 					cycle through by pressing the up and down arrow keys.
 				</div>
+				<div class="c" id="hxvisit">hxvisit <i>warp-trans</i></div>
+				<div class="b">Changes to the level specified by <i>warp-trans</i>. Unlike <a href="idclev">
+						idclev</a>, hxvisit determines the map to go to by finding a map defined in 
+					MAPINFO with a matching <i>warp-trans</i>. Hence, it emulates the Hexen visit 
+					cheat.</div>
 				<div class="c" id="idclev">idclev <i>level-code</i></div>
 				<div class="b">Changes to the level specified by <i>level-code</i>.
 				</div>
@@ -2983,8 +2989,7 @@ alias -creep "joy_speedmultiplier 1.0"</pre>
 			<a href="#echo">echo</a><br>
 			<a href="#endgame">endgame</a><br>
 			<a href="#error">error</a><br>
-			<a href="#error_fatal">error_fatal</a>
-			<a href="#eval">eval</a><br>
+			<a href="#error_fatal">error_fatal</a> <a href="#eval">eval</a><br>
 			<a href="#exec">exec</a><br>
 			<a href="#exit">exit</a><br>
 			<a href="#fly">fly</a><br>
@@ -3005,6 +3010,7 @@ alias -creep "joy_speedmultiplier 1.0"</pre>
 			<a href="#heapsize">heapsize</a><br>
 			<a href="#history">history</a><br>
 			<a href="#hud_scale">hud_scale</a><br>
+			<a href="#hxvisit">hxvisit</a><br>
 			<a href="#i_remapkeypad">i_remapkeypad</a><br>
 			<a href="#idclev">idclev</a><br>
 			<a href="#iddqd">iddqd</a><br>

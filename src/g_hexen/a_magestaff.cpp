@@ -307,8 +307,7 @@ int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 
 bool AMageStaffFX2::IsOkayToAttack (AActor *link)
 {
-	if ((link->flags&MF_COUNTKILL ||
-		(link->player))
+	if (((link->flags3&MF3_ISMONSTER) || link->player)
 		&& !(link->flags2&MF2_DORMANT))
 	{
 		if (!(link->flags&MF_SHOOTABLE))

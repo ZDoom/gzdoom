@@ -231,7 +231,7 @@ bool AArtiTeleportOther::ActivateArti (player_t *player, artitype_t arti)
 
 int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
 {
-	if ((target->flags & MF_COUNTKILL) &&
+	if ((target->flags3 & MF3_ISMONSTER) &&
 		!(target->flags2 & MF2_BOSS) &&
 		!(target->flags3 & MF3_NOTELEOTHER))
 	{
@@ -245,13 +245,12 @@ int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
 		else
 		{
 			// If death action, run it upon teleport
-			if (target->flags & MF_COUNTKILL && target->special)
+			if (target->flags3 & MF3_ISMONSTER && target->special)
 			{
 				target->RemoveFromHash ();
-
-				LineSpecials[target->special] (NULL, target,
-					target->args[0], target->args[1], target->args[2],
-					target->args[3], target->args[4]);
+				LineSpecials[target->special] (NULL, level.flags & LEVEL_ACTOWNSPECIAL
+					? target : this->target, target->args[0], target->args[1],
+					target->args[2], target->args[3], target->args[4]);
 				target->special = 0;
 			}
 

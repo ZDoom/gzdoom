@@ -218,4 +218,9 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_RaiseState:	actor->RaiseState = datastate;	break;
 		}
 	}
+	// Anything that is CountKill is also a monster, even if it doesn't specify it.
+	if (actor->flags & MF_COUNTKILL)
+	{
+		actor->flags3 |= MF3_ISMONSTER;
+	}
 }

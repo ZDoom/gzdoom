@@ -85,6 +85,8 @@ typedef enum {
 	redtext,
 	more,
 	slider,
+	absslider,
+	inverter,
 	discrete,
 	cdiscrete,
 	control,

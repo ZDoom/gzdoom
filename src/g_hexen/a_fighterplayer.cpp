@@ -310,7 +310,7 @@ void A_FPunchAttack (player_t *player, pspdef_t *psp)
 				PuffType = RUNTIME_CLASS(AHammerPuff);
 			}
 			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage);
-			if (linetarget->flags&MF_COUNTKILL || linetarget->player)
+			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
 			}
@@ -329,7 +329,7 @@ void A_FPunchAttack (player_t *player, pspdef_t *psp)
 				PuffType = RUNTIME_CLASS(AHammerPuff);
 			}
 			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage);
-			if (linetarget->flags&MF_COUNTKILL || linetarget->player)
+			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
 			}

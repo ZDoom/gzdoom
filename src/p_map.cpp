@@ -689,7 +689,7 @@ BOOL PIT_CheckThing (AActor *thing)
 	// Check for blasted thing running into another
 	if ((tmthing->flags2 & MF2_BLASTED) && (thing->flags & MF_SHOOTABLE))
 	{
-		if (!(thing->flags2 & MF2_BOSS) && (thing->flags & MF_COUNTKILL))
+		if (!(thing->flags2 & MF2_BOSS) && (thing->flags3 & MF3_ISMONSTER))
 		{
 			thing->momx += tmthing->momx;
 			thing->momy += tmthing->momy;
@@ -3421,7 +3421,7 @@ int P_PushUp (AActor *thing)
 	{
 		AActor *intersect = intersectors[firstintersect];
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
-			(!(intersect->flags & MF_COUNTKILL) &&
+			(!(intersect->flags3 & MF3_ISMONSTER) &&
 			 intersect->Mass > mymass))
 		{ // Can't push things more massive than ourself
 			return 2;
@@ -3463,7 +3463,7 @@ int P_PushDown (AActor *thing)
 	{
 		AActor *intersect = intersectors[firstintersect];
 		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
-			(!(intersect->flags & MF_COUNTKILL) &&
+			(!(intersect->flags3 & MF3_ISMONSTER) &&
 			 intersect->Mass > mymass))
 		{ // Can't push things more massive than ourself
 			return 2;

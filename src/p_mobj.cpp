@@ -942,7 +942,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 					{
 						if ((BlockingMobj->flags2 & MF2_REFLECTIVE) ||
 							((!BlockingMobj->player) &&
-							(!(BlockingMobj->flags & MF_COUNTKILL))))
+							(!(BlockingMobj->flags3 & MF3_ISMONSTER))))
 						{
 							fixed_t speed;
 
@@ -1281,7 +1281,7 @@ void P_ZMovement (AActor *mo)
 				return;
 			}
 		}
-		if (mo->flags & MF_COUNTKILL)		// Blasted mobj falling
+		if (mo->flags3 & MF3_ISMONSTER)		// Blasted mobj falling
 		{
 			if (mo->momz < -(23*FRACUNIT))
 			{
@@ -1690,7 +1690,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 {
 	if (player)				// Minotaur looking around player
 	{
-		if ((link->flags&MF_COUNTKILL) ||
+		if ((link->flags3 & MF3_ISMONSTER) ||
 			(link->player && (link != this)))
 		{
 			if (!(link->flags&MF_SHOOTABLE))
@@ -1816,7 +1816,7 @@ void AActor::Tick ()
 	}
 
 	if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback &&
-		flags & (MF_COUNTKILL|MF_SPECIAL|MF_MISSILE))
+		(flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER))
 	{
 		clock (BotSupportCycles);
 		bglobal.m_Thinking = true;
@@ -1825,7 +1825,7 @@ void AActor::Tick ()
 			if (!playeringame[i] || !players[i].isbot)
 				continue;
 
-			if (flags & MF_COUNTKILL)
+			if (flags3 & MF3_ISMONSTER)
 			{
 				if (health > 0
 					&& !players[i].enemy
@@ -2101,7 +2101,7 @@ void AActor::Tick ()
 	else
 	{
 		// check for nightmare respawn
-		if (!respawnmonsters || !(flags & MF_COUNTKILL) || (flags2 & MF2_DORMANT))
+		if (!respawnmonsters || !(flags3 & MF3_ISMONSTER) || (flags2 & MF2_DORMANT))
 			return;
 
 		movecount++;
@@ -2348,7 +2348,7 @@ void AActor::BeginPlay ()
 
 void AActor::Activate (AActor *activator)
 {
-	if (flags & MF_COUNTKILL)
+	if (flags3 & MF3_ISMONSTER)
 	{
 		if (flags2 & MF2_DORMANT)
 		{
@@ -2360,7 +2360,7 @@ void AActor::Activate (AActor *activator)
 
 void AActor::Deactivate (AActor *activator)
 {
-	if (flags & MF_COUNTKILL)
+	if (flags3 & MF3_ISMONSTER)
 	{
 		if (!(flags2 & MF2_DORMANT))
 		{
@@ -2860,7 +2860,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 				
 	// don't spawn any monsters if -nomonsters
 	if (dmflags & DF_NO_MONSTERS
-		&& (i->IsDescendantOf (RUNTIME_CLASS(ALostSoul)) || (info->flags & MF_COUNTKILL)) )
+		&& (i->IsDescendantOf (RUNTIME_CLASS(ALostSoul)) || (info->flags3 & MF3_ISMONSTER)) )
 	{
 		return;
 	}

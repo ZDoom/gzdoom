@@ -1345,7 +1345,7 @@ void player_s::Serialize (FArchive &arc)
 			arc << inventory[compatArtiNums[i]];
 		if (SaveVersion == 205)
 			arc << inventory[compatArtiNums[12]];
-		for (i = 13; i < sizeof(compatArtiNums); ++i)
+		for (i = 13; (size_t)i < sizeof(compatArtiNums); ++i)
 			arc << inventory[compatArtiNums[i]];
 	}
 	else

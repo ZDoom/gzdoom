@@ -3,10 +3,14 @@ Microsoft Developer Studio Workspace File, Format Version 6.00
 
 ###############################################################################
 
-Project: "zdoom"=.\zdoom.dsp - Package Owner=<4>
+Project: "zdoom"=".\zdoom.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    Perforce Project
+    ..
+    end source code control
 }}}
 
 Package=<4>
@@ -18,10 +22,14 @@ Package=<4>
 
 ###############################################################################
 
-Project: "zlib"=".\zlib-1.1.3\zlib.dsp" - Package Owner=<4>
+Project: "zlib"=".\zlib-1.1.4\zlib.dsp" - Package Owner=<4>
 
 Package=<5>
 {{{
+    begin source code control
+    Perforce Project
+    .\zlib-1.1.4
+    end source code control
 }}}
 
 Package=<4>

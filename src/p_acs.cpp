@@ -3986,6 +3986,14 @@ void DLevelScript::RunScript ()
 				PushToStack (activator->tid);
 			}
 			break;
+
+		case PCD_GETSCREENWIDTH:
+			PushToStack (SCREENWIDTH);
+			break;
+
+		case PCD_GETSCREENHEIGHT:
+			PushToStack (SCREENHEIGHT);
+			break;
 		}
 	}
 

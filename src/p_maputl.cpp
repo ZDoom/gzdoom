@@ -996,36 +996,5 @@ static AActor *RoughBlockCheck (AActor *mo, int index)
 			return link;
 		}
 	}
-/*
-		else if (mo->type == MT_MSTAFF_FX2)		// bloodscourge
-		{
-			if ((link->flags&MF_COUNTKILL ||
-				(link->player && link != mo->target))
-				&& !(link->flags2&MF2_DORMANT))
-			{
-				if (!(link->flags&MF_SHOOTABLE))
-				{
-					link = link->bnext;
-					continue;
-				}
-				if(netgame && !deathmatch && link->player)
-				{
-					link = link->bnext;
-					continue;
-				}
-				else if (P_CheckSight (mo, link))
-				{
-					master = mo->target;
-					angle = R_PointToAngle2(master->x, master->y,
-									link->x, link->y) - master->angle;
-					angle >>= 24;
-					if (angle>226 || angle<30)
-					{
-						return link;
-					}
-				}
-			}
-			link = link->bnext;
-		}*/
 	return NULL;
 }

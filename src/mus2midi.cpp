@@ -52,7 +52,9 @@ static const BYTE StaticMIDIhead[] =
 0, 70, // 70 divisions
 'M','T','r','k', 0, 0, 0, 0,
 // The first event sets the tempo to 500,000 microsec/quarter note
-0, 255, 81, 3, 0x07, 0xa1, 0x20
+0, 255, 81, 3, 0x07, 0xa1, 0x20,
+// Set the percussion channel to full volume
+0, 0xB9, 7, 127
 };
 
 static const BYTE MUSMagic[4] = { 'M','U','S',0x1a };
@@ -127,7 +129,7 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 	long trackLen;
 	
 	// Do some validation of the MUS file
-	if (*(DWORD *)MUSMagic != *(DWORD *)musHead->Magic)
+	if (*(DWORD *)MUSMagic != musHead->Magic)
 		return false;
 	
 	if (SHORT(musHead->NumChans) > 15)
@@ -163,6 +165,12 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 		
 		if (chanMap[channel] < 0)
 		{
+			// This is the first time this channel has been used,
+			// so sets its volume to 127.
+			fputc (0, outFile);
+			fputc (0xB0 | chanCount, outFile);
+			fputc (7, outFile);
+			fputc (127, outFile);
 			chanMap[channel] = chanCount++;
 			if (chanCount == 9)
 				++chanCount;

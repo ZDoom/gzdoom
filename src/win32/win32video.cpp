@@ -38,6 +38,10 @@
 #define DIRECTDRAW_VERSION 0x0300
 #define WIN32_LEAN_AND_MEAN
 
+#ifdef __GNUC__
+#define INITGUID
+#endif
+
 #include <windows.h>
 #include <ddraw.h>
 //#include <d3d8.h>

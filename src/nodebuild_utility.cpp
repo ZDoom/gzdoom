@@ -144,6 +144,7 @@ void FNodeBuilder::MakeSegsFromSides ()
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
+		share1 = NULL;
 		if (Level.Lines[i].sidenum[0] != NO_INDEX)
 		{
 			WORD backside;

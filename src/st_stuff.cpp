@@ -52,6 +52,7 @@ static BOOL Cht_Music (cheatseq_t *);
 static BOOL Cht_BeholdMenu (cheatseq_t *);
 static BOOL Cht_AutoMap (cheatseq_t *);
 static BOOL Cht_ChangeLevel (cheatseq_t *);
+static BOOL Cht_WarpTransLevel (cheatseq_t *);
 static BOOL Cht_MyPos (cheatseq_t *);
 static BOOL Cht_Sound (cheatseq_t *);
 static BOOL Cht_Ticker (cheatseq_t *);
@@ -162,7 +163,7 @@ static cheatseq_t HexenCheats[] =
 	{ CheatLocksmith,		0, 0, 0, {CHT_KEYS,0},		Cht_Generic },
 	{ CheatIndiana,			0, 0, 0, {CHT_ALLARTI,0},	Cht_Generic },
 	{ CheatSherlock,		0, 0, 0, {CHT_PUZZLE,0},	Cht_Generic },
-	{ CheatVisit,			0, 0, 0, {0,0},				Cht_ChangeLevel },
+	{ CheatVisit,			0, 0, 0, {0,0},				Cht_WarpTransLevel },
 	{ CheatPig,				0, 0, 0, {CHT_MORPH,0},		Cht_Generic },
 	{ CheatButcher,			0, 0, 0, {CHT_MASSACRE,0},	Cht_Generic },
 	{ CheatConan,			0, 0, 0, {CHT_TAKEWEAPS,0},	Cht_Generic },
@@ -228,6 +229,12 @@ BOOL ST_Responder (event_t *ev)
 				{
 					eat |= cheats->Handler (cheats);
 				}
+			}
+			else if (cheats->Pos - cheats->Sequence > 2)
+			{ // If more than two characters into the sequence,
+			  // eat the keypress, just so that the Hexen cheats
+			  // with T in them will work without unbinding T.
+				eat = true;
 			}
 		}
 	}
@@ -321,6 +328,15 @@ static BOOL Cht_ChangeLevel (cheatseq_t *cheat)
 
 	cmd[7] = cheat->Args[0];
 	cmd[8] = cheat->Args[1];
+	C_DoCommand (cmd);
+	return true;
+}
+
+static BOOL Cht_WarpTransLevel (cheatseq_t *cheat)
+{
+	char cmd[11] = "hxvisit xx";
+	cmd[8] = cheat->Args[0];
+	cmd[9] = cheat->Args[1];
 	C_DoCommand (cmd);
 	return true;
 }

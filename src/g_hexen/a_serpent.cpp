@@ -479,7 +479,7 @@ void A_SerpentChase (AActor *actor)
 		&& !actor->threshold
 		&& !P_CheckSight (actor, actor->target, false) )
 	{
-		bool lookForBetter;
+		bool lookForBetter = false;
 		BOOL gotNew;
 		if (actor->flags3 & MF3_NOSIGHTCHECK)
 		{
@@ -696,7 +696,7 @@ void A_SerpentWalk (AActor *actor)
 		&& !actor->threshold
 		&& !P_CheckSight (actor, actor->target, false) )
 	{
-		bool lookForBetter;
+		bool lookForBetter = false;
 		BOOL gotNew;
 		if (actor->flags3 & MF3_NOSIGHTCHECK)
 		{

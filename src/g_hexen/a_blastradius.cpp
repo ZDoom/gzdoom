@@ -200,11 +200,11 @@ void P_BlastRadius (player_t *player)
 		{
 			// Let these special cases go
 		}
-		else if ((mo->flags & MF_COUNTKILL) && (mo->health <= 0))
+		else if ((mo->flags3 & MF3_ISMONSTER) && (mo->health <= 0))
 		{
 			continue;
 		}
-		else if (!(mo->flags & MF_COUNTKILL) &&
+		else if (!(mo->flags3 & MF3_ISMONSTER) &&
 			!(mo->player) &&
 			!(mo->flags & MF_MISSILE) &&
 			!(mo->flags3 & MF3_CANBLAST))

@@ -32,33 +32,48 @@
 **
 */
 
+#if defined(__GNUC__) && defined(_WIN32)
+
+void InitAutoSegMarkers ();
+
+#define REGEXEPEEK
+#define REGMARKER(x) (*x)
+typedef void **REGINFO;
+
+#else
+
+#define REGMARKER(x) (x)
+typedef void *REGINFO;
+
+#endif
+
 // List of ActorInfos and the TypeInfos they belong to
-extern void *ARegHead;
-extern void *ARegTail;
+extern REGINFO ARegHead;
+extern REGINFO ARegTail;
 
 // List of AT_GAME_SET functions
-extern void *GRegHead;
-extern void *GRegTail;
+extern REGINFO GRegHead;
+extern REGINFO GRegTail;
 
 // List of AT_SPEED_SET functions
-extern void *SRegHead;
-extern void *SRegTail;
+extern REGINFO SRegHead;
+extern REGINFO SRegTail;
 
 // List of TypeInfos
-extern void *CRegHead;
-extern void *CRegTail;
+extern REGINFO CRegHead;
+extern REGINFO CRegTail;
 
 // List of WeaponInfoInits
-extern void *WRegHead;
-extern void *WRegTail;
+extern REGINFO WRegHead;
+extern REGINFO WRegTail;
 
-template<class T, void **head, void **tail>
+template<class T, REGINFO *head, REGINFO *tail>
 class TAutoSegIteratorNoArrow
 {
 	public:
 		TAutoSegIteratorNoArrow ()
 		{
-			Probe = (T *)head;
+			Probe = (T *)REGMARKER(head);
 		}
 		operator T () const
 		{
@@ -69,19 +84,19 @@ class TAutoSegIteratorNoArrow
 			do
 			{
 				++Probe;
-			} while (*Probe == NULL && Probe < (T *)tail);
+			} while (*Probe == NULL && Probe < (T *)REGMARKER(tail));
 			return *this;
 		}
 		void Reset ()
 		{
-			Probe = (T *)head;
+			Probe = (T *)REGMARKER(head);
 		}
 
 	protected:
 		T *Probe;
 };
 
-template<class T, void **head, void **tail>
+template<class T, REGINFO *head, REGINFO *tail>
 class TAutoSegIterator : public TAutoSegIteratorNoArrow<T, head, tail>
 {
 	public:

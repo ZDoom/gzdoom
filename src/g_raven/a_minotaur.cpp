@@ -180,7 +180,7 @@ void AMinotaur::NoBlockingSet ()
 bool AMinotaur::Slam (AActor *thing)
 {
 	// Slamming minotaurs shouldn't move non-creatures
-	if (!(thing->flags&MF_COUNTKILL))
+	if (!(thing->flags3&MF3_ISMONSTER))
 	{
 		return false;
 	}
@@ -200,7 +200,7 @@ int AMinotaur::DoSpecialDamage (AActor *target, int damage)
 
 bool AMinotaur::IsOkayToAttack (AActor *link)
 {
-	if ((link->flags&MF_COUNTKILL) && (link != tracer))
+	if ((link->flags3&MF3_ISMONSTER) && (link != tracer))
 	{
 		if (!(link->flags&MF_SHOOTABLE))
 		{
@@ -858,7 +858,7 @@ void A_MinotaurLook (AActor *actor)
 
 		while ((mo = iterator.Next()) != NULL)
 		{
-			if (!(mo->flags&MF_COUNTKILL)) continue;
+			if (!(mo->flags3&MF3_ISMONSTER)) continue;
 			if (mo->health <= 0) continue;
 			if (!(mo->flags&MF_SHOOTABLE)) continue;
 			dist = P_AproxDistance (actor->x - mo->x, actor->y - mo->y);

@@ -494,15 +494,15 @@ static void BloodCrypt (void *data, int key, int len)
 
 void PrintLastError ()
 {
-	LPVOID lpMsgBuf;
-	FormatMessage( 
+	char *lpMsgBuf;
+	FormatMessageA( 
 		FORMAT_MESSAGE_ALLOCATE_BUFFER | 
 		FORMAT_MESSAGE_FROM_SYSTEM | 
 		FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
 		GetLastError(),
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-		(LPTSTR) &lpMsgBuf,
+		(LPTSTR)&lpMsgBuf,
 		0,
 		NULL 
 	);

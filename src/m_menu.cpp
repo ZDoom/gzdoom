@@ -1504,10 +1504,9 @@ void M_ChooseSkill (int choice)
 	if (gameinfo.gametype == GAME_Hexen)
 	{
 		playerclass = PlayerClassNames[MenuPClass+1];
-	}
-	if (gameinfo.flags & GI_MAP41START)
-	{
-		G_DeferedInitNew ("MAP41");
+		// "&wt@01" is a magic name that will become whatever map has
+		// warptrans 1.
+		G_DeferedInitNew ("&wt@01");
 	}
 	else
 	{

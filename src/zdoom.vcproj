@@ -29,7 +29,7 @@
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
-				AdditionalIncludeDirectories="f:\fmodapi361win32\api\inc,win32,fmodsound,.,zlib-1.1.4,g_shared,g_doom,g_raven,g_heretic,g_hexen"
+				AdditionalIncludeDirectories="f:\fmodapi361win32\api\inc,win32,sound,.,zlib-1.1.4,g_shared,g_doom,g_raven,g_heretic,g_hexen"
 				PreprocessorDefinitions="NDEBUG,WIN32,_WINDOWS,USEASM"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -96,7 +96,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "
 				Optimization="0"
-				AdditionalIncludeDirectories="f:\fmodapi361win32\api\inc;win32;fmodsound;.;&quot;zlib-1.1.4&quot;;g_shared;g_doom;g_raven;g_heretic;g_hexen"
+				AdditionalIncludeDirectories="f:\fmodapi361win32\api\inc;win32;sound;.;&quot;zlib-1.1.4&quot;;g_shared;g_doom;g_raven;g_heretic;g_hexen"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,USEASM"
 				MinimalRebuild="TRUE"
 				RuntimeLibrary="1"
@@ -2204,9 +2204,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="win32\gccseh.h">
-			</File>
-			<File
 				RelativePath=".\win32\hardware.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -2334,42 +2331,6 @@
 			</File>
 			<File
 				RelativePath=".\win32\icon1.ico">
-			</File>
-			<File
-				RelativePath=".\win32\mid2strm.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\win32\mid2strm.h">
-			</File>
-			<File
-				RelativePath=".\win32\mus2strm.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\win32\mus2strm.h">
 			</File>
 			<File
 				RelativePath=".\win32\resource.h">
@@ -4461,43 +4422,85 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="FMOD Audio Files"
+			Name="Audio Files"
 			Filter="">
 			<File
-				RelativePath=".\fmodsound\i_music.cpp">
+				RelativePath="sound\i_music.cpp">
+			</File>
+			<File
+				RelativePath="sound\i_music.h">
+			</File>
+			<File
+				RelativePath="sound\i_musicinterns.h">
+			</File>
+			<File
+				RelativePath="sound\i_sound.cpp">
+			</File>
+			<File
+				RelativePath="sound\i_sound.h">
+			</File>
+			<File
+				RelativePath="sound\mid2strm.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\fmodsound\i_music.h">
+				RelativePath="sound\mid2strm.h">
 			</File>
 			<File
-				RelativePath=".\fmodsound\i_sound.cpp">
+				RelativePath="sound\mus2strm.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
+						ObjectFile="$(IntDir)/$(InputName)1.obj"/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\fmodsound\i_sound.h">
+				RelativePath="sound\mus2strm.h">
+			</File>
+			<File
+				RelativePath="sound\music_cd.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_midi_midiout.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_midi_stream.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_midi_timidity.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_mod.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_mus_midiout.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_mus_opl.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_spc.cpp">
+			</File>
+			<File
+				RelativePath="sound\music_stream.cpp">
 			</File>
 		</Filter>
 	</Files>

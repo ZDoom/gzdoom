@@ -1789,7 +1789,7 @@ static void WriteArrayVars (FILE *file, TArray<SDWORD> *vars, size_t count, DWOR
 		FPNGChunkArchive arc (file, id);
 		arc.WriteCount (i);
 		arc.WriteCount (j);
-		for (i; i <= j; ++i)
+		for (; i <= j; ++i)
 		{
 			arc.WriteCount (vars[i].Size());
 			for (k = 0; k < vars[i].Size(); ++k)

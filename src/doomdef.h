@@ -270,6 +270,7 @@ enum
 	COMPATF_MAGICSILENCE	= 1 << 5,	// Limit actors to one sound at a time?
 	COMPATF_WALLRUN			= 1 << 6,	// Enable buggier wall clipping so players can wallrun?
 	COMPATF_NOTOSSDROPS		= 1 << 7,	// Spawn dropped items directly on the floor?
+	COMPATF_USEBLOCKING		= 1 << 8,	// Any special line can block a use line
 };
 
 // phares 3/20/98:

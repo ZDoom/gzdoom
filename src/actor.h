@@ -540,7 +540,7 @@ private:
 	friend class FActorIterator;
 
 public:
-	void LinkToWorld ();
+	void LinkToWorld (bool buggy=false);
 	void UnlinkFromWorld ();
 	void AdjustFloorClip ();
 	void SetOrigin (fixed_t x, fixed_t y, fixed_t z);

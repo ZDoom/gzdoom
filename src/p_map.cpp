@@ -90,6 +90,13 @@ fixed_t 		tmdropoffz;
 int				tmfloorpic;
 sector_t		*tmfloorsector;
 
+static fixed_t	tmfbbox[4];
+fixed_t			tmffloorz;
+fixed_t			tmfceilingz;
+fixed_t			tmfdropoffz;
+fixed_t			tmffloorpic;
+sector_t		*tmffloorsector;
+
 //Added by MC: So bot will know what kind of sector it's entering.
 sector_t*		tmsector;
 
@@ -120,13 +127,13 @@ extern sector_t *openbottomsec;
 
 static BOOL PIT_FindFloorCeiling (line_t *ld)
 {
-	if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-		|| tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-		|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-		|| tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
+	if (tmfbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
+		|| tmfbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
+		|| tmfbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
+		|| tmfbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
 		return true;
 
-	if (P_BoxOnLineSide (tmbbox, ld) != -1)
+	if (P_BoxOnLineSide (tmfbbox, ld) != -1)
 		return true;
 
 	// A line has been hit
@@ -170,22 +177,21 @@ static BOOL PIT_FindFloorCeiling (line_t *ld)
 	}
 
 	// adjust floor / ceiling heights
-	if (opentop < tmceilingz)
+	if (opentop < tmfceilingz)
 	{
-		tmceilingz = opentop;
-		ceilingline = ld;
+		tmfceilingz = opentop;
 		BlockingLine = ld;
 	}
 
-	if (openbottom > tmfloorz)
+	if (openbottom > tmffloorz)
 	{
-		tmfloorz = openbottom;
-		tmfloorsector = openbottomsec;
+		tmffloorz = openbottom;
+		tmffloorsector = openbottomsec;
 		BlockingLine = ld;
 	}
 
-	if (lowfloor < tmdropoffz)
-		tmdropoffz = lowfloor;
+	if (lowfloor < tmfdropoffz)
+		tmfdropoffz = lowfloor;
 	
 	return true;
 }
@@ -202,26 +208,25 @@ void P_FindFloorCeiling (AActor *actor)
 	fixed_t x, y;
 	sector_t *sec;
 
-	tmx = x = actor->x;
-	tmy = y = actor->y;
-	tmthing = actor;
+	x = actor->x;
+	y = actor->y;
 
-	tmbbox[BOXTOP] = y + actor->radius;
-	tmbbox[BOXBOTTOM] = y - actor->radius;
-	tmbbox[BOXRIGHT] = x + actor->radius;
-	tmbbox[BOXLEFT] = x - actor->radius;
+	tmfbbox[BOXTOP] = y + actor->radius;
+	tmfbbox[BOXBOTTOM] = y - actor->radius;
+	tmfbbox[BOXRIGHT] = x + actor->radius;
+	tmfbbox[BOXLEFT] = x - actor->radius;
 
 	sec = R_PointInSubsector (x, y)->sector;
-	tmfloorz = tmdropoffz = sec->floorplane.ZatPoint (x, y);
-	tmceilingz = sec->ceilingplane.ZatPoint (x, y);
-	tmfloorpic = sec->floorpic;
-	tmfloorsector = sec;
+	tmffloorz = tmfdropoffz = sec->floorplane.ZatPoint (x, y);
+	tmfceilingz = sec->ceilingplane.ZatPoint (x, y);
+	tmffloorpic = sec->floorpic;
+	tmffloorsector = sec;
 	validcount++;
 
-	xl = (tmbbox[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
-	xh = (tmbbox[BOXRIGHT] - bmaporgx)>>MAPBLOCKSHIFT;
-	yl = (tmbbox[BOXBOTTOM] - bmaporgy )>>MAPBLOCKSHIFT;
-	yh = (tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
+	xl = (tmfbbox[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
+	xh = (tmfbbox[BOXRIGHT] - bmaporgx) >> MAPBLOCKSHIFT;
+	yl = (tmfbbox[BOXBOTTOM] - bmaporgy) >> MAPBLOCKSHIFT;
+	yh = (tmfbbox[BOXTOP] - bmaporgy) >> MAPBLOCKSHIFT;
 
 	for (bx = xl; bx <= xh; bx++)
 		for (by = yl; by <= yh; by++)
@@ -311,10 +316,10 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	
 	// The base floor/ceiling is from the subsector that contains the point.
 	// Any contacted lines the step closer together will adjust them.
-	tmfloorz = tmdropoffz = newsubsec->sector->floorplane.ZatPoint (x, y);
-	tmceilingz = newsubsec->sector->ceilingplane.ZatPoint (x, y);
-	tmfloorpic = newsubsec->sector->floorpic;
-	tmfloorsector = newsubsec->sector;
+	tmffloorz = tmfdropoffz = newsubsec->sector->floorplane.ZatPoint (x, y);
+	tmfceilingz = newsubsec->sector->ceilingplane.ZatPoint (x, y);
+	tmffloorpic = newsubsec->sector->floorpic;
+	tmffloorsector = newsubsec->sector;
 					
 	validcount++;
 	spechit.Clear ();
@@ -344,10 +349,11 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	
 	// the move is ok, so link the thing into its new position
 	thing->SetOrigin (x, y, z);
-	thing->floorz = tmfloorz;
-	thing->ceilingz = tmceilingz;
-	thing->floorsector = tmfloorsector;
-	thing->dropoffz = tmdropoffz;        // killough 11/98
+	thing->floorz = tmffloorz;
+	thing->ceilingz = tmfceilingz;
+	thing->floorsector = tmffloorsector;
+	thing->floorpic = tmffloorpic;
+	thing->dropoffz = tmfdropoffz;        // killough 11/98
 
 	if (thing->flags2 & MF2_FLOORCLIP)
 	{
@@ -2723,7 +2729,14 @@ BOOL PTR_UseTraverse (intercept_t *in)
 	//[RH] And now I've changed it again. If the line is of type
 	//	   SPAC_USE, then it eats the use. Everything else passes
 	//	   it through, including SPAC_USETHROUGH.
-	return (GET_SPAC(in->d.line->flags) == SPAC_USE) ? false : true;
+	if (compatflags & COMPATF_USEBLOCKING)
+	{
+		return GET_SPAC(in->d.line->flags) == SPAC_USETHROUGH;
+	}
+	else
+	{
+		return GET_SPAC(in->d.line->flags) != SPAC_USE;
+	}
 }
 
 // Returns false if a "oof" sound should be made because of a blocking

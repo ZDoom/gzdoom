@@ -254,6 +254,14 @@ extern msecnode_t		*sector_list;		// phares 3/16/98
 extern AActor			*BlockingMobj;
 extern line_t			*BlockingLine;		// Used only by P_Move
 											// This is not necessarily a *blocking* line
+
+// For P_FindFloorCeiling
+extern fixed_t			tmffloorz, tmfceilingz;
+extern fixed_t			tmfdropoffz;
+extern fixed_t			tmffloorpic;
+extern sector_t			*tmffloorsector;
+
+
 //Added by MC: tmsectortype
 extern fixed_t			tmdropoffz; //Needed in b_move.c
 extern sector_t			*tmsector;
@@ -276,7 +284,7 @@ void	P_ResetSightCounters (bool full);
 void	P_UseLines (player_t* player);
 bool	P_UsePuzzleItem (player_t *player, int itemType);
 void	PIT_ThrustSpike (AActor *actor);
-void P_FindFloorCeiling (AActor *actor);
+void	P_FindFloorCeiling (AActor *actor);
 
 bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil);
 

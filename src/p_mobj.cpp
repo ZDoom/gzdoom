@@ -2209,18 +2209,24 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	actor->touching_sectorlist = NULL;	// NULL head of sector list // phares 3/13/98
 
 	// set subsector and/or block links
-	actor->LinkToWorld ();
-	//actor->dropoffz =			// killough 11/98: for tracking dropoffs
-	//actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
-	//actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
-	//actor->floorsector = actor->Sector;
-	//actor->floorpic = actor->floorsector->floorpic;
-	P_FindFloorCeiling (actor);
-	actor->floorz = tmfloorz;
-	actor->dropoffz = tmdropoffz;
-	actor->ceilingz = tmceilingz;
-	actor->floorpic = tmfloorpic;
-	actor->floorsector = tmfloorsector;
+	actor->LinkToWorld (SpawningMapThing);
+	if (SpawningMapThing || !type->IsDescendantOf (RUNTIME_CLASS(APlayerPawn)))
+	{
+		actor->dropoffz =			// killough 11/98: for tracking dropoffs
+		actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
+		actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
+		actor->floorsector = actor->Sector;
+		actor->floorpic = actor->floorsector->floorpic;
+	}
+	else
+	{
+		P_FindFloorCeiling (actor);
+		actor->floorz = tmffloorz;
+		actor->dropoffz = tmfdropoffz;
+		actor->ceilingz = tmfceilingz;
+		actor->floorpic = tmffloorpic;
+		actor->floorsector = tmffloorsector;
+	}
 
 	if (iz == ONFLOORZ)
 	{

@@ -1,9 +1,10 @@
 /*
-** 
-** 
+** i_altsound.cpp
+**
+** Simple, no frills DirectSound player.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 2002 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

@@ -329,6 +329,7 @@ CVAR (Flag, compat_nopassover,	compatflags, COMPATF_NO_PASSMOBJ);
 CVAR (Flag, compat_soundslots,	compatflags, COMPATF_MAGICSILENCE);
 CVAR (Flag, compat_wallrun,		compatflags, COMPATF_WALLRUN);
 CVAR (Flag, compat_notossdrops,	compatflags, COMPATF_NOTOSSDROPS);
+CVAR (Flag, compat_useblocking, compatflags, COMPATF_USEBLOCKING);
 
 //==========================================================================
 //

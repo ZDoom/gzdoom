@@ -1,3 +1,25 @@
+January 3, 2003
+- Uploaded 34.cab.
+- Added a parameter to AActor::LinkToWorld() to tell it to use the original
+  incorrect point-on-line side calculations of the Doom engine. This is just
+  so that the map spots in the emerald key room of Hexen MAP01 will spawn in
+  their intended sector and not the sector that is technically correct.
+- Added a new compatibility option: compat_usewallblocking. Now I see that
+  there are wads that used non-use lines to block the player from activating
+  a use line.
+- Changed AActor::StaticSpawn() again. When spawning map things, the floor
+  and ceiling z's are taken from the actor's center point. When spawning
+  things during gameplay, the true z's are found instead. So P:AR's player
+  starts are still working, non-players placed in the map will be able to
+  get stuck in the floor of a neighboring sector, and anything spawned
+  during the game with ACS (or otherwise) will have the "correct" behavior
+  and know what their true floor and ceiling z range is. TBD: Should this
+  be players-only? Decided: Yes, otherwise bullet puffs will appear on
+  window sills instead of the actual spot where the bullet hit.
+- Changed P_FindFloorCeiling() to use different global variables than
+  P_CheckPosition(), because it can be called within P_CheckPosition().
+  Doom has too many global variables for its physics code.
+
 January 2, 2003
 - Uploaded 33.cab.
 - Fixed A_RestoreSpecialPosition() for MF2_FLOATBOB actors.

@@ -97,7 +97,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,0,33,0
+ FILEVERSION 2,0,34,0
  PRODUCTVERSION 2,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -116,9 +116,9 @@ BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
             VALUE "CompanyName", " "
             VALUE "FileDescription", "ZDoom"
-            VALUE "FileVersion", "2.0.33"
+            VALUE "FileVersion", "2.0.34"
             VALUE "InternalName", "ZDoom"
-            VALUE "LegalCopyright", "Copyright © 1993-1996, id Software & 1998-2002, Randy Heit"
+            VALUE "LegalCopyright", "Copyright © 1993-1996, id Software & 1998-2003, Randy Heit"
             VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
             VALUE "OriginalFilename", "zdoom.exe"
             VALUE "ProductName", "ZDoom"

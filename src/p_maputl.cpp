@@ -328,10 +328,56 @@ void AActor::UnlinkFromWorld ()
 // Links a thing into both a block and a subsector based on it's x y.
 // Sets thing->sector properly
 //
-void AActor::LinkToWorld ()
+void AActor::LinkToWorld (bool buggy)
 {
 	// link into subsector
-	sector_t *sec = R_PointInSubsector (x, y)->sector;
+	sector_t *sec;
+
+	if (!buggy || numnodes == 0)
+	{
+		sec = R_PointInSubsector (x, y)->sector;
+	}
+	else
+	{
+		node_t *node;
+		int side;
+					
+		node = nodes + numnodes - 1;
+
+		do
+		{
+			// Use original buggy point-on-side test when spawning
+			// things at level load so that the map spots in the
+			// emerald key room of Hexen MAP01 are spawned on the
+			// window ledge instead of the blocking floor in front
+			// of it. Why do I consider it buggy? Because a point
+			// that lies directly on a line should always be
+			// considered as "in front" of the line. The orientation
+			// of the line should be irrelevant.
+			if (node->dx == 0)
+			{
+				if (x <= node->x)
+					side = node->dy > 0;
+				else
+					side = node->dy < 0;
+			}
+			else if (node->dy == 0)
+			{
+				if (y <= node->y)
+					side = node->dx < 0;
+				else
+					side = node->dx > 0;
+			}
+			else
+			{
+				side = R_PointOnSide (x, y, node);
+			}
+			node = (node_t *)node->children[side];
+		}
+		while (!((size_t)node & 1));
+			
+		sec = ((subsector_t *)((BYTE *)node - 1))->sector;
+	}
 	Sector = sec;
 
 	if ( !(flags & MF_NOSECTOR) )

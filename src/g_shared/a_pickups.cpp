@@ -234,7 +234,6 @@ void A_RestoreSpecialPosition (AActor *self)
 {
 	// Move item back to its original location
 	fixed_t _x, _y;
-	fixed_t orgz = self->z;
 	sector_t *sec;
 
 	_x = self->SpawnPoint[0] << FRACBITS;

@@ -119,8 +119,11 @@ void P_RecursiveSound (sector_t *sec, int soundblocks)
 	for (i = 0; i < sec->linecount; i++)
 	{
 		check = sec->lines[i];
-		if (! (check->flags & ML_TWOSIDED) )
+		if (check->sidenum[1] == NO_INDEX ||
+			!(check->flags & ML_TWOSIDED))
+		{
 			continue;
+		}
 
 		if ( sides[ check->sidenum[0] ].sector == sec)
 			other = sides[ check->sidenum[1] ].sector;

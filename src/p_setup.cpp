@@ -63,6 +63,7 @@ extern unsigned int R_OldBlend;
 
 CVAR (Bool, genblockmap, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_GLOBALCONFIG);
+CVAR (Bool, genglnodes, false, 0);
 
 static void P_InitTagLists ();
 
@@ -372,7 +373,7 @@ void P_LoadSegs (int lump)
 		li->frontsector = sides[ldef->sidenum[side]].sector;
 
 		// killough 5/3/98: ignore 2s flag if second sidedef missing:
-		if (ldef->flags & ML_TWOSIDED && ldef->sidenum[side^1]!=NO_INDEX)
+		if (ldef->flags & ML_TWOSIDED && ldef->sidenum[side^1] != NO_INDEX)
 		{
 			li->backsector = sides[ldef->sidenum[side^1]].sector;
 		}
@@ -2570,7 +2571,7 @@ void P_SetupLevel (char *lumpname, int position)
 			sides, numsides,
 			lines, numlines
 		};
-		FNodeBuilder builder (leveldata, polyspots, anchors, r_experimental);
+		FNodeBuilder builder (leveldata, polyspots, anchors, r_experimental||genglnodes);
 		UsingGLNodes = r_experimental;
 		delete[] vertexes;
 		builder.Extract (nodes, numnodes,

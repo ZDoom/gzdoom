@@ -45,7 +45,7 @@ static int PowerTics[NUMPOWERS] =
 	 MAULATORTICS	// minotaur
 };
 
-static const char *ArtifactNames[NUMARTIFACTS] =
+const char *ArtifactNames[NUMARTIFACTS] =
 {
 	"none",
 	"ArtiInvulnerability",

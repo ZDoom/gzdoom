@@ -63,6 +63,7 @@ STREAM_ENUM (artitype_t)
 class player_s;
 extern bool (*ArtiDispatch[NUMARTIFACTS]) (player_s *, artitype_t);
 extern const char *ArtiPics[NUMARTIFACTS];
+extern const char *ArtifactNames[NUMARTIFACTS];
 
 #define NUMINVENTORYSLOTS	NUMARTIFACTS
 

@@ -699,7 +699,7 @@ static menuitem_t AdvSoundItems[] =
 static menu_t AdvSoundMenu =
 {
 	"ADVANCED SOUND OPTIONS",
-	0,
+	1,
 	sizeof(AdvSoundItems)/sizeof(AdvSoundItems[0]),
 	0,
 	AdvSoundItems,

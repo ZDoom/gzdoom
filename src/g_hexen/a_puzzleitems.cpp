@@ -271,7 +271,7 @@ END_DEFAULTS
 
 // Clock Gear 3 -------------------------------------------------------------
 
-PUZZLE(Gear3, arti_puzzgear3, TXT_ARTIPUZZGEAR, ARLTIGER3)
+PUZZLE(Gear3, arti_puzzgear3, TXT_ARTIPUZZGEAR, ARTIGER3)
 
 FState APuzzGear3::States[] =
 {

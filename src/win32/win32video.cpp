@@ -69,6 +69,7 @@
 #define LOG2(x,y,z)		do { if (dbg) { fprintf (dbg, x, y, z); fflush (dbg); } } while(0)
 #define LOG3(x,y,z,zz)	do { if (dbg) { fprintf (dbg, x, y, z, zz); fflush (dbg); } } while(0)
 #define LOG4(x,y,z,a,b)	do { if (dbg) { fprintf (dbg, x, y, z, a, b); fflush (dbg); } } while(0)
+#define LOG5(x,y,z,a,b,c) do { if (dbg) { fprintf (dbg, x, y, z, a, b, c); fflush (dbg); } } while(0)
 FILE *dbg;
 #else
 #define STARTLOG
@@ -78,6 +79,7 @@ FILE *dbg;
 #define LOG2(x,y,z)
 #define LOG3(x,y,z,zz)
 #define LOG4(x,y,z,a,b)
+#define LOG5(x,y,z,a,b,c)
 #endif
 
 // TYPES -------------------------------------------------------------------
@@ -690,7 +692,7 @@ bool DDrawFB::CreateResources ()
 		// Associate the clipper with the window
 		Clipper->SetHWnd (0, Window);
 		PrimarySurf->SetClipper (Clipper);
-		LOG ("Clipper set\n");
+		LOG1 ("Clipper @ %p set\n", Clipper);
 
 		// Create the backbuffer
 		ddsd.dwFlags        = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
@@ -706,6 +708,7 @@ bool DDrawFB::CreateResources ()
 			return false;
 		}
 		LockingSurf = BackSurf;
+		LOG1 ("LockingSurf and BackSurf @ %p\n", BackSurf);
 		LOG ("Created backbuf\n");
 	}
 	SetGamma (Gamma);
@@ -728,6 +731,8 @@ bool DDrawFB::CreateSurfacesAttached ()
 		LastHR = hr;
 		return false;
 	}
+
+	LOG1 ("Primary surface @ %p\n", PrimarySurf);
 
 	// Under NT 4 and with bad DDraw drivers under 9x (and maybe Win2k?)
 	// if the palette is not attached to the primary surface before any
@@ -794,6 +799,7 @@ bool DDrawFB::AddBackBuf (LPDIRECTDRAWSURFACE *surface, int num)
 	}
 	else
 	{
+		LOG2 ("BackBuf %d created @ %p\n", num, *surface);
 		hr = PrimarySurf->AddAttachedSurface (*surface);
 		if (FAILED(hr))
 		{
@@ -863,6 +869,8 @@ bool DDrawFB::CreateSurfacesComplex ()
 		LastHR = hr;
 		return false;
 	}
+
+	LOG1 ("Complex surface chain @ %p\n", PrimarySurf);
 
 	if (ddsd.dwBackBufferCount == 0)
 	{
@@ -1139,6 +1147,8 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 
 	wasLost = false;
 
+	LOG5 ("Lock %d %d %d %d %d\n", AppActive, SessionState, MustBuffer, useSimpleCanvas, UseBlitter);
+
 	if (!AppActive || SessionState || MustBuffer || useSimpleCanvas || !UseBlitter)
 	{
 		Buffer = MemBuffer;
@@ -1177,7 +1187,7 @@ bool DDrawFB::Relock ()
 
 void DDrawFB::Unlock ()
 {
-//	LOG1 ("Unlock     <%d>\n", LockCount);
+	LOG1 ("Unlock     <%d>\n", LockCount);
 
 	if (LockCount == 0)
 	{
@@ -1219,7 +1229,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 	}
 
 	hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
-	LOG2 ("LockSurf %p: %08lx\n", toLock, hr);
+	LOG3 ("LockSurf %p (%d): %08lx\n", toLock, lockingLocker, hr);
 
 	if (hr == DDERR_SURFACELOST)
 	{
@@ -1421,6 +1431,7 @@ void DDrawFB::Update ()
 
 	if (BufferingNow)
 	{
+		LockCount = 0;
 		if (AppActive && !SessionState && !PaintToWindow())
 		{
 			if (LockSurf (NULL, NULL) != NoGood)
@@ -1495,7 +1506,7 @@ void DDrawFB::Update ()
 
 bool DDrawFB::PaintToWindow ()
 {
-	if (Windowed)
+	if (Windowed && LockCount == 0)
 	{
 		RECT rect;
 		GetClientRect (Window, &rect);
@@ -1504,6 +1515,7 @@ bool DDrawFB::PaintToWindow ()
 			// Use blit to copy/stretch to window's client rect
 			ClientToScreen (Window, (POINT*)&rect.left);
 			ClientToScreen (Window, (POINT*)&rect.right);
+			LOG ("Paint to window\n");
 			if (LockSurf (NULL, NULL) != NoGood)
 			{
 				GPfx.Convert (MemBuffer, BufferPitch,
@@ -1513,6 +1525,7 @@ bool DDrawFB::PaintToWindow ()
 				if (FAILED (PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT|DDBLT_ASYNC, NULL)))
 					PrimarySurf->Blt (&rect, BackSurf, NULL, DDBLT_WAIT, NULL);
 			}
+			LOG ("Did paint to window\n");
 		}
 		return true;
 	}

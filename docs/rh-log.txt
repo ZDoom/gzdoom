@@ -1,3 +1,40 @@
+January 7, 2003
+- Uploaded 35.cab.
+- Fixed the node builder to successfully create GL nodes with >64k segs.
+- And now the node builder is fixed point again. (Undo is nice.) Making it
+  exclusively floating point made vrack2big3's BSP take 10 seconds longer to
+  build. Since the goal was to avoid the cost of int-to-float conversions
+  every time PointOnSide was called, I'd say it backfired miserably. With just
+  the change to PointOnSide, it's only about 1 second slower than 2.0.34.
+- Okay, the node builder now uses floating point for all its calculations.
+- Changed FNodeBuilder::PointOnSide() to use floating point to avoid overflow.
+  Methinks I should just change the node builder to use floating point
+  exclusively. Then it won't have to do int-to-float calculations repeatedly.
+- Changed A_Tracer() to set the puff type before it calls A_SpawnPuff().
+- Fixed: P_RecursiveSound crashed if it encountered a line that was marked
+  two-sided but lacked a second side.
+- Fixed: The cursor in the Advanced Sound Options menu started one line too
+  high.
+- Added Hexen support to giveinventory/takeinventory/checkinventory and made
+  them work with cross-game items.
+- Fixed: Clock gear 3's inventory image was misspelled as ARLTIGER3.
+
+January 4, 2003
+- Fixed: findFreeChannel() in mlopl.cpp would try very high channels instead
+  of the correct ones and access undefined memory.
+- Fixed: The Thing_Spawn special would fail to spawn things without
+  MF2_PASSMOBJ set if there was something already occuping their x,y space,
+  whatever that thing's z coordinate. This was problematic with the Hexen
+  bridges.
+- Fixed: DDrawFB::PaintToWindow() can get called during the render process
+  when a WM_PAINT message is received. If the framebuffer was already locked,
+  this would overwrite the buffer pointer and pitch with those of the
+  physical screen. This is not normally a problem, but one way to get a
+  repeatable crash was to turn on any of the pixel doubling modes and switch
+  from fullscreen to windowed. Simple fix: PaintToWindow() does nothing if
+  the screen has a non-zero LockCount, and Update() zeros LockCount before
+  it calls PaintToWindow().
+
 January 3, 2003
 - Uploaded 34.cab.
 - Added a parameter to AActor::LinkToWorld() to tell it to use the original

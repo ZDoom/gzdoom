@@ -88,7 +88,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 
 		for (i = 0; i < subCount; ++i)
 		{
-			int numsegs = CloseSubsector (segs, i, outVerts);
+			DWORD numsegs = CloseSubsector (segs, i, outVerts);
 			outSubs[i].numlines = numsegs;
 			outSubs[i].firstline = segs.Size() - numsegs;
 			outSubs[i].poly = NULL;
@@ -142,7 +142,8 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 	angle_t prevAngle;
 	double accumx, accumy;
 	fixed_t midx, midy;
-	int i, j, first, max, count, firstVert;
+	int firstVert;
+	DWORD first, max, count, i, j;
 
 	first = Subsectors[subsector].firstline;
 	max = first + Subsectors[subsector].numlines;
@@ -171,7 +172,7 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 	{
 		angle_t bestdiff = ANGLE_MAX;
 		FPrivSeg *bestseg = NULL;
-		int bestj = -1;
+		DWORD bestj = DWORD_MAX;
 		j = first;
 		do
 		{
@@ -193,7 +194,11 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 			}
 		}
 		while (++j < max);
-		seg = bestseg;
+		// Is a NULL bestseg actually okay?
+		if (bestseg != NULL)
+		{
+			seg = bestseg;
+		}
 		if (prev->v2 != seg->v1)
 		{
 			// Add a new miniseg to connect the two segs

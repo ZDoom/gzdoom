@@ -219,9 +219,9 @@ static int occupyChannel(struct musicBlock *mus, uint slot, uint channel,
 		instr = &instrument->instr[0];
 	ch->instr = instr;
 	if ( (note += instr->basenote) < 0)
-		while ((note += 12) < 0);
+		while ((note += 12) < 0) {}
 	else if (note > HIGHEST_NOTE)
-		while ((note -= 12) > HIGHEST_NOTE);
+		while ((note -= 12) > HIGHEST_NOTE) {}
 	ch->realnote = note;
 
 	OPLwriteInstrument(slot, instr);
@@ -273,9 +273,9 @@ static int findFreeChannel(struct musicBlock *mus, uint flag)
 	}
 
 	/* find free channel */
-	for(i = 0; i < OPLchannels; i++)
+	for (i = 0; i < OPLchannels; i++)
 	{
-		if (++last == OPLchannels)	/* use cyclic `Next Fit' algorithm */
+		if (++last >= OPLchannels)	/* use cyclic `Next Fit' algorithm */
 			last = 0;
 		if (channels[last].flags & CH_FREE)
 			return last;
@@ -285,24 +285,24 @@ static int findFreeChannel(struct musicBlock *mus, uint flag)
 		return -1;			/* stop searching if bit 0 is set */
 
 	/* find some 2nd-voice channel and determine the oldest */
-	for(i = 0; i < OPLchannels; i++)
+	for (i = 0; i < OPLchannels; i++)
 	{
 		if (channels[i].flags & CH_SECONDARY)
 		{
-			releaseChannel(mus, i, 0xff);
+			releaseChannel(mus, i, 1);
 			return i;
-		} else
-			if (channels[i].time < oldesttime)
-			{
-				oldesttime = channels[i].time;
-				oldest = i;
-			}
+		}
+		else if (channels[i].time < oldesttime)
+		{
+			oldesttime = channels[i].time;
+			oldest = i;
+		}
 	}
 
 	/* if possible, kill the oldest channel */
 	if ( !(flag & 2) && oldest != 1000000)
 	{
-		releaseChannel(mus, oldest, 0xff);
+		releaseChannel(mus, oldest, 1);
 		return oldest;
 	}
 
@@ -472,7 +472,7 @@ void OPLstopMusic(struct musicBlock *mus)
 	uint i;
 	for(i = 0; i < OPLchannels; i++)
 		if (!(channels[i].flags & CH_FREE))
-			releaseChannel(mus, i, 0xff);
+			releaseChannel(mus, i, 1);
 }
 
 void OPLchangeVolume(struct musicBlock *mus, uint volume)

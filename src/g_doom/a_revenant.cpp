@@ -7,6 +7,7 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "a_action.h"
+#include "a_doomglobal.h"
 
 static FRandom pr_rev ("RevenantMissileRange");
 static FRandom pr_tracer ("Tracer");
@@ -223,7 +224,8 @@ void A_Tracer (AActor *self)
 	if (level.time & 3)
 		return;
 	
-	// spawn a puff of smoke behind the rocket			
+	// spawn a puff of smoke behind the rocket
+	PuffType = RUNTIME_CLASS(ABulletPuff);
 	P_SpawnPuff (self->x, self->y, self->z, 0, 3);
 		
 	smoke = Spawn<ARevenantTracerSmoke> (self->x - self->momx,

@@ -96,7 +96,8 @@ void FNodeBuilder::BuildTree ()
 int FNodeBuilder::CreateNode (DWORD set, fixed_t bbox[4])
 {
 	node_t node;
-	int skip, count, selstat, splitseg;
+	int skip, count, selstat;
+	DWORD splitseg;
 
 	count = CountSegs (set);
 	skip = count / MaxSegs;
@@ -276,7 +277,7 @@ int FNodeBuilder::CountSegs (DWORD set) const
 // a splitter is synthesized, and true is returned to continue processing
 // down this branch of the tree.
 
-bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, int &splitseg, int setsize)
+bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int setsize)
 {
 	sector_t *sec;
 	DWORD seg;
@@ -320,7 +321,7 @@ bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, int &splitseg, int s
 	}
 
 	D(Printf("Need to synthesize a splitter for set %d on seg %d\n", set, seg));
-	splitseg = -1;
+	splitseg = DWORD_MAX;
 
 	// This is a very simple and cheap "fix" for subsectors with segs
 	// from multiple sectors, and it seems ZenNode does something
@@ -430,7 +431,7 @@ bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, int &splitseg, int s
 // each unique plane needs to be considered as a splitter. A result of 0 means
 // this set is a convex region. A result of -1 means that there were possible
 // splitters, but they all split segs we want to keep intact.
-int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, int &splitseg, int step, bool nosplit)
+int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int step, bool nosplit)
 {
 	int stepleft;
 	int bestvalue;
@@ -762,7 +763,7 @@ int FNodeBuilder::ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, 
 	return -1;
 }
 
-void FNodeBuilder::SplitSegs (DWORD set, node_t &node, int splitseg, DWORD &outset0, DWORD &outset1)
+void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1)
 {
 	outset0 = DWORD_MAX;
 	outset1 = DWORD_MAX;
@@ -1058,25 +1059,28 @@ double FNodeBuilder::InterceptVector (const node_t &splitter, const FPrivSeg &se
 int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int dy)
 {
 	// For most cases, a simple dot product is enough.
-	int foo = DMulScale32 (y-y1, dx, x1-x, dy);
-	if (abs(foo) >= 4)
-	{
-		return foo;
-	}
+	double d_dx = double(dx);
+	double d_dy = double(dy);
+	double d_x = double(x);
+	double d_y = double(y);
+	double d_x1 = double(x1);
+	double d_y1 = double(y1);
 
-	// Either the point is very near the line, or the segment defining
-	// the line is very short: Do a more expensive test to determine
-	// just how far from the line the point is.
-	double ddx = double(dx);
-	double ddy = double(dy);
-	double l = sqrt(ddx*ddx+ddy*ddy);
-	double s_num = double(y1-y)*ddx - double(x1-x)*ddy;
-	double dist = fabs(s_num)/l;
-	if (dist >= SIDE_EPSILON)
+	double s_num = (d_y1-d_y)*d_dx - (d_x1-d_x)*d_dy;
+
+	if (fabs(s_num) < 17179869184.0)	// 4<<32
 	{
-		return s_num > 0.0 ? -1 : 1;
+		// Either the point is very near the line, or the segment defining
+		// the line is very short: Do a more expensive test to determine
+		// just how far from the line the point is.
+		double l = sqrt(d_dx*d_dx+d_dy*d_dy);
+		double dist = fabs(s_num)/l;
+		if (dist < SIDE_EPSILON)
+		{
+			return 0;
+		}
 	}
-	return 0;
+	return s_num > 0.0 ? -1 : 1;
 }
 
 void FNodeBuilder::PrintSet (int l, DWORD set)

@@ -128,34 +128,25 @@ static void ClearInventory (AActor *activator)
 	}
 }
 
-static const char *DoomAmmoNames[4] =
+static const char *AmmoNames[NUMAMMO] =
 {
-	"Clip", "Shell", "Cell", "RocketAmmo"
+	"Clip", "Shell", "Cell", "RocketAmmo",
+	"GoldWandAmmo", "CrossbowAmmo", "BlasterAmmo",
+	"SkullRodAmmo", "PhoenixRodAmmo", "MaceAmmo",
+	"Mana1", "Mana2"
 };
 
-static const char *DoomWeaponNames[9] =
+static const char *WeaponNames[NUMWEAPONS] =
 {
 	"Fist", "Pistol", "Shotgun", "Chaingun", "RocketLauncher",
-	"PlasmaRifle", "BFG9000", "Chainsaw", "SuperShotgun"
-};
-
-static const char *HereticAmmoNames[6] =
-{
-	"GoldWandAmmo", "CrossbowAmmo", "BlasterAmmo",
-	"SkullRodAmmo", "PhoenixRodAmmo", "MaceAmmo"
-};
-
-static const char *HereticWeaponNames[9] =
-{
+	"PlasmaRifle", "BFG9000", "Chainsaw", "SuperShotgun",
 	"Staff", "GoldWand", "Crossbow", "Blaster", "SkullRod",
-	"PhoenixRod", "Mace", "Gauntlets", "Beak"
-};
-
-static const char *HereticArtifactNames[11] =
-{
-	"ArtiInvulnerability", "ArtiInvisibility", "ArtiHealth",
-	"ArtiSuperHealth", "ArtiTomeOfPower", NULL, NULL, "ArtiTorch",
-	"ArtiTimeBomb", "ArtiEgg", "ArtiFly"
+	"PhoenixRod", "Mace", "Gauntlets", "Beak",
+	"Snout",
+	"FWeapFist", "CWeapMace", "MWeapWand",
+	"FWeapAxe", "CWeapStaff", "MWeapFrost",
+	"FWeapHammer", "CWeapFlame", "MWeapLightning",
+	"FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge"
 };
 
 static const char *HereticKeyNames[3] =
@@ -178,34 +169,34 @@ static void DoGiveInv (player_t *player, const char *type, int amount)
 		player->armorpoints[0] = MIN (player->armorpoints[0] + amount, deh.MaxArmor);
 	}
 
-	if (gameinfo.gametype == GAME_Doom)
+	for (i = 0; i < NUMAMMO; ++i)
 	{
-		for (i = 0; i < 4; i++)
+		if (strcmp (AmmoNames[i], type) == 0)
 		{
-			if (strcmp (DoomAmmoNames[i], type) == 0)
-			{
-				player->ammo[i] = MIN(player->ammo[i]+amount, player->maxammo[i]);
-				return;
-			}
+			player->ammo[i] = MIN(player->ammo[i]+amount, player->maxammo[i]);
+			return;
 		}
 	}
-	else
+	for (i = 0; i < NUMARTIFACTS; ++i)
 	{
-		for (i = 0; i < 6; i++)
+		if (strcmp (ArtifactNames[i], type) == 0)
 		{
-			if (strcmp (HereticAmmoNames[i], type) == 0)
+			int maxCount;
+
+			if (i >= arti_firstpuzzitem)
 			{
-				player->ammo[i] = MIN(player->ammo[i+am_goldwand]+amount, player->maxammo[i]);
-				return;
+				maxCount = 1;
 			}
-		}
-		for (i = 0; i < 11; i++)
-		{
-			if (strcmp (HereticArtifactNames[i], type) == 0)
+			else if (gameinfo.gametype == GAME_Heretic)
 			{
-				player->inventory[i] = MIN(player->inventory[i]+amount, 16);
-				return;
+				maxCount = 16;
 			}
+			else
+			{
+				maxCount = 25;
+			}
+			player->inventory[i] = MIN(player->inventory[i]+amount, maxCount);
+			return;
 		}
 	}
 	const TypeInfo *info = TypeInfo::FindType (type);
@@ -320,24 +311,39 @@ static void DoTakeInv (player_t *player, const char *type, int amount)
 		player->armorpoints[0] = MAX (0, player->armorpoints[0] - amount);
 	}
 
+	for (i = 0; i < NUMAMMO; ++i)
+	{
+		if (strcmp (AmmoNames[i], type) == 0)
+		{
+			TakeAmmo (player, i, amount);
+			return;
+		}
+	}
+	for (i = 0; i < NUMARTIFACTS; ++i)
+	{
+		if (strcmp (ArtifactNames[i], type) == 0)
+		{
+			if (amount == 0)
+			{
+				player->inventory[i] = 0;
+			}
+			else
+			{
+				player->inventory[i] = MAX(player->inventory[i]-amount, 0);
+			}
+			return;
+		}
+	}
+	for (i = 0; i < NUMWEAPONS; ++i)
+	{
+		if (strcmp (WeaponNames[i], type) == 0)
+		{
+			TakeWeapon (player, i);
+			return;
+		}
+	}
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		for (i = 0; i < 4; ++i)
-		{
-			if (strcmp (DoomAmmoNames[i], type) == 0)
-			{
-				TakeAmmo (player, i, amount);
-				return;
-			}
-		}
-		for (i = 0; i < 9; ++i)
-		{
-			if (strcmp (DoomWeaponNames[i], type) == 0)
-			{
-				TakeWeapon (player, i);
-				return;
-			}
-		}
 		for (i = 0; i < 6; ++i)
 		{
 			if (strcmp (DoomKeyNames[i], type) == 0)
@@ -352,42 +358,11 @@ static void DoTakeInv (player_t *player, const char *type, int amount)
 	}
 	else
 	{
-		for (i = 0; i < 6; ++i)
-		{
-			if (strcmp (HereticAmmoNames[i], type) == 0)
-			{
-				TakeAmmo (player, i+am_goldwand, amount);
-				return;
-			}
-		}
-		for (i = 0; i < 9; ++i)
-		{
-			if (strcmp (HereticWeaponNames[i], type) == 0)
-			{
-				TakeWeapon (player, i+wp_staff);
-				return;
-			}
-		}
 		for (i = 0; i < 3; ++i)
 		{
 			if (strcmp (HereticKeyNames[i], type) == 0)
 			{
 				player->keys[i] = 0;
-			}
-		}
-		for (i = 0; i < 11; ++i)
-		{
-			if (strcmp (HereticArtifactNames[i], type) == 0)
-			{
-				if (amount == 0)
-				{
-					player->inventory[i] = 0;
-				}
-				else
-				{
-					player->inventory[i] = MAX(player->inventory[i]-amount, 0);
-				}
-				return;
 			}
 		}
 		if (strcmp ("BagOfHolding", type) == 0)
@@ -433,22 +408,32 @@ static int CheckInventory (AActor *activator, const char *type)
 		return player->health;
 	}
 
+	for (i = 0; i < NUMAMMO; ++i)
+	{
+		if (strcmp (AmmoNames[i], type) == 0)
+		{
+			return player->ammo[i];
+		}
+	}
+
+	for (i = 0; i < NUMARTIFACTS; ++i)
+	{
+		if (strcmp (ArtifactNames[i], type) == 0)
+		{
+			return player->inventory[i];
+		}
+	}
+
+	for (i = 0; i < NUMWEAPONS; ++i)
+	{
+		if (strcmp (WeaponNames[i], type) == 0)
+		{
+			return player->weaponowned[i] ? 1 : 0;
+		}
+	}
+
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		for (i = 0; i < 4; ++i)
-		{
-			if (strcmp (DoomAmmoNames[i], type) == 0)
-			{
-				return player->ammo[i];
-			}
-		}
-		for (i = 0; i < 9; ++i)
-		{
-			if (strcmp (DoomWeaponNames[i], type) == 0)
-			{
-				return player->weaponowned[i] ? 1 : 0;
-			}
-		}
 		for (i = 0; i < 6; ++i)
 		{
 			if (strcmp (DoomKeyNames[i], type) == 0)
@@ -463,32 +448,11 @@ static int CheckInventory (AActor *activator, const char *type)
 	}
 	else
 	{
-		for (i = 0; i < 6; ++i)
-		{
-			if (strcmp (HereticAmmoNames[i], type) == 0)
-			{
-				return player->ammo[i+am_goldwand];
-			}
-		}
-		for (i = 0; i < 9; ++i)
-		{
-			if (strcmp (HereticWeaponNames[i], type) == 0)
-			{
-				return player->weaponowned[i+wp_staff] ? 1 : 0;
-			}
-		}
 		for (i = 0; i < 3; ++i)
 		{
 			if (strcmp (HereticKeyNames[i], type) == 3)
 			{
 				return player->keys[i] ? 1 : 0;
-			}
-		}
-		for (i = 0; i < 11; ++i)
-		{
-			if (strcmp (HereticArtifactNames[i], type) == 0)
-			{
-				return player->inventory[i];
 			}
 		}
 		if (strcmp ("BagOfHolding", type) == 0)

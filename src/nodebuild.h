@@ -5,7 +5,7 @@
 struct FEventInfo
 {
 	int Vertex;
-	int FrontSeg;
+	DWORD FrontSeg;
 };
 
 struct FEvent
@@ -54,7 +54,7 @@ class FNodeBuilder
 		int linedef;
 		sector_t *frontsector;
 		sector_t *backsector;
-		int next;
+		DWORD next;
 		DWORD nextforvert;
 		DWORD nextforvert2;
 		int loopnum;		// loop number for split avoidance (0 means splitting is okay)
@@ -82,13 +82,13 @@ class FNodeBuilder
 	};
 	union USegPtr
 	{
-		int SegNum;
+		DWORD SegNum;
 		FPrivSeg *SegPtr;
 	};
 	struct FSplitSharer
 	{
 		double Distance;
-		WORD Seg;
+		DWORD Seg;
 		bool Forward;
 	};
 public:
@@ -151,9 +151,9 @@ private:
 	int CreateNode (DWORD set, fixed_t bbox[4]);
 	int CreateSubsector (DWORD set, fixed_t bbox[4]);
 	void CreateSubsectorsForReal ();
-	bool CheckSubsector (DWORD set, node_t &node, int &splitseg, int setsize);
-	int SelectSplitter (DWORD set, node_t &node, int &splitseg, int step, bool nosplit);
-	void SplitSegs (DWORD set, node_t &node, int splitseg, DWORD &outset0, DWORD &outset1);
+	bool CheckSubsector (DWORD set, node_t &node, DWORD &splitseg, int setsize);
+	int SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int step, bool nosplit);
+	void SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1);
 	DWORD SplitSeg (DWORD segnum, int splitvert, int v1InFront);
 	int Heuristic (node_t &node, DWORD set, bool honorNoSplit);
 	int ClassifyLine (node_t &node, const FPrivSeg *seg, int &sidev1, int &sidev2);
@@ -161,12 +161,12 @@ private:
 
 	void FixSplitSharers (const node_t &node);
 	double AddIntersection (const node_t &node, int vertex);
-	void AddMinisegs (const node_t &node, int splitseg, DWORD &fset, DWORD &rset);
+	void AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset, DWORD &rset);
 	DWORD CheckLoopStart (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
 	DWORD CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
 	void RemoveSegFromVert1 (DWORD segnum, int vertnum);
 	void RemoveSegFromVert2 (DWORD segnum, int vertnum);
-	DWORD AddMiniseg (int v1, int v2, DWORD partner, int seg1, int splitseg);
+	DWORD AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD splitseg);
 	void SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const;
 
 	int CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *outVerts);

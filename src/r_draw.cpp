@@ -1547,7 +1547,7 @@ void R_DetailDouble ()
 
 	case 3:		// x- and y-double
 #ifdef USEASM
-		if (UseMMX && (viewwidth&15)==0)
+		if (UseMMX && (viewwidth&15)==0 && 0)
 		{
 			DoubleHorizVert_MMX (viewheight, viewwidth, ylookup[0]+viewwidth, RenderTarget->GetPitch());
 		}

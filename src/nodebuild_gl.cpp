@@ -57,7 +57,7 @@ double FNodeBuilder::AddIntersection (const node_t &node, int vertex)
 {
 	static const FEventInfo defaultInfo =
 	{
-		-1, -1
+		-1, DWORD_MAX
 	};
 
 	// Calculate signed distance of intersection vertex from start of splitter.
@@ -172,7 +172,7 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 	}
 }
 
-void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, DWORD &fset, DWORD &bset)
+void FNodeBuilder::AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset, DWORD &bset)
 {
 	FEvent *event = Events.GetMinimum (), *prev = NULL;
 
@@ -238,9 +238,9 @@ void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, DWORD &fset, D
 	}
 }
 
-DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, int seg1, int splitseg)
+DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD splitseg)
 {
-	int nseg;
+	DWORD nseg;
 	FPrivSeg *seg = &Segs[seg1];
 	FPrivSeg newseg;
 
@@ -250,7 +250,7 @@ DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, int seg1, int spl
 	newseg.next = DWORD_MAX;
 	newseg.planefront = true;
 
-	if (splitseg >= 0)
+	if (splitseg != DWORD_MAX)
 	{
 		newseg.planenum = Segs[splitseg].planenum;
 	}
@@ -272,7 +272,7 @@ DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, int seg1, int spl
 	{
 		newseg.partner = DWORD_MAX;
 	}
-	nseg = (int)Segs.Push (newseg);
+	nseg = Segs.Push (newseg);
 	if (newseg.partner != DWORD_MAX)
 	{
 		Segs[partner].partner = nseg;
@@ -376,7 +376,7 @@ DWORD FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int verte
 		}
 		segnum = seg->nextforvert;
 	}
-	if (bestseg < 0)
+	if (bestseg == DWORD_MAX)
 	{
 		return DWORD_MAX;
 	}

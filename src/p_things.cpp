@@ -70,6 +70,8 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 
 		if (mobj != NULL)
 		{
+			DWORD oldFlags = mobj->flags;
+			mobj->flags |= MF2_PASSMOBJ;
 			if (P_TestMobjLocation (mobj))
 			{
 				rtn++;
@@ -88,6 +90,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 				mobj->Destroy ();
 				rtn = false;
 			}
+			mobj->flags = oldFlags;
 		}
 	}
 

@@ -53,7 +53,7 @@ FState AArtiTeleport::States[] =
 	S_NORMAL (ATLP, 'B',	4, NULL, &States[0])
 };
 
-IMPLEMENT_ACTOR (AArtiTeleport, Raven, 36, 0)
+IMPLEMENT_ACTOR (AArtiTeleport, Raven, 36, 18)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)

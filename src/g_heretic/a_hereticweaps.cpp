@@ -134,7 +134,8 @@ FWeaponInfo AStaff::WeaponInfo1 =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AStaff)
+	RUNTIME_CLASS(AStaff),
+	-1
 };
 
 FWeaponInfo AStaff::WeaponInfo2 =
@@ -154,7 +155,8 @@ FWeaponInfo AStaff::WeaponInfo2 =
 	0,
 	NULL,
 	"weapons/staffcrackle",
-	RUNTIME_CLASS(AStaff)
+	RUNTIME_CLASS(AStaff),
+	-1
 };
 
 IMPLEMENT_ACTOR (AStaff, Heretic, -1, 0)
@@ -308,7 +310,7 @@ FState AGoldWandAmmo::States[] =
 	S_NORMAL (AMG1, 'A',   -1, NULL 						, NULL),
 };
 
-IMPLEMENT_ACTOR (AGoldWandAmmo, Heretic, 10, 0)
+IMPLEMENT_ACTOR (AGoldWandAmmo, Heretic, 10, 11)
 	PROP_SpawnHealth (AMMO_GWND_WIMPY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
@@ -343,7 +345,7 @@ FState AGoldWandHefty::States[] =
 	S_NORMAL (AMG2, 'C',	4, NULL 						, &States[0])
 };
 
-IMPLEMENT_ACTOR (AGoldWandHefty, Heretic, 12, 0)
+IMPLEMENT_ACTOR (AGoldWandHefty, Heretic, 12, 12)
 	PROP_SpawnHealth (AMMO_GWND_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 
@@ -406,7 +408,8 @@ FWeaponInfo AGoldWand::WeaponInfo1 =
 	5*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AGoldWand)
+	RUNTIME_CLASS(AGoldWand),
+	-1
 };
 
 FWeaponInfo AGoldWand::WeaponInfo2 =
@@ -426,7 +429,8 @@ FWeaponInfo AGoldWand::WeaponInfo2 =
 	5*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AGoldWand)
+	RUNTIME_CLASS(AGoldWand),
+	-1
 };
 
 IMPLEMENT_ACTOR (AGoldWand, Heretic, -1, 0)
@@ -462,7 +466,7 @@ FState AGoldWandFX1::States[] =
 	S_BRIGHT (FX01, 'H',	3, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (AGoldWandFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AGoldWandFX1, Heretic, -1, 151)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (22)
@@ -489,7 +493,7 @@ FState AGoldWandFX2::States[] =
 	S_BRIGHT (FX01, 'D',	6, NULL 						, &States[0])
 };
 
-IMPLEMENT_ACTOR (AGoldWandFX2, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AGoldWandFX2, Heretic, -1, 152)
 	PROP_SpeedFixed (18)
 	PROP_Damage (1)
 
@@ -618,7 +622,7 @@ FState ACrossbowAmmo::States[] =
 	S_NORMAL (AMC1, 'A',   -1, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (ACrossbowAmmo, Heretic, 18, 0)
+IMPLEMENT_ACTOR (ACrossbowAmmo, Heretic, 18, 33)
 	PROP_SpawnHealth (AMMO_CBOW_WIMPY)
 	PROP_Flags (MF_SPECIAL)
 
@@ -654,7 +658,7 @@ FState ACrossbowHefty::States[] =
 	S_NORMAL (AMC2, 'C',	5, NULL 						, &States[0])
 };
 
-IMPLEMENT_ACTOR (ACrossbowHefty, Heretic, 19, 0)
+IMPLEMENT_ACTOR (ACrossbowHefty, Heretic, 19, 34)
 	PROP_SpawnHealth (AMMO_CBOW_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 
@@ -749,7 +753,8 @@ FWeaponInfo ACrossbow::WeaponInfo1 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ACrossbow)
+	RUNTIME_CLASS(ACrossbow),
+	-1
 };
 
 FWeaponInfo ACrossbow::WeaponInfo2 =
@@ -769,10 +774,11 @@ FWeaponInfo ACrossbow::WeaponInfo2 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ACrossbow)
+	RUNTIME_CLASS(ACrossbow),
+	-1
 };
 
-IMPLEMENT_ACTOR (ACrossbow, Heretic, 2001, 0)
+IMPLEMENT_ACTOR (ACrossbow, Heretic, 2001, 27)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_WBOW)
 END_DEFAULTS
@@ -805,7 +811,7 @@ FState ACrossbowFX1::States[] =
 	S_BRIGHT (FX03, 'J',	8, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (ACrossbowFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ACrossbowFX1, Heretic, -1, 147)
 	PROP_RadiusFixed (11)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (30)
@@ -833,7 +839,7 @@ FState ACrossbowFX2::States[] =
 	S_BRIGHT (FX03, 'B',	1, A_BoltSpark					, &States[S_CRBOWFX2])
 };
 
-IMPLEMENT_ACTOR (ACrossbowFX2, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ACrossbowFX2, Heretic, -1, 148)
 	PROP_SpeedFixed (32)
 	PROP_Damage (6)
 	PROP_SpawnState (S_CRBOWFX2)
@@ -857,7 +863,7 @@ FState ACrossbowFX3::States[] =
 	S_BRIGHT (FX03, 'E',	8, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (ACrossbowFX3, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ACrossbowFX3, Heretic, -1, 149)
 	PROP_SpeedFixed (20)
 	PROP_Damage (2)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
@@ -976,7 +982,7 @@ FState AMaceAmmo::States[] =
 	S_NORMAL (AMM1, 'A', -1, NULL, NULL)
 };
 
-IMPLEMENT_ACTOR (AMaceAmmo, Heretic, 13, 0)
+IMPLEMENT_ACTOR (AMaceAmmo, Heretic, 13, 35)
 	PROP_SpawnHealth (AMMO_MACE_WIMPY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
@@ -1009,7 +1015,7 @@ FState AMaceHefty::States[] =
 	S_NORMAL (AMM2, 'A', -1, NULL, NULL)
 };
 
-IMPLEMENT_ACTOR (AMaceHefty, Heretic, 16, 0)
+IMPLEMENT_ACTOR (AMaceHefty, Heretic, 16, 36)
 	PROP_SpawnHealth (AMMO_MACE_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
@@ -1102,7 +1108,8 @@ FWeaponInfo AMace::WeaponInfo1 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AMace)
+	RUNTIME_CLASS(AMace),
+	-1
 };
 
 FWeaponInfo AMace::WeaponInfo2 =
@@ -1122,7 +1129,8 @@ FWeaponInfo AMace::WeaponInfo2 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AMace)
+	RUNTIME_CLASS(AMace),
+	-1
 };
 
 BEGIN_DEFAULTS (AMace, Heretic, -1, 0)
@@ -1161,7 +1169,7 @@ FState AMaceFX1::States[] =
 	S_BRIGHT (FX02, 'J',	4, NULL 				, NULL)
 };
 
-IMPLEMENT_ACTOR (AMaceFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AMaceFX1, Heretic, -1, 154)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (20)
@@ -1192,7 +1200,7 @@ FState AMaceFX2::States[] =
 	S_BRIGHT (FX02, 'F',	4, A_MaceBallImpact2	, &AMaceFX1::States[S_MACEFXI1+1])
 };
 
-IMPLEMENT_ACTOR (AMaceFX2, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AMaceFX2, Heretic, -1, 156)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (10)
@@ -1218,7 +1226,7 @@ FState AMaceFX3::States[] =
 	S_NORMAL (FX02, 'B',	4, NULL 				, &States[S_MACEFX3+0])
 };
 
-IMPLEMENT_ACTOR (AMaceFX3, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AMaceFX3, Heretic, -1, 155)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (7)
@@ -1249,7 +1257,7 @@ FState AMaceFX4::States[] =
 	S_BRIGHT (FX02, 'C',	4, A_DeathBallImpact	, &AMaceFX1::States[S_MACEFXI1+1])
 };
 
-IMPLEMENT_ACTOR (AMaceFX4, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AMaceFX4, Heretic, -1, 153)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (7)
@@ -1730,7 +1738,8 @@ FWeaponInfo AGauntlets::WeaponInfo1 =
 	15*FRACUNIT,
 	"weapons/gauntletsactivate",
 	NULL,
-	RUNTIME_CLASS(AGauntlets)
+	RUNTIME_CLASS(AGauntlets),
+	-1
 };
 
 FWeaponInfo AGauntlets::WeaponInfo2 =
@@ -1750,10 +1759,11 @@ FWeaponInfo AGauntlets::WeaponInfo2 =
 	15*FRACUNIT,
 	"weapons/gauntletsactivate",
 	NULL,
-	RUNTIME_CLASS(AGauntlets)
+	RUNTIME_CLASS(AGauntlets),
+	-1
 };
 
-IMPLEMENT_ACTOR (AGauntlets, Heretic, 2005, 0)
+IMPLEMENT_ACTOR (AGauntlets, Heretic, 2005, 32)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_WGNT)
 END_DEFAULTS
@@ -1939,7 +1949,7 @@ FState ABlasterAmmo::States[] =
 	S_NORMAL (AMB1, 'C',	4, NULL 					, &States[0])
 };
 
-IMPLEMENT_ACTOR (ABlasterAmmo, Heretic, 54, 0)
+IMPLEMENT_ACTOR (ABlasterAmmo, Heretic, 54, 37)
 	PROP_SpawnHealth (AMMO_BLSR_WIMPY)
 	PROP_Flags (MF_SPECIAL)
 
@@ -1975,7 +1985,7 @@ FState ABlasterHefty::States[] =
 	S_NORMAL (AMB2, 'C',	4, NULL 					, &States[0])
 };
 
-IMPLEMENT_ACTOR (ABlasterHefty, Heretic, 55, 0)
+IMPLEMENT_ACTOR (ABlasterHefty, Heretic, 55, 38)
 	PROP_SpawnHealth (AMMO_BLSR_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
@@ -2048,7 +2058,8 @@ FWeaponInfo ABlaster::WeaponInfo1 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ABlaster)
+	RUNTIME_CLASS(ABlaster),
+	-1
 };
 
 FWeaponInfo ABlaster::WeaponInfo2 =
@@ -2068,10 +2079,11 @@ FWeaponInfo ABlaster::WeaponInfo2 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ABlaster)
+	RUNTIME_CLASS(ABlaster),
+	-1
 };
 
-IMPLEMENT_ACTOR (ABlaster, Heretic, 53, 0)
+IMPLEMENT_ACTOR (ABlaster, Heretic, 53, 28)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_BLSR)
 END_DEFAULTS
@@ -2188,7 +2200,7 @@ FState ARipper::States[] =
 	S_BRIGHT (FX18, 'S',	4, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ARipper, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ARipper, Heretic, -1, 157)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (14)
@@ -2432,7 +2444,7 @@ FState ASkullRodAmmo::States[] =
 	S_NORMAL (AMS1, 'B',	5, NULL 					, &States[0])
 };
 
-IMPLEMENT_ACTOR (ASkullRodAmmo, Heretic, 20, 0)
+IMPLEMENT_ACTOR (ASkullRodAmmo, Heretic, 20, 158)
 	PROP_SpawnHealth (AMMO_SKRD_WIMPY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
@@ -2466,7 +2478,7 @@ FState ASkullRodHefty::States[] =
 	S_NORMAL (AMS2, 'B',	5, NULL 					, &States[0])
 };
 
-IMPLEMENT_ACTOR (ASkullRodHefty, Heretic, 21, 0)
+IMPLEMENT_ACTOR (ASkullRodHefty, Heretic, 21, 159)
 	PROP_SpawnHealth (AMMO_SKRD_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 
@@ -2540,7 +2552,8 @@ FWeaponInfo ASkullRod::WeaponInfo1 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ASkullRod)
+	RUNTIME_CLASS(ASkullRod),
+	-1
 };
 
 FWeaponInfo ASkullRod::WeaponInfo2 =
@@ -2560,10 +2573,11 @@ FWeaponInfo ASkullRod::WeaponInfo2 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ASkullRod)
+	RUNTIME_CLASS(ASkullRod),
+	-1
 };
 
-IMPLEMENT_ACTOR (ASkullRod, Heretic, 2004, 0)
+IMPLEMENT_ACTOR (ASkullRod, Heretic, 2004, 30)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_WSKL)
 END_DEFAULTS
@@ -2600,7 +2614,7 @@ FState AHornRodFX1::States[] =
 	S_BRIGHT (FX00, 'M',	3, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AHornRodFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AHornRodFX1, Heretic, -1, 160)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (22)
@@ -2943,7 +2957,7 @@ FState APhoenixRodAmmo::States[] =
 	S_NORMAL (AMP1, 'C',	4, NULL 					, &States[0])
 };
 
-IMPLEMENT_ACTOR (APhoenixRodAmmo, Heretic, 22, 0)
+IMPLEMENT_ACTOR (APhoenixRodAmmo, Heretic, 22, 161)
 	PROP_SpawnHealth (AMMO_PHRD_WIMPY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
@@ -2978,7 +2992,7 @@ FState APhoenixRodHefty::States[] =
 	S_NORMAL (AMP2, 'C',	4, NULL 					, &States[0])
 };
 
-IMPLEMENT_ACTOR (APhoenixRodHefty, Heretic, 23, 0)
+IMPLEMENT_ACTOR (APhoenixRodHefty, Heretic, 23, 162)
 	PROP_SpawnHealth (AMMO_PHRD_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
@@ -3048,7 +3062,8 @@ FWeaponInfo APhoenixRod::WeaponInfo1 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(APhoenixRod)
+	RUNTIME_CLASS(APhoenixRod),
+	-1
 };
 
 FWeaponInfo APhoenixRod::WeaponInfo2 =
@@ -3068,10 +3083,11 @@ FWeaponInfo APhoenixRod::WeaponInfo2 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(APhoenixRod)
+	RUNTIME_CLASS(APhoenixRod),
+	-1
 };
 
-IMPLEMENT_ACTOR (APhoenixRod, Heretic, 2003, 0)
+IMPLEMENT_ACTOR (APhoenixRod, Heretic, 2003, 29)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_WPHX)
 END_DEFAULTS
@@ -3104,7 +3120,7 @@ FState APhoenixFX1::States[] =
 	S_BRIGHT (FX08, 'H',	4, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (APhoenixFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (APhoenixFX1, Heretic, -1, 163)
 	PROP_RadiusFixed (11)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (20)
@@ -3375,7 +3391,7 @@ FState ABagOfHolding::States[] =
 	S_NORMAL (BAGH, 'A',   -1, NULL, NULL)
 };
 
-IMPLEMENT_ACTOR (ABagOfHolding, Heretic, 8, 0)
+IMPLEMENT_ACTOR (ABagOfHolding, Heretic, 8, 136)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 

@@ -780,6 +780,7 @@ void G_NewInit ()
 	memset (playeringame, 0, sizeof(playeringame));
 	BackupSaveName[0] = 0;
 	consoleplayer = 0;
+	NextSkill = -1;
 }
 
 void G_DoNewGame (void)
@@ -1080,6 +1081,14 @@ void G_DoLoadLevel (int position, bool autosave)
 	static int lastposition = 0;
 	gamestate_t oldgs = gamestate;
 	int i;
+
+	if (NextSkill >= 0)
+	{
+		UCVarValue val;
+		val.Int = NextSkill;
+		gameskill.ForceSet (val, CVAR_Int);
+		NextSkill = -1;
+	}
 
 	if (position == -1)
 		position = lastposition;

@@ -282,7 +282,7 @@ FState AEggFX::States[] =
 	S_BRIGHT (FHFX, 'L',	3, NULL, NULL)
 };
 
-IMPLEMENT_ACTOR (AEggFX, Raven, -1, 0)
+IMPLEMENT_ACTOR (AEggFX, Raven, -1, 40)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (18)
@@ -347,7 +347,7 @@ FState AArtiEgg::States[] =
 	S_NORMAL (PORK, 'H',	5, NULL, &States[S_ARTI_EGGP+0])
 };
 
-IMPLEMENT_ACTOR (AArtiEgg, Raven, 30, 0)
+IMPLEMENT_ACTOR (AArtiEgg, Raven, 30, 14)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 END_DEFAULTS

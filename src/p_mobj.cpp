@@ -2974,8 +2974,8 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 		angle_t an = PS_Random (pr_spawnmissile) << 20;
 		an >>= ANGLETOFINESHIFT;
 		
-		fixed_t newx = FixedMul (th->momx, finecosine[an]) - FixedMul (th->momy, finesine[an]);
-		fixed_t newy = FixedMul (th->momx, finesine[an]) + FixedMul (th->momy, finecosine[an]);
+		fixed_t newx = DMulScale16 (th->momx, finecosine[an], -th->momy, finesine[an]);
+		fixed_t newy = DMulScale16 (th->momx, finesine[an], th->momy, finecosine[an]);
 		th->momx = newx;
 		th->momy = newy;
 	}

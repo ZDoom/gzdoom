@@ -272,7 +272,7 @@ bool P_CheckAmmo (player_t *player)
 		wpinfo = wpnlev1info;
 	}
 	ammo = wpinfo[player->readyweapon]->ammo;
-	count = wpinfo[player->readyweapon]->ammouse;
+	count = wpinfo[player->readyweapon]->GetMinAmmo();
 	if (ammo == MANA_BOTH)
 	{
 		if (player->ammo[MANA_1] >= count && player->ammo[MANA_2] >= count)
@@ -330,7 +330,7 @@ weapontype_t P_PickNewWeapon (player_t *player)
 	{
 		if (player->weaponowned[*prefs])
 		{
-			int count = wpinfo[*prefs]->ammouse;
+			int count = wpinfo[*prefs]->GetMinAmmo();
 			ammotype_t ammo = wpinfo[*prefs]->ammo;
 			if (ammo == MANA_BOTH)
 			{

@@ -179,7 +179,7 @@ void M_FindResponseFile (void)
 
 			if (argc != 0)
 			{
-				argv = (char **)Z_Malloc (argc*sizeof(char *) + argsize, PU_STATIC, 0);
+				argv = (char **)Malloc (argc*sizeof(char *) + argsize);
 				argv[i] = (char *)argv + argc*sizeof(char *);
 				ParseCommandLine (file, NULL, argv+i);
 

@@ -109,7 +109,6 @@ public:
 	bool Relock ();
 	void Unlock ();
 	void ForceBuffering (bool force);
-	void PartialUpdate (int x, int y, int width, int height);
 	void Update ();
 	PalEntry *GetPalette ();
 	void GetFlashedPalette (PalEntry pal[256]);
@@ -135,6 +134,7 @@ private:
 	void RebuildColorTable ();
 	void MaybeCreatePalette ();
 	bool AddBackBuf (LPDIRECTDRAWSURFACE *surface, int num);
+	HRESULT AttemptRestore ();
 
 	HRESULT LastHR;
 	BYTE GammaTable[256];
@@ -157,7 +157,6 @@ private:
 	int BufferCount;
 	int BufferPitch;
 	float Gamma;
-	DWORD FlipFlags;
 
 	bool NeedGammaUpdate;
 	bool NeedPalUpdate;

@@ -314,21 +314,6 @@ CVAR (Flag, sv_barrelrespawn,	dmflags2, DF2_BARRELS_RESPAWN);
 
 //==========================================================================
 //
-// D_NetUpdate
-//
-// Calls NetUpdate() during a rendering pass
-//
-//==========================================================================
-
-void D_NetUpdate ()
-{
-	screen->Unlock ();
-	NetUpdate ();	// check for new console commands.
-	screen->Relock ();
-}
-
-//==========================================================================
-//
 // D_Display
 //
 // Draw current display, possibly wiping it from the previous
@@ -424,7 +409,7 @@ void D_Display (bool screenshot)
 		if (viewactive)
 		{
 			R_RefreshViewBorder ();
-			R_RenderPlayerView (&players[consoleplayer], D_NetUpdate);
+			R_RenderPlayerView (&players[consoleplayer], NetUpdate);
 			R_DetailDouble ();		// [RH] Apply detail mode expansion
 		}
 		if (automapactive)
@@ -1534,6 +1519,8 @@ void D_DoomMain (void)
 	rngseed = (DWORD)time (NULL);
 	M_FindResponseFile ();
 	M_LoadDefaults ();			// load before initing other systems
+	Z_Init ();	// [RH] Init zone heap after loading config file
+
 	// [RH] Make sure zdoom.wad is always loaded,
 	// as it contains magic stuff we need.
 	wad = BaseFileSearch ("zdoom.wad", NULL);

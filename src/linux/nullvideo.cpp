@@ -24,7 +24,6 @@ public:
 	bool Lock (bool buffer);
 	bool Relock ();
 	void ForceBuffering (bool force);
-	void PartialUpdate (int x, int y, int width, int height);
 	void Update ();
 	PalEntry *GetPalette ();
 	void UpdatePalette ();
@@ -141,10 +140,6 @@ bool NullFB::Lock (bool buffered)
 bool NullFB::Relock ()
 {
 	return DSimpleCanvas::Lock ();
-}
-
-void NullFB::PartialUpdate (int x, int y, int width, int height)
-{
 }
 
 void NullFB::Update ()

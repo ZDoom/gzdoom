@@ -151,7 +151,6 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 
 		atexit (call_terms);
 
-		Z_Init ();					// 1/18/98 killough: start up memory stuff first
 		atterm (I_Quit);
 
 		// Figure out what directory the program resides in.

@@ -398,13 +398,21 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		// are underwater but not in a water sector themselves.
 		// Only works if you cannot see the top surface of any deep water
 		// sectors at the same time.
-		if (back)
+		if (back && !r_fakingunderwater && curline->frontsector->heightsec == NULL)
 		{
 			if (rw_frontcz1 <= s->floorplane.ZatPoint (curline->v1->x, curline->v1->y) &&
 				rw_frontcz2 <= s->floorplane.ZatPoint (curline->v2->x, curline->v2->y))
 			{
-				doorunderwater = true;
-				r_fakingunderwater = true;
+				// Check that the window is actually visible
+				for (int z = WallSX1; z < WallSX2; ++z)
+				{
+					if (floorclip[z] > ceilingclip[z])
+					{
+						doorunderwater = true;
+						r_fakingunderwater = true;
+						break;
+					}
+				}
 			}
 		}
 #endif

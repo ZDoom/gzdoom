@@ -1669,6 +1669,7 @@ void R_ProjectParticle (particle_t *particle)
 	vissprite_t*		vis;
 	sector_t			*sector = NULL;
 	sector_t*			heightsec = NULL;	// killough 3/27/98
+	int					fakeside = FAKED_Center;
 
 	// transform the origin point
 	tr_x = particle->x - viewx;
@@ -1709,6 +1710,11 @@ void R_ProjectParticle (particle_t *particle)
 	// killough 3/27/98: exclude things totally separated
 	// from the viewer, by either water or fake ceilings
 	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
+	// [RH] Because we can see through windows into areas below the deep water surface,
+	// this is not entirely correct. The "right" thing to do would be to store particles
+	// in subsectors and clip them the same way as sprites. When there are lots of
+	// particles around the map, it would probably speed things up, too, since not every
+	// particle would need to be considered for drawing.
 
 	{
 		subsector_t *subsector = R_PointInSubsector (particle->x, particle->y);
@@ -1719,6 +1725,18 @@ void R_ProjectParticle (particle_t *particle)
 			if (particle->z < sector->floorplane.ZatPoint (particle->x, particle->y) ||
 				particle->z > sector->ceilingplane.ZatPoint (particle->y, particle->z))
 				return;
+
+			if (heightsec != NULL)
+			{
+				if (particle->z < heightsec->floorplane.ZatPoint (particle->x, particle->y))
+				{
+					fakeside = FAKED_BelowFloor;
+				}
+				else if (particle->z >= heightsec->ceilingplane.ZatPoint (particle->z, particle->y))
+				{
+					fakeside = FAKED_AboveCeiling;
+				}
+			}
 		}
 	}
 
@@ -1730,13 +1748,13 @@ void R_ProjectParticle (particle_t *particle)
 			phs = NULL;
 		}
 		if (phs && viewz < phs->floorplane.ZatPoint (viewx, viewy) ?
-			particle->z >= heightsec->floorplane.ZatPoint (particle->x, particle->y):
+			fakeside != FAKED_BelowFloor:
 			gzt < heightsec->floorplane.ZatPoint (particle->x, particle->y))
 		  return;
 		if (phs && viewz > phs->ceilingplane.ZatPoint (viewx, viewy) ?
 			gzt < heightsec->ceilingplane.ZatPoint (particle->x, particle->y) &&
 			viewz >= heightsec->ceilingplane.ZatPoint (viewx, viewy) :
-			particle->z >= heightsec->ceilingplane.ZatPoint (particle->x, particle->y))
+			fakeside == FAKED_AboveCeiling)
 		  return;
 	}
 
@@ -1745,7 +1763,9 @@ void R_ProjectParticle (particle_t *particle)
 	vis->heightsec = heightsec;
 	vis->xscale = xscale;
 //	vis->yscale = FixedMul (xscale, InvZtoScale);
+	vis->yscale = xscale;
 	vis->depth = tz;
+	vis->cx = tx;
 	vis->gx = particle->x;
 	vis->gy = particle->y;
 	vis->gz = particle->z;
@@ -1757,6 +1777,9 @@ void R_ProjectParticle (particle_t *particle)
 	vis->startfrac = particle->color;
 	vis->picnum = -1;
 	vis->renderflags = particle->trans;
+	vis->FakeFlatStat = fakeside;
+	vis->floorclip = 0;
+	vis->heightsec = heightsec;
 
 	if (fixedcolormap)
 	{

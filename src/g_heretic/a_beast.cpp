@@ -64,7 +64,7 @@ FState ABeast::States[] =
 	S_NORMAL (BEAS, 'Q',   -1, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ABeast, Heretic, 70, 0)
+IMPLEMENT_ACTOR (ABeast, Heretic, 70, 3)
 	PROP_SpawnHealth (220)
 	PROP_RadiusFixed (32)
 	PROP_HeightFixed (74)
@@ -126,7 +126,7 @@ FState ABeastBall::States[] =
 	S_NORMAL (FRB1, 'H',	4, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ABeastBall, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ABeastBall, Heretic, -1, 120)
 	PROP_RadiusFixed (9)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (12)

@@ -93,16 +93,22 @@ extern BOOL AppActive;
 extern bool FullscreenReset;
 extern bool VidResizing;
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-CVAR (Bool, vid_palettehack, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, vid_attachedsurfaces, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, vid_noblitter, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static IDirectDraw2 *DDraw;
 static cycle_t BlitCycles;
+static DWORD FlipFlags;
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR (Bool, vid_palettehack, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, vid_attachedsurfaces, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, vid_noblitter, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Bool, vid_vsync, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	LOG1 ("vid_vsync set to %d\n", *self);
+	FlipFlags = self ? DDFLIP_WAIT : DDFLIP_WAIT|DDFLIP_NOVSYNC;
+}
 
 // CODE --------------------------------------------------------------------
 
@@ -446,7 +452,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 	BufferCount = 1;
 	Gamma = 1.0;
 	BufferPitch = Pitch;
-	FlipFlags = DDFLIP_WAIT|DDFLIP_NOVSYNC;
+	FlipFlags = vid_vsync ? DDFLIP_WAIT : DDFLIP_WAIT|DDFLIP_NOVSYNC;
 
 	NeedGammaUpdate = false;
 	NeedPalUpdate = false;
@@ -482,14 +488,31 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 		HRESULT hr = DDraw->GetCaps (&hwcaps, NULL);
 		if (SUCCEEDED(hr))
 		{
-			if (hwcaps.dwSVBCaps & DDCAPS_CANBLTSYSMEM)
+			LOG2 ("dwCaps = %08x, dwSVBCaps = %08x\n", hwcaps.dwCaps, hwcaps.dwSVBCaps);
+			if (hwcaps.dwCaps & DDCAPS_BLT)
 			{
-				LOG ("Driver can blit from system memory\n");
-				UseBlitter = true;
+				LOG ("Driver supports blits\n");
+				if (hwcaps.dwSVBCaps & DDCAPS_CANBLTSYSMEM)
+				{
+					LOG ("Driver can blit from system memory\n");
+					if (hwcaps.dwCaps & DDCAPS_BLTQUEUE)
+					{
+						LOG ("Driver supports asynchronous blits\n");
+						UseBlitter = true;
+					}
+					else
+					{
+						LOG ("Driver does not support asynchronous blits\n");
+					}
+				}
+				else
+				{
+					LOG ("Driver cannot blit from system memory\n");
+				}
 			}
 			else
 			{
-				LOG ("Driver cannot blit from system memory\n");
+				LOG ("Driver does not support blits\n");
 			}
 		}
 	}
@@ -1056,6 +1079,8 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 	}
 	else
 	{
+		HRESULT hr = BlitSurf->Flip (NULL, DDFLIP_WAIT);
+		LOG1 ("Blit flip = %08x\n", hr);
 		LockSurfRes res = LockSurf (NULL, BlitSurf);
 		
 		if (res == NoGood)
@@ -1125,50 +1150,23 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		toLock = LockingSurf;
 	}
 
-	LOG1 ("LockSurf %p\n", toLock);
 	hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
-	LOG1 ("result = %08x\n", hr);
+	LOG2 ("LockSurf %p: %08x\n", toLock, hr);
 
 	if (hr == DDERR_SURFACELOST)
 	{
 		wasLost = true;
-		hr = PrimarySurf->Restore ();
-		if (hr == DDERR_WRONGMODE && Windowed)
-		{ // The user changed the screen mode
-			ReleaseResources ();
-			if (!CreateResources ())
-			{
-				LOG1 ("Could not recreate framebuffer: %08x", LastHR);
-				return NoGood;
-			}
-		}
-		else if (FAILED (hr))
+		if (FAILED (AttemptRestore ()))
 		{
-			LOG1 ("Could not restore framebuffer: %08x", hr);
 			return NoGood;
-		}
-		if (BackSurf && FAILED(BackSurf->IsLost ()))
-		{
-			hr = BackSurf->Restore ();
-			if (FAILED (hr))
-			{
-				I_FatalError ("Could not restore backbuffer: %08x", hr);
-			}
-		}
-		if (BackSurf2 && FAILED(BackSurf2->IsLost ()))
-		{
-			hr = BackSurf2->Restore ();
-			if (FAILED (hr))
-			{
-				I_FatalError ("Could not restore second backbuffer: %08x", hr);
-			}
 		}
 		if (BlitSurf && FAILED(BlitSurf->IsLost ()))
 		{
+			LOG ("Restore blitter surface\n");
 			hr = BlitSurf->Restore ();
 			if (FAILED (hr))
 			{
-				LOG1 ("Could not restore blitter source: %08x", hr);
+				LOG1 ("Could not restore blitter surface: %08x", hr);
 				BlitSurf->Release ();
 				if (BlitSurf == toLock)
 				{
@@ -1182,6 +1180,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		{
 			toLock = LockingSurf;
 		}
+		LOG ("Trying to lock again\n");
 		hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
 		if (hr == DDERR_SURFACELOST && Windowed)
 		{ // If this is NT, the user probably opened the Windows NT Security dialog.
@@ -1191,13 +1190,17 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 			{
 				I_FatalError ("Could not rebuild framebuffer: %08x", LastHR);
 			}
+			if (lockingLocker)
+			{
+				toLock = LockingSurf;
+			}
 			hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
 		}
 	}
 	if (FAILED (hr))
 	{ // Still could not restore the surface, so don't draw anything
 		//I_FatalError ("Could not lock framebuffer: %08x", hr);
-		LOG1 ("Final result: %08x\n", hr);
+		LOG1 ("Final result after restoration attempts: %08x\n", hr);
 		return NoGood;
 	}
 	Buffer = (BYTE *)desc.lpSurface;
@@ -1206,17 +1209,44 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 	return wasLost ? GoodWasLost : Good;
 }
 
-void DDrawFB::PartialUpdate (int x, int y, int width, int height)
+HRESULT DDrawFB::AttemptRestore ()
 {
-	if (!BufferingNow || MustBuffer || !AppActive)
-	{
-		return;
+	LOG ("Restore primary\n");
+	HRESULT hr = PrimarySurf->Restore ();
+	if (hr == DDERR_WRONGMODE && Windowed)
+	{ // The user changed the screen mode
+		LOG ("DDERR_WRONGMODE and windowed, so recreating all resources\n");
+		ReleaseResources ();
+		if (!CreateResources ())
+		{
+			LOG1 ("Could not recreate framebuffer: %08x", LastHR);
+			return LastHR;
+		}
 	}
-
-	Unlock ();
-	Lock ();
-
-	CopyFromBuff (MemBuffer+x+y*Width, BufferPitch, width, height, Buffer+x+y*Pitch);
+	else if (FAILED (hr))
+	{
+		LOG1 ("Could not restore primary surface: %08x", hr);
+		return hr;
+	}
+	if (BackSurf && FAILED(BackSurf->IsLost ()))
+	{
+		LOG ("Restore backbuffer\n");
+		hr = BackSurf->Restore ();
+		if (FAILED (hr))
+		{
+			I_FatalError ("Could not restore backbuffer: %08x", hr);
+		}
+	}
+	if (BackSurf2 && FAILED(BackSurf2->IsLost ()))
+	{
+		LOG ("Restore backbuffer 2\n");
+		hr = BackSurf2->Restore ();
+		if (FAILED (hr))
+		{
+			I_FatalError ("Could not restore backbuffer 2: %08x", hr);
+		}
+	}
+	return 0;
 }
 
 void DDrawFB::Update ()
@@ -1224,7 +1254,7 @@ void DDrawFB::Update ()
 	bool pchanged = false;
 	int i;
 
-	LOG1 ("Update     <%d>\n", LockCount);
+	LOG2 ("Update     <%d,%c>\n", LockCount, AppActive?'Y':'N');
 
 	if (LockCount != 1)
 	{
@@ -1330,9 +1360,22 @@ void DDrawFB::Update ()
 			if (FAILED (hr))
 			{
 				LOG1 ("Could not blit: %08x\n", hr);
+				if (hr == DDERR_SURFACELOST)
+				{
+					if (SUCCEEDED (AttemptRestore ()))
+					{
+						hr = LockingSurf->BltFast (0, 0, BlitSurf, &srcRect, DDBLTFAST_NOCOLORKEY|DDBLTFAST_WAIT);
+						if (FAILED (hr))
+						{
+							LOG1 ("Blit retry also failed: %08x\n", hr);
+						}
+					}
+				}
 			}
-			hr = BlitSurf->Flip (NULL, DDFLIP_WAIT);
-			LOG1 ("Blit flip sayz %08x\n", hr);
+			else
+			{
+				LOG ("Blit ok\n");
+			}
 		}
 		else
 		{
@@ -1341,22 +1384,24 @@ void DDrawFB::Update ()
 	}
 
 	unclock (BlitCycles);
+	LOG1 ("cycles = %d\n", BlitCycles);
 
 	Buffer = NULL;
 	LockCount = 0;
 	UpdatePending = false;
 
-	if (!Windowed /*&& !MustBuffer && !UseBlitter*/)
+	if (!Windowed && AppActive /*&& !UseBlitter && !MustBuffer*/)
 	{
 		HRESULT hr = PrimarySurf->Flip (NULL, FlipFlags);
-		LOG1 ("Flip says %08x\n", hr);
+		LOG1 ("Flip = %08x\n", hr);
 		if (hr == DDERR_INVALIDPARAMS)
 		{
 			if (FlipFlags & DDFLIP_NOVSYNC)
 			{
 				LOG ("Flip apparently cannot handle NOVSYNC.\n");
+				FlipFlags &= ~DDFLIP_NOVSYNC;
+				PrimarySurf->Flip (NULL, FlipFlags);
 			}
-			FlipFlags &= ~DDFLIP_NOVSYNC;
 		}
 	}
 

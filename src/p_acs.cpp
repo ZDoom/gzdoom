@@ -615,16 +615,15 @@ FBehavior::FBehavior (BYTE *object, int len)
 		Chunks = object + len;
 		Scripts = object + ((DWORD *)object)[1];
 		NumScripts = ((DWORD *)Scripts)[0];
-		if (NumScripts == 0 && ((DWORD *)Scripts)[1] == 0 && ((DWORD *)object)[1] >= 16)
-		{ // No scripts and no strings, so check for redesigned ACSE/ACSe
-			if (((DWORD *)Scripts)[-1] == MAKE_ID('A','C','S','e') ||
-				((DWORD *)Scripts)[-1] == MAKE_ID('A','C','S','E'))
-			{
-				Format = (((BYTE *)Scripts)[-1] == 'e') ? ACS_LittleEnhanced : ACS_Enhanced;
-				Chunks = object + ((DWORD *)Scripts)[-2];
-				// Forget about the compatibility cruft at the end of the lump
-				DataSize -= 16;
-			}
+		// Check for redesigned ACSE/ACSe
+		if (((DWORD *)object)[1] >= 6*4 &&
+			(((DWORD *)Scripts)[-1] == MAKE_ID('A','C','S','e') ||
+			((DWORD *)Scripts)[-1] == MAKE_ID('A','C','S','E')))
+		{
+			Format = (((BYTE *)Scripts)[-1] == 'e') ? ACS_LittleEnhanced : ACS_Enhanced;
+			Chunks = object + ((DWORD *)Scripts)[-2];
+			// Forget about the compatibility cruft at the end of the lump
+			DataSize = ((DWORD *)object)[1] - 8;
 		}
 		else
 		{

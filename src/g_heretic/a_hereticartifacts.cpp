@@ -22,7 +22,7 @@ FState AArtiInvisibility::States[] =
 	S_BRIGHT (INVS, 'A',  350, NULL, &States[0])
 };
 
-IMPLEMENT_ACTOR (AArtiInvisibility, Heretic, 75, 0)
+IMPLEMENT_ACTOR (AArtiInvisibility, Heretic, 75, 135)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_RenderStyle (STYLE_Translucent)
@@ -78,7 +78,7 @@ FState AArtiTomeOfPower::States[] =
 	S_NORMAL (PWBK, 'A',  350, NULL, &States[0])
 };
 
-IMPLEMENT_ACTOR (AArtiTomeOfPower, Heretic, 86, 0)
+IMPLEMENT_ACTOR (AArtiTomeOfPower, Heretic, 86, 134)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 
@@ -119,7 +119,7 @@ FState AActivatedTimeBomb::States[] =
 	S_BRIGHT (XPL1, 'F',	4, NULL 	, NULL)
 };
 
-IMPLEMENT_ACTOR (AActivatedTimeBomb, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AActivatedTimeBomb, Heretic, -1, 72)
 	PROP_Flags (MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HR_SHADOW)
@@ -149,7 +149,7 @@ FState AArtiTimeBomb::States[] =
 	S_NORMAL (FBMB, 'E',  350, NULL, &States[0]),
 };
 
-IMPLEMENT_ACTOR (AArtiTimeBomb, Heretic, 34, 0)
+IMPLEMENT_ACTOR (AArtiTimeBomb, Heretic, 34, 72)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 

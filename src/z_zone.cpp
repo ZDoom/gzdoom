@@ -28,6 +28,7 @@
 #include "z_zone.h"
 #include "i_system.h"
 #include "doomdef.h"
+#include "c_cvars.h"
 #include "c_dispatch.h"
 
 
@@ -57,6 +58,7 @@ typedef struct
 	memblock_t	*rover;
 } memzone_t;
 
+CVAR (Float, heapsize, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 
 static memzone_t *mainzone;
@@ -108,7 +110,7 @@ void Z_Init (void)
     if (p != NULL)
 		zonesize = (size_t)(atof (p)*1024*1024);
 	else
-		zonesize = 8*1024*1024;
+		zonesize = (size_t)(heapsize*1024*1024);
 
 	mainzone = (memzone_t *)I_ZoneBase (&zonesize);
 	mainzone->size = zonesize;

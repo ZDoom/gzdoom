@@ -633,11 +633,6 @@ public:
 	// Locks the surface, using whatever the previous buffered status was.
 	virtual bool Relock () = 0;
 
-	// If the surface is buffered by choice, copy the specified region
-	// to the screen and then go unbuffered. If the surface must be
-	// buffered (e.g. if the display is not 8-bit), then does nothing.
-	virtual void PartialUpdate (int x, int y, int width, int height) = 0;
-
 	// Make the surface visible. Also implies Unlock().
 	virtual void Update () = 0;
 

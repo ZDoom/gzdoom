@@ -173,6 +173,7 @@ typedef enum {
 	Sector_ChangeSound = 140,
 
 // [RH] Begin new specials for ZDoom
+	ChangeSkill = 179,
 	Thing_SetTranslation = 180,
 	Plane_Align = 181,
 

@@ -57,7 +57,7 @@ FState AWizard::States[] =
 	S_NORMAL (WZRD, 'M',   -1, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (AWizard, Heretic, 15, 0)
+IMPLEMENT_ACTOR (AWizard, Heretic, 15, 19)
 	PROP_SpawnHealth (180)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (68)
@@ -121,7 +121,7 @@ FState AWizardFX1::States[] =
 	S_BRIGHT (FX11, 'G',	5, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (AWizardFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AWizardFX1, Heretic, -1, 140)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (18)

@@ -84,7 +84,7 @@ FState AHereticImp::States[] =
 	S_NORMAL (IMPX, 'Z',   -1, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AHereticImp, Heretic, 66, 0)
+IMPLEMENT_ACTOR (AHereticImp, Heretic, 66, 5)
 	PROP_SpawnHealth (40)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (36)
@@ -136,7 +136,7 @@ FState AHereticImpLeader::States[] =
 	S_NORMAL (IMPX, 'F',	6, A_ImpMsAttack2			, &AHereticImp::States[S_IMP_FLY]),
 };
 
-IMPLEMENT_ACTOR (AHereticImpLeader, Heretic, 5, 0)
+IMPLEMENT_ACTOR (AHereticImpLeader, Heretic, 5, 7)
 	PROP_SpawnHealth (80)
 	
 	PROP_MeleeState (~0)
@@ -208,7 +208,7 @@ FState AHereticImpBall::States[] =
 	S_BRIGHT (FX10, 'G',	5, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AHereticImpBall, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AHereticImpBall, Heretic, -1, 10)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (10)

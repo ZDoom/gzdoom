@@ -23,7 +23,7 @@ FState AArtiHealth::States[] =
 	S_NORMAL (PTN2, 'C',	4, NULL, &States[0])
 };
 
-IMPLEMENT_ACTOR (AArtiHealth, Raven, 82, 0)
+IMPLEMENT_ACTOR (AArtiHealth, Raven, 82, 24)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
@@ -51,7 +51,7 @@ FState AArtiSuperHealth::States[] =
 	S_NORMAL (SPHL, 'A',  350, NULL, &States[0])
 };
 
-IMPLEMENT_ACTOR (AArtiSuperHealth, Raven, 32, 0)
+IMPLEMENT_ACTOR (AArtiSuperHealth, Raven, 32, 25)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 
@@ -91,7 +91,7 @@ FState AArtiFly::States[] =
 	S_NORMAL (SOAR, 'B',	5, NULL, &States[0])
 };
 
-IMPLEMENT_ACTOR (AArtiFly, Raven, 83, 0)
+IMPLEMENT_ACTOR (AArtiFly, Raven, 83, 15)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
@@ -122,7 +122,7 @@ FState AArtiInvulnerability::States[] =
 	S_NORMAL (INVU, 'D',	3, NULL, &States[0])
 };
 
-IMPLEMENT_ACTOR (AArtiInvulnerability, Raven, 84, 0)
+IMPLEMENT_ACTOR (AArtiInvulnerability, Raven, 84, 133)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
@@ -152,7 +152,7 @@ FState AArtiTorch::States[] =
 	S_BRIGHT (TRCH, 'C',	3, NULL, &States[0])
 };
 
-IMPLEMENT_ACTOR (AArtiTorch, Raven, 33, 0)
+IMPLEMENT_ACTOR (AArtiTorch, Raven, 33, 73)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)

@@ -264,6 +264,7 @@ static void ParseAnim (byte istex)
 			{
 				texturenodecals[picnum] = 0;
 			}
+			continue;
 		}
 		else if (!SC_Compare ("pic"))
 		{
@@ -468,32 +469,6 @@ int P_FindLineFromID (int id, int start)
 	while (start >= 0 && lines[start].id != id)
 		start = lines[start].nextid;
 	return start;
-}
-
-// Hash the sector tags across the sectors and linedefs.
-static void P_InitTagLists (void)
-{
-	register int i;
-
-	for (i=numsectors; --i>=0; )		// Initially make all slots empty.
-		sectors[i].firsttag = -1;
-	for (i=numsectors; --i>=0; )		// Proceed from last to first sector
-	{									// so that lower sectors appear first
-		int j = (unsigned) sectors[i].tag % (unsigned) numsectors;	// Hash func
-		sectors[i].nexttag = sectors[j].firsttag;	// Prepend sector to chain
-		sectors[j].firsttag = i;
-	}
-
-	// killough 4/17/98: same thing, only for linedefs
-
-	for (i=numlines; --i>=0; )			// Initially make all slots empty.
-		lines[i].firstid = -1;
-	for (i=numlines; --i>=0; )        // Proceed from last to first linedef
-	{									// so that lower linedefs appear first
-		int j = (unsigned) lines[i].id % (unsigned) numlines;	// Hash func
-		lines[i].nextid = lines[j].firstid;	// Prepend linedef to chain
-		lines[j].firstid = i;
-	}
 }
 
 
@@ -1261,10 +1236,6 @@ void P_SpawnSpecials (void)
 	
 	// Init other misc stuff
 
-	// P_InitTagLists() must be called before P_FindSectorFromTag()
-	// or P_FindLineFromID() can be called.
-
-	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
 	P_SpawnScrollers(); // killough 3/7/98: Add generalized scrollers
 	P_SpawnFriction();	// phares 3/12/98: New friction model using linedefs
 	P_SpawnPushers();	// phares 3/20/98: New pusher model using linedefs

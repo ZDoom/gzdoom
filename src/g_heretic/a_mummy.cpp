@@ -55,7 +55,7 @@ FState AMummy::States[] =
 	S_NORMAL (MUMM, 'P',   -1, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AMummy, Heretic, 68, 0)
+IMPLEMENT_ACTOR (AMummy, Heretic, 68, 4)
 	PROP_SpawnHealth (80)
 	PROP_RadiusFixed (22)
 	PROP_HeightFixed (62)
@@ -109,7 +109,7 @@ FState AMummyLeader::States[] =
 
 };
 
-IMPLEMENT_ACTOR (AMummyLeader, Heretic, 45, 0)
+IMPLEMENT_ACTOR (AMummyLeader, Heretic, 45, 2)
 	PROP_SpawnHealth (100)
 	PROP_PainChance (64)
 	PROP_MissileState (S_MUMMYL_ATK)
@@ -127,7 +127,7 @@ class AMummyGhost : public AMummy
 	DECLARE_STATELESS_ACTOR (AMummyGhost, AMummy)
 };
 
-IMPLEMENT_STATELESS_ACTOR (AMummyGhost, Heretic, 69, 0)
+IMPLEMENT_STATELESS_ACTOR (AMummyGhost, Heretic, 69, 8)
 	PROP_FlagsSet (MF_SHADOW)
 	PROP_Flags3 (MF3_GHOST)
 	PROP_RenderStyle (STYLE_Translucent)
@@ -141,7 +141,7 @@ class AMummyLeaderGhost : public AMummyLeader
 	DECLARE_STATELESS_ACTOR (AMummyLeaderGhost, AMummyLeader)
 };
 
-IMPLEMENT_STATELESS_ACTOR (AMummyLeaderGhost, Heretic, 46, 0)
+IMPLEMENT_STATELESS_ACTOR (AMummyLeaderGhost, Heretic, 46, 9)
 	PROP_FlagsSet (MF_SHADOW)
 	PROP_Flags3 (MF3_GHOST)
 	PROP_RenderStyle (STYLE_Translucent)
@@ -196,7 +196,7 @@ FState AMummyFX1::States[] =
 	S_BRIGHT (FX15, 'G',	5, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AMummyFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AMummyFX1, Heretic, -1, 131)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (14)
 	PROP_SpeedFixed (9)

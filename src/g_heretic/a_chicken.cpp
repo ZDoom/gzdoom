@@ -89,7 +89,8 @@ FWeaponInfo ABeak::WeaponInfo1 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ABeak)
+	RUNTIME_CLASS(ABeak),
+	-1
 };
 
 FWeaponInfo ABeak::WeaponInfo2 =
@@ -109,7 +110,8 @@ FWeaponInfo ABeak::WeaponInfo2 =
 	15*FRACUNIT,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ABeak)
+	RUNTIME_CLASS(ABeak),
+	-1
 };
 
 IMPLEMENT_ACTOR (ABeak, Heretic, -1, 0)
@@ -216,7 +218,7 @@ FState AChicken::States[] =
 	S_NORMAL (CHKN, 'L',   -1, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AChicken, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AChicken, Heretic, -1, 122)
 	PROP_SpawnHealth (10)
 	PROP_RadiusFixed (9)
 	PROP_HeightFixed (22)
@@ -277,7 +279,7 @@ FState AFeather::States[] =
 	S_NORMAL (CHKN, 'N',	6, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AFeather, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AFeather, Heretic, -1, 121)
 	PROP_RadiusFixed (2)
 	PROP_HeightFixed (4)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)

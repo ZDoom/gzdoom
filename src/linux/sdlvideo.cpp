@@ -29,7 +29,6 @@ public:
 	bool Relock ();
 	void ForceBuffering (bool force);
 	bool IsValid ();
-	void PartialUpdate (int x, int y, int width, int height);
 	void Update ();
 	PalEntry *GetPalette ();
 	void GetFlashedPalette (PalEntry pal[256]);
@@ -330,10 +329,6 @@ void SDLFB::Unlock ()
 	{
 		Buffer = NULL;
 	}			
-}
-
-void SDLFB::PartialUpdate (int x, int y, int width, int height)
-{
 }
 
 void SDLFB::Update ()

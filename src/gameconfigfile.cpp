@@ -219,6 +219,20 @@ void FGameConfigFile::DoGlobalSetup ()
 	{
 		ReadCVars (CVAR_GLOBALCONFIG);
 	}
+#ifdef _WIN32
+	if (SetSection ("LastRun"))
+	{
+		const char *lastver = GetValueForKey ("Version");
+		if (lastver != NULL && atof (lastver) < 123.1f)
+		{
+			FBaseCVar *noblitter = FindCVar ("vid_noblitter", NULL);
+			if (noblitter != NULL)
+			{
+				noblitter->ResetToDefault ();
+			}
+		}
+	}
+#endif
 }
 
 void FGameConfigFile::DoGameSetup (const char *gamename)
@@ -309,16 +323,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 				name = NULL;
 			}
 		}
-	}
-
-	// Set the name of the savegames
-	if (game == Hexen)
-	{
-		GStrings.SetString (SAVEGAMENAME, "zhexsv");
-	}
-	else if (game == Heretic)
-	{
-		GStrings.SetString (SAVEGAMENAME, "zticsv");
 	}
 }
 

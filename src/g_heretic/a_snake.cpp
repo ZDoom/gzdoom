@@ -60,7 +60,7 @@ FState ASnake::States[] =
 	S_NORMAL (SNKE, 'P',   -1, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ASnake, Heretic, 92, 0)
+IMPLEMENT_ACTOR (ASnake, Heretic, 92, 132)
 	PROP_SpawnHealth (280)
 	PROP_RadiusFixed (22)
 	PROP_HeightFixed (70)
@@ -109,7 +109,7 @@ FState ASnakeProjA::States[] =
 	S_BRIGHT (SNFX, 'I',	3, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ASnakeProjA, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ASnakeProjA, Heretic, -1, 138)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (14)
@@ -151,7 +151,7 @@ FState ASnakeProjB::States[] =
 	S_BRIGHT (SNFX, 'O',	3, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ASnakeProjB, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ASnakeProjB, Heretic, -1, 139)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (8)
 	PROP_Damage (3)

@@ -43,7 +43,7 @@ void ABossSpot::Serialize (FArchive &arc)
 	arc << NextSpot;
 }
 
-IMPLEMENT_STATELESS_ACTOR (ABossSpot, Heretic, 56, 0)
+IMPLEMENT_STATELESS_ACTOR (ABossSpot, Heretic, 56, 141)
 	PROP_RenderFlags (RF_INVISIBLE)
 END_DEFAULTS
 
@@ -107,7 +107,7 @@ FState ASorcerer1::States[] =
 	S_NORMAL (SRCR, 'P',   -1, A_SorcererRise			, NULL)
 };
 
-IMPLEMENT_ACTOR (ASorcerer1, Heretic, 7, 0)
+IMPLEMENT_ACTOR (ASorcerer1, Heretic, 7, 142)
 	PROP_SpawnHealth (2000)
 	PROP_RadiusFixed (28)
 	PROP_HeightFixed (100)
@@ -163,7 +163,7 @@ FState ASorcererFX1::States[] =
 	S_BRIGHT (FX14, 'H',	5, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ASorcererFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ASorcererFX1, Heretic, -1, 144)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (10)
 	PROP_SpeedFixed (20)
@@ -238,7 +238,7 @@ FState ASorcerer2::States[] =
 	S_NORMAL (SDTH, 'O',   -1, A_BossDeath				, NULL)
 };
 
-IMPLEMENT_ACTOR (ASorcerer2, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ASorcerer2, Heretic, -1, 143)
 	PROP_SpawnHealth (3500)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (70)
@@ -324,7 +324,7 @@ FState ASorcerer2FX1::States[] =
 	S_BRIGHT (FX16, 'L',	5, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ASorcerer2FX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ASorcerer2FX1, Heretic, -1, 145)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (20)
@@ -392,7 +392,7 @@ FState ASorcerer2FX2::States[] =
 	S_BRIGHT (FX11, 'G',	5, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ASorcerer2FX2, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ASorcerer2FX2, Heretic, -1, 146)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (6)
@@ -596,7 +596,13 @@ void A_Srcr2Decide (AActor *actor)
 		192, 120, 120, 120, 64, 64, 32, 16, 0
 	};
 
-	if (P_Random() < chance[actor->health / (actor->GetDefault()->health/8)])
+	unsigned int chanceindex = actor->health / (actor->GetDefault()->health/8);
+	if (chanceindex >= sizeof(chance)/sizeof(chance[0]))
+	{
+		chanceindex = sizeof(chance)/sizeof(chance[0])-1;
+	}
+
+	if (P_Random() < chance[chanceindex])
 	{
 		P_DSparilTeleport (actor);
 	}

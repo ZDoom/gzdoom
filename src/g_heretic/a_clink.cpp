@@ -50,7 +50,7 @@ FState AClink::States[] =
 	S_NORMAL (CLNK, 'O',   -1, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AClink, Heretic, 90, 0)
+IMPLEMENT_ACTOR (AClink, Heretic, 90, 1)
 	PROP_SpawnHealth (150)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (64)

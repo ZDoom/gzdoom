@@ -1403,8 +1403,18 @@ void G_DoLoadGame (void)
 
 	arc.Close ();
 
-	if (text[9] != 0x1d)
+	if (text[9] == 0x1e)
+	{
+		arc << NextSkill;
+	}
+	else if (text[9] != 0x1d)
+	{
 		I_Error ("Bad savegame");
+	}
+	else
+	{
+		NextSkill = -1;
+	}
 
 	LocalSelectedItem = players[consoleplayer].readyArtifact;
 
@@ -1427,15 +1437,36 @@ void G_SaveGame (const char *filename, const char *description)
 	sendsave = true;
 }
 
-void G_BuildSaveName (char *name, int slot)
+void G_BuildSaveName (char *name, const char *prefix, int slot)
 {
 #ifndef unix
+	const char *leader;
+
 	if (Args.CheckParm ("-cdrom"))
-		sprintf(name, "c:\\zdoomdat\\%s%d.zds", GStrings(SAVEGAMENAME), slot);
+	{
+		leader = "c:/zdoomdat/";
+	}
 	else
-		sprintf (name, "%s%d.zds", GStrings(SAVEGAMENAME), slot);
+	{
+		leader = progdir;
+	}
+	if (slot < 0)
+	{
+		sprintf (name, "%s%s", leader, prefix);
+	}
+	else
+	{
+		sprintf (name, "%s%s%d.zds", leader, prefix, slot);
+	}
 #else
-	sprintf (name, "%s%d.zds", GStrings(SAVEGAMENAME), slot);
+	if (slot < 0)
+	{
+		sprintf (name, "%s", prefix);
+	}
+	else
+	{
+		sprintf (name, "%s%d.zds", prefix, slot);
+	}
 	char *path = GetUserFile (name);
 	strcpy (name, path);
 	delete[] path;
@@ -1466,7 +1497,7 @@ void G_DoAutoSave ()
 	num.Int = (autosavenum + 1) & 3;
 	autosavenum.ForceSet (num, CVAR_Int);
 
-	sprintf (name, "auto%d.zds", num.Int);
+	G_BuildSaveName (name, "auto", num.Int);
 	savegamefile = copystring (name);
 
 	time (&utcTime);
@@ -1647,8 +1678,8 @@ void G_DoSaveGame ()
 	for (i = 0; i < NUM_GLOBALVARS; i++)
 		arc << ACS_GlobalVars[i];
 
-	BYTE consist = 0x1d;			// consistancy marker
-	arc << consist;
+	BYTE consist = 0x1e;			// consistancy marker
+	arc << consist << NextSkill;
 
 	M_NotifyNewSave (savegamefile, savedescription);
 	gameaction = ga_nothing;

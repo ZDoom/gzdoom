@@ -597,13 +597,18 @@ void M_ReadSaveStrings ()
 	{
 		long filefirst;
 		findstate_t c_file;
+		char filter[PATH_MAX];
 
-		filefirst = I_FindFirst ("*.zds", &c_file);
+		G_BuildSaveName (filter, "*.zds", -1);
+		filefirst = I_FindFirst (filter, &c_file);
 		if (filefirst != -1)
 		{
 			do
 			{
-				FILE *file = fopen (I_FindName (&c_file), "rb");
+				// I_FindName only returns the file's name and not its full path
+				char filepath[PATH_MAX];
+				G_BuildSaveName (filepath, I_FindName(&c_file), -1);
+				FILE *file = fopen (filepath, "rb");
 				if (file != NULL)
 				{
 					char sig[PATH_MAX];
@@ -1133,13 +1138,13 @@ void M_DoSave (FSaveGameNode *node)
 	else
 	{
 		// Find an unused filename, and save as that
-		char filename[24];
+		char filename[PATH_MAX];
 		int i;
 		FILE *test;
 
 		for (i = 0;; ++i)
 		{
-			sprintf (filename, "save%d.zds", i);
+			G_BuildSaveName (filename, "save", i);
 			test = fopen (filename, "rb");
 			if (test == NULL)
 			{

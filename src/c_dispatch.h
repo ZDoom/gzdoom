@@ -117,6 +117,7 @@ public:
 	bool IsAlias ();
 	void PrintAlias () { Printf ("%s : %s\n", m_Name, m_Command); }
 	void Archive (FConfigFile *f);
+	void Realias (const char *command);
 protected:
 	char *m_Command;
 };

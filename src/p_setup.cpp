@@ -546,6 +546,199 @@ void P_LoadThings (int lump)
 	Z_Free (data);
 }
 
+//
+// P_SpawnSlopeMakers
+//
+
+static void P_SlopeLineToPoint (int lineid, fixed_t x, fixed_t y, fixed_t z, BOOL slopeCeil)
+{
+	int linenum = -1;
+
+	while ((linenum = P_FindLineFromID (lineid, linenum)) != -1)
+	{
+		const line_t *line = &lines[linenum];
+		sector_t *sec;
+		secplane_t *plane;
+		
+		if (P_PointOnLineSide (x, y, line) == 0)
+		{
+			sec = line->frontsector;
+		}
+		else
+		{
+			sec = line->backsector;
+		}
+		if (sec == NULL)
+		{
+			continue;
+		}
+		if (slopeCeil)
+		{
+			plane = &sec->ceilingplane;
+		}
+		else
+		{
+			plane = &sec->floorplane;
+		}
+
+		vec3_t p, v1, v2, cross;
+
+		p[0] = FIXED2FLOAT (line->v1->x);
+		p[1] = FIXED2FLOAT (line->v1->y);
+		p[2] = FIXED2FLOAT (plane->ZatPoint (line->v1->x, line->v1->y));
+		v1[0] = FIXED2FLOAT (line->dx);
+		v1[1] = FIXED2FLOAT (line->dy);
+		v1[2] = FIXED2FLOAT (plane->ZatPoint (line->v2->x, line->v2->y)) - p[2];
+		v2[0] = FIXED2FLOAT (x - line->v1->x);
+		v2[1] = FIXED2FLOAT (y - line->v1->y);
+		v2[2] = FIXED2FLOAT (z) - p[2];
+
+		CrossProduct (v1, v2, cross);
+		VectorNormalize (cross);
+
+		// Fix backward normals
+		if ((cross[2] < 0 && !slopeCeil) || (cross[2] > 0 && slopeCeil))
+		{
+			cross[0] = -cross[0];
+			cross[1] = -cross[1];
+			cross[2] = -cross[2];
+		}
+
+		plane->a = FLOAT2FIXED (cross[0]);
+		plane->b = FLOAT2FIXED (cross[1]);
+		plane->c = FLOAT2FIXED (cross[2]);
+		plane->ic = FLOAT2FIXED (1.f/cross[2]);
+		plane->d = -TMulScale16 (plane->a, x,
+								 plane->b, y,
+								 plane->c, z);
+	}
+}
+
+static void P_CopyPlane (int tag, fixed_t x, fixed_t y, BOOL copyCeil)
+{
+	sector_t *dest = R_PointInSubsector (x, y)->sector;
+	sector_t *source;
+	int secnum;
+	size_t planeofs;
+
+	secnum = P_FindSectorFromTag (tag, -1);
+	if (secnum == -1)
+	{
+		return;
+	}
+
+	source = &sectors[secnum];
+
+	if (copyCeil)
+	{
+		planeofs = myoffsetof(sector_t, ceilingplane);
+	}
+	else
+	{
+		planeofs = myoffsetof(sector_t, floorplane);
+	}
+	*(secplane_t *)((BYTE *)dest + planeofs) = *(secplane_t *)((BYTE *)source + planeofs);
+}
+
+void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
+	fixed_t x, fixed_t y, fixed_t z)
+{
+	angle_t xyang;
+	angle_t zang;
+
+	if (zangi >= 180)
+	{
+		zang = ANGLE_180-ANGLE_1;
+	}
+	else if (zangi <= 0)
+	{
+		zang = ANGLE_1;
+	}
+	else
+	{
+		zang = Scale (zangi, ANGLE_180, 180);
+	}
+	if (!setCeil)
+	{
+		zang += ANGLE_180;
+	}
+	zang >>= ANGLETOFINESHIFT;
+
+	xyang = (angle_t)Scale (xyangi, ANGLE_180, 180) >> ANGLETOFINESHIFT;
+
+	vec3_t norm;
+
+	norm[0] = (float)(finecosine[zang] * finecosine[xyang]);
+	norm[1] = (float)(finecosine[zang] * finesine[xyang]);
+	norm[2] = (float)(finesine[zang]) * 65536.f;
+	VectorNormalize (norm);
+	plane->a = (int)(norm[0] * 65536.f);
+	plane->b = (int)(norm[1] * 65536.f);
+	plane->c = (int)(norm[2] * 65536.f);
+	plane->ic = (int)(65536.f / norm[2]);
+	plane->d = -TMulScale16 (plane->a, x,
+							 plane->b, y,
+							 plane->c, z);
+}
+
+enum
+{
+	THING_SlopeFloorPointLine = 9500,
+	THING_SlopeCeilingPointLine = 9501,
+	THING_SetFloorSlope = 9502,
+	THING_SetCeilingSlope = 9503,
+	THING_CopyFloorPlane = 9510,
+	THING_CopyCeilingPlane = 9511,
+};
+
+static void P_SpawnSlopeMakers (mapthing2_t *mt, mapthing2_t *lastmt)
+{
+	mapthing2_t *firstmt = mt;
+
+	for (; mt < lastmt; ++mt)
+	{
+		if (mt->type >= THING_SlopeFloorPointLine &&
+			mt->type <= THING_SetCeilingSlope)
+		{
+			fixed_t x, y, z;
+			secplane_t *refplane;
+			sector_t *sec;
+
+			x = mt->x << FRACBITS;
+			y = mt->y << FRACBITS;
+			sec = R_PointInSubsector (x, y)->sector;
+			if (mt->type & 1)
+			{
+				refplane = &sec->ceilingplane;
+			}
+			else
+			{
+				refplane = &sec->floorplane;
+			}
+			z = refplane->ZatPoint (x, y) + (mt->z << FRACBITS);
+			if (mt->type <= THING_SlopeCeilingPointLine)
+			{
+				P_SlopeLineToPoint (mt->args[0], x, y, z, mt->type & 1);
+			}
+			else
+			{
+				P_SetSlope (refplane, mt->type & 1, mt->angle, mt->args[0], x, y, z);
+			}
+			mt->type = 0;
+		}
+	}
+
+	for (mt = firstmt; mt < lastmt; ++mt)
+	{
+		if (mt->type == THING_CopyFloorPlane ||
+			mt->type == THING_CopyCeilingPlane)
+		{
+			P_CopyPlane (mt->args[0], mt->x << FRACBITS, mt->y << FRACBITS, mt->type & 1);
+			mt->type = 0;
+		}
+	}
+}
+
 // [RH]
 // P_LoadThings2
 //
@@ -560,13 +753,9 @@ void P_LoadThings2 (int lump, int position)
 	mapthing2_t *mt = (mapthing2_t *)data;
 	mapthing2_t *lastmt = (mapthing2_t *)(data + W_LumpLength (lump));
 
-	for ( ; mt < lastmt; mt++)
+#ifdef __BIG_ENDIAN__
+	for (; mt < lastmt; ++mt)
 	{
-		// [RH] At this point, monsters unique to Doom II were weeded out
-		//		if the IWAD wasn't for Doom II. P_SpawnMapThing() can now
-		//		handle these and more cases better, so we just pass it
-		//		everything and let it decide what to do with them.
-
 		mt->thingid = SHORT(mt->thingid);
 		mt->x = SHORT(mt->x);
 		mt->y = SHORT(mt->y);
@@ -574,7 +763,14 @@ void P_LoadThings2 (int lump, int position)
 		mt->angle = SHORT(mt->angle);
 		mt->type = SHORT(mt->type);
 		mt->flags = SHORT(mt->flags);
+	}
+#endif
 
+	// [RH] Spawn slope creating things first.
+	P_SpawnSlopeMakers (mt, lastmt);
+
+	for (; mt < lastmt; mt++)
+	{
 		P_SpawnMapThing (mt, position);
 	}
 
@@ -1069,7 +1265,6 @@ void P_LoadSideDefs2 (int lump)
 }
 
 // [RH] Set slopes for sectors, based on line specials
-
 //
 // P_AlignPlane
 //
@@ -1171,6 +1366,7 @@ void P_SetSlopes ()
 		if (lines[i].special == Plane_Align)
 		{
 			lines[i].special = 0;
+			lines[i].id = lines[i].args[2];
 			if (lines[i].backsector != NULL)
 			{
 				// args[0] is for floor, args[1] is for ceiling
@@ -1544,6 +1740,32 @@ void P_LoadBehavior (int lumpnum)
 	}
 }
 
+// Hash the sector tags across the sectors and linedefs.
+static void P_InitTagLists ()
+{
+	int i;
+
+	for (i=numsectors; --i>=0; )		// Initially make all slots empty.
+		sectors[i].firsttag = -1;
+	for (i=numsectors; --i>=0; )		// Proceed from last to first sector
+	{									// so that lower sectors appear first
+		int j = (unsigned) sectors[i].tag % (unsigned) numsectors;	// Hash func
+		sectors[i].nexttag = sectors[j].firsttag;	// Prepend sector to chain
+		sectors[j].firsttag = i;
+	}
+
+	// killough 4/17/98: same thing, only for linedefs
+
+	for (i=numlines; --i>=0; )			// Initially make all slots empty.
+		lines[i].firstid = -1;
+	for (i=numlines; --i>=0; )        // Proceed from last to first linedef
+	{									// so that lower linedefs appear first
+		int j = (unsigned) lines[i].id % (unsigned) numlines;	// Hash func
+		lines[i].nextid = lines[j].firstid;	// Prepend linedef to chain
+		lines[j].firstid = i;
+	}
+}
+
 //
 // P_SetupLevel
 //
@@ -1669,6 +1891,8 @@ void P_SetupLevel (char *lumpname, int position)
 	deathmatchstarts.Clear ();
 
 	P_SetSlopes ();
+
+	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
 
 	if (!HasBehavior)
 		P_LoadThings (lumpnum+ML_THINGS);

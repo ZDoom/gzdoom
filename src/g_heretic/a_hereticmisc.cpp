@@ -64,7 +64,7 @@ FState APod::States[] =
 	S_NORMAL (PPOD, 'P',	3, NULL 						, &States[S_POD_WAIT+0])
 };
 
-BEGIN_DEFAULTS (APod, Heretic, 2035, 0)
+BEGIN_DEFAULTS (APod, Heretic, 2035, 125)
 	PROP_SpawnHealth (45)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (54)
@@ -124,7 +124,7 @@ FState APodGenerator::States[] =
 	S_NORMAL (TNT1, 'A',   35, A_MakePod					, &States[0])
 };
 
-IMPLEMENT_ACTOR (APodGenerator, Heretic, 43, 0)
+IMPLEMENT_ACTOR (APodGenerator, Heretic, 43, 126)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -231,7 +231,7 @@ FState ATeleGlitterGenerator1::States[] =
 	S_NORMAL (TGLT, 'A',	8, A_SpawnTeleGlitter			, &States[0])
 };
 
-IMPLEMENT_ACTOR (ATeleGlitterGenerator1, Heretic, 74, 0)
+IMPLEMENT_ACTOR (ATeleGlitterGenerator1, Heretic, 74, 166)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_NOSECTOR)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -248,7 +248,7 @@ FState ATeleGlitterGenerator2::States[] =
 	S_NORMAL (TGLT, 'F',	8, A_SpawnTeleGlitter2			, &States[0])
 };
 
-IMPLEMENT_ACTOR (ATeleGlitterGenerator2, Heretic, 52, 0)
+IMPLEMENT_ACTOR (ATeleGlitterGenerator2, Heretic, 52, 167)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_NOSECTOR)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -369,7 +369,7 @@ FState ASuperMap::States[] =
 	S_NORMAL (SPMP, 'A',   -1, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (ASuperMap, Heretic, 35, 0)
+IMPLEMENT_ACTOR (ASuperMap, Heretic, 35, 137)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 
@@ -403,7 +403,7 @@ FState AVolcano::States[] =
 	S_NORMAL (VLCO, 'E',   10, A_VolcanoBlast			, &States[1])
 };
 
-IMPLEMENT_ACTOR (AVolcano, Heretic, 87, 0)
+IMPLEMENT_ACTOR (AVolcano, Heretic, 87, 150)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (20)
 	PROP_Flags (MF_SOLID)
@@ -433,7 +433,7 @@ FState AVolcanoBlast::States[] =
 	S_NORMAL (XPL1, 'F',	4, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AVolcanoBlast, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AVolcanoBlast, Heretic, -1, 123)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (2)
@@ -470,7 +470,7 @@ FState AVolcanoTBlast::States[] =
 	S_NORMAL (SFFI, 'E',	4, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AVolcanoTBlast, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AVolcanoTBlast, Heretic, -1, 124)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (2)

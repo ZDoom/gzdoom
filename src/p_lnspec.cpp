@@ -1793,6 +1793,19 @@ FUNC(LS_Autosave)
 	return true;
 }
 
+FUNC(LS_ChangeSkill)
+{
+	if (arg0 < sk_baby || arg0 > sk_nightmare)
+	{
+		NextSkill = -1;
+	}
+	else
+	{
+		NextSkill = arg0;
+	}
+	return true;
+}
+
 lnSpecFunc LineSpecials[256] =
 {
 	LS_NOP,
@@ -1974,7 +1987,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 176
 	LS_NOP,		// 177
 	LS_NOP,		// 178
-	LS_NOP,		// 179
+	LS_ChangeSkill,
 	LS_Thing_SetTranslation,
 	LS_NOP,		// Plane_Align
 	LS_NOP,		// Line_Mirror

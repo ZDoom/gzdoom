@@ -1,3 +1,91 @@
+January 28, 2002
+- Fixed: Using allowdecals in ANIMDEFS was broken.
+- Added more ways to create slopes, all of which are thing-based:
+
+	Things 9500 and 9501: The first argument to these things is a line id.
+		For each matching line, the sector on the same side of the line
+		has its floor or ceiling sloped so that it passes through this thing.
+		The thing does not necessarily need to be in the sector(s) being
+		sloped. 9500 slopes the floor, and 9501 slopes the ceiling.
+	Things 9502 and 9503: Set the plane equation for the sector they are in
+		directly. The first argument determines how far it tilts from
+		horizontal and is measured in degrees. 90 degrees is perfectly
+		horizontal. Values close to 90 have less slope than values further
+		from 90. The thing's angle is used to determine what direction the
+		slope faces. The floor or ceiling will be adjusted so that it passes
+		through this thing. 9502 slopes the floor, and 9503 slopes the
+		ceiling.
+	Things 9510 and 9511: The first argument to these is a sector tag. The
+		plane equation from the first sector with a matching tag will be
+		copied to the sector that this thing is in. 9510 copies the floor
+		plane, and 9511 copies the ceiling plane.
+
+	Things 9500-9503 are processed after slopes created with linedef specials,
+	so they can be used to further adjust the resultant slope. Things 9510
+	and 9511 are processed after all other slopes are set up, so they override
+	any slopes that might have been created in their sectors already.
+	
+January 26, 2002
+- Assigned spawn numbers to most of the Heretic actors and added one for
+  Doom's health bonus.
+- Added ChangeSkill special (#179).
+- Changed A_FireRailgun to use the ammouse field to determine how much ammo
+  to eat up.
+- Added a minammo member to FWeaponInfo and made it dehacked-settable.
+- Fixed: Savegames went in the current directory instead of the program
+  directory.
+- Fixed: Aliases could not realias themselves reliably.
+- Fixed: Particle drawing was erratic in sectors with fake floors.
+- Improved detection of windows into below-deep-floor areas to have fewer
+  false positives with complex geometry. It works for all the test cases I
+  have now, so hopefully all the false positives have been eliminated.
+
+January 25, 2002
+- Because I can't figure out what's going wrong with the blitter, when loading
+  an ini from a previous ZDoom version, vid_noblitter will now be reset to
+  true, because I'm not sure it's benefiting anyone.
+- Removed DFrameBuffer::PartialUpdate.
+- Added more debugging spew and tried different blit techniques, and blits
+  still take too long. They're supposed to be asynchronous, but my timings
+  indicate otherwise--the blit times are proportional to the size of the
+  blit, BltFast almost never returned DDBLT_WASSTILLDRAWING when I removed the
+  _WAIT flag, and a 1600x1200 blit takes ~15 ms to complete (memcpy only needs
+  ~4 ms to do the same thing). It seems like it's not using DMA at all but
+  some lame software emulation instead, so I tried obtaining an
+  IDirectDrawSurface2 interface and PageLocking the blitter surface, but it
+  made no difference. Why did it work before but it doesn't now?
+- Removed the unlock/lock around D_NetUpdate when rendering. This is only
+  needed when a video memory surface is locked under Win9x. Since my
+  experiment with writing directly to video memory is gone, this never
+  happens.
+- Fixed: Alt-tabbing away and back when using the blitter would fail to
+  restore the lost surfaces, because system memory surfaces don't normally
+  get lost from such a situation, so the LockSurf call would return ok, and
+  the BltFast in Update would fail later.
+
+January 24, 2002
+- Added heapsize cvar so you don't need to use -heapsize if you always want
+  to use a heap other than 8 megabytes. Moved Z_Init to happen after loading
+  the config file so that the cvar is available when it gets called.
+- Lines with sky on the front and back are no longer considered fog
+  boundaries. As long as fog does not effect the sky, it looks bad to be
+  drawing the boundaries of different fogs in outdoor areas.
+- Fixed: R_ProjectParticle() did not set vis->cx, so R_DrawSprite() was
+  unable to properly determine if a drawseg was in front of a particle or
+  not.
+- Added a #wadauthor switch to ACC to cause it to create dummy scripts for
+  all the real scripts in the map so WadAuthor's error checking will know
+  about them. I had to change my ACSe detection to no longer look for scripts
+  that appear to have 0 scripts and strings. Since the standard ACC will
+  never generate object files with the ACSe tag, this should be safe.
+- I think I must have messed up the blitter code somewhere, because now it
+  slows down the machine it used to speed up. I don't see anything wrong
+  though! Changed the default for vid_noblitter to true until I can figure
+  out what's going on.
+- Added vid_vsync cvar to control whether or not vsync is used when flipping
+  the display. Since the framerate gets clamped well below the refresh rate,
+  turning off vsync is probably useless.
+
 January 23, 2002
 - Fixed: Deleting the most recently saved game and then dying would crash
   because the game would try to load that game and fail because it no longer

@@ -137,7 +137,8 @@ CVAR(Bool, r_fogboundary, true, 0)
 inline bool IsFogBoundary (sector_t *front, sector_t *back)
 {
 	return r_fogboundary && front->floorcolormap->Fade &&
-		front->floorcolormap->Fade != back->floorcolormap->Fade;
+		front->floorcolormap->Fade != back->floorcolormap->Fade &&
+		(front->ceilingpic != skyflatnum || back->ceilingpic != skyflatnum);
 }
 
 //=============================================================================

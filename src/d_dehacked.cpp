@@ -1371,6 +1371,10 @@ static int PatchWeapon (int weapNum)
 		{
 			info->ammouse = val;
 		}
+		else if (stricmp (Line1, "Min ammo") == 0)
+		{
+			info->minammo = val;
+		}
 		else
 		{
 			Printf (unknown_str, Line1, "Weapon", weapNum);
@@ -1460,7 +1464,7 @@ static int PatchMisc (int dummy)
 		{
 			if (stricmp (Line1, "BFG Cells/Shot") == 0)
 			{
-				if (wpnlev1info[wp_bfg])
+				if (wpnlev1info[wp_bfg] != NULL)
 					wpnlev1info[wp_bfg]->ammouse = atoi (Line2);
 			}
 			else if (stricmp (Line1, "Rocket Explosion Style") == 0)

@@ -135,6 +135,12 @@ struct FWeaponInfo
 	const char		*upsound;
 	const char		*readysound;
 	TypeInfo		*type;		// type of actor that represents this weapon
+	int				minammo;	// minimum ammo needed to switch to this weapon
+
+	int GetMinAmmo () const
+	{
+		return (minammo < 0) ? ammouse : minammo;
+	}
 };
 
 enum

@@ -34,7 +34,7 @@ FState AKeyGreen::States[] =
 	S_BRIGHT (AKYY, 'J',	3, NULL 				, &States[0])
 };
 
-IMPLEMENT_ACTOR (AKeyGreen, Heretic, 73, 0)
+IMPLEMENT_ACTOR (AKeyGreen, Heretic, 73, 86)
 	PROP_Flags (MF_SPECIAL|MF_NOTDMATCH)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -69,7 +69,7 @@ FState AKeyBlue::States[] =
 	S_BRIGHT (BKYY, 'J',	3, NULL 				, &States[0])
 };
 
-IMPLEMENT_ACTOR (AKeyBlue, Heretic, 79, 0)
+IMPLEMENT_ACTOR (AKeyBlue, Heretic, 79, 85)
 	PROP_Flags (MF_SPECIAL|MF_NOTDMATCH)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -103,7 +103,7 @@ FState AKeyYellow::States[] =
 	S_BRIGHT (CKYY, 'I',	3, NULL 				, &States[0])
 };
 
-IMPLEMENT_ACTOR (AKeyYellow, Heretic, 80, 0)
+IMPLEMENT_ACTOR (AKeyYellow, Heretic, 80, 87)
 	PROP_Flags (MF_SPECIAL|MF_NOTDMATCH)
 	PROP_SpawnState (0)
 END_DEFAULTS

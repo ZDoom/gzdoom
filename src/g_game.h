@@ -60,6 +60,8 @@ BOOL G_Responder (event_t*	ev);
 
 void G_ScreenShot (char *filename);
 
+void G_BuildSaveName (char *name, const char *prefix, int slot);
+
 enum EFinishLevelType
 {
 	FINISH_SameHub,

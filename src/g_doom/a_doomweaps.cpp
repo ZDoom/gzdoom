@@ -338,7 +338,8 @@ FWeaponInfo AFist::WeaponInfo =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AFist)
+	RUNTIME_CLASS(AFist),
+	-1
 };
 
 IMPLEMENT_ACTOR (AFist, Doom, -1, 0)
@@ -443,7 +444,8 @@ FWeaponInfo APistol::WeaponInfo =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(APistol)
+	RUNTIME_CLASS(APistol),
+	-1
 };
 
 IMPLEMENT_ACTOR (APistol, Doom, -1, 0)
@@ -534,7 +536,8 @@ FWeaponInfo AChainsaw::WeaponInfo =
 	0,
 	"weapons/sawup",
 	"weapons/sawidle",
-	RUNTIME_CLASS(AChainsaw)
+	RUNTIME_CLASS(AChainsaw),
+	-1
 };
 
 IMPLEMENT_ACTOR (AChainsaw, Doom, 2005, 32)
@@ -671,7 +674,8 @@ FWeaponInfo AShotgun::WeaponInfo =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AShotgun)
+	RUNTIME_CLASS(AShotgun),
+	-1
 };
 
 IMPLEMENT_ACTOR (AShotgun, Doom, 2001, 27)
@@ -793,7 +797,8 @@ FWeaponInfo ASuperShotgun::WeaponInfo =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ASuperShotgun)
+	RUNTIME_CLASS(ASuperShotgun),
+	-1
 };
 
 IMPLEMENT_ACTOR (ASuperShotgun, Doom, 82, 33)
@@ -932,7 +937,8 @@ FWeaponInfo AChaingun::WeaponInfo =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AChaingun)
+	RUNTIME_CLASS(AChaingun),
+	-1
 };
 
 IMPLEMENT_ACTOR (AChaingun, Doom, 2002, 28)
@@ -1045,7 +1051,8 @@ FWeaponInfo ARocketLauncher::WeaponInfo =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ARocketLauncher)
+	RUNTIME_CLASS(ARocketLauncher),
+	-1
 };
 
 IMPLEMENT_ACTOR (ARocketLauncher, Doom, 2003, 29)
@@ -1171,7 +1178,8 @@ FWeaponInfo APlasmaRifle::WeaponInfo =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(APlasmaRifle)
+	RUNTIME_CLASS(APlasmaRifle),
+	-1
 };
 
 IMPLEMENT_ACTOR (APlasmaRifle, Doom, 2004, 30)
@@ -1259,17 +1267,7 @@ void A_FireRailgun (player_t *player, pspdef_t *psp)
 {
 	int damage;
 
-	if (player->ammo[wpnlev1info[player->readyweapon]->ammo] < 10)
-	{
-		int ammo = player->ammo[wpnlev1info[player->readyweapon]->ammo];
-		player->ammo[wpnlev1info[player->readyweapon]->ammo] = 0;
-		P_CheckAmmo (player);
-		player->ammo[wpnlev1info[player->readyweapon]->ammo] = ammo;
-		return;
-	}
-
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[wpnlev1info[player->readyweapon]->ammo] -= 10;
+	player->UseAmmo ();
 
 	if (wpnlev1info[player->readyweapon]->flashstate)
 	{
@@ -1373,7 +1371,8 @@ FWeaponInfo ABFG9000::WeaponInfo =
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(ABFG9000)
+	RUNTIME_CLASS(ABFG9000),
+	-1
 };
 
 IMPLEMENT_ACTOR (ABFG9000, Doom, 2006, 31)

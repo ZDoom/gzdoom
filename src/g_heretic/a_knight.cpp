@@ -57,7 +57,7 @@ FState AKnight::States[] =
 	S_NORMAL (KNIG, 'O',   -1, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AKnight, Heretic, 64, 0)
+IMPLEMENT_ACTOR (AKnight, Heretic, 64, 6)
 	PROP_SpawnHealth (200)
 	PROP_RadiusFixed (24)
 	PROP_HeightFixed (78)
@@ -103,7 +103,7 @@ class AKnightGhost : public AKnight
 	DECLARE_STATELESS_ACTOR (AKnightGhost, AKnight)
 };
 
-IMPLEMENT_STATELESS_ACTOR (AKnightGhost, Heretic, 65, 0)
+IMPLEMENT_STATELESS_ACTOR (AKnightGhost, Heretic, 65, 129)
 	PROP_FlagsSet (MF_SHADOW)
 	PROP_Flags3 (MF3_GHOST)
 	PROP_RenderStyle (STYLE_Translucent)
@@ -130,7 +130,7 @@ FState AKnightAxe::States[] =
 	S_BRIGHT (SPAX, 'F',	6, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AKnightAxe, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AKnightAxe, Heretic, -1, 127)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (9)
@@ -168,7 +168,7 @@ FState ARedAxe::States[] =
 	S_BRIGHT (RAXE, 'E',	6, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ARedAxe, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ARedAxe, Heretic, -1, 128)
 	PROP_Damage (7)
 	PROP_Flags2Clear (MF2_WINDTHRUST)
 

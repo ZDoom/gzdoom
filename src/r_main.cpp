@@ -384,6 +384,11 @@ float R_GetFOV ()
 
 void R_SetVisibility (float vis)
 {
+	if (FocalTangent == 0)
+	{
+		return;
+	}
+
 	// Allow negative visibilities, just for novelty's sake
 	//vis = clamp (vis, -204.7f, 204.7f);
 

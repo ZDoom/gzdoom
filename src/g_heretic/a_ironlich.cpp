@@ -49,7 +49,7 @@ FState AIronlich::States[] =
 	S_NORMAL (HEAD, 'I',   -1, A_BossDeath				, NULL)
 };
 
-IMPLEMENT_ACTOR (AIronlich, Heretic, 6, 0)
+IMPLEMENT_ACTOR (AIronlich, Heretic, 6, 20)
 	PROP_SpawnHealth (700)
 	PROP_RadiusFixed (40)
 	PROP_HeightFixed (72)
@@ -110,7 +110,7 @@ FState AHeadFX1::States[] =
 	S_NORMAL (FX05, 'G',	5, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AHeadFX1, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AHeadFX1, Heretic, -1, 164)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (6)
 	PROP_SpeedFixed (13)
@@ -228,7 +228,7 @@ FState AWhirlwind::States[] =
 	S_NORMAL (FX07, 'D',	4, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (AWhirlwind, Heretic, -1, 0)
+IMPLEMENT_ACTOR (AWhirlwind, Heretic, -1, 165)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (74)
 	PROP_SpeedFixed (10)

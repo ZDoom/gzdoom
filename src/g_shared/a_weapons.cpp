@@ -362,7 +362,7 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 				if (weap >= NUMWEAPONS
 					|| !player->weaponowned[weap]
 					|| (infos[weap]->ammo < NUMAMMO &&
-						player->ammo[infos[weap]->ammo] < infos[weap]->ammouse))
+						player->ammo[infos[weap]->ammo] < infos[weap]->GetMinAmmo()))
 				{
 					continue;
 				}
@@ -378,7 +378,7 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 		if (weap >= NUMWEAPONS
 			|| !player->weaponowned[weap]
 			|| (infos[weap]->ammo < NUMAMMO &&
-				player->ammo[infos[weap]->ammo] < infos[weap]->ammouse))
+				player->ammo[infos[weap]->ammo] < infos[weap]->GetMinAmmo()))
 		{
 			continue;
 		}
@@ -455,7 +455,7 @@ weapontype_t PickNextWeapon (player_s *player)
 			if (weap >= NUMWEAPONS
 				|| !player->weaponowned[weap]
 				|| (infos[weap]->ammo < NUMAMMO &&
-					player->ammo[infos[weap]->ammo] < infos[weap]->ammouse))
+					player->ammo[infos[weap]->ammo] < infos[weap]->GetMinAmmo()))
 			{
 				continue;
 			}
@@ -490,7 +490,7 @@ weapontype_t PickPrevWeapon (player_s *player)
 			if (weap >= NUMWEAPONS
 				|| !player->weaponowned[weap]
 				|| (infos[weap]->ammo < NUMAMMO &&
-					player->ammo[infos[weap]->ammo] < infos[weap]->ammouse))
+					player->ammo[infos[weap]->ammo] < infos[weap]->GetMinAmmo()))
 			{
 				continue;
 			}

@@ -791,7 +791,11 @@ FConsoleAlias::FConsoleAlias (const char *name, const char *command)
 
 FConsoleAlias::~FConsoleAlias ()
 {
-	delete[] m_Command;
+	if (m_Command != NULL)
+	{
+		delete[] m_Command;
+		m_Command = NULL;
+	}
 }
 
 char *BuildString (int argc, char **argv)
@@ -927,6 +931,7 @@ CCMD (alias)
 			{
 				if (alias->IsAlias ())
 				{
+					static_cast<FConsoleAlias *> (alias)->Realias (argv[2]);
 					delete alias;
 				}
 				else
@@ -935,7 +940,7 @@ CCMD (alias)
 					return;
 				}
 			}
-			new FConsoleAlias (argv[1], copystring (argv[2]));
+			new FConsoleAlias (argv[1], argv[2]);
 		}
 	}
 }
@@ -1004,7 +1009,26 @@ bool FConsoleAlias::IsAlias ()
 
 void FConsoleAlias::Run (FCommandLine &args, AActor *m_Instigator, int key)
 {
-	AddCommandString (m_Command, key);
+	char *mycommand = m_Command;
+	m_Command = NULL;
+	AddCommandString (mycommand, key);
+	if (m_Command != NULL)
+	{ // The alias realiased itself, so delete the memory used by this command.
+		delete[] mycommand;
+	}
+	else
+	{ // The alias is unchanged, so put the command back so it can be used again.
+		m_Command = mycommand;
+	}
+}
+
+void FConsoleAlias::Realias (const char *command)
+{
+	if (m_Command != NULL)
+	{
+		delete[] m_Command;
+	}
+	m_Command = copystring (command);
 }
 
 extern void D_AddFile (const char *file);

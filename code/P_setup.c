@@ -49,6 +49,7 @@ extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
 extern void P_TranslateTeleportThings (void);
 extern int	P_TranslateSectorSpecial (int);
 
+extern unsigned int R_OldBlend;
 
 //
 // MAP related Lookup tables.
@@ -363,10 +364,10 @@ void P_LoadSectors (int lump)
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
 		if (level.outsidefog != 0xff000000 && ss->ceilingpic == skyflatnum)
-			ss->colormap = GetSpecialLights (255,255,255,
+			ss->ceilingcolormap = ss->floorcolormap = GetSpecialLights (255,255,255,
 				RPART(level.outsidefog),GPART(level.outsidefog),BPART(level.outsidefog));
 		else
-			ss->colormap = GetSpecialLights (255,255,255,
+			ss->ceilingcolormap = ss->floorcolormap = GetSpecialLights (255,255,255,
 				RPART(level.fadeto),GPART(level.fadeto),BPART(level.fadeto));
 
 		ss->sky = 0;
@@ -760,7 +761,8 @@ void P_LoadSideDefs2 (int lump)
 
 					for (s = 0; s < numsectors; s++) {
 						if (sectors[s].tag == sd->tag)
-							sectors[s].colormap = colormap;
+							sectors[s].ceilingcolormap =
+								sectors[s].floorcolormap = colormap;
 					}
 				}
 			}
@@ -1409,6 +1411,7 @@ void P_SetupLevel (char *lumpname, int position)
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();
 
+	R_OldBlend = ~0;
 	// preload graphics
 	if (precache)
 		R_PrecacheLevel ();

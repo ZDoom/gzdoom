@@ -67,7 +67,7 @@ extern char *IdStrings[22];
 extern int DisplayID;
 
 unsigned int Col2RGB8[65][256];
-byte RGB8k[16][32][16];
+byte RGB32k[32][32][32];
 
 
 // [RH] The framebuffer is no longer a mere byte array.
@@ -232,8 +232,8 @@ void V_DimScreen (screen_t *screen)
 		for (y = 0; y < screen->height; y++) {
 			for (x = 0; x < screen->width; x++) {
 				unsigned int bg = bg2rgb[*spot];
-				bg = (fg+bg) | 0xf07c3e1f;
-				*spot++ = RGB8k[0][0][(bg>>5) & (bg>>19)];
+				bg = (fg+bg) | 0x1f07c1f;
+				*spot++ = RGB32k[0][0][bg&(bg>>15)];
 			}
 			spot += gap;
 		}
@@ -407,19 +407,18 @@ void Cmd_SetColor (void *plyr, int argc, char **argv)
 	}
 }
 
-// This is DOSDoom 0.65's translucency table code, cleaned up.
-// I also removed the use of Allegro's RGB table code, because
-// it just wasn't accurate enough.
+// Build the tables necessary for translucency
 void BuildTransTable (unsigned int *palette)
 {
 	{
 		int r, g, b;
 
 		// create the small RGB table
-		for (r = 0; r < 16; r++)
+		for (r = 0; r < 32; r++)
 			for (g = 0; g < 32; g++)
-				for (b = 0; b < 16; b++)
-					RGB8k[r][g][b] = BestColor (palette, r * 16, g * 8, b * 16, 256);
+				for (b = 0; b < 32; b++)
+					RGB32k[r][g][b] = BestColor (palette,
+						(r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2), 256);
 	}
 
 	{
@@ -427,9 +426,9 @@ void BuildTransTable (unsigned int *palette)
 
 		for (x = 0; x < 65; x++)
 			for (y = 0; y < 256; y++)
-				Col2RGB8[x][y] = (((RPART(palette[y])*x)>>5)<<9)  |
-								 (((GPART(palette[y])*x)>>4)<<18) |
-								  ((BPART(palette[y])*x)>>5);
+				Col2RGB8[x][y] = (((RPART(palette[y])*x)>>4)<<20)  |
+								  ((GPART(palette[y])*x)>>4) |
+								 (((BPART(palette[y])*x)>>4)<<10);
 	}
 }
 

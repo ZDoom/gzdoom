@@ -965,8 +965,9 @@ static BOOL P_GetScriptGoing (mobj_t *who, line_t *where, int num, int *code,
 	if (delay) {
 		// From Hexen: Give the world some time to set itself up before
 		// running open scripts.
-		script->state = delayed;
-		script->statedata = TICRATE;
+		//script->state = delayed;
+		//script->statedata = TICRATE;
+		script->state = running;
 	} else {
 		script->state = running;
 	}

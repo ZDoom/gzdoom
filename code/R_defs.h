@@ -156,7 +156,8 @@ struct sector_s
 	float gravity;		// [RH] Sector gravity (1.0 is normal)
 	short damage;		// [RH] Damage to do while standing on floor
 	short mod;			// [RH] Means-of-death for applied damage
-	struct dyncolormap_s *colormap;	// [RH] Per-sector colormap
+	struct dyncolormap_s *floorcolormap;	// [RH] Per-sector colormap
+	struct dyncolormap_s *ceilingcolormap;
 };
 typedef struct sector_s sector_t;
 

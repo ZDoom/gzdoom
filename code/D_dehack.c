@@ -850,6 +850,9 @@ static int PatchThing (int thingNum)
 		Printf (PRINT_HIGH, "Thing %d out of range.\n", thingNum + 1);
 	}
 
+	if (thingNum == MT_HEAD)
+		thingNum = MT_HEAD;
+
 	while ((result = GetLine ()) == 1) {
 		int sndmap = atoi (Line2);
 

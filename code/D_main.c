@@ -33,7 +33,10 @@
 #include <sys/stat.h>
 #endif
 
+#include <time.h>
+
 #include "m_alloc.h"
+#include "m_random.h"
 #include "minilzo.h"
 #include "doomdef.h"
 #include "doomstat.h"
@@ -1038,6 +1041,8 @@ void D_DoomMain (void)
 {
 	int p, flags;
 	char file[256];
+
+	rngseed = (unsigned long)time (NULL);
 
 	gamestate = GS_STARTUP;
 	M_FindResponseFile ();

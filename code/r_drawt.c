@@ -369,8 +369,8 @@ void rt_lucent1col (int hx, int sx, int yl, int yh)
 
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		*dest = RGB32k[0][0][fg & (fg>>15)];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -410,15 +410,15 @@ void rt_lucent2cols (int hx, int sx, int yl, int yh)
 		unsigned int bg = dest[0];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[0] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[0] = RGB32k[0][0][fg & (fg>>15)];
 
 		fg = colormap[source[1]];
 		bg = dest[1];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[1] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[1] = RGB32k[0][0][fg & (fg>>15)];
 
 		source += 4;
 		dest += pitch;
@@ -459,30 +459,30 @@ void rt_lucent4cols (int sx, int yl, int yh)
 		unsigned int bg = dest[0];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[0] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[0] = RGB32k[0][0][fg & (fg>>15)];
 
 		fg = colormap[source[1]];
 		bg = dest[1];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[1] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[1] = RGB32k[0][0][fg & (fg>>15)];
 
 
 		fg = colormap[source[2]];
 		bg = dest[2];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[2] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[2] = RGB32k[0][0][fg & (fg>>15)];
 
 		fg = colormap[source[3]];
 		bg = dest[3];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[3] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[3] = RGB32k[0][0][fg & (fg>>15)];
 
 		source += 4;
 		dest += pitch;
@@ -526,8 +526,8 @@ void rt_tlatelucent1col (int hx, int sx, int yl, int yh)
 
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		*dest = RGB32k[0][0][fg & (fg>>15)];
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -569,15 +569,15 @@ void rt_tlatelucent2cols (int hx, int sx, int yl, int yh)
 		unsigned int bg = dest[0];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[0] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[0] = RGB32k[0][0][fg & (fg>>15)];
 
 		fg = colormap[translation[source[1]]];
 		bg = dest[1];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[1] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[1] = RGB32k[0][0][fg & (fg>>15)];
 
 		source += 4;
 		dest += pitch;
@@ -620,30 +620,30 @@ void rt_tlatelucent4cols (int sx, int yl, int yh)
 		unsigned int bg = dest[0];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[0] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[0] = RGB32k[0][0][fg & (fg>>15)];
 
 		fg = colormap[translation[source[1]]];
 		bg = dest[1];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[1] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[1] = RGB32k[0][0][fg & (fg>>15)];
 
 
 		fg = colormap[translation[source[2]]];
 		bg = dest[2];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[2] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[2] = RGB32k[0][0][fg & (fg>>15)];
 
 		fg = colormap[translation[source[3]]];
 		bg = dest[3];
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		dest[3] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		dest[3] = RGB32k[0][0][fg & (fg>>15)];
 
 		source += 4;
 		dest += pitch;

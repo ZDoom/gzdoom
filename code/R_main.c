@@ -874,10 +874,10 @@ subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 // R_SetupFrame
 //
 extern dyncolormap_t NormalLight;
+unsigned int R_OldBlend = ~0;
 
 void R_SetupFrame (player_t *player)
 {				
-	static unsigned int oldblend = ~0;
 	unsigned int newblend;
 	int dy;
 	
@@ -930,8 +930,8 @@ void R_SetupFrame (player_t *player)
 	// [RH] Don't override testblend unless entering a sector with a
 	//		blend different from the previous sector's. Same goes with
 	//		NormalLight's maps pointer.
-	if (oldblend != newblend) {
-		oldblend = newblend;
+	if (R_OldBlend != newblend) {
+		R_OldBlend = newblend;
 		if (APART(newblend)) {
 			BaseBlendR = RPART(newblend);
 			BaseBlendG = GPART(newblend);
@@ -1092,4 +1092,5 @@ void R_MultiresInit (void)
 
 	R_InitFuzzTable ();
 	R_PlaneInitData ();
+	R_OldBlend = ~0;
 }

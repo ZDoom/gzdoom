@@ -188,7 +188,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	texnum = texturetranslation[curline->sidedef->midtexture];
 
-	basecolormap = frontsector->colormap->maps;	// [RH] Set basecolormap
+	basecolormap = frontsector->floorcolormap->maps;	// [RH] Set basecolormap
 
 	// killough 4/13/98: get correct lightlevel for 2s normal textures
 	lightnum = (R_FakeFlat(frontsector, &tempsec, NULL, NULL, false)
@@ -839,7 +839,8 @@ void R_StoreWallRange (int start, int stop)
 				|| backsector->floorlightsec != frontsector->floorlightsec
 
 				// [RH] Add checks for colormaps
-				|| backsector->colormap != frontsector->colormap
+				|| backsector->floorcolormap != frontsector->floorcolormap
+				|| backsector->ceilingcolormap != frontsector->ceilingcolormap
 				;
 
 			markceiling = worldhigh != worldtop
@@ -859,7 +860,8 @@ void R_StoreWallRange (int start, int stop)
 				|| backsector->ceilinglightsec != frontsector->ceilinglightsec
 
 				// [RH] Add check for colormaps
-				|| backsector->colormap != frontsector->colormap
+				|| backsector->floorcolormap != frontsector->floorcolormap
+				|| backsector->ceilingcolormap != frontsector->ceilingcolormap
 				;
 		}
 

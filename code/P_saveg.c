@@ -157,8 +157,9 @@ void P_ArchiveWorld (void)
 		save_p = (byte *)(put + 10);	// [RH]
 		PADSAVEP();	// [RH]
 		*((float *)save_p)++ = sec->gravity;	// [RH]
-		*((unsigned int *)save_p)++ = sec->colormap->color;	// [RH]
-		*((unsigned int *)save_p)++ = sec->colormap->fade;	// [RH];
+		*((unsigned int *)save_p)++ = sec->floorcolormap->color;	// [RH]
+		*((unsigned int *)save_p)++ = sec->floorcolormap->fade;	// [RH];
+		/****** BE SURE AND ADD ceilingcolormap for 1.18 *******/
 	}
 
 	put = (short *)save_p;	// [RH]
@@ -228,7 +229,7 @@ void P_UnArchiveWorld (void)
 		color = *((unsigned int *)save_p)++;	// [RH]
 		fade = *((unsigned int *)save_p)++;	// [RH]
 
-		sec->colormap = GetSpecialLights (
+		sec->floorcolormap = sec->ceilingcolormap = GetSpecialLights (
 			RPART(color), GPART(color), BPART(color),
 			RPART(fade), GPART(fade), BPART(fade));	// [RH]
 
@@ -878,7 +879,8 @@ void P_ArchiveSpecials (void)
 			pusher = (pusher_t *)save_p;
 			memcpy (save_p, th, sizeof(*pusher));
 			save_p += sizeof(*pusher);
-			pusher->source = (mobj_t *) pusher->source->thinker.prev;	// [RH] remember source
+			pusher->source = pusher->source ?	// [RH] remember source
+				(mobj_t *) pusher->source->thinker.prev : NULL;
 			continue;
 		}
 		else if (th->function.acp1 == (actionf_p1) T_RotatePoly)

@@ -351,6 +351,26 @@ void G_ParseMapInfo (void)
 					mapinfo = data;
 					levelflags |= LEVEL_FORCENOSKYSTRETCH;
 
+				} else if (!stricmp (com_token, "allowfreelook")) {
+					mapinfo = data;
+					levelflags &= ~LEVEL_FREELOOK_NO;
+					levelflags |= LEVEL_FREELOOK_YES;
+
+				} else if (!stricmp (com_token, "nofreelook")) {
+					mapinfo = data;
+					levelflags &= ~LEVEL_FREELOOK_YES;
+					levelflags |= LEVEL_FREELOOK_NO;
+
+				} else if (!stricmp (com_token, "allowjump")) {
+					mapinfo = data;
+					levelflags &= ~LEVEL_JUMP_NO;
+					levelflags |= LEVEL_JUMP_YES;
+
+				} else if (!stricmp (com_token, "nojump")) {
+					mapinfo = data;
+					levelflags &= ~LEVEL_JUMP_YES;
+					levelflags |= LEVEL_JUMP_NO;
+
 				} else if (!stricmp (com_token, "cdtrack") ||
 						   !stricmp (com_token, "cd_start_track") ||
 						   !stricmp (com_token, "cd_end1_track") ||
@@ -936,6 +956,25 @@ void G_InitLevelLocals ()
 			strncpy (level.skypic2, "SKY1", 8);
 		level.flags = 0;
 		level.levelnum = 1;
+	}
+
+	{
+		int clear = 0, set = 0;
+		char buf[16];
+
+		if (level.flags & LEVEL_JUMP_YES)
+			clear = DF_NO_JUMP;
+		if (level.flags & LEVEL_JUMP_NO)
+			set = DF_NO_JUMP;
+		if (level.flags & LEVEL_FREELOOK_YES)
+			clear |= DF_NO_FREELOOK;
+		if (level.flags & LEVEL_FREELOOK_NO)
+			set |= DF_NO_FREELOOK;
+
+		dmflags &= ~clear;
+		dmflags |= set;
+		sprintf (buf, "%d", dmflags);
+		cvar_set ("dmflags", buf);
 	}
 
 	memset (level.vars, 0, sizeof(level.vars));

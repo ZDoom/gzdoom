@@ -555,6 +555,7 @@ void I_InitSound (void)
 						   (DLGPROC)InitBoxCallback)) {
 			case IDC_NOSOUND:
 				MIDASsetOption (MIDAS_OPTION_FORCE_NO_SOUND, TRUE);
+				nosound = true;
 				break;
 
 			case IDQUIT:

@@ -1,4 +1,4 @@
-This is the source code for ZDoom 1.17b released on 15 March 1999.
+This is the source code for ZDoom 1.17c released on 5 May 1999.
 
 It is based on the Linux DOOM sources that were prepared by B. Krenheimer
 and generously released by John Carmack shortly before Christmas, 1997. If
@@ -34,22 +34,15 @@ packages if you don't already have them. These are:
     MIDAS! I use a hack from NTDOOM that crashes with the DLL but not the
     static library.
 
-  Prometheus Truecolor Library (PTC)
+  Prometheus Truecolor Library (PTC) 0.72
     http://www.gaffer.org/ptc
 
-    A special note about PTC is that the version available at gaffer.org
-    will not work unmodified with ZDoom. A context diff has been provided
-    along with a copy of GNU patch to generate a version of PTC that works
-    with ZDoom. To use it, you need to download the source code for PTC
-    0.72 and the DirectX fix. Extract it to some directory (in my case
-    f:/games/doom/ptc/source), then using a DOS window, CD to that
-    directory and apply the ptc.diff file using the command line:
+    IMPORTANT NOTE! PTC 0.72 is no longer available at gaffer.org. If you
+    need it, e-mail me, and I can send you the source for it.
 
-        patch < ptc.diff
-
-    Then you'll need to build at least the release build of PTC. The
-    batch files provided with PTC to do this will generate the library
-    somewhere in ../library. In my case, this ends up being
+    Once you get the source, you'll need to build at least the release
+    build of PTC. The batch files provided with PTC to do this will generate
+    the library somewhere in ../library. In my case, this ends up being
     d:/games/doom/ptc/library/win32/vc5.x.
 
   NASM (for the assembly files)
@@ -72,11 +65,11 @@ assumptions about the development environment:
     PTC is installed in d:/games/doom/ptc.
 
 If you want to put things in different places, you'll need to adjust the
-project file accordingly.
+project file's settings accordingly.
 
 This code should also compile with Watcom C 10.6 (and presumably newer
 versions as well). If you use Watcom, please tell me if the following NASM
-line generates object files far tmap.nas and misc.nas that are usable with
+line generates object files for tmap.nas and misc.nas that are usable with
 the Watcom linker:
 
     nasm -o file.obj -f obj -d M_TARGET_WATCOM file.nas
@@ -84,7 +77,7 @@ the Watcom linker:
 (The line I use is "nasm -o file.obj -f win32 file.nas" which works with
 Microsoft's linker, but not Watcom's.)
 
-If you want to recompile the DOS code, you need DJGPP and allegro. Allegro
+If you want to recompile the DOS code, you need DJGPP and Allegro. Allegro
 is only needed because MIDAS uses its interrupt wrappers. I don't use it
 for anything myself. The makefile.dj file can be used with make to
 generate either a release or debug build. (Create the appropriate
@@ -92,4 +85,4 @@ subdirectories under code/djgpp first.)
 
 
 Randy Heit
-rheit@usa.net
+rheit@iastate.edu

@@ -376,7 +376,13 @@ void R_DrawFuzzColumnP_C (void)
 fixed_t dc_translevel;
 
 /*
-[RH] This note is from DOSDoom 0.65:
+[RH] This translucency algorithm is based on DOSDoom 0.65's, but uses
+a 32k RGB table instead of an 8k one. At least on my machine, it's
+slightly faster (probably because it uses only one shift instead of
+two), and it looks considerably less green at the ends of the
+translucency range. The extra size doesn't appear to be an issue.
+
+The following note is from DOSDoom 0.65:
 
 New translucency algorithm, by Erik Sandberg:
 
@@ -461,8 +467,8 @@ void R_DrawTranslucentColumnP_C (void)
 
 			fg = fg2rgb[fg];
 			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0xf07c3e1f;
-			*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest = RGB32k[0][0][fg & (fg>>15)];
 			dest += pitch;
 			frac += fracstep;
 		} while (--count);
@@ -580,8 +586,8 @@ void R_DrawTlatedLucentColumnP_C (void)
 
 			fg = fg2rgb[fg];
 			bg = bg2rgb[bg];
-			fg = (fg+bg) | 0xf07c3e1f;
-			*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest = RGB32k[0][0][fg & (fg>>15)];
 			dest += pitch;
 			frac += fracstep;
 		} while (--count);

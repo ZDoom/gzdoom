@@ -134,8 +134,8 @@ void V_DrawLucentPatchP (byte *source, byte *dest, int count, int pitch)
 
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		*dest = RGB32k[0][0][fg & (fg>>15)];
 		dest += pitch; 
 	} while (--count);
 }
@@ -161,8 +161,8 @@ void V_DrawLucentPatchSP (byte *source, byte *dest, int count, int pitch, int yi
 
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		*dest = RGB32k[0][0][fg & (fg>>15)];
 		dest += pitch;
 		c += yinc;
 	} while (--count);
@@ -214,8 +214,8 @@ void V_DrawTlatedLucentPatchP (byte *source, byte *dest, int count, int pitch)
 
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		*dest = RGB32k[0][0][fg & (fg>>15)];
 		dest += pitch; 
 	} while (--count);
 }
@@ -242,8 +242,8 @@ void V_DrawTlatedLucentPatchSP (byte *source, byte *dest, int count, int pitch, 
 
 		fg = fg2rgb[fg];
 		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0xf07c3e1f;
-		*dest = RGB8k[0][0][(fg>>5) & (fg>>19)];
+		fg = (fg+bg) | 0x1f07c1f;
+		*dest = RGB32k[0][0][fg & (fg>>15)];
 		dest += pitch;
 		c += yinc;
 	} while (--count);
@@ -290,8 +290,8 @@ void V_DrawColorLucentPatchP (byte *source, byte *dest, int count, int pitch)
 	do
 	{
 		unsigned int bg = bg2rgb[*dest];
-		bg = (bg+bg) | 0xf07c3e1f;
-		*dest = RGB8k[0][0][(bg>>5) & (bg>>19)];
+		bg = (bg+bg) | 0x1f07c1f;
+		*dest = RGB32k[0][0][bg & (bg>>15)];
 		dest += pitch; 
 	} while (--count);
 }

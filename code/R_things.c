@@ -969,7 +969,6 @@ void R_ProjectSprite (mobj_t *thing)
 	if (heightsec != -1)	// only clip things which are in special sectors
 	{
 		int phs = camera->subsector->sector->heightsec;
-
 		if (phs != -1 && viewz < sectors[phs].floorheight ?
 			thing->z >= sectors[heightsec].floorheight :
 			gzt < sectors[heightsec].floorheight)
@@ -1199,20 +1198,26 @@ void R_DrawPlayerSprites (void)
 	int 		i;
 	int 		lightnum;
 	pspdef_t*	psp;
+	sector_t*	sec;
+	static sector_t tempsec;
+	int			floorlight, ceilinglight;
 	
 	if (!r_drawplayersprites->value ||
 		!camera->player ||
 		(camera->player->cheats & CF_CHASECAM))
 		return;
 
+	sec = R_FakeFlat (camera->subsector->sector, &tempsec, &floorlight,
+		&ceilinglight, false);
+
 	// [RH] set foggy flag
-	foggy = (level.fadeto || camera->subsector->sector->colormap->fade);
+	foggy = (level.fadeto || sec->floorcolormap->fade);
 
 	// [RH] set basecolormap
-	basecolormap = camera->subsector->sector->colormap->maps;
+	basecolormap = sec->floorcolormap->maps;
 
 	// get light level
-	lightnum = (camera->subsector->sector->lightlevel >> LIGHTSEGSHIFT)
+	lightnum = ((floorlight + ceilinglight) >> (LIGHTSEGSHIFT+1))
 		+ (foggy ? 0 : extralight);
 
 	if (lightnum < 0)				
@@ -1692,7 +1697,7 @@ void R_ProjectParticle (particle_t *particle)
 	vis->mobjflags = particle->trans;
 
 	if (fixedlightlev) {
-		vis->colormap = sector->colormap->maps + fixedlightlev;
+		vis->colormap = sector->floorcolormap->maps + fixedlightlev;
 	} else if (fixedcolormap) {
 		vis->colormap = fixedcolormap;
 	} else if (sector) {
@@ -1707,7 +1712,7 @@ void R_ProjectParticle (particle_t *particle)
 		if (index >= MAXLIGHTSCALE) 
 			index = MAXLIGHTSCALE-1;
 
-		vis->colormap = scalelight[lightnum][index] + sector->colormap->maps;
+		vis->colormap = scalelight[lightnum][index] + sector->floorcolormap->maps;
 	} else {
 		vis->colormap = realcolormaps;
 	}
@@ -1775,8 +1780,8 @@ void R_DrawParticle (vissprite_t *vis, int x1, int x2)
 			do
 			{
 				unsigned int bg = bg2rgb[*dest];
-				bg = (fg+bg) | 0xf07c3e1f;
-				*dest = RGB8k[0][0][(bg>>5) & (bg>>19)];
+				bg = (fg+bg) | 0x1f07c1f;
+				*dest = RGB32k[0][0][bg & (bg>>15)];
 				dest += colsize;
 			} while (--count);
 			dest += spacing;

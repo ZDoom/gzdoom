@@ -1109,10 +1109,16 @@ FUNC(LS_Sector_SetColor)
 	int secnum = -1;
 	
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
-		sectors[secnum].colormap = GetSpecialLights (arg1, arg2, arg3,
-			RPART(sectors[secnum].colormap->fade),
-			GPART(sectors[secnum].colormap->fade),
-			BPART(sectors[secnum].colormap->fade));
+	{
+		sectors[secnum].floorcolormap = GetSpecialLights (arg1, arg2, arg3,
+			RPART(sectors[secnum].floorcolormap->fade),
+			GPART(sectors[secnum].floorcolormap->fade),
+			BPART(sectors[secnum].floorcolormap->fade));
+		sectors[secnum].ceilingcolormap = GetSpecialLights (arg1, arg2, arg3,
+			RPART(sectors[secnum].ceilingcolormap->fade),
+			GPART(sectors[secnum].ceilingcolormap->fade),
+			BPART(sectors[secnum].ceilingcolormap->fade));
+	}
 
 	return true;
 }
@@ -1123,12 +1129,18 @@ FUNC(LS_Sector_SetFade)
 	int secnum = -1;
 	
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
-		sectors[secnum].colormap = GetSpecialLights (
-			RPART(sectors[secnum].colormap->color),
-			GPART(sectors[secnum].colormap->color),
-			BPART(sectors[secnum].colormap->color),
+	{
+		sectors[secnum].floorcolormap = GetSpecialLights (
+			RPART(sectors[secnum].floorcolormap->color),
+			GPART(sectors[secnum].floorcolormap->color),
+			BPART(sectors[secnum].floorcolormap->color),
 			arg1, arg2, arg3);
-
+		sectors[secnum].ceilingcolormap = GetSpecialLights (
+			RPART(sectors[secnum].ceilingcolormap->color),
+			GPART(sectors[secnum].ceilingcolormap->color),
+			BPART(sectors[secnum].ceilingcolormap->color),
+			arg1, arg2, arg3);
+	}
 	return true;
 }
 

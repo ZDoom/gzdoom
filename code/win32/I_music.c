@@ -368,17 +368,23 @@ void I_PlaySong (int handle, int _looping)
 						UnprepareMIDIHeaders (info);
 						midiStreamClose (info->midiStream);
 						info->midiStream = NULL;
+						info->status = STATE_STOPPED;
 					}
 				} else {
 					UnprepareMIDIHeaders (info);
 					midiStreamClose (info->midiStream);
 					info->midiStream = NULL;
+					info->status = STATE_STOPPED;
 				}
 			} else {
 				MCIError (res, "opening MIDI stream");
 				if (snd_mididevice->value != -1) {
 					Printf (PRINT_HIGH, "Trying again with MIDI mapper\n");
 					SetCVarFloat (snd_mididevice, -1.0f);
+				}
+				else
+				{
+					info->status = STATE_STOPPED;
 				}
 			}
 
@@ -391,7 +397,10 @@ void I_PlaySong (int handle, int _looping)
 			}
 			break;
 	}
-	currSong = info;
+	if (info->status == STATE_PLAYING)
+		currSong = info;
+	else
+		currSong = NULL;
 }
 
 void I_PauseSong (int handle)

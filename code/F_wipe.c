@@ -301,8 +301,8 @@ int wipe_doBurn (int ticks)
 					unsigned int *bg2rgb = Col2RGB8[bglevel];
 					unsigned int fg = fg2rgb[fromnew[x]];
 					unsigned int bg = bg2rgb[fromold[x]];
-					fg = (fg+bg) | 0xf07c3e1f;
-					to[x] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+					fg = (fg+bg) | 0x1f07c1f;
+					to[x] = RGB32k[0][0][fg & (fg>>15)];
 					done = false;
 				}
 			}
@@ -355,8 +355,8 @@ int wipe_doFade (int ticks)
 			{
 				unsigned int fg = fg2rgb[fromnew[x]];
 				unsigned int bg = bg2rgb[fromold[x]];
-				fg = (fg+bg) | 0xf07c3e1f;
-				to[x] = RGB8k[0][0][(fg>>5) & (fg>>19)];
+				fg = (fg+bg) | 0x1f07c1f;
+				to[x] = RGB32k[0][0][fg & (fg>>15)];
 			}
 			fromnew += screen.width;
 			fromold += screen.width;

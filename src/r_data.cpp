@@ -603,11 +603,32 @@ void FTextureManager::AddPatches (int lumpnum)
 	delete file;
 }
 
-void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool texture1)
+void FTextureManager::AddTexturesLumps (int lump1, int lump2, int patcheslump)
+{
+	int firstdup = (int)Textures.Size();
+
+	if (lump1 >= 0)
+	{
+		FMemLump texdir = Wads.ReadLump (lump1);
+		AddTexturesLump (texdir.GetMem(), Wads.LumpLength (lump1), patcheslump, firstdup, true);
+	}
+	if (lump2 >= 0)
+	{
+		FMemLump texdir = Wads.ReadLump (lump2);
+		AddTexturesLump (texdir.GetMem(), Wads.LumpLength (lump2), patcheslump, firstdup, false);
+	}
+}
+
+void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int patcheslump, int firstdup, bool texture1)
 {
 	FPatchLookup *patchlookup;
 	int i, j;
 	DWORD numpatches;
+
+	if (firstdup == 0)
+	{
+		firstdup = (int)Textures.Size();
+	}
 
 	{
 		FWadLump pnames = Wads.OpenLumpNum (patcheslump);
@@ -640,16 +661,14 @@ void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool textur
 	}
 
 	bool isStrife = false;
-	FMemLump memlump;
 	const DWORD *maptex, *directory;
 	DWORD maxoff;
 	int numtextures;
 	DWORD offset = 0;   // Shut up, GCC!
 
-	memlump = Wads.ReadLump (lumpnum);
-	maptex = (const DWORD *)memlump.GetMem();
+	maptex = (const DWORD *)lumpdata;
 	numtextures = LONG(*maptex);
-	maxoff = Wads.LumpLength (lumpnum);
+	maxoff = lumpsize;
 
 	if (maxoff < DWORD(numtextures+1)*4)
 	{
@@ -702,12 +721,12 @@ void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool textur
 		// If this texture was defined already in this lump, skip it
 		// This could cause problems with animations that use the same name for intermediate
 		// textures. Should I be worried?
-		for (j = i-1; j > 0; --j)
+		for (j = (int)Textures.Size() - 1; j >= firstdup; --j)
 		{
-			if (strnicmp ((const char *)maptex + offset, (const char *)maptex + LONG(directory[j]), 8) == 0)
+			if (strnicmp (Textures[j].Texture->Name, (const char *)maptex + offset, 8) == 0)
 				break;
 		}
-		if (j == 0)
+		if (j + 1 == firstdup)
 		{
 			FTexture *tex = new FMultiPatchTexture ((const BYTE *)maptex + offset, patchlookup, numpatches, isStrife);
 			if (i == 1 && texture1)
@@ -2413,7 +2432,7 @@ void FWarpTexture::MakeTexture (DWORD time)
 void R_InitTextures (void)
 {
 	int lastlump = 0, lump;
-	int texlump1 = -1, texlump2 = -1, texlump;
+	int texlump1 = -1, texlump2 = -1, texlump1a, texlump2a;
 	int i;
 
 	// For each PNAMES lump, load the TEXTURE1 and/or TEXTURE2 lumps from the same wad.
@@ -2422,26 +2441,24 @@ void R_InitTextures (void)
 		int pfile = Wads.GetLumpFile (lump);
 
 		TexMan.AddPatches (lump);
-		if ((texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, pfile)) >= 0)
-		{
-			TexMan.AddTexturesLump (texlump1, lump, true);
-		}
-		if ((texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, pfile)) >= 0)
-		{
-			TexMan.AddTexturesLump (texlump2, lump, false);
-		}
+		texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, pfile);
+		texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, pfile);
+		TexMan.AddTexturesLumps (texlump1, texlump2, lump);
 	}
 
 	// If the final TEXTURE1 and/or TEXTURE2 lumps are in a wad without a PNAMES lump,
 	// they have not been loaded yet, so load them now.
-	if ((texlump = Wads.CheckNumForName ("TEXTURE1")) >= 0 && texlump != texlump1)
+	texlump1a = Wads.CheckNumForName ("TEXTURE1");
+	texlump2a = Wads.CheckNumForName ("TEXTURE2");
+	if (texlump1a == texlump1)
 	{
-		TexMan.AddTexturesLump (texlump, Wads.GetNumForName ("PNAMES"), true);
+		texlump1a = -1;
 	}
-	if ((texlump = Wads.CheckNumForName ("TEXTURE2")) >= 0 && texlump != texlump2)
+	if (texlump2a == texlump2)
 	{
-		TexMan.AddTexturesLump (texlump, Wads.GetNumForName ("PNAMES"), false);
+		texlump2a = -1;
 	}
+	TexMan.AddTexturesLumps (texlump1a, texlump2a, Wads.GetNumForName ("PNAMES"));
 
 	// The Hexen scripts use BLANK as a blank texture, even though it's really not.
 	// I guess the Doom renderer must have clipped away the line at the bottom of
@@ -3052,19 +3069,4 @@ CCMD (picnum)
 {
 	int picnum = TexMan.GetTexture (argv[1], FTexture::TEX_Any);
 	Printf ("%d: %s - %s\n", picnum, TexMan[picnum]->Name, TexMan(picnum)->Name);
-}
-
-CCMD (hashfoo)
-{
-	for (int i = 1; i < TexMan.NumTextures(); ++i)
-	{
-		if (TexMan.Textures[i].HashNext != FTextureManager::HASH_END)
-		{
-			Printf ("%s -> %s\n", TexMan[i]->Name, TexMan[TexMan.Textures[i].HashNext]->Name);
-		}
-		if (TexMan.CheckForTexture (TexMan[i]->Name, TexMan[i]->UseType) < 0)
-		{
-			Printf ("%s not found\n", TexMan[i]->Name);
-		}
-	}
 }

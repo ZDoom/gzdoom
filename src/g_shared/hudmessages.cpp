@@ -112,10 +112,6 @@ DHUDMessage::DHUDMessage (const char *text, float x, float y, int hudwidth, int 
 		}
 	}
 	Top = y;
-	if (hudwidth)
-	{
-		Printf ("Width: %d, Pic @ %g, %g\n", hudwidth, Left, Top);
-	}
 	Next = NULL;
 	Lines = NULL;
 	HoldTics = (int)(holdTime * TICRATE);
@@ -207,8 +203,6 @@ void DHUDMessage::ResetText (const char *text)
 	}
 
 	screen->SetFont (oldfont);
-
-	if (HUDWidth) Printf ("Size is %dx%d\n", Width, Height);
 }
 
 bool DHUDMessage::Tick ()

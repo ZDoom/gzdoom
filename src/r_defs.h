@@ -724,7 +724,8 @@ public:
 	void WriteTexture (FArchive &arc, int picnum);
 	int ReadTexture (FArchive &arc);
 
-	void AddTexturesLump (int lumpnum, int patcheslump, bool texture1);
+	void AddTexturesLump (const void *lumpdata, int lumpsize, int patcheslump, int firstdup=0, bool texture1=false);
+	void AddTexturesLumps (int lump1, int lump2, int patcheslump);
 	void AddFlats ();
 	void AddSprites ();
 	void AddPatches (int lumpnum);
@@ -748,7 +749,7 @@ public:
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
-public:
+private:
 	struct TextureHash
 	{
 		FTexture *Texture;

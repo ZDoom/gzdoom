@@ -360,14 +360,14 @@ void P_TranslateTeleportThings ()
 			{
 				if (lines[i].args[1] == 0)
 				{
-					lines[i].args[1] = 1;
+					lines[i].args[0] = 1;
 				}
 			}
 			else if (lines[i].special == Teleport_NoFog)
 			{
 				if (lines[i].args[2] == 0)
 				{
-					lines[i].args[2] = 1;
+					lines[i].args[0] = 1;
 				}
 			}
 		}

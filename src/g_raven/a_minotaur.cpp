@@ -290,8 +290,10 @@ void AMinotaurFriend::BeginPlay ()
 AT_GAME_SET (Minotaur)
 {
 	// Modify the Minotaur to accomodate the difference in Hexen's graphics.
-	// (Hexen's has fewer frames than Heretic's.)
-	if (Wads.CheckNumForName ("MNTRZ1", ns_sprites) < 0)
+	// (Hexen's has fewer frames than Heretic's.) Sprites have not been loaded
+	// yet, so check the wad for their presence.
+	if (Wads.CheckNumForName ("MNTRZ1", ns_sprites) < 0 &&
+		Wads.CheckNumForName ("MNTRZ0", ns_sprites) < 0)
 	{
 		AMinotaur::States[S_MNTR_ATK1+0].SetFrame ('G');
 		AMinotaur::States[S_MNTR_ATK1+1].SetFrame ('H');

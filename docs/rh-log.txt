@@ -1,4 +1,16 @@
-December 5, 2003
+December 8, 2003
+- Fixed: If a wad had TEXTURE1 and TEXTURE2 lumps, then any duplicates in
+  TEXTURE2 took precedence over TEXTURE1. It is supposed to be the other way
+  around, with TEXTURE1 taking precedence over TEXTURE2.
+- Prefixed the names of the Strife grenade launcher actors with "Strife".
+- Fixed: DDoor did not serialize m_LightTag.
+- Fixed the P_TranslateTeleportThings rewrite so that it sets the Teleport
+  special's TID to 1 instead of the tag.
+- Added a check for MNTRZ0 to AT_GAME_SET(Minotaur).
+- Fixed: The chaingun flash only showed frame one and not both frames one and
+  zero.
+
+December 6, 2003
 - Rewrote P_TranslateTeleportThings() so that it only assigns TIDs to things
   in sectors with tag 0.
 - Fixed: Teleporters by TID didn't work.
@@ -9,6 +21,8 @@ December 5, 2003
   try to go on the Z axis.
 - Changed the Minotaur state fixup to be based on the presence of MNTRZ1
   instead of the game type.
+  
+December 5, 2003
 - Fixed: When I went back to the blockmap-based sight code, I forgot to bring
   over the enhancements for block-everything lines I had made for the BSP-
   based sight code.

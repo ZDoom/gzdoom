@@ -1040,7 +1040,7 @@ void A_FireCGun (AActor *actor, pspdef_t *psp)
 	if (wpninfo->flashstate != NULL)
 	{
 		// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
-		int theflash = MAX (1, psp->state - wpninfo->atkstate);
+		int theflash = MIN (1, psp->state - wpninfo->atkstate);
 
 		if (wpninfo->flashstate[theflash].sprite.index != wpninfo->flashstate->sprite.index)
 		{

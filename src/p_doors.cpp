@@ -48,6 +48,14 @@ void DDoor::Serialize (FArchive &arc)
 		<< m_Direction
 		<< m_TopWait
 		<< m_TopCountdown;
+	if (SaveVersion < 220)
+	{
+		m_LightTag = 0;
+	}
+	else
+	{
+		arc << m_LightTag;
+	}
 }
 
 

@@ -1600,9 +1600,9 @@ void A_Burnination (AActor *self)
 
 void A_FireGrenade (AActor *, pspdef_t *);
 
-class AGrenadeLauncher : public AStrifeWeapon
+class AStrifeGrenadeLauncher : public AStrifeWeapon
 {
-	DECLARE_ACTOR (AGrenadeLauncher, AStrifeWeapon)
+	DECLARE_ACTOR (AStrifeGrenadeLauncher, AStrifeWeapon)
 public:
 	weapontype_t OldStyleID() const;
 	static FWeaponInfo WeaponInfo;
@@ -1614,7 +1614,7 @@ protected:
 	}
 };
 
-FState AGrenadeLauncher::States[] =
+FState AStrifeGrenadeLauncher::States[] =
 {
 #define S_HEPICKUP 0
 	S_NORMAL (GRND, 'A',   -1, NULL,					NULL),
@@ -1663,7 +1663,7 @@ FState AGrenadeLauncher::States[] =
 	S_BRIGHT (GREF, 'D',	5, A_Light2,				&AWeapon::States[S_LIGHTDONE]),
 };
 
-FWeaponInfo AGrenadeLauncher::WeaponInfo =
+FWeaponInfo AStrifeGrenadeLauncher::WeaponInfo =
 {
 	0,
 	am_hegrenade,
@@ -1676,29 +1676,29 @@ FWeaponInfo AGrenadeLauncher::WeaponInfo =
 	&States[S_HEGRENADE_ATK],
 	&States[S_HEGRENADE_ATK],
 	&States[S_HEGRENADE_FLASH],
-	RUNTIME_CLASS(AGrenadeLauncher),
+	RUNTIME_CLASS(AStrifeGrenadeLauncher),
 	150,
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AGrenadeLauncher),
+	RUNTIME_CLASS(AStrifeGrenadeLauncher),
 	-1
 };
 
-WEAPON1 (wp_hegrenadelauncher, AGrenadeLauncher)
+WEAPON1 (wp_hegrenadelauncher, AStrifeGrenadeLauncher)
 
-IMPLEMENT_ACTOR (AGrenadeLauncher, Strife, 154, 0)
+IMPLEMENT_ACTOR (AStrifeGrenadeLauncher, Strife, 154, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_HEPICKUP)
 	PROP_Tag ("Grenade_launcher")
 END_DEFAULTS
 
-weapontype_t AGrenadeLauncher::OldStyleID () const
+weapontype_t AStrifeGrenadeLauncher::OldStyleID () const
 {
 	return wp_hegrenadelauncher;
 }
 
-bool AGrenadeLauncher::TryPickup (AActor *toucher)
+bool AStrifeGrenadeLauncher::TryPickup (AActor *toucher)
 {
 	if (Super::TryPickup (toucher))
 	{
@@ -1712,14 +1712,14 @@ bool AGrenadeLauncher::TryPickup (AActor *toucher)
 
 // White Phosphorous Grenade Launcher ---------------------------------------
 
-class AGrenadeLauncher2 : public AGrenadeLauncher
+class AStrifeGrenadeLauncher2 : public AStrifeGrenadeLauncher
 {
-	DECLARE_STATELESS_ACTOR (AGrenadeLauncher2, AGrenadeLauncher)
+	DECLARE_STATELESS_ACTOR (AStrifeGrenadeLauncher2, AStrifeGrenadeLauncher)
 public:
 	static FWeaponInfo WeaponInfo;
 };
 
-FWeaponInfo AGrenadeLauncher2::WeaponInfo =
+FWeaponInfo AStrifeGrenadeLauncher2::WeaponInfo =
 {
 	0,
 	am_phgrenade,
@@ -1732,18 +1732,18 @@ FWeaponInfo AGrenadeLauncher2::WeaponInfo =
 	&States[S_PHGRENADE_ATK],
 	&States[S_PHGRENADE_ATK],
 	&States[S_PHGRENADE_FLASH],
-	RUNTIME_CLASS(AGrenadeLauncher),
+	RUNTIME_CLASS(AStrifeGrenadeLauncher),
 	150,
 	0,
 	NULL,
 	NULL,
-	RUNTIME_CLASS(AGrenadeLauncher2),
+	RUNTIME_CLASS(AStrifeGrenadeLauncher2),
 	-1
 };
 
-WEAPON1 (wp_phgrenadelauncher, AGrenadeLauncher2)
+WEAPON1 (wp_phgrenadelauncher, AStrifeGrenadeLauncher2)
 
-IMPLEMENT_ABSTRACT_ACTOR (AGrenadeLauncher2)
+IMPLEMENT_ABSTRACT_ACTOR (AStrifeGrenadeLauncher2)
 
 //============================================================================
 //

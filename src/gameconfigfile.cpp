@@ -733,8 +733,8 @@ void FGameConfigFile::SetupWeaponList (const char *gamename)
 		LocalWeapons.Slots[2].AddWeapon ("StrifeCrossbow");
 		LocalWeapons.Slots[3].AddWeapon ("AssaultGun");
 		LocalWeapons.Slots[4].AddWeapon ("MiniMissileLauncher");
-		LocalWeapons.Slots[5].AddWeapon ("GrenadeLauncher2");
-		LocalWeapons.Slots[5].AddWeapon ("GrenadeLauncher");
+		LocalWeapons.Slots[5].AddWeapon ("StrifeGrenadeLauncher2");
+		LocalWeapons.Slots[5].AddWeapon ("StrifeGrenadeLauncher");
 		LocalWeapons.Slots[6].AddWeapon ("FlameThrower");
 		LocalWeapons.Slots[7].AddWeapon ("Mauler2");
 		LocalWeapons.Slots[7].AddWeapon ("Mauler");

@@ -603,8 +603,6 @@ void FSingleLumpFont::CreateFontFromPic (int picnum)
 
 	// Only one color range. Don't bother with the others.
 	ActiveColors = 0;
-
-	Printf ("CreateFontFromPic: %s (%dx%d)\n", pic->Name, SpaceWidth, FontHeight);
 }
 
 void FSingleLumpFont::LoadFON1 (int lump, const BYTE *data)

@@ -4,16 +4,21 @@
 #include "gstrings.h"
 #include "p_local.h"
 
+#define PROP_HexenArmor_Class	PROP_Inventory_Amount
+
+enum
+{
+	ARMOR_ARMOR,
+	ARMOR_SHIELD,
+	ARMOR_HELMET,
+	ARMOR_AMULET
+};
+
 // Mesh Armor (1) -----------------------------------------------------------
 
-class AMeshArmor : public AArmor
+class AMeshArmor : public AHexenArmor
 {
 	DECLARE_ACTOR (AMeshArmor, AArmor)
-public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, ARMOR_ARMOR, -1);
-	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -28,19 +33,15 @@ FState AMeshArmor::States[] =
 
 IMPLEMENT_ACTOR (AMeshArmor, Hexen, 8005, 68)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
+	PROP_HexenArmor_Class (ARMOR_ARMOR)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
 // Falcon Shield (2) --------------------------------------------------------
 
-class AFalconShield : public AArmor
+class AFalconShield : public AHexenArmor
 {
-	DECLARE_ACTOR (AFalconShield, AArmor)
-public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, ARMOR_SHIELD, -1);
-	}
+	DECLARE_ACTOR (AFalconShield, AHexenArmor)
 protected:
 	const char *PickupMessage ()
 	{
@@ -55,19 +56,15 @@ FState AFalconShield::States[] =
 
 IMPLEMENT_ACTOR (AFalconShield, Hexen, 8006, 69)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
+	PROP_HexenArmor_Class (ARMOR_SHIELD)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
 // Platinum Helm (3) --------------------------------------------------------
 
-class APlatinumHelm : public AArmor
+class APlatinumHelm : public AHexenArmor
 {
-	DECLARE_ACTOR (APlatinumHelm, AArmor)
-public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, ARMOR_HELMET, -1);
-	}
+	DECLARE_ACTOR (APlatinumHelm, AHexenArmor)
 protected:
 	const char *PickupMessage ()
 	{
@@ -82,19 +79,15 @@ FState APlatinumHelm::States[] =
 
 IMPLEMENT_ACTOR (APlatinumHelm, Hexen, 8007, 70)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
+	PROP_HexenArmor_Class (ARMOR_HELMET)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
 // Amulet of Warding (4) ----------------------------------------------------
 
-class AAmuletOfWarding : public AArmor
+class AAmuletOfWarding : public AHexenArmor
 {
-	DECLARE_ACTOR (AAmuletOfWarding, AArmor)
-public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, ARMOR_AMULET, -1);
-	}
+	DECLARE_ACTOR (AAmuletOfWarding, AHexenArmor)
 protected:
 	const char *PickupMessage ()
 	{
@@ -109,5 +102,6 @@ FState AAmuletOfWarding::States[] =
 
 IMPLEMENT_ACTOR (AAmuletOfWarding, Hexen, 8008, 71)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
+	PROP_HexenArmor_Class (ARMOR_AMULET)
 	PROP_SpawnState (0)
 END_DEFAULTS

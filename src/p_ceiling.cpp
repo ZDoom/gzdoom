@@ -231,7 +231,12 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 manual_ceiling:
 		// if ceiling already moving, don't start a second function on it
 		if (sec->ceilingdata)
-			continue;
+		{
+			if (!manual)
+				continue;
+			else
+				return false;
+		}
 		
 		// new door thinker
 		rtn = 1;

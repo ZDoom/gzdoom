@@ -69,6 +69,7 @@ enum EIWADType
 	IWAD_UltimateDoom,
 	IWAD_DoomRegistered,
 	IWAD_Strife,
+	IWAD_StrifeTeaser,
 
 	NUM_IWAD_TYPES
 };

@@ -40,6 +40,8 @@
 #include "hu_stuff.h"
 #include "cmdlib.h"
 #include "gi.h"
+#include "p_conversation.h"
+#include "a_strifeglobal.h"
 
 static void FadePic ();
 static void GetFinaleText (const char *msgLumpName);
@@ -50,15 +52,16 @@ static void GetFinaleText (const char *msgLumpName);
 //	2 = underwater screen
 //	3 = character cast
 //	4 = Heretic title
+//  5 = Strife slideshow
 static unsigned int	FinaleStage;
 
 static size_t FinaleCount, FinaleEndCount;
+static int FinalePart;
 
 static int TEXTSPEED;
 #define TEXTWAIT		250
 
 static int FinaleSequence;
-static BYTE *DemonBuffer;
 static SBYTE FadeDir;
 static bool FinaleHasPic;
 
@@ -70,6 +73,7 @@ void	F_StartCast (void);
 void	F_CastTicker (void);
 BOOL	F_CastResponder (event_t *ev);
 void	F_CastDrawer (void);
+void	F_AdvanceSlideshow ();
 
 //
 // F_StartFinale
@@ -85,7 +89,7 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 	automapactive = false;
 
 	// Okay - IWAD dependend stuff.
-	// This has been changed severly, and some stuff might have changed in the process.
+	// This has been changed severely, and some stuff might have changed in the process.
 	//
 	// [RH] More flexible now (even more severe changes)
 	//  FinaleFlat, FinaleText, and music are now determined in G_WorldDone() based on
@@ -130,6 +134,12 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 	V_SetBlend (0,0,0,0);
 	TEXTSPEED = 2;
 
+	FinaleHasPic = !!finalePic;
+	FinaleCount = 0;
+	FinaleEndCount = 70;
+	FadeDir = -1;
+	S_StopAllChannels ();
+
 	if (ending)
 	{
 		FinaleSequence = *((WORD *)&level.nextmap[6]);
@@ -141,13 +151,21 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 			GetFinaleText ("win1msg");
 			V_SetBlend (0,0,0,256);
 		}
+		else if (EndSequences[FinaleSequence].EndType == END_Strife)
+		{
+			if (players[0].mo->FindInventory (QuestItemClasses[24]) ||
+				players[0].mo->FindInventory (QuestItemClasses[26]))
+			{
+				FinalePart = 10;
+			}
+			else
+			{
+				FinalePart = 17;
+			}
+			FinaleStage = 5;
+			FinaleEndCount = 0;
+		}
 	}
-
-	FinaleHasPic = !!finalePic;
-	FinaleCount = 0;
-	FinaleEndCount = 70;
-	FadeDir = -1;
-	S_StopAllChannels ();
 }
 
 void F_EndFinale ()
@@ -157,11 +175,6 @@ void F_EndFinale ()
 		delete[] FinaleText;
 		FinaleText = NULL;
 		FinaleTextLen = 0;
-	}
-	if (DemonBuffer != NULL)
-	{
-		delete[] DemonBuffer;
-		DemonBuffer = NULL;
 	}
 }
 
@@ -213,37 +226,33 @@ void F_Ticker ()
 	if (FinaleStage == 0)
 	{
 		if (interrupt ||
-			(gamemode != commercial && FinaleCount > FinaleTextLen*TEXTSPEED+TEXTWAIT))
+			((gamemode != commercial || gameinfo.flags & GI_SHAREWARE)
+			 && FinaleCount > FinaleTextLen*TEXTSPEED+TEXTWAIT))
 		{
-			if (FinaleCount < FinaleTextLen*TEXTSPEED)
+			if (FinaleCount < FinaleTextLen*TEXTSPEED+10)
 			{
-				FinaleCount = FinaleTextLen*TEXTSPEED;
+				FinaleCount = FinaleTextLen*TEXTSPEED+10;
 			}
 			else
 			{
 				if (strncmp (level.nextmap, "enDSeQ", 6) == 0)
 				{
-					FinaleSequence = *((WORD *)&level.nextmap[6]);
-					if (EndSequences[FinaleSequence].EndType == END_Cast)
+					// [RH] Don't automatically advance end-of-game messages
+					if (interrupt)
 					{
-						F_StartCast ();
-					}
-					else
-					{
-						FinaleCount = 0;
-						FinaleStage = 1;
-						wipegamestate = GS_FORCEWIPE;
-						if (EndSequences[FinaleSequence].EndType == END_Bunny)
+						FinaleSequence = *((WORD *)&level.nextmap[6]);
+						if (EndSequences[FinaleSequence].EndType == END_Cast)
 						{
-							S_StartMusic ("d_bunny");
+							F_StartCast ();
 						}
-						else if (EndSequences[FinaleSequence].EndType == END_Demon)
+						else
 						{
-							if (DemonBuffer == NULL)
+							FinaleCount = 0;
+							FinaleStage = 1;
+							wipegamestate = GS_FORCEWIPE;
+							if (EndSequences[FinaleSequence].EndType == END_Bunny)
 							{
-								DemonBuffer = new BYTE[128000];
-								Wads.ReadLump (Wads.GetNumForName ("FINAL2"), DemonBuffer);
-								Wads.ReadLump (Wads.GetNumForName ("FINAL1"), DemonBuffer+64000);
+								S_StartMusic ("d_bunny");
 							}
 						}
 					}
@@ -316,6 +325,13 @@ void F_Ticker ()
 			FadePic ();
 		}
 	}
+	else if (FinaleStage >= 5)
+	{ // Strife slideshow
+		if (interrupt)
+		{
+			FinaleCount = FinaleEndCount;
+		}
+	}
 	
 	// advance animation
 	FinaleCount++;
@@ -324,6 +340,12 @@ void F_Ticker ()
 	{
 		F_CastTicker ();
 		return;
+	}
+	else if (FinaleStage == 5 && FinaleCount > FinaleEndCount)
+	{
+		S_StopSound ((fixed_t *)NULL, CHAN_VOICE);
+		F_AdvanceSlideshow ();
+		FinaleCount = 0;
 	}
 }
 
@@ -365,9 +387,9 @@ void F_TextWrite (void)
 		return;
 
 	// draw some of the text onto the screen
-	leftmargin = (gameinfo.gametype == GAME_Doom ? 10 : 20) - 160;
+	leftmargin = (gameinfo.gametype & (GAME_Doom|GAME_Strife|GAME_Hexen) ? 10 : 20) - 160;
 	rowheight = screen->Font->GetHeight () +
-		(gameinfo.gametype == GAME_Doom ? 3 : -1);
+		(gameinfo.gametype & (GAME_Doom|GAME_Strife) ? 3 : -1);
 	scale = (CleanXfac != 1 || CleanYfac != 1);
 
 	cx = leftmargin;
@@ -377,7 +399,7 @@ void F_TextWrite (void)
 	}
 	else
 	{
-		cy = (gameinfo.gametype == GAME_Doom ? 10 : 5) - 100;
+		cy = (gameinfo.gametype & (GAME_Doom|GAME_Strife) ? 10 : 5) - 100;
 	}
 	ch = FinaleText;
 		
@@ -745,121 +767,6 @@ void F_CastDrawer (void)
 }
 
 
-//
-// F_DrawPatchCol
-//
-void F_DrawPatchCol (int x, FTexture *tex, int col, const DCanvas *scrn)
-{
-	const BYTE *column;
-	const FTexture::Span *spans;
-	const BYTE *source;
-	byte*		dest;
-	byte*		desttop;
-	unsigned	count;
-	int			repeat;
-	int			c;
-	unsigned	step;
-	unsigned	invstep;
-	float		mul;
-	float		fx;
-	byte		p;
-	int			pitch;
-
-	// [RH] figure out how many times to repeat this column
-	// (for screens wider than 320 pixels)
-	mul = SCREENWIDTH / 320.f;
-	fx = (float)x;
-	repeat = (int)(floor (mul*(fx+1)) - floor(mul*fx));
-	if (repeat <= 0)
-		return;
-
-	// [RH] Remap virtual-x to real-x
-	x = (int)floor (mul*x);
-
-	// [RH] Figure out per-row fixed-point step
-	step = (200<<16) / SCREENHEIGHT;
-	invstep = (SCREENHEIGHT<<16) / 200;
-
-	column = tex->GetColumn (col, &spans);
-	desttop = scrn->GetBuffer() + x;
-	pitch = scrn->GetPitch();
-
-	// step through the posts in a column
-	while (spans->Length != 0)
-	{
-		count = (spans->Length * invstep) >> 16;
-		source = column + spans->TopOffset;
-		dest = desttop + ((spans->TopOffset*invstep)>>16)*pitch;
-		c = 0;
-
-		switch (repeat)
-		{
-		case 1:
-			do
-			{
-				*dest = source[c>>16];
-				dest += pitch;
-				c += step;
-			} while (--count);
-			break;
-		case 2:
-			do
-			{
-				p = source[c>>16];
-				dest[0] = p;
-				dest[1] = p;
-				dest += pitch;
-				c += step;
-			} while (--count);
-			break;
-		case 3:
-			do
-			{
-				p = source[c>>16];
-				dest[0] = p;
-				dest[1] = p;
-				dest[2] = p;
-				dest += pitch;
-				c += step;
-			} while (--count);
-			break;
-		case 4:
-			do
-			{
-				p = source[c>>16];
-				dest[0] = p;
-				dest[1] = p;
-				dest[2] = p;
-				dest[3] = p;
-				dest += pitch;
-				c += step;
-			} while (--count);
-			break;
-		default:
-			{
-				int count2;
-
-				do
-				{
-					p = source[c>>16];
-					dest[0] = p;
-					dest[1] = p;
-					dest[2] = p;
-					dest[3] = p;
-					for (count2 = repeat-4; count2; count2--)
-					{
-						dest[count2+4] = p;
-					}
-					dest += pitch;
-					c += step;
-				} while (--count);
-			}
-			break;
-		}
-		spans++;
-	}
-}
-
 /*
 ==================
 =
@@ -870,28 +777,42 @@ void F_DrawPatchCol (int x, FTexture *tex, int col, const DCanvas *scrn)
 
 void F_DemonScroll ()
 {
-	static int yval = 0;
-	static size_t nextscroll = 0;
+	int yval;
+	FTexture *final1 = TexMan("FINAL1");
+	int swidth = screen->GetWidth();
+	int sheight = screen->GetHeight();
 
 	if (FinaleCount < 70)
 	{
-		screen->DrawPageBlock (DemonBuffer+64000);
-		nextscroll = FinaleCount;
-		yval = 0;
+		screen->DrawTexture (TexMan("FINAL1"), 0, 0,
+			DTA_DestWidth, swidth,
+			DTA_DestHeight, sheight,
+			DTA_Masked, false,
+			TAG_DONE);
 		return;
 	}
-	if (yval < 64000)
+	yval = FinaleCount - 70;
+	if (yval < 600)
 	{
-		screen->DrawPageBlock (DemonBuffer+64000-yval);
-		if (FinaleCount >= nextscroll)
-		{
-			yval += 320;
-			nextscroll = FinaleCount+3;
-		}
+		yval = Scale (yval, sheight, 600);
+		screen->DrawTexture (TexMan("FINAL1"), 0, yval,
+			DTA_DestWidth, swidth,
+			DTA_DestHeight, sheight,
+			DTA_Masked, false,
+			TAG_DONE);
+		screen->DrawTexture (TexMan("FINAL2"), 0, yval - sheight,
+			DTA_DestWidth, swidth,
+			DTA_DestHeight, sheight,
+			DTA_Masked, false,
+			TAG_DONE);
 	}
 	else
 	{ //else, we'll just sit here and wait, for now
-		screen->DrawPageBlock (DemonBuffer);
+		screen->DrawTexture (TexMan("FINAL2"), 0, 0,
+			DTA_DestWidth, swidth,
+			DTA_DestHeight, sheight,
+			DTA_Masked, false,
+			TAG_DONE);
 	}
 }
 
@@ -912,8 +833,8 @@ void F_DrawUnderwater(void)
 	case 1:
 		{
 		PalEntry *palette;
-		FMemLump lump;
 		const byte *orgpal;
+		FMemLump lump;
 		int i;
 
 		lump = Wads.ReadLump ("E2PAL");
@@ -925,8 +846,10 @@ void F_DrawUnderwater(void)
 		}
 		screen->UpdatePalette ();
 
-		lump = Wads.ReadLump ("E2END");
-		screen->DrawPageBlock ((byte *)lump.GetMem());
+		screen->DrawTexture (TexMan("E2END"), 0, 0,
+			DTA_DestWidth, screen->GetWidth(),
+			DTA_DestHeight, screen->GetHeight(),
+			TAG_DONE);
 		FinaleStage = 2;
 		}
 
@@ -939,7 +862,6 @@ void F_DrawUnderwater(void)
 	case 4:
 		{
 		PalEntry *palette;
-		FMemLump lump;
 		int i;
 
 		palette = screen->GetPalette ();
@@ -950,8 +872,10 @@ void F_DrawUnderwater(void)
 		screen->UpdatePalette ();
 
 		screen->UpdatePalette ();
-		lump = Wads.ReadLump ("TITLE");
-		screen->DrawPageBlock ((byte *)lump.GetMem());
+		screen->DrawTexture (TexMan("TITLE"), 0, 0,
+			DTA_DestWidth, screen->GetWidth(),
+			DTA_DestHeight, screen->GetHeight(),
+			TAG_DONE);
 		break;
 		}
 	}
@@ -967,56 +891,251 @@ void F_DrawUnderwater(void)
 void F_BunnyScroll (void)
 {
 	int 		scrolled;
-	int 		x;
-	FTexture	*p1;
-	FTexture	*p2;
 	char		name[10];
 	size_t 		stage;
 	static size_t laststage;
+	bool		bunny = EndSequences[FinaleSequence].EndType != END_BuyStrife;
 
 	V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
-	scrolled = 320 - ((signed)FinaleCount-230)/2;
+	scrolled = ((signed)FinaleCount-230)/2;
 	if (scrolled > 320)
 		scrolled = 320;
 	else if (scrolled < 0)
 		scrolled = 0;
 
-	p1 = TexMan["PFUB2"];
-	p2 = TexMan["PFUB1"];
+	screen->DrawTexture (TexMan(bunny ? "PFUB1" : "CREDIT"), scrolled, 0,
+		DTA_320x200, true, DTA_Masked, false, TAG_DONE);
+	screen->DrawTexture (TexMan(bunny ? "PFUB2" : "VELLOGO"), scrolled - 320, 0,
+		DTA_320x200, true, DTA_Masked, false, TAG_DONE);
 
-	for (x = 0; x < 320; x++)
+	if (bunny)
 	{
-		if (x+scrolled < 320)
-			F_DrawPatchCol (x, p1, x+scrolled, screen);
-		else
-			F_DrawPatchCol (x, p2, x+scrolled - 320, screen);
-	}
+		if (FinaleCount < 1130)
+		{
+			return;
+		}
+		if (FinaleCount < 1180)
+		{
+			screen->DrawTexture (TexMan("END0"), (320-13*8)/2, (200-8*8)/2, DTA_320x200, true, TAG_DONE);
+			laststage = 0;
+			return;
+		}
 
-	if (FinaleCount < 1130)
-	{
-		return;
-	}
-	if (FinaleCount < 1180)
-	{
-		screen->DrawTexture (TexMan["END0"], (320-13*8)/2, (200-8*8)/2, DTA_320x200, true, TAG_DONE);
-		laststage = 0;
-		return;
-	}
+		stage = (FinaleCount-1180) / 5;
+		if (stage > 6)
+			stage = 6;
+		if (stage > laststage)
+		{
+			S_Sound (CHAN_WEAPON, "weapons/pistol", 1, ATTN_NONE);
+			laststage = stage;
+		}
 
-	stage = (FinaleCount-1180) / 5;
-	if (stage > 6)
-		stage = 6;
-	if (stage > laststage)
-	{
-		S_Sound (CHAN_WEAPON, "weapons/pistol", 1, ATTN_NONE);
-		laststage = stage;
+		sprintf (name, "END%i", stage);
+		screen->DrawTexture (TexMan(name), (320-13*8)/2, (200-8*8)/2, DTA_320x200, true, TAG_DONE);
 	}
-
-	sprintf (name, "END%i", stage);
-	screen->DrawTexture (TexMan[name], (320-13*8)/2, (200-8*8)/2, DTA_320x200, true, TAG_DONE);
 }
 
+//============================================================================
+//
+// F_StartSlideshow
+//
+// Starts running the slideshow previously set up.
+//
+//============================================================================
+
+void F_StartSlideshow ()
+{
+	gameaction = ga_nothing;
+	gamestate = GS_FINALE;
+	wipegamestate = GS_FINALE;
+	viewactive = false;
+	automapactive = false;
+
+	S_StopAllChannels ();
+
+	// The slideshow is determined solely by the map you're on.
+	if (!multiplayer && level.flags & LEVEL_DEATHSLIDESHOW)
+	{
+		FinalePart = 14;
+	}
+	else switch (level.levelnum)
+	{
+	case 3:
+		FinalePart = 1;
+		break;
+
+	case 10:
+		FinalePart = 5;
+		break;
+
+	default:
+		FinalePart = -99;
+		break;
+	}
+
+	FinaleCount = 0;
+	FinaleStage = 5;
+	FinaleEndCount = 0;
+}
+
+//============================================================================
+//
+// F_AdvanceSlideshow
+//
+//============================================================================
+
+void F_AdvanceSlideshow ()
+{
+	switch (FinalePart)
+	{
+	case -99:
+		gamestate = GS_LEVEL;
+		wipegamestate = GS_LEVEL;
+		P_ResumeConversation ();
+		viewactive = true;
+		break;
+
+	case -1:
+		wipegamestate = GS_FORCEWIPEFADE;
+		FinaleStage = 6;
+		S_StartMusic ("D_INTRO");
+		break;
+
+		// Macil's speech on map 3 about the Programmer.
+	case 1:
+		FinaleFlat = "SS2F1";
+		S_Sound (CHAN_VOICE, "svox/mac10", 1, ATTN_NORM);
+		FinalePart = 2;
+		FinaleEndCount = 9 * TICRATE;
+		break;
+
+	case 2:
+		FinaleFlat = "SS2F2";
+		S_Sound (CHAN_VOICE, "svox/mac11", 1, ATTN_NORM);
+		FinalePart = 3;
+		FinaleEndCount = 10 * TICRATE;
+		break;
+
+	case 3:
+		FinaleFlat = "SS2F3";
+		S_Sound (CHAN_VOICE, "svox/mac12", 1, ATTN_NORM);
+		FinalePart = 4;
+		FinaleEndCount = 12 * TICRATE;
+		break;
+
+	case 4:
+		FinaleFlat = "SS2F4";
+		S_Sound (CHAN_VOICE, "svox/mac13", 1, ATTN_NORM);
+		FinalePart = -99;
+		FinaleEndCount = 17 * TICRATE;
+		break;
+
+		// Macil's speech on map 10 about the Sigil.
+	case 5:
+		FinaleFlat = "SS3F1";
+		S_Sound (CHAN_VOICE, "svox/mac16", 1, ATTN_NORM);
+		FinalePart = 6;
+		FinaleEndCount = 10 * TICRATE;
+		break;
+
+	case 6:
+		FinaleFlat = "SS3F2";
+		S_Sound (CHAN_VOICE, "svox/mac17", 1, ATTN_NORM);
+		FinalePart = 7;
+		FinaleEndCount = 12 * TICRATE;
+		break;
+
+	case 7:
+		FinaleFlat = "SS3F3";
+		S_Sound (CHAN_VOICE, "svox/mac18", 1, ATTN_NORM);
+		FinalePart = 8;
+		FinaleEndCount = 12 * TICRATE;
+		break;
+
+	case 8:
+		FinaleFlat = "SS3F4";
+		S_Sound (CHAN_VOICE, "svox/mac19", 1, ATTN_NORM);
+		FinaleEndCount = 11 * TICRATE;
+		FinalePart = -99;
+		break;
+
+		// You won! You are a hero!
+	case 10:
+		FinaleFlat = "SS4F1";
+		S_StartMusic ("D_HAPPY");
+		S_Sound (CHAN_VOICE, "svox/rie01", 1, ATTN_NORM);
+		FinaleEndCount = 13 * TICRATE;
+		FinalePart = 11;
+		break;
+
+	case 11:
+		FinaleFlat = "SS4F2";
+		S_Sound (CHAN_VOICE, "svox/bbx01", 1, ATTN_NORM);
+		FinaleEndCount = 11 * TICRATE;
+		FinalePart = 12;
+		break;
+
+	case 12:
+		FinaleFlat = "SS4F3";
+		S_Sound (CHAN_VOICE, "svox/bbx02", 1, ATTN_NORM);
+		FinaleEndCount = 14 * TICRATE;
+		FinalePart = 13;
+		break;
+
+	case 13:
+		FinaleFlat = "SS4F4";
+		FinaleEndCount = 28 * TICRATE;
+		FinalePart = -1;
+		break;
+
+		// You are dead! All hope is lost!
+	case 14:
+		S_StartMusic ("D_SAD");
+		FinaleFlat = "SS5F1";
+		S_Sound (CHAN_VOICE, "svox/ss501b", 1, ATTN_NORM);
+		FinalePart = 15;
+		FinaleEndCount = 11 * TICRATE;
+		break;
+
+	case 15:
+		FinaleFlat = "SS5F2";
+		S_Sound (CHAN_VOICE, "svox/ss502b", 1, ATTN_NORM);
+		FinalePart = 16;
+		FinaleEndCount = 10 * TICRATE;
+		break;
+
+	case 16:
+		FinaleFlat = "SS5F3";
+		S_Sound (CHAN_VOICE, "svox/ss503b", 1, ATTN_NORM);
+		FinalePart = -1;
+		FinaleEndCount = 11 * TICRATE;
+		break;
+
+		// You won, but at what cost?
+	case 17:
+		S_StartMusic ("D_END");
+		FinaleFlat = "SS6F1";
+		S_Sound (CHAN_VOICE, "svox/ss601a", 1, ATTN_NORM);
+		FinaleEndCount = 8 * TICRATE;
+		FinalePart = 18;
+		break;
+
+	case 18:
+		FinaleFlat = "SS6F2";
+		S_Sound (CHAN_VOICE, "svox/ss602a", 1, ATTN_NORM);
+		FinalePart = 19;
+		FinaleEndCount = 8 * TICRATE;
+		break;
+
+	case 19:
+		FinaleFlat = "SS6F3";
+		S_Sound (CHAN_VOICE, "svox/ss603a", 1, ATTN_NORM);
+		FinalePart = -1;
+		FinaleEndCount = 9 * TICRATE;
+		break;
+	}
+}
 
 //
 // F_Drawer
@@ -1070,6 +1189,7 @@ void F_Drawer (void)
 			picname = EndSequences[FinaleSequence].PicName;
 			break;
 		case END_Bunny:
+		case END_BuyStrife:
 			F_BunnyScroll ();
 			break;
 		case END_Underwater:
@@ -1083,6 +1203,14 @@ void F_Drawer (void)
 
 	case 3:
 		F_CastDrawer ();
+		break;
+
+	case 5:
+		picname = FinaleFlat;
+		break;
+
+	case 6:
+		picname = "CREDIT";
 		break;
 
 	case 10:

@@ -272,4 +272,9 @@ public:
 	FPNGChunkFile Chunk;
 };
 
+inline FArchive &operator<< (FArchive &arc, PalEntry &p)
+{
+	return arc << p.a << p.r << p.g << p.b;
+}
+
 #endif //__FARCHIVE_H__

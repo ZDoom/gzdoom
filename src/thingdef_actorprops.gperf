@@ -1,0 +1,61 @@
+/*
+ * This file contains a list of all the properties you can assign to actors, excluding flags.
+ * It is meant to serve as input for gperf, the GNU perfect hash function generator.
+ * On Win32 systems, you can obtain gperf from the GnuWin32 project at
+ * <http://gnuwin32.sourceforge.net/packages.html>, or you can compile it from source
+ * using MinGW and MSYS.
+ *
+ * gperf -tCET -LANSI-C -Hactorhash -Nis_actorprop --null-strings thingdef_actorprops.gperf > thingdef_actorprops.h
+ */
+struct ActorProps { const char *name; void (*Handler)(AActor *defaults, Baggage &bag)); };
+%%
+skip_super,		ActorSkipSuper
+spawnid,		ActorSpawnID
+health,			ActorHealth
+reactiontime,		ActorReactionTime
+painchance,		ActorPainChance
+damage,			ActorDamage
+speed,			ActorSpeed
+radius,			ActorRadius
+height,			ActorHeight
+mass,			ActorMass
+xscale,			ActorXScale
+yscale,			ActorYScale
+scale,			ActorScale
+seesound,		ActorSeeSound
+attacksound,		ActorAttackSound
+painsound,		ActorPainSound
+deathsound,		ActorDeathSound
+activesound,		ActorActiveSound
+dropitem,		ActorDropItem
+spawn,			ActorSpawnState
+see,			ActorSeeState
+melee,			ActorMeleeState
+missile,		ActorMissileState
+pain,			ActorPainState
+death,			ActorDeathState
+xdeath,			ActorXDeathState
+burn,			ActorBurnState
+ice,			ActorIceState
+raise,			ActorRaiseState
+crash,			ActorCrashState
+states,			ActorStates
+renderstyle,		ActorRenderStyle
+alpha,			ActorAlpha
+obituary,		ActorObituary
+hitobituary,		ActorHitObituary
+donthurtshooter,	ActorDontHurtShooter
+explosionradius,	ActorExplosionRadius
+explosiondamage,	ActorExplosionDamage
+deathheight,		ActorDeathHeight
+burnheight,		ActorBurnHeight
+meleedamage,		ActorMeleeDamage
+meleesound,		ActorMeleeSound
+missiletype,		ActorMissileType
+missileheight,		ActorMissileHeight
+translation,		ActorTranslation
+clearflags,		ActorClearFlags
+monster,		ActorMonster
+projectile,		ActorProjectile
++,			ActorFlagSetOrReset
+-,			ActorFlagSetOrReset

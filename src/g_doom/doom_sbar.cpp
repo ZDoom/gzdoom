@@ -10,6 +10,7 @@
 #include "st_stuff.h"
 #include "r_local.h"
 #include "m_swap.h"
+#include "a_keys.h"
 #include "templates.h"
 
 #define ST_EVILGRINCOUNT		(2*TICRATE)
@@ -43,7 +44,7 @@ public:
 		BigHeight = tex->GetHeight();
 
 		DoCommonInit ();
-		memset (FaceWeaponsOwned, 0, sizeof(FaceWeaponsOwned));
+		bEvilGrin = false;
 	}
 
 	~FDoomStatusBar ()
@@ -131,7 +132,6 @@ public:
 	void AttachToPlayer (player_t *player)
 	{
 		player_t *oldplayer = CPlayer;
-		int i;
 
 		FBaseStatusBar::AttachToPlayer (player);
 		if (oldplayer != CPlayer)
@@ -144,10 +144,7 @@ public:
 			StatusBarTex.DrawToBar ("STFBANY", 143, 1,
 				translationtables[TRANSLATION_Players] + (CPlayer - players)*256);
 		}
-		for (i = 0; i < NUMWEAPONS; i++)
-		{
-			FaceWeaponsOwned[i] = CPlayer->weaponowned[i];
-		}
+		bEvilGrin = false;
 	}
 
 	void Tick ()
@@ -173,7 +170,7 @@ public:
 				SB_state--;
 				DrawImage (&StatusBarTex, 0, 0);
 				memset (OldArms, 255, sizeof(OldArms));
-				memset (OldKeys, 255, sizeof(OldKeys));
+				OldKeys = -1;
 				memset (OldAmmo, 255, sizeof(OldAmmo));
 				memset (OldMaxAmmo, 255, sizeof(OldMaxAmmo));
 				OldFaceIndex = -1;
@@ -239,6 +236,8 @@ private:
 
 	void DrawMainBar ()
 	{
+		int amount;
+
 		DrawAmmoStats ();
 		DrawFace ();
 		DrawKeys ();
@@ -269,9 +268,11 @@ private:
 			HealthRefresh--;
 			DrawNumber (OldHealth, 48, 3);
 		}
-		if (CPlayer->armorpoints[0] != OldArmor)
+		AInventory *armor = CPlayer->mo->FindInventory<ABasicArmor>();
+		int armorpoints = armor != NULL ? armor->Amount : 0;
+		if (armorpoints != OldArmor)
 		{
-			OldArmor = CPlayer->armorpoints[0];
+			OldArmor = armorpoints;
 			ArmorRefresh = screen->GetPageCount ();
 		}
 		if (ArmorRefresh)
@@ -279,8 +280,15 @@ private:
 			ArmorRefresh--;
 			DrawNumber (OldArmor, 179, 3);
 		}
-		ammotype_t ammo = wpnlev1info[CPlayer->readyweapon]->ammo;
-		int amount = (ammo == am_noammo) ? -9999 : CPlayer->ammo[ammo];
+		if (CPlayer->ReadyWeapon != NULL)
+		{
+			AAmmo *ammo = CPlayer->ReadyWeapon->Ammo1;
+			amount = ammo != NULL ? ammo->Amount : -9999;
+		}
+		else
+		{
+			amount = -9999;
+		}
 		if (amount != OldActiveAmmo)
 		{
 			OldActiveAmmo = amount;
@@ -311,8 +319,8 @@ private:
 		{
 			for (j = 0; j < MAX_WEAPONS_PER_SLOT; j++)
 			{
-				weapontype_t weap = CPlayer->WeaponSlots.Slots[i+2].GetWeapon (j);
-				if (weap < NUMWEAPONS && CPlayer->weaponowned[weap])
+				const TypeInfo *weap = LocalWeapons.Slots[i+2].GetWeapon (j);
+				if (weap != NULL && CPlayer->mo->FindInventory (weap) != NULL)
 				{
 					arms[i] = 1;
 					break;
@@ -363,15 +371,31 @@ private:
 
 	void DrawAmmoStats ()
 	{
-		static const int ammomap[4] = { 0, 1, 3, 2 };
-		WORD ammo[4], maxammo[4];
+		static const char *const ammoTypes[4] =
+		{
+			"Clip",
+			"Shell",
+			"RocketAmmo",
+			"Cell"
+		};
+		int ammo[4], maxammo[4];
 		int i;
 
 		// Catalog the player's ammo
 		for (i = 0; i < 4; i++)
 		{
-			ammo[i] = CPlayer->ammo[am_clip+ammomap[i]];
-			maxammo[i] = CPlayer->maxammo[am_clip+ammomap[i]];
+			const TypeInfo *type = TypeInfo::FindType (ammoTypes[i]);
+			AInventory *item = CPlayer->mo->FindInventory (type);
+			if (item != NULL)
+			{
+				ammo[i] = item->Amount;
+				maxammo[i] = item->MaxAmount;
+			}
+			else
+			{
+				ammo[i] = 0;
+				maxammo[i] = ((AInventory *)GetDefaultByType (type))->MaxAmount;
+			}
 		}
 
 		// Draw ammo amounts that have changed since last time
@@ -420,23 +444,23 @@ private:
 			FaceRefresh = screen->GetPageCount ();
 			OldFaceIndex = FaceIndex;
 		}
-		if (FaceRefresh || (CPlayer->inventory[CPlayer->readyArtifact] != 0 && !(level.flags & LEVEL_NOINVENTORYBAR)))
+		if (FaceRefresh || (CPlayer->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR)))
 		{
 			if (FaceRefresh)
 			{
 				FaceRefresh--;
 			}
 			DrawPartialImage (&StatusBarTex, 142, 37);
-			if (CPlayer->inventory[CPlayer->readyArtifact] == 0 || (level.flags & LEVEL_NOINVENTORYBAR))
+			if (CPlayer->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR))
 			{
 				DrawImage (Faces[FaceIndex], 143, 0);
 			}
 			else
 			{
-				DrawImage (ArtiImages[CPlayer->readyArtifact], 144, 0);
-				if (CPlayer->inventory[CPlayer->readyArtifact] != 1)
+				DrawImage (TexMan(CPlayer->InvSel->Icon), 144, 0);
+				if (CPlayer->InvSel->Amount != 1)
 				{
-					DrSmallNumber (CPlayer->inventory[CPlayer->readyArtifact], 165, 24);
+					DrSmallNumber (CPlayer->InvSel->Amount, 165, 24);
 				}
 				OldFaceIndex = -1;
 			}
@@ -445,41 +469,58 @@ private:
 
 	void DrawKeys ()
 	{
-		byte keys[3];
-		int i;
+		AInventory *item;
+		int keys;
 
 		// Catalog the player's current keys
-		for (i = 0; i < 3; i++)
+		keys = 0;
+		for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 		{
-			keys[i] = CPlayer->keys[i] ? i : 255;
-			if (CPlayer->keys[i+3])
+			if (item->IsKindOf (RUNTIME_CLASS(AKey)))
 			{
-				keys[i] = (keys[i] == 255) ? i+3 : i+6;
-			}
-		}
-
-		// Draw keys that have changed since last time
-		for (i = 0; i < 3; i++)
-		{
-			if (keys[i] != OldKeys[i])
-			{
-				KeysRefresh = screen->GetPageCount ();
+				int keynum = static_cast<AKey*>(item)->KeyNumber;
+				if (keynum >= 1 && keynum <= 6)
+				{
+					keys |= 1 << (keynum-1);
+				}
 			}
 		}
 
 		// Remember keys for next time
-		memcpy (OldKeys, keys, sizeof(keys));
+		if (OldKeys != keys)
+		{
+			OldKeys = keys;
+			KeysRefresh = screen->GetPageCount ();
+		}
 
+		// Draw keys that have changed since last time
 		if (KeysRefresh)
 		{
 			KeysRefresh--;
 			DrawPartialImage (&StatusBarTex, 239, 8);
-			for (i = 0; i < 3; i++)
+
+			// Blue Keys
+			switch (keys & (2|16))
 			{
-				if (keys[i] != 255)
-				{
-					DrawImage (Images[imgKEYS0+keys[i]], 239, 3 + i*10);
-				}
+			case 2:		DrawImage (Images[imgKEYS0], 239, 3);	break;
+			case 16:	DrawImage (Images[imgKEYS3], 239, 3);	break;
+			case 18:	DrawImage (Images[imgKEYS6], 239, 3);	break;
+			}
+
+			// Yellow Keys
+			switch (keys & (4|32))
+			{
+			case 4:		DrawImage (Images[imgKEYS1], 239, 13);	break;
+			case 32:	DrawImage (Images[imgKEYS4], 239, 13);	break;
+			case 36:	DrawImage (Images[imgKEYS7], 239, 13);	break;
+			}
+
+			// Red Keys
+			switch (keys & (1|8))
+			{
+			case 1:		DrawImage (Images[imgKEYS2], 239, 23);	break;
+			case 8:		DrawImage (Images[imgKEYS5], 239, 23);	break;
+			case 9:		DrawImage (Images[imgKEYS8], 239, 23);	break;
 			}
 		}
 	}
@@ -492,57 +533,41 @@ private:
 
 	void DrawInventoryBar ()
 	{
+		const AInventory *item;
 		int i;
-		int x;
-		bool left, right;
 
 		// If the player has no artifacts, don't draw the bar
-		for (i = 0; i < NUMINVENTORYSLOTS; ++i)
+		CPlayer->InvFirst = ValidateInvFirst (7);
+		if (CPlayer->InvFirst != NULL)
 		{
-			if (CPlayer->inventory[i] != 0)
+			for (item = CPlayer->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
-				break;
-			}
-		}
-		if (i == NUMINVENTORYSLOTS)
-		{
-			return;
-		}
-
-		FindInventoryPos (x, left, right);
-		if (x > 0)
-		{
-			for (i = 0; i < 7 && x < NUMINVENTORYSLOTS; x++)
-			{
-				if (CPlayer->inventory[x])
+				DrawImage (Images[imgARTIBOX], 50+i*31, 2);
+				DrawImage (TexMan(item->Icon), 50+i*31, 2);
+				if (item->Amount != 1)
 				{
-					DrawImage (Images[imgARTIBOX], 50+i*31, 2);
-					DrawImage (ArtiImages[x], 50+i*31, 2);
-					if (CPlayer->inventory[x] != 1)
-					{
-						DrSmallNumber (CPlayer->inventory[x], 66+i*31, 24);
-					}
-					if (x == CPlayer->readyArtifact)
-					{
-						DrawImage (Images[imgSELECTBOX], 50+i*31, 2);
-					}
-					i++;
+					DrSmallNumber (item->Amount, 66+i*31, 24);
+				}
+				if (item == CPlayer->InvSel)
+				{
+					DrawImage (Images[imgSELECTBOX], 50+i*31, 2);
 				}
 			}
-			if (i > 0)
+			for (; i < 7; ++i)
 			{
-				for (; i < 7; ++i)
-				{
-					DrawImage (Images[imgARTIBOX], 50+i*31, 2);
-				}
-				if (left)
-				{
-					DrawImage (Images[!(level.time & 4) ? imgINVLFGEM1 : imgINVLFGEM2], 38, 2);
-				}
-				if (right)
-				{
-					DrawImage (Images[!(level.time & 4) ? imgINVRTGEM1 : imgINVRTGEM2], 269, 2);
-				}
+				DrawImage (Images[imgARTIBOX], 50+i*31, 2);
+			}
+			// Is there something to the left?
+			if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
+			{
+				DrawImage (Images[!(level.time & 4) ?
+					imgINVLFGEM1 : imgINVLFGEM2], 38, 2);
+			}
+			// Is there something to the right?
+			if (item != NULL)
+			{
+				DrawImage (Images[!(level.time & 4) ?
+					imgINVRTGEM1 : imgINVRTGEM2], 269, 2);
 			}
 		}
 	}
@@ -555,41 +580,50 @@ private:
 
 	void DrawFullScreenStuff ()
 	{
-		int i, x;
+		const AInventory *item;
+		int i;
 
 		// Draw health
-		OverrideImageOrigin (true);
-		DrawOuterImage (Images[imgMEDI], 20, -2);
-		OverrideImageOrigin (false);
+		screen->DrawTexture (Images[imgMEDI], 20, -2,
+			DTA_HUDRules, HUD_Normal,
+			DTA_CenterBottomOffset, true,
+			TAG_DONE);
 		DrBNumberOuter (CPlayer->health, 40, -BigHeight-4);
 
 		// Draw armor
-		if (CPlayer->armortype && CPlayer->armorpoints[0])
+		ABasicArmor *armor = CPlayer->mo->FindInventory<ABasicArmor>();
+		if (armor != NULL && armor->Amount != 0)
 		{
-			OverrideImageOrigin (true);
-			DrawOuterImage (ArmorImages[CPlayer->armortype != deh.GreenAC], 20, -24);
-			OverrideImageOrigin (false);
-			DrBNumberOuter (CPlayer->armorpoints[0], 40, -39);
+			screen->DrawTexture (TexMan(armor->Icon), 20, -24,
+				DTA_HUDRules, HUD_Normal,
+				DTA_CenterBottomOffset, true,
+				TAG_DONE);
+			DrBNumberOuter (armor->Amount, 40, -39);
 		}
 
 		// Draw ammo
-		i = wpnlev1info[CPlayer->readyweapon]->ammo;
-		if (i < NUMAMMO || i == MANA_BOTH)
-		{
-			int amt;
+		AAmmo *ammo1, *ammo2;
+		int ammocount1, ammocount2;
 
-			OverrideImageOrigin (true);
-			DrawOuterImage (AmmoImages[i], -14, -4);
-			OverrideImageOrigin (false);
-			if (i < NUMAMMO)
+		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
+		if (ammo1 != NULL)
+		{
+			// Draw primary ammo in the bottom-right corner
+			screen->DrawTexture (TexMan(ammo1->Icon), -14, -4,
+				DTA_HUDRules, HUD_Normal,
+				DTA_CenterBottomOffset, true,
+				TAG_DONE);
+			DrBNumberOuter (ammo1->Amount, -67, -4 - BigHeight);
+			if (ammo2 != NULL)
 			{
-				amt = CPlayer->ammo[i];
+				// Draw secondary ammo just above the primary ammo
+				int y = MIN (-5 - BigHeight, -5 - TexMan(ammo1->Icon)->GetHeight());
+				screen->DrawTexture (TexMan(ammo2->Icon), -14, y,
+					DTA_HUDRules, HUD_Normal,
+					DTA_CenterBottomOffset, true,
+					TAG_DONE);
+				DrBNumberOuter (ammo2->Amount, -67, y - BigHeight);
 			}
-			else
-			{
-				amt = MIN (CPlayer->ammo[MANA_1], CPlayer->ammo[MANA_2]);
-			}
-			DrBNumberOuter (amt, -67, -BigHeight-4);
 		}
 
 		if (deathmatch)
@@ -598,28 +632,38 @@ private:
 		}
 		else
 		{ // Draw keys (not DM)
-			for (i = 0; i < 3; i++)
-			{
-				if (CPlayer->keys[i])
-				{
-					DrawOuterImage (Images[imgKEYS0+i], -10, 2+i*10);
-				}
-			}
-			for (; i < 6; i++)
-			{
-				if (CPlayer->keys[i])
-				{
-					int x;
+			int maxw = 0;
+			int count = 0;
+			int x = -2;
+			int y = 2;
 
-					if (CPlayer->keys[i-3])
+			for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
+			{
+				if (item->Icon > 0 && item->IsKindOf (RUNTIME_CLASS(AKey)))
+				{
+					FTexture *keypic = TexMan(item->Icon);
+					int w = keypic->GetWidth ();
+					int h = keypic->GetHeight ();
+					if (w > maxw)
 					{
-						x = -20;
+						maxw = w;
+					}
+					screen->DrawTexture (keypic, x, y,
+						DTA_LeftOffset, w,
+						DTA_TopOffset, 0,
+						DTA_HUDRules, HUD_Normal,
+						TAG_DONE);
+					if (++count == 3)
+					{
+						count = 0;
+						y = 2;
+						x -= maxw + 2;
+						maxw = 0;
 					}
 					else
 					{
-						x = -10;
+						y += h + 2;
 					}
-					DrawOuterImage (Images[imgKEYS0+i], x, -29+i*10);
 				}
 			}
 		}
@@ -629,55 +673,68 @@ private:
 		{
 			if (CPlayer->inventorytics == 0)
 			{
-				if (CPlayer->inventory[CPlayer->readyArtifact] > 0)
+				if (CPlayer->InvSel != NULL)
 				{
-					OverrideImageOrigin (true);
-					DrawOuterImage (ArtiImages[CPlayer->readyArtifact], -14, -24);
-					OverrideImageOrigin (false);
-					DrBNumberOuter (CPlayer->inventory[CPlayer->readyArtifact], -67, -41);
+					screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -14, -24,
+						DTA_HUDRules, HUD_Normal,
+						DTA_LeftOffset, TexMan(CPlayer->InvSel->Icon)->GetWidth()/2,
+						DTA_TopOffset, TexMan(CPlayer->InvSel->Icon)->GetHeight(),
+						TAG_DONE);
+					DrBNumberOuter (CPlayer->InvSel->Amount, -67, -41);
 				}
 			}
 			else
 			{
-				SetHorizCentering (true);
-				bool left, right;
-
-				FindInventoryPos (x, left, right);
-				for (i = 0; i < 7 && x < NUMINVENTORYSLOTS; x++)
+				CPlayer->InvFirst = ValidateInvFirst (7);
+				i = 0;
+				if (CPlayer->InvFirst != NULL)
 				{
-					if (CPlayer->inventory[x])
+					for (item = CPlayer->InvFirst; item != NULL && i < 7; item = item->NextInv(), ++i)
 					{
-						DrawOuterFadedImage (Images[imgARTIBOX], -106+i*31, -32, TRANSLUC50);
-						DrawOuterImage (ArtiImages[x], -105+i*31, -32);
-						if (CPlayer->inventory[x] != 1)
+						screen->DrawTexture (Images[imgARTIBOX], -160+i*31, -32,
+							DTA_HUDRules, HUD_HorizCenter,
+							DTA_Alpha, HX_SHADOW,
+							TAG_DONE);
+						screen->DrawTexture (TexMan(item->Icon), -105+i*31, -32,
+							DTA_HUDRules, HUD_HorizCenter,
+							TAG_DONE);
+						if (item->Amount != 1)
 						{
-							DrSmallNumberOuter (CPlayer->inventory[x], -90+i*31, -10);
+							DrSmallNumberOuter (item->Amount, -90+i*31, -10, true);
 						}
-						if (x == CPlayer->readyArtifact)
+						if (item == CPlayer->InvSel)
 						{
-							OverrideImageOrigin (true);
-							DrawOuterImage (Images[imgSELECTBOX], -91+i*31, -3);
-							OverrideImageOrigin (false);
+							screen->DrawTexture (Images[imgSELECTBOX], -91+i*31, -3,
+								DTA_HUDRules, HUD_HorizCenter,
+								DTA_LeftOffset, Images[imgSELECTBOX]->GetWidth()/2,
+								DTA_TopOffset, Images[imgSELECTBOX]->GetHeight(),
+								TAG_DONE);
 						}
-						i++;
 					}
-				}
-				if (i > 0)
-				{
 					for (; i < 7; i++)
 					{
-						DrawOuterFadedImage (Images[imgARTIBOX], -106+i*31, -32, TRANSLUC50);
+						screen->DrawTexture (Images[imgARTIBOX], -106+i*31, -32,
+							DTA_HUDRules, HUD_HorizCenter,
+							DTA_Alpha, HX_SHADOW,
+							TAG_DONE);
 					}
-					if (left)
+					// Is there something to the left?
+					if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
 					{
-						DrawOuterImage (Images[!(level.time & 4) ? imgINVLFGEM1 : imgINVLFGEM2], -118, -33);
+						screen->DrawTexture (Images[!(level.time & 4) ?
+							imgINVLFGEM1 : imgINVLFGEM2], -118, -33,
+							DTA_HUDRules, HUD_Normal,
+							TAG_DONE);
 					}
-					if (right)
+					// Is there something to the right?
+					if (item != NULL)
 					{
-						DrawOuterImage (Images[!(level.time & 4) ? imgINVRTGEM1 : imgINVRTGEM2], 113, -33);
+						screen->DrawTexture (Images[!(level.time & 4) ?
+							imgINVRTGEM1 : imgINVRTGEM2], 113, -33,
+							DTA_HUDRules, HUD_Normal,
+							TAG_DONE);
 					}
 				}
-				SetHorizCentering (false);
 			}
 		}
 	}
@@ -698,6 +755,11 @@ private:
 		return lastcalc;
 	}
 
+	void ReceivedWeapon (AWeapon *weapon)
+	{
+		bEvilGrin = true;
+	}
+
 	//
 	// This is a not-very-pretty routine which handles the face states
 	// and their timing. The precedence of expressions is:
@@ -710,7 +772,6 @@ private:
 		angle_t 	diffang;
 		static int	lastattackdown = -1;
 		static int	priority = 0;
-		bool	 	doevilgrin;
 
 		if (priority < 10)
 		{
@@ -728,19 +789,10 @@ private:
 			if (CPlayer->bonuscount)
 			{
 				// picking up bonus
-				doevilgrin = false;
-
-				for (i = 0; i < NUMWEAPONS; i++)
-				{
-					if (FaceWeaponsOwned[i] != CPlayer->weaponowned[i])
-					{
-						doevilgrin = true;
-						FaceWeaponsOwned[i] = CPlayer->weaponowned[i];
-					}
-				}
-				if (doevilgrin) 
+				if (bEvilGrin) 
 				{
 					// evil grin if just picked up weapon
+					bEvilGrin = false;
 					priority = 8;
 					FaceCount = ST_EVILGRINCOUNT;
 					FaceIndex = CalcPainOffset() + ST_EVILGRINOFFSET;
@@ -853,7 +905,7 @@ private:
 		{
 			// invulnerability
 			if ((CPlayer->cheats & CF_GODMODE)
-				|| CPlayer->powers[pw_invulnerability])
+				|| (CPlayer->mo->flags2 & MF2_INVULNERABLE))
 			{
 				priority = 4;
 				FaceIndex = ST_GODFACE;
@@ -930,9 +982,9 @@ private:
 	int RandomNumber;
 	int OldFaceIndex;
 	byte OldArms[6];
-	byte OldKeys[3];
-	WORD OldAmmo[4];
-	WORD OldMaxAmmo[4];
+	int OldKeys;
+	int OldAmmo[4];
+	int OldMaxAmmo[4];
 	int OldHealth;
 	int OldArmor;
 	int OldActiveAmmo;
@@ -949,7 +1001,7 @@ private:
 	char FaceRefresh;
 	char KeysRefresh;
 
-	bool FaceWeaponsOwned[NUMWEAPONS];
+	bool bEvilGrin;
 };
 
 FDoomStatusBar::FDoomStatusBarTexture::FDoomStatusBarTexture ()

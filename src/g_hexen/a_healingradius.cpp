@@ -14,25 +14,12 @@
 
 // Healing Radius Artifact --------------------------------------------------
 
-BASIC_ARTI (HealingRadius, arti_healingradius, GStrings(TXT_ARTIHEALINGRADIUS))
-	AT_GAME_SET_FRIEND (HealingRadius)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		bool effective = false;
-
-		for (int i = 0; i < MAXPLAYERS; ++i)
-		{
-			if (playeringame[i] &&
-				players[i].mo != NULL &&
-				players[i].mo->health > 0 &&
-				P_AproxDistance (players[i].mo->x - player->mo->x, players[i].mo->y - player->mo->y) <= HEAL_RADIUS_DIST)
-			{
-				effective |= player->mo->DoHealingRadius (players[i].mo);
-			}
-		}
-		return effective;
-	}
+class AArtiHealingRadius : public AInventory
+{
+	DECLARE_ACTOR (AArtiHealingRadius, AInventory)
+public:
+	bool Use ();
+	const char *PickupMessage ();
 };
 
 FState AArtiHealingRadius::States[] =
@@ -59,10 +46,30 @@ IMPLEMENT_ACTOR (AArtiHealingRadius, Hexen, 10120, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTIHRAD")
 END_DEFAULTS
 
-AT_GAME_SET (HealingRadius)
+bool AArtiHealingRadius::Use ()
 {
-	ArtiDispatch[arti_healingradius] = AArtiHealingRadius::ActivateArti;
-	ArtiPics[arti_healingradius] = "ARTIHRAD";
+	bool effective = false;
+
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i] &&
+			players[i].mo != NULL &&
+			players[i].mo->health > 0 &&
+			P_AproxDistance (players[i].mo->x - Owner->x, players[i].mo->y - Owner->y) <= HEAL_RADIUS_DIST)
+		{
+			effective |= static_cast<APlayerPawn*>(Owner)->DoHealingRadius (players[i].mo);
+		}
+	}
+	return effective;
+
+}
+
+const char *AArtiHealingRadius::PickupMessage ()
+{
+	return GStrings(TXT_ARTIHEALINGRADIUS);
 }

@@ -67,7 +67,7 @@ IMPLEMENT_ABSTRACT_CLASS (DSimpleCanvas)
 
 int DisplayWidth, DisplayHeight, DisplayBits;
 
-FFont *SmallFont, *BigFont, *ConFont;
+FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
 
 extern "C" {
 DWORD *Col2RGB8_LessPrecision[65];
@@ -81,13 +81,24 @@ static DWORD Col2RGB8_2[63][256];
 // There's also only one, not four.
 DFrameBuffer *screen;
 
-CVAR (Int, vid_defwidth, 320, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Int, vid_defheight, 200, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Int, vid_defwidth, 640, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Int, vid_defheight, 480, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, vid_defbits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, vid_fps, false, 0)
 CVAR (Bool, ticker, false, 0)
+CVAR (Bool, vid_showpalette, false, 0)
 
-CVAR (Float, dimamount, 0.2f, CVAR_ARCHIVE)
+CUSTOM_CVAR (Float, dimamount, 0.2f, CVAR_ARCHIVE)
+{
+	if (self < 0.f)
+	{
+		self = 0.f;
+	}
+	else if (self > 1.f)
+	{
+		self = 1.f;
+	}
+}
 CVAR (Color, dimcolor, 0xffd700, CVAR_ARCHIVE)
 
 // [RH] Set true when vid_setmode command has been executed
@@ -212,15 +223,21 @@ void DCanvas::Clear (int left, int top, int right, int bottom, int color) const
 	}
 }
 
-
 void DCanvas::Dim () const
 {
-	if (dimamount < 0.f)
-		dimamount = 0.f;
-	else if (dimamount > 1.f)
-		dimamount = 1.f;
+	float amount = dimamount;
 
-	if (dimamount == 0.f)
+	if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
+	{ // On the Hexen title screen, the default dimming is not
+		// enough to make the menus readable.
+		amount = MIN<float> (1.f, amount*2.f);
+	}
+	Dim (PalEntry(dimcolor), amount, 0, 0, Width, Height);
+}
+
+void DCanvas::Dim (PalEntry color, float damount, int x1, int y1, int w, int h) const
+{
+	if (damount == 0.f)
 		return;
 
 	DWORD *bg2rgb;
@@ -230,49 +247,28 @@ void DCanvas::Dim () const
 	int x, y;
 
 	{
-		DWORD *fg2rgb;
-		fixed_t amount;
+		int amount;
 
-		amount = (fixed_t)(dimamount * 64);
-		if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
-		{ // On the Hexen title screen, the default dimming is not
-		  // enough to make the menus readable.
-			amount = MIN<fixed_t> (FRACUNIT, amount*2);
-		}
-		fg2rgb = Col2RGB8[amount];
+		amount = (int)(damount * 64);
 		bg2rgb = Col2RGB8[64-amount];
-		fg = fg2rgb[dimcolor.GetIndex ()];
+
+		fg = (((color.r * amount) >> 4) << 20) |
+			  ((color.g * amount) >> 4) |
+			 (((color.b * amount) >> 4) << 10);
 	}
 
-	spot = Buffer;
-	gap = Pitch - Width;
-	for (y = Height; y != 0; y--)
+	spot = Buffer + x1 + y1*Pitch;
+	gap = Pitch - w;
+	for (y = h; y != 0; y--)
 	{
-		for (x = Width/4; x != 0; x--)
+		for (x = w; x != 0; x--)
 		{
-			DWORD in = *(DWORD *)spot, out, bg;
+			DWORD bg;
 
-			// Do first pixel
-			bg = bg2rgb[in&0xff];
+			bg = bg2rgb[(*spot)&0xff];
 			bg = (fg+bg) | 0x1f07c1f;
-			out = RGB32k[0][0][bg&(bg>>15)];
-
-			// Do second pixel
-			bg = bg2rgb[(in>>8)&0xff];
-			bg = (fg+bg) | 0x1f07c1f;
-			out |= RGB32k[0][0][bg&(bg>>15)] << 8;
-
-			// Do third pixel
-			bg = bg2rgb[(in>>16)&0xff];
-			bg = (fg+bg) | 0x1f07c1f;
-			out |= RGB32k[0][0][bg&(bg>>15)] << 16;
-
-			// Do fourth pixel and store
-			bg = bg2rgb[in>>24];
-			bg = (fg+bg) | 0x1f07c1f;
-			*(DWORD *)spot = out | RGB32k[0][0][bg&(bg>>15)] << 24;
-
-			spot += 4;
+			*spot = RGB32k[0][0][bg&(bg>>15)];
+			spot++;
 		}
 		spot += gap;
 	}
@@ -562,7 +558,7 @@ DSimpleCanvas::DSimpleCanvas (int width, int height)
 	{
 		// The Athlon and P3 have very different caches, apparently.
 		// I am going to generalize the Athlon's performance to all AMD
-		// processor and the P3's to all non-AMD processors. I don't know
+		// processors and the P3's to all non-AMD processors. I don't know
 		// how smart that is, but I don't have a vast plethora of
 		// processors to test with.
 		if (CPU.bIsAMD)
@@ -658,6 +654,29 @@ void DFrameBuffer::DrawRateStuff ()
 		
 		for (i = 0; i < tics*2; i += 2)		buffer[i] = 0xff;
 		for ( ; i < 20*2; i += 2)			buffer[i] = 0x00;
+	}
+
+	// draws the palette for debugging
+	if (vid_showpalette)
+	{
+		int i, j, k, l;
+
+		BYTE *buffer = GetBuffer();
+		for (i = k = 0; i < 16; ++i)
+		{
+			for (j = 0; j < 8; ++j)
+			{
+				for (l = 0; l < 16; ++l)
+				{
+					memset (buffer, k, 8);
+					buffer += 8;
+					k++;
+				}
+				k -= 16;
+				buffer += GetPitch() - 16*8;
+			}
+			k += 16;
+		}
 	}
 }
 
@@ -827,9 +846,21 @@ void V_Init (void)
 	{
 		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
 	}
-	if (gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Strife)
+	if (Wads.CheckNumForName ("STBFN033") >= 0)
+	{
+		SmallFont2 = new FFont ("SmallFont2", "STBFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+	}
+	else
+	{
+		SmallFont2 = SmallFont;
+	}
+	if (gameinfo.gametype == GAME_Doom)
 	{
 		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("DBIGFONT"));
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		BigFont = new FSingleLumpFont ("BigFont", Wads.GetNumForName ("SBIGFONT"));
 	}
 	else
 	{

@@ -3,7 +3,7 @@
 ** Base status bar implementation
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2003 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,8 @@
 **
 */
 
+#include <assert.h>
+
 #include "templates.h"
 #include "sbar.h"
 #include "c_cvars.h"
@@ -48,20 +50,21 @@
 
 #define XHAIRSHRINKSIZE		(FRACUNIT/18)
 #define XHAIRPICKUPSIZE		(FRACUNIT*2+XHAIRSHRINKSIZE)
+#define POWERUPICONSIZE		32
 
 EXTERN_CVAR (Bool, am_showmonsters)
 EXTERN_CVAR (Bool, am_showsecrets)
 EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, noisedebug)
+EXTERN_CVAR (Bool, hud_scale)
 
 FBaseStatusBar *StatusBar;
-CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
 
 int ST_X, ST_Y;
 int SB_state = 3;
 
-static FTexture *CrosshairImage;
+FTexture *CrosshairImage;
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;
@@ -146,9 +149,6 @@ FBaseStatusBar::FBaseStatusBar (int reltop)
 	Displacement = 0;
 
 	SetScaled (st_scale);
-	AmmoImages.Init (AmmoPics, MANA_BOTH+1);
-	ArtiImages.Init (ArtiPics, NUMARTIFACTS);
-	ArmorImages.Init (ArmorPics, NUMARMOR);
 }
 
 //---------------------------------------------------------------------------
@@ -452,132 +452,6 @@ void FBaseStatusBar::DrawPartialImage (FTexture *img, int wx, int ww) const
 
 //---------------------------------------------------------------------------
 //
-// PROC RepositionCoords
-//
-// Repositions coordinates for the outside status bar drawers. Returns
-// true if the image should be stretched.
-//
-//---------------------------------------------------------------------------
-
-bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
-	const int w, const int h) const
-{
-	bool xright = x < 0;
-	bool ybot = y < 0;
-
-	if (FixedOrigin)
-	{
-		x += xo - w / 2;
-		y += yo - h;
-	}
-	if (hud_scale)
-	{
-		x *= CleanXfac;
-		if (Centering)
-			x += SCREENWIDTH / 2;
-		else if (xright)
-			x = SCREENWIDTH + x;
-		y *= CleanYfac;
-		if (ybot)
-			y = SCREENHEIGHT + y;
-		return true;
-	}
-	else
-	{
-		if (Centering)
-			x += SCREENWIDTH / 2;
-		else if (xright)
-			x = SCREENWIDTH + x;
-		if (ybot)
-			y = SCREENHEIGHT + y;
-		return false;
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawOuterFadedImage
-//
-// Draws a translucent image outside the status bar, possibly scaled.
-//
-//---------------------------------------------------------------------------
-
-void FBaseStatusBar::DrawOuterFadedImage (FTexture *img, int x, int y, fixed_t shade) const
-{
-	if (img != NULL)
-	{
-		int w = img->GetWidth ();
-		int h = img->GetHeight ();
-		bool cnm = RepositionCoords (x, y, img->LeftOffset, img->TopOffset, w, h);
-
-		screen->DrawTexture (img, x, y, DTA_Alpha, shade, DTA_CleanNoMove, cnm, TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawShadowedImage
-//
-// Draws a shadowed image outside the status bar, possibly scaled.
-//
-//---------------------------------------------------------------------------
-
-void FBaseStatusBar::DrawShadowedImage (FTexture *img, int x, int y, fixed_t shade) const
-{
-	if (img != NULL)
-	{
-		int w = img->GetWidth ();
-		int h = img->GetHeight ();
-		bool cnm = RepositionCoords (x, y, img->LeftOffset, img->TopOffset, w, h);
-
-		screen->DrawTexture (img, x, y,
-			DTA_CleanNoMove, cnm,
-			DTA_ShadowAlpha, shade,
-			DTA_ShadowColor, 0,
-			TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawOuterImage
-//
-// Draws an image outside the status bar, possibly scaled.
-//
-//---------------------------------------------------------------------------
-
-void FBaseStatusBar::DrawOuterImage (FTexture *img, int x, int y) const
-{
-	if (img != NULL)
-	{
-		int w = img->GetWidth ();
-		int h = img->GetHeight ();
-		bool cnm = RepositionCoords (x, y, img->LeftOffset, img->TopOffset, w, h);
-
-		screen->DrawTexture (img, x, y, DTA_CleanNoMove, cnm, TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
-// PROC DrawOuterTexture
-//
-// Draws a texture outside the status bar, possibly scaled.
-//
-//---------------------------------------------------------------------------
-
-void FBaseStatusBar::DrawOuterTexture (FTexture *tex, int x, int y) const
-{
-	if (tex)
-	{
-		bool cnm = RepositionCoords (x, y, 0, 0, 0, 0);
-
-		screen->DrawTexture (tex, x, y, DTA_CleanNoMove, cnm, TAG_DONE);
-	}
-}
-
-//---------------------------------------------------------------------------
-//
 // PROC DrINumber
 //
 // Draws a three digit number.
@@ -726,42 +600,48 @@ void FBaseStatusBar::DrSmallNumber (int val, int x, int y) const
 //
 // PROC DrINumberOuter
 //
-// Draws a three digit number outside the status bar, possibly scaled.
+// Draws a number outside the status bar, possibly scaled.
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrINumberOuter (signed int val, int x, int y) const
+void FBaseStatusBar::DrINumberOuter (signed int val, int x, int y, bool center, int w) const
 {
-	int oldval;
+	bool negative = false;
 
-	if (val > 999)
-	{
-		val = 999;
-	}
-	oldval = val;
+	x += w*2;
 	if (val < 0)
 	{
-		if (val < -9)
-		{
-			DrawOuterImage (Images[imgLAME], x+1, y+1);
-			return;
-		}
+		negative = true;
 		val = -val;
-		DrawOuterImage (Images[imgINumbers+val], x+18, y);
-		DrawOuterImage (Images[imgNEGATIVE], x+9, y);
+	}
+	else if (val == 0)
+	{
+		screen->DrawTexture (Images[imgINumbers], x + 1, y + 1,
+			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
+		screen->DrawTexture (Images[imgINumbers], x, y,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 		return;
 	}
-	if (val > 99)
+
+	while (val != 0)
 	{
-		DrawOuterImage (Images[imgINumbers+val/100], x, y);
+		screen->DrawTexture (Images[imgINumbers + val % 10], x + 1, y + 1,
+			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
+		screen->DrawTexture (Images[imgINumbers + val % 10], x, y,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
+		x -= w;
+		val /= 10;
 	}
-	val = val % 100;
-	if (val > 9 || oldval > 99)
+	if (negative)
 	{
-		DrawOuterImage (Images[imgINumbers+val/10], x+9, y);
+		screen->DrawTexture (Images[imgNEGATIVE], x + 1, y + 1,
+			DTA_FillColor, 0, DTA_Alpha, HR_SHADOW,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
+		screen->DrawTexture (Images[imgNEGATIVE], x, y,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 	}
-	val = val % 10;
-	DrawOuterImage (Images[imgINumbers+val], x+18, y);
 }
 
 //---------------------------------------------------------------------------
@@ -775,11 +655,8 @@ void FBaseStatusBar::DrINumberOuter (signed int val, int x, int y) const
 void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) const
 {
 	int xpos;
-	int i;
 	int w;
-	int div;
-	bool neg;
-	int first;
+	bool negative = false;
 	FTexture *pic;
 
 	pic = Images[imgBNumbers+3];
@@ -792,55 +669,135 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 		w = 0;
 	}
 
-	div = 1;
-	for (i = size-1; i>0; i--)
-		div *= 10;
-
-	xpos = x + w/2;
+	xpos = x + w/2 + (size-1)*w;
 
 	if (val == 0)
 	{
 		pic = Images[imgBNumbers];
-		DrawShadowedImage (pic, xpos - pic->GetWidth()/2 + w*(size-1), y, HR_SHADOW);
+		screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
+			DTA_HUDRules, HUD_Normal,
+			DTA_Alpha, HR_SHADOW,
+			DTA_FillColor, 0,
+			TAG_DONE);
+		screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
+			DTA_HUDRules, HUD_Normal,
+			TAG_DONE);
 		return;
 	}
-
-	if (val >= div*10)
+	else if (val < 0)
 	{
-		val = div*10 - 1;
-	}
-	if ( (neg = (val < 0)) )
-	{
-		if (val <= -div)
-		{
-			val = -div + 1;
-		}
+		negative = true;
 		val = -val;
-		size--;
-		div /= 10;
 	}
-	first = -99999;
-	while (size--)
-	{
-		i = val / div;
 
-		if (i != 0 || first != -99999)
-		{
-			if (first == -99999)
-			{
-				first = xpos;
-			}
-			pic = Images[i + imgBNumbers];
-			DrawShadowedImage (pic, xpos - pic->GetWidth()/2, y, HR_SHADOW);
-			val -= i * div;
-		}
-		div /= 10;
-		xpos += w;
+	while (val != 0)
+	{
+		pic = Images[val % 10 + imgBNumbers];
+		screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
+			DTA_HUDRules, HUD_Normal,
+			DTA_Alpha, HR_SHADOW,
+			DTA_FillColor, 0,
+			TAG_DONE);
+		screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
+			DTA_HUDRules, HUD_Normal,
+			TAG_DONE);
+		val /= 10;
+		xpos -= w;
 	}
-	if (neg)
+	if (negative)
 	{
 		pic = Images[imgBNEGATIVE];
-		DrawShadowedImage (pic, first - pic->GetWidth()/2 - w, y, HR_SHADOW);
+		if (pic != NULL)
+		{
+			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
+				DTA_HUDRules, HUD_Normal,
+				DTA_Alpha, HR_SHADOW,
+				DTA_FillColor, 0,
+				TAG_DONE);
+			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
+				DTA_HUDRules, HUD_Normal,
+				TAG_DONE);
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC DrBNumberOuter
+//
+// Draws a three digit number using the real big font outside the status bar.
+//
+//---------------------------------------------------------------------------
+
+void FBaseStatusBar::DrBNumberOuterFont (signed int val, int x, int y, int size) const
+{
+	int xpos;
+	int w, v;
+	bool negative = false;
+	FTexture *pic;
+
+	w = 0;
+	BigFont->GetChar ('0', &w);
+
+	if (w > 1)
+	{
+		w--;
+	}
+	xpos = x + w/2 + (size-1)*w;
+
+	if (val == 0)
+	{
+		pic = BigFont->GetChar ('0', &v);
+		screen->DrawTexture (pic, xpos - v/2 + 2, y + 2,
+			DTA_HUDRules, HUD_Normal,
+			DTA_Alpha, HR_SHADOW,
+			DTA_FillColor, 0,
+			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			TAG_DONE);
+		screen->DrawTexture (pic, xpos - v/2, y,
+			DTA_HUDRules, HUD_Normal,
+			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			TAG_DONE);
+		return;
+	}
+	else if (val < 0)
+	{
+		negative = true;
+		val = -val;
+	}
+
+	while (val != 0)
+	{
+		pic = BigFont->GetChar ('0' + val % 10, &v);
+		screen->DrawTexture (pic, xpos - v/2 + 2, y + 2,
+			DTA_HUDRules, HUD_Normal,
+			DTA_Alpha, HR_SHADOW,
+			DTA_FillColor, 0,
+			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			TAG_DONE);
+		screen->DrawTexture (pic, xpos - v/2, y,
+			DTA_HUDRules, HUD_Normal,
+			DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+			TAG_DONE);
+		val /= 10;
+		xpos -= w;
+	}
+	if (negative)
+	{
+		pic = BigFont->GetChar ('-', &v);
+		if (pic != NULL)
+		{
+			screen->DrawTexture (pic, xpos - v/2 + 2, y + 2,
+				DTA_HUDRules, HUD_Normal,
+				DTA_Alpha, HR_SHADOW,
+				DTA_FillColor, 0,
+				DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+				TAG_DONE);
+			screen->DrawTexture (pic, xpos - v/2, y,
+				DTA_HUDRules, HUD_Normal,
+				DTA_Translation, BigFont->GetColorTranslation (CR_UNTRANSLATED),
+				TAG_DONE);
+		}
 	}
 }
 
@@ -852,7 +809,7 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrSmallNumberOuter (int val, int x, int y) const
+void FBaseStatusBar::DrSmallNumberOuter (int val, int x, int y, bool center) const
 {
 	int digit = 0;
 
@@ -863,16 +820,19 @@ void FBaseStatusBar::DrSmallNumberOuter (int val, int x, int y) const
 	if (val > 99)
 	{
 		digit = val / 100;
-		DrawOuterImage (Images[imgSmNumbers + digit], x, y);
+		screen->DrawTexture (Images[imgSmNumbers + digit], x, y,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 		val -= digit * 100;
 	}
 	if (val > 9 || digit)
 	{
 		digit = val / 10;
-		DrawOuterImage (Images[imgSmNumbers + digit], x+4, y);
+		screen->DrawTexture (Images[imgSmNumbers + digit], x+4, y,
+			DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 		val -= digit * 10;
 	}
-	DrawOuterImage (Images[imgSmNumbers + val], x+8, y);
+	screen->DrawTexture (Images[imgSmNumbers + val], x+8, y,
+		DTA_HUDRules, center ? HUD_HorizCenter : HUD_Normal, TAG_DONE);
 }
 
 //---------------------------------------------------------------------------
@@ -1045,6 +1005,11 @@ void FBaseStatusBar::Draw (EHudState state)
 		fixed_t *value;
 		int i;
 
+		if (gameinfo.gametype == GAME_Strife)
+		{
+			y -= height * 4;
+		}
+
 		value = &CPlayer->mo->z;
 		for (i = 2, value = &CPlayer->mo->z; i >= 0; y -= height, --value, --i)
 		{
@@ -1053,6 +1018,8 @@ void FBaseStatusBar::Draw (EHudState state)
 			BorderNeedRefresh = screen->GetPageCount();
 		}
 	}
+
+	DrawPowerups ();
 
 	if (viewactive)
 	{
@@ -1187,6 +1154,34 @@ void FBaseStatusBar::Draw (EHudState state)
 	DrawConsistancy ();
 }
 
+//---------------------------------------------------------------------------
+//
+// DrawPowerups
+//
+//---------------------------------------------------------------------------
+
+void FBaseStatusBar::DrawPowerups ()
+{
+	// Each icon gets a 32x32 block to draw itself in.
+	int x, y;
+	AInventory *item;
+
+	x = -20;
+	y = 17;
+	for (item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
+	{
+		if (item->DrawPowerup (x, y))
+		{
+			x -= POWERUPICONSIZE;
+			if (x < -POWERUPICONSIZE*5)
+			{
+				x = -20;
+				y += POWERUPICONSIZE*2;
+			}
+		}
+	}
+}
+
 /*
 =============
 SV_AddBlend
@@ -1216,59 +1211,23 @@ void FBaseStatusBar::AddBlend (float r, float g, float b, float a, float v_blend
 
 void FBaseStatusBar::BlendView (float blend[4])
 {
-	int cnt, i;
+	int cnt;
 
 	AddBlend (BaseBlendR / 255.f, BaseBlendG / 255.f, BaseBlendB / 255.f, BaseBlendA, blend);
 
 	// [RH] All powerups can effect the screen blending now
-	for (i = 0; i < NUMPOWERS; ++i)
+	for (AInventory *item = CPlayer->mo->Inventory; item != NULL; item = item->Inventory)
 	{
-		if (i == pw_invulnerability && (CPlayer->mo->effects & FX_RESPAWNINVUL))
-		{ // Don't show effect if it's just temporary from respawning
-			continue;
-		}
-		if (i == pw_strength)
-		{ // berserk is different
-			continue;
-		}
-		if (CPlayer->powers[i] <= 0 ||
-			(CPlayer->powers[i] <= 4*32 && !(CPlayer->powers[i]&8)))
+		PalEntry color = item->GetBlend ();
+		if (color.a != 0)
 		{
-			continue;
+			AddBlend (color.r/255.f, color.g/255.f, color.b/255.f, color.a/255.f, blend);
 		}
-
-		int a = APART(PowerupColors[i]);
-
-		if (a == 0)
-		{
-			continue;
-		}
-
-		AddBlend (RPART(PowerupColors[i])/255.f,
-			GPART(PowerupColors[i])/255.f,
-			BPART(PowerupColors[i])/255.f,
-			a/255.f, blend);
 	}
-
 	if (CPlayer->bonuscount)
 	{
 		cnt = CPlayer->bonuscount << 3;
 		AddBlend (0.8431f, 0.7333f, 0.2706f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
-	}
-
-	if (CPlayer->powers[pw_strength] && APART(PowerupColors[pw_strength]))
-	{
-		// slowly fade the berzerk out
-		cnt = 128 - ((CPlayer->powers[pw_strength]>>3) & (~0x1f));
-
-		if (cnt > 0)
-		{
-			AddBlend (RPART(PowerupColors[pw_strength])/255.f,
-					  GPART(PowerupColors[pw_strength])/255.f,
-					  BPART(PowerupColors[pw_strength])/255.f,
-					  (APART(PowerupColors[pw_strength])*cnt)/(255.f*128.f),
-					  blend);
-		}
 	}
 
 	cnt = DamageToAlpha[MIN (113, CPlayer->damagecount)];
@@ -1286,19 +1245,14 @@ void FBaseStatusBar::BlendView (float blend[4])
 	// affect the white color in Hexen's palette and picking an alpha value
 	// that seems reasonable.
 
-	if (CPlayer->mstaffcount)
-	{ // The bloodscourge's flash isn't really describable using a blend
-	  // because the blue component of each color is the same for each level.
-		AddBlend (0.59216f, 0.43529f, 0.f, CPlayer->mstaffcount/6.f, blend);
-	}
-	if (CPlayer->cholycount)
-	{
-		AddBlend (0.51373f, 0.51373f, 0.51373f, CPlayer->cholycount/6.f, blend);
-	}
 	if (CPlayer->poisoncount)
 	{
 		cnt = MIN (CPlayer->poisoncount, 64);
 		AddBlend (0.04f, 0.2571f, 0.f, cnt/93.2571428571f, blend);
+	}
+	if (CPlayer->hazardcount > 16*TICRATE || (CPlayer->hazardcount & 8))
+	{
+		AddBlend (0.f, 1.f, 0.f, 0.125f, blend);
 	}
 	if (CPlayer->mo->flags2 & MF2_ICEDAMAGE)
 	{
@@ -1362,7 +1316,7 @@ void FBaseStatusBar::DrawConsistancy () const
 	}
 }
 
-void FBaseStatusBar::FlashArtifact (int arti)
+void FBaseStatusBar::FlashItem (const TypeInfo *itemtype)
 {
 }
 
@@ -1375,6 +1329,14 @@ void FBaseStatusBar::NewGame ()
 }
 
 void FBaseStatusBar::SetInteger (int pname, int param)
+{
+}
+
+void FBaseStatusBar::ShowPop (int popnum)
+{
+}
+
+void FBaseStatusBar::ReceivedWeapon (AWeapon *weapon)
 {
 }
 
@@ -1398,67 +1360,145 @@ void FBaseStatusBar::ScreenSizeChanged ()
 
 //---------------------------------------------------------------------------
 //
-// PROC FindInventoryPos
+// ValidateInvFirst
+//
+// Returns an inventory item that, when drawn as the first item, is sure to
+// include the selected item in the inventory bar.
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::FindInventoryPos (int &pos, bool &moreleft, bool &moreright) const
+AInventory *FBaseStatusBar::ValidateInvFirst (int numVisible) const
 {
-	int i, x;
-	int countleft, countright;
-	int lowest;
+	AInventory *item;
+	int i;
 
-	countleft = 0;
-	countright = 0;
-	lowest = 1;
-
-	x = CPlayer->readyArtifact - 1;
-	for (i = 0; i < 3 && x > 0; x--)
+	if (CPlayer->InvFirst == NULL)
 	{
-		if (CPlayer->inventory[x])
-		{
-			lowest = x;
-			i++;
+		CPlayer->InvFirst = CPlayer->mo->FirstInv();
+		if (CPlayer->InvFirst == NULL)
+		{ // Nothing to show
+			return NULL;
 		}
 	}
-	pos = lowest;
-	countleft = i;
-	if (x > 0)
+
+	assert (CPlayer->InvFirst->Owner == CPlayer->mo);
+
+	// If there are fewer than numVisible items shown, see if we can shift the
+	// view left to show more.
+	for (i = 0, item = CPlayer->InvFirst; item != NULL && i < numVisible; ++i, item = item->NextInv())
+	{ }
+
+	while (i < numVisible)
 	{
-		for (i = x; i > 0; i--)
+		item = CPlayer->InvFirst->PrevInv ();
+		if (item == NULL)
 		{
-			if (CPlayer->inventory[i])
+			break;
+		}
+		else
+		{
+			CPlayer->InvFirst = item;
+			++i;
+		}
+	}
+
+	if (CPlayer->InvSel == NULL)
+	{
+		// Nothing selected, so don't move the view.
+		return CPlayer->InvFirst == NULL ? CPlayer->mo->Inventory : CPlayer->InvFirst;
+	}
+	else
+	{
+		// Check if InvSel is already visible
+		for (item = CPlayer->InvFirst, i = numVisible;
+			 item != NULL && i != 0;
+			 item = item->NextInv(), --i)
+		{
+			if (item == CPlayer->InvSel)
 			{
-				countleft++;
-				lowest = i;
+				return CPlayer->InvFirst;
 			}
 		}
-	}
-	for (x = CPlayer->readyArtifact + 1; x < NUMINVENTORYSLOTS; x++)
-	{
-		if (CPlayer->inventory[x])
-			countright++;
-	}
-	if (countleft + countright <= 6)
-	{
-		pos = lowest;
-		moreleft = false;
-		moreright = false;
-		return;
-	}
-	if (countright < 3 && countleft > 3)
-	{
-		for (i = pos - 1; i > 0 && countright < 3; i--)
+		// Check if InvSel is to the right of the visible range
+		for (i = 1; item != NULL; item = item->NextInv(), ++i)
 		{
-			if (CPlayer->inventory[x])
+			if (item == CPlayer->InvSel)
 			{
-				pos = i;
-				countleft--;
-				countright++;
+				// Found it. Now advance InvFirst
+				for (item = CPlayer->InvFirst; i != 0; --i)
+				{
+					item = item->NextInv();
+				}
+				return item;
 			}
 		}
+		// Check if InvSel is to the left of the visible range
+		for (item = CPlayer->mo->Inventory;
+			item != CPlayer->InvSel;
+			item = item->NextInv())
+		{ }
+		if (item != NULL)
+		{
+			// Found it, so let it become the first item shown
+			return item;
+		}
+		// Didn't find the selected item, so don't move the view.
+		// This should never happen, so let debug builds assert.
+		assert (item != NULL);
+		return CPlayer->InvFirst;
 	}
-	moreleft = (countleft > 3);
-	moreright = (countright > 3);
 }
 
+//============================================================================
+//
+// FBaseStatusBar :: GetCurrentAmmo
+//
+// Returns the types and amounts of ammo used by the current weapon. If the
+// weapon only uses one type of ammo, it is always returned as ammo1.
+//
+//============================================================================
+
+void FBaseStatusBar::GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const
+{
+	if (CPlayer->ReadyWeapon != NULL)
+	{
+		ammo1 = CPlayer->ReadyWeapon->Ammo1;
+		ammo2 = CPlayer->ReadyWeapon->Ammo2;
+		if (ammo1 == NULL)
+		{
+			ammo1 = ammo2;
+			ammo2 = NULL;
+		}
+	}
+	else
+	{
+		ammo1 = ammo2 = NULL;
+	}
+	ammocount1 = ammo1 != NULL ? ammo1->Amount : 0;
+	ammocount2 = ammo2 != NULL ? ammo2->Amount : 0;
+}
+
+//============================================================================
+//
+// CCMD showpop
+//
+// Asks the status bar to show a pop screen.
+//
+//============================================================================
+
+CCMD (showpop)
+{
+	if (argv.argc() != 2)
+	{
+		Printf ("Usage: showpop <popnumber>\n");
+	}
+	else if (StatusBar != NULL)
+	{
+		int popnum = atoi (argv[1]);
+		if (popnum < 0)
+		{
+			popnum = 0;
+		}
+		StatusBar->ShowPop (popnum);
+	}
+}

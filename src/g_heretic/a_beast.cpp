@@ -191,7 +191,7 @@ void A_BeastAttack (AActor *actor)
 		return;
 	}
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
-	if (P_CheckMeleeRange(actor))
+	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_beastatk.HitDice (3);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);

@@ -11,7 +11,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "p_local.h"
-#include "p_inter.h"
 #include "b_bot.h"
 #include "g_game.h"
 #include "m_random.h"
@@ -140,12 +139,9 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 				  is (Megasphere)
 				 ) || 
 				 dist < (GETINCOMBAT/4) ||
-				 (b->readyweapon == wp_pistol || b->readyweapon == wp_fist ||
-				  b->readyweapon == wp_goldwand || b->readyweapon == wp_staff)
+				 (b->ReadyWeapon == NULL || b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)
 				)
-				&& (dist < GETINCOMBAT || (b->readyweapon == wp_pistol ||
-					b->readyweapon == wp_fist || b->readyweapon == wp_staff ||
-					b->readyweapon == wp_goldwand))
+				&& (dist < GETINCOMBAT || (b->ReadyWeapon == NULL || b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
 				&& Reachable (actor, b->dest))
 #undef is
 			{
@@ -155,8 +151,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 
 		b->dest = NULL; //To let bot turn right
 
-		if (b->readyweapon != wp_pistol && b->readyweapon != wp_fist &&
-			b->readyweapon != wp_goldwand && b->readyweapon != wp_staff)
+		if (!(b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
 			actor->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
 
 		if (!(b->enemy->flags3 & MF3_ISMONSTER))
@@ -174,7 +169,8 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 
 		b->angle = R_PointToAngle2(actor->x, actor->y, b->enemy->x, b->enemy->y);
 
-		if (P_AproxDistance(actor->x-b->enemy->x, actor->y-b->enemy->y) > bglobal.combatdst[b->readyweapon])
+		if (P_AproxDistance(actor->x-b->enemy->x, actor->y-b->enemy->y) >
+			b->ReadyWeapon->MoveCombatDist)
 		{
 			// If a monster, use lower speed (just for cooler apperance while strafing down doomed monster)
 			cmd->ucmd.forwardmove = (b->enemy->flags3 & MF3_ISMONSTER) ? FORWARDWALK : FORWARDRUN;
@@ -242,7 +238,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 			{
 				if (b->enemy->player)
 				{
-					if ((b->enemy->player->readyweapon==wp_missile || (pr_botmove()%100)>b->skill.isp) && !(b->readyweapon==wp_pistol || b->readyweapon==wp_fist))
+					if (((b->enemy->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE) || (pr_botmove()%100)>b->skill.isp) && !(b->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON))
 						b->dest = b->enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
 					else //hide while b->t_fight, but keep view at enemy.
 						b->angle = R_PointToAngle2(actor->x, actor->y, b->enemy->x, b->enemy->y);
@@ -332,44 +328,34 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	int weapgiveammo = (alwaysapplydmflags || deathmatch) && !(dmflags & DF_WEAPONS_STAY);
 
 	//if(pos && !bglobal.thingvis[pos->id][item->id]) continue;
-	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
-		return;	// don't know how to use artifacts
+//	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
+//		return;	// don't know how to use artifacts
 	if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 	{
 		AWeapon *weapon = static_cast<AWeapon *> (item);
-		weapontype_t weaptype = weapon->OldStyleID ();
+		AWeapon *heldWeapon;
 
-		if (weaptype >= NUMWEAPONS)
-		{ // bad weapon
-			return;
-		}
-
-		ammotype_t ammotype = wpnlev1info[weaptype]->ammo;
-
-		if (b->weaponowned[weaptype])
+		heldWeapon = static_cast<AWeapon *> (b->mo->FindInventory (item->GetClass()));
+		if (heldWeapon != NULL)
 		{
 			if (!weapgiveammo)
 				return;
-			if (ammotype >= NUMAMMO)
+			if ((heldWeapon->Ammo1 == NULL || heldWeapon->Ammo1->Amount >= heldWeapon->Ammo1->MaxAmount) &&
+				(heldWeapon->Ammo2 == NULL || heldWeapon->Ammo2->Amount >= heldWeapon->Ammo2->MaxAmount))
+			{
 				return;
-			if (b->ammo[ammotype] >= b->maxammo[ammotype])
-				return;
+			}
 		}
 	}
 	else if (item->IsKindOf (RUNTIME_CLASS(AAmmo)))
 	{
 		AAmmo *ammo = static_cast<AAmmo *> (item);
-		ammotype_t ammotype = ammo->GetAmmoType ();
+		const TypeInfo *parent = ammo->GetParentAmmo ();
+		AInventory *holdingammo = b->mo->FindInventory (parent);
 
-		if (ammotype < NUMAMMO)
+		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)
 		{
-			if (b->ammo[ammotype] >= b->maxammo[ammotype])
-				return;
-		}
-		else if (ammotype == MANA_BOTH)
-		{
-			if (b->ammo[MANA_1] >= b->maxammo[MANA_1] && b->ammo[MANA_2] >= b->maxammo[MANA_2])
-				return;
+			return;
 		}
 	}
 	else if ((typeis (Megasphere) || typeis (Soulsphere) || typeis (HealthBonus)) && actor->health >= deh.MaxSoulsphere)
@@ -378,9 +364,9 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 		return;
 
 	if ((b->dest == NULL ||
-		!(b->dest->flags & MF_SPECIAL) ||
-		!Reachable (actor, b->dest)) &&
-		Reachable (actor, item))
+		!(b->dest->flags & MF_SPECIAL)/* ||
+		!Reachable (actor, b->dest)*/)/* &&
+		Reachable (actor, item)*/)	// Calling Reachable slows this down tremendously
 	{
 		b->prev = b->dest;
 		b->dest = item;

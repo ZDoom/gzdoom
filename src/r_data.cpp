@@ -133,12 +133,7 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD fl
 		if (stricmp (tex->Name, name) == 0)
 		{
 			// The name matches, so check the texture type
-			if ((flags & TEXMAN_NoStaticNames) && tex->bStaticName)
-			{
-				Printf ("Sorry, RandomLag says you should not be able to use %s as a texture.\n", tex->Name);
-				// Do not return i;
-			}
-			else if (usetype == FTexture::TEX_Any)
+			if (usetype == FTexture::TEX_Any)
 			{
 				return i;
 			}
@@ -168,7 +163,7 @@ int FTextureManager::GetTexture (const char *name, int usetype, BITFIELD flags)
 
 	if (name == NULL || name[0] == 0)
 	{
-		i = 0;
+		return 0;
 	}
 	else
 	{
@@ -406,7 +401,7 @@ void FTextureManager::ReplaceTexture (int picnum, FTexture *newtexture, bool fre
 	}
 }
 
-int FTextureManager::AddPatch (const char *patchname, bool staticname, int namespc)
+int FTextureManager::AddPatch (const char *patchname, int namespc)
 {
 	if (patchname == NULL)
 	{
@@ -424,12 +419,7 @@ int FTextureManager::AddPatch (const char *patchname, bool staticname, int names
 		return -1;
 	}
 
-	int picnum = CreateTexture (lumpnum);
-	if (picnum >= 0)
-	{
-		TexMan[picnum]->bStaticName = true;
-	}
-	return picnum;
+	return CreateTexture (lumpnum);
 }
 
 void FTextureManager::AddFlats ()
@@ -744,7 +734,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int p
 FTexture::FTexture ()
 : LeftOffset(0), TopOffset(0),
   WidthBits(0), HeightBits(0), ScaleX(8), ScaleY(8),
-  UseType(TEX_Any), bNoDecals(false), bStaticName(false), bNoRemap0(false), bWorldPanning(false),
+  UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false),
   Rotations(0xFFFF), Width(0xFFFF), Height(0), WidthMask(0)
 {
@@ -1150,12 +1140,15 @@ void FPatchTexture::MakeTexture ()
 {
 	BYTE *remap, remaptable[256];
 	Span *spanstuffer, *spanstarter;
+	const column_t *maxcol;
 	bool warned;
 	int numspans;
 	int x;
 
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const patch_t *patch = (const patch_t *)lump.GetMem();
+
+	maxcol = (const column_t *)((const BYTE *)patch + Wads.LumpLength (SourceLump) - 3);
 
 	// Check for badly-sized patches
 	if (SHORT(patch->width) <= 0 || SHORT(patch->height) <= 0)
@@ -1204,7 +1197,7 @@ void FPatchTexture::MakeTexture ()
 		const column_t *column = (const column_t *)((const BYTE *)patch + LONG(patch->columnofs[x]));
 		int top = -1;
 
-		while (column->topdelta != 0xFF)
+		while (column < maxcol && column->topdelta != 0xFF)
 		{
 			if (column->topdelta <= top)
 			{
@@ -1252,7 +1245,7 @@ void FPatchTexture::MakeTexture ()
 		Spans[x] = spanstuffer;
 		spanstarter = spanstuffer;
 
-		while (column->topdelta != 0xFF)
+		while (column < maxcol && column->topdelta != 0xFF)
 		{
 			if (column->topdelta <= top)
 			{
@@ -2412,7 +2405,7 @@ void FWarpTexture::MakeTexture (DWORD time)
 
 	GenTime = time;
 
-	byte buffer[256];
+	byte *buffer = (byte *)alloca (MAX (Width, Height));
 	int xsize = Width;
 	int ysize = Height;
 	int xmask = WidthMask;
@@ -2572,15 +2565,19 @@ void R_SetDefaultColormap (const char *name)
 		// [RH] If using BUILD's palette.dat, generate the colormap
 		if (Args.CheckValue ("-bpal") != NULL)
 		{
+			Printf ("Make colormap\n");
 			FDynamicColormap foo;
 
 			foo.Color = 0xFFFFFF;
 			foo.Fade = 0;
 			foo.Maps = realcolormaps;
+			foo.Desaturate = 0;
+			foo.Next = NULL;
 			foo.BuildLights ();
 		}
 		else
 		{
+			Printf ("use colormap\n");
 			lump = Wads.CheckNumForName (name, ns_colormaps);
 			if (lump == -1)
 				lump = Wads.CheckNumForName (name, ns_global);
@@ -2970,7 +2967,12 @@ static void R_InitPatches ()
 		"STARMS",
 		"VICTORY2",
 		"STFBANY",
-		"STPBANY"
+		"STPBANY",
+		"RGELOGO",
+		"VELLOGO",
+		"FINAL1",
+		"FINAL2",
+		"E2END"
 	};
 	static const char spinners[][9] =
 	{
@@ -3056,6 +3058,21 @@ static void R_InitPatches ()
 	{
 		sprintf (name, "M_SKL%.2d", i);
 		TexMan.AddPatch (name);
+	}
+
+	// Strife story panels
+	for (i = 0; i <= 7; ++i)
+	{
+		sprintf (name, "PANEL%d", i);
+		TexMan.AddPatch (name);
+	}
+	for (i = 2; i <= 6; ++i)
+	{
+		for (j = 3 + (i < 5); j > 0; --j)
+		{
+			sprintf (name, "SS%dF%d", i, j);
+			TexMan.AddPatch (name);
+		}
 	}
 }
 

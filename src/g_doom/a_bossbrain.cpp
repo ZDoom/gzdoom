@@ -227,7 +227,7 @@ void A_BrainDie (AActor *self)
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 		return;
 
-	G_ExitLevel (0);
+	G_ExitLevel (0, false);
 }
 
 void A_BrainSpit (AActor *self)

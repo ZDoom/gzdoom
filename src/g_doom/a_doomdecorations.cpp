@@ -39,15 +39,9 @@
 	END_DEFAULTS \
 	_DECSTARTSTATES(cls,ns)
 
-#define DECNBLOCK(cls,ednum,rad,hi,ns) \
-	_DECCOMMAN(cls,ednum,rad,hi,ns,0) \
-	PROP_Flags (MF_NOBLOCKMAP) \
-	END_DEFAULTS \
-	_DECSTARTSTATES(cls,ns)
-
 #define DECNBLOCKID(cls,ednum,id,rad,hi,ns) \
 	_DECCOMMON(cls,ednum,rad,hi,ns,id) \
-	PROP_Flags (MF_NOBLOCKMAP) \
+	/*PROP_Flags (MF_NOBLOCKMAP)*/ \
 	END_DEFAULTS \
 	_DECSTARTSTATES(cls,ns)
 

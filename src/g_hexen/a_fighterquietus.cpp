@@ -13,7 +13,7 @@
 static FRandom pr_quietusdrop ("QuietusDrop");
 static FRandom pr_fswordflame ("FSwordFlame");
 
-void A_FSwordAttack (AActor *actor, pspdef_t *psp);
+void A_FSwordAttack (AActor *actor);
 void A_DropQuietusPieces (AActor *);
 void A_FSwordFlames (AActor *);
 
@@ -146,14 +146,6 @@ class AFWeapQuietus : public AFighterWeapon
 {
 	DECLARE_ACTOR (AFWeapQuietus, AFighterWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_fsword;
-	}
-
-	static FWeaponInfo WeaponInfo;
-
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_F4);
@@ -200,34 +192,28 @@ FState AFWeapQuietus::States[] =
 	S_BRIGHT2 (FSRD, 'B',	1, NULL					    , &States[S_FSWORDREADY], 5, 40),	//  S_FSWORDATK_12
 };
 
-FWeaponInfo AFWeapQuietus::WeaponInfo =
-{
-	0,								// flags
-	MANA_BOTH,						// ammo
-	MANA_BOTH,						// givingammo
-	14,								// ammouse
-	0,								// ammogive
-	&States[S_FSWORDUP],			// upstate
-	&States[S_FSWORDDOWN],			// downstate
-	&States[S_FSWORDREADY],			// readystate
-	&States[S_FSWORDATK],			// atkstate
-	&States[S_FSWORDATK],			// holdatkstate
-	NULL,							// flashstate
-	RUNTIME_CLASS(AQuietusDrop),	// droptype
-	150,							// kickback
-	10*FRACUNIT,					// yadjust
-	NULL,							// upsound
-	NULL,							// readysound
-	RUNTIME_CLASS(AFWeapQuietus),	// type
-	14								// minammo
-};
-
 IMPLEMENT_ACTOR (AFWeapQuietus, Hexen, -1, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-END_DEFAULTS
 
-WEAPON1 (wp_fsword, AFWeapQuietus)
+	PROP_Weapon_SelectionOrder (2900)
+	PROP_Weapon_Flags (WIF_PRIMARY_USES_BOTH | WIF_EXTREME_DEATH)
+	PROP_Weapon_AmmoUse1 (14)
+	PROP_Weapon_AmmoUse2 (14)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_AmmoGive2 (0)
+	PROP_Weapon_UpState (S_FSWORDUP)
+	PROP_Weapon_DownState (S_FSWORDDOWN)
+	PROP_Weapon_ReadyState (S_FSWORDREADY)
+	PROP_Weapon_AtkState (S_FSWORDATK)
+	PROP_Weapon_HoldAtkState (S_FSWORDATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (10)
+	PROP_Weapon_MoveCombatDist (20000000)
+	PROP_Weapon_AmmoType1 ("Mana1")
+	PROP_Weapon_AmmoType2 ("Mana2")
+	PROP_Weapon_ProjectileType ("FSwordMissile")
+END_DEFAULTS
 
 // Fighter Sword Missile ----------------------------------------------------
 
@@ -314,7 +300,7 @@ END_DEFAULTS
 //
 //============================================================================
 
-void A_FSwordAttack (AActor *actor, pspdef_t *psp)
+void A_FSwordAttack (AActor *actor)
 {
 	player_t *player;
 
@@ -322,16 +308,18 @@ void A_FSwordAttack (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	if (player->UseAmmo (true))
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
 	{
-		AActor *pmo = player->mo;
-		P_SpawnPlayerMissile (pmo, pmo->x, pmo->y, pmo->z-10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), pmo->angle+ANGLE_45/4);
-		P_SpawnPlayerMissile (pmo, pmo->x, pmo->y, pmo->z-5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), pmo->angle+ANGLE_45/8);
-		P_SpawnPlayerMissile (pmo, pmo->x, pmo->y, pmo->z, RUNTIME_CLASS(AFSwordMissile), pmo->angle);
-		P_SpawnPlayerMissile (pmo, pmo->x, pmo->y, pmo->z+5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), pmo->angle-ANGLE_45/8);
-		P_SpawnPlayerMissile (pmo, pmo->x, pmo->y, pmo->z+10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), pmo->angle-ANGLE_45/4);
-		S_Sound (pmo, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
 	}
+	P_SpawnPlayerMissile (actor, actor->x, actor->y, actor->z-10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), actor->angle+ANGLE_45/4);
+	P_SpawnPlayerMissile (actor, actor->x, actor->y, actor->z-5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), actor->angle+ANGLE_45/8);
+	P_SpawnPlayerMissile (actor, actor->x, actor->y, actor->z, RUNTIME_CLASS(AFSwordMissile), actor->angle);
+	P_SpawnPlayerMissile (actor, actor->x, actor->y, actor->z+5*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), actor->angle-ANGLE_45/8);
+	P_SpawnPlayerMissile (actor, actor->x, actor->y, actor->z+10*FRACUNIT, RUNTIME_CLASS(AFSwordMissile), actor->angle-ANGLE_45/4);
+	S_Sound (actor, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
 }
 
 //============================================================================

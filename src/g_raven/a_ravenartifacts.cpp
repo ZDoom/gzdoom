@@ -8,13 +8,11 @@
 
 // Health -------------------------------------------------------------------
 
-BASIC_ARTI (Health, arti_health, GStrings(TXT_ARTIHEALTH))
-	AT_GAME_SET_FRIEND (ArtiHealth)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		return P_GiveBody (player, 25);
-	}
+class AArtiHealth : public AHealthPickup
+{
+	DECLARE_ACTOR (AArtiHealth, AHealthPickup)
+public:
+	const char *PickupMessage ();
 };
 
 FState AArtiHealth::States[] =
@@ -27,24 +25,23 @@ FState AArtiHealth::States[] =
 IMPLEMENT_ACTOR (AArtiHealth, Raven, 82, 24)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
+	PROP_SpawnHealth (25)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("ARTIPTN2")
 END_DEFAULTS
 
-AT_GAME_SET (ArtiHealth)
+const char *AArtiHealth::PickupMessage ()
 {
-	ArtiDispatch[arti_health] = AArtiHealth::ActivateArti;
-	ArtiPics[arti_health] = "ARTIPTN2";
+	return GStrings(TXT_ARTIHEALTH);
 }
 
 // Super health -------------------------------------------------------------
 
-BASIC_ARTI (SuperHealth, arti_superhealth, GStrings(TXT_ARTISUPERHEALTH))
-	AT_GAME_SET_FRIEND (ArtiSuperHealth)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		return P_GiveBody (player, player->mo->GetDefault()->health);
-	}
+class AArtiSuperHealth : public AHealthPickup
+{
+	DECLARE_ACTOR (AArtiSuperHealth, AHealthPickup)
+public:
+	const char *PickupMessage ();
 };
 
 FState AArtiSuperHealth::States[] =
@@ -55,33 +52,23 @@ FState AArtiSuperHealth::States[] =
 IMPLEMENT_ACTOR (AArtiSuperHealth, Raven, 32, 25)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
-
 	PROP_SpawnState (0)
+	PROP_SpawnHealth (100)
+	PROP_Inventory_Icon ("ARTISPHL")
 END_DEFAULTS
 
-AT_GAME_SET (ArtiSuperHealth)
+const char *AArtiSuperHealth::PickupMessage ()
 {
-	ArtiDispatch[arti_superhealth] = AArtiSuperHealth::ActivateArti;
-	ArtiPics[arti_superhealth] = "ARTISPHL";
+	return GStrings(TXT_ARTISUPERHEALTH);
 }
 
 // Flight -------------------------------------------------------------------
 
-BASIC_ARTI (Fly, arti_fly, GStrings(TXT_ARTIFLY))
-	AT_GAME_SET_FRIEND (ArtiFly)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		if (P_GivePower (player, pw_flight))
-		{
-			if (player->mo->momz <= -35*FRACUNIT)
-			{ // stop falling scream
-				S_StopSound (player->mo, CHAN_VOICE);
-			}
-			return true;
-		}
-		return false;
-	}
+class AArtiFly : public APowerupGiver
+{
+	DECLARE_ACTOR (AArtiFly, APowerupGiver)
+public:
+	const char *PickupMessage ();
 };
 
 FState AArtiFly::States[] =
@@ -96,24 +83,24 @@ IMPLEMENT_ACTOR (AArtiFly, Raven, 83, 15)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_RespawnTics (30+4200)
+	PROP_Inventory_Flags (IF_INTERHUBSTRIP)
+	PROP_Inventory_Icon ("ARTISOAR")
+	PROP_PowerupGiver_Powerup ("PowerFlight")
 END_DEFAULTS
 
-AT_GAME_SET (ArtiFly)
+const char *AArtiFly::PickupMessage ()
 {
-	ArtiDispatch[arti_fly] = AArtiFly::ActivateArti;
-	ArtiPics[arti_fly] = "ARTISOAR";
+	return GStrings(TXT_ARTIFLY);
 }
 
 // Invulnerability ----------------------------------------------------------
 
-BASIC_ARTI (Invulnerability, arti_invulnerability,
-	GStrings(gameinfo.gametype==GAME_Hexen?TXT_ARTIINVULNERABILITY2:TXT_ARTIINVULNERABILITY))
-	AT_GAME_SET_FRIEND (ArtiInvul)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		return P_GivePower (player, pw_invulnerability);
-	}
+class AArtiInvulnerability : public APowerupGiver
+{
+	DECLARE_ACTOR (AArtiInvulnerability, APowerupGiver)
+public:
+	const char *PickupMessage ();
 };
 
 FState AArtiInvulnerability::States[] =
@@ -128,23 +115,30 @@ IMPLEMENT_ACTOR (AArtiInvulnerability, Raven, 84, 133)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_RespawnTics (30+4200)
+	PROP_Inventory_Icon ("ARTIINVU")
+	PROP_PowerupGiver_Powerup ("PowerInvulnerable")
 END_DEFAULTS
 
-AT_GAME_SET (ArtiInvul)
+const char *AArtiInvulnerability::PickupMessage ()
 {
-	ArtiDispatch[arti_invulnerability] = AArtiInvulnerability::ActivateArti;
-	ArtiPics[arti_invulnerability] = "ARTIINVU";
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		return GStrings (TXT_ARTIINVULNERABILITY2);
+	}
+	else
+	{
+		return GStrings (TXT_ARTIINVULNERABILITY);
+	}
 }
 
 // Torch --------------------------------------------------------------------
 
-BASIC_ARTI (Torch, arti_torch, GStrings(TXT_ARTITORCH))
-	AT_GAME_SET_FRIEND (ArtiTorch)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		return P_GivePower (player, pw_infrared);
-	}
+class AArtiTorch : public APowerupGiver
+{
+	DECLARE_ACTOR (AArtiTorch, APowerupGiver)
+public:
+	const char *PickupMessage ();
 };
 
 FState AArtiTorch::States[] =
@@ -158,10 +152,11 @@ IMPLEMENT_ACTOR (AArtiTorch, Raven, 33, 73)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("ARTITRCH")
+	PROP_PowerupGiver_Powerup ("PowerTorch")
 END_DEFAULTS
 
-AT_GAME_SET (ArtiTorch)
+const char *AArtiTorch::PickupMessage ()
 {
-	ArtiDispatch[arti_torch] = AArtiTorch::ActivateArti;
-	ArtiPics[arti_torch] = "ARTITRCH";
+	return GStrings(TXT_ARTITORCH);
 }

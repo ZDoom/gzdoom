@@ -147,10 +147,7 @@ void DCajunMaster::Main (int buf)
 		observer = false;
 		players[consoleplayer].mo->UnlinkFromWorld ();
 		players[consoleplayer].mo->flags = MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH;
-		if (players[consoleplayer].powers[pw_flight] == 0)
-		{
-			players[consoleplayer].mo->flags2 &= ~MF2_FLY;
-		}
+		players[consoleplayer].mo->flags2 &= ~MF2_FLY;
 		players[consoleplayer].mo->LinkToWorld ();
 	}
 
@@ -185,50 +182,6 @@ void DCajunMaster::Init ()
 		teamplay = true; //Need teamplay for ctf. (which is not done yet)
 
 	t_join = (wanted_botnum + 1) * SPAWN_DELAY; //The + is to let player get away before the bots come in.
-
-	//Determine Combat distance for each weapon.
-	if (deathmatch)
-	{
-		combatdst[wp_pistol]       = 25000000;
-		combatdst[wp_shotgun]      = 24000000;
-		combatdst[wp_chaingun]     = 27000000;
-		combatdst[wp_missile]      = (SAFE_SELF_MISDIST*2);
-		combatdst[wp_plasma]       = 27000000;
-		combatdst[wp_bfg]          = 10000000;
-		combatdst[wp_supershotgun] = 15000000;
-
-		combatdst[wp_goldwand]     = 25000000;
-		combatdst[wp_crossbow]     = 24000000;
-		combatdst[wp_blaster]      = 27000000;
-		combatdst[wp_skullrod]     = 27000000;
-		combatdst[wp_phoenixrod]   = (SAFE_SELF_MISDIST*2);
-		combatdst[wp_mace]         = 10000000;
-	}
-	else
-	{
-		combatdst[wp_pistol]       = 15000000;
-		combatdst[wp_shotgun]      = 14000000;
-		combatdst[wp_chaingun]     = 17000000;
-		combatdst[wp_missile]      = (SAFE_SELF_MISDIST*3/2);
-		combatdst[wp_plasma]       = 17000000;
-		combatdst[wp_bfg]          = 6000000;
-		combatdst[wp_supershotgun] = 10000000;
-
-		combatdst[wp_goldwand]     = 15000000;
-		combatdst[wp_crossbow]     = 14000000;
-		combatdst[wp_blaster]      = 17000000;
-		combatdst[wp_skullrod]     = 17000000;
-		combatdst[wp_phoenixrod]   = (SAFE_SELF_MISDIST*3/2);
-		combatdst[wp_mace]         = 60000000;
-	}
-	combatdst[wp_fist]         = 1;
-	combatdst[wp_chainsaw]     = 1;
-	combatdst[wp_staff]        = 1;
-	combatdst[wp_gauntlets]    = 1;
-	combatdst[wp_beak]         = 1;
-	combatdst[wp_snout]        = 1;
-	combatdst[wp_ffist]        = 1;
-	combatdst[wp_cmace]        = 1;
 
 	if (botinfo == NULL)
 	{
@@ -475,7 +428,6 @@ void DCajunMaster::CleanBotstuff (player_t *p)
 	p->first_shot = true; //Used for reaction skill.
 	p->sleft = false; //If false, strafe is right.
 	p->allround = false;
-	p->redteam = false; //in ctf, if true this bot is on red team, else on blue..
 }
 
 
@@ -572,7 +524,7 @@ bool DCajunMaster::LoadBots ()
 	{
 		if (!SC_Compare ("{"))
 		{
-			SC_ScriptError ("Unexpected token '%s'\n", (const char **)&sc_String);
+			SC_ScriptError ("Unexpected token '%s'\n", sc_String);
 		}
 
 		botinfo_t *newinfo = new botinfo_t;

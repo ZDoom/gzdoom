@@ -156,7 +156,15 @@ public:
 
 	bool TryPickup (AActor *toucher)
 	{
-		return LineSpecials[special] (NULL, toucher, args[0], args[1], args[2], args[3], args[4]);
+		BOOL success = LineSpecials[special] (NULL, toucher, false,
+			args[0], args[1], args[2], args[3], args[4]);
+
+		if (success)
+		{
+			GoAwayAndDie ();
+			return true;
+		}
+		return false;
 	}
 
 	void DoPickupSpecial (AActor *toucher)
@@ -183,6 +191,8 @@ END_DEFAULTS
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void ProcessActor(void (*process)(FState *, int));
+void ProcessWeapon(void (*process)(FState *, int));
+void FinishThingdef();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -330,6 +340,7 @@ void LoadDecorations (void (*process)(FState *, int))
 		ParseDecorate (process);
 		SC_Close ();
 	}
+	FinishThingdef();
 }
 
 //==========================================================================
@@ -417,8 +428,7 @@ static void ParseDecorate (void (*process)(FState *, int))
 			}
 			else
 			{
-				const char *name = sc_String;
-				SC_ScriptError ("Unknown game type %s", &name);
+				SC_ScriptError ("Unknown game type %s", sc_String);
 			}
 			SC_MustGetString ();
 		}
@@ -438,18 +448,15 @@ static void ParseDecorate (void (*process)(FState *, int))
 		info->NumOwnedStates = states.Size();
 		if (info->NumOwnedStates == 0)
 		{
-			const char *name = typeName + 1;
-			SC_ScriptError ("%s does not define any animation frames", &name);
+			SC_ScriptError ("%s does not define any animation frames", typeName + 1);
 		}
 		else if (extra.SpawnEnd == 0)
 		{
-			const char *name = typeName + 1;
-			SC_ScriptError ("%s does not have a Frames definition", &name);
+			SC_ScriptError ("%s does not have a Frames definition", typeName + 1);
 		}
 		else if (def == DEF_BreakableDecoration && extra.DeathEnd == 0)
 		{
-			const char *name = typeName + 1;
-			SC_ScriptError ("%s does not have a DeathFrames definition", &name);
+			SC_ScriptError ("%s does not have a DeathFrames definition", typeName + 1);
 		}
 		else if (extra.IceDeathEnd != 0 && extra.bGenericIceDeath)
 		{
@@ -505,24 +512,24 @@ static void ParseDecorate (void (*process)(FState *, int))
 				{
 					if (extra.ExplosionRadius > 0)
 					{
-						info->OwnedStates[extra.DeathStart].Action.acp1 = A_Explode;
+						info->OwnedStates[extra.DeathStart].Action = A_Explode;
 					}
 				}
 				else
 				{
 					// The first frame plays the death sound and
 					// the second frame makes it nonsolid.
-					info->OwnedStates[extra.DeathStart].Action.acp1 = A_Scream;
+					info->OwnedStates[extra.DeathStart].Action= A_Scream;
 					if (extra.bSolidOnDeath)
 					{
 					}
 					else if (extra.DeathStart + 1 < extra.DeathEnd)
 					{
-						info->OwnedStates[extra.DeathStart+1].Action.acp1 = A_NoBlocking;
+						info->OwnedStates[extra.DeathStart+1].Action = A_NoBlocking;
 					}
 					else
 					{
-						info->OwnedStates[extra.DeathStart].Action.acp1 = A_ScreamAndUnblock;
+						info->OwnedStates[extra.DeathStart].Action = A_ScreamAndUnblock;
 					}
 
 					if (extra.DeathHeight == 0)
@@ -558,17 +565,17 @@ static void ParseDecorate (void (*process)(FState *, int))
 
 				// The first frame plays the burn sound and
 				// the second frame makes it nonsolid.
-				info->OwnedStates[extra.FireDeathStart].Action.acp1 = A_ActiveSound;
+				info->OwnedStates[extra.FireDeathStart].Action = A_ActiveSound;
 				if (extra.bSolidOnBurn)
 				{
 				}
 				else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
 				{
-					info->OwnedStates[extra.FireDeathStart+1].Action.acp1 = A_NoBlocking;
+					info->OwnedStates[extra.FireDeathStart+1].Action = A_NoBlocking;
 				}
 				else
 				{
-					info->OwnedStates[extra.FireDeathStart].Action.acp1 = A_ActiveAndUnblock;
+					info->OwnedStates[extra.FireDeathStart].Action = A_ActiveAndUnblock;
 				}
 
 				if (extra.BurnHeight == 0)
@@ -594,13 +601,13 @@ static void ParseDecorate (void (*process)(FState *, int))
 				info->OwnedStates[i].NextState = &info->OwnedStates[info->NumOwnedStates-1];
 				info->OwnedStates[i].Tics = 6;
 				info->OwnedStates[i].Misc1 = 0;
-				info->OwnedStates[i].Action.acp1 = A_FreezeDeath;
+				info->OwnedStates[i].Action = A_FreezeDeath;
 
 				i = info->NumOwnedStates - 1;
 				info->OwnedStates[i].NextState = &info->OwnedStates[i];
 				info->OwnedStates[i].Tics = 2;
 				info->OwnedStates[i].Misc1 = 0;
-				info->OwnedStates[i].Action.acp1 = A_FreezeDeathChunks;
+				info->OwnedStates[i].Action = A_FreezeDeathChunks;
 				((AActor *)(info->Defaults))->IDeathState = &info->OwnedStates[extra.IceDeathStart];
 			}
 			else if (extra.bGenericIceDeath)
@@ -808,8 +815,7 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			}
 			else
 			{
-				const char *foo = sc_String;
-				SC_ScriptError ("Unknown damage type \"%s\"", &foo);
+				SC_ScriptError ("Unknown damage type \"%s\"", sc_String);
 			}
 		}
 		else if (def == DEF_Projectile && SC_Compare ("Speed"))

@@ -145,6 +145,7 @@ enum
 	MF_SKULLFLY		= 0x01000000,	// skull in flight
 	MF_NOTDMATCH	= 0x02000000,	// don't spawn in death match (key cards)
 
+	MF_FRIENDLY		= 0x08000000,	// [RH] Friendly monsters for Strife (and MBF)
 	MF_UNMORPHED	= 0x10000000,	// [RH] Actor is the unmorphed version of something else
 	MF_NOLIFTDROP	= 0x20000000,	// [RH] Used with MF_NOGRAVITY to avoid dropping with lifts
 	MF_STEALTH		= 0x40000000,	// [RH] Andy Baker's stealth monsters
@@ -179,7 +180,7 @@ enum
 	MF2_PUSHWALL		= 0x00400000, 	// mobj can push walls
 	MF2_MCROSS			= 0x00800000,	// can activate monster cross lines
 	MF2_PCROSS			= 0x01000000,	// can activate projectile cross lines
-	MF2_CANTLEAVEFLOORPIC = 0x02000000,	// stay within a certain floor type
+	MF2_CANTLEAVEFLOORPIC=0x02000000,	// stay within a certain floor type
 	MF2_NONSHOOTABLE	= 0x04000000,	// mobj is totally non-shootable, 
 										// but still considered solid
 	MF2_INVULNERABLE	= 0x08000000,	// mobj is invulnerable
@@ -200,6 +201,8 @@ enum
 	MF2_HERETICBOUNCE	= MF2_BOUNCE1,
 	MF2_HEXENBOUNCE		= MF2_BOUNCE2,
 	MF2_DOOMBOUNCE		= MF2_BOUNCE1|MF2_BOUNCE2,
+
+	MF2_ELECTRICDAMAGE	= MF2_FIREDAMAGE|MF2_ICEDAMAGE,
 
 // --- mobj.flags3 ---
 
@@ -233,7 +236,7 @@ enum
 	MF3_BLOODLESSIMPACT	= 0x08000000,	// Projectile does not leave blood
 	MF3_NOEXPLODEFLOOR	= 0x10000000,	// Missile stops at floor instead of exploding
 	MF3_WARNBOT			= 0x20000000,	// Missile warns bot
-	MF3_PUFFONACTORS	= 0x40000000,	// Puff appears even when hit actors
+	MF3_PUFFONACTORS	= 0x40000000,	// Puff appears even when hit bleeding actors
 	MF3_HUNTPLAYERS		= 0x80000000,	// Used with TIDtoHate, means to hate players too
 
 // --- mobj.flags4 ---
@@ -247,6 +250,19 @@ enum
 	MF4_FIXMAPTHINGPOS	= 0x00000040,	// Fix this actor's position when spawned as a map thing
 	MF4_ACTLIKEBRIDGE	= 0x00000080,	// Pickups can "stand" on this actor
 	MF4_STRIFEDAMAGE	= 0x00000100,	// Strife projectiles only do up to 4x damage, not 8x
+
+	MF4_LONGMELEERANGE	= 0x00000200,
+	MF4_MISSILEMORE		= 0x00000400,
+	MF4_MISSILEEVENMORE	= 0x00000800,
+	MF4_SHORTMISSILERANGE=0x00001000,
+	MF4_DONTFALL		= 0x00002000,
+	MF4_SEESDAGGERS		= 0x00004000,	// This actor can see you striking with a dagger
+	MF4_INCOMBAT		= 0x00008000,	// Don't alert others when attacked by a dagger
+	MF4_LOOKALLAROUND	= 0x00010000,	// Monster has eyes in the back of its head
+	MF4_STANDSTILL		= 0x00020000,	// Monster should not chase targets unless attacked?
+	MF4_SPECTRAL		= 0x00040000,
+	MF4_FIRERESIST		= 0x00080000,	// Actor takes half damage from fire
+	MF4_NOSPLASHALERT	= 0x00100000,	// Splashes don't alert this monster
 
 // --- mobj.renderflags ---
 
@@ -279,10 +295,8 @@ enum
 // --- dummies for unknown/unimplemented Strife flags ---
 
 	MF_STRIFEx40 = 0,			// looks like this is still MF_JUSTHIT
-	MF_STRIFEx800 = 0,			// used in A_Look as an allaround flag for P_LookForPlayers; seems to have other uses, too
 	MF_STRIFEx8000 = 0,
-	MF_STRIFEx4000000 = 0,		// seems related to MF_SHADOW
-	MF_STRIFEx8000000 = 0
+	MF_STRIFEx8000000 = 0,		// seems related to MF_SHADOW
 };
 
 enum ERenderStyle
@@ -337,6 +351,7 @@ struct FBlockNode
 };
 
 class FDecalBase;
+class AInventory;
 
 inline AActor *GetDefaultByName (const char *name)
 {
@@ -355,6 +370,18 @@ inline T *GetDefault ()
 }
 
 struct secplane_t;
+struct FStrifeDialogueNode;
+
+enum
+{
+	AMETA_BASE = 0x12000,
+
+	AMETA_Obituary,			// string (player was killed by this actor)
+	AMETA_HitObituary,		// string (player was killed by this actor in melee)
+	AMETA_DeathHeight,		// fixed (height on normal death)
+	AMETA_BurnHeight,		// fixed (height on burning death)
+	AMETA_StrifeName,		// string (for named Strife objects)
+};
 
 // Map Object definition.
 class AActor : public DThinker
@@ -381,6 +408,8 @@ public:
 	virtual void BeginPlay ();
 	// LevelSpawned: Called after BeginPlay if this actor was spawned by the world
 	virtual void LevelSpawned ();
+	// Translates SpawnFlags into in-game flags.
+	virtual void HandleSpawnFlags ();
 
 	virtual void Activate (AActor *activator);
 	virtual void Deactivate (AActor *activator);
@@ -414,6 +443,9 @@ public:
 	// Perform some special damage action. Returns the amount of damage to do.
 	// Returning -1 signals the damage routine to exit immediately
 	virtual int DoSpecialDamage (AActor *target, int damage);
+
+	// Like DoSpecialDamage, but called on the actor receiving the damage.
+	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage);
 
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	virtual void Howl ();
@@ -462,9 +494,46 @@ public:
 	// Returns true if it's okay to switch target to "other" after being attacked by it.
 	virtual bool OkayToSwitchTarget (AActor *other);
 
+	// Returns true if this actor is within melee range of its target
+	virtual bool CheckMeleeRange ();
+
+	// Something just touched this actor.
+	virtual void Touch (AActor *toucher);
+
+	// Adds the item to this actor's inventory and sets its Owner.
+	virtual void AddInventory (AInventory *item);
+
+	// Removes the item from the inventory list.
+	virtual void RemoveInventory (AInventory *item);
+
+	// Uses an item and removes it from the inventory.
+	virtual bool UseInventory (AInventory *item);
+
+	// Tosses an item out of the inventory.
+	virtual AInventory *DropInventory (AInventory *item);
+
+	// Finds the first item of a particular type.
+	AInventory *FindInventory (const TypeInfo *type) const;
+	template<class T> T *FindInventory () const
+	{
+		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));
+	}
+
+	// Adds one item of a particular type. Returns NULL if it could not be added.
+	AInventory *GiveInventoryType (const TypeInfo *type);
+
+	// Returns the first item held with IF_INVBAR set.
+	AInventory *FirstInv () const;
+
+	// Tries to give the actor some ammo.
+	bool GiveAmmo (const TypeInfo *type, int amount);
+
 	// Set the alphacolor field properly
 	void SetShade (DWORD rgb);
 	void SetShade (int r, int g, int b);
+
+	// Plays a conversation animation
+	virtual void ConversationAnimation (int animnum);
 
 // info for drawing
 // NOTE: The first member variable *must* be x.
@@ -500,7 +569,6 @@ public:
 	DWORD			flags2;			// Heretic flags
 	DWORD			flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
 	DWORD			flags4;			// [RH] Even more flags!
-	DWORD			mapflags;		// Flags from map (MTF_*)
 	int				special1;		// Special info
 	int				special2;		// Special info
 	int 			health;
@@ -510,6 +578,7 @@ public:
 	AActor			*target;		// thing being chased/attacked (or NULL)
 									// also the originator for missiles
 	AActor			*lastenemy;		// Last known enemy -- killogh 2/15/98
+	AActor			*LastHeard;		// [RH] Last actor this one heard
 	SDWORD			reactiontime;	// if non 0, don't attack yet; used by
 									// player to freeze a bit after teleporting
 	SDWORD			threshold;		// if > 0, the target will be chased
@@ -531,15 +600,20 @@ public:
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	AActor			*goal;			// Monster's goal if not chasing anything
 	BYTE			waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
+	BYTE			MinMissileChance;// [RH] If a random # is > than this, then missile attack.
 	WORD			SpawnFlags;
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98
 
+	AInventory		*Inventory;		// [RH] This actor's inventory
+	DWORD			InventoryID;	// A unique ID to keep track of inventory items
+
 	//Added by MC:
-	SDWORD id;							// Player ID (for items, # in list.)
+	SDWORD id;						// Player ID (for items, # in list.)
 
 	BYTE FloatBobPhase;
+	BYTE FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
 	WORD Translation;
 
 	// [RH] Stuff that used to be part of an Actor Info
@@ -548,6 +622,7 @@ public:
 	WORD PainSound;
 	WORD DeathSound;
 	WORD ActiveSound;
+	WORD UseSound;		// [RH] Sound to play when an actor is used.
 
 	fixed_t Speed;
 	SDWORD Mass;
@@ -563,7 +638,12 @@ public:
 	FState *XDeathState;
 	FState *BDeathState;
 	FState *IDeathState;
+	FState *EDeathState;
 	FState *RaiseState;
+	FState *WoundState;
+
+	// [RH] The dialogue to show when this actor is "used."
+	FStrifeDialogueNode *Conversation;
 
 	// [RH] Decal(s) this weapon/projectile generates on impact.
 	FDecalBase *DecalGenerator;
@@ -599,7 +679,7 @@ public:
 
 	static FState States[];
 
-	enum { S_GENERICFREEZEDEATH = 3 };
+	enum { S_NULL = 2, S_GENERICFREEZEDEATH = 3 };
 };
 
 class FActorIterator

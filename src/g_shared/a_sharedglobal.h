@@ -29,6 +29,8 @@ class APatrolSpecial : public AActor
 class ABlood : public AActor
 {
 	DECLARE_ACTOR (ABlood, AActor)
+public:
+	void SetDamage (int damage);
 };
 
 class AMapSpot : public AActor
@@ -151,8 +153,12 @@ class ASkyViewpoint : public AActor
 {
 	DECLARE_STATELESS_ACTOR (ASkyViewpoint, AActor)
 public:
+	void Serialize (FArchive &arc);
 	void BeginPlay ();
 	bool bInSkybox;
+	bool bAlways;
+	ASkyViewpoint *Mate;
+	fixed_t PlaneAlpha;
 };
 
 class DFlashFader : public DThinker

@@ -41,7 +41,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #else
-#include <SDL/SDL.h>
+#include <SDL.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -53,6 +53,7 @@
 #include "mus2midi.h"
 #define FALSE 0
 #define TRUE 1
+extern void ChildSigHandler (int signum);
 #endif
 
 #include <ctype.h>
@@ -214,7 +215,6 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 	FILE *file;
 	MusInfo *info = NULL;
 	DWORD id;
-	bool needdelete = true;
 
 	if (nomusic)
 	{
@@ -280,6 +280,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 			info = new TimiditySong (file, len);
 		}
 	}
+#ifdef _WIN32
 	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
 	{
 		char header[0x23];
@@ -297,6 +298,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 			info = new SPCSong (file, len);
 		}
 	}
+#endif // _WIN32
 	else if (id == MAKE_ID('f','L','a','C'))
 	{
 		info = new FLACSong (file, len);

@@ -17,8 +17,8 @@ static FRandom pr_atk ("FHammerAtk");
 
 extern void AdjustPlayerAngle (AActor *pmo);
 
-void A_FHammerAttack (AActor *actor, pspdef_t *psp);
-void A_FHammerThrow (AActor *actor, pspdef_t *psp);
+void A_FHammerAttack (AActor *actor);
+void A_FHammerThrow (AActor *actor);
 void A_HammerSound (AActor *);
 void A_BeAdditive (AActor *);
 
@@ -28,14 +28,6 @@ class AFWeapHammer : public AFighterWeapon
 {
 	DECLARE_ACTOR (AFWeapHammer, AFighterWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_fhammer;
-	}
-
-	static FWeaponInfo WeaponInfo;
-
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_F3);
@@ -71,34 +63,25 @@ FState AFWeapHammer::States[] =
 	S_NORMAL (FHMR, 'A',	1, NULL					    , &States[S_FHAMMERREADY]),
 };
 
-FWeaponInfo AFWeapHammer::WeaponInfo =
-{
-	WIF_AMMO_OPTIONAL,
-	MANA_2,
-	MANA_2,
-	3,
-	25,
-	&States[S_FHAMMERUP],
-	&States[S_FHAMMERDOWN],
-	&States[S_FHAMMERREADY],
-	&States[S_FHAMMERATK],
-	&States[S_FHAMMERATK],
-	NULL,
-	RUNTIME_CLASS(AFWeapHammer),
-	150,
-	-10*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AFWeapHammer),
-	-1
-};
-
 IMPLEMENT_ACTOR (AFWeapHammer, Hexen, 123, 28)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_HAMM)
-END_DEFAULTS
 
-WEAPON1 (wp_fhammer, AFWeapHammer)
+	PROP_Weapon_SelectionOrder (900)
+	PROP_Weapon_Flags (WIF_AMMO_OPTIONAL|WIF_BOT_MELEE)
+	PROP_Weapon_AmmoUse1 (3)
+	PROP_Weapon_AmmoGive1 (25)
+	PROP_Weapon_UpState (S_FHAMMERUP)
+	PROP_Weapon_DownState (S_FHAMMERDOWN)
+	PROP_Weapon_ReadyState (S_FHAMMERREADY)
+	PROP_Weapon_AtkState (S_FHAMMERATK)
+	PROP_Weapon_HoldAtkState (S_FHAMMERATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (-10)
+	PROP_Weapon_MoveCombatDist (22000000)
+	PROP_Weapon_AmmoType1 ("Mana2")
+	PROP_Weapon_ProjectileType ("HammerMissile")
+END_DEFAULTS
 
 // Hammer Missile -----------------------------------------------------------
 
@@ -190,7 +173,7 @@ void AHammerPuff::BeginPlay ()
 //
 //============================================================================
 
-void A_FHammerAttack (AActor *actor, pspdef_t *psp)
+void A_FHammerAttack (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -207,14 +190,13 @@ void A_FHammerAttack (AActor *actor, pspdef_t *psp)
 
 	damage = 60+(pr_atk()&63);
 	power = 10*FRACUNIT;
-	PuffType = RUNTIME_CLASS(AHammerPuff);
 	for (i = 0; i < 16; i++)
 	{
 		angle = pmo->angle + i*(ANG45/32);
 		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage);
+			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
 			AdjustPlayerAngle(pmo);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -227,7 +209,7 @@ void A_FHammerAttack (AActor *actor, pspdef_t *psp)
 		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE);
 		if(linetarget)
 		{
-			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage);
+			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
 			AdjustPlayerAngle(pmo);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -241,7 +223,7 @@ void A_FHammerAttack (AActor *actor, pspdef_t *psp)
 	PuffSpawned = NULL;
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE);
-	P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage);
+	P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
 	if (PuffSpawned)
 	{
 		pmo->special1 = false;
@@ -251,8 +233,11 @@ void A_FHammerAttack (AActor *actor, pspdef_t *psp)
 		pmo->special1 = true;
 	}
 hammerdone:
-	if (player->ammo[MANA_2] < wpnlev1info[player->readyweapon]->ammouse)
-	{ // Don't spawn a hammer if the player doesn't have enough mana
+	// Don't spawn a hammer if the player doesn't have enough mana
+	if (player->ReadyWeapon == NULL ||
+		!player->ReadyWeapon->CheckAmmo (player->ReadyWeapon->bAltFire ?
+			AWeapon::AltFire : AWeapon::PrimaryFire, false, true))
+	{ 
 		pmo->special1 = false;
 	}
 	return;		
@@ -264,7 +249,7 @@ hammerdone:
 //
 //============================================================================
 
-void A_FHammerThrow (AActor *actor, pspdef_t *psp)
+void A_FHammerThrow (AActor *actor)
 {
 	AActor *mo;
 	player_t *player;
@@ -278,9 +263,11 @@ void A_FHammerThrow (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	if (!(dmflags & DF_INFINITE_AMMO))
+	AWeapon *weapon = player->ReadyWeapon;
+	if (weapon != NULL)
 	{
-		player->ammo[MANA_2] -= wpnlev1info[player->readyweapon]->ammouse;
+		if (!weapon->DepleteAmmo (weapon->bAltFire, false))
+			return;
 	}
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHammerMissile)); 
 	if (mo)

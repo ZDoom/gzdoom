@@ -34,7 +34,7 @@ FState AStrifePlayer::States[] =
 
 #define S_PLAY_ATK (S_PLAY_RUN+4)
 	S_NORMAL (PLAY, 'E',   12, NULL 						, &States[S_PLAY]),
-	S_BRIGHT (PLAY, 'F',	6, NULL 						, &States[S_PLAY_ATK+0]),
+	S_NORMAL (PLAY, 'F',	6, NULL 						, &States[S_PLAY_ATK+0]),
 
 #define S_PLAY_PAIN (S_PLAY_ATK+2)
 	S_NORMAL (PLAY, 'Q',	4, NULL 						, &States[S_PLAY_PAIN+1]),
@@ -69,7 +69,7 @@ IMPLEMENT_ACTOR (AStrifePlayer, Strife, -1, 0)
 	PROP_Mass (100)
 	PROP_PainChance (255)
 	PROP_SpeedFixed (1)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY)
 	PROP_Flags2 (MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 
@@ -83,12 +83,9 @@ END_DEFAULTS
 
 void AStrifePlayer::GiveDefaultInventory ()
 {
+	AWeapon *weapon;
+
 	player->health = GetDefault()->health;
-	player->weaponowned[wp_dagger] = true;
-//	player->weaponowned[wp_pistol] = true;
-//	player->ammo[am_clip] = deh.StartBullets;
-	player->maxammo[am_clip] = 250;
-	player->maxammo[am_cell] = 400;
-	player->maxammo[am_misl] = 100;
-	player->readyweapon = player->pendingweapon = wp_dagger;
+	weapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (TypeInfo::FindType ("PunchDagger")));
+	player->ReadyWeapon = player->PendingWeapon = weapon;
 }

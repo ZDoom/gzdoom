@@ -3,7 +3,7 @@
 ** Skybox-related actors
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -65,6 +65,12 @@ void ASkyViewpoint::BeginPlay ()
 	}
 }
 
+void ASkyViewpoint::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << bInSkybox << bAlways << Mate << PlaneAlpha;
+}
+
 //---------------------------------------------------------------------------
 
 // arg0 = tid of matching SkyViewpoint
@@ -118,6 +124,75 @@ void ASkyPicker::PostBeginPlay ()
 		}
 	}
 	Destroy ();
+}
+
+//---------------------------------------------------------------------------
+// Stacked sectors.
+
+// arg0 = opacity of plane; 0 = invisible, 255 = fully opaque
+
+class AStackPoint : public ASkyViewpoint
+{
+	DECLARE_STATELESS_ACTOR (AStackPoint, ASkyViewpoint)
+public:
+	void BeginPlay ();
+};
+
+IMPLEMENT_ABSTRACT_ACTOR (AStackPoint)
+
+void AStackPoint::BeginPlay ()
+{
+	// Skip SkyViewpoint's initialization
+	AActor::BeginPlay ();
+
+	bAlways = true;
+}
+
+//---------------------------------------------------------------------------
+// Upper stacks go in the top sector. Lower stacks go in the bottom sector.
+
+class AUpperStackLookOnly : public AStackPoint
+{
+	DECLARE_STATELESS_ACTOR (AUpperStackLookOnly, AStackPoint)
+public:
+	void PostBeginPlay ();
+};
+
+class ALowerStackLookOnly : public AStackPoint
+{
+	DECLARE_STATELESS_ACTOR (ALowerStackLookOnly, AStackPoint)
+public:
+	void PostBeginPlay ();
+};
+
+IMPLEMENT_STATELESS_ACTOR (AUpperStackLookOnly, Any, 9077, 0)
+END_DEFAULTS
+
+IMPLEMENT_STATELESS_ACTOR (ALowerStackLookOnly, Any, 9078, 0)
+END_DEFAULTS
+
+void AUpperStackLookOnly::PostBeginPlay ()
+{
+	Super::PostBeginPlay ();
+	TActorIterator<ALowerStackLookOnly> it (tid);
+	Sector->FloorSkyBox = it.Next();
+	if (Sector->FloorSkyBox != NULL)
+	{
+		Sector->FloorSkyBox->Mate = this;
+		Sector->FloorSkyBox->PlaneAlpha = Scale (args[0], OPAQUE, 255);
+	}
+}
+
+void ALowerStackLookOnly::PostBeginPlay ()
+{
+	Super::PostBeginPlay ();
+	TActorIterator<AUpperStackLookOnly> it (tid);
+	Sector->CeilingSkyBox = it.Next();
+	if (Sector->CeilingSkyBox != NULL)
+	{
+		Sector->CeilingSkyBox->Mate = this;
+		Sector->CeilingSkyBox->PlaneAlpha = Scale (args[0], OPAQUE, 255);
+	}
 }
 
 //---------------------------------------------------------------------------

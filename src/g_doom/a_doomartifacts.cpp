@@ -14,11 +14,10 @@
 
 // Invulnerability Sphere ---------------------------------------------------
 
-class AInvulnerabilitySphere : public APowerup
+class AInvulnerabilitySphere : public APowerupGiver
 {
-	DECLARE_ACTOR (AInvulnerabilitySphere, APowerup)
+	DECLARE_ACTOR (AInvulnerabilitySphere, APowerupGiver)
 public:
-	bool TryPickup (AActor *toucher);
 	bool ShouldRespawn ();
 protected:
 	const char *PickupMessage ();
@@ -35,12 +34,9 @@ FState AInvulnerabilitySphere::States[] =
 IMPLEMENT_ACTOR (AInvulnerabilitySphere, Doom, 2022, 133)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
+	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_PowerupGiver_Powerup ("PowerInvulnerable")
 END_DEFAULTS
-
-bool AInvulnerabilitySphere::TryPickup (AActor *toucher)
-{
-	return P_GivePower (toucher->player, pw_invulnerability);
-}
 
 const char *AInvulnerabilitySphere::PickupMessage ()
 {
@@ -54,9 +50,9 @@ bool AInvulnerabilitySphere::ShouldRespawn ()
 
 // Soulsphere --------------------------------------------------------------
 
-class ASoulsphere : public APowerup
+class ASoulsphere : public AInventory
 {
-	DECLARE_ACTOR (ASoulsphere, APowerup)
+	DECLARE_ACTOR (ASoulsphere, AInventory)
 public:
 	virtual bool TryPickup (AActor *toucher)
 	{
@@ -65,6 +61,7 @@ public:
 		if (player->health > deh.MaxSoulsphere)
 			player->health = deh.MaxSoulsphere;
 		player->mo->health = player->health;
+		GoAwayAndDie ();
 		return true;
 	}
 protected:
@@ -91,25 +88,25 @@ END_DEFAULTS
 
 // Mega sphere --------------------------------------------------------------
 
-class AMegasphere : public APowerup
+class AMegasphere : public APowerupGiver
 {
-	DECLARE_ACTOR (AMegasphere, APowerup)
+	DECLARE_ACTOR (AMegasphere, APowerupGiver)
 public:
 	virtual bool TryPickup (AActor *toucher)
 	{
-		bool gotarmor, gothealth;
 		player_t *player = toucher->player;
 
-		gotarmor = P_GiveArmor (player, (armortype_t)-deh.BlueAC, 100*deh.BlueAC);
-		if ((gothealth = player->health < deh.MegasphereHealth))
+		ABasicArmorPickup *armor = static_cast<ABasicArmorPickup *> (Spawn ("BlueArmor", 0,0,0));
+		if (!armor->TryPickup (toucher))
+		{
+			armor->Destroy ();
+		}
+		if (player->health < deh.MegasphereHealth)
 		{
 			player->health = deh.MegasphereHealth;
 			player->mo->health = deh.MegasphereHealth;
 		}
-
-		// Use the commented-out line if you don't want to be able to get a megasphere
-		// that won't do you any good.
-		//return gotarmor || gothealth;
+		GoAwayAndDie ();
 		return true;
 	}
 protected:
@@ -134,16 +131,24 @@ END_DEFAULTS
 
 // Berserk ------------------------------------------------------------------
 
-class ABerserk : public APowerup
+class ABerserk : public APowerupGiver
 {
-	DECLARE_ACTOR (ABerserk, APowerup)
+	DECLARE_ACTOR (ABerserk, APowerupGiver)
 public:
-	virtual bool TryPickup (AActor *toucher)
+	virtual bool Use ()
 	{
-		if (P_GivePower (toucher->player, pw_strength))
+		if (Super::Use ())
 		{
-			if (toucher->player->readyweapon != wp_fist)
-				toucher->player->pendingweapon = wp_fist;
+			const TypeInfo *fistType = TypeInfo::FindType ("Fist");
+			if (Owner->player->ReadyWeapon == NULL ||
+				Owner->player->ReadyWeapon->GetClass() != fistType)
+			{
+				AInventory *fist = Owner->FindInventory (fistType);
+				if (fist != NULL)
+				{
+					Owner->player->PendingWeapon = static_cast<AWeapon *> (fist);
+				}
+			}
 			return true;
 		}
 		return false;
@@ -163,13 +168,15 @@ FState ABerserk::States[] =
 IMPLEMENT_ACTOR (ABerserk, Doom, 2023, 134)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
+	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_PowerupGiver_Powerup ("PowerStrength")
 END_DEFAULTS
 
 // Invisibility -------------------------------------------------------------
 
-class ABlurSphere : public APowerup
+class ABlurSphere : public APowerupGiver
 {
-	DECLARE_ACTOR (ABlurSphere, APowerup)
+	DECLARE_ACTOR (ABlurSphere, APowerupGiver)
 public:
 	virtual void PostBeginPlay ()
 	{
@@ -180,10 +187,6 @@ public:
 	virtual bool ShouldRespawn ()
 	{
 		return Super::ShouldRespawn () && (dmflags & DF_RESPAWN_SUPER);
-	}
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GivePower (toucher->player, pw_invisibility);
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -204,18 +207,15 @@ IMPLEMENT_ACTOR (ABlurSphere, Doom, 2024, 135)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_SpawnState (0)
+	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_PowerupGiver_Powerup ("PowerInvisibility")
 END_DEFAULTS
 
 // Radiation suit (aka iron feet) -------------------------------------------
 
-class ARadSuit : public APowerup
+class ARadSuit : public APowerupGiver
 {
-	DECLARE_ACTOR (ARadSuit, APowerup)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GivePower (toucher->player, pw_ironfeet);
-	}
+	DECLARE_ACTOR (ARadSuit, APowerupGiver)
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -232,18 +232,15 @@ IMPLEMENT_ACTOR (ARadSuit, Doom, 2025, 136)
 	PROP_HeightFixed (46)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_PowerupGiver_Powerup ("PowerIronFeet")
 END_DEFAULTS
 
 // infrared -----------------------------------------------------------------
 
-class AInfrared : public APowerup
+class AInfrared : public APowerupGiver
 {
-	DECLARE_ACTOR (AInfrared, APowerup)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GivePower (toucher->player, pw_infrared);
-	}
+	DECLARE_ACTOR (AInfrared, APowerupGiver)
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -260,23 +257,17 @@ FState AInfrared::States[] =
 IMPLEMENT_ACTOR (AInfrared, Doom, 2045, 138)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
+	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_PowerupGiver_Powerup ("PowerLightAmp")
 END_DEFAULTS
 
 // Allmap -------------------------------------------------------------------
 
-// Note that the allmap is a subclass of pickup, not powerup, because we
-// always want it to be activated immediately on pickup.
-
-class AAllmap : public AInventory
+class AAllmap : public AMapRevealer
 {
-	DECLARE_ACTOR (AAllmap, AInventory)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GivePower (toucher->player, pw_allmap);
-	}
+	DECLARE_ACTOR (AAllmap, AMapRevealer)
 protected:
-	virtual const char *PickupMessage ()
+	const char *PickupMessage ()
 	{
 		return GStrings(GOTMAP);
 	}
@@ -300,47 +291,5 @@ FState AAllmap::States[] =
 
 IMPLEMENT_ACTOR (AAllmap, Doom, 2026, 137)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-// Backpack -----------------------------------------------------------------
-
-// The backpack is also a pickup, because there's not much point to carrying
-// a backpack around unused.
-
-class ABackpack : public AInventory
-{
-	DECLARE_ACTOR (ABackpack, AInventory)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		player_t *player = toucher->player;
-		int i;
-
-		if (!player->backpack)
-		{
-			for (i = 0; i < NUMAMMO; i++)
-				player->maxammo[i] *= 2;
-			player->backpack = true;
-		}
-		for (i = 0; i < NUMAMMO; i++)
-			P_GiveAmmo (player, (ammotype_t)i, clipammo[i]);
-		return true;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return GStrings(GOTBACKPACK);
-	}
-};
-
-FState ABackpack::States[] =
-{
-	S_NORMAL (BPAK, 'A',   -1, NULL 						, NULL)
-};
-
-IMPLEMENT_ACTOR (ABackpack, Doom, 8, 144)
-	PROP_HeightFixed (26)
-	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 END_DEFAULTS

@@ -156,7 +156,7 @@ void A_TroopAttack (AActor *self)
 		return;
 				
 	A_FaceTarget (self);
-	if (P_CheckMeleeRange (self))
+	if (self->CheckMeleeRange ())
 	{
 		int damage = (pr_troopattack()%8+1)*3;
 		S_Sound (self, CHAN_WEAPON, "imp/melee", 1, ATTN_NORM);

@@ -25,7 +25,7 @@
 
 // Endianess handling.
 // WAD files are stored little endian.
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 
 // Swap 16bit, that is, MSB and LSB byte.
 // No masking with 0xFF should be necessary. 
@@ -126,6 +126,6 @@ inline int BELONG (int x)
 }
 #endif // USEASM
 
-#endif // __BIG_ENDIAN__
+#endif // WORDS_BIGENDIAN
 
 #endif // __M_SWAP_H__

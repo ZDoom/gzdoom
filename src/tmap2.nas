@@ -165,7 +165,6 @@ R_SetTiltedSpanSource_ASM:
 GLOBAL	SetTiltedSpanSize
 
 SetTiltedSpanSize:
-;ret
 	push	ecx
 	mov	cl,dl
 	neg	cl

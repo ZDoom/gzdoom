@@ -11,10 +11,12 @@ void A_Summon (AActor *);
 
 // Dark Servant Artifact ----------------------------------------------------
 
-BASIC_ARTI (DarkServant, arti_summon, GStrings(TXT_ARTISUMMON))
-	AT_GAME_SET_FRIEND (Summon)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti);
+class AArtiDarkServant : public AInventory
+{
+	DECLARE_ACTOR (AArtiDarkServant, AInventory)
+public:
+	bool Use ();
+	const char *PickupMessage ();
 };
 
 FState AArtiDarkServant::States[] =
@@ -26,14 +28,16 @@ FState AArtiDarkServant::States[] =
 IMPLEMENT_ACTOR (AArtiDarkServant, Hexen, 86, 16)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
-
 	PROP_SpawnState (S_ARTI_SUMMON)
+	PROP_Inventory_RespawnTics (30+4200)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTISUMN")
 END_DEFAULTS
 
-AT_GAME_SET (Summon)
+const char *AArtiDarkServant::PickupMessage ()
 {
-	ArtiDispatch[arti_summon] = AArtiDarkServant::ActivateArti;
-	ArtiPics[arti_summon] = "ARTISUMN";
+	return GStrings(TXT_ARTISUMMON);
 }
 
 // Summoning Doll -----------------------------------------------------------
@@ -107,16 +111,17 @@ END_DEFAULTS
 //
 //============================================================================
 
-bool AArtiDarkServant::ActivateArti (player_t *player, artitype_t arti)
+bool AArtiDarkServant::Use ()
 {
-	AActor *mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ASummoningDoll));
+	AActor *mo = P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(ASummoningDoll));
 	if (mo)
 	{
-		mo->target = player->mo;
-		mo->tracer = player->mo;
+		mo->target = Owner;
+		mo->tracer = Owner;
 		mo->momz = 5*FRACUNIT;
+		return true;
 	}
-	return true;
+	return false;
 }
 
 //============================================================================
@@ -148,7 +153,12 @@ void A_Summon (AActor *actor)
 		else
 		{
 			mo->tracer = actor->tracer;		// Pointer to master
-			P_GivePower (actor->tracer->player, pw_minotaur);
+			AInventory *power = Spawn<APowerMinotaur> (0, 0, 0);
+			power->TryPickup (actor->tracer);
+			if (actor->tracer->player != NULL)
+			{
+				mo->FriendPlayer = actor->tracer->player - players + 1;
+			}
 		}
 
 		// Make smoke puff

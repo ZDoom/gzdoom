@@ -829,7 +829,7 @@ void DSeqNode::Tick ()
 
 	case SS_CMD_VOLUME:
 		// volume is in range 0..100
-		m_Volume = GetData(*m_SequencePtr)/100;
+		m_Volume = GetData(*m_SequencePtr)/100.f;
 		m_SequencePtr++;
 		break;
 

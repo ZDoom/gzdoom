@@ -3,7 +3,7 @@
 ;* The texture-mapping inner loops in pure assembly language.
 ;*
 ;*---------------------------------------------------------------------------
-;* Copyright 1998-2001 Randy Heit
+;* Copyright 1998-2004 Randy Heit
 ;* All rights reserved.
 ;*
 ;* Redistribution and use in source and binary forms, with or without
@@ -187,6 +187,15 @@ R_SetSpanSource_ASM:
 	mov	[spreade+2],ecx
 	mov	[spreadf+2],ecx
 	mov	[spreadg+2],ecx
+
+	mov	[mspreada+2],ecx
+	mov	[mspreadb+2],ecx
+	mov	[mspreadc+2],ecx
+	mov	[mspreadd+2],ecx
+	mov	[mspreade+2],ecx
+	mov	[mspreadf+2],ecx
+	mov	[mspreadg+2],ecx
+
 	mov	[ds_cursource],ecx
 	ret
 
@@ -204,6 +213,15 @@ R_SetSpanColormap_ASM:
 	mov	[spmape+2],ecx
 	mov	[spmapf+2],ecx
 	mov	[spmapg+2],ecx
+
+	mov	[mspmapa+2],ecx
+	mov	[mspmapb+2],ecx
+	mov	[mspmapc+2],ecx
+	mov	[mspmapd+2],ecx
+	mov	[mspmape+2],ecx
+	mov	[mspmapf+2],ecx
+	mov	[mspmapg+2],ecx
+
 	mov	[ds_curcolormap],ecx
 	ret
 
@@ -226,6 +244,17 @@ R_SetSpanSize_ASM:
 	mov	[dsx5+2],cl
 	mov	[dsx6+2],cl
 	mov	[dsx7+2],cl
+	
+	mov	[dmsy1+2],dl
+	mov	[dmsy2+2],dl
+	
+	mov	[dmsx1+2],cl
+	mov	[dmsx2+2],cl
+	mov	[dmsx3+2],cl
+	mov	[dmsx4+2],cl
+	mov	[dmsx5+2],cl
+	mov	[dmsx6+2],cl
+	mov	[dmsx7+2],cl
 
 	push	ecx
 	add	ecx,edx
@@ -236,19 +265,34 @@ R_SetSpanSize_ASM:
 	mov	[dsm5+1],eax
 	mov	[dsm6+1],eax
 	mov	[dsm7+1],eax
+	
+	mov	[dmsm1+2],eax
+	mov	[dmsm5+1],eax
+	mov	[dmsm6+1],eax
+	mov	[dmsm7+1],eax
 	pop	ecx
 	ror	eax,cl
 	mov	[dsm2+2],eax
 	mov	[dsm3+2],eax
 	mov	[dsm4+2],eax
+
+	mov	[dmsm2+2],eax
+	mov	[dmsm3+2],eax
+	mov	[dmsm4+2],eax
 	and	eax,0xffff
 	not	eax
 	mov	[dsm8+2],eax
 	mov	[dsm9+2],eax
+
+	mov	[dmsm8+2],eax
+	mov	[dmsm9+2],eax
 	
 	neg	dl
 	mov	[dsy3+2],dl
 	mov	[dsy4+2],dl
+
+	mov	[dmsy3+2],dl
+	mov	[dmsy4+2],dl
 	
 aret:	ret
 
@@ -389,6 +433,161 @@ dsdone	pop	esi
 	pop	ebx
 
 rdspret	ret
+
+; This is the same as the previous routine, except it doesn't draw pixels
+; where the texture's color value is 0.
+
+GLOBAL @R_DrawSpanMaskedP_ASM@0
+GLOBAL _R_DrawSpanMaskedP_ASM
+GLOBAL R_DrawSpanMaskedP_ASM
+
+; eax: scratch
+; ebx: zero
+; ecx: yfrac at top end, xfrac int part at low end
+; edx: xfrac frac part at top end
+; edi: dest
+; ebp: scratch
+; esi: count
+
+	align	16
+
+@R_DrawSpanMaskedP_ASM@0:
+_R_DrawSpanMaskedP_ASM:
+R_DrawSpanMaskedP_ASM:
+	mov	eax,[ds_x2]
+	 mov	ecx,[ds_x1]
+	sub	eax,ecx
+	 jl	rdspret		; count < 0: nothing to do, so leave
+
+	push	ebx
+	push	edi
+	push	ebp
+	push	esi
+
+	mov	edi,ecx
+	add	edi,[dc_destorg]
+	 mov	ecx,[ds_y]
+	add	edi,[ylookup+ecx*4]
+	 mov	edx,[ds_xstep]
+dmsy1:	shl	edx,6
+	 mov	ebp,[ds_xstep]
+dmsy3:	shr	ebp,26
+	 xor	ebx,ebx
+	lea	esi,[eax+1]
+	 mov	[ds_xstep],edx
+	mov	edx,[ds_ystep]
+	 mov	ecx,[ds_xfrac]
+dmsy4:	shr	ecx,26
+dmsm8:	 and	edx,0xffffffc0
+	or	ebp,edx
+	 mov	[ds_ystep],ebp
+	mov	ebp,[ds_yfrac]
+	 mov	edx,[ds_xfrac]
+dmsy2:	shl	edx,6
+dmsm9:	 and	ebp,0xffffffc0
+	or	ecx,ebp
+	 shr	esi,1
+	jnc	dmseven1
+
+; do odd pixel
+
+		mov	ebp,ecx
+dmsx1:		rol	ebp,6
+dmsm1:		and	ebp,0xfff
+		 add	edx,[ds_xstep]
+		adc	ecx,[ds_ystep]
+mspreada	 mov	bl,[ebp+SPACEFILLER4]
+		cmp	bl,0
+		 je	mspskipa
+mspmapa		mov	bl,[ebx+SPACEFILLER4]
+		mov	[edi],bl
+mspskipa:	 inc	edi
+
+dmseven1	shr	esi,1
+		 jnc	dmsrest
+
+; do two more pixels
+		mov	ebp,ecx
+		 add	edx,[ds_xstep]
+		adc	ecx,[ds_ystep]
+dmsm2:		 and	ebp,0xfc00003f
+dmsx2:		rol	ebp,6
+		mov	eax,ecx
+		 add	edx,[ds_xstep]
+		adc	ecx,[ds_ystep]
+mspreadb	 mov	bl,[ebp+SPACEFILLER4]	;read texel1
+dmsx3:		rol	eax,6
+dmsm6:		and	eax,0xfff
+		cmp	bl,0
+		 je	mspskipb
+mspmapb		 mov	bl,[ebx+SPACEFILLER4]	;map texel1
+		mov	[edi],bl		;store texel1
+mspskipb	 add	edi,2
+mspreadc	mov	bl,[eax+SPACEFILLER4]	;read texel2
+		cmp	bl,0
+		 je	dmsrest
+mspmapc		mov	bl,[ebx+SPACEFILLER4]	;map texel2
+		mov	[edi-1],bl		;store texel2
+
+; do the rest
+
+dmsrest		test	esi,esi
+		jz near	dmsdone
+
+		align 16
+
+dmsloop		mov	ebp,ecx
+mspstep1d	 add	edx,[ds_xstep]
+mspstep2d	adc	ecx,[ds_ystep]
+dmsm3:		 and	ebp,0xfc00003f
+dmsx4:		rol	ebp,6
+		mov	eax,ecx
+mspstep1e	 add	edx,[ds_xstep]
+mspstep2e	adc	ecx,[ds_ystep]
+mspreadd	 mov	bl,[ebp+SPACEFILLER4]	;read texel1
+dmsx5:		rol	eax,6
+dmsm5:		and	eax,0xfff
+		 cmp	bl,0
+		mov	ebp,ecx
+		 je	mspreade
+mspmapd		mov	bl,[ebx+SPACEFILLER4]	;map texel1
+		mov	[edi],bl		;store texel1
+mspreade	mov	bl,[eax+SPACEFILLER4]	;read texel2
+mspstep1f	 add	edx,[ds_xstep]
+mspstep2f	adc	ecx,[ds_ystep]
+dmsm4:		 and	ebp,0xfc00003f
+dmsx6:		rol	ebp,6
+		 cmp	bl,0
+		mov	eax,ecx
+		 je	mspreadf
+mspmape		mov	bl,[ebx+SPACEFILLER4]	;map texel2
+		mov	[edi+1],bl		;store texel2
+mspreadf	 mov	bl,[ebp+SPACEFILLER4]	;read texel3
+		add	edi,4
+dmsx7:		rol	eax,6
+dmsm7:		and	eax,0xfff
+		cmp	bl,0
+		 je	mspreadg
+mspmapf		mov	bl,[ebx+SPACEFILLER4]	;map texel3
+		 mov	[edi-2],bl		;store texel3
+mspreadg	mov	bl,[eax+SPACEFILLER4]	;read texel4
+mspstep1g	 add	edx,[ds_xstep]
+mspstep2g	adc	ecx,[ds_ystep]
+		cmp	bl,0
+		 je	mspskipg
+mspmapg		 mov	bl,[ebx+SPACEFILLER4]	;map texel4
+		mov	[edi-1],bl		;store texel4
+mspskipg	dec	esi
+		 jnz near dmsloop
+
+dmsdone	pop	esi
+	pop	ebp
+	pop	edi
+	pop	ebx
+
+	ret
+
+
 
 
 ;*----------------------------------------------------------------------

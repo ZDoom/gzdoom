@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"
@@ -351,7 +352,7 @@ int MUSSong2::SendCommand ()
 				mid1 = CtrlTranslate[t];
 				mid2 = MusBuffer[MusP++];
 
-				// Some device don't support master volume
+				// Some devices don't support master volume
 				// (e.g. the Audigy's software MIDI synth--but not its two hardware ones),
 				// so assume none of them do and scale channel volumes manually.
 				if (mid1 == 7)
@@ -380,3 +381,4 @@ int MUSSong2::SendCommand ()
 
 	return SEND_DONE;
 }
+#endif

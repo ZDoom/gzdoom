@@ -68,6 +68,9 @@ int I_SetChannels (int);
 // load a sound from disk
 void I_LoadSound (sfxinfo_t *sfx);
 
+// unloads a sound from memory
+void I_UnloadSound (sfxinfo_t *sfx);
+
 // Starts a sound in a particular sound channel.
 long
 I_StartSound

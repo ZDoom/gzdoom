@@ -62,6 +62,7 @@ enum EOuterKeywords
 	OUT_IFDOOM,
 	OUT_IFHERETIC,
 	OUT_IFHEXEN,
+	OUT_IFSTRIFE,
 	OUT_ENDIF
 };
 
@@ -149,6 +150,7 @@ static const char *OuterKeywords[] =
 	"ifdoom",
 	"ifheretic",
 	"ifhexen",
+	"ifstrife",
 	"endif",
 	NULL
 };
@@ -367,6 +369,13 @@ static void ParseOuter ()
 
 			case OUT_IFHEXEN:
 				if (gameinfo.gametype != GAME_Hexen)
+				{
+					ifskip = true;
+				}
+				break;
+
+			case OUT_IFSTRIFE:
+				if (gameinfo.gametype != GAME_Strife)
 				{
 					ifskip = true;
 				}

@@ -24,8 +24,8 @@ void A_CHolySeek (AActor *);
 void A_CHolyCheckScream (AActor *);
 void A_DropWraithvergePieces (AActor *);
 
-void A_CHolyAttack (AActor *, pspdef_t *);
-void A_CHolyPalette (AActor *, pspdef_t *);
+void A_CHolyAttack (AActor *);
+void A_CHolyPalette (AActor *);
 
 void SpawnSpiritTail (AActor *spirit);
 
@@ -159,18 +159,20 @@ class ACWeapWraithverge : public AClericWeapon
 {
 	DECLARE_ACTOR (ACWeapWraithverge, AClericWeapon)
 public:
-	weapontype_t OldStyleID () const
+	void Serialize (FArchive &arc)
 	{
-		return wp_choly;
+		Super::Serialize (arc);
+		arc << CHolyCount;
 	}
-
-	static FWeaponInfo WeaponInfo;
-
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_C4);
 	}
+	PalEntry GetBlend ()
+	{
+		return PalEntry (CHolyCount * 128 / 3, 131, 131, 131);
+	}
+	BYTE CHolyCount;
 };
 
 FState ACWeapWraithverge::States[] =
@@ -199,34 +201,27 @@ FState ACWeapWraithverge::States[] =
 	S_BRIGHT2 (CHLY, 'G',	2, A_CHolyPalette		    , &States[S_CHOLYREADY], 0, 36)
 };
 
-FWeaponInfo ACWeapWraithverge::WeaponInfo =
-{
-	0,								// flags
-	MANA_BOTH,						// ammo
-	MANA_BOTH,						// givingammo
-	18,								// ammouse
-	0,								// ammogive
-	&States[S_CHOLYUP],				// upstate
-	&States[S_CHOLYDOWN],			// downstate
-	&States[S_CHOLYREADY],			// readystate
-	&States[S_CHOLYATK],			// atkstate
-	&States[S_CHOLYATK],			// holdatkstate
-	NULL,							// flashstate
-	RUNTIME_CLASS(AWraithvergeDrop),	// droptype
-	150,							// kickback
-	0,								// yadjust
-	NULL,							// upsound
-	NULL,							// readysound
-	RUNTIME_CLASS(ACWeapWraithverge),	// type
-	18								// minammo
-};
-
 IMPLEMENT_ACTOR (ACWeapWraithverge, Hexen, -1, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-END_DEFAULTS
 
-WEAPON1 (wp_choly, ACWeapWraithverge)
+	PROP_Weapon_SelectionOrder (3000)
+	PROP_Weapon_Flags (WIF_PRIMARY_USES_BOTH | WIF_EXTREME_DEATH)
+	PROP_Weapon_AmmoUse1 (18)
+	PROP_Weapon_AmmoUse2 (18)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_AmmoGive2 (0)
+	PROP_Weapon_UpState (S_CHOLYUP)
+	PROP_Weapon_DownState (S_CHOLYDOWN)
+	PROP_Weapon_ReadyState (S_CHOLYREADY)
+	PROP_Weapon_AtkState (S_CHOLYATK)
+	PROP_Weapon_HoldAtkState (S_CHOLYATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_MoveCombatDist (22000000)
+	PROP_Weapon_AmmoType1 ("Mana1")
+	PROP_Weapon_AmmoType2 ("Mana2")
+	PROP_Weapon_ProjectileType ("HolyMissile")
+END_DEFAULTS
 
 // Holy Missile -------------------------------------------------------------
 
@@ -393,7 +388,7 @@ bool AHolySpirit::Slam (AActor *thing)
 
 bool AHolySpirit::SpecialBlastHandling (AActor *source, fixed_t strength)
 {
-	if (strength < BLAST_FULLSTRENGTH && tracer == source)
+	if (strength == BLAST_FULLSTRENGTH && tracer == source)
 	{
 		tracer = target;
 		target = source;
@@ -561,7 +556,7 @@ void SpawnSpiritTail (AActor *spirit)
 //
 //============================================================================
 
-void A_CHolyAttack (AActor *actor, pspdef_t *psp)
+void A_CHolyAttack (AActor *actor)
 {
 	player_t *player;
 
@@ -569,12 +564,15 @@ void A_CHolyAttack (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	if (player->UseAmmo (true))
+	ACWeapWraithverge *weapon = static_cast<ACWeapWraithverge *> (actor->player->ReadyWeapon);
+	if (weapon != NULL)
 	{
-		P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHolyMissile));
-		player->cholycount = 3;
-		S_Sound (player->mo, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
 	}
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AHolyMissile));
+	weapon->CHolyCount = 3;
+	S_Sound (actor, CHAN_WEAPON, "HolySymbolFire", 1, ATTN_NORM);
 }
 
 //============================================================================
@@ -583,11 +581,15 @@ void A_CHolyAttack (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_CHolyPalette (AActor *actor, pspdef_t *psp)
+void A_CHolyPalette (AActor *actor)
 {
-	if (actor->player != NULL && actor->player->cholycount)
+	if (actor->player != NULL)
 	{
-		actor->player->cholycount--;
+		ACWeapWraithverge *weapon = static_cast<ACWeapWraithverge *> (actor->player->ReadyWeapon);
+		if (weapon != NULL && weapon->CHolyCount != 0)
+		{
+			weapon->CHolyCount--;
+		}
 	}
 }
 

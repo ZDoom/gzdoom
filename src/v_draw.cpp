@@ -3,7 +3,7 @@
 ** Draw patches and blocks to a canvas
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2003 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,8 @@ int CleanXfac, CleanYfac;
 // [RH] Effective screen sizes that the above scale values give you
 int CleanWidth, CleanHeight;
 
+CVAR (Bool, hud_scale, false, CVAR_ARCHIVE);
+
 void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_first, ...)
 {
 	FTexture::Span unmaskedSpan[2];
@@ -63,6 +65,11 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	DWORD tag;
 	BOOL boolval;
 	int intval;
+
+	if (img == NULL || img->UseType == FTexture::TEX_Null)
+	{
+		return;
+	}
 
 	int windowleft = 0;
 	int windowright = img->GetWidth();
@@ -148,6 +155,37 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			}
 			break;
 
+		case DTA_HUDRules:
+			{
+				bool xright = x0 < 0;
+				bool ybot = y0 < 0;
+				intval = va_arg (tags, int);
+
+				if (hud_scale)
+				{
+					x0 *= CleanXfac;
+					if (intval == HUD_HorizCenter)
+						x0 += Width * FRACUNIT / 2;
+					else if (xright)
+						x0 = Width * FRACUNIT + x0;
+					y0 *= CleanYfac;
+					if (ybot)
+						y0 = Height * FRACUNIT + y0;
+					destwidth = img->GetWidth() * CleanXfac * FRACUNIT;
+					destheight = img->GetHeight() * CleanYfac * FRACUNIT;
+				}
+				else
+				{
+					if (intval == HUD_HorizCenter)
+						x0 += Width * FRACUNIT / 2;
+					else if (xright)
+						x0 = Width * FRACUNIT + x0;
+					if (ybot)
+						y0 = Height * FRACUNIT + y0;
+				}
+			}
+			break;
+
 		case DTA_VirtualWidth:
 			intval = va_arg (tags, int);
 			x0 = Scale (Width, x0, intval);
@@ -186,6 +224,22 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 
 		case DTA_LeftOffset:
 			left = va_arg (tags, int);
+			break;
+
+		case DTA_CenterOffset:
+			if (va_arg (tags, bool))
+			{
+				left = img->GetWidth() / 2;
+				top = img->GetHeight() / 2;
+			}
+			break;
+
+		case DTA_CenterBottomOffset:
+			if (va_arg (tags, bool))
+			{
+				left = img->GetWidth() / 2;
+				top = img->GetHeight();
+			}
 			break;
 
 		case DTA_WindowLeft:
@@ -490,59 +544,6 @@ void DCanvas::DrawBlock (int x, int y, int _width, int _height, const byte *src)
 	} while (--_height);
 }
 
-void DCanvas::DrawPageBlock (const byte *src) const
-{
-	if (Width == 320 && Height == 200)
-	{
-		DrawBlock (0, 0, 320, 200, src);
-		return;
-	}
-
-	byte *dest;
-	fixed_t acc;
-	fixed_t xinc, yinc;
-	int h;
-
-	dest = Buffer;
-	xinc = 320 * FRACUNIT / Width;
-	yinc = 200 * FRACUNIT / Height;
-	acc = 0;
-	h = Height;
-
-	const byte *copysrc = NULL;
-
-	do
-	{
-		if (copysrc)
-		{
-			memcpy (dest, copysrc, Width);
-			dest += Pitch;
-		}
-		else
-		{
-			int w = Width;
-			fixed_t xfrac = 0;
-			do
-			{
-				*dest++ = src[xfrac >> FRACBITS];
-				xfrac += xinc;
-			} while (--w);
-			dest += Pitch - Width;
-		}
-		acc += yinc;
-		if (acc >= FRACUNIT)
-		{
-			src += (acc >> FRACBITS) * 320;
-			acc &= FRACUNIT-1;
-			copysrc = NULL;
-		}
-		else
-		{
-			copysrc = dest - Pitch;
-		}
-	} while (--h);
-}
-
 //
 // V_GetBlock
 // Gets a linear block of pixels from the view buffer.
@@ -597,48 +598,6 @@ bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const byte *&src, const i
 	if (y+h > Height)		// clip bottom edge
 	{
 		h = Height - y;
-	}
-	return false;
-}
-
-bool DCanvas::ClipScaleBox (
-	int &x, int &y,
-	int &w, int &h,
-	int &dw, int &dh,
-	const byte *&src, const int srcpitch,
-	fixed_t &xinc, fixed_t &yinc,
-	fixed_t &xstart, fixed_t &ystart) const
-{
-	if (x >= Width || y >= Height || x+dw <= 0 || y+dh <= 0)
-	{ // Completely clipped off screen
-		return true;
-	}
-
-	xinc = (w << FRACBITS) / dw;
-	yinc = (h << FRACBITS) / dh;
-	xstart = ystart = 0;
-
-	if (x < 0)				// clip left edge
-	{
-		dw += x;
-		xstart = -x*xinc;
-		x = 0;
-	}
-	if (x+dw > Width)		// clip right edge
-	{
-		dw = Width - x;
-	}
-	if (y < 0)				// clip top edge
-	{
-		dh += y;
-		ystart = -y*yinc;
-		src += (ystart>>FRACBITS)*srcpitch;
-		ystart &= FRACUNIT-1;
-		y = 0;
-	}
-	if (y+dh > Height)		// clip bottom edge
-	{
-		dh = Height - y;
 	}
 	return false;
 }

@@ -24,6 +24,10 @@
 #ifndef __DOOMTYPE__
 #define __DOOMTYPE__
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef _MSC_VER
 // VC++ does not define PATH_MAX, but the Windows headers do define MAX_PATH.
 // However, we want to avoid including the Windows headers in most of the
@@ -142,17 +146,35 @@ int STACK_ARGS DPrintf (const char *, ...) GCCPRINTF(1,2);
 // game print flags
 enum
 {
-        PRINT_LOW,              // pickup messages
-        PRINT_MEDIUM,   // death messages
-        PRINT_HIGH,             // critical messages
-        PRINT_CHAT,             // chat messages
-        PRINT_TEAMCHAT  // chat messages from a teammate
+	PRINT_LOW,		// pickup messages
+	PRINT_MEDIUM,	// death messages
+	PRINT_HIGH,		// critical messages
+	PRINT_CHAT,		// chat messages
+	PRINT_TEAMCHAT	// chat messages from a teammate
 };
-#define PRINT_LOW                       0               // pickup messages
-#define PRINT_MEDIUM            1               // death messages
-#define PRINT_HIGH                      2               // critical messages
-#define PRINT_CHAT                      3               // chat messages
-#define PRINT_TEAMCHAT          4               // chat messages from a teammate
-#define PRINT_BOLD                      200             // What Printf_Bold used
+#define PRINT_LOW				0				// pickup messages
+#define PRINT_MEDIUM			1				// death messages
+#define PRINT_HIGH				2				// critical messages
+#define PRINT_CHAT				3				// chat messages
+#define PRINT_TEAMCHAT			4				// chat messages from a teammate
+#define PRINT_BOLD				200				// What Printf_Bold used
+
+struct PalEntry
+{
+	PalEntry () {}
+	PalEntry (DWORD argb) { *(DWORD *)this = argb; }
+	operator DWORD () const { return *(DWORD *)this; }
+	PalEntry &operator= (DWORD other) { *(DWORD *)this = other; return *this; }
+
+#ifdef WORDS_BIGENDIAN
+	PalEntry (BYTE ir, BYTE ig, BYTE ib) : a(0), r(ir), g(ig), b(ib) {}
+	PalEntry (BYTE ia, BYTE ir, BYTE ig, BYTE ib) : a(ia), r(ir), g(ig), b(ib) {}
+	BYTE a,r,g,b;
+#else
+	PalEntry (BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(0) {}
+	PalEntry (BYTE ia, BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(ia) {}
+	BYTE b,g,r,a;
+#endif
+};
 
 #endif

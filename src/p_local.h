@@ -72,7 +72,6 @@
 void P_SetupPsprites (player_t* curplayer);
 void P_MovePsprites (player_t* curplayer);
 void P_DropWeapon (player_t* player);
-void P_PostMorphWeapon (player_t *player, weapontype_t weapon);
 
 
 //
@@ -93,15 +92,13 @@ void	P_UnPredictPlayer ();
 #define FLOATRANDZ		(FIXED_MAX-1)
 
 extern fixed_t FloatBobOffsets[64];
-extern const TypeInfo *PuffType;
-extern const TypeInfo *HitPuffType;
 extern AActor *MissileActor;
 
 void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
 bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax);
 
-AActor *P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hit=false);
+AActor *P_SpawnPuff (const TypeInfo *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hit=false);
 void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage);
 void	P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
 void	P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
@@ -139,7 +136,7 @@ bool	P_Thing_Move (int tid, int mapspot);
 //
 // P_ENEMY
 //
-void	P_NoiseAlert (AActor* target, AActor* emmiter);
+void	P_NoiseAlert (AActor* target, AActor* emmiter, bool splash);
 
 
 //
@@ -291,7 +288,7 @@ bool	P_BounceWall (AActor *mo);
 bool	P_CheckSight (const AActor* t1, const AActor* t2, int flags=0);
 void	P_ResetSightCounters (bool full);
 void	P_UseLines (player_t* player);
-bool	P_UsePuzzleItem (player_t *player, int itemType);
+bool	P_UsePuzzleItem (AActor *actor, int itemType);
 void	PIT_ThrustSpike (AActor *actor);
 void	P_FindFloorCeiling (AActor *actor);
 
@@ -301,7 +298,7 @@ extern	AActor*	linetarget; 	// who got hit (or NULL)
 extern	AActor *PuffSpawned;	// points to last puff spawned
 
 fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange=0);
-void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage);
+void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, const TypeInfo *pufftype);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
@@ -345,18 +342,11 @@ extern FBlockNode**		blocklinks; 	// for thing chains
 //
 // P_INTER
 //
-extern int				maxammo[NUMAMMO];
-extern int				clipammo[NUMAMMO];
-
 void P_TouchSpecialThing (AActor *special, AActor *toucher);
 
 void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int mod=0, int flags=0);
 
-bool P_GiveAmmo (player_t *player, ammotype_t ammo, int count);
-bool P_GiveArtifact (player_t *player, artitype_t arti);
-bool P_GiveArmor (player_t *player, armortype_t armortype, int amount);
 bool P_GiveBody (player_t *player, int num);
-bool P_GivePower (player_t *player, powertype_t power);
 bool P_MorphPlayer (player_t *player, const TypeInfo *morphClass);
 void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);

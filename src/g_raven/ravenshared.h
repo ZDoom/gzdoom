@@ -21,7 +21,6 @@ public:
 
 public:
 	int StartTime;
-	bool bIsFriend;
 	bool IsOkayToAttack (AActor *target);
 	void Die (AActor *source, AActor *inflictor);
 	bool OkayToSwitchTarget (AActor *other);
@@ -33,7 +32,7 @@ class AMinotaurFriend : public AMinotaur
 {
 	DECLARE_STATELESS_ACTOR (AMinotaurFriend, AMinotaur)
 public:
-	void BeginPlay ();
+	void NoBlockingSet ();
 };
 
 #endif //__RAVENSHARED_H__

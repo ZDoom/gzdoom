@@ -463,7 +463,7 @@ void A_SerpentChase (AActor *actor)
 //
 // check for melee attack
 //
-	if (actor->MeleeState && P_CheckMeleeRange (actor))
+	if (actor->MeleeState && actor->CheckMeleeRange ())
 	{
 		if (actor->AttackSound)
 		{
@@ -572,7 +572,7 @@ void A_SerpentHumpDecide (AActor *actor)
 	{
 		return;
 	}
-	if (!P_CheckMeleeRange (actor))
+	if (!actor->CheckMeleeRange ())
 	{ // The hump shouldn't occur when within melee range
 		if (static_cast<ASerpent *>(actor)->bLeader &&
 			pr_serpenthump() < 128)
@@ -681,7 +681,7 @@ void A_SerpentWalk (AActor *actor)
 //
 // check for melee attack
 //
-	if (actor->MeleeState && P_CheckMeleeRange (actor))
+	if (actor->MeleeState && actor->CheckMeleeRange ())
 	{
 		if (actor->AttackSound)
 		{
@@ -738,7 +738,7 @@ void A_SerpentCheckForAttack (AActor *actor)
 	}
 	if (static_cast<ASerpent *>(actor)->bLeader)
 	{
-		if (!P_CheckMeleeRange (actor))
+		if (!actor->CheckMeleeRange ())
 		{
 			actor->SetState (&ASerpent::States[S_SERPENT_ATK1]);
 			return;
@@ -748,7 +748,7 @@ void A_SerpentCheckForAttack (AActor *actor)
 	{
 		actor->SetState (&ASerpent::States[S_SERPENT_WALK1]);
 	}
-	else if (P_CheckMeleeRange (actor))
+	else if (actor->CheckMeleeRange ())
 	{
 		if (pr_serpentattack() < 32)
 		{
@@ -769,7 +769,7 @@ void A_SerpentCheckForAttack (AActor *actor)
 
 void A_SerpentChooseAttack (AActor *actor)
 {
-	if (!actor->target || P_CheckMeleeRange(actor))
+	if (!actor->target || actor->CheckMeleeRange())
 	{
 		return;
 	}
@@ -791,7 +791,7 @@ void A_SerpentMeleeAttack (AActor *actor)
 	{
 		return;
 	}
-	if (P_CheckMeleeRange (actor))
+	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_serpentmeattack.HitDice (5);
 		P_DamageMobj (actor->target, actor, actor, damage);

@@ -121,22 +121,25 @@ void TypeInfo::RegisterType ()
 // Case-sensitive search (preferred)
 const TypeInfo *TypeInfo::FindType (const char *name)
 {
-	unsigned int index = TypeHash[MakeKey (name) % HASH_SIZE];
-
-	while (index != 0)
+	if (name != NULL)
 	{
-		int lexx = strcmp (name, m_Types[index-1]->Name + 1);
-		if (lexx > 0)
+		unsigned int index = TypeHash[MakeKey (name) % HASH_SIZE];
+
+		while (index != 0)
 		{
-			index = m_Types[index-1]->HashNext;
-		}
-		else if (lexx == 0)
-		{
-			return m_Types[index-1];
-		}
-		else
-		{
-			break;
+			int lexx = strcmp (name, m_Types[index-1]->Name + 1);
+			if (lexx > 0)
+			{
+				index = m_Types[index-1]->HashNext;
+			}
+			else if (lexx == 0)
+			{
+				return m_Types[index-1];
+			}
+			else
+			{
+				break;
+			}
 		}
 	}
 	return NULL;
@@ -145,12 +148,13 @@ const TypeInfo *TypeInfo::FindType (const char *name)
 // Case-insensitive search
 const TypeInfo *TypeInfo::IFindType (const char *name)
 {
-	int i;
-
-	for (i = 0; i < TypeInfo::m_NumTypes; i++)
+	if (name != NULL)
 	{
-		if (stricmp (TypeInfo::m_Types[i]->Name + 1, name) == 0)
-			return TypeInfo::m_Types[i];
+		for (int i = 0; i < TypeInfo::m_NumTypes; i++)
+		{
+			if (stricmp (TypeInfo::m_Types[i]->Name + 1, name) == 0)
+				return TypeInfo::m_Types[i];
+		}
 	}
 	return NULL;
 }
@@ -190,6 +194,7 @@ TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
 	type->Pointers = NULL;
 	type->ConstructNative = ConstructNative;
 	type->RegisterType();
+	type->Meta = Meta;
 
 	// If this class has an actor info, then any classes derived from it
 	// also need an actor info.
@@ -214,6 +219,134 @@ TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
 		type->ActorInfo = NULL;
 	}
 	return type;
+}
+
+FMetaTable::~FMetaTable ()
+{
+	FreeMeta ();
+}
+
+FMetaTable::FMetaTable (const FMetaTable &other)
+{
+	Meta = NULL;
+	CopyMeta (&other);
+}
+
+FMetaTable &FMetaTable::operator = (const FMetaTable &other)
+{
+	CopyMeta (&other);
+	return *this;
+}
+
+void FMetaTable::FreeMeta ()
+{
+	while (Meta != NULL)
+	{
+		FMetaData *meta = Meta;
+
+		switch (meta->Type)
+		{
+		case META_String:
+			delete meta->Value.String;
+			break;
+		default:
+			break;
+		}
+		Meta = meta->Next;
+		delete meta;
+	}
+}
+
+void FMetaTable::CopyMeta (const FMetaTable *other)
+{
+	const FMetaData *meta_src;
+	FMetaData **meta_dest;
+
+	FreeMeta ();
+
+	meta_src = other->Meta;
+	meta_dest = &Meta;
+	while (meta_src != NULL)
+	{
+		FMetaData *newmeta = new FMetaData (meta_src->Type, meta_src->ID);
+		switch (meta_src->Type)
+		{
+		case META_String:
+			newmeta->Value.String = copystring (meta_src->Value.String);
+			break;
+		default:
+			newmeta->Value = meta_src->Value;
+			break;
+		}
+		*meta_dest = newmeta;
+		meta_dest = &newmeta->Next;
+		meta_src = meta_src->Next;
+	}
+	*meta_dest = NULL;
+}
+
+FMetaData *FMetaTable::FindMeta (EMetaType type, DWORD id) const
+{
+	FMetaData *meta = Meta;
+
+	while (meta != NULL)
+	{
+		if (meta->ID == id && meta->Type == type)
+		{
+			return meta;
+		}
+		meta = meta->Next;
+	}
+	return NULL;
+}
+
+FMetaData *FMetaTable::FindMetaDef (EMetaType type, DWORD id)
+{
+	FMetaData *meta = FindMeta (type, id);
+	if (meta == NULL)
+	{
+		meta = new FMetaData (type, id);
+		meta->Next = Meta;
+		meta->Value.String = NULL;
+		Meta = meta;
+	}
+	return meta;
+}
+
+void FMetaTable::SetMetaInt (DWORD id, int parm)
+{
+	FMetaData *meta = FindMetaDef (META_Int, id);
+	meta->Value.Int = parm;
+}
+
+int FMetaTable::GetMetaInt (DWORD id) const
+{
+	FMetaData *meta = FindMeta (META_Int, id);
+	return meta != NULL ? meta->Value.Int : 0;
+}
+
+void FMetaTable::SetMetaFixed (DWORD id, fixed_t parm)
+{
+	FMetaData *meta = FindMetaDef (META_Fixed, id);
+	meta->Value.Fixed = parm;
+}
+
+fixed_t FMetaTable::GetMetaFixed (DWORD id) const
+{
+	FMetaData *meta = FindMeta (META_Fixed, id);
+	return meta != NULL ? meta->Value.Fixed : 0;
+}
+
+void FMetaTable::SetMetaString (DWORD id, const char *parm)
+{
+	FMetaData *meta = FindMetaDef (META_String, id);
+	ReplaceString (&meta->Value.String, parm);
+}
+
+const char *FMetaTable::GetMetaString (DWORD id) const
+{
+	FMetaData *meta = FindMeta (META_String, id);
+	return meta != NULL ? meta->Value.String : NULL;
 }
 
 CCMD (dumpclasses)
@@ -402,16 +535,6 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 		}
 	}
 
-	if (old->IsKindOf (RUNTIME_CLASS(APlayerPawn)))
-	{
-		AActor *actor = static_cast<AActor *>(old);
-		for (i = 0; i < (size_t)numsectors; i++)
-		{
-			if (sectors[i].soundtarget == actor)
-				sectors[i].soundtarget = static_cast<AActor *>(notOld);
-		}
-	}
-
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{
 		if (bodyque[i] == old)
@@ -479,15 +602,6 @@ void DObject::DestroyScan ()
 	j = destroycount;
 	do
 	{
-		if ((*(destroybase + j))->IsKindOf (RUNTIME_CLASS(APlayerPawn)))
-		{
-			AActor *actor = static_cast<AActor *>(*(destroybase + j));
-			for (i = 0; i < (size_t)numsectors; i++)
-			{
-				if (sectors[i].soundtarget == actor)
-					sectors[i].soundtarget = NULL;
-			}
-		}
 		for (i = 0; i < BODYQUESIZE; ++i)
 		{
 			if (bodyque[i] == *(destroybase + j))
@@ -532,6 +646,19 @@ void DObject::CheckIfSerialized () const
 			"Super::Serialize\n",
 			StaticType ()->Name);
 	}
+}
+
+FArchive &operator<< (FArchive &arc, const TypeInfo * &info)
+{
+	if (arc.IsStoring ())
+	{
+		arc.UserWriteClass (info);
+	}
+	else
+	{
+		arc.UserReadClass (info);
+	}
+	return arc;
 }
 
 ADD_STAT (destroys, out)

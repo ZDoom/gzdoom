@@ -107,7 +107,6 @@ extern fixed_t			r_WallVisibility;
 extern fixed_t			r_FloorVisibility;
 extern float			r_TiltVisibility;
 extern fixed_t			r_SpriteVisibility;
-extern fixed_t			r_ParticleVisibility;
 extern fixed_t			r_SkyVisibility;
 
 extern fixed_t			r_TicFrac;

@@ -53,7 +53,7 @@ IMPLEMENT_ACTOR (ALostSoul, Doom, 3006, 110)
 	PROP_MaxPainChance
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PUSHWALL|MF2_PASSMOBJ)
-	PROP_Flags4 (MF4_NOICEDEATH)
+	PROP_Flags4 (MF4_NOICEDEATH|MF4_MISSILEMORE|MF4_DONTFALL)
 	PROP_RenderStyle (STYLE_SoulTrans)
 
 	PROP_SpawnState (S_SKULL_STND)
@@ -71,17 +71,6 @@ END_DEFAULTS
 const char *ALostSoul::GetObituary ()
 {
 	return GStrings(OB_SKULL);
-}
-
-bool ALostSoul::SuggestMissileAttack (fixed_t dist)
-{
-	return pr_lost() >= MIN<int> (dist >> (FRACBITS + 1), 200);
-}
-
-void ALostSoul::Die (AActor *source, AActor *inflictor)
-{
-	Super::Die (source, inflictor);
-	flags |= MF_NOGRAVITY;
 }
 
 //

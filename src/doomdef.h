@@ -85,7 +85,8 @@ typedef enum
 	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
 	GS_STARTUP,			// [RH] Console is fullscreen, and game is just starting
 
-	GS_FORCEWIPE = -1
+	GS_FORCEWIPE = -1,
+	GS_FORCEWIPEFADE = -2
 } gamestate_t;
 
 //
@@ -201,6 +202,7 @@ enum
 	DF_WEAPONS_STAY			= 1 << 2,	// Leave weapons around after pickup (DM)
 	DF_FORCE_FALLINGZD		= 1 << 3,	// Falling too far hurts (old ZDoom style)
 	DF_FORCE_FALLINGHX		= 1 << 4,	// Falling too far hurts (Hexen style)
+	DF_FORCE_FALLINGST		= 3 << 3,	// Falling too far hurts (Strife style)
 //	DF_INVENTORY_ITEMS		= 1 << 5,	// Wait for player to use powerups when picked up
 	DF_SAME_LEVEL			= 1 << 6,	// Stay on the same map when someone exits (DM)
 	DF_SPAWN_FARTHEST		= 1 << 7,	// Spawn players as far as possible from other players (DM)
@@ -273,17 +275,11 @@ enum
 
 // [RH] Means of death flags (based on Quake2's)
 #define MOD_UNKNOWN			0
-#define MOD_FIST			1
-#define MOD_PISTOL			2
-#define MOD_SHOTGUN			3
-#define MOD_CHAINGUN		4
 #define MOD_ROCKET			5
 #define MOD_R_SPLASH		6
 #define MOD_PLASMARIFLE		7
 #define MOD_BFG_BOOM		8
 #define MOD_BFG_SPLASH		9
-#define MOD_CHAINSAW		10
-#define MOD_SSHOTGUN		11
 #define MOD_WATER			12
 #define MOD_SLIME			13
 #define MOD_LAVA			14
@@ -301,7 +297,7 @@ enum
 
 #define BLINKTHRESHOLD (4*32)
 
-#ifndef __BIG_ENDIAN__
+#ifndef WORDS_BIGENDIAN
 #define MAKE_ID(a,b,c,d)	((a)|((b)<<8)|((c)<<16)|((d)<<24))
 #else
 #define MAKE_ID(a,b,c,d)	((d)|((c)<<8)|((b)<<16)|((a)<<24))

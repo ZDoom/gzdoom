@@ -7,41 +7,62 @@
 #include "s_sound.h"
 #include "c_console.h"
 
-#define PUZZLE(name,type,msg,pic) \
-	class APuzz##name : public APuzzleItem { \
-		DECLARE_ACTOR (APuzz##name, APuzzleItem) public: \
-		AT_GAME_SET_FRIEND (name) \
-		bool TryPickup (AActor *toucher) { \
-			return P_GiveArtifact (toucher->player, type); } protected: \
-	const char *PickupMessage () { return GStrings(msg); } }; \
-	AT_GAME_SET (name) { \
-		ArtiDispatch[type] = APuzzleItem::ActivateArti; \
-		ArtiPics[type] = #pic; }
-
-class APuzzleItem : public AArtifact
+enum
 {
-	DECLARE_STATELESS_ACTOR (APuzzleItem, AArtifact)
-public:
-	static bool ActivateArti (player_t *player, artitype_t arti);
-
-	void PlayPickupSound (AActor *toucher);
-	void SetDormant ();
-	bool ShouldStay ();
+	puzzskull,
+	puzzgembig,
+	puzzgemred,
+	puzzgemgreen1,
+	puzzgemgreen2,
+	puzzgemblue1,
+	puzzgemblue2,
+	puzzbook1,
+	puzzbook2,
+	puzzskull2,
+	puzzfweapon,
+	puzzcweapon,
+	puzzmweapon,
+	puzzgear1,
+	puzzgear2,
+	puzzgear3,
+	puzzgear4,
 };
 
 IMPLEMENT_STATELESS_ACTOR (APuzzleItem, Any, -1, 0)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_DefMaxAmount
 END_DEFAULTS
 
-bool APuzzleItem::ActivateArti (player_t *player, artitype_t arti)
-
+void APuzzleItem::Serialize (FArchive &arc)
 {
-	if (P_UsePuzzleItem (player, arti - arti_firstpuzzitem))
+	Super::Serialize (arc);
+	arc << PuzzleItemNumber;
+}
+
+bool APuzzleItem::HandlePickup (AInventory *item)
+{
+	// Can't carry more than 1 of each puzzle item in coop netplay
+	if (multiplayer && !deathmatch && item->GetClass() == GetClass())
 	{
 		return true;
 	}
+	return Super::HandlePickup (item);
+}
+
+bool APuzzleItem::Use ()
+{
+	if (P_UsePuzzleItem (Owner, PuzzleItemNumber))
+	{
+		if (--Amount == 0)
+		{
+			Owner->RemoveInventory (this);
+			Destroy ();
+		}
+		return true;
+	}
 	// [RH] Always play the sound if the use fails.
-	S_Sound (player->mo, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
+	S_Sound (Owner, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
 	C_MidPrintBold (GStrings(TXT_USEPUZZLEFAILED));
 	return false;
 }
@@ -51,18 +72,6 @@ void APuzzleItem::PlayPickupSound (AActor *toucher)
 	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
 }
 
-void APuzzleItem::SetDormant ()
-{
-	if (ShouldRespawn())
-	{
-		Hide ();
-	}
-	else
-	{
-		Destroy ();
-	}
-}
-
 bool APuzzleItem::ShouldStay ()
 {
 	return !!multiplayer;
@@ -70,7 +79,12 @@ bool APuzzleItem::ShouldStay ()
 
 // Yorick's Skull -----------------------------------------------------------
 
-PUZZLE(Skull, arti_puzzskull, TXT_ARTIPUZZSKULL, ARTISKLL)
+class APuzzSkull : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzSkull, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzSkull::States[] =
 {
@@ -79,11 +93,23 @@ FState APuzzSkull::States[] =
 
 IMPLEMENT_ACTOR (APuzzSkull, Hexen, 9002, 76)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzskull)
+	PROP_Inventory_Icon ("ARTISKLL")
 END_DEFAULTS
+
+const char *APuzzSkull::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZSKULL);
+}
 
 // Heart of D'Sparil --------------------------------------------------------
 
-PUZZLE(GemBig, arti_puzzgembig, TXT_ARTIPUZZGEMBIG, ARTIBGEM)
+class APuzzGemBig : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGemBig, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGemBig::States[] =
 {
@@ -92,11 +118,23 @@ FState APuzzGemBig::States[] =
 
 IMPLEMENT_ACTOR (APuzzGemBig, Hexen, 9003, 77)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgembig)
+	PROP_Inventory_Icon ("ARTIBGEM")
 END_DEFAULTS
+
+const char *APuzzGemBig::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEMBIG);
+}
 
 // Red Gem (Ruby Planet) ----------------------------------------------------
 
-PUZZLE(GemRed, arti_puzzgemred, TXT_ARTIPUZZGEMRED, ARTIGEMR)
+class APuzzGemRed : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGemRed, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGemRed::States[] =
 {
@@ -105,11 +143,23 @@ FState APuzzGemRed::States[] =
 
 IMPLEMENT_ACTOR (APuzzGemRed, Hexen, 9004, 78)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgemred)
+	PROP_Inventory_Icon ("ARTIGEMR")
 END_DEFAULTS
+
+const char *APuzzGemRed::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEMRED);
+}
 
 // Green Gem 1 (Emerald Planet) ---------------------------------------------
 
-PUZZLE(GemGreen1, arti_puzzgemgreen1, TXT_ARTIPUZZGEMGREEN1, ARTIGEMG)
+class APuzzGemGreen1 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGemGreen1, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGemGreen1::States[] =
 {
@@ -118,11 +168,23 @@ FState APuzzGemGreen1::States[] =
 
 IMPLEMENT_ACTOR (APuzzGemGreen1, Hexen, 9005, 79)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgemgreen1)
+	PROP_Inventory_Icon ("ARTIGEMG")
 END_DEFAULTS
+
+const char *APuzzGemGreen1::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEMGREEN1);
+}
 
 // Green Gem 2 (Emerald Planet) ---------------------------------------------
 
-PUZZLE(GemGreen2, arti_puzzgemgreen2, TXT_ARTIPUZZGEMGREEN2, ARTIGMG2)
+class APuzzGemGreen2 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGemGreen2, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGemGreen2::States[] =
 {
@@ -131,11 +193,23 @@ FState APuzzGemGreen2::States[] =
 
 IMPLEMENT_ACTOR (APuzzGemGreen2, Hexen, 9009, 80)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgemgreen2)
+	PROP_Inventory_Icon ("ARTIGMG2")
 END_DEFAULTS
+
+const char *APuzzGemGreen2::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEMGREEN2);
+}
 
 // Blue Gem 1 (Sapphire Planet) ---------------------------------------------
 
-PUZZLE(GemBlue1, arti_puzzgemblue1, TXT_ARTIPUZZGEMBLUE1, ARTIGEMB)
+class APuzzGemBlue1 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGemBlue1, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGemBlue1::States[] =
 {
@@ -144,11 +218,23 @@ FState APuzzGemBlue1::States[] =
 
 IMPLEMENT_ACTOR (APuzzGemBlue1, Hexen, 9006, 81)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgemblue1)
+	PROP_Inventory_Icon ("ARTIGEMB")
 END_DEFAULTS
+
+const char *APuzzGemBlue1::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEMBLUE1);
+}
 
 // Blue Gem 2 (Sapphire Planet) ---------------------------------------------
 
-PUZZLE(GemBlue2, arti_puzzgemblue2, TXT_ARTIPUZZGEMBLUE2, ARTIGMB2)
+class APuzzGemBlue2 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGemBlue2, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGemBlue2::States[] =
 {
@@ -157,11 +243,23 @@ FState APuzzGemBlue2::States[] =
 
 IMPLEMENT_ACTOR (APuzzGemBlue2, Hexen, 9010, 82)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgemblue2)
+	PROP_Inventory_Icon ("ARTIGMB2")
 END_DEFAULTS
+
+const char *APuzzGemBlue2::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEMBLUE2);
+}
 
 // Book 1 (Daemon Codex) ----------------------------------------------------
 
-PUZZLE(Book1, arti_puzzbook1, TXT_ARTIPUZZBOOK1, ARTIBOK1)
+class APuzzBook1 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzBook1, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzBook1::States[] =
 {
@@ -170,11 +268,23 @@ FState APuzzBook1::States[] =
 
 IMPLEMENT_ACTOR (APuzzBook1, Hexen, 9007, 83)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzbook1)
+	PROP_Inventory_Icon ("ARTIBOK1")
 END_DEFAULTS
+
+const char *APuzzBook1::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZBOOK1);
+}
 
 // Book 2 (Liber Oscura) ----------------------------------------------------
 
-PUZZLE(Book2, arti_puzzbook2, TXT_ARTIPUZZBOOK2, ARTIBOK2)
+class APuzzBook2 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzBook2, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzBook2::States[] =
 {
@@ -183,11 +293,23 @@ FState APuzzBook2::States[] =
 
 IMPLEMENT_ACTOR (APuzzBook2, Hexen, 9008, 84)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzbook2)
+	PROP_Inventory_Icon ("ARTIBOK2")
 END_DEFAULTS
+
+const char *APuzzBook2::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZBOOK2);
+}
 
 // Flame Mask ---------------------------------------------------------------
 
-PUZZLE(FlameMask, arti_puzzskull2, TXT_ARTIPUZZSKULL2, ARTISKL2)
+class APuzzFlameMask : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzFlameMask, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzFlameMask::States[] =
 {
@@ -196,11 +318,23 @@ FState APuzzFlameMask::States[] =
 
 IMPLEMENT_ACTOR (APuzzFlameMask, Hexen, 9014, 0)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzskull2)
+	PROP_Inventory_Icon ("ARTISKL2")
 END_DEFAULTS
+
+const char *APuzzFlameMask::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZSKULL2);
+}
 
 // Fighter Weapon (Glaive Seal) ---------------------------------------------
 
-PUZZLE(FWeapon, arti_puzzfweapon, TXT_ARTIPUZZFWEAPON, ARTIFWEP)
+class APuzzFWeapon : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzFWeapon, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzFWeapon::States[] =
 {
@@ -209,11 +343,23 @@ FState APuzzFWeapon::States[] =
 
 IMPLEMENT_ACTOR (APuzzFWeapon, Hexen, 9015, 0)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzfweapon)
+	PROP_Inventory_Icon ("ARTIFWEP")
 END_DEFAULTS
+
+const char *APuzzFWeapon::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZFWEAPON);
+}
 
 // Cleric Weapon (Holy Relic) -----------------------------------------------
 
-PUZZLE(CWeapon, arti_puzzcweapon, TXT_ARTIPUZZCWEAPON, ARTICWEP)
+class APuzzCWeapon : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzCWeapon, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzCWeapon::States[] =
 {
@@ -222,11 +368,23 @@ FState APuzzCWeapon::States[] =
 
 IMPLEMENT_ACTOR (APuzzCWeapon, Hexen, 9016, 0)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzcweapon)
+	PROP_Inventory_Icon ("ARTICWEP")
 END_DEFAULTS
+
+const char *APuzzCWeapon::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZCWEAPON);
+}
 
 // Mage Weapon (Sigil of the Magus) -----------------------------------------
 
-PUZZLE(MWeapon, arti_puzzmweapon, TXT_ARTIPUZZMWEAPON, ARTIMWEP)
+class APuzzMWeapon : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzMWeapon, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzMWeapon::States[] =
 {
@@ -235,11 +393,23 @@ FState APuzzMWeapon::States[] =
 
 IMPLEMENT_ACTOR (APuzzMWeapon, Hexen, 9017, 0)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzmweapon)
+	PROP_Inventory_Icon ("ARTIMWEP")
 END_DEFAULTS
+
+const char *APuzzMWeapon::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZMWEAPON);
+}
 
 // Clock Gear 1 -------------------------------------------------------------
 
-PUZZLE(Gear1, arti_puzzgear1, TXT_ARTIPUZZGEAR, ARTIGEAR)
+class APuzzGear1 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGear1, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGear1::States[] =
 {
@@ -255,11 +425,23 @@ FState APuzzGear1::States[] =
 
 IMPLEMENT_ACTOR (APuzzGear1, Hexen, 9018, 0)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgear1)
+	PROP_Inventory_Icon ("ARTIGEAR")
 END_DEFAULTS
+
+const char *APuzzGear1::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEAR);
+}
 
 // Clock Gear 2 -------------------------------------------------------------
 
-PUZZLE(Gear2, arti_puzzgear2, TXT_ARTIPUZZGEAR, ARTIGER2)
+class APuzzGear2 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGear2, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGear2::States[] =
 {
@@ -275,11 +457,23 @@ FState APuzzGear2::States[] =
 
 IMPLEMENT_ACTOR (APuzzGear2, Hexen, 9019, 0)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgear2)
+	PROP_Inventory_Icon ("ARTIGER2")
 END_DEFAULTS
+
+const char *APuzzGear2::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEAR);
+}
 
 // Clock Gear 3 -------------------------------------------------------------
 
-PUZZLE(Gear3, arti_puzzgear3, TXT_ARTIPUZZGEAR, ARTIGER3)
+class APuzzGear3 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGear3, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGear3::States[] =
 {
@@ -295,11 +489,23 @@ FState APuzzGear3::States[] =
 
 IMPLEMENT_ACTOR (APuzzGear3, Hexen, 9020, 0)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgear3)
+	PROP_Inventory_Icon ("ARTIGER3")
 END_DEFAULTS
+
+const char *APuzzGear3::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEAR);
+}
 
 // Clock Gear 4 -------------------------------------------------------------
 
-PUZZLE(Gear4, arti_puzzgear4, TXT_ARTIPUZZGEAR, ARTIGER4)
+class APuzzGear4 : public APuzzleItem
+{
+	DECLARE_ACTOR (APuzzGear4, APuzzleItem)
+public:
+	const char *PickupMessage ();
+};
 
 FState APuzzGear4::States[] =
 {
@@ -315,4 +521,11 @@ FState APuzzGear4::States[] =
 
 IMPLEMENT_ACTOR (APuzzGear4, Hexen, 9021, 0)
 	PROP_SpawnState (0)
+	PROP_PuzzleItem_Number (puzzgear4)
+	PROP_Inventory_Icon ("ARTIGER4")
 END_DEFAULTS
+
+const char *APuzzGear4::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPUZZGEAR);
+}

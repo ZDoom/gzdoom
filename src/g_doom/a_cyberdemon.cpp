@@ -9,8 +9,6 @@
 #include "gstrings.h"
 #include "a_action.h"
 
-static FRandom pr_cyb ("CyberMissileRange");
-
 void A_CyberAttack (AActor *);
 void A_Hoof (AActor *);
 void A_Metal (AActor *);
@@ -19,7 +17,6 @@ class ACyberdemon : public AActor
 {
 	DECLARE_ACTOR (ACyberdemon, AActor)
 public:
-	bool SuggestMissileAttack (fixed_t dist);
 	const char *GetObituary () { return GStrings(OB_CYBORG); }
 };
 
@@ -73,7 +70,8 @@ IMPLEMENT_ACTOR (ACyberdemon, Doom, 16, 114)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_BOSS|MF2_FLOORCLIP)
 	PROP_Flags3 (MF3_NORADIUSDMG)
-	PROP_Flags4 (MF4_BOSSDEATH)
+	PROP_Flags4 (MF4_BOSSDEATH|MF4_LONGMELEERANGE)
+	PROP_MinMissileChance (160)
 
 	PROP_SpawnState (S_CYBER_STND)
 	PROP_SeeState (S_CYBER_RUN)
@@ -86,11 +84,6 @@ IMPLEMENT_ACTOR (ACyberdemon, Doom, 16, 114)
 	PROP_DeathSound ("cyber/death")
 	PROP_ActiveSound ("cyber/active")
 END_DEFAULTS
-
-bool ACyberdemon::SuggestMissileAttack (fixed_t dist)
-{
-	return pr_cyb () >= MIN<int> (dist >> (FRACBITS + 1), 160);
-}
 
 void A_CyberAttack (AActor *self)
 {

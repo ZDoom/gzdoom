@@ -7,7 +7,6 @@
 #include "d_player.h"
 #include "p_pspr.h"
 #include "p_local.h"
-#include "p_inter.h"
 #include "gstrings.h"
 #include "p_effect.h"
 #include "gi.h"
@@ -22,33 +21,12 @@ static FRandom pr_bfgspray ("BFGSpray");
 
 /* ammo ********************************************************************/
 
-// a big item has five clip loads.
-int clipammo[NUMAMMO] =
-{
-	10,		// bullets
-	4,		// shells
-	20,		// cells
-	1		// rockets
-};
-
 // Clip --------------------------------------------------------------------
 
 class AClip : public AAmmo
 {
 	DECLARE_ACTOR (AClip, AAmmo)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		if (flags & MF_DROPPED)
-			return P_GiveAmmo (toucher->player, am_clip, clipammo[am_clip]/2);
-		else
-			return P_GiveAmmo (toucher->player, am_clip, clipammo[am_clip]);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_clip;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTCLIP);
@@ -64,37 +42,18 @@ IMPLEMENT_ACTOR (AClip, Doom, 2007, 11)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (10)
+	PROP_Inventory_MaxAmount (200)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("CLIPA0")
 END_DEFAULTS
-
-AT_GAME_SET (Clip)
-{
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		AmmoPics[am_clip] = "CLIPA0";
-	}
-	else
-	{
-		AmmoPics[am_clip] = "I_BLIT";	// for Strife
-	}
-}
 
 // Clip box ----------------------------------------------------------------
 
-class AClipBox : public AAmmo
+class AClipBox : public AClip
 {
-	DECLARE_ACTOR (AClipBox, AAmmo)
+	DECLARE_ACTOR (AClipBox, AClip)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_clip, clipammo[am_clip]*5);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_clip;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTCLIPBOX);
@@ -110,7 +69,7 @@ IMPLEMENT_ACTOR (AClipBox, Doom, 2048, 139)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (50)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -120,15 +79,6 @@ class ARocketAmmo : public AAmmo
 {
 	DECLARE_ACTOR (ARocketAmmo, AAmmo)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_misl, clipammo[am_misl]);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_misl;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTROCKET);
@@ -144,30 +94,18 @@ IMPLEMENT_ACTOR (ARocketAmmo, Doom, 2010, 140)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (26)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (1)
+	PROP_Inventory_MaxAmount (50)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("ROCKA0")
 END_DEFAULTS
-
-AT_GAME_SET (RocketAmmo)
-{
-	AmmoPics[am_misl] = "ROCKA0";
-}
 
 // Rocket box --------------------------------------------------------------
 
-class ARocketBox : public AAmmo
+class ARocketBox : public ARocketAmmo
 {
-	DECLARE_ACTOR (ARocketBox, AAmmo)
+	DECLARE_ACTOR (ARocketBox, ARocketAmmo)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_misl, clipammo[am_misl]*5);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_misl;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTROCKBOX);
@@ -183,7 +121,7 @@ IMPLEMENT_ACTOR (ARocketBox, Doom, 2046, 141)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (5)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -193,15 +131,6 @@ class ACell : public AAmmo
 {
 	DECLARE_ACTOR (ACell, AAmmo)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_cell, clipammo[am_cell]);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_cell;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTCELL);
@@ -217,30 +146,18 @@ IMPLEMENT_ACTOR (ACell, Doom, 2047, 75)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (10)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (20)
+	PROP_Inventory_MaxAmount (300)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("CELLA0")
 END_DEFAULTS
-
-AT_GAME_SET (Cell)
-{
-	AmmoPics[am_cell] = "CELLA0";
-}
 
 // Cell pack ---------------------------------------------------------------
 
-class ACellPack : public AAmmo
+class ACellPack : public ACell
 {
-	DECLARE_ACTOR (ACellPack, AAmmo)
+	DECLARE_ACTOR (ACellPack, ACell)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_cell, clipammo[am_cell]*5);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_cell;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTCELLBOX);
@@ -256,7 +173,7 @@ IMPLEMENT_ACTOR (ACellPack, Doom, 17, 142)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (18)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (100)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -266,15 +183,6 @@ class AShell : public AAmmo
 {
 	DECLARE_ACTOR (AShell, AAmmo)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_shell, clipammo[am_shell]);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_shell;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTSHELLS);
@@ -290,30 +198,18 @@ IMPLEMENT_ACTOR (AShell, Doom, 2008, 12)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (8)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (4)
+	PROP_Inventory_MaxAmount (50)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("SHELA0")
 END_DEFAULTS
-
-AT_GAME_SET (Shell)
-{
-	AmmoPics[am_shell] = "SHELA0";
-}
 
 // Shell box ---------------------------------------------------------------
 
-class AShellBox : public AAmmo
+class AShellBox : public AShell
 {
-	DECLARE_ACTOR (AShellBox, AAmmo)
+	DECLARE_ACTOR (AShellBox, AShell)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_shell, clipammo[am_shell]*5);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_shell;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTSHELLBOX);
@@ -329,7 +225,7 @@ IMPLEMENT_ACTOR (AShellBox, Doom, 2049, 143)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (10)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (20)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -337,15 +233,13 @@ END_DEFAULTS
 
 // Fist ---------------------------------------------------------------------
 
-void A_Punch (AActor *, pspdef_t *);
+void A_Punch (AActor *);
 
 class AFist : public AWeapon
 {
 	DECLARE_ACTOR (AFist, AWeapon)
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *GetObituary ();
 };
 
 FState AFist::States[] =
@@ -367,63 +261,51 @@ FState AFist::States[] =
 	S_NORMAL (PUNG, 'B',	5, A_ReFire 			, &States[S_PUNCH])
 };
 
-FWeaponInfo AFist::WeaponInfo =
-{
-	0,
-	am_noammo,
-	am_noammo,
-	1,
-	0,
-	&States[S_PUNCHUP],
-	&States[S_PUNCHDOWN],
-	&States[S_PUNCH],
-	&States[S_PUNCH1],
-	&States[S_PUNCH1],
-	NULL,
-	NULL,
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AFist),
-	-1
-};
-
 IMPLEMENT_ACTOR (AFist, Doom, -1, 0)
+	PROP_Weapon_SelectionOrder (3700)
+	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_PUNCHUP)
+	PROP_Weapon_DownState (S_PUNCHDOWN)
+	PROP_Weapon_ReadyState (S_PUNCH)
+	PROP_Weapon_AtkState (S_PUNCH1)
+	PROP_Weapon_HoldAtkState (S_PUNCH1)
+	PROP_Weapon_Kickback (100)
 END_DEFAULTS
 
-WEAPON1 (wp_fist, AFist)
-
-weapontype_t AFist::OldStyleID () const
+const char *AFist::GetObituary ()
 {
-	return wp_fist;
+	return GStrings (OB_MPFIST);
 }
 
 //
 // A_Punch
 //
-void A_Punch (AActor *actor, pspdef_t *psp)
+void A_Punch (AActor *actor)
 {
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
 
-	damage = (pr_punch()%10+1)<<1;
-
 	if (actor->player != NULL)
 	{
-		actor->player->UseAmmo ();
-
-		if (actor->player->powers[pw_strength])	
-			damage *= 10;
+		AWeapon *weapon = actor->player->ReadyWeapon;
+		if (weapon != NULL)
+		{
+			if (!weapon->DepleteAmmo (weapon->bAltFire))
+				return;
+		}
 	}
+
+	damage = (pr_punch()%10+1)<<1;
+
+	if (actor->FindInventory<APowerStrength>())	
+		damage *= 10;
 
 	angle = actor->angle;
 
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (actor, angle, MELEERANGE);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
-	P_LineAttack (actor, angle, MELEERANGE, pitch, damage);
+	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, RUNTIME_CLASS(ABulletPuff));
 
 	// turn to face target
 	if (linetarget)
@@ -438,15 +320,13 @@ void A_Punch (AActor *actor, pspdef_t *psp)
 
 // Pistol -------------------------------------------------------------------
 
-void A_FirePistol (AActor *, pspdef_t *);
+void A_FirePistol (AActor *);
 
 class APistol : public AWeapon
 {
 	DECLARE_ACTOR (APistol, AWeapon)
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *GetObituary ();
 };
 
 FState APistol::States[] =
@@ -473,52 +353,47 @@ FState APistol::States[] =
 	S_BRIGHT (PISF, 'A',	7, A_Light1 			, &AWeapon::States[S_LIGHTDONE])
 };
 
-FWeaponInfo APistol::WeaponInfo =
-{
-	0,
-	am_clip,
-	am_clip,
-	1,
-	20,
-	&States[S_PISTOLUP],
-	&States[S_PISTOLDOWN],
-	&States[S_PISTOL],
-	&States[S_PISTOL1],
-	&States[S_PISTOL1],
-	&States[S_PISTOLFLASH],
-	RUNTIME_CLASS(AClip),
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(APistol),
-	-1
-};
-
 IMPLEMENT_ACTOR (APistol, Doom, -1, 0)
+	PROP_Weapon_SelectionOrder (1900)
+	PROP_Weapon_Flags (WIF_WIMPY_WEAPON)
+
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (20)
+
+	PROP_Weapon_UpState (S_PISTOLUP)
+	PROP_Weapon_DownState (S_PISTOLDOWN)
+	PROP_Weapon_ReadyState (S_PISTOL)
+	PROP_Weapon_AtkState (S_PISTOL1)
+	PROP_Weapon_HoldAtkState (S_PISTOL1)
+	PROP_Weapon_FlashState (S_PISTOLFLASH)
+	PROP_Weapon_Kickback (100)
+	PROP_Weapon_MoveCombatDist (25000000)
+	PROP_Weapon_AmmoType1 ("Clip")
 END_DEFAULTS
 
-WEAPON1 (wp_pistol, APistol)
-
-weapontype_t APistol::OldStyleID () const
+const char *APistol::GetObituary ()
 {
-	return wp_pistol;
+	return GStrings(OB_MPPISTOL);
 }
 
 //
 // A_FirePistol
 //
-void A_FirePistol (AActor *actor, pspdef_t *psp)
+void A_FirePistol (AActor *actor)
 {
 	bool accurate;
 
 	if (actor->player != NULL)
 	{
-		actor->player->mo->PlayAttacking2 ();
-		actor->player->UseAmmo ();
+		AWeapon *weapon = actor->player->ReadyWeapon;
+		if (weapon != NULL)
+		{
+			if (!weapon->DepleteAmmo (weapon->bAltFire))
+				return;
 
-		P_SetPsprite (actor->player, ps_flash,
-			wpnlev1info[actor->player->readyweapon]->flashstate);
+			P_SetPsprite (actor->player, ps_flash, weapon->FlashState);
+		}
+		actor->player->mo->PlayAttacking2 ();
 
 		accurate = !actor->player->refire;
 	}
@@ -529,24 +404,20 @@ void A_FirePistol (AActor *actor, pspdef_t *psp)
 
 	S_Sound (actor, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	P_BulletSlope (actor);
-	P_GunShot (actor, accurate);
+	P_GunShot (actor, accurate, RUNTIME_CLASS(ABulletPuff));
 }
 
 // Chainsaw -----------------------------------------------------------------
 
-void A_Saw (AActor *, pspdef_t *);
+void A_Saw (AActor *);
 
 class AChainsaw : public AWeapon
 {
 	DECLARE_ACTOR (AChainsaw, AWeapon)
-protected:
-	const char *PickupMessage ();
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *PickupMessage ();
+	const char *GetObituary ();
 };
 
 FState AChainsaw::States[] =
@@ -570,52 +441,37 @@ FState AChainsaw::States[] =
 	S_NORMAL (CSAW, 'A',   -1, NULL 				, NULL)
 };
 
-FWeaponInfo AChainsaw::WeaponInfo =
-{
-	0,
-	am_noammo,
-	am_noammo,
-	1,
-	0,
-	&States[S_SAWUP],
-	&States[S_SAWDOWN],
-	&States[S_SAW],
-	&States[S_SAW1],
-	&States[S_SAW1],
-	NULL,
-	RUNTIME_CLASS(AChainsaw),
-	0,
-	0,
-	"weapons/sawup",
-	"weapons/sawidle",
-	RUNTIME_CLASS(AChainsaw),
-	-1
-};
-
 IMPLEMENT_ACTOR (AChainsaw, Doom, 2005, 32)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (S_CSAW)
+
+	PROP_Weapon_SelectionOrder (2200)
+	PROP_Weapon_Flags (WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_SAWUP)
+	PROP_Weapon_DownState (S_SAWDOWN)
+	PROP_Weapon_ReadyState (S_SAW)
+	PROP_Weapon_AtkState (S_SAW1)
+	PROP_Weapon_HoldAtkState (S_SAW1)
+	PROP_Weapon_UpSound ("weapos/sawup")
+	PROP_Weapon_ReadySound ("weapons/sawidle")
 END_DEFAULTS
-
-WEAPON1 (wp_chainsaw, AChainsaw)
-
-weapontype_t AChainsaw::OldStyleID () const
-{
-	return wp_chainsaw;
-}
 
 const char *AChainsaw::PickupMessage ()
 {
 	return GStrings(GOTCHAINSAW);
 }
 
+const char *AChainsaw::GetObituary ()
+{
+	return GStrings(OB_MPCHAINSAW);
+}
+
 //
 // A_Saw
 //
-void A_Saw (AActor *actor, pspdef_t *psp)
+void A_Saw (AActor *actor)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -626,7 +482,12 @@ void A_Saw (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 
 	damage = 2 * (pr_saw()%10+1);
 	angle = actor->angle;
@@ -637,9 +498,9 @@ void A_Saw (AActor *actor, pspdef_t *psp)
 	// up on walls. If the distance to P_LineAttack is <= MELEERANGE, then it
 	// won't puff the wall, which is why the fist does not create puffs on
 	// the walls.
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	P_LineAttack (actor, angle, MELEERANGE+1,
-				  P_AimLineAttack (actor, angle, MELEERANGE+1), damage);
+				  P_AimLineAttack (actor, angle, MELEERANGE+1), damage,
+				  RUNTIME_CLASS(ABulletPuff));
 
 	if (!linetarget)
 	{
@@ -670,17 +531,14 @@ void A_Saw (AActor *actor, pspdef_t *psp)
 
 // Shotgun ------------------------------------------------------------------
 
-void A_FireShotgun (AActor *, pspdef_t *);
+void A_FireShotgun (AActor *);
 
 class AShotgun : public AWeapon
 {
 	DECLARE_ACTOR (AShotgun, AWeapon)
-protected:
-	const char *PickupMessage ();
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *PickupMessage ();
+	const char *GetObituary ();
 };
 
 FState AShotgun::States[] =
@@ -713,52 +571,40 @@ FState AShotgun::States[] =
 	S_NORMAL (SHOT, 'A',   -1, NULL 				, NULL)
 };
 
-FWeaponInfo AShotgun::WeaponInfo =
-{
-	0,
-	am_shell,
-	am_shell,
-	1,
-	8,
-	&States[S_SGUNUP],
-	&States[S_SGUNDOWN],
-	&States[S_SGUN],
-	&States[S_SGUN1],
-	&States[S_SGUN1],
-	&States[S_SGUNFLASH],
-	RUNTIME_CLASS(AShotgun),
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AShotgun),
-	-1
-};
-
 IMPLEMENT_ACTOR (AShotgun, Doom, 2001, 27)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (S_SHOT)
+
+	PROP_Weapon_SelectionOrder (1300)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (8)
+	PROP_Weapon_UpState (S_SGUNUP)
+	PROP_Weapon_DownState (S_SGUNDOWN)
+	PROP_Weapon_ReadyState (S_SGUN)
+	PROP_Weapon_AtkState (S_SGUN1)
+	PROP_Weapon_HoldAtkState (S_SGUN1)
+	PROP_Weapon_FlashState (S_SGUNFLASH)
+	PROP_Weapon_Kickback (100)
+	PROP_Weapon_MoveCombatDist (24000000)
+	PROP_Weapon_AmmoType1 ("Shell")
 END_DEFAULTS
-
-WEAPON1 (wp_shotgun, AShotgun)
-
-weapontype_t AShotgun::OldStyleID () const
-{
-	return wp_shotgun;
-}
 
 const char *AShotgun::PickupMessage ()
 {
 	return GStrings(GOTSHOTGUN);
 }
 
+const char *AShotgun::GetObituary ()
+{
+	return GStrings(OB_MPSHOTGUN);
+}
+
 //
 // A_FireShotgun
 //
-void A_FireShotgun (AActor *actor, pspdef_t *psp)
+void A_FireShotgun (AActor *actor)
 {
 	int i;
 	player_t *player;
@@ -769,34 +615,34 @@ void A_FireShotgun (AActor *actor, pspdef_t *psp)
 	}
 
 	S_Sound (actor, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+		P_SetPsprite (player, ps_flash, weapon->FlashState);
+	}
 	player->mo->PlayAttacking2 ();
-	player->UseAmmo ();
-
-	P_SetPsprite (player, ps_flash, wpnlev1info[player->readyweapon]->flashstate);
 
 	P_BulletSlope (actor);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 
 	for (i=0 ; i<7 ; i++)
-		P_GunShot (actor, false);
+		P_GunShot (actor, false, RUNTIME_CLASS(ABulletPuff));
 }
 
 // Super Shotgun ------------------------------------------------------------
 
-void A_FireShotgun2 (AActor *actor, pspdef_t *);
-void A_OpenShotgun2 (AActor *actor, pspdef_t *);
-void A_LoadShotgun2 (AActor *actor, pspdef_t *);
-void A_CloseShotgun2 (AActor *actor, pspdef_t *);
+void A_FireShotgun2 (AActor *actor);
+void A_OpenShotgun2 (AActor *actor);
+void A_LoadShotgun2 (AActor *actor);
+void A_CloseShotgun2 (AActor *actor);
 
 class ASuperShotgun : public AWeapon
 {
 	DECLARE_ACTOR (ASuperShotgun, AWeapon)
-protected:
-	const char *PickupMessage ();
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *PickupMessage ();
+	const char *GetObituary ();
 };
 
 FState ASuperShotgun::States[] =
@@ -834,52 +680,40 @@ FState ASuperShotgun::States[] =
 	S_NORMAL (SGN2, 'A',   -1, NULL 				, NULL)
 };
 
-FWeaponInfo ASuperShotgun::WeaponInfo =
-{
-	0,
-	am_shell,
-	am_shell,
-	2,
-	8,
-	&States[S_DSGUNUP],
-	&States[S_DSGUNDOWN],
-	&States[S_DSGUN],
-	&States[S_DSGUN1],
-	&States[S_DSGUN1],
-	&States[S_DSGUNFLASH],
-	RUNTIME_CLASS(ASuperShotgun),
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ASuperShotgun),
-	-1
-};
-
 IMPLEMENT_ACTOR (ASuperShotgun, Doom, 82, 33)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (S_SHOT2)
+
+	PROP_Weapon_SelectionOrder (400)
+	PROP_Weapon_AmmoUse1 (2)
+	PROP_Weapon_AmmoGive1 (8)
+	PROP_Weapon_UpState (S_DSGUNUP)
+	PROP_Weapon_DownState (S_DSGUNDOWN)
+	PROP_Weapon_ReadyState (S_DSGUN)
+	PROP_Weapon_AtkState (S_DSGUN1)
+	PROP_Weapon_HoldAtkState (S_DSGUN1)
+	PROP_Weapon_FlashState (S_DSGUNFLASH)
+	PROP_Weapon_Kickback (100)
+	PROP_Weapon_MoveCombatDist (15000000)
+	PROP_Weapon_AmmoType1 ("Shell")
 END_DEFAULTS
-
-WEAPON1 (wp_supershotgun, ASuperShotgun)
-
-weapontype_t ASuperShotgun::OldStyleID () const
-{
-	return wp_supershotgun;
-}
 
 const char *ASuperShotgun::PickupMessage ()
 {
 	return GStrings(GOTSHOTGUN2);
 }
 
+const char *ASuperShotgun::GetObituary ()
+{
+	return GStrings(OB_MPSSHOTGUN);
+}
+
 //
 // A_FireShotgun2
 //
-void A_FireShotgun2 (AActor *actor, pspdef_t *psp)
+void A_FireShotgun2 (AActor *actor)
 {
 	int 		i;
 	angle_t 	angle;
@@ -892,15 +726,18 @@ void A_FireShotgun2 (AActor *actor, pspdef_t *psp)
 	}
 
 	S_Sound (actor, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+		P_SetPsprite (player, ps_flash, weapon->FlashState);
+	}
 	player->mo->PlayAttacking2 ();
-	player->UseAmmo ();
 
-	P_SetPsprite (player, ps_flash,
-		wpnlev1info[player->readyweapon]->flashstate);
 
 	P_BulletSlope (actor);
 		
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	for (i=0 ; i<20 ; i++)
 	{
 		damage = 5*(pr_fireshotgun2()%3+1);
@@ -916,39 +753,37 @@ void A_FireShotgun2 (AActor *actor, pspdef_t *psp)
 		P_LineAttack (actor,
 					  angle,
 					  PLAYERMISSILERANGE,
-					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage);
+					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage,
+					  RUNTIME_CLASS(ABulletPuff));
 	}
 }
 
-void A_OpenShotgun2 (AActor *actor, pspdef_t *psp)
+void A_OpenShotgun2 (AActor *actor)
 {
 	S_Sound (actor, CHAN_WEAPON, "weapons/sshoto", 1, ATTN_NORM);
 }
 
-void A_LoadShotgun2 (AActor *actor, pspdef_t *psp)
+void A_LoadShotgun2 (AActor *actor)
 {
 	S_Sound (actor, CHAN_WEAPON, "weapons/sshotl", 1, ATTN_NORM);
 }
 
-void A_CloseShotgun2 (AActor *actor, pspdef_t *psp)
+void A_CloseShotgun2 (AActor *actor)
 {
 	S_Sound (actor, CHAN_WEAPON, "weapons/sshotc", 1, ATTN_NORM);
-	A_ReFire (actor, psp);
+	A_ReFire (actor);
 }
 
 // Chaingun -----------------------------------------------------------------
 
-void A_FireCGun (AActor *, pspdef_t *);
+void A_FireCGun (AActor *);
 
 class AChaingun : public AWeapon
 {
 	DECLARE_ACTOR (AChaingun, AWeapon)
-protected:
-	const char *PickupMessage ();
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *PickupMessage ();
+	const char *GetObituary ();
 };
 
 FState AChaingun::States[] =
@@ -975,52 +810,40 @@ FState AChaingun::States[] =
 	S_NORMAL (MGUN, 'A',   -1, NULL 				, NULL)
 };
 
-FWeaponInfo AChaingun::WeaponInfo =
-{
-	0,
-	am_clip,
-	am_clip,
-	1,
-	20,
-	&States[S_CHAINUP],
-	&States[S_CHAINDOWN],
-	&States[S_CHAIN],
-	&States[S_CHAIN1],
-	&States[S_CHAIN1],
-	&States[S_CHAINFLASH],
-	RUNTIME_CLASS(AChaingun),
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AChaingun),
-	-1
-};
-
 IMPLEMENT_ACTOR (AChaingun, Doom, 2002, 28)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (S_MGUN)
+
+	PROP_Weapon_SelectionOrder (700)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (20)
+	PROP_Weapon_UpState (S_CHAINUP)
+	PROP_Weapon_DownState (S_CHAINDOWN)
+	PROP_Weapon_ReadyState (S_CHAIN)
+	PROP_Weapon_AtkState (S_CHAIN1)
+	PROP_Weapon_HoldAtkState (S_CHAIN1)
+	PROP_Weapon_FlashState (S_CHAINFLASH)
+	PROP_Weapon_Kickback (100)
+	PROP_Weapon_MoveCombatDist (27000000)
+	PROP_Weapon_AmmoType1 ("Clip")
 END_DEFAULTS
-
-WEAPON1 (wp_chaingun, AChaingun)
-
-weapontype_t AChaingun::OldStyleID () const
-{
-	return wp_chaingun;
-}
 
 const char *AChaingun::PickupMessage ()
 {
 	return GStrings(GOTCHAINGUN);
 }
 
+const char *AChaingun::GetObituary ()
+{
+	return GStrings(OB_MPCHAINGUN);
+}
+
 //
 // A_FireCGun
 //
-void A_FireCGun (AActor *actor, pspdef_t *psp)
+void A_FireCGun (AActor *actor)
 {
 	player_t *player;
 
@@ -1029,46 +852,42 @@ void A_FireCGun (AActor *actor, pspdef_t *psp)
 		return;
 	}
 	S_Sound (actor, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
-	FWeaponInfo *wpninfo = wpnlev1info[player->readyweapon];
 
-	if (wpninfo->ammo < NUMAMMO && !player->ammo[wpninfo->ammo])
-		return;
-				
-	player->mo->PlayAttacking2 ();
-	player->UseAmmo ();
-
-	if (wpninfo->flashstate != NULL)
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
 	{
-		// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
-		int theflash = MIN (1, psp->state - wpninfo->atkstate);
-
-		if (wpninfo->flashstate[theflash].sprite.index != wpninfo->flashstate->sprite.index)
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+		if (weapon->FlashState != NULL)
 		{
-			theflash = 0;
+			// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
+			int theflash = MIN (1, players->psprites[ps_weapon].state - weapon->AtkState);
+
+			if (weapon->FlashState[theflash].sprite.index != weapon->FlashState->sprite.index)
+			{
+				theflash = 0;
+			}
+
+			P_SetPsprite (player, ps_flash, weapon->FlashState + theflash);
 		}
 
-		P_SetPsprite (player, ps_flash, wpninfo->flashstate + theflash);
 	}
+	player->mo->PlayAttacking2 ();
 
 	P_BulletSlope (actor);
-	PuffType = RUNTIME_CLASS (ABulletPuff);		
-	P_GunShot (actor, !player->refire);
+	P_GunShot (actor, !player->refire, RUNTIME_CLASS(ABulletPuff));
 }
 
 // Rocket launcher ---------------------------------------------------------
 
-void A_FireMissile (AActor *, pspdef_t *);
+void A_FireMissile (AActor *);
 void A_Explode (AActor *);
 
 class ARocketLauncher : public AWeapon
 {
 	DECLARE_ACTOR (ARocketLauncher, AWeapon)
-protected:
-	const char *PickupMessage ();
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *PickupMessage ();
 };
 
 FState ARocketLauncher::States[] =
@@ -1097,42 +916,27 @@ FState ARocketLauncher::States[] =
 	S_NORMAL (LAUN, 'A',   -1, NULL 				, NULL)
 };
 
-FWeaponInfo ARocketLauncher::WeaponInfo =
-{
-	WIF_NOAUTOFIRE,
-	am_misl,
-	am_misl,
-	1,
-	2,
-	&States[S_MISSILEUP],
-	&States[S_MISSILEDOWN],
-	&States[S_MISSILE],
-	&States[S_MISSILE1],
-	&States[S_MISSILE1],
-	&States[S_MISSILEFLASH],
-	RUNTIME_CLASS(ARocketLauncher),
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ARocketLauncher),
-	-1
-};
-
 IMPLEMENT_ACTOR (ARocketLauncher, Doom, 2003, 29)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (S_LAUN)
+
+	PROP_Weapon_SelectionOrder (2500)
+	PROP_Weapon_Flags (WIF_NOAUTOFIRE|WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (2)
+	PROP_Weapon_UpState (S_MISSILEUP)
+	PROP_Weapon_DownState (S_MISSILEDOWN)
+	PROP_Weapon_ReadyState (S_MISSILE)
+	PROP_Weapon_AtkState (S_MISSILE1)
+	PROP_Weapon_HoldAtkState (S_MISSILE1)
+	PROP_Weapon_FlashState (S_MISSILEFLASH)
+	PROP_Weapon_Kickback (100)
+	PROP_Weapon_MoveCombatDist (18350080)
+	PROP_Weapon_AmmoType1 ("RocketAmmo")
+	PROP_Weapon_ProjectileType ("Rocket")
 END_DEFAULTS
-
-WEAPON1 (wp_missile, ARocketLauncher)
-
-weapontype_t ARocketLauncher::OldStyleID () const
-{
-	return wp_missile;
-}
 
 const char *ARocketLauncher::PickupMessage ()
 {
@@ -1175,7 +979,7 @@ void ARocket::BeginPlay ()
 //
 // A_FireMissile
 //
-void A_FireMissile (AActor *actor, pspdef_t *psp)
+void A_FireMissile (AActor *actor)
 {
 	player_t *player;
 
@@ -1183,23 +987,24 @@ void A_FireMissile (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ARocket));
 }
 
 // Plasma rifle ------------------------------------------------------------
 
-void A_FirePlasma (AActor *, pspdef_t *);
+void A_FirePlasma (AActor *);
 
 class APlasmaRifle : public AWeapon
 {
 	DECLARE_ACTOR (APlasmaRifle, AWeapon)
-protected:
-	const char *PickupMessage ();
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *PickupMessage ();
 };
 
 FState APlasmaRifle::States[] =
@@ -1225,42 +1030,26 @@ FState APlasmaRifle::States[] =
 	S_NORMAL (PLAS, 'A',   -1, NULL 				, NULL)
 };
 
-FWeaponInfo APlasmaRifle::WeaponInfo =
-{
-	0,
-	am_cell,
-	am_cell,
-	1,
-	40,
-	&States[S_PLASMAUP],
-	&States[S_PLASMADOWN],
-	&States[S_PLASMA],
-	&States[S_PLASMA1],
-	&States[S_PLASMA1],
-	&States[S_PLASMAFLASH],
-	RUNTIME_CLASS(APlasmaRifle),
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(APlasmaRifle),
-	-1
-};
-
 IMPLEMENT_ACTOR (APlasmaRifle, Doom, 2004, 30)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (S_PLAS)
+
+	PROP_Weapon_SelectionOrder (100)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (40)
+	PROP_Weapon_UpState (S_PLASMAUP)
+	PROP_Weapon_DownState (S_PLASMADOWN)
+	PROP_Weapon_ReadyState (S_PLASMA)
+	PROP_Weapon_AtkState (S_PLASMA1)
+	PROP_Weapon_HoldAtkState (S_PLASMA1)
+	PROP_Weapon_FlashState (S_PLASMAFLASH)
+	PROP_Weapon_Kickback (100)
+	PROP_Weapon_MoveCombatDist (27000000)
+	PROP_Weapon_ProjectileType ("PlasmaBall")
+	PROP_Weapon_AmmoType1 ("Cell")
 END_DEFAULTS
-
-WEAPON1 (wp_plasma, APlasmaRifle)
-
-weapontype_t APlasmaRifle::OldStyleID () const
-{
-	return wp_plasma;
-}
 
 const char *APlasmaRifle::PickupMessage ()
 {
@@ -1303,7 +1092,7 @@ END_DEFAULTS
 //
 // A_FirePlasma
 //
-void A_FirePlasma (AActor *actor, pspdef_t *psp)
+void A_FirePlasma (AActor *actor)
 {
 	player_t *player;
 
@@ -1311,13 +1100,15 @@ void A_FirePlasma (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	player->UseAmmo ();
-
-	if (wpnlev1info[player->readyweapon]->flashstate)
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
 	{
-		P_SetPsprite (player, ps_flash,
-			wpnlev1info[player->readyweapon]->flashstate
-			+ (pr_fireplasma()&1));
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+		if (weapon->FlashState != NULL)
+		{
+			P_SetPsprite (player, ps_flash, weapon->FlashState + (pr_fireplasma()&1));
+		}
 	}
 
 	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(APlasmaBall));
@@ -1328,7 +1119,7 @@ void A_FirePlasma (AActor *actor, pspdef_t *psp)
 //
 static int RailOffset;
 
-void A_FireRailgun (AActor *actor, pspdef_t *psp)
+void A_FireRailgun (AActor *actor)
 {
 	int damage;
 	player_t *player;
@@ -1338,13 +1129,15 @@ void A_FireRailgun (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	player->UseAmmo ();
-
-	if (wpnlev1info[player->readyweapon]->flashstate)
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
 	{
-		P_SetPsprite (player, ps_flash,
-			wpnlev1info[player->readyweapon]->flashstate
-			+ (pr_firerail()&1));
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+		if (weapon->FlashState != NULL)
+		{
+			P_SetPsprite (player, ps_flash, weapon->FlashState + (pr_firerail()&1));
+		}
 	}
 
 	damage = deathmatch ? 100 : 150;
@@ -1353,38 +1146,34 @@ void A_FireRailgun (AActor *actor, pspdef_t *psp)
 	RailOffset = 0;
 }
 
-void A_FireRailgunRight (AActor *actor, pspdef_t *psp)
+void A_FireRailgunRight (AActor *actor)
 {
 	RailOffset = 10;
-	A_FireRailgun (actor, psp);
+	A_FireRailgun (actor);
 }
 
-void A_FireRailgunLeft (AActor *actor, pspdef_t *psp)
+void A_FireRailgunLeft (AActor *actor)
 {
 	RailOffset = -10;
-	A_FireRailgun (actor, psp);
+	A_FireRailgun (actor);
 }
 
-void A_RailWait (AActor *actor, pspdef_t *psp)
+void A_RailWait (AActor *actor)
 {
 	// Okay, this was stupid. Just use a NULL function instead of this.
 }
 
 // BFG 9000 -----------------------------------------------------------------
 
-void A_FireBFG (AActor *, pspdef_t *);
+void A_FireBFG (AActor *);
 void A_BFGSpray (AActor *);
-void A_BFGsound (AActor *, pspdef_t *);
+void A_BFGsound (AActor *);
 
 class ABFG9000 : public AWeapon
 {
 	DECLARE_ACTOR (ABFG9000, AWeapon)
-protected:
-	const char *PickupMessage ();
 public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
+	const char *PickupMessage ();
 };
 
 class ABFGExtra : public AActor
@@ -1417,42 +1206,27 @@ FState ABFG9000::States[] =
 	S_NORMAL (BFUG, 'A',   -1, NULL 				, NULL)
 };
 
-FWeaponInfo ABFG9000::WeaponInfo =
-{
-	WIF_NOAUTOFIRE,
-	am_cell,
-	am_cell,
-	40,
-	40,
-	&States[S_BFGUP],
-	&States[S_BFGDOWN],
-	&States[S_BFG],
-	&States[S_BFG1],
-	&States[S_BFG1],
-	&States[S_BFGFLASH],
-	RUNTIME_CLASS(ABFG9000),
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ABFG9000),
-	-1
-};
-
 IMPLEMENT_ACTOR (ABFG9000, Doom, 2006, 31)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (20)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (S_BFUG)
+
+	PROP_Weapon_Flags (WIF_NOAUTOFIRE|WIF_BOT_REACTION_SKILL_THING|WIF_BOT_BFG)
+	PROP_Weapon_SelectionOrder (2800)
+	PROP_Weapon_AmmoUse1 (40)
+	PROP_Weapon_AmmoGive1 (100)
+	PROP_Weapon_UpState (S_BFGUP)
+	PROP_Weapon_DownState (S_BFGDOWN)
+	PROP_Weapon_ReadyState (S_BFG)
+	PROP_Weapon_AtkState (S_BFG1)
+	PROP_Weapon_HoldAtkState (S_BFG1)
+	PROP_Weapon_FlashState (S_BFGFLASH)
+	PROP_Weapon_Kickback (100)
+	PROP_Weapon_MoveCombatDist (10000000)
+	PROP_Weapon_AmmoType1 ("Cell")
+	PROP_Weapon_ProjectileType ("BFGBall")
 END_DEFAULTS
-
-WEAPON1 (wp_bfg, ABFG9000)
-
-weapontype_t ABFG9000::OldStyleID () const
-{
-	return wp_bfg;
-}
 
 const char *ABFG9000::PickupMessage ()
 {
@@ -1511,7 +1285,7 @@ END_DEFAULTS
 // A_FireBFG
 //
 
-void A_FireBFG (AActor *actor, pspdef_t *psp)
+void A_FireBFG (AActor *actor)
 {
 	player_t *player;
 
@@ -1523,7 +1297,12 @@ void A_FireBFG (AActor *actor, pspdef_t *psp)
 	angle_t storedpitch = actor->pitch;
 	int storedaimdist = player->userinfo.aimdist;
 
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 
 	if (dmflags2 & DF2_NO_FREEAIMBFG)
 	{
@@ -1535,6 +1314,7 @@ void A_FireBFG (AActor *actor, pspdef_t *psp)
 	player->userinfo.aimdist = storedaimdist;
 }
 
+bool thebfugu;
 //
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
@@ -1545,6 +1325,7 @@ void A_BFGSpray (AActor *mo)
 	int 				j;
 	int 				damage;
 	angle_t 			an;
+	AActor				*thingToHit;
 
 	// [RH] Don't crash if no target
 	if (!mo->target)
@@ -1568,15 +1349,16 @@ void A_BFGSpray (AActor *mo)
 		for (j = 0; j < 15; ++j)
 			damage += (pr_bfgspray() & 7) + 1;
 
-		P_DamageMobj (linetarget, mo->target, mo->target, damage, MOD_BFG_SPLASH);
-		P_TraceBleed (damage, linetarget, mo->target);
+		thingToHit = linetarget;
+		P_DamageMobj (thingToHit, mo->target, mo->target, damage, MOD_BFG_SPLASH);
+		P_TraceBleed (damage, thingToHit, mo->target);
 	}
 }
 
 //
 // A_BFGsound
 //
-void A_BFGsound (AActor *actor, pspdef_t *psp)
+void A_BFGsound (AActor *actor)
 {
 	S_Sound (actor, CHAN_WEAPON, "weapons/bfgf", 1, ATTN_NORM);
 }

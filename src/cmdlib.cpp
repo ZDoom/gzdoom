@@ -126,7 +126,11 @@ void DefaultExtension (char *path, const char *extension)
 //
 	src = path + strlen(path) - 1;
 
-	while (*src != PATHSEPERATOR && src != path)
+	while (src != path && *src != PATHSEPERATOR
+#ifdef _WIN32
+		&& *src != '\\'
+#endif
+		)
 	{
 		if (*src == '.')
 			return;                 // it has an extension

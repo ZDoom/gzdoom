@@ -83,6 +83,15 @@ extern void (*R_DrawTranslatedColumn)(void);
 // Span drawing for rows, floor/ceiling. No Sepctre effect needed.
 extern void (*R_DrawSpan)(void);
 
+// Span drawing for masked textures.
+extern void (*R_DrawSpanMasked)(void);
+
+// Span drawing for translucent textures.
+extern void (*R_DrawSpanTranslucent)(void);
+
+// Span drawing for masked, translucent textures.
+extern void (*R_DrawSpanMaskedTranslucent)(void);
+
 // [RH] Span blit into an interleaved intermediate buffer
 extern void (*R_DrawColumnHoriz)(void);
 void R_DrawMaskedColumnHoriz (const BYTE *column, const FTexture::Span *spans);
@@ -141,6 +150,7 @@ void	R_DrawFuzzColumnP_C (void);
 void	R_DrawTranslatedColumnP_C (void);
 void	R_DrawShadedColumnP_C (void);
 void	R_DrawSpanP_C (void);
+void	R_DrawSpanMaskedP_C (void);
 
 #else	/* USEASM */
 
@@ -152,8 +162,12 @@ extern "C" void	R_DrawFuzzColumnP_ASM (void);
 void	R_DrawTranslatedColumnP_C (void);
 void	R_DrawShadedColumnP_C (void);
 extern "C" void	R_DrawSpanP_ASM (void);
+extern "C" void R_DrawSpanMaskedP_ASM (void);
 
 #endif
+
+void	R_DrawSpanTranslucentP_C (void);
+void	R_DrawSpanMaskedTranslucentP_C (void);
 
 void	R_DrawTlatedLucentColumnP_C (void);
 #define R_DrawTlatedLucentColumn R_DrawTlatedLucentColumnP_C
@@ -174,6 +188,7 @@ extern "C" dsfixed_t		ds_xstep;
 extern "C" dsfixed_t		ds_ystep;
 extern "C" int				ds_xbits;
 extern "C" int				ds_ybits;
+extern "C" fixed_t			ds_alpha;
 
 // start of a 64*64 tile image
 extern "C" const byte*		ds_source;

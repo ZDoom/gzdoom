@@ -3,7 +3,7 @@
 ** Code to let ZDoom use DirectDraw
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@
 #define false FALSE
 
 #if 0
-#define STARTLOG		do { if (!dbg) dbg = fopen ("c:/vid.log", "w"); } while(0)
+#define STARTLOG		do { if (!dbg) dbg = fopen ("k:/vid.log", "w"); } while(0)
 #define STOPLOG			do { if (dbg) { fclose (dbg); dbg=NULL; } } while(0)
 #define LOG(x)			do { if (dbg) { fprintf (dbg, x); fflush (dbg); } } while(0)
 #define LOG1(x,y)		do { if (dbg) { fprintf (dbg, x, y); fflush (dbg); } } while(0)
@@ -106,6 +106,7 @@ extern bool FullscreenReset;
 extern bool VidResizing;
 
 EXTERN_CVAR (Bool, fullscreen)
+EXTERN_CVAR (Float, Gamma)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -118,10 +119,32 @@ static DWORD FlipFlags;
 CVAR (Bool, vid_palettehack, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, vid_attachedsurfaces, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, vid_noblitter, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Int, vid_displaybits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CUSTOM_CVAR (Bool, vid_vsync, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	LOG1 ("vid_vsync set to %d\n", *self);
 	FlipFlags = self ? DDFLIP_WAIT : DDFLIP_WAIT|DDFLIP_NOVSYNC;
+}
+CUSTOM_CVAR (Float, rgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
+}
+CUSTOM_CVAR (Float, ggamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
+}
+CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
 }
 
 // CODE --------------------------------------------------------------------
@@ -247,7 +270,9 @@ HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
 	if (desc->ddpfPixelFormat.dwRGBBitCount == 8 &&
 		(desc->dwWidth & 7) == 0 &&
 		desc->dwHeight <= MAXHEIGHT &&
-		desc->dwWidth <= MAXWIDTH)
+		desc->dwWidth <= MAXWIDTH &&
+		desc->dwHeight >= 200 &&
+		desc->dwWidth >= 320)
 	{
 		((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8);
 	}
@@ -472,6 +497,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 
 	NeedGammaUpdate = false;
 	NeedPalUpdate = false;
+	NeedResRecreate = false;
 	MustBuffer = false;
 	BufferingNow = false;
 	WasBuffering = false;
@@ -491,7 +517,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 		PalEntries[i].peRed = GPalette.BaseColors[i].r;
 		PalEntries[i].peGreen = GPalette.BaseColors[i].g;
 		PalEntries[i].peBlue = GPalette.BaseColors[i].b;
-		GammaTable[i] = i;
+		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
 	}
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 
@@ -557,6 +583,7 @@ bool DDrawFB::CreateResources ()
 {
 	DDSURFACEDESC ddsd = { sizeof(ddsd), };
 	HRESULT hr;
+	int bits;
 
 	BufferCount = 1;
 
@@ -565,15 +592,24 @@ bool DDrawFB::CreateResources ()
 		ShowWindow (Window, SW_SHOW);
 		// Remove the window border in fullscreen mode
 		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_SYSMENU);
-		hr = DDraw->SetDisplayMode (Width, Height, 8, 0, 0);
+		hr = DDraw->SetDisplayMode (Width, Height, bits = vid_displaybits, 0, 0);
 		if (FAILED(hr))
 		{
-			LastHR = hr;
-			return false;
+			bits = 32;
+			while (FAILED(hr) && bits >= 8)
+			{
+				hr = DDraw->SetDisplayMode (Width, Height, bits, 0, 0);
+				bits -= 8;
+			}
+			if (FAILED(hr))
+			{
+				LastHR = hr;
+				return false;
+			}
 		}
-		LOG2 ("Mode set to %d x %d\n", Width, Height);
+		LOG3 ("Mode set to %d x %d x %d\n", Width, Height, bits);
 
-		if (vid_attachedsurfaces)
+		if (vid_attachedsurfaces && OSPlatform == os_WinNT)
 		{
 			if (!CreateSurfacesAttached ())
 				return false;
@@ -594,21 +630,6 @@ bool DDrawFB::CreateResources ()
 		MustBuffer = true;
 
 		LOG ("Running in a window\n");
-		// Resize the window to match desired dimensions
-		int sizew = Width + GetSystemMetrics (SM_CXSIZEFRAME)*2;
-		int sizeh = Height + GetSystemMetrics (SM_CYSIZEFRAME) * 2 +
-					 GetSystemMetrics (SM_CYCAPTION);
-		LOG2 ("Resize window to %dx%d\n", sizew, sizeh);
-		VidResizing = true;
-		// Make sure the window has a border in windowed mode
-		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
-		if (!SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
-			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER))
-		{
-			LOG1 ("SetWindowPos failed because %08lx\n", GetLastError());
-		}
-		VidResizing = false;
-		ShowWindow (Window, SW_SHOWNORMAL);
 
 		// Create the primary surface
 		ddsd.dwFlags = DDSD_CAPS;
@@ -625,6 +646,22 @@ bool DDrawFB::CreateResources ()
 		}
 
 		MaybeCreatePalette ();
+
+		// Resize the window to match desired dimensions
+		int sizew = Width + GetSystemMetrics (SM_CXSIZEFRAME)*2;
+		int sizeh = Height + GetSystemMetrics (SM_CYSIZEFRAME) * 2 +
+					 GetSystemMetrics (SM_CYCAPTION);
+		LOG2 ("Resize window to %dx%d\n", sizew, sizeh);
+		VidResizing = true;
+		// Make sure the window has a border in windowed mode
+		SetWindowLongPtr (Window, GWL_STYLE, WS_VISIBLE|WS_OVERLAPPEDWINDOW);
+		if (!SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
+			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER))
+		{
+			LOG1 ("SetWindowPos failed because %08lx\n", GetLastError());
+		}
+		VidResizing = false;
+		ShowWindow (Window, SW_SHOWNORMAL);
 
 		// Create the clipper
 		hr = DDraw->CreateClipper (0, &Clipper, NULL);
@@ -904,7 +941,9 @@ void DDrawFB::MaybeCreatePalette ()
 	DDPIXELFORMAT fmt = { sizeof(fmt), };
 	HRESULT hr;
 	int i;
-	
+
+	UsePfx = false;
+
 	// If the surface needs a palette, try to create one. If the palette
 	// cannot be created, the result is ugly but non-fatal.
 	hr = PrimarySurf->GetPixelFormat (&fmt);
@@ -971,6 +1010,7 @@ void DDrawFB::MaybeCreatePalette ()
 	else
 	{
 		LOG ("Surface is direct color\n");
+		UsePfx = true;
 		GPfx.SetFormat (fmt.dwRGBBitCount,
 			fmt.dwRBitMask, fmt.dwGBitMask, fmt.dwBBitMask);
 		GPfx.SetPalette (GPalette.BaseColors);
@@ -1029,11 +1069,37 @@ void DDrawFB::ReleaseResources ()
 		ReleaseDC (Window, dc);
 		GDIPalette = NULL;
 	}
+	LockingSurf = NULL;
 }
 
 int DDrawFB::GetPageCount ()
 {
 	return MustBuffer ? 1 : BufferCount+1;
+}
+
+void DDrawFB::PaletteChanged ()
+{
+	// Somebody else changed the palette. If we are running fullscreen,
+	// they are obviously jerks, and we need to restore our own palette.
+	if (!Windowed)
+	{
+		if (Palette != NULL)
+		{
+			// It is not enough to set NeedPalUpdate to true. Some palette
+			// entries might now be reserved for system usage, and nothing
+			// we do will change them. The only way I have found to fix this
+			// is to recreate all our surfaces and the palette from scratch.
+
+			// IMPORTANT: Do not recreate the resources here. The screen might
+			// be locked for a drawing operation. Do it later the next time
+			// somebody tries to lock it.
+			NeedResRecreate = true;
+		}
+	}
+	else
+	{
+		QueryNewPalette ();
+	}
 }
 
 int DDrawFB::QueryNewPalette ()
@@ -1107,6 +1173,13 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 
 	wasLost = false;
 
+	if (NeedResRecreate)
+	{
+		NeedResRecreate = false;
+		ReleaseResources ();
+		CreateResources ();
+	}
+
 	LOG5 ("Lock %d %d %d %d %d\n", AppActive, SessionState, MustBuffer, useSimpleCanvas, UseBlitter);
 
 	if (!AppActive || SessionState || MustBuffer || useSimpleCanvas || !UseBlitter)
@@ -1138,11 +1211,6 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 	wasLost = wasLost || (BufferingNow != WasBuffering);
 	WasBuffering = BufferingNow;
 	return wasLost;
-}
-
-bool DDrawFB::Relock ()
-{
-	return Lock (BufferingNow);
 }
 
 void DDrawFB::Unlock ()
@@ -1185,6 +1253,21 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 	if (toLock == NULL)
 	{
 		lockingLocker = true;
+		if (LockingSurf == NULL)
+		{
+			if (!CreateResources ())
+			{
+				if (LastHR != DDERR_UNSUPPORTEDMODE)
+				{
+					I_FatalError ("Could not rebuild framebuffer: %08lx", LastHR);
+				}
+				else
+				{
+					LOG ("Display is in unsupported mode right now.\n");
+					return NoGood;
+				}
+			}
+		}
 		toLock = LockingSurf;
 	}
 
@@ -1224,22 +1307,16 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		{ // If this is NT, the user probably opened the Windows NT Security dialog.
 		  // If this is not NT, trying to recreate everything from scratch won't hurt.
 			ReleaseResources ();
-			// If the system is still recovering from having the Security dialog open,
-			// loop for up to two seconds, trying to recreate the display.
-			for (int k = 0; k < 21; ++k)
+			if (!CreateResources ())
 			{
-				if (!CreateResources ())
+				if (LastHR != DDERR_UNSUPPORTEDMODE)
 				{
-					if (LastHR != DDERR_UNSUPPORTEDMODE || k == 20)
-					{
-						I_FatalError ("Could not rebuild framebuffer: %08lx", LastHR);
-					}
-					// Wait a bit before trying again.
-					Sleep (100);
+					I_FatalError ("Could not rebuild framebuffer: %08lx", LastHR);
 				}
 				else
 				{
-					break;
+					LOG ("Display is in unsupported mode right now.\n");
+					return NoGood;
 				}
 			}
 			if (lockingLocker)
@@ -1324,7 +1401,9 @@ void DDrawFB::Update ()
 	if (NeedGammaUpdate)
 	{
 		NeedGammaUpdate = false;
-		CalcGamma (Gamma, GammaTable);
+		CalcGamma (Windowed || rgamma == 0.f ? Gamma : Gamma * rgamma, GammaTable[0]);
+		CalcGamma (Windowed || ggamma == 0.f ? Gamma : Gamma * ggamma, GammaTable[1]);
+		CalcGamma (Windowed || bgamma == 0.f ? Gamma : Gamma * bgamma, GammaTable[2]);
 		NeedPalUpdate = true;
 	}
 	
@@ -1335,14 +1414,14 @@ void DDrawFB::Update ()
 		{
 			for (i = 0; i < 256; i++)
 			{
-				PalEntries[i].peRed = GammaTable[SourcePalette[i].r];
-				PalEntries[i].peGreen = GammaTable[SourcePalette[i].g];
-				PalEntries[i].peBlue = GammaTable[SourcePalette[i].b];
+				PalEntries[i].peRed = GammaTable[0][SourcePalette[i].r];
+				PalEntries[i].peGreen = GammaTable[1][SourcePalette[i].g];
+				PalEntries[i].peBlue = GammaTable[2][SourcePalette[i].b];
 			}
 			if (FlashAmount)
 			{
 				DoBlending ((PalEntry *)PalEntries, (PalEntry *)PalEntries,
-					256, GammaTable[Flash.b], GammaTable[Flash.g], GammaTable[Flash.r],
+					256, GammaTable[2][Flash.b], GammaTable[1][Flash.g], GammaTable[0][Flash.r],
 					FlashAmount);
 			}
 			if (Palette != NULL)
@@ -1365,14 +1444,14 @@ void DDrawFB::Update ()
 		{
 			for (i = 0; i < 256; i++)
 			{
-				((PalEntry *)PalEntries)[i].r = GammaTable[SourcePalette[i].r];
-				((PalEntry *)PalEntries)[i].g = GammaTable[SourcePalette[i].g];
-				((PalEntry *)PalEntries)[i].b = GammaTable[SourcePalette[i].b];
+				((PalEntry *)PalEntries)[i].r = GammaTable[0][SourcePalette[i].r];
+				((PalEntry *)PalEntries)[i].g = GammaTable[1][SourcePalette[i].g];
+				((PalEntry *)PalEntries)[i].b = GammaTable[2][SourcePalette[i].b];
 			}
 			if (FlashAmount)
 			{
 				DoBlending ((PalEntry *)PalEntries, (PalEntry *)PalEntries,
-					256, GammaTable[Flash.r], GammaTable[Flash.g], GammaTable[Flash.b],
+					256, GammaTable[0][Flash.r], GammaTable[1][Flash.g], GammaTable[2][Flash.b],
 					FlashAmount);
 			}
 			GPfx.SetPalette ((PalEntry *)PalEntries);
@@ -1390,7 +1469,16 @@ void DDrawFB::Update ()
 			if (LockSurf (NULL, NULL) != NoGood)
 			{
 				LOG3 ("Copy %dx%d (%d)\n", Width, Height, BufferPitch);
-				CopyFromBuff (MemBuffer, BufferPitch, Width, Height, Buffer);
+				if (UsePfx)
+				{
+					GPfx.Convert (MemBuffer, BufferPitch,
+						Buffer, Pitch, Width, Height,
+						FRACUNIT, FRACUNIT, 0, 0);
+				}
+				else
+				{
+					CopyFromBuff (MemBuffer, BufferPitch, Width, Height, Buffer);
+				}
 				LockingSurf->Unlock (NULL);
 			}
 		}

@@ -246,7 +246,7 @@ static void DragonSeek (AActor *actor, angle_t thresh, angle_t turnMax)
 		{
 			oldTarget = actor->target;
 			actor->target = target;
-			if (P_CheckMeleeRange (actor))
+			if (actor->CheckMeleeRange ())
 			{
 				int damage = pr_dragonseek.HitDice (10);
 				P_DamageMobj (actor->target, actor, actor, damage);
@@ -360,7 +360,7 @@ void A_DragonFlight (AActor *actor)
 		}
 		angle = R_PointToAngle2(actor->x, actor->y, actor->target->x,
 			actor->target->y);
-		if (abs(actor->angle-angle) < ANGLE_45/2 && P_CheckMeleeRange(actor))
+		if (abs(actor->angle-angle) < ANGLE_45/2 && actor->CheckMeleeRange())
 		{
 			int damage = pr_dragonflight.HitDice (8);
 			P_DamageMobj (actor->target, actor, actor, damage);

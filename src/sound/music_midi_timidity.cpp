@@ -28,6 +28,10 @@ private:
 #endif
 
 #ifndef _WIN32
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <wordexp.h>
+
 int ChildQuit;
 
 void ChildSigHandler (int signum)
@@ -276,7 +280,7 @@ void TimiditySong::PrepTimidity ()
 				FSOUND_SIGNED | FSOUND_2D |
 				(timidity_stereo ? FSOUND_STEREO : FSOUND_MONO) |
 				(timidity_8bit ? FSOUND_8BITS : FSOUND_16BITS),
-				timidity_frequency, (int)this);
+				timidity_frequency, this);
 			if (m_Stream == NULL)
 			{
 				Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
@@ -525,9 +529,9 @@ bool TimiditySong::LaunchTimidity ()
 #endif // _WIN32
 }
 
-signed char F_CALLBACKAPI TimiditySong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+signed char F_CALLBACKAPI TimiditySong::FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata)
 {
-	TimiditySong *song = (TimiditySong *)param;
+	TimiditySong *song = (TimiditySong *)userdata;
 	
 #ifdef _WIN32
 	DWORD avail, got, didget;

@@ -512,7 +512,7 @@ static void ReadEAX ()
 		}
 		if (!inited[0])
 		{
-			SC_ScriptError ("Sound %s is missing an Environment field.", const_cast<const char **>(&name));
+			SC_ScriptError ("Sound %s is missing an Environment field.", name);
 		}
 
 		// Add the new environment to the list, filling in uninitialized fields

@@ -10,20 +10,23 @@
 #include "p_pspr.h"
 #include "gstrings.h"
 #include "a_hexenglobal.h"
+#include "p_effect.h"
 
 #define AXERANGE	((fixed_t)(2.25*MELEERANGE))
 
 static FRandom pr_atk ("FAxeAtk");
 static FRandom pr_splat ("FAxeSplatter");
 
-void A_FAxeCheckReady (AActor *actor, pspdef_t *psp);
-void A_FAxeCheckUp (AActor *actor, pspdef_t *psp);
-void A_FAxeCheckAtk (AActor *actor, pspdef_t *psp);
-void A_FAxeCheckReadyG (AActor *actor, pspdef_t *psp);
-void A_FAxeCheckUpG (AActor *actor, pspdef_t *psp);
-void A_FAxeAttack (AActor *actor, pspdef_t *psp);
+void A_FAxeCheckReady (AActor *actor);
+void A_FAxeCheckUp (AActor *actor);
+void A_FAxeCheckAtk (AActor *actor);
+void A_FAxeCheckReadyG (AActor *actor);
+void A_FAxeCheckUpG (AActor *actor);
+void A_FAxeAttack (AActor *actor);
 
 extern void AdjustPlayerAngle (AActor *pmo);
+
+EXTERN_CVAR (Int, cl_bloodtype)
 
 // The Fighter's Axe --------------------------------------------------------
 
@@ -31,13 +34,12 @@ class AFWeapAxe : public AFighterWeapon
 {
 	DECLARE_ACTOR (AFWeapAxe, AFighterWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_faxe;
-	}
-	static FWeaponInfo WeaponInfo;
+	FState *GetUpState ();
+	FState *GetDownState ();
+	FState *GetReadyState ();
+	FState *GetAtkState ();
+	FState *GetHoldAtkState ();
 
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_F2);
@@ -103,34 +105,48 @@ FState AFWeapAxe::States[] =
 	S_NORMAL  (FAXE, 'A',	1, NULL					    , &States[S_FAXEREADY_G]),
 };
 
-FWeaponInfo AFWeapAxe::WeaponInfo =
-{
-	WIF_AXEBLOOD | WIF_AMMO_OPTIONAL,
-	MANA_1,
-	MANA_1,
-	2,
-	25,
-	&States[S_FAXEUP],
-	&States[S_FAXEDOWN],
-	&States[S_FAXEREADY],
-	&States[S_FAXEATK],
-	&States[S_FAXEATK],
-	NULL,
-	RUNTIME_CLASS(AFWeapAxe),
-	150,
-	-12*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AFWeapAxe),
-	-1
-};
-
 IMPLEMENT_ACTOR (AFWeapAxe, Hexen, 8010, 27)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_AXE)
+
+	PROP_Weapon_SelectionOrder (1500)
+	PROP_Weapon_Flags (WIF_AXEBLOOD|WIF_AMMO_OPTIONAL|WIF_BOT_MELEE)
+	PROP_Weapon_AmmoUse1 (2)
+	PROP_Weapon_AmmoGive1 (25)
+	PROP_Weapon_UpState (S_FAXEUP)
+	PROP_Weapon_DownState (S_FAXEDOWN)
+	PROP_Weapon_ReadyState (S_FAXEREADY)
+	PROP_Weapon_AtkState (S_FAXEATK)
+	PROP_Weapon_HoldAtkState (S_FAXEATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (-12)
+	PROP_Weapon_AmmoType1 ("Mana1")
 END_DEFAULTS
 
-WEAPON1 (wp_faxe, AFWeapAxe)
+FState *AFWeapAxe::GetUpState ()
+{
+	return Ammo1->Amount ? &States[S_FAXEUP_G] : UpState;
+}
+
+FState *AFWeapAxe::GetDownState ()
+{
+	return Ammo1->Amount ? &States[S_FAXEDOWN_G] : DownState;
+}
+
+FState *AFWeapAxe::GetReadyState ()
+{
+	return Ammo1->Amount ? &States[S_FAXEREADY_G] : ReadyState;
+}
+
+FState *AFWeapAxe::GetAtkState ()
+{
+	return Ammo1->Amount ? &States[S_FAXEATK_G] : AtkState;
+}
+
+FState *AFWeapAxe::GetHoldAtkState ()
+{
+	return Ammo1->Amount ? &States[S_FAXEATK_G] : HoldAtkState;
+}
 
 // Axe Puff -----------------------------------------------------------------
 
@@ -219,7 +235,7 @@ END_DEFAULTS
 //
 //============================================================================
 
-void A_FAxeCheckReady (AActor *actor, pspdef_t *psp)
+void A_FAxeCheckReady (AActor *actor)
 {
 	player_t *player;
 
@@ -227,13 +243,13 @@ void A_FAxeCheckReady (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	if (player->ammo[MANA_1])
+	if (player->ReadyWeapon->Ammo1->Amount)
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEREADY_G]);
 	}
 	else
 	{
-		A_WeaponReady (actor, psp);
+		A_WeaponReady (actor);
 	}
 }
 
@@ -243,7 +259,7 @@ void A_FAxeCheckReady (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeCheckReadyG (AActor *actor, pspdef_t *psp)
+void A_FAxeCheckReadyG (AActor *actor)
 {
 	player_t *player;
 
@@ -251,13 +267,13 @@ void A_FAxeCheckReadyG (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	if (player->ammo[MANA_1] <= 0)
+	if (player->ReadyWeapon->Ammo1->Amount <= 0)
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEREADY]);
 	}
 	else
 	{
-		A_WeaponReady (actor, psp);
+		A_WeaponReady (actor);
 	}
 }
 
@@ -267,7 +283,7 @@ void A_FAxeCheckReadyG (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeCheckUp (AActor *actor, pspdef_t *psp)
+void A_FAxeCheckUp (AActor *actor)
 {
 	player_t *player;
 
@@ -275,13 +291,13 @@ void A_FAxeCheckUp (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	if (player->ammo[MANA_1])
+	if (player->ReadyWeapon->Ammo1->Amount)
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEUP_G]);
 	}
 	else
 	{
-		A_Raise (actor, psp);
+		A_Raise (actor);
 	}
 }
 
@@ -291,7 +307,7 @@ void A_FAxeCheckUp (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeCheckUpG (AActor *actor, pspdef_t *psp)
+void A_FAxeCheckUpG (AActor *actor)
 {
 	player_t *player;
 
@@ -299,13 +315,13 @@ void A_FAxeCheckUpG (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	if (player->ammo[MANA_1] <= 0)
+	if (player->ReadyWeapon->Ammo1->Amount <= 0)
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEUP]);
 	}
 	else
 	{
-		A_Raise (actor, psp);
+		A_Raise (actor);
 	}
 }
 
@@ -315,7 +331,7 @@ void A_FAxeCheckUpG (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeCheckAtk (AActor *actor, pspdef_t *psp)
+void A_FAxeCheckAtk (AActor *actor)
 {
 	player_t *player;
 
@@ -323,7 +339,7 @@ void A_FAxeCheckAtk (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	if (player->ammo[MANA_1])
+	if (player->ReadyWeapon->Ammo1->Amount)
 	{
 		P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEATK_G]);
 	}
@@ -335,7 +351,7 @@ void A_FAxeCheckAtk (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FAxeAttack (AActor *actor, pspdef_t *psp)
+void A_FAxeAttack (AActor *actor)
 {
 	angle_t angle;
 	fixed_t power;
@@ -344,6 +360,8 @@ void A_FAxeAttack (AActor *actor, pspdef_t *psp)
 	int i;
 	int useMana;
 	player_t *player;
+	AWeapon *weapon;
+	const TypeInfo *pufftype;
 
 	if (NULL == (player = actor->player))
 	{
@@ -354,16 +372,17 @@ void A_FAxeAttack (AActor *actor, pspdef_t *psp)
 	damage = 40+(pr_atk()&15);
 	damage += pr_atk()&7;
 	power = 0;
-	if (player->ammo[MANA_1] > 0)
+	weapon = player->ReadyWeapon;
+	if (player->ReadyWeapon->Ammo1->Amount > 0)
 	{
 		damage <<= 1;
 		power = 6*FRACUNIT;
-		PuffType = RUNTIME_CLASS(AAxePuffGlow);
+		pufftype = RUNTIME_CLASS(AAxePuffGlow);
 		useMana = 1;
 	}
 	else
 	{
-		PuffType = RUNTIME_CLASS(AAxePuff);
+		pufftype = RUNTIME_CLASS(AAxePuff);
 		useMana = 0;
 	}
 	for (i = 0; i < 16; i++)
@@ -372,7 +391,7 @@ void A_FAxeAttack (AActor *actor, pspdef_t *psp)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage);
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -385,7 +404,7 @@ void A_FAxeAttack (AActor *actor, pspdef_t *psp)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage);
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -400,17 +419,20 @@ void A_FAxeAttack (AActor *actor, pspdef_t *psp)
 
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
-	P_LineAttack (pmo, angle, MELEERANGE, slope, damage);
+	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, pufftype);
 
 axedone:
 	if (useMana == 2)
 	{
-		if (!(dmflags & DF_INFINITE_AMMO))
+		AWeapon *weapon = player->ReadyWeapon;
+		if (weapon != NULL)
 		{
-			player->ammo[MANA_1] -= wpnlev1info[player->readyweapon]->ammouse;
-			if (player->ammo[MANA_1] <= 0)
+			weapon->DepleteAmmo (weapon->bAltFire, false);
+
+			if ((weapon->Ammo1 == NULL || weapon->Ammo1->Amount == 0) &&
+				(!(weapon->WeaponFlags & WIF_PRIMARY_USES_BOTH) ||
+				  weapon->Ammo2 == NULL || weapon->Ammo2->Amount == 0))
 			{
-				player->ammo[MANA_1] = 0;
 				P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEATK+5]);
 			}
 		}
@@ -426,11 +448,18 @@ axedone:
 
 void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
-	AActor *mo;
-	
-	x += ((pr_splat()-128)<<11);
-	y += ((pr_splat()-128)<<11);
+	if (cl_bloodtype <= 1)
+	{
+		AActor *mo;
+		
+		x += ((pr_splat()-128)<<11);
+		y += ((pr_splat()-128)<<11);
 
-	mo = Spawn<AAxeBlood> (x, y, z);
-	mo->target = originator;
+		mo = Spawn<AAxeBlood> (x, y, z);
+		mo->target = originator;
+	}
+	if (cl_bloodtype >= 1)
+	{
+		P_DrawSplash2 (100, x, y, z, R_PointToAngle (originator->x - x, originator->y - y), 2, 0);
+	}
 }

@@ -3,7 +3,7 @@
 ** Handles line specials
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -47,23 +47,21 @@
 #include "statnums.h"
 #include "s_sound.h"
 #include "templates.h"
+#include "a_keys.h"
 #include "gi.h"
+#include "m_random.h"
+#include "a_strifeglobal.h"
 
-#define FUNC(a) static bool a (line_t *ln, AActor *it, int arg0, int arg1, \
-							   int arg2, int arg3, int arg4)
+#define FUNC(a) static int a (line_t *ln, AActor *it, bool backSide, \
+	int arg0, int arg1, int arg2, int arg3, int arg4)
 
 #define SPEED(a)		((a)*(FRACUNIT/8))
 #define TICS(a)			(((a)*TICRATE)/35)
 #define OCTICS(a)		(((a)*TICRATE)/8)
 #define	BYTEANGLE(a)	((angle_t)((a)<<24))
 
+static FRandom pr_glass ("GlassBreak");
 
-// Used by the teleporters to know if they were
-// activated by walking across the backside of a line.
-int TeleportSide;
-
-// Set true if this special was activated from inside a script.
-BOOL InScript;
 
 FUNC(LS_NOP)
 {
@@ -133,32 +131,38 @@ FUNC(LS_Polyobj_OR_MoveTimes8)
 FUNC(LS_Door_Close)
 // Door_Close (tag, speed, lighttag)
 {
-	return EV_DoDoor (DDoor::doorClose, ln, it, arg0, SPEED(arg1), 0, NoKey, arg2);
+	return EV_DoDoor (DDoor::doorClose, ln, it, arg0, SPEED(arg1), 0, 0, arg2);
 }
 
 FUNC(LS_Door_Open)
 // Door_Open (tag, speed, lighttag)
 {
-	return EV_DoDoor (DDoor::doorOpen, ln, it, arg0, SPEED(arg1), 0, NoKey, arg2);
+	return EV_DoDoor (DDoor::doorOpen, ln, it, arg0, SPEED(arg1), 0, 0, arg2);
 }
 
 FUNC(LS_Door_Raise)
 // Door_Raise (tag, speed, delay, lighttag)
 {
-	return EV_DoDoor (DDoor::doorRaise, ln, it, arg0, SPEED(arg1), TICS(arg2), NoKey, arg3);
+	return EV_DoDoor (DDoor::doorRaise, ln, it, arg0, SPEED(arg1), TICS(arg2), 0, arg3);
 }
 
 FUNC(LS_Door_LockedRaise)
 // Door_LockedRaise (tag, speed, delay, lock, lighttag)
 {
 	return EV_DoDoor (arg2 ? DDoor::doorRaise : DDoor::doorOpen, ln, it,
-					  arg0, SPEED(arg1), TICS(arg2), (keyspecialtype_t)arg3, arg4);
+					  arg0, SPEED(arg1), TICS(arg2), arg3, arg4);
 }
 
 FUNC(LS_Door_CloseWaitOpen)
 // Door_CloseWaitOpen (tag, speed, delay, lighttag)
 {
-	return EV_DoDoor (DDoor::doorCloseWaitOpen, ln, it, arg0, SPEED(arg1), OCTICS(arg2), NoKey, arg3);
+	return EV_DoDoor (DDoor::doorCloseWaitOpen, ln, it, arg0, SPEED(arg1), OCTICS(arg2), 0, arg3);
+}
+
+FUNC(LS_Door_Animated)
+// Door_Animated (tag, speed, delay)
+{
+	return EV_SlidingDoor (ln, it, arg0, arg1, arg2);
 }
 
 FUNC(LS_Generic_Door)
@@ -186,7 +190,7 @@ FUNC(LS_Generic_Door)
 		tag = arg0;
 		lightTag = 0;
 	}
-	return EV_DoDoor (type, ln, it, tag, SPEED(arg1), OCTICS(arg3), (keyspecialtype_t)arg4, lightTag);
+	return EV_DoDoor (type, ln, it, tag, SPEED(arg1), OCTICS(arg3), arg4, lightTag);
 }
 
 FUNC(LS_Floor_LowerByValue)
@@ -612,9 +616,11 @@ FUNC(LS_Plat_DownWaitUpStay)
 }
 
 FUNC(LS_Plat_DownWaitUpStayLip)
-// Plat_DownWaitUpStayLip (tag, speed, delay, lip)
+// Plat_DownWaitUpStayLip (tag, speed, delay, lip, floor-sound?)
 {
-	return EV_DoPlat (arg0, ln, DPlat::platDownWaitUpStay, 0, SPEED(arg1), TICS(arg2), arg3, 0);
+	return EV_DoPlat (arg0, ln,
+		arg4 ? DPlat::platDownWaitUpStayStone : DPlat::platDownWaitUpStay,
+		0, SPEED(arg1), TICS(arg2), arg3, 0);
 }
 
 FUNC(LS_Plat_DownByValue)
@@ -633,6 +639,12 @@ FUNC(LS_Plat_UpWaitDownStay)
 // Plat_UpWaitDownStay (tag, speed, delay)
 {
 	return EV_DoPlat (arg0, ln, DPlat::platUpWaitDownStay, 0, SPEED(arg1), TICS(arg2), 0, 0);
+}
+
+FUNC(LS_Plat_UpNearestWaitDownStay)
+// Plat_UpNearestWaitDownStay (tag, speed, delay)
+{
+	return EV_DoPlat (arg0, ln, DPlat::platUpNearestWaitDownStay, 0, SPEED(arg1), TICS(arg2), 0, 0);
 }
 
 FUNC(LS_Plat_RaiseAndStayTx0)
@@ -685,7 +697,7 @@ FUNC(LS_Exit_Normal)
 {
 	if (CheckIfExitIsGood (it))
 	{
-		G_ExitLevel (arg0);
+		G_ExitLevel (arg0, false);
 		return true;
 	}
 	return false;
@@ -703,16 +715,16 @@ FUNC(LS_Exit_Secret)
 }
 
 FUNC(LS_Teleport_NewMap)
-// Teleport_NewMap (map, position)
+// Teleport_NewMap (map, position, keepFacing?)
 {
-	if (TeleportSide == 0 || gameinfo.gametype == GAME_Strife)
+	if (backSide == 0 || gameinfo.gametype == GAME_Strife)
 	{
 		level_info_t *info = FindLevelByNum (arg0);
 
 		if (info && CheckIfExitIsGood (it))
 		{
 			strncpy (level.nextmap, info->mapname, 8);
-			G_ExitLevel (arg1);
+			G_ExitLevel (arg1, !!arg2);
 			return true;
 		}
 	}
@@ -720,15 +732,28 @@ FUNC(LS_Teleport_NewMap)
 }
 
 FUNC(LS_Teleport)
-// Teleport (tid, sectortag)
+// Teleport (tid, sectortag, bNoSourceFog)
 {
-	return EV_Teleport (arg0, arg1, ln, TeleportSide, it, true, false);
+	return EV_Teleport (arg0, arg1, ln, backSide, it, true, !arg2, false);
 }
 
 FUNC(LS_Teleport_NoFog)
 // Teleport_NoFog (tid, useang, sectortag)
 {
-	return EV_Teleport (arg0, arg2, ln, TeleportSide, it, false, !arg1);
+	return EV_Teleport (arg0, arg2, ln, backSide, it, false, false, !arg1);
+}
+
+FUNC(LS_Teleport_ZombieChanger)
+// Teleport_ZombieChanger (tid, sectortag)
+{
+	// This is practically useless outside of Strife, but oh well.
+	if (it != NULL)
+	{
+		EV_Teleport (arg0, arg1, ln, backSide, it, false, false, false);
+		it->SetState (it->PainState);
+		return true;
+	}
+	return false;
 }
 
 FUNC(LS_TeleportOther)
@@ -752,10 +777,10 @@ FUNC(LS_TeleportInSector)
 FUNC(LS_Teleport_EndGame)
 // Teleport_EndGame ()
 {
-	if (!TeleportSide && CheckIfExitIsGood (it))
+	if (!backSide && CheckIfExitIsGood (it))
 	{
 		G_SetForEndGame (level.nextmap);
-		G_ExitLevel (0);
+		G_ExitLevel (0, false);
 		return true;
 	}
 	return false;
@@ -764,7 +789,7 @@ FUNC(LS_Teleport_EndGame)
 FUNC(LS_Teleport_Line)
 // Teleport_Line (thisid, destid, reversed)
 {
-	return EV_SilentLineTeleport (ln, TeleportSide, it, arg1, arg2);
+	return EV_SilentLineTeleport (ln, backSide, it, arg1, arg2);
 }
 
 FUNC(LS_ThrustThing)
@@ -1325,9 +1350,9 @@ FUNC(LS_ACS_Execute)
 	level_info_t *info;
 
 	if ( (arg1 == 0) || !(info = FindLevelByNum (arg1)) )
-		return P_StartScript (it, ln, arg0, level.mapname, TeleportSide, arg2, arg3, arg4, 0);
+		return P_StartScript (it, ln, arg0, level.mapname, backSide, arg2, arg3, arg4, false, false);
 	else
-		return P_StartScript (it, ln, arg0, info->mapname, TeleportSide, arg2, arg3, arg4, 0);
+		return P_StartScript (it, ln, arg0, info->mapname, backSide, arg2, arg3, arg4, false, false);
 }
 
 FUNC(LS_ACS_ExecuteAlways)
@@ -1336,18 +1361,27 @@ FUNC(LS_ACS_ExecuteAlways)
 	level_info_t *info;
 
 	if ( (arg1 == 0) || !(info = FindLevelByNum (arg1)) )
-		return P_StartScript (it, ln, arg0, level.mapname, TeleportSide, arg2, arg3, arg4, 1);
+		return P_StartScript (it, ln, arg0, level.mapname, backSide, arg2, arg3, arg4, true, false);
 	else
-		return P_StartScript (it, ln, arg0, info->mapname, TeleportSide, arg2, arg3, arg4, 1);
+		return P_StartScript (it, ln, arg0, info->mapname, backSide, arg2, arg3, arg4, true, false);
 }
 
 FUNC(LS_ACS_LockedExecute)
 // ACS_LockedExecute (script, map, s_arg1, s_arg2, lock)
 {
-	if (arg4 && !P_CheckKeys (it->player, (keyspecialtype_t)arg4, 1))
+	if (arg4 && !P_CheckKeys (it, arg4, 1))
 		return false;
 	else
-		return LS_ACS_Execute (ln, it, arg0, arg1, arg2, arg3, 0);
+		return LS_ACS_Execute (ln, it, backSide, arg0, arg1, arg2, arg3, 0);
+}
+
+FUNC(LS_ACS_ExecuteWithResult)
+// ACS_ExecuteWithResult (script, s_arg1, s_arg2, s_arg3)
+{
+	// This is like ACS_ExecuteAlways, except the script is always run on
+	// the current map, and the return value is whatever the script sets
+	// with SetResultValue.
+	return P_StartScript (it, ln, arg0, level.mapname, backSide, arg1, arg2, arg3, true, true);
 }
 
 FUNC(LS_ACS_Suspend)
@@ -1506,23 +1540,26 @@ FUNC(LS_Radius_Quake)
 FUNC(LS_UsePuzzleItem)
 // UsePuzzleItem (item, script)
 {
-	player_t *player;
-	int type;
+	AInventory *item;
 
 	if (!it) return false;
-	player = it->player;
-	if (!player) return false;
-	type = arti_firstpuzzitem + arg0;
-	if (type >= NUMARTIFACTS) return false;
 
 	// Check player's inventory for puzzle item
-	if (player->inventory[type] > 0)
+	for (item = it->Inventory; item != NULL; item = item->Inventory)
 	{
-		if (P_PlayerUseArtifact (player, (artitype_t)type))
+		if (item->IsKindOf (RUNTIME_CLASS(APuzzleItem)))
 		{
-			return true;
+			if (static_cast<APuzzleItem*>(item)->PuzzleItemNumber == arg0)
+			{
+				if (it->UseInventory (item))
+				{
+					return true;
+				}
+				break;
+			}
 		}
 	}
+
 	// [RH] Say "hmm" if you don't have the puzzle item
 	S_Sound (it, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
 	return false;
@@ -1672,7 +1709,10 @@ static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy)
 			}
 			if (i == numcollected)
 			{
-				new DScroller (DScroller::sc_side, dx, dy, -1, lines[linenum].sidenum[sidechoice], 0);
+				if (lines[linenum].sidenum[sidechoice] != NO_INDEX)
+				{
+					new DScroller (DScroller::sc_side, dx, dy, -1, lines[linenum].sidenum[sidechoice], 0);
+				}
 			}
 		}
 		Collection.Clear ();
@@ -2046,18 +2086,54 @@ FUNC(LS_SetPlayerProperty)
 	// Add or remove a power
 	if (arg2 >= PROP_INVULNERABILITY && arg2 <= PROP_SPEED)
 	{
-		powertype_t power = (powertype_t)(arg2 - PROP_INVULNERABILITY);
+		static const TypeInfo *powers[11] =
+		{
+			RUNTIME_CLASS(APowerInvulnerable),
+			RUNTIME_CLASS(APowerStrength),
+			RUNTIME_CLASS(APowerInvisibility),
+			RUNTIME_CLASS(APowerIronFeet),
+			NULL, // MapRevealer
+			RUNTIME_CLASS(APowerLightAmp),
+			RUNTIME_CLASS(APowerWeaponLevel2),
+			RUNTIME_CLASS(APowerFlight),
+			NULL,
+			NULL,
+			RUNTIME_CLASS(APowerSpeed)
+		};
+		int power = arg2 - PROP_INVULNERABILITY;
+
+		if (power > 4 && powers[power] == NULL)
+		{
+			return false;
+		}
 
 		if (arg0 == 0)
 		{
 			if (arg1)
-			{
-				if (!it->player->powers[power])
-					P_GivePower (it->player, power);
+			{ // Give power to activator
+				if (power != 4)
+				{
+					it->GiveInventoryType (powers[power]);
+				}
+				else if (it->player - players == consoleplayer)
+				{
+					level.flags |= LEVEL_ALLMAP;
+				}
 			}
 			else
-			{
-				it->player->powers[power] = power == pw_strength ? 0 : 1;
+			{ // Take power from activator
+				if (power != 4)
+				{
+					AInventory *item = it->FindInventory (powers[power]);
+					if (item != NULL)
+					{
+						item->Destroy ();
+					}
+				}
+				else if (it->player - players == consoleplayer)
+				{
+					level.flags &= ~LEVEL_ALLMAP;
+				}
 			}
 		}
 		else
@@ -2066,17 +2142,34 @@ FUNC(LS_SetPlayerProperty)
 
 			for (i = 0; i < MAXPLAYERS; i++)
 			{
-				if (!playeringame[i])
+				if (!playeringame[i] || players[i].mo == NULL)
 					continue;
 
 				if (arg1)
-				{
-					if (!players[i].powers[power])
-						P_GivePower (&players[i], power);
+				{ // Give power
+					if (power != 4)
+					{
+						players[i].mo->GiveInventoryType (powers[power]);
+					}
+					else if (i == consoleplayer)
+					{
+						level.flags |= LEVEL_ALLMAP;
+					}
 				}
 				else
-				{
-					players[i].powers[power] = power == pw_strength ? 0 : 1;
+				{ // Take power
+					if (power != 4)
+					{
+						AInventory *item = players[i].mo->FindInventory (powers[power]);
+						if (item != NULL)
+						{
+							item->Destroy ();
+						}
+					}
+					else if (i == consoleplayer)
+					{
+						level.flags &= ~LEVEL_ALLMAP;
+					}
 				}
 			}
 		}
@@ -2183,6 +2276,216 @@ FUNC(LS_ChangeSkill)
 	return true;
 }
 
+FUNC(LS_NoiseAlert)
+// NoiseAlert (TID of target, TID of emitter)
+{
+	AActor *target, *emitter;
+
+	if (arg0 == 0)
+	{
+		target = it;
+	}
+	else
+	{
+		FActorIterator iter (arg0);
+		target = iter.Next();
+	}
+
+	if (arg1 == 0)
+	{
+		emitter = it;
+	}
+	else if (arg1 == arg0)
+	{
+		emitter = target;
+	}
+	else
+	{
+		FActorIterator iter (arg1);
+		emitter = iter.Next();
+	}
+
+	P_NoiseAlert (target, emitter);
+	return true;
+}
+
+FUNC(LS_SendToCommunicator)
+// SendToCommunicator (voc #, front-only, identify, nolog)
+{
+	// This obviously isn't going to work for co-op.
+	if (arg1 && backSide)
+		return false;
+
+	if (it != NULL && it->player != NULL && it->FindInventory<ACommunicator>())
+	{
+		char name[32];
+		sprintf (name, "svox/voc%d", arg0);
+
+		if (!arg3)
+		{
+			it->player->SetLogNumber (arg0);
+		}
+
+		if (players[consoleplayer].camera == it)
+		{
+			S_StopSound ((fixed_t *)NULL, CHAN_VOICE);
+			S_Sound (CHAN_VOICE, name, 1, ATTN_NORM);
+			if (arg2 == 0)
+			{
+				Printf (PRINT_CHAT, "Incoming Message\n");
+			}
+			else if (arg2 == 1)
+			{
+				Printf (PRINT_CHAT, "Incoming Message from BlackBird\n");
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+FUNC(LS_ForceField)
+// ForceField ()
+{
+	if (it != NULL)
+	{
+		P_DamageMobj (it, NULL, NULL, 16);
+		P_ThrustMobj (it, it->angle + ANGLE_180, 0x7D000);
+	}
+	return true;
+}
+
+FUNC(LS_ClearForceField)
+// ClearForceField (tag)
+{
+	int secnum = -1;
+	bool rtn = false;
+
+	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
+	{
+		sector_t *sec = &sectors[secnum];
+		rtn = true;
+
+		for (int i = 0; i < sec->linecount; ++i)
+		{
+			line_t *line = sec->lines[i];
+			if (line->backsector != NULL && line->special == ForceField)
+			{
+				line->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
+				line->special = 0;
+				sides[line->sidenum[0]].midtexture = 0;
+				sides[line->sidenum[1]].midtexture = 0;
+			}
+		}
+	}
+	return rtn;
+}
+
+class AGlassJunk : public AActor
+{
+	DECLARE_ACTOR (AGlassJunk, AActor);
+};
+
+// [RH] Slowly fade the shards away instead of abruptly removing them.
+void A_GlassAway (AActor *self)
+{
+	self->alpha -= FRACUNIT/32;
+	if (self->alpha <= 0)
+	{
+		self->Destroy ();
+	}
+}
+
+FState AGlassJunk::States[] =
+{
+	// Are the first three frames used anywhere?
+	S_NORMAL (SHAR, 'A', 128, NULL, &States[6]),
+	S_NORMAL (SHAR, 'B', 128, NULL, &States[6]),
+	S_NORMAL (SHAR, 'C', 128, NULL, &States[6]),
+	S_NORMAL (SHAR, 'D', 128, NULL, &States[6]),
+	S_NORMAL (SHAR, 'E', 128, NULL, &States[6]),
+	S_NORMAL (SHAR, 'F', 128, NULL, &States[6]),
+
+	S_NORMAL (----, 'A', 1, A_GlassAway, &States[6])
+};
+
+IMPLEMENT_ACTOR (AGlassJunk, Any, -1, 0)
+	PROP_SpawnState (0)
+	PROP_Flags (MF_NOCLIP | MF_NOBLOCKMAP | MF_STRIFEx8000000)
+	PROP_RenderStyle (STYLE_Translucent)
+	PROP_Alpha (HX_SHADOW)
+END_DEFAULTS
+
+FUNC(LS_GlassBreak)
+{
+	bool switched;
+	bool quest1, quest2;
+
+	ln->flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
+	switched = P_ChangeSwitchTexture (&sides[ln->sidenum[0]], false, 0, &quest1);
+	ln->special = 0;
+	if (ln->sidenum[1] != NO_INDEX)
+	{
+		switched |= P_ChangeSwitchTexture (&sides[ln->sidenum[1]], false, 0, &quest2);
+	}
+	else
+	{
+		quest2 = quest1;
+	}
+	if (switched)
+	{
+		// Break some glass
+		fixed_t x, y;
+		AActor *glass;
+		angle_t an;
+		int speed;
+
+		x = ln->v1->x + ln->dx/2;
+		y = ln->v1->y + ln->dy/2;
+		x += (ln->frontsector->soundorg[0] - x) / 5;
+		y += (ln->frontsector->soundorg[1] - y) / 5;
+
+		for (int i = 0; i < 7; ++i)
+		{
+			glass = Spawn<AGlassJunk> (x, y, ONFLOORZ);
+
+			glass->z += 24 * FRACUNIT;
+			glass->SetState (&AGlassJunk::States[3 + pr_glass() % 3]);
+			an = pr_glass() << (32-8);
+			glass->angle = an;
+			an >>= ANGLETOFINESHIFT;
+			speed = pr_glass() & 3;
+			glass->momx = finecosine[an] * speed;
+			glass->momy = finesine[an] * speed;
+			glass->momz = (pr_glass() & 7) << FRACBITS;
+			// [RH] Let the shards stick around longer than they did in Strife.
+			glass->tics += pr_glass();
+		}
+		if (quest1 || quest2)
+		{ // Up stats and signal this mission is complete
+			if (it == NULL)
+			{
+				for (int i = 0; i < MAXPLAYERS; ++i)
+				{
+					if (playeringame[i])
+					{
+						it = players[i].mo;
+						break;
+					}
+				}
+			}
+			if (it != NULL)
+			{
+				it->GiveInventoryType (QuestItemClasses[28]);
+				it->GiveInventoryType (RUNTIME_CLASS(AUpgradeAccuracy));
+				it->GiveInventoryType (RUNTIME_CLASS(AUpgradeStamina));
+			}
+		}
+	}
+	// We already changed the switch texture, so don't make the main code switch it back.
+	return false;
+}
+
 lnSpecFunc LineSpecials[256] =
 {
 	LS_NOP,
@@ -2199,7 +2502,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_Door_Open,
 	LS_Door_Raise,
 	LS_Door_LockedRaise,
-	LS_NOP,		// 14
+	LS_Door_Animated,
 	LS_Autosave,	// Autosave
 	LS_NOP,		// 16
 	LS_NOP,		// 17
@@ -2218,13 +2521,13 @@ lnSpecFunc LineSpecials[256] =
 	LS_Pillar_Open,
 	LS_Stairs_BuildDownSync,
 	LS_Stairs_BuildUpSync,
-	LS_NOP,		// 33
-	LS_NOP,		// 34
+	LS_ForceField,
+	LS_ClearForceField,
 	LS_Floor_RaiseByValueTimes8,
 	LS_Floor_LowerByValueTimes8,
 	LS_NOP,		// 37
 	LS_Ceiling_Waggle,
-	LS_NOP,		// 39
+	LS_Teleport_ZombieChanger,
 	LS_Ceiling_LowerByValue,
 	LS_Ceiling_RaiseByValue,
 	LS_Ceiling_CrushAndRaise,
@@ -2234,8 +2537,8 @@ lnSpecFunc LineSpecials[256] =
 	LS_Floor_CrushStop,
 	LS_NOP,		// 47
 	LS_NOP,		// 48
-	LS_NOP,		// 49
-	LS_NOP,		// 50
+	LS_GlassBreak,
+	LS_NOP,		// 50: ExtraFloor_LightOnly
 	LS_NOP,		// 51
 	LS_NOP,		// 52
 	LS_NOP,		// 53
@@ -2269,7 +2572,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_ACS_Suspend,
 	LS_ACS_Terminate,
 	LS_ACS_LockedExecute,
-	LS_NOP,		// 84
+	LS_ACS_ExecuteWithResult,
 	LS_NOP,		// 85
 	LS_NOP,		// 86
 	LS_NOP,		// 87
@@ -2357,9 +2660,9 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 169
 	LS_NOP,		// 170
 	LS_NOP,		// 171
-	LS_NOP,		// 172
-	LS_NOP,		// 173
-	LS_NOP,		// 174
+	LS_Plat_UpNearestWaitDownStay,
+	LS_NoiseAlert,
+	LS_SendToCommunicator,
 	LS_Thing_ProjectileIntercept,
 	LS_Thing_ChangeTID,
 	LS_Thing_Hate,

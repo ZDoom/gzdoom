@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "doomtype.h"
 #include "configfile.h"
 
 #define READBUFFERSIZE	256

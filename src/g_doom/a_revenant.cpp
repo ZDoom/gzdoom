@@ -9,7 +9,6 @@
 #include "a_action.h"
 #include "a_doomglobal.h"
 
-static FRandom pr_rev ("RevenantMissileRange");
 static FRandom pr_tracer ("Tracer");
 static FRandom pr_skelfist ("SkelFist");
 
@@ -22,7 +21,6 @@ class ARevenant : public AActor
 {
 	DECLARE_ACTOR (ARevenant, AActor)
 public:
-	bool SuggestMissileAttack (fixed_t dist);
 	const char *GetObituary () { return GStrings(OB_UNDEAD); }
 	const char *GetHitObituary () { return GStrings(OB_UNDEADHIT); }
 };
@@ -89,6 +87,7 @@ IMPLEMENT_ACTOR (ARevenant, Doom, 66, 20)
 	PROP_PainChance (100)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
+	PROP_Flags4 (MF4_LONGMELEERANGE|MF4_MISSILEMORE)
 
 	PROP_SpawnState (S_SKEL_STND)
 	PROP_SeeState (S_SKEL_RUN)
@@ -104,12 +103,6 @@ IMPLEMENT_ACTOR (ARevenant, Doom, 66, 20)
 	PROP_ActiveSound ("skeleton/active")
 END_DEFAULTS
 
-bool ARevenant::SuggestMissileAttack (fixed_t dist)
-{
-	if (dist < 196*FRACUNIT)
-		return false;		// close for fist attack
-	return pr_rev() >= MIN<int> (dist >> (FRACBITS + 1), 200);
-}
 
 class AStealthRevenant : public ARevenant
 {
@@ -226,8 +219,7 @@ void A_Tracer (AActor *self)
 		return;
 	
 	// spawn a puff of smoke behind the rocket
-	PuffType = RUNTIME_CLASS(ABulletPuff);
-	P_SpawnPuff (self->x, self->y, self->z, 0, 3);
+	P_SpawnPuff (RUNTIME_CLASS(ABulletPuff), self->x, self->y, self->z, 0, 3);
 		
 	smoke = Spawn<ARevenantTracerSmoke> (self->x - self->momx,
 		self->y - self->momy, self->z);
@@ -298,7 +290,7 @@ void A_SkelFist (AActor *self)
 				
 	A_FaceTarget (self);
 		
-	if (P_CheckMeleeRange (self))
+	if (self->CheckMeleeRange ())
 	{
 		int damage = ((pr_skelfist()%10)+1)*6;
 		S_Sound (self, CHAN_WEAPON, "skeleton/melee", 1, ATTN_NORM);

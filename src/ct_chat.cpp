@@ -230,7 +230,7 @@ void CT_Drawer (void)
 		BorderTopRefresh = screen->GetPageCount ();
 	}
 
-	if (deathmatch &&
+	if (players[consoleplayer].camera != NULL && deathmatch &&
 		(Button_ShowScores.bDown ||
 		 players[consoleplayer].camera->health <= 0))
 	{
@@ -334,6 +334,7 @@ static bool DoSubstitution (char *out, const char *in)
 	};
 
 	player_t *player = &players[consoleplayer];
+	AWeapon *weapon = player->ReadyWeapon;
 	const char *a, *b;
 
 	a = in;
@@ -358,36 +359,40 @@ static bool DoSubstitution (char *out, const char *in)
 			}
 			else if (strnicmp (a, "weapon", 6) == 0)
 			{
-				out += sprintf (out, "%s", wpnlev1info[player->readyweapon]->type->Name+1);
+				if (weapon == NULL)
+				{
+					out += sprintf (out, "no weapon");
+				}
+				else
+				{
+					out += sprintf (out, "%s", weapon->GetClass()->Name+1);
+				}
 			}
 		}
 		else if (len == 5)
 		{
 			if (strnicmp (a, "armor", 5) == 0)
 			{
-				out += sprintf (out, "%d", player->armorpoints[0]);
+				AInventory *armor = player->mo->FindInventory<ABasicArmor>();
+				int armorpoints = armor != NULL ? armor->Amount : 0;
+				out += sprintf (out, "%d", armorpoints);
 			}
 		}
 		else if (len == 9)
 		{
 			if (strnicmp (a, "ammocount", 9) == 0)
 			{
-				ammotype_t ammo = wpnlev1info[player->readyweapon]->ammo;
-				if (ammo >= NUMAMMO)
+				if (weapon == NULL)
 				{
-					if (ammo == MANA_BOTH)
-					{
-						out += sprintf (out, "%d", player->ammo[MANA_1] + player->ammo[MANA_2]);
-					}
-					else
-					{
-						*out++ = '0';
-						*out = 0;
-					}
+					out += sprintf (out, "0");
 				}
 				else
 				{
-					out += sprintf (out, "%d", player->ammo[ammo]);
+					out += sprintf (out, "%d", weapon->Ammo1 != NULL ? weapon->Ammo1->Amount : 0);
+					if (weapon->Ammo2 != NULL)
+					{
+						out += sprintf (out, "/%d", weapon->Ammo2->Amount);
+					}
 				}
 			}
 		}
@@ -395,12 +400,18 @@ static bool DoSubstitution (char *out, const char *in)
 		{
 			if (strnicmp (a, "ammo", 4) == 0)
 			{
-				ammotype_t ammo = wpnlev1info[player->readyweapon]->ammo;
-				if (ammo > MANA_NONE)
+				if (weapon == NULL || weapon->Ammo1 == NULL)
 				{
-					ammo = NUMAMMO;
+					out += sprintf (out, "no ammo");
 				}
-				out += sprintf (out, "%s", ammoNames[ammo]);
+				else
+				{
+					out += sprintf (out, "%s", weapon->Ammo1->GetClass()->Name+1);
+					if (weapon->Ammo2 != NULL)
+					{
+						out += sprintf (out, "/%s", weapon->Ammo2->GetClass()->Name+1);
+					}
+				}
 			}
 		}
 		else if (len == 0)

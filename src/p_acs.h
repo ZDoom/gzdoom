@@ -43,7 +43,19 @@
 
 class FFont;
 
+// The in-memory version
 struct ScriptPtr
+{
+	WORD Number;
+	BYTE Type;
+	BYTE ArgCount;
+	WORD VarCount;
+	WORD Flags;
+	DWORD Address;
+};
+
+// The present ZDoom version
+struct ScriptPtr3
 {
 	WORD Number;
 	BYTE Type;
@@ -51,6 +63,7 @@ struct ScriptPtr
 	DWORD Address;
 };
 
+// The intermediate ZDoom version
 struct ScriptPtr1
 {
 	WORD Number;
@@ -59,6 +72,7 @@ struct ScriptPtr1
 	DWORD ArgCount;
 };
 
+// The old Hexen version
 struct ScriptPtr2
 {
 	DWORD Number;	// Type is Number / 1000
@@ -90,8 +104,9 @@ enum
 	SCRIPT_Death		= 3,
 	SCRIPT_Enter		= 4,
 	SCRIPT_Pickup		= 5,
-	SCRIPT_T1Return		= 6,
-	SCRIPT_T2Return		= 7,
+	SCRIPT_BlueReturn	= 6,
+	SCRIPT_RedReturn	= 7,
+	SCRIPT_WhiteReturn	= 8,
 	SCRIPT_Lightning	= 12,
 };
 
@@ -113,7 +128,6 @@ public:
 	BYTE *FindChunk (DWORD id) const;
 	BYTE *NextChunk (BYTE *chunk) const;
 	const ScriptPtr *FindScript (int number) const;
-	WORD GetScriptFlags (int number) const;
 	void PrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
 	void StartTypedScripts (WORD type, AActor *activator);
 	DWORD PC2Ofs (int *pc) const { return (DWORD)((BYTE *)pc - Data); }
@@ -151,10 +165,8 @@ private:
 	BYTE *Data;
 	int DataSize;
 	BYTE *Chunks;
-	BYTE *Scripts;
+	ScriptPtr *Scripts;
 	int NumScripts;
-	BYTE *ScriptFlags;
-	int NumFlaggedScripts;
 	BYTE *Functions;
 	int NumFunctions;
 	ArrayInfo *ArrayStore;
@@ -170,8 +182,9 @@ private:
 
 	static TArray<FBehavior *> StaticModules;
 
+	void LoadScriptsDirectory ();
+
 	static int STACK_ARGS SortScripts (const void *a, const void *b);
-	static int STACK_ARGS SortScriptFlags (const void *a, const void *b);
 	void AddLanguage (DWORD lang);
 	DWORD FindLanguage (DWORD lang, bool ignoreregion) const;
 	DWORD *CheckIfInList (DWORD lang);
@@ -311,17 +324,17 @@ public:
 		PCD_PLAYERGOLDSKULL,
 		PCD_PLAYERBLACKCARD,
 		PCD_PLAYERSILVERCARD,
-		PCD_PLAYERGOLDCARD,
-		PCD_PLAYERTEAM1,
+		PCD_PLAYERONTEAM,
+		PCD_PLAYERTEAM,
 /*120*/	PCD_PLAYERHEALTH,
 		PCD_PLAYERARMORPOINTS,
 		PCD_PLAYERFRAGS,
 		PCD_PLAYEREXPERT,
-		PCD_TEAM1COUNT,
-		PCD_TEAM2COUNT,
-		PCD_TEAM1SCORE,
-		PCD_TEAM2SCORE,
-		PCD_TEAM1FRAGPOINTS,
+		PCD_BLUETEAMCOUNT,
+		PCD_REDTEAMCOUNT,
+		PCD_BLUETEAMSCORE,
+		PCD_REDTEAMSCORE,
+		PCD_ISONEFLAGCTF,
 		PCD_LSPEC6,				// These are never used. They should probably
 /*130*/	PCD_LSPEC6DIRECT,		// be given names like PCD_DUMMY.
 		PCD_PRINTNAME,
@@ -449,6 +462,15 @@ public:
 		PCD_STRLEN,
 		PCD_SETHUDSIZE,
 		PCD_GETCVAR,
+		PCD_CASEGOTOSORTED,
+		PCD_SETRESULTVALUE,
+		PCD_GETLINEROWOFFSET,
+		PCD_GETACTORFLOORZ,
+/*260*/	PCD_GETACTORANGLE,
+		PCD_GETSECTORFLOORZ,
+		PCD_GETSECTORCEILINGZ,
+		PCD_LSPEC5RESULT,
+		PCD_GETSIGILPIECES,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -503,10 +525,11 @@ public:
 	};
 
 	DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-		int lineSide, int arg0, int arg1, int arg2, int always, bool delay);
+		bool backSide, int arg0, int arg1, int arg2, int always, bool delay);
+	~DLevelScript ();
 
 	void Serialize (FArchive &arc);
-	void RunScript ();
+	int RunScript ();
 
 	inline void SetState (EScriptState newstate) { state = newstate; }
 	inline EScriptState GetState () { return state; }
@@ -514,13 +537,14 @@ public:
 protected:
 	DLevelScript	*next, *prev;
 	int				script;
-	SDWORD			localvars[LOCAL_SIZE];
+	SDWORD			*localvars;
+	int				numlocalvars;
 	int				*pc;
 	EScriptState	state;
 	int				statedata;
 	AActor			*activator;
 	line_t			*activationline;
-	int				lineSide;
+	bool			backSide;
 	FFont			*activefont;
 	int				hudwidth, hudheight;
 	FBehavior	    *activeBehavior;

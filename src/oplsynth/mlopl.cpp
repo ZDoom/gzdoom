@@ -45,7 +45,9 @@
 
 #include <malloc.h>
 #include <string.h>
+#ifdef _WIN32
 #include <io.h>
+#endif
 #include "muslib.h"
 
 #include "stats.h"

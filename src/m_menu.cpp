@@ -103,6 +103,7 @@ static void M_ReadThis (int choice);
 static void M_ReadThisMore (int choice);
 static void M_QuitDOOM (int choice);
 static void M_GameFiles (int choice);
+static void M_ClearSaveStuff ();
 
 static void SCClass (int choice);
 
@@ -184,6 +185,7 @@ static const char *messageString;		// ...and here is the message string!
 static EMenuState messageLastMenuActive;
 static bool		messageNeedsInput;		// timed message = no input from user
 static void	  (*messageRoutine)(int response);
+static int		showSharewareMessage;
 
 static int 		genStringEnter;	// we are going to be entering a savegame string
 static size_t	genStringLen;	// [RH] Max # of chars that can be entered
@@ -580,6 +582,7 @@ CCMD (bumpgamma)
 
 void M_ActivateMenuInput ()
 {
+	ResetButtonStates ();
 	menuactive = MENU_On;
 }
 
@@ -1551,8 +1554,15 @@ void M_Episode (int choice)
 {
 	if ((gameinfo.flags & GI_SHAREWARE) && choice)
 	{
-		M_StartMessage(GStrings(SWSTRING),NULL,false);
-		//M_SetupNextMenu(&ReadDef);
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			M_StartMessage(GStrings(SWSTRING),NULL,false);
+			//M_SetupNextMenu(&ReadDef);
+		}
+		else
+		{
+			showSharewareMessage = 3*TICRATE;
+		}
 		return;
 	}
 
@@ -1798,7 +1808,7 @@ static void M_PlayerSetupDrawer ()
 	EColorRange label, value;
 	DWORD color;
 
-	if (gameinfo.gametype != GAME_Doom)
+	if (!(gameinfo.gametype & (GAME_Doom|GAME_Strife)))
 	{
 		xo = 5;
 		yo = 5;
@@ -2750,6 +2760,7 @@ static void M_SaveSelect (const FSaveGameNode *file)
 
 static void M_DeleteSaveResponse (int choice)
 {
+	M_ClearSaveStuff ();
 	if (choice == 'y')
 	{
 		FSaveGameNode *next = static_cast<FSaveGameNode *>(SelSaveGame->Succ);
@@ -2837,10 +2848,17 @@ void M_Drawer ()
 	}
 	else if (menuactive != MENU_Off)
 	{
-		if (InfoType == 0)
+		if (InfoType == 0 && !OptionsActive)
 		{
 			screen->Dim ();
 		}
+		// For Heretic shareware message:
+		if (showSharewareMessage)
+		{
+			screen->DrawText (CR_WHITE, 160 - SmallFont->StringWidth("ONLY AVAILABLE IN THE REGISTERED VERSION")/2,
+				8, "ONLY AVAILABLE IN THE REGISTERED VERSION", DTA_Clean, true, TAG_DONE);
+		}
+
 		BorderNeedRefresh = screen->GetPageCount ();
 		SB_state = screen->GetPageCount ();
 
@@ -2887,7 +2905,20 @@ void M_Drawer ()
 			// DRAW CURSOR
 			if (drawSkull)
 			{
-				if (gameinfo.gametype == GAME_Doom)
+				if (currentMenu == &PSetupDef)
+				{
+					// [RH] Use options menu cursor for the player setup menu.
+					if (skullAnimCounter < 6)
+					{
+						screen->SetFont (ConFont);
+						screen->DrawText (CR_RED, x - 16,
+							currentMenu->y + itemOn*LINEHEIGHT +
+							(!(gameinfo.gametype & (GAME_Doom|GAME_Strife)) ? 6 : -1), "\xd",
+							DTA_Clean, true, TAG_DONE);
+						screen->SetFont (SmallFont);
+					}
+				}
+				else if (gameinfo.gametype == GAME_Doom)
 				{
 					screen->DrawTexture (TexMan[skullName[whichSkull]],
 						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT,
@@ -3009,6 +3040,10 @@ void M_PopMenuStack (void)
 //
 void M_Ticker (void)
 {
+	if (showSharewareMessage)
+	{
+		--showSharewareMessage;
+	}
 	if (menuactive == MENU_Off)
 	{
 		return;

@@ -36,7 +36,6 @@ class AArchvile : public AActor
 {
 	DECLARE_ACTOR (AArchvile, AActor)
 public:
-	bool SuggestMissileAttack (fixed_t dist);
 	const char *GetObituary ();
 };
 
@@ -51,8 +50,6 @@ class ALostSoul : public AActor
 {
 	DECLARE_ACTOR (ALostSoul, AActor)
 public:
-	bool SuggestMissileAttack (fixed_t dist);
-	void Die (AActor *source, AActor *inflictor);
 	const char *GetObituary ();
 };
 
@@ -106,7 +103,6 @@ class ADoomPlayer : public APlayerPawn
 	DECLARE_ACTOR (ADoomPlayer, APlayerPawn)
 public:
 	void GiveDefaultInventory ();
-	int GetMOD ();
 };
 
 #endif //__A_DOOMGLOBAL_H__

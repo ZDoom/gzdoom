@@ -1,29 +1,19 @@
-#include "a_pickups.h"
+#include "a_strifeglobal.h"
 #include "p_local.h"
+#include "a_strifeweaps.h"
+
+// HEGrenades:		6	12
+// PhGrenades:		4	8
+// ClipOfBullets	??	10
+// BoxOfBullets:	50	50
+// MiniMissiles:	4	8
+// CrateOfMissiles:	20	20
+// EnergyPod:		20	40
+// EnergyPack:		100
+// PoisonBolts:		20
+// ElectricBolts:	20
 
 // HE-Grenade Rounds --------------------------------------------------------
-
-class AHEGrenadeRounds : public AAmmo
-{
-	DECLARE_ACTOR (AHEGrenadeRounds, AAmmo);
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		if (flags & MF_DROPPED)
-			return P_GiveAmmo (toucher->player, am_hegrenade, 6);
-		else
-			return P_GiveAmmo (toucher->player, am_hegrenade, 12);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_hegrenade;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the HE-Grenade Rounds";
-	}
-};
 
 FState AHEGrenadeRounds::States[] =
 {
@@ -33,32 +23,20 @@ FState AHEGrenadeRounds::States[] =
 IMPLEMENT_ACTOR (AHEGrenadeRounds, Strife, 152, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
+	PROP_StrifeType (177)
+	PROP_StrifeTeaserType (170)
+	PROP_Inventory_Amount (12)
+	PROP_Inventory_MaxAmount (30)
+	PROP_Inventory_Icon ("I_GRN1")
 	PROP_Tag ("HE-Grenade_Rounds")
 END_DEFAULTS
 
-// Phosphorus-Grenade Rounds ------------------------------------------------
-
-class APhosphorusGrenadeRounds : public AAmmo
+const char *AHEGrenadeRounds::PickupMessage ()
 {
-	DECLARE_ACTOR (APhosphorusGrenadeRounds, AAmmo);
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		if (flags & MF_DROPPED)
-			return P_GiveAmmo (toucher->player, am_phgrenade, 4);
-		else
-			return P_GiveAmmo (toucher->player, am_phgrenade, 8);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_phgrenade;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the HE-Grenade Rounds";
-	}
-};
+	return "You picked up the HE-Grenade Rounds.";
+}
+
+// Phosphorus-Grenade Rounds ------------------------------------------------
 
 FState APhosphorusGrenadeRounds::States[] =
 {
@@ -68,32 +46,20 @@ FState APhosphorusGrenadeRounds::States[] =
 IMPLEMENT_ACTOR (APhosphorusGrenadeRounds, Strife, 153, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Tag ("HE-Grenade_Rounds")
+	PROP_StrifeType (178)
+	PROP_StrifeTeaserType (171)
+	PROP_Inventory_Amount (8)
+	PROP_Inventory_MaxAmount (16)
+	PROP_Inventory_Icon ("I_GRN2")
+	PROP_Tag ("Phoshorus-Grenade_Rounds")	// "Fire-Grenade_Rounds" in the Teaser
 END_DEFAULTS
 
-// Clip of Bullets ----------------------------------------------------------
-
-class AClipOfBullets : public AAmmo
+const char *APhosphorusGrenadeRounds::PickupMessage ()
 {
-	DECLARE_ACTOR (AClipOfBullets, AAmmo)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		if (flags & MF_DROPPED)
-			return P_GiveAmmo (toucher->player, am_clip, 5);
-		else
-			return P_GiveAmmo (toucher->player, am_clip, 10);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_clip;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the clip of bullets";
-	}
-};
+	return "You picked up the Phoshorus-Grenade Rounds.";
+}
+
+// Clip of Bullets ----------------------------------------------------------
 
 FState AClipOfBullets::States[] =
 {
@@ -103,29 +69,20 @@ FState AClipOfBullets::States[] =
 IMPLEMENT_ACTOR (AClipOfBullets, Strife, 2007, 11)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-	PROP_Tag ("clip_of_bullets")
+	PROP_StrifeType (179)
+	PROP_StrifeTeaserType (173)
+	PROP_Inventory_Amount (10)
+	PROP_Inventory_MaxAmount (250)
+	PROP_Inventory_Icon ("I_BLIT")
+	PROP_Tag ("clip_of_bullets")	// "bullets" in the Teaser
 END_DEFAULTS
 
-// Box of Bullets -----------------------------------------------------------
-
-class ABoxOfBullets : public AAmmo
+const char *AClipOfBullets::PickupMessage ()
 {
-	DECLARE_ACTOR (ABoxOfBullets, AAmmo)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_clip, 50);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_clip;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the box of bullets";
-	}
-};
+	return "You picked up the clip of bullets.";
+}
+
+// Box of Bullets -----------------------------------------------------------
 
 FState ABoxOfBullets::States[] =
 {
@@ -135,32 +92,18 @@ FState ABoxOfBullets::States[] =
 IMPLEMENT_ACTOR (ABoxOfBullets, Strife, 2048, 139)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_StrifeType (180)
+	PROP_StrifeTeaserType (174)
+	PROP_Inventory_Amount (50)
 	PROP_Tag ("ammo")
 END_DEFAULTS
 
-// Mini Missiles ------------------------------------------------------------
-
-class AMiniMissiles : public AAmmo
+const char *ABoxOfBullets::PickupMessage ()
 {
-	DECLARE_ACTOR (AMiniMissiles, AAmmo)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		if (flags & MF_DROPPED)
-			return P_GiveAmmo (toucher->player, am_misl, 4);
-		else
-			return P_GiveAmmo (toucher->player, am_misl, 8);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_misl;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the mini missiles";
-	}
-};
+	return "You picked up the box of bullets.";
+}
+
+// Mini Missiles ------------------------------------------------------------
 
 FState AMiniMissiles::States[] =
 {
@@ -170,29 +113,20 @@ FState AMiniMissiles::States[] =
 IMPLEMENT_ACTOR (AMiniMissiles, Strife, 2010, 140)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-	PROP_Tag ("mini_missiles")
+	PROP_StrifeType (181)
+	PROP_StrifeTeaserType (175)
+	PROP_Inventory_Amount (8)
+	PROP_Inventory_MaxAmount (100)
+	PROP_Inventory_Icon ("I_ROKT")
+	PROP_Tag ("mini_missiles")	//"rocket" in the Teaser
 END_DEFAULTS
 
-// Crate of Missiles --------------------------------------------------------
-
-class ACrateOfMissiles : public AAmmo
+const char *AMiniMissiles::PickupMessage ()
 {
-	DECLARE_ACTOR (ACrateOfMissiles, AAmmo)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_misl, 20);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_misl;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the crate of missiles";
-	}
-};
+	return "You picked up the mini missiles.";
+}
+
+// Crate of Missiles --------------------------------------------------------
 
 FState ACrateOfMissiles::States[] =
 {
@@ -202,32 +136,18 @@ FState ACrateOfMissiles::States[] =
 IMPLEMENT_ACTOR (ACrateOfMissiles, Strife, 2046, 141)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-	PROP_Tag ("crate_of_missiles")
+	PROP_StrifeType (182)
+	PROP_StrifeTeaserType (176)
+	PROP_Inventory_Amount (20)
+	PROP_Tag ("crate_of_missiles")	//"box_of_rockets" in the Teaser
 END_DEFAULTS
 
-// Energy Pod ---------------------------------------------------------------
-
-class AEnergyPod : public AAmmo
+const char *ACrateOfMissiles::PickupMessage ()
 {
-	DECLARE_ACTOR (AEnergyPod, AAmmo)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		if (flags & MF_DROPPED)
-			return P_GiveAmmo (toucher->player, am_cell, 20);
-		else
-			return P_GiveAmmo (toucher->player, am_cell, 40);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_cell;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the energy pod";
-	}
-};
+	return "You picked up the crate of missiles.";
+}
+
+// Energy Pod ---------------------------------------------------------------
 
 FState AEnergyPod::States[] =
 {
@@ -238,29 +158,20 @@ FState AEnergyPod::States[] =
 IMPLEMENT_ACTOR (AEnergyPod, Strife, 2047, 75)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_StrifeType (183)
+	PROP_StrifeTeaserType (177)
+	PROP_Inventory_Amount (40)
+	PROP_Inventory_MaxAmount (400)
+	PROP_Inventory_Icon ("I_BRY1")
 	PROP_Tag ("energy_pod")
 END_DEFAULTS
 
-// Energy pack ---------------------------------------------------------------
-
-class AEnergyPack : public AAmmo
+const char *AEnergyPod::PickupMessage ()
 {
-	DECLARE_ACTOR (AEnergyPack, AAmmo)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_cell, 100);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_cell;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the energy pack";
-	}
-};
+	return "You picked up the energy pod.";
+}
+
+// Energy pack ---------------------------------------------------------------
 
 FState AEnergyPack::States[] =
 {
@@ -271,29 +182,18 @@ FState AEnergyPack::States[] =
 IMPLEMENT_ACTOR (AEnergyPack, Strife, 17, 142)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_StrifeType (184)
+	PROP_StrifeTeaserType (178)
+	PROP_Inventory_Amount (100)
 	PROP_Tag ("energy_pack")
 END_DEFAULTS
 
-// Poison Bolt Quiver -------------------------------------------------------
-
-class APoisonBolts : public AAmmo
+const char *AEnergyPack::PickupMessage ()
 {
-	DECLARE_ACTOR (APoisonBolts, AAmmo)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_poisonbolt, 20);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_poisonbolt;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the poison bolts";
-	}
-};
+	return "You picked up the energy pack.";
+}
+
+// Poison Bolt Quiver -------------------------------------------------------
 
 FState APoisonBolts::States[] =
 {
@@ -303,29 +203,20 @@ FState APoisonBolts::States[] =
 IMPLEMENT_ACTOR (APoisonBolts, Strife, 115, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Tag ("poison_bolts")
+	PROP_StrifeType (185)
+	PROP_StrifeTeaserType (179)
+	PROP_Inventory_Amount (20)
+	PROP_Inventory_MaxAmount (25)
+	PROP_Inventory_Icon ("I_PQRL")
+	PROP_Tag ("poison_bolts")	// "poison_arrows" in the Teaser
 END_DEFAULTS
 
-// Electric Bolt Quiver -------------------------------------------------------
-
-class AElectricBolts : public AAmmo
+const char *APoisonBolts::PickupMessage ()
 {
-	DECLARE_ACTOR (AElectricBolts, AAmmo)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_electricbolt, 20);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_electricbolt;
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the electric bolts";
-	}
-};
+	return "You picked up the poison bolts.";
+}
+
+// Electric Bolt Quiver -------------------------------------------------------
 
 FState AElectricBolts::States[] =
 {
@@ -335,30 +226,24 @@ FState AElectricBolts::States[] =
 IMPLEMENT_ACTOR (AElectricBolts, Strife, 114, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Tag ("electric_bolts")
+	PROP_StrifeType (186)
+	PROP_StrifeTeaserType (180)
+	PROP_Inventory_Amount (20)
+	PROP_Inventory_MaxAmount (50)
+	PROP_Inventory_Icon ("I_XQRL")
+	PROP_Tag ("electric_bolts")	// "electric_arrows" in the Teaser
 END_DEFAULTS
+
+const char *AElectricBolts::PickupMessage ()
+{
+	return "You picked up the electric bolts.";
+}
 
 // Ammo Satchel -------------------------------------------------------------
 
-class AAmmoSatchel : public AInventory
+class AAmmoSatchel : public ABackpack
 {
-	DECLARE_ACTOR (AAmmoSatchel, AInventory)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		player_t *player = toucher->player;
-		int i;
-
-		if (!player->backpack)
-		{
-			for (i = 0; i < NUMAMMO; i++)
-				player->maxammo[i] *= 2;
-			player->backpack = true;
-		}
-		for (i = 0; i < NUMAMMO; i++)
-			P_GiveAmmo (player, (ammotype_t)i, clipammo[i]);
-		return true;
-	}
+	DECLARE_ACTOR (AAmmoSatchel, ABackpack)
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -371,8 +256,11 @@ FState AAmmoSatchel::States[] =
 	S_NORMAL (BKPK, 'A',   -1, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (AAmmoSatchel, Strife, 8, 144)
+IMPLEMENT_ACTOR (AAmmoSatchel, Strife, 183, 144)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-	PROP_Tag ("ammo_satchel")
+	PROP_StrifeType (187)
+	PROP_StrifeTeaserType (181)
+	PROP_Inventory_Icon ("I_BKPK")
+	PROP_Tag ("ammo_satchel")	// "Back_pack" in the Teaser
 END_DEFAULTS

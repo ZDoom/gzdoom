@@ -145,25 +145,6 @@ inline FArchive &operator<< (FArchive &arc, DPusher::EPusher &type)
 	return arc;
 }
 
-// [RH] Types of keys used by locked doors and scripts
-typedef enum
-{
-	NoKey,
-	RCard,
-	BCard,
-	YCard,
-	RSkull,
-	BSkull,
-	YSkull,
-
-	AnyKey = 100,
-	AllKeys = 101,
-
-	CardIsSkull = 128
-} keyspecialtype_t;
-
-BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote);
-
 // Define values for map objects
 #define MO_TELEPORTMAN			14
 
@@ -402,7 +383,7 @@ void	EV_StartLightFading (int tag, int value, int tics);
 
 #define BUTTONTIME TICRATE		// 1 second, in ticks. 
 
-void	P_ChangeSwitchTexture (side_t *side, int useAgain, byte special);
+bool	P_ChangeSwitchTexture (side_t *side, int useAgain, byte special, bool *quest=NULL);
 
 void	P_InitSwitchList ();
 void	P_ProcessSwitchDef ();
@@ -426,14 +407,16 @@ public:
 	{
 		platPerpetualRaise,
 		platDownWaitUpStay,
+		platDownWaitUpStayStone,
 		platUpWaitDownStay,
+		platUpNearestWaitDownStay,
 		platDownByValue,
 		platUpByValue,
 		platUpByValueStay,
 		platRaiseAndStay,
 		platToggle,
 		platDownToNearestFloor,
-		platDownToLowestCeiling
+		platDownToLowestCeiling,
 	};
 
 	void Serialize (FArchive &arc);
@@ -568,7 +551,7 @@ protected:
 	void DoorSound (bool raise) const;
 
 	friend bool	EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
-						   int tag, int speed, int delay, keyspecialtype_t lock,
+						   int tag, int speed, int delay, int lock,
 						   int lightTag);
 	friend void P_SpawnDoorCloseIn30 (sector_t *sec);
 	friend void P_SpawnDoorRaiseIn5Mins (sector_t *sec);
@@ -585,6 +568,36 @@ inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
 	return arc;
 }
 
+class DAnimatedDoor : public DMovingCeiling
+{
+	DECLARE_CLASS (DAnimatedDoor, DMovingCeiling)
+public:
+	DAnimatedDoor (sector_t *sector);
+	DAnimatedDoor (sector_t *sector, line_t *line, int speed, int delay);
+
+	void Serialize (FArchive &arc);
+	void Tick ();
+protected:
+	line_t *m_Line1, *m_Line2;
+	int m_Frame;
+	int m_WhichDoorIndex;
+	int m_Timer;
+	fixed_t m_BotDist;
+	int m_Status;
+	enum
+	{
+		Opening,
+		Waiting,
+		Closing,
+		Dead
+	};
+	int m_Speed;
+	int m_Delay;
+
+	friend bool EV_SlidingDoor (line_t *line, AActor *thing, int tag, int speed, int delay);
+private:
+	DAnimatedDoor ();
+};
 
 //
 // P_CEILNG
@@ -868,8 +881,8 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag);
 //
 // P_TELEPT
 //
-bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, bool useFog, bool keepOrientation);
-bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog, bool keepOrientation);
+bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, bool useFog, bool sourceFog, bool keepOrientation);
+bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog, bool sourceFog, bool keepOrientation);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 							BOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);
@@ -881,8 +894,8 @@ bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int gro
 // [RH] ACS (see also p_acs.h)
 //
 
-bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
-					int arg0, int arg1, int arg2, int always, bool net=false);
+int  P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
+					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net=false);
 void P_SuspendScript (int script, char *map);
 void P_TerminateScript (int script, char *map);
 void P_DoDeferedScripts (void);

@@ -5,8 +5,6 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 
-extern AActor *soundtarget;
-
 void A_CloseUpShop (AActor *);
 void A_ClearSoundTarget (AActor *);
 void A_PlayActiveSound (AActor *);
@@ -16,6 +14,8 @@ void A_PlayActiveSound (AActor *);
 class AMerchant : public AActor
 {
 	DECLARE_ACTOR (AMerchant, AActor)
+public:
+	void ConversationAnimation (int animnum);
 };
 
 FState AMerchant::States[] =
@@ -85,7 +85,24 @@ IMPLEMENT_ACTOR (AMerchant, Strife, -1, 0)
 	PROP_HeightFixed (56)
 	PROP_Mass (5000)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOTDMATCH)
+	PROP_Flags4 (MF4_NOSPLASHALERT)
 END_DEFAULTS
+
+void AMerchant::ConversationAnimation (int animnum)
+{
+	switch (animnum)
+	{
+	case 0:
+		SetState (&States[S_MERCHANT_GT]);
+		break;
+	case 1:
+		SetState (&States[S_MERCHANT_YES]);
+		break;
+	case 2:
+		SetState (&States[S_MERCHANT_NO]);
+		break;
+	}
+}
 
 // Weapon Smith -------------------------------------------------------------
 
@@ -95,6 +112,8 @@ class AWeaponSmith : public AMerchant
 };
 
 IMPLEMENT_STATELESS_ACTOR (AWeaponSmith, Strife, 116, 0)
+	PROP_StrifeType (2)
+	PROP_StrifeTeaserType (2)
 	PROP_PainSound ("smith/pain")
 	PROP_Tag ("Weapon_Smith")
 END_DEFAULTS
@@ -108,6 +127,8 @@ class ABarKeep : public AMerchant
 
 IMPLEMENT_STATELESS_ACTOR (ABarKeep, Strife, 72, 0)
 	PROP_Translation (TRANSLATION_Standard, 4)
+	PROP_StrifeType (3)
+	PROP_StrifeTeaserType (3)
 	PROP_PainSound ("barkeep/pain")
 	PROP_ActiveSound ("barkeep/active")
 	PROP_Tag ("Bar_Keep")
@@ -122,6 +143,8 @@ class AArmorer : public AMerchant
 
 IMPLEMENT_STATELESS_ACTOR (AArmorer, Strife, 73, 0)
 	PROP_Translation (TRANSLATION_Standard, 5)
+	PROP_StrifeType (4)
+	PROP_StrifeTeaserType (4)
 	PROP_PainSound ("armorer/pain")
 	PROP_Tag ("Aromorer")
 END_DEFAULTS
@@ -135,6 +158,8 @@ class AMedic : public AMerchant
 
 IMPLEMENT_STATELESS_ACTOR (AMedic, Strife, 74, 0)
 	PROP_Translation (TRANSLATION_Standard, 6)
+	PROP_StrifeType (5)
+	PROP_StrifeTeaserType (5)
 	PROP_PainSound ("medic/pain")
 	PROP_Tag ("Medic")
 END_DEFAULTS
@@ -148,12 +173,10 @@ END_DEFAULTS
 
 void A_CloseUpShop (AActor *self)
 {
-	EV_DoDoor (DDoor::doorCloseWaitOpen, NULL, self, 999, 8*FRACUNIT, 120*TICRATE, NoKey, 0);
+	EV_DoDoor (DDoor::doorCloseWaitOpen, NULL, self, 999, 8*FRACUNIT, 120*TICRATE, 0, 0);
 	if (self->target != NULL && self->target->player != NULL)
 	{
-		validcount++;
-		soundtarget = self->target;
-		P_RecursiveSound (self->Sector, 0);
+		P_NoiseAlert (self->target, self);
 	}
 }
 
@@ -165,7 +188,12 @@ void A_CloseUpShop (AActor *self)
 
 void A_ClearSoundTarget (AActor *self)
 {
-	self->Sector->soundtarget = NULL;
+	AActor *actor;
+
+	for (actor = self->Sector->thinglist; actor != NULL; actor = actor->snext)
+	{
+		actor->LastHeard = NULL;
+	}
 }
 
 //============================================================================

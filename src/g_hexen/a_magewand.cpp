@@ -13,19 +13,13 @@
 
 static FRandom pr_smoke ("MWandSmoke");
 
-void A_MWandAttack (AActor *actor, pspdef_t *psp);
+void A_MWandAttack (AActor *actor);
 
 // The Mage's Wand ----------------------------------------------------------
 
 class AMWeapWand : public AMageWeapon
 {
 	DECLARE_ACTOR (AMWeapWand, AMageWeapon)
-public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_mwand;
-	}
-	static FWeaponInfo WeaponInfo;
 };
 
 FState AMWeapWand::States[] =
@@ -46,32 +40,18 @@ FState AMWeapWand::States[] =
 	S_NORMAL2 (MWND, 'A',	3, A_ReFire				    , &States[S_MWANDREADY], 0, 36),
 };
 
-FWeaponInfo AMWeapWand::WeaponInfo =
-{
-	0,
-	MANA_NONE,
-	MANA_NONE,
-	0,
-	0,
-	&States[S_MWANDUP],
-	&States[S_MWANDDOWN],
-	&States[S_MWANDREADY],
-	&States[S_MWANDATK],
-	&States[S_MWANDATK],
-	NULL,
-	NULL,
-	0,
-	9*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AMWeapWand),
-	-1
-};
-
 IMPLEMENT_ACTOR (AMWeapWand, Hexen, -1, 0)
+	PROP_Weapon_SelectionOrder (3600)
+	PROP_Weapon_UpState (S_MWANDUP)
+	PROP_Weapon_DownState (S_MWANDDOWN)
+	PROP_Weapon_ReadyState (S_MWANDREADY)
+	PROP_Weapon_AtkState (S_MWANDATK)
+	PROP_Weapon_HoldAtkState (S_MWANDATK)
+	PROP_Weapon_Kickback (0)
+	PROP_Weapon_YAdjust (9)
+	PROP_Weapon_MoveCombatDist (25000000)
+	PROP_Weapon_ProjectileType ("MageWandMissile")
 END_DEFAULTS
-
-WEAPON1 (wp_mwand, AMWeapWand)
 
 // Wand Smoke ---------------------------------------------------------------
 
@@ -217,7 +197,7 @@ void AMageWandMissile::Tick ()
 //
 //============================================================================
 
-void A_MWandAttack (AActor *actor, pspdef_t *psp)
+void A_MWandAttack (AActor *actor)
 {
 	AActor *mo;
 

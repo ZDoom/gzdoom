@@ -39,6 +39,7 @@
 
 #include <time.h>
 #include <math.h>
+#include <assert.h>
 
 #include "doomerrors.h"
 
@@ -136,6 +137,7 @@ extern gameinfo_t HereticSWGameInfo;
 extern gameinfo_t HexenGameInfo;
 extern gameinfo_t HexenDKGameInfo;
 extern gameinfo_t StrifeGameInfo;
+extern gameinfo_t StrifeTeaserGameInfo;
 
 extern int testingmode;
 extern BOOL setmodeneeded;
@@ -153,6 +155,7 @@ extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 CVAR (Int, fraglimit, 0, CVAR_SERVERINFO);
 CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 wadlist_t *wadfiles;		// [RH] remove limit on # of loaded wads
@@ -168,6 +171,7 @@ event_t events[MAXEVENTS];
 int eventhead;
 int eventtail;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
+bool PageBlank;
 FTexture *Page;
 FTexture *Advisory;
 
@@ -186,7 +190,8 @@ const char *IWADTypeNames[NUM_IWAD_TYPES] =
 	"DOOM Shareware",
 	"The Ultimate DOOM",
 	"DOOM Registered",
-	"Strife: Quest for the Sigil (Not even close to complete)"
+	"Strife: Quest for the Sigil",
+	"Strife: Teaser Version"
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -209,6 +214,7 @@ static const char *IWADNames[] =
 	"hexen.wad",
 	"hexdd.wad",
 	"strife1.wad",
+	"strife0.wad",
 	NULL
 };
 static GameAtExit *ExitCmdList;
@@ -304,7 +310,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 
 	if (self & DF_NO_FREELOOK)
 	{
-		C_DoCommand ("centerview");
+		Net_WriteByte (DEM_CENTERVIEW);
 	}
 	// If nofov is set, force everybody to the arbitrator's FOV.
 	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
@@ -451,7 +457,14 @@ void D_Display (bool screenshot)
 	{ // save the current screen if about to wipe
 		BorderNeedRefresh = screen->GetPageCount ();
 		wipe = true;
-		wipe_StartScreen ();
+		if (wipegamestate != GS_FORCEWIPEFADE)
+		{
+			wipe_StartScreen (wipetype);
+		}
+		else
+		{
+			wipe_StartScreen (wipe_Fade);
+		}
 		wipegamestate = gamestate;
 	}
 	else
@@ -472,7 +485,7 @@ void D_Display (bool screenshot)
 		if (!gametic)
 			break;
 
-		if (viewactive)
+		if (1 || viewactive)
 		{
 			R_RefreshViewBorder ();
 			R_RenderPlayerView (&players[consoleplayer]);
@@ -766,7 +779,10 @@ void D_PageDrawer (void)
 	else
 	{
 		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0);
-		screen->DrawText (CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);
+		if (!PageBlank)
+		{
+			screen->DrawText (CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);
+		}
 	}
 	if (Advisory != NULL)
 	{
@@ -789,6 +805,127 @@ void D_AdvanceDemo (void)
 
 //==========================================================================
 //
+// D_DoStrifeAdvanceDemo
+//
+//==========================================================================
+
+void D_DoStrifeAdvanceDemo ()
+{
+	static const char *const fullVoices[6] =
+	{
+		"svox/pro1", "svox/pro2", "svox/pro3", "svox/pro4", "svox/pro5", "svox/pro6"
+	};
+	static const char *const teaserVoices[6] =
+	{
+		"svox/voc91", "svox/voc92", "svox/voc93", "svox/voc94", "svox/voc95", "svox/voc96"
+	};
+	const char *const *voices = gameinfo.flags & GI_SHAREWARE ? teaserVoices : fullVoices;
+	const char *pagename = NULL;
+
+	gamestate = GS_DEMOSCREEN;
+	PageBlank = false;
+
+	switch (demosequence)
+	{
+	default:
+	case 0:
+		pagetic = 6 * TICRATE;
+		pagename = "TITLEPIC";
+		if (Wads.CheckNumForName ("d_logo") < 0)
+		{ // strife0.wad does not have d_logo
+			S_StartMusic ("");
+		}
+		else
+		{
+			S_StartMusic ("d_logo");
+		}
+		C_HideConsole ();
+		break;
+
+	case 1:
+		// [RH] Strife fades to black and then to the Rogue logo, but
+		// I think it looks better if it doesn't fade.
+		pagetic = 10 * TICRATE/35;
+		pagename = "";	// PANEL0, but strife0.wad doesn't have it, so don't use it.
+		PageBlank = true;
+		S_Sound (CHAN_VOICE, "bishop/active", 1, ATTN_NORM);
+		break;
+
+	case 2:
+		pagetic = 4 * TICRATE;
+		pagename = "RGELOGO";
+		break;
+
+	case 3:
+		pagetic = 7 * TICRATE;
+		pagename = "PANEL1";
+		S_Sound (CHAN_VOICE, voices[0], 1, ATTN_NORM);
+		S_StartMusic (gameinfo.flags & GI_SHAREWARE ? "d_intro" : "d_darker");
+		break;
+
+	case 4:
+		pagetic = 9 * TICRATE;
+		pagename = "PANEL2";
+		S_Sound (CHAN_VOICE, voices[1], 1, ATTN_NORM);
+		break;
+
+	case 5:
+		pagetic = 12 * TICRATE;
+		pagename = "PANEL3";
+		S_Sound (CHAN_VOICE, voices[2], 1, ATTN_NORM);
+		break;
+
+	case 6:
+		pagetic = 11 * TICRATE;
+		pagename = "PANEL4";
+		S_Sound (CHAN_VOICE, voices[3], 1, ATTN_NORM);
+		break;
+
+	case 7:
+		pagetic = 10 * TICRATE;
+		pagename = "PANEL5";
+		S_Sound (CHAN_VOICE, voices[4], 1, ATTN_NORM);
+		break;
+
+	case 8:
+		pagetic = 16 * TICRATE;
+		pagename = "PANEL6";
+		S_Sound (CHAN_VOICE, voices[5], 1, ATTN_NORM);
+		break;
+
+	case 9:
+		pagetic = 6 * TICRATE;
+		pagename = "vellogo";
+		wipegamestate = GS_FORCEWIPEFADE;
+		break;
+
+	case 10:
+		pagetic = 12 * TICRATE;
+		pagename = "CREDIT";
+		wipegamestate = GS_FORCEWIPEFADE;
+		break;
+	}
+	if (demosequence++ > 10)
+		demosequence = 0;
+	if (demosequence == 9 && !(gameinfo.flags & GI_SHAREWARE))
+		demosequence = 10;
+
+	if (pagename)
+	{
+		if (Page != NULL)
+		{
+			Page->Unload ();
+			Page = NULL;
+		}
+		if (pagename[0])
+		{
+			Page = TexMan[pagename];
+		}
+	}
+}
+
+//==========================================================================
+//
 // D_DoAdvanceDemo
 //
 //==========================================================================
@@ -798,13 +935,20 @@ void D_DoAdvanceDemo (void)
 	static char demoname[8] = "DEMO1";
 	static int democount = 0;
 	static int pagecount;
-	char *pagename = NULL;
+	const char *pagename = NULL;
 
+	V_SetBlend (0,0,0,0);
 	players[consoleplayer].playerstate = PST_LIVE;	// not reborn
 	advancedemo = false;
 	usergame = false;				// no save / end game here
 	paused = 0;
 	gameaction = ga_nothing;
+
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		D_DoStrifeAdvanceDemo ();
+		return;
+	}
 
 	switch (demosequence)
 	{
@@ -1091,6 +1235,7 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		{ retail,		&RetailGameInfo,		doom },			// UltimateDoom
 		{ registered,	&RegisteredGameInfo,	doom },			// DoomRegistered
 		{ commercial,	&StrifeGameInfo,		doom2 },		// Strife
+		{ commercial,	&StrifeTeaserGameInfo,	doom2 },		// StrifeTeaser
 	};
 
 	D_AddFile (iwadpath);
@@ -1131,6 +1276,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		"CAMO1",
 		{ 'E','X','T','E','N','D','E','D'},
 		"ENDSTRF",
+		"MAP33",
 		"E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
 		"E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		"DPHOOF","BFGGA0","HEADA1","CYBRA1",
@@ -1148,6 +1294,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_cam01,
 		Check_Extended,
 		Check_endstrf,
+		Check_map33,
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
@@ -1180,9 +1327,20 @@ static EIWADType ScanIWAD (const char *iwad)
 		fclose (f);
 	}
 
-	if (lumpsfound[Check_title] && lumpsfound[Check_title] && lumpsfound[Check_map60])
+	if (lumpsfound[Check_title] && lumpsfound[Check_map60])
 	{
 		return IWAD_HexenDK;
+	}
+	else if (lumpsfound[Check_map33] && lumpsfound[Check_endstrf])
+	{
+		if (lumpsfound[Check_map01])
+		{
+			return IWAD_Strife;
+		}
+		else
+		{
+			return IWAD_StrifeTeaser;
+		}
 	}
 	else if (lumpsfound[Check_map01])
 	{
@@ -1193,10 +1351,6 @@ static EIWADType ScanIWAD (const char *iwad)
 		else if (lumpsfound[Check_cam01])
 		{
 			return IWAD_Doom2Plutonia;
-		}
-		else if (lumpsfound[Check_endstrf])
-		{
-			return IWAD_Strife;
 		}
 		else
 		{
@@ -1471,6 +1625,21 @@ static EIWADType IdentifyVersion (void)
 
 	SetIWAD (wads[pickwad].Path, wads[pickwad].Type);
 
+	if (wads[pickwad].Type == IWAD_Strife)
+	{ // Try to load voices.wad along with strife1.wad
+		char *filepart = strrchr (wads[pickwad].Path, '/');
+		if (filepart == NULL)
+		{
+			filepart = wads[pickwad].Path;
+		}
+		else
+		{
+			++filepart;
+		}
+		strcpy (filepart, "voices.wad");
+		D_AddFile (wads[pickwad].Path);
+	}
+
 	for (i = 0; i < numwads; i++)
 	{
 		delete[] wads[i].Path;
@@ -1702,8 +1871,6 @@ void D_DoomMain (void)
 	TypeInfo::StaticInit ();
 #endif
 
-	FActorInfo::StaticWeaponInit ();
-
 	atterm (DObject::StaticShutdown);
 	atterm (DoConsoleAtExit);
 
@@ -1819,10 +1986,11 @@ void D_DoomMain (void)
 	S_ParseSndInfo ();
 	S_ParseSndEax ();
 
+	FActorInfo::StaticInit ();
+
 	// [RH] Load custom key and weapon settings from WADs
 	D_LoadWadSettings ();
 
-	FActorInfo::StaticInit ();
 	FActorInfo::StaticGameSet ();
 
 	Printf ("Init DOOM refresh subsystem.\n");
@@ -1830,10 +1998,6 @@ void D_DoomMain (void)
 
 	DecalLibrary.Clear ();
 	DecalLibrary.ReadAllDecals ();
-
-	// [RH] Set standard powerup blends
-	PowerupColors[pw_ironfeet] = MAKEARGB (32, 0, 255, 0);
-	PowerupColors[pw_strength] = MAKEARGB (128, 255, 0, 0);
 
 	// [RH] Try adding .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.
@@ -1905,7 +2069,14 @@ void D_DoomMain (void)
 	dmflags = flags;
 
 	// get skill / episode / map from parms
-	strcpy (startmap, (gameinfo.flags & GI_MAPxx) ? "MAP01" : "E1M1");
+	if (gameinfo.gametype != GAME_Hexen)
+	{
+		strcpy (startmap, (gameinfo.flags & GI_MAPxx) ? "MAP01" : "E1M1");
+	}
+	else
+	{
+		strcpy (startmap, "&wt@01");
+	}
 	autostart = false;
 				
 	const char *val = Args.CheckValue ("-skill");
@@ -1916,7 +2087,7 @@ void D_DoomMain (void)
 	}
 
 	p = Args.CheckParm ("-warp");
-	if (p && p < Args.NumArgs() - (1+(gameinfo.flags & GI_MAPxx ? 0 : 1)))
+	if (p && p < Args.NumArgs() - 1)
 	{
 		int ep, map;
 
@@ -1928,7 +2099,7 @@ void D_DoomMain (void)
 		else 
 		{
 			ep = Args.GetArg(p+1)[0]-'0';
-			map = Args.GetArg(p+2)[0]-'0';
+			map = p < Args.NumArgs() - 2 ? Args.GetArg(p+2)[0]-'0' : 10;
 			if ((unsigned)map > 9)
 			{
 				map = ep;
@@ -2093,6 +2264,7 @@ void D_DoomMain (void)
 		BorderNeedRefresh = screen->GetPageCount ();
 		if (autostart || netgame)
 		{
+			CheckWarpTransMap (startmap, true);
 			G_InitNew (startmap);
 		}
 		else

@@ -287,7 +287,7 @@ static void Convert8 (BYTE *src, int srcpitch,
 			for (savedx = x, x >>= 2; x != 0; x--)
 			{
 				*(DWORD *)dest =
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 					(GPfxPal.Pal8[src[0]] << 24) |
 					(GPfxPal.Pal8[src[1]] << 16) |
 					(GPfxPal.Pal8[src[2]] << 8) |
@@ -326,7 +326,7 @@ static void Convert8 (BYTE *src, int srcpitch,
 			{
 				DWORD work;
 
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 				work  = GPfxPal.Pal8[src[xf >> FRACBITS]] << 24;	xf += xstep;
 				work |= GPfxPal.Pal8[src[xf >> FRACBITS]] << 16;	xf += xstep;
 				work |= GPfxPal.Pal8[src[xf >> FRACBITS]] << 8;		xf += xstep;
@@ -382,7 +382,7 @@ static void Convert16 (BYTE *src, int srcpitch,
 			for (savedx = x, x >>= 1; x != 0; x--)
 			{
 				*(DWORD *)dest =
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 					(GPfxPal.Pal16[src[0]] << 16) |
 					(GPfxPal.Pal16[src[1]]);
 #else
@@ -417,7 +417,7 @@ static void Convert16 (BYTE *src, int srcpitch,
 			{
 				DWORD work;
 
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 				work  = GPfxPal.Pal16[src[xf >> FRACBITS]] << 16;	xf += xstep;
 				work |= GPfxPal.Pal16[src[xf >> FRACBITS]];			xf += xstep;
 #else

@@ -1,3 +1,4 @@
+#include "actor.h"
 #include "info.h"
 #include "a_pickups.h"
 #include "a_artifacts.h"
@@ -138,70 +139,14 @@ END_DEFAULTS
 
 // Poison Bag Artifact (Flechette) ------------------------------------------
 
-class AArtiPoisonBag : public AArtifact
+class AArtiPoisonBag : public AInventory
 {
-	DECLARE_ACTOR (AArtiPoisonBag, AArtifact)
-	AT_GAME_SET_FRIEND (PoisonBag)
+	DECLARE_ACTOR (AArtiPoisonBag, AInventory)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		if (toucher->IsKindOf (RUNTIME_CLASS(AClericPlayer)))
-		{
-			return P_GiveArtifact (toucher->player, arti_poisonbag1);
-		}
-		else if (toucher->IsKindOf (RUNTIME_CLASS(AMagePlayer)))
-		{
-			return P_GiveArtifact (toucher->player, arti_poisonbag2);
-		}
-		else
-		{
-			return P_GiveArtifact (toucher->player, arti_poisonbag3);
-		}
-	}
-protected:
-	const char *PickupMessage ()
-	{
-		return GStrings(TXT_ARTIPOISONBAG);
-	}
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		angle_t angle = player->mo->angle >> ANGLETOFINESHIFT;
-		AActor *mo;
-
-		if (arti == arti_poisonbag1 || arti == arti_poisonbag2)	// cleric (1) or mage (2)
-		{
-			mo = Spawn (
-				arti == arti_poisonbag1 ? RUNTIME_CLASS(APoisonBag) : RUNTIME_CLASS (AFireBomb),
-				player->mo->x+16*finecosine[angle],
-				player->mo->y+24*finesine[angle], player->mo->z-
-				player->mo->floorclip+8*FRACUNIT);
-			if (mo)
-			{
-				mo->target = player->mo;
-			}
-		}
-		else // fighter
-		{
-			mo = Spawn<AThrowingBomb> (player->mo->x, player->mo->y, 
-				player->mo->z-player->mo->floorclip+35*FRACUNIT);
-			if (mo)
-			{
-				angle_t pitch = (angle_t)player->mo->pitch >> ANGLETOFINESHIFT;
-
-				mo->angle = player->mo->angle+(((pr_poisonbag()&7)-4)<<24);
-				mo->momz = 4*FRACUNIT + 2*finesine[pitch];
-				mo->z += 2*finesine[pitch];
-				P_ThrustMobj (mo, mo->angle, mo->Speed);
-				mo->momx += player->mo->momx>>1;
-				mo->momy += player->mo->momy>>1;
-				mo->target = player->mo;
-				mo->tics -= pr_poisonbag()&3;
-				P_CheckMissileSpawn (mo);											
-			} 
-		}
-		return mo != NULL;
-	}
+	bool HandlePickup (AInventory *item);
+	AInventory *CreateCopy (AActor *other);
+	const char *PickupMessage ();
+	void BeginPlay ();
 };
 
 FState AArtiPoisonBag::States[] =
@@ -213,16 +158,221 @@ IMPLEMENT_ACTOR (AArtiPoisonBag, Hexen, 8000, 72)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTIPSBG")
 END_DEFAULTS
 
-AT_GAME_SET (PoisonBag)
+// Poison Bag 1 (The Cleric's) ----------------------------------------------
+
+class AArtiPoisonBag1 : public AArtiPoisonBag
 {
-	ArtiDispatch[arti_poisonbag1] = &AArtiPoisonBag::ActivateArti;
-	ArtiDispatch[arti_poisonbag2] = &AArtiPoisonBag::ActivateArti;
-	ArtiDispatch[arti_poisonbag3] = &AArtiPoisonBag::ActivateArti;
-	ArtiPics[arti_poisonbag1] = Wads.CheckNumForName("ARTIPSB1") >= 0 ? "ARTIPSB1" : "ARTIPSBG";
-	ArtiPics[arti_poisonbag2] = Wads.CheckNumForName("ARTIPSB2") >= 0 ? "ARTIPSB2" : "ARTIPSBG";
-	ArtiPics[arti_poisonbag3] = Wads.CheckNumForName("ARTIPSB3") >= 0 ? "ARTIPSB3" : "ARTIPSBG";
+	DECLARE_STATELESS_ACTOR (AArtiPoisonBag1, AArtiPoisonBag)
+public:
+	bool Use ();
+};
+
+IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag1, Hexen, -1, 0)
+	PROP_Inventory_Icon ("ARTIPSB1")
+END_DEFAULTS
+
+bool AArtiPoisonBag1::Use ()
+{
+	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
+	AActor *mo;
+
+	mo = Spawn<APoisonBag> (
+		Owner->x+16*finecosine[angle],
+		Owner->y+24*finesine[angle], Owner->z-
+		Owner->floorclip+8*FRACUNIT);
+	if (mo)
+	{
+		mo->target = Owner;
+		return true;
+	}
+	return false;
+}
+
+// Poison Bag 2 (The Mage's) ------------------------------------------------
+
+class AArtiPoisonBag2 : public AArtiPoisonBag
+{
+	DECLARE_STATELESS_ACTOR (AArtiPoisonBag2, AArtiPoisonBag)
+public:
+	bool Use ();
+};
+
+IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag2, Hexen, -1, 0)
+	PROP_Inventory_Icon ("ARTIPSB2")
+END_DEFAULTS
+
+bool AArtiPoisonBag2::Use ()
+{
+	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
+	AActor *mo;
+
+	mo = Spawn<AFireBomb> (
+		Owner->x+16*finecosine[angle],
+		Owner->y+24*finesine[angle], Owner->z-
+		Owner->floorclip+8*FRACUNIT);
+	if (mo)
+	{
+		mo->target = Owner;
+		return true;
+	}
+	return false;
+}
+
+// Poison Bag 3 (The Fighter's) ---------------------------------------------
+
+class AArtiPoisonBag3 : public AArtiPoisonBag
+{
+	DECLARE_STATELESS_ACTOR (AArtiPoisonBag3, AArtiPoisonBag)
+public:
+	bool Use ();
+};
+
+IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag3, Hexen, -1, 0)
+	PROP_Inventory_Icon ("ARTIPSB3")
+END_DEFAULTS
+
+bool AArtiPoisonBag3::Use ()
+{
+	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
+	AActor *mo;
+
+	mo = Spawn<AThrowingBomb> (Owner->x, Owner->y, 
+		Owner->z-Owner->floorclip+35*FRACUNIT);
+	if (mo)
+	{
+		angle_t pitch = (angle_t)Owner->pitch >> ANGLETOFINESHIFT;
+
+		mo->angle = Owner->angle+(((pr_poisonbag()&7)-4)<<24);
+		mo->momz = 4*FRACUNIT + 2*finesine[pitch];
+		mo->z += 2*finesine[pitch];
+		P_ThrustMobj (mo, mo->angle, mo->Speed);
+		mo->momx += Owner->momx>>1;
+		mo->momy += Owner->momy>>1;
+		mo->target = Owner;
+		mo->tics -= pr_poisonbag()&3;
+		P_CheckMissileSpawn (mo);
+		return true;
+	}
+	return false;
+}
+
+//============================================================================
+//
+// AArtiPoisonBag :: HandlePickup
+//
+//============================================================================
+
+bool AArtiPoisonBag::HandlePickup (AInventory *item)
+{
+	// Only do special handling when picking up the base class
+	if (item->GetClass() != RUNTIME_CLASS(AArtiPoisonBag))
+	{
+		return Super::HandlePickup (item);
+	}
+
+	bool matched;
+
+	if (Owner->IsKindOf (RUNTIME_CLASS(AClericPlayer)))
+	{
+		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag1));
+	}
+	else if (Owner->IsKindOf (RUNTIME_CLASS(AMagePlayer)))
+	{
+		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag2));
+	}
+	else
+	{
+		matched = (GetClass() == RUNTIME_CLASS(AArtiPoisonBag3));
+	}
+	if (matched)
+	{
+		if (Amount < MaxAmount)
+		{
+			Amount += item->Amount;
+			if (Amount > MaxAmount)
+			{
+				Amount = MaxAmount;
+			}
+			item->ItemFlags |= IF_PICKUPGOOD;
+		}
+		return true;
+	}
+	if (Inventory != NULL)
+	{
+		return Inventory->HandlePickup (item);
+	}
+	return false;
+}
+
+//============================================================================
+//
+// AArtiPoisonBag :: CreateCopy
+//
+//============================================================================
+
+AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
+{
+	// Only the base class gets special handling
+	if (GetClass() != RUNTIME_CLASS(AArtiPoisonBag))
+	{
+		return Super::CreateCopy (other);
+	}
+
+	AInventory *copy;
+	const TypeInfo *spawntype;
+
+	if (other->IsKindOf (RUNTIME_CLASS(AClericPlayer)))
+	{
+		spawntype = RUNTIME_CLASS(AArtiPoisonBag1);
+	}
+	else if (other->IsKindOf (RUNTIME_CLASS(AMagePlayer)))
+	{
+		spawntype = RUNTIME_CLASS(AArtiPoisonBag2);
+	}
+	else
+	{
+		spawntype = RUNTIME_CLASS(AArtiPoisonBag3);
+	}
+	copy = static_cast<AInventory *>(Spawn (spawntype, 0, 0, 0));
+	copy->Amount = Amount;
+	copy->MaxAmount = MaxAmount;
+	GoAwayAndDie ();
+	return copy;
+}
+
+//============================================================================
+//
+// AArtiPoisonBag :: PickupMessage
+//
+//============================================================================
+
+const char *AArtiPoisonBag::PickupMessage ()
+{
+	return GStrings(TXT_ARTIPOISONBAG);
+}
+
+//============================================================================
+//
+// AArtiPoisonBag :: BeginPlay
+//
+//============================================================================
+
+void AArtiPoisonBag::BeginPlay ()
+{
+	// If a subclass's specific icon is not defined, let it use the base class's.
+	if (Icon <= 0)
+	{
+		AInventory *defbag;
+		// Why doesn't this work?
+		//defbag = GetDefault<AArtiPoisonBag>();
+		defbag = (AInventory *)GetDefaultByType (RUNTIME_CLASS(AArtiPoisonBag));
+		Icon = defbag->Icon;
+	}
 }
 
 // Poison Cloud -------------------------------------------------------------

@@ -135,13 +135,12 @@ void A_PosAttack (AActor *self)
 				
 	A_FaceTarget (self);
 	angle = self->angle;
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	slope = P_AimLineAttack (self, angle, MISSILERANGE);
 
 	S_Sound (self, CHAN_WEAPON, "grunt/attack", 1, ATTN_NORM);
 	angle += pr_posattack.Random2() << 20;
 	damage = ((pr_posattack()%5)+1)*3;
-	P_LineAttack (self, angle, MISSILERANGE, slope, damage);
+	P_LineAttack (self, angle, MISSILERANGE, slope, damage, RUNTIME_CLASS(ABulletPuff));
 }
 
 // Dead zombie man ---------------------------------------------------------
@@ -271,14 +270,13 @@ static void A_SPosAttack2 (AActor *self)
 		
 	A_FaceTarget (self);
 	bangle = self->angle;
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
 	for (i=0 ; i<3 ; i++)
     {
 		int angle = bangle + (pr_sposattack.Random2() << 20);
 		int damage = ((pr_sposattack()%5)+1)*3;
-		P_LineAttack(self, angle, MISSILERANGE, slope, damage);
+		P_LineAttack(self, angle, MISSILERANGE, slope, damage, RUNTIME_CLASS(ABulletPuff));
     }
 }
 
@@ -535,12 +533,11 @@ void A_CPosAttack (AActor *self)
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
 	bangle = self->angle;
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
 	angle = bangle + (pr_cposattack.Random2() << 20);
 	damage = ((pr_cposattack()%5)+1)*3;
-	P_LineAttack (self, angle, MISSILERANGE, slope, damage);
+	P_LineAttack (self, angle, MISSILERANGE, slope, damage, RUNTIME_CLASS(ABulletPuff));
 }
 
 void A_CPosRefire (AActor *self)

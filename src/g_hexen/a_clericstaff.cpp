@@ -14,10 +14,10 @@
 static FRandom pr_staffcheck ("CStaffCheck");
 static FRandom pr_blink ("CStaffBlink");
 
-void A_CStaffInitBlink (AActor *actor, pspdef_t *psp);
-void A_CStaffCheckBlink (AActor *actor, pspdef_t *psp);
-void A_CStaffCheck (AActor *actor, pspdef_t *psp);
-void A_CStaffAttack (AActor *actor, pspdef_t *psp);
+void A_CStaffInitBlink (AActor *actor);
+void A_CStaffCheckBlink (AActor *actor);
+void A_CStaffCheck (AActor *actor);
+void A_CStaffAttack (AActor *actor);
 void A_CStaffMissileSlither (AActor *);
 
 // The Cleric's Serpent Staff -----------------------------------------------
@@ -26,12 +26,6 @@ class ACWeapStaff : public AClericWeapon
 {
 	DECLARE_ACTOR (ACWeapStaff, AClericWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_cstaff;
-	}
-	static FWeaponInfo WeaponInfo;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_C2);
@@ -88,34 +82,24 @@ FState ACWeapStaff::States[] =
 	S_NORMAL2 (CSSF, 'K',   10, NULL				    , &States[S_CSTAFFREADY+2], 0, 36),
 };
 
-FWeaponInfo ACWeapStaff::WeaponInfo =
-{
-	0,
-	MANA_1,
-	MANA_1,
-	1,
-	25,
-	&States[S_CSTAFFUP],
-	&States[S_CSTAFFDOWN],
-	&States[S_CSTAFFREADY],
-	&States[S_CSTAFFATK],
-	&States[S_CSTAFFATK],
-	NULL,
-	RUNTIME_CLASS(ACWeapStaff),
-	150,
-	10*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ACWeapStaff),
-	-1
-};
-
 IMPLEMENT_ACTOR (ACWeapStaff, Hexen, 10, 32)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_CSTAFF)
-END_DEFAULTS
 
-WEAPON1 (wp_cstaff, ACWeapStaff)
+	PROP_Weapon_SelectionOrder (1600)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (25)
+	PROP_Weapon_UpState (S_CSTAFFUP)
+	PROP_Weapon_DownState (S_CSTAFFDOWN)
+	PROP_Weapon_ReadyState (S_CSTAFFREADY)
+	PROP_Weapon_AtkState (S_CSTAFFATK)
+	PROP_Weapon_HoldAtkState (S_CSTAFFATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (10)
+	PROP_Weapon_MoveCombatDist (25000000)
+	PROP_Weapon_AmmoType1 ("Mana1")
+	PROP_Weapon_ProjectileType ("CStaffMissile")
+END_DEFAULTS
 
 // Serpent Staff Missile ----------------------------------------------------
 
@@ -200,7 +184,7 @@ END_DEFAULTS
 //
 //============================================================================
 
-void A_CStaffCheck (AActor *actor, pspdef_t *psp)
+void A_CStaffCheck (AActor *actor)
 {
 	AActor *pmo;
 	int damage;
@@ -214,17 +198,17 @@ void A_CStaffCheck (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
+	AWeapon *weapon = actor->player->ReadyWeapon;
 
 	pmo = player->mo;
 	damage = 20+(pr_staffcheck()&15);
-	PuffType = RUNTIME_CLASS(ACStaffPuff);
 	for (i = 0; i < 3; i++)
 	{
 		angle = pmo->angle+i*(ANG45/16);
 		slope = P_AimLineAttack (pmo, angle, fixed_t(1.5*MELEERANGE));
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage);
+			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, RUNTIME_CLASS(ACStaffPuff));
 			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
 				linetarget->x, linetarget->y);
 			if ((linetarget->player || linetarget->flags3&MF3_ISMONSTER)
@@ -232,17 +216,23 @@ void A_CStaffCheck (AActor *actor, pspdef_t *psp)
 			{
 				newLife = player->health+(damage>>3);
 				newLife = newLife > 100 ? 100 : newLife;
-				pmo->health = player->health = newLife;
+				if (newLife > player->health)
+				{
+					pmo->health = player->health = newLife;
+				}
 				P_SetPsprite (player, ps_weapon, &ACWeapStaff::States[S_CSTAFFATK2]);
 			}
-			player->UseAmmo (true);
+			if (weapon != NULL)
+			{
+				weapon->DepleteAmmo (weapon->bAltFire, false);
+			}
 			break;
 		}
 		angle = pmo->angle-i*(ANG45/16);
 		slope = P_AimLineAttack (player->mo, angle, fixed_t(1.5*MELEERANGE));
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage);
+			P_LineAttack (pmo, angle, fixed_t(1.5*MELEERANGE), slope, damage, RUNTIME_CLASS(ACStaffPuff));
 			pmo->angle = R_PointToAngle2 (pmo->x, pmo->y, 
 				linetarget->x, linetarget->y);
 			if (linetarget->player || linetarget->flags3&MF3_ISMONSTER)
@@ -252,7 +242,7 @@ void A_CStaffCheck (AActor *actor, pspdef_t *psp)
 				pmo->health = player->health = newLife;
 				P_SetPsprite (player, ps_weapon, &ACWeapStaff::States[S_CSTAFFATK2]);
 			}
-			player->UseAmmo (true);
+			weapon->DepleteAmmo (weapon->bAltFire, false);
 			break;
 		}
 	}
@@ -264,10 +254,9 @@ void A_CStaffCheck (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_CStaffAttack (AActor *actor, pspdef_t *psp)
+void A_CStaffAttack (AActor *actor)
 {
 	AActor *mo;
-	AActor *pmo;
 	player_t *player;
 
 	if (NULL == (player = actor->player))
@@ -275,19 +264,23 @@ void A_CStaffAttack (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	player->UseAmmo (true);
-	pmo = player->mo;
-	mo = P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACStaffMissile), pmo->angle-(ANG45/15));
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+	mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACStaffMissile), actor->angle-(ANG45/15));
 	if (mo)
 	{
 		mo->special2 = 32;
 	}
-	mo = P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACStaffMissile), pmo->angle+(ANG45/15));
+	mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACStaffMissile), actor->angle+(ANG45/15));
 	if (mo)
 	{
 		mo->special2 = 0;
 	}
-	S_Sound (player->mo, CHAN_WEAPON, "ClericCStaffFire", 1, ATTN_NORM);
+	S_Sound (actor, CHAN_WEAPON, "ClericCStaffFire", 1, ATTN_NORM);
 }
 
 //============================================================================
@@ -319,7 +312,7 @@ void A_CStaffMissileSlither (AActor *actor)
 //
 //============================================================================
 
-void A_CStaffInitBlink (AActor *actor, pspdef_t *psp)
+void A_CStaffInitBlink (AActor *actor)
 {
 	actor->special1 = (pr_blink()>>1)+20;
 }
@@ -330,7 +323,7 @@ void A_CStaffInitBlink (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_CStaffCheckBlink (AActor *actor, pspdef_t *psp)
+void A_CStaffCheckBlink (AActor *actor)
 {
 	if (!--actor->special1)
 	{

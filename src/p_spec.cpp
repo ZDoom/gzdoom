@@ -163,6 +163,7 @@ static void ParseAnim (bool istex);
 //
 static void P_InitAnimDefs ()
 {
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	int lump, lastlump = 0;
 	
 	while ((lump = Wads.FindLump ("ANIMDEFS", &lastlump)) != -1)
@@ -199,9 +200,9 @@ static void P_InitAnimDefs ()
 				}
 				else
 				{
-					SC_ScriptError (NULL, NULL);
+					SC_ScriptError (NULL);
 				}
-				int picnum = TexMan.CheckForTexture (sc_String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall);
+				int picnum = TexMan.CheckForTexture (sc_String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
 				if (picnum != -1)
 				{
 					FTexture *warper = new FWarpTexture (TexMan[picnum]);
@@ -224,7 +225,7 @@ static void P_InitAnimDefs ()
 			}
 			else
 			{
-				SC_ScriptError (NULL, NULL);
+				SC_ScriptError (NULL);
 			}
 		}
 		SC_Close ();
@@ -233,6 +234,7 @@ static void P_InitAnimDefs ()
 
 static void ParseAnim (bool istex)
 {
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	TArray<FAnimDef::FAnimFrame> frames (32);
 	FAnimDef::FAnimFrame frame;
 	FAnimDef sink;
@@ -241,13 +243,26 @@ static void ParseAnim (bool istex)
 	int framenum;
 	int min, max;
 	size_t i;
+	bool optional = false, missing = false;
 
 	SC_MustGetString ();
-	picnum = TexMan.CheckForTexture (sc_String, istex ? FTexture::TEX_Wall : FTexture::TEX_Flat);
+	if (SC_Compare ("optional"))
+	{
+		optional = true;
+		SC_MustGetString ();
+	}
+	picnum = TexMan.CheckForTexture (sc_String, istex ? FTexture::TEX_Wall : FTexture::TEX_Flat, texflags);
 
 	if (picnum < 0)
 	{
-		Printf (PRINT_BOLD, "ANIMDEFS: Can't find %s\n", sc_String);
+		if (optional)
+		{
+			missing = true;
+		}
+		else
+		{
+			Printf (PRINT_BOLD, "ANIMDEFS: Can't find %s\n", sc_String);
+		}
 	}
 
 	sink.CurFrame = 0;
@@ -285,12 +300,15 @@ static void ParseAnim (bool istex)
 				SC_ScriptError ("You cannot use range together with pic.");
 			}
 		}
-		else if (!SC_Compare ("pic"))
+		else if (SC_Compare ("pic"))
 		{
 			if (!sink.bUniqueFrames)
 			{
 				SC_ScriptError ("You cannot use pic together with range.");
 			}
+		}
+		else
+		{
 			SC_UnGet ();
 			break;
 		}
@@ -304,11 +322,10 @@ static void ParseAnim (bool istex)
 		}
 		else
 		{
-			framenum = TexMan.CheckForTexture (sc_String, istex ? FTexture::TEX_Wall : FTexture::TEX_Flat);
-			if (framenum < 0)
+			framenum = TexMan.CheckForTexture (sc_String, istex ? FTexture::TEX_Wall : FTexture::TEX_Flat, texflags);
+			if (framenum < 0 && !missing)
 			{
-				const char *parm = sc_String;
-				SC_ScriptError ("Unknown texture %s", &parm);
+				SC_ScriptError ("Unknown texture %s", sc_String);
 			}
 		}
 		SC_MustGetString ();
@@ -431,6 +448,8 @@ static void ParseAnim (bool istex)
 //
 void P_InitPicAnims (void)
 {
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
+
 	if (Wads.CheckNumForName ("ANIMATED") != -1)
 	{
 		FAnimDef anim, *newAnim;
@@ -450,29 +469,36 @@ void P_InitPicAnims (void)
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
-				if ((pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Wall)) == -1 ||
-					(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .endname */, FTexture::TEX_Wall)) == -1)
+				if ((pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Wall, texflags)) == -1 ||
+					(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .endname */, FTexture::TEX_Wall, texflags)) == -1)
 					continue;		
 
-				anim.BasePic = pic1;
-				anim.NumFrames = pic2 - anim.BasePic + 1;
 				if (*anim_p & 2)
 				{ // [RH] Bit 1 set means allow decals on walls with this texture
-					TexMan[anim.BasePic]->bNoDecals = false;
+					TexMan[pic1]->bNoDecals = false;
 				}
 				else
 				{
-					TexMan[anim.BasePic]->bNoDecals = true;
+					TexMan[pic1]->bNoDecals = true;
 				}
 			}
 			else
 			{
-				if ((pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Flat)) == -1 ||
-					(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat)) == -1)
+				if ((pic1 = TexMan.CheckForTexture (anim_p + 10 /* .startname */, FTexture::TEX_Flat, texflags)) == -1 ||
+					(pic2 = TexMan.CheckForTexture (anim_p + 1 /* .startname */, FTexture::TEX_Flat, texflags)) == -1)
 					continue;
-
+			}
+			// [RH] Allow for either forward or backward animations.
+			if (pic1 < pic2)
+			{
 				anim.BasePic = pic1;
-				anim.NumFrames = pic2 - anim.BasePic + 1;
+				anim.NumFrames = pic2 - pic1 + 1;
+			}
+			else
+			{
+				anim.BasePic = pic2;
+				anim.NumFrames = pic1 - pic2 + 1;
+				anim.AnimType = FAnimDef::ANIM_Backward;
 			}
 
 			anim.bUniqueFrames = false;
@@ -619,173 +645,6 @@ int P_FindLineFromID (int id, int start)
 }
 
 
-// [RH] P_CheckKeys
-//
-//	Returns true if the player has the desired key,
-//	false otherwise.
-
-BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote)
-{
-	if ((lock & 0x7f) == NoKey)
-		return true;
-
-	// Non-players do not have keys
-	if (p == NULL)
-		return false;
-
-	int msg = 0;
-	bool keynameonly = false;
-	BOOL equiv = lock & 0x80;
-	int i;
-
-	lock = (keyspecialtype_t)(lock & 0x7f);
-
-	if (gameinfo.gametype == GAME_Hexen)
-	{
-		if (lock == AnyKey)
-		{
-			for (i = 0; i < NUMKEYS; ++i)
-			{
-				if (p->keys[i])
-				{
-					return true;
-				}
-			}
-			msg = PD_ANY;
-		}/* Hexen has so many keys, I don't know if I should allow this
-		else if (lock == AllKeys)
-		{
-			for (i = 0; i < NUMKEYS; ++i)
-			{
-				if (!p->keys[i])
-				{
-					break;
-				}
-			}
-			if (i == NUMKEYS)
-			{
-				return true;
-			}
-			msg = PD_ALL12;
-		}*/
-		else if ((unsigned)lock <= NUMKEYS)
-		{
-			if (p->keys[lock-1])
-			{
-				return true;
-			}
-			msg = TXT_KEY_STEEL+lock-1;
-			keynameonly = true;
-		}
-	}
-	else
-	{
-		static const struct
-		{
-			keyspecialtype_t Lock;
-			WORD ItemNum;
-			WORD ObjText, EquivText, UniqueText, HereticText;
-		}
-		KeyChecks[6] =
-		{
-			{ BCard,	it_bluecard,	PD_BLUEO,	PD_BLUEK,	PD_BLUEC,	TXT_NEEDBLUEKEY },
-			{ BSkull,	it_blueskull,	PD_BLUEO,	PD_BLUEK,	PD_BLUES,	TXT_NEEDBLUEKEY },
-			{ RCard,	it_redcard,		PD_REDO,	PD_REDK,	PD_REDC,	TXT_NEEDGREENKEY },
-			{ RSkull,	it_redskull,	PD_REDO,	PD_REDK,	PD_REDS,	TXT_NEEDGREENKEY },
-			{ YCard,	it_yellowcard,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWC,	TXT_NEEDYELLOWKEY },
-			{ YSkull,	it_yellowskull,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWS,	TXT_NEEDYELLOWKEY }
-		};
-
-		BYTE HaveKeys[6];
-
-		// First, catalog the keys the player has
-		for (i = 0; i < 6; i++)
-		{
-			HaveKeys[i] = p->keys[KeyChecks[i].ItemNum];
-		}
-		if (equiv || gameinfo.gametype == GAME_Heretic)
-		{
-			for (i = 0; i < 3; i++)
-			{
-				HaveKeys[2*i] = HaveKeys[2*i+1] = HaveKeys[2*i] | HaveKeys[2*i+1];
-			}
-		}
-		if (gameinfo.gametype != GAME_Doom)
-			remote = false;
-
-		switch (lock)
-		{
-		case AnyKey:
-			for (i = 0; i < 6; i++)
-			{
-				if (HaveKeys[i])
-				{
-					return true;
-				}
-			}
-			msg = PD_ANY;
-			break;
-
-		case AllKeys:
-			for (i = 0; i < 6; i++)
-			{
-				if (!HaveKeys[i])
-				{
-					msg = equiv ? PD_ALL3 : PD_ALL6;
-					break;
-				}
-			}
-			if (i == 6)
-			{ // Got all the keys
-				return true;
-			}
-			break;
-
-		default:
-			for (i = 0; i < 6; i++)
-			{
-				if (KeyChecks[i].Lock == lock)
-					break;
-			}
-			if (i == 6)
-			{ // Unknown key; assume we do not have it
-				return false;
-			}
-			if (HaveKeys[i])
-			{
-				return true;
-			}
-			if (gameinfo.gametype == GAME_Heretic)
-			{
-				msg = KeyChecks[i].HereticText;
-			}
-			else
-			{
-				msg = equiv ? (remote ? KeyChecks[i].ObjText : KeyChecks[i].EquivText)
-					: KeyChecks[i].UniqueText;
-			}
-			break;
-		}
-	}
-
-	// If we get here, we don't have the right key,
-	// so print an appropriate message and grunt.
-	if (p->mo == players[consoleplayer].camera)
-	{
-		S_Sound (p->mo, CHAN_VOICE, "misc/keytry", 1, ATTN_NORM);
-		if (!keynameonly)
-		{
-			C_MidPrint (GStrings(msg));
-		}
-		else
-		{
-			char msg2[256];
-			sprintf (msg2, "YOU NEED THE %s\n", GStrings(msg));
-			C_MidPrint (msg2);
-		}
-	}
-	return false;
-}
 
 
 //============================================================================
@@ -806,11 +665,14 @@ BOOL P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		return false;
 	}
 	lineActivation = GET_SPAC(line->flags);
+	if (lineActivation == SPAC_PTOUCH)
+	{
+		lineActivation = activationType;
+	}
 	repeat = line->flags & ML_REPEAT_SPECIAL;
 	buttonSuccess = false;
-	TeleportSide = side;
 	buttonSuccess = LineSpecials[line->special]
-					(line, mo, line->args[0],
+					(line, mo, side == 1, line->args[0],
 					line->args[1], line->args[2],
 					line->args[3], line->args[4]);
 
@@ -823,6 +685,10 @@ BOOL P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 		&& buttonSuccess)
 	{
 		P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
+	}
+	if (developer && buttonSuccess)
+	{
+		Printf ("Line special %d activated\n", special);
 	}
 	return true;
 }
@@ -838,7 +704,12 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	int lineActivation;
 
 	lineActivation = GET_SPAC(line->flags);
-	if (lineActivation == SPAC_USETHROUGH)
+	if (lineActivation == SPAC_PTOUCH &&
+		(activationType == SPAC_PCROSS || activationType == SPAC_IMPACT))
+	{
+		lineActivation = activationType;
+	}
+	else if (lineActivation == SPAC_USETHROUGH)
 	{
 		lineActivation = SPAC_USE;
 	}
@@ -866,59 +737,64 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{ 
 		return false;
 	}
-	if (!mo->player && !(mo->flags & MF_MISSILE))
-	{
+	if (!mo->player && !(mo->flags & MF_MISSILE) && !(line->flags & ML_MONSTERSCANACTIVATE))
+	{ // [RH] monsters' ability to activate this line depends on its type
+		// In Hexen, only MCROSS lines could be activated by monsters. With
+		// lax activation checks, monsters can also activate certain lines
+		// even without them being marked as monster activate-able. This is
+		// the default for non-Hexen maps in Hexen format.
+		if (!(level.flags & LEVEL_LAXMONSTERACTIVATION))
+		{
+			return false;
+		}
 		if ((activationType == SPAC_USE || activationType == SPAC_PUSH)
 			&& (line->flags & ML_SECRET))
 			return false;		// never open secret doors
-		if (!(line->flags & ML_MONSTERSCANACTIVATE))
-		{ // [RH] monsters' ability to activate this line depends on its type
-		  // (in Hexen, only MCROSS lines could be activated by monsters)
-			BOOL noway = true;
 
-			switch (lineActivation)
+		bool noway = true;
+
+		switch (lineActivation)
+		{
+		case SPAC_IMPACT:
+		case SPAC_PCROSS:
+			// shouldn't really be here if not a missile
+		case SPAC_MCROSS:
+			noway = false;
+			break;
+
+		case SPAC_CROSS:
+			switch (line->special)
 			{
-			case SPAC_IMPACT:
-			case SPAC_PCROSS:
-				// shouldn't really be here if not a missile
-			case SPAC_MCROSS:
-				noway = false;
-				break;
-
-			case SPAC_CROSS:
-				switch (line->special)
+			case Door_Raise:
+				if (line->args[1] >= 64)
 				{
-				case Door_Raise:
-					if (line->args[1] >= 64)
-					{
-						break;
-					}
-				case Teleport:
-				case Teleport_NoFog:
-				case Teleport_Line:
-				case Plat_DownWaitUpStayLip:
-				case Plat_DownWaitUpStay:
-					noway = false;
-				}
-				break;
-
-			case SPAC_USE:
-			case SPAC_PUSH:
-				switch (line->special)
-				{
-				case Door_Raise:
-					if (line->args[0] == 0 && line->args[1] < 64)
-						noway = false;
 					break;
-				case Teleport:
-				case Teleport_NoFog:
-					noway = false;
 				}
-				break;
+			case Teleport:
+			case Teleport_NoFog:
+			case Teleport_Line:
+			case Plat_DownWaitUpStayLip:
+			case Plat_DownWaitUpStay:
+				noway = false;
 			}
-			if (noway)
-				return false;
+			break;
+
+		case SPAC_USE:
+		case SPAC_PUSH:
+			switch (line->special)
+			{
+			case Door_Raise:
+				if (line->args[0] == 0 && line->args[1] < 64)
+					noway = false;
+				break;
+			case Teleport:
+			case Teleport_NoFog:
+				noway = false;
+			}
+			break;
 		}
+		if (noway)
+			return false;
 	}
 	return true;
 }
@@ -940,23 +816,32 @@ void P_PlayerInSpecialSector (player_t *player)
 		return;
 	}
 
-	// Has hitten ground.
+	// Has hit ground.
+	AInventory *ironfeet;
+
+	// Allow subclasses. Better would be to implement it as armor and let that reduce
+	// the damage as part of the normal damage procedure. Unfortunately, I don't have
+	// different damage types yet, so that's not happening for now.
+	for (ironfeet = player->mo->Inventory; ironfeet != NULL; ironfeet = ironfeet->Inventory)
+	{
+		if (ironfeet->IsKindOf (RUNTIME_CLASS(APowerIronFeet)))
+			break;
+	}
+
 	// [RH] Normal DOOM special or BOOM specialized?
-	if (special >= dLight_Flicker && special <= dDamage_LavaHefty)
+	if (special >= dLight_Flicker && special <= 255)
 	{
 		switch (special)
 		{
 		case dDamage_Hellslime:
 			// HELLSLIME DAMAGE
-			if (!player->powers[pw_ironfeet])
-				if (!(level.time&0x1f))
-					P_DamageMobj (player->mo, NULL, NULL, 10, MOD_SLIME);
+			if (ironfeet == NULL && !(level.time&0x1f))
+				P_DamageMobj (player->mo, NULL, NULL, 10, MOD_SLIME);
 			break;
 
 		case dDamage_Nukage:
 			// NUKAGE DAMAGE
-			if (!player->powers[pw_ironfeet])
-				if (!(level.time&0x1f))
+			if (ironfeet == NULL && !(level.time&0x1f))
 					P_DamageMobj (player->mo, NULL, NULL, 5, MOD_SLIME);
 			break;
 
@@ -964,12 +849,21 @@ void P_PlayerInSpecialSector (player_t *player)
 			// SUPER HELLSLIME DAMAGE
 		case dLight_Strobe_Hurt:
 			// STROBE HURT
-			if (!player->powers[pw_ironfeet]
-				|| (pr_playerinspecialsector()<5) )
+			if (ironfeet == NULL || pr_playerinspecialsector() < 5)
 			{
 				if (!(level.time&0x1f))
 					P_DamageMobj (player->mo, NULL, NULL, 20, MOD_SLIME);
 			}
+			break;
+
+		case sDamage_Hellslime:
+			if (ironfeet == NULL)
+				player->hazardcount += 2;
+			break;
+
+		case sDamage_SuperHellslime:
+			if (ironfeet == NULL)
+				player->hazardcount += 4;
 			break;
 
 		case dDamage_End:
@@ -980,7 +874,7 @@ void P_PlayerInSpecialSector (player_t *player)
 				P_DamageMobj (player->mo, NULL, NULL, 20, MOD_UNKNOWN);
 
 			if (player->health <= 10 && (!deathmatch || !(dmflags & DF_NO_EXIT)))
-				G_ExitLevel(0);
+				G_ExitLevel(0, false);
 			break;
 
 		case dDamage_LavaWimpy:
@@ -1013,18 +907,16 @@ void P_PlayerInSpecialSector (player_t *player)
 		case 0x000: // no damage
 			break;
 		case 0x100: // 2/5 damage per 31 ticks
-			if (!player->powers[pw_ironfeet])
-				if (!(level.time&0x1f))
-					P_DamageMobj (player->mo, NULL, NULL, 5, MOD_LAVA);
+			if (ironfeet == NULL && !(level.time&0x1f))
+				P_DamageMobj (player->mo, NULL, NULL, 5, MOD_LAVA);
 			break;
 		case 0x200: // 5/10 damage per 31 ticks
-			if (!player->powers[pw_ironfeet])
-				if (!(level.time&0x1f))
-					P_DamageMobj (player->mo, NULL, NULL, 10, MOD_SLIME);
+			if (ironfeet == NULL && !(level.time&0x1f))
+				P_DamageMobj (player->mo, NULL, NULL, 10, MOD_SLIME);
 			break;
 		case 0x300: // 10/20 damage per 31 ticks
-			if (!player->powers[pw_ironfeet]
-				|| (pr_playerinspecialsector()<5))	// take damage even with suit
+			if (ironfeet == NULL
+				|| pr_playerinspecialsector() < 5)	// take damage even with suit
 			{
 				if (!(level.time&0x1f))
 					P_DamageMobj (player->mo, NULL, NULL, 20, MOD_SLIME);
@@ -1038,12 +930,12 @@ void P_PlayerInSpecialSector (player_t *player)
 	{
 		if (sector->damage < 20)
 		{
-			if (!player->powers[pw_ironfeet] && !(level.time&0x1f))
+			if (ironfeet == NULL && !(level.time&0x1f))
 				P_DamageMobj (player->mo, NULL, NULL, sector->damage, sector->mod);
 		}
 		else if (sector->damage < 50)
 		{
-			if ((!player->powers[pw_ironfeet] || (pr_playerinspecialsector()<5))
+			if ((ironfeet == NULL || (pr_playerinspecialsector()<5))
 				 && !(level.time&0x1f))
 			{
 				P_DamageMobj (player->mo, NULL, NULL, sector->damage, sector->mod);
@@ -1125,7 +1017,7 @@ void P_UpdateSpecials ()
 		if (level.time >= (int)(timelimit * TICRATE * 60))
 		{
 			Printf ("%s\n", GStrings(TXT_TIMELIMIT));
-			G_ExitLevel(0);
+			G_ExitLevel(0, false);
 		}
 	}
 	

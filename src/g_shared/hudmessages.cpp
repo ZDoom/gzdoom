@@ -142,15 +142,8 @@ void DHUDMessage::Serialize (FArchive &arc)
 	Super::Serialize (arc);
 	arc << Left << Top << CenterX << HoldTics
 		<< Tics << State << TextColor
-		<< SBarID << SourceText << Font << Next;
-	if (SaveVersion >= 215)
-	{
-		arc << HUDWidth << HUDHeight;
-	}
-	else
-	{
-		HUDWidth = HUDHeight = 0;
-	}
+		<< SBarID << SourceText << Font << Next
+		<< HUDWidth << HUDHeight;
 	if (arc.IsLoading ())
 	{
 		Lines = NULL;

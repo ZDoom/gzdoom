@@ -44,6 +44,7 @@
 #include "sbar.h"
 #include "gi.h"
 
+extern FTexture *CrosshairImage;
 extern fixed_t globaluclip, globaldclip;
 
 
@@ -1087,7 +1088,15 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 				// choose a different rotation based on player view
 				spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
 				angle_t ang = R_PointToAngle (fx, fy);
-				angle_t rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+				angle_t rot;
+				if (sprframe->Texture[0] == sprframe->Texture[1])
+				{
+					rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+				}
+				else
+				{
+					rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+				}
 				picnum = sprframe->Texture[rot];
 				flip = sprframe->Flip & (1 << rot);
 				tex = TexMan[picnum];	// Do not animate the rotation
@@ -1116,7 +1125,15 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 			// choose a different rotation based on player view
 			spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + thing->frame];
 			angle_t ang = R_PointToAngle (fx, fy);
-			angle_t rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+			angle_t rot;
+			if (sprframe->Texture[0] == sprframe->Texture[1])
+			{
+				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9) >> 28;
+			}
+			else
+			{
+				rot = (ang - thing->angle + (angle_t)(ANGLE_45/2)*9-(angle_t)(ANGLE_180/16)) >> 28;
+			}
 			picnum = sprframe->Texture[rot];
 			flip = sprframe->Flip & (1 << rot);
 			tex = TexMan[picnum];	// Do not animate the rotation
@@ -1141,10 +1158,16 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 		return;
 	}
 
+	// [RH] Flip for mirrors and renderflags
+	if ((MirrorFlags ^ thing->renderflags) & RF_XFLIP)
+	{
+		flip = !flip;
+	}
+
 	// calculate edges of the shape
 	const fixed_t thingxscalemul = ((thing->xscale+1) * tex->ScaleX) << (16-6-3);
 
-	tx -= tex->LeftOffset * thingxscalemul;
+	tx -= (flip ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
 	x1 = centerx + MulScale32 (tx, xscale);
 
 	// off the right side?
@@ -1192,12 +1215,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 			if (gzb >= heightsec->ceilingplane.ZatPoint (fx, fy))
 				return;
 		}
-	}
-
-	// [RH] Flip for mirrors and renderflags
-	if ((MirrorFlags ^ thing->renderflags) & RF_XFLIP)
-	{
-		flip = !flip;
 	}
 
 	// store information in a vissprite
@@ -1298,7 +1315,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 //
 // R_DrawPSprite
 //
-void R_DrawPSprite (pspdef_t* psp, AActor *owner, fixed_t sx, fixed_t sy)
+void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_t sy)
 {
 	fixed_t 			tx;
 	int 				x1;
@@ -1362,21 +1379,21 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner, fixed_t sx, fixed_t sy)
 		realviewheight == RenderTarget->GetHeight() ||
 		(RenderTarget->GetWidth() > 320 && !st_scale)))
 	{	// Adjust PSprite for fullscreen views
-		FWeaponInfo *weapon;
-		if (camera->player->powers[pw_weaponlevel2])
-			weapon = wpnlev2info[camera->player->readyweapon];
-		else
-			weapon = wpnlev1info[camera->player->readyweapon];
-		if (weapon && weapon->yadjust)
+		AWeapon *weapon;
+		if (camera->player != NULL)
+		{
+			weapon = camera->player->ReadyWeapon;
+		}
+		if (weapon != NULL && weapon->YAdjust != 0 && pspnum <= ps_flash)
 		{
 			if (RenderTarget != screen || realviewheight == RenderTarget->GetHeight())
 			{
-				vis->texturemid -= weapon->yadjust;
+				vis->texturemid -= weapon->YAdjust;
 			}
 			else
 			{
 				vis->texturemid -= FixedMul (StatusBar->GetDisplacement (),
-					weapon->yadjust);
+					weapon->YAdjust);
 			}
 		}
 	}
@@ -1385,8 +1402,6 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner, fixed_t sx, fixed_t sy)
 	vis->xscale = pspritexscale;
 	vis->yscale = pspriteyscale;
 	vis->Translation = 0;		// [RH] Use default colors
-	vis->alpha = owner->alpha;
-	vis->RenderStyle = owner->RenderStyle;
 	vis->pic = tex;
 
 	if (flip)
@@ -1403,31 +1418,36 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner, fixed_t sx, fixed_t sy)
 	if (vis->x1 > x1)
 		vis->startfrac += vis->xiscale*(vis->x1-x1);
 
-	if (fixedlightlev)
+	if (pspnum <= ps_flash)
 	{
-		vis->colormap = basecolormap + fixedlightlev;
-	}
-	else if (fixedcolormap)
-	{
-		// fixed color
-		vis->colormap = fixedcolormap;
-	}
-	else if (!foggy && psp->state->GetFullbright())
-	{
-		// full bright
-		vis->colormap = basecolormap;	// [RH] use basecolormap
+		vis->alpha = owner->alpha;
+		vis->RenderStyle = owner->RenderStyle;
+		if (fixedlightlev)
+		{
+			vis->colormap = basecolormap + fixedlightlev;
+		}
+		else if (fixedcolormap)
+		{
+			// fixed color
+			vis->colormap = fixedcolormap;
+		}
+		else if (!foggy && psp->state->GetFullbright())
+		{
+			// full bright
+			vis->colormap = basecolormap;	// [RH] use basecolormap
+		}
+		else
+		{
+			// local light
+			vis->colormap = basecolormap + (GETPALOOKUP (0, spriteshade) << COLORMAPSHIFT);
+		}
+		if (camera->Inventory != NULL)
+		{
+			camera->Inventory->AlterWeaponSprite (vis);
+		}
 	}
 	else
 	{
-		// local light
-		vis->colormap = basecolormap + (GETPALOOKUP (0, spriteshade) << COLORMAPSHIFT);
-	}
-	if (camera->player &&
-		camera->player->powers[pw_invisibility] > 0 &&
-		camera->player->powers[pw_invisibility] < 4*32 &&
-		!(camera->player->powers[pw_invisibility] & 8))
-	{
-		// shadow draw
 		vis->RenderStyle = STYLE_Normal;
 	}
 		
@@ -1486,9 +1506,15 @@ void R_DrawPlayerSprites (void)
 			 i < NUMPSPRITES;
 			 i++, psp++)
 		{
-			if (psp->state)
+			// [RH] Don't draw the targeter's crosshair if the player already has a crosshair set.
+			if (psp->state && (i != ps_targetcenter || CrosshairImage == NULL))
 			{
-				R_DrawPSprite (psp, camera, psp->sx + ofsx, psp->sy + ofsy);
+				R_DrawPSprite (psp, i, camera, psp->sx + ofsx, psp->sy + ofsy);
+			}
+			// [RH] Don't bob the targeter.
+			if (i == ps_flash)
+			{
+				ofsx = ofsy = 0;
 			}
 		}
 
@@ -1971,7 +1997,9 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 	}
 	else
 	{
-		vis->colormap = map + (GETPALOOKUP (FixedMul (tiz, r_ParticleVisibility),
+		// Using MulScale15 instead of 16 makes particles slightly more visible
+		// than regular sprites.
+		vis->colormap = map + (GETPALOOKUP (MulScale15 (tiz, r_SpriteVisibility),
 			shade) << COLORMAPSHIFT);
 	}
 }

@@ -9,14 +9,17 @@
 #include "a_strifeglobal.h"
 #include "p_enemy.h"
 #include "p_lnspec.h"
+#include "c_console.h"
 
 // Notes so I don't forget them:
 // Strife does some extra stuff in A_Explode if a player caused the explosion. (probably NoiseAlert)
 // See the instructions @ 21249.
-
+//
+// Strife's FLOATSPEED is 5 and not 4.
+//
 // In P_CheckMissileRange, mobjtypes 53,54,55,56,57,58 shift the distance right 4 bits (some, but not all the acolytes)
 //						   mobjtypes 61,63,91 shift it right 1 bit
-
+//
 // When shooting missiles at something, if MF_SHADOW is set, the angle is adjusted with the formula:
 //		angle += pr_spawnmissile.Random2() << 21
 // When MF_STRIFEx4000000 is set, the angle is adjusted similarly:
@@ -27,7 +30,7 @@
 
 /* These mobjinfos have been converted:
 
-	  0
+	  0 ForceFieldGuard
 	  1 StrifePlayer
 	  2 WeaponSmith
 	  3 BarKeep
@@ -76,10 +79,10 @@
 	 46 Rebel4
 	 47 Rebel5
 	 48 Rebel6
-	 49
-	 50
+	 49 Macil1
+	 50 Macil2
 	 51 RocketTrail
-	 52 Reaver (incomplete)
+	 52 Reaver
 	 53 AcolyteTan
 	 54 AcolyteRed
 	 55 AcolyteRust
@@ -89,42 +92,43 @@
 	 59 AcolyteLGreen
 	 60 AcolyteBlue
 	 61 AcolyteShadow
+	 62 Templar
 	 63 Crusader
 	 64 StrifeBishop
-	 65
-	 66
-	 67
-	 68
-	 69
-	 70
-	 71
-	 72
-	 73
-	 74
-	 75
+	 65 Oracle
+	 66 Loremaster (aka Priest)
+	 67 AlienSpectre1
+	 68 AlienChunkSmall
+	 69 AlienChunkLarge
+	 70 AlienSpectre2
+	 71 AlienSpectre3
+	 72 AlienSpectre4
+	 73 AlienSpectre5
+	 74 EntityBoss
+	 75 EntitySecond
 	 76 EntityNest
 	 77 EntityPod
-	 78
-	 79
-	 80
-	 81
-	 82
-	 83 Zap6
-	 84
-	 85
-	 86
-	 87
-	 88 Zap5 (incomplete)
-	 89
-	 90
+	 78 SpectralLightningH1
+	 79 SpectralLightningH2
+	 80 SpectralLightningBall1
+	 81 SpectralLightningBall2
+	 82 SpectralLightningH3
+	 83 SpectralLightningHTail
+	 84 SpectralLightningBigBall1
+	 85 SpectralLightningBigBall2
+	 86 SpectralLightningV1
+	 87 SpectralLightningV2
+	 88 SpectralLightningSpot
+	 89 SpectralLightningBigV1
+	 90 SpectralLightningBigV2
 	 91 Sentinel
-	 92
-	 93 -- Plays full-volume sight sound --
-	 94
-	 95
-	 96
-	 97
-	 98
+	 92 Stalker
+	 93 Inquisitor
+	 94 InquisitorArm
+	 95 Programmer
+	 96 ProgrammerBase
+	 97 LoreShot
+	 98 LoreShot2
 	 99 MiniMissile
     100 CrusaderMissile
 	101 BishopMissile
@@ -134,7 +138,7 @@
 	105 SentinelFX2
 	106 HEGrenade
 	107 PhosphorousGrenade
-	108
+	108 InquisitorShot
 	109 PhosphorousFire
 	110 MaulerTorpedo
 	111 MaulerTorpedoWave
@@ -143,66 +147,66 @@
 	114 MaulerPuff
 	115 StrifePuff
     116 StrifeSpark
-	117
-	118
-	119
-	120
-	121 KlaxonWarningLight (incomplete)
-	122
-	123
-	124 Computer (incomplete)
-	125
-	126
-	127
-	128
+	117 Blood
+	118 TeleportFog
+	119 ItemFog
+	120 --- Doomednum is 14, which makes it a teleport destination. Don't know why it's in the mobjinfo table.
+	121 KlaxonWarningLight
+	122 CeilingTurret
+	123 Piston
+	124 Computer
+	125 MedPatch
+	126 MedicalKit
+	127 SurgeryKit
+	128 DegninOre
 	129 MetalArmor
 	130 LeatherArmor
 	131 WaterBottle
 	132 Mug
-	133
-	134
-	135
-	136
-	137
-	138
-	139
-	140
-	141
-	142
-	143
-	144
-	145
-	146
-	147
-	148
-	149
-	150
-	151
-	152
-	153
-	154
-	155
-	156
-	157
-	158
-	159
-	160
-	161
-	162
-	163
+	133 BaseKey
+	134 GovsKey
+	135 Passcard
+	136 IDBadge
+	137 PrisonKey
+	138 SeveredHand
+	139 Power1Key
+	140 Power2Key
+	141 Power3Key
+	142 GoldKey
+	143 IDCard
+	144 SilverKey
+	145 OracleKey
+	146 MilitaryID
+	147 OrderKey
+	148 WarehouseKey
+	149 BrassKey
+	150 RedCrystalKey
+	151 BlueCrystalKey
+	152 ChapelKey
+	153 CatacombKey
+	154 SecurityKey
+	155 CoreKey
+	156 MaulerKey
+	157 FactoryKey
+	158 MineKey
+	159 NewKey5
+	160 ShadowArmor
+	161 EnvironmentalSuit
+	162 GuardUniform
+	163 OfficersUniform
 	164 StrifeMap
-	165
+	165 Scanner
 	166
-	167
-	168
-	169
-	170
-	171
-	172
-	173
-	174
-	175
-	176
+	167 Targeter
+	168 Coin
+	169 Gold10
+	170 Gold25
+	171 Gold50
+	172 Gold300
+	173 BeldinsRing
+	174 OfferingChalice
+	175 Ear
+	176 Communicator
 	177 HEGrenadeRounds
 	178 PhosphorusGrenadeRounds
 	179 ClipOfBullets
@@ -217,18 +221,18 @@
 	188 AssaultGun
 	189 AssaultGunStanding
 	190 FlameThrower
-	191
+	191 FlameThrowerParts
 	192 MiniMissileLauncher
 	193 Mauler
-	194 ElectricCrossbow
-	195
-	196
-	197
-	198
-	199
-	200
-	201 PowerCrystal (incomplete)
-	202
+	194 StrifeCrossbow
+	195 StrifeGrenadeLauncher
+	196 Sigil1
+	197 Sigil2
+	198 Sigil3
+	199 Sigil4
+	200 Sigil5
+	201 PowerCrystal
+	202 RatBuddy
 	203 WoodenBarrel
 	204 ExplosiveBarrel2
 	205 TargetPractice
@@ -256,7 +260,7 @@
 	227 WaterFountain
 	228 HeartsInTank
 	229 TeleportSwirl
-	230 DeadCrusader (incomplete)
+	230 DeadCrusader
 	231 DeadStrifePlayer
 	232 DeadPeasant
 	233 DeadAcolyte
@@ -315,7 +319,7 @@
 	286 RebelHelmet
 	287 RebelShirt
 	288 PowerCoupling
-	289
+	289 BrokenPowerCoupling
 	290 AlienBubbleColumn
 	291 AlienFloorBubble
 	292 AlienCeilingBubble
@@ -323,67 +327,101 @@
 	294 AlienSpiderLight
 	295 Meat
 	296 Junk
-	297
-	298
-	299
-	300
-	301
-	302
-	303
-	304
-	305
-	306
-	307
-	308
-	309
-	310
-	311
-	312
-	313
-	314
-	315
-	316
-	317
-	318
-	319
-	320
-	321
-	322
-	323
-	324
-	325
-	326
-	327
-	328
-	329
-	330
-	331
-	332
-	333
-	334
-	335
-	336
-	337
-	338
-	339
-	340
-	341
-	342
-	343
+	297 FireDroplet
+	298 AmmoFillup
+	299 HealthFillup
+	300 Info
+	301 RaiseAlarm
+	302 OpenDoor222
+	303 CloseDoor222
+	304 PrisonPass
+	305 OpenDoor224
+	306 UpgradeStamina
+	307 UpgradeAccuracy
+	308 InterrogatorReport (seems to be unused)
+	309 HealthTraining
+	310 GunTraining
+	311 OraclePass
+	312 QuestItem1
+	313 QuestItem2
+	314 QuestItem3
+	315 QuestItem4
+	316 QuestItem5
+	317 QuestItem6
+	318 QuestItem7
+	319 QuestItem8
+	320 QuestItem9
+	321 QuestItem10
+	322 QuestItem11
+	323 QuestItem12
+	324 QuestItem13
+	325 QuestItem14
+	326 QuestItem15
+	327 QuestItem16
+	328 QuestItem17
+	329 QuestItem18
+	330 QuestItem19
+	331 QuestItem20
+	332 QuestItem21
+	333 QuestItem22
+	334 QuestItem23
+	335 QuestItem24
+	336 QuestItem25
+	337 QuestItem26
+	338 QuestItem27
+	339 QuestItem28
+	340 QuestItem29
+	341 QuestItem30
+	342 QuestItem31
+	343 SlideshowStarter
 */	
 
 static FRandom pr_gibtosser ("GibTosser");
-static FRandom pr_bang4cloud ("Bang4Cloud");
-static FRandom pr_lightout ("LightOut");
-static FRandom pr_reaverattack ("ReaverAttack");
 
 void A_TossGib (AActor *);
 void A_LoopActiveSound (AActor *);
 void A_FLoopActiveSound (AActor *);
 void A_Countdown (AActor *);
-void A_Bang4Cloud (AActor *);
-void A_LightGoesOut (AActor *);
 void A_XXScream (AActor *);
+void A_SentinelRefire (AActor *);
+
+// Force Field Guard --------------------------------------------------------
+
+void A_RemoveForceField (AActor *);
+
+class AForceFieldGuard : public AActor
+{
+	DECLARE_ACTOR (AForceFieldGuard, AActor)
+public:
+	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage);
+};
+
+FState AForceFieldGuard::States[] =
+{
+	S_NORMAL (TOKN, 'A', -1, NULL,					NULL),
+	S_NORMAL (XPRK, 'A',  1, A_RemoveForceField,	NULL)
+};
+
+IMPLEMENT_ACTOR (AForceFieldGuard, Strife, 25, 0)
+	PROP_StrifeType (0)
+	PROP_SpawnHealth (10)
+	PROP_SpawnState (0)
+	PROP_DeathState (1)
+	PROP_RadiusFixed (2)
+	PROP_HeightFixed (1)
+	PROP_Mass (10000)
+	PROP_Flags (MF_SHOOTABLE|MF_NOSECTOR)
+	PROP_Flags4 (MF4_INCOMBAT)
+END_DEFAULTS
+
+int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage)
+{
+	if (inflictor == NULL || !inflictor->IsKindOf (RUNTIME_CLASS(ADegninOre)))
+	{
+		return -1;
+	}
+	return health;
+}
 
 // Tank 1 (Huge) ------------------------------------------------------------
 
@@ -404,6 +442,7 @@ IMPLEMENT_ACTOR (ATank1, Strife, 209, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (192)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (31)
 END_DEFAULTS
 
 // Tank 2 (Huge) ------------------------------------------------------------
@@ -425,6 +464,7 @@ IMPLEMENT_ACTOR (ATank2, Strife, 210, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (192)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (32)
 END_DEFAULTS
 
 // Tank 3 (Huge) ------------------------------------------------------------
@@ -446,6 +486,7 @@ IMPLEMENT_ACTOR (ATank3, Strife, 211, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (192)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (33)
 END_DEFAULTS
 
 // Tank 4 -------------------------------------------------------------------
@@ -467,6 +508,7 @@ IMPLEMENT_ACTOR (ATank4, Strife, 213, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (56)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (34)
 END_DEFAULTS
 
 // Tank 5 -------------------------------------------------------------------
@@ -488,6 +530,7 @@ IMPLEMENT_ACTOR (ATank5, Strife, 214, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (56)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (35)
 END_DEFAULTS
 
 // Tank 6 -------------------------------------------------------------------
@@ -509,6 +552,7 @@ IMPLEMENT_ACTOR (ATank6, Strife, 229, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (56)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (36)
 END_DEFAULTS
 
 // Kneeling Guy -------------------------------------------------------------
@@ -531,7 +575,7 @@ static FRandom pr_gethurt ("HurtMe!");
 
 void A_GetHurt (AActor *self)
 {
-	self->flags |= MF_STRIFEx8000;
+	self->flags4 |= MF4_INCOMBAT;
 	if ((pr_gethurt() % 5) == 0)
 	{
 		S_SoundID (self, CHAN_VOICE, self->PainSound, 1, ATTN_NORM);
@@ -577,7 +621,7 @@ IMPLEMENT_ACTOR (AKneelingGuy, Strife, 204, 0)
 	PROP_SpawnState (S_KNEEL)
 	PROP_SeeState (S_KNEEL)
 	PROP_PainState (S_KNEEL_PAIN)
-//	PROP_WoundState (S_KNEEL_HURT)
+	PROP_WoundState (S_KNEEL_HURT)
 	PROP_DeathState (S_KNEEL_DIE)
 
 	PROP_SpawnHealth (51)
@@ -585,834 +629,71 @@ IMPLEMENT_ACTOR (AKneelingGuy, Strife, 204, 0)
 	PROP_RadiusFixed (6)
 	PROP_HeightFixed (6)
 	PROP_MassLong (50000)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD|MF_COUNTKILL)
+	PROP_Flags4 (MF4_INCOMBAT)
+	PROP_MinMissileChance (150)
+	PROP_StrifeType (37)
 
 	PROP_PainSound ("misc/static")
 	PROP_DeathSound ("misc/static")
 	PROP_ActiveSound ("misc/chant")
 END_DEFAULTS
 
-// Reaver -------------------------------------------------------------------
+// Klaxon Warning Light -----------------------------------------------------
 
-void A_ReaverMelee (AActor *self);
-void A_ReaverRanged (AActor *self);
-
-void A_21230 (AActor *) {}
-
-class AReaver : public AActor
+void A_1f608 (AActor *self)
 {
-	DECLARE_ACTOR (AReaver, AActor)
-public:
-	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+	AActor *target;
+
+	self->threshold = 0;
+	target = self->LastHeard;
+	if (target != NULL &&
+		target->health > 0 &&
+		target->flags & MF_SHOOTABLE &&
+		(self->flags & MF_FRIENDLY) != (target->flags & MF_FRIENDLY))
 	{
-		damage = dist = 32;
-	}
-};
-
-FState AReaver::States[] =
-{
-#define S_REAVER_STND (0)
-	S_NORMAL (ROB1, 'A',   10, A_Look,				&States[S_REAVER_STND]),
-	// Needless duplication of the previous state removed
-
-#define S_REAVER_RUN (S_REAVER_STND+1)
-	S_NORMAL (ROB1, 'B',	3, A_Chase,				&States[S_REAVER_RUN+1]),
-	S_NORMAL (ROB1, 'B',	3, A_Chase,				&States[S_REAVER_RUN+2]),
-	S_NORMAL (ROB1, 'C',	3, A_Chase,				&States[S_REAVER_RUN+3]),
-	S_NORMAL (ROB1, 'C',	3, A_Chase,				&States[S_REAVER_RUN+4]),
-	S_NORMAL (ROB1, 'D',	3, A_Chase,				&States[S_REAVER_RUN+5]),
-	S_NORMAL (ROB1, 'D',	3, A_Chase,				&States[S_REAVER_RUN+6]),
-	S_NORMAL (ROB1, 'E',	3, A_Chase,				&States[S_REAVER_RUN+7]),
-	S_NORMAL (ROB1, 'E',	3, A_Chase,				&States[S_REAVER_RUN]),
-
-#define S_REAVER_MELEE (S_REAVER_RUN+8)
-	S_NORMAL (ROB1, 'H',	6, A_FaceTarget,		&States[S_REAVER_MELEE+1]),
-	S_NORMAL (ROB1, 'I',	8, A_ReaverMelee,		&States[S_REAVER_MELEE+2]),
-	S_NORMAL (ROB1, 'H',	6, NULL,				&States[S_REAVER_RUN]),
-
-#define S_REAVER_MISSILE (S_REAVER_MELEE+3)
-	S_NORMAL (ROB1, 'F',	8, A_FaceTarget,		&States[S_REAVER_MISSILE+1]),
-	S_BRIGHT (ROB1, 'G',   11, A_ReaverRanged,		&States[S_REAVER_RUN]),
-
-#define S_REAVER_PAIN (S_REAVER_MISSILE+2)
-	S_NORMAL (ROB1, 'A',	2, NULL,				&States[S_REAVER_PAIN+1]),
-	S_NORMAL (ROB1, 'A',	2, A_Pain,				&States[S_REAVER_RUN]),
-
-#define S_REAVER_DEATH (S_REAVER_PAIN+2)
-	S_BRIGHT (ROB1, 'J',	6, NULL,				&States[S_REAVER_DEATH+1]),
-	S_BRIGHT (ROB1, 'K',	6, A_Scream,			&States[S_REAVER_DEATH+2]),
-	S_BRIGHT (ROB1, 'L',	5, NULL,				&States[S_REAVER_DEATH+3]),
-	S_BRIGHT (ROB1, 'M',	5, A_NoBlocking,		&States[S_REAVER_DEATH+4]),
-	S_BRIGHT (ROB1, 'N',	5, NULL,				&States[S_REAVER_DEATH+5]),
-	S_BRIGHT (ROB1, 'O',	5, NULL,				&States[S_REAVER_DEATH+6]),
-	S_BRIGHT (ROB1, 'P',	5, NULL,				&States[S_REAVER_DEATH+7]),
-	S_BRIGHT (ROB1, 'Q',	6, A_Explode,			&States[S_REAVER_DEATH+8]),
-	S_NORMAL (ROB1, 'R',   -1, NULL,				NULL),
-
-#define S_REAVER_XDEATH (S_REAVER_DEATH+9)
-	S_BRIGHT (ROB1, 'L',	5, A_TossGib,			&States[S_REAVER_XDEATH+1]),
-	S_BRIGHT (ROB1, 'M',	5, A_XXScream,			&States[S_REAVER_XDEATH+2]),
-	S_BRIGHT (ROB1, 'N',	5, A_TossGib,			&States[S_REAVER_XDEATH+3]),
-	S_BRIGHT (ROB1, 'O',	5, A_NoBlocking,		&States[S_REAVER_XDEATH+4]),
-	S_BRIGHT (ROB1, 'P',	5, A_TossGib,			&States[S_REAVER_XDEATH+5]),
-	S_BRIGHT (ROB1, 'Q',	6, A_Explode,			&States[S_REAVER_XDEATH+6]),
-	S_NORMAL (ROB1, 'R',   -1, NULL,				NULL),
-};
-
-IMPLEMENT_ACTOR (AReaver, Strife, 3001, 0)
-	PROP_SpawnHealth (150)
-	PROP_PainChance (128)
-	PROP_SpeedFixed (12)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (60)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
-	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
-
-	PROP_Mass (500)
-	PROP_SpawnState (S_REAVER_STND)
-	PROP_SeeState (S_REAVER_RUN)
-	PROP_PainState (S_REAVER_PAIN)
-	PROP_MeleeState (S_REAVER_MELEE)
-	PROP_MissileState (S_REAVER_MISSILE)
-	PROP_DeathState (S_REAVER_DEATH)
-	PROP_XDeathState (S_REAVER_XDEATH)
-
-	PROP_SeeSound ("reaver/sight")
-	PROP_PainSound ("reaver/pain")
-	PROP_DeathSound ("reaver/death")
-	PROP_ActiveSound ("reaver/active")
-END_DEFAULTS
-
-void A_ReaverMelee (AActor *self)
-{
-	if (self->target != NULL)
-	{
-		A_FaceTarget (self);
-
-		if (P_CheckMeleeRange (self))
+		self->target = target;
+		if ((self->flags & MF_AMBUSH) && !P_CheckSight (self, target))
 		{
-			int damage;
-
-			S_Sound (self, CHAN_WEAPON, "reaver/blade", 1, ATTN_NORM);
-			damage = ((pr_reaverattack() & 7) + 1) * 3;
-			P_DamageMobj (self->target, self, self, damage, MOD_HIT);
-			P_TraceBleed (damage, self->target, self);
+			return;
 		}
-	}
-}
-
-void A_ReaverRanged (AActor *self)
-{
-	if (self->target != NULL)
-	{
-		angle_t bangle;
-		int pitch;
-
-		PuffType = RUNTIME_CLASS(AStrifePuff);
-		A_FaceTarget (self);
-		S_Sound (self, CHAN_WEAPON, "reaver/attack", 1, ATTN_NORM);
-		bangle = self->angle;
-		pitch = P_AimLineAttack (self, bangle, MISSILERANGE);
-
-		for (int i = 0; i < 3; ++i)
+		if (self->SeeSound != 0)
 		{
-			angle_t angle = bangle + (pr_reaverattack.Random2() << 20);
-			int damage = ((pr_reaverattack() & 7) + 1) * 3;
-			P_LineAttack (self, angle, MISSILERANGE, pitch, damage);
+			S_SoundID (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
 		}
-	}
-}
-
-// Crusader -----------------------------------------------------------------
-
-void A_CrusaderChoose (AActor *);
-void A_CrusaderSweepLeft (AActor *);
-void A_CrusaderSweepRight (AActor *);
-void A_CrusaderRefire (AActor *);
-void A_21598 () {}
-
-class ACrusader : public AActor
-{
-	DECLARE_ACTOR (ACrusader, AActor)
-public:
-	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
-	{
-		damage = dist = 64;
-	}
-	bool SuggestMissileAttack (fixed_t dist)
-	{
-		return Super::SuggestMissileAttack (dist >> 1);
-	}
-};
-
-FState ACrusader::States[] =
-{
-#define S_CRUSADER_STND 0
-	S_NORMAL (ROB2, 'Q',   10, A_Look,					&States[S_CRUSADER_STND]),
-
-#define S_CRUSADER_RUN (S_CRUSADER_STND+1)
-	S_NORMAL (ROB2, 'A',	3, A_Chase,					&States[S_CRUSADER_RUN+1]),
-	S_NORMAL (ROB2, 'A',	3, A_Chase,					&States[S_CRUSADER_RUN+2]),
-	S_NORMAL (ROB2, 'B',	3, A_Chase,					&States[S_CRUSADER_RUN+3]),
-	S_NORMAL (ROB2, 'B',	3, A_Chase,					&States[S_CRUSADER_RUN+4]),
-	S_NORMAL (ROB2, 'C',	3, A_Chase,					&States[S_CRUSADER_RUN+5]),
-	S_NORMAL (ROB2, 'C',	3, A_Chase,					&States[S_CRUSADER_RUN+6]),
-	S_NORMAL (ROB2, 'D',	3, A_Chase,					&States[S_CRUSADER_RUN+7]),
-	S_NORMAL (ROB2, 'D',	3, A_Chase,					&States[S_CRUSADER_RUN]),
-
-#define S_CRUSADER_ATTACK (S_CRUSADER_RUN+8)
-	S_NORMAL (ROB2, 'E',	3, A_FaceTarget,			&States[S_CRUSADER_ATTACK+1]),
-	S_BRIGHT (ROB2, 'F',	2, A_CrusaderChoose,		&States[S_CRUSADER_ATTACK+2]),
-	S_BRIGHT (ROB2, 'E',	2, A_CrusaderSweepLeft,		&States[S_CRUSADER_ATTACK+3]),
-	S_BRIGHT (ROB2, 'F',	3, A_CrusaderSweepLeft,		&States[S_CRUSADER_ATTACK+4]),
-	S_BRIGHT (ROB2, 'E',	2, A_CrusaderSweepLeft,		&States[S_CRUSADER_ATTACK+5]),
-	S_BRIGHT (ROB2, 'F',	2, A_CrusaderSweepLeft,		&States[S_CRUSADER_ATTACK+6]),
-	S_BRIGHT (ROB2, 'E',	2, A_CrusaderSweepRight,	&States[S_CRUSADER_ATTACK+7]),
-	S_BRIGHT (ROB2, 'F',	2, A_CrusaderSweepRight,	&States[S_CRUSADER_ATTACK+8]),
-	S_BRIGHT (ROB2, 'E',	2, A_CrusaderSweepRight,	&States[S_CRUSADER_ATTACK+9]),
-	S_BRIGHT (ROB2, 'F',	2, A_CrusaderRefire,		&States[S_CRUSADER_ATTACK]),
-
-#define S_CRUSADER_PAIN (S_CRUSADER_ATTACK+10)
-	S_NORMAL (ROB2, 'D',	1, A_Pain,					&States[S_CRUSADER_RUN]),
-
-#define S_CRUSADER_DEATH (S_CRUSADER_PAIN+1)
-	S_NORMAL (ROB2, 'G',	3, A_Scream,				&States[S_CRUSADER_DEATH+1]),
-	S_NORMAL (ROB2, 'H',	5, A_TossGib,				&States[S_CRUSADER_DEATH+2]),
-	S_BRIGHT (ROB2, 'I',	4, A_TossGib,				&States[S_CRUSADER_DEATH+3]),
-	S_BRIGHT (ROB2, 'J',	4, A_Explode,				&States[S_CRUSADER_DEATH+4]),
-	S_BRIGHT (ROB2, 'K',	4, A_NoBlocking,			&States[S_CRUSADER_DEATH+5]),
-	S_NORMAL (ROB2, 'L',	4, A_Explode,				&States[S_CRUSADER_DEATH+6]),
-	S_NORMAL (ROB2, 'M',	4, A_TossGib,				&States[S_CRUSADER_DEATH+7]),
-	S_NORMAL (ROB2, 'N',	4, A_TossGib,				&States[S_CRUSADER_DEATH+8]),
-	S_NORMAL (ROB2, 'O',	4, A_Explode,				&States[S_CRUSADER_DEATH+9]),
-	S_NORMAL (ROB2, 'P',   -1, A_21598,					NULL)
-};
-
-IMPLEMENT_ACTOR (ACrusader, Strife, 3005, 0)
-	PROP_SpawnState (S_CRUSADER_STND)
-	PROP_SeeState (S_CRUSADER_RUN)
-	PROP_MissileState (S_CRUSADER_ATTACK)
-	PROP_PainState (S_CRUSADER_PAIN)
-	PROP_DeathState (S_CRUSADER_DEATH)
-	PROP_SpeedFixed (8)
-	PROP_RadiusFixed (40)
-	PROP_HeightFixed (56)
-	PROP_Mass (400)
-	PROP_SpawnHealth (400)
-	PROP_PainChance (128)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
-	PROP_SeeSound ("crusader/sight")
-	PROP_PainSound ("crusader/pain")
-	PROP_DeathSound ("crusader/death")
-	PROP_ActiveSound ("crusader/active")
-END_DEFAULTS
-
-// Fast Flame Projectile (used by Crusader) ---------------------------------
-
-class AFastFlameMissile : public AFlameMissile
-{
-	DECLARE_STATELESS_ACTOR (AFastFlameMissile, AFlameMissile)
-};
-
-IMPLEMENT_STATELESS_ACTOR (AFastFlameMissile, Strife, -1, 0)
-	PROP_Mass (50)
-	PROP_Damage (1)
-	PROP_SpeedFixed (35)
-END_DEFAULTS
-
-// Crusader Missile ---------------------------------------------------------
-// This is just like the mini missile the player shoots, except it doesn't
-// explode when it dies, and it does slightly less damage for a direct hit.
-
-void A_RocketInFlight (AActor *);
-void A_RocketDead (AActor *);
-
-class ACrusaderMissile : public AActor
-{
-	DECLARE_ACTOR (ACrusaderMissile, AActor)
-};
-
-FState ACrusaderMissile::States[] =
-{
-	S_BRIGHT (MICR, 'A', 6, A_RocketInFlight,	&States[0]),
-
-	S_BRIGHT (SMIS, 'A', 5, A_RocketDead,		&States[2]),
-	S_BRIGHT (SMIS, 'B', 5, NULL,				&States[3]),
-	S_BRIGHT (SMIS, 'C', 4, NULL,				&States[4]),
-	S_BRIGHT (SMIS, 'D', 2, NULL,				&States[5]),
-	S_BRIGHT (SMIS, 'E', 2, NULL,				&States[6]),
-	S_BRIGHT (SMIS, 'F', 2, NULL,				&States[7]),
-	S_BRIGHT (SMIS, 'G', 2, NULL,				NULL),
-};
-
-IMPLEMENT_ACTOR (ACrusaderMissile, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_DeathState (1)
-	PROP_SpeedFixed (20)
-	PROP_RadiusFixed (10)
-	PROP_HeightFixed (14)
-	PROP_Damage (7)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-	PROP_Flags4 (MF4_STRIFEDAMAGE)
-	PROP_SeeSound ("crusader/misl")
-	PROP_DeathSound ("crusader/mislx")
-END_DEFAULTS
-
-bool Sys_1ed64 (AActor *self)
-{
-	if (P_CheckSight (self, self->target) && self->reactiontime == 0)
-	{
-		return P_AproxDistance (self->x - self->target->x, self->y - self->target->y) < 264*FRACUNIT;
-	}
-	return false;
-}
-
-void A_CrusaderChoose (AActor *self)
-{
-	if (self->target == NULL)
-		return;
-
-	if (Sys_1ed64 (self))
-	{
-		A_FaceTarget (self);
-		self->angle -= ANGLE_180/16;
-		P_SpawnMissileZAimed (self, self->z + 40*FRACUNIT, self->target, RUNTIME_CLASS(AFastFlameMissile));
-	}
-	else
-	{
-		if (P_CheckMissileRange (self))
-		{
-			A_FaceTarget (self);
-			P_SpawnMissileZAimed (self, self->z + 56*FRACUNIT, self->target, RUNTIME_CLASS(ACrusaderMissile));
-			self->angle -= ANGLE_45/32;
-			P_SpawnMissileZAimed (self, self->z + 40*FRACUNIT, self->target, RUNTIME_CLASS(ACrusaderMissile));
-			self->angle += ANGLE_45/16;
-			P_SpawnMissileZAimed (self, self->z + 40*FRACUNIT, self->target, RUNTIME_CLASS(ACrusaderMissile));
-			self->angle -= ANGLE_45/16;
-			self->reactiontime += 15;
-		}
+		self->threshold = 10;
 		self->SetState (self->SeeState);
 	}
 }
 
-void A_CrusaderSweepLeft (AActor *self)
+void A_21c0c (AActor *self)
 {
-	self->angle += ANGLE_90/16;
-	AActor *misl = P_SpawnMissileZAimed (self, self->z + 48*FRACUNIT, self->target, RUNTIME_CLASS(AFastFlameMissile));
-	if (misl != NULL)
+	if (--self->threshold < 0)
 	{
-		misl->momz = FRACUNIT;
-	}
-}
-
-void A_CrusaderSweepRight (AActor *self)
-{
-	self->angle -= ANGLE_90/16;
-	AActor *misl = P_SpawnMissileZAimed (self, self->z + 48*FRACUNIT, self->target, RUNTIME_CLASS(AFastFlameMissile));
-	if (misl != NULL)
-	{
-		misl->momz = FRACUNIT;
-	}
-}
-
-void A_CrusaderRefire (AActor *self)
-{
-	if (self->target == NULL ||
-		self->target->health <= 0 ||
-		!P_CheckSight (self, self->target))
-	{
-		self->SetState (self->SeeState);
-	}
-}
-
-void A_RocketDead (AActor *self)
-{
-	self->RenderStyle = STYLE_Add;
-	S_StopSound (self, CHAN_VOICE);
-}
-
-// Bishop -------------------------------------------------------------------
-
-void A_SBishopAttack (AActor *);
-void A_20b54 (AActor *) {}
-
-class AStrifeBishop : public AActor
-{
-	DECLARE_ACTOR (AStrifeBishop, AActor)
-public:
-	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
-	{
-		damage = dist = 64;
-	}
-};
-
-FState AStrifeBishop::States[] =
-{
-#define S_BISHOP_STND 0
-	S_NORMAL (MLDR, 'A',   10, A_Look,				&States[S_BISHOP_STND]),
-
-#define S_BISHOP_RUN (S_BISHOP_STND+1)
-	S_NORMAL (MLDR, 'A',	3, A_Chase,				&States[S_BISHOP_RUN+1]),
-	S_NORMAL (MLDR, 'A',	3, A_Chase,				&States[S_BISHOP_RUN+2]),
-	S_NORMAL (MLDR, 'B',	3, A_Chase,				&States[S_BISHOP_RUN+3]),
-	S_NORMAL (MLDR, 'B',	3, A_Chase,				&States[S_BISHOP_RUN+4]),
-	S_NORMAL (MLDR, 'C',	3, A_Chase,				&States[S_BISHOP_RUN+5]),
-	S_NORMAL (MLDR, 'C',	3, A_Chase,				&States[S_BISHOP_RUN+6]),
-	S_NORMAL (MLDR, 'D',	3, A_Chase,				&States[S_BISHOP_RUN+7]),
-	S_NORMAL (MLDR, 'D',	3, A_Chase,				&States[S_BISHOP_RUN]),
-
-#define S_BISHOP_ATK (S_BISHOP_RUN+8)
-	S_NORMAL (MLDR, 'E',	3, A_FaceTarget,		&States[S_BISHOP_ATK+1]),
-	S_BRIGHT (MLDR, 'F',	2, A_SBishopAttack,		&States[S_BISHOP_RUN]),
-
-#define S_BISHOP_PAIN (S_BISHOP_ATK+2)
-	S_NORMAL (MLDR, 'D',	1, A_Pain,				&States[S_BISHOP_RUN]),
-
-#define S_BISHOP_DIE (S_BISHOP_PAIN+1)
-	S_BRIGHT (MLDR, 'G',	3, NULL,				&States[S_BISHOP_DIE+1]),
-	S_BRIGHT (MLDR, 'H',	5, A_Scream,			&States[S_BISHOP_DIE+2]),
-	S_BRIGHT (MLDR, 'I',	4, A_TossGib,			&States[S_BISHOP_DIE+3]),
-	S_BRIGHT (MLDR, 'J',	4, A_Explode,			&States[S_BISHOP_DIE+4]),
-	S_BRIGHT (MLDR, 'K',	4, NULL,				&States[S_BISHOP_DIE+5]),
-	S_BRIGHT (MLDR, 'L',	4, NULL,				&States[S_BISHOP_DIE+6]),
-	S_BRIGHT (MLDR, 'M',	4, A_NoBlocking,		&States[S_BISHOP_DIE+7]),
-	S_BRIGHT (MLDR, 'N',	4, NULL,				&States[S_BISHOP_DIE+8]),
-	S_BRIGHT (MLDR, 'O',	4, A_TossGib,			&States[S_BISHOP_DIE+9]),
-	S_BRIGHT (MLDR, 'P',	4, NULL,				&States[S_BISHOP_DIE+10]),
-	S_BRIGHT (MLDR, 'Q',	4, A_TossGib,			&States[S_BISHOP_DIE+11]),
-	S_BRIGHT (MLDR, 'R',	4, NULL,				&States[S_BISHOP_DIE+12]),
-	S_BRIGHT (MLDR, 'S',	4, A_TossGib,			&States[S_BISHOP_DIE+13]),
-	S_BRIGHT (MLDR, 'T',	4, NULL,				&States[S_BISHOP_DIE+14]),
-	S_BRIGHT (MLDR, 'U',	4, A_TossGib,			&States[S_BISHOP_DIE+15]),
-	S_BRIGHT (MLDR, 'V',	4, A_20b54,				NULL),
-};
-
-IMPLEMENT_ACTOR (AStrifeBishop, Strife, 187, 0)
-	PROP_SpawnState (S_BISHOP_STND)
-	PROP_SeeState (S_BISHOP_RUN)
-	PROP_PainState (S_BISHOP_PAIN)
-	PROP_MissileState (S_BISHOP_ATK)
-	PROP_DeathState (S_BISHOP_DIE)
-
-	PROP_SpawnHealth (500)
-	PROP_PainChance (128)
-	PROP_SpeedFixed (8)
-	PROP_RadiusFixed (40)
-	PROP_HeightFixed (56)
-	PROP_Mass (500)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL|MF_NOTDMATCH)
-	PROP_SeeSound ("bishop/sight")
-	PROP_PainSound ("bishop/pain")
-	PROP_DeathSound ("bishop/death")
-	PROP_ActiveSound ("bishop/active")
-END_DEFAULTS
-
-// The Bishop's missile -----------------------------------------------------
-
-void A_Tracer2 (AActor *);
-
-class ABishopMissile : public AActor
-{
-	DECLARE_ACTOR (ABishopMissile, AActor)
-public:
-	void PreExplode ()
-	{
-		RenderStyle = STYLE_Add;
-		S_StopSound (this, CHAN_VOICE);
-	}
-	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
-	{
-		damage = dist = 64;
-	}
-};
-
-FState ABishopMissile::States[] =
-{
-	S_BRIGHT (MISS, 'A',	4, A_RocketInFlight,	&States[1]),
-	S_BRIGHT (MISS, 'B',	3, A_Tracer2,			&States[0]),
-
-	S_BRIGHT (SMIS, 'A',	5, A_Explode,			&States[3]),
-	S_BRIGHT (SMIS, 'B',	5, NULL,				&States[4]),
-	S_BRIGHT (SMIS, 'C',	4, NULL,				&States[5]),
-	S_BRIGHT (SMIS, 'D',	2, NULL,				&States[6]),
-	S_BRIGHT (SMIS, 'E',	2, NULL,				&States[7]),
-	S_BRIGHT (SMIS, 'F',	2, NULL,				&States[8]),
-	S_BRIGHT (SMIS, 'G',	2, NULL,				NULL),
-};
-
-IMPLEMENT_ACTOR (ABishopMissile, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_DeathState (2)
-	PROP_SpeedFixed (20)
-	PROP_RadiusFixed (10)
-	PROP_HeightFixed (14)
-	PROP_Damage (10)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_SEEKERMISSILE)
-	PROP_Flags4 (MF4_STRIFEDAMAGE)
-	PROP_SeeSound ("bishop/misl")
-	PROP_DeathSound ("bishop/mislx")
-END_DEFAULTS
-
-void A_SBishopAttack (AActor *self)
-{
-	if (self->target != NULL)
-	{
-		AActor *missile = P_SpawnMissileZ (self, self->z + 64*FRACUNIT, self->target, RUNTIME_CLASS(ABishopMissile));
-
-		if (missile != NULL)
+		self->target = NULL;
+		self->reactiontime = self->GetDefault()->reactiontime;
+		A_1f608 (self);
+		if (self->threshold == 0)
 		{
-			missile->tracer = self->target;
-		}
-	}
-}
-
-// In Strife, this number is stored in the data segment, but it doesn't seem to be
-// altered anywhere.
-#define TRACEANGLE (0xe000000)
-
-void A_Tracer2 (AActor *self)
-{
-	AActor *dest;
-	angle_t exact;
-	fixed_t dist;
-	fixed_t slope;
-
-	dest = self->tracer;
-
-	if (dest == NULL || dest->health <= 0)
-		return;
-
-	// change angle
-	exact = R_PointToAngle2 (self->x, self->y, dest->x, dest->y);
-
-	if (exact != self->angle)
-	{
-		if (exact - self->angle > 0x80000000)
-		{
-			self->angle -= TRACEANGLE;
-			if (exact - self->angle < 0x80000000)
-				self->angle = exact;
+			self->SetState (self->SpawnState);
 		}
 		else
 		{
-			self->angle += TRACEANGLE;
-			if (exact - self->angle > 0x80000000)
-				self->angle = exact;
+			self->reactiontime = 50;
 		}
 	}
-
-	exact = self->angle >> ANGLETOFINESHIFT;
-	self->momx = FixedMul (self->Speed, finecosine[exact]);
-	self->momy = FixedMul (self->Speed, finesine[exact]);
-
-	// change slope
-	dist = P_AproxDistance (dest->x - self->x, dest->y - self->y);
-	dist /= self->Speed;
-
-	if (dist < 1)
+	if (self->reactiontime == 2)
 	{
-		dist = 1;
-	}
-	slope = (dest->z + 40*FRACUNIT - self->z) / dist;
-	if (slope < self->momz)
-	{
-		self->momz -= FRACUNIT/8;
-	}
-	else
-	{
-		self->momz += FRACUNIT/8;
-	}
-}
-
-// Sentinel -----------------------------------------------------------------
-
-void A_SentinelBob (AActor *);
-void A_SentinelAttack (AActor *);
-void A_SentinelRefire (AActor *);
-
-class ASentinel : public AActor
-{
-	DECLARE_ACTOR (ASentinel, AActor)
-};
-
-FState ASentinel::States[] =
-{
-#define S_SENTINEL_STND 0
-	S_NORMAL (SEWR, 'A',   10, A_Look,				&States[S_SENTINEL_STND]),
-
-#define S_SENTINEL_RUN (S_SENTINEL_STND+1)
-	S_NORMAL (SEWR, 'A',	6, A_SentinelBob,		&States[S_SENTINEL_RUN+1]),
-	S_NORMAL (SEWR, 'A',	6, A_Chase,				&States[S_SENTINEL_RUN]),
-
-#define S_SENTINEL_ATK (S_SENTINEL_RUN+2)
-	S_NORMAL (SEWR, 'B',	4, A_FaceTarget,		&States[S_SENTINEL_ATK+1]),
-	S_BRIGHT (SEWR, 'C',	8, A_SentinelAttack,	&States[S_SENTINEL_ATK+2]),
-	S_BRIGHT (SEWR, 'C',	4, A_SentinelRefire,	&States[S_SENTINEL_ATK+1]),
-
-#define S_SENTINEL_PAIN (S_SENTINEL_ATK+3)
-	S_NORMAL (SEWR, 'D',	5, A_Pain,				&States[S_SENTINEL_ATK+2]),
-
-#define S_SENTINEL_DIE (S_SENTINEL_PAIN+1)
-	S_NORMAL (SEWR, 'D',	7, A_NoBlocking,		&States[S_SENTINEL_DIE+1]),
-	S_BRIGHT (SEWR, 'E',	8, A_TossGib,			&States[S_SENTINEL_DIE+2]),
-	S_BRIGHT (SEWR, 'F',	5, A_Scream,			&States[S_SENTINEL_DIE+3]),
-	S_BRIGHT (SEWR, 'G',	4, A_TossGib,			&States[S_SENTINEL_DIE+4]),
-	S_BRIGHT (SEWR, 'H',	4, A_TossGib,			&States[S_SENTINEL_DIE+5]),
-	S_NORMAL (SEWR, 'I',	4, NULL,				&States[S_SENTINEL_DIE+6]),
-	S_NORMAL (SEWR, 'J',	5, NULL,				NULL)
-};
-
-IMPLEMENT_ACTOR (ASentinel, Strife, 3006, 0)
-	PROP_SpawnState (S_SENTINEL_STND)
-	PROP_SeeState (S_SENTINEL_RUN)
-	PROP_PainState (S_SENTINEL_PAIN)
-	PROP_MissileState (S_SENTINEL_ATK)
-	PROP_DeathState (S_SENTINEL_DIE)
-
-	PROP_SpawnHealth (100)
-	PROP_PainChance (255)
-	PROP_SpeedFixed (7)
-	PROP_RadiusFixed (23)
-	PROP_HeightFixed (53)
-	PROP_Mass (300)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_SPAWNCEILING|MF_NOGRAVITY|MF_DROPOFF|
-				MF_STRIFEx800|/*MF_FLOAT|*/MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
-
-	PROP_SeeSound ("sentinel/sight")
-	PROP_DeathSound ("sentinel/death")
-	PROP_ActiveSound ("sentinel/active")
-END_DEFAULTS
-
-// Sentinel FX 1 ------------------------------------------------------------
-
-class ASentinelFX1 : public AActor
-{
-	DECLARE_ACTOR (ASentinelFX1, AActor)
-};
-
-FState ASentinelFX1::States[] =
-{
-	S_NORMAL (SHT1, 'A', 4, NULL, &States[1]),
-	S_NORMAL (SHT1, 'B', 4, NULL, &States[0]),
-
-#define S_SENTINELFX2_X 2
-	S_NORMAL (POW1, 'F', 4, NULL, &States[S_SENTINELFX2_X+1]),
-	S_NORMAL (POW1, 'G', 4, NULL, &States[S_SENTINELFX2_X+2]),
-	S_NORMAL (POW1, 'H', 4, NULL, &States[S_SENTINELFX2_X+3]),
-	S_NORMAL (POW1, 'I', 4, NULL, &States[S_SENTINELFX2_X+4]),
-#define S_SENTINELFX1_X (S_SENTINELFX2_X+4)
-	S_NORMAL (POW1, 'J', 4, NULL, NULL),
-};
-
-IMPLEMENT_ACTOR (ASentinelFX1, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_DeathState (S_SENTINELFX1_X)
-	PROP_SpeedFixed (40)
-	PROP_RadiusFixed (10)
-	PROP_HeightFixed (8)
-	PROP_Damage (0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_RenderStyle (STYLE_Add)
-END_DEFAULTS
-
-// Sentinel FX 2 ------------------------------------------------------------
-
-class ASentinelFX2 : public ASentinelFX1
-{
-	DECLARE_STATELESS_ACTOR (ASentinelFX2, ASentinelFX1)
-};
-
-IMPLEMENT_STATELESS_ACTOR (ASentinelFX2, Strife, -1, 0)
-	PROP_DeathState (S_SENTINELFX2_X)
-	PROP_Damage (1)
-	PROP_SeeSound ("sentinel/plasma")
-END_DEFAULTS
-
-void A_SentinelBob (AActor *self)
-{
-	fixed_t minz, maxz;
-
-	if (self->flags & MF_INFLOAT)
-	{
-		self->momz = 0;
-		return;
-	}
-	if (self->threshold != 0)
-		return;
-
-	maxz =  self->ceilingz - self->height - 16*FRACUNIT;
-	minz = self->floorz + 96*FRACUNIT;
-	if (minz > maxz)
-	{
-		minz = maxz;
-	}
-	if (minz < self->z)
-	{
-		self->momz -= FRACUNIT;
-	}
-	else
-	{
-		self->momz += FRACUNIT;
-	}
-	self->reactiontime = (minz >= self->z) ? 4 : 0;
-}
-
-void A_SentinelAttack (AActor *self)
-{
-	AActor *missile, *trail;
-
-	missile = P_SpawnMissileZAimed (self, self->z + 32*FRACUNIT, self->target, RUNTIME_CLASS(ASentinelFX2));
-
-	if (missile != NULL && (missile->momx|missile->momy) != 0)
-	{
-		for (int i = 8; i > 1; --i)
+		for (AActor *actor = self->Sector->thinglist; actor != NULL; actor = actor->snext)
 		{
-			trail = Spawn<ASentinelFX1> (
-				self->x + FixedMul (missile->radius * i, finecosine[missile->angle >> ANGLETOFINESHIFT]),
-				self->y + FixedMul (missile->radius * i, finesine[missile->angle >> ANGLETOFINESHIFT]),
-				missile->z + (missile->momz / 4 * i));
-			if (trail != NULL)
-			{
-				trail->target = self;
-				trail->momx = missile->momx;
-				trail->momy = missile->momy;
-				trail->momz = missile->momz;
-				P_CheckMissileSpawn (trail);
-			}
-		}
-		missile->z += missile->momz >> 2;
-	}
-}
-
-static FRandom pr_sentinelrefire ("SentinelRefire");
-
-void A_SentinelRefire (AActor *self)
-{
-	A_FaceTarget (self);
-
-	if (pr_sentinelrefire() >= 30)
-	{
-		if (self->target == NULL ||
-			self->target->health <= 0 ||
-			!P_CheckSight (self, self->target) ||
-			pr_sentinelrefire() < 40)
-		{
-			self->SetState (self->SeeState);
+			actor->LastHeard = NULL;
 		}
 	}
-}
-
-// Entity Nest --------------------------------------------------------------
-
-class AEntityNest : public AActor
-{
-	DECLARE_ACTOR (AEntityNest, AActor)
-};
-
-FState AEntityNest::States[] =
-{
-	S_NORMAL (NEST, 'A', -1, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AEntityNest, Strife, 26, 0)
-	PROP_SpawnState (0)
-	PROP_RadiusFixed (84)
-	PROP_HeightFixed (47)
-	PROP_Flags (MF_SOLID|MF_NOTDMATCH)
-END_DEFAULTS
-
-// Entity Pod ---------------------------------------------------------------
-
-void A_SpawnEntity (AActor *);
-
-class AEntityPod : public AActor
-{
-	DECLARE_ACTOR (AEntityPod, AActor)
-};
-
-FState AEntityPod::States[] =
-{
-	S_NORMAL (PODD, 'A',  60, A_Look,			&States[0]),
-
-	S_NORMAL (PODD, 'A', 360, NULL,				&States[2]),
-	S_NORMAL (PODD, 'B',   9, A_NoBlocking,		&States[3]),
-	S_NORMAL (PODD, 'C',   9, NULL,				&States[4]),
-	S_NORMAL (PODD, 'D',   9, A_SpawnEntity,	&States[5]),
-	S_NORMAL (PODD, 'E',  -1, NULL,				NULL)
-};
-
-IMPLEMENT_ACTOR (AEntityPod, Strife, 198, 0)
-	PROP_SpawnState (0)
-	PROP_SeeState (1)
-	PROP_RadiusFixed (25)
-	PROP_HeightFixed (91)
-	PROP_Flags (MF_SOLID|MF_NOTDMATCH)
-	PROP_SeeSound ("misc/gibbed")
-END_DEFAULTS
-
-void A_SpawnEntity (AActor *self)
-{
-#if 0
-	AActor *entity = Spawn<AEntity> (self->x, self->y, self->z + 70*FRACUNIT);
-	if (entity != NULL)
+	else if (self->reactiontime > 50)
 	{
-		entity->momz = 5*FRACUNIT;
-		// And then it records the entity's spawn location at
-		// 2F860, 2F864, 2F868
+		S_Sound (self, CHAN_VOICE, "misc/alarm", 1, ATTN_NORM);
 	}
-#endif
 }
-
-// "Zap 6" ------------------------------------------------------------------
-
-class AZap6 : public AActor
-{
-	DECLARE_ACTOR (AZap6, AActor)
-};
-
-FState AZap6::States[] =
-{
-	S_BRIGHT (ZAP6, 'A', 5, NULL, &States[1]),
-	S_BRIGHT (ZAP6, 'B', 5, NULL, &States[2]),
-	S_BRIGHT (ZAP6, 'C', 5, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AZap6, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF)
-	PROP_RenderStyle (STYLE_Add)
-END_DEFAULTS
-
-// "Zap 5" ------------------------------------------------------------------
-
-void A_201fc (AActor *) {}
-
-class AZap5 : public AActor
-{
-	DECLARE_ACTOR (AZap5, AActor)
-};
-
-FState AZap5::States[] =
-{
-	S_BRIGHT (ZAP5, 'A', 4, A_Countdown, &States[1]),
-	S_BRIGHT (ZAP5, 'B', 4, A_201fc, &States[2]),
-	S_BRIGHT (ZAP5, 'C', 4, A_Countdown, &States[3]),
-	S_BRIGHT (ZAP5, 'D', 4, A_Countdown, &States[0]),
-};
-
-IMPLEMENT_ACTOR (AZap5, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF)
-	PROP_RenderStyle (STYLE_Add)
-	PROP_Alpha (HX_SHADOW)
-END_DEFAULTS
-
-// Klaxon Warning Light -----------------------------------------------------
-
-void A_1f608 (AActor *) {}
-void A_21c0c (AActor *) {}
 
 class AKlaxonWarningLight : public AActor
 {
@@ -1432,184 +713,54 @@ IMPLEMENT_ACTOR (AKlaxonWarningLight, Strife, 24, 0)
 	PROP_SeeState (1)
 	PROP_ReactionTime (60)
 	PROP_Flags (MF_NOBLOCKMAP|MF_AMBUSH|MF_SPAWNCEILING|MF_NOGRAVITY)
-	PROP_Flags4 (MF4_FIXMAPTHINGPOS)
+	PROP_Flags4 (MF4_FIXMAPTHINGPOS|MF4_NOSPLASHALERT)
+	PROP_StrifeType (121)
 END_DEFAULTS
 
-// Computer -----------------------------------------------------------------
+// CeilingTurret ------------------------------------------------------------
 
-void A_2100c (AActor *self)
-{
-	// This function does a lot more than just this
-	if (self->DeathSound != 0)
-	{
-		S_SoundID (self, CHAN_VOICE, self->DeathSound, 1.0, ATTN_NORM);
-		S_SoundID (self, 6, self->DeathSound, 1.0, ATTN_NORM);
-	}
-}
+void A_ShootGun (AActor *);
 
-class AComputer : public AActor
+class ACeilingTurret : public AActor
 {
-	DECLARE_ACTOR (AComputer, AActor)
+	DECLARE_ACTOR (ACeilingTurret, AActor)
 };
 
-FState AComputer::States[] =
+FState ACeilingTurret::States[] =
 {
-	S_BRIGHT (SECR, 'A', 4, NULL,				&States[1]),
-	S_BRIGHT (SECR, 'B', 4, NULL,				&States[2]),
-	S_BRIGHT (SECR, 'C', 4, NULL,				&States[3]),
-	S_BRIGHT (SECR, 'D', 4, NULL,				&States[0]),
+	S_NORMAL (TURT, 'A',  5, A_1f608,			&States[0]),
 
-	S_BRIGHT (SECR, 'E', 5, A_Bang4Cloud,		&States[5]),
-	S_BRIGHT (SECR, 'F', 5, A_NoBlocking,		&States[6]),
-	S_BRIGHT (SECR, 'G', 5, A_2100c,			&States[7]),
-	S_BRIGHT (SECR, 'H', 5, A_TossGib,			&States[8]),
-	S_BRIGHT (SECR, 'I', 5, A_Bang4Cloud,		&States[9]),
-	S_NORMAL (SECR, 'J', 5, NULL,				&States[10]),
-	S_NORMAL (SECR, 'K', 5, A_Bang4Cloud,		&States[11]),
-	S_NORMAL (SECR, 'L', 5, NULL,				&States[12]),
-	S_NORMAL (SECR, 'M', 5, A_Bang4Cloud,		&States[13]),
-	S_NORMAL (SECR, 'N', 5, NULL,				&States[14]),
-	S_NORMAL (SECR, 'O', 5, A_Bang4Cloud,		&States[15]),
-	S_NORMAL (SECR, 'P',-1, NULL,				NULL)
+	S_NORMAL (TURT, 'A',  2, A_Chase,			&States[1]),
+
+	S_NORMAL (TURT, 'B',  4, A_ShootGun,		&States[3]),
+	S_NORMAL (TURT, 'D',  3, A_SentinelRefire,	&States[4]),
+	S_NORMAL (TURT, 'A',  4, A_SentinelRefire,  &States[2]),
+
+	S_BRIGHT (BALL, 'A',  6, A_Scream,			&States[6]),
+	S_BRIGHT (BALL, 'B',  6, NULL,				&States[7]),
+	S_BRIGHT (BALL, 'C',  6, NULL,				&States[8]),
+	S_BRIGHT (BALL, 'D',  6, NULL,				&States[9]),
+	S_BRIGHT (BALL, 'E',  6, NULL,				&States[10]),
+	S_NORMAL (TURT, 'C', -1, NULL,				NULL)
 };
 
-IMPLEMENT_ACTOR (AComputer, Strife, 182, 0)
+IMPLEMENT_ACTOR (ACeilingTurret, Strife, 27, 0)
+	PROP_StrifeType (122)
+	PROP_SpawnHealth (125)
 	PROP_SpawnState (0)
-	PROP_SpawnHealth (80)
-	PROP_DeathState (4)
-	PROP_SpeedFixed (27)		// was a byte in Strife
-	PROP_RadiusFixed (26)
-	PROP_HeightFixed (128)
-	PROP_MassLong (100000)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx800|MF_STRIFEx8000|MF_NOBLOOD)
-	PROP_DeathSound ("misc/explosion")
+	PROP_SeeState (1)
+	PROP_PainState (2)
+	PROP_MissileState (2)
+	PROP_DeathState (5)
+	PROP_SpeedFixed (0)
+	PROP_PainChance (0)
+	PROP_MassLong (10000000)
+	PROP_Flags (MF_SHOOTABLE|MF_AMBUSH|MF_SPAWNCEILING|MF_NOGRAVITY|
+				MF_NOBLOOD|MF_COUNTKILL)
+	PROP_Flags4 (MF4_NOSPLASHALERT|MF4_DONTFALL)
+	PROP_MinMissileChance (150)
+	PROP_DeathSound ("turret/death")
 END_DEFAULTS
-
-// Metal Armor --------------------------------------------------------------
-
-class AMetalArmor : public AArmor
-{
-	DECLARE_ACTOR (AMetalArmor, AArmor)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, (armortype_t)-2, 200);
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the Metal Armor";
-	}
-};
-
-FState AMetalArmor::States[] =
-{
-	S_NORMAL (ARM3, 'A', -1, NULL, NULL),
-};
-
-IMPLEMENT_ACTOR (AMetalArmor, Strife, 2019, 69)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Mass (3)
-	PROP_Tag ("Metal_Armor")
-END_DEFAULTS
-
-AT_GAME_SET (MetalArmor)
-{
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		ArmorPics[0] = "ARM3A0";
-	}
-}
-
-// Leather Armor ------------------------------------------------------------
-
-class ALeatherArmor : public AArmor
-{
-	DECLARE_ACTOR (ALeatherArmor, AArmor)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, (armortype_t)-1, 100);
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the Leather Armor";
-	}
-};
-
-FState ALeatherArmor::States[] =
-{
-	S_NORMAL (ARM4, 'A', -1, NULL, NULL),
-};
-
-IMPLEMENT_ACTOR (ALeatherArmor, Strife, 2018, 68)
-	PROP_RadiusFixed (20)
-	PROP_HeightFixed (16)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-	PROP_Mass (5)
-	PROP_Tag ("Leather_Armor")
-END_DEFAULTS
-
-AT_GAME_SET (LeatherArmor)
-{
-	if (gameinfo.gametype == GAME_Strife)
-	{
-		ArmorPics[0] = "ARM4A0";
-	}
-}
-
-// A Cloud used for varius explosions ---------------------------------------
-// This actor has no direct equivalent in strife. To create this, Strife
-// spawned a spark and then changed its state to that of this explosion
-// cloud. Weird.
-
-class ABang4Cloud : public AActor
-{
-	DECLARE_ACTOR (ABang4Cloud, AActor);
-public:
-	void BeginPlay ()
-	{
-		momz = FRACUNIT;
-	}
-};
-
-FState ABang4Cloud::States[] =
-{
-	S_BRIGHT (BNG4, 'B', 3, NULL,		&States[1]),
-	S_BRIGHT (BNG4, 'C', 3, NULL,		&States[2]),
-	S_BRIGHT (BNG4, 'D', 3, NULL,		&States[3]),
-	S_BRIGHT (BNG4, 'E', 3, NULL,		&States[4]),
-	S_BRIGHT (BNG4, 'F', 3, NULL,		&States[5]),
-	S_BRIGHT (BNG4, 'G', 3, NULL,		&States[6]),
-	S_BRIGHT (BNG4, 'H', 3, NULL,		&States[7]),
-	S_BRIGHT (BNG4, 'I', 3, NULL,		&States[8]),
-	S_BRIGHT (BNG4, 'J', 3, NULL,		&States[9]),
-	S_BRIGHT (BNG4, 'K', 3, NULL,		&States[10]),
-	S_BRIGHT (BNG4, 'L', 3, NULL,		&States[11]),
-	S_BRIGHT (BNG4, 'M', 3, NULL,		&States[12]),
-	S_BRIGHT (BNG4, 'N', 3, NULL,		NULL)
-};
-
-IMPLEMENT_ACTOR (ABang4Cloud, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderStyle (STYLE_Add)
-END_DEFAULTS
-
-void A_Bang4Cloud (AActor *self)
-{
-	fixed_t spawnx, spawny;
-
-	spawnx = self->x + (pr_bang4cloud.Random2() & 3) * 10240;
-	spawny = self->y + (pr_bang4cloud.Random2() & 3) * 10240;
-
-	Spawn<ABang4Cloud> (spawnx, spawny, self->z);
-}
 
 // Water Bottle -------------------------------------------------------------
 
@@ -1625,6 +776,7 @@ FState AWaterBottle::States[] =
 
 IMPLEMENT_ACTOR (AWaterBottle, Strife, 2014, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (131)
 END_DEFAULTS
 
 // Mug ----------------------------------------------------------------------
@@ -1641,116 +793,8 @@ FState AMug::States[] =
 
 IMPLEMENT_ACTOR (AMug, Strife, 164, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (132)
 END_DEFAULTS
-
-// StrifeMap ----------------------------------------------------------------
-
-class AStrifeMap : public AInventory
-{
-	DECLARE_ACTOR (AStrifeMap, AInventory)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GivePower (toucher->player, pw_allmap);
-	}
-protected:
-	virtual const char *PickupMessage ()
-	{
-		return "You picked up the map";
-	}
-	// Which sound does it play in Strife? Powerup or normal pickup?
-	// Does Strife even have a powerup sound?
-};
-
-FState AStrifeMap::States[] =
-{
-	S_BRIGHT (SMAP, 'A',	6, NULL 				, &States[1]),
-	S_BRIGHT (SMAP, 'B',	6, NULL 				, &States[0]),
-};
-
-IMPLEMENT_ACTOR (AStrifeMap, Strife, 2026, 137)
-	PROP_Flags (MF_SPECIAL)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-// Power Crystal ------------------------------------------------------------
-
-void A_21100 (AActor *);
-void A_21124 (AActor *);
-
-class APowerCrystal : public AActor
-{
-	DECLARE_ACTOR (APowerCrystal, AActor)
-};
-
-FState APowerCrystal::States[] =
-{
-	S_BRIGHT (CRYS, 'A', 16, A_LoopActiveSound,		&States[1]),
-	S_BRIGHT (CRYS, 'B',  5, A_LoopActiveSound,		&States[2]),
-	S_BRIGHT (CRYS, 'C',  4, A_LoopActiveSound,		&States[3]),
-	S_BRIGHT (CRYS, 'D',  4, A_LoopActiveSound,		&States[4]),
-	S_BRIGHT (CRYS, 'E',  4, A_LoopActiveSound,		&States[5]),
-	S_BRIGHT (CRYS, 'F',  4, A_LoopActiveSound,		&States[0]),
-
-	S_BRIGHT (BOOM, 'A',  1, A_21124,				&States[7]),
-	S_BRIGHT (BOOM, 'B',  3, A_2100c,				&States[8]),
-	S_BRIGHT (BOOM, 'C',  2, A_LightGoesOut,		&States[9]),
-	S_BRIGHT (BOOM, 'D',  3, A_Bang4Cloud,			&States[10]),
-	S_BRIGHT (BOOM, 'E',  3, NULL,					&States[11]),
-	S_BRIGHT (BOOM, 'F',  3, NULL,					&States[12]),
-	S_BRIGHT (BOOM, 'G',  3, A_Bang4Cloud,			&States[13]),
-	S_BRIGHT (BOOM, 'H',  1, A_21124,				&States[14]),
-	S_BRIGHT (BOOM, 'I',  3, NULL,					&States[15]),
-	S_BRIGHT (BOOM, 'J',  3, A_Bang4Cloud,			&States[16]),
-	S_BRIGHT (BOOM, 'K',  3, A_Bang4Cloud,			&States[17]),
-	S_BRIGHT (BOOM, 'L',  3, A_Bang4Cloud,			&States[18]),
-	S_BRIGHT (BOOM, 'M',  3, NULL,					&States[19]),
-	S_BRIGHT (BOOM, 'N',  3, NULL,					&States[20]),
-	S_BRIGHT (BOOM, 'O',  3, A_Bang4Cloud,			&States[21]),
-	S_BRIGHT (BOOM, 'P',  3, NULL,					&States[22]),
-	S_BRIGHT (BOOM, 'Q',  3, NULL,					&States[23]),
-	S_BRIGHT (BOOM, 'R',  3, NULL,					&States[24]),
-	S_BRIGHT (BOOM, 'S',  3, NULL,					&States[25]),
-	S_BRIGHT (BOOM, 'T',  3, NULL,					&States[26]),
-	S_BRIGHT (BOOM, 'U',  3, A_21100,				&States[27]),
-	S_BRIGHT (BOOM, 'V',  3, NULL,					&States[28]),
-	S_BRIGHT (BOOM, 'W',  3, NULL,					&States[29]),
-	S_BRIGHT (BOOM, 'X',  3, NULL,					&States[30]),
-	S_BRIGHT (BOOM, 'Y',  3, NULL,					NULL)
-};
-
-IMPLEMENT_ACTOR (APowerCrystal, Strife, 92, 0)
-	PROP_SpawnState (0)
-	PROP_SpawnHealth (50)
-	PROP_DeathState (6)
-	PROP_SpeedFixed (14)		// Was a byte in Strife
-	PROP_RadiusFixed (20)		// This size seems odd, but that's what the mobjinfo says
-	PROP_HeightFixed (16)
-	PROP_MassLong (99999999)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOGRAVITY|MF_STRIFEx800|MF_NOBLOOD)
-	PROP_DeathSound ("misc/explosion")
-	PROP_ActiveSound ("misc/reactor")
-END_DEFAULTS
-
-void A_21100 (AActor *self)
-{
-	if (self->target != NULL && self->target->player != NULL)
-	{
-		// Store 0 in the dword at offset 0x307 in the player struct
-	}
-}
-
-void A_21124 (AActor *self)
-{
-	//sys25768 (self, self->target, 512);
-	if (self->target != NULL && self->target->player != NULL)
-	{
-		// Store 5 in the dword at offset 0x307 in the player struct
-	}
-
-	// Strife didn't do this next part, but it looks good
-	self->RenderStyle = STYLE_Add;
-}
 
 // Wooden Barrel ------------------------------------------------------------
 
@@ -1778,7 +822,9 @@ IMPLEMENT_ACTOR (AWoodenBarrel, Strife, 82, 0)
 	PROP_DeathState (1)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (32)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_INCOMBAT)
+	PROP_StrifeType (203)
 	PROP_DeathSound ("woodenbarrel/death")
 END_DEFAULTS
 
@@ -1818,7 +864,9 @@ IMPLEMENT_ACTOR (AExplosiveBarrel2, Strife, 94, 0)
 	PROP_DeathState (1)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (32)
-	//PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD)
+	PROP_StrifeType (204)
+	//PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_INCOMBAT)
 END_DEFAULTS
 
 // Target Practice -----------------------------------------------------------
@@ -1866,7 +914,9 @@ IMPLEMENT_ACTOR (ATargetPractice, Strife, 208, 0)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (72)
 	PROP_MassLong (9999999)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
+	PROP_Flags4 (MF4_INCOMBAT)
+	PROP_StrifeType (205)
 	PROP_PainSound ("misc/metalhit")
 END_DEFAULTS
 
@@ -1888,6 +938,7 @@ IMPLEMENT_ACTOR (ALightSilverFluorescent, Strife, 95, 0)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_Flags4 (MF4_FIXMAPTHINGPOS)
+	PROP_StrifeType (206)
 END_DEFAULTS
 
 // Light (Brown, Fluorescent) -----------------------------------------------
@@ -1908,6 +959,7 @@ IMPLEMENT_ACTOR (ALightBrownFluorescent, Strife, 96, 0)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_Flags4 (MF4_FIXMAPTHINGPOS)
+	PROP_StrifeType (207)
 END_DEFAULTS
 
 // Light (Gold, Fluorescent) ------------------------------------------------
@@ -1928,6 +980,7 @@ IMPLEMENT_ACTOR (ALightGoldFluorescent, Strife, 97, 0)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_Flags4 (MF4_FIXMAPTHINGPOS)
+	PROP_StrifeType (208)
 END_DEFAULTS
 
 // Light Globe --------------------------------------------------------------
@@ -1947,6 +1000,7 @@ IMPLEMENT_ACTOR (ALightGlobe, Strife, 2028, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (209)
 END_DEFAULTS
 
 // Techno Pillar ------------------------------------------------------------
@@ -1966,6 +1020,7 @@ IMPLEMENT_ACTOR (APillarTechno, Strife, 48, 0)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (128)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (210)
 END_DEFAULTS
 
 // Aztec Pillar -------------------------------------------------------------
@@ -1985,6 +1040,7 @@ IMPLEMENT_ACTOR (APillarAztec, Strife, 54, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (128)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (211)
 END_DEFAULTS
 
 // Damaged Aztec Pillar -----------------------------------------------------
@@ -2004,6 +1060,7 @@ IMPLEMENT_ACTOR (APillarAztecDamaged, Strife, 55, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (80)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (212)
 END_DEFAULTS
 
 // Ruined Aztec Pillar ------------------------------------------------------
@@ -2023,6 +1080,7 @@ IMPLEMENT_ACTOR (APillarAztecRuined, Strife, 56, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (40)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (213)
 END_DEFAULTS
 
 // Huge Tech Pillar ---------------------------------------------------------
@@ -2031,6 +1089,12 @@ class APillarHugeTech : public AActor
 {
 	DECLARE_ACTOR (APillarHugeTech, AActor)
 };
+
+// This was defined while compiling on Linux.
+// I don't know where it came from.
+#ifdef HUGE
+#undef HUGE
+#endif
 
 FState APillarHugeTech::States[] =
 {
@@ -2045,6 +1109,7 @@ IMPLEMENT_ACTOR (APillarHugeTech, Strife, 57, 0)
 	PROP_RadiusFixed (24)
 	PROP_HeightFixed (192)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (214)
 END_DEFAULTS
 
 // Alien Power Crystal in a Pillar ------------------------------------------
@@ -2064,6 +1129,7 @@ IMPLEMENT_ACTOR (APillarAlienPower, Strife, 227, 0)
 	PROP_RadiusFixed (24)
 	PROP_HeightFixed (192)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (215)
 	PROP_ActiveSound ("ambient/alien2")
 END_DEFAULTS
 
@@ -2084,6 +1150,7 @@ IMPLEMENT_ACTOR (ASStalactiteBig, Strife, 98, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (54)
 	PROP_Flags (MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY)
+	PROP_StrifeType (216)
 END_DEFAULTS
 
 // SStalactiteSmall ---------------------------------------------------------
@@ -2103,6 +1170,7 @@ IMPLEMENT_ACTOR (ASStalactiteSmall, Strife, 161, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (40)
 	PROP_Flags (MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY)
+	PROP_StrifeType (217)
 END_DEFAULTS
 
 // SStalagmiteBig -----------------------------------------------------------
@@ -2122,6 +1190,7 @@ IMPLEMENT_ACTOR (ASStalagmiteBig, Strife, 160, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (40)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (218)
 END_DEFAULTS
 
 // Cave Pillar Top ----------------------------------------------------------
@@ -2141,6 +1210,7 @@ IMPLEMENT_ACTOR (ACavePillarTop, Strife, 159, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (128)
 	PROP_Flags (MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY)
+	PROP_StrifeType (219)
 END_DEFAULTS
 
 // Cave Pillar Bottom -------------------------------------------------------
@@ -2160,6 +1230,7 @@ IMPLEMENT_ACTOR (ACavePillarBottom, Strife, 162, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (128)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (220)
 END_DEFAULTS
 
 // SStalagmiteSmall ---------------------------------------------------------
@@ -2179,6 +1250,7 @@ IMPLEMENT_ACTOR (ASStalagmiteSmall, Strife, 163, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (25)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (221)
 END_DEFAULTS
 
 // Candle -------------------------------------------------------------------
@@ -2195,6 +1267,7 @@ FState ACandle::States[] =
 
 IMPLEMENT_ACTOR (ACandle, Strife, 34, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (222)
 END_DEFAULTS
 
 // StrifeCandelabra ---------------------------------------------------------
@@ -2214,6 +1287,7 @@ IMPLEMENT_ACTOR (AStrifeCandelabra, Strife, 35, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (40)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (223)
 END_DEFAULTS
 
 // Floor Water Drop ---------------------------------------------------------
@@ -2238,7 +1312,8 @@ FState AWaterDropOnFloor::States[] =
 IMPLEMENT_ACTOR (AWaterDropOnFloor, Strife, 103, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_ActiveSound ("world/waterdrip")
+	PROP_StrifeType (224)
+	PROP_ActiveSound ("world/waterdrips")
 END_DEFAULTS
 
 // Waterfall Splash ---------------------------------------------------------
@@ -2264,6 +1339,7 @@ FState AWaterfallSplash::States[] =
 IMPLEMENT_ACTOR (AWaterfallSplash, Strife, 104, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (225)
 	PROP_ActiveSound ("world/waterfall")
 END_DEFAULTS
 
@@ -2286,6 +1362,7 @@ IMPLEMENT_ACTOR (AWaterDrip, Strife, 53, 0)
 	PROP_SpawnState (0)
 	PROP_HeightFixed (1)
 	PROP_Flags (MF_NOBLOCKMAP|MF_SPAWNCEILING|MF_NOGRAVITY)
+	PROP_StrifeType (226)
 END_DEFAULTS
 
 // WaterFountain ------------------------------------------------------------
@@ -2306,6 +1383,7 @@ FState AWaterFountain::States[] =
 IMPLEMENT_ACTOR (AWaterFountain, Strife, 112, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (227)
 	PROP_ActiveSound ("world/watersplash")
 END_DEFAULTS
 
@@ -2328,6 +1406,7 @@ IMPLEMENT_ACTOR (AHeartsInTank, Strife, 113, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (56)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (228)
 END_DEFAULTS
 
 // Teleport Swirl -----------------------------------------------------------
@@ -2349,25 +1428,8 @@ IMPLEMENT_ACTOR (ATeleportSwirl, Strife, 23, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_RenderStyle (STYLE_Add)
-	PROP_Alpha (HX_SHADOW)
-END_DEFAULTS
-
-// Dead Crusader ------------------------------------------------------------
-
-class ADeadCrusader : public AActor
-{
-	DECLARE_ACTOR (ADeadCrusader, AActor)
-};
-
-FState ADeadCrusader::States[] =
-{
-	S_NORMAL (ROB2, 'N', 4, A_TossGib,	&States[1]),
-	S_NORMAL (ROB2, 'O', 4, A_Explode,	&States[2]),
-	S_NORMAL (ROB2, 'P',-1, A_21598,	NULL)
-};
-
-IMPLEMENT_ACTOR (ADeadCrusader, Strife, 22, 0)
-	PROP_SpawnState (0)
+	PROP_Alpha (TRANSLUC25)
+	PROP_StrifeType (229)
 END_DEFAULTS
 
 // Dead Player --------------------------------------------------------------
@@ -2386,6 +1448,7 @@ FState ADeadStrifePlayer::States[] =
 
 IMPLEMENT_ACTOR (ADeadStrifePlayer, Strife, 15, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (231)
 END_DEFAULTS
 
 // Dead Peasant -------------------------------------------------------------
@@ -2403,6 +1466,7 @@ FState ADeadPeasant::States[] =
 
 IMPLEMENT_ACTOR (ADeadPeasant, Strife, 18, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (232)
 END_DEFAULTS
 
 // Dead Acolyte -------------------------------------------------------------
@@ -2420,6 +1484,7 @@ FState ADeadAcolyte::States[] =
 
 IMPLEMENT_ACTOR (ADeadAcolyte, Strife, 21, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (233)
 END_DEFAULTS
 
 // Dead Reaver --------------------------------------------------------------
@@ -2436,6 +1501,7 @@ FState ADeadReaver::States[] =
 
 IMPLEMENT_ACTOR (ADeadReaver, Strife, 20, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (234)
 END_DEFAULTS
 
 // Dead Rebel ---------------------------------------------------------------
@@ -2452,6 +1518,7 @@ FState ADeadRebel::States[] =
 
 IMPLEMENT_ACTOR (ADeadRebel, Strife, 19, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (235)
 END_DEFAULTS
 
 // Sacrificed Guy -----------------------------------------------------------
@@ -2468,6 +1535,7 @@ FState ASacrificedGuy::States[] =
 
 IMPLEMENT_ACTOR (ASacrificedGuy, Strife, 212, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (236)
 END_DEFAULTS
 
 // Pile of Guts -------------------------------------------------------------
@@ -2487,6 +1555,7 @@ FState APileOfGuts::States[] =
 // in a map. Pity.
 IMPLEMENT_ACTOR (APileOfGuts, Strife, -1, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (237)
 END_DEFAULTS
 
 // Burning Barrel -----------------------------------------------------------
@@ -2509,6 +1578,7 @@ IMPLEMENT_ACTOR (AStrifeBurningBarrel, Strife, 70, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (48)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (238)
 END_DEFAULTS
 
 // Burning Bowl -----------------------------------------------------------
@@ -2531,6 +1601,7 @@ IMPLEMENT_ACTOR (ABurningBowl, Strife, 105, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (239)
 	PROP_ActiveSound ("world/smallfire")
 END_DEFAULTS
 
@@ -2554,6 +1625,7 @@ IMPLEMENT_ACTOR (ABurningBrazier, Strife, 106, 0)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (32)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (240)
 	PROP_ActiveSound ("world/smallfire")
 END_DEFAULTS
 
@@ -2578,6 +1650,7 @@ IMPLEMENT_ACTOR (ASmallTorchLit, Strife, 107, 0)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_Flags4 (MF4_FIXMAPTHINGPOS)
+	PROP_StrifeType (241)
 
 	// It doesn't have any action functions, so how does it use this sound?
 	PROP_ActiveSound ("world/smallfire")
@@ -2601,6 +1674,7 @@ IMPLEMENT_ACTOR (ASmallTorchUnlit, Strife, 108, 0)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_Flags4 (MF4_FIXMAPTHINGPOS)
+	PROP_StrifeType (242)
 END_DEFAULTS
 
 // Ceiling Chain ------------------------------------------------------------
@@ -2620,6 +1694,7 @@ IMPLEMENT_ACTOR (ACeilingChain, Strife, 109, 0)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (93)
 	PROP_Flags (MF_NOBLOCKMAP|MF_SPAWNCEILING|MF_NOGRAVITY)
+	PROP_StrifeType (243)
 END_DEFAULTS
 
 // Cage Light ---------------------------------------------------------------
@@ -2639,6 +1714,7 @@ IMPLEMENT_ACTOR (ACageLight, Strife, 28, 0)
 	PROP_SpawnState (0)
 	PROP_HeightFixed (3)
 	PROP_Flags (MF_NOBLOCKMAP|MF_SPAWNCEILING|MF_NOGRAVITY)
+	PROP_StrifeType (244)
 END_DEFAULTS
 
 // Statue -------------------------------------------------------------------
@@ -2658,6 +1734,7 @@ IMPLEMENT_ACTOR (AStatue, Strife, 110, 0)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (64)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (245)
 END_DEFAULTS
 
 // Ruined Statue ------------------------------------------------------------
@@ -2677,6 +1754,7 @@ IMPLEMENT_ACTOR (AStatueRuined, Strife, 44, 0)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (56)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (246)
 END_DEFAULTS
 
 // Medium Torch -------------------------------------------------------------
@@ -2699,6 +1777,7 @@ IMPLEMENT_ACTOR (AMediumTorch, Strife, 111, 0)
 	PROP_RadiusFixed (4)
 	PROP_HeightFixed (72)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (247)
 END_DEFAULTS
 
 // Outside Lamp -------------------------------------------------------------
@@ -2719,6 +1798,7 @@ IMPLEMENT_ACTOR (AOutsideLamp, Strife, 43, 0)
 	PROP_RadiusFixed (3)
 	PROP_HeightFixed (80)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (248)
 END_DEFAULTS
 
 // Pole Lantern -------------------------------------------------------------
@@ -2739,6 +1819,7 @@ IMPLEMENT_ACTOR (APoleLantern, Strife, 46, 0)
 	PROP_RadiusFixed (3)
 	PROP_HeightFixed (80)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (249)
 END_DEFAULTS
 
 // Rock 1 -------------------------------------------------------------------
@@ -2756,6 +1837,7 @@ FState ASRock1::States[] =
 IMPLEMENT_ACTOR (ASRock1, Strife, 99, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (250)
 END_DEFAULTS
 
 // Rock 2 -------------------------------------------------------------------
@@ -2773,6 +1855,7 @@ FState ASRock2::States[] =
 IMPLEMENT_ACTOR (ASRock2, Strife, 100, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (251)
 END_DEFAULTS
 
 // Rock 3 -------------------------------------------------------------------
@@ -2790,6 +1873,7 @@ FState ASRock3::States[] =
 IMPLEMENT_ACTOR (ASRock3, Strife, 101, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (252)
 END_DEFAULTS
 
 // Rock 4 -------------------------------------------------------------------
@@ -2807,6 +1891,7 @@ FState ASRock4::States[] =
 IMPLEMENT_ACTOR (ASRock4, Strife, 102, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (253)
 END_DEFAULTS
 
 // Stick in Water -----------------------------------------------------------
@@ -2827,6 +1912,7 @@ FState AStickInWater::States[] =
 IMPLEMENT_ACTOR (AStickInWater, Strife, 215, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (254)
 	PROP_ActiveSound ("world/river")
 END_DEFAULTS
 
@@ -2845,6 +1931,7 @@ FState ARubble1::States[] =
 IMPLEMENT_ACTOR (ARubble1, Strife, 29, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+	PROP_StrifeType (255)
 END_DEFAULTS
 
 // Rubble 2 -----------------------------------------------------------------
@@ -2862,6 +1949,7 @@ FState ARubble2::States[] =
 IMPLEMENT_ACTOR (ARubble2, Strife, 30, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+	PROP_StrifeType (256)
 END_DEFAULTS
 
 // Rubble 3 -----------------------------------------------------------------
@@ -2879,6 +1967,7 @@ FState ARubble3::States[] =
 IMPLEMENT_ACTOR (ARubble3, Strife, 31, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+	PROP_StrifeType (257)
 END_DEFAULTS
 
 // Rubble 4 -----------------------------------------------------------------
@@ -2896,6 +1985,7 @@ FState ARubble4::States[] =
 IMPLEMENT_ACTOR (ARubble4, Strife, 32, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+	PROP_StrifeType (258)
 END_DEFAULTS
 
 // Rubble 5 -----------------------------------------------------------------
@@ -2913,6 +2003,7 @@ FState ARubble5::States[] =
 IMPLEMENT_ACTOR (ARubble5, Strife, 36, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+	PROP_StrifeType (259)
 END_DEFAULTS
 
 // Rubble 6 -----------------------------------------------------------------
@@ -2930,6 +2021,7 @@ FState ARubble6::States[] =
 IMPLEMENT_ACTOR (ARubble6, Strife, 37, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+	PROP_StrifeType (260)
 END_DEFAULTS
 
 // Rubble 7 -----------------------------------------------------------------
@@ -2947,6 +2039,7 @@ FState ARubble7::States[] =
 IMPLEMENT_ACTOR (ARubble7, Strife, 41, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+	PROP_StrifeType (261)
 END_DEFAULTS
 
 // Rubble 8 -----------------------------------------------------------------
@@ -2964,6 +2057,7 @@ FState ARubble8::States[] =
 IMPLEMENT_ACTOR (ARubble8, Strife, 42, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+	PROP_StrifeType (262)
 END_DEFAULTS
 
 // Surgery Crab -------------------------------------------------------------
@@ -2983,6 +2077,7 @@ IMPLEMENT_ACTOR (ASurgeryCrab, Strife, 117, 0)
 	PROP_Flags (MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
+	PROP_StrifeType (263)
 END_DEFAULTS
 
 // Large Torch --------------------------------------------------------------
@@ -3005,6 +2100,7 @@ IMPLEMENT_ACTOR (ALargeTorch, Strife, 47, 0)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (72)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (264)
 	PROP_ActiveSound ("world/smallfire")
 END_DEFAULTS
 
@@ -3028,6 +2124,7 @@ IMPLEMENT_ACTOR (AHugeTorch, Strife, 50, 0)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (80)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (265)
 	PROP_ActiveSound ("world/smallfire")
 END_DEFAULTS
 
@@ -3048,6 +2145,7 @@ IMPLEMENT_ACTOR (APalmTree, Strife, 51, 0)
 	PROP_RadiusFixed (15)
 	PROP_HeightFixed (109)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (266)
 END_DEFAULTS
 
 // Big Tree ----------------------------------------------------------------
@@ -3067,6 +2165,7 @@ IMPLEMENT_ACTOR (ABigTree2, Strife, 202, 0)
 	PROP_RadiusFixed (15)
 	PROP_HeightFixed (109)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (267)
 END_DEFAULTS
 
 // Potted Tree ----------------------------------------------------------------
@@ -3086,6 +2185,7 @@ IMPLEMENT_ACTOR (APottedTree, Strife, 203, 0)
 	PROP_RadiusFixed (15)
 	PROP_HeightFixed (64)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (268)
 END_DEFAULTS
 
 // Tree Stub ----------------------------------------------------------------
@@ -3105,6 +2205,7 @@ IMPLEMENT_ACTOR (ATreeStub, Strife, 33, 0)
 	PROP_RadiusFixed (15)
 	PROP_HeightFixed (80)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (269)
 END_DEFAULTS
 
 // Short Bush ---------------------------------------------------------------
@@ -3124,6 +2225,7 @@ IMPLEMENT_ACTOR (AShortBush, Strife, 60, 0)
 	PROP_RadiusFixed (15)
 	PROP_HeightFixed (40)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (270)
 END_DEFAULTS
 
 // Tall Bush ---------------------------------------------------------------
@@ -3143,6 +2245,7 @@ IMPLEMENT_ACTOR (ATallBush, Strife, 62, 0)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (64)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (271)
 END_DEFAULTS
 
 // Chimney Stack ------------------------------------------------------------
@@ -3162,6 +2265,7 @@ IMPLEMENT_ACTOR (AChimneyStack, Strife, 63, 0)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (64)	// This height does not fit the sprite
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (272)
 END_DEFAULTS
 
 // Barricade Column ---------------------------------------------------------
@@ -3181,6 +2285,7 @@ IMPLEMENT_ACTOR (ABarricadeColumn, Strife, 69, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (128)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (273)
 END_DEFAULTS
 
 // Pot ----------------------------------------------------------------------
@@ -3200,6 +2305,7 @@ IMPLEMENT_ACTOR (APot, Strife, 165, 0)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (24)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (274)
 END_DEFAULTS
 
 // Pitcher ------------------------------------------------------------------
@@ -3219,6 +2325,7 @@ IMPLEMENT_ACTOR (APitcher, Strife, 188, 0)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (32)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (275)
 END_DEFAULTS
 
 // Stool --------------------------------------------------------------------
@@ -3238,6 +2345,7 @@ IMPLEMENT_ACTOR (AStool, Strife, 189, 0)
 	PROP_RadiusFixed (6)
 	PROP_HeightFixed (24)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (276)
 END_DEFAULTS
 
 // Metal Pot ----------------------------------------------------------------
@@ -3255,6 +2363,7 @@ FState AMetalPot::States[] =
 IMPLEMENT_ACTOR (AMetalPot, Strife, 190, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (277)
 END_DEFAULTS
 
 // Tub ----------------------------------------------------------------------
@@ -3272,6 +2381,7 @@ FState ATub::States[] =
 IMPLEMENT_ACTOR (ATub, Strife, 191, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (278)
 END_DEFAULTS
 
 // Anvil --------------------------------------------------------------------
@@ -3291,6 +2401,7 @@ IMPLEMENT_ACTOR (AAnvil, Strife, 194, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (32)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (279)
 END_DEFAULTS
 
 // Silver Tech Lamp ----------------------------------------------------------
@@ -3310,6 +2421,7 @@ IMPLEMENT_ACTOR (ATechLampSilver, Strife, 196, 0)
 	PROP_RadiusFixed (11)
 	PROP_HeightFixed (64)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (280)
 END_DEFAULTS
 
 // Brass Tech Lamp ----------------------------------------------------------
@@ -3329,6 +2441,7 @@ IMPLEMENT_ACTOR (ATechLampBrass, Strife, 197, 0)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (64)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (281)
 END_DEFAULTS
 
 // Tray --------------------------------------------------------------------
@@ -3348,6 +2461,7 @@ IMPLEMENT_ACTOR (ATray, Strife, 68, 0)
 	PROP_RadiusFixed (24)
 	PROP_HeightFixed (40)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (282)
 END_DEFAULTS
 
 // AmmoFiller ---------------------------------------------------------------
@@ -3367,6 +2481,7 @@ IMPLEMENT_ACTOR (AAmmoFiller, Strife, 228, 0)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (24)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (283)
 END_DEFAULTS
 
 // Sigil Banner -------------------------------------------------------------
@@ -3386,6 +2501,7 @@ IMPLEMENT_ACTOR (ASigilBanner, Strife, 216, 0)
 	PROP_RadiusFixed (24)
 	PROP_HeightFixed (96)
 	PROP_Flags (MF_NOBLOCKMAP)	// I take it this was once solid, yes?
+	PROP_StrifeType (284)
 END_DEFAULTS
 
 // RebelBoots ---------------------------------------------------------------
@@ -3403,6 +2519,7 @@ FState ARebelBoots::States[] =
 IMPLEMENT_ACTOR (ARebelBoots, Strife, 217, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (285)
 END_DEFAULTS
 
 // RebelHelmet --------------------------------------------------------------
@@ -3420,6 +2537,7 @@ FState ARebelHelmet::States[] =
 IMPLEMENT_ACTOR (ARebelHelmet, Strife, 218, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (286)
 END_DEFAULTS
 
 // RebelShirt ---------------------------------------------------------------
@@ -3437,6 +2555,7 @@ FState ARebelShirt::States[] =
 IMPLEMENT_ACTOR (ARebelShirt, Strife, 219, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_StrifeType (287)
 END_DEFAULTS
 
 // Power Coupling -----------------------------------------------------------
@@ -3444,24 +2563,52 @@ END_DEFAULTS
 class APowerCoupling : public AActor
 {
 	DECLARE_ACTOR (APowerCoupling, AActor)
+public:
+	void Die (AActor *source, AActor *inflictor);
 };
 
 FState APowerCoupling::States[] =
 {
 	S_NORMAL (COUP, 'A', 5, NULL, &States[1]),
-	S_NORMAL (COUP, 'B', 5, NULL, &States[0])
+	S_NORMAL (COUP, 'B', 5, NULL, &States[0]),
 };
 
 IMPLEMENT_ACTOR (APowerCoupling, Strife, 220, 0)
 	PROP_SpawnState (0)
 	PROP_SpawnHealth (40)
-	PROP_SpeedFixed (6)		// Was a byte in Strife
 	PROP_RadiusFixed (17)
 	PROP_HeightFixed (64)
 	PROP_MassLong (999999)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx800|MF_STRIFEx8000|MF_DROPPED|MF_NOBLOOD|MF_NOTDMATCH)
-	// Why no death state?
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPPED|MF_NOBLOOD|MF_NOTDMATCH)
+	PROP_Flags4 (MF4_INCOMBAT)
+	PROP_StrifeType (288)
 END_DEFAULTS
+
+void APowerCoupling::Die (AActor *source, AActor *inflictor)
+{
+	Super::Die (source, inflictor);
+
+	int i;
+
+	for (i = 0; i < MAXPLAYERS; ++i)
+		if (playeringame[i] && players[i].health > 0)
+			break;
+
+	if (i == MAXPLAYERS)
+		return;
+
+	// [RH] In case the player broke it with the dagger, alert the guards now.
+	if (LastHeard != source)
+	{
+		P_NoiseAlert (source, this);
+	}
+	EV_DoDoor (DDoor::doorClose, NULL, players[i].mo, 225, 2*FRACUNIT, 0, 0, 0);
+	EV_DoFloor (DFloor::floorLowerToHighest, NULL, 44, FRACUNIT, 0, 0, 0);
+	players[i].mo->GiveInventoryType (QuestItemClasses[5]);
+	S_Sound (CHAN_VOICE, "svox/voc13", 1, ATTN_NORM);
+	players[i].SetLogNumber (13);
+	P_DropItem (this, "BrokenPowerCoupling", -1, 256);
+}
 
 // Alien Bubble Column ------------------------------------------------------
 
@@ -3480,6 +2627,7 @@ IMPLEMENT_ACTOR (AAlienBubbleColumn, Strife, 221, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (128)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (290)
 	PROP_ActiveSound ("ambient/alien5")
 END_DEFAULTS
 
@@ -3500,6 +2648,7 @@ IMPLEMENT_ACTOR (AAlienFloorBubble, Strife, 222, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (72)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (291)
 	PROP_ActiveSound ("ambient/alien6")
 END_DEFAULTS
 
@@ -3520,6 +2669,7 @@ IMPLEMENT_ACTOR (AAlienCeilingBubble, Strife, 223, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (72)
 	PROP_Flags (MF_SOLID|MF_SPAWNCEILING|MF_NOGRAVITY)
+	PROP_StrifeType (292)
 	PROP_ActiveSound ("ambient/alien4")
 END_DEFAULTS
 
@@ -3540,6 +2690,7 @@ IMPLEMENT_ACTOR (AAlienAspClimber, Strife, 224, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (128)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (293)
 	PROP_ActiveSound ("ambient/alien3")
 END_DEFAULTS
 
@@ -3562,6 +2713,7 @@ IMPLEMENT_ACTOR (AAlienSpiderLight, Strife, 225, 0)
 	PROP_RadiusFixed (32)
 	PROP_HeightFixed (56)
 	PROP_Flags (MF_SOLID)
+	PROP_StrifeType (294)
 	PROP_ActiveSound ("ambient/alien1")
 END_DEFAULTS
 
@@ -3688,35 +2840,109 @@ void A_Countdown (AActor *self)
 	}
 }
 
-void A_LightGoesOut (AActor *self)
-{
-	AActor *foo;
-	sector_t *sec = self->Sector;
-	vertex_t *spot;
-	fixed_t newheight;
-
-	sec->lightlevel = 0;
-
-	newheight = sec->FindLowestFloorSurrounding (&spot);
-	sec->floorplane.d = sec->floorplane.PointToDist (spot, newheight);
-
-	for (int i = 0; i < 8; ++i)
-	{
-		foo = Spawn<ARubble1> (self->x, self->y, self->z);
-		if (foo != NULL)
-		{
-			int t = pr_lightout() & 15;
-			foo->momx = (t - (pr_lightout() & 7)) << FRACBITS;
-			foo->momy = (pr_lightout.Random2() & 7) << FRACBITS;
-			foo->momz = (7 + (pr_lightout() & 3)) << FRACBITS;
-		}
-	}
-}
-
 void A_LoopActiveSound (AActor *self)
 {
 	if (self->ActiveSound != 0 && !S_IsActorPlayingSomething (self, CHAN_VOICE))
 	{
 		S_LoopedSoundID (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
 	}
+}
+
+// Fire Droplet -------------------------------------------------------------
+
+class AFireDroplet : public AActor
+{
+	DECLARE_ACTOR (AFireDroplet, AActor)
+};
+
+// [RH] I think these should be bright, even though they weren't in Strife.
+FState AFireDroplet::States[] =
+{
+	S_BRIGHT (FFOT, 'A', 9, NULL, &States[1]),
+	S_BRIGHT (FFOT, 'B', 9, NULL, &States[2]),
+	S_BRIGHT (FFOT, 'C', 9, NULL, &States[3]),
+	S_BRIGHT (FFOT, 'D', 9, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (AFireDroplet, Strife, -1, 0)
+	PROP_StrifeType (297)
+	PROP_SpawnState (0)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP)
+END_DEFAULTS
+
+// Humanoid Base Class ------------------------------------------------------
+
+void A_ItBurnsItBurns (AActor *);
+void A_DropFire (AActor *);
+
+FState AStrifeHumanoid::States[] =
+{
+#define S_FIREHANDS 0
+	S_BRIGHT (WAVE, 'A', 3, NULL,				&States[S_FIREHANDS+1]),
+	S_BRIGHT (WAVE, 'B', 3, NULL,				&States[S_FIREHANDS+2]),
+	S_BRIGHT (WAVE, 'C', 3, NULL,				&States[S_FIREHANDS+3]),
+	S_BRIGHT (WAVE, 'D', 3, NULL,				&States[S_FIREHANDS]),
+
+	// [RH] These weren't bright in Strife, but I think they should be.
+	// (After all, they are now a light source.)
+#define S_HUMAN_BURNDEATH (S_FIREHANDS+4)
+	S_BRIGHT (BURN, 'A', 3, A_ItBurnsItBurns,	&States[S_HUMAN_BURNDEATH+1]),
+	S_BRIGHT (BURN, 'B', 3, A_DropFire,			&States[S_HUMAN_BURNDEATH+2]),
+	S_BRIGHT (BURN, 'C', 3, A_Wander,			&States[S_HUMAN_BURNDEATH+3]),
+	S_BRIGHT (BURN, 'D', 3, A_NoBlocking,		&States[S_HUMAN_BURNDEATH+4]),
+	S_BRIGHT (BURN, 'E', 5, A_DropFire,			&States[S_HUMAN_BURNDEATH+5]),
+	S_BRIGHT (BURN, 'F', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+6]),
+	S_BRIGHT (BURN, 'G', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+7]),
+	S_BRIGHT (BURN, 'H', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+8]),
+	S_BRIGHT (BURN, 'I', 5, A_DropFire,			&States[S_HUMAN_BURNDEATH+9]),
+	S_BRIGHT (BURN, 'J', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+10]),
+	S_BRIGHT (BURN, 'K', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+11]),
+	S_BRIGHT (BURN, 'L', 5, A_Wander,			&States[S_HUMAN_BURNDEATH+12]),
+	S_BRIGHT (BURN, 'M', 3, A_DropFire,			&States[S_HUMAN_BURNDEATH+13]),
+	S_BRIGHT (BURN, 'N', 3, NULL,				&States[S_HUMAN_BURNDEATH+14]),
+	S_BRIGHT (BURN, 'O', 5, NULL,				&States[S_HUMAN_BURNDEATH+15]),
+	S_BRIGHT (BURN, 'P', 5, NULL,				&States[S_HUMAN_BURNDEATH+16]),
+	S_BRIGHT (BURN, 'Q', 5, NULL,				&States[S_HUMAN_BURNDEATH+17]),
+	S_BRIGHT (BURN, 'P', 5, NULL,				&States[S_HUMAN_BURNDEATH+18]),
+	S_BRIGHT (BURN, 'Q', 5, NULL,				&States[S_HUMAN_BURNDEATH+19]),
+	S_BRIGHT (BURN, 'R', 7, NULL,				&States[S_HUMAN_BURNDEATH+20]),
+	S_BRIGHT (BURN, 'S', 7, NULL,				&States[S_HUMAN_BURNDEATH+21]),
+	S_BRIGHT (BURN, 'T', 7, NULL,				&States[S_HUMAN_BURNDEATH+22]),
+	S_BRIGHT (BURN, 'U', 7, NULL,				&States[S_HUMAN_BURNDEATH+23]),
+	S_BRIGHT (BURN, 'V',700,NULL,				NULL),
+
+#define S_HUMAN_ZAPDEATH (S_HUMAN_BURNDEATH+24)
+	S_NORMAL (DISR, 'A', 5, NULL,				&States[S_HUMAN_ZAPDEATH+1]),
+	S_NORMAL (DISR, 'B', 5, NULL,				&States[S_HUMAN_ZAPDEATH+2]),
+	S_NORMAL (DISR, 'C', 5, NULL,				&States[S_HUMAN_ZAPDEATH+3]),
+	S_NORMAL (DISR, 'D', 5, A_NoBlocking,		&States[S_HUMAN_ZAPDEATH+4]),
+	S_NORMAL (DISR, 'E', 5, NULL,				&States[S_HUMAN_ZAPDEATH+5]),
+	S_NORMAL (DISR, 'F', 5, NULL,				&States[S_HUMAN_ZAPDEATH+6]),
+	S_NORMAL (DISR, 'G', 4, NULL,				&States[S_HUMAN_ZAPDEATH+7]),
+	S_NORMAL (DISR, 'H', 4, NULL,				&States[S_HUMAN_ZAPDEATH+8]),
+	S_NORMAL (DISR, 'I', 4, NULL,				&States[S_HUMAN_ZAPDEATH+9]),
+	S_NORMAL (DISR, 'J', 4, NULL,				&States[S_HUMAN_ZAPDEATH+10]),
+	S_NORMAL (MEAT, 'D',700,NULL,				NULL)
+};
+
+IMPLEMENT_ACTOR (AStrifeHumanoid, Any, -1, 0)
+	PROP_BDeathState (S_HUMAN_BURNDEATH)
+	PROP_EDeathState (S_HUMAN_ZAPDEATH)
+END_DEFAULTS
+
+void A_ItBurnsItBurns (AActor *self)
+{
+	A_Scream (self);
+	if (self->player != NULL)
+	{
+		P_SetPsprite (self->player, ps_weapon, &AStrifeHumanoid::States[S_FIREHANDS]);
+		P_SetPsprite (self->player, ps_flash, NULL);
+	}
+}
+
+void A_DropFire (AActor *self)
+{
+	AActor *drop = Spawn<AFireDroplet> (self->x, self->y, self->z + 24*FRACUNIT);
+	drop->momz = -FRACUNIT;
+	P_RadiusAttack (self, self, 64, 64, false, 0);
 }

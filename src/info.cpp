@@ -213,17 +213,6 @@ void FActorInfo::StaticInit ()
 	LoadDecorations (ProcessStates);
 }
 
-void FActorInfo::StaticWeaponInit ()
-{
-	TAutoSegIterator<FWeaponInfoInit *, &WRegHead, &WRegTail> reg;
-
-	while (++reg != NULL)
-	{
-		wpnlev1info[reg->WeaponType] = reg->Level1;
-		wpnlev2info[reg->WeaponType] = reg->Level2;
-	}
-}
-
 // Called after the IWAD has been identified
 void FActorInfo::StaticGameSet ()
 {

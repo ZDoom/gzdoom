@@ -60,6 +60,7 @@ static FRandom pr_dropitem ("DropItem");
 static FRandom pr_fastchase ("FastChase");
 static FRandom pr_look2 ("LookyLooky");
 static FRandom pr_look3 ("IGotHooky");
+static FRandom pr_slook ("SlooK");
 
 //
 // P_NewChaseDir related LUT.
@@ -99,13 +100,12 @@ fixed_t yspeed[8] = {0,46341,FRACUNIT,46341,0,-46341,-FRACUNIT,-46341};
 // sound blocking lines cut off traversal.
 //----------------------------------------------------------------------------
 
-AActor *soundtarget;
-
-void P_RecursiveSound (sector_t *sec, int soundblocks)
+void P_RecursiveSound (sector_t *sec, AActor *soundtarget, bool splash, int soundblocks)
 {
 	int 		i;
 	line_t* 	check;
 	sector_t*	other;
+	AActor*		actor;
 		
 	// wake up all monsters in this sector
 	if (sec->validcount == validcount
@@ -116,7 +116,15 @@ void P_RecursiveSound (sector_t *sec, int soundblocks)
 	
 	sec->validcount = validcount;
 	sec->soundtraversed = soundblocks+1;
-	sec->soundtarget = soundtarget;
+
+	// [RH] Set this in the actors in the sector instead of the sector itself.
+	for (actor = sec->thinglist; actor != NULL; actor = actor->snext)
+	{
+		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)))
+		{
+			actor->LastHeard = soundtarget;
+		}
+	}
 
 	for (i = 0; i < sec->linecount; i++)
 	{
@@ -148,11 +156,11 @@ void P_RecursiveSound (sector_t *sec, int soundblocks)
 		if (check->flags & ML_SOUNDBLOCK)
 		{
 			if (!soundblocks)
-				P_RecursiveSound (other, 1);
+				P_RecursiveSound (other, soundtarget, splash, 1);
 		}
 		else
 		{
-			P_RecursiveSound (other, soundblocks);
+			P_RecursiveSound (other, soundtarget, splash, soundblocks);
 		}
 	}
 }
@@ -168,14 +176,16 @@ void P_RecursiveSound (sector_t *sec, int soundblocks)
 //
 //----------------------------------------------------------------------------
 
-void P_NoiseAlert (AActor *target, AActor *emmiter)
+void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash)
 {
+	if (target == NULL || emmiter == NULL)
+		return;
+
 	if (target->player && (target->player->cheats & CF_NOTARGET))
 		return;
 
-	soundtarget = target;
 	validcount++;
-	P_RecursiveSound (emmiter->Sector, 0);
+	P_RecursiveSound (emmiter->Sector, target, splash, 0);
 }
 
 
@@ -183,35 +193,35 @@ void P_NoiseAlert (AActor *target, AActor *emmiter)
 
 //----------------------------------------------------------------------------
 //
-// FUNC P_CheckMeleeRange
+// AActor :: CheckMeleeRange
 //
 //----------------------------------------------------------------------------
 
-BOOL P_CheckMeleeRange (AActor *actor)
+bool AActor::CheckMeleeRange ()
 {
 	AActor *pl;
 	fixed_t dist;
 		
-	if (!actor->target)
+	if (!target)
 		return false;
 				
-	pl = actor->target;
-	dist = P_AproxDistance (pl->x-actor->x, pl->y-actor->y);
+	pl = target;
+	dist = P_AproxDistance (pl->x - x, pl->y - y);
 
 	if (dist >= MELEERANGE-20*FRACUNIT + pl->radius)
 		return false;
 
 	// [RH] If moving toward goal, then we've reached it.
-	if (actor->target == actor->goal)
+	if (target == goal)
 		return true;
 
 	// [RH] Don't melee things too far above or below actor.
-	if (pl->z > actor->z + actor->height)
+	if (pl->z > z + height)
 		return false;
-	if (pl->z + pl->height < actor->z)
+	if (pl->z + pl->height < z)
 		return false;
 		
-	if (!P_CheckSight (actor, pl, 0))
+	if (!P_CheckSight (this, pl, 0))
 		return false;
 														
 	return true;				
@@ -286,7 +296,22 @@ BOOL P_CheckMissileRange (AActor *actor)
 
 bool AActor::SuggestMissileAttack (fixed_t dist)
 {
-	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, 200);
+	// new version encapsulates the different behavior in flags instead of virtual functions
+	// The advantage is that this allows inheriting the missile attack attributes from the
+	// various Doom monsters by custom monsters
+	// Making these values customizable is not necessary and in most case more confusing than
+	// helpful because no value here translates into anything really meaningful. 
+	
+	if (flags4 & MF4_SHORTMISSILERANGE && dist>14*64*FRACUNIT)
+		return false;	// The Arch Vile's special behavior turned into a flag
+		
+	if (flags4 & MF4_LONGMELEERANGE && dist < 196*FRACUNIT)
+		return false;	// From the Revenant: close enough for fist attack
+
+	if (flags4 & MF4_MISSILEMORE) dist >>= 1;
+	if (flags4 & MF4_MISSILEEVENMORE) dist >>= 3;
+	
+	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, MinMissileChance);
 }
 
 //
@@ -857,6 +882,134 @@ BOOL P_LookForTID (AActor *actor, BOOL allaround)
 	return false;
 }
 
+//============================================================================
+//
+// LookForTIDinBlock
+//
+// Finds a non-friendly monster in a mapblock. It can also use targets of
+// friendlies in this mapblock to find non-friendlies in other mapblocks.
+//
+//============================================================================
+
+AActor *LookForEnemiesInBlock (AActor *lookee, int index)
+{
+	FBlockNode *block;
+	AActor *link;
+	AActor *other;
+	
+	for (block = blocklinks[index]; block != NULL; block = block->NextActor)
+	{
+		link = block->Me;
+
+        if (!(link->flags & MF_SHOOTABLE))
+			continue;			// not shootable (observer or dead)
+
+		if (link == lookee)
+			continue;
+
+		if (link->health <= 0)
+			continue;			// dead
+
+		if (link->flags2 & MF2_DORMANT)
+			continue;			// don't target dormant things
+
+		if (!(link->flags3 & MF3_ISMONSTER))
+			continue;			// don't target it if it isn't a monster (could be a barrel)
+
+		other = NULL;
+		if (link->flags & MF_FRIENDLY)
+		{
+			if (deathmatch &&
+				lookee->FriendPlayer != 0 && link->FriendPlayer != 0 &&
+				lookee->FriendPlayer != link->FriendPlayer)
+			{
+				// This is somebody else's friend, so go after it
+				other = link;
+			}
+			else if (link->target != NULL && !(link->target->flags & MF_FRIENDLY))
+			{
+				other = link->target;
+				if (!(other->flags & MF_SHOOTABLE) ||
+					other->health <= 0 ||
+					(other->flags2 & MF2_DORMANT))
+				{
+					other = NULL;;
+				}
+			}
+		}
+		else
+		{
+			other = link;
+		}
+
+		if (other == NULL || !P_CheckSight (lookee, other, 2))
+			continue;			// out of sight
+	/*						
+			if (!allaround)
+			{
+				angle_t an = R_PointToAngle2 (actor->x, actor->y, 
+											other->x, other->y)
+					- actor->angle;
+				
+				if (an > ANG90 && an < ANG270)
+				{
+					fixed_t dist = P_AproxDistance (other->x - actor->x,
+											other->y - actor->y);
+					// if real close, react anyway
+					if (dist > MELEERANGE)
+						continue;	// behind back
+				}
+			}
+	*/
+
+		return other;
+	}
+	return NULL;
+}
+
+//============================================================================
+//
+// P_LookForEnemies
+//
+// Selects a live enemy monster
+//
+//============================================================================
+
+BOOL P_LookForEnemies (AActor *actor, BOOL allaround)
+{
+	AActor *other;
+
+	other = P_BlockmapSearch (actor, 10, LookForEnemiesInBlock);
+
+	if (other != NULL)
+	{
+		if (actor->goal && actor->target == actor->goal)
+			actor->reactiontime = 0;
+
+		actor->target = other;
+//		actor->LastLook.Actor = other;
+		return true;
+	}
+
+	if (actor->target == NULL)
+	{
+		// [RH] use goal as target
+		if (actor->goal != NULL)
+		{
+			actor->target = actor->goal;
+			return true;
+		}
+		// Use last known enemy if no enemies sighted -- killough 2/15/98:
+		if (actor->lastenemy != NULL && actor->lastenemy->health > 0)
+		{
+			actor->target = actor->lastenemy;
+			actor->lastenemy = NULL;
+			return true;
+		}
+	}
+	return false;
+}
+
 /*
 ================
 =
@@ -887,8 +1040,12 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 			return false;
 		}
 	}
+	else if (actor->flags & MF_FRIENDLY)
+	{
+		return P_LookForEnemies (actor, allaround);
+	}
 
-	if (gameinfo.gametype != GAME_Doom &&
+	if (!(gameinfo.gametype & (GAME_Doom|GAME_Strife)) &&
 		!multiplayer &&
 		players[0].health <= 0)
 	{ // Single player game and player is dead; look for monsters
@@ -970,7 +1127,8 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 					continue;	// behind back
 			}
 		}
-		if (player->powers[pw_invisibility])
+		if (player->mo->RenderStyle == STYLE_Translucent ||
+			player->mo->RenderStyle == STYLE_OptFuzzy)
 		{
 			if ((P_AproxDistance (player->mo->x - actor->x,
 					player->mo->y - actor->y) > 2*MELEERANGE)
@@ -1025,7 +1183,7 @@ void A_Look (AActor *actor)
 	}
 	else
 	{
-		targ = actor->Sector->soundtarget;
+		targ = actor->LastHeard;
 
 		// [RH] If the soundtarget is dead, don't chase it
 		if (targ != NULL && targ->health <= 0)
@@ -1047,19 +1205,26 @@ void A_Look (AActor *actor)
 
 	if (targ && (targ->flags & MF_SHOOTABLE))
 	{
-		actor->target = targ;
-
-		if (actor->flags & MF_AMBUSH)
+		if (actor->flags & targ->flags & MF_FRIENDLY)
 		{
-			if (P_CheckSight (actor, actor->target, 2))
-				goto seeyou;
+			A_Wander (actor);
 		}
 		else
-			goto seeyou;
+		{
+			actor->target = targ;
+
+			if (actor->flags & MF_AMBUSH)
+			{
+				if (P_CheckSight (actor, actor->target, 2))
+					goto seeyou;
+			}
+			else
+				goto seeyou;
+		}
 	}
 		
 		
-	if (!P_LookForPlayers (actor, false))
+	if (!P_LookForPlayers (actor, actor->flags4 & MF4_LOOKALLAROUND))
 		return;
 				
 	// go into chase state
@@ -1090,7 +1255,7 @@ void A_Wander (AActor *self)
 {
 	int delta;
 
-	if (self->flags & MF_AMBUSH)
+	if (self->flags4 & MF4_STANDSTILL)
 		return;
 
 	if (self->threshold != 0)
@@ -1123,20 +1288,23 @@ void A_Wander (AActor *self)
 
 void A_Look2 (AActor *self)
 {
-	static dword2f178 = 0;
 	AActor *targ;
 
 	self->threshold = 0;
-	targ = self->Sector->soundtarget;
+	targ = self->LastHeard;
+
+	if (targ != NULL && targ->health <= 0)
+	{
+		targ = NULL;
+	}
 
 	if (targ && (targ->flags & MF_SHOOTABLE))
 	{
-		if ((self->flags & MF_STRIFEx4000000) != (targ->flags & MF_STRIFEx4000000) ||
-			dword2f178 == 3 ||
-			dword2f178 == 34)
+		if ((level.flags & LEVEL_NOALLIES) ||
+			(self->flags & MF_FRIENDLY) != (targ->flags & MF_FRIENDLY))
 		{
 			self->target = targ;
-			if (self->flags & MF_COUNTITEM)
+			if (self->flags & MF_AMBUSH)
 			{
 				if (!P_CheckSight (self, targ, 2))
 					goto nosee;
@@ -1147,10 +1315,10 @@ void A_Look2 (AActor *self)
 		}
 		else
 		{
-			if (!P_LookForPlayers (self, self->flags & MF_STRIFEx800))
+			if (!P_LookForPlayers (self, self->flags4 & MF4_LOOKALLAROUND))
 				goto nosee;
 			self->SetState (self->SeeState);
-			self->flags |= MF_STRIFEx8000;
+			self->flags4 |= MF4_INCOMBAT;
 			return;
 		}
 	}
@@ -1159,7 +1327,7 @@ nosee:
 	{
 		self->SetState (self->SpawnState + (pr_look2() & 1) + 1);
 	}
-	if (!(self->flags & MF_AMBUSH) && pr_look2() < 40)
+	if (!(self->flags4 & MF4_STANDSTILL) && pr_look2() < 40)
 	{
 		self->SetState (self->SpawnState + 4);
 	}
@@ -1265,7 +1433,7 @@ void A_Chase (AActor *actor)
 	// [RH] Don't attack if just moving toward goal
 	if (actor->target == actor->goal)
 	{
-		if (P_CheckMeleeRange (actor))
+		if (actor->CheckMeleeRange ())
 		{
 			// reached the goal
 			TActorIterator<APatrolPoint> iterator (actor->goal->args[0]);
@@ -1276,7 +1444,7 @@ void A_Chase (AActor *actor)
 			// as the goal.
 			while ( (spec = specit.Next()) )
 			{
-				LineSpecials[spec->special] (NULL, actor, spec->args[0],
+				LineSpecials[spec->special] (NULL, actor, false, spec->args[0],
 					spec->args[1], spec->args[2], spec->args[3], spec->args[4]);
 			}
 
@@ -1293,6 +1461,7 @@ void A_Chase (AActor *actor)
 			}
 			actor->target = NULL;
 			actor->flags |= MF_JUSTATTACKED;
+			actor->flags4 |= MF4_INCOMBAT;
 			actor->SetState (actor->SpawnState);
 			return;
 		}
@@ -1305,7 +1474,7 @@ void A_Chase (AActor *actor)
 		pr_scaredycat() < 43)
 	{
 		// check for melee attack
-		if (actor->MeleeState && P_CheckMeleeRange (actor))
+		if (actor->MeleeState && actor->CheckMeleeRange ())
 		{
 			if (actor->AttackSound)
 				S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
@@ -1328,6 +1497,7 @@ void A_Chase (AActor *actor)
 			
 			actor->SetState (actor->MissileState);
 			actor->flags |= MF_JUSTATTACKED;
+			actor->flags4 |= MF4_INCOMBAT;
 			return;
 		}
 	}
@@ -1477,29 +1647,65 @@ void A_XXScream (AActor *actor)
 //
 //---------------------------------------------------------------------------
 
-void P_DropItem (AActor *source, const TypeInfo *type, int special, int chance)
+AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int chance)
 {
-	if (pr_dropitem() <= chance)
+	if (type != NULL && pr_dropitem() <= chance)
 	{
 		AActor *mo;
-		
-		if (compatflags & COMPATF_NOTOSSDROPS || (GetDefaultByType(type)->flags & MF_NOGRAVITY))
+		fixed_t spawnz;
+
+		spawnz = source->z;
+		if (!(compatflags & COMPATF_NOTOSSDROPS))
 		{
-			mo = Spawn (type, source->x, source->y, ONFLOORZ);
+			if (gameinfo.gametype == GAME_Strife)
+			{
+				spawnz += 24*FRACUNIT;
+			}
+			else
+			{
+				spawnz += source->height / 2;
+			}
 		}
-		else
-		{
-			mo = Spawn (type, source->x, source->y,
-				source->z + (source->height>>1));
-			mo->momx = pr_dropitem.Random2() << 8;
-			mo->momy = pr_dropitem.Random2() << 8;
-			mo->momz = FRACUNIT*5 + (pr_dropitem() << 10);
-		}
+		mo = Spawn (type, source->x, source->y, spawnz);
 		mo->flags |= MF_DROPPED;
-		if (special >= 0)
+		if (mo->IsKindOf (RUNTIME_CLASS(AInventory)))
 		{
-			mo->health = special;
+			if (special > 0)
+			{
+				static_cast<AInventory *>(mo)->Amount = special;
+			}
+			if (static_cast<AInventory *>(mo)->SpecialDropAction (source))
+			{
+				return NULL;
+			}
 		}
+		if (!(compatflags & COMPATF_NOTOSSDROPS))
+		{
+			P_TossItem (mo);
+		}
+		return static_cast<AInventory *>(mo);
+	}
+	return NULL;
+}
+
+//============================================================================
+//
+// P_TossItem
+//
+//============================================================================
+
+void P_TossItem (AActor *item)
+{
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		item->momx += pr_dropitem.Random2(7) << FRACBITS;
+		item->momy += pr_dropitem.Random2(7) << FRACBITS;
+	}
+	else
+	{
+		item->momx = pr_dropitem.Random2() << 8;
+		item->momy = pr_dropitem.Random2() << 8;
+		item->momz = FRACUNIT*5 + (pr_dropitem() << 10);
 	}
 }
 
@@ -1565,13 +1771,39 @@ void A_Explode (AActor *thing)
 	}
 }
 
+bool CheckBossDeath (AActor *actor)
+{
+	int i;
+
+	// make sure there is a player alive for victory
+	for (i = 0; i < MAXPLAYERS; i++)
+		if (playeringame[i] && players[i].health > 0)
+			break;
+	
+	if (i == MAXPLAYERS)
+		return false; // no one left alive, so do not end game
+	
+	// Make sure all bosses are dead
+	TThinkerIterator<AActor> iterator;
+	AActor *other;
+
+	while ( (other = iterator.Next ()) )
+	{
+		if (other != actor && other->health > 0 && other->GetClass() == actor->GetClass())
+		{ // Found a living boss
+			return false;
+		}
+	}
+	// The boss death is good
+	return true;
+}
+
 //
 // A_BossDeath
 // Possibly trigger special effects if on a boss level
 //
 void A_BossDeath (AActor *actor)
 {
-	int i;
 	enum
 	{
 		MT_FATSO,
@@ -1629,26 +1861,11 @@ void A_BossDeath (AActor *actor)
 	else
 		return;
 
-	// make sure there is a player alive for victory
-	for (i = 0; i < MAXPLAYERS; i++)
-		if (playeringame[i] && players[i].health > 0)
-			break;
-	
-	if (i == MAXPLAYERS)
-		return; // no one left alive, so do not end game
-	
-	// Make sure all bosses are dead
-	TThinkerIterator<AActor> iterator;
-	AActor *other;
-
-	while ( (other = iterator.Next ()) )
+	if (!CheckBossDeath (actor))
 	{
-		if (other != actor && other->health > 0 && other->IsKindOf (RUNTIME_TYPE(actor)))
-		{ // Found a living boss
-			return;
-		}
+		return;
 	}
-		
+
 	// victory!
 	if (level.flags & LEVEL_SPECKILLMONSTERS)
 	{ // Kill any remaining monsters
@@ -1677,7 +1894,7 @@ void A_BossDeath (AActor *actor)
 			return;
 		
 		case LEVEL_SPECOPENDOOR:
-			EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 8*FRACUNIT, 0, NoKey, 0);
+			EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 8*FRACUNIT, 0, 0, 0);
 			return;
 		}
 	}
@@ -1686,7 +1903,7 @@ void A_BossDeath (AActor *actor)
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 		return;
 
-	G_ExitLevel (0);
+	G_ExitLevel (0, false);
 }
 
 //----------------------------------------------------------------------------
@@ -1894,6 +2111,7 @@ void A_FastChase (AActor *actor)
 			goto nomissile;
 		actor->SetState (actor->MissileState);
 		actor->flags |= MF_JUSTATTACKED;
+		actor->flags4 |= MF4_INCOMBAT;
 		return;
 	}
 nomissile:

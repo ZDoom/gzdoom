@@ -91,7 +91,6 @@ BOOL		cursoron = false;
 int			ConBottom, ConScroll, RowAdjust;
 int			CursorTicker;
 constate_e	ConsoleState = c_up;
-char		VersionString[32];
 
 static char ConsoleBuffer[CONSOLESIZE];
 static char *Lines[CONSOLELINES];
@@ -261,7 +260,6 @@ void C_InitConsole (int width, int height, BOOL ingame)
 				conline = false;
 			}
 
-			sprintf (VersionString, "v" DOTVERSIONSTR);
 			gotconback = true;
 		}
 	}
@@ -927,9 +925,9 @@ void C_DrawConsole ()
 		{
 			screen->SetFont (ConFont);
 			screen->DrawText (CR_ORANGE, SCREENWIDTH - 8 -
-				ConFont->StringWidth (VersionString),
+				ConFont->StringWidth ("v" DOTVERSIONSTR),
 				ConBottom - ConFont->GetHeight() - 4,
-				VersionString, TAG_DONE);
+				"v" DOTVERSIONSTR, TAG_DONE);
 			if (TickerMax)
 			{
 				char tickstr[256];

@@ -142,14 +142,13 @@ END_DEFAULTS
 void AMinotaur::BeginPlay ()
 {
 	Super::BeginPlay ();
-	bIsFriend = false;
 	StartTime = -1;
 }
 
 void AMinotaur::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << bIsFriend << StartTime;
+	arc << StartTime;
 }
 
 void AMinotaur::Tick ()
@@ -157,7 +156,7 @@ void AMinotaur::Tick ()
 	Super::Tick ();
 	
 	// The unfriendly Minotaur (Heretic's) is invulnerable while charging
-	if (!bIsFriend)
+	if (!(flags & MF_FRIENDLY))
 	{
 		// Get MF_SKULLFLY bit and shift it so it matches MF2_INVULNERABLE
 		DWORD flying = (flags & MF_SKULLFLY) << 3;
@@ -170,7 +169,7 @@ void AMinotaur::Tick ()
 
 void AMinotaur::NoBlockingSet ()
 {
-	if (gameinfo.gametype == GAME_Heretic)
+	if (!(flags & MF_FRIENDLY))
 	{
 		P_DropItem (this, "ArtiSuperHealth", 0, 51);
 		P_DropItem (this, "PhoenixRodAmmo", 10, 84);
@@ -249,7 +248,11 @@ void AMinotaur::Die (AActor *source, AActor *inflictor)
 
 		if (mo == NULL)
 		{
-			tracer->player->powers[pw_minotaur] = 0;
+			AInventory *power = tracer->FindInventory (RUNTIME_CLASS(APowerMinotaur));
+			if (power != NULL)
+			{
+				power->Destroy ();
+			}
 		}
 	}
 }
@@ -274,17 +277,12 @@ IMPLEMENT_STATELESS_ACTOR (AMinotaurFriend, Hexen, -1, 0)
 
 	PROP_SpawnHealth (2500)
 	PROP_FlagsClear (MF_DROPOFF)
+	PROP_FlagsSet (MF_FRIENDLY)
 	PROP_Flags2Clear (MF2_BOSS)
 	PROP_Flags2Set (MF2_TELESTOMP)
 	PROP_Flags3Set (MF3_STAYMORPHED)
 	PROP_Flags3Clear (MF3_DONTMORPH)
 END_DEFAULTS
-
-void AMinotaurFriend::BeginPlay ()
-{
-	Super::BeginPlay ();
-	bIsFriend = true;
-}
 
 AT_GAME_SET (Minotaur)
 {
@@ -308,6 +306,11 @@ AT_GAME_SET (Minotaur)
 
 		GetDefault<AMinotaur>()->DeathState = &AMinotaur::States[S_MNTR_FADEOUT];
 	}
+}
+
+void AMinotaurFriend::NoBlockingSet ()
+{
+	// Do not drop anything
 }
 
 // Minotaur FX 1 ------------------------------------------------------------
@@ -488,7 +491,7 @@ void A_MinotaurAtk1 (AActor *actor)
 		return;
 	}
 	S_Sound (actor, CHAN_WEAPON, "minotaur/melee", 1, ATTN_NORM);
-	if (P_CheckMeleeRange(actor))
+	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_minotauratk1.HitDice (4);
 		P_DamageMobj (actor->target, actor, actor, damage);
@@ -513,7 +516,7 @@ void A_MinotaurAtk1 (AActor *actor)
 
 void A_MinotaurDecide (AActor *actor)
 {
-	bool friendly = static_cast<AMinotaur *> (actor)->bIsFriend;
+	bool friendly = !!(actor->flags & MF_FRIENDLY);
 	angle_t angle;
 	AActor *target;
 	int dist;
@@ -618,10 +621,10 @@ void A_MinotaurAtk2 (AActor *actor)
 		return;
 	}
 	S_Sound (actor, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
-	if (P_CheckMeleeRange(actor))
+	if (actor->CheckMeleeRange())
 	{
 		int damage;
-		damage = pr_atk.HitDice (static_cast<AMinotaur *>(actor)->bIsFriend ? 3 : 5);
+		damage = pr_atk.HitDice ((actor->flags & MF_FRIENDLY) ? 3 : 5);
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
@@ -657,11 +660,12 @@ void A_MinotaurAtk3 (AActor *actor)
 	{
 		return;
 	}
-	if (P_CheckMeleeRange(actor))
+	S_Sound (actor, CHAN_VOICE, "minotaur/attack3", 1, ATTN_NORM);
+	if (actor->CheckMeleeRange())
 	{
 		int damage;
 		
-		damage = pr_minotauratk3.HitDice (static_cast<AMinotaur *>(actor)->bIsFriend ? 3 : 5);
+		damage = pr_minotauratk3.HitDice ((actor->flags & MF_FRIENDLY) ? 3 : 5);
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
 		if ((player = actor->target->player) != NULL &&
@@ -812,7 +816,7 @@ void A_MinotaurLook (AActor *actor)
 {
 	AMinotaur *self = static_cast<AMinotaur *> (actor);
 
-	if (!self->bIsFriend)
+	if (!(self->flags & MF_FRIENDLY))
 	{
 		A_Look (actor);
 		return;
@@ -892,7 +896,7 @@ void A_MinotaurChase (AActor *actor)
 		return;
 	}
 
-	if (!self->bIsFriend)
+	if (!(self->flags & MF_FRIENDLY))
 	{
 		A_Chase (actor);
 		return;
@@ -912,7 +916,7 @@ void A_MinotaurChase (AActor *actor)
 	actor->reactiontime = 0;
 
 	// Melee attack
-	if (actor->MeleeState && P_CheckMeleeRange (actor))
+	if (actor->MeleeState && actor->CheckMeleeRange ())
 	{
 		if (actor->AttackSound)
 		{

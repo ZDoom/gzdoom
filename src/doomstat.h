@@ -77,7 +77,7 @@ EXTERN_CVAR (Int, gameskill);
 extern	int				NextSkill;			// [RH] Skill to use at next level load
 
 // Nightmare mode flag, single player.
-extern	BOOL 			respawnmonsters;
+extern	int 			respawnmonsters;
 
 // Netgame? Only true if >1 player.
 extern	BOOL			netgame;
@@ -116,7 +116,8 @@ enum EMenuState
 {
 	MENU_Off,			// Menu is closed
 	MENU_On,			// Menu is opened
-	MENU_WaitKey		// Menu is opened and waiting for a key in the controls menu
+	MENU_WaitKey,		// Menu is opened and waiting for a key in the controls menu
+	MENU_OnNoPause,		// Menu is opened but does not pause the game
 };
 
 extern	bool			automapactive;	// In AutoMap mode?

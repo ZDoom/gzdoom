@@ -138,7 +138,6 @@ protected:
 	bool	 ctf;
 	int		 loaded_bots;
 	int		 t_join;
-	fixed_t	 combatdst[NUMWEAPONS+1]; //different for each weapon.
 	AActor	*body1;
 	AActor	*body2;
 	bool	 observer; //Consoleplayer is observer.

@@ -11,7 +11,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "p_local.h"
-#include "p_inter.h"
 #include "b_bot.h"
 #include "g_game.h"
 #include "m_random.h"
@@ -160,6 +159,9 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	if (!enemy || !(enemy->flags & MF_SHOOTABLE) || enemy->health <= 0)
 		return;
 
+	if (actor->player->ReadyWeapon == NULL)
+		return;
+
 	if (actor->player->damagecount > actor->player->skill.isp)
 	{
 		actor->player->first_shot = true;
@@ -168,10 +170,7 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 
 	//Reaction skill thing.
 	if (actor->player->first_shot &&
-		!(actor->player->readyweapon==wp_bfg ||
-		  actor->player->readyweapon==wp_missile ||
-		  actor->player->readyweapon==wp_phoenixrod ||
-		  actor->player->readyweapon==wp_mace))
+		!(actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_REACTION_SKILL_THING))
 	{
 		actor->player->t_react = (100-actor->player->skill.reaction+1)/((pr_botdofire()%3)+3);
 	}
@@ -188,104 +187,69 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 		(actor->y + actor->momy) - (enemy->y + enemy->momy));
 
 	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
-	switch (actor->player->readyweapon)
+	if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_MELEE)
 	{
-	case wp_missile: //Special rules for RL
-	case wp_phoenixrod:
-	case wp_cfire:
-		an = FireRox (actor, enemy, cmd);
-		if(an)
+		if ((actor->player->ReadyWeapon->ProjectileType != NULL))
 		{
-			actor->player->angle = an;
-			if (abs (actor->player->angle - actor->angle) < 12*ANGLE_1) //have to be somewhat precise. to avoid suicide.
+			if (actor->player->ReadyWeapon->CheckAmmo (AWeapon::PrimaryFire, false, true))
 			{
-				actor->player->t_rocket = 9;
-				no_fire = false;
+				// This weapon can fire a projectile and has enough ammo to do so
+				goto shootmissile;
+			}
+			else if (!(actor->player->ReadyWeapon->WeaponFlags & WIF_AMMO_OPTIONAL))
+			{
+				// Ammo is required, so don't shoot. This is for weapons that shoot
+				// missiles that die at close range, such as the powered-up Phoneix Rod.
+				return;
 			}
 		}
-		break;
-
-	case wp_fhammer:
-		if (actor->player->ammo[MANA_2] == 0)
+		else
 		{
-			goto fighternoammo;
+			//*4 is for atmosphere,  the chainsaws sounding and all..
+			no_fire = (dist > (MELEERANGE*4));
 		}
-	case wp_faxe:
-	case wp_plasma: //Plasma (prediction aiming)
-	case wp_skullrod:
-	case wp_crossbow:
-	case wp_cstaff:
-	case wp_mfrost:
-	case wp_mlightning:
-	case wp_fsword:
-	case wp_choly:
-	case wp_mstaff:
-		//Here goes the prediction.
-		dist = P_AproxDistance (actor->x - enemy->x, actor->y - enemy->y);
-		m = dist;
-		switch (actor->player->readyweapon)
-		{
-		case wp_plasma:
-			m /= GetDefaultByName ("PlasmaBall")->Speed;
-			break;
-		case wp_skullrod:
-			m /= GetDefaultByName ("HornRodFX1")->Speed;
-			break;
-		case wp_crossbow:
-			m /= GetDefaultByName ("CrossbowFX1")->Speed;
-			break;
-		case wp_cstaff:
-			m /= GetDefaultByName ("CStaffMissile")->Speed;
-			break;
-		case wp_mfrost:
-			m /= GetDefaultByName ("FrostMissile")->Speed;
-			break;
-		case wp_mlightning:
-			m /= GetDefaultByName ("LightningCeiling")->Speed;
-			break;
-		case wp_fsword:
-			m /= GetDefaultByName ("FSwordMissile")->Speed;
-			break;
-		case wp_choly:
-			m /= GetDefaultByName ("HolySpirit")->Speed;
-			break;
-		case wp_mstaff:
-			m /= GetDefaultByName ("MageStaffFX2")->Speed;
-			break;
-		default:
-			break;
-		}
-		SetBodyAt (enemy->x + enemy->momx*m*2, enemy->y + enemy->momy*m*2, ONFLOORZ, 1);
-		actor->player->angle = R_PointToAngle2 (actor->x, actor->y, body1->x, body1->y);
-		if (Check_LOS (actor, enemy, SHOOTFOV))
-			no_fire = false;
-		break;
-
-	case wp_chainsaw:
-	case wp_fist:
-	case wp_staff:
-	case wp_gauntlets:
-	case wp_snout:
-	case wp_beak:
-	case wp_ffist:
-	case wp_cmace:
-fighternoammo:
-		no_fire = (dist > (MELEERANGE*4)); //*4 is for atmosphere,  the chainsaws sounding and all..
-		break;
-
-	case wp_bfg:
+	}
+	else if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_BFG)
+	{
 		//MAKEME: This should be smarter.
 		if ((pr_botdofire()%200)<=actor->player->skill.reaction)
 			if(Check_LOS(actor, actor->player->enemy, SHOOTFOV))
 				no_fire = false;
-		break;
-
-	default: //Other weapons, mostly instant hit stuff.
+	}
+	else if (actor->player->ReadyWeapon->ProjectileType != NULL)
+	{
+		if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE)
+		{
+			//Special rules for RL
+			an = FireRox (actor, enemy, cmd);
+			if(an)
+			{
+				actor->player->angle = an;
+				//have to be somewhat precise. to avoid suicide.
+				if (abs (actor->player->angle - actor->angle) < 12*ANGLE_1)
+				{
+					actor->player->t_rocket = 9;
+					no_fire = false;
+				}
+			}
+		}
+		// prediction aiming
+shootmissile:
+		dist = P_AproxDistance (actor->x - enemy->x, actor->y - enemy->y);
+		m = dist / GetDefaultByType (actor->player->ReadyWeapon->ProjectileType)->Speed;
+		SetBodyAt (enemy->x + enemy->momx*m*2, enemy->y + enemy->momy*m*2, enemy->z, 1);
+		actor->player->angle = R_PointToAngle2 (actor->x, actor->y, body1->x, body1->y);
+		if (Check_LOS (actor, enemy, SHOOTFOV))
+			no_fire = false;
+	}
+	else
+	{
+		//Other weapons, mostly instant hit stuff.
 		actor->player->angle = R_PointToAngle2 (actor->x, actor->y, enemy->x, enemy->y);
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
 			aiming_penalty += (pr_botdofire()%25)+10;
-		if (enemy->Sector->lightlevel<WHATS_DARK && !actor->player->powers[pw_infrared])
+		if (enemy->Sector->lightlevel<WHATS_DARK/* && !(actor->player->powers & PW_INFRARED)*/)
 			aiming_penalty += pr_botdofire()%40;//Dark
 		if (actor->player->damagecount)
 			aiming_penalty += actor->player->damagecount; //Blood in face makes it hard to aim
@@ -466,7 +430,7 @@ AActor *DCajunMaster::Find_enemy (AActor *bot)
 				//Too dark?
 				if (temp > DARK_DIST &&
 					client->mo->Sector->lightlevel < WHATS_DARK &&
-					bot->player->powers[pw_infrared])
+					bot->player->Powers & PW_INFRARED)
 					continue;
 
 				if (temp < closest_dist)

@@ -3,7 +3,7 @@
 ** Parses dehacked/bex patches and changes game structures accordingly
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2002 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -67,8 +67,6 @@
 // [RH] Made this CVAR_SERVERINFO
 CVAR (Int, infighting, 0, CVAR_SERVERINFO)
 
-extern int clipammo[NUMAMMO];
-
 static bool LoadDehSupp ();
 static void UnloadDehSupp ();
 
@@ -83,17 +81,46 @@ static CodePtrMap *CodePtrNames;
 static int NumCodePtrs;
 
 // Prototype the dehacked code pointers
-#define WEAPON(x)	void A_##x(AActor*, pspdef_t*);
+#define WEAPON(x)	void A_##x(AActor*);
 #define ACTOR(x)	void A_##x(AActor*);
 #include "d_dehackedactions.h"
 
 // Declare the dehacked code pointers
-static const actionf_t CodePtrs[] =
+static const actionf_p CodePtrs[] =
 {
-	{(void *)NULL},
-#define WEAPON(x)	{(void *)A_##x},
-#define ACTOR(x)	{(void *)A_##x},
+	{NULL},
+#define WEAPON(x)	{A_##x},
+#define ACTOR(x)	{A_##x},
 #include "d_dehackedactions.h"
+};
+
+static const char *const AmmoNames[12] =
+{
+	"Clip",
+	"Shell",
+	"Cell",
+	"RocketAmmo",
+	"GoldWandAmmo",
+	NULL,
+	"BlasterAmmo",
+	"SkullRodAmmo",
+	"PhoenixRodAmmo",
+	"MaceAmmo",
+	"Mana1",
+	"Mana2"
+};
+
+static const char *const WeaponNames[9] =
+{
+	"Fist",
+	"Pistol",
+	"Shotgun",
+	"Chaingun",
+	"RocketLauncher",
+	"PlasmaRifle",
+	"BFG9000",
+	"Chainsaw",
+	"SuperShotgun"
 };
 
 // Miscellaneous info that used to be constant
@@ -133,13 +160,13 @@ class ADehackedPickup : public AInventory
 	DECLARE_ACTOR (ADehackedPickup, AInventory)
 	HAS_OBJECT_POINTERS
 public:
+	void Destroy ();
 	const char *PickupMessage ();
 	bool ShouldRespawn ();
 	bool ShouldStay ();
 	bool TryPickup (AActor *toucher);
 	void PlayPickupSound (AActor *toucher);
-	void Hide ();
-	void Destroy ();
+	void DoPickupSpecial (AActor *toucher);
 private:
 	const TypeInfo *DetermineType ();
 	AInventory *RealPickup;
@@ -1251,6 +1278,8 @@ static int PatchSprite (int sprNum)
 
 static int PatchAmmo (int ammoNum)
 {
+	const TypeInfo *ammoType;
+	AAmmo *defaultAmmo;
 	int result;
 	int *max;
 	int *per;
@@ -1260,12 +1289,15 @@ static int PatchAmmo (int ammoNum)
 	if (ammoNum >= 0 && ammoNum < 4)
 	{
 		DPrintf ("Ammo %d.\n", ammoNum);
-		max = &maxammo[ammoNum];
-		per = &clipammo[ammoNum];
+		ammoType = TypeInfo::FindType (AmmoNames[ammoNum]);
+		defaultAmmo = (AAmmo *)GetDefaultByType (ammoType);
+		max = &defaultAmmo->MaxAmount;
+		per = &defaultAmmo->Amount;
 	}
 	else
 	{
 		Printf ("Ammo %d out of range.\n", ammoNum);
+		ammoType = NULL;
 		max = per = &dummy;
 	}
 
@@ -1280,13 +1312,31 @@ static int PatchAmmo (int ammoNum)
 
 	if (oldclip != *per)
 	{
-		int i;
-
-		oldclip = *per;
-		for (i = 0; i < NUMWEAPONS; i++)
+		for (int i = 0; i < TypeInfo::m_NumTypes; ++i)
 		{
-			if (wpnlev1info[i] && wpnlev1info[i]->ammo == ammoNum)
-				wpnlev1info[i]->ammogive = oldclip*2;
+			TypeInfo *type = TypeInfo::m_Types[i];
+
+			if (type == ammoType)
+				continue;
+
+			if (type->IsDescendantOf (ammoType))
+			{
+				defaultAmmo = (AAmmo *)GetDefaultByType (type);
+				defaultAmmo->MaxAmount = *max;
+				defaultAmmo->Amount = Scale (defaultAmmo->Amount, *per, oldclip);
+			}
+			else if (type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+			{
+				AWeapon *defWeap = (AWeapon *)GetDefaultByType (type);
+				if (defWeap->AmmoType1 == ammoType)
+				{
+					defWeap->AmmoGive1 = Scale (defWeap->AmmoGive1, *per, oldclip);
+				}
+				if (defWeap->AmmoType2 == ammoType)
+				{
+					defWeap->AmmoGive2 = Scale (defWeap->AmmoGive2, *per, oldclip);
+				}
+			}
 		}
 	}
 
@@ -1296,16 +1346,17 @@ static int PatchAmmo (int ammoNum)
 static int PatchWeapon (int weapNum)
 {
 	int result;
-	FWeaponInfo *info, dummy;
+	AWeapon *info;
+	BYTE dummy[sizeof(AWeapon)];
 
-	if (weapNum >= 0 && weapNum < NUMWEAPONS)
+	if (weapNum >= 0 && weapNum < 9)
 	{
-		info = wpnlev1info[weapNum];
+		info = (AWeapon *)GetDefaultByName (WeaponNames[weapNum]);
 		DPrintf ("Weapon %d\n", weapNum);
 	}
 	else
 	{
-		info = &dummy;
+		info = (AWeapon *)&dummy;
 		Printf ("Weapon %d out of range.\n", weapNum);
 	}
 
@@ -1320,29 +1371,27 @@ static int PatchWeapon (int weapNum)
 				FState *state = FindState (val);
 
 				if (strnicmp (Line1, "Deselect", 8) == 0)
-					info->upstate = state;
+					info->UpState = state;
 				else if (strnicmp (Line1, "Select", 6) == 0)
-					info->downstate = state;
+					info->DownState = state;
 				else if (strnicmp (Line1, "Bobbing", 7) == 0)
-					info->readystate = state;
+					info->ReadyState = state;
 				else if (strnicmp (Line1, "Shooting", 8) == 0)
-					info->atkstate = info->holdatkstate = state;
+					info->AtkState = info->HoldAtkState = state;
 				else if (strnicmp (Line1, "Firing", 6) == 0)
-					info->flashstate = state;
+					info->FlashState = state;
 			}
 			else if (stricmp (Line1, "Ammo type") == 0)
 			{
-				if (val == 5)
+				if (val < 0 || val >= 12)
 				{
-					info->ammo = am_noammo;
-					info->givingammo = am_noammo;
+					val = 5;
 				}
-				else
+				info->AmmoType1 = TypeInfo::FindType (AmmoNames[val]);
+				if (info->AmmoType1 != NULL)
 				{
-					info->ammo = (ammotype_t)val;
-					info->givingammo = (ammotype_t)val;
+					info->AmmoGive1 = ((AAmmo*)GetDefaultByType (info->AmmoType1))->Amount * 2;
 				}
-				info->ammogive = clipammo[val];
 			}
 			else
 			{
@@ -1355,7 +1404,7 @@ static int PatchWeapon (int weapNum)
 			const FDecal *decal = DecalLibrary.GetDecalByName (Line2);
 			if (decal != NULL)
 			{
-				GetDefaultByType (info->type)->DecalGenerator = const_cast <FDecal *>(decal);
+				info->DecalGenerator = const_cast <FDecal *>(decal);
 			}
 			else
 			{
@@ -1364,11 +1413,11 @@ static int PatchWeapon (int weapNum)
 		}
 		else if (stricmp (Line1, "Ammo use") == 0 || stricmp (Line1, "Ammo per shot") == 0)
 		{
-			info->ammouse = val;
+			info->AmmoUse1 = val;
 		}
 		else if (stricmp (Line1, "Min ammo") == 0)
 		{
-			info->minammo = val;
+			info->MinAmmo1 = val;
 		}
 		else
 		{
@@ -1376,9 +1425,9 @@ static int PatchWeapon (int weapNum)
 		}
 	}
 
-	if (info->ammo == am_noammo)
+	if (info->AmmoType1 == NULL)
 	{
-		info->ammouse = 0;
+		info->AmmoUse1 = 0;
 	}
 
 	return result;
@@ -1403,7 +1452,7 @@ static int PatchPointer (int ptrNum)
 			if (state)
 			{
 				if ((unsigned)(atoi (Line2)) >= (unsigned)NumActions)
-					state->Action.acvoid = NULL;
+					state->Action = NULL;
 				else
 					state->Action = CodePtrs[ActionList[atoi (Line2)]];
 			}
@@ -1459,8 +1508,7 @@ static int PatchMisc (int dummy)
 		{
 			if (stricmp (Line1, "BFG Cells/Shot") == 0)
 			{
-				if (wpnlev1info[wp_bfg] != NULL)
-					wpnlev1info[wp_bfg]->ammouse = atoi (Line2);
+				((AWeapon*)GetDefaultByName ("BFG9000"))->AmmoUse1 = atoi (Line2);
 			}
 			else if (stricmp (Line1, "Rocket Explosion Style") == 0)
 			{
@@ -1485,31 +1533,40 @@ static int PatchMisc (int dummy)
 			}
 			else if (strnicmp (Line1, "Powerup Color ", 14) == 0)
 			{
-				static const char * const names[NUMPOWERS] =
+				static const char * const names[] =
 				{
 					"Invulnerability",
 					"Berserk",
 					"Invisibility",
 					"Radiation Suit",
-					"All Map",
 					"Infrared",
 					"Tome of Power",
 					"Wings of Wrath",
-					NULL,
-					NULL,
 					"Speed",
-					"Minotaur"
+					"Minotaur",
+					NULL
+				};
+				static const TypeInfo * const types[] =
+				{
+					RUNTIME_CLASS(APowerInvulnerable),
+					RUNTIME_CLASS(APowerStrength),
+					RUNTIME_CLASS(APowerInvisibility),
+					RUNTIME_CLASS(APowerIronFeet),
+					RUNTIME_CLASS(APowerLightAmp),
+					RUNTIME_CLASS(APowerWeaponLevel2),
+					RUNTIME_CLASS(APowerSpeed),
+					RUNTIME_CLASS(APowerMinotaur)
 				};
 				int i;
 
-				for (i = 0; i < NUMPOWERS; ++i)
+				for (i = 0; names[i] != NULL; ++i)
 				{
-					if (names[i] != NULL && stricmp (Line1 + 14, names[i]) == 0)
+					if (stricmp (Line1 + 14, names[i]) == 0)
 					{
 						break;
 					}
 				}
-				if (i == NUMPOWERS)
+				if (names[i] == NULL)
 				{
 					Printf ("Unknown miscellaneous info %s.\n", Line1);
 				}
@@ -1524,7 +1581,7 @@ static int PatchMisc (int dummy)
 					}
 					else
 					{
-						PowerupColors[i] = MAKEARGB(
+						static_cast<APowerup *>(GetDefaultByType (types[i]))->BlendColor = PalEntry(
 							BYTE(clamp(a,0.f,1.f)*255.f),
 							clamp(r,0,255),
 							clamp(g,0,255),
@@ -1538,6 +1595,16 @@ static int PatchMisc (int dummy)
 			}
 		}
 	}
+
+	// Update default armor properties
+	ABasicArmorPickup *armor;
+
+	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("GreenArmor"));
+	armor->SaveAmount = 100 * deh.GreenAC;
+	armor->SavePercent = deh.GreenAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("BlueArmor"));
+	armor->SaveAmount = 100 * deh.BlueAC;
+	armor->SavePercent = deh.BlueAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
 
 	// 0xDD means "enable infighting"
 	if (infighting == 0xDD)
@@ -1634,7 +1701,7 @@ static int PatchCodePtrs (int dummy)
 
 				if (name == -1)
 				{
-					state->Action.acp1 = NULL;
+					state->Action = NULL;
 					Printf ("Frame %d: Unknown code pointer: %s\n", frame, Line2);
 				}
 				else
@@ -1655,12 +1722,12 @@ static int PatchCodePtrs (int dummy)
 					}
 					if (min > max)
 					{
-						state->Action.acp1 = NULL;
+						state->Action = NULL;
 						Printf ("Frame %d: Unknown code pointer: %s\n", frame, Line2);
 					}
 					else
 					{
-						state->Action.acp1 = CodePtrs[CodePtrNames[mid].num].acp1;
+						state->Action = CodePtrs[CodePtrNames[mid].num];
 						DPrintf ("Frame %d set to %s\n", frame, GetName (CodePtrNames[mid].name));
 					}
 				}
@@ -2491,6 +2558,7 @@ bool ADehackedPickup::TryPickup (AActor *toucher)
 			RealPickup = NULL;
 			return false;
 		}
+		GoAwayAndDie ();
 		return true;
 	}
 	return false;
@@ -2503,13 +2571,7 @@ const char *ADehackedPickup::PickupMessage ()
 
 bool ADehackedPickup::ShouldStay ()
 {
-	bool staying = RealPickup->ShouldStay ();
-	if (staying)
-	{
-		RealPickup->Destroy();
-		RealPickup = NULL;
-	}
-	return staying;
+	return RealPickup->ShouldStay ();
 }
 
 bool ADehackedPickup::ShouldRespawn ()
@@ -2522,14 +2584,16 @@ void ADehackedPickup::PlayPickupSound (AActor *toucher)
 	RealPickup->PlayPickupSound (toucher);
 }
 
-void ADehackedPickup::Hide ()
+void ADehackedPickup::DoPickupSpecial (AActor *toucher)
 {
-	if (RealPickup != NULL)
+	Super::DoPickupSpecial (toucher);
+	// If the real pickup hasn't joined the toucher's inventory, make sure it
+	// doesn't stick around.
+	if (RealPickup->Owner != toucher)
 	{
 		RealPickup->Destroy ();
-		RealPickup = NULL;
 	}
-	Super::Hide ();
+	RealPickup = NULL;
 }
 
 void ADehackedPickup::Destroy ()

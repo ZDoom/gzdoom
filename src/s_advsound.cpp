@@ -137,6 +137,7 @@ static int S_LookupPlayerSound (int classidx, int gender, int refid);
 static void S_ParsePlayerSoundCommon (char pclass[MAX_SNDNAME+1], int &gender, int &refid);
 static void S_AddSNDINFO (int lumpnum);
 static void S_AddBloodSFX (int lumpnum);
+static void S_AddStrifeVoice (int lumpnum);
 static int S_AddSound (const char *logicalname, int lumpnum);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -238,6 +239,28 @@ int S_PickReplacement (int refid)
 		return list->Sounds[pr_randsound() % list->NumSounds];
 	}
 	return refid;
+}
+
+//==========================================================================
+//
+// S_CacheRandomSound
+//
+// Loads all sounds a random sound might play.
+//
+//==========================================================================
+
+void S_CacheRandomSound (sfxinfo_t *sfx)
+{
+	if (sfx->bRandomHeader)
+	{
+		const FRandomSoundList *list = &S_rnd[sfx->link];
+		for (int i = 0; i < list->NumSounds; ++i)
+		{
+			sfx = &S_sfx[list->Sounds[i]];
+			sfx->bUsed = true;
+			S_CacheSound (&S_sfx[list->Sounds[i]]);
+		}
+	}
 }
 
 //==========================================================================
@@ -370,7 +393,7 @@ static int S_AddSound (const char *logicalname, int lumpnum)
 
 		if (sfx->bPlayerReserve)
 		{
-			SC_ScriptError ("Sounds that are reserved for players cannot be reassigned", NULL);
+			SC_ScriptError ("Sounds that are reserved for players cannot be reassigned");
 		}
 		// Redefining a player compatibility sound will redefine the target instead.
 		if (sfx->bPlayerCompat)
@@ -467,7 +490,7 @@ int S_DupPlayerSound (const char *pclass, int gender, int refid, int aliasref)
 // S_ParseSndInfo
 //
 // Parses all loaded SNDINFO lumps.
-// Also registers Blood SFX files.
+// Also registers Blood SFX files and Strife's voices.
 //==========================================================================
 
 void S_ParseSndInfo ()
@@ -478,14 +501,22 @@ void S_ParseSndInfo ()
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
 	for (lump = 0; lump < Wads.GetNumLumps(); ++lump)
 	{
-		if (Wads.GetLumpNamespace (lump) == ns_bloodsfx)
+		switch (Wads.GetLumpNamespace (lump))
 		{
+		case ns_global:
+			if (Wads.CheckLumpName (lump, "SNDINFO"))
+			{
+				S_AddSNDINFO (lump);
+			}
+			break;
+
+		case ns_bloodsfx:
 			S_AddBloodSFX (lump);
-		}
-		else if (Wads.GetLumpNamespace (lump) == ns_global &&
-			Wads.CheckLumpName (lump, "SNDINFO"))
-		{
-			S_AddSNDINFO (lump);
+			break;
+
+		case ns_strifevoices:
+			S_AddStrifeVoice (lump);
+			break;
 		}
 	}
 
@@ -665,7 +696,7 @@ static void S_AddSNDINFO (int lump)
 				// $playerreserve <logical name>
 				if (DoneReserving)
 				{
-					SC_ScriptError ("All $playerreserves must come before any $playersounds or $playeraliases", NULL);
+					SC_ScriptError ("All $playerreserves must come before any $playersounds or $playeraliases");
 				}
 				else
 				{
@@ -695,8 +726,7 @@ static void S_AddSNDINFO (int lump)
 				targid = S_FindSoundNoHash (sc_String);
 				if (!S_sfx[targid].bPlayerReserve)
 				{
-					const char *name = sc_String;
-					SC_ScriptError ("%s is not a player sound", &name);
+					SC_ScriptError ("%s is not a player sound", sc_String);
 				}
 				S_DupPlayerSound (pclass, gender, refid, targid);
 				}
@@ -846,7 +876,7 @@ static void S_AddSNDINFO (int lump)
 //
 // S_AddBloodSFX
 //
-// Registers a new sound with the name <lumpname>.sfx
+// Registers a new sound with the name "<lumpname>.sfx"
 // Actual sound data is searched for in the ns_bloodraw namespace.
 //
 //==========================================================================
@@ -879,6 +909,21 @@ static void S_AddBloodSFX (int lumpnum)
 
 //==========================================================================
 //
+// S_AddStrifeVoice
+//
+// Registers a new sound with the name "svox/<lumpname>"
+//
+//==========================================================================
+
+static void S_AddStrifeVoice (int lumpnum)
+{
+	char name[16] = "svox/";
+	Wads.GetLumpName (name+5, lumpnum);
+	S_AddSound (name, lumpnum);
+}
+
+//==========================================================================
+//
 // S_ParsePlayerSoundCommon
 //
 // Parses the common part of playersound commands in SNDINFO
@@ -896,8 +941,7 @@ static void S_ParsePlayerSoundCommon (char pclass[MAX_SNDNAME+1], int &gender, i
 	refid = S_FindSoundNoHash (sc_String);
 	if (!S_sfx[refid].bPlayerReserve)
 	{
-		const char *name = sc_String;
-		SC_ScriptError ("%s has not been reserved for a player sound", &name);
+		SC_ScriptError ("%s has not been reserved for a player sound", sc_String);
 	}
 	SC_MustGetString ();
 }
@@ -1341,35 +1385,41 @@ void AAmbientSound::Activate (AActor *activator)
 		return;
 	}
 
-	if (!(amb->type & 3) && !amb->periodmin)
+	if (!bActive)
 	{
-		int sndnum = S_FindSound (amb->sound);
-		if (sndnum == 0)
+		if (!(amb->type & 3) && !amb->periodmin)
 		{
-			Destroy ();
-			return;
+			int sndnum = S_FindSound (amb->sound);
+			if (sndnum == 0)
+			{
+				Destroy ();
+				return;
+			}
+			sfxinfo_t *sfx = &S_sfx[sndnum];
+
+			// Make sure the sound has been loaded so we know how long it is
+			if (!sfx->data)
+				I_LoadSound (sfx);
+			amb->periodmin = (sfx->ms * TICRATE) / 1000;
 		}
-		sfxinfo_t *sfx = &S_sfx[sndnum];
 
-		// Make sure the sound has been loaded so we know how long it is
-		if (!sfx->data)
-			I_LoadSound (sfx);
-		amb->periodmin = (sfx->ms * TICRATE) / 1000;
+		NextCheck = gametic;
+		if (amb->type & (RANDOM|PERIODIC))
+			SetTicker (amb);
+
+		bActive = true;
 	}
-
-	NextCheck = gametic;
-	if (amb->type & (RANDOM|PERIODIC))
-		SetTicker (amb);
-
-	bActive = true;
 }
 
 void AAmbientSound::Deactivate (AActor *activator)
 {
 	Super::Deactivate (activator);
-	bActive = false;
-	if ((Ambients[args[0]]->type & CONTINUOUS) == CONTINUOUS)
+	if (bActive)
 	{
-		S_StopSound (this, CHAN_BODY);
+		bActive = false;
+		if ((Ambients[args[0]]->type & CONTINUOUS) == CONTINUOUS)
+		{
+			S_StopSound (this, CHAN_BODY);
+		}
 	}
 }

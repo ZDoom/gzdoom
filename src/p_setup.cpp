@@ -53,6 +53,9 @@
 #include "stats.h"
 #include "doomerrors.h"
 #include "gi.h"
+#include "p_conversation.h"
+
+extern void P_InitSlidingDoorFrames();
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);
@@ -61,6 +64,7 @@ extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
 extern void P_TranslateTeleportThings (void);
 extern int	P_TranslateSectorSpecial (int);
 
+extern int numinterpolations;
 extern unsigned int R_OldBlend;
 
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
@@ -177,7 +181,7 @@ static void SetTexture (short *texture, DWORD *blend, char *name8)
 	if ((*blend = R_ColormapNumForName (name)) == 0)
 	{
 		if ((*texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
-			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_NoStaticNames)
+			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny)
 			) == -1)
 		{
 			char name2[9];
@@ -204,7 +208,7 @@ static void SetTextureNoErr (short *texture, DWORD *color, char *name8)
 	strncpy (name, name8, 8);
 	name[8] = 0;
 	if ((*texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
-		FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_NoStaticNames)
+		FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny)
 		) == -1)
 	{
 		char name2[9];
@@ -806,11 +810,9 @@ void P_LoadSectors (int lump)
 		ss->ceilingplane.c = -FRACUNIT;
 		ss->ceilingplane.ic = -FRACUNIT;
 		strncpy (fname, ms->floorpic, 8);
-		ss->floorpic = TexMan.GetTexture (fname, FTexture::TEX_Flat,
-			FTextureManager::TEXMAN_NoStaticNames|FTextureManager::TEXMAN_Overridable);
+		ss->floorpic = TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 		strncpy (fname, ms->ceilingpic, 8);
-		ss->ceilingpic = TexMan.GetTexture (fname, FTexture::TEX_Flat,
-			FTextureManager::TEXMAN_NoStaticNames|FTextureManager::TEXMAN_Overridable);
+		ss->ceilingpic = TexMan.GetTexture (fname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 		ss->lightlevel = clamp (SHORT(ms->lightlevel), (short)0, (short)255);
 		if (HasBehavior)
 			ss->special = SHORT(ms->special);
@@ -954,8 +956,6 @@ void P_LoadThings (int lump, int position)
 	// [RH] ZDoom now uses Hexen-style maps as its native format.
 	//		Since this is the only place where Doom-style Things are ever
 	//		referenced, we translate them into a Hexen-style thing.
-	memset (&mt2, 0, sizeof(mt2));
-
 	for ( ; mt < lastmt; mt++)
 	{
 		// [RH] At this point, monsters unique to Doom II were weeded out
@@ -965,12 +965,25 @@ void P_LoadThings (int lump, int position)
 
 		// [RH] Need to translate the spawn flags to Hexen format.
 		short flags = SHORT(mt->options);
+
+		memset (&mt2, 0, sizeof(mt2));
 		mt2.flags = (short)((flags & 0xf) | 0x7e0);
+		if (gameinfo.gametype == GAME_Strife)
+		{
+			mt2.flags &= ~MTF_AMBUSH;
+			if (flags & STF_SHADOW)			mt2.flags |= MTF_SHADOW;
+			if (flags & STF_ALTSHADOW)		mt2.flags |= MTF_ALTSHADOW;
+			if (flags & STF_STANDSTILL)		mt2.flags |= MTF_STANDSTILL;
+			if (flags & STF_AMBUSH)			mt2.flags |= MTF_AMBUSH;
+			if (flags & STF_FRIENDLY)		mt2.flags |= MTF_FRIENDLY;
+		}
+		else if (flags & BTF_BADEDITORCHECK)
+		{
+			flags &= 0x1F;
+			if (flags & BTF_NOTDEATHMATCH)		mt2.flags &= ~MTF_DEATHMATCH;
+			if (flags & BTF_NOTCOOPERATIVE)		mt2.flags &= ~MTF_COOPERATIVE;
+		}
 		if (flags & BTF_NOTSINGLE)			mt2.flags &= ~MTF_SINGLE;
-		if (flags & BTF_NOTDEATHMATCH)		mt2.flags &= ~MTF_DEATHMATCH;
-		if (flags & BTF_NOTCOOPERATIVE)		mt2.flags &= ~MTF_COOPERATIVE;
-		if (flags & 256)					mt2.flags |= MTF_STRIFEBIT8;
-		if (flags & 512)					mt2.flags |= MTF_STRIFEBIT9;
 
 		mt2.x = SHORT(mt->x);
 		mt2.y = SHORT(mt->y);
@@ -1104,9 +1117,9 @@ void P_SetSlope (secplane_t *plane, BOOL setCeil, int xyangi, int zangi,
 
 	vec3_t norm;
 
-	norm[0] = (float)(finecosine[zang] * finecosine[xyang]);
-	norm[1] = (float)(finecosine[zang] * finesine[xyang]);
-	norm[2] = (float)(finesine[zang]) * 65536.f;
+	norm[0] = float(finecosine[zang]) * float(finecosine[xyang]);
+	norm[1] = float(finecosine[zang]) * float(finesine[xyang]);
+	norm[2] = float(finesine[zang]) * 65536.f;
 	VectorNormalize (norm);
 	plane->a = (int)(norm[0] * 65536.f);
 	plane->b = (int)(norm[1] * 65536.f);
@@ -1191,7 +1204,7 @@ void P_LoadThings2 (int lump, int position)
 	mapthing2_t *firstmt = (mapthing2_t *)data.GetMem();
 	mapthing2_t *lastmt = (mapthing2_t *)((BYTE *)firstmt + Wads.LumpLength (lump));
 
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 	for (mt = firstmt; mt < lastmt; ++mt)
 	{
 		mt->thingid = SHORT(mt->thingid);
@@ -1224,8 +1237,6 @@ void P_LoadThings2 (int lump, int position)
 void P_AdjustLine (line_t *ld)
 {
 	vertex_t *v1, *v2;
-
-	ld->alpha = 255;	// [RH] Opaque by default
 
 	v1 = ld->v1;
 	v2 = ld->v2;
@@ -1429,6 +1440,8 @@ void P_LoadLineDefs (int lump)
 	ld = lines;
 	for (i = numlines; i > 0; i--, mld++, ld++)
 	{
+		ld->alpha = 255;	// [RH] Opaque by default
+
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
 		P_TranslateLineDef (ld, mld);
@@ -1504,6 +1517,7 @@ void P_LoadLineDefs2 (int lump)
 
 		ld->v1 = &vertexes[SHORT(mld->v1)];
 		ld->v2 = &vertexes[SHORT(mld->v2)];
+		ld->alpha = 255;	// [RH] Opaque by default
 		ld->id = -1;
 
 		P_SetSideNum (&ld->sidenum[0], SHORT(mld->sidenum[0]));
@@ -1699,6 +1713,14 @@ void P_LoadSideDefs2 (int lump)
 		side_t *sd = sides + i;
 		sector_t *sec;
 
+		// [RH] The Doom renderer ignored the patch y locations when
+		// drawing mid textures. ZDoom does not, so fix the laser beams in Strife.
+		if (gameinfo.gametype == GAME_Strife &&
+			strncmp (msd->midtexture, "LASERB01", 8) == 0)
+		{
+			msd->rowoffset += 102;
+		}
+
 		sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
 		sd->rowoffset = SHORT(msd->rowoffset)<<FRACBITS;
 		sd->linenum = NO_INDEX;
@@ -1741,8 +1763,7 @@ void P_LoadSideDefs2 (int lump)
 				SetTextureNoErr (&sd->bottomtexture, &fog, msd->bottomtexture);
 				SetTextureNoErr (&sd->toptexture, &color, msd->toptexture);
 				strncpy (name, msd->midtexture, 8);
-				sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall,
-					FTextureManager::TEXMAN_NoStaticNames|FTextureManager::TEXMAN_Overridable);
+				sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
 				if (fog != 0x000000 || color != 0xffffff)
 				{
@@ -1773,16 +1794,13 @@ void P_LoadSideDefs2 (int lump)
 */
 		default:			// normal cases
 			strncpy (name, msd->midtexture, 8);
-			sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall,
-				FTextureManager::TEXMAN_NoStaticNames|FTextureManager::TEXMAN_Overridable);
+			sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
 			strncpy (name, msd->toptexture, 8);
-			sd->toptexture = TexMan.GetTexture (name, FTexture::TEX_Wall,
-				FTextureManager::TEXMAN_NoStaticNames|FTextureManager::TEXMAN_Overridable);
+			sd->toptexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
 			strncpy (name, msd->bottomtexture, 8);
-			sd->bottomtexture = TexMan.GetTexture (name, FTexture::TEX_Wall,
-				FTextureManager::TEXMAN_NoStaticNames|FTextureManager::TEXMAN_Overridable);
+			sd->bottomtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 			break;
 		}
 	}
@@ -2842,6 +2860,7 @@ void P_FreeLevelData ()
 	{
 		delete[] zones;
 	}
+	P_FreeStrifeConversations ();
 }
 
 //
@@ -2858,6 +2877,8 @@ void P_SetupLevel (char *lumpname, int position)
 	bool buildmap;
 
 	wminfo.partime = 180;
+
+	numinterpolations = 0;	// [RH] Nothing to interpolate on a fresh level.
 
 	if (!savegamerestore)
 	{
@@ -2928,10 +2949,23 @@ void P_SetupLevel (char *lumpname, int position)
 			P_LoadBehavior (lumpnum+ML_BEHAVIOR);
 			level.flags |= LEVEL_HEXENFORMAT;
 		}
-		else if (gameinfo.gametype == GAME_Strife)
+		else
 		{
-			P_LoadBehavior (Wads.CheckNumForName ("STRFHELP", ns_acslibrary));
+			// Doom format maps get strict monster activation unless the mapinfo
+			// specifies differently.
+			if (!(level.flags & LEVEL_LAXACTIVATIONMAPINFO))
+			{
+				level.flags &= ~LEVEL_LAXMONSTERACTIVATION;
+			}
+			// FIXME: Also load STRFHELP for Strife maps with their own BEHAVIOR.
+			// But since none exist right now, I'm not in a big hurry to do it.
+			if (gameinfo.gametype == GAME_Strife)
+			{
+				P_LoadBehavior (Wads.CheckNumForName ("STRFHELP", ns_acslibrary));
+			}
 		}
+
+		P_LoadStrifeConversations (lumpname);
 
 		clock (times[0]);
 		P_LoadVertexes (lumpnum+ML_VERTEXES);
@@ -3119,6 +3153,11 @@ void P_SetupLevel (char *lumpname, int position)
 			P_LoadThings (lumpnum+ML_THINGS, position);
 		else
 			P_LoadThings2 (lumpnum+ML_THINGS, position);	// [RH] Load Hexen-style things
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].mo != NULL)
+				players[i].health = players[i].mo->health;
+		}
 		unclock (times[14]);
 
 		clock (times[15]);
@@ -3164,9 +3203,12 @@ void P_SetupLevel (char *lumpname, int position)
 	R_ClearParticles ();
 
 	clock (times[17]);
-	// preload graphics
+	// preload graphics and sounds
 	if (precache)
+	{
 		R_PrecacheLevel ();
+		S_PrecacheLevel ();
+	}
 	unclock (times[17]);
 
 	if (deathmatch)
@@ -3220,6 +3262,7 @@ void P_Init ()
 	P_InitSwitchList ();
 	P_InitTerrainTypes ();
 	R_InitSprites ();
+	P_InitSlidingDoorFrames ();	// [RH]
 }
 
 #if 0

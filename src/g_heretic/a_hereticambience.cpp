@@ -378,7 +378,7 @@ void AScriptedAmbient::PostBeginPlay ()
 	class AScriptedAmbient##x : public AScriptedAmbient { \
 		DECLARE_STATELESS_ACTOR (AScriptedAmbient##x, AScriptedAmbient) };\
 	IMPLEMENT_STATELESS_ACTOR (AScriptedAmbient##x, Heretic, 1199+x, 0) \
-		PROP_SpawnHealth (1199+x) \
+		PROP_SpawnHealth (1200+x) \
 	END_DEFAULTS
 
 ADD_AMBIENT (1);

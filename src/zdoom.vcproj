@@ -29,8 +29,8 @@
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
-				AdditionalIncludeDirectories="win32,sound,.,zlib-1.1.4,g_shared,g_doom,g_raven,g_heretic,g_hexen;flac"
-				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,USEASM"
+				AdditionalIncludeDirectories="win32,sound,.,zlib-1.2.1,g_shared,g_doom,g_raven,g_heretic,g_hexen,g_strife;flac"
+				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,USEASM,HAVE_STRUPR,HAVE_FILELENGTH"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="FALSE"
@@ -109,8 +109,8 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "
 				Optimization="0"
-				AdditionalIncludeDirectories="win32;sound;.;&quot;zlib-1.1.4&quot;;g_shared;g_doom;g_raven;g_heretic;g_hexen;flac"
-				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,USEASM,_CRTDBG_MAP_ALLOC"
+				AdditionalIncludeDirectories="win32;sound;.;&quot;zlib-1.2.1&quot;;g_shared;g_doom;g_raven;g_heretic;g_hexen;g_strife;flac"
+				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,USEASM,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH"
 				MinimalRebuild="TRUE"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="TRUE"
@@ -551,9 +551,6 @@
 						Name="VCCLCompilerTool"
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="decorations.cpp">
 			</File>
 			<File
 				RelativePath=".\dobject.cpp">
@@ -1024,6 +1021,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\p_conversation.cpp">
+			</File>
+			<File
 				RelativePath=".\p_doors.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -1125,7 +1125,8 @@
 					Name="Debug|Win32">
 					<Tool
 						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
+						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "
+						GeneratePreprocessedFile="0"/>
 				</FileConfiguration>
 			</File>
 			<File
@@ -1612,9 +1613,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\thingdef.cpp">
-			</File>
-			<File
 				RelativePath=".\v_collection.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -1764,6 +1762,16 @@
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
 			</File>
+			<Filter
+				Name="Decorate++"
+				Filter="">
+				<File
+					RelativePath="decorations.cpp">
+				</File>
+				<File
+					RelativePath=".\thingdef.cpp">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1964,13 +1972,13 @@
 				RelativePath=".\p_acs.h">
 			</File>
 			<File
+				RelativePath=".\p_conversation.h">
+			</File>
+			<File
 				RelativePath=".\p_effect.h">
 			</File>
 			<File
 				RelativePath=".\p_enemy.h">
-			</File>
-			<File
-				RelativePath=".\p_inter.h">
 			</File>
 			<File
 				RelativePath=".\p_lnspec.h">
@@ -2490,6 +2498,12 @@
 			</File>
 			<File
 				RelativePath="g_shared\a_hatetarget.cpp">
+			</File>
+			<File
+				RelativePath=".\g_shared\a_keys.cpp">
+			</File>
+			<File
+				RelativePath=".\g_shared\a_keys.h">
 			</File>
 			<File
 				RelativePath=".\g_shared\a_lightning.cpp">
@@ -3552,21 +3566,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_boostmana.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\g_hexen\a_centaur.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -4156,22 +4155,79 @@
 				RelativePath=".\g_strife\a_acolyte.cpp">
 			</File>
 			<File
+				RelativePath=".\g_strife\a_alienspectres.cpp">
+			</File>
+			<File
 				RelativePath=".\g_strife\a_beggars.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_coin.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_crusader.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_entityboss.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_inquisitor.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_loremaster.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_macil.cpp">
 			</File>
 			<File
 				RelativePath=".\g_strife\a_merchants.cpp">
 			</File>
 			<File
+				RelativePath=".\g_strife\a_oracle.cpp">
+			</File>
+			<File
 				RelativePath=".\g_strife\a_peasant.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_programmer.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_questitems.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_ratbuddy.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_reaver.cpp">
 			</File>
 			<File
 				RelativePath=".\g_strife\a_rebels.cpp">
 			</File>
 			<File
+				RelativePath=".\g_strife\a_sentinel.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_spectral.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_stalker.cpp">
+			</File>
+			<File
 				RelativePath=".\g_strife\a_strifeammo.cpp">
 			</File>
 			<File
+				RelativePath=".\g_strife\a_strifearmor.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_strifebishop.cpp">
+			</File>
+			<File
 				RelativePath=".\g_strife\a_strifeglobal.h">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_strifeitems.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_strifekeys.cpp">
 			</File>
 			<File
 				RelativePath=".\g_strife\a_strifeplayer.cpp">
@@ -4187,6 +4243,15 @@
 						Name="VCCLCompilerTool"
 						GeneratePreprocessedFile="0"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\g_strife\a_strifeweaps.h">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_templar.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_thingstoblowup.cpp">
 			</File>
 			<File
 				RelativePath=".\g_strife\a_zombie.cpp">

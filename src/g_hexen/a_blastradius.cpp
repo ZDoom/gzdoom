@@ -6,24 +6,21 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 
-void P_BlastRadius (player_t *player);
-
 #define BLAST_RADIUS_DIST	255*FRACUNIT
 #define BLAST_SPEED			20*FRACUNIT
 #define BLAST_FULLSTRENGTH	255
 
 // Disc of Repulsion --------------------------------------------------------
 
-BASIC_ARTI (BlastRadius, arti_blastradius, GStrings(TXT_ARTIBLASTRADIUS))
-	AT_GAME_SET_FRIEND (BlastRadius)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		P_BlastRadius (player);
-		return true;
-	}
+class AArtiBlastRadius : public AInventory
+{
+	DECLARE_ACTOR (AArtiBlastRadius, AInventory)
+public:
+	bool Use ();
+	const char *PickupMessage ();
+protected:
+	void BlastActor (AActor *victim, fixed_t strength);
 };
-
 FState AArtiBlastRadius::States[] =
 {
 	S_BRIGHT (BLST, 'A',	4, NULL					    , &States[1]),
@@ -40,12 +37,14 @@ IMPLEMENT_ACTOR (AArtiBlastRadius, Hexen, 10110, 74)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTIBLST")
 END_DEFAULTS
 
-AT_GAME_SET (BlastRadius)
+const char *AArtiBlastRadius::PickupMessage ()
 {
-	ArtiDispatch[arti_blastradius] = AArtiBlastRadius::ActivateArti;
-	ArtiPics[arti_blastradius] = "ARTIBLST";
+	return GStrings(TXT_ARTIBLASTRADIUS);
 }
 
 // Blast Effect -------------------------------------------------------------
@@ -79,37 +78,78 @@ END_DEFAULTS
 
 //==========================================================================
 //
-// ResetBlasted
+// AArtiBlastRadius :: Activate
+//
+// Blast all actors away
 //
 //==========================================================================
 
-void ResetBlasted (AActor *mo)
+bool AArtiBlastRadius::Use ()
 {
-	mo->flags2 &= ~MF2_BLASTED;
-	if (!(mo->flags & MF_ICECORPSE))
+	AActor *mo;
+	TThinkerIterator<AActor> iterator;
+	fixed_t dist;
+
+	S_Sound (Owner, CHAN_AUTO, "BlastRadius", 1, ATTN_NORM);
+	P_NoiseAlert (Owner, Owner);
+
+	while ( (mo = iterator.Next ()) )
 	{
-		mo->flags2 &= ~MF2_SLIDE;
+		if ((mo == Owner) || (mo->flags2 & MF2_BOSS))
+		{ // Not a valid monster
+			continue;
+		}
+		if ((mo->flags & MF_ICECORPSE) || (mo->flags3 & MF3_CANBLAST))
+		{
+			// Let these special cases go
+		}
+		else if ((mo->flags3 & MF3_ISMONSTER) && (mo->health <= 0))
+		{
+			continue;
+		}
+		else if (!(mo->flags3 & MF3_ISMONSTER) &&
+			!(mo->player) &&
+			!(mo->flags & MF_MISSILE) &&
+			!(mo->flags3 & MF3_CANBLAST))
+		{	// Must be monster, player, or missile
+			continue;
+		}
+		if (mo->flags2 & MF2_DORMANT)
+		{
+			continue;		// no dormant creatures
+		}
+		if (mo->flags3 & MF3_DONTBLAST)
+		{ // A few things that would normally be blastable should not be blasted
+			continue;
+		}
+		dist = P_AproxDistance (Owner->x - mo->x, Owner->y - mo->y);
+		if (dist > BLAST_RADIUS_DIST)
+		{ // Out of range
+			continue;
+		}
+		BlastActor (mo, BLAST_FULLSTRENGTH);
 	}
+	return true;
 }
 
 //==========================================================================
 //
-// P_BlastMobj
+// AArtiBlastRadius :: BlastActor
 //
 //==========================================================================
 
-void P_BlastMobj (AActor *source, AActor *victim, fixed_t strength)
+void AArtiBlastRadius::BlastActor (AActor *victim, fixed_t strength)
 {
 	angle_t angle,ang;
 	AActor *mo;
 	fixed_t x,y,z;
 
-	if (!victim->SpecialBlastHandling (source, strength))
+	if (!victim->SpecialBlastHandling (Owner, strength))
 	{
 		return;
 	}
 
-	angle = R_PointToAngle2 (source->x, source->y, victim->x, victim->y);
+	angle = R_PointToAngle2 (Owner->x, Owner->y, victim->x, victim->y);
 	angle >>= ANGLETOFINESHIFT;
 	if (strength < BLAST_FULLSTRENGTH)
 	{
@@ -132,7 +172,7 @@ void P_BlastMobj (AActor *source, AActor *victim, fixed_t strength)
 			if (victim->IsKindOf (RUNTIME_CLASS(AMageStaffFX2)))
 			{ // Reflect to originator
 				victim->special1 = (int)victim->target;	
-				victim->target = source;
+				victim->target = Owner;
 			}
 #endif
 		}
@@ -140,7 +180,7 @@ void P_BlastMobj (AActor *source, AActor *victim, fixed_t strength)
 		victim->momy = FixedMul (BLAST_SPEED, finesine[angle]);
 
 		// Spawn blast puff
-		ang = R_PointToAngle2 (victim->x, victim->y, source->x, source->y);
+		ang = R_PointToAngle2 (victim->x, victim->y, Owner->x, Owner->y);
 		ang >>= ANGLETOFINESHIFT;
 		x = victim->x + FixedMul (victim->radius+FRACUNIT, finecosine[ang]);
 		y = victim->y + FixedMul (victim->radius+FRACUNIT, finesine[ang]);
@@ -169,61 +209,5 @@ void P_BlastMobj (AActor *source, AActor *victim, fixed_t strength)
 		{
 			victim->flags2 |= MF2_SLIDE | MF2_BLASTED;
 		}
-	}
-}
-
-//==========================================================================
-//
-// P_BlastRadius
-//
-// Blast all actors away
-//
-//==========================================================================
-
-void P_BlastRadius (player_t *player)
-{
-	AActor *pmo = player->mo;
-	AActor *mo;
-	TThinkerIterator<AActor> iterator;
-	fixed_t dist;
-
-	S_Sound (pmo, CHAN_AUTO, "BlastRadius", 1, ATTN_NORM);
-	P_NoiseAlert (player->mo, player->mo);
-
-	while ( (mo = iterator.Next ()) )
-	{
-		if ((mo == pmo) || (mo->flags2 & MF2_BOSS))
-		{ // Not a valid monster
-			continue;
-		}
-		if ((mo->flags & MF_ICECORPSE) || (mo->flags3 & MF3_CANBLAST))
-		{
-			// Let these special cases go
-		}
-		else if ((mo->flags3 & MF3_ISMONSTER) && (mo->health <= 0))
-		{
-			continue;
-		}
-		else if (!(mo->flags3 & MF3_ISMONSTER) &&
-			!(mo->player) &&
-			!(mo->flags & MF_MISSILE) &&
-			!(mo->flags3 & MF3_CANBLAST))
-		{	// Must be monster, player, or missile
-			continue;
-		}
-		if (mo->flags2 & MF2_DORMANT)
-		{
-			continue;		// no dormant creatures
-		}
-		if (mo->flags3 & MF3_DONTBLAST)
-		{ // A few things that would normally be blastable should not be blasted
-			continue;
-		}
-		dist = P_AproxDistance (pmo->x - mo->x, pmo->y - mo->y);
-		if (dist > BLAST_RADIUS_DIST)
-		{ // Out of range
-			continue;
-		}
-		P_BlastMobj (pmo, mo, BLAST_FULLSTRENGTH);
 	}
 }

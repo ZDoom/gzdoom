@@ -5,187 +5,14 @@
 #include "actor.h"
 #include "info.h"
 
-#define STREAM_ENUM(e) \
-	inline FArchive &operator<< (FArchive &arc, e &i) \
-	{ \
-		BYTE val = (BYTE)i; \
-		arc << val; \
-		i = (e)val; \
-		return arc; \
-	} \
-
-// Ammunition types defined.
-typedef enum
-{
-// Doom ammo
-	am_clip,	// Pistol / chaingun ammo.
-	am_shell,	// Shotgun / double barreled shotgun.
-	am_cell,	// Plasma rifle, BFG.
-	am_misl,	// Missile launcher.
-
-// Heretic ammo
- 	am_goldwand,
-	am_crossbow,
-	am_blaster,
-	am_skullrod,
-	am_phoenixrod,
-	am_mace,
-
-// Hexen ammo
-	MANA_1,
-	MANA_2,
-
-// Strife ammo
-	// am_clip
-	am_electricbolt,
-	am_poisonbolt,
-	// am_cell
-	// am_misl
-	am_hegrenade,
-	am_phgrenade,
-
-	NUMAMMO,
-
-	MANA_BOTH,
-	am_noammo,	// Unlimited for chainsaw / fist.
-	MANA_NONE = am_noammo,
-
-	SAVEVER217_NUMAMMO = MANA_2+1
-
-} ammotype_t;
-
-STREAM_ENUM (ammotype_t)
-
-#define MAX_MANA	200
-
-extern const char *AmmoPics[MANA_BOTH+1];
-
-typedef enum
-{
-	ARMOR_ARMOR = 0,
-	ARMOR_SHIELD,
-	ARMOR_HELMET,
-	ARMOR_AMULET,
-	NUMARMOR
-} armortype_t;
-
-extern const char *ArmorPics[NUMARMOR];
-
-STREAM_ENUM (armortype_t)
-
-// LUT of ammunition limits for each kind.
-// This doubles with BackPack powerup item.
-extern int maxammo[NUMAMMO];
-
-// The defined weapons,
-//	including a marker indicating
-//	user has not changed weapon.
-typedef enum
-{
-// Doom weapons
-	wp_fist,
-	wp_pistol,
-	wp_shotgun,
-	wp_chaingun,
-	wp_missile,
-	wp_plasma,
-	wp_bfg,
-	wp_chainsaw,
-	wp_supershotgun,
-
-// Heretic weapons
-	wp_staff,
-	wp_goldwand,
-	wp_crossbow,
-	wp_blaster,
-	wp_skullrod,
-	wp_phoenixrod,
-	wp_mace,
-	wp_gauntlets,
-	wp_beak,
-
-// Hexen weapons
-	wp_snout,
-	wp_ffist,
-	wp_cmace,
-	wp_mwand,
-	wp_faxe,
-	wp_cstaff,
-	wp_mfrost,
-	wp_fhammer,
-	wp_cfire,
-	wp_mlightning,
-	wp_fsword,
-	wp_choly,
-	wp_mstaff,
-
-// Strife weapons
-	wp_dagger,
-	wp_electricxbow,
-	wp_assaultgun,
-	wp_minimissile,
-	wp_hegrenadelauncher,
-	wp_flamethrower,
-	wp_maulerscatter,
-	wp_sigil,
-	wp_poisonxbow,
-	wp_phgrenadelauncher,
-	wp_maulertorpedo,
-
-	NUMWEAPONS,
-	
-	wp_nochange,		// No pending weapon change.
-
-	SAVEVER217_NUMWEAPONS = wp_mstaff+1
-
-} weapontype_t;
-
-STREAM_ENUM (weapontype_t)
-
-// Weapon info: sprite frames, ammunition use.
-struct FWeaponInfo
-{
-	DWORD			flags;
-	ammotype_t		ammo;
-	ammotype_t		givingammo;
-	int				ammouse;
-	int				ammogive;
-	FState			*upstate;
-	FState			*downstate;
-	FState			*readystate;
-	FState			*atkstate;
-	FState			*holdatkstate;
-	FState			*flashstate;
-	const TypeInfo	*droptype;
-	int				kickback;
-	fixed_t			yadjust;
-	const char		*upsound;
-	const char		*readysound;
-	TypeInfo		*type;		// type of actor that represents this weapon
-	int				minammo;	// minimum ammo needed to switch to this weapon
-
-	int GetMinAmmo () const
-	{
-		return (minammo < 0) ? ammouse : minammo;
-	}
-};
-
-enum
-{
-	WIF_NOAUTOFIRE =		0x00000001, // weapon does not autofire
-	WIF_READYSNDHALF =		0x00000002, // ready sound is played ~1/2 the time
-	WIF_DONTBOB =			0x00000004, // don't bob the weapon
-	WIF_AXEBLOOD =			0x00000008, // weapon makes axe blood on impact (Hexen only)
-	WIF_FIREDAMAGE =		0x00000010, // weapon does fire damage on impact
-	WIF_NOALERT =			0x00000020,	// weapon does not alert monsters
-	WIF_AMMO_OPTIONAL =		0x00000040, // weapon can use ammo but does not require it
-};
+#define MAX_MANA				200
 
 #define MAX_WEAPONS_PER_SLOT	8
 #define NUM_WEAPON_SLOTS		10
 
 class player_s;
 class FConfigFile;
+class AWeapon;
 
 class FWeaponSlot
 {
@@ -194,24 +21,21 @@ public:
 	void Clear ();
 	bool AddWeapon (const char *type);
 	bool AddWeapon (const TypeInfo *type);
-	bool AddWeapon (weapontype_t weap);
-	weapontype_t PickWeapon (player_s *player);
+	AWeapon *PickWeapon (player_s *player);
 	int CountWeapons ();
-	void StreamOut ();
-	void StreamIn (byte **stream);
 
-	inline weapontype_t GetWeapon (int index) const
+	inline const TypeInfo *GetWeapon (int index) const
 	{
-		return (weapontype_t)Weapons[index];
+		return Weapons[index];
 	}
 
-	friend weapontype_t PickNextWeapon (player_s *player);
-	friend weapontype_t PickPrevWeapon (player_s *player);
+	friend AWeapon *PickNextWeapon (player_s *player);
+	friend AWeapon *PickPrevWeapon (player_s *player);
 
 	friend struct FWeaponSlots;
 
 private:
-	byte Weapons[MAX_WEAPONS_PER_SLOT];
+	const TypeInfo *Weapons[MAX_WEAPONS_PER_SLOT];
 };
 
 // FWeaponSlots::AddDefaultWeapon return codes
@@ -227,135 +51,333 @@ struct FWeaponSlots
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];
 
 	void Clear ();
-	bool LocateWeapon (weapontype_t weap, int *const slot, int *const index);
-	ESlotDef AddDefaultWeapon (int slot, const char *weapName, weapontype_t weap);
+	bool LocateWeapon (const TypeInfo *type, int *const slot, int *const index);
+	ESlotDef AddDefaultWeapon (int slot, const TypeInfo *type);
 	void RestoreSlots (FConfigFile &config);
 	void SaveSlots (FConfigFile &config);
-	void StreamOutSlots ();
-	void StreamInSlots (byte **stream);
 };
 
 extern FWeaponSlots LocalWeapons;
-extern FWeaponInfo *wpnlev1info[NUMWEAPONS], *wpnlev2info[NUMWEAPONS];
-
-//
-// Keys
-//
-typedef enum
-{
-// Heretic keys
-	key_blue = 0,
-	key_yellow,
-	key_green,
-	
-// Doom keys
-	it_bluecard = 0,
-	it_yellowcard,
-	it_redcard,
-	it_blueskull,
-	it_yellowskull,
-	it_redskull,
-
-// Hexen keys
-	KEY_STEEL = 0,
-	KEY_CAVE,
-	KEY_AXE,
-	KEY_FIRE,
-	KEY_EMERALD,
-	KEY_DUNGEON,
-	KEY_SILVER,
-	KEY_RUSTED,
-	KEY_HORN,
-	KEY_SWAMP,
-	KEY_CASTLE,
-
-	NUMKEYS
-	
-} keytype_t;
-
-STREAM_ENUM (keytype_t)
 
 /************************************************************************/
 /* Class definitions													*/
 /************************************************************************/
 
-// A pickup is anything the player can pickup (i.e. weapons, ammo,
-// powerups, etc)
+// A pickup is anything the player can pickup (i.e. weapons, ammo, powerups, etc)
+
+enum
+{
+	AIMETA_BASE = 0x71000,
+	AIMETA_PickupMessage,		// string
+	AIMETA_PickupSound			// int
+};
+
+enum
+{
+	IF_ACTIVATABLE		= 1<<0,	// can be activated
+	IF_ACTIVATED		= 1<<1,	// is currently activated
+	IF_PICKUPGOOD		= 1<<2,	// HandlePickup wants normal pickup FX to happen
+	IF_QUIET			= 1<<3,	// Don't give feedback when picking up
+	IF_AUTOACTIVATE		= 1<<4,	// Automatically activate item on pickup
+	IF_UNDROPPABLE		= 1<<5,	// The player cannot manually drop the item
+	IF_INVBAR			= 1<<6,	// Item appears in the inventory bar
+	IF_HUBPOWER			= 1<<7,	// Powerup is kept when moving in a hub
+	IF_INTERHUBSTRIP	= 1<<8,	// Item is removed when travelling between hubs
+};
+
+struct vissprite_t;
+
 class AInventory : public AActor
 {
 	DECLARE_ACTOR (AInventory, AActor)
+	HAS_OBJECT_POINTERS
 public:
 	virtual void Touch (AActor *toucher);
+	virtual void Serialize (FArchive &arc);
 
 	virtual void BeginPlay ();
+	virtual void Destroy ();
 	virtual bool ShouldRespawn ();
 	virtual bool ShouldStay ();
 	virtual void Hide ();
 	virtual bool DoRespawn ();
 	virtual bool TryPickup (AActor *toucher);
 	virtual void DoPickupSpecial (AActor *toucher);
+	virtual bool SpecialDropAction (AActor *dropper);
+	virtual bool DrawPowerup (int x, int y);
 
 	virtual const char *PickupMessage ();
 	virtual void PlayPickupSound (AActor *toucher);
+
+	void DoPlayPickupSound (AActor *toucher);
+
+	AInventory *PrevItem () const;	// Returns the item preceding this one in the list.
+	AInventory *PrevInv () const;	// Returns the previous item with IF_INVBAR set.
+	AInventory *NextInv () const;	// Returns the next item with IF_INVBAR set.
+
+	AActor *Owner;				// Who owns this item? NULL if it's still a pickup.
+	int Amount;					// Amount of item this instance has
+	int MaxAmount;				// Max amount of item this instance can have
+	int RespawnTics;			// Tics from pickup time to respawn time
+	int Icon;					// Icon to show on status bar or HUD
+
+	DWORD ItemFlags;
+
+	virtual void BecomeItem ();
+	virtual void BecomePickup ();
+	virtual void AttachToOwner (AActor *other);
+	virtual void DetachFromOwner ();
+	virtual AInventory *CreateCopy (AActor *other);
+	virtual AInventory *CreateTossable ();
+	virtual bool GoAway ();
+	virtual void GoAwayAndDie ();
+	virtual bool HandlePickup (AInventory *item);
+	virtual bool Use ();
+
+	virtual void AbsorbDamage (int damage, int &newdamage);
+	virtual void AlterWeaponSprite (vissprite_t *vis);
+
+	virtual PalEntry GetBlend ();
+
 private:
 	static int StaticLastMessageTic;
 	static const char *StaticLastMessage;
+};
+
+// Ammo: Something a weapon needs to operate
+class AAmmo : public AInventory
+{
+	DECLARE_STATELESS_ACTOR (AAmmo, AInventory)
+public:
+	bool TryPickup (AActor *toucher);
+	AInventory *CreateCopy (AActor *other);
+	bool HandlePickup (AInventory *item);
+	const TypeInfo *GetParentAmmo () const;
+	virtual void PlayPickupSound (AActor *toucher);
 };
 
 // A weapon is just that.
 class AWeapon : public AInventory
 {
 	DECLARE_ACTOR (AWeapon, AInventory)
+	HAS_OBJECT_POINTERS
 public:
-	virtual bool TryPickup (AActor *toucher);
-	virtual weapontype_t OldStyleID() const;
-protected:
+	DWORD WeaponFlags;
+	const TypeInfo *AmmoType1, *AmmoType2;	// Types of ammo used by this weapon
+	int AmmoGive1, AmmoGive2;				// Amount of each ammo to get when picking up weapon
+	int MinAmmo1, MinAmmo2;					// Minimum ammo needed to switch to this weapon
+	int AmmoUse1, AmmoUse2;					// How much ammo to use with each shot
+	int Kickback;
+	fixed_t YAdjust;						// For viewing the weapon fullscreen
+	WORD UpSound, ReadySound;				// Sounds when coming up and idle
+	const TypeInfo *SisterWeaponType;		// Another weapon to pick up with this one
+	const TypeInfo *ProjectileType;			// Projectile used by primary attack
+	const TypeInfo *AltProjectileType;		// Projectile used by alternate attack
+	int SelectionOrder;						// Lower-numbered weapons get picked first
+	fixed_t MoveCombatDist;					// Used by bots, but do they *really* need it?
+
+	FState *UpState;
+	FState *DownState;
+	FState *ReadyState;
+	FState *AtkState, *HoldAtkState;
+	FState *AltAtkState, *AltHoldAtkState;
+	FState *FlashState;
+
+	// In-inventory instance variables
+	AAmmo *Ammo1, *Ammo2;
+	AWeapon *SisterWeapon;
+
+	bool bAltFire;	// Set when this weapon's alternate fire is used.
+
+	virtual void Serialize (FArchive &arc);
 	virtual void PlayPickupSound (AActor *toucher);
 	virtual bool ShouldStay ();
+	virtual void AttachToOwner (AActor *other);
+	virtual bool HandlePickup (AInventory *item);
+	virtual AInventory *CreateCopy (AActor *other);
+	virtual bool TryPickup (AActor *toucher);
+	virtual bool PickupForAmmo (AWeapon *ownedWeapon);
+	virtual bool Use ();
+
+	virtual FState *GetUpState ();
+	virtual FState *GetDownState ();
+	virtual FState *GetReadyState ();
+	virtual FState *GetAtkState ();
+	virtual FState *GetHoldAtkState ();
+
+	virtual void PostMorphWeapon ();
+	virtual void EndPowerup ();
+
+	enum
+	{
+		PrimaryFire,
+		AltFire,
+		EitherFire
+	};
+	bool CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo=false);
+	bool DepleteAmmo (bool altFire, bool checkEnough=true);
+
+protected:
+	static AAmmo *AddAmmo (AActor *other, const TypeInfo *ammotype, int amount);
+	static bool AddExistingAmmo (AAmmo *ammo, int amount);
+	AWeapon *AddWeapon (const TypeInfo *weapon);
 };
+
+enum
+{
+	WIF_NOAUTOFIRE =		0x00000001, // weapon does not autofire
+	WIF_READYSNDHALF =		0x00000002, // ready sound is played ~1/2 the time
+	WIF_DONTBOB =			0x00000004, // don't bob the weapon
+	WIF_AXEBLOOD =			0x00000008, // weapon makes axe blood on impact (Hexen only)
+	WIF_NOALERT =			0x00000010,	// weapon does not alert monsters
+	WIF_AMMO_OPTIONAL =		0x00000020, // weapon can use ammo but does not require it
+	WIF_ALT_AMMO_OPTIONAL = 0x00000040, // alternate fire can use ammo but does not require it
+	WIF_PRIMARY_USES_BOTH =	0x00000080, // primary fire uses both ammo
+	WIF_ALT_USES_BOTH =		0x00000100, // alternate fire uses both ammo
+	WIF_WIMPY_WEAPON =		0x00000200, // change away when ammo for another weapon is replenished
+	WIF_POWERED_UP =		0x00000400, // this is a tome-of-power'ed version of its sister
+	WIF_EXTREME_DEATH =		0x00000800,	// weapon always causes an extreme death
+	WIF_HITS_GHOSTS =		0x00001000, // melee weapon can strike ghosts
+	WIF_STAFF2_KICKBACK =	0x00002000, // the powered-up Heretic staff has special kickback
+
+	// Flags used only by bot AI:
+
+	WIF_BOT_REACTION_SKILL_THING = 1<<31, // I don't understand this
+	WIF_BOT_EXPLOSIVE =		1<<30,		// weapon fires an explosive
+	WIF_BOT_MELEE =			1<<29,		// melee weapon
+	WIF_BOT_BFG =			1<<28,		// this is a BFG
+};
+
 #define S_LIGHTDONE 0
 
 // Health is some item that gives the player health when picked up.
 class AHealth : public AInventory
 {
-	DECLARE_CLASS (AHealth, AInventory)
-protected:
-	AHealth () {}
+	DECLARE_STATELESS_ACTOR (AHealth, AInventory)
+public:
 	virtual void PlayPickupSound (AActor *toucher);
+	virtual bool TryPickup (AActor *other);
 };
 
-// Armor gives the player armor when picked up.
+// HealthPickup is some item that gives the player health when used.
+class AHealthPickup : public AInventory
+{
+	DECLARE_STATELESS_ACTOR (AHealthPickup, AInventory)
+public:
+	virtual AInventory *CreateCopy (AActor *other);
+	virtual AInventory *CreateTossable ();
+	virtual bool HandlePickup (AInventory *item);
+	virtual bool Use ();
+};
+
+// Armor absorbs some damage for the player.
 class AArmor : public AInventory
 {
-	DECLARE_CLASS (AArmor, AInventory)
-protected:
-	AArmor () {}
-	virtual void PlayPickupSound (AActor *toucher);
-};
-
-class AAmmo : public AInventory
-{
-	DECLARE_CLASS (AAmmo, AInventory)
+	DECLARE_STATELESS_ACTOR (AArmor, AInventory)
 public:
-	virtual ammotype_t GetAmmoType () const;
-protected:
-	AAmmo () {}
 	virtual void PlayPickupSound (AActor *toucher);
 };
 
-// A key is something the player can use to unlock something
-class AKey : public AInventory
+// Basic armor absorbs a specific percent of the damage. You should
+// never pickup a BasicArmor. Instead, you pickup a BasicArmorPickup
+// or BasicArmorBonus and those gives you BasicArmor when it activates.
+class ABasicArmor : public AArmor
 {
-	DECLARE_CLASS (AKey, AInventory)
+	DECLARE_STATELESS_ACTOR (ABasicArmor, AArmor)
 public:
-	virtual bool TryPickup (AActor *toucher);
-protected:
-	virtual bool ShouldStay ();
-	virtual void PlayPickupSound (AActor *toucher);
-	virtual keytype_t GetKeyType ();
-	AKey () {}
+	virtual void Serialize (FArchive &arc);
+	virtual AInventory *CreateCopy (AActor *other);
+	virtual bool HandlePickup (AInventory *item);
+	virtual void AbsorbDamage (int damage, int &newdamage);
+
+	fixed_t SavePercent;
 };
 
-#undef STREAM_ENUM
+// BasicArmorPickup replaces the armor you have.
+class ABasicArmorPickup : public AArmor
+{
+	DECLARE_STATELESS_ACTOR (ABasicArmorPickup, AArmor)
+public:
+	virtual void Serialize (FArchive &arc);
+	virtual AInventory *CreateCopy (AActor *other);
+	virtual bool Use ();
+
+	fixed_t SavePercent;
+	int SaveAmount;
+};
+
+// BasicArmorBonus adds to the armor you have.
+class ABasicArmorBonus : public AArmor
+{
+	DECLARE_STATELESS_ACTOR (ABasicArmorBonus, AArmor)
+public:
+	virtual void Serialize (FArchive &arc);
+	virtual AInventory *CreateCopy (AActor *other);
+	virtual bool Use ();
+
+	fixed_t SavePercent;	// The default, for when you don't already have armor
+	int MaxSaveAmount;
+	int SaveAmount;
+};
+
+// Hexen armor consists of four separate armor types plus a conceptual armor
+// type (the player himself) that work together as a single armor.
+class AHexenArmor : public AArmor
+{
+	DECLARE_STATELESS_ACTOR (AHexenArmor, AArmor)
+public:
+	virtual void Serialize (FArchive &arc);
+	virtual AInventory *CreateCopy (AActor *other);
+	virtual AInventory *CreateTossable ();
+	virtual bool HandlePickup (AInventory *item);
+	virtual void AbsorbDamage (int damage, int &newdamage);
+
+	fixed_t Slots[4];
+
+protected:
+	bool AddArmorToSlot (AActor *actor, int slot, int amount);
+};
+
+// PuzzleItems work in conjunction with the UsePuzzleItem special
+class APuzzleItem : public AInventory
+{
+	DECLARE_STATELESS_ACTOR (APuzzleItem, AInventory)
+public:
+	void Serialize (FArchive &arc);
+	void PlayPickupSound (AActor *toucher);
+	bool ShouldStay ();
+	bool Use ();
+	bool HandlePickup (AInventory *item);
+
+	int PuzzleItemNumber;
+};
+
+// A MapRevealer reveals the whole map for the player who picks it up.
+class AMapRevealer : public AInventory
+{
+	DECLARE_STATELESS_ACTOR (AMapRevealer, AInventory)
+public:
+	bool TryPickup (AActor *toucher);
+};
+
+// A backpack gives you one clip of each ammo and doubles your
+// normal maximum ammo amounts.
+class ABackpack : public AInventory
+{
+	DECLARE_ACTOR (ABackpack, AInventory)
+public:
+	bool TryPickup (AActor *other);
+	const char *PickupMessage ();
+	void DetachFromOwner ();
+};
+
+// When the communicator is in a player's inventory, the
+// SendToCommunicator special can work.
+class ACommunicator : public AInventory
+{
+	DECLARE_ACTOR (ACommunicator, AInventory)
+public:
+	const char *PickupMessage ();
+};
 
 #endif //__A_PICKUPS_H__

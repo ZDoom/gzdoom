@@ -138,6 +138,18 @@ static const FBinding DefHexenBindings[] =
 	{ NULL }
 };
 
+static const FBinding DefStrifeBindings[] =
+{
+	{ "w", "showpop 1" },
+	{ "backspace", "invdrop" },
+	{ "z", "showpop 3" },
+	{ "k", "showpop 2" },
+	{ NULL }
+	// not done
+	// h - use health
+	// q - query inventory
+};
+
 const char *KeyNames[NUM_KEYS] =
 {
 	// This array is dependant on the particular keyboard input
@@ -472,7 +484,7 @@ void C_BindDefaults ()
 {
 	SetBinds (DefBindings);
 
-	if (gameinfo.gametype & GAME_Raven)
+	if (gameinfo.gametype & (GAME_Raven|GAME_Strife))
 	{
 		SetBinds (DefRavenBindings);
 	}
@@ -480,6 +492,11 @@ void C_BindDefaults ()
 	if (gameinfo.gametype == GAME_Hexen)
 	{
 		SetBinds (DefHexenBindings);
+	}
+
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		SetBinds (DefStrifeBindings);
 	}
 }
 
@@ -502,6 +519,9 @@ BOOL C_DoKey (event_t *ev)
 	byte dclickmask;
 
 	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)
+		return false;
+
+	if ((unsigned int)ev->data1 >= NUM_KEYS)
 		return false;
 
 	dclickspot = ev->data1 >> 3;
@@ -689,13 +709,16 @@ void C_UnbindACommand (char *str)
 
 void C_ChangeBinding (const char *str, int newone)
 {
-	if (Bindings[newone])
-		delete[] Bindings[newone];
+	if ((unsigned int)newone < NUM_KEYS)
+	{
+		if (Bindings[newone])
+			delete[] Bindings[newone];
 
-	Bindings[newone] = copystring (str);
+		Bindings[newone] = copystring (str);
+	}
 }
 
 char *C_GetBinding (int key)
 {
-	return Bindings[key];
+	return (unsigned int)key < NUM_KEYS ? Bindings[key] : NULL;
 }

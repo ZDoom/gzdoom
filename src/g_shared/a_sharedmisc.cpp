@@ -50,7 +50,16 @@ FState ABlood::States[] =
 #define S_HBLOOD (S_DBLOOD+3)
 	S_NORMAL (BLOD, 'C',	8, NULL							, &States[S_HBLOOD+1]),
 	S_NORMAL (BLOD, 'B',	8, NULL							, &States[S_HBLOOD+2]),
-	S_NORMAL (BLOD, 'A',	8, NULL							, NULL)
+	S_NORMAL (BLOD, 'A',	8, NULL							, NULL),
+
+#define S_SBLOOD (S_HBLOOD+3)
+	S_NORMAL (SPRY, 'A',    3, NULL							, &States[S_SBLOOD+1]),
+	S_NORMAL (SPRY, 'B',    3, NULL							, &States[S_SBLOOD+2]),
+	S_NORMAL (SPRY, 'C',    3, NULL							, &States[S_SBLOOD+3]),
+	S_NORMAL (SPRY, 'D',    3, NULL							, &States[S_SBLOOD+4]),
+	S_NORMAL (SPRY, 'E',    3, NULL							, &States[S_SBLOOD+5]),
+	S_NORMAL (SPRY, 'F',    3, NULL							, &States[S_SBLOOD+6]),
+	S_NORMAL (SPRY, 'G',    2, NULL							, NULL),
 };
 
 IMPLEMENT_ACTOR (ABlood, Any, -1, 130)
@@ -63,6 +72,40 @@ AT_GAME_SET (Blood)
 	ABlood *def = GetDefault<ABlood>();
 
 	def->SpawnState = &ABlood::States[gameinfo.gametype == GAME_Doom ? S_DBLOOD : S_HBLOOD];
+}
+
+void ABlood::SetDamage (int damage)
+{
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		if (damage <= 12 && damage >= 9)
+		{
+			SetState (SpawnState + 1);
+		}
+		else if (damage < 9)
+		{
+			SetState (SpawnState + 2);
+		}
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		if (damage > 13)
+		{
+			SetState (&States[S_SBLOOD]);
+		}
+		else if (damage >= 10)
+		{
+			SetState (&States[S_HBLOOD]);
+		}
+		else if (damage >= 7)
+		{
+			SetState (&States[S_HBLOOD+1]);
+		}
+		else
+		{
+			SetState (&States[S_HBLOOD+2]);
+		}
+	}
 }
 
 // Map spot ----------------------------------------------------------------
@@ -86,6 +129,7 @@ FState ARealGibs::States[] =
 };
 
 IMPLEMENT_ACTOR (ARealGibs, Any, -1, 0)
+	PROP_SpawnState (0)
 	PROP_Flags (MF_DROPOFF|MF_CORPSE)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_Flags3 (MF3_DONTGIB)

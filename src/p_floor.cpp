@@ -151,7 +151,7 @@ void DFloor::Tick ()
 				case donutRaise:
 				case genFloorChgT:
 				case genFloorChg0:
-					m_Sector->special = m_NewSpecial;
+					m_Sector->special = (m_Sector->special & SECRET_MASK) | m_NewSpecial;
 					//fall thru
 				case genFloorChg:
 					m_Sector->floorpic = m_Texture;
@@ -168,7 +168,7 @@ void DFloor::Tick ()
 				case floorLowerAndChange:
 				case genFloorChgT:
 				case genFloorChg0:
-					m_Sector->special = m_NewSpecial;
+					m_Sector->special = (m_Sector->special & SECRET_MASK) | m_NewSpecial;
 					//fall thru
 				case genFloorChg:
 					m_Sector->floorpic = m_Texture;
@@ -319,7 +319,12 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 manual_floor:
 		// ALREADY MOVING?	IF SO, KEEP GOING...
 		if (sec->floordata)
-			continue;
+		{
+			if (manual)
+				continue;
+			else
+				return false;
+		}
 		
 		// new floor thinker
 		rtn = true;
@@ -454,7 +459,7 @@ manual_floor:
 			{
 				int oldpic = sec->floorpic;
 				sec->floorpic = line->frontsector->floorpic;
-				sec->special = line->frontsector->special;
+				sec->special = (sec->special & SECRET_MASK) | (line->frontsector->special & ~SECRET_MASK);
 				if (oldpic != sec->floorpic)
 				{
 					sec->AdjustFloorClip ();
@@ -462,7 +467,7 @@ manual_floor:
 			}
 			else
 			{
-				sec->special = 0;
+				sec->special &= SECRET_MASK;
 			}
 			break;
 		  
@@ -474,7 +479,7 @@ manual_floor:
 			// jff 1/24/98 make sure floor->m_NewSpecial gets initialized
 			// in case no surrounding sector is at floordestheight
 			// --> should not affect compatibility <--
-			floor->m_NewSpecial = sec->special; 
+			floor->m_NewSpecial = sec->special & ~SECRET_MASK; 
 
 			//jff 5/23/98 use model subroutine to unify fixes and handling
 			sector_t *modelsec;
@@ -482,7 +487,7 @@ manual_floor:
 			if (modelsec != NULL)
 			{
 				floor->m_Texture = modelsec->floorpic;
-				floor->m_NewSpecial = modelsec->special;
+				floor->m_NewSpecial = modelsec->special & ~SECRET_MASK;
 			}
 			break;
 
@@ -523,7 +528,7 @@ manual_floor:
 						floor->m_Type = DFloor::genFloorChg0;
 						break;
 					case 2:
-						floor->m_NewSpecial = sec->special;
+						floor->m_NewSpecial = sec->special & ~SECRET_MASK;
 						floor->m_Type = DFloor::genFloorChgT;
 						break;
 					case 3:
@@ -544,7 +549,7 @@ manual_floor:
 					floor->m_Type = DFloor::genFloorChg0;
 					break;
 				case 2:
-					floor->m_NewSpecial = sec->special;
+					floor->m_NewSpecial = sec->special & ~SECRET_MASK;
 					floor->m_Type = DFloor::genFloorChgT;
 					break;
 				case 3:
@@ -619,7 +624,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag)
 			if (line)
 			{ // [RH] if no line, no change
 				sec->floorpic = line->frontsector->floorpic;
-				sec->special = line->frontsector->special;
+				sec->special = (sec->special & SECRET_MASK) | (line->frontsector->special & ~SECRET_MASK);
 			}
 			break;
 		case numChangeOnly:

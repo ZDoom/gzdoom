@@ -30,7 +30,7 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** This tries to be fast closest color finding system. It is, but the results
+** This tries to be a fast closest color finding system. It is, but the results
 ** are not as good as I would like, so I don't actually use it.
 **
 */
@@ -55,7 +55,7 @@ struct FColorMatcher::Seed
 
 struct FColorMatcher::PalEntry
 {
-#ifndef __BIG_ENDIAN__
+#ifndef WORDS_BIGENDIAN
 	byte b, g, r, a;
 #else
 	byte a, r, g, b;

@@ -165,8 +165,24 @@ DArgs *DArgs::GatherFiles (const char *param, const char *extension, bool accept
 			size_t len = strlen (m_ArgV[i]);
 			if (len >= extlen && stricmp (m_ArgV[i] + len - extlen, extension) == 0)
 				out->AppendArg (m_ArgV[i]);
-			else if (acceptNoExt && !strrchr (m_ArgV[i], '.'))
+			else if (acceptNoExt)
+			{
+				const char *src = m_ArgV[i] + len - 1;
+
+				while (src != m_ArgV[i] && *src != '/'
+			#ifdef _WIN32
+					&& *src != '\\'
+			#endif
+					)
+				{
+					if (*src == '.')
+						goto morefor;					// it has an extension
+					src--;
+				}
 				out->AppendArg (m_ArgV[i]);
+morefor:
+				;
+			}
 		}
 	}
 	if (param != NULL)

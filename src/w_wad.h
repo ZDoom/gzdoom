@@ -26,7 +26,7 @@
 #include "files.h"
 
 // [RH] Compare wad header as ints instead of chars
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 #define IWAD_ID (('I'<<24)|('W'<<16)|('A'<<8)|('D'))
 #define PWAD_ID (('P'<<24)|('W'<<16)|('A'<<8)|('D'))
 #define RFF_ID (('R'<<24)|('F'<<16)|('F'<<8)|(0x1a))
@@ -72,7 +72,8 @@ typedef enum {
 	ns_newtextures,
 	ns_bloodraw,
 	ns_bloodsfx,
-	ns_bloodmisc
+	ns_bloodmisc,
+	ns_strifevoices,
 } namespace_t;
 
 // [RH] Copy an 8-char string and uppercase it.
@@ -186,6 +187,7 @@ protected:
 	// [RH] Combine multiple marked ranges of lumps into one.
 	int MergeLumps (const char *start, const char *end, int name_space);
 	bool IsMarker (const LumpRecord *lump, const char *marker) const;
+	void FindStrifeTeaserVoices ();
 
 private:
 	void ScanForFlatHack (int startlump);

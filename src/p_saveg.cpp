@@ -84,13 +84,7 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->floortexz
 			<< sec->ceilingtexz;
 
-		if (SaveVersion < 217)
-		{
-			// Skip floorpic and ceilingpic in old savegames
-			short dummy;
-			arc << dummy << dummy;
-		}
-		else if (arc.IsStoring ())
+		if (arc.IsStoring ())
 		{
 			TexMan.WriteTexture (arc, sec->floorpic);
 			TexMan.WriteTexture (arc, sec->ceilingpic);
@@ -104,7 +98,6 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->special
 			<< sec->tag
 			<< sec->soundtraversed
-			<< sec->soundtarget
 			<< sec->seqType
 			<< sec->friction
 			<< sec->movefactor
@@ -132,18 +125,9 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->FloorFlags
 			<< sec->CeilingFlags
 			<< sec->sky
-			<< sec->MoreFlags;
-		if (SaveVersion < 213)
-		{
-			ASkyViewpoint *skybox;
-			arc << skybox;
-			sec->FloorSkyBox = sec->CeilingSkyBox = skybox;
-		}
-		else
-		{
-			arc << sec->FloorSkyBox << sec->CeilingSkyBox;
-		}
-		arc << sec->ZoneNumber;
+			<< sec->MoreFlags
+			<< sec->FloorSkyBox << sec->CeilingSkyBox
+			<< sec->ZoneNumber;
 		if (arc.IsStoring ())
 		{
 			arc << sec->ColorMap->Color
@@ -155,15 +139,8 @@ void P_SerializeWorld (FArchive &arc)
 		{
 			PalEntry color, fade;
 			BYTE desaturate;
-			arc << color << fade;
-			if (SaveVersion < 214)
-			{
-				desaturate = 0;
-			}
-			else
-			{
-				arc << desaturate;
-			}
+			arc << color << fade
+				<< desaturate;
 			sec->ColorMap = GetSpecialLights (color, fade, desaturate);
 		}
 	}
@@ -186,14 +163,7 @@ void P_SerializeWorld (FArchive &arc)
 			arc << si->textureoffset
 				<< si->rowoffset;
 
-			if (SaveVersion < 217)
-			{
-				// Skip toptexture, bottomtexture, and midtexture stored in
-				// old savegames, because their indices are sure to be wrong.
-				short dummy;
-				arc << dummy << dummy << dummy;
-			}
-			else if (arc.IsStoring ())
+			if (arc.IsStoring ())
 			{
 				TexMan.WriteTexture (arc, si->toptexture);
 				TexMan.WriteTexture (arc, si->bottomtexture);

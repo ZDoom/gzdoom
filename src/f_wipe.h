@@ -27,9 +27,18 @@
 //						 SCREEN WIPE PACKAGE
 //
 
-int wipe_StartScreen (void);
+int wipe_StartScreen (int type);
 int wipe_EndScreen (void);
 int wipe_ScreenWipe (int ticks);
+
+enum
+{
+	wipe_None,			// don't bother
+	wipe_Melt,			// weird screen melt
+	wipe_Burn,			// fade in shape of fire
+	wipe_Fade,			// crossfade from old to new
+	wipe_NUMWIPES
+};
 
 #endif
 //-----------------------------------------------------------------------------

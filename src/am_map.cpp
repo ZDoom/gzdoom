@@ -49,6 +49,7 @@
 #include "gstrings.h"
 
 #include "am_map.h"
+#include "a_artifacts.h"
 
 static int Background, YourColor, WallColor, TSWallColor,
 		   FDWallColor, CDWallColor, ThingColor,
@@ -1735,7 +1736,7 @@ void AM_drawGrid (int color)
 // Determines visible lines, draws them.
 // This is LineDef based, not LineSeg based.
 //
-void AM_drawWalls ()
+void AM_drawWalls (bool allmap)
 {
 	int i;
 	static mline_t l;
@@ -1807,7 +1808,7 @@ void AM_drawWalls ()
 				}
 			}
 		}
-		else if (players[consoleplayer].powers[pw_allmap])
+		else if (allmap)
 		{
 			if (!(lines[i].flags & ML_DONTDRAW))
 				AM_drawMline(&l, NotSeenColor);
@@ -1926,7 +1927,7 @@ void AM_drawPlayers ()
 			continue;
 		}
 
-		if (p->powers[pw_invisibility])
+		if (p->mo->alpha < OPAQUE)
 		{
 			color = AlmostBackground;
 		}
@@ -1985,6 +1986,22 @@ void AM_drawThings (int color)
 			AM_drawLineCharacter
 			(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
 			 16<<MAPBITS, angle, color, p.x, p.y);
+
+			mline_t l;
+			l.a.x = (t->x - t->radius) >> FRACTOMAPBITS;
+			l.a.y = (t->y - t->radius) >> FRACTOMAPBITS;
+			l.b.x = (t->x + t->radius) >> FRACTOMAPBITS;
+			l.b.y = l.a.y;
+			AM_drawMline (&l, color);
+			l.a = l.b;
+			l.b.y = (t->y + t->radius) >> FRACTOMAPBITS;
+			AM_drawMline (&l, color);
+			l.a = l.b;
+			l.b.x = (t->x - t->radius) >> FRACTOMAPBITS;
+			AM_drawMline (&l, color);
+			l.a = l.b;
+			l.b.y = (t->y - t->radius) >> FRACTOMAPBITS;
+			AM_drawMline (&l, color);
 			t = t->snext;
 		}
 	}
@@ -2029,6 +2046,9 @@ void AM_Drawer ()
 	if (!automapactive)
 		return;
 
+	bool allmap = (level.flags & LEVEL_ALLMAP) != 0;
+	bool allthings = allmap && players[consoleplayer].mo->FindInventory<APowerScanner>() != NULL;
+
 	AM_initColors (viewactive);
 
 	fb = screen->GetBuffer ();
@@ -2062,9 +2082,9 @@ void AM_Drawer ()
 	if (grid)	
 		AM_drawGrid(GridColor);
 
-	AM_drawWalls();
+	AM_drawWalls(allmap);
 	AM_drawPlayers();
-	if (am_cheat >= 2)
+	if (am_cheat >= 2 || allthings)
 		AM_drawThings(ThingColor);
 
 	if (!viewactive)

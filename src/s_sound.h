@@ -55,6 +55,7 @@ struct sfxinfo_t
 	WORD		bLoadRAW:1;
 	WORD		bPlayerCompat:1;
 	WORD		b16bit:1;
+	WORD		bUsed:1;
 
 	WORD		link;
 
@@ -79,6 +80,12 @@ void S_Init ();
 // Kills playing sounds at start of level and starts new music.
 //
 void S_Start ();
+
+// Called after a level is loaded. Ensures that most sounds are loaded.
+void S_PrecacheLevel ();
+
+// Loads a sound, including any random sounds it might reference.
+void S_CacheSound (sfxinfo_t *sfx);
 
 // Start sound for thing at <ent>
 void S_Sound (int channel, const char *name, float volume, int attenuation);
@@ -124,6 +131,7 @@ void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int att
 #define ATTN_SURROUND			4	// like ATTN_NONE, but plays in surround sound
 
 int S_PickReplacement (int refid);
+void S_CacheRandomSound (sfxinfo_t *sfx);
 
 // [RH] From Hexen.
 //		Prevents too many of the same sound from playing simultaneously.

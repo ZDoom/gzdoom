@@ -12,8 +12,8 @@ static FRandom pr_bloodscourgedrop ("BloodScourgeDrop");
 
 void A_MStaffTrack (AActor *);
 void A_DropBloodscourgePieces (AActor *);
-void A_MStaffAttack (AActor *actor, pspdef_t *);
-void A_MStaffPalette (AActor *actor, pspdef_t *);
+void A_MStaffAttack (AActor *actor);
+void A_MStaffPalette (AActor *actor);
 
 static AActor *FrontBlockCheck (AActor *mo, int index);
 static divline_t BlockCheckLine;
@@ -147,18 +147,20 @@ class AMWeapBloodscourge : public AMageWeapon
 {
 	DECLARE_ACTOR (AMWeapBloodscourge, AMageWeapon)
 public:
-	weapontype_t OldStyleID () const
+	void Serialize (FArchive &arc)
 	{
-		return wp_mstaff;
+		Super::Serialize (arc);
+		arc << MStaffCount;
 	}
-
-	static FWeaponInfo WeaponInfo;
-
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_M4);
 	}
+	PalEntry GetBlend ()
+	{
+		return PalEntry (MStaffCount * 128 / 3, 151, 110, 0);
+	}
+	BYTE MStaffCount;
 };
 
 FState AMWeapBloodscourge::States[] =
@@ -219,34 +221,26 @@ FState AMWeapBloodscourge::States[] =
 	S_NORMAL2 (MSTF, 'J',	5, NULL					    , &States[S_MSTAFFREADY], 0, 36)
 };
 
-FWeaponInfo AMWeapBloodscourge::WeaponInfo =
-{
-	0,								// flags
-	MANA_BOTH,						// ammo
-	MANA_BOTH,						// givingammo
-	15,								// ammouse
-	0,								// ammogive
-	&States[S_MSTAFFUP],			// upstate
-	&States[S_MSTAFFDOWN],			// downstate
-	&States[S_MSTAFFREADY],			// readystate
-	&States[S_MSTAFFATK],			// atkstate
-	&States[S_MSTAFFATK],			// holdatkstate
-	NULL,							// flashstate
-	RUNTIME_CLASS(ABloodscourgeDrop),	// droptype
-	150,							// kickback
-	20*FRACUNIT,					// yadjust
-	NULL,							// upsound
-	NULL,							// readysound
-	RUNTIME_CLASS(AMWeapBloodscourge),	// type
-	15								// minammo
-};
-
 IMPLEMENT_ACTOR (AMWeapBloodscourge, Hexen, -1, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-END_DEFAULTS
 
-WEAPON1 (wp_mstaff, AMWeapBloodscourge)
+	PROP_Weapon_SelectionOrder (3100)
+	PROP_Weapon_Flags (WIF_PRIMARY_USES_BOTH | WIF_EXTREME_DEATH)
+	PROP_Weapon_AmmoUse1 (15)
+	PROP_Weapon_AmmoUse2 (15)
+	PROP_Weapon_UpState (S_MSTAFFUP)
+	PROP_Weapon_DownState (S_MSTAFFDOWN)
+	PROP_Weapon_ReadyState (S_MSTAFFREADY)
+	PROP_Weapon_AtkState (S_MSTAFFATK)
+	PROP_Weapon_HoldAtkState (S_MSTAFFATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (20)
+	PROP_Weapon_MoveCombatDist (20000000)
+	PROP_Weapon_AmmoType1 ("Mana1")
+	PROP_Weapon_AmmoType2 ("Mana2")
+	PROP_Weapon_ProjectileType ("MageStaffFX2")
+END_DEFAULTS
 
 // Mage Staff FX2 (Bloodscourge) --------------------------------------------
 
@@ -415,10 +409,9 @@ void MStaffSpawn (AActor *pmo, angle_t angle)
 //
 //============================================================================
 
-void A_MStaffAttack (AActor *actor, pspdef_t *psp)
+void A_MStaffAttack (AActor *actor)
 {
 	angle_t angle;
-	AActor *pmo;
 	player_t *player;
 
 	if (NULL == (player = actor->player))
@@ -426,27 +419,29 @@ void A_MStaffAttack (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	if (player->UseAmmo (true))
+	AMWeapBloodscourge *weapon = static_cast<AMWeapBloodscourge *> (actor->player->ReadyWeapon);
+	if (weapon != NULL)
 	{
-		pmo = player->mo;
-		angle = pmo->angle;
-		
-		// [RH] Let's try and actually track what the player aimed at
-		P_AimLineAttack (pmo, angle, PLAYERMISSILERANGE, ANGLE_1*32);
-		if (linetarget == NULL)
-		{
-			BlockCheckLine.x = pmo->x;
-			BlockCheckLine.y = pmo->y;
-			BlockCheckLine.dx = -finesine[angle >> ANGLETOFINESHIFT];
-			BlockCheckLine.dy = -finecosine[angle >> ANGLETOFINESHIFT];
-			linetarget = P_BlockmapSearch (pmo, 10, FrontBlockCheck);
-		}
-		MStaffSpawn (pmo, angle);
-		MStaffSpawn (pmo, angle-ANGLE_1*5);
-		MStaffSpawn (pmo, angle+ANGLE_1*5);
-		S_Sound (pmo, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
-		player->mstaffcount = 3;
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
 	}
+	angle = actor->angle;
+	
+	// [RH] Let's try and actually track what the player aimed at
+	P_AimLineAttack (actor, angle, PLAYERMISSILERANGE, ANGLE_1*32);
+	if (linetarget == NULL)
+	{
+		BlockCheckLine.x = actor->x;
+		BlockCheckLine.y = actor->y;
+		BlockCheckLine.dx = -finesine[angle >> ANGLETOFINESHIFT];
+		BlockCheckLine.dy = -finecosine[angle >> ANGLETOFINESHIFT];
+		linetarget = P_BlockmapSearch (actor, 10, FrontBlockCheck);
+	}
+	MStaffSpawn (actor, angle);
+	MStaffSpawn (actor, angle-ANGLE_1*5);
+	MStaffSpawn (actor, angle+ANGLE_1*5);
+	S_Sound (actor, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
+	weapon->MStaffCount = 3;
 }
 
 //============================================================================
@@ -455,11 +450,15 @@ void A_MStaffAttack (AActor *actor, pspdef_t *psp)
 //
 //============================================================================
 
-void A_MStaffPalette (AActor *actor, pspdef_t *psp)
+void A_MStaffPalette (AActor *actor)
 {
-	if (actor->player != NULL && actor->player->mstaffcount)
+	if (actor->player != NULL)
 	{
-		actor->player->mstaffcount--;
+		AMWeapBloodscourge *weapon = static_cast<AMWeapBloodscourge *> (actor->player->ReadyWeapon);
+		if (weapon != NULL && weapon->MStaffCount != 0)
+		{
+			weapon->MStaffCount--;
+		}
 	}
 }
 

@@ -21,7 +21,6 @@
 //
 //-----------------------------------------------------------------------------
 
-//#include <crtdbg.h>
 
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0500
@@ -30,16 +29,15 @@
 #include <objbase.h>
 #include <commctrl.h>
 
-#ifndef NOWTS
 //#include <wtsapi32.h>
 #define NOTIFY_FOR_THIS_SESSION 0
-#endif
 
 #include <malloc.h>
 #include "m_alloc.h"
 #ifdef _MSC_VER
 #include <eh.h>
 #include <new.h>
+#include <crtdbg.h>
 #endif
 #include "resource.h"
 
@@ -135,7 +133,6 @@ static void STACK_ARGS UnCOM (void)
 	CoUninitialize ();
 }
 
-#ifndef NOWTS
 static void STACK_ARGS UnWTS (void)
 {
 	if (hwtsapi32 != 0)
@@ -150,7 +147,6 @@ static void STACK_ARGS UnWTS (void)
 		hwtsapi32 = 0;
 	}
 }
-#endif
 
 void DoMain (HINSTANCE hInstance)
 {
@@ -273,7 +269,7 @@ void DoMain (HINSTANCE hInstance)
 		
 		/* create window */
 		Window = CreateWindow((LPCTSTR)WinClassName,
-				(LPCTSTR) "ZDOOM (" __DATE__ ")",
+				(LPCTSTR) "ZDOOM " DOTVERSIONSTR " (" __DATE__ ")",
 				WS_OVERLAPPEDWINDOW,
 				0/*CW_USEDEFAULT*/, 1/*CW_USEDEFAULT*/, width, height,
 				(HWND)   NULL,
@@ -286,7 +282,6 @@ void DoMain (HINSTANCE hInstance)
 
 		if (kernel != 0)
 		{
-#ifndef NOWTS
 			typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
 			pts pidsid = (pts)GetProcAddress (kernel, "ProcessIdToSessionId");
 			if (pidsid != 0)
@@ -310,7 +305,6 @@ void DoMain (HINSTANCE hInstance)
 					}
 				}
 			}
-#endif
 			FreeLibrary (kernel);
 		}
 

@@ -70,8 +70,20 @@
 #include "farchive.h"
 #include "doomdef.h"
 
+const BYTE SF_WEAPONPARAM= 0x20;
 const BYTE SF_FULLBRIGHT = 0x40;
 const BYTE SF_BIGTIC	 = 0x80;
+
+// For weapon action functions with parameters a few tricks are necessary
+// because the misc fields are already used. This serves as a base class
+// for all parameter lists for weapon functions.
+struct FWeaponParam
+{
+	SBYTE wp_xoffset;
+	BYTE wp_yoffset;
+};
+
+extern TArray<FWeaponParam *> WeaponParams;
 
 struct FState
 {
@@ -88,12 +100,12 @@ struct FState
 	SBYTE		Misc1;
 	BYTE		Misc2;
 	BYTE		Frame;
-	actionf_t	Action;
+	actionf_p	Action;
 	FState		*NextState;
 
 	inline int GetFrame() const
 	{
-		return Frame & ~(SF_FULLBRIGHT|SF_BIGTIC);
+		return Frame & ~(SF_FULLBRIGHT|SF_BIGTIC|SF_WEAPONPARAM);
 	}
 	inline int GetFullbright() const
 	{
@@ -102,12 +114,12 @@ struct FState
 	inline int GetTics() const
 	{
 		int tics;
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 		tics = Frame & SF_BIGTIC ? (Tics|((BYTE)Misc1<<8))-1 : Tics-1;
 #else
 		// Use some trickery to help the compiler create this without
 		// using any jumps.
-		tics = ((*(int *)&Tics) & ((*(int *)&Tics) < 0 ? 0xffff : 0xff)) - 1;
+		tics = ((*(SDWORD *)&Tics) & ((*(SDWORD *)&Tics) < 0 ? 0xffff : 0xff)) - 1;
 #endif
 #if TICRATE == 35
 		return tics;
@@ -123,11 +135,22 @@ struct FState
 	{
 		return Misc2;
 	}
+	inline int GetMisc1_2() const
+	{
+		return ((*(DWORD *)&Tics) >> 8) & 0xFFFF;
+	}
+	inline void SetMisc1_2 (WORD val)
+	{
+		DWORD x = *(DWORD *)&Tics;
+		x &= 0xFF0000FF;
+		x |= (DWORD)val << 8;
+		*(DWORD *)&Tics = x;
+	}
 	inline FState *GetNextState() const
 	{
 		return NextState;
 	}
-	inline actionf_t GetAction() const
+	inline actionf_p GetAction() const
 	{
 		return Action;
 	}
@@ -152,10 +175,10 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 	{cmd}, next }
 
 #define S_NORMAL2(spr,frm,tic,cmd,next,m1,m2) \
-	_S__FR_TIC_(spr, (frm) - 'A', tic, m1, m2, (void *)cmd, next)
+	_S__FR_TIC_(spr, (frm) - 'A', tic, m1, m2, cmd, next)
 
 #define S_BRIGHT2(spr,frm,tic,cmd,next,m1,m2) \
-	_S__FR_TIC_(spr, (frm) - 'A' | SF_FULLBRIGHT, tic, m1, m2, (void *)cmd, next)
+	_S__FR_TIC_(spr, (frm) - 'A' | SF_FULLBRIGHT, tic, m1, m2, cmd, next)
 
 /* <winbase.h> #defines its own, completely unrelated S_NORMAL.
  * Since winbase.h will only be included in Win32-specific files that
@@ -163,9 +186,9 @@ FArchive &operator<< (FArchive &arc, FState *&state);
  */
 
 #ifndef S_NORMAL
-#define S_NORMAL(spr,frm,tic,cmd,next)	S_NORMAL2(spr,frm,tic,(void *)cmd,next,0,0)
+#define S_NORMAL(spr,frm,tic,cmd,next)	S_NORMAL2(spr,frm,tic,cmd,next,0,0)
 #endif
-#define S_BRIGHT(spr,frm,tic,cmd,next)	S_BRIGHT2(spr,frm,tic,(void *)cmd,next,0,0)
+#define S_BRIGHT(spr,frm,tic,cmd,next)	S_BRIGHT2(spr,frm,tic,cmd,next,0,0)
 
 
 #ifndef EGAMETYPE
@@ -185,11 +208,11 @@ enum EGameType
 
 enum
 {
-	ADEFTYPE_Byte		= 0,
-	ADEFTYPE_FixedMul	= 64,		// one byte, multiplied by FRACUNIT
-	ADEFTYPE_Word		= 128,
-	ADEFTYPE_Long		= 192,
-	ADEFTYPE_MASK		= 192,
+	ADEFTYPE_Byte		= 0x0000,
+	ADEFTYPE_FixedMul	= 0x4000,		// one byte, multiplied by FRACUNIT
+	ADEFTYPE_Word		= 0x8000,
+	ADEFTYPE_Long		= 0xC000,
+	ADEFTYPE_MASK		= 0xC000,
 
 	// These first properties are always strings
 	ADEF_SeeSound = 1,
@@ -197,8 +220,17 @@ enum
 	ADEF_PainSound,
 	ADEF_DeathSound,
 	ADEF_ActiveSound,
-	ADEF_Tag,			// Used by Strife, but I'm not sure how
-	ADEF_LastString = ADEF_Tag,
+	ADEF_UseSound,
+	ADEF_Weapon_UpSound,
+	ADEF_Weapon_ReadySound,
+	ADEF_Tag,			// Used by Strife to name items
+	ADEF_Weapon_AmmoType1,
+	ADEF_Weapon_AmmoType2,
+	ADEF_Weapon_SisterType,
+	ADEF_Weapon_ProjectileType,
+	ADEF_PowerupGiver_Powerup,
+	ADEF_Inventory_Icon,
+	ADEF_LastString = ADEF_Inventory_Icon,
 
 	// The rest of the properties use their type field (upper 2 bits)
 	ADEF_XScale,
@@ -227,6 +259,7 @@ enum
 	ADEF_RenderStyle,
 	ADEF_RenderFlags,
 	ADEF_Translation,
+	ADEF_MinMissileChance,
 
 	ADEF_SpawnState,
 	ADEF_SeeState,
@@ -238,14 +271,59 @@ enum
 	ADEF_XDeathState,
 	ADEF_BDeathState,
 	ADEF_IDeathState,
+	ADEF_EDeathState,
 	ADEF_RaiseState,
+	ADEF_WoundState,
+
+	ADEF_StrifeType,	// Not really a property. Used to init StrifeTypes[] in p_conversation.h.
+	ADEF_StrifeTeaserType,
+
+	ADEF_Inventory_Amount,
+	ADEF_Inventory_MaxAmount,
+	ADEF_Inventory_DefMaxAmount,
+	ADEF_Inventory_RespawnTics,
+	ADEF_Inventory_Flags,
+
+	ADEF_PuzzleItem_Number,	// Identifies the puzzle item for UsePuzzleItem
+
+	ADEF_BasicArmorPickup_SavePercent,
+	ADEF_BasicArmorPickup_SaveAmount,
+	ADEF_BasicArmorBonus_SavePercent,
+	ADEF_BasicArmorBonus_SaveAmount,
+	ADEF_BasicArmorBonus_MaxSaveAmount,
+	ADEF_HexenArmor_ArmorAmount,
+
+	ADEF_Powerup_EffectTics,
+	ADEF_Powerup_Color,
+	ADEF_PowerupGiver_EffectTics,
+
+	ADEF_Key_KeyNumber,
+	ADEF_Key_AltKeyNumber,
+
+	ADEF_Weapon_Flags,
+	ADEF_Weapon_AmmoGive1,
+	ADEF_Weapon_AmmoGive2,
+	ADEF_Weapon_AmmoUse1,
+	ADEF_Weapon_AmmoUse2,
+	ADEF_Weapon_Kickback,
+	ADEF_Weapon_YAdjust,
+	ADEF_Weapon_SelectionOrder,
+	ADEF_Weapon_MoveCombatDist,
+	ADEF_Weapon_UpState,
+	ADEF_Weapon_DownState,
+	ADEF_Weapon_ReadyState,
+	ADEF_Weapon_AtkState,
+	ADEF_Weapon_HoldAtkState,
+	ADEF_Weapon_AltAtkState,
+	ADEF_Weapon_AltHoldAtkState,
+	ADEF_Weapon_FlashState,
+	ADEF_Sigil_NumPieces,
 
 	// The following are not properties but effect how the list is parsed
 	ADEF_FirstCommand,
-	ADEF_LimitGame = ADEF_FirstCommand,
-	ADEF_SkipSuper,		// Take defaults from AActor instead of superclass(es)
+	ADEF_SkipSuper = ADEF_FirstCommand,	// Take defaults from AActor instead of superclass(es)
 
-	ADEF_EOL = 0		// End Of List
+	ADEF_EOL = 0xED5E		// End Of List
 };
 
 #if _MSC_VER
@@ -259,7 +337,6 @@ struct FActorInfo
 	static void StaticGameSet ();
 	static void StaticSetActorNums ();
 	static void StaticSpeedSet ();
-	static void StaticWeaponInit ();
 
 	void BuildDefaults ();
 	void ApplyDefaults (BYTE *defaults);
@@ -305,15 +382,6 @@ private:
 };
 
 extern FDoomEdMap DoomEdMap;
-
-struct FWeaponInfo;
-
-struct FWeaponInfoInit
-{
-	int WeaponType;
-	FWeaponInfo *Level1;
-	FWeaponInfo *Level2;
-};
 
 #include "infomacros.h"
 

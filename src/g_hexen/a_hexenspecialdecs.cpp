@@ -373,7 +373,6 @@ FState ABloodPool::States[] =
 };
 
 IMPLEMENT_ACTOR (ABloodPool, Hexen, 111, 0)
-	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -1214,7 +1213,7 @@ void A_BellReset1 (AActor *actor)
 	actor->height <<= 2;
 	if (actor->special)
 	{ // Initiate death action
-		LineSpecials[actor->special] (NULL, NULL, actor->args[0],
+		LineSpecials[actor->special] (NULL, NULL, false, actor->args[0],
 			actor->args[1], actor->args[2], actor->args[3], actor->args[4]);
 		actor->special = 0;
 	}

@@ -304,7 +304,7 @@ void A_LichAttack (AActor *actor)
 		return;
 	}
 	A_FaceTarget (actor);
-	if (P_CheckMeleeRange (actor))
+	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_atk.HitDice (6);
 		P_DamageMobj (target, actor, actor, damage, MOD_HIT);

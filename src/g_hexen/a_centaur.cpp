@@ -277,7 +277,7 @@ void A_CentaurAttack (AActor *actor)
 	{
 		return;
 	}
-	if (P_CheckMeleeRange (actor))
+	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_centaurattack()%7+3;
 		P_DamageMobj (actor->target, actor, actor, damage);
@@ -344,7 +344,7 @@ void A_CentaurDropStuff (AActor *actor)
 void A_CentaurDefend (AActor *actor)
 {
 	A_FaceTarget (actor);
-	if (P_CheckMeleeRange(actor) && pr_centaurdefend() < 32)
+	if (actor->CheckMeleeRange() && pr_centaurdefend() < 32)
 	{
 		A_UnSetInvulnerable (actor);
 		actor->SetState (actor->MeleeState);

@@ -67,12 +67,35 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	const BYTE *tlate;
 	short special = SHORT(mld->special);
 	short tag = SHORT(mld->tag);
-	short flags = SHORT(mld->flags);
+	DWORD flags = SHORT(mld->flags);
 	BOOL passthrough;
 	int i;
 
-	passthrough = (flags & ML_PASSUSE_BOOM);
-	flags = flags & 0x01ff;	// Ignore flags unknown to DOOM
+	if (flags & ML_TRANSLUCENT_STRIFE)
+	{
+		ld->alpha = 255*3/4;
+	}
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		// It might be useful to make these usable by all games.
+		// Unfortunately, there aren't enough flag bits left to do that,
+		// so they're Strife-only.
+		if (flags & ML_RAILING_STRIFE)
+		{
+			flags |= ML_RAILING;
+		}
+		if (flags & ML_BLOCK_FLOATERS_STRIFE)
+		{
+			flags |= ML_BLOCK_FLOATERS_STRIFE;
+		}
+		flags |= ML_CLIP_MIDTEX;
+		passthrough = 0;
+	}
+	else
+	{
+		passthrough = (flags & ML_PASSUSE_BOOM);
+	}
+	flags = flags & 0xFFFF01FF;	// Ignore flags unknown to DOOM
 
 	// For purposes of maintaining BOOM compatibility, each
 	// line also needs to have its ID set to the same as its tag.
@@ -90,6 +113,13 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		return;
 	}
 
+/*	if (special == 52 || special == 124 || special == 51 || special == 11)
+	{
+		Printf ("Line %d has special %d (%d,%d)-(%d,%d)\n", ld-lines, special,
+			vertexes[mld->v1].x>>16, vertexes[mld->v1].y>>16,
+			vertexes[mld->v2].x>>16, vertexes[mld->v2].y>>16);
+	}
+*/
 	if (tlatebase.GetMem() == NULL)
 	{
 		if (gameinfo.gametype == GAME_Doom)
@@ -203,7 +233,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			int high = (tlate[2] << 8) | tlate[3];
 			tlate += 4;
 
-			short oflags = flags;
+			DWORD oflags = flags;
 
 			// Assume we found it and translate
 			switch (special & 0x0007)
@@ -261,7 +291,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 				}
 				else
 				{
-					flagtemp = (flags >> 9) & 0x3f;
+					flagtemp = short((flags >> 9) & 0x3f);
 					destp = &flagtemp;
 				}
 				lsize = op >> 4;
@@ -392,7 +422,7 @@ int P_TranslateSectorSpecial (int special)
 		{
 			if (gameinfo.gametype == GAME_Strife)
 			{
-				if (special == 15 || special == 18)
+				if (special == 5 || special == 15 || special == 16 || special == 18)
 				{
 					return high | (special + 100);
 				}

@@ -3,7 +3,7 @@
 ** General BEHAVIOR management and ACS execution environment
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2003 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,7 @@
 #include "m_swap.h"
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
+#include "a_strifeglobal.h"
 #include "v_video.h"
 #include "w_wad.h"
 
@@ -82,8 +83,8 @@ struct CallReturn
 
 static SDWORD Stack[STACK_SIZE];
 
-static bool P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-	int lineSide, int arg0, int arg1, int arg2, int always, bool delay);
+static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
+	bool lineSide, int arg0, int arg1, int arg2, int always, bool delay);
 
 struct FBehavior::ArrayInfo
 {
@@ -93,29 +94,39 @@ struct FBehavior::ArrayInfo
 
 TArray<FBehavior *> FBehavior::StaticModules;
 
-//---- Temporary inventory functions --------------------------------------//
-// to be simplified dramatically once I have a real inventory system
+//---- Inventory functions --------------------------------------//
 //
-#include "gi.h"
 
-static void DoClearInv (player_t *player)
+//============================================================================
+//
+// DoClearInv
+//
+// Clears the inventory of a single actor.
+//
+//============================================================================
+
+static void DoClearInv (AActor *actor)
 {
-	int i;
-
-	memset (player->inventory, 0, sizeof(player->inventory));
-	memset (player->weaponowned, 0, sizeof(player->weaponowned));
-	memset (player->keys, 0, sizeof(player->keys));
-	memset (player->ammo, 0, sizeof(player->ammo));
-	if (player->backpack)
+	while (actor->Inventory != NULL)
 	{
-		player->backpack = false;
-		for (i = 0; i < NUMAMMO; i++)
-		{
-			player->maxammo[i] /= 2;
-		}
+		actor->Inventory->Destroy ();
 	}
-	player->pendingweapon = NUMWEAPONS;
+	if (actor->player != NULL)
+	{
+		actor->player->ReadyWeapon = NULL;
+		actor->player->PendingWeapon = WP_NOCHANGE;
+		actor->player->psprites[ps_weapon].state = NULL;
+		actor->player->psprites[ps_flash].state = NULL;
+	}
 }
+
+//============================================================================
+//
+// ClearInventory
+//
+// Clears the inventory for one or more actors.
+//
+//============================================================================
 
 static void ClearInventory (AActor *activator)
 {
@@ -124,383 +135,184 @@ static void ClearInventory (AActor *activator)
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				DoClearInv (&players[i]);
+				DoClearInv (players[i].mo);
 		}
-	}
-	else if (activator->player != NULL)
-	{
-		DoClearInv (activator->player);
-	}
-}
-
-static const char *AmmoNames[NUMAMMO] =
-{
-	"Clip", "Shell", "Cell", "RocketAmmo",
-	"GoldWandAmmo", "CrossbowAmmo", "BlasterAmmo",
-	"SkullRodAmmo", "PhoenixRodAmmo", "MaceAmmo",
-	"Mana1", "Mana2", "ElectricBolts", "PoisonBolts",
-	"HEGrenadeRounds", "PhGrenadeRounds"
-};
-
-static const char *WeaponNames[NUMWEAPONS] =
-{
-	"Fist", "Pistol", "Shotgun", "Chaingun", "RocketLauncher",
-	"PlasmaRifle", "BFG9000", "Chainsaw", "SuperShotgun",
-	"Staff", "GoldWand", "Crossbow", "Blaster", "SkullRod",
-	"PhoenixRod", "Mace", "Gauntlets", "Beak",
-	"Snout",
-	"FWeapFist", "CWeapMace", "MWeapWand",
-	"FWeapAxe", "CWeapStaff", "MWeapFrost",
-	"FWeapHammer", "CWeapFlame", "MWeapLightning",
-	"FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge",
-	"PunchDagger", "StrifeCrossbow", "AssaultGun", "MiniMissileLauncher",
-	"StrifeGrenadeLauncher", "FlameThrower", "Mauler",
-	"Sigil", "StrifeCrossbow2", "StrifeGrenadeLauncher2", "Mauler2"
-};
-
-static const char *HereticKeyNames[3] =
-{
-	"KeyBlue", "KeyYellow", "KeyGreen",
-};
-static const char *DoomKeyNames[6] =
-{
-	"BlueCard", "YellowCard", "RedCard",
-	"BlueSkull", "YellowSkull", "RedSkull"
-};
-static const char *HexenKeyNames[11] =
-{
-	"KeySteel", "KeyCave", "KeyAxe", "KeyFire",
-	"KeyEmerald", "KeyDungeon", "KeySilver", "KeyRusted",
-	"KeyHorn", "KeySwamp", "KeyCastle"
-};
-
-static void DoGiveInv (player_t *player, const char *type, int amount)
-{
-	if (amount <= 0)
-	{
-		return;
-	}
-
-	int i;
-	weapontype_t savedpendingweap = player->pendingweapon;
-
-	if (strcmp (type, "Armor") == 0)
-	{
-		player->armorpoints[0] = MIN (player->armorpoints[0] + amount, deh.MaxArmor);
-	}
-
-	for (i = 0; i < NUMAMMO; ++i)
-	{
-		if (strcmp (AmmoNames[i], type) == 0)
-		{
-			player->ammo[i] = MIN(player->ammo[i]+amount, player->maxammo[i]);
-			return;
-		}
-	}
-	for (i = 0; i < NUMARTIFACTS; ++i)
-	{
-		if (strcmp (ArtifactNames[i], type) == 0)
-		{
-			int maxCount;
-
-			if (gameinfo.gametype == GAME_Heretic)
-			{
-				maxCount = 16;
-			}
-			else
-			{
-				maxCount = 25;
-			}
-			player->inventory[i] = MIN(player->inventory[i]+amount, maxCount);
-			return;
-		}
-	}
-	const TypeInfo *info = TypeInfo::FindType (type);
-	if (info == NULL)
-	{
-		Printf ("I don't know what %s is.\n", type);
-	}
-	else if (!info->IsDescendantOf (RUNTIME_CLASS(AInventory)))
-	{
-		Printf ("%s is not an inventory item.\n", type);
 	}
 	else
 	{
-		do
-		{
-			AInventory *item = static_cast<AInventory *>(Spawn
-				(info, player->mo->x, player->mo->y, player->mo->z));
-			item->TryPickup (player->mo);
-			if (!(item->ObjectFlags & OF_MassDestruction))
-			{
-				item->Destroy ();
-			}
-		} while (--amount > 0);
-	}
-
-	// If the item was a weapon, don't bring it up automatically
-	if (savedpendingweap != NUMWEAPONS)
-	{
-		player->pendingweapon = savedpendingweap;
-		P_CheckAmmo (player);
+		DoClearInv (activator);
 	}
 }
+
+//============================================================================
+//
+// DoGiveInv
+//
+// Gives an item to a single actor.
+//
+//============================================================================
+
+static void DoGiveInv (AActor *actor, const TypeInfo *info, int amount)
+{
+	AWeapon *savedPendingWeap = actor->player != NULL
+		? actor->player->PendingWeapon : NULL;
+	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
+
+	do
+	{
+		AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0));
+		if (!item->TryPickup (actor))
+		{
+			item->Destroy ();
+		}
+	} while (--amount > 0);
+
+	// If the item was a weapon, don't bring it up automatically
+	// unless the player was not already using a weapon.
+	if (savedPendingWeap != NULL && hadweap)
+	{
+		actor->player->PendingWeapon = savedPendingWeap;
+	}
+}
+
+//============================================================================
+//
+// GiveInventory
+//
+// Gives an item to one or more actors.
+//
+//============================================================================
 
 static void GiveInventory (AActor *activator, const char *type, int amount)
 {
+	const TypeInfo *info;
+
 	if (amount <= 0)
 	{
+		return;
 	}
-	if (activator == NULL)
+	if (strcmp (type, "Armor") == 0)
+	{
+		type = "BasicArmor";
+	}
+	info = TypeInfo::FindType (type);
+	if (info == NULL)
+	{
+		Printf ("ACS: I don't know what %s is.\n", type);
+	}
+	else if (!info->IsDescendantOf (RUNTIME_CLASS(AInventory)))
+	{
+		Printf ("ACS: %s is not an inventory item.\n", type);
+	}
+	else if (activator == NULL)
 	{
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				DoGiveInv (&players[i], type, amount);
-		}
-	}
-	else if (activator->player != NULL)
-	{
-		DoGiveInv (activator->player, type, amount);
-	}
-}
-
-static void TakeWeapon (player_t *player, int weapon)
-{
-	player->weaponowned[weapon] = false;
-	if (player->readyweapon == weapon || player->pendingweapon == weapon)
-	{
-		P_PickNewWeapon (player);
-	}
-}
-
-static void TakeAmmo (player_t *player, int ammo, int amount)
-{
-	if (amount == 0)
-	{
-		player->ammo[ammo] = 0;
-	}
-	else
-	{
-		player->ammo[ammo] = MAX(player->ammo[ammo]-amount, 0);
-	}
-	if (player->pendingweapon != wp_nochange)
-	{ // Make sure we have the ammo for the weapon being switched to
-		weapontype_t readynow = player->readyweapon;
-		player->readyweapon = player->pendingweapon;
-		player->pendingweapon = wp_nochange;
-		if (P_CheckAmmo (player))
-		{ // There was enough ammo for the pending weapon, so keep switching
-			player->pendingweapon = player->readyweapon;
-			player->readyweapon = readynow;
-		}
-		else
-		{
-			player->pendingweapon = player->readyweapon = readynow;
-			P_CheckAmmo (player);
+				DoGiveInv (players[i].mo, info, amount);
 		}
 	}
 	else
-	{ // Make sure we still have enough ammo for the current weapon
-		P_CheckAmmo (player);
+	{
+		DoGiveInv (activator, info, amount);
 	}
 }
 
-static void TakeBackpack (player_t *player)
+//============================================================================
+//
+// DoTakeInv
+//
+// Takes an item from a single actor.
+//
+//============================================================================
+
+static void DoTakeInv (AActor *actor, const TypeInfo *info, int amount)
 {
-	if (!player->backpack)
-		return;
-
-	player->backpack = false;
-	for (int i = 0; i < NUMAMMO; ++i)
+	AInventory *item = actor->FindInventory (info);
+	if (item != NULL)
 	{
-		player->maxammo[i] /= 2;
-		if (player->ammo[i] > player->maxammo[i])
+		item->Amount -= amount;
+		if (item->Amount <= 0)
 		{
-			player->ammo[i] = player->maxammo[i];
-		}
-	}
-}
-
-static void DoTakeInv (player_t *player, const char *type, int amount)
-{
-	int i;
-
-	if (strcmp (type, "Armor") == 0)
-	{
-		player->armorpoints[0] = MAX (0, player->armorpoints[0] - amount);
-	}
-
-	for (i = 0; i < NUMAMMO; ++i)
-	{
-		if (strcmp (AmmoNames[i], type) == 0)
-		{
-			TakeAmmo (player, i, amount);
-			return;
-		}
-	}
-	for (i = 0; i < NUMARTIFACTS; ++i)
-	{
-		if (strcmp (ArtifactNames[i], type) == 0)
-		{
-			if (amount == 0)
+			// If it's not ammo, destroy it. Ammo needs to stick around, even
+			// when it's zero for the benefit of the weapons that use it and 
+			// to maintain the maximum ammo amounts a backpack might have given.
+			if (item->GetClass()->ParentType != RUNTIME_CLASS(AAmmo))
 			{
-				player->inventory[i] = 0;
+				item->Destroy ();
 			}
 			else
 			{
-				player->inventory[i] = MAX(player->inventory[i]-amount, 0);
-			}
-			return;
-		}
-	}
-	for (i = 0; i < NUMWEAPONS; ++i)
-	{
-		if (strcmp (WeaponNames[i], type) == 0)
-		{
-			TakeWeapon (player, i);
-			return;
-		}
-	}
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		for (i = 0; i < 6; ++i)
-		{
-			if (strcmp (DoomKeyNames[i], type) == 0)
-			{
-				player->keys[i] = 0;
-			}
-		}
-		if (strcmp ("Backpack", type) == 0)
-		{
-			TakeBackpack (player);
-		}
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		for (i = 0; i < 3; ++i)
-		{
-			if (strcmp (HereticKeyNames[i], type) == 0)
-			{
-				player->keys[i] = 0;
-			}
-		}
-		if (strcmp ("BagOfHolding", type) == 0)
-		{
-			TakeBackpack (player);
-		}
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		for (i = 0; i < 11; ++i)
-		{
-			if (strcmp (HexenKeyNames[i], type) == 0)
-			{
-				player->keys[i] = 0;
+				item->Amount = 0;
 			}
 		}
 	}
 }
 
+//============================================================================
+//
+// TakeInventory
+//
+// Takes an item from one or more actors.
+//
+//============================================================================
+
 static void TakeInventory (AActor *activator, const char *type, int amount)
 {
-	if (amount < 0)
+	const TypeInfo *info;
+
+	if (strcmp (type, "Armor") == 0)
 	{
+		type = "BasicArmor";
+	}
+	if (amount <= 0)
+	{
+		return;
+	}
+	info = TypeInfo::FindType (type);
+	if (info == NULL)
+	{
+		return;
 	}
 	if (activator == NULL)
 	{
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
 			if (playeringame[i])
-				DoTakeInv (&players[i], type, amount);
+				DoTakeInv (players[i].mo, info, amount);
 		}
 	}
-	else if (activator->player != NULL)
+	else
 	{
-		DoTakeInv (activator->player, type, amount);
+		DoTakeInv (activator, info, amount);
 	}
 }
 
+//============================================================================
+//
+// CheckInventory
+//
+// Returns how much of a particular item an actor has.
+//
+//============================================================================
+
 static int CheckInventory (AActor *activator, const char *type)
 {
-	if (activator == NULL || activator->player == NULL)
+	if (activator == NULL)
 		return 0;
-
-	player_t *player = activator->player;
-	int i;
 
 	if (strcmp (type, "Armor") == 0)
 	{
-		return player->armorpoints[0];
+		type = "BasicArmor";
 	}
 	else if (strcmp (type, "Health") == 0)
 	{
-		return player->health;
+		return activator->health;
 	}
 
-	for (i = 0; i < NUMAMMO; ++i)
-	{
-		if (strcmp (AmmoNames[i], type) == 0)
-		{
-			return player->ammo[i];
-		}
-	}
-
-	for (i = 0; i < NUMARTIFACTS; ++i)
-	{
-		if (strcmp (ArtifactNames[i], type) == 0)
-		{
-			return player->inventory[i];
-		}
-	}
-
-	for (i = 0; i < NUMWEAPONS; ++i)
-	{
-		if (strcmp (WeaponNames[i], type) == 0)
-		{
-			return player->weaponowned[i] ? 1 : 0;
-		}
-	}
-
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		for (i = 0; i < 6; ++i)
-		{
-			if (strcmp (DoomKeyNames[i], type) == 0)
-			{
-				return player->keys[i] ? 1 : 0;
-			}
-		}
-		if (strcmp ("Backpack", type) == 0)
-		{
-			return player->backpack ? 1 : 0;
-		}
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		for (i = 0; i < 3; ++i)
-		{
-			if (strcmp (HereticKeyNames[i], type) == 0)
-			{
-				return player->keys[i] ? 1 : 0;
-			}
-		}
-		if (strcmp ("BagOfHolding", type) == 0)
-		{
-			return player->backpack ? 1 : 0;
-		}
-	}
-	else if (gameinfo.gametype == GAME_Hexen)
-	{
-		for (i = 0; i < 11; ++i)
-		{
-			if (strcmp (HexenKeyNames[i], type) == 0)
-			{
-				return player->keys[i] ? 1 : 0;
-			}
-		}
-	}
-	return 0;
+	const TypeInfo *info = TypeInfo::FindType (type);
+	AInventory *item = activator->FindInventory (info);
+	return item ? item->Amount : 0;
 }
 
 //---- Plane watchers ----//
@@ -521,7 +333,7 @@ private:
 	int Special, Arg0, Arg1, Arg2, Arg3, Arg4;
 	AActor *Activator;
 	line_t *Line;
-	int LineSide;
+	bool LineSide;
 	bool bCeiling;
 
 	DPlaneWatcher() {}
@@ -535,7 +347,7 @@ DPlaneWatcher::DPlaneWatcher (AActor *it, line_t *line, int lineSide, bool ceili
 	int tag, int height, int special,
 	int arg0, int arg1, int arg2, int arg3, int arg4)
 	: Special (special), Arg0 (arg0), Arg1 (arg1), Arg2 (arg2), Arg3 (arg3), Arg4 (arg4),
-	  Activator (it), Line (line), LineSide (lineSide), bCeiling (ceiling)
+	  Activator (it), Line (line), LineSide (!!lineSide), bCeiling (ceiling)
 {
 	int secnum;
 
@@ -595,8 +407,7 @@ void DPlaneWatcher::Tick ()
 	if ((LastD < WatchD && newd >= WatchD) ||
 		(LastD > WatchD && newd <= WatchD))
 	{
-		TeleportSide = LineSide;
-		LineSpecials[Special] (Line, Activator, Arg0, Arg1, Arg2, Arg3, Arg4);
+		LineSpecials[Special] (Line, Activator, LineSide, Arg0, Arg1, Arg2, Arg3, Arg4);
 		Destroy ();
 	}
 
@@ -774,12 +585,10 @@ FBehavior::FBehavior (int lumpnum)
 	int i;
 
 	NumScripts = 0;
-	NumFlaggedScripts = 0;
 	NumFunctions = 0;
 	NumArrays = 0;
 	NumTotalArrays = 0;
 	Scripts = NULL;
-	ScriptFlags = NULL;
 	Functions = NULL;
 	Arrays = NULL;
 	ArrayStore = NULL;
@@ -830,90 +639,27 @@ FBehavior::FBehavior (int lumpnum)
 	
 	if (Format == ACS_Old)
 	{
+		DWORD dirofs = LONG(((DWORD *)object)[1]);
+		DWORD pretag = ((DWORD *)(object + dirofs))[-1];
+
 		Chunks = object + len;
-		Scripts = object + ((DWORD *)object)[1];
-		NumScripts = ((DWORD *)Scripts)[0];
 		// Check for redesigned ACSE/ACSe
-		if (((DWORD *)object)[1] >= 6*4 &&
-			(((DWORD *)Scripts)[-1] == MAKE_ID('A','C','S','e') ||
-			((DWORD *)Scripts)[-1] == MAKE_ID('A','C','S','E')))
+		if (dirofs >= 6*4 &&
+			(pretag == MAKE_ID('A','C','S','e') ||
+			 pretag == MAKE_ID('A','C','S','E')))
 		{
-			Format = (((BYTE *)Scripts)[-1] == 'e') ? ACS_LittleEnhanced : ACS_Enhanced;
-			Chunks = object + ((DWORD *)Scripts)[-2];
+			Format = (pretag == MAKE_ID('A','C','S','e')) ? ACS_LittleEnhanced : ACS_Enhanced;
+			Chunks = object + LONG(((DWORD *)(object + dirofs))[-2]);
 			// Forget about the compatibility cruft at the end of the lump
-			DataSize = ((DWORD *)object)[1] - 8;
-		}
-		else
-		{
-			Scripts += 4;
-			for (i = 0; i < NumScripts; ++i)
-			{
-				ScriptPtr2 ptr1 = *(ScriptPtr2 *)(Scripts + 12*i);
-				ScriptPtr *ptr2 =  (ScriptPtr  *)(Scripts +  8*i);
-				ptr2->Number = ptr1.Number % 1000;
-				ptr2->Type = ptr1.Number / 1000;
-				ptr2->ArgCount = ptr1.ArgCount;
-				ptr2->Address = ptr1.Address;
-			}
+			DataSize = LONG(((DWORD *)object)[1]) - 8;
 		}
 	}
 	else
 	{
-		Chunks = object + ((DWORD *)object)[1];
-	}
-	if (Format != ACS_Old)
-	{
-		Scripts = FindChunk (MAKE_ID('S','P','T','R'));
-		if (Scripts == NULL)
-		{
-			NumScripts = 0;
-		}
-		else
-		{
-			if (object[3] != 0)
-			{
-				NumScripts = ((DWORD *)Scripts)[1] / 12;
-				Scripts += 8;
-				for (i = 0; i < NumScripts; ++i)
-				{
-					ScriptPtr1 ptr1 = *(ScriptPtr1 *)(Scripts + 12*i);
-					ScriptPtr *ptr2 =  (ScriptPtr  *)(Scripts +  8*i);
-					ptr2->Number = ptr1.Number;
-					ptr2->Type = ptr1.Type;
-					ptr2->ArgCount = ptr1.ArgCount;
-					ptr2->Address = ptr1.Address;
-				}
-			}
-			else
-			{
-				NumScripts = ((DWORD *)Scripts)[1] / 8;
-				Scripts += 8;
-			}
-		}
-
-		ScriptFlags = FindChunk (MAKE_ID('S','F','L','G'));
-		if (ScriptFlags == NULL)
-		{
-			NumFlaggedScripts = 0;
-		}
-		else
-		{
-			NumFlaggedScripts = ((DWORD *)ScriptFlags)[1] / 4;
-			ScriptFlags += 8;
-		}
-
-		UnencryptStrings ();
+		Chunks = object + LONG(((DWORD *)object)[1]);
 	}
 
-	// Sort scripts, so we can use a binary search to find them
-	if (NumScripts > 0)
-	{
-		qsort (Scripts, NumScripts, 8, SortScripts);
-	}
-	if (NumFlaggedScripts > 0)
-	{
-		qsort (ScriptFlags, NumFlaggedScripts, 4, SortScriptFlags);
-	}
+	LoadScriptsDirectory ();
 
 	if (Format == ACS_Old)
 	{
@@ -924,6 +670,7 @@ FBehavior::FBehavior (int lumpnum)
 	{
 		LanguageNeutral = FindLanguage (0, false);
 		PrepLocale (LanguageIDs[0], LanguageIDs[1], LanguageIDs[2], LanguageIDs[3]);
+		UnencryptStrings ();
 	}
 
 	if (Format == ACS_Old)
@@ -1178,6 +925,11 @@ FBehavior::FBehavior (int lumpnum)
 
 FBehavior::~FBehavior ()
 {
+	if (Scripts != NULL)
+	{
+		delete[] Scripts;
+		Scripts = NULL;
+	}
 	if (Arrays != NULL)
 	{
 		delete[] Arrays;
@@ -1203,17 +955,134 @@ FBehavior::~FBehavior ()
 	}
 }
 
+void FBehavior::LoadScriptsDirectory ()
+{
+	union
+	{
+		BYTE *b;
+		DWORD *dw;
+		WORD *w;
+		ScriptPtr2 *po;		// Old
+		ScriptPtr1 *pi;		// Intermediate
+		ScriptPtr3 *pe;		// LittleEnhanced
+	} scripts;
+	int i, max;
+
+	NumScripts = 0;
+
+	// Load the main script directory
+	switch (Format)
+	{
+	case ACS_Old:
+		scripts.dw = (DWORD *)(Data + ((DWORD *)Data)[1]);
+		NumScripts = scripts.dw[0];
+		scripts.dw++;
+
+		Scripts = new ScriptPtr[NumScripts];
+
+		for (i = 0; i < NumScripts; ++i)
+		{
+			ScriptPtr2 *ptr1 = &scripts.po[i];
+			ScriptPtr  *ptr2 = &Scripts[i];
+
+			ptr2->Number = LONG(ptr1->Number) % 1000;
+			ptr2->Type = LONG(ptr1->Number) / 1000;
+			ptr2->ArgCount = LONG(ptr1->ArgCount);
+			ptr2->Address = LONG(ptr1->Address);
+		}
+		break;
+
+	case ACS_Enhanced:
+	case ACS_LittleEnhanced:
+		scripts.b = FindChunk (MAKE_ID('S','P','T','R'));
+		if (*(DWORD *)Data != MAKE_ID('A','C','S',0))
+		{
+			NumScripts = scripts.dw[1] / 12;
+			Scripts = new ScriptPtr[NumScripts];
+			scripts.dw += 2;
+
+			for (i = 0; i < NumScripts; ++i)
+			{
+				ScriptPtr1 *ptr1 = &scripts.pi[i];
+				ScriptPtr  *ptr2 = &Scripts[i];
+
+				ptr2->Number = SHORT(ptr1->Number);
+				ptr2->Type = SHORT(ptr1->Type);
+				ptr2->ArgCount = LONG(ptr1->ArgCount);
+				ptr2->Address = LONG(ptr1->Address);
+			}
+		}
+		else
+		{
+			NumScripts = scripts.dw[1] / 8;
+			Scripts = new ScriptPtr[NumScripts];
+			scripts.dw += 2;
+
+			for (i = 0; i < NumScripts; ++i)
+			{
+				ScriptPtr3 *ptr1 = &scripts.pe[i];
+				ScriptPtr  *ptr2 = &Scripts[i];
+
+				ptr2->Number = SHORT(ptr1->Number);
+				ptr2->Type = ptr1->Type;
+				ptr2->ArgCount = ptr1->ArgCount;
+				ptr2->Address = LONG(ptr1->Address);
+			}
+		}
+		break;
+	}
+	for (i = 0; i < NumScripts; ++i)
+	{
+		Scripts[i].Flags = 0;
+		Scripts[i].VarCount = LOCAL_SIZE;
+	}
+
+	if (Format == ACS_Old)
+		return;
+
+	// Sort scripts, so we can use a binary search to find them
+	if (NumScripts > 1)
+	{
+		qsort (Scripts, NumScripts, sizeof(ScriptPtr), SortScripts);
+	}
+
+	// Load script flags
+	scripts.b = FindChunk (MAKE_ID('S','F','L','G'));
+	if (scripts.dw != NULL)
+	{
+		max = scripts.dw[1];
+		scripts.dw += 2;
+		for (i = max; i > 0; --i, scripts.w += 2)
+		{
+			ScriptPtr *ptr = const_cast<ScriptPtr *>(FindScript (SHORT(scripts.w[0])));
+			if (ptr != NULL)
+			{
+				ptr->Flags = SHORT(scripts.w[1]);
+			}
+		}
+	}
+
+	// Load script var counts
+	scripts.b = FindChunk (MAKE_ID('S','V','C','T'));
+	if (scripts.dw != NULL)
+	{
+		max = scripts.dw[1];
+		scripts.dw += 2;
+		for (i = max; i > 0; --i, scripts.w += 2)
+		{
+			ScriptPtr *ptr = const_cast<ScriptPtr *>(FindScript (SHORT(scripts.w[0])));
+			if (ptr != NULL)
+			{
+				ptr->VarCount = SHORT(scripts.w[1]);
+			}
+		}
+	}
+}
+
 int STACK_ARGS FBehavior::SortScripts (const void *a, const void *b)
 {
 	ScriptPtr *ptr1 = (ScriptPtr *)a;
 	ScriptPtr *ptr2 = (ScriptPtr *)b;
-	return ptr1->Number - ptr2->Number;
-}
-
-int STACK_ARGS FBehavior::SortScriptFlags (const void *a, const void *b)
-{
-	ScriptFlagsPtr *ptr1 = (ScriptFlagsPtr *)a;
-	ScriptFlagsPtr *ptr2 = (ScriptFlagsPtr *)b;
 	return ptr1->Number - ptr2->Number;
 }
 
@@ -1303,13 +1172,6 @@ const ScriptPtr *FBehavior::StaticFindScript (int script, FBehavior *&module)
 		}
 	}
 	return NULL;
-}
-
-WORD FBehavior::GetScriptFlags (int script) const
-{
-	const ScriptFlagsPtr *ptr = BinarySearch<ScriptFlagsPtr, WORD>
-		((ScriptFlagsPtr *)ScriptFlags, NumFlaggedScripts, &ScriptFlagsPtr::Number, (WORD)script);
-	return ptr ? ptr->Flags : 0;
 }
 
 ScriptFunction *FBehavior::GetFunction (int funcnum, FBehavior *&module) const
@@ -1622,7 +1484,7 @@ void FBehavior::StartTypedScripts (WORD type, AActor *activator)
 
 	for (i = 0; i < NumScripts; ++i)
 	{
-		ptr = (ScriptPtr *)(Scripts + 8*i);
+		ptr = &Scripts[i];
 		if (ptr->Type == type)
 		{
 			P_GetScriptGoing (activator, NULL, ptr->Number,
@@ -1721,21 +1583,18 @@ void DLevelScript::Serialize (FArchive &arc)
 	arc << next << prev
 		<< script;
 
-	if (SaveVersion < 217)
-	{
-		// Woops. Versions 206-216 wrote random junk here because the test above
-		// was against 306 instead of 206.
-		int sp;
-		arc << sp;
-	}
-
 	arc	<< state
 		<< statedata
 		<< activator
 		<< activationline
-		<< lineSide;
+		<< backSide
+		<< numlocalvars;
 
-	for (i = 0; i < LOCAL_SIZE; i++)
+	if (arc.IsLoading())
+	{
+		localvars = new SDWORD[numlocalvars];
+	}
+	for (i = 0; i < numlocalvars; i++)
 	{
 		arc << localvars[i];
 	}
@@ -1755,16 +1614,8 @@ void DLevelScript::Serialize (FArchive &arc)
 		pc = activeBehavior->Ofs2PC (i);
 	}
 
-	arc << activefont;
-
-	if (SaveVersion >= 215)
-	{
-		arc << hudwidth << hudheight;
-	}
-	else
-	{
-		hudwidth = hudheight = 0;
-	}
+	arc << activefont
+		<< hudwidth << hudheight;
 }
 
 DLevelScript::DLevelScript ()
@@ -1773,6 +1624,13 @@ DLevelScript::DLevelScript ()
 	if (DACSThinker::ActiveThinker == NULL)
 		new DACSThinker;
 	activefont = SmallFont;
+	localvars = NULL;
+}
+
+DLevelScript::~DLevelScript ()
+{
+	if (localvars != NULL)
+		delete[] localvars;
 }
 
 void DLevelScript::Unlink ()
@@ -2217,20 +2075,22 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	}
 }
 
-int DLevelScript::GetActorProperty (int tid, int property)
+static AActor *SingleActorFromTID (int tid, AActor *defactor)
 {
-	AActor *actor;
-
 	if (tid == 0)
 	{
-		actor = activator;
+		return defactor;
 	}
 	else
 	{
 		FActorIterator iterator (tid);
-
-		actor = iterator.Next();
+		return iterator.Next();
 	}
+}
+
+int DLevelScript::GetActorProperty (int tid, int property)
+{
+	AActor *actor = SingleActorFromTID (tid, activator);
 
 	if (actor == NULL)
 	{
@@ -2260,13 +2120,13 @@ inline int getbyte (int *&pc)
 	return res;
 }
 
-void DLevelScript::RunScript ()
+int DLevelScript::RunScript ()
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
-	TeleportSide = lineSide;
 	SDWORD *locals = localvars;
 	ScriptFunction *activeFunction = NULL;
 	BYTE *translation = 0;
+	int resultValue = 1;
 
 	switch (state)
 	{
@@ -2285,7 +2145,7 @@ void DLevelScript::RunScript ()
 
 		while ((secnum = P_FindSectorFromTag (statedata, secnum)) >= 0)
 			if (sectors[secnum].floordata || sectors[secnum].ceilingdata)
-				return;
+				return resultValue;
 		
 		// If we got here, none of the tagged sectors were busy
 		state = SCRIPT_Running;
@@ -2309,7 +2169,7 @@ void DLevelScript::RunScript ()
 	case SCRIPT_ScriptWait:
 		// Wait for a script to stop running, then enter state running
 		if (controller->RunningScripts[statedata])
-			return;
+			return resultValue;
 
 		state = SCRIPT_Running;
 		PutFirst ();
@@ -2439,99 +2299,106 @@ void DLevelScript::RunScript ()
 			break;
 
 		case PCD_LSPEC1:
-			LineSpecials[NEXTBYTE] (activationline, activator,
+			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
 									STACK(1), 0, 0, 0, 0);
 			sp -= 1;
 			break;
 
 		case PCD_LSPEC2:
-			LineSpecials[NEXTBYTE] (activationline, activator,
+			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
 									STACK(2), STACK(1), 0, 0, 0);
 			sp -= 2;
 			break;
 
 		case PCD_LSPEC3:
-			LineSpecials[NEXTBYTE] (activationline, activator,
+			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
 									STACK(3), STACK(2), STACK(1), 0, 0);
 			sp -= 3;
 			break;
 
 		case PCD_LSPEC4:
-			LineSpecials[NEXTBYTE] (activationline, activator,
+			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
 									STACK(4), STACK(3), STACK(2),
 									STACK(1), 0);
 			sp -= 4;
 			break;
 
 		case PCD_LSPEC5:
-			LineSpecials[NEXTBYTE] (activationline, activator,
+			LineSpecials[NEXTBYTE] (activationline, activator, backSide,
 									STACK(5), STACK(4), STACK(3),
 									STACK(2), STACK(1));
 			sp -= 5;
 			break;
 
+		case PCD_LSPEC5RESULT:
+			STACK(5) = LineSpecials[NEXTBYTE] (activationline, activator, backSide,
+									STACK(5), STACK(4), STACK(3),
+									STACK(2), STACK(1));
+			sp -= 4;
+			break;
+
 		case PCD_LSPEC1DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator,
+			LineSpecials[temp] (activationline, activator, backSide,
 								pc[0], 0, 0, 0, 0);
 			pc += 1;
 			break;
 
 		case PCD_LSPEC2DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator,
+			LineSpecials[temp] (activationline, activator, backSide,
 								pc[0], pc[1], 0, 0, 0);
 			pc += 2;
 			break;
 
 		case PCD_LSPEC3DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator,
+			LineSpecials[temp] (activationline, activator, backSide,
 								pc[0], pc[1], pc[2], 0, 0);
 			pc += 3;
 			break;
 
 		case PCD_LSPEC4DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator,
+			LineSpecials[temp] (activationline, activator, backSide,
 								pc[0], pc[1], pc[2], pc[3], 0);
 			pc += 4;
 			break;
 
 		case PCD_LSPEC5DIRECT:
 			temp = NEXTBYTE;
-			LineSpecials[temp] (activationline, activator,
+			LineSpecials[temp] (activationline, activator, backSide,
 								pc[0], pc[1], pc[2], pc[3], pc[4]);
 			pc += 5;
 			break;
 
 		case PCD_LSPEC1DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator,
+			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
 				((BYTE *)pc)[1], 0, 0, 0, 0);
 			pc = (int *)((BYTE *)pc + 2);
 			break;
 
 		case PCD_LSPEC2DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator,
+			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], 0, 0, 0);
 			pc = (int *)((BYTE *)pc + 3);
 			break;
 
 		case PCD_LSPEC3DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator,
+			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3], 0, 0);
 			pc = (int *)((BYTE *)pc + 4);
 			break;
 
 		case PCD_LSPEC4DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator,
+			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3],
 				((BYTE *)pc)[4], 0);
 			pc = (int *)((BYTE *)pc + 5);
 			break;
 
 		case PCD_LSPEC5DIRECTB:
-			LineSpecials[((BYTE *)pc)[0]] (activationline, activator,
+			LineSpecials[((BYTE *)pc)[0]] (activationline, activator, backSide,
 				((BYTE *)pc)[1], ((BYTE *)pc)[2], ((BYTE *)pc)[3],
 				((BYTE *)pc)[4], ((BYTE *)pc)[5]);
 			pc = (int *)((BYTE *)pc + 6);
@@ -2631,11 +2498,23 @@ void DLevelScript::RunScript ()
 			break;
 
 		case PCD_DIVIDE:
+			if (STACK(1) == 0)
+			{
+				Printf ("Divide by zero in script %d\n", script);
+				state = SCRIPT_PleaseRemove;
+				break;
+			}
 			STACK(2) = STACK(2) / STACK(1);
 			sp--;
 			break;
 
 		case PCD_MODULUS:
+			if (STACK(1) == 0)
+			{
+				Printf ("Modulus by zero in script %d\n", script);
+				state = SCRIPT_PleaseRemove;
+				break;
+			}
 			STACK(2) = STACK(2) % STACK(1);
 			sp--;
 			break;
@@ -3068,6 +2947,8 @@ void DLevelScript::RunScript ()
 			break;
 
 		case PCD_DROP:
+		case PCD_SETRESULTVALUE:
+			resultValue = STACK(1);
 			sp--;
 			break;
 
@@ -3225,7 +3106,7 @@ void DLevelScript::RunScript ()
 			break;
 
 		case PCD_LINESIDE:
-			PushToStack (lineSide);
+			PushToStack (backSide);
 			break;
 
 		case PCD_SCRIPTWAIT:
@@ -3258,6 +3139,39 @@ void DLevelScript::RunScript ()
 			else
 			{
 				pc++;
+			}
+			break;
+
+		case PCD_CASEGOTOSORTED:
+			// The count and jump table are 4-byte aligned
+			pc = (int *)((BYTE *)pc + (4 - (((long)pc & 3)) & 3));
+			{
+				int numcases = NEXTWORD;
+				int min = 0, max = numcases-1;
+				while (min <= max)
+				{
+					int mid = (min + max) / 2;
+					SDWORD caseval = pc[mid*2];
+					if (caseval == STACK(1))
+					{
+						pc = activeBehavior->Ofs2PC (pc[mid*2+1]);
+						sp--;
+						break;
+					}
+					else if (caseval < STACK(1))
+					{
+						min = mid + 1;
+					}
+					else
+					{
+						max = mid - 1;
+					}
+				}
+				if (min > max)
+				{
+					// The case was not found, so go to the next instruction.
+					pc += numcases * 2;
+				}
 			}
 			break;
 
@@ -3468,10 +3382,15 @@ void DLevelScript::RunScript ()
 			break;
 
 		case PCD_PLAYERARMORPOINTS:
-			if (activator && activator->player)
-				PushToStack (activator->player->armorpoints[0]);
+			if (activator)
+			{
+				ABasicArmor *armor = activator->FindInventory<ABasicArmor>();
+				PushToStack (armor ? armor->Amount : 0);
+			}
 			else
+			{
 				PushToStack (0);
+			}
 			break;
 
 		case PCD_PLAYERFRAGS:
@@ -3663,7 +3582,7 @@ void DLevelScript::RunScript ()
 
 				while ( (spot = iterator.Next ()) )
 				{
-					S_Sound (spot, CHAN_BODY,
+					S_Sound (spot, CHAN_AUTO,
 							 lookup,
 							 (float)(STACK(1))/127.f, ATTN_NORM);
 				}
@@ -3756,6 +3675,21 @@ void DLevelScript::RunScript ()
 			pc += 1;
 			break;
 
+		case PCD_GETSIGILPIECES:
+			{
+				ASigil *sigil;
+
+				if (activator == NULL || (sigil = activator->FindInventory<ASigil>()) == NULL)
+				{
+					PushToStack (0);
+				}
+				else
+				{
+					PushToStack (sigil->NumPieces);
+				}
+			}
+			break;
+
 		case PCD_SETMUSIC:
 			S_ChangeMusic (FBehavior::StaticLookupString (STACK(3)), STACK(2));
 			sp -= 3;
@@ -3816,17 +3750,8 @@ void DLevelScript::RunScript ()
 		case PCD_GETACTORY:
 		case PCD_GETACTORZ:
 			{
-				AActor *actor;
+				AActor *actor = SingleActorFromTID (STACK(1), activator);
 
-				if (STACK(1) == 0)
-				{
-					actor = activator;
-				}
-				else
-				{
-					FActorIterator iterator (STACK(1));
-					actor = iterator.Next ();
-				}
 				if (actor == NULL)
 				{
 					STACK(1) = 0;
@@ -3838,14 +3763,81 @@ void DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_GETACTORFLOORZ:
+			{
+				AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+				if (actor == NULL)
+				{
+					STACK(1) = 0;
+				}
+				else
+				{
+					STACK(1) = actor->floorz;
+				}
+			}
+			break;
+
+		case PCD_GETACTORANGLE:
+			{
+				AActor *actor = SingleActorFromTID (STACK(1), activator);
+
+				if (actor == NULL)
+				{
+					STACK(1) = 0;
+				}
+				else
+				{
+					STACK(1) = actor->angle >> 16;
+				}
+			}
+			break;
+
+		case PCD_GETLINEROWOFFSET:
+			if (activationline)
+			{
+				PushToStack (sides[activationline->sidenum[0]].rowoffset >> FRACBITS);
+			}
+			else
+			{
+				PushToStack (0);
+			}
+			break;
+
+		case PCD_GETSECTORFLOORZ:
+		case PCD_GETSECTORCEILINGZ:
+			// Arguments are (tag, x, y). If you don't use slopes, then (x, y) don't
+			// really matter and can be left as (0, 0) if you like.
+			{
+				int secnum = P_FindSectorFromTag (STACK(3), -1);
+				fixed_t z = 0;
+
+				if (secnum >= 0)
+				{
+					fixed_t x = STACK(2) << FRACBITS;
+					fixed_t y = STACK(1) << FRACBITS;
+					if (pcd == PCD_GETSECTORFLOORZ)
+					{
+						z = sectors[secnum].floorplane.ZatPoint (x, y);
+					}
+					else
+					{
+						z = sectors[secnum].ceilingplane.ZatPoint (x, y);
+					}
+				}
+				sp -= 2;
+				STACK(1) = z;
+			}
+			break;
+
 		case PCD_SETFLOORTRIGGER:
-			new DPlaneWatcher (activator, activationline, lineSide, false, STACK(8),
+			new DPlaneWatcher (activator, activationline, backSide, false, STACK(8),
 				STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
 			sp -= 8;
 			break;
 
 		case PCD_SETCEILINGTRIGGER:
-			new DPlaneWatcher (activator, activationline, lineSide, true, STACK(8),
+			new DPlaneWatcher (activator, activationline, backSide, true, STACK(8),
 				STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
 			sp -= 8;
 			break;
@@ -3975,14 +3967,15 @@ void DLevelScript::RunScript ()
 			break;
 
 		case PCD_CHECKWEAPON:
-			if (activator == NULL || activator->player == NULL)
-			{ // Non-players do not have ready weapons
+			if (activator == NULL || activator->player == NULL || // Non-players do not have weapons
+				activator->player->ReadyWeapon == NULL)
+			{
 				STACK(1) = 0;
 			}
 			else
 			{
 				STACK(1) = 0 == strcmp (FBehavior::StaticLookupString (STACK(1)),
-					wpnlev1info[activator->player->readyweapon]->type->Name+1);
+					activator->player->ReadyWeapon->GetClass()->Name+1);
 			}
 			break;
 
@@ -3993,41 +3986,33 @@ void DLevelScript::RunScript ()
 			}
 			else
 			{
-				int i;
+				AInventory *item = activator->FindInventory (TypeInfo::FindType (
+					FBehavior::StaticLookupString (STACK(1))));
 
-				for (i = 0; i < NUMWEAPONS; ++i)
-				{
-					if (wpnlev1info[i] != NULL &&
-						wpnlev1info[i]->type != NULL &&
-						0 == strcmp (FBehavior::StaticLookupString (STACK(1)),
-									 wpnlev1info[i]->type->Name+1))
-					{
-						break;
-					}
-				}
-				if (i >= NUMWEAPONS || !activator->player->weaponowned[i])
+				if (item == NULL || !item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 				{
 					STACK(1) = 0;
 				}
+				else if (activator->player->ReadyWeapon == item)
+				{
+					// The weapon is already selected, so setweapon succeeds by default,
+					// but make sure the player isn't switching away from it.
+					activator->player->PendingWeapon = WP_NOCHANGE;
+					STACK(1) = 1;
+				}
 				else
 				{
-					STACK(1) = 1;
-					if (activator->player->readyweapon != i)
-					{
-						weapontype_t oldpend = activator->player->pendingweapon;
-						weapontype_t oldready = activator->player->readyweapon;
+					AWeapon *weap = static_cast<AWeapon *> (item);
 
-						activator->player->readyweapon = (weapontype_t)i;
-						if (P_CheckAmmo (activator->player))
-						{
-							activator->player->pendingweapon = (weapontype_t)i;
-						}
-						else
-						{ // Not enough ammo for the new weapon
-							STACK(1) = 0;
-							activator->player->pendingweapon = oldpend;
-						}
-						activator->player->readyweapon = oldready;
+					if (weap->CheckAmmo (AWeapon::EitherFire, false))
+					{
+						// There's enough ammo, so switch to it.
+						STACK(1) = 1;
+						activator->player->PendingWeapon = weap;
+					}
+					else
+					{
+						STACK(1) = 0;
 					}
 				}
 			}
@@ -4167,14 +4152,6 @@ void DLevelScript::RunScript ()
 		}
 	}
 
-	this->pc = pc;
-	assert (sp == 0);
-
-	if (screen != NULL)
-	{
-		screen->SetFont (SmallFont);
-	}
-
 	if (state == SCRIPT_PleaseRemove)
 	{
 		Unlink ();
@@ -4182,12 +4159,22 @@ void DLevelScript::RunScript ()
 			controller->RunningScripts[script] = NULL;
 		this->Destroy ();
 	}
+	else
+	{
+		this->pc = pc;
+		assert (sp == 0);
+	}
+	if (screen != NULL)
+	{
+		screen->SetFont (SmallFont);
+	}
+	return resultValue;
 }
 
 #undef PushtoStack
 
-static bool P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-	int lineSide, int arg0, int arg1, int arg2, int always, bool delay)
+static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
+	bool backSide, int arg0, int arg1, int arg2, int always, bool delay)
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
 
@@ -4196,32 +4183,32 @@ static bool P_GetScriptGoing (AActor *who, line_t *where, int num, const ScriptP
 		if (controller->RunningScripts[num]->GetState () == DLevelScript::SCRIPT_Suspended)
 		{
 			controller->RunningScripts[num]->SetState (DLevelScript::SCRIPT_Running);
-			return true;
+			return controller->RunningScripts[num];
 		}
-		return false;
+		return NULL;
 	}
 
-	new DLevelScript (who, where, num, code, module, lineSide, arg0, arg1, arg2, always, delay);
-
-	return true;
+	return new DLevelScript (who, where, num, code, module, backSide, arg0, arg1, arg2, always, delay);
 }
 
 DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
-							int lineside, int arg0, int arg1, int arg2, int always, bool delay)
+							bool backside, int arg0, int arg1, int arg2, int always, bool delay)
 	: activeBehavior (module)
 {
 	if (DACSThinker::ActiveThinker == NULL)
 		new DACSThinker;
 
 	script = num;
+	numlocalvars = code->VarCount;
+	localvars = new SDWORD[code->VarCount];
 	localvars[0] = arg0;
 	localvars[1] = arg1;
 	localvars[2] = arg2;
-	memset (localvars+code->ArgCount, 0, sizeof(localvars)-code->ArgCount*sizeof(int));
+	memset (localvars+code->ArgCount, 0, (code->VarCount-code->ArgCount)*sizeof(SDWORD));
 	pc = module->GetScriptAddress (code);
 	activator = who;
 	activationline = where;
-	lineSide = lineside;
+	backSide = backside;
 	activefont = SmallFont;
 	hudwidth = hudheight = 0;
 	if (delay)
@@ -4326,8 +4313,8 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, i
 
 EXTERN_CVAR (Bool, sv_cheats)
 
-bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
-					int arg0, int arg1, int arg2, int always, bool net)
+int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
+					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net)
 {
 	if (map == NULL || 0 == strnicmp (level.mapname, map, 8))
 	{
@@ -4340,16 +4327,24 @@ bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineS
 			{
 				// If playing multiplayer and cheats are disallowed, check to
 				// make sure only net scripts are run.
-				if (!(module->GetScriptFlags (script) & SCRIPTF_Net))
+				if (!(scriptdata->Flags & SCRIPTF_Net))
 				{
 					Printf (PRINT_BOLD, "%s tried to puke script %d (%d, %d, %d)\n",
 						who->player->userinfo.netname, script, arg0, arg1, arg2);
 					return false;
 				}
 			}
-			return P_GetScriptGoing (who, where, script,
-									 scriptdata, module,
-									 lineSide, arg0, arg1, arg2, always, false);
+			DLevelScript *runningScript = P_GetScriptGoing (who, where, script,
+				scriptdata, module, backSide, arg0, arg1, arg2, always, false);
+			if (runningScript != NULL)
+			{
+				if (wantResultCode)
+				{
+					return runningScript->RunScript ();
+				}
+				return true;
+			}
+			return false;
 		}
 		else
 		{

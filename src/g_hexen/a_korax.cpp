@@ -249,10 +249,10 @@ void A_KoraxChase (AActor *actor)
 		spot = iterator.Next ();
 		if (spot != NULL)
 		{
-			P_Teleport (actor, spot->x, spot->y, ONFLOORZ, spot->angle, true, false);
+			P_Teleport (actor, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
 		}
 
-		P_StartScript (actor, NULL, 249, NULL, 0, 0, 0, 0, 0);
+		P_StartScript (actor, NULL, 249, NULL, 0, 0, 0, 0, 0, false);
 		actor->special2 = 1;	// Don't run again
 
 		return;
@@ -288,7 +288,7 @@ void A_KoraxChase (AActor *actor)
 			actor->tracer = spot;
 			if (spot)
 			{
-				P_Teleport (actor, spot->x, spot->y, ONFLOORZ, spot->angle, true, false);
+				P_Teleport (actor, spot->x, spot->y, ONFLOORZ, spot->angle, true, true, false);
 			}
 		}
 	}
@@ -335,7 +335,7 @@ void A_KoraxBonePop (AActor *actor)
 		if (mo) KSpiritInit (mo, actor);
 	}
 
-	P_StartScript (actor, NULL, 255, NULL, 0, 0, 0, 0, false);		// Death script
+	P_StartScript (actor, NULL, 255, NULL, 0, 0, 0, 0, false, false);		// Death script
 }
 
 //============================================================================
@@ -446,7 +446,7 @@ void A_KoraxCommand (AActor *actor)
 	}
 
 	P_StartScript (actor, NULL, 250+(pr_koraxcommand()%numcommands),
-		NULL, 0, 0, 0, 0, false);
+		NULL, 0, 0, 0, 0, false, false);
 }
 
 //============================================================================

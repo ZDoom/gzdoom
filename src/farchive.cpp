@@ -67,6 +67,7 @@
 #define NEW_CLS_OBJ			((BYTE)2)	// Data for a new class and object follows
 #define OLD_OBJ				((BYTE)3)	// Reference to an old object follows
 #define NULL_OBJ			((BYTE)4)	// Load as NULL
+#define M1_OBJ				((BYTE)44)	// Load as (DObject*)-1
 
 #define NEW_PLYR_OBJ		((BYTE)5)	// Data for a new player follows
 #define NEW_PLYR_CLS_OBJ	((BYTE)6)	// Data for a new class and player follows
@@ -78,7 +79,7 @@
 #define NEW_SPRITE			((BYTE)11)	// A new sprite name follows
 #define OLD_SPRITE			((BYTE)12)	// Reference to an old sprite name follows
 
-#ifdef __BIG_ENDIAN__
+#ifdef WORDS_BIGENDIAN
 #define SWAP_WORD(x)
 #define SWAP_DWORD(x)
 #define SWAP_QWORD(x)
@@ -949,6 +950,11 @@ FArchive &FArchive::WriteObject (DObject *obj)
 		id[0] = NULL_OBJ;
 		Write (id, 1);
 	}
+	else if (obj == (DObject*)~0)
+	{
+		id[0] = M1_OBJ;
+		Write (id, 1);
+	}
 	else
 	{
 		const TypeInfo *type = RUNTIME_TYPE(obj);
@@ -1040,6 +1046,10 @@ FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
 	{
 	case NULL_OBJ:
 		obj = NULL;
+		break;
+
+	case M1_OBJ:
+		obj = (DObject *)~0;
 		break;
 
 	case OLD_OBJ:
@@ -1406,7 +1416,7 @@ void FArchive::UserReadClass (const TypeInfo *&type)
 		type = NULL;
 		break;
 	default:
-		I_Error ("Unknown class type %d in archive.\n", type);
+		I_Error ("Unknown class type %d in archive.\n", newclass);
 		break;
 	}
 }

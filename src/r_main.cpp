@@ -49,10 +49,10 @@
 // MACROS ------------------------------------------------------------------
 
 #if 0
-#define TEST_X 1051721
-#define TEST_Y -64542001
-#define TEST_Z 2686976
-#define TEST_ANGLE 990880375
+#define TEST_X 268141009  
+#define TEST_Y -133465913 
+#define TEST_Z 20105352  
+#define TEST_ANGLE 3732930560  
 #endif
 
 // TYPES -------------------------------------------------------------------
@@ -417,8 +417,8 @@ void R_SetFOV (float fov)
 {
 	if (fov < 5.f)
 		fov = 5.f;
-	else if (fov > 175.f)
-		fov = 175.f;
+	else if (fov > 170.f)
+		fov = 170.f;
 	if (fov != LastFOV)
 	{
 		LastFOV = fov;
@@ -490,9 +490,6 @@ void R_SetVisibility (float vis)
 
 	r_TiltVisibility = vis * (float)FocalTangent * (16.f * 320.f) / (float)viewwidth;
 	r_SpriteVisibility = r_WallVisibility;
-	
-	// particles are slightly more visible than regular sprites
-	r_ParticleVisibility = r_SpriteVisibility * 2;
 }
 
 //==========================================================================
@@ -883,7 +880,7 @@ void R_SetupFrame (player_t *player)
 		oviewangle = nviewangle;
 	}
 
-	if (((player->cheats & CF_CHASECAM) || (camera->health <= 0)) &&
+	if (((player->cheats & CF_CHASECAM)/* || (camera->health <= 0)*/) &&
 		(camera->RenderStyle != STYLE_None) &&
 		!(camera->renderflags & RF_INVISIBLE) &&
 		camera->sprite != 0)	// Sprite 0 is always TNT1
@@ -1014,6 +1011,12 @@ void R_SetupFrame (player_t *player)
 		{
 			fixedcolormap = InvulnerabilityColormap;
 		}
+	}
+	// [RH] Inverse light for shooting the Sigil
+	else if (extralight == INT_MIN)
+	{
+		fixedcolormap = InvulnerabilityColormap;
+		extralight = 0;
 	}
 
 	// [RH] freelook stuff
@@ -1361,26 +1364,29 @@ void R_RenderPlayerView (player_t *player)
 
 	NetUpdate ();
 
-	clock (PlaneCycles);
-	R_DrawPlanes ();
-	R_DrawSkyBoxes ();
-	unclock (PlaneCycles);
-
-	// [RH] Walk through mirrors
-	size_t lastmirror = WallMirrors.Size ();
-	for (size_t i = 0; i < lastmirror; i++)
+	if (viewactive)
 	{
-		R_EnterMirror (drawsegs + WallMirrors[i], 0);
+		clock (PlaneCycles);
+		R_DrawPlanes ();
+		R_DrawSkyBoxes ();
+		unclock (PlaneCycles);
+
+		// [RH] Walk through mirrors
+		size_t lastmirror = WallMirrors.Size ();
+		for (size_t i = 0; i < lastmirror; i++)
+		{
+			R_EnterMirror (drawsegs + WallMirrors[i], 0);
+		}
+		WallMirrors.Clear ();
+
+		NetUpdate ();
+		
+		clock (MaskedCycles);
+		R_DrawMasked ();
+		unclock (MaskedCycles);
+
+		NetUpdate ();
 	}
-	WallMirrors.Clear ();
-
-	NetUpdate ();
-	
-	clock (MaskedCycles);
-	R_DrawMasked ();
-	unclock (MaskedCycles);
-
-	NetUpdate ();
 
 	restoreinterpolations ();
 
@@ -1589,26 +1595,19 @@ void restoreinterpolations()  //Stick at end of drawscreen
 
 void SerializeInterpolations (FArchive &arc)
 {
-	if (SaveVersion < 216)
+	int i;
+
+	if (arc.IsStoring ())
 	{
-		numinterpolations = 0;
+		arc.WriteCount (numinterpolations);
 	}
 	else
 	{
-		int i;
-
-		if (arc.IsStoring ())
-		{
-			arc.WriteCount (numinterpolations);
-		}
-		else
-		{
-			numinterpolations = arc.ReadCount ();
-		}
-		for (i = 0; i < numinterpolations; ++i)
-		{
-			arc << curipos[i];
-		}
+		numinterpolations = arc.ReadCount ();
+	}
+	for (i = 0; i < numinterpolations; ++i)
+	{
+		arc << curipos[i];
 	}
 }
 

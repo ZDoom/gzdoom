@@ -90,7 +90,7 @@ IMPLEMENT_ACTOR (AClericPlayer, Hexen, -1, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (64)
 	PROP_SpeedFixed (1)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_SLIDE|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 	PROP_Flags4 (MF4_NOSKIN)
@@ -123,8 +123,8 @@ void AClericPlayer::PlayAttacking2 ()
 void AClericPlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
-	player->readyweapon = player->pendingweapon = wp_cmace;
-	player->weaponowned[wp_cmace] = true;
+	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
+		(player->mo->GiveInventoryType (TypeInfo::FindType ("CWeapMace")));
 }
 
 fixed_t AClericPlayer::GetArmorIncrement (int armortype)
@@ -206,12 +206,14 @@ bool AClericWeapon::TryPickup (AActor *toucher)
 		{ // Can't pick up weapons for other classes in coop netplay
 			return false;
 		}
-		weapontype_t type = OldStyleID ();
-		if (type < NUMWEAPONS)
+
+		bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
+		gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
+		if (gaveSome)
 		{
-			return P_GiveAmmo (toucher->player, wpnlev1info[type]->givingammo, wpnlev1info[type]->ammogive);
+			GoAwayAndDie ();
 		}
-		return false;
+		return gaveSome;
 	}
 	return Super::TryPickup (toucher);
 }

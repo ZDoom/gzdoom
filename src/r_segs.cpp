@@ -208,7 +208,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		curline->linedef->alpha < 255 ? curline->linedef->alpha<<8 : FRACUNIT,
 		0, 0);
 
-	if (drawmode == DontDraw && !ds->bFogBoundary)
+	if ((drawmode == DontDraw && !ds->bFogBoundary))
 	{
 		return;
 	}
@@ -403,7 +403,7 @@ esp+13 = bad
 esp+14 = light
 esp+18 = &uwal[x]
 esp+1c = &lwal[x]
-esp+20 =
+esp+20 = x2
 esp+24 = &dwal[x]
 esp+28 = 
 esp+2c = xoffset
@@ -721,7 +721,7 @@ void R_RenderSegLoop ()
 	// draw the wall tiers
 	if (midtexture)
 	{ // one sided line
-		if (midtexture->UseType != FTexture::TEX_Null)
+		if (midtexture->UseType != FTexture::TEX_Null && viewactive)
 		{
 			dc_texturemid = rw_midtexturemid;
 			rw_pic = midtexture;
@@ -755,25 +755,28 @@ void R_RenderSegLoop ()
 			{
 				wallupper[x] = MAX (MIN (wallupper[x], floorclip[x]), walltop[x]);
 			}
-			dc_texturemid = rw_toptexturemid;
-			rw_pic = toptexture;
-			xscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
-			if (xscale != lwallscale)
+			if (viewactive)
 			{
-				PrepLWall (lwall, (curline->sidedef->TexelLength*xscale) << (FRACBITS-3));
-				lwallscale = xscale;
-			}
-			if (toptexture->bWorldPanning)
-			{
-				rw_offset = MulScale3 (xoffset, toptexture->ScaleY ? toptexture->ScaleY : ty);
-			}
-			if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
-			{
-				wallscan (x1, x2-1, walltop, wallupper, swall, lwall);
-			}
-			else
-			{
-				wallscan_striped (x1, x2-1, walltop, wallupper, swall, lwall);
+				dc_texturemid = rw_toptexturemid;
+				rw_pic = toptexture;
+				xscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
+				if (xscale != lwallscale)
+				{
+					PrepLWall (lwall, (curline->sidedef->TexelLength*xscale) << (FRACBITS-3));
+					lwallscale = xscale;
+				}
+				if (toptexture->bWorldPanning)
+				{
+					rw_offset = MulScale3 (xoffset, toptexture->ScaleY ? toptexture->ScaleY : ty);
+				}
+				if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
+				{
+					wallscan (x1, x2-1, walltop, wallupper, swall, lwall);
+				}
+				else
+				{
+					wallscan_striped (x1, x2-1, walltop, wallupper, swall, lwall);
+				}
 			}
 			memcpy (ceilingclip+x1, wallupper+x1, (x2-x1)*sizeof(short));
 		}
@@ -789,29 +792,32 @@ void R_RenderSegLoop ()
 			{
 				walllower[x] = MIN (MAX (walllower[x], ceilingclip[x]), wallbottom[x]);
 			}
-			dc_texturemid = rw_bottomtexturemid;
-			rw_pic = bottomtexture;
-			xscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
-			if (xscale != lwallscale)
+			if (viewactive)
 			{
-				PrepLWall (lwall, (curline->sidedef->TexelLength*xscale) << (FRACBITS-3));
-				lwallscale = xscale;
-			}
-			if (bottomtexture->bWorldPanning)
-			{
-				rw_offset = MulScale3 (xoffset, bottomtexture->ScaleY ? bottomtexture->ScaleY : ty);
-			}
-			else
-			{
-				rw_offset = xoffset;
-			}
-			if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
-			{
-				wallscan (x1, x2-1, walllower, wallbottom, swall, lwall);
-			}
-			else
-			{
-				wallscan_striped (x1, x2-1, walllower, wallbottom, swall, lwall);
+				dc_texturemid = rw_bottomtexturemid;
+				rw_pic = bottomtexture;
+				xscale = rw_pic->ScaleX ? rw_pic->ScaleX : tx;
+				if (xscale != lwallscale)
+				{
+					PrepLWall (lwall, (curline->sidedef->TexelLength*xscale) << (FRACBITS-3));
+					lwallscale = xscale;
+				}
+				if (bottomtexture->bWorldPanning)
+				{
+					rw_offset = MulScale3 (xoffset, bottomtexture->ScaleY ? bottomtexture->ScaleY : ty);
+				}
+				else
+				{
+					rw_offset = xoffset;
+				}
+				if (fixedlightlev || fixedcolormap || !frontsector->ExtraLights)
+				{
+					wallscan (x1, x2-1, walllower, wallbottom, swall, lwall);
+				}
+				else
+				{
+					wallscan_striped (x1, x2-1, walllower, wallbottom, swall, lwall);
+				}
 			}
 			memcpy (floorclip+x1, walllower+x1, (x2-x1)*sizeof(short));
 		}
@@ -825,6 +831,8 @@ void R_RenderSegLoop ()
 
 void R_NewWall ()
 {
+	fixed_t rowoffset;
+
 	rw_markmirror = false;
 
 	sidedef = curline->sidedef;
@@ -847,6 +855,11 @@ void R_NewWall ()
 			if (linedef->special != Line_Horizon)
 			{
 				midtexture = TexMan(sidedef->midtexture);
+				rowoffset = sidedef->rowoffset;
+				if (rowoffset < 0 && midtexture != NULL)
+				{
+					rowoffset += midtexture->GetHeight() << FRACBITS;
+				}
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
 					rw_midtexturemid = frontsector->floortexz + (midtexture->GetHeight() << FRACBITS);
@@ -857,7 +870,7 @@ void R_NewWall ()
 				}
 				if (midtexture->bWorldPanning)
 				{
-					rw_midtexturemid = MulScale3 (rw_midtexturemid - viewz + sidedef->rowoffset,
+					rw_midtexturemid = MulScale3 (rw_midtexturemid - viewz + rowoffset,
 						midtexture->ScaleY ? midtexture->ScaleY : ty);
 				}
 				else
@@ -866,7 +879,7 @@ void R_NewWall ()
 					// by texels instead of world units.
 					rw_midtexturemid = MulScale3 (rw_midtexturemid - viewz,
 						midtexture->ScaleY ? midtexture->ScaleY : ty)
-						+ sidedef->rowoffset;
+						+ rowoffset;
 				}
 			}
 		}
@@ -892,12 +905,12 @@ void R_NewWall ()
 			else
 			{ // back ceiling is above front ceiling
 				// Recalculate walltop so that the wall is clipped by the back sector's
-				// ceiling instead of the front sector's ceiling. This also alters the
-				// positioning of unpegged lower textures by making them relative to the
-				// back sector's ceiling instead of the front sector's ceiling.
+				// ceiling instead of the front sector's ceiling.
 				WallMost (walltop, backsector->ceilingplane);
-				rw_frontlowertop = backsector->ceilingtexz;
 			}
+			// Putting sky ceilins on the front and back of a line alters the way unpegged
+			// positioning works.
+			rw_frontlowertop = backsector->ceilingtexz;
 		}
 
 		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
@@ -931,6 +944,8 @@ void R_NewWall ()
 				|| backsector->floor_yscale != frontsector->floor_yscale
 
 				|| (backsector->floor_angle + backsector->base_floor_angle) != (frontsector->floor_angle + frontsector->base_floor_angle)
+
+				|| (sidedef->midtexture && linedef->flags & ML_CLIP_MIDTEX)
 				;
 
 			markceiling = (frontsector->ceilingpic != skyflatnum ||
@@ -958,6 +973,8 @@ void R_NewWall ()
 				|| backsector->ceiling_yscale != frontsector->ceiling_yscale
 
 				|| (backsector->ceiling_angle + backsector->base_ceiling_angle) != (frontsector->ceiling_angle + frontsector->base_ceiling_angle)
+
+				|| (sidedef->midtexture && linedef->flags & ML_CLIP_MIDTEX)
 				);
 		}
 
@@ -974,13 +991,18 @@ void R_NewWall ()
 			{ // bottom of texture at bottom
 				rw_toptexturemid = MulScale3 (backsector->ceilingtexz - viewz, scale) + (toptexture->GetHeight() << FRACBITS);
 			}
+			rowoffset = sidedef->rowoffset;
+			if (rowoffset < 0 && toptexture != NULL)
+			{
+				rowoffset += toptexture->GetHeight() << FRACBITS;
+			}
 			if (toptexture->bWorldPanning)
 			{
-				rw_toptexturemid += MulScale3 (sidedef->rowoffset, scale);
+				rw_toptexturemid += MulScale3 (rowoffset, scale);
 			}
 			else
 			{
-				rw_toptexturemid += sidedef->rowoffset;
+				rw_toptexturemid += rowoffset;
 			}
 		}
 		if (rw_havelow)
@@ -995,16 +1017,21 @@ void R_NewWall ()
 			{ // top of texture at top
 				rw_bottomtexturemid = backsector->floortexz;
 			}
+			rowoffset = sidedef->rowoffset;
+			if (rowoffset < 0 && bottomtexture != NULL)
+			{
+				rowoffset += bottomtexture->GetHeight() << FRACBITS;
+			}
 			if (bottomtexture->bWorldPanning)
 			{
-				rw_bottomtexturemid = MulScale3 (rw_bottomtexturemid - viewz + sidedef->rowoffset,
+				rw_bottomtexturemid = MulScale3 (rw_bottomtexturemid - viewz + rowoffset,
 					bottomtexture->ScaleY ? bottomtexture->ScaleY : ty);
 			}
 			else
 			{
 				rw_bottomtexturemid = MulScale3 (rw_bottomtexturemid - viewz,
 					bottomtexture->ScaleY ? bottomtexture->ScaleY : ty)
-					+ sidedef->rowoffset;
+					+ rowoffset;
 			}
 		}
 	}
@@ -1772,7 +1799,7 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	int needrepeat = 0;
 	sector_t *front, *back;
 
-	if (actor->renderflags & RF_INVISIBLE)
+	if (actor->renderflags & RF_INVISIBLE || !viewactive)
 		return;
 
 	DecalActorForDebug = actor;

@@ -45,29 +45,6 @@
 #define GPART(c)			(((c)>>8)&0xff)
 #define BPART(c)			((c)&0xff)
 
-struct PalEntry
-{
-	PalEntry () {}
-	PalEntry (DWORD argb) { *(DWORD *)this = argb; }
-	operator DWORD () const { return *(DWORD *)this; }
-	PalEntry &operator= (DWORD other) { *(DWORD *)this = other; return *this; }
-
-#ifdef __BIG_ENDIAN__
-	PalEntry (BYTE ir, BYTE ig, BYTE ib) : a(0), r(ir), g(ig), b(ib) {}
-	PalEntry (BYTE ia, BYTE ir, BYTE ig, BYTE ib) : a(ia), r(ir), g(ig), b(ib) {}
-	BYTE a,r,g,b;
-#else
-	PalEntry (BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(0) {}
-	PalEntry (BYTE ia, BYTE ir, BYTE ig, BYTE ib) : b(ib), g(ig), r(ir), a(ia) {}
-	BYTE b,g,r,a;
-#endif
-};
-
-inline FArchive &operator<< (FArchive &arc, PalEntry &p)
-{
-	return arc << p.a << p.r << p.g << p.b;
-}
-
 struct FPalette
 {
 	FPalette ();

@@ -1,6 +1,8 @@
 #ifndef __A_HEXENGLOBAL_H__
 #define __A_HEXENGLOBAL_H__
 
+#include "d_player.h"
+
 class ALightning : public AActor
 {
 	DECLARE_STATELESS_ACTOR (ALightning, AActor)
@@ -144,6 +146,20 @@ class AMageWeapon : public AWeapon
 	DECLARE_STATELESS_ACTOR (AMageWeapon, AWeapon);
 public:
 	bool TryPickup (AActor *toucher);
+};
+
+class AMana1 : public AAmmo
+{
+	DECLARE_ACTOR (AMana1, AAmmo)
+public:
+	const char *PickupMessage ();
+};
+
+class AMana2 : public AAmmo
+{
+	DECLARE_ACTOR (AMana2, AAmmo)
+public:
+	const char *PickupMessage ();
 };
 
 #endif //__A_HEXENGLOBAL_H__

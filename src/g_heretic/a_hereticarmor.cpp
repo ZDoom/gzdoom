@@ -7,14 +7,9 @@
 
 // Silver Shield (Shield1) --------------------------------------------------
 
-class ASilverShield : public AArmor
+class ASilverShield : public ABasicArmorPickup
 {
-	DECLARE_ACTOR (ASilverShield, AArmor)
-public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, (armortype_t)-1, 100);
-	}
+	DECLARE_ACTOR (ASilverShield, ABasicArmorPickup)
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -30,27 +25,17 @@ FState ASilverShield::States[] =
 IMPLEMENT_ACTOR (ASilverShield, Heretic, 85, 68)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
+	PROP_BasicArmorPickup_SavePercent (FRACUNIT/2)
+	PROP_BasicArmorPickup_SaveAmount (100)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("SHLDA0")
 END_DEFAULTS
-
-AT_GAME_SET (SilverShield)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		ArmorPics[0] = "SHLDA0";
-	}
-}
 
 // Enchanted shield (Shield2) -----------------------------------------------
 
-class AEnchantedShield : public AArmor
+class AEnchantedShield : public ABasicArmorPickup
 {
-	DECLARE_ACTOR (AEnchantedShield, AArmor)
-public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, (armortype_t)-2, 200);
-	}
+	DECLARE_ACTOR (AEnchantedShield, ABasicArmorPickup)
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -66,13 +51,8 @@ FState AEnchantedShield::States[] =
 IMPLEMENT_ACTOR (AEnchantedShield, Heretic, 31, 69)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
+	PROP_BasicArmorPickup_SavePercent (FRACUNIT*3/4)
+	PROP_BasicArmorPickup_SaveAmount (200)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("SHD2A0")
 END_DEFAULTS
-
-AT_GAME_SET (EnchantedShield)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		ArmorPics[1] = "SHD2A0";
-	}
-}

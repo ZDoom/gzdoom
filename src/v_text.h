@@ -37,14 +37,13 @@
 #include "doomtype.h"
 #include "v_font.h"
 
-struct brokenlines_s
+struct brokenlines_t
 {
 	short width;
 	byte nlterminated;
 	byte pad;
 	char *string;
 };
-typedef struct brokenlines_s brokenlines_t;
 
 #define TEXTCOLOR_ESCAPE	'\x1c'
 

@@ -3,7 +3,7 @@
 ** Parses MAPINFO and controls movement between levels
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2003 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 **
 */
 
+#include <assert.h>
 #include "templates.h"
 #include "d_main.h"
 #include "m_alloc.h"
@@ -69,6 +70,7 @@
 #include "m_random.h"
 #include "version.h"
 #include "m_menu.h"
+#include "statnums.h"
 
 #include "gi.h"
 
@@ -97,50 +99,6 @@ static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
 TArray<EndSequence> EndSequences;
 
-static const char Musics1[48][9] =
-{
-	"D_E1M1",		"D_E1M2",		"D_E1M3",		"D_E1M4",		"D_E1M5",
-	"D_E1M6",		"D_E1M7",		"D_E1M8",		"D_E1M9",		"D_E2M1",
-	"D_E2M2",		"D_E2M3",		"D_E2M4",		"D_E2M5",		"D_E2M6",
-	"D_E2M7",		"D_E2M8",		"D_E2M9",		"D_E3M1",		"D_E3M2",
-	"D_E3M3",		"D_E3M4",		"D_E3M5",		"D_E3M6",		"D_E3M7",
-	"D_E3M8",		"D_E3M9",		"D_E3M4",		"D_E3M2",		"D_E3M3",
-	"D_E1M5",		"D_E2M7",		"D_E2M4",		"D_E2M6",		"D_E2M5",
-	"D_E1M9",		"MUS_E2M1",		"MUS_E2M2",		"MUS_E2M3",		"MUS_E2M4",
-	"MUS_E1M4",		"MUS_E2M6",		"MUS_E2M7",		"MUS_E2M8",		"MUS_E2M9",
-	"MUS_E3M2",		"MUS_E3M3",		"MUS_E1M6"
-};
-
-static const char Musics2[36][9] =
-{
-	"MUS_E1M1",		"MUS_E1M2",		"MUS_E1M3",		"MUS_E1M4",		"MUS_E1M5",
-	"MUS_E1M6",		"MUS_E1M7",		"MUS_E1M8",		"MUS_E1M9",		"MUS_E2M1",
-	"MUS_E2M2",		"MUS_E2M3",		"MUS_E2M4",		"MUS_E1M4",		"MUS_E2M6",
-	"MUS_E2M7",		"MUS_E2M8",		"MUS_E2M9",		"MUS_E1M1",		"MUS_E3M2",
-	"MUS_E3M3",		"MUS_E1M6",		"MUS_E1M3",		"MUS_E1M2",		"MUS_E1M5",
-	"MUS_E1M9",		"MUS_E2M6",		"MUS_E1M6",		"MUS_E1M2",		"MUS_E1M3",
-	"MUS_E1M4",		"MUS_E1M5",		"MUS_E1M1",		"MUS_E1M7",		"MUS_E1M8",
-	"MUS_E1M9"
-};
-
-static const char Musics3[32][9] =
-{
-	"D_RUNNIN",		"D_STALKS",		"D_COUNTD",		"D_BETWEE",		"D_DOOM",
-	"D_THE_DA",		"D_SHAWN",		"D_DDTBLU",		"D_IN_CIT",		"D_DEAD",
-	"D_STLKS2",		"D_THEDA2",		"D_DOOM2",		"D_DDTBL2",		"D_RUNNI2",
-	"D_DEAD2",		"D_STLKS3",		"D_ROMERO",		"D_SHAWN2",		"D_MESSAG",
-	"D_COUNT2",		"D_DDTBL3",		"D_AMPIE",		"D_THEDA3",		"D_ADRIAN",
-	"D_MESSG2",		"D_ROMER2",		"D_TENSE",		"D_SHAWN3",		"D_OPENIN",
-	"D_EVIL",		"D_ULTIMA"
-};
-
-static const char Musics4[15][9] =
-{
-	"D_VICTOR",		"D_VICTOR",		"D_VICTOR",		"D_VICTOR",		"D_READ_M",
-	"D_READ_M",		"D_READ_M",		"D_READ_M",		"D_READ_M",		"D_READ_M",
-	"MUS_CPTD",		"MUS_CPTD",		"MUS_CPTD",		"MUS_CPTD",		"MUS_CPTD"
-};
-
 extern int timingdemo;
 
 // Start time for timing demos
@@ -161,11 +119,8 @@ extern char BackupSaveName[PATH_MAX];
 BOOL savegamerestore;
 
 extern int mousex, mousey;
-extern bool sendpause, sendsave, sendcenterview, sendturn180, SendLand;
-extern BYTE SendWeaponSlot, SendWeaponChoice;
-extern int SendItemSelect;
-extern artitype_t SendItemUse;
-extern artitype_t LocalSelectedItem;
+extern bool sendpause, sendsave, sendturn180, SendLand;
+extern const AInventory *SendItemUse, *SendItemDrop;
 
 void *statcopy;					// for statistics driver
 
@@ -245,7 +200,9 @@ static const char *MapInfoMapLevel[] =
 	"fallingdamage",		// Hexen falling damage
 	"oldfallingdamage",		// Lesser ZDoom falling damage
 	"forcefallingdamage",	// Skull Tag compatibility name for oldfallingdamage
+	"strifefallingdamage",	// Strife's falling damage is really unforgiving
 	"nofallingdamage",
+	"noallies",
 	"cdtrack",
 	"cdid",
 	"cd_start_track",
@@ -263,6 +220,10 @@ static const char *MapInfoMapLevel[] =
 	"activateowndeathspecials",
 	"killeractivatesdeathspecials",
 	"noinventorybar",
+	"deathslideshow",
+	"redirect",
+	"strictmonsteractivation",
+	"laxmonsteractivation",
 	NULL
 };
 
@@ -284,13 +245,14 @@ enum EMIType
 	MITYPE_STRING,
 	MITYPE_MUSIC,
 	MITYPE_RELLIGHT,
-	MITYPE_CLRBYTES
+	MITYPE_CLRBYTES,
+	MITYPE_REDIRECT
 };
 
 struct MapInfoHandler
 {
 	EMIType type;
-	DWORD data1, data2;
+	QWORD data1, data2;
 }
 MapHandlers[] =
 {
@@ -333,7 +295,9 @@ MapHandlers[] =
 	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_HX, ~LEVEL_FALLDMG_ZD },
 	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD, ~LEVEL_FALLDMG_HX },
 	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD, ~LEVEL_FALLDMG_HX },
+	{ MITYPE_SCFLAGS,	LEVEL_FALLDMG_ZD|LEVEL_FALLDMG_HX, 0 },
 	{ MITYPE_SCFLAGS,	0, ~(LEVEL_FALLDMG_ZD|LEVEL_FALLDMG_HX) },
+	{ MITYPE_SETFLAG,	LEVEL_NOALLIES, 0 },
 	{ MITYPE_INT,		lioffset(cdtrack), 0 },
 	{ MITYPE_HEX,		lioffset(cdid), 0 },
 	{ MITYPE_EATNEXT,	0, 0 },
@@ -351,6 +315,10 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ MITYPE_CLRFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_NOINVENTORYBAR, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_DEATHSLIDESHOW, 0 },
+	{ MITYPE_REDIRECT,	lioffset(RedirectMap), 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_LAXMONSTERACTIVATION, LEVEL_LAXACTIVATIONMAPINFO },
+	{ MITYPE_SETFLAG,	LEVEL_LAXMONSTERACTIVATION, LEVEL_LAXACTIVATIONMAPINFO },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -359,6 +327,7 @@ static const char *MapInfoClusterLevel[] =
 	"exittext",
 	"music",
 	"flat",
+	"pic",
 	"hub",
 	"cdtrack",
 	"cdid",
@@ -373,6 +342,7 @@ MapInfoHandler ClusterHandlers[] =
 	{ MITYPE_STRING,	cioffset(exittext), CLUSTER_LOOKUPEXITTEXT },
 	{ MITYPE_MUSIC,		cioffset(messagemusic), cioffset(musicorder) },
 	{ MITYPE_LUMPNAME,	cioffset(finaleflat), 0 },
+	{ MITYPE_LUMPNAME,	cioffset(finaleflat), CLUSTER_FINALEPIC },
 	{ MITYPE_SETFLAG,	CLUSTER_HUB, 0 },
 	{ MITYPE_INT,		cioffset(cdtrack), 0 },
 	{ MITYPE_HEX,		cioffset(cdid), 0 },
@@ -384,7 +354,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 							   const char *strings[],
 							   level_info_t *levelinfo,
 							   cluster_info_t *clusterinfo,
-							   DWORD levelflags);
+							   QWORD levelflags);
 
 static int FindWadLevelInfo (char *name)
 {
@@ -418,6 +388,11 @@ static void SetLevelDefaults (level_info_t *levelinfo)
 	strncpy (levelinfo->fadetable, "COLORMAP", 8);
 	strcpy (levelinfo->skypic1, "-NOFLAT-");
 	strcpy (levelinfo->skypic2, "-NOFLAT-");
+	if (gameinfo.gametype != GAME_Hexen)
+	{
+		// For maps without a BEHAVIOR, this will be cleared.
+		levelinfo->flags |= LEVEL_LAXMONSTERACTIVATION;
+	}
 }
 
 //
@@ -455,7 +430,7 @@ void G_ParseMapInfo ()
 		break;
 
 	case GAME_Hexen:
-		// Hexen already has a MAPINFO.
+		G_DoParseMapInfo (Wads.GetNumForName ("HEXNINFO"));
 		break;
 
 	case GAME_Strife:
@@ -488,11 +463,11 @@ static void G_DoParseMapInfo (int lump)
 	int levelindex;
 	cluster_info_t *clusterinfo;
 	int clusterindex;
-	DWORD levelflags;
+	QWORD levelflags;
 
 	SetLevelDefaults (&defaultinfo);
 	SC_OpenLumpNum (lump, "MAPINFO");
-	
+
 	while (SC_GetString ())
 	{
 		switch (SC_MustMatchString (MapInfoTopLevel))
@@ -632,7 +607,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 							   const char *strings[],
 							   level_info_t *levelinfo,
 							   cluster_info_t *clusterinfo,
-							   DWORD flags)
+							   QWORD flags)
 {
 	int entry;
 	MapInfoHandler *handler;
@@ -678,6 +653,16 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			*((DWORD *)(info + handler->data1)) = V_GetColor (NULL, sc_String);
 			break;
 
+		case MITYPE_REDIRECT:
+			SC_MustGetString ();
+			levelinfo->RedirectType = TypeInfo::IFindType (sc_String);
+			if (levelinfo->RedirectType == NULL ||
+				!(levelinfo->RedirectType->IsDescendantOf (RUNTIME_CLASS(AInventory))))
+			{
+				SC_ScriptError ("%s is not an inventory item", sc_String);
+			}
+			// Intentional fall-through
+
 		case MITYPE_MAPNAME: {
 			EndSequence newSeq;
 			bool useseq = false;
@@ -706,6 +691,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				case '3':	type = END_Bunny;		break;
 				case 'C':	type = END_Cast;		break;
 				case 'W':	type = END_Underwater;	break;
+				case 'S':	type = END_Strife;		break;
 				default:	type = END_Pic3;		break;
 				}
 				newSeq.EndType = type;
@@ -715,7 +701,8 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			{
 				SC_MustGetString ();
 				newSeq.EndType = END_Pic;
-				strcpy (newSeq.PicName, "endseq");
+				strncpy (newSeq.PicName, sc_String, 8);
+				newSeq.PicName[8] = 0;
 				useseq = true;
 			}
 			else if (SC_Compare ("endbunny"))
@@ -743,6 +730,11 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				newSeq.EndType = END_Underwater;
 				useseq = true;
 			}
+			else if (SC_Compare ("endbuystrife"))
+			{
+				newSeq.EndType = END_BuyStrife;
+				useseq = true;
+			}
 			else
 			{
 				strncpy ((char *)(info + handler->data1), sc_String, 8);
@@ -763,6 +755,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 		case MITYPE_LUMPNAME:
 			SC_MustGetString ();
 			uppercopy ((char *)(info + handler->data1), sc_String);
+			flags |= handler->data2;
 			break;
 
 		case MITYPE_SKY:
@@ -781,10 +774,12 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 
 		case MITYPE_SETFLAG:
 			flags |= handler->data1;
+			flags |= handler->data2;
 			break;
 
 		case MITYPE_CLRFLAG:
 			flags &= ~handler->data1;
+			flags |= handler->data2;
 			break;
 
 		case MITYPE_SCFLAGS:
@@ -880,6 +875,15 @@ static void ParseEpisodeInfo ()
 	map[8] = 0;
 
 	SC_MustGetString ();
+	if (SC_Compare ("teaser"))
+	{
+		SC_MustGetString ();
+		if (gameinfo.flags & GI_SHAREWARE)
+		{
+			uppercopy (map, sc_String);
+		}
+		SC_MustGetString ();
+	}
 	do
 	{
 		if (SC_Compare ("name"))
@@ -1008,7 +1012,11 @@ static void SetEndSequence (char *nextmap, int type)
 
 void G_SetForEndGame (char *nextmap)
 {
-	if (gameinfo.gametype == GAME_Hexen)
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		SetEndSequence (nextmap, gameinfo.flags & GI_SHAREWARE ? END_BuyStrife : END_Strife);
+	}
+	else if (gameinfo.gametype == GAME_Hexen)
 	{
 		SetEndSequence (nextmap, END_Chess);
 	}
@@ -1134,7 +1142,6 @@ void G_NewInit ()
 		demoplayback = false;
 		D_SetupUserInfo ();
 	}
-	LocalSelectedItem = arti_none;
 	memset (playeringame, 0, sizeof(playeringame));
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
@@ -1166,7 +1173,7 @@ void G_InitNew (char *mapname)
 	if (!savegamerestore)
 	{
 		for (i = 0; i < numwadlevelinfos; i++)
-			wadlevelinfos[i].flags &= ~LEVEL_VISITED;
+			wadlevelinfos[i].flags = wadlevelinfos[i].flags & ~LEVEL_VISITED;
 	}
 
 	UnlatchCVars ();
@@ -1192,9 +1199,16 @@ void G_InitNew (char *mapname)
 		I_Error ("Could not find map %s\n", mapname);
 	}
 
-	respawnmonsters =
-		((gameinfo.gametype == GAME_Doom && gameskill == sk_nightmare)
-		|| (dmflags & DF_MONSTERS_RESPAWN));
+	if (dmflags & DF_MONSTERS_RESPAWN)
+	{
+		respawnmonsters = TICRATE;
+	}
+	else if (gameinfo.gametype & (GAME_Doom|GAME_Strife) && gameskill == sk_nightmare)
+	{
+		respawnmonsters = TICRATE;
+	}
+	// Monsters wait longer before respawning in Strife.
+	respawnmonsters *= gameinfo.gametype != GAME_Strife ? 12 : 16;
 
 	oldSpeed = GameSpeed;
 	wantFast = (dmflags & DF_FAST_MONSTERS) || (gameskill == sk_nightmare);
@@ -1237,10 +1251,6 @@ void G_InitNew (char *mapname)
 			players[i].playerstate = PST_ENTER;	// [BC]
 	}
 
-	// [RH] Send weapon assignments now
-	Net_WriteByte (DEM_SLOTSCHANGE);
-	LocalWeapons.StreamOutSlots ();
-
 	usergame = true;				// will be set false if a demo
 	paused = 0;
 	demoplayback = false;
@@ -1259,16 +1269,18 @@ void G_InitNew (char *mapname)
 BOOL 			secretexit;
 static int		startpos;	// [RH] Support for multiple starts per level
 extern BOOL		NoWipe;		// [RH] Don't wipe when travelling in hubs
+static bool		startkeepfacing;	// [RH] Support for keeping your facing angle
 
 // [RH] The position parameter to these next three functions should
 //		match the first parameter of the single player start spots
 //		that should appear in the next map.
-static void goOn (int position)
+static void goOn (int position, bool keepFacing)
 {
 	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
-	cluster_info_t *nextcluster = FindClusterInfo (FindLevelInfo (level.nextmap)->cluster);
+	cluster_info_t *nextcluster = FindClusterInfo (CheckLevelRedirect (FindLevelInfo (level.nextmap))->cluster);
 
 	startpos = position;
+	startkeepfacing = keepFacing;
 	gameaction = ga_completed;
 	bglobal.End();	//Added by MC:
 
@@ -1280,10 +1292,10 @@ static void goOn (int position)
 	}
 }
 
-void G_ExitLevel (int position)
+void G_ExitLevel (int position, bool keepFacing)
 {
 	secretexit = false;
-	goOn (position);
+	goOn (position, keepFacing);
 }
 
 // Here's for the german edition.
@@ -1293,7 +1305,7 @@ void G_SecretExitLevel (int position)
 	//		G_DoCompleted()
 
 	secretexit = true;
-	goOn (position);
+	goOn (position, false);
 }
 
 void G_DoCompleted (void)
@@ -1337,8 +1349,17 @@ void G_DoCompleted (void)
 		}
 		if (!wminfo.next[0])
 		{
-			strncpy (wminfo.next, level.nextmap, 8);
-			strncpy (wminfo.lname1, FindLevelInfo (level.nextmap)->pname, 8);
+			if (strncmp (level.nextmap, "enDSeQ", 6) == 0)
+			{
+				strncpy (wminfo.next, level.nextmap, 8);
+				wminfo.lname1[0] = 0;
+			}
+			else
+			{
+				level_info_t *nextinfo = CheckLevelRedirect (FindLevelInfo (level.nextmap));
+				strncpy (wminfo.next, nextinfo->mapname, 8);
+				strncpy (wminfo.lname1, nextinfo->pname, 8);
+			}
 		}
 	}
 
@@ -1371,7 +1392,7 @@ void G_DoCompleted (void)
 	//		leave the world vars alone.
 	{
 		cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
-		cluster_info_t *nextcluster = FindClusterInfo (FindLevelInfo (level.nextmap)->cluster);
+		cluster_info_t *nextcluster = FindClusterInfo (CheckLevelRedirect (FindLevelInfo (level.nextmap))->cluster);
 		EFinishLevelType mode;
 
 		if (thiscluster != nextcluster || deathmatch ||
@@ -1527,18 +1548,15 @@ void G_DoLoadLevel (int position, bool autosave)
 		P_StartLightning ();
 	}
 
-	displayplayer = consoleplayer;		// view the guy you are playing
-	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	gameaction = ga_nothing; 
 
 	// clear cmd building stuff
 	ResetButtonStates ();
 
-	SendWeaponSlot = SendWeaponChoice = 255;
-	SendItemSelect = 0;
-	SendItemUse = arti_none;
+	SendItemUse = NULL;
+	SendItemDrop = NULL;
 	mousex = mousey = 0; 
-	sendpause = sendsave = sendcenterview = sendturn180 = SendLand = false;
+	sendpause = sendsave = sendturn180 = SendLand = false;
 	LocalViewAngle = 0;
 	LocalViewPitch = 0;
 	paused = 0;
@@ -1559,6 +1577,9 @@ void G_DoLoadLevel (int position, bool autosave)
 
 	level.starttime = gametic;
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
+	G_FinishTravel ();
+	displayplayer = consoleplayer;		// view the guy you are playing
+	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
 	if (demoplayback || oldgs == GS_STARTUP)
@@ -1602,7 +1623,7 @@ void G_WorldDone (void)
 	}
 	else
 	{
-		nextcluster = FindClusterInfo (FindLevelInfo (nextmap)->cluster);
+		nextcluster = FindClusterInfo (CheckLevelRedirect (FindLevelInfo (nextmap))->cluster);
 
 		if (nextcluster->cluster != level.cluster && !deathmatch)
 		{
@@ -1642,11 +1663,108 @@ void G_DoWorldDone (void)
 	{
 		strncpy (level.mapname, wminfo.next, 8);
 	}
+	G_StartTravel ();
 	G_DoLoadLevel (startpos, true);
 	startpos = 0;
 	gameaction = ga_nothing;
 	viewactive = true; 
-} 
+}
+
+//==========================================================================
+//
+// G_StartTravel
+//
+// Moves players (and eventually their inventory) to a different statnum,
+// so they will not be destroyed when switching levels. This only applies
+// to real players, not voodoo dolls.
+//
+//==========================================================================
+
+void G_StartTravel ()
+{
+	if (deathmatch)
+		return;
+
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			AActor *pawn = players[i].mo;
+			AInventory *inv;
+
+			pawn->UnlinkFromWorld ();
+			pawn->RemoveFromHash ();
+			pawn->ChangeStatNum (STAT_TRAVELLING);
+
+			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
+			{
+				inv->ChangeStatNum (STAT_TRAVELLING);
+				inv->UnlinkFromWorld ();
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// G_FinishTravel
+//
+// Moves any travelling players so that they occupy their newly-spawned
+// copies' locations, destroying the new players in the process (because
+// they are really fake placeholders to show where the travelling players
+// should go).
+//
+//==========================================================================
+
+void G_FinishTravel ()
+{
+	if (deathmatch)
+		return;
+
+	TThinkerIterator<APlayerPawn> it (STAT_TRAVELLING);
+	APlayerPawn *pawn, *pawndup;
+	AInventory *inv;
+
+	while ( (pawn = it.Next()) != NULL)
+	{
+		pawn->ChangeStatNum (STAT_PLAYER);
+		pawndup = pawn->player->mo;
+		assert (pawn != pawndup);
+		if (!startkeepfacing)
+		{
+			pawn->angle = pawndup->angle;
+			pawn->pitch = pawndup->pitch;
+		}
+		pawn->x = pawndup->x;
+		pawn->y = pawndup->y;
+		pawn->z = pawndup->z;
+		pawn->momx = pawndup->momx;
+		pawn->momy = pawndup->momy;
+		pawn->momz = pawndup->momz;
+		pawn->Sector = pawndup->Sector;
+		pawn->floorz = pawndup->floorz;
+		pawn->ceilingz = pawndup->ceilingz;
+		pawn->dropoffz = pawndup->dropoffz;
+		pawn->floorsector = pawndup->floorsector;
+		pawn->floorpic = pawndup->floorpic;
+		pawn->floorclip = pawndup->floorclip;
+		pawn->waterlevel = pawndup->waterlevel;
+		pawn->target = NULL;
+		pawn->lastenemy = NULL;
+		pawn->AddToHash ();
+		pawn->player->mo = pawn;
+		DObject::PointerSubstitution (pawndup, pawn);
+		pawndup->Destroy ();
+		pawn->LinkToWorld ();
+		pawn->AddToHash ();
+
+		for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
+		{
+			inv->ChangeStatNum (STAT_INVENTORY);
+			inv->LinkToWorld ();
+		}
+	}
+}
  
 void G_InitLevelLocals ()
 {
@@ -1795,6 +1913,26 @@ level_info_t *FindLevelByNum (int num)
 			return (level_info_t *)(wadlevelinfos + i);
 
 	return NULL;
+}
+
+level_info_t *CheckLevelRedirect (level_info_t *info)
+{
+	if (info->RedirectType != NULL)
+	{
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].mo->FindInventory (info->RedirectType))
+			{
+				level_info_t *newinfo = FindLevelInfo (info->RedirectMap);
+				if (newinfo != NULL)
+				{
+					info = newinfo;
+				}
+				break;
+			}
+		}
+	}
+	return info;
 }
 
 static void SetLevelNum (level_info_t *info, int num)

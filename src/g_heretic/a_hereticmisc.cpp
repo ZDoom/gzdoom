@@ -357,14 +357,9 @@ void A_AccTeleGlitter (AActor *actor)
 
 // Super map ----------------------------------------------------------------
 
-class ASuperMap : public AInventory
+class ASuperMap : public AMapRevealer
 {
-	DECLARE_ACTOR (ASuperMap, AInventory)
-public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GivePower (toucher->player, pw_allmap);
-	}
+	DECLARE_ACTOR (ASuperMap, AMapRevealer)
 protected:
 	const char *PickupMessage ()
 	{

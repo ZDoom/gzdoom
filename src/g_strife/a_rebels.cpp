@@ -4,18 +4,21 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "s_sound.h"
+#include "gi.h"
+#include "a_sharedglobal.h"
 #include "a_strifeglobal.h"
 
 static FRandom pr_shootgun ("ShootGun");
 
 void A_ShootGun (AActor *);
 void A_TossGib (AActor *);
+void A_Beacon (AActor *);
 
 // Base class for the rebels ------------------------------------------------
 
-class ARebel : public AActor
+class ARebel : public AStrifeHumanoid
 {
-	DECLARE_ACTOR (ARebel, AActor)
+	DECLARE_ACTOR (ARebel, AStrifeHumanoid)
 };
 
 FState ARebel::States[] =
@@ -88,7 +91,11 @@ IMPLEMENT_ACTOR (ARebel, Strife, -1, 0)
 	PROP_SpeedFixed (8)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (56)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_STRIFEx4000000)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_FRIENDLY)
+	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_MCROSS)
+	PROP_Flags3 (MF3_ISMONSTER)
+	PROP_Flags4 (MF4_NOSPLASHALERT)
+	PROP_MinMissileChance (150)
 	PROP_Tag ("Rebel")
 
 	PROP_SeeSound ("rebel/sight")
@@ -113,10 +120,9 @@ void A_ShootGun (AActor *self)
 	S_Sound (self, CHAN_WEAPON, "monsters/rifle", 1, ATTN_NORM);
 	A_FaceTarget (self);
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
-	PuffType = RUNTIME_CLASS(AStrifePuff);
 	P_LineAttack (self, self->angle + (pr_shootgun.Random2() << 19),
 		MISSILERANGE, pitch,
-		3*(pr_shootgun() % 5 + 1));
+		3*(pr_shootgun() % 5 + 1), RUNTIME_CLASS(AStrifePuff));
 }
 
 // Rebel 1 ------------------------------------------------------------------
@@ -124,10 +130,27 @@ void A_ShootGun (AActor *self)
 class ARebel1 : public ARebel
 {
 	DECLARE_STATELESS_ACTOR (ARebel1, ARebel)
+public:
+	void NoBlockingSet ();
 };
 
 IMPLEMENT_STATELESS_ACTOR (ARebel1, Strife, 9, 0)
+	PROP_StrifeType (43)
+	PROP_StrifeTeaserType (42)
 END_DEFAULTS
+
+//============================================================================
+//
+// ARebel1 :: NoBlockingSet
+//
+// Only this type of rebel drops bullet clips by default.
+//
+//============================================================================
+
+void ARebel1::NoBlockingSet ()
+{
+	P_DropItem (this, "ClipOfBullets", -1, 256);
+}
 
 // Rebel 2 ------------------------------------------------------------------
 
@@ -137,6 +160,8 @@ class ARebel2 : public ARebel
 };
 
 IMPLEMENT_STATELESS_ACTOR (ARebel2, Strife, 144, 0)
+	PROP_StrifeType (44)
+	PROP_StrifeTeaserType (43)
 END_DEFAULTS
 
 // Rebel 3 ------------------------------------------------------------------
@@ -147,6 +172,8 @@ class ARebel3 : public ARebel
 };
 
 IMPLEMENT_STATELESS_ACTOR (ARebel3, Strife, 145, 0)
+	PROP_StrifeType (45)
+	PROP_StrifeTeaserType (44)
 END_DEFAULTS
 
 // Rebel 4 ------------------------------------------------------------------
@@ -157,6 +184,8 @@ class ARebel4 : public ARebel
 };
 
 IMPLEMENT_STATELESS_ACTOR (ARebel4, Strife, 149, 0)
+	PROP_StrifeType (46)
+	PROP_StrifeTeaserType (45)
 END_DEFAULTS
 
 // Rebel 5 ------------------------------------------------------------------
@@ -167,6 +196,8 @@ class ARebel5 : public ARebel
 };
 
 IMPLEMENT_STATELESS_ACTOR (ARebel5, Strife, 150, 0)
+	PROP_StrifeType (47)
+	PROP_StrifeTeaserType (46)
 END_DEFAULTS
 
 // Rebel 6 ------------------------------------------------------------------
@@ -177,4 +208,110 @@ class ARebel6 : public ARebel
 };
 
 IMPLEMENT_STATELESS_ACTOR (ARebel6, Strife, 151, 0)
+	PROP_StrifeType (48)
+	PROP_StrifeTeaserType (47)
 END_DEFAULTS
+
+// Teleporter Beacon --------------------------------------------------------
+
+class ATeleporterBeacon : public AInventory
+{
+	DECLARE_ACTOR (ATeleporterBeacon, AInventory)
+public:
+	bool Use ();
+};
+
+FState ATeleporterBeacon::States[] =
+{
+	S_NORMAL (BEAC, 'A',  -1, NULL,			NULL),
+
+	S_NORMAL (BEAC, 'A',  30, NULL,			&States[2]),
+	S_NORMAL (BEAC, 'A', 160, A_Beacon,		&States[1])
+};
+
+IMPLEMENT_ACTOR (ATeleporterBeacon, Strife, 10, 0)
+	PROP_StrifeType (166)
+	PROP_SpawnHealth (5)
+	PROP_SpawnState (0)
+	PROP_SeeState (1)
+	PROP_RadiusFixed (16)
+	PROP_HeightFixed (16)
+	PROP_Inventory_MaxAmount (3)
+	PROP_Flags (MF_SPECIAL|MF_DROPPED)
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("I_BEAC")
+	PROP_Tag ("Teleporter_Beacon")
+END_DEFAULTS
+
+bool ATeleporterBeacon::Use ()
+{
+	AInventory *drop;
+
+	// Increase the amount by one so that when DropInventory decrements it,
+	// the actor will have the same number of beacons that he started with.
+	// When we return to UseInventory, it will take care of decrementing
+	// Amount again and disposing of this item if there are no more.
+	Amount++;
+	drop = Owner->DropInventory (this);
+	if (drop == NULL)
+	{
+		Amount--;
+		return false;
+	}
+	else
+	{
+		drop->SetState (drop->SeeState);
+		drop->target = Owner;
+		return true;
+	}
+}
+
+void A_Beacon (AActor *self)
+{
+	AActor *owner = self->target;
+	ARebel *rebel;
+	int friendNum;
+	angle_t an;
+
+	rebel = Spawn<ARebel1> (self->x, self->y, ONFLOORZ);
+	if (!P_TryMove (rebel, rebel->x, rebel->y, true))
+	{
+		rebel->Destroy ();
+		return;
+	}
+	// Once the rebels start teleporting in, you can't pick up the beacon anymore.
+	self->flags &= ~MF_SPECIAL;
+	// Set up the new rebel.
+	friendNum = owner->player != NULL ? owner->player - players + 1 : 0;
+	rebel->FriendPlayer = friendNum;
+	rebel->threshold = 100;
+	rebel->target = NULL;
+	rebel->flags4 |= MF4_INCOMBAT;
+	rebel->LastHeard = owner;	// Make sure the rebels look for targets
+	if (deathmatch)
+	{
+		rebel->health *= 2;
+	}
+	if (owner != NULL)
+	{
+		// Rebels are the same color as their owner
+		rebel->Translation = owner->Translation;
+		// Set the rebel's target to whatever last hurt the player, so long as it's not
+		// one of the player's other rebels.
+		if (owner->target != NULL &&
+			(!(owner->target->flags & MF_FRIENDLY) ||
+			 owner->target->FriendPlayer == 0 ||
+			 owner->target->FriendPlayer != friendNum))
+		{
+			rebel->target = owner->target;
+		}
+	}
+	rebel->SetState (rebel->SeeState);
+	rebel->angle = self->angle;
+	an = self->angle >> ANGLETOFINESHIFT;
+	Spawn<ATeleportFog> (rebel->x + 20*finecosine[an], rebel->y + 20*finesine[an], rebel->z + TELEFOGHEIGHT);
+	if (--self->health < 0)
+	{
+		self->Destroy ();
+	}
+}

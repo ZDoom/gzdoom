@@ -80,6 +80,56 @@ class                                   DPillar;
 
 struct FActorInfo;
 
+enum EMetaType
+{
+	META_Int,		// An int
+	META_Fixed,		// A fixed point number
+	META_String,	// A string
+};
+
+class FMetaData
+{
+private:
+	FMetaData (EMetaType type, DWORD id) : Type(type), ID(id) {}
+
+	FMetaData *Next;
+	EMetaType Type;
+	DWORD ID;
+	union
+	{
+		int Int;
+		char *String;
+		fixed_t Fixed;
+	} Value;
+
+	friend class FMetaTable;
+};
+
+class FMetaTable
+{
+public:
+	FMetaTable() : Meta(NULL) {}
+	FMetaTable(const FMetaTable &other);
+	~FMetaTable();
+	FMetaTable &operator = (const FMetaTable &other);
+
+	void SetMetaInt (DWORD id, int parm);
+	void SetMetaFixed (DWORD id, fixed_t parm);
+	void SetMetaString (DWORD id, const char *parm);	// The string is copied
+
+	int GetMetaInt (DWORD id) const;
+	fixed_t GetMetaFixed (DWORD id) const;
+	const char *GetMetaString (DWORD id) const;
+
+	FMetaData *FindMeta (EMetaType type, DWORD id) const;
+
+private:
+	FMetaData *Meta;
+	FMetaData *FindMetaDef (EMetaType type, DWORD id);
+	void FreeMeta ();
+	void CopyMeta (const FMetaTable *other);
+};
+
 struct TypeInfo
 {
 #if !defined(_MSC_VER) && !defined(__GNUC__)
@@ -106,7 +156,6 @@ struct TypeInfo
 #else
 	static void StaticInit ();
 #endif
-
 	const char *Name;
 	TypeInfo *ParentType;
 	unsigned int SizeOf;
@@ -115,6 +164,7 @@ struct TypeInfo
 	FActorInfo *ActorInfo;
 	unsigned int HashNext;
 	unsigned short TypeIndex;
+	FMetaTable Meta;
 
 	void RegisterType ();
 	DObject *CreateNew () const;
@@ -324,5 +374,7 @@ FArchive &operator<< (FArchive &arc, T* &object)
 }
 
 #include "farchive.h"
+
+FArchive &operator<< (FArchive &arc, const TypeInfo * &info);
 
 #endif //__DOBJECT_H__

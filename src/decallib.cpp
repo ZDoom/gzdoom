@@ -545,8 +545,7 @@ void FDecalLib::ParseDecalGroup ()
 		targetDecal = ScanTreeForName (sc_String, Root);
 		if (targetDecal == NULL)
 		{
-			const char *arg = sc_String;
-			SC_ScriptError ("%s has not been defined", &arg);
+			SC_ScriptError ("%s has not been defined", sc_String);
 		}
 		SC_MustGetNumber ();
 
@@ -565,20 +564,15 @@ void FDecalLib::ParseGenerator ()
 	type = TypeInfo::FindType (sc_String);
 	if (type == NULL || type->ActorInfo == NULL)
 	{
-		const char *eekMsg = "%s is not an actor.";
-		const char *args[2];
-
-		args[0] = sc_String;
 		if (type == NULL)
 		{
 			type = TypeInfo::IFindType (sc_String);
 			if (type != NULL)
 			{
-				args[1] = type->Name + 1;
-				eekMsg = "%s is not an actor.\nDid you mean %s?";
+				SC_ScriptError ("%s is not an actor. Did you mean %s?", sc_String, type->Name + 1);
 			}
 		}
-		SC_ScriptError (eekMsg, args);
+		SC_ScriptError ("%s is not an actor.", sc_String);
 	}
 	actor = (AActor *)type->ActorInfo->Defaults;
 
@@ -593,8 +587,7 @@ void FDecalLib::ParseGenerator ()
 		decal = ScanTreeForName (sc_String, Root);
 		if (decal == NULL)
 		{
-			const char *arg = sc_String;
-			SC_ScriptError ("%s has not been defined.", &arg);
+			SC_ScriptError ("%s has not been defined.", sc_String);
 		}
 	}
 
@@ -633,7 +626,7 @@ void FDecalLib::ParseFader ()
 		}
 		else
 		{
-			SC_ScriptError ("Unknown fader parameter", NULL);
+			SC_ScriptError ("Unknown fader parameter '%s'", sc_String);
 		}
 	}
 }
@@ -684,7 +677,7 @@ void FDecalLib::ParseStretcher ()
 		}
 		else
 		{
-			SC_ScriptError ("Unknown stretcher parameter", NULL);
+			SC_ScriptError ("Unknown stretcher parameter '%s'", sc_String);
 		}
 	}
 }
@@ -737,7 +730,7 @@ void FDecalLib::ParseSlider ()
 		}
 		else
 		{
-			SC_ScriptError ("Unknown slider parameter", NULL);
+			SC_ScriptError ("Unknown slider parameter '%s'", sc_String);
 		}
 	}
 }
@@ -781,7 +774,7 @@ void FDecalLib::ParseColorchanger ()
 		}
 		else
 		{
-			SC_ScriptError ("Unknown fader parameter", NULL);
+			SC_ScriptError ("Unknown color changer parameter '%s'", sc_String);
 		}
 	}
 }
@@ -800,8 +793,7 @@ void FDecalLib::ParseCombiner ()
 		FDecalAnimator *anim = FindAnimator (sc_String);
 		if (anim == NULL)
 		{
-			const char *namePtr = sc_String;
-			SC_ScriptError ("Undefined animator %s", &namePtr);
+			SC_ScriptError ("Undefined animator %s", sc_String);
 		}
 		FDecalCombinerAnim::AnimatorList.Push (anim);
 		SC_MustGetString ();

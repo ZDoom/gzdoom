@@ -65,7 +65,7 @@ void WI_unloadData ();
 // Loads of by-pixel layout and placement, offsets etc.
 //
 
-#define NUMEPISODES 	6
+#define NUMEPISODES 	3
 #define NUMMAPS 		9
 
 // GLOBAL LOCATIONS
@@ -129,7 +129,7 @@ typedef struct
 	int 		state;		// used by RANDOM and LEVEL when animating
 } in_anim_t;
 
-static yahpt_t lnodes[NUMEPISODES][NUMMAPS] =
+static yahpt_t lnodes[NUMEPISODES*2][NUMMAPS] =
 {
 //
 // Doom 1 Episodes
@@ -493,11 +493,6 @@ int WI_MapToIndex (char *map, int ep)
 {
 	int i;
 
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		ep -= 10;
-	}
-
 	for (i = 0; i < NUMMAPS; i++)
 	{
 		if (!strnicmp (names[ep][i], map, 8))
@@ -518,7 +513,7 @@ void WI_drawOnLnode (int n, FTexture *c[], int episode)
 
 	if (gameinfo.gametype == GAME_Heretic)
 	{
-		episode -= 7;
+		episode += 3;
 	}
 	i = 0;
 	do
@@ -874,19 +869,16 @@ void WI_drawShowNextLoc ()
 
 	if (gamemode != commercial)
 	{
-		if ((gameinfo.gametype != GAME_Doom || epsd > 2) &&
-			(gameinfo.gametype != GAME_Heretic || epsd > 12 || epsd < 10))
+		if (!(gameinfo.gametype & (GAME_Doom|GAME_Heretic)) || epsd > 2)
 		{
 			WI_drawEL();
 			return;
 		}
 
-		int ep = (gameinfo.gametype == GAME_Doom) ? epsd : epsd - 10;
-
 		// draw a splat on taken cities.
 		for (i = 0; i < NUMMAPS; i++)
 		{
-			if (FindLevelInfo (names[ep][i])->flags & LEVEL_VISITED)
+			if (FindLevelInfo (names[epsd][i])->flags & LEVEL_VISITED)
 				WI_drawOnLnode (i, &splat, epsd);
 		}
 
@@ -1744,7 +1736,7 @@ void WI_loadData ()
 		{
 			char *lname = (i == 0 ? wbs->lname0 : wbs->lname1);
 
-			j = lname ? TexMan.CheckForTexture (lname, FTexture::TEX_MiscPatch) : -1;
+			j = lname && lname[0] ? TexMan.CheckForTexture (lname, FTexture::TEX_MiscPatch) : -1;
 
 			if (j > 0)
 			{

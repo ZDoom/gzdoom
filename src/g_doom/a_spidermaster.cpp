@@ -8,7 +8,6 @@
 #include "gstrings.h"
 #include "a_action.h"
 
-static FRandom pr_spidey ("SpidMissileRange");
 static FRandom pr_spidrefire ("SpidRefire");
 
 void A_SpidRefire (AActor *);
@@ -19,7 +18,6 @@ class ASpiderMastermind : public AActor
 {
 	DECLARE_ACTOR (ASpiderMastermind, AActor)
 public:
-	bool SuggestMissileAttack (fixed_t dist);
 	const char *GetObituary () { return GStrings(OB_SPIDER); }
 };
 
@@ -77,7 +75,7 @@ IMPLEMENT_ACTOR (ASpiderMastermind, Doom, 7, 7)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_BOSS|MF2_FLOORCLIP)
 	PROP_Flags3 (MF3_NORADIUSDMG)
-	PROP_Flags4 (MF4_BOSSDEATH)
+	PROP_Flags4 (MF4_BOSSDEATH|MF4_MISSILEMORE)
 
 	PROP_SpawnState (S_SPID_STND)
 	PROP_SeeState (S_SPID_RUN)
@@ -91,11 +89,6 @@ IMPLEMENT_ACTOR (ASpiderMastermind, Doom, 7, 7)
 	PROP_DeathSound ("spider/death")
 	PROP_ActiveSound ("spider/active")
 END_DEFAULTS
-
-bool ASpiderMastermind::SuggestMissileAttack (fixed_t dist)
-{
-	return pr_spidey() >= MIN<int> (dist >> (FRACBITS + 1), 200);
-}
 
 void A_SpidRefire (AActor *self)
 {

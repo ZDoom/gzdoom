@@ -41,6 +41,7 @@ enum
 	STAT_INFO,								// An info queue
 	STAT_DECAL,								// A decal
 	STAT_CORPSEPOINTER,						// An entry in Hexen's corpse queue
+	STAT_TRAVELLING,						// An actor temporarily travelling to a new map
 
   // Thinkers that do think
 	STAT_FIRST_THINKING=32,

@@ -51,12 +51,15 @@ class APlayerPawn : public AActor
 {
 	DECLARE_STATELESS_ACTOR (APlayerPawn, AActor)
 public:
+	virtual void AddInventory (AInventory *item);
+	virtual void RemoveInventory (AInventory *item);
+	virtual bool UseInventory (AInventory *item);
+
 	virtual void PlayIdle ();
 	virtual void PlayRunning ();
 	virtual void PlayAttacking ();
 	virtual void PlayAttacking2 ();
 	virtual void ThrowPoisonBag ();
-	virtual const TypeInfo *GetDropType ();
 	virtual void GiveDefaultInventory ();
 	virtual int GetAutoArmorSave ();
 	virtual fixed_t GetArmorIncrement (int armortype);
@@ -67,6 +70,8 @@ public:
 	virtual bool DoHealingRadius (APlayerPawn *other);
 	virtual void MorphPlayerThink ();
 	virtual void ActivateMorphWeapon ();
+	virtual AWeapon *PickNewWeapon (const TypeInfo *ammotype);
+	virtual AWeapon *BestWeapon (const TypeInfo *ammotype);
 
 	enum EInvulState
 	{
@@ -123,6 +128,23 @@ typedef enum
 #define WPIECE2		2
 #define WPIECE3		4
 
+enum
+{
+	PW_INVULNERABILITY	= 1,
+	PW_INVISIBILITY		= 2,
+	PW_INFRARED			= 4,
+
+// Powerups added in Heretic
+	PW_WEAPONLEVEL2		= 8,
+	PW_FLIGHT			= 16,
+
+// Powerups added in Hexen
+	PW_SPEED			= 32,
+	PW_MINOTAUR			= 64,
+};
+
+#define WP_NOCHANGE ((AWeapon*)~0)
+
 //
 // Extended player object info: player_t
 //
@@ -132,14 +154,14 @@ public:
 	void Serialize (FArchive &arc);
 	void FixPointers (const DObject *obj, DObject *replacement);
 
-	bool UseAmmo (bool noCheck=false);
+	void SetLogNumber (int num);
+	void SetLogText (const char *text);
 
 	APlayerPawn	*mo;
 	BYTE		playerstate;
 	ticcmd_t	cmd;
 
 	userinfo_t	userinfo;				// [RH] who is this?
-	FWeaponSlots WeaponSlots;			// Weapon slot assignments for this player
 	
 	const TypeInfo *cls;				// class of associated PlayerPawn
 
@@ -161,16 +183,11 @@ public:
 	short		oldbuttons;
 	int			health;					// only used between levels, mo->health
 										// is used during levels
-	int			armortype;				// armor type is 0-2
-	int			armorpoints[NUMARMOR];
 
+	AInventory *InvFirst;				// first inventory item displayed on inventory bar
+	AInventory *InvSel;					// selected inventory item
 	int			inventorytics;
-	WORD		inventory[NUMINVENTORYSLOTS];
 	BYTE		CurrentPlayerClass;		// class # for this player instance
-	artitype_t	readyArtifact;
-	int			artifactCount;
-	int			powers[NUMPOWERS];
-	bool		keys[NUMKEYS];
 	int			pieces;					// Fourth Weapon pieces
 	bool		backpack;
 	
@@ -180,20 +197,16 @@ public:
 	byte		multicount;
 	byte		spreecount;				// [RH] Keep track of killing sprees
 
-	weapontype_t	readyweapon;
-	weapontype_t	pendingweapon;		// wp_nochange if not changing
-	bool		weaponowned[NUMWEAPONS];
-	int			ammo[NUMAMMO];
-	int			maxammo[NUMAMMO];
+	AWeapon	   *ReadyWeapon;
+	AWeapon	   *PendingWeapon;			// WP_NOCHANGE if not changing
 
 	int			cheats;					// bit flags
+	BITFIELD	Powers;					// powers
 	short		refire;					// refired shots are less accurate
 	short		inconsistant;
 	int			killcount, itemcount, secretcount;		// for intermission
 	int			damagecount, bonuscount;// for screen flashing
-	int			mstaffcount;			// for mage's bloodscourge flash
-	int			cholycount;				// for cleric's wraithverge flash
-	int			flamecount;				// for flame thrower duration
+	int			hazardcount;			// for delayed Strife damage
 	int			poisoncount;			// screen flash for poison damage
 	AActor		*poisoner;				// NULL for non-player actors
 	AActor		*attacker;				// who did damage (NULL for floors)
@@ -202,15 +215,16 @@ public:
 	int			xviewshift;				// [RH] view shift (for earthquakes)
 	pspdef_t	psprites[NUMPSPRITES];	// view sprites (gun, etc)
 	int			morphTics;				// player is a chicken/pig if > 0
+	AWeapon		*PremorphWeapon;		// ready weapon before morphing
 	int			chickenPeck;			// chicken peck countdown
-	AActor		*rain1;					// active rain maker 1
-	AActor		*rain2;					// active rain maker 2
 	int			jumpTics;				// delay the next jump for a moment
 
 	int			respawn_time;			// [RH] delay respawning until this tic
 	AActor		*camera;				// [RH] Whose eyes this player sees through
 
 	int			air_finished;			// [RH] Time when you start drowning
+
+	WORD		accuracy, stamina;		// [RH] Strife stats
 
 	//Added by MC:
 	angle_t		savedyaw;
@@ -248,7 +262,6 @@ public:
 	bool		first_shot;	// Used for reaction skill.
 	bool		sleft;		// If false, strafe is right.
 	bool		allround;
-	bool		redteam;	// in ctf, if true this bot is on red team, else on blue..
 
 	fixed_t		oldx;
 	fixed_t		oldy;
@@ -258,6 +271,8 @@ public:
 	float		BlendG;
 	float		BlendB;
 	float		BlendA;
+
+	char		*LogText;	// [RH] Log for Strife
 };
 
 typedef player_s player_t;

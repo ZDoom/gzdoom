@@ -89,7 +89,7 @@ IMPLEMENT_ACTOR (AFighterPlayer, Hexen, -1, 0)
 	PROP_Mass (100)
 	PROP_PainChance (255)
 	PROP_SpeedFixed (1)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_SLIDE|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 	PROP_Flags4 (MF4_NOSKIN)
@@ -122,8 +122,8 @@ void AFighterPlayer::PlayAttacking2 ()
 void AFighterPlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
-	player->readyweapon = player->pendingweapon = wp_ffist;
-	player->weaponowned[wp_ffist] = true;
+	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
+		(player->mo->GiveInventoryType (TypeInfo::FindType ("FWeapFist")));
 }
 
 fixed_t AFighterPlayer::GetArmorIncrement (int armortype)
@@ -173,17 +173,11 @@ void AdjustPlayerAngle (AActor *pmo)
 
 // Fist (first weapon) ------------------------------------------------------
 
-void A_FPunchAttack (AActor *actor, pspdef_t *);
+void A_FPunchAttack (AActor *actor);
 
 class AFWeapFist : public AFighterWeapon
 {
 	DECLARE_ACTOR (AFWeapFist, AFighterWeapon)
-public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_ffist;
-	}
-	static FWeaponInfo WeaponInfo;
 };
 
 FState AFWeapFist::States[] =
@@ -216,32 +210,16 @@ FState AFWeapFist::States[] =
 	S_NORMAL2(FPCH, 'E',   10, NULL 					, &States[S_PUNCHREADY], 0, 150)
 };
 
-FWeaponInfo AFWeapFist::WeaponInfo =
-{
-	0,
-	MANA_NONE,
-	MANA_NONE,
-	0,
-	0,
-	&States[S_PUNCHUP],
-	&States[S_PUNCHDOWN],
-	&States[S_PUNCHREADY],
-	&States[S_PUNCHATK1],
-	&States[S_PUNCHATK1],
-	NULL,
-	NULL,
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AFWeapFist),
-	-1
-};
-
 IMPLEMENT_ACTOR (AFWeapFist, Hexen, -1, 0)
+	PROP_Weapon_SelectionOrder (3400)
+	PROP_Weapon_Flags (WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_PUNCHUP)
+	PROP_Weapon_DownState (S_PUNCHDOWN)
+	PROP_Weapon_ReadyState (S_PUNCHREADY)
+	PROP_Weapon_AtkState (S_PUNCHATK1)
+	PROP_Weapon_HoldAtkState (S_PUNCHATK1)
+	PROP_Weapon_Kickback (150)
 END_DEFAULTS
-
-WEAPON1 (wp_ffist, AFWeapFist)
 
 // Punch puff ---------------------------------------------------------------
 
@@ -286,7 +264,7 @@ void APunchPuff::BeginPlay ()
 //
 //============================================================================
 
-void A_FPunchAttack (AActor *actor, pspdef_t *psp)
+void A_FPunchAttack (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -294,6 +272,7 @@ void A_FPunchAttack (AActor *actor, pspdef_t *psp)
 	fixed_t power;
 	int i;
 	player_t *player;
+	const TypeInfo *pufftype;
 
 	if (NULL == (player = actor->player))
 	{
@@ -303,7 +282,7 @@ void A_FPunchAttack (AActor *actor, pspdef_t *psp)
 
 	damage = 40+(pr_fpatk()&15);
 	power = 2*FRACUNIT;
-	PuffType = RUNTIME_CLASS(APunchPuff);
+	pufftype = RUNTIME_CLASS(APunchPuff);
 	for (i = 0; i < 16; i++)
 	{
 		angle = pmo->angle + i*(ANG45/16);
@@ -315,9 +294,9 @@ void A_FPunchAttack (AActor *actor, pspdef_t *psp)
 			{
 				damage <<= 1;
 				power = 6*FRACUNIT;
-				PuffType = RUNTIME_CLASS(AHammerPuff);
+				pufftype = RUNTIME_CLASS(AHammerPuff);
 			}
-			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage);
+			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -334,9 +313,9 @@ void A_FPunchAttack (AActor *actor, pspdef_t *psp)
 			{
 				damage <<= 1;
 				power = 6*FRACUNIT;
-				PuffType = RUNTIME_CLASS(AHammerPuff);
+				pufftype = RUNTIME_CLASS(AHammerPuff);
 			}
-			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage);
+			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -350,7 +329,7 @@ void A_FPunchAttack (AActor *actor, pspdef_t *psp)
 
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
-	P_LineAttack (pmo, angle, MELEERANGE, slope, damage);
+	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, pufftype);
 
 punchdone:
 	if (pmo->special1 == 3)
@@ -401,10 +380,23 @@ int AFighterPlayer::GetAutoArmorSave ()
 // Radius armor boost
 bool AFighterPlayer::DoHealingRadius (APlayerPawn *other)
 {
-	if ((P_GiveArmor (other->player, ARMOR_ARMOR, 1)) ||
-		(P_GiveArmor (other->player, ARMOR_SHIELD, 1)) ||
-		(P_GiveArmor (other->player, ARMOR_HELMET, 1)) ||
-		(P_GiveArmor (other->player, ARMOR_AMULET, 1)))
+	bool gotSome = false;
+
+	for (int i = 0; i < 4; ++i)
+	{
+		AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0);
+		armor->Amount = i;
+		armor->MaxAmount = 1;
+		if (!armor->TryPickup (player->mo))
+		{
+			armor->Destroy ();
+		}
+		else
+		{
+			gotSome = true;
+		}
+	}
+	if (gotSome)
 	{
 		S_Sound (other, CHAN_AUTO, "MysticIncant", 1, ATTN_NORM);
 		return true;
@@ -427,12 +419,14 @@ bool AFighterWeapon::TryPickup (AActor *toucher)
 		{ // Can't pick up weapons for other classes in coop netplay
 			return false;
 		}
-		weapontype_t type = OldStyleID ();
-		if (type < NUMWEAPONS)
+
+		bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
+		gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
+		if (gaveSome)
 		{
-			return P_GiveAmmo (toucher->player, wpnlev1info[type]->givingammo, wpnlev1info[type]->ammogive);
+			GoAwayAndDie ();
 		}
-		return false;
+		return gaveSome;
 	}
 	return Super::TryPickup (toucher);
 }

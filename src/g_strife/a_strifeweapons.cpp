@@ -9,8 +9,8 @@
 // Note: Strife missiles do 1-4 times their damage amount.
 // Doom missiles do 1-8 times their damage amount, so to
 // make the strife missiles do proper damage without
-// hacking more stuff in the executable, their damages
-// need to be halved compared to what is in the Strife exe.
+// hacking more stuff in the executable, be sure to give
+// all Strife missiles the MF4_STRIFEDAMAGE flag.
 
 static FRandom pr_jabdagger ("JabDagger");
 static FRandom pr_electric ("FireElectric");
@@ -25,18 +25,41 @@ static FRandom pr_phburn ("PhBurn");
 void A_LoopActiveSound (AActor *);
 void A_Countdown (AActor *);
 
-class AStrifeWeapon : public AWeapon
+IMPLEMENT_STATELESS_ACTOR (AStrifeWeapon, Strife, -1, 0)
+	PROP_Weapon_Kickback (100)
+END_DEFAULTS
+
+// Same as the bullet puff for Doom -----------------------------------------
+
+FState AStrifePuff::States[] =
 {
-	DECLARE_STATELESS_ACTOR (AStrifeWeapon, AWeapon)
+	// When you hit an actor
+	S_BRIGHT (PUFY, 'A', 4, NULL, &States[1]),
+	S_NORMAL (PUFY, 'B', 4, NULL, &States[2]),
+	S_NORMAL (PUFY, 'C', 4, NULL, &States[3]),
+	S_NORMAL (PUFY, 'D', 4, NULL, NULL),
+
+	// When you hit something else
+	S_NORMAL (POW2, 'A', 4, NULL, &States[5]),
+	S_NORMAL (POW2, 'B', 4, NULL, &States[6]),
+	S_NORMAL (POW2, 'C', 4, NULL, &States[7]),
+	S_NORMAL (POW2, 'D', 4, NULL, NULL)
 };
-IMPLEMENT_ABSTRACT_ACTOR (AStrifeWeapon)
+
+IMPLEMENT_ACTOR (AStrifePuff, Strife, -1, 0)
+	PROP_SpawnState (0)
+	PROP_CrashState (4)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Alpha (TRANSLUC25)
+	PROP_RenderStyle (STYLE_Translucent)
+END_DEFAULTS
 
 // A spark when you hit something that doesn't bleed ------------------------
-// Only used by the dagger, I think.
+// Only used by the dagger.
 
-class AStrifeSpark : public AActor
+class AStrifeSpark : public AStrifePuff
 {
-	DECLARE_ACTOR (AStrifeSpark, AActor)
+	DECLARE_ACTOR (AStrifeSpark, AStrifePuff)
 };
 
 FState AStrifeSpark::States[] =
@@ -49,51 +72,23 @@ FState AStrifeSpark::States[] =
 	S_NORMAL (POW3, 'E', 3, NULL, &States[5]),
 	S_NORMAL (POW3, 'F', 3, NULL, &States[6]),
 	S_NORMAL (POW3, 'G', 3, NULL, &States[7]),
-	S_NORMAL (POW3, 'H', 3, NULL, NULL),
-
-	// When you hit something else
-	S_NORMAL (POW2, 'A', 4, NULL, &States[9]),
-	S_NORMAL (POW2, 'B', 4, NULL, &States[10]),
-	S_NORMAL (POW2, 'C', 4, NULL, &States[11]),
-	S_NORMAL (POW2, 'D', 4, NULL, NULL),
+	S_NORMAL (POW3, 'H', 3, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (AStrifeSpark, Strife, -1, 0)
 	PROP_SpawnState (0)
-	PROP_CrashState (8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Add)
-	PROP_Alpha (HX_ALTSHADOW)
-END_DEFAULTS
-
-// Same as the bullet puff for Doom -----------------------------------------
-
-FState AStrifePuff::States[] =
-{
-	S_BRIGHT (PUFY, 'A', 4, NULL, &States[1]),
-	S_NORMAL (PUFY, 'B', 4, NULL, &States[2]),
-	S_NORMAL (PUFY, 'C', 4, NULL, &States[3]),
-	S_NORMAL (PUFY, 'D', 4, NULL, NULL)
-};
-
-IMPLEMENT_ACTOR (AStrifePuff, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Alpha (HX_SHADOW)
-	PROP_RenderStyle (STYLE_Translucent)
+	PROP_Alpha (TRANSLUC25)
 END_DEFAULTS
 
 // Punch Dagger -------------------------------------------------------------
 
-void A_JabDagger (AActor *, pspdef_t *);
+void A_JabDagger (AActor *);
 
 class APunchDagger : public AStrifeWeapon
 {
 	DECLARE_ACTOR (APunchDagger, AStrifeWeapon)
-public:
-	weapontype_t OldStyleID () const;
-
-	static FWeaponInfo WeaponInfo;
 };
 
 FState APunchDagger::States[] =
@@ -115,36 +110,68 @@ FState APunchDagger::States[] =
 	S_NORMAL (PNCH, 'B',	5, A_ReFire 			, &States[S_PUNCH])
 };
 
-FWeaponInfo APunchDagger::WeaponInfo =
-{
-	WIF_NOALERT,
-	am_noammo,
-	am_noammo,
-	1,
-	0,
-	&States[S_PUNCHUP],
-	&States[S_PUNCHDOWN],
-	&States[S_PUNCH],
-	&States[S_PUNCH1],
-	&States[S_PUNCH1],
-	NULL,
-	NULL,
-	100,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(APunchDagger),
-	-1
-};
-
 IMPLEMENT_ACTOR (APunchDagger, Strife, -1, 0)
+	PROP_Weapon_SelectionOrder (3900)
+	PROP_Weapon_Flags (WIF_NOALERT)
+	PROP_Weapon_UpState (S_PUNCHUP)
+	PROP_Weapon_DownState (S_PUNCHDOWN)
+	PROP_Weapon_ReadyState (S_PUNCH)
+	PROP_Weapon_AtkState (S_PUNCH1)
+	PROP_Weapon_HoldAtkState (S_PUNCH1)
 END_DEFAULTS
 
-WEAPON1 (wp_dagger, APunchDagger)
+//============================================================================
+//
+// P_DaggerAlert
+//
+//============================================================================
 
-weapontype_t APunchDagger::OldStyleID () const
+void P_DaggerAlert (AActor *target, AActor *emitter)
 {
-	return wp_dagger;
+	AActor *looker;
+	sector_t *sec = emitter->Sector;
+
+	if (emitter->LastHeard != NULL)
+		return;
+	if (emitter->health <= 0)
+		return;
+	if (!(emitter->flags3 & MF3_ISMONSTER))
+		return;
+	if (emitter->flags4 & MF4_INCOMBAT)
+		return;
+	emitter->flags4 |= MF4_INCOMBAT;
+
+	emitter->target = target;
+	if (emitter->PainState != NULL)
+	{
+		emitter->SetState (emitter->PainState);
+	}
+
+	for (looker = sec->thinglist; looker != NULL; looker = looker->snext)
+	{
+		if (looker == emitter || looker == target)
+			continue;
+
+		if (looker->health <= 0)
+			continue;
+
+		if (!(looker->flags4 & MF4_SEESDAGGERS))
+			continue;
+
+		if (!(looker->flags4 & MF4_INCOMBAT))
+		{
+			if (!P_CheckSight (looker, target) && !P_CheckSight (looker, emitter))
+				continue;
+
+			looker->target = target;
+			if (looker->SeeSound)
+			{
+				S_SoundID (looker, CHAN_VOICE, looker->SeeSound, 1, ATTN_NORM);
+			}
+			looker->SetState (looker->SeeState);
+			looker->flags4 |= MF4_INCOMBAT;
+		}
+	}
 }
 
 //============================================================================
@@ -153,31 +180,24 @@ weapontype_t APunchDagger::OldStyleID () const
 //
 //============================================================================
 
-void A_JabDagger (AActor *actor, pspdef_t *psp)
+void A_JabDagger (AActor *actor)
 {
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
-	fixed_t		somestat;
+	int			power;
 
-	// somestat is presumably in the range 0-100, as a fixed-point number
-	// somestat = (int @ player+0x131);
-	somestat = FRACUNIT;
+	power = actor->player->stamina / 10;
+	damage = (pr_jabdagger() & (power + 7)) * (power + 2);
 
-	// Is this right? You have a chance of doing 0 damage!
-	// Right or wrong, this is what it looks like it's doing.
-	somestat = (somestat >> FRACBITS) / 10;
-	damage = (pr_jabdagger() & (somestat + 7)) * (somestat + 2);
-
-	if (actor->player->powers[pw_strength])
+	if (actor->FindInventory<APowerStrength>())
 	{
 		damage *= 10;
 	}
 
 	angle = actor->angle + (pr_jabdagger.Random2() << 18);
 	pitch = P_AimLineAttack (actor, angle, 80*FRACUNIT);
-	PuffType = RUNTIME_CLASS(AStrifeSpark);
-	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage);
+	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, RUNTIME_CLASS(AStrifeSpark));
 
 	// turn to face target
 	if (linetarget)
@@ -190,7 +210,7 @@ void A_JabDagger (AActor *actor, pspdef_t *psp)
 										linetarget->x,
 										linetarget->y);
 		actor->flags |= MF_JUSTATTACKED;
-		// Sys1eae0 (actor->player, linetarget);
+		P_DaggerAlert (actor, linetarget);
 	}
 	else
 	{
@@ -242,7 +262,7 @@ void A_AlertMonsters (AActor *self)
 {
 	if (self->target != NULL && self->target->player != NULL)
 	{
-		P_NoiseAlert (self, self->target);
+		P_NoiseAlert (self->target, self);
 	}
 }
 
@@ -267,6 +287,7 @@ IMPLEMENT_ACTOR (AElectricBolt, Strife, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_StrifeType (102)
 	PROP_SeeSound ("misc/swish")
 	PROP_ActiveSound ("misc/swish")
 	PROP_DeathSound ("weapons/xbowhit")
@@ -277,6 +298,8 @@ END_DEFAULTS
 class APoisonBolt : public AActor
 {
 	DECLARE_ACTOR (APoisonBolt, AActor)
+public:
+	int DoSpecialDamage (AActor *target, int damage);
 };
 
 FState APoisonBolt::States[] =
@@ -296,9 +319,19 @@ IMPLEMENT_ACTOR (APoisonBolt, Strife, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_StrifeType (103)
 	PROP_SeeSound ("misc/swish")
 	PROP_ActiveSound ("misc/swish")
 END_DEFAULTS
+
+int APoisonBolt::DoSpecialDamage (AActor *target, int damage)
+{
+	if (target->flags & MF_NOBLOOD)
+	{
+		return -1;
+	}
+	return target->health + 10;
+}
 
 // Strife's Crossbow --------------------------------------------------------
 
@@ -312,10 +345,6 @@ class AStrifeCrossbow : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AStrifeCrossbow, AStrifeWeapon)
 public:
-	weapontype_t OldStyleID() const;
-	static FWeaponInfo WeaponInfo;
-	bool TryPickup (AActor *toucher);
-protected:
 	const char *PickupMessage ()
 	{
 		return "You picked up the crossbow";
@@ -374,87 +403,52 @@ FState AStrifeCrossbow::States[] =
 };
 
 // The electric version
-FWeaponInfo AStrifeCrossbow::WeaponInfo =
-{
-	WIF_NOALERT,
-	am_electricbolt,
-	am_electricbolt,
-	1,
-	8,
-	&States[S_EXBOWUP],
-	&States[S_EXBOWDOWN],
-	&States[S_EXBOW],
-	&States[S_EXBOWATK],
-	&States[S_EXBOWATK],
-	NULL,
-	RUNTIME_CLASS(AStrifeCrossbow),
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AStrifeCrossbow),
-	-1
-};
-
-WEAPON1 (wp_electricxbow, AStrifeCrossbow)
 
 IMPLEMENT_ACTOR (AStrifeCrossbow, Strife, 2001, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_StrifeType (194)
+	PROP_StrifeTeaserType (188)
+
+	PROP_Weapon_SelectionOrder (1200)
+	PROP_Weapon_Flags (WIF_NOALERT)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (8)
+	PROP_Weapon_UpState (S_EXBOWUP)
+	PROP_Weapon_DownState (S_EXBOWDOWN)
+	PROP_Weapon_ReadyState (S_EXBOW)
+	PROP_Weapon_AtkState (S_EXBOWATK)
+	PROP_Weapon_HoldAtkState (S_EXBOWATK)
+	PROP_Weapon_MoveCombatDist (24000000)
+	PROP_Weapon_AmmoType1 ("ElectricBolts")
+	PROP_Weapon_SisterType ("StrifeCrossbow2")
+	PROP_Weapon_ProjectileType ("ElectricBolt")
+
+	PROP_Inventory_Icon ("CBOWA0")
 	PROP_Tag ("crossbow")
 END_DEFAULTS
-
-weapontype_t AStrifeCrossbow::OldStyleID() const
-{
-	return wp_electricxbow;
-}
-
-bool AStrifeCrossbow::TryPickup (AActor *toucher)
-{
-	if (Super::TryPickup (toucher))
-	{
-		// You get the electric and poison crossbows at the same time
-		toucher->player->weaponowned[wp_poisonxbow] = true;
-		return true;
-	}
-	return false;
-}
 
 // Poison Crossbow ----------------------------------------------------------
 
 class AStrifeCrossbow2 : public AStrifeCrossbow
 {
 	DECLARE_STATELESS_ACTOR (AStrifeCrossbow2, AStrifeCrossbow)
-public:
-	static FWeaponInfo WeaponInfo;
 };
 
-// The poison version
-FWeaponInfo AStrifeCrossbow2::WeaponInfo =
-{
-	WIF_NOALERT,
-	am_poisonbolt,
-	am_poisonbolt,
-	1,
-	0,
-	&States[S_PXBOWUP],
-	&States[S_PXBOWDOWN],
-	&States[S_PXBOW],
-	&States[S_PXBOWATK],
-	&States[S_PXBOWATK],
-	NULL,
-	RUNTIME_CLASS(AStrifeCrossbow),
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AStrifeCrossbow2),
-	-1
-};
-
-WEAPON1 (wp_poisonxbow, AStrifeCrossbow2)
-
-IMPLEMENT_ABSTRACT_ACTOR (AStrifeCrossbow2)
+IMPLEMENT_STATELESS_ACTOR (AStrifeCrossbow2, Strife, -1, 0)
+	PROP_Weapon_SelectionOrder (2700)
+	PROP_Weapon_Flags (WIF_NOALERT)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_UpState (S_PXBOWUP)
+	PROP_Weapon_DownState (S_PXBOWDOWN)
+	PROP_Weapon_ReadyState (S_PXBOW)
+	PROP_Weapon_AtkState (S_PXBOWATK)
+	PROP_Weapon_HoldAtkState (S_PXBOWATK)
+	PROP_Weapon_AmmoType1 ("PoisonBolts")
+	PROP_Weapon_SisterType ("StrifeCrossbow")
+	PROP_Weapon_ProjectileType ("PoisonBolt")
+END_DEFAULTS
 
 
 //============================================================================
@@ -495,16 +489,20 @@ void A_ShowElectricFlash (AActor *self)
 
 void A_FireElectric (AActor *self)
 {
-	fixed_t somestat;
 	angle_t savedangle;
 
-	//somestat = (int @ player+0x1df)
-	somestat = FRACUNIT;
+	if (self->player == NULL)
+		return;
 
-	somestat = (somestat >> FRACBITS) * 5 / 100;
+	AWeapon *weapon = self->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+
 	savedangle = self->angle;
-	self->angle += pr_electric.Random2 () << (18 - somestat);
-	self->player->UseAmmo ();
+	self->angle += pr_electric.Random2 () << (18 - self->player->accuracy * 5 / 100);
 	self->player->mo->PlayAttacking2 ();
 	P_SpawnPlayerMissile (self, RUNTIME_CLASS(AElectricBolt));
 	self->angle = savedangle;
@@ -519,16 +517,20 @@ void A_FireElectric (AActor *self)
 
 void A_FirePoison (AActor *self)
 {
-	fixed_t somestat;
 	angle_t savedangle;
 
-	//somestat = (int @ player+0x1df)
-	somestat = FRACUNIT;
+	if (self->player == NULL)
+		return;
 
-	somestat = (somestat >> FRACBITS) * 5 / 100;
+	AWeapon *weapon = self->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+
 	savedangle = self->angle;
-	self->angle += pr_electric.Random2 () << (18 - somestat);
-	self->player->UseAmmo ();
+	self->angle += pr_electric.Random2 () << (18 - self->player->accuracy * 5 / 100);
 	self->player->mo->PlayAttacking2 ();
 	P_SpawnPlayerMissile (self, RUNTIME_CLASS(APoisonBolt));
 	self->angle = savedangle;
@@ -548,8 +550,12 @@ void A_XBowReFire (AActor *self)
 	if (player == NULL)
 		return;
 
-	P_CheckAmmo (player);
-	if (player->readyweapon == wp_electricxbow)
+	AWeapon *weapon = player->ReadyWeapon;
+	if (weapon == NULL)
+		return;
+
+	weapon->CheckAmmo (weapon->bAltFire ? AWeapon::AltFire : AWeapon::PrimaryFire, true);
+	if (weapon->GetClass() == RUNTIME_CLASS(AStrifeCrossbow))
 	{
 		P_SetPsprite (player, ps_flash, &AStrifeCrossbow::States[S_EXBOWARROWHEAD]);
 	}
@@ -561,13 +567,18 @@ class AAssaultGun : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AAssaultGun, AStrifeWeapon)
 public:
-	weapontype_t OldStyleID() const;
-	static FWeaponInfo WeaponInfo;
-protected:
 	const char *PickupMessage ()
 	{
 		return "You picked up the assault gun";
 	}
+	bool HandlePickup (AInventory *item);
+};
+
+class AAssaultGunStanding : public AAssaultGun
+{
+	DECLARE_ACTOR (AAssaultGunStanding, AAssaultGun)
+public:
+	AInventory *CreateCopy (AActor *other);
 };
 
 void A_FireAssaultGun (AActor *);
@@ -593,39 +604,52 @@ FState AAssaultGun::States[] =
 	S_NORMAL (RIFG, 'B',	2, NULL,				&States[S_ASSAULT])
 };
 
-FWeaponInfo AAssaultGun::WeaponInfo =
-{
-	0,
-	am_clip,
-	am_clip,
-	1,
-	20,
-	&States[S_ASSAULTUP],
-	&States[S_ASSAULTDOWN],
-	&States[S_ASSAULT],
-	&States[S_ASSAULTATK],
-	&States[S_ASSAULTATK],
-	NULL,
-	RUNTIME_CLASS(AAssaultGun),
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AAssaultGun),
-	-1
-};
-
-WEAPON1 (wp_assaultgun, AAssaultGun)
-
 IMPLEMENT_ACTOR (AAssaultGun, Strife, 2002, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_StrifeType (188)
+	PROP_StrifeTeaserType (182)
+
+	PROP_Weapon_SelectionOrder (600)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (20)
+	PROP_Weapon_UpState (S_ASSAULTUP)
+	PROP_Weapon_DownState (S_ASSAULTDOWN)
+	PROP_Weapon_ReadyState (S_ASSAULT)
+	PROP_Weapon_AtkState (S_ASSAULTATK)
+	PROP_Weapon_HoldAtkState (S_ASSAULTATK)
+	PROP_Weapon_MoveCombatDist (27000000)
+	PROP_Weapon_AmmoType1 ("ClipOfBullets")
+
+	PROP_Inventory_Icon ("RIFLA0")
 	PROP_Tag ("assault_gun")
 END_DEFAULTS
 
-weapontype_t AAssaultGun::OldStyleID() const
+//============================================================================
+//
+// AAssaultGun :: HandlePickup
+//
+// Picking up the standing assault gun is the same as picking up a regular
+// one.
+//
+//============================================================================
+
+bool AAssaultGun::HandlePickup (AInventory *item)
 {
-	return wp_assaultgun;
+	if (item->GetClass() == RUNTIME_CLASS(AAssaultGunStanding) ||
+		item->GetClass() == GetClass())
+	{
+		if (static_cast<AWeapon *>(item)->PickupForAmmo (this))
+		{
+			item->ItemFlags |= IF_PICKUPGOOD;
+		}
+		return true;
+	}
+	if (Inventory != NULL)
+	{
+		return Inventory->HandlePickup (item);
+	}
+	return false;
 }
 
 //============================================================================
@@ -636,23 +660,18 @@ weapontype_t AAssaultGun::OldStyleID() const
 
 void P_StrifeGunShot (AActor *mo, bool accurate)
 {
-	fixed_t somestat;
 	angle_t angle;
 	int damage;
 
-	PuffType = RUNTIME_CLASS(AStrifePuff);
 	damage = 4*(pr_sgunshot()%3+1);
 	angle = mo->angle;
 
 	if (mo->player != NULL && !accurate)
 	{
-		//somestat = (int @ player+0x1df)
-		somestat = FRACUNIT;
-
-		angle += pr_sgunshot.Random2() << (20 - (somestat >> FRACBITS) * 5 / 100);
+		angle += pr_sgunshot.Random2() << (20 - mo->player->accuracy * 5 / 100);
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, RUNTIME_CLASS(AStrifePuff));
 }
 
 //============================================================================
@@ -669,11 +688,13 @@ void A_FireAssaultGun (AActor *self)
 
 	if (self->player != NULL)
 	{
-		self->player->mo->PlayAttacking2 ();
-		if (!self->player->UseAmmo (true))
+		AWeapon *weapon = self->player->ReadyWeapon;
+		if (weapon != NULL)
 		{
-			return;
+			if (!weapon->DepleteAmmo (weapon->bAltFire))
+				return;
 		}
+		self->player->mo->PlayAttacking2 ();
 		accurate = !self->player->refire;
 	}
 	else
@@ -687,11 +708,6 @@ void A_FireAssaultGun (AActor *self)
 
 // Standing variant of the assault gun --------------------------------------
 
-class AAssaultGunStanding : public AAssaultGun
-{
-	DECLARE_ACTOR (AAssaultGunStanding, AAssaultGun)
-};
-
 FState AAssaultGunStanding::States[] =
 {
 	S_NORMAL (RIFL, 'B',   -1, NULL,				&States[0]),
@@ -699,7 +715,28 @@ FState AAssaultGunStanding::States[] =
 
 IMPLEMENT_ACTOR (AAssaultGunStanding, Strife, 2006, 0)
 	PROP_SpawnState (0)
+	PROP_StrifeType (189)
+	PROP_StrifeTeaserType (183)
+	// "pulse_rifle" in the Teaser
 END_DEFAULTS
+
+//============================================================================
+//
+// AAssaultGunStanding :: CreateCopy
+//
+// This is just a different look for the standard assault gun. It is not a
+// gun in its own right, so give the player an AssaultGun, not this.
+//
+//============================================================================
+
+AInventory *AAssaultGunStanding::CreateCopy (AActor *other)
+{
+	AAssaultGun *copy = Spawn<AAssaultGun> (0,0,0);
+	copy->AmmoGive1 = AmmoGive1;
+	copy->AmmoGive2 = AmmoGive2;
+	GoAwayAndDie ();
+	return copy;
+}
 
 // Mini-Missile Launcher ----------------------------------------------------
 
@@ -709,9 +746,6 @@ class AMiniMissileLauncher : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AMiniMissileLauncher, AStrifeWeapon)
 public:
-	weapontype_t OldStyleID() const;
-	static FWeaponInfo WeaponInfo;
-protected:
 	const char *PickupMessage ()
 	{
 		return "You picked up the mini missile launcher";
@@ -741,40 +775,26 @@ FState AMiniMissileLauncher::States[] =
 	S_NORMAL (MMIS, 'F',	0, A_ReFire,			&States[S_MMISSILE])
 };
 
-FWeaponInfo AMiniMissileLauncher::WeaponInfo =
-{
-	0,
-	am_misl,
-	am_misl,
-	1,
-	8,
-	&States[S_MMISSILEUP],
-	&States[S_MMISSILEDOWN],
-	&States[S_MMISSILE],
-	&States[S_MMISSILEATK],
-	&States[S_MMISSILEATK],
-	NULL,
-	RUNTIME_CLASS(AMiniMissileLauncher),
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AMiniMissileLauncher),
-	-1
-};
-
-WEAPON1 (wp_minimissile, AMiniMissileLauncher)
-
 IMPLEMENT_ACTOR (AMiniMissileLauncher, Strife, 2003, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-	PROP_Tag ("mini_missile_launcher")
-END_DEFAULTS
+	PROP_StrifeType (192)
+	PROP_StrifeTeaserType (186)
 
-weapontype_t AMiniMissileLauncher::OldStyleID() const
-{
-	return wp_minimissile;
-}
+	PROP_Weapon_SelectionOrder (1800)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (8)
+	PROP_Weapon_UpState (S_MMISSILEUP)
+	PROP_Weapon_DownState (S_MMISSILEDOWN)
+	PROP_Weapon_ReadyState (S_MMISSILE)
+	PROP_Weapon_AtkState (S_MMISSILEATK)
+	PROP_Weapon_HoldAtkState (S_MMISSILEATK)
+	PROP_Weapon_MoveCombatDist (18350080)
+	PROP_Weapon_AmmoType1 ("MiniMissiles")
+
+	PROP_Inventory_Icon ("MMSLA0")
+	PROP_Tag ("mini_missile_launcher")	// "missile_gun" in the Teaser
+END_DEFAULTS
 
 // Rocket Trail -------------------------------------------------------------
 
@@ -795,8 +815,9 @@ FState ARocketTrail::States[] =
 IMPLEMENT_ACTOR (ARocketTrail, Strife, -1, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Alpha (HX_SHADOW)
+	PROP_Alpha (TRANSLUC25)
 	PROP_RenderStyle (STYLE_Translucent)
+	PROP_StrifeType (51)
 	PROP_SeeSound ("misc/missileinflight")
 END_DEFAULTS
 
@@ -842,6 +863,7 @@ IMPLEMENT_ACTOR (AMiniMissile, Strife, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_StrifeType (99)
 	PROP_SeeSound ("weapons/minimissile")
 	PROP_DeathSound ("weapons/minimissilehit")
 END_DEFAULTS
@@ -855,16 +877,21 @@ END_DEFAULTS
 void A_FireMiniMissile (AActor *self)
 {
 	player_t *player = self->player;
-	fixed_t somestat;
 	angle_t savedangle;
 
-	//somestat = (int @ player+0x1df);
-	somestat = FRACUNIT;
+	if (self->player == NULL)
+		return;
+
+	AWeapon *weapon = self->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 
 	savedangle = self->angle;
-	self->angle += pr_minimissile.Random2() << (19 - (somestat >> FRACBITS) * 5 / 100);
+	self->angle += pr_minimissile.Random2() << (19 - player->accuracy * 5 / 100);
 	player->mo->PlayAttacking2 ();
-	player->UseAmmo ();
 	P_SpawnPlayerMissile (self, RUNTIME_CLASS(AMiniMissile));
 	self->angle = savedangle;
 }
@@ -880,8 +907,7 @@ void A_RocketInFlight (AActor *self)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	PuffType = RUNTIME_CLASS(AStrifePuff);
-	P_SpawnPuff (self->x, self->y, self->z, self->angle - ANGLE_180, 2);
+	P_SpawnPuff (RUNTIME_CLASS(AStrifePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, true);
 	trail = Spawn<ARocketTrail> (self->x - self->momx, self->y - self->momy, self->z);
 	if (trail != NULL)
 	{
@@ -897,9 +923,6 @@ class AFlameThrower : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AFlameThrower, AStrifeWeapon)
 public:
-	weapontype_t OldStyleID() const;
-	static FWeaponInfo WeaponInfo;
-protected:
 	const char *PickupMessage ()
 	{
 		return "You picked up the flame thrower";
@@ -925,40 +948,50 @@ FState AFlameThrower::States[] =
 	S_NORMAL (FLMF, 'B', 3, A_ReFire,		&States[S_FLAMER])
 };
 
-FWeaponInfo AFlameThrower::WeaponInfo =
-{
-	0,
-	am_cell,
-	am_cell,
-	1,
-	40,
-	&States[S_FLAMERUP],
-	&States[S_FLAMERDOWN],
-	&States[S_FLAMER],
-	&States[S_FLAMERATK],
-	&States[S_FLAMERATK],
-	NULL,
-	RUNTIME_CLASS(AFlameThrower),
-	150,
-	0,
-	"weapons/flameidle",
-	"weapons/flameidle",
-	RUNTIME_CLASS(AFlameThrower),
-	-1
-};
-
-WEAPON1 (wp_flamethrower, AFlameThrower)
-
 IMPLEMENT_ACTOR (AFlameThrower, Strife, 2005, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_StrifeType (190)
+	PROP_StrifeTeaserType (184)
+
+	PROP_Weapon_SelectionOrder (2100)
+	PROP_Weapon_Flags (WIF_BOT_MELEE)
+	PROP_Weapon_Kickback (0)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (40)
+	PROP_Weapon_UpState (S_FLAMERUP)
+	PROP_Weapon_DownState (S_FLAMERDOWN)
+	PROP_Weapon_ReadyState (S_FLAMER)
+	PROP_Weapon_AtkState (S_FLAMERATK)
+	PROP_Weapon_HoldAtkState (S_FLAMERATK)
+	PROP_Weapon_UpSound ("weapons/flameidle")
+	PROP_Weapon_ReadySound ("weapons/flameidle")
+	PROP_Weapon_AmmoType1 ("EnergyPod")
+	PROP_Weapon_ProjectileType ("FlameMissile")
+
+	PROP_Inventory_Icon ("FLAMA0")
 	PROP_Tag ("flame_thrower")
 END_DEFAULTS
 
-weapontype_t AFlameThrower::OldStyleID () const
+// Flame Thrower Parts ------------------------------------------------------
+
+class AFlameThrowerParts : AInventory
 {
-	return wp_flamethrower;
-}
+	DECLARE_ACTOR (AFlameThrowerParts, AInventory)
+};
+
+FState AFlameThrowerParts::States[] =
+{
+	S_NORMAL (BFLM, 'A', -1, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (AFlameThrowerParts, Strife, -1, 0)
+	PROP_Flags (MF_SPECIAL)
+	PROP_StrifeType (191)
+	PROP_StrifeTeaserType (185)
+	PROP_Inventory_Icon ("I_BFLM")
+	PROP_Tag ("flame_thrower_parts")
+END_DEFAULTS
 
 // Flame Thrower Projectile -------------------------------------------------
 
@@ -1021,8 +1054,13 @@ void A_FireFlamer (AActor *self)
 
 	if (player != NULL)
 	{
+		AWeapon *weapon = self->player->ReadyWeapon;
+		if (weapon != NULL)
+		{
+			if (!weapon->DepleteAmmo (weapon->bAltFire))
+				return;
+		}
 		player->mo->PlayAttacking2 ();
-		player->UseAmmo ();
 	}
 
 	self->angle += pr_flamethrower.Random2() << 18;
@@ -1035,19 +1073,15 @@ void A_FireFlamer (AActor *self)
 
 // Mauler -------------------------------------------------------------------
 
-void A_FireMauler1 (AActor *, pspdef_t *);
-void A_FireMauler2Pre (AActor *, pspdef_t *);
-void A_FireMauler2 (AActor *, pspdef_t *);
+void A_FireMauler1 (AActor *);
+void A_FireMauler2Pre (AActor *);
+void A_FireMauler2 (AActor *);
 void A_MaulerTorpedoWave (AActor *);
 
 class AMauler : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AMauler, AStrifeWeapon)
 public:
-	weapontype_t OldStyleID() const;
-	static FWeaponInfo WeaponInfo;
-	bool TryPickup (AActor *toucher);
-protected:
 	const char *PickupMessage ()
 	{
 		return "You picked up the mauler";
@@ -1094,96 +1128,62 @@ FState AMauler::States[] =
 	S_NORMAL (MAUL, 'I',  1, A_Raise,			&States[S_MAULER2UP]),
 
 #define S_MAULER2ATK (S_MAULER2UP+1)
-	S_NORMAL (MAUL, 'J', 20, A_FireMauler2Pre,	&States[S_MAULER2ATK+1]),
-	S_BRIGHT (BLSF, 'A', 10, A_Light1,			&States[S_MAULER2ATK+2]),
-	S_BRIGHT (MAUL, 'B', 10, A_FireMauler2,		&States[S_MAULER2ATK+3]),
-	S_NORMAL (MAUL, 'C',  2, NULL,				&States[S_MAULER2ATK+4]),
-	S_NORMAL (MAUL, 'D',  2, A_Light0,			&States[S_MAULER2ATK+5]),
+	S_NORMAL (MAUL, 'I', 20, A_FireMauler2Pre,	&States[S_MAULER2ATK+1]),
+	S_NORMAL (MAUL, 'J', 10, A_Light1,			&States[S_MAULER2ATK+2]),
+	S_BRIGHT (BLSF, 'A', 10, A_FireMauler2,		&States[S_MAULER2ATK+3]),
+	S_BRIGHT (MAUL, 'B', 10, A_Light2,			&States[S_MAULER2ATK+4]),
+	S_NORMAL (MAUL, 'C',  2, NULL,				&States[S_MAULER2ATK+5]),
+	S_NORMAL (MAUL, 'D',  2, A_Light0,			&States[S_MAULER2ATK+6]),
 	S_NORMAL (MAUL, 'E',  2, A_ReFire,			&States[S_MAULER2]),
 };
 
 // The scatter version
-FWeaponInfo AMauler::WeaponInfo =
-{
-	0,
-	am_cell,
-	am_cell,
-	20,
-	40,
-	&States[S_MAULER1UP],
-	&States[S_MAULER1DOWN],
-	&States[S_MAULER1],
-	&States[S_MAULER1ATK],
-	&States[S_MAULER1ATK],
-	NULL,
-	RUNTIME_CLASS(AMauler),
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AMauler),
-	-1
-};
-
-WEAPON1 (wp_maulerscatter, AMauler)
 
 IMPLEMENT_ACTOR (AMauler, Strife, 2004, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-	PROP_Tag ("mauler")
+	PROP_StrifeType (193)
+	PROP_StrifeTeaserType (187)
+
+	PROP_Weapon_SelectionOrder (300)
+	PROP_Weapon_AmmoUse1 (20)
+	PROP_Weapon_AmmoGive1 (40)
+	PROP_Weapon_UpState (S_MAULER1UP)
+	PROP_Weapon_DownState (S_MAULER1DOWN)
+	PROP_Weapon_ReadyState (S_MAULER1)
+	PROP_Weapon_AtkState (S_MAULER1ATK)
+	PROP_Weapon_HoldAtkState (S_MAULER1ATK)
+	PROP_Weapon_MoveCombatDist (15000000)
+	PROP_Weapon_AmmoType1 ("EnergyPod")
+	PROP_Weapon_SisterType ("Mauler2")
+
+	PROP_Inventory_Icon ("TRPDA0")
+	PROP_Tag ("mauler")		// "blaster" in the Teaser
 END_DEFAULTS
-
-weapontype_t AMauler::OldStyleID() const
-{
-	return wp_maulerscatter;
-}
-
-bool AMauler::TryPickup (AActor *toucher)
-{
-	if (Super::TryPickup (toucher))
-	{
-		// You get the scatter and torpedo version at the same time
-		toucher->player->weaponowned[wp_maulertorpedo] = true;
-		return true;
-	}
-	return false;
-}
 
 // Mauler Torpedo version ---------------------------------------------------
 
 class AMauler2 : public AMauler
 {
 	DECLARE_STATELESS_ACTOR (AMauler2, AMauler)
-public:
-	static FWeaponInfo WeaponInfo;
 };
 
 // The torpedo version
-FWeaponInfo AMauler2::WeaponInfo =
-{
-	0,
-	am_cell,
-	am_cell,
-	30,
-	0,
-	&States[S_MAULER2UP],
-	&States[S_MAULER2DOWN],
-	&States[S_MAULER2],
-	&States[S_MAULER2ATK],
-	&States[S_MAULER2ATK],
-	NULL,
-	RUNTIME_CLASS(AMauler),
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AMauler2),
-	-1
-};
 
-WEAPON1 (wp_maulertorpedo, AMauler2)
-
-IMPLEMENT_ABSTRACT_ACTOR (AMauler2)
+IMPLEMENT_STATELESS_ACTOR (AMauler2, Strife, -1, 0)
+	PROP_Weapon_SelectionOrder (3300)
+	PROP_Weapon_AmmoUse1 (30)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_UpState (S_MAULER2UP)
+	PROP_Weapon_DownState (S_MAULER2DOWN)
+	PROP_Weapon_ReadyState (S_MAULER2)
+	PROP_Weapon_AtkState (S_MAULER2ATK)
+	PROP_Weapon_HoldAtkState (S_MAULER2ATK)
+	PROP_Weapon_MoveCombatDist (10000000)
+	PROP_Weapon_AmmoType1 ("EnergyPod")
+	PROP_Weapon_SisterType ("Mauler")
+	PROP_Weapon_ProjectileType ("MaulerTorpedo")
+END_DEFAULTS
 
 // Mauler "Bullet" Puff -----------------------------------------------------
 
@@ -1206,6 +1206,8 @@ FState AMaulerPuff::States[] =
 IMPLEMENT_ACTOR (AMaulerPuff, Strife, -1, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Flags2 (MF2_ELECTRICDAMAGE)
+	PROP_Flags3 (MF3_PUFFONACTORS)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
 
@@ -1238,7 +1240,7 @@ IMPLEMENT_ACTOR (AMaulerTorpedo, Strife, -1, 0)
 	PROP_HeightFixed (8)
 	PROP_Damage (1)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_ELECTRICDAMAGE)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_SeeSound ("weapons/mauler2fire")
@@ -1267,7 +1269,7 @@ IMPLEMENT_ACTOR (AMaulerTorpedoWave, Strife, -1, 0)
 	PROP_HeightFixed (13)
 	PROP_Damage (10)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_ELECTRICDAMAGE)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
@@ -1279,24 +1281,26 @@ END_DEFAULTS
 // Hey! This is exactly the same as a super shotgun except for the sound
 // and the bullet puffs and the disintegration death.
 //
-// Note: Disintegration death not done yet.
-//
 //============================================================================
 
-void A_FireMauler1 (AActor *self, pspdef_t *)
+void A_FireMauler1 (AActor *self)
 {
 	if (self->player != NULL)
 	{
-		self->player->UseAmmo ();
+		AWeapon *weapon = self->player->ReadyWeapon;
+		if (weapon != NULL)
+		{
+			if (!weapon->DepleteAmmo (weapon->bAltFire))
+				return;
+		}
+		// Strife apparently didn't show the player shooting. Let's fix that.
+		self->player->mo->PlayAttacking2 ();
 	}
 
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler1", 1, ATTN_NORM);
 
-	// Strife apparently didn't show the player shooting. Let's fix that.
-	self->player->mo->PlayAttacking2 ();
 
 	P_BulletSlope (self);
-	PuffType = RUNTIME_CLASS(AMaulerPuff);
 
 	for (int i = 0; i < 20; ++i)
 	{
@@ -1304,11 +1308,11 @@ void A_FireMauler1 (AActor *self, pspdef_t *)
 		angle_t angle = self->angle + (pr_mauler1.Random2() << 19);
 		int pitch = bulletpitch + (pr_mauler1.Random2() * 332063);
 		
-		// Strife used a range of 2112 units for the mauler, apparently as
-		// a signal to use slightly different behavior, such as the puff.
-		// ZDoom's default range is longer than this, so let's not handicap
-		// it by being too faithful to the original.
-		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage);
+		// Strife used a range of 2112 units for the mauler to signal that
+		// it should use a different puff. ZDoom's default range is longer
+		// than this, so let's not handicap it by being too faithful to the
+		// original.
+		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, RUNTIME_CLASS(AMaulerPuff));
 	}
 }
 
@@ -1320,14 +1324,14 @@ void A_FireMauler1 (AActor *self, pspdef_t *)
 //
 //============================================================================
 
-void A_FireMauler2Pre (AActor *self, pspdef_t *psp)
+void A_FireMauler2Pre (AActor *self)
 {
 	S_Sound (self, CHAN_WEAPON, "weapons/mauler2charge", 1, ATTN_NORM);
 
-	if (self->player != NULL && psp != NULL)
+	if (self->player != NULL)
 	{
-		psp->sx += pr_mauler2.Random2() << 10;
-		psp->sy += pr_mauler2.Random2() << 10;
+		self->player->psprites[ps_weapon].sx += pr_mauler2.Random2() << 10;
+		self->player->psprites[ps_weapon].sy += pr_mauler2.Random2() << 10;
 	}
 }
 
@@ -1339,12 +1343,17 @@ void A_FireMauler2Pre (AActor *self, pspdef_t *psp)
 //
 //============================================================================
 
-void A_FireMauler2 (AActor *self, pspdef_t *)
+void A_FireMauler2 (AActor *self)
 {
 	if (self->player != NULL)
 	{
+		AWeapon *weapon = self->player->ReadyWeapon;
+		if (weapon != NULL)
+		{
+			if (!weapon->DepleteAmmo (weapon->bAltFire))
+				return;
+		}
 		self->player->mo->PlayAttacking2 ();
-		self->player->UseAmmo ();
 	}
 	P_SpawnPlayerMissile (self, RUNTIME_CLASS(AMaulerTorpedo));
 	P_DamageMobj (self, self, NULL, 20);
@@ -1452,6 +1461,7 @@ IMPLEMENT_ACTOR (AHEGrenade, Strife, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_DOOMBOUNCE)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_StrifeType (106)
 	PROP_SeeSound ("weapons/hegrenadeshoot")
 	PROP_DeathSound ("weapons/hegrenadebang")
 END_DEFAULTS
@@ -1497,6 +1507,7 @@ IMPLEMENT_ACTOR (APhosphorousGrenade, Strife, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_DOOMBOUNCE)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
+	PROP_StrifeType (107)
 	PROP_SeeSound ("weapons/phgrenadeshoot")
 	PROP_DeathSound ("weapons/phgrenadebang")
 END_DEFAULTS
@@ -1508,6 +1519,8 @@ void A_Burnination (AActor *self);
 class APhosphorousFire : public AActor
 {
 	DECLARE_ACTOR (APhosphorousFire, AActor)
+public:
+	int DoSpecialDamage (AActor *target, int damage);
 };
 
 FState APhosphorousFire::States[] =
@@ -1535,9 +1548,18 @@ IMPLEMENT_ACTOR (APhosphorousFire, Strife, -1, 0)
 	PROP_DeathState (S_BURNDWINDLE)
 	PROP_ReactionTime (120)
 	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_Flags2 (MF2_FIREDAMAGE)
+	PROP_Flags2 (MF2_FIREDAMAGE|MF2_NOTELEPORT)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
+
+int APhosphorousFire::DoSpecialDamage (AActor *target, int damage)
+{
+	if (target->flags & MF_NOBLOOD)
+	{
+		return damage / 2;
+	}
+	return Super::DoSpecialDamage (target, damage);
+}
 
 void A_SpawnBurn (AActor *self)
 {
@@ -1598,16 +1620,12 @@ void A_Burnination (AActor *self)
 
 // High-Explosive Grenade Launcher ------------------------------------------
 
-void A_FireGrenade (AActor *, pspdef_t *);
+void A_FireGrenade (AActor *);
 
 class AStrifeGrenadeLauncher : public AStrifeWeapon
 {
 	DECLARE_ACTOR (AStrifeGrenadeLauncher, AStrifeWeapon)
 public:
-	weapontype_t OldStyleID() const;
-	static FWeaponInfo WeaponInfo;
-	bool TryPickup (AActor *toucher);
-protected:
 	const char *PickupMessage ()
 	{
 		return "You picked up the Grenade launcher";
@@ -1663,87 +1681,51 @@ FState AStrifeGrenadeLauncher::States[] =
 	S_BRIGHT (GREF, 'D',	5, A_Light2,				&AWeapon::States[S_LIGHTDONE]),
 };
 
-FWeaponInfo AStrifeGrenadeLauncher::WeaponInfo =
-{
-	0,
-	am_hegrenade,
-	am_hegrenade,
-	1,
-	8,
-	&States[S_HEGRENADE_UP],
-	&States[S_HEGRENADE_DOWN],
-	&States[S_HEGRENADE],
-	&States[S_HEGRENADE_ATK],
-	&States[S_HEGRENADE_ATK],
-	&States[S_HEGRENADE_FLASH],
-	RUNTIME_CLASS(AStrifeGrenadeLauncher),
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AStrifeGrenadeLauncher),
-	-1
-};
-
-WEAPON1 (wp_hegrenadelauncher, AStrifeGrenadeLauncher)
-
 IMPLEMENT_ACTOR (AStrifeGrenadeLauncher, Strife, 154, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_HEPICKUP)
+	PROP_StrifeType (195)
+	PROP_StrifeTeaserType (189)
+
+	PROP_Weapon_SelectionOrder (2400)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (8)
+	PROP_Weapon_UpState (S_HEGRENADE_UP)
+	PROP_Weapon_DownState (S_HEGRENADE_DOWN)
+	PROP_Weapon_ReadyState (S_HEGRENADE)
+	PROP_Weapon_AtkState (S_HEGRENADE_ATK)
+	PROP_Weapon_HoldAtkState (S_HEGRENADE_ATK)
+	PROP_Weapon_FlashState (S_HEGRENADE_FLASH)
+	PROP_Weapon_MoveCombatDist (18350080)
+	PROP_Weapon_AmmoType1 ("HEGrenadeRounds")
+	PROP_Weapon_SisterType ("StrifeGrenadeLauncher2")
+	PROP_Weapon_ProjectileType ("HEGrenade")
+
+	PROP_Inventory_Icon ("GRNDA0")
 	PROP_Tag ("Grenade_launcher")
 END_DEFAULTS
-
-weapontype_t AStrifeGrenadeLauncher::OldStyleID () const
-{
-	return wp_hegrenadelauncher;
-}
-
-bool AStrifeGrenadeLauncher::TryPickup (AActor *toucher)
-{
-	if (Super::TryPickup (toucher))
-	{
-		// You get the high-explosive and white phosphorous grenade
-		// launchers at the same time.
-		toucher->player->weaponowned[wp_phgrenadelauncher] = true;
-		return true;
-	}
-	return false;
-}
 
 // White Phosphorous Grenade Launcher ---------------------------------------
 
 class AStrifeGrenadeLauncher2 : public AStrifeGrenadeLauncher
 {
 	DECLARE_STATELESS_ACTOR (AStrifeGrenadeLauncher2, AStrifeGrenadeLauncher)
-public:
-	static FWeaponInfo WeaponInfo;
 };
 
-FWeaponInfo AStrifeGrenadeLauncher2::WeaponInfo =
-{
-	0,
-	am_phgrenade,
-	am_phgrenade,
-	1,
-	0,
-	&States[S_PHGRENADE_UP],
-	&States[S_PHGRENADE_DOWN],
-	&States[S_PHGRENADE],
-	&States[S_PHGRENADE_ATK],
-	&States[S_PHGRENADE_ATK],
-	&States[S_PHGRENADE_FLASH],
-	RUNTIME_CLASS(AStrifeGrenadeLauncher),
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AStrifeGrenadeLauncher2),
-	-1
-};
-
-WEAPON1 (wp_phgrenadelauncher, AStrifeGrenadeLauncher2)
-
-IMPLEMENT_ABSTRACT_ACTOR (AStrifeGrenadeLauncher2)
+IMPLEMENT_STATELESS_ACTOR (AStrifeGrenadeLauncher2, Strife, -1, 0)
+	PROP_Weapon_SelectionOrder (3200)
+	PROP_Weapon_AmmoUse1 (1)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_UpState (S_PHGRENADE_UP)
+	PROP_Weapon_DownState (S_PHGRENADE_DOWN)
+	PROP_Weapon_ReadyState (S_PHGRENADE)
+	PROP_Weapon_AtkState (S_PHGRENADE_ATK)
+	PROP_Weapon_HoldAtkState (S_PHGRENADE_ATK)
+	PROP_Weapon_FlashState (S_PHGRENADE_FLASH)
+	PROP_Weapon_AmmoType1 ("PhosphorusGrenadeRounds")
+	PROP_Weapon_SisterType ("StrifeGrenadeLauncher")
+	PROP_Weapon_ProjectileType ("PhosphorousGrenade")
+END_DEFAULTS
 
 //============================================================================
 //
@@ -1751,28 +1733,22 @@ IMPLEMENT_ABSTRACT_ACTOR (AStrifeGrenadeLauncher2)
 //
 //============================================================================
 
-void A_FireGrenade (AActor *self, pspdef_t *psp)
+void A_FireGrenade (AActor *self)
 {
 	TypeInfo *grenadetype;
 	player_t *player = self->player;
 	AActor *grenade;
 	angle_t an;
 	fixed_t tworadii;
-	FWeaponInfo *weapon;
+	AWeapon *weapon;
 
 	if (player == NULL)
 		return;
 
-	if (player->powers[pw_weaponlevel2])
-	{
-		weapon = wpnlev2info[player->readyweapon];
-	}
-	else
-	{
-		weapon = wpnlev1info[player->readyweapon];
-	}
+	if ((weapon = player->ReadyWeapon) == NULL)
+		return;
 
-	if (player->readyweapon == wp_hegrenadelauncher)
+	if (weapon->GetClass() == RUNTIME_CLASS(AStrifeGrenadeLauncher))
 	{
 		grenadetype = RUNTIME_CLASS(AHEGrenade);
 	}
@@ -1780,11 +1756,12 @@ void A_FireGrenade (AActor *self, pspdef_t *psp)
 	{
 		grenadetype = RUNTIME_CLASS(APhosphorousGrenade);
 	}
-	if (!player->UseAmmo ())
+	if (!weapon->DepleteAmmo (weapon->bAltFire))
 		return;
 
 	// Make it flash
-	P_SetPsprite (player, ps_flash, weapon->flashstate + (psp->state - weapon->atkstate));
+	P_SetPsprite (player, ps_flash, weapon->FlashState +
+		(player->psprites[ps_weapon].state - weapon->GetAtkState()));
 
 	self->z += 32*FRACUNIT;
 	grenade = P_SpawnSubMissile (self, grenadetype);
@@ -1804,7 +1781,7 @@ void A_FireGrenade (AActor *self, pspdef_t *psp)
 	grenade->x += FixedMul (finecosine[an], tworadii);
 	grenade->y += FixedMul (finesine[an], tworadii);
 
-	if (weapon->atkstate == psp->state)
+	if (weapon->GetAtkState() == player->psprites[ps_weapon].state)
 	{
 		an = self->angle - ANGLE_90;
 	}
@@ -1815,4 +1792,592 @@ void A_FireGrenade (AActor *self, pspdef_t *psp)
 	an >>= ANGLETOFINESHIFT;
 	grenade->x += FixedMul (finecosine[an], 15*FRACUNIT);
 	grenade->y += FixedMul (finesine[an], 15*FRACUNIT);
+}
+
+// The Almighty Sigil! ------------------------------------------------------
+
+void A_SelectPiece (AActor *);
+void A_SelectSigilView (AActor *);
+void A_SelectSigilDown (AActor *);
+void A_SelectSigilAttack (AActor *);
+void A_SigilCharge (AActor *);
+void A_FireSigil1 (AActor *);
+void A_FireSigil2 (AActor *);
+void A_FireSigil3 (AActor *);
+void A_FireSigil4 (AActor *);
+void A_FireSigil5 (AActor *);
+void A_LightInverse (AActor *);
+
+FState ASigil::States[] =
+{
+	S_NORMAL (SIGL, 'A',  0, NULL,					&States[1]),
+	S_NORMAL (SIGL, 'A', -1, A_SelectPiece,			NULL),
+	S_NORMAL (SIGL, 'B', -1, NULL,					NULL),
+	S_NORMAL (SIGL, 'C', -1, NULL,					NULL),
+	S_NORMAL (SIGL, 'D', -1, NULL,					NULL),
+	S_NORMAL (SIGL, 'E', -1, NULL,					NULL),
+
+#define S_SIGIL 6
+	S_BRIGHT (SIGH, 'A',  0, A_SelectSigilView,		&States[S_SIGIL+1]),
+	S_BRIGHT (SIGH, 'A',  1, A_WeaponReady,			&States[S_SIGIL+1]),
+	S_BRIGHT (SIGH, 'B',  1, A_WeaponReady,			&States[S_SIGIL+2]),
+	S_BRIGHT (SIGH, 'C',  1, A_WeaponReady,			&States[S_SIGIL+3]),
+	S_BRIGHT (SIGH, 'D',  1, A_WeaponReady,			&States[S_SIGIL+4]),
+	S_BRIGHT (SIGH, 'E',  1, A_WeaponReady,			&States[S_SIGIL+5]),
+
+#define S_SIGILDOWN (S_SIGIL+6)
+	S_BRIGHT (SIGH, 'A',  0, A_SelectSigilDown,		&States[S_SIGILDOWN+1]),
+	S_BRIGHT (SIGH, 'A',  1, A_Lower,				&States[S_SIGILDOWN+1]),
+	S_BRIGHT (SIGH, 'B',  1, A_Lower,				&States[S_SIGILDOWN+2]),
+	S_BRIGHT (SIGH, 'C',  1, A_Lower,				&States[S_SIGILDOWN+3]),
+	S_BRIGHT (SIGH, 'D',  1, A_Lower,				&States[S_SIGILDOWN+4]),
+	S_BRIGHT (SIGH, 'E',  1, A_Lower,				&States[S_SIGILDOWN+5]),
+
+#define S_SIGILUP (S_SIGILDOWN+6)
+	S_BRIGHT (SIGH, 'A',  0, A_SelectSigilView,		&States[S_SIGILUP+1]),
+	S_BRIGHT (SIGH, 'A',  1, A_Raise,				&States[S_SIGILUP+1]),
+	S_BRIGHT (SIGH, 'B',  1, A_Raise,				&States[S_SIGILUP+2]),
+	S_BRIGHT (SIGH, 'C',  1, A_Raise,				&States[S_SIGILUP+3]),
+	S_BRIGHT (SIGH, 'D',  1, A_Raise,				&States[S_SIGILUP+4]),
+	S_BRIGHT (SIGH, 'E',  1, A_Raise,				&States[S_SIGILUP+5]),
+
+#define S_SIGILATK (S_SIGILUP+6)
+	S_BRIGHT (SIGH, 'A',  0, A_SelectSigilAttack,	&States[S_SIGILATK+1]),
+
+	S_BRIGHT (SIGH, 'A', 18, A_SigilCharge,			&States[S_SIGILATK+2]),
+	S_BRIGHT (SIGH, 'A',  3, A_GunFlash,			&States[S_SIGILATK+3]),
+	S_NORMAL (SIGH, 'A', 10, A_FireSigil1,			&States[S_SIGILATK+4]),
+	S_NORMAL (SIGH, 'A',  5, NULL,					&States[S_SIGIL]),
+
+	S_BRIGHT (SIGH, 'B', 18, A_SigilCharge,			&States[S_SIGILATK+6]),
+	S_BRIGHT (SIGH, 'B',  3, A_GunFlash,			&States[S_SIGILATK+7]),
+	S_NORMAL (SIGH, 'B', 10, A_FireSigil2,			&States[S_SIGILATK+8]),
+	S_NORMAL (SIGH, 'B',  5, NULL,					&States[S_SIGIL]),
+
+	S_BRIGHT (SIGH, 'C', 18, A_SigilCharge,			&States[S_SIGILATK+10]),
+	S_BRIGHT (SIGH, 'C',  3, A_GunFlash,			&States[S_SIGILATK+11]),
+	S_NORMAL (SIGH, 'C', 10, A_FireSigil3,			&States[S_SIGILATK+12]),
+	S_NORMAL (SIGH, 'C',  5, NULL,					&States[S_SIGIL]),
+
+	S_BRIGHT (SIGH, 'D', 18, A_SigilCharge,			&States[S_SIGILATK+14]),
+	S_BRIGHT (SIGH, 'D',  3, A_GunFlash,			&States[S_SIGILATK+15]),
+	S_NORMAL (SIGH, 'D', 10, A_FireSigil4,			&States[S_SIGILATK+16]),
+	S_NORMAL (SIGH, 'D',  5, NULL,					&States[S_SIGIL]),
+
+	S_BRIGHT (SIGH, 'E', 18, A_SigilCharge,			&States[S_SIGILATK+18]),
+	S_BRIGHT (SIGH, 'E',  3, A_GunFlash,			&States[S_SIGILATK+19]),
+	S_NORMAL (SIGH, 'E', 10, A_FireSigil5,			&States[S_SIGILATK+20]),
+	S_NORMAL (SIGH, 'E',  5, NULL,					&States[S_SIGIL]),
+
+#define S_SIGILFLASH (S_SIGILATK+1+4*5)
+	S_BRIGHT (SIGF, 'A',  4, A_Light2,				&States[S_SIGILFLASH+1]),
+	S_BRIGHT (SIGF, 'B',  6, A_LightInverse,		&States[S_SIGILFLASH+2]),
+	S_BRIGHT (SIGF, 'C',  4, A_Light1,				&States[S_SIGILFLASH+3]),
+	S_BRIGHT (SIGF, 'C',  0, A_Light0,				NULL)
+};
+
+IMPLEMENT_ACTOR (ASigil, Strife, -1, 0)
+	PROP_Weapon_SelectionOrder (4000)
+	PROP_Weapon_UpState (S_SIGILUP)
+	PROP_Weapon_DownState (S_SIGILDOWN)
+	PROP_Weapon_ReadyState (S_SIGIL)
+	PROP_Weapon_AtkState (S_SIGILATK)
+	PROP_Weapon_HoldAtkState (S_SIGILATK)
+	PROP_Weapon_FlashState (S_SIGILFLASH)
+	PROP_Sigil_NumPieces (1)
+	PROP_SpawnState (0)
+	PROP_Flags (MF_SPECIAL)
+	PROP_Tag ("SIGIL")
+	PROP_Inventory_Icon ("I_SGL1")
+END_DEFAULTS
+
+// Sigil 1 ------------------------------------------------------------------
+
+class ASigil1 : public ASigil
+{
+	DECLARE_STATELESS_ACTOR (ASigil1, ASigil)
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASigil1, Strife, 77, 0)
+	PROP_Sigil_NumPieces (1)
+	PROP_StrifeType (196)
+	PROP_StrifeTeaserType (190)
+	PROP_Tag ("SIGIL")
+	PROP_Inventory_Icon ("I_SGL1")
+END_DEFAULTS
+
+// Sigil 2 ------------------------------------------------------------------
+
+class ASigil2 : public ASigil
+{
+	DECLARE_STATELESS_ACTOR (ASigil2, ASigil)
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASigil2, Strife, 78, 0)
+	PROP_Sigil_NumPieces (2)
+	PROP_StrifeType (197)
+	PROP_StrifeTeaserType (191)
+	PROP_Tag ("SIGIL")
+	PROP_Inventory_Icon ("I_SGL2")
+END_DEFAULTS
+
+// Sigil 3 ------------------------------------------------------------------
+
+class ASigil3 : public ASigil
+{
+	DECLARE_STATELESS_ACTOR (ASigil3, ASigil)
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASigil3, Strife, 79, 0)
+	PROP_Sigil_NumPieces (3)
+	PROP_StrifeType (198)
+	PROP_StrifeTeaserType (192)
+	PROP_Tag ("SIGIL")
+	PROP_Inventory_Icon ("I_SGL3")
+END_DEFAULTS
+
+// Sigil 4 ------------------------------------------------------------------
+
+class ASigil4 : public ASigil
+{
+	DECLARE_STATELESS_ACTOR (ASigil4, ASigil)
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASigil4, Strife, 80, 0)
+	PROP_Sigil_NumPieces (4)
+	PROP_StrifeType (199)
+	PROP_StrifeTeaserType (193)
+	PROP_Tag ("SIGIL")
+	PROP_Inventory_Icon ("I_SGL4")
+END_DEFAULTS
+
+// Sigil 5 ------------------------------------------------------------------
+
+class ASigil5 : public ASigil
+{
+	DECLARE_STATELESS_ACTOR (ASigil5, ASigil)
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASigil5, Strife, 81, 0)
+	PROP_Sigil_NumPieces (5)
+	PROP_StrifeType (200)
+	PROP_StrifeTeaserType (194)
+	PROP_Tag ("SIGIL")
+	PROP_Inventory_Icon ("I_SGL5")
+END_DEFAULTS
+
+//============================================================================
+//
+// ASigil :: Serialize
+//
+//============================================================================
+
+void ASigil::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << NumPieces << DownPieces;
+}
+
+//============================================================================
+//
+// ASigil :: HandlePickup
+//
+//============================================================================
+
+bool ASigil::HandlePickup (AInventory *item)
+{
+	if (item->IsKindOf (RUNTIME_CLASS(ASigil)))
+	{
+		int otherPieces = static_cast<ASigil*>(item)->NumPieces;
+		if (otherPieces > NumPieces)
+		{
+			item->ItemFlags |= IF_PICKUPGOOD;
+			Icon = item->Icon;
+			// If the player is holding the Sigil right now, drop it and bring
+			// it back with the new piece(s) in view.
+			if (Owner->player != NULL && Owner->player->ReadyWeapon == this)
+			{
+				DownPieces = NumPieces;
+				Owner->player->PendingWeapon = this;
+			}
+			NumPieces = otherPieces;
+		}
+		return true;
+	}
+	if (Inventory != NULL)
+	{
+		return Inventory->HandlePickup (item);
+	}
+	return NULL;
+}
+
+//============================================================================
+//
+// ASigil :: CreateCopy
+//
+//============================================================================
+
+AInventory *ASigil::CreateCopy (AActor *other)
+{
+	ASigil *copy = Spawn<ASigil> (0,0,0);
+	copy->Amount = Amount;
+	copy->MaxAmount = MaxAmount;
+	copy->NumPieces = NumPieces;
+	copy->Icon = Icon;
+	GoAwayAndDie ();
+	return copy;
+}
+
+//============================================================================
+//
+// ASigil :: PickupMessage
+//
+//============================================================================
+
+const char *ASigil::PickupMessage ()
+{
+	return "You picked up the SIGIL.";
+}
+
+//============================================================================
+//
+// A_SelectPiece
+//
+// Decide which sprite frame this Sigil should use as an item, based on how
+// many pieces it represents.
+//
+//============================================================================
+
+void A_SelectPiece (AActor *self)
+{
+	int pieces = MIN (static_cast<ASigil*>(self)->NumPieces, 5);
+
+	if (pieces > 1)
+	{
+		self->SetState (&ASigil::States[pieces]);
+	}
+}
+
+//============================================================================
+//
+// A_SelectSigilView
+//
+// Decide which first-person frame this Sigil should show, based on how many
+// pieces it represents. Strife did this by selecting a flash that looked like
+// the Sigil whenever you switched to it and at the end of an attack. I have
+// chosen to make the weapon sprite choose the correct frame and let the flash
+// be a regular flash. It means I need to use more states, but I think it's
+// worth it.
+//
+//============================================================================
+
+void A_SelectSigilView (AActor *self)
+{
+	int pieces;
+
+	if (self->player == NULL)
+	{
+		return;
+	}
+	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
+	P_SetPsprite (self->player, ps_weapon,
+		self->player->psprites[ps_weapon].state + pieces);
+}
+
+//============================================================================
+//
+// A_SelectSigilDown
+//
+// Same as A_SelectSigilView, except it uses DownPieces. This is so that when
+// you pick up a Sigil, the old one will drop and *then* change to the new
+// one.
+//
+//============================================================================
+
+void A_SelectSigilDown (AActor *self)
+{
+	int pieces;
+
+	if (self->player == NULL)
+	{
+		return;
+	}
+	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->DownPieces;
+	static_cast<ASigil*>(self->player->ReadyWeapon)->DownPieces = 0;
+	if (pieces == 0)
+	{
+		pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
+	}
+	P_SetPsprite (self->player, ps_weapon,
+		self->player->psprites[ps_weapon].state + pieces);
+}
+
+//============================================================================
+//
+// A_SelectSigilAttack
+//
+// Same as A_SelectSigilView, but used just before attacking.
+//
+//============================================================================
+
+void A_SelectSigilAttack (AActor *self)
+{
+	int pieces;
+
+	if (self->player == NULL)
+	{
+		return;
+	}
+	pieces = static_cast<ASigil*>(self->player->ReadyWeapon)->NumPieces;
+	P_SetPsprite (self->player, ps_weapon,
+		self->player->psprites[ps_weapon].state + 4*pieces - 3);
+}
+
+//============================================================================
+//
+// A_SigilCharge
+//
+//============================================================================
+
+void A_SigilCharge (AActor *self)
+{
+	S_Sound (self, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+	if (self->player != NULL)
+	{
+		self->player->extralight = 2;
+	}
+}
+
+//============================================================================
+//
+// A_LightInverse
+//
+//============================================================================
+
+void A_LightInverse (AActor *actor)
+{
+	if (actor->player != NULL)
+	{
+		actor->player->extralight = INT_MIN;
+	}
+}
+
+//============================================================================
+//
+// A_FireSigil1
+//
+//============================================================================
+
+void A_FireSigil1 (AActor *actor)
+{
+	AActor *spot;
+	player_t *player = actor->player;
+
+	if (player == NULL || player->ReadyWeapon == NULL)
+		return;
+
+	P_DamageMobj (actor, actor, NULL, 1*4);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+
+	P_BulletSlope (actor);
+	if (linetarget != NULL)
+	{
+		spot = Spawn<ASpectralLightningSpot> (linetarget->x, linetarget->y, ONFLOORZ);
+		if (spot != NULL)
+		{
+			spot->tracer = linetarget;
+		}
+	}
+	else
+	{
+		spot = Spawn<ASpectralLightningSpot> (actor->x, actor->y, actor->z);
+		if (spot != NULL)
+		{
+			spot->momx += 28 * finecosine[actor->angle >> ANGLETOFINESHIFT];
+			spot->momy += 28 * finesine[actor->angle >> ANGLETOFINESHIFT];
+		}
+	}
+	if (spot != NULL)
+	{
+		spot->health = -1;
+		spot->target = actor;
+	}
+}
+
+//============================================================================
+//
+// A_FireSigil2
+//
+//============================================================================
+
+void A_FireSigil2 (AActor *actor)
+{
+	AActor *spot;
+	player_t *player = actor->player;
+
+	if (player == NULL || player->ReadyWeapon == NULL)
+		return;
+
+	P_DamageMobj (actor, actor, NULL, 2*4);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+
+	spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningH1));
+	if (spot != NULL)
+	{
+		spot->health = -1;
+	}
+}
+
+//============================================================================
+//
+// A_FireSigil3
+//
+//============================================================================
+
+void A_FireSigil3 (AActor *actor)
+{
+	AActor *spot;
+	player_t *player = actor->player;
+	int i;
+
+	if (player == NULL || player->ReadyWeapon == NULL)
+		return;
+
+	P_DamageMobj (actor, actor, NULL, 3*4);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+
+	actor->angle -= ANGLE_90;
+	for (i = 0; i < 20; ++i)
+	{
+		actor->angle += ANGLE_180/20;
+		spot = P_SpawnSubMissile (actor, RUNTIME_CLASS(ASpectralLightningBall1));
+		if (spot != NULL)
+		{
+			spot->health = -1;
+			spot->z = actor->z + 32*FRACUNIT;
+		}
+	}
+	actor->angle -= (ANGLE_180/20)*10;
+}
+
+//============================================================================
+//
+// A_FireSigil4
+//
+//============================================================================
+
+void A_FireSigil4 (AActor *actor)
+{
+	AActor *spot;
+	player_t *player = actor->player;
+
+	if (player == NULL || player->ReadyWeapon == NULL)
+		return;
+
+	P_DamageMobj (actor, actor, NULL, 4*4);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+
+	P_BulletSlope (actor);
+	if (linetarget != NULL)
+	{
+		spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigV1));
+		if (spot != NULL)
+		{
+			spot->tracer = linetarget;
+			spot->health = -1;
+		}
+	}
+	else
+	{
+		spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigV1));
+		if (spot != NULL)
+		{
+			spot->momx += FixedMul (spot->Speed, finecosine[actor->angle >> ANGLETOFINESHIFT]);
+			spot->momy += FixedMul (spot->Speed, finesine[actor->angle >> ANGLETOFINESHIFT]);
+			spot->health = -1;
+		}
+	}
+}
+
+//============================================================================
+//
+// A_FireSigil5
+//
+//============================================================================
+
+void A_FireSigil5 (AActor *actor)
+{
+	AActor *spot;
+	player_t *player = actor->player;
+
+	if (player == NULL || player->ReadyWeapon == NULL)
+		return;
+
+	P_DamageMobj (actor, actor, NULL, 5*4);
+	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
+
+	spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigBall1));
+	if (spot != NULL)
+	{
+		spot->health = -1;
+	}
+}
+
+//============================================================================
+//
+// ASigil :: SpecialDropAction
+//
+// Monsters don't drop Sigil pieces. The Sigil pieces grab hold of the person
+// who killed the dropper and automatically enter their inventory. That's the
+// way it works if you believe Macil, anyway...
+//
+//============================================================================
+
+bool ASigil::SpecialDropAction (AActor *dropper)
+{
+	AActor *receiver = dropper->target;
+	ASigil *sigil;
+
+	if (receiver == NULL)
+	{
+		return false;
+	}
+	sigil = receiver->FindInventory<ASigil> ();
+	if (sigil == NULL)
+	{
+		int oldpieces = NumPieces;
+		int oldicon = Icon;
+		NumPieces = 1;
+		Icon = ((AInventory*)GetDefaultByType (RUNTIME_CLASS(ASigil1)))->Icon;
+		if (!this->TryPickup (receiver))
+		{
+			NumPieces = oldpieces;
+			return false;
+		}
+		sigil = this;
+	}
+	else
+	{
+		if (sigil->NumPieces < 5)
+		{
+			++sigil->NumPieces;
+			static const TypeInfo *const sigils[5] =
+			{
+				RUNTIME_CLASS(ASigil1),
+				RUNTIME_CLASS(ASigil2),
+				RUNTIME_CLASS(ASigil3),
+				RUNTIME_CLASS(ASigil4),
+				RUNTIME_CLASS(ASigil5)
+			};
+			sigil->Icon = ((AInventory*)GetDefaultByType (sigils[MAX(0,sigil->NumPieces-1)]))->Icon;
+			// If the player has the Sigil out, drop it and bring it back up.
+			if (sigil->Owner->player != NULL && sigil->Owner->player->ReadyWeapon == sigil)
+			{
+				sigil->Owner->player->PendingWeapon = sigil;
+				sigil->DownPieces = sigil->NumPieces - 1;
+			}
+		}
+		Destroy ();
+	}
+	return true;
 }

@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "doomtype.h"
 #include "doomstat.h"
 #include "v_font.h"
@@ -11,6 +13,7 @@
 #include "r_draw.h"
 #include "templates.h"
 #include "a_hexenglobal.h"
+#include "a_keys.h"
 
 class FManaBar : public FTexture
 {
@@ -22,7 +25,7 @@ public:
 	void Unload ();
 	bool CheckModified ();
 
-	void SetVial (FTexture *pic, int level);
+	void SetVial (FTexture *pic, AActor *actor, const TypeInfo *manaType);
 
 protected:
 	BYTE Pixels[5*24];
@@ -86,12 +89,14 @@ const BYTE *FManaBar::GetPixels ()
 	return Pixels;
 }
 
-void FManaBar::SetVial (FTexture *pic, int level)
+void FManaBar::SetVial (FTexture *pic, AActor *actor, const TypeInfo *manaType)
 {
-	if (level > 22)
-	{
-		level = 22;
-	}
+	int level;
+	AInventory *ammo;
+
+	ammo = actor->FindInventory (manaType);
+	level = ammo != NULL ? ammo->Amount : 0;
+	level = MIN (22*level/MAX_MANA, 22);
 	if (VialPic != pic || VialLevel != level)
 	{
 		VialPic = pic;
@@ -127,7 +132,8 @@ public:
 			"USEARTIB",	"USEARTIC",	"USEARTID",	"USEARTIE",	"KEYSLOT1",
 			"KEYSLOT2",	"KEYSLOT3",	"KEYSLOT4",	"KEYSLOT5",	"KEYSLOT6",
 			"KEYSLOT7",	"KEYSLOT8",	"KEYSLOT9",	"KEYSLOTA",	"KEYSLOTB",
-			"ARMSLOT1",	"ARMSLOT2",	"ARMSLOT3",	"ARMSLOT4",	"ARTIBOX"
+			"ARMSLOT1",	"ARMSLOT2",	"ARMSLOT3",	"ARMSLOT4",	"ARTIBOX",
+			"HAMOBACK"
 		};
 		static const char *classLumpNames[3][NUM_HEXENCLASSSB_IMAGES] =
 		{
@@ -164,17 +170,21 @@ public:
 		ClassImages[1].Init (classLumpNames[1], NUM_HEXENCLASSSB_IMAGES);
 		ClassImages[2].Init (classLumpNames[2], NUM_HEXENCLASSSB_IMAGES);
 
-		oldarti = 0;
+		oldarti = NULL;
 		oldartiCount = 0;
+		oldammo1 = oldammo2 = NULL;
+		oldammocount1 = oldammocount2 = -1;
 		oldfrags = -9999;
 		oldmana1 = -1;
 		oldmana2 = -1;
+		oldusemana1 = -1;
+		oldusemana2 = -1;
+		olddrawbars = -1;
 		oldarmor = -1;
 		oldhealth = -1;
 		oldlife = -1;
 		oldpieces = -1;
-		oldweapon = -1;
-		oldkeys = -1;
+		oldkeys[0] = oldkeys[1] = oldkeys[2] = oldkeys[3] = oldkeys[4] = NULL;
 
 		HealthMarker = 0;
 		ArtifactFlash = 0;
@@ -186,6 +196,9 @@ public:
 		HealthRefresh = 0;
 		Mana1Refresh = 0;
 		Mana2Refresh = 0;
+		AmmoRefresh = 0;
+		Ammo1Refresh = 0;
+		Ammo2Refresh = 0;
 	}
 
 	~FHexenStatusBar ()
@@ -252,15 +265,18 @@ public:
 					// Main interface
 					SB_state--;
 					DrawImage (Images[!automapactive ? imgSTATBAR : imgKEYBAR], 38, 0);
-					oldarti = 0;
+					oldarti = NULL;
+					oldammo1 = oldammo2 = NULL;
 					oldmana1 = -1;
 					oldmana2 = -1;
+					oldusemana1 = -1;
+					oldusemana2 = -1;
+					olddrawbars = -1;
 					oldarmor = -1;
 					oldpieces = -1;
 					oldfrags = -9999; //can't use -1, 'cuz of negative frags
 					oldlife = -1;
-					oldweapon = -1;
-					oldkeys = -1;
+					oldkeys[0] = oldkeys[1] = oldkeys[2] = oldkeys[3] = oldkeys[4] = NULL;
 					//oldhealth = -1;
 				}
 				if (!automapactive)
@@ -285,8 +301,6 @@ public:
 				DrawInventoryBar ();
 			}
 		}
-
-		DrawAnimatedIcons ();
 	}
 
 	void AttachToPlayer (player_s *player)
@@ -325,90 +339,6 @@ public:
 	}
 
 private:
-	void FHexenStatusBar::DrawAnimatedIcons ()
-	{
-		int frame;
-		static bool hitCenterFrame;
-		int picnum;
-
-		// Flight icons
-		if (CPlayer->powers[pw_flight])
-		{
-			if (CPlayer->powers[pw_flight] > BLINKTHRESHOLD
-				|| !(CPlayer->powers[pw_flight] & 16))
-			{
-				picnum = TexMan.GetTexture ("SPFLY0", FTexture::TEX_MiscPatch);
-				frame = (level.time/3) & 15;
-
-				if (CPlayer->mo->flags2 & MF2_FLY)
-				{
-					if (hitCenterFrame && (frame != 15 && frame != 0))
-					{
-						DrawOuterTexture (TexMan[picnum+15], 20, 19);
-					}
-					else
-					{
-						DrawOuterTexture (TexMan[picnum+frame], 20, 19);
-						hitCenterFrame = false;
-					}
-				}
-				else
-				{
-					if (!hitCenterFrame && (frame != 15 && frame != 0))
-					{
-						DrawOuterTexture (TexMan[picnum+frame], 20, 19);
-						hitCenterFrame = false;
-					}
-					else
-					{
-						DrawOuterTexture (TexMan[picnum+15], 20, 19);
-						hitCenterFrame = true;
-					}
-				}
-			}
-			BorderTopRefresh = screen->GetPageCount ();
-		}
-
-		// Speed Boots
-		if (CPlayer->powers[pw_speed])
-		{
-			if (CPlayer->powers[pw_speed] > BLINKTHRESHOLD
-				|| !(CPlayer->powers[pw_speed] & 16))
-			{
-				picnum = TexMan.GetTexture ("SPBOOT0", FTexture::TEX_MiscPatch);
-				frame = (level.time/3)&15;
-				DrawOuterTexture (TexMan[picnum+frame], 60, 19);
-			}
-			BorderTopRefresh = screen->GetPageCount ();
-		}
-
-		// Defensive power
-		if (CPlayer->powers[pw_invulnerability])
-		{
-			if (CPlayer->powers[pw_invulnerability] > BLINKTHRESHOLD
-				|| !(CPlayer->powers[pw_invulnerability] & 16))
-			{
-				frame = (level.time/3)&15;
-				picnum = TexMan.GetTexture ("SPSHLD0", FTexture::TEX_MiscPatch);
-				DrawOuterTexture (TexMan[picnum+frame], -60, 19);
-			}
-			BorderTopRefresh = screen->GetPageCount ();
-		}
-
-		// Minotaur Active
-		if (CPlayer->powers[pw_minotaur])
-		{
-			if (CPlayer->powers[pw_minotaur] > BLINKTHRESHOLD
-				|| !(CPlayer->powers[pw_minotaur]&16))
-			{
-				frame = (level.time/3)&15;
-				picnum = TexMan.GetTexture ("SPMINO0", FTexture::TEX_MiscPatch);
-				DrawOuterTexture (TexMan[picnum+frame], -20, 19);
-			}
-			BorderTopRefresh = screen->GetPageCount ();
-		}
-	}
-
 //---------------------------------------------------------------------------
 //
 // PROC DrawCommonBar
@@ -453,22 +383,23 @@ private:
 		{
 			DrawImage (Images[imgARTICLEAR], 144, -1);
 			DrawImage (Images[imgUSEARTIA + ArtifactFlash], 148, 2);
-			oldarti = -1; // so that the correct artifact fills in after the flash
+			oldarti = NULL; // so that the correct artifact fills in after the flash
 		}
-		else if (oldarti != CPlayer->readyArtifact
-			|| oldartiCount != CPlayer->inventory[oldarti])
+		else if (oldarti != CPlayer->InvSel
+			|| (oldarti != NULL && oldartiCount != oldarti->Amount))
 		{
-			oldarti = CPlayer->readyArtifact;
-			oldartiCount = CPlayer->inventory[oldarti];
+			oldarti = CPlayer->InvSel;
+			oldartiCount = oldarti != NULL ? oldarti->Amount : 0;
 			ArtiRefresh = screen->GetPageCount ();
 		}
 		if (ArtiRefresh)
 		{
 			ArtiRefresh--;
 			DrawImage (Images[imgARTICLEAR], 144, -1);
-			if (CPlayer->inventory[oldarti] > 0)
+			if (oldarti != NULL)
 			{
-				DrawImage (ArtiImages[oldarti], 143, 2);
+				assert (oldarti->Amount > 0);
+				DrawImage (TexMan(oldarti->Icon), 143, 2);
 				if (oldartiCount != 1)
 				{
 					DrSmallNumber (oldartiCount, 162, 23);
@@ -509,118 +440,40 @@ private:
 		}
 
 		// Mana
-		int manaPatch1, manaPatch2;
-		int manaVialPatch1, manaVialPatch2;
+		AAmmo *ammo1, *ammo2;
+		int ammocount1, ammocount2;
+		int drawbar;
 
-		manaPatch1 = 0;
-		manaPatch2 = 0;
-		manaVialPatch1 = 0;
-		manaVialPatch2 = 0;
+		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
 
-		temp = CPlayer->ammo[MANA_1];
-		if (oldmana1 != temp)
+		// If the weapon uses some ammo that is not mana, do not draw
+		// the mana bars; draw the specific used ammo instead.
+
+		drawbar = !((ammo1 != NULL && ammo1->GetClass() != RUNTIME_CLASS(AMana1) && ammo1->GetClass() != RUNTIME_CLASS(AMana2)) ||
+				    (ammo2 != NULL && ammo2->GetClass() != RUNTIME_CLASS(AMana1) && ammo2->GetClass() != RUNTIME_CLASS(AMana2)));
+
+		if (drawbar != olddrawbars)
 		{
-			oldmana1 = temp;
-			Mana1Refresh = screen->GetPageCount ();
+			AmmoRefresh = screen->GetPageCount ();
+			olddrawbars = drawbar;
+			oldmana1 = -1;
+			oldmana2 = -1;
 		}
-		if (Mana1Refresh)
+		if (drawbar && oldammo2 != ammo2)
 		{
-			Mana1Refresh--;
-			DrawImage (Images[imgMANACLEAR], 77, 16);
-			DrSmallNumber (temp, 79, 19);
-			if (temp == 0)
-			{ // Draw Dim Mana icon
-				manaPatch1 = imgMANADIM1;
-			}
-			else if (oldmana1 == 0)
-			{
-				manaPatch1 = imgMANABRIGHT1;
-			}		
-			manaVialPatch1 = 1; // force a vial update
+			AmmoRefresh = screen->GetPageCount ();
 		}
-
-		temp = CPlayer->ammo[MANA_2];
-		if (oldmana2 != temp)
+		if (drawbar)
 		{
-			oldmana2 = temp;
-			Mana2Refresh = screen->GetPageCount ();
+			DrawManaBars (ammo1, ammo2);
 		}
-		if (Mana2Refresh)
+		else
 		{
-			Mana2Refresh--;
-			DrawImage (Images[imgMANACLEAR], 109, 16);
-			DrSmallNumber (temp, 111, 19);
-			if (temp == 0)
-			{ // Draw Dim Mana icon
-				manaPatch2 = imgMANADIM2;
-			}		
-			else if (oldmana2 == 0)
-			{
-				manaPatch2 = imgMANABRIGHT2;
-			}		
-			manaVialPatch1 = 1; // force a vial update
-		}
-
-		if (oldweapon != CPlayer->readyweapon || manaPatch1 || manaPatch2
-			|| manaVialPatch1)
-		{ // Update mana graphics based upon mana count/weapon type
-			FWeaponInfo **wpinfo;
-			int ammo;
-
-			if (CPlayer->powers[pw_weaponlevel2] && !deathmatch)
-			{
-				wpinfo = wpnlev2info;
-			}
-			else
-			{
-				wpinfo = wpnlev1info;
-			}
-			ammo = wpinfo[CPlayer->readyweapon]->ammo;
-
-			// Pick graphics for mana 1 vial
-			if (ammo == MANA_1 || ammo == MANA_BOTH)
-			{
-				if (!manaPatch1)
-				{
-					manaPatch1 = imgMANABRIGHT1;
-				}
-				manaVialPatch1 = imgMANAVIAL1;
-			}
-			else
-			{
-				manaPatch1 = imgMANADIM1;
-				manaVialPatch1 = imgMANAVIALDIM1;
-			}
-
-			// Pick graphics for mana 2 vial
-			if (ammo == MANA_2 || ammo == MANA_BOTH)
-			{
-				if (!manaPatch2)
-				{
-					manaPatch2 = imgMANABRIGHT2;
-				}
-				manaVialPatch2 = imgMANAVIAL2;
-			}
-			else
-			{
-				manaPatch2 = imgMANADIM2;
-				manaVialPatch2 = imgMANAVIALDIM2;
-			}
-
-			DrawImage (Images[manaPatch1], 77, 2);
-			DrawImage (Images[manaPatch2], 110, 2);
-
-			ManaVial1Pic.SetVial (Images[manaVialPatch1], 22*CPlayer->ammo[MANA_1]/MAX_MANA);
-			ManaVial2Pic.SetVial (Images[manaVialPatch2], 22*CPlayer->ammo[MANA_2]/MAX_MANA);
-			DrawImage (&ManaVial1Pic, 94, 2);
-			DrawImage (&ManaVial2Pic, 102, 2);
-			oldweapon = CPlayer->readyweapon;
+			DrawMainAltAmmo (ammo1, ammo2, ammocount1, ammocount2);
 		}
 
 		// Armor
-		temp = CPlayer->mo->GetAutoArmorSave()
-			+CPlayer->armorpoints[ARMOR_ARMOR]+CPlayer->armorpoints[ARMOR_SHIELD]
-			+CPlayer->armorpoints[ARMOR_HELMET]+CPlayer->armorpoints[ARMOR_AMULET];
+		temp = GetArmorPercent (NULL);
 		if (oldarmor != temp)
 		{
 			oldarmor = temp;
@@ -643,42 +496,241 @@ private:
 
 //---------------------------------------------------------------------------
 //
+// PROC DrawMainAltAmmo
+//
+// Draw a generic ammo readout on the main bar, instead of the mana bars.
+//
+//---------------------------------------------------------------------------
+
+	void DrawMainAltAmmo (AAmmo *ammo1, AAmmo *ammo2, int ammocount1, int ammocount2)
+	{
+		if (AmmoRefresh)
+		{
+			Ammo1Refresh = MAX(AmmoRefresh, Ammo1Refresh);
+			Ammo2Refresh = MAX(AmmoRefresh, Ammo2Refresh);
+			AmmoRefresh--;
+			DrawImage (Images[imgAMMOBACK], 77, 2);
+		}
+		if (ammo1 != oldammo1 || ammocount1 != oldammocount1)
+		{
+			Ammo1Refresh = screen->GetPageCount ();
+			oldammo1 = ammo1;
+			oldammocount1 = ammocount1;
+		}
+		if (ammo2 != oldammo2 || ammocount2 != oldammocount2)
+		{
+			Ammo2Refresh = screen->GetPageCount ();
+			oldammo2 = ammo2;
+			oldammocount2 = ammocount2;
+		}
+		if (ammo2 != NULL)
+		{ // Draw both ammos
+			if (Ammo1Refresh)
+			{
+				Ammo1Refresh--;
+				screen->DrawTexture (TexMan[ammo1->Icon], 89+ST_X, 10+ST_Y,
+					DTA_CenterOffset, true,
+					DTA_320x200, true,
+					TAG_DONE);
+				DrSmallNumber (ammo1->Amount, 86, 20);
+			}
+			if (Ammo2Refresh)
+			{
+				Ammo2Refresh--;
+				screen->DrawTexture (TexMan[ammo2->Icon], 113+ST_X, 10+ST_Y,
+					DTA_CenterOffset, true,
+					DTA_320x200, true,
+					TAG_DONE);
+				DrSmallNumber (ammo2->Amount, 110, 20);
+			}
+		}
+		else
+		{ // Draw one ammo
+			if (Ammo1Refresh)
+			{
+				Ammo1Refresh--;
+				screen->DrawTexture (TexMan[ammo1->Icon], 100+ST_X, 10+ST_Y,
+					DTA_CenterOffset, true,
+					DTA_320x200, true,
+					TAG_DONE);
+				DrSmallNumber (ammo1->Amount, 97, 20);
+			}
+		}
+	}
+
+//---------------------------------------------------------------------------
+//
+// PROC DrawManaBars
+//
+// Draws the mana bars on the main status bar
+//
+//---------------------------------------------------------------------------
+
+	void DrawManaBars (AAmmo *ammo1, AAmmo *ammo2)
+	{
+		AAmmo *mana1 = NULL, *mana2 = NULL;
+		int usemana1 = false, usemana2 = false;
+		int manacount1, manacount2;
+		int manaPatch1, manaPatch2;
+		int manaVialPatch1, manaVialPatch2;
+
+		manaPatch1 = 0;
+		manaPatch2 = 0;
+		manaVialPatch1 = 0;
+		manaVialPatch2 = 0;
+
+		if (AmmoRefresh)
+		{
+			Mana1Refresh = MAX(AmmoRefresh, Mana1Refresh);
+			Mana2Refresh = MAX(AmmoRefresh, Mana2Refresh);
+			AmmoRefresh--;
+			screen->DrawTexture (Images[imgSTATBAR], ST_X+38, ST_Y,
+				DTA_WindowLeft, 39,
+				DTA_WindowRight, 87,
+				DTA_320x200, Scaled,
+				TAG_DONE);
+		}
+
+		// Locate Mana1 and Mana2 in the inventory, and decide which ones are used.
+		if (ammo1 == NULL)
+		{
+		}
+		else if (ammo1->GetClass() == RUNTIME_CLASS(AMana1))
+		{
+			mana1 = ammo1;
+			usemana1 = true;
+		}
+		else if (ammo1->GetClass() == RUNTIME_CLASS(AMana2))
+		{
+			mana2 = ammo1;
+			usemana2 = true;
+		}
+		if (ammo2 == NULL)
+		{
+		}
+		else if (ammo2->GetClass() == RUNTIME_CLASS(AMana1))
+		{
+			mana1 = ammo2;
+			usemana1 = true;
+		}
+		else if (ammo2->GetClass() == RUNTIME_CLASS(AMana2))
+		{
+			mana2 = ammo2;
+			usemana2 = true;
+		}
+		if (mana1 == NULL)
+		{
+			mana1 = CPlayer->mo->FindInventory<AMana1> ();
+		}
+		if (mana2 == NULL)
+		{
+			mana2 = CPlayer->mo->FindInventory<AMana2> ();
+		}
+		manacount1 = mana1 != NULL ? mana1->Amount : 0;
+		manacount2 = mana2 != NULL ? mana2->Amount : 0;
+
+		// Has Mana1 changed since last time?
+		if (oldmana1 != manacount1 || oldusemana1 != usemana1)
+		{
+			oldmana1 = manacount1;
+			oldusemana1 = usemana1;
+			Mana1Refresh = screen->GetPageCount ();
+		}
+
+		// Has Mana2 changed since last time?
+		if (oldmana2 != manacount2 || oldusemana2 != usemana2)
+		{
+			oldmana2 = manacount2;
+			oldusemana2 = usemana2;
+			Mana2Refresh = screen->GetPageCount ();
+		}
+		// Decide what to draw for vial 1
+		if (Mana1Refresh)
+		{
+			Mana1Refresh--;
+			DrawImage (Images[imgMANACLEAR], 77, 16);
+			DrSmallNumber (manacount1, 79, 19);
+			if (!usemana1)
+			{ // Draw Dim Mana icon
+				manaPatch1 = imgMANADIM1;
+				manaVialPatch1 = imgMANAVIALDIM1;
+			}
+			else
+			{
+				manaPatch1 = imgMANABRIGHT1;
+				manaVialPatch1 = manacount1 ? imgMANAVIAL1 : imgMANAVIALDIM1;
+			}		
+		}
+		// Decide what to draw for vial 2
+		if (Mana2Refresh)
+		{
+			Mana2Refresh--;
+			DrawImage (Images[imgMANACLEAR], 109, 16);
+			DrSmallNumber (manacount2, 111, 19);
+			if (!usemana2)
+			{ // Draw Dim Mana icon
+				manaPatch2 = imgMANADIM2;
+				manaVialPatch2 = imgMANAVIALDIM2;
+			}		
+			else
+			{
+				manaPatch2 = imgMANABRIGHT2;
+				manaVialPatch2 = manacount2 ? imgMANAVIAL2 : imgMANAVIALDIM2;
+			}		
+		}
+		// Update mana graphics
+		if (manaPatch1 || manaPatch2 || manaVialPatch1)
+		{
+			if (manaVialPatch1)
+			{
+				DrawImage (Images[manaPatch1], 77, 2);
+				ManaVial1Pic.SetVial (Images[manaVialPatch1], CPlayer->mo, RUNTIME_CLASS(AMana1));
+				DrawImage (&ManaVial1Pic, 94, 2);
+			}
+			if (manaVialPatch2)
+			{
+				DrawImage (Images[manaPatch2], 110, 2);
+				ManaVial2Pic.SetVial (Images[manaVialPatch2], CPlayer->mo, RUNTIME_CLASS(AMana2));
+				DrawImage (&ManaVial2Pic, 102, 2);
+			}
+		}
+	}
+
+//---------------------------------------------------------------------------
+//
 // PROC DrawInventoryBar
 //
 //---------------------------------------------------------------------------
 
 	void DrawInventoryBar ()
 	{
+		const AInventory *item;
 		int i;
-		int x;
-		bool left, right;
 
 		DrawImage (Images[imgINVBAR], 38, 0);
-		FindInventoryPos (x, left, right);
-		if (x > 0)
+		CPlayer->InvFirst = ValidateInvFirst (7);
+		if (CPlayer->InvFirst != NULL)
 		{
-			for (i = 0; i < 7 && x < NUMINVENTORYSLOTS; x++)
+			for (item = CPlayer->InvFirst, i = 0; item != NULL && i < 7; item = item->NextInv(), ++i)
 			{
-				if (CPlayer->inventory[x])
+				DrawImage (TexMan(item->Icon), 50+i*31, 1);
+				if (item->Amount != 1)
 				{
-					DrawImage (ArtiImages[x], 50+i*31, 1);
-					if (CPlayer->inventory[x] != 1)
-					{
-						DrSmallNumber (CPlayer->inventory[x], 68+i*31, 23);
-					}
-					if (x == CPlayer->readyArtifact)
-					{
-						DrawImage (Images[imgSELECTBOX], 51+i*31, 1);
-					}
-					i++;
+					DrSmallNumber (item->Amount, 68+i*31, 23);
+				}
+				if (item == CPlayer->InvSel)
+				{
+					DrawImage (Images[imgSELECTBOX], 51+i*31, 1);
 				}
 			}
-			if (left)
+			// Is there something to the left?
+			if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
 			{
 				DrawImage (Images[!(level.time & 4) ?
 					imgINVLFGEM1 : imgINVLFGEM2], 42, 1);
 			}
-			if (right)
+			// Is there something to the right?
+			if (item != NULL)
 			{
 				DrawImage (Images[!(level.time & 4) ?
 					imgINVRTGEM1 : imgINVRTGEM2], 269, 1);
@@ -694,56 +746,91 @@ private:
 
 	void DrawKeyBar ()
 	{
-		int playerkeys;
+		AInventory *item;
+		AHexenArmor *armor;
+		AKey *keys[5];
 		int i;
-		int xPosition;
 		int temp;
+		bool different;
 
-		playerkeys = 0;
-		
-		for (i = 0; i < NUMKEYS; ++i)
+		keys[0] = keys[1] = keys[2] = keys[3] = keys[4] = NULL;
+		for (item = CPlayer->mo->Inventory, i = 0;
+			item != NULL && i < 5;
+			item = item->Inventory)
 		{
-			playerkeys <<= 1;
-			if (CPlayer->keys[i])
+			if (item->Icon > 0 &&
+				item->IsKindOf (RUNTIME_CLASS(AKey)) &&
+				item->GetClass() != RUNTIME_CLASS(AKey))
 			{
-				playerkeys |= 1;
+				keys[i++] = static_cast<AKey*>(item);
 			}
 		}
-
-		if (oldkeys != playerkeys)
+		different = false;
+		for (i = 0; i < 5; ++i)
 		{
-			oldkeys = playerkeys;
+			if (keys[i] != oldkeys[i])
+			{
+				oldkeys[i] = keys[i];
+				different = true;
+			}
+		}
+		if (different)
+		{
 			KeysRefresh = screen->GetPageCount ();
 		}
 		if (KeysRefresh)
 		{
 			KeysRefresh--;
-			xPosition = 46;
-			for (i = 0; i < NUMKEYS && xPosition <= 126; i++)
+			for (i = 0; i < 5 && keys[i] != NULL; i++)
 			{
-				if (CPlayer->keys[i])
-				{
-					DrawImage (Images[imgKEYSLOT1+i], xPosition, 2);
-					xPosition += 20;
-				}
+				DrawImage (TexMan[keys[i]->Icon], 46 + i*20, 2);
 			}
 		}
-		temp = CPlayer->mo->GetAutoArmorSave()
-			+CPlayer->armorpoints[ARMOR_ARMOR]+CPlayer->armorpoints[ARMOR_SHIELD]
-			+CPlayer->armorpoints[ARMOR_HELMET]+CPlayer->armorpoints[ARMOR_AMULET];
-		if (oldarmor != temp)
+
+		temp = GetArmorPercent (&armor);
+		if (oldarmor != temp && armor != NULL)
 		{
-			for (i = 0; i < NUMARMOR; i++)
+			for (i = 0; i < 4; i++)
 			{
-				if (CPlayer->armorpoints[i] > 0)
+				if (armor->Slots[i] > 0)
 				{
 					DrawFadedImage (Images[imgARMSLOT1+i], 150+31*i, 2,
-						MIN<fixed_t> (OPAQUE, Scale (CPlayer->armorpoints[i], OPAQUE,
+						MIN<fixed_t> (OPAQUE, Scale (armor->Slots[i], OPAQUE,
 											CPlayer->mo->GetArmorIncrement (i))));
 				}
 			}
 			oldarmor = temp;
 		}
+	}
+
+//==========================================================================
+//
+// GetArmorPercent
+//
+//==========================================================================
+
+	fixed_t GetArmorPercent (AHexenArmor **armorp)
+	{
+		AHexenArmor *harmor = CPlayer->mo->FindInventory<AHexenArmor>();
+		fixed_t amount = CPlayer->mo->GetAutoArmorSave();
+		if (harmor != NULL)
+		{
+			amount += harmor->Slots[0]
+					+ harmor->Slots[1]
+					+ harmor->Slots[2]
+					+ harmor->Slots[3];
+		}
+		// [RH] Count basic armor too.
+		ABasicArmor *barmor = CPlayer->mo->FindInventory<ABasicArmor>();
+		if (barmor != NULL)
+		{
+			amount += barmor->SavePercent;
+		}
+		if (armorp != NULL)
+		{
+			*armorp = harmor;
+		}
+		return amount;
 	}
 
 //==========================================================================
@@ -790,106 +877,166 @@ private:
 
 	void DrawFullScreenStuff ()
 	{
+		const AInventory *item;
 		int i;
-		int x;
 
+		// Health
 		DrBNumberOuter (MAX (0, CPlayer->mo->health), 5, -20);
+
+		// Frags
 		if (deathmatch)
 		{
 			DrINumberOuter (CPlayer->fragcount, 45, -15);
 		}
+
+		// Inventory
 		if (CPlayer->inventorytics == 0)
 		{
 			if (ArtifactFlash)
 			{
-				DrawOuterFadedImage (Images[imgARTIBOX], -80, -30, HX_SHADOW);
-				DrawOuterImage (Images[imgUSEARTIA + ArtifactFlash], -76, -26);
+				screen->DrawTexture (Images[imgARTIBOX], -80, -30,
+					DTA_HUDRules, HUD_Normal,
+					DTA_Alpha, HX_SHADOW,
+					TAG_DONE);
+				screen->DrawTexture (Images[imgUSEARTIA + ArtifactFlash], -76, -26,
+					DTA_HUDRules, HUD_Normal,
+					TAG_DONE);
 			}
-			else if (CPlayer->inventory[CPlayer->readyArtifact] > 0)
+			else if (CPlayer->InvSel != NULL)
 			{
-				DrawOuterFadedImage (Images[imgARTIBOX], -80, -30, HX_SHADOW);
-				DrawOuterImage (ArtiImages[CPlayer->readyArtifact], -82, -31);
-				if (CPlayer->inventory[CPlayer->readyArtifact] != 1)
+				screen->DrawTexture (Images[imgARTIBOX], -80, -30,
+					DTA_HUDRules, HUD_Normal,
+					DTA_Alpha, HX_SHADOW,
+					TAG_DONE);
+				screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -82, -31,
+					DTA_HUDRules, HUD_Normal,
+					TAG_DONE);
+				if (CPlayer->InvSel->Amount != 1)
 				{
-					DrSmallNumberOuter (CPlayer->inventory[CPlayer->readyArtifact],
-						-64, -8);
+					DrSmallNumberOuter (CPlayer->InvSel->Amount, -64, -8, false);
 				}
 			}
 		}
 		else
 		{
-			SetHorizCentering (true);
-			bool left, right;
-
-			FindInventoryPos (x, left, right);
-			for (i = 0; i < 7 && x < NUMINVENTORYSLOTS; x++)
+			CPlayer->InvFirst = ValidateInvFirst (7);
+			i = 0;
+			if (CPlayer->InvFirst != NULL)
 			{
-				if (CPlayer->inventory[x])
+				for (item = CPlayer->InvFirst; item != NULL && i < 7; item = item->NextInv(), ++i)
 				{
-					DrawOuterFadedImage (Images[imgARTIBOX], -106+i*31, -32, HX_SHADOW);
-					DrawOuterImage (ArtiImages[x], -108+i*31, -33);
-					if (CPlayer->inventory[x] != 1)
+					screen->DrawTexture (Images[imgARTIBOX], -106+i*31, -32,
+						DTA_HUDRules, HUD_HorizCenter,
+						DTA_Alpha, HX_SHADOW,
+						TAG_DONE);
+					screen->DrawTexture (TexMan(item->Icon), -108+i*31, -33,
+						DTA_HUDRules, HUD_HorizCenter,
+						TAG_DONE);
+					if (item->Amount != 1)
 					{
-						DrSmallNumberOuter (CPlayer->inventory[x], -90+i*31, -12);
+						DrSmallNumberOuter (item->Amount, -90+i*31, -11, true);
 					}
-					if (x == CPlayer->readyArtifact)
+					if (item == CPlayer->InvSel)
 					{
-						DrawOuterImage (Images[imgSELECTBOX], -107+i*31, -33);
+						screen->DrawTexture (Images[imgSELECTBOX], -107+i*31, -33,
+							DTA_HUDRules, HUD_HorizCenter,
+							TAG_DONE);
 					}
-					i++;
+				}
+				// Is there something to the left?
+				if (CPlayer->mo->FirstInv() != CPlayer->InvFirst)
+				{
+					screen->DrawTexture (Images[!(level.time & 4) ?
+						imgINVLFGEM1 : imgINVLFGEM2], -118, -33,
+						DTA_HUDRules, HUD_HorizCenter, TAG_DONE);
+				}
+				// Is there something to the right?
+				if (item != NULL)
+				{
+					screen->DrawTexture (Images[!(level.time & 4) ?
+						imgINVRTGEM1 : imgINVRTGEM2], 113, -33,
+						DTA_HUDRules, HUD_HorizCenter, TAG_DONE);
 				}
 			}
 			for (; i < 7; i++)
 			{
-				DrawOuterFadedImage (Images[imgARTIBOX], -106+i*31, -32, HX_SHADOW);
+				screen->DrawTexture (Images[imgARTIBOX], -106+i*31, -32,
+					DTA_HUDRules, HUD_HorizCenter,
+					DTA_Alpha, HX_SHADOW,
+					TAG_DONE);
 			}
-			if (left)
-			{
-				DrawOuterImage (Images[!(level.time & 4) ?
-					imgINVLFGEM1 : imgINVLFGEM2], -118, -33);
-			}
-			if (right)
-			{
-				DrawOuterImage (Images[!(level.time & 4) ?
-					imgINVRTGEM1 : imgINVRTGEM2], 113, -33);
-			}
-			SetHorizCentering (false);
 		}
 
-		int manaImage;
-		FWeaponInfo **wpinfo;
-		int ammo;
+		// Mana
+		AAmmo *ammo1, *ammo2;
+		int ammocount1, ammocount2;
+		bool drawmana;
 
-		if (CPlayer->powers[pw_weaponlevel2] && !deathmatch)
+		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
+
+		// If the weapon uses some ammo that is not mana, do not draw
+		// the mana blocks; draw the specific used ammo instead.
+
+		drawmana = !((ammo1 != NULL && ammo1->GetClass() != RUNTIME_CLASS(AMana1) && ammo1->GetClass() != RUNTIME_CLASS(AMana2)) ||
+				     (ammo2 != NULL && ammo2->GetClass() != RUNTIME_CLASS(AMana1) && ammo2->GetClass() != RUNTIME_CLASS(AMana2)));
+
+		if (drawmana)
 		{
-			wpinfo = wpnlev2info;
+			int manaImage;
+			int ammo = 0;
+
+			if (CPlayer->ReadyWeapon != NULL)
+			{
+				if (CPlayer->ReadyWeapon->Ammo1 != NULL)
+				{
+					if (CPlayer->ReadyWeapon->Ammo1->GetClass() == RUNTIME_CLASS(AMana1))
+					{
+						ammo |= 1;
+					}
+					else if (CPlayer->ReadyWeapon->Ammo1->GetClass() == RUNTIME_CLASS(AMana2))
+					{
+						ammo |= 2;
+					}
+				}
+				if (CPlayer->ReadyWeapon->Ammo2 != NULL)
+				{
+					if (CPlayer->ReadyWeapon->Ammo2->GetClass() == RUNTIME_CLASS(AMana1))
+					{
+						ammo |= 1;
+					}
+					else if (CPlayer->ReadyWeapon->Ammo2->GetClass() == RUNTIME_CLASS(AMana2))
+					{
+						ammo |= 2;
+					}
+				}
+			}
+
+			item = CPlayer->mo->FindInventory (RUNTIME_CLASS(AMana1));
+			i = item != NULL ? item->Amount : 0;
+			manaImage = ((ammo & 1) && i > 0) ? imgMANABRIGHT1 : imgMANADIM1;
+			screen->DrawTexture (Images[manaImage], -17, -30,
+				DTA_HUDRules, HUD_Normal, TAG_DONE);
+			DrINumberOuter (i, -47, -30);
+
+			item = CPlayer->mo->FindInventory (RUNTIME_CLASS(AMana2));
+			i = item != NULL ? item->Amount : 0;
+			manaImage = ((ammo & 2) && i > 0) ? imgMANABRIGHT2 : imgMANADIM2;
+			screen->DrawTexture (Images[manaImage], -17, -15,
+				DTA_HUDRules, HUD_Normal, TAG_DONE);
+			DrINumberOuter (i, -47, -15);
 		}
 		else
 		{
-			wpinfo = wpnlev1info;
 		}
-		ammo = wpinfo[CPlayer->readyweapon]->ammo;
-
-		i = CPlayer->ammo[MANA_1];
-		manaImage = ((ammo == MANA_1 || ammo == MANA_BOTH) && i > 0)
-			? imgMANABRIGHT1 : imgMANADIM1;
-		DrawOuterImage (Images[manaImage], -17, -30);
-		DrINumberOuter (i, -47, -30);
-
-		i = CPlayer->ammo[MANA_2];
-		manaImage = ((ammo == MANA_2 || ammo == MANA_BOTH) && i > 0)
-			? imgMANABRIGHT2 : imgMANADIM2;
-		DrawOuterImage (Images[manaImage], -17, -15);
-		DrINumberOuter (i, -47, -15);
 	}
 
 //---------------------------------------------------------------------------
 //
-// PROC FlashArtifact
+// PROC FlashItem
 //
 //---------------------------------------------------------------------------
 
-	void FlashArtifact (int arti)
+	void FlashItem (const TypeInfo *itemtype)
 	{
 		ArtifactFlash = 4;
 	}
@@ -897,17 +1044,21 @@ private:
 	static const char patcharti[][10];
 	static const char ammopic[][10];
 
-	int oldarti;
+	AInventory *oldarti;
+	AAmmo *oldammo1, *oldammo2;
+	AKey *oldkeys[5];
+	int oldammocount1, oldammocount2;
 	int oldartiCount;
 	int oldfrags;
 	int oldmana1;
 	int oldmana2;
+	int oldusemana1;
+	int oldusemana2;
+	int olddrawbars;
 	int oldarmor;
 	int oldhealth;
 	int oldlife;
 	int oldpieces;
-	int oldweapon;
-	int oldkeys;
 
 	enum
 	{
@@ -956,6 +1107,7 @@ private:
 		imgARMSLOT3,
 		imgARMSLOT4,
 		imgARTIBOX,
+		imgAMMOBACK,
 
 		NUM_HEXENSB_IMAGES
 	};
@@ -990,6 +1142,9 @@ private:
 	char HealthRefresh;
 	char Mana1Refresh;
 	char Mana2Refresh;
+	char AmmoRefresh;
+	char Ammo1Refresh;
+	char Ammo2Refresh;
 
 	FManaBar ManaVial1Pic;
 	FManaBar ManaVial2Pic;

@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include "c_dispatch.h"
 #include "i_musicinterns.h"
 #include "i_music.h"
@@ -206,3 +207,4 @@ CCMD (snd_listmididevices)
 		}
 	}
 }
+#endif

@@ -238,7 +238,7 @@ void A_BruisAttack (AActor *self)
 	if (!self->target)
 		return;
 				
-	if (P_CheckMeleeRange (self))
+	if (self->CheckMeleeRange ())
 	{
 		int damage = (pr_bruisattack()%8+1)*10;
 		S_Sound (self, CHAN_WEAPON, "baron/melee", 1, ATTN_NORM);

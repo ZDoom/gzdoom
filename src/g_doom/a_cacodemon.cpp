@@ -137,7 +137,7 @@ void A_HeadAttack (AActor *self)
 		return;
 				
 	A_FaceTarget (self);
-	if (P_CheckMeleeRange (self))
+	if (self->CheckMeleeRange ())
 	{
 		int damage = (pr_headattack()%6+1)*10;
 		S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);

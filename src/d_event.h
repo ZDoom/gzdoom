@@ -65,11 +65,11 @@ typedef enum
 	ga_autosave,
 	ga_playdemo,
 	ga_completed,
-	ga_victory,
+	ga_slideshow,
 	ga_worlddone,
 	ga_screenshot,
 	ga_togglemap,
-	ga_fullconsole
+	ga_fullconsole,
 } gameaction_t;
 
 

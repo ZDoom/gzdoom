@@ -37,8 +37,10 @@
 *		Cleaned up the source
 */
 
+#ifdef _WIN32
 #include <dos.h>
 #include <conio.h>
+#endif
 #include "muslib.h"
 #include "fmopl.h"
 

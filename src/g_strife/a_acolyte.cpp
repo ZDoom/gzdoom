@@ -5,8 +5,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 #include "a_strifeglobal.h"
-
-extern AActor *soundtarget;
+#include "doomdata.h"
 
 void A_BeShadowyFoe (AActor *);
 void A_AcolyteBits (AActor *);
@@ -20,9 +19,9 @@ void A_SetShadow (AActor *);
 
 // Base class for the acolytes ----------------------------------------------
 
-class AAcolyte : public AActor
+class AAcolyte : public AStrifeHumanoid
 {
-	DECLARE_ACTOR (AAcolyte, AActor)
+	DECLARE_ACTOR (AAcolyte, AStrifeHumanoid)
 };
 
 FState AAcolyte::States[] =
@@ -84,7 +83,7 @@ FState AAcolyte::States[] =
 	S_NORMAL (GIBS, 'G',	4, NULL,				&States[S_ACOLYTE_XDIE+7]),
 	S_NORMAL (GIBS, 'H',	4, NULL,				&States[S_ACOLYTE_XDIE+8]),
 	S_NORMAL (GIBS, 'I',	5, NULL,				&States[S_ACOLYTE_XDIE+9]),
-	S_NORMAL (GIBS, 'J',	5, A_AcolyteDie,				&States[S_ACOLYTE_XDIE+10]),
+	S_NORMAL (GIBS, 'J',	5, A_AcolyteDie,		&States[S_ACOLYTE_XDIE+10]),
 	S_NORMAL (GIBS, 'K',	5, NULL,				&States[S_ACOLYTE_XDIE+11]),
 	S_NORMAL (GIBS, 'L', 1400, NULL,				NULL),
 };
@@ -104,6 +103,9 @@ IMPLEMENT_ACTOR (AAcolyte, Strife, -1, 0)
 	PROP_HeightFixed (64)
 	PROP_Mass (400)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
+	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_MCROSS)
+	PROP_Flags4 (MF4_SEESDAGGERS|MF4_NOSPLASHALERT)
+	PROP_MinMissileChance (150)
 	PROP_Tag ("ACOLYTE")
 
 	PROP_SeeSound ("acolyte/sight")
@@ -118,10 +120,28 @@ END_DEFAULTS
 class AAcolyteTan : public AAcolyte
 {
 	DECLARE_STATELESS_ACTOR (AAcolyteTan, AAcolyte)
+public:
+	void NoBlockingSet ();
 };
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteTan, Strife, 3002, 0)
+	PROP_StrifeType (53)
+	PROP_StrifeTeaserType (52)
+	PROP_Flags4 (MF4_MISSILEMORE|MF4_MISSILEEVENMORE|MF4_SEESDAGGERS|MF4_NOSPLASHALERT)
 END_DEFAULTS
+
+//============================================================================
+//
+// AAcolyteTan :: NoBlockingSet
+//
+// This and the shadow acolyte are the only ones that drop clips by default.
+//
+//============================================================================
+
+void AAcolyteTan::NoBlockingSet ()
+{
+	P_DropItem (this, "ClipOfBullets", -1, 256);
+}
 
 // Acolyte 2 ----------------------------------------------------------------
 
@@ -132,6 +152,9 @@ class AAcolyteRed : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteRed, Strife, 142, 0)
 	PROP_Translation (TRANSLATION_Standard, 0)
+	PROP_StrifeType (54)
+	PROP_StrifeTeaserType (53)
+	PROP_Flags4 (MF4_MISSILEMORE|MF4_MISSILEEVENMORE|MF4_SEESDAGGERS|MF4_NOSPLASHALERT)
 END_DEFAULTS
 
 // Acolyte 3 ----------------------------------------------------------------
@@ -143,6 +166,9 @@ class AAcolyteRust : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteRust, Strife, 143, 0)
 	PROP_Translation (TRANSLATION_Standard, 1)
+	PROP_StrifeType (55)
+	PROP_StrifeTeaserType (54)
+	PROP_Flags4 (MF4_MISSILEMORE|MF4_MISSILEEVENMORE|MF4_SEESDAGGERS|MF4_NOSPLASHALERT)
 END_DEFAULTS
 
 // Acolyte 4 ----------------------------------------------------------------
@@ -154,6 +180,9 @@ class AAcolyteGray : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteGray, Strife, 146, 0)
 	PROP_Translation (TRANSLATION_Standard, 2)
+	PROP_StrifeType (56)
+	PROP_StrifeTeaserType (55)
+	PROP_Flags4 (MF4_MISSILEMORE|MF4_MISSILEEVENMORE|MF4_SEESDAGGERS|MF4_NOSPLASHALERT)
 END_DEFAULTS
 
 // Acolyte 5 ----------------------------------------------------------------
@@ -165,6 +194,9 @@ class AAcolyteDGreen : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteDGreen, Strife, 147, 0)
 	PROP_Translation (TRANSLATION_Standard, 3)
+	PROP_StrifeType (57)
+	PROP_StrifeTeaserType (56)
+	PROP_Flags4 (MF4_MISSILEMORE|MF4_MISSILEEVENMORE|MF4_SEESDAGGERS|MF4_NOSPLASHALERT)
 END_DEFAULTS
 
 // Acolyte 6 ----------------------------------------------------------------
@@ -176,6 +208,9 @@ class AAcolyteGold : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteGold, Strife, 148, 0)
 	PROP_Translation (TRANSLATION_Standard, 4)
+	PROP_StrifeType (58)
+	PROP_StrifeTeaserType (57)
+	PROP_Flags4 (MF4_MISSILEMORE|MF4_MISSILEEVENMORE|MF4_SEESDAGGERS|MF4_NOSPLASHALERT)
 END_DEFAULTS
 
 // Acolyte 7 ----------------------------------------------------------------
@@ -187,6 +222,7 @@ class AAcolyteLGreen : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteLGreen, Strife, 232, 0)
 	PROP_Translation (TRANSLATION_Standard, 5)
+	PROP_StrifeType (59)
 END_DEFAULTS
 
 // Acolyte 8 ----------------------------------------------------------------
@@ -198,6 +234,7 @@ class AAcolyteBlue : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteBlue, Strife, 231, 0)
 	PROP_Translation (TRANSLATION_Standard, 6)
+	PROP_StrifeType (60)
 END_DEFAULTS
 
 // Shadow Acolyte -----------------------------------------------------------
@@ -205,12 +242,30 @@ END_DEFAULTS
 class AAcolyteShadow : public AAcolyte
 {
 	DECLARE_STATELESS_ACTOR (AAcolyteShadow, AAcolyte)
+public:
+	void NoBlockingSet ();
 };
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteShadow, Strife, 58, 0)
 	PROP_SeeState (S_ACOLYTE_ALTCHASE)
 	PROP_PainState (S_ACOLYTE_ALTPAIN)
+	PROP_StrifeType (61)
+	PROP_StrifeTeaserType (58)
+	PROP_Flags4 (MF4_MISSILEMORE|MF4_SEESDAGGERS|MF4_NOSPLASHALERT)
 END_DEFAULTS
+
+//============================================================================
+//
+// AAcolyteShadow :: NoBlockingSet
+//
+// This and the tan acolyte are the only ones that drop clips by default.
+//
+//============================================================================
+
+void AAcolyteShadow::NoBlockingSet ()
+{
+	P_DropItem (this, "ClipOfBullets", -1, 256);
+}
 
 // Some guy turning into an acolyte -----------------------------------------
 
@@ -240,7 +295,7 @@ IMPLEMENT_ACTOR (AAcolyteToBe, Strife, 201, 0)
 	PROP_PainChance (255)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (56)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
+	PROP_StrifeType (29)
 
 	PROP_DeathSound ("becoming/death")
 END_DEFAULTS
@@ -261,12 +316,10 @@ END_DEFAULTS
 
 void A_HideDecepticon (AActor *self)
 {
-	EV_DoDoor (DDoor::doorClose, NULL, self, 999, 8*FRACUNIT, 0, NoKey, 0);
+	EV_DoDoor (DDoor::doorClose, NULL, self, 999, 8*FRACUNIT, 0, 0, 0);
 	if (self->target != NULL && self->target->player != NULL)
 	{
-		validcount++;
-		soundtarget = self->target;
-		P_RecursiveSound (self->Sector, 0);
+		P_NoiseAlert (self->target, self);
 	}
 }
 
@@ -318,7 +371,7 @@ void A_BeShadowyFoe (AActor *self)
 {
 	self->RenderStyle = STYLE_Translucent;
 	self->alpha = HR_SHADOW;
-	self->flags &= ~MF_STRIFEx4000000;
+	self->flags &= ~MF_FRIENDLY;
 }
 
 //============================================================================
@@ -329,13 +382,22 @@ void A_BeShadowyFoe (AActor *self)
 
 void A_AcolyteBits (AActor *self)
 {
-	if (self->SpawnFlags & MTF_STRIFEBIT8)
+	if (self->SpawnFlags & MTF_SHADOW)
 	{
 		self->RenderStyle = STYLE_Translucent;
 		self->alpha = HR_SHADOW;
+		self->flags |= MF_SHADOW;
 	}
-	if (self->SpawnFlags & MTF_STRIFEBIT9)
+	if (self->SpawnFlags & MTF_ALTSHADOW)
 	{
-		self->flags |= MF_STRIFEx8000000;
+		//self->flags |= MF_STRIFEx8000000;
+		if (self->flags & MF_SHADOW)
+		{
+			// I dunno.
+		}
+		else
+		{
+			self->RenderStyle = STYLE_None;
+		}
 	}
 }

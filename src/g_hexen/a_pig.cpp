@@ -19,7 +19,7 @@ static FRandom pr_pigplayerthink ("PigPlayerThink");
 
 extern void AdjustPlayerAngle (AActor *);
 
-void A_SnoutAttack (AActor *actor, pspdef_t *);
+void A_SnoutAttack (AActor *actor);
 
 void A_PigPain (AActor *);
 void A_PigLook (AActor *);
@@ -54,12 +54,6 @@ END_DEFAULTS
 class ASnout : public AWeapon
 {
 	DECLARE_ACTOR (ASnout, AWeapon)
-public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_snout;
-	}
-	static FWeaponInfo WeaponInfo;
 };
 
 FState ASnout::States[] =
@@ -78,32 +72,17 @@ FState ASnout::States[] =
 	S_NORMAL (WPIG, 'B',	8, A_SnoutAttack		    , &States[S_SNOUTREADY])
 };
 
-FWeaponInfo ASnout::WeaponInfo =
-{
-	WIF_DONTBOB,
-	am_noammo,
-	am_noammo,
-	0,
-	0,
-	&States[S_SNOUTUP],
-	&States[S_SNOUTDOWN],
-	&States[S_SNOUTREADY],
-	&States[S_SNOUTATK],
-	&States[S_SNOUTATK],
-	NULL,
-	NULL,
-	150,
-	10*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ASnout),
-	-1
-};
-
 IMPLEMENT_ACTOR (ASnout, Hexen, -1, 0)
+	PROP_Weapon_SelectionOrder (10000)
+	PROP_Weapon_Flags (WIF_DONTBOB|WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_SNOUTUP)
+	PROP_Weapon_DownState (S_SNOUTDOWN)
+	PROP_Weapon_ReadyState (S_SNOUTREADY)
+	PROP_Weapon_AtkState (S_SNOUTATK)
+	PROP_Weapon_HoldAtkState (S_SNOUTATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (10)
 END_DEFAULTS
-
-WEAPON1 (wp_snout, ASnout)
 
 // Pig player ---------------------------------------------------------------
 
@@ -160,7 +139,7 @@ IMPLEMENT_ACTOR (APigPlayer, Hexen, -1, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (24)
 	PROP_SpeedFixed (1)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOTDMATCH|MF_FRIENDLY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_SLIDE|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 	PROP_Flags4 (MF4_NOSKIN)
@@ -205,7 +184,7 @@ void APigPlayer::MorphPlayerThink ()
 	}
 	if(!(momx | momy) && pr_pigplayerthink() < 64)
 	{ // Snout sniff
-		P_SetPspriteNF (player, ps_weapon, wpnlev1info[wp_snout]->atkstate + 1);
+		P_SetPspriteNF (player, ps_weapon, ((ASnout*)GetDefaultByType(RUNTIME_CLASS(ASnout)))->AtkState + 1);
 		S_Sound (this, CHAN_VOICE, "PigActive1", 1, ATTN_NORM); // snort
 		return;
 	}
@@ -217,10 +196,10 @@ void APigPlayer::MorphPlayerThink ()
 
 void APigPlayer::ActivateMorphWeapon ()
 {
-	player->pendingweapon = wp_nochange;
+	player->PendingWeapon = WP_NOCHANGE;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
-	player->readyweapon = wp_snout;
-	P_SetPsprite (player, ps_weapon, wpnlev1info[player->readyweapon]->readystate);
+	player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (RUNTIME_CLASS(ASnout)));;
+	P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
 }
 
 // Pig (non-player) ---------------------------------------------------------
@@ -322,7 +301,7 @@ void APig::Die (AActor *source, AActor *inflictor)
 //
 //============================================================================
 
-void A_SnoutAttack (AActor *actor, pspdef_t *psp)
+void A_SnoutAttack (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -337,9 +316,8 @@ void A_SnoutAttack (AActor *actor, pspdef_t *psp)
 	damage = 3+(pr_snoutattack()&3);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
-	PuffType = RUNTIME_CLASS(ASnoutPuff);
 	PuffSpawned = NULL;
-	P_LineAttack(player->mo, angle, MELEERANGE, slope, damage);
+	P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, RUNTIME_CLASS(ASnoutPuff));
 	S_Sound(player->mo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
 	if(linetarget)
 	{
@@ -397,7 +375,7 @@ void A_PigAttack (AActor *actor)
 	{
 		return;
 	}
-	if (P_CheckMeleeRange (actor))
+	if (actor->CheckMeleeRange ())
 	{
 		P_DamageMobj(actor->target, actor, actor, 2+(pr_pigattack()&1));
 		S_Sound(actor, CHAN_WEAPON, "PigAttack", 1, ATTN_NORM);

@@ -156,6 +156,7 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 	AActor *spot, *mobj, *targ = forcedest;
 	FActorIterator iterator (tid);
 	float fspeed = float(speed);
+	int defflags3;
 
 	if (type >= MAX_SPAWNABLES)
 		return false;
@@ -163,7 +164,8 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 	if ((kind = SpawnableThings[type]) == NULL)
 		return false;
 
-	if ((GetDefaultByType (kind)->flags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))
+	defflags3 = GetDefaultByType (kind)->flags3;
+	if ((defflags3 & MF3_ISMONSTER) && (dmflags & DF_NO_MONSTERS))
 		return false;
 
 	while ( (spot = iterator.Next ()) )
@@ -174,7 +176,20 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 		{
 			do
 			{
-				mobj = Spawn (kind, spot->x, spot->y, spot->z);
+				fixed_t z = spot->z;
+				if (defflags3 & MF3_FLOORHUGGER)
+				{
+					z = ONFLOORZ;
+				}
+				else if (defflags3 & MF3_CEILINGHUGGER)
+				{
+					z = ONCEILINGZ;
+				}
+				else if (z != ONFLOORZ)
+				{
+					z -= spot->floorclip;
+				}
+				mobj = Spawn (kind, spot->x, spot->y, z);
 
 				if (mobj)
 				{
@@ -294,13 +309,23 @@ nolead:
 						mobj->momy = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
 						mobj->momz = vspeed;
 					}
+					// Set the missile's speed to reflect the speed it was spawned at.
+					mobj->Speed = fixed_t (sqrtf (float(speed*speed + vspeed*vspeed)));
+					// Hugger missiles don't have any vertical velocity
+					if (mobj->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
+					{
+						mobj->momz = 0;
+					}
 					if (mobj->flags & MF_SPECIAL)
 					{
 						mobj->flags |= MF_DROPPED;
 					}
 					if (mobj->flags & MF_MISSILE)
 					{
-						rtn = P_CheckMissileSpawn (mobj);
+						if (P_CheckMissileSpawn (mobj))
+						{
+							rtn = true;
+						}
 					}
 					else if (!P_TestMobjLocation (mobj))
 					{
@@ -316,6 +341,11 @@ nolead:
 							level.total_items--;
 						}
 						mobj->Destroy ();
+					}
+					else
+					{
+						// It spawned fine.
+						rtn = 1;
 					}
 				}
 			} while (dest != 0 && (targ = tit.Next()));

@@ -41,8 +41,11 @@
 #include "statnums.h"
 #include "v_palette.h"
 #include "v_video.h"
+#include "w_wad.h"
+#include "cmdlib.h"
+#include "sbar.h"
+#include "f_finale.h"
 
-static FRandom pr_torch ("Torch");
 static FRandom pr_healradius ("HealRadius");
 
 // [RH] # of ticks to complete a turn180
@@ -62,8 +65,6 @@ static TArray<sector_t *> PredictionTouchingSectorsBackup;
 #define MAXBOB			0x100000
 
 BOOL onground;
-int newtorch; // used in the torch flicker effect.
-int newtorchdelta;
 
 
 // This function supplements the pointer cleanup in dobject.cpp, because
@@ -78,50 +79,42 @@ int newtorchdelta;
 void player_s::FixPointers (const DObject *old, DObject *rep)
 {
 	APlayerPawn *replacement = static_cast<APlayerPawn *>(rep);
-	if (mo == old)			mo = replacement;
-	if (poisoner == old)	poisoner = replacement;
-	if (attacker == old)	attacker = replacement;
-	if (rain1 == old)		rain1 = replacement;
-	if (rain2 == old)		rain2 = replacement;
-	if (camera == old)		camera = replacement;
-	if (dest == old)		dest = replacement;
-	if (prev == old)		prev = replacement;
-	if (enemy == old)		enemy = replacement;
-	if (missile == old)		missile = replacement;
-	if (mate == old)		mate = replacement;
-	if (last_mate == old)	last_mate = replacement;
+	if (mo == old)				mo = replacement;
+	if (poisoner == old)		poisoner = replacement;
+	if (attacker == old)		attacker = replacement;
+	if (camera == old)			camera = replacement;
+	if (dest == old)			dest = replacement;
+	if (prev == old)			prev = replacement;
+	if (enemy == old)			enemy = replacement;
+	if (missile == old)			missile = replacement;
+	if (mate == old)			mate = replacement;
+	if (last_mate == old)		last_mate = replacement;
+	if (ReadyWeapon == old)		ReadyWeapon = static_cast<AWeapon *>(rep);
+	if (PendingWeapon == old)	PendingWeapon = static_cast<AWeapon *>(rep);
 }
 
-// Reduce the ammo used by the current weapon. Returns true
-// if there was enough ammo to use.
-bool player_s::UseAmmo (bool doCheck)
+void player_s::SetLogNumber (int num)
 {
-	if (!(dmflags & DF_INFINITE_AMMO))
-	{
-		FWeaponInfo *info;
+	char lumpname[16];
+	int lumpnum;
 
-		if (deathmatch || !powers[pw_weaponlevel2])
-			info = wpnlev1info[readyweapon];
-		else
-			info = wpnlev2info[readyweapon];
-		if (info->ammo < NUMAMMO)
-		{
-			if (doCheck && ammo[info->ammo] < info->ammouse)
-				return false;
-			ammo[info->ammo] -= info->ammouse;
-		}
-		else if (info->ammo == MANA_BOTH)
-		{
-			if (doCheck)
-			{
-				if (ammo[MANA_1] < info->ammouse || ammo[MANA_2] < info->ammouse)
-					return false;
-			}
-			ammo[MANA_1] -= info->ammouse;
-			ammo[MANA_2] -= info->ammouse;
-		}
+	sprintf (lumpname, "LOG%d", num);
+	lumpnum = Wads.CheckNumForName (lumpname);
+	if (lumpnum == -1)
+	{
+		// Leave the log message alone if this one doesn't exist.
+		//SetLogText (lumpname);
 	}
-	return true;
+	else
+	{
+		FMemLump data = Wads.ReadLump (lumpnum);
+		SetLogText ((char *)data.GetMem());
+	}
+}
+
+void player_s::SetLogText (const char *text)
+{
+	ReplaceString (&LogText, text);
 }
 
 IMPLEMENT_ABSTRACT_ACTOR (APlayerPawn)
@@ -132,6 +125,166 @@ void APlayerPawn::BeginPlay ()
 	Super::BeginPlay ();
 	ChangeStatNum (STAT_PLAYER);
 }
+
+void APlayerPawn::AddInventory (AInventory *item)
+{
+	// Adding inventory to a voodoo doll should add it to the real player instead.
+	if (player != NULL && player->mo != this)
+	{
+		player->mo->AddInventory (item);
+		return;
+	}
+	Super::AddInventory (item);
+
+	// If nothing is selected, select this item.
+	if (player != NULL && player->InvSel == NULL && (item->ItemFlags & IF_INVBAR))
+	{
+		player->InvSel = item;
+	}
+}
+
+void APlayerPawn::RemoveInventory (AInventory *item)
+{
+	bool pickWeap = false;
+
+	// Since voodoo dolls aren't supposed to have an inventory, there should be
+	// no need to redirect them to the real player here as there is with AddInventory.
+
+	// If the item removed is the selected one, select something else, either the next
+	// item, if there is one, or the previous item.
+	if (player != NULL)
+	{
+		if (player->InvSel == item)
+		{
+			player->InvSel = item->NextInv ();
+			if (player->InvSel == NULL)
+			{
+				player->InvSel = item->PrevInv ();
+			}
+		}
+		if (player->InvFirst == item)
+		{
+			player->InvFirst = item->NextInv ();
+			if (player->InvFirst == NULL)
+			{
+				player->InvFirst = item->PrevInv ();
+			}
+		}
+		if (item == player->PendingWeapon)
+		{
+			player->PendingWeapon = WP_NOCHANGE;
+		}
+		if (item == player->ReadyWeapon)
+		{
+			// If the current weapon is removed, pick a new one.
+			pickWeap = true;
+			player->ReadyWeapon = NULL;
+		}
+	}
+	Super::RemoveInventory (item);
+	if (pickWeap && player->mo == this && player->PendingWeapon == WP_NOCHANGE)
+	{
+		PickNewWeapon (NULL);
+	}
+}
+
+bool APlayerPawn::UseInventory (AInventory *item)
+{
+	const TypeInfo *itemtype = item->GetClass();
+
+	if (player->cheats & CF_TOTALLYFROZEN)
+	{ // You can't use items if you're totally frozen
+		return false;
+	}
+	if (!Super::UseInventory (item))
+	{
+		// Heretic and Hexen advance the inventory cursor if the use failed.
+		// Should this behavior be retained?
+		return false;
+	}
+	if (player == &players[consoleplayer])
+	{
+		S_SoundID (this, CHAN_ITEM, item->UseSound, 1, ATTN_NORM);
+		StatusBar->FlashItem (itemtype);
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// APlayerPawn :: BestWeapon
+//
+// Returns the best weapon a player has, possibly restricted to a single
+// type of ammo.
+//
+//===========================================================================
+
+AWeapon *APlayerPawn::BestWeapon (const TypeInfo *ammotype)
+{
+	AWeapon *bestMatch = NULL;
+	int bestOrder = INT_MAX;
+	AInventory *item;
+	AWeapon *weap;
+
+	// Find the best weapon the player has.
+	for (item = Inventory; item != NULL; item = item->Inventory)
+	{
+		if (!item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+			continue;
+
+		weap = static_cast<AWeapon *> (item);
+
+		// Don't select it if it's worse than what was already found.
+		if (weap->SelectionOrder > bestOrder)
+			continue;
+
+		// Don't select it if its primary fire doesn't use the desired ammo.
+		if (ammotype != NULL &&
+			(weap->Ammo1 == NULL ||
+			 weap->Ammo1->GetClass() != ammotype))
+			continue;
+
+		// Don't select it if there isn't enough ammo to use its primary fire.
+		if (!(weap->WeaponFlags & WIF_AMMO_OPTIONAL) &&
+			!weap->CheckAmmo (AWeapon::PrimaryFire, false))
+			continue;
+
+		// This weapon is usable!
+		bestOrder = weap->SelectionOrder;
+		bestMatch = weap;
+	}
+	return bestMatch;
+}
+
+//===========================================================================
+//
+// APlayerPawn :: PickNewWeapon
+//
+// Picks a new weapon for this player. Used mostly for running out of ammo,
+// but it also works when an ACS script explicitly takes the ready weapon
+// away or the player picks up some ammo they had previously run out of.
+//
+//===========================================================================
+
+AWeapon *APlayerPawn::PickNewWeapon (const TypeInfo *ammotype)
+{
+	AWeapon *best = BestWeapon (ammotype);
+
+	if (best != NULL)
+	{
+		player->PendingWeapon = best;
+		if (player->ReadyWeapon != NULL)
+		{
+			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->DownState);
+		}
+		else
+		{
+			P_BringUpWeapon (player);
+		}
+	}
+	return best;
+}
+
 
 const char *APlayerPawn::GetSoundClass ()
 {
@@ -210,31 +363,52 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 	{ // Make the real player die, too
 		player->mo->Die (source, inflictor);
 	}
-	else if (dmflags2 & DF2_YES_WEAPONDROP)
-	{ // Voodoo dolls don't drop weapons
-		const TypeInfo *droptype = GetDropType ();
-		if (droptype)
-		{
-			P_DropItem (this, droptype, -1, 256);
-		}
-	}
-}
-
-const TypeInfo *APlayerPawn::GetDropType ()
-{
-	if (player == NULL || player->readyweapon >= NUMWEAPONS)
-	{
-		return NULL;
-	}
 	else
 	{
-		return wpnlev1info[player->readyweapon]->droptype;
+		if (dmflags2 & DF2_YES_WEAPONDROP)
+		{ // Voodoo dolls don't drop weapons
+			AWeapon *weap = player->ReadyWeapon;
+			if (weap != NULL)
+			{
+				if (weap->SpawnState != NULL &&
+					weap->SpawnState != &AActor::States[AActor::S_NULL])
+				{
+					weap->BecomePickup ();
+					weap->SetOrigin (x, y, z);
+					P_TossItem (weap);
+				}
+				else
+				{
+					AInventory *item;
+
+					item = P_DropItem (this, weap->AmmoType1, -1, 256);
+					if (item != NULL)
+					{
+						item->Amount = weap->Ammo1->Amount;
+					}
+					item = P_DropItem (this, weap->AmmoType2, -1, 256);
+					if (item != NULL)
+					{
+						item->Amount = weap->Ammo2->Amount;
+					}
+				}
+			}
+		}
+		// Kill the player's inventory
+		while (Inventory != NULL)
+		{
+			Inventory->Destroy ();
+		}
+		if (!multiplayer && (level.flags & LEVEL_DEATHSLIDESHOW))
+		{
+			F_StartSlideshow ();
+		}
 	}
 }
 
 void APlayerPawn::TweakSpeeds (int &forward, int &side)
 {
-	if (player->powers[pw_speed] && !player->morphTics)
+	if ((player->Powers & PW_SPEED) && !player->morphTics)
 	{ // Adjust for a player with a speed artifact
 		forward = (3*forward)>>1;
 		side = (3*side)>>1;
@@ -254,30 +428,6 @@ bool APlayerPawn::DoHealingRadius (APlayerPawn *other)
 
 void APlayerPawn::SpecialInvulnerabilityHandling (EInvulState setting)
 {
-}
-
-class APlayerSpeedTrail : public AActor
-{
-	DECLARE_STATELESS_ACTOR (APlayerSpeedTrail, AActor)
-public:
-	void Tick ();
-};
-
-IMPLEMENT_STATELESS_ACTOR (APlayerSpeedTrail, Any, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Alpha (FRACUNIT*6/10)
-	PROP_RenderStyle (STYLE_Translucent)
-END_DEFAULTS
-
-void APlayerSpeedTrail::Tick ()
-{
-	const int fade = OPAQUE*6/10/8;
-	if (alpha <= fade)
-	{
-		Destroy ();
-		return;
-	}
-	alpha -= fade;
 }
 
 /*
@@ -505,10 +655,6 @@ void P_MovePlayer (player_t *player)
 		int fm, sm;
 
 		movefactor = P_GetMoveFactor (mo, &friction);
-		if (player->morphTics && gameinfo.gametype == GAME_Heretic)
-		{ // Chicken speed
-			movefactor = movefactor * 2500 / 2048;
-		}
 		bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
 		if (!onground && !(player->mo->flags2 & MF2_FLY) && !player->mo->waterlevel)
 		{
@@ -588,9 +734,9 @@ void P_FallingDamage (AActor *actor)
 	// precedence. ZDoom falling damage may not be as strong, but it
 	// gets felt sooner.
 
-	if (damagestyle & DF_FORCE_FALLINGHX)
-	{ // Hexen falling damage
-
+	switch (damagestyle)
+	{
+	case DF_FORCE_FALLINGHX:		// Hexen falling damage
 		if (mom <= 23*FRACUNIT)
 		{ // Not fast enough to hurt
 			return;
@@ -609,9 +755,9 @@ void P_FallingDamage (AActor *actor)
 				damage = actor->health-1;
 			}
 		}
-	}
-	else
-	{ // ZDoom falling damage
+		break;
+	
+	case DF_FORCE_FALLINGZD:		// ZDoom falling damage
 		if (mom <= 19*FRACUNIT)
 		{ // Not fast enough to hurt
 			return;
@@ -628,12 +774,23 @@ void P_FallingDamage (AActor *actor)
 				damage = 1;
 			}
 		}
+		break;
+
+	case DF_FORCE_FALLINGST:		// Strife falling damage
+		if (mom <= 20*FRACUNIT)
+		{ // Not fast enough to hurt
+			return;
+		}
+		// The minimum amount of damage you take from falling in Strife
+		// is 52. Ouch!
+		damage = mom / 25000;
+		break;
 	}
 
 	if (actor->player)
 	{
 		S_Sound (actor, CHAN_AUTO, "*land", 1, ATTN_NORM);
-		P_NoiseAlert (actor, actor);
+		P_NoiseAlert (actor, actor, true);
 		if (damage == 1000000 && (actor->player->cheats & CF_GODMODE))
 		{
 			damage = 999;
@@ -810,14 +967,6 @@ void P_PlayerThink (player_t *player)
 	{
 		player->mo->flags &= ~MF_NOCLIP;
 	}
-	if (player->cheats & CF_FLY)
-	{
-		player->mo->flags |= MF_NOGRAVITY, player->mo->flags2 |= MF2_FLY;
-	}
-	else if (player->powers[pw_flight] == 0)
-	{
-		player->mo->flags &= ~MF_NOGRAVITY, player->mo->flags2 &= ~MF2_FLY;
-	}
 	cmd = &player->cmd;
 	if (player->mo->flags & MF_JUSTATTACKED)
 	{ // Chainsaw/Gauntlets attack auto forward motion
@@ -912,28 +1061,6 @@ void P_PlayerThink (player_t *player)
 		P_MovePlayer (player);
 		AActor *pmo = player->mo;
 
-		if (!(player->cheats & CF_PREDICTING) && player->powers[pw_speed] && !(level.time & 1)
-			&& P_AproxDistance (pmo->momx, pmo->momy) > 12*FRACUNIT)
-		{
-			AActor *speedMo;
-
-			speedMo = Spawn<APlayerSpeedTrail> (pmo->x, pmo->y, pmo->z);
-			if (speedMo)
-			{
-				speedMo->angle = pmo->angle;
-				speedMo->Translation = pmo->Translation;
-				speedMo->target = pmo;
-				speedMo->sprite = pmo->sprite;
-				speedMo->frame = pmo->frame;
-				speedMo->floorclip = pmo->floorclip;
-				if (player->mo == players[consoleplayer].camera &&
-					!(player->cheats & CF_CHASECAM))
-				{
-					speedMo->renderflags |= RF_INVISIBLE;
-				}
-			}
-		}
-
 		// [RH] check for jump
 		if (cmd->ucmd.buttons & BT_JUMP)
 		{
@@ -964,7 +1091,7 @@ void P_PlayerThink (player_t *player)
 		}
 		else if (cmd->ucmd.upmove != 0)
 		{
-			if (player->mo->waterlevel >= 2 || player->powers[pw_flight] || player->mo->flags2 & MF2_FLY)
+			if (player->mo->waterlevel >= 2 || player->mo->FindInventory (RUNTIME_CLASS(APowerFlight)))
 			{
 				player->mo->momz = cmd->ucmd.upmove << 9;
 				if (player->mo->waterlevel < 2 && !(player->mo->flags2 & MF2_FLY))
@@ -979,7 +1106,11 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (cmd->ucmd.upmove > 0 && !(player->cheats & CF_PREDICTING))
 			{
-				P_PlayerUseArtifact (player, arti_fly);
+				AInventory *fly = player->mo->FindInventory (TypeInfo::FindType ("ArtiFly"));
+				if (fly != NULL)
+				{
+					player->mo->UseInventory (fly);
+				}
 			}
 		}
 	}
@@ -1021,92 +1152,20 @@ void P_PlayerThink (player_t *player)
 		}
 		// Cycle psprites
 		P_MovePsprites (player);
+
 		// Other Counters
-		if (player->powers[pw_invulnerability])
-		{
-			player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Active);
-			if (!(--player->powers[pw_invulnerability]))
-			{
-				player->mo->flags2 &= ~MF2_INVULNERABLE;
-				player->mo->effects &= ~FX_RESPAWNINVUL;
-				player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Stop);
-			}
-		}
-		// Strength counts up to diminish fade.
-		if (player->powers[pw_strength])
-			player->powers[pw_strength]++;
-
-		if (player->powers[pw_invisibility])
-		{
-			if (!--player->powers[pw_invisibility])
-			{
-				player->mo->flags &= ~MF_SHADOW;
-				player->mo->flags3 &= ~MF3_GHOST;
-				player->mo->RenderStyle = STYLE_Normal;
-				player->mo->alpha = OPAQUE;
-			}
-		}
-
-		if (player->powers[pw_infrared])
-			player->powers[pw_infrared]--;
-
-		if (player->powers[pw_ironfeet])
-			player->powers[pw_ironfeet]--;
-
-		if (player->powers[pw_minotaur])
-			player->powers[pw_minotaur]--;
-
-		if (player->powers[pw_speed])
-			player->powers[pw_speed]--;
-
-		if (player->powers[pw_flight] && (multiplayer || !(level.clusterflags & CLUSTER_HUB)))
-		{
-			// [RH] Methinks this check is not right.
-			//if ((player->mo->flags2 & MF2_FLY) && (player->mo->waterlevel < 2))))
-			{
-				if (!--player->powers[pw_flight])
-				{
-					if (player->mo->z != player->mo->floorz)
-					{
-						player->centering = true;
-					}
-					player->mo->flags2 &= ~MF2_FLY;
-					player->mo->flags &= ~MF_NOGRAVITY;
-					BorderTopRefresh = screen->GetPageCount (); //make sure the sprite's cleared out
-				}
-			}
-		}
-
-		if (player->powers[pw_weaponlevel2])
-		{
-			if (!--player->powers[pw_weaponlevel2])
-			{
-				if ((player->readyweapon == wp_phoenixrod)
-					&& (player->psprites[ps_weapon].state
-						!= wpnlev2info[wp_phoenixrod]->readystate)
-					&& (player->psprites[ps_weapon].state
-						!= wpnlev2info[wp_phoenixrod]->upstate))
-				{
-					P_SetPsprite (player, ps_weapon,
-						wpnlev1info[wp_phoenixrod]->readystate);
-					player->UseAmmo ();
-					player->refire = 0;
-					S_StopSound (player->mo, CHAN_WEAPON);
-				}
-				else if ((player->readyweapon == wp_gauntlets)
-					|| (player->readyweapon == wp_staff))
-				{
-					player->pendingweapon = player->readyweapon;
-				}
-				BorderTopRefresh = screen->GetPageCount ();
-			}
-		}
-
 		if (player->damagecount)
 			player->damagecount--;
 
 		if (player->bonuscount)
 			player->bonuscount--;
+
+		if (player->hazardcount)
+		{
+			player->hazardcount--;
+			if (!(level.time & 31) && player->hazardcount > 16*TICRATE)
+				P_DamageMobj (player->mo, NULL, NULL, 5, MOD_SLIME);
+		}
 
 		if (player->poisoncount && !(level.time & 15))
 		{
@@ -1118,82 +1177,9 @@ void P_PlayerThink (player_t *player)
 			P_PoisonDamage (player, player->poisoner, 1, true);
 		}
 
-		// Handling colormaps.
-		if (player->powers[pw_invulnerability] && gameinfo.gametype != GAME_Hexen)
-		{
-			if ((player->powers[pw_invulnerability] > BLINKTHRESHOLD
-				|| (player->powers[pw_invulnerability] & 8)) &&
-				!(player->mo->effects & FX_RESPAWNINVUL) &&
-				!APART(PowerupColors[pw_invulnerability]))	// [RH] No special colormap if there is a blend
-			{
-				player->fixedcolormap = NUMCOLORMAPS;
-			}
-			else
-			{
-				player->fixedcolormap = 0;
-			}
-		}
-		else if (player->powers[pw_infrared])		
-		{
-			if (gameinfo.gametype == GAME_Doom)
-			{
-				if (player->powers[pw_infrared] > BLINKTHRESHOLD
-					|| (player->powers[pw_infrared] & 8))
-				{	// almost full bright
-					player->fixedcolormap = 1;
-				}
-				else
-				{
-					player->fixedcolormap = 0;
-				}
-			}
-			else
-			{
-				if (player->powers[pw_infrared] <= BLINKTHRESHOLD)
-				{
-					if (player->powers[pw_infrared] & 8)
-					{
-						player->fixedcolormap = 0;
-					}
-					else
-					{
-						player->fixedcolormap = 1;
-					}
-				}
-				else if (!(level.time & 16) &&
-					player->mo == players[consoleplayer].camera)
-				{
-					if (newtorch)
-					{
-						if (player->fixedcolormap + newtorchdelta > 7
-							|| player->fixedcolormap + newtorchdelta < 1
-							|| newtorch == player->fixedcolormap)
-						{
-							newtorch = 0;
-						}
-						else
-						{
-							player->fixedcolormap += newtorchdelta;
-						}
-					}
-					else
-					{
-						newtorch = (pr_torch() & 7) + 1;
-						newtorchdelta = (newtorch == player->fixedcolormap) ?
-							0 : ((newtorch > player->fixedcolormap) ? 1 : -1);
-					}
-				}
-			}
-		}
-		else
-		{
-			player->fixedcolormap = 0;
-		}
-
 		// Handle air supply
 		if (player->mo->waterlevel < 3 ||
-			player->powers[pw_ironfeet] ||
-			player->powers[pw_invulnerability] ||
+			/*(player->Powers & PW_IRONFEET) ||*/
 			(player->mo->flags2 & MF2_INVULNERABLE))
 		{
 			player->air_finished = level.time + 10*TICRATE;
@@ -1352,18 +1338,15 @@ void player_s::Serialize (FArchive &arc)
 		<< momy
 		<< centering
 		<< health
-		<< armortype
-		<< readyArtifact
-		<< artifactCount
 		<< inventorytics
+		<< InvFirst << InvSel
 		<< pieces
 		<< backpack
 		<< fragcount
 		<< spreecount
 		<< multicount
 		<< lastkilltime
-		<< readyweapon
-		<< pendingweapon
+		<< ReadyWeapon << PendingWeapon
 		<< cheats
 		<< refire
 		<< inconsistant
@@ -1372,7 +1355,7 @@ void player_s::Serialize (FArchive &arc)
 		<< secretcount
 		<< damagecount
 		<< bonuscount
-		<< flamecount
+		<< hazardcount
 		<< poisoncount
 		<< poisoner
 		<< attacker
@@ -1380,9 +1363,8 @@ void player_s::Serialize (FArchive &arc)
 		<< fixedcolormap
 		<< xviewshift
 		<< morphTics
+		<< PremorphWeapon
 		<< chickenPeck
-		<< rain1
-		<< rain2
 		<< jumpTics
 		<< respawn_time
 		<< air_finished
@@ -1392,75 +1374,15 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendR
 		<< BlendG
 		<< BlendB
-		<< BlendA;
-	pendingweapon = wp_nochange;
-	for (i = 0; i < NUMARMOR; i++)
-	{
-		arc << armorpoints[i];
-	}
-	// Post-205 stores inventory names with their counts,
-	// so new artifacts can be added freely without breaking
-	// savegames.
-	if (arc.IsStoring())
-	{
-		for (i = 0; i < NUMINVENTORYSLOTS; ++i)
-		{
-			if (inventory[i] != 0)
-			{
-				arc.WriteString (ArtifactNames[i]);
-				arc.WriteCount (inventory[i]);
-			}
-		}
-		arc.WriteString (NULL);
-	}
-	else
-	{
-		char *str = NULL;
-
-		memset (inventory, 0, sizeof(inventory));
-		arc << str;
-		while (str != NULL)
-		{
-			artitype_t arti;
-			DWORD count;
-
-			arti = P_FindNamedInventory (str);
-			count = arc.ReadCount ();
-			if (arti != arti_none)
-			{
-				inventory[arti] = (WORD)count;
-			}
-			arc << str;
-		}
-	}
-	for (i = 0; i < NUMPOWERS; i++)
-		arc << powers[i];
-	for (i = 0; i < NUMKEYS; i++)
-		arc << keys[i];
+		<< BlendA
+		<< accuracy << stamina
+		<< LogText;
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];
-	if (SaveVersion < 218)
-	{
-		for (i = 0; i < SAVEVER217_NUMWEAPONS; i++)
-			arc << weaponowned[i];
-		for (; i < NUMWEAPONS; ++i)
-			weaponowned[i] = 0;
-		for (i = 0; i < SAVEVER217_NUMAMMO; i++)
-			arc << ammo[i] << maxammo[i];
-		for (; i < NUMAMMO; ++i)
-			ammo[i] = maxammo[i] = 0;
-	}
-	else
-	{
-		for (i = 0; i < NUMWEAPONS; i++)
-			arc << weaponowned[i];
-		for (i = 0; i < NUMAMMO; i++)
-			arc << ammo[i] << maxammo[i];
-	}
 	for (i = 0; i < NUMPSPRITES; i++)
 		arc << psprites[i];
 
-	arc << CurrentPlayerClass << mstaffcount << cholycount;
+	arc << CurrentPlayerClass;
 
 	if (isbot)
 	{
@@ -1482,7 +1404,6 @@ void player_s::Serialize (FArchive &arc)
 			<< first_shot
 			<< sleft
 			<< allround
-			<< redteam
 			<< oldx
 			<< oldy;
 		if (arc.IsLoading ())
@@ -1505,5 +1426,11 @@ void player_s::Serialize (FArchive &arc)
 	else
 	{
 		dest = prev = enemy = missile = mate = last_mate = NULL;
+	}
+	if (arc.IsLoading ())
+	{
+		// If the player reloaded because they pressed +use after dying, we
+		// don't want +use to still be down after the game is loaded.
+		oldbuttons = ~0;
 	}
 }

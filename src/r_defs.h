@@ -310,8 +310,6 @@ struct sector_t
 	WORD		sky;
 	short		seqType;		// this sector's sound sequence
 
-	AActor* 	soundtarget;	// thing that made a sound (or null)
-//	int 		blockbox[4];	// mapblock bounding box for height changes
 	fixed_t		soundorg[3];	// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
 	AActor* 	thinglist;		// list of mobjs in sector
@@ -603,7 +601,6 @@ public:
 	BYTE UseType;	// This texture's primary purpose
 
 	BYTE bNoDecals:1;		// Decals should not stick to texture
-	BYTE bStaticName:1;		// Texture was loaded from a static list of names in the executable
 	BYTE bNoRemap0:1;		// Do not remap color 0 (used by front layer of parallax skies)
 	BYTE bWorldPanning:1;	// Texture is panned in world units rather than texels
 	BYTE bMasked:1;			// Texture (might) have holes
@@ -715,7 +712,6 @@ public:
 	{
 		TEXMAN_TryAny = 1,
 		TEXMAN_Overridable = 2,
-		TEXMAN_NoStaticNames = 4,
 	};
 
 	int CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
@@ -734,7 +730,7 @@ public:
 
 	int CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
 	int AddTexture (FTexture *texture);
-	int AddPatch (const char *patchname, bool staticname=true, int namespc=0);
+	int AddPatch (const char *patchname, int namespc=0);
 
 	// Replaces one texture with another. The new texture will be assigned
 	// the same name, slot, and use type as the texture as it is replacing.

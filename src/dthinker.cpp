@@ -194,8 +194,11 @@ void DThinker::DestroyAllThinkers ()
 
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
-		DestroyThinkersInList (Thinkers[i].Head);
-		DestroyThinkersInList (FreshThinkers[i].Head);
+		if (i != STAT_TRAVELLING)
+		{
+			DestroyThinkersInList (Thinkers[i].Head);
+			DestroyThinkersInList (FreshThinkers[i].Head);
+		}
 	}
 }
 
@@ -208,8 +211,11 @@ void DThinker::DestroyMostThinkers ()
 
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
-		DestroyMostThinkersInList (Thinkers[i], i);
-		DestroyMostThinkersInList (FreshThinkers[i], i);
+		if (i != STAT_TRAVELLING)
+		{
+			DestroyMostThinkersInList (Thinkers[i], i);
+			DestroyMostThinkersInList (FreshThinkers[i], i);
+		}
 	}
 }
 

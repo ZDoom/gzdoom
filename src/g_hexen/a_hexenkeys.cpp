@@ -1,11 +1,8 @@
 #include "info.h"
 #include "a_pickups.h"
 #include "gstrings.h"
-
-class AHexenKey : public AKey
-{
-	DECLARE_STATELESS_ACTOR (AHexenKey, AKey)
-};
+#include "a_keys.h"
+#include "tarray.h"
 
 IMPLEMENT_STATELESS_ACTOR (AHexenKey, Hexen, -1, 0)
 	PROP_RadiusFixed (8)
@@ -16,12 +13,24 @@ END_DEFAULTS
 #define MAKEKEY(num,n1,name,ednum, spawn) \
 	class AKey##n1 : public AHexenKey { \
 		DECLARE_ACTOR (AKey##n1, AHexenKey) \
-	protected: \
-		keytype_t GetKeyType () { return (keytype_t)(KEY_STEEL + 0x##num - 1); } \
+	public: \
 		const char *PickupMessage () { return GStrings(TXT_KEY_##name); } \
+		const char *NeedKeyMessage (bool remote, int keynum) { return MakeNeedKey(TXT_KEY_##name); } \
 	}; \
 	FState AKey##n1::States[] = { S_NORMAL (KEY##num, 'A', -1, NULL, NULL) }; \
-	IMPLEMENT_ACTOR (AKey##n1, Hexen, ednum, spawn) PROP_SpawnState (0) END_DEFAULTS
+	IMPLEMENT_ACTOR (AKey##n1, Hexen, ednum, spawn) PROP_SpawnState (0) \
+	PROP_Key_KeyNumber(0x##num) PROP_Inventory_Icon ("KEYSLOT" #num) END_DEFAULTS
+
+static TArray<char> NeedString;
+
+static const char *MakeNeedKey (int msgnum)
+{
+	const char *keyname = GStrings(msgnum);
+	
+	NeedString.Grow (strlen(keyname) + 14);
+	sprintf (&NeedString[0], "YOU NEED THE %s", keyname);
+	return &NeedString[0];
+}
 
 MAKEKEY (1, Steel, STEEL, 8030, 85)
 MAKEKEY (2, Cave, CAVE, 8031, 86)

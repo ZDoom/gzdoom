@@ -1,4 +1,577 @@
+October 20, 2004
+- Time to release 2.0.90, I think?
+- Added some Strife keys to the controls menu.
+- Did more work on the Strife status bar. I think it's feature complete now.
+- Finished reimplementing the Heretic status bar.
+- Made cholycount, mstaffcount, and flamecount local to the weapons that use them
+  instead of the players who fire them. The rain1 and rain2 members are now stored
+  in the shooter's inventory instead, so it should be safe to use the rain with
+  monsters.
+
+October 19, 2004
+- Added extrapolation for the Strife popscreen scrolling.
+
+October 14, 2004
+- Fixed: Using -warp with an ExMy game and only providing the map number only worked
+  if -warp wasn't the last parameter on the command line.
+- Updated some powerup-related code for the new inventory system.
+
+October 12, 2004
+- Fixed: Quitting a game and returning to the title screen would not zero the
+  palette blend.
+- Fixed: Missiles disappearing on horizon lines were still exploded.
+
+October 8, 2004
+- Added a scrolling effect for switching between pages in the keys pop screen.
+
+October 6, 2004
+- Fixed: Missiles with MF2_BOUNCE2 set did no normal damage.
+- Added particle blood for the Heretic/Hexen blood functions.
+- Added a fix for negative row offsets to non-power of 2 height textures.
+- Continued my R_FakeFlat() fix from yesterday: It didn't copy the control sector's
+  lighting either.
+- LEVEL_SWAPSKIES is now ignored if LEVEL_DOUBLESKY is set.
+- Fixed a possible crash in SC_GetString() if whitespace is the last character(s)
+  in a script.
+- Fixed the sliding along diagonal walls behavior in P_HitSlideLine() so that it
+  uses correct math. (from code submitted on the forum)
+
+October 5, 2004
+- Removed MF_NOBLOCKMAP from ColonGibs, SmallBloodPool, BrainStem, and BloodPool. I
+  can't see any good reason for them to have this flag set.
+- Fixed: player_s::Serialize() set PendingWeapon to WP_NOCHANGE. I have no idea why.
+- Added a playing of "minotaur/attack3" to A_MinotaurAtk3().
+- Fixed: R_FakeFlat() did not set FakeSide to FAKED_BelowFloor when viewing a
+  fake plane with SECF_CLIPFAKEPLANES and SECF_FAKEFLOORONLY set and the fake floor
+  was above the real ceiling.
+- Fixed: DArgs::GatherFiles() would hang on files with unexpected extensions.
+- Autostarting games (i.e. co-op) of Hexen now use the map set as the first map,
+  so you can play co-op Deathkings without knowing Deathkings starts on MAP41.
+- Added range checks to C_DoKey(), C_ChangeBinding(), and C_GetBinding().
+- Fixed integer overflow in P_SetSlope() for very extreme slopes.
+- Stopped outputting the exception information to the crash log for an
+  EXCEPTION_ACCESS_VIOLATION when run under a pre-NT kernel, because those seem to
+  fill it with 0xFF instead of anything meaningful.
+
+October 4, 2004
+- Fixed: The mace death ball did full damage to teammates.
+- Fixed: The font translation builders counted the transparent color as a visible
+  color and erroneously included it in the calculations, making every range lighter
+  than they should have been.
+- Fixed: Giving the player a weapon when they were not already using one would not
+  bring the weapon up. (Note: Not bringing the new weapon up if the player is
+  already using a weapon is normal behavior.)
+- Fixed: PickNextWeapon() and PickPrevWeapon() crashed when the player had no
+  ready weapon.
+- Changed MakeKey to return a value of 0xFFFFFFFF for NULL strings.
+- Changed the centerview command to send a DEM_CENTERVIEW event instead of using the
+  ticcmd_t structure to do it. Now it works while the game is paused.
+- Changed particle visibility calculations so they use r_SpriteVisibility instead of
+  a separate variable pre-multiplied by 2. So now there is no r_ParticleVisibility
+  to overflow.
+- Removed the 3-digit restriction on large fullscreen HUD numbers.
+- Fixed: G_LoadGame() did not check for a NULL name.
+- Added the -nojoy command line parameter to disable the enumeration of joysticks,
+  effectively disabling joysticks regardless of the use_joystick cvar.
+- Reduced the maximum FOV from 175 to 170.
+- New: With the (non-overlayed) automap on, a cut-down rendering process is performed
+  so that the automap can update while you move around.
+- Fixed the switch and animation parsers so they can use overridden textures.
+- Changed the warp command so that it gets sent across the loopback device.
+- Changed the default item respawning behavior so that the dmflag is observed in all
+  multiplayer games, not just deathmatch.
+- Fixed: Thing_Projectile did not set the projectile's speed.
+- Fixed: The banishment device did not work on non-monsters. Normally, that's okay,
+  but it didn't work on players either.
+- Fixed: Ambient sounds in Doom-format maps could prevent players from spawning.
+- Fixed: The scripted version of Scroll_Texture_Both now checks to make sure the
+  specified line side is valid.
+- After P_SetupLevel() calls P_LoadThings(), it now sets the healths of the players
+  to match their actors, in case their voodoo dolls were were fragged during the
+  spawn process. (Plutonia MAP06)
+- FindShortestTextureAround() and FindShortestUpperAround() now return the height of
+  the null texture if none of the sector's side have a corresponding texture.
+- Changed the minotaur drops so that (1) Minotaur always drops and (2) MinotaurFriend
+  never drops.
+- Added a dummy actor with doomednum 32000, so Doom Builder's camera won't show up
+  in maps.
+- Added a minimum screen size of 320x200 to the Win32Video mode enumerator.
+
+September 29, 2004
+- Removed the bStaticName texture flag.
+- Added support for autoactivating items with a MaxAmount of 0. This lets me use the
+  same armor classes for Strife (which can stack armor) and Doom/Heretic (which cannot
+  stack).
+
+September 28, 2004
+- Merged in my the old Linux changes I made just after releasing 2.0.63.
+
+September 7, 2004
+- Stopped "*** SOUND DEBUG INFO ***"'s flashing.
+- Changed the default resolution from 320x200 to 640x480.
+- Added some sound precaching now. Sounds that are stored in an Actor's members
+  are now loaded at level load time, and those that aren't are unloaded. Is this
+  enough or should I also scan scripts for strings that could be sounds?
+- Fixed a bug I added when I fixed the palette scrambling just after switching to
+  fullscreen mode. The WM_PALETTECHANGED message could be received during a drawing
+  operation, but it was still handled immediately anyway. So after doing that, the
+  screen would no longer be locked, and drawing operations would be referencing a
+  NULL pointer. Now the reosurce freeing and restoring waits until the next Lock call.
+
+August 31, 2004
+- Fixed: The vampiric mode of the serpent staff brought you down to 100 health if you
+  were over it.
+
+August 25, 2004
+- Fixed: PIT_CeilingRaise would move overlapping things that did not have MF2_PASSMOBJ
+  set.
+- Fixed: Selecting an episode not present in the shareware Heretic told you you needed
+  to buy Doom.
+- Fixed: PTR_UseTraverse didn't consider ML_BLOCKEVERYTHING lines to be blocking.
+- Fixed: PTR_AimTraverse didn't consider ML_BLOCKEVERYTHING lines to be blocking.
+- Fixed: After pressing +use to load a save game after you die, +use would still be
+  down after the load finished, and you could open doors immediately. Nasty if there
+  was some mean thing behind the door all set to kill you.
+- Fixed: Sector special transferring moving floors also copied a sector's secret flag.
+- Changed the player setup menu to use the arrow cursor instead of the skull cursor.
+- Changed FWarpTexture::MakeTexture() to allocate a temporary buffer instead of using
+  a fixed sized 256-byte one.
+- Changed sprite flipping so it flips the sprite's left offset too.
+- Fixed: You could use items on the intermission screens between levels.
+- Changed the ACS thingsound command to use CHAN_AUTO like the other ACS functions.
+- Fixed: Flying things could get stuck inside rising floors.
+
+August 14, 2004
+- Fixed sign problms with door light tags.
+- Fixed: PIT_CheckOnmobjZ()'s "under thing" check used < instead of <=. This
+  is why falling stacks of monsters would get stuck and be unable to move.
+
+August 10, 2004
+- Added support for drawing masked and translucent flats that are part of
+  a stack. The amount of translucency is controlled by the first argument
+  of the 9077 and 9078 things. At the moment, this is only for unsloped flats.
+
+July 29, 2004
+- Added checks in AAmbientSound::(De)Activate so that you can't activate it
+  when it's already activated or deactivate it when it's already deactivated.
+- Fixed: addmenukey did not ensure that the ControlsMenu.items pointed to the
+  first entry of CustomControlsItems, so if you added too many controls and the
+  array needed to resize, the ControlsMenu would no longer point to valid data.
+- Did some fullscreen palette work now that I somehow ended up with a program
+  that _always_ blows up my palette within a second of switching to fullscreen
+  mode. Now when the game receives WM_PALETTECHANGED messages from other windows
+  while it's fullscreen, it immediately queues up a palette update event to
+  undo what the other window did. Other programs shouldn't be messing with
+  the palette when they don't even have the focus, but this obviously doesn't
+  stop them from doing it anyway. :-( Hopefully, this makes vid_palettehack
+  obsolete. Also added vid_showpalette cvar to draw the palette to the screen
+  for debugging purposes. Thanks to that, I can see that the first and last 10
+  colors are being kept at the standard system palette colors after some other
+  program alters the palette in fullscreen mode, and no amount of
+  IDirectDrawPalette::SetEntries() calls will change them. I need to release
+  and recreate my surfaces and palette, or I won't be able to touch them.
+- Added separate rgamma, ggamma, and bgamma cvars to control the gamma of
+  individual color components in fullscreen mode. These are multiplied to
+  with the gamma cvar, so that cvar still controls the overall gamma. I need
+  this because my monitor is extra green, and the drivers don't gamma adjust
+  paletted displays for me.
+
+July 28, 2004
+- Stopped using FSOUND_Sample_Upload for everything. It seems to be even more
+  broken with the latest FMOD.
+
+July 26, 2004
+- Added a NULL pointer check to the main P_TraceBleed function that takes a
+  target, because D-ONAHD can cause this to happen some times when the imps
+  shoot their BFGs in A_BFGSpray. So linetarget also gets copied to a local
+  variable before being used in A_BFGSpray, since P_DamageMobj apparently can
+  change it.
+- Updated the FakePickup and DehackedPickup classes so that they work with the
+  new inventory system.
+- Added coop starts 5-8 for Strife because they're on the Bishop's Tower map
+  for some reason.
+- Finally added the special deathmatch logic for the enemy-finding used by
+  rebels spawned from a teleporter beacon.
+
+July 22, 2004
+- Fixed the default Heretic MAPINFO: The episode 5 maps are supposed to play the
+  music from episode 2 (not 1), and the episode 6 maps didn't have any music at
+  all.
+- Fixed: The Heretic ambient sounds were off by one.
+- Changed the default for opl_freqeuncy to 49716, since that's the rate the
+  chip actually played at in SoundBlaster/AdLib cards, and the emulator performs
+  very poorly when it needs to downsample. Also added new OPL frequencies to
+  choose from in the menu.
+- Fixed: OPLmusicBlock::ServiceStream could crash on non-looping songs, because
+  the return value FALSE was never passed along to tell FMOD to stop the stream.
+
+July 19, 2004
+- Changed DDrawFB::LockSurf so that a result of DDERR_UNSUPPORTEDMODE when
+  trying to recreate a surface is non-fatal. The game should now be able to
+  survive a screen saver and power suspend.
+- Reimplemented the key display on Doom's status bar.
+
+July 16, 2004
+- Reimplemented the Hexen status bar's key bar. Also improved the status bar so
+  that it can show ammo from other games.
+- Fixed the ammo and key displays for Heretic's status bar. Plus, now Heretic's
+  status bar will properly update when you lose a key, which it didn't before.
+- Reimplemented the invulnerability powerup.
+
+July 15, 2004
+- Fixed: Morphing a monster and then using the kill monsters cheat would crash
+  because the original unmorphed version would be destroyed, then when the
+  morphed one died, it tried to destroy the original again, because the
+  pointer hadn't been set NULL yet. Since the actual crash is from unlinking the
+  actor twice, AActor::Destroy() now sets MF_NOSECTOR and MF_NOBLOCKMAP after
+  unlinking an actor.
+- Fixed: Trying to use "-" as a sky with MBF's 271/272 linetypes crashed. Now
+  it ignores the control line and just draws a normal sky.
+- Fixed: G_DoReborn() needs to do a complete new game, not just a reload of the
+  current map, if the player is dead and wants to respawn without a most recent
+  save.
+- Changed FWadCollection::FindLump() so that it only returns lumps that are in
+  the global namespace. Now it won't return lumps that got moved into a skin
+  namespace. On a related note, FWadCollection::SkinHack() now prints a warning
+  when it thinks it finds a skin wad with maps in it.
+- Fixed: The "you are here" marks on Heretic's inter-level maps were no longer
+  drawn.
+- Updated to FMOD 3.73.
+
+July 14, 2004
+- Moved the full-screen HUD coordinate logic out of FBaseStatusBar and into
+  DCanvas::DrawTexture. This is so that powerups can draw their status icons
+  themselves without needing to hook into the status bar.
+- Reimplemented the Tome of Power.
+- Removed DCanvas::DrawPageBlock().
+
+July 13, 2004
+- Fixed positioning of ML_DONTPEGBOTTOM for lower textures. Putting a sky
+  ceiling on both sides of the line always makes unpegged positioning
+  relative to the back sector's ceiling, not just when the back ceiling is
+  above the front ceiling.
+- Fixed: Saving a game would momentarily stop floatbobbers from bobbing.
+  Since actors have a FloatBobPhase member, their height doesn't need to be
+  adjusted when serializing them. (However, since the adjustment just gets
+  undone, I'm not sure why it was a problem.)
+- Fixed 16-rotation sprites so that the rotation boundaries are where you would
+  expect them to be.
+- Re-Fixed: CT_Drawer could try drawing the scoreboard when deathmatch is
+  true, but you hadn't started a game yet.
+- Added the inverse video flash when firing the Sigil.
+- I don't know why the Oracle's spectre is able to teleport across its
+  monster blocking lines, so I've given it the MF3_NOBLOCKMONST flag.
+- Translucency of things in Strife has been corrected. Strife uses 25%/75%
+  translucency. Walls are 75% and it's flipped to 25% for sprites. However,
+  the spectres are really hard to see, so I've given them 33% translucency.
+- Added genuine Strife falling damage. It is extremely unforgiving, so you'd
+  better try not to fall too far while playing Strife.
+- Added the yellow and red colors for the Strife health bar when your health
+  drops to 20 and 10 respectively.
+
+July 12, 2004
+- Finished a play through of Strife, from beginning to end. (Woohoo! It works!)
+  Now to finish the things that aren't quite right...
+- Miscellanoues Strife bug fixing.
+
+July 10, 2004
+- The eight SPAC type has now been assigned: SPAC_PTOUCH, for when projectiles
+  either impact or cross a line. Strife line type 182 needs this.
+
+July 9, 2004
+- Miscellaneous Strife fixing.
+- Better support for not having a ready weapon at all.
+- Changed the Sigil to use the normal weapon sprite instead of the flash
+  sprite to show how many pieces you have.
+
+July 8, 2004
+- Fixed: Interpolations were not cleared when loading a brand-new level.
+- Added support for snesapu.dll 2.0, which happened to be as simple as
+  changing the version check, since none of the changes from 1.01 affect
+  the functions I use.
+
+July 7, 2004
+- "Fixed:" Missiles that moved perfectly vertical would do no damage. Now
+  missiles without any x/y velocity are given a very small x/y velocity so
+  that they are not quite moving vertical.
+- Added the GetSigilPieces() ACS command, which returns the number of Sigil
+  pieces the activator has obtained.
+- Added a third parameter to Teleport_NewMap that, when set to TRUE, will
+  cause the player to keep their current facing when they move to the new map.
+- Added the Hexen intermission text between hubs that I had forgotten about.
+- Added map redirects, so if a player is carrying a particular item, they go
+  to a different map instead. (Used for Strife maps 3 and 7.)
+
+July 6, 2004
+- Added support for the teaser version of Strife. It seems to be based on an
+  older version of Strife than the one that was released to retail, so the
+  mobjinfo list is different, the dialogues are slightly different, and some
+  items have different names. The Teaser is fully playable.
+
+June 30, 2004
+- Added Strife's fire and disruptor deaths.
+- Corrected the missile attack chances for the Strife monsters.
+
+June 26, 2004
+- Added Strife's breaking glass.
+
+June 25, 2004
+- Added a fix for Strife's LASERB01 texture. The Doom renderer ignored patch
+  y offsets on masked mid-textures, so it got drawn as if the beam was at the
+  top of the texture instead of the bottom. The "fix" is to adjust the rowoffset
+  of the sides that it appears on.
+
+June 24, 2004
+- Made some corrections to the Strife blood and bullet puffs.
+- Removed the global variable PuffType. It's now a parameter to those
+  functions that use it. HitPuffType is also gone, because giving a puff a
+  CrashState can make the same distinction.
+- Added Strife's scanner.
+- Added Strife's targeter, although it's kind of a useless item when the
+  player can just go to the options menu and turn on a crosshair.
+
+June 23, 2004
+- Added th IF_INVBAR flag so that only selected items show up on the inventory
+  bar.
+
+June 21, 2004
+- Removed the soundtarget sector property and made it an actor property. Now
+  newly spawned actors won't wake up if you happened to make noise near their
+  spawn point earlier.
+
+June 20, 2004
+- Fixed: A_FreezeDeathChunks could divide by zero for very small actors.
+- Fixed: The EndPic "map" in mapinfo didn't work. It always tried to show the
+  graphic "endseq" instead of what was specified in MAPINFO.
+
+June 19, 2004
+- Finished adding all of Strife's slideshows.
+
+June 18, 2004
+- Removed F_DrawPatchCol, since DrawTexture can do its own clipping.
+
+June 15, 2004
+- Added the Sigil, except for the inverse colors when shooting it. Does anyone
+  else think its fourth mode really weak compared to the third and fifth?
+
+June 10, 2004
+- Moved the chicken speed mods out of P_MovePlayer and into
+  AChickenPlayer::TweakSpeeds.
+- Added a check for NULL cameras to the very end of CT_Drawer() where it checks
+  to see if the scoreboard should be shown.
+- Fixed: Trying to activate some manual types of specials would activate every
+  tag 0 sector in the map if the back sector was already moving.
+- Added support for paths with . in them to DArgs::GatherFiles when it checks
+  if a file was specified with an extension or not.
+- Added support for \ as a path seperator in DefaultExtension on Win32.
+- Added the vid_displaybits cvar to control how many bits per pixel the
+  fullscreen display gets created with. The game is still rendered in 8-bit,
+  but this is for the benefit of cards that don't support that or work better
+  with non-8-bit displays.
+- The vid_attachedsurfaces cvar is now ignored unless you are running NT 4.
+
+June 9, 2004
+- Fixed: FDynamicColormap::BuildLights() did not check for a NULL Maps pointer.
+- Fixed: Masked textures and sprites were not drawn correctly inside nested
+  skyboxes because they would be drawn in the front skybox before drawing the
+  second skybox, so the second skybox would cover up the ones in the first
+  skybox.
+
+June 2, 2004
+- Removed all the other network commands related to managing weapon slots.
+  Determination of which weapon to switch to is now done entirely on the
+  local machine and sent using DEM_INVUSE, so the slots don't need to be
+  replicated to the other players.
+
+May 28, 2004
+- Removed DEM_WEAPSEL as part of the inventory rewrite. DEM_INVUSE works
+  instead. This also means the weapon console command is no more.
+
+May 18, 2004
+- Added division/modulus by zero checks to the ACS VM.
+- Implemented the ACS_ExecuteWithResult special so the Strife specials
+  implemented in ACS can function correctly.
+
+May 17, 2004
+- Removed the TeleportSide global variable and made it a line special parameter,
+  which it should have been from the very beginning.
+- Increased the limit for local script variables from 20 to 65535.
+
+May 11, 2004
+- Added Strife's delayed damage sectors.
+- M_ActivateMenuInput now resets the state of the game buttons, so +use will
+  work right away after talking to somebody.
+- Added another validity check to FPatchTexture::MakeTexture to make sure the
+  column doesn't go past the end of the patch when fed bad data.
+- Added Strife's merchant conversation animations.
+
+May 7, 2004
+- Added Strife's animated doors.
+
+May 6, 2004
+- Added support for clipping midtextures on all lines, because I think Strife
+  looks better that way. (Even though it looks like Strife does not do this.)
+- Added Strife's railing and floater-blocking line flags.
+- Add Strife's status bar popup screens.
+
+May 5, 2004
+- Moved artifacts to the new inventory system.
+
+May 1, 2004
+- Fixed: Build palette loading was unreliable after adding desaturation support
+  to Sector_SetColor.
+
+April 30, 2004
+- Did some work on Strife's status bar.
+
+April 25, 2004
+- Added Strife's title sequence.
+
+April 21, 2004
+- Added Degnin Ore.
+
+April 20, 2004
+- Added lots of Strife line specials, ~30 done entirely through ACS.
+- New ACS p-codes:
+	PCD_CASEGOTOSORTED: Faster replacement for PCD_CASEGOTO.
+	PCD_LSPEC5RESULT: Same as PCD_LSPEC5, but the result of the special's
+		execution is left on the stack.
+- New ACS internal functions:
+	int GetLineRowOffset ();
+		Returns the front side's rowoffset for the activating line.
+		
+	fixed GetActorFloorZ (int tid);
+		Returns the highest floor point underneath the actor.
+		
+	int GetActorAngle (int tid);
+		Returns the actor's angle. 65536 is 360 degrees.
+		
+	fixed GetSectorFloorZ (int tag, int x, int y);
+		Returns the sector height (fixed point) at coordinates (x, y).
+		(x, y) are not fixed-point, so you should specify (32, 16)
+		instead of (32.0, 16.0).
+		
+	fixed GetSectorCeilingZ (int tag, int x, int y);
+		Same as GetSectorFloorZ, except for ceilings.
+
+	void SetResultValue (int value);
+		Set's a script's "result value." Needs to be used before any
+		functions that make the script wait. ACS_ExecuteResult and
+		ACS_LockedExecuteResult will return this value.
+
+April 12, 2004
+- Changed the respawnmonsters flag into an int that holds the respawn
+  interval, since Strife respawns at 16 second intervals, and Doom uses
+  12 second intervals.
+
+April 11, 2004
+- Added Strife's Templar.
+
+April 10, 2004
+- Added Strife's Loremaster and Stalker.
+
+April 9, 2004
+- Added Strife's ceiling turret and fixed the alarm klaxon.
+- Added the Strife quest items.
+
+April 8, 2004
+- Converted keys to the new inventory system and added Strife's.
+
+April 7, 2004
+- Added Strife door sounds.
+
+April 6, 2004
+- Added Macil.
+
+April 2, 2004
+- Converted the Heretic and Hexen artifacts to the new inventory system.
+
+March 31, 2004
+- Converted Doom's powerups to the new inventory system.
+
+March 30, 2004
+- Converted armor and health to the new inventory system.
+
+March 26, 2004
+- Fixed: The mauler's secondary fire had the wrong states.
+- Started transitioning over to the Unreal-like inventory system, starting
+  with the easiest first: Puzzle items (since they basically just sit in your
+  inventory until used), then ammo and the backpack.
+- Made the dialogues prettier with shadow boxes behind the text.
+
+March 23, 2004
+- More dialogue work: Now you can pick responses to the things NPCs tell you
+  and drive the conversations along further. You can also get items from the
+  responses. However, item checks aren't in yet, so no item-specific dialogue
+  branches work.
+- P_NoiseAlert now sets a new object flag, OF_IsSoundTarget, so that
+  soundtarget clearing will work with non-players.
+- Changed P_NoiseAlert( self, self->target ) in A_AlertMonsters() to
+  P_NoiseAlert( self->target, self ), so monsters will target the player
+  who shot the projectile instead of the projectile itself.
+
+March 22, 2004
+- Started work on the Strife conversation system. You can now +use things and
+  they will say something to you, but you can't do any sort of conversing yet.
+  Plus, Strife monsters now drop stuff when they die.
+- Added autoloading of voices.wad when playing Strife.
+
+March 17, 2004
+- Changed COMPATF_NOTOSSDROPS behavior so that the items spawn at the monster's
+  feet instead of on the floor.
+- Changed the maximum thrust in P_DamageMobj() to 10*FRACUNIT. (Previously, it
+  was only clamped to this if it was so large that it went negative.)
+- Added AmmoPics for the Strife ammo types.
+- Fixed: The phosphorus grenades used the HE grenades pickup message.
+- Added some code from P_SpawnProjectile to P_Thing_Projectile so that it can
+  support floor/ceiling huggers.
+
+March 13, 2004
+- Fixed: ARealGib's PROP_SpawnState was accidentally deleted.
+- Fixed: P_Thing_Projectile always returned false when spawning non-missiles,
+  and when spawning missiles, only returned the status of the last missile.
+- Fixed: P_SpawnPlayerMissile used the original angle instead of the aimed
+  angle to rotate the projectile in the X-Y plane.
+- Fixed: AHolySpirit::SpecialBlastHandling() compared "< BLAST_FULLSTRENGTH"
+  instead of "== BLAST_FULLSTRENGTH".
+- Changed the parser for SS_CMD_VOLUME in s_sndseq.cpp to use a floating point
+  division instead of an integer division. (Whoops!)
+- Fixed: Pressing backspace on a file in the save game menu and then answering
+  "no" when asked if you really want to delete the file would mess up the
+  savegame menu.
+- Removed the WeaponNames array from p_acs.cpp, because wpnlev1info provides
+  the same information.
+
+March 8, 2004
+- Removed WIF_FIREDAMAGE, as it was unused.
+- Changed AWeapon::OldStyleID() so that it is no longer virtual. Instead, it
+  searches the wpnlev1info array to find the info that points to that class.
+- Replaced A_CallSpecial and A_Script keywords in the thingdef parser with
+  support for using specials by name. (e.g. Instead of using
+  A_CallSpecial (80,...) or A_Script (...) you use ACS_ExecuteAlways (...)
+  instead.
+- Changed SC_ScriptError to be varargs, so passing parameters for the format
+  string is more straight-forward.
+
+March 3, 2004
+- Eliminated the CustomActor class by moving some of its data into class
+  metadata and the rest of it into function parameters. Now custom actors
+  can properly derive from built-in classes.
+- Replaced A_Explode in thingdef.cpp with A_ExplodeParms, so the explosion
+  parameters can be a property of the state instead of a property of the
+  actor.
+- Renamed __BIG_ENDIAN__ to WORDS_BIGENDIAN to match autoconf's name for the
+  #define.
+
+March 2, 2004
+- Added metadata support for TypeInfo, so classes can carry metadata around
+  with them. This is intended to allow actors in DECORATE to properly derive
+  from built-in actors. Whenever a scripting language for DECORATE gets
+  implemented so that everything can be defined there instead of in C++, the
+  metadata should no longer be needed.
+
 February 10, 2004
+- Upgraded to zlib 1.2.1.
 - Merged in Graf Zahl's additions to thingdef.cpp.
 - Fixed: Heretic wind specials would effect you while you were underwater.
   Also turned off the Heretic wind for noclipping things.

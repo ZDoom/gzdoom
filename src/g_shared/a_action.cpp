@@ -63,25 +63,6 @@ IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
-//----------------------------------------------------------------------------
-//
-// PROC A_NoBlocking
-//
-//----------------------------------------------------------------------------
-
-void A_NoBlocking (AActor *actor)
-{
-	// [RH] Andy Baker's stealth monsters
-	if (actor->flags & MF_STEALTH)
-	{
-		actor->alpha = OPAQUE;
-		actor->visdir = 0;
-	}
-
-	actor->flags &= ~MF_SOLID;
-	actor->NoBlockingSet ();
-}
-
 //==========================================================================
 //
 // A_SetFloorClip
@@ -151,7 +132,7 @@ void A_FreezeDeath (AActor *actor)
 	}
 	else if (actor->flags3&MF3_ISMONSTER && actor->special)
 	{ // Initiate monster death actions
-		LineSpecials [actor->special] (NULL, actor, actor->args[0],
+		LineSpecials [actor->special] (NULL, actor, false, actor->args[0],
 			actor->args[1], actor->args[2], actor->args[3], actor->args[4]);
 		actor->special = 0;
 	}
@@ -218,7 +199,7 @@ void A_FreezeDeathChunks (AActor *actor)
 	// base the number of shards on the size of the dead thing, so bigger
 	// things break up into more shards than smaller things.
 	// An actor with radius 20 and height 64 creates ~40 chunks.
-	numChunks = (actor->radius>>FRACBITS)*(actor->height>>FRACBITS)/32;
+	numChunks = MAX<int> (4, (actor->radius>>FRACBITS)*(actor->height>>FRACBITS)/32);
 	i = (pr_freeze.Random2()) % (numChunks/4);
 	for (i = MAX (24, numChunks + i); i >= 0; i--)
 	{

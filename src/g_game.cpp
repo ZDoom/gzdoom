@@ -70,6 +70,8 @@
 #include "m_swap.h"
 #include "m_png.h"
 #include "gi.h"
+#include "a_keys.h"
+#include "a_artifacts.h"
 
 #include <zlib.h>
 
@@ -101,14 +103,13 @@ CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
-BOOL 			respawnmonsters;
+int 			respawnmonsters;
 
 int 			paused;
 bool 			sendpause;				// send a pause event next tic 
 bool			sendsave;				// send a save event next tic 
 bool			sendturn180;			// [RH] send a 180 degree turn next tic
 bool 			usergame;				// ok to save / end game
-bool			sendcenterview;			// send a center view event next tic
 
 BOOL			timingdemo; 			// if true, exit with report on completion 
 BOOL 			nodrawers;				// for comparative timing purposes 
@@ -194,11 +195,7 @@ char savename[PATH_MAX];
 char BackupSaveName[PATH_MAX];
 
 bool SendLand;
-BYTE SendWeaponSlot = 255;
-BYTE SendWeaponChoice = 255;
-int SendItemSelect;
-artitype_t SendItemUse;
-artitype_t LocalSelectedItem;
+const AInventory *SendItemUse, *SendItemDrop;
 
 EXTERN_CVAR (Int, team)
 
@@ -260,21 +257,18 @@ CCMD (slot)
 {
 	if (argv.argc() > 1)
 	{
-		SendWeaponSlot = atoi (argv[1]);
-	}
-}
+		int slot = atoi (argv[1]);
 
-CCMD (weapon)
-{
-	if (argv.argc() > 1)
-	{
-		SendWeaponChoice = atoi (argv[1]);
+		if (slot < NUM_WEAPON_SLOTS)
+		{
+			SendItemUse = LocalWeapons.Slots[slot].PickWeapon (&players[consoleplayer]);
+		}
 	}
 }
 
 CCMD (centerview)
 {
-	sendcenterview = true;
+	Net_WriteByte (DEM_CENTERVIEW);
 }
 
 CCMD (land)
@@ -294,52 +288,85 @@ CCMD (turn180)
 
 CCMD (weapnext)
 {
-	Net_WriteByte (DEM_WEAPNEXT);
+	SendItemUse = PickNextWeapon (&players[consoleplayer]);
 }
 
 CCMD (weapprev)
 {
-	Net_WriteByte (DEM_WEAPPREV);
+	SendItemUse = PickPrevWeapon (&players[consoleplayer]);
 }
 
 CCMD (invnext)
 {
+	AInventory *next;
+
 	if (m_Instigator == NULL)
 		return;
 
-	LocalSelectedItem = P_NextInventory (m_Instigator->player, LocalSelectedItem);
-	SendItemSelect = (argv.argc() == 1) ? 2 : 1;
+	if (m_Instigator->player->InvSel != NULL && (next = m_Instigator->player->InvSel->NextInv()) != NULL)
+	{
+		m_Instigator->player->InvSel = next;
+	}
+	m_Instigator->player->inventorytics = 5*TICRATE;
 }
 
 CCMD (invprev)
 {
+	AInventory *prev;
+
 	if (m_Instigator == NULL)
 		return;
 
-	LocalSelectedItem = P_PrevInventory (m_Instigator->player, LocalSelectedItem);
-	SendItemSelect = (argv.argc() == 1) ? 2 : 1;
-}
-
-CCMD (invuse)
-{
-	SendItemUse = LocalSelectedItem;
+	if (m_Instigator->player->InvSel != NULL && (prev = m_Instigator->player->InvSel->PrevInv()) != NULL)
+	{
+		m_Instigator->player->InvSel = prev;
+	}
+	m_Instigator->player->inventorytics = 5*TICRATE;
 }
 
 CCMD (invuseall)
 {
-	SendItemUse = (artitype_t)-1;
+	SendItemUse = (const AInventory *)1;
+}
+
+CCMD (invuse)
+{
+	if (players[consoleplayer].inventorytics == 0 || gameinfo.gametype == GAME_Strife)
+	{
+		SendItemUse = players[consoleplayer].InvSel;
+	}
+	players[consoleplayer].inventorytics = 0;
 }
 
 CCMD (use)
 {
-	if (argv.argc() > 1)
+	if (argv.argc() > 1 && m_Instigator != NULL)
 	{
-		SendItemUse = P_FindNamedInventory (argv[1]);
+		SendItemUse = m_Instigator->FindInventory (TypeInfo::IFindType (argv[1]));
+	}
+}
+
+CCMD (invdrop)
+{
+	SendItemDrop = players[consoleplayer].InvSel;
+}
+
+CCMD (drop)
+{
+	if (argv.argc() > 1 && m_Instigator != NULL)
+	{
+		SendItemDrop = m_Instigator->FindInventory (TypeInfo::IFindType (argv[1]));
 	}
 }
 
 CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
+	static const char *bagnames[3] =
+	{
+		"ArtiPoisonBag1",
+		"ArtiPoisonBag2",
+		"ArtiPoisonBag3"
+	};
 	int i, j;
 
 	if (m_Instigator == NULL)
@@ -349,10 +376,11 @@ CCMD (useflechette)
 
 	for (j = 0; j < 3; ++j)
 	{
-		artitype_t type = (artitype_t)(arti_poisonbag1 + (i+j)%3);
-		if (m_Instigator->player->inventory[type] != 0)
+		const TypeInfo *type = TypeInfo::FindType (bagnames[(i+j)%3]);
+		AInventory *item;
+		if (type != NULL && (item = m_Instigator->FindInventory (type)))
 		{
-			SendItemUse = type;
+			SendItemUse = item;
 			break;
 		}
 	}
@@ -362,9 +390,13 @@ CCMD (select)
 {
 	if (argv.argc() > 1)
 	{
-		LocalSelectedItem = P_FindNamedInventory (argv[1]);
+		AInventory *item = m_Instigator->FindInventory (TypeInfo::FindType (argv[1]));
+		if (item != NULL)
+		{
+			m_Instigator->player->InvSel = item;
+		}
 	}
-	SendItemSelect = 1;
+	m_Instigator->player->inventorytics = 5*TICRATE;
 }
 
 //
@@ -489,15 +521,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		forward += (int)((float)mousey * m_forward);
 	}
 
-	if (sendcenterview)
-	{
-		sendcenterview = false;
-		cmd->ucmd.pitch = -32768;
-	}
-	else
-	{
-		cmd->ucmd.pitch = LocalViewPitch >> 16;
-	}
+	cmd->ucmd.pitch = LocalViewPitch >> 16;
 
 	if (SendLand)
 	{
@@ -546,32 +570,22 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		delete[] savegamefile;
 		savegamefile = NULL;
 	}
-	if (SendWeaponSlot != 255)
+	if (SendItemUse == (const AInventory *)1)
 	{
-		Net_WriteByte (DEM_WEAPSLOT);
-		Net_WriteByte (SendWeaponSlot);
-		SendWeaponSlot = 255;
+		Net_WriteByte (DEM_INVUSEALL);
+		SendItemUse = NULL;
 	}
-	if (SendWeaponChoice != 255)
-	{
-		Net_WriteByte (DEM_WEAPSEL);
-		Net_WriteByte (SendWeaponChoice);
-		SendWeaponChoice = 255;
-	}
-	if (SendItemSelect)
-	{
-		Net_WriteByte (DEM_INVSEL);
-		if (SendItemSelect == 2)
-			Net_WriteByte (LocalSelectedItem | 0x80);
-		else
-			Net_WriteByte (LocalSelectedItem);
-		SendItemSelect = 0;
-	}
-	if (SendItemUse != arti_none)
+	else if (SendItemUse != NULL)
 	{
 		Net_WriteByte (DEM_INVUSE);
-		Net_WriteByte (SendItemUse != -1 ? (byte)SendItemUse : 0);
-		SendItemUse = arti_none;
+		Net_WriteLong (SendItemUse->InventoryID);
+		SendItemUse = NULL;
+	}
+	if (SendItemDrop != NULL)
+	{
+		Net_WriteByte (DEM_INVDROP);
+		Net_WriteLong (SendItemDrop->InventoryID);
+		SendItemDrop = NULL;
 	}
 
 	cmd->ucmd.forwardmove <<= 8;
@@ -816,9 +830,8 @@ void G_Ticker ()
 		case ga_completed:
 			G_DoCompleted ();
 			break;
-		case ga_victory:
-//			F_StartFinale ();
-			gameaction = ga_nothing;
+		case ga_slideshow:
+			F_StartSlideshow ();
 			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
@@ -894,8 +907,7 @@ void G_Ticker ()
 			}
 
 			// check for turbo cheats
-			if (!players[i].powers[pw_speed] &&
-				cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
+			if (cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
 				!(gametic&31) && ((gametic>>5)&(MAXPLAYERS-1)) == i )
 			{
 				Printf ("%s is turbo!\n", players[i].userinfo.netname);
@@ -968,18 +980,24 @@ void G_Ticker ()
 //
 void G_PlayerFinishLevel (int player, EFinishLevelType mode)
 {
+	AInventory *item, *next;
 	player_t *p;
-	int i;
-	int flightPower;
 
 	p = &players[player];
 
-	// Strip all current powers
-	flightPower = p->powers[pw_flight];
-	memset (p->powers, 0, sizeof (p->powers));
-	if (!deathmatch && mode == FINISH_SameHub)
-	{ // Keep flight if moving to another level in same hub
-		p->powers[pw_flight] = flightPower;
+	// Strip all current powers, unless moving in a hub and the power is okay to keep.
+	item = p->mo->Inventory;
+	while (item != NULL)
+	{
+		next = item->Inventory;
+		if (item->IsKindOf (RUNTIME_CLASS(APowerup)))
+		{
+			if (deathmatch || mode != FINISH_SameHub || !(item->ItemFlags & IF_HUBPOWER))
+			{
+				item->Destroy ();
+			}
+		}
+		item = next;
 	}
 	p->mo->flags &= ~MF_SHADOW; 		// cancel invisibility
 	p->mo->RenderStyle = STYLE_Normal;
@@ -989,22 +1007,31 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode)
 	p->damagecount = 0; 				// no palette changes
 	p->bonuscount = 0;
 	p->poisoncount = 0;
-	p->rain1 = NULL;
-	p->rain2 = NULL;
 	p->inventorytics = 0;
 
 	if (mode != FINISH_SameHub)
 	{
-		memset (p->keys, 0, sizeof (p->keys));	// Take away keys
-		p->inventory[arti_fly] = 0;				// Take away flight
+		// Take away flight and keys (and anything else with IF_INTERHUBSTRIP set)
+		item = p->mo->Inventory;
+		while (item != NULL)
+		{
+			next = item->Inventory;
+			if (item->ItemFlags & IF_INTERHUBSTRIP)
+			{
+				item->Destroy ();
+			}
+			item = next;
+		}
 	}
 
 	if (mode == FINISH_NoHub)
-	{ // Reduce all owned inventory to 1 item each
-		for (i = 0; i < NUMINVENTORYSLOTS; i++)
+	{ // Reduce all owned (visible) inventory to 1 item each
+		for (item = p->mo->Inventory; item != NULL; item = item->Inventory)
 		{
-			if (p->inventory[i])
-				p->inventory[i] = 1;
+			if (item->ItemFlags & IF_INVBAR)
+			{
+				item->Amount = 1;
+			}
 		}
 	}
 
@@ -1023,7 +1050,6 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode)
 void G_PlayerReborn (int player)
 {
 	player_t*	p;
-	int 		i;
 	int 		frags[MAXPLAYERS];
 	int			fragcount;	// [RH] Cumulative frags
 	int 		killcount;
@@ -1031,7 +1057,6 @@ void G_PlayerReborn (int player)
 	int 		secretcount;
 	BYTE		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
-	FWeaponSlots slots;		// save weapon slots too
 	botskill_t  b_skill;//Added by MC:
 	APlayerPawn *actor;
 	const TypeInfo *cls;
@@ -1044,7 +1069,6 @@ void G_PlayerReborn (int player)
 	itemcount = p->itemcount;
 	secretcount = p->secretcount;
 	currclass = p->CurrentPlayerClass;
-	slots = p->WeaponSlots;
     b_skill = p->skill;    //Added by MC:
 	memcpy (&userinfo, &p->userinfo, sizeof(userinfo));
 	actor = p->mo;
@@ -1058,7 +1082,6 @@ void G_PlayerReborn (int player)
 	p->itemcount = itemcount;
 	p->secretcount = secretcount;
 	p->CurrentPlayerClass = currclass;
-	p->WeaponSlots = slots;
 	memcpy (&p->userinfo, &userinfo, sizeof(userinfo));
 	p->mo = actor;
 	p->cls = cls;
@@ -1067,9 +1090,6 @@ void G_PlayerReborn (int player)
 
 	p->oldbuttons = 255;	// don't do anything immediately
 	p->playerstate = PST_LIVE;
-
-	for (i = 0; i < NUMAMMO; i++)
-		p->maxammo[i] = maxammo[i];
 
 	actor->GiveDefaultInventory ();
 
@@ -1080,10 +1100,10 @@ void G_PlayerReborn (int player)
 		p->isbot = false;
 
 	// [BC] Handle temporary invulnerability when respawned
-	if ((dmflags2 & DF2_YES_INVUL) &&
-		(deathmatch || alwaysapplydmflags))
+	if ((dmflags2 & DF2_YES_INVUL) && (deathmatch || alwaysapplydmflags))
 	{
-		p->powers[pw_invulnerability] = 2*TICRATE;
+		APowerup *invul = static_cast<APowerup*>(actor->GiveInventoryType (RUNTIME_CLASS(APowerInvulnerable)));
+		invul->EffectTics = 2*TICRATE;
 		actor->effects |= FX_RESPAWNINVUL;	// [RH] special effect
 	}
 }
@@ -1267,8 +1287,6 @@ static void G_QueueBody (AActor *body)
 //
 void G_DoReborn (int playernum, bool freshbot)
 {
-	int i;
-
 	if (!multiplayer)
 	{
 		if (BackupSaveName[0] && FileExists (BackupSaveName))
@@ -1279,37 +1297,36 @@ void G_DoReborn (int playernum, bool freshbot)
 		else
 		{ // Reload the level from scratch
 			BackupSaveName[0] = 0;
-			gameaction = ga_loadlevel;
+			G_InitNew (level.mapname);
+//			gameaction = ga_loadlevel;
 		}
 	}
 	else
 	{
 		// respawn at the start
+		int i;
+		AInventory *oldInv;
 
 		// first disassociate the corpse
 		if (players[playernum].mo)
 		{
+			oldInv = players[playernum].mo->Inventory;
+			players[playernum].mo->Inventory = NULL;
 			G_QueueBody (players[playernum].mo);
 			players[playernum].mo->player = NULL;
+		}
+		else
+		{
+			oldInv = NULL;
 		}
 
 		// spawn at random spot if in death match
 		if (deathmatch)
 		{
 			G_DeathMatchSpawnPlayer (playernum);
+			if (players[playernum].mo == NULL)
+				i = 1;
 			return;
-		}
-
-		// Cooperative net-play, retain keys and weapons
-		bool oldweapons[NUMWEAPONS];
-		bool oldkeys[NUMKEYS];
-		int oldpieces = 0;
-
-		if (!freshbot)
-		{
-			memcpy (oldweapons, players[playernum].weaponowned, sizeof(oldweapons));
-			memcpy (oldkeys, players[playernum].keys, sizeof(oldkeys));
-			oldpieces = players[playernum].pieces;
 		}
 
 		if (G_CheckSpot (playernum, &playerstarts[playernum]) )
@@ -1336,21 +1353,37 @@ void G_DoReborn (int playernum, bool freshbot)
 			P_SpawnPlayer (&playerstarts[playernum]);
 		}
 
+		// Cooperative net-play, retain keys, weapons, and some ammo,
+		// but throw the other inventory items away.
 		if (!freshbot)
-		{ // Restore keys and weapons
-			memcpy (players[playernum].weaponowned, oldweapons, sizeof(oldweapons));
-			memcpy (players[playernum].keys, oldkeys, sizeof(oldkeys));
-			players[playernum].pieces = oldpieces;
+		{
+			AInventory *probe = oldInv;
 
-			// Give the player some ammo, based on the weapons owned
-			for (i = 0; i < NUMWEAPONS; i++)
+			while (probe != NULL)
 			{
-				if (players[playernum].weaponowned[i])
+				AInventory *next = probe->Inventory;
+				if (probe->IsKindOf (RUNTIME_CLASS(AWeapon)))
 				{
-					int ammo = wpnlev1info[i]->ammo;
-					players[playernum].ammo[ammo] =
-						MAX (25, players[playernum].ammo[ammo]);
+					// Keep weapons
 				}
+				else if (probe->IsKindOf (RUNTIME_CLASS(AKey)))
+				{
+					// Keep keys
+				}
+				else if (probe->IsKindOf (RUNTIME_CLASS(AAmmo)))
+				{
+					// Take away some ammo
+					if (probe->Amount > 0)
+					{
+						probe->Amount = MAX(1, probe->Amount / 2);
+					}
+				}
+				else
+				{
+					// Eliminate it
+					probe->Destroy ();
+				}
+				probe = next;
 			}
 		}
 	}
@@ -1372,8 +1405,11 @@ void G_ScreenShot (char *filename)
 //
 void G_LoadGame (char* name)
 {
-	strcpy (savename, name);
-	gameaction = ga_loadgame;
+	if (name != NULL)
+	{
+		strcpy (savename, name);
+		gameaction = ga_loadgame;
+	}
 }
 
 static bool CheckSingleWad (char *name, bool &printRequires)
@@ -1576,8 +1612,6 @@ void G_DoLoadGame ()
 		fread (&next, 1, 1, stdfile);
 		NextSkill = next;
 	}
-
-	LocalSelectedItem = players[consoleplayer].readyArtifact;
 
 	if (level.info->snapshot != NULL)
 	{

@@ -18,7 +18,7 @@ const int SHARDSPAWN_DOWN	= 8;
 
 static FRandom pr_cone ("FireConePL1");
 
-void A_FireConePL1 (AActor *actor, pspdef_t *);
+void A_FireConePL1 (AActor *actor);
 void A_ShedShard (AActor *);
 
 // The Mage's Frost Cone ----------------------------------------------------
@@ -27,12 +27,6 @@ class AMWeapFrost : public AMageWeapon
 {
 	DECLARE_ACTOR (AMWeapFrost, AMageWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_mfrost;
-	}
-	static FWeaponInfo WeaponInfo;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_M2);
@@ -69,31 +63,21 @@ FState AMWeapFrost::States[] =
 IMPLEMENT_ACTOR (AMWeapFrost, Hexen, 53, 36)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_COS1)
+
+	PROP_Weapon_SelectionOrder (1700)
+	PROP_Weapon_AmmoUse1 (3)
+	PROP_Weapon_AmmoGive1 (25)
+	PROP_Weapon_UpState (S_CONEUP)
+	PROP_Weapon_DownState (S_CONEDOWN)
+	PROP_Weapon_ReadyState (S_CONEREADY)
+	PROP_Weapon_AtkState (S_CONEATK)
+	PROP_Weapon_HoldAtkState (S_CONEATK+2)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (20)
+	PROP_Weapon_MoveCombatDist (19000000)
+	PROP_Weapon_AmmoType1 ("Mana1")
+	PROP_Weapon_ProjectileType ("FrostMissile")
 END_DEFAULTS
-
-FWeaponInfo AMWeapFrost::WeaponInfo =
-{
-	0,
-	MANA_1,
-	MANA_1,
-	3,
-	25,
-	&States[S_CONEUP],
-	&States[S_CONEDOWN],
-	&States[S_CONEREADY],
-	&States[S_CONEATK],
-	&States[S_CONEATK+2],
-	NULL,
-	RUNTIME_CLASS(AMWeapFrost),
-	150,
-	20*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AMWeapFrost),
-	-1
-};
-
-WEAPON1 (wp_mfrost, AMWeapFrost)
 
 // Frost Missile ------------------------------------------------------------
 
@@ -167,13 +151,13 @@ END_DEFAULTS
 //
 //============================================================================
 
-void A_FireConePL1 (AActor *actor, pspdef_t *psp)
+void A_FireConePL1 (AActor *actor)
 {
 	angle_t angle;
 	int damage;
 	int slope;
 	int i;
-	AActor *pmo,*mo;
+	AActor *mo;
 	bool conedone=false;
 	player_t *player;
 
@@ -182,20 +166,24 @@ void A_FireConePL1 (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	pmo = player->mo;
-	player->UseAmmo ();
-	S_Sound (pmo, CHAN_WEAPON, "MageShardsFire", 1, ATTN_NORM);
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+	S_Sound (actor, CHAN_WEAPON, "MageShardsFire", 1, ATTN_NORM);
 
 	damage = 90+(pr_cone()&15);
 	for (i = 0; i < 16; i++)
 	{
-		angle = pmo->angle+i*(ANG45/16);
-		slope = P_AimLineAttack (pmo, angle, MELEERANGE);
+		angle = actor->angle+i*(ANG45/16);
+		slope = P_AimLineAttack (actor, angle, MELEERANGE);
 		if (linetarget)
 		{
-			pmo->flags2 |= MF2_ICEDAMAGE;
-			P_DamageMobj (linetarget, pmo, pmo, damage);
-			pmo->flags2 &= ~MF2_ICEDAMAGE;
+			actor->flags2 |= MF2_ICEDAMAGE;
+			P_DamageMobj (linetarget, actor, actor, damage);
+			actor->flags2 &= ~MF2_ICEDAMAGE;
 			conedone = true;
 			break;
 		}
@@ -204,13 +192,13 @@ void A_FireConePL1 (AActor *actor, pspdef_t *psp)
 	// didn't find any creatures, so fire projectiles
 	if (!conedone)
 	{
-		mo = P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(AFrostMissile));
+		mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(AFrostMissile));
 		if (mo)
 		{
 			mo->special1 = SHARDSPAWN_LEFT|SHARDSPAWN_DOWN|SHARDSPAWN_UP
 				|SHARDSPAWN_RIGHT;
 			mo->special2 = 3; // Set sperm count (levels of reproductivity)
-			mo->target = pmo;
+			mo->target = actor;
 			mo->args[0] = 3;		// Mark Initial shard as super damage
 		}
 	}

@@ -166,9 +166,14 @@ void CreateCrashLog (char *(*userCrashInfo)(char *text, char *maxtext))
 	}
 	if (CrashPointers.ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
 	{
-		CrashPtr += wsprintf (CrashPtr, "Tried to %s address %08x\r\n",
-			CrashPointers.ExceptionRecord->ExceptionInformation[0] ? "write" : "read",
-			CrashPointers.ExceptionRecord->ExceptionInformation[1]);
+		OSVERSIONINFO verinfo = { sizeof(verinfo) };
+		// Pre-NT kernels do not seem to provide this information.
+		if (!GetVersionEx (&verinfo) || verinfo.dwPlatformId != VER_PLATFORM_WIN32_WINDOWS)
+		{
+			CrashPtr += wsprintf (CrashPtr, "Tried to %s address %08x\r\n",
+				CrashPointers.ExceptionRecord->ExceptionInformation[0] ? "write" : "read",
+				CrashPointers.ExceptionRecord->ExceptionInformation[1]);
+		}
 	}
 	CrashPtr += wsprintf (CrashPtr, "Flags: %08x\r\nAddress: %08x\r\n\r\n", CrashPointers.ExceptionRecord->ExceptionFlags,
 		CrashPointers.ExceptionRecord->ExceptionAddress);

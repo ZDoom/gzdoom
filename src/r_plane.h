@@ -76,8 +76,8 @@ void R_ClearPlanes (bool fullclear);
 void R_DrawPlanes ();
 void R_DrawSkyBoxes ();
 void R_DrawSkyPlane (visplane_t *pl);
-void R_DrawNormalPlane (visplane_t *pl);
-void R_DrawTiltedPlane (visplane_t *pl);
+void R_DrawNormalPlane (visplane_t *pl, fixed_t alpha, bool masked);
+void R_DrawTiltedPlane (visplane_t *pl, fixed_t alpha, bool masked);
 void R_MapVisPlane (visplane_t *pl, void (*mapfunc)(int y, int x1));
 
 visplane_t *R_FindPlane

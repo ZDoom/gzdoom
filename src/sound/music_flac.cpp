@@ -1,6 +1,7 @@
 #include "i_musicinterns.h"
 #include "templates.h"
 
+#include <string.h>
 #include <FLAC++/decoder.h>
 
 class FLACSong::FLACStreamer : protected FLAC::Decoder::Stream
@@ -61,7 +62,7 @@ FLACSong::FLACSong (FILE *file, int length)
 			mode |= FSOUND_STEREO;
 			buffsize <<= 1;
 		}
-		m_Stream = FSOUND_Stream_Create (FillStream, buffsize, mode, State->SampleRate, (int)this);
+		m_Stream = FSOUND_Stream_Create (FillStream, buffsize, mode, State->SampleRate, this);
 		if (m_Stream == NULL)
 		{
 			Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
@@ -106,9 +107,9 @@ void FLACSong::Play (bool looping)
 	}
 }
 
-signed char F_CALLBACKAPI FLACSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+signed char F_CALLBACKAPI FLACSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata)
 {
-	FLACSong *song = (FLACSong *)param;
+	FLACSong *song = (FLACSong *)userdata;
 	return song->State->ServiceStream (buff, len, song->m_Looping);
 }
 

@@ -51,6 +51,7 @@
 
 #include "a_sharedglobal.h"
 #include "a_doomglobal.h"
+#include "p_conversation.h"
 
 #define WATER_SINK_FACTOR		3
 #define WATER_SINK_SMALL_FACTOR	4
@@ -65,7 +66,7 @@ static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puf
 							 fixed_t vx, fixed_t vy, fixed_t vz);
 
 fixed_t 		tmbbox[4];
-static AActor  *tmthing;
+AActor		   *tmthing;
 static int 		tmflags;
 static fixed_t	tmx;
 static fixed_t	tmy;
@@ -599,6 +600,8 @@ BOOL PIT_CrossLine (line_t* ld)
 static // killough 3/26/98: make static
 BOOL PIT_CheckLine (line_t *ld)
 {
+	bool rail = false;
+
 	if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
 		|| tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
 		|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
@@ -631,8 +634,13 @@ BOOL PIT_CheckLine (line_t *ld)
 
 	if (!(tmthing->flags & MF_MISSILE) || (ld->flags & ML_BLOCKEVERYTHING))
 	{
-		if ((ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING)) || 	// explicitly blocking everything
-			(!(tmthing->flags3 & MF3_NOBLOCKMONST) && (ld->flags & ML_BLOCKMONSTERS)))	// block monsters only
+		if (ld->flags & ML_RAILING)
+		{
+			rail = true;
+		}
+		else if ((ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING)) || 	// explicitly blocking everything
+			(!(tmthing->flags3 & MF3_NOBLOCKMONST) && (ld->flags & ML_BLOCKMONSTERS)) || // block monsters only
+			((ld->flags & ML_BLOCK_FLOATERS) && (tmthing->flags & MF_FLOAT)))	// block floaters
 		{
 			if (tmthing->flags2 & MF2_BLASTED)
 			{
@@ -714,6 +722,11 @@ BOOL PIT_CheckLine (line_t *ld)
 	/*	Printf ("    %d %d %d\n", sx, sy, openbottom);*/
 	}
 
+	if (rail)
+	{
+		openbottom += 32*FRACUNIT;
+	}
+
 	// adjust floor / ceiling heights
 	if (opentop < tmceilingz)
 	{
@@ -746,7 +759,6 @@ BOOL PIT_CheckLine (line_t *ld)
 //
 static AActor *stepthing;
 
-static // killough 3/26/98: make static
 BOOL PIT_CheckThing (AActor *thing)
 {
 	fixed_t topz;
@@ -853,7 +865,10 @@ BOOL PIT_CheckThing (AActor *thing)
 
 		if (tmthing->flags2 & MF2_BOUNCE2)
 		{
-			return (tmthing->target == thing || !(thing->flags & MF_SOLID));
+			if (tmthing->damage == 0)
+			{
+				return (tmthing->target == thing || !(thing->flags & MF_SOLID));
+			}
 		}
 
 		switch (tmthing->SpecialMissileHit (thing))
@@ -893,6 +908,10 @@ BOOL PIT_CheckThing (AActor *thing)
 		if (!(thing->flags & MF_SHOOTABLE))
 		{ // Didn't do any damage
 			return !(thing->flags & MF_SOLID);
+		}
+		if ((thing->flags4 & MF4_SPECTRAL) && !(tmthing->flags4 & MF4_SPECTRAL))
+		{
+			return true;
 		}
 		if (DoRipping)
 		{
@@ -1036,7 +1055,7 @@ BOOL PIT_CheckOnmobjZ (AActor *thing)
 	{ // Can't hit thing
 		return true;
 	}
-	if (thing->flags & (MF_SPECIAL|MF_NOCLIP))
+	if (thing->flags & (MF_SPECIAL|MF_NOCLIP|MF_CORPSE))
 	{ // [RH] Corpses and specials and noclippers don't block moves
 		return true;
 	}
@@ -1052,7 +1071,7 @@ BOOL PIT_CheckOnmobjZ (AActor *thing)
 	{ // over thing
 		return true;
 	}
-	else if (tmthing->z+tmthing->height < thing->z)
+	else if (tmthing->z+tmthing->height <= thing->z)
 	{ // under thing
 		return true;
 	}
@@ -1779,7 +1798,6 @@ void P_HitSlideLine (line_t* ld)
 	angle_t deltaangle;
 	
 	fixed_t movelen;
-	fixed_t newlen;
 	BOOL	icyfloor;	// is floor icy?							// phares
 																	//   |
 	// Under icy conditions, if the angle of approach to the wall	//   V
@@ -1858,6 +1876,9 @@ void P_HitSlideLine (line_t* ld)
 	}																//   ^
 	else															//   |
 	{																// phares
+#if 0
+		fixed_t newlen;
+	
 		if (deltaangle > ANG180)
 			deltaangle += ANG180;
 		//	I_Error ("SlideLine: ang>ANG180");
@@ -1869,6 +1890,27 @@ void P_HitSlideLine (line_t* ld)
 
 		tmxmove = FixedMul (newlen, finecosine[lineangle]);
 		tmymove = FixedMul (newlen, finesine[lineangle]);
+#else
+		divline_t dll, dlv;
+		fixed_t inter1, inter2, inter3;
+
+		P_MakeDivline (ld, &dll);
+
+		dlv.x = slidemo->x;
+		dlv.y = slidemo->y;
+		dlv.dx = dll.dy;
+		dlv.dy = -dll.dx;
+
+		inter1 = P_InterceptVector(&dll, &dlv);
+
+		dlv.dx = tmxmove;
+		dlv.dy = tmymove;
+		inter2 = P_InterceptVector (&dll, &dlv);
+		inter3 = P_InterceptVector (&dlv, &dll);
+
+		tmxmove = Scale (inter2-inter1, dll.dx, inter3);
+		tmymove = Scale (inter2-inter1, dll.dy, inter3);
+#endif
 	}																// phares
 }
 
@@ -2347,7 +2389,7 @@ BOOL PTR_AimTraverse (intercept_t* in)
 	{
 		li = in->d.line;
 
-		if ( !(li->flags & ML_TWOSIDED) )
+		if ( !(li->flags & ML_TWOSIDED) || (li->flags & ML_BLOCKEVERYTHING) )
 			return false;				// stop
 
 		// Crosses a two sided line.
@@ -2385,7 +2427,8 @@ BOOL PTR_AimTraverse (intercept_t* in)
 	// check for physical attacks on a ghost
 	if ((th->flags3 & MF3_GHOST) && 
 		shootthing->player &&	// [RH] Be sure shootthing is a player
-		shootthing->player->readyweapon == wp_staff)
+		shootthing->player->ReadyWeapon &&
+		(shootthing->player->ReadyWeapon->WeaponFlags & WIF_HITS_GHOSTS))
 	{
 		return true;
 	}
@@ -2481,7 +2524,24 @@ static bool CheckForGhost (FTraceResults &res)
 	}
 
 	// check for physical attacks on a ghost
-	if (res.Actor->flags3 & MF3_GHOST)
+	if (res.Actor->flags3 & MF3_GHOST || res.Actor->flags4 & MF4_SPECTRAL)
+	{
+		res.HitType = TRACE_HitNone;
+		return true;
+	}
+
+	return false;
+}
+
+static bool CheckForSpectral (FTraceResults &res)
+{
+	if (res.HitType != TRACE_HitActor)
+	{
+		return false;
+	}
+
+	// check for physical attacks on spectrals
+	if (res.Actor->flags4 & MF4_SPECTRAL)
 	{
 		res.HitType = TRACE_HitNone;
 		return true;
@@ -2491,12 +2551,13 @@ static bool CheckForGhost (FTraceResults &res)
 }
 
 void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage)
+				   int pitch, int damage, const TypeInfo *pufftype)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
 	angle_t srcangle = angle;
 	int srcpitch = pitch;
+	bool hitGhosts;
 
 	angle >>= ANGLETOFINESHIFT;
 	pitch = (angle_t)(pitch) >> ANGLETOFINESHIFT;
@@ -2509,19 +2570,22 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	attackrange = distance;
 	aimpitch = pitch;
 
+	hitGhosts = (t1->player != NULL &&
+		t1->player->ReadyWeapon != NULL &&
+		(t1->player->ReadyWeapon->WeaponFlags & WIF_HITS_GHOSTS));
+
 	if (!Trace (t1->x, t1->y, shootz, t1->Sector, vx, vy, vz, distance,
 		MF_SHOOTABLE, ML_BLOCKEVERYTHING, t1, trace,
-		TRACE_NoSky|TRACE_Impact,
-			t1->player && t1->player->readyweapon == wp_staff ? CheckForGhost : NULL))
+		TRACE_NoSky|TRACE_Impact, hitGhosts ? CheckForGhost : CheckForSpectral))
 	{ // hit nothing
-		AActor *puffDefaults = GetDefaultByType (PuffType);
+		AActor *puffDefaults = GetDefaultByType (pufftype);
 		if (puffDefaults->ActiveSound)
 		{ // Play miss sound
 			S_SoundID (t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
 		}
 		if (puffDefaults->flags3 & MF3_ALWAYSPUFF)
 		{ // Spawn the puff anyway
-			P_SpawnPuff (trace.X, trace.Y, trace.Z, angle - ANG180, 2);
+			P_SpawnPuff (pufftype, trace.X, trace.Y, trace.Z, angle - ANG180, 2);
 		}
 		else
 		{
@@ -2539,7 +2603,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			if (trace.HitType != TRACE_HitWall || trace.Line->special != Line_Horizon)
 			{
 				fixed_t closer = trace.Distance - 4*FRACUNIT;
-				puff = P_SpawnPuff (t1->x + FixedMul (vx, closer),
+				puff = P_SpawnPuff (pufftype, t1->x + FixedMul (vx, closer),
 					t1->y + FixedMul (vy, closer),
 					shootz + FixedMul (vz, closer), angle - ANG90, 0);
 			}
@@ -2565,14 +2629,14 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			hitz = shootz + FixedMul (vz, trace.Distance);
 
 			// Spawn bullet puffs or blood spots, depending on target type.
-			AActor *puffDefaults = GetDefaultByType (PuffType);
+			AActor *puffDefaults = GetDefaultByType (pufftype);
 			if ((puffDefaults->flags3 & MF3_PUFFONACTORS) ||
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
-				puff = P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
+				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, true);
 			}
-			if (gameinfo.gametype == GAME_Doom &&
+			if ((gameinfo.gametype & (GAME_Doom|GAME_Strife)) &&
 				!(trace.Actor->flags & MF_NOBLOOD) &&
 				!(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
@@ -2581,21 +2645,18 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 			if (damage)
 			{
-				DWORD wflags = 0;
-
 				if (gameinfo.gametype != GAME_Doom)
 				{
-					if (t1->player)
-					{
-						wflags = t1->player->powers[pw_weaponlevel2] ?
-							wpnlev2info[t1->player->readyweapon]->flags :
-							wpnlev1info[t1->player->readyweapon]->flags;
-					}
+					bool axeBlood;
+
+					axeBlood = (t1->player != NULL &&
+						t1->player->ReadyWeapon != NULL &&
+						(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
 
 					if (!(trace.Actor->flags&MF_NOBLOOD) &&
 						!(trace.Actor->flags2&(MF2_INVULNERABLE|MF2_DORMANT)))
 					{
-						if (wflags & WIF_AXEBLOOD)
+						if (axeBlood)
 						{
 							P_BloodSplatter2 (hitx, hity, hitz, trace.Actor);
 						}
@@ -2605,14 +2666,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 						}
 					}
 				}
-				if (wflags & WIF_FIREDAMAGE)
-				{ // Cleric FlameStrike does fire damage
-					P_DamageMobj (trace.Actor, t1, t1, damage, t1->GetMOD (), DMG_FIRE_DAMAGE);
-				}
-				else
-				{
-					P_DamageMobj (trace.Actor, t1, t1, damage, t1->GetMOD ());
-				}
+				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, t1->GetMOD ());
 				// [RH] Stick blood to walls
 				P_TraceBleed (damage, trace.X, trace.Y, trace.Z,
 					trace.Actor, srcangle, srcpitch);
@@ -2624,7 +2678,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 			if (puff == NULL)
 			{ // Spawn puff just to get a mass for the splash
-				puff = P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
+				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, true);
 				killPuff = true;
 			}
 			SpawnDeepSplash (t1, trace, puff, vx, vy, vz);
@@ -2717,7 +2771,7 @@ void P_TraceBleed (int damage, AActor *target, AActor *missile)
 {
 	int pitch;
 
-	if (missile->flags3 & MF3_BLOODLESSIMPACT)
+	if (target == NULL || missile->flags3 & MF3_BLOODLESSIMPACT)
 	{
 		return;
 	}
@@ -2865,7 +2919,7 @@ void P_RailAttack (AActor *source, int damage, int offset)
 		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
 			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
-			P_SpawnPuff (x, y, z, source->angle - ANG180, 1, true);
+			P_SpawnPuff (RUNTIME_CLASS(ABulletPuff), x, y, z, source->angle - ANG180, 1, true);
 		}
 		else
 		{
@@ -2929,11 +2983,47 @@ bool foundline;
 
 BOOL PTR_UseTraverse (intercept_t *in)
 {
+	// [RH] Check for things to talk with
+	if (!in->isaline)
+	{
+		// Dead things can't talk.
+		if (in->d.thing->health <= 0)
+		{
+			return true;
+		}
+		// Fighting things don't talk either.
+		if (in->d.thing->flags4 & MF4_INCOMBAT)
+		{
+			return true;
+		}
+		if (in->d.thing->Conversation != NULL)
+		{
+			P_StartConversation (in->d.thing, usething);
+			return false;
+		}
+		return true;
+	}
+
+	// [RH] The range passed to P_PathTraverse was doubled so that it could
+	// find things up to 128 units away (for Strife), but it should still reject
+	// lines further than 64 units away.
+	if (in->frac > FRACUNIT/2)
+	{
+		return true;
+	}
+
 	if (in->d.line->special == 0 || (GET_SPAC(in->d.line->flags) != SPAC_USETHROUGH &&
 		GET_SPAC(in->d.line->flags) != SPAC_USE))
 	{
-		P_LineOpening (in->d.line, trace.x + FixedMul (trace.dx, in->frac),
-			trace.y + FixedMul (trace.dy, in->frac));
+		if (in->d.line->flags & ML_BLOCKEVERYTHING)
+		{
+			openrange = 0;
+		}
+		else
+		{
+			P_LineOpening (in->d.line, trace.x + FixedMul (trace.dx, in->frac),
+				trace.y + FixedMul (trace.dy, in->frac));
+		}
 		if (openrange <= 0 ||
 			(in->d.line->special != 0 && (compatflags & COMPATF_USEBLOCKING)))
 		{
@@ -3017,8 +3107,8 @@ void P_UseLines (player_t *player)
 	angle = player->mo->angle >> ANGLETOFINESHIFT;
 	x1 = player->mo->x;
 	y1 = player->mo->y;
-	x2 = x1 + (USERANGE>>FRACBITS)*finecosine[angle];
-	y2 = y1 + (USERANGE>>FRACBITS)*finesine[angle];
+	x2 = x1 + (USERANGE>>FRACBITS)*finecosine[angle]*2;
+	y2 = y1 + (USERANGE>>FRACBITS)*finesine[angle]*2;
 
 	// old code:
 	//
@@ -3026,7 +3116,7 @@ void P_UseLines (player_t *player)
 	//
 	// This added test makes the "oof" sound work on 2s lines -- killough:
 
-	if (P_PathTraverse (x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse))
+	if (P_PathTraverse (x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS, PTR_UseTraverse))
 	{ // [RH] Give sector a chance to eat the use
 		sector_t *sec = usething->Sector;
 		int spac = SECSPAC_Use;
@@ -3079,7 +3169,7 @@ BOOL PTR_PuzzleItemTraverse (intercept_t *in)
 			return false;
 		}
 		P_StartScript (PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, 0,
-			in->d.line->args[2], in->d.line->args[3], in->d.line->args[4], true);
+			in->d.line->args[2], in->d.line->args[3], in->d.line->args[4], true, false);
 		in->d.line->special = 0;
 		PuzzleActivated = true;
 		return false; // Stop searching
@@ -3095,7 +3185,7 @@ BOOL PTR_PuzzleItemTraverse (intercept_t *in)
 		return true;
 	}
 	P_StartScript (PuzzleItemUser, NULL, mobj->args[1], NULL, 0,
-		mobj->args[2], mobj->args[3], mobj->args[4], true);
+		mobj->args[2], mobj->args[3], mobj->args[4], true, false);
 	mobj->special = 0;
 	PuzzleActivated = true;
 	return false; // Stop searching
@@ -3109,17 +3199,17 @@ BOOL PTR_PuzzleItemTraverse (intercept_t *in)
 //
 //==========================================================================
 
-bool P_UsePuzzleItem (player_t *player, int itemType)
+bool P_UsePuzzleItem (AActor *actor, int itemType)
 {
 	int angle;
 	fixed_t x1, y1, x2, y2;
 
 	PuzzleItemType = itemType;
-	PuzzleItemUser = player->mo;
+	PuzzleItemUser = actor;
 	PuzzleActivated = false;
-	angle = player->mo->angle>>ANGLETOFINESHIFT;
-	x1 = player->mo->x;
-	y1 = player->mo->y;
+	angle = actor->angle>>ANGLETOFINESHIFT;
+	x1 = actor->x;
+	y1 = actor->y;
 	x2 = x1+(USERANGE>>FRACBITS)*finecosine[angle];
 	y2 = y1+(USERANGE>>FRACBITS)*finesine[angle];
 	P_PathTraverse (x1, y1, x2, y2, PT_ADDLINES|PT_ADDTHINGS,
@@ -3686,7 +3776,7 @@ int P_PushDown (AActor *thing)
 	size_t lastintersect;
 	int mymass = thing->Mass;
 
-	if (thing->z < thing->floorz)
+	if (thing->z <= thing->floorz)
 	{
 		return 1;
 	}
@@ -3703,12 +3793,15 @@ int P_PushDown (AActor *thing)
 		}
 		fixed_t oldz = intersect->z;
 		P_AdjustFloorCeil (intersect);
-		intersect->z = thing->z - intersect->height;
-		if (P_PushDown (intersect))
-		{ // Move blocked
-			P_DoCrunch (intersect);
-			intersect->z = oldz;
-			return 2;
+		if (oldz > thing->z - intersect->height)
+		{ // Only push things down, not up.
+			intersect->z = thing->z - intersect->height;
+			if (P_PushDown (intersect))
+			{ // Move blocked
+				P_DoCrunch (intersect);
+				intersect->z = oldz;
+				return 2;
+			}
 		}
 	}
 	return 0;
@@ -3770,10 +3863,7 @@ void PIT_FloorRaise (AActor *thing)
 		fixed_t oldz = thing->z;
 		if (!(thing->flags2 & MF2_FLOATBOB))
 		{
-			if (!(thing->flags & MF_NOGRAVITY))
-			{
-				thing->z = thing->floorz;
-			}
+			thing->z = thing->floorz;
 		}
 		else
 		{
@@ -3813,7 +3903,14 @@ void PIT_CeilingLower (AActor *thing)
 	{
 		intersectors.Clear ();
 		fixed_t oldz = thing->z;
-		thing->z = thing->ceilingz - thing->height;
+		if (thing->ceilingz - thing->height >= thing->floorz)
+		{
+			thing->z = thing->ceilingz - thing->height;
+		}
+		else
+		{
+			thing->z = thing->floorz;
+		}
 		switch (P_PushDown (thing))
 		{
 		case 2:
@@ -3855,7 +3952,7 @@ void PIT_CeilingRaise (AActor *thing)
 		}
 		P_CheckFakeFloorTriggers (thing, oldz);
 	}
-	else if (!isgood && thing->z + thing->height < thing->ceilingz)
+	else if ((thing->flags & MF2_PASSMOBJ) && !isgood && thing->z + thing->height < thing->ceilingz)
 	{
 		if (!P_TestMobjZ (thing) && onmobj->z <= thing->z)
 		{
@@ -4230,14 +4327,9 @@ void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
 {
 	FDecalBase *decalbase = NULL;
 
-	if (t1->player != NULL)
+	if (t1->player != NULL && t1->player->ReadyWeapon != NULL)
 	{
-		weapontype_t weap = t1->player->readyweapon;
-		if (weap < NUMWEAPONS)
-		{
-			decalbase =
-				((AActor *)wpnlev1info[weap]->type->ActorInfo->Defaults)->DecalGenerator;
-		}
+		decalbase = t1->player->ReadyWeapon->GetDefault()->DecalGenerator;
 	}
 	else
 	{

@@ -101,7 +101,7 @@ enum EDemoCommand
 	DEM_BAD,			//  0 Bad command
 	DEM_USERCMD,		//  1 Player movement
 	DEM_EMPTYUSERCMD,	//  2 Equivalent to [DEM_USERCMD, 0]
-	DEM_UNDONE2,
+	DEM_UNDONE2,		//  3
 	DEM_MUSICCHANGE,	//  4 Followed by name of new music
 	DEM_PRINT,			//  5 Print string to console
 	DEM_CENTERPRINT,	//  6 Print string to middle of screen
@@ -116,22 +116,25 @@ enum EDemoCommand
 	DEM_SUICIDE,		// 15 Player wants to die
 	DEM_ADDBOT,			// 16 Byte: player#, String: userinfo for bot
 	DEM_KILLBOTS,		// 17 Remove all bots from the world
-	DEM_INVSEL,			// 18 Byte: inventory item to select, for status bar
-	DEM_INVUSE,			// 19 Byte: inventory item to use
+	DEM_INVUSEALL,		// 18 Use every item (panic!)
+	DEM_INVUSE,			// 19 4 bytes: ID of item to use
 	DEM_PAUSE,			// 20 Pause game
 	DEM_SAVEGAME,		// 21 String: Filename, String: Description
-	DEM_WEAPSEL,		// 22 Byte: weapontype_t to change to
-	DEM_WEAPSLOT,		// 23 Byte: Weapon slot to pick a weapon from
-	DEM_WEAPNEXT,		// 24 Select next weapon
-	DEM_WEAPPREV,		// 25 Select previous weapon
+	DEM_UNDONE3,		// 22 
+	DEM_UNDONE4,		// 23
+	DEM_UNDONE5,		// 24
+	DEM_UNDONE6,		// 25
 	DEM_SUMMON,			// 26 String: Thing to fabricate
 	DEM_FOV,			// 27 Byte: New FOV for all players
 	DEM_MYFOV,			// 28 Byte: New FOV for this player
 	DEM_CHANGEMAP2,		// 29 Byte: Position in new map, String: name of new map
-	DEM_SLOTSCHANGE,	// 30 Stream: New weapon slot assignments
-	DEM_SLOTCHANGE,		// 31 Byte: Slot, Stream: Weapon assigments
+	DEM_UNDONE7,		// 30
+	DEM_UNDONE8,		// 31
 	DEM_RUNSCRIPT,		// 32 Word: Script#, Byte: # of args; each arg is a 4-byte int
 	DEM_SINFCHANGEDXOR,	// 33 Like DEM_SINFCHANGED, but data is a byte indicating how to set a bit
+	DEM_INVDROP,		// 34 4 bytes: ID of item to drop
+	DEM_WARPCHEAT,		// 35 4 bytes: 2 for x, 2 for y
+	DEM_CENTERVIEW,		// 36
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

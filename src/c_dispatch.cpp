@@ -245,7 +245,10 @@ static int ListActionCommands (const char *pattern)
 
 unsigned int MakeKey (const char *s)
 {
-	assert (s != NULL);
+	if (s == NULL)
+	{
+		return 0xffffffff;
+	}
 
 	DWORD key = 0xffffffff;
 	const DWORD *table = GetCRCTable ();
@@ -259,9 +262,7 @@ unsigned int MakeKey (const char *s)
 
 unsigned int MakeKey (const char *s, size_t len)
 {
-	assert (s != NULL);
-
-	if (len == 0)
+	if (len == 0 || s == NULL)
 	{
 		return 0xffffffff;
 	}
@@ -452,7 +453,7 @@ void C_DoCommand (const char *cmd, int keynum)
 				button->ReleaseKey (keynum);
 				if (button == &Button_Mlook && lookspring)
 				{
-					C_DoCommand ("centerview");
+					Net_WriteByte (DEM_CENTERVIEW);
 				}
 			}
 			return;

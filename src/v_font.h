@@ -138,6 +138,6 @@ protected:
 
 void RecordTextureColors (FTexture *pic, byte *colorsused);
 
-extern FFont *SmallFont, *BigFont, *ConFont;
+extern FFont *SmallFont, *SmallFont2, *BigFont, *ConFont;
 
 #endif //__V_FONT_H__

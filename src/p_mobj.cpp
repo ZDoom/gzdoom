@@ -49,6 +49,8 @@
 #include "decallib.h"
 #include "ravenshared.h"
 #include "a_action.h"
+#include "a_keys.h"
+#include "p_conversation.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -148,8 +150,6 @@ fixed_t FloatBobDiffs[64] =
 CVAR (Int, cl_pufftype, 0, CVAR_ARCHIVE);
 CVAR (Int, cl_bloodtype, 0, CVAR_ARCHIVE);
 
-const TypeInfo *PuffType = RUNTIME_CLASS(ABulletPuff);
-const TypeInfo *HitPuffType = NULL;
 AActor *MissileActor;
 AActor *PuffSpawned;
 
@@ -161,6 +161,8 @@ IMPLEMENT_POINTY_CLASS (AActor)
  DECLARE_POINTER (tracer)
  DECLARE_POINTER (goal)
  DECLARE_POINTER (LastLook)	// This is actually a union
+ DECLARE_POINTER (Inventory)
+ DECLARE_POINTER (LastHeard)
 END_POINTERS
 
 AActor::~AActor ()
@@ -172,11 +174,6 @@ AActor::~AActor ()
 void AActor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-
-	if (flags2 & MF2_FLOATBOB)
-	{ // Serialize the center of bobbing rather than the current position
-		z -= FloatBobOffsets[(FloatBobPhase + level.time - 1) & 63];
-	}
 
 	if (arc.IsStoring ())
 	{
@@ -190,71 +187,13 @@ void AActor::Serialize (FArchive &arc)
 	arc << x
 		<< y
 		<< z
-		<< pitch
 		<< angle
-		<< roll
 		<< frame
-		<< effects
-		<< floorz
-		<< ceilingz
-		<< floorsector
-		<< floorpic
-		<< radius
-		<< height
-		<< momx
-		<< momy
-		<< momz
-		<< tics
-		<< state
-		<< damage
-		<< flags
-		<< flags2
-		<< flags3
-		<< mapflags
-		<< special1
-		<< special2
-		<< health
-		<< movedir
-		<< visdir
-		<< movecount
-		<< target
-		<< lastenemy
-		<< reactiontime
-		<< threshold
-		<< player;
-
-	arc << TIDtoHate;
-	if (TIDtoHate == 0)
-	{
-		arc << LastLook.PlayerNumber;
-	}
-	else
-	{
-		arc << LastLook.Actor;
-	}
-
-	arc << tracer
-		<< floorclip
-		<< tid
-		<< special
-		<< args[0] << args[1] << args[2] << args[3] << args[4]
-		<< goal
-		<< alpha
-		<< waterlevel
 		<< xscale
 		<< yscale
+		<< RenderStyle
 		<< renderflags;
-	if (SaveVersion < 217)
-	{
-		// Skip picnum in old savegames, because the index will be wrong
-		WORD dummy;
-		arc << dummy;
-		if (dummy == 0xFFFF)
-		{
-			picnum = dummy;
-		}
-	}
-	else if (arc.IsStoring ())
+	if (arc.IsStoring ())
 	{
 		BYTE ff;
 		if (picnum == 0xFFFF)
@@ -282,28 +221,73 @@ void AActor::Serialize (FArchive &arc)
 			picnum = TexMan.ReadTexture (arc);
 		}
 	}
-	arc << RenderStyle
+	arc << TIDtoHate;
+	if (TIDtoHate == 0)
+	{
+		arc << LastLook.PlayerNumber;
+	}
+	else
+	{
+		arc << LastLook.Actor;
+	}
+	arc << effects
+		<< alpha
+		<< alphacolor
+		<< pitch
+		<< roll
+		<< Sector
+		<< floorz
+		<< ceilingz
+		<< dropoffz
+		<< floorsector
+		<< floorpic
+		<< radius
+		<< height
+		<< momx
+		<< momy
+		<< momz
+		<< tics
+		<< state
+		<< damage
+		<< flags
+		<< flags2
+		<< flags3
+		<< flags4
+		<< special1
+		<< special2
+		<< health
+		<< movedir
+		<< visdir
+		<< movecount
+		<< target
+		<< lastenemy
+		<< LastHeard
+		<< reactiontime
+		<< threshold
+		<< player
+		<< SpawnPoint[0] << SpawnPoint[1] << SpawnPoint[2]
+		<< SpawnAngle
+		<< tracer
+		<< floorclip
+		<< tid
+		<< special
+		<< args[0] << args[1] << args[2] << args[3] << args[4]
+		<< goal
+		<< waterlevel
+		<< MinMissileChance
+		<< SpawnFlags
+		<< Inventory
+		<< InventoryID
+		<< id
+		<< FloatBobPhase
+		<< Translation
 		<< AR_SOUNDW(SeeSound)
 		<< AR_SOUNDW(AttackSound)
 		<< AR_SOUNDW(PainSound)
 		<< AR_SOUNDW(DeathSound)
-		<< AR_SOUNDW(ActiveSound);
-
-	if (SaveVersion < 218)
-	{
-		SDWORD fakereactiontime;
-		arc << fakereactiontime;
-	}
-	if (SaveVersion < 219)
-	{
-		Sector = NULL;
-		SpawnFlags = 0;
-	}
-	else
-	{
-		arc << Sector;
-	}
-	arc << Speed
+		<< AR_SOUNDW(ActiveSound)
+		<< AR_SOUNDW(UseSound)
+		<< Speed
 		<< Mass
 		<< PainChance
 		<< SpawnState
@@ -316,33 +300,69 @@ void AActor::Serialize (FArchive &arc)
 		<< XDeathState
 		<< BDeathState
 		<< IDeathState
+		<< EDeathState
 		<< RaiseState
-		<< dropoffz
-		<< SpawnPoint[0] << SpawnPoint[1] << SpawnPoint[2]
-		<< SpawnAngle;
-	// SpawnFlags was a byte before, now it's a word.
-	if (SaveVersion < 219)
+		<< WoundState;
+	if (arc.IsStoring ())
 	{
-		BYTE foo;
-		arc << foo;
-		SpawnFlags = foo;
+		int convnum = 0;
+		size_t i;
+
+		if (Conversation != NULL)
+		{
+			for (i = 0; i < StrifeDialogues.Size(); ++i)
+			{
+				if (StrifeDialogues[i] == GetDefault()->Conversation)
+				{
+					break;
+				}
+			}
+			for (; i + convnum < StrifeDialogues.Size(); ++convnum)
+			{
+				if (StrifeDialogues[i + convnum] == Conversation)
+				{
+					break;
+				}
+			}
+			if (i + convnum < StrifeDialogues.Size())
+			{
+				convnum++;
+			}
+			else
+			{
+				convnum = 0;
+			}
+		}
+		arc.WriteCount (convnum);
 	}
 	else
 	{
-		arc << SpawnFlags;
-	}
+		int convnum;
+		size_t i;
 
-	arc << FloatBobPhase
-		<< alphacolor
-		<< Translation
-		<< flags4;
-
-	if (flags2 & MF2_FLOATBOB)
-	{
-		int offs = FloatBobPhase + level.time;
-		if (arc.IsLoading())
-			--offs;
-		z += FloatBobOffsets[offs & 63];
+		convnum = arc.ReadCount();
+		if (convnum == 0 || GetDefault()->Conversation == NULL)
+		{
+			Conversation = NULL;
+		}
+		else
+		{
+			for (i = 0; i < StrifeDialogues.Size(); ++i)
+			{
+				if (StrifeDialogues[i] == GetDefault()->Conversation)
+				{
+					break;
+				}
+			}
+			if (i + convnum < StrifeDialogues.Size())
+			{
+				Conversation = StrifeDialogues[i + convnum - 1];
+			}
+			else
+			{
+				Conversation = GetDefault()->Conversation;
+			}
+		}
 	}
 
 	if (arc.IsLoading ())
@@ -362,6 +382,9 @@ void AActor::Serialize (FArchive &arc)
 				Speed = GetDefault()->Speed;
 			}
 		}
+		PrevX = x;
+		PrevY = y;
+		PrevZ = z;
 	}
 }
 
@@ -403,6 +426,7 @@ bool AActor::SetState (FState *newstate)
 	{
 		if (newstate == NULL)
 		{
+			FState *oldstate = state;
 			state = NULL;
 			Destroy ();
 			return false;
@@ -450,9 +474,9 @@ bool AActor::SetState (FState *newstate)
 				sprite = newsprite;
 			}
 		}
-		if (newstate->GetAction().acp1)
+		if (newstate->GetAction())
 		{
-			newstate->GetAction().acp1 (this);
+			newstate->GetAction() (this);
 		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
@@ -517,6 +541,243 @@ bool AActor::SetStateNF (FState *newstate)
 	} while (tics == 0);
 
 	return true;
+}
+
+//============================================================================
+//
+// AActor :: AddInventory
+//
+//============================================================================
+
+void AActor::AddInventory (AInventory *item)
+{
+	// Check if it's already attached to an actor
+	if (item->Owner != NULL)
+	{
+		// Is it attached to us?
+		if (item->Owner == this)
+			return;
+
+		// No, then remove it from the other actor first
+		item->Owner->RemoveInventory (item);
+	}
+
+	item->Owner = this;
+	item->Inventory = Inventory;
+	Inventory = item;
+
+	// Each item receives an unique ID when added to an actor's inventory.
+	// This is used by the DEM_INVUSE command to identify the item. Simply
+	// using the item's position in the list won't work, because ticcmds get
+	// run sometime in the future, so by the time it runs, the inventory
+	// might not be in the same state as it was when DEM_INVUSE was sent.
+	Inventory->InventoryID = InventoryID++;
+}
+
+//============================================================================
+//
+// AActor :: RemoveInventory
+//
+//============================================================================
+
+void AActor::RemoveInventory (AInventory *item)
+{
+	AInventory *inv, **invp;
+
+	invp = &item->Owner->Inventory;
+	for (inv = *invp; inv != NULL; invp = &inv->Inventory, inv = *invp)
+	{
+		if (inv == item)
+		{
+			*invp = item->Inventory;
+			item->DetachFromOwner ();
+			item->Owner = NULL;
+			break;
+		}
+	}
+}
+
+//============================================================================
+//
+// AActor :: FirstInv
+//
+// Returns the first item in this actor's inventory that has IF_INVBAR set.
+//
+//============================================================================
+
+AInventory *AActor::FirstInv () const
+{
+	if (Inventory == NULL)
+	{
+		return NULL;
+	}
+	if (Inventory->ItemFlags & IF_INVBAR)
+	{
+		return Inventory;
+	}
+	return Inventory->NextInv ();
+}
+
+//============================================================================
+//
+// AActor :: UseInventory
+//
+// Attempts to use an item. If the use succeeds, one copy of the item is
+// removed from the inventory. If all copies are removed, then the item is
+// destroyed.
+//
+//============================================================================
+
+bool AActor::UseInventory (AInventory *item)
+{
+	// No using items if you're dead.
+	if (health <= 0)
+	{
+		return false;
+	}
+	if (!item->Use ())
+	{
+		return false;
+	}
+	if (--item->Amount <= 0)
+	{
+		item->Destroy ();
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// AActor :: DropInventory
+//
+// Removes a single copy of an item and throws it out in front of the actor.
+//
+//===========================================================================
+
+AInventory *AActor::DropInventory (AInventory *item)
+{
+	int i;
+	fixed_t dropdist;
+	angle_t an;
+	AInventory *drop = item->CreateTossable ();
+
+	if (drop == NULL)
+	{
+		return NULL;
+	}
+	an = angle >> ANGLETOFINESHIFT;
+	/* 92682 = sqrt(2) * FRACUNIT */
+	dropdist = FixedMul (92682, radius + 8*FRACUNIT + item->radius);
+	drop->x = x + momx + FixedMul (dropdist, finecosine[an]);
+	drop->y = y + momy + FixedMul (dropdist, finesine[an]);
+	drop->z = z + momz + 10*FRACUNIT;
+
+	// Doom needs a good solid trace function. Unfortunately, it doesn't, so
+	// we have to move the item several small steps to make sure it can be where
+	// we want it to.
+	for (i = 3; i < 9; ++i)
+	{
+		if (!P_TryMove (drop, x + (drop->x - x)*i/8, y + (drop->y - y)*i/8, true) &&
+			BlockingMobj != this && !floatok)
+		{
+			if (drop->TryPickup (this))
+				return NULL;
+			return drop;
+		}
+	}
+	drop->angle = angle;
+	drop->momx = momx + 5 * finecosine[an];
+	drop->momy = momy + 5 * finesine[an];
+	drop->momz = momz + FRACUNIT;
+	return drop;
+}
+
+//============================================================================
+//
+// AActor :: FindInventory
+//
+//============================================================================
+
+AInventory *AActor::FindInventory (const TypeInfo *type) const
+{
+	AInventory *item;
+
+	for (item = Inventory; item != NULL; item = item->Inventory)
+	{
+		if (item->GetClass() == type)
+		{
+			break;
+		}
+	}
+	return item;
+}
+
+//============================================================================
+//
+// AActor :: GiveInventoryType
+//
+//============================================================================
+
+AInventory *AActor::GiveInventoryType (const TypeInfo *type)
+{
+	AInventory *item;
+
+	item = static_cast<AInventory *>(Spawn (type, 0,0,0));
+	if (!item->TryPickup (this))
+	{
+		item->Destroy ();
+		return NULL;
+	}
+	return item;
+}
+
+//============================================================================
+//
+// AActor :: GiveAmmo
+//
+// Returns true if the ammo was added, false if not.
+//
+//============================================================================
+
+bool AActor::GiveAmmo (const TypeInfo *type, int amount)
+{
+	AInventory *item = static_cast<AInventory *>(Spawn (type, 0, 0, 0));
+	item->Amount = amount;
+	item->flags |= MF_DROPPED;
+	if (!item->TryPickup (this))
+	{
+		item->Destroy ();
+		return false;
+	}
+	return true;
+}
+
+//============================================================================
+//
+// AActor :: ConversationAnimation
+//
+// Plays a conversation-related animation:
+//	 0 = greeting
+//   1 = "yes"
+//   2 = "no"
+//
+//============================================================================
+
+void AActor::ConversationAnimation (int animnum)
+{
+}
+
+//============================================================================
+//
+// AActor :: Touch
+//
+// Something just touched this actor. Normally used only for inventory items,
+// but some Strife monsters also use it.
+//
+//============================================================================
+
+void AActor::Touch (AActor *toucher)
+{
 }
 
 //----------------------------------------------------------------------------
@@ -1122,6 +1383,13 @@ explode:
 					DoRipping = false;
 					return;
 				}
+				// [RH] Don't explode on horizon lines.
+				if (BlockingLine != NULL && BlockingLine->special == Line_Horizon)
+				{
+					mo->Destroy ();
+					DoRipping = false;
+					return;
+				}
 				P_ExplodeMissile (mo, BlockingLine);
 				DoRipping = false;
 				return;
@@ -1379,7 +1647,7 @@ void P_ZMovement (AActor *mo)
 				}
 				else
 				{
-					if (mo->Sector->floorpic == skyflatnum &&
+					if (mo->floorsector->floorpic == skyflatnum &&
 						!(mo->flags3 & MF3_SKYEXPLODE))
 					{
 						// [RH] Just remove the missile without exploding it
@@ -1636,11 +1904,8 @@ void P_NightmareRespawn (AActor *mobj)
 	mo->SpawnFlags = mobj->SpawnFlags;
 	mo->angle = ANG45 * (mobj->SpawnAngle/45);
 
-	if (mobj->SpawnFlags & MTF_AMBUSH)
-		mo->flags |= MF_AMBUSH;
-
+	mo->HandleSpawnFlags ();
 	mo->reactiontime = 18;
-
 	mo->TIDtoHate = mobj->TIDtoHate;
 	mo->LastLook = mobj->LastLook;
 	mo->flags3 |= mobj->flags3 & MF3_HUNTPLAYERS;
@@ -2113,7 +2378,8 @@ void AActor::Tick ()
 	}
 
 	// [RH] If standing on a steep slope, fall down it
-	if (!(flags & (MF_NOCLIP|MF_NOGRAVITY)) &&
+	if ((flags & MF_SOLID) && !(flags & (MF_NOCLIP|MF_NOGRAVITY)) &&
+		!(flags & MF_NOBLOCKMAP) &&
 		momz <= 0 &&
 		floorz == z &&
 		floorsector->floorplane.c < STEEPSLOPE &&
@@ -2142,6 +2408,13 @@ void AActor::Tick ()
 			momx += floorsector->floorplane.a;
 			momy += floorsector->floorplane.b;
 		}
+	}
+
+	// [RH] Missiles moving perfectly vertical need some X/Y movement, or they
+	// won't hurt anything.
+	if ((flags & MF_MISSILE) && (momx|momy) == 0)
+	{
+		momx = 1;
 	}
 
 	// Handle X and Y momemtums
@@ -2248,8 +2521,11 @@ void AActor::Tick ()
 		// [RH] Use <= 0 instead of == 0 so that spawnstates
 		// of 0 tics work as expected.
 		if (tics <= 0)
+		{
+			FState *oldstate = state;
 			if (!SetState (state->GetNextState()))
 				return; 		// freed itself
+		}
 	}
 	else
 	{
@@ -2259,7 +2535,7 @@ void AActor::Tick ()
 
 		movecount++;
 
-		if (movecount < 12*TICRATE)
+		if (movecount < respawnmonsters)
 			return;
 
 		if (level.time & 31)
@@ -2387,6 +2663,7 @@ BEGIN_DEFAULTS (AActor, Any, -1, 0)
 	PROP_Mass (100)
 	PROP_RenderStyle (STYLE_Normal)
 	PROP_Alpha (FRACUNIT)
+	PROP_MinMissileChance (200)
 END_DEFAULTS
 
 //==========================================================================
@@ -2528,10 +2805,38 @@ void AActor::LevelSpawned ()
 		tics = 1 + (pr_spawnmapthing() % tics);
 	angle_t incs = AngleIncrements ();
 	angle -= angle % incs;
-	if (mapflags & MTF_AMBUSH)
+	flags &= ~MF_DROPPED;		// [RH] clear MF_DROPPED flag
+	HandleSpawnFlags ();
+}
+
+void AActor::HandleSpawnFlags ()
+{
+	if (SpawnFlags & MTF_AMBUSH)
+	{
 		flags |= MF_AMBUSH;
-	if (mapflags & MTF_DORMANT)
+	}
+	if (SpawnFlags & MTF_DORMANT)
+	{
 		Deactivate (NULL);
+	}
+	if (SpawnFlags & MTF_STANDSTILL)
+	{
+		flags4 |= MF4_STANDSTILL;
+	}
+	if (SpawnFlags & MTF_FRIENDLY)
+	{
+		flags |= MF_FRIENDLY;
+	}
+	if (SpawnFlags & MTF_SHADOW)
+	{
+		flags |= MF_SHADOW;
+		RenderStyle = STYLE_Translucent;
+		alpha = TRANSLUC25;
+	}
+	else if (SpawnFlags & MTF_ALTSHADOW)
+	{
+		RenderStyle = STYLE_None;
+	}
 }
 
 void AActor::BeginPlay ()
@@ -2568,11 +2873,20 @@ void AActor::Deactivate (AActor *activator)
 
 void AActor::Destroy ()
 {
+	// [RH] Destroy any inventory this actor is carrying
+	while (Inventory != NULL)
+	{
+		AInventory *item = Inventory;
+		Inventory = item->Inventory;
+		item->Destroy ();
+	}
+
 	// [RH] Unlink from tid chain
 	RemoveFromHash ();
 
 	// unlink from sector and block lists
 	UnlinkFromWorld ();
+	flags |= MF_NOSECTOR|MF_NOBLOCKMAP;
 
 	// Delete all nodes on the current sector_list			phares 3/16/98
 	if (sector_list)
@@ -2750,8 +3064,6 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	p->damagecount = 0;
 	p->bonuscount = 0;
 	p->morphTics = 0;
-	p->rain1 = NULL;
-	p->rain2 = NULL;
 	p->extralight = 0;
 	p->fixedcolormap = 0;
 	p->viewheight = VIEWHEIGHT;
@@ -2783,8 +3095,23 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 
 	// give all cards in death match mode
 	if (deathmatch)
-		for (i = 0; i < NUMKEYS; i++)
-			p->keys[i] = true;
+	{
+		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+		{
+			if (TypeInfo::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+			{
+				AKey *key = (AKey *)GetDefaultByType (TypeInfo::m_Types[i]);
+				if (key->KeyNumber != 0)
+				{
+					key = static_cast<AKey *>(Spawn (TypeInfo::m_Types[i], 0,0,0));
+					if (!key->TryPickup (p->mo))
+					{
+						key->Destroy ();
+					}
+				}
+			}
+		}
+	}
 
 	if (displayplayer == playernum)
 	{
@@ -2901,11 +3228,12 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	}
 	else
 	{
-		const int base = (gameinfo.gametype == GAME_Hexen) ? 9100 : 4001;
+		const int base = (gameinfo.gametype == GAME_Strife) ? 5 :
+						 (gameinfo.gametype == GAME_Hexen) ? 9100 : 4001;
 
-		if (mthing->type >= base && mthing->type <= base + MAXPLAYERS - 4)
+		if (mthing->type >= base && mthing->type < base + MAXPLAYERS - 4)
 		{
-			pnum = mthing->type - base + 4;
+			pnum = mthing->type - base + 3;
 		}
 	}
 
@@ -3092,8 +3420,8 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		}
 		if (dmflags & DF_NO_ITEMS)
 		{
-			if (i->IsDescendantOf (RUNTIME_CLASS(AArtifact)))
-				return;
+//			if (i->IsDescendantOf (RUNTIME_CLASS(AArtifact)))
+//				return;
 		}
 		if (dmflags & DF_NO_ARMOR)
 		{
@@ -3118,7 +3446,6 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	SpawningMapThing = true;
 	mobj = Spawn (i, x, y, z);
 	SpawningMapThing = false;
-	mobj->mapflags = mthing->flags;
 
 	if (z == ONFLOORZ)
 		mobj->z += mthing->z << FRACBITS;
@@ -3129,7 +3456,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 	mobj->SpawnPoint[1] = mthing->y;
 	mobj->SpawnPoint[2] = mthing->z;
 	mobj->SpawnAngle = mthing->angle;
-	mobj->SpawnFlags = (BYTE)mthing->flags;
+	mobj->SpawnFlags = mthing->flags;
 
 	// [RH] Set the thing's special
 	mobj->special = mthing->special;
@@ -3159,26 +3486,20 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 // P_SpawnPuff
 //
 
-AActor *P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing)
+AActor *P_SpawnPuff (const TypeInfo *pufftype, fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing)
 {
 	AActor *puff;
 
 	z += pr_spawnpuff.Random2 () << 10;
 
-	if (hitthing == NULL || HitPuffType == NULL)
-	{
-		puff = Spawn (PuffType, x, y, z);
+	puff = Spawn (pufftype, x, y, z);
 
-		// If a puff has a crash state and an actor was not hit,
-		// it will enter the crash state. This is used by the StrifeSpark.
-		if (hitthing == NULL && puff->CrashState != NULL)
-		{
-			puff->SetState (puff->CrashState);
-		}
-	}
-	else
+	// If a puff has a crash state and an actor was not hit,
+	// it will enter the crash state. This is used by the StrifeSpark
+	// and BlasterPuff.
+	if (hitthing == NULL && puff->CrashState != NULL)
 	{
-		puff = Spawn (HitPuffType, x, y, z);
+		puff->SetState (puff->CrashState);
 	}
 
 	if (gameinfo.gametype == GAME_Doom)
@@ -3221,29 +3542,25 @@ AActor *P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, b
 // 
 void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage)
 {
-	AActor *th;
+	ABlood *th;
 
 	if (cl_bloodtype <= 1)
 	{
 		z += pr_spawnblood.Random2 () << 10;
 		th = Spawn<ABlood> (x, y, z);
 		th->momz = FRACUNIT*2;
-		th->tics -= pr_spawnblood() & 3;
-
-		if (th->tics < 1)
-			th->tics = 1;
-
 		if (gameinfo.gametype == GAME_Doom)
 		{
-			if (damage <= 12 && damage >= 9)
-				th->SetState (th->SpawnState + 1);
-			else if (damage < 9)
-				th->SetState (th->SpawnState + 2);
+			th->tics -= pr_spawnblood() & 3;
+
+			if (th->tics < 1)
+				th->tics = 1;
 		}
+		th->SetDamage (damage);
 	}
 
 	if (cl_bloodtype >= 1)
-		P_DrawSplash2 (32, x, y, z, dir, 2, 0);
+		P_DrawSplash2 (40, x, y, z, dir, 2, 0);
 }
 
 // Blood splatter -----------------------------------------------------------
@@ -3282,20 +3599,27 @@ END_DEFAULTS
 
 void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 {
-	AActor *mo;
+	if (cl_bloodtype <= 1)
+	{
+		AActor *mo;
 
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		mo = Spawn<ABlood> (x, y, z);
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			mo = Spawn<ABlood> (x, y, z);
+		}
+		else
+		{
+			mo = Spawn<ABloodSplatter> (x, y, z);
+		}
+		mo->target = originator;
+		mo->momx = pr_splatter.Random2 () << 10;
+		mo->momy = pr_splatter.Random2 () << 10;
+		mo->momz = 3*FRACUNIT;
 	}
-	else
+	if (cl_bloodtype >= 1)
 	{
-		mo = Spawn<ABloodSplatter> (x, y, z);
+		P_DrawSplash2 (40, x, y, z, R_PointToAngle (originator->x - x, originator->y - y), 2, 0);
 	}
-	mo->target = originator;
-	mo->momx = pr_splatter.Random2 () << 10;
-	mo->momy = pr_splatter.Random2 () << 10;
-	mo->momz = 3*FRACUNIT;
 }
 
 //---------------------------------------------------------------------------
@@ -3306,18 +3630,25 @@ void P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
 
 void P_RipperBlood (AActor *mo)
 {
-	AActor *th;
 	fixed_t x, y, z;
 
 	x = mo->x + (pr_ripperblood.Random2 () << 12);
 	y = mo->y + (pr_ripperblood.Random2 () << 12);
 	z = mo->z + (pr_ripperblood.Random2 () << 12);
-	th = Spawn<ABlood> (x, y, z);
-	if (gameinfo.gametype == GAME_Heretic)
-		th->flags |= MF_NOGRAVITY;
-	th->momx = mo->momx >> 1;
-	th->momy = mo->momy >> 1;
-	th->tics += pr_ripperblood () & 3;
+	if (cl_bloodtype <= 1)
+	{
+		AActor *th;
+		th = Spawn<ABlood> (x, y, z);
+		if (gameinfo.gametype == GAME_Heretic)
+			th->flags |= MF_NOGRAVITY;
+		th->momx = mo->momx >> 1;
+		th->momy = mo->momy >> 1;
+		th->tics += pr_ripperblood () & 3;
+	}
+	if (cl_bloodtype >= 1)
+	{
+		P_DrawSplash2 (28, x, y, z, 0, 0, 0);
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -3416,7 +3747,7 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 		}
 		if (thing->player && !splash->NoAlert)
 		{
-			P_NoiseAlert (thing, thing);
+			P_NoiseAlert (thing, thing, true);
 		}
 	}
 	if (mo)
@@ -3508,7 +3839,15 @@ bool P_CheckMissileSpawn (AActor* th)
 		// [RH] Don't explode ripping missiles that spawn inside something
 		if (BlockingMobj == NULL || !(th->flags2 & MF2_RIP))
 		{
-			P_ExplodeMissile (th, NULL);
+			// [RH] Don't explode missiles that spawn on top of horizon lines
+			if (BlockingLine != NULL && BlockingLine->special == Line_Horizon)
+			{
+				th->Destroy ();
+			}
+			else
+			{
+				P_ExplodeMissile (th, NULL);
+			}
 			return false;
 		}
 	}
@@ -3549,7 +3888,7 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	{
 		z = ONCEILINGZ;
 	}
-	if (z != ONFLOORZ)
+	else if (z != ONFLOORZ)
 	{
 		z -= source->floorclip;
 	}
@@ -3644,7 +3983,7 @@ AActor *P_SpawnMissileZAimed (AActor *source, fixed_t z, AActor *dest, const Typ
 	dist = P_AproxDistance (dest->x - source->x, dest->y - source->y);
 	speed = GetDefaultByType (type)->Speed;
 	dist /= speed;
-	momz = dist != 0 ? (dest->z - source->z)/dist : 0;
+	momz = dist != 0 ? (dest->z - source->z)/dist : speed;
 	return P_SpawnMissileAngleZSpeed (source, z, type, an, momz, speed);
 }
 
@@ -3690,8 +4029,8 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z,
 	mo->target = owner != NULL ? owner : source; // Originator
 	mo->angle = angle;
 	angle >>= ANGLETOFINESHIFT;
-	mo->momx = FixedMul (mo->Speed, finecosine[angle]);
-	mo->momy = FixedMul (mo->Speed, finesine[angle]);
+	mo->momx = FixedMul (speed, finecosine[angle]);
+	mo->momy = FixedMul (speed, finesine[angle]);
 	mo->momz = momz;
 	return P_CheckMissileSpawn(mo) ? mo : NULL;
 }
@@ -3761,8 +4100,8 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 
 	fixed_t vx, vy, vz, speed;
 
-	vx = FixedMul (finecosine[pitch>>ANGLETOFINESHIFT], finecosine[angle>>ANGLETOFINESHIFT]);
-	vy = FixedMul (finecosine[pitch>>ANGLETOFINESHIFT], finesine[angle>>ANGLETOFINESHIFT]);
+	vx = FixedMul (finecosine[pitch>>ANGLETOFINESHIFT], finecosine[an>>ANGLETOFINESHIFT]);
+	vy = FixedMul (finecosine[pitch>>ANGLETOFINESHIFT], finesine[an>>ANGLETOFINESHIFT]);
 	vz = -finesine[pitch>>ANGLETOFINESHIFT];
 	speed = MissileActor->Speed;
 
@@ -3793,13 +4132,8 @@ bool AActor::IsTeammate (AActor *other)
 
 int AActor::DoSpecialDamage (AActor *target, int damage)
 {
-	if ((target->flags2 & MF2_INVULNERABLE) && damage < 1000000)
-	{ // actor is invulnerable
-		return -1;
-	}
-	else if (target->player && target->player->mo == target && damage < 1000 &&
-		((target->player->cheats & CF_GODMODE)
-		|| target->player->powers[pw_invulnerability]))
+	if (target->player && target->player->mo == target && damage < 1000 &&
+		(target->player->cheats & CF_GODMODE))
 	{
 		return -1;
 	}
@@ -3807,6 +4141,11 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 	{
 		return damage;
 	}
+}
+
+int AActor::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage)
+{
+	return damage;
 }
 
 FArchive &operator<< (FArchive &arc, FSoundIndex &snd)

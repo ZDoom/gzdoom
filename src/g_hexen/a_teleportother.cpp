@@ -23,10 +23,12 @@ void P_TeleportToDeathmatchStarts (AActor *victim);
 
 // Teleport Other Artifact --------------------------------------------------
 
-BASIC_ARTI (TeleportOther, arti_teleportother, GStrings(TXT_ARTITELEPORTOTHER))
-	AT_GAME_SET_FRIEND (TeleportOther)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti);
+class AArtiTeleportOther : public AInventory
+{
+	DECLARE_ACTOR (AArtiTeleportOther, AInventory)
+public:
+	bool Use ();
+	const char *PickupMessage ();
 };
 
 FState AArtiTeleportOther::States[] =
@@ -41,14 +43,15 @@ FState AArtiTeleportOther::States[] =
 IMPLEMENT_ACTOR (AArtiTeleportOther, Hexen, 10040, 17)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
-
 	PROP_SpawnState (S_ARTI_TELOTHER1)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTITELO")
 END_DEFAULTS
 
-AT_GAME_SET (TeleportOther)
+const char *AArtiTeleportOther::PickupMessage ()
 {
-	ArtiDispatch[arti_teleportother] = AArtiTeleportOther::ActivateArti;
-	ArtiPics[arti_teleportother] = "ARTITELO";
+	return GStrings(TXT_ARTITELEPORTOTHER);
 }
 
 // Teleport Other FX --------------------------------------------------------
@@ -211,14 +214,14 @@ void A_CheckTeleRing (AActor *actor)
 //
 //===========================================================================
 
-bool AArtiTeleportOther::ActivateArti (player_t *player, artitype_t arti)
+bool AArtiTeleportOther::Use ()
 {
 	AActor *mo;
 
-	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ATelOtherFX1));
+	mo = P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(ATelOtherFX1));
 	if (mo)
 	{
-		mo->target = player->mo;
+		mo->target = Owner;
 	}
 	return true;
 }
@@ -231,7 +234,7 @@ bool AArtiTeleportOther::ActivateArti (player_t *player, artitype_t arti)
 
 int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
 {
-	if ((target->flags3 & MF3_ISMONSTER) &&
+	if ((target->flags3 & MF3_ISMONSTER || target->player != NULL) &&
 		!(target->flags2 & MF2_BOSS) &&
 		!(target->flags3 & MF3_NOTELEOTHER))
 	{
@@ -249,7 +252,7 @@ int ATelOtherFX1::DoSpecialDamage (AActor *target, int damage)
 			{
 				target->RemoveFromHash ();
 				LineSpecials[target->special] (NULL, level.flags & LEVEL_ACTOWNSPECIAL
-					? target : this->target, target->args[0], target->args[1],
+					? target : this->target, false, target->args[0], target->args[1],
 					target->args[2], target->args[3], target->args[4]);
 				target->special = 0;
 			}
@@ -282,7 +285,7 @@ void P_TeleportToPlayerStarts (AActor *victim)
 	destX = playerstarts[i].x << FRACBITS;
 	destY = playerstarts[i].y << FRACBITS;
 	destAngle = ANG45 * (playerstarts[i].angle/45);
-	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, false);
+	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
 }
 
 //===========================================================================
@@ -304,7 +307,7 @@ void P_TeleportToDeathmatchStarts (AActor *victim)
 		destX = deathmatchstarts[i].x << FRACBITS;
 		destY = deathmatchstarts[i].y << FRACBITS;
 		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
-		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, false);
+		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, true, false);
 	}
 	else
 	{

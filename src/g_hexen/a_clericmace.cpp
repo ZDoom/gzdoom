@@ -15,20 +15,13 @@ extern void AdjustPlayerAngle (AActor *pmo);
 
 static FRandom pr_atk ("CMaceAttack");
 
-void A_CMaceAttack (AActor *actor, pspdef_t *psp);
+void A_CMaceAttack (AActor *actor);
 
 // The Cleric's Mace --------------------------------------------------------
 
 class ACWeapMace : public AClericWeapon
 {
 	DECLARE_ACTOR (ACWeapMace, AClericWeapon)
-public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_cmace;
-	}
-
-	static FWeaponInfo WeaponInfo;
 };
 
 FState ACWeapMace::States[] =
@@ -62,32 +55,18 @@ FState ACWeapMace::States[] =
 	S_NORMAL2 (CMCE, 'A',	1, NULL					    , &States[S_CMACEREADY], 8, 45),
 };
 
-FWeaponInfo ACWeapMace::WeaponInfo =
-{
-	0,
-	MANA_NONE,
-	MANA_NONE,
-	0,
-	0,
-	&States[S_CMACEUP],
-	&States[S_CMACEDOWN],
-	&States[S_CMACEREADY],
-	&States[S_CMACEATK],
-	&States[S_CMACEATK],
-	NULL,
-	NULL,
-	150,
-	-8*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ACWeapMace),
-	-1
-};
 
 IMPLEMENT_ACTOR (ACWeapMace, Hexen, -1, 0)
+	PROP_Weapon_SelectionOrder (3500)
+	PROP_Weapon_Flags (WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_CMACEUP)
+	PROP_Weapon_DownState (S_CMACEDOWN)
+	PROP_Weapon_ReadyState (S_CMACEREADY)
+	PROP_Weapon_AtkState (S_CMACEATK)
+	PROP_Weapon_HoldAtkState (S_CMACEATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (-8)
 END_DEFAULTS
-
-WEAPON1 (wp_cmace, ACWeapMace)
 
 //===========================================================================
 //
@@ -95,7 +74,7 @@ WEAPON1 (wp_cmace, ACWeapMace)
 //
 //===========================================================================
 
-void A_CMaceAttack (AActor *actor, pspdef_t *psp)
+void A_CMaceAttack (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -109,14 +88,13 @@ void A_CMaceAttack (AActor *actor, pspdef_t *psp)
 	}
 
 	damage = 25+(pr_atk()&15);
-	PuffType = RUNTIME_CLASS(AHammerPuff);
 	for (i = 0; i < 16; i++)
 	{
 		angle = player->mo->angle+i*(ANG45/16);
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage);
+			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
 			AdjustPlayerAngle (player->mo);
 //			player->mo->angle = R_PointToAngle2(player->mo->x,
 //				player->mo->y, linetarget->x, linetarget->y);
@@ -126,7 +104,7 @@ void A_CMaceAttack (AActor *actor, pspdef_t *psp)
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage);
+			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
 			AdjustPlayerAngle (player->mo);
 //			player->mo->angle = R_PointToAngle2(player->mo->x,
 //				player->mo->y, linetarget->x, linetarget->y);
@@ -138,7 +116,7 @@ void A_CMaceAttack (AActor *actor, pspdef_t *psp)
 
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
 macedone:
 	return;		
 }

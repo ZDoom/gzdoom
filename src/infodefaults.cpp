@@ -3,7 +3,7 @@
 ** Parses default lists to create default copies of actors
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,19 @@
 **
 */
 
+#include <assert.h>
 #include "actor.h"
 #include "info.h"
 #include "s_sound.h"
+#include "p_conversation.h"
+#include "a_pickups.h"
+#include "gi.h"
+#include "a_artifacts.h"
+#include "a_keys.h"
+#include "i_system.h"
+#include "r_data.h"
+#include "w_wad.h"
+#include "a_strifeglobal.h"
 
 void FActorInfo::BuildDefaults ()
 {
@@ -59,6 +69,7 @@ void FActorInfo::BuildDefaults ()
 			}
 			parent->ActorInfo->BuildDefaults ();
 			memcpy (Defaults, parent->ActorInfo->Defaults, parent->SizeOf);
+			assert (Class->SizeOf >= parent->SizeOf);
 			if (Class->SizeOf > parent->SizeOf)
 			{
 				memset (Defaults + parent->SizeOf, 0, Class->SizeOf - parent->SizeOf);
@@ -91,25 +102,39 @@ static FState *DefaultStates (TypeInfo *type)
 
 void FActorInfo::ApplyDefaults (BYTE *defaults)
 {
-	AActor *actor = (AActor *)defaults;
+	// Different casts for the same thing
+	AActor *const actor = (AActor *)defaults;
+	APowerupGiver *const giver = (APowerupGiver *)defaults;
+	AInventory *const item = (AInventory *)defaults;
+	ABasicArmorBonus *const armorb = (ABasicArmorBonus *)defaults;
+	ABasicArmorPickup *const armorp = (ABasicArmorPickup *)defaults;
+	APuzzleItem *const puzzl = (APuzzleItem *)defaults;
+	APowerup *const power = (APowerup *)defaults;
+	AKey *const key = (AKey *)defaults;
+	AWeapon *const weapon = (AWeapon *)defaults;
+	ASigil *const sigil = (ASigil *)defaults;
+
 	FState *states = DefaultStates (Class);
 	const BYTE *parser = DefaultList;
 
 	const char *datastr;
 	int dataint = 0;
 	FState *datastate = NULL;
+	const TypeInfo *datatype;
 	int datasound = 0;
-	BYTE defnum;
+	int defnum;
+	int deftype;
 
-	while ((defnum = *parser) != ADEF_EOL)
+	while ((defnum = *(WORD *)parser) != ADEF_EOL)
 	{
-		BYTE type = defnum >> 6;
-		defnum &= 63;
+		deftype = defnum >> (16-2);
+		defnum &= 0x3FFF;
+		parser += 2;
 		if (defnum <= ADEF_LastString)
 		{
-			datastr = (const char *)(parser + 1);
+			datastr = (const char *)parser;
 			parser = (const BYTE *)datastr + strlen (datastr) + 1;
-			if (defnum <= ADEF_ActiveSound)
+			if (defnum <= ADEF_Weapon_ReadySound)
 			{
 				datasound = S_FindSound (datastr);
 			}
@@ -119,36 +144,54 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 			switch (defnum)
 			{
 			case ADEF_SkipSuper:
-				parser += 2;
+				parser++;
 				break;
 			}
 		}
 		else
 		{
-			switch (type)
+			switch (deftype)
 			{
 			case 0:		// byte
-				dataint = parser[1];
-				parser += 2;
+				dataint = *parser;
+				parser++;
 				break;
 
 			case 1:		// byte * FRACUNIT;
-				dataint = parser[1] << FRACBITS;
-				parser += 2;
+				dataint = *parser << FRACBITS;
+				parser++;
 				break;
 
 			case 2:		// word
-				dataint = *((WORD *)(parser + 1));
-				parser += 3;
+				dataint = *(WORD *)parser;
+				parser += 2;
 				break;
 
 			case 3:		// long
-				dataint = *((DWORD *)(parser + 1));
-				parser += 5;
+				dataint = *(DWORD *)parser;
+				parser += 4;
 				break;
 			}
 			defnum &= ~ADEFTYPE_MASK;
 			datastate = dataint < 255 ? states + dataint : NULL;
+		}
+
+		switch (defnum)
+		{
+		case ADEF_Weapon_AmmoType1:
+		case ADEF_Weapon_AmmoType2:
+		case ADEF_Weapon_SisterType:
+		case ADEF_Weapon_ProjectileType:
+		case ADEF_PowerupGiver_Powerup:
+			datatype = TypeInfo::FindType (datastr);
+			if (datatype == NULL)
+			{
+				I_FatalError ("Unknown class %s in %s's default list", datastr, this->Class->Name+1);
+			}
+			break;
+
+		default:
+			datatype = NULL;
 		}
 
 		switch (defnum)
@@ -158,7 +201,32 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_PainSound:	actor->PainSound = datasound;	break;
 		case ADEF_DeathSound:	actor->DeathSound = datasound;	break;
 		case ADEF_ActiveSound:	actor->ActiveSound = datasound;	break;
-		case ADEF_Tag:			/* Do nothing for now */		break;
+		case ADEF_UseSound:		actor->UseSound = datasound;	break;
+		case ADEF_Tag:
+			{
+				char name[256];
+				int i;
+
+				// Replace underscores with spaces
+				i = 0;
+				do
+				{
+					name[i] = datastr[i] == '_' ? ' ' : datastr[i];
+				} while (datastr[i++] != 0);
+				Class->Meta.SetMetaString (AMETA_StrifeName, name);
+				break;
+			}
+		case ADEF_PowerupGiver_Powerup:
+			giver->PowerupType = datatype;
+			break;
+
+		case ADEF_Inventory_Icon:
+			item->Icon = TexMan.AddPatch (datastr);
+			if (item->Icon <= 0)
+			{
+				item->Icon = TexMan.AddPatch (datastr, ns_sprites);
+			}
+			break;
 
 		case ADEF_XScale:		actor->xscale = dataint;		break;
 		case ADEF_YScale:		actor->yscale = dataint;		break;
@@ -197,7 +265,64 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_XDeathState:	actor->XDeathState = datastate;	break;
 		case ADEF_BDeathState:	actor->BDeathState = datastate;	break;
 		case ADEF_IDeathState:	actor->IDeathState = datastate;	break;
+		case ADEF_EDeathState:	actor->EDeathState = datastate;	break;
 		case ADEF_RaiseState:	actor->RaiseState = datastate;	break;
+		case ADEF_WoundState:	actor->WoundState = datastate;	break;
+
+		case ADEF_StrifeType:	if (!(gameinfo.flags & GI_SHAREWARE)) StrifeTypes[dataint] = Class;	break;
+		case ADEF_StrifeTeaserType: if (gameinfo.flags & GI_SHAREWARE) StrifeTypes[dataint] = Class; break;
+
+		case ADEF_Inventory_Flags:		((AInventory*)actor)->ItemFlags = dataint; break;
+		case ADEF_Inventory_Amount:		((AInventory*)actor)->Amount = dataint;	break;
+		case ADEF_Inventory_RespawnTics:((AInventory*)actor)->RespawnTics = dataint; break;
+		case ADEF_Inventory_MaxAmount:	item->MaxAmount = dataint; break;
+		case ADEF_Inventory_DefMaxAmount:
+			// In Heretic, the maximum number of artifacts of one kind you can carry is 16.
+			// In Hexen, it was upped to 25.
+			item->MaxAmount = gameinfo.gametype == GAME_Heretic ? 16 : 25;
+			break;
+
+		case ADEF_BasicArmorPickup_SavePercent:		armorp->SavePercent = dataint; break;
+		case ADEF_BasicArmorPickup_SaveAmount:		armorp->SaveAmount = dataint; break;
+		case ADEF_BasicArmorBonus_SavePercent:		armorb->SavePercent = dataint; break;
+		case ADEF_BasicArmorBonus_SaveAmount:		armorb->SaveAmount = dataint; break;
+		case ADEF_BasicArmorBonus_MaxSaveAmount:	armorb->MaxSaveAmount = dataint; break;
+		case ADEF_HexenArmor_ArmorAmount:			item->MaxAmount = dataint; break;
+
+		case ADEF_PuzzleItem_Number:	puzzl->PuzzleItemNumber = dataint; break;
+
+		case ADEF_PowerupGiver_EffectTics:giver->EffectTics = dataint; break;
+
+		case ADEF_Powerup_EffectTics:	power->EffectTics = dataint; break;
+		case ADEF_Powerup_Color:		power->BlendColor = dataint; break;
+
+		case ADEF_Key_KeyNumber:		key->KeyNumber = dataint; break;
+		case ADEF_Key_AltKeyNumber:		key->AltKeyNumber = dataint; break;
+
+		case ADEF_Weapon_Flags:			weapon->WeaponFlags = dataint; break;
+		case ADEF_Weapon_UpSound:		weapon->UpSound = datasound; break;
+		case ADEF_Weapon_ReadySound:	weapon->ReadySound = datasound; break;
+		case ADEF_Weapon_SisterType:	weapon->SisterWeaponType = datatype; break;
+		case ADEF_Weapon_ProjectileType:weapon->ProjectileType = datatype; break;
+		case ADEF_Weapon_AmmoType1:		weapon->AmmoType1 = datatype; break;
+		case ADEF_Weapon_AmmoType2:		weapon->AmmoType2 = datatype; break;
+		case ADEF_Weapon_AmmoGive1:		weapon->AmmoGive1 = dataint; break;
+		case ADEF_Weapon_AmmoGive2:		weapon->AmmoGive2 = dataint; break;
+		case ADEF_Weapon_AmmoUse1:		weapon->AmmoUse1 = dataint; break;
+		case ADEF_Weapon_AmmoUse2:		weapon->AmmoUse2 = dataint; break;
+		case ADEF_Weapon_Kickback:		weapon->Kickback = dataint; break;
+		case ADEF_Weapon_YAdjust:		weapon->YAdjust = dataint; break;
+		case ADEF_Weapon_SelectionOrder:weapon->SelectionOrder = dataint; break;
+		case ADEF_Weapon_MoveCombatDist:weapon->MoveCombatDist = dataint; break;
+		case ADEF_Weapon_UpState:		weapon->UpState = datastate; break;
+		case ADEF_Weapon_DownState:		weapon->DownState = datastate; break;
+		case ADEF_Weapon_ReadyState:	weapon->ReadyState = datastate; break;
+		case ADEF_Weapon_AtkState:		weapon->AtkState = datastate; break;
+		case ADEF_Weapon_HoldAtkState:	weapon->HoldAtkState = datastate; break;
+		case ADEF_Weapon_AltAtkState:	weapon->AltAtkState = datastate; break;
+		case ADEF_Weapon_AltHoldAtkState:weapon->AltHoldAtkState = datastate; break;
+		case ADEF_Weapon_FlashState:	weapon->FlashState = datastate; break;
+		case ADEF_Sigil_NumPieces:		sigil->NumPieces = dataint; break;
 		}
 	}
 	// Anything that is CountKill is also a monster, even if it doesn't specify it.

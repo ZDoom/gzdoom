@@ -52,20 +52,6 @@ CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static weapontype_t WeaponPrefs[] =
-{
-	wp_plasma, wp_skullrod, wp_maulerscatter,
-	wp_supershotgun, wp_blaster, wp_assaultgun,
-	wp_chaingun, wp_crossbow, wp_fhammer, wp_cfire, wp_mlightning, wp_electricxbow,
-	wp_shotgun, wp_mace, wp_faxe, wp_cstaff, wp_mfrost, wp_minimissile,
-	wp_pistol, wp_goldwand, wp_flamethrower,
-	wp_chainsaw, wp_gauntlets, wp_hegrenadelauncher,
-	wp_missile, wp_phoenixrod, wp_poisonxbow,
-	wp_bfg, wp_fsword, wp_choly, wp_mstaff, wp_phgrenadelauncher, wp_maulertorpedo,
-	wp_ffist, wp_cmace, wp_mwand, wp_fist, wp_staff, wp_dagger,
-	NUMWEAPONS
-};
-
 static FRandom pr_wpnreadysnd ("WpnReadySnd");
 static FRandom pr_gunshot ("GunShot");
 
@@ -98,23 +84,40 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 		psp->state = state;
 
 		if (sv_fastweapons >= 2 && position == ps_weapon)
-			psp->tics = (state->Action.acvoid == NULL) ? 0 : 1;
+			psp->tics = (state->Action == NULL) ? 0 : 1;
 		else if (sv_fastweapons)
 			psp->tics = 1;		// great for producing decals :)
 		else
 			psp->tics = state->GetTics(); // could be 0
 
-		if (state->GetMisc1())
-		{ // Set coordinates.
-			psp->sx = state->GetMisc1()<<FRACBITS;
-		}
-		if (state->GetMisc2())
+		if (!(state->Frame&SF_WEAPONPARAM))
 		{
-			psp->sy = state->GetMisc2()<<FRACBITS;
+			if (state->GetMisc1())
+			{ // Set coordinates.
+				psp->sx = state->GetMisc1()<<FRACBITS;
+			}
+			if (state->GetMisc2())
+			{
+				psp->sy = state->GetMisc2()<<FRACBITS;
+			}
 		}
-		if (state->GetAction().acp2)
+		else	// for parameterized action functions this must be done differently!
+		{
+			int index=state->GetMisc1_2();
+			FWeaponParam *wp=WeaponParams[index];
+
+			if (wp->wp_xoffset)
+			{ // Set coordinates.
+				psp->sx = wp->wp_xoffset<<FRACBITS;
+			}
+			if (wp->wp_yoffset)
+			{
+				psp->sy = wp->wp_yoffset<<FRACBITS;
+			}
+		}
+		if (state->GetAction())
 		{ // Call action routine.
-			state->GetAction().acp2 (player->mo, psp);
+			state->GetAction() (player->mo);
 			if (!psp->state)
 			{
 				break;
@@ -159,20 +162,6 @@ void P_SetPspriteNF (player_t *player, int position, FState *state)
 
 //---------------------------------------------------------------------------
 //
-// PROC P_PostMorphWeapon
-//
-//---------------------------------------------------------------------------
-
-void P_PostMorphWeapon (player_t *player, weapontype_t weapon)
-{
-	player->pendingweapon = wp_nochange;
-	player->readyweapon = weapon;
-	player->psprites[ps_weapon].sy = WEAPONBOTTOM;
-	P_SetPsprite (player, ps_weapon, wpnlev1info[weapon]->upstate);
-}
-
-//---------------------------------------------------------------------------
-//
 // PROC P_BringUpWeapon
 //
 // Starts bringing the pending weapon up from the bottom of the screen.
@@ -182,155 +171,44 @@ void P_PostMorphWeapon (player_t *player, weapontype_t weapon)
 void P_BringUpWeapon (player_t *player)
 {
 	FState *newstate;
-	FWeaponInfo *weapon;
+	AWeapon *weapon;
 
-	if (player->pendingweapon == wp_nochange)
+	if (player->PendingWeapon == WP_NOCHANGE)
 	{
-		player->pendingweapon = player->readyweapon;
-	}
-	if (player->powers[pw_weaponlevel2])
-	{
-		weapon = wpnlev2info[player->pendingweapon];
-	}
-	else
-	{
-		weapon = wpnlev1info[player->pendingweapon];
+		player->psprites[ps_weapon].sy = WEAPONTOP;
+		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+		return;
 	}
 
-	if (weapon)
+	weapon = player->PendingWeapon;
+
+	// If the player has a tome of power, use this weapon's powered up
+	// version, if one is available.
+	if (weapon != NULL &&
+		weapon->SisterWeapon &&
+		weapon->SisterWeapon->WeaponFlags & WIF_POWERED_UP &&
+		player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2)))
 	{
-		if (weapon->upsound)
+		weapon = weapon->SisterWeapon;
+	}
+
+	if (weapon != NULL)
+	{
+		if (weapon->UpSound)
 		{
-			S_Sound (player->mo, CHAN_WEAPON, weapon->upsound, 1, ATTN_NORM);
+			S_SoundID (player->mo, CHAN_WEAPON, weapon->UpSound, 1, ATTN_NORM);
 		}
-		if (player->pendingweapon == wp_faxe && player->ammo[MANA_1])
-		{
-			newstate = wpnlev2info[wp_faxe]->upstate;
-		}
-		else
-		{
-			newstate = weapon->upstate;
-		}
+		newstate = weapon->GetUpState ();
 	}
 	else
 	{
 		newstate = NULL;
 	}
-	player->pendingweapon = wp_nochange;
+	player->PendingWeapon = WP_NOCHANGE;
+	player->ReadyWeapon = weapon;
 	player->psprites[ps_weapon].sy = player->cheats & CF_INSTANTWEAPSWITCH
 		? WEAPONTOP : WEAPONBOTTOM;
 	P_SetPsprite (player, ps_weapon, newstate);
-}
-
-//---------------------------------------------------------------------------
-//
-// FUNC P_CheckAmmo
-//
-// Returns true if there is enough ammo to shoot.  If not, selects the
-// next weapon to use.
-//
-//---------------------------------------------------------------------------
-
-bool P_CheckAmmo (player_t *player)
-{
-	ammotype_t ammo;
-	FWeaponInfo **wpinfo;
-	int count;
-
-	if (player->powers[pw_weaponlevel2] && !deathmatch)
-	{
-		wpinfo = wpnlev2info;
-	}
-	else
-	{
-		wpinfo = wpnlev1info;
-	}
-	if (wpinfo[player->readyweapon]->flags & WIF_AMMO_OPTIONAL)
-	{
-		return true;
-	}
-	ammo = wpinfo[player->readyweapon]->ammo;
-	count = wpinfo[player->readyweapon]->GetMinAmmo();
-	if (ammo == MANA_BOTH)
-	{
-		if (player->ammo[MANA_1] >= count && player->ammo[MANA_2] >= count)
-		{
-			return true;
-		}
-	}
-	else if (ammo == am_noammo || player->ammo[ammo] >= count)
-	{
-		return true;
-	}
-	// out of ammo, pick a weapon to change to
-	P_PickNewWeapon (player);
-	return false;
-}
-
-//---------------------------------------------------------------------------
-//
-// FUNC P_PickNewWeapon
-//
-// Changes the player's weapon to something different. Used mostly for
-// running out of ammo, but it also works when an ACS script explicitly
-// takes the ready weapon away.
-//
-//---------------------------------------------------------------------------
-
-weapontype_t P_PickNewWeapon (player_t *player)
-{
-	FWeaponInfo **wpinfo;
-	weapontype_t *prefs;
-
-	if (player->powers[pw_weaponlevel2] && !deathmatch)
-	{
-		wpinfo = wpnlev2info;
-	}
-	else
-	{
-		wpinfo = wpnlev1info;
-	}
-
-	prefs = WeaponPrefs;
-	player->pendingweapon = wp_nochange;
-	do
-	{
-		if (player->weaponowned[*prefs])
-		{
-			int count = wpinfo[*prefs]->GetMinAmmo();
-			ammotype_t ammo = wpinfo[*prefs]->ammo;
-			if (wpinfo[*prefs]->flags & WIF_AMMO_OPTIONAL)
-			{
-				player->pendingweapon = *prefs;
-			}
-			if (ammo == MANA_BOTH)
-			{
-				if (player->ammo[MANA_1] >= count && player->ammo[MANA_2] >= count)
-				{
-					player->pendingweapon = *prefs;
-				}
-			}
-			else if (ammo == am_noammo || player->ammo[ammo] >= count)
-			{
-				player->pendingweapon = *prefs;
-			}
-		}
-		prefs++;
-	} while (*prefs < NUMWEAPONS && player->pendingweapon == wp_nochange);
-	if (player->pendingweapon != wp_nochange)
-	{
-		if (player->powers[pw_weaponlevel2])
-		{
-			P_SetPsprite (player, ps_weapon,
-				wpnlev2info[player->readyweapon]->downstate);
-		}
-		else
-		{
-			P_SetPsprite (player, ps_weapon,
-				wpnlev1info[player->readyweapon]->downstate);
-		}
-	}
-	return player->pendingweapon;
 }
 
 
@@ -342,8 +220,7 @@ weapontype_t P_PickNewWeapon (player_t *player)
 
 void P_FireWeapon (player_t *player)
 {
-	FWeaponInfo **wpinfo;
-	FState *attackState;
+	AWeapon *weapon;
 
 	// [SO] 9/2/02: People were able to do an awful lot of damage
 	// when they were observers...
@@ -352,7 +229,8 @@ void P_FireWeapon (player_t *player)
 		return;
 	}
 
-	if (!P_CheckAmmo (player))
+	weapon = player->ReadyWeapon;
+	if (weapon == NULL || !weapon->CheckAmmo (AWeapon::PrimaryFire, true))
 	{
 		return;
 	}
@@ -365,25 +243,11 @@ void P_FireWeapon (player_t *player)
 	{
 		player->mo->PlayAttacking ();
 	}
-	wpinfo = player->powers[pw_weaponlevel2] ? wpnlev2info : wpnlev1info;
-	if (player->readyweapon == wp_faxe && player->ammo[MANA_1] > 0)
-	{ // Glowing axe
-		attackState = wpnlev2info[wp_faxe]->atkstate;
-	}
-	else
+	P_SetPsprite (player, ps_weapon,
+		player->refire ? weapon->GetHoldAtkState() : weapon->GetAtkState());
+	if (!(weapon->WeaponFlags & WIF_NOALERT))
 	{
-		attackState = player->refire ? 
-			wpinfo[player->readyweapon]->holdatkstate
-			: wpinfo[player->readyweapon]->atkstate;
-	}
-	P_SetPsprite (player, ps_weapon, attackState);
-	if (!(wpinfo[player->readyweapon]->flags & WIF_NOALERT))
-	{
-		P_NoiseAlert (player->mo, player->mo);
-	}
-	if (player->readyweapon == wp_gauntlets && !player->refire)
-	{ // Play the sound for the initial gauntlet attack
-		S_Sound (player->mo, CHAN_WEAPON, "weapons/gauntletsuse", 1, ATTN_NORM);
+		P_NoiseAlert (player->mo, player->mo, false);
 	}
 }
 
@@ -397,15 +261,9 @@ void P_FireWeapon (player_t *player)
 
 void P_DropWeapon (player_t *player)
 {
-	if (player->powers[pw_weaponlevel2])
+	if (player->ReadyWeapon != NULL)
 	{
-		P_SetPsprite (player, ps_weapon,
-			wpnlev2info[player->readyweapon]->downstate);
-	}
-	else
-	{
-		P_SetPsprite (player, ps_weapon,
-			wpnlev1info[player->readyweapon]->downstate);
+		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetDownState());
 	}
 }
 
@@ -423,13 +281,12 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 {
 	static fixed_t curbob;
 
-	FWeaponInfo *weapon;
+	AWeapon *weapon;
 	fixed_t bobtarget;
 
-	weapon = player->powers[pw_weaponlevel2] ?
-		wpnlev2info[player->readyweapon] : wpnlev1info[player->readyweapon];
+	weapon = player->ReadyWeapon;
 
-	if (weapon->flags & WIF_DONTBOB)
+	if (weapon == NULL || weapon->flags & WIF_DONTBOB)
 	{
 		*x = *y = 0;
 		return;
@@ -482,39 +339,43 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 //
 //---------------------------------------------------------------------------
 
-void A_WeaponReady(AActor *actor, pspdef_t *psp)
+void A_WeaponReady(AActor *actor)
 {
-	FWeaponInfo *weapon;
-	player_t *player;
+	player_t *player = actor->player;
+	AWeapon *weapon;
 
-	if (NULL == (player = actor->player))
+	if (NULL == player)
 	{
 		return;
 	}
 
-	weapon = player->powers[pw_weaponlevel2] ?
-		wpnlev2info[player->readyweapon] : wpnlev1info[player->readyweapon];
+	weapon = player->ReadyWeapon;
+
+	if (NULL == weapon)
+	{
+		return;
+	}
 
 	// Change player from attack state
-	if (player->mo->state >= player->mo->MissileState &&
-		player->mo->state < player->mo->PainState)
+	if (actor->state >= actor->MissileState &&
+		actor->state < actor->PainState)
 	{
-		player->mo->PlayIdle ();
+		static_cast<APlayerPawn *>(actor)->PlayIdle ();
 	}
 
 	// Play ready sound, if any.
-	if (weapon->readysound && psp->state == weapon->readystate)
+	if (weapon->ReadySound && player->psprites[ps_weapon].state == weapon->ReadyState)
 	{
-		if (!(weapon->flags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
+		if (!(weapon->WeaponFlags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
 		{
-			S_Sound (actor, CHAN_WEAPON, weapon->readysound, 1, ATTN_NORM);
+			S_SoundID (actor, CHAN_WEAPON, weapon->ReadySound, 1, ATTN_NORM);
 		}
 	}
 
 	// Prepare for bobbing and firing action.
 	player->cheats |= CF_WEAPONREADY;
-	psp->sx = 0;
-	psp->sy = WEAPONTOP;
+	player->psprites[ps_weapon].sx = 0;
+	player->psprites[ps_weapon].sy = WEAPONTOP;
 }
 
 //---------------------------------------------------------------------------
@@ -529,16 +390,16 @@ void A_WeaponReady(AActor *actor, pspdef_t *psp)
 
 void P_CheckWeaponFire (player_t *player)
 {
-	FWeaponInfo *weapon;
+	AWeapon *weapon = player->ReadyWeapon;
 
-	weapon = player->powers[pw_weaponlevel2] ?
-		wpnlev2info[player->readyweapon] : wpnlev1info[player->readyweapon];
+	if (weapon == NULL)
+		return;
 
 	// Put the weapon away if the player has a pending weapon or has
 	// died.
-	if ((player->morphTics == 0 && player->pendingweapon != wp_nochange) || player->health <= 0)
+	if ((player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE) || player->health <= 0)
 	{
-		P_SetPsprite (player, ps_weapon, weapon->downstate);
+		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
 		return;
 	}
 
@@ -558,20 +419,20 @@ void P_CheckWeaponFire (player_t *player)
 //
 // PROC A_ReFire
 //
-// The player can re fire the weapon without lowering it entirely.
+// The player can re-fire the weapon without lowering it entirely.
 //
 //---------------------------------------------------------------------------
 
-void A_ReFire (AActor *actor, pspdef_t *psp)
+void A_ReFire (AActor *actor)
 {
-	player_t *player;
+	player_t *player = actor->player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == player)
 	{
 		return;
 	}
 	if ((player->cmd.ucmd.buttons&BT_ATTACK)
-		&& player->pendingweapon == wp_nochange && player->health)
+		&& player->PendingWeapon == WP_NOCHANGE && player->health)
 	{
 		player->refire++;
 		P_FireWeapon (player);
@@ -579,7 +440,8 @@ void A_ReFire (AActor *actor, pspdef_t *psp)
 	else
 	{
 		player->refire = 0;
-		P_CheckAmmo (player);
+		player->ReadyWeapon->CheckAmmo (player->ReadyWeapon->bAltFire
+			? AWeapon::PrimaryFire : AWeapon::AltFire, true);
 	}
 }
 
@@ -593,11 +455,13 @@ void A_ReFire (AActor *actor, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_CheckReload (AActor *actor, pspdef_t *psp)
+void A_CheckReload (AActor *actor)
 {
 	if (actor->player != NULL)
 	{
-		P_CheckAmmo (actor->player);
+		actor->player->ReadyWeapon->CheckAmmo (
+			actor->player->ReadyWeapon->bAltFire ? AWeapon::PrimaryFire
+			: AWeapon::AltFire, true);
 	}
 }
 
@@ -607,14 +471,16 @@ void A_CheckReload (AActor *actor, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_Lower (AActor *actor, pspdef_t *psp)
+void A_Lower (AActor *actor)
 {
-	player_t *player;
+	player_t *player = actor->player;
+	pspdef_t *psp;
 
-	if (NULL == (player = actor->player))
+	if (NULL == player)
 	{
 		return;
 	}
+	psp = &player->psprites[ps_weapon];
 	if (player->morphTics || player->cheats & CF_INSTANTWEAPSWITCH)
 	{
 		psp->sy = WEAPONBOTTOM;
@@ -637,16 +503,12 @@ void A_Lower (AActor *actor, pspdef_t *psp)
 		P_SetPsprite (player,  ps_weapon, NULL);
 		return;
 	}
-	if (player->pendingweapon == wp_nochange)
+	if (player->PendingWeapon != WP_NOCHANGE)
 	{ // [RH] Make sure we're actually changing weapons.
-		player->pendingweapon = player->readyweapon;
+		player->ReadyWeapon = player->PendingWeapon;
 	}
-	else
-	{
-		player->readyweapon = player->pendingweapon;
-		// [RH] Clear the flash state. Only needed for Strife.
-		P_SetPsprite (player, ps_flash, NULL);
-	}
+	// [RH] Clear the flash state. Only needed for Strife.
+	P_SetPsprite (player, ps_flash, NULL);
 	P_BringUpWeapon (player);
 }
 
@@ -656,30 +518,33 @@ void A_Lower (AActor *actor, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_Raise (AActor *actor, pspdef_t *psp)
+void A_Raise (AActor *actor)
 {
-	player_t *player;
-
-	if (NULL == (player = actor->player))
+	if (actor == NULL)
 	{
 		return;
 	}
+	player_t *player = actor->player;
+	pspdef_t *psp;
+
+	if (NULL == player)
+	{
+		return;
+	}
+	psp = &player->psprites[ps_weapon];
 	psp->sy -= RAISESPEED;
 	if (psp->sy > WEAPONTOP)
 	{ // Not raised all the way yet
 		return;
 	}
 	psp->sy = WEAPONTOP;
-	if (player->powers[pw_weaponlevel2] ||
-		(player->readyweapon == wp_faxe && player->ammo[MANA_1]))
+	if (player->ReadyWeapon != NULL)
 	{
-		P_SetPsprite (player, ps_weapon,
-			wpnlev2info[player->readyweapon]->readystate);
+		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
 	}
 	else
 	{
-		P_SetPsprite (player, ps_weapon,
-			wpnlev1info[player->readyweapon]->readystate);
+		player->psprites[ps_weapon].state = NULL;
 	}
 }
 
@@ -689,16 +554,16 @@ void A_Raise (AActor *actor, pspdef_t *psp)
 //
 // A_GunFlash
 //
-void A_GunFlash (AActor *actor, pspdef_t *psp)
+void A_GunFlash (AActor *actor)
 {
-	player_t *player;
+	player_t *player = actor->player;
 
-	if (NULL == (player = actor->player))
+	if (NULL == player)
 	{
 		return;
 	}
 	player->mo->PlayAttacking2 ();
-	P_SetPsprite (player, ps_flash, wpnlev1info[player->readyweapon]->flashstate);
+	P_SetPsprite (player, ps_flash, player->ReadyWeapon->FlashState);
 }
 
 
@@ -732,7 +597,7 @@ void P_BulletSlope (AActor *mo)
 //
 // P_GunShot
 //
-void P_GunShot (AActor *mo, BOOL accurate)
+void P_GunShot (AActor *mo, BOOL accurate, const TypeInfo *pufftype)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -745,10 +610,10 @@ void P_GunShot (AActor *mo, BOOL accurate)
 		angle += pr_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, pufftype);
 }
 
-void A_Light0 (AActor *actor, pspdef_t *psp)
+void A_Light0 (AActor *actor)
 {
 	if (actor->player != NULL)
 	{
@@ -756,7 +621,7 @@ void A_Light0 (AActor *actor, pspdef_t *psp)
 	}
 }
 
-void A_Light1 (AActor *actor, pspdef_t *psp)
+void A_Light1 (AActor *actor)
 {
 	if (actor->player != NULL)
 	{
@@ -764,7 +629,7 @@ void A_Light1 (AActor *actor, pspdef_t *psp)
 	}
 }
 
-void A_Light2 (AActor *actor, pspdef_t *psp)
+void A_Light2 (AActor *actor)
 {
 	if (actor->player != NULL)
 	{
@@ -790,7 +655,7 @@ void P_SetupPsprites(player_t *player)
 		player->psprites[i].state = NULL;
 	}
 	// Spawn the ready weapon
-	player->pendingweapon = player->readyweapon;
+	player->PendingWeapon = player->ReadyWeapon;
 	P_BringUpWeapon (player);
 }
 
@@ -808,28 +673,40 @@ void P_MovePsprites (player_t *player)
 	pspdef_t *psp;
 	FState *state;
 
-	psp = &player->psprites[0];
-	for (i = 0; i < NUMPSPRITES; i++, psp++)
+	// [RH] If you don't have a weapon, then the psprites should be NULL.
+	if (player->ReadyWeapon == NULL)
 	{
-		if ((state = psp->state) != NULL) // a null state means not active
+		P_SetPsprite (player, ps_weapon, NULL);
+		P_SetPsprite (player, ps_flash, NULL);
+		if (player->PendingWeapon != WP_NOCHANGE)
 		{
-			// drop tic count and possibly change state
-			if (psp->tics != -1)	// a -1 tic count never changes
+			P_BringUpWeapon (player);
+		}
+	}
+	else
+	{
+		psp = &player->psprites[0];
+		for (i = 0; i < NUMPSPRITES; i++, psp++)
+		{
+			if ((state = psp->state) != NULL) // a null state means not active
 			{
-				psp->tics--;
-				if(!psp->tics)
+				// drop tic count and possibly change state
+				if (psp->tics != -1)	// a -1 tic count never changes
 				{
-					P_SetPsprite (player, i, psp->state->GetNextState());
+					psp->tics--;
+					if(!psp->tics)
+					{
+						P_SetPsprite (player, i, psp->state->GetNextState());
+					}
 				}
 			}
 		}
-	}
-	player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
-	player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
-
-	if (player->cheats & CF_WEAPONREADY)
-	{
-		P_CheckWeaponFire (player);
+		player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
+		player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
+		if (player->cheats & CF_WEAPONREADY)
+		{
+			P_CheckWeaponFire (player);
+		}
 	}
 }
 

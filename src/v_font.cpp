@@ -166,7 +166,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	byte usedcolors[256], identity[256];
 	double *luminosity;
 	int maxyoffs;
-	bool doomtemplate = strncmp (nametemplate, "STCFN", 5) == 0;
+	bool doomtemplate = gameinfo.gametype == GAME_Doom ? strncmp (nametemplate, "STCFN", 5) == 0 : false;
 
 	Chars = new CharData[count];
 	charlumps = new int[count];
@@ -352,7 +352,7 @@ int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse
 	*luminosity = new double[j];
 	max = 0.0;
 	min = 100000000.0;
-	for (i = 0; i < j; i++)
+	for (i = 1; i < j; i++)
 	{
 		translation[reverse[i]] = i;
 
@@ -439,7 +439,9 @@ void FFont::BuildTranslations (const double *luminosity, const BYTE *identity)
 			}
 		}
 
-		for (j = 0; j < ActiveColors; j++)
+		*range++ = 0;
+
+		for (j = 1; j < ActiveColors; j++)
 		{
 			double p1 = luminosity[j];
 			double i1 = p1 * 16.0;

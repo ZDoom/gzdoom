@@ -69,7 +69,7 @@ struct Channel
 		QWORD SamplePos;
 		struct
 		{
-#ifndef __BIG_ENDIAN__
+#ifndef WORDS_BIGENDIAN
 			DWORD LowPos, HighPos;
 #else
 			DWORD HighPos, LowPos;
@@ -633,6 +633,21 @@ badwave:
 		I_LoadSound_Simple (sfx);
 	}
 	delete[] sfxdata;
+}
+
+//==========================================================================
+//
+// I_UnloadSound_Simple
+//
+//==========================================================================
+
+void I_UnloadSound_Simple (sfxinfo_t *sfx)
+{
+	if (sfx->data != NULL)
+	{
+		delete sfx->data;
+		sfx->data = NULL;
+	}
 }
 
 //==========================================================================

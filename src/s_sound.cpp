@@ -201,17 +201,16 @@ void S_NoiseDebug (void)
 	int i, y, color;
 
 	y = 32 * CleanYfac;
-	if (gametic & 16)
-		screen->DrawText (CR_TAN, 0, y, "*** SOUND DEBUG INFO ***", TAG_DONE);
+	screen->DrawText (CR_YELLOW, 0, y, "*** SOUND DEBUG INFO ***", TAG_DONE);
 	y += 8;
 
-	screen->DrawText (CR_GREY, 0, y, "name", TAG_DONE);
-	screen->DrawText (CR_GREY, 70, y, "x", TAG_DONE);
-	screen->DrawText (CR_GREY, 120, y, "y", TAG_DONE);
-	screen->DrawText (CR_GREY, 170, y, "vol", TAG_DONE);
-	screen->DrawText (CR_GREY, 200, y, "pri", TAG_DONE);
-	screen->DrawText (CR_GREY, 240, y, "dist", TAG_DONE);
-	screen->DrawText (CR_GREY, 280, y, "chan", TAG_DONE);
+	screen->DrawText (CR_GOLD, 0, y, "name", TAG_DONE);
+	screen->DrawText (CR_GOLD, 70, y, "x", TAG_DONE);
+	screen->DrawText (CR_GOLD, 120, y, "y", TAG_DONE);
+	screen->DrawText (CR_GOLD, 170, y, "vol", TAG_DONE);
+	screen->DrawText (CR_GOLD, 200, y, "pri", TAG_DONE);
+	screen->DrawText (CR_GOLD, 240, y, "dist", TAG_DONE);
+	screen->DrawText (CR_GOLD, 280, y, "chan", TAG_DONE);
 	y += 8;
 
 	for (i = 0; i < numChannels && y < SCREENHEIGHT - 16; i++, y += 8)
@@ -362,6 +361,79 @@ void S_Start ()
 	}
 	
 	nextcleanup = 15;
+}
+
+//==========================================================================
+//
+// S_PrecacheLevel
+//
+// Like R_PrecacheLevel, but for sounds.
+//
+//==========================================================================
+
+void S_PrecacheLevel ()
+{
+	size_t i;
+
+	for (i = 0; i < S_sfx.Size(); ++i)
+	{
+		S_sfx[i].bUsed = false;
+	}
+
+	AActor *actor;
+	TThinkerIterator<AActor> iterator;
+
+	while ( (actor = iterator.Next ()) != NULL )
+	{
+		S_sfx[actor->SeeSound].bUsed = true;
+		S_sfx[actor->AttackSound].bUsed = true;
+		S_sfx[actor->PainSound].bUsed = true;
+		S_sfx[actor->DeathSound].bUsed = true;
+		S_sfx[actor->ActiveSound].bUsed = true;
+		S_sfx[actor->UseSound].bUsed = true;
+	}
+
+	for (i = 1; i < S_sfx.Size(); ++i)
+	{
+		if (S_sfx[i].bUsed)
+		{
+			S_CacheSound (&S_sfx[i]);
+		}
+	}
+	for (i = 1; i < S_sfx.Size(); ++i)
+	{
+		if (!S_sfx[i].bUsed && S_sfx[i].link == sfxinfo_t::NO_LINK)
+		{
+			I_UnloadSound (&S_sfx[i]);
+		}
+	}
+}
+
+//==========================================================================
+//
+// S_CacheSound
+//
+//==========================================================================
+
+void S_CacheSound (sfxinfo_t *sfx)
+{
+	if (sfx->bPlayerReserve)
+	{
+		return;
+	}
+	else if (sfx->bRandomHeader)
+	{
+		S_CacheRandomSound (sfx);
+	}
+	else
+	{
+		while (sfx->link != sfxinfo_t::NO_LINK)
+		{
+			sfx = &S_sfx[sfx->link];
+		}
+		sfx->bUsed = true;
+		I_LoadSound (sfx);
+	}
 }
 
 // [RH] Split S_StartSoundAtVolume into multiple parts so that sounds can
@@ -927,7 +999,7 @@ void S_StopSound (fixed_t *pt, int channel)
 	for (i = 0; i < numChannels; ++i)
 	{
 		if (Channel[i].sfxinfo &&
-			Channel[i].pt == pt &&
+			((pt == NULL && Channel[i].pt == &Channel[i].x) || Channel[i].pt == pt) &&
 			((compatflags & COMPATF_MAGICSILENCE) || Channel[i].entchannel == channel))
 		{
 			S_StopChannel (i);
@@ -1743,5 +1815,28 @@ CCMD (playliststatus)
 			PlayList->GetPosition () + 1,
 			PlayList->GetNumSongs (),
 			PlayList->GetSong (PlayList->GetPosition ()));
+	}
+}
+
+//==========================================================================
+//
+// CCMD cachesound <sound name>
+//
+//==========================================================================
+
+CCMD (cachesound)
+{
+	if (argv.argc() < 2)
+	{
+		Printf ("Usage: cachesound <sound> ...\n");
+		return;
+	}
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		int sfxnum = S_FindSound (argv[i]);
+		if (sfxnum > 0)
+		{
+			S_CacheSound (&S_sfx[sfxnum]);
+		}
 	}
 }

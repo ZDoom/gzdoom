@@ -33,16 +33,6 @@
 //		SCREEN WIPE PACKAGE
 //
 
-enum
-{
-	wipe_None,			// don't bother
-	wipe_Melt,			// weird screen melt
-	wipe_Burn,			// fade in shape of fire
-	wipe_Fade,			// crossfade from old to new
-	wipe_NUMWIPES
-};
-
-CVAR (Int, wipetype, 1, CVAR_ARCHIVE);
 static int CurrentWipeType;
 
 static short *wipe_scr_start;
@@ -373,9 +363,9 @@ int wipe_exitFade (int ticks)
 
 // General Wipe Functions -------------------------------------------
 
-int wipe_StartScreen (void)
+int wipe_StartScreen (int type)
 {
-	CurrentWipeType = wipetype;
+	CurrentWipeType = type;
 	if (CurrentWipeType < 0)
 		CurrentWipeType = 0;
 	else if (CurrentWipeType >= wipe_NUMWIPES)

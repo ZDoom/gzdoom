@@ -11,40 +11,12 @@ static FRandom pr_tele ("TeleportSelf");
 
 // Teleport (self) ----------------------------------------------------------
 
-BASIC_ARTI (Teleport, arti_teleport, GStrings(TXT_ARTITELEPORT))
-	AT_GAME_SET_FRIEND (ArtiTeleport)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		fixed_t destX;
-		fixed_t destY;
-		angle_t destAngle;
-
-		if (deathmatch)
-		{
-			size_t selections = deathmatchstarts.Size ();
-			size_t i = pr_tele() % selections;
-			destX = deathmatchstarts[i].x << FRACBITS;
-			destY = deathmatchstarts[i].y << FRACBITS;
-			destAngle = ANG45 * (deathmatchstarts[i].angle/45);
-		}
-		else
-		{
-			destX = playerstarts[player - players].x << FRACBITS;
-			destY = playerstarts[player - players].y << FRACBITS;
-			destAngle = ANG45 * (playerstarts[player - players].angle/45);
-		}
-		P_Teleport (player->mo, destX, destY, ONFLOORZ, destAngle, true, false);
-		if (gameinfo.gametype == GAME_Hexen && player->morphTics)
-		{ // Teleporting away will undo any morph effects (pig)
-			P_UndoPlayerMorph (player);
-		}
-		if (gameinfo.gametype == GAME_Heretic)
-		{ // Full volume laugh
-			S_Sound (player->mo, CHAN_VOICE, "*evillaugh", 1, ATTN_NONE);
-		}
-		return true;
-	}
+class AArtiTeleport : public AInventory
+{
+	DECLARE_ACTOR (AArtiTeleport, AInventory)
+public:
+	bool Use ();
+	const char *PickupMessage ();
 };
 
 FState AArtiTeleport::States[] =
@@ -59,10 +31,63 @@ IMPLEMENT_ACTOR (AArtiTeleport, Raven, 36, 18)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTIATLP")
 END_DEFAULTS
 
-AT_GAME_SET (ArtiTeleport)
+bool AArtiTeleport::Use ()
 {
-	ArtiDispatch[arti_teleport] = AArtiTeleport::ActivateArti;
-	ArtiPics[arti_teleport] = "ARTIATLP";
+	fixed_t destX;
+	fixed_t destY;
+	angle_t destAngle;
+
+	if (deathmatch)
+	{
+		size_t selections = deathmatchstarts.Size ();
+		size_t i = pr_tele() % selections;
+		destX = deathmatchstarts[i].x << FRACBITS;
+		destY = deathmatchstarts[i].y << FRACBITS;
+		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
+	}
+	else
+	{
+		destX = playerstarts[Owner->player - players].x << FRACBITS;
+		destY = playerstarts[Owner->player - players].y << FRACBITS;
+		destAngle = ANG45 * (playerstarts[Owner->player - players].angle/45);
+	}
+	P_Teleport (Owner, destX, destY, ONFLOORZ, destAngle, true, true, false);
+	if (gameinfo.gametype == GAME_Hexen && Owner->player->morphTics)
+	{ // Teleporting away will undo any morph effects (pig)
+		P_UndoPlayerMorph (player);
+	}
+	if (gameinfo.gametype == GAME_Heretic)
+	{ // Full volume laugh
+		S_Sound (Owner, CHAN_VOICE, "*evillaugh", 1, ATTN_NONE);
+	}
+	return true;
+}
+
+const char *AArtiTeleport::PickupMessage ()
+{
+	return GStrings(TXT_ARTITELEPORT);
+}
+
+//---------------------------------------------------------------------------
+//
+// FUNC P_AutoUseChaosDevice
+//
+//---------------------------------------------------------------------------
+
+bool P_AutoUseChaosDevice (player_t *player)
+{
+	AArtiTeleport *arti = player->mo->FindInventory<AArtiTeleport> ();
+
+	if (arti != NULL)
+	{
+		player->mo->UseInventory (arti);
+		player->health = player->mo->health = (player->health+1)/2;
+		return true;
+	}
+	return false;
 }

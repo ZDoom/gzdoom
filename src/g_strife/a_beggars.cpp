@@ -4,6 +4,7 @@
 #include "p_local.h"
 #include "p_enemy.h"
 #include "s_sound.h"
+#include "a_strifeglobal.h"
 
 void A_SentinelRefire (AActor *);
 void A_PeasantAttack (AActor *);
@@ -11,9 +12,9 @@ void A_TossGib (AActor *);
 
 // Base class for the beggars ---------------------------------------------
 
-class ABeggar : public AActor
+class ABeggar : public AStrifeHumanoid
 {
-	DECLARE_ACTOR (ABeggar, AActor);
+	DECLARE_ACTOR (ABeggar, AStrifeHumanoid);
 };
 
 FState ABeggar::States[] =
@@ -78,6 +79,9 @@ IMPLEMENT_ACTOR (ABeggar, Strife, 0, 0)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (56)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_JUSTHIT|MF_COUNTKILL)
+	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_MCROSS)
+	PROP_Flags4 (MF4_NOSPLASHALERT)
+	PROP_MinMissileChance (150)
 	PROP_Tag ("Beggar")
 
 	PROP_AttackSound ("beggar/attack")
@@ -93,6 +97,8 @@ class ABeggar1 : public ABeggar
 };
 
 IMPLEMENT_STATELESS_ACTOR (ABeggar1, Strife, 141, 0)
+	PROP_StrifeType (38)
+	PROP_StrifeTeaserType (37)
 END_DEFAULTS
 
 // Beggar 2 -----------------------------------------------------------------
@@ -103,6 +109,8 @@ class ABeggar2 : public ABeggar
 };
 
 IMPLEMENT_STATELESS_ACTOR (ABeggar2, Strife, 155, 0)
+	PROP_StrifeType (39)
+	PROP_StrifeTeaserType (38)
 END_DEFAULTS
 
 // Beggar 3 -----------------------------------------------------------------
@@ -113,6 +121,8 @@ class ABeggar3 : public ABeggar
 };
 
 IMPLEMENT_STATELESS_ACTOR (ABeggar3, Strife, 156, 0)
+	PROP_StrifeType (40)
+	PROP_StrifeTeaserType (39)
 END_DEFAULTS
 
 // Beggar 4 -----------------------------------------------------------------
@@ -123,6 +133,8 @@ class ABeggar4 : public ABeggar
 };
 
 IMPLEMENT_STATELESS_ACTOR (ABeggar4, Strife, 157, 0)
+	PROP_StrifeType (41)
+	PROP_StrifeTeaserType (40)
 END_DEFAULTS
 
 // Beggar 5 -----------------------------------------------------------------
@@ -133,4 +145,6 @@ class ABeggar5 : public ABeggar
 };
 
 IMPLEMENT_STATELESS_ACTOR (ABeggar5, Strife, 158, 0)
+	PROP_StrifeType (42)
+	PROP_StrifeTeaserType (41)
 END_DEFAULTS

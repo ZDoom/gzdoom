@@ -2,7 +2,7 @@
 ** v_video.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -81,7 +81,7 @@ enum
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
 	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
 	DTA_320x200,		// bool: scale texture size and position to fit on a virtual 320x200 screen
-	DTA_CleanNoMove,	// bool: like DTA_CleanScale but does not reposition output position
+	DTA_CleanNoMove,	// bool: like DTA_Clean but does not reposition output position
 	DTA_FlipX,			// bool: flip image horizontally
 	DTA_ShadowColor,	// color of shadow
 	DTA_ShadowAlpha,	// alpha of shadow
@@ -90,6 +90,8 @@ enum
 	DTA_VirtualHeight,	// pretend the canvas is this tall
 	DTA_TopOffset,		// override texture's top offset
 	DTA_LeftOffset,		// override texture's left offset
+	DTA_CenterOffset,	// override texture's left and top offsets and set them for the texture's middle
+	DTA_CenterBottomOffset,// override texture's left and top offsets and set them for the texture's bottom middle
 	DTA_WindowLeft,		// don't draw anything left of this column (on source, not dest)
 	DTA_WindowRight,	// don't draw anything at or to the right of this column (on source, not dest)
 	DTA_ClipTop,		// don't draw anything above this row (on dest, not source)
@@ -97,8 +99,14 @@ enum
 	DTA_ClipLeft,		// don't draw anything to the left of this column (on dest, not source)
 	DTA_ClipRight,		// don't draw anything at or to the right of this column (on dest, not source)
 	DTA_Masked,			// true(default)=use masks from texture, false=ignore masks
+	DTA_HUDRules,		// use fullscreen HUD rules to position and size textures
 };
 
+enum
+{
+	HUD_Normal,
+	HUD_HorizCenter
+};
 
 
 //
@@ -135,13 +143,15 @@ public:
 
 	// Draw a linear block of pixels into the canvas
 	virtual void DrawBlock (int x, int y, int width, int height, const byte *src) const;
-	virtual void DrawPageBlock (const byte *src) const;
 
 	// Reads a linear block of pixels into the view buffer.
 	virtual void GetBlock (int x, int y, int width, int height, byte *dest) const;
 
-	// Darken the entire canvas
+	// Dim the entire canvas for the menus
 	virtual void Dim () const;
+
+	// Dim part of the canvas
+	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h) const;
 
 	// Fill an area with a texture
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src);
@@ -171,7 +181,6 @@ protected:
 	int LockCount;
 
 	bool ClipBox (int &left, int &top, int &width, int &height, const byte *&src, const int srcpitch) const;
-	bool ClipScaleBox (int &left, int &top, int &width, int &height, int &dwidth, int &dheight, const byte *&src, const int srcpitch, fixed_t &xinc, fixed_t &yinc, fixed_t &xstart, fixed_t &yerr) const;
 
 private:
 	// Keep track of canvases, for automatic destruction at exit
@@ -211,9 +220,6 @@ public:
 	// Force the surface to use buffered output if true is passed.
 	virtual bool Lock (bool buffered) = 0;
 
-	// Locks the surface, using whatever the previous buffered status was.
-	virtual bool Relock () = 0;
-
 	// Make the surface visible. Also implies Unlock().
 	virtual void Update () = 0;
 
@@ -247,6 +253,7 @@ public:
 	virtual bool IsFullscreen () = 0;
 
 #ifdef _WIN32
+	virtual void PaletteChanged () = 0;
 	virtual int QueryNewPalette () = 0;
 #endif
 

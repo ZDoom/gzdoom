@@ -80,7 +80,7 @@ IMPLEMENT_ACTOR (AArchvile, Doom, 64, 111)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
 	PROP_Flags3 (MF3_NOTARGET)
-	PROP_Flags4 (MF4_QUICKTORETALIATE)
+	PROP_Flags4 (MF4_QUICKTORETALIATE|MF4_SHORTMISSILERANGE)
 
 	PROP_SpawnState (S_VILE_STND)
 	PROP_SeeState (S_VILE_RUN)
@@ -159,12 +159,6 @@ IMPLEMENT_ACTOR (AArchvileFire, Doom, -1, 98)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
-bool AArchvile::SuggestMissileAttack (fixed_t dist)
-{
-	if (dist > 14*64*FRACUNIT)
-		return false;		// too far away
-	return Super::SuggestMissileAttack (dist);
-}
 
 //
 // PIT_VileCheck
@@ -189,7 +183,12 @@ BOOL PIT_VileCheck (AActor *thing)
 	if (thing->RaiseState == NULL)
 		return true;	// monster doesn't have a raise state
 	
-	maxdist = thing->GetDefault()->radius + GetDefault<AArchvile>()->radius;
+  	// This may be a potential problem if this is used by something other
+	// than an Arch Vile.	
+	//maxdist = thing->GetDefault()->radius + GetDefault<AArchvile>()->radius;
+	
+	// use the current actor's radius instead of the Arch Vile's default.
+	maxdist = thing->GetDefault()->radius + vileobj->radius; 
 		
 	if ( abs(thing->x - viletryx) > maxdist
 		 || abs(thing->y - viletryy) > maxdist )

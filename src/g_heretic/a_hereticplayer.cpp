@@ -117,7 +117,7 @@ IMPLEMENT_ACTOR (AHereticPlayer, Heretic, -1, 0)
 	PROP_Mass (100)
 	PROP_PainChance (255)
 	PROP_SpeedFixed (1)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_TELESTOMP)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 
@@ -132,11 +132,15 @@ END_DEFAULTS
 
 void AHereticPlayer::GiveDefaultInventory ()
 {
+	AInventory *wand, *ammo;
+
 	player->health = GetDefault()->health;
-	player->readyweapon = player->pendingweapon = wp_goldwand;
-	player->weaponowned[wp_staff] = true;
-	player->weaponowned[wp_goldwand] = true;
-	player->ammo[am_goldwand] = 50;
+	player->mo->GiveInventoryType (TypeInfo::FindType ("Staff"));
+	wand = player->mo->GiveInventoryType (TypeInfo::FindType ("GoldWand"));
+	// Adding the gold wand automatically adds its ammo
+	ammo = player->mo->FindInventory (TypeInfo::FindType ("GoldWandAmmo"));
+	ammo->Amount = 50;
+	player->ReadyWeapon = static_cast<AWeapon *> (wand);
 }
 
 // The player's skull -------------------------------------------------------

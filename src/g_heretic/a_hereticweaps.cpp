@@ -8,7 +8,6 @@
 #include "d_player.h"
 #include "p_pspr.h"
 #include "p_local.h"
-#include "p_inter.h"
 #include "gstrings.h"
 #include "p_effect.h"
 #include "gstrings.h"
@@ -65,44 +64,29 @@ static FRandom pr_fp2 ("FirePhoenixPL2");
 #define USE_MACE_AMMO_1 1
 #define USE_MACE_AMMO_2 5
 
-//---------------------------------------------------------------------------
-//
-// FUNC P_AutoUseChaosDevice
-//
-//---------------------------------------------------------------------------
-
-bool P_AutoUseChaosDevice (player_t *player)
-{
-	if (player->inventory[arti_teleport])
-	{
-		P_PlayerUseArtifact (player, arti_teleport);
-		player->health = player->mo->health = (player->health+1)/2;
-		return true;
-	}
-	return false;
-}
+extern bool P_AutoUseChaosDevice (player_t *player);
 
 // Base Heretic weapon class ------------------------------------------------
 
-IMPLEMENT_ABSTRACT_ACTOR (AHereticWeapon)
+IMPLEMENT_STATELESS_ACTOR (AHereticWeapon, Heretic, -1, 0)
+	PROP_Weapon_Kickback (150)
+END_DEFAULTS
 
 // --- Staff ----------------------------------------------------------------
 
-void A_StaffAttackPL1 (AActor *, pspdef_t *);
-void A_StaffAttackPL2 (AActor *, pspdef_t *);
+void A_StaffAttackPL1 (AActor *);
+void A_StaffAttackPL2 (AActor *);
 
 // Staff --------------------------------------------------------------------
 
 class AStaff : public AHereticWeapon
 {
 	DECLARE_ACTOR (AStaff, AHereticWeapon)
-public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_staff;
-	}
+};
 
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+class AStaffPowered : public AStaff
+{
+	DECLARE_STATELESS_ACTOR (AStaffPowered, AStaff)
 };
 
 FState AStaff::States[] =
@@ -138,54 +122,27 @@ FState AStaff::States[] =
 	S_NORMAL (STFF, 'G',	8, A_ReFire 					, &States[S_STAFFREADY2+0])
 };
 
-FWeaponInfo AStaff::WeaponInfo1 =
-{
-	0,
-	am_noammo,
-	am_noammo,
-	0,
-	0,
-	&States[S_STAFFUP],
-	&States[S_STAFFDOWN],
-	&States[S_STAFFREADY],
-	&States[S_STAFFATK1],
-	&States[S_STAFFATK1],
-	NULL,
-	NULL,
-	150,
-	0,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AStaff),
-	-1
-};
-
-FWeaponInfo AStaff::WeaponInfo2 =
-{
-	WIF_READYSNDHALF,
-	am_noammo,
-	am_noammo,
-	0,
-	0,
-	&States[S_STAFFUP2],
-	&States[S_STAFFDOWN2],
-	&States[S_STAFFREADY2],
-	&States[S_STAFFATK2],
-	&States[S_STAFFATK2],
-	NULL,
-	NULL,
-	150,
-	0,
-	NULL,
-	"weapons/staffcrackle",
-	RUNTIME_CLASS(AStaff),
-	-1
-};
-
 IMPLEMENT_ACTOR (AStaff, Heretic, -1, 0)
+	PROP_Weapon_SelectionOrder (3800)
+	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_HITS_GHOSTS|WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_STAFFUP)
+	PROP_Weapon_DownState (S_STAFFDOWN)
+	PROP_Weapon_ReadyState (S_STAFFREADY)
+	PROP_Weapon_AtkState (S_STAFFATK1)
+	PROP_Weapon_HoldAtkState (S_STAFFATK1)
+	PROP_Weapon_SisterType ("StaffPowered")
 END_DEFAULTS
 
-WEAPON2 (wp_staff, AStaff)
+IMPLEMENT_STATELESS_ACTOR (AStaffPowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_HITS_GHOSTS|WIF_READYSNDHALF|WIF_POWERED_UP|WIF_BOT_MELEE|WIF_STAFF2_KICKBACK)
+	PROP_Weapon_UpState (S_STAFFUP2)
+	PROP_Weapon_DownState (S_STAFFDOWN2)
+	PROP_Weapon_ReadyState (S_STAFFREADY2)
+	PROP_Weapon_AtkState (S_STAFFATK2)
+	PROP_Weapon_HoldAtkState (S_STAFFATK2)
+	PROP_Weapon_ReadySound ("weapons/staffcrackle")
+	PROP_Weapon_SisterType ("Staff")
+END_DEFAULTS
 
 // Staff puff ---------------------------------------------------------------
 
@@ -250,7 +207,7 @@ void AStaffPuff2::BeginPlay ()
 //
 //----------------------------------------------------------------------------
 
-void A_StaffAttackPL1 (AActor *actor, pspdef_t *psp)
+void A_StaffAttackPL1 (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -262,13 +219,17 @@ void A_StaffAttackPL1 (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	damage = 5+(pr_sap()&15);
 	angle = player->mo->angle;
 	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	PuffType = RUNTIME_CLASS(AStaffPuff);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, RUNTIME_CLASS(AStaffPuff));
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfhit);
@@ -284,7 +245,7 @@ void A_StaffAttackPL1 (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_StaffAttackPL2 (AActor *actor, pspdef_t *psp)
+void A_StaffAttackPL2 (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -296,14 +257,18 @@ void A_StaffAttackPL2 (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	player->UseAmmo();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	// P_inter.c:P_DamageMobj() handles target momentums
 	damage = 18+(pr_sap2()&63);
 	angle = player->mo->angle;
 	angle += pr_sap2.Random2() << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	PuffType = RUNTIME_CLASS(AStaffPuff2);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, RUNTIME_CLASS(AStaffPuff2));
 	if (linetarget)
 	{
 		//S_StartSound(player->mo, sfx_stfpow);
@@ -315,8 +280,8 @@ void A_StaffAttackPL2 (AActor *actor, pspdef_t *psp)
 
 // --- Gold wand ------------------------------------------------------------
 
-void A_FireGoldWandPL1 (AActor *, pspdef_t *);
-void A_FireGoldWandPL2 (AActor *, pspdef_t *);
+void A_FireGoldWandPL1 (AActor *);
+void A_FireGoldWandPL2 (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
 
@@ -324,15 +289,6 @@ class AGoldWandAmmo : public AAmmo
 {
 	DECLARE_ACTOR (AGoldWandAmmo, AAmmo)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_goldwand, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_goldwand;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOGOLDWAND1);
@@ -345,31 +301,19 @@ FState AGoldWandAmmo::States[] =
 };
 
 IMPLEMENT_ACTOR (AGoldWandAmmo, Heretic, 10, 11)
-	PROP_SpawnHealth (AMMO_GWND_WIMPY)
+	PROP_Inventory_Amount (AMMO_GWND_WIMPY)
+	PROP_Inventory_MaxAmount (100)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("INAMGLD")
 END_DEFAULTS
-
-AT_GAME_SET (GoldWandAmmo)
-{
-	AmmoPics[am_goldwand] = "INAMGLD";
-}
 
 // Hefty ammo ---------------------------------------------------------------
 
-class AGoldWandHefty : public AAmmo
+class AGoldWandHefty : public AGoldWandAmmo
 {
-	DECLARE_ACTOR (AGoldWandHefty, AAmmo)
+	DECLARE_ACTOR (AGoldWandHefty, AGoldWandAmmo)
 public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_goldwand, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_goldwand;
-	}
-protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOGOLDWAND2);
@@ -384,9 +328,8 @@ FState AGoldWandHefty::States[] =
 };
 
 IMPLEMENT_ACTOR (AGoldWandHefty, Heretic, 12, 12)
-	PROP_SpawnHealth (AMMO_GWND_HEFTY)
+	PROP_Inventory_Amount (AMMO_GWND_HEFTY)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -395,13 +338,11 @@ END_DEFAULTS
 class AGoldWand : public AHereticWeapon
 {
 	DECLARE_ACTOR (AGoldWand, AHereticWeapon)
-public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_goldwand;
-	}
+};
 
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+class AGoldWandPowered : public AGoldWand
+{
+	DECLARE_STATELESS_ACTOR (AGoldWandPowered, AGoldWand)
 };
 
 FState AGoldWand::States[] =
@@ -428,54 +369,29 @@ FState AGoldWand::States[] =
 	S_NORMAL (GWND, 'D',	0, A_ReFire 					, &States[S_GOLDWANDREADY])
 };
 
-FWeaponInfo AGoldWand::WeaponInfo1 =
-{
-	0,
-	am_goldwand,
-	am_goldwand,
-	USE_GWND_AMMO_1,
-	25,
-	&States[S_GOLDWANDUP],
-	&States[S_GOLDWANDDOWN],
-	&States[S_GOLDWANDREADY],
-	&States[S_GOLDWANDATK1],
-	&States[S_GOLDWANDATK1],
-	NULL,
-	RUNTIME_CLASS(AGoldWandAmmo),
-	150,
-	5*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AGoldWand),
-	-1
-};
-
-FWeaponInfo AGoldWand::WeaponInfo2 =
-{
-	0,
-	am_goldwand,
-	am_goldwand,
-	USE_GWND_AMMO_2,
-	25,
-	&States[S_GOLDWANDUP],
-	&States[S_GOLDWANDDOWN],
-	&States[S_GOLDWANDREADY],
-	&States[S_GOLDWANDATK2],
-	&States[S_GOLDWANDATK2],
-	NULL,
-	RUNTIME_CLASS(AGoldWandHefty),
-	150,
-	5*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AGoldWand),
-	-1
-};
-
 IMPLEMENT_ACTOR (AGoldWand, Heretic, -1, 0)
+	PROP_Weapon_SelectionOrder (2000)
+	PROP_Weapon_AmmoUse1 (USE_GWND_AMMO_1)
+	PROP_Weapon_AmmoGive1 (25)
+	PROP_Weapon_UpState (S_GOLDWANDUP)
+	PROP_Weapon_DownState (S_GOLDWANDDOWN)
+	PROP_Weapon_ReadyState (S_GOLDWANDREADY)
+	PROP_Weapon_AtkState (S_GOLDWANDATK1)
+	PROP_Weapon_HoldAtkState (S_GOLDWANDATK1)
+	PROP_Weapon_YAdjust (5)
+	PROP_Weapon_MoveCombatDist (25000000)
+	PROP_Weapon_AmmoType1 ("GoldWandAmmo")
+	PROP_Weapon_SisterType ("GoldWandPowered")
 END_DEFAULTS
 
-WEAPON2 (wp_goldwand, AGoldWand)
+IMPLEMENT_STATELESS_ACTOR (AGoldWandPowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_POWERED_UP)
+	PROP_Weapon_AmmoUse1 (USE_GWND_AMMO_2)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_AtkState (S_GOLDWANDATK2)
+	PROP_Weapon_HoldAtkState (S_GOLDWANDATK2)
+	PROP_Weapon_SisterType ("GoldWand")
+END_DEFAULTS
 
 // Gold wand FX1 ------------------------------------------------------------
 
@@ -574,7 +490,7 @@ END_DEFAULTS
 //
 //----------------------------------------------------------------------------
 
-void A_FireGoldWandPL1 (AActor *actor, pspdef_t *psp)
+void A_FireGoldWandPL1 (AActor *actor)
 {
 	AActor *mo;
 	angle_t angle;
@@ -587,7 +503,12 @@ void A_FireGoldWandPL1 (AActor *actor, pspdef_t *psp)
 	}
 
 	mo = player->mo;
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	P_BulletSlope(mo);
 	damage = 7+(pr_fgw()&7);
 	angle = mo->angle;
@@ -595,8 +516,7 @@ void A_FireGoldWandPL1 (AActor *actor, pspdef_t *psp)
 	{
 		angle += pr_fgw.Random2() << 18;
 	}
-	PuffType = RUNTIME_CLASS(AGoldWandPuff1);
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, RUNTIME_CLASS(AGoldWandPuff1));
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
 }
 
@@ -606,7 +526,7 @@ void A_FireGoldWandPL1 (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireGoldWandPL2 (AActor *actor, pspdef_t *psp)
+void A_FireGoldWandPL2 (AActor *actor)
 {
 	int i;
 	AActor *mo;
@@ -621,8 +541,12 @@ void A_FireGoldWandPL2 (AActor *actor, pspdef_t *psp)
 	}
 
 	mo = player->mo;
-	player->UseAmmo ();
-	PuffType = RUNTIME_CLASS(AGoldWandPuff2);
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	P_BulletSlope (mo);
 	momz = FixedMul (GetDefault<AGoldWandFX2>()->Speed,
 		finetangent[FINEANGLES/4-((signed)bulletpitch>>ANGLETOFINESHIFT)]);
@@ -632,7 +556,7 @@ void A_FireGoldWandPL2 (AActor *actor, pspdef_t *psp)
 	for(i = 0; i < 5; i++)
 	{
 		damage = 1+(pr_fgw2()&7);
-		P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
+		P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, RUNTIME_CLASS(AGoldWandPuff2));
 		angle += ((ANG45/8)*2)/4;
 	}
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/wandhit", 1, ATTN_NORM);
@@ -640,8 +564,8 @@ void A_FireGoldWandPL2 (AActor *actor, pspdef_t *psp)
 
 // --- Crossbow -------------------------------------------------------------
 
-void A_FireCrossbowPL1 (AActor *, pspdef_t *);
-void A_FireCrossbowPL2 (AActor *, pspdef_t *);
+void A_FireCrossbowPL1 (AActor *);
+void A_FireCrossbowPL2 (AActor *);
 void A_BoltSpark (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
@@ -650,15 +574,6 @@ class ACrossbowAmmo : public AAmmo
 {
 	DECLARE_ACTOR (ACrossbowAmmo, AAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_crossbow, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_crossbow;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOCROSSBOW1);
@@ -671,32 +586,19 @@ FState ACrossbowAmmo::States[] =
 };
 
 IMPLEMENT_ACTOR (ACrossbowAmmo, Heretic, 18, 33)
-	PROP_SpawnHealth (AMMO_CBOW_WIMPY)
+	PROP_Inventory_Amount (AMMO_CBOW_WIMPY)
+	PROP_Inventory_MaxAmount (50)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("INAMBOW")
 END_DEFAULTS
-
-AT_GAME_SET (CrossbowAmmo)
-{
-	AmmoPics[am_crossbow] = "INAMBOW";
-}
 
 // Hefty ammo ---------------------------------------------------------------
 
-class ACrossbowHefty : public AAmmo
+class ACrossbowHefty : public ACrossbowAmmo
 {
-	DECLARE_ACTOR (ACrossbowHefty, AAmmo)
+	DECLARE_ACTOR (ACrossbowHefty, ACrossbowAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_crossbow, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_crossbow;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOCROSSBOW2);
@@ -711,9 +613,8 @@ FState ACrossbowHefty::States[] =
 };
 
 IMPLEMENT_ACTOR (ACrossbowHefty, Heretic, 19, 34)
-	PROP_SpawnHealth (AMMO_CBOW_HEFTY)
+	PROP_Inventory_Amount (AMMO_CBOW_HEFTY)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -723,17 +624,15 @@ class ACrossbow : public AHereticWeapon
 {
 	DECLARE_ACTOR (ACrossbow, AHereticWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_crossbow;
-	}
-
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNCROSSBOW);
 	}
+};
+
+class ACrossbowPowered : public ACrossbow
+{
+	DECLARE_STATELESS_ACTOR (ACrossbowPowered, ACrossbow)
 };
 
 FState ACrossbow::States[] =
@@ -788,56 +687,34 @@ FState ACrossbow::States[] =
 	S_NORMAL (CRBW, 'C',	4, A_ReFire 					, &States[S_CRBOW+0])
 };
 
-FWeaponInfo ACrossbow::WeaponInfo1 =
-{
-	0,
-	am_crossbow,
-	am_crossbow,
-	USE_CBOW_AMMO_1,
-	10,
-	&States[S_CRBOWUP],
-	&States[S_CRBOWDOWN],
-	&States[S_CRBOW],
-	&States[S_CRBOWATK1],
-	&States[S_CRBOWATK1],
-	NULL,
-	RUNTIME_CLASS(ACrossbow),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ACrossbow),
-	-1
-};
-
-FWeaponInfo ACrossbow::WeaponInfo2 =
-{
-	0,
-	am_crossbow,
-	am_crossbow,
-	USE_CBOW_AMMO_2,
-	10,
-	&States[S_CRBOWUP],
-	&States[S_CRBOWDOWN],
-	&States[S_CRBOW],
-	&States[S_CRBOWATK2],
-	&States[S_CRBOWATK2],
-	NULL,
-	RUNTIME_CLASS(ACrossbow),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ACrossbow),
-	-1
-};
-
 IMPLEMENT_ACTOR (ACrossbow, Heretic, 2001, 27)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_WBOW)
+
+	PROP_Weapon_SelectionOrder (800)
+	PROP_Weapon_AmmoUse1 (USE_CBOW_AMMO_1)
+	PROP_Weapon_AmmoGive1 (10)
+	PROP_Weapon_UpState (S_CRBOWUP)
+	PROP_Weapon_DownState (S_CRBOWDOWN)
+	PROP_Weapon_ReadyState (S_CRBOW)
+	PROP_Weapon_AtkState (S_CRBOWATK1)
+	PROP_Weapon_HoldAtkState (S_CRBOWATK1)
+	PROP_Weapon_YAdjust (15)
+	PROP_Weapon_MoveCombatDist (24000000)
+	PROP_Weapon_AmmoType1 ("CrossbowAmmo")
+	PROP_Weapon_SisterType ("CrossbowPowered")
+	PROP_Weapon_ProjectileType ("CrossbowFX1")
 END_DEFAULTS
 
-WEAPON2 (wp_crossbow, ACrossbow)
+IMPLEMENT_STATELESS_ACTOR (ACrossbowPowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_POWERED_UP)
+	PROP_Weapon_AmmoUse1 (USE_CBOW_AMMO_2)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_AtkState (S_CRBOWATK2)
+	PROP_Weapon_HoldAtkState (S_CRBOWATK2)
+	PROP_Weapon_SisterType ("Crossbow")
+	PROP_Weapon_ProjectileType ("CrossbowFX2")
+END_DEFAULTS
 
 // Crossbow FX1 -------------------------------------------------------------
 
@@ -951,7 +828,7 @@ END_DEFAULTS
 //
 //----------------------------------------------------------------------------
 
-void A_FireCrossbowPL1 (AActor *actor, pspdef_t *psp)
+void A_FireCrossbowPL1 (AActor *actor)
 {
 	AActor *pmo;
 	player_t *player;
@@ -962,7 +839,12 @@ void A_FireCrossbowPL1 (AActor *actor, pspdef_t *psp)
 	}
 
 	pmo = player->mo;
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX1));
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX3), pmo->angle-(ANG45/10));
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX3), pmo->angle+(ANG45/10));
@@ -974,7 +856,7 @@ void A_FireCrossbowPL1 (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireCrossbowPL2(AActor *actor, pspdef_t *psp)
+void A_FireCrossbowPL2(AActor *actor)
 {
 	AActor *pmo;
 	player_t *player;
@@ -985,7 +867,12 @@ void A_FireCrossbowPL2(AActor *actor, pspdef_t *psp)
 	}
 
 	pmo = player->mo;
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2));
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2), pmo->angle-(ANG45/10));
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2), pmo->angle+(ANG45/10));
@@ -1015,12 +902,12 @@ void A_BoltSpark (AActor *bolt)
 
 #define MAGIC_JUNK 1234
 
-void A_FireMacePL1B (AActor *, pspdef_t *);
-void A_FireMacePL1 (AActor *, pspdef_t *);
+void A_FireMacePL1B (AActor *);
+void A_FireMacePL1 (AActor *);
 void A_MacePL1Check (AActor *);
 void A_MaceBallImpact (AActor *);
 void A_MaceBallImpact2 (AActor *);
-void A_FireMacePL2 (AActor *, pspdef_t *);
+void A_FireMacePL2 (AActor *);
 void A_DeathBallImpact (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
@@ -1029,15 +916,6 @@ class AMaceAmmo : public AAmmo
 {
 	DECLARE_ACTOR (AMaceAmmo, AAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_mace, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_mace;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOMACE1);
@@ -1050,31 +928,19 @@ FState AMaceAmmo::States[] =
 };
 
 IMPLEMENT_ACTOR (AMaceAmmo, Heretic, 13, 35)
-	PROP_SpawnHealth (AMMO_MACE_WIMPY)
+	PROP_Inventory_Amount (AMMO_MACE_WIMPY)
+	PROP_Inventory_MaxAmount (150)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("INAMLOB")
 END_DEFAULTS
-
-AT_GAME_SET (MaceAmmo)
-{
-	AmmoPics[am_mace] = "INAMLOB";
-}
 
 // Hefty ammo ---------------------------------------------------------------
 
-class AMaceHefty : public AAmmo
+class AMaceHefty : public AMaceAmmo
 {
-	DECLARE_ACTOR (AMaceHefty, AAmmo)
+	DECLARE_ACTOR (AMaceHefty, AMaceAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_mace, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_mace;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOMACE1);
@@ -1087,7 +953,7 @@ FState AMaceHefty::States[] =
 };
 
 IMPLEMENT_ACTOR (AMaceHefty, Heretic, 16, 36)
-	PROP_SpawnHealth (AMMO_MACE_HEFTY)
+	PROP_Inventory_Amount (AMMO_MACE_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -1101,22 +967,22 @@ class AMace : public AHereticWeapon
 public:
 	void Serialize (FArchive &arc);
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_mace;
-	}
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNMACE);
 	}
+protected:
 	bool DoRespawn ();
 	int NumMaceSpots;
 	AActor *FirstSpot;
 private:
 
 	friend void A_SpawnMace (AActor *self);
+};
+
+class AMacePowered : public AMace
+{
+	DECLARE_STATELESS_ACTOR (AMacePowered, AMace)
 };
 
 IMPLEMENT_POINTY_CLASS (AMace)
@@ -1162,56 +1028,35 @@ FState AMace::States[] =
 	S_NORMAL (MACE, 'A',	8, A_ReFire 			, &States[S_MACEREADY])
 };
 
-FWeaponInfo AMace::WeaponInfo1 =
-{
-	0,
-	am_mace,
-	am_mace,
-	USE_MACE_AMMO_1,
-	50,
-	&States[S_MACEUP],
-	&States[S_MACEDOWN],
-	&States[S_MACEREADY],
-	&States[S_MACEATK1],
-	&States[S_MACEATK1+1],
-	NULL,
-	RUNTIME_CLASS(AMace),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AMace),
-	-1
-};
-
-FWeaponInfo AMace::WeaponInfo2 =
-{
-	0,
-	am_mace,
-	am_mace,
-	USE_MACE_AMMO_2,
-	50,
-	&States[S_MACEUP],
-	&States[S_MACEDOWN],
-	&States[S_MACEREADY],
-	&States[S_MACEATK2],
-	&States[S_MACEATK2],
-	NULL,
-	RUNTIME_CLASS(AMace),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AMace),
-	-1
-};
-
 BEGIN_DEFAULTS (AMace, Heretic, -1, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+
+	PROP_Weapon_SelectionOrder (1400)
+	PROP_Weapon_Flags (WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE)
+	PROP_Weapon_AmmoUse1 (USE_MACE_AMMO_1)
+	PROP_Weapon_AmmoGive1 (50)
+	PROP_Weapon_UpState (S_MACEUP)
+	PROP_Weapon_DownState (S_MACEDOWN)
+	PROP_Weapon_ReadyState (S_MACEREADY)
+	PROP_Weapon_AtkState (S_MACEATK1)
+	PROP_Weapon_HoldAtkState (S_MACEATK1+1)
+	PROP_Weapon_YAdjust (15)
+	PROP_Weapon_MoveCombatDist (27000000)
+	PROP_Weapon_AmmoType1 ("MaceAmmo")
+	PROP_Weapon_SisterType ("MacePowered")
+	PROP_Weapon_ProjectileType ("MaceFX2")
 END_DEFAULTS
 
-WEAPON2 (wp_mace, AMace)
+IMPLEMENT_STATELESS_ACTOR (AMacePowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_POWERED_UP|WIF_BOT_REACTION_SKILL_THING|WIF_BOT_EXPLOSIVE)
+	PROP_Weapon_AmmoUse1 (USE_MACE_AMMO_2)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_AtkState (S_MACEATK2)
+	PROP_Weapon_HoldAtkState (S_MACEATK2)
+	PROP_Weapon_SisterType ("Mace")
+	PROP_Weapon_ProjectileType ("MaceFX4")
+END_DEFAULTS
 
 // Mace FX1 -----------------------------------------------------------------
 
@@ -1333,13 +1178,13 @@ END_DEFAULTS
 
 int AMaceFX4::DoSpecialDamage (AActor *target, int damage)
 {
-	if ((target->flags2 & MF2_BOSS) || (target->flags3 & MF3_DONTSQUASH))
-	{ // Don't allow cheap boss kills
+	if ((target->flags2 & MF2_BOSS) || (target->flags3 & MF3_DONTSQUASH) || target->IsTeammate (this->target))
+	{ // Don't allow cheap boss kills and don't instagib teammates
 		return damage;
 	}
 	else if (target->player)
 	{ // Player specific checks
-		if (target->player->powers[pw_invulnerability])
+		if (target->player->mo->flags2 & MF2_INVULNERABLE)
 		{ // Can't hurt invulnerable players
 			return -1;
 		}
@@ -1450,7 +1295,7 @@ bool AMace::DoRespawn ()
 //
 //----------------------------------------------------------------------------
 
-void A_FireMacePL1B (AActor *actor, pspdef_t *psp)
+void A_FireMacePL1B (AActor *actor)
 {
 	AActor *pmo;
 	AActor *ball;
@@ -1462,9 +1307,11 @@ void A_FireMacePL1B (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	if (!player->UseAmmo (true))
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
 	{
-		return;
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
 	}
 	pmo = player->mo;
 	ball = Spawn<AMaceFX2> (pmo->x, pmo->y, pmo->z + 28*FRACUNIT 
@@ -1488,7 +1335,7 @@ void A_FireMacePL1B (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireMacePL1 (AActor *actor, pspdef_t *psp)
+void A_FireMacePL1 (AActor *actor)
 {
 	AActor *ball;
 	player_t *player;
@@ -1500,15 +1347,17 @@ void A_FireMacePL1 (AActor *actor, pspdef_t *psp)
 
 	if (pr_maceatk() < 28)
 	{
-		A_FireMacePL1B (actor, psp);
+		A_FireMacePL1B (actor);
 		return;
 	}
-	if (!player->UseAmmo (true))
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
 	{
-		return;
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
 	}
-	psp->sx = ((pr_maceatk()&3)-2)*FRACUNIT;
-	psp->sy = WEAPONTOP+(pr_maceatk()&3)*FRACUNIT;
+	player->psprites[ps_weapon].sx = ((pr_maceatk()&3)-2)*FRACUNIT;
+	player->psprites[ps_weapon].sy = WEAPONTOP+(pr_maceatk()&3)*FRACUNIT;
 	ball = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMaceFX1),
 		player->mo->angle+(((pr_maceatk()&7)-4)<<24));
 	if (ball)
@@ -1650,7 +1499,7 @@ boom:
 //
 //----------------------------------------------------------------------------
 
-void A_FireMacePL2 (AActor *actor, pspdef_t *psp)
+void A_FireMacePL2 (AActor *actor)
 {
 	AActor *mo;
 	player_t *player;
@@ -1660,7 +1509,12 @@ void A_FireMacePL2 (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMaceFX4));
 	if (mo)
 	{
@@ -1768,7 +1622,8 @@ boom:
 
 // --- Gauntlets ------------------------------------------------------------
 
-void A_GauntletAttack (AActor *, pspdef_t *);
+void A_GauntletAttack (AActor *);
+void A_GauntletSound (AActor *);
 
 // Gauntlets ----------------------------------------------------------------
 
@@ -1776,16 +1631,15 @@ class AGauntlets : public AHereticWeapon
 {
 	DECLARE_ACTOR (AGauntlets, AHereticWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_gauntlets;
-	}
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNGAUNTLETS);
 	}
+};
+
+class AGauntletsPowered : public AGauntlets
+{
+	DECLARE_STATELESS_ACTOR (AGauntletsPowered, AGauntlets)
 };
 
 FState AGauntlets::States[] =
@@ -1814,7 +1668,7 @@ FState AGauntlets::States[] =
 	S_NORMAL (GAUN, 'G',	1, A_Raise					, &States[S_GAUNTLETUP2]),
 
 #define S_GAUNTLETATK1 (S_GAUNTLETUP2+1)
-	S_NORMAL (GAUN, 'B',	4, NULL 					, &States[S_GAUNTLETATK1+1]),
+	S_NORMAL (GAUN, 'B',	4, A_GauntletSound			, &States[S_GAUNTLETATK1+1]),
 	S_NORMAL (GAUN, 'C',	4, NULL 					, &States[S_GAUNTLETATK1+2]),
 	S_BRIGHT (GAUN, 'D',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK1+3]),
 	S_BRIGHT (GAUN, 'E',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK1+4]),
@@ -1823,7 +1677,7 @@ FState AGauntlets::States[] =
 	S_NORMAL (GAUN, 'B',	4, A_Light0 				, &States[S_GAUNTLETREADY]),
 
 #define S_GAUNTLETATK2 (S_GAUNTLETATK1+7)
-	S_NORMAL (GAUN, 'J',	4, NULL 					, &States[S_GAUNTLETATK2+1]),
+	S_NORMAL (GAUN, 'J',	4, A_GauntletSound			, &States[S_GAUNTLETATK2+1]),
 	S_NORMAL (GAUN, 'K',	4, NULL 					, &States[S_GAUNTLETATK2+2]),
 	S_BRIGHT (GAUN, 'L',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK2+3]),
 	S_BRIGHT (GAUN, 'M',	4, A_GauntletAttack 		, &States[S_GAUNTLETATK2+4]),
@@ -1832,56 +1686,35 @@ FState AGauntlets::States[] =
 	S_NORMAL (GAUN, 'J',	4, A_Light0 				, &States[S_GAUNTLETREADY2+0])
 };
 
-FWeaponInfo AGauntlets::WeaponInfo1 =
-{
-	0,
-	am_noammo,
-	am_noammo,
-	0,
-	0,
-	&States[S_GAUNTLETUP],
-	&States[S_GAUNTLETDOWN],
-	&States[S_GAUNTLETREADY],
-	&States[S_GAUNTLETATK1],
-	&States[S_GAUNTLETATK1+2],
-	NULL,
-	RUNTIME_CLASS(AGauntlets),
-	0,
-	15*FRACUNIT,
-	"weapons/gauntletsactivate",
-	NULL,
-	RUNTIME_CLASS(AGauntlets),
-	-1
-};
-
-FWeaponInfo AGauntlets::WeaponInfo2 =
-{
-	0,
-	am_noammo,
-	am_noammo,
-	0,
-	0,
-	&States[S_GAUNTLETUP2],
-	&States[S_GAUNTLETDOWN2],
-	&States[S_GAUNTLETREADY2],
-	&States[S_GAUNTLETATK2],
-	&States[S_GAUNTLETATK2+2],
-	NULL,
-	RUNTIME_CLASS(AGauntlets),
-	0,
-	15*FRACUNIT,
-	"weapons/gauntletsactivate",
-	NULL,
-	RUNTIME_CLASS(AGauntlets),
-	-1
-};
-
 IMPLEMENT_ACTOR (AGauntlets, Heretic, 2005, 32)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_WGNT)
+
+	PROP_Weapon_SelectionOrder (2300)
+	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_GAUNTLETUP)
+	PROP_Weapon_DownState (S_GAUNTLETDOWN)
+	PROP_Weapon_ReadyState (S_GAUNTLETREADY)
+	PROP_Weapon_AtkState (S_GAUNTLETATK1)
+	PROP_Weapon_HoldAtkState (S_GAUNTLETATK1+2)
+	PROP_Weapon_Kickback (0)
+	PROP_Weapon_YAdjust (15)
+	PROP_Weapon_UpSound ("weapons/gauntletsactivate")
+	PROP_Weapon_SisterType ("GauntletsPowered")
 END_DEFAULTS
 
-WEAPON2 (wp_gauntlets, AGauntlets)
+IMPLEMENT_STATELESS_ACTOR (AGauntletsPowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_WIMPY_WEAPON|WIF_POWERED_UP|WIF_BOT_MELEE)
+	PROP_Weapon_AtkState (S_GAUNTLETATK2)
+	PROP_Weapon_HoldAtkState (S_GAUNTLETATK2+2)
+	PROP_Weapon_SisterType ("Gauntlets")
+END_DEFAULTS
+
+void A_GauntletSound (AActor *actor)
+{
+	// Play the sound for the initial gauntlet attack
+	S_Sound (actor, CHAN_WEAPON, "weapons/gauntletsuse", 1, ATTN_NORM);
+}
 
 // Gauntlet puff 1 ----------------------------------------------------------
 
@@ -1945,7 +1778,7 @@ END_DEFAULTS
 //
 //---------------------------------------------------------------------------
 
-void A_GauntletAttack (AActor *actor, pspdef_t *psp)
+void A_GauntletAttack (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -1953,32 +1786,40 @@ void A_GauntletAttack (AActor *actor, pspdef_t *psp)
 	int randVal;
 	fixed_t dist;
 	player_t *player;
+	const TypeInfo *pufftype;
+	AInventory *power;
 
 	if (NULL == (player = actor->player))
 	{
 		return;
 	}
 
-	player->UseAmmo ();
-	psp->sx = ((pr_gatk()&3)-2) * FRACUNIT;
-	psp->sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+	player->psprites[ps_weapon].sx = ((pr_gatk()&3)-2) * FRACUNIT;
+	player->psprites[ps_weapon].sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
 	angle = player->mo->angle;
-	if (player->powers[pw_weaponlevel2])
+	power = player->mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+	if (power)
 	{
 		damage = pr_gatk.HitDice (2);
 		dist = 4*MELEERANGE;
 		angle += pr_gatk.Random2() << 17;
-		PuffType = RUNTIME_CLASS(AGauntletPuff2);
+		pufftype = RUNTIME_CLASS(AGauntletPuff2);
 	}
 	else
 	{
 		damage = pr_gatk.HitDice (2);
 		dist = MELEERANGE+1;
 		angle += pr_gatk.Random2() << 18;
-		PuffType = RUNTIME_CLASS(AGauntletPuff1);
+		pufftype = RUNTIME_CLASS(AGauntletPuff1);
 	}
 	slope = P_AimLineAttack (player->mo, angle, dist);
-	P_LineAttack (player->mo, angle, dist, slope, damage);
+	P_LineAttack (player->mo, angle, dist, slope, damage, pufftype);
 	if (!linetarget)
 	{
 		if (pr_gatk() > 64)
@@ -2001,7 +1842,7 @@ void A_GauntletAttack (AActor *actor, pspdef_t *psp)
 	{
 		player->extralight = 2;
 	}
-	if (player->powers[pw_weaponlevel2])
+	if (power)
 	{
 		P_GiveBody (player, damage>>1);
 		S_Sound (player->mo, CHAN_AUTO, "weapons/gauntletspowhit", 1, ATTN_NORM);
@@ -2032,8 +1873,8 @@ void A_GauntletAttack (AActor *actor, pspdef_t *psp)
 
 // --- Blaster (aka Claw) ---------------------------------------------------
 
-void A_FireBlasterPL1 (AActor *, pspdef_t *);
-void A_FireBlasterPL2 (AActor *, pspdef_t *);
+void A_FireBlasterPL1 (AActor *);
+void A_FireBlasterPL2 (AActor *);
 void A_SpawnRippers (AActor *);
 
 // Wimpy ammo ---------------------------------------------------------------
@@ -2042,15 +1883,6 @@ class ABlasterAmmo : public AAmmo
 {
 	DECLARE_ACTOR (ABlasterAmmo, AAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_blaster, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_blaster;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOBLASTER1);
@@ -2065,32 +1897,19 @@ FState ABlasterAmmo::States[] =
 };
 
 IMPLEMENT_ACTOR (ABlasterAmmo, Heretic, 54, 37)
-	PROP_SpawnHealth (AMMO_BLSR_WIMPY)
+	PROP_Inventory_Amount (AMMO_BLSR_WIMPY)
+	PROP_Inventory_MaxAmount (200)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("INAMBST")
 END_DEFAULTS
-
-AT_GAME_SET (BlasterAmmo)
-{
-	AmmoPics[am_blaster] = "INAMBST";
-}
 
 // Hefty ammo ---------------------------------------------------------------
 
-class ABlasterHefty : public AAmmo
+class ABlasterHefty : public ABlasterAmmo
 {
-	DECLARE_ACTOR (ABlasterHefty, AAmmo)
+	DECLARE_ACTOR (ABlasterHefty, ABlasterAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_blaster, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_blaster;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOBLASTER2);
@@ -2105,7 +1924,7 @@ FState ABlasterHefty::States[] =
 };
 
 IMPLEMENT_ACTOR (ABlasterHefty, Heretic, 55, 38)
-	PROP_SpawnHealth (AMMO_BLSR_HEFTY)
+	PROP_Inventory_Amount (AMMO_BLSR_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -2116,16 +1935,15 @@ class ABlaster : public AHereticWeapon
 {
 	DECLARE_ACTOR (ABlaster, AHereticWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_blaster;
-	}
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNBLASTER);
 	}
+};
+
+class ABlasterPowered : public ABlaster
+{
+	DECLARE_STATELESS_ACTOR (ABlasterPowered, ABlaster)
 };
 
 FState ABlaster::States[] =
@@ -2159,56 +1977,33 @@ FState ABlaster::States[] =
 	S_NORMAL (BLSR, 'A',	0, A_ReFire 					, &States[S_BLASTERREADY])
 };
 
-FWeaponInfo ABlaster::WeaponInfo1 =
-{
-	0,
-	am_blaster,
-	am_blaster,
-	USE_BLSR_AMMO_1,
-	30,
-	&States[S_BLASTERUP],
-	&States[S_BLASTERDOWN],
-	&States[S_BLASTERREADY],
-	&States[S_BLASTERATK1],
-	&States[S_BLASTERATK1+2],
-	NULL,
-	RUNTIME_CLASS(ABlaster),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ABlaster),
-	-1
-};
-
-FWeaponInfo ABlaster::WeaponInfo2 =
-{
-	0,
-	am_blaster,
-	am_blaster,
-	USE_BLSR_AMMO_2,
-	30,
-	&States[S_BLASTERUP],
-	&States[S_BLASTERDOWN],
-	&States[S_BLASTERREADY],
-	&States[S_BLASTERATK2],
-	&States[S_BLASTERATK2+2],
-	NULL,
-	RUNTIME_CLASS(ABlaster),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ABlaster),
-	-1
-};
-
 IMPLEMENT_ACTOR (ABlaster, Heretic, 53, 28)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_BLSR)
+
+	PROP_Weapon_SelectionOrder (500)
+	PROP_Weapon_AmmoUse1 (USE_BLSR_AMMO_1)
+	PROP_Weapon_AmmoGive1 (30)
+	PROP_Weapon_UpState (S_BLASTERUP)
+	PROP_Weapon_DownState (S_BLASTERDOWN)
+	PROP_Weapon_ReadyState (S_BLASTERREADY)
+	PROP_Weapon_AtkState (S_BLASTERATK1)
+	PROP_Weapon_HoldAtkState (S_BLASTERATK1+2)
+	PROP_Weapon_YAdjust (15)
+	PROP_Weapon_MoveCombatDist (27000000)
+	PROP_Weapon_AmmoType1 ("BlasterAmmo")
+	PROP_Weapon_SisterType ("BlasterPowered")
 END_DEFAULTS
 
-WEAPON2 (wp_blaster, ABlaster)
+IMPLEMENT_STATELESS_ACTOR (ABlasterPowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_POWERED_UP)
+	PROP_Weapon_AmmoUse1 (USE_BLSR_AMMO_2)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_AtkState (S_BLASTERATK2)
+	PROP_Weapon_HoldAtkState (S_BLASTERATK2+2)
+	PROP_Weapon_SisterType ("Blaster")
+	PROP_Weapon_ProjectileType ("BlasterFX1")
+END_DEFAULTS
 
 // Blaster FX 1 -------------------------------------------------------------
 
@@ -2338,14 +2133,14 @@ int ARipper::DoSpecialDamage (AActor *target, int damage)
 	return damage;
 }
 
-// Blaster puff 1 -----------------------------------------------------------
+// Blaster Puff -------------------------------------------------------------
 
-class ABlasterPuff1 : public AActor
+class ABlasterPuff : public AActor
 {
-	DECLARE_ACTOR (ABlasterPuff1, AActor)
+	DECLARE_ACTOR (ABlasterPuff, AActor)
 };
 
-FState ABlasterPuff1::States[] =
+FState ABlasterPuff::States[] =
 {
 #define S_BLASTERPUFF1 0
 	S_BRIGHT (FX17, 'A',	4, NULL 					, &States[S_BLASTERPUFF1+1]),
@@ -2353,26 +2148,8 @@ FState ABlasterPuff1::States[] =
 	S_BRIGHT (FX17, 'C',	4, NULL 					, &States[S_BLASTERPUFF1+3]),
 	S_BRIGHT (FX17, 'D',	4, NULL 					, &States[S_BLASTERPUFF1+4]),
 	S_BRIGHT (FX17, 'E',	4, NULL 					, NULL),
-};
 
-IMPLEMENT_ACTOR (ABlasterPuff1, Heretic, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_PUFFONACTORS)
-	PROP_RenderStyle (STYLE_Add)
-
-	PROP_SpawnState (S_BLASTERPUFF1)
-END_DEFAULTS
-
-// Blaster puff 2 -----------------------------------------------------------
-
-class ABlasterPuff2 : public AActor
-{
-	DECLARE_ACTOR (ABlasterPuff2, AActor)
-};
-
-FState ABlasterPuff2::States[] =
-{
-#define S_BLASTERPUFF2 0
+#define S_BLASTERPUFF2 (S_BLASTERPUFF1+5)
 	S_BRIGHT (FX17, 'F',	3, NULL 					, &States[S_BLASTERPUFF2+1]),
 	S_BRIGHT (FX17, 'G',	3, NULL 					, &States[S_BLASTERPUFF2+2]),
 	S_BRIGHT (FX17, 'H',	4, NULL 					, &States[S_BLASTERPUFF2+3]),
@@ -2382,11 +2159,13 @@ FState ABlasterPuff2::States[] =
 	S_BRIGHT (FX17, 'L',	4, NULL 					, NULL)
 };
 
-IMPLEMENT_ACTOR (ABlasterPuff2, Heretic, -1, 0)
+IMPLEMENT_ACTOR (ABlasterPuff, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_PUFFONACTORS)
 	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_BLASTERPUFF2)
+	PROP_CrashState (S_BLASTERPUFF1)
 END_DEFAULTS
 
 //----------------------------------------------------------------------------
@@ -2395,9 +2174,8 @@ END_DEFAULTS
 //
 //----------------------------------------------------------------------------
 
-void A_FireBlasterPL1 (AActor *actor, pspdef_t *psp)
+void A_FireBlasterPL1 (AActor *actor)
 {
-	AActor *mo;
 	angle_t angle;
 	int damage;
 	player_t *player;
@@ -2407,20 +2185,21 @@ void A_FireBlasterPL1 (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	mo = player->mo;
-	player->UseAmmo ();
-	P_BulletSlope(mo);
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+	P_BulletSlope(actor);
 	damage = pr_fb1.HitDice (4);
-	angle = mo->angle;
+	angle = actor->angle;
 	if (player->refire)
 	{
 		angle += pr_fb1.Random2() << 18;
 	}
-	PuffType = RUNTIME_CLASS(ABlasterPuff1);
-	HitPuffType = RUNTIME_CLASS(ABlasterPuff2);
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage);
-	HitPuffType = NULL;
-	S_Sound (mo, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
+	P_LineAttack (actor, angle, PLAYERMISSILERANGE, bulletpitch, damage, RUNTIME_CLASS(ABlasterPuff));
+	S_Sound (actor, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 }
 
 //----------------------------------------------------------------------------
@@ -2429,7 +2208,7 @@ void A_FireBlasterPL1 (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireBlasterPL2 (AActor *actor, pspdef_t *psp)
+void A_FireBlasterPL2 (AActor *actor)
 {
 	AActor *mo;
 	player_t *player;
@@ -2439,8 +2218,13 @@ void A_FireBlasterPL2 (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	player->UseAmmo ();
-	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ABlasterFX1));
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+	mo = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ABlasterFX1));
 	S_Sound (mo, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 }
 
@@ -2542,8 +2326,8 @@ void ABlasterFX1::Tick ()
 
 // --- Skull rod ------------------------------------------------------------
 
-void A_FireSkullRodPL1 (AActor *, pspdef_t *);
-void A_FireSkullRodPL2 (AActor *, pspdef_t *);
+void A_FireSkullRodPL1 (AActor *);
+void A_FireSkullRodPL2 (AActor *);
 void A_SkullRodPL2Seek (AActor *);
 void A_AddPlayerRain (AActor *);
 void A_HideInCeiling (AActor *);
@@ -2556,15 +2340,6 @@ class ASkullRodAmmo : public AAmmo
 {
 	DECLARE_ACTOR (ASkullRodAmmo, AAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_skullrod, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_skullrod;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOSKULLROD1);
@@ -2578,31 +2353,19 @@ FState ASkullRodAmmo::States[] =
 };
 
 IMPLEMENT_ACTOR (ASkullRodAmmo, Heretic, 20, 158)
-	PROP_SpawnHealth (AMMO_SKRD_WIMPY)
+	PROP_Inventory_Amount (AMMO_SKRD_WIMPY)
+	PROP_Inventory_MaxAmount (200)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("INAMRAM")
 END_DEFAULTS
-
-AT_GAME_SET (SkullRodAmmo)
-{
-	AmmoPics[am_skullrod] = "INAMRAM";
-}
 
 // Hefty ammo ---------------------------------------------------------------
 
-class ASkullRodHefty : public AAmmo
+class ASkullRodHefty : public ASkullRodAmmo
 {
-	DECLARE_ACTOR (ASkullRodHefty, AAmmo)
+	DECLARE_ACTOR (ASkullRodHefty, ASkullRodAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_skullrod, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_skullrod;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOSKULLROD2);
@@ -2616,9 +2379,8 @@ FState ASkullRodHefty::States[] =
 };
 
 IMPLEMENT_ACTOR (ASkullRodHefty, Heretic, 21, 159)
-	PROP_SpawnHealth (AMMO_SKRD_HEFTY)
+	PROP_Inventory_Amount (AMMO_SKRD_HEFTY)
 	PROP_Flags (MF_SPECIAL)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -2628,16 +2390,15 @@ class ASkullRod : public AHereticWeapon
 {
 	DECLARE_ACTOR (ASkullRod, AHereticWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_skullrod;
-	}
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNSKULLROD);
 	}
+};
+
+class ASkullRodPowered : public ASkullRod
+{
+	DECLARE_STATELESS_ACTOR (ASkullRodPowered, ASkullRod)
 };
 
 FState ASkullRod::States[] =
@@ -2671,56 +2432,34 @@ FState ASkullRod::States[] =
 	S_NORMAL (HROD, 'C',	2, A_ReFire 					, &States[S_HORNRODREADY])
 };
 
-FWeaponInfo ASkullRod::WeaponInfo1 =
-{
-	0,
-	am_skullrod,
-	am_skullrod,
-	USE_SKRD_AMMO_1,
-	50,
-	&States[S_HORNRODUP],
-	&States[S_HORNRODDOWN],
-	&States[S_HORNRODREADY],
-	&States[S_HORNRODATK1],
-	&States[S_HORNRODATK1],
-	NULL,
-	RUNTIME_CLASS(ASkullRod),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ASkullRod),
-	-1
-};
-
-FWeaponInfo ASkullRod::WeaponInfo2 =
-{
-	0,
-	am_skullrod,
-	am_skullrod,
-	USE_SKRD_AMMO_2,
-	50,
-	&States[S_HORNRODUP],
-	&States[S_HORNRODDOWN],
-	&States[S_HORNRODREADY],
-	&States[S_HORNRODATK2],
-	&States[S_HORNRODATK2],
-	NULL,
-	RUNTIME_CLASS(ASkullRod),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ASkullRod),
-	-1
-};
-
 IMPLEMENT_ACTOR (ASkullRod, Heretic, 2004, 30)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_WSKL)
+
+	PROP_Weapon_SelectionOrder (200)
+	PROP_Weapon_AmmoUse1 (USE_SKRD_AMMO_1)
+	PROP_Weapon_AmmoGive1 (50)
+	PROP_Weapon_UpState (S_HORNRODUP)
+	PROP_Weapon_DownState (S_HORNRODDOWN)
+	PROP_Weapon_ReadyState (S_HORNRODREADY)
+	PROP_Weapon_AtkState (S_HORNRODATK1)
+	PROP_Weapon_HoldAtkState (S_HORNRODATK1)
+	PROP_Weapon_YAdjust (15)
+	PROP_Weapon_MoveCombatDist (27000000)
+	PROP_Weapon_AmmoType1 ("SkullRodAmmo")
+	PROP_Weapon_SisterType ("SkullRodPowered")
+	PROP_Weapon_ProjectileType ("HornRodFX1")
 END_DEFAULTS
 
-WEAPON2 (wp_skullrod, ASkullRod)
+IMPLEMENT_STATELESS_ACTOR (ASkullRodPowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_POWERED_UP)
+	PROP_Weapon_AmmoUse1 (USE_SKRD_AMMO_2)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_AtkState (S_HORNRODATK2)
+	PROP_Weapon_HoldAtkState (S_HORNRODATK2)
+	PROP_Weapon_SisterType ("SkullRod")
+	PROP_Weapon_ProjectileType ("HornRodFX2")
+END_DEFAULTS
 
 // Horn Rod FX 1 ------------------------------------------------------------
 
@@ -2865,13 +2604,33 @@ int ARainPillar::DoSpecialDamage (AActor *target, int damage)
 	return damage;
 }
 
+// Rain tracker "inventory" item --------------------------------------------
+
+class ARainTracker : public AInventory
+{
+	DECLARE_STATELESS_ACTOR (ARainTracker, AInventory)
+public:
+	void Serialize (FArchive &arc);
+	AActor *Rain1, *Rain2;
+};
+
+IMPLEMENT_STATELESS_ACTOR (ARainTracker, Any, -1, 0)
+	PROP_Inventory_Flags (IF_UNDROPPABLE)
+END_DEFAULTS
+
+void ARainTracker::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << Rain1 << Rain2;
+}
+
 //----------------------------------------------------------------------------
 //
 // PROC A_FireSkullRodPL1
 //
 //----------------------------------------------------------------------------
 
-void A_FireSkullRodPL1 (AActor *actor, pspdef_t *psp)
+void A_FireSkullRodPL1 (AActor *actor)
 {
 	AActor *mo;
 	player_t *player;
@@ -2881,9 +2640,11 @@ void A_FireSkullRodPL1 (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	if (!player->UseAmmo (true))
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
 	{
-		return;
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
 	}
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHornRodFX1));
 	// Randomize the first frame
@@ -2902,7 +2663,7 @@ void A_FireSkullRodPL1 (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FireSkullRodPL2 (AActor *actor, pspdef_t *psp)
+void A_FireSkullRodPL2 (AActor *actor)
 {
 	player_t *player;
 
@@ -2910,7 +2671,12 @@ void A_FireSkullRodPL2 (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHornRodFX2));
 	// Use MissileActor instead of the return value from
 	// P_SpawnPlayerMissile because we need to give info to the mobj
@@ -2945,44 +2711,51 @@ void A_SkullRodPL2Seek (AActor *actor)
 
 void A_AddPlayerRain (AActor *actor)
 {
-	player_t *player;
+	ARainTracker *tracker;
 
-	if (!playeringame[actor->special2])
-	{ // Player left the game
+	if (actor->target == NULL || actor->target->health <= 0)
+	{ // Shooter is dead or nonexistant
 		return;
 	}
-	player = &players[actor->special2];
-	if (player->health <= 0)
-	{ // Player is dead
-		return;
-	}
-	if (player->rain1 && player->rain2)
-	{ // Terminate an active rain
-		if (player->rain1->health < player->rain2->health)
-		{
-			if (player->rain1->health > 16)
-			{
-				player->rain1->health = 16;
-			}
-			player->rain1 = NULL;
-		}
-		else
-		{
-			if (player->rain2->health > 16)
-			{
-				player->rain2->health = 16;
-			}
-			player->rain2 = NULL;
-		}
-	}
-	// Add rain mobj to list
-	if (player->rain1)
+
+	tracker = actor->target->FindInventory<ARainTracker> ();
+
+	// They player is only allowed two rainstorms at a time. Shooting more
+	// than that will cause the oldest one to terminate.
+	if (tracker != NULL)
 	{
-		player->rain2 = actor;
+		if (tracker->Rain1 && tracker->Rain2)
+		{ // Terminate an active rain
+			if (tracker->Rain1->health < tracker->Rain2->health)
+			{
+				if (tracker->Rain1->health > 16)
+				{
+					tracker->Rain1->health = 16;
+				}
+				tracker->Rain1 = NULL;
+			}
+			else
+			{
+				if (tracker->Rain2->health > 16)
+				{
+					tracker->Rain2->health = 16;
+				}
+				tracker->Rain2 = NULL;
+			}
+		}
 	}
 	else
 	{
-		player->rain1 = actor;
+		tracker = static_cast<ARainTracker *> (actor->target->GiveInventoryType (RUNTIME_CLASS(ARainTracker)));
+	}
+	// Add rain mobj to list
+	if (tracker->Rain1)
+	{
+		tracker->Rain2 = actor;
+	}
+	else
+	{
+		tracker->Rain1 = actor;
 	}
 	actor->special1 = S_FindSound ("misc/rain");
 }
@@ -2998,30 +2771,27 @@ void A_SkullRodStorm (AActor *actor)
 	fixed_t x;
 	fixed_t y;
 	AActor *mo;
-	player_t *player;
+	ARainTracker *tracker;
 
 	if (actor->health-- == 0)
 	{
 		S_StopSound (actor, CHAN_BODY);
-		if (!playeringame[actor->special2])
+		if (actor->target == NULL)
 		{ // Player left the game
 			actor->Destroy ();
 			return;
 		}
-		player = &players[actor->special2];
-		/*
-		if (player->health <= 0)
-		{ // Player is dead
-			return;
-		}
-		*/
-		if (player->rain1 == actor)
+		tracker = actor->target->FindInventory<ARainTracker> ();
+		if (tracker != NULL)
 		{
-			player->rain1 = NULL;
-		}
-		else if (player->rain2 == actor)
-		{
-			player->rain2 = NULL;
+			if (tracker->Rain1 == actor)
+			{
+				tracker->Rain1 = NULL;
+			}
+			else if (tracker->Rain2 == actor)
+			{
+				tracker->Rain2 = NULL;
+			}
 		}
 		actor->Destroy ();
 		return;
@@ -3077,10 +2847,10 @@ void A_HideInCeiling (AActor *actor)
 
 // --- Phoenix Rod ----------------------------------------------------------
 
-void A_FirePhoenixPL1 (AActor *, pspdef_t *);
-void A_InitPhoenixPL2 (AActor *, pspdef_t *);
-void A_FirePhoenixPL2 (AActor *, pspdef_t *);
-void A_ShutdownPhoenixPL2 (AActor *, pspdef_t *);
+void A_FirePhoenixPL1 (AActor *);
+void A_InitPhoenixPL2 (AActor *);
+void A_FirePhoenixPL2 (AActor *);
+void A_ShutdownPhoenixPL2 (AActor *);
 void A_PhoenixPuff (AActor *);
 void A_FlameEnd (AActor *);
 void A_FloatPuff (AActor *);
@@ -3091,15 +2861,6 @@ class APhoenixRodAmmo : public AAmmo
 {
 	DECLARE_ACTOR (APhoenixRodAmmo, AAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_phoenixrod, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_phoenixrod;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOPHOENIXROD1);
@@ -3114,31 +2875,19 @@ FState APhoenixRodAmmo::States[] =
 };
 
 IMPLEMENT_ACTOR (APhoenixRodAmmo, Heretic, 22, 161)
-	PROP_SpawnHealth (AMMO_PHRD_WIMPY)
+	PROP_Inventory_Amount (AMMO_PHRD_WIMPY)
+	PROP_Inventory_MaxAmount (20)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("INAMPNX")
 END_DEFAULTS
-
-AT_GAME_SET (PhoenixRodAmmo)
-{
-	AmmoPics[am_phoenixrod] = "INAMPNX";
-}
 
 // Hefty ammo ---------------------------------------------------------------
 
-class APhoenixRodHefty : public AAmmo
+class APhoenixRodHefty : public APhoenixRodAmmo
 {
-	DECLARE_ACTOR (APhoenixRodHefty, AAmmo)
+	DECLARE_ACTOR (APhoenixRodHefty, APhoenixRodAmmo)
 public:
-	bool TryPickup (AActor *toucher)
-	{
-		return P_GiveAmmo (toucher->player, am_phoenixrod, health);
-	}
-	virtual ammotype_t GetAmmoType () const
-	{
-		return am_phoenixrod;
-	}
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOPHOENIXROD2);
@@ -3153,7 +2902,7 @@ FState APhoenixRodHefty::States[] =
 };
 
 IMPLEMENT_ACTOR (APhoenixRodHefty, Heretic, 23, 162)
-	PROP_SpawnHealth (AMMO_PHRD_HEFTY)
+	PROP_Inventory_Amount (AMMO_PHRD_HEFTY)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -3164,16 +2913,23 @@ class APhoenixRod : public AHereticWeapon
 {
 	DECLARE_ACTOR (APhoenixRod, AHereticWeapon)
 public:
-	weapontype_t OldStyleID () const
+	void Serialize (FArchive &arc)
 	{
-		return wp_phoenixrod;
+		Super::Serialize (arc);
+		arc << FlameCount;
 	}
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNPHOENIXROD);
 	}
+	int FlameCount;		// for flamethrower duration
+};
+
+class APhoenixRodPowered : public APhoenixRod
+{
+	DECLARE_STATELESS_ACTOR (APhoenixRodPowered, APhoenixRod)
+public:
+	void EndPowerup ();
 };
 
 FState APhoenixRod::States[] =
@@ -3204,56 +2960,45 @@ FState APhoenixRod::States[] =
 	S_NORMAL (PHNX, 'B',	4, A_ShutdownPhoenixPL2 		, &States[S_PHOENIXREADY])
 };
 
-FWeaponInfo APhoenixRod::WeaponInfo1 =
-{
-	WIF_NOAUTOFIRE,
-	am_phoenixrod,
-	am_phoenixrod,
-	USE_PHRD_AMMO_1,
-	2,
-	&States[S_PHOENIXUP],
-	&States[S_PHOENIXDOWN],
-	&States[S_PHOENIXREADY],
-	&States[S_PHOENIXATK1],
-	&States[S_PHOENIXATK1],
-	NULL,
-	RUNTIME_CLASS(APhoenixRod),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(APhoenixRod),
-	-1
-};
-
-FWeaponInfo APhoenixRod::WeaponInfo2 =
-{
-	WIF_NOAUTOFIRE,
-	am_phoenixrod,
-	am_phoenixrod,
-	USE_PHRD_AMMO_2,
-	2,
-	&States[S_PHOENIXUP],
-	&States[S_PHOENIXDOWN],
-	&States[S_PHOENIXREADY],
-	&States[S_PHOENIXATK2],
-	&States[S_PHOENIXATK2+1],
-	NULL,
-	RUNTIME_CLASS(APhoenixRod),
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(APhoenixRod),
-	-1
-};
-
 IMPLEMENT_ACTOR (APhoenixRod, Heretic, 2003, 29)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (S_WPHX)
+
+	PROP_Weapon_Flags (WIF_NOAUTOFIRE|WIF_BOT_REACTION_SKILL_THING)
+	PROP_Weapon_SelectionOrder (2600)
+	PROP_Weapon_AmmoUse1 (USE_PHRD_AMMO_1)
+	PROP_Weapon_AmmoGive1 (2)
+	PROP_Weapon_UpState (S_PHOENIXUP)
+	PROP_Weapon_DownState (S_PHOENIXDOWN)
+	PROP_Weapon_ReadyState (S_PHOENIXREADY)
+	PROP_Weapon_AtkState (S_PHOENIXATK1)
+	PROP_Weapon_HoldAtkState (S_PHOENIXATK1)
+	PROP_Weapon_YAdjust (15)
+	PROP_Weapon_MoveCombatDist (18350080)
+	PROP_Weapon_AmmoType1 ("PhoenixRodAmmo")
+	PROP_Weapon_SisterType ("PhoenixRodPowered")
+	PROP_Weapon_ProjectileType ("PhoenixFX1")
 END_DEFAULTS
 
-WEAPON2 (wp_phoenixrod, APhoenixRod)
+IMPLEMENT_STATELESS_ACTOR (APhoenixRodPowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_NOAUTOFIRE|WIF_POWERED_UP|WIF_BOT_MELEE)
+	PROP_Weapon_AmmoUse1 (USE_PHRD_AMMO_2)
+	PROP_Weapon_AmmoGive1 (0)
+	PROP_Weapon_AtkState (S_PHOENIXATK2)
+	PROP_Weapon_HoldAtkState (S_PHOENIXATK2+1)
+	PROP_Weapon_MoveCombatDist (0)
+	PROP_Weapon_SisterType ("PhoenixRod")
+	PROP_Weapon_ProjectileType ("PhoenixFX2")
+END_DEFAULTS
+
+void APhoenixRodPowered::EndPowerup ()
+{
+	P_SetPsprite (Owner->player, ps_weapon, &APhoenixRod::States[S_PHOENIXREADY]);
+	DepleteAmmo (bAltFire);
+	Owner->player->refire = 0;
+	S_StopSound (Owner, CHAN_WEAPON);
+	Owner->player->ReadyWeapon = SisterWeapon;
+}
 
 // Phoenix FX 1 -------------------------------------------------------------
 
@@ -3378,7 +3123,7 @@ int APhoenixFX2::DoSpecialDamage (AActor *target, int damage)
 //
 //----------------------------------------------------------------------------
 
-void A_FirePhoenixPL1 (AActor *actor, pspdef_t *psp)
+void A_FirePhoenixPL1 (AActor *actor)
 {
 	angle_t angle;
 	player_t *player;
@@ -3388,12 +3133,17 @@ void A_FirePhoenixPL1 (AActor *actor, pspdef_t *psp)
 		return;
 	}
 
-	player->UseAmmo ();
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(APhoenixFX1));
-	angle = player->mo->angle + ANG180;
+	angle = actor->angle + ANG180;
 	angle >>= ANGLETOFINESHIFT;
-	player->mo->momx += FixedMul (4*FRACUNIT, finecosine[angle]);
-	player->mo->momy += FixedMul (4*FRACUNIT, finesine[angle]);
+	actor->momx += FixedMul (4*FRACUNIT, finecosine[angle]);
+	actor->momy += FixedMul (4*FRACUNIT, finesine[angle]);
 }
 
 //----------------------------------------------------------------------------
@@ -3429,11 +3179,15 @@ void A_PhoenixPuff (AActor *actor)
 //
 //----------------------------------------------------------------------------
 
-void A_InitPhoenixPL2 (AActor *actor, pspdef_t *psp)
+void A_InitPhoenixPL2 (AActor *actor)
 {
 	if (actor->player != NULL)
 	{
-		actor->player->flamecount = FLAME_THROWER_TICS;
+		APhoenixRod *flamethrower = static_cast<APhoenixRod *> (actor->player->ReadyWeapon);
+		if (flamethrower != NULL)
+		{
+			flamethrower->FlameCount = FLAME_THROWER_TICS;
+		}
 	}
 }
 
@@ -3445,7 +3199,7 @@ void A_InitPhoenixPL2 (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_FirePhoenixPL2 (AActor *actor, pspdef_t *psp)
+void A_FirePhoenixPL2 (AActor *actor)
 {
 	AActor *mo;
 	AActor *pmo;
@@ -3454,6 +3208,7 @@ void A_FirePhoenixPL2 (AActor *actor, pspdef_t *psp)
 	fixed_t slope;
 	int soundid;
 	player_t *player;
+	APhoenixRod *flamethrower;
 
 	if (NULL == (player = actor->player))
 	{
@@ -3462,7 +3217,8 @@ void A_FirePhoenixPL2 (AActor *actor, pspdef_t *psp)
 
 	soundid = S_FindSound ("weapons/phoenixpowshoot");
 
-	if (--player->flamecount == 0)
+	flamethrower = static_cast<APhoenixRod *> (player->ReadyWeapon);
+	if (flamethrower == NULL || --flamethrower->FlameCount == 0)
 	{ // Out of flame
 		P_SetPsprite (player, ps_weapon, &APhoenixRod::States[S_PHOENIXATK2+3]);
 		player->refire = 0;
@@ -3495,7 +3251,7 @@ void A_FirePhoenixPL2 (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_ShutdownPhoenixPL2 (AActor *actor, pspdef_t *psp)
+void A_ShutdownPhoenixPL2 (AActor *actor)
 {
 	player_t *player;
 
@@ -3503,8 +3259,13 @@ void A_ShutdownPhoenixPL2 (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	S_StopSound (player->mo, CHAN_WEAPON);
-	player->UseAmmo ();
+	S_StopSound (actor, CHAN_WEAPON);
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
 }
 
 //----------------------------------------------------------------------------
@@ -3531,30 +3292,9 @@ void A_FloatPuff (AActor *puff)
 
 // --- Bag of holding -------------------------------------------------------
 
-class ABagOfHolding : public AInventory
+class ABagOfHolding : public ABackpack
 {
-	DECLARE_ACTOR (ABagOfHolding, AInventory)
-public:
-	bool TryPickup (AActor *toucher)
-	{
-		player_t *player = toucher->player;
-		int i;
-
-		if (!player->backpack)
-		{
-			for (i = 0; i < NUMAMMO; i++)
-			{
-				player->maxammo[i] *= 2;
-			}
-			player->backpack = true;
-		}
-		P_GiveAmmo(player, am_goldwand, AMMO_GWND_WIMPY);
-		P_GiveAmmo(player, am_blaster, AMMO_BLSR_WIMPY);
-		P_GiveAmmo(player, am_crossbow, AMMO_CBOW_WIMPY);
-		P_GiveAmmo(player, am_skullrod, AMMO_SKRD_WIMPY);
-		P_GiveAmmo(player, am_phoenixrod, AMMO_PHRD_WIMPY);
-		return true;
-	}
+	DECLARE_ACTOR (ABagOfHolding, ABackpack)
 protected:
 	const char *PickupMessage ()
 	{
@@ -3570,6 +3310,5 @@ FState ABagOfHolding::States[] =
 IMPLEMENT_ACTOR (ABagOfHolding, Heretic, 8, 136)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
-
 	PROP_SpawnState (0)
 END_DEFAULTS

@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 
 #include "m_alloc.h"
@@ -115,6 +116,42 @@ FWadCollection Wads;
 
 //==========================================================================
 //
+// strupr
+//
+// Suprisingly, glibc lacks this
+//==========================================================================
+
+#ifndef HAVE_STRUPR
+void strupr (char *s)
+{
+	while (*s)
+		*s++ = toupper (*s);
+}
+#endif
+
+//==========================================================================
+//
+// filelength
+//
+// Suprisingly, glibc lacks this
+//==========================================================================
+
+#ifndef HAVE_FILELENGTH
+int filelength (int handle)
+{
+	struct stat fileinfo;
+
+	if (fstat (handle, &fileinfo) == -1)
+	{
+		close (handle);
+		I_Error ("Error fstating");
+	}
+	return fileinfo.st_size;
+}
+#endif
+
+//==========================================================================
+//
 // uppercoppy
 //
 // [RH] Copy up to 8 chars, upper-casing them in the process
@@ -191,6 +228,7 @@ void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
 	MergeLumps ("C_START", "C_END", ns_colormaps);
 	MergeLumps ("A_START", "A_END", ns_acslibrary);
 	MergeLumps ("TX_START", "TX_END", ns_newtextures);
+	MergeLumps ("V_START", "V_END", ns_strifevoices);
 
 	// [RH] Set up hash table
 	FirstLumpIndex = new WORD[NumLumps];
@@ -347,6 +385,12 @@ void FWadCollection::AddFile (const char *filename)
 	wadinfo->LastLump = NumLumps - 1;
 	Wads = (WadFileRecord **)Realloc (Wads, (++NumWads)*sizeof(WadFileRecord*));
 	Wads[NumWads-1] = wadinfo;
+
+	// [RH] Put the Strife Teaser voices into the voices namespace
+	if (NumWads == IWAD_FILENUM+1 && gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE)
+	{
+		FindStrifeTeaserVoices ();
+	}
 }
 
 //==========================================================================
@@ -618,7 +662,7 @@ void FWadCollection::ScanForFlatHack (int startlump)
 		return;
 	}
 
-	for (int i = startlump; i < NumLumps; ++i)
+	for (int i = startlump; (DWORD)i < NumLumps; ++i)
 	{
 		if (LumpInfo[i].name[0] == 'F')
 		{
@@ -631,7 +675,7 @@ void FWadCollection::ScanForFlatHack (int startlump)
 				// a FF_START-flats-FF_END-flats-F_END pattern as seen
 				// in darkhour.wad. At what point do I stop making hacks
 				// for wads that are incorrect?
-				for (i = i + 1; i < NumLumps; ++i)
+				for (i = i + 1; (DWORD)i < NumLumps; ++i)
 				{
 					if (LumpInfo[i].name[0] == 'F' && strcmp (LumpInfo[i].name + 1, "F_END") == 0)
 					{
@@ -646,7 +690,7 @@ void FWadCollection::ScanForFlatHack (int startlump)
 				if (i < NumLumps)
 				{
 					// Look for flats-F_END
-					for (j = ++i; j < NumLumps; ++j)
+					for (j = ++i; (DWORD)j < NumLumps; ++j)
 					{
 						if (LumpInfo[j].name[0] == 'F' && strcmp (LumpInfo[j].name + 1, "_END") == 0)
 						{
@@ -777,13 +821,13 @@ void FWadCollection::RenameSprites (int startlump)
 	  MAKE_ID('S','H','T','2'), MAKE_ID('M','P','U','F'),		// MaulerPuff
 	  MAKE_ID('B','A','R','L'), MAKE_ID('B','B','A','R'),		// StrifeBurningBarrel
 	  MAKE_ID('T','R','C','H'), MAKE_ID('T','R','H','L'),		// SmallTorchLit
-	  MAKE_ID('S','H','R','D'), MAKE_ID('S','H','A','R'),		// unimplemented glass shards
+	  MAKE_ID('S','H','R','D'), MAKE_ID('S','H','A','R'),		// glass shards
 	  MAKE_ID('B','L','S','T'), MAKE_ID('M','A','U','L'),		// Mauler
 	  MAKE_ID('L','O','G','G'), MAKE_ID('L','O','G','W'),		// StickInWater
 	  MAKE_ID('V','A','S','E'), MAKE_ID('V','A','Z','E'),		// Pot and Pitcher
 	  MAKE_ID('C','N','D','L'), MAKE_ID('K','N','D','L'),		// Candle
 	  MAKE_ID('P','O','T','1'), MAKE_ID('M','P','O','T'),		// MetalPot
-	  MAKE_ID('S','P','I','D'), MAKE_ID('S','T','L','K'),		// Stalker (unimplemented)
+	  MAKE_ID('S','P','I','D'), MAKE_ID('S','T','L','K'),		// Stalker
 	};
 
 	const DWORD *renames;
@@ -792,6 +836,7 @@ void FWadCollection::RenameSprites (int startlump)
 	switch (gameinfo.gametype)
 	{
 	case GAME_Doom:
+	default:
 		// Doom's sprites don't get renamed.
 		return;
 
@@ -813,7 +858,7 @@ void FWadCollection::RenameSprites (int startlump)
 
 	renameAll = !!Args.CheckParm ("-oldsprites");
 
-	for (int i = startlump + 1;
+	for (DWORD i = startlump + 1;
 		i < NumLumps && 
 		 *(DWORD *)LumpInfo[i].name != MAKE_ID('S','_','E','N') &&
 		 *(((DWORD *)LumpInfo[i].name) + 1) != MAKE_ID('D',0,0,0);
@@ -847,7 +892,7 @@ int FWadCollection::MergeLumps (const char *start, const char *end, int space)
 	char ustart[8], uend[8];
 	LumpRecord *newlumpinfos;
 	int newlumps, oldlumps;
-	int markerpos;
+	int markerpos = -1;
     size_t i;
 	BOOL insideBlock;
 
@@ -935,6 +980,38 @@ int FWadCollection::MergeLumps (const char *start, const char *end, int space)
 
 //==========================================================================
 //
+// FindStrifeTeaserVoices
+//
+// Strife0.wad does not have the voices between V_START/V_END markers, so
+// figure out which lumps are voices based on their names.
+//
+//==========================================================================
+
+void FWadCollection::FindStrifeTeaserVoices ()
+{
+	for (DWORD i = Wads[IWAD_FILENUM]->FirstLump; i <= Wads[IWAD_FILENUM]->LastLump; ++i)
+	{
+		if (LumpInfo[i].name[0] == 'V' &&
+			LumpInfo[i].name[1] == 'O' &&
+			LumpInfo[i].name[2] == 'C')
+		{
+			int j;
+
+			for (j = 3; j < 8; ++j)
+			{
+				if (LumpInfo[i].name[j] != 0 && !isdigit(LumpInfo[i].name[j]))
+					break;
+			}
+			if (j == 8)
+			{
+				LumpInfo[i].namespc = ns_strifevoices;
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // W_FindLump
 //
 // Find a named lump. Specifically allows duplicates for merging of e.g.
@@ -952,7 +1029,8 @@ int FWadCollection::FindLump (const char *name, int *lastlump)
 	lump_p = LumpInfo + *lastlump;
 	while (lump_p < LumpInfo + NumLumps)
 	{
-		if (*(__int64 *)&lump_p->name == *(__int64 *)&name8)
+		if (lump_p->namespc == ns_global &&
+			*(__int64 *)&lump_p->name == *(__int64 *)&name8)
 		{
 			int lump = lump_p - LumpInfo;
 			*lastlump = lump + 1;
@@ -1194,11 +1272,13 @@ const char *FWadCollection::GetWadFullName (int wadnum) const
 // not be a problem. Yes, there are skins that replace more than that, but
 // they are such a pain, and breaking them like this was done on purpose.
 // This also renames any S_SKINxx lumps to just S_SKIN.
+//
 //==========================================================================
 
 void FWadCollection::SkinHack (int baselump)
 {
 	bool skinned = false;
+	bool hasmap = false;
 	size_t i;
 
 	for (i = baselump; i < NumLumps; i++)
@@ -1225,6 +1305,20 @@ void FWadCollection::SkinHack (int baselump)
 				}
 			}
 		}
+		if (LumpInfo[i].name[0] == 'M' &&
+			LumpInfo[i].name[1] == 'A' &&
+			LumpInfo[i].name[2] == 'P')
+		{
+			hasmap = true;
+		}
+	}
+	if (skinned && hasmap)
+	{
+		Printf (TEXTCOLOR_BLUE
+			"The maps in %s will not be loaded because it has a skin.\n"
+			TEXTCOLOR_BLUE
+			"You should remove the skin from the wad to play these maps.\n",
+			Wads[LumpInfo[baselump].wadnum]->Name);
 	}
 }
 

@@ -3,7 +3,7 @@
 ** Base status bar definition
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,8 @@ enum EHudState
 	HUD_Fullscreen,
 	HUD_None
 };
+
+class AWeapon;
 
 class DHUDMessage : public DObject
 {
@@ -127,10 +129,21 @@ protected:
 };
 
 class FTexture;
+class AAmmo;
 
 class FBaseStatusBar
 {
 public:
+	// Popup screens for Strife's status bar
+	enum
+	{
+		POP_NoChange = -1,
+		POP_None,
+		POP_Log,
+		POP_Keys,
+		POP_Status
+	};
+
 	FBaseStatusBar (int reltop);
 	virtual ~FBaseStatusBar ();
 
@@ -148,7 +161,7 @@ public:
 
 	virtual void Tick ();
 	virtual void Draw (EHudState state);
-	virtual void FlashArtifact (int arti);
+	virtual void FlashItem (const TypeInfo *itemtype);
 	virtual void AttachToPlayer (player_s *player);
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);
@@ -157,34 +170,31 @@ public:
 	virtual void ScreenSizeChanged ();
 	virtual void MultiplayerChanged ();
 	virtual void SetInteger (int pname, int param);
+	virtual void ShowPop (int popnum);
+	virtual void ReceivedWeapon (AWeapon *weapon);
 
 protected:
+	void DrawPowerups ();
+
 	void UpdateRect (int x, int y, int width, int height) const;
 	void DrawImage (FTexture *image, int x, int y, byte *translation=NULL) const;
 	void DrawFadedImage (FTexture *image, int x, int y, fixed_t shade) const;
 	void DrawPartialImage (FTexture *image, int wx, int ww) const;
 
-	void SetHorizCentering (bool which) { Centering = which; }
-	void OverrideImageOrigin (bool which) { FixedOrigin = which; }
-
-	void DrawOuterFadedImage (FTexture *image, int x, int y, fixed_t shade) const;
-	void DrawShadowedImage (FTexture *image, int x, int y, fixed_t shade) const;
-	void DrawOuterImage (FTexture *image, int x, int y) const;
-	void DrawOuterTexture (FTexture *image, int x, int y) const;
-
 	void DrINumber (signed int val, int x, int y, int imgBase=imgINumbers) const;
 	void DrBNumber (signed int val, int x, int y, int w=3) const;
 	void DrSmallNumber (int val, int x, int y) const;
 
-	void DrINumberOuter (signed int val, int x, int y) const;
+	void DrINumberOuter (signed int val, int x, int y, bool center=false, int w=9) const;
 	void DrBNumberOuter (signed int val, int x, int y, int w=3) const;
-	void DrSmallNumberOuter (int val, int x, int y) const;
+	void DrBNumberOuterFont (signed int val, int x, int y, int w=3) const;
+	void DrSmallNumberOuter (int val, int x, int y, bool center) const;
 
 	void DrawCrosshair ();
-
 	void RefreshBackground () const;
 
-	void FindInventoryPos (int &pos, bool &moreleft, bool &moreright) const;
+	void GetCurrentAmmo (AAmmo *&ammo1, AAmmo *&ammo2, int &ammocount1, int &ammocount2) const;
+	AInventory *ValidateInvFirst (int numVisible) const;
 
 	static void AddBlend (float r, float g, float b, float a, float v_blend[4]);
 
@@ -208,9 +218,6 @@ protected:
 		NUM_BASESB_IMAGES = 33
 	};
 	FImageCollection Images;
-	FImageCollection AmmoImages;
-	FImageCollection ArtiImages;
-	FImageCollection ArmorImages;
 
 	player_s *CPlayer;
 

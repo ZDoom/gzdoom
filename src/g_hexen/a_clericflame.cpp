@@ -17,7 +17,7 @@ const fixed_t FLAMEROTSPEED	= 2*FRACUNIT;
 
 static FRandom pr_missile ("CFlameMissile");
 
-void A_CFlameAttack (AActor *, pspdef_t *);
+void A_CFlameAttack (AActor *);
 void A_CFlameRotate (AActor *);
 void A_CFlamePuff (AActor *);
 void A_CFlameMissile (AActor *);
@@ -28,12 +28,6 @@ class ACWeapFlame : public AClericWeapon
 {
 	DECLARE_ACTOR (ACWeapFlame, AClericWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_cfire;
-	}
-	static FWeaponInfo WeaponInfo;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_C3);
@@ -86,31 +80,21 @@ FState ACWeapFlame::States[] =
 IMPLEMENT_ACTOR (ACWeapFlame, Hexen, 8009, 0)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
 	PROP_SpawnState (S_CFLAME1)
+
+	PROP_Weapon_SelectionOrder (1000)
+	PROP_Weapon_AmmoUse1 (4)
+	PROP_Weapon_AmmoGive1 (25)
+	PROP_Weapon_UpState (S_CFLAMEUP)
+	PROP_Weapon_DownState (S_CFLAMEDOWN)
+	PROP_Weapon_ReadyState (S_CFLAMEREADY)
+	PROP_Weapon_AtkState (S_CFLAMEATK)
+	PROP_Weapon_HoldAtkState (S_CFLAMEATK)
+	PROP_Weapon_Kickback (150)
+	PROP_Weapon_YAdjust (10)
+	PROP_Weapon_MoveCombatDist (27000000)
+	PROP_Weapon_AmmoType1 ("Mana2")
+	PROP_Weapon_ProjectileType ("CFlameMissile")
 END_DEFAULTS
-
-FWeaponInfo ACWeapFlame::WeaponInfo =
-{
-	0,
-	MANA_2,
-	MANA_2,
-	4,
-	25,
-	&States[S_CFLAMEUP],
-	&States[S_CFLAMEDOWN],
-	&States[S_CFLAMEREADY],
-	&States[S_CFLAMEATK],
-	&States[S_CFLAMEATK],
-	NULL,
-	RUNTIME_CLASS(ACWeapFlame),
-	150,
-	10*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ACWeapFlame),
-	-1
-};
-
-WEAPON1 (wp_cfire, ACWeapFlame)
 
 // Floor Flame --------------------------------------------------------------
 
@@ -395,7 +379,7 @@ void ACFlameMissile::Tick ()
 //
 //============================================================================
 
-void A_CFlameAttack (AActor *actor, pspdef_t *psp)
+void A_CFlameAttack (AActor *actor)
 {
 	player_t *player;
 
@@ -403,9 +387,14 @@ void A_CFlameAttack (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ACFlameMissile));
-	player->UseAmmo ();
-	S_Sound (player->mo, CHAN_WEAPON, "ClericFlameFire", 1, ATTN_NORM);
+	AWeapon *weapon = actor->player->ReadyWeapon;
+	if (weapon != NULL)
+	{
+		if (!weapon->DepleteAmmo (weapon->bAltFire))
+			return;
+	}
+	P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ACFlameMissile));
+	S_Sound (actor, CHAN_WEAPON, "ClericFlameFire", 1, ATTN_NORM);
 }
 
 //============================================================================
@@ -471,89 +460,6 @@ void A_CFlameMissile (AActor *actor)
 		actor->SetState (&AFlamePuff2::States[0]);
 	}
 }
-
-/* [RH] This was commented out in the Hexen source
-void A_CFlameAttack(player_t *player, pspdef_t *psp)
-{
-	mobj_t *pmo;
-	angle_t angle;
-	int damage;
-	int i;
-	int an, an90;
-	fixed_t dist;
-	mobj_t *mo;
-
-	pmo = player->mo;
-	P_BulletSlope(pmo);
-	damage = 25+HITDICE(3);
-	angle = pmo->angle;
-	if(player->refire)
-	{
-		angle += (P_Random()-P_Random())<<17;
-	}
-	P_AimLineAttack(pmo, angle, CFLAMERANGE); // Correctly set linetarget
-	if(!linetarget)
-	{
-		angle += ANGLE_1*2;
-		P_AimLineAttack(pmo, angle, CFLAMERANGE);
-		if(!linetarget)
-		{
-			angle -= ANGLE_1*4;
-			P_AimLineAttack(pmo, angle, CFLAMERANGE);
-			if(!linetarget)
-			{
-				angle += ANGLE_1*2;
-			}
-		}		
-	}
-	if(linetarget)
-	{
-		PuffType = MT_FLAMEPUFF2;
-	}
-	else
-	{
-		PuffType = MT_FLAMEPUFF;
-	}
-	P_LineAttack(pmo, angle, CFLAMERANGE, bulletslope, damage);
-	if(linetarget)
-	{ // Hit something, so spawn the flame circle around the thing
-		dist = linetarget->radius+18*FRACUNIT;
-		for(i = 0; i < 4; i++)
-		{
-			an = (i*ANG45)>>ANGLETOFINESHIFT;
-			an90 = (i*ANG45+ANG90)>>ANGLETOFINESHIFT;
-			mo = P_SpawnMobj(linetarget->x+FixedMul(dist, finecosine[an]),
-				linetarget->y+FixedMul(dist, finesine[an]), 
-				linetarget->z+5*FRACUNIT, MT_CIRCLEFLAME);
-			if(mo)
-			{
-				mo->angle = an<<ANGLETOFINESHIFT;
-				mo->target = pmo;
-				mo->momx = mo->special1 = FixedMul(FLAMESPEED, finecosine[an]);
-				mo->momy = mo->special2 = FixedMul(FLAMESPEED, finesine[an]);
-				mo->tics -= P_Random()&3;
-			}
-			mo = P_SpawnMobj(linetarget->x-FixedMul(dist, finecosine[an]),
-				linetarget->y-FixedMul(dist, finesine[an]), 
-				linetarget->z+5*FRACUNIT, MT_CIRCLEFLAME);
-			if(mo)
-			{
-				mo->angle = ANG180+(an<<ANGLETOFINESHIFT);
-				mo->target = pmo;
-				mo->momx = mo->special1 = FixedMul(-FLAMESPEED, 
-					finecosine[an]);
-				mo->momy = mo->special2 = FixedMul(-FLAMESPEED, finesine[an]);
-				mo->tics -= P_Random()&3;
-			}
-		}
-	}
-// Create a line of flames from the player to the flame puff
-	CFlameCreateFlames(player->mo);
-
-	player->mana[MANA_2] -= WeaponManaUse[player->class][player->readyweapon];
-	S_StartSound(player->mo, SFX_CLERIC_FLAME_FIRE);
-}
-*/
 
 //============================================================================
 //

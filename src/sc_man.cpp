@@ -47,6 +47,7 @@ static void CheckOpen (void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 char *sc_String;
+int sc_StringLen;
 int sc_Number;
 float sc_Float;
 int sc_Line;
@@ -263,13 +264,8 @@ BOOL SC_GetString (void)
 	}
 	while (foundToken == false)
 	{
-		while (*ScriptPtr <= ' ')
+		while (ScriptPtr < ScriptEndPtr && *ScriptPtr <= ' ')
 		{
-			if (ScriptPtr >= ScriptEndPtr)
-			{
-				sc_End = true;
-				return false;
-			}
 			if (*ScriptPtr++ == '\n')
 			{
 				sc_Line++;
@@ -370,6 +366,7 @@ BOOL SC_GetString (void)
 		}
 	}
 	*text = 0;
+	sc_StringLen = text - sc_String;
 	return true;
 }
 
@@ -398,11 +395,29 @@ void SC_MustGetStringName (const char *name)
 	SC_MustGetString ();
 	if (SC_Compare (name) == false)
 	{
-		const char *args[2];
-		args[0] = name;
-		args[1] = sc_String;
-		SC_ScriptError ("Expected '%s', got '%s'.", args);
+		SC_ScriptError ("Expected '%s', got '%s'.", name, sc_String);
 	}
+}
+
+//==========================================================================
+//
+// SC_CheckString
+//
+// Checks if the next token matches the specified string. Returns true if
+// it does. If it doesn't, it ungets it and returns false.
+//==========================================================================
+
+bool SC_CheckString (const char *name)
+{
+	if (SC_GetString ())
+	{
+		if (SC_Compare (name))
+		{
+			return true;
+		}
+		SC_UnGet ();
+	}
+	return false;
 }
 
 //==========================================================================
@@ -427,9 +442,7 @@ BOOL SC_GetNumber (void)
 			sc_Number = strtol (sc_String, &stopper, 0);
 			if (*stopper != 0)
 			{
-				const char *args;
-				args = sc_String;
-				SC_ScriptError ("SC_GetNumber: Bad numeric constant \"%s\".", &args);
+				SC_ScriptError ("SC_GetNumber: Bad numeric constant \"%s\".", sc_String);
 			}
 		}
 		sc_Float = (float)sc_Number;
@@ -607,21 +620,19 @@ BOOL SC_Compare (const char *text)
 //
 //==========================================================================
 
-void SC_ScriptError (const char *message, const char **args)
+void STACK_ARGS SC_ScriptError (const char *message, ...)
 {
 	char composed[2048];
 	if (message == NULL)
 	{
 		message = "Bad syntax.";
 	}
-#if !defined(__GNUC__) && !defined(_MSC_VER)
+
 	va_list arglist;
-	va_start (arglist, *args);
+	va_start (arglist, message);
 	vsprintf (composed, message, arglist);
 	va_end (arglist);
-#else
-	vsprintf (composed, message, (va_list)args);
-#endif
+
 	I_Error ("Script error, \"%s\" line %d:\n%s\n", ScriptName,
 		sc_Line, composed);
 }

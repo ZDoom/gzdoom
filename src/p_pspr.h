@@ -55,6 +55,9 @@ typedef enum
 {
 	ps_weapon,
 	ps_flash,
+	ps_targetcenter,
+	ps_targetleft,
+	ps_targetright,
 	NUMPSPRITES
 
 } psprnum_t;
@@ -83,25 +86,22 @@ class player_s;
 void P_SetPsprite (player_s *player, int position, FState *state);
 void P_SetPspriteNF (player_s *player, int position, FState *state);
 void P_CalcSwing (player_s *player);
-void P_PostMorphWeapon (player_s *player, weapontype_t weapon);
 void P_BringUpWeapon (player_s *player);
-bool P_CheckAmmo (player_s *player);
-weapontype_t P_PickNewWeapon (player_s *player);
 void P_FireWeapon (player_s *player);
 void P_DropWeapon (player_s *player);
 void P_BobWeapon (player_s *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
 void P_BulletSlope (AActor *mo);
-void P_GunShot (AActor *mo, BOOL accurate);
+void P_GunShot (AActor *mo, BOOL accurate, const TypeInfo *pufftype);
 
-void A_WeaponReady (AActor *actor, pspdef_t *psp);
-void A_ReFire (AActor *actor, pspdef_t *psp);
-void A_CheckReload (AActor *actor, pspdef_t *psp);
-void A_Lower (AActor *actor, pspdef_t *psp);
-void A_Raise (AActor *actor, pspdef_t *psp);
-void A_GunFlash (AActor *actor, pspdef_t *psp);
-void A_Light0 (AActor *actor, pspdef_t *psp);
-void A_Light1 (AActor *actor, pspdef_t *psp);
-void A_Light2 (AActor *actor, pspdef_t *psp);
+void A_WeaponReady (AActor *actor);
+void A_ReFire (AActor *actor);
+void A_CheckReload (AActor *actor);
+void A_Lower (AActor *actor);
+void A_Raise (AActor *actor);
+void A_GunFlash (AActor *actor);
+void A_Light0 (AActor *actor);
+void A_Light1 (AActor *actor);
+void A_Light2 (AActor *actor);
 
 extern angle_t bulletpitch;
 

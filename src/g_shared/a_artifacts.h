@@ -1,6 +1,7 @@
 #ifndef __A_ARTIFACTS_H__
 #define __A_ARTIFACTS_H__
 
+#include "farchive.h"
 #include "a_pickups.h"
 
 #define STREAM_ENUM(e) \
@@ -10,136 +11,146 @@
 		arc << val; \
 		i = (e)val; \
 		return arc; \
-	} \
-
-typedef enum
-{
-	arti_none,
-	arti_invulnerability,
-	arti_invisibility,
-	arti_health,
-	arti_superhealth,
-	arti_tomeofpower,
-	arti_healingradius,
-	arti_summon,
-	arti_torch,
-	arti_firebomb,
-	arti_egg,
-	arti_pork,
-	arti_fly,
-	arti_blastradius,
-	arti_poisonbag1,
-	arti_poisonbag2,
-	arti_poisonbag3,
-	arti_teleportother,
-	arti_speed,
-	arti_boostmana,
-	arti_boostarmor,
-	arti_teleport,
-	// Puzzle artifacts
-	arti_firstpuzzitem,
-	arti_puzzskull = arti_firstpuzzitem,
-	arti_puzzgembig,
-	arti_puzzgemred,
-	arti_puzzgemgreen1,
-	arti_puzzgemgreen2,
-	arti_puzzgemblue1,
-	arti_puzzgemblue2,
-	arti_puzzbook1,
-	arti_puzzbook2,
-	arti_puzzskull2,
-	arti_puzzfweapon,
-	arti_puzzcweapon,
-	arti_puzzmweapon,
-	arti_puzzgear1,
-	arti_puzzgear2,
-	arti_puzzgear3,
-	arti_puzzgear4,
-	NUMARTIFACTS
-} artitype_t;
-
-STREAM_ENUM (artitype_t)
+	}
 
 class player_s;
-extern bool (*ArtiDispatch[NUMARTIFACTS]) (player_s *, artitype_t);
-extern const char *ArtiPics[NUMARTIFACTS];
-extern const char *ArtifactNames[NUMARTIFACTS];
 
-#define NUMINVENTORYSLOTS	NUMARTIFACTS
-
-typedef enum
+// A powerup is a pseudo-inventory item that applies an effect to its
+// owner while it is present.
+class APowerup : public AInventory
 {
-	pw_invulnerability,
-	pw_strength,
-	pw_invisibility,
-	pw_ironfeet,
-	pw_allmap,
-	pw_infrared,
-
-// Powerups added in Heretic
-	pw_weaponlevel2,
-	pw_flight,
-	pw_unused1,		// was pw_shield
-	pw_unused2,		// was pw_health2
-
-// Powerups added in Hexen
-	pw_speed,
-	pw_minotaur,
-
-	NUMPOWERS
-	
-} powertype_t;
-
-STREAM_ENUM (powertype_t)
-
-extern DWORD PowerupColors[NUMPOWERS];
-
-// An artifact is something the player can pickup and carry around
-// in his/her inventory.
-class AArtifact : public AInventory
-{
-	DECLARE_ACTOR (AArtifact, AInventory)
+	DECLARE_STATELESS_ACTOR (APowerup, AInventory)
 public:
-	virtual void SetDormant ();
+	virtual void Tick ();
+	virtual void Destroy ();
+	virtual bool HandlePickup (AInventory *item);
+	virtual AInventory *CreateCopy (AActor *other);
+	virtual AInventory *CreateTossable ();
+	virtual void Serialize (FArchive &arc);
+	virtual PalEntry GetBlend ();
+	virtual bool DrawPowerup (int x, int y);
+
+	int EffectTics;
+	PalEntry BlendColor;
+
 protected:
-	virtual void SetHiddenState ();
-	virtual void PlayPickupSound (AActor *toucher);
+	virtual void InitEffect ();
+	virtual void DoEffect ();
+	virtual void EndEffect ();
 };
 
-// A powerup is an artifact that can be made to activate immediately
-// on pickup with the appropriate dmflags setting.
-class APowerup : public AArtifact
+// An artifact is an item that gives the player a powerup when activated.
+class APowerupGiver : public AInventory
 {
-	DECLARE_CLASS (APowerup, AArtifact)
+	DECLARE_STATELESS_ACTOR (APowerupGiver, AInventory)
+public:
+	virtual bool Use ();
+	virtual void Serialize (FArchive &arc);
+
+	const TypeInfo *PowerupType;
+	int EffectTics;		// Non-0 to override the powerup's default tics
+protected:
+	void PlayPickupSound (AActor *toucher);
+};
+
+class APowerInvulnerable : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerInvulnerable, APowerup)
+protected:
+	void InitEffect ();
+	void DoEffect ();
+	void EndEffect ();
+};
+
+class APowerStrength : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerStrength, APowerup)
+public:
+	PalEntry GetBlend ();
+protected:
+	void InitEffect ();
+	void DoEffect ();
+};
+
+class APowerInvisibility : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerInvisibility, APowerup)
+protected:
+	void InitEffect ();
+	void EndEffect ();
+	void AlterWeaponSprite (vissprite_t *vis);
+};
+
+class APowerIronFeet : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerIronFeet, APowerup)
+};
+
+class APowerMask : public APowerIronFeet
+{
+	DECLARE_STATELESS_ACTOR (APowerMask, APowerIronFeet)
+};
+
+class APowerLightAmp : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerLightAmp, APowerup)
+protected:
+	void DoEffect ();
+	void EndEffect ();
+};
+
+class APowerTorch : public APowerLightAmp
+{
+	DECLARE_STATELESS_ACTOR (APowerTorch, APowerLightAmp)
+public:
+	void Serialize (FArchive &arc);
+protected:
+	void DoEffect ();
+	int NewTorch, NewTorchDelta;
+};
+
+class APowerFlight : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerFlight, APowerup)
+public:
+	bool DrawPowerup (int x, int y);
+	void Serialize (FArchive &arc);
+
+protected:
+	void InitEffect ();
+	void DoEffect ();
+	void EndEffect ();
+
+	bool HitCenterFrame;
+};
+
+class APowerWeaponLevel2 : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerWeaponLevel2, APowerup)
+protected:
+	void InitEffect ();
+	void EndEffect ();
+};
+
+class APowerSpeed : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerSpeed, APowerup)
+protected:
+	void InitEffect ();
+	void DoEffect ();
+	void EndEffect ();
+};
+
+class APowerMinotaur : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerMinotaur, APowerup)
+};
+
+class APowerScanner : public APowerup
+{
+	DECLARE_STATELESS_ACTOR (APowerScanner, APowerup)
 };
 
 class player_s;
-void P_PlayerNextArtifact (player_s *player);
-void P_PlayerRemoveArtifact (player_s *player, int slot);
-bool P_PlayerUseArtifact (player_s *player, artitype_t arti);
-
-artitype_t P_NextInventory (player_s *player, artitype_t arti);
-artitype_t P_PrevInventory (player_s *player, artitype_t arti);
-artitype_t P_FindNamedInventory (const char *name);
-
-bool P_UseArtifact (player_s *player, artitype_t arti);
-
-// Helper macro to save me some typing --------------------------------------
-
-#define BASIC_ARTI(name,type,msg) \
-	class AArti##name : public AArtifact { \
-		DECLARE_ACTOR (AArti##name, AArtifact) public: \
-		bool TryPickup (AActor *toucher) { \
-			return P_GiveArtifact (toucher->player, type); } protected: \
-		const char *PickupMessage () { return msg; } 
-
-// ^^^^^^^^^^^^^^^^^^ Notice ^^^^^^^^^^^^^^^^^^^ No closing };
-
-#define POWER_ARTI(name,type,msg) \
-	class AArti##name : public APowerup { \
-		DECLARE_ACTOR (AArti##name, APowerup) public: \
-		bool TryPickup (AActor *toucher) { \
-			return P_GiveArtifact (toucher->player, type); } protected:\
-		const char *PickupMessage () { return msg; } 
 
 #endif //__A_ARTIFACTS_H__

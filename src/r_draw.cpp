@@ -90,6 +90,9 @@ void (*R_DrawFuzzColumn)(void);
 void (*R_DrawTranslatedColumn)(void);
 void (*R_DrawShadedColumn)(void);
 void (*R_DrawSpan)(void);
+void (*R_DrawSpanMasked)(void);
+void (*R_DrawSpanTranslucent)(void);
+void (*R_DrawSpanMaskedTranslucent)(void);
 void (*rt_map4cols)(int,int,int);
 
 //
@@ -97,7 +100,7 @@ void (*rt_map4cols)(int,int,int);
 // Source is the top of the column to scale.
 //
 extern "C" {
-int				dc_pitch=0x12345678;	// [RH] Distance between rows
+int				dc_pitch=0xABadCafe;	// [RH] Distance between rows
 
 lighttable_t*	dc_colormap; 
 int 			dc_x; 
@@ -245,7 +248,6 @@ void R_FillAddColumn (void)
 //
 // Spectre/Invisibility.
 //
-// [RH] FUZZTABLE changed from 50 to 64
 #define FUZZTABLE	50
 
 extern "C"
@@ -703,6 +705,8 @@ void R_DrawSpanP_C (void)
 	dsfixed_t			xstep;
 	dsfixed_t			ystep;
 	byte*				dest;
+	const byte*			source = ds_source;
+	const byte*			colormap = ds_colormap;
 	int 				count;
 	int 				spot;
 
@@ -735,7 +739,7 @@ void R_DrawSpanP_C (void)
 
 			// Lookup pixel from flat texture tile,
 			//  re-index using light/colormap.
-			*dest++ = ds_colormap[ds_source[spot]];
+			*dest++ = colormap[source[spot]];
 
 			// Next step in u,v.
 			xfrac += xstep;
@@ -744,18 +748,18 @@ void R_DrawSpanP_C (void)
 	}
 	else
 	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+
 		do
 		{
-			BYTE yshift = 32 - ds_ybits;
-			BYTE xshift = yshift - ds_xbits;
-			int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
-		
 			// Current texture index in u,v.
 			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
 
 			// Lookup pixel from flat texture tile,
 			//  re-index using light/colormap.
-			*dest++ = ds_colormap[ds_source[spot]];
+			*dest++ = colormap[source[spot]];
 
 			// Next step in u,v.
 			xfrac += xstep;
@@ -763,7 +767,205 @@ void R_DrawSpanP_C (void)
 		} while (--count);
 	}
 }
+
+// [RH] Draw a span with holes
+void R_DrawSpanMaskedP_C (void)
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	byte*				dest;
+	const byte*			source = ds_source;
+	const byte*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			BYTE texdata;
+
+			spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				*dest = colormap[texdata];
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			BYTE texdata;
+		
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				*dest = colormap[texdata];
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
 #endif
+
+void R_DrawSpanTranslucentP_C (void)
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	byte*				dest;
+	const byte*			source = ds_source;
+	const byte*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
+			DWORD fg = colormap[source[spot]];
+			DWORD bg = *dest;
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest++ = RGB32k[0][0][fg & (fg>>15)];
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			DWORD fg = colormap[source[spot]];
+			DWORD bg = *dest;
+			fg = fg2rgb[fg];
+			bg = bg2rgb[bg];
+			fg = (fg+bg) | 0x1f07c1f;
+			*dest++ = RGB32k[0][0][fg & (fg>>15)];
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
+void R_DrawSpanMaskedTranslucentP_C (void)
+{
+	dsfixed_t			xfrac;
+	dsfixed_t			yfrac;
+	dsfixed_t			xstep;
+	dsfixed_t			ystep;
+	byte*				dest;
+	const byte*			source = ds_source;
+	const byte*			colormap = ds_colormap;
+	int 				count;
+	int 				spot;
+	DWORD *fg2rgb = dc_srcblend;
+	DWORD *bg2rgb = dc_destblend;
+
+	xfrac = ds_xfrac;
+	yfrac = ds_yfrac;
+
+	dest = ylookup[ds_y] + ds_x1 + dc_destorg;
+
+	count = ds_x2 - ds_x1 + 1;
+
+	xstep = ds_xstep;
+	ystep = ds_ystep;
+
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			BYTE texdata;
+
+			spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				DWORD fg = colormap[texdata];
+				DWORD bg = *dest;
+				fg = fg2rgb[fg];
+				bg = bg2rgb[bg];
+				fg = (fg+bg) | 0x1f07c1f;
+				*dest = RGB32k[0][0][fg & (fg>>15)];
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		BYTE yshift = 32 - ds_ybits;
+		BYTE xshift = yshift - ds_xbits;
+		int xmask = ((1 << ds_xbits) - 1) << ds_ybits;
+		do
+		{
+			BYTE texdata;
+		
+			spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+			texdata = source[spot];
+			if (texdata != 0)
+			{
+				DWORD fg = colormap[texdata];
+				DWORD bg = *dest;
+				fg = fg2rgb[fg];
+				bg = bg2rgb[bg];
+				fg = (fg+bg) | 0x1f07c1f;
+				*dest = RGB32k[0][0][fg & (fg>>15)];
+			}
+			dest++;
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+}
+
 // [RH] Just fill a span with a color
 void R_FillSpan (void)
 {
@@ -1516,29 +1718,33 @@ ADD_STAT(detail,out)
 void R_InitColumnDrawers ()
 {
 #ifdef USEASM
-	R_DrawColumn			= R_DrawColumnP_ASM;
-	R_DrawColumnHoriz		= R_DrawColumnHorizP_ASM;
-	R_DrawFuzzColumn		= R_DrawFuzzColumnP_ASM;
-	R_DrawTranslatedColumn	= R_DrawTranslatedColumnP_C;
-	R_DrawShadedColumn		= R_DrawShadedColumnP_C;
-	R_DrawSpan				= R_DrawSpanP_ASM;
+	R_DrawColumn				= R_DrawColumnP_ASM;
+	R_DrawColumnHoriz			= R_DrawColumnHorizP_ASM;
+	R_DrawFuzzColumn			= R_DrawFuzzColumnP_ASM;
+	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
+	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
+	R_DrawSpan					= R_DrawSpanP_ASM;
+	R_DrawSpanMasked			= R_DrawSpanMaskedP_ASM;
 	if (CPU.Family <= 5)
 	{
-		rt_map4cols			= rt_map4cols_asm2;
+		rt_map4cols				= rt_map4cols_asm2;
 	}
 	else
 	{
-		rt_map4cols			= rt_map4cols_asm1;
+		rt_map4cols				= rt_map4cols_asm1;
 	}
 #else
-	R_DrawColumnHoriz		= R_DrawColumnHorizP_C;
-	R_DrawColumn			= R_DrawColumnP_C;
-	R_DrawFuzzColumn		= R_DrawFuzzColumnP_C;
-	R_DrawTranslatedColumn	= R_DrawTranslatedColumnP_C;
-	R_DrawShadedColumn		= R_DrawShadedColumnP_C;
-	R_DrawSpan				= R_DrawSpanP_C;
-	rt_map4cols				= rt_map4cols_c;
+	R_DrawColumnHoriz			= R_DrawColumnHorizP_C;
+	R_DrawColumn				= R_DrawColumnP_C;
+	R_DrawFuzzColumn			= R_DrawFuzzColumnP_C;
+	R_DrawTranslatedColumn		= R_DrawTranslatedColumnP_C;
+	R_DrawShadedColumn			= R_DrawShadedColumnP_C;
+	R_DrawSpan					= R_DrawSpanP_C;
+	R_DrawSpanMasked			= R_DrawSpanMaskedP_C;
+	rt_map4cols					= rt_map4cols_c;
 #endif
+	R_DrawSpanTranslucent		= R_DrawSpanTranslucentP_C;
+	R_DrawSpanMaskedTranslucent = R_DrawSpanMaskedTranslucentP_C;
 }
 
 // [RH] Choose column drawers in a single place

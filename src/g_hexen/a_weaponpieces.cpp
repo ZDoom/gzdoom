@@ -92,7 +92,8 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 			return false;
 		}
 		checkAssembled = false;
-		gaveMana = P_GiveAmmo (toucher->player, MANA_1, 20) + P_GiveAmmo (toucher->player, MANA_2, 20);
+		gaveMana = toucher->GiveAmmo (RUNTIME_CLASS(AMana1), 20) +
+				   toucher->GiveAmmo (RUNTIME_CLASS(AMana2), 20);
 		if (!gaveMana)
 		{ // Didn't need the mana, so don't pick it up
 			return false;
@@ -104,12 +105,13 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 		{ // Already has the piece
 			return false;
 		}
-		P_GiveAmmo (toucher->player, MANA_1, 20);
-		P_GiveAmmo (toucher->player, MANA_2, 20);
+		toucher->GiveAmmo (RUNTIME_CLASS(AMana1), 20);
+		toucher->GiveAmmo (RUNTIME_CLASS(AMana2), 20);
 	}
 	else
 	{ // Deathmatch or singleplayer game
-		gaveMana = P_GiveAmmo (toucher->player, MANA_1, 20) + P_GiveAmmo (toucher->player, MANA_2, 20);
+		gaveMana = toucher->GiveAmmo (RUNTIME_CLASS(AMana1), 20) +
+				   toucher->GiveAmmo (RUNTIME_CLASS(AMana2), 20);
 		if (toucher->player->pieces & PieceValue)
 		{ // Already has the piece, check if mana needed
 			if (!gaveMana)
@@ -154,6 +156,10 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 		{
 			gaveWeapon = false;
 		}
+	}
+	if (gaveWeapon || gaveMana || checkAssembled)
+	{
+		GoAwayAndDie ();
 	}
 	return gaveWeapon || gaveMana || checkAssembled;
 }

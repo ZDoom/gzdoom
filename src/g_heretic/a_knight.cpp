@@ -216,7 +216,7 @@ void A_KnightAttack (AActor *actor)
 	{
 		return;
 	}
-	if (P_CheckMeleeRange (actor))
+	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_knightatk.HitDice (3);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);

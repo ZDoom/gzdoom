@@ -9,16 +9,6 @@
 class AHealthBonus : public AHealth
 {
 	DECLARE_ACTOR (AHealthBonus, AHealth)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		player_t *player = toucher->player;
-		player->health++;		// can go over 100%
-		if (player->health > deh.MaxSoulsphere)
-			player->health = deh.MaxSoulsphere;
-		player->mo->health = player->health;
-		return true;
-	}
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -40,7 +30,8 @@ IMPLEMENT_ACTOR (AHealthBonus, Doom, 2014, 152)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
-
+	PROP_Inventory_Amount (1)
+	PROP_Inventory_MaxAmount (200)		// deh.MaxSoulsphere
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -49,11 +40,6 @@ END_DEFAULTS
 class AStimpack : public AHealth
 {
 	DECLARE_ACTOR (AStimpack, AHealth)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveBody (toucher->player, 10);
-	}
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -70,7 +56,7 @@ IMPLEMENT_ACTOR (AStimpack, Doom, 2011, 23)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (10)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -83,7 +69,7 @@ public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		PrevHealth = toucher->player->health;
-		return P_GiveBody (toucher->player, 25);
+		return Super::TryPickup (toucher);
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -102,6 +88,6 @@ IMPLEMENT_ACTOR (AMedikit, Doom, 2012, 24)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
-
+	PROP_Inventory_Amount (25)
 	PROP_SpawnState (0)
 END_DEFAULTS

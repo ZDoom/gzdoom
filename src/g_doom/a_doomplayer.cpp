@@ -97,32 +97,20 @@ END_DEFAULTS
 
 void ADoomPlayer::GiveDefaultInventory ()
 {
-	player->health = deh.StartHealth;		// [RH] Used to be MAXHEALTH
-	player->weaponowned[wp_fist] = true;
-	player->weaponowned[wp_pistol] = true;
-	player->ammo[am_clip] = deh.StartBullets; // [RH] Used to be 50
-	if (deh.StartBullets > 0)
-	{
-		player->readyweapon = player->pendingweapon = wp_pistol;
-	}
-	else
-	{
-		player->readyweapon = player->pendingweapon = wp_fist;
-	}
-}
+	AInventory *fist, *pistol, *bullets;
 
-int ADoomPlayer::GetMOD ()
-{
-	switch (player->readyweapon)
+	player->health = deh.StartHealth;		// [RH] Used to be MAXHEALTH
+	health = deh.StartHealth;
+	fist = player->mo->GiveInventoryType (TypeInfo::FindType ("Fist"));
+	pistol = player->mo->GiveInventoryType (TypeInfo::FindType ("Pistol"));
+	// Adding the pistol automatically adds bullets
+	bullets = player->mo->FindInventory (TypeInfo::FindType ("Clip"));
+	if (bullets != NULL)
 	{
-	case wp_fist:			return MOD_FIST;
-	case wp_pistol:			return MOD_PISTOL;
-	case wp_shotgun:		return MOD_SHOTGUN;
-	case wp_chaingun:		return MOD_CHAINGUN;
-	case wp_supershotgun:	return MOD_SSHOTGUN;
-	case wp_chainsaw:		return MOD_CHAINSAW;
-	default:				return MOD_UNKNOWN;
+		bullets->Amount = deh.StartBullets;		// [RH] Used to be 50
 	}
+	player->ReadyWeapon = player->PendingWeapon =
+		static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
 }
 
 void A_PlayerScream (AActor *self)

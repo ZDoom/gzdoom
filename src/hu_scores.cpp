@@ -70,7 +70,7 @@ void HU_DrawScores (player_t *player)
 	int i, j;
 	player_t *sortedplayers[MAXPLAYERS];
 
-	if (player->camera->player)
+	if (player->camera && player->camera->player)
 		player = player->camera->player;
 
 	sortedplayers[MAXPLAYERS-1] = player;

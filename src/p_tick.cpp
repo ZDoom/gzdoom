@@ -51,7 +51,7 @@ void P_Ticker (void)
 
 	// pause if in menu or console and at least one tic has been run
 	if ( !netgame
-		 && (menuactive != MENU_Off || ConsoleState == c_down || ConsoleState == c_falling)
+		 && ((menuactive != MENU_Off && menuactive != MENU_OnNoPause) || ConsoleState == c_down || ConsoleState == c_falling)
 		 && !demoplayback
 		 && !demorecording
 		 && players[consoleplayer].viewz != 1

@@ -1,9 +1,8 @@
+#ifdef _WIN32
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "c_cvars.h"
 #include "doomdef.h"
-
-#ifndef NOSPC
 
 struct XID6Tag
 {
@@ -62,7 +61,7 @@ SPCSong::SPCSong (FILE *iofile, int len)
 		FSOUND_SIGNED | FSOUND_2D |
 		(spc_stereo ? FSOUND_STEREO : FSOUND_MONO) |
 		(spc_8bit ? FSOUND_8BITS : FSOUND_16BITS),
-		freq, (int)this);
+		freq, this);
 	if (m_Stream == NULL)
 	{
 		Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
@@ -168,9 +167,9 @@ void SPCSong::Play (bool looping)
 	}
 }
 
-signed char F_CALLBACKAPI SPCSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+signed char F_CALLBACKAPI SPCSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata)
 {
-	SPCSong *song = (SPCSong *)param;
+	SPCSong *song = (SPCSong *)userdata;
 	int div = 1 << (spc_stereo + !spc_8bit);
 	song->EmuAPU (buff, len/div, 1);
 	return TRUE;
@@ -206,14 +205,18 @@ bool SPCSong::LoadEmu ()
 		{
 			APUVersion = 98;
 		}
+		else if ((min & 0xffff00) == 0x11000)
+		{
+			APUVersion = 110;
+		}
 		else
 		{
 			char letters[4];
 			letters[0] = (char)ver; letters[1] = 0;
 			letters[2] = (char)min; letters[3] = 0;
-			Printf ("This snesapu.dll is too new. It is version %lx.%02lx%s.\n"
-				"It supports DLLs back to %lx.%02lx%s.\n"
-				"ZDoom is only known to support DLL versions 0.95 - 1.01\n",
+			Printf ("This snesapu.dll is too new.\nIt is version %lx.%02lx%s and"
+				"is backward compatible with DLL version %lx.%02lx%s.\n"
+				"ZDoom is only known to support DLL versions 0.95 - 2.0\n",
 				(ver>>16) & 255, (ver>>8) & 255, letters,
 				(min>>16) & 255, (min>>8) & 255, letters+2);
 		}

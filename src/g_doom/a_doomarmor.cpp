@@ -7,19 +7,9 @@
 
 // Armor bonus --------------------------------------------------------------
 
-class AArmorBonus : public AArmor
+class AArmorBonus : public ABasicArmorBonus
 {
-	DECLARE_ACTOR (AArmorBonus, AArmor)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		player_t *player = toucher->player;
-		if (player->armorpoints[0] < deh.MaxArmor)
-			player->armorpoints[0]++;		// can go over 100%
-		if (!player->armortype)
-			player->armortype = deh.GreenAC;
-		return true;
-	}
+	DECLARE_ACTOR (AArmorBonus, ABasicArmorBonus)
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -42,19 +32,19 @@ IMPLEMENT_ACTOR (AArmorBonus, Doom, 2015, 22)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 
+	PROP_BasicArmorBonus_SavePercent (FRACUNIT/3)
+	PROP_BasicArmorBonus_SaveAmount (1)
+	PROP_BasicArmorBonus_MaxSaveAmount (200)	// deh.MaxArmor
+
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("ARM1A0")
 END_DEFAULTS
 
 // Green armor --------------------------------------------------------------
 
-class AGreenArmor : public AArmor
+class AGreenArmor : public ABasicArmorPickup
 {
-	DECLARE_ACTOR (AGreenArmor, AArmor)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, (armortype_t)-deh.GreenAC, 100*deh.GreenAC);
-	}
+	DECLARE_ACTOR (AGreenArmor, ABasicArmorPickup)
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -73,27 +63,18 @@ IMPLEMENT_ACTOR (AGreenArmor, Doom, 2018, 68)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
 
-	PROP_SpawnState (0)
-END_DEFAULTS
+	PROP_BasicArmorPickup_SavePercent (FRACUNIT/3)
+	PROP_BasicArmorPickup_SaveAmount (100)		// 100*deh.GreenAC
 
-AT_GAME_SET (GreenArmor)
-{
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		ArmorPics[0] = "ARM1A0";
-	}
-}
+	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("ARM1A0")
+END_DEFAULTS
 
 // Blue armor ---------------------------------------------------------------
 
-class ABlueArmor : public AArmor
+class ABlueArmor : public ABasicArmorPickup
 {
-	DECLARE_ACTOR (ABlueArmor, AArmor)
-public:
-	virtual bool TryPickup (AActor *toucher)
-	{
-		return P_GiveArmor (toucher->player, (armortype_t)-deh.BlueAC, 100*deh.BlueAC);
-	}
+	DECLARE_ACTOR (ABlueArmor, ABasicArmorPickup)
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -112,13 +93,9 @@ IMPLEMENT_ACTOR (ABlueArmor, Doom, 2019, 69)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL)
 
-	PROP_SpawnState (0)
-END_DEFAULTS
+	PROP_BasicArmorPickup_SavePercent (FRACUNIT/2)
+	PROP_BasicArmorPickup_SaveAmount (200)		// 100*deh.BlueAC
 
-AT_GAME_SET (BlueArmor)
-{
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		ArmorPics[1] = "ARM2A0";
-	}
-}
+	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("ARM2A0")
+END_DEFAULTS

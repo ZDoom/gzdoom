@@ -19,19 +19,18 @@ enum dirtype_t
 
 extern fixed_t xspeed[8], yspeed[8];
 
-void P_RecursiveSound (sector_t *sec, int soundblocks);
-void P_NoiseAlert (AActor *target, AActor *emmiter);
-BOOL P_CheckMeleeRange (AActor *actor);
+void P_NoiseAlert (AActor *target, AActor *emmiter, bool splash=false);
 bool P_CheckMeleeRange2 (AActor *actor);
 BOOL P_Move (AActor *actor);
 BOOL P_TryWalk (AActor *actor);
 void P_NewChaseDir (AActor *actor);
 BOOL P_LookForPlayers (AActor *actor, BOOL allaround);
-void P_DropItem (AActor *source, const TypeInfo *type, int special, int chance);
-inline void P_DropItem (AActor *source, const char *type, int special, int chance)
+AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int chance);
+inline AInventory *P_DropItem (AActor *source, const char *type, int special, int chance)
 {
-	P_DropItem (source, TypeInfo::FindType (type), special, chance);
+	return P_DropItem (source, TypeInfo::FindType (type), special, chance);
 }
+void P_TossItem (AActor *item);
 
 void A_Look (AActor *actor);
 void A_Wander (AActor *actor);
@@ -54,6 +53,7 @@ void A_ClassBossHealth (AActor *);
 bool A_RaiseMobj (AActor *);
 bool A_SinkMobj (AActor *);
 
+bool CheckBossDeath (AActor *);
 int P_Massacre ();
 BOOL P_CheckMissileRange (AActor *actor);
 

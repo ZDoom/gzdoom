@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0400
 #undef _WIN32_WINNT
@@ -7,6 +8,11 @@
 #endif
 #include <windows.h>
 #include <mmsystem.h>
+#else
+#include <SDL.h>
+#define FALSE 0
+#define TRUE 1
+#endif
 #include <fmod.h>
 #include "tempfiles.h"
 #include "oplsynth/opl_mus_player.h"
@@ -44,6 +50,7 @@ public:
 
 // MUS file played with MIDI output messages --------------------------------
 
+#ifdef _WIN32
 class MUSSong2 : public MusInfo
 {
 public:
@@ -84,9 +91,11 @@ protected:
 	BYTE ChannelVolumes[16];
 	size_t MusP, MaxMusP;
 };
+#endif
 
 // MIDI file played with MIDI output messages -------------------------------
 
+#ifdef _WIN32
 class MIDISong2 : public MusInfo
 {
 public:
@@ -130,6 +139,7 @@ protected:
 	int Tempo;
 	WORD DesignationMask;
 };
+#endif
 
 // MOD file played with FMOD ------------------------------------------------
 
@@ -180,6 +190,7 @@ protected:
 
 // SPC file, rendered with SNESAPU.DLL and streamed through FMOD ------------
 
+#ifdef _WIN32
 typedef void (__stdcall *SNESAPUInfo_TYPE) (DWORD*, DWORD*, DWORD*);
 typedef void (__stdcall *GetAPUData_TYPE) (void**, BYTE**, BYTE**, DWORD**, void**, void**, DWORD**, DWORD**);
 typedef void (__stdcall *ResetAPU_TYPE) (DWORD);
@@ -201,7 +212,7 @@ protected:
 	bool LoadEmu ();
 	void CloseEmu ();
 
-	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata);
 
 	HINSTANCE HandleAPU;
 	int APUVersion;
@@ -214,6 +225,7 @@ protected:
 	SetAPUOpt_TYPE SetAPUOpt;
 	EmuAPU_TYPE EmuAPU;
 };
+#endif
 
 // MIDI file played with Timidity and possibly streamed through FMOD --------
 
@@ -246,7 +258,7 @@ protected:
 	char *CommandLine;
 	int LoopPos;
 
-	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata);
 #ifdef _WIN32
 	static const char EventName[];
 #endif
@@ -265,7 +277,7 @@ public:
 	void ResetChips ();
 
 protected:
-	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata);
 
 	OPLmusicBlock *Music;
 };
@@ -282,7 +294,7 @@ public:
 	bool IsValid () const;
 
 protected:
-	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+	static signed char F_CALLBACKAPI FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata);
 
 	class FLACStreamer;
 

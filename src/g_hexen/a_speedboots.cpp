@@ -6,13 +6,11 @@
 
 // Speed Boots Artifact -----------------------------------------------------
 
-BASIC_ARTI (SpeedBoots, arti_speed, GStrings(TXT_ARTISPEED))
-	AT_GAME_SET_FRIEND (SpeedBoots)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		return P_GivePower (player, pw_speed);
-	}
+class AArtiSpeedBoots : public APowerupGiver
+{
+	DECLARE_ACTOR (AArtiSpeedBoots, APowerupGiver)
+public:
+	const char *PickupMessage ();
 };
 
 FState AArtiSpeedBoots::States[] =
@@ -31,10 +29,11 @@ IMPLEMENT_ACTOR (AArtiSpeedBoots, Hexen, 8002, 13)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_Icon ("ARTISPED")
+	PROP_PowerupGiver_Powerup ("PowerSpeed")
 END_DEFAULTS
 
-AT_GAME_SET (SpeedBoots)
+const char *AArtiSpeedBoots::PickupMessage ()
 {
-	ArtiDispatch[arti_speed] = AArtiSpeedBoots::ActivateArti;
-	ArtiPics[arti_speed] = "ARTISPED";
+	return GStrings(TXT_ARTISPEED);
 }

@@ -1,3 +1,4 @@
+#ifdef _WIN32
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"
@@ -730,3 +731,4 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 	}
 	return NULL;
 }
+#endif

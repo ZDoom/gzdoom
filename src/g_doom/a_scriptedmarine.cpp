@@ -202,16 +202,13 @@ void AScriptedMarine::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 
-	if (SaveVersion >= 209)
+	if (arc.IsStoring ())
 	{
-		if (arc.IsStoring ())
-		{
-			arc.WriteSprite (SpriteOverride);
-		}
-		else
-		{
-			SpriteOverride = arc.ReadSprite ();
-		}
+		arc.WriteSprite (SpriteOverride);
+	}
+	else
+	{
+		SpriteOverride = arc.ReadSprite ();
 	}
 }
 
@@ -311,7 +308,7 @@ void A_M_Refire (AActor *self)
 		self->SetState (self->state + 1);
 		return;
 	}
-	if ((self->MissileState == NULL && !P_CheckMeleeRange (self)) ||
+	if ((self->MissileState == NULL && !self->CheckMeleeRange ()) ||
 		!P_CheckSight (self, self->target) ||
 		pr_m_refire() < 4)	// Small chance of stopping even when target not dead
 	{
@@ -332,7 +329,7 @@ void A_M_SawRefire (AActor *self)
 		self->SetState (self->state + 1);
 		return;
 	}
-	if (!P_CheckMeleeRange (self))
+	if (!self->CheckMeleeRange ())
 	{
 		self->SetState (self->state + 1);
 	}
@@ -391,7 +388,7 @@ void A_M_Saw (AActor *self)
 		return;
 
 	A_FaceTarget (self);
-	if (P_CheckMeleeRange (self))
+	if (self->CheckMeleeRange ())
 	{
 		angle_t 	angle;
 		int 		damage;
@@ -399,9 +396,9 @@ void A_M_Saw (AActor *self)
 		damage = 2 * (pr_m_saw()%10+1);
 		angle = self->angle + (pr_m_saw.Random2() << 18);
 		
-		PuffType = RUNTIME_CLASS(ABulletPuff);
 		P_LineAttack (self, angle, MELEERANGE+1,
-					P_AimLineAttack (self, angle, MELEERANGE+1), damage);
+					P_AimLineAttack (self, angle, MELEERANGE+1), damage,
+					RUNTIME_CLASS(ABulletPuff));
 
 		if (!linetarget)
 		{
@@ -454,8 +451,7 @@ void A_M_Punch (AActor *self)
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage);
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, RUNTIME_CLASS(ABulletPuff));
 
 	// turn to face target
 	if (linetarget)
@@ -485,8 +481,7 @@ void A_M_BerserkPunch (AActor *self)
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage);
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, RUNTIME_CLASS(ABulletPuff));
 
 	// turn to face target
 	if (linetarget)
@@ -502,7 +497,7 @@ void A_M_BerserkPunch (AActor *self)
 //
 //============================================================================
 
-void P_GunShot2 (AActor *mo, bool accurate, int pitch)
+void P_GunShot2 (AActor *mo, bool accurate, int pitch, const TypeInfo *pufftype)
 {
 	angle_t 	angle;
 	int 		damage;
@@ -515,7 +510,7 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch)
 		angle += pr_m_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, MISSILERANGE, pitch, damage);
+	P_LineAttack (mo, angle, MISSILERANGE, pitch, damage, pufftype);
 }
 
 //============================================================================
@@ -530,9 +525,9 @@ void A_M_FirePistol (AActor *self)
 		return;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
-	P_GunShot2 (self, true, P_AimLineAttack (self, self->angle, MISSILERANGE));
+	P_GunShot2 (self, true, P_AimLineAttack (self, self->angle, MISSILERANGE),
+		RUNTIME_CLASS(ABulletPuff));
 }
 
 //============================================================================
@@ -547,9 +542,9 @@ void A_M_FirePistolInaccurate (AActor *self)
 		return;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
-	P_GunShot2 (self, false, P_AimLineAttack (self, self->angle, MISSILERANGE));
+	P_GunShot2 (self, false, P_AimLineAttack (self, self->angle, MISSILERANGE),
+		RUNTIME_CLASS(ABulletPuff));
 }
 
 //============================================================================
@@ -566,12 +561,11 @@ void A_M_FireShotgun (AActor *self)
 		return;
 
 	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	for (int i = 0; i < 7; ++i)
 	{
-		P_GunShot2 (self, false, pitch);
+		P_GunShot2 (self, false, pitch, RUNTIME_CLASS(ABulletPuff));
 	}
 	self->special1 = level.time + 27;
 }
@@ -608,7 +602,6 @@ void A_M_FireShotgun2 (AActor *self)
 		return;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	for (int i = 0; i < 20; ++i)
@@ -617,7 +610,8 @@ void A_M_FireShotgun2 (AActor *self)
 		angle_t angle = self->angle + (pr_m_fireshotgun2.Random2() << 19);
 
 		P_LineAttack (self, angle, MISSILERANGE,
-					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage);
+					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage,
+					  RUNTIME_CLASS(ABulletPuff));
 	}
 	self->special1 = level.time;
 }
@@ -634,9 +628,9 @@ void A_M_FireCGunAccurate (AActor *self)
 		return;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
-	P_GunShot2 (self, true, P_AimLineAttack (self, self->angle, MISSILERANGE));
+	P_GunShot2 (self, true, P_AimLineAttack (self, self->angle, MISSILERANGE),
+		RUNTIME_CLASS(ABulletPuff));
 }
 
 //============================================================================
@@ -651,9 +645,9 @@ void A_M_FireCGun (AActor *self)
 		return;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
-	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
-	P_GunShot2 (self, false, P_AimLineAttack (self, self->angle, MISSILERANGE));
+	P_GunShot2 (self, false, P_AimLineAttack (self, self->angle, MISSILERANGE),
+		RUNTIME_CLASS(ABulletPuff));
 }
 
 //============================================================================
@@ -671,7 +665,7 @@ void A_M_FireMissile (AActor *self)
 	if (self->target == NULL)
 		return;
 
-	if (P_CheckMeleeRange (self))
+	if (self->CheckMeleeRange ())
 	{ // If too close, punch it
 		A_M_Punch (self);
 	}

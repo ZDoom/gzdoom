@@ -433,7 +433,7 @@ static void I_CheckGUICapture ()
 	}
 	else
 	{
-		wantCapt = menuactive == MENU_On;
+		wantCapt = (menuactive == MENU_On || menuactive == MENU_OnNoPause);
 	}
 
 	if (wantCapt != GUICapture)
@@ -771,13 +771,16 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetSoundPaused (wParam);
 		break;
 
-#ifndef NOWTS
 	case WM_WTSSESSION_CHANGE:
+	case WM_POWERBROADCAST:
 		{
-			if (lParam == (LPARAM)SessionID)
-			{
-				int oldstate = SessionState;
+			int oldstate = SessionState;
 
+			if (message == WM_WTSSESSION_CHANGE && lParam == (LPARAM)SessionID)
+			{
+#ifdef _DEBUG
+				OutputDebugString ("SessionID matched\n");
+#endif
 				// When using fast user switching, XP will lock a session before
 				// disconnecting it, and the session will be unlocked before reconnecting it.
 				// For our purposes, video output will only happen when the session is
@@ -799,15 +802,27 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					//I_MovieResumeSound ();
 					break;
 				}
+			}
+			else if (message == WM_POWERBROADCAST)
+			{
+				switch (wParam)
+				{
+				case PBT_APMSUSPEND:
+					SessionState |= 4;
+					break;
+				case PBT_APMRESUMESUSPEND:
+					SessionState &= ~4;
+					break;
+				}
+			}
 
-				if (!oldstate && SessionState)
-				{
-					I_MovieDisableSound ();
-				}
-				else if (oldstate && !SessionState)
-				{
-					I_MovieResumeSound ();
-				}
+			if (!oldstate && SessionState)
+			{
+				I_MovieDisableSound ();
+			}
+			else if (oldstate && !SessionState)
+			{
+				I_MovieResumeSound ();
 			}
 #ifdef _DEBUG
 			char foo[256];
@@ -816,7 +831,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 		}
 		break;
-#endif
 
 	case WM_DEVICECHANGE:
 		if (wParam == DBT_DEVNODES_CHANGED ||
@@ -889,14 +903,18 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PALETTECHANGED:
 		if ((HWND)wParam == Window)
 			break;
-		// intentional fall-through
+		if (screen != NULL)
+		{
+			screen->PaletteChanged ();
+		}
+		return DefWindowProc (hWnd, message, wParam, lParam);
 
 	case WM_QUERYNEWPALETTE:
 		if (screen != NULL)
 		{
 			return screen->QueryNewPalette ();
 		}
-		// intentional fall-through
+		return DefWindowProc (hWnd, message, wParam, lParam);
 
 	default:
 		return DefWindowProc (hWnd, message, wParam, lParam);
@@ -1106,7 +1124,7 @@ void DI_EnumJoy ()
 	JoyActive = 0;
 	JoystickNames.Clear ();
 
-	if (g_pdi != NULL)
+	if (g_pdi != NULL && !Args.CheckParm ("-nojoy"))
 	{
 		g_pdi->EnumDevices (DI8DEVCLASS_GAMECTRL, EnumJoysticksCallback, NULL, DIEDFL_ALLDEVICES);
 	}

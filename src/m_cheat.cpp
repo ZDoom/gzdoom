@@ -29,7 +29,6 @@
 #include "d_player.h"
 #include "doomstat.h"
 #include "gstrings.h"
-#include "p_inter.h"
 #include "p_local.h"
 #include "a_doomglobal.h"
 #include "gi.h"
@@ -38,6 +37,7 @@
 #include "c_dispatch.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "a_keys.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -45,6 +45,17 @@
 
 void cht_DoCheat (player_t *player, int cheat)
 {
+	static const TypeInfo *BeholdPowers[6] =
+	{
+		RUNTIME_CLASS(APowerInvulnerable),
+		RUNTIME_CLASS(APowerStrength),
+		RUNTIME_CLASS(APowerInvisibility),
+		RUNTIME_CLASS(APowerIronFeet),
+		NULL, // MapRevealer
+		RUNTIME_CLASS(APowerLightAmp)
+	};
+	const TypeInfo *type;
+	AInventory *item;
 	const char *msg = "";
 	char msgbuild[32];
 	int i;
@@ -80,9 +91,17 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_FLY:
 		player->cheats ^= CF_FLY;
 		if (player->cheats & CF_FLY)
+		{
+			player->mo->flags |= MF_NOGRAVITY;
+			player->mo->flags2 |= MF2_FLY;
 			msg = "You feel lighter";
+		}
 		else
+		{
+			player->mo->flags &= ~MF_NOGRAVITY;
+			player->mo->flags2 &= ~MF2_FLY;
 			msg = "Gravity weighs you down";
+		}
 		break;
 
 	case CHT_MORPH:
@@ -126,13 +145,20 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_CHAINSAW:
-		player->weaponowned[wp_chainsaw] = true;
-		player->powers[pw_invulnerability] = true;	// [RH] This isn't going to do much
+		type = TypeInfo::FindType ("Chainsaw");
+		if (player->mo->FindInventory (type) == NULL)
+		{
+			player->mo->GiveInventoryType (type);
+		}
 		msg = GStrings(STSTR_CHOPPERS);
+		// [RH] The original cheat also set powers[pw_invulnerability] to true.
+		// Since this is a timer and not a boolean, it effectively turned off
+		// the invulnerability powerup, although it looks like it was meant to
+		// turn it on.
 		break;
 
 	case CHT_POWER:
-		P_GivePower (player, pw_weaponlevel2);
+		player->mo->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
 		break;
 
 	case CHT_IDKFA:
@@ -140,8 +166,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "weapons");
 		cht_Give (player, "ammo");
 		cht_Give (player, "keys");
-		player->armorpoints[0] = deh.KFAArmor;
-		player->armortype = deh.KFAAC;
+		cht_Give (player, "armor");
 		msg = GStrings(STSTR_KFAADDED);
 		break;
 
@@ -149,8 +174,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "backpack");
 		cht_Give (player, "weapons");
 		cht_Give (player, "ammo");
-		player->armorpoints[0] = deh.FAArmor;
-		player->armortype = deh.FAAC;
+		cht_Give (player, "armor");
 		msg = GStrings(STSTR_FAADDED);
 		break;
 
@@ -162,13 +186,22 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_BEHOLDL:
 		i = cheat - CHT_BEHOLDV;
 
-		if (!player->powers[i])
-			P_GivePower (player, (powertype_t)i);
-		else if (i!=pw_strength)
-			player->powers[i] = 1;
-		else
-			player->powers[i] = 0;
-
+		if (i == 4)
+		{
+			level.flags ^= LEVEL_ALLMAP;
+		}
+		else if (player->mo != NULL)
+		{
+			item = player->mo->FindInventory (BeholdPowers[i]);
+			if (item == NULL)
+			{
+				player->mo->GiveInventoryType (BeholdPowers[i]);
+			}
+			else
+			{
+				item->Destroy ();
+			}
+		}
 		msg = GStrings(STSTR_BEHOLDX);
 		break;
 
@@ -197,12 +230,21 @@ void cht_DoCheat (player_t *player, int cheat)
 		{
 			return;
 		}
-		for (i = 0; i < NUMWEAPONS; i++)
+		// Take away all weapons that are either non-wimpy or use ammo.
+		for (item = player->mo->Inventory; item != NULL; )
 		{
-			player->weaponowned[i] = false;
+			AInventory *next = item->Inventory;
+			if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+			{
+				AWeapon *weap = static_cast<AWeapon *> (item);
+				if (!(weap->WeaponFlags & WIF_WIMPY_WEAPON) ||
+					weap->AmmoType1 != NULL)
+				{
+					item->Destroy ();
+				}
+			}
+			item = next;
 		}
-		player->weaponowned[wp_staff] = true;
-		player->pendingweapon = wp_staff;
 		msg = GStrings(TXT_CHEATIDKFA);
 		break;
 
@@ -231,7 +273,8 @@ void cht_DoCheat (player_t *player, int cheat)
 			// Don't allow this in deathmatch even with cheats enabled, because it's
 			// a very very cheap kill.
 			P_LineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE,
-				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), 1000000);
+				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), 1000000,
+				RUNTIME_CLASS(ABulletPuff));
 		}
 		break;
 	}
@@ -245,14 +288,14 @@ void cht_DoCheat (player_t *player, int cheat)
 		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
 }
 
-static void GiveSpawner (player_t *player, const TypeInfo *type)
+void GiveSpawner (player_t *player, const TypeInfo *type)
 {
 	AInventory *item = static_cast<AInventory *>
 		(Spawn (type, player->mo->x, player->mo->y, player->mo->z));
 	if (item != NULL)
 	{
-		item->TryPickup (player->mo);
-		if (!(item->ObjectFlags & OF_MassDestruction))
+		item->Amount = item->MaxAmount;
+		if (!item->TryPickup (player->mo))
 		{
 			item->Destroy ();
 		}
@@ -306,14 +349,7 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "backpack") == 0)
 	{
-		if (!player->backpack)
-		{
-			for (i=0 ; i<NUMAMMO ; i++)
-			player->maxammo[i] *= 2;
-			player->backpack = true;
-		}
-		for (i=0 ; i<NUMAMMO ; i++)
-			P_GiveAmmo (player, (ammotype_t)i, 1);
+		GiveSpawner (player, RUNTIME_CLASS(ABackpack));
 
 		if (!giveall)
 			return;
@@ -321,8 +357,27 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "ammo") == 0)
 	{
-		for (i=0;i<NUMAMMO;i++)
-			player->ammo[i] = player->maxammo[i];
+		// Find every unique type of ammo. Give it to the player if
+		// he doesn't have it already, and set each to its maximum.
+		for (int i = 0; i < TypeInfo::m_NumTypes; ++i)
+		{
+			const TypeInfo *type = TypeInfo::m_Types[i];
+
+			if (type->ParentType == RUNTIME_CLASS(AAmmo))
+			{
+				AInventory *ammo = player->mo->FindInventory (type);
+				if (ammo == NULL)
+				{
+					ammo = static_cast<AInventory *>(Spawn (type, 0, 0, 0));
+					ammo->AttachToOwner (player->mo);
+					ammo->Amount = ammo->MaxAmount;
+				}
+				else if (ammo->Amount < ammo->MaxAmount)
+				{
+					ammo->Amount = ammo->MaxAmount;
+				}
+			}
+		}
 
 		if (!giveall)
 			return;
@@ -332,14 +387,25 @@ void cht_Give (player_t *player, char *name, int amount)
 	{
 		if (gameinfo.gametype != GAME_Hexen)
 		{
-			player->armorpoints[0] = 100*deh.BlueAC;
-			player->armortype = deh.BlueAC;
+			ABasicArmor *armor = Spawn<ABasicArmor> (0,0,0);
+			armor->Amount = 100*deh.BlueAC;
+			armor->SavePercent = FRACUNIT/2;
+			if (!armor->TryPickup (player->mo))
+			{
+				armor->Destroy ();
+			}
 		}
 		else
 		{
-			for (i = 0; i < NUMARMOR; ++i)
+			for (i = 0; i < 4; ++i)
 			{
-				P_GiveArmor (player, (armortype_t)i, -1);
+				AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0);
+				armor->Amount = i;
+				armor->MaxAmount = 0;
+				if (!armor->TryPickup (player->mo))
+				{
+					armor->Destroy ();
+				}
 			}
 		}
 
@@ -349,25 +415,38 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "keys") == 0)
 	{
-		for (i=0;i<NUMKEYS;i++)
-			player->keys[i] = true;
-
+		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
+		{
+			if (TypeInfo::m_Types[i]->IsDescendantOf (RUNTIME_CLASS(AKey)))
+			{
+				AKey *key = (AKey *)GetDefaultByType (TypeInfo::m_Types[i]);
+				if (key->KeyNumber != 0)
+				{
+					key = static_cast<AKey *>(Spawn (TypeInfo::m_Types[i], 0,0,0));
+					if (!key->TryPickup (player->mo))
+					{
+						key->Destroy ();
+					}
+				}
+			}
+		}
 		if (!giveall)
 			return;
 	}
 
 	if (giveall || stricmp (name, "weapons") == 0)
 	{
-		weapontype_t savedpending = player->pendingweapon;
+		AWeapon *savedpending = player->PendingWeapon;
 		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
 		{
 			type = TypeInfo::m_Types[i];
-			if (type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
+			if (type != RUNTIME_CLASS(AWeapon) &&
+				type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 			{
 				GiveSpawner (player, type);
 			}
 		}
-		player->pendingweapon = savedpending;
+		player->PendingWeapon = savedpending;
 
 		if (!giveall)
 			return;
@@ -375,21 +454,17 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "artifacts") == 0)
 	{
-		int pbagType = arti_poisonbag1 + (player->CurrentPlayerClass + 2) % 3;
-		for (i = arti_none+1; i < arti_firstpuzzitem; ++i)
+		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
 		{
-			if (Wads.CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
+			type = TypeInfo::m_Types[i];
+			if (type->IsDescendantOf (RUNTIME_CLASS(AInventory)) &&
+				!type->IsDescendantOf (RUNTIME_CLASS(APuzzleItem)) &&
+				!type->IsDescendantOf (RUNTIME_CLASS(APowerup)))
 			{
-				if (i >= arti_poisonbag1 && i <= arti_poisonbag3)
-				{ // Hide the fact that there is more than one flechette artifact
-					if (i != pbagType)
-					{
-						continue;
-					}
-				}
-				for (int j = 0; j < 25; ++j)
+				AInventory *def = (AInventory*)GetDefaultByType (type);
+				if (def->Icon > 0)
 				{
-					P_GiveArtifact (player, (artitype_t)i);
+					GiveSpawner (player, type);
 				}
 			}
 		}
@@ -399,11 +474,16 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "puzzlepieces") == 0)
 	{
-		for (i = arti_firstpuzzitem; i < NUMARTIFACTS; ++i)
+		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
 		{
-			if (Wads.CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
+			type = TypeInfo::m_Types[i];
+			if (type->IsDescendantOf (RUNTIME_CLASS(APuzzleItem)))
 			{
-				P_GiveArtifact (player, (artitype_t)i);
+				AInventory *def = (AInventory*)GetDefaultByType (type);
+				if (def->Icon > 0)
+				{
+					GiveSpawner (player, type);
+				}
 			}
 		}
 		if (!giveall)

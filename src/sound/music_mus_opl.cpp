@@ -1,11 +1,11 @@
 #include "i_musicinterns.h"
 
-CUSTOM_CVAR (Int, opl_frequency, 11025, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, opl_frequency, 49716, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 { // Clamp frequency to FMOD's limits
 	if (self < 4000)
 		self = 4000;
-	else if (self > 65535)
-		self = 65535;
+	else if (self > 49716)	// No need to go higher than this
+		self = 49716;
 }
 
 CVAR (Bool, opl_enable, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -30,7 +30,7 @@ OPLMUSSong::OPLMUSSong (FILE *file, int len)
 
 	m_Stream = FSOUND_Stream_Create (FillStream, samples*2,
 		FSOUND_SIGNED | FSOUND_2D | FSOUND_MONO | FSOUND_16BITS,
-		rate, (int)this);
+		rate, this);
 	if (m_Stream == NULL)
 	{
 		Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
@@ -85,9 +85,8 @@ void OPLMUSSong::Play (bool looping)
 	}
 }
 
-signed char F_CALLBACKAPI OPLMUSSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+signed char F_CALLBACKAPI OPLMUSSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, void *userdata)
 {
-	OPLMUSSong *song = (OPLMUSSong *)param;
-	song->Music->ServiceStream (buff, len);
-	return TRUE;
+	OPLMUSSong *song = (OPLMUSSong *)userdata;
+	return song->Music->ServiceStream (buff, len);
 }

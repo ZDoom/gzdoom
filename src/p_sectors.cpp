@@ -458,7 +458,7 @@ fixed_t sector_t::FindShortestTextureAround () const
 			CheckShortestTex (sides[lines[i]->sidenum[1]].bottomtexture, minsize);
 		}
 	}
-	return minsize;
+	return minsize < FIXED_MAX ? minsize : TexMan[0]->GetHeight() * FRACUNIT;
 }
 
 
@@ -484,7 +484,7 @@ fixed_t sector_t::FindShortestUpperAround () const
 			CheckShortestTex (sides[lines[i]->sidenum[1]].toptexture, minsize);
 		}
 	}
-	return minsize;
+	return minsize < FIXED_MAX ? minsize : TexMan[0]->GetHeight() * FRACUNIT;
 }
 
 

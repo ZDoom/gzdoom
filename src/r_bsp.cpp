@@ -42,6 +42,7 @@
 #include "r_plane.h"
 #include "r_draw.h"
 #include "r_things.h"
+#include "a_sharedglobal.h"
 
 // State.
 #include "doomstat.h"
@@ -370,6 +371,26 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			}
 			else if (s->MoreFlags & SECF_FAKEFLOORONLY)
 			{
+				if (underwater)
+				{
+					tempsec->ColorMap = s->ColorMap;
+					if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+					{
+						tempsec->lightlevel = s->lightlevel;
+
+						if (floorlightlevel != NULL)
+						{
+							*floorlightlevel = GetFloorLight (s);
+						}
+
+						if (ceilinglightlevel != NULL)
+						{
+							*ceilinglightlevel = GetFloorLight (s);
+						}
+					}
+					FakeSide = FAKED_BelowFloor;
+					return tempsec;
+				}
 				return sec;
 			}
 		}
@@ -1046,9 +1067,9 @@ void R_Subsector (subsector_t *sub)
 	foggy = level.fadeto || frontsector->ColorMap->Fade || (level.flags & LEVEL_HASFADETABLE);
 	r_actualextralight = foggy ? 0 : extralight << 4;
 	basecolormap = frontsector->ColorMap->Maps;
-
 	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
 		frontsector->ceilingpic == skyflatnum ||
+		(frontsector->CeilingSkyBox != NULL && frontsector->CeilingSkyBox->bAlways) ||
 		(frontsector->heightsec && 
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->floorpic == skyflatnum) ?
@@ -1072,6 +1093,8 @@ void R_Subsector (subsector_t *sub)
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
 	floorplane = frontsector->floorplane.ZatPoint (viewx, viewy) < viewz || // killough 3/7/98
+		frontsector->floorpic == skyflatnum ||
+		(frontsector->FloorSkyBox != NULL && frontsector->FloorSkyBox->bAlways) ||
 		(frontsector->heightsec &&
 		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 frontsector->heightsec->ceilingpic == skyflatnum) ?
@@ -1128,7 +1151,7 @@ void R_Subsector (subsector_t *sub)
 // Renders all subsectors below a given node, traversing subtree recursively.
 // Just call with BSP root and -1.
 // killough 5/2/98: reformatted, removed tail recursion
-
+#include "v_video.h"
 void R_RenderBSPNode (void *node)
 {
 	if (numnodes == 0)

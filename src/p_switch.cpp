@@ -98,6 +98,7 @@ struct FSwitchDef
 	WORD PairIndex;		// switch def to use to return to PreTexture
 	SWORD Sound;		// sound to play at start of animation
 	WORD NumFrames;		// # of animation frames
+	bool QuestPanel;	// Special texture for Strife mission
 	union				// Array of times followed by array of textures
 	{					//   actual length of each array is <NumFrames>
 		DWORD Times[1];
@@ -123,6 +124,7 @@ static TArray<FSwitchDef *> SwitchList;
 //		MAXSWITCHES limit.
 void P_InitSwitchList ()
 {
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	int lump = Wads.CheckNumForName ("SWITCHES");
 	FSwitchDef **origMap;
 	int i, j;
@@ -145,12 +147,12 @@ void P_InitSwitchList ()
 			// [RH] Skip this switch if its texture can't be found.
 			if (((gameinfo.maxSwitch & 15) >= (list_p[18] & 15)) &&
 				((gameinfo.maxSwitch & ~15) == (list_p[18] & ~15)) &&
-				TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall) >= 0)
+				TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags) >= 0)
 			{
 				def1 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
 				def2 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
-				def1->PreTexture = def2->u.Textures[2] = TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall);
-				def2->PreTexture = def1->u.Textures[2] = TexMan.CheckForTexture (list_p + 9, FTexture::TEX_Wall);
+				def1->PreTexture = def2->u.Textures[2] = TexMan.CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags);
+				def2->PreTexture = def1->u.Textures[2] = TexMan.CheckForTexture (list_p + 9, FTexture::TEX_Wall, texflags);
 				def1->Sound = def2->Sound = 0;
 				def1->NumFrames = def2->NumFrames = 1;
 				def1->u.Times[0] = def2->u.Times[0] = 0;
@@ -199,10 +201,12 @@ static int STACK_ARGS SortSwitchDefs (const void *a, const void *b)
 // Parse a switch block in ANIMDEFS and add the definitions to SwitchList
 void P_ProcessSwitchDef ()
 {
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	char *picname;
 	FSwitchDef *def1, *def2;
 	SWORD picnum;
 	byte max;
+	bool quest = false;
 
 	def1 = def2 = NULL;
 	SC_MustGetString ();
@@ -239,11 +243,15 @@ void P_ProcessSwitchDef ()
 		max |= sc_Number & 15;
 	}
 	SC_MustGetString ();
-	picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall);
+	picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall, texflags);
 	picname = copystring (sc_String);
 	while (SC_GetString ())
 	{
-		if (SC_Compare ("on"))
+		if (SC_Compare ("quest"))
+		{
+			quest = true;
+		}
+		else if (SC_Compare ("on"))
 		{
 			if (def1 != NULL)
 			{
@@ -303,16 +311,17 @@ void P_ProcessSwitchDef ()
 	def2->PreTexture = def1->u.Textures[def1->NumFrames*2+def1->NumFrames-1];
 	if (def1->PreTexture == def2->PreTexture)
 	{
-		const char *args[2] = { picname, picname };
-		SC_ScriptError ("The on state for switch %s must end with a texture other than %s", args);
+		SC_ScriptError ("The on state for switch %s must end with a texture other than %s", picname, picname);
 	}
 	def2->PairIndex = AddSwitchDef (def1);
 	def1->PairIndex = AddSwitchDef (def2);
+	def1->QuestPanel = def2->QuestPanel = quest;
 	free (picname);
 }
 
 FSwitchDef *ParseSwitchDef (bool ignoreBad)
 {
+	const BITFIELD texflags = FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny;
 	FSwitchDef *def;
 	SWORD pics[MAX_FRAMES];
 	DWORD times[MAX_FRAMES];
@@ -343,7 +352,7 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 				SC_ScriptError ("Switch has too many frames");
 			}
 			SC_MustGetString ();
-			picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall);
+			picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall, texflags);
 			if (picnum < 0 && !ignoreBad)
 			{
 				//Printf ("Unknown switch texture %s\n", sc_String);
@@ -467,7 +476,7 @@ static int TryFindSwitch (SWORD texture)
 // Function that changes wall texture.
 // Tell it if switch is ok to use again (1=yes, it's a button).
 //
-void P_ChangeSwitchTexture (side_t *side, int useAgain, byte special)
+bool P_ChangeSwitchTexture (side_t *side, int useAgain, byte special, bool *quest)
 {
 	DActiveButton::EWhere where;
 	short *texture;
@@ -490,7 +499,7 @@ void P_ChangeSwitchTexture (side_t *side, int useAgain, byte special)
 	}
 	else
 	{
-		return;
+		return false;
 	}
 
 	// EXIT SWITCH?
@@ -521,6 +530,11 @@ void P_ChangeSwitchTexture (side_t *side, int useAgain, byte special)
 	*texture = SwitchList[i]->u.Textures[SwitchList[i]->NumFrames*2];
 	if (useAgain || SwitchList[i]->NumFrames > 1)
 		P_StartButton (side, where, i, pt[0], pt[1], !!useAgain);
+	if (quest != NULL)
+	{
+		*quest = SwitchList[i]->QuestPanel;
+	}
+	return true;
 }
 
 IMPLEMENT_CLASS (DActiveButton)

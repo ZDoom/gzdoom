@@ -120,7 +120,6 @@ public:
 	bool IsValid ();
 	bool Lock ();
 	bool Lock (bool buffer);
-	bool Relock ();
 	void Unlock ();
 	void ForceBuffering (bool force);
 	void Update ();
@@ -132,6 +131,7 @@ public:
 	void GetFlash (PalEntry &rgb, int &amount);
 	int GetPageCount ();
 	int QueryNewPalette ();
+	void PaletteChanged ();
 	HRESULT GetHR () { return LastHR; }
 
 	void Blank ();
@@ -151,7 +151,7 @@ private:
 	HRESULT AttemptRestore ();
 
 	HRESULT LastHR;
-	BYTE GammaTable[256];
+	BYTE GammaTable[3][256];
 	PalEntry SourcePalette[256];
 	PALETTEENTRY PalEntries[256];
 
@@ -174,10 +174,12 @@ private:
 
 	bool NeedGammaUpdate;
 	bool NeedPalUpdate;
+	bool NeedResRecreate;
 	bool MustBuffer;		// The screen is not 8-bit, or there is no backbuffer
 	bool BufferingNow;		// Most recent Lock was buffered
 	bool WasBuffering;		// Second most recent Lock was buffered
 	bool Write8bit;
 	bool UpdatePending;		// On final unlock, call Update()
 	bool UseBlitter;		// Use blitter to copy from sys mem to video mem
+	bool UsePfx;
 };

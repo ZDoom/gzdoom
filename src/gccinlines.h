@@ -147,12 +147,12 @@ inline SDWORD DMulScale (SDWORD a, SDWORD b, SDWORD c, SDWORD d, int s)
 		asm volatile \
 			("imull %3\n\t" \
 			:"=a" (f), "=d" (g) \
-			: "%0" (a),  "r" (b) \
+			: "%0" (a), "r" (b) \
 			:"%cc"); \
 		asm volatile \
 			("imull %3\n\t" \
-			:"=a,a" (h), "=d,d" (i) \
-			: "%0,%0" (c),  "r,m" (d) \
+			:"=a" (h), "=d" (i) \
+			: "%0" (c), "m" (d) \
 			:"%cc"); \
 		asm volatile \
 			("addl %4,%2\n\t" \

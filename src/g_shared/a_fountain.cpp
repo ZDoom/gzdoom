@@ -69,7 +69,7 @@ FOUNTAIN (White, 9033);
 void AParticleFountain::PostBeginPlay ()
 {
 	Super::PostBeginPlay ();
-	if (!(mapflags & MTF_DORMANT))
+	if (!(SpawnFlags & MTF_DORMANT))
 		Activate (NULL);
 }
 

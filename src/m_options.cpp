@@ -52,10 +52,8 @@
 #include "i_system.h"
 #include "i_video.h"
 
-#ifdef _WIN32
 #include "i_music.h"
 #include "i_input.h"
-#endif
 
 #include "v_video.h"
 #include "v_text.h"
@@ -89,8 +87,6 @@ CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 // Show messages has default, 0 = off, 1 = on
 CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-extern bool	OptionsActive;
-
 extern int	skullAnimCounter;
 
 EXTERN_CVAR (Bool, cl_run)
@@ -107,7 +103,6 @@ void M_ChangeMessages ();
 void M_SizeDisplay (int diff);
 
 int  M_StringHeight (char *string);
-void M_ClearMenus ();
 
 EColorRange LabelColor;
 EColorRange ValueColor;
@@ -379,6 +374,7 @@ static menuitem_t ControlsItems[] =
 	{ control,	"Activate all items",	{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"invuseall"} },
 	{ control,	"Next item",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"invnext"} },
 	{ control,	"Previous item",		{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"invprev"} },
+	{ control,	"Drop item",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"invdrop"} },
 	{ redtext,	" ",					{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
 	{ whitetext,"Other",				{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
 	{ control,	"Toggle automap",		{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"togglemap"} },
@@ -386,7 +382,12 @@ static menuitem_t ControlsItems[] =
 	{ control,	"Add a bot",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"addbot"} },
 	{ control,	"Coop spy",				{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"spynext"} },
 	{ control,	"Screenshot",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"screenshot"} },
-	{ control,  "Open console",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"toggleconsole"} }
+	{ control,  "Open console",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"toggleconsole"} },
+	{ redtext,	" ",					{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
+	{ whitetext,"Strife Popup Screens",	{NULL},	{0.0}, {0.0}, {0.0}, {NULL} },
+	{ control,	"Mission objectives",	{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"showpop 1"} },
+	{ control,	"Keys list",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"showpop 2"} },
+	{ control,	"Weapons/ammo/stats",	{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"showpop 3"} },
 };
 
 static TArray<menuitem_t> CustomControlsItems (0);
@@ -602,15 +603,15 @@ static menuitem_t ModesItems[] = {
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Fullscreen",			{&fullscreen},			{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ screenres,{NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ screenres,NULL,					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ whitetext,"Note: Only 8 bpp modes are supported",{NULL},	{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,  VMEnterText,			{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
@@ -818,13 +819,21 @@ EXTERN_CVAR (Bool, opl_enable)
 EXTERN_CVAR (Int, opl_frequency)
 EXTERN_CVAR (Bool, opl_onechip)
 
+static value_t OPLSampleRates[] =
+{
+	{ 4000.f, "4000 Hz" },
+	{ 6215.f, "6215 Hz" },
+	{ 12429.f, "12429 Hz" },
+	{ 24858.f, "24858 Hz" },
+	{ 49716.f, "49716 Hz" },
+};
 
 static menuitem_t AdvSoundItems[] =
 {
 	{ whitetext,"OPL Synthesis",			{NULL},				{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Use FM Synth for MUS music",{&opl_enable},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Only emulate one OPL chip", {&opl_onechip},	{2.0}, {0.0},	{0.0}, {OnOff} },
-	{ discrete, "OPL synth sample rate",	 {&opl_frequency},	{8.0}, {0.0},	{0.0}, {SampleRates} },
+	{ discrete, "OPL synth sample rate",	 {&opl_frequency},	{5.0}, {0.0},	{0.0}, {OPLSampleRates} },
 
 
 };
@@ -1059,21 +1068,37 @@ void M_OptDrawer ()
 	UCVarValue value;
 	int labelofs;
 
-	if (BigFont && CurrentMenu->texttitle)
+	if (!CurrentMenu->DontDim)
 	{
-		screen->SetFont (BigFont);
-		screen->DrawText (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
-			160-BigFont->StringWidth (CurrentMenu->texttitle)/2, 10,
-			CurrentMenu->texttitle, DTA_Clean, true, TAG_DONE);
-		screen->SetFont (SmallFont);
-		y = 15 + BigFont->GetHeight ();
+		screen->Dim ();
+	}
+
+	if (CurrentMenu->PreDraw !=  NULL)
+	{
+		CurrentMenu->PreDraw ();
+	}
+
+	if (CurrentMenu->y != 0)
+	{
+		y = CurrentMenu->y;
 	}
 	else
 	{
-		y = 15;
+		if (BigFont && CurrentMenu->texttitle)
+		{
+			screen->SetFont (BigFont);
+			screen->DrawText (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
+				160-BigFont->StringWidth (CurrentMenu->texttitle)/2, 10,
+				CurrentMenu->texttitle, DTA_Clean, true, TAG_DONE);
+			screen->SetFont (SmallFont);
+			y = 15 + BigFont->GetHeight ();
+		}
+		else
+		{
+			y = 15;
+		}
 	}
-
-	if (gameinfo.gametype != GAME_Doom)
+	if (gameinfo.gametype & GAME_Raven)
 	{
 		labelofs = 2;
 		y -= 2;
@@ -1084,7 +1109,6 @@ void M_OptDrawer ()
 		labelofs = 0;
 		fontheight = 8;
 	}
-
 	ytop = y + CurrentMenu->scrolltop * 8;
 
 	for (i = 0; i < CurrentMenu->numitems && y <= 200 - SmallFont->GetHeight(); i++, y += fontheight)
@@ -1104,6 +1128,11 @@ void M_OptDrawer ()
 			case more:
 				x = CurrentMenu->indent - width;
 				color = MoreColor;
+				break;
+
+			case numberedmore:
+				x = CurrentMenu->indent + 14;
+				color = CR_GREEN;
 				break;
 
 			case redtext:
@@ -1131,6 +1160,17 @@ void M_OptDrawer ()
 
 			switch (item->type)
 			{
+			case numberedmore:
+				if (item->b.position != 0)
+				{
+					char tbuf[16];
+
+					sprintf (tbuf, "%d.", item->b.position);
+					x = CurrentMenu->indent - SmallFont->StringWidth (tbuf);
+					screen->DrawText (CR_GREY, x, y, tbuf, DTA_Clean, true, TAG_DONE);
+				}
+				break;
+
 			case discrete:
 			case cdiscrete:
 			case inverter:
@@ -1404,7 +1444,9 @@ void M_OptResponder (event_t *ev)
 			} while (CurrentMenu->items[CurrentItem].type == redtext ||
 					 CurrentMenu->items[CurrentItem].type == whitetext ||
 					 (CurrentMenu->items[CurrentItem].type == screenres &&
-					  !CurrentMenu->items[CurrentItem].b.res1));
+					  !CurrentMenu->items[CurrentItem].b.res1) ||
+					 (CurrentMenu->items[CurrentItem].type == numberedmore &&
+					  !CurrentMenu->items[CurrentItem].b.position));
 
 			if (CurrentMenu->items[CurrentItem].type == screenres)
 				CurrentMenu->items[CurrentItem].a.selmode = modecol;
@@ -1466,7 +1508,9 @@ void M_OptResponder (event_t *ev)
 			} while (CurrentMenu->items[CurrentItem].type == redtext ||
 					 CurrentMenu->items[CurrentItem].type == whitetext ||
 					 (CurrentMenu->items[CurrentItem].type == screenres &&
-					  !CurrentMenu->items[CurrentItem].b.res1));
+					  !CurrentMenu->items[CurrentItem].b.res1) ||
+					 (CurrentMenu->items[CurrentItem].type == numberedmore &&
+					  !CurrentMenu->items[CurrentItem].b.position));
 
 			if (CurrentMenu->items[CurrentItem].type == screenres)
 				CurrentMenu->items[CurrentItem].a.selmode = modecol;
@@ -1487,7 +1531,9 @@ void M_OptResponder (event_t *ev)
 			while (CurrentMenu->items[CurrentItem].type == redtext ||
 				   CurrentMenu->items[CurrentItem].type == whitetext ||
 				   (CurrentMenu->items[CurrentItem].type == screenres &&
-					!CurrentMenu->items[CurrentItem].b.res1))
+					!CurrentMenu->items[CurrentItem].b.res1) ||
+				   (CurrentMenu->items[CurrentItem].type == numberedmore &&
+					!CurrentMenu->items[CurrentItem].b.position))
 			{
 				++CurrentItem;
 			}
@@ -1508,7 +1554,9 @@ void M_OptResponder (event_t *ev)
 			while (CurrentMenu->items[CurrentItem].type == redtext ||
 				   CurrentMenu->items[CurrentItem].type == whitetext ||
 				   (CurrentMenu->items[CurrentItem].type == screenres &&
-					!CurrentMenu->items[CurrentItem].b.res1))
+					!CurrentMenu->items[CurrentItem].b.res1) ||
+				   (CurrentMenu->items[CurrentItem].type == numberedmore &&
+					!CurrentMenu->items[CurrentItem].b.position))
 			{
 				++CurrentItem;
 			}
@@ -1735,6 +1783,34 @@ void M_OptResponder (event_t *ev)
 		}
 		break;
 
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+		{
+			int lookfor = ch == '0' ? 10 : ch - '0', i;
+			for (i = 0; i < CurrentMenu->numitems; ++i)
+			{
+				if (CurrentMenu->items[i].b.position == lookfor)
+				{
+					CurrentItem = i;
+					item = &CurrentMenu->items[i];
+					break;
+				}
+			}
+			if (i == CurrentMenu->numitems)
+			{
+				break;
+			}
+			// Otherwise, fall through to '\r' below
+		}
+
 	case '\r':
 		if (CurrentMenu == &ModesMenu)
 		{
@@ -1752,7 +1828,7 @@ void M_OptResponder (event_t *ev)
 			S_Sound (CHAN_VOICE, "menu/choose", 1, ATTN_NONE);
 			SetModesMenu (NewWidth, NewHeight, NewBits);
 		}
-		else if (item->type == more && item->e.mfunc)
+		else if ((item->type == more || item->type == numberedmore) && item->e.mfunc)
 		{
 			CurrentMenu->lastOn = CurrentItem;
 			S_Sound (CHAN_VOICE, "menu/choose", 1, ATTN_NONE);
@@ -2417,5 +2493,6 @@ CCMD (addmenukey)
 				 sizeof(menuitem_t)*movecount);
 		CustomControlsItems[AddKeySpot++] = newItem;
 	}
+	ControlsMenu.items = &CustomControlsItems[0];
 	ControlsMenu.numitems = (int)CustomControlsItems.Size();
 }

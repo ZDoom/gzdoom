@@ -39,6 +39,21 @@
 #include "p_local.h"
 #include "vectors.h"
 
+class ADoomBuilderCamera : public AActor
+{
+	DECLARE_STATELESS_ACTOR (ADoomBuilderCamera, AActor)
+public:
+	void PostBeginPlay ();
+};
+
+IMPLEMENT_STATELESS_ACTOR (ADoomBuilderCamera, Any, 32000, 0)
+END_DEFAULTS
+
+void ADoomBuilderCamera::PostBeginPlay ()
+{
+	Destroy ();
+}
+
 /*
 == SecurityCamera
 ==

@@ -158,7 +158,7 @@ END_DEFAULTS
 
 void A_EttinAttack (AActor *actor)
 {
-	if (P_CheckMeleeRange(actor))
+	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_ettinatk.HitDice (2);
 		P_DamageMobj (actor->target, actor, actor, damage);

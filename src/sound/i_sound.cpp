@@ -3,7 +3,7 @@
 ** System interface for sound; uses fmod.dll
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2003 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -83,6 +83,7 @@ extern void I_StopSound_Simple (int handle);
 extern int I_SoundIsPlaying_Simple (int handle);
 extern void I_UpdateSoundParams_Simple (int handle, int vol, int sep, int pitch);
 extern void I_LoadSound_Simple (sfxinfo_t *sfx);
+extern void I_UnloadSound_Simple (sfxinfo_t *sfx);
 
 static const ReverbContainer *PrevEnvironment;
 ReverbContainer *ForcedEnvironment;
@@ -182,12 +183,12 @@ static const char *FmodErrors[] =
 static int PutSampleData (FSOUND_SAMPLE *sample, const BYTE *data, int len,
 	unsigned int mode)
 {
-	if (mode & FSOUND_2D)
+	/*if (mode & FSOUND_2D)
 	{
 		return FSOUND_Sample_Upload (sample, const_cast<BYTE *>(data),
 			FSOUND_8BITS|FSOUND_MONO|FSOUND_UNSIGNED);
 	}
-	else if (FSOUND_Sample_GetMode (sample) & FSOUND_8BITS)
+	else*/ if (FSOUND_Sample_GetMode (sample) & FSOUND_8BITS)
 	{
 		void *ptr1, *ptr2;
 		unsigned int len1, len2;
@@ -376,7 +377,7 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 	if (sfx->data)
 	{
 		sfx->ms = (sfx->ms * 1000) / (sfx->frequency);
-		DPrintf ("sound loaded: %d Hz %d samples\n", sfx->frequency, sfx->length);
+		DPrintf ("[%d Hz %d samples]\n", sfx->frequency, sfx->length);
 
 		if (Sound3D)
 		{
@@ -843,9 +844,38 @@ void I_LoadSound (sfxinfo_t *sfx)
 
 	if (!sfx->data)
 	{
-		DPrintf ("loading sound \"%s\" (%d)\n", sfx->name, sfx - &S_sfx[0]);
+		DPrintf ("loading sound \"%s\" (%d) ", sfx->name, sfx - &S_sfx[0]);
 		getsfx (sfx);
 	}
+}
+
+void I_UnloadSound (sfxinfo_t *sfx)
+{
+	if (_nosound || sfx->data == NULL)
+		return;
+
+	if (nofmod)
+	{
+		I_UnloadSound_Simple (sfx);
+	}
+	else
+	{
+		sfx->bHaveLoop = false;
+		sfx->normal = 0;
+		sfx->looping = 0;
+		if (sfx->altdata != NULL)
+		{
+			FSOUND_Sample_Free ((FSOUND_SAMPLE *)sfx->altdata);
+			sfx->altdata = NULL;
+		}
+		if (sfx->data != NULL)
+		{
+			FSOUND_Sample_Free ((FSOUND_SAMPLE *)sfx->data);
+			sfx->data = NULL;
+		}
+	}
+
+	DPrintf ("Unloaded sound \"%s\" (%d)\n", sfx->name, sfx - &S_sfx[0]);
 }
 
 #ifdef _WIN32
@@ -954,12 +984,12 @@ void I_InitSound ()
 #else
 	if (stricmp (snd_output, "oss") == 0)
 	{
-		outindex = 2;
+		outindex = 1;
 	}
 	else if (stricmp (snd_output, "esd") == 0 ||
 			 stricmp (snd_output, "esound") == 0)
 	{
-		outindex = 1;
+		outindex = 2;
 	}
 	else
 	{
@@ -1055,7 +1085,7 @@ void I_InitSound ()
 			}
 			FSOUND_GetDriverCaps (FSOUND_GetDriver(), &DriverCaps);
 			Printf ("  Initialization");
-			if (!FModLog (FSOUND_Init (snd_samplerate, 64, FSOUND_INIT_USEDEFAULTMIDISYNTH)))
+			if (!FModLog (FSOUND_Init (snd_samplerate, 64, FSOUND_INIT_DSOUND_DEFERRED)))
 			{
 #if 0
 				if (trya3d)
@@ -1162,7 +1192,9 @@ int I_SetChannels (int numchannels)
 	// are fewer than 8 hardware channels, then force software.
 	if (Sound3D)
 	{
-		int hardChans = FSOUND_GetNumHardwareChannels ();
+		int hardChans;
+		
+		FSOUND_GetNumHWChannels (NULL, &hardChans, NULL);
 
 		if (hardChans < 8)
 		{
@@ -1241,22 +1273,26 @@ CCMD (snd_status)
 	int output = FSOUND_GetOutput ();
 	int driver = FSOUND_GetDriver ();
 	int mixer = FSOUND_GetMixer ();
+	int num2d, num3d, total;
 
 	Printf ("Output: %s\n", OutputNames[output]);
-	Printf ("Driver: %d (%s)\n", driver,
-		FSOUND_GetDriverName (driver));
+	Printf ("Driver: %d (%s)\n", driver, FSOUND_GetDriverName (driver));
 	Printf ("Mixer: %s\n", MixerNames[mixer]);
-	if (Sound3D)
-	{
-		Printf ("Using 3D sound\n");
-	}
 	if (DriverCaps)
 	{
-		Printf ("Driver caps: 0x%x\n", DriverCaps);
-		if (DriverCaps & FSOUND_CAPS_HARDWARE)
-		{
-			Printf ("Hardware channels: %d\n", FSOUND_GetNumHardwareChannels ());
-		}
+		Printf ("Driver caps:");
+		if (DriverCaps & FSOUND_CAPS_HARDWARE)	Printf (" HARDWARE");
+		if (DriverCaps & FSOUND_CAPS_EAX2)		Printf (" EAX2");
+		if (DriverCaps & FSOUND_CAPS_EAX3)		Printf (" EAX3");
+		Printf ("\n");
+	}
+	FSOUND_GetNumHWChannels (&num2d, &num3d, &total);
+	Printf ("Hardware 2D channels: %d\n", num2d);
+	Printf ("Hardware 3D channels: %d\n", num3d);
+	Printf ("Total hardware channels: %d\n", total);
+	if (Sound3D)
+	{
+		Printf ("\nUsing 3D sound\n");
 	}
 }
 

@@ -8,7 +8,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "p_local.h"
-#include "p_inter.h"
 #include "b_bot.h"
 #include "g_game.h"
 #include "d_ticcmd.h"
@@ -17,6 +16,7 @@
 #include "i_system.h"
 #include "p_lnspec.h"
 #include "gi.h"
+#include "a_keys.h"
 
 #ifndef M_PI
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
@@ -107,9 +107,9 @@ BOOL DCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 		{
 			bool tryit = true;
 
-			if (ld->special == Door_LockedRaise && !P_CheckKeys (actor->player, (keyspecialtype_t)ld->args[3], false))
+			if (ld->special == Door_LockedRaise && !P_CheckKeys (actor, ld->args[3], false))
 				tryit = false;
-			else if (ld->special == Generic_Door && !P_CheckKeys (actor->player, (keyspecialtype_t)ld->args[4], false))
+			else if (ld->special == Generic_Door && !P_CheckKeys (actor, ld->args[4], false))
 				tryit = false;
 
 			if (tryit &&
@@ -328,14 +328,19 @@ bool DCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
 void DCajunMaster::TurnToAng (AActor *actor)
 {
-	if (actor->player->readyweapon == wp_missile && actor->player->t_rocket && !actor->player->missile)
-		return; //Keep angle that where when shot where decided.
+	if (actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_EXPLOSIVE)
+	{
+		if (actor->player->t_roam && !actor->player->missile)
+		{ //Keep angle that where when shot where decided.
+			return;
+		}
+	}
 
     int maxturn = MAXTURN;
 
 	if(actor->player->enemy)
 	if(!actor->player->dest) //happens when running after item in combat situations, or normal, prevent's weak turns
-	if(actor->player->readyweapon != wp_missile && actor->player->readyweapon != wp_bfg && actor->player->readyweapon != wp_plasma && actor->player->readyweapon != wp_fist && actor->player->readyweapon != wp_chainsaw)
+	if(actor->player->ReadyWeapon->ProjectileType == NULL && !(actor->player->ReadyWeapon->WeaponFlags & WIF_BOT_MELEE))
 	if(Check_LOS(actor, actor->player->enemy, SHOOTFOV+5*ANGLE_1))
 		maxturn = 3;
 

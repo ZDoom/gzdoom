@@ -52,6 +52,9 @@ void M_Init (void);
 // does nothing if menu is already up.
 void M_StartControlPanel (bool makeSound);
 
+// Turns off the menu
+void M_ClearMenus ();
+
 // [RH] Setup options menu
 bool M_StartOptionsMenu (void);
 
@@ -94,7 +97,8 @@ typedef enum {
 	screenres,
 	bitflag,
 	listelement,
-	nochoice
+	nochoice,
+	numberedmore,
 } itemtype;
 
 struct GUIDName;
@@ -114,11 +118,13 @@ typedef struct menuitem_s {
 		float			  invflag;
 		int				  key1;
 		char			 *res1;
+		int				  position;
 	} b;
 	union {
 		float			  max;
 		int				  key2;
 		char			 *res2;
+		void			 *extra;
 	} c;
 	union {
 		float			  step;
@@ -144,6 +150,9 @@ typedef struct menu_s {
 	menuitem_t	   *items;
 	int				scrolltop;
 	int				scrollpos;
+	int				y;
+	void		  (*PreDraw)(void);
+	bool			DontDim;
 } menu_t;
 
 typedef struct value_s {
@@ -194,6 +203,8 @@ extern value_t OnOff[2];
 
 extern menustack_t MenuStack[16];
 extern int MenuStackDepth;
+
+extern bool	OptionsActive;
 
 extern menu_t  *CurrentMenu;
 extern int		CurrentItem;

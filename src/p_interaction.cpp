@@ -41,7 +41,6 @@
 
 #include "p_local.h"
 
-#include "p_inter.h"
 #include "p_lnspec.h"
 #include "p_effect.h"
 #include "p_acs.h"
@@ -55,7 +54,7 @@
 #include "a_sharedglobal.h"
 #include "a_pickups.h"
 #include "gi.h"
-
+#include "templates.h"
 #include "sbar.h"
 
 static FRandom pr_obituary ("Obituary");
@@ -97,24 +96,7 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
     	toucher->player->dest = NULL;
 	}
 
-	if (special->IsKindOf (RUNTIME_CLASS (AInventory)))
-	{
-		static_cast<AInventory *>(special)->Touch (toucher);
-	}
-	else
-	{
-		if (special->special == 0)
-		{
-			Printf ("Unknown gettable thing (%s)\n", RUNTIME_TYPE (special)->Name);
-		}
-		else
-		{
-			LineSpecials[special->special] (NULL, toucher,
-				special->args[0], special->args[1], special->args[2], special->args[3], special->args[4]);
-			special->special = 0;
-		}
-		special->flags &= ~MF_SPECIAL;
-	}
+	special->Touch (toucher);
 }
 
 
@@ -262,11 +244,29 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 		else if (attacker->player == NULL)
 		{
 			if (mod == MOD_TELEFRAG)
+			{
 				message = GStrings(OB_MONTELEFRAG);
+			}
 			else if (mod == MOD_HIT)
-				message = attacker->GetHitObituary ();
+			{
+				message = attacker->GetClass()->Meta.GetMetaString (AMETA_HitObituary);
+				if (message == NULL)
+				{
+					message = attacker->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+					if (message == NULL)
+					{
+						message = attacker->GetHitObituary ();
+					}
+				}
+			}
 			else
-				message = attacker->GetObituary ();
+			{
+				message = attacker->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+				if (message == NULL)
+				{
+					message = attacker->GetObituary ();
+				}
+			}
 		}
 	}
 
@@ -295,12 +295,12 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 		{
 			switch (mod)
 			{
-			case MOD_FIST:			messagenum = OB_MPFIST;			break;
-			case MOD_CHAINSAW:		messagenum = OB_MPCHAINSAW;		break;
-			case MOD_PISTOL:		messagenum = OB_MPPISTOL;		break;
-			case MOD_SHOTGUN:		messagenum = OB_MPSHOTGUN;		break;
-			case MOD_SSHOTGUN:		messagenum = OB_MPSSHOTGUN;		break;
-			case MOD_CHAINGUN:		messagenum = OB_MPCHAINGUN;		break;
+			default:
+				if (attacker->player->ReadyWeapon != NULL)
+				{
+					message = attacker->player->ReadyWeapon->GetObituary ();
+				}
+				break;
 			case MOD_ROCKET:		messagenum = OB_MPROCKET;		break;
 			case MOD_R_SPLASH:		messagenum = OB_MPR_SPLASH;		break;
 			case MOD_PLASMARIFLE:	messagenum = OB_MPPLASMARIFLE;	break;
@@ -355,9 +355,34 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		P_ExplodeMissile (this, NULL);
 		return;
 	}
-	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY|MF_NOGRAVITY);
-	flags |= MF_CORPSE|MF_DROPOFF;
-	height >>= 2;
+	// [RH] Set the target to the thing that killed it. Strife apparently does this.
+	target = source;
+
+	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY);
+	if (!(flags4 & MF4_DONTFALL)) flags&=~MF_NOGRAVITY;
+	flags |= MF_DROPOFF;
+	if (flags3 & MF3_ISMONSTER)
+	{ // [RH] Only monsters get to be corpses.
+		flags |= MF_CORPSE;
+	}
+	// [RH] Allow the death height to be overridden using metadata.
+	fixed_t metaheight = 0;
+	if (flags2 & MF2_FIREDAMAGE)
+	{
+		metaheight = GetClass()->Meta.GetMetaFixed (AMETA_BurnHeight);
+	}
+	if (metaheight == 0)
+	{
+		metaheight = GetClass()->Meta.GetMetaFixed (AMETA_DeathHeight);
+	}
+	if (metaheight != 0)
+	{
+		height = MAX<fixed_t> (metaheight, 0);
+	}
+	else
+	{
+		height >>= 2;
+	}
 
 	// [RH] If the thing has a special, execute and remove it
 	//		Note that the thing that killed it is considered
@@ -367,7 +392,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	if (special && !(flags & MF_SPECIAL))
 	{
 		LineSpecials[special] (NULL, level.flags & LEVEL_ACTOWNSPECIAL
-			? this : source, args[0], args[1], args[2], args[3], args[4]);
+			? this : source, false, args[0], args[1], args[2], args[3], args[4]);
 		special = 0;
 	}
 
@@ -405,7 +430,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 				++source->player->spreecount;
 				if (source->player->morphTics)
 				{ // Make a super chicken
-					P_GivePower (source->player, pw_weaponlevel2);
+					source->GiveInventoryType (RUNTIME_CLASS(APowerWeaponLevel2));
 				}
 				if (deathmatch && cl_showsprees)
 				{
@@ -511,7 +536,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 				fraglimit == D_GetFragCount (source->player))
 			{
 				Printf ("%s\n", GStrings(TXT_FRAGLIMIT));
-				G_ExitLevel (0);
+				G_ExitLevel (0, false);
 			}
 		}
 	}
@@ -581,7 +606,11 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		return;
 	}
 
-	if (flags2 & MF2_FIREDAMAGE && BDeathState)
+	if ((flags2 & MF2_ELECTRICDAMAGE) == MF2_ELECTRICDAMAGE && EDeathState)
+	{ // Elecrocution death
+		SetState (EDeathState);
+	}
+	else if (flags2 & MF2_FIREDAMAGE && BDeathState)
 	{ // Burn death
 		SetState (BDeathState);
 	}
@@ -630,47 +659,92 @@ void P_AutoUseHealth(player_t *player, int saveHealth)
 {
 	int i;
 	int count;
-	int normalCount;
-	int superCount;
+	const TypeInfo *normalType = TypeInfo::FindType ("ArtiHealth");
+	const TypeInfo *superType = TypeInfo::FindType ("ArtiSuperHealth");
+	AInventory *normalItem = player->mo->FindInventory (normalType);
+	AInventory *superItem = player->mo->FindInventory (superType);
+	int normalAmount, superAmount;
 
-	normalCount = player->inventory[arti_health];
-	superCount = player->inventory[arti_superhealth];
-	if ((gameskill == sk_baby) && (normalCount*25 >= saveHealth))
+	normalAmount = normalItem != NULL ? normalItem->Amount : 0;
+	superAmount = superItem != NULL ? superItem->Amount : 0;
+
+	if ((gameskill == sk_baby) && (normalAmount*25 >= saveHealth))
 	{ // Use quartz flasks
 		count = (saveHealth+24)/25;
 		for(i = 0; i < count; i++)
 		{
 			player->health += 25;
-			P_PlayerRemoveArtifact (player, arti_health);
+			if (--normalItem->Amount == 0)
+			{
+				normalItem->Destroy ();
+				break;
+			}
 		}
 	}
-	else if (superCount*100 >= saveHealth)
+	else if (superAmount*100 >= saveHealth)
 	{ // Use mystic urns
 		count = (saveHealth+99)/100;
 		for(i = 0; i < count; i++)
 		{
 			player->health += 100;
-			P_PlayerRemoveArtifact (player, arti_superhealth);
+			if (--superItem->Amount == 0)
+			{
+				superItem->Destroy ();
+				break;
+			}
 		}
 	}
 	else if ((gameskill == sk_baby)
-		&& (superCount*100+normalCount*25 >= saveHealth))
+		&& (superAmount*100+normalAmount*25 >= saveHealth))
 	{ // Use mystic urns and quartz flasks
 		count = (saveHealth+24)/25;
 		saveHealth -= count*25;
 		for(i = 0; i < count; i++)
 		{
 			player->health += 25;
-			P_PlayerRemoveArtifact (player, arti_health);
+			if (--normalItem->Amount == 0)
+			{
+				normalItem->Destroy ();
+				break;
+			}
 		}
 		count = (saveHealth+99)/100;
 		for(i = 0; i < count; i++)
 		{
 			player->health += 100;
-			P_PlayerRemoveArtifact (player, arti_superhealth);
+			if (--superItem->Amount == 0)
+			{
+				superItem->Destroy ();
+				break;
+			}
 		}
 	}
 	player->mo->health = player->health;
+}
+
+//============================================================================
+//
+// P_AutoUseStrifeHealth
+//
+//============================================================================
+
+void P_AutoUseStrifeHealth (player_t *player)
+{
+	static const char *healthnames[2] = { "MedicalKit", "MedPatch" };
+
+	for (int i = 0; i < 2; ++i)
+	{
+		const TypeInfo *type = TypeInfo::FindType (healthnames[i]);
+
+		while (player->health < 50)
+		{
+			AInventory *item = player->mo->FindInventory (type);
+			if (item == NULL)
+				break;
+			if (!player->mo->UseInventory (item))
+				break;
+		}
+	}
 }
 
 /*
@@ -693,16 +767,25 @@ int MeansOfDeath;
 void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int mod, int flags)
 {
 	unsigned ang;
-	int saved;
-	fixed_t savedPercent;
 	player_t *player;
 	fixed_t thrust;
 	int temp;
-	int i;
 
 	if (target == NULL || !(target->flags & MF_SHOOTABLE))
 	{ // Shouldn't happen
 		return;
+	}
+	// Spectral targets only take damage from spectral projectiles.
+	if (target->flags4 & MF4_SPECTRAL)
+	{
+		if (inflictor == NULL || !(inflictor->flags4 & MF4_SPECTRAL))
+		{
+			if (target->MissileState != NULL)
+			{
+				target->SetState (target->MissileState);
+			}
+			return;
+		}
 	}
 	if (target->health <= 0)
 	{
@@ -719,11 +802,20 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if ((target->flags2 & MF2_INVULNERABLE) && damage < 1000000)
 	{ // actor is invulnerable
-		if (target->player) return;		// for players, no exceptions
-		if (!inflictor || !(inflictor->flags3 & MF3_FOILINVUL))
+		if (!target->player)
 		{
-			return;
+			if (!inflictor || !(inflictor->flags3 & MF3_FOILINVUL))
+			{
+				return;
+			}
 		}
+		else
+		{
+			// Only in Hexen invulnerable players are excluded from getting
+			// thrust by damage.
+			if (gameinfo.gametype == GAME_Hexen) return;
+		}
+		
 	}
 	MeansOfDeath = mod;
 	// [RH] Andy Baker's Stealth monsters
@@ -753,9 +845,33 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	// Special damage types
 	if (inflictor)
 	{
+		if (inflictor->flags4 & MF4_SPECTRAL)
+		{
+			if (player != NULL)
+			{
+				if (inflictor->health == -1)
+					return;
+			}
+			else if (target->flags4 & MF4_SPECTRAL)
+			{
+				if (inflictor->health == -2)
+					return;
+			}
+		}
+		if (inflictor->flags2 & MF2_FIREDAMAGE && target->flags4 & MF4_FIRERESIST)
+		{
+			damage /= 2;
+		}
 		damage = inflictor->DoSpecialDamage (target, damage);
 		if (damage == -1)
+		{
 			return;
+		}
+	}
+	damage = target->TakeSpecialDamage (inflictor, source, damage);
+	if (damage == -1)
+	{
+		return;
 	}
 	// Push the target unless the source's weapon's kickback is 0.
 	// (i.e. Guantlets/Chainsaw)
@@ -765,12 +881,10 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	{
 		int kickback;
 
-		if (!source || !source->player)
+		if (!source || !source->player || !source->player->ReadyWeapon)
 			kickback = gameinfo.defKickback;
-		else if (source->player->powers[pw_weaponlevel2])
-			kickback = wpnlev2info[source->player->readyweapon]->kickback;
 		else
-			kickback = wpnlev1info[source->player->readyweapon]->kickback;
+			kickback = source->player->ReadyWeapon->Kickback;
 
 		if (kickback)
 		{
@@ -778,7 +892,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				target->x, target->y);
 			thrust = damage*(FRACUNIT>>3)*kickback / target->Mass;
 			// [RH] If thrust overflows, use a more reasonable amount
-			if (thrust < 0)
+			if (thrust < 0 || thrust > 10*FRACUNIT)
 			{
 				thrust = 10*FRACUNIT;
 			}
@@ -795,8 +909,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			}
 			ang >>= ANGLETOFINESHIFT;
 			if (source && source->player && (source == inflictor)
-				&& source->player->powers[pw_weaponlevel2]
-				&& source->player->readyweapon == wp_staff)
+				&& source->player->ReadyWeapon != NULL &&
+				(source->player->ReadyWeapon->WeaponFlags & WIF_STAFF2_KICKBACK))
 			{
 				// Staff power level 2
 				target->momx += FixedMul (10*FRACUNIT, finecosine[ang]);
@@ -819,6 +933,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	//
 	if (player)
 	{
+		if ((target->flags2 & MF2_INVULNERABLE) && damage < 1000000)
+		{ // player is invulnerable, so don't hurt him
+			return;
+		}
+
         //Added by MC: Lets bots look allround for enemies if they survive an ambush.
         if (player->isbot)
 		{
@@ -833,7 +952,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 
 		if (damage < 1000 && ((target->player->cheats & CF_GODMODE)
-			|| target->player->powers[pw_invulnerability]))
+			|| (target->player->mo->flags2 & MF2_INVULNERABLE)))
 		{
 			return;
 		}
@@ -849,73 +968,19 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 					return;
 			}
 		}
+		if (inflictor != NULL &&
+			inflictor->flags2 & MF2_FIREDAMAGE &&
+			player->mo->FindInventory (RUNTIME_CLASS(APowerMask)))
+		{
+			return;
+		}
+		if (!(flags & DMG_NO_ARMOR) && player->mo->Inventory != NULL)
+		{
+			int newdam = damage;
+			player->mo->Inventory->AbsorbDamage (damage, newdam);
+			damage = newdam;
+		}
 
-		if (gameinfo.gametype != GAME_Hexen)
-		{
-			if (player->armortype && !(flags & DMG_NO_ARMOR))
-			{
-				if (gameinfo.gametype == GAME_Doom)
-				{
-					saved = (player->armortype == deh.GreenAC) ?
-						damage/3 : damage/2;
-				}
-				else
-				{
-					saved = (player->armortype == 1) ?
-						damage >> 1 : (damage >> 1) + (damage >> 2);
-				}
-				if (player->armorpoints[0] <= saved)
-				{
-					// armor is used up
-					saved = player->armorpoints[0];
-					player->armortype = 0;
-				}
-				player->armorpoints[0] -= saved;
-				damage -= saved;
-			}
-		}
-		else if (!(flags & DMG_NO_ARMOR))	// && GAME_Hexen
-		{
-			savedPercent = player->mo->GetAutoArmorSave ()
-				+player->armorpoints[(int)ARMOR_ARMOR]
-				+player->armorpoints[(int)ARMOR_SHIELD]
-				+player->armorpoints[(int)ARMOR_HELMET]
-				+player->armorpoints[(int)ARMOR_AMULET];
-			if (savedPercent)
-			{ // armor absorbed some damage
-				if (savedPercent > 100*FRACUNIT)
-				{
-					savedPercent = 100*FRACUNIT;
-				}
-				for (i = 0; i < NUMARMOR; i++)
-				{
-					if (player->armorpoints[i])
-					{
-						// 300 damage always wipes out the armor unless some was added
-						// with the dragon skin bracers.
-						if (damage < 10000)
-						{
-							player->armorpoints[i] -= 
-								Scale (damage, player->mo->GetArmorIncrement (i), 300);
-							if (player->armorpoints[i] < 2*FRACUNIT)
-							{
-								player->armorpoints[i] = 0;
-							}
-						}
-						else
-						{
-							player->armorpoints[i] = 0;
-						}
-					}
-				}
-				saved = Scale (damage, savedPercent, 100*FRACUNIT);
-				if (saved > savedPercent >> (FRACBITS-1))
-				{	
-					saved = savedPercent >> (FRACBITS-1);
-				}
-				damage -= saved;
-			}
-		}
 		if (damage >= player->health
 			&& ((gameskill == sk_baby) || deathmatch)
 			&& !player->morphTics)
@@ -925,6 +990,11 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		player->health -= damage;		// mirror mobj health here for Dave
 		// [RH] Make voodoo dolls and real players record the same health
 		target->health = player->mo->health -= damage;
+		if (player->health < 50 && !deathmatch)
+		{
+			P_AutoUseStrifeHealth (player);
+			player->mo->health = player->health;
+		}
 		if (player->health < 0)
 		{
 			player->health = 0;
@@ -975,7 +1045,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				target->flags2 |= MF2_FIREDAMAGE;
 			}
 		}
-		else if ((inflictor && inflictor->flags2 & MF2_ICEDAMAGE) ||
+		if ((inflictor && inflictor->flags2 & MF2_ICEDAMAGE) ||
 			(flags & DMG_ICE_DAMAGE))
 		{
 			target->flags2 |= MF2_ICEDAMAGE;
@@ -988,15 +1058,18 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				source = source->tracer;
 			}
 		}
-		if (source && (source->player) &&
-			(source->player->readyweapon == wp_fsword ||
-			 source->player->readyweapon == wp_choly ||
-			 source->player->readyweapon == wp_mstaff))
+		if (source && (source->player) && source->player->ReadyWeapon != NULL &&
+			(source->player->ReadyWeapon->WeaponFlags & WIF_EXTREME_DEATH))
 		{
 			// Always extreme death from fourth weapon
-			target->health = -5000;
+			target->health = -target->GetDefault()->health * 3;
 		}
 		target->Die (source, inflictor);
+		return;
+	}
+	if (target->health <= 6 && target->WoundState != NULL)
+	{
+		target->SetState (target->WoundState);
 		return;
 	}
 	if ((pr_damagemobj() < target->PainChance)
@@ -1075,6 +1148,17 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 		return false;
 	if (threshold != 0 && !(flags4 & MF4_QUICKTORETALIATE))
 		return false;
+	if (other->flags & flags & MF_FRIENDLY)
+	{ // [RH] Friendlies don't target other friendlies
+		if (!deathmatch || other->FriendPlayer == 0 || FriendPlayer == 0 ||
+			other->FriendPlayer != FriendPlayer)
+		{
+			return false;
+		}
+	}
+	if (gameinfo.gametype == GAME_Strife)
+		if (!(other->flags & MF_FRIENDLY) && !(flags & MF_FRIENDLY))
+			return false;	// Strife: Non-friendlies don't target other non-friendlies
 	if (infighting < 0 && other->player == NULL)
 		return false;		// [RH] Allow monsters to ignore each other
 	if (TIDtoHate != 0 && TIDtoHate == other->TIDtoHate)
@@ -1097,7 +1181,7 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 
 void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poison)
 {
-	if((player->cheats&CF_GODMODE) || player->powers[pw_invulnerability])
+	if((player->cheats&CF_GODMODE) || (player->mo->flags2 & MF2_INVULNERABLE))
 	{
 		return;
 	}
@@ -1144,7 +1228,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		damage >>= 1;
 	}
 	if(damage < 1000 && ((player->cheats&CF_GODMODE)
-		|| player->powers[pw_invulnerability]))
+		|| (player->mo->flags2 & MF2_INVULNERABLE)))
 	{
 		return;
 	}
@@ -1155,6 +1239,10 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		P_AutoUseHealth (player, damage - player->health+1);
 	}
 	player->health -= damage; // mirror mobj health here for Dave
+	if (player->health < 50 && !deathmatch)
+	{
+		P_AutoUseStrifeHealth (player);
+	}
 	if (player->health < 0)
 	{
 		player->health = 0;

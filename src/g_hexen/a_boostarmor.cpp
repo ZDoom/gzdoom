@@ -7,29 +7,12 @@
 
 // Boost Armor Artifact (Dragonskin Bracers) --------------------------------
 
-BASIC_ARTI (BoostArmor, arti_boostarmor, GStrings(TXT_ARTIBOOSTARMOR))
-	AT_GAME_SET_FRIEND (BoostArmor)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		int count = 0;
-
-		if (gameinfo.gametype == GAME_Hexen)
-		{
-			for (armortype_t i = ARMOR_ARMOR; i < NUMARMOR; i = (armortype_t)(i+1))
-			{
-				count += P_GiveArmor (player, i, 1); // 1 point per armor type
-			}
-			return count != 0;
-		}
-		else
-		{
-			player->armorpoints[0] += 50;
-			if (!player->armortype)
-				player->armortype = deh.GreenAC;
-			return true;
-		}
-	}
+class AArtiBoostArmor : public AInventory
+{
+	DECLARE_ACTOR (AArtiBoostArmor, AInventory)
+public:
+	bool Use ();
+	const char *PickupMessage ();
 };
 
 FState AArtiBoostArmor::States[] =
@@ -49,10 +32,55 @@ IMPLEMENT_ACTOR (AArtiBoostArmor, Hexen, 8041, 22)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTIBRAC")
 END_DEFAULTS
 
-AT_GAME_SET (BoostArmor)
+bool AArtiBoostArmor::Use ()
 {
-	ArtiDispatch[arti_boostarmor] = AArtiBoostArmor::ActivateArti;
-	ArtiPics[arti_boostarmor] = "ARTIBRAC";
+	int count = 0;
+
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		AHexenArmor *armor;
+
+		for (int i = 0; i < 4; ++i)
+		{
+			armor = static_cast<AHexenArmor*>(Spawn (RUNTIME_CLASS(AHexenArmor),0,0,0));
+			armor->flags |= MF_DROPPED;
+			armor->Amount = i;
+			armor->MaxAmount = 1;
+			if (!armor->TryPickup (Owner))
+			{
+				armor->Destroy ();
+			}
+			else
+			{
+				count++;
+			}
+		}
+		return count != 0;
+	}
+	else
+	{
+		ABasicArmor *armor = static_cast<ABasicArmor*>(Spawn (RUNTIME_CLASS(ABasicArmor),0,0,0));
+		armor->flags |= MF_DROPPED;
+		armor->Amount = 50;
+		armor->MaxAmount = 300;
+		if (!armor->TryPickup (Owner))
+		{
+			armor->Destroy ();
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+}
+
+const char *AArtiBoostArmor::PickupMessage ()
+{
+	return GStrings(TXT_ARTIBOOSTARMOR);
 }

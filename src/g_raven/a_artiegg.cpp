@@ -23,6 +23,7 @@ static FRandom pr_morphmonst ("MorphMonster");
 
 bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 {
+	AInventory *item;
 	APlayerPawn *morphed;
 	APlayerPawn *actor;
 
@@ -35,7 +36,7 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	{
 		return false;
 	}
-	if (p->powers[pw_invulnerability])
+	if (p->mo->flags2 & MF2_INVULNERABLE)
 	{ // Immune when invulnerable
 		return false;
 	}
@@ -54,7 +55,7 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
-	morphed->special1 = p->readyweapon;
+	p->PremorphWeapon = p->ReadyWeapon;
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
 	morphed->player = p;
 	if (actor->renderflags & RF_INVISIBLE)
@@ -81,7 +82,18 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	p->morphTics = MORPHTICS;
 	p->health = morphed->health;
 	p->mo = static_cast<APlayerPawn *>(morphed);
-	memset (&p->armorpoints[0], 0, NUMARMOR*sizeof(int));
+	// Remove all armor
+	for (item = actor->Inventory; item != NULL; )
+	{
+		AInventory *next = item->Inventory;
+		if (item->IsKindOf (RUNTIME_CLASS(AArmor)))
+		{
+			item->Destroy ();
+		}
+		item = next;
+	}
+	morphed->Inventory = actor->Inventory;
+	actor->Inventory = NULL;
 	morphed->ActivateMorphWeapon ();
 	if (p->camera == actor)
 	{
@@ -136,7 +148,11 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	}
 
 	player->morphTics = 0;
-	player->powers[pw_weaponlevel2] = 0;
+	AInventory *level2 = mo->FindInventory (RUNTIME_CLASS(APowerWeaponLevel2));
+	if (level2 != NULL)
+	{
+		level2->Destroy ();
+	}
 	player->health = mo->health = mo->GetDefault()->health;
 	player->mo = mo;
 	if (player->camera == pmo)
@@ -146,7 +162,9 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	angle = mo->angle >> ANGLETOFINESHIFT;
 	Spawn<ATeleportFog> (pmo->x + 20*finecosine[angle],
 		pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT);
-	P_PostMorphWeapon (player, (weapontype_t)pmo->special1);
+	mo->Inventory = pmo->Inventory;
+	pmo->Inventory = NULL;
+	player->PremorphWeapon->PostMorphWeapon ();
 	pmo->tracer = NULL;
 	pmo->Destroy ();
 	return true;
@@ -301,21 +319,14 @@ int AEggFX::DoSpecialDamage (AActor *target, int damage)
 	return -1;
 }
 
-// Morph Ovum ---------------------------------------------------------------
+// Morph Ovum ----------------------------------------------------------------
 
-BASIC_ARTI (Egg, arti_egg, GStrings(TXT_ARTIEGG))
-	AT_GAME_SET_FRIEND (Egg)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		AActor *mo = player->mo;
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(AEggFX));
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(AEggFX), mo->angle-(ANG45/6));
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(AEggFX), mo->angle+(ANG45/6));
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(AEggFX), mo->angle-(ANG45/3));
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(AEggFX), mo->angle+(ANG45/3));
-		return true;
-	}
+class AArtiEgg : public AInventory
+{
+	DECLARE_ACTOR (AArtiEgg, AInventory)
+public:
+	bool Use ();
+	const char *PickupMessage ();
 };
 
 FState AArtiEgg::States[] =
@@ -330,15 +341,27 @@ IMPLEMENT_ACTOR (AArtiEgg, Heretic, 30, 14)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTIEGGC")
 END_DEFAULTS
 
-AT_GAME_SET (Egg)
+bool AArtiEgg::Use ()
 {
-	ArtiDispatch[arti_egg] = AArtiEgg::ActivateArti;
-	ArtiPics[arti_egg] = "ARTIEGGC";
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX));
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle-(ANG45/6));
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle+(ANG45/6));
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle-(ANG45/3));
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle+(ANG45/3));
+	return true;
 }
 
-// Pork thing ---------------------------------------------------------------
+const char *AArtiEgg::PickupMessage ()
+{
+	return GStrings (TXT_ARTIEGG);
+}
+
+// Pork missile --------------------------------------------------------------
 
 class APorkFX : public AActor
 {
@@ -390,19 +413,12 @@ int APorkFX::DoSpecialDamage (AActor *target, int damage)
 
 // Porkalator ---------------------------------------------------------------
 
-BASIC_ARTI (Pork, arti_pork, GStrings(TXT_ARTIEGG2))
-	AT_GAME_SET_FRIEND (Pork)
-private:
-	static bool ActivateArti (player_t *player, artitype_t arti)
-	{
-		AActor *mo = player->mo;
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX));
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX), mo->angle-(ANG45/6));
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX), mo->angle+(ANG45/6));
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX), mo->angle-(ANG45/3));
-		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX), mo->angle+(ANG45/3));
-		return true;
-	}
+class AArtiPork : public AInventory
+{
+	DECLARE_ACTOR (AArtiPork, AInventory)
+public:
+	bool Use ();
+	const char *PickupMessage ();
 };
 
 FState AArtiPork::States[] =
@@ -421,10 +437,22 @@ IMPLEMENT_ACTOR (AArtiPork, Hexen, 30, 14)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_DefMaxAmount
+	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_Icon ("ARTIPORK")
 END_DEFAULTS
 
-AT_GAME_SET (Pork)
+bool AArtiPork::Use ()
 {
-	ArtiDispatch[arti_pork] = AArtiPork::ActivateArti;
-	ArtiPics[arti_pork] = "ARTIPORK";
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX));
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle-(ANG45/6));
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle+(ANG45/6));
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle-(ANG45/3));
+	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle+(ANG45/3));
+	return true;
+}
+
+const char *AArtiPork::PickupMessage ()
+{
+	return GStrings(TXT_ARTIEGG2);
 }

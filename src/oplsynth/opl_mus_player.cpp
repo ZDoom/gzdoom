@@ -1,5 +1,8 @@
+#ifdef _WIN32
 #include <io.h>
+#endif
 #include <string.h>
+#include <assert.h>
 
 #include "doomtype.h"
 #include "fmopl.h"
@@ -16,11 +19,19 @@ OPLmusicBlock::OPLmusicBlock (FILE *file, int len, int rate, int maxSamples)
 {
 	static bool gotInstrs;
 
-	InitializeCriticalSection (&ChipAccess);
-
 	scoredata = NULL;
 	SampleBuff = NULL;
 	TwoChips = !opl_onechip;
+
+#ifdef _WIN32
+	InitializeCriticalSection (&ChipAccess);
+#else
+	ChipAccess = SDL_CreateMutex ();
+	if (ChipAccess == NULL)
+	{
+		return;
+	}
+#endif
 
 	if (!gotInstrs)
 	{
@@ -59,16 +70,33 @@ OPLmusicBlock::~OPLmusicBlock ()
 		delete[] SampleBuff;
 		SampleBuff = NULL;
 	}
+#ifdef _WIN32
 	DeleteCriticalSection (&ChipAccess);
+#else
+	if (ChipAccess != NULL)
+	{
+		SDL_DestroyMutex (ChipAccess);
+		ChipAccess = NULL;
+	}
+#endif
 }
 
 void OPLmusicBlock::ResetChips ()
 {
 	TwoChips = !opl_onechip;
+#ifdef _WIN32
 	EnterCriticalSection (&ChipAccess);
+#else
+	if (SDL_mutexP (ChipAccess) != 0)
+		return;
+#endif
 	OPLdeinit ();
 	OPLinit (TwoChips + 1, SampleRate);
+#ifdef _WIN32
 	LeaveCriticalSection (&ChipAccess);
+#else
+	SDL_mutexV (ChipAccess);
+#endif
 }
 
 bool OPLmusicBlock::IsValid () const
@@ -100,7 +128,12 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 
 	memset (SampleBuff, 0, numsamples * 4);
 
+#ifdef _WIN32
 	EnterCriticalSection (&ChipAccess);
+#else
+	if (SDL_mutexP (ChipAccess) != 0)
+		return true;
+#endif
 	while (numsamples > 0)
 	{
 		int samplesleft = MIN (numsamples, NextTickIn);
@@ -113,6 +146,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 				YM3812UpdateOne (1, samples1, samplesleft);
 			}
 			NextTickIn -= samplesleft;
+			assert (NextTickIn >= 0);
 			numsamples -= samplesleft;
 			samples1 += samplesleft;
 		}
@@ -146,11 +180,16 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 			{
 				prevEnded = false;
 				NextTickIn = SamplesPerTick * next;
+				assert (NextTickIn >= 0);
 				MLtime += next;
 			}
 		}
 	}
+#ifdef _WIN32
 	LeaveCriticalSection (&ChipAccess);
+#else
+	SDL_mutexV (ChipAccess);
+#endif
 	numsamples = numbytes / 2;
 	samples1 = SampleBuff;
 
@@ -231,5 +270,5 @@ done:
 			samples[numsamples-1] = v;
 		}
 	}
-	return true;
+	return res;
 }

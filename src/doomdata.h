@@ -131,7 +131,7 @@ typedef struct
 #define ML_REPEAT_SPECIAL	0x0200	// special is repeatable
 #define ML_SPAC_SHIFT		10
 #define ML_SPAC_MASK		0x1c00
-static int GET_SPAC (int flags)
+static inline int GET_SPAC (int flags)
 {
 	return (flags&ML_SPAC_MASK) >> ML_SPAC_SHIFT;
 }
@@ -144,6 +144,7 @@ static int GET_SPAC (int flags)
 #define SPAC_PUSH		4	// when player/monster pushes line
 #define SPAC_PCROSS		5	// when projectile crosses line
 #define SPAC_USETHROUGH	6	// SPAC_USE, but passes it through
+#define SPAC_PTOUCH		7	// when a projectiles crosses or hits line
 
 #define SPAC_OTHERCROSS	8	// [RH] Not a real activation type. Here for compatibility.
 
@@ -153,8 +154,22 @@ static int GET_SPAC (int flags)
 // [RH] BOOM's ML_PASSUSE flag (conflicts with ML_REPEATSPECIAL)
 #define ML_PASSUSE_BOOM				0x0200
 
+// [RH] In case I feel like it, here it is...
+#define ML_3DMIDTEX_ETERNITY		0x0400
+
 // [RH] Line blocks everything
 #define ML_BLOCKEVERYTHING			0x8000
+
+// [RH] Extra flags for Strife compatibility
+// The first set are as they exist in Strife maps.
+// The second set are what they get translated into.
+#define ML_TRANSLUCENT_STRIFE		0x1000
+#define ML_RAILING_STRIFE			0x0200
+#define ML_BLOCK_FLOATERS_STRIFE	0x0400
+
+#define ML_RAILING					0x20000
+#define ML_BLOCK_FLOATERS			0x40000
+#define ML_CLIP_MIDTEX				0x80000	// Automatic for every Strife line
 
 // Sector definition, from editing
 typedef struct
@@ -251,14 +266,27 @@ typedef struct MapThing
 #define MTF_COOPERATIVE		0x0200	// Thing appears in cooperative games
 #define MTF_DEATHMATCH		0x0400	// Thing appears in deathmatch games
 
-#define MTF_STRIFEBIT8		0x1000
-#define MTF_STRIFEBIT9		0x2000
+#define MTF_SHADOW			0x0800
+#define MTF_ALTSHADOW		0x1000
+#define MTF_FRIENDLY		0x2000
+#define MTF_STANDSTILL		0x4000
+#define MTF_STRIFESOMETHING	0x8000
 
 // BOOM and DOOM compatible versions of some of the above
 
 #define BTF_NOTSINGLE		0x0010	// (TF_COOPERATIVE|TF_DEATHMATCH)
 #define BTF_NOTDEATHMATCH	0x0020	// (TF_SINGLE|TF_COOPERATIVE)
 #define BTF_NOTCOOPERATIVE	0x0040	// (TF_SINGLE|TF_DEATHMATCH)
+#define BTF_FRIENDLY		0x0080	// MBF friendly monsters
+#define BTF_BADEDITORCHECK	0x0100	// for detecting bad (Mac) editors
+
+// Strife thing flags
+
+#define STF_STANDSTILL		0x0008
+#define STF_AMBUSH			0x0020
+#define STF_FRIENDLY		0x0040
+#define STF_SHADOW			0x0100
+#define STF_ALTSHADOW		0x0200
 
 //--------------------------------------------------------------------------
 //

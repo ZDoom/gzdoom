@@ -7,7 +7,6 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 
-static FRandom pr_foo ("ImpMissileRange");
 static FRandom pr_imp ("ImpExplode");
 static FRandom pr_impmeatk ("ImpMeAttack");
 static FRandom pr_impmsatk ("ImpMsAttack");
@@ -27,7 +26,6 @@ class AHereticImp : public AActor
 {
 	DECLARE_ACTOR (AHereticImp, AActor)
 public:
-	bool SuggestMissileAttack (fixed_t dist);
 	const char *GetObituary ();
 	const char *GetHitObituary ();
 };
@@ -100,6 +98,7 @@ IMPLEMENT_ACTOR (AHereticImp, Heretic, 66, 5)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY|MF_COUNTKILL)
 	PROP_Flags2 (MF2_SPAWNFLOAT|MF2_PASSMOBJ|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_DONTOVERLAP)
+	PROP_Flags4 (MF4_MISSILEMORE)
 
 	PROP_SpawnState (S_IMP_LOOK)
 	PROP_SeeState (S_IMP_FLY)
@@ -147,6 +146,7 @@ IMPLEMENT_ACTOR (AHereticImpLeader, Heretic, 5, 7)
 	
 	PROP_MeleeState (~0)
 	PROP_MissileState (S_IMP_MSATK2)
+	PROP_Flags4Clear(MF4_MISSILEMORE)	// The imp leader does have a 'normal' missile range!
 
 	PROP_AttackSound ("himp/leaderattack")
 END_DEFAULTS
@@ -234,11 +234,6 @@ AT_SPEED_SET (HereticImpBall, speed)
 	SimpleSpeedSetter (AHereticImpBall, 10*FRACUNIT, 20*FRACUNIT, speed);
 }
 
-bool AHereticImp::SuggestMissileAttack (fixed_t dist)
-{ // Imps fly attack from far away
-	return pr_foo() >= MIN<int> (dist >> (FRACBITS + 1), 200);
-}
-
 //----------------------------------------------------------------------------
 //
 // PROC A_ImpExplode
@@ -279,7 +274,7 @@ void A_ImpMeAttack (AActor *self)
 		return;
 	}
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
-	if (P_CheckMeleeRange (self))
+	if (self->CheckMeleeRange ())
 	{
 		int damage = 5+(pr_impmeatk()&7);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
@@ -335,7 +330,7 @@ void A_ImpMsAttack2 (AActor *self)
 		return;
 	}
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
-	if (P_CheckMeleeRange (self))
+	if (self->CheckMeleeRange ())
 	{
 		int damage = 5+(pr_impmsatk2()&7);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);

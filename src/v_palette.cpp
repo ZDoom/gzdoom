@@ -35,7 +35,11 @@
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
+#ifdef _WIN32
 #include <io.h>
+#else
+#define O_BINARY 0
+#endif
 #include <fcntl.h>
 
 #include "templates.h"
@@ -302,7 +306,7 @@ void InitPalette ()
 	buildPal = Args.CheckValue ("-bpal");
 	if (buildPal != NULL)
 	{
-		int f = open (buildPal, _O_BINARY | _O_RDONLY);
+		int f = open (buildPal, O_BINARY | O_RDONLY);
 		if (f >= 0 && read (f, pal, 768) == 768)
 		{
 			// Reverse the palette because BUILD used entry 255 as
@@ -364,8 +368,9 @@ void InitPalette ()
 
 	// build special maps (e.g. invulnerability)
 	shade = InvulnerabilityColormap;
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{ // Doom invulnerability is an inverted grayscale
+	  // Strife uses it when firing the Sigil
 		int grayint;
 		for (c = 0; c < 256; c++)
 		{
@@ -634,6 +639,9 @@ void FDynamicColormap::BuildLights ()
 	int lr, lg, lb, ld, ild;
 	PalEntry colors[256], basecolors[256];
 	BYTE *shade;
+
+	if (Maps == NULL)
+		return;
 
 	// Scale light to the range 0-256, so we can avoid
 	// dividing by 255 in the bottom loop.

@@ -19,9 +19,9 @@ static FRandom pr_feathers ("Feathers");
 static FRandom pr_beakatkpl1 ("BeakAtkPL1");
 static FRandom pr_beakatkpl2 ("BeakAtkPL2");
 
-void A_BeakRaise (AActor *, pspdef_t *);
-void A_BeakAttackPL1 (AActor *, pspdef_t *);
-void A_BeakAttackPL2 (AActor *, pspdef_t *);
+void A_BeakRaise (AActor *);
+void A_BeakAttackPL1 (AActor *);
+void A_BeakAttackPL2 (AActor *);
 
 void A_Feathers (AActor *);
 void A_ChicLook (AActor *);
@@ -29,7 +29,7 @@ void A_ChicChase (AActor *);
 void A_ChicPain (AActor *);
 void A_ChicAttack (AActor *);
 
-void P_UpdateBeak (AActor *, pspdef_t *);
+void P_UpdateBeak (AActor *);
 
 // Beak puff ----------------------------------------------------------------
 
@@ -58,8 +58,11 @@ void ABeakPuff::BeginPlay ()
 class ABeak : public AWeapon
 {
 	DECLARE_ACTOR (ABeak, AWeapon)
+};
 
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+class ABeakPowered : public ABeak
+{
+	DECLARE_STATELESS_ACTOR (ABeakPowered, ABeak)
 };
 
 FState ABeak::States[] =
@@ -80,54 +83,24 @@ FState ABeak::States[] =
 	S_NORMAL (BEAK, 'A',   12, A_BeakAttackPL2			, &States[S_BEAKREADY])
 };
 
-FWeaponInfo ABeak::WeaponInfo1 =
-{
-	WIF_DONTBOB,
-	am_noammo,
-	am_noammo,
-	0,
-	0,
-	&States[S_BEAKUP],
-	&States[S_BEAKDOWN],
-	&States[S_BEAKREADY],
-	&States[S_BEAKATK1],
-	&States[S_BEAKATK1],
-	NULL,
-	NULL,
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ABeak),
-	-1
-};
-
-FWeaponInfo ABeak::WeaponInfo2 =
-{
-	WIF_DONTBOB,
-	am_noammo,
-	am_noammo,
-	0,
-	0,
-	&States[S_BEAKUP],
-	&States[S_BEAKDOWN],
-	&States[S_BEAKREADY],
-	&States[S_BEAKATK2],
-	&States[S_BEAKATK2],
-	NULL,
-	NULL,
-	150,
-	15*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(ABeak),
-	-1
-};
-
 IMPLEMENT_ACTOR (ABeak, Heretic, -1, 0)
+	PROP_Weapon_SelectionOrder (10000)
+	PROP_Weapon_Flags (WIF_DONTBOB|WIF_BOT_MELEE)
+	PROP_Weapon_UpState (S_BEAKUP)
+	PROP_Weapon_DownState (S_BEAKDOWN)
+	PROP_Weapon_ReadyState (S_BEAKREADY)
+	PROP_Weapon_AtkState (S_BEAKATK1)
+	PROP_Weapon_HoldAtkState (S_BEAKATK1)
+	PROP_Weapon_YAdjust (15)
+	PROP_Weapon_SisterType ("BeakPowered")
 END_DEFAULTS
 
-WEAPON2 (wp_beak, ABeak)
+IMPLEMENT_STATELESS_ACTOR (ABeakPowered, Heretic, -1, 0)
+	PROP_Weapon_Flags (WIF_DONTBOB|WIF_BOT_MELEE|WIF_POWERED_UP)
+	PROP_Weapon_AtkState (S_BEAKATK2)
+	PROP_Weapon_HoldAtkState (S_BEAKATK2)
+	PROP_Weapon_SisterType ("Beak")
+END_DEFAULTS
 
 // Chicken player -----------------------------------------------------------
 
@@ -138,6 +111,7 @@ public:
 	fixed_t GetJumpZ () { return FRACUNIT; }
 	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();
+	void TweakSpeeds (int &forward, int &side);
 };
 
 FState AChickenPlayer::States[] =
@@ -175,7 +149,7 @@ IMPLEMENT_ACTOR (AChickenPlayer, Heretic, -1, 0)
 	PROP_HeightFixed (24)
 	PROP_PainChance (255)
 	PROP_SpeedFixed (1)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_NOTDMATCH|MF_FRIENDLY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP|MF2_LOGRAV|MF2_TELESTOMP)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 	PROP_Flags4 (MF4_NOSKIN)
@@ -194,7 +168,7 @@ void AChickenPlayer::MorphPlayerThink ()
 {
 	if (health > 0)
 	{ // Handle beak movement
-		P_UpdateBeak (this, &player->psprites[ps_weapon]);
+		P_UpdateBeak (this);
 	}
 	if (player->morphTics & 15)
 	{
@@ -217,10 +191,20 @@ void AChickenPlayer::MorphPlayerThink ()
 
 void AChickenPlayer::ActivateMorphWeapon ()
 {
-	player->pendingweapon = wp_nochange;
+	player->PendingWeapon = WP_NOCHANGE;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
-	player->readyweapon = wp_beak;
-	P_SetPsprite (player, ps_weapon, wpnlev1info[player->readyweapon]->readystate);
+	player->ReadyWeapon = player->mo->FindInventory<ABeak> ();
+	if (player->ReadyWeapon == NULL)
+	{
+		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (RUNTIME_CLASS(ABeak)));
+	}
+	P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
+}
+
+void AChickenPlayer::TweakSpeeds (int &forward, int &side)
+{
+	forward = forward * 2500 / 2048;
+	side = side * 2500 / 2048;
 }
 
 // Chicken (non-player) -----------------------------------------------------
@@ -360,7 +344,7 @@ void A_ChicAttack (AActor *actor)
 	{
 		return;
 	}
-	if (P_CheckMeleeRange(actor))
+	if (actor->CheckMeleeRange())
 	{
 		int damage = 1 + (pr_chicattack() & 1);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
@@ -450,11 +434,12 @@ void A_Feathers (AActor *actor)
 //
 //---------------------------------------------------------------------------
 
-void P_UpdateBeak (AActor *actor, pspdef_t *psp)
+void P_UpdateBeak (AActor *actor)
 {
 	if (actor->player != NULL)
 	{
-		psp->sy = WEAPONTOP + (actor->player->chickenPeck << (FRACBITS-1));
+		actor->player->psprites[ps_weapon].sy = WEAPONTOP +
+			(actor->player->chickenPeck << (FRACBITS-1));
 	}
 }
 
@@ -464,7 +449,7 @@ void P_UpdateBeak (AActor *actor, pspdef_t *psp)
 //
 //---------------------------------------------------------------------------
 
-void A_BeakRaise (AActor *actor, pspdef_t *psp)
+void A_BeakRaise (AActor *actor)
 {
 	player_t *player;
 
@@ -472,9 +457,8 @@ void A_BeakRaise (AActor *actor, pspdef_t *psp)
 	{
 		return;
 	}
-	psp->sy = WEAPONTOP;
-	P_SetPsprite (player, ps_weapon,
-		wpnlev1info[player->readyweapon]->readystate);
+	player->psprites[ps_weapon].sy = WEAPONTOP;
+	P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
 }
 
 //----------------------------------------------------------------------------
@@ -494,7 +478,7 @@ void P_PlayPeck (AActor *chicken)
 //
 //----------------------------------------------------------------------------
 
-void A_BeakAttackPL1 (AActor *actor, pspdef_t *psp)
+void A_BeakAttackPL1 (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -509,8 +493,7 @@ void A_BeakAttackPL1 (AActor *actor, pspdef_t *psp)
 	damage = 1 + (pr_beakatkpl1()&3);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	PuffType = RUNTIME_CLASS(ABeakPuff);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, RUNTIME_CLASS(ABeakPuff));
 	if (linetarget)
 	{
 		player->mo->angle = R_PointToAngle2 (player->mo->x,
@@ -518,7 +501,7 @@ void A_BeakAttackPL1 (AActor *actor, pspdef_t *psp)
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
-	psp->tics -= pr_beakatkpl1() & 7;
+	player->psprites[ps_weapon].tics -= pr_beakatkpl1() & 7;
 }
 
 //----------------------------------------------------------------------------
@@ -527,7 +510,7 @@ void A_BeakAttackPL1 (AActor *actor, pspdef_t *psp)
 //
 //----------------------------------------------------------------------------
 
-void A_BeakAttackPL2 (AActor *actor, pspdef_t *psp)
+void A_BeakAttackPL2 (AActor *actor)
 {
 	angle_t angle;
 	int damage;
@@ -542,8 +525,7 @@ void A_BeakAttackPL2 (AActor *actor, pspdef_t *psp)
 	damage = pr_beakatkpl2.HitDice (4);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	PuffType = RUNTIME_CLASS(ABeakPuff);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage);
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, RUNTIME_CLASS(ABeakPuff));
 	if (linetarget)
 	{
 		player->mo->angle = R_PointToAngle2 (player->mo->x,
@@ -551,5 +533,5 @@ void A_BeakAttackPL2 (AActor *actor, pspdef_t *psp)
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
-	psp->tics -= pr_beakatkpl2()&3;
+	player->psprites[ps_weapon].tics -= pr_beakatkpl2()&3;
 }

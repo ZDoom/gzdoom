@@ -56,7 +56,6 @@
 #include "s_sound.h"
 #include "g_game.h"
 #include "g_level.h"
-#include "p_inter.h"
 #include "w_wad.h"
 #include "g_level.h"
 #include "gi.h"
@@ -335,7 +334,7 @@ CCMD (give)
 
 CCMD (gameversion)
 {
-	Printf ("%d.%d : " __DATE__ "\n", VERSION / 100, VERSION % 100);
+	Printf ("%d.%d : " __DATE__ "\n", GAMEVERSION / 100, GAMEVERSION % 100);
 }
 
 CCMD (print)
@@ -597,6 +596,8 @@ CCMD (warp)
 	}
 	else
 	{
-		P_TeleportMove (players[consoleplayer].mo, fixed_t(atof(argv[1])*65536.0), fixed_t(atof(argv[2])*65536.0), ONFLOORZ, true);
+		Net_WriteByte (DEM_WARPCHEAT);
+		Net_WriteWord (atoi (argv[1]));
+		Net_WriteWord (atoi (argv[2]));
 	}
 }

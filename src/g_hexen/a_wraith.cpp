@@ -379,7 +379,7 @@ void A_WraithMelee (AActor *actor)
 	int amount;
 
 	// Steal health from target and give to self
-	if (P_CheckMeleeRange(actor) && (pr_stealhealth()<220))
+	if (actor->CheckMeleeRange() && (pr_stealhealth()<220))
 	{
 		amount = pr_stealhealth.HitDice (2);
 		P_DamageMobj (actor->target, actor, actor, amount);

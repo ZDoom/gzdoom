@@ -49,8 +49,8 @@
 #include "d_gui.h"
 #include "templates.h"
 
-bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineSide,
-					int arg0, int arg1, int arg2, int always, bool net);
+int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backSide,
+					int arg0, int arg1, int arg2, int always, bool wantResultCode, bool net);
 
 //#define SIMULATEERRORS		(RAND_MAX/3)
 #define SIMULATEERRORS			0
@@ -1414,7 +1414,7 @@ void D_ArbitrateNetStart (void)
 
 				if (!nodeingame[node])
 				{
-					if (netbuffer[2] != VERSION)
+					if (netbuffer[2] != GAMEVERSION)
 						I_Error ("Different DOOM versions cannot play a net game!");
 
 					playeringame[netbuffer[1]] = true;
@@ -1460,7 +1460,7 @@ void D_ArbitrateNetStart (void)
 				break;
 		}
 
-		netbuffer[2] = VERSION;
+		netbuffer[2] = GAMEVERSION;
 		netbuffer[3] = playersdetected[0] >> 24;
 		netbuffer[4] = playersdetected[0] >> 16;
 		netbuffer[5] = playersdetected[0] >> 8;
@@ -1478,7 +1478,7 @@ void D_ArbitrateNetStart (void)
 		else
 		{ // Send user info for all nodes
 			netbuffer[0] = NCMD_SETUP+1;
-			netbuffer[2] = VERSION;
+			netbuffer[2] = GAMEVERSION;
 			for (i = 1; i < doomcom->numnodes; ++i)
 			{
 				for (j = 0; j < doomcom->numnodes; ++j)
@@ -1998,6 +1998,15 @@ void Net_DoCommand (int type, byte **stream, int player)
 		cht_Give (&players[player], s, ReadByte (stream));
 		break;
 
+	case DEM_WARPCHEAT:
+		{
+			int x, y;
+			x = ReadWord (stream);
+			y = ReadWord (stream);
+			P_TeleportMove (players[consoleplayer].mo, x * 65536, y * 65536, ONFLOORZ, true);
+		}
+		break;
+
 	case DEM_GENERICCHEAT:
 		cht_DoCheat (&players[player], ReadByte (stream));
 		break;
@@ -2012,7 +2021,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 		// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
 		// That was a long time ago. Maybe it works now?
 		level.flags |= LEVEL_CHANGEMAPCHEAT;
-		G_ExitLevel (pos);
+		G_ExitLevel (pos, false);
 		break;
 
 	case DEM_SUICIDE:
@@ -2031,117 +2040,55 @@ void Net_DoCommand (int type, byte **stream, int player)
 		Printf ("Removed all bots\n");
 		break;
 
-	case DEM_INVSEL:
+	case DEM_CENTERVIEW:
+		if (players[player].mo != NULL)
 		{
-			byte which = ReadByte (stream);
+			players[player].mo->pitch = 0;
+		}
+		break;
 
-			if (which & 0x80)
+	case DEM_INVUSEALL:
+		if (gamestate == GS_LEVEL)
+		{
+			AInventory *item = players[player].mo->Inventory;
+
+			while (item != NULL)
 			{
-				players[player].inventorytics = 5*TICRATE;
-			}
-			which &= 0x7f;
-			if (players[player].inventory[which] > 0)
-			{
-				players[player].readyArtifact = (artitype_t)which;
+				AInventory *next = item->Inventory;
+				if (item->ItemFlags & IF_INVBAR)
+				{
+					players[player].mo->UseInventory (item);
+				}
+				item = next;
 			}
 		}
 		break;
 
 	case DEM_INVUSE:
+	case DEM_INVDROP:
 		{
-			byte which = ReadByte (stream);
+			DWORD which = ReadLong (stream);
 
-			if (which == arti_none)
-			{ // Use one of each artifact (except puzzle artifacts)
-				for (i = 1; i < arti_firstpuzzitem; i++)
-				{
-					P_PlayerUseArtifact (&players[player], (artitype_t)i);
-				}
-			}
-			else
+			if (gamestate == GS_LEVEL)
 			{
-				if (players[player].inventorytics)
+				AInventory *item = players[player].mo->Inventory;
+				while (item != NULL && item->InventoryID != which)
 				{
-					players[player].inventorytics = 0;
+					item = item->Inventory;
 				}
-				else
+				if (item != NULL)
 				{
-					P_PlayerUseArtifact (&players[player], (artitype_t)which);
-				}
-			}
-		}
-		break;
-
-	case DEM_WEAPSEL:
-		{
-			byte which = ReadByte (stream);
-			FWeaponInfo **infos = (players[player].powers[pw_weaponlevel2]
-				&& deathmatch) ? wpnlev2info : wpnlev1info;
-
-			if (which < NUMWEAPONS
-				&& which != players[player].readyweapon
-				&& players[player].weaponowned[which]
-				&& (infos[which]->ammo >= NUMAMMO ||
-				    players[player].ammo[infos[which]->ammo] >= infos[which]->ammouse))
-			{
-				// The actual changing of the weapon is done when the weapon
-				// psprite can do it (A_WeaponReady), so it doesn't happen in
-				// the middle of an attack.
-				players[player].pendingweapon = (weapontype_t)which;
-			}
-		}
-		break;
-
-	case DEM_WEAPSLOT:
-		{
-			byte slot = ReadByte (stream);
-
-			if (slot < NUM_WEAPON_SLOTS)
-			{
-				weapontype_t newweap = players[player].WeaponSlots.Slots[slot].PickWeapon (&players[player]);
-				if (newweap < NUMWEAPONS && newweap != players[player].readyweapon)
-				{
-					players[player].pendingweapon = newweap;
+					if (type == DEM_INVUSE)
+					{
+						players[player].mo->UseInventory (item);
+					}
+					else
+					{
+						players[player].mo->DropInventory (item);
+					}
 				}
 			}
 		}
-		break;
-
-	case DEM_WEAPNEXT:
-	case DEM_WEAPPREV:
-		{
-			weapontype_t newweap;
-			
-			if (type == DEM_WEAPNEXT)
-				newweap = PickNextWeapon (&players[player]);
-			else
-				newweap = PickPrevWeapon (&players[player]);
-
-			if (newweap != players[player].readyweapon)
-			{
-				players[player].pendingweapon = newweap;
-			}
-		}
-		break;
-
-	case DEM_SLOTCHANGE:
-		{
-			byte slot = ReadByte (stream);
-
-			if (slot < NUM_WEAPON_SLOTS)
-			{
-				players[player].WeaponSlots.Slots[slot].StreamIn (stream);
-			}
-			else
-			{
-				slot = ReadByte (stream);
-				*stream += slot;
-			}
-		}
-		break;
-
-	case DEM_SLOTSCHANGE:
-		players[player].WeaponSlots.StreamInSlots (stream);
 		break;
 
 	case DEM_SUMMON:
@@ -2252,7 +2199,8 @@ void Net_DoCommand (int type, byte **stream, int player)
 			{
 				arg[i] = ReadLong (stream);
 			}
-			P_StartScript (players[player].mo, NULL, snum, level.mapname, 0, arg[0], arg[1], arg[2], false, true);
+			P_StartScript (players[player].mo, NULL, snum, level.mapname, false,
+				arg[0], arg[1], arg[2], false, false, true);
 		}
 		break;
 
@@ -2290,12 +2238,14 @@ void Net_SkipCommand (int type, byte **stream)
 			skip = strlen ((char *)(*stream)) + 1;
 			break;
 
+		case DEM_INVUSE:
+		case DEM_INVDROP:
+		case DEM_WARPCHEAT:
+			skip = 4;
+			break;
+
 		case DEM_GENERICCHEAT:
 		case DEM_DROPPLAYER:
-		case DEM_INVSEL:
-		case DEM_INVUSE:
-		case DEM_WEAPSEL:
-		case DEM_WEAPSLOT:
 		case DEM_FOV:
 		case DEM_MYFOV:
 			skip = 1;
@@ -2304,18 +2254,6 @@ void Net_SkipCommand (int type, byte **stream)
 		case DEM_SAVEGAME:
 			skip = strlen ((char *)(*stream)) + 1;
 			skip += strlen ((char *)(*stream) + skip) + 1;
-			break;
-
-		case DEM_SLOTCHANGE:
-			skip = 2 + *(*stream + 1);
-			break;
-
-		case DEM_SLOTSCHANGE:
-			{
-				FWeaponSlots foo;
-				foo.StreamInSlots (stream);
-				skip = 0;
-			}
 			break;
 
 		case DEM_SINFCHANGEDXOR:

@@ -95,6 +95,7 @@ void DPlat::Tick ()
 							break;
 					case platDownByValue:
 					case platDownWaitUpStay:
+					case platDownWaitUpStayStone:
 					case platUpByValueStay:
 					case platDownToNearestFloor:
 					case platDownToLowestCeiling:
@@ -127,6 +128,7 @@ void DPlat::Tick ()
 				switch (m_Type)
 				{
 					case platUpWaitDownStay:
+					case platUpNearestWaitDownStay:
 					case platUpByValue:
 						Destroy ();
 						break;
@@ -228,7 +230,12 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 
 manual_plat:
 		if (sec->floordata)
-			continue;
+		{
+			if (!manual)
+				continue;
+			else
+				return false;
+		}
 
 		// Find lowest & highest floors around sector
 		rtn = true;
@@ -281,6 +288,7 @@ manual_plat:
 			break;
 
 		case DPlat::platDownWaitUpStay:
+		case DPlat::platDownWaitUpStayStone:
 			newheight = sec->FindLowestFloorSurrounding (&spot) + lip*FRACUNIT;
 			plat->m_Low = sec->floorplane.PointToDist (spot, newheight);
 
@@ -289,11 +297,18 @@ manual_plat:
 
 			plat->m_High = sec->floorplane.d;
 			plat->m_Status = DPlat::down;
-			plat->PlayPlatSound ("Platform");
+			plat->PlayPlatSound (type == DPlat::platDownWaitUpStay ? "Platform" : "Floor");
 			break;
 		
+		case DPlat::platUpNearestWaitDownStay:
+			newheight = sec->FindNextHighestFloor (&spot);
+			// Intentional fall-through
+
 		case DPlat::platUpWaitDownStay:
-			newheight = sec->FindHighestFloorSurrounding (&spot);
+			if (type == DPlat::platUpWaitDownStay)
+			{
+				newheight = sec->FindHighestFloorSurrounding (&spot);
+			}
 			plat->m_High = sec->floorplane.PointToDist (spot, newheight);
 			plat->m_Low = sec->floorplane.d;
 

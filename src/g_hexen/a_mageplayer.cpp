@@ -88,7 +88,7 @@ IMPLEMENT_ACTOR (AMagePlayer, Hexen, -1, 0)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (64)
 	PROP_SpeedFixed (1)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_FLOORCLIP|MF2_SLIDE|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 	PROP_Flags4 (MF4_NOSKIN)
@@ -121,8 +121,8 @@ void AMagePlayer::PlayAttacking2 ()
 void AMagePlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
-	player->readyweapon = player->pendingweapon = wp_mwand;
-	player->weaponowned[wp_mwand] = true;
+	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
+		(player->mo->GiveInventoryType (TypeInfo::FindType ("MWeapWand")));
 }
 
 fixed_t AMagePlayer::GetArmorIncrement (int armortype)
@@ -176,8 +176,9 @@ int AMagePlayer::GetAutoArmorSave ()
 bool AMagePlayer::DoHealingRadius (APlayerPawn *other)
 {
 	int amount = 50 + (pr_manaradius() % 50);
-	if ((P_GiveAmmo (other->player, MANA_1, amount)) ||
-		(P_GiveAmmo (other->player, MANA_2, amount)))
+
+	if (GiveAmmo (RUNTIME_CLASS(AMana1), amount) ||
+		GiveAmmo (RUNTIME_CLASS(AMana2), amount))
 	{
 		S_Sound (other, CHAN_AUTO, "MysticIncant", 1, ATTN_NORM);
 		return true;
@@ -212,12 +213,14 @@ bool AMageWeapon::TryPickup (AActor *toucher)
 		{ // Can't pick up weapons for other classes in coop netplay
 			return false;
 		}
-		weapontype_t type = OldStyleID ();
-		if (type < NUMWEAPONS)
+
+		bool gaveSome = (NULL != AddAmmo (toucher, AmmoType1, AmmoGive1));
+		gaveSome |= (NULL != AddAmmo (toucher, AmmoType2, AmmoGive2));
+		if (gaveSome)
 		{
-			return P_GiveAmmo (toucher->player, wpnlev1info[type]->givingammo, wpnlev1info[type]->ammogive);
+			GoAwayAndDie ();
 		}
-		return false;
+		return gaveSome;
 	}
 	return Super::TryPickup (toucher);
 }

@@ -42,17 +42,7 @@ class AActor;
 class player_s;
 struct pspdef_s;
 
-typedef void (*actionf_v)();
-typedef void (*actionf_p1)( AActor* );
-typedef void (*actionf_p2)( AActor*, pspdef_s* );
-
-typedef union
-{
-	void *acvoid;
-	actionf_p1	acp1;
-	actionf_v	acv;
-	actionf_p2	acp2;
-} actionf_t;
+typedef void (*actionf_p)( AActor* );
 
 class FThinkerIterator;
 

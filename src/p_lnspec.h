@@ -53,6 +53,7 @@ typedef enum {
 	Door_Open = 11,
 	Door_Raise = 12,
 	Door_LockedRaise = 13,
+	Door_Animated = 14,
 
 	Autosave = 15,	// [RH] Save the game *now*
 
@@ -74,10 +75,14 @@ typedef enum {
 	Stairs_BuildDownSync = 31,
 	Stairs_BuildUpSync = 32,
 
+	ForceField = 33,	// [RH] Strife's forcefield special (148)
+	ClearForceField = 34,	// [RH] Remove Strife's forcefield from tagged sectors
+
 	Floor_RaiseByValueTimes8 = 35,
 	Floor_LowerByValueTimes8 = 36,
 
 	Ceiling_Waggle = 38,	// [RH] Complement of Floor_Waggle
+	Teleport_ZombieChanger = 39,	// [RH] Needed for Strife
 
 	Ceiling_LowerByValue = 40,
 	Ceiling_RaiseByValue = 41,
@@ -88,6 +93,7 @@ typedef enum {
 
 	Floor_CrushStop = 46,
 
+	GlassBreak = 49,
 	ExtraFloor_LightOnly = 50,
 
 	Plat_PerpetualRaise = 60,
@@ -119,6 +125,7 @@ typedef enum {
 	ACS_Suspend = 81,
 	ACS_Terminate = 82,
 	ACS_LockedExecute = 83,
+	ACS_ExecuteWithResult = 84,
 
 	Polyobj_OR_RotateLeft = 90,
 	Polyobj_OR_RotateRight = 91,
@@ -180,6 +187,9 @@ typedef enum {
 	Sector_ChangeSound = 140,
 
 // [RH] Begin new specials for ZDoom
+	Plat_UpNearestWaitDownStay = 172,
+	NoiseAlert = 173,
+	SendToCommunicator = 174,
 	Thing_ProjectileIntercept = 175,
 	Thing_ChangeTID = 176,
 	Thing_Hate = 177,
@@ -330,7 +340,9 @@ typedef enum {
 	dScroll_EastLavaDamage = 84,
 
 	// And here are some for Strife
+	sDamage_Hellslime = 105,
 	Damage_InstantDeath = 115,
+	sDamage_SuperHellslime = 116,
 	Scroll_StrifeCurrent = 118,
 
 	Light_OutdoorLightning = 197,
@@ -399,16 +411,15 @@ typedef enum {
 struct line_s;
 class AActor;
 
-typedef bool (*lnSpecFunc)(struct line_s	*line,
-						   class AActor		*activator,
-						   int				arg1,
-						   int				arg2,
-						   int				arg3,
-						   int				arg4,
-						   int				arg5);
+typedef int (*lnSpecFunc)(struct line_s	*line,
+						  class AActor	*activator,
+						  bool			backSide,
+						  int			arg1,
+						  int			arg2,
+						  int			arg3,
+						  int			arg4,
+						  int			arg5);
 
 extern lnSpecFunc LineSpecials[256];
-
-extern int TeleportSide;
 
 #endif //__P_LNSPEC_H__

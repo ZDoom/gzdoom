@@ -145,7 +145,7 @@ END_DEFAULTS
 //
 
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
-				 bool useFog, bool keepOrientation)
+				 bool useFog, bool sourceFog, bool keepOrientation)
 {
 	fixed_t oldx;
 	fixed_t oldy;
@@ -172,7 +172,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	{
 		if (player)
 		{
-			if (player->powers[pw_flight] && aboveFloor)
+			if (thing->flags2 & MF2_FLY && aboveFloor)
 			{
 				z = floorheight + aboveFloor;
 				if (z + thing->height > ceilingheight)
@@ -223,10 +223,14 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		angle = thing->angle;
 	}
 	// Spawn teleport fog at source and destination
-	if (useFog)
+	if (sourceFog)
 	{
 		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 		Spawn<ATeleportFog> (oldx, oldy, oldz + fogDelta);
+	}
+	if (useFog)
+	{
+		fixed_t fogDelta = thing->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
 		an = angle >> ANGLETOFINESHIFT;
 		Spawn<ATeleportFog> (x + 20*finecosine[an],
 			y + 20*finesine[an], thing->z + fogDelta);
@@ -235,10 +239,13 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 			// [RH] Zoom player's field of vision
 			if (telezoom && thing->player->mo == thing)
 				thing->player->FOV = MIN (175.f, thing->player->DesiredFOV + 45.f);
-			// Freeze player for about .5 sec
-			if (!thing->player->powers[pw_speed])
-				thing->reactiontime = 18;
 		}
+	}
+	if (thing->player && (useFog || !keepOrientation))
+	{
+		// Freeze player for about .5 sec
+		if (!(thing->player->Powers & PW_SPEED))
+			thing->reactiontime = 18;
 	}
 	if (thing->flags & MF_MISSILE)
 	{
@@ -343,7 +350,8 @@ static AActor *SelectTeleDest (int tid, int tag)
 	return NULL;
 }
 
-bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog, bool keepOrientation)
+bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog,
+				  bool sourceFog, bool keepOrientation)
 {
 	AActor *searcher;
 	fixed_t z;
@@ -395,7 +403,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 	{
 		z = ONFLOORZ;
 	}
-	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, keepOrientation))
+	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, sourceFog, keepOrientation))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (!fog && line && keepOrientation)
@@ -574,7 +582,7 @@ bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 
 		while ( (victim = iterator.Next ()) )
 		{
-			didSomething |= EV_Teleport (dest_tid, 0, NULL, 0, victim, fog, !fog);
+			didSomething |= EV_Teleport (dest_tid, 0, NULL, 0, victim, fog, fog, !fog);
 		}
 	}
 
@@ -594,7 +602,7 @@ static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool fl
 		P_Teleport (victim, dest->x + newX,
 							dest->y + newY,
 							floorz ? ONFLOORZ : dest->z + victim->z - source->z,
-							0, fog, !fog);
+							0, fog, fog, !fog);
 	// P_Teleport only changes angle if fog is true
 	victim->angle = dest->angle + offAngle;
 
@@ -662,7 +670,7 @@ bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_t
 	{
 		didSomething |=
 			P_Teleport (sourceOrigin, destOrigin->x, destOrigin->y,
-				floorz ? ONFLOORZ : destOrigin->z, 0, false, true);
+				floorz ? ONFLOORZ : destOrigin->z, 0, false, false, true);
 		sourceOrigin->angle = destOrigin->angle;
 	}
 

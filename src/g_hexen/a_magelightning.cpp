@@ -19,8 +19,8 @@ static FRandom pr_zap ("LightningZap");
 static FRandom pr_zapf ("LightningZapF");
 static FRandom pr_hit ("LightningHit");
 
-void A_LightningReady (AActor *actor, pspdef_t *);
-void A_MLightningAttack (AActor *actor, pspdef_t *);
+void A_LightningReady (AActor *actor);
+void A_MLightningAttack (AActor *actor);
 
 void A_LightningClip (AActor *);
 void A_LightningZap (AActor *);
@@ -35,12 +35,6 @@ class AMWeapLightning : public AMageWeapon
 {
 	DECLARE_ACTOR (AMWeapLightning, AMageWeapon)
 public:
-	weapontype_t OldStyleID () const
-	{
-		return wp_mlightning;
-	}
-	static FWeaponInfo WeaponInfo;
-protected:
 	const char *PickupMessage ()
 	{
 		return GStrings (TXT_WEAPON_M3);
@@ -108,31 +102,21 @@ FState AMWeapLightning::States[] =
 IMPLEMENT_ACTOR (AMWeapLightning, Hexen, 8040, 0)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
 	PROP_SpawnState (S_MW_LIGHTNING1)
+
+	PROP_Weapon_SelectionOrder (1100)
+	PROP_Weapon_AmmoUse1 (5)
+	PROP_Weapon_AmmoGive1 (25)
+	PROP_Weapon_UpState (S_MLIGHTNINGUP)
+	PROP_Weapon_DownState (S_MLIGHTNINGDOWN)
+	PROP_Weapon_ReadyState (S_MLIGHTNINGREADY)
+	PROP_Weapon_AtkState (S_MLIGHTNINGATK)
+	PROP_Weapon_HoldAtkState (S_MLIGHTNINGATK)
+	PROP_Weapon_Kickback (0)
+	PROP_Weapon_YAdjust (20)
+	PROP_Weapon_MoveCombatDist (23000000)
+	PROP_Weapon_AmmoType1 ("Mana2")
+	PROP_Weapon_ProjectileType ("LightningFloor")
 END_DEFAULTS
-
-FWeaponInfo AMWeapLightning::WeaponInfo =
-{
-	0,
-	MANA_2,
-	MANA_2,
-	5,
-	25,
-	&States[S_MLIGHTNINGUP],
-	&States[S_MLIGHTNINGDOWN],
-	&States[S_MLIGHTNINGREADY],
-	&States[S_MLIGHTNINGATK],
-	&States[S_MLIGHTNINGATK],
-	NULL,
-	RUNTIME_CLASS(AMWeapLightning),
-	0,
-	20*FRACUNIT,
-	NULL,
-	NULL,
-	RUNTIME_CLASS(AMWeapLightning),
-	-1
-};
-
-WEAPON1 (wp_mlightning, AMWeapLightning)
 
 // Lightning ----------------------------------------------------------------
 
@@ -367,9 +351,9 @@ int ALightningZap::SpecialMissileHit (AActor *thing)
 //
 //============================================================================
 
-void A_LightningReady (AActor *actor, pspdef_t *psp)
+void A_LightningReady (AActor *actor)
 {
-	A_WeaponReady (actor, psp);
+	A_WeaponReady (actor);
 	if (pr_lightningready() < 160)
 	{
 		S_Sound (actor, CHAN_WEAPON, "MageLightningReady", 1, ATTN_NORM);
@@ -526,12 +510,16 @@ void A_MLightningAttack2 (AActor *actor)
 //
 //============================================================================
 
-void A_MLightningAttack (AActor *actor, pspdef_t *psp)
+void A_MLightningAttack (AActor *actor)
 {
 	A_MLightningAttack2(actor);
 	if (actor->player != NULL)
 	{
-		actor->player->UseAmmo ();
+		AWeapon *weapon = actor->player->ReadyWeapon;
+		if (weapon != NULL)
+		{
+			weapon->DepleteAmmo (weapon->bAltFire);
+		}
 	}
 }
 

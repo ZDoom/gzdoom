@@ -544,7 +544,7 @@ END_DEFAULTS
 
 void A_DemonAttack1 (AActor *actor)
 {
-	if (P_CheckMeleeRange (actor))
+	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_atk.HitDice (2);
 		P_DamageMobj (actor->target, actor, actor, damage);

@@ -2759,7 +2759,8 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	}
 
 	// [RH] If someone is in the way, kill them
-	P_TeleportMove (mobj, mobj->x, mobj->y, ONFLOORZ, true);
+	//P_TeleportMove (mobj, mobj->x, mobj->y, ONFLOORZ, true);
+	P_TeleportMove (mobj, mobj->x, mobj->y, mobj->z, true);
 
 	// [BC] Do script stuff
 	if (level.behavior != NULL)

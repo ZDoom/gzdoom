@@ -60,7 +60,6 @@ typedef struct
 
 
 static memzone_t *mainzone;
-static size_t zonesize;
 
 
 //
@@ -96,16 +95,22 @@ static void STACK_ARGS Z_Close (void)
 	mainzone = NULL;
 }
 
+#include "m_argv.h"
 //
 // Z_Init
 //
 void Z_Init (void)
 {
 	memblock_t *block;
+	size_t zonesize;
+
+    char *p = Args.CheckValue ("-heapsize");
+    if (p != NULL)
+		zonesize = (size_t)(atof (p)*1024*1024);
+	else
+		zonesize = 8*1024*1024;
 
 	mainzone = (memzone_t *)I_ZoneBase (&zonesize);
-	if (mainzone == NULL)
-		I_FatalError ("Could not allocate zone heap\n");
 	mainzone->size = zonesize;
 
 // set the entire zone to one free block
@@ -146,7 +151,7 @@ void Z_Free (void *ptr)
 		I_FatalError ("Z_Free: freed a pointer without ZONEID");
 	if (block->user == NULL)
 		I_FatalError ("Z_Free: freed a freed pointer");
-	if (*(int *)((byte *)block + block->size - 4) != TRASHID)
+	if (*(DWORD *)((byte *)block + block->size - 4) != TRASHID)
 		I_FatalError ("Z_Free: memory changed past end of block");
 
 	if (block->user > (void **)2)

@@ -1,4 +1,36 @@
-// p_lnspec.h: New line and sector specials (Using Hexen as a base.)
+/*
+** p_lnspec.h
+** New line and sector specials (Using Hexen as a base.)
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #ifndef __P_LNSPEC_H__
 #define __P_LNSPEC_H__
@@ -15,10 +47,14 @@ typedef enum {
 	Polyobj_DoorSwing = 7,
 	Polyobj_DoorSlide = 8,
 
+	Line_Horizon = 9,	// [RH] draw one-sided wall at horizon
+
 	Door_Close = 10,
 	Door_Open = 11,
 	Door_Raise = 12,
 	Door_LockedRaise = 13,
+
+	Autosave = 15,	// [RH] Save the game *now*
 
 	Floor_LowerByValue = 20,
 	Floor_LowerToLowest = 21,
@@ -71,6 +107,9 @@ typedef enum {
 
 	Teleport_NewMap = 74,
 	Teleport_EndGame = 75,
+	TeleportOther = 76,
+	TeleportGroup = 77,
+	TeleportInSector = 78,
 
 	ACS_Execute = 80,
 	ACS_Suspend = 81,
@@ -104,6 +143,17 @@ typedef enum {
 	Radius_Quake = 120,	// Earthquake
 
 	Line_SetIdentification = 121,
+#if 0 // Skull Tag specials that might be added later
+	Thing_SetGravity = 122,
+	Thing_ReverseGravity = 123,
+	Thing_RevertGravity = 124,
+#endif
+	Thing_Move = 125,
+#if 0 // Skull Tag special I doubt I will add
+	Thing_SetSprite = 126,
+#endif
+	Thing_SetSpecial = 127,
+	ThrustThingZ = 128,
 
 	UsePuzzleItem = 129,
 
@@ -118,9 +168,12 @@ typedef enum {
 
 	Floor_Waggle = 138,
 
+	Thing_SpawnFacing = 139,
+
 	Sector_ChangeSound = 140,
 
 // [RH] Begin new specials for ZDoom
+	Thing_SetTranslation = 180,
 	Plane_Align = 181,
 
 	Line_Mirror = 182,

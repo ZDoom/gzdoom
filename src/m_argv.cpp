@@ -1,24 +1,36 @@
-// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log:$
-//
-// DESCRIPTION:
-//
-//-----------------------------------------------------------------------------
+/*
+** m_argv.cpp
+** Manages command line arguments
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #include <string.h>
 #include "m_argv.h"
@@ -87,11 +99,9 @@ void DArgs::FlushArgs ()
 // Checks for the given parameter in the program's command line arguments.
 // Returns the argument number (1 to argc-1) or 0 if not present
 //
-int DArgs::CheckParm (const char *check) const
+int DArgs::CheckParm (const char *check, int start) const
 {
-	int i;
-
-	for (i = 1; i < m_ArgC; i++)
+	for (int i = start; i < m_ArgC; ++i)
 		if (!stricmp (check, m_ArgV[i]))
 			return i;
 
@@ -148,19 +158,25 @@ DArgs *DArgs::GatherFiles (const char *param, const char *extension, bool accept
 	int i;
 	int extlen = strlen (extension);
 
-	for (i = 1; i < m_ArgC && *m_ArgV[i] != '-' && *m_ArgV[i] != '+'; i++)
+	if (extlen > 0)
 	{
-		int len = strlen (m_ArgV[i]);
-		if (len >= extlen && stricmp (m_ArgV[i] + len - extlen, extension) == 0)
-			out->AppendArg (m_ArgV[i]);
-		else if (acceptNoExt && !strrchr (m_ArgV[i], '.'))
-			out->AppendArg (m_ArgV[i]);
+		for (i = 1; i < m_ArgC && *m_ArgV[i] != '-' && *m_ArgV[i] != '+'; i++)
+		{
+			int len = strlen (m_ArgV[i]);
+			if (len >= extlen && stricmp (m_ArgV[i] + len - extlen, extension) == 0)
+				out->AppendArg (m_ArgV[i]);
+			else if (acceptNoExt && !strrchr (m_ArgV[i], '.'))
+				out->AppendArg (m_ArgV[i]);
+		}
 	}
-	i = CheckParm (param);
-	if (i)
+	if (param != NULL)
 	{
-		for (i++; i < m_ArgC && *m_ArgV[i] != '-' && *m_ArgV[i] != '+'; i++)
-			out->AppendArg (m_ArgV[i]);
+		i = 1;
+		while (0 != (i = CheckParm (param, i)))
+		{
+			for (++i; i < m_ArgC && *m_ArgV[i] != '-' && *m_ArgV[i] != '+'; ++i)
+				out->AppendArg (m_ArgV[i]);
+		}
 	}
 	return out;
 }

@@ -9,8 +9,7 @@
 #include "d_player.h"
 #include "st_stuff.h"
 #include "v_video.h"
-
-extern byte *translationtables;
+#include "r_draw.h"
 
 class FHereticStatusBar : public FBaseStatusBar
 {
@@ -279,7 +278,7 @@ private:
 			DrawImage (Images, imgCHAINBACK, 0, 32);
 			DrawImage (Images, imgCHAIN, 2+(healthPos%17), chainY);
 			DrawImage (Images, imgLIFEGEM, 17+healthPos, chainY, multiplayer ?
-				translationtables + (CPlayer-players)*256*2+256 : NULL);
+				translationtables[TRANSLATION_PlayersExtra] + (CPlayer-players)*256 : NULL);
 			DrawImage (Images, imgLTFACE, 0, 32);
 			DrawImage (Images, imgRTFACE, 276, 32);
 			ShadeChain (19, 277, 32, 10);

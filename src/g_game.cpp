@@ -88,6 +88,7 @@ void	G_DoCompleted (void);
 void	G_DoVictory (void);
 void	G_DoWorldDone (void);
 void	G_DoSaveGame (void);
+void	G_DoAutoSave (void);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
@@ -151,7 +152,7 @@ float	 		normforwardmove[2] = {0x19, 0x32};		// [RH] For setting turbo from cons
 float	 		normsidemove[2] = {0x18, 0x28};			// [RH] Ditto
 
 fixed_t			forwardmove[2], sidemove[2];
-fixed_t 		angleturn[3] = {640, 1280, 320};		// + slow turn
+fixed_t 		angleturn[4] = {640, 1280, 320, 320};		// + slow turn
 fixed_t			flyspeed[2] = {1*256, 3*256};
 int				lookspeed[2] = {450, 512};
 
@@ -190,8 +191,8 @@ int 			bodyqueslot;
 
 void R_ExecuteSetViewSize (void);
 
-char savename[256];
-char BackupSaveName[256];
+char savename[PATH_MAX];
+char BackupSaveName[PATH_MAX];
 
 bool SendLand;
 BYTE SendWeaponSlot;
@@ -219,6 +220,36 @@ CUSTOM_CVAR (Float, turbo, 100.f, 0)
 		forwardmove[1] = (int)(normforwardmove[1]*scale);
 		sidemove[0] = (int)(normsidemove[0]*scale);
 		sidemove[1] = (int)(normsidemove[1]*scale);
+	}
+}
+
+CCMD (turnspeeds)
+{
+	if (argv.argc() == 1)
+	{
+		Printf ("Current turn speeds: %ld %ld %ld %ld\n", angleturn[0],
+			angleturn[1], angleturn[2], angleturn[3]);
+	}
+	else
+	{
+		int i;
+
+		for (i = 1; i <= 4 && i < argv.argc(); ++i)
+		{
+			angleturn[i-1] = atoi (argv[i]);
+		}
+		if (i <= 2)
+		{
+			angleturn[1] = angleturn[0] * 2;
+		}
+		if (i <= 3)
+		{
+			angleturn[2] = angleturn[0] / 2;
+		}
+		if (i <= 4)
+		{
+			angleturn[3] = angleturn[2];
+		}
 	}
 }
 
@@ -317,7 +348,6 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 {
 	int 		strafe;
 	int 		speed;
-	int 		tspeed; 
 	int 		forward;
 	int 		side;
 	int			look;
@@ -343,11 +373,6 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	else
 		turnheld = 0;
 
-	if (turnheld < SLOWTURNTICS)
-		tspeed = 2; 			// slow turn
-	else
-		tspeed = speed;
-	
 	// let movement keys cancel each other out
 	if (strafe)
 	{
@@ -358,6 +383,11 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	}
 	else
 	{
+		int tspeed = speed;
+
+		if (turnheld < SLOWTURNTICS)
+			tspeed *= 2;		// slow turn
+		
 		if (Button_Right.bDown)
 			cmd->ucmd.yaw -= angleturn[tspeed];
 		if (Button_Left.bDown)
@@ -408,7 +438,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (strafe || lookstrafe)
 		side += (MAXPLMOVE * joyxmove) / 256;
 	else 
-		cmd->ucmd.yaw -= (angleturn[1] * joyxmove) / 256; 
+		cmd->ucmd.yaw -= (1280 * joyxmove) / 256; 
 
 	// [RH] Scale joystick moves over full range
 	if (Button_Mlook.bDown)
@@ -686,6 +716,7 @@ BOOL G_Responder (event_t *ev)
 //
 extern DCanvas *page;
 
+
 void G_Ticker ()
 {
 	int i;
@@ -724,6 +755,9 @@ void G_Ticker ()
 			break;
 		case ga_savegame:
 			G_DoSaveGame ();
+			break;
+		case ga_autosave:
+			G_DoAutoSave ();
 			break;
 		case ga_playdemo:
 			G_DoPlayDemo ();
@@ -913,7 +947,7 @@ void G_PlayerReborn (int player)
 
 	p = &players[player];
 
-	memcpy (frags,p->frags,sizeof(frags));
+	memcpy (frags, p->frags, sizeof(frags));
 	fragcount = p->fragcount;
 	killcount = p->killcount;
 	itemcount = p->itemcount;
@@ -1406,6 +1440,42 @@ void G_BuildSaveName (char *name, int slot)
 	delete[] path;
 #endif
 }
+
+CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+extern void P_CalcHeight (player_t *);
+
+void G_DoAutoSave ()
+{
+	// Do not autosave in multiplayer games or demos
+	if (multiplayer || demoplayback)
+	{
+		gameaction = ga_nothing;
+		return;
+	}
+
+	// Keep up to four autosaves at a time
+	UCVarValue num;
+	char name[PATH_MAX];
+	time_t utcTime;
+	struct tm *now;
+	char *readableTime;
+	
+	num.Int = (autosavenum + 1) & 3;
+	autosavenum.ForceSet (num, CVAR_Int);
+
+	sprintf (name, "auto%d.zds", num.Int);
+	savegamefile = copystring (name);
+
+	time (&utcTime);
+	now = localtime (&utcTime);
+	readableTime = asctime (now);
+	strcpy (savedescription, "Autosave ");
+	strncpy (savedescription+9, readableTime+4, 12);
+	savedescription[9+12] = 0;
+
+	G_DoSaveGame ();
+}
+
 
 static void PutSaveWads (FILE *file)
 {

@@ -16,7 +16,7 @@ public:
 	DEarthquake (AActor *center, int intensity, int duration, int damrad, int tremrad);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 	AActor *m_Spot;
 	fixed_t m_TremorRadius, m_DamageRadius;
@@ -39,7 +39,7 @@ void DEarthquake::Serialize (FArchive &arc)
 	m_QuakeSFX = S_FindSound ("world/quake");
 }
 
-void DEarthquake::RunThink ()
+void DEarthquake::Tick ()
 {
 	int i;
 

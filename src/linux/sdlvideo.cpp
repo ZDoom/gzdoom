@@ -8,6 +8,7 @@
 #include "i_video.h"
 #include "v_video.h"
 #include "v_pfx.h"
+#include "stats.h"
 
 #include "sdlvideo.h"
 
@@ -24,16 +25,20 @@ public:
 	~SDLFB ();
 
 	bool Lock (bool buffer);
+	void Unlock ();
 	bool Relock ();
 	void ForceBuffering (bool force);
 	bool IsValid ();
 	void PartialUpdate (int x, int y, int width, int height);
 	void Update ();
 	PalEntry *GetPalette ();
+	void GetFlashedPalette (PalEntry pal[256]);
 	void UpdatePalette ();
 	bool SetGamma (float gamma);
 	bool SetFlash (PalEntry rgb, int amount);
+	void GetFlash (PalEntry &rgb, int &amount);
 	int GetPageCount ();
+	bool IsFullscreen ();
 
 	friend class SDLVideo;
 
@@ -43,6 +48,7 @@ private:
 	PalEntry Flash;
 	int FlashAmount;
 	float Gamma;
+	bool UpdatePending;
 	
 	SDL_Surface *Screen;
 	
@@ -89,6 +95,9 @@ static MiniModeInfo WinModes[] =
 	{ 1280, 960 }
 };
 
+static cycle_t BlitCycles;
+static cycle_t SDLFlipCycles;
+
 // CODE --------------------------------------------------------------------
 
 SDLVideo::SDLVideo (int parm)
@@ -104,12 +113,8 @@ SDLVideo::~SDLVideo ()
 // This only changes how the iterator lists modes
 bool SDLVideo::FullscreenChanged (bool fs)
 {
-	if (IteratorFS != fs)
-	{
-		IteratorFS = fs;
-		return true;
-	}
-	return false;
+	IteratorFS = fs;
+	return true;
 }
 
 int SDLVideo::GetModeCount ()
@@ -151,7 +156,7 @@ bool SDLVideo::NextMode (int *width, int *height)
 	
 	if (!IteratorFS)
 	{
-		if (IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
+		if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
 		{
 			*width = WinModes[IteratorMode].Width;
 			*height = WinModes[IteratorMode].Height;
@@ -175,6 +180,12 @@ bool SDLVideo::NextMode (int *width, int *height)
 
 DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
 {
+	static int retry = 0;
+	static int owidth, oheight;
+	
+	PalEntry flashColor;
+	int flashAmount;
+
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
 		SDLFB *fb = static_cast<SDLFB *> (old);
@@ -189,16 +200,65 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscree
 			}
 			return old;
 		}
+		old->GetFlash (flashColor, flashAmount);
 		delete old;
 	}
-	SDLFB *fb = new SDLFB (width, height, fullscreen);
-	if (!fb->IsValid ())
+	else
 	{
-		delete fb;
-		fb = NULL;
-		I_FatalError ("Could not create new screen (%d x %d)\n%s",
-			width, height, SDL_GetError());
+		flashColor = 0;
+		flashAmount = 0;
 	}
+	
+	SDLFB *fb = new SDLFB (width, height, fullscreen);
+	retry = 0;
+	
+	// If we could not create the framebuffer, try again with slightly
+	// different parameters in this order:
+	// 1. Try with the closest size
+	// 2. Try in the opposite screen mode with the original size
+	// 3. Try in the opposite screen mode with the closest size
+	// This is a somewhat confusing mass of recursion here.
+
+	while (fb == NULL || !fb->IsValid ())
+	{
+		if (fb != NULL)
+		{
+			delete fb;
+		}
+
+		switch (retry)
+		{
+		case 0:
+			owidth = width;
+			oheight = height;
+		case 2:
+			// Try a different resolution. Hopefully that will work.
+			I_ClosestResolution (&width, &height, 8);
+			break;
+
+		case 1:
+			// Try changing fullscreen mode. Maybe that will work.
+			width = owidth;
+			height = oheight;
+			fullscreen = !fullscreen;
+			break;
+
+		default:
+			// I give up!
+			I_FatalError ("Could not create new screen (%d x %d)", owidth, oheight);
+		}
+
+		++retry;
+		fb = static_cast<SDLFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+	}
+
+	if (fb->IsFullscreen() != fullscreen)
+	{
+		Video->FullscreenChanged (!fullscreen);
+	}
+
+	fb->SetFlash (flashColor, flashAmount);
+
 	return fb;
 }
 
@@ -215,6 +275,7 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	
 	NeedPalUpdate = false;
 	NeedGammaUpdate = false;
+	UpdatePending = false;
 	
 	Screen = SDL_SetVideoMode (width, height, 8,
 		SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|
@@ -255,14 +316,46 @@ bool SDLFB::Relock ()
 	return DSimpleCanvas::Lock ();
 }
 
+void SDLFB::Unlock ()
+{
+	if (LockCount == 0)
+	{
+		return;
+	}
+	if (UpdatePending && LockCount == 1)
+	{
+		Update ();
+	}
+	else if (--LockCount == 0)
+	{
+		Buffer = NULL;
+	}			
+}
+
 void SDLFB::PartialUpdate (int x, int y, int width, int height)
 {
 }
 
 void SDLFB::Update ()
 {
+	if (LockCount != 1)
+	{
+		if (LockCount > 0)
+		{
+			UpdatePending = true;
+			--LockCount;
+		}
+		return;
+	}
+	
+	DrawRateStuff ();
+			
 	Unlock ();
 
+	BlitCycles = 0;
+	SDLFlipCycles = 0;
+	clock (BlitCycles);
+	
 	if (SDL_LockSurface (Screen) == -1)
 		return;
 
@@ -279,7 +372,12 @@ void SDLFB::Update ()
 	}
 	
 	SDL_UnlockSurface (Screen);
+	
+	clock (SDLFlipCycles);
 	SDL_Flip (Screen);
+	unclock (SDLFlipCycles);
+
+	unclock (BlitCycles);
 
 	if (NeedGammaUpdate)
 	{
@@ -305,6 +403,12 @@ void SDLFB::UpdateColors ()
 		colors[i].g = GammaTable[SourcePalette[i].g];
 		colors[i].b = GammaTable[SourcePalette[i].b];
 	}
+	if (FlashAmount)
+	{
+		DoBlending ((PalEntry *)colors, (PalEntry *)colors,
+			256, GammaTable[Flash.b], GammaTable[Flash.g], GammaTable[Flash.r],
+			FlashAmount);
+	}
 	SDL_SetPalette (Screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 256);
 }
 
@@ -327,10 +431,38 @@ bool SDLFB::SetGamma (float gamma)
 
 bool SDLFB::SetFlash (PalEntry rgb, int amount)
 {
-	Flash.r = GammaTable[rgb.r];
-	Flash.g = GammaTable[rgb.g];
-	Flash.b = GammaTable[rgb.b];
+	Flash = rgb;
 	FlashAmount = amount;
 	NeedPalUpdate = true;
 	return true;
+}
+
+void SDLFB::GetFlash (PalEntry &rgb, int &amount)
+{
+	rgb = Flash;
+	amount = FlashAmount;
+}
+
+// Q: Should I gamma adjust the returned palette?
+void SDLFB::GetFlashedPalette (PalEntry pal[256])
+{
+	memcpy (pal, SourcePalette, 256*sizeof(PalEntry));
+	if (FlashAmount)
+	{
+		DoBlending (pal, pal, 256, Flash.r, Flash.g, Flash.b, FlashAmount);
+	}
+}
+
+bool SDLFB::IsFullscreen ()
+{
+	return (Screen->flags & SDL_FULLSCREEN) != 0;
+}
+
+ADD_STAT (blit, out)
+{
+	sprintf (out,
+		"blit=%04.1f ms  flip=%04.1f ms",
+		(double)BlitCycles * SecondsPerCycle * 1000,
+		(double)SDLFlipCycles * SecondsPerCycle * 1000
+		);
 }

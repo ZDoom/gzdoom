@@ -189,9 +189,9 @@ class ASerpentFX : public AActor
 {
 	DECLARE_ACTOR (ASerpentFX, AActor)
 public:
-	void RunThink ()
+	void Tick ()
 	{
-		Super::RunThink ();
+		Super::Tick ();
 	}
 };
 
@@ -479,12 +479,12 @@ void A_SerpentChase (AActor *actor)
 //
 	oldX = actor->x;
 	oldY = actor->y;
-	oldFloor = actor->subsector->sector->floorpic;
+	oldFloor = actor->Sector->floorpic;
 	if (--actor->movecount<0 || !P_Move (actor))
 	{
 		P_NewChaseDir (actor);
 	}
-	if (actor->subsector->sector->floorpic != oldFloor)
+	if (actor->Sector->floorpic != oldFloor)
 	{
 		P_TryMove (actor, oldX, oldY, false);
 		P_NewChaseDir (actor);

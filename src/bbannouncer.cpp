@@ -1,16 +1,44 @@
-
-//**************************************************************************
-//**
-//** bbannouncer.cpp
-//**
-//** The announcer from Blood (The Voice).
-//**
-//** It's been so long since I played a bloodbath, I don't know when all
-//** these sounds are used, so much of this usage is me guessing. Some of
-//** it has also obviously been reused for events that were never present
-//** in bloodbaths.
-//**
-//**************************************************************************
+/*
+** bbannouncer.cpp
+** The announcer from Blood (The Voice).
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** It's been so long since I played a bloodbath, I don't know when all
+** these sounds are used, so much of this usage is me guessing. Some of
+** it has also obviously been reused for events that were never present
+** in bloodbaths.
+**
+** I should really have a base Announcer class and derive the Bloodbath
+** announcer off of that. That way, multiple announcer styles could be
+** supported easily.
+*/
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -172,7 +200,7 @@ void DoVoiceAnnounce (const char *sound)
 bool AnnounceGameStart ()
 {
 	LastAnnounceTime = 0;
-	if (cl_bbannounce)
+	if (cl_bbannounce && deathmatch)
 	{
 		DoVoiceAnnounce (BeginSounds[P_Random (pr_bbannounce) & 1]);
 	}
@@ -194,14 +222,14 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 	const char *message;
 	int rannum = P_Random (pr_bbannounce);
 
-	if (cl_bbannounce)
+	if (cl_bbannounce && deathmatch)
 	{
 		bool playSound = (killee == players[consoleplayer].camera);
 
 		if (killer == NULL)
 		{ // The world killed the player
 			if (killee->player->userinfo.gender == GENDER_MALE)
-			{ // Only males can suffer scrotum separation
+			{ // Only males have scrotums to separate
 				choice = &WorldKillSounds[rannum % 3];
 			}
 			else
@@ -265,7 +293,7 @@ bool AnnounceTelefrag (AActor *killer, AActor *killee)
 {
 	int rannum = P_Random (pr_bbannounce);
 
-	if (cl_bbannounce)
+	if (cl_bbannounce && multiplayer)
 	{
 		const char *message = GStrings (OB_MPTELEFRAG);
 		if (message != NULL)

@@ -393,6 +393,7 @@ IMPLEMENT_ACTOR (AChaingunGuy, Doom, 65, 2)
 	PROP_PainSound ("chainguy/pain")
 	PROP_DeathSound ("chainguy/death")
 	PROP_ActiveSound ("chainguy/active")
+	PROP_AttackSound ("chainguy/attack")
 END_DEFAULTS
 
 void AChaingunGuy::NoBlockingSet ()
@@ -499,6 +500,7 @@ IMPLEMENT_ACTOR (AWolfensteinSS, Doom, 84, 116)
 	PROP_PainSound ("wolfss/pain")
 	PROP_DeathSound ("wolfss/death")
 	PROP_ActiveSound ("wolfss/active")
+	PROP_AttackSound ("wolfss/attack")
 END_DEFAULTS
 
 void AWolfensteinSS::NoBlockingSet ()
@@ -522,7 +524,7 @@ void A_CPosAttack (AActor *self)
 		self->visdir = 1;
 	}
 
-	S_Sound (self, CHAN_WEAPON, "chainguy/attack", 1, ATTN_NORM);
+	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
 	bangle = self->angle;
 	slope = P_AimLineAttack (self, bangle, MISSILERANGE);

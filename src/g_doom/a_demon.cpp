@@ -88,18 +88,18 @@ static void SetTics (FState *state, int count)
 	state->Frame = (state->Frame & ~SF_BIGTIC) | (count > 254 ? SF_BIGTIC : 0);
 }
 
-AT_GAME_SET (Demon)
+AT_SPEED_SET (Demon, speednow)
 {
 	static bool isFast = false;
 	int i;
 
-	if (GameSpeed == SPEED_Fast && !isFast)
+	if (speednow == SPEED_Fast && !isFast)
 	{
 		isFast = true;
 		for (i = S_SARG_RUN; i < S_SARG_PAIN; i++)
 			SetTics (&ADemon::States[i], ADemon::States[i].GetTics() >> 1);
 	}
-	else if (GameSpeed == SPEED_Normal && isFast)
+	else if (speednow == SPEED_Normal && isFast)
 	{
 		isFast = false;
 		for (i = S_SARG_RUN; i < S_SARG_PAIN; i++)

@@ -306,7 +306,7 @@ CCMD (messagemode)
 
 CCMD (say)
 {
-	ShoveChatStr (argv.AllButFirstArg(), 0);
+	ShoveChatStr (argv[1], 0);
 }
 
 CCMD (messagemode2)
@@ -321,7 +321,7 @@ CCMD (messagemode2)
 
 CCMD (say_team)
 {
-	ShoveChatStr (argv.AllButFirstArg(), 1);
+	ShoveChatStr (argv[1], 1);
 }
 
 static int STACK_ARGS compare (const void *arg1, const void *arg2)

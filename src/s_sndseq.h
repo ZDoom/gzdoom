@@ -31,6 +31,7 @@ void SN_StopAllSequences (void);
 ptrdiff_t SN_GetSequenceOffset (int sequence, unsigned int *sequencePtr);
 void SN_ChangeNodeData (int nodeNum, int seqOffset, int delayTics,
 	float volume, int currentSoundID);
+bool SN_IsMakingLoopingSound (sector_t *sector);
 
 class DSeqNode : public DObject
 {
@@ -42,7 +43,7 @@ public:
 	virtual void MakeLoopedSound () {}
 	virtual void *Source () { return NULL; }
 	virtual bool IsPlaying () { return false; }
-	void RunThink ();
+	void Tick ();
 	inline static DSeqNode *FirstSequence() { return SequenceListHead; }
 	inline DSeqNode *NextSequence() const { return m_Next; }
 	void ChangeData (int seqOffset, int delayTics, float volume, int currentSoundID);

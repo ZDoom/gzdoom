@@ -243,7 +243,8 @@ void P_BringUpWeapon (player_t *player)
 		newstate = NULL;
 	}
 	player->pendingweapon = wp_nochange;
-	player->psprites[ps_weapon].sy = WEAPONBOTTOM;
+	player->psprites[ps_weapon].sy = player->cheats & CF_INSTANTWEAPSWITCH
+		? WEAPONTOP : WEAPONBOTTOM;
 	P_SetPsprite (player, ps_weapon, newstate);
 }
 
@@ -258,7 +259,6 @@ void P_BringUpWeapon (player_t *player)
 
 bool P_CheckAmmo (player_t *player)
 {
-	weapontype_t *prefs;
 	ammotype_t ammo;
 	FWeaponInfo **wpinfo;
 	int count;
@@ -285,6 +285,34 @@ bool P_CheckAmmo (player_t *player)
 		return true;
 	}
 	// out of ammo, pick a weapon to change to
+	P_PickNewWeapon (player);
+	return false;
+}
+
+//---------------------------------------------------------------------------
+//
+// FUNC P_PickNewWeapon
+//
+// Changes the player's weapon to something different. Used mostly for
+// running out of ammo, but it also works when an ACS script explicitly
+// takes the ready weapon away.
+//
+//---------------------------------------------------------------------------
+
+weapontype_t P_PickNewWeapon (player_t *player)
+{
+	FWeaponInfo **wpinfo;
+	weapontype_t *prefs;
+
+	if (player->powers[pw_weaponlevel2] && !deathmatch)
+	{
+		wpinfo = wpnlev2info;
+	}
+	else
+	{
+		wpinfo = wpnlev1info;
+	}
+
 	if (gameinfo.gametype == GAME_Hexen)
 	{
 		prefs = HexenWeaponPrefs;
@@ -302,8 +330,8 @@ bool P_CheckAmmo (player_t *player)
 	{
 		if (player->weaponowned[*prefs])
 		{
-			count = wpinfo[*prefs]->ammouse;
-			ammo = wpinfo[*prefs]->ammo;
+			int count = wpinfo[*prefs]->ammouse;
+			ammotype_t ammo = wpinfo[*prefs]->ammo;
 			if (ammo == MANA_BOTH)
 			{
 				if (player->ammo[MANA_1] >= count && player->ammo[MANA_2] >= count)
@@ -331,7 +359,7 @@ bool P_CheckAmmo (player_t *player)
 				wpnlev1info[player->readyweapon]->downstate);
 		}
 	}
-	return false;
+	return player->pendingweapon;
 }
 
 
@@ -497,7 +525,7 @@ void A_ReFire (player_t *player, pspdef_t *psp)
 
 void A_Lower (player_t *player, pspdef_t *psp)
 {
-	if (player->morphTics)
+	if (player->morphTics || player->cheats & CF_INSTANTWEAPSWITCH)
 	{
 		psp->sy = WEAPONBOTTOM;
 	}

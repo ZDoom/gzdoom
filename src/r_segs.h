@@ -41,11 +41,9 @@ inline ptrdiff_t R_NewOpening (ptrdiff_t len)
 void R_CheckOpenings (size_t need);
 void R_CheckDrawSegs ();
 
-// [RH] There are two different RenderSegLoops.
-extern void (*R_RenderSegLoop)();
+// [RH] Selects how to draw masked columns.
 EXTERN_CVAR (Int, r_columnmethod)
 
-void R_RenderSegLoop1 ();
-void R_RenderSegLoop2 ();
+void R_RenderSegLoop ();
 
 #endif

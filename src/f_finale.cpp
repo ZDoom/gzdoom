@@ -650,23 +650,37 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 	pitch = scrn->GetPitch();
 
 	// step through the posts in a column
-	while (column->topdelta != 0xff )
+	int top = 0;	// DeePsea tall patches support
+	while (column->topdelta != 0xff)
 	{
-		source = (byte *)column + 3;
-		dest = desttop + ((column->topdelta*invstep)>>16)*pitch;
-		count = (column->length * invstep) >> 16;
-		c = 0;
+		if (column->topdelta <= top)
+		{
+			top += column->topdelta;
+		}
+		else
+		{
+			top = column->topdelta;
+		}
+		if (column->length != 0)
+		{
+			count = (column->length * invstep) >> 16;
+			source = (byte *)column + 3;
+			dest = desttop + ((top*invstep)>>16)*pitch;
+			c = 0;
 
-		switch (repeat) {
+			switch (repeat)
+			{
 			case 1:
-				do {
+				do
+				{
 					*dest = source[c>>16];
 					dest += pitch;
 					c += step;
 				} while (--count);
 				break;
 			case 2:
-				do {
+				do
+				{
 					p = source[c>>16];
 					dest[0] = p;
 					dest[1] = p;
@@ -675,7 +689,8 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 				} while (--count);
 				break;
 			case 3:
-				do {
+				do
+				{
 					p = source[c>>16];
 					dest[0] = p;
 					dest[1] = p;
@@ -685,7 +700,8 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 				} while (--count);
 				break;
 			case 4:
-				do {
+				do
+				{
 					p = source[c>>16];
 					dest[0] = p;
 					dest[1] = p;
@@ -699,7 +715,8 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 				{
 					int count2;
 
-					do {
+					do
+					{
 						p = source[c>>16];
 						for (count2 = repeat; count2; count2--)
 						{
@@ -710,6 +727,7 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 					} while (--count);
 				}
 				break;
+			}
 		}
 		column = (column_t *)((byte *)column + column->length + 4);
 	}

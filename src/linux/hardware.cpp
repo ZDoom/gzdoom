@@ -30,21 +30,12 @@ void I_InitHardware ()
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
 	Video = new SDLVideo (0);
+	if (Video == NULL)
+		I_FatalError ("Failed to initialize display");
 	atterm (I_ShutdownHardware);
 
 	Video->SetWindowedScale (vid_winscale);
 }
-
-#if 0
-// MOUSE WRAPPERS ---------------------------------------------------------
-
-bool MouseShouldBeGrabbed ()
-{
-	return (ConsoleState != c_falling && ConsoleState != c_down
-			&& gamestate != GS_STARTUP && gamestate != GS_FULLCONSOLE
-			&& !menuactive);
-}
-#endif
 
 /** Remaining code is common to Win32 and Linux **/
 
@@ -72,6 +63,7 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 	}
 	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
 
+	/* Right now, CreateFrameBuffer cannot return NULL
 	if (res == NULL)
 	{
 		I_ClosestResolution (&width, &height, 8);
@@ -81,6 +73,7 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 			I_FatalError ("Mode %dx%d is unavailable\n", width, height);
 		}
 	}
+	*/
 	return res;
 }
 
@@ -88,7 +81,7 @@ bool I_CheckResolution (int width, int height, int bits)
 {
 	int twidth, theight;
 
-	Video->FullscreenChanged (fullscreen);
+	Video->FullscreenChanged (screen ? screen->IsFullscreen() : fullscreen);
 	Video->StartModeIterator (bits);
 	while (Video->NextMode (&twidth, &theight))
 	{
@@ -105,7 +98,7 @@ void I_ClosestResolution (int *width, int *height, int bits)
 	int iteration;
 	DWORD closest = 4294967295u;
 
-	Video->FullscreenChanged (fullscreen ? true : false);
+	Video->FullscreenChanged (screen ? screen->IsFullscreen() : fullscreen);
 	for (iteration = 0; iteration < 2; iteration++)
 	{
 		Video->StartModeIterator (bits);

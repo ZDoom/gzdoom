@@ -73,7 +73,6 @@ extern fixed_t			yslope[MAXHEIGHT];
 void R_InitPlanes ();
 void R_ClearPlanes (bool fullclear);
 
-void R_MakeSpans (int x, int t1, int b1, int t2, int b2, void (*mapfunc)(int y, int x1));
 void R_DrawPlanes ();
 void R_DrawSkyBoxes ();
 void R_DrawSkyPlane (visplane_t *pl);

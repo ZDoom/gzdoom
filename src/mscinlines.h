@@ -323,23 +323,19 @@ inline void clearbuf (void *buff, int count, SDWORD clear)
 
 inline void clearbufshort (void *buff, unsigned int count, WORD clear)
 {
+	if (!count)
+		return;
 	SWORD *b2 = (SWORD *)buff;
-	if ((size_t)b2 & 3)
+	if ((int)b2 & 2)
 	{
 		*b2++ = clear;
-		count--;
+		if (--count == 0)
+			return;
 	}
-	unsigned int c2 = count>>1;
-	if (c2 > 0)
+	do
 	{
-		DWORD fill = (clear)|(clear<<16);
-		DWORD *b3 = (DWORD *)b2;
-		for (; c2; c2--)
-			*b3++ = fill;
-		b2 = (SWORD *)b3;
-	}
-	if (count & 1)
-		*b2 = clear;
+		*b2++ = clear;
+	} while (--count);
 }
 
 inline void qinterpolatedown16 (SDWORD *out, DWORD count, SDWORD val, SDWORD delta)

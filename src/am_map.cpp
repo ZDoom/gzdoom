@@ -74,6 +74,7 @@ CVAR (Bool,  am_rotate,				false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_overlay,			false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showsecrets,		true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showmonsters,		true,		CVAR_ARCHIVE);
+CVAR (Bool,  am_showitems,			false,		CVAR_ARCHIVE);
 CVAR (Bool,  am_showtime,			true,		CVAR_ARCHIVE);
 CVAR (Bool,  am_usecustomcolors,	true,		CVAR_ARCHIVE);
 CVAR (Float, am_ovtrans,			1.f,		CVAR_ARCHIVE);
@@ -1064,6 +1065,11 @@ BOOL AM_clipMline (mline_t *ml, fline_t *fl)
 //
 void AM_drawFline (fline_t *fl, int color)
 {
+	fl->a.x += f_x;
+	fl->b.x += f_x;
+	fl->a.y += f_y;
+	fl->b.y += f_y;
+
 	switch (color)
 	{
 		case WALLCOLORS:
@@ -1091,11 +1097,6 @@ void AM_drawFline (fline_t *fl, int color)
 			register int d;
 
 #define PUTDOTP(xx,yy,cc) fb[(yy)*f_p+(xx)]=(cc)
-
-			fl->a.x += f_x;
-			fl->b.x += f_x;
-			fl->a.y += f_y;
-			fl->b.y += f_y;
 
 			dx = fl->b.x - fl->a.x;
 			ax = 2 * (dx<0 ? -dx : dx);
@@ -1374,7 +1375,6 @@ void PUTTRANSDOT (int xx, int yy, int basecolor, int level)
 	DWORD bg = bg2rgb[*spot];
 	bg = (fg+bg) | 0x1f07c1f;
 	*spot = RGB32k[0][0][bg&(bg>>15)];
-	TransArea++;
 }
 
 void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)

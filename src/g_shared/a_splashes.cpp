@@ -8,9 +8,9 @@
 FState AWaterSplash::States[] =
 {
 #define S_SPLASH 0
-	S_NORMAL (SPSH, 'A',	8, NULL, &States[S_SPLASH+1]),
-	S_NORMAL (SPSH, 'B',	8, NULL, &States[S_SPLASH+2]),
-	S_NORMAL (SPSH, 'C',	8, NULL, &States[S_SPLASH+3]),
+	S_NORMAL (SPSH, 'A',	8, NULL, &States[1]),
+	S_NORMAL (SPSH, 'B',	8, NULL, &States[2]),
+	S_NORMAL (SPSH, 'C',	8, NULL, &States[3]),
 	S_NORMAL (SPSH, 'D',   16, NULL, NULL),
 
 #define S_SPLASHX (S_SPLASH+4)
@@ -87,9 +87,9 @@ END_DEFAULTS
 FState ASludgeChunk::States[] =
 {
 #define S_SLUDGECHUNK 0
-	S_NORMAL (SLDG, 'A',	8, NULL, &States[S_SLUDGECHUNK+1]),
-	S_NORMAL (SLDG, 'B',	8, NULL, &States[S_SLUDGECHUNK+2]),
-	S_NORMAL (SLDG, 'C',	8, NULL, &States[S_SLUDGECHUNK+3]),
+	S_NORMAL (SLDG, 'A',	8, NULL, &States[1]),
+	S_NORMAL (SLDG, 'B',	8, NULL, &States[2]),
+	S_NORMAL (SLDG, 'C',	8, NULL, &States[3]),
 	S_NORMAL (SLDG, 'D',	8, NULL, NULL),
 
 #define S_SLUDGECHUNKX (S_SLUDGECHUNK+4)
@@ -121,3 +121,105 @@ IMPLEMENT_ACTOR (ASludgeSplash, Any, -1, 0)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
+
+/*
+ * These next four classes are not used by me anywhere.
+ * They are for people who want to use them in a TERRAIN lump.
+ */
+
+class ABloodSplash : public AActor
+{
+	DECLARE_ACTOR (ABloodSplash, AActor);
+};
+class ABloodSplashBase : public AActor
+{
+	DECLARE_ACTOR (ABloodSplashBase, AActor);
+};
+class ASlimeSplash : public AActor
+{
+	DECLARE_ACTOR (ASlimeSplash, AActor)
+};
+class ASlimeChunk : public AActor
+{
+	DECLARE_ACTOR (ASlimeChunk, AActor)
+};
+
+// Blood (water with a different sprite) ------------------------------------
+
+FState ABloodSplash::States[] =
+{
+	S_NORMAL (BSPH, 'A',	8, NULL, &States[1]),
+	S_NORMAL (BSPH, 'B',	8, NULL, &States[2]),
+	S_NORMAL (BSPH, 'C',	8, NULL, &States[3]),
+	S_NORMAL (BSPH, 'D',   16, NULL, NULL),
+
+	S_NORMAL (BSPH, 'D',   10, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (ABloodSplash, Any, -1, 0)
+	PROP_RadiusFixed (2)
+	PROP_HeightFixed (4)
+	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_LOGRAV|MF2_CANNOTPUSH)
+	PROP_Flags3 (MF3_DONTSPLASH)
+
+	PROP_SpawnState (0)
+	PROP_DeathState (4)
+END_DEFAULTS
+
+FState ABloodSplashBase::States[] =
+{
+	S_NORMAL (BSPH, 'E',	5, NULL, &States[1]),
+	S_NORMAL (BSPH, 'F',	5, NULL, &States[2]),
+	S_NORMAL (BSPH, 'G',	5, NULL, &States[3]),
+	S_NORMAL (BSPH, 'H',	5, NULL, &States[4]),
+	S_NORMAL (BSPH, 'I',	5, NULL, &States[5]),
+	S_NORMAL (BSPH, 'J',	5, NULL, &States[6]),
+	S_NORMAL (BSPH, 'K',	5, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (ABloodSplashBase, Any, -1, 0)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_DONTSPLASH)
+
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+// Slime (sludge with a different sprite) -----------------------------------
+
+FState ASlimeChunk::States[] =
+{
+	S_NORMAL (SLIM, 'A',	8, NULL, &States[1]),
+	S_NORMAL (SLIM, 'B',	8, NULL, &States[2]),
+	S_NORMAL (SLIM, 'C',	8, NULL, &States[3]),
+	S_NORMAL (SLIM, 'D',	8, NULL, NULL),
+
+	S_NORMAL (SLIM, 'D',	6, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (ASlimeChunk, Any, -1, 0)
+	PROP_RadiusFixed (2)
+	PROP_HeightFixed (4)
+	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_LOGRAV|MF2_CANNOTPUSH)
+	PROP_Flags3 (MF3_DONTSPLASH)
+
+	PROP_SpawnState (0)
+	PROP_DeathState (4)
+END_DEFAULTS
+
+FState ASlimeSplash::States[] =
+{
+	S_NORMAL (SLIM, 'E',	6, NULL, &States[1]),
+	S_NORMAL (SLIM, 'F',	6, NULL, &States[2]),
+	S_NORMAL (SLIM, 'G',	6, NULL, &States[3]),
+	S_NORMAL (SLIM, 'H',	6, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (ASlimeSplash, Any, -1, 0)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_DONTSPLASH)
+
+	PROP_SpawnState (0)
+END_DEFAULTS
+

@@ -1,3 +1,36 @@
+/*
+** win32iface.h
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <ddraw.h>
@@ -22,6 +55,7 @@ class Win32Video : public IVideo
 	bool NextMode (int *width, int *height);
 
 	bool GoFullscreen (bool yes);
+	void BlankForGDI ();
 
  private:
 	struct ModeInfo
@@ -61,4 +95,79 @@ class Win32Video : public IVideo
 		ModeInfo *modes;
 	};
 	static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes);
+};
+
+class DDrawFB : public DFrameBuffer
+{
+public:
+	DDrawFB (int width, int height, bool fullscreen);
+	~DDrawFB ();
+
+	bool IsValid ();
+	bool Lock ();
+	bool Lock (bool buffer);
+	bool Relock ();
+	void Unlock ();
+	void ForceBuffering (bool force);
+	void PartialUpdate (int x, int y, int width, int height);
+	void Update ();
+	PalEntry *GetPalette ();
+	void GetFlashedPalette (PalEntry pal[256]);
+	void UpdatePalette ();
+	bool SetGamma (float gamma);
+	bool SetFlash (PalEntry rgb, int amount);
+	void GetFlash (PalEntry &rgb, int &amount);
+	int GetPageCount ();
+	int QueryNewPalette ();
+	HRESULT GetHR () { return LastHR; }
+	bool IsFullscreen () { return !Windowed; }
+
+	void Blank ();
+	bool PaintToWindow ();
+
+	bool CreateResources ();
+	void ReleaseResources ();
+private:
+	bool CreateSurfacesAttached ();
+	bool CreateSurfacesComplex ();
+	bool CreateBlitterSource ();
+	enum LockSurfRes { NoGood, Good, GoodWasLost } LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE surf);
+	void RebuildColorTable ();
+	void MaybeCreatePalette ();
+	bool AddBackBuf (LPDIRECTDRAWSURFACE *surface, int num);
+
+	HRESULT LastHR;
+	BYTE GammaTable[256];
+	PalEntry SourcePalette[256];
+	PALETTEENTRY PalEntries[256];
+
+	LPDIRECTDRAWPALETTE Palette;
+	LPDIRECTDRAWSURFACE PrimarySurf;
+	LPDIRECTDRAWSURFACE BackSurf;
+	LPDIRECTDRAWSURFACE BackSurf2;
+	LPDIRECTDRAWSURFACE BlitSurf;
+	LPDIRECTDRAWSURFACE LockingSurf;
+	LPDIRECTDRAWCLIPPER Clipper;
+	//IDirectDrawGammaControl *GammaControl;
+	HPALETTE GDIPalette;
+	BYTE *ClipRegion;
+	DWORD ClipSize;
+	PalEntry Flash;
+	int FlashAmount;
+	int BufferCount;
+	int BufferPitch;
+	float Gamma;
+	DWORD FlipFlags;
+
+	bool NeedGammaUpdate;
+	bool NeedPalUpdate;
+	bool MustBuffer;		// The screen is not 8-bit, or there is no backbuffer
+	bool Windowed;
+	bool BufferingNow;		// Most recent Lock was buffered
+	bool WasBuffering;		// Second most recent Lock was buffered
+	bool Write8bit;
+	bool UpdatePending;		// On final unlock, call Update()
+	bool UseBlitter;		// Use blitter to copy from sys mem to video mem
+
+	friend class Win32Video;
 };

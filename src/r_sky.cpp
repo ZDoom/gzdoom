@@ -26,7 +26,6 @@
 //-----------------------------------------------------------------------------
 
 
-
 // Needed for FRACUNIT.
 #include "m_fixed.h"
 #include "r_data.h"
@@ -84,13 +83,7 @@ void R_InitSkyMap ()
 		sky2texture = sky1texture;
 	}
 
-	// Heretic's sky textures are recorded with the wrong height. :-(
-	// Assume 200 pixels tall, since anything else would look bad in Heretic
-	// anyway.
 	fskyheight = textureheight[sky1texture];
-	if (gameinfo.gametype == GAME_Heretic && fskyheight == 128 * FRACUNIT)
-		fskyheight = 200 * FRACUNIT;
-
 	if (fskyheight <= (128 << FRACBITS))
 	{
 		skytexturemid = 200/2*FRACUNIT;
@@ -100,7 +93,7 @@ void R_InitSkyMap ()
 	}
 	else
 	{
-		skytexturemid = 200*FRACUNIT;
+		skytexturemid = 199<<FRACBITS;//textureheight[sky1texture]-1;
 		skystretch = 0;
 	}
 	skyheight = fskyheight << skystretch;
@@ -115,7 +108,7 @@ void R_InitSkyMap ()
 		skyscale = Scale (skyscale, 2048, FieldOfView);
 	}
 
-	// The sky map is 256*128*4 maps.
+	// The (standard Doom) sky map is 256*128*4 maps.
 	sky1shift = 22+skystretch-16;
 	sky2shift = 22+skystretch-16;
 	if (texturewidthmask[sky1texture] >= 256*2-1)

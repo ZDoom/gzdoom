@@ -1,11 +1,39 @@
-/* m_options.c
+/*
+** m_options.cpp
+** New options menu code
 **
-** New options menu code.
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
 **
 ** Sorry this got so convoluted. It was originally much cleaner until
 ** I started adding all sorts of gadgets to the menus. I might someday
 ** make a project of rewriting the entire menu system using Amiga-style
-** taglists to describe each menu item. We'll see...
+** taglists to describe each menu item. We'll see... (Probably not.)
 */
 
 #include "m_alloc.h"
@@ -206,6 +234,8 @@ static menuitem_t ControlsItems[] =
 	{ control,	"Screenshot",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"screenshot"} },
 	{ control,  "Open console",			{NULL}, {0.0}, {0.0}, {0.0}, {(value_t *)"toggleconsole"} }
 };
+
+static TArray<menuitem_t> CustomControlsItems (0);
 
 menu_t ControlsMenu = {
 	{ 'M','_','C','O','N','T','R','O' },
@@ -1409,17 +1439,17 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 		ModesItems[i].e.highlight = -1;
 		for (c = 0; c < 3; c++)
 		{
-			switch (c)
+			if (c == 0)
 			{
-				case 0:
-					str = &ModesItems[i].b.res1;
-					break;
-				case 1:
-					str = &ModesItems[i].c.res2;
-					break;
-				case 2:
-					str = &ModesItems[i].d.res3;
-					break;
+				str = &ModesItems[i].b.res1;
+			}
+			else if (c == 1)
+			{
+				str = &ModesItems[i].c.res2;
+			}
+			else
+			{
+				str = &ModesItems[i].d.res3;
 			}
 			if (I_NextMode (&width, &height))
 			{
@@ -1543,4 +1573,176 @@ CCMD (menu_video)
 	M_StartControlPanel (true);
 	OptionsActive = true;
 	SetVidMode ();
+}
+
+void M_LoadKeys (const char *modname, bool dbl)
+{
+	char section[64];
+
+	if (GameNames[gameinfo.gametype] == NULL)
+		return;
+
+	sprintf (section, "%s.%s%sBindings", GameNames[gameinfo.gametype], modname,
+		dbl ? ".Double" : ".");
+	if (GameConfig->SetSection (section))
+	{
+		const char *key, *value;
+		while (GameConfig->NextInSection (key, value))
+		{
+			C_DoBind (key, value, dbl);
+		}
+	}
+}
+
+int M_DoSaveKeys (FConfigFile *config, char *section, int i, bool dbl)
+{
+	int most = CustomControlsItems.Size();
+
+	config->SetSection (section, true);
+	config->ClearCurrentSection ();
+	for (++i; i < most; ++i)
+	{
+		menuitem_t *item = &CustomControlsItems[i];
+		if (item->type == control)
+		{
+			C_ArchiveBindings (config, dbl, item->e.command);
+			continue;
+		}
+		break;
+	}
+	return i;
+}
+
+void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
+{
+	if (ControlsMenu.items == ControlsItems)
+		return;
+
+	// Start after the normal controls
+	int i = sizeof(ControlsItems)/sizeof(ControlsItems[0]);
+	int most = CustomControlsItems.Size();
+
+	while (i < most)
+	{
+		menuitem_t *item = &CustomControlsItems[i];
+
+		if (item->type == whitetext)
+		{
+			sprintf (subsection, "%s.Bindings", item->e.command);
+			M_DoSaveKeys (config, section, i, false);
+			sprintf (subsection, "%s.DoubleBindings", item->e.command);
+			i = M_DoSaveKeys (config, section, i, true);
+		}
+		else
+		{
+			i++;
+		}
+	}
+}
+
+static int AddKeySpot;
+
+CCMD (addkeysection)
+{
+	if (argv.argc() != 3)
+	{
+		Printf ("Usage: addkeysection <section name> <ini name>\n");
+		return;
+	}
+
+	const int numStdControls = sizeof(ControlsItems)/sizeof(ControlsItems[0]);
+	int i;
+
+	if (ControlsMenu.items == ControlsItems)
+	{ // No custom controls have been defined yet.
+		for (i = 0; i < numStdControls; ++i)
+		{
+			CustomControlsItems.Push (ControlsItems[i]);
+		}
+	}
+
+	// See if this section already exists
+	int last = CustomControlsItems.Size();
+	for (i = numStdControls; i < last; ++i)
+	{
+		menuitem_t *item = &CustomControlsItems[i];
+
+		if (item->type == whitetext &&
+			stricmp (item->label, argv[1]) == 0)
+		{ // found it
+			break;
+		}
+	}
+
+	if (i == last)
+	{ // Add the new section
+		// Limit the ini name to 32 chars
+		if (strlen (argv[2]) > 32)
+			argv[2][32] = 0;
+
+		menuitem_t tempItem = { redtext, " " };
+
+		// Add a blank line to the menu
+		CustomControlsItems.Push (tempItem);
+
+		// Add the section name to the menu
+		tempItem.type = whitetext;
+		tempItem.label = copystring (argv[1]);
+		tempItem.e.command = copystring (argv[2]);	// Record ini section name in command field
+		CustomControlsItems.Push (tempItem);
+		ControlsMenu.items = &CustomControlsItems[0];
+
+		// Load bindings for this section from the ini
+		M_LoadKeys (argv[1], 0);
+		M_LoadKeys (argv[1], 1);
+
+		AddKeySpot = 0;
+	}
+	else
+	{ // Add new keys to the end of this section
+		do
+		{
+			i++;
+		} while (i < last && CustomControlsItems[i].type == control);
+		if (i < last)
+		{
+			AddKeySpot = i;
+		}
+		else
+		{
+			AddKeySpot = 0;
+		}
+	}
+}
+
+CCMD (addmenukey)
+{
+	if (argv.argc() != 3)
+	{
+		Printf ("Usage: addmenukey <description> <command>\n");
+		return;
+	}
+	if (ControlsMenu.items == ControlsItems)
+	{
+		Printf ("You must use addkeysection first.\n");
+		return;
+	}
+
+	menuitem_t newItem = { control, };
+	newItem.label = copystring (argv[1]);
+	newItem.e.command = copystring (argv[2]);
+	if (AddKeySpot == 0)
+	{ // Just add to the end of the menu
+		CustomControlsItems.Push (newItem);
+	}
+	else
+	{ // Add somewhere in the middle of the menu
+		size_t movecount = CustomControlsItems.Size() - AddKeySpot;
+		CustomControlsItems.Reserve (1);
+		memmove (&CustomControlsItems[AddKeySpot+1],
+				 &CustomControlsItems[AddKeySpot],
+				 sizeof(menuitem_t)*movecount);
+		CustomControlsItems[AddKeySpot++] = newItem;
+	}
+	ControlsMenu.numitems = CustomControlsItems.Size();
 }

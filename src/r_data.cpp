@@ -54,6 +54,7 @@
 
 #include "v_palette.h"
 #include "v_video.h"
+#include "gi.h"
 
 //
 // Graphics.
@@ -116,12 +117,15 @@ texture_t** 	textures;
 
 
 int*			texturewidthmask;
-static byte*	textureheightmask;		// [RH] Tutti-Frutti fix
+byte*			textureheightlog2;		// [RH] Tutti-Frutti fix
 fixed_t*		textureheight;			// needed for texture pegging
 static int*		texturecompositesize;
 static short** 	texturecolumnlump;
 static unsigned **texturecolumnofs;	// killough 4/9/98: make 32-bit
 static byte**	texturecomposite;
+byte*			texturenodecals;
+byte*			texturescalex;			// [RH] Texture scales
+byte*			texturescaley;
 
 // for global animation
 bool*			flatwarp;
@@ -152,10 +156,20 @@ int*			texturetranslation;
 void R_DrawColumnInCache (const column_t *patch, byte *cache,
 						  int originy, int cacheheight, byte *marks)
 {
+	int top = -1; // [RH] DeePsea tall patches
+
 	while (patch->topdelta != 0xff)
 	{
+		if (patch->topdelta <= top)
+		{
+			top += patch->topdelta;
+		}
+		else
+		{
+			top = patch->topdelta;
+		}
 		int count = patch->length;
-		int position = originy + patch->topdelta;
+		int position = originy + top;
 
 		if (position < 0)
 		{
@@ -224,6 +238,7 @@ void R_GenerateComposite (int texnum)
 
 	source = (byte *)Malloc (texture->height); 		// temporary column
 	for (i=0; i < texture->width; i++)
+	{
 		if (collump[i] == -1) 				// process only multipatched columns
 		{
 			column_t *col = (column_t *)(block + colofs[i] - 3);	// cached column
@@ -250,6 +265,7 @@ void R_GenerateComposite (int texnum)
 				col = (column_t *)((byte *) col + col->length + 4); // next post
 			}
 		}
+	}
 	free(source); 				// free temporary column
 	free(marks);				// free transparency marks
 
@@ -365,7 +381,6 @@ byte *R_GetColumn (int tex, int col)
 	col &= texturewidthmask[tex];
 	lump = texturecolumnlump[tex][col];
 	ofs = texturecolumnofs[tex][col];
-	dc_mask = textureheightmask[tex];		// [RH] Tutti-Frutti fix
 	
 	if (lump > 0)
 		return (byte *)W_CacheLumpNum(lump,PU_CACHE)+ofs;
@@ -469,8 +484,13 @@ void R_InitTextures (void)
 	texturecomposite = new byte *[numtextures];
 	texturecompositesize = new int[numtextures];
 	texturewidthmask = new int[numtextures];
-	textureheightmask = new byte[numtextures];
+	textureheightlog2 = new byte[numtextures];
 	textureheight = new fixed_t[numtextures];
+	texturenodecals = new byte[numtextures];
+	texturescalex = new byte[numtextures];
+	texturescaley = new byte[numtextures];
+
+	memset (texturenodecals, 0, numtextures);
 
 	totalwidth = 0;
 
@@ -489,7 +509,7 @@ void R_InitTextures (void)
 		if (offset > maxoff)
 			I_FatalError ("R_InitTextures: bad texture directory");
 		
-		mtexture = (maptexture_t *) ( (byte *)maptex + offset);
+		mtexture = (maptexture_t *) ((byte *)maptex + offset);
 
 		texture = textures[i] = (texture_t *)
 			Z_Malloc (sizeof(texture_t)
@@ -499,8 +519,22 @@ void R_InitTextures (void)
 		texture->width = SAFESHORT(mtexture->width);
 		texture->height = SAFESHORT(mtexture->height);
 		texture->patchcount = SAFESHORT(mtexture->patchcount);
-
 		uppercopy (texture->name, mtexture->name);
+
+		// [RH] Heretic sky textures are marked as only 128 pixels tall,
+		// even though they are really 200 pixels tall. Hack around this.
+		if (gameinfo.gametype == GAME_Heretic &&
+			texture->name[0] == 'S' &&
+			texture->name[1] == 'K' &&
+			texture->name[2] == 'Y' &&
+			texture->name[4] == 0 &&
+			texture->name[3] >= '1' &&
+			texture->name[3] <= '3' &&
+			texture->height == 128)
+		{
+			texture->height = 200;
+		}
+
 		mpatch = &mtexture->patches[0];
 		patch = &texture->patches[0];
 
@@ -521,21 +555,25 @@ void R_InitTextures (void)
 		texturecolumnlump[i] = new short[texture->width];
 		texturecolumnofs[i] = new unsigned int[texture->width];
 
-		j = 1;
-		while (j*2 <= texture->width)
-			j<<=1;
-
+		for (j = 1; j*2 <= texture->width; j <<= 1)
+			;
 		texturewidthmask[i] = j-1;
-		textureheight[i] = texture->height<<FRACBITS;
 
 		// [RH] Tutti-Frutti fix
 		// Sorry, only power-of-2 tall textures are actually fixed.
-		j = 1;
-		while (j < texture->height)
-			j <<= 1;
+		// For performance reasons, I have no intention of changing this.
+		for (j = 0; (1<<j) < texture->height; ++j)
+			;
+		textureheightlog2[i] = j;
+		textureheight[i] = texture->height<<FRACBITS;
 
-		textureheightmask[i] = j-1;
-				
+		// [RH] Special for beta 29: Values of 0 will use the tx/ty cvars
+		// to determine scaling instead of defaulting to 8. I will likely
+		// remove this once I finish the betas, because by then, users
+		// should be able to actually create scaled textures.
+		texturescalex[i] = mtexture->ScaleX ? mtexture->ScaleX : 0;
+		texturescaley[i] = mtexture->ScaleY ? mtexture->ScaleY : 0;
+
 		totalwidth += texture->width;
 	}
 	delete[] patchlookup;
@@ -854,7 +892,7 @@ int R_CheckTileNumForName (const char *name, ETileType type)
 
 	const namespace_t *space = spaces[type];
 	int i;
-	int lump;
+	int lump = -1;
 
 	for (i = 0; i < NUM_TILE_TYPES; i++)
 	{

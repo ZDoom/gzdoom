@@ -1,3 +1,41 @@
+/*
+** i_music.cpp
+** Plays music
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+#ifndef FMOD_333
+#define FMOD_333 0
+#endif
+
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -40,6 +78,8 @@
 
 void Enable_FSOUND_IO_Loader ();
 void Disable_FSOUND_IO_Loader ();
+
+static bool MusicDown = true;
 
 extern int _nosound;
 
@@ -224,11 +264,7 @@ protected:
 	FSOUND_STREAM *m_Stream;
 	int m_Channel;
 	int m_LastPos;
-
-	static int m_Volume;
 };
-
-int StreamSong::m_Volume = 255;
 
 // MIDI file played with Timidity
 class TimiditySong : public StreamSong
@@ -397,15 +433,17 @@ void ChildSigHandler (int signum)
 
 void MODSong::SetVolume (float volume)
 {
-	FMUSIC_SetMasterVolume (m_Module, (int)(volume * 256));
+	if (m_Module)
+	{
+		FMUSIC_SetMasterVolume (m_Module, (int)(volume * 256));
+	}
 }
 
 void StreamSong::SetVolume (float volume)
 {
-	m_Volume = (int)(volume * 255);
 	if (m_Channel)
 	{
-		FSOUND_SetVolumeAbsolute (m_Channel, m_Volume);
+		FSOUND_SetVolumeAbsolute (m_Channel, (int)(volume * 255));
 	}
 }
 
@@ -482,11 +520,15 @@ void I_InitMusic (void)
 		signal (SIGCHLD, ChildSigHandler);
 #endif
 	}
+	MusicDown = false;
 }
 
 
 void STACK_ARGS I_ShutdownMusic(void)
 {
+	if (MusicDown)
+		return;
+	MusicDown = true;
 	if (currSong)
 	{
 		S_StopMusic (true);
@@ -498,6 +540,16 @@ void STACK_ARGS I_ShutdownMusic(void)
 		CloseHandle (BufferReturnEvent);
 		BufferReturnEvent = NULL;
 	}
+	// I don't know if this is an NT 4.0 bug or an FMOD bug, but if waveout
+	// is used for sound, and a MIDI is also played, then when I quit, the OS
+	// tells me a free block was modified after being freed. This is
+	// apparently a synchronization issue between two threads, because if I
+	// put this Sleep here after stopping the music but before shutting down
+	// the entire sound system, the error does not happen. I don't think it's
+	// a driver problem, because it happens with both a Vortex 2 and an Audigy.
+	// Though if their drivers are both based off some common Microsoft sample
+	// code, I suppose it could be a driver issue.
+	Sleep (50);
 #endif // _WIN32
 }
 
@@ -794,15 +846,23 @@ void MODSong::Play (bool looping)
 
 void StreamSong::Play (bool looping)
 {
+	int volume = (int)(snd_musicvolume * 255);
+
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
+#if FMOD_333
+	m_Channel = FSOUND_Stream_Play3DAttrib (FSOUND_FREE, m_Stream, -1, volume, FSOUND_STEREOPAN, NULL, NULL);
+#else
 	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
+#endif
 	if (m_Channel != -1)
 	{
+		FSOUND_SetVolumeAbsolute (m_Channel, volume);
+#if !FMOD_333
 		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
-		FSOUND_SetVolumeAbsolute (m_Channel, m_Volume);
 		FSOUND_SetPaused (m_Channel, false);
+#endif
 		m_Status = STATE_Playing;
 		m_LastPos = 0;
 	}
@@ -810,6 +870,8 @@ void StreamSong::Play (bool looping)
 
 void TimiditySong::Play (bool looping)
 {
+	int volume = (int)(snd_musicvolume * 255);
+
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
@@ -817,12 +879,18 @@ void TimiditySong::Play (bool looping)
 	{
 		if (m_Stream != NULL)
 		{
+#if FMOD_333
+			m_Channel = FSOUND_Stream_Play3DAttrib (FSOUND_FREE, m_Stream, -1, volume, FSOUND_STEREOPAN, NULL, NULL);
+#else
 			m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
+#endif
 			if (m_Channel != -1)
 			{
+				FSOUND_SetVolumeAbsolute (m_Channel, volume);
+#if !FMOD_333
 				FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
-				FSOUND_SetVolumeAbsolute (m_Channel, m_Volume);
 				FSOUND_SetPaused (m_Channel, false);
+#endif
 				m_Status = STATE_Playing;
 			}
 		}
@@ -1136,7 +1204,7 @@ long I_RegisterSong (int handle, int pos, int len)
 		{
 			info = new MUSSong (handle, pos, len);
 		}
-		else
+		else if (!_nosound)
 #endif // _WIN32
 		{
 			info = new TimiditySong (handle, pos, len);
@@ -1154,7 +1222,7 @@ long I_RegisterSong (int handle, int pos, int len)
 		{
 			info = new MIDISong (handle, pos, len);
 		}
-		else
+		else if (!_nosound)
 #endif // _WIN32
 		{
 			info = new TimiditySong (handle, pos, len);
@@ -1503,11 +1571,12 @@ bool TimiditySong::ValidateTimidity ()
 		return false;
 	}
 
-	diskFile = CreateFile (foundPath, GENERIC_READ, 0, NULL,
+	diskFile = CreateFile (foundPath, GENERIC_READ, FILE_SHARE_READ, NULL,
 		OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (diskFile == INVALID_HANDLE_VALUE)
 	{
 		Printf_Bold ("Could not access %s\n", foundPath);
+		return false;
 	}
 	fileLen = GetFileSize (diskFile, NULL);
 	mapping = CreateFileMapping (diskFile, NULL, PAGE_READONLY, 0, 0, NULL);
@@ -1663,7 +1732,7 @@ bool TimiditySong::LaunchTimidity ()
 	}
 	else
 	{
-		printf ("child is %d\n", forkres);
+//		printf ("child is %d\n", forkres);
 		ChildProcess = forkres;
 		close (WavePipe[1]);
 		WavePipe[1] = -1;
@@ -1716,7 +1785,7 @@ signed char STACK_ARGS TimiditySong::FillStream (FSOUND_STREAM *stream, void *bu
 	if (ChildQuit == song->ChildProcess)
 	{
 		ChildQuit = 0;
-		printf ("child gone\n");
+//		printf ("child gone\n");
 		song->ChildProcess = -1;
 		return FALSE;
 	}

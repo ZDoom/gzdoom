@@ -1,7 +1,38 @@
-// p_lnspec.c: Code to handle line specials.
-//
-// Each function returns true if it caused something to happen
-// or false if it couldn't perform the desired action.
+/*
+** p_lnspec.cpp
+** Handles line specials
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** Each function returns true if it caused something to happen
+** or false if it could not perform the desired action.
+*/
 
 #include "doomstat.h"
 #include "p_local.h"
@@ -14,6 +45,7 @@
 #include "a_sharedglobal.h"
 #include "a_lightning.h"
 #include "statnums.h"
+//#include "r_draw.h"
 
 #define FUNC(a) static bool a (line_t *ln, AActor *it, int arg0, int arg1, \
 							   int arg2, int arg3, int arg4)
@@ -633,7 +665,7 @@ FUNC(LS_Exit_Normal)
 {
 	if (CheckIfExitIsGood (it))
 	{
-		G_ExitLevel (0);
+		G_ExitLevel (arg0);
 		return true;
 	}
 	return false;
@@ -644,7 +676,7 @@ FUNC(LS_Exit_Secret)
 {
 	if (CheckIfExitIsGood (it))
 	{
-		G_SecretExitLevel (0);
+		G_SecretExitLevel (arg0);
 		return true;
 	}
 	return false;
@@ -677,6 +709,24 @@ FUNC(LS_Teleport_NoFog)
 // Teleport_NoFog (tid)
 {
 	return EV_Teleport (arg0, ln, TeleportSide, it, false);
+}
+
+FUNC(LS_TeleportOther)
+// TeleportOther (other_tid, dest_tid, fog?)
+{
+	return EV_TeleportOther (arg0, arg1, arg2?true:false);
+}
+
+FUNC(LS_TeleportGroup)
+// TeleportGroup (group_tid, source_tid, dest_tid, move_source?, fog?)
+{
+	return EV_TeleportGroup (arg0, it, arg1, arg2, arg3?true:false, arg4?true:false);
+}
+
+FUNC(LS_TeleportInSector)
+// TeleportInSector (tag, source_tid, dest_tid, bFog, group_tid)
+{
+	return EV_TeleportSector (arg0, arg1, arg2, arg3?true:false, arg4);
 }
 
 FUNC(LS_Teleport_EndGame)
@@ -712,9 +762,14 @@ FUNC(LS_ThrustThing)
 }
 
 FUNC(LS_ThrustThingZ)	// [BC]
-// ThrustThingZ (tid, momz)
+// ThrustThingZ (tid, zthrust, down/up, set)
 {
 	AActor *victim;
+	fixed_t thrust = arg1*FRACUNIT/4;
+
+	// [BC] Up is default
+	if (arg2)
+		thrust = -thrust;
 
 	if (arg0 != 0)
 	{
@@ -722,21 +777,28 @@ FUNC(LS_ThrustThingZ)	// [BC]
 
 		while ( (victim = iterator.Next ()) )
 		{
-			victim->momz = arg1 << FRACBITS;
+			if (!arg3)
+				victim->momz = thrust;
+			else
+				victim->momz += thrust;
 		}
 		return true;
 	}
 	else if (it)
 	{
-		it->momz = arg1 * FRACUNIT/10;
+		if (!arg3)
+			it->momz = thrust;
+		else
+			it->momz += thrust;
 		return true;
 	}
 	return false;
 }
 
 FUNC(LS_Thing_SetSpecial)	// [BC]
-// Thing_SetSpecial (tid, special, arg1, arg2, arg3, arg4)
+// Thing_SetSpecial (tid, special, arg1, arg2, arg3)
 // [RH] Use the SetThingSpecial ACS command instead.
+// It can set all args and not just the first three.
 {
 	if (arg0 != 0)
 	{
@@ -759,10 +821,27 @@ FUNC(LS_DamageThing)
 {
 	if (it)
 	{
-		if (arg0)
+		if (arg0 < 0)
+		{ // Negative damages mean healing
+			if (it->player)
+			{
+				P_GiveBody (it->player, -arg0);
+			}
+			else
+			{
+				it->health -= arg0;
+				if (it->GetDefault()->health < it->health)
+					it->health = it->GetDefault()->health;
+			}
+		}
+		else if (arg0 > 0)
+		{
+			if (arg0 == 0)
+			{
+				arg0 = 10000;
+			}
 			P_DamageMobj (it, NULL, NULL, arg0, MOD_UNKNOWN);
-		else
-			P_DamageMobj (it, NULL, NULL, 10000, MOD_UNKNOWN);
+		}
 	}
 
 	return it ? true : false;
@@ -900,6 +979,12 @@ FUNC(LS_Thing_SpawnNoFog)
 	return P_Thing_Spawn (arg0, arg1, BYTEANGLE(arg2), false, arg3);
 }
 
+FUNC(LS_Thing_SpawnFacing)
+// Thing_SpawnFacing (tid, type, nofog, newtid)
+{
+	return P_Thing_Spawn (arg0, arg1, ANGLE_MAX, arg2 ? false : true, arg3);
+}
+
 FUNC(LS_Thing_SetGoal)
 // Thing_SetGoal (tid, goal, delay)
 {
@@ -907,9 +992,11 @@ FUNC(LS_Thing_SetGoal)
 	TActorIterator<APatrolPoint> goaliterator (arg1);
 	AActor *self;
 	APatrolPoint *goal = goaliterator.Next ();
+	bool ok = false;
 
 	while ( (self = selfiterator.Next ()) )
 	{
+		ok = true;
 		if (self->flags & MF_SHOOTABLE)
 		{
 			self->goal = goal;
@@ -918,13 +1005,43 @@ FUNC(LS_Thing_SetGoal)
 		}
 	}
 
-	return true;
+	return ok;
 }
 
 FUNC(LS_Thing_Move)		// [BC]
 // Thing_Move (tid, mapspot)
 {
 	return P_Thing_Move (arg0, arg1);
+}
+
+FUNC(LS_Thing_SetTranslation)
+// Thing_SetTranslation (tid, range)
+{
+	TActorIterator<AActor> iterator (arg0);
+	WORD range;
+	AActor *target;
+	bool ok = false;
+
+	if (arg1 == -1 && it != NULL)
+	{
+		range = it->Translation;
+	}
+	else if (arg1 >= 1 && arg1 < MAX_ACS_TRANSLATIONS)
+	{
+		range = (TRANSLATION_LevelScripted<<8)|(arg1-1);
+	}
+	else
+	{
+		range = 0;
+	}
+
+	while ( (target = iterator.Next ()) )
+	{
+		ok = true;
+		target->Translation = range;
+	}
+
+	return ok;
 }
 
 FUNC(LS_ACS_Execute)
@@ -1604,8 +1721,9 @@ FUNC(LS_ChangeCamera)
 FUNC(LS_SetPlayerProperty)
 // SetPlayerProperty (who, set, which)
 {
-#define PROP_FROZEN		0
-#define PROP_NOTARGET	1
+#define PROP_FROZEN					0
+#define PROP_NOTARGET				1
+#define PROP_INSTANTWEAPONSWITCH	2
 
 	int mask = 0;
 
@@ -1614,15 +1732,18 @@ FUNC(LS_SetPlayerProperty)
 
 	switch (arg2)
 	{
-		case PROP_FROZEN:
-			mask = CF_FROZEN;
-			break;
-		case PROP_NOTARGET:
-			mask = CF_NOTARGET;
-			break;
+	case PROP_FROZEN:
+		mask = CF_FROZEN;
+		break;
+	case PROP_NOTARGET:
+		mask = CF_NOTARGET;
+		break;
+	case PROP_INSTANTWEAPONSWITCH:
+		mask = CF_INSTANTWEAPSWITCH;
+		break;
 	}
 
-	if (arg1 == 0)
+	if (arg0 == 0)
 	{
 		if (arg1)
 			it->player->cheats |= mask;
@@ -1663,6 +1784,15 @@ FUNC(LS_TranslucentLine)
 	return true;
 }
 
+FUNC(LS_Autosave)
+{
+	if (gameaction != ga_savegame)
+	{
+		gameaction = ga_autosave;
+	}
+	return true;
+}
+
 lnSpecFunc LineSpecials[256] =
 {
 	LS_NOP,
@@ -1674,13 +1804,13 @@ lnSpecFunc LineSpecials[256] =
 	LS_Polyobj_MoveTimes8,
 	LS_Polyobj_DoorSwing,
 	LS_Polyobj_DoorSlide,
-	LS_NOP,		// 9
+	LS_NOP,		// Line_Horizon
 	LS_Door_Close,
 	LS_Door_Open,
 	LS_Door_Raise,
 	LS_Door_LockedRaise,
 	LS_NOP,		// 14
-	LS_NOP,		// 15
+	LS_Autosave,	// Autosave
 	LS_NOP,		// 16
 	LS_NOP,		// 17
 	LS_NOP,		// 18
@@ -1741,9 +1871,9 @@ lnSpecFunc LineSpecials[256] =
 	LS_DamageThing,
 	LS_Teleport_NewMap,
 	LS_Teleport_EndGame,
-	LS_NOP,		// 76
-	LS_NOP,		// 77
-	LS_NOP,		// 78
+	LS_TeleportOther,
+	LS_TeleportGroup,
+	LS_TeleportInSector,
 	LS_NOP,		// 79
 	LS_ACS_Execute,
 	LS_ACS_Suspend,
@@ -1787,13 +1917,13 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 119
 	LS_Radius_Quake,
 	LS_NOP,		// Line_SetIdentification
-	LS_NOP,		// Thing_SetGravity
+	LS_NOP,		// Thing_SetGravity			// [BC] Start
 	LS_NOP,		// Thing_ReverseGravity
 	LS_NOP,		// Thing_RevertGravity
 	LS_Thing_Move,
 	LS_NOP,		// Thing_SetSprite
 	LS_Thing_SetSpecial,
-	LS_ThrustThingZ,
+	LS_ThrustThingZ,						// [BC] End
 	LS_UsePuzzleItem,
 	LS_Thing_Activate,
 	LS_Thing_Deactivate,
@@ -1804,24 +1934,24 @@ lnSpecFunc LineSpecials[256] =
 	LS_Thing_ProjectileGravity,
 	LS_Thing_SpawnNoFog,
 	LS_Floor_Waggle,
-	LS_NOP,		// 139
+	LS_Thing_SpawnFacing,
 	LS_Sector_ChangeSound,
-	LS_NOP,		// 141
-	LS_NOP,		// 142
-	LS_NOP,		// 143
-	LS_NOP,		// 144
-	LS_NOP,		// 145
-	LS_NOP,		// 146
-	LS_NOP,		// 147
-	LS_NOP,		// 148
-	LS_NOP,		// 149
-	LS_NOP,		// 150
-	LS_NOP,		// 151
-	LS_NOP,		// 152
-	LS_NOP,		// 153
-	LS_NOP,		// 154
-	LS_NOP,		// 155
-	LS_NOP,		// 156
+	LS_NOP,		// 141 Music_Pause			// [BC] Start
+	LS_NOP,		// 142 Music_Change
+	LS_NOP,		// 143 Player_RemoveItem
+	LS_NOP,		// 144 Player_GiveItem
+	LS_NOP,		// 145 Player_SetTeam
+	LS_NOP,		// 146 Player_SetLeader
+	LS_NOP,		// 147 Team_InitFP
+	LS_NOP,		// 148 TeleportAll
+	LS_NOP,		// 149 TeleportAll_NoFog
+	LS_NOP,		// 150 Team_GiveFP
+	LS_NOP,		// 151 Team_UseFP
+	LS_NOP,		// 152 Team_Score
+	LS_NOP,		// 153 Team_Init
+	LS_NOP,		// 154 Var_Lock
+	LS_NOP,		// 155 Team_RemoveItem
+	LS_NOP,		// 156 Team_GiveItem		// [BC] End
 	LS_NOP,		// 157
 	LS_NOP,		// 158
 	LS_NOP,		// 159
@@ -1845,7 +1975,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 177
 	LS_NOP,		// 178
 	LS_NOP,		// 179
-	LS_NOP,		// 180
+	LS_Thing_SetTranslation,
 	LS_NOP,		// Plane_Align
 	LS_NOP,		// Line_Mirror
 	LS_Line_AlignCeiling,

@@ -84,9 +84,17 @@
 #include "sbar.h"
 #include "decallib.h"
 
+#include "v_text.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
+
+struct GameAtExit
+{
+	GameAtExit *Next;
+	char Command[1];
+};
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -100,12 +108,13 @@ void D_CheckNetGame ();
 void D_ProcessEvents ();
 void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
+void D_AddFile (const char *file);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 void D_DoomLoop ();
-static void D_AddFile (const char *file);
 static const char *BaseFileSearch (const char *file, const char *ext);
+static void STACK_ARGS DoConsoleAtExit ();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -129,14 +138,13 @@ extern BOOL gameisdead;
 extern BOOL demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 
-extern cycle_t WallCycles, PlaneCycles, MaskedCycles;
+extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (Int, fraglimit, 0, CVAR_SERVERINFO);
 CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR (Int, vid_bufferarea, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 wadlist_t *wadfiles;		// [RH] remove limit on # of loaded wads
@@ -190,6 +198,7 @@ static const char *IWADNames[] =
 	"hexen.wad",
 	NULL
 };
+static GameAtExit *ExitCmdList;
 
 // CODE --------------------------------------------------------------------
 
@@ -259,6 +268,12 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 	{
 		C_DoCommand ("centerview");
 	}
+	// If nofov is set, force everybody to the arbitrator's FOV.
+	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
+	{
+		Net_WriteByte (DEM_FOV);
+		Net_WriteByte ((BYTE)players[consoleplayer].DesiredFOV);
+	}
 }
 
 CVAR (Flag, sv_nohealth,		dmflags, DF_NO_HEALTH);
@@ -280,6 +295,7 @@ CVAR (Flag, sv_nojump,			dmflags, DF_NO_JUMP);
 CVAR (Flag, sv_nofreelook,		dmflags, DF_NO_FREELOOK);
 CVAR (Flag, sv_respawnsuper,	dmflags, DF_RESPAWN_SUPER);
 CVAR (Flag, sv_nopassover,		dmflags, DF_NO_PASSMOBJ);
+CVAR (Flag, sv_nofov,			dmflags, DF_NO_FOV);
 
 //==========================================================================
 //
@@ -348,9 +364,8 @@ void D_Display (bool screenshot)
 		{
 			// Recalculate various view parameters.
 			setsizeneeded = true;
-			// Trick status bar into rethinking its position
-			st_scale.Callback ();
-			SB_state = screen->GetPageCount ();
+			// Let the status bar know the screen size changed
+			StatusBar->ScreenSizeChanged ();
 			// Refresh the console.
 			C_NewModeAdjust ();
 			// Reload crosshair if transitioned to a different size
@@ -367,12 +382,11 @@ void D_Display (bool screenshot)
 		setmodeneeded = false;
 	}
 
-	if (screen->Lock (TransArea >= vid_bufferarea || screenshot))
+	if (screen->Lock (screenshot))
 	{
 		SB_state = screen->GetPageCount ();
 		BorderNeedRefresh = screen->GetPageCount ();
 	}
-	TransArea = 0;
 
 	// [RH] Allow temporarily disabling wipes
 	if (NoWipe)
@@ -521,6 +535,56 @@ void D_Display (bool screenshot)
 
 	unclock (cycles);
 	FrameCycles = cycles;
+}
+
+//==========================================================================
+//
+// DoConsoleAtExit
+//
+// Executes the contents of the atexit cvar, if any, at quit time.
+//
+//==========================================================================
+
+static void STACK_ARGS DoConsoleAtExit ()
+{
+	GameAtExit *cmd = ExitCmdList;
+
+	while (cmd != NULL)
+	{
+		GameAtExit *next = cmd->Next;
+		AddCommandString (cmd->Command);
+		Z_Free (cmd);
+		cmd = next;
+	}
+}
+
+//==========================================================================
+//
+// CCMD atexit
+//
+//==========================================================================
+
+CCMD (atexit)
+{
+	if (argv.argc() == 1)
+	{
+		Printf ("Registered atexit commands:\n");
+		GameAtExit *record = ExitCmdList;
+		while (record != NULL)
+		{
+			Printf ("%s\n", record->Command);
+			record = record->Next;
+		}
+		return;
+	}
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		GameAtExit *record = (GameAtExit *)Z_Malloc (
+			sizeof(GameAtExit)+strlen(argv[i]), PU_STATIC, 0);
+		strcpy (record->Command, argv[i]);
+		record->Next = ExitCmdList;
+		ExitCmdList = record;
+	}
 }
 
 //==========================================================================
@@ -812,6 +876,21 @@ CCMD (endgame)
 
 void D_AddFile (const char *file)
 {
+	if (file == NULL)
+	{
+		return;
+	}
+
+	if (!FileExists (file))
+	{
+		const char *f = BaseFileSearch (file, ".wad");
+		if (f == NULL)
+		{
+			Printf ("Can't find '%s'\n", file);
+			return;
+		}
+		file = f;
+	}
 	wadlist_t *wad = (wadlist_t *)Z_Malloc (sizeof(*wad) + strlen(file), PU_STATIC, 0);
 
 	*wadtail = wad;
@@ -849,6 +928,20 @@ void D_AddConfigWads (const char *section)
 				{
 					D_AddFile (wadfile);
 				}
+				else
+				{ // Try pattern matching
+					findstate_t findstate;
+					long handle = I_FindFirst (value, &findstate);
+
+					 if (handle != -1)
+					 {
+						 do
+						 {
+							 D_AddFile (I_FindName (&findstate));
+						 } while (I_FindNext (handle, &findstate) == 0);
+					 }
+					 I_FindClose (handle);
+				}
 
 				// Reset GameConfig's position to get next wad
 				GameConfig->SetPosition (pos);
@@ -867,11 +960,11 @@ void D_AddConfigWads (const char *section)
 
 static void D_AddDirectory (const char *dir)
 {
-	char curdir[256];
+	char curdir[PATH_MAX];
 
-	if (getcwd (curdir, 256))
+	if (getcwd (curdir, PATH_MAX))
 	{
-		char skindir[256];
+		char skindir[PATH_MAX];
 		findstate_t findstate;
 		long handle;
 		int stuffstart;
@@ -1114,9 +1207,12 @@ static int CheckIWAD (const char *doomwaddir, WadStuff *wads)
 			FixPathSeperator (iwad);
 			if (FileExists (iwad))
 			{
-				wads[i].Path = copystring (iwad);
 				wads[i].Type = ScanIWAD (iwad);
-				numfound++;
+				if (wads[i].Type != NUM_IWAD_TYPES)
+				{
+					wads[i].Path = copystring (iwad);
+					numfound++;
+				}
 			}
 		}
 	}
@@ -1357,7 +1453,7 @@ static const char *BaseFileSearch (const char *file, const char *ext)
 	// Retry, this time with a default extension
 	if (ext != NULL)
 	{
-		char tmp[PATH_MAX];
+		static char tmp[PATH_MAX];
 		strcpy (tmp, file);
 		DefaultExtension (tmp, ext);
 		return BaseFileSearch (tmp, NULL);
@@ -1383,13 +1479,31 @@ bool ConsiderPatches (const char *arg, const char *ext)
 		int i;
 		const char *f;
 
-		for (i = 0; i < files->NumArgs(); i++)
-			if ( (f = BaseFileSearch (files->GetArg (i), ext)) )
+		for (i = 0; i < files->NumArgs(); ++i)
+		{
+			if ( (f = BaseFileSearch (files->GetArg (i), ".deh")) )
 				DoDehPatch (f, false);
+			else if ( (f = BaseFileSearch (files->GetArg (i), ".bex")) )
+				DoDehPatch (f, false);
+		}
 		noDef = true;
 	}
 	delete files;
 	return noDef;
+}
+
+//==========================================================================
+//
+// D_MultiExec
+//
+//==========================================================================
+
+void D_MultiExec (DArgs *list, bool usePullin)
+{
+	for (int i = 0; i < list->NumArgs(); ++i)
+	{
+		C_ExecFile (list->GetArg (i), usePullin);
+	}
 }
 
 //==========================================================================
@@ -1401,35 +1515,47 @@ bool ConsiderPatches (const char *arg, const char *ext)
 void D_DoomMain (void)
 {
 	int p, flags;
-	char file[256];
+	char file[PATH_MAX];
 	char *v;
+	const char *wad;
+	DArgs *execFiles;
 
 #if defined(_MSC_VER) || defined(__GNUC__)
 	TypeInfo::StaticInit ();
 #endif
 
 	atterm (DObject::StaticShutdown);
+	atterm (DoConsoleAtExit);
+
 	gamestate = GS_STARTUP;
 
 	SetLanguageIDs ();
 
 	rngseed = (DWORD)time (NULL);
-
 	M_FindResponseFile ();
-
+	M_LoadDefaults ();			// load before initing other systems
 	// [RH] Make sure zdoom.wad is always loaded,
 	// as it contains magic stuff we need.
-	const char *wad;
-
 	wad = BaseFileSearch ("zdoom.wad", NULL);
 	if (wad)
 		D_AddFile (wad);
 	else
 		I_FatalError ("Cannot find zdoom.wad");
 
-	M_LoadDefaults ();			// load before initing other systems
 	I_SetTitleString (IWADTypeNames[IdentifyVersion ()]);
 	GameConfig->DoGameSetup (GameNames[gameinfo.gametype]);
+
+	// Run automatically executed files
+	execFiles = new DArgs;
+	GameConfig->AddAutoexec (execFiles, GameNames[gameinfo.gametype]);
+	D_MultiExec (execFiles, true);
+	delete execFiles;
+
+	// Run .cfg files at the start of the command line.
+	execFiles = Args.GatherFiles (NULL, ".cfg", false);
+	D_MultiExec (execFiles, true);
+	delete execFiles;
+
 	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
 	// [RH] zvox.wad - A wad I had intended to be automatically generate
@@ -1477,15 +1603,7 @@ void D_DoomMain (void)
 		// the files gathered are wadfile/lump names
 		for (int i = 0; i < files->NumArgs(); i++)
 		{
-			const char *f = BaseFileSearch (files->GetArg (i), ".wad");
-			if (f)
-			{
-				D_AddFile (files->GetArg (i));
-			}
-			else
-			{
-				Printf ("Can't find '%s'\n", files->GetArg (i));
-			}
+			D_AddFile (files->GetArg (i));
 		}
 	}
 	delete files;
@@ -1521,6 +1639,9 @@ void D_DoomMain (void)
 	FActorInfo::StaticInit ();
 	FActorInfo::StaticGameSet ();
 
+	DecalLibrary.Clear ();
+	DecalLibrary.ReadAllDecals ();
+
 	// [RH] Try adding .deh and .bex files on the command line.
 	// If there are none, try adding any in the config file.
 
@@ -1546,6 +1667,8 @@ void D_DoomMain (void)
 		DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
 	}
 
+	FActorInfo::StaticSetActorNums ();
+
 	// [RH] User-configurable startup strings. Because BOOM does.
 	if (GStrings(STARTUP1)[0])	Printf ("%s\n", GStrings(STARTUP1));
 	if (GStrings(STARTUP2)[0])	Printf ("%s\n", GStrings(STARTUP2));
@@ -1554,7 +1677,7 @@ void D_DoomMain (void)
 	if (GStrings(STARTUP5)[0])	Printf ("%s\n", GStrings(STARTUP5));
 
 	//Added by MC:
-	bglobal.getspawned = Args.GatherFiles ("-bots", "", true);
+	bglobal.getspawned = Args.GatherFiles ("-bots", "", false);
 	if (bglobal.getspawned->NumArgs() == 0)
 	{
 		delete bglobal.getspawned;
@@ -1627,9 +1750,16 @@ void D_DoomMain (void)
 	p = Args.CheckParm ("+map");
 	if (p && p < Args.NumArgs()-1)
 	{
-		strncpy (startmap, Args.GetArg (p+1), 8);
-		Args.GetArg (p)[0] = '-';
-		autostart = true;
+		if (W_CheckNumForName (Args.GetArg (p+1)) == -1)
+		{
+			Printf ("Can't find map %s\n", Args.GetArg (p+1));
+		}
+		else
+		{
+			strncpy (startmap, Args.GetArg (p+1), 8);
+			Args.GetArg (p)[0] = '-';
+			autostart = true;
+		}
 	}
 	if (devparm)
 		Printf (GStrings(D_DEVSTR));
@@ -1700,9 +1830,6 @@ void D_DoomMain (void)
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 
-	DecalLibrary.Clear ();
-	DecalLibrary.ReadAllDecals ();
-
 	// start the apropriate game based on parms
 	v = Args.CheckValue ("-record");
 
@@ -1734,11 +1861,6 @@ void D_DoomMain (void)
 	{
 		G_LoadGame (v);
 	}
-
-	// [RH] Initialize items. Still only used for the give command. :-(
-	// And that's all it will be used for, since the game logic should be
-	// getting a major overhaul soon. (Scripting ala Unreal!)
-	InitItems ();
 
 	// [RH] Lock any cvars that should be locked now that we're
 	// about to begin the game.
@@ -1781,6 +1903,14 @@ void D_DoomMain (void)
 	D_DoomLoop ();		// never returns
 }
 
+//==========================================================================
+//
+// STAT fps
+//
+// Displays statistics about rendering times
+//
+//==========================================================================
+
 ADD_STAT (fps, out)
 {
 	sprintf (out,
@@ -1791,3 +1921,50 @@ ADD_STAT (fps, out)
 		(double)MaskedCycles * SecondsPerCycle * 1000
 		);
 }
+
+//==========================================================================
+//
+// STAT wallcycles
+//
+// Displays the minimum number of cycles spent drawing walls
+//
+//==========================================================================
+
+static cycle_t bestwallcycles = INT_MAX;
+
+ADD_STAT (wallcycles, out)
+{
+	if (WallCycles && WallCycles < bestwallcycles)
+		bestwallcycles = WallCycles;
+	sprintf (out, "%lu", bestwallcycles);
+}
+
+//==========================================================================
+//
+// CCMD clearwallcycles
+//
+// Resets the count of minimum wall drawing cycles
+//
+//==========================================================================
+
+CCMD (clearwallcycles)
+{
+	bestwallcycles = INT_MAX;
+}
+
+#if 0
+// To use these, also uncomment the clock/unclock in wallscan
+static cycle_t bestscancycles = INT_MAX;
+
+ADD_STAT (scancycles, out)
+{
+	if (WallScanCycles && WallScanCycles < bestscancycles)
+		bestscancycles = WallScanCycles;
+	sprintf (out, "%d", bestscancycles);
+}
+
+CCMD (clearscancycles)
+{
+	bestscancycles = INT_MAX;
+}
+#endif

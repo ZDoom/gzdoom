@@ -65,7 +65,7 @@ void DFireFlicker::Serialize (FArchive &arc)
 //
 // T_FireFlicker
 //
-void DFireFlicker::RunThink ()
+void DFireFlicker::Tick ()
 {
 	int amount;
 
@@ -118,7 +118,7 @@ void DFlicker::Serialize (FArchive &arc)
 }
 
 
-void DFlicker::RunThink ()
+void DFlicker::Tick ()
 {
 	if (m_Count)
 	{
@@ -177,7 +177,7 @@ void DLightFlash::Serialize (FArchive &arc)
 // T_LightFlash
 // Do flashing lights.
 //
-void DLightFlash::RunThink ()
+void DLightFlash::Tick ()
 {
 	if (--m_Count == 0)
 	{
@@ -239,7 +239,7 @@ void DStrobe::Serialize (FArchive &arc)
 //
 // T_StrobeFlash
 //
-void DStrobe::RunThink ()
+void DStrobe::Tick ()
 {
 	if (--m_Count == 0)
 	{
@@ -420,7 +420,7 @@ void DGlow::Serialize (FArchive &arc)
 	arc << m_Direction << m_MaxLight << m_MinLight;
 }
 
-void DGlow::RunThink ()
+void DGlow::Tick ()
 {
 	int newlight = m_Sector->lightlevel;
 
@@ -474,7 +474,7 @@ void DGlow2::Serialize (FArchive &arc)
 	arc << m_End << m_MaxTics << m_OneShot << m_Start << m_Tics;
 }
 
-void DGlow2::RunThink ()
+void DGlow2::Tick ()
 {
 	if (m_Tics++ >= m_MaxTics)
 	{
@@ -561,7 +561,7 @@ void DPhased::Serialize (FArchive &arc)
 	arc << m_BaseLevel << m_Phase;
 }
 
-void DPhased::RunThink ()
+void DPhased::Tick ()
 {
 	const int steps = 12;
 

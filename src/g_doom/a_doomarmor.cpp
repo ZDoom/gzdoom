@@ -10,7 +10,7 @@
 class AArmorBonus : public AArmor
 {
 	DECLARE_ACTOR (AArmorBonus, AArmor)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		player_t *player = toucher->player;
@@ -21,6 +21,7 @@ protected:
 			player->armortype = deh.GreenAC;
 		return true;
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTARMBONUS);
@@ -50,11 +51,12 @@ END_DEFAULTS
 class AGreenArmor : public AArmor
 {
 	DECLARE_ACTOR (AGreenArmor, AArmor)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveArmor (toucher->player, (armortype_t)deh.GreenAC, 100*deh.GreenAC);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTARMOR);
@@ -88,11 +90,12 @@ AT_GAME_SET (GreenArmor)
 class ABlueArmor : public AArmor
 {
 	DECLARE_ACTOR (ABlueArmor, AArmor)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveArmor (toucher->player, (armortype_t)deh.BlueAC, 100*deh.BlueAC);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTMEGA);

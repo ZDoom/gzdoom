@@ -24,6 +24,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
+#include <objbase.h>
 #ifdef _MSC_VER
 #include <eh.h>
 #endif
@@ -49,9 +50,16 @@
 
 #include "stats.h"
 
+
+#include <assert.h>
+#include <malloc.h>
+
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 
 // Will this work with something besides VC++?
+// Answer, yes it will.
+// Which brings up the question, what won't it work with?
+//
 //extern int __argc;
 //extern char **__argv;
 
@@ -64,7 +72,6 @@ WNDCLASS		WndClass;
 HWND			Window;
 HINSTANCE		hInstance;
 
-extern float mb_used;
 extern UINT TimerPeriod;
 extern HCURSOR TheArrowCursor, TheInvisibleCursor;
 
@@ -100,6 +107,11 @@ static int STACK_ARGS NewFailure (size_t size)
 	return 0;
 }
 #endif
+
+static void STACK_ARGS UnCOM (void)
+{
+	CoUninitialize ();
+}
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
@@ -187,12 +199,12 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		WinWidth = cRect.right;
 		WinHeight = cRect.bottom;
 
+		CoInitialize (NULL);
+		atterm (UnCOM);
+
 		C_InitConsole (((WinWidth / 8) + 2) * 8, (WinHeight / 12) * 8, false);
 
-		Printf ("Heapsize: %g megabytes\n", mb_used);
-
 		I_DetectOS ();
-
 		D_DoomMain ();
 	}
 	catch (CDoomError &error)

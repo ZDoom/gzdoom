@@ -81,7 +81,7 @@ extern "C" void STACK_ARGS DoubleVert_ASM (int height, int width, byte *dest, in
 
 // [RH] Pointers to the different column drawers.
 //		These get changed depending on the current
-//		screen depth.
+//		screen depth and asm/no asm.
 void (*R_DrawColumnHoriz)(void);
 void (*R_DrawColumn)(void);
 void (*R_DrawFuzzColumn)(void);
@@ -89,7 +89,6 @@ void (*R_DrawTranslatedColumn)(void);
 void (*R_DrawShadedColumn)(void);
 void (*R_DrawSpan)(void);
 void (*rt_map4cols)(int,int,int);
-
 
 //
 // R_DrawColumn
@@ -112,8 +111,13 @@ DWORD			*dc_destblend;			// blending lookups
 // first pixel in a column (possibly virtual) 
 byte*			dc_source;				
 
-// [RH] Tutti-Frutti fix
-unsigned int	dc_mask;
+byte*			dc_dest;
+int				dc_count;
+
+DWORD			vplce[4];
+DWORD			vince[4];
+BYTE*			palookupoffse[4];
+BYTE*			bufplce[4];
 
 // just for profiling 
 int 			dccount;
@@ -173,7 +177,6 @@ void R_DrawColumnP_C (void)
 		// [RH] Get local copies of these variables so that the compiler
 		//		has a better chance of optimizing this well.
 		byte *colormap = dc_colormap;
-		int mask = dc_mask;
 		byte *source = dc_source;
 		int pitch = dc_pitch;
 
@@ -184,7 +187,7 @@ void R_DrawColumnP_C (void)
 		{
 			// Re-map color indices from wall texture column
 			//	using a lighting/special effects LUT.
-			*dest = colormap[source[(frac>>FRACBITS)&mask]];
+			*dest = colormap[source[frac>>FRACBITS]];
 
 			dest += pitch;
 			frac += fracstep;
@@ -226,13 +229,12 @@ void R_StretchColumnP_C (void)
 	frac = dc_texturefrac;
 
 	{
-		int mask = dc_mask;
 		byte *source = dc_source;
 		int pitch = dc_pitch;
 
 		do
 		{
-			*dest = source[(frac>>FRACBITS)&mask];
+			*dest = source[frac>>FRACBITS];
 			dest += pitch;
 			frac += fracstep;
 		} while (--count);
@@ -483,12 +485,11 @@ void R_DrawAddColumnP_C (void)
 		DWORD *bg2rgb = dc_destblend;
 		byte *colormap = dc_colormap;
 		byte *source = dc_source;
-		int mask = dc_mask;
 		int pitch = dc_pitch;
 
 		do
 		{
-			DWORD fg = colormap[source[(frac>>FRACBITS)&mask]];
+			DWORD fg = colormap[source[frac>>FRACBITS]];
 			DWORD bg = *dest;
 
 			fg = fg2rgb[fg];
@@ -503,15 +504,13 @@ void R_DrawAddColumnP_C (void)
 
 //
 // R_DrawTranslatedColumn
-// Used to draw player sprites
-//	with the green colorramp mapped to others.
-// Could be used with different translation
-//	tables, e.g. the lighter colored version
-//	of the BaronOfHell, the HellKnight, uses
-//	identical sprites, kinda brightened up.
+// Used to draw player sprites with the green colorramp mapped to others.
+// Could be used with different translation tables, e.g. the lighter colored
+// version of the BaronOfHell, the HellKnight, uses	identical sprites, kinda
+// brightened up.
 //
-byte*	dc_translation;
-byte*	translationtables;
+byte *dc_translation;
+byte *translationtables[NUM_TRANSLATION_TABLES];
 
 void R_DrawTranslatedColumnP_C (void)
 { 
@@ -547,11 +546,10 @@ void R_DrawTranslatedColumnP_C (void)
 		byte *translation = dc_translation;
 		byte *source = dc_source;
 		int pitch = dc_pitch;
-		int mask = dc_mask;
 
 		do
 		{
-			*dest = colormap[translation[source[(frac>>FRACBITS) & mask]]];
+			*dest = colormap[translation[source[frac>>FRACBITS]]];
 			dest += pitch;
 
 			frac += fracstep;
@@ -594,12 +592,11 @@ void R_DrawTlatedAddColumnP_C (void)
 		byte *translation = dc_translation;
 		byte *colormap = dc_colormap;
 		byte *source = dc_source;
-		int mask = dc_mask;
 		int pitch = dc_pitch;
 
 		do
 		{
-			DWORD fg = colormap[translation[source[(frac>>FRACBITS)&mask]]];
+			DWORD fg = colormap[translation[source[frac>>FRACBITS]]];
 			DWORD bg = *dest;
 
 			fg = fg2rgb[fg];
@@ -642,7 +639,6 @@ void R_DrawShadedColumnP_C (void)
 	frac = dc_texturefrac;
 
 	{
-		int mask = dc_mask;
 		byte *source = dc_source;
 		byte *colormap = dc_colormap;
 		int pitch = dc_pitch;
@@ -650,7 +646,7 @@ void R_DrawShadedColumnP_C (void)
 
 		do
 		{
-			DWORD val = colormap[source[(frac>>FRACBITS)&mask]];
+			DWORD val = colormap[source[frac>>FRACBITS]];
 			DWORD fg = fgstart[val<<8];
 			val = (Col2RGB8[64-val][*dest] + fg) | 0x1f07c1f;
 			*dest = RGB32k[0][0][val & (val>>15)];
@@ -692,14 +688,13 @@ void R_DrawAddClampColumnP_C ()
 	{
 		byte *colormap = dc_colormap;
 		byte *source = dc_source;
-		int mask = dc_mask;
 		int pitch = dc_pitch;
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
 
 		do
 		{
-			DWORD a = fg2rgb[colormap[source[(frac>>FRACBITS)&mask]]]
+			DWORD a = fg2rgb[colormap[source[frac>>FRACBITS]]]
 				+ bg2rgb[*dest];
 			DWORD b = a;
 
@@ -747,14 +742,13 @@ void R_DrawAddClampTranslatedColumnP_C ()
 		byte *translation = dc_translation;
 		byte *colormap = dc_colormap;
 		byte *source = dc_source;
-		int mask = dc_mask;
 		int pitch = dc_pitch;
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
 
 		do
 		{
-			DWORD a = fg2rgb[colormap[translation[source[(frac>>FRACBITS)&mask]]]]
+			DWORD a = fg2rgb[colormap[translation[source[frac>>FRACBITS]]]]
 				+ bg2rgb[*dest];
 			DWORD b = a;
 
@@ -877,54 +871,301 @@ void R_FillSpan (void)
 /****************************************************/
 /****************************************************/
 
+// wallscan stuff, in C
+
+#ifndef USEASM
+static DWORD STACK_ARGS vlinec1 ();
+static void STACK_ARGS vlinec4 ();
+static int vlinebits;
+
+DWORD (STACK_ARGS *dovline1)() = vlinec1;
+DWORD (STACK_ARGS *doprevline1)() = vlinec1;
+void (STACK_ARGS *dovline4)() = vlinec4;
+
+#else
+
+extern "C"
+{
+DWORD STACK_ARGS vlineasm1 ();
+DWORD STACK_ARGS prevlineasm1 ();
+DWORD STACK_ARGS vlinetallasm1 ();
+DWORD STACK_ARGS prevlinetallasm1 ();
+void STACK_ARGS vlineasm4 ();
+void STACK_ARGS vlinetallasm4 ();
+void STACK_ARGS setupvlineasm (int);
+void STACK_ARGS setupvlinetallasm (int);
+}
+
+DWORD (STACK_ARGS *dovline1)() = vlinetallasm1;
+DWORD (STACK_ARGS *doprevline1)() = prevlinetallasm1;
+void (STACK_ARGS *dovline4)() = vlinetallasm4;
+#endif
+
+void setupvline (int fracbits)
+{
+#ifdef USEASM
+	if (CPUFamily <= 5)
+	{
+		if (fracbits >= 24)
+		{
+			setupvlineasm (fracbits);
+			dovline4 = vlineasm4;
+			dovline1 = vlineasm1;
+			doprevline1 = prevlineasm1;
+		}
+		else
+		{
+			setupvlinetallasm (fracbits);
+			dovline1 = vlinetallasm1;
+			doprevline1 = prevlinetallasm1;
+			dovline4 = vlinetallasm4;
+		}
+	}
+	else
+	{
+		setupvlinetallasm (fracbits);
+	}
+#else
+	vlinebits = fracbits;
+#endif
+}
+
+#ifndef USEASM
+DWORD STACK_ARGS vlinec1 ()
+{
+	DWORD fracstep = dc_iscale;
+	DWORD frac = dc_texturefrac;
+	BYTE *colormap = dc_colormap;
+	int count = dc_count;
+	BYTE *source = dc_source;
+	BYTE *dest = dc_dest;
+	int bits = vlinebits;
+	int pitch = dc_pitch;
+
+	do
+	{
+		*dest = colormap[source[frac>>bits]];
+		frac += fracstep;
+		dest += pitch;
+	} while (--count);
+
+	return frac;
+}
+
+void STACK_ARGS vlinec4 ()
+{
+	BYTE *dest = dc_dest;
+	int count = dc_count;
+	int bits = vlinebits;
+	DWORD place;
+
+	do
+	{
+		dest[0] = palookupoffse[0][bufplce[0][(place=vplce[0])>>bits]]; vplce[0] = place+vince[0];
+		dest[1] = palookupoffse[1][bufplce[1][(place=vplce[1])>>bits]]; vplce[1] = place+vince[1];
+		dest[2] = palookupoffse[2][bufplce[2][(place=vplce[2])>>bits]]; vplce[2] = place+vince[2];
+		dest[3] = palookupoffse[3][bufplce[3][(place=vplce[3])>>bits]]; vplce[3] = place+vince[3];
+		dest += dc_pitch;
+	} while (--count);
+}
+#endif
+
+extern "C" short spanend[MAXHEIGHT];
+extern fixed_t rw_light;
+extern fixed_t rw_lightstep;
+extern int wallshade;
+
+static void R_DrawFogBoundarySection (int y, int y2, int x1)
+{
+	BYTE *colormap = dc_colormap;
+	BYTE *dest = ylookup[y];
+
+	for (; y < y2; ++y)
+	{
+		int x2 = spanend[y];
+		int x = x1;
+		do
+		{
+			dest[x] = colormap[dest[x]];
+		} while (++x <= x2);
+		dest += dc_pitch;
+	}
+}
+
+static void R_DrawFogBoundaryLine (int y, int x)
+{
+	int x2 = spanend[y];
+	BYTE *colormap = dc_colormap;
+	BYTE *dest = ylookup[y];
+	do
+	{
+		dest[x] = colormap[dest[x]];
+	} while (++x <= x2);
+}
+
+void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip)
+{
+	// This is essentially the same as R_MapVisPlane but with an extra step
+	// to create new horizontal spans whenever the light changes enough that
+	// we need to use a new colormap.
+
+	fixed_t lightstep = rw_lightstep;
+	fixed_t light = rw_light+lightstep*(x2-x1);
+	int x = x2;
+	int t2 = uclip[x];
+	int b2 = dclip[x];
+	int rcolormap = GETPALOOKUP (light, wallshade);
+	int lcolormap;
+
+	if (b2 > t2)
+	{
+		clearbufshort (spanend+t2, b2-t2, x);
+	}
+
+	dc_colormap = basecolormap + (rcolormap << COLORMAPSHIFT);
+
+	for (--x; x >= x1; --x)
+	{
+		int t1 = uclip[x];
+		int b1 = dclip[x];
+		const int xr = x+1;
+		int stop;
+
+		light -= rw_lightstep;
+		lcolormap = GETPALOOKUP (light, wallshade);
+		if (lcolormap != rcolormap)
+		{
+			if (t2 < b2 && rcolormap != 0)
+			{ // Colormap 0 is always the identity map, so rendering it is
+			  // just a waste of time.
+				R_DrawFogBoundarySection (t2, b2, xr);
+			}
+			if (t1 < t2) t2 = t1;
+			if (b1 > b2) b2 = b1;
+			if (t2 < b2)
+			{
+				clearbufshort (spanend+t2, b2-t2, x);
+			}
+			rcolormap = lcolormap;
+			dc_colormap = basecolormap + (lcolormap << COLORMAPSHIFT);
+		}
+		else
+		{
+			if (dc_colormap != basecolormap)
+			{
+				stop = MIN (t1, b2);
+				while (t2 < stop)
+				{
+					R_DrawFogBoundaryLine (t2++, xr);
+				}
+				stop = MAX (b1, t2);
+				while (b2 > stop)
+				{
+					R_DrawFogBoundaryLine (--b2, xr);
+				}
+			}
+			else
+			{
+				t2 = MAX (t2, MIN (t1, b2));
+				b2 = MIN (b2, MAX (b1, t2));
+			}
+
+			stop = MIN (t2, b1);
+			while (t1 < stop)
+			{
+				spanend[t1++] = x;
+			}
+			stop = MAX (b2, t2);
+			while (b1 > stop)
+			{
+				spanend[--b1] = x;
+			}
+		}
+
+		t2 = uclip[x];
+		b2 = dclip[x];
+	}
+	if (t2 < b2 && rcolormap != 0)
+	{
+		R_DrawFogBoundarySection (t2, b2, x1);
+	}
+}
+
+/****************************************************/
+/****************************************************/
+
 //
 // R_InitTranslationTables
-// Creates the translation tables to map
-//	the green color ramp to gray, brown, red.
-// Assumes a given structure of the PLAYPAL.
-// Could be read from a lump instead.
+// Creates the translation tables to map the green color ramp to gray,
+// brown, red. Assumes a given structure of the PLAYPAL.
 //
 void R_InitTranslationTables ()
 {
 	int i, j;
-		
-	translationtables = (byte *)Z_Malloc (256*(2*MAXPLAYERS+3+
-		NUMCOLORMAPS*16)+255, PU_STATIC, NULL);
-	translationtables = (byte *)(((ptrdiff_t)translationtables + 255) & ~255);
-	
+
+	// Diminishing translucency tables for shaded actors. Not really
+	// translation tables, but putting them here was convenient, particularly
+	// since translationtables[0] would otherwise be wasted.
+	translationtables[0] = (byte *)Z_Malloc (
+		(NUMCOLORMAPS*16+MAXPLAYERS*2+3+MAX_ACS_TRANSLATIONS)*256,
+		PU_STATIC, NULL);
+
+	// Player translations, one for each player
+	translationtables[TRANSLATION_Players] =
+		translationtables[0] + NUMCOLORMAPS*16*256;
+
+	// Extra player translations, one for each player, unused by Doom
+	translationtables[TRANSLATION_PlayersExtra] =
+		translationtables[TRANSLATION_Players] + MAXPLAYERS*256;
+
+	// The three standard translations from Doom or Heretic
+	translationtables[TRANSLATION_Standard] =
+		translationtables[TRANSLATION_PlayersExtra] + MAXPLAYERS*256;
+
+	translationtables[TRANSLATION_LevelScripted] =
+		translationtables[TRANSLATION_Standard] + 3*256;
+
 	// [RH] Each player now gets their own translation table. These are set
 	//		up during netgame arbitration and as-needed rather than in here.
 
-	for (i = 0; i < 256; i++)
-		translationtables[i] = i;
+	for (i = 0; i < 256; ++i)
+	{
+		translationtables[0][i] = i;
+	}
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		memcpy (translationtables[TRANSLATION_Players] + i*256, translationtables[0], 256);
+		memcpy (translationtables[TRANSLATION_PlayersExtra] + i*256, translationtables[0], 256);
+	}
 
-	for (i = 1; i < MAXPLAYERS*2+3; i++)
-		memcpy (translationtables + i*256, translationtables, 256);
-
-	// create translation tables for dehacked patches that expect them
+	// Create the standard translation tables
+	for (i = 0; i < 3; ++i)
+	{
+		memcpy (translationtables[TRANSLATION_Standard] + i*256, translationtables[0], 256);
+	}
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		for (i = 0x70; i < 0x80; i++)
 		{ // map green ramp to gray, brown, red
-			translationtables[i+(MAXPLAYERS*2+0)*256] = 0x60 + (i&0xf);
-			translationtables[i+(MAXPLAYERS*2+1)*256] = 0x40 + (i&0xf);
-			translationtables[i+(MAXPLAYERS*2+2)*256] = 0x20 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i    ] = 0x60 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+256] = 0x40 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+512] = 0x20 + (i&0xf);
 		}
 	}
 	else if (gameinfo.gametype == GAME_Heretic)
 	{
 		for (i = 225; i <= 240; i++)
 		{
-			translationtables[i+(MAXPLAYERS*2+0)*256] = 114+(i-225); // yellow
-			translationtables[i+(MAXPLAYERS*2+1)*256] = 145+(i-225); // red
-			translationtables[i+(MAXPLAYERS*2+2)*256] = 190+(i-225); // blue
+			translationtables[TRANSLATION_Standard][i    ] = 114+(i-225); // yellow
+			translationtables[TRANSLATION_Standard][i+256] = 145+(i-225); // red
+			translationtables[TRANSLATION_Standard][i+512] = 190+(i-225); // blue
 		}
 	}
 
 	// set up shading tables for shaded columns
 	// 16 colormap sets, progressing from full alpha to minimum visible alpha
 
-	BYTE *table = translationtables + (MAXPLAYERS*2+3)*256;
+	BYTE *table = translationtables[TRANSLATION_Shaded];
 
 	// Full alpha
 	for (i = 0; i < 16; ++i)
@@ -946,7 +1187,7 @@ void R_InitTranslationTables ()
 //		a given mid-range color.
 void R_BuildPlayerTranslation (int player, int color)
 {
-	byte *table = &translationtables[player*256*2];
+	byte *table = &translationtables[TRANSLATION_Players][player*256];
 	FPlayerSkin *skin = &skins[players[player].userinfo.skin];
 
 	byte i;
@@ -1006,7 +1247,7 @@ void R_BuildPlayerTranslation (int player, int color)
 		}
 
 		// Build rain/lifegem translation
-		table += 256;
+		table = &translationtables[TRANSLATION_PlayersExtra][player*256];
 		bases = MIN (bases*1.3f, 1.f);
 		basev = MIN (basev*1.3f, 1.f);
 		for (i = 145; i <= 168; i++)
@@ -1153,7 +1394,7 @@ void R_DetailDouble ()
 
 	case 2:		// x-double
 #ifdef USEASM
-		if (UseMMX)
+		if (UseMMX && (viewwidth&15)==0)
 		{
 			DoubleHoriz_MMX (viewheight, viewwidth, ylookup[0]+viewwidth, RenderTarget->GetPitch());
 		}
@@ -1181,7 +1422,7 @@ void R_DetailDouble ()
 
 	case 3:		// x- and y-double
 #ifdef USEASM
-		if (UseMMX)
+		if (UseMMX && (viewwidth&15)==0)
 		{
 			DoubleHorizVert_MMX (viewheight, viewwidth, ylookup[0]+viewwidth, RenderTarget->GetPitch());
 		}
@@ -1230,9 +1471,13 @@ void R_InitColumnDrawers ()
 	R_DrawShadedColumn		= R_DrawShadedColumnP_C;
 	R_DrawSpan				= R_DrawSpanP_ASM;
 	if (CPUFamily <= 5)
+	{
 		rt_map4cols			= rt_map4cols_asm2;
+	}
 	else
+	{
 		rt_map4cols			= rt_map4cols_asm1;
+	}
 #else
 	R_DrawColumnHoriz		= R_DrawColumnHorizP_C;
 	R_DrawColumn			= R_DrawColumnP_C;
@@ -1265,17 +1510,14 @@ static bool R_SetBlendFunc (fixed_t fglevel, fixed_t bglevel)
 		{
 			colfunc = basecolfunc;
 			hcolfunc_post1 = rt_map1col;
-			hcolfunc_post2 = rt_map2cols;
 			hcolfunc_post4 = rt_map4cols;
 		}
 		else
 		{
 			colfunc = transcolfunc;
 			hcolfunc_post1 = rt_tlate1col;
-			hcolfunc_post2 = rt_tlate2cols;
 			hcolfunc_post4 = rt_tlate4cols;
 		}
-		r_MarkTrans = false;
 		return true;
 	}
 	if (fglevel == BL_ZERO && bglevel == BL_ONE)
@@ -1290,14 +1532,12 @@ static bool R_SetBlendFunc (fixed_t fglevel, fixed_t bglevel)
 		{
 			colfunc = R_DrawAddColumnP_C;
 			hcolfunc_post1 = rt_add1col;
-			hcolfunc_post2 = rt_add2cols;
 			hcolfunc_post4 = rt_add4cols;
 		}
 		else
 		{
 			colfunc = R_DrawTlatedAddColumnP_C;
 			hcolfunc_post1 = rt_tlateadd1col;
-			hcolfunc_post2 = rt_tlateadd2cols;
 			hcolfunc_post4 = rt_tlateadd4cols;
 		}
 	}
@@ -1309,22 +1549,19 @@ static bool R_SetBlendFunc (fixed_t fglevel, fixed_t bglevel)
 		{
 			colfunc = R_DrawAddClampColumnP_C;
 			hcolfunc_post1 = rt_addclamp1col;
-			hcolfunc_post2 = rt_addclamp2cols;
 			hcolfunc_post4 = rt_addclamp4cols;
 		}
 		else
 		{
 			colfunc = R_DrawAddClampTranslatedColumnP_C;
 			hcolfunc_post1 = rt_tlateaddclamp1col;
-			hcolfunc_post2 = rt_tlateaddclamp2cols;
 			hcolfunc_post4 = rt_tlateaddclamp4cols;
 		}
 	}
-	r_MarkTrans = true;
 	return true;
 }
 
-ESPSResult R_SetPatchStyle (int style, fixed_t alpha, BYTE *translation, DWORD color)
+ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD color)
 {
 	fixed_t fglevel, bglevel;
 
@@ -1340,7 +1577,15 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, BYTE *translation, DWORD c
 
 	alpha = clamp<fixed_t> (alpha, 0, FRACUNIT);
 
-	dc_translation = translation;
+	if (translation != 0)
+	{
+		dc_translation = translationtables[(translation&0xff00)>>8]
+			+ (translation&0x00ff)*256;
+	}
+	else
+	{
+		dc_translation = NULL;
+	}
 	basecolormapsave = basecolormap;
 
 	switch (style)
@@ -1348,7 +1593,6 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, BYTE *translation, DWORD c
 		// Special modes
 	case STYLE_Fuzzy:
 		colfunc = fuzzcolfunc;
-		r_MarkTrans = true;
 		return DoDraw0;
 
 	case STYLE_Shaded:
@@ -1356,16 +1600,14 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, BYTE *translation, DWORD c
 		if ((alpha >>= 12) == 0)
 			return DontDraw;
 		colfunc = R_DrawShadedColumn;
+		hcolfunc_post1 = rt_shaded1col;
+		hcolfunc_post4 = rt_shaded4cols;
 		dc_color = fixedcolormap ? fixedcolormap[APART(color)] : basecolormap[APART(color)];
-		dc_colormap = basecolormap = &translationtables[(MAXPLAYERS*2+3+(16-alpha)*NUMCOLORMAPS)*256];
+		dc_colormap = basecolormap = &translationtables[TRANSLATION_Shaded][((16-alpha)*NUMCOLORMAPS)*256];
 		if (fixedlightlev)
 		{
 			dc_colormap += fixedlightlev;
 		}
-		hcolfunc_post1 = rt_shaded1col;
-		hcolfunc_post2 = rt_shaded2cols;
-		hcolfunc_post4 = rt_shaded4cols;
-		r_MarkTrans = true;
 		return r_columnmethod ? DoDraw1 : DoDraw0;
 
 		// Standard modes

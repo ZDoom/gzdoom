@@ -273,7 +273,9 @@ typedef struct
 typedef struct
 {
 	char		name[8];
-	BOOL		masked;	
+	WORD		masked;				// [RH] Unused
+	BYTE		ScaleX;				// [RH] Scaling (8 is normal)
+	BYTE		ScaleY;				// [RH] Same as above
 	short		width;
 	short		height;
 	byte		columndirectory[4];	// OBSOLETE

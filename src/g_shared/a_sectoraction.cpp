@@ -1,5 +1,41 @@
+/*
+** a_sectoraction.cpp
+** Actors that hold specials to be executed upon conditions in a sector
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "r_defs.h"
 #include "p_lnspec.h"
+
+// The base class for sector actions
 
 IMPLEMENT_STATELESS_ACTOR (ASectorAction, Any, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
@@ -8,9 +44,8 @@ END_DEFAULTS
 void ASectorAction::Destroy ()
 {
 	// Remove ourself from this sector's list of actions
-	sector_t *sec = subsector->sector;
-	AActor *probe = sec->SecActTarget;
-	AActor **prev = reinterpret_cast<AActor **>(&sec->SecActTarget);
+	AActor *probe = Sector->SecActTarget;
+	AActor **prev = reinterpret_cast<AActor **>(&Sector->SecActTarget);
 
 	while (probe && probe != this)
 	{
@@ -30,9 +65,8 @@ void ASectorAction::BeginPlay ()
 	Super::BeginPlay ();
 
 	// Add ourself to this sector's list of actions
-	sector_t *sec = subsector->sector;
-	tracer = sec->SecActTarget;
-	sec->SecActTarget = this;
+	tracer = Sector->SecActTarget;
+	Sector->SecActTarget = this;
 }
 
 void ASectorAction::Activate (AActor *source)
@@ -179,3 +213,76 @@ bool ASecActUseWall::TriggerAction (AActor *triggerer, int activationType)
 	bool didit = (activationType & SECSPAC_UseWall) ? CheckTrigger (triggerer) : false;
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
+
+// Triggered when eyes go below fake floor
+
+class ASecActEyesDive : public ASectorAction
+{
+	DECLARE_STATELESS_ACTOR (ASecActEyesDive, ASectorAction)
+public:
+	bool TriggerAction (AActor *triggerer, int activationType);
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASecActEyesDive, Any, 9993, 0)
+END_DEFAULTS
+
+bool ASecActEyesDive::TriggerAction (AActor *triggerer, int activationType)
+{
+	bool didit = (activationType & SECSPAC_EyesDive) ? CheckTrigger (triggerer) : false;
+	return didit | Super::TriggerAction (triggerer, activationType);
+}
+
+// Triggered when eyes go above fake floor
+
+class ASecActEyesSurface : public ASectorAction
+{
+	DECLARE_STATELESS_ACTOR (ASecActEyesSurface, ASectorAction)
+public:
+	bool TriggerAction (AActor *triggerer, int activationType);
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASecActEyesSurface, Any, 9992, 0)
+END_DEFAULTS
+
+bool ASecActEyesSurface::TriggerAction (AActor *triggerer, int activationType)
+{
+	bool didit = (activationType & SECSPAC_EyesSurface) ? CheckTrigger (triggerer) : false;
+	return didit | Super::TriggerAction (triggerer, activationType);
+}
+
+// Triggered when eyes go below fake floor
+
+class ASecActEyesBelowC : public ASectorAction
+{
+	DECLARE_STATELESS_ACTOR (ASecActEyesBelowC, ASectorAction)
+public:
+	bool TriggerAction (AActor *triggerer, int activationType);
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASecActEyesBelowC, Any, 9983, 0)
+END_DEFAULTS
+
+bool ASecActEyesBelowC::TriggerAction (AActor *triggerer, int activationType)
+{
+	bool didit = (activationType & SECSPAC_EyesBelowC) ? CheckTrigger (triggerer) : false;
+	return didit | Super::TriggerAction (triggerer, activationType);
+}
+
+// Triggered when eyes go above fake floor
+
+class ASecActEyesAboveC : public ASectorAction
+{
+	DECLARE_STATELESS_ACTOR (ASecActEyesAboveC, ASectorAction)
+public:
+	bool TriggerAction (AActor *triggerer, int activationType);
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASecActEyesAboveC, Any, 9982, 0)
+END_DEFAULTS
+
+bool ASecActEyesAboveC::TriggerAction (AActor *triggerer, int activationType)
+{
+	bool didit = (activationType & SECSPAC_EyesAboveC) ? CheckTrigger (triggerer) : false;
+	return didit | Super::TriggerAction (triggerer, activationType);
+}
+

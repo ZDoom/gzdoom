@@ -301,6 +301,8 @@ struct DehInfo
 	int KFAAC;
 	int Infight;
 	char PlayerSprite[5];
+	BYTE ExplosionStyle;
+	fixed_t ExplosionAlpha;
 };
 extern DehInfo deh;
 

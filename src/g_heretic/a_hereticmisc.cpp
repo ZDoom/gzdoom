@@ -311,7 +311,7 @@ void A_SpawnTeleGlitter (AActor *actor)
 	mo = Spawn<ATeleGlitter1> (
 		actor->x+((P_Random()&31)-16)*FRACUNIT,
 		actor->y+((P_Random()&31)-16)*FRACUNIT,
-		actor->subsector->sector->floorplane.ZatPoint (actor->x, actor->y));
+		actor->Sector->floorplane.ZatPoint (actor->x, actor->y));
 	mo->momz = FRACUNIT/4;
 }
 
@@ -328,7 +328,7 @@ void A_SpawnTeleGlitter2 (AActor *actor)
 	mo = Spawn<ATeleGlitter2> (
 		actor->x+((P_Random()&31)-16)*FRACUNIT,
 		actor->y+((P_Random()&31)-16)*FRACUNIT,
-		actor->subsector->sector->floorplane.ZatPoint (actor->x, actor->y));
+		actor->Sector->floorplane.ZatPoint (actor->x, actor->y));
 	mo->momz = FRACUNIT/4;
 }
 
@@ -351,11 +351,12 @@ void A_AccTeleGlitter (AActor *actor)
 class ASuperMap : public AInventory
 {
 	DECLARE_ACTOR (ASuperMap, AInventory)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GivePower (toucher->player, pw_allmap);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_ITEMSUPERMAP);

@@ -87,7 +87,7 @@ static int PTR_Reachable (intercept_t *in)
 	thing = in->d.thing;
 	if (thing == looker) //Can't reach self in this case.
 		return true;
-	if (thing == rtarget && (rtarget->subsector->sector->floorplane.ZatPoint (rtarget->x, rtarget->y) <= (last_z+MAXMOVEHEIGHT)))
+	if (thing == rtarget && (rtarget->Sector->floorplane.ZatPoint (rtarget->x, rtarget->y) <= (last_z+MAXMOVEHEIGHT)))
 	{
 		reachable = true;
 		return false;
@@ -104,18 +104,15 @@ bool DCajunMaster::Reachable (AActor *actor, AActor *target)
 	if (actor == target)
 		return false;
 
-	if ((target->subsector->sector->ceilingplane.ZatPoint (target->x, target->y) -
-		 target->subsector->sector->floorplane.ZatPoint (target->x, target->y))
+	if ((target->Sector->ceilingplane.ZatPoint (target->x, target->y) -
+		 target->Sector->floorplane.ZatPoint (target->x, target->y))
 		< actor->height) //Where target is, looker can't be.
 		return false;
 
-	if (target->subsector->sector == actor->subsector->sector)
-		return true;    
-
 	looker = actor;
 	rtarget = target;
-	last_z = actor->subsector->sector->floorplane.ZatPoint (actor->x, actor->y);
-	last_s = actor->subsector->sector;
+	last_s = actor->Sector;
+	last_z = last_s->floorplane.ZatPoint (actor->x, actor->y);
 	reachable = true;
 	estimated_dist = P_AproxDistance (actor->x - target->x, actor->y - target->y);
 	P_PathTraverse (actor->x+actor->momx, actor->y+actor->momy, target->x, target->y, PT_ADDLINES|PT_ADDTHINGS, PTR_Reachable);
@@ -229,7 +226,7 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
 			aiming_penalty += (P_Random (pr_botdofire)%25)+10;
-		if (enemy->subsector->sector->lightlevel<WHATS_DARK && !actor->player->powers[pw_infrared])
+		if (enemy->Sector->lightlevel<WHATS_DARK && !actor->player->powers[pw_infrared])
 			aiming_penalty += P_Random (pr_botdofire)%40;//Dark
 		if (actor->player->damagecount)
 			aiming_penalty += actor->player->damagecount; //Blood in face makes it hard to aim
@@ -408,7 +405,7 @@ AActor *DCajunMaster::Find_enemy (AActor *bot)
 
 				//Too dark?
 				if (temp > DARK_DIST &&
-					client->mo->subsector->sector->lightlevel < WHATS_DARK &&
+					client->mo->Sector->lightlevel < WHATS_DARK &&
 					bot->player->powers[pw_infrared])
 					continue;
 

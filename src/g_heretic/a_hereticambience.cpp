@@ -162,7 +162,7 @@ class AScriptedAmbientMaster : public AActor
 	DECLARE_STATELESS_ACTOR (AScriptedAmbientMaster, AActor)
 public:
 	void BeginPlay ();
-	void RunThink ();
+	void Tick ();
 	void AddAmbient (int sfx);
 
 	void Serialize (FArchive &arc);
@@ -262,9 +262,9 @@ void AScriptedAmbientMaster::AddAmbient (int sfx)
 	LevelAmbientSfx.Push (ptr);
 }
 
-void AScriptedAmbientMaster::RunThink ()
+void AScriptedAmbientMaster::Tick ()
 {
-	// No need to call Super::RunThink(), because the only effect this
+	// No need to call Super::Tick(), because the only effect this
 	// actor has on the world is aural.
 
 	long cmd;

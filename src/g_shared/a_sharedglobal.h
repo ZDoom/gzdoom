@@ -3,6 +3,7 @@
 
 #include "dobject.h"
 #include "info.h"
+#include "actor.h"
 
 class FDecal;
 struct vertex_s;
@@ -46,9 +47,18 @@ class ADecal : public AActor
 public:
 	void BeginPlay ();
 	void Destroy ();
-	void StickToWall (side_s *wall);
+	int StickToWall (side_s *wall);
+	void Relocate (fixed_t x, fixed_t y, fixed_t z);
+	fixed_t GetRealZ (const side_s *wall) const;
 
-	static void SerializeChain (FArchive &arc, AActor **firstptr);
+	static void SerializeChain (FArchive &arc, ADecal **firstptr);
+	static void MoveChain (ADecal *first, fixed_t x, fixed_t y);
+	static void FixForSide (side_s *side);
+
+protected:
+	void CalcFracPos (side_s *wall);
+	void DoTrace ();
+	void Remove ();
 };
 
 class AImpactDecal : public ADecal
@@ -103,8 +113,8 @@ class AAmbientSound : public AActor
 public:
 	void Serialize (FArchive &arc);
 
-	void PostBeginPlay ();
-	void RunThink ();
+	void BeginPlay ();
+	void Tick ();
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
 
@@ -132,6 +142,30 @@ class ASkyViewpoint : public AActor
 	DECLARE_STATELESS_ACTOR (ASkyViewpoint, AActor)
 public:
 	void BeginPlay ();
+};
+
+class DFlashFader : public DThinker
+{
+	DECLARE_CLASS (DFlashFader, DThinker)
+	HAS_OBJECT_POINTERS
+public:
+	DFlashFader (float r1, float g1, float b1, float a1,
+				 float r2, float g2, float b2, float a2,
+				 float time, AActor *who);
+	~DFlashFader ();
+	void Serialize (FArchive &arc);
+	void Tick ();
+	AActor *WhoFor() { return ForWho; }
+	void Cancel ();
+
+protected:
+	float Blends[2][4];
+	int TotalTics;
+	int StartTic;
+	AActor *ForWho;
+
+	void SetBlend (float time);
+	DFlashFader ();
 };
 
 #endif //__A_SHAREDGLOBAL_H__

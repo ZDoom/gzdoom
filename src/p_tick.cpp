@@ -38,7 +38,6 @@ extern gamestate_t wipegamestate;
 //
 // P_Ticker
 //
-
 void P_Ticker (void)
 {
 	int i;

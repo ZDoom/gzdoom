@@ -39,15 +39,18 @@
 
 
 
-#define MAXWIDTH 1600
-#define MAXHEIGHT 1200
+#define MAXWIDTH 2048
+#define MAXHEIGHT 1536
 
 // Silhouette, needed for clipping Segs (mainly)
 // and sprites representing things.
-#define SIL_NONE				0
-#define SIL_BOTTOM				1
-#define SIL_TOP 				2
-#define SIL_BOTH				3
+enum
+{
+	SIL_NONE,
+	SIL_BOTTOM,
+	SIL_TOP,
+	SIL_BOTH
+};
 
 extern int MaxDrawSegs;
 
@@ -80,8 +83,6 @@ class player_s;
 // The SECTORS record, at runtime.
 // Stores things/mobjs.
 //
-struct dyncolormap_s;
-
 class DSectorEffect;
 struct sector_t;
 
@@ -93,6 +94,10 @@ enum
 	SECSPAC_HitCeiling	= 8,	// Trigger when player hits ceiling
 	SECSPAC_Use			= 16,	// Trigger when player uses
 	SECSPAC_UseWall		= 32,	// Trigger when player uses a wall
+	SECSPAC_EyesDive	= 64,	// Trigger when player eyes go below fake floor
+	SECSPAC_EyesSurface = 128,	// Trigger when player eyes go above fake floor
+	SECSPAC_EyesBelowC	= 256,	// Trigger when player eyes go below fake ceiling
+	SECSPAC_EyesAboveC	= 512,	// Triggen when player eyes go above fake ceiling
 };
 
 class ASectorAction : public AActor
@@ -117,41 +122,60 @@ struct secplane_t
 
 	fixed_t a, b, c, d, ic;
 
+	// Returns the value of z at (x,y)
 	fixed_t ZatPoint (fixed_t x, fixed_t y) const
 	{
 		return FixedMul (ic, -d - DMulScale16 (a, x, b, y));
 	}
 
+	// Returns the value of z at vertex v
 	fixed_t ZatPoint (const vertex_t *v) const
 	{
 		return FixedMul (ic, -d - DMulScale16 (a, v->x, b, v->y));
 	}
 
+	// Returns the value of z at (x,y) if d is equal to dist
 	fixed_t ZatPointDist (fixed_t x, fixed_t y, fixed_t dist) const
 	{
 		return FixedMul (ic, -dist - DMulScale16 (a, x, b, y));
 	}
 
+	// Returns the value of z at vertex v if d is equal to dist
 	fixed_t ZatPointDist (const vertex_t *v, fixed_t dist)
 	{
 		return FixedMul (ic, -dist - DMulScale16 (a, v->x, b, v->y));
 	}
 
+	// Flips the plane's vertical orientiation, so that if it pointed up,
+	// it will point down, and vice versa.
+	void FlipVert ()
+	{
+		a = -a;
+		b = -b;
+		c = -c;
+		d = -d;
+		ic = -ic;
+	}
+
+	// Returns true if 2 planes are the same
 	bool operator== (const secplane_t &other) const
 	{
 		return a == other.a && b == other.b && c == other.c && d == other.d;
 	}
 
+	// Returns true if 2 planes are different
 	bool operator!= (const secplane_t &other) const
 	{
 		return a != other.a || b != other.b || c != other.c || d != other.d;
 	}
 
+	// Moves a plane up/down by hdiff units
 	void ChangeHeight (fixed_t hdiff)
-	{ // Move the plane up or down by hdiff units
+	{
 		d = d - FixedMul (hdiff, c);
 	}
 
+	// Returns how much this plane's height would change if d were set to oldd
 	fixed_t HeightDiff (fixed_t oldd) const
 	{
 		return FixedMul (oldd - d, ic);
@@ -187,7 +211,11 @@ enum
 // Misc sector flags
 enum
 {
-	SECF_SILENT			= 1		// actors in sector make no noise
+	SECF_SILENT			= 1,	// actors in sector make no noise
+	SECF_FAKEFLOORONLY	= 2,	// when used as heightsec in R_FakeFlat, only copies floor
+	SECF_CLIPFAKEPLANES = 4,	// as a heightsec, clip planes to target sector's planes
+	SECF_NOFAKELIGHT	= 8,	// heightsec does not change lighting
+	SECF_IGNOREHEIGHTSEC= 16,	// heightsec is only for triggering sector actions
 };
 
 struct FDynamicColormap;
@@ -232,7 +260,7 @@ struct sector_t
 	fixed_t		  floor_xscale,   floor_yscale;
 	fixed_t		ceiling_xscale, ceiling_yscale;
 
-	// [RH]		floor and ceiling texture rotation
+	// [RH] floor and ceiling texture rotation
 	angle_t		floor_angle, ceiling_angle;
 
 	fixed_t		base_ceiling_angle, base_ceiling_yoffs;
@@ -311,6 +339,8 @@ struct sector_t
 // The SideDef.
 //
 
+class ADecal;
+
 enum
 {
 	WALLF_ABSLIGHTING	= 1,	// Light is absolute instead of relative
@@ -322,7 +352,7 @@ struct side_s
 	fixed_t 	textureoffset;	// add this to the calculated texture column
 	fixed_t 	rowoffset;		// add this to the calculated texture top
 	sector_t*	sector;			// Sector the SideDef is facing.
-	AActor*		BoundActors;	// [RH] Wall sprites bound to the wall (aka decals)
+	ADecal*		BoundActors;	// [RH] Decals bound to the wall
 	short		toptexture, bottomtexture, midtexture;	// texture indices
 	short		linenum;
 	short		LeftSide, RightSide;	// [RH] Group walls into loops
@@ -336,13 +366,13 @@ typedef struct side_s side_t;
 //
 // Move clipping aid for LineDefs.
 //
-typedef enum
+enum slopetype_t
 {
 	ST_HORIZONTAL,
 	ST_VERTICAL,
 	ST_POSITIVE,
 	ST_NEGATIVE
-} slopetype_t;
+};
 
 struct line_s
 {
@@ -355,7 +385,7 @@ struct line_s
 	short		args[5];	// <--- hexen-style arguments
 							//		note that these are shorts in order to support
 							//		the tag parameter from DOOM.
-	int			firstid, nextid;
+	short		firstid, nextid;
 	short		sidenum[2];	// sidenum[1] will be -1 if one sided
 	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.
 	slopetype_t	slopetype;	// To aid move clipping.
@@ -442,9 +472,8 @@ typedef struct polyblock_s
 //
 // A SubSector.
 // References a Sector.
-// Basically, this is a list of LineSegs,
-//	indicating the visible walls that define
-//	(all or some) sides of a convex BSP leaf.
+// Basically, this is a list of LineSegs indicating the visible walls that
+// define (all or some) sides of a convex BSP leaf.
 //
 typedef struct subsector_s
 {
@@ -510,25 +539,34 @@ typedef struct patch_s patch_t;
 // I.e. a sprite object that is partly visible.
 struct vissprite_s
 {
-	int				x1, x2;
-	fixed_t			gx, gy;			// for line side calculation
+	short			x1, x2;
+	fixed_t			cx;				// for line side calculation
+	fixed_t			gx, gy;			// for fake floor clipping
 	fixed_t			gz, gzt;		// global bottom / top for silhouette clipping
 	fixed_t			startfrac;		// horizontal position of x1
 	fixed_t			xscale, yscale;
 	fixed_t			xiscale;		// negative if flipped
 	fixed_t			depth;
 	fixed_t			texturemid;
-	short			picnum;
-	short 			renderflags;
-	BYTE			RenderStyle;
 	DWORD			AlphaColor;
 	lighttable_t	*colormap;
-	byte			*translation;	// [RH] for translation;
 	sector_t		*heightsec;		// killough 3/27/98: height sector for underwater/fake ceiling
 	fixed_t			alpha;
 	fixed_t			floorclip;
+	short			picnum;
+	short 			renderflags;
+	BYTE			RenderStyle;
+	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
+	WORD			Translation;	// [RH] for color translation
 };
 typedef struct vissprite_s vissprite_t;
+
+enum
+{
+	FAKED_Center,
+	FAKED_BelowFloor,
+	FAKED_AboveCeiling
+};
 
 //
 // Sprites are patches with a special naming convention so they can be

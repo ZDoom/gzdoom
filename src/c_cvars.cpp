@@ -1,3 +1,37 @@
+/*
+** c_cvars.cpp
+** Defines all the different console variable types
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include <string.h>
 #include <stdio.h>
 
@@ -829,7 +863,7 @@ void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 		val.Int |= BitVal;
 	else
 		val.Int &= ~BitVal;
-	ValueVar.DoSet (val, CVAR_Int);
+	ValueVar = val.Int;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -1218,10 +1252,11 @@ void FBaseCVar::ListVars (const char *filter)
 
 		count++;
 		val = var->GetGenericRep (CVAR_String);
-		Printf ("%c%c%c%c %s \"%s\"\n",
+		Printf ("%c%c%c %s \"%s\"\n",
 				flags & CVAR_ARCHIVE ? 'A' : ' ',
-				flags & CVAR_USERINFO ? 'U' : ' ',
-				flags & CVAR_SERVERINFO ? 'S' : ' ',
+				flags & CVAR_USERINFO ? 'U' :
+					flags & CVAR_SERVERINFO ? 'S' :
+					flags & CVAR_AUTO ? 'C' : ' ',
 				flags & CVAR_NOSET ? '-' :
 					flags & CVAR_LATCH ? 'L' :
 					flags & CVAR_UNSETTABLE ? '*' : ' ',
@@ -1241,5 +1276,23 @@ CCMD (cvarlist)
 	else
 	{
 		FBaseCVar::ListVars (argv[1]);
+	}
+}
+
+CCMD (archivecvar)
+{
+
+	if (argv.argc() == 1)
+	{
+		Printf ("Usage: archivecvar <cvar>\n");
+	}
+	else
+	{
+		FBaseCVar *var = FindCVar (argv[1], NULL);
+
+		if (var != NULL && (var->GetFlags() & CVAR_AUTO))
+		{
+			var->SetArchiveBit ();
+		}
 	}
 }

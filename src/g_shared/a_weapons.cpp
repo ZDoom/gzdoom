@@ -174,8 +174,8 @@ bool P_GiveAmmo (player_t *player, ammotype_t ammo, int count)
 			break;
 
 		case GAME_Heretic:
-			if (player->readyweapon == wp_staff
-				|| player->readyweapon == wp_gauntlets)
+			if ((player->readyweapon == wp_staff
+				|| player->readyweapon == wp_gauntlets) && ammo < MANA_1)
 			{
 				if (player->weaponowned[GetAmmoChange[ammo]])
 				{

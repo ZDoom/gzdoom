@@ -75,6 +75,11 @@ class AStaff : public AHereticWeapon
 {
 	DECLARE_ACTOR (AStaff, AHereticWeapon)
 	AT_GAME_SET_FRIEND (Staff)
+protected:
+	weapontype_t OldStyleID () const
+	{
+		return wp_staff;
+	}
 private:
 	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
@@ -178,6 +183,7 @@ FState AStaffPuff::States[] =
 IMPLEMENT_ACTOR (AStaffPuff, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_SpawnState (0)
+	PROP_Mass (5)
 	PROP_AttackSound ("weapons/staffhit")
 END_DEFAULTS
 
@@ -208,6 +214,7 @@ FState AStaffPuff2::States[] =
 
 IMPLEMENT_ACTOR (AStaffPuff2, Heretic, -1, 0)
 	PROP_SpawnState (0)
+	PROP_Mass (5)
 	PROP_AttackSound ("weapons/staffpowerhit")
 END_DEFAULTS
 
@@ -229,6 +236,7 @@ void A_StaffAttackPL1 (player_t *player, pspdef_t *psp)
 	int damage;
 	int slope;
 
+	player->UseAmmo ();
 	damage = 5+(P_Random()&15);
 	angle = player->mo->angle;
 	angle += PS_Random() << 18;
@@ -256,6 +264,7 @@ void A_StaffAttackPL2 (player_t *player, pspdef_t *psp)
 	int damage;
 	int slope;
 
+	player->UseAmmo();
 	// P_inter.c:P_DamageMobj() handles target momentums
 	damage = 18+(P_Random()&63);
 	angle = player->mo->angle;
@@ -287,6 +296,7 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_goldwand, health);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOGOLDWAND1);
@@ -319,6 +329,7 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_goldwand, health);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOGOLDWAND2);
@@ -345,6 +356,11 @@ class AGoldWand : public AHereticWeapon
 {
 	DECLARE_ACTOR (AGoldWand, AHereticWeapon)
 	AT_GAME_SET_FRIEND (GoldWand)
+protected:
+	weapontype_t OldStyleID () const
+	{
+		return wp_goldwand;
+	}
 private:
 	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
@@ -500,6 +516,7 @@ FState AGoldWandPuff1::States[] =
 
 IMPLEMENT_ACTOR (AGoldWandPuff1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Mass (5)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -512,6 +529,7 @@ class AGoldWandPuff2 : public AGoldWandPuff1
 
 IMPLEMENT_STATELESS_ACTOR (AGoldWandPuff2, Heretic, -1, 0)
 	PROP_SpawnState (S_GWANDFXI1)
+	PROP_Mass (5)
 END_DEFAULTS
 
 //----------------------------------------------------------------------------
@@ -527,8 +545,7 @@ void A_FireGoldWandPL1 (player_t *player, pspdef_t *psp)
 	int damage;
 
 	mo = player->mo;
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_goldwand] -= USE_GWND_AMMO_1;
+	player->UseAmmo ();
 	P_BulletSlope(mo);
 	damage = 7+(P_Random()&7);
 	angle = mo->angle;
@@ -556,9 +573,7 @@ void A_FireGoldWandPL2 (player_t *player, pspdef_t *psp)
 	fixed_t momz;
 
 	mo = player->mo;
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_goldwand] -=
-			deathmatch ? USE_GWND_AMMO_1 : USE_GWND_AMMO_2;
+	player->UseAmmo ();
 	PuffType = RUNTIME_CLASS(AGoldWandPuff2);
 	P_BulletSlope (mo);
 	momz = FixedMul (GetDefault<AGoldWandFX2>()->Speed,
@@ -591,6 +606,7 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_crossbow, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOCROSSBOW1);
@@ -624,6 +640,7 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_crossbow, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOCROSSBOW2);
@@ -882,8 +899,7 @@ void A_FireCrossbowPL1 (player_t *player, pspdef_t *psp)
 	AActor *pmo;
 
 	pmo = player->mo;
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_crossbow] -= USE_CBOW_AMMO_1;
+	player->UseAmmo ();
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX1));
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX3), pmo->angle-(ANG45/10));
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX3), pmo->angle+(ANG45/10));
@@ -900,9 +916,7 @@ void A_FireCrossbowPL2(player_t *player, pspdef_t *psp)
 	AActor *pmo;
 
 	pmo = player->mo;
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_crossbow] -=
-			deathmatch ? USE_CBOW_AMMO_1 : USE_CBOW_AMMO_2;
+	player->UseAmmo ();
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2));
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2), pmo->angle-(ANG45/10));
 	P_SpawnPlayerMissile (pmo, RUNTIME_CLASS(ACrossbowFX2), pmo->angle+(ANG45/10));
@@ -945,11 +959,12 @@ void A_DeathBallImpact (AActor *);
 class AMaceAmmo : public AAmmo
 {
 	DECLARE_ACTOR (AMaceAmmo, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_mace, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOMACE1);
@@ -977,11 +992,12 @@ AT_GAME_SET (MaceAmmo)
 class AMaceHefty : public AAmmo
 {
 	DECLARE_ACTOR (AMaceHefty, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_mace, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOMACE1);
@@ -1367,12 +1383,10 @@ void A_FireMacePL1B (player_t *player, pspdef_t *psp)
 	AActor *ball;
 	angle_t angle;
 
-	if (player->ammo[am_mace] < USE_MACE_AMMO_1)
+	if (!player->UseAmmo (true))
 	{
 		return;
 	}
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_mace] -= USE_MACE_AMMO_1;
 	pmo = player->mo;
 	ball = Spawn<AMaceFX2> (pmo->x, pmo->y, pmo->z + 28*FRACUNIT 
 		- pmo->floorclip);
@@ -1404,12 +1418,10 @@ void A_FireMacePL1 (player_t *player, pspdef_t *psp)
 		A_FireMacePL1B (player, psp);
 		return;
 	}
-	if (player->ammo[am_mace] < USE_MACE_AMMO_1)
+	if (!player->UseAmmo (true))
 	{
 		return;
 	}
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_mace] -= USE_MACE_AMMO_1;
 	psp->sx = ((P_Random()&3)-2)*FRACUNIT;
 	psp->sy = WEAPONTOP+(P_Random()&3)*FRACUNIT;
 	ball = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMaceFX1),
@@ -1548,9 +1560,7 @@ void A_FireMacePL2 (player_t *player, pspdef_t *psp)
 {
 	AActor *mo;
 
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_mace] -=
-			deathmatch ? USE_MACE_AMMO_1 : USE_MACE_AMMO_2;
+	player->UseAmmo ();
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMaceFX4));
 	if (mo)
 	{
@@ -1781,6 +1791,7 @@ IMPLEMENT_ACTOR (AGauntletPuff1, Heretic, -1, 0)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HR_SHADOW)
 	PROP_SpawnState (S_GAUNTLETPUFF1)
+	PROP_Mass (5)
 END_DEFAULTS
 
 void AGauntletPuff1::BeginPlay ()
@@ -1827,6 +1838,7 @@ void A_GauntletAttack (player_t *player, pspdef_t *psp)
 	int randVal;
 	fixed_t dist;
 
+	player->UseAmmo ();
 	psp->sx = ((P_Random()&3)-2) * FRACUNIT;
 	psp->sy = WEAPONTOP + (P_Random()&3) * FRACUNIT;
 	angle = player->mo->angle;
@@ -1908,11 +1920,12 @@ void A_SpawnRippers (AActor *);
 class ABlasterAmmo : public AAmmo
 {
 	DECLARE_ACTOR (ABlasterAmmo, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_blaster, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOBLASTER1);
@@ -1943,11 +1956,12 @@ AT_GAME_SET (BlasterAmmo)
 class ABlasterHefty : public AAmmo
 {
 	DECLARE_ACTOR (ABlasterHefty, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_blaster, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOBLASTER2);
@@ -2078,7 +2092,7 @@ class ABlasterFX1 : public AActor
 {
 	DECLARE_ACTOR (ABlasterFX1, AActor)
 public:
-	void RunThink ();
+	void Tick ();
 	int DoSpecialDamage (AActor *target, int damage);
 };
 
@@ -2219,6 +2233,7 @@ FState ABlasterPuff1::States[] =
 
 IMPLEMENT_ACTOR (ABlasterPuff1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Mass (5)
 
 	PROP_SpawnState (S_BLASTERPUFF1)
 END_DEFAULTS
@@ -2244,6 +2259,7 @@ FState ABlasterPuff2::States[] =
 
 IMPLEMENT_ACTOR (ABlasterPuff2, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Mass (5)
 
 	PROP_SpawnState (S_BLASTERPUFF2)
 END_DEFAULTS
@@ -2261,8 +2277,7 @@ void A_FireBlasterPL1 (player_t *player, pspdef_t *psp)
 	int damage;
 
 	mo = player->mo;
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_blaster] -= USE_BLSR_AMMO_1;
+	player->UseAmmo ();
 	P_BulletSlope(mo);
 	damage = HITDICE(4);
 	angle = mo->angle;
@@ -2287,9 +2302,7 @@ void A_FireBlasterPL2 (player_t *player, pspdef_t *psp)
 {
 	AActor *mo;
 
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_blaster] -=
-			deathmatch ? USE_BLSR_AMMO_1 : USE_BLSR_AMMO_2;
+	player->UseAmmo ();
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ABlasterFX1));
 	S_Sound (mo, CHAN_WEAPON, "weapons/blastershoot", 1, ATTN_NORM);
 }
@@ -2327,7 +2340,7 @@ void A_SpawnRippers (AActor *actor)
 //
 //----------------------------------------------------------------------------
 
-void ABlasterFX1::RunThink ()
+void ABlasterFX1::Tick ()
 {
 	int i;
 	fixed_t xfrac;
@@ -2401,11 +2414,12 @@ void A_RainImpact (AActor *);
 class ASkullRodAmmo : public AAmmo
 {
 	DECLARE_ACTOR (ASkullRodAmmo, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_skullrod, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOSKULLROD1);
@@ -2434,11 +2448,12 @@ AT_GAME_SET (SkullRodAmmo)
 class ASkullRodHefty : public AAmmo
 {
 	DECLARE_ACTOR (ASkullRodHefty, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_skullrod, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOSKULLROD2);
@@ -2709,12 +2724,10 @@ void A_FireSkullRodPL1 (player_t *player, pspdef_t *psp)
 {
 	AActor *mo;
 
-	if (player->ammo[am_skullrod] < USE_SKRD_AMMO_1)
+	if (!player->UseAmmo (true))
 	{
 		return;
 	}
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_skullrod] -= USE_SKRD_AMMO_1;
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHornRodFX1));
 	// Randomize the first frame
 	if (mo && P_Random() > 128)
@@ -2734,9 +2747,7 @@ void A_FireSkullRodPL1 (player_t *player, pspdef_t *psp)
 
 void A_FireSkullRodPL2 (player_t *player, pspdef_t *psp)
 {
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_skullrod] -=
-			deathmatch ? USE_SKRD_AMMO_1 : USE_SKRD_AMMO_2;
+	player->UseAmmo ();
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHornRodFX2));
 	// Use MissileActor instead of the return value from
 	// P_SpawnPlayerMissile because we need to give info to the mobj
@@ -2856,8 +2867,8 @@ void A_SkullRodStorm (AActor *actor)
 	x = actor->x + ((P_Random()&127) - 64) * FRACUNIT;
 	y = actor->y + ((P_Random()&127) - 64) * FRACUNIT;
 	mo = Spawn<ARainPillar> (x, y, ONCEILINGZ);
-	mo->translation = multiplayer ?
-		translationtables + actor->special2*2*256 + 256 : NULL;
+	mo->Translation = multiplayer ?
+		TRANSLATION(TRANSLATION_PlayersExtra,actor->special2) : 0;
 	mo->target = actor->target;
 	mo->momx = 1; // Force collision detection
 	mo->momz = -mo->Speed;
@@ -2913,11 +2924,12 @@ void A_FloatPuff (AActor *);
 class APhoenixRodAmmo : public AAmmo
 {
 	DECLARE_ACTOR (APhoenixRodAmmo, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_phoenixrod, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOPHOENIXROD1);
@@ -2947,11 +2959,12 @@ AT_GAME_SET (PhoenixRodAmmo)
 class APhoenixRodHefty : public AAmmo
 {
 	DECLARE_ACTOR (APhoenixRodHefty, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_phoenixrod, health);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_AMMOPHOENIXROD2);
@@ -3198,8 +3211,7 @@ void A_FirePhoenixPL1 (player_t *player, pspdef_t *psp)
 {
 	angle_t angle;
 
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_phoenixrod] -= USE_PHRD_AMMO_1;
+	player->UseAmmo ();
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(APhoenixFX1));
 	angle = player->mo->angle + ANG180;
 	angle >>= ANGLETOFINESHIFT;
@@ -3300,8 +3312,7 @@ void A_FirePhoenixPL2 (player_t *player, pspdef_t *psp)
 void A_ShutdownPhoenixPL2 (player_t *player, pspdef_t *psp)
 {
 	S_StopSound (player->mo, CHAN_WEAPON);
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[am_phoenixrod] -= USE_PHRD_AMMO_2;
+	player->UseAmmo ();
 }
 
 //----------------------------------------------------------------------------
@@ -3331,7 +3342,7 @@ void A_FloatPuff (AActor *puff)
 class ABagOfHolding : public AInventory
 {
 	DECLARE_ACTOR (ABagOfHolding, AInventory)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		player_t *player = toucher->player;
@@ -3352,6 +3363,7 @@ protected:
 		P_GiveAmmo(player, am_phoenixrod, AMMO_PHRD_WIMPY);
 		return true;
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_ITEMBAGOFHOLDING);

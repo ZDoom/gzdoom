@@ -36,6 +36,7 @@
 #include "m_bbox.h"
 
 #include "i_system.h"
+#include "p_lnspec.h"
 
 #include "r_main.h"
 #include "r_plane.h"
@@ -59,6 +60,8 @@ sector_t*		backsector;
 // killough 4/7/98: indicates doors closed wrt automap bugfix:
 int				doorclosed;
 
+bool			r_fakingunderwater;
+
 extern bool		rw_prepped;
 extern bool		rw_havehigh, rw_havelow;
 extern int		rw_floorstat, rw_ceilstat;
@@ -81,10 +84,9 @@ drawseg_t*		ds_p;
 
 fixed_t			WallTX1, WallTX2;	// x coords at left, right of wall in view space
 fixed_t			WallTY1, WallTY2;	// y coords at left, right of wall in view space
-fixed_t			WallTZ1, WallTZ2;	// z coords at left, right of wall in view space
 
-fixed_t			WallCX1, WallCX2;	// x coords at left, right of wall in view space
-fixed_t			WallCY1, WallCY2;	// y coords at left, right of wall in view space
+fixed_t			WallCX1, WallCX2;	// x coords at left, right of wall in camera space
+fixed_t			WallCY1, WallCY2;	// y coords at left, right of wall in camera space
 
 int				WallSX1, WallSX2;	// x coords at left, right of wall in screen space
 fixed_t			WallSZ1, WallSZ2;	// depth at left, right of wall in screen space
@@ -92,6 +94,8 @@ fixed_t			WallSZ1, WallSZ2;	// depth at left, right of wall in screen space
 float			WallDepthOrg, WallDepthScale;
 float			WallUoverZorg, WallUoverZstep;
 float			WallInvZorg, WallInvZstep;
+
+static BYTE		FakeSide;
 
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
@@ -155,8 +159,6 @@ void R_ClipWallSegment (int first, int last, bool solid)
 	cliprange_t *next, *start;
 	int i, j;
 
-	if (curline->linedef - lines == 2)
-		last=last;
 	// Find the first range that touches the range
 	// (adjacent pixels are touching).
 	start = solidsegs;
@@ -282,6 +284,36 @@ int GetCeilingLight (const sector_t *sec)
 	}
 }
 
+bool CopyPlaneIfValid (secplane_t *dest, const secplane_t *source, const secplane_t *opp)
+{
+	bool copy = false;
+
+	// If the planes do not have matching slopes, then always copy them
+	// because clipping would require creating new sectors.
+	if (source->a != dest->a || source->b != dest->b || source->c != dest->c)
+	{
+		copy = true;
+	}
+	else if (opp->a != -dest->a || opp->b != -dest->b || opp->c != -dest->c)
+	{
+		if (source->d < dest->d)
+		{
+			copy = true;
+		}
+	}
+	else if (source->d < dest->d && source->d > -opp->d)
+	{
+		copy = true;
+	}
+
+	if (copy)
+	{
+		*dest = *source;
+	}
+
+	return copy;
+}
+
 //
 // killough 3/7/98: Hack floor/ceiling heights for deep water etc.
 //
@@ -310,30 +342,85 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 		*ceilinglightlevel = GetCeilingLight (sec);
 	}
 
-	if (sec->heightsec)
+	FakeSide = FAKED_Center;
+
+	if (sec->heightsec && !(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{
 		const sector_t *s = sec->heightsec;
-		sector_t *heightsec = camera->subsector->sector->heightsec;
-		int underwater = heightsec && viewz <= heightsec->floorplane.ZatPoint (viewx, viewy);
+		sector_t *heightsec = viewsector->heightsec;
+		bool underwater = r_fakingunderwater ||
+			(heightsec && viewz <= heightsec->floorplane.ZatPoint (viewx, viewy));
+		bool doorunderwater = false;
+		int diffTex = (s->MoreFlags & SECF_CLIPFAKEPLANES);
 
 		// Replace sector being drawn with a copy to be hacked
 		*tempsec = *sec;
 
-		// Replace floor and ceiling height with other sector's heights.
-		tempsec->floorplane    = s->floorplane;
-		tempsec->ceilingplane  = s->ceilingplane;
+		// Replace floor and ceiling height with control sector's heights.
+		if (diffTex)
+		{
+			if (CopyPlaneIfValid (&tempsec->floorplane, &s->floorplane, &sec->ceilingplane))
+			{
+				tempsec->floorpic = s->floorpic;
+			}
+			else if (s->MoreFlags & SECF_FAKEFLOORONLY)
+			{
+				return sec;
+			}
+		}
+		else
+		{
+			tempsec->floorplane = s->floorplane;
+		}
 
-		fixed_t refflorz = s->floorplane.ZatPoint (viewx, viewy);
+		if (!(s->MoreFlags & SECF_FAKEFLOORONLY))
+		{
+			if (diffTex)
+			{
+				if (CopyPlaneIfValid (&tempsec->ceilingplane, &s->ceilingplane, &sec->floorplane))
+				{
+					tempsec->ceilingpic = s->ceilingpic;
+				}
+			}
+			else
+			{
+				tempsec->ceilingplane  = s->ceilingplane;
+			}
+		}
+
+//		fixed_t refflorz = s->floorplane.ZatPoint (viewx, viewy);
 		fixed_t refceilz = s->ceilingplane.ZatPoint (viewx, viewy);
-		fixed_t orgflorz = sec->floorplane.ZatPoint (viewx, viewy);
+//		fixed_t orgflorz = sec->floorplane.ZatPoint (viewx, viewy);
 		fixed_t orgceilz = sec->ceilingplane.ZatPoint (viewx, viewy);
 
-		if ((underwater && (tempsec->  floorplane = sec->floorplane,
-							tempsec->ceilingplane = s->floorplane,
-							tempsec->ceilingplane.ChangeHeight(-1),
-							!back)))
+#if 1
+		// [RH] Allow viewing underwater areas through doors/windows that
+		// are underwater but not in a water sector themselves.
+		// Only works if you cannot see the top surface of any deep water
+		// sectors at the same time.
+		if (back)
+		{
+			if (rw_frontcz1 <= s->floorplane.ZatPoint (curline->v1->x, curline->v1->y) &&
+				rw_frontcz2 <= s->floorplane.ZatPoint (curline->v2->x, curline->v2->y))
+			{
+				doorunderwater = true;
+				r_fakingunderwater = true;
+			}
+		}
+#endif
+
+		if (underwater || doorunderwater)
+		{
+			tempsec->floorplane = sec->floorplane;
+			tempsec->ceilingplane = s->floorplane;
+			tempsec->ceilingplane.FlipVert ();
+			tempsec->ceilingplane.ChangeHeight (-1);
+		}
+
+		// killough 11/98: prevent sudden light changes from non-water sectors:
+		if ((underwater && !back) || doorunderwater)
 		{					// head-below-floor hack
-			tempsec->floorpic			= s->floorpic;
+			tempsec->floorpic			= diffTex ? sec->floorpic : s->floorpic;
 			tempsec->floor_xoffs		= s->floor_xoffs;
 			tempsec->floor_yoffs		= s->floor_yoffs;
 			tempsec->floor_xscale		= s->floor_xscale;
@@ -342,63 +429,65 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->base_floor_angle	= s->base_floor_angle;
 			tempsec->base_floor_yoffs	= s->base_floor_yoffs;
 
-			if (underwater)
+			tempsec->floorcolormap		= s->floorcolormap;
+			tempsec->ceilingplane		= s->floorplane;
+			tempsec->ceilingplane.FlipVert ();
+			tempsec->ceilingplane.ChangeHeight (-1);
+			tempsec->ceilingcolormap	= s->ceilingcolormap;
+			if (s->ceilingpic == skyflatnum)
 			{
-				tempsec->lightlevel			= s->lightlevel;
-				tempsec->floorcolormap		= s->floorcolormap;
-				tempsec->ceilingplane		= s->floorplane;
-				tempsec->ceilingplane.ChangeHeight (-1);
-				tempsec->ceilingcolormap	= s->ceilingcolormap;
-				if (s->ceilingpic == skyflatnum)
-				{
-					tempsec->floorplane			= tempsec->ceilingplane;
-					tempsec->floorplane.ChangeHeight (+1);
-					tempsec->ceilingpic			= tempsec->floorpic;
-					tempsec->ceiling_xoffs		= tempsec->floor_xoffs;
-					tempsec->ceiling_yoffs		= tempsec->floor_yoffs;
-					tempsec->ceiling_xscale		= tempsec->floor_xscale;
-					tempsec->ceiling_yscale		= tempsec->floor_yscale;
-					tempsec->ceiling_angle		= tempsec->floor_angle;
-					tempsec->base_ceiling_angle	= tempsec->base_floor_angle;
-					tempsec->base_ceiling_yoffs	= tempsec->base_floor_yoffs;
-				}
-				else
-				{
-					tempsec->ceilingpic			= s->ceilingpic;
-					tempsec->ceiling_xoffs		= s->ceiling_xoffs;
-					tempsec->ceiling_yoffs		= s->ceiling_yoffs;
-					tempsec->ceiling_xscale		= s->ceiling_xscale;
-					tempsec->ceiling_yscale		= s->ceiling_yscale;
-					tempsec->ceiling_angle		= s->ceiling_angle;
-					tempsec->base_ceiling_angle	= s->base_ceiling_angle;
-					tempsec->base_ceiling_yoffs	= s->base_ceiling_yoffs;
-				}
+				tempsec->floorplane			= tempsec->ceilingplane;
+				tempsec->floorplane.FlipVert ();
+				tempsec->floorplane.ChangeHeight (+1);
+				tempsec->ceilingpic			= tempsec->floorpic;
+				tempsec->ceiling_xoffs		= tempsec->floor_xoffs;
+				tempsec->ceiling_yoffs		= tempsec->floor_yoffs;
+				tempsec->ceiling_xscale		= tempsec->floor_xscale;
+				tempsec->ceiling_yscale		= tempsec->floor_yscale;
+				tempsec->ceiling_angle		= tempsec->floor_angle;
+				tempsec->base_ceiling_angle	= tempsec->base_floor_angle;
+				tempsec->base_ceiling_yoffs	= tempsec->base_floor_yoffs;
 			}
 			else
 			{
-				tempsec->floorplane = sec->floorplane;
+				tempsec->ceilingpic			= diffTex ? s->floorpic : s->ceilingpic;
+				tempsec->ceiling_xoffs		= s->ceiling_xoffs;
+				tempsec->ceiling_yoffs		= s->ceiling_yoffs;
+				tempsec->ceiling_xscale		= s->ceiling_xscale;
+				tempsec->ceiling_yscale		= s->ceiling_yscale;
+				tempsec->ceiling_angle		= s->ceiling_angle;
+				tempsec->base_ceiling_angle	= s->base_ceiling_angle;
+				tempsec->base_ceiling_yoffs	= s->base_ceiling_yoffs;
 			}
 
-			if (floorlightlevel != NULL)
+			if (!(s->MoreFlags & SECF_NOFAKELIGHT))
 			{
-				*floorlightlevel = GetFloorLight (s);
-			}
+				tempsec->lightlevel = s->lightlevel;
 
-			if (ceilinglightlevel != NULL)
-			{
-				*ceilinglightlevel = GetFloorLight (s);
+				if (floorlightlevel != NULL)
+				{
+					*floorlightlevel = GetFloorLight (s);
+				}
+
+				if (ceilinglightlevel != NULL)
+				{
+					*ceilinglightlevel = GetFloorLight (s);
+				}
 			}
+			FakeSide = FAKED_BelowFloor;
 		}
 		else if (heightsec && viewz >= heightsec->ceilingplane.ZatPoint (viewx, viewy) &&
-				 orgceilz > refceilz)
+				 orgceilz > refceilz && !(s->MoreFlags & SECF_FAKEFLOORONLY))
 		{	// Above-ceiling hack
 			tempsec->ceilingplane		= s->ceilingplane;
 			tempsec->floorplane			= s->ceilingplane;
+			tempsec->floorplane.FlipVert ();
 			tempsec->floorplane.ChangeHeight (+1);
 			tempsec->ceilingcolormap	= s->ceilingcolormap;
 			tempsec->floorcolormap		= s->floorcolormap;
 
-			tempsec->floorpic			= tempsec->ceilingpic			= s->ceilingpic;
+			tempsec->ceilingpic = diffTex ? sec->ceilingpic : s->ceilingpic;
+			tempsec->floorpic											= s->ceilingpic;
 			tempsec->floor_xoffs		= tempsec->ceiling_xoffs		= s->ceiling_xoffs;
 			tempsec->floor_yoffs		= tempsec->ceiling_yoffs		= s->ceiling_yoffs;
 			tempsec->floor_xscale		= tempsec->ceiling_xscale		= s->ceiling_xscale;
@@ -418,17 +507,21 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 				tempsec->floor_angle	= s->floor_angle;
 			}
 
-			tempsec->lightlevel  = s->lightlevel;
-
-			if (floorlightlevel != NULL)
+			if (!(s->MoreFlags & SECF_NOFAKELIGHT))
 			{
-				*floorlightlevel = GetFloorLight (s);
-			}
+				tempsec->lightlevel  = s->lightlevel;
 
-			if (ceilinglightlevel != NULL)
-			{
-				*ceilinglightlevel = GetCeilingLight (s);
+				if (floorlightlevel != NULL)
+				{
+					*floorlightlevel = GetFloorLight (s);
+				}
+
+				if (ceilinglightlevel != NULL)
+				{
+					*ceilinglightlevel = GetCeilingLight (s);
+				}
 			}
+			FakeSide = FAKED_AboveCeiling;
 		}
 		sec = tempsec;					// Use other sector
 	}
@@ -479,6 +572,7 @@ void R_AddLine (seg_t *line)
 	if (WallTX1 >= -WallTY1)
 	{
 		if (WallTX1 > WallTY1) return;	// left edge is off the right side
+		if (WallTY1 == 0) return;
 		WallSX1 = (centerxfrac + Scale (WallTX1, centerxfrac, WallTY1)) >> FRACBITS;
 		if (WallTX1 >= 0) WallSX1 = MIN (viewwidth, WallSX1+1); // fix for signed divide
 		WallSZ1 = WallTY1;
@@ -498,6 +592,7 @@ void R_AddLine (seg_t *line)
 	if (WallTX2 <= WallTY2)
 	{
 		if (WallTX2 < -WallTY2) return;	// right edge is off the left side
+		if (WallTY2 == 0) return;
 		WallSX2 = (centerxfrac + Scale (WallTX2, centerxfrac, WallTY2)) >> FRACBITS;
 		if (WallTX2 >= 0) WallSX2 = MIN (viewwidth, WallSX2+1);	// fix for signed divide
 		WallSZ2 = WallTY2;
@@ -577,6 +672,7 @@ void R_AddLine (seg_t *line)
 	rw_frontfz2 = frontsector->floorplane.ZatPoint (line->v2->x, line->v2->y);
 
 	rw_mustmarkfloor = rw_mustmarkceiling = false;
+	rw_havehigh = rw_havelow = false;
 
 	// Single sided line?
 	if (backsector == NULL)
@@ -594,6 +690,19 @@ void R_AddLine (seg_t *line)
 		rw_backfz1 = backsector->floorplane.ZatPoint (line->v1->x, line->v1->y);
 		rw_backcz2 = backsector->ceilingplane.ZatPoint (line->v2->x, line->v2->y);
 		rw_backfz2 = backsector->floorplane.ZatPoint (line->v2->x, line->v2->y);
+
+		// Cannot make these walls solid, because it can result in
+		// sprite clipping problems for sprites near the wall
+		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
+		{
+			rw_havehigh = true;
+			WallMost (wallupper, backsector->ceilingplane);
+		}
+		if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
+		{
+			rw_havelow = true;
+			WallMost (walllower, backsector->floorplane);
+		}
 
 		// Closed door.
 		if ((rw_backcz1 <= rw_frontfz1 && rw_backcz2 <= rw_frontfz2) ||
@@ -673,43 +782,34 @@ void R_AddLine (seg_t *line)
 	}
 
 	rw_prepped = false;
-	rw_ceilstat = WallMost (walltop, frontsector->ceilingplane);
-	rw_floorstat = WallMost (wallbottom, frontsector->floorplane);
 
-	// [RH] treat off-screen walls as solid
-#if 0	// Maybe later...
-	if (!solid)
+	if (line->linedef->special == Line_Horizon)
 	{
-		if (rw_ceilstat == 12 && line->sidedef->toptexture != 0)
-		{
-			rw_mustmarkceiling = true;
-			solid = true;
-		}
-		if (rw_floorstat == 3 && line->sidedef->bottomtexture != 0)
-		{
-			rw_mustmarkfloor = true;
-			solid = true;
-		}
+		// Be aware: Line_Horizon does not work properly with sloped planes
+		clearbufshort (walltop+WallSX1, WallSX2 - WallSX1, centery);
+		clearbufshort (wallbottom+WallSX1, WallSX2 - WallSX1, centery);
 	}
-#endif
-
-	rw_havehigh = rw_havelow = false;
-
-	if (backsector != NULL)
+	else
 	{
-		if (rw_frontcz1 > rw_backcz1 || rw_frontcz2 > rw_backcz2)
-		{
-			rw_havehigh = true;
-			WallMost (wallupper, backsector->ceilingplane);
-		}
-		if (rw_frontfz1 < rw_backfz1 || rw_frontfz2 < rw_backfz2)
-		{
-			rw_havelow = true;
-			WallMost (walllower, backsector->floorplane);
-		}
+		rw_ceilstat = WallMost (walltop, frontsector->ceilingplane);
+		rw_floorstat = WallMost (wallbottom, frontsector->floorplane);
 
-		// Cannot make these walls solid, because it can result in
-		// sprite clipping problems for sprites near the wall
+		// [RH] treat off-screen walls as solid
+#if 0	// Maybe later...
+		if (!solid)
+		{
+			if (rw_ceilstat == 12 && line->sidedef->toptexture != 0)
+			{
+				rw_mustmarkceiling = true;
+				solid = true;
+			}
+			if (rw_floorstat == 3 && line->sidedef->bottomtexture != 0)
+			{
+				rw_mustmarkfloor = true;
+				solid = true;
+			}
+		}
+#endif
 	}
 
 	R_ClipWallSegment (WallSX1, WallSX2, solid);
@@ -745,7 +845,7 @@ static BOOL R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 
 	fixed_t 			x1, y1, x2, y2;
 	fixed_t				rx1, ry1, rx2, ry2;
-	fixed_t				sx1, sx2;
+	int					sx1, sx2;
 	
 	cliprange_t*		start;
 
@@ -796,8 +896,9 @@ static BOOL R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	if (rx1 >= -ry1)
 	{
 		if (rx1 > ry1) return false;	// left edge is off the right side
+		if (ry1 == 0) return false;
 		sx1 = (centerxfrac + Scale (rx1, centerxfrac, ry1)) >> FRACBITS;
-		if (rx1 >= 0) sx1 = MIN<fixed_t> (viewwidth, sx1+1);	// fix for signed divide
+		if (rx1 >= 0) sx1 = MIN<int> (viewwidth, sx1+1);	// fix for signed divide
 	}
 	else
 	{
@@ -809,8 +910,9 @@ static BOOL R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	if (rx2 <= ry2)
 	{
 		if (rx2 < -ry2) return false;	// right edge is off the left side
+		if (ry2 == 0) return false;
 		sx2 = (centerxfrac + Scale (rx2, centerxfrac, ry2)) >> FRACBITS;
-		if (rx2 >= 0) sx2 = MIN<fixed_t> (viewwidth, sx2+1); // fix for signed divide
+		if (rx2 >= 0) sx2 = MIN<int> (viewwidth, sx2+1);	// fix for signed divide
 	}
 	else
 	{
@@ -872,7 +974,9 @@ void R_Subsector (int num)
 
 	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
 		frontsector->ceilingpic == skyflatnum ||
-		(frontsector->heightsec && frontsector->heightsec->floorpic == skyflatnum) ?
+		(frontsector->heightsec && 
+		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
+		 frontsector->heightsec->floorpic == skyflatnum) ?
 		R_FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 					frontsector->ceilingpic == skyflatnum &&  // killough 10/98
 						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
@@ -892,7 +996,9 @@ void R_Subsector (int num)
 	// killough 3/16/98: add floorlightlevel
 	// killough 10/98: add support for skies transferred from sidedefs
 	floorplane = frontsector->floorplane.ZatPoint (viewx, viewy) < viewz || // killough 3/7/98
-		(frontsector->heightsec && frontsector->heightsec->ceilingpic == skyflatnum) ?
+		(frontsector->heightsec &&
+		 !(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
+		 frontsector->heightsec->ceilingpic == skyflatnum) ?
 		R_FindPlane(frontsector->floorplane,
 					frontsector->floorpic == skyflatnum &&  // killough 10/98
 						frontsector->sky & PL_SKYFLAT ? frontsector->sky :
@@ -914,7 +1020,7 @@ void R_Subsector (int num)
 	// killough 9/18/98: Fix underwater slowdown, by passing real sector 
 	// instead of fake one. Improve sprite lighting by basing sprite
 	// lightlevels on floor & ceiling lightlevels in the surrounding area.
-	R_AddSprites (sub->sector, (floorlightlevel + ceilinglightlevel) / 2);
+	R_AddSprites (sub->sector, (floorlightlevel + ceilinglightlevel) / 2, FakeSide);
 
 	if (sub->poly)
 	{ // Render the polyobj in the subsector first
@@ -935,10 +1041,12 @@ void R_Subsector (int num)
 //
 // RenderBSPNode
 // Renders all subsectors below a given node, traversing subtree recursively.
-// Just call with BSP root.
+// Just call with BSP root and -1.
 // killough 5/2/98: reformatted, removed tail recursion
+// [RH] Added subsecnum to restrict the subsectors drawn to just those
+// encountered *after* subsecnum. -1 does not restrict.
 
-void R_RenderBSPNode (int bspnum)
+int R_RenderBSPNode (int bspnum, int subsecnum)
 {
 	while (!(bspnum & NF_SUBSECTOR))  // Found a subsector?
 	{
@@ -948,14 +1056,22 @@ void R_RenderBSPNode (int bspnum)
 		int side = R_PointOnSide (viewx, viewy, bsp);
 
 		// Recursively divide front space (toward the viewer).
-		if (R_CheckBBox (bsp->bbox[side]))
-			R_RenderBSPNode (bsp->children[side]);
+		subsecnum = R_RenderBSPNode (bsp->children[side], subsecnum);
 
 		// Possibly divide back space (away from the viewer).
-		if (!R_CheckBBox (bsp->bbox[side^1]))
-			return;
+		side ^= 1;
+		if (!R_CheckBBox (bsp->bbox[side]))
+			return subsecnum;
 
-		bspnum = bsp->children[side^1];
+		bspnum = bsp->children[side];
 	}
-	R_Subsector (bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
+	if (subsecnum == -1)
+	{
+		R_Subsector (bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
+	}
+	else if (subsecnum == (bspnum & ~NF_SUBSECTOR))
+	{
+		subsecnum = -1;
+	}
+	return subsecnum;
 }

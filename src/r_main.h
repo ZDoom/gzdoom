@@ -25,7 +25,7 @@
 
 #include "d_player.h"
 #include "r_data.h"
-
+#include "r_bsp.h"
 
 
 //
@@ -94,7 +94,9 @@ extern int				loopcount;
 
 extern fixed_t			GlobVis;
 
-EXTERN_CVAR (Float, r_visibility)
+void R_SetVisibility (float visibility);
+float R_GetVisibility ();
+
 extern fixed_t			r_BaseVisibility;
 extern fixed_t			r_WallVisibility;
 extern fixed_t			r_FloorVisibility;
@@ -112,8 +114,6 @@ extern lighttable_t*	fixedcolormap;
 // [RH] New detail modes
 extern "C" int			detailxshift;
 extern "C" int			detailyshift;
-
-extern bool				r_MarkTrans;
 
 //
 // Function pointers to switch refresh/drawing functions.
@@ -135,9 +135,23 @@ extern void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 //
 // Utility functions.
-int R_PointOnSide (fixed_t x, fixed_t y, node_t *node);
-int R_PointOnSegSide (fixed_t x, fixed_t y, seg_t *line);
-int R_PointOnSegSide2 (fixed_t x, fixed_t y, seg_t *line);
+
+//==========================================================================
+//
+// R_PointOnSide
+//
+// Traverse BSP (sub) tree, check point against partition plane.
+// Returns side 0 (front/on) or 1 (back).
+//
+// [RH] inlined, stripped down, and made more precise
+//
+//==========================================================================
+
+inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
+{
+	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) >= 0;
+}
+
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);
 inline angle_t R_PointToAngle (fixed_t x, fixed_t y) { return R_PointToAngle2 (viewx, viewy, x, y); }
 subsector_t *R_PointInSubsector (fixed_t x, fixed_t y);

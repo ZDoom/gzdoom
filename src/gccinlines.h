@@ -498,12 +498,12 @@ inline void qinterpolatedown16short (short *out, DWORD count, SDWORD val, SDWORD
 		}
 		SDWORD temp1, temp2;
 		asm volatile
-			("subl $2,%5\n\t"
+			("subl $2,%6\n\t"
 			 "jc 1f\n\t"
 			 "0:\n\t"
 			 "movl %7,%0\n\t"
 			 "addl %8,%7\n\t"
-			 "sarl $16,%0\n\t"
+			 "shrl $16,%0\n\t"
 			 "movl %7,%1\n\t"
 			 "andl $0xffff0000,%1\n\t"
 			 "addl %8,%7\n\t"

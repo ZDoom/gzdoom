@@ -285,11 +285,11 @@ bool DCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
 		if (!(thing->flags&MF_MISSILE))
 		{
-			if(tmfloorz > (thing->subsector->sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
+			if(tmfloorz > (thing->Sector->floorplane.ZatPoint (x, y)+MAXMOVEHEIGHT)) //Too high wall
 				return false;
 
 			//Jumpable
-			if(tmfloorz>(thing->subsector->sector->floorplane.ZatPoint (x, y)+24*FRACUNIT /*MAXSTEPMOVE*/))
+			if(tmfloorz>(thing->Sector->floorplane.ZatPoint (x, y)+24*FRACUNIT /*MAXSTEPMOVE*/))
 				cmd->ucmd.buttons |= BT_JUMP;
 
 

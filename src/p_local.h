@@ -103,7 +103,7 @@ void P_ThrustMobj (AActor *mo, angle_t angle, fixed_t move);
 int P_FaceMobj (AActor *source, AActor *target, angle_t *delta);
 bool P_SeekerMissile (AActor *actor, angle_t thresh, angle_t turnMax);
 
-void	P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hit=false);
+AActor *P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hit=false);
 void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage);
 void	P_BloodSplatter (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
 void	P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator);
@@ -166,9 +166,49 @@ extern TArray<intercept_t> intercepts;
 typedef BOOL (*traverser_t) (intercept_t *in);
 
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);
-int 	P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line);
-int 	P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line);
-void	P_MakeDivline (const line_t *li, divline_t *dl);
+
+//==========================================================================
+//
+// P_PointOnLineSide
+//
+// Returns 0 (front/on) or 1 (back)
+// [RH] inlined, stripped down, and made more precise
+//
+//==========================================================================
+
+inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
+{
+	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) >= 0;
+}
+
+//==========================================================================
+//
+// P_PointOnDivLineSide
+//
+// Same as P_PointOnLineSide except it uses divlines
+// [RH] inlined, stripped down, and made more precise
+//
+//==========================================================================
+
+inline int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
+{
+	return DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) >= 0;
+}
+
+//==========================================================================
+//
+// P_MakeDivline
+//
+//==========================================================================
+
+inline void P_MakeDivline (const line_t *li, divline_t *dl)
+{
+	dl->x = li->v1->x;
+	dl->y = li->v1->y;
+	dl->dx = li->dx;
+	dl->dy = li->dy;
+}
+
 fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1);
 int 	P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld);
 
@@ -252,6 +292,7 @@ bool	P_CheckMissileSpawn (AActor *missile);
 // [RH] Position the chasecam
 void	P_AimCamera (AActor *t1);
 extern	fixed_t CameraX, CameraY, CameraZ;
+extern	sector_t *CameraSector;
 
 // [RH] Means of death
 void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, bool hurtSelf, int mod);
@@ -343,7 +384,7 @@ class DRotatePoly : public DPolyAction
 	DECLARE_CLASS (DRotatePoly, DPolyAction)
 public:
 	DRotatePoly (int polyNum);
-	void RunThink ();
+	void Tick ();
 protected:
 	friend bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
 private:
@@ -356,7 +397,7 @@ class DMovePoly : public DPolyAction
 public:
 	DMovePoly (int polyNum);
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 protected:
 	DMovePoly ();
 	int m_Angle;
@@ -372,7 +413,7 @@ class DPolyDoor : public DMovePoly
 public:
 	DPolyDoor (int polyNum, podoortype_t type);
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 protected:
 	int m_Direction;
 	int m_TotalDist;

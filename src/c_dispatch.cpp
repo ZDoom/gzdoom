@@ -1,3 +1,37 @@
+/*
+** c_dispatch.cpp
+** Functions for executing console commands and aliases
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,7 +62,7 @@ public:
 	DWaitingCommand (const char *cmd, int tics);
 	~DWaitingCommand ();
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 private:
 	DWaitingCommand ();
@@ -43,7 +77,7 @@ class DStoredCommand : public DThinker
 public:
 	DStoredCommand (FConsoleCommand *com, const char *cmd);
 	~DStoredCommand ();
-	void RunThink ();
+	void Tick ();
 
 private:
 	DStoredCommand ();
@@ -118,7 +152,7 @@ DWaitingCommand::DWaitingCommand ()
 DWaitingCommand::DWaitingCommand (const char *cmd, int tics)
 {
 	Command = copystring (cmd);
-	TicsLeft = tics;
+	TicsLeft = tics+1;
 }
 
 DWaitingCommand::~DWaitingCommand ()
@@ -129,7 +163,7 @@ DWaitingCommand::~DWaitingCommand ()
 	}
 }
 
-void DWaitingCommand::RunThink ()
+void DWaitingCommand::Tick ()
 {
 	if (--TicsLeft == 0)
 	{
@@ -160,7 +194,7 @@ DStoredCommand::~DStoredCommand ()
 	}
 }
 
-void DStoredCommand::RunThink ()
+void DStoredCommand::Tick ()
 {
 	if (Text != NULL && Command != NULL)
 	{
@@ -388,7 +422,8 @@ void C_DoCommand (const char *cmd, int keynum)
 			(len == 9 && strnicmp (beg, "unbindall", 9) == 0) ||
 			(len == 4 && strnicmp (beg, "bind", 4) == 0) ||
 			(len == 4 && strnicmp (beg, "exec", 4) == 0) ||
-			(len ==10 && strnicmp (beg, "doublebind", 10) == 0)
+			(len ==10 && strnicmp (beg, "doublebind", 10) == 0) ||
+			(len == 6 && strnicmp (beg, "pullin", 6) == 0)
 			)
 		{
 			FCommandLine args (beg);
@@ -409,7 +444,7 @@ void C_DoCommand (const char *cmd, int keynum)
 
 			if (args.argc() >= 2)
 			{ // Set the variable
-				var->CmdSet (args.AllButFirstArg (1));
+				var->CmdSet (args[1]);
 			}
 			else
 			{ // Get the variable's value
@@ -483,7 +518,7 @@ void AddCommandString (char *cmd, int keynum)
 						  // Note that deferred commands lose track of which key
 						  // (if any) they were pressed from.
 							*brkpt = ';';
-							new DWaitingCommand (brkpt + 1, tics);
+							new DWaitingCommand (brkpt, tics+1);
 						}
 						return;
 					}
@@ -570,7 +605,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 
 			while (*args && *args > ' ' && *args != '\"')
 				args++;
-			if (*start == '$' && (var = FindCVar (start+1, NULL)))
+			if (*start == '$' && (var = FindCVarSub (start+1, args-start-1)))
 			{
 				val = var->GetGenericRep (CVAR_String);
 				start = val.String;
@@ -635,39 +670,6 @@ char *FCommandLine::operator[] (int i)
 		ParseCommandLine (cmd, NULL, _argv);
 	}
 	return _argv[i];
-}
-
-const char *FCommandLine::AllButFirstArg (int numToSkip)
-{
-	const char *start = cmd;
-
-	if (argc() != numToSkip + 1)
-	{
-		while (--numToSkip >= 0 && *start)
-		{
-			// Skip non-white space (the arg itself)
-			while (*start > ' ')
-			{
-				if (*start == '\"')
-				{ // skip to end of quoted string
-					while (*start && *start != '\"')
-						++start;
-					if (*start == 0)
-						return start;
-				}
-				++start;
-			}
-
-			// Skip white space after arg
-			while (*start && *start <= ' ')
-				++start;
-		}
-		return start;
-	}
-	else
-	{
-		return operator[] (numToSkip);
-	}
 }
 
 static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, int namelen, FConsoleCommand **prev)
@@ -933,10 +935,7 @@ CCMD (alias)
 					return;
 				}
 			}
-			if (argv.argc() > 3)
-				new FConsoleAlias (argv[1], copystring (argv.AllButFirstArg(2)));
-			else
-				new FConsoleAlias (argv[1], copystring (argv[2]));
+			new FConsoleAlias (argv[1], copystring (argv[2]));
 		}
 	}
 }
@@ -959,15 +958,13 @@ CCMD (key)
 		for (i = 1; i < argv.argc(); ++i)
 		{
 			unsigned int key = MakeKey (argv[i]);
-			Printf (" 0x%08x\n", key, key);
+			Printf (" 0x%08x\n", key);
 		}
 	}
 }
 
 // Execute any console commands specified on the command line.
 // These all begin with '+' as opposed to '-'.
-// If DispatchSetOnly is true, only "set" commands will be executed,
-// otherwise only non-"set" commands are executed.
 void C_ExecCmdLineParams ()
 {
 	for (int currArg = 1; currArg < Args.NumArgs(); )
@@ -1008,4 +1005,73 @@ bool FConsoleAlias::IsAlias ()
 void FConsoleAlias::Run (FCommandLine &args, AActor *m_Instigator, int key)
 {
 	AddCommandString (m_Command, key);
+}
+
+extern void D_AddFile (const char *file);
+static byte PullinBad = 2;
+
+int C_ExecFile (const char *file, bool usePullin)
+{
+	FILE *f;
+	char cmd[4096];
+	int retval = 0;
+
+	if ( (f = fopen (file, "r")) )
+	{
+		PullinBad = 1-usePullin;
+		while (fgets (cmd, 4095, f))
+		{
+			// Comments begin with //
+			char *comment = strstr (cmd, "//");
+			if (comment)
+				continue;
+
+			char *end = cmd + strlen (cmd) - 1;
+			if (*end == '\n')
+				*end = 0;
+			AddCommandString (cmd);
+		}
+		if (!feof (f))
+		{
+			retval = 2;
+		}
+		fclose (f);
+	}
+	else
+	{
+		retval = 1;
+	}
+	PullinBad = 2;
+	return retval;
+}
+
+CCMD (pullin)
+{
+	if (PullinBad == 2)
+	{
+		Printf ("This command is only valid from .cfg\n"
+				"files and only when used at startup.\n");
+	}
+	else if (argv.argc() > 1)
+	{
+		if (PullinBad)
+		{
+			Printf ("Not loading:");
+		}
+		for (int i = 1; i < argv.argc(); ++i)
+		{
+			if (PullinBad)
+			{
+				Printf (" %s", argv[i]);
+			}
+			else
+			{
+				D_AddFile (argv[i]);
+			}
+		}
+		if (PullinBad)
+		{
+			Printf ("\n");
+		}
+	}
 }

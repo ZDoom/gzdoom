@@ -1,4 +1,36 @@
-// p_acs.h: ACS Script Stuff
+/*
+** p_acs.h
+** ACS script stuff
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #ifndef __P_ACS_H__
 #define __P_ACS_H__
@@ -6,15 +38,40 @@
 #include "dobject.h"
 #include "doomtype.h"
 
-#define STACK_SIZE	64
 #define LOCAL_SIZE	10
 
+class FFont;
+
 struct ScriptPtr
+{
+	WORD Number;
+	BYTE Type;
+	BYTE ArgCount;
+	DWORD Address;
+};
+
+struct ScriptPtr1
 {
 	WORD Number;
 	WORD Type;
 	DWORD Address;
 	DWORD ArgCount;
+};
+
+struct ScriptPtr2
+{
+	DWORD Number;	// Type is Number / 1000
+	DWORD Address;
+	DWORD ArgCount;
+};
+
+struct ScriptFunction
+{
+	BYTE ArgCount;
+	BYTE LocalCount;
+	BYTE HasReturnValue;
+	BYTE Pad;
+	DWORD Address;
 };
 
 enum
@@ -27,7 +84,6 @@ enum
 	SCRIPT_Pickup		= 5,
 	SCRIPT_T1Return		= 6,
 	SCRIPT_T2Return		= 7,
-	SCRIPT_Render		= 11,
 	SCRIPT_Lightning	= 12,
 };
 
@@ -41,6 +97,7 @@ public:
 
 	bool IsGood ();
 	BYTE *FindChunk (DWORD id) const;
+	BYTE *NextChunk (BYTE *chunk) const;
 	int *FindScript (int number) const;
 	void PrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
 	const char *LookupString (DWORD index, DWORD ofs=0) const;
@@ -49,8 +106,13 @@ public:
 	DWORD PC2Ofs (int *pc) const { return (BYTE *)pc - Data; }
 	int *Ofs2PC (DWORD ofs) const { return (int *)(Data + ofs); }
 	ACSFormat GetFormat() const { return Format; }
+	ScriptFunction *GetFunction (int funcnum) const;
+	int GetArrayVal (int arraynum, int index) const;
+	void SetArrayVal (int arraynum, int index, int value);
 
 private:
+	struct ArrayInfo;
+
 	ACSFormat Format;
 
 	BYTE *Data;
@@ -58,6 +120,10 @@ private:
 	BYTE *Chunks;
 	BYTE *Scripts;
 	int NumScripts;
+	BYTE *Functions;
+	int NumFunctions;
+	ArrayInfo *Arrays;
+	int NumArrays;
 	DWORD LanguageNeutral;
 	DWORD Localized;
 
@@ -265,6 +331,41 @@ public:
 		PCD_MODGLOBALVAR,
 		PCD_INCGLOBALVAR,
 		PCD_DECGLOBALVAR,
+/*190*/	PCD_FADETO,
+		PCD_FADERANGE,
+		PCD_CANCELFADE,
+		PCD_PLAYMOVIE,
+		PCD_SETFLOORTRIGGER,
+		PCD_SETCEILINGTRIGGER,
+		PCD_GETACTORX,
+		PCD_GETACTORY,
+		PCD_GETACTORZ,
+		PCD_STARTTRANSLATION,
+/*200*/	PCD_TRANSLATIONRANGE1,
+		PCD_TRANSLATIONRANGE2,
+		PCD_ENDTRANSLATION,
+		PCD_CALL,
+		PCD_CALLDISCARD,
+		PCD_RETURNVOID,
+		PCD_RETURNVAL,
+		PCD_PUSHMAPARRAY,
+		PCD_ASSIGNMAPARRAY,
+		PCD_ADDMAPARRAY,
+/*210*/	PCD_SUBMAPARRAY,
+		PCD_MULMAPARRAY,
+		PCD_DIVMAPARRAY,
+		PCD_MODMAPARRAY,
+		PCD_INCMAPARRAY,
+		PCD_DECMAPARRAY,
+		PCD_DUP,
+		PCD_SWAP,
+		PCD_WRITETOINI,
+		PCD_GETFROMINI,
+/*220*/ PCD_SIN,
+		PCD_COS,
+		PCD_VECTORANGLE,
+		PCD_CHECKWEAPON,
+		PCD_SETWEAPON,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -333,17 +434,15 @@ public:
 protected:
 	DLevelScript	*next, *prev;
 	int				script;
-	int				stack[STACK_SIZE];
 	int				sp;
-	int				locals[LOCAL_SIZE];
+	int				localvars[LOCAL_SIZE];
 	int				*pc;
 	EScriptState	state;
 	int				statedata;
 	AActor			*activator;
 	line_t			*activationline;
 	int				lineSide;
-
-	inline void PushToStack (int val);
+	FFont			*activefont;
 
 	void Link ();
 	void Unlink ();
@@ -356,6 +455,11 @@ protected:
 	static void SetLineTexture (int lineid, int side, int position, int name);
 	static int DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, int angle);
 	static int DoSpawnSpot (int type, int spot, int tid, int angle);
+
+	void DoFadeTo (int r, int g, int b, int a, fixed_t time);
+	void DoFadeRange (int r1, int g1, int b1, int a1,
+		int r2, int g2, int b2, int a2, fixed_t time);
+	void DoSetFont (int fontnum);
 
 private:
 	DLevelScript ();
@@ -371,16 +475,6 @@ inline FArchive &operator<< (FArchive &arc, DLevelScript::EScriptState &state)
 	return arc;
 }
 
-inline void DLevelScript::PushToStack (int val)
-{
-	if (sp == STACK_SIZE)
-	{
-		Printf ("Stack overflow in script %d\n", script);
-		state = SCRIPT_PleaseRemove;
-	}
-	stack[sp++] = val;
-}
-
 class DACSThinker : public DThinker
 {
 	DECLARE_CLASS (DACSThinker, DThinker)
@@ -389,10 +483,12 @@ public:
 	~DACSThinker ();
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 	DLevelScript *RunningScripts[1000];	// Array of all synchronous scripts
 	static DACSThinker *ActiveThinker;
+
+	void DumpScriptStatus();
 
 private:
 	DLevelScript *LastScript;

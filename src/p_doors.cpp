@@ -58,7 +58,7 @@ void DDoor::Serialize (FArchive &arc)
 //
 // T_VerticalDoor
 //
-void DDoor::RunThink ()
+void DDoor::Tick ()
 {
 	EResult res;
 
@@ -352,6 +352,7 @@ void P_SpawnDoorCloseIn30 (sector_t *sec)
 	height = sec->FindHighestFloorPoint (&door->m_BotSpot);
 	door->m_BotDist = sec->ceilingplane.PointToDist (door->m_BotSpot, height);
 	door->m_OldFloorDist = sec->floorplane.d;
+	door->m_TopDist = sec->ceilingplane.d;
 }
 
 //

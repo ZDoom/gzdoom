@@ -9,11 +9,12 @@
 class ACrystalVial : public AHealth
 {
 	DECLARE_ACTOR (ACrystalVial, AHealth)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveBody (toucher->player, 10);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(TXT_ITEMHEALTH);

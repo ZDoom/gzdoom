@@ -209,7 +209,7 @@ void W_AddFile (char *filename)
 		lseek (handle, header.wad.InfoTableOfs, SEEK_SET);
 		read (handle, fileinfo, header.wad.NumLumps * sizeof(wadlump_t));
 		numlumps += header.wad.NumLumps;
-		Printf (" (%d lumps)", header.wad.NumLumps);
+		Printf (" (%ld lumps)", header.wad.NumLumps);
 	}
 	else if (header.magic == RFF_ID)
 	{ // This is a Blood RFF file

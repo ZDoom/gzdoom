@@ -9,11 +9,12 @@
 class ASilverShield : public AArmor
 {
 	DECLARE_ACTOR (ASilverShield, AArmor)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveArmor (toucher->player, (armortype_t)1, 100);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(TXT_ITEMSHIELD1);
@@ -37,11 +38,12 @@ END_DEFAULTS
 class AEnchantedShield : public AArmor
 {
 	DECLARE_ACTOR (AEnchantedShield, AArmor)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveArmor (toucher->player, (armortype_t)2, 200);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(TXT_ITEMSHIELD2);

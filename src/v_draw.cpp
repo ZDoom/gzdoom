@@ -1,3 +1,37 @@
+/*
+** v_draw.cpp
+** Draw patches and blocks to a canvas
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "doomtype.h"
 #include "v_video.h"
 #include "m_swap.h"
@@ -78,7 +112,6 @@ void DCanvas::DrawLucentPatchP (const byte *source, byte *dest, int count, int p
 {
 	DWORD *fg2rgb, *bg2rgb;
 
-	TransArea += count + 1;
 	{
 		fixed_t fglevel, bglevel;
 
@@ -106,7 +139,6 @@ void DCanvas::DrawLucentPatchSP (const byte *source, byte *dest, int count, int 
 	DWORD *fg2rgb, *bg2rgb;
 	int c = 0;
 
-	TransArea += count + 1;
 	{
 		fixed_t fglevel, bglevel;
 
@@ -160,7 +192,6 @@ void DCanvas::DrawTlatedLucentPatchP (const byte *source, byte *dest, int count,
 	DWORD *fg2rgb, *bg2rgb;
 	byte *colormap = V_ColorMap;
 
-	TransArea += count + 1;
 	{
 		fixed_t fglevel, bglevel;
 
@@ -189,7 +220,6 @@ void DCanvas::DrawTlatedLucentPatchSP (const byte *source, byte *dest, int count
 	DWORD *fg2rgb, *bg2rgb;
 	byte *colormap = V_ColorMap;
 
-	TransArea += count + 1;
 	{
 		fixed_t fglevel, bglevel;
 
@@ -246,7 +276,6 @@ void DCanvas::DrawColorLucentPatchP (const byte *source, byte *dest, int count, 
 	DWORD *bg2rgb;
 	DWORD fg;
 
-	TransArea += count + 1;
 	{
 		fixed_t fglevel;
 
@@ -269,7 +298,6 @@ void DCanvas::DrawColorLucentPatchSP (const byte *source, byte *dest, int count,
 	DWORD *bg2rgb;
 	DWORD fg;
 
-	TransArea += count + 1;
 	{
 		fixed_t fglevel;
 
@@ -333,14 +361,23 @@ void DCanvas::DrawWrapper (EWrapperCode drawer, const patch_t *patch, int x, int
 	for ( ; col<w ; x++, col++, desttop += colstep)
 	{
 		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col]));
+		int top = -1;
 
 		// step through the posts in a column
-		while (column->topdelta != 0xff )
+		while (column->topdelta != 0xff)
 		{
+			if (column->topdelta <= top)
+			{
+				top += column->topdelta;
+			}
+			else
+			{
+				top = column->topdelta;
+			}
 			if (column->length != 0)
 			{
 				drawfunc ((byte *)column + 3,
-						  desttop + column->topdelta * Pitch,
+						  desttop + top * Pitch,
 						  column->length,
 						  Pitch);
 			}
@@ -413,13 +450,22 @@ void DCanvas::DrawSWrapper (EWrapperCode drawer, const patch_t *patch, int x0, i
 	for ( ; col<w ; col += xinc, desttop += colstep)
 	{
 		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col >> 16]));
+		int htop = -1;
 
 		// step through the posts in a column
 		while (column->topdelta != 0xff)
 		{
+			if (column->topdelta <= htop)
+			{
+				htop += column->topdelta;
+			}
+			else
+			{
+				htop = column->topdelta;
+			}
 			if (column->length != 0)
 			{
-				int top = column->topdelta * ymul;
+				int top = htop * ymul;
 				int bot = top + column->length * ymul;
 				bot = (bot - top + 0x8000) >> 16;
 				if (bot > 0)
@@ -541,14 +587,23 @@ void DCanvas::DrawPatchFlipped (const patch_t *patch, int x0, int y0) const
 	for ( ; col >= 0 ; col -= xinc, desttop += colstep)
 	{
 		column = (column_t *)((byte *)patch + LONG(patch->columnofs[col >> 16]));
+		int top = -1;
 
 		// step through the posts in a column
-		while (column->topdelta != 0xff )
+		while (column->topdelta != 0xff)
 		{
+			if (column->topdelta <= top)
+			{
+				top += column->topdelta;
+			}
+			else
+			{
+				top = column->topdelta;
+			}
 			if (column->length != 0)
 			{
 				drawfunc ((byte *)column + 3,
-						  desttop + (((column->topdelta * ymul)) >> 16) * Pitch,
+						  desttop + ((top * ymul) >> 16) * Pitch,
 						  (column->length * ymul) >> 16,
 						  Pitch,
 						  yinc);
@@ -901,8 +956,6 @@ void DCanvas::DrawTranslucentMaskedBlock (int x, int y, int _width, int _height,
 
 	destpitch = Pitch;
 	dest = Buffer + y*destpitch + x;
-	if (this == screen)
-		TransArea += _width * _height;
 
 	if (colors != NULL)
 	{
@@ -998,8 +1051,6 @@ void DCanvas::ScaleTranslucentMaskedBlock (int x, int y, int _width, int _height
 
 	destpitch = Pitch;
 	dest = Buffer + y*destpitch + x;
-	if (this == screen)
-		TransArea += dwidth * dheight;
 
 	if (colors != NULL)
 	{
@@ -1083,6 +1134,14 @@ void DCanvas::DrawShadowedMaskedBlock (int x, int y, int _width, int _height,
 		return;		// Nothing to draw
 	}
 
+	if (y + _height + 2 >= Height || x + _width + 2 >= Width)
+	{
+		// Shadow extends past edge of canvas
+		DrawMaskedBlock (x, y, srcpitch, _height, src, colors);
+		DrawShadowBlock (x+2, y+2, srcpitch, _height, src, shade);
+		return;
+	}
+
 	DWORD fg, *bg2rgb;
 
 	{
@@ -1096,8 +1155,6 @@ void DCanvas::DrawShadowedMaskedBlock (int x, int y, int _width, int _height,
 
 	destpitch = Pitch;
 	dest = Buffer + y*Pitch + x;
-	if (this == screen)
-		TransArea += _width * _height;
 
 	if (colors != NULL)
 	{
@@ -1182,6 +1239,14 @@ void DCanvas::ScaleShadowedMaskedBlock (int x, int y, int _width, int _height,
 		return;		// Nothing to draw
 	}
 
+	if (y + dheight + 2 >= Height || x + dwidth + 2 >= Width)
+	{
+		// Shadow extends past end of canvas
+		ScaleMaskedBlock (x, y, srcpitch, _height, dwidth, dheight, src, colors);
+		ScaleShadowBlock (x+2, y+2, srcpitch, _height, dwidth, dheight, src, shade);
+		return;
+	}
+
 	DWORD fg, *bg2rgb;
 
 	{
@@ -1195,8 +1260,6 @@ void DCanvas::ScaleShadowedMaskedBlock (int x, int y, int _width, int _height,
 
 	destpitch = Pitch;
 	dest = Buffer + y*destpitch + x;
-	if (this == screen)
-		TransArea += dwidth * dheight;
 
 	if (colors != NULL)
 	{
@@ -1270,6 +1333,110 @@ void DCanvas::ScaleShadowedMaskedBlock (int x, int y, int _width, int _height,
 	}
 }
 
+void DCanvas::DrawShadowBlock (int x, int y, int w, int h, const byte *src, fixed_t shade) const
+{
+	int srcpitch = w;
+
+	if (ClipBox (x, y, w, h, src, srcpitch))
+	{
+		return;		// Nothing to draw
+	}
+
+	DWORD fg, *bg2rgb;
+
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = shade & ~0x3ff;
+		bglevel = FRACUNIT - fglevel;
+		fg = Col2RGB8[fglevel>>10][0];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
+	int destpitch = Pitch;
+	BYTE *dest = Buffer + y*Pitch + x;
+
+	do
+	{
+		int i, j;
+
+		i = w;
+		j = 0;
+
+		do
+		{
+			byte val = src[j];
+			if (val)
+			{
+				DWORD bg = bg2rgb[dest[j]];
+				bg = (fg + bg) | 0x1f07c1f;
+				dest[j] = RGB32k[0][0][bg & (bg>>15)];
+			}
+		} while (++j, --i);
+		dest += destpitch;
+		src += srcpitch;
+	}
+	while (--h);
+}
+
+void DCanvas::ScaleShadowBlock (int x, int y, int w, int h, int dwidth, int dheight, const byte *src, fixed_t shade) const
+{
+	DWORD fg, *bg2rgb;
+	byte *dest;
+	int srcpitch;
+	int destpitch;
+	fixed_t err;
+	fixed_t xinc, yinc;
+	fixed_t xstart;
+
+	srcpitch = w;
+
+	if (ClipScaleBox (x, y, w, h, dwidth, dheight, src, srcpitch, xinc, yinc, xstart, err))
+	{
+		return;		// Nothing to draw
+	}
+
+	{
+		fixed_t fglevel, bglevel;
+
+		fglevel = shade & ~0x3ff;
+		bglevel = FRACUNIT - fglevel;
+		fg = Col2RGB8[fglevel>>10][0];
+		bg2rgb = Col2RGB8[bglevel>>10];
+	}
+
+	destpitch = Pitch;
+	dest = Buffer + y*destpitch + x;
+
+	do
+	{
+		int i, x;
+
+		i = 0;
+		x = xstart;
+
+		do
+		{
+			byte in = src[x >> FRACBITS];
+			if (in)
+			{
+				DWORD bg;
+				bg = (fg + bg2rgb[dest[i]]) | 0x1f07c1f;
+				dest[i] = RGB32k[0][0][bg & (bg>>15)];
+			}
+			x += xinc;
+		} while (++i < dwidth);
+		dest += destpitch;
+		err += yinc;
+		while (err >= FRACUNIT)
+		{
+			src += w;
+			err -= FRACUNIT;
+		}
+	}
+	while (--dheight);
+}
+
 void DCanvas::DrawAlphaMaskedBlock (int x, int y, int _width, int _height,
 	const byte *src, int color) const
 {
@@ -1285,8 +1452,6 @@ void DCanvas::DrawAlphaMaskedBlock (int x, int y, int _width, int _height,
 	destpitch = Pitch;
 	dest = Buffer + y*destpitch + x;
 	DWORD *fgstart = &Col2RGB8[0][color];
-	if (this == screen)
-		TransArea += _width * _height;
 
 #ifdef USEASM
 	MaskedBlockFunctions.DMAUP (src, dest, srcpitch, destpitch, _width, _height, fgstart);
@@ -1342,8 +1507,6 @@ void DCanvas::ScaleAlphaMaskedBlock (int x, int y, int _width, int _height,
 
 	destpitch = Pitch;
 	dest = Buffer + y*destpitch + x;
-	if (this == screen)
-		TransArea += dwidth * dheight;
 
 	DWORD *fgstart = &Col2RGB8[0][color];
 

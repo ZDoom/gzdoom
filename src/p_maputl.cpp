@@ -39,49 +39,30 @@
 // State.
 #include "r_state.h"
 
+//==========================================================================
 //
 // P_AproxDistance
-// Gives an estimation of distance (not exact)
 //
+// Gives an estimation of distance (not exact)
+// 
+//==========================================================================
 
 fixed_t P_AproxDistance (fixed_t dx, fixed_t dy)
 {
 	dx = abs(dx);
 	dy = abs(dy);
-	if (dx < dy)
-		return dx+dy-(dx>>1);
-	return dx+dy-(dy>>1);
+	return (dx < dy) ? dx+dy-(dx>>1) : dx+dy-(dy>>1);
 }
 
-
-//
-// P_PointOnLineSide
-// Returns 0 (front) or 1 (back)
-//
-int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
-{
-	if (!line->dx)
-	{
-		return (x <= line->v1->x) ? (line->dy > 0) : (line->dy < 0);
-	}
-	else if (!line->dy)
-	{
-		return (y <= line->v1->y) ? (line->dx < 0) : (line->dx > 0);
-	}
-	else
-	{
-		return FixedMul (line->dy >> FRACBITS, x - line->v1->x)
-			   <= FixedMul (y - line->v1->y , line->dx >> FRACBITS);
-	}
-}
-
-
-
+//==========================================================================
 //
 // P_BoxOnLineSide
+//
 // Considers the line to be infinite
 // Returns side 0 or 1, -1 if box crosses the line.
 //
+//==========================================================================
+
 int P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld)
 {
 	int p1;
@@ -89,7 +70,7 @@ int P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld)
 		
 	switch (ld->slopetype)
 	{
-	  case ST_HORIZONTAL:
+	case ST_HORIZONTAL:
 		p1 = tmbox[BOXTOP] > ld->v1->y;
 		p2 = tmbox[BOXBOTTOM] > ld->v1->y;
 		if (ld->dx < 0)
@@ -99,7 +80,7 @@ int P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld)
 		}
 		break;
 		
-	  case ST_VERTICAL:
+	case ST_VERTICAL:
 		p1 = tmbox[BOXRIGHT] < ld->v1->x;
 		p2 = tmbox[BOXLEFT] < ld->v1->x;
 		if (ld->dy < 0)
@@ -109,12 +90,12 @@ int P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld)
 		}
 		break;
 		
-	  case ST_POSITIVE:
+	case ST_POSITIVE:
 		p1 = P_PointOnLineSide (tmbox[BOXLEFT], tmbox[BOXTOP], ld);
 		p2 = P_PointOnLineSide (tmbox[BOXRIGHT], tmbox[BOXBOTTOM], ld);
 		break;
 		
-	  case ST_NEGATIVE:
+	case ST_NEGATIVE:
 		p1 = P_PointOnLineSide (tmbox[BOXRIGHT], tmbox[BOXTOP], ld);
 		p2 = P_PointOnLineSide (tmbox[BOXLEFT], tmbox[BOXBOTTOM], ld);
 		break;
@@ -123,58 +104,15 @@ int P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld)
 	return (p1 == p2) ? p1 : -1;
 }
 
-
-//
-// P_PointOnDivlineSide
-// Returns 0 (front) or 1 (back).
-//
-int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
-{
-	if (!line->dx)
-	{
-		return (x <= line->x) ? (line->dy > 0) : (line->dy < 0);
-	}
-	else if (!line->dy)
-	{
-		return (y <= line->y) ? (line->dx < 0) : (line->dx > 0);
-	}
-	else
-	{
-		fixed_t dx = (x - line->x);
-		fixed_t dy = (y - line->y);
-		
-		// try to quickly decide by looking at sign bits
-		if ((line->dy ^ line->dx ^ dx ^ dy) & 0x80000000)
-		{	// (left is negative)
-			return ((line->dy ^ dx) & 0x80000000) ? 1 : 0;
-		}
-		else
-		{	// if (left >= right), return 1, 0 otherwise
-			return FixedMul (dy >> 8, line->dx >> 8) >= FixedMul (line->dy >> 8, dx >> 8);
-		}
-	}
-}
-
-
-
-//
-// P_MakeDivline
-//
-void P_MakeDivline (const line_t *li, divline_t *dl)
-{
-	dl->x = li->v1->x;
-	dl->y = li->v1->y;
-	dl->dx = li->dx;
-	dl->dy = li->dy;
-}
-
-
-
+//==========================================================================
 //
 // P_InterceptVector
+//
 // Returns the fractional intercept point along the first divline.
 // This is only called by the addthings and addlines traversers.
 //
+//==========================================================================
+
 fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 {
 #if 1	// [RH] Use 64 bit ints, so long divlines don't overflow
@@ -231,12 +169,16 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 #endif
 }
 
+//==========================================================================
 //
 // P_LineOpening
+//
 // Sets opentop and openbottom to the window
 // through a two sided line.
 // OPTIMIZE: keep this precalculated
 //
+//==========================================================================
+
 fixed_t opentop;
 fixed_t openbottom;
 fixed_t openrange;
@@ -376,13 +318,13 @@ void AActor::UnlinkFromWorld ()
 //
 // P_SetThingPosition
 // Links a thing into both a block and a subsector based on it's x y.
-// Sets thing->subsector properly
+// Sets thing->sector properly
 //
 void AActor::LinkToWorld ()
 {
 	// link into subsector
-	subsector_t *ss = R_PointInSubsector (x, y);
-	subsector = ss;
+	sector_t *sec = R_PointInSubsector (x, y)->sector;
+	Sector = sec;
 
 	if ( !(flags & MF_NOSECTOR) )
 	{
@@ -390,7 +332,7 @@ void AActor::LinkToWorld ()
 		// killough 8/11/98: simpler scheme using pointer-to-pointer prev
 		// pointers, allows head nodes to be treated like everything else
 
-		AActor **link = &ss->sector->thinglist;
+		AActor **link = &sec->thinglist;
 		AActor *next = *link;
 		if ((snext = next))
 			next->sprev = &snext;
@@ -409,7 +351,6 @@ void AActor::LinkToWorld ()
 		// When a node is deleted, its sector links (the links starting
 		// at sector_t->touching_thinglist) are broken. When a node is
 		// added, new sector links are created.
-
 		P_CreateSecNodeList (this, x, y);
 		touching_sectorlist = sector_list;	// Attach to thing
 		sector_list = NULL;		// clear for next time
@@ -450,8 +391,8 @@ void AActor::SetOrigin (fixed_t ix, fixed_t iy, fixed_t iz)
 	y = iy;
 	z = iz;
 	LinkToWorld ();
-	floorz = subsector->sector->floorplane.ZatPoint (ix, iy);
-	ceilingz = subsector->sector->ceilingplane.ZatPoint (ix, iy);
+	floorz = Sector->floorplane.ZatPoint (ix, iy);
+	ceilingz = Sector->ceilingplane.ZatPoint (ix, iy);
 }
 
 

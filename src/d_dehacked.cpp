@@ -1,3 +1,43 @@
+/*
+** d_dehacked.cpp
+** Parses dehacked/bex patches and changes game structures accordingly
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** Much of this file is fudging code to compensate for the fact that most of
+** what could be changed with Dehacked is no longer in the same state it was
+** in as of Doom 1.9. There is a lump in zdoom.wad (DEHSUPP) that stores most
+** of the lookup tables used so that they need not be loaded all the time.
+** Also, their total size is less in the lump than when they were part of the
+** executable, so it saves space on disk as well as in memory.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
@@ -10,7 +50,6 @@
 #include "info.h"
 #include "d_dehacked.h"
 #include "s_sound.h"
-#include "d_items.h"
 #include "g_level.h"
 #include "cmdlib.h"
 #include "gstrings.h"
@@ -21,6 +60,7 @@
 #include "r_state.h"
 #include "gi.h"
 #include "c_dispatch.h"
+#include "decallib.h"
 #include "z_zone.h"
 
 extern int clipammo[NUMAMMO];
@@ -227,6 +267,8 @@ DehInfo deh =
 	  2,	// .KFAAC
 	  0,	// .Infight
 	"PLAY",	// Name of player sprite
+	STYLE_Translucent,	// Rocket explosion style
+	FRACUNIT*2/3		// Rocket explosion alpha
 };
 
 #define LINESIZE 2048
@@ -467,6 +509,34 @@ static FState *FindState (int statenum)
 		stateacc += StateMap[i].StateSpan;
 	}
 	return NULL;
+}
+
+int FindStyle (const char *namestr)
+{
+	int min = 0;
+	int max = NumStyleNames - 1;
+	int name = FindName (Line2);
+	if (name != -1)
+	{
+		while (min <= max)
+		{
+			int mid = (min + max) / 2;
+			if (StyleNames[mid].Name == name)
+			{
+				return StyleNames[mid].Num;
+			}
+			else if (StyleNames[mid].Name < name)
+			{
+				min = mid + 1;
+			}
+			else
+			{
+				max = mid - 1;
+			}
+		}
+	}
+	DPrintf("Unknown render style %s\n", namestr);
+	return -1;
 }
 
 static BOOL ReadChars (char **stuff, int size)
@@ -725,38 +795,40 @@ static int PatchThing (int thingy)
 				hadTranslucency = true;
 				hadStyle = true;
 			}
-			else if (linelen == 5 && stricmp (Line1, "Alpha") == 0)
+			else if (linelen == 5)
 			{
-				info->alpha = (fixed_t)(atof (Line2) * FRACUNIT);
-				hadTranslucency = true;
+				if (stricmp (Line1, "Alpha") == 0)
+				{
+					info->alpha = (fixed_t)(atof (Line2) * FRACUNIT);
+					hadTranslucency = true;
+				}
+				else if (stricmp (Line1, "Scale") == 0)
+				{
+					info->xscale = clamp ((int)(atof (Line2) * 64), 1, 256) - 1;
+					info->yscale = clamp ((int)(atof (Line2) * 64), 1, 256) - 1;
+				}
+				else if (stricmp (Line1, "Decal") == 0)
+				{
+					stripwhite (Line2);
+					const FDecal *decal = DecalLibrary.GetDecalByName (Line2);
+					if (decal != NULL)
+					{
+						info->DecalGenerator = const_cast <FDecal *>(decal);
+					}
+					else
+					{
+						Printf ("Thing %d: Unknown decal %s\n", thingy, Line2);
+					}
+				}
 			}
 			else if (linelen == 12 && stricmp (Line1, "Render Style") == 0)
 			{
 				stripwhite (Line2);
-				int min = 0;
-				int max = NumStyleNames - 1;
-				int name = FindName (Line2);
-				while (min <= max)
+				int style = FindStyle (Line2);
+				if (style >= 0)
 				{
-					int mid = (min + max) / 2;
-					if (StyleNames[mid].Name == name)
-					{
-						info->RenderStyle = StyleNames[mid].Num;
-						hadStyle = true;
-						break;
-					}
-					else if (StyleNames[mid].Name < name)
-					{
-						min = mid + 1;
-					}
-					else
-					{
-						max = mid - 1;
-					}
-				}
-				if (min > max)
-				{
-					DPrintf("Unknown render style %s\n", Line2);
+					info->RenderStyle = style;
+					hadStyle = true;
 				}
 			}
 			else if (linelen > 6)
@@ -789,7 +861,8 @@ static int PatchThing (int thingy)
 					if (val == 0 || val >= (unsigned long)NumSounds)
 					{
 						if (endptr == Line2)
-						{ // Sound was not a number, so treat it as an actual sound name
+						{ // Sound was not a (valid) number,
+						  // so treat it as an actual sound name.
 							stripwhite (Line2);
 							snd = S_FindSound (Line2);
 						}
@@ -875,7 +948,9 @@ static int PatchThing (int thingy)
 						info->flags = value[0];
 					}
 					if (vchanged[1])
+					{
 						info->flags2 = value[1];
+					}
 					if (vchanged[2])
 					{
 						if (value[2] & 7)
@@ -937,7 +1012,7 @@ static int PatchThing (int thingy)
 			}
 		}
 		// If this thing's speed is really low (i.e. meant to be a monster),
-		// bump it up.
+		// bump it up, because all speeds are fixed point now.
 		if (info->Speed < 256)
 		{
 			info->Speed <<= FRACBITS;
@@ -946,6 +1021,11 @@ static int PatchThing (int thingy)
 
 	return result;
 }
+
+// The only remotely useful thing Dehacked sound patches could do
+// was change where the sound's name was stored. Since there is no
+// real benefit to doing this, and it would be very difficult for
+// me to emulate it, I have disabled them entirely.
 
 static int PatchSound (int soundNum)
 {
@@ -1009,7 +1089,18 @@ static int PatchFrame (int frameNum)
 	if (info)
 	{
 		DPrintf ("Frame %d\n", frameNum);
-		tics = info->GetTics ();
+		if (frameNum == 47)
+		{ // Use original tics for S_DSGUNFLASH1
+			tics = 5;
+		}
+		else if (frameNum == 48)
+		{ // Ditto for S_DSGUNFLASH2
+			tics = 4;
+		}
+		else
+		{
+			tics = info->GetTics ();
+		}
 		misc1 = info->GetMisc1 ();
 		frame = info->GetFrame () | (info->GetFullbright() ? 0x8000 : 0);
 	}
@@ -1251,10 +1342,28 @@ static int PatchWeapon (int weapNum)
 				Printf (unknown_str, Line1, "Weapon", weapNum);
 			}
 		}
+		else if (stricmp (Line1, "Decal") == 0)
+		{
+			stripwhite (Line2);
+			const FDecal *decal = DecalLibrary.GetDecalByName (Line2);
+			if (decal != NULL)
+			{
+				GetDefaultByType (info->type)->DecalGenerator = const_cast <FDecal *>(decal);
+			}
+			else
+			{
+				Printf ("Weapon %d: Unknown decal %s\n", weapNum, Line2);
+			}
+		}
 		else
 		{
 			Printf (unknown_str, Line1, "Weapon", weapNum);
 		}
+	}
+
+	if (info->ammo == am_noammo)
+	{
+		info->ammouse = 0;
 	}
 
 	return result;
@@ -1326,7 +1435,6 @@ static int PatchMisc (int dummy)
 		{ NULL, }
 	};
 	int result;
-	gitem_t *item;
 
 	DPrintf ("Misc\n");
 
@@ -1339,18 +1447,25 @@ static int PatchMisc (int dummy)
 				if (wpnlev1info[wp_bfg])
 					wpnlev1info[wp_bfg]->ammouse = atoi (Line2);
 			}
+			else if (stricmp (Line1, "Rocket Explosion Style") == 0)
+			{
+				stripwhite (Line2);
+				int style = FindStyle (Line2);
+				if (style >= 0)
+				{
+					deh.ExplosionStyle = style;
+				}
+			}
+			else if (stricmp (Line1, "Rocket Explosion Alpha") == 0)
+			{
+				deh.ExplosionAlpha = (fixed_t)(atof (Line2) * FRACUNIT);
+			}
 			else
 			{
 				Printf ("Unknown miscellaneous info %s.\n", Line2);
 			}
 		}
 	}
-
-	if ( (item = FindItem ("Basic Armor")) )
-		item->offset = deh.GreenAC;
-
-	if ( (item = FindItem ("Mega Armor")) )
-		item->offset = deh.BlueAC;
 
 	// 0xDD means "enable infighting"
 	deh.Infight = deh.Infight == 0xDD ? 1 : 0;
@@ -1670,45 +1785,28 @@ static int DoInclude (int dummy)
 		return GetLine();
 	}
 
-	data = Line2;
-	while (*data > ' ')
-		++data;
-
-	if (*data != 0)
+	if (strnicmp (Line2, "notext", 6) == 0 && Line2[6] != 0 && isspace(Line2[6]))
 	{
-		const char save = *data;
-		char *const savepos = data;
-
-		*data++ = 0;
-		while (*data && *data <= ' ')
-			++data;
-		if (stricmp (Line2, "notext") == 0)
-		{
-			includenotext = true;
-		}
-		*savepos = save;
-	}
-	else
-	{
-		data = Line2;
+		includenotext = true;
+		Line2 = skipwhite (Line2+7);
 	}
 
-	if (*data == 0)
+	stripwhite (Line2);
+	if (*Line2 == '\"')
+	{
+		data = ++Line2;
+		while (*data && *data != '\"')
+			data++;
+		*data = 0;
+	}
+
+	if (*Line2 == 0)
 	{
 		Printf ("Include directive is missing filename\n");
 	}
 	else
 	{
-		stripwhite (data);
-		if (*data == '\"')
-		{
-			data++;
-			int len = strlen(data);
-			if (data[len-1] == '\"')
-			{
-				data[len-1] = 0;
-			}
-		}
+		data = Line2;
 		DPrintf ("Including %s\n", data);
 		savepatchfile = PatchFile;
 		savepatchpt = PatchPt;
@@ -1962,7 +2060,11 @@ static bool LoadDehSupp ()
 		return false;
 	}
 
-	++DehUseCount;
+	if (++DehUseCount > 1)
+	{
+		return true;
+	}
+
 	supp = (BYTE *)W_CacheLumpNum (lump, PU_DEHACKED);
 
 	for (;;)

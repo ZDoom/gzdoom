@@ -1,3 +1,698 @@
+January 20, 2002
+- Fixed: Picking items up when item respawn is enabled would mess up collision
+  detection because the items would move themselves back to their original
+  positions, and the collision detection code is not reentrant. They now
+  relocate themselves as the result of a state change later on.
+- Made some changes to the renderer to support drawing textures with different
+  scales on the same wall and to also support obtaining textures scaling from
+  some of the previously unused bytes in the maptexture_t structs stored in
+  the wad.
+
+January 19, 2002
+- Added support for DeePsea's tall patches.
+- Fixed: Sky textures wider than 1024 could not scroll properly because the
+  sky position was always clamped to 255.
+
+January 17, 2002
+- Added a new player property: PROP_INSTANTWEAPONSWITCH (2). When set, the
+  player can switch weapons instantly without lowering and raising them.
+
+January 16, 2002
+- Fixed: Autoaim could mess up. Same reason as PTR_SightTraverse below.
+- Changed giveinventory when giving a weapon so that the weapon will not be
+  brought up automatically if the player did not have it already. If this is
+  desired, it can be simulated with setweapon.
+- Disabled drawing of the crosshair when the camera is not a player.
+- Fixed a problem under NT4 when using waveout for sound effects and playing
+  MIDI music: A memory block would be modified after being freed. The fix is
+  a 50 ms delay between stopping the song and shutting down the sound.
+- Added "waveout" as a synonym for "winmm" for the snd_output cvar.
+- Added CheckWeapon and SetWeapon ACS commands.
+- Added support for a -1 translation in Thing_SetTranslation to set the
+  target's translation to that of the activator's.
+
+January 14, 2002
+- Fixed a bug in PTR_SightTraverse() that could cause it to think something
+  was visible when it really wasn't.
+- Fixed: Masked mid textures in foggy areas could be drawn with the wrong
+  light level, because they checked the foggy flag to determine if they were
+  in a foggy area. This flag is not set when drawing masked mid textures.
+- Added a tx cvar to test different horizontal wall texture scales.
+- Fixed some errors GCC found and added GetFlashedPalette() to SDLVideo
+  so that ZDoom compiles under Linux again.
+
+January 12, 2002
+- Added a ty cvar to test different vertical wall texture scales.
+
+January 10, 2002
+- Added a vid_noblitter cvar to force memcpy to be used for copying from
+  system to video memory, even when the blitter is available to do the job.
+  On my P3-866 with a GeForce2 Go, the blitter is about twice as fast as
+  memcpy. On my Athlon XP 1600+ with GeForce2 MX, memcpy is about three
+  times faster than the blitter. I need more data before I can decide what
+  a reasonable default for different systems is, but right now it defaults
+  to false.
+- Fixed: The blitter surfaces would only flip when logging was enabled
+  because I had the Flip call enclosed inside a LOG1 macro.
+- Fixed the case where the video driver reported it could blit from system
+  to video memory, but the blitter surfaces could not be allocated. When this
+  happened, the screen would not update.
+
+January 9, 2002
+- Changed P_CheckSlopeWalk() to return false if the actor's floorsector is
+  different from the actor's sector. It seems to fix the problem with the
+  "push pad". The whole Doom collision detection/movement code is a mess and
+  deserves to be rewritten from the ground up.
+- Changed sky texture positioning to match older versions. It should be based
+  on the height of the screen, not the height of the texture.
+- Commented out a check at the beginning of wallscan(), because sky boxes can
+  make the check invalid.
+
+January 8, 2002
+- By default, animated textures will no longer have decals drawn on top of
+  them. This can be changed by adding "allowdecals" to the animation sequence
+  in ANIMDEFS.
+- Moved the SpawnableThings/DoomEdMap initialization out of
+  FActorInfo::StaticGameSet() into ::StaticSetActorNums() so that Dehacked
+  patches that change doomednums will work as expected.
+
+January 7, 2002
+- Added an error message for switches that have more than one sound for their
+  on or off states.
+- Fixed: Creating a switch with a valid start texture but an invalid second
+  texture would crash when you tried to use the switch. Now you get an error
+  when the ANIMDEFS is parsed.
+
+January 5, 2002
+- Wrote some code for Convert24(). Since my video card does not support 24-bit
+  displays, I had to test it using a 32-bit display instead, but it seems to
+  be working.
+- Removed the special case for writing to 8-bit windowed displays in
+  win32video.cpp.
+- Added turnspeeds command to adjust the keyboard turning rate.
+- Added sin, cos, and vectorangle ACS functions. They use 16-bit angles. 0 is
+  0 degrees, and 65536 would be 360 degrees if it didn't wrap to 0.
+
+January 4, 2002
+- Fixed: CheckIWAD() would consider as valid any files that were present in
+  the search, even if they weren't IWADs. Hence, something like
+  "zdoom -iwad zdoom.exe" would be accepted and cause a crash.
+
+January 3, 2002
+- Got rid of the divide in P_AdjustLine when it calculated the slopetype for
+  diagonal lines. Because only the sign of the result is significant, a
+  simple xor is enough. Did the same for UpdateSegBBox.
+- Turned R_PointOnSide into a simple inlining of DivScale32. Multiplies are
+  cheaper than mispredicted branches, so I took out the special cases for
+  perfectly horizontal and vertical lines. Also made similar changes to
+  P_PointOnLineSide and P_PointOnDivlineSide, which are exactly the same
+  thing, except they use different line representations. Also inlined
+  P_MakeDivline, because it's so simple.
+
+January 2, 2002
+- Moved cl_bobscale and cl_stillbob into userinfo (and renamed them to
+  movebob and stillbob). There are sector actions that depend on the player's
+  eye height, so these values need to be sent across the network.
+- Optimized R_DrawFogBoundary() by drawing horizontal spans instead of
+  vertical strips.
+
+December 24, 2001
+- Added a check for sectors without any lines in p_setup.cpp. If any are
+  found, their tags are set to 0 so that they cannot be used by most specials.
+
+December 22, 2001
+- Fixed: If you saved over a savegame from a different ZDoom version, the menu
+  would still list it as being from a different version until you quit and
+  restarted the game.
+- Added the CreateTranslation ACS command and Thing_SetTranslation special to
+  allow changing the translation used by any actor.
+- Added a ScriptedMarine actor. It looks just like the player but wears indigo
+  and acts like a monster (except its attacks don't actually do anything).
+  Doomednum 9100, spawnable #151.
+
+December 21, 2001
+- Added function and array support to ZDoom's ACS VM.
+
+December 18, 2001
+- Fixed: Player corpses would revert to the default skin if the player
+  respawned before their death animation finished.
+- Changed the Doom weapons so that they use the ammouse member of FWeaponInfo.
+  This way, when a deh patch sets a weapon to no ammo, I can set its ammouse to
+  0, and nothing will change when the weapon is fired..
+- Changed video code so that if the blitter is not being used to copy the
+  frame from system memory, all the drawing will still happen in system memory
+  because the processor has faster access to it than video memory.
+- Changed video code so that it works with drivers that do not support
+  FLIP_NOVSYNC.
+
+December 16, 2001
+- Changed the SSG flash to not last longer than the associated weapon frame.
+
+December 8, 2001
+- Fixed: CheckIfExitIsGood() always returned false if self was NULL. This
+  meant open scripts could not change the level.
+- Fixed: Exit_Normal and Exit_Secret specials ignored their position
+  arguments and always used position 0.
+
+December 7, 2001
+- Changed PIT_RadiusAttack() to be closer to the original behavior. Doom does
+  radius damage in a square pattern, not a circle. Oops!
+
+November 23, 2001
+- Changed translationtables into an array of translation tables and fixed a
+  bug with the serialization of decals with custom translations in the
+  process.
+- Added the CreateTranslation command to ACC.
+- Redesigned the layout of ACSe/ACSE files so that they can be included with
+  editors other than ZETH. The new format looks like a normal ACS\0 file with
+  some junk in the string area but no actual scripts or strings. The old
+  ACSe/ACSE format is still supported for people who took the time to compile
+  the ACC 1.16 source I had posted.
+
+November 22, 2001
+- Changed the translation member of AActor to an index into the
+  translationtables array.
+- Added the Thing_SpawnFacing special. It works like Thing_Spawn(NoFog)
+  except the angle of the new actor is taken from the spot where it spawns at.
+- Corrected the xspeed and yspeed arrays in p_enemy.cpp so that they better
+  reflect diagonal movement at the correct speed of 1.
+
+November 20, 2001
+- More tool work: Added IMGZ, FON1, and FON2 loading support and ILBM, PCX,
+  and BMP writing support to imagetool. It loads FON1 and FON2 as images, not
+  fonts, so converting to/from FON1 and FON2 requires extra work on the user's
+  part. However, it does make it possible to obtain an editable image for
+  the font that can be used to create another font of the same type. It also
+  makes imagetool usable as a general-purpose image conversion program, which
+  is fitting considering that it was spawned from an ILBM to PCX converter I
+  had written earlier.
+
+November 19, 2001
+- Changed FFont to construct a font whose glyphs are all the same height so
+  that I don't need to keep track of the height and y-offset of individual
+  characters.
+- Fixed the FONTA63 character in zdoom.wad to be a proper copy of the
+  underscore character for Heretic/Hexen.
+- Fixed: The Beak's weapon infos did not have their type member filled in.
+
+November 15, 2001
+- Changed fog boundary handling so that black fog is treated like diminishing
+  light rather than fog, so it will not appear on a boundary.
+- Fixed: The Fortress of Mystery appeared on the intermission map when
+  entering E2M8 instead of E2M9. It will also stay on the map after you
+  finish it now.
+- Fixed: When using the changemap command to switch episodes in Doom 1, only
+  the episode just finished would be shown during the intermission.
+- Renamed CONCHARS to CONFONT.
+- Merged all of the FONTB?? graphics in zdoom.wad into a single DBIGFONT
+  lump, partly to save space but mostly because I wanted an example font to
+  include with imagetool when I distribute it.
+- After inspiration struck, I added some code to make fog boundaries look
+  better: At a two-sided line where the front fog is different from the back
+  fog, draw a solid-colored window of varying translucency in the color of
+  the front fog color. This is effectively what creating a new colormap for
+  each fog color already does for sprites and one-sided lines.
+
+November 13, 2001
+- Added FON2 creation support to imagetool. Like FON1, this is a font format,
+  but this one supports characters of varying widths and a custom palette.
+
+November 12, 2001
+- Tool work: Added pcx, bmp, and patch loading support to imagetool.
+- Fixed: Screen shots did not capture the palette blend.
+- Added the ability for HUD messages to resize themselves when the screen
+  size changes.
+- Removed precachefonts command from ACC, as I decided it was not needed.
+
+November 10, 2001
+- Implemented the setfont command.
+- Fixed: HUD messages were not saved with save games.
+- Added decal teleporting support to TeleportInSector so that decals can move
+  between the different shafts of a fake 3D elevator. Then I commented it out
+  because doing it right is too hard.
+
+November 9, 2001
+- Added the ACS functions setfloortrigger, setceilingtrigger, getactorx,
+  getactory, and getactorz. The first two are to make convincing fake 3D
+  lifts possible. The last three are there because they have been requested
+  a lot.
+
+November 8, 2001
+- Fixed: Elevators did not set floordata or ceilingdata, so you could not
+  tagwait on them.
+- Improved sprite clipping by fake flats further. Now you can look into an
+  underwater area through a window, and the sprites in it will still show
+  when your view is above water.
+
+November 7, 2001
+- Fixed: Autosaves do not become the default quicksave if the player has not
+  saved a game manually yet.
+- FMOD 3.33 also has some division by zero issues, so now I'm back to using
+  FMOD 3.40--but this one was updated with some more checks that seem to be
+  keeping the division errors away. Unfortunately, the updated FMOD 3.40
+  isn't available for Linux yet.
+- Fixed: G_InitNew() was calling StaticGameSet(), but that only needs to be
+  called during startup. Calling it again later can cause some Dehacked
+  changes to be undone.
+- Fixed: Swimming into a one-sided line while in water would try to jump you
+  out of the water. Since there's nothing on the other side of the line,
+  that's rather pointless.
+- Made R_DrawSkyBoxes() set the camera properly.
+- Changed most instances of camera->Sector in the renderer with viewsector
+  so that deep water clipping can behave as expected when using a chase
+  camera that moves out of the same sector as the camera.
+- Improved clipping of sprites by sloped fake floors. To be completely
+  correct, the clip line should be sloped with the floor, but it's still
+  horizontal because I am feeling lazy right now. At least things don't
+  appear and disappear as you move around underneath a sloped fake floor.
+- Added a sound to A_HeadAttack() so that the Cacodemon can be given a melee
+  sound through SNDINFO.
+- Changed A_CPosAttack() to use self->AttackSound instead of hard-coding it
+  to "chainguy/attack". Now the WolfSS can have a different attack sound.
+- Fixed: secplane_t::FlipVert() was wrong. It needs to negate everything, not
+  just c and d. This prevented sloped fake floors and ceilings from
+  displaying properly.
+
+November 6, 2001
+- Added things 9983 and 9982 to perform actions when going below and above
+  fake ceilings.
+- Added some more Transfer_Heights modifiers: 16 causes the control sector
+  to have no effect at all on the target sector. With this modifier, it is
+  used solely for triggering sector actions. 32 causes the control sector to
+  not effect the lighting in the target sector.
+- Added two new sector actions: SecActEyesDive (9993) and SecActEyesSurface
+  (9992). When used in conjunction with TeleportGroup, these can produce the
+  Duke3D silent teleport to and from underwater sectors effect.
+- Changed TeleportGroup so that if group_tid is 0, it treats the activator
+  as the group.
+
+November 3, 2001
+- Made some changes to P_ExplodeMissile() so that missiles exploding on a
+  corner are more likely to leave behind decals.
+- Added the cvars cl_bobscale and cl_stillbob to control the amount of view
+  bob when moving and standing still, respectively.
+
+November 2, 2001
+- Improved the accuracy of EV_SilentLineTeleport(). The original function was
+  written as if the actor was always exactly on the line, so it calculated a
+  destination position directly on the line and fudged with it to get the
+  player on the correct side. It's better to find the closest point on the
+  source line and the corresponding point on the destination line and then
+  offset off of the destination line so that the actor is in the same
+  relative position as it is to the source line. This eliminates the need for
+  fudging, and I can't get stuck in the wall when teleporting in a sample
+  level anymore.
+- Why does the Doom map format have to store sectors only implicitly? Because
+  of this, people can create maps with oodles of unclosed sectors. I've
+  already had to modify my P_Trace() function because of this. Now I found
+  out that they can cause problems if I don't always divide front space in
+  R_RenderBSPNode(): I made it conditional because I assumed it was
+  unconditional because of precision problems with using polar coordinates to
+  perform the transformations. When sectors are well formed (and most are),
+  having the check causes no visible problems. But when sectors are badly
+  formed, it is possible that sprites in the sectors will not be drawn because
+  the sectors do not actually get visited, even though the space they occupy
+  is drawn.
+- Changed the Doom fullscreen HUD so that health and armor counts are drawn
+  at a location based on the actual font height.
+- Fixed: DCanvas::DrawShadowedMaskedBlock and ::ScaleShadowedMaskedBlock did
+  not check to make sure the shadow was drawn inside the screen. Now they do,
+  and if the shadow lies partially off the surface, the image and shadow get
+  drawn in two passes instead of one.
+
+October 31, 2001
+- Fixed: The bloodbath announcer was not entirely silent in single player
+  games.
+- Fixed AImpactDecal::SpreadLeft() and SpreadRight() so that they can spread
+  across adjacent loops without getting stuck in an infinite loop.
+- Fixed: Corpses can fall to the bottom of deep water now.
+- Fixed a bug in P_Trace() when the trace is on the floor or ceiling and it
+  hits a two sided line that blocks it.
+- New: Instant hit weapons can make splashes in liquids, even deep ones.
+  The size of the splash is determined by the weapon's puff's mass, so I set
+  several of the puff actors to have masses of 5 so their trails only leave
+  small splashes instead of big ones.
+- Renamed DThinker::RunThink() to Tick().
+
+October 30, 2001
+- Finally added a playmovie command to ACS.
+- Fixed: FDecalLibrary::GetDecalByNum() would only find the decal if it was
+  on the right-most branch of the tree.
+- Changed the subsector pointer in AActor to a sector pointer. The only place
+  where it wasn't used to get the actor's containing sector was an early-out
+  in P_CheckSight(). Since the sight checking in ZDoom uses the blockmap
+  instead of the BSP, I doubt it provided much benefit, especially since it
+  was rarely taken.
+
+October 29, 2001
+- Put back some code that lets you see underwater areas through windows. It
+  is not perfect and cannot be used at the same time that you can see the
+  abovewater area of any deep sectors.
+- Fixed: The back side of a mirror could clip sprites in front of it because
+  the determination of which side of a line a sprite is on was being done in
+  world space. The solution is to use camera space for the determination
+  instead. Since I was already calculating all the necessary values, the
+  solution mostly involved extending vissprite_t and drawseg_t to hold the
+  extra information.
+- Fixed: Sectors set to drop their ceilings after 30 seconds would not go
+  back to their original height if they were blocked while closing.
+- Added the con_ctrl_d cvar so that I can set it to "quit" and press Ctrl-D
+  at an empty console prompt to quit the game.
+- Added the exit command as a synonym for quit.
+- Added the defaultbind command.
+
+October 27, 2001
+- Made a slight optimization for sprite drawing by moving the floorclip
+  clipping out of R_DrawMaskedColumn and into R_DrawSprite.
+- Fixed: Spawning objects in a swimmable water area would create a splash on
+  the water surface.
+- Fixed: Passing +map at startup just prints a warning to the console instead
+  of quitting altogether if the map could not be found.
+- Added new options to Transfer_Heights: By setting the second argument to 2,
+  only the deep water effect will be created. By setting it to 4, the fake
+  floor and/or ceiling will only show if it is "inside" the sector, but only
+  if the real sector's and the control sector's corresponding planes are not
+  sloped. This also effects the texturing in that the control sector's
+  textures are used for both the top and bottom of the surface they correspond
+  to, and the sector being faked keeps its textures for its normal range.
+  Set the first argument to 8, and it will be made into water even without a
+  WaterZone actor in the control sector. These can be added together to
+  combine effects. So Transfer_Heights (tag, 12) should produce an effect
+  similar to Doom Legacy's 280 linetype.
+- Added the test and eval console commands. Test is like if/then/else, and
+  eval evaluates an expression, possibly storing the result in a variable.
+  This should take care of all the major functionality the console was
+  missing before.
+
+October 26, 2001
+- Made the atexit cvar a command that registers different commands to
+  execute when the game quits.
+- Cfg files listed at the start of the command line now get executed as if
+  they had appeared after +exec. (i.e. "zdoom foo.cfg" works just like
+  "zdoom +exec foo.cfg")
+- Added the pullin command so that .cfg scripts loaded at startup can cause
+  one or more wads to be loaded. (They "pull in" the wads they need.)
+- Changed the exec command so that it can execute more than one file.
+- Added the addkeysection and addmenukey commands for people writing console
+  scripts.
+
+October 25, 2001
+- Added ACS commands fadeto, faderange, and cancelfade to do some palette
+  blending stuff under scripted control.
+- Added BloodSplash, BloodSplashBase, SlimeSplash, and SlimeChunk classes
+  for anyone who wants to use them in a TERRAIN lump.
+- Added the atexit cvar. It gets executed like an alias when the game quits.
+- Added archivecvar command to force user-defined cvars to save themselves
+  in the config file.
+- Added snd_waterreverb cvar to disable the use of underwater reverb.
+- Added support for specials with variable argument counts to ACC so that
+  specials which have had parameters added (such as Thing_Spawn) can still
+  be used without the extra parameter.
+- Added TeleportOther (76) and TeleportGroup (77) specials.
+- Added autosave capabilities. Up to four autosaves are kept at a time,
+  and they get created whenever a player enters a map. The level designer
+  can also place them at strategic locations in the level using special
+  15 or linetype 338.
+
+October 24, 2001
+- Fixed: The level name shown on the automap included the hours of the
+  current time if the map was in a hub.
+- Added Line_Horizon to DOOMX/HERETICX as linetype 337.
+- Added am_showitems cvar to show the item count on the automap.
+- Added pattern matching support to D_AddConfigWads().
+- Fixed: Variable substitution only worked for the last argument of a
+  command line.
+- Removed FCommandLine::AllButFirstArg(). It did not handle variable
+  substitution, and since you can escape quotes inside strings, it's not
+  really neccessary, either.
+- Added a generator line for the Spider Mastermind to DECALDEF.
+- Added some division-by-zero checks to the projection calculations in
+  R_AddLine(), R_CheckBBox(), and R_RenderBoundWallSprite().
+
+October 23, 2001
+- Added Scale and Decal properties to Dehacked thing sections. Added Decal
+  property to Dehacked weapon sections.
+- Changed the scalars in DECALDEF to be 1-based instead of 64-based. This
+  lets me silently expand its range in the future without breaking existing
+  decal definitions.
+- Fixed: fixedlightlev was being applied to skies. It looks weird to see a
+  torch lighting up the entire sky, so skies should ignore the setting of
+  fixedlightlev.
+- Fixed the scaled status bar. I was simply forgetting to add the image
+  offsets in FBaseStatusBar::DrawImage() before calling CopyToScreen().
+- Added code to let decals move with sliding and rotating polyobjects.
+- Fixed: The wait console command waited one tic too few.
+- Fixed a resizing problem with playing movies windowed.
+- I think checkinventory, giveinventory, and takeinventory are fully working
+  now.
+- Made checkinventory not crash in open scripts.
+- Made AInventory::TryPickup() public so that I can use it with
+  giveinventory and avoid printing a message about the pickup.
+- Passing an amount of 0 to takeinventory now removes all of that item
+  from the player's inventory.
+- Made TakeInventory work in open scripts.
+- Removed the Health option from GiveInventory.
+- Changed DamageThing so that negative damages cause it to act like
+  HealThing.
+- Added OldStyleID() methods to AFist, APistol, AStaff, and AGoldWand.
+
+October 22, 2001
+- Made clearinventory work in open scripts.
+- Made ambientsound use CHAN_AUTO instead of CHAN_BODY, so you can have
+  multiple overlapping ambientsounds.
+- Fixed: Setplayerproperty was using the set property as the who property.
+- Fixed: Closing the console when the overlay automap is active and the view
+  window does not cover the width of the screen would not redraw the border.
+- Fixed: The overlay automap did not center itself inside the view window.
+- Fixed: When neverswitchonpickup was changed during a game, it would always
+  become false in the playerinfo struct.
+- Made the rocket explosion style modifiable through dehacked in the misc
+  section. Use the keys "Rocket Explosion Style" and "Rocket Explosion Alpha"
+  to change it.
+- Changed the sky drawer so that it properly tiles skies of any height and
+  not just those that are a power of 2.
+- Changed R_InitSkyMap() so that tall skies will always be aligned at the
+  top of the screen when looking all the way up. Now 240-tall skies will
+  actually be useful, since so many people seem to think skies need to be
+  that tall to be considered "tall" even though anything taller than 128
+  pixels is "tall".
+- Fixed: Files specified at the start of the command line were treated as
+  if they were listed after a -bot parameter.
+- Modified DArgs::GatherFiles() so that it can handle files listed after
+  multiple instances of the same parameter (e.g. "-file 1.wad -file 2.wad")
+- Changed ConsiderPatches() so that it tries appending both .deh and .bex to
+  files listed after both -deh and -bex parameters, which means the two
+  parameters now behave identically and are just synonyms for each other.
+- Made a fix to BaseFileSearch() when it retries with an extension.
+
+October 20, 2001
+- Added range checks to R_SetVisibility to prevent visual glitches caused by
+  too high visibility/fov combinations.
+- Made r_visibility unchangeable in netgames.
+- Made FOV changes get sent through the net interface, so they can be
+  recorded in demos, and also so that they can be restricted with the new
+  sv_nofov cvar.
+- Fixed: Bool cvars (such as sv_nomonsters) would change their associated
+  serverinfo var without going through the network.
+- Fixed: The Doom status bar would not update the arms/frags area when the
+  deathmatch cvar is changed during the game.
+- Fixed: Player corpses could still make the grunt sound when they hit the
+  ground.
+- Fixed: StreamSong would always play at full volume until snd_musicvolume
+  changed because it kept its own internal copy of the volume that was not
+  updated with the actual volume until the cvar was changed.
+- Made crushing ceilings call PlayCeilingSound() again, but only if the
+  ceiling is not playing a looping sound. This fixes the almost silent crusher
+  in Doom2 MAP04 that had become totally silent.
+- Fixed: The weapon sprite did not flash when invisibility was about to run
+  out.
+- Made DECALDEF generators support using "None" to remove decals from actors.
+- Added fullbright flag to the BFG lightning and plasma scorch decals.
+- Fixed: Ambient things could not be spawned silent, because they start
+  themselves with PostBeginPlay, which gets called after Deactivate
+  when their dormant bit is set. So they would stop themselves and then
+  immediately start again. Using BeginPlay fixes this, since it gets
+  called before the dormant Deactivate.
+- Fixed: S_RelinkSound() should not be able to move repeating sounds to
+  positioned sounds. This fixes removing continuous ambient sound things
+  from not stopping the sound immediately.
+- Fixed: Deactivating a continuous ambient sound thing would not stop the
+  sound until it was either overridden by more important sounds or disappeared
+  out of range.
+- Fixed: The bex include directive ignored the file name if it appeared in
+  files that mark line endings with CR/LF instead of just LF. (AFAIK, that's
+  all bex files that exist.) For files that just use LF, it would try to
+  include the file but crash.
+- Win32Video::EnumDDModesCB() now rejects modes whose widths are not
+  multiples of 8, because there are various places in the source that assume
+  this to be true, and I have no alternative code (or desire to write such
+  code) to handle cases when this is not true. I don't know of any standard
+  modes that would be rejected by this, but it's better to be safe than sorry.
+- Fixed: Viewwindows with widths that are not divisible by 16 could crash
+  when doubling pixels horizontally, because the MMX routines write to
+  quadwords at a time. Now the non-MMX code is always used in such cases,
+  since they are rare (only when the window is the full width of the screen
+  and the screen width is not a multiple of 16).
+- Removed vid_bufferarea and related code to switch between buffered and
+  unbuffered display based on translucent areas visible in the last frame.
+- Fixed: Savegames did not remember which levels had been marked visited for
+  the Doom 1 intermission screen.
+- Fixed: Actors' alphacolor was not serialized.
+- Fixed vid_setmode not always resizing the window to a reasonable size under
+  Win ME because the OS sends out WM_GETMINMAXINFO before performing the
+  resize with SetWindowPos().
+
+October 19, 2001
+- Added the ability for DDrawFB to draw to a system memory surface and then
+  blit it to the primary surface. This can greatly improve performance, both
+  because the video card can write to its own memory faster than the CPU, but
+  also because the next frame can start rendering in a separate surface while
+  the blit is underway. The net result is that drawing to system memory is
+  only a little slower than drawing directly to video memory (if at all), and
+  there is really no reason for me to support writing directly to the primary
+  surface any more. I can even run 1400x1050 at 35 fps, though it is somewhat
+  jumpy, and it does get slower if the scene is too complicated. But just
+  being able to run it full speed at all at that high a resolution rocks! Even
+  a 300 MHz P2 can run the standard levels at a full 35 fps at 800x600, which
+  it couldn't before.
+
+October 18, 2001
+- Need to fix windowed 256 color updating for systems that cannot lock the
+  primary surface. (result is DDERR_CANTLOCKSURFACE when you try)
+- Added a performance counter for blitting the frame buffer to the screen and
+  discovered that it is a real performance sink. When no pixel format
+  conversion is involved, it should be no slower than wall drawing, right? Well,
+  it's about twice as slow.
+- Improved performance at 1024x768 by using a pitch larger than the width for
+  the underlying SimpleCanvas at that resolution (so that successive pixels
+  drawn in columns are not exactly 1k apart and can make better use of the
+  cache). The result is that wall pixels take about 5.4 cycles to draw, which
+  is in line with what the other resolutions manage.
+
+October 17, 2001
+- Did some performance tests at different resolutions and discovered something
+  very weird: up to and including 800x600, wall drawing ranges between 4.5 and
+  5.2 cycles/pixel. But at 1024x768, it jumps up to a whopping 18 cycles per
+  pixel. Even stranger, 1280x1024 only uses 7 cycles/pixel, and 1400x1050 takes
+  just 5.5 cycles/pixel. (These numbers include all overhead such as traversing
+  the BSP and creating visplanes, not just the time actually spent stuffing
+  pixels to the framebufer.)
+- Changed the mode iterator to allow resolutions taller than 1024 pixels,
+  since there is nowhere in the source that this restriction exists. (There
+  is a limit of 1200 pixels tall, but this is easily changed with a #define.)
+- Massaged the assembly output of vlinec4 to produce vlinetallasm4. This
+  new function is about 7% faster than provlineasm4 and is not limited to
+  256 pixel tall columns, so I stopped using provlineasm4. I don't know
+  how it compares to vlineasm4 on a Pentium, but my guess is that vlineasm4
+  is faster on such a machine. It's probably worth also noting that contrary
+  to my initial belief, self-modifying code was essential to getting this
+  function to perform well. Also, I did not even bother trying to optimize
+  it for a Pentium, just Pentium Pro and above. Moving things around to help
+  pairing on a Pentium actually reduced performance on this P3-M.
+
+October 15, 2001
+- Wrote C versions of vlineasm1 and vlineasm4. On a P3, vlinec4 performs
+  about half way between vlineasm4 and provlineasm4. P2 performance is
+  probably similar.
+- Got rid of all the 2-column drawers. Whatever performance improvements
+  they might have been able to offer was negated by the complexity of the
+  code neccessary to use them. This let me greatly clean up rt_draw4cols()
+  and actually make it readable.
+
+October 12, 2001
+- Fixed: I_InitMusic() was not called if -nosound or -nosfx was passed.
+- Changed visplanes so that the bottom array stores the pixels just below
+  the plane--a simple semantic change that lends itself to a few more
+  optimization chances elsewhere in the engine, since it unifies the way
+  top and bottom arrays are handled everywhere.
+- Enhanced wallscan so that it can get a texture column using any function.
+  This lets me use it for layered skies.
+
+October 10, 2001
+- Drawing of a single sky layer now uses wallscan. 
+- Removed the use of dc_mask from all of the non-wallscan column drawers,
+  since they are only used for masked columns, which never repeat and hence
+  never need masking.
+- Tried out the new code on a P2-300. It is also slightly faster. Drawing a
+  wall covering the entire screen is about 10ms faster at 800x600 on it. This
+  made me decide to do away with BlastColumn, R_RenderSegLoop1, and
+  R_RenderSegLoop2. There is just one R_RenderSegLoop now, using vlineasm4.
+
+October 9, 2001
+- Added Build's vlineasm4 and associated code to speed up wall drawing.
+  Surprisingly, it only offers a marginal improvement on this P3-866 equipped
+  notebook: The higher resolutions are only a few FPS faster than
+  r_columnmethod 1. When I get a new monitor, I will have to try it out with
+  my main system, since it still has a P2-350. I think the biggest benefit
+  should be for people with Pentium-class or less processors.
+  Since it is faster, I'll keep it. I also improved it so that it works with
+  textures taller than 256 pixels (or should, I haven't tested).
+
+October 4, 2001
+- Fixed fullscreen video playback so that it does not minimize the game
+  window immediately after the video is stopped.
+- Improved dragging the ZDoom window around by making the window procedure
+  pay attention to WM_PAINT messages and redraw the screen as needed. Making
+  WM_SIZE invalidate the client rect also lets it redraw as the window is
+  shrinking.
+
+October 3, 2001
+- Fixed DDrawFB::CreateSurfacesComplex() so that it can retry without
+  requesting video memory. This lets it work with Mode X, so presumably it
+  will also let it work with old video cards that lack proper DirectDraw
+  support.
+- Commented out the GammaControl stuff in win32video.cpp. Too many people
+  complained about not being able to compile it (get a newer DX SDK!), and
+  it does not provide me much benefit when working with paletted displays
+  anyway. Nor was it ever actually implemented.
+
+October 2, 2001
+- Fixed: DROPPED bit was defined twice in DEHSUPP.
+- Updated my source files with the new BSD-ish license.
+- Renamed p_spark.cpp to g_shared/a_spark.cpp.
+- Removed d_items.cpp and d_items.h. They have been obsolete ever since I
+  changed the give command to accept class names.
+- Changed the randomized sound names in DEHSUPP from their individual names
+  to their new base name. (i.e. grunt/sight1, 2, and 3 all become grunt/sight)
+- Fixed a typo in DEHSUPP: gatso/death should have been fatso/death.
+
+October 1, 2001
+- Added a playmovie command to play a file using DirectShow. Currently, it
+  works best with windowed mode.
+
+September 27, 2001
+- Added Line_Horizon special to extend a sector's floor and ceiling to
+  infinity--should be useful for skyboxes. It is not meant for use with
+  slopes, so don't do that.
+- Fixed: ceilingclip/floorclip generation in R_DrawSkyBoxes was wrong for
+  unused portions of the sky box's visplane (when pl->top[x] == 0xffff).
+  This could cause problems when taking the snapshot for savegames.
+- Fixed: Quicksaving would continue to ask for a save slot until a normal
+  save had been done.
+- Fixed: Bad decal texture coordinates could crash the game. These were
+  generated when the camera gets extremely close to a decal, so I chose to
+  use the same tactic I used with masked mid textures and not render them
+  at all if they get too close. I think the only time something like this
+  becomes a real issue is when somebody is noclipping around the level.
+
+September 26, 2001
+- Fixed P_LoopSides() to not trash memory when loading a map with a
+  single-sided line that does not attach to anything at its right end. (E1M3
+  is one such map.)
+- Fixed decals not drawing their full height except when they were on upper
+  textures; BlastColumn was storing wallbottom wrong.
+- Fixed inconsistant usage of ceilingclip. It is supposed to store the top
+  good y, but some places still treated it as the y just above the first good
+  y, as it was in the original renderer.
+- Fixed the GCC version of qinterpolatedown16short(). It wrote 2 more
+  entries than it was supposed to and could start writing one entry before
+  it was supposed to.
+- Previous log entries were accidentally lost when I was improving the
+  todos/fromdos scripts. Now only the files that have changed get copied
+  across, and I can avoid rebuilding every source file each time I transfer
+  the code between partitions. Under Linux, this is a big deal, because GCC
+  is so slow.
+
 September 17, 2001
 - Added cl_missiledecals cvar to turn off decals left behind by missile
   explosions.
@@ -78,7 +773,8 @@ September 10, 2001
 September 8, 2001
 - Added decal faders so that decals that are likely to bog things down
   (such as the plasma rifle's) can disappear sooner than if they wait for
-  cl_maxdecals to be hit and get cycled out.
+  cl_maxdecals to be hit and get cycled out. [Edit: I only use these for
+  special effect decals right now.]
 - Added the ability for missiles to leave behind decals on walls.
 - Fixed a sub-pixel alignment problem for vertically flipped sprites.
 - Fixed: Adding bots and then changing the map could crash because the bot's
@@ -874,7 +1570,7 @@ February 11, 2001
 
 February 8, 2001
 - Added Anubis cheat.
-- Really fixed rotated flats on sloped planes. The previous fix only effected
+- Really fixed rotated flats on sloped planes. The previous fix only affected
   floors at certain angles and did nothing for ceilings.
 
 February 5, 2001
@@ -3314,7 +4010,7 @@ January 8, 1999
   routines. I tried disabling vbl wait, but DirectDraw always seems to do it
   even when I don't tell it to, so the numbers for the low resolutions aren't
   very informative since they cap at the screen's refresh rate. Rates from
-  twoBuild games under similar conditions are also given for comparison.
+  two Build games under similar conditions are also given for comparison.
   This is on my PII-350:
 
 	mode		old		new		Blood	Duke3D
@@ -3335,7 +4031,7 @@ January 8, 1999
   also looks like I can draw walls faster than Blood but not Duke. For
   rendering a real scene that consists of more than just a single wall, ZDoom
   beats them both, since a single wall is the best-case scenario for Build.
-  Frame rates in ZDoom seems to be pretty even now, which is nice since the
+  Frame rates in ZDoom seem to be pretty even now, which is nice since the
   old routines were significantly slower at drawing walls than anything else.
 
 - Put in a check in R_RenderSegLoop1() and R_RenderSegLoop2() for NULL

@@ -55,6 +55,7 @@ typedef enum
 
 CVAR (Bool, wi_percents, true, CVAR_ARCHIVE)
 
+void WI_loadData ();
 void WI_unloadData ();
 
 #define NEXTSTAGE		(gameinfo.gametype == GAME_Doom ? "weapons/rocklx" : "doors/dr1_clos")
@@ -304,6 +305,7 @@ static wbstartstruct_t *wbs;				// contains information passed into intermission
 static wbplayerstruct_t*plrs;				// wbs->plyr[]
 static int				cnt;				// used for general timing
 static int				bcnt;				// used for timing of background animation
+static int				epsd;				// episode currently displayed
 
 static int				cnt_kills[MAXPLAYERS];
 static int				cnt_items[MAXPLAYERS];
@@ -413,8 +415,7 @@ static int WI_DrawName (char *str, int x, int y, bool nomove=false)
 		}
 	}
 	screen->SetFont (SmallFont);
-	patch_t *p = (patch_t *)W_CacheLumpName ("FONTB39", PU_CACHE);
-	return (5*(SHORT(p->height)-SHORT(p->topoffset)))/4;
+	return BigFont->GetHeight()*5/4;
 }
 
 static int WI_CalcWidth (char *str)
@@ -499,12 +500,10 @@ void WI_drawEL ()
 	}
 }
 
-int WI_MapToIndex (char *map)
+int WI_MapToIndex (char *map, int ep)
 {
 	int i;
-	int ep;
 
-	ep = wbs->epsd;
 	if (gameinfo.gametype == GAME_Heretic)
 	{
 		ep -= 10;
@@ -518,7 +517,7 @@ int WI_MapToIndex (char *map)
 	return i;
 }
 
-void WI_drawOnLnode (int n, patch_t *c[])
+void WI_drawOnLnode (int n, patch_t *c[], int episode)
 {
 
 	int 	i;
@@ -526,10 +525,8 @@ void WI_drawOnLnode (int n, patch_t *c[])
 	int 	top;
 	int 	right;
 	int 	bottom;
-	int		episode;
 	BOOL 	fits = false;
 
-	episode = wbs->epsd;
 	if (gameinfo.gametype == GAME_Heretic)
 	{
 		episode -= 7;
@@ -574,13 +571,13 @@ void WI_initAnimatedBack ()
 
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		if (wbs->epsd > 2)
+		if (epsd > 2)
 		{
 			return;
 		}
-		for (i = 0; i < NUMANIMS[wbs->epsd]; i++)
+		for (i = 0; i < NUMANIMS[epsd]; i++)
 		{
-			a = &anims[wbs->epsd][i];
+			a = &anims[epsd][i];
 
 			// init variables
 			a->ctr = -1;
@@ -598,7 +595,7 @@ void WI_initAnimatedBack ()
 		patch_t *bg;
 		int lump;
 
-		sprintf (name, "MAPE%d", wbs->epsd - 9);
+		sprintf (name, "MAPE%d", epsd - 9);
 		lump = W_CheckNumForName (name);
 		if (lump >= 0)
 		{
@@ -611,6 +608,44 @@ void WI_initAnimatedBack ()
 	}
 }
 
+void WI_DrawDoomBack ()
+{
+	char name[9];
+	patch_t *bg;
+
+	if ((gamemode == commercial) ||
+		(gamemode == retail && epsd >= 3))
+		strcpy (name, "INTERPIC");
+	else 
+		sprintf (name, "WIMAP%d", epsd);
+
+	// background
+	bg = (patch_t *)W_CacheLumpName (name, PU_CACHE);
+	if (background != NULL &&
+		(SHORT(bg->width) != background->GetWidth() ||
+		 SHORT(bg->height) != background->GetHeight()))
+	{
+		delete background;
+		background = NULL;
+	}
+	if (background == NULL)
+	{
+		background = I_NewStaticCanvas (SHORT(bg->width), SHORT(bg->height));
+	}
+	background->Lock ();
+	background->DrawPatch (bg, 0, 0);
+	if (FindLevelInfo ("E2M9")->flags & LEVEL_VISITED && epsd == 1)
+	{ // Add the Fortress of Mystery if it has been visited
+		background->DrawPatch (anims[1][7].p[2], anims[1][7].loc.x, anims[1][7].loc.y);
+		anims[1][7].data = 800;	// Don't animate it again if the user uses changemap E2M9
+	}
+	else
+	{
+		anims[1][7].data = 8;
+	}
+	background->Unlock ();
+}
+
 void WI_updateAnimatedBack (void)
 {
 	int i;
@@ -618,14 +653,14 @@ void WI_updateAnimatedBack (void)
 
 	if (gameinfo.gametype != GAME_Doom ||
 		gamemode == commercial ||
-		wbs->epsd > 2)
+		epsd > 2)
 	{
 		return;
 	}
 
-	for (i = 0; i < NUMANIMS[wbs->epsd]; i++)
+	for (i = 0; i < NUMANIMS[epsd]; i++)
 	{
-		a = &anims[wbs->epsd][i];
+		a = &anims[epsd][i];
 
 		if (bcnt == a->nexttic)
 		{
@@ -641,7 +676,7 @@ void WI_updateAnimatedBack (void)
 				// gawd-awful hack for level anims
 
 				if (!(state == StatCount && i == 7)
-					&& (WI_MapToIndex (wbs->next) + 1) == a->data)
+					&& WI_MapToIndex (wbs->next, wbs->next_ep) == a->data)
 				{
 					a->ctr++;
 					if (a->ctr == a->nanims)
@@ -663,12 +698,12 @@ void WI_drawAnimatedBack (void)
 
 	if (gameinfo.gametype == GAME_Doom &&
 		gamemode != commercial &&
-		wbs->epsd <= 2)
+		epsd <= 2)
 	{
 		background->Lock ();
-		for (i = 0; i < NUMANIMS[wbs->epsd]; i++)
+		for (i = 0; i < NUMANIMS[epsd]; i++)
 		{
-			a = &anims[wbs->epsd][i];
+			a = &anims[epsd][i];
 
 			if (a->ctr >= 0)
 				background->DrawPatch (a->p[a->ctr], a->loc.x, a->loc.y);
@@ -848,6 +883,13 @@ void WI_initShowNextLoc ()
 	acceleratestage = 0;
 	cnt = SHOWNEXTLOCDELAY * TICRATE;
 
+	if (epsd != wbs->next_ep && gameinfo.gametype == GAME_Doom)
+	{
+		WI_unloadData ();
+		epsd = wbs->next_ep;
+		WI_loadData ();
+	}
+
 	WI_initAnimatedBack();
 }
 
@@ -870,8 +912,8 @@ void WI_drawShowNextLoc ()
 
 	if (gamemode != commercial)
 	{
-		if ((gameinfo.gametype != GAME_Doom || wbs->epsd > 2) &&
-			(gameinfo.gametype != GAME_Heretic || wbs->epsd > 12 || wbs->epsd < 10))
+		if ((gameinfo.gametype != GAME_Doom || epsd > 2) &&
+			(gameinfo.gametype != GAME_Heretic || epsd > 12 || epsd < 10))
 		{
 			WI_drawEL();
 			return;
@@ -881,23 +923,23 @@ void WI_drawShowNextLoc ()
 
 		if (gameinfo.gametype == GAME_Doom)
 		{
-			ep = wbs->epsd;
+			ep = epsd;
 		}
 		else
 		{
-			ep = wbs->epsd - 10;
+			ep = epsd - 10;
 		}
 
 		// draw a splat on taken cities.
 		for (i = 0; i < NUMMAPS; i++)
 		{
 			if (FindLevelInfo (names[ep][i])->flags & LEVEL_VISITED)
-				WI_drawOnLnode (i, &splat);
+				WI_drawOnLnode (i, &splat, ep);
 		}
 
 		// draw flashing ptr
 		if (snl_pointeron)
-			WI_drawOnLnode (WI_MapToIndex (wbs->next), yah); 
+			WI_drawOnLnode (WI_MapToIndex (wbs->next, wbs->next_ep), yah, wbs->next_ep); 
 	}
 
 	// draws which level you are entering..
@@ -1366,7 +1408,7 @@ void WI_drawNetgameStats ()
 
 			x = NG_STATSX;
 			// [RH] Only use one graphic for the face backgrounds
-			V_ColorMap = translationtables + i*512;
+			V_ColorMap = translationtables[TRANSLATION_Players] + i*256;
 			FB->DrawTranslatedPatchClean (p, x-SHORT(p->width), y);
 
 			if (i == me)
@@ -1398,7 +1440,7 @@ void WI_drawNetgameStats ()
 				break;
 			if (!playeringame[i])
 				continue;
-			V_ColorMap = translationtables + i*512;
+			V_ColorMap = translationtables[TRANSLATION_Players] + i*256;
 			screen->DrawTranslatedPatchClean (star, 25, y);
 			WI_drawPercent (127, y+10, cnt_kills[i], wbs->maxkills);
 			if (ng_state >= 4)
@@ -1673,27 +1715,15 @@ void WI_Ticker ()
 	}
 }
 
-void WI_loadData (void)
+void WI_loadData ()
 {
 	int i, j;
 	char name[9];
 	in_anim_t *a;
-	patch_t *bg;
 
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		if ((gamemode == commercial) ||
-			(gamemode == retail && wbs->epsd >= 3))
-			strcpy (name, "INTERPIC");
-		else 
-			sprintf (name, "WIMAP%d", wbs->epsd);
-
-		// background
-		bg = (patch_t *)W_CacheLumpName (name, PU_CACHE);
-		background = I_NewStaticCanvas (SHORT(bg->width), SHORT(bg->height));
-		background->Lock ();
-		background->DrawPatch (bg, 0, 0);
-		background->Unlock ();
+		WI_DrawDoomBack ();
 
 		for (i = 0; i < 2; i++)
 		{
@@ -1720,27 +1750,24 @@ void WI_loadData (void)
 
 	if (gameinfo.gametype == GAME_Doom &&
 		gamemode != commercial &&
-		wbs->epsd < 3)
+		epsd < 3)
 	{
-		if (wbs->epsd < 3)
+		for (j = 0; j < NUMANIMS[epsd]; j++)
 		{
-			for (j = 0; j < NUMANIMS[wbs->epsd]; j++)
+			a = &anims[epsd][j];
+			for (i = 0; i < a->nanims; i++)
 			{
-				a = &anims[wbs->epsd][j];
-				for (i=0;i<a->nanims;i++)
+				// MONDO HACK!
+				if (epsd != 1 || j != 8) 
 				{
-					// MONDO HACK!
-					if (wbs->epsd != 1 || j != 8) 
-					{
-						// animations
-						sprintf (name, "WIA%d%.2d%.2d", wbs->epsd, j, i);  
-						a->p[i] = (patch_t *)W_CacheLumpName (name, PU_STATIC);
-					}
-					else
-					{
-						// HACK ALERT!
-						a->p[i] = anims[1][4].p[i]; 
-					}
+					// animations
+					sprintf (name, "WIA%d%.2d%.2d", epsd, j, i);  
+					a->p[i] = (patch_t *)W_CacheLumpName (name, PU_STATIC);
+				}
+				else
+				{
+					// HACK ALERT!
+					a->p[i] = anims[1][4].p[i];
 				}
 			}
 		}
@@ -1807,7 +1834,7 @@ void WI_loadData (void)
 	}
 }
 
-void WI_unloadData (void)
+void WI_unloadData ()
 {
 	int i, j;
 
@@ -1833,14 +1860,14 @@ void WI_unloadData (void)
 		Z_ChangeTag (yah[1], PU_CACHE);
 		Z_ChangeTag (splat, PU_CACHE);
 		
-		if (gameinfo.gametype == GAME_Doom && wbs->epsd < 3)
+		if (gameinfo.gametype == GAME_Doom && epsd < 3)
 		{
-			for (j = 0; j < NUMANIMS[wbs->epsd]; j++)
+			for (j = 0; j < NUMANIMS[epsd]; j++)
 			{
-				if (wbs->epsd != 1 || j != 8)
+				if (epsd != 1 || j != 8)
 				{
-					for (i = 0; i < anims[wbs->epsd][j].nanims; i++)
-						Z_ChangeTag (anims[wbs->epsd][j].p[i], PU_CACHE);
+					for (i = 0; i < anims[epsd][j].nanims; i++)
+						Z_ChangeTag (anims[epsd][j].p[i], PU_CACHE);
 				}
 			}
 		}
@@ -1900,6 +1927,7 @@ void WI_initVariables (wbstartstruct_t *wbstartstruct)
 	cnt = bcnt = 0;
 	me = wbs->pnum;
 	plrs = wbs->plyr;
+	epsd = wbs->finished_ep;
 }
 
 void WI_Start (wbstartstruct_t *wbstartstruct)

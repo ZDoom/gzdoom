@@ -75,8 +75,6 @@ extern "C"
 	byte		CPUFamily, CPUModel, CPUStepping;
 }
 
-static cycle_t ClockCalibration;
-
 extern HWND Window;
 extern HINSTANCE hInstance;
 
@@ -86,8 +84,6 @@ UINT TimerEventID;
 HANDLE NewTicArrived;
 DWORD LanguageIDs[4];
 void CalculateCPUSpeed ();
-
-float mb_used = 8.0;
 
 int (*I_GetTime) (void);
 int (*I_WaitForTic) (int);
@@ -106,23 +102,15 @@ ticcmd_t *I_BaseTiccmd(void)
 	return &emptycmd;
 }
 
-int I_GetHeapSize (void)
-{
-	return (int)(mb_used*1024*1024);
-}
-
 byte *I_ZoneBase (size_t *size)
 {
-	char *p;
 	void *zone;
 
-	p = Args.CheckValue ("-heapsize");
-	if (p)
-		mb_used = (float)atof (p);
-	*size = (size_t)(mb_used*1024*1024);
-
-	while (NULL == (zone = malloc (*size)) && *size >= 2*1024*1024)
+	while (NULL == (zone = malloc (*size)) &&
+		   *size >= 2*1024*1024)
+	{
 		*size -= 1024*1024;
+	}
 
 	return (byte *)zone;
 }	
@@ -383,6 +371,7 @@ void CalculateCPUSpeed ()
 	{
 		LARGE_INTEGER count1, count2;
 		DWORD minDiff;
+		cycle_t ClockCalibration = 0;
 
 		// Count cycles for at least 55 milliseconds.
 		// The performance counter is very low resolution compared to CPU
@@ -396,7 +385,6 @@ void CalculateCPUSpeed ()
 		// high priority. This is another reason to avoid timing for too long.
 		SetPriorityClass (GetCurrentProcess (), REALTIME_PRIORITY_CLASS);
 		SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_TIME_CRITICAL);
-		ClockCalibration = 0;
 		clock (ClockCalibration);
 		QueryPerformanceCounter (&count1);
 		do
@@ -410,7 +398,7 @@ void CalculateCPUSpeed ()
 
 		CyclesPerSecond = (double)ClockCalibration *
 			(double)freq.QuadPart /
-			(double)((unsigned __int64)count2.QuadPart - (unsigned __int64)count1.QuadPart);
+			(double)((__int64)count2.QuadPart - (__int64)count1.QuadPart);
 		SecondsPerCycle = 1.0 / CyclesPerSecond;
 	}
 	else
@@ -573,7 +561,7 @@ int I_PickIWad (WadStuff *wads, int numwads)
 		(HWND)Window, (DLGPROC)IWADBoxCallback);
 }
 
-long I_FindFirst (char *filespec, findstate_t *fileinfo)
+long I_FindFirst (const char *filespec, findstate_t *fileinfo)
 {
 	return (long)FindFirstFileA (filespec, (LPWIN32_FIND_DATAA)fileinfo);
 }

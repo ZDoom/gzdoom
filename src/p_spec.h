@@ -55,7 +55,7 @@ public:
 	DScroller (fixed_t dx, fixed_t dy, const line_t *l, int control, int accel);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 	bool AffectsWall (int wallnum) const { return m_Type == sc_side && m_Affectee == wallnum; }
 	int GetWallNum () const { return m_Type == sc_side ? m_Affectee : -1; }
@@ -121,7 +121,7 @@ public:
 		m_Magnitude = magnitude;
 	}
 
-	void RunThink ();
+	void Tick ();
 
 protected:
 	EPusher m_Type;
@@ -171,7 +171,7 @@ BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote);
 // [RH] If a deathmatch game, checks to see if noexit is enabled.
 //		If so, it kills the player and returns false. Otherwise,
 //		it returns true, and the player is allowed to live.
-BOOL	CheckIfExitIsGood (AActor *self);
+bool	CheckIfExitIsGood (AActor *self);
 
 // at game start
 void	P_InitPicAnims (void);
@@ -262,7 +262,7 @@ public:
 	DFireFlicker (sector_t *sector);
 	DFireFlicker (sector_t *sector, int upper, int lower);
 	void		Serialize (FArchive &arc);
-	void		RunThink ();
+	void		Tick ();
 protected:
 	int 		m_Count;
 	int 		m_MaxLight;
@@ -277,7 +277,7 @@ class DFlicker : public DLighting
 public:
 	DFlicker (sector_t *sector, int upper, int lower);
 	void		Serialize (FArchive &arc);
-	void		RunThink ();
+	void		Tick ();
 protected:
 	int 		m_Count;
 	int 		m_MaxLight;
@@ -293,7 +293,7 @@ public:
 	DLightFlash (sector_t *sector);
 	DLightFlash (sector_t *sector, int min, int max);
 	void		Serialize (FArchive &arc);
-	void		RunThink ();
+	void		Tick ();
 protected:
 	int 		m_Count;
 	int 		m_MaxLight;
@@ -311,7 +311,7 @@ public:
 	DStrobe (sector_t *sector, int utics, int ltics, bool inSync);
 	DStrobe (sector_t *sector, int upper, int lower, int utics, int ltics);
 	void		Serialize (FArchive &arc);
-	void		RunThink ();
+	void		Tick ();
 protected:
 	int 		m_Count;
 	int 		m_MinLight;
@@ -328,7 +328,7 @@ class DGlow : public DLighting
 public:
 	DGlow (sector_t *sector);
 	void		Serialize (FArchive &arc);
-	void		RunThink ();
+	void		Tick ();
 protected:
 	int 		m_MinLight;
 	int 		m_MaxLight;
@@ -344,7 +344,7 @@ class DGlow2 : public DLighting
 public:
 	DGlow2 (sector_t *sector, int start, int end, int tics, bool oneshot);
 	void		Serialize (FArchive &arc);
-	void		RunThink ();
+	void		Tick ();
 protected:
 	int			m_Start;
 	int			m_End;
@@ -363,7 +363,7 @@ public:
 	DPhased (sector_t *sector);
 	DPhased (sector_t *sector, int baselevel, int phase);
 	void		Serialize (FArchive &arc);
-	void		RunThink ();
+	void		Tick ();
 protected:
 	byte		m_BaseLevel;
 	byte		m_Phase;
@@ -432,7 +432,7 @@ public:
 	};
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 protected:
 	DPlat (sector_t *sector);
@@ -496,7 +496,7 @@ public:
 			 fixed_t height2, int crush);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 protected:
 	EPillar		m_Type;
@@ -541,7 +541,7 @@ public:
 	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 protected:
 	EVlDoor		m_Type;
 	fixed_t 	m_TopDist;
@@ -621,7 +621,7 @@ public:
 	DCeiling (sector_t *sec, fixed_t speed1, fixed_t speed2, int silent);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 protected:
 	ECeiling	m_Type;
@@ -719,7 +719,7 @@ public:
 	DFloor (sector_t *sec);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 protected:
 	EFloor	 	m_Type;
@@ -776,7 +776,7 @@ public:
 	DElevator (sector_t *sec);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 protected:
 	EElevator	m_Type;
@@ -808,7 +808,7 @@ public:
 	DFloorWaggle (sector_t *sec);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 protected:
 	fixed_t m_OriginalDist;
@@ -844,6 +844,9 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, 
 bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 							BOOL reverse);
+bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);
+bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog);
+bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int group_tid);
 
 
 //

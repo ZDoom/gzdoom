@@ -1,20 +1,52 @@
+/*
+** infomacros.h
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** This file contains macros for building Actor defaults lists
+** Defaults lists are byte-packed arrays of keys and values.
+**
+** For Visual C++, a simple byte array will do, with one
+** restriction: Any strings must be at the end of the array.
+**
+** For GCC, we need to get more complicated: Everything needs
+** to be a separate variable. Fortunately, GCC byte-aligns
+** char variables, so as long they appear in the right order
+** (which they do in all version I tried), this will work.
+*/
+
 #ifndef __INFOMACROS_H__
 #define __INFOMACROS_H__
 
 #ifndef __INFO_H__
 #error infomacros.h is meant to be included by info.h
 #endif
-
-// This file contains macros for building Actor defaults lists
-// Defaults lists are byte-packed arrays of keys and values.
-
-// For Visual C++, a simple byte array will do, with one
-// restriction: Any strings must be at the end of the array.
-//
-// For GCC, we need to get more complicated: Everything needs
-// to be a separate variable. Fortunately, GCC byte-aligns
-// char variables, so as long they appear in the right order
-// (which they do in all version I tried), this will work.
 
 #ifdef __BIG_ENDIAN__
 #define BREAK_WORD(x) ((unsigned)(x)>>8), (x)&255
@@ -35,6 +67,8 @@ typedef void (*voidfunc_)();
 #pragma data_seg(".sreg$u")		// AT_SPEED_SET list
 #pragma data_seg()
 
+#define DOOMEDNUMOF(actor) actor##Defaults_.DoomEdNum
+
 #define BEGIN_DEFAULTS_PRE(actor) \
 	extern FActorInfo actor##Defaults_; \
 	__declspec(allocate(".areg$u")) FActorInfo *actor##DefaultsReg = &actor##Defaults_; \
@@ -51,13 +85,13 @@ typedef void (*voidfunc_)();
 #define ADD_LONG_PROP(prop,val) prop|ADEFTYPE_Long, BREAK_LONG(val),
 #define ADD_STRING_PROP(prop1,prop2,val) prop2 val "\0"
 
-// Define a function that gets called when the game is started
-// or the speed is changed
+// Define a function that gets called when the game is started.
 #define AT_GAME_SET(ns) \
 	extern void ns##_gs(); \
 	__declspec(allocate(".greg$u")) voidfunc_ ns##_gsr = ns##_gs; \
 	void ns##_gs ()
 
+// Define a function that gets called when the speed is changed.
 #define AT_SPEED_SET(ns,varname) \
 	extern void ns##_ss(EGameSpeed); \
 	__declspec(allocate(".sreg$u")) void (*ns##_gsr)(EGameSpeed) = ns##_ss; \
@@ -66,6 +100,8 @@ typedef void (*voidfunc_)();
 #elif defined(__GNUC__)
 
 // GCC macros
+
+#define DOOMEDNUMOF(actor) actor##Defaults_::TheInfo.DoomEdNum
 
 // All variables used for the default list must be declared extern to
 // ensure that GCC actually generates them in the object file.
@@ -176,6 +212,7 @@ public:
 #define PROP_Alpha(x)			ADD_LONG_PROP(ADEF_Alpha,x)
 #define PROP_RenderStyle(x)		ADD_BYTE_PROP(ADEF_RenderStyle,x)
 #define PROP_RenderFlags(x)		ADD_WORD_PROP(ADEF_RenderFlags,x)
+#define PROP_Translation(x,y)	ADD_WORD_PROP(ADEF_Translation,((x)<<8)|(y))
 
 #define PROP_SpawnState(x)		ADD_BYTE_PROP(ADEF_SpawnState,x)
 #define PROP_SeeState(x)		ADD_BYTE_PROP(ADEF_SeeState,x)

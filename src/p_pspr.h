@@ -87,6 +87,7 @@ void P_ActivateMorphWeapon (player_s *player);
 void P_PostMorphWeapon (player_s *player, weapontype_t weapon);
 void P_BringUpWeapon (player_s *player);
 bool P_CheckAmmo (player_s *player);
+weapontype_t P_PickNewWeapon (player_s *player);
 void P_FireWeapon (player_s *player);
 void P_DropWeapon (player_s *player);
 void P_BulletSlope (AActor *mo);

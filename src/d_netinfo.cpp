@@ -1,3 +1,37 @@
+/*
+** d_netinfo.cpp
+** Manages transport of user and "server" cvars across a network
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,6 +60,8 @@ CVAR (String,	skin,					"base",		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Int,		team,					255,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	gender,					"male",		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		neverswitchonpickup,	false,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Float,	movebob,				0.25f,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (Float,	stillbob,				0.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 
 enum
 {
@@ -35,7 +71,9 @@ enum
 	INFO_Skin,
 	INFO_Team,
 	INFO_Gender,
-	INFO_NeverSwitchOnPickup
+	INFO_NeverSwitchOnPickup,
+	INFO_MoveBob,
+	INFO_StillBob
 };
 
 const char *TeamNames[NUM_TEAMS] =
@@ -54,6 +92,8 @@ static const char *UserInfoStrings[] =
 	"team",
 	"gender",
 	"neverswitchonpickup",
+	"movebob",
+	"stillbob",
 	NULL
 };
 
@@ -78,15 +118,17 @@ void D_SetupUserInfo (void)
 	strncpy (coninfo->netname, name, MAXPLAYERNAME);
 	coninfo->team = team;
 	coninfo->aimdist = abs ((int)(autoaim * (float)ANGLE_1));
-	if (coninfo->aimdist > ANGLE_1*32)
+	if (coninfo->aimdist > ANGLE_1*35)
 	{
-		coninfo->aimdist = ANGLE_1*32;
+		coninfo->aimdist = ANGLE_1*35;
 	}
 	coninfo->color = color;
 	coninfo->skin = R_FindSkin (skin);
 	coninfo->gender = D_GenderToInt (gender);
 	coninfo->neverswitch = neverswitchonpickup;
 	R_BuildPlayerTranslation (consoleplayer, coninfo->color);
+	coninfo->MoveBob = (fixed_t)(65536.f * movebob);
+	coninfo->StillBob = (fixed_t)(65536.f * stillbob);
 }
 
 void D_UserInfoChanged (FBaseCVar *cvar)
@@ -211,14 +253,18 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 					 "\\skin\\%s"
 					 "\\team\\%d"
 					 "\\gender\\%s"
-					 "\\neverswitchonpickup\\%d",
+					 "\\neverswitchonpickup\\%d"
+					 "\\movebob\\%g"
+					 "\\stillbob\\%g",
 					 info->netname,
 					 (double)info->aimdist / (float)ANGLE_1,
 					 RPART(info->color), GPART(info->color), BPART(info->color),
 					 skins[info->skin].name, info->team,
 					 info->gender == GENDER_FEMALE ? "female" :
 						info->gender == GENDER_NEUTER ? "cyborg" : "male",
-					 info->neverswitch
+					 info->neverswitch,
+					 (float)(info->MoveBob) / 65536.f,
+					 (float)(info->StillBob) / 65536.f
 					);
 		}
 		else
@@ -232,6 +278,8 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 				"\\%d"			// team
 				"\\%s"			// gender
 				"\\%d"			// neverswitchonpickup
+				"\\%g"			// movebob
+				"\\%g"			// stillbob
 				,
 				info->netname,
 				(double)info->aimdist / (float)ANGLE_1,
@@ -240,7 +288,9 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 				info->team,
 				info->gender == GENDER_FEMALE ? "female" :
 					info->gender == GENDER_NEUTER ? "cyborg" : "male",
-				info->neverswitch
+				info->neverswitch,
+				(float)(info->MoveBob) / 65536.f,
+				(float)(info->StillBob) / 65536.f
 			);
 		}
 	}
@@ -299,9 +349,9 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 			{
 			case INFO_Autoaim:
 				info->aimdist = abs ((int)(atof (value) * (float)ANGLE_1));
-				if (info->aimdist > ANGLE_1*32)
+				if (info->aimdist > ANGLE_1*35)
 				{
-					info->aimdist = ANGLE_1*32;
+					info->aimdist = ANGLE_1*35;
 				}
 				break;
 
@@ -363,7 +413,20 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 				break;
 
 			case INFO_NeverSwitchOnPickup:
-				info->neverswitch = atoi (value) ? true : false;
+				if (*value >= '0' && *value <= '9')
+					info->neverswitch = atoi (value) ? true : false;
+				else if (stricmp (value, "true") == 0)
+					info->neverswitch = 1;
+				else
+					info->neverswitch = 0;
+				break;
+
+			case INFO_MoveBob:
+				info->MoveBob = (fixed_t)(atof (value) * 65536.f);
+				break;
+
+			case INFO_StillBob:
+				info->StillBob = (fixed_t)(atof (value) * 65536.f);
 				break;
 
 			default:
@@ -429,5 +492,7 @@ CCMD (playerinfo)
 		Printf ("Skin:        %d\n", players[i].userinfo.skin);
 		Printf ("Gender:      %d\n", players[i].userinfo.gender);
 		Printf ("NeverSwitch: %d\n", players[i].userinfo.neverswitch);
+		Printf ("MoveBob:     %g\n", players[i].userinfo.MoveBob/65536.f);
+		Printf ("StillBob:    %g\n", players[i].userinfo.StillBob/65536.f);
 	}
 }

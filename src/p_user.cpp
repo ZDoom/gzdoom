@@ -96,6 +96,28 @@ void player_s::FixPointers (const DObject *obj)
 		last_mate = NULL;
 }
 
+// Reduce the ammo used by the current weapon. Returns true
+// if there was enough ammo to use.
+bool player_s::UseAmmo (bool doCheck)
+{
+	if (!(dmflags & DF_INFINITE_AMMO))
+	{
+		FWeaponInfo *info;
+
+		if (deathmatch || !powers[pw_weaponlevel2])
+			info = wpnlev1info[readyweapon];
+		else
+			info = wpnlev2info[readyweapon];
+		if (info->ammo < NUMAMMO)
+		{
+			if (doCheck && ammo[info->ammo] < info->ammouse)
+				return false;
+			ammo[info->ammo] -= info->ammouse;
+		}
+	}
+	return true;
+}
+
 IMPLEMENT_ABSTRACT_ACTOR (APlayerPawn)
 IMPLEMENT_ABSTRACT_ACTOR (APlayerChunk)
 
@@ -195,7 +217,7 @@ class APlayerSpeedTrail : public AActor
 {
 	DECLARE_STATELESS_ACTOR (APlayerSpeedTrail, AActor)
 public:
-	void RunThink ();
+	void Tick ();
 };
 
 IMPLEMENT_STATELESS_ACTOR (APlayerSpeedTrail, Any, -1, 0)
@@ -204,7 +226,7 @@ IMPLEMENT_STATELESS_ACTOR (APlayerSpeedTrail, Any, -1, 0)
 	PROP_RenderStyle (STYLE_Translucent)
 END_DEFAULTS
 
-void APlayerSpeedTrail::RunThink ()
+void APlayerSpeedTrail::Tick ()
 {
 	const int fade = OPAQUE*6/10/8;
 	if (alpha <= fade)
@@ -285,6 +307,7 @@ void P_CalcHeight (player_t *player)
 {
 	int 		angle;
 	fixed_t 	bob;
+	bool		still = false;
 
 	// Regular movement bobbing
 	// (needs to be calculated for gun swing even if not on ground)
@@ -302,12 +325,18 @@ void P_CalcHeight (player_t *player)
 	}
 	else
 	{
-		player->bob = FixedMul (player->momx, player->momx)
-					+ FixedMul (player->momy, player->momy);
-		player->bob >>= 2;
+		player->bob = DMulScale16 (player->momx, player->momx, player->momy, player->momy);
+		if (player->bob == 0)
+		{
+			still = true;
+		}
+		else
+		{
+			player->bob = FixedMul (player->bob, player->userinfo.MoveBob);
 
-		if (player->bob > MAXBOB)
-			player->bob = MAXBOB;
+			if (player->bob > MAXBOB)
+				player->bob = MAXBOB;
+		}
 	}
 
 	if (player->cheats & CF_NOMOMENTUM)
@@ -319,9 +348,17 @@ void P_CalcHeight (player_t *player)
 
 		return;
 	}
-				
-	angle = (FINEANGLES/20*level.time) & FINEMASK;
-	bob = FixedMul (player->bob>>(player->mo->waterlevel > 1 ? 2 : 1), finesine[angle]);
+
+	if (still)
+	{
+		angle = (FINEANGLES/120*level.time) & FINEMASK;
+		bob = FixedMul (player->userinfo.StillBob, finesine[angle]);
+	}
+	else
+	{
+		angle = (FINEANGLES/20*level.time) & FINEMASK;
+		bob = FixedMul (player->bob>>(player->mo->waterlevel > 1 ? 2 : 1), finesine[angle]);
+	}
 
 	// move viewheight
 	if (player->playerstate == PST_LIVE)
@@ -850,7 +887,7 @@ void P_PlayerThink (player_t *player)
 			if (speedMo)
 			{
 				speedMo->angle = pmo->angle;
-				speedMo->translation = pmo->translation;
+				speedMo->Translation = pmo->Translation;
 				speedMo->target = pmo;
 				speedMo->sprite = pmo->sprite;
 				speedMo->frame = pmo->frame;
@@ -914,8 +951,7 @@ void P_PlayerThink (player_t *player)
 
 	P_CalcHeight (player);
 
-	if (player->mo->subsector->sector->special
-		|| player->mo->subsector->sector->damage)
+	if (player->mo->Sector->special || player->mo->Sector->damage)
 	{
 		P_PlayerInSpecialSector (player);
 	}
@@ -1223,7 +1259,11 @@ void player_s::Serialize (FArchive &arc)
 		<< air_finished
 		<< turnticks
 		<< oldbuttons
-		<< isbot;
+		<< isbot
+		<< BlendR
+		<< BlendG
+		<< BlendB
+		<< BlendA;
 	for (i = 0; i < NUMARMOR; i++)
 		arc << armorpoints[i];
 	for (i = 0; i < NUMINVENTORYSLOTS; i++)

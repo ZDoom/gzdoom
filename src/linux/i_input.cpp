@@ -173,7 +173,7 @@ void MessagePump (const SDL_Event &sev)
 		break;
 
 	case SDL_MOUSEMOTION:
-		event.x = sev.motion.xrel * 3;
+		event.x = sev.motion.xrel << 2;
 		event.y = -sev.motion.yrel << 1;
 		event.type = EV_Mouse;
 		D_PostEvent (&event);

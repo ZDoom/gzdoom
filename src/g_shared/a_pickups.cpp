@@ -178,6 +178,48 @@ void A_RestoreSpecialDoomThing (AActor *self)
 	}
 }
 
+//---------------------------------------------------------------------------
+//
+// PROP A_RestoreSpecialPosition
+//
+//---------------------------------------------------------------------------
+
+void A_RestoreSpecialPosition (AActor *self)
+{
+	// Move item back to its original location
+	fixed_t _x, _y;
+	sector_t *sec;
+
+	_x = self->SpawnPoint[0] << FRACBITS;
+	_y = self->SpawnPoint[1] << FRACBITS;
+	sec = R_PointInSubsector (_x, _y)->sector;
+
+	self->SetOrigin (_x, _y, sec->floorplane.ZatPoint (_x, _y));
+	P_CheckPosition (self, _x, _y);
+
+	if (self->flags & MF_SPAWNCEILING)
+	{
+		self->z = self->ceilingz - self->height - (self->SpawnPoint[2] << FRACBITS);
+	}
+	else if (self->flags2 & MF2_SPAWNFLOAT)
+	{
+		fixed_t space = self->ceilingz - self->height - self->floorz;
+		if (space > 48*FRACUNIT)
+		{
+			space -= 40*FRACUNIT;
+			self->z = ((space * P_Random(pr_spawnmobj))>>8) + self->floorz + 40*FRACUNIT;
+		}
+		else
+		{
+			self->z = self->floorz;
+		}
+	}
+	else
+	{
+		self->z = (self->SpawnPoint[2] << FRACBITS) + self->floorz;
+	}
+}
+
 /***************************************************************************/
 /* AInventory implementation											   */
 /***************************************************************************/
@@ -186,19 +228,21 @@ FState AInventory::States[] =
 {
 #define S_HIDEDOOMISH 0
 	S_NORMAL (TNT1, 'A', 1050, NULL							, &States[S_HIDEDOOMISH+1]),
+	S_NORMAL (TNT1, 'A',	0, A_RestoreSpecialPosition		, &States[S_HIDEDOOMISH+2]),
 	S_NORMAL (TNT1, 'A',    1, A_RestoreSpecialDoomThing	, NULL),
 
-#define S_HIDESPECIAL (S_HIDEDOOMISH+2)
+#define S_HIDESPECIAL (S_HIDEDOOMISH+3)
 	S_NORMAL (ACLO, 'E', 1400, NULL                         , &States[S_HIDESPECIAL+1]),
-	S_NORMAL (ACLO, 'A',    4, A_RestoreSpecialThing1       , &States[S_HIDESPECIAL+2]),
-	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+3]),
-	S_NORMAL (ACLO, 'A',    4, NULL                         , &States[S_HIDESPECIAL+4]),
-	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+5]),
-	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+6]),
-	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+7]),
-	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+8]),
-	S_NORMAL (ACLO, 'D',    4, NULL                         , &States[S_HIDESPECIAL+9]),
-	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+10]),
+	S_NORMAL (ACLO, 'A',	0, A_RestoreSpecialPosition		, &States[S_HIDESPECIAL+2]),
+	S_NORMAL (ACLO, 'A',    4, A_RestoreSpecialThing1       , &States[S_HIDESPECIAL+3]),
+	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+4]),
+	S_NORMAL (ACLO, 'A',    4, NULL                         , &States[S_HIDESPECIAL+5]),
+	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+6]),
+	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+7]),
+	S_NORMAL (ACLO, 'B',    4, NULL                         , &States[S_HIDESPECIAL+8]),
+	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+9]),
+	S_NORMAL (ACLO, 'D',    4, NULL                         , &States[S_HIDESPECIAL+10]),
+	S_NORMAL (ACLO, 'C',    4, NULL                         , &States[S_HIDESPECIAL+11]),
 	S_NORMAL (ACLO, 'D',    4, A_RestoreSpecialThing2       , NULL)
 };
 
@@ -228,39 +272,6 @@ void AInventory::Hide ()
 		SetState (&States[S_HIDEDOOMISH]);
 	else
 		SetState (&States[S_HIDESPECIAL]);
-
-	// Move item back to its original location
-	fixed_t _x, _y;
-	sector_t *sec;
-
-	_x = SpawnPoint[0] << FRACBITS;
-	_y = SpawnPoint[1] << FRACBITS;
-	sec = R_PointInSubsector (_x, _y)->sector;
-
-	SetOrigin (_x, _y, sec->floorplane.ZatPoint (_x, _y));
-	P_CheckPosition (this, _x, _y);
-
-	if (flags & MF_SPAWNCEILING)
-	{
-		z = ceilingz - height - (SpawnPoint[2] << FRACBITS);
-	}
-	else if (flags2 & MF2_SPAWNFLOAT)
-	{
-		fixed_t space = ceilingz - height - floorz;
-		if (space > 48*FRACUNIT)
-		{
-			space -= 40*FRACUNIT;
-			z = ((space * P_Random(pr_spawnmobj))>>8) + floorz + 40*FRACUNIT;
-		}
-		else
-		{
-			z = floorz;
-		}
-	}
-	else
-	{
-		z = (SpawnPoint[2] << FRACBITS) + floorz;
-	}
 }
 
 void AInventory::Touch (AActor *toucher)

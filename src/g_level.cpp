@@ -1,3 +1,37 @@
+/*
+** g_level.cpp
+** Parses MAPINFO and controls movement between levels
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "templates.h"
 #include "d_main.h"
 #include "m_alloc.h"
@@ -34,6 +68,7 @@
 #include "a_lightning.h"
 
 #include "gi.h"
+
 
 EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
@@ -106,7 +141,7 @@ int ACS_GlobalVars[NUM_GLOBALVARS];
 
 
 extern BOOL netdemo;
-extern char BackupSaveName[256];
+extern char BackupSaveName[PATH_MAX];
 
 BOOL savegamerestore;
 
@@ -706,7 +741,7 @@ void P_RemoveDefereds (void)
 //
 // G_InitNew
 // Can be called by the startup code or the menu task,
-// consoleplayer, displayplayer, playeringame[] should be set.
+// consoleplayer, playeringame[] should be set.
 //
 static char d_mapname[9];
 
@@ -791,6 +826,8 @@ void G_InitNew (char *mapname)
 		S_ResumeSound ();
 	}
 
+	StatusBar->NewGame ();
+
 	// [RH] If this map doesn't exist, bomb out
 	if (W_CheckNumForName (mapname) == -1)
 	{
@@ -805,7 +842,6 @@ void G_InitNew (char *mapname)
 	wantFast = (dmflags & DF_FAST_MONSTERS) || (gameskill == sk_nightmare);
 	GameSpeed = wantFast ? SPEED_Fast : SPEED_Normal;
 
-	FActorInfo::StaticGameSet ();
 	if (oldSpeed != GameSpeed)
 	{
 		FActorInfo::StaticSpeedSet ();
@@ -890,7 +926,7 @@ void G_DoCompleted (void)
 	if (automapactive)
 		AM_Stop ();
 
-	wminfo.epsd = level.cluster - 1;		// Only used for DOOM I and Heretic.
+	wminfo.finished_ep = level.cluster - 1;
 	strncpy (wminfo.lname0, level.info->pname, 8);
 	strncpy (wminfo.current, level.mapname, 8);
 
@@ -923,6 +959,7 @@ void G_DoCompleted (void)
 		}
 	}
 
+	wminfo.next_ep = FindLevelInfo (wminfo.next)->cluster - 1;
 	wminfo.maxkills = level.total_monsters;
 	wminfo.maxitems = level.total_items;
 	wminfo.maxsecret = level.total_secrets;
@@ -1017,11 +1054,25 @@ void G_DoCompleted (void)
 	WI_Start (&wminfo);
 }
 
+class DAutosaver : public DThinker
+{
+	DECLARE_CLASS (DAutosaver, DThinker)
+public:
+	void Tick ();
+};
+
+IMPLEMENT_CLASS (DAutosaver)
+
+void DAutosaver::Tick ()
+{
+	gameaction = ga_autosave;
+	Destroy ();
+}
+
 //
 // G_DoLoadLevel 
 //
 extern gamestate_t 	wipegamestate; 
-extern float BaseBlendA;
  
 void G_DoLoadLevel (int position) 
 { 
@@ -1139,6 +1190,12 @@ void G_DoLoadLevel (int position)
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 
 	C_FlushDisplay ();
+
+	// [RH] Always save the game when entering a new level.
+	if (!savegamerestore)
+	{
+		DAutosaver GCCNOWARN *dummy = new DAutosaver;
+	}
 }
 
 
@@ -1203,7 +1260,7 @@ void G_DoWorldDone (void)
 	}
 	G_DoLoadLevel (startpos);
 	startpos = 0;
-	gameaction = ga_nothing; 
+	gameaction = ga_nothing;
 	viewactive = true; 
 } 
  
@@ -1568,6 +1625,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	BYTE t;
 
+	// Does this level have scrollers?
 	if (arc.IsStoring ())
 	{
 		t = level.Scrolls ? 1 : 0;
@@ -1592,6 +1650,45 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	P_SerializeWorld (arc);
 	P_SerializePolyobjs (arc);
 	P_SerializeSounds (arc);
+	StatusBar->Serialize (arc);
+
+	// Does this level have custom translations?
+	if (arc.IsStoring ())
+	{
+		for (i = 0; i < MAX_ACS_TRANSLATIONS; ++i)
+		{
+			BYTE *trans = &translationtables[TRANSLATION_LevelScripted][i*256];
+			int j;
+			for (j = 0; j < 256; ++j)
+			{
+				if (trans[j] != j)
+				{
+					break;
+				}
+			}
+			if (j < 256)
+			{
+				t = i;
+				arc << t;
+				arc.Write (trans, 256);
+			}
+		}
+		t = 255;
+		arc << t;
+	}
+	else
+	{
+		arc << t;
+		while (t != 255)
+		{
+			if (t >= MAX_ACS_TRANSLATIONS)
+			{ // hack hack to avoid crashing
+				t = 0;
+			}
+			arc.Read (&translationtables[TRANSLATION_LevelScripted][t*256], 256);
+			arc << t;
+		}
+	}
 	if (!hubLoad)
 	{
 		P_SerializePlayers (arc);
@@ -1672,6 +1769,17 @@ void G_SerializeSnapshots (FArchive &arc)
 		// Signal end of snapshots
 		BYTE zero = 0;
 		arc << zero;
+
+		// Write out which levels have been visited
+		for (i = 0; i < numwadlevelinfos; ++i)
+			if (wadlevelinfos[i].flags & LEVEL_VISITED)
+				arc.Write (wadlevelinfos[i].mapname, 8);
+
+		for (i = 0; LevelInfos[i].mapname[0]; ++i)
+			if (LevelInfos[i].flags & LEVEL_VISITED)
+				arc.Write (LevelInfos[i].mapname, 8);
+
+		arc << zero;
 	}
 	else
 	{
@@ -1686,6 +1794,15 @@ void G_SerializeSnapshots (FArchive &arc)
 			level_info_t *i = FindLevelInfo (mapname);
 			i->snapshot = new FCompressedMemFile;
 			i->snapshot->Serialize (arc);
+			arc << mapname[0];
+		}
+
+		arc << mapname[0];
+		while (mapname[0])
+		{
+			arc.Read (&mapname[1], 7);
+			level_info_t *i = FindLevelInfo (mapname);
+			i->flags |= LEVEL_VISITED;
 			arc << mapname[0];
 		}
 	}

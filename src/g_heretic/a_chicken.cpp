@@ -34,6 +34,7 @@ public:
 };
 
 IMPLEMENT_STATELESS_ACTOR (ABeakPuff, Heretic, -1, 0)
+	PROP_Mass (5)
 	PROP_AttackSound ("chicken/attack")
 END_DEFAULTS
 
@@ -87,7 +88,8 @@ FWeaponInfo ABeak::WeaponInfo1 =
 	150,
 	15*FRACUNIT,
 	NULL,
-	NULL
+	NULL,
+	RUNTIME_CLASS(ABeak)
 };
 
 FWeaponInfo ABeak::WeaponInfo2 =
@@ -106,7 +108,8 @@ FWeaponInfo ABeak::WeaponInfo2 =
 	150,
 	15*FRACUNIT,
 	NULL,
-	NULL
+	NULL,
+	RUNTIME_CLASS(ABeak)
 };
 
 IMPLEMENT_ACTOR (ABeak, Heretic, -1, 0)

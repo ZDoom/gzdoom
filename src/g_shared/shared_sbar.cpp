@@ -1,3 +1,37 @@
+/*
+** shared_sbar.cpp
+** Base status bar implementation
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "templates.h"
 #include "sbar.h"
 #include "c_cvars.h"
@@ -16,6 +50,7 @@
 
 EXTERN_CVAR (Bool, am_showmonsters)
 EXTERN_CVAR (Bool, am_showsecrets)
+EXTERN_CVAR (Bool, am_showitems)
 EXTERN_CVAR (Bool, am_showtime)
 EXTERN_CVAR (Bool, noisedebug)
 
@@ -122,7 +157,7 @@ FBaseStatusBar::FBaseStatusBar (int reltop)
 
 FBaseStatusBar::~FBaseStatusBar ()
 {
-	FHUDMessage *msg;
+	DHUDMessage *msg;
 
 	if (ScaleCopy)
 	{
@@ -131,7 +166,7 @@ FBaseStatusBar::~FBaseStatusBar ()
 	msg = Messages;
 	while (msg)
 	{
-		FHUDMessage *next = msg->Next;
+		DHUDMessage *next = msg->Next;
 		delete msg;
 		msg = next;
 	}
@@ -199,12 +234,12 @@ void FBaseStatusBar::AttachToPlayer (player_s *player)
 
 void FBaseStatusBar::Tick ()
 {
-	FHUDMessage *msg = Messages;
-	FHUDMessage **prev = &Messages;
+	DHUDMessage *msg = Messages;
+	DHUDMessage **prev = &Messages;
 
 	while (msg)
 	{
-		FHUDMessage *next = msg->Next;
+		DHUDMessage *next = msg->Next;
 
 		if (msg->Tick ())
 		{
@@ -225,9 +260,9 @@ void FBaseStatusBar::Tick ()
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::AttachMessage (FHUDMessage *msg, DWORD id)
+void FBaseStatusBar::AttachMessage (DHUDMessage *msg, DWORD id)
 {
-	FHUDMessage *old = NULL;
+	DHUDMessage *old = NULL;
 
 	old = (id == 0) ? NULL : DetachMessage (id);
 	if (old != NULL)
@@ -245,10 +280,10 @@ void FBaseStatusBar::AttachMessage (FHUDMessage *msg, DWORD id)
 //
 //---------------------------------------------------------------------------
 
-FHUDMessage *FBaseStatusBar::DetachMessage (FHUDMessage *msg)
+DHUDMessage *FBaseStatusBar::DetachMessage (DHUDMessage *msg)
 {
-	FHUDMessage *probe = Messages;
-	FHUDMessage **prev = &Messages;
+	DHUDMessage *probe = Messages;
+	DHUDMessage **prev = &Messages;
 
 	while (probe && probe != msg)
 	{
@@ -263,10 +298,10 @@ FHUDMessage *FBaseStatusBar::DetachMessage (FHUDMessage *msg)
 	return probe;
 }
 
-FHUDMessage *FBaseStatusBar::DetachMessage (DWORD id)
+DHUDMessage *FBaseStatusBar::DetachMessage (DWORD id)
 {
-	FHUDMessage *probe = Messages;
-	FHUDMessage **prev = &Messages;
+	DHUDMessage *probe = Messages;
+	DHUDMessage **prev = &Messages;
 
 	while (probe && probe->SBarID != id)
 	{
@@ -289,12 +324,12 @@ FHUDMessage *FBaseStatusBar::DetachMessage (DWORD id)
 
 void FBaseStatusBar::DetachAllMessages ()
 {
-	FHUDMessage *probe = Messages;
+	DHUDMessage *probe = Messages;
 
 	Messages = NULL;
 	while (probe != NULL)
 	{
-		FHUDMessage *next = probe->Next;
+		DHUDMessage *next = probe->Next;
 		delete probe;
 		probe = next;
 	}
@@ -306,9 +341,9 @@ void FBaseStatusBar::DetachAllMessages ()
 //
 //---------------------------------------------------------------------------
 
-bool FBaseStatusBar::CheckMessage (FHUDMessage *msg)
+bool FBaseStatusBar::CheckMessage (DHUDMessage *msg)
 {
-	FHUDMessage *probe = Messages;
+	DHUDMessage *probe = Messages;
 	while (probe && probe != msg)
 	{
 		probe = probe->Next;
@@ -327,7 +362,7 @@ void FBaseStatusBar::ShowPlayerName ()
 	EColorRange color;
 
 	color = (CPlayer == &players[consoleplayer]) ? CR_GOLD : CR_GREEN;
-	AttachMessage (new FHUDMessageFadeOut (CPlayer->userinfo.netname,
+	AttachMessage (new DHUDMessageFadeOut (CPlayer->userinfo.netname,
 		1.5f, 1.f, color, 2.f, 0.35f), 'PNAM');
 }
 
@@ -363,19 +398,15 @@ void FBaseStatusBar::CopyToScreen (int x, int y, int w, int h) const
 	if ((oh | ow) <= 0)
 		return;
 
-	byte *from = ScaleCopy->GetBuffer() + (left >> FRACBITS);
+	int frompitch = ScaleCopy->GetPitch();
+	byte *from = ScaleCopy->GetBuffer() + frompitch * (err >> FRACBITS) + (left >> FRACBITS);
+	err &= FRACUNIT-1;
 	left &= FRACUNIT-1;
 	byte *to = screen->GetBuffer() + nx + screen->GetPitch() * (ny + ::ST_Y);
-	int frompitch = ScaleCopy->GetPitch();
 	int toskip = screen->GetPitch() - ow;
 
 	do
 	{
-		if (err >= FRACUNIT)
-		{
-			from += frompitch * (err >> FRACBITS);
-			err &= FRACUNIT-1;
-		}
 		int l = ow;
 		fixed_t cx = left;
 		do
@@ -386,6 +417,11 @@ void FBaseStatusBar::CopyToScreen (int x, int y, int w, int h) const
 		} while (--l);
 		to += toskip;
 		err += iy;
+		if (err >= FRACUNIT)
+		{
+			from += frompitch;
+			err &= FRACUNIT-1;
+		}
 	} while (--oh);
 }
 
@@ -456,6 +492,8 @@ void FBaseStatusBar::DrawImage (const FImageCollection &coll, int img,
 	{
 		int w, h, xo, yo;
 		byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
+		x -= xo;
+		y -= yo;
 		if (data && y >= 0)
 		{
 			ScaleCopy->Lock ();
@@ -982,7 +1020,6 @@ void FBaseStatusBar::ShadeChain (int left, int right, int top, int height) const
 		right += ST_X;
 		pitch = screen->GetPitch();
 		top_p = screen->GetBuffer();
-		TransArea += height * 16;
 	}
 	top_p += top*pitch + left;
 	diff = right+15-left;
@@ -1145,7 +1182,7 @@ void FBaseStatusBar::FlashCrosshair ()
 
 void FBaseStatusBar::DrawMessages (int bottom) const
 {
-	FHUDMessage *msg = Messages;
+	DHUDMessage *msg = Messages;
 	while (msg)
 	{
 		msg->Draw (bottom);
@@ -1189,7 +1226,7 @@ void FBaseStatusBar::Draw (EHudState state)
 		}
 	}
 
-	if (viewactive)
+	if (viewactive && CPlayer && CPlayer->camera->player)
 	{
 		DrawCrosshair ();
 	}
@@ -1225,22 +1262,26 @@ void FBaseStatusBar::Draw (EHudState state)
 			}
 			line[i] = ':';
 			line[i+1] = ' ';
+			i += 2;
 		}
-		line[i+2] = TEXTCOLOR_ESCAPE;
-		line[i+3] = CR_GREY + 'A';
-		strcpy (&line[i+4], level.level_name);
+		line[i] = TEXTCOLOR_ESCAPE;
+		line[i+1] = CR_GREY + 'A';
+		strcpy (&line[i+2], level.level_name);
 		screen->DrawTextClean (highlight,
 			(SCREENWIDTH - screen->StringWidth (line)*CleanXfac)/2, y, line);
 
 		if (!deathmatch)
 		{
+			int y = 8;
+
 			// Draw monster count
 			if (am_showmonsters)
 			{
 				sprintf (line, "MONSTERS:"
 							   TEXTCOLOR_GREY " %d/%d",
 							   level.killed_monsters, level.total_monsters);
-				screen->DrawTextClean (highlight, 8, 8, line);
+				screen->DrawTextClean (highlight, 8, y, line);
+				y += height;
 			}
 
 			// Draw secret count
@@ -1249,7 +1290,17 @@ void FBaseStatusBar::Draw (EHudState state)
 				sprintf (line, "SECRETS:"
 							   TEXTCOLOR_GREY " %d/%d",
 							   level.found_secrets, level.total_secrets);
-				screen->DrawTextClean (highlight, 8, 8+height, line);
+				screen->DrawTextClean (highlight, 8, y, line);
+				y += height;
+			}
+
+			// Draw item count
+			if (am_showitems)
+			{
+				sprintf (line, "ITEMS:"
+							   TEXTCOLOR_GREY " %d/%d",
+							   level.found_items, level.total_items);
+				screen->DrawTextClean (highlight, 8, y, line);
 			}
 		}
 	}
@@ -1309,7 +1360,9 @@ void FBaseStatusBar::BlendView (float blend[4])
 {
 	int cnt;
 
-	AddBlend (BaseBlendR / 255.0f, BaseBlendG / 255.0f, BaseBlendB / 255.0f, BaseBlendA, blend);
+	AddBlend (BaseBlendR / 255.0f, BaseBlendG / 255.0f,
+		BaseBlendB / 255.0f, BaseBlendA, blend);
+
 	if (CPlayer->powers[pw_ironfeet] > 4*32 || CPlayer->powers[pw_ironfeet]&8)
 	{
 		AddBlend (0.0f, 1.0f, 0.0f, 0.125f, blend);
@@ -1337,6 +1390,12 @@ void FBaseStatusBar::BlendView (float blend[4])
 			cnt = 228;
 
 		AddBlend (1.0f, 0.0f, 0.0f, cnt / 255.0f, blend);
+	}
+
+	if (CPlayer->camera->player != NULL)
+	{
+		player_t *player = CPlayer->camera->player;
+		AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
 	}
 
 	V_SetBlend ((int)(blend[0] * 255.0f), (int)(blend[1] * 255.0f),
@@ -1381,4 +1440,26 @@ void FBaseStatusBar::FlashArtifact (int arti)
 
 void FBaseStatusBar::SetFace (void *)
 {
+}
+
+void FBaseStatusBar::NewGame ()
+{
+}
+
+void FBaseStatusBar::Serialize (FArchive &arc)
+{
+	arc << Messages;
+}
+
+void FBaseStatusBar::ScreenSizeChanged ()
+{
+	st_scale.Callback ();
+	SB_state = screen->GetPageCount ();
+
+	DHUDMessage *message = Messages;
+	while (message != NULL)
+	{
+		message->ScreenSizeChanged ();
+		message = message->Next;
+	}
 }

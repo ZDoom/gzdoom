@@ -712,6 +712,8 @@ void M_NotifyNewSave (const char *file, const char *title)
 {
 	FSaveGameNode *node;
 
+	M_ReadSaveStrings ();
+
 	// See if the file is already in our list
 	for (node = static_cast<FSaveGameNode *>(SaveGames.Head);
 		 node->Succ != NULL;
@@ -724,6 +726,11 @@ void M_NotifyNewSave (const char *file, const char *title)
 #endif
 		{
 			strcpy (node->Title, title);
+			node->bOldVersion = false;
+			/*if (quickSaveSlot == NULL)
+			{
+				quickSaveSlot = node;
+			}*/
 			return;
 		}
 	}
@@ -734,11 +741,11 @@ void M_NotifyNewSave (const char *file, const char *title)
 	node->bOldVersion = false;
 	M_InsertSaveNode (node);
 	SelSaveGame = node;
-
+/*
 	if (quickSaveSlot == NULL)
 	{
 		quickSaveSlot = node;
-	}
+	}*/
 }
 
 //
@@ -1206,7 +1213,6 @@ void M_QuickSave ()
 	{
 		M_StartControlPanel(false);
 		M_SaveGame (0);
-		quickSaveSlot = NULL; 	// means to pick a slot now
 		return;
 	}
 	sprintf (tempstring, GStrings(QSPROMPT), quickSaveSlot->Title);
@@ -1662,7 +1668,7 @@ static void M_PlayerSetupDrawer ()
 		spriteframe_t *sprframe =
 			&sprites[skins[players[consoleplayer].userinfo.skin].sprite].spriteframes[PlayerState->GetFrame()];
 
-		V_ColorMap = translationtables + consoleplayer*256*2;
+		V_ColorMap = translationtables[TRANSLATION_Players] + consoleplayer*256;
 		screen->DrawTranslatedPatchClean ((patch_t *)W_CacheLumpNum (
 			sprframe->lump[PlayerRotation], PU_CACHE),
 			320 - 52 - 32 + xo, PSetupDef.y + LINEHEIGHT*3 + 52);

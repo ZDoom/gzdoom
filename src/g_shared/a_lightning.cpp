@@ -48,7 +48,7 @@ void DLightningThinker::Serialize (FArchive &arc)
 	}
 }
 
-void DLightningThinker::RunThink ()
+void DLightningThinker::Tick ()
 {
 	if (!NextLightningFlash || LightningFlashCount)
 	{

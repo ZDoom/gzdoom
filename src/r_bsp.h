@@ -33,8 +33,11 @@ struct drawseg_s
 	fixed_t 	neardepth, fardepth;
 	fixed_t		light, lightstep;
 	fixed_t		iscale, iscalestep;
-	fixed_t		sx1, sx2, sz1, sz2;
-	int 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
+	short		sx1, sx2;
+	fixed_t		sz1, sz2;
+	fixed_t		cx, cy, cdx, cdy;
+	BYTE 		silhouette;		// 0=none, 1=bottom, 2=top, 3=both
+	BYTE		bFogBoundary;
 // Pointers to lists for sprite clipping,
 // all three adjusted so [x1] is first value.
 	ptrdiff_t	sprtopclip; 		// type short
@@ -70,7 +73,7 @@ EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
 // BSP?
 void R_ClearClipSegs (short left, short right);
 void R_ClearDrawSegs ();
-void R_RenderBSPNode (int bspnum);
+int R_RenderBSPNode (int bspnum, int subsecnum);
 
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
 sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, BOOL);

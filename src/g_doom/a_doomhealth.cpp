@@ -9,7 +9,7 @@
 class AHealthBonus : public AHealth
 {
 	DECLARE_ACTOR (AHealthBonus, AHealth)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		player_t *player = toucher->player;
@@ -19,6 +19,7 @@ protected:
 		player->mo->health = player->health;
 		return true;
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTHTHBONUS);
@@ -48,11 +49,12 @@ END_DEFAULTS
 class AStimpack : public AHealth
 {
 	DECLARE_ACTOR (AStimpack, AHealth)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveBody (toucher->player, 10);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTSTIM);
@@ -77,12 +79,13 @@ END_DEFAULTS
 class AMedikit : public AHealth
 {
 	DECLARE_ACTOR (AMedikit, AHealth)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		PrevHealth = toucher->player->health;
 		return P_GiveBody (toucher->player, 25);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings((PrevHealth < 25) ? GOTMEDINEED : GOTMEDIKIT);

@@ -760,7 +760,7 @@ BOOL CheckAbort (void)
 {
 	event_t *ev;
 
-	Printf ("");	// [RH] Give the console a chance to redraw itself
+	PrintString (PRINT_HIGH, "");	// [RH] Give the console a chance to redraw itself
 	// This WaitForTic is to avoid flooding the network with packets on startup.
 	I_WaitForTic (I_GetTime () + TICRATE/4);
 	I_StartTic ();
@@ -1203,6 +1203,7 @@ byte *FDynamicBuffer::GetData (int *len)
 void Net_DoCommand (int type, byte **stream, int player)
 {
 	char *s = NULL;
+	int i;
 
 	switch (type)
 	{
@@ -1303,8 +1304,6 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 			if (which == arti_none)
 			{ // Use one of each artifact (except puzzle artifacts)
-				int i;
-
 				for (i = 1; i < arti_firstpuzzitem; i++)
 				{
 					P_PlayerUseArtifact (&players[player], (artitype_t)i);
@@ -1414,6 +1413,31 @@ void Net_DoCommand (int type, byte **stream, int player)
 		gameaction = ga_savegame;
 		break;
 
+	case DEM_FOV:
+		{
+			float newfov = (float)ReadByte (stream);
+
+			if (newfov != players[consoleplayer].DesiredFOV)
+			{
+				Printf ("FOV%s set to %g\n",
+					consoleplayer == Net_Arbitrator ? " for everyone" : "",
+					newfov);
+			}
+
+			for (i = 0; i < MAXPLAYERS; ++i)
+			{
+				if (playeringame[i])
+				{
+					players[i].DesiredFOV = newfov;
+				}
+			}
+		}
+		break;
+
+	case DEM_MYFOV:
+		players[player].DesiredFOV = (float)ReadByte (stream);
+		break;
+
 	default:
 		I_Error ("Unknown net command: %d", type);
 		break;
@@ -1454,6 +1478,8 @@ void Net_SkipCommand (int type, byte **stream)
 		case DEM_INVUSE:
 		case DEM_WEAPSEL:
 		case DEM_WEAPSLOT:
+		case DEM_FOV:
+		case DEM_MYFOV:
 			skip = 1;
 			break;
 

@@ -1,3 +1,37 @@
+/*
+** a_skies.cpp
+** Skybox-related actors
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "actor.h"
 #include "a_sharedglobal.h"
 #include "p_local.h"
@@ -49,7 +83,7 @@ void ASkyPicker::PostBeginPlay ()
 
 	if (args[0] == 0)
 	{
-		subsector->sector->SkyBox = NULL;
+		Sector->SkyBox = NULL;
 	}
 	else
 	{
@@ -58,12 +92,12 @@ void ASkyPicker::PostBeginPlay ()
 
 		if (box != NULL)
 		{
-			subsector->sector->SkyBox = box;
+			Sector->SkyBox = box;
 		}
 		else
 		{
 			Printf ("Can't find SkyViewpoint %d for sector %d\n",
-				args[0], subsector->sector - sectors);
+				args[0], Sector - sectors);
 		}
 	}
 	Destroy ();
@@ -75,7 +109,7 @@ class ASectorSilencer : public AActor
 {
 	DECLARE_STATELESS_ACTOR (ASectorSilencer, AActor)
 public:
-	void PostBeginPlay ();
+	void BeginPlay ();
 	void Destroy ();
 };
 
@@ -84,14 +118,14 @@ IMPLEMENT_STATELESS_ACTOR (ASectorSilencer, Any, 9082, 0)
 	PROP_RenderStyle (STYLE_None)
 END_DEFAULTS
 
-void ASectorSilencer::PostBeginPlay ()
+void ASectorSilencer::BeginPlay ()
 {
-	Super::PostBeginPlay ();
-	subsector->sector->MoreFlags |= SECF_SILENT;
+	Super::BeginPlay ();
+	Sector->MoreFlags |= SECF_SILENT;
 }
 
 void ASectorSilencer::Destroy ()
 {
-	subsector->sector->MoreFlags &= ~SECF_SILENT;
+	Sector->MoreFlags &= ~SECF_SILENT;
 	Super::Destroy ();
 }

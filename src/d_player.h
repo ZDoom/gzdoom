@@ -34,7 +34,6 @@
 // of other structs: items (internal inventory),
 // animation states (closely tied to the sprites
 // used to represent them, unfortunately).
-#include "d_items.h"
 #include "p_pspr.h"
 
 // In addition, the player is just a special
@@ -102,6 +101,7 @@ typedef enum
 	CF_REVERTPLEASE		= 128,	// [RH] Stick camera in player's head if (s)he moves
 	CF_STEPLEFT			= 512,	// [RH] Play left footstep sound next time
 	CF_FRIGHTENING		= 1024,	// [RH] Scare monsters away
+	CF_INSTANTWEAPSWITCH= 2048,	// [RH] Switch weapons instantly
 } cheat_t;
 
 
@@ -113,6 +113,8 @@ class player_s
 public:
 	void Serialize (FArchive &arc);
 	void FixPointers (const DObject *obj);
+
+	bool UseAmmo (bool noCheck=false);
 
 	APlayerPawn	*mo;
 	BYTE		playerstate;
@@ -230,7 +232,11 @@ public:
 	fixed_t		oldx;
 	fixed_t		oldy;
 
-	FPlayerSkin	*skin;		// Sprite override
+	FPlayerSkin	*skin;		// [RH] Sprite override
+	float		BlendR;		// [RH] Final blending values
+	float		BlendG;
+	float		BlendB;
+	float		BlendA;
 };
 
 typedef player_s player_t;
@@ -242,49 +248,5 @@ inline FArchive &operator<< (FArchive &arc, player_s *&p)
 {
 	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
 }
-
-//
-// INTERMISSION
-// Structure passed e.g. to WI_Start(wb)
-//
-typedef struct wbplayerstruct_s
-{
-	BOOL		in;			// whether the player is in game
-	
-	// Player stats, kills, collected items etc.
-	int			skills;
-	int			sitems;
-	int			ssecret;
-	int			stime;
-	int			frags[MAXPLAYERS];
-	int			fragcount;	// [RH] Cumulative frags for this player
-	int			score;		// current score on entry, modified on return
-
-} wbplayerstruct_t;
-
-typedef struct wbstartstruct_s
-{
-	int			epsd;	// episode # (0-2)
-
-	char		current[8];	// [RH] Name of map just finished
-	char		next[8];	// next level, [RH] actual map name
-
-	char		lname0[8];
-	char		lname1[8];
-	
-	int			maxkills;
-	int			maxitems;
-	int			maxsecret;
-	int			maxfrags;
-
-	// the par time
-	int			partime;
-	
-	// index of this player in game
-	int			pnum;	
-
-	wbplayerstruct_s	plyr[MAXPLAYERS];
-} wbstartstruct_t;
-
 
 #endif // __D_PLAYER_H__

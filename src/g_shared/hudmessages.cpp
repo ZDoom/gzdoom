@@ -1,16 +1,55 @@
+/*
+** hudmessages.cpp
+** Neato messages for the HUD
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "templates.h"
 #include "doomdef.h"
 #include "sbar.h"
 #include "c_cvars.h"
 #include "v_video.h"
+#include "cmdlib.h"
 
 EXTERN_CVAR (Bool, con_scaletext)
+
+IMPLEMENT_CLASS (DHUDMessage)
+IMPLEMENT_CLASS (DHUDMessageFadeOut)
+IMPLEMENT_CLASS (DHUDMessageTypeOnFadeOut)
 
 //
 // Basic HUD message. Appears and disappears without any special FX
 //
 
-FHUDMessage::FHUDMessage (const char *text, float x, float y, EColorRange textColor,
+DHUDMessage::DHUDMessage (const char *text, float x, float y, EColorRange textColor,
 						  float holdTime)
 {
 	if (fabs (x) > 2.f)
@@ -37,11 +76,12 @@ FHUDMessage::FHUDMessage (const char *text, float x, float y, EColorRange textCo
 	Tics = 0;
 	TextColor = textColor;
 	State = 0;
-
-	ResetText (text);
+	SourceText = copystring (text);
+	Font = screen->Font;
+	ResetText (SourceText);
 }
 
-FHUDMessage::~FHUDMessage ()
+DHUDMessage::~DHUDMessage ()
 {
 	if (Lines)
 	{
@@ -49,10 +89,33 @@ FHUDMessage::~FHUDMessage ()
 		Lines = NULL;
 		BorderNeedRefresh = screen->GetPageCount ();
 	}
+	if (SourceText != NULL)
+	{
+		delete[] SourceText;
+	}
 }
 
-void FHUDMessage::ResetText (const char *text)
+void DHUDMessage::Serialize (FArchive &arc)
 {
+	Super::Serialize (arc);
+	arc << Left << Top << CenterX << HoldTics
+		<< Tics << State << TextColor
+		<< SBarID << SourceText << Font << Next;
+	if (arc.IsLoading ())
+	{
+		ResetText (SourceText);
+	}
+}
+
+void DHUDMessage::ScreenSizeChanged ()
+{
+	ResetText (SourceText);
+}
+
+void DHUDMessage::ResetText (const char *text)
+{
+	screen->SetFont (Font);
+
 	Lines = V_BreakLines (con_scaletext ?
 		SCREENWIDTH / CleanXfac : SCREENWIDTH, (byte *)text);
 
@@ -64,13 +127,15 @@ void FHUDMessage::ResetText (const char *text)
 	{
 		for (; Lines[NumLines].width != -1; NumLines++)
 		{
-			Height += SmallFont->GetHeight ();
+			Height += Font->GetHeight ();
 			Width = MAX<int> (Width, Lines[NumLines].width);
 		}
 	}
+
+	screen->SetFont (SmallFont);
 }
 
-bool FHUDMessage::Tick ()
+bool DHUDMessage::Tick ()
 {
 	Tics++;
 	if (HoldTics != 0 && HoldTics <= Tics)
@@ -80,13 +145,15 @@ bool FHUDMessage::Tick ()
 	return false;
 }
 
-void FHUDMessage::Draw (int bottom)
+void DHUDMessage::Draw (int bottom)
 {
 	int xscale, yscale;
 	int x, y;
 	int ystep;
 	int i;
 	bool clean;
+
+	screen->SetFont (Font);
 
 	DrawSetup ();
 
@@ -122,7 +189,7 @@ void FHUDMessage::Draw (int bottom)
 		y = (int)((float)bottom * -Top);
 	}
 
-	ystep = SmallFont->GetHeight() * yscale;
+	ystep = Font->GetHeight() * yscale;
 
 	for (i = 0; i < NumLines; i++)
 	{
@@ -132,13 +199,15 @@ void FHUDMessage::Draw (int bottom)
 		DoDraw (i, drawx, y, xscale, yscale, clean);
 		y += ystep;
 	}
+
+	screen->SetFont (SmallFont);
 }
 
-void FHUDMessage::DrawSetup ()
+void DHUDMessage::DrawSetup ()
 {
 }
 
-void FHUDMessage::DoDraw (int linenum, int x, int y, int xscale, int yscale,
+void DHUDMessage::DoDraw (int linenum, int x, int y, int xscale, int yscale,
 						  bool clean)
 {
 	if (clean)
@@ -155,15 +224,21 @@ void FHUDMessage::DoDraw (int linenum, int x, int y, int xscale, int yscale,
 // HUD message that fades out
 //
 
-FHUDMessageFadeOut::FHUDMessageFadeOut (const char *text, float x, float y,
+DHUDMessageFadeOut::DHUDMessageFadeOut (const char *text, float x, float y,
 	EColorRange textColor, float holdTime, float fadeOutTime)
-	: FHUDMessage (text, x, y, textColor, holdTime)
+	: DHUDMessage (text, x, y, textColor, holdTime)
 {
 	FadeOutTics = (int)(fadeOutTime * TICRATE);
 	State = 1;
 }
 
-bool FHUDMessageFadeOut::Tick ()
+void DHUDMessageFadeOut::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << FadeOutTics;
+}
+
+bool DHUDMessageFadeOut::Tick ()
 {
 	Tics++;
 	if (State == 1 && HoldTics <= Tics)
@@ -178,12 +253,12 @@ bool FHUDMessageFadeOut::Tick ()
 	return false;
 }
 
-void FHUDMessageFadeOut::DoDraw (int linenum, int x, int y, int xscale,
+void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, int xscale,
 								 int yscale, bool clean)
 {
 	if (State == 1)
 	{
-		FHUDMessage::DoDraw (linenum, x, y, xscale, yscale, clean);
+		DHUDMessage::DoDraw (linenum, x, y, xscale, yscale, clean);
 	}
 	else
 	{
@@ -206,9 +281,9 @@ void FHUDMessageFadeOut::DoDraw (int linenum, int x, int y, int xscale,
 // HUD message that gets "typed" on, then fades out
 //
 
-FHUDMessageTypeOnFadeOut::FHUDMessageTypeOnFadeOut (const char *text, float x, float y,
+DHUDMessageTypeOnFadeOut::DHUDMessageTypeOnFadeOut (const char *text, float x, float y,
 	EColorRange textColor, float typeTime, float holdTime, float fadeOutTime)
-	: FHUDMessageFadeOut (text, x, y, textColor, holdTime, fadeOutTime)
+	: DHUDMessageFadeOut (text, x, y, textColor, holdTime, fadeOutTime)
 {
 	TypeOnTime = typeTime * TICRATE;
 	if (TypeOnTime == 0.f)
@@ -219,9 +294,15 @@ FHUDMessageTypeOnFadeOut::FHUDMessageTypeOnFadeOut (const char *text, float x, f
 	State = 3;
 }
 
-bool FHUDMessageTypeOnFadeOut::Tick ()
+void DHUDMessageTypeOnFadeOut::Serialize (FArchive &arc)
 {
-	if (!FHUDMessageFadeOut::Tick ())
+	Super::Serialize (arc);
+	arc << TypeOnTime << CurrLine << LineVisible << LineLen;
+}
+
+bool DHUDMessageTypeOnFadeOut::Tick ()
+{
+	if (!Super::Tick ())
 	{
 		if (State == 3)
 		{
@@ -246,14 +327,34 @@ bool FHUDMessageTypeOnFadeOut::Tick ()
 	return true;
 }
 
-void FHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, int xscale,
+void DHUDMessageTypeOnFadeOut::ScreenSizeChanged ()
+{
+	int charCount = 0, i;
+
+	for (i = 0; i < CurrLine; ++i)
+	{
+		charCount += strlen (Lines[i].string);
+	}
+	charCount += LineVisible;
+
+	Super::ScreenSizeChanged ();
+	if (State == 3)
+	{
+		CurrLine = 0;
+		LineLen = strlen (Lines[0].string);
+		Tics = (int)(charCount * TypeOnTime) - 1;
+		Tick ();
+	}
+}
+
+void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, int xscale,
 								 int yscale, bool clean)
 {
 	if (State == 3)
 	{
 		if (linenum < CurrLine)
 		{
-			FHUDMessage::DoDraw (linenum, x, y, xscale, yscale, clean);
+			DHUDMessage::DoDraw (linenum, x, y, xscale, yscale, clean);
 		}
 		else if (linenum == CurrLine)
 		{
@@ -274,6 +375,6 @@ void FHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, int xscale,
 	}
 	else
 	{
-		FHUDMessageFadeOut::DoDraw (linenum, x, y, xscale, yscale, clean);
+		DHUDMessageFadeOut::DoDraw (linenum, x, y, xscale, yscale, clean);
 	}
 }

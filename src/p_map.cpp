@@ -61,6 +61,9 @@
 CVAR (Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 
 static void CheckForPushSpecial (line_t *line, int side, AActor *mobj);
+static void SpawnShootDecal (AActor *t1, const FTraceResults &trace);
+static void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
+							 fixed_t vx, fixed_t vy, fixed_t vz);
 
 fixed_t 		tmbbox[4];
 static AActor  *tmthing;
@@ -215,6 +218,11 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	thing->floorsector = tmfloorsector;
 	thing->dropoffz = tmdropoffz;        // killough 11/98
 
+	if (thing->flags2 & MF2_FLOORCLIP)
+	{
+		thing->AdjustFloorClip ();
+	}
+
 	return true;
 }
 
@@ -249,8 +257,8 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 	else if (!(mo->flags & MF_NOGRAVITY) && mo->waterlevel > 1 ||
 		(mo->waterlevel == 1 && mo->z > mo->floorz + 6*FRACUNIT))
 	{
-		friction = secfriction (mo->subsector->sector);
-		movefactor = secmovefac (mo->subsector->sector) >> 1;
+		friction = secfriction (mo->Sector);
+		movefactor = secmovefac (mo->Sector) >> 1;
 	}
 	else if (var_friction && !(mo->flags & (MF_NOCLIP|MF_NOGRAVITY)))
 	{	// When the object is straddling sectors with the same
@@ -262,7 +270,7 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 			if ((sec = m->m_sector)->special & FRICTION_MASK &&
 				(sec->friction < friction || friction == ORIG_FRICTION) &&
 				(mo->z <= sec->floorplane.ZatPoint (mo->x, mo->y) ||
-				(sec->heightsec &&
+				(sec->heightsec && !(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 				mo->z <= sec->heightsec->floorplane.ZatPoint (mo->x, mo->y))))
 			{
 				friction = secfriction (sec);
@@ -645,15 +653,13 @@ BOOL PIT_CheckThing (AActor *thing)
 		thing->momx += tmthing->momx >> 2;
 		thing->momy += tmthing->momy >> 2;
 	}
+	solid = (thing->flags & MF_SOLID) &&
+			!(thing->flags & MF_NOCLIP) &&
+			(tmthing->flags & MF_SOLID);
 	// Check for special pickup
-	if (thing->flags & MF_SPECIAL)
-	{
-		solid = thing->flags & MF_SOLID;
-		if (tmflags & MF_PICKUP)
-		{ // Can be picked up by tmthing
-			P_TouchSpecialThing (thing, tmthing);	// can remove thing
-		}
-		return !solid;
+	if ((thing->flags & MF_SPECIAL) && (tmflags & MF_PICKUP))
+	{ // Can be picked up by tmthing
+		P_TouchSpecialThing (thing, tmthing);	// can remove thing
 	}
 
 	// killough 3/16/98: Allow non-solid moving objects to move through solid
@@ -661,8 +667,7 @@ BOOL PIT_CheckThing (AActor *thing)
 	// despite another solid thing being in the way.
 	// killough 4/11/98: Treat no-clipping things as not blocking
 
-	return !((thing->flags & MF_SOLID && !(thing->flags & MF_NOCLIP))
-			 && (tmthing->flags & MF_SOLID));
+	return !solid;
 
 	// return !(thing->flags & MF_SOLID);	// old code -- killough
 }
@@ -1088,7 +1093,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 	int 		side;
 	int 		oldside;
 	line_t* 	ld;
-	sector_t*	oldsec = thing->subsector->sector;	// [RH] for sector actions
+	sector_t*	oldsec = thing->Sector;	// [RH] for sector actions
 	sector_t*	newsec;
 
 	floatok = false;
@@ -1112,7 +1117,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			}
 			else if (BlockingMobj->z+BlockingMobj->height-thing->z 
 				> 24*FRACUNIT 
-				|| (BlockingMobj->subsector->sector->ceilingplane.ZatPoint (x, y)
+				|| (BlockingMobj->Sector->ceilingplane.ZatPoint (x, y)
 				- (BlockingMobj->z+BlockingMobj->height) < thing->height)
 				|| (tmceilingz-(BlockingMobj->z+BlockingMobj->height) 
 				< thing->height))
@@ -1200,7 +1205,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			return false;
 		}
 		if (thing->flags2 & MF2_CANTLEAVEFLOORPIC
-			&& (tmfloorpic != thing->subsector->sector->floorpic
+			&& (tmfloorpic != thing->Sector->floorpic
 				|| tmfloorz - thing->z != 0))
 		{ // must stay within a sector of a certain floor type
 			thing->z = oldz;
@@ -1216,7 +1221,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		//Added by MC: To prevent bot from getting into dangerous sectors.
 		if (thing->player && thing->player->isbot && thing->flags & MF_SHOOTABLE)
 		{
-			if (tmsector != thing->subsector->sector
+			if (tmsector != thing->Sector
 				&& bglobal.IsDangerous (tmsector))
 			{
 				thing->player->prev = thing->player->dest;
@@ -1282,7 +1287,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 	}
 
 	// [RH] If changing sectors, trigger transitions
-	newsec = thing->subsector->sector;
+	newsec = thing->Sector;
 	if (oldsec != newsec)
 	{
 		if (oldsec->SecActTarget)
@@ -1775,6 +1780,11 @@ bool P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove)
 	const secplane_t *plane = &actor->floorsector->floorplane;
 	fixed_t planezhere = plane->ZatPoint (actor->x, actor->y);
 
+	if (actor->floorsector != actor->Sector)
+	{
+		return false;
+	}
+
 	if (actor->z - planezhere > FRACUNIT)
 	{ // not on floor
 		return false;
@@ -1990,9 +2000,6 @@ BOOL PTR_AimTraverse (intercept_t* in)
 		if ( !(li->flags & ML_TWOSIDED) )
 			return false;				// stop
 
-		fixed_t oldbottom = openbottom;
-		fixed_t oldtop = opentop;
-
 		// Crosses a two sided line.
 		// A two sided line will restrict the possible target ranges.
 		P_LineOpening (li, trace.x + FixedMul (trace.dx, in->frac),
@@ -2003,19 +2010,13 @@ BOOL PTR_AimTraverse (intercept_t* in)
 
 		dist = FixedMul (attackrange, in->frac);
 
-		if (oldbottom != openbottom)
-		{
-			pitch = -(int)R_PointToAngle2 (0, shootz, dist, openbottom);
-			if (pitch < bottompitch)
-				bottompitch = pitch;
-		}
+		pitch = -(int)R_PointToAngle2 (0, shootz, dist, openbottom);
+		if (pitch < bottompitch)
+			bottompitch = pitch;
 
-		if (oldtop != opentop)
-		{
-			pitch = -(int)R_PointToAngle2 (0, shootz, dist, opentop);
-			if (pitch > toppitch)
-				toppitch = pitch;
-		}
+		pitch = -(int)R_PointToAngle2 (0, shootz, dist, opentop);
+		if (pitch > toppitch)
+			toppitch = pitch;
 
 		if (toppitch >= bottompitch)
 			return false;				// stop
@@ -2084,14 +2085,14 @@ fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vr
 	{
 		if (t1->player == NULL || dmflags & DF_NO_FREELOOK)
 		{
-			vrange = ANGLE_1*32;
+			vrange = ANGLE_1*35;
 		}
 		else
 		{
 			vrange = t1->player->userinfo.aimdist;
-			if (vrange > ANGLE_1*32)
+			if (vrange > ANGLE_1*35)
 			{
-				vrange = ANGLE_1*32;
+				vrange = ANGLE_1*35;
 			}
 		}
 	}
@@ -2139,7 +2140,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	attackrange = distance;
 	aimpitch = pitch;
 
-	if (!Trace (t1->x, t1->y, shootz, t1->subsector->sector, vx, vy, vz, distance,
+	if (!Trace (t1->x, t1->y, shootz, t1->Sector, vx, vy, vz, distance,
 		MF_SHOOTABLE, ML_BLOCKEVERYTHING, t1, trace,
 		TRACE_NoSky|TRACE_Impact))
 	{ // hit nothing
@@ -2160,38 +2161,30 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 	else
 	{
 		fixed_t hitx, hity, hitz, closer;
+		AActor *puff = NULL;
 
 		if (trace.HitType != TRACE_HitActor)
 		{
 			// position a bit closer for puffs
 			fixed_t closer = trace.Distance - 4*FRACUNIT;
-			P_SpawnPuff (t1->x + FixedMul (vx, closer),
+			puff = P_SpawnPuff (t1->x + FixedMul (vx, closer),
 				t1->y + FixedMul (vy, closer),
 				shootz + FixedMul (vz, closer), angle - ANG90, 0);
 
 			// [RH] Spawn a decal
 			if (trace.HitType == TRACE_HitWall)
 			{
-				FDecalBase *decalbase = NULL;
-
-				if (t1->player != NULL)
-				{
-					weapontype_t weap = t1->player->readyweapon;
-					if (weap < NUMWEAPONS)
-					{
-						decalbase =
-							((AActor *)wpnlev1info[weap]->type->ActorInfo->Defaults)->DecalGenerator;
-					}
-				}
-				else
-				{
-					decalbase = t1->DecalGenerator;
-				}
-				if (decalbase != NULL)
-				{
-					AImpactDecal::StaticCreate (decalbase->GetDecal (),
-						trace.X, trace.Y, trace.Z, sides + trace.Line->sidenum[trace.Side]);
-				}
+				SpawnShootDecal (t1, trace);
+			}
+			else if (puff != NULL &&
+				trace.CrossedWater == NULL &&
+				trace.HitType == TRACE_HitFloor)
+			{
+				P_HitWater (puff, trace.Sector);
+			}
+			if (trace.CrossedWater)
+			{
+				SpawnDeepSplash (t1, trace, puff, vx, vy, vz);
 			}
 		}
 		else
@@ -2207,11 +2200,26 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & MF2_INVULNERABLE))
 			{
-				P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
+				puff = P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
 			}
 			else if (gameinfo.gametype == GAME_Doom)
 			{
 				P_SpawnBlood (hitx, hity, hitz, angle - ANG180, damage);
+			}
+			if (trace.CrossedWater)
+			{
+				bool killPuff = false;
+
+				if (puff == NULL)
+				{ // Spawn puff just to get a mass for the splash
+					puff = P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
+					killPuff = true;
+				}
+				SpawnDeepSplash (t1, trace, puff, vx, vy, vz);
+				if (killPuff)
+				{
+					puff->Destroy();
+				}
 			}
 
 			if (damage)
@@ -2311,7 +2319,7 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 		fixed_t vy = FixedMul (finecosine[bleedpitch], finesine[bleedang]);
 		fixed_t vz = -finesine[bleedpitch];
 
-		if (Trace (x, y, z, actor->subsector->sector,
+		if (Trace (x, y, z, actor->Sector,
 					vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, actor,
 					bleedtrace, TRACE_NoSky))
 		{
@@ -2415,9 +2423,29 @@ void P_RailAttack (AActor *source, int damage, int offset)
 	RailHits.Clear ();
 	VectorFixedSet (start, x1, y1, shootz);
 
-	Trace (x1, y1, shootz, source->subsector->sector, vx, vy, vz,
+	Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
 		8192*FRACUNIT, MF_SHOOTABLE, 0, source, trace,
 		TRACE_PCross|TRACE_Impact, ProcessRailHit);
+
+	if (trace.CrossedWater)
+	{
+		SpawnDeepSplash (source, trace, NULL, vx, vy, vz);
+	}
+	if (trace.HitType == TRACE_HitWall)
+	{
+		SpawnShootDecal (source, trace);
+	}
+	else if (trace.HitType == TRACE_HitFloor)
+	{
+		fixed_t savex, savey, savez;
+
+		savex = source->x;
+		savey = source->y;
+		savez = source->z;
+		source->SetOrigin (trace.X, trace.Y, trace.Z);
+		P_HitWater (source, trace.Sector);
+		source->SetOrigin (savex, savey, savez);
+	}
 
 	// Now hurt anything the trace hit
 	size_t i;
@@ -2452,6 +2480,7 @@ void P_RailAttack (AActor *source, int damage, int offset)
 CVAR (Float, chase_height, -8.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Float, chase_dist, 90.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 fixed_t CameraX, CameraY, CameraZ;
+sector_t *CameraSector;
 
 void P_AimCamera (AActor *t1)
 {
@@ -2467,7 +2496,7 @@ void P_AimCamera (AActor *t1)
 
 	sz = t1->z - t1->floorclip + t1->height + (fixed_t)(chase_height * FRACUNIT);
 
-	if (Trace (t1->x, t1->y, sz, t1->subsector->sector,
+	if (Trace (t1->x, t1->y, sz, t1->Sector,
 		vx, vy, vz, distance, 0, 0, NULL, trace) &&
 		trace.Distance > 10*FRACUNIT)
 	{
@@ -2483,6 +2512,7 @@ void P_AimCamera (AActor *t1)
 		CameraY = trace.Y;
 		CameraZ = trace.Z;
 	}
+	CameraSector = trace.Sector;
 }
 
 
@@ -2583,7 +2613,7 @@ void P_UseLines (player_t *player)
 
 	if (P_PathTraverse (x1, y1, x2, y2, PT_ADDLINES, PTR_UseTraverse))
 	{ // [RH] Give sector a chance to eat the use
-		sector_t *sec = usething->subsector->sector;
+		sector_t *sec = usething->Sector;
 		int spac = SECSPAC_Use;
 		if (foundline)
 			spac |= SECSPAC_UseWall;
@@ -2745,12 +2775,15 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		// height of the thing and not the height of the map.
 		float points;
 		float len;
-		float dx, dy;
+		fixed_t dx, dy;
+		float boxradius;
 
-		dx = (float)(thing->x - bombspot->x);
-		dy = (float)(thing->y - bombspot->y);
+		dx = abs (thing->x - bombspot->x);
+		dy = abs (thing->y - bombspot->y);
+		boxradius = float (thing->radius);
 
-		len = sqrtf (dx*dx + dy*dy);
+		// The damage pattern is square, not circular.
+		len = float (dx > dy ? dx : dy);
 
 		if (bombspot->z < thing->z || bombspot->z >= thing->z + thing->height)
 		{
@@ -2758,25 +2791,25 @@ BOOL PIT_RadiusAttack (AActor *thing)
 
 			if (bombspot->z > thing->z)
 			{
-				dz = (float)(thing->z + thing->height - bombspot->z);
+				dz = float (thing->z + thing->height - bombspot->z);
 			}
 			else
 			{
-				dz = (float)(thing->z - bombspot->z);
+				dz = float (thing->z - bombspot->z);
 			}
-			if (len <= (float)thing->radius)
+			if (len <= boxradius)
 			{
 				len = dz;
 			}
 			else
 			{
-				len -= (float)thing->radius;
+				len -= boxradius;
 				len = sqrtf (len*len + dz*dz);
 			}
 		}
 		else
 		{
-			len -= (float)thing->radius;
+			len -= boxradius;
 			if (len < 0.f)
 				len = 0.f;
 		}
@@ -2825,8 +2858,8 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		// [RH] Old code just for barrels
 		fixed_t dx, dy, dist;
 
-		dx = abs(thing->x - bombspot->x);
-		dy = abs(thing->y - bombspot->y);
+		dx = abs (thing->x - bombspot->x);
+		dy = abs (thing->y - bombspot->y);
 
 		dist = dx>dy ? dx : dy;
 		dist = (dist - thing->radius) >> FRACBITS;
@@ -2849,36 +2882,6 @@ BOOL PIT_RadiusAttack (AActor *thing)
 			P_TraceBleed (damage, thing, bombspot);
 		}
 	}
-	return true;
-}
-
-//=============================================================================
-//
-// PIT_RadiusDecals
-//
-// Puts decals on walls near a P_RadiusAttack spot.
-//
-//=============================================================================
-
-static const FDecal *RadDecal;
-
-BOOL PIT_RadiusDecals (line_t *ld)
-{
-	int side = P_PointOnLineSide (bombspot->x, bombspot->y, ld);
-
-	if (side != 0 && ld->backsector == NULL)
-		return true;	// exploded behind wall
-
-	float len2 = (float)DMulScale16 (ld->dx,ld->dx, ld->dy,ld->dy);
-	if (len2 == 0.f)
-		return true;	// What kind of crap wall has 0 length?
-
-	float dot = (float)DMulScale16 (bombspot->x - ld->v1->x, ld->dx,  bombspot->y - ld->v1->y, ld->dy);
-	float r = dot / len2;
-
-	if (r < 0.f || r > 1.f)
-		return true;	// Nearest pt on wall's line is not on the wall
-
 	return true;
 }
 
@@ -2911,11 +2914,6 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
 	for (y = yl; y <= yh; y++)
 		for (x = xl; x <= xh; x++)
 			P_BlockThingsIterator (x, y, PIT_RadiusAttack);
-
-	// [RH] Spray some decals on nearby walls
-	for (y = yl; y <= yh; y++)
-		for (x = xl; x <= xh; x++)
-			P_BlockLinesIterator (x, y, PIT_RadiusDecals);
 }
 
 
@@ -3548,6 +3546,9 @@ msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode)
 {
 	msecnode_t *node;
 
+	if (s == 0)
+	I_FatalError ("AddSecnode of 0 for %s\n", thing->_StaticType.Name);
+
 	node = nextnode;
 	while (node)
 	{
@@ -3750,7 +3751,7 @@ void P_CreateSecNodeList (AActor *thing, fixed_t x, fixed_t y)
 
 	// Add the sector of the (x,y) point to sector_list.
 
-	sector_list = P_AddSecnode (thing->subsector->sector, thing, sector_list);
+	sector_list = P_AddSecnode (thing->Sector, thing, sector_list);
 
 	// Now delete any nodes that won't be used. These are the ones where
 	// m_thing is still NULL.
@@ -3776,4 +3777,62 @@ void P_CreateSecNodeList (AActor *thing, fixed_t x, fixed_t y)
 	tmx = xsave;
 	tmy = ysave;
 	memcpy (tmbbox, bboxsave, sizeof(bboxsave));
+}
+
+void SpawnShootDecal (AActor *t1, const FTraceResults &trace)
+{
+	FDecalBase *decalbase = NULL;
+
+	if (t1->player != NULL)
+	{
+		weapontype_t weap = t1->player->readyweapon;
+		if (weap < NUMWEAPONS)
+		{
+			decalbase =
+				((AActor *)wpnlev1info[weap]->type->ActorInfo->Defaults)->DecalGenerator;
+		}
+	}
+	else
+	{
+		decalbase = t1->DecalGenerator;
+	}
+	if (decalbase != NULL)
+	{
+		AImpactDecal::StaticCreate (decalbase->GetDecal (),
+			trace.X, trace.Y, trace.Z, sides + trace.Line->sidenum[trace.Side]);
+	}
+}
+
+void SpawnDeepSplash (AActor *t1, const FTraceResults &trace, AActor *puff,
+	fixed_t vx, fixed_t vy, fixed_t vz)
+{
+	fixed_t num, den, hitdist;
+	const secplane_t *plane = &trace.CrossedWater->heightsec->floorplane;
+
+	den = TMulScale16 (plane->a, vx, plane->b, vy, plane->c, vz);
+	if (den != 0)
+	{
+		num = TMulScale16 (plane->a, t1->x, plane->b, t1->y, plane->c, shootz) + plane->d;
+		hitdist = FixedDiv (-num, den);
+
+		if (hitdist >= 0 && hitdist <= trace.Distance)
+		{
+			fixed_t savex, savey, savez;
+
+			// Move the puff onto the water surface, splash, then move it back.
+			if (puff == NULL)
+			{
+				puff = t1;
+			}
+
+			savex = puff->x;
+			savey = puff->y;
+			savez = puff->z;
+			puff->SetOrigin (t1->x+FixedMul (vx, hitdist),
+							 t1->y+FixedMul (vy, hitdist),
+							shootz+FixedMul (vz, hitdist));
+			P_HitWater (puff, puff->Sector);
+			puff->SetOrigin (savex, savey, savez);
+		}
+	}
 }

@@ -16,7 +16,7 @@
 //
 // $Log:$
 //
-// DESCRIPTION:  Ceiling aninmation (lowering, crushing, raising)
+// DESCRIPTION:  Ceiling animation (lowering, crushing, raising)
 //
 //-----------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ void DCeiling::PlayCeilingSound ()
 //
 // T_MoveCeiling
 //
-void DCeiling::RunThink ()
+void DCeiling::Tick ()
 {
 	EResult res;
 		
@@ -99,7 +99,8 @@ void DCeiling::RunThink ()
 			case ceilCrushAndRaise:
 				m_Direction = -1;
 				m_Speed = m_Speed1;
-				//PlayCeilingSound ();
+				if (!SN_IsMakingLoopingSound (m_Sector))
+					PlayCeilingSound ();
 				break;
 				
 			// movers with texture change, change the texture then get removed
@@ -130,7 +131,8 @@ void DCeiling::RunThink ()
 			case ceilCrushRaiseAndStay:
 				m_Speed = m_Speed2;
 				m_Direction = 1;
-				//PlayCeilingSound ();
+				if (!SN_IsMakingLoopingSound (m_Sector))
+					PlayCeilingSound ();
 				break;
 
 			// in the case of ceiling mover/changer, change the texture
@@ -197,7 +199,7 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 	sector_t*	sec;
 	DCeiling*	ceiling;
 	bool		manual = false;
-	fixed_t		targheight;
+	fixed_t		targheight = 0;	// Silence, GCC
 	vertex_t*	spot;
 		
 	rtn = false;

@@ -1,3 +1,37 @@
+/*
+** decallib.cpp
+** Parses DECALDEFs and creates a "library" of decals
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "decallib.h"
 #include "sc_man.h"
 #include "w_wad.h"
@@ -8,8 +42,12 @@
 #include "weightedlist.h"
 #include "statnums.h"
 #include "templates.h"
+#include "r_draw.h"
 
 FDecalLib DecalLibrary;
+
+static int ReadScale ();
+static TArray<BYTE> DecalTranslations;
 
 // A decal group holds multiple decals and returns one randomly
 // when GetDecal() is called.
@@ -37,7 +75,7 @@ struct FDecalLib::FTranslation
 
 	DWORD StartColor, EndColor;
 	FTranslation *Next;
-	BYTE PalRemap[256];
+	WORD Index;
 };
 
 struct FDecalAnimator
@@ -88,7 +126,7 @@ class DDecalFader : public DDecalThinker
 public:
 	DDecalFader (AActor *decal) : DDecalThinker (decal) {}
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 	int TimeToStartDecay;
 	int TimeToEndDecay;
@@ -113,7 +151,7 @@ class DDecalColorer : public DDecalThinker
 public:
 	DDecalColorer (AActor *decal) : DDecalThinker (decal) {}
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 	int TimeToStartDecay;
 	int TimeToEndDecay;
@@ -139,7 +177,7 @@ class DDecalStretcher : public DDecalThinker
 public:
 	DDecalStretcher (AActor *decal) : DDecalThinker (decal) {}
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 	int TimeToStart;
 	int TimeToStop;
@@ -170,7 +208,7 @@ class DDecalSlider : public DDecalThinker
 public:
 	DDecalSlider (AActor *decal) : DDecalThinker (decal) {}
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 	int TimeToStart;
 	int TimeToStop;
@@ -383,13 +421,11 @@ void FDecalLib::ParseDecal ()
 		switch ((code = SC_MustMatchString (DecalKeywords)))
 		{
 		case DECAL_XSCALE:
+			newdecal.ScaleX = ReadScale ();
+			break;
+
 		case DECAL_YSCALE:
-			SC_MustGetNumber ();
-			sc_Number = clamp (sc_Number, 1, 256) - 1;
-			if (code == DECAL_XSCALE)
-				newdecal.ScaleX = sc_Number;
-			else
-				newdecal.ScaleY = sc_Number;
+			newdecal.ScaleY = ReadScale ();
 			break;
 
 		case DECAL_PIC:
@@ -451,7 +487,7 @@ void FDecalLib::ParseDecal ()
 
 			SC_MustGetString (); startcolor = V_GetColor (NULL, sc_String);
 			SC_MustGetString (); endcolor   = V_GetColor (NULL, sc_String);
-			newdecal.Translation = GenerateTranslation (startcolor, endcolor)->PalRemap;
+			newdecal.Translation = GenerateTranslation (startcolor, endcolor)->Index;
 			break;
 
 		case DECAL_ANIMATOR:
@@ -533,11 +569,18 @@ void FDecalLib::ParseGenerator ()
 
 	// Get name of generated decal
 	SC_MustGetString ();
-	decal = ScanTreeForName (sc_String, Root);
-	if (decal == NULL)
+	if (stricmp (sc_String, "None") == 0)
 	{
-		const char *arg = sc_String;
-		SC_ScriptError ("%s has not been defined.", &arg);
+		decal = NULL;
+	}
+	else
+	{
+		decal = ScanTreeForName (sc_String, Root);
+		if (decal == NULL)
+		{
+			const char *arg = sc_String;
+			SC_ScriptError ("%s has not been defined.", &arg);
+		}
 	}
 
 	actor->DecalGenerator = decal;
@@ -618,13 +661,11 @@ void FDecalLib::ParseStretcher ()
 		}
 		else if (SC_Compare ("GoalX"))
 		{
-			SC_MustGetNumber ();
-			goalX = clamp (sc_Number, 1, 256) - 1;
+			goalX = ReadScale ();
 		}
 		else if (SC_Compare ("GoalY"))
 		{
-			SC_MustGetNumber ();
-			goalY = clamp (sc_Number, 1, 256) - 1;
+			goalY = ReadScale ();
 		}
 		else
 		{
@@ -858,7 +899,9 @@ FDecalBase *FDecalLib::ScanTreeForNum (const BYTE num, FDecalBase *root)
 		{
 			break;
 		}
-		ScanTreeForNum (num, root->Left);
+		FDecalBase *leftres = ScanTreeForNum (num, root->Left);
+		if (leftres != NULL)
+			return leftres;
 		root = root->Right;		// Avoid tail-recursion
 	}
 	return root;
@@ -923,7 +966,7 @@ void FDecal::ApplyToActor (AActor *actor) const
 	{
 		actor->SetShade (ShadeColor);
 	}
-	actor->translation = Translation;
+	actor->Translation = Translation;
 	actor->xscale = ScaleX;
 	actor->yscale = ScaleY;
 	actor->picnum = PicNum;
@@ -951,11 +994,19 @@ FDecalLib::FTranslation::FTranslation (DWORD start, DWORD end)
 {
 	DWORD ri, gi, bi, rs, gs, bs;
 	PalEntry *first, *last;
-	int i;
+	BYTE *table;
+	int i, tablei;
 
 	StartColor = start;
 	EndColor = end;
 	Next = NULL;
+
+	if (DecalTranslations.Size() == 256*256)
+	{
+		Printf ("Too many decal translations defined\n");
+		Index = 0;
+		return;
+	}
 
 	first = (PalEntry *)&StartColor;
 	last = (PalEntry *)&EndColor;
@@ -971,11 +1022,15 @@ FDecalLib::FTranslation::FTranslation (DWORD start, DWORD end)
 	gs = (gs - ri) / 255;
 	bs = (bs - bi) / 255;
 
+	tablei = DecalTranslations.Reserve(256);
+	table = &DecalTranslations[tablei];
+
 	for (i = 1; i < 256; i++, ri += rs, gi += gs, bi += bs)
 	{
-		PalRemap[i] = ColorMatcher.Pick (ri >> 24, gi >> 24, bi >> 24);
+		table[i] = ColorMatcher.Pick (ri >> 24, gi >> 24, bi >> 24);
 	}
-	PalRemap[0] = PalRemap[1];
+	table[0] = table[1];
+	Index = TRANSLATION(TRANSLATION_Decals, tablei >> 8);
 }
 
 FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (DWORD start, DWORD end)
@@ -1030,7 +1085,7 @@ void DDecalFader::Serialize (FArchive &arc)
 	arc << TimeToStartDecay << TimeToEndDecay << StartTrans;
 }
 
-void DDecalFader::RunThink ()
+void DDecalFader::Tick ()
 {
 	if (TheDecal == NULL)
 	{
@@ -1117,7 +1172,7 @@ DThinker *FDecalStretcherAnim::CreateThinker (AActor *actor) const
 	return thinker;
 }
 
-void DDecalStretcher::RunThink ()
+void DDecalStretcher::Tick ()
 {
 	if (TheDecal == NULL)
 	{
@@ -1186,7 +1241,7 @@ DThinker *FDecalSliderAnim::CreateThinker (AActor *actor) const
 	return thinker;
 }
 
-void DDecalSlider::RunThink ()
+void DDecalSlider::Tick ()
 {
 	if (TheDecal == NULL)
 	{
@@ -1219,7 +1274,7 @@ void DDecalSlider::RunThink ()
 
 DThinker *FDecalCombinerAnim::CreateThinker (AActor *actor) const
 {
-	DThinker *thinker;
+	DThinker *thinker = NULL;
 
 	for (int i = 0; i < NumAnimators; ++i)
 	{
@@ -1251,7 +1306,7 @@ void DDecalColorer::Serialize (FArchive &arc)
 	arc << TimeToStartDecay << TimeToEndDecay << StartColor << GoalColor;
 }
 
-void DDecalColorer::RunThink ()
+void DDecalColorer::Tick ()
 {
 	if (TheDecal == NULL || TheDecal->RenderStyle != STYLE_Shaded)
 	{
@@ -1300,4 +1355,10 @@ DThinker *FDecalColorerAnim::CreateThinker (AActor *actor) const
 	Colorer->StartColor = 0xff000000;
 	Colorer->GoalColor = GoalColor;
 	return Colorer;
+}
+
+static int ReadScale ()
+{
+	SC_MustGetFloat ();
+	return clamp ((int)(sc_Float * 64.f), 1, 256) - 1;
 }

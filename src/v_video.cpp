@@ -57,6 +57,7 @@
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "cmdlib.h"
+#include "gi.h"
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
@@ -80,8 +81,6 @@ static DWORD Col2RGB8_2[63][256];
 // [RH] The framebuffer is no longer a mere byte array.
 // There's also only one, not four.
 DFrameBuffer *screen;
-
-int TransArea, TotalArea;
 
 CVAR (Int, vid_defwidth, 320, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, vid_defheight, 200, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -255,9 +254,6 @@ void DCanvas::Dim () const
 		}
 		spot += gap;
 	}
-
-	if (this == screen)
-		TransArea += TotalArea;
 }
 
 int V_GetColorFromString (const DWORD *palette, const char *cstr)
@@ -403,7 +399,7 @@ CCMD (setcolor)
 		return;
 	}
 
-	if ( (desc = V_GetColorStringByName (argv.AllButFirstArg (2))) )
+	if ( (desc = V_GetColorStringByName (argv[2])) )
 	{
 		sprintf (setcmd, "set %s \"%s\"", argv[1], desc);
 		C_DoCommand (setcmd);
@@ -524,8 +520,8 @@ void DCanvas::CalcGamma (float gamma, BYTE gammalookup[256])
 DSimpleCanvas::DSimpleCanvas (int width, int height)
 	: DCanvas (width, height)
 {
-	MemBuffer = new BYTE[width * height];
-	Pitch = width;
+	Pitch = width==1024?1032:width;
+	MemBuffer = new BYTE[Pitch * height];
 }
 
 DSimpleCanvas::~DSimpleCanvas ()
@@ -618,7 +614,7 @@ void DFrameBuffer::DrawRateStuff ()
 
 void DFrameBuffer::CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest)
 {
-	if (Pitch == width && Pitch == Width)
+	if (Pitch == width && Pitch == Width && srcPitch == width)
 	{
 		memcpy (dest, src, Width * Height);
 	}
@@ -653,7 +649,6 @@ bool V_DoModeSetup (int width, int height, int bits)
 	CleanYfac = height / 200;
 	CleanWidth = width / CleanXfac;
 	CleanHeight = height / CleanYfac;
-	TotalArea = width * height;
 
 	DisplayWidth = width;
 	DisplayHeight = height;
@@ -762,13 +757,20 @@ void V_Init (void)
 	// load the heads-up font
 	if (W_CheckNumForName ("FONTA_S") >= 0)
 	{
-		SmallFont = new FFont ("FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+		SmallFont = new FFont ("SmallFont", "FONTA%02u", HU_FONTSTART, HU_FONTSIZE, 1);
 	}
 	else
 	{
-		SmallFont = new FFont ("STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
+		SmallFont = new FFont ("SmallFont", "STCFN%.3d", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART);
 	}
-	BigFont = new FFont ("FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		BigFont = new FSingleLumpFont ("BigFont", W_GetNumForName ("DBIGFONT"));
+	}
+	else
+	{
+		BigFont = new FFont ("BigFont", "FONTB%02u", HU_FONTSTART, HU_FONTSIZE, 1);
+	}
 
 	width = height = bits = 0;
 
@@ -813,7 +815,7 @@ void V_Init (void)
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	FBaseCVar::ResetColors ();
-	ConFont = new FConsoleFont (W_GetNumForName ("CONCHARS"));
+	ConFont = new FSingleLumpFont ("ConsoleFont", W_GetNumForName ("CONFONT"));
 	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);
 
 	BuildTransTable (GPalette.BaseColors);

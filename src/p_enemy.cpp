@@ -61,8 +61,8 @@ dirtype_t diags[4] =
 	DI_NORTHWEST, DI_NORTHEAST, DI_SOUTHWEST, DI_SOUTHEAST
 };
 
-fixed_t xspeed[8] = {FRACUNIT,47000,0,-47000,-FRACUNIT,-47000,0,47000};
-fixed_t yspeed[8] = {0,47000,FRACUNIT,47000,0,-47000,-FRACUNIT,-47000};
+fixed_t xspeed[8] = {FRACUNIT,46341,0,-46341,-FRACUNIT,-46341,0,46341};
+fixed_t yspeed[8] = {0,46341,FRACUNIT,46341,0,-46341,-FRACUNIT,-46341};
 
 
 
@@ -157,7 +157,7 @@ void P_NoiseAlert (AActor *target, AActor *emmiter)
 
 	soundtarget = target;
 	validcount++;
-	P_RecursiveSound (emmiter->subsector->sector, 0);
+	P_RecursiveSound (emmiter->Sector, 0);
 }
 
 
@@ -639,7 +639,7 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 		return P_LookForMonsters (actor);
 	}
 
-	sector = actor->subsector->sector;	
+	sector = actor->Sector;	
 	c = 0;
 	stop = (actor->lastlook-1) & (MAXPLAYERS-1);
 		
@@ -746,7 +746,7 @@ void A_Look (AActor *actor)
 	}
 
 	actor->threshold = 0;		// any shot will wake up
-	targ = actor->subsector->sector->soundtarget;
+	targ = actor->Sector->soundtarget;
 
 	// [RH] If the soundtarget is dead, don't chase it
 	if (targ != NULL && targ->health <= 0)

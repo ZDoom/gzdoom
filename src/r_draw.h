@@ -41,16 +41,21 @@ extern "C" DWORD		*dc_srcblend;
 extern "C" DWORD		*dc_destblend;
 
 // first pixel in a column
-extern "C" byte*			dc_source;
+extern "C" byte*		dc_source;
+
+extern "C" byte*		dc_dest;
+extern "C" int			dc_count;
+
+extern "C" DWORD		vplce[4];
+extern "C" DWORD		vince[4];
+extern "C" BYTE*		palookupoffse[4];
+extern "C" BYTE*		bufplce[4];
 
 // [RH] Temporary buffer for column drawing
-extern "C" byte			dc_temp[1200*4];
+extern "C" byte			dc_temp[MAXHEIGHT*4];
 extern "C" unsigned int	dc_tspans[4][256];
 extern "C" unsigned int	*dc_ctspan[4];
 extern "C" unsigned int	horizspans[4];
-
-// [RH] Tutti-Frutti fix
-extern "C" unsigned int		dc_mask;
 
 
 // [RH] Pointers to the different column and span drawers...
@@ -58,6 +63,11 @@ extern "C" unsigned int		dc_mask;
 // The span blitting interface.
 // Hook in assembler or system specific BLT here.
 extern void (*R_DrawColumn)(void);
+
+extern DWORD (STACK_ARGS *dovline1) ();
+extern DWORD (STACK_ARGS *doprevline1) ();
+extern void (STACK_ARGS *dovline4) ();
+extern void setupvline (int);
 
 // The Spectre/Invisibility effect.
 extern void (*R_DrawFuzzColumn)(void);
@@ -74,42 +84,32 @@ extern void (*R_DrawSpan)(void);
 
 // [RH] Span blit into an interleaved intermediate buffer
 extern void (*R_DrawColumnHoriz)(void);
-void R_DrawMaskedColumnHoriz (column_t *column, int baseclip);
+void R_DrawMaskedColumnHoriz (column_t *column);
 
 // [RH] Initialize the above pointers
 void R_InitColumnDrawers ();
 
 // [RH] Moves data from the temporary buffer to the screen.
 void rt_copy1col_c (int hx, int sx, int yl, int yh);
-void rt_copy2cols_c (int hx, int sx, int yl, int yh);
 void rt_copy4cols_c (int sx, int yl, int yh);
 void rt_map1col_c (int hx, int sx, int yl, int yh);
-void rt_map2cols_c (int hx, int sx, int yl, int yh);
 void rt_map4cols_c (int sx, int yl, int yh);
 void rt_add1col (int hx, int sx, int yl, int yh);
-void rt_add2cols (int hx, int sx, int yl, int yh);
 void rt_add4cols (int sx, int yl, int yh);
 void rt_tlate1col (int hx, int sx, int yl, int yh);
-void rt_tlate2cols (int hx, int sx, int yl, int yh);
 void rt_tlate4cols (int sx, int yl, int yh);
 void rt_tlateadd1col (int hx, int sx, int yl, int yh);
-void rt_tlateadd2cols (int hx, int sx, int yl, int yh);
 void rt_tlateadd4cols (int sx, int yl, int yh);
 void rt_shaded1col (int hx, int sx, int yl, int yh);
-void rt_shaded2cols (int hx, int sx, int yl, int yh);
 void rt_shaded4cols (int sx, int yl, int yh);
 void rt_addclamp1col (int hx, int sx, int yl, int yh);
-void rt_addclamp2cols (int hx, int sx, int yl, int yh);
 void rt_addclamp4cols (int sx, int yl, int yh);
 void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh);
-void rt_tlateaddclamp2cols (int hx, int sx, int yl, int yh);
 void rt_tlateaddclamp4cols (int sx, int yl, int yh);
 
 extern "C" void rt_copy1col_asm (int hx, int sx, int yl, int yh);
-extern "C" void rt_copy2cols_asm (int hx, int sx, int yl, int yh);
 extern "C" void rt_copy4cols_asm (int sx, int yl, int yh);
 extern "C" void rt_map1col_asm (int hx, int sx, int yl, int yh);
-extern "C" void rt_map2cols_asm (int hx, int sx, int yl, int yh);
 extern "C" void rt_map4cols_asm1 (int sx, int yl, int yh);
 extern "C" void rt_map4cols_asm2 (int sx, int yl, int yh);
 
@@ -117,24 +117,20 @@ extern void (*rt_map4cols)(int sx, int yl, int yh);
 
 #ifdef USEASM
 #define rt_copy1col		rt_copy1col_asm
-#define rt_copy2cols	rt_copy2cols_asm
 #define rt_copy4cols	rt_copy4cols_asm
 #define rt_map1col		rt_map1col_asm
-#define rt_map2cols		rt_map2cols_asm
 #else
 #define rt_copy1col		rt_copy1col_c
-#define rt_copy2cols	rt_copy2cols_c
 #define rt_copy4cols	rt_copy4cols_c
 #define rt_map1col		rt_map1col_c
-#define rt_map2cols		rt_map2cols_c
 #endif
 
-void rt_draw1col (int hx, int sx);
-void rt_draw2cols (int hx, int sx);
 void rt_draw4cols (int sx);
 
 // [RH] Preps the temporary horizontal buffer.
 void rt_initcols (void);
+
+void R_DrawFogBoundary (int x1, int x2, short *uclip, short *dclip);
 
 
 #ifndef USEASM
@@ -183,8 +179,24 @@ extern "C" byte*			ds_source;
 
 extern "C" int				ds_color;		// [RH] For flat color (no texturing)
 
-extern byte*			translationtables;
+enum
+{
+	TRANSLATION_Shaded,
+	TRANSLATION_Players,
+	TRANSLATION_PlayersExtra,
+	TRANSLATION_Standard,
+	TRANSLATION_LevelScripted,
+	TRANSLATION_Decals,
+
+	NUM_TRANSLATION_TABLES
+};
+
+extern byte*			translationtables[NUM_TRANSLATION_TABLES];
 extern byte*			dc_translation;
+
+#define TRANSLATION(a,b)	(((a)<<8)|(b))
+
+const int MAX_ACS_TRANSLATIONS = 32;
 
 
 // [RH] Double view pixels by detail mode
@@ -214,10 +226,13 @@ enum ESPSResult
 	DoDraw0,	// draw this as if r_columnmethod is 0
 	DoDraw1,	// draw this as if r_columnmethod is 1
 };
-ESPSResult R_SetPatchStyle (int style, fixed_t alpha, BYTE *translation, DWORD color);
+ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD color);
 
 // Call this after finished drawing the current thing, in case its
 // style was STYLE_Shade
 void R_FinishSetPatchStyle ();
+
+extern byte *R_GetColumn (int tex, int col);
+void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, byte *(*getcol)(int tex, int col)=R_GetColumn);
 
 #endif

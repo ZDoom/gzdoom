@@ -259,6 +259,7 @@ IMPLEMENT_ACTOR (APunchPuff, Hexen, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HX_SHADOW)
+	PROP_Mass (5)
 
 	PROP_SpawnState (0)
 
@@ -295,6 +296,7 @@ IMPLEMENT_ACTOR (AHammerPuff, Hexen, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HX_SHADOW)
+	PROP_Mass (5)
 
 	PROP_SpawnState (0)
 
@@ -391,10 +393,11 @@ punchdone:
 class AFWeapAxe : public AWeapon
 {
 	DECLARE_ACTOR (AFWeapAxe, AWeapon)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveWeapon
+protected:
 
 FState AFWeapAxe::States[] =
 {

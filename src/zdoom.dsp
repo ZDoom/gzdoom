@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /Gr /MD /W3 /GX /O2 /I "f:/fmod/api/inc" /I "win32" /I "fmodsound" /I "." /I "zlib-1.1.3" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /c
+# ADD CPP /nologo /Gr /MD /W3 /GX /O2 /I "f:\fmod\api\inc" /I "win32" /I "fmodsound" /I "." /I "zlib-1.1.3" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /I /fmod/api/inc" " /c
 # SUBTRACT CPP /Fr
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
@@ -54,7 +54,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib f:/fmod/api/lib/fmodvc.lib wsock32.lib winmm.lib zlib-1.1.3/release/zlib.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /nodefaultlib:"libcmt" /out:"../../zdoom.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib wsock32.lib winmm.lib zlib-1.1.3/release/zlib.lib f:\fmod/api/lib/fmodvc.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /nodefaultlib:"libcmt" /out:"../../zdoom.exe"
 # SUBTRACT LINK32 /verbose /profile /debug
 
 !ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
@@ -71,7 +71,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "f:/fmod/api/inc" /I "win32" /I "fmodsound" /I "." /I "zlib-1.1.3" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /c
+# ADD CPP /nologo /MTd /W3 /Gm /GX /ZI /Od /I "win32" /I "fmodsound" /I "." /I "zlib-1.1.3" /I "g_shared" /I "g_doom" /I "g_raven" /I "g_heretic" /I "g_hexen" /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /I /fmod/api/inc" " /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -81,8 +81,8 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ddraw.lib winmm.lib wsock32.lib f:/fmod/api/lib/fmodvc.lib zlib-1.1.3/debug/zlib.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../../doomdbg.exe"
-# SUBTRACT LINK32 /profile
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib strmiids.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ddraw.lib winmm.lib wsock32.lib zlib-1.1.3/debug/zlib.lib f:\fmod/api/lib/fmodvc.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib:"libcmt" /out:"../../doomdbg.exe"
+# SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
 
@@ -151,6 +151,10 @@ SOURCE=.\c_dispatch.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\c_expr.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\cmdlib.cpp
 # End Source File
 # Begin Source File
@@ -168,10 +172,6 @@ SOURCE=.\ct_chat.cpp
 # Begin Source File
 
 SOURCE=.\d_dehacked.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\d_items.cpp
 # End Source File
 # Begin Source File
 
@@ -371,10 +371,6 @@ SOURCE=.\p_sight.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\p_spark.cpp
-# End Source File
-# Begin Source File
-
 SOURCE=.\p_spec.cpp
 # End Source File
 # Begin Source File
@@ -412,42 +408,6 @@ SOURCE=.\p_xlat.cpp
 # Begin Source File
 
 SOURCE=.\po_man.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_bsp.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_data.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_draw.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_drawt.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_main.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_plane.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_segs.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_sky.cpp
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_things.cpp
 # End Source File
 # Begin Source File
 
@@ -607,10 +567,6 @@ SOURCE=.\d_gui.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\d_items.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\d_main.h
 # End Source File
 # Begin Source File
@@ -712,6 +668,14 @@ SOURCE=.\gstrings.h
 # Begin Source File
 
 SOURCE=.\hu_stuff.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\i_cd.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\i_movie.h
 # End Source File
 # Begin Source File
 
@@ -831,54 +795,6 @@ SOURCE=.\p_trace.h
 # End Source File
 # Begin Source File
 
-SOURCE=..\util\xlatcc\pcode.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_bsp.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_data.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_defs.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_draw.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_local.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_main.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_plane.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_segs.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_sky.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_state.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\r_things.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\s_playlist.h
 # End Source File
 # Begin Source File
@@ -987,6 +903,37 @@ SOURCE=.\z_zone.h
 # PROP Default_Filter "nas; asm"
 # Begin Source File
 
+SOURCE=.\a.nas
+
+!IF  "$(CFG)" == "zdoom - Win32 Release"
+
+# Begin Custom Build - Assembling $(InputPath)...
+IntDir=.\Release
+InputPath=.\a.nas
+InputName=a
+
+"$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
+
+# Begin Custom Build - Assembling $(InputPath)...
+IntDir=.\Debug
+InputPath=.\a.nas
+InputName=a
+
+"$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+
+# End Custom Build
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
 SOURCE=.\blocks.nas
 
 !IF  "$(CFG)" == "zdoom - Win32 Release"
@@ -1084,7 +1031,7 @@ SOURCE=.\tmap2.nas
 
 !IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# Begin Custom Build
+# Begin Custom Build - Assembling $(InputPath)...
 IntDir=.\Release
 InputPath=.\tmap2.nas
 InputName=tmap2
@@ -1100,6 +1047,37 @@ InputName=tmap2
 IntDir=.\Debug
 InputPath=.\tmap2.nas
 InputName=tmap2
+
+"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+
+# End Custom Build
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\tmap3.nas
+
+!IF  "$(CFG)" == "zdoom - Win32 Release"
+
+# Begin Custom Build - Assembling $(InputPath)...
+IntDir=.\Release
+InputPath=.\tmap3.nas
+InputName=tmap3
+
+"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
+
+# Begin Custom Build - Assembling $(InputPath)...
+IntDir=.\Debug
+InputPath=.\tmap3.nas
+InputName=tmap3
 
 "$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
 	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
@@ -1139,10 +1117,6 @@ SOURCE=.\win32\i_cd.cpp
 # End Source File
 # Begin Source File
 
-SOURCE=.\win32\i_cd.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\win32\i_input.cpp
 # End Source File
 # Begin Source File
@@ -1152,6 +1126,10 @@ SOURCE=.\win32\i_input.h
 # Begin Source File
 
 SOURCE=.\win32\i_main.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\win32\i_movie.cpp
 # End Source File
 # Begin Source File
 
@@ -1168,10 +1146,6 @@ SOURCE=.\win32\I_system.cpp
 # Begin Source File
 
 SOURCE=.\win32\I_system.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\win32\I_video.h
 # End Source File
 # Begin Source File
 
@@ -1287,6 +1261,10 @@ SOURCE=.\g_shared\a_decals.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\g_shared\a_flashfader.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\g_shared\a_fountain.cpp
 # End Source File
 # Begin Source File
@@ -1332,6 +1310,10 @@ SOURCE=.\g_shared\a_sharedmisc.cpp
 # Begin Source File
 
 SOURCE=.\g_shared\a_skies.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_shared\a_spark.cpp
 # End Source File
 # Begin Source File
 
@@ -1452,6 +1434,10 @@ SOURCE=.\g_doom\a_possessed.cpp
 # Begin Source File
 
 SOURCE=.\g_doom\a_revenant.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_doom\a_scriptedmarine.cpp
 # End Source File
 # Begin Source File
 
@@ -1657,6 +1643,98 @@ SOURCE=.\fmodsound\i_sound.cpp
 
 SOURCE=.\fmodsound\i_sound.h
 # End Source File
+# End Group
+# Begin Group "Render Core"
+
+# PROP Default_Filter ""
+# Begin Group "Render Sources"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\r_bsp.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_data.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_draw.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_drawt.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_main.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_plane.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_segs.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_sky.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_things.cpp
+# End Source File
+# End Group
+# Begin Group "Render Headers"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\r_bsp.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_data.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_defs.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_draw.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_local.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_main.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_plane.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_segs.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_sky.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_state.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_things.h
+# End Source File
+# End Group
 # End Group
 # Begin Source File
 

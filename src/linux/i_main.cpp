@@ -127,17 +127,14 @@ int main (int argc, char **argv)
     }
     catch (CDoomError &error)
     {
-		printf ("caught bad\n");
 		if (error.GetMessage ())
 			fprintf (stderr, "%s\n", error.GetMessage ());
 		exit (-1);
     }
     catch (...)
     {
-		printf ("caught other\n");
 		call_terms ();
 		throw;
     }
-	printf ("returing\n");
     return 0;
 }

@@ -1,3 +1,37 @@
+/*
+** a_decals.cpp
+** Implements the actor that represents decals in the level
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "actor.h"
 #include "a_sharedglobal.h"
 #include "r_defs.h"
@@ -9,11 +43,21 @@
 #include "z_zone.h"
 #include "c_dispatch.h"
 
+// Decals overload snext and sprev to keep a list of decals attached to a wall.
+// They also overload floorclip to be the fractional distance from the
+// left edge of the side. This distance is stored as a 2.30 fixed pt number.
+
 IMPLEMENT_STATELESS_ACTOR (ADecal, Any, 9200, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
 END_DEFAULTS
 
 void ADecal::Destroy ()
+{
+	Remove ();
+	Super::Destroy ();
+}
+
+void ADecal::Remove ()
 {
 	AActor **prev = sprev;
 	AActor *next = snext;
@@ -21,13 +65,13 @@ void ADecal::Destroy ()
 		next->sprev = prev;
 	sprev = NULL;
 	snext = NULL;
-	Super::Destroy ();
 }
 
-void ADecal::SerializeChain (FArchive &arc, AActor **firstptr)
+void ADecal::SerializeChain (FArchive &arc, ADecal **first)
 {
 	DWORD numInChain;
 	AActor *fresh;
+	AActor **firstptr = (AActor **)first;
 
 	if (arc.IsLoading ())
 	{
@@ -60,6 +104,45 @@ void ADecal::SerializeChain (FArchive &arc, AActor **firstptr)
 	}
 }
 
+void ADecal::MoveChain (ADecal *first, fixed_t x, fixed_t y)
+{
+	while (first != NULL)
+	{
+		first->x += x;
+		first->y += y;
+		first = (ADecal *)first->snext;
+	}
+}
+
+void ADecal::FixForSide (side_t *wall)
+{
+	AActor *decal = wall->BoundActors;
+	line_t *line = &lines[wall->linenum];
+	int wallnum = wall - sides;
+	vertex_t *v1, *v2;
+
+	if (line->sidenum[0] == wallnum)
+	{
+		v1 = line->v1;
+		v2 = line->v2;
+	}
+	else
+	{
+		v1 = line->v2;
+		v2 = line->v1;
+	}
+
+	fixed_t dx = v2->x - v1->x;
+	fixed_t dy = v2->y - v1->y;
+
+	while (decal != NULL)
+	{
+		decal->x = v1->x + MulScale2 (decal->floorclip, dx);
+		decal->y = v1->y + MulScale2 (decal->floorclip, dy);
+		decal = decal->snext;
+	}
+}
+
 void ADecal::BeginPlay ()
 {
 	Super::BeginPlay ();
@@ -75,23 +158,7 @@ void ADecal::BeginPlay ()
 
 	if (special1 == 0)
 	{
-		FTraceResults trace;
-
-		Trace (x, y, z, subsector->sector,
-			finecosine[(angle+ANGLE_180)>>ANGLETOFINESHIFT],
-			finesine[(angle+ANGLE_180)>>ANGLETOFINESHIFT], 0,
-			64*FRACUNIT, 0, 0, NULL, trace, TRACE_NoSky);
-
-		if (trace.HitType == TRACE_HitWall)
-		{
-			x = trace.X;
-			y = trace.Y;
-			StickToWall (sides + trace.Line->sidenum[trace.Side]);
-		}
-		else
-		{
-			Destroy ();
-		}
+		DoTrace ();
 	}
 
 	if (args[0] != 0)
@@ -104,11 +171,34 @@ void ADecal::BeginPlay ()
 	}
 }
 
-void ADecal::StickToWall (side_t *wall)
+void ADecal::DoTrace ()
 {
+	FTraceResults trace;
+
+	Trace (x, y, z, Sector,
+		finecosine[(angle+ANGLE_180)>>ANGLETOFINESHIFT],
+		finesine[(angle+ANGLE_180)>>ANGLETOFINESHIFT], 0,
+		64*FRACUNIT, 0, 0, NULL, trace, TRACE_NoSky);
+
+	if (trace.HitType == TRACE_HitWall)
+	{
+		x = trace.X;
+		y = trace.Y;
+		StickToWall (sides + trace.Line->sidenum[trace.Side]);
+	}
+	else
+	{
+		Destroy ();
+	}
+}
+
+// Returns the texture the decal stuck to.
+int ADecal::StickToWall (side_t *wall)
+{
+	// Stick the decal at the end of the chain so it appears on top
 	AActor *next, **prev;
 
-	prev = &wall->BoundActors;
+	prev = (AActor **)&wall->BoundActors;
 	while (*prev != NULL)
 	{
 		next = *prev;
@@ -127,6 +217,7 @@ void ADecal::StickToWall (side_t *wall)
 */
 	sector_t *front, *back;
 	line_t *line;
+	int tex;
 
 	line = &lines[wall->linenum];
 	if (line->sidenum[0] == wall - sides)
@@ -146,6 +237,7 @@ void ADecal::StickToWall (side_t *wall)
 			z -= front->floortexz;
 		else
 			z -= front->ceilingtexz;
+		tex = wall->midtexture;
 	}
 	else if (back->floorplane.ZatPoint (x, y) >= z)
 	{
@@ -154,6 +246,7 @@ void ADecal::StickToWall (side_t *wall)
 			z -= front->ceilingtexz;
 		else
 			z -= back->floortexz;
+		tex = wall->toptexture;
 	}
 	else
 	{
@@ -162,6 +255,119 @@ void ADecal::StickToWall (side_t *wall)
 			z -= front->ceilingtexz;
 		else
 			z -= back->ceilingtexz;
+		tex = wall->bottomtexture;
+	}
+
+	CalcFracPos (wall);
+
+	// Face the decal away from the wall
+	angle = R_PointToAngle2 (0, 0, line->dx, line->dy);
+	if (line->frontsector == front)
+	{
+		angle -= ANGLE_90;
+	}
+	else
+	{
+		angle += ANGLE_90;
+	}
+
+	return tex;
+}
+
+fixed_t ADecal::GetRealZ (const side_t *wall) const
+{
+	const line_t *line = &lines[wall->linenum];
+	const sector_t *front, *back;
+
+	if (line->sidenum[0] == wall - sides)
+	{
+		front = line->frontsector;
+		back = line->backsector;
+	}
+	else
+	{
+		front = line->backsector;
+		back = line->frontsector;
+	}
+	if (back == NULL)
+	{
+		back = front;
+	}
+
+	switch (renderflags & RF_RELMASK)
+	{
+	default:
+		return z;
+	case RF_RELUPPER:
+		if (curline->linedef->flags & ML_DONTPEGTOP)
+		{
+			return z + front->ceilingtexz;
+		}
+		else
+		{
+			return z + back->ceilingtexz;
+		}
+	case RF_RELLOWER:
+		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+		{
+			return z + front->ceilingtexz;
+		}
+		else
+		{
+			return z + back->floortexz;
+		}
+	case RF_RELMID:
+		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+		{
+			return z + front->floortexz;
+		}
+		else
+		{
+			return z + front->ceilingtexz;
+		}
+	}
+}
+
+void ADecal::Relocate (fixed_t ix, fixed_t iy, fixed_t iz)
+{
+	Remove ();
+	x = ix;
+	y = iy;
+	z = iz;
+	DoTrace ();
+}
+
+void ADecal::CalcFracPos (side_t *wall)
+{
+	line_t *line = &lines[wall->linenum];
+	int wallnum = wall - sides;
+	vertex_t *v1, *v2;
+
+	if (line->sidenum[0] == wallnum)
+	{
+		v1 = line->v1;
+		v2 = line->v2;
+	}
+	else
+	{
+		v1 = line->v2;
+		v2 = line->v1;
+	}
+
+	fixed_t dx = v2->x - v1->x;
+	fixed_t dy = v2->y - v1->y;
+
+	if (abs(dx) > abs(dy))
+	{
+		floorclip = SafeDivScale2 (x - v1->x, dx);
+	}
+	else if (dy != 0)
+	{
+		floorclip = SafeDivScale2 (y - v1->y, dy);
+	}
+	else
+	{
+		floorclip = 0;
 	}
 }
 
@@ -268,11 +474,13 @@ static fixed_t DecalWidth, DecalLeft, DecalRight;
 static fixed_t SpreadZ;
 static const AImpactDecal *SpreadSource;
 static const FDecal *SpreadDecal;
-static side_t *SpreadWall;
+static TArray<side_t *> SpreadStack;
 
 void AImpactDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 {
 	fixed_t ldx, ldy;
+
+	SpreadStack.Push (feelwall);
 
 	while (r < 0 && feelwall->LeftSide != -1)
 	{
@@ -289,17 +497,26 @@ void AImpactDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 		y += Scale (r, ldy, wallsize);
 		r = wallsize + startr;
 		SpreadSource->CloneSelf (SpreadDecal, x, y, SpreadZ, feelwall);
-/*
-		side_t *nextwall = NextWall (feelwall);
-		if (nextwall != NULL && nextwall->LeftSide != -1 && nextwall != SpreadWall)
-		{
-			vertex_t *v2;
+		SpreadStack.Push (feelwall);
 
-			//nextwall = &sides[nextwall->LeftSide];
-			GetWallStuff (nextwall, v2, ldx, ldy);
-			SpreadLeft (startr, v2, nextwall);
+		side_t *nextwall = NextWall (feelwall);
+		if (nextwall != NULL && nextwall->LeftSide != -1)
+		{
+			int i;
+
+			for (i = SpreadStack.Size()-1; i >= 0; --i)
+			{
+				if (SpreadStack[i] == nextwall)
+					break;
+			}
+			if (i < 0)
+			{
+				vertex_t *v2;
+
+				GetWallStuff (nextwall, v2, ldx, ldy);
+				SpreadLeft (startr, v2, nextwall);
+			}
 		}
-*/
 	}
 }
 
@@ -308,10 +525,29 @@ void AImpactDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
 	vertex_t *v1;
 	fixed_t x, y, ldx, ldy;
 
+	SpreadStack.Push (feelwall);
+
 	while (r > wallsize && feelwall->RightSide != -1)
 	{
-		r = DecalWidth - r + wallsize - DecalLeft;
 		feelwall = &sides[feelwall->RightSide];
+
+		side_t *nextwall = NextWall (feelwall);
+		if (nextwall != NULL && nextwall->LeftSide != -1)
+		{
+			int i;
+
+			for (i = SpreadStack.Size()-1; i >= 0; --i)
+			{
+				if (SpreadStack[i] == nextwall)
+					break;
+			}
+			if (i < 0)
+			{
+				SpreadRight (r, nextwall, wallsize);
+			}
+		}
+
+		r = DecalWidth - r + wallsize - DecalLeft;
 		GetWallStuff (feelwall, v1, ldx, ldy);
 		x = v1->x;
 		y = v1->y;
@@ -320,13 +556,15 @@ void AImpactDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
 		y -= Scale (r, ldy, wallsize);
 		r = DecalRight - r;
 		SpreadSource->CloneSelf (SpreadDecal, x, y, SpreadZ, feelwall);
+		SpreadStack.Push (feelwall);
 	}
 }
 
 AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_t y, fixed_t z, side_t *wall)
 {
 	AImpactDecal *actor = NULL;
-	if (decal != NULL && cl_maxdecals > 0 && !(wall->Flags & WALLF_NOAUTODECALS))
+	if (decal != NULL && cl_maxdecals > 0 &&
+		!(wall->Flags & WALLF_NOAUTODECALS))
 	{
 		if (decal->LowerDecal)
 		{
@@ -340,9 +578,16 @@ AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_
 		actor = Spawn<AImpactDecal> (x, y, z);
 
 		if (actor == NULL)
-			return actor;
+			return NULL;
 
-		actor->StickToWall (wall);
+		int stickypic = actor->StickToWall (wall);
+
+		if (stickypic >= 0 && texturenodecals[stickypic])
+		{
+			actor->Destroy ();
+			return NULL;
+		}
+
 		decal->ApplyToActor (actor);
 
 		if (!cl_spreaddecals || actor->picnum == 0xffff)
@@ -370,14 +615,16 @@ AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_
 		SpreadSource = actor;
 		SpreadDecal = decal;
 		SpreadZ = z;
-		SpreadWall = wall;
+
 
 		// Try spreading left first
 		SpreadLeft (rorg - DecalLeft, v1, wall);
+		SpreadStack.Clear ();
 
 		// Then try spreading right
 		SpreadRight (rorg + DecalRight, wall,
 			Length (lines[wall->linenum].dx, lines[wall->linenum].dy));
+		SpreadStack.Clear ();
 	}
 	return actor;
 }
@@ -450,7 +697,7 @@ CCMD (spray)
 
 	if (Trace (m_Instigator->x, m_Instigator->y,
 		m_Instigator->z + m_Instigator->height - (m_Instigator->height>>2),
-		m_Instigator->subsector->sector,
+		m_Instigator->Sector,
 		vx, vy, vz, 172*FRACUNIT, 0, ML_BLOCKEVERYTHING, m_Instigator,
 		trace, TRACE_NoSky))
 	{

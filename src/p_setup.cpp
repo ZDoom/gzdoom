@@ -46,6 +46,7 @@
 #include "p_acs.h"
 #include "vectors.h"
 #include "announcer.h"
+#include "wi_stuff.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 
@@ -108,7 +109,7 @@ BOOL			HasBehavior;
 // BLOCKMAP
 // Created from axis aligned bounding box
 // of the map, a rectangular array of
-// blocks of size ...
+// blocks of size 256x256.
 // Used to speed up collision detection
 // by spatial subdivision in 2D.
 //
@@ -605,7 +606,7 @@ void P_AdjustLine (line_t *ld)
 	else if (ld->dy == 0)
 		ld->slopetype = ST_HORIZONTAL;
 	else
-		ld->slopetype = (FixedDiv (ld->dy , ld->dx) > 0) ? ST_POSITIVE : ST_NEGATIVE;
+		ld->slopetype = ((ld->dy ^ ld->dx) >= 0) ? ST_POSITIVE : ST_NEGATIVE;
 			
 	if (v1->x < v2->x)
 	{
@@ -675,6 +676,12 @@ void P_FinishLoadingLineDefs ()
 		len = (int)sqrtf (dx*dx + dy*dy);
 		light = dy == 0 ? level.WallHorizLight :
 				dx == 0 ? level.WallVertLight : 0;
+
+		if (len == 0)
+		{
+			Printf ("Line %d has 0 length\n", linenum);
+			len = 1;
+		}
 
 		if (ld->sidenum[0] != -1)
 		{
@@ -909,9 +916,15 @@ static void P_LoopSidedefs ()
 
 			right = sidetemp[right].first;
 
+			if (right == -1)
+			{ // There is no right side!
+				Printf ("Line %d's right edge is unconnected\n", line-lines);
+				continue;
+			}
+
 			if (sidetemp[right].next != -1)
 			{
-				int bestright;
+				int bestright = right;	// Shut up, GCC
 				angle_t bestang = ANGLE_MAX;
 				line_t *leftline, *rightline;
 				angle_t ang1, ang2, ang;
@@ -982,10 +995,10 @@ void P_LoadSideDefs2 (int lump)
 		// killough 4/11/98: refined to allow colormaps to work as wall
 		// textures if invalid as colormaps but valid as textures.
 
-		if ((unsigned)SHORT(msd->sector)>=numsectors)
+		if ((unsigned)SHORT(msd->sector)>=(unsigned)numsectors)
 		{
 			Printf (PRINT_HIGH, "Sidedef %d has a bad sector\n", i);
-			sd->sector = NULL;
+			sd->sector = sec = NULL;
 		}
 		else
 		{
@@ -998,9 +1011,12 @@ void P_LoadSideDefs2 (int lump)
 			  //	  but a packed ARGB word for blending, so we also allow
 			  //	  the blend to be specified directly by the texture names
 			  //	  instead of figuring something out from the colormap.
-			SetTexture (&sd->bottomtexture, &sec->bottommap, msd->bottomtexture);
-			SetTexture (&sd->midtexture, &sec->midmap, msd->midtexture);
-			SetTexture (&sd->toptexture, &sec->topmap, msd->toptexture);
+			if (sec != NULL)
+			{
+				SetTexture (&sd->bottomtexture, &sec->bottommap, msd->bottomtexture);
+				SetTexture (&sd->midtexture, &sec->midmap, msd->midtexture);
+				SetTexture (&sd->toptexture, &sec->topmap, msd->toptexture);
+			}
 			break;
 
 		case Static_Init:
@@ -1069,7 +1085,7 @@ static void P_AlignPlane (sector_t *sec, line_t *line, int which)
 {
 	sector_t *refsec;
 	int bestdist;
-	vertex_t *refvert;
+	vertex_t *refvert = (*sec->lines)->v1;	// Shut up, GCC
 	int i;
 	line_t **probe;
 
@@ -1202,15 +1218,20 @@ static void P_CreateBlockMap ()
 
 	for (i = 0; i < numvertexes; i++)
 	{
-		if (vertexes[i].x >> FRACBITS < minx)
-			minx = vertexes[i].x >> FRACBITS;
-		else if (vertexes[i].x >> FRACBITS > maxx)
-			maxx = vertexes[i].x >> FRACBITS;
-		if (vertexes[i].y >> FRACBITS < miny)
-			miny = vertexes[i].y >> FRACBITS;
-		else if (vertexes[i].y >> FRACBITS > maxy)
-			maxy = vertexes[i].y >> FRACBITS;
+		if (vertexes[i].x < minx)
+			minx = vertexes[i].x;
+		else if (vertexes[i].x > maxx)
+			maxx = vertexes[i].x;
+		if (vertexes[i].y < miny)
+			miny = vertexes[i].y;
+		else if (vertexes[i].y > maxy)
+			maxy = vertexes[i].y;
 	}
+
+	minx >>= FRACBITS;
+	miny >>= FRACBITS;
+	maxx >>= FRACBITS;
+	maxy >>= FRACBITS;
 
 	// Save blockmap parameters
 
@@ -1449,33 +1470,42 @@ void P_GroupLines ()
 	{
 		I_Error ("This map contains errors that must be fixed.\n");
 	}
-		
+
 	// build line tables for each sector		
 	linebuffer = (line_t **)Z_Malloc (total*sizeof(line_t *), PU_LEVEL, 0);
 	sector = sectors;
 	for (i = 0; i < numsectors; i++, sector++)
 	{
 		bbox.ClearBox ();
-		sector->lines = linebuffer;
-		li = lines;
-		for (j = 0; j < numlines; j++, li++)
+		if (sector->linecount == 0)
 		{
-			if (li->frontsector == sector || li->backsector == sector)
+			Printf ("Sector %i (tag %i) has no lines\n", i, sector->tag);
+			// 0 the sector's tag so that no specials can use it
+			sector->tag = 0;
+		}
+		else
+		{
+			sector->lines = linebuffer;
+			li = lines;
+			for (j = 0; j < numlines; j++, li++)
 			{
-				*linebuffer++ = li;
-				bbox.AddToBox (li->v1->x, li->v1->y);
-				bbox.AddToBox (li->v2->x, li->v2->y);
+				if (li->frontsector == sector || li->backsector == sector)
+				{
+					*linebuffer++ = li;
+					bbox.AddToBox (li->v1->x, li->v1->y);
+					bbox.AddToBox (li->v2->x, li->v2->y);
+				}
+			}
+			if (linebuffer - sector->lines != sector->linecount)
+			{
+				I_Error ("P_GroupLines: miscounted");
 			}
 		}
-		if (linebuffer - sector->lines != sector->linecount)
-		{
-			I_Error ("P_GroupLines: miscounted");
-		}
-						
+
 		// set the soundorg to the middle of the bounding box
 		sector->soundorg[0] = (bbox.Right()+bbox.Left())/2;
 		sector->soundorg[1] = (bbox.Top()+bbox.Bottom())/2;
-		
+
 #if 0
 		int block;
 
@@ -1524,7 +1554,7 @@ extern polyblock_t **PolyBlockMap;
 void P_SetupLevel (char *lumpname, int position)
 {
 	int i, lumpnum;
-		
+
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
@@ -1542,19 +1572,26 @@ void P_SetupLevel (char *lumpname, int position)
 	{
 		players[i].mo = NULL;
 	}
-
+	// [RH] Set default scripted translation colors
+	for (i = 0; i < 256; ++i)
+	{
+		translationtables[TRANSLATION_LevelScripted][i] = i;
+	}
+	for (i = 1; i < MAX_ACS_TRANSLATIONS; ++i)
+	{
+		memcpy (&translationtables[TRANSLATION_LevelScripted][i*256],
+				translationtables[TRANSLATION_LevelScripted], 256);
+	}
 	// Initial height of PointOfView will be set by player think.
 	players[consoleplayer].viewz = 1; 
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start ();
-
 	// [RH] Clear all ThingID hash chains.
 	AActor::ClearTIDHashes ();
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint (NULL);
-
 	PolyBlockMap = NULL;
 
 	DThinker::DestroyAllThinkers ();
@@ -1673,7 +1710,6 @@ void P_SetupLevel (char *lumpname, int position)
 	}
 
 	P_ResetSightCounters (true);
-
 	//Printf ("free memory: 0x%x\n", Z_FreeMemory());
 }
 

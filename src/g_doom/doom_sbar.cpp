@@ -25,14 +25,6 @@ class FDoomStatusBar : public FBaseStatusBar
 public:
 	FDoomStatusBar () : FBaseStatusBar (32)
 	{
-		static const char *doomLumpNames[] =
-		{
-			"STKEYS0",	"STKEYS1",	"STKEYS2",	"STKEYS3",	"STKEYS4",
-			"STKEYS5",	"STKEYS6",	"STKEYS7",	"STKEYS8",	"STBAR",
-			"STGNUM2",	"STGNUM3",	"STGNUM4",	"STGNUM5",	"STGNUM6",
-			"STGNUM7",	"MEDIA0",
-		};
-
 		static const char *sharedLumpNames[] =
 		{
 			NULL,		NULL,		NULL,		NULL,		NULL,
@@ -47,25 +39,25 @@ public:
 		int dummy;
 
 		FBaseStatusBar::Images.Init (sharedLumpNames, NUM_BASESB_IMAGES);
-		Images.Init (doomLumpNames, NUM_DOOMSB_IMAGES);
-
 		FBaseStatusBar::Images.GetImage (imgBNumbers+3, &BigWidth, &BigHeight,
 			&dummy, &dummy);
 
-		if (!deathmatch)
-		{
-			DrawToSBar ("STARMS", 104, 0);
-		}
-
-		DrawToSBar ("STTPRCNT", 90, 3);		// Health %
-		DrawToSBar ("STTPRCNT", 221, 3);	// Armor %
-
-		SB_state = screen->GetPageCount ();
+		DoCommonInit ();
 		memset (FaceWeaponsOwned, 0, sizeof(FaceWeaponsOwned));
 	}
 
 	~FDoomStatusBar ()
 	{
+	}
+
+	void NewGame ()
+	{
+		Images.Uninit ();
+		DoCommonInit ();
+		if (CPlayer != NULL)
+		{
+			AttachToPlayer (CPlayer);
+		}
 	}
 
 	void SetFace (void *skn)
@@ -133,7 +125,7 @@ public:
 		SetFace (&skins[CPlayer->userinfo.skin]);
 		if (multiplayer)
 		{
-			V_ColorMap = translationtables + (CPlayer - players)*256*2;
+			V_ColorMap = translationtables[TRANSLATION_Players] + (CPlayer - players)*256*2;
 			DrawToSBar ("STFBANY", 143, 1);	// face background
 		}
 		for (i = 0; i < NUMWEAPONS; i++)
@@ -179,6 +171,29 @@ public:
 	}
 
 private:
+	void DoCommonInit ()
+	{
+		static const char *doomLumpNames[] =
+		{
+			"STKEYS0",	"STKEYS1",	"STKEYS2",	"STKEYS3",	"STKEYS4",
+			"STKEYS5",	"STKEYS6",	"STKEYS7",	"STKEYS8",	"STBAR",
+			"STGNUM2",	"STGNUM3",	"STGNUM4",	"STGNUM5",	"STGNUM6",
+			"STGNUM7",	"MEDIA0",
+		};
+
+		Images.Init (doomLumpNames, NUM_DOOMSB_IMAGES);
+
+		if (!deathmatch)
+		{
+			DrawToSBar ("STARMS", 104, 0);
+		}
+
+		DrawToSBar ("STTPRCNT", 90, 3);		// Health %
+		DrawToSBar ("STTPRCNT", 221, 3);	// Armor %
+
+		SB_state = screen->GetPageCount ();
+	}
+
 	void DrawMainBar ()
 	{
 		DrawAmmoStats ();
@@ -424,7 +439,7 @@ private:
 		OverrideImageOrigin (true);
 		DrawOuterImage (Images, imgMEDI, 20, -2);
 		OverrideImageOrigin (false);
-		DrBNumberOuter (CPlayer->health, 40, -20);
+		DrBNumberOuter (CPlayer->health, 40, -BigHeight-4);
 
 		// Draw armor
 		if (CPlayer->armortype && CPlayer->armorpoints[0])
@@ -443,7 +458,7 @@ private:
 			OverrideImageOrigin (true);
 			DrawOuterImage (AmmoImages, i, -14, -4);
 			OverrideImageOrigin (false);
-			DrBNumberOuter (CPlayer->ammo[i], -67, -20);
+			DrBNumberOuter (CPlayer->ammo[i], -67, -BigHeight-4);
 		}
 
 		if (deathmatch)
@@ -495,11 +510,20 @@ private:
 			do
 			{
 				column_t *column = (column_t *)((byte *)arms + LONG(*ofs));
+				int top = -1;
 
 				while (column->topdelta != 0xff)
 				{
+					if  (column->topdelta <= top)
+					{
+						top += column->topdelta;
+					}
+					else
+					{
+						top = column->topdelta;
+					}
 					byte *source = (byte *)column + 3;
-					byte *dest = desttop + column->topdelta * 320;
+					byte *dest = desttop + top * 320;
 					int count = column->length;
 
 					do
@@ -533,9 +557,8 @@ private:
 	}
 
 	//
-	// This is a not-very-pretty routine which handles
-	//	the face states and their timing.
-	// the precedence of expressions is:
+	// This is a not-very-pretty routine which handles the face states
+	// and their timing. The precedence of expressions is:
 	//	dead > evil grin > turned head > straight ahead
 	//
 	void UpdateFace ()

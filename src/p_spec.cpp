@@ -241,6 +241,11 @@ static void ParseAnim (byte istex)
 				maxanims = newmax;
 			}
 		}
+		// no decals on animating textures by default
+		if (istex)
+		{
+			texturenodecals[picnum] = 1;
+		}
 	}
 
 	place->uniqueframes = true;
@@ -253,7 +258,14 @@ static void ParseAnim (byte istex)
 
 	while (SC_GetString ())
 	{
-		if (!SC_Compare ("pic"))
+		if (SC_Compare ("allowdecals"))
+		{
+			if (istex && picnum >= 0)
+			{
+				texturenodecals[picnum] = 0;
+			}
+		}
+		else if (!SC_Compare ("pic"))
 		{
 			SC_UnGet ();
 			break;
@@ -264,6 +276,8 @@ static void ParseAnim (byte istex)
 			SC_ScriptError ("Animation has too many frames");
 		}
 
+		min = max = 1;	// Shut up, GCC
+		
 		SC_MustGetNumber ();
 		frame = sc_Number;
 		SC_MustGetString ();
@@ -346,7 +360,7 @@ void P_InitPicAnims (void)
 				maxanims = newmax;
 			}
 
-			if (*anim_p /* .istexture */)
+			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
 				if (R_CheckTextureNumForName (anim_p + 10 /* .startname */) == -1 ||
@@ -356,6 +370,14 @@ void P_InitPicAnims (void)
 				lastanim->basepic = R_TextureNumForName (anim_p + 10 /* .startname */);
 				lastanim->numframes = R_TextureNumForName (anim_p + 1 /* .endname */)
 									  - lastanim->basepic + 1;
+				if (*anim_p & 2)
+				{ // [RH] Bit 1 set means allow decals on walls with this texture
+					texturenodecals[lastanim->basepic] = 0;
+				}
+				else
+				{
+					texturenodecals[lastanim->basepic] = 1;
+				}
 			}
 			else
 			{
@@ -395,10 +417,11 @@ void P_InitPicAnims (void)
 }
 
 // [RH] Check dmflags for noexit and respond accordingly
-BOOL CheckIfExitIsGood (AActor *self)
+bool CheckIfExitIsGood (AActor *self)
 {
+	// The world can always exit itself.
 	if (self == NULL)
-		return false;
+		return true;
 
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 	{
@@ -562,8 +585,8 @@ BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote)
 				break;
 		}
 		if (i == 6)
-		{ // Unknown key; assume we have it
-			return true;
+		{ // Unknown key; assume we do not have it
+			return false;
 		}
 		if (HaveKeys[i])
 		{
@@ -721,7 +744,7 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 //
 void P_PlayerInSpecialSector (player_t *player)
 {
-	sector_t *sector = player->mo->subsector->sector;
+	sector_t *sector = player->mo->Sector;
 	int special = sector->special & ~SECRET_MASK;
 
 	// Falling, not all the way down yet?
@@ -877,7 +900,7 @@ void P_PlayerInSpecialSector (player_t *player)
 
 void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 {
-	if (player->mo->z > player->mo->subsector->sector->floorplane.ZatPoint (
+	if (player->mo->z > player->mo->Sector->floorplane.ZatPoint (
 		player->mo->x, player->mo->y) &&
 		!player->mo->waterlevel)
 	{ // Player is not touching the floor
@@ -966,8 +989,8 @@ void P_UpdateSpecials ()
 	}
 
 	// [RH] Scroll the sky
-	sky1pos = (sky1pos + level.skyspeed1) & 0xffffff;
-	sky2pos = (sky2pos + level.skyspeed2) & 0xffffff;
+	sky1pos = sky1pos + level.skyspeed1;
+	sky2pos = sky2pos + level.skyspeed2;
 }
 
 
@@ -985,8 +1008,12 @@ CUSTOM_CVAR (Bool, forcewater, false, CVAR_SERVERINFO)
 
 		for (i = 0; i < numsectors; i++)
 		{
-			if (sectors[i].heightsec && sectors[i].heightsec->waterzone != 1)
+			if (sectors[i].heightsec &&
+				!(sectors[i].heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
+				sectors[i].heightsec->waterzone != 1)
+			{
 				sectors[i].heightsec->waterzone = setTo;
+			}
 		}
 	}
 }
@@ -997,7 +1024,7 @@ class DLightTransfer : public DThinker
 public:
 	DLightTransfer (sector_t *srcSec, int target, bool copyFloor);
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 protected:
 	static void DoTransfer (BYTE level, int target, bool floor);
@@ -1038,7 +1065,7 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 	}
 }
 
-void DLightTransfer::RunThink ()
+void DLightTransfer::Tick ()
 {
 	BYTE light = GetLight (Source, CopyFloor);
 
@@ -1252,13 +1279,33 @@ void P_SpawnSpecials (void)
 		// support for drawn heights coming from different sector
 		case Transfer_Heights:
 			sec = sides[*lines[i].sidenum].sector;
+			if (forcewater)
+			{
+				sec->waterzone = 2;
+			}
+			if (lines[i].args[1] & 2)
+			{
+				sec->MoreFlags |= SECF_FAKEFLOORONLY;
+			}
+			if (lines[i].args[1] & 4)
+			{
+				sec->MoreFlags |= SECF_CLIPFAKEPLANES;
+			}
+			if (lines[i].args[1] & 8)
+			{
+				sec->waterzone = 1;
+			}
+			if (lines[i].args[1] & 16)
+			{
+				sec->MoreFlags |= SECF_IGNOREHEIGHTSEC;
+			}
+			if (lines[i].args[1] & 32)
+			{
+				sec->MoreFlags |= SECF_NOFAKELIGHT;
+			}
 			for (s = -1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
 			{
 				sectors[s].heightsec = sec;
-				if (forcewater)
-				{
-					sec->waterzone = 2;
-				}
 			}
 			break;
 
@@ -1343,7 +1390,7 @@ void P_SpawnSpecials (void)
 // This is the main scrolling code
 // killough 3/7/98
 
-void DScroller::RunThink ()
+void DScroller::Tick ()
 {
 	fixed_t dx = m_dx, dy = m_dy;
 
@@ -1492,6 +1539,8 @@ static void P_SpawnScrollers(void)
 
 		// [RH] Assume that it's a scroller and zero the line's special.
 		l->special = 0;
+
+		dx = dy = 0;	// Shut up, GCC
 
 		if (special == Scroll_Ceiling ||
 			special == Scroll_Floor ||
@@ -1859,7 +1908,7 @@ BOOL PIT_PushThing (AActor *thing)
 //
 extern fixed_t tmbbox[4];
 
-void DPusher::RunThink ()
+void DPusher::Tick ()
 {
 	sector_t *sec;
 	AActor *thing;
@@ -1930,8 +1979,9 @@ void DPusher::RunThink ()
 			continue;
 		if (m_Type == p_wind)
 		{
-			if (sec->heightsec == NULL) // NOT special water sector
-			{
+			if (sec->heightsec == NULL ||
+				sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
+			{ // NOT special water sector
 				if (thing->z > thing->floorz) // above ground
 				{
 					xspeed = m_Xmag; // full force
@@ -1966,7 +2016,8 @@ void DPusher::RunThink ()
 		{
 			const secplane_t *floor;
 
-			if (sec->heightsec == NULL)
+			if (sec->heightsec == NULL ||
+				(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 			{ // NOT special water sector
 				floor = &sec->floorplane;
 			}
@@ -2057,7 +2108,7 @@ static void P_SpawnPushers ()
 					if (thing->IsA (RUNTIME_CLASS(APointPuller)) ||
 						thing->IsA (RUNTIME_CLASS(APointPusher)))
 						new DPusher (DPusher::p_push, l->args[3] ? l : NULL, l->args[2],
-									 0, thing, thing->subsector->sector - sectors);
+									 0, thing, thing->Sector - sectors);
 				}
 			}
 			break;

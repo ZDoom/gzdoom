@@ -35,6 +35,16 @@
 // needed for texture pegging
 extern fixed_t* 		textureheight;
 
+// [RH] needed for wallscan
+extern byte*			textureheightlog2;
+
+// [RH] needed for texture scaling
+extern byte*			texturescalex;
+extern byte*			texturescaley;
+
+// [RH] don't slap decals on top of textures marked true
+extern byte*			texturenodecals;
+
 extern "C" int			viewwidth;
 extern "C" int			realviewwidth;
 extern "C" int			viewheight;
@@ -108,9 +118,10 @@ inline FArchive &operator<< (FArchive &arc, vertex_t *&vert)
 extern fixed_t			viewx;
 extern fixed_t			viewy;
 extern fixed_t			viewz;
-
 extern angle_t			viewangle;
+
 extern AActor*			camera;		// [RH] camera instead of viewplayer
+extern sector_t*		viewsector;	// [RH] keep track of sector viewing from
 
 extern angle_t			xtoviewangle[MAXWIDTH+1];
 extern int				FieldOfView;

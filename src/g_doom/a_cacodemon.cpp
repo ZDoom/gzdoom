@@ -5,6 +5,7 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "a_action.h"
+#include "s_sound.h"
 
 void A_HeadAttack (AActor *);
 
@@ -72,6 +73,7 @@ IMPLEMENT_ACTOR (ACacodemon, Doom, 3005, 19)
 	PROP_PainSound ("caco/pain")
 	PROP_DeathSound ("caco/death")
 	PROP_ActiveSound ("caco/active")
+	PROP_AttackSound ("caco/melee")
 END_DEFAULTS
 
 class AStealthCacodemon : public ACacodemon
@@ -135,6 +137,7 @@ void A_HeadAttack (AActor *self)
 	if (P_CheckMeleeRange (self))
 	{
 		int damage = (P_Random (pr_headattack)%6+1)*10;
+		S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);
 		return;

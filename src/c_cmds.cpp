@@ -1,3 +1,39 @@
+/*
+** c_cmds.cpp
+** Miscellaneous console commands.
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** It might be a good idea to move these into files that they are more
+** closely related to, but right now, I am too lazy to do that.
+*/
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,7 +55,6 @@
 #include "gstrings.h"
 #include "s_sound.h"
 #include "g_game.h"
-#include "d_items.h"
 #include "p_inter.h"
 #include "z_zone.h"
 #include "w_wad.h"
@@ -41,9 +76,9 @@ CCMD (toggleconsole)
 
 BOOL CheckCheatmode ()
 {
-	if (((gameskill == sk_nightmare) || netgame || deathmatch) && (sv_cheats == 0.0))
+	if (((gameskill == sk_nightmare) || netgame || deathmatch) && (!sv_cheats))
 	{
-		Printf ("You must run the server with '+set sv_cheats 1' to enable this command.\n");
+		Printf ("sv_cheats must be true to enable this command.\n");
 		return true;
 	}
 	else
@@ -53,6 +88,11 @@ BOOL CheckCheatmode ()
 }
 
 CCMD (quit)
+{
+	exit (0);
+}
+
+CCMD (exit)
 {
 	exit (0);
 }
@@ -280,35 +320,17 @@ CCMD (print)
 
 CCMD (exec)
 {
-	FILE *f;
-	char cmd[4096];
-
 	if (argv.argc() < 2)
 		return;
 
-	if ( (f = fopen (argv[1], "r")) )
+	for (int i = 1; i < argv.argc(); ++i)
 	{
-		while (fgets (cmd, 4095, f))
+		switch (C_ExecFile (argv[i], gamestate == GS_STARTUP))
 		{
-			// Comments begin with //
-			char *comment = strstr (cmd, "//");
-			if (comment)
-				*comment = 0;
-
-			char *end = cmd + strlen (cmd) - 1;
-			if (*end == '\n')
-				*end = 0;
-			AddCommandString (cmd);
+		case 1: Printf ("Could not open \"%s\"\n", argv[1]); break;
+		case 2: Printf ("Error parsing \"%s\"\n", argv[1]); break;
+		default: break;
 		}
-		if (!feof (f))
-		{
-			Printf ("Error parsing \"%s\"\n", argv[1]);
-		}
-		fclose (f);
-	}
-	else
-	{
-		Printf ("Could not open \"%s\"\n", argv[1]);
 	}
 }
 
@@ -390,7 +412,7 @@ CCMD (puke)
 
 CCMD (error)
 {
-	char *textcopy = copystring (argv.AllButFirstArg ());
+	char *textcopy = copystring (argv[1]);
 	I_Error (textcopy);
 }
 
@@ -463,7 +485,51 @@ CCMD (fov)
 		: &players[consoleplayer];
 
 	if (argv.argc() != 2)
+	{
 		Printf ("fov is %g\n", player->DesiredFOV);
+		return;
+	}
+	else if (dmflags & DF_NO_FOV)
+	{
+		if (consoleplayer == Net_Arbitrator)
+		{
+			Net_WriteByte (DEM_FOV);
+		}
+		else
+		{
+			Printf ("The arbitrator has disabled FOV changes.\n");
+			return;
+		}
+	}
 	else
-		player->DesiredFOV = atof (argv[1]);
+	{
+		Net_WriteByte (DEM_MYFOV);
+	}
+	Net_WriteByte (clamp (atoi (argv[1]), 5, 179));
+}
+
+//==========================================================================
+//
+// CCMD r_visibility
+//
+// Controls how quickly light ramps across a 1/z range. Set this, and it
+// sets all the r_*Visibility variables (except r_SkyVisibilily, which is
+// currently unused).
+//
+//==========================================================================
+
+CCMD (r_visibility)
+{
+	if (argv.argc() < 2)
+	{
+		Printf ("Visibility is %g\n", R_GetVisibility());
+	}
+	else if (!netgame)
+	{
+		R_SetVisibility (atof (argv[1]));
+	}
+	else
+	{
+		Printf ("Visibility cannot be changed in net games.\n");
+	}
 }

@@ -72,8 +72,7 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 	fixed_t delta = special->z - toucher->z;
 
 	if (delta > toucher->height || delta < -32*FRACUNIT)
-	{
-		// out of reach
+	{ // out of reach
 		return;
 	}
 
@@ -95,7 +94,8 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 	}
 	else
 	{
-		I_Error ("P_SpecialThing: Unknown gettable thing (%s)", RUNTIME_TYPE (special)->Name);
+		Printf ("Unknown gettable thing (%s)", RUNTIME_TYPE (special)->Name);
+		special->flags &= ~MF_SPECIAL;
 	}
 }
 
@@ -134,11 +134,10 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 		}
 		else
 		{
-			int gendermsg;
+			int gendermsg = -1;
 			
 			switch (from[1])
 			{
-			default:	gendermsg = -1;	break;
 			case 'g':	gendermsg = 0;	break;
 			case 'h':	gendermsg = 1;	break;
 			case 'p':	gendermsg = 2;	break;
@@ -355,7 +354,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					SexMessage (GStrings(SPREEKILLSELF), buff,
 						player->userinfo.gender, player->userinfo.netname,
 						player->userinfo.netname);
-					StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
+					StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
 							1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
 				}
 			}
@@ -396,7 +395,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						{
 							SexMessage (GStrings(SPREEOVER), buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
-							StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
+							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
 								1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
 						}
 					}
@@ -406,7 +405,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						{
 							SexMessage (spreemsg, buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
-							StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
+							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
 								1.5f, 0.2f, CR_WHITE, 3.f, 0.5f), 'KSPR');
 						}
 					}
@@ -454,7 +453,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						{
 							SexMessage (multimsg, buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
-							StatusBar->AttachMessage (new FHUDMessageFadeOut (buff,
+							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
 								1.5f, 0.8f, CR_RED, 3.f, 0.5f), 'MKIL');
 						}
 					}
@@ -756,7 +755,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 
 		// end of game hell hack
-		if ((target->subsector->sector->special & 255) == dDamage_End
+		if ((target->Sector->special & 255) == dDamage_End
 			&& damage >= target->health)
 		{
 			damage = target->health - 1;

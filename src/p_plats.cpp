@@ -64,7 +64,7 @@ void DPlat::PlayPlatSound (const char *sound)
 //
 // Move a plat up and down
 //
-void DPlat::RunThink ()
+void DPlat::Tick ()
 {
 	EResult res;
 		

@@ -229,8 +229,9 @@ void AActor::Serialize (FArchive &arc)
 		<< dropoffz
 		<< SpawnPoint[0] << SpawnPoint[1] << SpawnPoint[2]
 		<< SpawnAngle << SpawnFlags
-		<< FloatBobPhase;
-	arc.SerializePointer (translationtables, (BYTE **)&translation, 256);
+		<< FloatBobPhase
+		<< alphacolor
+		<< Translation;
 
 	if (flags2 & MF2_FLOATBOB)
 	{
@@ -249,6 +250,7 @@ void AActor::Serialize (FArchive &arc)
 		{ // Give player back the skin
 			player->skin = &skins[player->userinfo.skin];
 		}
+		SetShade (alphacolor);
 	}
 }
 
@@ -292,24 +294,44 @@ bool AActor::SetState (FState *newstate)
 			Destroy ();
 			return false;
 		}
+		int prevsprite, newsprite;
 
+		if (state != NULL)
+		{
+			prevsprite = state->sprite.index;
+		}
+		else
+		{
+			prevsprite = -1;
+		}
 		state = newstate;
 		tics = newstate->GetTics();
 		frame = newstate->GetFrame();
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
-
-		// [RH] Handle skins for players
-		if (player == NULL ||
-			player->skin == NULL ||
-			newstate->sprite.index != GetDefaultByType (player->cls)->SpawnState->sprite.index)
-		{
-			sprite = newstate->sprite.index;
+		newsprite = newstate->sprite.index;
+		if (newsprite == SpawnState->sprite.index)
+		{ // [RH] If the new sprite is the same as the original sprite, and
+		  // this actor is attached to a player, use the player's skin's
+		  // sprite. If a player is not attached, do not change the sprite
+		  // unless it is different from the previous state's sprite; a
+		  // player may have been attached, died, and respawned elsewher,
+		  // and we do not want to lose the skin on the body. If it wasn't
+		  // for Dehacked, I would move sprite changing out of the states
+		  // altogether, since actors rarely change their sprites after
+		  // spawning.
+			if (player != NULL)
+			{
+				sprite = skins[player->userinfo.skin].sprite;
+			}
+			else if (newsprite != prevsprite)
+			{
+				sprite = newsprite;
+			}
 		}
 		else
 		{
-			sprite = player->skin->sprite;
+			sprite = newsprite;
 		}
-
 		if (newstate->GetAction().acp1)
 		{
 			newstate->GetAction().acp1 (this);
@@ -338,20 +360,35 @@ bool AActor::SetStateNF (FState *newstate)
 			Destroy ();
 			return false;
 		}
+		int prevsprite, newsprite;
+
+		if (state != NULL)
+		{
+			prevsprite = state->sprite.index;
+		}
+		else
+		{
+			prevsprite = -1;
+		}
 		state = newstate;
 		tics = newstate->GetTics();
 		frame = newstate->GetFrame();
 		renderflags = (renderflags & ~RF_FULLBRIGHT) | newstate->GetFullbright();
-		// [RH] Handle skins for players
-		if (player == NULL ||
-			player->skin == NULL ||
-			newstate->sprite.index != GetDefaultByType (player->cls)->SpawnState->sprite.index)
+		newsprite = newstate->sprite.index;
+		if (newsprite == SpawnState->sprite.index)
 		{
-			sprite = newstate->sprite.index;
+			if (player != NULL)
+			{
+				sprite = skins[player->userinfo.skin].sprite;
+			}
+			else if (newsprite != prevsprite)
+			{
+				sprite = newsprite;
+			}
 		}
 		else
 		{
-			sprite = player->skin->sprite;
+			sprite = newsprite;
 		}
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
@@ -379,6 +416,8 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 	if (line != NULL && cl_missiledecals)
 	{
 		int side = P_PointOnLineSide (mo->x, mo->y, line);
+		if (line->sidenum[side] == -1)
+			side ^= 1;
 		if (line->sidenum[side] != -1)
 		{
 			FDecalBase *base = mo->DecalGenerator;
@@ -391,18 +430,28 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 				den = (SQWORD)line->dx*line->dx + (SQWORD)line->dy*line->dy;
 				if (den != 0)
 				{
+					SDWORD frac;
+
 					num = (SQWORD)(mo->x-line->v1->x)*line->dx+(SQWORD)(mo->y-line->v1->y)*line->dy;
-					if (num <= den)
+					if (num <= 0)
 					{
-						SDWORD frac = num / (den>>30);
-
-						x = line->v1->x + MulScale30 (line->dx, frac);
-						y = line->v1->y + MulScale30 (line->dy, frac);
-						z = mo->z;
-
-						AImpactDecal::StaticCreate (base->GetDecal (),
-							x, y, z, sides + line->sidenum[side]);
+						frac = 0;
 					}
+					else if (num >= den)
+					{
+						frac = 1<<30;
+					}
+					else
+					{
+						frac = (SDWORD)(num / (den>>30));
+					}
+
+					x = line->v1->x + MulScale30 (line->dx, frac);
+					y = line->v1->y + MulScale30 (line->dy, frac);
+					z = mo->z;
+
+					AImpactDecal::StaticCreate (base->GetDecal (),
+						x, y, z, sides + line->sidenum[side]);
 				}
 			}
 		}
@@ -416,8 +465,8 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 		// [RH] Change render style of exploding rockets
 		if (mo->IsKindOf (RUNTIME_CLASS(ARocket)))
 		{
-			mo->RenderStyle = STYLE_Translucent;
-			mo->alpha = mo->alpha * 2 / 3;
+			mo->RenderStyle = deh.ExplosionStyle;
+			mo->alpha = deh.ExplosionAlpha;
 		}
 
 		if (gameinfo.gametype == GAME_Doom)
@@ -644,7 +693,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 
 	if (mo->flags2 & MF2_WINDTHRUST)
 	{
-		int special = mo->subsector->sector->special;
+		int special = mo->Sector->special;
 		switch (special)
 		{
 			case 40: case 41: case 42: // Wind_East
@@ -710,8 +759,10 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 				// try to slide along it
 				if (BlockingMobj == NULL)
 				{ // slide against wall
-					if (mo->player && mo->waterlevel && mo->waterlevel < 3
-						&& (mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove))
+					if (BlockingLine != NULL &&
+						mo->player && mo->waterlevel && mo->waterlevel < 3 &&
+						(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove) &&
+						BlockingLine->sidenum[1] != -1)
 					{
 						mo->momz = WATER_JUMP_SPEED;
 					}
@@ -836,7 +887,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 			}
 		}
 	} while (xmove | ymove);
-	
+
 	// Friction
 
 	if (player && player->mo == mo && player->cheats & CF_NOMOMENTUM)
@@ -874,7 +925,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 		if (mo->momx > FRACUNIT/4 || mo->momx < -FRACUNIT/4
 			|| mo->momy > FRACUNIT/4 || mo->momy < -FRACUNIT/4)
 		{
-			if (mo->floorz > mo->subsector->sector->floorplane.ZatPoint (mo->x, mo->y))
+			if (mo->floorz > mo->Sector->floorplane.ZatPoint (mo->x, mo->y))
 				return;
 		}
 	}
@@ -962,6 +1013,7 @@ void P_ZMovement (AActor *mo)
 {
 	fixed_t dist;
 	fixed_t delta;
+	fixed_t oldz = mo->z;
 
 //	
 // check for smooth step up
@@ -978,17 +1030,19 @@ void P_ZMovement (AActor *mo)
 	{
 		fixed_t startmomz = mo->momz;
 
-		if (!mo->waterlevel || (mo->player &&
+		if (!mo->waterlevel || mo->flags & MF_CORPSE || (mo->player &&
 			!(mo->player->cmd.ucmd.forwardmove | mo->player->cmd.ucmd.sidemove)))
 		{
-			mo->momz -= (fixed_t)(level.gravity * mo->subsector->sector->gravity *
+			mo->momz -= (fixed_t)(level.gravity * mo->Sector->gravity *
 				(mo->flags2 & MF2_LOGRAV ? 10.24 : 81.92));
 		}
 		if (mo->waterlevel > 1)
 		{
-			if (mo->momz < -WATER_SINK_SPEED)
+			fixed_t sinkspeed = mo->flags & MF_CORPSE ? -WATER_SINK_SPEED/3 : -WATER_SINK_SPEED;
+
+			if (mo->momz < sinkspeed)
 			{
-				mo->momz = (startmomz < -WATER_SINK_SPEED) ? startmomz : -WATER_SINK_SPEED;
+				mo->momz = (startmomz < sinkspeed) ? startmomz : sinkspeed;
 			}
 			else
 			{
@@ -1020,7 +1074,7 @@ void P_ZMovement (AActor *mo)
 	}
 	if (mo->waterlevel && !(mo->flags & MF_NOGRAVITY))
 	{
-		mo->momz = FixedMul (mo->momz, mo->subsector->sector->friction);
+		mo->momz = FixedMul (mo->momz, mo->Sector->friction);
 	}
 
 //
@@ -1028,10 +1082,10 @@ void P_ZMovement (AActor *mo)
 //
 	if (mo->z <= mo->floorz)
 	{	// Hit the floor
-		if (mo->subsector->sector->SecActTarget != NULL &&
-			mo->subsector->sector->floorplane.ZatPoint (mo->x, mo->y) == mo->floorz)
+		if (mo->Sector->SecActTarget != NULL &&
+			mo->Sector->floorplane.ZatPoint (mo->x, mo->y) == mo->floorz)
 		{ // [RH] Let the sector do something to the actor
-			mo->subsector->sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
+			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitFloor);
 		}
 		if ((mo->flags & MF_MISSILE) &&
 			(gameinfo.gametype != GAME_Doom || !(mo->flags & MF_NOCLIP)))
@@ -1048,7 +1102,7 @@ void P_ZMovement (AActor *mo)
 			}
 			else
 			{
-				if (mo->subsector->sector->floorpic == skyflatnum)
+				if (mo->Sector->floorpic == skyflatnum)
 				{
 					// [RH] Just remove the missile without exploding it
 					//		if this is a sky floor.
@@ -1071,7 +1125,7 @@ void P_ZMovement (AActor *mo)
 		if (mo->momz < 0)
 		{
 			// [RH] avoid integer roundoff by doing comparisons with floats
-			float minmom = level.gravity * mo->subsector->sector->gravity * -655.36f;
+			float minmom = level.gravity * mo->Sector->gravity * -655.36f;
 			float mom = (float)mo->momz;
 
 			// Spawn splashes, etc.
@@ -1120,10 +1174,10 @@ void P_ZMovement (AActor *mo)
 
 	if (mo->z + mo->height > mo->ceilingz)
 	{ // hit the ceiling
-		if (mo->subsector->sector->SecActTarget != NULL &&
-			mo->subsector->sector->ceilingplane.ZatPoint (mo->x, mo->y) == mo->ceilingz)
+		if (mo->Sector->SecActTarget != NULL &&
+			mo->Sector->ceilingplane.ZatPoint (mo->x, mo->y) == mo->ceilingz)
 		{ // [RH] Let the sector do something to the actor
-			mo->subsector->sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
+			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_HitCeiling);
 		}
 		mo->z = mo->ceilingz - mo->height;
 		if (mo->flags2 & MF2_FLOORBOUNCE)
@@ -1145,13 +1199,55 @@ void P_ZMovement (AActor *mo)
 			(gameinfo.gametype != GAME_Doom || !(mo->flags & MF_NOCLIP)))
 		{
 			if (!(mo->flags3 & MF3_SKYEXPLODE) &&
-				mo->subsector->sector->ceilingpic == skyflatnum)
+				mo->Sector->ceilingpic == skyflatnum)
 			{
 				mo->Destroy ();
 				return;
 			}
 			P_ExplodeMissile (mo, NULL);
 			return;
+		}
+	}
+
+	if (mo->Sector->heightsec != NULL && mo->Sector->SecActTarget != NULL)
+	{
+		sector_t *hs = mo->Sector->heightsec;
+		fixed_t waterz = hs->floorplane.ZatPoint (mo->x, mo->y);
+		fixed_t newz;
+		fixed_t viewheight;
+
+		if (mo->player != NULL)
+		{
+			viewheight = mo->player->viewheight;
+		}
+		else
+		{
+			viewheight = mo->height / 2;
+		}
+
+		newz = mo->z + viewheight;
+		oldz += viewheight;
+
+		if (oldz <= waterz && newz > waterz)
+		{ // View went above fake floor
+			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_EyesSurface);
+		}
+		else if (oldz > waterz && newz <= waterz)
+		{ // View went below fake floor
+			mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_EyesDive);
+		}
+
+		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
+		{
+			waterz = hs->ceilingplane.ZatPoint (mo->x, mo->y);
+			if (oldz <= waterz && newz > waterz)
+			{ // View went above fake floor
+				mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_EyesAboveC);
+			}
+			else if (oldz > waterz && newz <= waterz)
+			{ // View went below fake floor
+				mo->Sector->SecActTarget->TriggerAction (mo, SECSPAC_EyesBelowC);
+			}
 		}
 	}
 }
@@ -1166,17 +1262,15 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 {
 	mo->player->deltaviewheight = mo->momz>>3;
 	P_FallingDamage (mo);
-	if (!mo->player->morphTics)
+
+	// [RH] only make noise if alive
+	if (!mo->player->morphTics && mo->health > 0)
 	{
-		if (mo->momz < (fixed_t)(level.gravity * mo->subsector->sector->gravity * -983.04f))
+		if (mo->momz < (fixed_t)(level.gravity * mo->Sector->gravity * -983.04f))
 		{
-			if (mo->health > 0)
-			{ // [RH] only grunt if alive
-				S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
-			}
+			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 		}
-		if (onmobj != NULL ||
-			!Terrains[P_GetThingFloorType (mo)].IsLiquid)
+		if (onmobj != NULL || !Terrains[P_GetThingFloorType (mo)].IsLiquid)
 		{
 			S_Sound (mo, CHAN_AUTO, "*land", 1, ATTN_NORM);
 		}
@@ -1394,7 +1488,7 @@ void AActor::SetShade (int r, int g, int b)
 //
 // P_MobjThinker
 //
-void AActor::RunThink ()
+void AActor::Tick ()
 {
 	// [RH] Data for Heretic/Hexen scrolling sectors
 	static const byte HexenScrollDirs[8] = { 64, 0, 192, 128, 96, 32, 224, 160 };
@@ -1589,14 +1683,15 @@ void AActor::RunThink ()
 			{
 				continue;
 			}
-			if (flags & MF_NOGRAVITY && sec->heightsec == NULL)
+			if (flags & MF_NOGRAVITY &&
+				(sec->heightsec == NULL || (sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)))
 			{
 				continue;
 			}
 			height = sec->floorplane.ZatPoint (x, y);
 			if (z > height)
 			{
-				if (sec->heightsec == NULL)
+				if (sec->heightsec == NULL || (sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 				{
 					continue;
 				}
@@ -1695,7 +1790,7 @@ void AActor::RunThink ()
 			{
 				if (player)
 				{
-					if (momz < (fixed_t)(level.gravity * subsector->sector->gravity * -655.36f)
+					if (momz < (fixed_t)(level.gravity * Sector->gravity * -655.36f)
 						&& !(flags2&MF2_FLY))
 					{
 						PlayerLandedOnThing (this, onmo);
@@ -1726,39 +1821,11 @@ void AActor::RunThink ()
 
 	byte lastwaterlevel = waterlevel;
 
-	waterlevel = 0;
-
-	if (subsector)
-	{
-		if (subsector->sector->waterzone)
-			waterlevel = 3;
-		sector_t *hsec;
-		if ( (hsec = subsector->sector->heightsec) )
-		{
-			if (hsec->waterzone && !subsector->sector->waterzone)
-			{
-				fixed_t fh = hsec->floorplane.ZatPoint (x, y);
-				if (z < fh)
-				{
-					waterlevel = 1;
-					if (z + height/2 < fh)
-					{
-						waterlevel = 2;
-						if (z + height <= fh)
-							waterlevel = 3;
-					}
-				}
-				else if (z + height > hsec->ceilingplane.ZatPoint (x, y))
-				{
-					waterlevel = 3;
-				}
-			}
-		}
-	}
+	UpdateWaterLevel ();
 
 	if (lastwaterlevel == 0 && waterlevel != 0)
 	{
-		P_HitWater (this, subsector->sector);
+		P_HitWater (this, Sector);
 	}
 
 	// killough 9/12/98: objects fall off ledges if they are hanging off
@@ -1811,6 +1878,45 @@ void AActor::RunThink ()
 			return;
 
 		P_NightmareRespawn (this);
+	}
+}
+
+//==========================================================================
+//
+// AActor::UpdateWaterLevel
+//
+//==========================================================================
+
+void AActor::UpdateWaterLevel ()
+{
+	waterlevel = 0;
+
+	if (Sector)
+	{
+		if (Sector->waterzone)
+			waterlevel = 3;
+		sector_t *hsec;
+		if ( (hsec = Sector->heightsec) && !(hsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+		{
+			if (hsec->waterzone && !Sector->waterzone)
+			{
+				fixed_t fh = hsec->floorplane.ZatPoint (x, y);
+				if (z < fh)
+				{
+					waterlevel = 1;
+					if (z + height/2 < fh)
+					{
+						waterlevel = 2;
+						if (z + height <= fh)
+							waterlevel = 3;
+					}
+				}
+				else if (z + height > hsec->ceilingplane.ZatPoint (x, y))
+				{
+					waterlevel = 3;
+				}
+			}
+		}
 	}
 }
 
@@ -1900,9 +2006,9 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	// set subsector and/or block links
 	actor->LinkToWorld ();
 	actor->dropoffz =			// killough 11/98: for tracking dropoffs
-	actor->floorz = actor->subsector->sector->floorplane.ZatPoint (ix, iy);
-	actor->ceilingz = actor->subsector->sector->ceilingplane.ZatPoint (ix, iy);
-	actor->floorsector = actor->subsector->sector;
+	actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
+	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
+	actor->floorsector = actor->Sector;
 
 	if (iz == ONFLOORZ)
 	{
@@ -1938,6 +2044,7 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	{
 		actor->floorclip = 0;
 	}
+	actor->UpdateWaterLevel ();
 	if (!SpawningMapThing)
 	{
 		actor->BeginPlay ();
@@ -2035,7 +2142,8 @@ void AActor::AdjustFloorClip ()
 	// do the floorclipping instead of the terrain type.
 	for (m = touching_sectorlist; m; m = m->m_tnext)
 	{
-		if (m->m_sector->heightsec == NULL &&
+		if ((m->m_sector->heightsec == NULL ||
+			 m->m_sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 			m->m_sector->floorplane.ZatPoint (x, y) == z)
 		{
 			fixed_t clip = Terrains[TerrainTypes[m->m_sector->floorpic]].FootClip;
@@ -2114,7 +2222,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 
 	// set color translations for player sprites
 	// [RH] Different now: MF_TRANSLATION is not used.
-	mobj->translation = translationtables + 256*2*playernum;
+	mobj->Translation = TRANSLATION(TRANSLATION_Players,playernum);
 
 	mobj->angle = ANG45 * (mthing->angle/45);
 	mobj->pitch = mobj->roll = 0;
@@ -2141,6 +2249,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	p->viewheight = VIEWHEIGHT;
 	p->inconsistant = 0;
 	p->attacker = NULL;
+	p->BlendR = p->BlendG = p->BlendB = p->BlendA = 0.f;
 
 	p->momx = p->momy = 0;		// killough 10/98: initialize bobbing to 0.
 
@@ -2477,7 +2586,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 // P_SpawnPuff
 //
 
-void P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing)
+AActor *P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool hitthing)
 {
 	AActor *puff;
 
@@ -2516,6 +2625,8 @@ void P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, bool
 	{
 		S_SoundID (puff, CHAN_BODY, puff->AttackSound, 1, ATTN_NORM);
 	}
+
+	return puff;
 }
 
 
@@ -2631,7 +2742,7 @@ int P_GetThingFloorType (AActor *thing)
 	}
 	else
 	{
-		return TerrainTypes[thing->subsector->sector->floorpic];
+		return TerrainTypes[thing->Sector->floorpic];
 	}
 }
 
@@ -2649,7 +2760,20 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 
 	AActor *mo = NULL;
 	FSplashDef *splash;
-	int terrainnum = TerrainTypes[sec->floorpic];
+	int terrainnum;
+	
+	if (sec->heightsec == NULL ||
+		!sec->heightsec->waterzone ||
+		!(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) ||
+		!(sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES))
+	{
+		terrainnum = TerrainTypes[sec->floorpic];
+	}
+	else
+	{
+		terrainnum = TerrainTypes[sec->heightsec->floorpic];
+	}
+
 	int splashnum = Terrains[terrainnum].Splash;
 	bool smallsplash = false;
 	const secplane_t *plane;
@@ -2658,8 +2782,10 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 	if (splashnum == -1)
 		return Terrains[terrainnum].IsLiquid;
 
-	plane = (sec->heightsec != NULL) ? &sec->heightsec->floorplane
-		: &sec->floorplane;
+	plane = (sec->heightsec != NULL &&
+		sec->heightsec->waterzone &&
+		!(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	  ? &sec->heightsec->floorplane : &sec->floorplane;
 	z = plane->ZatPoint (thing->x, thing->y);
 
 	splash = &Splashes[splashnum];
@@ -2727,7 +2853,9 @@ bool P_HitFloor (AActor *thing)
 			break;
 		}
 	}
-	if (m == NULL || m->m_sector->heightsec != NULL)
+	if (m == NULL ||
+		(m->m_sector->heightsec != NULL &&
+		!(m->m_sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)))
 	{ 
 		return false;
 	}

@@ -93,6 +93,8 @@ IMPLEMENT_STATELESS_ACTOR (ATeleportDest, Any, 14, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
 END_DEFAULTS
 
+// Teleport dest that can spawn above floor
+
 class ATeleportDest2 : public ATeleportDest
 {
 	DECLARE_STATELESS_ACTOR (ATeleportDest2, ATeleportDest)
@@ -100,6 +102,17 @@ class ATeleportDest2 : public ATeleportDest
 
 IMPLEMENT_STATELESS_ACTOR (ATeleportDest2, Any, 9044, 0)
 	PROP_FlagsSet (MF_NOGRAVITY)
+END_DEFAULTS
+
+// Z-preserving dest subject to gravity (for TeleportGroup, etc.)
+
+class ATeleportDest3 : public ATeleportDest2
+{
+	DECLARE_STATELESS_ACTOR (ATeleportDest3, ATeleportDest2)
+};
+
+IMPLEMENT_STATELESS_ACTOR (ATeleportDest3, Any, 9043, 0)
+	PROP_FlagsClear (MF_NOGRAVITY)
 END_DEFAULTS
 
 //
@@ -194,10 +207,6 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 			if (!thing->player->powers[pw_speed])
 				thing->reactiontime = 18;
 		}
-	}
-	if (thing->flags2 & MF2_FLOORCLIP)
-	{
-		thing->AdjustFloorClip ();
 	}
 	if (thing->flags & MF_MISSILE)
 	{
@@ -307,97 +316,101 @@ bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog)
 // It has advantages over the teleporter with thing exits.
 //
 
-// maximum fixed_t units to move object to avoid hiccups
-#define FUDGEFACTOR 10
-
 // [RH] Modified to support different source and destination ids.
+// [RH] Modified some more to be accurate.
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 							BOOL reverse)
 {
 	int i;
 	line_t *l;
 
-	if (side || thing->flags2 & MF2_NOTELEPORT || !line)
+	if (side || thing->flags2 & MF2_NOTELEPORT || !line || line->sidenum[1] == -1)
 		return false;
 
-	for (i = -1; (i = P_FindLineFromID (id, i)) >= 0;)
+	for (i = -1; (i = P_FindLineFromID (id, i)) >= 0; )
+	{
 		if ((l=lines+i) != line && l->backsector)
 		{
 			// Get the thing's position along the source linedef
-			fixed_t pos = abs(line->dx) > abs(line->dy) ?
-				FixedDiv(thing->x - line->v1->x, line->dx) :
-				FixedDiv(thing->y - line->v1->y, line->dy) ;
+			SDWORD pos;				// 30.2 fixed
+			fixed_t nposx, nposy;	// offsets from line
+			{
+				SQWORD den;
+
+				den = (SQWORD)line->dx*line->dx + (SQWORD)line->dy*line->dy;
+				if (den == 0)
+				{
+					pos = 0;
+					nposx = 0;
+					nposy = 0;
+				}
+				else
+				{
+					SQWORD num = (SQWORD)(thing->x-line->v1->x)*line->dx + 
+								 (SQWORD)(thing->y-line->v1->y)*line->dy;
+					if (num <= 0)
+					{
+						pos = 0;
+					}
+					else if (num >= den)
+					{
+						pos = 1<<30;
+					}
+					else
+					{
+						pos = (SDWORD)(num / (den>>30));
+					}
+					nposx = thing->x - line->v1->x - MulScale30 (line->dx, pos);
+					nposy = thing->y - line->v1->y - MulScale30 (line->dy, pos);
+				}
+			}
 
 			// Get the angle between the two linedefs, for rotating
 			// orientation and momentum. Rotate 180 degrees, and flip
 			// the position across the exit linedef, if reversed.
-			angle_t angle = (reverse ? pos = FRACUNIT-pos, 0 : ANG180) +
+			angle_t angle =
 				R_PointToAngle2(0, 0, l->dx, l->dy) -
 				R_PointToAngle2(0, 0, line->dx, line->dy);
 
-			// Interpolate position across the exit linedef
-			fixed_t x = l->v2->x - FixedMul(pos, l->dx);
-			fixed_t y = l->v2->y - FixedMul(pos, l->dy);
+			if (!reverse)
+			{
+				angle += ANGLE_180;
+				pos = (1<<30) - pos;
+			}
 
 			// Sine, cosine of angle adjustment
 			fixed_t s = finesine[angle>>ANGLETOFINESHIFT];
 			fixed_t c = finecosine[angle>>ANGLETOFINESHIFT];
 
-			// Maximum distance thing can be moved away from interpolated
-			// exit, to ensure that it is on the correct side of exit linedef
-			int fudge = FUDGEFACTOR;
+			fixed_t x, y;
+
+			// Rotate position along normal to match exit linedef
+			x = DMulScale16 (nposx, c, -nposy, s);
+			y = DMulScale16 (nposy, c,  nposx, s);
+
+			// Interpolate position across the exit linedef
+			x += l->v1->x + MulScale30 (pos, l->dx);
+			y += l->v1->y + MulScale30 (pos, l->dy);
 
 			// Whether this is a player, and if so, a pointer to its player_t.
 			// Voodoo dolls are excluded by making sure thing->player->mo==thing.
 			player_t *player = thing->player && thing->player->mo == thing ?
 				thing->player : NULL;
 
-			// Whether walking towards first side of exit linedef steps down
-			int stepdown =
-				l->frontsector->floorplane.ZatPoint (x, y) <
-				l->backsector->floorplane.ZatPoint (x, y);
-
 			// Height of thing above ground
-			fixed_t z = thing->z - thing->floorz;
-
-			// Side to exit the linedef on positionally.
-			//
-			// Notes:
-			//
-			// This flag concerns exit position, not momentum. Due to
-			// roundoff error, the thing can land on either the left or
-			// the right side of the exit linedef, and steps must be
-			// taken to make sure it does not end up on the wrong side.
-			//
-			// Exit momentum is always towards side 1 in a reversed
-			// teleporter, and always towards side 0 otherwise.
-			//
-			// Exiting positionally on side 1 is always safe, as far
-			// as avoiding oscillations and stuck-in-wall problems,
-			// but may not be optimum for non-reversed teleporters.
-			//
-			// Exiting on side 0 can cause oscillations if momentum
-			// is towards side 1, as it is with reversed teleporters.
-			//
-			// Exiting on side 1 slightly improves player viewing
-			// when going down a step on a non-reversed teleporter.
-
-			int side = reverse || (player && stepdown);
-
-			// Make sure we are on correct side of exit linedef.
-			while (P_PointOnLineSide(x, y, l) != side && --fudge>=0)
-				if (abs(l->dx) > abs(l->dy))
-					y -= l->dx < 0 != side ? -1 : 1;
-				else
-					x += l->dy < 0 != side ? -1 : 1;
+			fixed_t z;
+			
+			z = thing->z - sides[line->sidenum[1]].sector->floorplane.ZatPoint (thing->x, thing->y)
+				+ sides[l->sidenum[0]].sector->floorplane.ZatPoint (x, y);
 
 			// Attempt to teleport, aborting if blocked
 			// Adjust z position to be same height above ground as before.
 			// Ground level at the exit is measured as the higher of the
 			// two floor heights at the exit linedef.
-			if (!P_TeleportMove (thing, x, y,
-								 z + sides[l->sidenum[stepdown]].sector->floorplane.ZatPoint (x, y), false))
+			if (!P_TeleportMove (thing, x, y, z, false))
+			{
 				return false;
+			}
 
 			// Rotate thing's orientation according to difference in linedef angles
 			thing->angle += angle;
@@ -407,17 +420,18 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 			y = thing->momy;
 
 			// Rotate thing's momentum to come out of exit just like it entered
-			thing->momx = FixedMul(x, c) - FixedMul(y, s);
-			thing->momy = FixedMul(y, c) + FixedMul(x, s);
-
-			if (thing->flags2 & MF2_FLOORCLIP)
-			{
-				thing->AdjustFloorClip ();
-			}
+			thing->momx = DMulScale16 (x, c, -y, s);
+			thing->momy = DMulScale16 (y, c,  x, s);
 
 			// Adjust a player's view, in case there has been a height change
 			if (player)
 			{
+				// Adjust player's local copy of momentum
+				x = player->momx;
+				y = player->momy;
+				player->momx = DMulScale16 (x, c, -y, s);
+				player->momy = DMulScale16 (y, c,  x, s);
+
 				// Save the current deltaviewheight, used in stepping
 				fixed_t deltaviewheight = player->deltaviewheight;
 
@@ -433,5 +447,186 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 
 			return true;
 		}
+	}
 	return false;
+}
+
+// [RH] Teleport anything matching other_tid to dest_tid
+bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
+{
+	bool didSomething = false;
+
+	if (other_tid != 0 && dest_tid != 0)
+	{
+		AActor *victim;
+		FActorIterator iterator (other_tid);
+
+		while ( (victim = iterator.Next ()) )
+		{
+			didSomething |= EV_Teleport (dest_tid, NULL, 0, victim, fog);
+		}
+	}
+
+	return didSomething;
+}
+
+static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, bool fog)
+{
+	int an = (dest->angle - source->angle) >> ANGLETOFINESHIFT;
+	fixed_t offX = victim->x - source->x;
+	fixed_t offY = victim->y - source->y;
+	angle_t offAngle = victim->angle - source->angle;
+	fixed_t newX = DMulScale16 (offX, finecosine[an], -offY, finesine[an]);
+	fixed_t newY = DMulScale16 (offX, finesine[an], offY, finecosine[an]);
+
+	bool res =
+		P_Teleport (victim, dest->x + newX,
+							dest->y + newY,
+							floorz ? ONFLOORZ : dest->z + victim->z - source->z,
+							0, fog);
+	// P_Teleport only changes angle if fog is true
+	victim->angle = dest->angle + offAngle;
+
+	return res;
+}
+
+static void MoveTheDecal (ADecal *decal, fixed_t z, AActor *source, AActor *dest)
+{
+	int an = (dest->angle - source->angle) >> ANGLETOFINESHIFT;
+	fixed_t offX = decal->x - source->x;
+	fixed_t offY = decal->y - source->y;
+	fixed_t newX = DMulScale16 (offX, finecosine[an], -offY, finesine[an]);
+	fixed_t newY = DMulScale16 (offX, finesine[an], offY, finecosine[an]);
+
+	decal->Relocate (dest->x + newX, dest->y + newY, dest->z + z - source->z);
+}
+
+// [RH] Teleport a group of actors centered around source_tid so
+// that they become centered around dest_tid instead.
+bool EV_TeleportGroup (int group_tid, AActor *victim, int source_tid, int dest_tid, bool moveSource, bool fog)
+{
+	AActor *sourceOrigin, *destOrigin;
+	{
+		FActorIterator iterator (source_tid);
+		sourceOrigin = iterator.Next ();
+	}
+	if (sourceOrigin == NULL)
+	{ // If there is no source origin, behave like TeleportOther
+		return EV_TeleportOther (group_tid, dest_tid, fog);
+	}
+
+	{
+		TActorIterator<ATeleportDest> iterator (dest_tid);
+		destOrigin = iterator.Next ();
+	}
+	if (destOrigin == NULL)
+	{
+		return false;
+	}
+
+	bool didSomething = false;
+	bool floorz = !destOrigin->IsKindOf (RUNTIME_CLASS(ATeleportDest2));
+
+	// Use the passed victim if group_tid is 0
+	if (group_tid == 0 && victim != NULL)
+	{
+		didSomething = DoGroupForOne (victim, sourceOrigin, destOrigin, floorz, fog);
+	}
+	else
+	{
+		FActorIterator iterator (group_tid);
+
+		// For each actor with tid matching arg0, move it to the same
+		// position relative to destOrigin as it is relative to sourceOrigin
+		// before the teleport.
+		while ( (victim = iterator.Next ()) )
+		{
+			didSomething |= DoGroupForOne (victim, sourceOrigin, destOrigin, floorz, fog);
+		}
+	}
+
+	if (moveSource && didSomething)
+	{
+		didSomething |=
+			P_Teleport (sourceOrigin, destOrigin->x, destOrigin->y,
+				floorz ? ONFLOORZ : destOrigin->z, 0, false);
+		sourceOrigin->angle = destOrigin->angle;
+	}
+
+	return didSomething;
+}
+
+// [RH] Teleport a group of actors in a sector. Source_tid is used as a
+// reference point so that they end up in the same position relative to
+// dest_tid. Group_tid can be used to not teleport all actors in the sector.
+bool EV_TeleportSector (int tag, int source_tid, int dest_tid, bool fog, int group_tid)
+{
+	AActor *sourceOrigin, *destOrigin;
+	{
+		FActorIterator iterator (source_tid);
+		sourceOrigin = iterator.Next ();
+	}
+	if (sourceOrigin == NULL)
+	{
+		return false;
+	}
+	{
+		TActorIterator<ATeleportDest> iterator (dest_tid);
+		destOrigin = iterator.Next ();
+	}
+	if (destOrigin == NULL)
+	{
+		return false;
+	}
+
+	bool didSomething = false;
+	bool floorz = !destOrigin->IsKindOf (RUNTIME_CLASS(ATeleportDest2));
+	int secnum;
+
+	secnum = -1;
+	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	{
+		msecnode_t *node;
+		const sector_t * const sec = &sectors[secnum];
+
+		for (node = sec->touching_thinglist; node; )
+		{
+			AActor *actor = node->m_thing;
+			msecnode_t *next = node->m_snext;
+
+			// possibly limit actors by group
+			if (actor != NULL && (group_tid == 0 || actor->tid == group_tid))
+			{
+				didSomething |= DoGroupForOne (actor, sourceOrigin, destOrigin, floorz, fog);
+			}
+			node = next;
+		}
+
+#if 0
+		if (group_tid == 0 && !fog)
+		{
+			int lineindex;
+			for (lineindex = sec->linecount-1; lineindex >= 0; --lineindex)
+			{
+				line_t *line = sec->lines[lineindex];
+				int wallnum;
+
+				wallnum = line->sidenum[(line->backsector == sec)];
+				if (wallnum != -1)
+				{
+					side_t *wall = &sides[wallnum];
+					ADecal *decal = wall->BoundActors;
+
+					while (decal != NULL)
+					{
+						ADecal *next = (ADecal *)decal->snext;
+						MoveTheDecal (decal, decal->GetRealZ (wall), sourceOrigin, destOrigin);	
+						decal = next;
+					}
+				}
+			}
+		}
+#endif
+	}
+	return didSomething;
 }

@@ -1,3 +1,37 @@
+/*
+** gameconfigfile.cpp
+** An .ini parser specifically for zdoom.ini
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include <stdio.h>
 
 #include "doomdef.h"
@@ -286,8 +320,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	{
 		GStrings.SetString (SAVEGAMENAME, "zticsv");
 	}
-
-	RunAutoexec (gamename);
 }
 
 void FGameConfigFile::ReadCVars (DWORD flags)
@@ -335,6 +367,8 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 	ClearCurrentSection ();
 	C_ArchiveAliases (this);
 
+	M_SaveCustomKeys (this, section, subsection);
+
 	strcpy (subsection, "Bindings");
 	SetSection (section, true);
 	ClearCurrentSection ();
@@ -379,11 +413,11 @@ char *FGameConfigFile::GetConfigPath ()
 	strcat (path, "zdoom.ini");
 	return path;
 #else
-	return GetUserFile (".zdoomirc");
+	return GetUserFile ("zdoom.ini");
 #endif
 }
 
-void FGameConfigFile::RunAutoexec (const char *game)
+void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 {
 	char section[64];
 	const char *key;
@@ -405,7 +439,7 @@ void FGameConfigFile::RunAutoexec (const char *game)
 			delete autoexec;
 			SetSection (section, true);
 			SetValueForKey ("Path", path);
-			DoRunAutoexec (path);
+			list->AppendArg (path);
 			delete[] path;
 		}
 	}
@@ -442,19 +476,11 @@ void FGameConfigFile::RunAutoexec (const char *game)
 			{
 				if (stricmp (key, "Path") == 0 && FileExists (value))
 				{
-					DoRunAutoexec (value);
+					list->AppendArg (value);
 				}
 			}
 		}
 	}
-}
-
-void FGameConfigFile::DoRunAutoexec (const char *autofile)
-{
-	char *execcommand = new char[strlen (autofile) + 8];
-	sprintf (execcommand, "exec \"%s\"", autofile);
-	C_DoCommand (execcommand);
-	delete[] execcommand;
 }
 
 void FGameConfigFile::SetRavenDefaults (bool isHexen)

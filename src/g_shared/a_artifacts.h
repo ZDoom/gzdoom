@@ -122,18 +122,18 @@ bool P_UseArtifact (player_s *player, artitype_t arti);
 
 #define BASIC_ARTI(name,type,msg) \
 	class AArti##name : public AArtifact { \
-		DECLARE_ACTOR (AArti##name, AArtifact) protected: \
+		DECLARE_ACTOR (AArti##name, AArtifact) public: \
 		bool TryPickup (AActor *toucher) { \
-			return P_GiveArtifact (toucher->player, type); } \
-			const char *PickupMessage () { return msg; } 
+			return P_GiveArtifact (toucher->player, type); } protected: \
+		const char *PickupMessage () { return msg; } 
 
 // ^^^^^^^^^^^^^^^^^^ Notice ^^^^^^^^^^^^^^^^^^^ No closing };
 
 #define POWER_ARTI(name,type,msg) \
 	class AArti##name : public APowerup { \
-		DECLARE_ACTOR (AArti##name, APowerup) protected: \
+		DECLARE_ACTOR (AArti##name, APowerup) public: \
 		bool TryPickup (AActor *toucher) { \
-			return P_GiveArtifact (toucher->player, type); } \
-			const char *PickupMessage () { return msg; } 
+			return P_GiveArtifact (toucher->player, type); } protected:\
+		const char *PickupMessage () { return msg; } 
 
 #endif //__A_ARTIFACTS_H__

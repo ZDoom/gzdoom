@@ -17,11 +17,11 @@
 class AInvulnerabilitySphere : public APowerup
 {
 	DECLARE_ACTOR (AInvulnerabilitySphere, APowerup)
-protected:
-	bool TryPickup (AActor *toucher);
-	const char *PickupMessage ();
 public:
+	bool TryPickup (AActor *toucher);
 	bool ShouldRespawn ();
+protected:
+	const char *PickupMessage ();
 };
 
 FState AInvulnerabilitySphere::States[] =
@@ -57,7 +57,7 @@ bool AInvulnerabilitySphere::ShouldRespawn ()
 class ASoulsphere : public APowerup
 {
 	DECLARE_ACTOR (ASoulsphere, APowerup)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		player_t *player = toucher->player;
@@ -67,6 +67,7 @@ protected:
 		player->mo->health = player->health;
 		return true;
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTSUPER);
@@ -93,7 +94,7 @@ END_DEFAULTS
 class AMegasphere : public APowerup
 {
 	DECLARE_ACTOR (AMegasphere, APowerup)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		bool gotarmor, gothealth;
@@ -107,6 +108,7 @@ protected:
 		}
 		return gotarmor || gothealth;
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTMSPHERE);
@@ -131,7 +133,7 @@ END_DEFAULTS
 class ABerserk : public APowerup
 {
 	DECLARE_ACTOR (ABerserk, APowerup)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		if (P_GivePower (toucher->player, pw_strength))
@@ -142,6 +144,7 @@ protected:
 		}
 		return false;
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTBERSERK);
@@ -174,11 +177,11 @@ public:
 	{
 		return Super::ShouldRespawn () && (dmflags & DF_RESPAWN_SUPER);
 	}
-protected:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GivePower (toucher->player, pw_invisibility);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTINVIS);
@@ -204,11 +207,12 @@ END_DEFAULTS
 class ARadSuit : public APowerup
 {
 	DECLARE_ACTOR (ARadSuit, APowerup)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GivePower (toucher->player, pw_ironfeet);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTSUIT);
@@ -231,11 +235,12 @@ END_DEFAULTS
 class AInfrared : public APowerup
 {
 	DECLARE_ACTOR (AInfrared, APowerup)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GivePower (toucher->player, pw_infrared);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTVISOR);
@@ -261,11 +266,12 @@ END_DEFAULTS
 class AAllmap : public AInventory
 {
 	DECLARE_ACTOR (AAllmap, AInventory)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GivePower (toucher->player, pw_allmap);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTMAP);
@@ -298,7 +304,7 @@ END_DEFAULTS
 class ABackpack : public AInventory
 {
 	DECLARE_ACTOR (ABackpack, AInventory)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		player_t *player = toucher->player;
@@ -314,6 +320,7 @@ protected:
 			P_GiveAmmo (player, (ammotype_t)i, clipammo[i]);
 		return true;
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTBACKPACK);

@@ -27,11 +27,11 @@ AT_GAME_SET (SoundWind)
 {
 	if (gameinfo.gametype == GAME_Heretic)
 	{
-		DoomEdMap.AddType (42, RUNTIME_CLASS(ASoundWind));
+		DOOMEDNUMOF(ASoundWind) = 42;
 	}
 	else if (gameinfo.gametype == GAME_Hexen)
 	{
-		DoomEdMap.AddType (1410, RUNTIME_CLASS(ASoundWind));
+		DOOMEDNUMOF(ASoundWind) = 1410;
 	}
 }
 

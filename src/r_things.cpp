@@ -691,13 +691,29 @@ fixed_t 		sprtopscreen;
 
 bool			sprflipvert;
 
-void R_DrawMaskedColumn (column_t *column, int baseclip)
+void R_DrawMaskedColumn (column_t *column)
 {
-	for (; column->topdelta != 0xff; column = (column_t *)((byte *)column + column->length + 4))
+	int top = -1;
+
+	while (column->topdelta != 0xff)
 	{
+		if (column->topdelta <= top)
+		{
+			top += column->topdelta;
+		}
+		else
+		{
+			top = column->topdelta;
+		}
+
+		if (column->length == 0)
+		{
+			goto nextpost;
+		}
+
 		// calculate unclipped screen coordinates for post
-		dc_yl = (sprtopscreen + spryscale * column->topdelta) >> FRACBITS;
-		dc_yh = (sprtopscreen + spryscale * (column->topdelta + column->length) - FRACUNIT) >> FRACBITS;
+		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
+		dc_yh = (sprtopscreen + spryscale * (top + column->length) - FRACUNIT) >> FRACBITS;
 
 		if (sprflipvert)
 		{
@@ -708,10 +724,6 @@ void R_DrawMaskedColumn (column_t *column, int baseclip)
 		{
 			dc_yh = mfloorclip[dc_x] - 1;
 		}
-		if (dc_yh > baseclip)
-		{
-			dc_yh = baseclip;
-		}
 		if (dc_yl < mceilingclip[dc_x])
 		{
 			dc_yl = mceilingclip[dc_x];
@@ -721,33 +733,47 @@ void R_DrawMaskedColumn (column_t *column, int baseclip)
 		{
 			if (sprflipvert)
 			{
-				dc_texturefrac = (dc_yl*dc_iscale) - (column->topdelta << FRACBITS)
+				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
 					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
-				while (dc_texturefrac >= column->length << FRACBITS)
+				const fixed_t maxfrac = column->length << FRACBITS;
+				while (dc_texturefrac >= maxfrac)
 				{
 					if (++dc_yl > dc_yh)
-						break;
+						goto nextpost;
 					dc_texturefrac += dc_iscale;
 				}
-				if (dc_yl > dc_yh)
-					continue;
+				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
+				while (endfrac < 0)
+				{
+					if (--dc_yh < dc_yl)
+						goto nextpost;
+					endfrac -= dc_iscale;
+				}
 			}
 			else
 			{
-				dc_texturefrac = dc_texturemid - (column->topdelta << FRACBITS)
+				dc_texturefrac = dc_texturemid - (top << FRACBITS)
 					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
-				if (dc_texturefrac < 0)
+				while (dc_texturefrac < 0)
 				{
 					if (++dc_yl > dc_yh)
-						continue;
+						goto nextpost;
 					dc_texturefrac += dc_iscale;
+				}
+				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
+				const fixed_t maxfrac = column->length << FRACBITS;
+				while (endfrac >= maxfrac)
+				{
+					if (--dc_yh < dc_yl)
+						goto nextpost;
+					endfrac -= dc_iscale;
 				}
 			}
 			dc_source = (byte *)column + 3;
-			if (r_MarkTrans)
-				TransArea += dc_yh - dc_yl + 1;
 			colfunc ();
 		}
+nextpost:
+		column = (column_t *)((byte *)column + column->length + 4);
 	}
 }
 
@@ -762,10 +788,6 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 #endif
 	fixed_t 		frac;
 	patch_t*		patch;
-	int				baseclip;
-
-	// [RH] Tutti-Frutti fix (also allows sprites up to 256 pixels tall)
-	dc_mask = 0xff;
 
 	if (vis->picnum == -1)
 	{ // [RH] It's a particle
@@ -784,24 +806,12 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 
 	sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
 
-	if (vis->floorclip)
-	{
-		fixed_t sprbotscreen = sprtopscreen +
-			FixedMul (patch->height << FRACBITS, spryscale);
-		baseclip = (sprbotscreen - FixedMul (vis->floorclip, 
-			spryscale)) >> FRACBITS;
-	}
-	else
-	{
-		baseclip = FIXED_MAX;
-	}
-
 #ifdef RANGECHECK
 	patchwidth = (unsigned)SHORT(patch->width);
 #endif
 
 	switch (R_SetPatchStyle (vis->RenderStyle, vis->alpha,
-		vis->translation, vis->AlphaColor))
+		vis->Translation, vis->AlphaColor))
 	{
 	case DontDraw:
 		break;
@@ -824,7 +834,7 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 			}
 #endif
 
-			R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[texturecolumn])), baseclip);
+			R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[texturecolumn])));
 		}
 		}
 		break;
@@ -840,69 +850,36 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 		{
 			dc_x = x1;
 
-			if (dc_x & 1)
+			while ((dc_x < stop) && (dc_x & 3))
 			{
-				R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
+				R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
 				dc_x++;
 				frac += xiscale;
-			}
-
-			if (dc_x & 2)
-			{
-				if (dc_x < x2 - 1)
-				{
-					rt_initcols();
-					R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
-					dc_x++;
-					frac += xiscale;
-					R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
-					rt_draw2cols ((dc_x - 1) & 3, dc_x - 1);
-					dc_x++;
-					frac += xiscale;
-				}
-				else if (dc_x == x2 - 1)
-				{
-					R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
-					dc_x++;
-					frac += xiscale;
-				}
 			}
 
 			while (dc_x < stop)
 			{
 				rt_initcols();
-				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
+				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
 				dc_x++;
 				frac += xiscale;
-				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
+				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
 				dc_x++;
 				frac += xiscale;
-				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
+				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
 				dc_x++;
 				frac += xiscale;
-				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
+				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
 				rt_draw4cols (dc_x - 3);
 				dc_x++;
 				frac += xiscale;
 			}
 
-			if (x2 - dc_x == 1)
+			while (dc_x < x2)
 			{
-				R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
-			}
-			else if (x2 - dc_x >= 2)
-			{
-				rt_initcols();
-				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
+				R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])));
 				dc_x++;
 				frac += xiscale;
-				R_DrawMaskedColumnHoriz ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
-				rt_draw2cols ((dc_x - 1) & 3, dc_x - 1);
-				frac += xiscale;
-				if (++dc_x < x2)
-				{
-					R_DrawMaskedColumn ((column_t *)((byte *)patch + LONG(patch->columnofs[frac>>FRACBITS])), baseclip);
-				}
 			}
 		}
 		}
@@ -916,14 +893,14 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 // R_ProjectSprite
 // Generates a vissprite for a thing if it might be visible.
 //
-void R_ProjectSprite (AActor *thing)
+void R_ProjectSprite (AActor *thing, int fakeside)
 {
 	fixed_t 			tr_x;
 	fixed_t 			tr_y;
 	
 	fixed_t				gzt;				// killough 3/27/98
 	fixed_t				gzb;				// [RH] use bottom of sprite, not actor
-	fixed_t 			tx;
+	fixed_t 			tx, tx2;
 	fixed_t 			tz;
 
 	fixed_t 			xscale;
@@ -967,6 +944,7 @@ void R_ProjectSprite (AActor *thing)
 	{
 		tx = viewwidth - tx - 1;
 	}
+	tx2 = tx >> 4;
 
 	// too far off the side?
 	if ((abs (tx) >> 6) > tz)
@@ -1044,20 +1022,32 @@ void R_ProjectSprite (AActor *thing)
 	// from the viewer, by either water or fake ceilings
 	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
 
-	heightsec = thing->subsector->sector->heightsec;
+	heightsec = thing->Sector->heightsec;
+
+	if (heightsec != NULL && heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
+	{
+		heightsec = NULL;
+	}
 
 	if (heightsec)	// only clip things which are in special sectors
 	{
-		sector_t *phs = camera->subsector->sector->heightsec;
-		if (phs && viewz < phs->floorplane.ZatPoint (viewx, viewy) ?
-			gzb >= heightsec->floorplane.ZatPoint (thing->x, thing->y) :
-			gzt < heightsec->floorplane.ZatPoint (thing->x, thing->y))
-		  return;
-		if (phs && viewz > phs->ceilingplane.ZatPoint (viewx, viewy) ?
-			gzt < heightsec->ceilingplane.ZatPoint (thing->x, thing->y) &&
-			viewz >= heightsec->ceilingplane.ZatPoint (viewx, viewy) :
-			gzb >= heightsec->ceilingplane.ZatPoint (thing->x, thing->y))
-		  return;
+		if (fakeside == FAKED_AboveCeiling)
+		{
+			if (gzt < heightsec->ceilingplane.ZatPoint (thing->x, thing->y))
+				return;
+		}
+		else if (fakeside == FAKED_BelowFloor)
+		{
+			if (gzb >= heightsec->floorplane.ZatPoint (thing->x, thing->y))
+				return;
+		}
+		else
+		{
+			if (gzt < heightsec->floorplane.ZatPoint (thing->x, thing->y))
+				return;
+			if (gzb >= heightsec->ceilingplane.ZatPoint (thing->x, thing->y))
+				return;
+		}
 	}
 
 	// [RH] Flip for mirrors and renderflags
@@ -1078,6 +1068,7 @@ void R_ProjectSprite (AActor *thing)
 	vis->xscale = xscale;
 	vis->yscale = Scale (InvZtoScale, (thing->yscale+1)<<6, tz);
 	vis->depth = tz;
+	vis->cx = tx2;
 	vis->gx = thing->x;
 	vis->gy = thing->y;
 	vis->gz = gzb;		// [RH] use gzb, not thing->z
@@ -1087,11 +1078,12 @@ void R_ProjectSprite (AActor *thing)
 		- SafeDivScale6 (viewz-thing->z, thing->yscale+1) - vis->floorclip;
 	vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 	vis->x2 = x2 > WindowRight ? WindowRight : x2;
-	vis->translation = thing->translation;		// [RH] thing translation table
-	if (vis->translation == NULL && (thing->flags & MF_TRANSLATION))
+	vis->Translation = thing->Translation;		// [RH] thing translation table
+	vis->FakeFlatStat = fakeside;
+	if (vis->Translation == 0 && (thing->flags & MF_TRANSLATION))
 	{
-		vis->translation = translationtables + MAXPLAYERS*256*2 - 256 +
-			((thing->flags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8));
+		vis->Translation = TRANSLATION (TRANSLATION_Players,
+			((thing->flags & MF_TRANSLATION) >> (MF_TRANSSHIFT))-1);
 	}
 	vis->alpha = thing->alpha;
 	vis->picnum = lump;
@@ -1140,7 +1132,8 @@ void R_ProjectSprite (AActor *thing)
 // During BSP traversal, this adds sprites by sector.
 //
 // killough 9/18/98: add lightlevel as parameter, fixing underwater lighting
-void R_AddSprites (sector_t *sec, int lightlevel)
+// [RH] Save which side of heightsec sprite is on here.
+void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 {
 	AActor *thing;
 
@@ -1159,7 +1152,7 @@ void R_AddSprites (sector_t *sec, int lightlevel)
 	// Handle all things in sector.
 	for (thing = sec->thinglist; thing; thing = thing->snext)
 	{
-		R_ProjectSprite (thing);
+		R_ProjectSprite (thing, fakeside);
 	}
 }
 
@@ -1254,7 +1247,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;
 	vis->xscale = pspritexscale;
 	vis->yscale = pspriteyscale;
-	vis->translation = NULL;		// [RH] Use default colors
+	vis->Translation = 0;		// [RH] Use default colors
 	vis->alpha = owner->alpha;
 	vis->RenderStyle = owner->RenderStyle;
 	vis->picnum = lump;
@@ -1293,13 +1286,11 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 		vis->colormap = basecolormap + (GETPALOOKUP (0, spriteshade) << COLORMAPSHIFT);
 	}
 	if (camera->player &&
-		(camera->player->powers[pw_invisibility] > 4*32
-		 || camera->player->powers[pw_invisibility] & 8))
+		camera->player->powers[pw_invisibility] < 4*32 &&
+		!(camera->player->powers[pw_invisibility] & 8))
 	{
 		// shadow draw
-		vis->alpha = FRACUNIT/5;
-		vis->RenderStyle = (gameinfo.gametype == GAME_Doom) ?
-			STYLE_OptFuzzy : STYLE_Translucent;
+		vis->RenderStyle = STYLE_Normal;
 	}
 		
 	R_DrawVisSprite (vis, vis->x1, vis->x2);
@@ -1324,7 +1315,7 @@ void R_DrawPlayerSprites (void)
 		(players[consoleplayer].cheats & CF_CHASECAM))
 		return;
 
-	sec = R_FakeFlat (camera->subsector->sector, &tempsec, &floorlight,
+	sec = R_FakeFlat (camera->Sector, &tempsec, &floorlight,
 		&ceilinglight, false);
 
 	// [RH] set foggy flag
@@ -1432,50 +1423,74 @@ void R_DrawSprite (vissprite_t *spr)
 		return;
 
 	// [RH] Initialize the clipping arrays to their largest possible range
-	// instead of using a special "not clipped" value.
+	// instead of using a special "not clipped" value. This eliminates
+	// visual anomalies when looking down and should be faster, too.
 	topclip = 0;
 	botclip = viewheight;
 
 	// killough 3/27/98:
 	// Clip the sprite against deep water and/or fake ceilings.
-	// killough 4/9/98: optimize by adding mh
-	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
-	// killough 11/98: fix disappearing sprites
+	// [RH] rewrote this to be based on which part of the sector is really visible
 
-	if (spr->heightsec)	// only things in specially marked sectors
-	{
-		fixed_t h, mh;
-		sector_t *phs = camera->subsector->sector->heightsec;
-		if ((mh = spr->heightsec->floorplane.ZatPoint (spr->gx, spr->gy)) > spr->gz &&
-			(h = centeryfrac - FixedMul (mh-=viewz, spr->yscale)) >= 0 &&
-			(h >>= FRACBITS) < viewheight)
+	if (spr->heightsec &&
+		!(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	{ // only things in specially marked sectors
+		if (spr->FakeFlatStat != FAKED_AboveCeiling)
 		{
-			if (mh <= 0 || (phs && viewz > phs->floorplane.ZatPoint (viewx, viewy)) && h < botclip)
-			{						// clip bottom
-				botclip = h;
+			fixed_t h = spr->heightsec->floorplane.ZatPoint (spr->gx, spr->gy);
+			h = (centeryfrac - FixedMul (h-viewz, spr->yscale)) >> FRACBITS;
+
+			if (spr->FakeFlatStat == FAKED_BelowFloor)
+			{ // seen below floor: clip top
+				if (h > topclip)
+				{
+					topclip = MIN<short> (h, viewheight);
+				}
 			}
-			else if (h > topclip &&
-				phs != NULL && viewz <= phs->floorplane.ZatPoint (viewx, viewy)) // killough 11/98
-			{						// clip top
-				topclip = h;
+			else
+			{ // seen in the middle: clip bottom
+				if (h < botclip)
+				{
+					botclip = MAX<short> (0, h);
+				}
 			}
 		}
-
-		if ((mh = spr->heightsec->ceilingplane.ZatPoint (viewx, viewy)) < spr->gzt &&
-			(h = centeryfrac - FixedMul(mh-viewz, spr->yscale)) >= 0 &&
-			(h >>= FRACBITS) < viewheight)
+		if (spr->FakeFlatStat != FAKED_BelowFloor)
 		{
-			if (phs && viewz >= phs->ceilingplane.ZatPoint (viewx, viewy) && h < botclip)
-			{						// clip bottom
-				botclip = h;
+			fixed_t h = spr->heightsec->ceilingplane.ZatPoint (spr->gx, spr->gy);
+			h = (centeryfrac - FixedMul (h-viewz, spr->yscale)) >> FRACBITS;
+
+			if (spr->FakeFlatStat == FAKED_AboveCeiling)
+			{ // seen above ceiling: clip bottom
+				if (h < botclip)
+				{
+					botclip = MAX<short> (0, h);
+				}
 			}
-			else if (h > topclip)
-			{						// clip top
-				topclip = h;
+			else
+			{ // seen in the middle: clip top
+				if (h > topclip)
+				{
+					topclip = MIN<short> (h, viewheight);
+				}
 			}
 		}
 	}
 	// killough 3/27/98: end special clipping for deep water / fake ceilings
+	else if (spr->floorclip)
+	{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
+		if (TileSizes[spr->picnum].Width == 0xffff)
+		{
+			R_CacheTileNum (spr->picnum, PU_CACHE);
+		}
+		int clip = ((centeryfrac - FixedMul (spr->texturemid -
+			(TileSizes[spr->picnum].Height<<FRACBITS) +
+			spr->floorclip, spr->yscale)) >> FRACBITS);
+		if (clip < botclip)
+		{
+			botclip = MAX<short> (0, clip);
+		}
+	}
 
 	i = spr->x2 - spr->x1 + 1;
 	clip1 = clipbot + spr->x1;
@@ -1499,7 +1514,7 @@ void R_DrawSprite (vissprite_t *spr)
 	{
 		// determine if the drawseg obscures the sprite
 		if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
-			(!ds->silhouette && ds->maskedtexturecol == -1) )
+			(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == -1) )
 		{
 			// does not cover sprite
 			continue;
@@ -1509,10 +1524,12 @@ void R_DrawSprite (vissprite_t *spr)
 		r2 = MIN<int> (ds->x2, spr->x2);
 
 		if (ds->neardepth > spr->depth || (ds->fardepth > spr->depth &&
-					!R_PointOnSegSide (spr->gx, spr->gy, ds->curline)))
+			// Check if sprite is in front of draw seg:
+			DMulScale24 (spr->depth - ds->cy, ds->cdx,
+						 ds->cdy, ds->cx - spr->cx) < 0))
 		{
 			// seg is behind sprite, so draw the mid texture if it has one
-			if (ds->maskedtexturecol != -1)
+			if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
 				R_RenderMaskedSegRange (ds, r1, r2);
 			continue;
 		}
@@ -1582,8 +1599,12 @@ void R_DrawMasked (void)
 	//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
 
 	for (ds = ds_p; ds-- > firstdrawseg; )	// new -- killough
-		if (ds->maskedtexturecol != -1)
+	{
+		if (ds->maskedtexturecol != -1 || ds->bFogBoundary)
+		{
 			R_RenderMaskedSegRange (ds, ds->x1, ds->x2);
+		}
+	}
 	
 	// draw the psprites on top of everything
 	//	but does not draw on side views
@@ -1706,10 +1727,13 @@ void R_ProjectParticle (particle_t *particle)
 		}
 	}
 
-	if (heightsec)	// only clip particles which are in special sectors
-	{
-		sector_t *phs = camera->subsector->sector->heightsec;
-
+	if (heightsec && !(heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	{ // only clip particles which are in special sectors
+		sector_t *phs = viewsector->heightsec;
+		if (phs != NULL && phs->MoreFlags & SECF_IGNOREHEIGHTSEC)
+		{
+			phs = NULL;
+		}
 		if (phs && viewz < phs->floorplane.ZatPoint (viewx, viewy) ?
 			particle->z >= heightsec->floorplane.ZatPoint (particle->x, particle->y):
 			gzt < heightsec->floorplane.ZatPoint (particle->x, particle->y))
@@ -1734,7 +1758,7 @@ void R_ProjectParticle (particle_t *particle)
 	vis->texturemid = FixedMul (yaspectmul, vis->gzt - viewz);
 	vis->x1 = x1;
 	vis->x2 = x2;
-	vis->translation = NULL;
+	vis->Translation = 0;
 	vis->startfrac = particle->color;
 	vis->picnum = -1;
 	vis->renderflags = particle->trans;
@@ -1747,7 +1771,8 @@ void R_ProjectParticle (particle_t *particle)
 	{
 		byte *map;
 
-		if (sector->heightsec == NULL)
+		if (sector->heightsec == NULL ||
+			(sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 		{
 			map = sector->floorcolormap->Maps;
 		}
@@ -1790,12 +1815,12 @@ void R_DrawParticle (vissprite_t *vis, int x1, int x2)
 	// Don't bother clipping each individual column
 	if (yh >= mfloorclip[x1])
 		yh = mfloorclip[x1]-1;
-	if (yl <= mceilingclip[x1])
-		yl = mceilingclip[x1]+1;
+	if (yl < mceilingclip[x1])
+		yl = mceilingclip[x1];
 	if (yh >= mfloorclip[x2])
 		yh = mfloorclip[x2]-1;
-	if (yl <= mceilingclip[x2])
-		yl = mceilingclip[x2]+1;
+	if (yl < mceilingclip[x2])
+		yl = mceilingclip[x2];
 
 	// vis->renderflags holds translucency level (0-255)
 	{

@@ -98,7 +98,7 @@ void DFloorWaggle::Serialize (FArchive &arc)
 //
 // MOVE A FLOOR TO IT'S DESTINATION (UP OR DOWN)
 //
-void DFloor::RunThink ()
+void DFloor::Tick ()
 {
 	EResult res;
 
@@ -222,7 +222,7 @@ void DFloor::RunThink ()
 //
 // jff 02/22/98 added to support parallel floor/ceiling motion
 //
-void DElevator::RunThink ()
+void DElevator::Tick ()
 {
 	EResult res;
 
@@ -693,9 +693,9 @@ manual_stair:
 		osecnum = secnum;				//jff 3/4/98 preserve loop index
 		
 		// Find next sector to raise
-		// 1.	Find 2-sided line with same sector side[0] (lowest numbered)
-		// 2.	Other side is the next sector to raise
-		// 3.	Unless already moving, or different texture, then stop building
+		// 1. Find 2-sided line with same sector side[0] (lowest numbered)
+		// 2. Other side is the next sector to raise
+		// 3. Unless already moving, or different texture, then stop building
 		do
 		{
 			ok = 0;
@@ -872,6 +872,8 @@ bool EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 DElevator::DElevator (sector_t *sec)
 	: Super (sec)
 {
+	sec->floordata = this;
+	sec->ceilingdata = this;
 }
 
 //
@@ -985,7 +987,7 @@ DFloorWaggle::DFloorWaggle (sector_t *sec)
 {
 }
 
-void DFloorWaggle::RunThink ()
+void DFloorWaggle::Tick ()
 {
 	fixed_t dist;
 

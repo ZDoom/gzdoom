@@ -1,27 +1,13 @@
-// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log:$
-//
-// DESCRIPTION:
-//		LineOfSight/Visibility checks, uses REJECT Lookup Table.
-//		[RH] Switched over to Hexen's p_sight.c
-//
-//-----------------------------------------------------------------------------
-
+//**************************************************************************
+//**
+//** p_sight.cpp : Heretic 2 : Raven Software, Corp.
+//**
+//** $RCSfile: p_sight.c,v $
+//** $Revision: 1.1 $
+//** $Date: 95/05/11 00:22:50 $
+//** $Author: bgokey $
+//**
+//**************************************************************************
 
 #include "doomdef.h"
 
@@ -54,6 +40,8 @@ static int sightcounts[4];
 static cycle_t SightCycles;
 static cycle_t MaxSightCycles;
 
+static bool P_SightTraverseIntercepts ();
+
 /*
 ==============
 =
@@ -69,33 +57,24 @@ static bool PTR_SightTraverse (intercept_t *in)
 
 	li = in->d.line;
 
-	fixed_t oldbottom, oldtop;
-
 //
 // crosses a two sided line
 //
-	oldbottom = openbottom;
-	oldtop = opentop;
-
 	P_LineOpening (li, trace.x + FixedMul (trace.dx, in->frac),
 		trace.y + FixedMul (trace.dy, in->frac));
 
 	if (openrange <= 0)		// quick test for totally closed doors
 		return false;		// stop
 
-	if (oldbottom < openbottom)
-	{
-		slope = FixedDiv (openbottom - sightzstart, in->frac);
-		if (slope > bottomslope)
-			bottomslope = slope;
-	}
+	// check bottom
+	slope = FixedDiv (openbottom - sightzstart, in->frac);
+	if (slope > bottomslope)
+		bottomslope = slope;
 
-	if (oldtop > opentop)
-	{
-		slope = FixedDiv (opentop - sightzstart, in->frac);
-		if (slope < topslope)
-			topslope = slope;
-	}
+	// check top
+	slope = FixedDiv (opentop - sightzstart, in->frac);
+	if (slope < topslope)
+		topslope = slope;
 
 	if (topslope <= bottomslope)
 		return false;		// stop
@@ -230,8 +209,6 @@ static bool P_SightTraverseIntercepts ()
 // go through in order
 //
 	in = 0;					// shut up compiler warning
-	openbottom = FIXED_MIN;
-	opentop = FIXED_MAX;
 
 	while (count--)
 	{
@@ -406,8 +383,8 @@ bool P_CheckSight (const AActor *t1, const AActor *t2, BOOL ignoreInvisibility)
 
 	bool res;
 
-	const sector_t *s1 = t1->subsector->sector;
-	const sector_t *s2 = t2->subsector->sector;
+	const sector_t *s1 = t1->Sector;
+	const sector_t *s2 = t2->Sector;
 	int pnum = (s1 - sectors) * numsectors + (s2 - sectors);
 
 //
@@ -439,27 +416,19 @@ sightcounts[0]++;
 
 	// killough 4/19/98: make fake floors and ceilings block monster view
 
-	if ((s1->heightsec  &&
+	if ((s1->heightsec && !(s1->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		((t1->z + t1->height <= s1->heightsec->floorplane.ZatPoint (t1->x, t1->y) &&
 		  t2->z >= s1->heightsec->floorplane.ZatPoint (t2->x, t2->y)) ||
 		 (t1->z >= s1->heightsec->ceilingplane.ZatPoint (t1->x, t1->y) &&
 		  t2->z + t1->height <= s1->heightsec->ceilingplane.ZatPoint (t2->x, t2->y))))
 		||
-		(s2->heightsec &&
+		(s2->heightsec && !(s2->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 		 ((t2->z + t2->height <= s2->heightsec->floorplane.ZatPoint (t2->x, t2->y) &&
 		   t1->z >= s2->heightsec->floorplane.ZatPoint (t1->x, t1->y)) ||
 		  (t2->z >= s2->heightsec->ceilingplane.ZatPoint (t2->x, t2->y) &&
 		   t1->z + t2->height <= s2->heightsec->ceilingplane.ZatPoint (t1->x, t1->y)))))
 	{
 		res = false;
-		goto done;
-	}
-
-	// killough 11/98: shortcut for melee situations
-	if (t1->subsector == t2->subsector)
-	{ // same subsector? obviously visible
-sightcounts[0]++;
-		res = true;
 		goto done;
 	}
 

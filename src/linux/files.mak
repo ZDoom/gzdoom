@@ -8,7 +8,8 @@ KEYMAP_FILE = $(zdoomshare_dir)/xkeys
 
 DEFS_common = -Wp,-Dstricmp=strcasecmp -Wp,-Dstrnicmp=strncasecmp \
 	-Wp,-DNO_STRUPR -Wp,-DNO_FILELENGTH -Wp,-DKEYMAP_FILE=\"$(KEYMAP_FILE)\" \
-	-Wp,-DSHARE_DIR=\"$(zdoomshare_dir)/\" -Wp,-DPLATFORM_LINUX
+	-Wp,-DSHARE_DIR=\"$(zdoomshare_dir)/\" -Wp,-DPLATFORM_LINUX \
+	-Wp,-DFMOD_333=1
 ASFLAGS_common = -f elf -DM_TARGET_LINUX
 #LDFLAGS_common = -rdynamic -Xlinker -rpath -Xlinker $(lib_dir)
 LDFLAGS_common = 
@@ -20,7 +21,7 @@ HW_X_LDFLAGS = -L$(X_libs) -lX11 -lXext -lXxf86dga -lXxf86vm
 
 # libraries to link with
 #LIBS = -lm -ldl -lpthread midas/lib/linux/gcretail/libmidas.a
-LIBS = -lm /home/randy/zdoom-1.23/fmod/api/libfmod-3.33.so -lz -lSDL -lpthread
+LIBS = -lm -lfmod-3.4 -lz -lSDL -lpthread
 
 SYSINT = $(INTDIR)/$(SYSTEM)
 
@@ -30,6 +31,7 @@ SYSOBJS = \
 	$(SYSINT)/i_system.o \
 	$(SYSINT)/i_cd.o \
 	$(SYSINT)/i_input.o \
+	$(SYSINT)/i_movie.o \
 	$(SYSINT)/hardware.o \
 	$(SYSINT)/sdlvideo.o \
 	$(SYSINT)/expandorama.o
@@ -40,6 +42,7 @@ SYSSOURCES = \
 	$(IMPDIR)/i_system.cpp \
 	$(IMPDIR)/i_cd.cpp \
 	$(IMPDIR)/i_input.cpp \
+	$(IMPDIR)/i_movie.cpp \
 	$(IMPDIR)/hardware.cpp \
 	$(IMPDIR)/sdlvideo.cpp \
 	$(IMPDIR)/expandorama.nas

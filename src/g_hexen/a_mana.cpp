@@ -7,11 +7,12 @@
 class AMana1 : public AAmmo
 {
 	DECLARE_ACTOR (AMana1, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, MANA_1, 15);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_MANA_1);
@@ -46,11 +47,12 @@ END_DEFAULTS
 class AMana2 : public AAmmo
 {
 	DECLARE_ACTOR (AMana2, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, MANA_2, 15);
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_MANA_2);
@@ -92,7 +94,7 @@ END_DEFAULTS
 class AMana3 : public AAmmo
 {
 	DECLARE_ACTOR (AMana3, AAmmo)
-protected:
+public:
 	bool TryPickup (AActor *toucher)
 	{
 		bool gotit;
@@ -102,6 +104,7 @@ protected:
 
 		return gotit;
 	}
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_MANA_BOTH);

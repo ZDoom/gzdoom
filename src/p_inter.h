@@ -23,9 +23,5 @@
 #ifndef __P_INTER__
 #define __P_INTER__
 
-class player_s;
-
-void P_GiveKey(player_s*, keytype_t);
-
 
 #endif

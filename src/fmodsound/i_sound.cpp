@@ -1,5 +1,40 @@
-/* i_sound.cpp: System interface for sound, uses fmod.dll
+/*
+** i_sound.cpp
+** System interface for sound; uses fmod.dll
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
 */
+
+#ifndef FMOD_333
+#define FMOD_333 0
+#endif
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -76,6 +111,7 @@ CVAR (Int, snd_buffersize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_driver, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_output, "default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_3d, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, snd_waterreverb, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // killough 2/21/98: optionally use varying pitched sounds
 CVAR (Bool, snd_pitched, false, CVAR_ARCHIVE)
@@ -97,7 +133,8 @@ bool Sound3D;
 static int numChannels;
 static unsigned int DriverCaps;
 static int OutputType;
-static float ListenPos[3], ListenVel[3];
+
+static bool SoundDown = true;
 
 #if 0
 static const char *FmodErrors[] =
@@ -559,16 +596,23 @@ long I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOO
 	freq = PITCH(sfx->frequency,pitch);
 	volume = vol;
 
+#if FMOD_333
+	chan = FSOUND_PlaySound3DAttrib (FSOUND_FREE, CheckLooping (sfx, looping), freq, vol, pan, NULL, NULL);
+#else
 	chan = FSOUND_PlaySoundEx (FSOUND_FREE, CheckLooping (sfx, looping), NULL, true);
+#endif
 	
 	if (chan != -1)
 	{
 		//FSOUND_SetReserved (chan, TRUE);
 		FSOUND_SetSurround (chan, sep == -1 ? TRUE : FALSE);
+		//printf ("%ld\n", freq);
+#if !FMOD_333
 		FSOUND_SetFrequency (chan, freq);
 		FSOUND_SetVolume (chan, vol);
 		FSOUND_SetPan (chan, pan);
 		FSOUND_SetPaused (chan, false);
+#endif
 		ChannelMap[channel].channelID = chan;
 		ChannelMap[channel].soundID = id;
 		ChannelMap[channel].bIsLooping = looping ? true : false;
@@ -603,15 +647,21 @@ long I_StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel,
 
 	FSOUND_SAMPLE *sample = CheckLooping (sfx, looping);
 
+#if FMOD_333
+	chan = FSOUND_PlaySound3DAttrib (channel+64, sample, freq, (int)(vol*255.f), -1, lpos, lvel);
+#else
 	chan = FSOUND_PlaySoundEx (channel+64, sample, NULL, true);
+#endif
 
 	if (chan != -1)
 	{
 		//FSOUND_SetReserved (chan, TRUE);
+#if !FMOD_333
 		FSOUND_SetFrequency (chan, freq);
 		FSOUND_SetVolume (chan, (int)(vol * 255.f));
 		FSOUND_3D_SetAttributes (chan, lpos, lvel);
 		FSOUND_SetPaused (chan, false);
+#endif
 		ChannelMap[channel].channelID = chan;
 		ChannelMap[channel].soundID = id;
 		ChannelMap[channel].bIsLooping = looping ? true : false;
@@ -770,7 +820,7 @@ void I_UpdateListener (AActor *listener)
 
 		if (DriverCaps & FSOUND_CAPS_EAX)
 		{
-			if (listener->waterlevel == 3)
+			if (listener->waterlevel == 3 && snd_waterreverb)
 			{
 				environmentWant = FSOUND_ENVIRONMENT_UNDERWATER;
 			}
@@ -861,6 +911,7 @@ void I_InitSound ()
 
 	if (_nosound)
 	{
+		I_InitMusic ();
 		return;
 	}
 
@@ -872,7 +923,7 @@ void I_InitSound ()
 	{
 		outindex = 0;
 	}
-	else if (stricmp (snd_output, "winmm") == 0)
+	else if (stricmp (snd_output, "winmm") == 0 || stricmp (snd_output, "waveout"))
 	{
 		outindex = 1;
 	}
@@ -1015,6 +1066,7 @@ void I_InitSound ()
 			didthis = true;
 			atterm (I_ShutdownSound);
 		}
+		SoundDown = false;
 	}
 
 	I_InitMusic ();
@@ -1058,19 +1110,33 @@ int I_SetChannels (int numchannels)
 	return numchannels;
 }
 
+/*
+inline void check()
+{
+	static char bah[32];
+	int hah = _heapchk ();
+	sprintf (bah, "%d\n", hah);
+	OutputDebugString (bah);
+}
+*/
+
 void STACK_ARGS I_ShutdownSound (void)
 {
-	if (!_nosound)
+	if (!_nosound && !SoundDown)
 	{
 		size_t i;
 
-		FSOUND_StopSound (FSOUND_ALL);
+		SoundDown = true;
 
+//check();
+		FSOUND_StopSound (FSOUND_ALL);
+//check();
 		if (ChannelMap)
 		{
 			delete[] ChannelMap;
 			ChannelMap = NULL;
 		}
+//check();
 
 		// Free all loaded samples
 		for (i = 0; i < S_sfx.Size (); i++)
@@ -1081,6 +1147,7 @@ void STACK_ARGS I_ShutdownSound (void)
 		}
 
 		FSOUND_Close ();
+//check();
 	}
 }
 
@@ -1114,13 +1181,25 @@ CCMD (snd_status)
 	}
 }
 
-CCMD (snd_reset)
+void I_MovieDisableSound ()
 {
+	//OutputDebugString ("away\n");
 	I_ShutdownMusic ();
 	I_ShutdownSound ();
+}
+
+void I_MovieResumeSound ()
+{
+	//OutputDebugString ("come back\n");
 	I_InitSound ();
 	S_Init ();
 	S_RestartMusic ();
+}
+
+CCMD (snd_reset)
+{
+	I_MovieDisableSound ();
+	I_MovieResumeSound ();
 }
 
 CCMD (snd_listdrivers)

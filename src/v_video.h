@@ -1,25 +1,35 @@
-// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// DESCRIPTION:
-//		Functions to draw patches (by post) directly to screen.
-//		Functions to blit a block to the screen.
-//
-//-----------------------------------------------------------------------------
-
+/*
+** v_video.h
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #ifndef __V_VIDEO_H__
 #define __V_VIDEO_H__
@@ -95,6 +105,8 @@ public:
 	virtual void ScaleShadowedMaskedBlock (int x, int y, int width, int height, int dwidth, int dheight, const byte *src, const byte *colors, fixed_t shade) const;
 	virtual void DrawAlphaMaskedBlock (int x, int y, int width, int height, const byte *src, int color) const;
 	virtual void ScaleAlphaMaskedBlock (int x, int y, int width, int height, int dwidth, int dheight, const byte *src, int color) const;
+	virtual void DrawShadowBlock (int x, int y, int width, int height, const byte *src, fixed_t shade) const;
+	virtual void ScaleShadowBlock (int x, int y, int width, int height, int dwidth, int dheight, const byte *src, fixed_t shade) const;
 
 	// Reads a linear block of pixels into the view buffer.
 	virtual void GetBlock (int x, int y, int width, int height, byte *dest) const;
@@ -632,6 +644,9 @@ public:
 	// Return a pointer to 256 palette entries that can be written to.
 	virtual PalEntry *GetPalette () = 0;
 
+	// Stores the palette with flash blended in into 256 dwords
+	virtual void GetFlashedPalette (PalEntry palette[256]) = 0;
+
 	// Mark the palette as changed. It will be updated on the next Update().
 	virtual void UpdatePalette () = 0;
 
@@ -682,8 +697,6 @@ EXTERN_CVAR (Float, Gamma)
 extern "C" DWORD Col2RGB8[65][256];
 extern "C" byte RGB32k[32][32][32];
 extern "C" DWORD *Col2RGB8_LessPrecision[65];
-
-extern int TransArea, TotalArea;
 
 // Allocates buffer screens, call before R_Init.
 void V_Init ();

@@ -58,9 +58,9 @@ extern "C" {
 // Called by DoomMain.
 void I_Init (void);
 
-// Called by startup code
-// to get the ammount of memory to malloc
-// for the zone management.
+// Called by startup code to create a block of memory for
+// zone management. *size should be the preferred intial size,
+// which may get shrunk depending on memory available.
 byte *I_ZoneBase (size_t *size);
 
 
@@ -148,6 +148,9 @@ extern char DoomStartupTitle[256];
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
+#ifndef PATH_MAX
+#define PATH_MAX 260
+#endif
 
 struct findstate_t
 {
@@ -159,7 +162,7 @@ struct findstate_t
 	char AltName[14];
 };
 
-long I_FindFirst (char *filespec, findstate_t *fileinfo);
+long I_FindFirst (const char *filespec, findstate_t *fileinfo);
 int I_FindNext (long handle, findstate_t *fileinfo);
 int I_FindClose (long handle);
 

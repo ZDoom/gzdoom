@@ -206,26 +206,27 @@ enum ESkillLevels
 #define NUM_KEYS				0x128
 
 // [RH] dmflags bits (based on Q2's)
-#define	DF_NO_HEALTH		1		// Do not spawn health items (DM)
-#define	DF_NO_ITEMS			2		// Do not spawn powerups (DM)
-#define	DF_WEAPONS_STAY		4		// Leave weapons around after pickup (DM)
-#define	DF_FORCE_FALLINGZD	8		// Falling too far hurts (old ZDoom style)
-#define DF_FORCE_FALLINGHX	16		// Falling too far hurts (Hexen style)
+#define	DF_NO_HEALTH		0x0000001		// Do not spawn health items (DM)
+#define	DF_NO_ITEMS			0x0000002		// Do not spawn powerups (DM)
+#define	DF_WEAPONS_STAY		0x0000004		// Leave weapons around after pickup (DM)
+#define	DF_FORCE_FALLINGZD	0x0000008		// Falling too far hurts (old ZDoom style)
+#define DF_FORCE_FALLINGHX	0x0000010		// Falling too far hurts (Hexen style)
 //#define	DF_INVENTORY_ITEMS	32		// Wait for player to use powerups when picked up
-#define	DF_SAME_LEVEL		64		// Stay on the same map when someone exits (DM)
-#define	DF_SPAWN_FARTHEST	128		// Spawn players as far as possible from other players (DM)
-#define DF_FORCE_RESPAWN	256		// Automatically respawn dead players after respawn_time is up (DM)
-#define DF_NO_ARMOR			512		// Do not spawn armor (DM)
-#define DF_NO_EXIT			1024	// Kill anyone who tries to exit the level (DM)
-#define DF_INFINITE_AMMO	2048	// Don't use up ammo when firing
-#define DF_NO_MONSTERS		4096	// Don't spawn monsters (replaces -nomonsters parm)
-#define DF_MONSTERS_RESPAWN	8192	// Monsters respawn sometime after their death (replaces -respawn parm)
-#define DF_ITEMS_RESPAWN	16384	// Items other than invuln. and invis. respawn
-#define DF_FAST_MONSTERS	32768	// Monsters are fast (replaces -fast parm)
-#define DF_NO_JUMP			65536	// Don't allow jumping
-#define DF_NO_FREELOOK		131072	// Don't allow freelook
-#define DF_RESPAWN_SUPER	262144	// Respawn invulnerability and invisibility
-#define DF_NO_PASSMOBJ		524288	// Pretend every actor is infinitely tall
+#define	DF_SAME_LEVEL		0x0000040		// Stay on the same map when someone exits (DM)
+#define	DF_SPAWN_FARTHEST	0x0000080		// Spawn players as far as possible from other players (DM)
+#define DF_FORCE_RESPAWN	0x0000100		// Automatically respawn dead players after respawn_time is up (DM)
+#define DF_NO_ARMOR			0x0000200		// Do not spawn armor (DM)
+#define DF_NO_EXIT			0x0000400	// Kill anyone who tries to exit the level (DM)
+#define DF_INFINITE_AMMO	0x0000800	// Don't use up ammo when firing
+#define DF_NO_MONSTERS		0x0001000	// Don't spawn monsters (replaces -nomonsters parm)
+#define DF_MONSTERS_RESPAWN	0x0002000	// Monsters respawn sometime after their death (replaces -respawn parm)
+#define DF_ITEMS_RESPAWN	0x0004000	// Items other than invuln. and invis. respawn
+#define DF_FAST_MONSTERS	0x0008000	// Monsters are fast (replaces -fast parm)
+#define DF_NO_JUMP			0x0010000	// Don't allow jumping
+#define DF_NO_FREELOOK		0x0020000	// Don't allow freelook
+#define DF_RESPAWN_SUPER	0x0040000	// Respawn invulnerability and invisibility
+#define DF_NO_PASSMOBJ		0x0080000	// Pretend every actor is infinitely tall
+#define DF_NO_FOV			0x0100000	// Only let the arbitrator set FOV (for all players)
 
 // [BC] More dmflags. w00p!
 //#define	DF2_YES_IMPALING		1		// Player gets implaed on MF2_IMPALE items

@@ -1,6 +1,41 @@
-// info.cpp: Keep track of available actors and their states
-//
-// This is completely different from the Doom original.
+/*
+** info.cpp
+** Keeps track of available actors and their states
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** This is completely different from Doom's info.c.
+**
+** The primary advancement over Doom's system is that actors can be defined
+** across multiple files without having to recompile most of the source
+** whenever one changes.
+*/
 
 
 #include "m_fixed.h"
@@ -147,8 +182,19 @@ void FActorInfo::StaticInit ()
 	}
 }
 
-// Called whenever a new game is started
+// Called after the IWAD has been identified
 void FActorInfo::StaticGameSet ()
+{
+	// Run every AT_GAME_SET function
+	TAutoSegIteratorNoArrow<void (*)(), &GRegHead, &GRegTail> setters;
+	while (++setters != NULL)
+	{
+		((void (*)())setters) ();
+	}
+}
+
+// Called after Dehacked patches are applied
+void FActorInfo::StaticSetActorNums ()
 {
 	memset (SpawnableThings, 0, sizeof(SpawnableThings));
 	DoomEdMap.Empty ();
@@ -171,16 +217,9 @@ void FActorInfo::StaticGameSet ()
 			}
 		}
 	}
-
-	// Now run every AT_GAME_SET function
-	TAutoSegIteratorNoArrow<void (*)(), &GRegHead, &GRegTail> setters;
-	while (++setters != NULL)
-	{
-		((void (*)())setters) ();
-	}
 }
 
-// Called immediately after StaticGameSet, but only if the game
+// Called when a new game is started, but only if the game
 // speed has changed.
 
 void FActorInfo::StaticSpeedSet ()

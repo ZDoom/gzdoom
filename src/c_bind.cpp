@@ -1,3 +1,37 @@
+/*
+** c_bind.cpp
+** Functions for using and maintaining key bindings
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "doomtype.h"
 #include "doomdef.h"
 #include "cmdlib.h"
@@ -256,7 +290,7 @@ CCMD (bind)
 		}
 		else
 		{
-			ReplaceString (&Bindings[i], argv.AllButFirstArg (2));
+			ReplaceString (&Bindings[i], argv[2]);
 		}
 	}
 	else
@@ -268,6 +302,45 @@ CCMD (bind)
 			if (Bindings[i])
 				Printf ("%s \"%s\"\n", KeyName (i), Bindings[i]);
 		}
+	}
+}
+
+//==========================================================================
+//
+// CCMD defaultbind
+//
+// Binds a command to a key if that key is not already bound and if
+// that command is not already bound to another key.
+//
+//==========================================================================
+
+CCMD (defaultbind)
+{
+	if (argv.argc() < 3)
+	{
+		Printf ("Usage: defaultbind <key> <command>\n");
+	}
+	else
+	{
+		int key = GetKeyFromName (argv[1]);
+		if (key == 0)
+		{
+			Printf ("Unknown key \"%s\"\n", argv[1]);
+			return;
+		}
+		if (Bindings[key] != NULL)
+		{ // This key is already bound.
+			return;
+		}
+		for (int i = 0; i < NUM_KEYS; ++i)
+		{
+			if (Bindings[i] != NULL && stricmp (Bindings[i], argv[2]) == 0)
+			{ // This command is already bound to a key.
+				return;
+			}
+		}
+		// It is safe to do the bind, so do it.
+		Bindings[key] = copystring (argv[2]);
 	}
 }
 
@@ -312,7 +385,7 @@ CCMD (doublebind)
 		}
 		else
 		{
-			ReplaceString (&DoubleBindings[i], argv.AllButFirstArg (2));
+			ReplaceString (&DoubleBindings[i], argv[2]);
 		}
 	}
 	else
@@ -349,7 +422,7 @@ CCMD (rebind)
 
 	if (argv.argc() > 1)
 	{
-		ReplaceString (&bindings[key], argv.AllButFirstArg (1));
+		ReplaceString (&bindings[key], argv[1]);
 	}
 }
 
@@ -461,7 +534,7 @@ BOOL C_DoKey (event_t *ev)
 	return false;
 }
 
-void C_ArchiveBindings (FConfigFile *f, bool dodouble)
+void C_ArchiveBindings (FConfigFile *f, bool dodouble, const char *matchcmd)
 {
 	char **bindings;
 	const char *name;
@@ -471,7 +544,7 @@ void C_ArchiveBindings (FConfigFile *f, bool dodouble)
 
 	for (i = 0; i < NUM_KEYS; i++)
 	{
-		if (bindings[i])
+		if (bindings[i] && (matchcmd==NULL || stricmp(bindings[i], matchcmd)==0))
 		{
 			name = KeyName (i);
 			if (name[1] == 0)	// Make sure given name is config-safe
@@ -486,6 +559,12 @@ void C_ArchiveBindings (FConfigFile *f, bool dodouble)
 					name = "KP-Equals";
 			}
 			f->SetValueForKey (name, bindings[i]);
+			if (matchcmd != NULL)
+			{ // If saving a specific command, remove the old binding
+			  // so it does not get saved in the general binding list
+				delete[] Bindings[i];
+				Bindings[i] = NULL;
+			}
 		}
 	}
 }

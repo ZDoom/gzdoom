@@ -22,6 +22,7 @@
 #include "m_bbox.h"
 #include "tables.h"
 #include "s_sndseq.h"
+#include "a_sharedglobal.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -49,6 +50,7 @@ static void InitBlockMap (void);
 static void IterFindPolySegs (int x, int y, seg_t **segList);
 static void SpawnPolyobj (int index, int tag, BOOL crush);
 static void TranslateToStartSpot (int tag, int originX, int originY);
+static void DoMovePolyobj (polyobj_t *po, int x, int y);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -147,7 +149,7 @@ DPolyDoor::DPolyDoor (int polyNum, podoortype_t type)
 //
 //==========================================================================
 
-void DRotatePoly::RunThink ()
+void DRotatePoly::Tick ()
 {
 	if (PO_RotatePolyobj (m_PolyObj, m_Speed))
 	{
@@ -266,7 +268,7 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 //
 //==========================================================================
 
-void DMovePoly::RunThink ()
+void DMovePoly::Tick ()
 {
 	polyobj_t *poly;
 
@@ -357,7 +359,7 @@ bool EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle,
 //
 //==========================================================================
 
-void DPolyDoor::RunThink ()
+void DPolyDoor::Tick ()
 {
 	int absSpeed;
 	polyobj_t *poly;
@@ -698,14 +700,7 @@ static void UpdateSegBBox (seg_t *seg)
 	}
 	else
 	{
-		if (FixedDiv(line->dy, line->dx) > 0)
-		{
-			line->slopetype = ST_POSITIVE;
-		}
-		else
-		{
-			line->slopetype = ST_NEGATIVE;
-		}
+		line->slopetype = ((line->dy ^ line->dx) >= 0) ? ST_POSITIVE : ST_NEGATIVE;
 	}
 }
 
@@ -719,10 +714,8 @@ BOOL PO_MovePolyobj (int num, int x, int y)
 {
 	int count;
 	seg_t **segList;
-	seg_t **veryTempSeg;
 	polyobj_t *po;
-	vertex_t *prevPts;
-	BOOL blocked;
+	bool blocked;
 
 	if (!(po = GetPolyobj (num)))
 	{
@@ -730,21 +723,61 @@ BOOL PO_MovePolyobj (int num, int x, int y)
 	}
 
 	UnLinkPolyobj (po);
+	DoMovePolyobj (po, x, y);
+
+	segList = po->segs;
+	blocked = false;
+	for (count = po->numsegs; count; count--, segList++)
+	{
+		if (CheckMobjBlocking(*segList, po))
+		{
+			blocked = true;
+			break;
+		}
+	}
+	if (blocked)
+	{
+		DoMovePolyobj (po, -x, -y);
+		LinkPolyobj(po);
+		return false;
+	}
+	po->startSpot[0] += x;
+	po->startSpot[1] += y;
+	LinkPolyobj (po);
+	return true;
+}
+
+//==========================================================================
+//
+// DoMovePolyobj
+//
+//==========================================================================
+
+void DoMovePolyobj (polyobj_t *po, int x, int y)
+{
+	int count;
+	seg_t **segList;
+	seg_t **veryTempSeg;
+	vertex_t *prevPts;
 
 	segList = po->segs;
 	prevPts = po->prevPts;
-	blocked = false;
 
 	validcount++;
 	for (count = po->numsegs; count; count--, segList++, prevPts++)
 	{
-		if ((*segList)->linedef->validcount != validcount)
+		line_t *linedef = (*segList)->linedef;
+		if (linedef->validcount != validcount)
 		{
-			(*segList)->linedef->bbox[BOXTOP] += y;
-			(*segList)->linedef->bbox[BOXBOTTOM] += y;
-			(*segList)->linedef->bbox[BOXLEFT] += x;
-			(*segList)->linedef->bbox[BOXRIGHT] += x;
-			(*segList)->linedef->validcount = validcount;
+			linedef->bbox[BOXTOP] += y;
+			linedef->bbox[BOXBOTTOM] += y;
+			linedef->bbox[BOXLEFT] += x;
+			linedef->bbox[BOXRIGHT] += x;
+			if (linedef->sidenum[0] != -1)
+				ADecal::MoveChain (sides[linedef->sidenum[0]].BoundActors, x, y);
+			if (linedef->sidenum[1] != -1)
+				ADecal::MoveChain (sides[linedef->sidenum[1]].BoundActors, x, y);
+			linedef->validcount = validcount;
 		}
 		for (veryTempSeg = po->segs; veryTempSeg != segList;
 			veryTempSeg++)
@@ -762,55 +795,6 @@ BOOL PO_MovePolyobj (int num, int x, int y)
 		(*prevPts).x += x; // previous points are unique for each seg
 		(*prevPts).y += y;
 	}
-	segList = po->segs;
-	for (count = po->numsegs; count; count--, segList++)
-	{
-		if (CheckMobjBlocking(*segList, po))
-		{
-			blocked = true;
-		}
-	}
-	if (blocked)
-	{
-		count = po->numsegs;
-		segList = po->segs;
-		prevPts = po->prevPts;
-		validcount++;
-		while (count--)
-		{
-			if ((*segList)->linedef->validcount != validcount)
-			{
-				(*segList)->linedef->bbox[BOXTOP] -= y;
-				(*segList)->linedef->bbox[BOXBOTTOM] -= y;
-				(*segList)->linedef->bbox[BOXLEFT] -= x;
-				(*segList)->linedef->bbox[BOXRIGHT] -= x;
-				(*segList)->linedef->validcount = validcount;
-			}
-			for (veryTempSeg = po->segs; veryTempSeg != segList;
-				veryTempSeg++)
-			{
-				if((*veryTempSeg)->v1 == (*segList)->v1)
-				{
-					break;
-				}
-			}
-			if (veryTempSeg == segList)
-			{
-				(*segList)->v1->x -= x;
-				(*segList)->v1->y -= y;
-			}
-			(*prevPts).x -= x;
-			(*prevPts).y -= y;
-			segList++;
-			prevPts++;
-		}
-		LinkPolyobj(po);
-		return false;
-	}
-	po->startSpot[0] += x;
-	po->startSpot[1] += y;
-	LinkPolyobj (po);
-	return true;
 }
 
 //==========================================================================
@@ -821,19 +805,11 @@ BOOL PO_MovePolyobj (int num, int x, int y)
 
 static void RotatePt (int an, fixed_t *x, fixed_t *y, fixed_t startSpotX, fixed_t startSpotY)
 {
-	fixed_t tr_x, tr_y;
-	fixed_t gxt, gyt;
+	fixed_t tr_x = *x;
+	fixed_t tr_y = *y;
 
-	tr_x = *x;
-	tr_y = *y;
-
-	gxt = FixedMul(tr_x, finecosine[an]);
-	gyt = FixedMul(tr_y, finesine[an]);
-	*x = (gxt-gyt)+startSpotX;
-
-	gxt = FixedMul(tr_x, finesine[an]);
-	gyt = FixedMul(tr_y, finecosine[an]);
-	*y = (gyt+gxt)+startSpotY;
+	*x = DMulScale16 (tr_x, finecosine[an], -tr_y, finesine[an])+startSpotX;
+	*y = DMulScale16 (tr_x, finesine[an], tr_y, finecosine[an])+startSpotY;
 }
 
 //==========================================================================
@@ -886,7 +862,12 @@ BOOL PO_RotatePolyobj (int num, angle_t angle)
 		if ((*segList)->linedef->validcount != validcount)
 		{
 			UpdateSegBBox(*segList);
-			(*segList)->linedef->validcount = validcount;
+			line_t *line = (*segList)->linedef;
+			if (line->sidenum[0] != -1)
+				ADecal::FixForSide (&sides[line->sidenum[0]]);
+			if (line->sidenum[1] != -1)
+				ADecal::FixForSide (&sides[line->sidenum[1]]);
+			line->validcount = validcount;
 		}
 		(*segList)->angle += angle;
 	}
@@ -906,7 +887,12 @@ BOOL PO_RotatePolyobj (int num, angle_t angle)
 			if ((*segList)->linedef->validcount != validcount)
 			{
 				UpdateSegBBox(*segList);
-				(*segList)->linedef->validcount = validcount;
+				line_t *line = (*segList)->linedef;
+				if (line->sidenum[0] != -1)
+					ADecal::FixForSide (&sides[line->sidenum[0]]);
+				if (line->sidenum[1] != -1)
+					ADecal::FixForSide (&sides[line->sidenum[1]]);
+				line->validcount = validcount;
 			}
 			(*segList)->angle -= angle;
 		}
@@ -1079,7 +1065,7 @@ static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 		{
 			for (mobj = blocklinks[j+i]; mobj; mobj = mobj->bnext)
 			{
-				if (mobj->flags&MF_SOLID || mobj->player)
+				if ((mobj->flags&MF_SOLID) && !(mobj->flags&MF_NOCLIP))
 				{
 					tmbbox[BOXTOP] = mobj->y+mobj->radius;
 					tmbbox[BOXBOTTOM] = mobj->y-mobj->radius;

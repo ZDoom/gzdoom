@@ -102,7 +102,7 @@ AT_GAME_SET (Minotaur)
 {
 	if (gameinfo.gametype == GAME_Heretic)
 	{
-		DoomEdMap.AddType (9, RUNTIME_CLASS(AMinotaur));
+		DOOMEDNUMOF(AMinotaur) = 9;
 	}
 }
 

@@ -64,40 +64,19 @@ void R_SpanInitData ();
 
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 extern short *openings;
+extern bool r_fakingunderwater;
 EXTERN_CVAR (Bool, r_particles)
 
 // PRIVATE DATA DECLARATIONS -----------------------------------------------
 
 static float LastFOV;
+static float CurrentVisibility = 8.f;
+static fixed_t MaxVisForWall;
+static fixed_t MaxVisForFloor;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
-
-//==========================================================================
-//
-// CVAR r_visibility
-//
-// Controls how quickly light ramps across a 1/z range. Set this, and it
-// sets all the r_*Visibility variables (except r_SkyVisibilily, which is
-// currently unused).
-//
-//==========================================================================
-
-CUSTOM_CVAR (Float, r_visibility, 8, CVAR_NOINITCALL)
-{
-	r_BaseVisibility = toint (self * 65536.f);
-
-	r_WallVisibility = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(200<<detailyshift),
-		(viewwidth<<detailxshift)*SCREENHEIGHT), FixedMul (r_BaseVisibility, FocalTangent));
-	r_FloorVisibility = FixedDiv (160*r_BaseVisibility, FocalLengthY);
-	r_TiltVisibility = self * 16.f * 320.f
-		* (float)FocalTangent / (float)viewwidth;
-	r_SpriteVisibility = r_WallVisibility;
-	
-	// particles are slightly more visible than regular sprites
-	r_ParticleVisibility = r_SpriteVisibility * 2;
-}
 
 fixed_t			r_BaseVisibility;
 fixed_t			r_WallVisibility;
@@ -144,12 +123,12 @@ fixed_t 		viewy;
 fixed_t 		viewz;
 
 angle_t 		viewangle;
+sector_t		*viewsector;
 
 fixed_t 		viewcos, viewtancos;
 fixed_t 		viewsin, viewtansin;
 
 AActor			*camera;	// [RH] camera to draw from. doesn't have to be a player
-bool			r_MarkTrans;
 
 //
 // precalculated math tables
@@ -183,101 +162,13 @@ void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
 void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
 void (*hcolfunc_post4) (int sx, int yl, int yh);
 
-cycle_t WallCycles, PlaneCycles, MaskedCycles;
+cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static int lastcenteryfrac;
 
 // CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-// R_PointOnSide
-//
-// Traverse BSP (sub) tree, check point against partition plane.
-// Returns side 0 (front) or 1 (back).
-//
-// killough 5/2/98: reformatted
-//
-//==========================================================================
-
-int R_PointOnSide (fixed_t x, fixed_t y, node_t *node)
-{
-	if (!node->dx)
-		return x <= node->x ? node->dy > 0 : node->dy < 0;
-
-	if (!node->dy)
-		return y <= node->y ? node->dx < 0 : node->dx > 0;
-        
-	x -= node->x;
-	y -= node->y;
-  
-	// Try to quickly decide by looking at sign bits.
-	if ((node->dy ^ node->dx ^ x ^ y) < 0)
-		return (node->dy ^ x) < 0;	// (left is negative)
-	return DMulScale32 (y, node->dx, -node->dy, x) >= 0;
-}
-
-//==========================================================================
-//
-// R_PointOnSegSide
-//
-// Same, except takes a lineseg as input instead of a linedef
-//
-// killough 5/2/98: reformatted
-//
-//==========================================================================
-
-int R_PointOnSegSide (fixed_t x, fixed_t y, seg_t *line)
-{
-	fixed_t lx = line->v1->x;
-	fixed_t ly = line->v1->y;
-	fixed_t ldx = line->v2->x - lx;
-	fixed_t ldy = line->v2->y - ly;
-
-	if (!ldx)
-		return x <= lx ? ldy > 0 : ldy < 0;
-
-	if (!ldy)
-		return y <= ly ? ldx < 0 : ldx > 0;
-  
-	x -= lx;
-	y -= ly;
-      
-	// Try to quickly decide by looking at sign bits.
-	if ((ldy ^ ldx ^ x ^ y) < 0)
-		return (ldy ^ x) < 0;			// (left is negative)
-	return DMulScale32 (y, ldx, -ldy, x) >= 0;
-}
-
-//==========================================================================
-//
-// R_PointOnSegSide2
-//
-// [RH] Same, except returns 2 for "on the line"
-//
-//==========================================================================
-
-int R_PointOnSegSide2 (fixed_t x, fixed_t y, seg_t *line)
-{
-	fixed_t lx = line->v1->x;
-	fixed_t ly = line->v1->y;
-	fixed_t ldx = line->v2->x - lx;
-	fixed_t ldy = line->v2->y - ly;
-
-	if (!ldx)
-		return x == lx ? 2 : x < lx ? ldy > 0 : ldy < 0;
-
-	if (!ldy)
-		return y == ly ? 2 : y < ly ? ldx < 0 : ldx > 0;
-  
-	x -= lx;
-	y -= ly;
-      
-	fixed_t d = DMulScale32 (y, ldx, -ldy, x);
-	return d > 0 ? 1 : d < 0 ? 0 : 2;
-}
 
 //==========================================================================
 //
@@ -485,6 +376,66 @@ float R_GetFOV ()
 
 //==========================================================================
 //
+// R_SetVisibility
+//
+// Changes how rapidly things get dark with distance
+//
+//==========================================================================
+
+void R_SetVisibility (float vis)
+{
+	// Allow negative visibilities, just for novelty's sake
+	//vis = clamp (vis, -204.7f, 204.7f);
+
+	CurrentVisibility = vis;
+
+	r_BaseVisibility = toint (vis * 65536.f);
+
+	// Prevent overflow on walls
+	if (r_BaseVisibility < 0 && r_BaseVisibility < -MaxVisForWall)
+		r_WallVisibility = -MaxVisForWall;
+	else if (r_BaseVisibility > 0 && r_BaseVisibility > MaxVisForWall)
+		r_WallVisibility = MaxVisForWall;
+	else
+		r_WallVisibility = r_BaseVisibility;
+
+	r_WallVisibility = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(200<<detailyshift),
+		(viewwidth<<detailxshift)*SCREENHEIGHT), FixedMul (r_WallVisibility, FocalTangent));
+
+	// Prevent overflow on floors/ceilings. Note that the calculation of
+	// MaxVisForFloor means that planes less than two units from the player's
+	// view could still overflow, but there is no way to totally eliminate
+	// that while still using fixed point math.
+	if (r_BaseVisibility < 0 && r_BaseVisibility < -MaxVisForFloor)
+		r_FloorVisibility = -MaxVisForFloor;
+	else if (r_BaseVisibility > 0 && r_BaseVisibility > MaxVisForFloor)
+		r_FloorVisibility = MaxVisForFloor;
+	else
+		r_FloorVisibility = r_BaseVisibility;
+
+	r_FloorVisibility = Scale (160*FRACUNIT, r_FloorVisibility, FocalLengthY);
+
+	r_TiltVisibility = vis * 16.f * 320.f
+		* (float)FocalTangent / (float)viewwidth;
+	r_SpriteVisibility = r_WallVisibility;
+	
+	// particles are slightly more visible than regular sprites
+	r_ParticleVisibility = r_SpriteVisibility * 2;
+}
+
+//==========================================================================
+//
+// R_GetVisibility
+//
+//==========================================================================
+
+float R_GetVisibility ()
+{
+	return CurrentVisibility;
+}
+
+//==========================================================================
+//
 // R_SetViewSize
 //
 // Do not really change anything here, because it might be in the middle
@@ -536,7 +487,6 @@ CUSTOM_CVAR (Int, r_detail, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 void R_SetDetail (int detail)
 {
-	R_RenderSegLoop = r_columnmethod ? R_RenderSegLoop2 : R_RenderSegLoop1;
 	detailxshift = detail & 1;
 	detailyshift = (detail >> 1) & 1;
 }
@@ -615,8 +565,13 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 
 	R_InitTextureMapping ();
 
+	MaxVisForWall = FixedMul (Scale (InvZtoScale, SCREENWIDTH*(200<<detailyshift),
+		(viewwidth<<detailxshift)*SCREENHEIGHT), FocalTangent);
+	MaxVisForWall = FixedDiv (0x7fff0000, MaxVisForWall);
+	MaxVisForFloor = Scale (FixedDiv (0x7fff0000, viewheight<<(FRACBITS-2)), FocalLengthY, 160*FRACUNIT);
+
 	// Reset r_*Visibility vars
-	r_visibility.Callback ();
+	R_SetVisibility (R_GetVisibility ());
 }
 
 //==========================================================================
@@ -644,17 +599,6 @@ void R_ExecuteSetViewSize ()
 	// Same with base row offset.
 	viewwindowy = ((viewwidth<<detailxshift) == screen->GetWidth()) ?
 		0 : (ST_Y-(viewheight<<detailyshift)) >> 1;
-
-	colfunc = basecolfunc = R_DrawColumn;
-	fuzzcolfunc = R_DrawFuzzColumn;
-	transcolfunc = R_DrawTranslatedColumn;
-	spanfunc = R_DrawSpan;
-
-	// [RH] Horizontal column drawers
-	hcolfunc_pre = R_DrawColumnHoriz;
-	hcolfunc_post1 = rt_map1col;
-	hcolfunc_post2 = rt_map2cols;
-	hcolfunc_post4 = rt_map4cols;
 }
 
 //==========================================================================
@@ -713,6 +657,16 @@ void R_Init (void)
 	R_InitTranslationTables ();
 
 	R_InitParticles ();	// [RH] Setup particle engine
+
+	colfunc = basecolfunc = R_DrawColumn;
+	fuzzcolfunc = R_DrawFuzzColumn;
+	transcolfunc = R_DrawTranslatedColumn;
+	spanfunc = R_DrawSpan;
+
+	// [RH] Horizontal column drawers
+	hcolfunc_pre = R_DrawColumnHoriz;
+	hcolfunc_post1 = rt_map1col;
+	hcolfunc_post4 = rt_map4cols;
 
 	framecount = 0;
 }
@@ -784,23 +738,25 @@ void R_SetupFrame (player_t *player)
 		viewx = CameraX;
 		viewy = CameraY;
 		viewz = CameraZ;
+		viewsector = CameraSector;
 	}
 	else
 	{
 		viewx = camera->x;
 		viewy = camera->y;
 		viewz = camera->player ? camera->player->viewz : camera->z;
+		viewsector = camera->Sector;
 	}
 
 	// Keep the view within the sector's floor and ceiling
-	fixed_t theZ = camera->subsector->sector->ceilingplane.ZatPoint
+	fixed_t theZ = viewsector->ceilingplane.ZatPoint
 		(camera->x, camera->y) - 4*FRACUNIT;
 	if (viewz > theZ)
 	{
 		viewz = theZ;
 	}
 
-	theZ = camera->subsector->sector->floorplane.ZatPoint
+	theZ = camera->Sector->floorplane.ZatPoint
 		(camera->x, camera->y) + 4*FRACUNIT;
 	if (viewz < theZ)
 	{
@@ -823,9 +779,10 @@ void R_SetupFrame (player_t *player)
 	// killough 3/20/98, 4/4/98: select colormap based on player status
 	// [RH] Can also select a blend
 
-	if (camera->subsector->sector->heightsec)
+	if (viewsector->heightsec &&
+		!(viewsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{
-		const sector_t *s = camera->subsector->sector->heightsec;
+		const sector_t *s = viewsector->heightsec;
 		newblend = viewz < s->floorplane.ZatPoint (viewx, viewy)
 			? s->bottommap
 			: viewz > s->ceilingplane.ZatPoint (viewx, viewy)
@@ -1075,7 +1032,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	WindowRight = ds->x2;
 	MirrorFlags = (depth + 1) & 1;
 
-	R_RenderBSPNode (numnodes - 1);
+	R_RenderBSPNode (numnodes - 1, -1);
 
 	if (r_particles)
 	{
@@ -1155,9 +1112,24 @@ static void R_SetupBuffer ()
 //
 //==========================================================================
 
+CVAR (Int, restrict, -1, 0)
+#ifdef _DEBUG
+#include "c_dispatch.h"
+CCMD (nodefun)
+{
+	if (argv.argc() != 2)
+		return;
+	int i = atoi (argv[1]);
+	unsigned short *kids = nodes[i].children;
+	Printf ("Left: %d (%c)   Right: %d (%c)\n",
+		kids[0] & ~NF_SUBSECTOR, kids[0] & NF_SUBSECTOR ? 's' : 'n',
+		kids[1] & ~NF_SUBSECTOR, kids[1] & NF_SUBSECTOR ? 's' : 'n');
+}
+#endif
+
 void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 {
-	WallCycles = PlaneCycles = MaskedCycles = 0;
+	WallCycles = PlaneCycles = MaskedCycles = WallScanCycles = 0;
 
 	R_SetupBuffer ();
 	R_SetupFrame (player);
@@ -1175,7 +1147,6 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	{
 		hcolfunc_pre = R_FillColumnHorizP;
 		hcolfunc_post1 = rt_copy1col;
-		hcolfunc_post2 = rt_copy2cols;
 		hcolfunc_post4 = rt_copy4cols;
 		colfunc = R_FillColumnP;
 		spanfunc = R_FillSpan;
@@ -1183,10 +1154,10 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	else
 	{
 		hcolfunc_pre = R_DrawColumnHoriz;
-		colfunc = basecolfunc;
 		hcolfunc_post1 = rt_map1col;
-		hcolfunc_post2 = rt_map2cols;
 		hcolfunc_post4 = rt_map4cols;
+		colfunc = basecolfunc;
+		spanfunc = R_DrawSpan;
 	}
 
 	WindowLeft = 0;
@@ -1194,19 +1165,23 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	MirrorFlags = 0;
 	ActiveWallMirror = NULL;
 	
+	// [RH] Hack to make windows into underwater areas possible
+	r_fakingunderwater = false;
+
 	clock (WallCycles);
 	// Never draw the player unless in chasecam mode
 	if (camera->player && !(player->cheats & CF_CHASECAM))
 	{
 		WORD savedflags = camera->renderflags;
 		camera->renderflags |= RF_INVISIBLE;
-		R_RenderBSPNode (numnodes - 1);
+//memset (screen->GetBuffer(), 255, screen->GetWidth()*screen->GetHeight());
+		R_RenderBSPNode (numnodes - 1, restrict);
 		camera->renderflags = savedflags;
 	}
 	else
 	{	// The head node is the last node output.
 		// [[RH] Not that this tells me anything...]
-		R_RenderBSPNode (numnodes - 1);
+		R_RenderBSPNode (numnodes - 1, -1);
 	}
 	unclock (WallCycles);
 
@@ -1236,8 +1211,6 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	}
 	WallMirrors.Clear ();
 
-	spanfunc = R_DrawSpan;
-
 	if (lengthyCallback != NULL)	lengthyCallback ();
 	
 	clock (MaskedCycles);
@@ -1261,7 +1234,6 @@ void R_RenderViewToCanvas (player_t *player, DCanvas *canvas,
 	const int saveddetail = detailxshift | (detailyshift << 1);
 
 	detailxshift = detailyshift = 0;
-	R_RenderSegLoop = r_columnmethod ? R_RenderSegLoop2 : R_RenderSegLoop1;
 	realviewwidth = viewwidth = width;
 
 	RenderTarget = canvas;

@@ -56,7 +56,7 @@ include $(IMPDIR)/files.mak
 CPPFLAGS_debug = -g -Wp,-DRANGECHECK
 LDFLAGS_debug =
 ASFLAGS_debug = -g
-DEFS_debug = -Wp,-DDEBUG,-DUSEASM	# -DNOASM
+DEFS_debug = -Wp,-DDEBUG,-DNOASM
 
 # options specific to the release build
 CPPFLAGS_release = -O2 -march=pentium -fomit-frame-pointer
@@ -165,6 +165,12 @@ srctar: $(ALLSOURCES) Makefile $(SRCDOC) docs/* other/*
 			$(basename)/$(src_dir)/* \
 			$(basename)/$(src_dir)/linux/* \
 			$(basename)/$(src_dir)/win32/* \
+			$(basename)/$(src_dir)/fmodsound/* \
+			$(basename)/$(src_dir)/g_heretic/* \
+			$(basename)/$(src_dir)/g_raven/* \
+			$(basename)/$(src_dir)/g_doom/* \
+			$(basename)/$(src_dir)/g_hexen/* \
+			$(basename)/$(src_dir)/g_shared/* \
 			$(SRCDOC:%=$(basename)/%) \
 		| $(GZIP) -9c > $(basename)/$(SRCTAR)'
 

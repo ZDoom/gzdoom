@@ -1,11 +1,42 @@
-/* r_drawt.c [RH]
- *
- * Functions for drawing columns into a temporary buffer and then
- * copying them to the screen. On machines with a decent cache, this
- * is faster than drawing them directly to the screen. Will I be able
- * to even understand any of this if I come back to it later? Let's
- * hope so. :-)
- */
+/*
+** r_drawt.cpp
+** Faster column drawers for modern processors
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** These functions stretch columns into a temporary buffer and then
+** map them to the screen. On modern machines, this is faster than drawing
+** them directly to the screen.
+**
+** Will I be able to even understand any of this if I come back to it later?
+** Let's hope so. :-)
+*/
 
 #include "templates.h"
 #include "doomtype.h"
@@ -23,7 +54,7 @@
 // dc_ctspan points into dc_tspans.
 // But what is horizspan, and what is its relation with dc_ctspan?
 
-byte dc_temp[1200*4];
+byte dc_temp[MAXHEIGHT*4];
 unsigned int dc_tspans[4][256];
 unsigned int *dc_ctspan[4];
 unsigned int *horizspan[4];
@@ -67,39 +98,6 @@ void rt_copy1col_c (int hx, int sx, int yl, int yh)
 		dest[pitch*3] = source[12];
 		source += 16;
 		dest += pitch*4;
-	} while (--count);
-}
-
-// Copies two spans at hx and hx+1 to the screen at sx and sx+1.
-void rt_copy2cols_c (int hx, int sx, int yl, int yh)
-{
-	short *source;
-	short *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	dest = (short *)(ylookup[yl] + sx);
-	source = (short *)(&dc_temp[yl*4 + hx]);
-	pitch = dc_pitch/sizeof(short);
-
-	if (count & 1) {
-		*dest = *source;
-		source += 4/sizeof(short);
-		dest += pitch;
-	}
-	if (!(count >>= 1))
-		return;
-
-	do {
-		dest[0] = source[0];
-		dest[pitch] = source[4/sizeof(short)];
-		source += 8/sizeof(short);
-		dest += pitch*2;
 	} while (--count);
 }
 
@@ -166,44 +164,6 @@ void rt_map1col_c (int hx, int sx, int yl, int yh)
 	do {
 		dest[0] = colormap[source[0]];
 		dest[pitch] = colormap[source[4]];
-		source += 8;
-		dest += pitch*2;
-	} while (--count);
-}
-
-// Maps two spans at hx and hx+1 to the screen at sx and sx+1.
-void rt_map2cols_c (int hx, int sx, int yl, int yh)
-{
-	byte *colormap;
-	byte *source;
-	byte *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	colormap = dc_colormap;
-	dest = ylookup[yl] + sx;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-
-	if (count & 1) {
-		dest[0] = colormap[source[0]];
-		dest[1] = colormap[source[1]];
-		source += 4;
-		dest += pitch;
-	}
-	if (!(count >>= 1))
-		return;
-
-	do {
-		dest[0] = colormap[source[0]];
-		dest[1] = colormap[source[1]];
-		dest[pitch] = colormap[source[4]];
-		dest[pitch+1] = colormap[source[5]];
 		source += 8;
 		dest += pitch*2;
 	} while (--count);
@@ -282,35 +242,6 @@ void rt_tlate1col (int hx, int sx, int yl, int yh)
 	} while (--count);
 }
 
-// Translates two spans at hx and hx+1 to the screen at sx and sx+1.
-void rt_tlate2cols (int hx, int sx, int yl, int yh)
-{
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	translation = dc_translation;
-	colormap = dc_colormap;
-	dest = ylookup[yl] + sx;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-
-	do {
-		dest[0] = colormap[translation[source[0]]];
-		dest[1] = colormap[translation[source[1]]];
-		source += 4;
-		dest += pitch;
-	} while (--count);
-}
-
 // Translates all four spans to the screen starting at sx.
 void rt_tlate4cols (int sx, int yl, int yh)
 {
@@ -371,47 +302,6 @@ void rt_add1col (int hx, int sx, int yl, int yh)
 		bg = bg2rgb[bg];
 		fg = (fg+bg) | 0x1f07c1f;
 		*dest = RGB32k[0][0][fg & (fg>>15)];
-		source += 4;
-		dest += pitch;
-	} while (--count);
-}
-
-// Adds two spans at hx and hx+1 to the screen at sx and sx+1 without clamping.
-void rt_add2cols (int hx, int sx, int yl, int yh)
-{
-	byte *colormap;
-	byte *source;
-	byte *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-
-	do {
-		DWORD fg = colormap[source[0]];
-		DWORD bg = dest[0];
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		dest[0] = RGB32k[0][0][fg & (fg>>15)];
-
-		fg = colormap[source[1]];
-		bg = dest[1];
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		dest[1] = RGB32k[0][0][fg & (fg>>15)];
-
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -509,49 +399,6 @@ void rt_tlateadd1col (int hx, int sx, int yl, int yh)
 	} while (--count);
 }
 
-// Translates and adds two spans at hx and hx+1 to the screen at sx and sx+1 without clamping.
-void rt_tlateadd2cols (int hx, int sx, int yl, int yh)
-{
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	translation = dc_translation;
-	colormap = dc_colormap;
-	dest = ylookup[yl] + sx;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-
-	do {
-		DWORD fg = colormap[translation[source[0]]];
-		DWORD bg = dest[0];
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		dest[0] = RGB32k[0][0][fg & (fg>>15)];
-
-		fg = colormap[translation[source[1]]];
-		bg = dest[1];
-		fg = fg2rgb[fg];
-		bg = bg2rgb[bg];
-		fg = (fg+bg) | 0x1f07c1f;
-		dest[1] = RGB32k[0][0][fg & (fg>>15)];
-
-		source += 4;
-		dest += pitch;
-	} while (--count);
-}
-
 // Translates and adds all four spans to the screen starting at sx without clamping.
 void rt_tlateadd4cols (int sx, int yl, int yh)
 {
@@ -636,43 +483,6 @@ void rt_shaded1col (int hx, int sx, int yl, int yh)
 		DWORD fg = fgstart[val<<8];
 		val = (Col2RGB8[64-val][*dest] + fg) | 0x1f07c1f;
 		*dest = RGB32k[0][0][val & (val>>15)];
-		source += 4;
-		dest += pitch;
-	} while (--count);
-}
-
-// Shade two spans at hx and hx+1 to the screen at sx and sx+1.
-void rt_shaded2cols (int hx, int sx, int yl, int yh)
-{
-	DWORD *fgstart;
-	byte *colormap;
-	byte *source;
-	byte *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	fgstart = &Col2RGB8[0][dc_color];
-	colormap = dc_colormap;
-	dest = ylookup[yl] + sx;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-
-	do {
-		DWORD val = colormap[source[0]];
-		DWORD fg = fgstart[val<<8];
-		val = (Col2RGB8[64-val][dest[0]] + fg) | 0x1f07c1f;
-		dest[0] = RGB32k[0][0][val & (val>>15)];
-
-		val = colormap[source[1]];
-		fg = fgstart[val<<8];
-		val = (Col2RGB8[64-val][dest[1]] + fg) | 0x1f07c1f;
-		dest[1] = RGB32k[0][0][val & (val>>15)];
-
 		source += 4;
 		dest += pitch;
 	} while (--count);
@@ -795,52 +605,6 @@ void rt_addclamp1col (int hx, int sx, int yl, int yh)
 	} while (--count);
 }
 
-// Adds two spans at hx and hx+1 to the screen at sx and sx+1 with clamping.
-void rt_addclamp2cols (int hx, int sx, int yl, int yh)
-{
-	byte *colormap;
-	byte *source;
-	byte *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-
-	do {
-		DWORD a = fg2rgb[colormap[source[0]]] + bg2rgb[dest[0]];
-		DWORD b = a;
-
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		dest[0] = RGB32k[0][0][(a>>15) & a];
-
-		a = fg2rgb[colormap[source[1]]] + bg2rgb[dest[1]];
-		b = a;
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		dest[1] = RGB32k[0][0][(a>>15) & a];
-
-		source += 4;
-		dest += pitch;
-	} while (--count);
-}
-
 // Adds all four spans to the screen starting at sx with clamping.
 void rt_addclamp4cols (int sx, int yl, int yh)
 {
@@ -943,54 +707,6 @@ void rt_tlateaddclamp1col (int hx, int sx, int yl, int yh)
 	} while (--count);
 }
 
-// Translates and adds two spans at hx and hx+1 to the screen at sx and sx+1 with clamping.
-void rt_tlateaddclamp2cols (int hx, int sx, int yl, int yh)
-{
-	byte *translation;
-	byte *colormap;
-	byte *source;
-	byte *dest;
-	int count;
-	int pitch;
-
-	count = yh-yl;
-	if (count < 0)
-		return;
-	count++;
-
-	DWORD *fg2rgb = dc_srcblend;
-	DWORD *bg2rgb = dc_destblend;
-	dest = ylookup[yl] + sx;
-	source = &dc_temp[yl*4 + hx];
-	pitch = dc_pitch;
-	colormap = dc_colormap;
-	translation = dc_translation;
-
-	do {
-		DWORD a = fg2rgb[colormap[translation[source[0]]]] + bg2rgb[dest[0]];
-		DWORD b = a;
-
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		dest[0] = RGB32k[0][0][(a>>15) & a];
-
-		a = fg2rgb[colormap[translation[source[1]]]] + bg2rgb[dest[1]];
-		b = a;
-		a |= 0x01f07c1f;
-		b &= 0x40100400;
-		a &= 0x3fffffff;
-		b = b - (b >> 5);
-		a |= b;
-		dest[1] = RGB32k[0][0][(a>>15) & a];
-
-		source += 4;
-		dest += pitch;
-	} while (--count);
-}
-
 // Translates and adds all four spans to the screen starting at sx with clamping.
 void rt_tlateaddclamp4cols (int sx, int yl, int yh)
 {
@@ -1057,211 +773,141 @@ void rt_tlateaddclamp4cols (int sx, int yl, int yh)
 	} while (--count);
 }
 
-// Draws all spans at hx to the screen at sx.
-void rt_draw1col (int hx, int sx)
-{
-	while (horizspan[hx] < dc_ctspan[hx]) {
-		hcolfunc_post1 (hx, sx, horizspan[hx][0], horizspan[hx][1]);
-		horizspan[hx] += 2;
-	}
-}
-
-// Adjusts two columns so that they both start on the same row.
-// Returns false if it succeeded, true if a column ran out.
-static BOOL rt_nudgecols (int hx, int sx)
-{
-	if (horizspan[hx][0] < horizspan[hx+1][0]) {
-spaghetti1:
-		// first column starts before the second; it might also end before it
-		if (horizspan[hx][1] < horizspan[hx+1][0]){
-			while (horizspan[hx] < dc_ctspan[hx] && horizspan[hx][1] < horizspan[hx+1][0]) {
-				hcolfunc_post1 (hx, sx, horizspan[hx][0], horizspan[hx][1]);
-				horizspan[hx] += 2;
-			}
-			if (horizspan[hx] >= dc_ctspan[hx]) {
-				// the first column ran out of spans
-				rt_draw1col (hx+1, sx+1);
-				return true;
-			}
-			if (horizspan[hx][0] > horizspan[hx+1][0])
-				goto spaghetti2;	// second starts before first now
-			else if (horizspan[hx][0] == horizspan[hx+1][0])
-				return false;
-		}
-		hcolfunc_post1 (hx, sx, horizspan[hx][0], horizspan[hx+1][0] - 1);
-		horizspan[hx][0] = horizspan[hx+1][0];
-	}
-	if (horizspan[hx][0] > horizspan[hx+1][0]) {
-spaghetti2:
-		// second column starts before the first; it might also end before it
-		if (horizspan[hx+1][1] < horizspan[hx][0]) {
-			while (horizspan[hx+1] < dc_ctspan[hx+1] && horizspan[hx+1][1] < horizspan[hx][0]) {
-				hcolfunc_post1 (hx+1, sx+1, horizspan[hx+1][0], horizspan[hx+1][1]);
-				horizspan[hx+1] += 2;
-			}
-			if (horizspan[hx+1] >= dc_ctspan[hx+1]) {
-				// the second column ran out of spans
-				rt_draw1col (hx, sx);
-				return true;
-			}
-			if (horizspan[hx][0] < horizspan[hx+1][0])
-				goto spaghetti1;	// first starts before second now
-			else if (horizspan[hx][0] == horizspan[hx+1][0])
-				return false;
-		}
-		hcolfunc_post1 (hx+1, sx+1, horizspan[hx+1][0], horizspan[hx][0] - 1);
-		horizspan[hx+1][0] = horizspan[hx][0];
-	}
-	return false;
-}
-
-// Copies all spans at hx and hx+1 to the screen at sx and sx+1.
-// hx and sx should be word-aligned.
-void rt_draw2cols (int hx, int sx)
-{
-loop:
-	if (horizspan[hx] >= dc_ctspan[hx]) {
-		// no first column, do the second (if any)
-		rt_draw1col (hx+1, sx+1);
-		return;
-	}
-	if (horizspan[hx+1] >= dc_ctspan[hx+1]) {
-		// no second column, do the first
-		rt_draw1col (hx, sx);
-		return;
-	}
-
-	// both columns have spans, align their tops
-	if (rt_nudgecols (hx, sx))
-		return;
-
-	// now draw as much as possible as a series of words
-	if (horizspan[hx][1] < horizspan[hx+1][1]) {
-		// first column ends first, so draw down to its bottom
-		hcolfunc_post2 (hx, sx, horizspan[hx][0], horizspan[hx][1]);
-		horizspan[hx+1][0] = horizspan[hx][1] + 1;
-		horizspan[hx] += 2;
-	} else {
-		// second column ends first, or they end at the same spot
-		hcolfunc_post2 (hx, sx, horizspan[hx+1][0], horizspan[hx+1][1]);
-		if (horizspan[hx][1] == horizspan[hx+1][1]) {
-			horizspan[hx] += 2;
-			horizspan[hx+1] += 2;
-		} else {
-			horizspan[hx][0] = horizspan[hx+1][1] + 1;
-			horizspan[hx+1] += 2;
-		}
-	}
-
-	goto loop;	// keep going until all columns have no more spans
-}
-
 // Copies all spans in all four columns to the screen starting at sx.
 // sx should be longword-aligned.
 void rt_draw4cols (int sx)
 {
-loop:
-	if (horizspan[0] >= dc_ctspan[0]) {
-		// no first column, do the second (if any)
-		rt_draw1col (1, sx+1);
-		rt_draw2cols (2, sx+2);
-		return;
-	}
-	if (horizspan[1] >= dc_ctspan[1]) {
-		// no second column, we already know there is a first one
-		rt_draw1col (0, sx);
-		rt_draw2cols (2, sx+2);
-		return;
-	}
-	if (horizspan[2] >= dc_ctspan[2]) {
-		// no third column, do the fourth (if any)
-		rt_draw2cols (0, sx);
-		rt_draw1col (3, sx+3);
-		return;
-	}
-	if (horizspan[3] >= dc_ctspan[3]) {
-		// no fourth column, but there is a third
-		rt_draw2cols (0, sx);
-		rt_draw1col (2, sx+2);
-		return;
-	}
+	int x, bad;
+	unsigned int maxtop, minbot, minnexttop;
 
-	// if we get here, then we know all four columns have something,
-	// make sure they all align at the top
-	if (rt_nudgecols (0, sx)) {
-		rt_draw2cols (2, sx+2);
-		return;
-	}
-	if (rt_nudgecols (2, sx+2)) {
-		rt_draw2cols (0, sx);
-		return;
-	}
-
-	// first column is now aligned with second at top, and third is aligned
-	// with fourth at top. now make sure both halves align at the top and
-	// also have some shared space to their bottoms.
+	// Place a dummy "span" in each column. These don't get
+	// drawn. They're just here to avoid special cases in the
+	// max/min calculations below.
+	for (x = 0; x < 4; ++x)
 	{
-		unsigned int bot1 = horizspan[0][1] < horizspan[1][1] ? horizspan[0][1] : horizspan[1][1];
-		unsigned int bot2 = horizspan[2][1] < horizspan[3][1] ? horizspan[2][1] : horizspan[3][1];
-
-		if (horizspan[0][0] < horizspan[2][0]) {
-			// first half starts before second half
-			if (bot1 >= horizspan[2][0]) {
-				// first half ends after second begins
-				hcolfunc_post2 (0, sx, horizspan[0][0], horizspan[2][0] - 1);
-				horizspan[0][0] = horizspan[1][0] = horizspan[2][0];
-			} else {
-				// first half ends before second begins
-				hcolfunc_post2 (0, sx, horizspan[0][0], bot1);
-				if (horizspan[0][1] == bot1)
-					horizspan[0] += 2;
-				else
-					horizspan[0][0] = bot1 + 1;
-				if (horizspan[1][1] == bot1)
-					horizspan[1] += 2;
-				else
-					horizspan[1][0] = bot1 + 1;
-				goto loop;	// start over
-			}
-		} else if (horizspan[0][0] > horizspan[2][0]) {
-			// second half starts before the first
-			if (bot2 >= horizspan[0][0]) {
-				// second half ends after first begins
-				hcolfunc_post2 (2, sx+2, horizspan[2][0], horizspan[0][0] - 1);
-				horizspan[2][0] = horizspan[3][0] = horizspan[0][0];
-			} else {
-				// second half ends before first begins
-				hcolfunc_post2 (2, sx+2, horizspan[2][0], bot2);
-				if (horizspan[2][1] == bot2)
-					horizspan[2] += 2;
-				else
-					horizspan[2][0] = bot2 + 1;
-				if (horizspan[3][1] == bot2)
-					horizspan[3] += 2;
-				else
-					horizspan[3][0] = bot2 + 1;
-				goto loop;	// start over
-			}
-		}
-
-		// all four columns are now aligned at the top; draw all of them
-		// until one ends.
-		bot1 = bot1 < bot2 ? bot1 : bot2;
-
-		hcolfunc_post4 (sx, horizspan[0][0], bot1);
-
-		{
-			int x;
-
-			for (x = 3; x >= 0; x--)
-				if (horizspan[x][1] == bot1)
-					horizspan[x] += 2;
-				else
-					horizspan[x][0] = bot1 + 1;
-		}
+		dc_ctspan[x][0] = viewheight+1;
+		dc_ctspan[x][1] = viewheight;
 	}
 
-	goto loop;	// keep going until all columns have no more spans
+	for (;;)
+	{
+		// If a column is out of spans, mark it as such
+		bad = 0;
+		minnexttop = 0xffffffff;
+		for (x = 0; x < 4; ++x)
+		{
+			if (horizspan[x] >= dc_ctspan[x])
+			{
+				bad |= 1 << x;
+			}
+			else if ((horizspan[x]+2)[0] < minnexttop)
+			{
+				minnexttop = (horizspan[x]+2)[0];
+			}
+		}
+		// Once all columns are out of spans, we're done
+		if (bad == 15)
+		{
+			return;
+		}
+
+		// Find the largest shared area for the spans in each column
+		maxtop = MAX (MAX (horizspan[0][0], horizspan[1][0]),
+					  MAX (horizspan[2][0], horizspan[3][0]));
+		minbot = MIN (MIN (horizspan[0][1], horizspan[1][1]),
+					  MIN (horizspan[2][1], horizspan[3][1]));
+
+		// If there is no shared area with these spans, draw each span
+		// individually and advance to the next spans until we reach a shared area.
+		// However, only draw spans down to the highest span in the next set of
+		// spans. If we allow the entire height of a span to be drawn, it could
+		// prevent any more shared areas from being drawn in these four columns.
+		//
+		// Example: Suppose we have the following arrangement:
+		//			A CD
+		//			A CD
+		//			 B D
+		//			 B D
+		//			aB D
+		//			aBcD
+		//			aBcD
+		//			aBc
+		//
+		// If we draw the entire height of the spans, we end up drawing this first:
+		//			A CD
+		//			A CD
+		//			 B D
+		//			 B D
+		//			 B D
+		//			 B D
+		//			 B D
+		//			 B D
+		//			 B
+		//
+		// This leaves only the "a" and "c" columns to be drawn, and they are not
+		// part of a shared area, but if we can include B and D with them, we can
+		// get a shared area. So we cut off everything in the first set just
+		// above the "a" column and end up drawing this first:
+		//			A CD
+		//			A CD
+		//			 B D
+		//			 B D
+		//
+		// Then the next time through, we have the following arrangement with an
+		// easily shared area to draw:
+		//			aB D
+		//			aBcD
+		//			aBcD
+		//			aBc
+		if (bad != 0 || maxtop > minbot)
+		{
+			for (x = 0; x < 4; ++x)
+			{
+				if (!(bad & 1))
+				{
+					if (horizspan[x][1] < minnexttop)
+					{
+						hcolfunc_post1 (x, sx+x, horizspan[x][0], horizspan[x][1]);
+						horizspan[x] += 2;
+					}
+					else if (minnexttop > horizspan[x][0])
+					{
+						hcolfunc_post1 (x, sx+x, horizspan[x][0], minnexttop-1);
+						horizspan[x][0] = minnexttop;
+					}
+				}
+				bad >>= 1;
+			}
+			continue;
+		}
+
+		// Draw any span fragments above the shared area.
+		for (x = 0; x < 4; ++x)
+		{
+			if (maxtop > horizspan[x][0])
+			{
+				hcolfunc_post1 (x, sx+x, horizspan[x][0], maxtop-1);
+			}
+		}
+
+		// Draw the shared area.
+		hcolfunc_post4 (sx, maxtop, minbot);
+
+		// For each column, if part of the span is past the shared area,
+		// set its top to just below the shared area. Otherwise, advance
+		// to the next span in that column.
+		for (x = 0; x < 4; ++x)
+		{
+			if (minbot < horizspan[x][1])
+			{
+				horizspan[x][0] = minbot+1;
+			}
+			else
+			{
+				horizspan[x] += 2;
+			}
+		}
+	}
 }
 
 // Before each pass through a rendering loop that uses these routines,
@@ -1283,13 +929,15 @@ void R_DrawColumnHorizP_C (void)
 	fixed_t fracstep;
 	fixed_t frac;
 
-	if (count++ < 0)
+	if (count < 0)
 		return;
+	++count;
 
 	{
 		int x = dc_x & 3;
-		unsigned int **span = &dc_ctspan[x];
-
+		unsigned int **span;
+		
+		span = &dc_ctspan[x];
 		(*span)[0] = dc_yl;
 		(*span)[1] = dc_yh;
 		*span += 2;
@@ -1299,29 +947,28 @@ void R_DrawColumnHorizP_C (void)
 	frac = dc_texturefrac;
 
 	{
-		int mask = dc_mask;
 		byte *source = dc_source;
 
 		if (count & 1) {
-			*dest = source[(frac>>FRACBITS) & mask];
+			*dest = source[frac>>FRACBITS];
 			dest += 4;
 			frac += fracstep;
 		}
 		if (count & 2) {
-			dest[0] = source[(frac>>FRACBITS) & mask];
+			dest[0] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[4] = source[(frac>>FRACBITS) & mask];
+			dest[4] = source[frac>>FRACBITS];
 			frac += fracstep;
 			dest += 8;
 		}
 		if (count & 4) {
-			dest[0] = source[(frac>>FRACBITS) & mask];
+			dest[0] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[4] = source[(frac>>FRACBITS) & mask];
+			dest[4] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[8] = source[(frac>>FRACBITS) & mask];
+			dest[8] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[12] = source[(frac>>FRACBITS) & mask];
+			dest[12] = source[frac>>FRACBITS];
 			frac += fracstep;
 			dest += 16;
 		}
@@ -1330,21 +977,21 @@ void R_DrawColumnHorizP_C (void)
 
 		do
 		{
-			dest[0] = source[(frac>>FRACBITS) & mask];
+			dest[0] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[4] = source[(frac>>FRACBITS) & mask];
+			dest[4] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[8] = source[(frac>>FRACBITS) & mask];
+			dest[8] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[12] = source[(frac>>FRACBITS) & mask];
+			dest[12] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[16] = source[(frac>>FRACBITS) & mask];
+			dest[16] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[20] = source[(frac>>FRACBITS) & mask];
+			dest[20] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[24] = source[(frac>>FRACBITS) & mask];
+			dest[24] = source[frac>>FRACBITS];
 			frac += fracstep;
-			dest[28] = source[(frac>>FRACBITS) & mask];
+			dest[28] = source[frac>>FRACBITS];
 			frac += fracstep;
 			dest += 32;
 		} while (--count);
@@ -1388,13 +1035,27 @@ void R_FillColumnHorizP (void)
 // Same as R_DrawMaskedColumn() except that it always uses
 // R_DrawColumnHoriz().
 
-void R_DrawMaskedColumnHoriz (column_t *column, int baseclip)
+void R_DrawMaskedColumnHoriz (column_t *column)
 {
-	for (; column->topdelta != 0xff; column = (column_t *)((byte *)column + column->length + 4))
+	int top = 0;
+
+	while (column->topdelta != 0xff)
 	{
+		if (column->topdelta <= top)
+		{
+			top += column->topdelta;
+		}
+		else
+		{
+			top = column->topdelta;
+		}
+		if (column->length == 0)
+		{
+			goto nextpost;
+		}
 		// calculate unclipped screen coordinates for post
-		dc_yl = (sprtopscreen + spryscale * column->topdelta) >> FRACBITS;
-		dc_yh = (sprtopscreen + spryscale * (column->topdelta + column->length) - FRACUNIT) >> FRACBITS;
+		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
+		dc_yh = (sprtopscreen + spryscale * (top + column->length) - FRACUNIT) >> FRACBITS;
 
 		if (sprflipvert)
 		{
@@ -1405,10 +1066,6 @@ void R_DrawMaskedColumnHoriz (column_t *column, int baseclip)
 		{
 			dc_yh = mfloorclip[dc_x] - 1;
 		}
-		if (dc_yh > baseclip)
-		{
-			dc_yh = baseclip;
-		}
 		if (dc_yl < mceilingclip[dc_x])
 		{
 			dc_yl = mceilingclip[dc_x];
@@ -1418,32 +1075,62 @@ void R_DrawMaskedColumnHoriz (column_t *column, int baseclip)
 		{
 			if (sprflipvert)
 			{
-				dc_texturefrac = (dc_yl*dc_iscale) - (column->topdelta << FRACBITS)
+				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
 					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
-				while (dc_texturefrac >= column->length << FRACBITS)
+				const fixed_t maxfrac = column->length << FRACBITS;
+				while (dc_texturefrac >= maxfrac)
 				{
 					if (++dc_yl > dc_yh)
-						break;
+						goto nextpost;
 					dc_texturefrac += dc_iscale;
 				}
-				if (dc_yl > dc_yh)
-					continue;
+				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
+				while (endfrac < 0)
+				{
+					if (--dc_yh < dc_yl)
+						goto nextpost;
+					endfrac -= dc_iscale;
+				}
 			}
 			else
 			{
-				dc_texturefrac = dc_texturemid - (column->topdelta << FRACBITS)
+				dc_texturefrac = dc_texturemid - (top << FRACBITS)
 					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
-				if (dc_texturefrac < 0)
+				while (dc_texturefrac < 0)
 				{
 					if (++dc_yl > dc_yh)
-						continue;
+						goto nextpost;
 					dc_texturefrac += dc_iscale;
+				}
+				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
+				const fixed_t maxfrac = column->length << FRACBITS;
+				while (endfrac >= maxfrac)
+				{
+					if (--dc_yh < dc_yl)
+						goto nextpost;
+					endfrac -= dc_iscale;
 				}
 			}
 			dc_source = (byte *)column + 3;
-			if (r_MarkTrans)
-				TransArea += dc_yh - dc_yl + 1;
 			hcolfunc_pre ();
+		}
+nextpost:
+		column = (column_t *)((byte *)column + column->length + 4);
+	}
+
+	if (sprflipvert)
+	{
+		unsigned int *front = horizspan[dc_x&3];
+		unsigned int *back = dc_ctspan[dc_x&3] - 2;
+
+		// Reorder the posts so that they get drawn top-to-bottom
+		// instead of bottom-to-top.
+		while (front < back)
+		{
+			swap (front[0], back[0]);
+			swap (front[1], back[1]);
+			front += 2;
+			back -= 2;
 		}
 	}
 }

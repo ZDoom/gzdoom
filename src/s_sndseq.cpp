@@ -1,3 +1,14 @@
+//**************************************************************************
+//**
+//** sn_sonix.c : Heretic 2 : Raven Software, Corp.
+//**
+//** $RCSfile: sn_sonix.c,v $
+//** $Revision: 1.17 $
+//** $Date: 95/10/05 18:25:44 $
+//** $Author: paul $
+//**
+//**************************************************************************
+
 #include <string.h>
 #include <stdio.h>
 
@@ -107,10 +118,11 @@ public:
 	DSeqSectorNode (sector_t *sec, int sequence);
 	~DSeqSectorNode ();
 	void Serialize (FArchive &arc);
-	void MakeSound () { S_SoundID (&m_Sector->soundorg[0], CHAN_BODY, m_CurrentSoundID, m_Volume, m_Atten, m_Sector->tag); }
-	void MakeLoopedSound () { S_LoopedSoundID (&m_Sector->soundorg[0], CHAN_BODY, m_CurrentSoundID, m_Volume, m_Atten, m_Sector->tag); }
+	void MakeSound () { S_SoundID (&m_Sector->soundorg[0], CHAN_BODY, m_CurrentSoundID, m_Volume, m_Atten, m_Sector->tag); Looping = false; }
+	void MakeLoopedSound () { S_LoopedSoundID (&m_Sector->soundorg[0], CHAN_BODY, m_CurrentSoundID, m_Volume, m_Atten, m_Sector->tag); Looping = true; }
 	bool IsPlaying () { return S_GetSoundPlayingInfo (m_Sector->soundorg, m_CurrentSoundID); }
 	void *Source () { return m_Sector; }
+	bool Looping;
 private:
 	DSeqSectorNode() {}
 	sector_t *m_Sector;
@@ -275,7 +287,7 @@ IMPLEMENT_CLASS (DSeqSectorNode)
 void DSeqSectorNode::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << m_Sector;
+	arc << m_Sector << Looping;
 }
 
 //==========================================================================
@@ -561,21 +573,22 @@ void DSeqNode::ActivateSequence (int sequence)
 }
 
 DSeqActorNode::DSeqActorNode (AActor *actor, int sequence)
-	: DSeqNode (sequence)
+	: DSeqNode (sequence),
+	  m_Actor (actor)
 {
-	m_Actor = actor;
 }
 
 DSeqPolyNode::DSeqPolyNode (polyobj_t *poly, int sequence)
-	: DSeqNode (sequence)
+	: DSeqNode (sequence),
+	  m_Poly (poly)
 {
-	m_Poly = poly;
 }
 
 DSeqSectorNode::DSeqSectorNode (sector_t *sec, int sequence)
-	: DSeqNode (sequence)
+	: DSeqNode (sequence),
+	  Looping (false),
+	  m_Sector (sec)
 {
-	m_Sector = sec;
 }
 
 //==========================================================================
@@ -726,11 +739,33 @@ DSeqPolyNode::~DSeqPolyNode ()
 
 //==========================================================================
 //
+//  SN_IsMakingLoopingSound
+//
+//==========================================================================
+
+bool SN_IsMakingLoopingSound (sector_t *sector)
+{
+	DSeqNode *node;
+
+	for (node = DSeqNode::FirstSequence (); node; )
+	{
+		DSeqNode *next = node->NextSequence();
+		if (node->Source() == (void *)sector)
+		{
+			return static_cast<DSeqSectorNode *> (node)->Looping;
+		}
+		node = next;
+	}
+	return false;
+}
+
+//==========================================================================
+//
 //  SN_UpdateActiveSequences
 //
 //==========================================================================
 
-void DSeqNode::RunThink ()
+void DSeqNode::Tick ()
 {
 	if (m_DelayTics > 0)
 	{
@@ -825,7 +860,7 @@ void SN_UpdateActiveSequences (void)
 	}
 	for (node = DSeqNode::FirstSequence(); node; node = node->NextSequence())
 	{
-		node->RunThink ();
+		node->Tick ();
 	}
 }
 

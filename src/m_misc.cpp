@@ -557,7 +557,10 @@ void M_ScreenShot (char *filename)
 
 	// save the pcx file
 	D_Display (true);
-	WritePCXfile (filename, screen, screen->GetPalette ());
+
+	PalEntry palette[256];
+	screen->GetFlashedPalette (palette);
+	WritePCXfile (filename, screen, palette);
 
 	if (!screenshot_quiet)
 	{

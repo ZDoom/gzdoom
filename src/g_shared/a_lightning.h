@@ -14,7 +14,7 @@ public:
 	DLightningThinker ();
 	~DLightningThinker ();
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 	void ForceLightning ();
 
 protected:

@@ -1,8 +1,35 @@
-;* Here are the texture-mapping inner loops in pure assembly
-;* language.
 ;*
-;* Since discovering the Win32 Demos FAQ, self-modifying code
-;* no longer sits in the data segment.
+;* tmap.nas
+;* The texture-mapping inner loops in pure assembly language.
+;*
+;*---------------------------------------------------------------------------
+;* Copyright 1998-2001 Randy Heit
+;* All rights reserved.
+;*
+;* Redistribution and use in source and binary forms, with or without
+;* modification, are permitted provided that the following conditions
+;* are met:
+;*
+;* 1. Redistributions of source code must retain the above copyright
+;*    notice, this list of conditions and the following disclaimer.
+;* 2. Redistributions in binary form must reproduce the above copyright
+;*    notice, this list of conditions and the following disclaimer in the
+;*    documentation and/or other materials provided with the distribution.
+;* 3. The name of the author may not be used to endorse or promote products
+;*    derived from this software without specific prior written permission.
+;*
+;* THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+;* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+;* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+;* IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+;* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+;* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+;* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+;* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+;* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+;* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;*---------------------------------------------------------------------------
+;*
 
 BITS 32
 
@@ -37,7 +64,6 @@ EXTERN dc_source
 EXTERN dc_yl
 EXTERN dc_yh
 EXTERN dc_x
-EXTERN dc_mask
 
 EXTERN dc_ctspan
 EXTERN dc_temp
@@ -72,7 +98,6 @@ EXTERN _dc_source
 EXTERN _dc_yl
 EXTERN _dc_yh
 EXTERN _dc_x
-EXTERN _dc_mask
 
 EXTERN _dc_ctspan
 EXTERN _dc_temp
@@ -105,7 +130,6 @@ GLOBAL _ds_curcolormap
 %define dc_yl		_dc_yl
 %define dc_yh		_dc_yh
 %define dc_x		_dc_x
-%define dc_mask		_dc_mask
 
 %define dc_ctspan	_dc_ctspan
 %define dc_temp		_dc_temp
@@ -121,7 +145,6 @@ GLOBAL _ds_curcolormap
 %define ds_y		_ds_y
 
 %endif
-
 
 _ds_cursource:
 ds_cursource:
@@ -249,7 +272,6 @@ dseven1		shr	esi,1
 		 jnc	dsrest
 
 ; do two more pixels
-
 		mov	ebp,ecx
 		 add	edx,[ds_ystep]
 		adc	ecx,[ds_xstep]
@@ -321,6 +343,9 @@ rdspret	ret
 
 ;************************
 
+EXTERN setvlinebpl_
+EXTERN setpitch3
+
 GLOBAL	@ASM_PatchPitch@0
 GLOBAL	_ASM_PatchPitch
 GLOBAL	ASM_PatchPitch
@@ -328,21 +353,11 @@ GLOBAL	ASM_PatchPitch
 ASM_PatchPitch:
 _ASM_PatchPitch:
 @ASM_PatchPitch@0:
-	mov	edx,[dc_pitch]
-
-	; 1 * dc_pitch
-	mov	[rdcp1+2],edx
-
-	; 2 * dc_pitch
-	add	edx,[dc_pitch]
-
-	; 3 * dc_pitch
-	add	edx,[dc_pitch]
-
-	; 4 * dc_pitch
-	add	edx,[dc_pitch]
-
-	ret
+	mov		eax,[dc_pitch]
+	mov		[rdcp1+2],eax
+	mov		[rdcp2+2],eax
+	call	setpitch3
+	jmp		setvlinebpl_
 
 
 ;*----------------------------------------------------------------------
@@ -363,9 +378,9 @@ _R_DrawColumnP_ASM:
 
 ; count = dc_yh - dc_yl;
 
-	mov	eax,[dc_yh]
-	 mov	ecx,[dc_yl]
-	sub	eax,ecx
+	mov	ecx,[dc_yh]
+	 mov	eax,[dc_yl]
+	sub	ecx,eax
 	 jl	near rdcpret		; count < 0: nothing to do, so leave
 
 	push	ebp			; save registers
@@ -375,56 +390,47 @@ _R_DrawColumnP_ASM:
 
 ; dest = ylookup[dc_yl] + dc_x;
 
-	inc	eax			; make 0 count mean 0 pixels
-	 mov	ebx,[dc_x]
-	imul	eax,[dc_pitch]		; Start turning the counter into an index
-	mov	edi,[ylookup+ecx*4]
-	add	edi,ebx			; edi = top of destination column
-	add	edi,eax			; Point edi to the bottom of the destination column
-	 mov	edx,[dc_iscale]
-	shr	edx,16
-	 mov	ecx,[dc_texturefrac]	; ecx = frac (all 32 bits)
-	mov	ebx,ecx
-	 mov	ebp,0
-	shl	ebx,16
-	 sub	ebp,eax			; ebp = counter (counts up to 0 in pitch increments)
+	lea	ebp,[ecx+1]		; make 0 count mean 0 pixels
+	 mov	esi,[dc_x]
+	mov	edi,[ylookup+eax*4]
+	 mov	ebx,[dc_texturefrac]	; ebx = frac
+	add	edi,esi			; edi = top of destination column
+	 mov	ecx,ebx
 	shr	ecx,16
-	 mov	eax,[dc_mask]
-	and	ecx,eax
-	 or	ebx,edx			; Put fracstep integral part into bl
-	shl	eax,8
-	 mov	edx,[dc_iscale]
-	shl	edx,16
 	 mov	esi,[dc_source]
-	or	ebx,eax			; Put mask byte into bh
-	 mov	eax,[dc_colormap]
-	sub	edi,[dc_pitch]
+	mov	edx,[dc_iscale]
+
+rdcp1:	 sub	edi,SPACEFILLER4
+	mov	eax,[dc_colormap]
+
+; pad this out to a 16 byte boundary while retaining pairing on a Pentium
+	 mov	edx,edx
+	mov	ebp,ebp
+	 nop
 
 ; The registers should now look like this:
 ;
 ;	[31  ..  16][15 .. 8][7 .. 0]
-; eax	[colormap	    ][texel ]
-; ebx	[yf	   ][mask   ][dyi   ]
-; ecx	[0		    ][yi    ]
-; edx	[dyf	   ][	    ][      ]
+; eax	[colormap		    ]
+; ebx	[yi	   ][yf		    ]
+; ecx	[scratch		    ]
+; edx	[dyi	   ][dyf	    ]
 ; esi	[source texture column	    ]
 ; edi	[destination screen pointer ]
-; ebp	[counter (adds up)	    ]
+; ebp	[counter		    ]
 ;
-; Unfortunately, this arrangement is going to produce
-; lots of partial register stalls on anything better
-; than a Pentium.
+; Note the partial register stalls on anything better than a Pentium
 
-	align	16
 rdcploop:
-	mov	al,[esi+ecx]		; Fetch texel
-	 add	ebx,edx			; increment frac fractional part
-	adc	cl,bl			; increment frac integral part
-rdcp1:	 add	ebp,SPACEFILLER4	; increment counter
-	mov	al,[eax]		; colormap texel
-	 and	cl,bh
-	mov	[edi+ebp],al		; Store texel
-	 test	ebp,ebp
+	mov	cl,[esi+ecx]		; Fetch texel
+	 mov	ch,0
+	add	ebx,edx			; increment frac
+rdcp2:	 add	edi,SPACEFILLER4	; increment destination pointer
+	mov	cl,[eax+ecx]		; colormap texel
+	mov	[edi],cl		; Store texel
+	 mov	ecx,ebx
+	shr	ecx,16
+	 dec	ebp
 	jnz	rdcploop		; loop
 
 	pop	esi
@@ -612,14 +618,10 @@ _R_DrawColumnHorizP_ASM:
 	mov	[esi],ecx
 	 mov	[esi+4],ebp
 	add	esi,8
-	 mov	[dc_ctspan+edx*4],esi
-	mov	esi,[dc_iscale]
-	 mov	ecx,[dc_texturefrac]	; ecx = frac (all 32 bits)
-	shl	ecx,8
-	 mov	ebx,[dc_mask]
-	shl	esi,8
 	 mov	edi,[dc_source]
-	or	ecx,ebx
+	mov	[dc_ctspan+edx*4],esi
+	 mov	esi,[dc_iscale]
+	mov	ecx,[dc_texturefrac]	; ecx = frac
 	 mov	dl,[edi]		; load cache
 	mov	ebx,[esp]
 	 and	ebx,0xfffffff8
@@ -629,8 +631,8 @@ _R_DrawColumnHorizP_ASM:
 ;
 ; eax: dest
 ; edi: source
-; ecx: frac (8.16)/mask (..8)
-; esi: fracstep (8.24)
+; ecx: frac (16.16)
+; esi: fracstep (16.16)
 ; ebx: add1
 ; ebp: add2
 ;  dl: texel1
@@ -647,9 +649,8 @@ _R_DrawColumnHorizP_ASM:
 
 	mov	ebp,ecx			; copy frac to ebx
 	 add	ecx,esi			; increment frac
-	shr	ebp,24			; shift frac over to low byte
+	shr	ebp,16			; shift frac over to low end
 	 add	eax,4
-	and	ebp,ecx			; mask it
 	mov	dl,[edi+ebp]
 	mov	[eax-4],dl
 
@@ -658,13 +659,11 @@ _R_DrawColumnHorizP_ASM:
 
 .loop2	mov	[esp],ebx		; save counter
 	 mov	ebx,ecx			; copy frac for texel1 to ebx
-	shr	ebx,24			; shift frac for texel1 to low byte
+	shr	ebx,16			; shift frac for texel1 to low end
 	 add	ecx,esi			; increment frac
 	mov	ebp,ecx			; copy frac for texel2 to ebp
-	 and	ebx,ecx			; mask frac for texel1
-	shr	ebp,24			; shift frac for texel2 to low byte
+	shr	ebp,16			; shift frac for texel2 to low end
 	 add	ecx,esi			; increment frac
-	and	ebp,ecx			; mask frac for texel2
 	 mov	dl,[edi+ebx]		; read texel1
 	mov	ebx,[esp]		; fetch counter
 	 mov	dh,[edi+ebp]		; read texel2
@@ -684,9 +683,8 @@ _R_DrawColumnHorizP_ASM:
 
 	mov	ebp,ecx			; frac: in ebp
 	 add	ecx,esi			; step
-	shr	ebp,24			; frac: shift
+	shr	ebp,16			; frac: shift
 	 add	eax,4			; increment dest
-	and	ebp,ecx			; frac: mask
 	 mov	ebx,[esp]		; fetch counter
 	mov	dl,[edi+ebp]		; tex:  read
 	 dec	ebx			; decrement counter
@@ -698,11 +696,9 @@ _R_DrawColumnHorizP_ASM:
 
 	mov	ebx,ecx			; frac1: in ebx
 	 add	ecx,esi			; step
-	shr	ebx,24			; frac1: shift
+	shr	ebx,16			; frac1: shift
 	 mov	ebp,ecx			; frac2: in ebp
-	shr	ebp,24			; frac2: shift
-	 and	ebx,ecx			; frac1: mask
-	and	ebp,ecx			; frac2: mask
+	shr	ebp,16			; frac2: shift
 	 add	ecx,esi			; step
 	mov	dl,[edi+ebx]		; tex1:  read
 	 mov	ebx,[esp]		; fetch counter
@@ -718,23 +714,19 @@ _R_DrawColumnHorizP_ASM:
 
 	mov	ebx,ecx			; frac1: in ebx
 	 add	ecx,esi			; step
-	shr	ebx,24			; frac1: shift
+	shr	ebx,16			; frac1: shift
 	 mov	ebp,ecx			; frac2: in ebp
-	shr	ebp,24			; frac2: shift
-	 and	ebx,ecx			; frac1: mask
-	and	ebp,ecx			; frac2: mask
+	shr	ebp,16			; frac2: shift
 	 add	ecx,esi			; step
 	mov	dl,[edi+ebx]		; tex1:  read
 	 mov	ebx,ecx			; frac3: in ebx
-	shr	ebx,24			; frac3: shift
+	shr	ebx,16			; frac3: shift
 	 mov	dh,[edi+ebp]		; tex2:  read
 	add	ecx,esi			; step
 	 mov	[eax],dl		; tex1:  write
 	mov	[eax+4],dh		; tex2:  write
 	 mov	ebp,ecx			; frac4: in ebp
-	shr	ebp,24			; frac4: shift
-	 and	ebx,ecx			; frac3: mask
-	and	ebp,ecx			; frac4: mask
+	shr	ebp,16			; frac4: shift
 	 add	ecx,esi			; step
 	mov	dl,[edi+ebx]		; tex3:  read
 	 mov	ebx,[esp]		; fetch counter
@@ -754,49 +746,41 @@ _R_DrawColumnHorizP_ASM:
 
 .loop8	mov	[esp],ebx		; save counter
 	 mov	ebx,ecx			; frac1: in ebx
-	shr	ebx,24			; frac1: shift
+	shr	ebx,16			; frac1: shift
 	 add	ecx,esi			; step
 	mov	ebp,ecx			; frac2: in ebp
-	 and	ebx,ecx			; frac1: mask
-	shr	ebp,24			; frac2: shift
+	shr	ebp,16			; frac2: shift
 	 add	ecx,esi			; step
-	and	ebp,ecx			; frac2: mask
 	 mov	dl,[edi+ebx]		; tex1:  read
 	mov	ebx,ecx			; frac3: in ebx
 	 mov	dh,[edi+ebp]		; tex2:  read
-	shr	ebx,24			; frac3: shift
+	shr	ebx,16			; frac3: shift
 	 add	ecx,esi			; step
 	mov	[eax],dl		; tex1:  write
 	 mov	[eax+4],dh		; tex2:  write
 	mov	ebp,ecx			; frac4: in ebp
-	 and	ebx,ecx			; frac3: mask
-	shr	ebp,24			; frac4: shift
+	shr	ebp,16			; frac4: shift
 	 add	ecx,esi			; step
-	and	ebp,ecx			; frac4: mask
 	 mov	dl,[edi+ebx]		; tex3:  read
 	mov	ebx,ecx			; frac5: in ebx
 	 mov	dh,[edi+ebp]		; tex4:  read
-	shr	ebx,24			; frac5: shift
+	shr	ebx,16			; frac5: shift
 	 mov	[eax+8],dl		; tex3:  write
 	mov	[eax+12],dh		; tex4:  write
 	 add	ecx,esi			; step
 	mov	ebp,ecx			; frac6: in ebp
-	 and	ebx,ecx			; frac5: mask
-	shr	ebp,24			; frac6: shift
+	shr	ebp,16			; frac6: shift
 	 mov	dl,[edi+ebx]		; tex5:  read
-	and	ebp,ecx			; frac6: mask
 	 add	ecx,esi			; step
 	mov	ebx,ecx			; frac7: in ebx
 	 mov	[eax+16],dl		; tex5:  write
-	shr	ebx,24			; frac7: shift
+	shr	ebx,16			; frac7: shift
 	 mov	dh,[edi+ebp]		; tex6:  read
-	and	ebx,ecx			; frac7: mask
 	 add	ecx,esi			; step
 	mov	ebp,ecx			; frac8: in ebp
 	 mov	[eax+20],dh		; tex6:  write
-	shr	ebp,24			; frac8: shift
+	shr	ebp,16			; frac8: shift
 	 add	eax,32			; increment dest pointer
-	and	ebp,ecx			; frac8: mask
 	 mov	dl,[edi+ebx]		; tex7:  read
 	mov	ebx,[esp]		; fetch counter
 	 mov	[eax-8],dl		; tex7:  write
@@ -882,76 +866,6 @@ _rt_copy1col_asm:
 	mov	[eax+esi],dh
 	add	ecx,8
 	lea	eax,[eax+esi*2]
-	dec	ebx
-	jnz	.loop
-
-.done	pop	edi
-	pop	esi
-	pop	ebx
-	ret	8
-
-;*----------------------------------------------------------------------
-;*
-;* rt_copy2cols_asm
-;*
-;* ecx = hx
-;* edx = sx
-;* [esp+4] = yl
-;* [esp+8] = yh
-;*
-;*----------------------------------------------------------------------
-
-GLOBAL	@rt_copy2cols_asm@16
-GLOBAL	_rt_copy2cols_asm
-GLOBAL	rt_copy2cols_asm
-
-	align 16
-
-_rt_copy2cols_asm:
-rt_copy2cols_asm:
-	pop	eax
-	mov	edx,[esp+4*3]
-	mov	ecx,[esp+4*2]
-	push	edx
-	push	ecx
-	mov	ecx,[esp+4*2]
-	mov	edx,[esp+4*3]
-	push	eax
-
-@rt_copy2cols_asm@16:
-	mov	eax, [esp+4]
-	push	ebx
-	mov	ebx, [esp+12]
-	push	esi
-	sub	ebx, eax
-	push	edi
-	js	.done
-
-	lea	esi,[eax*4]
-	inc	ebx			; ebx = count
-	mov	eax,edx
-	lea	ecx,[dc_temp+ecx+esi]	; ecx = source
-	mov	edi,[ylookup+esi]
-	mov	edx,[dc_pitch]		; edx = pitch
-	add	eax,edi			; eax = dest
-
-	shr	ebx,1
-	jnc	.even
-
-	mov	si,[ecx]
-	add	ecx,4
-	mov	[eax],si
-	add	eax,edx
-
-.even	and	ebx,ebx
-	jz	.done
-
-.loop	mov	si,[ecx]
-	mov	di,[ecx+4]
-	mov	[eax],si
-	mov	[eax+edx],di
-	add	ecx,8
-	lea	eax,[eax+edx*2]
 	dec	ebx
 	jnz	.loop
 
@@ -1105,94 +1019,10 @@ _rt_map1col_asm:
 
 ;*----------------------------------------------------------------------
 ;*
-;* rt_map2cols_asm
-;*
-;* ecx = hx
-;* edx = sx
-;* [esp+4] = yl
-;* [esp+8] = yh
-;*
-;*----------------------------------------------------------------------
-
-GLOBAL	@rt_map2cols_asm@16
-GLOBAL	_rt_map2cols_asm
-GLOBAL	rt_map2cols_asm
-
-	align 16
-
-rt_map2cols_asm:
-_rt_map2cols_asm:
-	pop	eax
-	mov	edx,[esp+4*3]
-	mov	ecx,[esp+4*2]
-	push	edx
-	push	ecx
-	mov	ecx,[esp+4*2]
-	mov	edx,[esp+4*3]
-	push	eax
-
-@rt_map2cols_asm@16:
-	mov	eax,[esp+4]
-	push	ebx
-	mov	ebx,[esp+12]
-	push	ebp
-	push	esi
-	sub	ebx, eax
-	push	edi
-	js	near .done
-
-	lea	edi,[eax*4]
-	mov	esi,[dc_colormap]		; esi = colormap
-	inc	ebx				; ebx = count
-	mov	eax,edx
-	lea	ebp,[dc_temp+ecx+edi]		; ebp = source
-	mov	ecx,[ylookup+edi]
-	mov	edi,[dc_pitch]			; edi = pitch
-	add	eax,ecx				; eax = dest
-	xor	ecx,ecx
-	xor	edx,edx
-
-	shr	ebx,1
-	jnc	.even
-
-	mov	dl,[ebp]
-	mov	cl,[ebp+1]
-	add	ebp,4
-	mov	dl,[esi+edx]
-	mov	cl,[esi+ecx]
-	mov	[eax],dl
-	mov	[eax+1],cl
-	add	eax,edi
-
-.even	and	ebx,ebx
-	jz	.done
-
-.loop	mov	dl,[ebp]
-	mov	cl,[ebp+1]
-	mov	dl,[esi+edx]
-	mov	cl,[esi+ecx]
-	mov	[eax],dl
-	mov	dl,[ebp+4]
-	mov	[eax+1],cl
-	mov	cl,[ebp+5]
-	add	ebp,8
-	mov	dl,[esi+edx]
-	mov	cl,[esi+ecx]
-	mov	[eax+edi],dl
-	mov	[eax+edi+1],cl
-	dec	ebx
-	lea	eax,[eax+edi*2]
-	jnz	.loop
-
-.done	pop	edi
-	pop	esi
-	pop	ebp
-	pop	ebx
-	ret	8
-
-;*----------------------------------------------------------------------
-;*
 ;* rt_map4cols_asm
+;*
+;* rt_map4cols_asm1 is for PPro and above
+;* rt_map4cols_asm2 is for Pentium and below
 ;*
 ;* ecx = sx
 ;* edx = yl

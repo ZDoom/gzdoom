@@ -28,7 +28,7 @@ int clipammo[NUMAMMO] =
 class AClip : public AAmmo
 {
 	DECLARE_ACTOR (AClip, AAmmo)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		if (flags & MF_DROPPED)
@@ -36,6 +36,7 @@ protected:
 		else
 			return P_GiveAmmo (toucher->player, am_clip, clipammo[am_clip]);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTCLIP);
@@ -65,11 +66,12 @@ AT_GAME_SET (Clip)
 class AClipBox : public AAmmo
 {
 	DECLARE_ACTOR (AClipBox, AAmmo)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_clip, clipammo[am_clip]*5);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTCLIPBOX);
@@ -94,11 +96,12 @@ END_DEFAULTS
 class ARocketAmmo : public AAmmo
 {
 	DECLARE_ACTOR (ARocketAmmo, AAmmo)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_misl, clipammo[am_misl]);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTROCKET);
@@ -128,11 +131,12 @@ AT_GAME_SET (RocketAmmo)
 class ARocketBox : public AAmmo
 {
 	DECLARE_ACTOR (ARocketBox, AAmmo)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_misl, clipammo[am_misl]*5);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTROCKBOX);
@@ -157,11 +161,12 @@ END_DEFAULTS
 class ACell : public AAmmo
 {
 	DECLARE_ACTOR (ACell, AAmmo)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_cell, clipammo[am_cell]);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTCELL);
@@ -191,11 +196,12 @@ AT_GAME_SET (Cell)
 class ACellPack : public AAmmo
 {
 	DECLARE_ACTOR (ACellPack, AAmmo)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_cell, clipammo[am_cell]*5);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTCELLBOX);
@@ -220,11 +226,12 @@ END_DEFAULTS
 class AShell : public AAmmo
 {
 	DECLARE_ACTOR (AShell, AAmmo)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_shell, clipammo[am_shell]);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTSHELLS);
@@ -254,11 +261,12 @@ AT_GAME_SET (Shell)
 class AShellBox : public AAmmo
 {
 	DECLARE_ACTOR (AShellBox, AAmmo)
-protected:
+public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_shell, clipammo[am_shell]*5);
 	}
+protected:
 	virtual const char *PickupMessage ()
 	{
 		return GStrings(GOTSHELLBOX);
@@ -288,6 +296,8 @@ class AFist : public AWeapon
 {
 	DECLARE_ACTOR (AFist, AWeapon)
 	AT_GAME_SET_FRIEND (Fist)
+protected:
+	weapontype_t OldStyleID () const;
 private:
 	static FWeaponInfo WeaponInfo;
 };
@@ -343,6 +353,11 @@ AT_GAME_SET (Fist)
 	}
 }
 
+weapontype_t AFist::OldStyleID () const
+{
+	return wp_fist;
+}
+
 //
 // A_Punch
 //
@@ -351,7 +366,9 @@ void A_Punch (player_t *player, pspdef_t *psp)
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
-		
+
+	player->UseAmmo ();
+
 	damage = (P_Random (pr_punch)%10+1)<<1;
 
 	if (player->powers[pw_strength])	
@@ -382,6 +399,8 @@ class APistol : public AWeapon
 {
 	DECLARE_ACTOR (APistol, AWeapon)
 	AT_GAME_SET_FRIEND (Pistol)
+protected:
+	weapontype_t OldStyleID () const;
 private:
 	static FWeaponInfo WeaponInfo;
 };
@@ -439,6 +458,11 @@ AT_GAME_SET (Pistol)
 	}
 }
 
+weapontype_t APistol::OldStyleID () const
+{
+	return wp_pistol;
+}
+
 //
 // A_FirePistol
 //
@@ -447,8 +471,7 @@ void A_FirePistol (player_t *player, pspdef_t *psp)
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 
 	player->mo->PlayAttacking2 ();
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[wpnlev1info[player->readyweapon]->ammo]--;
+	player->UseAmmo ();
 
 	P_SetPsprite (player,
 				  ps_flash,
@@ -548,6 +571,8 @@ void A_Saw (player_t *player, pspdef_t *psp)
 {
 	angle_t 	angle;
 	int 		damage;
+
+	player->UseAmmo ();
 
 	damage = 2 * (P_Random (pr_saw)%10+1);
 	angle = player->mo->angle;
@@ -685,9 +710,7 @@ void A_FireShotgun (player_t *player, pspdef_t *psp)
 		
 	S_Sound (player->mo, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	player->mo->PlayAttacking2 ();
-
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[wpnlev1info[player->readyweapon]->ammo]--;
+	player->UseAmmo ();
 
 	P_SetPsprite (player,
 				  ps_flash,
@@ -746,8 +769,8 @@ FState ASuperShotgun::States[] =
 	S_NORMAL (SHT2, 'A',	3, NULL 				, &States[S_DSGUNDOWN]),
 
 #define S_DSGUNFLASH (S_DSNR+2)
-	S_BRIGHT (SHT2, 'I',	5, A_Light1 			, &States[S_DSGUNFLASH+1]),
-	S_BRIGHT (SHT2, 'J',	4, A_Light2 			, &AWeapon::States[S_LIGHTDONE]),
+	S_BRIGHT (SHT2, 'I',	4, A_Light1 			, &States[S_DSGUNFLASH+1]),
+	S_BRIGHT (SHT2, 'J',	3, A_Light2 			, &AWeapon::States[S_LIGHTDONE]),
 
 #define S_SHOT2 (S_DSGUNFLASH+2)
 	S_NORMAL (SGN2, 'A',   -1, NULL 				, NULL)
@@ -812,9 +835,7 @@ void A_FireShotgun2 (player_t *player, pspdef_t *psp)
 		
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
 	player->mo->PlayAttacking2 ();
-
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[wpnlev1info[player->readyweapon]->ammo]-=2;
+	player->UseAmmo ();
 
 	P_SetPsprite (player,
 				  ps_flash,
@@ -948,12 +969,12 @@ void A_FireCGun (player_t *player, pspdef_t *psp)
 {
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 
-	if (!player->ammo[wpnlev1info[player->readyweapon]->ammo])
+	if (wpnlev1info[player->readyweapon]->ammo < NUMAMMO &&
+		!player->ammo[wpnlev1info[player->readyweapon]->ammo])
 		return;
 				
 	player->mo->PlayAttacking2 ();
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[wpnlev1info[player->readyweapon]->ammo]--;
+	player->UseAmmo ();
 
 	P_SetPsprite (player,
 				  ps_flash,
@@ -1091,8 +1112,7 @@ void ARocket::BeginPlay ()
 //
 void A_FireMissile (player_t *player, pspdef_t *psp)
 {
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[wpnlev1info[player->readyweapon]->ammo]--;
+	player->UseAmmo ();
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ARocket));
 }
 
@@ -1217,8 +1237,7 @@ END_DEFAULTS
 //
 void A_FirePlasma (player_t *player, pspdef_t *psp)
 {
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[wpnlev1info[player->readyweapon]->ammo]--;
+	player->UseAmmo ();
 
 	if (wpnlev1info[player->readyweapon]->flashstate)
 	{
@@ -1441,14 +1460,12 @@ void A_FireBFG (player_t *player, pspdef_t *psp)
 	angle_t storedpitch = player->mo->pitch;
 	int storedaimdist = player->userinfo.aimdist;
 
-	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[wpnlev1info[player->readyweapon]->ammo] -=
-			wpnlev1info[player->readyweapon]->ammouse;
+	player->UseAmmo ();
 
 	if (dmflags2 & DF2_NO_FREEAIMBFG)
 	{
 		player->mo->pitch = 0;
-		player->userinfo.aimdist = ANGLE_1*32;
+		player->userinfo.aimdist = ANGLE_1*35;
 	}
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ABFGBall));
 	player->mo->pitch = storedpitch;

@@ -1,10 +1,44 @@
-// MUS files are essentially format 0 MIDI files with some
-// space-saving modifications. Conversion is quite straight-forward.
-// If you were to hook a main() into this that calls ProduceMIDI,
-// you could create a self-contained MUS->MIDI converter. However, if
-// you want to do that, you would be better off using qmus2mid, since
-// it creates multitrack files that usually maintain running status
-// better than single track files and are thus smaller.
+/*
+** mus2midi.cpp
+** Simple converter from MUS to MIDI format
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+** MUS files are essentially format 0 MIDI files with some
+** space-saving modifications. Conversion is quite straight-forward.
+** If you were to hook a main() into this that calls ProduceMIDI,
+** you could create a self-contained MUS->MIDI converter. However, if
+** you want to do that, you would be better off using qmus2mid, since
+** it creates multitrack files that usually maintain running status
+** better than single track files and are thus smaller.
+*/
+
 
 #include <string.h>
 
@@ -117,7 +151,7 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 	while (mus_p < maxmus_p && (event & 0x70) != MUS_SCOREEND)
 	{
 		int channel;
-		BYTE t;
+		BYTE t = 0;
 		
 		event = musBuf[mus_p++];
 		
@@ -173,6 +207,7 @@ bool ProduceMIDI (const BYTE *musBuf, FILE *outFile)
 				midArgs = 1;
 				midStatus |= MIDI_PRGMCHANGE;
 				mid1 = musBuf[mus_p++];
+				mid2 = 0;	// Assign mid2 just to make GCC happy
 			}
 			else
 			{

@@ -1,25 +1,36 @@
-// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-//
-// DESCRIPTION:
-//		Switches, buttons. Two-state animation. Exits.
-//
-//-----------------------------------------------------------------------------
-
+/*
+** p_switch.cpp
+** Switch and button maintenance and animation
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #include "templates.h"
 #include "i_system.h"
@@ -57,7 +68,7 @@ public:
 	DActiveButton (side_t *, EWhere, WORD switchnum, fixed_t x, fixed_t y, bool flippable);
 
 	void Serialize (FArchive &arc);
-	void RunThink ();
+	void Tick ();
 
 	side_t	*m_Side;
 	EWhere	m_Where;
@@ -94,7 +105,7 @@ struct FSwitchDef
 };
 
 static int STACK_ARGS SortSwitchDefs (const void *a, const void *b);
-static FSwitchDef *ParseSwitchDef ();
+static FSwitchDef *ParseSwitchDef (bool ignoreBad);
 static WORD AddSwitchDef (FSwitchDef *def);
 
 //
@@ -226,7 +237,7 @@ void P_ProcessSwitchDef ()
 			{
 				SC_ScriptError ("Switch already has an on state");
 			}
-			def1 = ParseSwitchDef ();
+			def1 = ParseSwitchDef (picnum == -1);
 		}
 		else if (SC_Compare ("off"))
 		{
@@ -234,7 +245,7 @@ void P_ProcessSwitchDef ()
 			{
 				SC_ScriptError ("Switch already has an off state");
 			}
-			def2 = ParseSwitchDef ();
+			def2 = ParseSwitchDef (picnum == -1);
 		}
 		else
 		{
@@ -278,12 +289,13 @@ void P_ProcessSwitchDef ()
 	def1->PairIndex = AddSwitchDef (def2);
 }
 
-FSwitchDef *ParseSwitchDef ()
+FSwitchDef *ParseSwitchDef (bool ignoreBad)
 {
 	FSwitchDef *def;
 	SWORD pics[MAX_FRAMES];
 	DWORD times[MAX_FRAMES];
 	int numframes;
+	int picnum;
 	SWORD sound;
 
 	numframes = 0;
@@ -293,6 +305,10 @@ FSwitchDef *ParseSwitchDef ()
 	{
 		if (SC_Compare ("sound"))
 		{
+			if (sound != 0)
+			{
+				SC_ScriptError ("Switch state already has a sound");
+			}
 			SC_MustGetString ();
 			sound = S_FindSound (sc_String);
 		}
@@ -303,7 +319,13 @@ FSwitchDef *ParseSwitchDef ()
 				SC_ScriptError ("Switch has too many frames");
 			}
 			SC_MustGetString ();
-			pics[numframes] = R_CheckTextureNumForName (sc_String);
+			picnum = R_CheckTextureNumForName (sc_String);
+			if (picnum < 0 && !ignoreBad)
+			{
+				const char *texname = sc_String;
+				SC_ScriptError ("Unknown texture %s", &texname);
+			}
+			pics[numframes] = picnum;
 			SC_MustGetString ();
 			if (SC_Compare ("tics"))
 			{
@@ -517,7 +539,7 @@ void DActiveButton::Serialize (FArchive &arc)
 	}
 }
 
-void DActiveButton::RunThink ()
+void DActiveButton::Tick ()
 {
 	if (--m_Timer == 0)
 	{

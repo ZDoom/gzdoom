@@ -30,7 +30,6 @@
 #include "doomstat.h"
 #include "gstrings.h"
 #include "p_inter.h"
-#include "d_items.h"
 #include "p_local.h"
 #include "a_doomglobal.h"
 #include "gi.h"
@@ -246,7 +245,7 @@ static void GiveSpawner (player_t *player, const TypeInfo *type)
 		(Spawn (type, player->mo->x, player->mo->y, player->mo->z));
 	if (item != NULL)
 	{
-		item->Touch (player->mo);
+		item->TryPickup (player->mo);
 		if (!(item->ObjectFlags & OF_MassDestruction))
 		{
 			item->Destroy ();
@@ -258,7 +257,7 @@ void cht_Give (player_t *player, char *name, int amount)
 {
 	BOOL giveall;
 	int i;
-	gitem_t *it;
+	const TypeInfo *type;
 
 	if (player != &players[consoleplayer])
 		Printf ("%s is a cheater: give %s\n", player->userinfo.netname, name);
@@ -338,14 +337,16 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "weapons") == 0)
 	{
+		weapontype_t savedpending = player->pendingweapon;
 		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
 		{
-			const TypeInfo *const type = TypeInfo::m_Types[i];
+			type = TypeInfo::m_Types[i];
 			if (type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 			{
 				GiveSpawner (player, type);
 			}
 		}
+		player->pendingweapon = savedpending;
 
 		if (!giveall)
 			return;
@@ -354,46 +355,20 @@ void cht_Give (player_t *player, char *name, int amount)
 	if (giveall)
 		return;
 
-	it = FindItem (name);
-	if (!it)
+	type = TypeInfo::IFindType (name);
+	if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 	{
-		it = FindItemByClassname (name);
-		if (!it)
+		if (player == &players[consoleplayer])
+			Printf ("Unknown item \"%s\"\n", name);
+	}
+	else
+	{
+		for (i = amount ? amount : 1; i; --i)
 		{
-			const TypeInfo *type = TypeInfo::IFindType (name);
-			if (type == NULL || !type->IsDescendantOf (RUNTIME_CLASS(AInventory)))
-			{
-				if (player == &players[consoleplayer])
-					Printf ("Unknown item \"%s\"\n", name);
-			}
-			else
-			{
-				for (i = amount ? amount : 1; i; --i)
-				{
-					GiveSpawner (player, type);
-				}
-			}
-			return;
+			GiveSpawner (player, type);
 		}
 	}
-
-	if (it->flags & IT_AMMO)
-	{
-		P_GiveAmmo (player, (ammotype_t)it->offset,
-			amount != 0 ? amount : it->quantity);
-	}
-	else if (it->flags & IT_KEY)
-	{
-		P_GiveKey (player, (keytype_t)it->offset);
-	}
-	else if (it->flags & IT_POWERUP)
-	{
-		P_GivePower (player, (powertype_t)it->offset);
-	}
-	else if (it->flags & IT_ARMOR)
-	{
-		P_GiveArmor (player, (armortype_t)it->offset, it->offset * 100);
-	}
+	return;
 }
 
 void cht_Suicide (player_t *plyr)

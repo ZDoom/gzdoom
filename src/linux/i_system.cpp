@@ -76,7 +76,7 @@ extern "C"
 	byte		CPUFamily, CPUModel, CPUStepping;
 }
 
-static cycle_t ClockCalibration;
+void CalculateCPUSpeed ();
 
 BOOL UseMMX;
 DWORD LanguageIDs[4] =
@@ -87,8 +87,6 @@ DWORD LanguageIDs[4] =
 	MAKE_ID ('e','n','u',0)
 };
 	
-static float mb_used = 8.f;
-
 int (*I_GetTime) (void);
 int (*I_WaitForTic) (int);
 
@@ -104,20 +102,17 @@ ticcmd_t *I_BaseTiccmd(void)
     return &emptycmd;
 }
 
-int I_GetHeapSize (void)
-{
-    return (int)(mb_used*1024*1024);
-}
-
 byte *I_ZoneBase (size_t *size)
 {
-    char *p;
+	void *zone;
 
-    p = Args.CheckValue ("-heapsize");
-    if (p)
-		mb_used = (float)atof (p);
-    *size = I_GetHeapSize ();
-    return (byte *) malloc (*size);
+	while (NULL == (zone = malloc (*size)) &&
+		   *size >= 2*1024*1024)
+	{
+		*size -= 1024*1024;
+	}
+
+	return (byte *)zone;
 }
 
 void I_BeginRead(void)
@@ -228,13 +223,7 @@ void I_Init (void)
 		Printf (PRINT_HIGH, "not using MMX)\n");
 
     Printf (PRINT_HIGH, "-> family %d, model %d, stepping %d\n", CPUFamily, CPUModel, CPUStepping);
-    Printf (PRINT_HIGH, "-> Processor %s RDTSC\n", HaveRDTSC ? "has" : "does not have");
-    if (HaveRDTSC)
-    {
-		clock (ClockCalibration);
-		usleep (100);
-		unclock (ClockCalibration);
-    }
+    CalculateCPUSpeed ();
 #endif
 
 	I_GetTime = I_GetTimePolled;
@@ -243,9 +232,41 @@ void I_Init (void)
 	I_InitHardware ();
 }
 
-void I_FinishClockCalibration ()
+void CalculateCPUSpeed ()
 {
-	Printf (PRINT_HIGH, "CPU Frequency: ~%f MHz\n", CyclesPerSecond / 1e6);
+	timeval start, stop, now;
+	cycle_t ClockCycles;
+	DWORD usec;
+
+	if (HaveRDTSC)
+	{
+		ClockCycles = 0;
+		clock (ClockCycles);
+		gettimeofday (&start, NULL);
+	
+		// Count cycles for at least 100 milliseconds.
+		// We don't have the same accuracy we can get with the Win32
+		// performance counters, so we have to time longer.
+		stop.tv_usec = start.tv_usec + 100000;
+		stop.tv_sec = start.tv_sec;
+		if (stop.tv_usec >= 1000000)
+		{
+			stop.tv_usec -= 1000000;
+			stop.tv_sec += 1;
+		}
+		do
+		{
+			gettimeofday (&now, NULL);
+		} while (timercmp (&now, &stop, <));
+	
+		unclock (ClockCycles);
+		gettimeofday (&now, NULL);
+		usec = now.tv_usec - start.tv_usec;
+
+		CyclesPerSecond = (double)ClockCycles * 1e6 / (double)usec;
+		SecondsPerCycle = 1.0 / CyclesPerSecond;
+	}
+	Printf (PRINT_HIGH, "CPU Speed: ~%f MHz\n", CyclesPerSecond / 1e6);
 }
 
 //
@@ -284,12 +305,12 @@ void STACK_ARGS I_FatalError (const char *error, ...)
 		index = vsprintf (errortext, error, argptr);
 		va_end (argptr);
 
-		printf ("fatality:\n%s\n", errortext);
 		// Record error to log (if logging)
 		if (Logfile)
 			fprintf (Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-		throw CFatalError (errortext);
-		printf ("did throw\n");
+//		throw CFatalError (errortext);
+		fprintf (stderr, "%s\n", errortext);
+		exit (-1);
     }
 
     if (!has_exited)	// If it hasn't exited yet, exit now -- killough
@@ -366,7 +387,7 @@ static int select (const struct dirent *ent)
     return fnmatch (pattern, ent->d_name, FNM_NOESCAPE) == 0;
 }
 
-long I_FindFirst (char *filespec, findstate_t *fileinfo)
+long I_FindFirst (const char *filespec, findstate_t *fileinfo)
 {
 	char *slash = strrchr (filespec, '/');
 	if (slash)

@@ -148,6 +148,7 @@ FBoolCVar noisedebug ("noise", false, 0);	// [RH] Print sound debugging info?
 CVAR (Int, snd_channels, 12, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// number of channels available
 CVAR (Bool, sv_ihatesounds, false, CVAR_SERVERINFO)
 CVAR (Bool, snd_dolby, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, snd_flipstereo, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
 
@@ -309,12 +310,16 @@ void S_Start ()
 
 	// kill all playing sounds at start of level (trust me - a good idea)
 	for (cnum = 0; cnum < numChannels; cnum++)
+	{
 		if (Channel[cnum].sfxinfo)
+		{
 			S_StopChannel (cnum);
-	
+		}
+	}
+
 	// start new music for the level
 	mus_paused = 0;
-	
+
 	// [RH] This is a lot simpler now.
 	if (!savegamerestore)
 	{
@@ -622,6 +627,10 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 				angle = angle + (ANGLE_MAX - listener->angle);
 			angle >>= ANGLETOFINESHIFT;
 			sep = NORM_SEP - (FixedMul (S_STEREO_SWING, finesine[angle])>>FRACBITS);
+			if (snd_flipstereo)
+			{
+				sep = 255-sep;
+			}
 			if (snd_dolby)
 			{
 				int rearsep = NORM_SEP -
@@ -705,7 +714,7 @@ void S_SoundID (int channel, int sound_id, float volume, int attenuation)
 
 void S_SoundID (AActor *ent, int channel, int sound_id, float volume, int attenuation)
 {
-	if (ent->subsector->sector->MoreFlags & SECF_SILENT)
+	if (ent->Sector->MoreFlags & SECF_SILENT)
 		return;
 	S_StartSound (&ent->x, ent, channel, sound_id, volume, SELECT_ATTEN(attenuation), false);
 }
@@ -723,7 +732,7 @@ void S_SoundID (fixed_t *pt, int channel, int sound_id, float volume, int attenu
 
 void S_LoopedSoundID (AActor *ent, int channel, int sound_id, float volume, int attenuation)
 {
-	if (ent->subsector->sector->MoreFlags & SECF_SILENT)
+	if (ent->Sector->MoreFlags & SECF_SILENT)
 		return;
 	S_StartSound (&ent->x, ent, channel, sound_id, volume, SELECT_ATTEN(attenuation), true);
 }
@@ -745,7 +754,7 @@ void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel,
 	int sfx_id;
 	
 	if (name == NULL ||
-		(ent != NULL && ent->subsector->sector->MoreFlags & SECF_SILENT))
+		(ent != NULL && ent->Sector->MoreFlags & SECF_SILENT))
 	{
 		return;
 	}
@@ -917,10 +926,17 @@ void S_RelinkSound (AActor *from, AActor *to)
 	{
 		if (Channel[i].pt == frompt)
 		{
-			Channel[i].pt = topt ? topt : &Channel[i].x;
-			Channel[i].x = frompt[0];
-			Channel[i].y = frompt[1];
-			Channel[i].z = frompt[2];
+			if (to != NULL || !Channel[i].loop)
+			{
+				Channel[i].pt = topt ? topt : &Channel[i].x;
+				Channel[i].x = frompt[0];
+				Channel[i].y = frompt[1];
+				Channel[i].z = frompt[2];
+			}
+			else
+			{
+				S_StopChannel (i);
+			}
 		}
 	}
 }
@@ -1091,6 +1107,10 @@ void S_UpdateSounds (void *listener_p)
 					angle = angle + (ANGLE_MAX - players[consoleplayer].camera->angle);
 				angle >>= ANGLETOFINESHIFT;
 				sep = NORM_SEP - (FixedMul (S_STEREO_SWING, finesine[angle])>>FRACBITS);
+				if (snd_flipstereo)
+				{
+					sep = 255-sep;
+				}
 				if (snd_dolby)
 				{
 					int rearsep = NORM_SEP -

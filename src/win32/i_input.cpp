@@ -1,3 +1,37 @@
+/*
+** i_input.cpp
+** Handles input from keyboard, mouse, and joystick
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2001 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #define DIRECTINPUT_VERSION 0x300	// We want to support DX 3.0, and
 #define _WIN32_WINNT 0x0400			// we want to support the mouse wheel
 
@@ -27,6 +61,7 @@
 #include "i_system.h"
 
 #include "s_sound.h"
+#include "win32iface.h"
 
 #define DINPUT_BUFFERSIZE	32
 
@@ -56,6 +91,8 @@ static bool GUICapture;
 static bool NativeMouse;
 static bool MakeMouseEvents;
 static POINT UngrabbedPointerPos;
+
+bool VidResizing;
 
 extern BOOL vidactive;
 extern HWND Window;
@@ -210,10 +247,10 @@ static void I_CheckGUICapture ()
 	}
 }
 
-static void I_CheckNativeMouse ()
+void I_CheckNativeMouse (bool preferNative)
 {
 	bool wantNative = !HaveFocus ||
-		((!screen || !screen->IsFullscreen()) && (GUICapture || paused));
+		((!screen || !screen->IsFullscreen()) && (GUICapture || paused || preferNative));
 
 //		Printf ("%d -> %d\n", NativeMouse, wantNative);
 	if (wantNative != NativeMouse)
@@ -265,6 +302,10 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_PAINT:
+		if (screen != NULL)
+		{
+			static_cast<DDrawFB *> (screen)->PaintToWindow ();
+		}
 		return DefWindowProc (hWnd, message, wParam, lParam);
 
 	case WM_SETTINGCHANGE:
@@ -277,7 +318,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		
 		FlushDIKState ();
 		HaveFocus = false;
-		I_CheckNativeMouse ();	// Make sure mouse gets released right away
+		I_CheckNativeMouse (true);	// Make sure mouse gets released right away
 		if (paused == 0)
 		{
 			S_PauseSound ();
@@ -312,6 +353,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			CenterMouse_Win32 (-1, -1);
 			return 0;
 		}
+		InvalidateRect (Window, NULL, FALSE);
 		break;
 
 	case WM_MOVE:
@@ -470,7 +512,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_GETMINMAXINFO:
-		if (screen)
+		if (screen && !VidResizing)
 		{
 			LPMINMAXINFO mmi = (LPMINMAXINFO)lParam;
 			mmi->ptMinTrackSize.x = SCREENWIDTH + GetSystemMetrics (SM_CXSIZEFRAME) * 2;
@@ -1175,7 +1217,7 @@ void I_StartTic ()
 {
 	ResetButtonTriggers ();
 	I_CheckGUICapture ();
-	I_CheckNativeMouse ();
+	I_CheckNativeMouse (false);
 	I_GetEvent ();
 }
 
@@ -1233,4 +1275,16 @@ char *I_GetFromClipboard ()
 
 	CloseClipboard ();
 	return retstr;
+}
+
+#include "i_movie.h"
+
+CCMD (playmovie)
+{
+	if (argv.argc() != 2)
+	{
+		Printf ("Usage: playmovie <movie name>\n");
+		return;
+	}
+	I_PlayMovie (argv[1]);
 }

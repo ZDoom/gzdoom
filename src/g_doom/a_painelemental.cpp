@@ -125,8 +125,8 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	// ceiling of its new sector, or below the floor. If so, kill it.
 
 	if ((other->z >
-         (other->subsector->sector->ceilingplane.ZatPoint (other->x, other->y) - other->height)) ||
-        (other->z < other->subsector->sector->floorplane.ZatPoint (other->x, other->y)))
+         (other->Sector->ceilingplane.ZatPoint (other->x, other->y) - other->height)) ||
+        (other->z < other->Sector->floorplane.ZatPoint (other->x, other->y)))
 	{
 		// kill it immediately
 		P_DamageMobj (other, self, self, 10000, MOD_UNKNOWN);		//   ^

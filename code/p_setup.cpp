@@ -1381,8 +1381,9 @@ void P_SetupLevel (char *lumpname, int position)
 
 	po_NumPolyobjs = 0;
 
-	if (!deathmatchstarts) {
-		MaxDeathmatchStarts = 10;	// [RH] Default. Increased as needed.
+	if (!deathmatchstarts)
+	{
+		MaxDeathmatchStarts = 16;	// [RH] Default. Increased as needed.
 		deathmatchstarts = (mapthing2_t *)Malloc (MaxDeathmatchStarts * sizeof(mapthing2_t));
 	}
 	deathmatch_p = deathmatchstarts;

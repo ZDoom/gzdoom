@@ -643,7 +643,6 @@ void player_s::Serialize (FArchive &arc)
 			<< xviewshift
 			<< jumpTics
 			<< respawn_time
-			<< camera
 			<< air_finished
 			<< isbot;
 		for (i = 0; i < NUMPOWERS; i++)
@@ -725,7 +724,6 @@ void player_s::Serialize (FArchive &arc)
 			>> xviewshift
 			>> jumpTics
 			>> respawn_time
-			>> camera
 			>> air_finished
 			>> isbot;
 		for (i = 0; i < NUMPOWERS; i++)
@@ -743,31 +741,46 @@ void player_s::Serialize (FArchive &arc)
 		for (i = 0; i < 3; i++)
 			arc >> oldvelocity[i];
 
+		camera = mo;
+
+		if (consoleplayer != this - players)
+			userinfo = dummyuserinfo;
+
 		if (isbot)
 		{
-			arc	<< angle
-				<< dest
-				<< prev
-				<< enemy
-				<< missile
-				<< mate
-				<< last_mate
-				<< skill
-				<< t_active
-				<< t_respawn
-				<< t_strafe
-				<< t_react
-				<< t_fight
-				<< t_roam
-				<< t_rocket
-				<< first_shot
-				<< sleft
-				<< allround
-				<< redteam
-				<< oldx
-				<< oldy
-				<< chat;
+			arc	>> angle
+				>> dest
+				>> prev
+				>> enemy
+				>> missile
+				>> mate
+				>> last_mate
+				>> skill
+				>> t_active
+				>> t_respawn
+				>> t_strafe
+				>> t_react
+				>> t_fight
+				>> t_roam
+				>> t_rocket
+				>> first_shot
+				>> sleft
+				>> allround
+				>> redteam
+				>> oldx
+				>> oldy
+				>> chat;
 			arc.Read (c_target, 256);
+
+			botinfo_t *thebot = bglobal.botinfo;
+			while (thebot && stricmp (userinfo.netname, thebot->name))
+				thebot = thebot->next;
+			if (thebot)
+			{
+				thebot->inuse = true;
+			}
+			bglobal.botnum++;
+			bglobal.botingame[this - players] = true;
 		}
 	}
 }

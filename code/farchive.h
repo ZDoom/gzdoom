@@ -188,9 +188,9 @@ protected:
 		struct ObjectMap
 		{
 			const DObject *object;
-			ObjectMap *hashNext;
+			size_t hashNext;
 		} *m_ObjectMap;
-		ObjectMap *m_ObjectHash[EObjectHashSize];
+		size_t m_ObjectHash[EObjectHashSize];
 
 private:
 		FArchive (const FArchive &src) {}

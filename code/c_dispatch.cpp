@@ -118,7 +118,7 @@ int GetActionBit (unsigned int key)
 	if (actionbits[min].key == key) 
 		return actionbits[mid].index;
 	
-	return 0;
+	return -1;
 }
 
 void C_DoCommand (char *cmd)
@@ -128,7 +128,7 @@ void C_DoCommand (char *cmd)
 	char *args, *arg, *realargs;
 	char *data;
 	DConsoleCommand *com;
-	int check = 0;
+	int check = -1;
 
 	data = ParseString (cmd);
 	if (!data)
@@ -138,14 +138,16 @@ void C_DoCommand (char *cmd)
 	if (*com_token == '+')
 	{
 		check = GetActionBit (MakeKey (com_token + 1));
-		if (Actions[check] < 255)
-			Actions[check]++;
+		//if (Actions[check] < 255)
+		//	Actions[check]++;
+		Actions[check] = 1;
 	}
 	else if (*com_token == '-')
 	{
 		check = GetActionBit (MakeKey (com_token + 1));
-		if (Actions[check])
-			Actions[check]--;
+		//if (Actions[check])
+		//	Actions[check]--;
+		Actions[check] = 0;
 		if (check == ACTION_MLOOK && lookspring.value)
 		{
 			AddCommandString ("centerview");
@@ -153,7 +155,7 @@ void C_DoCommand (char *cmd)
 	}
 	
 	// Check if this is a normal command
-	if (check == 0)
+	if (check == -1)
 	{
 		argc = 1;
 		argsize = strlen (com_token) + 1;

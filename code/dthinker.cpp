@@ -3,7 +3,8 @@
 #include "stats.h"
 #include "p_local.h"
 
-static cycle_t ThinkCycles, BotSupportCycles;
+static cycle_t ThinkCycles;
+extern cycle_t BotSupportCycles;
 
 // Cap is both the head and tail of the thinker list
 DThinker DThinker::Cap;

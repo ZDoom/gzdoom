@@ -391,7 +391,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				int map = atoi (sc_String);
 				sprintf (sc_String, "MAP%02d", map);
 			}
-			uppercopy ((char *)(info + handler->data1), sc_String);
+			strncpy ((char *)(info + handler->data1), sc_String, 8);
 			break;
 
 		case MITYPE_LUMPNAME:

@@ -387,7 +387,11 @@ void FLZOMemFile::Serialize (FArchive &arc)
 	if (arc.IsStoring ())
 	{
 		if (m_ImplodedBuffer == NULL)
-			I_Error ("FLZOMemFile must be imploded before storing\n");
+		{
+			//I_Error ("FLZOMemFile must be imploded before storing\n");
+			// Q: How do we get here without closing FLZOMemFile first?
+			Close ();
+		}
 		arc.Write (LZOSig, 4);
 
 		DWORD sizes[2];
@@ -460,7 +464,7 @@ FArchive::FArchive (FFile &file)
 	}
 	m_ClassCount = 0;
 	for (i = 0; i < EObjectHashSize; i++)
-		m_ObjectHash[i] = NULL;
+		m_ObjectHash[i] = ~0;
 }
 
 FArchive::~FArchive ()
@@ -875,7 +879,7 @@ DWORD FArchive::MapObject (const DObject *obj)
 		m_ObjectMap = (ObjectMap *)Realloc (m_ObjectMap, sizeof(ObjectMap)*m_MaxObjectCount);
 		for (int i = m_ObjectCount; i < m_MaxObjectCount; i++)
 		{
-			m_ObjectMap[i].hashNext = NULL;
+			m_ObjectMap[i].hashNext = ~0;
 			m_ObjectMap[i].object = NULL;
 		}
 	}
@@ -885,7 +889,7 @@ DWORD FArchive::MapObject (const DObject *obj)
 
 	m_ObjectMap[index].object = obj;
 	m_ObjectMap[index].hashNext = m_ObjectHash[hash];
-	m_ObjectHash[hash] = m_ObjectMap + index;
+	m_ObjectHash[hash] = index;
 
 	return index;
 }
@@ -897,13 +901,10 @@ DWORD FArchive::HashObject (const DObject *obj) const
 
 DWORD FArchive::FindObjectIndex (const DObject *obj) const
 {
-	ObjectMap *map = m_ObjectHash[HashObject (obj)];
-	while (map && map->object != obj)
+	size_t index = m_ObjectHash[HashObject (obj)];
+	while (index != ~0 && m_ObjectMap[index].object != obj)
 	{
-		map = map->hashNext;
+		index = m_ObjectMap[index].hashNext;
 	}
-	if (map)
-		return map - m_ObjectMap;
-	else
-		return -1;
+	return index;
 }

@@ -1,3 +1,33 @@
+September 15, 1999
+- Fixed a nasty bug when saving big games. FArchive used pointers into the
+  m_ObjectMap array when mapping objects to indices. Now it uses indices
+  all the way through so that they will still remain valid if m_ObjectMap
+  has to grow.
+- Reduced the rate at which arbitration packets are sent out to 4 times per
+  second. Combined with their reduced size, this will hopefully solve
+  problems I understand some people were having using 1.18 with DoomServ.
+  (Based on the assumption that their problems were caused by the lack of
+  bandwidth offered by modems.)
+- Reduced the size of netgame arbitration packets by removing the names of
+  the cvars the values represent. When playing with the same copy of the
+  executable, these are implicit in the order in which the values appear in
+  the stream, so storing the name of the key is essentially redundant.
+- Pulled out the original 1.18a source and fixed loading of savegames before
+  a new game is begun. The problem was in DCajunMaster::RemoveAllBots(),
+  where the consoleplayer's camera is restored to the console player if
+  viewing a bot. Before the game begins, the camera field is NULL. Also
+  changed caught recoverable errors so that bots are removed and level
+  snapshots are deleted.
+
+September 12, 1999
+- Made actor movement floating-point based. I had already done the fp time
+  system (to an extent) before I had to pull out the 1.18 source and fix
+  bugs. Gravity seems to be inversely proportional to the ticrate. Can't
+  figure out why.
+
+Okay, I was stupid. I accidentally erased the version of the log file that
+contained my changes from 1.18 to 1.18a.
+
 September 5, 1999
 - The +moveup and +movedown commands finally do something.
 - Added a fly cheat.

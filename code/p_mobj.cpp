@@ -420,7 +420,7 @@ void P_XYMovement (AActor *mo)
 
 	player = mo->player;
 
-	int maxmove = mo->waterlevel < 2 ? MAXMOVE : MAXMOVE/4;
+	int maxmove = (mo->waterlevel < 2) || (mo->flags & MF_MISSILE) ? MAXMOVE : MAXMOVE/4;
 
 	if (mo->momx > maxmove)
 		mo->momx = maxmove;
@@ -1132,7 +1132,8 @@ void AActor::RunThink ()
 		}
 	}
 
-	if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback)
+	if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback &&
+		flags & (MF_COUNTKILL|MF_SPECIAL|MF_MISSILE))
 	{
 		clock (BotSupportCycles);
 		bglobal.m_Thinking = true;
@@ -1141,17 +1142,23 @@ void AActor::RunThink ()
 			if (!playeringame[i] || !players[i].isbot)
 				continue;
 
-			if (((flags & (MF_COUNTKILL|MF_SHOOTABLE)) == (MF_COUNTKILL|MF_SHOOTABLE))
-				&& !IsTeammate (players[i].mo))
+			if ((flags & MF_COUNTKILL)
+				&& health > 0
+				&& !players[i].enemy
+				&& player ? !IsTeammate (players[i].mo) : true
+				&& P_AproxDistance (players[i].mo->x-x, players[i].mo->y-y) < MAX_MONSTER_TARGET_DIST
+				&& P_CheckSight (players[i].mo, this))
 			{ //Probably a monster, so go kill it.
-				if(!players[i].enemy || players[i].enemy->health<=0 || (players[i].enemy && !P_CheckSight(players[i].mo, players[i].enemy)))
-					if(P_AproxDistance(players[i].mo->x-x, players[i].mo->y-y) < MAX_MONSTER_TARGET_DIST)
-						if(P_CheckSight(players[i].mo, this))
-							players[i].enemy = this;
+				players[i].enemy = this;
 			}
-			else if (flags & MF_SPECIAL) //Item pickup time
+			else if (flags & MF_SPECIAL)
+			{ //Item pickup time
 				bglobal.WhatToGet (players[i].mo, this);
-			else if ((flags & MF_MISSILE) && type != MT_PLASMA && type != MT_ARACHPLAZ)
+			}
+			else if ((flags & MF_MISSILE)
+				&& !players[i].missile
+				&& type != MT_PLASMA
+				&& type != MT_ARACHPLAZ)
 			{ //warn for incoming missiles.
 				if (target != players[i].mo && bglobal.Check_LOS (players[i].mo, this, ANGLE_90))
 					players[i].missile = this;
@@ -1612,9 +1619,10 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		if (deathmatch_p == &deathmatchstarts[MaxDeathmatchStarts])
 		{
 			// [RH] Get more deathmatchstarts
+			int offset = MaxDeathmatchStarts;
 			MaxDeathmatchStarts *= 2;
 			deathmatchstarts = (mapthing2_t *)Realloc (deathmatchstarts, MaxDeathmatchStarts * sizeof(mapthing2_t));
-			deathmatch_p = &deathmatchstarts[MaxDeathmatchStarts - 8];
+			deathmatch_p = &deathmatchstarts[offset];
 		}
 		memcpy (deathmatch_p, mthing, sizeof(*mthing));
 		deathmatch_p++;

@@ -208,17 +208,22 @@ void cvar_t::EnableCallbacks ()
 	}
 }
 
-void C_WriteCVars (byte **demo_p, unsigned int filter)
+void C_WriteCVars (byte **demo_p, DWORD filter, bool compact)
 {
 	cvar_t *cvar = CVars;
 	byte *ptr = *demo_p;
+
+	if (compact)
+		ptr += sprintf ((char *)ptr, "\\\\%x", filter);
 
 	while (cvar)
 	{
 		if (cvar->flags & filter)
 		{
-			sprintf ((char *)ptr, "\\%s\\%s", cvar->name, cvar->string);
-			ptr += strlen ((char *)ptr);
+			if (compact)
+				ptr += sprintf ((char *)ptr, "\\%s", cvar->string);
+			else
+				ptr += sprintf ((char *)ptr, "\\%s\\%s", cvar->name, cvar->string);
 		}
 		cvar = cvar->m_Next;
 	}
@@ -230,32 +235,66 @@ void C_ReadCVars (byte **demo_p)
 {
 	char *ptr = *((char **)demo_p);
 	char *breakpt;
-	char *value;
 
 	if (*ptr++ != '\\')
 		return;
 
-	while ( (breakpt = strchr (ptr, '\\')) )
-	{
+	if (*ptr == '\\')
+	{	// compact mode
+		cvar_t *cvar = CVars;
+		DWORD filter;
+
+		ptr++;
+		breakpt = strchr (ptr, '\\');
 		*breakpt = 0;
-		value = breakpt + 1;
-		if ( (breakpt = strchr (value, '\\')) )
-			*breakpt = 0;
-
-		cvar_set (ptr, value);
-
-		*(value - 1) = '\\';
-		if (breakpt)
+		filter = strtoul (ptr, NULL, 16);
+		*breakpt = '\\';
+		ptr = breakpt + 1;
+		
+		while (cvar)
 		{
-			*breakpt = '\\';
-			ptr = breakpt + 1;
-		}
-		else
-		{
-			break;
+			if (cvar->flags & filter)
+			{
+				breakpt = strchr (ptr, '\\');
+				if (breakpt)
+					*breakpt = 0;
+				cvar->Set (ptr);
+				if (breakpt)
+				{
+					*breakpt = '\\';
+					ptr = breakpt + 1;
+				}
+				else
+					break;
+			}
+			cvar = cvar->m_Next;
 		}
 	}
+	else
+	{
+		char *value;
 
+		while ( (breakpt = strchr (ptr, '\\')) )
+		{
+			*breakpt = 0;
+			value = breakpt + 1;
+			if ( (breakpt = strchr (value, '\\')) )
+				*breakpt = 0;
+
+			cvar_set (ptr, value);
+
+			*(value - 1) = '\\';
+			if (breakpt)
+			{
+				*breakpt = '\\';
+				ptr = breakpt + 1;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
 	*demo_p += strlen (*((char **)demo_p)) + 1;
 }
 

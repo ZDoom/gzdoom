@@ -258,6 +258,7 @@ void R_GenerateComposite (int texnum)
 static void R_GenerateLookup(int texnum, int *const errors)
 {
 	const texture_t *texture = textures[texnum];
+	const bool nottall = texture->height < 256;
 
 	// Composited texture not created yet.
 
@@ -293,7 +294,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
 
 				const column_t *col = (column_t*)((byte*)realpatch+LONG(cofs[x]));
 				for (;col->topdelta != 0xff; count[x].posts++)
-					col = (column_t *)((byte *) col + col->length + 4);
+					col = (column_t *)((byte *) col + (col->length || nottall ? col->length : 256) + 4);
 				count[x].patches++;
 				collump[x] = pat;
 				colofs[x] = LONG(cofs[x])+3;

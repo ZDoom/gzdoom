@@ -449,7 +449,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	{
 		int val;
 
-		val = (int)((float)(mousey * 16) * m_pitch.value);
+		val = (int)((float)(mousey * 16) * m_pitch.value) / ticdup;
 		if (invertmouse.value)
 			look -= val;
 		else
@@ -476,7 +476,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (strafe || lookstrafe.value)
 		side += (int)((float)mousex * m_side.value);
 	else 
-		cmd->ucmd.yaw -= (int)((float)(mousex*0x8) * m_yaw.value); 
+		cmd->ucmd.yaw -= (int)((float)(mousex*0x8) * m_yaw.value) / ticdup; 
 
 	mousex = mousey = 0; 
 
@@ -1195,6 +1195,8 @@ void G_DoLoadGame (void)
 	fread (text, 8, 1, stdfile);
 	text[8] = 0;
 
+	bglobal.RemoveAllBots (true);
+
 	FLZOFile savefile (stdfile, FFile::EReading);
 
 	if (!savefile.IsOpen ())
@@ -1304,6 +1306,9 @@ void G_DoSaveGame (void)
 
 	Printf (PRINT_HIGH, "%s\n", GGSAVED);
 	arc.Close ();
+
+	delete level.info->snapshot;
+	level.info->snapshot = NULL;
 }
 
 
@@ -1394,7 +1399,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
-	if ((specdata = NetSpecs[player][buf].GetData (&speclen)))
+	if ((specdata = NetSpecs[player][buf].GetData (&speclen)) && gametic % ticdup == 0)
 	{
 		memcpy (demo_p, specdata, speclen);
 		demo_p += speclen;

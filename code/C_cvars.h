@@ -73,7 +73,10 @@ private:
 
 	// Writes all cvars that could effect demo sync to *demo_p. These are
 	// cvars that have either CVAR_SERVERINFO or CVAR_DEMOSAVE set.
-	friend void C_WriteCVars (byte **demo_p, unsigned int filter);
+	friend void C_WriteCVars (byte **demo_p, DWORD filter, bool compact=false);
+
+	// Read all cvars from *demo_p and set them appropriately.
+	friend void C_ReadCVars (byte **demo_p);
 
 	// Backup demo cvars. Called before a demo starts playing to save all
 	// cvars the demo might change.
@@ -101,9 +104,6 @@ cvar_t *cvar_forceset (const char *var_name, const char *value);
 inline cvar_t *cvar_set (const char *var_name, const byte *value) { return cvar_set (var_name, (const char *)value); }
 inline cvar_t *cvar_forceset (const char *var_name, const byte *value) { return cvar_forceset (var_name, (const char *)value); }
 
-
-// Read all cvars from *demo_p and set them appropriately.
-void C_ReadCVars (byte **demo_p);
 
 
 // Maximum number of cvars that can be saved across a demo. If you need

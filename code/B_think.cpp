@@ -39,12 +39,13 @@ void DCajunMaster::Think (AActor *actor, ticcmd_t *cmd)
 		ThinkForMove (actor, cmd);
 		TurnToAng (actor);
 
-		cmd->ucmd.yaw = (short)((actor->angle - oldyaw) >> 16);
+		cmd->ucmd.yaw = (short)((actor->angle - oldyaw) >> 16) / ticdup;
 		cmd->ucmd.pitch = (short)((oldpitch - actor->pitch) >> 16);
 		if (cmd->ucmd.pitch == -37268)
 			cmd->ucmd.pitch = -32767;
-		actor->angle = oldyaw + (cmd->ucmd.yaw << 16);
-		actor->pitch = oldpitch - (cmd->ucmd.pitch << 16);
+		cmd->ucmd.pitch /= ticdup;
+		actor->angle = oldyaw + (cmd->ucmd.yaw << 16) * ticdup;
+		actor->pitch = oldpitch - (cmd->ucmd.pitch << 16) * ticdup;
 	}
 
 	if (actor->player->t_active)	actor->player->t_active--;
@@ -291,7 +292,17 @@ void DCajunMaster::Set_enemy (AActor *actor)
 {
 	AActor *oldenemy;
 
-	oldenemy = actor->player->enemy;
+	if (actor->player->enemy
+		&& actor->player->enemy->health > 0
+		&& P_CheckSight (actor, actor->player->enemy))
+	{
+		oldenemy = actor->player->enemy;
+	}
+	else
+	{
+		oldenemy = NULL;
+	}
+
 	actor->player->allround = !!actor->player->enemy;
 	actor->player->enemy = NULL;
 	actor->player->enemy = Find_enemy(actor);

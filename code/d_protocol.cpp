@@ -300,17 +300,20 @@ void RunNetSpecs (int player, int buf)
 	byte *stream;
 	int len;
 
-	stream = NetSpecs[player][buf].GetData (&len);
-	if (stream)
+	if (gametic % ticdup == 0)
 	{
-		byte *end = stream + len;
-		while (stream < end)
+		stream = NetSpecs[player][buf].GetData (&len);
+		if (stream)
 		{
-			int type = ReadByte (&stream);
-			Net_DoCommand (type, &stream, player);
+			byte *end = stream + len;
+			while (stream < end)
+			{
+				int type = ReadByte (&stream);
+				Net_DoCommand (type, &stream, player);
+			}
+			if (!demorecording)
+				NetSpecs[player][buf].SetData (NULL, 0);
 		}
-		if (!demorecording)
-			NetSpecs[player][buf].SetData (NULL, 0);
 	}
 }
 

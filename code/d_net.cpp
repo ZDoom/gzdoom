@@ -450,6 +450,7 @@ void GetPackets (void)
 			if (netconsole == Net_Arbitrator)
 			{
 				bglobal.RemoveAllBots (true);
+				Printf (PRINT_HIGH, "Removed all bots\n");
 
 				// Pick a new network arbitrator
 				for (int i = 0; i < MAXPLAYERS; i++)
@@ -612,23 +613,6 @@ void NetUpdate (void)
 		G_BuildTiccmd (&localcmds[block]);
 		//Added by MC: For some of that bot stuff. The main bot function.
 		bglobal.Main (block);
-		if (ticdup > 1)
-		{
-			localcmds[block].ucmd.yaw /= ticdup;
-			if (localcmds[block].ucmd.pitch != -32768)
-				localcmds[block].ucmd.pitch /= ticdup;
-			if (consoleplayer == Net_Arbitrator)
-			{
-				for (int j = 0; j < MAXPLAYERS; j++)
-				{
-					if (playeringame[j] && players[j].isbot)
-					{
-						netcmds[j][block].ucmd.yaw /= ticdup;
-						netcmds[j][block].ucmd.pitch /= ticdup;
-					}
-				}
-			}
-		}
 		maketic++;
 		Net_NewMakeTic ();
 	}
@@ -729,7 +713,8 @@ BOOL CheckAbort (void)
 	event_t *ev;
 
 	Printf (PRINT_HIGH, "");	// [RH] Give the console a chance to redraw itself
-	I_WaitForTic (I_GetTime () + TICRATE*2/35);
+	// This WaitForTic is to avoid flooding the network with packets on startup.
+	I_WaitForTic (I_GetTime () + TICRATE/4);
 	I_StartTic ();
 	for ( ; eventtail != eventhead 
 		  ; eventtail = (++eventtail)&(MAXEVENTS-1) ) 
@@ -836,7 +821,7 @@ void D_ArbitrateNetStart (void)
 			netbuffer->starttic = nodesdetected[0];
 			stream = &(netbuffer->cmds[0]);
 
-			D_WriteUserInfoStrings (consoleplayer, &stream);
+			D_WriteUserInfoStrings (consoleplayer, &stream, true);
 
 			HSendPacket (i, NCMD_SETUP|NCMD_KILL, (int)stream - (int)netbuffer);
 		}
@@ -854,7 +839,7 @@ void D_ArbitrateNetStart (void)
 
 				WriteString (startmap, &stream);
 				WriteLong (rngseed, &stream);
-				C_WriteCVars (&stream, CVAR_SERVERINFO);
+				C_WriteCVars (&stream, CVAR_SERVERINFO, true);
 
 				HSendPacket (i, NCMD_SETUP, (int)stream - (int)netbuffer);
 			}
@@ -1241,6 +1226,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 	case DEM_KILLBOTS:
 		bglobal.RemoveAllBots (true);
+		Printf (PRINT_HIGH, "Removed all bots\n");
 		break;
 
 	default:

@@ -111,7 +111,7 @@ FUNC(LS_Door_Raise)
 }
 
 FUNC(LS_Door_LockedRaise)
-// Door_LocedRaise (tag, speed, delay, lock)
+// Door_LockedRaise (tag, speed, delay, lock)
 {
 	return EV_DoDoor (arg2 ? DDoor::doorRaise : DDoor::doorOpen, ln, it,
 					  arg0, SPEED(arg1), TICS(arg2), (keytype_t)arg3);

@@ -1194,7 +1194,7 @@ void P_PlayerInSpecialSector (player_t *player)
 	int special = sector->special & ~SECRET_MASK;
 
 	// Falling, not all the way down yet?
-	if (player->mo->z != sector->floorheight)
+	if (player->mo->z != sector->floorheight && !player->mo->waterlevel)
 		return; 
 
 	// Has hitten ground.

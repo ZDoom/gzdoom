@@ -668,7 +668,7 @@ void R_DrawPlanes (void)
 				{
 					if ((!warpedflats[useflatnum]
 						 && Z_Malloc (64*64, PU_STATIC, &warpedflats[useflatnum]))
-						|| flatwarpedwhen[useflatnum] < level.time)
+						|| flatwarpedwhen[useflatnum] != level.time)
 					{
 						static byte buffer[64];
 						int timebase = level.time*23;

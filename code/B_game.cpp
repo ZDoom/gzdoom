@@ -16,7 +16,7 @@ G_game.c   (v0.95: Too make demorecording work somewhat)
 G_input.c  (v0.95: added some keycommands)
 G_input.h  (v0.95)
 P_mobj.c   (v0.95: changed much in the P_MobjThinker(), a little in P_SpawnPlayerMissile(), maybee something else )
-P_mobj.h   (v0.95: Removed some uneccisary variables)
+P_mobj.h   (v0.95: Removed some unnecessary variables)
 P_user.c   (v0.95: It's only one change maybee it already was there in 0.71)
 P_inter.c  (v0.95: lot of changes)
 P_pspr.c   (v0.71)
@@ -27,7 +27,7 @@ Info.c     (v0.95: maybee same as 0.71)
 Info.h     (v0.95: maybee same as 0.71)
 M_menu.c   (v0.95: an extra menu in the key setup with the new commands)
 R_main.c   (v0.95: Fix for bot's view)
-wi_stuff.c (v0.97: Too remove bots correct)
+wi_stuff.c (v0.97: To remove bots correct)
 
 (v0.85) Removed all my code from: P_enemy.c
 New file: b_move.c
@@ -38,7 +38,7 @@ What I know has to be done. in near future.
 - Do some hunting/fleeing functions.
 - Make the roaming 100% flawfree.
 - Fix all SIGSEVS (Below is known SIGSEVS)
-      -Nada (but they might bee there)
+      -Nada (but they might be there)
 ******************************************
 Everything that is changed is marked (maybe commented) with "Added by MC"
 */
@@ -389,7 +389,8 @@ void DCajunMaster::RemoveAllBots (bool fromlist)
 	int i;
 	int removed = 0;
 
-	if (players[consoleplayer].camera->player &&
+	if (players[consoleplayer].camera &&
+		players[consoleplayer].camera->player &&
 		(!playeringame[players[consoleplayer].camera->player - players]
 		 ||players[consoleplayer].camera->player->isbot))
 	{
@@ -407,11 +408,12 @@ void DCajunMaster::RemoveAllBots (bool fromlist)
 	}
 
 	if (fromlist)
+	{
 		wanted_botnum = 0;
+		for (i = 0; i < MAXPLAYERS; i++)
+			waitingforspawn[i] = false;
+	}
 	botnum = 0;
-
-	if (removed)
-		Printf (PRINT_HIGH, "Removed all bots\n");
 }
 
 //Clean the bot part of the player_t

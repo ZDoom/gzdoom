@@ -463,10 +463,13 @@ void D_DoomLoop (void)
 		{
 			int i;
 
+			bglobal.RemoveAllBots (true);
+
 			if (error.GetMessage ())
-				Printf (PRINT_HIGH, "%s\n", error.GetMessage());
+				Printf_Bold ("\n%s\n", error.GetMessage());
 
 			D_QuitNetGame ();
+			G_ClearSnapshots ();
 			netgame = false;
 			netdemo = false;
 			multiplayer = false;

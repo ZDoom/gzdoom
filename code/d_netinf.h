@@ -33,7 +33,7 @@ void D_UserInfoChanged (cvar_t *info);
 void D_SendServerInfoChange (const cvar_t *cvar, const char *value);
 void D_DoServerInfoChange (byte **stream);
 
-void D_WriteUserInfoStrings (int player, byte **stream);
-void D_ReadUserInfoStrings (int player, byte **stream, BOOL update);
+void D_WriteUserInfoStrings (int player, byte **stream, bool compact=false);
+void D_ReadUserInfoStrings (int player, byte **stream, bool update);
 
 #endif //__D_CLIENTINFO_H__

@@ -96,29 +96,19 @@ BOOL DCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 
 		actor->movedir = DI_NODIR;
 
-		// if the special is not a door that can be opened, return false
-		//
-		// killough 8/9/98: this is what caused monsters to get stuck in
-		// doortracks, because it thought that the monster freed itself
-		// by opening a door, even if it was moving towards the doortrack,
-		// and not the door itself.
-		//
-		// killough 9/9/98: If a line blocking the monster is activated,
-		// return true 90% of the time. If a line blocking the monster is
-		// not activated, but some other line is, return false 90% of the
-		// time. A bit of randomness is needed to ensure it's free from
-		// lockups, but for most cases, it returns the correct result.
-		//
-		// Do NOT simply return false 1/4th of the time (causes monsters to
-		// back out when they shouldn't, and creates secondary stickiness).
-
 		for (good = 0; numspechit > 0; )
 		{
 			line_t *ld = spechit[--numspechit];
+			bool tryit = true;
 
-			// [RH] let monsters push lines, as well as use them
-			if (P_TestActivateLine (ld, actor, 0, SPAC_USE) ||
-				P_TestActivateLine (ld, actor, 0, SPAC_PUSH))
+			if (ld->special == Door_LockedRaise && !P_CheckKeys (actor->player, (keytype_t)ld->args[3], false))
+				tryit = false;
+			else if (ld->special == Generic_Door && !P_CheckKeys (actor->player, (keytype_t)ld->args[4], false))
+				tryit = false;
+
+			if (tryit &&
+				(P_TestActivateLine (ld, actor, 0, SPAC_USE) ||
+				 P_TestActivateLine (ld, actor, 0, SPAC_PUSH)))
 			{
 				good |= ld == BlockingLine ? 1 : 2;
 			}
@@ -340,12 +330,12 @@ void DCajunMaster::TurnToAng (AActor *actor)
 	if(actor->player->enemy)
 	if(!actor->player->dest) //happens when running after item in combat situations, or normal, prevent's weak turns
 	if(actor->player->readyweapon != wp_missile && actor->player->readyweapon != wp_bfg && actor->player->readyweapon != wp_plasma && actor->player->readyweapon != wp_fist && actor->player->readyweapon != wp_chainsaw)
-	if(Check_LOS(actor, actor->player->enemy, SHOOTFOV+5))
+	if(Check_LOS(actor, actor->player->enemy, SHOOTFOV+5*ANGLE_1))
 		maxturn = 3;
 
 	int distance = actor->player->angle - actor->angle;
 
-	if (abs (distance) < OKAYRANGE)
+	if (abs (distance) < OKAYRANGE && !actor->player->enemy)
 		return;
 
 	distance /= TURNSENS;

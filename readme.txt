@@ -1,5 +1,4 @@
-This is the source code for ZDoom 1.18 released on 5 September 1999. It is
-not the same as the source released on 15 August.
+This is the source code for ZDoom 1.18b released on 15 September 1999.
 
 It is based on the Linux DOOM sources that were prepared by B. Krenheimer
 and generously released by John Carmack shortly before Christmas, 1997. If

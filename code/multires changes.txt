@@ -1,0 +1,57 @@
+r_defs.h:
+	in struct visplane_s:
+		unsigned short pad1, top[SW], pad2 -> *top
+		unsigned short pad3, bottom[SW], pad4 -> *bottom
+
+r_state.h:
+	extern angle_t xtoviewangle[SCREENWIDTH+1] -> *xtoviewangle
+
+r_plane.h:
+	extern short floorclip[SCREENWIDTH] -> *floorclip
+	extern short ceilingclip[SCREENWIDTH] -> *ceilingclip
+
+	extern fixed_t yslope[SCREENHEIGHT] -> *yslope
+	extern fixed_t distscale[SCREENWIDTH] -> *distscale
+
+r_things.h:
+	extern short negonearray[SCREENWIDTH] -> *negonearray
+	extern short screenheightarray[SCREENHEIGHT] -> *screenheightarray
+
+	    negonearray[] allocated in R_InitSprites()
+	    screenheightarray[] inited in r_main.c/R_ExecuteSetViewSize()
+		(alloced in v_video.c/V_SetResolution())
+
+--------
+r_draw.c:
+	Added R_InitFuzzTable() because SCREENWIDTH is no longer const
+
+r_main.c:
+	angle_t xtoviewangle[SCREENWIDTH+1] -> *xtoviewangle
+
+r_plane.c:
+	short openings[MAXOPENINGS] -> *openings
+	short floorclip[SCREENWIDTH] -> *floorclip
+	short ceilingclip[SCREENWIDTH] -> *ceilingclip
+	int spanstart[SCREENHEIGHT] -> *spanstart
+	int spanstop[SCREENHEIGHT] -> *spanstop
+	fixed_t yslope[SCREENHEIGHT] -> *yslope
+	fixed_t distscale[SCREENWIDTH] -> *distscale
+	fixed_t cachedheight[SCREENHEIGHT] -> *cachedheight
+	fixed_t cacheddistance[SCREENHEIGHT] -> *cacheddistance
+	fixed_t cachedxstep[SCREENHEIGHT] -> *cachedxstep
+	fixed_t cachedystep[SCREENHEIGHT] -> *cachedystep
+
+	Added R_PlaneInitData() to allocate all these res-dependant arrays:
+		Also allocates top and bottom arrays for all visplanes
+
+r_things.c:
+	short negonearray[SCREENWIDTH] -> *negonearray
+	short screenheightarray[SCREENWIDTH] -> *screenheightarray
+
+	In R_DrawSprite:
+		clipbot[] and cliptop[] changed to pointers
+
+--------
+v_video.c
+	V_SetResolution:
+		Allocate space for xtoviewangle[]

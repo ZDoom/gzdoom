@@ -392,6 +392,49 @@ void EV_LightTurnOn (int tag, int bright)
 	}
 }
 
+// killough 10/98
+//
+// EV_LightTurnOnPartway
+//
+// Turn sectors tagged to line lights on to specified or max neighbor level
+//
+// Passed the tag of sector(s) to light and a light level fraction between 0 and 1.
+// Sets the light to min on 0, max on 1, and interpolates in-between.
+// Used for doors with gradual lighting effects.
+//
+// Returns true
+
+void EV_LightTurnOnPartway (int tag, fixed_t frac)
+{
+	int i;
+
+	frac = clamp<fixed_t> (frac, 0, FRACUNIT);
+
+	// Search all sectors for ones with same tag as activating line
+	i = -1;
+	while ((i = P_FindSectorFromTag (tag, i)) >= 0)
+	{
+		sector_t *temp, *sector = sectors + i;
+		int j, bright = 0, min = sector->lightlevel;
+
+		for (j = 0; j < sector->linecount; ++j)
+		{
+			if ((temp = getNextSector (sector->lines[j], sector)) != NULL)
+			{
+				if (temp->lightlevel > bright)
+				{
+					bright = temp->lightlevel;
+				}
+				if (temp->lightlevel < min)
+				{
+					min = temp->lightlevel;
+				}
+			}
+		}
+		sector->lightlevel = (BYTE)DMulScale16 (frac, bright, FRACUNIT-frac, min);
+	}
+}
+
 
 //
 // [RH] New function to adjust tagged sectors' light levels

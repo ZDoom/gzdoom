@@ -692,6 +692,7 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"Enable wall running",						{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_WALLRUN} },
 	{ bitflag,	"Spawn item drops on the floor",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOTOSSDROPS} },
 	{ bitflag,  "All special lines can block use lines",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_USEBLOCKING} },
+	{ bitflag,	"Disable BOOM door light effect",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NODOORLIGHT} },
 };
 
 static menu_t CompatibilityMenu =

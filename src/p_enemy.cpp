@@ -1674,13 +1674,13 @@ void A_BossDeath (AActor *actor)
 	{
 		switch (level.flags & LEVEL_SPECACTIONSMASK)
 		{
-			case LEVEL_SPECLOWERFLOOR:
-				EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0);
-				return;
-			
-			case LEVEL_SPECOPENDOOR:
-				EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 8*FRACUNIT, 0, NoKey);
-				return;
+		case LEVEL_SPECLOWERFLOOR:
+			EV_DoFloor (DFloor::floorLowerToLowest, NULL, 666, FRACUNIT, 0, 0, 0);
+			return;
+		
+		case LEVEL_SPECOPENDOOR:
+			EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 8*FRACUNIT, 0, NoKey, 0);
+			return;
 		}
 	}
 

@@ -910,13 +910,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			P_AutoUseHealth (player, damage - player->health + 1);
 		}
 		player->health -= damage;		// mirror mobj health here for Dave
-		if (target != player->mo)
-		{ // [RH] Make the shot voodoo doll reflect the player's real health
-		  // If there is more than one voodoo doll on the level, the player
-		  // could shoot both of them enough to lose all his health but not
-		  // enough to kill either voodoo doll, so he would not actually die.
-			target->health = player->health + damage;
-		}
+		// [RH] Make voodoo dolls and real players record the same health
+		target->health = player->mo->health -= damage;
 		if (player->health < 0)
 		{
 			player->health = 0;
@@ -933,11 +928,14 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			I_Tactile (40,10,40+temp*2);
 		}
 	}
-	
+	else
+	{
+		target->health -= damage;	
+	}
+
 	//
-	// do the damage
+	// the damage has been dealt; now deal with the consequences
 	//
-	target->health -= damage;	
 	if (target->health <= 0)
 	{ // Death
 		target->special1 = damage;

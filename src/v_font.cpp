@@ -544,6 +544,9 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 {
 	Name = copystring (name);
 
+	// If lump is -1, then the font name is really a texture name, so
+	// the font should be a redirect to the texture.
+	// If lump is >= 0, then the font is really a font.
 	if (lump < 0)
 	{
 		int picnum = TexMan.CheckForTexture (name, FTexture::TEX_Any);
@@ -551,30 +554,34 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 		if (picnum > 0)
 		{
 			CreateFontFromPic (picnum);
-			return;
 		}
-		I_FatalError ("%s is not a font or texture", name);
-	}
-
-	FMemLump data1 = Wads.ReadLump (lump);
-	const BYTE *data = (const BYTE *)data1.GetMem();
-
-	if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
-		(data[3] != '1' && data[3] != '2'))
-	{
-		I_FatalError ("%s is not a recognizable font", name);
+		else
+		{
+			I_FatalError ("%s is not a font or texture", name);
+		}
 	}
 	else
 	{
-		switch (data[3])
-		{
-		case '1':
-			LoadFON1 (lump, data);
-			break;
+		FMemLump data1 = Wads.ReadLump (lump);
+		const BYTE *data = (const BYTE *)data1.GetMem();
 
-		case '2':
-			LoadFON2 (lump, data);
-			break;
+		if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
+			(data[3] != '1' && data[3] != '2'))
+		{
+			I_FatalError ("%s is not a recognizable font", name);
+		}
+		else
+		{
+			switch (data[3])
+			{
+			case '1':
+				LoadFON1 (lump, data);
+				break;
+
+			case '2':
+				LoadFON2 (lump, data);
+				break;
+			}
 		}
 	}
 
@@ -588,6 +595,7 @@ void FSingleLumpFont::CreateFontFromPic (int picnum)
 
 	FontHeight = pic->GetHeight ();
 	SpaceWidth = pic->GetWidth ();
+	GlobalKerning = 0;
 
 	FirstChar = LastChar = 'A';
 	Chars = new CharData[1];
@@ -595,6 +603,8 @@ void FSingleLumpFont::CreateFontFromPic (int picnum)
 
 	// Only one color range. Don't bother with the others.
 	ActiveColors = 0;
+
+	Printf ("CreateFontFromPic: %s (%dx%d)\n", pic->Name, SpaceWidth, FontHeight);
 }
 
 void FSingleLumpFont::LoadFON1 (int lump, const BYTE *data)

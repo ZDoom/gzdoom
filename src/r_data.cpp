@@ -237,6 +237,7 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 {
 	FTexture *out = NULL;
     enum { t_patch, t_raw, t_imgz, t_png } type = t_patch;
+	DWORD first4bytes;
 
 	if (lumpnum < 0)
 	{
@@ -245,7 +246,6 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 	else
 	{
 		FWadLump data = Wads.OpenLumpNum (lumpnum);
-		DWORD first4bytes;
 
 		data >> first4bytes;
 		if (first4bytes == MAKE_ID('I','M','G','Z'))
@@ -363,7 +363,17 @@ int FTextureManager::CreateTexture (int lumpnum, int usetype)
 	}
 	switch (type)
 	{
-	default:		out = new FPatchTexture (lumpnum, FTexture::TEX_MiscPatch); break;
+	default:
+		{	// Check patch sizes for sanity
+			WORD width = SHORT(*(WORD *)&first4bytes);
+			WORD height = SHORT(*((WORD *)&first4bytes + 1));
+
+			if (width <= 2048 && height <= 2048)
+			{
+				out = new FPatchTexture (lumpnum, FTexture::TEX_MiscPatch);
+			}
+		}
+		break;
 	case t_raw:		out = new FRawPageTexture (lumpnum); break;
 	case t_imgz:	out = new FIMGZTexture (lumpnum); break;
 	case t_png:		break;
@@ -1102,9 +1112,9 @@ void FPatchTexture::GetDimensions ()
 
 	lump >> dummy.width >> dummy.height;
 
-	if (dummy.width <= 0 || dummy.height <= 0)
+	if (dummy.width <= 0 || dummy.height <= 0 || dummy.width > 2048 || dummy.height > 2048)
 	{
-		lump = Wads.OpenLumpName ("-BADPATCH");
+		lump = Wads.OpenLumpName ("-BADPATC");
 		lump >> dummy.width >> dummy.height;
 	}
 
@@ -1131,9 +1141,15 @@ void FPatchTexture::MakeTexture ()
 	// Check for badly-sized patches
 	if (SHORT(patch->width) <= 0 || SHORT(patch->height) <= 0)
 	{
-		lump = Wads.ReadLump ("-BADPATCH");
+		lump = Wads.ReadLump ("-BADPATC");
 		patch = (const patch_t *)lump.GetMem();
 		Printf (PRINT_BOLD, "Patch %s has a non-positive size.\n", Name);
+	}
+	else if (SHORT(patch->width) > 2048 || SHORT(patch->height) > 2048)
+	{
+		lump = Wads.ReadLump ("-BADPATC");
+		patch = (const patch_t *)lump.GetMem();
+		Printf (PRINT_BOLD, "Patch %s is too big.\n", Name);
 	}
 
 	Width = SHORT(patch->width);

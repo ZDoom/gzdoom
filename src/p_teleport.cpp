@@ -233,7 +233,7 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 		if (thing->player)
 		{
 			// [RH] Zoom player's field of vision
-			if (telezoom)
+			if (telezoom && thing->player->mo == thing)
 				thing->player->FOV = MIN (175.f, thing->player->DesiredFOV + 45.f);
 			// Freeze player for about .5 sec
 			if (!thing->player->powers[pw_speed])
@@ -256,15 +256,100 @@ bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle,
 	return true;
 }
 
-bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool keepOrientation)
+static AActor *SelectTeleDest (int tid, int tag)
 {
-	int count;
+	AActor *searcher;
+
+	// If tid is non-zero, select a destination from a matching actor at random.
+	// If tag is also non-zero, the selection is restricted to actors in sectors
+	// with a matching tag. If tid is zero and tag is non-zero, then the old Doom
+	// behavior is used instead (return the first teleport dest found in a tagged
+	// sector).
+
+	if (tid != 0)
+	{
+		TActorIterator<ATeleportDest> iterator (tid);
+		int count = 0;
+		while ( (searcher = iterator.Next ()) )
+		{
+			if (tag == 0 || searcher->Sector->tag == tag)
+			{
+				count++;
+			}
+		}
+
+		// If teleport dests were not found, the sector tag is ignored for the
+		// following compatibility searches.
+		if (count == 0)
+		{
+			// Try to find a matching map spot (fixes Hexen MAP10)
+			TActorIterator<AMapSpot> it2 (tid);
+			searcher = it2.Next ();
+			if (searcher == NULL)
+			{
+				// Try to find a matching non-blocking spot of any type (fixes Caldera MAP13)
+				FActorIterator it3 (tid);
+				searcher = it3.Next ();
+				while (searcher != NULL && (searcher->flags & MF_SOLID))
+				{
+					searcher = it3.Next ();
+				}
+				return searcher;
+			}
+		}
+		else
+		{
+			if (count != 1)
+			{
+				count = 1 + (pr_teleport() % count);
+			}
+			searcher = NULL;
+			while (count > 0)
+			{
+				searcher = iterator.Next ();
+				if (tag == 0 || searcher->Sector->tag == tag)
+				{
+					count--;
+				}
+			}
+		}
+		return searcher;
+	}
+
+	if (tag != 0)
+	{
+		int secnum = -1;
+
+		while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+		{
+			// Scanning the snext links of things in the sector will not work, because
+			// TeleportDests have MF_NOSECTOR set. So you have to search *everything*.
+			// If there is more than one sector with a matching tag, then the destination
+			// in the lowest-numbered sector is returned, rather than the earliest placed
+			// teleport destination. This means if 50 sectors have a matching tag and
+			// only the last one has a destination, *every* actor is scanned at least 49
+			// times. Yuck.
+			TThinkerIterator<ATeleportDest> it2;
+			while ((searcher = it2.Next()) != NULL)
+			{
+				if (searcher->Sector == sectors + secnum)
+				{
+					return searcher;
+				}
+			}
+		}
+	}
+
+	return NULL;
+}
+
+bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog, bool keepOrientation)
+{
 	AActor *searcher;
 	fixed_t z;
 	angle_t angle = 0;
 	fixed_t s = 0, c = 0;
 	fixed_t momx = 0, momy = 0;
-	TActorIterator<ATeleportDest> iterator (tid);
 
 	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
@@ -278,48 +363,10 @@ bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool
 	{ // Don't teleport if hit back of line, so you can get out of teleporter.
 		return 0;
 	}
-	count = 0;
-	while ( (searcher = iterator.Next ()) )
-	{
-		count++;
-	}
-	if (count == 0)
-	{
-		// Try to find a matching map spot (fixes Hexen MAP10)
-		TActorIterator<AMapSpot> it2 (tid);
-		searcher = it2.Next ();
-		if (searcher == NULL)
-		{
-			// Try to find a matching non-blocking spot of any type (fixes Caldera MAP13)
-			FActorIterator it3 (tid);
-			searcher = it3.Next ();
-			while (searcher != NULL && (searcher->flags & MF_SOLID))
-			{
-				searcher = it3.Next ();
-			}
-			if (searcher == NULL)
-			{
-				return false;
-			}
-		}
-	}
-	else if (count == 1)
-	{
-		searcher = iterator.Next ();
-	}
-	else
-	{
-		count = 1 + (pr_teleport() % count);
-		searcher = NULL;
-		while (count > 0)
-		{
-			searcher = iterator.Next ();
-			count--;
-		}
-	}
+	searcher = SelectTeleDest (tid, tag);
 	if (searcher == NULL)
-	{ // Should not happen
-		Printf (PRINT_BOLD, "Can't find teleport destination %d\n", tid);
+	{
+		return false;
 	}
 	// [RH] Lee Killough's changes for silent teleporters from BOOM
 	if (keepOrientation && line)
@@ -527,7 +574,7 @@ bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 
 		while ( (victim = iterator.Next ()) )
 		{
-			didSomething |= EV_Teleport (dest_tid, NULL, 0, victim, fog, !fog);
+			didSomething |= EV_Teleport (dest_tid, 0, NULL, 0, victim, fog, !fog);
 		}
 	}
 

@@ -386,6 +386,7 @@ void	EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 void	EV_StartLightStrobing (int tag, int utics, int ltics);
 void	EV_TurnTagLightsOff (int tag);
 void	EV_LightTurnOn (int tag, int bright);
+void	EV_LightTurnOnPartway (int tag, fixed_t frac);	// killough 10/98
 void	EV_LightChange (int tag, int value);
 void	EV_StopLightEffect (int tag);
 
@@ -542,7 +543,7 @@ public:
 	};
 
 	DDoor (sector_t *sector);
-	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay);
+	DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag);
 
 	void Serialize (FArchive &arc);
 	void Tick ();
@@ -562,10 +563,13 @@ protected:
 	// when it reaches 0, start going down
 	int 		m_TopCountdown;
 
+	int			m_LightTag;
+
 	void DoorSound (bool raise) const;
 
 	friend bool	EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
-						   int tag, int speed, int delay, keyspecialtype_t lock);
+						   int tag, int speed, int delay, keyspecialtype_t lock,
+						   int lightTag);
 	friend void P_SpawnDoorCloseIn30 (sector_t *sec);
 	friend void P_SpawnDoorRaiseIn5Mins (sector_t *sec);
 private:
@@ -865,7 +869,7 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag);
 // P_TELEPT
 //
 bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, bool useFog, bool keepOrientation);
-bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool keepOrientation);
+bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool fog, bool keepOrientation);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 							BOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);

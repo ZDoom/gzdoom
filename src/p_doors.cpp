@@ -114,6 +114,14 @@ void DDoor::Tick ()
 	case -1:
 		// DOWN
 		res = MoveCeiling (m_Speed, m_BotDist, -1, m_Direction);
+
+		// killough 10/98: implement gradual lighting effects
+		if (m_LightTag != 0 && m_TopDist != m_Sector->floorplane.d)
+		{
+			EV_LightTurnOnPartway (m_LightTag, FixedDiv (m_Sector->ceilingplane.d - m_Sector->floorplane.d,
+				m_TopDist - m_Sector->floorplane.d));
+		}
+
 		if (res == pastdest)
 		{
 			SN_StopSequence (m_Sector);
@@ -154,6 +162,13 @@ void DDoor::Tick ()
 		// UP
 		res = MoveCeiling (m_Speed, m_TopDist, -1, m_Direction);
 		
+		// killough 10/98: implement gradual lighting effects
+		if (m_LightTag != 0 && m_TopDist != m_Sector->floorplane.d)
+		{
+			EV_LightTurnOnPartway (m_LightTag, FixedDiv (m_Sector->ceilingplane.d - m_Sector->floorplane.d,
+				m_TopDist - m_Sector->floorplane.d));
+		}
+
 		if (res == pastdest)
 		{
 			SN_StopSequence (m_Sector);
@@ -217,15 +232,17 @@ DDoor::DDoor (sector_t *sector)
 //		and made them more general to support the new specials.
 
 // [RH] SpawnDoor: Helper function for EV_DoDoor
-DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay)
-	: DMovingCeiling (sec)
+DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay, int lightTag)
+	: DMovingCeiling (sec),
+  	  m_Type (type), m_Speed (speed), m_TopWait (delay), m_LightTag (lightTag)
 {
 	vertex_t *spot;
 	fixed_t height;
 
-	m_Type = type;
-	m_TopWait = delay;
-	m_Speed = speed;
+	if (compatflags & COMPATF_NODOORLIGHT)
+	{
+		m_LightTag = 0;
+	}
 
 	switch (type)
 	{
@@ -265,7 +282,7 @@ DDoor::DDoor (sector_t *sec, EVlDoor type, fixed_t speed, int delay)
 }
 
 bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
-				int tag, int speed, int delay, keyspecialtype_t lock)
+				int tag, int speed, int delay, keyspecialtype_t lock, int lightTag)
 {
 	bool		rtn = false;
 	int 		secnum;
@@ -333,7 +350,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			}
 			return false;
 		}
-		if (new DDoor (sec, type, speed, delay))
+		if (new DDoor (sec, type, speed, delay, lightTag))
 			rtn = true;
 	}
 	else
@@ -347,7 +364,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			if (sec->ceilingdata)
 				continue;
 
-			if (new DDoor (sec, type, speed, delay))
+			if (new DDoor (sec, type, speed, delay, lightTag))
 				rtn = true;
 		}
 				
@@ -375,6 +392,7 @@ void P_SpawnDoorCloseIn30 (sector_t *sec)
 	door->m_BotDist = sec->ceilingplane.PointToDist (door->m_BotSpot, height);
 	door->m_OldFloorDist = sec->floorplane.d;
 	door->m_TopDist = sec->ceilingplane.d;
+	door->m_LightTag = 0;
 }
 
 //
@@ -383,5 +401,5 @@ void P_SpawnDoorCloseIn30 (sector_t *sec)
 void P_SpawnDoorRaiseIn5Mins (sector_t *sec)
 {
 	sec->special = 0;
-	new DDoor (sec, DDoor::doorRaiseIn5Mins, 2*FRACUNIT, TICRATE*30/7);
+	new DDoor (sec, DDoor::doorRaiseIn5Mins, 2*FRACUNIT, TICRATE*30/7, 0);
 }

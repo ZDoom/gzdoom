@@ -100,13 +100,9 @@ AT_GAME_SET (RealGibs)
 	{
 		def->SpawnState = &ARealGibs::States[0];
 	}
-	else if (gameinfo.gametype == GAME_Heretic)
+	else if (gameinfo.gametype & GAME_Raven)
 	{
 		def->SpawnState = &ARealGibs::States[1];
-	}
-	else // Hexen does not make gibs
-	{
-		def->RenderStyle = STYLE_None;
 	}
 }
 

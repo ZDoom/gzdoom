@@ -285,6 +285,7 @@ AActor	*P_CheckOnmobj (AActor *thing);
 void	P_FakeZMovement (AActor *mo);
 BOOL	P_TryMove (AActor* thing, fixed_t x, fixed_t y, BOOL dropoff, bool onfloor = false);
 BOOL	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
+void	P_PlayerStartStomp (AActor *actor);		// [RH] Stomp on things for a newly spawned player
 void	P_SlideMove (AActor* mo, fixed_t tryx, fixed_t tryy, int numsteps);
 bool	P_BounceWall (AActor *mo);
 bool	P_CheckSight (const AActor* t1, const AActor* t2, int flags=0);

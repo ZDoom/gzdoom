@@ -131,7 +131,10 @@ typedef struct
 #define ML_REPEAT_SPECIAL	0x0200	// special is repeatable
 #define ML_SPAC_SHIFT		10
 #define ML_SPAC_MASK		0x1c00
-#define GET_SPAC(flags)		((flags&ML_SPAC_MASK)>>ML_SPAC_SHIFT)
+static int GET_SPAC (int flags)
+{
+	return (flags&ML_SPAC_MASK) >> ML_SPAC_SHIFT;
+}
 
 // Special activation types
 #define SPAC_CROSS		0	// when player crosses line

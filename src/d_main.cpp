@@ -270,7 +270,7 @@ void D_PostEvent (const event_t *ev)
 	{
 		if (Button_Mlook.bDown || freelook)
 		{
-			int look = (int)(ev->y * m_pitch * 16.0);
+			int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
 			if (invertmouse)
 				look = -look;
 			G_AddViewPitch (look);
@@ -278,7 +278,7 @@ void D_PostEvent (const event_t *ev)
 		}
 		if (!Button_Strafe.bDown && !lookstrafe)
 		{
-			G_AddViewAngle (int(ev->x * 8.0 * m_yaw));
+			G_AddViewAngle (int(ev->x * m_yaw * mouse_sensitivity * 8.0));
 			events[eventhead].x = 0;
 		}
 		if ((events[eventhead].x | events[eventhead].y) == 0)
@@ -365,6 +365,7 @@ CVAR (Flag, compat_soundslots,	compatflags, COMPATF_MAGICSILENCE);
 CVAR (Flag, compat_wallrun,		compatflags, COMPATF_WALLRUN);
 CVAR (Flag, compat_notossdrops,	compatflags, COMPATF_NOTOSSDROPS);
 CVAR (Flag, compat_useblocking, compatflags, COMPATF_USEBLOCKING);
+CVAR (Flag, compat_nodoorlight,	compatflags, COMPATF_NODOORLIGHT);
 
 //==========================================================================
 //

@@ -379,6 +379,81 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	return true;
 }
 
+//
+// [RH] P_PlayerStartStomp
+//
+// Like P_TeleportMove, but it doesn't move anything, and only monsters and other
+// players get telefragged.
+//
+BOOL PIT_StompThing2 (AActor *thing)
+{
+	fixed_t blockdist;
+
+	if (!(thing->flags & MF_SHOOTABLE))
+		return true;
+
+	// don't clip against self, and don't kill your own voodoo dolls
+	if (thing == tmthing ||
+		(thing->player == tmthing->player && thing->player != NULL))
+		return true;
+
+	// only kill monsters and other players
+	if (thing->player == NULL && !(thing->flags3 & MF3_ISMONSTER))
+		return true;
+
+	blockdist = thing->radius + tmthing->radius;
+	
+	if (abs(thing->x - tmthing->x) >= blockdist || abs(thing->y - tmthing->y) >= blockdist)
+	{
+		// didn't hit it
+		return true;
+	}
+
+	if (tmthing->z > thing->z + thing->height)
+		return true;        // overhead
+	if (tmthing->z + tmthing->height < thing->z)
+		return true;        // underneath
+
+	P_DamageMobj (thing, tmthing, tmthing, 10000, MOD_TELEFRAG);
+	return true;
+}
+
+void P_PlayerStartStomp (AActor *actor)
+{
+	static TArray<AActor *> telebt;
+
+	int 				xl;
+	int 				xh;
+	int 				yl;
+	int 				yh;
+	int 				bx;
+	int 				by;
+	
+	tmthing = actor;
+	tmflags = actor->flags;
+		
+	tmbbox[BOXTOP] = actor->y + actor->radius;
+	tmbbox[BOXBOTTOM] = actor->y - actor->radius;
+	tmbbox[BOXRIGHT] = actor->x + actor->radius;
+	tmbbox[BOXLEFT] = actor->x - actor->radius;
+
+	telebt.Clear();
+
+	// stomp on any things contacted
+	xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
+	xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
+	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
+	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
+
+	for (bx = xl; bx <= xh; bx++)
+	{
+		for (by = yl; by <= yh; by++)
+		{
+			P_BlockThingsIterator (bx, by, PIT_StompThing2, telebt);
+		}
+	}
+}
+
 inline fixed_t secfriction (const sector_t *sec)
 {
 	fixed_t friction = Terrains[TerrainTypes[sec->floorpic]].Friction;

@@ -2804,7 +2804,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	}
 
 	// [RH] If someone is in the way, kill them
-	P_TeleportMove (mobj, mobj->x, mobj->y, mobj->z, true);
+	P_PlayerStartStomp (mobj);
 
 	// [BC] Do script stuff
 	if (level.behavior != NULL)
@@ -3572,8 +3572,13 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	velocity[0] = (float)(dest->x - source->x);
 	velocity[1] = (float)(dest->y - source->y);
 	velocity[2] = (float)(dest->z - source->z);
+	// Floor and ceiling huggers should never have a vertical component to their velocity
+	if (defflags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
+	{
+		velocity[2] = 0.f;
+	}
 	// [RH] Adjust the trajectory if the missile will go over the player's head.
-	if (z - source->z >= dest->height)
+	else if (z - source->z >= dest->height)
 	{
 		velocity[2] += (float)(dest->height - z + source->z);
 	}
@@ -3581,7 +3586,6 @@ AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z,
 	th->momx = (fixed_t)(velocity[0] * speed);
 	th->momy = (fixed_t)(velocity[1] * speed);
 	th->momz = (fixed_t)(velocity[2] * speed);
-
 
 	// invisible target: rotate velocity vector in 2D
 	if (dest->flags & MF_SHADOW)

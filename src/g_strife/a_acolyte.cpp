@@ -261,7 +261,7 @@ END_DEFAULTS
 
 void A_HideDecepticon (AActor *self)
 {
-	EV_DoDoor (DDoor::doorClose, NULL, self, 999, 8*FRACUNIT, 0, NoKey);
+	EV_DoDoor (DDoor::doorClose, NULL, self, 999, 8*FRACUNIT, 0, NoKey, 0);
 	if (self->target != NULL && self->target->player != NULL)
 	{
 		validcount++;

@@ -76,7 +76,7 @@ void A_KeenDie (AActor *self)
 		}
 	}
 
-	EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 2*FRACUNIT, 0, NoKey);
+	EV_DoDoor (DDoor::doorOpen, NULL, NULL, 666, 2*FRACUNIT, 0, NoKey, 0);
 }
 
 

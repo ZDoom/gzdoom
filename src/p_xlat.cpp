@@ -123,10 +123,10 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 
 				ld->flags = flags | ((specialmap[0] & 0x1f) << 9);
 
-				if (passthrough && (GET_SPAC(flags) == SPAC_USE))
+				if (passthrough && (GET_SPAC(ld->flags) == SPAC_USE))
 				{
-					flags &= ~ML_SPAC_MASK;
-					flags |= SPAC_USETHROUGH << ML_SPAC_SHIFT;
+					ld->flags &= ~ML_SPAC_MASK;
+					ld->flags |= SPAC_USETHROUGH << ML_SPAC_SHIFT;
 				}
 				ld->special = specialmap[1];
 				ld->args[0] = specialmap[2];
@@ -136,13 +136,26 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 				ld->args[4] = specialmap[6];
 				switch (specialmap[0] & 0xe0)
 				{
-				case 0xc0:					// First two arguments are tags
+				case 7<<5:					// First two arguments are tags
 					ld->args[1] = tag;
-				case 0x80: case 0x40:		// First argument is a tag
+				case 1<<5: case 6<<5:		// First argument is a tag
 					ld->args[0] = tag;
 					break;
-				case 0x20:					// Fourth argument is a tag
+
+				case 2<<5:					// Second argument is a tag
+					ld->args[1] = tag;
+					break;
+
+				case 3<<5:					// Third argument is a tag
+					ld->args[2] = tag;
+					break;
+
+				case 4<<5:					// Fourth argument is a tag
 					ld->args[3] = tag;
+					break;
+
+				case 5<<5:					// Fifth argument is a tag
+					ld->args[4] = tag;
 					break;
 				}
 				return;
@@ -219,10 +232,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 				break;
 			}
 
-			// We treat push triggers like switch triggers with zero tags.
-			ld->args[0] =
-				((special & 0x0007) == PushMany || (special & 0x0007) == PushOnce)
-				? 0 : tag;
+			ld->args[0] = tag;
 			ld->args[1] = ld->args[2] = ld->args[3] = ld->args[4] = 0;
 
 			ld->special = *tlate++;
@@ -294,6 +304,18 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			}
 			if (special >= low && special <= high)
 			{ // Really found it, so we're done
+				// We treat push triggers like switch triggers with zero tags.
+				if ((special & 7) == PushMany || (special & 7) == PushOnce)
+				{
+					if (ld->special == Generic_Door)
+					{
+						ld->args[2] |= 128;
+					}
+					else
+					{
+						ld->args[0] = 0;
+					}
+				}
 				ld->flags = flags;
 				return;
 			}
@@ -309,84 +331,45 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	memset (ld->args, 0, sizeof(ld->args));
 }
 
-// The teleport specials that use things as destinations also require
-// that their TIDs be set to the tags of their containing sectors. We
-// do that after the rest of the level has been loaded. If any dest is
-// in a sector with a tag of 0, it gets mapped to some unused tag and
-// so do the lines that reference it.
+// Now that ZDoom again gives the option of using Doom's original teleport
+// behavior, only teleport dests in a sector with a 0 tag need to be
+// given a TID. And since Doom format maps don't have TIDs, we can safely
+// give them TID 1.
 
 void P_TranslateTeleportThings ()
 {
-	TArray<ATeleportDest *> baddests;
-	TArray<int> badlines;
-	int i, j;
-	int highestid = 0;
+	ATeleportDest *dest;
+	TThinkerIterator<ATeleportDest> iterator;
+	bool foundSomething = false;
 
-	for (i = 0; i < numlines; i++)
+	while ( (dest = iterator.Next()) )
 	{
-		if (lines[i].special == Teleport ||
-			lines[i].special == Teleport_NoFog)
+		if (dest->Sector->tag == 0)
 		{
-			if (lines[i].args[0] == 0)
-			{
-				badlines.Push (i);
-			}
-			else if (lines[i].args[0] > highestid)
-			{
-				highestid = lines[i].args[0];
-			}
-
-			// The sector tag hash table hasn't been set up yet,
-			// so we need to use this linear search.
-			for (j = 0; j < numsectors; j++)
-			{
-				if (sectors[j].tag == lines[i].args[0])
-				{
-					ATeleportDest *other;
-					TThinkerIterator<ATeleportDest> iterator;
-
-					while ( (other = iterator.Next ()) )
-					{
-						// wrong sector
-						if (other->Sector - sectors != j)
-							continue;
-
-						// already handled
-						if (other->tid != 0)
-							continue;
-
-						// it's a teleportdest
-						if (lines[i].args[0] == 0)
-						{
-							baddests.Push (other);
-							other->tid = 1;
-						}
-						else
-						{
-							other->tid = lines[i].args[0];
-							other->AddToHash ();
-						}
-					}
-					if (other)
-						break;
-				}
-			}
+			dest->tid = 1;
+			dest->AddToHash ();
+			foundSomething = true;
 		}
 	}
 
-	if (baddests.Size ())
+	if (foundSomething)
 	{
-		ATeleportDest *other;
-
-		highestid++;
-		while (baddests.Pop (other))
+		for (int i = 0; i < numlines; ++i)
 		{
-			other->tid = highestid;
-			other->AddToHash ();
-		}
-		while (badlines.Pop (i))
-		{
-			lines[i].args[0] = highestid;
+			if (lines[i].special == Teleport)
+			{
+				if (lines[i].args[1] == 0)
+				{
+					lines[i].args[1] = 1;
+				}
+			}
+			else if (lines[i].special == Teleport_NoFog)
+			{
+				if (lines[i].args[2] == 0)
+				{
+					lines[i].args[2] = 1;
+				}
+			}
 		}
 	}
 }

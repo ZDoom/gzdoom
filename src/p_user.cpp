@@ -206,8 +206,12 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 {
 	Super::Die (source, inflictor);
 
-	if (dmflags2 & DF2_YES_WEAPONDROP)
-	{
+	if (player->mo != this)
+	{ // Make the real player die, too
+		player->mo->Die (source, inflictor);
+	}
+	else if (dmflags2 & DF2_YES_WEAPONDROP)
+	{ // Voodoo dolls don't drop weapons
 		const TypeInfo *droptype = GetDropType ();
 		if (droptype)
 		{

@@ -1,3 +1,68 @@
+December 5, 2003
+- Rewrote P_TranslateTeleportThings() so that it only assigns TIDs to things
+  in sectors with tag 0.
+- Fixed: Teleporters by TID didn't work.
+- Fixed: P_SpawnMissileXYZ spawned floor/ceiling huggers as if they could move
+  with a vertical component to their velocity. They can't, so it could result
+  in very slow moving projectiles when aiming at something nearby in the X/Y
+  plane but far away on the Z axis, because most of the projectile's speed would
+  try to go on the Z axis.
+- Changed the Minotaur state fixup to be based on the presence of MNTRZ1
+  instead of the game type.
+- Fixed: When I went back to the blockmap-based sight code, I forgot to bring
+  over the enhancements for block-everything lines I had made for the BSP-
+  based sight code.
+- Added a second argument to Teleport and a third argument to Teleport_NoFog
+  specials. This is a sector tag to filter the teleport dests with. Only
+  dests in a sector with a matching tag will be selected if the tag parameter
+  is non-zero. If tid is zero and tag is non-zero, then the old (and slow)
+  teleport dest based on sector tag is used so that Mordeth's trick can work.
+- Added support for the BOOM local door light effect by adding an additional
+  parameter to all the Door_* specials to serve as the lighttag parameter.
+  The first argument still determines the door to open, so unlike BOOM, you
+  can use the effect with remote doors if you like. In the case of the
+  Generic_Door special, OR the type (the third argument) with 128, and the
+  first argument will be used as the lighttag parameter instead of the tag
+  parameter.
+- Fixed two bugs with using the ACS setfont call to create fonts from images:
+  GlobalKerning was left uninitialized, and they weren't added to the global
+  font list, so they were recreated every time they were setfont'ed.
+
+December 4, 2003
+- Fixed: Voodoo dolls would also trigger the teleport zoom.
+- Added 2048x2048 as the maximum size for a patch as a simple sanity check.
+- Added a fix to the console's maybedrawnow() function to prevent recursive
+  calls to it.
+
+December 3, 2003
+- Fixed: The transfer lights specials are supposed to copy the source sector's
+  light level instead of propagating along changes from other transfer lights
+  specials.
+- Added an armor display to Heretic's fullscreen HUD to match Doom's.
+- Added a check for a NULL spot to Earthquake::Tick() so that if somebody
+  removes an earthquake's spot before the quake is over, it won't crash.
+- Fixed: The Boom use-through flag was only being translated to SPAC_USETHROUGH
+  for lines with generalized line types and not for lines with normal line types.
+- Fixed: P_ActivateLine() did not consider SPAC_USETHROUGH lines when deciding
+  if it should flip a switch texture.
+- Fixed: In EV_DoCeiling(), ceilLowerToNearest made the ceiling go up instead
+  of down.
+- Fixed: PIT_AddThingIntercepts() did not add anything the trace started in,
+  because none of the thing's sides faced the start of the trace.
+- Added a check to A_FireCGun() to try to catch Dehacked patches that do
+  naughty things to the chaingun's flash states.
+- Fixed: The bNoDecals property was not copied to every texture in an
+  animation range.
+- Added the "range" keyword to ANIMDEFS so that it can be a true replacement
+  for ANIMATED.
+- Fixed: Crushers in Hexen made monsters disappear instead of turning them into
+  piles of giblets.
+- Changed P_SpawnPlayer() so that it doesn't telefrag *everything* inside the
+  player. Only monsters and other players will be telefragged now.
+- Fixed: Hurting a voodoo doll and then dying from something else didn't
+  completely kill you.
+- Fixed: mouse_sensitivity was no longer affecting mouselooking.
+
 November 26, 2003
 - Fixed: Ceiling type ceilRaiseToLowest (used exclusively by Ceiling_Generic)
   set the direction to -1 instead of 1.
@@ -12,7 +77,8 @@ November 24, 2003
   DI_JoyCheck().
 - Changed bots.cfg loading so that it is relative to progdir instead of the
   current directory.
-- Removed support for loading zdoom.ini from the user's profile directory.
+- Removed support for loading zdoom.ini from the user's profile directory
+  under Windows.
 - Added Strife's acolytes.
 - Added Strife's rebel(s).
 - Added Strife's beggar(s).

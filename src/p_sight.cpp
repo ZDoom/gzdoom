@@ -16,6 +16,7 @@
 #include "p_local.h"
 #include "m_random.h"
 #include "m_bbox.h"
+#include "p_lnspec.h"
 
 // State.
 #include "r_state.h"
@@ -37,7 +38,7 @@ This uses specialized forms of the maputils routines for optimized performance
 
 static fixed_t sightzstart;				// eye z of looker
 static fixed_t topslope, bottomslope;	// slopes to top and bottom of target
-static int SeePastBlockEverything;
+static int SeePastBlockEverything, SeePastShootableLines;
 
 // Performance meters
 static int sightcounts[6];
@@ -121,8 +122,25 @@ static bool P_SightCheckLine (line_t *ld)
 	if (!ld->backsector)
 		return false;	// stop checking
 
-	if (!SeePastBlockEverything && (ld->flags & ML_BLOCKEVERYTHING))
-		return false;	// don't see past block everything lines
+	// [RH] don't see past block everything lines
+	if (ld->flags & ML_BLOCKEVERYTHING)
+	{
+		if (!SeePastBlockEverything)
+		{
+			return false;
+		}
+		if (SeePastShootableLines &&
+			(GET_SPAC(ld->flags) != SPAC_IMPACT ||
+			(ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways)) ||
+			(ld->args[1] != 0 && ld->args[1] != level.levelnum))
+		{
+			// Pretend the other side is invisible if this is not an impact line
+			// or it does not run a script on the current map. Used to prevent
+			// monsters from trying to attack through a block everything line
+			// unless there's a chance their attack will make it nonblocking.
+			return false;
+		}
+	}
 
 	sightcounts[3]++;
 // store the line for later intersection testing
@@ -493,9 +511,11 @@ sightcounts[0]++;
 	bottomslope = t2->z - sightzstart;
 	topslope = bottomslope + t2->height;
 
-	SeePastBlockEverything = flags & 2;
+	SeePastBlockEverything = flags & 6;
+	SeePastShootableLines = flags & 4;
 	res = P_SightPathTraverse (t1->x, t1->y, t2->x, t2->y);
 	SeePastBlockEverything = 0;
+	SeePastShootableLines = 0;
 
 done:
 	unclock (SightCycles);

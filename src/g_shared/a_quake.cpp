@@ -44,6 +44,12 @@ void DEarthquake::Tick ()
 {
 	int i;
 
+	if (m_Spot == NULL)
+	{
+		Destroy ();
+		return;
+	}
+
 	if (!S_GetSoundPlayingInfo (m_Spot, m_QuakeSFX))
 		S_SoundID (m_Spot, CHAN_BODY, m_QuakeSFX, 1, ATTN_NORM);
 

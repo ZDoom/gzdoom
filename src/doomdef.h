@@ -256,6 +256,7 @@ enum
 	COMPATF_WALLRUN			= 1 << 6,	// Enable buggier wall clipping so players can wallrun?
 	COMPATF_NOTOSSDROPS		= 1 << 7,	// Spawn dropped items directly on the floor?
 	COMPATF_USEBLOCKING		= 1 << 8,	// Any special line can block a use line
+	COMPATF_NODOORLIGHT		= 1 << 9,	// Don't do the BOOM local door light effect
 };
 
 // phares 3/20/98:

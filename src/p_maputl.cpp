@@ -266,8 +266,6 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 // lookups maintaining lists of things inside
 // these structures need to be updated.
 //
-int linkfoo;
-
 void AActor::UnlinkFromWorld ()
 {
 	sector_list = NULL;
@@ -280,12 +278,10 @@ void AActor::UnlinkFromWorld ()
 		// pointers, allows head node pointers to be treated like everything else
 		AActor **prev = sprev;
 		AActor  *next = snext;
-		linkfoo = 1;
 		if ((*prev = next))  // unlink from sector list
 			next->sprev = prev;
 		snext = NULL;
-		sprev = (AActor **)0xbeefcafe;
-		linkfoo = 0;
+		sprev = (AActor **)0xBeefCafe;	// Woo! Bug-catching value!
 
 		// phares 3/14/98
 		//
@@ -362,14 +358,12 @@ void AActor::LinkToWorld (sector_t *sec)
 		// killough 8/11/98: simpler scheme using pointer-to-pointer prev
 		// pointers, allows head nodes to be treated like everything else
 
-		linkfoo = 1;
 		AActor **link = &sec->thinglist;
 		AActor *next = *link;
 		if ((snext = next))
 			next->sprev = &snext;
 		sprev = link;
 		*link = this;
-		linkfoo = 0;
 
 		// phares 3/16/98
 		//
@@ -811,6 +805,7 @@ BOOL PIT_AddLineIntercepts (line_t *ld)
 //
 BOOL PIT_AddThingIntercepts (AActor* thing)
 {
+	int numfronts = 0;
 	divline_t line;
 	int i;
 
@@ -854,6 +849,8 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 		// Check if this side is facing the trace origin
 		if (P_PointOnDivlineSide (trace.x, trace.y, &line) == 0)
 		{
+			numfronts++;
+
 			// If it is, see if the trace crosses it
 			if (P_PointOnDivlineSide (line.x, line.y, &trace) !=
 				P_PointOnDivlineSide (line.x + line.dx, line.y + line.dy, &trace))
@@ -873,6 +870,18 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 				return true;	// keep going
 			}
 		}
+	}
+
+	// If none of the sides was facing the trace, then the trace
+	// must have started inside the box, so add it as an intercept.
+	if (numfronts == 0)
+	{
+		intercept_t newintercept;
+		newintercept.frac = 0;
+		newintercept.isaline = false;
+		newintercept.d.thing = thing;
+		intercepts.Push (newintercept);
+		return true;	// keep going
 	}
 
 	// Didn't hit it

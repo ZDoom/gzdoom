@@ -11,6 +11,7 @@
 #include "gstrings.h"
 #include "p_effect.h"
 #include "gi.h"
+#include "templates.h"
 
 static FRandom pr_punch ("Punch");
 static FRandom pr_saw ("Saw");
@@ -1038,8 +1039,15 @@ void A_FireCGun (AActor *actor, pspdef_t *psp)
 
 	if (wpninfo->flashstate != NULL)
 	{
-		P_SetPsprite (player, ps_flash,
-			wpninfo->flashstate + (psp->state - wpninfo->atkstate));
+		// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
+		int theflash = MAX (1, psp->state - wpninfo->atkstate);
+
+		if (wpninfo->flashstate[theflash].sprite.index != wpninfo->flashstate->sprite.index)
+		{
+			theflash = 0;
+		}
+
+		P_SetPsprite (player, ps_flash, wpninfo->flashstate + theflash);
 	}
 
 	P_BulletSlope (actor);

@@ -7,6 +7,7 @@
 #include "ravenshared.h"
 #include "a_action.h"
 #include "gi.h"
+#include "w_wad.h"
 
 #define MAULATORTICS (25*35)
 
@@ -267,6 +268,11 @@ bool AMinotaur::OkayToSwitchTarget (AActor *other)
 // Minotaur Friend ----------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (AMinotaurFriend, Hexen, -1, 0)
+	PROP_SpawnState (S_MNTR_FADEIN)
+	PROP_DeathState (S_MNTR_FADEOUT)
+	PROP_RenderStyle (STYLE_Translucent)
+	PROP_Alpha (OPAQUE/3)
+
 	PROP_SpawnHealth (2500)
 	PROP_FlagsClear (MF_DROPOFF)
 	PROP_Flags2Clear (MF2_BOSS)
@@ -283,11 +289,10 @@ void AMinotaurFriend::BeginPlay ()
 
 AT_GAME_SET (Minotaur)
 {
-	// Modify the Minotaur to accomodate the difference in Hexen's graphics
-	if (gameinfo.gametype == GAME_Hexen)
+	// Modify the Minotaur to accomodate the difference in Hexen's graphics.
+	// (Hexen's has fewer frames than Heretic's.)
+	if (Wads.CheckNumForName ("MNTRZ1", ns_sprites) < 0)
 	{
-		AMinotaur *def;
-
 		AMinotaur::States[S_MNTR_ATK1+0].SetFrame ('G');
 		AMinotaur::States[S_MNTR_ATK1+1].SetFrame ('H');
 		AMinotaur::States[S_MNTR_ATK1+2].SetFrame ('I');
@@ -300,17 +305,7 @@ AT_GAME_SET (Minotaur)
 		AMinotaur::States[S_MNTR_ATK3+3].SetFrame ('I');
 		AMinotaur::States[S_MNTR_ATK4+0].SetFrame ('F');
 
-		def = GetDefault<AMinotaur> ();
-		def->SpawnState = &AMinotaur::States[S_MNTR_FADEIN];
-		def->DeathState = &AMinotaur::States[S_MNTR_FADEOUT];
-		def->RenderStyle = STYLE_Translucent;
-		def->alpha = OPAQUE/3;
-
-		def = GetDefault<AMinotaurFriend> ();
-		def->SpawnState = &AMinotaur::States[S_MNTR_FADEIN];
-		def->DeathState = &AMinotaur::States[S_MNTR_FADEOUT];
-		def->RenderStyle = STYLE_Translucent;
-		def->alpha = OPAQUE/3;
+		GetDefault<AMinotaur>()->DeathState = &AMinotaur::States[S_MNTR_FADEOUT];
 	}
 }
 

@@ -148,7 +148,7 @@ END_DEFAULTS
 
 void A_CloseUpShop (AActor *self)
 {
-	EV_DoDoor (DDoor::doorCloseWaitOpen, NULL, self, 999, 8*FRACUNIT, 120*TICRATE, NoKey);
+	EV_DoDoor (DDoor::doorCloseWaitOpen, NULL, self, 999, 8*FRACUNIT, 120*TICRATE, NoKey, 0);
 	if (self->target != NULL && self->target->player != NULL)
 	{
 		validcount++;

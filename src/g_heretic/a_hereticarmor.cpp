@@ -3,6 +3,7 @@
 #include "d_player.h"
 #include "gstrings.h"
 #include "p_local.h"
+#include "gi.h"
 
 // Silver Shield (Shield1) --------------------------------------------------
 
@@ -29,9 +30,16 @@ FState ASilverShield::States[] =
 IMPLEMENT_ACTOR (ASilverShield, Heretic, 85, 68)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
+
+AT_GAME_SET (SilverShield)
+{
+	if (gameinfo.gametype == GAME_Heretic)
+	{
+		ArmorPics[0] = "SHLDA0";
+	}
+}
 
 // Enchanted shield (Shield2) -----------------------------------------------
 
@@ -58,6 +66,13 @@ FState AEnchantedShield::States[] =
 IMPLEMENT_ACTOR (AEnchantedShield, Heretic, 31, 69)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
+
+AT_GAME_SET (EnchantedShield)
+{
+	if (gameinfo.gametype == GAME_Heretic)
+	{
+		ArmorPics[1] = "SHD2A0";
+	}
+}

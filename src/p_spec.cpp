@@ -144,7 +144,7 @@ TArray<FAnimDef *> Anims;
 // killough 3/7/98: Initialize generalized scrolling
 static void P_SpawnScrollers();
 
-static void P_FixAnimatedFrontSkies ();
+static void P_FixAnimations ();
 
 static void P_SpawnFriction ();		// phares 3/16/98
 static void P_SpawnPushers ();		// phares 3/20/98
@@ -263,6 +263,8 @@ static void ParseAnim (bool istex)
 
 	while (SC_GetString ())
 	{
+		bool range = false;
+
 		if (SC_Compare ("allowdecals"))
 		{
 			if (picnum >= 0)
@@ -271,8 +273,24 @@ static void ParseAnim (bool istex)
 			}
 			continue;
 		}
+		else if (SC_Compare ("range"))
+		{
+			range = true;
+			if (!sink.bUniqueFrames)
+			{
+				SC_ScriptError ("You can only use range once in a single animation.");
+			}
+			if (frames.Size() != 0)
+			{
+				SC_ScriptError ("You cannot use range together with pic.");
+			}
+		}
 		else if (!SC_Compare ("pic"))
 		{
+			if (!sink.bUniqueFrames)
+			{
+				SC_ScriptError ("You cannot use pic together with range.");
+			}
 			SC_UnGet ();
 			break;
 		}
@@ -303,7 +321,7 @@ static void ParseAnim (bool istex)
 				sc_Number = 255;
 			min = max = sc_Number;
 		}
-		else if (SC_Compare ("rand"))
+		else if (SC_Compare ("rand") && !range)
 		{
 			SC_MustGetNumber ();
 			min = clamp (sc_Number, 0, 255);
@@ -317,29 +335,59 @@ static void ParseAnim (bool istex)
 
 		if (picnum >= 0)
 		{
-			frame.SpeedMin = min;
-			frame.SpeedRange = max - min;
-			frame.FramePic = framenum;
-			frames.Push (frame);
+			if (!range)
+			{
+				frame.SpeedMin = min;
+				frame.SpeedRange = max - min;
+				frame.FramePic = framenum;
+				frames.Push (frame);
+			}
+			else
+			{
+				int spread = framenum - picnum;
+
+				sink.bUniqueFrames = false;
+				sink.NumFrames = abs(spread) + 1;
+				sink.Frames[0].SpeedMin = min;
+				sink.Frames[0].SpeedRange = max - min;
+				sink.Countdown = min - 1;
+				sink.AnimType = FAnimDef::ANIM_Forward;
+				if (spread < 0)
+				{
+					sink.AnimType = FAnimDef::ANIM_Backward;
+					TexMan[framenum]->bNoDecals = TexMan[picnum]->bNoDecals;
+					picnum = framenum;
+					sink.BasePic = picnum;
+				}
+				sink.Frames[0].FramePic = picnum;
+			}
 		}
 	}
 
 	if (picnum >= 0)	// If base pic is not present, don't add this anim
 	{
-		if (frames.Size() < 2)
+		if (frames.Size() < 2 && (sink.bUniqueFrames || sink.NumFrames < 2))
 		{
 			SC_ScriptError ("Animation needs at least 2 frames");
 		}
 
-		sink.Countdown = frames[0].SpeedMin;
-		sink.NumFrames = frames.Size();
-
-		newAnim = (FAnimDef *)Malloc (sizeof(FAnimDef) + (frames.Size()-1)*sizeof(FAnimDef::FAnimFrame));
-		*newAnim = sink;
-
-		for (i = 0; i < frames.Size(); ++i)
+		if (sink.bUniqueFrames)
 		{
-			newAnim->Frames[i] = frames[i];
+			sink.Countdown = frames[0].SpeedMin;
+			sink.NumFrames = frames.Size();
+
+			newAnim = (FAnimDef *)Malloc (sizeof(FAnimDef) + (frames.Size()-1)*sizeof(FAnimDef::FAnimFrame));
+			*newAnim = sink;
+
+			for (i = 0; i < frames.Size(); ++i)
+			{
+				newAnim->Frames[i] = frames[i];
+			}
+		}
+		else
+		{
+			newAnim = (FAnimDef *)Malloc (sizeof(FAnimDef));
+			*newAnim = sink;
 		}
 
 		// See if there is already an anim with the same base pic.
@@ -453,7 +501,7 @@ void P_InitPicAnims (void)
 	}
 	// [RH] Load any ANIMDEFS lumps
 	P_InitAnimDefs ();
-	P_FixAnimatedFrontSkies ();
+	P_FixAnimations ();
 }
 
 void P_AddSimpleAnim (int picnum, int animcount, int animtype, int animspeed)
@@ -472,8 +520,9 @@ void P_AddSimpleAnim (int picnum, int animcount, int animtype, int animspeed)
 }
 
 // [RH] Copy the "front sky" flag from an animated texture to the rest
-// of the textures in the animation.
-static void P_FixAnimatedFrontSkies ()
+// of the textures in the animation, and make every texture in an
+// animation range use the same setting for bNoDecals.
+static void P_FixAnimations ()
 {
 	size_t i;
 	int j;
@@ -493,19 +542,17 @@ static void P_FixAnimatedFrontSkies ()
 		}
 		else
 		{
+			bool nodecals;
 			bool noremap = false;
 			const char *name;
 
 			name = TexMan[anim->BasePic]->Name;
-			name=name;
+			nodecals = TexMan[anim->BasePic]->bNoDecals;
 			for (j = 0; j < anim->NumFrames; ++j)
 			{
 				FTexture *tex = TexMan[anim->BasePic + j];
-				if (tex->bNoRemap0)
-				{
-					noremap = true;
-					break;
-				}
+				noremap |= tex->bNoRemap0;
+				tex->bNoDecals = nodecals;
 			}
 			if (noremap)
 			{
@@ -772,7 +819,7 @@ BOOL P_ActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{ // clear the special on non-retriggerable lines
 		line->special = 0;
 	}
-	if ((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) 
+	if ((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT || lineActivation == SPAC_USETHROUGH) 
 		&& buttonSuccess)
 	{
 		P_ChangeSwitchTexture (&sides[line->sidenum[0]], repeat, special);
@@ -1197,7 +1244,6 @@ public:
 
 protected:
 	static void DoTransfer (BYTE level, int target, bool floor);
-	static BYTE GetLight (sector_t *sec, bool floor);
 
 	BYTE LastLight;
 	sector_t *Source;
@@ -1220,7 +1266,7 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 	Source = srcSec;
 	TargetTag = target;
 	CopyFloor = copyFloor;
-	DoTransfer (LastLight = GetLight (srcSec, copyFloor), target, copyFloor);
+	DoTransfer (LastLight = srcSec->lightlevel, target, copyFloor);
 
 	if (copyFloor)
 	{
@@ -1236,37 +1282,12 @@ DLightTransfer::DLightTransfer (sector_t *srcSec, int target, bool copyFloor)
 
 void DLightTransfer::Tick ()
 {
-	BYTE light = GetLight (Source, CopyFloor);
+	BYTE light = Source->lightlevel;
 
 	if (light != LastLight)
 	{
 		LastLight = light;
 		DoTransfer (light, TargetTag, CopyFloor);
-	}
-}
-
-BYTE DLightTransfer::GetLight (sector_t *sec, bool floor)
-{
-	BYTE level, flags;
-
-	if (floor)
-	{
-		level = sec->FloorLight;
-		flags = sec->FloorFlags;
-	}
-	else
-	{
-		level = sec->CeilingFlags;
-		flags = sec->CeilingFlags;
-	}
-
-	if (flags & SECF_ABSLIGHTING)
-	{
-		return level;
-	}
-	else
-	{
-		return clamp (sec->lightlevel + (SBYTE)level, 0, 255);
 	}
 }
 

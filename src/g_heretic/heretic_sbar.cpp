@@ -95,7 +95,7 @@ public:
 			"INVGEML1",	"INVGEML2",	"INVGEMR1",	"INVGEMR2",	"BLACKSQ",
 			"ARMCLEAR",	"CHAINBACK","GOD1",		"GOD2",		"USEARTIA",
 			"USEARTIB",	"USEARTIC",	"USEARTID",	"YKEYICON",	"GKEYICON",
-			"BKEYICON",	"ARTIBOX"
+			"BKEYICON",	"ARTIBOX",	"PTN1A0",	"PTN1B0",	"PTN1C0"
 		};
 		static const char *sharedLumpNames[] =
 		{
@@ -553,20 +553,36 @@ private:
 		int i;
 		int x;
 
+		// Draw health
 		if (CPlayer->mo->health > 0)
 		{
+			OverrideImageOrigin (true);
+			DrawOuterImage (Images[imgPTN1 + gametic/3%3], 48, -3);
+			OverrideImageOrigin (false);
 			DrBNumberOuter (CPlayer->mo->health, 5, -21);
 		}
 		else
 		{
 			DrBNumberOuter (0, 5, -20);
 		}
+
+		// Draw armor
+		if (CPlayer->armortype && CPlayer->armorpoints[0])
+		{
+			OverrideImageOrigin (true);
+			DrawOuterImage (ArmorImages[CPlayer->armortype != deh.GreenAC], 56, -24);
+			OverrideImageOrigin (false);
+			DrBNumberOuter (CPlayer->armorpoints[0], 5, -43);
+		}
+
 		if (deathmatch)
 		{
+			// Draw frag count
 			DrINumberOuter (CPlayer->fragcount, 45, -16);
 		}
 		else
 		{
+			// Draw keys
 			i = -8;
 			if (CPlayer->keys[key_blue])
 			{
@@ -583,6 +599,8 @@ private:
 				DrawOuterImage (Images[imgYKEYICON], 45, i);
 			}
 		}
+
+		// Draw ammo
 		i = wpnlev1info[CPlayer->readyweapon]->ammo;
 		if (i < NUMAMMO || i == MANA_BOTH)
 		{
@@ -599,6 +617,8 @@ private:
 			DrINumberOuter (amt, -29, -15);
 			DrawOuterImage (AmmoImages[i], -27, -30);
 		}
+
+		// Draw inventory
 		if (CPlayer->inventorytics == 0)
 		{
 			if (ArtifactFlash)
@@ -714,6 +734,9 @@ private:
 		imgGKEYICON,
 		imgBKEYICON,
 		imgARTIBOX,
+		imgPTN1,
+		imgPTN2,
+		imgPTN3,
 
 		NUM_HERETICSB_IMAGES
 	};

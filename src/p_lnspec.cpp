@@ -131,42 +131,43 @@ FUNC(LS_Polyobj_OR_MoveTimes8)
 }
 
 FUNC(LS_Door_Close)
-// Door_Close (tag, speed)
+// Door_Close (tag, speed, lighttag)
 {
-	return EV_DoDoor (DDoor::doorClose, ln, it, arg0, SPEED(arg1), 0, NoKey);
+	return EV_DoDoor (DDoor::doorClose, ln, it, arg0, SPEED(arg1), 0, NoKey, arg2);
 }
 
 FUNC(LS_Door_Open)
-// Door_Open (tag, speed)
+// Door_Open (tag, speed, lighttag)
 {
-	return EV_DoDoor (DDoor::doorOpen, ln, it, arg0, SPEED(arg1), 0, NoKey);
+	return EV_DoDoor (DDoor::doorOpen, ln, it, arg0, SPEED(arg1), 0, NoKey, arg2);
 }
 
 FUNC(LS_Door_Raise)
-// Door_Raise (tag, speed, delay)
+// Door_Raise (tag, speed, delay, lighttag)
 {
-	return EV_DoDoor (DDoor::doorRaise, ln, it, arg0, SPEED(arg1), TICS(arg2), NoKey);
+	return EV_DoDoor (DDoor::doorRaise, ln, it, arg0, SPEED(arg1), TICS(arg2), NoKey, arg3);
 }
 
 FUNC(LS_Door_LockedRaise)
-// Door_LockedRaise (tag, speed, delay, lock)
+// Door_LockedRaise (tag, speed, delay, lock, lighttag)
 {
 	return EV_DoDoor (arg2 ? DDoor::doorRaise : DDoor::doorOpen, ln, it,
-					  arg0, SPEED(arg1), TICS(arg2), (keyspecialtype_t)arg3);
+					  arg0, SPEED(arg1), TICS(arg2), (keyspecialtype_t)arg3, arg4);
 }
 
 FUNC(LS_Door_CloseWaitOpen)
-// Door_CloseWaitOpen (tag, speed, delay)
+// Door_CloseWaitOpen (tag, speed, delay, lighttag)
 {
-	return EV_DoDoor (DDoor::doorCloseWaitOpen, ln, it, arg0, SPEED(arg1), OCTICS(arg2), NoKey);
+	return EV_DoDoor (DDoor::doorCloseWaitOpen, ln, it, arg0, SPEED(arg1), OCTICS(arg2), NoKey, arg3);
 }
 
 FUNC(LS_Generic_Door)
 // Generic_Door (tag, speed, kind, delay, lock)
 {
+	int tag, lightTag;
 	DDoor::EVlDoor type;
 
-	switch (arg2)
+	switch (arg2 & 127)
 	{
 		case 0: type = DDoor::doorRaise;			break;
 		case 1: type = DDoor::doorOpen;				break;
@@ -174,7 +175,18 @@ FUNC(LS_Generic_Door)
 		case 3: type = DDoor::doorClose;			break;
 		default: return false;
 	}
-	return EV_DoDoor (type, ln, it, arg0, SPEED(arg1), OCTICS(arg3), (keyspecialtype_t)arg4);
+	if (arg2 & 128)
+	{
+		// New for 2.0.58: Finally support BOOM's local door light effect
+		tag = 0;
+		lightTag = arg0;
+	}
+	else
+	{
+		tag = arg0;
+		lightTag = 0;
+	}
+	return EV_DoDoor (type, ln, it, tag, SPEED(arg1), OCTICS(arg3), (keyspecialtype_t)arg4, lightTag);
 }
 
 FUNC(LS_Floor_LowerByValue)
@@ -708,15 +720,15 @@ FUNC(LS_Teleport_NewMap)
 }
 
 FUNC(LS_Teleport)
-// Teleport (tid)
+// Teleport (tid, sectortag)
 {
-	return EV_Teleport (arg0, ln, TeleportSide, it, true, false);
+	return EV_Teleport (arg0, arg1, ln, TeleportSide, it, true, false);
 }
 
 FUNC(LS_Teleport_NoFog)
-// Teleport_NoFog (tid, useang)
+// Teleport_NoFog (tid, useang, sectortag)
 {
-	return EV_Teleport (arg0, ln, TeleportSide, it, false, !arg1);
+	return EV_Teleport (arg0, arg2, ln, TeleportSide, it, false, !arg1);
 }
 
 FUNC(LS_TeleportOther)

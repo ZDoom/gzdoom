@@ -2109,7 +2109,11 @@ void DLevelScript::DoSetFont (int fontnum)
 			num = TexMan.CheckForTexture (fontname, FTexture::TEX_Any);
 			if (num <= 0)
 			{
-				num = TexMan.AddPatch (fontname);
+				num = Wads.CheckNumForName (fontname);
+				if (num > 0)
+				{
+					num = TexMan.CreateTexture (num);
+				}
 			}
 			if (num > 0)
 			{

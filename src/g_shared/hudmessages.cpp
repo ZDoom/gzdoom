@@ -81,7 +81,7 @@ DHUDMessage::DHUDMessage (const char *text, float x, float y, int hudwidth, int 
 	}
 	else
 	{ // HUD size is specified, so coordinates are in pixels, but you can add
-	  // some fractions to effect positioning:
+	  // some fractions to affect positioning:
 	  // For y: .1 = positions top edge of box
 	  //		.2 = positions bottom edge of box
 	  // For x: .1 = positions left edge of box
@@ -112,6 +112,10 @@ DHUDMessage::DHUDMessage (const char *text, float x, float y, int hudwidth, int 
 		}
 	}
 	Top = y;
+	if (hudwidth)
+	{
+		Printf ("Width: %d, Pic @ %g, %g\n", hudwidth, Left, Top);
+	}
 	Next = NULL;
 	Lines = NULL;
 	HoldTics = (int)(holdTime * TICRATE);
@@ -171,8 +175,6 @@ void DHUDMessage::ResetText (const char *text)
 	FFont *oldfont = screen->Font;
 	int width;
 
-	screen->SetFont (Font);
-
 	if (HUDWidth != 0)
 	{
 		width = HUDWidth;
@@ -186,6 +188,9 @@ void DHUDMessage::ResetText (const char *text)
 	{
 		V_FreeBrokenLines (Lines);
 	}
+
+	screen->SetFont (Font);
+
 	Lines = V_BreakLines (width, (byte *)text);
 
 	NumLines = 0;
@@ -202,6 +207,8 @@ void DHUDMessage::ResetText (const char *text)
 	}
 
 	screen->SetFont (oldfont);
+
+	if (HUDWidth) Printf ("Size is %dx%d\n", Width, Height);
 }
 
 bool DHUDMessage::Tick ()

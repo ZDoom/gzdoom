@@ -198,6 +198,13 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 
 static void maybedrawnow (bool tick, bool force)
 {
+	static bool drawingnow = false;
+
+	if (drawingnow)
+	{
+		return;
+	}
+
 	if (vidactive &&
 		(((tick || gameaction != ga_nothing) && ConsoleState == c_down)
 		|| gamestate == GS_STARTUP))
@@ -208,7 +215,9 @@ static void maybedrawnow (bool tick, bool force)
 		if (nowtime - lastprinttime > 1 || force)
 		{
 			screen->Lock (false);
+			drawingnow = true;
 			C_DrawConsole ();
+			drawingnow = false;
 			screen->Update ();
 			lastprinttime = nowtime;
 		}

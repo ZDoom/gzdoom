@@ -95,7 +95,9 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 	FState *states = DefaultStates (Class);
 	const BYTE *parser = DefaultList;
 
+#if 0
 	TypeInfo *classtype;
+#endif
 	const char *datastr;
 	int dataint = 0;
 	FState *datastate = NULL;
@@ -122,7 +124,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 			case ADEF_SkipSuper:
 				parser += 2;
 				break;
-
+#if 0
 			case ADEF_StateBase:
 #ifdef __GNUC__
 				classtype = const_cast<TypeInfo *>(TypeInfo::FindType ((const char *)(parser + 2)));
@@ -137,6 +139,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 				}
 				states = DefaultStates (classtype);
 				break;
+#endif
 			}
 		}
 		else

@@ -8,6 +8,10 @@
 #include "gstrings.h"
 #include "a_action.h"
 
+static FRandom pr_rev ("RevenantMissileRange");
+static FRandom pr_tracer ("Tracer");
+static FRandom pr_skelfist ("SkelFist");
+
 void A_SkelMissile (AActor *);
 void A_Tracer (AActor *);
 void A_SkelWhoosh (AActor *);
@@ -103,7 +107,7 @@ bool ARevenant::SuggestMissileAttack (fixed_t dist)
 {
 	if (dist < 196*FRACUNIT)
 		return false;		// close for fist attack
-	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 200);
+	return pr_rev() >= MIN<int> (dist >> (FRACBITS + 1), 200);
 }
 
 class AStealthRevenant : public ARevenant
@@ -143,7 +147,7 @@ IMPLEMENT_ACTOR (ARevenantTracer, Doom, -1, 53)
 	PROP_SpeedFixed (10)
 	PROP_Damage (10)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT)
+	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT|MF2_SEEKERMISSILE)
 	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_TRACER)
@@ -226,7 +230,7 @@ void A_Tracer (AActor *self)
 		self->y - self->momy, self->z);
 	
 	smoke->momz = FRACUNIT;
-	smoke->tics -= P_Random (pr_tracer)&3;
+	smoke->tics -= pr_tracer()&3;
 	if (smoke->tics < 1)
 		smoke->tics = 1;
 	
@@ -296,7 +300,7 @@ void A_SkelFist (AActor *self)
 		
 	if (P_CheckMeleeRange (self))
 	{
-		int damage = ((P_Random (pr_skelfist)%10)+1)*6;
+		int damage = ((pr_skelfist()%10)+1)*6;
 		S_Sound (self, CHAN_WEAPON, "skeleton/melee", 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);

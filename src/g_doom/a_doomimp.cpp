@@ -7,6 +7,8 @@
 #include "gstrings.h"
 #include "a_action.h"
 
+static FRandom pr_troopattack ("TroopAttack");
+
 void A_TroopAttack (AActor *);
 
 class ADoomImp : public AActor
@@ -155,7 +157,7 @@ void A_TroopAttack (AActor *self)
 	A_FaceTarget (self);
 	if (P_CheckMeleeRange (self))
 	{
-		int damage = (P_Random (pr_troopattack)%8+1)*3;
+		int damage = (pr_troopattack()%8+1)*3;
 		S_Sound (self, CHAN_WEAPON, "imp/melee", 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);

@@ -63,7 +63,7 @@ DECNS (AZRock2, 7, 20, 16, 1)
 	S_NORMAL (RCK2, 'A', -1, NULL, NULL)
 };
 
-DECNS (AZRock3, 8, 20, 16, 1)
+DECNS (AZRock3, 9, 20, 16, 1)
 {
 	S_NORMAL (RCK3, 'A', -1, NULL, NULL)
 };

@@ -18,9 +18,8 @@
 // $Log:$
 //
 // DESCRIPTION:
-//		Main loop menu stuff.
 //		Default Config File.
-//		PCX Screenshots.
+//		Screenshots.
 //
 //-----------------------------------------------------------------------------
 
@@ -68,6 +67,7 @@
 
 // Data.
 #include "m_misc.h"
+#include "m_png.h"
 
 #include "cmdlib.h"
 
@@ -77,6 +77,9 @@
 #include "gameconfigfile.h"
 
 FGameConfigFile *GameConfig;
+
+CVAR(Bool, screenshot_quiet, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(String, screenshot_type, "png", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 static long ParseCommandLine (const char *args, int *argc, char **argv);
 
@@ -288,7 +291,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 	{
 		*argc = count;
 	}
-	return (long)buffplace;
+	return (long)(buffplace - (char *)0);
 }
 
 
@@ -393,22 +396,14 @@ typedef struct
 //
 // WritePCXfile
 //
-void WritePCXfile (char *filename, DCanvas *canvas, const PalEntry *palette)
+void WritePCXfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 {
 	int x, y;
 	int runlen;
 	BYTE color;
 	pcx_t pcx;
-	FILE *file;
 	BYTE *data;
 	int width, height, pitch;
-
-	file = fopen (filename, "wb");
-	if (file == NULL)
-	{
-		Printf ("Could not open %s\n", filename);
-		return;
-	}
 
 	data = canvas->GetBuffer ();
 	width = canvas->GetWidth ();
@@ -495,8 +490,6 @@ void WritePCXfile (char *filename, DCanvas *canvas, const PalEntry *palette)
 		data += pitch - width;
 	}
 
-	canvas->Unlock ();
-
 	// write the palette
 	putc (12, file);		// palette ID byte
 	for (x = 0; x < 256; x++, palette++)
@@ -505,8 +498,19 @@ void WritePCXfile (char *filename, DCanvas *canvas, const PalEntry *palette)
 		putc (palette->g, file);
 		putc (palette->b, file);
 	}
+}
 
-	fclose (file);
+//
+// WritePNGfile
+//
+void WritePNGfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
+{
+	if (!M_CreatePNG (file, canvas, palette) ||
+		!M_AppendPNGText (file, "Software", "ZDoom " DOTVERSIONSTR) ||
+		!M_FinishPNG (file))
+	{
+		Printf ("Could not create screenshot.\n");
+	}
 }
 
 
@@ -517,7 +521,7 @@ static BOOL FindFreeName (char *lbmname, const char *extension)
 {
 	int i;
 
-	for (i=0 ; i<=9999 ; i++)
+	for (i = 0; i <= 9999; i++)
 	{
 		sprintf (lbmname, "DOOM%04d.%s", i, extension);
 		if (!FileExists (lbmname))
@@ -526,12 +530,12 @@ static BOOL FindFreeName (char *lbmname, const char *extension)
 	return false;
 }
 
-CVAR(Bool, screenshot_quiet, false, CVAR_ARCHIVE);
-
 void M_ScreenShot (char *filename)
 {
+	FILE *file;
 	char  autoname[32];
 	char *lbmname;
+	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
 
 	// find a file name to save it to
 	if (!filename)
@@ -547,7 +551,7 @@ void M_ScreenShot (char *filename)
 		{
 			lbmname = autoname;
 		}
-		if (!FindFreeName (lbmname, "pcx"))
+		if (!FindFreeName (lbmname, writepcx ? "pcx" : "png"))
 		{
 			Printf ("M_ScreenShot: Delete some screenshots\n");
 			return;
@@ -564,7 +568,24 @@ void M_ScreenShot (char *filename)
 
 	PalEntry palette[256];
 	screen->GetFlashedPalette (palette);
-	WritePCXfile (filename, screen, palette);
+
+	file = fopen (filename, "wb");
+	if (file == NULL)
+	{
+		Printf ("Could not open %s\n", filename);
+		return;
+	}
+
+	if (writepcx)
+	{
+		WritePCXfile (file, screen, palette);
+	}
+	else
+	{
+		WritePNGfile (file, screen, palette);
+	}
+	fclose (file);
+	screen->Unlock ();
 
 	if (!screenshot_quiet)
 	{

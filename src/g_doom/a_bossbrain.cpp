@@ -18,6 +18,9 @@ void A_BrainSpit (AActor *);
 void A_SpawnFly (AActor *);
 void A_SpawnSound (AActor *);
 
+static FRandom pr_brainscream ("BrainScream");
+static FRandom pr_brainexplode ("BrainExplode");
+static FRandom pr_spawnfly ("SpawnFly");
 
 class ABossTarget : public AActor
 {
@@ -165,7 +168,7 @@ IMPLEMENT_ACTOR (ASpawnShot, Doom, -1, 0)
 	PROP_SpawnState (0)
 
 	PROP_SeeSound ("brain/spit")
-	PROP_DeathSound ("brain/spawn")
+	PROP_DeathSound ("brain/cubeboom")
 END_DEFAULTS
 
 class ASpawnFire : public AActor
@@ -209,10 +212,10 @@ static void BrainishExplosion (fixed_t x, fixed_t y, fixed_t z)
 	AActor *boom = Spawn<ARocket> (x, y, z);
 	if (boom != NULL)
 	{
-		boom->momz = P_Random (pr_brainscream) << 9;
+		boom->momz = pr_brainscream() << 9;
 		boom->SetState (&ABossBrain::States[S_BRAINEXPLODE]);
 		boom->effects = 0;
-		boom->tics -= P_Random (pr_brainscream) & 7;
+		boom->tics -= pr_brainscream() & 7;
 		if (boom->tics < 1)
 			boom->tics = 1;
 	}
@@ -225,15 +228,16 @@ void A_BrainScream (AActor *self)
 	for (x = self->x - 196*FRACUNIT; x < self->x + 320*FRACUNIT; x += 8*FRACUNIT)
 	{
 		BrainishExplosion (x, self->y - 320*FRACUNIT,
-			128 + (P_Random (pr_brainscream) << (FRACBITS + 1)));
+			128 + (pr_brainscream() << (FRACBITS + 1)));
 	}
 	S_Sound (self, CHAN_VOICE, "brain/death", 1, ATTN_SURROUND);
 }
 
 void A_BrainExplode (AActor *self)
 {
-	BrainishExplosion (self->x + PS_Random (pr_brainexplode)*2048,
-		self->y, 128 + P_Random (pr_brainexplode)*2*FRACUNIT);
+	fixed_t x = self->x + pr_brainexplode.Random2()*2048;
+	fixed_t z = 128 + pr_brainexplode()*2*FRACUNIT;
+	BrainishExplosion (x, self->y, z);
 }
 
 void A_BrainDie (AActor *self)
@@ -293,10 +297,10 @@ void A_SpawnFly (AActor *self)
 
 	// First spawn teleport fog.
 	fog = Spawn<ASpawnFire> (targ->x, targ->y, targ->z);
-	S_Sound (fog, CHAN_BODY, "misc/teleport", 1, ATTN_NORM);
+	S_Sound (fog, CHAN_BODY, "brain/spawn", 1, ATTN_NORM);
 
 	// Randomly select monster to spawn.
-	r = P_Random (pr_spawnfly);
+	r = pr_spawnfly ();
 
 	// Probability distribution (kind of :),
 	// decreasing likelihood.

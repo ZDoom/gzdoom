@@ -156,13 +156,13 @@ DArgs *DArgs::GatherFiles (const char *param, const char *extension, bool accept
 {
 	DArgs *out = new DArgs;
 	int i;
-	int extlen = strlen (extension);
+	size_t extlen = strlen (extension);
 
 	if (extlen > 0)
 	{
 		for (i = 1; i < m_ArgC && *m_ArgV[i] != '-' && *m_ArgV[i] != '+'; i++)
 		{
-			int len = strlen (m_ArgV[i]);
+			size_t len = strlen (m_ArgV[i]);
 			if (len >= extlen && stricmp (m_ArgV[i] + len - extlen, extension) == 0)
 				out->AppendArg (m_ArgV[i]);
 			else if (acceptNoExt && !strrchr (m_ArgV[i], '.'))

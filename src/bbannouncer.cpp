@@ -170,6 +170,7 @@ static const char *TelefragSounds[] =
 #endif
 
 static int LastAnnounceTime;
+static FRandom pr_bbannounce ("BBAnnounce");
 
 // CODE --------------------------------------------------------------------
 
@@ -202,7 +203,7 @@ bool AnnounceGameStart ()
 	LastAnnounceTime = 0;
 	if (cl_bbannounce && deathmatch)
 	{
-		DoVoiceAnnounce (BeginSounds[P_Random (pr_bbannounce) & 1]);
+		DoVoiceAnnounce (BeginSounds[pr_bbannounce() & 1]);
 	}
 	return false;
 }
@@ -220,7 +221,7 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 	const char *killerName;
 	const SoundAndString *choice;
 	const char *message;
-	int rannum = P_Random (pr_bbannounce);
+	int rannum = pr_bbannounce();
 
 	if (cl_bbannounce && deathmatch)
 	{
@@ -291,7 +292,7 @@ bool AnnounceKill (AActor *killer, AActor *killee)
 
 bool AnnounceTelefrag (AActor *killer, AActor *killee)
 {
-	int rannum = P_Random (pr_bbannounce);
+	int rannum = pr_bbannounce();
 
 	if (cl_bbannounce && multiplayer)
 	{

@@ -7,6 +7,12 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 
+static FRandom pr_foo ("ImpMissileRange");
+static FRandom pr_imp ("ImpExplode");
+static FRandom pr_impmeatk ("ImpMeAttack");
+static FRandom pr_impmsatk ("ImpMsAttack");
+static FRandom pr_impmsatk2 ("ImpMsAttack2");
+
 void A_ImpExplode (AActor *);
 void A_ImpMeAttack (AActor *);
 void A_ImpMsAttack (AActor *);
@@ -227,7 +233,7 @@ AT_SPEED_SET (HereticImpBall, speed)
 
 bool AHereticImp::SuggestMissileAttack (fixed_t dist)
 { // Imps fly attack from far away
-	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 200);
+	return pr_foo() >= MIN<int> (dist >> (FRACBITS + 1), 200);
 }
 
 //----------------------------------------------------------------------------
@@ -241,13 +247,13 @@ void A_ImpExplode (AActor *self)
 	AActor *chunk;
 
 	chunk = Spawn<AHereticImpChunk1> (self->x, self->y, self->z);
-	chunk->momx = PS_Random () << 10;
-	chunk->momy = PS_Random () << 10;
+	chunk->momx = pr_imp.Random2 () << 10;
+	chunk->momy = pr_imp.Random2 () << 10;
 	chunk->momz = 9*FRACUNIT;
 
 	chunk = Spawn<AHereticImpChunk2> (self->x, self->y, self->z);
-	chunk->momx = PS_Random () << 10;
-	chunk->momy = PS_Random () << 10;
+	chunk->momx = pr_imp.Random2 () << 10;
+	chunk->momy = pr_imp.Random2 () << 10;
 	chunk->momz = 9*FRACUNIT;
 	if (self->special1 == 666)
 	{ // Extreme death crash
@@ -270,7 +276,7 @@ void A_ImpMeAttack (AActor *self)
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (self))
 	{
-		int damage = 5+(P_Random()&7);
+		int damage = 5+(pr_impmeatk()&7);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);
 	}
@@ -288,7 +294,7 @@ void A_ImpMsAttack (AActor *self)
 	angle_t an;
 	int dist;
 
-	if (!self->target || P_Random() > 64)
+	if (!self->target || pr_impmsatk() > 64)
 	{
 		self->SetState (self->SeeState);
 		return;
@@ -326,7 +332,7 @@ void A_ImpMsAttack2 (AActor *self)
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (self))
 	{
-		int damage = 5+(P_Random()&7);
+		int damage = 5+(pr_impmsatk2()&7);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);
 		return;

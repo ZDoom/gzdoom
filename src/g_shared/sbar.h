@@ -37,7 +37,7 @@
 #include "v_collection.h"
 #include "v_text.h"
 
-struct patch_s;
+struct patch_t;
 class player_s;
 
 extern int SB_state;
@@ -152,6 +152,7 @@ public:
 	virtual void SetFace (void *);		// Takes a FPlayerSkin as input
 	virtual void NewGame ();
 	virtual void ScreenSizeChanged ();
+	virtual void MultiplayerChanged ();
 
 protected:
 	void UpdateRect (int x, int y, int width, int height) const;
@@ -165,7 +166,7 @@ protected:
 	void DrawFadedImage (const FImageCollection &collection, int image, int x, int y, fixed_t shade) const;
 	void DrawShadowedImage (const FImageCollection &collection, int image, int x, int y, fixed_t shade) const;
 	void DrawOuterImage (const FImageCollection &collection, int image, int x, int y) const;
-	void DrawOuterPatch (const patch_s *patch, int x, int y) const;
+	void DrawOuterPatch (const patch_t *patch, int x, int y) const;
 
 	void DrINumber (signed int val, int x, int y) const;
 	void DrBNumber (signed int val, int x, int y, int w=3) const;

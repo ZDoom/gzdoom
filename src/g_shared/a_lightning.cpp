@@ -7,6 +7,8 @@
 #include "s_sound.h"
 #include "p_acs.h"
 
+static FRandom pr_lightning ("Lightning");
+
 IMPLEMENT_CLASS (DLightningThinker)
 
 DLightningThinker::DLightningThinker ()
@@ -14,7 +16,7 @@ DLightningThinker::DLightningThinker ()
 {
 	LightningLightLevels = NULL;
 	LightningFlashCount = 0;
-	NextLightningFlash = ((P_Random(pr_lightning)&15)+5)*35; // don't flash at level start
+	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
 
 	LightningLightLevels = new BYTE[numsectors + (numsectors+7)/8];
 	memset (LightningLightLevels, 0, numsectors + (numsectors+7)/8);
@@ -102,8 +104,8 @@ void DLightningThinker::LightningFlash ()
 		return;
 	}
 
-	LightningFlashCount = (P_Random(pr_lightning)&7)+8;
-	flashLight = 200+(P_Random(pr_lightning)&31);
+	LightningFlashCount = (pr_lightning()&7)+8;
+	flashLight = 200+(pr_lightning()&31);
 	tempSec = sectors;
 	for (i = numsectors, j = 0; i > 0; --i, ++j, ++tempSec)
 	{
@@ -135,27 +137,24 @@ void DLightningThinker::LightningFlash ()
 
 	level.flags |= LEVEL_SWAPSKIES;	// set alternate sky
 	S_Sound (CHAN_AUTO, "world/thunder", 1.0, ATTN_NONE);
-	if (level.behavior != NULL)
-	{ // [RH] Run lightning scripts
-		level.behavior->StartTypedScripts (SCRIPT_Lightning, NULL);
-	}
+	FBehavior::StaticStartTypedScripts (SCRIPT_Lightning, NULL);	// [RH] Run lightning scripts
 
 	// Calculate the next lighting flash
 	if (!NextLightningFlash)
 	{
-		if (P_Random(pr_lightning) < 50)
+		if (pr_lightning() < 50)
 		{ // Immediate Quick flash
-			NextLightningFlash = (P_Random(pr_lightning)&15)+16;
+			NextLightningFlash = (pr_lightning()&15)+16;
 		}
 		else
 		{
-			if (P_Random(pr_lightning) < 128 && !(level.time&32))
+			if (pr_lightning() < 128 && !(level.time&32))
 			{
-				NextLightningFlash = ((P_Random (pr_lightning)&7)+2)*35;
+				NextLightningFlash = ((pr_lightning()&7)+2)*35;
 			}
 			else
 			{
-				NextLightningFlash = ((P_Random (pr_lightning)&15)+5)*35;
+				NextLightningFlash = ((pr_lightning()&15)+5)*35;
 			}
 		}
 	}

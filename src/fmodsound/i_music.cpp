@@ -32,8 +32,10 @@
 **
 */
 
-#ifndef FMOD_333
-#define FMOD_333 0
+#ifndef NOSPC
+#ifndef _WIN32
+#define NOSPC
+#endif
 #endif
 
 #ifdef _WIN32
@@ -187,6 +189,8 @@ protected:
 	bool PrepareHeaders ();
 	void SubmitBuffer ();
 	void AllChannelsOff ();
+	void SetStreamVolume ();
+	void UnsetStreamVolume ();
 
 	bool m_IsMUS;
 
@@ -199,6 +203,9 @@ protected:
 	HMIDISTRM m_MidiStream;
 	PSTREAMBUF m_Buffers;
 	PSTREAMBUF m_CurrBuffer;
+	bool m_bVolGood, m_bOldVolGood;
+
+	DWORD m_OldVolume, m_LastSetVol;
 };
 
 // MUS file played through the multimedia system
@@ -265,6 +272,42 @@ protected:
 	int m_Channel;
 	int m_LastPos;
 };
+
+#ifndef NOSPC
+// SPC file
+
+typedef void (__stdcall *SNESAPUInfo_TYPE) (DWORD&, DWORD&, DWORD&);
+typedef void (__stdcall *GetAPUData_TYPE) (void**, BYTE**, BYTE**, DWORD**, void**, void**, DWORD**, DWORD**);
+typedef void (__stdcall *ResetAPU_TYPE) (DWORD);
+typedef void (__stdcall *FixAPU_TYPE) (WORD, BYTE, BYTE, BYTE, BYTE, BYTE);
+typedef void (__stdcall *SetAPUOpt_TYPE) (DWORD, DWORD, DWORD, DWORD, DWORD, DWORD);
+typedef void *(__stdcall *EmuAPU_TYPE) (void *, DWORD, BYTE);
+
+class SPCSong : public StreamSong
+{
+public:
+	SPCSong (int handle, int pos, int len);
+	~SPCSong ();
+	void Play (bool looping);
+	bool IsPlaying ();
+	bool IsValid () const;
+
+protected:
+	bool LoadEmu ();
+	void CloseEmu ();
+
+	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+
+	HINSTANCE HandleAPU;
+
+	SNESAPUInfo_TYPE SNESAPUInfo;
+	GetAPUData_TYPE GetAPUData;
+	ResetAPU_TYPE ResetAPU;
+	FixAPU_TYPE FixAPU;
+	SetAPUOpt_TYPE SetAPUOpt;
+	EmuAPU_TYPE EmuAPU;
+};
+#endif
 
 // MIDI file played with Timidity
 class TimiditySong : public StreamSong
@@ -413,14 +456,81 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (oldmididev != mididevice && currSong)
 	{
 		MusInfo *song = currSong;
-		I_StopSong ((long)song);
-		I_PlaySong ((long)song, song->m_Looping);
+		I_StopSong (song);
+		I_PlaySong (song, song->m_Looping);
 	}
 }
 
 void MIDISong::SetVolume (float volume)
 {
-	midiOutSetVolume ((HMIDIOUT)m_MidiStream, midivolume);
+	SetStreamVolume ();
+}
+
+// Hacks for stupid Creative drivers that won't let me simply call
+// midiOutSetVolume when I want to affect the volume for a single stream.
+
+void MIDISong::SetStreamVolume ()
+{
+	DWORD vol;
+	MMRESULT ret;
+
+	ret = midiOutGetVolume ((HMIDIOUT)mididevice, &vol);
+	if (m_bVolGood)
+	{
+		// Check the last set vol against the current volume.
+		// If they're different, then the the current volume
+		// becomes the volume to set when we're done.
+		if (ret == MMSYSERR_NOERROR)
+		{
+			if (vol != m_LastSetVol)
+			{
+				m_OldVolume = vol;
+				m_bOldVolGood = true;
+			}
+		}
+		else
+		{
+			m_bOldVolGood = false;
+		}
+	}
+	else
+	{
+		// The volume hasn't been set yet, so remember the
+		// current volume so that we can return to it later.
+		if (ret == MMSYSERR_NOERROR)
+		{
+			m_OldVolume = vol;
+			m_bOldVolGood = true;
+		}
+		else
+		{
+			m_bOldVolGood = false;
+		}
+	}
+	// Now set the new volume.
+	ret = midiOutSetVolume ((HMIDIOUT)mididevice, midivolume);
+	if (ret == MMSYSERR_NOERROR)
+	{
+		m_LastSetVol = midivolume;
+		m_bVolGood = true;
+	}
+	else
+	{
+		char err[MAXERRORLENGTH];
+		midiOutGetErrorText (ret, err, MAXERRORLENGTH);
+		Printf (PRINT_BOLD, "Could not set MIDI volume:\n%s\n", err);
+		m_bVolGood = false;
+	}
+}
+
+void MIDISong::UnsetStreamVolume ()
+{
+	if (m_bVolGood && m_bOldVolGood)
+	{
+		midiOutSetVolume ((HMIDIOUT)mididevice, m_OldVolume);
+		m_bVolGood = false;
+		m_bOldVolGood = false;
+	}
 }
 #endif // _WIN32
 
@@ -448,16 +558,44 @@ void StreamSong::SetVolume (float volume)
 }
 
 #ifdef _WIN32
-static void PrintMidiDevice (int id, const char *name)
+#include "v_text.h"
+
+static void PrintMidiDevice (int id, const char *name, WORD tech, DWORD support)
 {
 	if (id == snd_mididevice)
 	{
-		Printf_Bold ("% 2d. %s\n", id, name);
+		Printf (TEXTCOLOR_BOLD);
 	}
-	else
+	Printf ("% 2d. %s : ", id, name);
+	switch (tech)
 	{
-		Printf ("% 2d. %s\n", id, name);
+	case MOD_MIDIPORT:		Printf ("MIDIPORT");		break;
+	case MOD_SYNTH:			Printf ("SYNTH");			break;
+	case MOD_SQSYNTH:		Printf ("SQSYNTH");			break;
+	case MOD_FMSYNTH:		Printf ("FMSYNTH");			break;
+	case MOD_MAPPER:		Printf ("MAPPER");			break;
+#ifdef MOD_WAVETABLE
+	case MOD_WAVETABLE:		Printf ("WAVETABLE");		break;
+	case MOD_SWSYNTH:		Printf ("SWSYNTH");			break;
+#endif
 	}
+	if (support & MIDICAPS_CACHE)
+	{
+		Printf (" CACHE");
+	}
+	if (support & MIDICAPS_LRVOLUME)
+	{
+		Printf (" LRVOLUME");
+	}
+	if (support & MIDICAPS_STREAM)
+	{
+		Printf (" STREAM");
+	}
+	if (support & MIDICAPS_VOLUME)
+	{
+		Printf (" VOLUME");
+	}
+	Printf (TEXTCOLOR_NORMAL "\n");
 }
 
 CCMD (snd_listmididevices)
@@ -466,12 +604,12 @@ CCMD (snd_listmididevices)
 	MIDIOUTCAPS caps;
 	MMRESULT res;
 
-	PrintMidiDevice (-3, "DirectMusic");
-	PrintMidiDevice (-2, "TiMidity++");
+	PrintMidiDevice (-3, "DirectMusic", 0, 0);
+	PrintMidiDevice (-2, "TiMidity++", 0, 0);
 	if (nummididevices != 0)
 	{
-		PrintMidiDevice (-1, "MIDI Mapper");
-		for (id = 0; id < nummididevices; id++)
+		PrintMidiDevice (-1, "MIDI Mapper", MOD_MAPPER, 0);
+		for (id = 0; id < nummididevices; ++id)
 		{
 			res = midiOutGetDevCaps (id, &caps, sizeof(caps));
 			if (res == MMSYSERR_NODRIVER)
@@ -481,7 +619,7 @@ CCMD (snd_listmididevices)
 			else if (res != MMSYSERR_NOERROR)
 				continue;
 
-			PrintMidiDevice (id, caps.szPname);
+			PrintMidiDevice (id, caps.szPname, caps.wTechnology, caps.dwSupport);
 		}
 	}
 }
@@ -556,10 +694,10 @@ void STACK_ARGS I_ShutdownMusic(void)
 #ifdef _WIN32
 void MIDISong::MCIError (MMRESULT res, const char *descr)
 {
-	char errorStr[256];
+	char errorStr[MAXERRORLENGTH];
 
-	mciGetErrorString (res, errorStr, 255);
-	Printf_Bold ("An error occured while %s:\n", descr);
+	mciGetErrorString (res, errorStr, MAXERRORLENGTH);
+	Printf (PRINT_BOLD, "An error occured while %s:\n", descr);
 	Printf ("%s\n", errorStr);
 }
 
@@ -674,7 +812,7 @@ void MIDISong::MidiProc (UINT uMsg)
 }
 #endif // _WIN32
 
-void I_PlaySong (long handle, int _looping)
+void I_PlaySong (void *handle, int _looping)
 {
 	MusInfo *info = (MusInfo *)handle;
 
@@ -702,8 +840,8 @@ void MIDISong::Play (bool looping)
 	// (interesting undocumented behavior)
 	if ((res = midiStreamOpen (&m_MidiStream,
 							   &mididevice,
-							   (DWORD)1, (DWORD)::MidiProc,
-							   (DWORD)this,
+							   (DWORD)1,
+							   (DWORD_PTR)::MidiProc, (DWORD_PTR)this,
 							   CALLBACK_FUNCTION)) == MMSYSERR_NOERROR)
 	{
 		MIDIPROPTIMEDIV timedivProp;
@@ -715,7 +853,7 @@ void MIDISong::Play (bool looping)
 		if (res != MMSYSERR_NOERROR)
 			MCIError (res, "setting time division");
 
-		res = midiOutSetVolume ((HMIDIOUT)m_MidiStream, midivolume);
+		SetStreamVolume ();
 
 		// Preload all instruments into soundcard RAM (if necessary).
 		// On my GUS PnP, this is necessary because it will fail to
@@ -851,18 +989,12 @@ void StreamSong::Play (bool looping)
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-#if FMOD_333
-	m_Channel = FSOUND_Stream_Play3DAttrib (FSOUND_FREE, m_Stream, -1, volume, FSOUND_STEREOPAN, NULL, NULL);
-#else
 	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
-#endif
 	if (m_Channel != -1)
 	{
 		FSOUND_SetVolumeAbsolute (m_Channel, volume);
-#if !FMOD_333
 		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
 		FSOUND_SetPaused (m_Channel, false);
-#endif
 		m_Status = STATE_Playing;
 		m_LastPos = 0;
 	}
@@ -879,18 +1011,12 @@ void TimiditySong::Play (bool looping)
 	{
 		if (m_Stream != NULL)
 		{
-#if FMOD_333
-			m_Channel = FSOUND_Stream_Play3DAttrib (FSOUND_FREE, m_Stream, -1, volume, FSOUND_STEREOPAN, NULL, NULL);
-#else
 			m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
-#endif
 			if (m_Channel != -1)
 			{
 				FSOUND_SetVolumeAbsolute (m_Channel, volume);
-#if !FMOD_333
 				FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
 				FSOUND_SetPaused (m_Channel, false);
-#endif
 				m_Status = STATE_Playing;
 			}
 		}
@@ -911,7 +1037,7 @@ void CDSong::Play (bool looping)
 	}
 }
 
-void I_PauseSong (long handle)
+void I_PauseSong (void *handle)
 {
 	MusInfo *info = (MusInfo *)handle;
 
@@ -958,7 +1084,7 @@ void CDSong::Pause ()
 	}
 }
 
-void I_ResumeSong (long handle)
+void I_ResumeSong (void *handle)
 {
 	MusInfo *info = (MusInfo *)handle;
 
@@ -1005,7 +1131,7 @@ void StreamSong::Resume ()
 	}
 }
 
-void I_StopSong (long handle)
+void I_StopSong (void *handle)
 {
 	MusInfo *info = (MusInfo *)handle;
 	
@@ -1027,6 +1153,7 @@ void MIDISong::Stop ()
 		WaitForSingleObject (BufferReturnEvent, 5000);
 		midiOutReset ((HMIDIOUT)m_MidiStream);
 		UnprepareHeaders ();
+		UnsetStreamVolume ();
 		midiStreamClose (m_MidiStream);
 		m_MidiStream = NULL;
 	}
@@ -1094,7 +1221,7 @@ void CDSong::Stop ()
 	}
 }
 
-void I_UnRegisterSong (long handle)
+void I_UnRegisterSong (void *handle)
 {
 	MusInfo *info = (MusInfo *)handle;
 
@@ -1179,7 +1306,7 @@ CDSong::~CDSong ()
 	m_Inited = false;
 }
 
-long I_RegisterSong (int handle, int pos, int len)
+void *I_RegisterSong (int handle, int pos, int len)
 {
 	MusInfo *info = NULL;
 	DWORD id;
@@ -1192,7 +1319,7 @@ long I_RegisterSong (int handle, int pos, int len)
 	lseek (handle, pos, SEEK_SET);
 	read (handle, &id, 4);
 
-	if (id == (('M')|(('U')<<8)|(('S')<<16)|((0x1a)<<24)))
+	if (id == MAKE_ID('M','U','S',0x1a))
 	{
 		// This is a mus file
 #ifdef _WIN32
@@ -1210,7 +1337,7 @@ long I_RegisterSong (int handle, int pos, int len)
 			info = new TimiditySong (handle, pos, len);
 		}
 	}
-	else if (id == (('M')|(('T')<<8)|(('h')<<16)|(('d')<<24)))
+	else if (id == MAKE_ID('M','T','h','d'))
 	{
 		// This is a midi file
 #ifdef _WIN32
@@ -1226,6 +1353,18 @@ long I_RegisterSong (int handle, int pos, int len)
 #endif // _WIN32
 		{
 			info = new TimiditySong (handle, pos, len);
+		}
+	}
+	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
+	{
+		char tag[0x23-4];
+
+		if (read (handle, tag, 0x23-4) == 0x23-4 &&
+			strncmp (tag, "-SPC700 Sound File Data", 23) == 0 &&
+			tag[0x21-4] == 26 &&
+			tag[0x22-4] == 26)
+		{
+			info = new SPCSong (handle, pos, len);
 		}
 	}
 
@@ -1260,10 +1399,10 @@ long I_RegisterSong (int handle, int pos, int len)
 		info = NULL;
 	}
 
-	return info ? (long)info : 0;
+	return info;
 }
 
-long I_RegisterCDSong (int track, int id)
+void *I_RegisterCDSong (int track, int id)
 {
 	MusInfo *info = new CDSong (track, id);
 
@@ -1273,14 +1412,13 @@ long I_RegisterCDSong (int track, int id)
 		info = NULL;
 	}
 
-	return info ? (long)info : 0;
+	return info;
 }
 
 #ifdef _WIN32
 MIDISong::MIDISong ()
+: m_IsMUS (false), m_Buffers (NULL), m_bVolGood (false)
 {
-	m_Buffers = NULL;
-	m_IsMUS = false;
 }
 
 MIDISong::MIDISong (int handle, int pos, int len)
@@ -1326,7 +1464,7 @@ DMusSong::DMusSong (int handle, int pos, int len)
 	FILE *f = fopen (DiskName, "wb");
 	if (f == NULL)
 	{
-		Printf_Bold ("Could not open temp music file\n");
+		Printf (PRINT_BOLD, "Could not open temp music file\n");
 		return;
 	}
 
@@ -1336,7 +1474,7 @@ DMusSong::DMusSong (int handle, int pos, int len)
 	if (lseek (handle, pos, SEEK_SET) == -1 || read (handle, buf, len) != len)
 	{
 		fclose (f);
-		Printf_Bold ("Could not read source music file\n");
+		Printf (PRINT_BOLD, "Could not read source music file\n");
 		return;
 	}
 
@@ -1395,14 +1533,14 @@ TimiditySong::TimiditySong (int handle, int pos, int len)
 	
 	if (DiskName == NULL)
 	{
-		Printf_Bold ("Could not create temp music file\n");
+		Printf (PRINT_BOLD, "Could not create temp music file\n");
 		return;
 	}
 
 	f = fopen (DiskName, "wb");
 	if (f == NULL)
 	{
-		Printf_Bold ("Could not open temp music file\n");
+		Printf (PRINT_BOLD, "Could not open temp music file\n");
 		return;
 	}
 
@@ -1411,7 +1549,7 @@ TimiditySong::TimiditySong (int handle, int pos, int len)
 	if (lseek (handle, pos, SEEK_SET) == -1 || read (handle, buf, len) != len)
 	{
 		fclose (f);
-		Printf_Bold ("Could not read source music file\n");
+		Printf (PRINT_BOLD, "Could not read source music file\n");
 		return;
 	}
 
@@ -1435,7 +1573,7 @@ TimiditySong::TimiditySong (int handle, int pos, int len)
 	}
 	else
 	{
-		Printf_Bold ("Could not write temp music file\n");
+		Printf (PRINT_BOLD, "Could not write temp music file\n");
 	}
 }
 
@@ -1456,7 +1594,7 @@ void TimiditySong::PrepTimidity ()
 	KillerEvent = CreateEvent (NULL, FALSE, FALSE, EventName);
 	if (KillerEvent == INVALID_HANDLE_VALUE)
 	{
-		Printf_Bold ("Could not create TiMidity++ kill event.\n");
+		Printf (PRINT_BOLD, "Could not create TiMidity++ kill event.\n");
 		return;
 	}
 #endif // WIN32
@@ -1485,7 +1623,7 @@ void TimiditySong::PrepTimidity ()
 		if (pipe (WavePipe) == -1)
 #endif
 		{
-			Printf_Bold ("Could not create a data pipe for TiMidity++.\n");
+			Printf (PRINT_BOLD, "Could not create a data pipe for TiMidity++.\n");
 			pipeSize = 0;
 		}
 		else
@@ -1497,7 +1635,7 @@ void TimiditySong::PrepTimidity ()
 				timidity_frequency, (int)this);
 			if (m_Stream == NULL)
 			{
-				Printf_Bold ("Could not create FMOD music stream.\n");
+				Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
 				pipeSize = 0;
 #ifdef _WIN32
 				CloseHandle (ReadWavePipe);
@@ -1513,8 +1651,8 @@ void TimiditySong::PrepTimidity ()
 		
 		if (pipeSize == 0)
 		{
-			Printf_Bold ("If your soundcard cannot play more than one\n"
-						 "wave at a time, you will hear no music.\n");
+			Printf (PRINT_BOLD, "If your soundcard cannot play more than one\n"
+								"wave at a time, you will hear no music.\n");
 		}
 		else
 		{
@@ -1562,12 +1700,12 @@ bool TimiditySong::ValidateTimidity ()
 	pathLen = SearchPath (NULL, timidity_exe, NULL, MAX_PATH, foundPath, &filePart);
 	if (pathLen == 0)
 	{
-		Printf_Bold ("Please set the timidity_exe cvar to the location of TiMidity++\n");
+		Printf (PRINT_BOLD, "Please set the timidity_exe cvar to the location of TiMidity++\n");
 		return false;
 	}
 	if (pathLen > MAX_PATH)
 	{
-		Printf_Bold ("TiMidity++ is in a path too long\n");
+		Printf (PRINT_BOLD, "The path to TiMidity++ is too long\n");
 		return false;
 	}
 
@@ -1575,21 +1713,21 @@ bool TimiditySong::ValidateTimidity ()
 		OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, NULL);
 	if (diskFile == INVALID_HANDLE_VALUE)
 	{
-		Printf_Bold ("Could not access %s\n", foundPath);
+		Printf (PRINT_BOLD, "Could not access %s\n", foundPath);
 		return false;
 	}
 	fileLen = GetFileSize (diskFile, NULL);
 	mapping = CreateFileMapping (diskFile, NULL, PAGE_READONLY, 0, 0, NULL);
 	if (mapping == NULL)
 	{
-		Printf_Bold ("Could not create mapping for %s\n", foundPath);
+		Printf (PRINT_BOLD, "Could not create mapping for %s\n", foundPath);
 		CloseHandle (diskFile);
 		return false;
 	}
 	exeBase = (const BYTE *)MapViewOfFile (mapping, FILE_MAP_READ, 0, 0, 0);
 	if (exeBase == NULL)
 	{
-		Printf_Bold ("Could not map %s\n", foundPath);
+		Printf (PRINT_BOLD, "Could not map %s\n", foundPath);
 		CloseHandle (mapping);
 		CloseHandle (diskFile);
 		return false;
@@ -1615,11 +1753,11 @@ bool TimiditySong::ValidateTimidity ()
 	}
 	catch (...)
 	{
-		Printf_Bold ("Error reading %s\n", foundPath);
+		Printf (PRINT_BOLD, "Error reading %s\n", foundPath);
 	}
 	if (!good)
 	{
-		Printf_Bold ("ZDoom requires a special version of TiMidity++\n");
+		Printf (PRINT_BOLD, "ZDoom requires a special version of TiMidity++\n");
 	}
 
 	UnmapViewOfFile (exeBase);
@@ -1677,8 +1815,8 @@ bool TimiditySong::LaunchTimidity ()
 		msgBuf = hres;
 	}
 
-	Printf_Bold ("Could not run timidity with the command line:\n%s\n"
-				 "Reason: %s\n", CommandLine, msgBuf);
+	Printf (PRINT_BOLD, "Could not run timidity with the command line:\n%s\n"
+						"Reason: %s\n", CommandLine, msgBuf);
 	if (msgBuf != hres)
 	{
 		LocalFree (msgBuf);
@@ -1728,7 +1866,7 @@ bool TimiditySong::LaunchTimidity ()
 	}
 	else if (forkres < 0)
 	{
-		Printf_Bold ("Could not fork when trying to start timidity\n");
+		Printf (PRINT_BOLD, "Could not fork when trying to start timidity\n");
 	}
 	else
 	{
@@ -1861,7 +1999,7 @@ CDDAFile::CDDAFile (int handle, int pos, int len)
 }
 
 // Is the song playing?
-bool I_QrySongPlaying (long handle)
+bool I_QrySongPlaying (void *handle)
 {
 	MusInfo *info = (MusInfo *)handle;
 
@@ -1877,14 +2015,22 @@ bool MIDISong::IsPlaying ()
 
 bool MODSong::IsPlaying ()
 {
-	if (m_Status != STATE_Stopped && FMUSIC_IsPlaying (m_Module))
+	if (m_Status != STATE_Stopped)
 	{
-		if (!m_Looping && FMUSIC_IsFinished (m_Module))
+		if (FMUSIC_IsPlaying (m_Module))
 		{
-			Stop();
-			return false;
+			if (!m_Looping && FMUSIC_IsFinished (m_Module))
+			{
+				Stop ();
+				return false;
+			}
+			return true;
 		}
-		return true;
+		else if (m_Looping)
+		{
+			Play (true);
+			return m_Status != STATE_Stopped;
+		}
 	}
 	return false;
 }
@@ -1955,7 +2101,7 @@ bool CDSong::IsPlaying ()
 }
 
 // Change to a different part of the song
-bool I_SetSongPosition (long handle, int order)
+bool I_SetSongPosition (void *handle, int order)
 {
 	MusInfo *info = (MusInfo *)handle;
 	return info ? info->SetPosition (order) : false;
@@ -2049,3 +2195,158 @@ int FPipeBuffer::ReadFrag (BYTE *buf)
 	return startavail;
 }
 #endif	// !_WIN32
+
+#ifndef NOSPC
+CVAR (Int, spc_amp, 30, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, spc_8bit, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, spc_stereo, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, spc_lowpass, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, spc_surround, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, spc_oldsamples, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR (Int, spc_quality, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (spc_quality < 0)
+	{
+		spc_quality = 0;
+	}
+	else if (spc_quality > 3)
+	{
+		spc_quality = 3;
+	}
+}
+
+CUSTOM_CVAR (Int, spc_frequency, 32000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (spc_frequency < 8000)
+	{
+		spc_frequency = 8000;
+	}
+	else if (spc_frequency > 65535)
+	{
+		spc_frequency = 65535;
+	}
+}
+
+SPCSong::SPCSong (int handle, int pos, int len)
+{
+	if (!LoadEmu ())
+	{
+		return;
+	}
+
+	m_Stream = FSOUND_Stream_Create (FillStream, 16384,
+		FSOUND_SIGNED | FSOUND_2D |
+		(spc_stereo ? FSOUND_STEREO : FSOUND_MONO) |
+		(spc_8bit ? FSOUND_8BITS : FSOUND_16BITS),
+		spc_frequency, (int)this);
+	if (m_Stream == NULL)
+	{
+		Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
+		CloseEmu ();
+		return;
+	}
+
+	ResetAPU (spc_amp);
+	SetAPUOpt (0, spc_stereo + 1, spc_8bit ? 8 : 16, spc_frequency, spc_quality,
+		(spc_lowpass ? 1 : 0) | (spc_oldsamples ? 2 : 0) | (spc_surround ? 4 : 0));
+
+	BYTE spcfile[66048];
+
+	lseek (handle, pos, SEEK_SET);
+	if (66048 != read (handle, spcfile, 66048))
+	{
+		CloseEmu ();
+		return;
+	}
+
+	void *apuram;
+	BYTE *extraram;
+	void *dsp;
+
+	GetAPUData (&apuram, &extraram, NULL, NULL, &dsp, NULL, NULL, NULL);
+
+	memcpy (apuram, spcfile + 0x100, 65536);
+	memcpy (dsp, spcfile + 0x10100, 128);
+	memcpy (extraram, spcfile + 0x101c0, 64);
+
+	FixAPU (spcfile[37]+spcfile[38]*256, spcfile[39], spcfile[41], spcfile[40], spcfile[42], spcfile[43]);
+}
+
+SPCSong::~SPCSong ()
+{
+	Stop ();
+	CloseEmu ();
+}
+
+bool SPCSong::IsValid () const
+{
+	return HandleAPU != NULL;
+}
+
+bool SPCSong::IsPlaying ()
+{
+	return m_Status == STATE_Playing;
+}
+
+void SPCSong::Play (bool looping)
+{
+	int volume = (int)(snd_musicvolume * 255);
+
+	m_Status = STATE_Stopped;
+	m_Looping = true;
+
+	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
+	if (m_Channel != -1)
+	{
+		FSOUND_SetVolumeAbsolute (m_Channel, volume);
+		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
+		FSOUND_SetPaused (m_Channel, false);
+		m_Status = STATE_Playing;
+	}
+}
+
+signed char STACK_ARGS SPCSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+{
+	SPCSong *song = (SPCSong *)param;
+	int div = 1 << (spc_stereo + !spc_8bit);
+	song->EmuAPU (buff, len/div, 1);
+	return TRUE;
+}
+
+bool SPCSong::LoadEmu ()
+{
+	HandleAPU = LoadLibraryA ("snesapu.dll");
+	if (HandleAPU == NULL)
+	{
+		Printf ("Could not load snesapu.dll\n");
+		return false;
+	}
+
+	DWORD ver, min, opt;
+
+	if (!(SNESAPUInfo = (SNESAPUInfo_TYPE)GetProcAddress (HandleAPU, "SNESAPUInfo")) ||
+		!(GetAPUData = (GetAPUData_TYPE)GetProcAddress (HandleAPU, "GetAPUData")) ||
+		!(ResetAPU = (ResetAPU_TYPE)GetProcAddress (HandleAPU, "ResetAPU")) ||
+		!(FixAPU = (FixAPU_TYPE)GetProcAddress (HandleAPU, "FixAPU")) ||
+		!(SetAPUOpt = (SetAPUOpt_TYPE)GetProcAddress (HandleAPU, "SetAPUOpt")) ||
+		!(EmuAPU = (EmuAPU_TYPE)GetProcAddress (HandleAPU, "EmuAPU")) ||
+		(SNESAPUInfo (ver, min, opt), ((min>>8)&0xffff) > 0x095))
+	{
+		Printf ("snesapu.dll is wrong version\n");
+		FreeLibrary (HandleAPU);
+		HandleAPU = NULL;
+		return false;
+	}
+	return true;
+}
+
+void SPCSong::CloseEmu ()
+{
+	if (HandleAPU != NULL)
+	{
+		FreeLibrary (HandleAPU);
+		HandleAPU = NULL;
+	}
+}
+#endif

@@ -5,6 +5,13 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
+#include "a_hexenglobal.h"
+
+static FRandom pr_centaurdefend ("CentaurDefend");
+
+static FRandom pr_reflect ("CentaurDeflect");
+static FRandom pr_centaurattack ("CentaurAttack");
+static FRandom pr_centaurdrop ("CentaurDrop");
 
 void A_CentaurDefend (AActor *);
 void A_CentaurAttack (AActor *);
@@ -12,13 +19,6 @@ void A_CentaurAttack2 (AActor *);
 void A_CentaurDropStuff (AActor *);
 
 // Centaur ------------------------------------------------------------------
-
-class ACentaur : public AActor
-{
-	DECLARE_ACTOR (ACentaur, AActor)
-public:
-	void Howl ();
-};
 
 FState ACentaur::States[] =
 {
@@ -115,6 +115,22 @@ void ACentaur::Howl ()
 	}
 }
 
+bool ACentaur::AdjustReflectionAngle (AActor *thing, angle_t &angle)
+{
+	if (abs (angle-BlockingMobj->angle)>>24 > 45)
+		return true;	// Let missile explode
+
+	if (thing->IsKindOf (RUNTIME_CLASS(AHolySpirit)))
+		return true;
+
+	if (pr_reflect () < 128)
+		angle += ANGLE_45;
+	else
+		angle -= ANGLE_45;
+
+	return false;
+}
+
 // Centaur Leader -----------------------------------------------------------
 
 class ACentaurLeader : public ACentaur
@@ -162,14 +178,14 @@ class ACentaurFX : public AActor
 FState ACentaurFX::States[] =
 {
 #define S_CENTAUR_FX1 0
-	S_BRIGHT (CTFX, 'A',   -1, NULL					    , NULL),
+	S_BRIGHT (CTFX, 'A',   -1, NULL						, NULL),
 
 #define S_CENTAUR_FX_X1 (S_CENTAUR_FX1+1)
-	S_BRIGHT (CTFX, 'B',	4, NULL					    , &States[S_CENTAUR_FX_X1+1]),
-	S_BRIGHT (CTFX, 'C',	3, NULL					    , &States[S_CENTAUR_FX_X1+2]),
-	S_BRIGHT (CTFX, 'D',	4, NULL					    , &States[S_CENTAUR_FX_X1+3]),
-	S_BRIGHT (CTFX, 'E',	3, NULL					    , &States[S_CENTAUR_FX_X1+4]),
-	S_BRIGHT (CTFX, 'F',	2, NULL					    , NULL),
+	S_BRIGHT (CTFX, 'B',	4, NULL						, &States[S_CENTAUR_FX_X1+1]),
+	S_BRIGHT (CTFX, 'C',	3, NULL						, &States[S_CENTAUR_FX_X1+2]),
+	S_BRIGHT (CTFX, 'D',	4, NULL						, &States[S_CENTAUR_FX_X1+3]),
+	S_BRIGHT (CTFX, 'E',	3, NULL						, &States[S_CENTAUR_FX_X1+4]),
+	S_BRIGHT (CTFX, 'F',	2, NULL						, NULL),
 };
 
 IMPLEMENT_ACTOR (ACentaurFX, Hexen, -1, 0)
@@ -194,18 +210,18 @@ class ACentaurShield : public AActor
 FState ACentaurShield::States[] =
 {
 #define S_CENTAUR_SHIELD1 0
-	S_NORMAL (CTDP, 'A',	3, A_CheckFloor			    , &States[S_CENTAUR_SHIELD1+1]),
-	S_NORMAL (CTDP, 'B',	3, A_CheckFloor			    , &States[S_CENTAUR_SHIELD1+2]),
-	S_NORMAL (CTDP, 'C',	3, A_CheckFloor			    , &States[S_CENTAUR_SHIELD1+3]),
-	S_NORMAL (CTDP, 'D',	3, A_CheckFloor			    , &States[S_CENTAUR_SHIELD1+4]),
-	S_NORMAL (CTDP, 'E',	3, A_CheckFloor			    , &States[S_CENTAUR_SHIELD1+5]),
-	S_NORMAL (CTDP, 'F',	3, A_CheckFloor			    , &States[S_CENTAUR_SHIELD1+2]),
+	S_NORMAL (CTDP, 'A',	3, NULL						, &States[S_CENTAUR_SHIELD1+1]),
+	S_NORMAL (CTDP, 'B',	3, NULL						, &States[S_CENTAUR_SHIELD1+2]),
+	S_NORMAL (CTDP, 'C',	3, NULL						, &States[S_CENTAUR_SHIELD1+3]),
+	S_NORMAL (CTDP, 'D',	3, NULL						, &States[S_CENTAUR_SHIELD1+4]),
+	S_NORMAL (CTDP, 'E',	3, NULL						, &States[S_CENTAUR_SHIELD1+5]),
+	S_NORMAL (CTDP, 'F',	3, NULL						, &States[S_CENTAUR_SHIELD1+2]),
 
 #define S_CENTAUR_SHIELD_X1 (S_CENTAUR_SHIELD1+6)
-	S_NORMAL (CTDP, 'G',	4, NULL					    , &States[S_CENTAUR_SHIELD_X1+1]),
-	S_NORMAL (CTDP, 'H',	4, A_QueueCorpse		    , &States[S_CENTAUR_SHIELD_X1+2]),
-	S_NORMAL (CTDP, 'I',	4, NULL					    , &States[S_CENTAUR_SHIELD_X1+3]),
-	S_NORMAL (CTDP, 'J',   -1, NULL					    , NULL),
+	S_NORMAL (CTDP, 'G',	4, NULL						, &States[S_CENTAUR_SHIELD_X1+1]),
+	S_NORMAL (CTDP, 'H',	4, A_QueueCorpse			, &States[S_CENTAUR_SHIELD_X1+2]),
+	S_NORMAL (CTDP, 'I',	4, NULL						, &States[S_CENTAUR_SHIELD_X1+3]),
+	S_NORMAL (CTDP, 'J',   -1, NULL						, NULL),
 };
 
 IMPLEMENT_ACTOR (ACentaurShield, Hexen, -1, 0)
@@ -213,7 +229,7 @@ IMPLEMENT_ACTOR (ACentaurShield, Hexen, -1, 0)
 	PROP_Flags2 (MF2_NOTELEPORT)
 
 	PROP_SpawnState (S_CENTAUR_SHIELD1)
-	PROP_DeathState (S_CENTAUR_SHIELD_X1)
+	PROP_CrashState (S_CENTAUR_SHIELD_X1)
 END_DEFAULTS
 
 // Centaur sword (debris) ---------------------------------------------------
@@ -226,18 +242,18 @@ class ACentaurSword : public AActor
 FState ACentaurSword::States[] =
 {
 #define S_CENTAUR_SWORD1 0
-	S_NORMAL (CTDP, 'K',	3, A_CheckFloor			    , &States[S_CENTAUR_SWORD1+1]),
-	S_NORMAL (CTDP, 'L',	3, A_CheckFloor			    , &States[S_CENTAUR_SWORD1+2]),
-	S_NORMAL (CTDP, 'M',	3, A_CheckFloor			    , &States[S_CENTAUR_SWORD1+3]),
-	S_NORMAL (CTDP, 'N',	3, A_CheckFloor			    , &States[S_CENTAUR_SWORD1+4]),
-	S_NORMAL (CTDP, 'O',	3, A_CheckFloor			    , &States[S_CENTAUR_SWORD1+5]),
-	S_NORMAL (CTDP, 'P',	3, A_CheckFloor			    , &States[S_CENTAUR_SWORD1+6]),
-	S_NORMAL (CTDP, 'Q',	3, A_CheckFloor			    , &States[S_CENTAUR_SWORD1+2]),
+	S_NORMAL (CTDP, 'K',	3, NULL						, &States[S_CENTAUR_SWORD1+1]),
+	S_NORMAL (CTDP, 'L',	3, NULL						, &States[S_CENTAUR_SWORD1+2]),
+	S_NORMAL (CTDP, 'M',	3, NULL						, &States[S_CENTAUR_SWORD1+3]),
+	S_NORMAL (CTDP, 'N',	3, NULL						, &States[S_CENTAUR_SWORD1+4]),
+	S_NORMAL (CTDP, 'O',	3, NULL						, &States[S_CENTAUR_SWORD1+5]),
+	S_NORMAL (CTDP, 'P',	3, NULL						, &States[S_CENTAUR_SWORD1+6]),
+	S_NORMAL (CTDP, 'Q',	3, NULL						, &States[S_CENTAUR_SWORD1+2]),
 
 #define S_CENTAUR_SWORD_X1 (S_CENTAUR_SWORD1+7)
-	S_NORMAL (CTDP, 'R',	4, NULL					    , &States[S_CENTAUR_SWORD_X1+1]),
-	S_NORMAL (CTDP, 'S',	4, A_QueueCorpse		    , &States[S_CENTAUR_SWORD_X1+2]),
-	S_NORMAL (CTDP, 'T',   -1, NULL					    , NULL),
+	S_NORMAL (CTDP, 'R',	4, NULL						, &States[S_CENTAUR_SWORD_X1+1]),
+	S_NORMAL (CTDP, 'S',	4, A_QueueCorpse			, &States[S_CENTAUR_SWORD_X1+2]),
+	S_NORMAL (CTDP, 'T',   -1, NULL						, NULL),
 };
 
 IMPLEMENT_ACTOR (ACentaurSword, Hexen, -1, 0)
@@ -245,7 +261,7 @@ IMPLEMENT_ACTOR (ACentaurSword, Hexen, -1, 0)
 	PROP_Flags2 (MF2_NOTELEPORT)
 
 	PROP_SpawnState (S_CENTAUR_SWORD1)
-	PROP_DeathState (S_CENTAUR_SWORD_X1)
+	PROP_CrashState (S_CENTAUR_SWORD_X1)
 END_DEFAULTS
 
 //============================================================================
@@ -262,7 +278,7 @@ void A_CentaurAttack (AActor *actor)
 	}
 	if (P_CheckMeleeRange (actor))
 	{
-		int damage = P_Random(pr_centaurattack)%7+3;
+		int damage = pr_centaurattack()%7+3;
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
 	}
@@ -308,10 +324,10 @@ void A_CentaurDropStuff (AActor *actor)
 		if (mo)
 		{
 			angle_t angle = actor->angle+(i?ANG90:-ANG90);
-			mo->momz = FRACUNIT*8+(P_Random(pr_centaurdrop)<<10);
-			mo->momx = FixedMul(((P_Random(pr_centaurdrop)-128)<<11)+FRACUNIT,
+			mo->momz = FRACUNIT*8+(pr_centaurdrop()<<10);
+			mo->momx = FixedMul(((pr_centaurdrop()-128)<<11)+FRACUNIT,
 				finecosine[angle>>ANGLETOFINESHIFT]);
-			mo->momy = FixedMul(((P_Random(pr_centaurdrop)-128)<<11)+FRACUNIT, 
+			mo->momy = FixedMul(((pr_centaurdrop()-128)<<11)+FRACUNIT, 
 				finesine[angle>>ANGLETOFINESHIFT]);
 			mo->target = actor;
 		}
@@ -327,7 +343,7 @@ void A_CentaurDropStuff (AActor *actor)
 void A_CentaurDefend (AActor *actor)
 {
 	A_FaceTarget (actor);
-	if (P_CheckMeleeRange(actor) && P_Random(pr_centaurdefend) < 32)
+	if (P_CheckMeleeRange(actor) && pr_centaurdefend() < 32)
 	{
 		A_UnSetInvulnerable (actor);
 		actor->SetState (actor->MeleeState);

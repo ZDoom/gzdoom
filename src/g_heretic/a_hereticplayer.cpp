@@ -6,12 +6,12 @@
 #include "a_action.h"
 #include "p_local.h"
 
+static FRandom pr_skullpop ("SkullPop");
+
 void A_Pain (AActor *);
 void A_PlayerScream (AActor *);
-void A_SkullPop (AActor *);
 void A_CheckSkullFloor (AActor *);
 void A_CheckSkullDone (AActor *);
-void A_CheckBurnGone (AActor *);
 void A_FlameSnd (AActor *);
 
 // The player ---------------------------------------------------------------
@@ -124,7 +124,8 @@ class ABloodySkull : public APlayerPawn
 
 FState ABloodySkull::States[] =
 {
-#define S_BLOODYSKULL 0
+	S_NORMAL (PLAY, 'A',	0, NULL							, &States[1]),
+#define S_BLOODYSKULL 1
 	S_NORMAL (BSKL, 'A',	5, A_CheckSkullFloor			, &States[S_BLOODYSKULL+1]),
 	S_NORMAL (BSKL, 'B',	5, A_CheckSkullFloor			, &States[S_BLOODYSKULL+2]),
 	S_NORMAL (BSKL, 'C',	5, A_CheckSkullFloor			, &States[S_BLOODYSKULL+3]),
@@ -142,7 +143,7 @@ IMPLEMENT_ACTOR (ABloodySkull, Heretic, -1, 0)
 	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH)
 	PROP_Flags3 (MF3_SKYEXPLODE|MF3_NOBLOCKMONST)
 
-	PROP_SpawnState (S_BLOODYSKULL)
+	PROP_SpawnState (0)
 END_DEFAULTS
 
 //----------------------------------------------------------------------------
@@ -159,21 +160,24 @@ void A_SkullPop (AActor *actor)
 	actor->flags &= ~MF_SOLID;
 	mo = Spawn<ABloodySkull> (actor->x, actor->y, actor->z + 48*FRACUNIT);
 	//mo->target = actor;
-	mo->momx = PS_Random() << 9;
-	mo->momy = PS_Random() << 9;
-	mo->momz = 2*FRACUNIT + (P_Random() << 6);
+	mo->momx = pr_skullpop.Random2() << 9;
+	mo->momy = pr_skullpop.Random2() << 9;
+	mo->momz = 2*FRACUNIT + (pr_skullpop() << 6);
 	// Attach player mobj to bloody skull
 	player = actor->player;
 	actor->player = NULL;
 	mo->player = player;
 	mo->health = actor->health;
 	mo->angle = actor->angle;
-	player->mo = mo;
-	if (player->camera == actor)
+	if (player != NULL)
 	{
-		player->camera = mo;
+		player->mo = mo;
+		if (player->camera == actor)
+		{
+			player->camera = mo;
+		}
+		player->damagecount = 32;
 	}
-	player->damagecount = 32;
 }
 
 //----------------------------------------------------------------------------
@@ -198,21 +202,7 @@ void A_CheckSkullFloor (AActor *actor)
 
 void A_CheckSkullDone (AActor *actor)
 {
-	if (actor->special2 == 666)
-	{
-		actor->Destroy ();
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC A_CheckBurnGone
-//
-//----------------------------------------------------------------------------
-
-void A_CheckBurnGone (AActor *actor)
-{
-	if (actor->special2 == 666)
+	if (actor->player == NULL)
 	{
 		actor->Destroy ();
 	}

@@ -518,8 +518,7 @@ void AActorMover::PostBeginPlay ()
 
 	if (tracer == NULL)
 	{
-		Printf ("ActorMover %d: Can't find target %d\n",
-			tid, args[3]);
+		Printf ("ActorMover %d: Can't find target %d\n", tid, args[3]);
 	}
 }
 

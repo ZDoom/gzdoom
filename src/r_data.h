@@ -45,7 +45,8 @@ inline int R_FlatNumForName (const byte *name) { return R_FlatNumForName ((const
 // [RH] "Tile" management. Currently only handles patches.
 struct FTileSize
 {
-	WORD Width, Height, LeftOffset, TopOffset;
+	WORD Width, Height;
+	SWORD LeftOffset, TopOffset;
 };
 enum ETileType
 {
@@ -66,6 +67,7 @@ int R_CheckTileNumForName (const char *name, ETileType type);
 // returns the texture number for the texture name.
 int R_TextureNumForName (const char *name);
 int R_CheckTextureNumForName (const char *name);
+const char *R_GetTextureName (int texnum);
 
 inline int R_TextureNumForName (const byte *name) { return R_TextureNumForName ((const char *)name); }
 inline int R_CheckTextureNumForName (const byte *name) { return R_CheckTextureNumForName ((const char *)name); }

@@ -42,6 +42,10 @@ inline DWORD CalcCRC32 (const BYTE *buf, unsigned int len)
 {
 	return crc32 (0, buf, len);
 }
+inline DWORD AddCRC32 (DWORD crc, const BYTE *buf, unsigned int len)
+{
+	return crc32 (crc, buf, len);
+}
 inline DWORD CRC1 (DWORD crc, const BYTE c, const DWORD *crcTable)
 {
 	return crcTable[(crc & 0xff) ^ c] ^ (crc >> 8);

@@ -34,7 +34,6 @@
 #ifndef __M_ALLOC_H__
 #define __M_ALLOC_H__
 #include <stdlib.h>
-#include <malloc.h>
 
 // These are the same as the same stdlib functions,
 // except they bomb out with an error requester

@@ -8,6 +8,8 @@
 #include "gi.h"
 #include "doomstat.h"
 
+static FRandom pr_spawnpuffx ("SpawnPuffX");
+
 // The barrel of green goop ------------------------------------------------
 
 void A_BarrelDestroy (AActor *);
@@ -104,7 +106,7 @@ void ABulletPuff::BeginPlay ()
 	Super::BeginPlay ();
 
 	momz = FRACUNIT;
-	tics -= P_Random (pr_spawnpuff) & 3;
+	tics -= pr_spawnpuffx() & 3;
 	if (tics < 1)
 		tics = 1;
 }

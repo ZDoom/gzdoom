@@ -32,8 +32,13 @@
 **
 */
 
-#define DIRECTINPUT_VERSION 0x300	// We want to support DX 3.0, and
-#define _WIN32_WINNT 0x0400			// we want to support the mouse wheel
+// DI3 only supports up to 4 mouse buttons, so use DI7 unless I find some
+// reason not to.
+//#define DIRECTINPUT_VERSION 0x300	// We want to support DirectInput 3.
+#define DIRECTINPUT_VERSION 0x700
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0400
+#define _WIN32_WINNT 0x0501			// Support the mouse wheel and session notification.
+#endif
 
 #define WIN32_LEAN_AND_MEAN
 #define __BYTEBOOL__
@@ -53,6 +58,7 @@
 #include "m_argv.h"
 #include "i_input.h"
 #include "v_video.h"
+#include "i_sound.h"
 
 #include "d_main.h"
 #include "d_gui.h"
@@ -73,6 +79,7 @@
 #endif
 
 extern HINSTANCE g_hInst;
+extern DWORD SessionID;
 
 static void KeyRead ();
 static BOOL DI_Init2 ();
@@ -134,6 +141,7 @@ static int GDx,GDy;
 extern constate_e ConsoleState;
 
 BOOL AppActive = TRUE;
+int SessionState = 0;
 
 CVAR (Bool,  i_remapkeypad,			true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -183,6 +191,7 @@ CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 static BYTE KeyState[256];
 static BYTE DIKState[2][NUM_KEYS];
 static int ActiveDIKState;
+static void SetSoundPaused (int state);
 
 // Convert DIK_* code to ASCII using Qwerty keymap
 static const byte Convert [256] =
@@ -268,7 +277,7 @@ void I_CheckNativeMouse (bool preferNative)
 				UngrabMouse_Win32 ();
 				SetCursorPos (UngrabbedPointerPos.x, UngrabbedPointerPos.y);
 			}
-			FlushDIKState (KEY_MOUSE1, KEY_MOUSE4);
+			FlushDIKState (KEY_MOUSE1, KEY_MOUSE8);
 		}
 		else
 		{
@@ -305,7 +314,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		if (screen != NULL)
 		{
-			static_cast<DDrawFB *> (screen)->PaintToWindow ();
+			static_cast<BaseWinFB *> (screen)->PaintToWindow ();
 		}
 		return DefWindowProc (hWnd, message, wParam, lParam);
 
@@ -320,14 +329,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		FlushDIKState ();
 		HaveFocus = false;
 		I_CheckNativeMouse (true);	// Make sure mouse gets released right away
-		if (paused == 0)
-		{
-			S_PauseSound ();
-			if (!netgame)
-			{
-				paused = -1;
-			}
-		}
+		SetSoundPaused (0);
 		if (!noidle)
 			SetPriorityClass (GetCurrentProcess(), IDLE_PRIORITY_CLASS);
 		break;
@@ -337,14 +339,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (g_pKey)
 			DI_Acquire (g_pKey);
 		HaveFocus = true;
-		if (paused <= 0)
-		{
-			S_ResumeSound ();
-			if (!netgame)
-			{
-				paused = 0;
-			}
-		}
+		SetSoundPaused (1);
 		break;
 
 	case WM_SIZE:
@@ -504,6 +499,33 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case WM_XBUTTONDOWN:
+	case WM_XBUTTONUP:
+		// Microsoft's (lack of) documentation for the X buttons is unclear on whether
+		// or not simultaneous pressing of multiple X buttons will ever be merged into
+		// a single message. Winuser.h describes the button field as being filled with
+		// flags, which suggests that it could merge them. My testing
+		// indicates it does not, but I will assume it might in the future.
+		if (MakeMouseEvents && mousemode == win32)
+		{
+			WORD xbuttons = GET_XBUTTON_WPARAM (wParam);
+
+			event.type = (message == WM_XBUTTONDOWN) ? EV_KeyDown : EV_KeyUp;
+
+			// There are only two X buttons defined presently, so I extrapolate from
+			// the current winuser.h values to support up to 8 mouse buttons.
+			for (int i = 0; i < 5; ++i, xbuttons >>= 1)
+			{
+				if (xbuttons & 1)
+				{
+					event.data1 = KEY_MOUSE4 + i;
+					DIKState[ActiveDIKState][event.data1] = (event.type == EV_KeyDown);
+					D_PostEvent (&event);
+				}
+			}
+		}
+		return TRUE;
+
 	case WM_MOUSEWHEEL:
 		if (MakeMouseEvents && mousemode == win32)
 		{
@@ -526,6 +548,51 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_ACTIVATEAPP:
 		AppActive = wParam;
 		break;
+
+#ifndef NOWTS
+	case WM_WTSSESSION_CHANGE:
+		{
+			if (lParam == SessionID)
+			{
+				int oldstate = SessionState;
+
+				// When using fast user switching, XP will lock a session before
+				// disconnecting it, and the session will be unlocked before reconnecting it.
+				// For our purposes, video output will only happen when the session is
+				// both unlocked and connected (that is, SessionState is 0).
+				switch (wParam)
+				{
+				case WTS_SESSION_LOCK:
+					SessionState |= 1;
+					break;
+				case WTS_SESSION_UNLOCK:
+					SessionState &= ~1;
+					break;
+				case WTS_CONSOLE_DISCONNECT:
+					SessionState |= 2;
+					//I_MovieDisableSound ();
+					break;
+				case WTS_CONSOLE_CONNECT:
+					SessionState &= ~2;
+					//I_MovieResumeSound ();
+					break;
+				}
+
+				if (!oldstate && SessionState)
+				{
+					I_MovieDisableSound ();
+				}
+				else if (oldstate && !SessionState)
+				{
+					I_MovieResumeSound ();
+				}
+			}
+			char foo[256];
+			sprintf (foo, "%d %d\n", lParam, wParam);
+			OutputDebugString (foo);
+		}
+		break;
+#endif
 
 	case WM_PALETTECHANGED:
 		if ((HWND)wParam == Window)
@@ -751,8 +818,27 @@ static BOOL I_GetDIMouse ()
 	if (FAILED(hr))
 		return FALSE;
 
+	DIDEVCAPS_DX3 mouseCaps = { sizeof(mouseCaps), };
+	hr = g_pMouse->GetCapabilities ((DIDEVCAPS *)&mouseCaps);
+
 	// Set the data format to "mouse format".
-	hr = g_pMouse->SetDataFormat (&c_dfDIMouse);
+	if (SUCCEEDED(hr))
+	{
+		// Select the data format with enough buttons for this mouse
+		if (mouseCaps.dwButtons <= 4)
+		{
+			hr = g_pMouse->SetDataFormat (&c_dfDIMouse);
+		}
+		else
+		{
+			hr = g_pMouse->SetDataFormat (&c_dfDIMouse2);
+		}
+	}
+	else
+	{
+		// Assume the mouse has no more than 4 buttons if we can't check it
+		hr = g_pMouse->SetDataFormat (&c_dfDIMouse);
+	}
 
 	if (FAILED(hr))
 	{
@@ -818,9 +904,6 @@ BOOL I_InitInput (void *hwnd)
 	if (FAILED(hr))
 		I_FatalError ("Could not obtain DirectInput interface");
 
-	if (!I_GetDIMouse ())
-		I_GetWin32Mouse ();
-
 	DI_Init2();
 
 	return TRUE;
@@ -856,6 +939,40 @@ void STACK_ARGS I_ShutdownInput ()
 	}
 }
 
+static void SetSoundPaused (int state)
+{
+	if (state)
+	{
+		if (paused <= 0)
+		{
+			S_ResumeSound ();
+			if (!netgame
+#ifdef _DEBUG
+				&& !demoplayback
+#endif
+				)
+			{
+				paused = 0;
+			}
+		}
+	}
+	else
+	{
+		if (paused == 0)
+		{
+			S_PauseSound ();
+			if (!netgame
+#ifdef _DEBUG
+				&& !demoplayback
+#endif
+				)
+			{
+				paused = -1;
+			}
+		}
+	}
+}
+
 static LONG PrevX, PrevY;
 
 static void CenterMouse_Win32 (LONG curx, LONG cury)
@@ -880,7 +997,7 @@ static void CenterMouse_Win32 (LONG curx, LONG cury)
 static void SetCursorState (int visible)
 {
 	HCURSOR usingCursor = visible ? TheArrowCursor : TheInvisibleCursor;
-	SetClassLong (Window, GCL_HCURSOR, (LONG)usingCursor);
+	SetClassLongPtr (Window, GCL_HCURSOR, (LONG_PTR)usingCursor);
 	if (HaveFocus)
 	{
 		SetCursor (usingCursor);
@@ -1033,6 +1150,10 @@ static void MouseRead_DI ()
 		case DIMOFS_BUTTON1:
 		case DIMOFS_BUTTON2:
 		case DIMOFS_BUTTON3:
+		case DIMOFS_BUTTON4:
+		case DIMOFS_BUTTON5:
+		case DIMOFS_BUTTON6:
+		case DIMOFS_BUTTON7:
 			if (!GUICapture)
 			{
 				event.type = (od.dwData & 0x80) ? EV_KeyDown : EV_KeyUp;

@@ -35,6 +35,10 @@ enum dirtype_t
     NUMDIRS
 };
 
+static FRandom pr_botopendoor ("BotOpenDoor");
+static FRandom pr_bottrywalk ("BotTryWalk");
+static FRandom pr_botnewchasedir ("BotNewChaseDir");
+
 // borrow some tables from p_enemy.cpp
 extern dirtype_t opposite[9];
 extern dirtype_t diags[4];
@@ -43,14 +47,16 @@ extern fixed_t yspeed[8];
 
 extern TArray<line_t *> spechit;
 
-//Called while the bot moves after it's player->dest mobj
+//Called while the bot moves after its player->dest mobj
 //which can be a weapon/enemy/item whatever.
 void DCajunMaster::Roam (AActor *actor, ticcmd_t *cmd)
 {
 	int delta;
 
-	if (Reachable(actor, actor->player->dest)) //Straight towards it.
+	if (Reachable(actor, actor->player->dest))
+	{ // Straight towards it.
 		actor->player->angle = R_PointToAngle2(actor->x, actor->y, actor->player->dest->x, actor->player->dest->y);
+	}
 	else if (actor->movedir < 8) // turn towards movement direction if not there yet
 	{
 		actor->player->angle &= (angle_t)(7<<29);
@@ -112,7 +118,7 @@ BOOL DCajunMaster::Move (AActor *actor, ticcmd_t *cmd)
 				good |= ld == BlockingLine ? 1 : 2;
 			}
 		}
-		if (good && ((P_Random (pr_botopendoor) >= 203) ^ (good & 1)))
+		if (good && ((pr_botopendoor() >= 203) ^ (good & 1)))
 		{
 			cmd->ucmd.buttons |= BT_USE;
 			cmd->ucmd.forwardmove = FORWARDRUN;
@@ -132,7 +138,7 @@ bool DCajunMaster::TryWalk (AActor *actor, ticcmd_t *cmd)
     if (!Move (actor, cmd))
         return false;
 
-    actor->movecount = P_Random(pr_bottrywalk) & 60;
+    actor->movecount = pr_bottrywalk() & 60;
     return true;
 }
 
@@ -185,7 +191,7 @@ void DCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
     }
 
     // try other directions
-    if (P_Random(pr_botnewchasedir) > 200
+    if (pr_botnewchasedir() > 200
         || abs(deltay)>abs(deltax))
     {
         tdir=d[1];
@@ -224,7 +230,7 @@ void DCajunMaster::NewChaseDir (AActor *actor, ticcmd_t *cmd)
     }
 
     // randomly determine direction of search
-    if (P_Random(pr_botnewchasedir)&1)
+    if (pr_botnewchasedir()&1)
     {
         for ( tdir=DI_EAST;
               tdir<=DI_SOUTHEAST;

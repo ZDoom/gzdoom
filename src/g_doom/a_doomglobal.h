@@ -42,6 +42,8 @@ public:
 class APainElemental : public AActor
 {
 	DECLARE_ACTOR (APainElemental, AActor)
+public:
+	void Tick ();
 };
 
 class ALostSoul : public AActor

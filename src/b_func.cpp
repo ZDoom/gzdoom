@@ -24,6 +24,8 @@
 #include "vectors.h"
 #include "a_doomglobal.h"
 
+static FRandom pr_botdofire ("BotDoFire");
+
 //Used with Reachable().
 static AActor *looker;
 static AActor *rtarget;
@@ -166,9 +168,12 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 
 	//Reaction skill thing.
 	if (actor->player->first_shot &&
-		!(actor->player->readyweapon==wp_bfg || actor->player->readyweapon==wp_missile))
+		!(actor->player->readyweapon==wp_bfg ||
+		  actor->player->readyweapon==wp_missile ||
+		  actor->player->readyweapon==wp_phoenixrod ||
+		  actor->player->readyweapon==wp_mace))
 	{
-		actor->player->t_react = (100-actor->player->skill.reaction+1)/((P_Random(pr_botdofire)%3)+3);
+		actor->player->t_react = (100-actor->player->skill.reaction+1)/((pr_botdofire()%3)+3);
 	}
 	actor->player->first_shot = false;
 	if (actor->player->t_react)
@@ -186,6 +191,7 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	switch (actor->player->readyweapon)
 	{
 	case wp_missile: //Special rules for RL
+	case wp_phoenixrod:
 		an = FireRox (actor, enemy, cmd);
 		if(an)
 		{
@@ -199,9 +205,17 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 		break;
 
 	case wp_plasma: //Plasma (prediction aiming)
+	case wp_skullrod:
+	case wp_crossbow:
 		//Here goes the prediction.
 		dist = P_AproxDistance (actor->x - enemy->x, actor->y - enemy->y);
-		m = (dist/FRACUNIT) / GetDefaultByName ("PlasmaBall")->Speed;
+		m = (dist/FRACUNIT);
+		if (actor->player->readyweapon == wp_plasma)
+			m /= GetDefaultByName ("PlasmaBall")->Speed;
+		else if (actor->player->readyweapon == wp_skullrod)
+			m /= GetDefaultByName ("HornRodFX1")->Speed;
+		else
+			m /= GetDefaultByName ("CrossbowFX1")->Speed;
 		SetBodyAt (enemy->x + FixedMul (enemy->momx, (m*2*FRACUNIT)),
 				   enemy->y + FixedMul (enemy->momy, (m*2*FRACUNIT)), ONFLOORZ, 1);
 		actor->player->angle = R_PointToAngle2 (actor->x, actor->y, body1->x, body1->y);
@@ -211,12 +225,14 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 
 	case wp_chainsaw:
 	case wp_fist:
+	case wp_staff:
+	case wp_gauntlets:
 		no_fire = (dist > (MELEERANGE*4)); //*4 is for atmosphere,  the chainsaws sounding and all..
 		break;
 
 	case wp_bfg:
 		//MAKEME: This should be smarter.
-		if ((P_Random(pr_botdofire)%200)<=actor->player->skill.reaction)
+		if ((pr_botdofire()%200)<=actor->player->skill.reaction)
 			if(Check_LOS(actor, actor->player->enemy, SHOOTFOV))
 				no_fire = false;
 		break;
@@ -225,9 +241,9 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 		actor->player->angle = R_PointToAngle2 (actor->x, actor->y, enemy->x, enemy->y);
 		aiming_penalty = 0;
 		if (enemy->flags & MF_SHADOW)
-			aiming_penalty += (P_Random (pr_botdofire)%25)+10;
+			aiming_penalty += (pr_botdofire()%25)+10;
 		if (enemy->Sector->lightlevel<WHATS_DARK && !actor->player->powers[pw_infrared])
-			aiming_penalty += P_Random (pr_botdofire)%40;//Dark
+			aiming_penalty += pr_botdofire()%40;//Dark
 		if (actor->player->damagecount)
 			aiming_penalty += actor->player->damagecount; //Blood in face makes it hard to aim
 		aiming_value = actor->player->skill.aiming - aiming_penalty;

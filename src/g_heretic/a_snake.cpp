@@ -75,6 +75,7 @@ IMPLEMENT_ACTOR (ASnake, Heretic, 92, 132)
 	PROP_MissileState (S_SNAKE_ATK)
 	PROP_DeathState (S_SNAKE_DIE)
 
+	PROP_AttackSound ("snake/attack")
 	PROP_SeeSound ("snake/sight")
 	PROP_PainSound ("snake/pain")
 	PROP_DeathSound ("snake/death")

@@ -11,6 +11,8 @@
 #include "v_video.h"
 #include "r_draw.h"
 
+static FRandom pr_chainwiggle ("ChainWiggle");
+
 class FHereticStatusBar : public FBaseStatusBar
 {
 public:
@@ -78,7 +80,7 @@ public:
 		FBaseStatusBar::Tick ();
 		if (level.time & 1)
 		{
-			ChainWiggle = P_Random(pr_chainwiggle) & 1;
+			ChainWiggle = pr_chainwiggle() & 1;
 		}
 		curHealth = CPlayer->health;
 		if (curHealth < 0)

@@ -5,8 +5,6 @@
 #include "a_doomglobal.h"
 #include "a_action.h"
 
-CVAR (Bool, limitpainelemental, false, CVAR_SERVERINFO)
-
 void A_PainAttack (AActor *);
 void A_PainDie (AActor *);
 
@@ -75,6 +73,23 @@ IMPLEMENT_ACTOR (APainElemental, Doom, 71, 115)
 	PROP_ActiveSound ("pain/active")
 END_DEFAULTS
 
+void APainElemental::Tick ()
+{
+	// [RH] Give the pain elemental vertical friction
+	if (flags & MF_FLOAT)
+	{
+		if (abs (momz) < FRACUNIT/4)
+		{
+			momz = 0;
+		}
+		else
+		{
+			momz = FixedMul (momz, 0xe800);
+		}
+	}
+	Super::Tick ();
+}
+
 //
 // A_PainShootSkull
 // Spawn a lost soul and launch it at the target
@@ -87,8 +102,16 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	angle_t an;
 	int prestep;
 
-	// [RH] make the optional
-	if (limitpainelemental)
+	// [RH] check to make sure it's not too close to the ceiling
+	if (self->z + self->height + 8*FRACUNIT > self->ceilingz)
+	{
+		self->momz -= 2*FRACUNIT;
+		self->flags |= MF_INFLOAT;
+		return;
+	}
+
+	// [RH] make this optional
+	if (compatflags & COMPATF_LIMITPAIN)
 	{
 		// count total number of skulls currently on the level
 		// if there are already 20 skulls on the level, don't spit another one

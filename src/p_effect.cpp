@@ -123,7 +123,7 @@ void P_ThinkParticles ()
 			else
 				ActiveParticles = i;
 			particle->tnext = InactiveParticles;
-			InactiveParticles = particle - Particles;
+			InactiveParticles = (int)(particle - Particles);
 			continue;
 		}
 		particle->x += particle->velx;
@@ -139,11 +139,11 @@ void P_ThinkParticles ()
 //
 // P_RunEffects
 //
-// Run effects on all mobjs in world
+// Run effects on all actors in the world
 //
 void P_RunEffects ()
 {
-	int pnum = (players[consoleplayer].camera->Sector - sectors) * numsectors;
+	int pnum = int(players[consoleplayer].camera->Sector - sectors) * numsectors;
 	AActor *actor;
 	TThinkerIterator<AActor> iterator;
 
@@ -151,8 +151,8 @@ void P_RunEffects ()
 	{
 		if (actor->effects)
 		{
-			// Only run the effect if the mobj is potentially visible
-			int rnum = pnum + (actor->Sector - sectors);
+			// Only run the effect if the actor is potentially visible
+			int rnum = pnum + int(actor->Sector - sectors);
 			if (rejectempty || !(rejectmatrix[rnum>>3] & (1 << (rnum & 7))))
 				P_RunEffect (actor, actor->effects);
 		}

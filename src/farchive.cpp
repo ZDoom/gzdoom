@@ -48,12 +48,14 @@
 #include "farchive.h"
 #include "m_alloc.h"
 #include "m_swap.h"
+#include "m_crc32.h"
 #include "cmdlib.h"
 #include "i_system.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "d_player.h"
 #include "dobject.h"
+#include "r_local.h"
 
 #define NEW_OBJ				((BYTE)1)
 #define NEW_CLS_OBJ			((BYTE)2)
@@ -64,6 +66,8 @@
 #define NEW_NAME			((BYTE)27)
 #define OLD_NAME			((BYTE)28)
 #define NIL_NAME			((BYTE)33)
+#define NEW_SPRITE			((BYTE)11)
+#define OLD_SPRITE			((BYTE)12)
 
 #ifdef __BIG_ENDIAN__
 #define SWAP_WORD(x)
@@ -113,13 +117,16 @@ FCompressedFile::FCompressedFile (const char *name, EOpenMode mode, bool dontCom
 	m_NoCompress = dontCompress;
 }
 
-FCompressedFile::FCompressedFile (FILE *file, EOpenMode mode, bool dontCompress)
+FCompressedFile::FCompressedFile (FILE *file, EOpenMode mode, bool dontCompress, bool postopen)
 {
 	BeEmpty ();
 	m_Mode = mode;
 	m_File = file;
 	m_NoCompress = dontCompress;
-	PostOpen ();
+	if (postopen)
+	{
+		PostOpen ();
+	}
 }
 
 FCompressedFile::~FCompressedFile ()
@@ -152,6 +159,7 @@ void FCompressedFile::PostOpen ()
 			{
 				Printf ("Compressed files from older ZDooms are not supported.\n");
 			}
+			return;
 		}
 		else
 		{
@@ -237,7 +245,7 @@ FFile &FCompressedFile::Read (void *mem, unsigned int len)
 	{
 		if (m_Pos + len > m_BufferSize)
 		{
-			I_Error ("Attempt to read past end of cfilen");
+			I_Error ("Attempt to read past end of cfile");
 		}
 		if (len == 1)
 			*(BYTE *)mem = m_Buffer[m_Pos];
@@ -301,7 +309,7 @@ void FCompressedFile::Implode ()
 		// If the data could not be compressed, store it as-is.
 		if (r != Z_OK || outlen >= len)
 		{
-			DPrintf ("cfile could not be compress\n");
+			DPrintf ("cfile could not be compressed\n");
 			outlen = 0;
 		}
 		else
@@ -504,13 +512,81 @@ bool FCompressedMemFile::IsOpen () const
 	return !!m_Buffer;
 }
 
+FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id)
+	: FCompressedFile (file, EWriting, true, false), m_ChunkID (id)
+{
+}
+
+FPNGChunkFile::FPNGChunkFile (FILE *file, DWORD id, unsigned int chunklen)
+	: FCompressedFile (file, EReading, true, false), m_ChunkID (id)
+{
+	m_Buffer = (byte *)Malloc (chunklen);
+	m_BufferSize = chunklen;
+	fread (m_Buffer, chunklen, 1, m_File);
+	// Skip the CRC for now. Maybe later it will be used.
+	fseek (m_File, 4, SEEK_CUR);
+}
+
+// Unlike FCompressedFile::Close, m_File is left open
+void FPNGChunkFile::Close ()
+{
+	DWORD data[2];
+	DWORD crc;
+
+	if (m_File)
+	{
+		if (m_Mode == EWriting)
+		{
+			crc = CalcCRC32 ((BYTE *)&m_ChunkID, 4);
+			crc = AddCRC32 (crc, (BYTE *)m_Buffer, m_BufferSize);
+
+			data[0] = BELONG(m_BufferSize);
+			data[1] = m_ChunkID;
+			fwrite (data, 8, 1, m_File);
+			fwrite (m_Buffer, m_BufferSize, 1, m_File);
+			SWAP_DWORD (crc);
+			fwrite (&crc, 4, 1, m_File);
+		}
+		m_File = NULL;
+	}
+	FCompressedFile::Close ();
+}
+
+FPNGChunkArchive::FPNGChunkArchive (FILE *file, DWORD id)
+	: FArchive (), Chunk (file, id)
+{
+	AttachToFile (Chunk);
+}
+
+FPNGChunkArchive::FPNGChunkArchive (FILE *file, DWORD id, unsigned int len)
+	: FArchive (), Chunk (file, id, len)
+{
+	AttachToFile (Chunk);
+}
+
+FPNGChunkArchive::~FPNGChunkArchive ()
+{
+	// Close before FArchive's destructor, because Chunk will be
+	// destroyed before the FArchive is destroyed.
+	Close ();
+}
+
 //============================================
 //
 // FArchive
 //
 //============================================
 
+FArchive::FArchive ()
+{
+}
+
 FArchive::FArchive (FFile &file)
+{
+	AttachToFile (file);
+}
+
+void FArchive::AttachToFile (FFile &file)
 {
 	int i;
 
@@ -533,7 +609,7 @@ FArchive::FArchive (FFile &file)
 	m_TypeMap = new TypeMap[TypeInfo::m_NumTypes];
 	for (i = 0; i < TypeInfo::m_NumTypes; i++)
 	{
-		m_TypeMap[i].toArchive = ~0;
+		m_TypeMap[i].toArchive = TypeMap::NO_INDEX;
 		m_TypeMap[i].toCurrent = NULL;
 	}
 	m_ClassCount = 0;
@@ -541,6 +617,12 @@ FArchive::FArchive (FFile &file)
 	{
 		m_ObjectHash[i] = ~0;
 		m_NameHash[i] = NameMap::NO_INDEX;
+	}
+	m_NumSprites = 0;
+	m_SpriteMap = new int[sprites.Size()];
+	for (size_t s = 0; s < sprites.Size(); ++s)
+	{
+		m_SpriteMap[s] = -1;
 	}
 }
 
@@ -551,6 +633,8 @@ FArchive::~FArchive ()
 		delete[] m_TypeMap;
 	if (m_ObjectMap)
 		free (m_ObjectMap);
+	if (m_SpriteMap)
+		delete[] m_SpriteMap;
 }
 
 void FArchive::Write (const void *mem, unsigned int len)
@@ -656,7 +740,7 @@ const char *FArchive::ReadName ()
 		DWORD size = ReadCount ();
 		char *str;
 
-		index = m_NameStorage.Reserve (size);
+		index = (DWORD)m_NameStorage.Reserve (size);
 		str = &m_NameStorage[index];
 		Read (str, size-1);
 		str[size-1] = 0;
@@ -678,7 +762,7 @@ void FArchive::WriteString (const char *str)
 	}
 	else
 	{
-		DWORD size = strlen (str) + 1;
+		DWORD size = (DWORD)(strlen (str) + 1);
 		WriteCount (size);
 		Write (str, size - 1);
 	}
@@ -1003,6 +1087,80 @@ FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
 	return *this;
 }
 
+void FArchive::WriteSprite (int spritenum)
+{
+	BYTE id;
+
+	if ((unsigned)spritenum >= (unsigned)sprites.Size())
+	{
+		spritenum = 0;
+	}
+
+	if (m_SpriteMap[spritenum] < 0)
+	{
+		m_SpriteMap[spritenum] = (int)(m_NumSprites++);
+		id = NEW_SPRITE; 
+		Write (&id, 1);
+		Write (sprites[spritenum].name, 4);
+
+		// Write the current sprite number as a hint, because
+		// these will only change between different versions.
+		WriteCount (spritenum);
+	}
+	else
+	{
+		id = OLD_SPRITE;
+		Write (&id, 1);
+		WriteCount (m_SpriteMap[spritenum]);
+	}
+}
+
+int FArchive::ReadSprite ()
+{
+	BYTE id;
+
+	Read (&id, 1);
+	if (id == OLD_SPRITE)
+	{
+		DWORD index = ReadCount ();
+		if (index >= m_NumSprites)
+		{
+			I_Error ("Sprite %lu has not been read yet\n", index);
+		}
+		return m_SpriteMap[index];
+	}
+	else if (id == NEW_SPRITE)
+	{
+		DWORD name;
+		DWORD hint;
+
+		Read (&name, 4);
+		hint = ReadCount ();
+
+		if (hint >= sprites.Size() || *(DWORD *)&sprites[hint].name != name)
+		{
+			for (hint = (DWORD)sprites.Size(); hint-- != 0; )
+			{
+				if (*(DWORD *)&sprites[hint].name == name)
+				{
+					break;
+				}
+			}
+			if (hint >= sprites.Size())
+			{ // Don't know this sprite, so just use the first one
+				hint = 0;
+			}
+		}
+		m_SpriteMap[m_NumSprites++] = hint;
+		return hint;
+	}
+	else
+	{
+		I_Error ("Expected a sprite but got something else\n");
+		return 0;
+	}
+}
+
 DWORD FArchive::AddName (const char *name)
 {
 	DWORD index;
@@ -1011,21 +1169,21 @@ DWORD FArchive::AddName (const char *name)
 	index = FindName (name, hash);
 	if (index == NameMap::NO_INDEX)
 	{
-		size_t namelen = strlen (name) + 1;
-		size_t strpos = m_NameStorage.Reserve (namelen);
-		NameMap mapper = { strpos, m_NameHash[hash] };
+		DWORD namelen = (DWORD)(strlen (name) + 1);
+		DWORD strpos = (DWORD)m_NameStorage.Reserve (namelen);
+		NameMap mapper = { strpos, (DWORD)m_NameHash[hash] };
 
 		memcpy (&m_NameStorage[strpos], name, namelen);
-		m_NameHash[hash] = index = m_Names.Push (mapper);
+		m_NameHash[hash] = index = (DWORD)m_Names.Push (mapper);
 	}
 	return index;
 }
 
 DWORD FArchive::AddName (size_t start)
 {
-	size_t hash = MakeKey (&m_NameStorage[start]) % EObjectHashSize;
-	NameMap mapper = { start, m_NameHash[hash] };
-	return (m_NameHash[hash] = m_Names.Push (mapper));
+	DWORD hash = MakeKey (&m_NameStorage[start]) % EObjectHashSize;
+	NameMap mapper = { (DWORD)start, (DWORD)m_NameHash[hash] };
+	return (DWORD)(m_NameHash[hash] = m_Names.Push (mapper));
 }
 
 DWORD FArchive::FindName (const char *name) const
@@ -1042,11 +1200,11 @@ DWORD FArchive::FindName (const char *name, size_t bucket) const
 		const NameMap *mapping = &m_Names[map];
 		if (strcmp (name, &m_NameStorage[mapping->StringStart]) == 0)
 		{
-			return map;
+			return (DWORD)map;
 		}
 		map = mapping->HashNext;
 	}
-	return map;
+	return (DWORD)map;
 }
 
 DWORD FArchive::WriteClass (const TypeInfo *info)
@@ -1161,7 +1319,7 @@ DWORD FArchive::FindObjectIndex (const DObject *obj) const
 	{
 		index = m_ObjectMap[index].hashNext;
 	}
-	return index;
+	return (DWORD)index;
 }
 
 void FArchive::UserWriteClass (const TypeInfo *type)

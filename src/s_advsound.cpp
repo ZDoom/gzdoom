@@ -94,6 +94,9 @@ enum SICommands
 	SI_PlayerCompat,
 	SI_PlayerAlias,
 	SI_Alias,
+	SI_Limit,
+	SI_PitchShift,
+	SI_PitchShiftRange,
 	SI_Map,
 	SI_Registered,
 	SI_ArchivePath,
@@ -116,6 +119,7 @@ struct FBloodSFX
 
 void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
 	const char *name, float volume, float attenuation, BOOL looping);
+extern bool IsFloat (const char *str);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -154,6 +158,9 @@ static const char *SICommandStrings[] =
 	"$playercompat",
 	"$playeralias",
 	"$alias",
+	"$limit",
+	"$pitchshift",
+	"$pitchshiftrange",
 	"$map",
 	"$registered",
 	"$archivepath",
@@ -175,6 +182,10 @@ static TArray<WORD> PlayerSounds;
 static char DefPlayerClassName[MAX_SNDNAME+1];
 static int DefPlayerClass;
 
+static BYTE CurrentPitchMask;
+
+static FRandom pr_randsound ("RandSound");
+
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -188,7 +199,7 @@ void S_HashSounds ()
 {
 	unsigned int i;
 	unsigned int j;
-	unsigned int size;
+	size_t size;
 
 	S_sfx.ShrinkToFit ();
 	size = S_sfx.Size ();
@@ -220,7 +231,7 @@ int S_PickReplacement (int refid)
 	{
 		const FRandomSoundList *list = &S_rnd[S_sfx[refid].link];
 
-		return list->Sounds[P_Random (pr_randsound) % list->NumSounds];
+		return list->Sounds[pr_randsound() % list->NumSounds];
 	}
 	return refid;
 }
@@ -309,7 +320,9 @@ int S_AddSoundLump (const char *logicalname, int lump)
 	strcpy (newsfx.name, logicalname);
 	newsfx.lumpnum = lump;
 	newsfx.link = sfxinfo_t::NO_LINK;
-	return S_sfx.Push (newsfx);
+	newsfx.PitchMask = CurrentPitchMask;
+	newsfx.MaxChannels = 2;
+	return (int)S_sfx.Push (newsfx);
 }
 
 //==========================================================================
@@ -371,6 +384,7 @@ static int S_AddSound (const char *logicalname, int lumpnum)
 		sfx->lumpnum = lumpnum;
 		sfx->bRandomHeader = false;
 		sfx->link = sfxinfo_t::NO_LINK;
+		//sfx->PitchMask = CurrentPitchMask;
 	}
 	else
 	{ // Otherwise, create a new definition.
@@ -397,7 +411,8 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 int S_AddPlayerSound (const char *pclass, int gender, int refid, int lumpnum)
 {
 	char fakename[MAX_SNDNAME+1];
-	int len, id;
+	size_t len;
+	int id;
 
 	len = strlen (pclass);
 	memcpy (fakename, pclass, len);
@@ -455,6 +470,7 @@ void S_ParseSndInfo ()
 {
 	int lump;
 
+	CurrentPitchMask = 0;
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
 	for (lump = 0; lump < numlumps; ++lump)
 	{
@@ -522,7 +538,9 @@ static void S_AddSNDINFO (int lump)
 			switch (SC_MatchString (SICommandStrings))
 			{
 			case SI_Ambient: {
-				// $ambient <num> <logical name> [point [atten]|surround] <type> [secs] <relative volume>
+				// $ambient <num> <logical name> [point [atten] | surround | [world]]
+				//			<continuous | random <minsecs> <maxsecs> | periodic <secs>>
+				//			<volume>
 				AmbientSound *ambient, dummy;
 
 				SC_MustGetNumber ();
@@ -550,11 +568,19 @@ static void S_AddSNDINFO (int lump)
 
 					ambient->type = POSITIONAL;
 					SC_MustGetString ();
-					attenuation = (float)atof (sc_String);
-					if (attenuation > 0)
+
+					if (IsFloat (sc_String))
 					{
-						ambient->attenuation = attenuation;
+						attenuation = atof (sc_String);
 						SC_MustGetString ();
+						if (attenuation > 0)
+						{
+							ambient->attenuation = attenuation;
+						}
+						else
+						{
+							ambient->attenuation = 1;
+						}
 					}
 					else
 					{
@@ -624,6 +650,7 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_Registered:
+				// I don't think Hexen even pays attention to the $registered command.
 				break;
 
 			case SI_ArchivePath:
@@ -672,7 +699,7 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_PlayerCompat: {
-				// $playercompat <logical name> <player class> <gender> <logical name>
+				// $playercompat <player class> <gender> <logical name> <compat sound name>
 				char pclass[MAX_SNDNAME+1];
 				int gender, refid;
 				int sfxfrom, aliasto;
@@ -697,6 +724,7 @@ static void S_AddSNDINFO (int lump)
 				break;
 
 			case SI_Alias: {
+				// $alias <name of alias> <name of real sound>
 				int sfxfrom;
 
 				SC_MustGetString ();
@@ -708,6 +736,34 @@ static void S_AddSNDINFO (int lump)
 				}
 				S_sfx[sfxfrom].link = S_FindSoundTentative (sc_String);
 				}
+				break;
+
+			case SI_Limit: {
+				// $limit <logical name> <max channels>
+				int sfx;
+
+				SC_MustGetString ();
+				sfx = S_FindSoundTentative (sc_String);
+				SC_MustGetNumber ();
+				S_sfx[sfx].MaxChannels = clamp<BYTE> (sc_Number, 0, 255);
+				}
+				break;
+
+			case SI_PitchShift: {
+				// $pitchshift <logical name> <pitch shift amount>
+				int sfx;
+
+				SC_MustGetString ();
+				sfx = S_FindSoundTentative (sc_String);
+				SC_MustGetNumber ();
+				S_sfx[sfx].PitchMask = (1 << clamp (sc_Number, 0, 7)) - 1;
+				}
+				break;
+
+			case SI_PitchShiftRange:
+				// $pitchshiftrange <pitch shift amount>
+				SC_MustGetNumber ();
+				CurrentPitchMask = (1 << clamp (sc_Number, 0, 7)) - 1;
 				break;
 
 			case SI_Random: {
@@ -729,10 +785,10 @@ static void S_AddSNDINFO (int lump)
 				}
 				else if (list.Size() > 1)
 				{ // Only add non-empty random lists
-					random.NumSounds = list.Size();
+					random.NumSounds = (WORD)list.Size();
 					random.Sounds = new WORD[random.NumSounds];
 					memcpy (random.Sounds, &list[0], sizeof(WORD)*random.NumSounds);
-					S_sfx[random.SfxHead].link = S_rnd.Push (random);
+					S_sfx[random.SfxHead].link = (WORD)S_rnd.Push (random);
 					S_sfx[random.SfxHead].bRandomHeader = true;
 				}
 				}
@@ -848,11 +904,11 @@ static int S_AddPlayerClass (const char *name)
 	if (cnum == -1)
 	{
 		FPlayerClassLookup lookup;
-		int namelen = strlen (name) + 1;
+		size_t namelen = strlen (name) + 1;
 
 		memcpy (lookup.Name, name, namelen);
 		lookup.ListIndex[2] = lookup.ListIndex[1] = lookup.ListIndex[0] = 0xffff;
-		cnum = PlayerClasses.Push (lookup);
+		cnum = (int)PlayerClasses.Push (lookup);
 		PlayerClassesIsSorted = false;
 
 		// The default player class is the first one added
@@ -882,14 +938,14 @@ static int S_FindPlayerClass (const char *name)
 		{
 			if (stricmp (name, PlayerClasses[i].Name) == 0)
 			{
-				return i;
+				return (int)i;
 			}
 		}
 	}
 	else
 	{
 		int min = 0;
-		int max = PlayerClasses.Size() - 1;
+		int max = (int)(PlayerClasses.Size() - 1);
 
 		while (min <= max)
 		{
@@ -929,8 +985,8 @@ static int S_AddPlayerGender (int classnum, int gender)
 	{
 		WORD pushee = 0;
 
-		PlayerClasses[classnum].ListIndex[gender] =
-			index = PlayerSounds.Size ();
+		index = (int)PlayerSounds.Size ();
+		PlayerClasses[classnum].ListIndex[gender] = (WORD)index;
 		for (int i = NumPlayerReserves; i != 0; --i)
 		{
 			PlayerSounds.Push (pushee);
@@ -1021,7 +1077,11 @@ static int S_LookupPlayerSound (int classidx, int gender, int refid)
 	}
 
 	int sndnum = PlayerSounds[listidx + S_sfx[refid].link];
-	if (sndnum == 0 || S_sfx[sndnum].lumpnum == -1 || S_sfx[sndnum].lumpnum == sfx_empty)
+
+	// If we're not done parsing SNDINFO yet, assume that the target sound is valid
+	if (PlayerClassesIsSorted &&
+		(sndnum == 0 ||
+		((S_sfx[sndnum].lumpnum == -1 || S_sfx[sndnum].lumpnum == sfx_empty) && S_sfx[sndnum].link == 0xffff)))
 	{ // This sound is unavailable.
 		if (ingender != 0)
 		{ // Try "male"
@@ -1183,7 +1243,14 @@ END_DEFAULTS
 void AAmbientSound::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	arc << bActive << NextCheck;
+	arc << bActive;
+	
+	int checktime = NextCheck - gametic;
+	arc << checktime;
+	if (arc.IsLoading ())
+	{
+		NextCheck = checktime + gametic;
+	}
 }
 
 void AAmbientSound::Tick ()

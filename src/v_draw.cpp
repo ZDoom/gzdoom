@@ -1134,11 +1134,11 @@ void DCanvas::DrawShadowedMaskedBlock (int x, int y, int _width, int _height,
 		return;		// Nothing to draw
 	}
 
-	if (y + _height + 2 >= Height || x + _width + 2 >= Width)
+	if (y + _height + 2 > Height || x + _width + 2 > Width)
 	{
 		// Shadow extends past edge of canvas
-		DrawMaskedBlock (x, y, srcpitch, _height, src, colors);
 		DrawShadowBlock (x+2, y+2, srcpitch, _height, src, shade);
+		DrawMaskedBlock (x, y, srcpitch, _height, src, colors);
 		return;
 	}
 
@@ -1189,6 +1189,7 @@ void DCanvas::DrawShadowedMaskedBlock (int x, int y, int _width, int _height,
 	{
 #ifdef USEASM
 		MaskedBlockFunctions.DMSUP (src, dest, srcpitch, destpitch, _width, _height, fg, bg2rgb);
+		//MaskedBlockFunctions.DMPUP (src, dest, srcpitch, destpitch, _width, _height);
 #else
 		do
 		{
@@ -1239,11 +1240,11 @@ void DCanvas::ScaleShadowedMaskedBlock (int x, int y, int _width, int _height,
 		return;		// Nothing to draw
 	}
 
-	if (y + dheight + 2 >= Height || x + dwidth + 2 >= Width)
+	if (y + dheight + 2 > Height || x + dwidth + 2 > Width)
 	{
 		// Shadow extends past end of canvas
-		ScaleMaskedBlock (x, y, srcpitch, _height, dwidth, dheight, src, colors);
 		ScaleShadowBlock (x+2, y+2, srcpitch, _height, dwidth, dheight, src, shade);
+		ScaleMaskedBlock (x, y, srcpitch, _height, dwidth, dheight, src, colors);
 		return;
 	}
 

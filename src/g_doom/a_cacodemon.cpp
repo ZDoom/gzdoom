@@ -7,6 +7,8 @@
 #include "a_action.h"
 #include "s_sound.h"
 
+static FRandom pr_headattack ("HeadAttack");
+
 void A_HeadAttack (AActor *);
 
 class ACacodemon : public AActor
@@ -36,20 +38,20 @@ FState ACacodemon::States[] =
 	S_NORMAL (HEAD, 'F',	6, NULL 						, &States[S_HEAD_RUN+0]),
 
 #define S_HEAD_DIE (S_HEAD_PAIN+3)
-	S_NORMAL (HEAD, 'G',	8, NULL 						, &States[S_HEAD_DIE+1]),
+	S_NORMAL (HEAD, 'G',	8, NULL							, &States[S_HEAD_DIE+1]),
 	S_NORMAL (HEAD, 'H',	8, A_Scream 					, &States[S_HEAD_DIE+2]),
 	S_NORMAL (HEAD, 'I',	8, NULL 						, &States[S_HEAD_DIE+3]),
 	S_NORMAL (HEAD, 'J',	8, NULL 						, &States[S_HEAD_DIE+4]),
 	S_NORMAL (HEAD, 'K',	8, A_NoBlocking					, &States[S_HEAD_DIE+5]),
-	S_NORMAL (HEAD, 'L',   -1, NULL 						, NULL),
+	S_NORMAL (HEAD, 'L',   -1, A_SetFloorClip				, NULL),
 
 #define S_HEAD_RAISE (S_HEAD_DIE+6)
-	S_NORMAL (HEAD, 'L',	8, NULL 						, &States[S_HEAD_RAISE+1]),
+	S_NORMAL (HEAD, 'L',	8, A_UnSetFloorClip				, &States[S_HEAD_RAISE+1]),
 	S_NORMAL (HEAD, 'K',	8, NULL 						, &States[S_HEAD_RAISE+2]),
 	S_NORMAL (HEAD, 'J',	8, NULL 						, &States[S_HEAD_RAISE+3]),
 	S_NORMAL (HEAD, 'I',	8, NULL 						, &States[S_HEAD_RAISE+4]),
 	S_NORMAL (HEAD, 'H',	8, NULL 						, &States[S_HEAD_RAISE+5]),
-	S_NORMAL (HEAD, 'G',	8, NULL 						, &States[S_HEAD_RUN+0])
+	S_NORMAL (HEAD, 'G',	8, NULL							, &States[S_HEAD_RUN+0])
 };
 
 IMPLEMENT_ACTOR (ACacodemon, Doom, 3005, 19)
@@ -136,7 +138,7 @@ void A_HeadAttack (AActor *self)
 	A_FaceTarget (self);
 	if (P_CheckMeleeRange (self))
 	{
-		int damage = (P_Random (pr_headattack)%6+1)*10;
+		int damage = (pr_headattack()%6+1)*10;
 		S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);

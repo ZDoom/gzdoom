@@ -144,6 +144,10 @@ GLOBAL _ds_curcolormap
 %define ds_yfrac	_ds_yfrac
 %define ds_y		_ds_y
 
+%define R_SetSpanSource_ASM	_R_SetSpanSource_ASM
+%define R_SetSpanSize_ASM	_R_SetSpanSize_ASM
+%define R_SetSpanColormap_ASM	_R_SetSpanColormap_ASM
+
 %endif
 
 _ds_cursource:
@@ -168,11 +172,9 @@ pixelcount	DD 0
 
 
 GLOBAL @R_SetSpanSource_ASM@4
-GLOBAL _R_SetSpanSource_ASM
 GLOBAL R_SetSpanSource_ASM
 
 R_SetSpanSource_ASM:
-_R_SetSpanSource_ASM:
 	mov	ecx,[esp+4]
 
 @R_SetSpanSource_ASM@4:
@@ -187,11 +189,9 @@ _R_SetSpanSource_ASM:
 	ret
 
 GLOBAL @R_SetSpanColormap_ASM@4
-GLOBAL _R_SetSpanColormap_ASM
 GLOBAL R_SetSpanColormap_ASM
 
 R_SetSpanColormap_ASM:
-_R_SetSpanColormap_ASM:
 	mov ecx,[esp+4]
 
 @R_SetSpanColormap_ASM@4:
@@ -203,6 +203,54 @@ _R_SetSpanColormap_ASM:
 	mov	[spmapf+2],ecx
 	mov	[spmapg+2],ecx
 	mov	[ds_curcolormap],ecx
+	ret
+
+GLOBAL @R_SetSpanSize_ASM@8
+GLOBAL R_SetSpanSize_ASM
+
+EXTERN	SetTiltedSpanSize
+
+R_SetSpanSize_ASM:
+	mov	ecx,[esp+4]
+	mov	edx,[esp+8]
+	
+@R_SetSpanSize_ASM@8:
+	call	SetTiltedSpanSize
+	
+	mov	[dsy1+2],dl
+	mov	[dsy2+2],dl
+	
+	mov	[dsx1+2],cl
+	mov	[dsx2+2],cl
+	mov	[dsx3+2],cl
+	mov	[dsx4+2],cl
+	mov	[dsx5+2],cl
+	mov	[dsx6+2],cl
+	mov	[dsx7+2],cl
+
+	push	ecx
+	add	ecx,edx
+	mov	eax,1
+	shl	eax,cl
+	dec	eax
+	mov	[dsm1+2],eax
+	mov	[dsm5+1],eax
+	mov	[dsm6+1],eax
+	mov	[dsm7+1],eax
+	pop	ecx
+	ror	eax,cl
+	mov	[dsm2+2],eax
+	mov	[dsm3+2],eax
+	mov	[dsm4+2],eax
+	and	eax,0xffff
+	not	eax
+	mov	[dsm8+2],eax
+	mov	[dsm9+2],eax
+	
+	neg	dl
+	mov	[dsy3+2],dl
+	mov	[dsy4+2],dl
+	
 aret:	ret
 
 GLOBAL @R_DrawSpanP_ASM@0
@@ -236,22 +284,22 @@ R_DrawSpanP_ASM:
 	 mov	ecx,[ds_y]
 	add	edi,[ylookup+ecx*4]
 	 mov	edx,[ds_ystep]
-	shl	edx,6
+dsy1:	shl	edx,6
 	 mov	ebp,[ds_ystep]
-	shr	ebp,26
+dsy3:	shr	ebp,26
 	 xor	ebx,ebx
 	lea	esi,[eax+1]
 	 mov	[ds_ystep],edx
 	mov	edx,[ds_xstep]
 	 mov	ecx,[ds_yfrac]
-	shr	ecx,26
-	 and	edx,0xffffffc0
+dsy4:	shr	ecx,26
+dsm8:	 and	edx,0xffffffc0
 	or	ebp,edx
 	 mov	[ds_xstep],ebp
 	mov	ebp,[ds_xfrac]
 	 mov	edx,[ds_yfrac]
-	shl	edx,6
-	 and	ebp,0xffffffc0
+dsy2:	shl	edx,6
+dsm9:	 and	ebp,0xffffffc0
 	or	ecx,ebp
 	 shr	esi,1
 	jnc	dseven1
@@ -259,8 +307,8 @@ R_DrawSpanP_ASM:
 ; do odd pixel
 
 		mov	ebp,ecx
-		rol	ebp,6
-		and	ebp,0xfff
+dsx1:		rol	ebp,6
+dsm1:		and	ebp,0xfff
 		 add	edx,[ds_ystep]
 		adc	ecx,[ds_xstep]
 spreada		 mov	bl,[ebp+SPACEFILLER4]
@@ -275,14 +323,14 @@ dseven1		shr	esi,1
 		mov	ebp,ecx
 		 add	edx,[ds_ystep]
 		adc	ecx,[ds_xstep]
-		 and	ebp,0xfc00003f
-		rol	ebp,6
+dsm2:		 and	ebp,0xfc00003f
+dsx2:		rol	ebp,6
 		mov	eax,ecx
 		 add	edx,[ds_ystep]
 		adc	ecx,[ds_xstep]
 spreadb		 mov	bl,[ebp+SPACEFILLER4]	;read texel1
-		rol	eax,6
-		and	eax,0xfff
+dsx3:		rol	eax,6
+dsm6:		and	eax,0xfff
 spmapb		 mov	bl,[ebx+SPACEFILLER4]	;map texel1
 		mov	[edi],bl		;store texel1
 		 add	edi,2
@@ -300,30 +348,30 @@ dsrest		test	esi,esi
 dsloop		mov	ebp,ecx
 spstep1d	 add	edx,[ds_ystep]
 spstep2d	adc	ecx,[ds_xstep]
-		 and	ebp,0xfc00003f
-		rol	ebp,6
+dsm3:		 and	ebp,0xfc00003f
+dsx4:		rol	ebp,6
 		mov	eax,ecx
 spstep1e	 add	edx,[ds_ystep]
 spstep2e	adc	ecx,[ds_xstep]
 spreadd		 mov	bl,[ebp+SPACEFILLER4]	;read texel1
-		rol	eax,6
-		and	eax,0xfff
+dsx5:		rol	eax,6
+dsm5:		and	eax,0xfff
 spmapd		 mov	bl,[ebx+SPACEFILLER4]	;map texel1
 		mov	[edi],bl		;store texel1
 		 mov	ebp,ecx
 spreade		mov	bl,[eax+SPACEFILLER4]	;read texel2
 spstep1f	 add	edx,[ds_ystep]
 spstep2f	adc	ecx,[ds_xstep]
-		 and	ebp,0xfc00003f
-		rol	ebp,6
+dsm4:		 and	ebp,0xfc00003f
+dsx6:		rol	ebp,6
 spmape		mov	bl,[ebx+SPACEFILLER4]	;map texel2
 		 mov	eax,ecx
 		mov	[edi+1],bl		;store texel2
 spreadf		 mov	bl,[ebp+SPACEFILLER4]	;read texel3
 spmapf		mov	bl,[ebx+SPACEFILLER4]	;map texel3
 		 add	edi,4
-		rol	eax,6
-		and	eax,0xfff
+dsx7:		rol	eax,6
+dsm7:		and	eax,0xfff
 		 mov	[edi-2],bl		;store texel3
 spreadg		mov	bl,[eax+SPACEFILLER4]	;read texel4
 spstep1g	 add	edx,[ds_ystep]

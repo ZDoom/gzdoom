@@ -6,6 +6,9 @@
 #include "a_action.h"
 #include "m_random.h"
 
+static FRandom pr_iceguylook ("IceGuyLook");
+static FRandom pr_iceguychase ("IceGuyChase");
+
 void A_IceGuyLook (AActor *);
 void A_IceGuyChase (AActor *);
 void A_IceGuyAttack (AActor *);
@@ -272,12 +275,12 @@ void A_IceGuyLook (AActor *actor)
 	fixed_t an;
 
 	A_Look (actor);
-	if (P_Random (pr_iceguylook) < 64)
+	if (pr_iceguylook() < 64)
 	{
-		dist = ((P_Random(pr_iceguylook)-128)*actor->radius)>>7;
+		dist = ((pr_iceguylook()-128)*actor->radius)>>7;
 		an = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
 
-		Spawn (WispTypes[P_Random(pr_iceguylook)&1],
+		Spawn (WispTypes[pr_iceguylook()&1],
 			actor->x+FixedMul(dist, finecosine[an]),
 			actor->y+FixedMul(dist, finesine[an]),
 			actor->z+60*FRACUNIT);
@@ -297,12 +300,12 @@ void A_IceGuyChase (AActor *actor)
 	AActor *mo;
 
 	A_Chase (actor);
-	if (P_Random (pr_iceguychase) < 128)
+	if (pr_iceguychase() < 128)
 	{
-		dist = ((P_Random(pr_iceguychase)-128)*actor->radius)>>7;
+		dist = ((pr_iceguychase()-128)*actor->radius)>>7;
 		an = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
 
-		mo = Spawn (WispTypes[P_Random(pr_iceguychase)&1],
+		mo = Spawn (WispTypes[pr_iceguychase()&1],
 			actor->x+FixedMul(dist, finecosine[an]),
 			actor->y+FixedMul(dist, finesine[an]),
 			actor->z+60*FRACUNIT);

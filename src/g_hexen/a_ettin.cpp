@@ -6,6 +6,9 @@
 #include "a_action.h"
 #include "m_random.h"
 
+static FRandom pr_ettinatk ("EttinAttack");
+static FRandom pr_dropmace ("DropMace");
+
 // Ettin --------------------------------------------------------------------
 
 void A_EttinAttack (AActor *);
@@ -111,10 +114,11 @@ class AEttinMace : public AActor
 
 FState AEttinMace::States[] =
 {
-	S_NORMAL (ETTB, 'M',	5, A_CheckFloor 			, &States[1]),
-	S_NORMAL (ETTB, 'N',	5, A_CheckFloor 			, &States[2]),
-	S_NORMAL (ETTB, 'O',	5, A_CheckFloor 			, &States[3]),
-	S_NORMAL (ETTB, 'P',	5, A_CheckFloor 			, &States[0]),
+	S_NORMAL (ETTB, 'M',	5, NULL 					, &States[1]),
+	S_NORMAL (ETTB, 'N',	5, NULL 					, &States[2]),
+	S_NORMAL (ETTB, 'O',	5, NULL 					, &States[3]),
+	S_NORMAL (ETTB, 'P',	5, NULL 					, &States[0]),
+
 	S_NORMAL (ETTB, 'Q',	5, NULL 					, &States[5]),
 	S_NORMAL (ETTB, 'R',	5, A_QueueCorpse			, &States[6]),
 	S_NORMAL (ETTB, 'S',   -1, NULL 					, NULL)
@@ -127,7 +131,7 @@ IMPLEMENT_ACTOR (AEttinMace, Hexen, -1, 0)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_FLOORCLIP)
 
 	PROP_SpawnState (0)
-	PROP_DeathState (4)
+	PROP_CrashState (4)
 END_DEFAULTS
 
 // Ettin mash ---------------------------------------------------------------
@@ -156,7 +160,7 @@ void A_EttinAttack (AActor *actor)
 {
 	if (P_CheckMeleeRange(actor))
 	{
-		int damage = HITDICE(2);
+		int damage = pr_ettinatk.HitDice (2);
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
 	}
@@ -171,9 +175,9 @@ void A_DropMace (AActor *actor)
 		actor->z + (actor->height>>1));
 	if (mo)
 	{
-		mo->momx = (P_Random()-128) << 11;
-		mo->momy = (P_Random()-128) << 11;
-		mo->momz = FRACUNIT*10+(P_Random()<<10);
+		mo->momx = (pr_dropmace()-128) << 11;
+		mo->momy = (pr_dropmace()-128) << 11;
+		mo->momz = FRACUNIT*10+(pr_dropmace()<<10);
 		mo->target = actor;
 	}
 }

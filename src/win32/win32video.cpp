@@ -38,7 +38,9 @@
 #define DIRECTDRAW_VERSION 0x0300
 #define WIN32_LEAN_AND_MEAN
 
+#include <windows.h>
 #include <ddraw.h>
+//#include <d3d8.h>
 #include <stdio.h>
 
 #define __BYTEBOOL__
@@ -50,6 +52,7 @@
 #include "v_video.h"
 #include "v_pfx.h"
 #include "stats.h"
+#include "errors.h"
 
 #include "win32iface.h"
 
@@ -58,7 +61,7 @@
 #define true TRUE
 #define false FALSE
 
-#if 0
+#if 1
 #define STARTLOG		do { if (!dbg) dbg = fopen ("c:/vid.log", "w"); } while(0)
 #define STOPLOG			do { if (dbg) { fclose (dbg); dbg=NULL; } } while(0)
 #define LOG(x)			do { if (dbg) { fprintf (dbg, x); fflush (dbg); } } while(0)
@@ -79,6 +82,12 @@ FILE *dbg;
 
 // TYPES -------------------------------------------------------------------
 
+class CVidError : public CRecoverableError
+{
+	CVidError() : CRecoverableError() {}
+	CVidError(const char *message) : CRecoverableError(message) {}
+};
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
@@ -90,11 +99,14 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 extern HWND Window;
 extern IVideo *Video;
 extern BOOL AppActive;
+extern int SessionState;
 extern bool FullscreenReset;
 extern bool VidResizing;
+extern HMODULE hd3d8;	// handle to d3d8.dll
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+//static IDirect3D8 *D3D;
 static IDirectDraw2 *DDraw;
 static cycle_t BlitCycles;
 static DWORD FlipFlags;
@@ -120,51 +132,88 @@ Win32Video::Win32Video (int parm)
 {
 	STARTLOG;
 
-	CBData cbdata;
 	HRESULT dderr;
 
-	dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_ALL, IID_IDirectDraw2, (void **)&DDraw);
-
-	if (FAILED(dderr))
-		I_FatalError ("Could not create DirectDraw object: %08x", dderr);
-
-	dderr = DDraw->Initialize (0);
-	if (FAILED(dderr))
+#if 0
+	if (hd3d8 != 0)
 	{
-		DDraw->Release ();
-		DDraw = NULL;
-		I_FatalError ("Could not initialize IDirectDraw2 interface: %08x", dderr);
+		FARPROC d3dcreate = GetProcAddress (hd3d8, "Direct3DCreate8");
+		if (d3dcreate != 0)
+		{
+			LOG ("Trying to create IDirect3D8 interface\n");
+			D3D = ((IDirect3D8*(WINAPI *)(UINT))d3dcreate) (D3D_SDK_VERSION);
+		}
 	}
+	if (D3D == 0)
+#endif
+	{
+		// Use the DirectX 3 path
+		//LOG ("IDirect3D8 interface is unavailable, trying IDirectDraw2\n");
+		dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_INPROC_SERVER, IID_IDirectDraw2, (void **)&DDraw);
 
-	DDraw->SetCooperativeLevel (Window, DDSCL_NORMAL);
-	FreeModes ();
-	cbdata.self = this;
-	cbdata.modes = (ModeInfo *)&m_Modes;
-	dderr = DDraw->EnumDisplayModes (0, NULL, &cbdata, EnumDDModesCB);
-	if (FAILED(dderr))
-	{
-		DDraw->Release ();
-		DDraw = NULL;
-		I_FatalError ("Could not enumerate display modes: %08x", dderr);
-	}
-	if (m_Modes == NULL)
-	{
-		DDraw->Release ();
-		DDraw = NULL;
-		I_FatalError ("DirectDraw returned no display modes.\n\n"
-					  "If you started ZDoom from a fullscreen DOS box, run it from "
-					  "a DOS window instead. If that does not work, you may need to reboot.");
-	}
-	if (OSPlatform == os_Win95)
-	{
-		// Windows 95 will let us use Mode X. If we didn't find any linear
-		// modes in the loop above, add the Mode X modes here.
+		if (FAILED(dderr))
+			I_FatalError ("Could not create DirectDraw object: %08x", dderr);
 
-		if (!m_Have320x200x8)
-			AddMode (320, 200, 8, &cbdata.modes);
-		if (!m_Have320x240x8)
-			AddMode (320, 240, 8, &cbdata.modes);
+		dderr = DDraw->Initialize (0);
+		if (FAILED(dderr))
+		{
+			DDraw->Release ();
+			DDraw = NULL;
+			I_FatalError ("Could not initialize IDirectDraw2 interface: %08x", dderr);
+		}
+
+		DDraw->SetCooperativeLevel (Window, DDSCL_NORMAL);
+		FreeModes ();
+		dderr = DDraw->EnumDisplayModes (0, NULL, this, EnumDDModesCB);
+		if (FAILED(dderr))
+		{
+			DDraw->Release ();
+			DDraw = NULL;
+			I_FatalError ("Could not enumerate display modes: %08x", dderr);
+		}
+		if (m_Modes == NULL)
+		{
+			DDraw->Release ();
+			DDraw = NULL;
+			I_FatalError ("DirectDraw returned no display modes.\n\n"
+						"If you started ZDoom from a fullscreen DOS box, run it from "
+						"a DOS window instead. If that does not work, you may need to reboot.");
+		}
+		if (OSPlatform == os_Win95)
+		{
+			// Windows 95 will let us use Mode X. If we didn't find any linear
+			// modes in the loop above, add the Mode X modes here.
+
+			if (!m_Have320x200x8)
+				AddMode (320, 200, 8);
+			if (!m_Have320x240x8)
+				AddMode (320, 240, 8);
+		}
 	}
+#if 0
+	else
+	{
+		// Use the DirectX 8 path
+		UINT totalModes = D3D->GetAdapterModeCount (D3DADAPTER_DEFAULT);
+
+		FreeModes ();
+		for (UINT i = 0; i < totalModes; ++i)
+		{
+			D3DDISPLAYMODE mode;
+			if (D3D_OK == D3D->EnumAdapterModes (D3DADAPTER_DEFAULT, i, &mode))
+			{
+				if (mode.Format == D3DFMT_P8 &&
+					(mode.Width & 7) == 0 &&
+					mode.Width <= MAXWIDTH &&
+					mode.Height <= MAXHEIGHT)
+				{
+					AddMode (mode.Width, mode.Height, 8);
+				}
+			}
+		}
+		exit (0);
+	}
+#endif
 }
 
 Win32Video::~Win32Video ()
@@ -238,17 +287,31 @@ HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
 		desc->dwHeight <= MAXHEIGHT &&
 		desc->dwWidth <= MAXWIDTH)
 	{
-		((CBData *)data)->self->AddMode
-			(desc->dwWidth, desc->dwHeight, 8,
-			&((CBData *)data)->modes);
+		((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8);
 	}
 
 	return DDENUMRET_OK;
 }
 
-void Win32Video::AddMode (int x, int y, int bits, ModeInfo **lastmode)
+void Win32Video::AddMode (int x, int y, int bits)
 {
-	ModeInfo *newmode = new ModeInfo (x, y, bits);
+	ModeInfo **probep = &m_Modes;
+	ModeInfo *probe = m_Modes;
+
+	// This mode may have been already added to the list because it is
+	// enumerated multiple times at different refresh rates. If it's
+	// not present, add it to the end of the list; otherwise, do nothing.
+	while (probe != 0)
+	{
+		if (probe->width == x && probe->height == y && probe->bits == bits)
+		{
+			return;
+		}
+		probep = &probe->next;
+		probe = probe->next;
+	}
+
+	*probep = new ModeInfo (x, y, bits);
 
 	if (x == 320 && bits == 8)
 	{
@@ -257,8 +320,6 @@ void Win32Video::AddMode (int x, int y, int bits, ModeInfo **lastmode)
 		else if (y == 240)
 			m_Have320x240x8 = true;
 	}
-	(*lastmode)->next = newmode;
-	*lastmode = newmode;
 }
 
 void Win32Video::FreeModes ()
@@ -331,7 +392,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-		DDrawFB *fb = static_cast<DDrawFB *> (old);
+		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
 		if (fb->Width == width &&
 			fb->Height == height &&
 			fb->Windowed == !fullscreen)
@@ -428,13 +489,8 @@ void Win32Video::SetWindowedScale (float scale)
 // FrameBuffer implementation -----------------------------------------------
 
 DDrawFB::DDrawFB (int width, int height, bool fullscreen)
-	: DFrameBuffer (width, height)
+	: BaseWinFB (width, height)
 {
-	if (MemBuffer == NULL)
-	{
-		return;
-	}
-
 	int i;
 
 	LastHR = 0;
@@ -464,6 +520,11 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 	UseBlitter = false;
 
 	FlashAmount = 0;
+
+	if (MemBuffer == NULL)
+	{
+		return;
+	}
 
 	for (i = 0; i < 256; i++)
 	{
@@ -587,6 +648,7 @@ bool DDrawFB::CreateResources ()
 	{
 		MustBuffer = true;
 
+		LOG ("Running in a window\n");
 		// Resize the window to match desired dimensions
 		int sizew = Width + GetSystemMetrics (SM_CXSIZEFRAME)*2;
 		int sizeh = Height + GetSystemMetrics (SM_CYSIZEFRAME) * 2 +
@@ -604,7 +666,11 @@ bool DDrawFB::CreateResources ()
 		// Create the primary surface
 		ddsd.dwFlags = DDSD_CAPS;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
-		hr = DDraw->CreateSurface (&ddsd, &PrimarySurf, NULL);
+		do
+		{
+			hr = DDraw->CreateSurface (&ddsd, &PrimarySurf, NULL);
+			LOG1 ("Create primary: %08x\n", hr);
+		} while (0);
 		if (FAILED(hr))
 		{
 			LastHR = hr;
@@ -615,6 +681,7 @@ bool DDrawFB::CreateResources ()
 
 		// Create the clipper
 		hr = DDraw->CreateClipper (0, &Clipper, NULL);
+		LOG1 ("Create clipper: %08x\n", hr);
 		if (FAILED(hr))
 		{
 			LastHR = hr;
@@ -632,6 +699,7 @@ bool DDrawFB::CreateResources ()
 		ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | (UseBlitter ? DDSCAPS_SYSTEMMEMORY : 0);
 
 		hr = DDraw->CreateSurface (&ddsd, &BackSurf, NULL);
+		LOG1 ("Create backbuffer: %08x\n", hr);
 		if (FAILED(hr))
 		{
 			LastHR = hr;
@@ -1071,7 +1139,7 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 
 	wasLost = false;
 
-	if (!AppActive || MustBuffer || useSimpleCanvas || !UseBlitter)
+	if (!AppActive || SessionState || MustBuffer || useSimpleCanvas || !UseBlitter)
 	{
 		Buffer = MemBuffer;
 		Pitch = BufferPitch;
@@ -1186,9 +1254,23 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 		{ // If this is NT, the user probably opened the Windows NT Security dialog.
 		  // If this is not NT, trying to recreate everything from scratch won't hurt.
 			ReleaseResources ();
-			if (!CreateResources ())
+			// If the system is still recovering from having the Security dialog open,
+			// loop for up to two seconds, trying to recreate the display.
+			for (int k = 0; k < 21; ++k)
 			{
-				I_FatalError ("Could not rebuild framebuffer: %08x", LastHR);
+				if (!CreateResources ())
+				{
+					if (LastHR != DDERR_UNSUPPORTEDMODE || k == 20)
+					{
+						I_FatalError ("Could not rebuild framebuffer: %08x", LastHR);
+					}
+					// Wait a bit before trying again.
+					Sleep (100);
+				}
+				else
+				{
+					break;
+				}
 			}
 			if (lockingLocker)
 			{
@@ -1254,7 +1336,7 @@ void DDrawFB::Update ()
 	bool pchanged = false;
 	int i;
 
-	LOG2 ("Update     <%d,%c>\n", LockCount, AppActive?'Y':'N');
+	LOG3 ("Update     <%d,%c:%d>\n", LockCount, AppActive?'Y':'N', SessionState);
 
 	if (LockCount != 1)
 	{
@@ -1339,7 +1421,7 @@ void DDrawFB::Update ()
 
 	if (BufferingNow)
 	{
-		if (!PaintToWindow () && AppActive)
+		if (AppActive && !SessionState && !PaintToWindow())
 		{
 			if (LockSurf (NULL, NULL) != NoGood)
 			{
@@ -1390,7 +1472,7 @@ void DDrawFB::Update ()
 	LockCount = 0;
 	UpdatePending = false;
 
-	if (!Windowed && AppActive /*&& !UseBlitter && !MustBuffer*/)
+	if (!Windowed && AppActive && !SessionState /*&& !UseBlitter && !MustBuffer*/)
 	{
 		HRESULT hr = PrimarySurf->Flip (NULL, FlipFlags);
 		LOG1 ("Flip = %08x\n", hr);
@@ -1405,7 +1487,7 @@ void DDrawFB::Update ()
 		}
 	}
 
-	if (pchanged && AppActive)
+	if (pchanged && AppActive && !SessionState)
 	{
 		Palette->SetEntries (0, 0, 256, PalEntries);
 	}
@@ -1477,6 +1559,7 @@ void DDrawFB::GetFlash (PalEntry &rgb, int &amount)
 }
 
 // Q: Should I gamma adjust the returned palette?
+// A: No. PNG screenshots save the gamma value, so there is no need.
 void DDrawFB::GetFlashedPalette (PalEntry pal[256])
 {
 	memcpy (pal, SourcePalette, 256*sizeof(PalEntry));

@@ -10,6 +10,14 @@
 #include "s_sound.h"
 #include "gstrings.h"
 
+static FRandom pr_podpain ("PodPain");
+static FRandom pr_makepod ("MakePod");
+static FRandom pr_teleg ("TeleGlitter");
+static FRandom pr_teleg2 ("TeleGlitter2");
+static FRandom pr_volcano ("VolcanoSet");
+static FRandom pr_blast ("VolcanoBlast");
+static FRandom pr_impact ("VolcBallImpact");
+
 // --- Pods -----------------------------------------------------------------
 
 void A_PodPain (AActor *);
@@ -143,7 +151,7 @@ void A_PodPain (AActor *actor)
 	int chance;
 	AActor *goo;
 
-	chance = P_Random ();
+	chance = pr_podpain ();
 	if (chance < 128)
 	{
 		return;
@@ -152,9 +160,9 @@ void A_PodPain (AActor *actor)
 	{
 		goo = Spawn<APodGoo> (actor->x, actor->y, actor->z + 48*FRACUNIT);
 		goo->target = actor;
-		goo->momx = PS_Random() << 9;
-		goo->momy = PS_Random() << 9;
-		goo->momz = FRACUNIT/2 + (P_Random() << 9);
+		goo->momx = pr_podpain.Random2() << 9;
+		goo->momy = pr_podpain.Random2() << 9;
+		goo->momz = FRACUNIT/2 + (pr_podpain() << 9);
 	}
 }
 
@@ -206,7 +214,7 @@ void A_MakePod (AActor *actor)
 		return;
 	}
 	mo->SetState (&APod::States[S_POD_GROW]);
-	P_ThrustMobj (mo, P_Random()<<24, (fixed_t)(4.5*FRACUNIT));
+	P_ThrustMobj (mo, pr_makepod()<<24, (fixed_t)(4.5*FRACUNIT));
 	S_Sound (mo, CHAN_BODY, "world/podgrow", 1, ATTN_IDLE);
 	actor->special1++; // Increment generated pod count
 	mo->Generator = actor; // Link the generator to the pod
@@ -307,10 +315,10 @@ END_DEFAULTS
 void A_SpawnTeleGlitter (AActor *actor)
 {
 	AActor *mo;
+	fixed_t x = actor->x+((pr_teleg()&31)-16)*FRACUNIT;
+	fixed_t y = actor->y+((pr_teleg()&31)-16)*FRACUNIT;
 
-	mo = Spawn<ATeleGlitter1> (
-		actor->x+((P_Random()&31)-16)*FRACUNIT,
-		actor->y+((P_Random()&31)-16)*FRACUNIT,
+	mo = Spawn<ATeleGlitter1> (x, y,
 		actor->Sector->floorplane.ZatPoint (actor->x, actor->y));
 	mo->momz = FRACUNIT/4;
 }
@@ -324,10 +332,10 @@ void A_SpawnTeleGlitter (AActor *actor)
 void A_SpawnTeleGlitter2 (AActor *actor)
 {
 	AActor *mo;
+	fixed_t x = actor->x+((pr_teleg2()&31)-16)*FRACUNIT;
+	fixed_t y = actor->y+((pr_teleg2()&31)-16)*FRACUNIT;
 
-	mo = Spawn<ATeleGlitter2> (
-		actor->x+((P_Random()&31)-16)*FRACUNIT,
-		actor->y+((P_Random()&31)-16)*FRACUNIT,
+	mo = Spawn<ATeleGlitter2> (x, y,
 		actor->Sector->floorplane.ZatPoint (actor->x, actor->y));
 	mo->momz = FRACUNIT/4;
 }
@@ -490,7 +498,7 @@ END_DEFAULTS
 
 void A_VolcanoSet (AActor *volcano)
 {
-	volcano->tics = 105 + (P_Random() & 127);
+	volcano->tics = 105 + (pr_volcano() & 127);
 }
 
 //----------------------------------------------------------------------------
@@ -506,18 +514,18 @@ void A_VolcanoBlast (AActor *volcano)
 	AActor *blast;
 	angle_t angle;
 
-	count = 1 + (P_Random() % 3);
+	count = 1 + (pr_blast() % 3);
 	for (i = 0; i < count; i++)
 	{
 		blast = Spawn<AVolcanoBlast> (volcano->x, volcano->y,
 			volcano->z + 44*FRACUNIT);
 		blast->target = volcano;
-		angle = P_Random () << 24;
+		angle = pr_blast () << 24;
 		blast->angle = angle;
 		angle >>= ANGLETOFINESHIFT;
 		blast->momx = FixedMul (1*FRACUNIT, finecosine[angle]);
 		blast->momy = FixedMul (1*FRACUNIT, finesine[angle]);
-		blast->momz = (FRACUNIT*5/2) + (P_Random() << 10);
+		blast->momz = (FRACUNIT*5/2) + (pr_blast() << 10);
 		S_Sound (blast, CHAN_BODY, "world/volcano/shoot", 1, ATTN_NORM);
 		P_CheckMissileSpawn (blast);
 	}
@@ -552,7 +560,7 @@ void A_VolcBallImpact (AActor *ball)
 		angle >>= ANGLETOFINESHIFT;
 		tiny->momx = FixedMul (FRACUNIT*7/10, finecosine[angle]);
 		tiny->momy = FixedMul (FRACUNIT*7/10, finesine[angle]);
-		tiny->momz = FRACUNIT + (P_Random() << 9);
+		tiny->momz = FRACUNIT + (pr_impact() << 9);
 		P_CheckMissileSpawn (tiny);
 	}
 }

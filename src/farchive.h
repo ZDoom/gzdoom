@@ -79,7 +79,7 @@ class FCompressedFile : public FFile
 public:
 	FCompressedFile ();
 	FCompressedFile (const char *name, EOpenMode mode, bool dontcompress = false);
-	FCompressedFile (FILE *file, EOpenMode mode, bool dontcompress = false);
+	FCompressedFile (FILE *file, EOpenMode mode, bool dontcompress = false, bool postopen=true);
 	~FCompressedFile ();
 
 	bool Open (const char *name, EOpenMode mode);
@@ -88,6 +88,7 @@ public:
 	EOpenMode Mode () const;
 	bool IsPersistent () const { return true; }
 	bool IsOpen () const;
+	unsigned int GetSize () const { return m_BufferSize; }
 
 	FFile &Write (const void *, unsigned int);
 	FFile &Read (void *, unsigned int);
@@ -106,10 +107,10 @@ protected:
 	void Implode ();
 	void Explode ();
 	virtual bool FreeOnExplode () { return true; }
+	void PostOpen ();
 
 private:
 	void BeEmpty ();
-	void PostOpen ();
 };
 
 class FCompressedMemFile : public FCompressedFile
@@ -133,6 +134,18 @@ protected:
 private:
 	bool m_SourceFromMem;
 	unsigned char *m_ImplodedBuffer;
+};
+
+class FPNGChunkFile : public FCompressedFile
+{
+public:
+	FPNGChunkFile (FILE *file, DWORD id);					// Create for writing
+	FPNGChunkFile (FILE *file, DWORD id, size_t chunklen);	// Create for reading
+
+	void Close ();
+
+private:
+	DWORD m_ChunkID;
 };
 
 class FArchive
@@ -173,6 +186,9 @@ virtual void Read (void *mem, unsigned int len);
 
 		void WriteName (const char *name);
 		const char *ReadName ();	// The returned name disappears with the archive, unlike strings
+
+		void WriteSprite (int spritenum);
+		int ReadSprite ();
 
 inline	FArchive& operator<< (char &c) { return operator<< ((BYTE &)c); }
 inline	FArchive& operator<< (SBYTE &c) { return operator<< ((BYTE &)c); }
@@ -235,9 +251,25 @@ protected:
 		TArray<char> m_NameStorage;
 		size_t m_NameHash[EObjectHashSize];
 
+		int *m_SpriteMap;
+		size_t m_NumSprites;
+
+		FArchive ();
+		void AttachToFile (FFile &file);
+
 private:
 		FArchive (const FArchive &src) {}
 		void operator= (const FArchive &src) {}
+};
+
+// Create an FPNGChunkFile and FArchive in one step
+class FPNGChunkArchive : public FArchive
+{
+public:
+	FPNGChunkArchive (FILE *file, DWORD chunkid);
+	FPNGChunkArchive (FILE *file, DWORD chunkid, size_t chunklen);
+	~FPNGChunkArchive ();
+	FPNGChunkFile Chunk;
 };
 
 #endif //__FARCHIVE_H__

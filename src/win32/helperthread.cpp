@@ -103,6 +103,27 @@ bool FHelperThread::LaunchThread ()
 					DestroyThread ();
 					return false;
 				}
+#if defined(_MSC_VER) && defined(_DEBUG)
+				// Give the thread a name in the debugger
+				struct
+				{
+					DWORD type;
+					LPCSTR name;
+					DWORD threadID;
+					DWORD flags;
+				} info =
+				{
+					0x1000, ThreadName(), ThreadID, 0
+				};
+				__try
+				{
+					RaiseException( 0x406D1388, 0, sizeof(info)/sizeof(DWORD), (DWORD*)&info );
+				}
+				__except(EXCEPTION_CONTINUE_EXECUTION)
+				{
+				}
+#endif
+
 				return true;
 			}
 			CloseHandle (Thread_Events[1]);

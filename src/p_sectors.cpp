@@ -23,6 +23,7 @@
 
 #include "r_data.h"
 #include "p_spec.h"
+#include "c_cvars.h"
 
 // [RH]
 // P_NextSpecialSector()
@@ -430,22 +431,30 @@ fixed_t sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 //
 // jff 02/03/98 Add routine to find shortest lower texture
 //
+
+static inline void CheckShortestTex (int texnum, fixed_t &minsize)
+{
+	if (texnum > 0 || (texnum == 0 && (compatflags & COMPATF_SHORTTEX)))
+	{
+		int yscale = texturescaley[texnum] ? texturescaley[texnum] : 8;
+		fixed_t h = DivScale3 (textureheight[texnum], yscale);
+		if (h < minsize)
+		{
+			minsize = h;
+		}
+	}
+}
+
 fixed_t sector_t::FindShortestTextureAround () const
 {
-	int minsize = FIXED_MAX;
-	side_t *side;
-	int i;
+	fixed_t minsize = FIXED_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (int i = 0; i < linecount; i++)
 	{
 		if (lines[i]->flags & ML_TWOSIDED)
 		{
-			side = &sides[lines[i]->sidenum[0]];
-			if (side->bottomtexture >= 0 && textureheight[side->bottomtexture] < minsize)
-				minsize = textureheight[side->bottomtexture];
-			side = &sides[lines[i]->sidenum[1]];
-			if (side->bottomtexture >= 0 && textureheight[side->bottomtexture] < minsize)
-				minsize = textureheight[side->bottomtexture];
+			CheckShortestTex (sides[lines[i]->sidenum[0]].bottomtexture, minsize);
+			CheckShortestTex (sides[lines[i]->sidenum[1]].bottomtexture, minsize);
 		}
 	}
 	return minsize;
@@ -464,20 +473,14 @@ fixed_t sector_t::FindShortestTextureAround () const
 //
 fixed_t sector_t::FindShortestUpperAround () const
 {
-	int minsize = FIXED_MAX;
-	side_t *side;
-	int i;
+	fixed_t minsize = FIXED_MAX;
 
-	for (i = 0; i < linecount; i++)
+	for (int i = 0; i < linecount; i++)
 	{
 		if (lines[i]->flags & ML_TWOSIDED)
 		{
-			side = &sides[lines[i]->sidenum[0]];
-			if (side->toptexture >= 0 && textureheight[side->toptexture] < minsize)
-				minsize = textureheight[side->toptexture];
-			side = &sides[lines[i]->sidenum[1]];
-			if (side->toptexture >= 0 && textureheight[side->toptexture] < minsize)
-				minsize = textureheight[side->toptexture];
+			CheckShortestTex (sides[lines[i]->sidenum[0]].toptexture, minsize);
+			CheckShortestTex (sides[lines[i]->sidenum[1]].toptexture, minsize);
 		}
 	}
 	return minsize;

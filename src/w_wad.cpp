@@ -50,7 +50,7 @@
 #define O_BINARY 0
 #endif
 
-#define MAX_PERM_OPEN_WADS	2	// Max # of wads to always keep open
+#define MAX_PERM_OPEN_WADS	3	// Max # of wads to always keep open
 #define MAX_OPEN_WADS		16	// Max # of additional wads to have open at a time
 
 #define NULL_INDEX		(0xffff)
@@ -248,7 +248,7 @@ void W_AddFile (char *filename)
 				continue;
 			}
 			uppercopy (lump_p->name, rff_p->Name);
-			lump_p->wadnum = ActiveWads.Size ();
+			lump_p->wadnum = (WORD)ActiveWads.Size ();
 			lump_p->position = LONG(rff_p->FilePos);
 			lump_p->size = LONG(rff_p->Size);
 			lump_p->flags = (rff_p->Flags & 0x10) >> 4;
@@ -283,7 +283,7 @@ void W_AddFile (char *filename)
 		{
 			// [RH] Convert name to uppercase during copy
 			uppercopy (lump_p->name, fileinfo->Name);
-			lump_p->wadnum = ActiveWads.Size ();
+			lump_p->wadnum = (WORD)ActiveWads.Size ();
 			lump_p->position = LONG(fileinfo->FilePos);
 			lump_p->size = LONG(fileinfo->Size);
 			lump_p->namespc = ns_global;
@@ -302,7 +302,7 @@ void W_AddFile (char *filename)
 
 	if (ActiveWads.Push (wadhandle) >= MAX_PERM_OPEN_WADS)
 	{
-		PutWadToFront (ActiveWads.Size () - 1, NumOpenWads);
+		PutWadToFront ((int)(ActiveWads.Size() - 1), NumOpenWads);
 		NumOpenWads++;
 	}
 }
@@ -354,6 +354,7 @@ void W_InitMultipleFiles (wadlist_t **filenames)
 	W_MergeLumps ("S_START", "S_END", ns_sprites);
 	W_MergeLumps ("F_START", "F_END", ns_flats);
 	W_MergeLumps ("C_START", "C_END", ns_colormaps);
+	W_MergeLumps ("A_START", "A_END", ns_acslibrary);
 
 	// [RH] Set up hash table
 	FirstLumpIndex = new WORD[numlumps];
@@ -495,7 +496,7 @@ bool W_CheckIfWadLoaded (const char *name)
 	{
 		for (i = 0; i < ActiveWads.Size(); ++i)
 		{
-			if (stricmp (W_GetWadName (i), name) == 0)
+			if (stricmp (W_GetWadName ((int)i), name) == 0)
 			{
 				return true;
 			}
@@ -519,7 +520,8 @@ int W_NumLumps (void)
 //
 // W_CheckNumForName
 //
-// Returns -1 if name not found.
+// Returns -1 if name not found. The version with a third parameter will
+// look exclusively in the specified wad for the lump.
 //
 // [RH] Changed to use hash lookup ala BOOM instead of a linear search
 // and namespace parameter
@@ -536,6 +538,30 @@ int W_CheckNumForName (const char *name, int space)
 	while (i != NULL_INDEX &&
 		(*(__int64 *)&lumpinfo[i].name != *(__int64 *)&uname ||
 		 lumpinfo[i].namespc != space))
+	{
+		i = NextLumpIndex[i];
+	}
+
+	return i != NULL_INDEX ? i : -1;
+}
+
+int W_CheckNumForName (const char *name, int space, int wadnum)
+{
+	char uname[8];
+	WORD i;
+
+	if (wadnum < 0)
+	{
+		return W_CheckNumForName (name, space);
+	}
+
+	uppercopy (uname, name);
+	i = FirstLumpIndex[W_LumpNameHash (uname) % (unsigned)numlumps];
+
+	while (i != NULL_INDEX &&
+		(*(__int64 *)&lumpinfo[i].name != *(__int64 *)&uname ||
+		 lumpinfo[i].namespc != space ||
+		 lumpinfo[i].wadnum != wadnum))
 	{
 		i = NextLumpIndex[i];
 	}
@@ -575,7 +601,9 @@ int W_GetNumForName (const char *name)
 int W_LumpLength (int lump)
 {
 	if (lump >= numlumps)
+	{
 		I_Error ("W_LumpLength: %i >= numlumps",lump);
+	}
 
 	return lumpinfo[lump].size;
 }
@@ -618,7 +646,11 @@ void W_ReadLump (int lump, void *dest)
 //
 //==========================================================================
 
+#ifndef _DEBUG
 void *W_CacheLumpNum (int lump, int tag)
+#else
+void *W_CacheLumpNum2 (int lump, int tag, const char *file, int line)
+#endif
 {
 	byte *ptr;
 	int lumplen;
@@ -636,7 +668,11 @@ void *W_CacheLumpNum (int lump, int tag)
 		//		various text parsing routines can just call
 		//		W_CacheLumpNum() and not choke.
 		lumplen = W_LumpLength (lump);
+#ifndef _DEBUG
 		ptr = (byte *)Z_Malloc (lumplen + 1, tag, &lumpcache[lump]);
+#else
+		ptr = (byte *)Z_Malloc2 (lumplen + 1, tag, &lumpcache[lump], file, line);
+#endif
 		W_ReadLump (lump, lumpcache[lump]);
 		ptr[lumplen] = 0;
 	}
@@ -963,6 +999,19 @@ void W_GetLumpName (char *to, int lump)
 		*to = 0;
 	else
 		uppercopy (to, lumpinfo[lump].name);
+}
+
+//==========================================================================
+//
+// W_GetLumpFile
+//
+//==========================================================================
+
+int W_GetLumpFile (int lump)
+{
+	if (lump >= numlumps)
+		return -1;
+	return lumpinfo[lump].wadnum;
 }
 
 //==========================================================================

@@ -8,6 +8,9 @@
 #include "a_sharedglobal.h"
 #include "gstrings.h"
 
+static FRandom pr_dripblood ("DripBlood");
+static FRandom pr_knightatk ("KnightAttack");
+
 void A_KnightAttack (AActor *);
 void A_DripBlood (AActor *);
 void A_AxeSound (AActor *);
@@ -192,11 +195,11 @@ void A_DripBlood (AActor *actor)
 	AActor *mo;
 	fixed_t x, y;
 
-	x = actor->x + (PS_Random () << 11);
-	y = actor->y + (PS_Random () << 11);
+	x = actor->x + (pr_dripblood.Random2 () << 11);
+	y = actor->y + (pr_dripblood.Random2 () << 11);
 	mo = Spawn<ABlood> (x, y, actor->z);
-	mo->momx = PS_Random () << 10;
-	mo->momy = PS_Random () << 10;
+	mo->momx = pr_dripblood.Random2 () << 10;
+	mo->momy = pr_dripblood.Random2 () << 10;
 	mo->flags2 |= MF2_LOGRAV;
 }
 
@@ -214,7 +217,7 @@ void A_KnightAttack (AActor *actor)
 	}
 	if (P_CheckMeleeRange (actor))
 	{
-		int damage = HITDICE(3);
+		int damage = pr_knightatk.HitDice (3);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		S_Sound (actor, CHAN_BODY, "knight/melee", 1, ATTN_NORM);
@@ -222,7 +225,7 @@ void A_KnightAttack (AActor *actor)
 	}
 	// Throw axe
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
-	if (actor->flags & MF_SHADOW || P_Random () < 40)
+	if (actor->flags & MF_SHADOW || pr_knightatk () < 40)
 	{ // Red axe
 		P_SpawnMissileZ (actor, actor->z + 36*FRACUNIT, actor->target, RUNTIME_CLASS(ARedAxe));
 		return;

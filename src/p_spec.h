@@ -840,8 +840,8 @@ bool EV_DoChange (line_t *line, EChange changetype, int tag);
 //
 // P_TELEPT
 //
-bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, bool useFog);
-bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog);
+bool P_Teleport (AActor *thing, fixed_t x, fixed_t y, fixed_t z, angle_t angle, bool useFog, bool keepOrientation);
+bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool keepOrientation);
 bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 							BOOL reverse);
 bool EV_TeleportOther (int other_tid, int dest_tid, bool fog);

@@ -85,19 +85,33 @@ class Win32Video : public IVideo
 
 	bool m_CalledCoInitialize;
 
-	void AddMode (int x, int y, int bits, ModeInfo **lastmode);
+	void AddMode (int x, int y, int bits);
 	void FreeModes ();
 
 	void NewDDMode (int x, int y);
-	struct CBData
-	{
-		Win32Video *self;
-		ModeInfo *modes;
-	};
 	static HRESULT WINAPI EnumDDModesCB (LPDDSURFACEDESC desc, void *modes);
 };
 
-class DDrawFB : public DFrameBuffer
+class BaseWinFB : public DFrameBuffer
+{
+public:
+	BaseWinFB (int width, int height) : DFrameBuffer (width, height), Windowed (true) {}
+
+	bool IsFullscreen () { return !Windowed; }
+	virtual void Blank () = 0;
+	virtual bool PaintToWindow () = 0;
+
+protected:
+	virtual bool CreateResources () = 0;
+	virtual void ReleaseResources () = 0;
+
+	bool Windowed;
+
+	friend int I_PlayMovie (const char *name);
+	friend class Win32Video;
+};
+
+class DDrawFB : public BaseWinFB
 {
 public:
 	DDrawFB (int width, int height, bool fullscreen);
@@ -119,14 +133,13 @@ public:
 	int GetPageCount ();
 	int QueryNewPalette ();
 	HRESULT GetHR () { return LastHR; }
-	bool IsFullscreen () { return !Windowed; }
 
 	void Blank ();
 	bool PaintToWindow ();
 
+private:
 	bool CreateResources ();
 	void ReleaseResources ();
-private:
 	bool CreateSurfacesAttached ();
 	bool CreateSurfacesComplex ();
 	bool CreateBlitterSource ();
@@ -161,12 +174,9 @@ private:
 	bool NeedGammaUpdate;
 	bool NeedPalUpdate;
 	bool MustBuffer;		// The screen is not 8-bit, or there is no backbuffer
-	bool Windowed;
 	bool BufferingNow;		// Most recent Lock was buffered
 	bool WasBuffering;		// Second most recent Lock was buffered
 	bool Write8bit;
 	bool UpdatePending;		// On final unlock, call Update()
 	bool UseBlitter;		// Use blitter to copy from sys mem to video mem
-
-	friend class Win32Video;
 };

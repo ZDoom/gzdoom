@@ -88,7 +88,7 @@ BOOL		cursoron = false;
 int			ConBottom, ConScroll, RowAdjust;
 int			CursorTicker;
 constate_e	ConsoleState = c_up;
-char		VersionString[16];
+char		VersionString[32];
 
 static char ConsoleBuffer[CONSOLESIZE];
 static char *Lines[CONSOLELINES];
@@ -109,6 +109,8 @@ EXTERN_CVAR (Bool, show_messages)
 
 static unsigned int TickerAt, TickerMax;
 static const char *TickerLabel;
+
+static bool TickerVisible;
 
 struct History
 {
@@ -144,7 +146,7 @@ static struct NotifyText
 } NotifyStrings[NUMNOTIFIES];
 
 #define PRINTLEVELS 5
-int PrintColors[PRINTLEVELS+1] = { CR_RED, CR_GOLD, CR_GRAY, CR_GREEN, CR_GREEN, CR_GOLD };
+int PrintColors[PRINTLEVELS+2] = { CR_RED, CR_GOLD, CR_GRAY, CR_GREEN, CR_GREEN, CR_GOLD };
 
 static void setmsgcolor (int index, int color);
 
@@ -183,16 +185,21 @@ CUSTOM_CVAR (Int, msgmidcolor, 5, CVAR_ARCHIVE)
 	setmsgcolor (PRINTLEVELS, self);
 }
 
-static void maybedrawnow ()
+CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
+{
+	setmsgcolor (PRINTLEVELS+1, self);
+}
+
+static void maybedrawnow (bool tick, bool force)
 {
 	if (vidactive &&
-		((gameaction != ga_nothing && ConsoleState == c_down)
+		(((tick || gameaction != ga_nothing) && ConsoleState == c_down)
 		|| gamestate == GS_STARTUP))
 	{
 		static size_t lastprinttime = 0;
 		size_t nowtime = I_GetTime();
 
-		if (nowtime - lastprinttime > 1)
+		if (nowtime - lastprinttime > 1 || force)
 		{
 			screen->Lock (false);
 			C_DrawConsole ();
@@ -208,10 +215,10 @@ void C_InitConsole (int width, int height, BOOL ingame)
 	{
 		if (!gotconback)
 		{
-			BOOL stylize = false;
+			bool stylize = false;
 			BOOL isRaw = false;
 			patch_t *bg;
-			int num;
+			int num, pitch;
 
 			num = W_CheckNumForName ("CONBACK");
 			if (num == -1)
@@ -237,37 +244,43 @@ void C_InitConsole (int width, int height, BOOL ingame)
 
 			if (stylize)
 			{
-				byte *fadetable = (byte *)W_CacheLumpName ("COLORMAP", PU_CACHE), f, *i;
-				int x, y;
+				byte *fadetable = (byte *)W_CacheLumpName ("COLORMAP", PU_CACHE), *i;
+				int x, y, s;
+				byte *v;
 
-				for (y = 0; y < conback->GetHeight(); y++)
+				pitch = conback->GetPitch();
+				v = fadetable + 22*256;
+				for (y = 8; y < conback->GetHeight() - 8; ++y)
 				{
-					i = conback->GetBuffer() + conback->GetPitch() * y;
-					if (y < 8 || y > 191)
+					i = conback->GetBuffer() + pitch * y + 8;
+					for (x = conback->GetWidth() - 16; x > 0; --x)
 					{
-						if (y < 8)
-							f = y;
-						else
-							f = 199 - y;
-						byte *v = fadetable + (30 - f) * 256;
-						for (x = 0; x < conback->GetWidth(); x++)
-						{
-							*i = v[*i];
-							i++;
-						}
+						*i = v[*i];
+						++i;
 					}
-					else
+				}
+
+				for (s = 0; s < 8; ++s)
+				{
+					byte *j;
+
+					v = fadetable + (30 - s) * 256;
+					i = conback->GetBuffer() + pitch * s + s;
+					j = conback->GetBuffer() + pitch * (conback->GetHeight() - s - 1) + s;
+					for (x = s; x < conback->GetWidth() - s; ++x)
 					{
-						for (x = 0; x < conback->GetWidth(); x++)
-						{
-							if (x <= 8)
-								*i = *(fadetable + (30 - x) * 256 + *i);
-							else if (x > 312)
-								*i = *(fadetable + (x - 289) * 256 + *i);
-							else
-								*i = *(fadetable + 22*256 + *i);
-							++i;
-						}
+						*i = v[*i];
+						*j = v[*j];
+						++i;
+						++j;
+					}
+					i = conback->GetBuffer() + pitch * (s + 1) + s;
+					x = conback->GetWidth() - 2*s - 1;
+					for (y = s; y < conback->GetHeight() - s - 2; ++y)
+					{
+						*i = v[*i];
+						*(i+x) = v[*(i+x)];
+						i += pitch;
 					}
 				}
 			}
@@ -304,7 +317,7 @@ void C_InitConsole (int width, int height, BOOL ingame)
 
 			for (in = TopLine; in != InsertLine; in = (in + 1) & LINEMASK)
 			{
-				int len = strlen (Lines[in]);
+				size_t len = strlen (Lines[in]);
 
 				if (fmtpos + len + 2 - fmtBuff > CONSOLESIZE)
 				{
@@ -387,7 +400,7 @@ void C_AddNotifyString (int printlevel, const char *source)
 	int i, len, width;
 
 	if ((printlevel != 128 && !show_messages) ||
-		!(len = strlen (source)) ||
+		!(len = (int)strlen (source)) ||
 		gamestate != GS_LEVEL)
 		return;
 
@@ -483,12 +496,12 @@ static void AddToConsole (int printlevel, const char *text)
 
 	char *work_p;
 	char *linestart;
-	char cc;
+	int cc = CR_TAN;
 	int size, len;
 	int x;
 	int maxwidth;
 
-	len = strlen (text);
+	len = (int)strlen (text);
 	size = len + 3;
 
 	if (addtype != NEWLINE)
@@ -506,7 +519,7 @@ static void AddToConsole (int printlevel, const char *text)
 	}
 	if (addtype == APPENDLINE)
 	{
-		size += strlen (Lines[InsertLine]);
+		size += (int)strlen (Lines[InsertLine]);
 	}
 	if (size > worklen)
 	{
@@ -524,7 +537,6 @@ static void AddToConsole (int printlevel, const char *text)
 		{
 			strcpy (work, Lines[InsertLine]);
 			strcat (work, text);
-			cc = CR_TAN;
 		}
 		else if (printlevel >= 0)
 		{
@@ -539,7 +551,6 @@ static void AddToConsole (int printlevel, const char *text)
 		else
 		{
 			strcpy (work, text);
-			cc = CR_TAN;
 		}
 	}
 
@@ -639,9 +650,9 @@ int PrintString (int printlevel, const char *outline)
 	if (vidactive && screen)
 	{
 		C_AddNotifyString (printlevel, outline);
-		maybedrawnow ();
+		maybedrawnow (false, false);
 	}
-	return strlen (outline);
+	return (int)strlen (outline);
 }
 
 extern BOOL gameisdead;
@@ -676,18 +687,6 @@ int STACK_ARGS Printf (const char *format, ...)
 
 	va_start (argptr, format);
 	count = VPrintf (PRINT_HIGH, format, argptr);
-	va_end (argptr);
-
-	return count;
-}
-
-int STACK_ARGS Printf_Bold (const char *format, ...)
-{
-	va_list argptr;
-	int count;
-
-	va_start (argptr, format);
-	count = VPrintf (200, format, argptr);
 	va_end (argptr);
 
 	return count;
@@ -825,13 +824,13 @@ void C_InitTicker (const char *label, unsigned int max)
 	TickerMax = max;
 	TickerLabel = label;
 	TickerAt = 0;
-	maybedrawnow ();
+	maybedrawnow (true, false);
 }
 
-void C_SetTicker (unsigned int at)
+void C_SetTicker (unsigned int at, bool forceUpdate)
 {
 	TickerAt = at > TickerMax ? TickerMax : at;
-	maybedrawnow ();
+	maybedrawnow (true, TickerVisible ? forceUpdate : false);
 }
 
 void C_DrawConsole ()
@@ -884,28 +883,33 @@ void C_DrawConsole ()
 			if (TickerMax)
 			{
 				char tickstr[256];
-				unsigned int i, tickend = ConCols - SCREENWIDTH / 90 - 6;
-				unsigned int tickbegin = 0;
+				const int tickerY = ConBottom - ConFont->GetHeight() - 4;
+				size_t i, tickend = ConCols - SCREENWIDTH / 90 - 6;
+				size_t tickbegin = 0;
 
 				if (TickerLabel)
 				{
 					tickbegin = strlen (TickerLabel) + 2;
-					tickend -= tickbegin;
 					sprintf (tickstr, "%s: ", TickerLabel);
 				}
 				if (tickend > 256 - 8)
 					tickend = 256 - 8;
-				tickstr[tickbegin] = -128;
-				memset (tickstr + tickbegin + 1, 0x81, tickend - tickbegin);
-				tickstr[tickend + 1] = -126;
+				tickstr[tickbegin] = 0x10;
+				memset (tickstr + tickbegin + 1, 0x11, tickend - tickbegin);
+				tickstr[tickend + 1] = 0x12;
 				tickstr[tickend + 2] = ' ';
-				i = tickbegin + 1 + (TickerAt * (tickend - tickbegin - 1)) / TickerMax;
-				if (i > tickend)
-					i = tickend;
-				tickstr[i] = -125;
-				sprintf (tickstr + tickend + 3, "%u%%", (TickerAt * 100) / TickerMax);
-				screen->DrawText (CR_GREEN, 8, ConBottom - ConFont->GetHeight() - 4,
-					tickstr);
+				sprintf (tickstr + tickend + 3, "%lu%%", Scale (TickerAt, 100, TickerMax));
+				screen->DrawText (CR_BROWN, 8, tickerY, tickstr);
+
+				// Draw the marker
+				i = 8+5+tickbegin*8 + Scale (TickerAt, (SDWORD)(tickend - tickbegin)*8, TickerMax);
+				screen->DrawChar (CR_ORANGE, (int)i, tickerY, 0x13);
+
+				TickerVisible = true;
+			}
+			else
+			{
+				TickerVisible = false;
 			}
 		}
 	}
@@ -1224,7 +1228,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 			if (HistPos)
 			{
 				strcpy ((char *)&buffer[2], HistPos->String);
-				buffer[0] = buffer[1] = strlen ((char *)&buffer[2]);
+				buffer[0] = buffer[1] = (BYTE)strlen ((char *)&buffer[2]);
 				buffer[len+4] = 0;
 				makestartposgood();
 			}
@@ -1239,7 +1243,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 				HistPos = HistPos->Newer;
 			
 				strcpy ((char *)&buffer[2], HistPos->String);
-				buffer[0] = buffer[1] = strlen ((char *)&buffer[2]);
+				buffer[0] = buffer[1] = (BYTE)strlen ((char *)&buffer[2]);
 			}
 			else
 			{
@@ -1254,7 +1258,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 		case 'D':
 			if (ev->data3 & GKM_CTRL && buffer[0] == 0)
 			{ // Control-D pressed on an empty line
-				int replen = strlen (con_ctrl_d);
+				int replen = (int)strlen (con_ctrl_d);
 
 				if (replen == 0)
 					break;	// Replacement is empty, so do nothing
@@ -1362,7 +1366,7 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 					if (clip != NULL)
 					{
 						strtok (clip, "\r\n\b");
-						int cliplen = strlen (clip);
+						int cliplen = (int)strlen (clip);
 
 						cliplen = MIN(len, cliplen);
 						if (buffer[0] + cliplen > len)
@@ -1463,6 +1467,30 @@ void C_MidPrint (const char *msg)
 
 		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f,
 			(EColorRange)PrintColors[PRINTLEVELS], con_midtime), 'CNTR');
+	}
+	else
+	{
+		StatusBar->DetachMessage ('CNTR');
+	}
+}
+
+void C_MidPrintBold (const char *msg)
+{
+	if (msg)
+	{
+		char buff[1024];
+		sprintf (buff, TEXTCOLOR_RED
+			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+			"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_GREEN
+			"\n\n%s\n" TEXTCOLOR_RED
+			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+			"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n\n" ,
+			msg);
+
+		AddToConsole (-1, buff);
+
+		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f,
+			(EColorRange)PrintColors[PRINTLEVELS+1], con_midtime), 'CNTR');
 	}
 	else
 	{
@@ -1616,7 +1644,7 @@ static void C_TabComplete (bool goForward)
 		else
 		{		
 			strcpy ((char *)(CmdLine + TabStart), TabCommands[TabPos].Name);
-			CmdLine[0] = CmdLine[1] = strlen ((char *)(CmdLine + 2)) + 1;
+			CmdLine[0] = CmdLine[1] = (BYTE)strlen ((char *)(CmdLine + 2)) + 1;
 			CmdLine[CmdLine[0] + 1] = ' ';
 		}
 	}

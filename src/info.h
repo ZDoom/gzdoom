@@ -124,6 +124,10 @@ struct FState
 	{
 		return Action;
 	}
+	inline void SetFrame(BYTE frame)
+	{
+		Frame = (Frame & (SF_FULLBRIGHT|SF_BIGTIC)) | (frame-'A');
+	}
 };
 
 FArchive &operator<< (FArchive &arc, FState *&state);
@@ -226,13 +230,13 @@ enum
 	ADEF_FirstCommand,
 	ADEF_LimitGame = ADEF_FirstCommand,
 	ADEF_SkipSuper,		// Take defaults from AActor instead of superclass(es)
-	ADEF_StateBase,		// Use states not owned by this actor
 
 	ADEF_EOL = 0		// End Of List
 };
 
 #if _MSC_VER
-#pragma warning(disable:4200)	// nonstandard extension used : zero-sized array in struct/union
+// nonstandard extension used : zero-sized array in struct/union
+#pragma warning(disable:4200)
 #endif
 
 struct FActorInfo
@@ -241,9 +245,11 @@ struct FActorInfo
 	static void StaticGameSet ();
 	static void StaticSetActorNums ();
 	static void StaticSpeedSet ();
+	static void StaticWeaponInit ();
 
 	void BuildDefaults ();
 	void ApplyDefaults (BYTE *defaults);
+	void RegisterIDs ();
 
 	TypeInfo *Class;
 	FState *OwnedStates;
@@ -285,6 +291,15 @@ private:
 };
 
 extern FDoomEdMap DoomEdMap;
+
+struct FWeaponInfo;
+
+struct FWeaponInfoInit
+{
+	int WeaponType;
+	FWeaponInfo *Level1;
+	FWeaponInfo *Level2;
+};
 
 #include "infomacros.h"
 

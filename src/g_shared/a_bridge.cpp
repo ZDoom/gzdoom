@@ -3,6 +3,8 @@
 #include "gi.h"
 #include "m_random.h"
 
+static FRandom pr_orbit ("Orbit");
+
 void A_BridgeOrbit (AActor *);
 void A_BridgeInit (AActor *);
 
@@ -134,7 +136,7 @@ void A_BridgeInit (AActor *self)
 	cx = self->x;
 	cy = self->y;
 	cz = self->z;
-	startangle = P_Random ();
+	startangle = pr_orbit ();
 	self->special1 = 0;
 
 	// Spawn triad into world

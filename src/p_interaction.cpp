@@ -50,12 +50,20 @@
 
 #include "a_doomglobal.h"
 #include "a_hereticglobal.h"
+#include "ravenshared.h"
 #include "a_hexenglobal.h"
 #include "a_sharedglobal.h"
 #include "a_pickups.h"
 #include "gi.h"
 
 #include "sbar.h"
+
+static FRandom pr_obituary ("Obituary");
+static FRandom pr_botrespawn ("BotRespawn");
+static FRandom pr_killmobj ("ActorDie");
+static FRandom pr_damagemobj ("ActorTakeDamage");
+static FRandom pr_lightning ("LightningDamage");
+static FRandom pr_poison ("PoisonDamage");
 
 CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
@@ -94,7 +102,16 @@ void P_TouchSpecialThing (AActor *special, AActor *toucher)
 	}
 	else
 	{
-		Printf ("Unknown gettable thing (%s)", RUNTIME_TYPE (special)->Name);
+		if (special->special == 0)
+		{
+			Printf ("Unknown gettable thing (%s)\n", RUNTIME_TYPE (special)->Name);
+		}
+		else
+		{
+			LineSpecials[special->special] (NULL, toucher,
+				special->args[0], special->args[1], special->args[2], special->args[3], special->args[4]);
+			special->special = 0;
+		}
 		special->flags &= ~MF_SPECIAL;
 	}
 }
@@ -146,7 +163,7 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 			}
 			if (subst != NULL)
 			{
-				int len = strlen (subst);
+				size_t len = strlen (subst);
 				memcpy (to, subst, len);
 				to += len;
 				from++;
@@ -171,7 +188,7 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 //
 void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 {
-	int	 mod;
+	int	mod;
 	const char *message;
 	int messagenum;
 	char gendermessage[1024];
@@ -258,7 +275,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	{
 		if (friendly)
 		{
-			int rnum = P_Random (pr_obituary);
+			int rnum = pr_obituary();
 
 			attacker->player->fragcount -= 2;
 			attacker->player->frags[attacker->player - players]++;
@@ -463,7 +480,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 
 			// [RH] Implement fraglimit
 			if (deathmatch && fraglimit &&
-				fraglimit == source->player->fragcount)
+				fraglimit == D_GetFragCount (source->player))
 			{
 				Printf ("%s\n", GStrings(TXT_FRAGLIMIT));
 				G_ExitLevel (0);
@@ -484,10 +501,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		ClientObituary (this, inflictor, source);
 
 		// Death script execution, care of Skull Tag
-		if (level.behavior != NULL)
-		{
-			level.behavior->StartTypedScripts (SCRIPT_Death, this);
-		}
+		FBehavior::StaticStartTypedScripts (SCRIPT_Death, this);
 
 		// [RH] Force a delay between death and respawn
 		player->respawn_time = level.time + TICRATE;
@@ -496,7 +510,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		if (bglobal.botnum && consoleplayer == Net_Arbitrator && !demoplayback)
 		{
 			if (player->isbot)
-				player->t_respawn = (P_Random(pr_botrespawn)%15)+((bglobal.botnum-1)*2)+TICRATE+1;
+				player->t_respawn = (pr_botrespawn()%15)+((bglobal.botnum-1)*2)+TICRATE+1;
 
 			//Added by MC: Discard enemies.
 			for (int i = 0; i < MAXPLAYERS; i++)
@@ -549,7 +563,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		SetState (DeathState);
 	}
 
-	tics -= P_Random (pr_killmobj) & 3;
+	tics -= pr_killmobj() & 3;
 	if (tics < 1)
 		tics = 1;
 }
@@ -633,7 +647,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	int saved;
 	fixed_t savedPercent;
 	player_t *player;
-	AActor *master;
 	fixed_t thrust;
 	int temp;
 	int i;
@@ -655,6 +668,14 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 		return;
 	}
+	if ((target->flags2 & MF2_INVULNERABLE) && damage < 10000)
+	{ // actor is invulnerable
+		if (target->player) return;		// for players, no exceptions
+		if (!inflictor || !(inflictor->flags3 & MF3_FOILINVUL))
+		{
+			return;
+		}
+	}
 	MeansOfDeath = mod;
 	// [RH] Andy Baker's Stealth monsters
 	if (target->flags & MF_STEALTH)
@@ -664,11 +685,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if (target->flags & MF_SKULLFLY)
 	{
-		if (gameinfo.gametype == GAME_Heretic &&
-			target->IsKindOf (RUNTIME_CLASS(AMinotaur)))
-		{ // Minotaur is invulnerable during charge attack
-			return;
-		}
 		target->momx = target->momy = target->momz = 0;
 	}
 	if (target->flags2 & MF2_DORMANT)
@@ -712,7 +728,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			// make fall forwards sometimes
 			if ((damage < 40) && (damage > target->health)
 				 && (target->z - inflictor->z > 64*FRACUNIT)
-				 && (P_Random (pr_damagemobj)&1))
+				 && (pr_damagemobj()&1))
 			{
 				ang += ANG180;
 				thrust *= 4;
@@ -734,11 +750,6 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			{
 				target->momx += FixedMul (thrust, finecosine[ang]);
 				target->momy += FixedMul (thrust, finesine[ang]);
-			}
-			// killough 11/98: thrust objects hanging off ledges
-			if (target->flags & MF_FALLING && target->gear >= MAXGEAR)
-			{
-				target->gear = 0;
 			}
 		}
 	}
@@ -821,16 +832,14 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 					if (player->armorpoints[i])
 					{
 						player->armorpoints[i] -= 
-							Scale(damage<<FRACBITS,
-							player->mo->GetArmorIncrement (i), 300*FRACUNIT);
+							Scale (damage, player->mo->GetArmorIncrement (i), 300);
 						if (player->armorpoints[i] < 2*FRACUNIT)
 						{
 							player->armorpoints[i] = 0;
 						}
 					}
 				}
-				saved = Scale (damage<<FRACBITS, savedPercent,
-					100*FRACUNIT);
+				saved = Scale (damage, savedPercent, 100);
 				if (saved > savedPercent*2)
 				{	
 					saved = savedPercent*2;
@@ -897,13 +906,12 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		{
 			target->flags2 |= MF2_ICEDAMAGE;
 		}
-		if (source && source->IsKindOf (RUNTIME_CLASS (ADarkServant)))
+		if (source && source->tracer && source->IsKindOf (RUNTIME_CLASS (AMinotaur)))
 		{ // Minotaur's kills go to his master
-			master = static_cast<ADarkServant *>(source)->master;
 			// Make sure still alive and not a pointer to fighter head
-			if (master->player && (master->player->mo == master))
+			if (source->tracer->player && (source->tracer->player->mo == source->tracer))
 			{
-				source = master;
+				source = source->tracer;
 			}
 		}
 		if (source && (source->player) &&
@@ -917,12 +925,12 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		target->Die (source, inflictor);
 		return;
 	}
-	if ((P_Random (pr_damagemobj) < target->PainChance)
+	if ((pr_damagemobj() < target->PainChance)
 		 && !(target->flags & MF_SKULLFLY))
 	{
 		if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(ALightning)))
 		{
-			if (P_Random() < 96)
+			if (pr_lightning() < 96)
 			{
 				target->flags |= MF_JUSTHIT; // fight back!
 				target->SetState (target->PainState);
@@ -930,7 +938,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			else
 			{ // "electrocute" the target
 				target->renderflags |= RF_FULLBRIGHT;
-				if (target->flags & MF_COUNTKILL && P_Random() < 128)
+				if (target->flags & MF_COUNTKILL && pr_lightning() < 128)
 				{
 					target->Howl ();
 				}
@@ -942,7 +950,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			target->SetState (target->PainState);	
 			if (inflictor && inflictor->IsKindOf (RUNTIME_CLASS(APoisonCloud)))
 			{
-				if (target->flags & MF_COUNTKILL && P_Random() < 128)
+				if (target->flags & MF_COUNTKILL && pr_poison() < 128)
 				{
 					target->Howl ();
 				}
@@ -951,6 +959,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	target->reactiontime = 0;			// we're awake now...	
 	if (source && source != target && !(source->flags3 & MF3_NOTARGET)
+		&& deh.Infight >= 0		// [RH] allow monsters to ignore each other
 		&& !source->IsKindOf (RUNTIME_CLASS(AArchvile))
 		&& (!target->threshold || target->IsKindOf (RUNTIME_CLASS(AArchvile)))
 		&& target->NewTarget (source))
@@ -972,6 +981,26 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		{
 			target->SetState (target->SeeState);
 		}
+	}
+}
+
+//==========================================================================
+//
+// P_PoisonPlayer - Sets up all data concerning poisoning
+//
+//==========================================================================
+
+void P_PoisonPlayer (player_t *player, AActor *poisoner, int poison)
+{
+	if((player->cheats&CF_GODMODE) || player->powers[pw_invulnerability])
+	{
+		return;
+	}
+	player->poisoncount += poison;
+	player->poisoner = poisoner;
+	if(player->poisoncount > 100)
+	{
+		player->poisoncount = 100;
 	}
 }
 

@@ -12,7 +12,7 @@ class ASilverShield : public AArmor
 public:
 	bool TryPickup (AActor *toucher)
 	{
-		return P_GiveArmor (toucher->player, (armortype_t)1, 100);
+		return P_GiveArmor (toucher->player, (armortype_t)-1, 100);
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -41,7 +41,7 @@ class AEnchantedShield : public AArmor
 public:
 	bool TryPickup (AActor *toucher)
 	{
-		return P_GiveArmor (toucher->player, (armortype_t)2, 200);
+		return P_GiveArmor (toucher->player, (armortype_t)-2, 200);
 	}
 protected:
 	virtual const char *PickupMessage ()

@@ -44,7 +44,7 @@ char *copystring (const char *s)
 	char *b;
 	if (s)
 	{
-		int len = strlen (s) + 1;
+		size_t len = strlen (s) + 1;
 		b = new char[len];
 		memcpy (b, s, len);
 	}

@@ -44,6 +44,7 @@
 #include "stats.h"
 #include "z_zone.h"
 #include "i_video.h"
+#include "i_system.h"
 #include "vectors.h"
 
 // MACROS ------------------------------------------------------------------
@@ -73,6 +74,7 @@ static float LastFOV;
 static float CurrentVisibility = 8.f;
 static fixed_t MaxVisForWall;
 static fixed_t MaxVisForFloor;
+static FRandom pr_torchflicker ("TorchFlicker");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -182,19 +184,77 @@ static int lastcenteryfrac;
 //==========================================================================
 
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x, fixed_t y)
-{		
-  return (y -= y1, (x -= x1) || y) ?
-    x >= 0 ?
-      y >= 0 ? 
-        (x > y) ? tantoangle[SlopeDiv(y,x)] :						// octant 0 
-                ANG90-1-tantoangle[SlopeDiv(x,y)] :					// octant 1
-        x > (y = -y) ? (angle_t)-(SDWORD)tantoangle[SlopeDiv(y,x)] :	// octant 8
-                       ANG270+tantoangle[SlopeDiv(x,y)] :			// octant 7
-      y >= 0 ? (x = -x) > y ? ANG180-1-tantoangle[SlopeDiv(y,x)] :	// octant 3
-                            ANG90 + tantoangle[SlopeDiv(x,y)] :		// octant 2
-        (x = -x) > (y = -y) ? ANG180+tantoangle[SlopeDiv(y,x)] :	// octant 4
-                              ANG270-1-tantoangle[SlopeDiv(x,y)] :	// octant 5
-    0;
+{
+	x -= x1;
+	y -= y1;
+
+	if ((x | y) == 0)
+	{
+		return 0;
+	}
+
+	fixed_t ax = abs (x);
+	fixed_t ay = abs (y);
+	int div;
+	angle_t angle;
+
+	if (ax > ay)
+	{
+		swap (ax, ay);
+	}
+	div = SlopeDiv (ax, ay);
+	angle = tantoangle[div];
+
+	if (x >= 0)
+	{
+		if (y >= 0)
+		{
+			if (x > y)
+			{ // octant 0
+				return angle;
+			}
+			else
+			{ // octant 1
+				return ANG90 - 1 - angle;
+			}
+		}
+		else // y < 0
+		{
+			if (x > -y)
+			{ // octant 8
+				return (angle_t)-(SDWORD)angle;
+			}
+			else
+			{ // octant 7
+				return ANG270 + angle;
+			}
+		}
+	}
+	else // x < 0
+	{
+		if (y >= 0)
+		{
+			if (-x > y)
+			{ // octant 3
+				return ANG180 - 1 - angle;
+			}
+			else
+			{ // octant 2
+				return ANG90 + angle;
+			}
+		}
+		else // y < 0
+		{
+			if (x < y)
+			{ // octant 4
+				return ANG180 + angle;
+			}
+			else
+			{ // octant 5
+				return ANG270 - 1 - angle;
+			}
+		}
+	}
 }
 
 //==========================================================================
@@ -384,15 +444,17 @@ float R_GetFOV ()
 
 void R_SetVisibility (float vis)
 {
-	if (FocalTangent == 0)
-	{
-		return;
-	}
-
 	// Allow negative visibilities, just for novelty's sake
 	//vis = clamp (vis, -204.7f, 204.7f);
 
 	CurrentVisibility = vis;
+
+	if (FocalTangent == 0)
+	{ // If r_visibility is called before the renderer is all set up, don't
+	  // divide by zero. This will be called again later, and the proper
+	  // values can be initialized then.
+		return;
+	}
 
 	r_BaseVisibility = toint (vis * 65536.f);
 
@@ -420,8 +482,7 @@ void R_SetVisibility (float vis)
 
 	r_FloorVisibility = Scale (160*FRACUNIT, r_FloorVisibility, FocalLengthY);
 
-	r_TiltVisibility = vis * 16.f * 320.f
-		* (float)FocalTangent / (float)viewwidth;
+	r_TiltVisibility = vis * (float)FocalTangent * (16.f * 320.f) / (float)viewwidth;
 	r_SpriteVisibility = r_WallVisibility;
 	
 	// particles are slightly more visible than regular sprites
@@ -728,10 +789,20 @@ void R_SetViewAngle (angle_t ang)
 //==========================================================================
 
 void R_SetupFrame (player_t *player)
-{				
+{
 	unsigned int newblend;
-	
+
 	camera = player->camera;	// [RH] Use camera instead of viewplayer
+
+	if (camera == NULL)
+	{
+		camera = player->camera = player->mo;
+	}
+
+	if (camera == NULL)
+	{
+		I_Error ("You lost your body. Bad dehacked work is likely to blame.");
+	}
 
 	if ((player->cheats & CF_CHASECAM) &&
 		(camera->RenderStyle != STYLE_None) &&
@@ -752,34 +823,35 @@ void R_SetupFrame (player_t *player)
 		viewz = camera->player ? camera->player->viewz : camera->z;
 		viewsector = camera->Sector;
 	}
+	if (camera->player != 0)
+	{
+		player = camera->player;
+	}
+	R_SetViewAngle (camera->angle + viewangleoffset);
 
 	// Keep the view within the sector's floor and ceiling
-	fixed_t theZ = viewsector->ceilingplane.ZatPoint
-		(camera->x, camera->y) - 4*FRACUNIT;
+	fixed_t theZ = viewsector->ceilingplane.ZatPoint (viewx, viewy) - 4*FRACUNIT;
 	if (viewz > theZ)
 	{
 		viewz = theZ;
 	}
 
-	theZ = camera->Sector->floorplane.ZatPoint
-		(camera->x, camera->y) + 4*FRACUNIT;
+	theZ = viewsector->floorplane.ZatPoint (viewx, viewy) + 4*FRACUNIT;
 	if (viewz < theZ)
 	{
 		viewz = theZ;
 	}
 
-	if (camera->player && camera->player->xviewshift && !paused)
+	if (player && player->xviewshift && !paused)
 	{
-		int intensity = camera->player->xviewshift;
-		viewx += ((P_Random(pr_torch) % (intensity<<2))
+		int intensity = player->xviewshift;
+		viewx += ((pr_torchflicker() % (intensity<<2))
 					-(intensity<<1))<<FRACBITS;
-		viewy += ((P_Random(pr_torch) % (intensity<<2))
+		viewy += ((pr_torchflicker() % (intensity<<2))
 					-(intensity<<1))<<FRACBITS;
 	}
 
-	extralight = camera->player ? camera->player->extralight : 0;
-
-	R_SetViewAngle (camera->angle + viewangleoffset);
+	extralight = player ? player->extralight : 0;
 
 	// killough 3/20/98, 4/4/98: select colormap based on player status
 	// [RH] Can also select a blend
@@ -813,7 +885,7 @@ void R_SetupFrame (player_t *player)
 			BaseBlendG = GPART(newblend);
 			BaseBlendB = BPART(newblend);
 			BaseBlendA = APART(newblend) / 255.f;
-			NormalLight.Maps = realcolormaps;;
+			NormalLight.Maps = realcolormaps;
 		}
 		else
 		{
@@ -841,7 +913,16 @@ void R_SetupFrame (player_t *player)
 
 	// [RH] freelook stuff
 	{
-		fixed_t dy = FixedMul (FocalLengthY, finetangent[(ANGLE_90-camera->pitch)>>ANGLETOFINESHIFT]);
+		fixed_t dy;
+		
+		if (camera != NULL)
+		{
+			dy = FixedMul (FocalLengthY, finetangent[(ANGLE_90-camera->pitch)>>ANGLETOFINESHIFT]);
+		}
+		else
+		{
+			dy = 0;
+		}
 
 		centeryfrac = (viewheight << (FRACBITS-1)) + dy;
 		centery = centeryfrac >> FRACBITS;
@@ -854,7 +935,7 @@ void R_SetupFrame (player_t *player)
 		{
 			int e;
 
-			if (i & (FRACUNIT-1) == 0)	// Unlikely, but possible
+			if ((i & (FRACUNIT-1)) == 0)	// Unlikely, but possible
 			{
 				i >>= FRACBITS;
 				if (abs (i) < viewheight)
@@ -993,11 +1074,11 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	// Reflect the current view behind the mirror.
 	if (ds->curline->linedef->dx == 0)
 	{ // vertical mirror
-		viewx = 2*v1->x - startx;
+		viewx = v1->x - startx + v1->x;
 	}
 	else if (ds->curline->linedef->dy == 0)
 	{ // horizontal mirror
-		viewy = 2*v1->y - starty;
+		viewy = v1->y - starty + v1->y;
 	}
 	else
 	{ // any mirror--use floats to avoid integer overflow
@@ -1016,7 +1097,8 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 		viewx = FLOAT2FIXED((x1 + r * dx)*2 - x);
 		viewy = FLOAT2FIXED((y1 + r * dy)*2 - y);
 	}
-	viewangle = 2*ds->curline->angle - startang;
+	viewangle = 2*R_PointToAngle2 (ds->curline->v1->x, ds->curline->v1->y,
+								   ds->curline->v2->x, ds->curline->v2->y) - startang;
 
 	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
 	viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];

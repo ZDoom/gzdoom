@@ -13,6 +13,11 @@
 #include "ravenshared.h"
 #include "gstrings.h"
 
+static FRandom pr_chicattack ("ChicAttack");
+static FRandom pr_feathers ("Feathers");
+static FRandom pr_beakatkpl1 ("BeakAtkPL1");
+static FRandom pr_beakatkpl2 ("BeakAtkPL2");
+
 void A_BeakReady (player_t *, pspdef_t *);
 void A_BeakRaise (player_t *, pspdef_t *);
 void A_BeakAttackPL1 (player_t *, pspdef_t *);
@@ -49,8 +54,7 @@ void ABeakPuff::BeginPlay ()
 class ABeak : public AWeapon
 {
 	DECLARE_ACTOR (ABeak, AWeapon)
-	AT_GAME_SET_FRIEND (Beak)
-private:
+
 	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
 
@@ -117,11 +121,7 @@ FWeaponInfo ABeak::WeaponInfo2 =
 IMPLEMENT_ACTOR (ABeak, Heretic, -1, 0)
 END_DEFAULTS
 
-AT_GAME_SET (Beak)
-{
-	wpnlev1info[wp_beak] = &ABeak::WeaponInfo1;
-	wpnlev2info[wp_beak] = &ABeak::WeaponInfo2;
-}
+WEAPON2 (wp_beak, ABeak)
 
 // Chicken player -----------------------------------------------------------
 
@@ -308,7 +308,7 @@ void A_ChicAttack (AActor *actor)
 	}
 	if (P_CheckMeleeRange(actor))
 	{
-		int damage = 1 + (P_Random() & 1);
+		int damage = 1 + (pr_chicattack() & 1);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 	}
@@ -373,20 +373,20 @@ void A_Feathers (AActor *actor)
 
 	if (actor->health > 0)
 	{ // Pain
-		count = P_Random() < 32 ? 2 : 1;
+		count = pr_feathers() < 32 ? 2 : 1;
 	}
 	else
 	{ // Death
-		count = 5 + (P_Random()&3);
+		count = 5 + (pr_feathers()&3);
 	}
 	for (i = 0; i < count; i++)
 	{
 		mo = Spawn<AFeather> (actor->x, actor->y, actor->z+20*FRACUNIT);
 		mo->target = actor;
-		mo->momx = PS_Random() << 8;
-		mo->momy = PS_Random() << 8;
-		mo->momz = FRACUNIT + (P_Random() << 9);
-		mo->SetState (&AFeather::States[S_FEATHER+P_Random()&7]);
+		mo->momx = pr_feathers.Random2() << 8;
+		mo->momy = pr_feathers.Random2() << 8;
+		mo->momz = FRACUNIT + (pr_feathers() << 9);
+		mo->SetState (&AFeather::States[S_FEATHER+pr_feathers()&7]);
 	}
 }
 
@@ -453,17 +453,6 @@ void A_BeakRaise (player_t *player, pspdef_t *psp)
 void P_PlayPeck (AActor *chicken)
 {
 	S_Sound (chicken, CHAN_VOICE, "chicken/peck", 1, ATTN_NORM);
-	switch (P_Random () % 3)
-	{
-	case 0:
-		S_Sound (chicken, CHAN_VOICE, "chicken/peck1", 1, ATTN_NORM);
-		break;
-	case 1:
-		S_Sound (chicken, CHAN_VOICE, "chicken/peck2", 1, ATTN_NORM);
-		break;
-	case 2:
-		S_Sound (chicken, CHAN_VOICE, "chicken/peck3", 1, ATTN_NORM);
-	}
 }
 
 //----------------------------------------------------------------------------
@@ -478,7 +467,7 @@ void A_BeakAttackPL1 (player_t *player, pspdef_t *psp)
 	int damage;
 	int slope;
 
-	damage = 1 + (P_Random()&3);
+	damage = 1 + (pr_beakatkpl1()&3);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	PuffType = RUNTIME_CLASS(ABeakPuff);
@@ -490,7 +479,7 @@ void A_BeakAttackPL1 (player_t *player, pspdef_t *psp)
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
-	psp->tics -= P_Random() & 7;
+	psp->tics -= pr_beakatkpl1() & 7;
 }
 
 //----------------------------------------------------------------------------
@@ -505,7 +494,7 @@ void A_BeakAttackPL2 (player_t *player, pspdef_t *psp)
 	int damage;
 	int slope;
 
-	damage = HITDICE(4);
+	damage = pr_beakatkpl2.HitDice (4);
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	PuffType = RUNTIME_CLASS(ABeakPuff);
@@ -517,5 +506,5 @@ void A_BeakAttackPL2 (player_t *player, pspdef_t *psp)
 	}
 	P_PlayPeck (player->mo);
 	player->chickenPeck = 12;
-	psp->tics -= P_Random()&3;
+	psp->tics -= pr_beakatkpl2()&3;
 }

@@ -57,6 +57,8 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "m_misc.h"
 #include "sbar.h"
 
+static FRandom pr_botspawn ("BotSpawn");
+
 //Externs
 DCajunMaster bglobal;
 
@@ -159,9 +161,7 @@ void DCajunMaster::Init ()
 	int i;
 
 	botnum = 0;
-	thingnum = 0;
 	firstthing = NULL;
-	itemsdone = false;
 	spawn_tries = 0;
 	freeze = false;
 	observer = false;
@@ -190,31 +190,58 @@ void DCajunMaster::Init ()
 	//Determine Combat distance for each weapon.
 	if (deathmatch)
 	{
-		combatdst[wp_fist]         = 1       ;
 		combatdst[wp_pistol]       = 25000000;
 		combatdst[wp_shotgun]      = 24000000;
 		combatdst[wp_chaingun]     = 27000000;
 		combatdst[wp_missile]      = (SAFE_SELF_MISDIST*2);
 		combatdst[wp_plasma]       = 27000000;
 		combatdst[wp_bfg]          = 10000000;
-		combatdst[wp_chainsaw]     = 1       ;
 		combatdst[wp_supershotgun] = 15000000;
+
+		combatdst[wp_goldwand]     = 25000000;
+		combatdst[wp_crossbow]     = 24000000;
+		combatdst[wp_blaster]      = 27000000;
+		combatdst[wp_skullrod]     = 27000000;
+		combatdst[wp_phoenixrod]   = (SAFE_SELF_MISDIST*2);
+		combatdst[wp_mace]         = 10000000;
 	}
 	else
 	{
-		combatdst[wp_fist]         = 1       ;
 		combatdst[wp_pistol]       = 15000000;
 		combatdst[wp_shotgun]      = 14000000;
 		combatdst[wp_chaingun]     = 17000000;
 		combatdst[wp_missile]      = (SAFE_SELF_MISDIST*3/2);
 		combatdst[wp_plasma]       = 17000000;
 		combatdst[wp_bfg]          = 6000000;
-		combatdst[wp_chainsaw]     = 1       ;
 		combatdst[wp_supershotgun] = 10000000;
-	}
 
-	if (!savegamerestore)
+		combatdst[wp_goldwand]     = 15000000;
+		combatdst[wp_crossbow]     = 14000000;
+		combatdst[wp_blaster]      = 17000000;
+		combatdst[wp_skullrod]     = 17000000;
+		combatdst[wp_phoenixrod]   = (SAFE_SELF_MISDIST*3/2);
+		combatdst[wp_mace]         = 60000000;
+	}
+	combatdst[wp_fist]         = 1;
+	combatdst[wp_chainsaw]     = 1;
+	combatdst[wp_staff]        = 1;
+	combatdst[wp_gauntlets]    = 1;
+	combatdst[wp_beak]         = 1;
+
+	if (botinfo == NULL)
+	{
 		LoadBots ();
+	}
+	else
+	{
+		botinfo_t *thebot = botinfo;
+
+		while (thebot != NULL)
+		{
+			thebot->inuse = false;
+			thebot = thebot->next;
+		}
+	}
 }
 
 //Called on each level exit (from g_game.c).
@@ -318,7 +345,7 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 		bool vacant = false;  //Spawn a random bot from bots.cfg if no name given.
 		while (!vacant)
 		{
-			int rnum = (P_Random(pr_botspawn) % loaded_bots);
+			int rnum = (pr_botspawn() % loaded_bots);
 			thebot = botinfo;
 			while (rnum)
 				--rnum, thebot = thebot->next;
@@ -336,17 +363,17 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 	Net_WriteByte (playernumber);
 	{
 		//Set color.
+		char concat[512];
+		strcpy (concat, thebot->info);
 		if (color == NOCOLOR && bot_next_color < NOCOLOR && bot_next_color >= 0)
 		{
-			char concat[256];
-			strcpy (concat, thebot->info);
 			strcat (concat, colors[bot_next_color]);
-			Net_WriteString (concat);
 		}
-		else
-		{
-			Net_WriteString (thebot->info);
+		if (thebot->lastteam < NUM_TEAMS)
+		{ // Keep the bot on the same team when switching levels
+			sprintf (concat+strlen(concat), "\\team\\%d\n", thebot->lastteam);
 		}
+		Net_WriteString (concat);
 	}
 
 	players[playernumber].skill = thebot->skill;
@@ -394,29 +421,41 @@ void DCajunMaster::DoAddBot (int bnum, char *info)
 		players[bnum].playerstate = PST_ENTER;
 		botingame[bnum] = true;
 		Printf ("%s joined the game\n", players[bnum].userinfo.netname);
+
 		G_DoReborn (bnum, true);
+		if (StatusBar != NULL)
+		{
+			StatusBar->MultiplayerChanged ();
+		}
 	}
 	waitingforspawn[bnum] = false;
 }
 
 void DCajunMaster::RemoveAllBots (bool fromlist)
 {
-	int i;
+	int i, j;
 
-	if (players[consoleplayer].camera &&
-		players[consoleplayer].camera->player &&
-		(!playeringame[players[consoleplayer].camera->player - players]
-		 ||players[consoleplayer].camera->player->isbot))
-	{
-		players[consoleplayer].camera = players[consoleplayer].mo;
-		displayplayer = consoleplayer;
-	}
-
-	for (i = 0; i < MAXPLAYERS; i++)
+	for (i = 0; i < MAXPLAYERS; ++i)
 	{
 		if (playeringame[i] && botingame[i])
 		{
-			ClearPlayer (i);
+			// If a player is looking through this bot's eyes, make him
+			// look through his own eyes instead.
+			for (j = 0; j < MAXPLAYERS; ++j)
+			{
+				if (i != j && playeringame[j] && !botingame[j])
+				{
+					if (players[j].camera == players[i].mo)
+					{
+						players[j].camera = players[j].mo;
+						if (j == consoleplayer)
+						{
+							StatusBar->AttachToPlayer (players + j);
+						}
+					}
+				}
+			}
+			ClearPlayer (i, !fromlist);
 		}
 	}
 
@@ -474,14 +513,14 @@ static void appendinfo (char *&front, const char *back)
 
 	if (front)
 	{
-		int newlen = strlen (front) + strlen (back) + 2;
+		size_t newlen = strlen (front) + strlen (back) + 2;
 		newstr = new char[newlen];
 		strcpy (newstr, front);
 		delete[] front;
 	}
 	else
 	{
-		int newlen = strlen (back) + 2;
+		size_t newlen = strlen (back) + 2;
 		newstr = new char[newlen];
 	}
 	strcat (newstr, "\\");
@@ -549,7 +588,7 @@ bool DCajunMaster::LoadBots ()
 		botinfo_t *newinfo = new botinfo_t;
 		memset (newinfo, 0, sizeof(*newinfo));
 
-		newinfo->info = copystring ("\\autoaim\\0");
+		newinfo->info = copystring ("\\autoaim\\0\\movebob\\.25\\team\\255");
 
 		for (;;)
 		{
@@ -594,6 +633,7 @@ bool DCajunMaster::LoadBots ()
 			}
 		}
 		newinfo->next = bglobal.botinfo;
+		newinfo->lastteam = TEAM_None;
 		bglobal.botinfo = newinfo;
 		bglobal.loaded_bots++;
 	}

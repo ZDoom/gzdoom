@@ -174,6 +174,8 @@ extern "C" dsfixed_t		ds_xfrac;
 extern "C" dsfixed_t		ds_yfrac;
 extern "C" dsfixed_t		ds_xstep;
 extern "C" dsfixed_t		ds_ystep;
+extern "C" int				ds_xbits;
+extern "C" int				ds_ybits;
 
 // start of a 64*64 tile image
 extern "C" byte*			ds_source;
@@ -209,7 +211,7 @@ void R_DetailDouble (void);
 void R_InitTranslationTables (void);
 
 // [RH] Actually create a player's translation table.
-void R_BuildPlayerTranslation (int player, int color);
+void R_BuildPlayerTranslation (int player);
 
 
 // If the view size is not full screen, draws a border around it.

@@ -3,7 +3,7 @@
 ** Keeps track of available actors and their states
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2002 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,8 @@
 #include "i_system.h"
 #include "p_local.h"
 
+extern void LoadDecorations (void (*process)(FState *, int));
+
 // Each state is owned by an actor. Actors can own any number of
 // states, but a single state cannot be owned by more than one
 // actor. States are archived by recording the actor they belong
@@ -79,7 +81,7 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 			state < info->OwnedStates + info->NumOwnedStates)
 		{
 			arc.UserWriteClass (RUNTIME_CLASS(AActor));
-			arc.WriteCount (state - info->OwnedStates);
+			arc.WriteCount ((DWORD)(state - info->OwnedStates));
 			return arc;
 		}
 
@@ -87,13 +89,26 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 		while (++reg != NULL)
 		{
 			if (state >= reg->OwnedStates &&
-				state < reg->OwnedStates + reg->NumOwnedStates)
+				state <  reg->OwnedStates + reg->NumOwnedStates)
 			{
 				arc.UserWriteClass (reg->Class);
-				arc.WriteCount (state - reg->OwnedStates);
+				arc.WriteCount ((DWORD)(state - reg->OwnedStates));
 				return arc;
 			}
 		}
+
+		for (size_t i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
+		{
+			FActorInfo *info = TypeInfo::m_RuntimeActors[i]->ActorInfo;
+			if (state >= info->OwnedStates &&
+				state <  info->OwnedStates + info->NumOwnedStates)
+			{
+				arc.UserWriteClass (info->Class);
+				arc.WriteCount ((DWORD)(state - info->OwnedStates));
+				return arc;
+			}
+		}
+
 		I_Error ("Cannot find owner for state %p\n", state);
 	}
 	else
@@ -126,9 +141,6 @@ static void ProcessStates (FState *states, int numstates)
 
 	if (states == NULL)
 		return;
-if (states->sprite.name[0] == 'D' && states->sprite.name[1] == 'E'
-	&& states->sprite.name[2] == 'M')
-states=states;
 	while (--numstates >= 0)
 	{
 		if (sprite == -1 || strncmp (sprites[sprite].name, states->sprite.name, 4) != 0)
@@ -140,7 +152,7 @@ states=states;
 			{
 				if (strncmp (sprites[i].name, states->sprite.name, 4) == 0)
 				{
-					sprite = i;
+					sprite = (int)i;
 					break;
 				}
 			}
@@ -148,8 +160,10 @@ states=states;
 			{
 				spritedef_t temp;
 				strncpy (temp.name, states->sprite.name, 4);
-				temp.name[5] = 0;
-				sprite = sprites.Push (temp);
+				temp.name[4] = 0;
+				temp.numframes = 0;
+				temp.spriteframes = 0;
+				sprite = (int)sprites.Push (temp);
 			}
 		}
 		states->sprite.index = sprite;
@@ -180,6 +194,19 @@ void FActorInfo::StaticInit ()
 	{
 		reg->BuildDefaults ();
 	}
+
+	LoadDecorations (ProcessStates);
+}
+
+void FActorInfo::StaticWeaponInit ()
+{
+	TAutoSegIterator<FWeaponInfoInit *, &WRegHead, &WRegTail> reg;
+
+	while (++reg != NULL)
+	{
+		wpnlev1info[reg->WeaponType] = reg->Level1;
+		wpnlev2info[reg->WeaponType] = reg->Level2;
+	}
 }
 
 // Called after the IWAD has been identified
@@ -204,17 +231,26 @@ void FActorInfo::StaticSetActorNums ()
 	TAutoSegIterator<FActorInfo *, &ARegHead, &ARegTail> reg;
 	while (++reg != NULL)
 	{
-		if (reg->GameFilter == GAME_Any ||
-			(reg->GameFilter & gameinfo.gametype))
+		reg->RegisterIDs ();
+	}
+
+	for (size_t i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
+	{
+		TypeInfo::m_RuntimeActors[i]->ActorInfo->RegisterIDs ();
+	}
+}
+
+void FActorInfo::RegisterIDs ()
+{
+	if (GameFilter == GAME_Any || (GameFilter & gameinfo.gametype))
+	{
+		if (SpawnID != 0)
 		{
-			if (reg->SpawnID != 0)
-			{
-				SpawnableThings[reg->SpawnID] = reg->Class;
-			}
-			if (reg->DoomEdNum != -1)
-			{
-				DoomEdMap.AddType (reg->DoomEdNum, reg->Class);
-			}
+			SpawnableThings[SpawnID] = Class;
+		}
+		if (DoomEdNum != -1)
+		{
+			DoomEdMap.AddType (DoomEdNum, Class);
 		}
 	}
 }
@@ -249,6 +285,11 @@ void FDoomEdMap::AddType (int doomednum, const TypeInfo *type)
 		entry->HashNext = DoomEdHash[hash];
 		entry->DoomEdNum = doomednum;
 		DoomEdHash[hash] = entry;
+	}
+	else
+	{
+		Printf (PRINT_BOLD, "Warning: %s and %s both have doomednum %d.\n",
+			type->Name+1, entry->Type->Name+1, doomednum);
 	}
 	entry->Type = type;
 }

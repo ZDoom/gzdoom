@@ -6,26 +6,34 @@
 #include "p_lnspec.h"
 #include "a_hereticglobal.h"
 #include "sbar.h"
+#include "statnums.h"
+
+static FRandom pr_restore ("RestorePos");
 
 IMPLEMENT_ABSTRACT_ACTOR (AHealth)
 
 void AHealth::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_ITEM, "misc/health_pkup", 1, ATTN_NORM);
+	S_Sound (toucher, CHAN_PICKUP, "misc/health_pkup", 1, ATTN_NORM);
 }
 
 IMPLEMENT_ABSTRACT_ACTOR (AArmor)
 
 void AArmor::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_ITEM, "misc/armor_pkup", 1, ATTN_NORM);
+	S_Sound (toucher, CHAN_PICKUP, "misc/armor_pkup", 1, ATTN_NORM);
 }
 
 IMPLEMENT_ABSTRACT_ACTOR (AAmmo)
 
 void AAmmo::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_ITEM, "misc/ammo_pkup", 1, ATTN_NORM);
+	S_Sound (toucher, CHAN_PICKUP, "misc/ammo_pkup", 1, ATTN_NORM);
+}
+
+ammotype_t AAmmo::GetAmmoType () const
+{
+	return NUMAMMO;
 }
 
 const char *AmmoPics[NUMAMMO];
@@ -73,12 +81,50 @@ bool P_GiveBody (player_t *player, int num)
 
 bool P_GiveArmor (player_t *player, armortype_t armortype, int amount)
 {
-	if (player->armorpoints[0] >= amount)
-	{
-		return false;
+	if (armortype < 0)
+	{ // Doom/Heretic style armor
+		if (player->armorpoints[0] >= amount)
+		{
+			return false;
+		}
+		player->armortype = armortype;
+		player->armorpoints[0] = amount;
+		return true;
 	}
-	player->armortype = armortype;
-	player->armorpoints[0] = amount;
+
+	// Hexen style armor
+	int hits;
+	int totalArmor;
+
+	if (amount == -1)
+	{
+		hits = player->mo->GetArmorIncrement (armortype);
+		if (player->armorpoints[armortype] >= hits)
+		{
+			return false;
+		}
+		else
+		{
+			player->armorpoints[armortype] = hits;
+		}
+	}
+	else
+	{
+		hits = amount*5*FRACUNIT;
+		totalArmor = player->armorpoints[ARMOR_ARMOR]
+			+player->armorpoints[ARMOR_SHIELD]
+			+player->armorpoints[ARMOR_HELMET]
+			+player->armorpoints[ARMOR_AMULET]
+			+player->mo->GetAutoArmorSave();
+		if (totalArmor < player->mo->GetArmorMax()*5*FRACUNIT)
+		{
+			player->armorpoints[armortype] += hits;
+		}
+		else
+		{
+			return false;
+		}
+	}
 	return true;
 }
 
@@ -207,7 +253,7 @@ void A_RestoreSpecialPosition (AActor *self)
 		if (space > 48*FRACUNIT)
 		{
 			space -= 40*FRACUNIT;
-			self->z = ((space * P_Random(pr_spawnmobj))>>8) + self->floorz + 40*FRACUNIT;
+			self->z = ((space * pr_restore())>>8) + self->floorz + 40*FRACUNIT;
 		}
 		else
 		{
@@ -256,6 +302,11 @@ bool AInventory::ShouldRespawn ()
 {
 	return (deathmatch || alwaysapplydmflags) && 
 		   (dmflags & DF_ITEMS_RESPAWN);
+}
+
+void AInventory::BeginPlay ()
+{
+	ChangeStatNum (STAT_INVENTORY);
 }
 
 //----------------------------------------------------------------------------
@@ -307,6 +358,13 @@ void AInventory::Touch (AActor *toucher)
 		level.found_items++;
 	}
 
+	// Special check so voodoo dolls picking up items cause the
+	// real player to make noise.
+	if (toucher->player)
+		PlayPickupSound (toucher->player->mo);
+	else
+		PlayPickupSound (toucher);
+
 	if (!ShouldStay ())
 	{
 		if (!(flags & MF_DROPPED))
@@ -339,13 +397,6 @@ void AInventory::Touch (AActor *toucher)
 	}
 
 	toucher->player->bonuscount = BONUSADD;
-
-	// Special check so voodoo dolls picking up items cause the
-	// real player to make noise.
-	if (toucher->player)
-		PlayPickupSound (toucher->player->mo);
-	else
-		PlayPickupSound (toucher);
 }
 
 const char *AInventory::PickupMessage ()
@@ -355,7 +406,7 @@ const char *AInventory::PickupMessage ()
 
 void AInventory::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_ITEM, "misc/i_pkup", 1, ATTN_NORM);
+	S_Sound (toucher, CHAN_PICKUP, "misc/i_pkup", 1, ATTN_NORM);
 }
 
 bool AInventory::ShouldStay ()
@@ -473,7 +524,7 @@ END_DEFAULTS
 
 void AArtifact::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_ITEM, "misc/p_pkup", 1,
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
 		toucher == NULL || toucher == players[consoleplayer].camera
 		? ATTN_SURROUND : ATTN_NORM);
 }
@@ -567,7 +618,7 @@ bool AKey::ShouldStay ()
 
 void AKey::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_ITEM, "misc/k_pkup", 1, ATTN_NORM);
+	S_Sound (toucher, CHAN_PICKUP, "misc/k_pkup", 1, ATTN_NORM);
 }
 
 bool AInventory::DoRespawn ()

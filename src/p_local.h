@@ -33,7 +33,7 @@
 
 #define STEEPSLOPE		46341	// [RH] Minimum floorplane.c value for walking
 
-#define MAXHEALTH		100
+#define MAXHEALTH		(deh.MaxHealth)		//100
 #define MAXMORPHHEALTH	30
 #define VIEWHEIGHT		(41*FRACUNIT)
 
@@ -115,7 +115,9 @@ AActor *P_SpawnMissile (AActor* source, AActor* dest, const TypeInfo *type);
 AActor *P_SpawnMissileZ (AActor* source, fixed_t z, AActor* dest, const TypeInfo *type);
 AActor *P_SpawnMissileXYZ (fixed_t x, fixed_t y, fixed_t z, AActor *source, AActor *dest, const TypeInfo *type);
 AActor *P_SpawnMissileAngle (AActor *source, const TypeInfo *type, angle_t angle, fixed_t momz);
+AActor *P_SpawnMissileAngleSpeed (AActor *source, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed);
 AActor *P_SpawnMissileAngleZ (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz);
+AActor *P_SpawnMissileAngleZSpeed (AActor *source, fixed_t z, const TypeInfo *type, angle_t angle, fixed_t momz, fixed_t speed);
 
 AActor *P_SpawnPlayerMissile (AActor* source, const TypeInfo *type);
 AActor *P_SpawnPlayerMissile (AActor *source, const TypeInfo *type, angle_t angle);
@@ -130,7 +132,7 @@ extern const TypeInfo *SpawnableThings[MAX_SPAWNABLES];
 
 bool	P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid);
 bool	P_Thing_Projectile (int tid, int type, angle_t angle,
-			fixed_t speed, fixed_t vspeed, bool gravity);
+			fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, bool gravity);
 bool	P_Thing_Move (int tid, int mapspot);
 
 //
@@ -178,7 +180,7 @@ fixed_t P_AproxDistance (fixed_t dx, fixed_t dy);
 
 inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 {
-	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) >= 0;
+	return DMulScale32 (y-line->v1->y, line->dx, line->v1->x-x, line->dy) > 0;
 }
 
 //==========================================================================
@@ -192,7 +194,7 @@ inline int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 
 inline int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
 {
-	return DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) >= 0;
+	return DMulScale32 (y-line->y, line->dx, line->x-x, line->dy) > 0;
 }
 
 //==========================================================================
@@ -237,6 +239,7 @@ P_PathTraverse
   int			flags,
   BOOL		(*trav) (intercept_t *));
 
+AActor *P_RoughMonsterSearch (AActor *mo, int distance);
 
 //
 // P_MAP
@@ -267,7 +270,7 @@ void	P_FakeZMovement (AActor *mo);
 BOOL	P_TryMove (AActor* thing, fixed_t x, fixed_t y, BOOL dropoff, bool onfloor = false);
 BOOL	P_TeleportMove (AActor* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
 void	P_SlideMove (AActor* mo);
-void	P_BounceWall (AActor *mo);
+bool	P_BounceWall (AActor *mo);
 bool	P_CheckSight (const AActor* t1, const AActor* t2, BOOL ignoreInvisibility=false);
 void	P_ResetSightCounters (bool full);
 void	P_UseLines (player_t* player);
@@ -277,6 +280,7 @@ void	PIT_ThrustSpike (AActor *actor);
 bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil);
 
 extern	AActor*	linetarget; 	// who got hit (or NULL)
+extern	AActor *PuffSpawned;	// points to last puff spawned
 
 fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange=0);
 void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage);
@@ -301,7 +305,6 @@ void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
 void	P_CreateSecNodeList(AActor*,fixed_t,fixed_t);		// phares 3/14/98
 int		P_GetMoveFactor(const AActor *mo, int *frictionp);	// phares  3/6/98
 int		P_GetFriction(const AActor *mo, int *frictionfactor);
-void    P_ApplyTorque(AActor *mo);							// killough 9/12/98
 BOOL	Check_Sides(AActor *, int, int);					// phares
 
 // [RH] 
@@ -338,6 +341,7 @@ bool P_GiveArmor (player_t *player, armortype_t armortype, int amount);
 bool P_GiveBody (player_t *player, int num);
 bool P_GivePower (player_t *player, powertype_t power);
 bool P_MorphPlayer (player_t *player);
+void P_PoisonPlayer (player_t *player, AActor *poisoner, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
 
 #define DMG_NO_ARMOR		1
@@ -356,7 +360,7 @@ typedef enum
 	PODOOR_SWING,
 } podoortype_t;
 
-inline FArchive &operator<< (FArchive &arc, podoortype_t type)
+inline FArchive &operator<< (FArchive &arc, podoortype_t &type)
 {
 	BYTE val = (BYTE)type;
 	arc << val;

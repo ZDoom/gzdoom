@@ -124,10 +124,19 @@ int STACK_ARGS Printf (const char *, ...) GCCPRINTF(1,2);
 int STACK_ARGS DPrintf (const char *, ...) GCCPRINTF(1,2);
 
 // game print flags
+enum
+{
+	PRINT_LOW,		// pickup messages
+	PRINT_MEDIUM,	// death messages
+	PRINT_HIGH,		// critical messages
+	PRINT_CHAT,		// chat messages
+	PRINT_TEAMCHAT	// chat messages from a teammate
+};
 #define	PRINT_LOW			0		// pickup messages
 #define	PRINT_MEDIUM		1		// death messages
 #define	PRINT_HIGH			2		// critical messages
 #define	PRINT_CHAT			3		// chat messages
 #define PRINT_TEAMCHAT		4		// chat messages from a teammate
+#define PRINT_BOLD			200		// What Printf_Bold used
 
 #endif

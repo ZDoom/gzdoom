@@ -115,10 +115,8 @@ byte* I_AllocLow (int length);
 
 void I_Tactile (int on, int off, int total);
 
-extern "C" {
 void STACK_ARGS I_Error (const char *error, ...) GCCPRINTF(1,2);
 void STACK_ARGS I_FatalError (const char *error, ...) GCCPRINTF(1,2);
-}
 
 void atterm (void (STACK_ARGS *func)(void));
 void popterm ();
@@ -144,7 +142,7 @@ extern char DoomStartupTitle[256];
 
 // Directory searching routines
 
-// Mirror WIN32_FIND_DATAA in winbase.h
+// Mirror WIN32_FIND_DATAA in <winbase.h>
 #ifndef MAX_PATH
 #define MAX_PATH 260
 #endif
@@ -162,9 +160,9 @@ struct findstate_t
 	char AltName[14];
 };
 
-long I_FindFirst (const char *filespec, findstate_t *fileinfo);
-int I_FindNext (long handle, findstate_t *fileinfo);
-int I_FindClose (long handle);
+void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
+int I_FindNext (void *handle, findstate_t *fileinfo);
+int I_FindClose (void *handle);
 
 #define I_FindName(a)	((a)->Name)
 #define I_FindAttr(a)	((a)->Attribs)

@@ -791,6 +791,8 @@ dsfixed_t 				ds_xfrac;
 dsfixed_t 				ds_yfrac; 
 dsfixed_t 				ds_xstep; 
 dsfixed_t 				ds_ystep;
+int						ds_xbits;
+int						ds_ybits;
 
 // start of a 64*64 tile image 
 byte*					ds_source;		
@@ -813,18 +815,14 @@ void R_DrawSpanP_C (void)
 	int 				spot;
 
 #ifdef RANGECHECK 
-	if (ds_x2 < ds_x1
-		|| ds_x1<0
-		|| ds_x2>=screen->width
-		|| ds_y>screen->height)
+	if (ds_x2 < ds_x1 || ds_x1 < 0
+		|| ds_x2 >= screen->width || ds_y > screen->height)
 	{
-		I_Error ("R_DrawSpan: %i to %i at %i",
-				 ds_x1,ds_x2,ds_y);
+		I_Error ("R_DrawSpan: %i to %i at %i", ds_x1, ds_x2, ds_y);
 	}
 //		dscount++;
 #endif
 
-	
 	xfrac = ds_xfrac;
 	yfrac = ds_yfrac;
 
@@ -836,18 +834,43 @@ void R_DrawSpanP_C (void)
 	xstep = ds_xstep;
 	ystep = ds_ystep;
 
-	do {
-		// Current texture index in u,v.
-		spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
+	if (ds_xbits == 6 && ds_ybits == 6)
+	{
+		// 64x64 is the most common case by far, so special case it.
+		do
+		{
+			// Current texture index in u,v.
+			spot = ((yfrac>>(32-6-6))&(63*64)) + (xfrac>>(32-6));
 
-		// Lookup pixel from flat texture tile,
-		//  re-index using light/colormap.
-		*dest++ = ds_colormap[ds_source[spot]];
+			// Lookup pixel from flat texture tile,
+			//  re-index using light/colormap.
+			*dest++ = ds_colormap[ds_source[spot]];
 
-		// Next step in u,v.
-		xfrac += xstep;
-		yfrac += ystep;
-	} while (--count);
+			// Next step in u,v.
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
+	else
+	{
+		do
+		{
+			BYTE xshift = 32 - ds_xbits;
+			BYTE yshift = xshift - ds_ybits;
+			int ymask = ((1 << ds_ybits) - 1) << ds_xbits;
+		
+			// Current texture index in u,v.
+			spot = ((yfrac >> yshift) & ymask) + (xfrac >> xshift);
+
+			// Lookup pixel from flat texture tile,
+			//  re-index using light/colormap.
+			*dest++ = ds_colormap[ds_source[spot]];
+
+			// Next step in u,v.
+			xfrac += xstep;
+			yfrac += ystep;
+		} while (--count);
+	}
 }
 #endif
 // [RH] Just fill a span with a color
@@ -1106,9 +1129,7 @@ void R_InitTranslationTables ()
 	// Diminishing translucency tables for shaded actors. Not really
 	// translation tables, but putting them here was convenient, particularly
 	// since translationtables[0] would otherwise be wasted.
-	translationtables[0] = (byte *)Z_Malloc (
-		(NUMCOLORMAPS*16+MAXPLAYERS*2+3+MAX_ACS_TRANSLATIONS)*256,
-		PU_STATIC, NULL);
+	translationtables[0] = new BYTE[(NUMCOLORMAPS*16+MAXPLAYERS*2+3+MAX_ACS_TRANSLATIONS)*256];
 
 	// Player translations, one for each player
 	translationtables[TRANSLATION_Players] =
@@ -1183,19 +1204,16 @@ void R_InitTranslationTables ()
 	}
 }
 
-// [RH] Create a player's translation table based on
-//		a given mid-range color.
-void R_BuildPlayerTranslation (int player, int color)
+// [RH] Create a player's translation table based on a given mid-range color.
+void R_BuildPlayerTranslation (int player)
 {
 	byte *table = &translationtables[TRANSLATION_Players][player*256];
 	FPlayerSkin *skin = &skins[players[player].userinfo.skin];
 
-	byte i;
+	int i;
 	byte start = skin->range0start;
 	byte end = skin->range0end;
-	float r = (float)RPART(color) / 255.f;
-	float g = (float)GPART(color) / 255.f;
-	float b = (float)BPART(color) / 255.f;
+	float r, g, b;
 	float h, s, v;
 	float bases, basev;
 	float sdelta, vdelta;
@@ -1203,7 +1221,7 @@ void R_BuildPlayerTranslation (int player, int color)
 
 	range = (float)(end-start+1);
 
-	RGBtoHSV (r, g, b, &h, &s, &v);
+	D_GetPlayerColor (player, &h, &s, &v);
 
 	bases = s;
 	basev = v;

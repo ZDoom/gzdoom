@@ -8,6 +8,8 @@
 #include "z_zone.h"
 #include "s_sound.h"
 
+static FRandom pr_quake ("Quake");
+
 class DEarthquake : public DThinker
 {
 	DECLARE_CLASS (DEarthquake, DThinker)
@@ -62,12 +64,12 @@ void DEarthquake::Tick ()
 			// Check if in damage radius
 			if (dist < m_DamageRadius && victim->z <= victim->floorz)
 			{
-				if (P_Random (pr_quake) < 50)
+				if (pr_quake() < 50)
 				{
-					P_DamageMobj (victim, NULL, NULL, HITDICE(1), MOD_UNKNOWN);
+					P_DamageMobj (victim, NULL, NULL, pr_quake.HitDice (1), MOD_UNKNOWN);
 				}
 				// Thrust player around
-				angle_t an = victim->angle + ANGLE_1*P_Random(pr_quake);
+				angle_t an = victim->angle + ANGLE_1*pr_quake();
 				P_ThrustMobj (victim, an, m_Intensity << (FRACBITS-1));
 			}
 		}

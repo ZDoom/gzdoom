@@ -99,8 +99,8 @@ typedef struct menuitem_s {
 	char			 *label;
 	union {
 		FBaseCVar		 *cvar;
+		FIntCVar		 *intcvar;
 		int				  selmode;
-		int				  flagmask;
 	} a;
 	union {
 		float			  min;		/* aka numvalues aka invflag */
@@ -123,6 +123,7 @@ typedef struct menuitem_s {
 		void			(*mfunc)(void);
 		void			(*lfunc)(int);
 		int				  highlight;
+		int				  flagmask;
 	} e;
 } menuitem_t;
 

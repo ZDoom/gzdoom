@@ -155,8 +155,7 @@ void InitPalette ()
 	NormalLight.Color = PalEntry (255, 255, 255);
 	NormalLight.Fade = 0;
 
-	InvulnerabilityColormap = (BYTE *)Z_Malloc (NUMCOLORMAPS*256+255, PU_STATIC, 0);
-	InvulnerabilityColormap = (BYTE *)(((ptrdiff_t)InvulnerabilityColormap + 255) & ~0xff);
+	InvulnerabilityColormap = new BYTE[NUMCOLORMAPS*256];
 
 	// build special maps (e.g. invulnerability)
 	shade = InvulnerabilityColormap;
@@ -419,9 +418,8 @@ FDynamicColormap *GetSpecialLights (PalEntry color, PalEntry fade)
 	}
 
 	// Not found. Create it.
-	colormap = (FDynamicColormap *)Z_Malloc (sizeof(*colormap), PU_LEVEL, 0);
-	colormap->Maps = (BYTE *)Z_Malloc (NUMCOLORMAPS*256+255, PU_LEVEL, 0);
-	colormap->Maps = (BYTE *)(((ptrdiff_t)colormap->Maps + 255) & ~0xff);
+	colormap = new FDynamicColormap;;
+	colormap->Maps = new BYTE[NUMCOLORMAPS*256];
 	colormap->Next = NormalLight.Next;
 	colormap->Color = color;
 	colormap->Fade = fade;

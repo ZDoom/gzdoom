@@ -289,7 +289,7 @@ DHUDMessageTypeOnFadeOut::DHUDMessageTypeOnFadeOut (const char *text, float x, f
 	if (TypeOnTime == 0.f)
 		TypeOnTime = 0.1f;
 	CurrLine = 0;
-	LineLen = strlen (Lines[0].string);
+	LineLen = (int)strlen (Lines[0].string);
 	LineVisible = 0;
 	State = 3;
 }
@@ -318,7 +318,7 @@ bool DHUDMessageTypeOnFadeOut::Tick ()
 				}
 				else
 				{
-					LineLen = strlen (Lines[CurrLine].string);
+					LineLen = (int)strlen (Lines[CurrLine].string);
 				}
 			}
 		}
@@ -333,7 +333,7 @@ void DHUDMessageTypeOnFadeOut::ScreenSizeChanged ()
 
 	for (i = 0; i < CurrLine; ++i)
 	{
-		charCount += strlen (Lines[i].string);
+		charCount += (int)strlen (Lines[i].string);
 	}
 	charCount += LineVisible;
 
@@ -341,7 +341,7 @@ void DHUDMessageTypeOnFadeOut::ScreenSizeChanged ()
 	if (State == 3)
 	{
 		CurrLine = 0;
-		LineLen = strlen (Lines[0].string);
+		LineLen = (int)strlen (Lines[0].string);
 		Tics = (int)(charCount * TypeOnTime) - 1;
 		Tick ();
 	}

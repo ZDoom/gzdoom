@@ -77,13 +77,13 @@ fixed_t			rw_frontcz1, rw_frontcz2;
 fixed_t			rw_frontfz1, rw_frontfz2;
 
 
-int				MaxDrawSegs;
+size_t			MaxDrawSegs;
 drawseg_t		*drawsegs;
 drawseg_t*		firstdrawseg;
 drawseg_t*		ds_p;
 
-int				FirstInterestingDrawseg;
-TArray<int>		InterestingDrawsegs;
+size_t			FirstInterestingDrawseg;
+TArray<size_t>	InterestingDrawsegs;
 
 fixed_t			WallTX1, WallTX2;	// x coords at left, right of wall in view space
 fixed_t			WallTY1, WallTY2;	// y coords at left, right of wall in view space
@@ -103,7 +103,7 @@ static BYTE		FakeSide;
 int WindowLeft, WindowRight;
 WORD MirrorFlags;
 seg_t *ActiveWallMirror;
-TArray<ptrdiff_t> WallMirrors;
+TArray<size_t> WallMirrors;
 
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 
@@ -242,7 +242,7 @@ crunch:
 		{
 			// Remove start+1 to next from the clip list,
 			// because start now covers their area.
-			for (i = 1, j = newend - next; j > 0; i++, j--)
+			for (i = 1, j = (int)(newend - next); j > 0; i++, j--)
 			{
 				start[i] = next[i];
 			}
@@ -557,7 +557,7 @@ void R_AddLine (seg_t *line)
 	curline = line;
 
 	// [RH] Color if not texturing line
-	dc_color = (((line - segs) * 8) + 4) & 255;
+	dc_color = (((int)(line - segs) * 8) + 4) & 255;
 
 	tx1 = line->v1->x - viewx;
 	tx2 = line->v2->x - viewx;

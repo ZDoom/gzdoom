@@ -246,7 +246,7 @@ int ADecal::StickToWall (side_t *wall)
 			z -= front->ceilingtexz;
 		else
 			z -= back->floortexz;
-		tex = wall->toptexture;
+		tex = wall->bottomtexture;
 	}
 	else
 	{
@@ -255,7 +255,7 @@ int ADecal::StickToWall (side_t *wall)
 			z -= front->ceilingtexz;
 		else
 			z -= back->ceilingtexz;
-		tex = wall->bottomtexture;
+		tex = wall->toptexture;
 	}
 
 	CalcFracPos (wall);
@@ -394,9 +394,56 @@ CUSTOM_CVAR (Int, cl_maxdecals, 1024, CVAR_ARCHIVE)
 
 // Uses: target points to previous impact decal
 //		 tracer points to next impact decal
+//
+// Note that this means we can't simply serialize an impact decal as-is
+// because doing so when many are present in a level could result in
+// a lot of recursion and we would run out of stack. Not nice. So instead,
+// the save game code calls AImpactDecal::SerializeAll to serialize a
+// list of impact decals.
 
 IMPLEMENT_STATELESS_ACTOR (AImpactDecal, Any, -1, 0)
 END_DEFAULTS
+
+void AImpactDecal::SerializeTime (FArchive &arc)
+{
+	if (arc.IsLoading ())
+	{
+		ImpactCount = 0;
+		FirstImpact = LastImpact = NULL;
+	}
+}
+
+void AImpactDecal::Serialize (FArchive &arc)
+{
+	if (arc.IsStoring ())
+	{
+		// NULL the next pointer so that the serializer will not follow it
+		// and possibly run out of stack space. NULLing target isn't
+		// required; it just makes the archive smaller.
+		AActor *saved1 = tracer, *saved2 = target;
+		tracer = NULL;
+		target = NULL;
+		Super::Serialize (arc);
+		tracer = saved1;
+		target = saved2;
+	}
+	else
+	{
+		Super::Serialize (arc);
+
+		ImpactCount++;
+		target = LastImpact;
+		if (target != NULL)
+		{
+			target->tracer = this;
+		}
+		else
+		{
+			FirstImpact = this;
+		}
+		LastImpact = this;
+	}
+}
 
 void AImpactDecal::BeginPlay ()
 {
@@ -458,7 +505,7 @@ static side_t *NextWall (const side_t *wall)
 
 	if (line->sidenum[0] == wallnum)
 	{
-		if (line->sidenum[1] != -1)
+		if (line->sidenum[1] != NO_INDEX)
 		{
 			return sides + line->sidenum[1];
 		}
@@ -482,7 +529,7 @@ void AImpactDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 
 	SpreadStack.Push (feelwall);
 
-	while (r < 0 && feelwall->LeftSide != -1)
+	while (r < 0 && feelwall->LeftSide != NO_INDEX)
 	{
 		fixed_t startr = r;
 
@@ -500,16 +547,16 @@ void AImpactDecal::SpreadLeft (fixed_t r, vertex_t *v1, side_t *feelwall)
 		SpreadStack.Push (feelwall);
 
 		side_t *nextwall = NextWall (feelwall);
-		if (nextwall != NULL && nextwall->LeftSide != -1)
+		if (nextwall != NULL && nextwall->LeftSide != NO_INDEX)
 		{
-			int i;
+			size_t i;
 
-			for (i = SpreadStack.Size()-1; i >= 0; --i)
+			for (i = SpreadStack.Size(); i-- > 0; )
 			{
 				if (SpreadStack[i] == nextwall)
 					break;
 			}
-			if (i < 0)
+			if (i == (size_t)~0)
 			{
 				vertex_t *v2;
 
@@ -527,21 +574,21 @@ void AImpactDecal::SpreadRight (fixed_t r, side_t *feelwall, fixed_t wallsize)
 
 	SpreadStack.Push (feelwall);
 
-	while (r > wallsize && feelwall->RightSide != -1)
+	while (r > wallsize && feelwall->RightSide != NO_INDEX)
 	{
 		feelwall = &sides[feelwall->RightSide];
 
 		side_t *nextwall = NextWall (feelwall);
-		if (nextwall != NULL && nextwall->LeftSide != -1)
+		if (nextwall != NULL && nextwall->LeftSide != NO_INDEX)
 		{
-			int i;
+			size_t i;
 
-			for (i = SpreadStack.Size()-1; i >= 0; --i)
+			for (i = SpreadStack.Size(); i-- > 0; )
 			{
 				if (SpreadStack[i] == nextwall)
 					break;
 			}
-			if (i < 0)
+			if (i == (size_t)~0)
 			{
 				SpreadRight (r, nextwall, wallsize);
 			}
@@ -677,6 +724,17 @@ void AImpactDecal::Destroy ()
 CCMD (countdecals)
 {
 	Printf ("%d impact decals\n", ImpactCount);
+}
+
+CCMD (countdecalsreal)
+{
+	TThinkerIterator<AImpactDecal> iterator (STAT_DECAL);
+	int count = 0;
+
+	while (iterator.Next())
+		count++;
+
+	Printf ("Counted %d impact decals\n", count);
 }
 
 CCMD (spray)

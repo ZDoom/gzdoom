@@ -65,6 +65,7 @@ typedef void (*voidfunc_)();
 #pragma data_seg(".areg$u")		// ActorInfo initializer list
 #pragma data_seg(".greg$u")		// AT_GAME_SET list
 #pragma data_seg(".sreg$u")		// AT_SPEED_SET list
+#pragma data_seg(".wreg$u")		// WEAPON1/WEAPON2 list
 #pragma data_seg()
 
 #define DOOMEDNUMOF(actor) actor##Defaults_.DoomEdNum
@@ -96,6 +97,19 @@ typedef void (*voidfunc_)();
 	extern void ns##_ss(EGameSpeed); \
 	__declspec(allocate(".sreg$u")) void (*ns##_gsr)(EGameSpeed) = ns##_ss; \
 	void ns##_ss (EGameSpeed varname)
+
+#define ADDWPINF(wp) \
+	extern const FWeaponInfoInit *wpinit##wp##ptr; \
+	__declspec(allocate(".wreg$u")) const FWeaponInfoInit *wpinit##wp##ptr = &wpinit##wp;
+
+#define WEAPON1(wp,inf) \
+static const FWeaponInfoInit wpinit##wp = { wp, &inf::WeaponInfo, &inf::WeaponInfo }; \
+	ADDWPINF(wp)
+
+#define WEAPON2(wp,inf) \
+static const FWeaponInfoInit wpinit##wp = { wp, &inf::WeaponInfo1, &inf::WeaponInfo2 }; \
+	ADDWPINF(wp)
+
 
 #elif defined(__GNUC__)
 
@@ -134,6 +148,18 @@ typedef void (*voidfunc_)();
 	extern void ns##_ss(EGameSpeed); \
 	void (*ns##_gsr)(EGameSpeed) __attribute__((section("sreg"))) = ns##_ss; \
 	void ns##_ss (EGameSpeed varname)
+
+#define ADDWPINF(wp) \
+	extern const FWeaponInfoInit *wpinit##wp##ptr; \
+	const FWeaponInfoInit *__attribute__((section("wreg"))) wpinit##wp##ptr = &wpinit##wp;
+
+#define WEAPON1(wp,inf) \
+static const FWeaponInfoInit wpinit##wp = { wp, &inf::WeaponInfo, &inf::WeaponInfo }; \
+	ADDWPINF(wp)
+
+#define WEAPON2(wp,inf) \
+static const FWeaponInfoInit wpinit##wp = { wp, &inf::WeaponInfo1, &inf::WeaponInfo2 }; \
+	ADDWPINF(wp)
 
 #else
 
@@ -227,10 +253,15 @@ public:
 #define PROP_RaiseState(x)		ADD_BYTE_PROP(ADEF_RaiseState,x)
 
 #define PROP_SKIP_SUPER			ADD_BYTE_PROP(ADEF_SkipSuper,0)
+#if 0
 #ifndef __GNUC__
+#if _MSC_VER < 1300
 #define PROP_STATE_BASE(x)		ADD_LONG_PROP(ADEF_StateBase,((int)RUNTIME_CLASS(x)))
+#else
+#define PROP_STATE_BASE(x)		ADD_LONG_PROP(ADEF_StateBase,(1))
+#endif
 #else
 #define PROP_STATE_BASE(x)		ADD_STRING_PROP(ADEF_StateBase,"\x29",#x)
 #endif
-
+#endif
 #endif //__INFOMACROS_H__

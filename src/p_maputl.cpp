@@ -35,9 +35,12 @@
 #include "doomstat.h"
 #include "p_local.h"
 
-
 // State.
 #include "r_state.h"
+#include "templates.h"
+
+static AActor *RoughBlockCheck (AActor *mo, int index);
+
 
 //==========================================================================
 //
@@ -96,6 +99,7 @@ int P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld)
 		break;
 		
 	case ST_NEGATIVE:
+	default:	// Just to assure GCC that p1 and p2 really do get initialized
 		p1 = P_PointOnLineSide (tmbox[BOXRIGHT], tmbox[BOXTOP], ld);
 		p2 = P_PointOnLineSide (tmbox[BOXLEFT], tmbox[BOXBOTTOM], ld);
 		break;
@@ -191,7 +195,7 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 	sector_t *front, *back;
 	fixed_t fc, ff, bc, bf;
 
-	if (linedef->sidenum[1] == -1)
+	if (linedef->sidenum[1] == NO_INDEX)
 	{
 		// single sided line
 		openrange = 0;
@@ -651,7 +655,7 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 // 
 BOOL P_TraverseIntercepts (traverser_t func, fixed_t maxfrac)
 {
-	int 		 count;
+	size_t 		 count;
 	fixed_t 	 dist;
 	size_t		 scanpos;
 	intercept_t *scan;
@@ -824,4 +828,152 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 	}
 	// go through the sorted list
 	return P_TraverseIntercepts ( trav, FRACUNIT );
+}
+
+//===========================================================================
+//
+// P_RoughMonsterSearch
+//
+// Searches though the surrounding mapblocks for monsters/players
+//		distance is in MAPBLOCKUNITS
+//===========================================================================
+
+AActor *P_RoughMonsterSearch (AActor *mo, int distance)
+{
+	int blockX;
+	int blockY;
+	int startX, startY;
+	int blockIndex;
+	int firstStop;
+	int secondStop;
+	int thirdStop;
+	int finalStop;
+	int count;
+	AActor *target;
+
+	startX = (mo->x-bmaporgx)>>MAPBLOCKSHIFT;
+	startY = (mo->y-bmaporgy)>>MAPBLOCKSHIFT;
+	
+	if (startX >= 0 && startX < bmapwidth && startY >= 0 && startY < bmapheight)
+	{
+		if ( (target = RoughBlockCheck (mo, startY*bmapwidth+startX)) )
+		{ // found a target right away
+			return target;
+		}
+	}
+	for (count = 1; count <= distance; count++)
+	{
+		blockX = clamp (startX-count, 0, bmapwidth-1);
+		blockY = clamp (startY-count, 0, bmapheight-1);
+
+		blockIndex = blockY*bmapwidth+blockX;
+		firstStop = startX+count;
+		if (firstStop < 0)
+		{
+			continue;
+		}
+		if (firstStop >= bmapwidth)
+		{
+			firstStop = bmapwidth-1;
+		}
+		secondStop = startY+count;
+		if (secondStop < 0)
+		{
+			continue;
+		}
+		if (secondStop >= bmapheight)
+		{
+			secondStop = bmapheight-1;
+		}
+		thirdStop = secondStop*bmapwidth+blockX;
+		secondStop = secondStop*bmapwidth+firstStop;
+		firstStop += blockY*bmapwidth;
+		finalStop = blockIndex;		
+
+		// Trace the first block section (along the top)
+		for (; blockIndex <= firstStop; blockIndex++)
+		{
+			if ( (target = RoughBlockCheck (mo, blockIndex)) )
+			{
+				return target;
+			}
+		}
+		// Trace the second block section (right edge)
+		for (blockIndex--; blockIndex <= secondStop; blockIndex += bmapwidth)
+		{
+			if ( (target = RoughBlockCheck(mo, blockIndex)) )
+			{
+				return target;
+			}
+		}		
+		// Trace the third block section (bottom edge)
+		for (blockIndex -= bmapwidth; blockIndex >= thirdStop; blockIndex--)
+		{
+			if ( (target = RoughBlockCheck(mo, blockIndex)) )
+			{
+				return target;
+			}
+		}
+		// Trace the final block section (left edge)
+		for (blockIndex++; blockIndex > finalStop; blockIndex -= bmapwidth)
+		{
+			if ( (target = RoughBlockCheck (mo, blockIndex)) )
+			{
+				return target;
+			}
+		}
+	}
+	return NULL;	
+}
+
+//===========================================================================
+//
+// RoughBlockCheck
+//
+//===========================================================================
+
+static AActor *RoughBlockCheck (AActor *mo, int index)
+{
+	AActor *link;
+
+	link = blocklinks[index];
+	for (link = blocklinks[index]; link != NULL; link = link->bnext)
+	{
+		if (link != mo && mo->IsOkayToAttack (link))
+		{
+			return link;
+		}
+	}
+/*
+		else if (mo->type == MT_MSTAFF_FX2)		// bloodscourge
+		{
+			if ((link->flags&MF_COUNTKILL ||
+				(link->player && link != mo->target))
+				&& !(link->flags2&MF2_DORMANT))
+			{
+				if (!(link->flags&MF_SHOOTABLE))
+				{
+					link = link->bnext;
+					continue;
+				}
+				if(netgame && !deathmatch && link->player)
+				{
+					link = link->bnext;
+					continue;
+				}
+				else if (P_CheckSight (mo, link))
+				{
+					master = mo->target;
+					angle = R_PointToAngle2(master->x, master->y,
+									link->x, link->y) - master->angle;
+					angle >>= 24;
+					if (angle>226 || angle<30)
+					{
+						return link;
+					}
+				}
+			}
+			link = link->bnext;
+		}*/
+	return NULL;
 }

@@ -109,6 +109,7 @@ void D_ProcessEvents ();
 void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_AddFile (const char *file);
+void D_AddWildFile (const char *pattern);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -169,6 +170,7 @@ const char *IWADTypeNames[NUM_IWAD_TYPES] =
 	"DOOM 2: TNT - Evilution",
 	"DOOM 2: Plutonia Experiment",
 	"Hexen: Beyond Heretic",
+	"Hexen: Deathkings of the Dark Citadel",
 	"DOOM 2: Hell on Earth",
 	"Heretic Shareware",
 	"Heretic: Shadow of the Serpent Riders",
@@ -196,6 +198,7 @@ static const char *IWADNames[] =
 	"heretic.wad",
 	"heretic1.wad",
 	"hexen.wad",
+	"hexdd.wad",
 	NULL
 };
 static GameAtExit *ExitCmdList;
@@ -294,7 +297,6 @@ CVAR (Flag, sv_fastmonsters,	dmflags, DF_FAST_MONSTERS);
 CVAR (Flag, sv_nojump,			dmflags, DF_NO_JUMP);
 CVAR (Flag, sv_nofreelook,		dmflags, DF_NO_FREELOOK);
 CVAR (Flag, sv_respawnsuper,	dmflags, DF_RESPAWN_SUPER);
-CVAR (Flag, sv_nopassover,		dmflags, DF_NO_PASSMOBJ);
 CVAR (Flag, sv_nofov,			dmflags, DF_NO_FOV);
 
 //==========================================================================
@@ -311,6 +313,22 @@ CVAR (Flag, sv_weapondrop,		dmflags2, DF2_YES_WEAPONDROP);
 CVAR (Flag, sv_nobfgaim,		dmflags2, DF2_NO_FREEAIMBFG);
 CVAR (Flag, sv_respawnprotect,	dmflags2, DF2_YES_INVUL);
 CVAR (Flag, sv_barrelrespawn,	dmflags2, DF2_BARRELS_RESPAWN);
+
+//==========================================================================
+//
+// CVAR compatflags
+//
+//==========================================================================
+
+CVAR (Int, compatflags, 0, CVAR_SERVERINFO);
+CVAR (Flag, compat_shortTex,	compatflags, COMPATF_SHORTTEX);
+CVAR (Flag, compat_stairs,		compatflags, COMPATF_STAIRINDEX);
+CVAR (Flag, compat_limitpain,	compatflags, COMPATF_LIMITPAIN);
+CVAR (Flag, compat_silentpickup,compatflags, COMPATF_SILENTPICKUP);
+CVAR (Flag, compat_nopassover,	compatflags, COMPATF_NO_PASSMOBJ);
+CVAR (Flag, compat_soundslots,	compatflags, COMPATF_MAGICSILENCE);
+CVAR (Flag, compat_wallrun,		compatflags, COMPATF_WALLRUN);
+CVAR (Flag, compat_notossdrops,	compatflags, COMPATF_NOTOSSDROPS);
 
 //==========================================================================
 //
@@ -538,7 +556,7 @@ static void STACK_ARGS DoConsoleAtExit ()
 	{
 		GameAtExit *next = cmd->Next;
 		AddCommandString (cmd->Command);
-		Z_Free (cmd);
+		free (cmd);
 		cmd = next;
 	}
 }
@@ -564,8 +582,8 @@ CCMD (atexit)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		GameAtExit *record = (GameAtExit *)Z_Malloc (
-			sizeof(GameAtExit)+strlen(argv[i]), PU_STATIC, 0);
+		GameAtExit *record = (GameAtExit *)Malloc (
+			sizeof(GameAtExit)+strlen(argv[i]));
 		strcpy (record->Command, argv[i]);
 		record->Next = ExitCmdList;
 		ExitCmdList = record;
@@ -657,7 +675,9 @@ void D_DoomLoop ()
 		catch (CRecoverableError &error)
 		{
 			if (error.GetMessage ())
-				Printf_Bold ("\n%s\n", error.GetMessage());
+			{
+				Printf (PRINT_BOLD, "\n%s\n", error.GetMessage());
+			}
 			D_ErrorCleanup ();
 		}
 	}
@@ -753,7 +773,7 @@ void D_DoAdvanceDemo (void)
 			if (W_CheckNumForName (demoname) < 0)
 			{
 				demosequence = 0;
-				democount = 1;
+				democount = 0;
 				// falls through to case 0 below
 			}
 			else
@@ -886,6 +906,59 @@ void D_AddFile (const char *file)
 
 //==========================================================================
 //
+// D_AddWildFile
+//
+//==========================================================================
+
+void D_AddWildFile (const char *value)
+{
+	const char *wadfile = BaseFileSearch (value, ".wad");
+
+	if (wadfile != NULL)
+	{
+		D_AddFile (wadfile);
+	}
+	else
+	{ // Try pattern matching
+		findstate_t findstate;
+		char path[PATH_MAX];
+		char *sep;
+		void *handle = I_FindFirst (value, &findstate);
+
+		strcpy (path, value);
+		sep = strrchr (path, '/');
+		if (sep == NULL)
+		{
+			sep = strrchr (path, '\\');
+#ifdef _WIN32
+			if (sep == NULL && path[1] == ':')
+			{
+				sep = path + 1;
+			}
+#endif
+		}
+
+		if (handle != ((void *)-1))
+		{
+			do
+			{
+				if (sep == NULL)
+				{
+					D_AddFile (I_FindName (&findstate));
+				}
+				else
+				{
+					strcpy (sep+1, I_FindName (&findstate));
+					D_AddFile (path);
+				}
+			} while (I_FindNext (handle, &findstate) == 0);
+		}
+		I_FindClose (handle);
+	}
+}
+
+//==========================================================================
+//
 // D_AddConfigWads
 //
 // Adds all files in the specified config file section.
@@ -904,30 +977,9 @@ void D_AddConfigWads (const char *section)
 		{
 			if (stricmp (key, "Path") == 0)
 			{
-				// BaseFileSearch resets GameConfig's position, so remember it
+				// D_AddWildFile resets GameConfig's position, so remember it
 				GameConfig->GetPosition (pos);
-
-				const char *wadfile = BaseFileSearch (value, "wad");
-
-				if (wadfile != NULL)
-				{
-					D_AddFile (wadfile);
-				}
-				else
-				{ // Try pattern matching
-					findstate_t findstate;
-					long handle = I_FindFirst (value, &findstate);
-
-					 if (handle != -1)
-					 {
-						 do
-						 {
-							 D_AddFile (I_FindName (&findstate));
-						 } while (I_FindNext (handle, &findstate) == 0);
-					 }
-					 I_FindClose (handle);
-				}
-
+				D_AddWildFile (value);
 				// Reset GameConfig's position to get next wad
 				GameConfig->SetPosition (pos);
 			}
@@ -951,8 +1003,8 @@ static void D_AddDirectory (const char *dir)
 	{
 		char skindir[PATH_MAX];
 		findstate_t findstate;
-		long handle;
-		int stuffstart;
+		void *handle;
+		size_t stuffstart;
 
 		stuffstart = strlen (dir);
 		memcpy (skindir, dir, stuffstart*sizeof(*dir));
@@ -966,14 +1018,13 @@ static void D_AddDirectory (const char *dir)
 		if (!chdir (skindir))
 		{
 			skindir[stuffstart++] = '/';
-			if ((handle = I_FindFirst ("*.wad", &findstate)) != -1)
+			if ((handle = I_FindFirst ("*.wad", &findstate)) != (void *)-1)
 			{
 				do
 				{
 					if (!(I_FindAttr (&findstate) & FA_DIREC))
 					{
-						strcpy (skindir + stuffstart,
-								I_FindName (&findstate));
+						strcpy (skindir + stuffstart, I_FindName (&findstate));
 						D_AddFile (skindir);
 					}
 				} while (I_FindNext (handle, &findstate) == 0);
@@ -1002,6 +1053,7 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		{ commercial,	&CommercialGameInfo,	pack_tnt },		// Doom2TNT
 		{ commercial,	&CommercialGameInfo,	pack_plut },	// Doom2Plutonia
 		{ commercial,	&HexenGameInfo,			doom2 },		// Hexen
+		{ commercial,	&HexenGameInfo,			doom2 },		// HexenDK
 		{ commercial,	&CommercialGameInfo,	doom2 },		// Doom2
 		{ shareware,	&HereticSWGameInfo,		doom },			// HereticShareware
 		{ retail,		&HereticGameInfo,		doom },			// HereticExtended
@@ -1043,6 +1095,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		"E1M1",
 		"E4M1",
 		"MAP01",
+		"MAP60",
 		"TITLE",
 		"REDTNT2",
 		"CAMO1",
@@ -1058,6 +1111,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_e1m1,
 		Check_e4m1,
 		Check_map01,
+		Check_map60,
 		Check_title,
 		Check_redtnt2,
 		Check_cam01,
@@ -1094,7 +1148,11 @@ static EIWADType ScanIWAD (const char *iwad)
 		fclose (f);
 	}
 
-	if (lumpsfound[Check_map01])
+	if (lumpsfound[Check_title] && lumpsfound[Check_title] && lumpsfound[Check_map60])
+	{
+		return IWAD_HexenDK;
+	}
+	else if (lumpsfound[Check_map01])
 	{
 		if (lumpsfound[Check_redtnt2])
 		{
@@ -1165,7 +1223,7 @@ static EIWADType ScanIWAD (const char *iwad)
 //
 // CheckIWAD
 //
-// Tries to find an IWAD from a set of know IWAD names, and checks the
+// Tries to find an IWAD from a set of known IWAD names, and checks the
 // contents of each one found to determine which game it belongs to.
 // Returns the number of new wads found in this pass (does not count wads
 // found from a previous call).
@@ -1253,6 +1311,7 @@ static int CheckIWADinEnvDir (const char *envname, WadStuff *wads)
 static EIWADType IdentifyVersion (void)
 {
 	WadStuff wads[sizeof(IWADNames)/sizeof(char *)];
+	size_t foundwads[NUM_IWAD_TYPES] = { 0 };
 	const char *iwadparm = Args.CheckValue ("-iwad");
 	char *homepath = NULL;
 	size_t numwads;
@@ -1331,26 +1390,48 @@ static EIWADType IdentifyVersion (void)
 		if (wads[i].Path != NULL)
 		{
 			if (i != numwads)
+			{
 				wads[numwads] = wads[i];
+			}
+			foundwads[wads[numwads].Type] = numwads+1;
 			numwads++;
 		}
+	}
+
+	if (foundwads[IWAD_HexenDK] && !foundwads[IWAD_Hexen])
+	{ // Cannot play Hexen DK without Hexen
+		size_t kill = foundwads[IWAD_HexenDK];
+		if (kill != numwads)
+		{
+			memmove (&wads[kill-1], &wads[kill], numwads - kill);
+		}
+		numwads--;
 	}
 
 	if (numwads == 0)
 	{
 		I_FatalError ("Cannot find a game IWAD (doom.wad, doom2.wad, heretic.wad, etc.).\n"
-					  "Did you install ZDoom properly?");
+					  "Did you install ZDoom properly? You can do either of the following:\n"
+					  "\n"
+					  "1. Place one or more of these wads in the same directory as ZDoom."
+					  "2. Edit your zdoom.ini and add the directories of your iwads\n"
+					  "to the list beneath [IWADSearch.Directories]");
 	}
 
 	pickwad = 0;
 
 	if (!iwadparmfound && numwads > 1 && queryiwad)
 	{
-		pickwad = I_PickIWad (wads, numwads);
+		pickwad = I_PickIWad (wads, (int)numwads);
 	}
 
 	if (pickwad < 0)
 		exit (0);
+
+	if (wads[pickwad].Type == IWAD_HexenDK)
+	{ // load hexen.wad before loading hexdd.wad
+		D_AddFile (wads[foundwads[IWAD_Hexen]-1].Path);
+	}
 
 	SetIWAD (wads[pickwad].Path, wads[pickwad].Type);
 
@@ -1505,9 +1586,13 @@ void D_DoomMain (void)
 	const char *wad;
 	DArgs *execFiles;
 
+	file[PATH_MAX-1] = 0;
+
 #if defined(_MSC_VER) || defined(__GNUC__)
 	TypeInfo::StaticInit ();
 #endif
+
+	FActorInfo::StaticWeaponInit ();
 
 	atterm (DObject::StaticShutdown);
 	atterm (DoConsoleAtExit);
@@ -1590,7 +1675,7 @@ void D_DoomMain (void)
 		// the files gathered are wadfile/lump names
 		for (int i = 0; i < files->NumArgs(); i++)
 		{
-			D_AddFile (files->GetArg (i));
+			D_AddWildFile (files->GetArg (i));
 		}
 	}
 	delete files;
@@ -1652,6 +1737,7 @@ void D_DoomMain (void)
 		}
 
 		DoDehPatch (NULL, true);	// See if there's a patch in a PWAD
+		FinishDehPatch ();			// Create replacements for dehacked pickups
 	}
 
 	FActorInfo::StaticSetActorNums ();
@@ -1749,9 +1835,14 @@ void D_DoomMain (void)
 		}
 	}
 	if (devparm)
+	{
 		Printf (GStrings(D_DEVSTR));
+	}
 
 #ifndef unix
+	// We do not need to support -cdrom under Unix, because all the files
+	// that would go to c:\\zdoomdat are already stored in .zdoom inside
+	// the user's home directory.
 	if (Args.CheckParm("-cdrom"))
 	{
 		Printf (GStrings(D_CDROM));
@@ -1817,6 +1908,18 @@ void D_DoomMain (void)
 	}
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 
+	// [RH] Lock any cvars that should be locked now that we're
+	// about to begin the game.
+	FBaseCVar::EnableNoSet ();
+
+	// [RH] Run any saved commands from the command line or autoexec.cfg now.
+	gamestate = GS_FULLCONSOLE;
+	Net_NewMakeTic ();
+	DObject::BeginFrame ();
+	DThinker::RunThinkers ();
+	DObject::EndFrame ();
+	gamestate = GS_STARTUP;
+
 	// start the apropriate game based on parms
 	v = Args.CheckValue ("-record");
 
@@ -1846,28 +1949,17 @@ void D_DoomMain (void)
 	v = Args.CheckValue ("-loadgame");
 	if (v)
 	{
-		G_LoadGame (v);
+		strncpy (file, v, sizeof(file)-1);
+		FixPathSeperator (file);
+		DefaultExtension (file, ".zds");
+		G_LoadGame (file);
 	}
-
-	// [RH] Lock any cvars that should be locked now that we're
-	// about to begin the game.
-	FBaseCVar::EnableNoSet ();
-
-	// [RH] Run any saved commands from the command line or autoexec.cfg now.
-	gamestate = GS_FULLCONSOLE;
-	Net_NewMakeTic ();
-	DObject::BeginFrame ();
-	DThinker::RunThinkers ();
-	DObject::EndFrame ();
-	gamestate = GS_STARTUP;
 
 	if (gameaction != ga_loadgame)
 	{
 		BorderNeedRefresh = screen->GetPageCount ();
 		if (autostart || netgame)
 		{
-			G_NewInit ();
-			playeringame[consoleplayer] = 1;
 			G_InitNew (startmap);
 		}
 		else

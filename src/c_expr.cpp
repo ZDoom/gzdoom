@@ -77,13 +77,14 @@ struct FProducer
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+bool IsFloat (const char *str);
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static FProduction *ParseExpression (FCommandLine &argv, int &parsept);
-static bool IsFloat (const char *str);
 static const char *IsNum (const char *str);
 static FStringProd *NewStringProd (const char *str);
-static FStringProd *NewStringProd (int len);
+static FStringProd *NewStringProd (size_t len);
 static FDoubleProd *NewDoubleProd (double val);
 static FStringProd *DoubleToString (FProduction *prod);
 static FDoubleProd *StringToDouble (FProduction *prod);
@@ -232,8 +233,8 @@ missing:
 	Printf ("Missing argument to %s\n", token);
 
 done:
-	if (prod1 != NULL) Z_Free (prod1);
 	if (prod2 != NULL) Z_Free (prod2);
+	if (prod1 != NULL) Z_Free (prod1);
 	return prod3;
 }
 
@@ -243,7 +244,7 @@ done:
 //
 //==========================================================================
 
-static bool IsFloat (const char *str)
+bool IsFloat (const char *str)
 {
 	const char *pt;
 	
@@ -317,7 +318,7 @@ static FStringProd *NewStringProd (const char *str)
 //
 //==========================================================================
 
-static FStringProd *NewStringProd (int len)
+static FStringProd *NewStringProd (size_t len)
 {
 	FStringProd *prod = (FStringProd *)Z_Malloc (sizeof(FStringProd)+len, PU_STATIC, 0);
 	prod->Type = PROD_String;
@@ -453,7 +454,7 @@ FProduction *ProdAddDbl (FDoubleProd *prod1, FDoubleProd *prod2)
 
 FProduction *ProdAddStr (FStringProd *prod1, FStringProd *prod2)
 {
-	int len = strlen (prod1->Value) + strlen (prod2->Value) + 1;
+	size_t len = strlen (prod1->Value) + strlen (prod2->Value) + 1;
 	FStringProd *prod = NewStringProd (len);
 	strcpy (prod->Value, prod1->Value);
 	strcat (prod->Value, prod2->Value);

@@ -68,90 +68,6 @@ extern int clipammo[NUMAMMO];
 static bool LoadDehSupp ();
 static void UnloadDehSupp ();
 
-// Available action functions
-void A_FireRailgun(player_s*, pspdef_t*);
-void A_FireRailgunLeft(player_s*, pspdef_t*);
-void A_FireRailgunRight(player_s*, pspdef_t*);
-void A_RailWait(player_s*, pspdef_t*);
-void A_Light0(player_s*, pspdef_t*);
-void A_WeaponReady(player_s*, pspdef_t*);
-void A_Lower(player_s*, pspdef_t*);
-void A_Raise(player_s*, pspdef_t*);
-void A_Punch(player_s*, pspdef_t*);
-void A_ReFire(player_s*, pspdef_t*);
-void A_FirePistol(player_s*, pspdef_t*);
-void A_Light1(player_s*, pspdef_t*);
-void A_FireShotgun(player_s*, pspdef_t*);
-void A_Light2(player_s*, pspdef_t*);
-void A_FireShotgun2(player_s*, pspdef_t*);
-void A_CheckReload(player_s*, pspdef_t*);
-void A_OpenShotgun2(player_s*, pspdef_t*);
-void A_LoadShotgun2(player_s*, pspdef_t*);
-void A_CloseShotgun2(player_s*, pspdef_t*);
-void A_FireCGun(player_s*, pspdef_t*);
-void A_GunFlash(player_s*, pspdef_t*);
-void A_FireMissile(player_s*, pspdef_t*);
-void A_Saw(player_s*, pspdef_t*);
-void A_FirePlasma(player_s*, pspdef_t*);
-void A_BFGsound(player_s*, pspdef_t*);
-void A_FireBFG(player_s*, pspdef_t*);
-void A_BFGSpray(AActor*);
-void A_Explode(AActor*);
-void A_Pain(AActor*);
-void A_PlayerScream(AActor*);
-void A_NoBlocking(AActor*);
-void A_XScream(AActor*);
-void A_Look(AActor*);
-void A_Chase(AActor*);
-void A_FaceTarget(AActor*);
-void A_PosAttack(AActor*);
-void A_Scream(AActor*);
-void A_SPosAttack(AActor*);
-void A_VileChase(AActor*);
-void A_VileStart(AActor*);
-void A_VileTarget(AActor*);
-void A_VileAttack(AActor*);
-void A_StartFire(AActor*);
-void A_Fire(AActor*);
-void A_FireCrackle(AActor*);
-void A_Tracer(AActor*);
-void A_SkelWhoosh(AActor*);
-void A_SkelFist(AActor*);
-void A_SkelMissile(AActor*);
-void A_FatRaise(AActor*);
-void A_FatAttack1(AActor*);
-void A_FatAttack2(AActor*);
-void A_FatAttack3(AActor*);
-void A_BossDeath(AActor*);
-void A_CPosAttack(AActor*);
-void A_CPosRefire(AActor*);
-void A_TroopAttack(AActor*);
-void A_SargAttack(AActor*);
-void A_HeadAttack(AActor*);
-void A_BruisAttack(AActor*);
-void A_SkullAttack(AActor*);
-void A_Metal(AActor*);
-void A_SpidRefire(AActor*);
-void A_BabyMetal(AActor*);
-void A_BspiAttack(AActor*);
-void A_Hoof(AActor*);
-void A_CyberAttack(AActor*);
-void A_PainAttack(AActor*);
-void A_PainDie(AActor*);
-void A_KeenDie(AActor*);
-void A_BrainPain(AActor*);
-void A_BrainScream(AActor*);
-void A_BrainDie(AActor*);
-void A_BrainAwake(AActor*);
-void A_BrainSpit(AActor*);
-void A_SpawnSound(AActor*);
-void A_SpawnFly(AActor*);
-void A_BrainExplode(AActor*);
-void A_Die(AActor*);
-void A_Detonate(AActor*);
-void A_Mushroom(AActor*);
-void A_MonsterRail(AActor*);
-
 // Action functions available to patches
 struct CodePtrMap
 {
@@ -161,91 +77,17 @@ struct CodePtrMap
 
 static CodePtrMap *CodePtrNames;
 static int NumCodePtrs;
+
+#define WEAPON(x)	void A_##x(player_s*, pspdef_t*);
+#define ACTOR(x)	void A_##x(AActor*);
+#include "d_dehackedactions.h"
+
 static const actionf_t CodePtrs[] =
 {
 	{(void *)NULL},
-	{(void *)A_MonsterRail},
-	{(void *)A_FireRailgun},
-	{(void *)A_FireRailgunLeft},
-	{(void *)A_FireRailgunRight},
-	{(void *)A_RailWait},
-	{(void *)A_Light0},
-	{(void *)A_WeaponReady},
-	{(void *)A_Lower},
-	{(void *)A_Raise},
-	{(void *)A_Punch},
-	{(void *)A_ReFire},
-	{(void *)A_FirePistol},
-	{(void *)A_Light1},
-	{(void *)A_FireShotgun},
-	{(void *)A_Light2},
-	{(void *)A_FireShotgun2},
-	{(void *)A_CheckReload},
-	{(void *)A_OpenShotgun2},
-	{(void *)A_LoadShotgun2},
-	{(void *)A_CloseShotgun2},
-	{(void *)A_FireCGun},
-	{(void *)A_GunFlash},
-	{(void *)A_FireMissile},
-	{(void *)A_Saw},
-	{(void *)A_FirePlasma},
-	{(void *)A_BFGsound},
-	{(void *)A_FireBFG},
-	{(void *)A_BFGSpray},
-	{(void *)A_Explode},
-	{(void *)A_Pain},
-	{(void *)A_PlayerScream},
-	{(void *)A_NoBlocking},
-	{(void *)A_XScream},
-	{(void *)A_Look},
-	{(void *)A_Chase},
-	{(void *)A_FaceTarget},
-	{(void *)A_PosAttack},
-	{(void *)A_Scream},
-	{(void *)A_SPosAttack},
-	{(void *)A_VileChase},
-	{(void *)A_VileStart},
-	{(void *)A_VileTarget},
-	{(void *)A_VileAttack},
-	{(void *)A_StartFire},
-	{(void *)A_Fire},
-	{(void *)A_FireCrackle},
-	{(void *)A_Tracer},
-	{(void *)A_SkelWhoosh},
-	{(void *)A_SkelFist},
-	{(void *)A_SkelMissile},
-	{(void *)A_FatRaise},
-	{(void *)A_FatAttack1},
-	{(void *)A_FatAttack2},
-	{(void *)A_FatAttack3},
-	{(void *)A_BossDeath},
-	{(void *)A_CPosAttack},
-	{(void *)A_CPosRefire},
-	{(void *)A_TroopAttack},
-	{(void *)A_SargAttack},
-	{(void *)A_HeadAttack},
-	{(void *)A_BruisAttack},
-	{(void *)A_SkullAttack},
-	{(void *)A_Metal},
-	{(void *)A_SpidRefire},
-	{(void *)A_BabyMetal},
-	{(void *)A_BspiAttack},
-	{(void *)A_Hoof},
-	{(void *)A_CyberAttack},
-	{(void *)A_PainAttack},
-	{(void *)A_PainDie},
-	{(void *)A_KeenDie},
-	{(void *)A_BrainPain},
-	{(void *)A_BrainScream},
-	{(void *)A_BrainDie},
-	{(void *)A_BrainAwake},
-	{(void *)A_BrainSpit},
-	{(void *)A_SpawnSound},
-	{(void *)A_SpawnFly},
-	{(void *)A_BrainExplode},
-	{(void *)A_Die},
-	{(void *)A_Detonate},
-	{(void *)A_Mushroom},
+#define WEAPON(x)	{(void *)A_##x},
+#define ACTOR(x)	{(void *)A_##x},
+#include "d_dehackedactions.h"
 };
 
 // Miscellaneous info that used to be constant
@@ -270,6 +112,48 @@ DehInfo deh =
 	255,	// Rocket explosion style, 255=use cvar
 	FRACUNIT*2/3		// Rocket explosion alpha
 };
+
+// Doom identified pickup items by their sprites. ZDoom prefers to use their
+// class type to identify them instead. To support the traditional Doom
+// behavior, for every thing touched by dehacked that has the MF_PICKUP flag,
+// a new subclass of ADehackedPickup will be created with properties copied
+// from the original actor's defaults. The original actor is then changed to
+// spawn the new class.
+
+void A_SpawnDehackedPickup (AActor *);
+
+class ADehackedPickup : public AInventory
+{
+	DECLARE_ACTOR (ADehackedPickup, AInventory)
+	HAS_OBJECT_POINTERS
+public:
+	const char *PickupMessage ();
+	bool ShouldRespawn ();
+	bool TryPickup (AActor *toucher);
+	void PlayPickupSound (AActor *toucher);
+	void Hide ();
+	void Destroy ();
+private:
+	const TypeInfo *DetermineType ();
+	AInventory *RealPickup;
+};
+
+IMPLEMENT_POINTY_CLASS (ADehackedPickup)
+ DECLARE_POINTER (RealPickup)
+END_POINTERS
+
+FState ADehackedPickup::States[] =
+{
+	S_NORMAL(TNT1, 0, 0, NULL, &States[1]),
+	S_NORMAL(TNT1, 0, 0, A_SpawnDehackedPickup, NULL)
+};
+
+BEGIN_DEFAULTS (ADehackedPickup, Any, -1, 0)
+END_DEFAULTS
+
+TArray<TypeInfo *> DehackedPickups;
+TArray<TypeInfo *> TouchedActors;
+
 
 #define LINESIZE 2048
 
@@ -330,6 +214,8 @@ struct StateMapper
 {
 	FState *State;
 	int StateSpan;
+	const TypeInfo *Owner;
+	bool OwnerIsPickup;
 };
 
 static StateMapper *StateMap;
@@ -486,7 +372,7 @@ static int FindSprite (const char *sprname)
 	{
 		if (*((DWORD *)&sprites[i].name) == nameint)
 		{
-			return i;
+			return (int)i;
 		}
 	}
 	return -1;
@@ -504,6 +390,10 @@ static FState *FindState (int statenum)
 	{
 		if (stateacc <= statenum && stateacc + StateMap[i].StateSpan > statenum)
 		{
+			if (StateMap[i].OwnerIsPickup)
+			{
+				TouchedActors.Push (const_cast<TypeInfo *>(StateMap[i].Owner));
+			}
 			return StateMap[i].State + statenum - stateacc;
 		}
 		stateacc += StateMap[i].StateSpan;
@@ -788,7 +678,7 @@ static int PatchThing (int thingy)
 
 		if (HandleKey (keys, info, Line1, val))
 		{
-			int linelen = strlen (Line1);
+			size_t linelen = strlen (Line1);
 
 			if (linelen == 11 && stricmp (Line1, "Pain chance") == 0)
 			{
@@ -962,6 +852,12 @@ static int PatchThing (int thingy)
 					if (vchanged[1])
 					{
 						info->flags2 = value[1];
+						if (info->flags2 & MF2_BOUNCE1)
+						{ // If a bex patch specifies FLOORBOUNCE, also set
+						  // BOUNCE2, because otherwise it will get HERETICBOUNCE
+						  // instead of DOOMBOUNCE.
+							info->flags2 |= MF2_BOUNCE2;
+						}
 					}
 					if (vchanged[2])
 					{
@@ -981,8 +877,8 @@ static int PatchThing (int thingy)
 						else
 							info->renderflags &= ~RF_INVISIBLE;
 					}
-					DPrintf ("Bits: %d,%d (0x%08x,0x%08x)\n", info->flags, info->flags2,
-															  info->flags, info->flags2);
+					DPrintf ("Bits: %ld,%ld (0x%08lx,0x%08lx)\n", info->flags, info->flags2,
+															      info->flags, info->flags2);
 				}
 				else if (stricmp (Line1, "ID #") == 0)
 				{
@@ -1028,6 +924,11 @@ static int PatchThing (int thingy)
 		if (info->Speed < 256)
 		{
 			info->Speed <<= FRACBITS;
+		}
+
+		if (info->flags & MF_SPECIAL)
+		{
+			TouchedActors.Push (const_cast<TypeInfo *>(type));
 		}
 	}
 
@@ -1126,7 +1027,7 @@ static int PatchFrame (int frameNum)
 	while ((result = GetLine ()) == 1)
 	{
 		int val = atoi (Line2);
-		int keylen = strlen (Line1);
+		size_t keylen = strlen (Line1);
 
 		if (keylen == 8 && stricmp (Line1, "Duration") == 0)
 		{
@@ -1164,7 +1065,7 @@ static int PatchFrame (int frameNum)
 				{
 					if (memcmp (OrgSprNames[val], sprites[i].name, 4) == 0)
 					{
-						info->sprite.index = i;
+						info->sprite.index = (int)i;
 						break;
 					}
 				}
@@ -1480,6 +1381,10 @@ static int PatchMisc (int dummy)
 			{
 				deh.ExplosionAlpha = (fixed_t)(atof (Line2) * FRACUNIT);
 			}
+			else if (stricmp (Line1, "Monsters Ignore Each Other") == 0)
+			{
+				deh.Infight = atoi (Line2) ? -1 : 0;
+			}
 			else
 			{
 				Printf ("Unknown miscellaneous info %s.\n", Line2);
@@ -1488,7 +1393,14 @@ static int PatchMisc (int dummy)
 	}
 
 	// 0xDD means "enable infighting"
-	deh.Infight = deh.Infight == 0xDD ? 1 : 0;
+	if (deh.Infight == 0xDD)
+	{
+		deh.Infight = 1;
+	}
+	else if (deh.Infight != -1)
+	{
+		deh.Infight = 0;
+	}
 
 	return result;
 }
@@ -1769,7 +1681,7 @@ static int PatchStrings (int dummy)
 				(i >= OB_FRIENDLY1 && i <= OB_FRIENDLY4 &&
 				strstr (holdstring, "%k") == NULL))
 			{
-				int len = strlen (holdstring);
+				size_t len = strlen (holdstring);
 				memmove (holdstring+3, holdstring, len);
 				holdstring[0] = '%';
 				holdstring[1] = i <= OB_DEFAULT ? 'o' : 'k';
@@ -1940,14 +1852,14 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 	PatchFile[filelen] = 0;
 
 	dversion = pversion = -1;
-
+/*
 	if (gameinfo.gametype != GAME_Doom)
 	{
 		Printf ("DeHackEd/BEX patches are only supported for DOOM mode\n");
 		delete[] PatchFile;
 		return;
 	}
-
+*/
 	cont = 0;
 	if (!strncmp (PatchFile, "Patch File for DeHackEd v", 25))
 	{
@@ -2022,10 +1934,9 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 
 }
 
-static bool CompareLabel (const char *want, const BYTE *have)
+static inline bool CompareLabel (const char *want, const BYTE *have)
 {
-	return want[0] == have[0] && want[1] == have[1] &&
-		   want[2] == have[2] && want[3] == have[3];
+	return *(DWORD *)want == *(DWORD *)have;
 }
 
 static inline short GetWord (const BYTE *in)
@@ -2040,7 +1951,7 @@ static short *GetWordSpace (void *in, size_t size)
 
 	if ((size_t)in & 1)
 	{
-		ptr = (short *)Z_Malloc (size, PU_DEHACKED, NULL);
+		ptr = (short *)Z_Malloc (size*2, PU_DEHACKED, NULL);
 	}
 	else
 	{
@@ -2106,9 +2017,9 @@ static bool LoadDehSupp ()
 		else if (CompareLabel ("ACTF", supp))
 		{
 			NumCodePtrs = GetWord (supp + 4);
-			if ((unsigned)NumCodePtrs > sizeof(CodePtrs)/sizeof(CodePtrs[0]))
+			if ((unsigned)NumCodePtrs != sizeof(CodePtrs)/sizeof(CodePtrs[0]))
 			{
-				Printf ("DEHSUPP defines %d code pointers, but there are only %d\n",
+				Printf ("DEHSUPP defines %d code pointers, but there should be %d\n",
 					NumCodePtrs, sizeof(CodePtrs)/sizeof(CodePtrs[0]));
 				return false;
 			}
@@ -2188,6 +2099,8 @@ static bool LoadDehSupp ()
 						break;
 					}
 					StateMap[i].StateSpan = supp[6+i*4+3];
+					StateMap[i].Owner = type;
+					StateMap[i].OwnerIsPickup = (def->flags & MF_SPECIAL) != 0;
 				}
 			}
 			supp += 6 + NumStateMaps * 4;
@@ -2238,4 +2151,173 @@ static bool LoadDehSupp ()
 			return false;
 		}
 	}
+}
+
+void FinishDehPatch ()
+{
+	size_t touchedIndex;
+
+	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
+	{
+		TypeInfo *type = TouchedActors[touchedIndex];
+		AActor *defaults1 = GetDefaultByType (type);
+		if (!(defaults1->flags & MF_SPECIAL))
+		{ // We only need to do this for pickups
+			continue;
+		}
+
+		// Create a new class that will serve as the actual pickup
+		char typeNameBuilder[32];
+		sprintf (typeNameBuilder, "ADehackedPickup%d", touchedIndex);
+		TypeInfo *subclass = RUNTIME_CLASS(ADehackedPickup)->CreateDerivedClass
+			(copystring(typeNameBuilder), sizeof(ADehackedPickup));
+		AActor *defaults2 = GetDefaultByType (subclass);
+		memcpy (defaults2, defaults1, sizeof(AActor));
+		subclass->ActorInfo->GameFilter = type->ActorInfo->GameFilter;
+		subclass->ActorInfo->SpawnID = type->ActorInfo->SpawnID;
+		subclass->ActorInfo->DoomEdNum = type->ActorInfo->DoomEdNum;
+
+		// Alter the original class so that it just spawns the new one
+		//memcpy (defaults1, GetDefault<AActor>(), sizeof(AActor));
+		defaults1->SpawnState = &ADehackedPickup::States[0];
+		defaults1->flags = 0;
+		defaults1->flags2 = 0;
+		defaults1->flags3 = 0;
+		defaults1->health = DehackedPickups.Push (subclass);
+		type->ActorInfo->SpawnID = 0;
+		type->ActorInfo->DoomEdNum = -1;
+
+		DPrintf ("%s replaces %s\n", subclass->Name, type->Name);
+	}
+}
+
+void A_SpawnDehackedPickup (AActor *actor)
+{
+	if ((size_t)actor->health < DehackedPickups.Size())
+	{
+		Spawn (DehackedPickups[actor->health], actor->x, actor->y, actor->z);
+	}
+}
+
+bool ADehackedPickup::TryPickup (AActor *toucher)
+{
+	const TypeInfo *type = DetermineType ();
+	if (type == NULL)
+	{
+		return false;
+	}
+	RealPickup = static_cast<AInventory *>(Spawn (type, x, y, z));
+	if (!RealPickup->TryPickup (toucher))
+	{
+		RealPickup->Destroy ();
+		RealPickup = NULL;
+		return false;
+	}
+	return true;
+}
+
+const char *ADehackedPickup::PickupMessage ()
+{
+	return RealPickup->PickupMessage ();
+}
+
+bool ADehackedPickup::ShouldRespawn ()
+{
+	return RealPickup->ShouldRespawn ();
+}
+
+void ADehackedPickup::PlayPickupSound (AActor *toucher)
+{
+	RealPickup->PlayPickupSound (toucher);
+}
+
+void ADehackedPickup::Hide ()
+{
+	if (RealPickup != NULL)
+	{
+		RealPickup->Destroy ();
+		RealPickup = NULL;
+	}
+	Super::Hide ();
+}
+
+void ADehackedPickup::Destroy ()
+{
+	if (RealPickup != NULL)
+	{
+		RealPickup->Destroy ();
+		RealPickup = NULL;
+	}
+	Super::Destroy ();
+}
+
+const TypeInfo *ADehackedPickup::DetermineType ()
+{
+	// Look at the actor's current sprite to determine what kind of
+	// item to pretend to me.
+	static const struct
+	{
+		const char *Sprite;
+		const char *ClassName;
+	}
+	mappings[] = {
+	{ "AMMO", "ClipBox" },
+	{ "ARM1", "GreenArmor" },
+	{ "ARM2", "BlueArmor" },
+	{ "BFUG", "BFG9000" },
+	{ "BKEY", "BlueCard" },
+	{ "BON1", "HealthBonus" },
+	{ "BON2", "ArmorBonus" },
+	{ "BPAK", "Backpack" },
+	{ "BROK", "RocketBox" },
+	{ "BSKU", "BlueSkull" },
+	{ "CELL", "Cell" },
+	{ "CELP", "CellPack" },
+	{ "CLIP", "Clip" },
+	{ "CSAW", "Chainsaw" },
+	{ "LAUN", "RocketLauncher" },
+	{ "MEDI", "Medikit" },
+	{ "MEGA", "Megasphere" },
+	{ "MGUN", "Chaingun" },
+	{ "PINS", "BlurSphere" },
+	{ "PINV", "InvulnerabilitySphere" },
+	{ "PLAS", "PlasmaRifle" },
+	{ "PMAP", "Allmap" },
+	{ "PSTR", "Berserk" },
+	{ "PVIS", "Infrared" },
+	{ "RKEY", "RedCard" },
+	{ "ROCK", "RocketAmmo" },
+	{ "RSKU", "RedSkull" },
+	{ "SBOX", "ShellBox" },
+	{ "SGN2", "SuperShotgun" },
+	{ "SHEL", "Shell" },
+	{ "SHOT", "Shotgun" },
+	{ "SOUL", "Soulsphere" },
+	{ "STIM", "Stimpack" },
+	{ "SUIT", "RadSuit" },
+	{ "YKEY", "YellowCard" },
+	{ "YSKU", "YellowSkull" }
+	};
+
+	int min = 0;
+	int max = sizeof(mappings)/sizeof(mappings[0]) - 1;
+
+	while (min <= max)
+	{
+		int mid = (min + max) / 2;
+		int lex = memcmp (mappings[mid].Sprite, sprites[sprite].name, 4);
+		if (lex == 0)
+		{
+			return TypeInfo::FindType (mappings[mid].ClassName);
+		}
+		else if (lex < 0)
+		{
+			min = mid + 1;
+		}
+		else
+		{
+			max = mid - 1;
+		}
+	}
+	return NULL;
 }

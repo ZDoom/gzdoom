@@ -93,8 +93,8 @@ struct FActionMap
 	char			Name[12];
 };
 
-static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char *name, int namelen);
-static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, int namelen, FConsoleCommand **prev);
+static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char *name, size_t namelen);
+static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, size_t namelen, FConsoleCommand **prev);
 
 FConsoleCommand *Commands[HASH_SIZE];
 
@@ -228,7 +228,7 @@ unsigned int MakeKey (const char *s)
 	return key ^ 0xffffffff;
 }
 
-unsigned int MakeKey (const char *s, int len)
+unsigned int MakeKey (const char *s, size_t len)
 {
 	if (len == 0)
 	{
@@ -637,7 +637,7 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 	{
 		*argc = count;
 	}
-	return (long)buffplace;
+	return (long)(buffplace - (char *)0);
 }
 
 FCommandLine::FCommandLine (const char *commandline)
@@ -676,7 +676,7 @@ char *FCommandLine::operator[] (int i)
 	return _argv[i];
 }
 
-static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, int namelen, FConsoleCommand **prev)
+static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, size_t namelen, FConsoleCommand **prev)
 {
 	int comp;
 
@@ -695,7 +695,7 @@ static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *na
 	return NULL;
 }
 
-static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char *name, int namelen)
+static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char *name, size_t namelen)
 {
 	FConsoleCommand *dummy;
 
@@ -788,7 +788,8 @@ void FConsoleCommand::Run (FCommandLine &argv, AActor *instigator, int key)
 }
 
 FConsoleAlias::FConsoleAlias (const char *name, const char *command)
-	: FConsoleCommand (name, NULL)
+	: FConsoleCommand (name, NULL),
+	  bRunning (false), bKill (false)
 {
 	m_Command = copystring (command);
 }
@@ -841,14 +842,19 @@ static int DumpHash (FConsoleCommand **table, BOOL aliases)
 		cmd = table[bucket];
 		while (cmd)
 		{
-			count++;
 			if (cmd->IsAlias())
 			{
 				if (aliases)
+				{
+					++count;
 					static_cast<FConsoleAlias *>(cmd)->PrintAlias ();
+				}
 			}
 			else if (!aliases)
+			{
+				++count;
 				cmd->PrintCommand ();
+			}
 			cmd = cmd->m_Next;
 		}
 	}
@@ -891,7 +897,7 @@ void C_SetAlias (const char *name, const char *cmd)
 	{
 		if (!alias->IsAlias ())
 		{
-			//Printf_Bold ("%s is a command and cannot be an alias.\n", name);
+			//Printf (PRINT_BOLD, "%s is a command and cannot be an alias.\n", name);
 			return;
 		}
 		delete alias;
@@ -919,7 +925,7 @@ CCMD (alias)
 			{
 				if (alias->IsAlias ())
 				{
-					delete alias;
+					static_cast<FConsoleAlias *> (alias)->SafeDelete ();
 				}
 				else
 				{
@@ -936,15 +942,16 @@ CCMD (alias)
 				if (alias->IsAlias ())
 				{
 					static_cast<FConsoleAlias *> (alias)->Realias (argv[2]);
-					delete alias;
 				}
 				else
 				{
 					Printf ("%s is a normal command\n", alias->m_Name);
-					return;
 				}
 			}
-			new FConsoleAlias (argv[1], argv[2]);
+			else
+			{
+				new FConsoleAlias (argv[1], argv[2]);
+			}
 		}
 	}
 }
@@ -1015,7 +1022,9 @@ void FConsoleAlias::Run (FCommandLine &args, AActor *m_Instigator, int key)
 {
 	char *mycommand = m_Command;
 	m_Command = NULL;
+	bRunning = true;
 	AddCommandString (mycommand, key);
+	bRunning = false;
 	if (m_Command != NULL)
 	{ // The alias realiased itself, so delete the memory used by this command.
 		delete[] mycommand;
@@ -1023,6 +1032,10 @@ void FConsoleAlias::Run (FCommandLine &args, AActor *m_Instigator, int key)
 	else
 	{ // The alias is unchanged, so put the command back so it can be used again.
 		m_Command = mycommand;
+	}
+	if (bKill)
+	{ // The alias wants to remove itself
+		delete this;
 	}
 }
 
@@ -1033,6 +1046,19 @@ void FConsoleAlias::Realias (const char *command)
 		delete[] m_Command;
 	}
 	m_Command = copystring (command);
+	bKill = false;
+}
+
+void FConsoleAlias::SafeDelete ()
+{
+	if (!bRunning)
+	{
+		delete this;
+	}
+	else
+	{
+		bKill = true;
+	}
 }
 
 extern void D_AddFile (const char *file);

@@ -49,6 +49,7 @@ public:
 	void ArchiveGlobalData ();
 	void ArchiveGameData (const char *gamename);
 	void AddAutoexec (DArgs *list, const char *gamename);
+	char *GetConfigPath (bool tryProg);
 
 protected:
 	void WriteCommentHeader (FILE *file) const;
@@ -56,10 +57,10 @@ protected:
 private:
 	static void MigrateStub (const char *pathname, FConfigFile *config, void *userdata);
 
-	char *GetConfigPath ();
 	void MigrateOldConfig ();
 	void SetRavenDefaults (bool isHexen);
 	void ReadCVars (DWORD flags);
+	void SetupWeaponList (const char *gamename);
 
 	bool bMigrating;
 };

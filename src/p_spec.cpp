@@ -68,6 +68,9 @@
 // [RH] Needed for sky scrolling
 #include "r_sky.h"
 
+static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
+static FRandom pr_animatepictures ("AnimatePics");
+
 IMPLEMENT_CLASS (DScroller)
 
 IMPLEMENT_POINTY_CLASS (DPusher)
@@ -486,90 +489,132 @@ BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote)
 	if (p == NULL)
 		return false;
 
-	int msg;
+	int msg = 0;
+	bool keynameonly = false;
 	BOOL equiv = lock & 0x80;
 	int i;
 
 	lock = (keyspecialtype_t)(lock & 0x7f);
 
-	static const struct
+	if (gameinfo.gametype == GAME_Hexen)
 	{
-		keyspecialtype_t Lock;
-		WORD ItemNum;
-		WORD ObjText, EquivText, UniqueText;
-	}
-	KeyChecks[6] =
-	{
-		{ BCard,	it_bluecard,	PD_BLUEO,	PD_BLUEK,	PD_BLUEC },
-		{ BSkull,	it_blueskull,	PD_BLUEO,	PD_BLUEK,	PD_BLUES },
-		{ RCard,	it_redcard,		PD_REDO,	PD_REDK,	PD_REDC },
-		{ RSkull,	it_redskull,	PD_REDO,	PD_REDK,	PD_REDS },
-		{ YCard,	it_yellowcard,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWC },
-		{ YSkull,	it_yellowskull,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWS }
-	};
-
-	BYTE HaveKeys[6];
-
-	// First, catalog the keys the player has
-	for (i = 0; i < 6; i++)
-	{
-		HaveKeys[i] = p->keys[KeyChecks[i].ItemNum];
-	}
-	if (equiv || gameinfo.gametype == GAME_Heretic)
-	{
-		for (i = 0; i < 3; i++)
+		if (lock == AnyKey)
 		{
-			HaveKeys[2*i] = HaveKeys[2*i+1] = HaveKeys[2*i] | HaveKeys[2*i+1];
+			for (i = 0; i < NUMKEYS; ++i)
+			{
+				if (p->keys[i])
+				{
+					return true;
+				}
+			}
+			msg = PD_ANY;
+		}/* Hexen has so many keys, I don't know if I should allow this
+		else if (lock == AllKeys)
+		{
+			for (i = 0; i < NUMKEYS; ++i)
+			{
+				if (!p->keys[i])
+				{
+					break;
+				}
+			}
+			if (i == NUMKEYS)
+			{
+				return true;
+			}
+			msg = PD_ALL12;
+		}*/
+		else if ((unsigned)lock <= NUMKEYS)
+		{
+			if (p->keys[lock-1])
+			{
+				return true;
+			}
+			msg = TXT_KEY_STEEL+lock-1;
+			keynameonly = true;
 		}
 	}
-	if (gameinfo.gametype != GAME_Doom)
-		remote = false;
-
-	switch (lock)
+	else
 	{
-	case AnyKey:
+		static const struct
+		{
+			keyspecialtype_t Lock;
+			WORD ItemNum;
+			WORD ObjText, EquivText, UniqueText;
+		}
+		KeyChecks[6] =
+		{
+			{ BCard,	it_bluecard,	PD_BLUEO,	PD_BLUEK,	PD_BLUEC },
+			{ BSkull,	it_blueskull,	PD_BLUEO,	PD_BLUEK,	PD_BLUES },
+			{ RCard,	it_redcard,		PD_REDO,	PD_REDK,	PD_REDC },
+			{ RSkull,	it_redskull,	PD_REDO,	PD_REDK,	PD_REDS },
+			{ YCard,	it_yellowcard,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWC },
+			{ YSkull,	it_yellowskull,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWS }
+		};
+
+		BYTE HaveKeys[6];
+
+		// First, catalog the keys the player has
 		for (i = 0; i < 6; i++)
 		{
+			HaveKeys[i] = p->keys[KeyChecks[i].ItemNum];
+		}
+		if (equiv || gameinfo.gametype == GAME_Heretic)
+		{
+			for (i = 0; i < 3; i++)
+			{
+				HaveKeys[2*i] = HaveKeys[2*i+1] = HaveKeys[2*i] | HaveKeys[2*i+1];
+			}
+		}
+		if (gameinfo.gametype != GAME_Doom)
+			remote = false;
+
+		switch (lock)
+		{
+		case AnyKey:
+			for (i = 0; i < 6; i++)
+			{
+				if (HaveKeys[i])
+				{
+					return true;
+				}
+			}
+			msg = PD_ANY;
+			break;
+
+		case AllKeys:
+			for (i = 0; i < 6; i++)
+			{
+				if (!HaveKeys[i])
+				{
+					msg = equiv ? PD_ALL3 : PD_ALL6;
+					break;
+				}
+			}
+			if (i == 6)
+			{ // Got all the keys
+				return true;
+			}
+			break;
+
+		default:
+			for (i = 0; i < 6; i++)
+			{
+				if (KeyChecks[i].Lock == lock)
+					break;
+			}
+			if (i == 6)
+			{ // Unknown key; assume we do not have it
+				return false;
+			}
 			if (HaveKeys[i])
 			{
 				return true;
 			}
+			msg = equiv ? (remote ? KeyChecks[i].ObjText : KeyChecks[i].EquivText)
+				: KeyChecks[i].UniqueText;
+			break;
 		}
-		msg = PD_ANY;
-		break;
-
-	case AllKeys:
-		for (i = 0; i < 6; i++)
-		{
-			if (!HaveKeys[i])
-			{
-				msg = equiv ? PD_ALL3 : PD_ALL6;
-				break;
-			}
-		}
-		if (i == 6)
-		{ // Got all the keys
-			return true;
-		}
-		break;
-
-	default:
-		for (i = 0; i < 6; i++)
-		{
-			if (KeyChecks[i].Lock == lock)
-				break;
-		}
-		if (i == 6)
-		{ // Unknown key; assume we do not have it
-			return false;
-		}
-		if (HaveKeys[i])
-		{
-			return true;
-		}
-		msg = equiv ? (remote ? KeyChecks[i].ObjText : KeyChecks[i].EquivText)
-			: KeyChecks[i].UniqueText;
-		break;
 	}
 
 	// If we get here, we don't have the right key,
@@ -586,7 +631,16 @@ BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote)
 			else if (msg == PD_YELLOWK)
 				msg = TXT_NEEDYELLOWKEY;
 		}
-		C_MidPrint (GStrings(msg));
+		if (!keynameonly)
+		{
+			C_MidPrint (GStrings(msg));
+		}
+		else
+		{
+			char msg2[256];
+			sprintf (msg2, "YOU NEED THE %s\n", GStrings(msg));
+			C_MidPrint (msg2);
+		}
 	}
 	return false;
 }
@@ -754,7 +808,7 @@ void P_PlayerInSpecialSector (player_t *player)
 		case dLight_Strobe_Hurt:
 			// STROBE HURT
 			if (!player->powers[pw_ironfeet]
-				|| (P_Random (pr_playerinspecialsector)<5) )
+				|| (pr_playerinspecialsector()<5) )
 			{
 				if (!(level.time&0x1f))
 					P_DamageMobj (player->mo, NULL, NULL, 20, MOD_SLIME);
@@ -813,7 +867,7 @@ void P_PlayerInSpecialSector (player_t *player)
 			break;
 		case 0x300: // 10/20 damage per 31 ticks
 			if (!player->powers[pw_ironfeet]
-				|| (P_Random(pr_playerinspecialsector)<5))	// take damage even with suit
+				|| (pr_playerinspecialsector()<5))	// take damage even with suit
 			{
 				if (!(level.time&0x1f))
 					P_DamageMobj (player->mo, NULL, NULL, 20, MOD_SLIME);
@@ -832,7 +886,7 @@ void P_PlayerInSpecialSector (player_t *player)
 		}
 		else if (sector->damage < 50)
 		{
-			if ((!player->powers[pw_ironfeet] || (P_Random(pr_playerinspecialsector)<5))
+			if ((!player->powers[pw_ironfeet] || (pr_playerinspecialsector()<5))
 				 && !(level.time&0x1f))
 			{
 				P_DamageMobj (player->mo, NULL, NULL, sector->damage, sector->mod);
@@ -933,7 +987,7 @@ void P_UpdateSpecials ()
 			if (anim->speedmin[speedframe] == anim->speedmax[speedframe])
 				anim->countdown = anim->speedmin[speedframe];
 			else
-				anim->countdown = P_Random(pr_animatepictures) %
+				anim->countdown = pr_animatepictures() %
 					(anim->speedmax[speedframe] - anim->speedmin[speedframe]) +
 					anim->speedmin[speedframe];
 		}
@@ -1336,10 +1390,7 @@ void P_SpawnSpecials (void)
 		}
 
 	// [RH] Start running any open scripts on this map
-	if (level.behavior != NULL)
-	{
-		level.behavior->StartTypedScripts (SCRIPT_Open, NULL);
-	}
+	FBehavior::StaticStartTypedScripts (SCRIPT_Open, NULL);
 }
 
 // killough 2/28/98:

@@ -18,7 +18,6 @@ IMPLEMENT_POINTY_CLASS (DCajunMaster)
  DECLARE_POINTER (getspawned)
  DECLARE_POINTER (botinfo)
  DECLARE_POINTER (firstthing)
-// DECLARE_POINTER (things)
  DECLARE_POINTER (body1)
  DECLARE_POINTER (body2)
 END_POINTERS
@@ -50,7 +49,7 @@ CCMD (addbot)
 		bglobal.SpawnBot (NULL);
 }
 
-void DCajunMaster::ClearPlayer (int i)
+void DCajunMaster::ClearPlayer (int i, bool keepTeam)
 {
 	if (players[i].mo)
 	{
@@ -61,7 +60,10 @@ void DCajunMaster::ClearPlayer (int i)
 	while (bot && stricmp (players[i].userinfo.netname, bot->name))
 		bot = bot->next;
 	if (bot)
+	{
 		bot->inuse = false;
+		bot->lastteam = keepTeam ? players[i].userinfo.team : TEAM_None;
+	}
 	memset (&players[i], 0, sizeof(player_t));
 	playeringame[i] = false;
 }

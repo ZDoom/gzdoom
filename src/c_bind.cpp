@@ -179,8 +179,8 @@ const char *KeyNames[NUM_KEYS] =
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		"pause",	//F8
 
 	// non-keyboard buttons that can be bound
-	"mouse1",	"mouse2",	"mouse3",	"mouse4",		// 6 mouse buttons
-	"mouse5",	"mouse6",	"mwheelup",	"mwheeldown",	// and the wheel
+	"mouse1",	"mouse2",	"mouse3",	"mouse4",		// 8 mouse buttons
+	"mouse5",	"mouse6",	"mouse7",	"mouse8",
 	"joy1",		"joy2",		"joy3",		"joy4",			// 32 joystick buttons
 	"joy5",		"joy6",		"joy7",		"joy8",
 	"joy9",		"joy10",	"joy11",	"joy12",
@@ -188,7 +188,8 @@ const char *KeyNames[NUM_KEYS] =
 	"joy17",	"joy18",	"joy19",	"joy20",
 	"joy21",	"joy22",	"joy23",	"joy24",
 	"joy25",	"joy26",	"joy27",	"joy28",
-	"joy29",	"joy30",	"joy31",	"joy32"
+	"joy29",	"joy30",	"joy31",	"joy32",
+	"mwheelup",	"mwheeldown",							// the mouse wheel
 };
 
 static char *Bindings[NUM_KEYS];

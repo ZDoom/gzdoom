@@ -6,6 +6,12 @@
 #include "p_enemy.h"
 #include "gstrings.h"
 #include "a_action.h"
+#include "a_doomglobal.h"
+
+static FRandom pr_posattack ("PosAttack");
+static FRandom pr_sposattack ("SPosAttack");
+static FRandom pr_cposattack ("CPosAttack");
+static FRandom pr_cposrefire ("CPosRefire");
 
 void A_PosAttack (AActor *);
 void A_SPosAttackUseAtkSound (AActor *);
@@ -129,11 +135,12 @@ void A_PosAttack (AActor *self)
 				
 	A_FaceTarget (self);
 	angle = self->angle;
+	PuffType = RUNTIME_CLASS(ABulletPuff);
 	slope = P_AimLineAttack (self, angle, MISSILERANGE);
 
 	S_Sound (self, CHAN_WEAPON, "grunt/attack", 1, ATTN_NORM);
-	angle += PS_Random (pr_posattack) << 20;
-	damage = ((P_Random (pr_posattack)%5)+1)*3;
+	angle += pr_posattack.Random2() << 20;
+	damage = ((pr_posattack()%5)+1)*3;
 	P_LineAttack (self, angle, MISSILERANGE, slope, damage);
 }
 
@@ -264,12 +271,13 @@ static void A_SPosAttack2 (AActor *self)
 		
 	A_FaceTarget (self);
 	bangle = self->angle;
+	PuffType = RUNTIME_CLASS(ABulletPuff);
 	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
 	for (i=0 ; i<3 ; i++)
     {
-		int angle = bangle + (PS_Random (pr_sposattack) << 20);
-		int damage = ((P_Random (pr_sposattack)%5)+1)*3;
+		int angle = bangle + (pr_sposattack.Random2() << 20);
+		int damage = ((pr_sposattack()%5)+1)*3;
 		P_LineAttack(self, angle, MISSILERANGE, slope, damage);
     }
 }
@@ -527,19 +535,20 @@ void A_CPosAttack (AActor *self)
 	S_SoundID (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
 	A_FaceTarget (self);
 	bangle = self->angle;
+	PuffType = RUNTIME_CLASS(ABulletPuff);
 	slope = P_AimLineAttack (self, bangle, MISSILERANGE);
 
-	angle = bangle + (PS_Random (pr_cposattack) << 20);
-	damage = ((P_Random (pr_cposattack)%5)+1)*3;
+	angle = bangle + (pr_cposattack.Random2() << 20);
+	damage = ((pr_cposattack()%5)+1)*3;
 	P_LineAttack (self, angle, MISSILERANGE, slope, damage);
 }
 
 void A_CPosRefire (AActor *self)
-{		
+{
 	// keep firing unless target got out of sight
 	A_FaceTarget (self);
 
-	if (P_Random (pr_cposrefire) < 40)
+	if (pr_cposrefire() < 40)
 		return;
 
 	if (!self->target

@@ -54,7 +54,7 @@ class AGreenArmor : public AArmor
 public:
 	virtual bool TryPickup (AActor *toucher)
 	{
-		return P_GiveArmor (toucher->player, (armortype_t)deh.GreenAC, 100*deh.GreenAC);
+		return P_GiveArmor (toucher->player, (armortype_t)-deh.GreenAC, 100*deh.GreenAC);
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -93,7 +93,7 @@ class ABlueArmor : public AArmor
 public:
 	virtual bool TryPickup (AActor *toucher)
 	{
-		return P_GiveArmor (toucher->player, (armortype_t)deh.BlueAC, 100*deh.BlueAC);
+		return P_GiveArmor (toucher->player, (armortype_t)-deh.BlueAC, 100*deh.BlueAC);
 	}
 protected:
 	virtual const char *PickupMessage ()

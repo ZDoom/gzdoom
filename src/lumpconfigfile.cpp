@@ -68,7 +68,7 @@ char *FLumpConfigFile::ReadLine (char *string, int n, void *file) const
 
 	n--;
 	if (state->pos + n > state->end)
-		n = state->end - state->pos;
+		n = (int)(state->end - state->pos);
 
 	while (len < n && pos[n] != '\n')
 		n++;

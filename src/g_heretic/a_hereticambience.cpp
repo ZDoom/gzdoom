@@ -3,6 +3,8 @@
 #include "s_sound.h"
 #include "m_random.h"
 
+static FRandom pr_afx ("AFX");
+
 // Scripted ambients --------------------------------------------------------
 
 enum
@@ -15,129 +17,129 @@ enum
 	afxcmd_end			// ()
 };
 
-static long AmbSndSeqInit[] =
+static ptrdiff_t AmbSndSeqInit[] =
 { // Startup
 	afxcmd_end
 };
-static long AmbSndSeq1[] =
+static ptrdiff_t AmbSndSeq1[] =
 { // Scream
-	afxcmd_play, (long)"world/amb1",
+	afxcmd_play, (ptrdiff_t)"world/amb1",
 	afxcmd_end
 };
-static long AmbSndSeq2[] =
+static ptrdiff_t AmbSndSeq2[] =
 { // Squish
-	afxcmd_play, (long)"world/amb2",
+	afxcmd_play, (ptrdiff_t)"world/amb2",
 	afxcmd_end
 };
-static long AmbSndSeq3[] =
+static ptrdiff_t AmbSndSeq3[] =
 { // Drops
-	afxcmd_play, (long)"world/amb3",
+	afxcmd_play, (ptrdiff_t)"world/amb3",
 	afxcmd_delay, 16,
 	afxcmd_delayrand, 31,
-	afxcmd_play, (long)"world/amb7",
+	afxcmd_play, (ptrdiff_t)"world/amb7",
 	afxcmd_delay, 16,
 	afxcmd_delayrand, 31,
-	afxcmd_play, (long)"world/amb3",
+	afxcmd_play, (ptrdiff_t)"world/amb3",
 	afxcmd_delay, 16,
 	afxcmd_delayrand, 31,
-	afxcmd_play, (long)"world/amb7",
+	afxcmd_play, (ptrdiff_t)"world/amb7",
 	afxcmd_delay, 16,
 	afxcmd_delayrand, 31,
-	afxcmd_play, (long)"world/amb3",
+	afxcmd_play, (ptrdiff_t)"world/amb3",
 	afxcmd_delay, 16,
 	afxcmd_delayrand, 31,
-	afxcmd_play, (long)"world/amb7",
+	afxcmd_play, (ptrdiff_t)"world/amb7",
 	afxcmd_delay, 16,
 	afxcmd_delayrand, 31,
 	afxcmd_end
 };
-static long AmbSndSeq4[] =
+static ptrdiff_t AmbSndSeq4[] =
 { // SlowFootSteps
-	afxcmd_play, (long)"world/amb4",
+	afxcmd_play, (ptrdiff_t)"world/amb4",
 	afxcmd_delay, 15,
-	afxcmd_playrelvol, (long)"world/amb11", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb11", -3,
 	afxcmd_delay, 15,
-	afxcmd_playrelvol, (long)"world/amb4", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb4", -3,
 	afxcmd_delay, 15,
-	afxcmd_playrelvol, (long)"world/amb11", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb11", -3,
 	afxcmd_delay, 15,
-	afxcmd_playrelvol, (long)"world/amb4", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb4", -3,
 	afxcmd_delay, 15,
-	afxcmd_playrelvol, (long)"world/amb11", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb11", -3,
 	afxcmd_delay, 15,
-	afxcmd_playrelvol, (long)"world/amb4", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb4", -3,
 	afxcmd_delay, 15,
-	afxcmd_playrelvol, (long)"world/amb11", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb11", -3,
 	afxcmd_end
 };
-static long AmbSndSeq5[] =
+static ptrdiff_t AmbSndSeq5[] =
 { // Heartbeat
-	afxcmd_play, (long)"world/amb5",
+	afxcmd_play, (ptrdiff_t)"world/amb5",
 	afxcmd_delay, 35,
-	afxcmd_play, (long)"world/amb5",
+	afxcmd_play, (ptrdiff_t)"world/amb5",
 	afxcmd_delay, 35,
-	afxcmd_play, (long)"world/amb5",
+	afxcmd_play, (ptrdiff_t)"world/amb5",
 	afxcmd_delay, 35,
-	afxcmd_play, (long)"world/amb5",
+	afxcmd_play, (ptrdiff_t)"world/amb5",
 	afxcmd_end
 };
-static long AmbSndSeq6[] =
+static ptrdiff_t AmbSndSeq6[] =
 { // Bells
-	afxcmd_play, (long)"world/amb6",
+	afxcmd_play, (ptrdiff_t)"world/amb6",
 	afxcmd_delay, 17,
-	afxcmd_playrelvol, (long)"world/amb6", -8,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb6", -8,
 	afxcmd_delay, 17,
-	afxcmd_playrelvol, (long)"world/amb6", -8,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb6", -8,
 	afxcmd_delay, 17,
-	afxcmd_playrelvol, (long)"world/amb6", -8,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb6", -8,
 	afxcmd_end
 };
-static long AmbSndSeq7[] =
+static ptrdiff_t AmbSndSeq7[] =
 { // Growl
-	afxcmd_play, (long)"world/amb12",
+	afxcmd_play, (ptrdiff_t)"world/amb12",
 	afxcmd_end
 };
-static long AmbSndSeq8[] =
+static ptrdiff_t AmbSndSeq8[] =
 { // Magic
-	afxcmd_play, (long)"world/amb8",
+	afxcmd_play, (ptrdiff_t)"world/amb8",
 	afxcmd_end
 };
-static long AmbSndSeq9[] =
+static ptrdiff_t AmbSndSeq9[] =
 { // Laughter
-	afxcmd_play, (long)"world/amb9",
+	afxcmd_play, (ptrdiff_t)"world/amb9",
 	afxcmd_delay, 16,
-	afxcmd_playrelvol, (long)"world/amb9", -4,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb9", -4,
 	afxcmd_delay, 16,
-	afxcmd_playrelvol, (long)"world/amb9", -4,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb9", -4,
 	afxcmd_delay, 16,
-	afxcmd_playrelvol, (long)"world/amb10", -4,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb10", -4,
 	afxcmd_delay, 16,
-	afxcmd_playrelvol, (long)"world/amb10", -4,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb10", -4,
 	afxcmd_delay, 16,
-	afxcmd_playrelvol, (long)"world/amb10", -4,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb10", -4,
 	afxcmd_end
 };
-static long AmbSndSeq10[] =
+static ptrdiff_t AmbSndSeq10[] =
 { // FastFootsteps
-	afxcmd_play, (long)"world/amb4",
+	afxcmd_play, (ptrdiff_t)"world/amb4",
 	afxcmd_delay, 8,
-	afxcmd_playrelvol, (long)"world/amb11", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb11", -3,
 	afxcmd_delay, 8,
-	afxcmd_playrelvol, (long)"world/amb4", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb4", -3,
 	afxcmd_delay, 8,
-	afxcmd_playrelvol, (long)"world/amb11", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb11", -3,
 	afxcmd_delay, 8,
-	afxcmd_playrelvol, (long)"world/amb4", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb4", -3,
 	afxcmd_delay, 8,
-	afxcmd_playrelvol, (long)"world/amb11", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb11", -3,
 	afxcmd_delay, 8,
-	afxcmd_playrelvol, (long)"world/amb4", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb4", -3,
 	afxcmd_delay, 8,
-	afxcmd_playrelvol, (long)"world/amb11", -3,
+	afxcmd_playrelvol, (ptrdiff_t)"world/amb11", -3,
 	afxcmd_end
 };
 
-static long *BaseAmbientSfx[] =
+static ptrdiff_t *BaseAmbientSfx[] =
 {
 	AmbSndSeqInit,
 	AmbSndSeq1,		// Scream
@@ -163,17 +165,17 @@ class AScriptedAmbientMaster : public AActor
 public:
 	void BeginPlay ();
 	void Tick ();
-	void AddAmbient (int sfx);
+	void AddAmbient (size_t sfx);
 
 	void Serialize (FArchive &arc);
 protected:
-	long *AmbientSfx;
-	long *AmbSfxPtr;
-	int AmbSfxTics;
+	ptrdiff_t *AmbientSfx;
+	ptrdiff_t *AmbSfxPtr;
+	ptrdiff_t AmbSfxTics;
 	float AmbSfxVolume;
-	TArray<long *> LevelAmbientSfx;
+	TArray<ptrdiff_t *> LevelAmbientSfx;
 private:
-	byte LocateSfx (long *ptr);
+	byte LocateSfx (ptrdiff_t *ptr);
 };
 
 IMPLEMENT_STATELESS_ACTOR (AScriptedAmbientMaster, Heretic, -1, 0)
@@ -193,10 +195,10 @@ void AScriptedAmbientMaster::Serialize (FArchive &arc)
 	if (arc.IsStoring ())
 	{
 		seq = LocateSfx (AmbientSfx);
-		ofs = (AmbSfxPtr && AmbientSfx) ? AmbSfxPtr - AmbientSfx : 255;
+		ofs = (AmbSfxPtr && AmbientSfx) ? (BYTE)(AmbSfxPtr - AmbientSfx) : 255;
 		arc << seq << ofs;
 
-		arc.WriteCount (LevelAmbientSfx.Size ());
+		arc.WriteCount ((DWORD)LevelAmbientSfx.Size ());
 		for (i = 0; i < LevelAmbientSfx.Size (); i++)
 		{
 			seq = LocateSfx (LevelAmbientSfx[i]);
@@ -224,21 +226,21 @@ void AScriptedAmbientMaster::Serialize (FArchive &arc)
 			arc << seq;
 			if (seq < NUMSNDSEQ)
 			{
-				long *ptr = BaseAmbientSfx[seq];
+				ptrdiff_t *ptr = BaseAmbientSfx[seq];
 				LevelAmbientSfx.Push (ptr);
 			}
 		}
 	}
 }
 
-byte AScriptedAmbientMaster::LocateSfx (long *ptr)
+byte AScriptedAmbientMaster::LocateSfx (ptrdiff_t *ptr)
 {
 	size_t i;
 
-	for (i = 0; i < NUMSNDSEQ; i++)
+	for (i = 0; i < NUMSNDSEQ; ++i)
 	{
 		if (BaseAmbientSfx[i] == ptr)
-			return i;
+			return (BYTE)i;
 	}
 	return 255;
 }
@@ -252,12 +254,12 @@ void AScriptedAmbientMaster::BeginPlay ()
 	LevelAmbientSfx.Clear ();
 }
 
-void AScriptedAmbientMaster::AddAmbient (int sfx)
+void AScriptedAmbientMaster::AddAmbient (size_t sfx)
 {
-	if ((unsigned)sfx >= NUMSNDSEQ)
+	if (sfx >= NUMSNDSEQ)
 		return;
 
-	long *ptr = BaseAmbientSfx[sfx];
+	ptrdiff_t *ptr = BaseAmbientSfx[sfx];
 
 	LevelAmbientSfx.Push (ptr);
 }
@@ -267,7 +269,7 @@ void AScriptedAmbientMaster::Tick ()
 	// No need to call Super::Tick(), because the only effect this
 	// actor has on the world is aural.
 
-	long cmd;
+	ptrdiff_t cmd;
 	const char *sound;
 	bool done;
 
@@ -288,7 +290,7 @@ void AScriptedAmbientMaster::Tick ()
 		{
 		case afxcmd_play:
 			sound = (const char *)(*AmbSfxPtr++);
-			AmbSfxVolume = (float)P_Random(pr_afx) / 510.f;
+			AmbSfxVolume = (float)pr_afx() / 510.f;
 			S_Sound (this, CHAN_ITEM, sound, AmbSfxVolume, ATTN_NONE);
 			break;
 
@@ -318,18 +320,18 @@ void AScriptedAmbientMaster::Tick ()
 			break;
 
 		case afxcmd_delayrand:
-			AmbSfxTics = P_Random(pr_afx) & (*AmbSfxPtr++);
+			AmbSfxTics = pr_afx() & (*AmbSfxPtr++);
 			done = true;
 			break;
 
 		case afxcmd_end:
-			AmbSfxTics = 6*TICRATE + P_Random(pr_afx);
-			AmbSfxPtr = LevelAmbientSfx[P_Random() % LevelAmbientSfx.Size ()];
+			AmbSfxTics = 6*TICRATE + pr_afx();
+			AmbSfxPtr = LevelAmbientSfx[pr_afx() % LevelAmbientSfx.Size ()];
 			done = true;
 			break;
 
 		default:
-			DPrintf ("P_AmbientSound: Unknown afxcmd %ld", cmd);
+			DPrintf ("P_AmbientSound: Unknown afxcmd %ld", (long)cmd);
 			break;
 		}
 	} while (done == false);

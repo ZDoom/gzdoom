@@ -42,6 +42,8 @@
 #define MAXWIDTH 2048
 #define MAXHEIGHT 1536
 
+const WORD NO_INDEX = 0xffff;
+
 // Silhouette, needed for clipping Segs (mainly)
 // and sprites representing things.
 enum
@@ -52,7 +54,7 @@ enum
 	SIL_BOTH
 };
 
-extern int MaxDrawSegs;
+extern size_t MaxDrawSegs;
 
 
 
@@ -71,6 +73,11 @@ extern int MaxDrawSegs;
 struct vertex_s
 {
 	fixed_t x, y;
+
+	bool operator== (const vertex_s &other)
+	{
+		return x == other.x && y == other.y;
+	}
 };
 typedef struct vertex_s vertex_t;
 
@@ -97,7 +104,8 @@ enum
 	SECSPAC_EyesDive	= 64,	// Trigger when player eyes go below fake floor
 	SECSPAC_EyesSurface = 128,	// Trigger when player eyes go above fake floor
 	SECSPAC_EyesBelowC	= 256,	// Trigger when player eyes go below fake ceiling
-	SECSPAC_EyesAboveC	= 512,	// Triggen when player eyes go above fake ceiling
+	SECSPAC_EyesAboveC	= 512,	// Trigger when player eyes go above fake ceiling
+	SECSPAC_HitFakeFloor= 1024,	// Trigger when player hits fake floor
 };
 
 class ASectorAction : public AActor
@@ -345,6 +353,7 @@ enum
 {
 	WALLF_ABSLIGHTING	= 1,	// Light is absolute instead of relative
 	WALLF_NOAUTODECALS	= 2,	// Do not attach impact decals to this wall
+	WALLF_ADDTRANS		= 4,	// Use additive instead of normal translucency
 };
 
 struct side_s
@@ -355,7 +364,7 @@ struct side_s
 	ADecal*		BoundActors;	// [RH] Decals bound to the wall
 	short		toptexture, bottomtexture, midtexture;	// texture indices
 	short		linenum;
-	short		LeftSide, RightSide;	// [RH] Group walls into loops
+	WORD		LeftSide, RightSide;	// [RH] Group walls into loops
 	WORD		TexelLength;
 	SBYTE		Light;
 	BYTE		Flags;
@@ -386,7 +395,7 @@ struct line_s
 							//		note that these are shorts in order to support
 							//		the tag parameter from DOOM.
 	short		firstid, nextid;
-	short		sidenum[2];	// sidenum[1] will be -1 if one sided
+	WORD		sidenum[2];	// sidenum[1] will be 0xffff if one sided
 	fixed_t		bbox[4];	// bounding box, for the extent of the LineDef.
 	slopetype_t	slopetype;	// To aid move clipping.
 	sector_t	*frontsector, *backsector;
@@ -430,19 +439,15 @@ struct seg_s
 	vertex_t*	v1;
 	vertex_t*	v2;
 	
-	angle_t 	angle;
-
 	side_t* 	sidedef;
 	line_t* 	linedef;
 
-	// Sector references.
-	// Could be retrieved from linedef, too.
+	// Sector references. Could be retrieved from linedef, too.
 	sector_t*	frontsector;
 	sector_t*	backsector;		// NULL for one-sided lines
 	
 };
 typedef struct seg_s seg_t;
-
 
 // ===== Polyobj data =====
 typedef struct FPolyObj
@@ -462,13 +467,6 @@ typedef struct FPolyObj
 	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
 } polyobj_t;
 
-typedef struct polyblock_s
-{
-	polyobj_t *polyobj;
-	struct polyblock_s *prev;
-	struct polyblock_s *next;
-} polyblock_t;
-
 //
 // A SubSector.
 // References a Sector.
@@ -478,8 +476,8 @@ typedef struct polyblock_s
 typedef struct subsector_s
 {
 	sector_t	*sector;
-	short		numlines;
-	short		firstline;
+	WORD		numlines;
+	WORD		firstline;
 	polyobj_t	*poly;
 } subsector_t;
 
@@ -497,6 +495,14 @@ struct node_s
 	unsigned short children[2];	// If NF_SUBSECTOR its a subsector.
 };
 typedef struct node_s node_t;
+
+
+typedef struct polyblock_s
+{
+	polyobj_t *polyobj;
+	struct polyblock_s *prev;
+	struct polyblock_s *next;
+} polyblock_t;
 
 
 
@@ -529,7 +535,7 @@ typedef byte lighttable_t;	// This could be wider for >8 bit display.
 // A patch holds one or more columns.
 // Patches are used for sprites and all masked pictures, and we compose
 // textures from the TEXTURE1/2 lists of patches.
-struct patch_s
+struct patch_t
 { 
 	short			width;			// bounding box size 
 	short			height; 
@@ -538,13 +544,12 @@ struct patch_s
 	int 			columnofs[8];	// only [width] used
 	// the [0] is &columnofs[width] 
 };
-typedef struct patch_s patch_t;
 
 
 // A vissprite_t is a thing
 //	that will be drawn during a refresh.
 // I.e. a sprite object that is partly visible.
-struct vissprite_s
+struct vissprite_t
 {
 	short			x1, x2;
 	fixed_t			cx;				// for line side calculation
@@ -566,7 +571,6 @@ struct vissprite_s
 	BYTE			FakeFlatStat;	// [RH] which side of fake/floor ceiling sprite is on
 	WORD			Translation;	// [RH] for color translation
 };
-typedef struct vissprite_s vissprite_t;
 
 enum
 {
@@ -585,25 +589,25 @@ enum
 // is used to save space, thus NNNNF2F5 defines a mirrored patch.
 // Some sprites will only have one picture used for all views: NNNNF0
 //
-struct spriteframe_s
+struct spriteframe_t
 {
 	byte	 	rotate;		// if false, use 0 for any position.
 	short		lump[16];	// lump to use for view angles 0-15
 	WORD		flip;		// flip (1 = flip) to use for view angles 0-15.
 };
-typedef struct spriteframe_s spriteframe_t;
 
 //
 // A sprite definition:
 //	a number of animation frames.
 //
-struct spritedef_s
+struct spritedef_t
 {
 	char			name[5];
-	short 			numframes;
-	spriteframe_t	*spriteframes;
+	BYTE			numframes;
+	WORD			spriteframes;
 };
-typedef struct spritedef_s spritedef_t;
+
+extern TArray<spriteframe_t> SpriteFrames;
 
 //
 // [RH] Internal "skin" definition.

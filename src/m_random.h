@@ -24,9 +24,10 @@
 #ifndef __M_RANDOM__
 #define __M_RANDOM__
 
+#include <stdio.h>
 #include "doomtype.h"
 
-// killough 1/19/98: rewritten to use to use a better random number generator
+// killough 1/19/98: rewritten to use a better random number generator
 // in the new engine, although the old one is available for compatibility.
 
 // killough 2/16/98:
@@ -47,135 +48,46 @@
 // Keep all current entries in this list the same, and in the order
 // indicated by the #'s, because they're critical for preserving demo
 // sync. Do not remove entries simply because they become unused later.
+//
+// [RH] Changed to use different class instances for different generators.
+// This makes added new RNGs easier, because I don't need to recompile every
+// file that uses random numbers.
 
-typedef enum {
-	pr_misc,					// 0
-	pr_all_in_one,				// 1
-	pr_dmspawn,					// 2
-	pr_checkmissilerange,		// 3
-	pr_trywalk,					// 4
-	pr_newchasedir,				// 5
-	pr_look,					// 6
-	pr_chase,					// 7
-	pr_facetarget,				// 8
-	pr_posattack,				// 9
-	pr_sposattack,				// 10
-	pr_cposattack,				// 11
-	pr_cposrefire,				// 12
-	pr_spidrefire,				// 13
-	pr_troopattack,				// 14
-	pr_sargattack,				// 15
-	pr_headattack,				// 16
-	pr_bruisattack,				// 17
-	pr_tracer,					// 18
-	pr_skelfist,				// 19
-	pr_scream,					// 20
-	pr_brainscream,				// 21
-	pr_brainexplode,			// 22
-	pr_spawnfly,				// 23
-	pr_killmobj,				// 24
-	pr_damagemobj,				// 25
-	pr_checkthing,				// 26
-	pr_changesector,			// 27
-	pr_explodemissile,			// 28
-	pr_mobjthinker,				// 29
-	pr_spawnmobj,				// 30
-	pr_spawnmapthing,			// 31
-	pr_spawnpuff,				// 32
-	pr_spawnblood,				// 33
-	pr_checkmissilespawn,		// 34
-	pr_spawnmissile,			// 35
-	pr_punch,					// 36
-	pr_saw,						// 37
-	pr_fireplasma,				// 38
-	pr_gunshot,					// 39
-	pr_fireshotgun2,			// 40
-	pr_bfgspray,				// 41
-	pr_checksight,				// 42
-	pr_playerinspecialsector,	// 43
-	pr_fireflicker,				// 44
-	pr_lightflash,				// 45
-	pr_spawnlightflash,			// 46
-	pr_spawnstrobeflash,		// 47
-	pr_doplat,					// 48
-	pr_throwgib,				// 49
-	pr_vel4dmg,					// 50
-	pr_gengib,					// 51
-	pr_acs,						// 52
-	pr_animatepictures,			// 53
-	pr_obituary,				// 54
-	pr_quake,					// 55
-	pr_playerscream,			// 56
-	pr_playerpain,				// 57
-	pr_bounce,					// 58
-	pr_opendoor,				// 59
-	pr_botmove,					// 60
-	pr_botdofire,				// 61
-	pr_botspawn,				// 62
-	pr_botrespawn,				// 63
-	pr_bottrywalk,				// 64
-	pr_botnewchasedir,			// 65
-	pr_botspawnmobj,			// 66
-	pr_botopendoor,				// 67
-	pr_botchecksight,			// 68
-	pr_bobbing,					// 69
-	pr_wpnreadysnd,				// 70
-	pr_spark,					// 71
-	pr_torch,					// 72
-	pr_ssdelay,					// 73
-	pr_afx,						// 74
-	pr_chainwiggle,				// 75
-	pr_switchanim,				// 76
-	pr_scaredycat,				// 77
-	pr_randsound,				// 78
-	pr_decal,					// 79
-	pr_lightning,				// 80
-	pr_decalchoice,				// 81
-	pr_firedemonrock,			// 82
-	pr_firedemonsplotch,		// 83
-	pr_firedemonchase,			// 84
-	pr_smbounce,				// 85
-	pr_serpenthump,				// 86
-	pr_serpentattack,			// 87
-	pr_serpentgibs,				// 88
-	pr_centaurattack,			// 89
-	pr_centaurdrop,				// 90
-	pr_centaurdefend,			// 91
-	pr_demonchunks,				// 92
-	pr_iceguylook,				// 93
-	pr_iceguychase,				// 94
-	pr_bbannounce,				// 95
-	pr_floatbobphase,			// 96
-	pr_tracebleed,				// 97
-	// Start new entries -- add new entries below
+class FRandom
+{
+public:
+	FRandom ();
+	FRandom (const char *name);
+	~FRandom ();
 
-	// End of new entries
-	NUMPRCLASS							// MUST be last item in list
-} pr_class_t;
+	int operator() ();			// Returns a random number in the range [0,255]
+	int Random2();				// Returns rand# - rand#
+	int HitDice (int count);	// HITDICE macro used in Heretic and Hexen
 
-// The random number generator's state.
-typedef struct {
-	DWORD seed[NUMPRCLASS];		// Each block's random seed
-	int rndindex, prndindex;			// For compatibility support
-} rng_t;
+	int Random()				// synonym for ()
+	{
+		return operator()();
+	}
 
-extern rng_t rng;						// The rng's state
+	static void StaticClearRandom ();
+
+private:
+	DWORD Seed;
+	FRandom *Next;
+	DWORD NameCRC;
+
+#ifdef _DEBUG
+	const char *Name;
+#endif
+
+	static FRandom *RNGList;
+
+	friend void P_SerializeRNGState (FILE *file, bool saving);
+};
 
 extern DWORD rngseed;			// The starting seed (not part of state)
 
-// Returns a number from 0 to 255,
-#define M_Random() P_Random(pr_misc)
-
-// As M_Random, but used by the play simulation.
-int P_Random(pr_class_t = pr_all_in_one);
-
-inline int PS_Random(pr_class_t cls = pr_all_in_one)
-{
-	int t = P_Random (cls);
-	return t - P_Random (cls);
-}
-
-// Fix randoms for demos.
-void M_ClearRandom(void);
+// M_Random can be used for numbers that do not effect gameplay
+extern FRandom M_Random;
 
 #endif

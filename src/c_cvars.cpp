@@ -203,14 +203,21 @@ bool FBaseCVar::ToBool (UCVarValue value, ECVarType type)
 int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 {
 	int res;
+#if __GNUC__ <= 2
+	float tmp;
+#endif
 
 	switch (type)
 	{
 	case CVAR_Bool:		res = (int)value.Bool; break;
 	case CVAR_Int:		res = value.Int; break;
+#if __GNUC__ <= 2
+	case CVAR_Float:	tmp = value.Float; res = (int)tmp; break;
+#else
 	case CVAR_Float:	res = (int)value.Float; break;
-	default:			res = 0; break;
+#endif
 	case CVAR_String:	res = strtol (value.String, NULL, 0); break;
+	default:			res = 0; break;
 	}
 	return res;
 }
@@ -878,7 +885,7 @@ void FilterCompactCVars (TArray<FBaseCVar *> &cvars, DWORD filter)
 	if (cvars.Size () > 0)
 	{
 		cvars.ShrinkToFit ();
-		qsort (&cvars[0], cvars.Size (), sizeof(FBaseCVar *), sortcvars);
+		qsort (&cvars[0], cvars.Size(), sizeof(FBaseCVar *), sortcvars);
 	}
 }
 
@@ -903,7 +910,7 @@ void C_WriteCVars (byte **demo_p, DWORD filter, bool compact)
 		cvar = CVars;
 		while (cvar)
 		{
-			if (cvar->Flags & filter)
+			if ((cvar->Flags & filter) && !(cvar->Flags & CVAR_NOSAVE))
 			{
 				UCVarValue val = cvar->GetGenericRep (CVAR_String);
 				ptr += sprintf ((char *)ptr, "\\%s\\%s",
@@ -1234,7 +1241,7 @@ CCMD (toggle)
 	}
 }
 
-void FBaseCVar::ListVars (const char *filter)
+void FBaseCVar::ListVars (const char *filter, bool plain)
 {
 	FBaseCVar *var = CVars;
 	int count = 0;
@@ -1244,9 +1251,19 @@ void FBaseCVar::ListVars (const char *filter)
 		DWORD flags = var->GetFlags();
 		UCVarValue val;
 
-		count++;
 		val = var->GetGenericRep (CVAR_String);
-		Printf ("%c%c%c %s \"%s\"\n",
+		if (plain)
+		{ // plain formatting does not include user-defined cvars
+			if (!(flags & CVAR_UNSETTABLE))
+			{
+				++count;
+				Printf ("%s : %s\n", var->GetName(), var->GetGenericRep(CVAR_String).String);
+			}
+		}
+		else
+		{
+			++count;
+			Printf ("%c%c%c %s : :%s\n",
 				flags & CVAR_ARCHIVE ? 'A' : ' ',
 				flags & CVAR_USERINFO ? 'U' :
 					flags & CVAR_SERVERINFO ? 'S' :
@@ -1256,6 +1273,7 @@ void FBaseCVar::ListVars (const char *filter)
 					flags & CVAR_UNSETTABLE ? '*' : ' ',
 				var->GetName(),
 				var->GetGenericRep (CVAR_String).String);
+		}
 		var = var->m_Next;
 	}
 	Printf ("%d cvars\n", count);
@@ -1265,12 +1283,17 @@ CCMD (cvarlist)
 {
 	if (argv.argc() == 1)
 	{
-		FBaseCVar::ListVars (NULL);
+		FBaseCVar::ListVars (NULL, false);
 	}
 	else
 	{
-		FBaseCVar::ListVars (argv[1]);
+		FBaseCVar::ListVars (argv[1], false);
 	}
+}
+
+CCMD (cvarlistplain)
+{
+	FBaseCVar::ListVars (NULL, true);
 }
 
 CCMD (archivecvar)

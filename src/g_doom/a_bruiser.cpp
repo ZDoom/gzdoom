@@ -8,6 +8,8 @@
 #include "gstrings.h"
 #include "a_action.h"
 
+static FRandom pr_bruisattack ("BruisAttack");
+
 void A_BruisAttack (AActor *);
 
 class ABaronOfHell : public AActor
@@ -198,7 +200,7 @@ IMPLEMENT_ACTOR (AHellKnight, Doom, 69, 113)
 	PROP_SpeedFixed (8)
 	PROP_PainChance (50)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
-	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL)
+	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
 
 	PROP_SpawnState (S_BOS2_STND)
 	PROP_SeeState (S_BOS2_RUN)
@@ -235,7 +237,7 @@ void A_BruisAttack (AActor *self)
 				
 	if (P_CheckMeleeRange (self))
 	{
-		int damage = (P_Random (pr_bruisattack)%8+1)*10;
+		int damage = (pr_bruisattack()%8+1)*10;
 		S_Sound (self, CHAN_WEAPON, "baron/melee", 1, ATTN_NORM);
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);

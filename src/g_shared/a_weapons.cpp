@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "a_pickups.h"
 #include "gi.h"
 #include "d_player.h"
@@ -5,6 +7,8 @@
 #include "i_system.h"
 #include "r_state.h"
 #include "p_pspr.h"
+#include "c_dispatch.h"
+#include "configfile.h"
 
 #define BONUSADD 6
 
@@ -76,7 +80,7 @@ END_DEFAULTS
 
 void AWeapon::PlayPickupSound (AActor *toucher)
 {
-	S_Sound (toucher, CHAN_ITEM, "misc/w_pkup", 1, ATTN_NORM);
+	S_Sound (toucher, CHAN_PICKUP, "misc/w_pkup", 1, ATTN_NORM);
 }
 
 
@@ -299,46 +303,49 @@ FWeaponSlot WeaponSlots[NUM_WEAPON_SLOTS];
 
 FWeaponSlot::FWeaponSlot ()
 {
-	int i;
+	Clear ();
+}
 
-	for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
+void FWeaponSlot::Clear ()
+{
+	for (int i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
 	{
-		Weapons[i].Weapon = NUMWEAPONS;
-		Weapons[i].Priority = 0;
+		Weapons[i] = NUMWEAPONS;
 	}
 }
 
-bool FWeaponSlot::AddWeapon (weapontype_t weap, int priority)
+bool FWeaponSlot::AddWeapon (const char *type)
+{
+	return AddWeapon (TypeInfo::IFindType (type));
+}
+
+bool FWeaponSlot::AddWeapon (const TypeInfo *type)
+{
+	for (int i = 0; i < NUMWEAPONS; ++i)
+	{
+		if (wpnlev1info[i] != NULL && wpnlev1info[i]->type == type)
+		{
+			return AddWeapon ((weapontype_t)i);
+		}
+	}
+	return false;
+}
+
+bool FWeaponSlot::AddWeapon (weapontype_t weap)
 {
 	int i;
 
 	for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
 	{
-		if (Weapons[i].Weapon == weap)
-		{
-			if (i > 0)
-			{
-				memmove (&Weapons[1], &Weapons[0], sizeof(Weapons[0]) * i);
-			}
-			Weapons[0].Weapon = NUMWEAPONS;
-			Weapons[i].Priority = 0;
+		if (Weapons[i] == NUMWEAPONS)
 			break;
-		}
 	}
-	for (i = MAX_WEAPONS_PER_SLOT - 1; i >= 0; i--)
-	{
-		if (Weapons[i].Priority <= priority)
-		{
-			if (i > 0)
-			{
-				memmove (&Weapons[0], &Weapons[1], sizeof(Weapons[0]) * i);
-			}
-			Weapons[i].Priority = priority;
-			Weapons[i].Weapon = weap;
-			return true;
-		}
+	if (i == MAX_WEAPONS_PER_SLOT)
+	{ // This slot is full
+		return false;
 	}
-	return false;
+	Weapons[i] = weap;
+	return true;
 }
 
 weapontype_t FWeaponSlot::PickWeapon (player_t *player)
@@ -351,13 +358,13 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 
 	for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
 	{
-		if (Weapons[i].Weapon == player->readyweapon)
+		if (Weapons[i] == player->readyweapon)
 		{
 			for (j = (unsigned)(i - 1) % MAX_WEAPONS_PER_SLOT;
 				 j != i;
 				 j = (unsigned)(j - 1) % MAX_WEAPONS_PER_SLOT)
 			{
-				int weap = Weapons[j].Weapon;
+				int weap = Weapons[j];
 
 				if (weap >= NUMWEAPONS
 					|| !player->weaponowned[weap]
@@ -368,12 +375,12 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 				}
 				break;
 			}
-			return (weapontype_t)Weapons[j].Weapon;
+			return (weapontype_t)Weapons[j];
 		}
 	}
 	for (i = MAX_WEAPONS_PER_SLOT - 1; i >= 0; i--)
 	{
-		weapontype_t weap = (weapontype_t)Weapons[i].Weapon;
+		weapontype_t weap = (weapontype_t)Weapons[i];
 
 		if (weap >= NUMWEAPONS
 			|| !player->weaponowned[weap]
@@ -395,11 +402,15 @@ bool FWeaponSlot::LocateWeapon (weapontype_t weap, int *const slot, int *const i
 	{
 		for (j = 0; j < MAX_WEAPONS_PER_SLOT; j++)
 		{
-			if (WeaponSlots[i].Weapons[j].Weapon == weap)
+			if (WeaponSlots[i].Weapons[j] == weap)
 			{
 				*slot = i;
 				*index = j;
 				return true;
+			}
+			else if (WeaponSlots[i].Weapons[j] == NUMWEAPONS)
+			{ // No more weapons in this slot, so try the next
+				break;
 			}
 		}
 	}
@@ -450,7 +461,7 @@ weapontype_t PickNextWeapon (player_s *player)
 		{
 			int slot = (unsigned)((start + i) / MAX_WEAPONS_PER_SLOT) % NUM_WEAPON_SLOTS;
 			int index = (unsigned)(start + i) % MAX_WEAPONS_PER_SLOT;
-			int weap = WeaponSlots[slot].Weapons[index].Weapon;
+			int weap = WeaponSlots[slot].Weapons[index];
 
 			if (weap >= NUMWEAPONS
 				|| !player->weaponowned[weap]
@@ -485,7 +496,7 @@ weapontype_t PickPrevWeapon (player_s *player)
 				slot += NUM_WEAPON_SLOTS * MAX_WEAPONS_PER_SLOT;
 			int index = slot % MAX_WEAPONS_PER_SLOT;
 			slot /= MAX_WEAPONS_PER_SLOT;
-			int weap = WeaponSlots[slot].Weapons[index].Weapon;
+			int weap = WeaponSlots[slot].Weapons[index];
 
 			if (weap >= NUMWEAPONS
 				|| !player->weaponowned[weap]
@@ -498,4 +509,119 @@ weapontype_t PickPrevWeapon (player_s *player)
 		}
 	}
 	return player->readyweapon;
+}
+
+CCMD (setslot)
+{
+	int slot, i;
+
+	if (argv.argc() < 2 || (slot = atoi (argv[1])) >= NUM_WEAPON_SLOTS)
+	{
+		Printf ("Usage: setslot [slot] [weapons]\nCurrent slot assignments:\n");
+		for (slot = 0; slot < NUM_WEAPON_SLOTS; ++slot)
+		{
+			Printf (" Slot %d:", slot);
+			for (i = 0;
+				i < MAX_WEAPONS_PER_SLOT && WeaponSlots[slot].GetWeapon(i) < NUMWEAPONS;
+				++i)
+			{
+				Printf (" %s", wpnlev1info[WeaponSlots[slot].GetWeapon(i)]->type->Name+1);
+			}
+			Printf ("\n");
+		}
+		return;
+	}
+
+	WeaponSlots[slot].Clear();
+	if (argv.argc() == 2)
+	{
+		Printf ("Slot %d cleared\n", slot);
+	}
+	else
+	{
+		for (i = 2; i < argv.argc(); ++i)
+		{
+			if (!WeaponSlots[slot].AddWeapon (argv[i]))
+			{
+				Printf ("Could not add %s to slot %d\n", argv[i], slot);
+			}
+		}
+	}
+}
+
+CCMD (addslot)
+{
+	size_t slot;
+
+	if (argv.argc() != 3 || (slot = atoi (argv[1])) >= NUM_WEAPON_SLOTS)
+	{
+		Printf ("Usage: addslot <slot> <weapon>\n");
+		return;
+	}
+
+	if (!WeaponSlots[slot].AddWeapon (argv[2]))
+	{
+		Printf ("Could not add %s to slot %d\n", argv[2], slot);
+	}
+}
+
+void FWeaponSlot::StaticRestoreSlots (FConfigFile &config)
+{
+	char buff[MAX_WEAPONS_PER_SLOT*64];
+	const char *key, *value;
+
+	buff[sizeof(buff)-1] = 0;
+	while (config.NextInSection (key, value))
+	{
+		if (strnicmp (key, "Slot[", 5) != 0 ||
+			key[5] < '0' ||
+			key[5] > '0'+NUM_WEAPON_SLOTS ||
+			key[6] != ']' ||
+			key[7] != 0)
+		{
+			continue;
+		}
+		int slot = key[5] - '0';
+		strncpy (buff, value, sizeof(buff)-1);
+		char *tok;
+
+		WeaponSlots[slot].Clear ();
+		tok = strtok (buff, " ");
+		while (tok != NULL)
+		{
+			WeaponSlots[slot].AddWeapon (tok);
+			tok = strtok (NULL, " ");
+		}
+	}
+}
+
+void FWeaponSlot::StaticSaveSlots (FConfigFile &config)
+{
+	char buff[MAX_WEAPONS_PER_SLOT*64];
+	char keyname[16];
+
+	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		int index = 0;
+
+		for (int j = 0; j < MAX_WEAPONS_PER_SLOT; ++j)
+		{
+			if (WeaponSlots[i].Weapons[j] >= NUMWEAPONS)
+			{
+				break;
+			}
+			if (index > 0)
+			{
+				buff[index++] = ' ';
+			}
+			const char *name = wpnlev1info[WeaponSlots[i].Weapons[j]]->type->Name+1;
+			strcpy (buff+index, name);
+			index += (int)strlen (name);
+		}
+		if (index > 0)
+		{
+			sprintf (keyname, "Slot[%d]", i);
+			config.SetValueForKey (keyname, buff);
+		}
+	}
 }

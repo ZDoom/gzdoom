@@ -76,6 +76,11 @@ static fixed_t	pe_y;	// Pain Elemental position for Lost Soul checks	// phares
 static fixed_t	ls_x;	// Lost Soul position for Lost Soul checks		// phares
 static fixed_t	ls_y;	// Lost Soul position for Lost Soul checks		// phares
 
+static FRandom pr_tracebleed ("TraceBleed");
+static FRandom pr_checkthing ("CheckThing");
+static FRandom pr_lineattack ("LineAttack");
+static FRandom pr_crunch ("DoCrunch");
+
 // If "floatok" true, move would be ok
 // if within "tmfloorz - tmceilingz".
 BOOL 			floatok;
@@ -518,7 +523,7 @@ BOOL PIT_CheckThing (AActor *thing)
 		return true;	
 	}
 	BlockingMobj = thing;
-	if (tmthing->flags2 & MF2_PASSMOBJ && !(dmflags & DF_NO_PASSMOBJ))
+	if (tmthing->flags2 & MF2_PASSMOBJ && !(compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (tmthing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible
@@ -534,20 +539,14 @@ BOOL PIT_CheckThing (AActor *thing)
 	// Check for skulls slamming into things
 	if (tmthing->flags & MF_SKULLFLY)
 	{
-		damage = ((P_Random(pr_checkthing)%8)+1) * tmthing->damage;
-		P_DamageMobj (thing, tmthing, tmthing, damage);
-		P_TraceBleed (damage, thing, tmthing);
-		tmthing->flags &= ~MF_SKULLFLY;
-		tmthing->momx = tmthing->momy = tmthing->momz = 0;
-		tmthing->SetState (tmthing->SeeState);
+		bool res = tmthing->Slam (BlockingMobj);
 		BlockingMobj = NULL;
-		return false;			// stop moving
+		return res;
 	}
 	// Check for blasted thing running into another
-	if (tmthing->flags2 & MF2_BLASTED && thing->flags & MF_SHOOTABLE)
+	if ((tmthing->flags2 & MF2_BLASTED) && (thing->flags & MF_SHOOTABLE))
 	{
-		if (!(thing->flags2 & MF2_BOSS) &&
-			(thing->flags & MF_COUNTKILL))
+		if (!(thing->flags2 & MF2_BOSS) && (thing->flags & MF_COUNTKILL))
 		{
 			thing->momx += tmthing->momx;
 			thing->momy += tmthing->momy;
@@ -585,12 +584,25 @@ BOOL PIT_CheckThing (AActor *thing)
 		{ // Under thing
 			return true;
 		}
-		
-		if (gameinfo.gametype != GAME_Heretic && (tmthing->flags2 & MF2_FLOORBOUNCE))
+
+		if (tmthing->flags2 & MF2_BOUNCE2)
 		{
 			return (tmthing->target == thing || !(thing->flags & MF_SOLID));
 		}
-	
+
+		switch (tmthing->SpecialMissileHit (thing))
+		{
+		case 0:		return false;
+		case 1:		return true;
+		default:	break;
+		}
+
+		// [RH] Extend DeHacked infighting to allow for monsters
+		// to never fight each other
+		if ((deh.Infight < 0) && !thing->player && thing != tmthing->target)
+		{
+			return false;
+		}
 		if (tmthing->target && (
 			tmthing->target->IsKindOf (RUNTIME_TYPE (thing)) ||
 			thing->IsKindOf (RUNTIME_TYPE (tmthing->target)) ) )
@@ -601,7 +613,7 @@ BOOL PIT_CheckThing (AActor *thing)
 			}
 
 			// [RH] DeHackEd infighting is here.
-			if (!deh.Infight && !thing->player)
+			if ((deh.Infight == 0) && !thing->player)
 			{ // Hit same species as originator => explode, no damage
 				return false;
 			}
@@ -619,7 +631,7 @@ BOOL PIT_CheckThing (AActor *thing)
 				P_RipperBlood (tmthing);
 			}
 			S_Sound (tmthing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
-			damage = ((P_Random()&3)+2)*tmthing->damage;
+			damage = ((pr_checkthing()&3)+2)*tmthing->damage;
 			P_DamageMobj (thing, tmthing, tmthing->target, damage);
 			P_TraceBleed (damage, thing, tmthing);
 			if(thing->flags2&MF2_PUSHABLE
@@ -632,18 +644,22 @@ BOOL PIT_CheckThing (AActor *thing)
 			return true;
 		}
 		// Do damage
-		damage = ((P_Random(pr_checkthing)%8)+1) * tmthing->damage;
+		damage = ((pr_checkthing()%8)+1) * tmthing->damage;
 		if (damage)
 		{
 			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->GetMOD ());
-			P_TraceBleed (damage, thing, tmthing);
 			if (gameinfo.gametype != GAME_Doom &&
 				!(thing->flags & MF_NOBLOOD) &&
 				!(thing->flags2 & MF2_REFLECTIVE) &&
 				!(thing->flags2 & MF2_INVULNERABLE) &&
-				(P_Random () < 192))
+				!(tmthing->flags3 & MF3_BLOODLESSIMPACT) &&
+				(pr_checkthing() < 192))
 			{
 				P_BloodSplatter (tmthing->x, tmthing->y, tmthing->z, thing);
+			}
+			else if (!(tmthing->flags3 & MF3_BLOODLESSIMPACT))
+			{
+				P_TraceBleed (damage, thing, tmthing);
 			}
 		}
 		return false;		// don't traverse any more
@@ -781,8 +797,12 @@ BOOL P_TestMobjLocation (AActor *mobj)
 	if (P_CheckPosition(mobj, mobj->x, mobj->y))
 	{ // XY is ok, now check Z
 		mobj->flags = flags;
-		if ((mobj->z < mobj->floorz)
-			|| (mobj->z + mobj->height > mobj->ceilingz))
+		fixed_t z = mobj->z;
+		if (mobj->flags2 & MF2_FLOATBOB)
+		{
+			z -= FloatBobOffsets[(mobj->FloatBobPhase + level.time - 1) & 63];
+		}
+		if ((z < mobj->floorz) || (z + mobj->height > mobj->ceilingz))
 		{ // Bad Z
 			return false;
 		}
@@ -930,6 +950,18 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	}
 
 	// check lines
+
+	// [RH] We need to increment validcount again, because a function above may
+	// have already set some lines to equal the current validcount.
+	//
+	// Specifically, when DehackedPickup spawns a new item in its TryPickup()
+	// function, that new actor will set the lines around it to match validcount
+	// when it links itself into the world. If we just leave validcount alone,
+	// that will give the player the freedom to walk through walls at will near
+	// a pickup they cannot get, because their validcount will prevent them from
+	// being considered for collision with the player.
+	validcount++;
+
 	BlockingMobj = NULL;
 	thing->height = realheight;
 	if (tmflags & MF_NOCLIP)
@@ -1125,7 +1157,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				goto pushline;
 			}
 		}
-		if (!(tmthing->flags2 & MF2_PASSMOBJ) || (dmflags & DF_NO_PASSMOBJ))
+		if (!(tmthing->flags2 & MF2_PASSMOBJ) || (compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			thing->z = oldz;
 			return false;
@@ -1209,12 +1241,6 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				|| tmfloorz - thing->z != 0))
 		{ // must stay within a sector of a certain floor type
 			thing->z = oldz;
-			return false;
-		}
-		// killough 11/98: prevent falling objects from going up too many steps
-		if (thing->flags & MF_FALLING && tmfloorz - thing->z >
-			DMulScale16 (thing->momx, thing->momx, thing->momy, thing->momy))
-		{
 			return false;
 		}
 		
@@ -1305,6 +1331,11 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			{
 				act |= SECSPAC_HitCeiling;
 			}
+			if (newsec->heightsec &&
+				thing->z == newsec->heightsec->floorplane.ZatPoint (thing->x, thing->y))
+			{
+				act |= SECSPAC_HitFakeFloor;
+			}
 			newsec->SecActTarget->TriggerAction (thing, act);
 		}
 	}
@@ -1320,7 +1351,7 @@ pushline:
 		{
 			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5);
 		}
-		numSpecHitTemp = spechit.Size ();
+		numSpecHitTemp = (int)spechit.Size ();
 		while (numSpecHitTemp > 0)
 		{
 			// see which lines were pushed
@@ -1330,133 +1361,6 @@ pushline:
 		}
 	}
 	return false;
-}
-
-//
-// killough 9/12/98:
-//
-// Apply "torque" to objects hanging off of ledges, so that they
-// fall off. It's not really torque, since Doom has no concept of
-// rotation, but it's a convincing effect which avoids anomalies
-// such as lifeless objects hanging more than halfway off of ledges,
-// and allows objects to roll off of the edges of moving lifts, or
-// to slide up and then back down stairs, or to fall into a ditch.
-// If more than one linedef is contacted, the effects are cumulative,
-// so balancing is possible.
-//
-
-static BOOL PIT_ApplyTorque (line_t *ld)
-{
-	if (ld->backsector &&		// If thing touches two-sided pivot linedef
-		tmbbox[BOXRIGHT]  > ld->bbox[BOXLEFT]  &&
-		tmbbox[BOXLEFT]   < ld->bbox[BOXRIGHT] &&
-		tmbbox[BOXTOP]    > ld->bbox[BOXBOTTOM] &&
-		tmbbox[BOXBOTTOM] < ld->bbox[BOXTOP] &&
-		P_BoxOnLineSide(tmbbox, ld) == -1)
-	{
-		AActor *mo = tmthing;
-
-		fixed_t dist =								// lever arm
-	  + (ld->dx >> FRACBITS) * (mo->y >> FRACBITS)
-	  - (ld->dy >> FRACBITS) * (mo->x >> FRACBITS) 
-	  - (ld->dx >> FRACBITS) * (ld->v1->y >> FRACBITS)
-	  + (ld->dy >> FRACBITS) * (ld->v1->x >> FRACBITS);
-
-		if (dist < 0 ?								// dropoff direction
-			ld->frontsector->floorplane.ZatPoint (mo->x, mo->y) < mo->z &&
-			ld->backsector->floorplane.ZatPoint (mo->x, mo->y) >= mo->z :
-				ld->backsector->floorplane.ZatPoint (mo->x, mo->y) < mo->z &&
-				ld->frontsector->floorplane.ZatPoint (mo->x, mo->y) >= mo->z)
-		{
-		// At this point, we know that the object straddles a two-sided
-		// linedef, and that the object's center of mass is above-ground.
-
-			fixed_t x = abs(ld->dx), y = abs(ld->dy);
-
-			if (y > x)
-			{
-				fixed_t t = x;
-				x = y;
-				y = t;
-			}
-
-			y = finesine[(tantoangle[FixedDiv(y,x)>>DBITS] +
-				ANG90) >> ANGLETOFINESHIFT];
-
-			// Momentum is proportional to distance between the
-			// object's center of mass and the pivot linedef.
-			//
-			// It is scaled by 2^(OVERDRIVE - gear). When gear is
-			// increased, the momentum gradually decreases to 0 for
-			// the same amount of pseudotorque, so that oscillations
-			// are prevented, yet it has a chance to reach equilibrium.
-
-			dist = FixedDiv(FixedMul(dist, (mo->gear < OVERDRIVE) ?
-							y << -(mo->gear - OVERDRIVE) :
-							y >> +(mo->gear - OVERDRIVE)), x);
-
-			// Apply momentum away from the pivot linedef.
-
-			x = FixedMul(ld->dy, dist);
-			y = FixedMul(ld->dx, dist);
-
-			// Avoid moving too fast all of a sudden (step into "overdrive")
-
-			dist = FixedMul(x,x) + FixedMul(y,y);
-
-			while (dist > FRACUNIT*4 && mo->gear < MAXGEAR)
-				++mo->gear, x >>= 1, y >>= 1, dist >>= 1;
-
-			mo->momx -= x;
-			mo->momy += y;
-		}
-	}
-	return true;
-}
-
-//
-// killough 9/12/98
-//
-// Applies "torque" to objects, based on all contacted linedefs
-//
-
-void P_ApplyTorque (AActor *mo)
-{
-	int xl = ((tmbbox[BOXLEFT] = 
-			mo->x - mo->radius) - bmaporgx) >> MAPBLOCKSHIFT;
-	int xh = ((tmbbox[BOXRIGHT] = 
-			mo->x + mo->radius) - bmaporgx) >> MAPBLOCKSHIFT;
-	int yl = ((tmbbox[BOXBOTTOM] =
-			mo->y - mo->radius) - bmaporgy) >> MAPBLOCKSHIFT;
-	int yh = ((tmbbox[BOXTOP] = 
-			mo->y + mo->radius) - bmaporgy) >> MAPBLOCKSHIFT;
-	int bx,by;
-	int flags = mo->flags;	//Remember the current state, for gear-change
-
-	tmthing = mo;
-	++validcount; // prevents checking same line twice
-
-	for (bx = xl ; bx <= xh ; bx++)
-		for (by = yl ; by <= yh ; by++)
-			P_BlockLinesIterator (bx, by, PIT_ApplyTorque);
-
-	// If any momentum, mark object as 'falling' using engine-internal flags
-	if (mo->momx | mo->momy)
-		mo->flags |= MF_FALLING;
-	else  // Clear the engine-internal flag indicating falling object.
-		mo->flags &= ~MF_FALLING;
-
-	// If the object has been moving, step up the gear.
-	// This helps reach equilibrium and avoid oscillations.
-	//
-	// Doom has no concept of potential energy, much less
-	// of rotation, so we have to creatively simulate these 
-	// systems somehow :)
-
-	if (!((mo->flags | flags) & MF_FALLING))	// If not falling for a while,
-		mo->gear = 0;							// Reset it to full strength
-	else if (mo->gear < MAXGEAR)				// Else if not at max gear,
-		mo->gear++;								// move up a gear
 }
 
 //
@@ -1515,7 +1419,10 @@ void P_HitSlideLine (line_t* ld)
 		{
 			tmxmove /= 2; // absorb half the momentum
 			tmymove = -tmymove/2;
-			S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
+			if (slidemo->player && slidemo->health > 0)
+			{
+				S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
+			}
 		}
 		else
 			tmymove = 0; // no more movement in the Y direction
@@ -1528,7 +1435,10 @@ void P_HitSlideLine (line_t* ld)
 		{
 			tmxmove = -tmxmove/2; // absorb half the momentum
 			tmymove /= 2;
-			S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!	//   ^
+			if (slidemo->player && slidemo->health > 0)
+			{
+				S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!//   ^
+			}
 		}																		//   |
 		else																	// phares
 			tmxmove = 0; // no more movement in the X direction
@@ -1555,7 +1465,10 @@ void P_HitSlideLine (line_t* ld)
 	{
 		moveangle = lineangle - deltaangle;
 		movelen /= 2; // absorb
-		S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
+		if (slidemo->player && slidemo->health > 0)
+		{
+			S_Sound (slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
+		}
 		moveangle >>= ANGLETOFINESHIFT;
 		tmxmove = FixedMul (movelen, finecosine[moveangle]);
 		tmymove = FixedMul (movelen, finesine[moveangle]);
@@ -1569,7 +1482,6 @@ void P_HitSlideLine (line_t* ld)
 		lineangle >>= ANGLETOFINESHIFT;
 		deltaangle >>= ANGLETOFINESHIFT;
 
-		movelen = P_AproxDistance (tmxmove, tmymove);
 		newlen = FixedMul (movelen, finecosine[deltaangle]);
 
 		tmxmove = FixedMul (newlen, finecosine[lineangle]);
@@ -1695,12 +1607,9 @@ void P_SlideMove (AActor *mo)
 
 	bestslidefrac = FRACUNIT+1;
 		
-	P_PathTraverse ( leadx, leady, leadx+mo->momx, leady+mo->momy,
-					 PT_ADDLINES, PTR_SlideTraverse );
-	P_PathTraverse ( trailx, leady, trailx+mo->momx, leady+mo->momy,
-					 PT_ADDLINES, PTR_SlideTraverse );
-	P_PathTraverse ( leadx, traily, leadx+mo->momx, traily+mo->momy,
-					 PT_ADDLINES, PTR_SlideTraverse );
+	P_PathTraverse (leadx, leady, leadx+mo->momx, leady+mo->momy, PT_ADDLINES, PTR_SlideTraverse);
+	P_PathTraverse (trailx, leady, trailx+mo->momx, leady+mo->momy, PT_ADDLINES, PTR_SlideTraverse);
+	P_PathTraverse (leadx, traily, leadx+mo->momx, traily+mo->momy, PT_ADDLINES, PTR_SlideTraverse);
 	
 	// move up to the wall
 	if (bestslidefrac == FRACUNIT+1)
@@ -1712,15 +1621,15 @@ void P_SlideMove (AActor *mo)
 		walkplane = P_CheckSlopeWalk (mo, xmove, ymove);
 		if (!P_TryMove (mo, mo->x + xmove, mo->y + ymove, true, walkplane))
 		{
-			xmove = mo->momy, ymove = 0;
+			xmove = mo->momx, ymove = 0;
 			walkplane = P_CheckSlopeWalk (mo, xmove, ymove);
-			P_TryMove (mo, mo->x + mo->momx, mo->y, true, walkplane);
+			P_TryMove (mo, mo->x + xmove, mo->y + ymove, true, walkplane);
 		}
 		return;
 	}
 
 	// fudge a bit to make sure it doesn't hit
-	bestslidefrac -= 0x800;
+	bestslidefrac -= FRACUNIT/32;
 	if (bestslidefrac > 0)
 	{
 		newx = FixedMul (mo->momx, bestslidefrac);
@@ -1732,7 +1641,7 @@ void P_SlideMove (AActor *mo)
 	}
 
 	// Now continue along the wall.
-	bestslidefrac = FRACUNIT-(bestslidefrac+0x800);	// remainder
+	bestslidefrac = FRACUNIT - (bestslidefrac + FRACUNIT/32);	// remainder
 	if (bestslidefrac > FRACUNIT)
 		bestslidefrac = FRACUNIT;
 	else if (bestslidefrac <= 0)
@@ -1873,6 +1782,10 @@ BOOL PTR_BounceTraverse (intercept_t *in)
 		I_Error ("PTR_BounceTraverse: not a line?");
 
 	li = in->d.line;
+	if (li->flags & ML_BLOCKEVERYTHING)
+	{
+		goto bounceblocking;
+	}
 	if (!(li->flags&ML_TWOSIDED))
 	{
 		if (P_PointOnLineSide (slidemo->x, slidemo->y, li))
@@ -1907,57 +1820,104 @@ bounceblocking:
 //
 //============================================================================
 
-void P_BounceWall (AActor *mo)
+bool P_BounceWall (AActor *mo)
 {
 	fixed_t         leadx, leady;
 	int             side;
 	angle_t         lineangle, moveangle, deltaangle;
 	fixed_t         movelen;
+	line_t			*line;
 
-	slidemo = mo;
+	if (!(mo->flags2 & MF2_BOUNCETYPE))
+	{
+		return false;
+	}
 
+	if (BlockingLine != NULL)
+	{
+		line = BlockingLine;
+	}
+	else
+	{
+		slidemo = mo;
 //
 // trace along the three leading corners
 //
-	if (mo->momx > 0)
-	{
-		leadx = mo->x+mo->radius;
-	}
-	else
-	{
-		leadx = mo->x-mo->radius;
-	}
-	if (mo->momy > 0)
-	{
-		leady = mo->y+mo->radius;
-	}
-	else
-	{
-		leady = mo->y-mo->radius;
-	}
-	bestslidefrac = FRACUNIT+1;
-	if (P_PathTraverse(leadx, leady, leadx+mo->momx, leady+mo->momy,
-		PT_ADDLINES, PTR_BounceTraverse))
-	{ // Could not find a wall, so don't bounce.
-		return;
+		if (mo->momx > 0)
+		{
+			leadx = mo->x+mo->radius;
+		}
+		else
+		{
+			leadx = mo->x-mo->radius;
+		}
+		if (mo->momy > 0)
+		{
+			leady = mo->y+mo->radius;
+		}
+		else
+		{
+			leady = mo->y-mo->radius;
+		}
+		bestslidefrac = FRACUNIT+1;
+		if (P_PathTraverse(leadx, leady, leadx+mo->momx, leady+mo->momy,
+			PT_ADDLINES, PTR_BounceTraverse))
+		{ // Could not find a wall, so bounce off the floor/ceiling instead.
+			fixed_t floordist = mo->z - mo->floorz;
+			fixed_t ceildist = mo->ceilingz - mo->z;
+			if (floordist <= ceildist)
+			{
+				mo->FloorBounceMissile (mo->Sector->floorplane);
+				return true;
+			}
+			else
+			{
+				mo->FloorBounceMissile (mo->Sector->ceilingplane);
+				return true;
+			}
+			/*
+			else
+			{
+				return (mo->flags2 & MF2_BOUNCE2) != 0;
+			}
+			*/
+		}
+		line = bestslideline;
 	}
 
-	side = P_PointOnLineSide(mo->x, mo->y, bestslideline);
-	lineangle = R_PointToAngle2(0, 0, bestslideline->dx,
-		bestslideline->dy);
-	if(side == 1)
+	side = P_PointOnLineSide (mo->x, mo->y, line);
+	lineangle = R_PointToAngle2 (0, 0, line->dx, line->dy);
+	if (side == 1)
+	{
 		lineangle += ANG180;
-	moveangle = R_PointToAngle2(0, 0, mo->momx, mo->momy);
+	}
+	moveangle = R_PointToAngle2 (0, 0, mo->momx, mo->momy);
 	deltaangle = (2*lineangle)-moveangle;
+	mo->angle = deltaangle;
 
 	lineangle >>= ANGLETOFINESHIFT;
 	deltaangle >>= ANGLETOFINESHIFT;
 
-	movelen = P_AproxDistance(mo->momx, mo->momy);
-	movelen = FixedMul(movelen, (fixed_t)(0.75*FRACUNIT)); // friction
-	if (movelen < FRACUNIT) movelen = 2*FRACUNIT;
+	movelen = P_AproxDistance (mo->momx, mo->momy);
+	movelen = (movelen * 192) >> 8; // friction
+
+	fixed_t box[4];
+	box[BOXTOP] = mo->y + mo->radius;
+	box[BOXBOTTOM] = mo->y - mo->radius;
+	box[BOXLEFT] = mo->x - mo->radius;
+	box[BOXRIGHT] = mo->x + mo->radius;
+	if (P_BoxOnLineSide (box, line) == -1)
+	{
+		mo->SetOrigin (mo->x + FixedMul(mo->radius,
+			finecosine[deltaangle]), mo->y + FixedMul(mo->radius, finesine[deltaangle]), mo->z);;
+	}
+	if (movelen < FRACUNIT)
+	{
+		movelen = 2*FRACUNIT;
+	}
 	mo->momx = FixedMul(movelen, finecosine[deltaangle]);
 	mo->momy = FixedMul(movelen, finesine[deltaangle]);
+	return true;
 }
 
 
@@ -2036,7 +1996,9 @@ BOOL PTR_AimTraverse (intercept_t* in)
 		return true;					// corpse or something
 
 	// check for physical attacks on a ghost
-	if (th->flags3 & MF3_GHOST && shootthing->player->readyweapon == wp_staff)
+	if ((th->flags3 & MF3_GHOST) && 
+		shootthing->player &&	// [RH] Be sure shootthing is a player
+		shootthing->player->readyweapon == wp_staff)
 	{
 		return true;
 	}
@@ -2200,13 +2162,16 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			hitz = shootz + FixedMul (vz, closer);
 
 			// Spawn bullet puffs or blood spots, depending on target type.
-			if (gameinfo.gametype != GAME_Doom ||
+			AActor *puffDefaults = GetDefaultByType (PuffType);
+			if ((puffDefaults->flags3 & MF3_PUFFONACTORS) ||
 				(trace.Actor->flags & MF_NOBLOOD) ||
 				(trace.Actor->flags2 & MF2_INVULNERABLE))
 			{
 				puff = P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
 			}
-			else if (gameinfo.gametype == GAME_Doom)
+			if (gameinfo.gametype == GAME_Doom &&
+				!(trace.Actor->flags & MF_NOBLOOD) &&
+				!(trace.Actor->flags2 & MF2_INVULNERABLE))
 			{
 				P_SpawnBlood (hitx, hity, hitz, angle - ANG180, damage);
 			}
@@ -2246,7 +2211,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 						{
 							P_BloodSplatter2 (hitx, hity, hitz, trace.Actor);
 						}
-						if (P_Random() < 192)
+						if (pr_lineattack() < 192)
 						{
 							P_BloodSplatter (hitx, hity, hitz, trace.Actor);
 						}
@@ -2285,7 +2250,7 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 	{	// For low damages, there is a chance to not spray blood at all
 		if (damage <= 10)
 		{
-			if (P_Random (pr_tracebleed) < 160)
+			if (pr_tracebleed() < 160)
 			{
 				return;
 			}
@@ -2300,7 +2265,7 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 	}
 	else
 	{	// For high damages, there is a chance to spray just one big glob of blood
-		if (P_Random (pr_tracebleed) < 24)
+		if (pr_tracebleed() < 24)
 		{
 			bloodType = "BloodSmear";
 			count = 1;
@@ -2317,8 +2282,8 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 	{
 		FTraceResults bleedtrace;
 
-		angle_t bleedang = (angle + ((P_Random (pr_tracebleed)-128) << noise)) >> ANGLETOFINESHIFT;
-		angle_t bleedpitch = (angle_t)(pitch + ((P_Random (pr_tracebleed)-128) << noise)) >> ANGLETOFINESHIFT;
+		angle_t bleedang = (angle + ((pr_tracebleed()-128) << noise)) >> ANGLETOFINESHIFT;
+		angle_t bleedpitch = (angle_t)(pitch + ((pr_tracebleed()-128) << noise)) >> ANGLETOFINESHIFT;
 		fixed_t vx = FixedMul (finecosine[bleedpitch], finecosine[bleedang]);
 		fixed_t vy = FixedMul (finecosine[bleedpitch], finesine[bleedang]);
 		fixed_t vz = -finesine[bleedpitch];
@@ -2365,8 +2330,11 @@ void P_TraceBleed (int damage, AActor *target, AActor *missile)
 
 void P_TraceBleed (int damage, AActor *target)
 {
+	fixed_t one = pr_tracebleed() << 24;
+	fixed_t two = (pr_tracebleed()-128) << 16;
+
 	P_TraceBleed (damage, target->x, target->y, target->z + target->height/2,
-		target, P_Random(pr_tracebleed) << 24, (P_Random()-128)<<16);
+		target, one, two);
 }
 
 //
@@ -2676,6 +2644,11 @@ BOOL PTR_PuzzleItemTraverse (intercept_t *in)
 		}
 		if (PuzzleItemType != in->d.line->args[0])
 		{ // Item type doesn't match
+			// [RH] Play "hmm" on one-sided lines
+			if (PuzzleItemUser->player && in->d.line->backsector == NULL)
+			{
+				S_Sound (PuzzleItemUser, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
+			}
 			return false;
 		}
 		P_StartScript (PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, 0,
@@ -3192,8 +3165,8 @@ void P_DoCrunch (AActor *thing)
 				mo = Spawn<ABlood> (thing->x, thing->y,
 					thing->z + thing->height/2);
 
-				mo->momx = PS_Random (pr_changesector) << 12;
-				mo->momy = PS_Random (pr_changesector) << 12;
+				mo->momx = pr_crunch.Random2 () << 12;
+				mo->momy = pr_crunch.Random2 () << 12;
 			}
 			if (cl_bloodtype >= 1)
 			{
@@ -3342,11 +3315,6 @@ void PIT_FloorRaise (AActor *thing)
 			if (!(thing->flags & MF_NOGRAVITY))
 			{
 				thing->z = thing->floorz;
-				// killough 11/98: Possibly upset balance of objects hanging off ledges
-				if (thing->flags & MF_FALLING && thing->gear >= MAXGEAR)
-				{
-					thing->gear = 0;
-				}
 			}
 		}
 		else
@@ -3522,7 +3490,7 @@ msecnode_t *P_GetSecnode()
 	}
 	else
 	{
-		node = (msecnode_t *)Z_Malloc (sizeof(*node), PU_LEVEL, NULL);
+		node = (msecnode_t *)Malloc (sizeof(*node));
 	}
 	return node;
 }
@@ -3558,7 +3526,9 @@ msecnode_t *P_AddSecnode (sector_t *s, AActor *thing, msecnode_t *nextnode)
 	msecnode_t *node;
 
 	if (s == 0)
-	I_FatalError ("AddSecnode of 0 for %s\n", thing->_StaticType.Name);
+	{
+		I_FatalError ("AddSecnode of 0 for %s\n", thing->_StaticType.Name);
+	}
 
 	node = nextnode;
 	while (node)

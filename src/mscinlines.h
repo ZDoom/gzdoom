@@ -326,7 +326,7 @@ inline void clearbufshort (void *buff, unsigned int count, WORD clear)
 	if (!count)
 		return;
 	SWORD *b2 = (SWORD *)buff;
-	if ((int)b2 & 2)
+	if ((size_t)b2 & 2)
 	{
 		*b2++ = clear;
 		if (--count == 0)

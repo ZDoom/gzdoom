@@ -7,6 +7,13 @@
 #include "m_random.h"
 #include "p_terrain.h"
 
+static FRandom pr_serpentchase ("SerpentChase");
+static FRandom pr_serpenthump ("SerpentHump");
+static FRandom pr_serpentattack ("SerpentAttack");
+static FRandom pr_serpentmeattack ("SerpentMeAttack");
+static FRandom pr_serpentgibs ("SerpentGibs");
+static FRandom pr_delaygib ("DelayGib");
+
 void A_SerpentChase (AActor *);
 void A_SerpentHumpDecide (AActor *);
 void A_SerpentDiveSound (AActor *);
@@ -142,7 +149,7 @@ IMPLEMENT_ACTOR (ASerpent, Hexen, 121, 6)
 	PROP_MassLong (0x7fffffff)		// [RH] Is this a mistake?
 	PROP_Flags (MF_SOLID|MF_NOBLOOD|MF_COUNTKILL)
 	PROP_Flags2 (MF2_PASSMOBJ|MF2_MCROSS|MF2_CANTLEAVEFLOORPIC|MF2_NONSHOOTABLE)
-	PROP_Flags3 (MF3_STAYMORPHED|MF3_DONTBLAST)
+	PROP_Flags3 (MF3_STAYMORPHED|MF3_DONTBLAST|MF3_NOTELEOTHER)
 	PROP_RenderFlags (RF_INVISIBLE)
 
 	PROP_SpawnState (S_SERPENT_LOOK1)
@@ -493,9 +500,9 @@ void A_SerpentChase (AActor *actor)
 //
 // make active sound
 //
-	if (actor->ActiveSound && P_Random() < 3)
+	if (pr_serpentchase() < 3)
 	{
-		S_SoundID (actor, CHAN_VOICE, actor->ActiveSound, 1, ATTN_NORM);
+		actor->PlayActiveSound ();
 	}
 }
 
@@ -534,24 +541,24 @@ void A_SerpentHumpDecide (AActor *actor)
 {
 	if (static_cast<ASerpent *>(actor)->bLeader)
 	{
-		if (P_Random (pr_serpenthump) > 30)
+		if (pr_serpenthump() > 30)
 		{
 			return;
 		}
-		else if (P_Random (pr_serpenthump) < 40)
+		else if (pr_serpenthump() < 40)
 		{ // Missile attack
 			actor->SetState (&ASerpent::States[S_SERPENT_SURFACE1]);
 			return;
 		}
 	}
-	else if (P_Random (pr_serpenthump) > 3)
+	else if (pr_serpenthump() > 3)
 	{
 		return;
 	}
 	if (!P_CheckMeleeRange (actor))
 	{ // The hump shouldn't occur when within melee range
 		if (static_cast<ASerpent *>(actor)->bLeader &&
-			P_Random (pr_serpenthump) < 128)
+			pr_serpenthump() < 128)
 		{
 			actor->SetState (&ASerpent::States[S_SERPENT_SURFACE1]);
 		}
@@ -710,7 +717,7 @@ void A_SerpentCheckForAttack (AActor *actor)
 	}
 	else if (P_CheckMeleeRange (actor))
 	{
-		if (P_Random (pr_serpentattack) < 32)
+		if (pr_serpentattack() < 32)
 		{
 			actor->SetState (&ASerpent::States[S_SERPENT_WALK1]);
 		}
@@ -753,12 +760,12 @@ void A_SerpentMeleeAttack (AActor *actor)
 	}
 	if (P_CheckMeleeRange (actor))
 	{
-		int damage = HITDICE(5);
+		int damage = pr_serpentmeattack.HitDice (5);
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
 		S_Sound (actor, CHAN_BODY, "SerpentMeleeHit", 1, ATTN_NORM);
 	}
-	if (P_Random (pr_serpentattack) < 96)
+	if (pr_serpentmeattack() < 96)
 	{
 		A_SerpentCheckForAttack (actor);
 	}
@@ -811,13 +818,13 @@ void A_SerpentSpawnGibs (AActor *actor)
 	for (int i = sizeof(GibTypes)/sizeof(GibTypes[0])-1; i >= 0; --i)
 	{
 		mo = Spawn (GibTypes[i],
-			actor->x+((P_Random (pr_serpentgibs)-128)<<12), 
-			actor->y+((P_Random (pr_serpentgibs)-128)<<12),
+			actor->x+((pr_serpentgibs()-128)<<12), 
+			actor->y+((pr_serpentgibs()-128)<<12),
 			actor->floorz+FRACUNIT);
 		if (mo)
 		{
-			mo->momx = (P_Random (pr_serpentgibs)-128)<<6;
-			mo->momy = (P_Random (pr_serpentgibs)-128)<<6;
+			mo->momx = (pr_serpentgibs()-128)<<6;
+			mo->momy = (pr_serpentgibs()-128)<<6;
 			mo->floorclip = 6*FRACUNIT;
 		}
 	}
@@ -853,7 +860,7 @@ void A_SinkGib (AActor *actor)
 
 void A_DelayGib (AActor *actor)
 {
-	actor->tics -= P_Random()>>2;
+	actor->tics -= pr_delaygib()>>2;
 }
 
 //============================================================================

@@ -167,8 +167,8 @@ enum ESkillLevels
 #define KEY_MOUSE4				0x103
 #define KEY_MOUSE5				0x104
 #define KEY_MOUSE6				0x105
-#define KEY_MWHEELUP			0x106
-#define KEY_MWHEELDOWN			0x107
+#define KEY_MOUSE7				0x106
+#define KEY_MOUSE8				0x107
 
 #define KEY_JOY1				0x108
 #define KEY_JOY2				0x109
@@ -203,53 +203,74 @@ enum ESkillLevels
 #define KEY_JOY31				0x126
 #define KEY_JOY32				0x127
 
-#define NUM_KEYS				0x128
+#define KEY_MWHEELUP			0x128
+#define KEY_MWHEELDOWN			0x129
+
+#define NUM_KEYS				0x130
 
 // [RH] dmflags bits (based on Q2's)
-#define	DF_NO_HEALTH		0x0000001		// Do not spawn health items (DM)
-#define	DF_NO_ITEMS			0x0000002		// Do not spawn powerups (DM)
-#define	DF_WEAPONS_STAY		0x0000004		// Leave weapons around after pickup (DM)
-#define	DF_FORCE_FALLINGZD	0x0000008		// Falling too far hurts (old ZDoom style)
-#define DF_FORCE_FALLINGHX	0x0000010		// Falling too far hurts (Hexen style)
-//#define	DF_INVENTORY_ITEMS	32		// Wait for player to use powerups when picked up
-#define	DF_SAME_LEVEL		0x0000040		// Stay on the same map when someone exits (DM)
-#define	DF_SPAWN_FARTHEST	0x0000080		// Spawn players as far as possible from other players (DM)
-#define DF_FORCE_RESPAWN	0x0000100		// Automatically respawn dead players after respawn_time is up (DM)
-#define DF_NO_ARMOR			0x0000200		// Do not spawn armor (DM)
-#define DF_NO_EXIT			0x0000400	// Kill anyone who tries to exit the level (DM)
-#define DF_INFINITE_AMMO	0x0000800	// Don't use up ammo when firing
-#define DF_NO_MONSTERS		0x0001000	// Don't spawn monsters (replaces -nomonsters parm)
-#define DF_MONSTERS_RESPAWN	0x0002000	// Monsters respawn sometime after their death (replaces -respawn parm)
-#define DF_ITEMS_RESPAWN	0x0004000	// Items other than invuln. and invis. respawn
-#define DF_FAST_MONSTERS	0x0008000	// Monsters are fast (replaces -fast parm)
-#define DF_NO_JUMP			0x0010000	// Don't allow jumping
-#define DF_NO_FREELOOK		0x0020000	// Don't allow freelook
-#define DF_RESPAWN_SUPER	0x0040000	// Respawn invulnerability and invisibility
-#define DF_NO_PASSMOBJ		0x0080000	// Pretend every actor is infinitely tall
-#define DF_NO_FOV			0x0100000	// Only let the arbitrator set FOV (for all players)
+enum
+{
+	DF_NO_HEALTH			= 1 << 0,	// Do not spawn health items (DM)
+	DF_NO_ITEMS				= 1 << 1,	// Do not spawn powerups (DM)
+	DF_WEAPONS_STAY			= 1 << 2,	// Leave weapons around after pickup (DM)
+	DF_FORCE_FALLINGZD		= 1 << 3,	// Falling too far hurts (old ZDoom style)
+	DF_FORCE_FALLINGHX		= 1 << 4,	// Falling too far hurts (Hexen style)
+//	DF_INVENTORY_ITEMS		= 1 << 5,	// Wait for player to use powerups when picked up
+	DF_SAME_LEVEL			= 1 << 6,	// Stay on the same map when someone exits (DM)
+	DF_SPAWN_FARTHEST		= 1 << 7,	// Spawn players as far as possible from other players (DM)
+	DF_FORCE_RESPAWN		= 1 << 8,	// Automatically respawn dead players after respawn_time is up (DM)
+	DF_NO_ARMOR				= 1 << 9,	// Do not spawn armor (DM)
+	DF_NO_EXIT				= 1 << 10,	// Kill anyone who tries to exit the level (DM)
+	DF_INFINITE_AMMO		= 1 << 11,	// Don't use up ammo when firing
+	DF_NO_MONSTERS			= 1 << 12,	// Don't spawn monsters (replaces -nomonsters parm)
+	DF_MONSTERS_RESPAWN		= 1 << 13,	// Monsters respawn sometime after their death (replaces -respawn parm)
+	DF_ITEMS_RESPAWN		= 1 << 14,	// Items other than invuln. and invis. respawn
+	DF_FAST_MONSTERS		= 1 << 15,	// Monsters are fast (replaces -fast parm)
+	DF_NO_JUMP				= 1 << 16,	// Don't allow jumping
+	DF_NO_FREELOOK			= 1 << 17,	// Don't allow freelook
+	DF_RESPAWN_SUPER		= 1 << 18,	// Respawn invulnerability and invisibility
+	DF_NO_FOV				= 1 << 19,	// Only let the arbitrator set FOV (for all players)
+};
 
 // [BC] More dmflags. w00p!
-//#define	DF2_YES_IMPALING		1		// Player gets implaed on MF2_IMPALE items
-#define	DF2_YES_WEAPONDROP		2		// Drop current weapon upon death
+enum
+{
+//	DF2_YES_IMPALING		= 1 << 0,	// Player gets implaed on MF2_IMPALE items
+	DF2_YES_WEAPONDROP		= 1 << 1,	// Drop current weapon upon death
 //#define DF2_NO_RUNES			4		// Don't spawn runes
-//#define DF2_YES_IRETURN			8		// Instantly return skull when player carrying it dies
-//#define DF2_YES_RETURN			16		// Return dropped skulls after 30 seconds
-//#define DF2_YES_TEAMCOLORS		32		// Don't use player's base color in teamgames
+//#define DF2_YES_IRETURN		8		// Instantly return skull when player carrying it dies
+//#define DF2_YES_RETURN		16		// Return dropped skulls after 30 seconds
+//#define DF2_YES_TEAMCOLORS	32		// Don't use player's base color in teamgames
 //#define DF2_NO_SWITCH			64		// Player is not allowed to switch teams
 //#define DF2_FORCE_RANDOM		128		// Player put on random team
 //#define DF2_YES_RUNEDROP		256		// Drop current rune upon death
-//#define DF2_YES_200MAX			512		// Don't all max. health/armor items to bring
+//#define DF2_YES_200MAX		512		// Don't all max. health/armor items to bring
 //										// health or armor over 200%
-//#define DF2_YES_DOUBLEAMMO		1024	// Doubles ammo like skill 1 and 5 do
+//#define DF2_YES_DOUBLEAMMO	1024	// Doubles ammo like skill 1 and 5 do
 //#define DF2_NO_CLEARFRAGS		2048	// Don't clear frags after each level
-//#define DF2_FORCE_NORESPAWN		4096	// Player cannot respawn
+//#define DF2_FORCE_NORESPAWN	4096	// Player cannot respawn
 //#define DF2_YES_DEGENERATION	8192	// Quake-style degeneration
 //#define DF2_YES_LOSEFRAG		16384	// Lose a frag when killed. More incentive to try to
 //										// not get yerself killed
-#define	DF2_NO_FREEAIMBFG		32768	// Don't allow BFG to be aimed at the ground
+	DF2_NO_FREEAIMBFG		= 1 << 15,	// Don't allow BFG to be aimed at the ground
 										// or ceiling. Prevents cheap BFG frags
-#define	DF2_BARRELS_RESPAWN		65536	// Barrels respawn (duh)
-#define	DF2_YES_INVUL			131072	// Player is temporarily invulnerable when respawned
+	DF2_BARRELS_RESPAWN		= 1 << 16,	// Barrels respawn (duh)
+	DF2_YES_INVUL			= 1 << 17,	// Player is temporarily invulnerable when respawned
+};
+
+// [RH] Compatibility flags.
+enum
+{
+	COMPATF_SHORTTEX		= 1 << 0,	// Use Doom's shortest texture around behavior?
+	COMPATF_STAIRINDEX		= 1 << 1,	// Don't fix loop index for stair building?
+	COMPATF_LIMITPAIN		= 1 << 2,	// Pain elemental is limited to 20 lost souls?
+	COMPATF_SILENTPICKUP	= 1 << 3,	// Pickups are only heard locally?
+	COMPATF_NO_PASSMOBJ		= 1 << 4,	// Pretend every actor is infinitely tall?
+	COMPATF_MAGICSILENCE	= 1 << 5,	// Limit actors to one sound at a time?
+	COMPATF_WALLRUN			= 1 << 6,	// Enable buggier wall clipping so players can wallrun?
+	COMPATF_NOTOSSDROPS		= 1 << 7,	// Spawn dropped items directly on the floor?
+};
 
 // phares 3/20/98:
 //
@@ -290,9 +311,6 @@ enum ESkillLevels
 #define MOD_RAILGUN			23
 #define MOD_ICE				24
 #define MOD_FRIENDLY_FIRE	0x80000000
-
-// Most damage defined using HITDICE
-#define HITDICE(a) ((1+(P_Random()&7))*a)
 
 #define BLINKTHRESHOLD (4*32)
 

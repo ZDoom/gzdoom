@@ -17,6 +17,10 @@
 #include "m_random.h"
 #include "r_main.h"
 #include "stats.h"
+#include "a_pickups.h"
+#include "statnums.h"
+
+static FRandom pr_botmove ("BotMove");
 
 //This function is called each tic for each bot,
 //so this is what the bot does.
@@ -91,7 +95,7 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 
 	if (actor->pitch > 0)
 		actor->pitch -= 80;
-	else if (actor->pitch <= -60 || actor->pitch >= 60)
+	else if (actor->pitch <= -60)
 		actor->pitch += 80;
 
 	//HOW TO MOVE:
@@ -115,7 +119,6 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 	}
 	else if (b->enemy && P_CheckSight (actor, b->enemy, false)) //Fight!
 	{
-
 		Pitch (actor, b->enemy);
 
 		//Check if it's more important to get an item than fight.
@@ -125,20 +128,24 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 			if (
 				(
 				 (actor->health < b->skill.isp &&
-				  (is (AMedikit) ||
-				   is (AStimpack) ||
-				   is (ASoulsphere) ||
-				   is (AMegasphere)
+				  (is (Medikit) ||
+				   is (Stimpack) ||
+				   is (Soulsphere) ||
+				   is (Megasphere) ||
+				   is (CrystalVial)
 				  )
 				 ) || (
-				  is (AInvulnerability) ||
-				  is (AInvisibility) ||
-				  is (AMegasphere)
+				  is (Invulnerability) ||
+				  is (Invisibility) ||
+				  is (Megasphere)
 				 ) || 
 				 dist < (GETINCOMBAT/4) ||
-				 (b->readyweapon == wp_pistol || b->readyweapon == wp_fist)
+				 (b->readyweapon == wp_pistol || b->readyweapon == wp_fist ||
+				  b->readyweapon == wp_goldwand || b->readyweapon == wp_staff)
 				)
-				&& (dist < GETINCOMBAT || (b->readyweapon == wp_pistol || b->readyweapon == wp_fist))
+				&& (dist < GETINCOMBAT || (b->readyweapon == wp_pistol ||
+					b->readyweapon == wp_fist || b->readyweapon == wp_staff ||
+					b->readyweapon == wp_goldwand))
 				&& Reachable (actor, b->dest))
 #undef is
 			{
@@ -148,15 +155,17 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 
 		b->dest = NULL; //To let bot turn right
 
-		if (b->readyweapon != wp_pistol && b->readyweapon != wp_fist)
+		if (b->readyweapon != wp_pistol && b->readyweapon != wp_fist &&
+			b->readyweapon != wp_goldwand && b->readyweapon != wp_staff)
 			actor->flags &= ~MF_DROPOFF; //Don't jump off any ledges when fighting.
 
 		if (!(b->enemy->flags & MF_COUNTKILL))
 			b->t_fight = AFTERTICS;
 
-		if ((P_AproxDistance(actor->x-b->oldx, actor->y-b->oldy)<50000
-			|| ((P_Random(pr_botmove)%30)==10))
-			&& b->t_strafe<=0)
+		if (b->t_strafe <= 0 &&
+			(P_AproxDistance(actor->x-b->oldx, actor->y-b->oldy)<50000
+			|| ((pr_botmove()%30)==10))
+			)
 		{
 			stuck = true;
 			b->t_strafe = 5;
@@ -193,8 +202,14 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 
 		Pitch (actor, b->mate);
 
-		if (!Reachable(actor, b->mate))
+		if (!Reachable (actor, b->mate))
+		{
+			if (b->mate == b->dest && pr_botmove.Random() < 32)
+			{ // [RH] If the mate is the dest, pick a new dest sometimes
+				b->dest = NULL;
+			}
 			goto roam;
+		}
 
 		actor->player->angle = R_PointToAngle2(actor->x, actor->y, b->mate->x, b->mate->y);
 
@@ -217,15 +232,17 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 			Dofire (actor, cmd); //Order bot to fire current weapon
 
 		if (b->dest && !(b->dest->flags&MF_SPECIAL) && b->dest->health < 0)
-			b->dest = NULL; //Roaming after something dead.
+		{ //Roaming after something dead.
+			b->dest = NULL;
+		}
 
-		if (!b->dest)
+		if (b->dest == NULL)
 		{
-			if (b->t_fight && b->enemy) //Enemy has jumped around corner/bot has. So what to do.
+			if (b->t_fight && b->enemy) //Enemy/bot has jumped around corner. So what to do?
 			{
 				if (b->enemy->player)
 				{
-					if ((b->enemy->player->readyweapon==wp_missile || (P_Random(pr_botmove)%100)>b->skill.isp) && !(b->readyweapon==wp_pistol || b->readyweapon==wp_fist))
+					if ((b->enemy->player->readyweapon==wp_missile || (pr_botmove()%100)>b->skill.isp) && !(b->readyweapon==wp_pistol || b->readyweapon==wp_fist))
 						b->dest = b->enemy;//Dont let enemy kill the bot by supressive fire. So charge enemy.
 					else //hide while b->t_fight, but keep view at enemy.
 						b->angle = R_PointToAngle2(actor->x, actor->y, b->enemy->x, b->enemy->y);
@@ -237,20 +254,47 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 			}
 			else //Choose a distant target. to get things going.
 			{
-				r = P_Random(pr_botmove);
-				if ((r%100)<50 && bglobal.thingnum)
-					b->dest = bglobal.things[(r%(bglobal.thingnum-1))];
-				else if (b->mate && (P_CheckSight(actor, b->mate) || (r%100)<70))
+				r = pr_botmove();
+				if (r < 128)
+				{
+					TThinkerIterator<AInventory> it (STAT_INVENTORY, firstthing);
+					AInventory *item = it.Next();
+
+					if (item != NULL || (item = it.Next()) != NULL)
+					{
+						r &= 63;	// Only scan up to 64 entries at a time
+						while (r)
+						{
+							--r;
+							item = it.Next();
+						}
+						if (item == NULL)
+						{
+							item = it.Next();
+						}
+						firstthing = item;
+						b->dest = item;
+					}
+				}
+				else if (b->mate && (r < 179 || P_CheckSight(actor, b->mate)))
+				{
 					b->dest = b->mate;
+				}
 				else if ((playeringame[(r%bglobal.playernumber)]) && players[(r%bglobal.playernumber)].mo->health >= 0)
+				{
 					b->dest = players[(r%bglobal.playernumber)].mo; 
+				}
 			}
 
-			if(b->dest)
+			if (b->dest)
+			{
 				b->t_roam = MAXROAM;
+			}
 		}
-		if (b->dest) //Bot has a target so roam after it.
+		if (b->dest)
+		{ //Bot has a target so roam after it.
 			Roam (actor, cmd);
+		}
 
 	} //End of movement main part.
 
@@ -280,20 +324,52 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	{
 		return;
 	}
+	int weapgiveammo = !(dmflags & DF_WEAPONS_STAY);
+
 	//if(pos && !bglobal.thingvis[pos->id][item->id]) continue;
-	if ((typeis (AStimpack) || typeis (AMedikit)) && actor->health >= MAXHEALTH)
+	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
+		return;	// don't know how to use artifacts
+	if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
+	{
+		AWeapon *weapon = static_cast<AWeapon *> (item);
+		weapontype_t weaptype = weapon->OldStyleID ();
+
+		if (weaptype >= NUMWEAPONS)
+		{ // bad weapon
+			return;
+		}
+
+		ammotype_t ammotype = wpnlev1info[weaptype]->ammo;
+
+		if (b->weaponowned[weaptype])
+		{
+			if (!weapgiveammo)
+				return;
+			if (ammotype >= NUMAMMO)
+				return;
+			if (b->ammo[ammotype] >= b->maxammo[ammotype])
+				return;
+		}
+	}
+	else if (item->IsKindOf (RUNTIME_CLASS(AAmmo)))
+	{
+		AAmmo *ammo = static_cast<AAmmo *> (item);
+		ammotype_t ammotype = ammo->GetAmmoType ();
+
+		if (ammotype < NUMAMMO)
+		{
+			if (b->ammo[ammotype] >= b->maxammo[ammotype])
+				return;
+		}
+		else if (ammotype == MANA_BOTH)
+		{
+			if (b->ammo[MANA_1] >= b->maxammo[MANA_1] && b->ammo[MANA_2] >= b->maxammo[MANA_2])
+				return;
+		}
+	}
+	else if ((typeis (Megasphere) || typeis (Soulsphere) || typeis (HealthBonus)) && actor->health >= deh.MaxSoulsphere)
 		return;
-	else if ((typeis (AMegasphere) || typeis (ASoulsphere) || typeis (AHealthBonus)) && actor->health >= deh.MaxSoulsphere)
-		return;
-	else if (((typeis (ASuperShotgun) || typeis (AShotgun) || typeis (AShell) || typeis (AShellBox)) && b->ammo[am_shell] == b->maxammo[am_shell]) || (deathmatch != 2 && ((typeis (AShotgun) && b->weaponowned[wp_shotgun]) || (typeis (ASuperShotgun) && b->weaponowned[wp_supershotgun]))))
-		return;
-	else if (((typeis (AChaingun) || typeis (AClip) || typeis (AClipBox)) && b->ammo[am_clip] == b->maxammo[am_clip]) || (deathmatch != 2 && (typeis (AChaingun) && b->weaponowned[wp_chaingun])))
-		return;
-	else if (((typeis (APlasmaRifle) || typeis (ABigFreakingGun) || typeis (ACell) || typeis (ACellPack)) && b->ammo[am_cell] == b->maxammo[am_cell]) || (deathmatch != 2 && ((typeis (ABigFreakingGun) && b->weaponowned[wp_bfg]) || (typeis (APlasmaRifle) && b->weaponowned[wp_plasma]))))
-		return;
-	else if (((typeis (ARocketLauncher) || typeis (ARocketAmmo) || typeis (ARocketBox)) && b->ammo[am_misl] == b->maxammo[am_misl]) || (deathmatch != 2 && (typeis (ARocketLauncher) && b->weaponowned[wp_missile])))
-		return;
-	else if (typeis (AChainsaw) && b->weaponowned[wp_chainsaw])
+	else if (item->IsKindOf (RUNTIME_CLASS(AHealth)) && actor->health >= MAXHEALTH)
 		return;
 
 	if ((b->dest == NULL ||

@@ -140,6 +140,8 @@ typedef enum {
 	Light_Flicker = 115,
 	Light_Strobe = 116,
 
+	Thing_Damage = 119,
+
 	Radius_Quake = 120,	// Earthquake
 
 	Line_SetIdentification = 121,
@@ -173,6 +175,8 @@ typedef enum {
 	Sector_ChangeSound = 140,
 
 // [RH] Begin new specials for ZDoom
+	Thing_Hate = 177,
+	Thing_ProjectileAimed = 178,
 	ChangeSkill = 179,
 	Thing_SetTranslation = 180,
 	Plane_Align = 181,

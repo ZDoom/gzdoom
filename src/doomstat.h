@@ -312,4 +312,6 @@ extern DehInfo deh;
 EXTERN_CVAR (Int, dmflags);
 EXTERN_CVAR (Int, dmflags2);	// [BC]
 
+EXTERN_CVAR (Int, compatflags);
+
 #endif

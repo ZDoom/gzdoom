@@ -189,7 +189,7 @@ patch_t *FImageCollection::CachePatch (const char *name, int namespc)
 		lump = W_CheckNumForName (name, ns_sprites);
 	if (lump == -1)
 		return NULL;
-	return (patch_s *)W_CacheLumpNum (lump, PU_CACHE);
+	return (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
 }
 
 byte *FImageCollection::GetImage (int code, int *const width, int *const height,

@@ -7,6 +7,9 @@
 #include "a_action.h"
 #include "gstrings.h"
 
+static FRandom pr_atk ("MummyAttack");
+static FRandom pr_ma2 ("MummyAttack2");
+
 void A_MummyAttack (AActor *);
 void A_MummySoul (AActor *);
 void A_MummyAttack2 (AActor *);
@@ -227,7 +230,7 @@ void A_MummyAttack (AActor *actor)
 	}
 	if (P_CheckMeleeRange (actor))
 	{
-		int damage = HITDICE(2);
+		int damage = pr_atk.HitDice (2);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		S_Sound (actor, CHAN_WEAPON, "mummy/attack2", 1, ATTN_NORM);
@@ -255,7 +258,7 @@ void A_MummyAttack2 (AActor *actor)
 	//S_StartSound(actor, actor->info->attacksound);
 	if (P_CheckMeleeRange (actor))
 	{
-		int damage = HITDICE(2);
+		int damage = pr_ma2.HitDice (2);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		return;

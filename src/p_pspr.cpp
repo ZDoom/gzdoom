@@ -69,6 +69,9 @@ static weapontype_t HexenWeaponPrefs[] =
 	NUMWEAPONS
 };
 
+static FRandom pr_wpnreadysnd ("WpnReadySnd");
+static FRandom pr_gunshot ("GunShot");
+
 // CODE --------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
@@ -459,7 +462,7 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
 	// Play ready sound, if any.
 	if (weapon->readysound && psp->state == weapon->readystate)
 	{
-		if (!(weapon->flags & WIF_READYSNDHALF) || P_Random (pr_wpnreadysnd) < 128)
+		if (!(weapon->flags & WIF_READYSNDHALF) || pr_wpnreadysnd() < 128)
 		{
 			S_Sound (player->mo, CHAN_WEAPON, weapon->readysound, 1, ATTN_NORM);
 		}
@@ -626,12 +629,12 @@ void P_GunShot (AActor *mo, BOOL accurate)
 	angle_t 	angle;
 	int 		damage;
 		
-	damage = 5*(P_Random (pr_gunshot)%3+1);
+	damage = 5*(pr_gunshot()%3+1);
 	angle = mo->angle;
 
 	if (!accurate)
 	{
-		angle += PS_Random (pr_gunshot) << 18;
+		angle += pr_gunshot.Random2 () << 18;
 	}
 
 	P_LineAttack (mo, angle, MISSILERANGE, bulletpitch, damage);

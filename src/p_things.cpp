@@ -130,12 +130,13 @@ bool P_Thing_Move (int tid, int mapspot)
 }
 
 bool P_Thing_Projectile (int tid, int type, angle_t angle,
-	fixed_t speed, fixed_t vspeed, bool gravity)
+	fixed_t speed, fixed_t vspeed, int dest, AActor *forcedest, bool gravity)
 {
 	int rtn = 0;
 	const TypeInfo *kind;
-	AActor *spot, *mobj;
-	TActorIterator<AMapSpot> iterator (tid);
+	AActor *spot, *mobj, *targ = forcedest;
+	FActorIterator iterator (tid);
+	float fspeed = float(speed);
 
 	if (type >= MAX_SPAWNABLES)
 		return false;
@@ -148,35 +149,74 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 
 	while ( (spot = iterator.Next ()) )
 	{
-		mobj = Spawn (kind, spot->x, spot->y, spot->z);
+		FActorIterator tit (dest);
 
-		if (mobj)
+		if (dest == 0 || (targ = tit.Next()))
 		{
-			if (mobj->SeeSound)
+			do
 			{
-				S_SoundID (mobj, CHAN_VOICE, mobj->SeeSound, 1, ATTN_NORM);
-			}
-			if (gravity)
-			{
-				mobj->flags &= ~MF_NOGRAVITY;
-				if (!(mobj->flags & MF_COUNTKILL))
-					mobj->flags2 |= MF2_LOGRAV;
-			}
-			else
-			{
-				mobj->flags |= MF_NOGRAVITY;
-			}
-			mobj->target = spot;
-			mobj->angle = angle;
-			mobj->momx = FixedMul (speed, finecosine[angle>>ANGLETOFINESHIFT]);
-			mobj->momy = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
-			mobj->momz = vspeed;
-			if (mobj->flags & MF_SPECIAL)
-				mobj->flags |= MF_DROPPED;
-			if (mobj->flags & MF_MISSILE)
-				rtn = P_CheckMissileSpawn (mobj);
-			else if (!P_TestMobjLocation (mobj))
-				mobj->Destroy ();
+				mobj = Spawn (kind, spot->x, spot->y, spot->z);
+
+				if (mobj)
+				{
+					if (mobj->SeeSound)
+					{
+						S_SoundID (mobj, CHAN_VOICE, mobj->SeeSound, 1, ATTN_NORM);
+					}
+					if (gravity)
+					{
+						mobj->flags &= ~MF_NOGRAVITY;
+						if (!(mobj->flags & MF_COUNTKILL))
+						{
+							mobj->flags2 |= MF2_LOGRAV;
+						}
+					}
+					else
+					{
+						mobj->flags |= MF_NOGRAVITY;
+					}
+					mobj->target = spot;
+
+					if (targ != NULL)
+					{
+						vec3_t aim =
+						{
+							float(targ->x - mobj->x),
+							float(targ->y - mobj->y),
+							float(targ->z+targ->height/2 - mobj->z)
+						};
+
+						mobj->angle = R_PointToAngle2 (mobj->x, mobj->y, targ->x, targ->y);
+						VectorNormalize (aim);
+						mobj->momx = fixed_t(aim[0] * fspeed);
+						mobj->momy = fixed_t(aim[1] * fspeed);
+						mobj->momz = fixed_t(aim[2] * fspeed);
+						if (mobj->flags2 & MF2_SEEKERMISSILE)
+						{
+							mobj->tracer = targ;
+						}
+					}
+					else
+					{
+						mobj->angle = angle;
+						mobj->momx = FixedMul (speed, finecosine[angle>>ANGLETOFINESHIFT]);
+						mobj->momy = FixedMul (speed, finesine[angle>>ANGLETOFINESHIFT]);
+						mobj->momz = vspeed;
+					}
+					if (mobj->flags & MF_SPECIAL)
+					{
+						mobj->flags |= MF_DROPPED;
+					}
+					if (mobj->flags & MF_MISSILE)
+					{
+						rtn = P_CheckMissileSpawn (mobj);
+					}
+					else if (!P_TestMobjLocation (mobj))
+					{
+						mobj->Destroy ();
+					}
+				}
+			} while (dest != 0 && (targ = tit.Next()));
 		} 
 	}
 

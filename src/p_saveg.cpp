@@ -147,7 +147,7 @@ void P_SerializeWorld (FArchive &arc)
 
 		for (j = 0; j < 2; j++)
 		{
-			if (li->sidenum[j] == -1)
+			if (li->sidenum[j] == NO_INDEX)
 				continue;
 
 			side_t *si = &sides[li->sidenum[j]];
@@ -176,6 +176,7 @@ void P_SerializeWorld (FArchive &arc)
 
 void P_SerializeThinkers (FArchive &arc, bool hubLoad)
 {
+	AImpactDecal::SerializeTime (arc);
 	DThinker::SerializeAll (arc, hubLoad);
 }
 

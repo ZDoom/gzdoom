@@ -94,7 +94,7 @@ AT_GAME_SET (RealGibs)
 	{
 		def->SpawnState = &ARealGibs::States[1];
 	}
-	else
+	else // Hexen does not make gibs
 	{
 		def->RenderStyle = STYLE_None;
 	}
@@ -112,4 +112,5 @@ class AGibs : public ARealGibs
 };
 
 IMPLEMENT_STATELESS_ACTOR (AGibs, Doom, 24, 146)
+	PROP_SpawnState (0)
 END_DEFAULTS

@@ -31,6 +31,22 @@
 **
 */
 
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ * If you do not have dshow.h, either download the latest DirectX SDK from
+ * <http://msdn.microsoft.com/library/default.asp?url=/nhp/Default.asp?contentid=28000410>
+ * or #define I_DO_NOT_LIKE_BIG_DOWNLOADS
+ * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ */
+
+#ifdef I_DO_NOT_LIKE_BIG_DOWNLOADS
+
+int I_PlayMovie (const char *movie)
+{
+	return MOVIE_Failed;
+}
+
+#else
+
 #define WIN32_LEAN_AND_MEAN
 
 #include <dshow.h>
@@ -103,7 +119,7 @@ LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 		break;
 
 	case WM_DESTROY:
-		PostQuitMessage (0);;
+		PostQuitMessage (0);
 		break;
 
 	case WM_SIZE:
@@ -121,7 +137,7 @@ LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 	case WM_PAINT:
 		if (vidwin == NULL)
 		{
-			static_cast<DDrawFB *> (screen)->PaintToWindow ();
+			static_cast<BaseWinFB *> (screen)->PaintToWindow ();
 		}
 		else
 		{
@@ -140,14 +156,19 @@ LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lP
 
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
+		/*
 	case WM_LBUTTONDOWN:
 	case WM_RBUTTONDOWN:
 	case WM_MBUTTONDOWN:
+		*/
 		if (MovieNotDone)
 		{
-			control->Stop ();
-			MovieNotDone = false;
-			MovieInterrupted = true;
+			if (wParam == VK_ESCAPE || message == WM_CANCELMODE)
+			{
+				control->Stop ();
+				MovieNotDone = false;
+				MovieInterrupted = true;
+			}
 		}
 		return 0;
 
@@ -176,13 +197,14 @@ int I_PlayMovie (const char *name)
 	size_t namelen = strlen (name) + 1;
 	wchar_t *uniname = (wchar_t *)Z_Malloc (namelen*sizeof(wchar_t), PU_STATIC, NULL);
 	bool returnSound = false;
-	bool runningFull;
+	bool runningFull = false;
+	bool hotkey = false;
 	size_t i;
 	MSG msg;
 
 	MovieNotDone = true;
 
-	if (MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, name, -1, uniname, namelen) == 0)
+	if (MultiByteToWideChar (CP_ACP, MB_PRECOMPOSED, name, -1, uniname, (int)namelen) == 0)
 	{ // Could not convert name to Unicode
 		goto bomb1;
 	}
@@ -229,7 +251,6 @@ int I_PlayMovie (const char *name)
 	SetTheVolume ();
 
 	FullVideo = false;
-	runningFull = false;
 
 	if (vidwin != NULL)
 	{
@@ -245,7 +266,7 @@ int I_PlayMovie (const char *name)
 			// Does not always work. :-(
 			static_cast<Win32Video *> (Video)->BlankForGDI ();
 			static_cast<Win32Video *> (Video)->GoFullscreen (false);
-			static_cast<DDrawFB *> (screen)->ReleaseResources ();
+			static_cast<BaseWinFB *> (screen)->ReleaseResources ();
 			if (FAILED (drainhr) || FAILED(vidwin->put_FullScreenMode (OATRUE)))
 			{
 				SizeWindowForVideo ();
@@ -258,6 +279,11 @@ int I_PlayMovie (const char *name)
 			vidwin->put_WindowStyle (WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN);
 			SetMovieSize ();
 		}
+		else
+		{
+			RegisterHotKey (Window, 0, MOD_ALT, VK_TAB);
+			hotkey = true;
+		}
 	}
 
 	if (FAILED (event->SetNotifyWindow ((OAHWND)Window, WM_GRAPHNOTIFY, 0)))
@@ -268,7 +294,7 @@ int I_PlayMovie (const char *name)
 	SetPriorityClass (GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
 
 	I_CheckNativeMouse (true);
-	SetWindowLong (Window, GWL_WNDPROC, (LONG)MovieWndProc);
+	SetWindowLongPtr (Window, GWL_WNDPROC, (LONG_PTR)MovieWndProc);
 
 	if (FAILED (control->Run ()))
 	{
@@ -288,10 +314,14 @@ int I_PlayMovie (const char *name)
 								   MOVIE_Played;
 
 bomb4:
-	SetWindowLong (Window, GWL_WNDPROC, (LONG)WndProc);
+	SetWindowLongPtr (Window, GWL_WNDPROC, (LONG_PTR)WndProc);
 	SetPriorityClass (GetCurrentProcess(), INGAME_PRIORITY_CLASS);
 
 bomb3:
+	if (hotkey)
+	{
+		UnregisterHotKey (Window, 0);
+	}
 	if (vidwin != NULL)
 	{
 		if (!FullVideo)
@@ -331,7 +361,7 @@ bomb2:
 	if (runningFull)
 	{
 		static_cast<Win32Video *> (Video)->GoFullscreen (true);
-		static_cast<DDrawFB *> (screen)->CreateResources ();
+		static_cast<BaseWinFB *> (screen)->CreateResources ();
 	}
 
 bomb1:
@@ -450,3 +480,5 @@ static void SetMovieSize ()
 
 	InvalidateRect (Window, NULL, FALSE);
 }
+
+#endif		// I_DO_NOT_LIKE_BIG_DOWNLOADS

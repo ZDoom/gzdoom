@@ -35,6 +35,7 @@ inline void P_DropItem (AActor *source, const char *type, int special, int chanc
 
 void A_Look (AActor *actor);
 void A_Chase (AActor *actor);
+void A_FastChase (AActor *actor);
 void A_FaceTarget (AActor *actor);
 void A_MonsterRail (AActor *actor);
 void A_Scream (AActor *actor);
@@ -46,10 +47,12 @@ void A_Explode (AActor *thing);
 void A_Mushroom (AActor *actor);
 void A_BossDeath (AActor *actor);
 void A_PlayerScream (AActor *mo);
+void A_ClassBossHealth (AActor *);
 
 bool A_RaiseMobj (AActor *);
 bool A_SinkMobj (AActor *);
 
 int P_Massacre ();
+BOOL P_CheckMissileRange (AActor *actor);
 
 #endif //__P_ENEMY_H__

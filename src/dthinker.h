@@ -70,9 +70,6 @@ public:
 	virtual void Tick ();
 	virtual void PostBeginPlay ();	// Called just before the first tick
 
-	void *operator new (size_t size);
-	void operator delete (void *block);
-
 	void ChangeStatNum (int statnum);
 
 	static void RunThinkers ();
@@ -106,6 +103,7 @@ private:
 
 public:
 	FThinkerIterator (TypeInfo *type, int statnum=MAX_STATNUM+1);
+	FThinkerIterator (TypeInfo *type, int statnum, DThinker *prev);
 	DThinker *Next ();
 	void Reinit ();
 };
@@ -114,6 +112,9 @@ template <class T> class TThinkerIterator : public FThinkerIterator
 {
 public:
 	TThinkerIterator (int statnum=MAX_STATNUM+1) : FThinkerIterator (RUNTIME_CLASS(T), statnum)
+	{
+	}
+	TThinkerIterator (int statnum, DThinker *prev) : FThinkerIterator (RUNTIME_CLASS(T), statnum, prev)
 	{
 	}
 	T *Next ()

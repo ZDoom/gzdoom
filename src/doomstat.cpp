@@ -54,11 +54,8 @@ CVAR (Float, teamdamage, 0.f, CVAR_SERVERINFO);
 CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
 {
 	SetLanguageIDs ();
-	if (level.behavior != NULL)
-	{
-		level.behavior->PrepLocale (LanguageIDs[0], LanguageIDs[1],
+	FBehavior::StaticPrepLocale (LanguageIDs[0], LanguageIDs[1],
 			LanguageIDs[2], LanguageIDs[3]);
-	}
 	GStrings.ReloadStrings ();
 	GStrings.Compact ();
 	G_SetLevelStrings ();
@@ -67,4 +64,4 @@ CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
 // [RH] Network arbitrator
 int Net_Arbitrator = 0;
 
-int NextSkill;
+int NextSkill = -1;

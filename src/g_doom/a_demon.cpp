@@ -6,6 +6,8 @@
 #include "gstrings.h"
 #include "a_action.h"
 
+static FRandom pr_sargattack ("SargAttack");
+
 void A_SargAttack (AActor *);
 
 class ADemon : public AActor
@@ -148,7 +150,7 @@ void A_SargAttack (AActor *self)
 	A_FaceTarget (self);
 	if (P_CheckMeleeRange (self))
 	{
-		int damage = ((P_Random (pr_sargattack)%10)+1)*4;
+		int damage = ((pr_sargattack()%10)+1)*4;
 		P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 		P_TraceBleed (damage, self->target, self);
 	}

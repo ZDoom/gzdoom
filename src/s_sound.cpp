@@ -50,6 +50,7 @@
 #include "gstrings.h"
 #include "vectors.h"
 #include "gi.h"
+#include "templates.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -79,6 +80,17 @@
 #define S_PITCH_PERTURB 		1
 #define S_STEREO_SWING			(96<<FRACBITS)
 
+/* Sound curve parameters for Doom */
+
+// Maximum sound distance
+const int S_CLIPPING_DIST = 1200;
+
+// Sounds closer than this to the listener are maxed out.
+// Originally: 200.
+const int S_CLOSE_DIST =	160;
+
+const int S_ATTENUATOR =	S_CLIPPING_DIST - S_CLOSE_DIST;
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct
@@ -105,7 +117,7 @@ typedef struct
 struct MusPlayingInfo
 {
 	char *name;
-	int   handle;
+	void *handle;
 	int   baseorder;
 	bool  loop;
 };
@@ -146,8 +158,7 @@ int numChannels;
 CVAR (Bool, snd_surround, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// [RH] Use surround sounds?
 FBoolCVar noisedebug ("noise", false, 0);	// [RH] Print sound debugging info?
 CVAR (Int, snd_channels, 12, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// number of channels available
-CVAR (Bool, sv_ihatesounds, false, CVAR_SERVERINFO)
-CVAR (Bool, snd_dolby, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, snd_matrix, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_flipstereo, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------
@@ -264,19 +275,43 @@ void S_Init ()
 	int i;
 	int curvelump;
 
-	curvelump = W_GetNumForName ("SNDCURVE");
-	SoundCurve = (byte *)W_CacheLumpNum (curvelump, PU_STATIC);
-	MAX_SND_DIST = W_LumpLength (curvelump);
-
 	Printf ("S_Init\n");
+
+	// Heretic and Hexen have sound curve lookup tables. Doom does not.
+	curvelump = W_CheckNumForName ("SNDCURVE");
+	if (curvelump >= 0)
+	{
+		MAX_SND_DIST = W_LumpLength (curvelump);
+		SoundCurve = new BYTE[MAX_SND_DIST];
+		W_ReadLump (curvelump, SoundCurve);
+
+		// The maximum value in a SNDCURVE lump is 127, so scale it to
+		// fit our sound system's volume levels.
+		for (i = 0; i < S_CLIPPING_DIST; ++i)
+		{
+			SoundCurve[i] = SoundCurve[i] * 255 / 127;
+		}
+	}
+	else
+	{
+		MAX_SND_DIST = S_CLIPPING_DIST;
+		SoundCurve = new BYTE[S_CLIPPING_DIST];
+		for (i = 0; i < S_CLIPPING_DIST; ++i)
+		{
+			SoundCurve[i] = MIN (255, (S_CLIPPING_DIST - i) * 255 / S_ATTENUATOR);
+		}
+	}
 
 	// [RH] Read in sound sequences
 	S_ParseSndSeq ();
 
-	// Allocating the virtual channels in zone memory
+	// Allocating the virtual channels
 	numChannels = I_SetChannels (snd_channels);
-	Z_FreeTags (PU_SOUNDCHANNELS, PU_SOUNDCHANNELS);
-	Channel = (channel_t *) Z_Malloc (numChannels*sizeof(channel_t), PU_SOUNDCHANNELS, 0);
+	if (Channel != NULL)
+	{
+		delete[] Channel;
+	}
+	Channel = new channel_t[numChannels];
 
 	// Free all channels for use
 	for (i = 0; i < numChannels; i++)
@@ -403,6 +438,8 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	{
 		if (attenuation > 0)
 			attenuation = 0;
+		// Give these variables values, although they don't really matter
+		x = y = z = 0;
 	}
 	else
 	{
@@ -416,12 +453,19 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	{
 		pt = NULL;
 	}
-	if (sv_ihatesounds)
+	if (compatflags & COMPATF_MAGICSILENCE)
 	{ // For people who just can't play without a silent BFG.
 		channel = 1;
 	}
 	else
 	{
+		if ((channel & CHAN_MAYBE_LOCAL) && (compatflags & COMPATF_SILENTPICKUP))
+		{
+			if (mover != 0 && mover != players[consoleplayer].camera)
+			{
+				return;
+			}
+		}
 		channel &= 7;
 	}
 	if (volume > 1)
@@ -446,13 +490,12 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 				* attenuation);
 		if (dist >= MAX_SND_DIST)
 		{
-			if (level.flags & LEVEL_NOSOUNDCLIPPING)
-				dist = MAX_SND_DIST;
-			else
-				return;	// sound is beyond the hearing range...
+			return;	// sound is beyond the hearing range...
 		}
 		else if (dist < 0)
+		{
 			dist = 0;
+		}
 		sep = -3;	// Calculate separation later on
 	}
 
@@ -518,7 +561,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	}
 	priority = basepriority * (PRIORITY_MAX_ADJUST - (dist/DIST_ADJUST));
 
-	if (!S_StopSoundID (sound_id, priority, x, y))
+	if (pt != NULL && !S_StopSoundID (sound_id, priority, sfx->MaxChannels, x, y))
 		return;	// other sounds have greater priority
 
 	if (pt)
@@ -606,7 +649,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		}
 	}
 
-	vol = (int)(SoundCurve[dist]*volume*2);
+	vol = (int)(SoundCurve[dist]*volume);
 	if (sep == -3)
 	{
 		AActor *listener = players[consoleplayer].camera;
@@ -631,7 +674,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 			{
 				sep = 255-sep;
 			}
-			if (snd_dolby)
+			if (snd_matrix)
 			{
 				int rearsep = NORM_SEP -
 					(FixedMul (S_STEREO_SWING, finecosine[angle])>>FRACBITS);
@@ -644,13 +687,15 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 		}
 	}
 
-	// hacks to vary the sfx pitches
-	if (sound_id == sfx_sawup)
-		Channel[i].pitch = NORM_PITCH + 8 - (M_Random()&15);
-	else if (sound_id != sfx_itemup && sound_id != sfx_tink)
-		Channel[i].pitch = NORM_PITCH + 16 - (M_Random()&31);
+	// vary the sfx pitches
+	if (sfx->PitchMask != 0)
+	{
+		Channel[i].pitch = NORM_PITCH-(M_Random()&sfx->PitchMask)+(M_Random()&sfx->PitchMask);
+	}
 	else
+	{
 		Channel[i].pitch = NORM_PITCH;
+	}
 
 	if (Sound3D && attenuation > 0)
 	{
@@ -722,6 +767,15 @@ void S_SoundID (AActor *ent, int channel, int sound_id, float volume, int attenu
 void S_SoundID (fixed_t *pt, int channel, int sound_id, float volume, int attenuation)
 {
 	S_StartSound (pt, NULL, channel, sound_id, volume, SELECT_ATTEN(attenuation), false);
+}
+
+void S_SoundID (fixed_t x, fixed_t y, fixed_t z, int channel, int sound_id, float volume, int attenuation)
+{
+	fixed_t pt[3];
+	pt[0] = x;
+	pt[1] = y;
+	pt[2] = z;
+	S_StartSound (pt, NULL, channel|CHAN_IMMOBILE, sound_id, volume, SELECT_ATTEN(attenuation), false);
 }
 
 //==========================================================================
@@ -818,14 +872,17 @@ void S_LoopedSound (AActor *ent, int channel, const char *name, float volume, in
 // Stops more than <limit> copies of the sound from playing at once.
 //==========================================================================
 
-BOOL S_StopSoundID (int sound_id, int priority, fixed_t x, fixed_t y)
+BOOL S_StopSoundID (int sound_id, int priority, int limit, fixed_t x, fixed_t y)
 {
 	int i;
 	int lp; //least priority
-	int limit;
 	int found;
 
-	limit = 2;
+	if (limit <= 0)
+	{
+		return true;
+	}
+
 	lp = -1;
 	found = 0;
 	for (i = 0; i < numChannels; i++)
@@ -872,7 +929,7 @@ void S_StopSound (fixed_t *pt, int channel)
 	{
 		if (Channel[i].sfxinfo &&
 			Channel[i].pt == pt &&
-			(sv_ihatesounds || Channel[i].entchannel == channel))
+			((compatflags & COMPATF_MAGICSILENCE) || Channel[i].entchannel == channel))
 		{
 			S_StopChannel (i);
 		}
@@ -973,7 +1030,7 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel)
 {
 	int i;
 
-	if (sv_ihatesounds)
+	if (compatflags & COMPATF_MAGICSILENCE)
 	{
 		channel = 0;
 	}
@@ -1080,13 +1137,8 @@ void S_UpdateSounds (void *listener_p)
 					* Channel[i].attenuation);
 			if (dist >= MAX_SND_DIST)
 			{
-				if (!(level.flags & LEVEL_NOSOUNDCLIPPING))
-				{
-					S_StopChannel (i);
-					continue;
-				}
-				else
-					dist = MAX_SND_DIST;
+				S_StopChannel (i);
+				continue;
 			}
 			else if (dist < 0)
 			{
@@ -1106,7 +1158,7 @@ void S_UpdateSounds (void *listener_p)
 				{
 					sep = 255-sep;
 				}
-				if (snd_dolby)
+				if (snd_matrix)
 				{
 					int rearsep = NORM_SEP -
 						(FixedMul (S_STEREO_SWING, finecosine[angle])>>FRACBITS);
@@ -1216,17 +1268,12 @@ bool S_StartMusic (char *m_id)
 
 bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 {
-	int lumpnum = -1;
-	int len;
-	int handle;
-	int pos;
-
 	if (!force && PlayList)
 	{ // Don't change if a playlist is active
 		return false;
 	}
 
-	if (musicname == NULL)
+	if (musicname == NULL || musicname[0] == 0)
 	{
 		// Don't choke if the map doesn't have a song attached
 		S_StopMusic (true);
@@ -1262,6 +1309,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	}
 	else
 	{
+		int lumpnum = -1;
+		int handle;
+		int len;
+		int pos;
+
 		if (-1 == (handle = open (musicname, O_BINARY|O_RDONLY)))
 		{
 			if ((lumpnum = W_CheckNumForName (musicname)) == -1)
@@ -1278,12 +1330,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		else
 		{
-#ifdef _WIN32
-			lseek (handle, 0, SEEK_END);
-			len = tell (handle);
-#else
 			len = lseek (handle, 0, SEEK_END);
-#endif
 			lseek (handle, 0, SEEK_SET);
 			pos = 0;
 		}
@@ -1297,14 +1344,14 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			delete[] mus_playing.name;
 		}
 		mus_playing.handle = I_RegisterSong (handle, pos, len);
+
+		if (lumpnum == -1)
+		{
+			close (handle);
+		}
 	}
 
 	mus_playing.loop = looping;
-
-	if (lumpnum == -1)
-	{
-		close (handle);
-	}
 
 	if (mus_playing.handle != 0)
 	{ // play it

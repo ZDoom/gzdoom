@@ -49,7 +49,7 @@
 #include "helperthread.h"
 
 extern HWND Window;
-extern HINSTANCE hInstance;
+extern HINSTANCE g_hInst;
 
 enum
 {
@@ -77,6 +77,7 @@ public:
 protected:
 	bool Init ();
 	void Deinit ();
+	const char *ThreadName ();
 	DWORD Dispatch (DWORD method, DWORD parm1=0, DWORD parm2=0, DWORD parm3=0);
 	void DefaultDispatch ();
 
@@ -153,6 +154,17 @@ FCDThread::FCDThread ()
 
 //==========================================================================
 //
+// ThreadName
+//
+//==========================================================================
+
+const char *FCDThread::ThreadName ()
+{
+	return "CD Player";
+}
+
+//==========================================================================
+//
 // Init
 //
 //==========================================================================
@@ -161,7 +173,7 @@ bool FCDThread::Init ()
 {
 	CD_WindowClass.style = CS_NOCLOSE;
 	CD_WindowClass.lpfnWndProc = CD_WndProc;
-	CD_WindowClass.hInstance = hInstance;
+	CD_WindowClass.hInstance = g_hInst;
 	CD_WindowClass.lpszClassName = "ZDoom CD Player";
 	CD_WindowAtom = RegisterClass (&CD_WindowClass);
 
@@ -175,17 +187,17 @@ bool FCDThread::Init ()
 		0, 0, 10, 10,
 		NULL,
 		NULL,
-		hInstance,
+		g_hInst,
 		NULL);
 
 	if (CD_Window == NULL)
 	{
-		UnregisterClass ((LPCTSTR)CD_WindowAtom, hInstance);
+		UnregisterClass ((LPCTSTR)CD_WindowAtom, g_hInst);
 		CD_WindowAtom = 0;
 		return false;
 	}
 
-	SetWindowLong (CD_Window, GWL_USERDATA, (DWORD)this);
+	SetWindowLongPtr (CD_Window, GWL_USERDATA, (LONG)(LONG_PTR)this);
 	SetThreadPriority (ThreadHandle, THREAD_PRIORITY_LOWEST);
 	return true;
 }
@@ -205,7 +217,7 @@ void FCDThread::Deinit ()
 	}
 	if (CD_WindowAtom)
 	{
-		UnregisterClass ((LPCTSTR)(CD_WindowAtom), hInstance);
+		UnregisterClass ((LPCTSTR)(CD_WindowAtom), g_hInst);
 		CD_WindowAtom = 0;
 	}
 	if (DeviceID)
@@ -264,7 +276,7 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 			openFlags |= MCI_OPEN_ELEMENT;
 		}
 
-		while (mciSendCommand (0, MCI_OPEN, openFlags, (DWORD)&mciOpen) != 0)
+		while (mciSendCommand (0, MCI_OPEN, openFlags, (DWORD_PTR)&mciOpen) != 0)
 		{
 			if (!(openFlags & MCI_OPEN_ELEMENT))
 			{
@@ -275,7 +287,7 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 
 		DeviceID = mciOpen.wDeviceID;
 		mciSetParms.dwTimeFormat = MCI_FORMAT_TMSF;
-		if (mciSendCommand (DeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD)&mciSetParms) == 0)
+		if (mciSendCommand (DeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&mciSetParms) == 0)
 		{
 			return TRUE;
 		}
@@ -317,10 +329,10 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 	case CDM_Replay:
 		playParms.dwFrom = PlayFrom;
 		playParms.dwTo = PlayTo;
-		playParms.dwCallback = (DWORD)CD_Window;
+		playParms.dwCallback = (DWORD_PTR)CD_Window;
 
 		return mciSendCommand (DeviceID, MCI_PLAY, MCI_FROM | MCI_TO | MCI_NOTIFY,
-			(DWORD)&playParms);
+			(DWORD_PTR)&playParms);
 
 	case CDM_PlayCD:
 		numTracks = GetNumTracks ();
@@ -350,10 +362,10 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 
 		playParms.dwFrom = PlayFrom;
 		playParms.dwTo = PlayTo;
-		playParms.dwCallback = (DWORD)CD_Window;
+		playParms.dwCallback = (DWORD_PTR)CD_Window;
 
 		return mciSendCommand (DeviceID, MCI_PLAY, MCI_FROM|MCI_TO|MCI_NOTIFY,
-			(DWORD)&playParms);
+			(DWORD_PTR)&playParms);
 
 	case CDM_Stop:
 		return mciSendCommand (DeviceID, MCI_STOP, 0, 0);
@@ -369,12 +381,12 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 
 	case CDM_Resume:
 		playParms.dwTo = PlayTo;
-		playParms.dwCallback = (DWORD)CD_Window;
-		return mciSendCommand (DeviceID, MCI_PLAY, MCI_TO | MCI_NOTIFY, (DWORD)&playParms);
+		playParms.dwCallback = (DWORD_PTR)CD_Window;
+		return mciSendCommand (DeviceID, MCI_PLAY, MCI_TO | MCI_NOTIFY, (DWORD_PTR)&playParms);
 
 	case CDM_GetMode:
 		statusParms.dwItem = MCI_STATUS_MODE;
-		if (mciSendCommand (DeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)&statusParms))
+		if (mciSendCommand (DeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&statusParms))
 		{
 			return CDMode_Unknown;
 		}
@@ -402,7 +414,7 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 		infoParms.dwRetSize = sizeof(ident);
 		if (mciSendCommand (DeviceID, MCI_INFO,
 			method == CDM_GetMediaIdentity ? MCI_WAIT|MCI_INFO_MEDIA_IDENTITY
-				: MCI_WAIT|MCI_INFO_MEDIA_UPC, (DWORD)&infoParms))
+				: MCI_WAIT|MCI_INFO_MEDIA_UPC, (DWORD_PTR)&infoParms))
 		{
 			return 0;
 		}
@@ -697,7 +709,7 @@ bool FCDThread::IsTrackAudio (DWORD track) const
 	statusParms.dwItem = MCI_CDA_STATUS_TYPE_TRACK;
 	statusParms.dwTrack = track;
 	if (mciSendCommand (DeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK,
-		(DWORD)&statusParms))
+		(DWORD_PTR)&statusParms))
 	{
 		return FALSE;
 	}
@@ -717,13 +729,13 @@ DWORD FCDThread::GetTrackLength (DWORD track) const
 	statusParms.dwItem = MCI_STATUS_LENGTH;
 	statusParms.dwTrack = track;
 	if (mciSendCommand (DeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK,
-		(DWORD)&statusParms))
+		(DWORD_PTR)&statusParms))
 	{
 		return 0;
 	}
 	else
 	{
-		return statusParms.dwReturn;
+		return (DWORD)statusParms.dwReturn;
 	}
 }
 
@@ -738,13 +750,13 @@ DWORD FCDThread::GetNumTracks () const
 	MCI_STATUS_PARMS statusParms;
 
 	statusParms.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
-	if (mciSendCommand (DeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD)&statusParms))
+	if (mciSendCommand (DeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&statusParms))
 	{
 		return 0;
 	}
 	else
 	{
-		return statusParms.dwReturn;
+		return (DWORD)statusParms.dwReturn;
 	}
 }
 
@@ -765,7 +777,7 @@ LRESULT CALLBACK FCDThread::CD_WndProc (HWND hWnd, UINT message,
 	case MM_MCINOTIFY:
 		if (wParam == MCI_NOTIFY_SUCCESSFUL)
 		{
-			FCDThread *self = (FCDThread *)GetWindowLong (hWnd, GWL_USERDATA);
+			FCDThread *self = (FCDThread *)(LONG_PTR)GetWindowLongPtr (hWnd, GWL_USERDATA);
 			// Using SendMessage could deadlock, so don't do that.
 			self->Dispatch (self->Looping ? CDM_Replay : CDM_Stop);
 		}

@@ -7,6 +7,9 @@
 #include "a_action.h"
 #include "gstrings.h"
 
+static FRandom pr_beastatk ("BeastAttack");
+static FRandom pr_beastpuff ("BeastPuff");
+
 void A_BeastAttack (AActor *);
 void A_BeastPuff (AActor *);
 
@@ -186,7 +189,7 @@ void A_BeastAttack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
-		int damage = HITDICE(3);
+		int damage = pr_beastatk.HitDice (3);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
@@ -202,13 +205,13 @@ void A_BeastAttack (AActor *actor)
 
 void A_BeastPuff (AActor *actor)
 {
-	if (P_Random() > 64)
+	if (pr_beastpuff() > 64)
 	{
 		fixed_t x, y, z;
 
-		x = actor->x + (PS_Random () << 10);
-		y = actor->y + (PS_Random () << 10);
-		z = actor->z + (PS_Random () << 10);
+		x = actor->x + (pr_beastpuff.Random2 () << 10);
+		y = actor->y + (pr_beastpuff.Random2 () << 10);
+		z = actor->z + (pr_beastpuff.Random2 () << 10);
 		Spawn<APuffy> (x, y, z);
 	}
 }

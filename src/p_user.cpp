@@ -42,6 +42,9 @@
 #include "v_palette.h"
 #include "v_video.h"
 
+static FRandom pr_morphplayerthink ("MorphPlayerThink");
+static FRandom pr_torch ("Torch");
+
 extern void P_UpdateBeak (player_t *, pspdef_t *);
 
 // [RH] # of ticks to complete a turn180
@@ -174,6 +177,11 @@ void APlayerPawn::GiveDefaultInventory ()
 }
 
 int APlayerPawn::GetAutoArmorSave ()
+{
+	return 0;
+}
+
+int APlayerPawn::GetArmorMax ()
 {
 	return 0;
 }
@@ -351,8 +359,15 @@ void P_CalcHeight (player_t *player)
 
 	if (still)
 	{
-		angle = (FINEANGLES/120*level.time) & FINEMASK;
-		bob = FixedMul (player->userinfo.StillBob, finesine[angle]);
+		if (player->health > 0)
+		{
+			angle = (FINEANGLES/120*level.time) & FINEMASK;
+			bob = FixedMul (player->userinfo.StillBob, finesine[angle]);
+		}
+		else
+		{
+			bob = 0;
+		}
 	}
 	else
 	{
@@ -415,7 +430,7 @@ void P_CalcHeight (player_t *player)
 =
 =================
 */
-CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO)
+CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)
 {
 	level.aircontrol = (fixed_t)(self * 65536.f);
 	G_AirControlChanged ();
@@ -664,20 +679,16 @@ void P_DeathThink (player_t *player)
 		}
 	}		
 
-	// [RH] Delay rebirth slightly
-	if (level.time >= player->respawn_time)
+	if (player->cmd.ucmd.buttons & BT_USE ||
+		((deathmatch || alwaysapplydmflags) && (dmflags & DF_FORCE_RESPAWN)))
 	{
-		if (player->cmd.ucmd.buttons & BT_USE ||
-			((deathmatch || alwaysapplydmflags) && (dmflags & DF_FORCE_RESPAWN)))
+		if (level.time >= player->respawn_time || ((player->cmd.ucmd.buttons & BT_USE) && !player->isbot))
 		{
 			player->playerstate = PST_REBORN;
 			if (player->mo->special1 > 2)
 			{
 				player->mo->special1 = 0;
 			}
-			// Let the mobj know the player has entered the reborn state. Some
-			// mobjs need to know when it's ok to remove themselves
-			player->mo->special2 = 666;
 		}
 	}
 }
@@ -704,16 +715,16 @@ void P_MorphPlayerThink (player_t *player)
 			return;
 		}
 		pmo = player->mo;
-		if (!(pmo->momx + pmo->momy) && P_Random () < 160)
+		if (!(pmo->momx + pmo->momy) && pr_morphplayerthink () < 160)
 		{ // Twitch view angle
-			pmo->angle += PS_Random () << 19;
+			pmo->angle += pr_morphplayerthink.Random2 () << 19;
 		}
-		if ((pmo->z <= pmo->floorz) && (P_Random() < 32))
+		if ((pmo->z <= pmo->floorz) && (pr_morphplayerthink() < 32))
 		{ // Jump and noise
 			pmo->momz += pmo->GetJumpZ ();
 			pmo->SetState (pmo->PainState);
 		}
-		if (P_Random () < 48)
+		if (pr_morphplayerthink () < 48)
 		{ // Just noise
 			S_Sound (pmo, CHAN_VOICE, "chicken/active", 1, ATTN_NORM);
 		}
@@ -725,15 +736,15 @@ void P_MorphPlayerThink (player_t *player)
 			return;
 		}
 		pmo = player->mo;
-		if(!(pmo->momx + pmo->momy) && P_Random() < 64)
+		if(!(pmo->momx + pmo->momy) && pr_morphplayerthink() < 64)
 		{ // Snout sniff
 			P_SetPspriteNF (player, ps_weapon, wpnlev1info[wp_snout]->atkstate + 1);
 			S_Sound (pmo, CHAN_VOICE, "PigActive1", 1, ATTN_NORM); // snort
 			return;
 		}
-		if (P_Random() < 48)
+		if (pr_morphplayerthink() < 48)
 		{
-			if (P_Random() < 128)
+			if (pr_morphplayerthink() < 128)
 			{
 				S_Sound (pmo, CHAN_VOICE, "PigActive1", 1, ATTN_NORM);
 			}
@@ -892,7 +903,8 @@ void P_PlayerThink (player_t *player)
 				speedMo->sprite = pmo->sprite;
 				speedMo->frame = pmo->frame;
 				speedMo->floorclip = pmo->floorclip;
-				if (player == &players[consoleplayer])
+				if (player->mo == players[consoleplayer].camera &&
+					!(player->cheats & CF_CHASECAM))
 				{
 					speedMo->renderflags |= RF_INVISIBLE;
 				}
@@ -1166,7 +1178,7 @@ void P_PlayerThink (player_t *player)
 				}
 				else
 				{
-					newtorch = (P_Random(pr_torch) & 7) + 1;
+					newtorch = (pr_torch() & 7) + 1;
 					newtorchdelta = (newtorch == player->fixedcolormap) ?
 						0 : ((newtorch > player->fixedcolormap) ? 1 : -1);
 				}
@@ -1210,6 +1222,7 @@ void player_s::Serialize (FArchive &arc)
 	}
 
 	arc << mo
+		<< camera
 		<< playerstate
 		<< cmd
 		<< *ui
@@ -1324,9 +1337,5 @@ void player_s::Serialize (FArchive &arc)
 	else
 	{
 		dest = prev = enemy = missile = mate = last_mate = NULL;
-	}
-	if (arc.IsLoading ())
-	{
-		camera = mo;
 	}
 }

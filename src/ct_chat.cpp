@@ -28,6 +28,7 @@
 #include "gi.h"
 #include "d_gui.h"
 #include "i_input.h"
+#include "templates.h"
 
 #define QUEUESIZE		128
 #define MESSAGESIZE		128
@@ -42,7 +43,6 @@ EXTERN_CVAR (Bool, con_scaletext)
 void CT_Init ();
 void CT_Drawer ();
 BOOL CT_Responder (event_t *ev);
-void HU_DrawScores (player_t *plyr);
 
 int chatmodeon;
 
@@ -51,7 +51,8 @@ int chatmodeon;
 static void CT_ClearChatMessage ();
 static void CT_AddChar (char c);
 static void CT_BackSpace ();
-static void ShoveChatStr (const char *str, int who);
+static void ShoveChatStr (const char *str, BYTE who);
+static bool DoSubstitution (char *out, const char *in);
 
 static int len;
 static byte ChatQueue[QUEUESIZE];
@@ -80,6 +81,8 @@ FStringCVar *chat_macros[10] =
 	&chatmacro8,
 	&chatmacro9
 };
+
+CVAR (Bool, chat_substitution, false, CVAR_ARCHIVE)
 
 //===========================================================================
 //
@@ -287,11 +290,154 @@ static void CT_ClearChatMessage ()
 	len = 0;
 }
 
-static void ShoveChatStr (const char *str, int who)
+//===========================================================================
+//
+// ShoveChatStr
+//
+// Sends the chat message across the network
+//
+//===========================================================================
+
+static void ShoveChatStr (const char *str, BYTE who)
 {
+	char substBuff[256];
+
+	if (str[0] == '/' &&
+		(str[1] == 'm' || str[1] == 'M') &&
+		(str[2] == 'e' || str[2] == 'E'))
+	{ // This is a /me message
+		str += 3;
+		who |= 2;
+	}
+
 	Net_WriteByte (DEM_SAY);
-	Net_WriteByte ((byte)who);
-	Net_WriteString (str);
+	Net_WriteByte (who);
+
+	if (!chat_substitution || !DoSubstitution (substBuff, str))
+	{
+		Net_WriteString (str);
+	}
+	else
+	{
+		Net_WriteString (substBuff);
+	}
+}
+
+//===========================================================================
+//
+// DoSubstitution
+//
+// Replace certain special substrings with different values to reflect
+// the player's current state.
+//
+//===========================================================================
+
+static bool DoSubstitution (char *out, const char *in)
+{
+	static const char *ammoNames[] =
+	{
+		"bullets", "shells", "cells", "rockets",
+		"wand crystals", "ethereal arrows", "claw orbs", "runes", "flame orbs", "mace spheres",
+		"blue mana", "green mana",
+		"strange ammo", "both mana", "no ammo"
+	};
+
+	player_t *player = &players[consoleplayer];
+	const char *a, *b;
+
+	a = in;
+	while ((b = strchr (a, '$')))
+	{
+		strncpy (out, a, b - a);
+		out += b - a;
+
+		a = ++b;
+		while (*b && isalpha (*b))
+		{
+			++b;
+		}
+
+		ptrdiff_t len = b - a;
+
+		if (len == 6)
+		{
+			if (strnicmp (a, "health", 6) == 0)
+			{
+				out += sprintf (out, "%d", player->health);
+			}
+			else if (strnicmp (a, "weapon", 6) == 0)
+			{
+				out += sprintf (out, "%s", wpnlev1info[player->readyweapon]->type->Name+1);
+			}
+		}
+		else if (len == 5)
+		{
+			if (strnicmp (a, "armor", 5) == 0)
+			{
+				out += sprintf (out, "%d", player->armorpoints[0]);
+			}
+		}
+		else if (len == 9)
+		{
+			if (strnicmp (a, "ammocount", 9) == 0)
+			{
+				ammotype_t ammo = wpnlev1info[player->readyweapon]->ammo;
+				if (ammo >= NUMAMMO)
+				{
+					if (ammo == MANA_BOTH)
+					{
+						out += sprintf (out, "%d", player->ammo[MANA_1] + player->ammo[MANA_2]);
+					}
+					else
+					{
+						*out++ = '0';
+						*out = 0;
+					}
+				}
+				else
+				{
+					out += sprintf (out, "%d", player->ammo[ammo]);
+				}
+			}
+		}
+		else if (len == 4)
+		{
+			if (strnicmp (a, "ammo", 4) == 0)
+			{
+				ammotype_t ammo = wpnlev1info[player->readyweapon]->ammo;
+				if (ammo > MANA_NONE)
+				{
+					ammo = NUMAMMO;
+				}
+				out += sprintf (out, "%s", ammoNames[ammo]);
+			}
+		}
+		else if (len == 0)
+		{
+			*out++ = '$';
+			*out = 0;
+			if (*b == '$')
+			{
+				b++;
+			}
+		}
+		else
+		{
+			*out++ = '$';
+			strncpy (out, a, len);
+			out += len;
+		}
+		a = b;
+	}
+
+	// Return false if no substitution was performed
+	if (a == in)
+	{
+		return false;
+	}
+
+	strcpy (out, a);
+	return true;
 }
 
 CCMD (messagemode)
@@ -306,7 +452,14 @@ CCMD (messagemode)
 
 CCMD (say)
 {
-	ShoveChatStr (argv[1], 0);
+	if (argv.argc() == 1)
+	{
+		Printf ("Usage: say <message>\n");
+	}
+	else
+	{
+		ShoveChatStr (argv[1], 0);
+	}
 }
 
 CCMD (messagemode2)
@@ -321,113 +474,12 @@ CCMD (messagemode2)
 
 CCMD (say_team)
 {
-	ShoveChatStr (argv[1], 1);
-}
-
-static int STACK_ARGS compare (const void *arg1, const void *arg2)
-{
-	return (*(player_t **)arg2)->fragcount - (*(player_t **)arg1)->fragcount;
-}
-
-EXTERN_CVAR (Float, timelimit)
-
-void HU_DrawScores (player_t *player)
-{
-	char str[80];
-	player_t *sortedplayers[MAXPLAYERS];
-	int i, j, x, y, maxwidth, margin;
-
-	if (player->camera->player)
-		player = player->camera->player;
-
-	sortedplayers[MAXPLAYERS-1] = player;
-	for (i = 0, j = 0; j < MAXPLAYERS - 1; i++, j++)
+	if (argv.argc() == 1)
 	{
-		if (&players[i] == player)
-			i++;
-		sortedplayers[j] = &players[i];
+		Printf ("Usage: say_team <message>\n");
 	}
-
-	qsort (sortedplayers, MAXPLAYERS, sizeof(player_t *), compare);
-
-	maxwidth = 0;
-	for (i = 0; i < MAXPLAYERS; i++)
+	else
 	{
-		if (playeringame[i])
-		{
-			int width = screen->StringWidth (players[i].userinfo.netname);
-			if (teamplay)
-				width += screen->StringWidth (
-					players[i].userinfo.team == TEAM_None ? "None"
-					: TeamNames[players[i].userinfo.team]) + 24;
-			if (width > maxwidth)
-				maxwidth = width;
-		}
+		ShoveChatStr (argv[1], 1);
 	}
-
-	x = (SCREENWIDTH >> 1) - (((maxwidth + 32 + 32 + 16) * CleanXfac) >> 1);
-	margin = x + 40 * CleanXfac;
-
-	y = (ST_Y >> 1) - (MAXPLAYERS * 6);
-	if (y < 48) y = 48;
-
-	if (deathmatch && timelimit && gamestate == GS_LEVEL)
-	{
-		int timeleft = (int)(timelimit * TICRATE * 60) - level.time;
-		int hours, minutes, seconds;
-
-		if (timeleft < 0)
-			timeleft = 0;
-
-		hours = timeleft / (TICRATE * 3600);
-		timeleft -= hours * TICRATE * 3600;
-		minutes = timeleft / (TICRATE * 60);
-		timeleft -= minutes * TICRATE * 60;
-		seconds = timeleft / TICRATE;
-
-		if (hours)
-			sprintf (str, "Level ends in %02d:%02d:%02d", hours, minutes, seconds);
-		else
-			sprintf (str, "Level ends in %02d:%02d", minutes, seconds);
-		
-		screen->DrawTextClean (CR_GREY, SCREENWIDTH/2 - screen->StringWidth (str)/2*CleanXfac,
-			y - 12 * CleanYfac, str);
-	}
-
-	int height = screen->Font->GetHeight() * CleanYfac;
-	for (i = 0; i < MAXPLAYERS && y < ST_Y - 12 * CleanYfac; i++)
-	{
-		int color = sortedplayers[i]->userinfo.color;
-
-		if (playeringame[sortedplayers[i] - players])
-		{
-			color = ColorMatcher.Pick (RPART(color), GPART(color), BPART(color));
-
-			screen->Clear (x, y, x + 24 * CleanXfac, y + height, color);
-
-			sprintf (str, "%d", sortedplayers[i]->fragcount);
-			screen->DrawTextClean (sortedplayers[i] == player ? CR_GREEN : CR_BRICK,
-							 margin, y, str);
-
-			if (teamplay && sortedplayers[i]->userinfo.team != TEAM_None)
-				sprintf (str, "%s (%s)", sortedplayers[i]->userinfo.netname,
-						 TeamNames[sortedplayers[i]->userinfo.team]);
-			else
-				strcpy (str, sortedplayers[i]->userinfo.netname);
-
-			if (sortedplayers[i] != player)
-			{
-				color = (demoplayback && sortedplayers[i] == &players[consoleplayer]) ? CR_GOLD : CR_GREY;
-			}
-			else
-			{
-				color = CR_GREEN;
-			}
-
-			screen->DrawTextClean (color, margin + 32 * CleanXfac, y, str);
-
-			y += height + CleanYfac;
-		}
-	}
-	BorderNeedRefresh = screen->GetPageCount ();
 }

@@ -228,6 +228,17 @@ void FBaseStatusBar::AttachToPlayer (player_s *player)
 
 //---------------------------------------------------------------------------
 //
+// PROC MultiplayerChanged
+//
+//---------------------------------------------------------------------------
+
+void FBaseStatusBar::MultiplayerChanged ()
+{
+	SB_state = screen->GetPageCount ();
+}
+
+//---------------------------------------------------------------------------
+//
 // PROC Tick
 //
 //---------------------------------------------------------------------------
@@ -918,6 +929,13 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 
 	xpos = x + w/2;
 
+	if (val == 0)
+	{
+		DrawShadowedImage (Images, imgBNumbers,
+			xpos - Images.GetImageWidth (imgBNumbers)/2 + w*(size-1), y, HR_SHADOW);
+		return;
+	}
+
 	if (val >= div*10)
 	{
 		val = div*10 - 1;
@@ -931,12 +949,6 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 		val = -val;
 		size--;
 		div /= 10;
-	}
-	if (val == 0)
-	{
-		DrawShadowedImage (Images, imgBNumbers,
-			xpos - Images.GetImageWidth (imgBNumbers)/2 + w*(size-1), y, HR_SHADOW);
-		return;
 	}
 	first = -99999;
 	while (size--)
@@ -1392,7 +1404,7 @@ void FBaseStatusBar::BlendView (float blend[4])
 		AddBlend (1.0f, 0.0f, 0.0f, cnt / 255.0f, blend);
 	}
 
-	if (CPlayer->camera->player != NULL)
+	if (CPlayer->camera != NULL && CPlayer->camera->player != NULL)
 	{
 		player_t *player = CPlayer->camera->player;
 		AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);

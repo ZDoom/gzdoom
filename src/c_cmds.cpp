@@ -274,9 +274,21 @@ CCMD (changemap)
 		}
 		else
 		{
-			Net_WriteByte (DEM_CHANGEMAP);
+			if (argv.argc() > 2)
+			{
+				Net_WriteByte (DEM_CHANGEMAP2);
+				Net_WriteByte (atoi(argv[2]));
+			}
+			else
+			{
+				Net_WriteByte (DEM_CHANGEMAP);
+			}
 			Net_WriteString (argv[1]);
 		}
+	}
+	else
+	{
+		Printf ("Usage: changemap <map name> [position]\n");
 	}
 }
 
@@ -336,7 +348,7 @@ CCMD (exec)
 
 CCMD (dumpheap)
 {
-	int lo = PU_STATIC, hi = PU_CACHE;
+	int lo = 0, hi = 255;
 
 	if (argv.argc() >= 2)
 	{
@@ -421,7 +433,7 @@ CCMD (dir)
 	char dir[256], curdir[256];
 	char *match;
 	findstate_t c_file;
-	long file;
+	void *file;
 
 	if (!getcwd (curdir, 256))
 	{
@@ -461,7 +473,7 @@ CCMD (dir)
 			strcat (dir, "/");
 	}
 
-	if ( (file = I_FindFirst (match, &c_file)) == -1)
+	if ( (file = I_FindFirst (match, &c_file)) == ((void *)(-1)))
 		Printf ("Nothing matching %s%s\n", dir, match);
 	else
 	{
@@ -469,7 +481,7 @@ CCMD (dir)
 		do
 		{
 			if (I_FindAttr (&c_file) & FA_DIREC)
-				Printf_Bold ("%s <dir>\n", I_FindName (&c_file));
+				Printf (PRINT_BOLD, "%s <dir>\n", I_FindName (&c_file));
 			else
 				Printf ("%s\n", I_FindName (&c_file));
 		} while (I_FindNext (file, &c_file) == 0);

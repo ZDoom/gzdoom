@@ -21,14 +21,6 @@ class APhoenixPuff : public AActor
 	DECLARE_ACTOR (APhoenixPuff, AActor)
 };
 
-class AMinotaur : public AActor
-{
-	DECLARE_ACTOR (AMinotaur, AActor)
-public:
-	void NoBlockingSet ();
-	int DoSpecialDamage (AActor *target, int damage);
-};
-
 class ASorcerer2 : public AActor
 {
 	DECLARE_ACTOR (ASorcerer2, AActor)

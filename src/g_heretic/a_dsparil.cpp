@@ -9,6 +9,13 @@
 #include "a_sharedglobal.h"
 #include "gstrings.h"
 
+static FRandom pr_s2fx1 ("S2FX1");
+static FRandom pr_scrc1atk ("Srcr1Attack");
+static FRandom pr_dst ("D'SparilTele");
+static FRandom pr_s2d ("Srcr2Decide");
+static FRandom pr_s2a ("Srcr2Attack");
+static FRandom pr_bluespark ("BlueSpark");
+
 void A_Sor1Chase (AActor *);
 void A_Sor1Pain (AActor *);
 void A_Srcr1Attack (AActor *);
@@ -343,7 +350,7 @@ AT_SPEED_SET (Sorcerer2FX1, speed)
 
 void ASorcerer2FX1::GetExplodeParms (int &damage, int &distance, bool &hurtSource)
 {
-	damage = 80 + (P_Random() & 31);
+	damage = 80 + (pr_s2fx1() & 31);
 }
 
 // Sorcerer 2 FX Spark ------------------------------------------------------
@@ -476,7 +483,7 @@ void A_Srcr1Attack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (actor))
 	{
-		int damage = HITDICE(8);
+		int damage = pr_scrc1atk.HitDice (8);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
@@ -548,7 +555,7 @@ void P_DSparilTeleport (AActor *actor)
 	{ // No spots
 		return;
 	}
-	i = P_Random () % self->NumBossSpots;
+	i = pr_dst () % self->NumBossSpots;
 	spot = static_cast<ABossSpot *> (self->FirstBossSpot);
 	while (i-- > 0)
 	{
@@ -591,6 +598,7 @@ void P_DSparilTeleport (AActor *actor)
 
 void A_Srcr2Decide (AActor *actor)
 {
+
 	static const int chance[] =
 	{
 		192, 120, 120, 120, 64, 64, 32, 16, 0
@@ -602,7 +610,7 @@ void A_Srcr2Decide (AActor *actor)
 		chanceindex = sizeof(chance)/sizeof(chance[0])-1;
 	}
 
-	if (P_Random() < chance[chanceindex])
+	if (pr_s2d() < chance[chanceindex])
 	{
 		P_DSparilTeleport (actor);
 	}
@@ -625,13 +633,13 @@ void A_Srcr2Attack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NONE);
 	if (P_CheckMeleeRange(actor))
 	{
-		int damage = HITDICE(20);
+		int damage = pr_s2a.HitDice (20);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
 	chance = actor->health < actor->GetDefault()->health/2 ? 96 : 48;
-	if (P_Random() < chance)
+	if (pr_s2a() < chance)
 	{ // Wizard spawners
 		P_SpawnMissileAngle (actor, RUNTIME_CLASS(ASorcerer2FX2),
 			actor->angle-ANG45, FRACUNIT/2);
@@ -658,9 +666,9 @@ void A_BlueSpark (AActor *actor)
 	for (i = 0; i < 2; i++)
 	{
 		mo = Spawn<ASorcerer2FXSpark> (actor->x, actor->y, actor->z);
-		mo->momx = PS_Random() << 9;
-		mo->momy = PS_Random() << 9;
-		mo->momz = FRACUNIT + (P_Random()<<8);
+		mo->momx = pr_bluespark.Random2() << 9;
+		mo->momy = pr_bluespark.Random2() << 9;
+		mo->momz = FRACUNIT + (pr_bluespark()<<8);
 	}
 }
 

@@ -290,16 +290,6 @@ void DThinker::Tick ()
 {
 }
 
-void *DThinker::operator new (size_t size)
-{
-	return Z_Malloc (size, PU_LEVSPEC, 0);
-}
-
-void DThinker::operator delete (void *mem)
-{
-	Z_Free (mem);
-}
-
 FThinkerIterator::FThinkerIterator (TypeInfo *type, int statnum)
 {
 	if ((unsigned)statnum > MAX_STATNUM)
@@ -315,6 +305,30 @@ FThinkerIterator::FThinkerIterator (TypeInfo *type, int statnum)
 	m_ParentType = type;
 	m_CurrThinker = DThinker::Thinkers[m_Stat].Head;
 	m_SearchingFresh = false;
+}
+
+FThinkerIterator::FThinkerIterator (TypeInfo *type, int statnum, DThinker *prev)
+{
+	if ((unsigned)statnum > MAX_STATNUM)
+	{
+		m_Stat = STAT_FIRST_THINKING;
+		m_SearchStats = true;
+	}
+	else
+	{
+		m_Stat = statnum;
+		m_SearchStats = false;
+	}
+	m_ParentType = type;
+	if (prev == NULL || prev->Succ == NULL)
+	{
+		Reinit ();
+	}
+	else
+	{
+		m_CurrThinker = prev->Succ;
+		m_SearchingFresh = false;
+	}
 }
 
 void FThinkerIterator::Reinit ()

@@ -24,6 +24,9 @@
 
 
 #include <math.h>
+#ifdef _MSC_VER
+#include <malloc.h>		// for alloca()
+#endif
 
 #include "templates.h"
 #include "m_alloc.h"
@@ -38,6 +41,7 @@
 #include "p_local.h"
 #include "p_effect.h"
 #include "p_terrain.h"
+#include "p_nodebuild.h"
 #include "s_sound.h"
 #include "doomstat.h"
 #include "p_lnspec.h"
@@ -49,12 +53,16 @@
 #include "wi_stuff.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
+extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t *start);
 
 extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
 extern void P_TranslateTeleportThings (void);
 extern int	P_TranslateSectorSpecial (int);
 
 extern unsigned int R_OldBlend;
+
+CVAR (Bool, genblockmap, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR (Bool, gennodes, false, CVAR_GLOBALCONFIG);
 
 //
 // MAP related Lookup tables.
@@ -96,11 +104,12 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 		// Used when grouping sidedefs into loops.
 		struct
 		{
-			short first, next;
+			WORD first, next;
 			char lineside;
 		} b;
 	};
 }				*sidetemp;
+static WORD		*linemap;
 
 // [RH] Set true if the map contains a BEHAVIOR lump
 BOOL			HasBehavior;
@@ -137,13 +146,14 @@ AActor**		blocklinks;		// for thing chains
 byte*			rejectmatrix;
 BOOL			rejectempty;
 
+static bool		ForceNodeBuild;
 
 // Maintain single and multi player starting spots.
 TArray<mapthing2_t> deathmatchstarts (16);
 mapthing2_t		playerstarts[MAXPLAYERS];
 
 static void P_AllocateSideDefs (int count);
-static void P_SetSideNum (short *sidenum_p, short sidenum);
+static void P_SetSideNum (WORD *sidenum_p, WORD sidenum);
 
 // [RH] Figure out blends for deep water sectors
 static void SetTexture (short *texture, DWORD *blend, char *name)
@@ -225,6 +235,7 @@ void P_LoadSegs (int lump)
 	int  i;
 	byte *data;
 	byte *vertchanged = (byte *)Z_Malloc (numvertexes,PU_LEVEL,0);	// phares 10/4/98
+	DWORD segangle;
 	line_t* line;		// phares 10/4/98
 	int ptp_angle;		// phares 10/4/98
 	int delta_angle;	// phares 10/4/98
@@ -235,6 +246,16 @@ void P_LoadSegs (int lump)
 	memset (vertchanged,0,numvertexes); // phares 10/4/98
 
 	numsegs = W_LumpLength (lump) / sizeof(mapseg_t);
+
+	if (numsegs == 0)
+	{
+		Printf ("This map has no segs.\n");
+		Z_Free (subsectors);
+		Z_Free (nodes);
+		ForceNodeBuild = true;
+		return;
+	}
+
 	segs = (seg_t *)Z_Malloc (numsegs*sizeof(seg_t), PU_LEVEL, 0);
 	memset (segs, 0, numsegs*sizeof(seg_t));
 	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
@@ -260,7 +281,7 @@ void P_LoadSegs (int lump)
 		li->v1 = &vertexes[SHORT(ml->v1)];
 		li->v2 = &vertexes[SHORT(ml->v2)];
 
-		li->angle = (SHORT(ml->angle))<<16;
+		segangle = (WORD)SHORT(ml->angle);
 
 // phares 10/4/98: In the case of a lineseg that was created by splitting
 // another line, it appears that the line angle is inherited from the
@@ -292,19 +313,34 @@ void P_LoadSegs (int lump)
 // off, then move one vertex. This may seem insignificant, but one degree
 // errors _can_ cause firelines.
 
-		ptp_angle = R_PointToAngle2(li->v1->x,li->v1->y,li->v2->x,li->v2->y);
+		ptp_angle = R_PointToAngle2 (li->v1->x, li->v1->y, li->v2->x, li->v2->y);
 		dis = 0;
-		delta_angle = (abs(ptp_angle-li->angle)>>ANGLETOFINESHIFT)*360/8192;
+		delta_angle = (abs(ptp_angle-(segangle<<16))>>ANGLETOFINESHIFT)*360/FINEANGLES;
+
+		vnum1 = li->v1 - vertexes;
+		vnum2 = li->v2 - vertexes;
+
+		if (vnum1 >= numvertexes || vnum2 >= numvertexes)
+		{
+			Printf ("Seg %d references a nonexistant vertex.\n"
+					"The BSP will be rebuilt.\n", i);
+			Z_Free (vertchanged);
+			Z_Free (data);
+			Z_Free (segs);
+			Z_Free (subsectors);
+			Z_Free (nodes);
+			ForceNodeBuild = true;
+			return;
+		}
 
 		if (delta_angle != 0)
 		{
+			segangle >>= (ANGLETOFINESHIFT-16);
 			dx = (li->v1->x - li->v2->x)>>FRACBITS;
 			dy = (li->v1->y - li->v2->y)>>FRACBITS;
 			dis = ((int) sqrt(dx*dx + dy*dy))<<FRACBITS;
-			dx = finecosine[li->angle>>ANGLETOFINESHIFT];
-			dy = finesine[li->angle>>ANGLETOFINESHIFT];
-			vnum1 = li->v1 - vertexes; 
-			vnum2 = li->v2 - vertexes; 
+			dx = finecosine[segangle];
+			dy = finesine[segangle];
 			if ((vnum2 > vnum1) && (vertchanged[vnum2] == 0))
 			{
 				li->v2->x = li->v1->x + FixedMul(dis,dx);
@@ -327,7 +363,7 @@ void P_LoadSegs (int lump)
 		li->frontsector = sides[ldef->sidenum[side]].sector;
 
 		// killough 5/3/98: ignore 2s flag if second sidedef missing:
-		if (ldef->flags & ML_TWOSIDED && ldef->sidenum[side^1]!=-1)
+		if (ldef->flags & ML_TWOSIDED && ldef->sidenum[side^1]!=NO_INDEX)
 		{
 			li->backsector = sides[ldef->sidenum[side^1]].sector;
 		}
@@ -348,10 +384,21 @@ void P_LoadSegs (int lump)
 //
 void P_LoadSubsectors (int lump)
 {
+	int maxseg;
 	byte *data;
 	int i;
-		
+
 	numsubsectors = W_LumpLength (lump) / sizeof(mapsubsector_t);
+	maxseg = W_LumpLength (lump - ML_SSECTORS + ML_SEGS) / sizeof(mapseg_t);
+
+	if (numsubsectors == 0 || maxseg == 0)
+	{
+		Printf ("This map has an incomplete BSP tree.\n");
+		Z_Free (nodes);
+		ForceNodeBuild = true;
+		return;
+	}
+
 	subsectors = (subsector_t *)Z_Malloc (numsubsectors*sizeof(subsector_t),PU_LEVEL,0);		
 	data = (byte *)W_CacheLumpNum (lump,PU_STATIC);
 		
@@ -361,8 +408,29 @@ void P_LoadSubsectors (int lump)
 	{
 		subsectors[i].numlines = SHORT(((mapsubsector_t *)data)[i].numsegs);
 		subsectors[i].firstline = SHORT(((mapsubsector_t *)data)[i].firstseg);
+
+		if (subsectors[i].firstline >= maxseg)
+		{
+			Printf ("Subsector %d contains invalid segs %d-%d\n"
+				"The BSP will be rebuilt.\n", i, subsectors[i].firstline,
+				subsectors[i].firstline + subsectors[i].numlines - 1);
+			ForceNodeBuild = true;
+			Z_Free (nodes);
+			Z_Free (subsectors);
+			break;
+		}
+		else if (subsectors[i].firstline + subsectors[i].numlines > maxseg)
+		{
+			Printf ("Subsector %d contains invalid segs %d-%d\n"
+				"The BSP will be rebuilt.\n", i, maxseg,
+				subsectors[i].firstline + subsectors[i].numlines - 1);
+			ForceNodeBuild = true;
+			Z_Free (nodes);
+			Z_Free (subsectors);
+			break;
+		}
 	}
-		
+
 	Z_Free (data);
 }
 
@@ -419,29 +487,15 @@ void P_LoadSectors (int lump)
 		ss->prevsec = -1;	// stair retriggering until build completes
 
 		// killough 3/7/98:
-		ss->floor_xoffs = 0;
-		ss->floor_yoffs = 0;	// floor and ceiling flats offsets
-		ss->ceiling_xoffs = 0;
-		ss->ceiling_yoffs = 0;
-
 		ss->floor_xscale = FRACUNIT;	// [RH] floor and ceiling scaling
 		ss->floor_yscale = FRACUNIT;
 		ss->ceiling_xscale = FRACUNIT;
 		ss->ceiling_yscale = FRACUNIT;
 
-		ss->floor_angle = 0;	// [RH] floor and ceiling rotation
-		ss->ceiling_angle = 0;
-
-		ss->base_ceiling_angle = ss->base_ceiling_yoffs =
-			ss->base_floor_angle = ss->base_floor_yoffs = 0;
-
 		ss->heightsec = NULL;	// sector used to get floor and ceiling height
 		// killough 3/7/98: end changes
 
-		ss->FloorFlags = ss->CeilingFlags = 0;
-		ss->FloorLight = ss->CeilingLight = 0;
-
-		ss->gravity = 1.0f;	// [RH] Default sector gravity of 1.0
+		ss->gravity = 1.f;	// [RH] Default sector gravity of 1.0
 
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
@@ -457,8 +511,6 @@ void P_LoadSectors (int lump)
 				normMap = GetSpecialLights (PalEntry (255,255,255), level.fadeto);
 			ss->ceilingcolormap = ss->floorcolormap = normMap;
 		}
-
-		ss->sky = 0;
 
 		// killough 8/28/98: initialize all sectors to normal friction
 		ss->friction = ORIG_FRICTION;
@@ -480,11 +532,24 @@ void P_LoadNodes (int lump)
 	int 		k;
 	mapnode_t*	mn;
 	node_t* 	no;
+	int			maxss;
+	WORD*		used;
 		
 	numnodes = W_LumpLength (lump) / sizeof(mapnode_t);
+	maxss = W_LumpLength (lump - ML_NODES + ML_SSECTORS) / sizeof(mapsubsector_t);
+
+	if (numnodes == 0 || maxss == 0)
+	{
+		ForceNodeBuild = true;
+		return;
+	}
+
+	
 	nodes = (node_t *)Z_Malloc (numnodes*sizeof(node_t), PU_LEVEL, 0);		
 	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
-		
+	used = (WORD *)alloca (sizeof(WORD)*numnodes);
+	memset (used, 0, sizeof(WORD)*numnodes);
+
 	mn = (mapnode_t *)data;
 	no = nodes;
 	
@@ -497,8 +562,45 @@ void P_LoadNodes (int lump)
 		for (j = 0; j < 2; j++)
 		{
 			no->children[j] = SHORT(mn->children[j]);
+			if (no->children[j] & NF_SUBSECTOR)
+			{
+				if ((no->children[j] & ~NF_SUBSECTOR) >= maxss)
+				{
+					Printf ("BSP node %d references invalid subsector %d.\n"
+						"The BSP will be rebuilt.\n", i, no->children[j] & ~NF_SUBSECTOR);
+					ForceNodeBuild = true;
+					Z_Free (nodes);
+					Z_Free (data);
+					return;
+				}
+			}
+			else if (no->children[j] >= numnodes)
+			{
+				Printf ("BSP node %d references invalid node %d.\n"
+					"The BSP will be rebuilt.\n", i, no->children[j]);
+				ForceNodeBuild = true;
+				Z_Free (nodes);
+				Z_Free (data);
+				return;
+			}
+			else if (used[no->children[j]])
+			{
+				Printf ("BSP node %d references node %d,\n"
+					"which is already used by node %d.\n"
+					"The BSP will be rebuilt.\n", i, no->children[j], used[no->children[j]]-1);
+				ForceNodeBuild = true;
+				Z_Free (nodes);
+				Z_Free (data);
+				return;
+			}
+			else
+			{
+				used[no->children[j]] = j + 1;
+			}
 			for (k = 0; k < 4; k++)
+			{
 				no->bbox[j][k] = SHORT(mn->bbox[j][k])<<FRACBITS;
+			}
 		}
 	}
 		
@@ -834,8 +936,12 @@ void P_AdjustLine (line_t *ld)
 	{
 		ld->id = ld->args[0];
 	}
+}
+
+void P_SaveLineSpecial (line_t *ld)
+{
 	// killough 4/4/98: support special sidedef interpretation below
-	if ((ld->sidenum[0] != -1) &&
+	if ((ld->sidenum[0] != NO_INDEX) &&
 		// [RH] Save Static_Init only if it's interested in the textures
 		(ld->special != Static_Init || ld->args[1] == Init_Color))
 	{
@@ -857,15 +963,15 @@ void P_FinishLoadingLineDefs ()
 
 	for (i = numlines, linenum = 0; i--; ld++, linenum++)
 	{
-		ld->frontsector = ld->sidenum[0]!=-1 ? sides[ld->sidenum[0]].sector : 0;
-		ld->backsector  = ld->sidenum[1]!=-1 ? sides[ld->sidenum[1]].sector : 0;
+		ld->frontsector = ld->sidenum[0]!=NO_INDEX ? sides[ld->sidenum[0]].sector : 0;
+		ld->backsector  = ld->sidenum[1]!=NO_INDEX ? sides[ld->sidenum[1]].sector : 0;
 		float dx = FIXED2FLOAT(ld->v2->x - ld->v1->x);
 		float dy = FIXED2FLOAT(ld->v2->y - ld->v1->y);
 		SBYTE light;
 
 		if (ld->frontsector == NULL)
 		{
-			Printf (PRINT_HIGH, "Line %d has no front sector\n", linenum);
+			Printf ("Line %d has no front sector\n", linemap[linenum]);
 		}
 
 		// [RH] Set some new sidedef properties
@@ -873,19 +979,13 @@ void P_FinishLoadingLineDefs ()
 		light = dy == 0 ? level.WallHorizLight :
 				dx == 0 ? level.WallVertLight : 0;
 
-		if (len == 0)
-		{
-			Printf ("Line %d has 0 length\n", linenum);
-			len = 1;
-		}
-
-		if (ld->sidenum[0] != -1)
+		if (ld->sidenum[0] != NO_INDEX)
 		{
 			sides[ld->sidenum[0]].linenum = linenum;
 			sides[ld->sidenum[0]].TexelLength = len;
 			sides[ld->sidenum[0]].Light = light;
 		}
-		if (ld->sidenum[1] != -1)
+		if (ld->sidenum[1] != NO_INDEX)
 		{
 			sides[ld->sidenum[1]].linenum = linenum;
 			sides[ld->sidenum[1]].TexelLength = len;
@@ -899,11 +999,36 @@ void P_FinishLoadingLineDefs ()
 		case TranslucentLine:			// killough 4/11/98: translucent 2s textures
 			// [RH] Second arg controls how opaque it is.
 			if (!ld->args[0])
+			{
 				ld->alpha = (byte)ld->args[1];
+				if (ld->args[2] == 1)
+				{
+					sides[ld->sidenum[0]].Flags |= WALLF_ADDTRANS;
+					if (ld->sidenum[1] != NO_INDEX)
+					{
+						sides[ld->sidenum[1]].Flags |= WALLF_ADDTRANS;
+					}
+				}
+			}
 			else
+			{
 				for (j = 0; j < numlines; j++)
+				{
 					if (lines[j].id == ld->args[0])
+					{
 						lines[j].alpha = (byte)ld->args[1];
+						if (lines[j].args[2] == 1)
+						{
+							sides[lines[j].sidenum[0]].Flags |= WALLF_ADDTRANS;
+							if (lines[j].sidenum[1] != NO_INDEX)
+							{
+								sides[lines[j].sidenum[1]].Flags |= WALLF_ADDTRANS;
+							}
+						}
+					}
+				}
+			}
+			ld->special = 0;
 			break;
 		}
 	}
@@ -912,31 +1037,53 @@ void P_FinishLoadingLineDefs ()
 void P_LoadLineDefs (int lump)
 {
 	byte *data;
-	int i;
+	int i, skipped;
 	line_t *ld;
 		
 	numlines = W_LumpLength (lump) / sizeof(maplinedef_t);
-	lines = (line_t *)Z_Malloc (numlines*sizeof(line_t), PU_LEVEL, 0);		
+	lines = (line_t *)Z_Malloc (numlines*sizeof(line_t), PU_LEVEL, 0);
+	linemap = (WORD *)Z_Malloc (numlines*sizeof(WORD), PU_LEVEL, 0);
 	memset (lines, 0, numlines*sizeof(line_t));
 	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
 
 	// [RH] Count the number of sidedef references. This is the number of
 	// sidedefs we need. The actual number in the SIDEDEFS lump might be less.
-	for (i = sidecount = 0; i < numlines; i++)
+	// Lines with 0 length are also removed.
+
+	for (skipped = sidecount = i = 0; i < numlines; )
 	{
 		maplinedef_t *mld = ((maplinedef_t *)data) + i;
-		if (SHORT(mld->sidenum[0]) != -1)
-			sidecount++;
-		if (SHORT(mld->sidenum[1]) != -1)
-			sidecount++;
+
+		if (mld->v1 == mld->v2 ||
+			(vertexes[SHORT(mld->v1)].x == vertexes[SHORT(mld->v2)].x &&
+			 vertexes[SHORT(mld->v1)].y == vertexes[SHORT(mld->v2)].y))
+		{
+			Printf ("Removing 0-length line %d\n", i+skipped);
+			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
+			skipped++;
+			numlines--;
+		}
+		else
+		{
+			if (SHORT(mld->sidenum[0]) != -1)
+				sidecount++;
+			if (SHORT(mld->sidenum[1]) != -1)
+				sidecount++;
+			linemap[i] = i+skipped;
+			i++;
+		}
 	}
+	if (skipped > 0)
+	{
+		ForceNodeBuild = true;
+	}
+
 	P_AllocateSideDefs (sidecount);
 
+	maplinedef_t *mld = (maplinedef_t *)data;
 	ld = lines;
-	for (i = 0; i < numlines; i++, ld++)
+	for (i = numlines; i > 0; i--, mld++, ld++)
 	{
-		maplinedef_t *mld = ((maplinedef_t *)data) + i;
-
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
 		P_TranslateLineDef (ld, mld);
@@ -944,10 +1091,11 @@ void P_LoadLineDefs (int lump)
 		ld->v1 = &vertexes[SHORT(mld->v1)];
 		ld->v2 = &vertexes[SHORT(mld->v2)];
 
-		P_SetSideNum (&ld->sidenum[0], mld->sidenum[0]);
-		P_SetSideNum (&ld->sidenum[1], mld->sidenum[1]);
+		P_SetSideNum (&ld->sidenum[0], SHORT(mld->sidenum[0]));
+		P_SetSideNum (&ld->sidenum[1], SHORT(mld->sidenum[1]));
 
 		P_AdjustLine (ld);
+		P_SaveLineSpecial (ld);
 	}
 		
 	Z_Free (data);
@@ -957,23 +1105,45 @@ void P_LoadLineDefs (int lump)
 void P_LoadLineDefs2 (int lump)
 {
 	byte*				data;
-	int 				i;
+	int 				i, skipped;
 	maplinedef2_t*		mld;
 	line_t* 			ld;
 
 	numlines = W_LumpLength (lump) / sizeof(maplinedef2_t);
-	lines = (line_t *)Z_Malloc (numlines*sizeof(line_t), PU_LEVEL,0 );
+	lines = (line_t *)Z_Malloc (numlines*sizeof(line_t), PU_LEVEL, 0);
+	linemap = (WORD *)Z_Malloc (numlines*sizeof(WORD), PU_LEVEL, 0);
 	memset (lines, 0, numlines*sizeof(line_t));
 	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
 
-	for (i = sidecount = 0; i < numlines; i++)
+	// [RH] Remove any lines that have 0 length and count sidedefs used
+	for (skipped = sidecount = i = 0; i < numlines; )
 	{
 		maplinedef2_t *mld = ((maplinedef2_t *)data) + i;
-		if (SHORT(mld->sidenum[0]) != -1)
-			sidecount++;
-		if (SHORT(mld->sidenum[1]) != -1)
-			sidecount++;
+
+		if (mld->v1 == mld->v2 ||
+			(vertexes[SHORT(mld->v1)].x == vertexes[SHORT(mld->v2)].x &&
+			 vertexes[SHORT(mld->v1)].y == vertexes[SHORT(mld->v2)].y))
+		{
+			Printf ("Removing 0-length line %d\n", i+skipped);
+			memmove (mld, mld+1, sizeof(*mld)*(numlines-i-1));
+			skipped++;
+			numlines--;
+		}
+		else
+		{
+			if (SHORT(mld->sidenum[0]) != -1)
+				sidecount++;
+			if (SHORT(mld->sidenum[1]) != -1)
+				sidecount++;
+			linemap[i] = i+skipped;
+			i++;
+		}
 	}
+	if (skipped > 0)
+	{
+		ForceNodeBuild = true;
+	}
+
 	P_AllocateSideDefs (sidecount);
 
 	mld = (maplinedef2_t *)data;
@@ -991,10 +1161,11 @@ void P_LoadLineDefs2 (int lump)
 		ld->v1 = &vertexes[SHORT(mld->v1)];
 		ld->v2 = &vertexes[SHORT(mld->v2)];
 
-		P_SetSideNum (&ld->sidenum[0], mld->sidenum[0]);
+		P_SetSideNum (&ld->sidenum[0], SHORT(mld->sidenum[0]));
 		P_SetSideNum (&ld->sidenum[1], SHORT(mld->sidenum[1]));
 
 		P_AdjustLine (ld);
+		P_SaveLineSpecial (ld);
 	}
 		
 	Z_Free (data);
@@ -1032,10 +1203,10 @@ static void P_AllocateSideDefs (int count)
 	sidecount = 0;
 }
 
-static void P_SetSideNum (short *sidenum_p, short sidenum)
+static void P_SetSideNum (WORD *sidenum_p, WORD sidenum)
 {
 	sidenum = SHORT(sidenum);
-	if (sidenum == -1)
+	if (sidenum == NO_INDEX)
 	{
 		*sidenum_p = sidenum;
 	}
@@ -1059,12 +1230,12 @@ static void P_LoopSidedefs ()
 
 	for (i = 0; i < numvertexes; ++i)
 	{
-		sidetemp[i].b.first = -1;
-		sidetemp[i].b.next = -1;
+		sidetemp[i].b.first = NO_INDEX;
+		sidetemp[i].b.next = NO_INDEX;
 	}
 	for (; i < numsides; ++i)
 	{
-		sidetemp[i].b.next = -1;
+		sidetemp[i].b.next = NO_INDEX;
 	}
 
 	for (i = 0; i < numsides; ++i)
@@ -1080,8 +1251,8 @@ static void P_LoopSidedefs ()
 		sidetemp[vert].b.first = i;
 
 		// Set each side so that it is the only member of its loop
-		sides[i].LeftSide = -1;
-		sides[i].RightSide = -1;
+		sides[i].LeftSide = NO_INDEX;
+		sides[i].RightSide = NO_INDEX;
 	}
 
 	// For each side, find the side that is to its right and set the
@@ -1089,7 +1260,7 @@ static void P_LoopSidedefs ()
 	// one that forms the smallest angle is assumed to be the right one.
 	for (i = 0; i < numsides; ++i)
 	{
-		int right;
+		WORD right;
 		line_t *line = &lines[sides[i].linenum];
 
 		// If the side's line only exists in a single sector,
@@ -1112,13 +1283,13 @@ static void P_LoopSidedefs ()
 
 			right = sidetemp[right].b.first;
 
-			if (right == -1)
+			if (right == NO_INDEX)
 			{ // There is no right side!
-				Printf ("Line %d's right edge is unconnected\n", line-lines);
+				Printf ("Line %d's right edge is unconnected\n", linemap[line-lines]);
 				continue;
 			}
 
-			if (sidetemp[right].b.next != -1)
+			if (sidetemp[right].b.next != NO_INDEX)
 			{
 				int bestright = right;	// Shut up, GCC
 				angle_t bestang = ANGLE_MAX;
@@ -1126,15 +1297,15 @@ static void P_LoopSidedefs ()
 				angle_t ang1, ang2, ang;
 
 				leftline = &lines[sides[i].linenum];
-				ang1 = R_PointToAngle (leftline->dx, leftline->dy);
+				ang1 = R_PointToAngle2 (0, 0, leftline->dx, leftline->dy);
 				if (!sidetemp[i].b.lineside)
 				{
 					ang1 += ANGLE_180;
 				}
 
-				while (right != -1)
+				while (right != NO_INDEX)
 				{
-					if (sides[right].LeftSide == -1)
+					if (sides[right].LeftSide == NO_INDEX)
 					{
 						rightline = &lines[sides[right].linenum];
 						if (rightline->frontsector != rightline->backsector)
@@ -1563,13 +1734,12 @@ static void P_CreateBlockMap ()
 //
 // killough 3/30/98: Rewritten to remove blockmap limit
 //
-CVAR (Bool, genblockmap, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 void P_LoadBlockMap (int lump)
 {
 	int count;
 	
-	if (genblockmap ||
+	if (ForceNodeBuild || genblockmap ||
 		(count = W_LumpLength(lump)/2) >= 0x10000 ||
 		Args.CheckParm("-blockmap") ||
 		W_LumpLength (lump) == 0)
@@ -1726,16 +1896,43 @@ void P_GroupLines ()
 }
 
 //
+// P_LoadReject
+//
+void P_LoadReject (int lump, bool junk)
+{
+	const int neededsize = (numsectors * numsectors + 7) >> 3;
+	int rejectsize = junk ? 0 : W_LumpLength (lump);
+
+	if (rejectsize < neededsize)
+	{
+		if (rejectsize > 0)
+		{
+			Printf ("REJECT is %d byte%s too small.\n", neededsize - rejectsize,
+				neededsize-rejectsize==1?"":"s");
+		}
+		rejectmatrix = (byte *)Z_Malloc (neededsize, PU_LEVEL, 0);
+		if (rejectsize > 0)
+		{
+			W_ReadLump (lump, rejectmatrix);
+		}
+		memset (rejectmatrix+rejectsize, 0, neededsize-rejectsize);
+	}
+	else
+	{
+		rejectmatrix = (byte *)W_CacheLumpNum (lump, PU_LEVEL);
+	}
+}
+
+//
 // [RH] P_LoadBehavior
 //
 void P_LoadBehavior (int lumpnum)
 {
-	byte *behavior = (byte *)W_CacheLumpNum (lumpnum, PU_LEVEL);
-
-	level.behavior = new FBehavior (behavior, lumpinfo[lumpnum].size);
-	if (!level.behavior->IsGood ())
+	level.behavior = FBehavior::StaticLoadModule (lumpnum);
+	if (!FBehavior::StaticCheckAllGood ())
 	{
-		delete level.behavior;
+		Printf ("ACS scripts unloaded.\n");
+		FBehavior::StaticUnloadModules ();
 		level.behavior = NULL;
 	}
 }
@@ -1766,6 +1963,48 @@ static void P_InitTagLists ()
 	}
 }
 
+static void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors)
+{
+	if (HasBehavior)
+	{
+		int spot1, spot2, anchor;
+		mapthing2_t *mt = (mapthing2_t *)W_CacheLumpNum (lump, PU_CACHE);
+		int num = W_LumpLength (lump) / sizeof(*mt);
+
+		if (HexenHack)
+		{
+			spot1 = SHORT(PO_HEX_SPAWN_TYPE);
+			spot2 = SHORT(PO_HEX_SPAWNCRUSH_TYPE);
+			anchor = SHORT(PO_HEX_ANCHOR_TYPE);
+		}
+		else
+		{
+			spot1 = SHORT(PO_SPAWN_TYPE);
+			spot2 = SHORT(PO_SPAWNCRUSH_TYPE);
+			anchor = SHORT(PO_ANCHOR_TYPE);
+		}
+
+		for (int i = 0; i < num; ++i)
+		{
+			if (mt[i].type == spot1 || mt[i].type == spot2 || mt[i].type == anchor)
+			{
+				FNodeBuilder::FPolyStart newvert;
+				newvert.x = SHORT(mt[i].x) << FRACBITS;
+				newvert.y = SHORT(mt[i].y) << FRACBITS;
+				newvert.polynum = SHORT(mt[i].angle);
+				if (mt[i].type == anchor)
+				{
+					anchors.Push (newvert);
+				}
+				else
+				{
+					spots.Push (newvert);
+				}
+			}
+		}
+	}
+}
+
 //
 // P_SetupLevel
 //
@@ -1775,7 +2014,9 @@ extern polyblock_t **PolyBlockMap;
 // [RH] position indicates the start spot to spawn at
 void P_SetupLevel (char *lumpname, int position)
 {
+	mapthing2_t buildstart;
 	int i, lumpnum;
+	bool buildmap;
 
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
@@ -1818,63 +2059,76 @@ void P_SetupLevel (char *lumpname, int position)
 
 	DThinker::DestroyAllThinkers ();
 	Z_FreeTags (PU_LEVEL, PU_PURGELEVEL-1);
-	NormalLight.Next = NULL;	// [RH] Z_FreeTags frees all the custom colormaps
 
 	// UNUSED W_Profile ();
 
 	// find map num
 	level.lumpnum = lumpnum = W_GetNumForName (lumpname);
 
-	// [RH] Check if this map is Hexen-style.
-	//		LINEDEFS and THINGS need to be handled accordingly.
-	HasBehavior = W_CheckLumpName (lumpnum+ML_BEHAVIOR, "BEHAVIOR");
-
-	// note: most of this ordering is important 
-	
-	// [RH] Load in the BEHAVIOR lump
-	if (level.behavior != NULL)
+	// [RH] Support loading Build maps (because I felt like it. :-)
+	buildmap = false;
+	if (W_LumpLength (lumpnum) > 0)
 	{
-		delete level.behavior;
+		BYTE *mapdata = new BYTE[W_LumpLength (lumpnum)];
+		W_ReadLump (lumpnum, mapdata);
+		buildmap = P_LoadBuildMap (mapdata, W_LumpLength (lumpnum), &buildstart);
+		delete[] mapdata;
+	}
+
+	if (!buildmap)
+	{
+		// [RH] Check if this map is Hexen-style.
+		//		LINEDEFS and THINGS need to be handled accordingly.
+		HasBehavior = W_CheckLumpName (lumpnum+ML_BEHAVIOR, "BEHAVIOR");
+
+		// note: most of this ordering is important 
+
+		ForceNodeBuild = gennodes;
+		// [RH] Load in the BEHAVIOR lump
+		FBehavior::StaticUnloadModules ();
 		level.behavior = NULL;
-	}
-	if (HasBehavior)
-	{
-		P_LoadBehavior (lumpnum+ML_BEHAVIOR);
-	}
-	P_LoadVertexes (lumpnum+ML_VERTEXES);
-	P_LoadSectors (lumpnum+ML_SECTORS);
-	P_LoadSideDefs (lumpnum+ML_SIDEDEFS);
-	if (!HasBehavior)
-		P_LoadLineDefs (lumpnum+ML_LINEDEFS);
-	else
-		P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);	// [RH] Load Hexen-style linedefs
-	P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
-	P_FinishLoadingLineDefs ();
-	P_LoopSidedefs ();
-	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
-	P_LoadSubsectors (lumpnum+ML_SSECTORS);
-	P_LoadNodes (lumpnum+ML_NODES);
-	P_LoadSegs (lumpnum+ML_SEGS);
-		
-	rejectmatrix = (byte *)W_CacheLumpNum (lumpnum+ML_REJECT, PU_LEVEL);
-	{
-		// [RH] Scan the rejectmatrix and see if it actually contains anything
-		int i, end = (W_LumpLength (lumpnum+ML_REJECT)-(sizeof(int)-1)) / sizeof(int);
+		if (HasBehavior)
+		{
+			P_LoadBehavior (lumpnum+ML_BEHAVIOR);
+		}
 
-		for (i = 0; i < end; i++)
-		{
-			if (((int *)rejectmatrix)[i])
-			{
-				rejectempty = false;
-				break;
-			}
-		}
-		if (i >= end)
-		{
-			DPrintf ("Reject matrix is empty\n");
-			rejectempty = true;
-		}
+		P_LoadVertexes (lumpnum+ML_VERTEXES);
+		P_LoadSectors (lumpnum+ML_SECTORS);
+		P_LoadSideDefs (lumpnum+ML_SIDEDEFS);
+		if (!HasBehavior)
+			P_LoadLineDefs (lumpnum+ML_LINEDEFS);
+		else
+			P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);	// [RH] Load Hexen-style linedefs
+		P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
+		P_FinishLoadingLineDefs ();
+		P_LoopSidedefs ();
+		Z_Free (linemap);
+		linemap = NULL;
 	}
+	else
+	{
+		ForceNodeBuild = true;
+	}
+
+	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
+
+	if (!ForceNodeBuild) P_LoadNodes (lumpnum+ML_NODES);
+	if (!ForceNodeBuild) P_LoadSubsectors (lumpnum+ML_SSECTORS);
+	if (!ForceNodeBuild) P_LoadSegs (lumpnum+ML_SEGS);
+	if (ForceNodeBuild)
+	{
+		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
+		P_GetPolySpots (lumpnum+ML_THINGS, polyspots, anchors);
+		FNodeBuilder builder (lines, numlines, vertexes, numvertexes, sides, numsides, polyspots, anchors);
+		Z_Free (vertexes);
+		builder.Create (nodes, numnodes,
+			segs, numsegs,
+			subsectors, numsubsectors,
+			vertexes, numvertexes);
+	}
+
+	P_LoadReject (lumpnum+ML_REJECT, buildmap);
+
 	P_GroupLines ();
 
 	bodyqueslot = 0;
@@ -1890,17 +2144,27 @@ void P_SetupLevel (char *lumpname, int position)
 
 	deathmatchstarts.Clear ();
 
-	P_SetSlopes ();
+	if (!buildmap)
+	{
+		P_SetSlopes ();
+	}
 
 	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
 
-	if (!HasBehavior)
-		P_LoadThings (lumpnum+ML_THINGS);
-	else
-		P_LoadThings2 (lumpnum+ML_THINGS, position);	// [RH] Load Hexen-style things
+	if (!buildmap)
+	{
+		if (!HasBehavior)
+			P_LoadThings (lumpnum+ML_THINGS);
+		else
+			P_LoadThings2 (lumpnum+ML_THINGS, position);	// [RH] Load Hexen-style things
 
-	if (!HasBehavior)
-		P_TranslateTeleportThings ();	// [RH] Assign teleport destination TIDs
+		if (!HasBehavior)
+			P_TranslateTeleportThings ();	// [RH] Assign teleport destination TIDs
+	}
+	else
+	{
+		P_SpawnMapThing (&buildstart, 0);
+	}
 
 	PO_Init ();	// Initialize the polyobjs
 
@@ -1923,7 +2187,8 @@ void P_SetupLevel (char *lumpname, int position)
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();
 
-	R_OldBlend = ~0;
+	R_OldBlend = 0xffffffff;
+
 	// preload graphics
 	if (precache)
 		R_PrecacheLevel ();

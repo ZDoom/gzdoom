@@ -269,14 +269,14 @@ void FStringTable::Compact ()
 
 int FStringTable::SumStringSizes () const
 {
-	int len;
+	size_t len;
 	int i;
 
-	for (i = len = 0; i < NumStrings; ++i)
+	for (i = 0, len = 0; i < NumStrings; ++i)
 	{
 		len += strlen (Strings[i]) + 1;
 	}
-	return len;
+	return (int)len;
 }
 
 

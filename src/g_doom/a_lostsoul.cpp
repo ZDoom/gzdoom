@@ -10,6 +10,8 @@
 #include "gstrings.h"
 #include "a_action.h"
 
+static FRandom pr_lost ("LostMissileRange");
+
 void A_SkullAttack (AActor *);
 
 FState ALostSoul::States[] =
@@ -49,7 +51,7 @@ IMPLEMENT_ACTOR (ALostSoul, Doom, 3006, 110)
 	PROP_SpeedFixed (8)
 	PROP_Damage (3)
 	PROP_MaxPainChance
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_FLOAT|MF_NOGRAVITY|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PUSHWALL|MF2_PASSMOBJ)
 	PROP_RenderStyle (STYLE_SoulTrans)
 
@@ -72,7 +74,7 @@ const char *ALostSoul::GetObituary ()
 
 bool ALostSoul::SuggestMissileAttack (fixed_t dist)
 {
-	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 200);
+	return pr_lost() >= MIN<int> (dist >> (FRACBITS + 1), 200);
 }
 
 void ALostSoul::Die (AActor *source, AActor *inflictor)

@@ -107,6 +107,7 @@ typedef enum {
 	ns_sprites,
 	ns_flats,
 	ns_colormaps,
+	ns_acslibrary,
 	ns_bloodraw,
 	ns_bloodsfx,
 	ns_bloodmisc
@@ -126,6 +127,7 @@ const char *W_GetWadName (int wadnum);
 bool W_CheckIfWadLoaded (const char *wadname);
 
 int W_CheckNumForName (const char *name, int namespc);
+int W_CheckNumForName (const char *name, int namespc, int wadfile);
 int W_GetNumForName (const char *name);
 
 inline int W_CheckNumForName (const byte *name) { return W_CheckNumForName ((const char *)name, ns_global); }
@@ -136,7 +138,12 @@ inline int W_GetNumForName (const byte *name) { return W_GetNumForName ((const c
 int W_LumpLength (int lump);
 void W_ReadLump (int lump, void *dest);
 
+#ifndef _DEBUG
 void *W_CacheLumpNum (int lump, int tag);
+#else
+void *W_CacheLumpNum2 (int lump, int tag, const char *file, int line);
+#define W_CacheLumpNum(l,t) W_CacheLumpNum2 (l, t, __FILE__, __LINE__)
+#endif
 
 // [RH] W_CacheLumpName() is now a macro
 #define W_CacheLumpName(name,tag) W_CacheLumpNum (W_GetNumForName(name), (tag))
@@ -158,7 +165,7 @@ void uppercopy (char *to, const char *from);
 // [RH] Copies the lump name to to using uppercopy
 void W_GetLumpName (char *to, int lump);
 
-// [RH] Returns file handle for specified lump
+// [RH] Returns wadnum for a specified lump
 int W_GetLumpFile (int lump);
 
 #endif

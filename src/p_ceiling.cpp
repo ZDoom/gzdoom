@@ -209,7 +209,7 @@ bool EV_DoCeiling (DCeiling::ECeiling type, line_t *line,
 	{
 		if (!line || !(sec = line->backsector))
 			return rtn;
-		secnum = sec-sectors;
+		secnum = (int)(sec-sectors);
 		manual = true;
 		// [RH] Hack to let manual crushers be retriggerable, too
 		tag ^= secnum | 0x1000000;

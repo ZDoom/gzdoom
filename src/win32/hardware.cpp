@@ -68,7 +68,6 @@ void I_InitHardware ()
 
 	val.Bool = !!Args.CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
-
 	Video = new Win32Video (0);
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
@@ -217,10 +216,11 @@ CCMD (vid_listmodes)
 	{
 		Video->StartModeIterator (bits);
 		while (Video->NextMode (&width, &height))
-			if (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits)
-				Printf_Bold ("%4d x%5d x%3d\n", width, height, bits);
-			else
-				Printf ("%4d x%5d x%3d\n", width, height, bits);
+		{
+			Printf ((width == DisplayWidth && height == DisplayHeight && bits == DisplayBits)
+				? PRINT_BOLD : PRINT_HIGH,
+				"%4d x%5d x%3d\n", width, height, bits);
+		}
 	}
 }
 

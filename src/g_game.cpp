@@ -68,11 +68,15 @@
 #include "b_bot.h"			//Added by MC:
 #include "sbar.h"
 #include "m_swap.h"
+#include "m_png.h"
+#include "gi.h"
 
 #include <zlib.h>
 
+static FRandom pr_dmspawn ("DMSpawn");
+
 const int SAVEPICWIDTH = 216;
-const int SAVEPICHEIGHT = 135;
+const int SAVEPICHEIGHT = 162;
 
 BOOL	G_CheckDemoStatus (void);
 void	G_ReadDemoTiccmd (ticcmd_t *cmd, int player);
@@ -92,7 +96,6 @@ void	G_DoAutoSave (void);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
 CVAR (Int, deathmatch, 0, CVAR_SERVERINFO|CVAR_LATCH);
-CVAR (Bool, teamplay, false, CVAR_SERVERINFO);
 CVAR (Bool, chasedemo, false, 0);
 CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -122,6 +125,7 @@ int 			consoleplayer;			// player taking events and displaying
 int 			displayplayer;			// view being displayed 
 int 			gametic;
 
+CVAR(Bool, demo_compress, true, CVAR_ARCHIVE);
 char			demoname[256];
 BOOL 			demorecording;
 BOOL 			demoplayback;
@@ -130,6 +134,8 @@ BOOL			demonew;				// [RH] Only used around G_InitNew for demos
 int				demover;
 byte*			demobuffer;
 byte*			demo_p;
+byte*			democompspot;
+byte*			demobodyspot;
 size_t			maxdemosize;
 byte*			zdemformend;			// end of FORM ZDEM chunk
 byte*			zdembodyend;			// end of ZDEM BODY chunk
@@ -195,11 +201,31 @@ char savename[PATH_MAX];
 char BackupSaveName[PATH_MAX];
 
 bool SendLand;
-BYTE SendWeaponSlot;
-BYTE SendWeaponChoice;
+BYTE SendWeaponSlot = 255;
+BYTE SendWeaponChoice = 255;
 int SendItemSelect;
 artitype_t SendItemUse;
 artitype_t LocalSelectedItem;
+
+EXTERN_CVAR (Int, team)
+
+CUSTOM_CVAR (Bool, teamplay, false, CVAR_SERVERINFO)
+{
+	// Update player colors for team play
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			R_BuildPlayerTranslation (i);
+		}
+	}
+	if (StatusBar != NULL)
+	{
+		StatusBar->AttachToPlayer (&players[displayplayer]);
+	}
+	// Update the player's userinfo team with their team cvar
+	team = team;
+}
 
 // [RH] Allow turbo setting anytime during game
 CUSTOM_CVAR (Float, turbo, 100.f, 0)
@@ -502,6 +528,13 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		side = MAXPLMOVE;
 	else if (side < -MAXPLMOVE)
 		side = -MAXPLMOVE;
+
+	if (players[consoleplayer].powers[pw_speed]
+		&& !players[consoleplayer].morphTics)
+	{ // Adjust for a player with a speed artifact
+		forward = (3*forward)>>1;
+		side = (3*side)>>1;
+	}
 
 	cmd->ucmd.forwardmove += forward;
 	cmd->ucmd.sidemove += side;
@@ -812,7 +845,10 @@ void G_Ticker ()
 			{
 				G_WriteDemoTiccmd (newcmd, i, buf);
 			}
-			if (demoplayback)
+			// If the user alt-tabbed away, paused gets set to -1. In this case,
+			// we do not want to read more demo commands until paused is no
+			// longer negative.
+			if (demoplayback && paused >= 0)
 			{
 				G_ReadDemoTiccmd (cmd, i);
 			}
@@ -822,8 +858,9 @@ void G_Ticker ()
 			}
 
 			// check for turbo cheats
-			if (cmd->ucmd.forwardmove > TURBOTHRESHOLD
-				&& !(gametic&31) && ((gametic>>5)&3) == i )
+			if (!players[i].powers[pw_speed] &&
+				cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
+				!(gametic&31) && ((gametic>>5)&(MAXPLAYERS-1)) == i )
 			{
 				Printf ("%s is turbo!\n", players[i].userinfo.netname);
 			}
@@ -860,6 +897,14 @@ void G_Ticker ()
 
 	case GS_DEMOSCREEN:
 		D_PageTicker ();
+		break;
+
+	case GS_STARTUP:
+		if (gameaction == ga_nothing)
+		{
+			gamestate = GS_FULLCONSOLE;
+			gameaction = ga_fullconsole;
+		}
 		break;
 
 	default:
@@ -1072,11 +1117,11 @@ static fixed_t PlayersRangeFromSpot (mapthing2_t *spot)
 }
 
 // [RH] Select the deathmatch spawn spot farthest from everyone.
-static mapthing2_t *SelectFarthestDeathmatchSpot (int selections)
+static mapthing2_t *SelectFarthestDeathmatchSpot (size_t selections)
 {
 	fixed_t bestdistance = 0;
 	mapthing2_t *bestspot = NULL;
-	int i;
+	size_t i;
 
 	for (i = 0; i < selections; i++)
 	{
@@ -1093,13 +1138,13 @@ static mapthing2_t *SelectFarthestDeathmatchSpot (int selections)
 }
 
 // [RH] Select a deathmatch spawn spot at random (original mechanism)
-static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, int selections)
+static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, size_t selections)
 {
-	int i, j;
+	size_t i, j;
 
 	for (j=0; j < 20; j++)
 	{
-		i = P_Random (pr_dmspawn) % selections;
+		i = pr_dmspawn() % selections;
 		if (G_CheckSpot (playernum, &deathmatchstarts[i]) )
 		{
 			return &deathmatchstarts[i];
@@ -1112,7 +1157,7 @@ static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, int selections)
 
 void G_DeathMatchSpawnPlayer (int playernum)
 {
-	int selections;
+	size_t selections;
 	mapthing2_t *spot;
 
 	selections = deathmatchstarts.Size ();
@@ -1123,7 +1168,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	// At level start, none of the players have mobjs attached to them,
 	// so we always use the random deathmatch spawn. During the game,
 	// though, we use whatever dmflags specifies.
-	if (dmflags & DF_SPAWN_FARTHEST && players[playernum].mo)
+	if ((dmflags & DF_SPAWN_FARTHEST) && players[playernum].mo)
 		spot = SelectFarthestDeathmatchSpot (selections);
 	else
 		spot = SelectRandomDeathmatchSpot (playernum, selections);
@@ -1136,8 +1181,10 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	{
 		if (playernum < 4)
 			spot->type = playernum+1;
-		else
+		else if (gameinfo.gametype != GAME_Hexen)
 			spot->type = playernum+4001-4;	// [RH] > 4 players
+		else
+			spot->type = playernum+9100-4;
 	}
 
 	P_SpawnPlayer (spot);
@@ -1269,54 +1316,75 @@ void G_LoadGame (char* name)
 	gameaction = ga_loadgame;
 }
 
+static bool CheckSingleWad (char *name, bool &printRequires)
+{
+	if (name == NULL)
+	{
+		return true;
+	}
+	if (!W_CheckIfWadLoaded (name))
+	{
+		if (!printRequires)
+		{
+			printRequires = true;
+			Printf ("This savegame needs these wads:\n");
+		}
+		Printf ("%s, ", name);
+		delete[] name;
+		return false;
+	}
+	delete[] name;
+	return true;
+}
+
 // Return false if not all the needed wads have been loaded.
 static bool G_CheckSaveGameWads (FILE *file)
 {
-	char wadbuff[PATH_MAX];
-	int i, c;
+	char *text;
 	bool printRequires = false;
 
-	for (;;)
+	text = M_GetPNGText (file, "Game WAD");
+	CheckSingleWad (text, printRequires);
+	text = M_GetPNGText (file, "Map WAD");
+	CheckSingleWad (text, printRequires);
+
+	if (printRequires)
 	{
-		i = 0;
-		do
-		{
-			c = fgetc (file);
-			wadbuff[i++] = c;
-		} while (c != 0 && c != EOF);
+		Printf ("\n");
+		return false;
+	}
 
-		if (c == EOF)
-		{
-			Printf ("Savegame is too short\n");
-			return false;
-		}
+	return true;
+}
 
-		if (i == 1)
-		{ // The end of the wad list is an empty string.
-			if (printRequires)
-			{
-				Printf ("\n");
-				return false;
-			}
-			return true;
-		}
+static void ReadVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
+{
+	size_t len = M_FindPNGChunk (file, id);
+	size_t used = 0;
 
-		if (!W_CheckIfWadLoaded (wadbuff))
+	if (len != 0)
+	{
+		DWORD var;
+		size_t i;
+		FPNGChunkArchive arc (file, id, len);
+		used = len / 4;
+
+		for (i = 0; i < used; ++i)
 		{
-			if (!printRequires)
-			{
-				printRequires = true;
-				Printf ("This savegame needs these wads:\n");
-			}
-			Printf ("%s, ", wadbuff);
+			arc << var;
+			vars[i] = var;
 		}
+	}
+	if (used < count)
+	{
+		memset (&vars[used], 0, (count-used)*4);
 	}
 }
 
-void G_DoLoadGame (void)
+void G_DoLoadGame ()
 {
-	int i;
-	char text[16];
+	char *text = NULL;
+	char *map;
 
 	gameaction = ga_nothing;
 
@@ -1327,16 +1395,19 @@ void G_DoLoadGame (void)
 		return;
 	}
 
-	fread (text, 16, 1, stdfile);
-	if (strncmp (text, SAVESIG, 16))
+	if (!M_VerifyPNG (stdfile) ||
+		!(text = M_GetPNGText (stdfile, "ZDoom Save Version")) ||
+		0 != strcmp (text, SAVESIG))
 	{
 		Printf ("Savegame is from a different version\n");
+		if (text != NULL)
+		{
+			delete[] text;
+		}
 		fclose (stdfile);
 		return;
 	}
-	fseek (stdfile, SAVESTRINGSIZE, SEEK_CUR);	// skip the title field
-	fread (text, 8, 1, stdfile);
-	text[8] = 0;
+	delete[] text;
 
 	if (!G_CheckSaveGameWads (stdfile))
 	{
@@ -1344,83 +1415,66 @@ void G_DoLoadGame (void)
 		return;
 	}
 
-	// Skip the comment and pic
-	WORD t1, t2;
-
-	fread (&t1, 2, 1, stdfile);
-	fseek (stdfile, SHORT(t1), SEEK_CUR);
-	fread (&t1, 2, 1, stdfile);
-	fread (&t2, 2, 1, stdfile);
-	if (t1 != 0 && t2 != 0)
+	map = M_GetPNGText (stdfile, "Current Map");
+	if (map == NULL)
 	{
-		WORD t3;
-		fread (&t3, 4, 1, stdfile);
-		t3 = LONG(t3);
-		if (t3 == 0)
-		{
-			t3 = SHORT(t1) * SHORT(t2);
-		}
-		fseek (stdfile, t3, SEEK_CUR);		// skip (compressed) pic
+		Printf ("Savegame is missing the current map\n");
+		fclose (stdfile);
+		return;
 	}
 
 	bglobal.RemoveAllBots (true);
 
-	FCompressedFile savefile (stdfile, FFile::EReading);
-
-	if (!savefile.IsOpen ())
-		I_Error ("Savegame '%s' is corrupt\n", savename);
-
-	FArchive arc (savefile);
-
+	text = M_GetPNGText (stdfile, "Important CVARs");
+	if (text != NULL)
 	{
-		byte vars[4096], *vars_p;
-		unsigned int len;
-		vars_p = vars;
-		len = arc.ReadCount ();
-		arc.Read (vars, len);
+		byte *vars_p = (byte *)text;
 		C_ReadCVars (&vars_p);
+		delete[] text;
 	}
 
 	// dearchive all the modifications
-	arc << level.time;
+	if (M_FindPNGChunk (stdfile, MAKE_ID('p','t','I','c')) == 8)
+	{
+		DWORD time[2];
+		fread (&time, 8, 1, stdfile);
+		time[0] = BELONG((unsigned int)time[0]);
+		time[1] = BELONG((unsigned int)time[1]);
+		level.time = Scale (time[1], TICRATE, time[0]);
+	}
+	else
+	{ // No ptIc chunk so we don't know how long the user was playing
+		level.time = 0;
+	}
 
-	G_SerializeSnapshots (arc);
-	P_SerializeRNGState (arc);
-	P_SerializeACSDefereds (arc);
+	G_SerializeSnapshots (stdfile, false);
+	P_SerializeRNGState (stdfile, false);
+	P_SerializeACSDefereds (stdfile, false);
 
 	// load a base level
 	savegamerestore = true;		// Use the player actors in the savegame
-	G_InitNew (text);
+	G_InitNew (map);
+	delete[] map;
 	savegamerestore = false;
 
-	for (i = 0; i < NUM_WORLDVARS; i++)
-		arc << ACS_WorldVars[i];
+	ReadVars (stdfile, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
+	ReadVars (stdfile, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
 
-	for (i = 0; i < NUM_GLOBALVARS; i++)
-		arc << ACS_GlobalVars[i];
-
-	arc << text[9];
-
-	if (text[9] == 0x1e)
+	NextSkill = -1;
+	if (M_FindPNGChunk (stdfile, MAKE_ID('s','n','X','t')) == 1)
 	{
-		arc << NextSkill;
-	}
-	else
-	{
-		NextSkill = -1;
-	}
-
-	arc.Close ();
-
-	if (text[9] != 0x1d && text[9] != 0x1e)
-	{
-		I_Error ("Bad savegame");
+		BYTE next;
+		fread (&next, 1, 1, stdfile);
+		NextSkill = next;
 	}
 
 	LocalSelectedItem = players[consoleplayer].readyArtifact;
 
-	delete level.info->snapshot;
-	level.info->snapshot = NULL;
+	if (level.info->snapshot != NULL)
+	{
+		delete level.info->snapshot;
+		level.info->snapshot = NULL;
+	}
 
 	strcpy (BackupSaveName, savename);
 }
@@ -1518,16 +1572,14 @@ static void PutSaveWads (FILE *file)
 
 	// Name of IWAD
 	name = W_GetWadName (1);
-	fwrite (name, 1, strlen (name) + 1, file);
+	M_AppendPNGText (file, "Game WAD", name);
 
 	// Name of wad the map resides in
 	if (lumpinfo[level.lumpnum].wadnum != 1)
 	{
 		name = W_GetWadName (lumpinfo[level.lumpnum].wadnum);
-		fwrite (name, 1, strlen (name) + 1, file);
+		M_AppendPNGText (file, "Map WAD", name);
 	}
-
-	fputc (0, file);
 }
 
 static void PutSaveComment (FILE *file)
@@ -1547,92 +1599,76 @@ static void PutSaveComment (FILE *file)
 	strncpy (comment, readableTime, 10);
 	strncpy (comment+10, readableTime+19, 5);
 	strncpy (comment+15, readableTime+10, 9);
-	comment[24] = '\n';
-	comment[25] = '\n';
+	comment[24] = 0;
 
-	// Append level name
-	strcpy (comment+26, level.level_name);
-	len = strlen (comment);
+	M_AppendPNGText (file, "Creation Time", comment);
+
+	// Get level name
+	strcpy (comment, level.level_name);
+	len = (WORD)strlen (comment);
 	comment[len] = '\n';
 
 	// Append elapsed time
 	levelTime = level.time / TICRATE;
 	sprintf (comment+len+1, "time: %02d:%02d:%02d",
 		levelTime/3600, (levelTime%3600)/60, levelTime%60);
-	len += 16;
-	comment[len-1] = 0;
+	comment[len+16] = 0;
 
 	// Write out the comment
-	len = SHORT(len);
-	fwrite (&len, 2, 1, file);
-	len = SHORT(len);
-	fwrite (comment, 1, len, file);
+	M_AppendPNGText (file, "Comment", comment);
 }
 
 static void PutSavePic (FILE *file, int width, int height)
 {
-	const uLong picArea = width * height;
-
-	if (picArea == 0 || !storesavepic)
+	if (width <= 0 || height <= 0 || !storesavepic)
 	{
-		DWORD zero = 0;
-		fwrite (&zero, 4, 1, file);
+		M_CreateDummyPNG (file);
 	}
 	else
 	{
 		DCanvas *pic = new DSimpleCanvas (width, height);
+		PalEntry palette[256];
 
 		// Take a snapshot of the player's view
 		pic->Lock ();
 		R_RenderViewToCanvas (&players[consoleplayer], pic, 0, 0, width, height);
-
-		// Compress the pic and save it to disk
-		uLong outlen;
-		Byte *compressed;
-		int r;
-
-		outlen = picArea + picArea/1000 + 12;
-		do
-		{
-			compressed = new Bytef[outlen];
-			r = compress (compressed, &outlen, pic->GetBuffer(), picArea);
-			if (r == Z_BUF_ERROR)
-			{
-				delete[] compressed;
-				outlen += 1024;
-			}
-		} while (r == Z_BUF_ERROR);
-
-		WORD temp;
-		DWORD dtemp;
-
-		temp = SHORT(width);
-		fwrite (&temp, 2, 1, file);
-		temp = SHORT(height);
-		fwrite (&temp, 2, 1, file);
-
-		if (r != Z_OK || outlen >= picArea)
-		{ // Save uncompressable data as-is
-			dtemp = 0;
-			fwrite (&dtemp, 4, 1, file);
-			fwrite (pic->GetBuffer(), 1, picArea, file);
-		}
-		else
-		{ // Save compressable data in compressed form
-			dtemp = LONG(outlen);
-			fwrite (&dtemp, 4, 1, file);
-			fwrite (compressed, 1, outlen, file);
-		}
-
+		screen->GetFlashedPalette (palette);
+		M_CreatePNG (file, pic, palette);
 		pic->Unlock ();
-		delete[] compressed;
 		delete pic;
+	}
+}
+
+static void WriteVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
+{
+	size_t i, j;
+
+	for (i = 0; i < count; ++i)
+	{
+		if (vars[i] != 0)
+			break;
+	}
+	if (i < count)
+	{
+		// Find last non-zero var. Anything beyond the last stored variable
+		// will be zeroed at load time.
+		for (j = count-1; j > i; --j)
+		{
+			if (vars[j] != 0)
+				break;
+		}
+		FPNGChunkArchive arc (file, id);
+		for (i = 0; i <= j; ++i)
+		{
+			DWORD var = vars[i];
+			arc << var;
+		}
 	}
 }
 
 void G_DoSaveGame (bool okForQuicksave)
 {
-	int i;
+	char name[9];
 
 	if (demoplayback)
 		return;
@@ -1649,45 +1685,51 @@ void G_DoSaveGame (bool okForQuicksave)
 		return;
 	}
 
-	fwrite (SAVESIG, 16, 1, stdfile);
-	fwrite (savedescription, SAVESTRINGSIZE, 1, stdfile);
-	fwrite (level.mapname, 8, 1, stdfile);
+	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
+	M_AppendPNGText (stdfile, "Software", "ZDoom " DOTVERSIONSTR);
+	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
+	M_AppendPNGText (stdfile, "Title", savedescription);
+	strncpy (name, level.mapname, 8);
+	name[9] = 0;
+	M_AppendPNGText (stdfile, "Current Map", name);
 	PutSaveWads (stdfile);
 	PutSaveComment (stdfile);
-	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
-
-	FCompressedFile savefile (stdfile, FFile::EWriting, true);
-	FArchive arc (savefile);
 
 	{
 		byte vars[4096], *vars_p;
 		vars_p = vars;
 		C_WriteCVars (&vars_p, CVAR_SERVERINFO);
-		arc.WriteCount (vars_p - vars);
-		arc.Write (vars, vars_p - vars);
+		*vars_p = 0;
+		M_AppendPNGText (stdfile, "Important CVARs", (char *)vars);
 	}
 
-	arc << level.time;
+	if (level.time != 0)
+	{
+		DWORD time[2] = { BELONG(TICRATE), BELONG(level.time) };
+		M_AppendPNGChunk (stdfile, MAKE_ID('p','t','I','c'), (BYTE *)&time, 8);
+	}
 
-	G_SerializeSnapshots (arc);
-	P_SerializeRNGState (arc);
-	P_SerializeACSDefereds (arc);
+	G_SerializeSnapshots (stdfile, true);
+	P_SerializeRNGState (stdfile, true);
+	P_SerializeACSDefereds (stdfile, true);
 
-	for (i = 0; i < NUM_WORLDVARS; i++)
-		arc << ACS_WorldVars[i];
+	WriteVars (stdfile, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
+	WriteVars (stdfile, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
 
-	for (i = 0; i < NUM_GLOBALVARS; i++)
-		arc << ACS_GlobalVars[i];
-
-	BYTE consist = 0x1e;			// consistancy marker
-	arc << consist << NextSkill;
+	if (NextSkill != -1)
+	{
+		BYTE next = NextSkill;
+		M_AppendPNGChunk (stdfile, MAKE_ID('s','n','X','t'), &next, 1);
+	}
 
 	M_NotifyNewSave (savegamefile, savedescription, okForQuicksave);
 	gameaction = ga_nothing;
 	savedescription[0] = 0;
 
+	M_FinishPNG (stdfile);
+	fclose (stdfile);
+
 	Printf ("%s\n", GStrings(GGSAVED));
-	arc.Close ();
 
 	strcpy (BackupSaveName, savegamefile);
 
@@ -1829,9 +1871,10 @@ void G_BeginRecording (void)
 	// Write header chunk
 	StartChunk (ZDHD_ID, &demo_p);
 	WriteWord (GAMEVER, &demo_p);			// Write ZDoom version
-	*demo_p++ = 1;							// Write minimum version needed to use this demo.
-	*demo_p++ = 13;							// (Useful?)
-	for (i = 0; i < 8; i++) {				// Write name of map demo was recorded on.
+	*demo_p++ = 2;							// Write minimum version needed to use this demo.
+	*demo_p++ = 0;							// (Useful?)
+	for (i = 0; i < 8; i++)					// Write name of map demo was recorded on.
+	{
 		*demo_p++ = level.mapname[i];
 	}
 	WriteLong (rngseed, &demo_p);			// Write RNG seed
@@ -1839,8 +1882,10 @@ void G_BeginRecording (void)
 	FinishChunk (&demo_p);
 
 	// Write player info chunks
-	for (i = 0; i < MAXPLAYERS; i++) {
-		if (playeringame[i]) {
+	for (i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i])
+		{
 			StartChunk (UINF_ID, &demo_p);
 			WriteByte ((byte)i, &demo_p);
 			D_WriteUserInfoStrings (i, &demo_p);
@@ -1853,8 +1898,15 @@ void G_BeginRecording (void)
 	C_WriteCVars (&demo_p, CVAR_SERVERINFO|CVAR_DEMOSAVE);
 	FinishChunk (&demo_p);
 
+	// Indicate body is compressed
+	StartChunk (COMP_ID, &demo_p);
+	democompspot = demo_p;
+	WriteLong (0, &demo_p);
+	FinishChunk (&demo_p);
+
 	// Begin BODY chunk
 	StartChunk (BODY_ID, &demo_p);
+	demobodyspot = demo_p;
 }
 
 
@@ -1896,6 +1948,7 @@ BOOL G_ProcessIFFDemo (char *mapname)
 	BOOL bodyHit = false;
 	int numPlayers = 0;
 	int id, len, i;
+	uLong uncompSize = 0;
 	byte *nextchunk;
 
 	demoplayback = true;
@@ -1910,67 +1963,79 @@ BOOL G_ProcessIFFDemo (char *mapname)
 	// TODO: Support multiple FORM ZDEMs in a CAT. Might be useful.
 
 	id = ReadLong (&demo_p);
-	if (id != ZDEM_ID) {
+	if (id != ZDEM_ID)
+	{
 		Printf ("Not a ZDoom demo file!\n");
 		return true;
 	}
 
 	// Process all chunks until a BODY chunk is encountered.
 
-	while (demo_p < zdemformend && !bodyHit) {
+	while (demo_p < zdemformend && !bodyHit)
+	{
 		id = ReadLong (&demo_p);
 		len = ReadLong (&demo_p);
 		nextchunk = demo_p + len + (len & 1);
-		if (nextchunk > zdemformend) {
+		if (nextchunk > zdemformend)
+		{
 			Printf ("Demo is mangled!\n");
 			return true;
 		}
 
-		switch (id) {
-			case ZDHD_ID:
-				headerHit = true;
+		switch (id)
+		{
+		case ZDHD_ID:
+			headerHit = true;
 
-				demover = ReadWord (&demo_p);	// ZDoom version demo was created with
-				if (ReadWord (&demo_p) > GAMEVER) {		// Minimum ZDoom version
-					Printf ("Demo requires a newer version of ZDoom!\n");
-					return true;
-				}
-				memcpy (mapname, demo_p, 8);	// Read map name
-				mapname[8] = 0;
-				demo_p += 8;
-				rngseed = ReadLong (&demo_p);
-				consoleplayer = displayplayer = *demo_p++;
-				break;
+			demover = ReadWord (&demo_p);	// ZDoom version demo was created with
+			if (ReadWord (&demo_p) > GAMEVER)		// Minimum ZDoom version
+			{
+				Printf ("Demo requires a newer version of ZDoom!\n");
+				return true;
+			}
+			memcpy (mapname, demo_p, 8);	// Read map name
+			mapname[8] = 0;
+			demo_p += 8;
+			rngseed = ReadLong (&demo_p);
+			consoleplayer = displayplayer = *demo_p++;
+			break;
 
-			case VARS_ID:
-				C_ReadCVars (&demo_p);
-				break;
+		case VARS_ID:
+			C_ReadCVars (&demo_p);
+			break;
 
-			case UINF_ID:
-				i = ReadByte (&demo_p);
-				if (!playeringame[i]) {
-					playeringame[i] = 1;
-					numPlayers++;
-				}
-				D_ReadUserInfoStrings (i, &demo_p, false);
-				break;
+		case UINF_ID:
+			i = ReadByte (&demo_p);
+			if (!playeringame[i])
+			{
+				playeringame[i] = 1;
+				numPlayers++;
+			}
+			D_ReadUserInfoStrings (i, &demo_p, false);
+			break;
 
-			case BODY_ID:
-				bodyHit = true;
-				zdembodyend = demo_p + len;
-				break;
+		case BODY_ID:
+			bodyHit = true;
+			zdembodyend = demo_p + len;
+			break;
+
+		case COMP_ID:
+			uncompSize = ReadLong (&demo_p);
+			break;
 		}
 
 		if (!bodyHit)
 			demo_p = nextchunk;
 	}
 
-	if (!numPlayers) {
+	if (!numPlayers)
+	{
 		Printf ("Demo has no players!\n");
 		return true;
 	}
 
-	if (!bodyHit) {
+	if (!bodyHit)
+	{
 		zdembodyend = NULL;
 		Printf ("Demo has no BODY chunk!\n");
 		return true;
@@ -1978,6 +2043,21 @@ BOOL G_ProcessIFFDemo (char *mapname)
 
 	if (numPlayers > 1)
 		multiplayer = netgame = netdemo = true;
+
+	if (uncompSize > 0)
+	{
+		BYTE *uncompressed = (BYTE *)Z_Malloc (uncompSize, PU_STATIC, 0);
+		int r = uncompress (uncompressed, &uncompSize, demo_p, zdembodyend - demo_p);
+		if (r != Z_OK)
+		{
+			Printf ("Could not decompress demo!\n");
+			Z_Free (uncompressed);
+			return true;
+		}
+		Z_Free (demobuffer);
+		zdembodyend = uncompressed + uncompSize;
+		demobuffer = demo_p = uncompressed;
+	}
 
 	return false;
 }
@@ -2017,7 +2097,7 @@ void G_DoPlayDemo (void)
 		}
 		else
 		{
-			Printf_Bold (eek);
+			Printf (PRINT_BOLD, eek);
 			gameaction = ga_nothing;
 		}
 	}
@@ -2086,7 +2166,7 @@ BOOL G_CheckDemoStatus (void)
 
 		if (timingdemo)
 			endtime = I_GetTimePolled () - starttime;
-			
+
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 
 		Z_Free (demobuffer);
@@ -2135,6 +2215,26 @@ BOOL G_CheckDemoStatus (void)
 		byte *formlen;
 
 		WriteByte (DEM_STOP, &demo_p);
+
+		if (demo_compress)
+		{
+			// Now that the entire BODY chunk has been created, replace it with
+			// a compressed version. If the BODY successfully compresses, the
+			// contents of the COMP chunk will be changed to indicate the
+			// uncompressed size of the BODY.
+			uLong len = demo_p - demobodyspot;
+			uLong outlen = (len + len/1000 + 12);
+			Byte *compressed = new Byte[outlen];
+			int r = compress2 (compressed, &outlen, demobodyspot, len, 9);
+			if (r == Z_OK && outlen < len)
+			{
+				formlen = democompspot;
+				WriteLong (len, &democompspot);
+				memcpy (demobodyspot, compressed, outlen);
+				demo_p = demobodyspot + outlen;
+			}
+			delete[] compressed;
+		}
 		FinishChunk (&demo_p);
 		formlen = demobuffer + 4;
 		WriteLong (demo_p - demobuffer - 8, &formlen);

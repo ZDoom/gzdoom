@@ -66,6 +66,37 @@ inline int LONG (int x)
 #define SHORT(x)		(x)
 #define LONG(x) 		(x)
 
+#if defined(_MSC_VER) && defined(USEASM)
+#pragma warning (disable: 4035)
+
+inline short BESHORT (short x)
+{
+	__asm mov ax, x
+	__asm xchg al, ah
+}
+
+inline unsigned short BESHORT (unsigned short x)
+{
+	__asm mov ax, x
+	__asm xchg al, ah
+}
+
+inline int BELONG (int x)
+{
+	__asm mov eax, x
+	__asm bswap eax
+}
+
+inline unsigned int BELONG (unsigned int x)
+{
+	__asm mov eax, x
+	__asm bswap eax
+}
+
+#pragma warning (default: 4035)
+
+#else
+
 inline short BESHORT (short x)
 {
 	return (short)((((unsigned short)x)>>8) | (((unsigned short)x)<<8));
@@ -93,6 +124,7 @@ inline int BELONG (int x)
 		| ((((unsigned int)x)<<8) & 0xff0000)
 		| (((unsigned int)x)<<24));
 }
+#endif // USEASM
 
 #endif // __BIG_ENDIAN__
 

@@ -30,6 +30,7 @@
 #include "doomdef.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
+#include "stats.h"
 
 
 /*
@@ -49,7 +50,6 @@ automatically if needed
 */
 
 #define ZONEID		0x1d4a11
-#define TRASHID		0xf51a4d16
 
 typedef struct
 {
@@ -62,7 +62,8 @@ CVAR (Float, heapsize, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 
 static memzone_t *mainzone;
-
+static int PurgeCount;
+static size_t PurgeSize;
 
 //
 // Z_ClearZone
@@ -153,8 +154,6 @@ void Z_Free (void *ptr)
 		I_FatalError ("Z_Free: freed a pointer without ZONEID");
 	if (block->user == NULL)
 		I_FatalError ("Z_Free: freed a freed pointer");
-	if (*(DWORD *)((byte *)block + block->size - 4) != TRASHID)
-		I_FatalError ("Z_Free: memory changed past end of block");
 
 	if (block->user > (void **)2)
 	{
@@ -193,6 +192,10 @@ void Z_Free (void *ptr)
 		if (other == mainzone->rover)
 			mainzone->rover = block;
 	}
+
+	// [RH] Move the rover back if we freed a block just behind it.
+	if (block->next == mainzone->rover)
+		mainzone->rover = block;
 }
 
 
@@ -208,8 +211,14 @@ void Z_Free (void *ptr)
 #define MINFRAGMENT	64
 #define ALIGN		8
 
+#ifndef _DEBUG
 void *Z_Malloc (size_t size, int tag, void *user)
+#else
+void *Z_Malloc2 (size_t size, int tag, void *user, const char *file, int line)
+#endif
 {
+	size_t		startSize;
+	size_t		collectSize;
 	int 		extra;
 	memblock_t	*start;
 	memblock_t	*rover;
@@ -223,9 +232,11 @@ void *Z_Malloc (size_t size, int tag, void *user)
 //
 // scan through the block list, looking for the first free block
 // of sufficient size, throwing out any purgable blocks along the way.
+// [RH] Be smarter: Only throw out purgable blocks if doing so gives
+// a large enough block.
 //
+	startSize = size;
 	size += sizeof(memblock_t);	// account for size of block header
-	size += 4;					// space for memory trash tester
 	size = (size + ALIGN - 1) & ~(ALIGN - 1);
 
 //
@@ -237,39 +248,68 @@ void *Z_Malloc (size_t size, int tag, void *user)
 
 	rover = base;
 	start = base->prev;
+	collectSize = 0;
 
 	do
 	{
 		if (rover == start)
 		{
 			// scanned all the way around the list
-			I_FatalError ("Z_Malloc: failed on allocation of %i bytes", size);
+			Z_DumpHeap (0, 1000);
+			I_FatalError ("Z_Malloc: failed on allocation of %i bytes", startSize);
 		}
-		
-		if (rover->user)
+
+		if (rover == &mainzone->blocklist)
+		{ // if looped around, restart the block
+			base = rover;
+			collectSize = 0;
+		}
+
+		if (rover->user == NULL || rover->tag >= PU_PURGELEVEL)
 		{
-			if (rover->tag < PU_PURGELEVEL)
-			{
-			// hit a block that can't be purged, so move past it
-				base = rover = rover->next;
-			}
-			else
+		// found an unused or purgable block
+			collectSize += rover->size;
+			rover = rover->next;
+		}
+		else
+		{
+		// hit a block that can't be purged, so move past it
+			base = rover = rover->next;
+			collectSize = 0;
+		}
+	} while (collectSize < size);
+
+	// found a block big enough
+
+	// [RH] free any purgable blocks found along the way
+	rover = base;
+
+	while (base->user || base->size < size)
+	{
+		if (rover->user != NULL)
+		{
+			if (rover->tag >= PU_PURGELEVEL)
 			{
 			// free the rover block (adding the size to base)
+				PurgeCount++;
+				PurgeSize += rover->size;
 				base = base->prev;	// the rover can be the base block
 				Z_Free ((byte *)rover+sizeof(memblock_t));
 				base = base->next;
 				rover = base->next;
+			}
+			else
+			{
+				I_FatalError ("Z_Malloc: locked block unexpected\n");
 			}
 		}
 		else
 		{
 			rover = rover->next;
 		}
-	} while (base->user || base->size < size);
+	}
 
-	// found a block big enough
-	extra = base->size - size;
+	extra = (int)(base->size - size);
 	
 	if (extra > MINFRAGMENT)
 	{
@@ -283,6 +323,12 @@ void *Z_Malloc (size_t size, int tag, void *user)
 		newblock->prev = base;
 		newblock->next = base->next;
 		newblock->next->prev = newblock;
+
+		// [RH] Possibly move the rover back to this block
+		if (mainzone->rover == newblock->next)
+		{
+			mainzone->rover = newblock;
+		}
 
 		base->next = newblock;
 		base->size = size;
@@ -303,12 +349,24 @@ void *Z_Malloc (size_t size, int tag, void *user)
 	}
 	base->tag = tag;
 
+#ifdef _DEBUG
+	base->line = line;
+	base->file = strstr (file, "src");
+	if (base->file == NULL)
+	{
+		base->file = file;
+	}
+	else
+	{
+		base->file += 4;
+	}
+#else
+	base->line = 0;
+#endif
+
 	mainzone->rover = base->next;	// next allocation will start looking here
 
 	base->id = ZONEID;
-
-	// marker for memory trash testing
-	*(int *)((byte *)base + base->size - 4) = TRASHID;
 
 //#ifdef _DEBUG
 //	Z_CheckHeap ();
@@ -347,6 +405,9 @@ void Z_FreeTags (int lowtag, int hightag)
 		if (block->tag >= lowtag && block->tag <= hightag)
 			Z_Free ((byte *)block+sizeof(memblock_t));
 	}
+
+	// [RH] reset the rover to the beginning of the heap
+	mainzone->rover = mainzone->blocklist.next;
 }
 
 
@@ -370,8 +431,25 @@ void Z_DumpHeap (int lowtag, int hightag)
 	for (block = mainzone->blocklist.next ; ; block = block->next)
 	{
 		if (block->tag >= lowtag && block->tag <= hightag)
-			Printf ("block:%p    size:%7i    user:%p    tag:%3i\n",
-					block, block->size, block->user, block->tag);
+		{
+			if (block->user)
+			{
+				Printf ("block:%p    size:%7i    user:%p    tag:%3i"
+#ifdef _DEBUG
+					"    %s:%d"
+#endif
+					"\n",
+					block, block->size, block->user, block->tag
+#ifdef _DEBUG
+					, block->file, block->line
+#endif
+					);
+			}
+			else
+			{
+				Printf ("block:%p    size:%7i    free\n", block, block->size);
+			}
+		}
 				
 		if (block->next == &mainzone->blocklist)
 		{
@@ -402,8 +480,16 @@ void Z_FileDumpHeap (FILE *f)
 		
 	for (block = mainzone->blocklist.next ; ; block = block->next)
 	{
-		fprintf (f,"block:%p    size:%7i    user:%p    tag:%3i\n",
-				 block, block->size, block->user, block->tag);
+		fprintf (f,"block:%p    size:%7i    user:%p    tag:%3i"
+#ifdef _DEBUG
+			"    %s:%d"
+#endif
+			"\n",
+			block, block->size, block->user, block->tag
+#ifdef _DEBUG
+			, block->file, block->line
+#endif
+			);
 				
 		if (block->next == &mainzone->blocklist)
 		{
@@ -433,9 +519,10 @@ void Z_FileDumpHeap (FILE *f)
 
 void Z_CheckHeap (void)
 {
-	memblock_t *block;
+	memblock_t *block, *prev;
 
-	for (block = mainzone->blocklist.next;
+	for (prev = &mainzone->blocklist,
+		block = mainzone->blocklist.next;
 		block->next != &mainzone->blocklist;
 		block = block->next)
 	{
@@ -493,7 +580,7 @@ static size_t largestlsize, lsize, usedlblocks;	// Locked blocks
 size_t Z_FreeMemory (void)
 {
 	memblock_t *block;
-	BOOL lastpurgable = false;
+	size_t run = 0;
 		
 	numblocks =
 		largestpfree = pfree = usedpblocks =
@@ -510,27 +597,35 @@ size_t Z_FreeMemory (void)
 	{
 		numblocks++;
 
-		if (block->tag >= PU_PURGELEVEL) {
-			usedpblocks++;
-			pfree += block->size;
-			if (lastpurgable) {
-				largestpfree += block->size;
-			} else if (block->size > largestpfree) {
-				largestpfree = block->size;
-				lastpurgable = true;
-			}
-		} else if (!block->user) {
+		if (block->user == NULL)
+		{
 			usedeblocks++;
 			efree += block->size;
+			run += block->size;
 			if (block->size > largestefree)
+			{
 				largestefree = block->size;
-			lastpurgable = false;
-		} else {
+			}
+		}
+		else if (block->tag >= PU_PURGELEVEL)
+		{
+			usedpblocks++;
+			pfree += block->size;
+			run += block->size;
+		}
+		else
+		{
 			usedlblocks++;
 			lsize += block->size;
 			if (block->size > largestlsize)
+			{
 				largestlsize = block->size;
-			lastpurgable = false;
+			}
+			run = 0;
+		}
+		if (run > largestpfree)
+		{
+			largestpfree = run;
 		}
 	}
 	return pfree + efree;
@@ -540,18 +635,30 @@ CCMD (mem)
 {
 	Z_FreeMemory ();
 	Printf ("%u blocks:\n"
-			"%5u used      (%u, %u)\n"
-			" %5u purgable (%u, %u)\n"
-			" %5u locked   (%u, %u)\n"
-			"%5u unused    (%u, %u)\n"
-			"%5u p-free    (%u, %u)\n",
+			"used:      %5u (%9u,%9u)\n"
+			"  purgable:%5u (%9u,%9u)\n"
+			"  locked:  %5u (%9u,%9u)\n"
+			"unused:    %5u (%9u,%9u)\n"
+			"p-free:    %5u (%9u,%9u)\n",
 			numblocks,
-			usedpblocks+usedlblocks, pfree+lsize,
-			largestpfree > largestlsize ? largestpfree : largestlsize,
+
+			usedpblocks+usedlblocks, pfree+lsize, largestlsize,
+
 			usedpblocks, pfree, largestpfree,
 			usedlblocks, lsize, largestlsize,
 			usedeblocks, efree, largestefree,
 			usedpblocks + usedeblocks, pfree + efree,
 			largestpfree > largestefree ? largestpfree : largestefree
 			);
+}
+
+ADD_STAT (purge, out)
+{
+	sprintf (out, "Purged%4d blocks,%6d bytes", PurgeCount, PurgeSize);
+	if (PurgeCount)
+	{
+		Printf ("%s\n", out);
+	}
+	PurgeCount = 0;
+	PurgeSize = 0;
 }

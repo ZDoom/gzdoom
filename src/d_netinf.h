@@ -72,6 +72,7 @@ enum ETeams
 };
 
 extern const char *TeamNames[NUM_TEAMS];
+extern float TeamHues[NUM_TEAMS];
 
 FArchive &operator<< (FArchive &arc, userinfo_t &info);
 
@@ -84,5 +85,11 @@ void D_DoServerInfoChange (byte **stream);
 
 void D_WriteUserInfoStrings (int player, byte **stream, bool compact=false);
 void D_ReadUserInfoStrings (int player, byte **stream, bool update);
+
+void D_GetPlayerColor (int player, float *h, float *s, float *v);
+void D_PickRandomTeam (int player);
+int D_PickRandomTeam ();
+class player_s;
+int D_GetFragCount (player_s *player);
 
 #endif //__D_CLIENTINFO_H__

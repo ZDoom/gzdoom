@@ -8,6 +8,9 @@
 #include "gstrings.h"
 #include "a_action.h"
 
+static FRandom pr_spidey ("SpidMissileRange");
+static FRandom pr_spidrefire ("SpidRefire");
+
 void A_SpidRefire (AActor *);
 void A_Metal (AActor *);
 void A_SPosAttackUseAtkSound (AActor *);
@@ -90,15 +93,15 @@ END_DEFAULTS
 
 bool ASpiderMastermind::SuggestMissileAttack (fixed_t dist)
 {
-	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 200);
+	return pr_spidey() >= MIN<int> (dist >> (FRACBITS + 1), 200);
 }
 
 void A_SpidRefire (AActor *self)
-{		
+{
 	// keep firing unless target got out of sight
 	A_FaceTarget (self);
 
-	if (P_Random (pr_spidrefire) < 10)
+	if (pr_spidrefire() < 10)
 		return;
 
 	if (!self->target

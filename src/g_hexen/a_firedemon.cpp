@@ -8,6 +8,11 @@
 
 #define FIREDEMON_ATTACK_RANGE	64*8*FRACUNIT
 
+static FRandom pr_firedemonrock ("FireDemonRock");
+static FRandom pr_smbounce ("SMBounce");
+static FRandom pr_firedemonchase ("FiredChase");
+static FRandom pr_firedemonsplotch ("FiredSplotch");
+
 //============================================================================
 // Fire Demon AI
 //
@@ -15,15 +20,12 @@
 // special2			whether strafing or not
 //============================================================================
 
-extern BOOL P_CheckMissileRange (AActor *);
-
 void A_FiredRocks (AActor *);
 void A_FiredSpawnRock (AActor *);
 void A_SmBounce (AActor *);
 void A_FiredChase (AActor *);
 void A_FiredAttack (AActor *);
 void A_FiredSplotch (AActor *);
-void FaceMovementDirection (AActor *);
 
 // FireDemon ----------------------------------------------------------------
 
@@ -346,7 +348,7 @@ void A_FiredSpawnRock (AActor *actor)
 	int x,y,z;
 	const TypeInfo *rtype;
 
-	switch (P_Random (pr_firedemonrock) % 5)
+	switch (pr_firedemonrock() % 5)
 	{
 		case 0:
 			rtype = RUNTIME_CLASS (AFireDemonRock1);
@@ -365,16 +367,16 @@ void A_FiredSpawnRock (AActor *actor)
 			break;
 	}
 
-	x = actor->x + ((P_Random (pr_firedemonrock) - 128) << 12);
-	y = actor->y + ((P_Random (pr_firedemonrock) - 128) << 12);
-	z = actor->z + ( P_Random (pr_firedemonrock) << 11);
+	x = actor->x + ((pr_firedemonrock() - 128) << 12);
+	y = actor->y + ((pr_firedemonrock() - 128) << 12);
+	z = actor->z + ( pr_firedemonrock() << 11);
 	mo = Spawn (rtype, x, y, z);
 	if (mo)
 	{
 		mo->target = actor;
-		mo->momx = (P_Random (pr_firedemonrock) - 128) <<10;
-		mo->momy = (P_Random (pr_firedemonrock) - 128) <<10;
-		mo->momz = (P_Random (pr_firedemonrock) << 10);
+		mo->momx = (pr_firedemonrock() - 128) <<10;
+		mo->momy = (pr_firedemonrock() - 128) <<10;
+		mo->momz = (pr_firedemonrock() << 10);
 		mo->special1 = 2;		// Number bounces
 	}
 
@@ -393,9 +395,9 @@ void A_SmBounce (AActor *actor)
 {
 	// give some more momentum (x,y,&z)
 	actor->z = actor->floorz + FRACUNIT;
-	actor->momz = (2*FRACUNIT) + (P_Random(pr_smbounce) << 10);
-	actor->momx = P_Random(pr_smbounce)%3<<FRACBITS;
-	actor->momy = P_Random(pr_smbounce)%3<<FRACBITS;
+	actor->momz = (2*FRACUNIT) + (pr_smbounce() << 10);
+	actor->momx = pr_smbounce()%3<<FRACBITS;
+	actor->momy = pr_smbounce()%3<<FRACBITS;
 }
 
 //============================================================================
@@ -454,10 +456,10 @@ void A_FiredChase (AActor *actor)
 		dist = P_AproxDistance (actor->x - target->x, actor->y - target->y);
 		if (dist < FIREDEMON_ATTACK_RANGE)
 		{
-			if (P_Random (pr_firedemonchase) < 30)
+			if (pr_firedemonchase() < 30)
 			{
 				ang = R_PointToAngle2 (actor->x, actor->y, target->x, target->y);
-				if (P_Random (pr_firedemonchase) < 128)
+				if (pr_firedemonchase() < 128)
 					ang += ANGLE_90;
 				else
 					ang -= ANGLE_90;
@@ -483,7 +485,7 @@ void A_FiredChase (AActor *actor)
 	// Do missile attack
 	if (!(actor->flags & MF_JUSTATTACKED))
 	{
-		if (P_CheckMissileRange (actor) && (P_Random() < 20))
+		if (P_CheckMissileRange (actor) && (pr_firedemonchase() < 20))
 		{
 			actor->SetState (actor->MissileState);
 			actor->flags |= MF_JUSTATTACKED;
@@ -496,9 +498,9 @@ void A_FiredChase (AActor *actor)
 	}
 
 	// make active sound
-	if (actor->ActiveSound && P_Random (pr_firedemonchase) < 3)
+	if (pr_firedemonchase() < 3)
 	{
-		S_SoundID (actor, CHAN_VOICE, actor->ActiveSound, 1, ATTN_NORM);
+		actor->PlayActiveSound ();
 	}
 }
 
@@ -515,46 +517,15 @@ void A_FiredSplotch (AActor *actor)
 	mo = Spawn<AFireDemonSplotch1> (actor->x, actor->y, actor->z);
 	if (mo)
 	{
-		mo->momx = (P_Random (pr_firedemonsplotch) - 128) << 11;
-		mo->momy = (P_Random (pr_firedemonsplotch) - 128) << 11;
-		mo->momz = (P_Random (pr_firedemonsplotch) << 10) + FRACUNIT*3;
+		mo->momx = (pr_firedemonsplotch() - 128) << 11;
+		mo->momy = (pr_firedemonsplotch() - 128) << 11;
+		mo->momz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
 	}
 	mo = Spawn<AFireDemonSplotch2> (actor->x, actor->y, actor->z);
 	if (mo)
 	{
-		mo->momx = (P_Random (pr_firedemonsplotch) - 128) << 11;
-		mo->momy = (P_Random (pr_firedemonsplotch) - 128) << 11;
-		mo->momz = (P_Random (pr_firedemonsplotch) << 10) + FRACUNIT*3;
-	}
-}
-
-void FaceMovementDirection (AActor *actor)
-{
-	switch (actor->movedir)
-	{
-	case DI_EAST:
-		actor->angle = 0<<24;
-		break;
-	case DI_NORTHEAST:
-		actor->angle = 32<<24;
-		break;
-	case DI_NORTH:
-		actor->angle = 64<<24;
-		break;
-	case DI_NORTHWEST:
-		actor->angle = 96<<24;
-		break;
-	case DI_WEST:
-		actor->angle = 128<<24;
-		break;
-	case DI_SOUTHWEST:
-		actor->angle = 160<<24;
-		break;
-	case DI_SOUTH:
-		actor->angle = 192<<24;
-		break;
-	case DI_SOUTHEAST:
-		actor->angle = 224<<24;
-		break;
+		mo->momx = (pr_firedemonsplotch() - 128) << 11;
+		mo->momy = (pr_firedemonsplotch() - 128) << 11;
+		mo->momz = (pr_firedemonsplotch() << 10) + FRACUNIT*3;
 	}
 }

@@ -25,6 +25,10 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <objbase.h>
+#include <commctrl.h>
+#ifndef NOWTS
+#include <wtsapi32.h>
+#endif
 #ifdef _MSC_VER
 #include <eh.h>
 #endif
@@ -70,7 +74,10 @@ const char WinClassName[] = "ZDOOM WndClass";
 HINSTANCE		g_hInst;
 WNDCLASS		WndClass;
 HWND			Window;
-HINSTANCE		hInstance;
+DWORD			SessionID;
+
+HMODULE			hwtsapi32;		// handle to wtsapi32.dll
+HMODULE			hd3d8;			// handle to d3d8.dll
 
 extern UINT TimerPeriod;
 extern HCURSOR TheArrowCursor, TheInvisibleCursor;
@@ -113,6 +120,34 @@ static void STACK_ARGS UnCOM (void)
 	CoUninitialize ();
 }
 
+#ifndef NOWTS
+static void STACK_ARGS UnWTS (void)
+{
+	if (hwtsapi32 != 0)
+	{
+		typedef BOOL (WINAPI *ursn)(HWND);
+		ursn unreg = (ursn)GetProcAddress (hwtsapi32, "WTSUnRegisterSessionNotification");
+		if (unreg != 0)
+		{
+			unreg (Window);
+		}
+		FreeLibrary (hwtsapi32);
+		hwtsapi32 = 0;
+	}
+}
+#endif
+
+#if 0
+static void CloseD3D8 (void)
+{
+	if (hd3d8 != 0)
+	{
+		FreeLibrary (hd3d8);
+		hd3d8 = 0;
+	}
+}
+#endif
+
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
 	LONG WinWidth, WinHeight;
@@ -128,6 +163,49 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	{
 		g_hInst = hInstance;
 		Args.SetArgs (__argc, __argv);
+
+#ifndef NOWTS
+		// Under XP, get our session ID so we can know when the user changes/locks sessions.
+		// Since we need to remain binary compatible with older versions of Windows, we
+		// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
+		HMODULE kernel = LoadLibraryA ("kernel32.dll");
+		if (kernel != 0)
+		{
+			typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
+			pts pidsid = (pts)GetProcAddress (kernel, "ProcessIdToSessionId");
+			if (pidsid != 0)
+			{
+				if (!pidsid (GetCurrentProcessId(), &SessionID))
+				{
+					SessionID = 0;
+				}
+				hwtsapi32 = LoadLibraryA ("wtsapi32.dll");
+				if (hwtsapi32 != 0)
+				{
+					FARPROC reg = GetProcAddress (hwtsapi32, "WTSRegisterSessionNotification");
+					if (reg == 0 || !((BOOL(WINAPI *)(HWND, DWORD))reg) (Window, NOTIFY_FOR_THIS_SESSION))
+					{
+						FreeLibrary (hwtsapi32);
+						hwtsapi32 = 0;
+					}
+					else
+					{
+						atterm (UnWTS);
+					}
+				}
+			}
+			FreeLibrary (kernel);
+		}
+#endif
+
+#if 0
+		// Load the DirectX Graphics library if available, but don't depend on it.
+		hd3d8 = LoadLibraryA ("d3d8.dll");
+		atterm (CloseD3D8);
+#endif
+
+		// Let me see fancy visual styles under XP
+		InitCommonControls ();
 
 		// Set the timer to be as accurate as possible
 		if (timeGetDevCaps (&tc, sizeof(tc)) != TIMERR_NOERROR)
@@ -226,8 +304,18 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		I_ShutdownHardware ();
 		SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
 		call_terms ();
+
 		// Now let somebody who understands the exception deal with it.
+
+		// This is the top-level function, so throwing anything out of it
+		// causes the system exception handler to pop up.
+#if _MSC_VER
+#pragma warning (disable:4297)	// function assumed not to throw an exception but does
+#endif
 		throw;
+#if _MSC_VER
+#pragma warning (default:4297)
+#endif
 	}
 #endif
 	return 0;

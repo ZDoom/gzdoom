@@ -36,7 +36,7 @@ FState AHealthBonus::States[] =
 	S_NORMAL (BON1, 'B',	6, NULL 				, &States[0])
 };
 
-IMPLEMENT_ACTOR (AHealthBonus, Doom, 2014, 151)
+IMPLEMENT_ACTOR (AHealthBonus, Doom, 2014, 152)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)

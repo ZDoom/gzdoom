@@ -38,32 +38,41 @@
 #define PU_MUSIC				3		// static while playing
 #define PU_DAVE 				4		// anything else Dave wants static
 #define PU_DEHACKED				5		// static while processing a patch
-#define PU_SOUNDCHANNELS		6		// sound channels in s_sound.cpp
 #define PU_LEVEL				50		// static until level exited
 #define PU_LEVSPEC				51		// a special thinker in a level
-#define PU_LEVACS				52		// [RH] An ACS script in a level
 // Tags >= 100 are purgable whenever needed.
 #define PU_PURGELEVEL			100
 #define PU_CACHE				101
 
 
-void	Z_Init (void);
+void	Z_Init ();
+
+#ifndef _DEBUG
 void*	Z_Malloc (size_t size, int tag, void *ptr);
+#else
+void*	Z_Malloc2 (size_t size, int tag, void *ptr, const char *file, int line);
+#define Z_Malloc(s,t,p) Z_Malloc2 (s, t, p, __FILE__, __LINE__)
+#endif
+
 void	Z_Free (void *ptr);
 void	Z_FreeTags (int lowtag, int hightag);
 void	Z_DumpHeap (int lowtag, int hightag);
 void	Z_FileDumpHeap (FILE *f);
-void	Z_CheckHeap (void);
+void	Z_CheckHeap ();
 void	Z_ChangeTag2 (void *ptr, int tag);
-size_t 	Z_FreeMemory (void);
+size_t 	Z_FreeMemory ();
 
 
 typedef struct memblock_s
 {
 	size_t 				size;	// including the header and possibly tiny fragments
 	void**				user;	// NULL if a free block
-	int 				tag;	// purgelevel
 	int 				id; 	// should be ZONEID
+	unsigned short		tag;	// purgelevel
+	unsigned short		line;	// line number of file Z_Malloc called from
+#ifdef _DEBUG
+	const char*			file;	// name of file Z_Malloc called from
+#endif
 	struct memblock_s*	next;
 	struct memblock_s*	prev;
 } memblock_t;

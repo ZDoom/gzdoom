@@ -5,11 +5,26 @@
 #include "d_player.h"
 #include "a_action.h"
 #include "p_local.h"
+#include "p_enemy.h"
+#include "a_action.h"
+#include "a_hexenglobal.h"
 
-void A_Pain (AActor *);
-void A_PlayerScream (AActor *);
-void A_SkullPop (AActor *);
-void A_CheckBurnGone (AActor *);
+static FRandom pr_fpatk ("FPunchAttack");
+static FRandom pr_fswordflame ("FSwordFlame");
+
+void A_FSwordFlames (AActor *);
+
+/*
+int ArmorMax[NUMCLASSES] = { 20, 18, 16, 1 };
+int ArmorIncrement[NUMCLASSES][NUMARMOR] =
+{
+	{ 25*FRACUNIT, 20*FRACUNIT, 15*FRACUNIT, 5*FRACUNIT },		fighter
+	{ 10*FRACUNIT, 25*FRACUNIT, 5*FRACUNIT, 20*FRACUNIT },		cleric
+	{ 5*FRACUNIT, 15*FRACUNIT, 10*FRACUNIT, 25*FRACUNIT },		mage
+	{ 0, 0, 0, 0 }												pig
+};
+int AutoArmorSave[NUMCLASSES] = { 15*FRACUNIT, 10*FRACUNIT, 5*FRACUNIT, 0 };
+*/
 
 // The fighter --------------------------------------------------------------
 
@@ -21,6 +36,9 @@ public:
 	void GiveDefaultInventory ();
 	const char *GetSoundClass ();
 	fixed_t GetJumpZ () { return 9*FRACUNIT; }
+	int GetArmorMax () { return 20; }
+	int GetAutoArmorSave () { return 15*FRACUNIT; }
+	fixed_t GetArmorIncrement (int armortype);
 };
 
 FState AFighterPlayer::States[] =
@@ -140,6 +158,17 @@ void AFighterPlayer::GiveDefaultInventory ()
 	player->weaponowned[wp_ffist] = true;
 }
 
+fixed_t AFighterPlayer::GetArmorIncrement (int armortype)
+{
+	static const fixed_t increment[4] = { 25*FRACUNIT, 20*FRACUNIT, 15*FRACUNIT, 5*FRACUNIT };
+
+	if ((unsigned)armortype <= 3)
+	{
+		return increment[armortype];
+	}
+	return 0;
+}
+
 // --- Fighter Weapons ------------------------------------------------------
 
 //============================================================================
@@ -174,8 +203,11 @@ void A_FPunchAttack (player_t *, pspdef_t *);
 class AFWeapFist : public AWeapon
 {
 	DECLARE_ACTOR (AFWeapFist, AWeapon)
-	AT_GAME_SET_FRIEND (FWeapFist)
-private:
+public:
+	weapontype_t OldStyleID () const
+	{
+		return wp_ffist;
+	}
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -233,10 +265,7 @@ FWeaponInfo AFWeapFist::WeaponInfo =
 IMPLEMENT_ACTOR (AFWeapFist, Hexen, -1, 0)
 END_DEFAULTS
 
-AT_GAME_SET (FWeapFist)
-{
-	wpnlev1info[wp_ffist] = wpnlev2info[wp_ffist] = &AFWeapFist::WeaponInfo;
-}
+WEAPON1 (wp_ffist, AFWeapFist)
 
 // Punch puff ---------------------------------------------------------------
 
@@ -258,6 +287,7 @@ FState APunchPuff::States[] =
 
 IMPLEMENT_ACTOR (APunchPuff, Hexen, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_PUFFONACTORS)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HX_SHADOW)
 
@@ -272,42 +302,6 @@ void APunchPuff::BeginPlay ()
 {
 	Super::BeginPlay ();
 	momz = FRACUNIT;
-}
-
-// Hammer puff (also used by fist) ------------------------------------------
-
-class AHammerPuff : public AActor
-{
-	DECLARE_ACTOR (AHammerPuff, AActor)
-public:
-	void BeginPlay ();
-};
-
-FState AHammerPuff::States[] =
-{
-	S_NORMAL (FHFX, 'S',	4, NULL 					, &States[1]),
-	S_NORMAL (FHFX, 'T',	4, NULL 					, &States[2]),
-	S_NORMAL (FHFX, 'U',	4, NULL 					, &States[3]),
-	S_NORMAL (FHFX, 'V',	4, NULL 					, &States[4]),
-	S_NORMAL (FHFX, 'W',	4, NULL 					, NULL),
-};
-
-IMPLEMENT_ACTOR (AHammerPuff, Hexen, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_SHADOW)
-
-	PROP_SpawnState (0)
-
-	PROP_SeeSound ("FighterHammerHitThing")
-	PROP_AttackSound ("FighterHammmerHitWall")
-	PROP_ActiveSound ("FighterHammerMiss")
-END_DEFAULTS
-
-void AHammerPuff::BeginPlay ()
-{
-	Super::BeginPlay ();
-	momz = FRACUNIT*8/10;
 }
 
 //============================================================================
@@ -325,7 +319,7 @@ void A_FPunchAttack (player_t *player, pspdef_t *psp)
 	fixed_t power;
 	int i;
 
-	damage = 40+(P_Random()&15);
+	damage = 40+(pr_fpatk()&15);
 	power = 2*FRACUNIT;
 	PuffType = RUNTIME_CLASS(APunchPuff);
 	for (i = 0; i < 16; i++)
@@ -381,135 +375,121 @@ punchdone:
 	{
 		pmo->special1 = 0;
 		P_SetPsprite (player, ps_weapon, &AFWeapFist::States[S_PUNCHATK2]);
-		S_Sound (pmo, CHAN_VOICE, "FighterGrunt", 1, ATTN_NORM);
+		S_Sound (pmo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 	}
 	return;		
 }
 
-// Axe (second weapon) ------------------------------------------------------
+// Fighter Sword Missile ----------------------------------------------------
 
-#if 0
-class AFWeapAxe : public AWeapon
+class AFSwordMissile : public AActor
 {
-	DECLARE_ACTOR (AFWeapAxe, AWeapon)
+	DECLARE_ACTOR (AFSwordMissile, AActor)
 public:
-	bool TryPickup (AActor *toucher)
+	void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
+};
+
+FState AFSwordMissile::States[] =
+{
+#define S_FSWORD_MISSILE1 0
+	S_BRIGHT (FSFX, 'A',	3, NULL					    , &States[S_FSWORD_MISSILE1+1]),
+	S_BRIGHT (FSFX, 'B',	3, NULL					    , &States[S_FSWORD_MISSILE1+2]),
+	S_BRIGHT (FSFX, 'C',	3, NULL					    , &States[S_FSWORD_MISSILE1]),
+
+#define S_FSWORD_MISSILE_X1 (S_FSWORD_MISSILE1+3)
+	S_BRIGHT (FSFX, 'D',	4, NULL					    , &States[S_FSWORD_MISSILE_X1+1]),
+	S_BRIGHT (FSFX, 'E',	3, A_FSwordFlames		    , &States[S_FSWORD_MISSILE_X1+2]),
+	S_BRIGHT (FSFX, 'F',	4, A_Explode			    , &States[S_FSWORD_MISSILE_X1+3]),
+	S_BRIGHT (FSFX, 'G',	3, NULL					    , &States[S_FSWORD_MISSILE_X1+4]),
+	S_BRIGHT (FSFX, 'H',	4, NULL					    , &States[S_FSWORD_MISSILE_X1+5]),
+	S_BRIGHT (FSFX, 'I',	3, NULL					    , &States[S_FSWORD_MISSILE_X1+6]),
+	S_BRIGHT (FSFX, 'J',	4, NULL					    , &States[S_FSWORD_MISSILE_X1+7]),
+	S_BRIGHT (FSFX, 'K',	3, NULL					    , &States[S_FSWORD_MISSILE_X1+8]),
+	S_BRIGHT (FSFX, 'L',	3, NULL					    , &States[S_FSWORD_MISSILE_X1+9]),
+	S_BRIGHT (FSFX, 'M',	3, NULL					    , NULL),
+};
+
+IMPLEMENT_ACTOR (AFSwordMissile, Hexen, -1, 0)
+	PROP_SpeedFixed (30)
+	PROP_RadiusFixed (16)
+	PROP_HeightFixed (8)
+	PROP_Damage (8)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
+
+	PROP_SpawnState (S_FSWORD_MISSILE1)
+	PROP_DeathState (S_FSWORD_MISSILE_X1)
+
+	PROP_DeathSound ("FighterSwordExplode")
+END_DEFAULTS
+
+void AFSwordMissile::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+{
+	damage = 64;
+	hurtSource = false;
+}
+
+// Fighter Sword Flame ------------------------------------------------------
+
+class AFSwordFlame : public AActor
+{
+	DECLARE_ACTOR (AFSwordFlame, AActor)
+};
+
+FState AFSwordFlame::States[] =
+{
+	S_BRIGHT (FSFX, 'N',	3, NULL					    , &States[1]),
+	S_BRIGHT (FSFX, 'O',	3, NULL					    , &States[2]),
+	S_BRIGHT (FSFX, 'P',	3, NULL					    , &States[3]),
+	S_BRIGHT (FSFX, 'Q',	3, NULL					    , &States[4]),
+	S_BRIGHT (FSFX, 'R',	3, NULL					    , &States[5]),
+	S_BRIGHT (FSFX, 'S',	3, NULL					    , &States[6]),
+	S_BRIGHT (FSFX, 'T',	3, NULL					    , &States[7]),
+	S_BRIGHT (FSFX, 'U',	3, NULL					    , &States[8]),
+	S_BRIGHT (FSFX, 'V',	3, NULL					    , &States[9]),
+	S_BRIGHT (FSFX, 'W',	3, NULL					    , NULL),
+};
+
+IMPLEMENT_ACTOR (AFSwordFlame, Hexen, -1, 0)
+	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_RenderStyle (STYLE_Translucent)
+	PROP_Alpha (HX_SHADOW)
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+//============================================================================
+//
+// A_FSwordAttack2
+//
+//============================================================================
+
+void A_FSwordAttack2 (AActor *actor)
+{
+	angle_t angle = actor->angle;
+
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/4, 0);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/8, 0);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle,         0);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/8, 0);
+	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/4, 0);
+	S_Sound (actor, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
+}
+
+//============================================================================
+//
+// A_FSwordFlames
+//
+//============================================================================
+
+void A_FSwordFlames (AActor *actor)
+{
+	int i;
+
+	for (i = 1+(pr_fswordflame()&3); i; i--)
 	{
-		return P_GiveWeapon
-protected:
-
-FState AFWeapAxe::States[] =
-{
-#define S_AXE 0
-	S_NORMAL (WFAX, 'A',   -1, NULL 					, NULL),
-
-#define S_FAXEREADY (S_AXE+1)
-	S_NORMAL (FAXE, 'A',	1, A_WeaponReady			, &States[S_FAXEREADY]),
-
-#define S_FAXEDOWN (S_FAXEREADY+1)
-	S_NORMAL (FAXE, 'A',	1, A_Lower					, &States[S_FAXEDOWN]),
-
-#define S_FAXEUP (S_FAXEDOWN+1)
-	S_NORMAL (FAXE, 'A',	1, A_Raise					, &States[S_FAXEUP]),
-
-#define S_FAXEATK (S_FAXEUP+1)
-	S_NORMAL2(FAXE, 'B',	4, NULL 					, &States[S_FAXEATK+1], 15, 32),
-	S_NORMAL2(FAXE, 'C',	3, NULL 					, &States[S_FAXEATK+2], 15, 32),
-	S_NORMAL2(FAXE, 'D',	2, NULL 					, &States[S_FAXEATK+3], 15, 32),
-	S_NORMAL2(FAXE, 'D',	1, A_FAxeAttack 			, &States[S_FAXEATK+4], -5, 70),
-	S_NORMAL2(FAXE, 'D',	2, NULL 					, &States[S_FAXEATK+5], -25, 90),
-	S_NORMAL2(FAXE, 'E',	1, NULL 					, &States[S_FAXEATK+6], 15, 32),
-	S_NORMAL2(FAXE, 'E',	2, NULL 					, &States[S_FAXEATK+7], 10, 54),
-	S_NORMAL2(FAXE, 'E',	7, NULL 					, &States[S_FAXEATK+8], 10, 150),
-	S_NORMAL2(FAXE, 'A',	1, A_ReFire 				, &States[S_FAXEATK+9], 0, 60),
-	S_NORMAL2(FAXE, 'A',	1, NULL 					, &States[S_FAXEATK+10], 0, 52),
-	S_NORMAL2(FAXE, 'A',	1, NULL 					, &States[S_FAXEATK+11], 0, 44),
-	S_NORMAL2(FAXE, 'A',	1, NULL 					, &States[S_FAXEATK+12], 0, 36),
-	S_NORMAL (FAXE, 'A',	1, NULL 					, &States[S_FAXEREADY]),
-
-#define S_FAXEREADY_G (S_FAXEATK+13)
-	S_NORMAL (FAXE, 'L',	1, A_WeaponReady			, &States[S_FAXEREADY_G+0]),
-	S_NORMAL (FAXE, 'L',	1, A_WeaponReady			, &States[S_FAXEREADY_G+1]),
-	S_NORMAL (FAXE, 'L',	1, A_WeaponReady			, &States[S_FAXEREADY_G+2]),
-	S_NORMAL (FAXE, 'M',	1, A_WeaponReady			, &States[S_FAXEREADY_G+3]),
-	S_NORMAL (FAXE, 'M',	1, A_WeaponReady			, &States[S_FAXEREADY_G+4]),
-	S_NORMAL (FAXE, 'M',	1, A_WeaponReady			, &States[S_FAXEREADY_G]),
-
-#define S_FAXEDOWN_G (S_FAXEREADY_G+6)
-	S_NORMAL (FAXE, 'L',	1, A_Lower					, &States[S_FAXEDOWN_G]),
-
-#define S_FAXEUP_G (S_FAXEDOWN_G+1)
-	S_NORMAL (FAXE, 'L',	1, A_Raise					, &States[S_FAXEUP_G]),
-
-#define S_FAXEATK_G (S_FAXEUP_G+1)
-	S_NORMAL2(FAXE, 'N',	4, NULL 					, &States[S_FAXEATK_G+1], 15, 32),
-	S_NORMAL2(FAXE, 'O',	3, NULL 					, &States[S_FAXEATK_G+2], 15, 32),
-	S_NORMAL2(FAXE, 'P',	2, NULL 					, &States[S_FAXEATK_G+3], 15, 32),
-	S_NORMAL2(FAXE, 'P',	1, A_FAxeAttack 			, &States[S_FAXEATK_G+4], -5, 70),
-	S_NORMAL2(FAXE, 'P',	2, NULL 					, &States[S_FAXEATK_G+5], -25, 90),
-	S_NORMAL2(FAXE, 'Q',	1, NULL 					, &States[S_FAXEATK_G+6], 15, 32),
-	S_NORMAL2(FAXE, 'Q',	2, NULL 					, &States[S_FAXEATK_G+7], 10, 54),
-	S_NORMAL2(FAXE, 'Q',	7, NULL 					, &States[S_FAXEATK_G+8], 10, 150),
-	S_NORMAL2(FAXE, 'A',	1, A_ReFire 				, &States[S_FAXEATK_G+9], 0, 60),
-	S_NORMAL2(FAXE, 'A',	1, NULL 					, &States[S_FAXEATK_G+10], 0, 52),
-	S_NORMAL2(FAXE, 'A',	1, NULL 					, &States[S_FAXEATK_G+11], 0, 44),
-	S_NORMAL2(FAXE, 'A',	1, NULL 					, &States[S_FAXEATK_G+12], 0, 36),
-	S_NORMAL (FAXE, 'A',	1, NULL 					, &States[S_FAXEREADY_G])
-};
-
-FState AAxePuffGlow::States[] =
-{
-#define S_AXEPUFF_GLOW 0
-	S_BRIGHT (FAXE, 'R',	4, NULL 					, &States[S_AXEPUFF_GLOW+1]),
-	S_BRIGHT (FAXE, 'S',	4, NULL 					, &States[S_AXEPUFF_GLOW+2]),
-	S_BRIGHT (FAXE, 'T',	4, NULL 					, &States[S_AXEPUFF_GLOW+3]),
-	S_BRIGHT (FAXE, 'U',	4, NULL 					, &States[S_AXEPUFF_GLOW+4]),
-	S_BRIGHT (FAXE, 'V',	4, NULL 					, &States[S_AXEPUFF_GLOW+5]),
-	S_BRIGHT (FAXE, 'W',	4, NULL 					, &States[S_AXEPUFF_GLOW+6]),
-	S_BRIGHT (FAXE, 'X',	4, NULL 					, NULL)
-};
-
-FState AAxeBlood::States[] =
-{
-#define S_AXEBLOOD 0
-	S_NORMAL (FAXE, 'F',	3, NULL 					, &States[S_AXEBLOOD+1]),
-	S_NORMAL (FAXE, 'G',	3, NULL 					, &States[S_AXEBLOOD+2]),
-	S_NORMAL (FAXE, 'H',	3, NULL 					, &States[S_AXEBLOOD+3]),
-	S_NORMAL (FAXE, 'I',	3, NULL 					, &States[S_AXEBLOOD+4]),
-	S_NORMAL (FAXE, 'J',	3, NULL 					, &States[S_AXEBLOOD+5]),
-	S_NORMAL (FAXE, 'K',	3, NULL 					, NULL)
-};
-
-void AAxePuff::SetDefaults (FActorInfo *info)
-{
-	INHERIT_DEFS;
-	info->activesound = "FighterHammerMiss";
-}
-
-void AAxePuffGlow::SetDefaults (FActorInfo *info)
-{
-	INHERIT_DEFS;
-	info->activesound = "FighterHammerMiss";
-}
-
-void AFlamePuff::SetDefaults (FActorInfo *info)
-{
-	INHERIT_DEFS;
-	info->flags3 = MF3_ALWAYSPUFF;
-}
-#endif
-//===========================================================================
-//
-//  P_BloodSplatter2
-//
-//===========================================================================
-
-void P_BloodSplatter2 (fixed_t x, fixed_t y, fixed_t z, AActor *originator)
-{
-#if 0
-	AActor *mo;
-
-	mo = Spawn<AAxeBlood> (x+((P_Random()-128)<<11), y+((P_Random()-128)<<11), z);
-	mo->target = originator;
-#endif
+		fixed_t x = actor->x+((pr_fswordflame()-128)<<12);
+		fixed_t y = actor->y+((pr_fswordflame()-128)<<12);
+		fixed_t z = actor->z+((pr_fswordflame()-128)<<11);
+		Spawn<AFSwordFlame> (x, y, z);
+	}
 }

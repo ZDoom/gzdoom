@@ -78,10 +78,17 @@ END_DEFAULTS
 void ADoomPlayer::GiveDefaultInventory ()
 {
 	player->health = deh.StartHealth;		// [RH] Used to be MAXHEALTH
-	player->readyweapon = player->pendingweapon = wp_pistol;
 	player->weaponowned[wp_fist] = true;
 	player->weaponowned[wp_pistol] = true;
 	player->ammo[am_clip] = deh.StartBullets; // [RH] Used to be 50
+	if (deh.StartBullets > 0)
+	{
+		player->readyweapon = player->pendingweapon = wp_pistol;
+	}
+	else
+	{
+		player->readyweapon = player->pendingweapon = wp_fist;
+	}
 }
 
 int ADoomPlayer::GetMOD ()
@@ -166,24 +173,32 @@ void A_PlayerScream (AActor *self)
 
 class ADeadMarine : public AActor
 {
-	DECLARE_STATELESS_ACTOR (ADeadMarine, AActor)
+	DECLARE_ACTOR (ADeadMarine, AActor)
 };
 
-IMPLEMENT_STATELESS_ACTOR (ADeadMarine, Doom, 15, 0)
-	PROP_STATE_BASE (ADoomPlayer)
-	PROP_SpawnState (S_PLAY_DIE+6)
+FState ADeadMarine::States[] =
+{
+	S_NORMAL (PLAY, 'N',   -1, NULL							, NULL)
+};
+
+IMPLEMENT_ACTOR (ADeadMarine, Doom, 15, 0)
+	PROP_SpawnState (0)
 END_DEFAULTS
 
 // Gibbed marine -----------------------------------------------------------
 
 class AGibbedMarine : public AActor
 {
-	DECLARE_STATELESS_ACTOR (AGibbedMarine, AActor)
+	DECLARE_ACTOR (AGibbedMarine, AActor)
 };
 
-IMPLEMENT_STATELESS_ACTOR (AGibbedMarine, Doom, 10, 145)
-	PROP_STATE_BASE (ADoomPlayer)
-	PROP_SpawnState (S_PLAY_XDIE+8)
+FState AGibbedMarine::States[] =
+{
+	S_NORMAL (PLAY, 'W',   -1, NULL							, NULL)
+};
+
+IMPLEMENT_ACTOR (AGibbedMarine, Doom, 10, 145)
+	PROP_SpawnState (0)
 END_DEFAULTS
 
 // Gibbed marine (extra copy) ----------------------------------------------

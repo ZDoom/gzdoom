@@ -12,6 +12,13 @@
 #include "p_effect.h"
 #include "gi.h"
 
+static FRandom pr_punch ("Punch");
+static FRandom pr_saw ("Saw");
+static FRandom pr_fireshotgun2 ("FireSG2");
+static FRandom pr_fireplasma ("FirePlasma");
+static FRandom pr_firerail ("FireRail");
+static FRandom pr_bfgspray ("BFGSpray");
+
 /* ammo ********************************************************************/
 
 // a big item has five clip loads.
@@ -35,6 +42,10 @@ public:
 			return P_GiveAmmo (toucher->player, am_clip, clipammo[am_clip]/2);
 		else
 			return P_GiveAmmo (toucher->player, am_clip, clipammo[am_clip]);
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_clip;
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -71,6 +82,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_clip, clipammo[am_clip]*5);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_clip;
+	}
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -100,6 +115,10 @@ public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_misl, clipammo[am_misl]);
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_misl;
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -136,6 +155,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_misl, clipammo[am_misl]*5);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_misl;
+	}
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -165,6 +188,10 @@ public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_cell, clipammo[am_cell]);
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_cell;
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -201,6 +228,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_cell, clipammo[am_cell]*5);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_cell;
+	}
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -230,6 +261,10 @@ public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_shell, clipammo[am_shell]);
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_shell;
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -266,6 +301,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_shell, clipammo[am_shell]*5);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_shell;
+	}
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -295,10 +334,9 @@ void A_Punch (player_t *, pspdef_t *);
 class AFist : public AWeapon
 {
 	DECLARE_ACTOR (AFist, AWeapon)
-	AT_GAME_SET_FRIEND (Fist)
-protected:
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -345,14 +383,7 @@ FWeaponInfo AFist::WeaponInfo =
 IMPLEMENT_ACTOR (AFist, Doom, -1, 0)
 END_DEFAULTS
 
-AT_GAME_SET (Fist)
-{
-	wpnlev1info[wp_fist] = wpnlev2info[wp_fist] = &AFist::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[1].AddWeapon (wp_fist, 1);
-	}
-}
+WEAPON1 (wp_fist, AFist)
 
 weapontype_t AFist::OldStyleID () const
 {
@@ -370,15 +401,16 @@ void A_Punch (player_t *player, pspdef_t *psp)
 
 	player->UseAmmo ();
 
-	damage = (P_Random (pr_punch)%10+1)<<1;
+	damage = (pr_punch()%10+1)<<1;
 
 	if (player->powers[pw_strength])	
 		damage *= 10;
 
 	angle = player->mo->angle;
 
-	angle += PS_Random (pr_punch) << 18;
+	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (player->mo, angle, MELEERANGE);
+	PuffType = RUNTIME_CLASS(ABulletPuff);
 	P_LineAttack (player->mo, angle, MELEERANGE, pitch, damage);
 
 	// turn to face target
@@ -399,10 +431,9 @@ void A_FirePistol (player_t *, pspdef_t *);
 class APistol : public AWeapon
 {
 	DECLARE_ACTOR (APistol, AWeapon)
-	AT_GAME_SET_FRIEND (Pistol)
-protected:
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -424,6 +455,9 @@ FState APistol::States[] =
 	S_NORMAL (PISG, 'B',	5, A_ReFire 			, &States[S_PISTOL]),
 
 #define S_PISTOLFLASH (S_PISTOL1+4)
+	S_BRIGHT (PISF, 'A',	7, A_Light1 			, &AWeapon::States[S_LIGHTDONE]),
+// This next state is here just in case people want to shoot plasma balls or railguns
+// with the pistol using Dehacked.
 	S_BRIGHT (PISF, 'A',	7, A_Light1 			, &AWeapon::States[S_LIGHTDONE])
 };
 
@@ -451,14 +485,7 @@ FWeaponInfo APistol::WeaponInfo =
 IMPLEMENT_ACTOR (APistol, Doom, -1, 0)
 END_DEFAULTS
 
-AT_GAME_SET (Pistol)
-{
-	wpnlev1info[wp_pistol] = wpnlev2info[wp_pistol] = &APistol::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[2].AddWeapon (wp_pistol, 3);
-	}
-}
+WEAPON1 (wp_pistol, APistol)
 
 weapontype_t APistol::OldStyleID () const
 {
@@ -475,10 +502,10 @@ void A_FirePistol (player_t *player, pspdef_t *psp)
 	player->mo->PlayAttacking2 ();
 	player->UseAmmo ();
 
-	P_SetPsprite (player,
-				  ps_flash,
-				  wpnlev1info[player->readyweapon]->flashstate);
+	P_SetPsprite (player, ps_flash,
+		wpnlev1info[player->readyweapon]->flashstate);
 
+	PuffType = RUNTIME_CLASS(ABulletPuff);
 	P_BulletSlope (player->mo);
 	P_GunShot (player->mo, !player->refire);
 }
@@ -490,11 +517,11 @@ void A_Saw (player_t *, pspdef_t *);
 class AChainsaw : public AWeapon
 {
 	DECLARE_ACTOR (AChainsaw, AWeapon)
-	AT_GAME_SET_FRIEND (Chainsaw)
 protected:
 	const char *PickupMessage ();
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -548,14 +575,7 @@ IMPLEMENT_ACTOR (AChainsaw, Doom, 2005, 32)
 	PROP_SpawnState (S_CSAW)
 END_DEFAULTS
 
-AT_GAME_SET (Chainsaw)
-{
-	wpnlev1info[wp_chainsaw] = wpnlev2info[wp_chainsaw] = &AChainsaw::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[1].AddWeapon (wp_chainsaw, 2);
-	}
-}
+WEAPON1 (wp_chainsaw, AChainsaw)
 
 weapontype_t AChainsaw::OldStyleID () const
 {
@@ -577,11 +597,16 @@ void A_Saw (player_t *player, pspdef_t *psp)
 
 	player->UseAmmo ();
 
-	damage = 2 * (P_Random (pr_saw)%10+1);
+	damage = 2 * (pr_saw()%10+1);
 	angle = player->mo->angle;
-	angle += PS_Random (pr_saw) << 18;
+	angle += pr_saw.Random2() << 18;
 	
 	// use meleerange + 1 so the puff doesn't skip the flash
+	// [RH] What I think that really means is that they want the puff to show
+	// up on walls. If the distance to P_LineAttack is <= MELEERANGE, then it
+	// won't puff the wall, which is why the fist does not create puffs on
+	// the walls.
+	PuffType = RUNTIME_CLASS(ABulletPuff);
 	P_LineAttack (player->mo, angle, MELEERANGE+1,
 				  P_AimLineAttack (player->mo, angle, MELEERANGE+1), damage);
 
@@ -619,11 +644,11 @@ void A_FireShotgun (player_t *, pspdef_t *);
 class AShotgun : public AWeapon
 {
 	DECLARE_ACTOR (AShotgun, AWeapon)
-	AT_GAME_SET_FRIEND (Shotgun)
 protected:
 	const char *PickupMessage ();
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -686,14 +711,7 @@ IMPLEMENT_ACTOR (AShotgun, Doom, 2001, 27)
 	PROP_SpawnState (S_SHOT)
 END_DEFAULTS
 
-AT_GAME_SET (Shotgun)
-{
-	wpnlev1info[wp_shotgun] = wpnlev2info[wp_shotgun] = &AShotgun::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[3].AddWeapon (wp_shotgun, 4);
-	}
-}
+WEAPON1 (wp_shotgun, AShotgun)
 
 weapontype_t AShotgun::OldStyleID () const
 {
@@ -716,12 +734,11 @@ void A_FireShotgun (player_t *player, pspdef_t *psp)
 	player->mo->PlayAttacking2 ();
 	player->UseAmmo ();
 
-	P_SetPsprite (player,
-				  ps_flash,
-				  wpnlev1info[player->readyweapon]->flashstate);
+	P_SetPsprite (player, ps_flash, wpnlev1info[player->readyweapon]->flashstate);
 
 	P_BulletSlope (player->mo);
-		
+	PuffType = RUNTIME_CLASS(ABulletPuff);
+	
 	for (i=0 ; i<7 ; i++)
 		P_GunShot (player->mo, false);
 }
@@ -737,11 +754,11 @@ void A_CloseShotgun2 (player_t *, pspdef_t *);
 class ASuperShotgun : public AWeapon
 {
 	DECLARE_ACTOR (ASuperShotgun, AWeapon)
-	AT_GAME_SET_FRIEND (SuperShotgun)
 protected:
 	const char *PickupMessage ();
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -809,14 +826,7 @@ IMPLEMENT_ACTOR (ASuperShotgun, Doom, 82, 33)
 	PROP_SpawnState (S_SHOT2)
 END_DEFAULTS
 
-AT_GAME_SET (SuperShotgun)
-{
-	wpnlev1info[wp_supershotgun] = wpnlev2info[wp_supershotgun] = &ASuperShotgun::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[3].AddWeapon (wp_supershotgun, 5);
-	}
-}
+WEAPON1 (wp_supershotgun, ASuperShotgun)
 
 weapontype_t ASuperShotgun::OldStyleID () const
 {
@@ -842,21 +852,28 @@ void A_FireShotgun2 (player_t *player, pspdef_t *psp)
 	player->mo->PlayAttacking2 ();
 	player->UseAmmo ();
 
-	P_SetPsprite (player,
-				  ps_flash,
-				  wpnlev1info[player->readyweapon]->flashstate);
+	P_SetPsprite (player, ps_flash,
+		wpnlev1info[player->readyweapon]->flashstate);
 
 	P_BulletSlope (player->mo);
 		
+	PuffType = RUNTIME_CLASS(ABulletPuff);
 	for (i=0 ; i<20 ; i++)
 	{
-		damage = 5*(P_Random (pr_fireshotgun2)%3+1);
+		damage = 5*(pr_fireshotgun2()%3+1);
 		angle = player->mo->angle;
-		angle += PS_Random (pr_fireshotgun2) << 19;
+		angle += pr_fireshotgun2.Random2() << 19;
+
+		// Doom adjusts the bullet slope by shifting a random number [-255,255]
+		// left 5 places. At 2048 units away, this means the vertical position
+		// of the shot can deviate as much as 255 units from nominal. So using
+		// some simple trigonometry, that means the vertical angle of the shot
+		// can deviate by as many as ~7.097 degrees or ~84676099 BAMs.
+
 		P_LineAttack (player->mo,
 					  angle,
 					  MISSILERANGE,
-					  bulletpitch + (PS_Random (pr_fireshotgun2) << 18), damage);
+					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage);
 	}
 }
 
@@ -888,11 +905,11 @@ void A_FireCGun (player_t *, pspdef_t *);
 class AChaingun : public AWeapon
 {
 	DECLARE_ACTOR (AChaingun, AWeapon)
-	AT_GAME_SET_FRIEND (Chaingun)
 protected:
 	const char *PickupMessage ();
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -949,14 +966,7 @@ IMPLEMENT_ACTOR (AChaingun, Doom, 2002, 28)
 	PROP_SpawnState (S_MGUN)
 END_DEFAULTS
 
-AT_GAME_SET (Chaingun)
-{
-	wpnlev1info[wp_chaingun] = wpnlev2info[wp_chaingun] = &AChaingun::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[4].AddWeapon (wp_chaingun, 6);
-	}
-}
+WEAPON1 (wp_chaingun, AChaingun)
 
 weapontype_t AChaingun::OldStyleID () const
 {
@@ -974,21 +984,22 @@ const char *AChaingun::PickupMessage ()
 void A_FireCGun (player_t *player, pspdef_t *psp)
 {
 	S_Sound (player->mo, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
+	FWeaponInfo *wpninfo = wpnlev1info[player->readyweapon];
 
-	if (wpnlev1info[player->readyweapon]->ammo < NUMAMMO &&
-		!player->ammo[wpnlev1info[player->readyweapon]->ammo])
+	if (wpninfo->ammo < NUMAMMO && !player->ammo[wpninfo->ammo])
 		return;
 				
 	player->mo->PlayAttacking2 ();
 	player->UseAmmo ();
 
-	P_SetPsprite (player,
-				  ps_flash,
-				  wpnlev1info[player->readyweapon]->flashstate
-				  + (psp->state - wpnlev1info[player->readyweapon]->atkstate));
+	if (wpninfo->flashstate != NULL)
+	{
+		P_SetPsprite (player, ps_flash,
+			wpninfo->flashstate + (psp->state - wpninfo->atkstate));
+	}
 
 	P_BulletSlope (player->mo);
-		
+	PuffType = RUNTIME_CLASS (ABulletPuff);		
 	P_GunShot (player->mo, !player->refire);
 }
 
@@ -1000,11 +1011,11 @@ void A_Explode (AActor *);
 class ARocketLauncher : public AWeapon
 {
 	DECLARE_ACTOR (ARocketLauncher, AWeapon)
-	AT_GAME_SET_FRIEND (RocketLauncher)
 protected:
 	const char *PickupMessage ();
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -1063,14 +1074,7 @@ IMPLEMENT_ACTOR (ARocketLauncher, Doom, 2003, 29)
 	PROP_SpawnState (S_LAUN)
 END_DEFAULTS
 
-AT_GAME_SET (RocketLauncher)
-{
-	wpnlev1info[wp_missile] = wpnlev2info[wp_missile] = &ARocketLauncher::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[5].AddWeapon (wp_missile, 7);
-	}
-}
+WEAPON1 (wp_missile, ARocketLauncher)
 
 weapontype_t ARocketLauncher::OldStyleID () const
 {
@@ -1130,11 +1134,11 @@ void A_FirePlasma (player_t *, pspdef_t *);
 class APlasmaRifle : public AWeapon
 {
 	DECLARE_ACTOR (APlasmaRifle, AWeapon)
-	AT_GAME_SET_FRIEND (PlasmaRifle)
 protected:
 	const char *PickupMessage ();
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -1190,14 +1194,7 @@ IMPLEMENT_ACTOR (APlasmaRifle, Doom, 2004, 30)
 	PROP_SpawnState (S_PLAS)
 END_DEFAULTS
 
-AT_GAME_SET (PlasmaRifle)
-{
-	wpnlev1info[wp_plasma] = wpnlev2info[wp_plasma] = &APlasmaRifle::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[6].AddWeapon (wp_plasma, 8);
-	}
-}
+WEAPON1 (wp_plasma, APlasmaRifle)
 
 weapontype_t APlasmaRifle::OldStyleID () const
 {
@@ -1230,6 +1227,7 @@ IMPLEMENT_ACTOR (APlasmaBall, Doom, -1, 51)
 	PROP_Damage (5)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_PCROSS|MF2_IMPACT|MF2_NOTELEPORT)
+	PROP_Flags3 (MF3_WARNBOT)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_Alpha (TRANSLUC75)
 
@@ -1249,10 +1247,9 @@ void A_FirePlasma (player_t *player, pspdef_t *psp)
 
 	if (wpnlev1info[player->readyweapon]->flashstate)
 	{
-		P_SetPsprite (player,
-					  ps_flash,
-					  wpnlev1info[player->readyweapon]->flashstate
-					   + (P_Random (pr_fireplasma)&1));
+		P_SetPsprite (player, ps_flash,
+			wpnlev1info[player->readyweapon]->flashstate
+			+ (pr_fireplasma()&1));
 	}
 
 	P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(APlasmaBall));
@@ -1271,10 +1268,9 @@ void A_FireRailgun (player_t *player, pspdef_t *psp)
 
 	if (wpnlev1info[player->readyweapon]->flashstate)
 	{
-		P_SetPsprite (player,
-					  ps_flash,
-					  wpnlev1info[player->readyweapon]->flashstate
-					   + (P_Random (pr_fireplasma)&1));
+		P_SetPsprite (player, ps_flash,
+			wpnlev1info[player->readyweapon]->flashstate
+			+ (pr_firerail()&1));
 	}
 
 	damage = deathmatch ? 100 : 150;
@@ -1309,11 +1305,11 @@ void A_BFGsound (player_t *, pspdef_t *);
 class ABFG9000 : public AWeapon
 {
 	DECLARE_ACTOR (ABFG9000, AWeapon)
-	AT_GAME_SET_FRIEND (BFG9000)
 protected:
 	const char *PickupMessage ();
+public:
 	weapontype_t OldStyleID () const;
-private:
+
 	static FWeaponInfo WeaponInfo;
 };
 
@@ -1383,14 +1379,7 @@ IMPLEMENT_ACTOR (ABFG9000, Doom, 2006, 31)
 	PROP_SpawnState (S_BFUG)
 END_DEFAULTS
 
-AT_GAME_SET (BFG9000)
-{
-	wpnlev1info[wp_bfg] = wpnlev2info[wp_bfg] = &ABFG9000::WeaponInfo;
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WeaponSlots[7].AddWeapon (wp_bfg, 9);
-	}
-}
+WEAPON1 (wp_bfg, ABFG9000)
 
 weapontype_t ABFG9000::OldStyleID () const
 {
@@ -1491,8 +1480,7 @@ void A_BFGSpray (AActor *mo)
 	{
 		an = mo->angle - ANG90/2 + ANG90/40*i;
 
-		// mo->target is the originator (player)
-		//	of the missile
+		// mo->target is the originator (player) of the missile
 		P_AimLineAttack (mo->target, an, 16*64*FRACUNIT, ANGLE_1*32);
 
 		if (!linetarget)
@@ -1502,8 +1490,8 @@ void A_BFGSpray (AActor *mo)
 			linetarget->z + (linetarget->height>>2));
 		
 		damage = 0;
-		for (j=0;j<15;j++)
-			damage += (P_Random (pr_bfgspray) & 7) + 1;
+		for (j = 0; j < 15; ++j)
+			damage += (pr_bfgspray() & 7) + 1;
 
 		P_DamageMobj (linetarget, mo->target, mo->target, damage, MOD_BFG_SPLASH);
 		P_TraceBleed (damage, linetarget, mo->target);

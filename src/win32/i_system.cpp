@@ -76,7 +76,7 @@ extern "C"
 }
 
 extern HWND Window;
-extern HINSTANCE hInstance;
+extern HINSTANCE g_hInst;
 
 BOOL UseMMX;
 UINT TimerPeriod;
@@ -206,36 +206,67 @@ void I_DetectOS (void)
 	info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx (&info);
 
-	switch (info.dwPlatformId) {
-		case VER_PLATFORM_WIN32s:
-			OSPlatform = os_Win32s;
-			break;
-		case VER_PLATFORM_WIN32_WINDOWS:
-			OSPlatform = os_Win95;
-			osname = info.dwMinorVersion >= 10 ? "Windows 98" : "Windows 95";
-			break;
-		case VER_PLATFORM_WIN32_NT:
-			OSPlatform = info.dwMajorVersion < 5 ? os_WinNT : os_Win2k;
-			osname = "Windows NT";
-			break;
-		default:
-			OSPlatform = os_unknown;
-			osname = "Unknown OS";
-			break;
+	switch (info.dwPlatformId)
+	{
+	case VER_PLATFORM_WIN32s:
+		OSPlatform = os_Win32s;
+		osname = "3.x";
+		break;
+
+	case VER_PLATFORM_WIN32_WINDOWS:
+		OSPlatform = os_Win95;
+		if (info.dwMinorVersion < 10)
+		{
+			osname = "95";
+		}
+		else if (info.dwMinorVersion < 90)
+		{
+			osname = "98";
+		}
+		else
+		{
+			osname = "Me";
+		}
+		break;
+
+	case VER_PLATFORM_WIN32_NT:
+		OSPlatform = info.dwMajorVersion < 5 ? os_WinNT : os_Win2k;
+		if (OSPlatform == os_WinNT)
+		{
+			osname = "NT";
+		}
+		else if (info.dwMinorVersion == 0)
+		{
+			osname = "2000";
+		}
+		else
+		{
+			osname = "XP";
+		}
+		break;
+
+	default:
+		OSPlatform = os_unknown;
+		osname = "Unknown OS";
+		break;
 	}
 
-	Printf ("OS: %s %u.%u (build %u)\n",
+	Printf ("OS: Windows %s %u.%u (Build %u)\n",
 			osname,
 			info.dwMajorVersion, info.dwMinorVersion,
-			OSPlatform == os_Win95 ? info.dwBuildNumber & 0xffff : info.dwBuildNumber,
-			info.szCSDVersion);
+			OSPlatform == os_Win95 ? info.dwBuildNumber & 0xffff : info.dwBuildNumber);
 	if (info.szCSDVersion[0])
-		Printf ("  %s\n", info.szCSDVersion);
+	{
+		Printf ("    %s\n", info.szCSDVersion);
+	}
 
-	if (OSPlatform == os_Win32s) {
+	if (OSPlatform == os_Win32s)
+	{
 		I_FatalError ("Sorry, Win32s is not supported.\n"
 					  "Upgrade to a newer version of Windows.");
-	} else if (OSPlatform == os_unknown) {
+	}
+	else if (OSPlatform == os_unknown)
+	{
 		Printf ("(Assuming Windows 95)\n");
 		OSPlatform = os_Win95;
 	}
@@ -268,7 +299,7 @@ static void SubsetLanguageIDs (LCID id, LCTYPE type, int idx)
 //
 void SetLanguageIDs ()
 {
-	int langlen = strlen (language);
+	size_t langlen = strlen (language);
 
 	if (langlen < 2 || langlen > 3)
 	{
@@ -437,8 +468,6 @@ void STACK_ARGS I_Quit (void)
 extern FILE *Logfile;
 BOOL gameisdead;
 
-extern "C" {
-
 void STACK_ARGS I_FatalError (const char *error, ...)
 {
 	static BOOL alreadyThrown = false;
@@ -480,8 +509,6 @@ void STACK_ARGS I_Error (const char *error, ...)
 
 	throw CRecoverableError (errortext);
 }
-
-}	// extern "C"
 
 char DoomStartupTitle[256] = { 0 };
 
@@ -557,20 +584,20 @@ int I_PickIWad (WadStuff *wads, int numwads)
 	WadList = wads;
 	NumWads = numwads;
 
-	return DialogBox (hInstance, MAKEINTRESOURCE(IDD_IWADDIALOG),
+	return DialogBox (g_hInst, MAKEINTRESOURCE(IDD_IWADDIALOG),
 		(HWND)Window, (DLGPROC)IWADBoxCallback);
 }
 
-long I_FindFirst (const char *filespec, findstate_t *fileinfo)
+void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
 {
-	return (long)FindFirstFileA (filespec, (LPWIN32_FIND_DATAA)fileinfo);
+	return FindFirstFileA (filespec, (LPWIN32_FIND_DATAA)fileinfo);
 }
-int I_FindNext (long handle, findstate_t *fileinfo)
+int I_FindNext (void *handle, findstate_t *fileinfo)
 {
 	return !FindNextFileA ((HANDLE)handle, (LPWIN32_FIND_DATAA)fileinfo);
 }
 
-int I_FindClose (long handle)
+int I_FindClose (void *handle)
 {
 	return FindClose ((HANDLE)handle);
 }

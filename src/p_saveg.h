@@ -42,13 +42,9 @@
 void P_SerializePlayers (FArchive &arc);
 void P_SerializeWorld (FArchive &arc);
 void P_SerializeThinkers (FArchive &arc, bool);
-void P_SerializeRNGState (FArchive &arc);
-void P_SerializeACSDefereds (FArchive &arc);
 void P_SerializePolyobjs (FArchive &arc);
 void P_SerializeSounds (FArchive &arc);
 
-void SV_UpdateRebornSlot ();
-void SV_ClearRebornSlot ();
-bool SV_RebornSlotAvailable ();
+void P_SerializeACSDefereds (FILE *file, bool saving);
 
 #endif // __P_SAVEG_H__

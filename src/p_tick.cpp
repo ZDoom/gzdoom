@@ -77,9 +77,8 @@ void P_Ticker (void)
 	if (!bglobal.freeze)
 	{
 		P_UpdateSpecials ();
+		P_RunEffects ();	// [RH] Run particle effects
 	}
-
-	P_RunEffects ();	// [RH] Run particle effects
 
 	// for par times
 	level.time++;

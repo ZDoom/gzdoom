@@ -159,9 +159,57 @@ R_SetTiltedSpanSource_ASM:
 	mov	[fetch10+3],ecx
 	mov	[ds_curtiltedsource],ecx
 	ret
+	
+GLOBAL	SetTiltedSpanSize
+
+SetTiltedSpanSize:
+;ret
+	neg	cl
+	mov	eax,1
+	shl	eax,cl
+	mov	[x1+2],cl
+	mov	[x2+2],cl
+	mov	[x3+2],cl
+	mov	[x4+2],cl
+	mov	[x5+2],cl
+	mov	[x6+2],cl
+	mov	[x7+2],cl
+	mov	[x8+2],cl
+	mov	[x9+2],cl
+	mov	[x10+2],cl
+	
+	push	edx
+	neg	dl
+	add	dl,cl
+	neg	cl
+	dec	eax
+	mov	[y1+2],dl
+	mov	[y2+2],dl
+	mov	[y3+2],dl
+	mov	[y4+2],dl
+	mov	[y5+2],dl
+	mov	[y6+2],dl
+	mov	[y7+2],dl
+	mov	[y8+2],dl
+	mov	[y9+2],dl
+	mov	[y10+2],dl
+	not	eax
+	pop	edx
+	
+	mov	[m1+2],eax
+	mov	[m2+2],eax
+	mov	[m3+2],eax
+	mov	[m4+2],eax
+	mov	[m5+2],eax
+	mov	[m6+2],eax
+	mov	[m7+2],eax
+	mov	[m8+2],eax
+	mov	[m9+2],eax
+	mov	[m10+2],eax
+	
+	ret
 
 	section .data
-
 GLOBAL	R_DrawTiltedPlane_ASM
 GLOBAL	@R_DrawTiltedPlane_ASM@8
 
@@ -339,9 +387,9 @@ DrawFullSpan
 
 	mov	esi,ecx
 	mov	ebp,edx
-	shr	ebp,26
-	and	esi,0xfc000000
-	shr	esi,20
+x1	shr	ebp,26
+m1	and	esi,0xfc000000
+y1	shr	esi,20
 	add	ecx,[step_v]
 	add	edx,[step_u]
 fetch1	mov	al,[ebp+esi+SPACEFILLER4]
@@ -351,9 +399,9 @@ fetch1	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,edx
 	mov	[edi+0],al
 
-	shr	ebp,26
-	and	esi,0xfc000000
-	shr	esi,20
+x2	shr	ebp,26
+m2	and	esi,0xfc000000
+y2	shr	esi,20
 	add	ecx,[step_v]
 	add	edx,[step_u]
 fetch2	mov	al,[ebp+esi+SPACEFILLER4]
@@ -363,9 +411,9 @@ fetch2	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,edx
 	mov	[edi+1],al
 
-	shr	ebp,26
-	and	esi,0xfc000000
-	shr	esi,20
+x3	shr	ebp,26
+m3	and	esi,0xfc000000
+y3	shr	esi,20
 	add	ecx,[step_v]
 	add	edx,[step_u]
 fetch3	mov	al,[ebp+esi+SPACEFILLER4]
@@ -375,9 +423,9 @@ fetch3	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,edx
 	mov	[edi+2],al
 
-	shr	ebp,26
-	and	esi,0xfc000000
-	shr	esi,20
+x4	shr	ebp,26
+m4	and	esi,0xfc000000
+y4	shr	esi,20
 	add	ecx,[step_v]
 	add	edx,[step_u]
 fetch4	mov	al,[ebp+esi+SPACEFILLER4]
@@ -387,9 +435,9 @@ fetch4	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,edx
 	mov	[edi+3],al
 
-	shr	ebp,26
-	and	esi,0xfc000000
-	shr	esi,20
+x5	shr	ebp,26
+m5	and	esi,0xfc000000
+y5	shr	esi,20
 	add	ecx,[step_v]
 	add	edx,[step_u]
 fetch5	mov	al,[ebp+esi+SPACEFILLER4]
@@ -399,9 +447,9 @@ fetch5	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,edx
 	mov	[edi+4],al
 
-	shr	ebp,26
-	and	esi,0xfc000000
-	shr	esi,20
+x6	shr	ebp,26
+m6	and	esi,0xfc000000
+y6	shr	esi,20
 	add	ecx,[step_v]
 	add	edx,[step_u]
 fetch6	mov	al,[ebp+esi+SPACEFILLER4]
@@ -411,19 +459,19 @@ fetch6	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,edx
 	mov	[edi+5],al
 
-	shr	ebp,26
-	and	esi,0xfc000000
-	shr	esi,20
+x7	shr	ebp,26
+m7	and	esi,0xfc000000
+y7	shr	esi,20
 	add	ecx,[step_v]
 	add	edx,[step_u]
 fetch7	mov	al,[ebp+esi+SPACEFILLER4]
 	mov	ebp,[tiltlighting+ebx*4-24]
-	shr	edx,26
+x8	shr	edx,26
 	mov	al,[ebp+eax]
-	and	ecx,0xfc000000
+m8	and	ecx,0xfc000000
 	mov	[edi+6],al
 
-	shr	ecx,20
+y8	shr	ecx,20
 	mov	ebp,[tiltlighting+ebx*4-28]
 fetch8	mov	al,[edx+ecx+SPACEFILLER4]
 	mov	al,[ebp+eax]
@@ -471,9 +519,9 @@ OnlyOnePixel:
 	mov	ecx,[start_v]
 	add	edx,[pviewx]
 	add	ecx,[pviewy]
-	shr	edx,26
-	and	ecx,0xfc000000
-	shr	ecx,20
+x9	shr	edx,26
+m9	and	ecx,0xfc000000
+y9	shr	ecx,20
 	mov	ebp,[tiltlighting]
 fetch9	mov	al,[ecx+edx+SPACEFILLER4]
 	mov	al,[ebp+eax]
@@ -537,11 +585,11 @@ CalcPartialSteps:
 
 	mov	esi,ecx
 	mov	ebp,edx
+endloop
+x10	shr	ebp,26
+m10	and	esi,0xfc000000
 
-endloop	shr	ebp,26
-	and	esi,0xfc000000
-
-	shr	esi,20
+y10	shr	esi,20
 	inc	edi
 
 	add	ecx,[step_v]

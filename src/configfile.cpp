@@ -276,7 +276,7 @@ FConfigFile::FConfigSection *FConfigFile::NewConfigSection (const char *name)
 	section = FindSection (name);
 	if (section == NULL)
 	{
-		int namelen = strlen (name);
+		size_t namelen = strlen (name);
 		section = (FConfigSection *)new char[sizeof(*section)+namelen];
 		section->RootEntry = NULL;
 		section->LastEntryPtr = &section->RootEntry;
@@ -293,7 +293,7 @@ FConfigFile::FConfigEntry *FConfigFile::NewConfigEntry (
 	FConfigFile::FConfigSection *section, const char *key, const char *value)
 {
 	FConfigEntry *entry;
-	int keylen;
+	size_t keylen;
 
 	keylen = strlen (key);
 	entry = (FConfigEntry *)new char[sizeof(*section)+keylen];

@@ -9,6 +9,8 @@
 #include "gstrings.h"
 #include "a_action.h"
 
+static FRandom pr_cyb ("CyberMissileRange");
+
 void A_CyberAttack (AActor *);
 void A_Hoof (AActor *);
 void A_Metal (AActor *);
@@ -86,7 +88,7 @@ END_DEFAULTS
 
 bool ACyberdemon::SuggestMissileAttack (fixed_t dist)
 {
-	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> (FRACBITS + 1), 160);
+	return pr_cyb () >= MIN<int> (dist >> (FRACBITS + 1), 160);
 }
 
 void A_CyberAttack (AActor *self)

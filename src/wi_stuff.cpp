@@ -332,7 +332,7 @@ static patch_t* 		kills;		// "Kills", "Scrt", "Items", "Frags"
 static patch_t* 		secret;
 static patch_t* 		items;
 static patch_t* 		frags;
-static patch_t* 		time;		// Time sucks.
+static patch_t* 		timepic;	// Time sucks.
 static patch_t* 		par;
 static patch_t* 		sucks;
 static patch_t* 		killers;	// "killers", "victims"
@@ -637,7 +637,7 @@ void WI_DrawDoomBack ()
 	if (FindLevelInfo ("E2M9")->flags & LEVEL_VISITED && epsd == 1)
 	{ // Add the Fortress of Mystery if it has been visited
 		background->DrawPatch (anims[1][7].p[2], anims[1][7].loc.x, anims[1][7].loc.y);
-		anims[1][7].data = 800;	// Don't animate it again if the user uses changemap E2M9
+		// anims[1][7].data = 800;	// Don't animate it again if the user uses changemap E2M9
 	}
 	else
 	{
@@ -802,8 +802,7 @@ void WI_drawPercent (int x, int y, int p, int b)
 
 
 //
-// Display level completion time and par,
-//	or "sucks" message if overflow.
+// Display level completion time and par, or "sucks" message if overflow.
 //
 void WI_drawTime (int x, int y, int t)
 {
@@ -1599,7 +1598,7 @@ void WI_drawStats (void)
 		FB->DrawPatchClean (sp_secret, SP_STATSX, SP_STATSY+2*lh);
 		WI_drawPercent(320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs->maxsecret);
 
-		FB->DrawPatchClean (time, SP_TIMEX, SP_TIMEY);
+		FB->DrawPatchClean (timepic, SP_TIMEX, SP_TIMEY);
 		WI_drawTime (160 - SP_TIMEX, SP_TIMEY, cnt_time);
 
 		if (wbs->partime)
@@ -1712,33 +1711,6 @@ void WI_loadData ()
 	char name[9];
 	in_anim_t *a;
 
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		WI_DrawDoomBack ();
-
-		for (i = 0; i < 2; i++)
-		{
-			char *lname = (i == 0 ? wbs->lname0 : wbs->lname1);
-
-			j = lname ? W_CheckNumForName (lname) : -1;
-
-			if (j >= 0)
-			{
-				lnames[i] = (patch_t *)W_CacheLumpNum (j, PU_STATIC);
-			}
-			else
-			{
-				lnames[i] = NULL;
-				lnametexts[i] = FindLevelInfo (i == 0 ? wbs->current : wbs->next)->level_name;
-				lnamewidths[i] = WI_CalcWidth (lnametexts[i]);
-			}
-		}
-	}
-	else
-	{
-		background = NULL;
-	}
-
 	if (gameinfo.gametype == GAME_Doom &&
 		gamemode != commercial &&
 		epsd < 3)
@@ -1766,6 +1738,33 @@ void WI_loadData ()
 
 	if (gameinfo.gametype == GAME_Doom)
 	{
+		WI_DrawDoomBack ();
+
+		for (i = 0; i < 2; i++)
+		{
+			char *lname = (i == 0 ? wbs->lname0 : wbs->lname1);
+
+			j = lname ? W_CheckNumForName (lname) : -1;
+
+			if (j >= 0)
+			{
+				lnames[i] = (patch_t *)W_CacheLumpNum (j, PU_STATIC);
+			}
+			else
+			{
+				lnames[i] = NULL;
+				lnametexts[i] = FindLevelInfo (i == 0 ? wbs->current : wbs->next)->level_name;
+				lnamewidths[i] = WI_CalcWidth (lnametexts[i]);
+			}
+		}
+	}
+	else
+	{
+		background = NULL;
+	}
+
+	if (gameinfo.gametype == GAME_Doom)
+	{
 		if (gamemode != commercial)
 		{
 			yah[0] = (patch_t *)W_CacheLumpName ("WIURH0", PU_STATIC);	// you are here
@@ -1782,7 +1781,7 @@ void WI_loadData ()
 		items = (patch_t *)W_CacheLumpName ("WIOSTI", PU_STATIC);		// "items"
 		frags = (patch_t *)W_CacheLumpName ("WIFRGS", PU_STATIC);		// "frgs"
 		colon = (patch_t *)W_CacheLumpName ("WICOLON", PU_STATIC);		// ":"
-		time = (patch_t *)W_CacheLumpName ("WITIME", PU_STATIC);		// "time"
+		timepic = (patch_t *)W_CacheLumpName ("WITIME", PU_STATIC);		// "time"
 		sucks = (patch_t *)W_CacheLumpName ("WISUCKS", PU_STATIC);		// "sucks"
 		par = (patch_t *)W_CacheLumpName ("WIPAR", PU_STATIC);			// "par"
 		killers = (patch_t *)W_CacheLumpName ("WIKILRS", PU_STATIC);	// "killers" (vertical)
@@ -1873,7 +1872,7 @@ void WI_unloadData ()
 	if (sp_secret)	{ Z_ChangeTag (sp_secret, PU_CACHE);	sp_secret = NULL; }
 	if (items)		{ Z_ChangeTag (items, PU_CACHE);		items = NULL; }
 	if (frags)		{ Z_ChangeTag (frags, PU_CACHE);		frags = NULL; }
-	if (time)		{ Z_ChangeTag (time, PU_CACHE);			time = NULL; }
+	if (timepic)	{ Z_ChangeTag (timepic, PU_CACHE);		timepic = NULL; }
 	if (sucks)		{ Z_ChangeTag (sucks, PU_CACHE);		sucks = NULL; }
 	if (par)		{ Z_ChangeTag (par, PU_CACHE);			par = NULL; }
 	if (victims)	{ Z_ChangeTag (victims, PU_CACHE);		victims = NULL; }
@@ -1881,6 +1880,8 @@ void WI_unloadData ()
 	if (total)		{ Z_ChangeTag (total, PU_CACHE);		total = NULL; }
 	if (p)			{ Z_ChangeTag (p, PU_CACHE);			p = NULL; }
 	if (slash)		{ Z_ChangeTag (slash, PU_CACHE);		slash = NULL; }
+	if (star)		{ Z_ChangeTag (star, PU_CACHE);			star = NULL; }
+	if (bstar)		{ Z_ChangeTag (bstar, PU_CACHE);		bstar = NULL; }
 }
 
 void WI_Drawer (void)

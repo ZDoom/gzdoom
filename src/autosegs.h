@@ -48,6 +48,9 @@ extern void *SRegTail;
 extern void *CRegHead;
 extern void *CRegTail;
 
+// List of WeaponInfoInits
+extern void *WRegHead;
+extern void *WRegTail;
 
 template<class T, void **head, void **tail>
 class TAutoSegIteratorNoArrow

@@ -22,7 +22,7 @@ IMPLEMENT_ACTOR (AWaterSplash, Any, -1, 0)
 	PROP_HeightFixed (4)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_LOGRAV|MF2_CANNOTPUSH)
-	PROP_Flags3 (MF3_DONTSPLASH)
+	PROP_Flags3 (MF3_DONTSPLASH|MF3_DONTBLAST)
 
 	PROP_SpawnState (S_SPLASH)
 	PROP_DeathState (S_SPLASHX)
@@ -41,7 +41,7 @@ FState AWaterSplashBase::States[] =
 
 IMPLEMENT_ACTOR (AWaterSplashBase, Any, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOCLIP|MF_NOGRAVITY)
-	PROP_Flags3 (MF3_DONTSPLASH)
+	PROP_Flags3 (MF3_DONTSPLASH|MF3_DONTBLAST)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -77,10 +77,15 @@ FState ALavaSmoke::States[] =
 IMPLEMENT_ACTOR (ALavaSmoke, Any, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_NOCLIP)
 	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (gameinfo.gametype==GAME_Heretic?HR_SHADOW:HX_SHADOW)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
+
+AT_GAME_SET (LavaSmoke)
+{
+	ALavaSmoke *def = GetDefault<ALavaSmoke>();
+	def->alpha = (gameinfo.gametype == GAME_Heretic ? HR_SHADOW : HX_SHADOW);
+}
 
 // Sludge -------------------------------------------------------------------
 
@@ -222,4 +227,3 @@ IMPLEMENT_ACTOR (ASlimeSplash, Any, -1, 0)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
-

@@ -27,7 +27,9 @@ typedef enum
 	arti_egg,
 	arti_fly,
 	arti_blastradius,
-	arti_poisonbag,
+	arti_poisonbag1,
+	arti_poisonbag2,
+	arti_poisonbag3,
 	arti_teleportother,
 	arti_speed,
 	arti_boostmana,
@@ -110,7 +112,7 @@ class APowerup : public AArtifact
 class player_s;
 void P_PlayerNextArtifact (player_s *player);
 void P_PlayerRemoveArtifact (player_s *player, int slot);
-void P_PlayerUseArtifact (player_s *player, artitype_t arti);
+bool P_PlayerUseArtifact (player_s *player, artitype_t arti);
 
 artitype_t P_NextInventory (player_s *player, artitype_t arti);
 artitype_t P_PrevInventory (player_s *player, artitype_t arti);

@@ -30,12 +30,13 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** This file was originally assisted to help people with non-MS compilers
+** This file was originally created to help people with non-MS compilers
 ** who could not use dxguid.lib. Since then, I can no longer figure out how
 ** to get ZDoom to link with dxguid.lib and use the copies there, so dxcrap
 ** will probably stay forever.
 */
 
+#define DIRECTINPUT_VERSION 0x0700
 #include <dinput.h>
 
 const GUID GUID_XAxis		= {0xA36D02E0,0xC9F3,0x11CF,0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00};
@@ -66,6 +67,26 @@ static DIOBJECTDATAFORMAT MouseObjectData[7] =
 const DIDATAFORMAT c_dfDIMouse =
 {
 	24, 16, 2, 16, 7, MouseObjectData
+};
+
+static DIOBJECTDATAFORMAT MouseObjectData2[11] =
+{
+	{&GUID_XAxis,  0, 0x00ffff03, 0},
+	{&GUID_YAxis,  4, 0x00ffff03, 0},
+	{&GUID_ZAxis,  8, 0x80ffff03, 0},
+	{NULL,		  12, 0x00ffff0c, 0},
+	{NULL,		  13, 0x00ffff0c, 0},
+	{NULL,		  14, 0x80ffff0c, 0},
+	{NULL,		  15, 0x80ffff0c, 0},
+	{NULL,		  16, 0x80ffff0c, 0},
+	{NULL,		  17, 0x80ffff0c, 0},
+	{NULL,		  18, 0x80ffff0c, 0},
+	{NULL,		  19, 0x80ffff0c, 0},
+};
+
+const DIDATAFORMAT c_dfDIMouse2 =
+{
+	24, 16, 2, 20, 11, MouseObjectData2
 };
 
 // Using this instead of using a pre-initialized array

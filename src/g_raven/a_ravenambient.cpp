@@ -47,7 +47,12 @@ FState ASoundWaterfall::States[] =
 	S_NORMAL (TNT1, 'A',   2, A_WaterfallSound, &States[0])
 };
 
-IMPLEMENT_ACTOR (ASoundWaterfall, Raven, 41, 111)
+// Interestingly, MT_SOUNDWATERFALL is present in both Heretic and Hexen
+// with doomednum 41. However, in Hexen, ZShroomLarge3 also has ednum 41
+// and comes before the waterfall, so it will never be possible to place
+// it in a map.
+
+IMPLEMENT_ACTOR (ASoundWaterfall, Heretic, 41, 111)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR)
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -74,14 +79,6 @@ void A_WindSound (AActor *self)
 
 void A_WaterfallSound (AActor *self)
 {
-// Oddly, Hexen does not play any sound for the waterfall, even though it
-// includes it as a thing. Since Hexen also doesn't define a "world/waterfall"
-// sound, we won't play anything for it either, but people who want to hear
-// it can do so by defining the sound.
-//
-// For Heretic, we *do* define "world/waterfall", so it will be audible in
-// Heretic.
-
 	if (!S_IsActorPlayingSomething (self, 6))
 	{
 		S_LoopedSound (self, 6, "world/waterfall", 1, ATTN_NORM);

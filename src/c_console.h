@@ -58,7 +58,6 @@ void C_Ticker (void);
 
 int PrintString (int printlevel, const char *string);
 int VPrintf (int printlevel, const char *format, va_list parms) GCCFORMAT(2);
-int STACK_ARGS Printf_Bold (const char *format, ...) GCCPRINTF(1,2);
 
 void C_DrawConsole (void);
 void C_ToggleConsole (void);
@@ -68,9 +67,10 @@ void C_AdjustBottom (void);
 void C_FlushDisplay (void);
 
 void C_InitTicker (const char *label, unsigned int max);
-void C_SetTicker (unsigned int at);
+void C_SetTicker (unsigned int at, bool forceUpdate=false);
 
 void C_MidPrint (const char *message);
+void C_MidPrintBold (const char *message);
 
 BOOL C_Responder (event_t *ev);
 

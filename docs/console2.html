@@ -1,0 +1,464 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+xmlns:w="urn:schemas-microsoft-com:office:word"
+xmlns="http://www.w3.org/TR/REC-html40">
+	
+
+<head>
+<meta http-equiv=Content-Type content="text/html; charset=windows-1252">
+<meta name=ProgId content=Word.Document>
+<meta name=Generator content="Microsoft Word 9">
+<meta name=Originator content="Microsoft Word 9">
+<link rel=File-List href="./console2_files/filelist.xml">
+<title>ZDoom includes a powerful console that you can use to manipulate or
+inspect various aspects of the game while you are playing</title>
+<!--[if gte mso 9]><xml>
+ <o:DocumentProperties>
+  <o:Author>Randy Heit</o:Author>
+  <o:LastAuthor>Randy Heit</o:LastAuthor>
+  <o:Revision>2</o:Revision>
+  <o:TotalTime>2</o:TotalTime>
+  <o:Created>2002-08-20T01:18:00Z</o:Created>
+  <o:LastSaved>2002-08-20T01:18:00Z</o:LastSaved>
+  <o:Pages>38</o:Pages>
+  <o:Words>14199</o:Words>
+  <o:Characters>80938</o:Characters>
+  <o:Lines>674</o:Lines>
+  <o:Paragraphs>161</o:Paragraphs>
+  <o:CharactersWithSpaces>99397</o:CharactersWithSpaces>
+  <o:Version>9.3821</o:Version>
+ </o:DocumentProperties>
+</xml><![endif]-->
+<style>
+<!--
+@import url("console.css");
+ /* Font Definitions */
+@font-face
+	{font-family:Times;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Helvetica;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Courier;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:modern;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Geneva;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"Tms Rmn";
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Helv;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"MS Serif";
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"MS Sans Serif";
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:"New York";
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:System;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Wingdings;
+	panose-1:5 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:2;
+	mso-generic-font-family:auto;
+	mso-font-pitch:variable;
+	mso-font-signature:0 268435456 0 0 -2147483648 0;}
+@font-face
+	{font-family:Mincho;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\660E\671D;
+	mso-font-charset:128;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 134676480 16 0 131072 0;}
+@font-face
+	{font-family:Batang;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\BC14\D0D5;
+	mso-font-charset:129;
+	mso-generic-font-family:auto;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 151388160 16 0 524288 0;}
+@font-face
+	{font-family:SimSun;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\5B8B\4F53;
+	mso-font-charset:134;
+	mso-generic-font-family:auto;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:1 135135232 16 0 262144 0;}
+@font-face
+	{font-family:PMingLiU;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\65B0\7D30\660E\9AD4;
+	mso-font-charset:136;
+	mso-generic-font-family:auto;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:1 134742016 16 0 1048576 0;}
+@font-face
+	{font-family:Gothic;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\FF7B\FF9E\FF7C\FF6F\FF78;
+	mso-font-charset:128;
+	mso-generic-font-family:modern;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 134676480 16 0 131072 0;}
+@font-face
+	{font-family:Dotum;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\B3CB\C6C0;
+	mso-font-charset:129;
+	mso-generic-font-family:modern;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 151388160 16 0 524288 0;}
+@font-face
+	{font-family:SimHei;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\9ED1\4F53;
+	mso-font-charset:134;
+	mso-generic-font-family:modern;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 135135232 16 0 262144 0;}
+@font-face
+	{font-family:MingLiU;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\7D30\660E\9AD4;
+	mso-font-charset:136;
+	mso-generic-font-family:modern;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 134742016 16 0 1048576 0;}
+@font-face
+	{font-family:"MS Mincho";
+	panose-1:2 2 6 9 4 2 5 8 3 4;
+	mso-font-alt:"\FF2D\FF33 \660E\671D";
+	mso-font-charset:128;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 134676480 16 0 131072 0;}
+@font-face
+	{font-family:Gulim;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:\AD74\B9BC;
+	mso-font-charset:129;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 151388160 16 0 524288 0;}
+@font-face
+	{font-family:"MS Gothic";
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-alt:"\FF2D\FF33 \30B4\30B7\30C3\30AF";
+	mso-font-charset:128;
+	mso-generic-font-family:modern;
+	mso-font-format:other;
+	mso-font-pitch:fixed;
+	mso-font-signature:1 134676480 16 0 131072 0;}
+@font-face
+	{font-family:Century;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:roman;
+	mso-font-format:other;
+	mso-font-pitch:variable;
+	mso-font-signature:3 0 0 0 1 0;}
+@font-face
+	{font-family:Tahoma;
+	panose-1:0 0 0 0 0 0 0 0 0 0;
+	mso-font-charset:0;
+	mso-generic-font-family:swiss;
+	mso-font-format:other;
+	mso-font-pitch:auto;
+	mso-font-signature:3 0 0 0 1 0;}
+ /* Style Definitions */
+p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{mso-style-parent:"";
+	margin:0in;
+	margin-bottom:.0001pt;
+	mso-pagination:widow-orphan;
+	font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+p
+	{font-size:12.0pt;
+	font-family:"Times New Roman";
+	mso-fareast-font-family:"Times New Roman";}
+code
+	{mso-ascii-font-family:"Courier New";
+	mso-fareast-font-family:"Courier New";
+	mso-hansi-font-family:"Courier New";
+	mso-bidi-font-family:"Courier New";}
+pre
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:10.0pt;
+	font-family:"Courier New";
+	mso-fareast-font-family:"Courier New";}
+span.msoIns
+	{mso-style-type:export-only;
+	mso-style-name:"";
+	text-decoration:underline;
+	text-underline:single;
+	color:teal;}
+span.msoDel
+	{mso-style-type:export-only;
+	mso-style-name:"";
+	text-decoration:line-through;
+	color:red;}
+span.msoChangeProp
+	{mso-style-type:export-only;
+	mso-style-name:"";
+	color:black;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;
+	mso-header-margin:.5in;
+	mso-footer-margin:.5in;
+	mso-paper-source:0;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+@list l0
+	{mso-list-id:165635405;
+	mso-list-type:hybrid;
+	mso-list-template-ids:531535356 1333277374 509800712 1215476482 -74960582 -1013130576 793565182 -525691652 -338382956 1561079150;}
+@list l1
+	{mso-list-id:489369666;
+	mso-list-type:hybrid;
+	mso-list-template-ids:291644094 748713652 1210619528 2048810284 -1043671612 1052133222 1607473504 -291189002 846466160 -1554904668;}
+@list l1:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+@list l2
+	{mso-list-id:516233099;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-401820510 902876440 -1935265674 -1649118304 839043126 931940900 -1297343802 -1779383916 -816549988 1136297300;}
+@list l3
+	{mso-list-id:766197230;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1002708612 -143332926 1885998388 -432645964 1361103628 504258760 744004868 551295218 1599524860 -1676777782;}
+@list l4
+	{mso-list-id:858549816;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1863861142 929091656 305442802 -1918993072 -450992264 -81600322 1602393256 1532296078 718961654 762977100;}
+@list l5
+	{mso-list-id:918905342;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1295798056 1225576180 -128685948 543434488 2097070882 -1816471038 784390768 -2102859786 2033076946 -324740692;}
+@list l6
+	{mso-list-id:1362979378;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-1850549792 -391186072 -905432110 2063762872 1730582286 -2082574146 -1539803674 -1996176218 -1381079158 -1410833194;}
+@list l7
+	{mso-list-id:1635328699;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1228281090 1104947790 991701514 983832616 741385964 620277532 1606465572 -369836152 1736976332 1084508316;}
+@list l8
+	{mso-list-id:1646624103;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1224640572 -953379986 1961779546 914290964 744158696 -2083898490 -615732342 1695052258 -1966034182 -1493239608;}
+@list l8:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+@list l9
+	{mso-list-id:1802117089;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1380746592 689494654 -1541107352 -1297045148 -173254316 -2131698750 1508031626 -1410297752 -1837830562 372664458;}
+@list l10
+	{mso-list-id:1807695059;
+	mso-list-type:hybrid;
+	mso-list-template-ids:1407893458 1337116600 -2124374718 -2145628386 -2039033766 -1145645950 1018592814 926160498 1505642846 712400720;}
+@list l10:level1
+	{mso-level-number-format:bullet;
+	mso-level-text:\F0B7;
+	mso-level-tab-stop:.5in;
+	mso-level-number-position:left;
+	text-indent:-.25in;
+	mso-ansi-font-size:10.0pt;
+	font-family:Symbol;}
+@list l11
+	{mso-list-id:1905872787;
+	mso-list-type:hybrid;
+	mso-list-template-ids:150497658 223655122 1863870932 -2041170490 1818011262 -636699064 1665060092 1516957276 -588601664 2126671290;}
+@list l12
+	{mso-list-id:2131968032;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-1936026304 1252412506 1728357352 1996384130 1098690316 -585067264 -1692122122 -1350537662 1298047156 -873440630;}
+@list l13
+	{mso-list-id:2142531460;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-701841198 -1314860012 -1088756404 989619594 -745792078 1975953494 -1896712442 -987226800 -987218510 1376819838;}
+ol
+	{margin-bottom:0in;}
+ul
+	{margin-bottom:0in;}
+-->
+</style>
+<meta content="http://schemas.microsoft.com/intellisense/nav4-0"
+name="vs_targetSchema">
+</head>
+
+	
+
+<body lang=EN-US link=blue vlink=blue style='tab-interval:.5in'>
+
+<div class=Section1>
+
+<p class=MsoNormal>ZDoom includes a powerful console that you can use to
+manipulate or inspect various aspects of the game while you are playing. </p>
+
+<h1>Obsolete commands and variables</h1>
+
+<p class=MsoNormal>The following commands and variables were present in ZDoom
+1.22 but have been removed: </p>
+
+<p class=MsoNormal><b>configver<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>This variable was used by ZDoom to determine which version
+wrote the zdoom.cfg. This has been replaced by the [LastRun] section of
+zdoom.ini and is no longer accessible from the console.</p>
+
+<p class=MsoNormal><b>def_patch<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>You can now have multiple dehacked patches loaded
+automatically. To do this, add a [Doom.DefaultDehacked] section to zdoom.ini
+like this: </p>
+
+<pre style='margin-left:.5in'>[Doom.DefaultDehacked]</pre><pre
+style='margin-left:.5in'>Path=my_first_patch.deh</pre><pre style='margin-left:
+.5in'>Path=my_second_patch.deh</pre>
+
+<p class=MsoNormal style='margin-left:.5in'>You can add as many Path= lines as
+you like. Not all Dehacked patches will work well together. Changes made by
+patches listed later will override any changes made by patches listed earlier
+that affect the same things. If you specify any patches with -deh or -bex at
+the command line, then those patches will be loaded instead of the ones listed
+here.</p>
+
+<p class=MsoNormal><b>impulse<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>Use the new slot and weapon commands instead.</p>
+
+<p class=MsoNormal><b>nobfgaim<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>This was renamed to sv_nobfgaim and is now a part of
+dmflags2.</p>
+
+<p class=MsoNormal><b>vid_noptc<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>PTC is no longer used for video, so there is nothing for this
+cvar to disable.</p>
+
+<p class=MsoNormal><b>testgibs<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>This variable never did anything useful in 1.22. </p>
+
+<p class=MsoNormal>There are five types of cvars: </p>
+
+<p class=MsoNormal><b>boolean<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>This type of variable represents a yes/no or on/off value. It
+can only be set to true or false. As shorthand, setting a boolean variable to 0
+will set it to false, and setting it to anything non-zero will set it to true.</p>
+
+<p class=MsoNormal><b>integer<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>This is an ordinary number without a decimal point. For
+example, 1 is an integer, but 1.2 is not.</p>
+
+<p class=MsoNormal><b>float<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>This is an ordinary number that can have a decimal point.</p>
+
+<p class=MsoNormal><b>string<o:p></o:p></b></p>
+
+<p class=MsoNormal style='margin-top:0in;margin-right:0in;margin-bottom:12.0pt;
+margin-left:.5in'>This is a series of text characters enclosed in quotes: For
+example, &quot;Felix loitered lecherously on the lot&quot; is a string. If you
+removed the quotes around it, then it would not be a string.</p>
+
+<p class=MsoNormal>

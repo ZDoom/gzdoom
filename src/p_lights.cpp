@@ -34,6 +34,11 @@
 // State.
 #include "r_state.h"
 
+static FRandom pr_flicker ("Flicker");
+static FRandom pr_lightflash ("LightFlash");
+static FRandom pr_strobeflash ("StrobeFlash");
+static FRandom pr_fireflicker ("FireFlicker");
+
 IMPLEMENT_CLASS (DLighting)
 
 DLighting::DLighting ()
@@ -71,7 +76,7 @@ void DFireFlicker::Tick ()
 
 	if (--m_Count == 0)
 	{
-		amount = (P_Random (pr_fireflicker) & 3) << 4;
+		amount = (pr_fireflicker() & 3) << 4;
 
 		// [RH] Shouldn't this be (m_MaxLight - amount < m_MinLight)?
 		if (m_Sector->lightlevel - amount < m_MinLight)
@@ -127,12 +132,12 @@ void DFlicker::Tick ()
 	else if (m_Sector->lightlevel == m_MaxLight)
 	{
 		m_Sector->lightlevel = m_MinLight;
-		m_Count = (P_Random(pr_misc)&7)+1;
+		m_Count = (pr_flicker()&7)+1;
 	}
 	else
 	{
 		m_Sector->lightlevel = m_MaxLight;
-		m_Count = (P_Random(pr_misc)&31)+1;
+		m_Count = (pr_flicker()&31)+1;
 	}
 }
 
@@ -142,7 +147,7 @@ DFlicker::DFlicker (sector_t *sector, int upper, int lower)
 	m_MaxLight = upper;
 	m_MinLight = lower;
 	sector->lightlevel = upper;
-	m_Count = (P_Random(pr_misc)&64)+1;
+	m_Count = (pr_flicker()&64)+1;
 }
 
 void EV_StartLightFlickering (int tag, int upper, int lower)
@@ -184,12 +189,12 @@ void DLightFlash::Tick ()
 		if (m_Sector->lightlevel == m_MaxLight)
 		{
 			m_Sector->lightlevel = m_MinLight;
-			m_Count = (P_Random (pr_lightflash) & m_MinTime) + 1;
+			m_Count = (pr_lightflash() & m_MinTime) + 1;
 		}
 		else
 		{
 			m_Sector->lightlevel = m_MaxLight;
-			m_Count = (P_Random (pr_lightflash) & m_MaxTime) + 1;
+			m_Count = (pr_lightflash() & m_MaxTime) + 1;
 		}
 	}
 }
@@ -205,7 +210,7 @@ DLightFlash::DLightFlash (sector_t *sector)
 	m_MinLight = sector->FindMinSurroundingLight (sector->lightlevel);
 	m_MaxTime = 64;
 	m_MinTime = 7;
-	m_Count = (P_Random (pr_spawnlightflash) & m_MaxTime) + 1;
+	m_Count = (pr_lightflash() & m_MaxTime) + 1;
 }
 	
 DLightFlash::DLightFlash (sector_t *sector, int min, int max)
@@ -216,7 +221,7 @@ DLightFlash::DLightFlash (sector_t *sector, int min, int max)
 	m_MinLight = clamp (min, 0, 255);
 	m_MaxTime = 64;
 	m_MinTime = 7;
-	m_Count = (P_Random (pr_spawnlightflash) & m_MaxTime) + 1;
+	m_Count = (pr_lightflash() & m_MaxTime) + 1;
 }
 
 
@@ -284,7 +289,7 @@ DStrobe::DStrobe (sector_t *sector, int utics, int ltics, bool inSync)
 	if (m_MinLight == m_MaxLight)
 		m_MinLight = 0;
 
-	m_Count = inSync ? 1 : (P_Random (pr_spawnstrobeflash) & 7) + 1;
+	m_Count = inSync ? 1 : (pr_strobeflash() & 7) + 1;
 }
 
 

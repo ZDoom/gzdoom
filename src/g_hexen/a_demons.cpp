@@ -6,6 +6,9 @@
 #include "a_action.h"
 #include "m_random.h"
 
+static FRandom pr_atk ("DemonAttack1");
+static FRandom pr_demonchunks ("DemonChunks");
+
 //============================================================================
 // Demon AI
 //============================================================================
@@ -541,7 +544,7 @@ void A_DemonAttack1 (AActor *actor)
 {
 	if (P_CheckMeleeRange (actor))
 	{
-		int damage = HITDICE(2);
+		int damage = pr_atk.HitDice (2);
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
 	}
@@ -635,11 +638,11 @@ static void TossChunks (AActor *actor, const TypeInfo *const chunks[])
 		mo = Spawn (chunks[i], actor->x, actor->y, actor->z+45*FRACUNIT);
 		if(mo)
 		{
-			angle = actor->angle+(i?-ANG90:ANG90);
+			angle = actor->angle+(i<4?-ANG90:ANG90);
 			mo->momz = 8*FRACUNIT;
-			mo->momx = FixedMul((P_Random(pr_demonchunks)<<10)+FRACUNIT,
+			mo->momx = FixedMul((pr_demonchunks()<<10)+FRACUNIT,
 				finecosine[angle>>ANGLETOFINESHIFT]);
-			mo->momy = FixedMul((P_Random(pr_demonchunks)<<10)+FRACUNIT, 
+			mo->momy = FixedMul((pr_demonchunks()<<10)+FRACUNIT, 
 				finesine[angle>>ANGLETOFINESHIFT]);
 			mo->target = actor;
 		}

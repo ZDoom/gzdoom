@@ -52,6 +52,8 @@
 
 #define MAX_FRAMES 128
 
+static FRandom pr_switchanim ("AnimSwitch");
+
 class DActiveButton : public DThinker
 {
 	DECLARE_CLASS (DActiveButton, DThinker)
@@ -139,8 +141,8 @@ void P_InitSwitchList ()
 				((gameinfo.maxSwitch & ~15) == (list_p[18] & ~15)) &&
 				R_CheckTextureNumForName (list_p /* .name1 */) >= 0)
 			{
-				def1 = (FSwitchDef *)Z_Malloc (sizeof(FSwitchDef), PU_STATIC, 0);
-				def2 = (FSwitchDef *)Z_Malloc (sizeof(FSwitchDef), PU_STATIC, 0);
+				def1 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
+				def2 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
 				def1->PreTexture = def2->u.Textures[2] = R_CheckTextureNumForName (list_p /* .name1 */);
 				def2->PreTexture = def1->u.Textures[2] = R_CheckTextureNumForName (list_p + 9);
 				def1->Sound = def2->Sound = 0;
@@ -166,12 +168,12 @@ void P_InitSwitchList ()
 	qsort (&SwitchList[0], i, sizeof(FSwitchDef *), SortSwitchDefs);
 
 	// Correct the PairIndex of each switch def, since the sorting broke them
-	for (i = SwitchList.Size () - 1; i >= 0; i--)
+	for (i = (int)(SwitchList.Size () - 1); i >= 0; i--)
 	{
 		FSwitchDef *def = SwitchList[i];
 		if (def->PairIndex != 65535)
 		{
-			for (j = SwitchList.Size () - 1; j >= 0; j--)
+			for (j = (int)(SwitchList.Size () - 1); j >= 0; j--)
 			{
 				if (SwitchList[j] == origMap[def->PairIndex])
 				{
@@ -253,22 +255,25 @@ void P_ProcessSwitchDef ()
 			break;
 		}
 	}
-
+/*
 	if (def1 == NULL)
 	{
 		SC_ScriptError ("Switch must have an on state");
 	}
-
-	if (picnum == -1 ||
+*/
+	if (def1 == NULL || picnum == -1 ||
 		((max & 240) != 240 &&
 		 ((gameinfo.maxSwitch & 240) != (max & 240) ||
 		  (gameinfo.maxSwitch & 15) < (max & 15))))
 	{
 		if (def2 != NULL)
 		{
-			Z_Free (def2);
+			free (def2);
 		}
-		Z_Free (def1);
+		if (def1 != NULL)
+		{
+			free (def1);
+		}
 		return;
 	}
 
@@ -276,7 +281,7 @@ void P_ProcessSwitchDef ()
 	// it to the original texture without doing anything interesting
 	if (def2 == NULL)
 	{
-		def2 = (FSwitchDef *)Z_Malloc (sizeof(FSwitchDef), PU_STATIC, 0);
+		def2 = (FSwitchDef *)Malloc (sizeof(FSwitchDef));
 		def2->Sound = def1->Sound;
 		def2->NumFrames = 1;
 		def2->u.Times[0] = 0;
@@ -296,10 +301,12 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 	DWORD times[MAX_FRAMES];
 	int numframes;
 	int picnum;
+	bool bad;
 	SWORD sound;
 
 	numframes = 0;
 	sound = 0;
+	bad = false;
 
 	while (SC_GetString ())
 	{
@@ -322,8 +329,8 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 			picnum = R_CheckTextureNumForName (sc_String);
 			if (picnum < 0 && !ignoreBad)
 			{
-				const char *texname = sc_String;
-				SC_ScriptError ("Unknown texture %s", &texname);
+				Printf ("Unknown switch texture %s\n", sc_String);
+				bad = true;
 			}
 			pics[numframes] = picnum;
 			SC_MustGetString ();
@@ -362,8 +369,11 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 	{
 		SC_ScriptError ("Switch state needs at least one frame");
 	}
-	def = (FSwitchDef *)Z_Malloc (
-		myoffsetof (FSwitchDef, u.Times[0]) + numframes * 6, PU_STATIC, 0);
+	if (bad)
+	{
+		return NULL;
+	}
+	def = (FSwitchDef *)Malloc (myoffsetof (FSwitchDef, u.Times[0]) + numframes * 6);
 	def->Sound = sound;
 	def->NumFrames = numframes;
 	memcpy (&def->u.Times[0], times, numframes * 4);
@@ -374,18 +384,18 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 
 static WORD AddSwitchDef (FSwitchDef *def)
 {
-	int i;
+	size_t i;
 
-	for (i = SwitchList.Size () - 1; i >= 0; i--)
+	for (i = SwitchList.Size (); i-- > 0; )
 	{
 		if (SwitchList[i]->PreTexture == def->PreTexture)
 		{
-			Z_Free (SwitchList[i]);
+			free (SwitchList[i]);
 			SwitchList[i] = def;
 			return (WORD)i;
 		}
 	}
-	return SwitchList.Push (def);
+	return (WORD)SwitchList.Push (def);
 }
 
 //
@@ -412,7 +422,7 @@ static int TryFindSwitch (SWORD texture)
 {
 	int mid, low, high;
 
-	high = SwitchList.Size () - 1;
+	high = (int)(SwitchList.Size () - 1);
 	if (high >= 0)
 	{
 		low = 0;
@@ -597,7 +607,9 @@ bool DActiveButton::AdvanceFrame ()
 	{
 		if (def->u.Times[m_Frame] & 0xffff0000)
 		{
-			m_Timer = (WORD)((((P_Random (pr_switchanim) | (P_Random (pr_switchanim) << 8))
+			int t = pr_switchanim();
+
+			m_Timer = (WORD)((((t | (pr_switchanim() << 8))
 				% def->u.Times[m_Frame]) >> 16)
 				+ (def->u.Times[m_Frame] & 0xffff));
 		}

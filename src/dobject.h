@@ -93,12 +93,12 @@ struct TypeInfo
 		  ActorInfo (NULL),
 		  HashNext (0)
 	{ RegisterType(); }
-	TypeInfo (const size_t *p, const char *inName, const TypeInfo *inParentType, unsigned int inSize, DObject *(*inNew)())
+	TypeInfo (const size_t *p, const char *inName, const TypeInfo *inParentType, unsigned int inSize, void (*inNew)(void *))
 		: Name (inName),
 		  ParentType (inParentType),
 		  SizeOf (inSize),
 		  Pointers (p),
-		  CreateNew (inNew),
+		  ConstructNative (inNew),
 		  TypeIndex(0),
 		  ActorInfo (NULL),
 		  HashNext (0)
@@ -111,12 +111,14 @@ struct TypeInfo
 	TypeInfo *ParentType;
 	unsigned int SizeOf;
 	const size_t *Pointers;
-	DObject *(*CreateNew)();
+	void (*ConstructNative)(void *);
 	FActorInfo *ActorInfo;
 	unsigned int HashNext;
 	unsigned short TypeIndex;
 
 	void RegisterType ();
+	DObject *CreateNew () const;
+	TypeInfo *CreateDerivedClass (char *name, unsigned int size);
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.
 	bool IsAncestorOf (const TypeInfo *ti) const
@@ -139,13 +141,17 @@ struct TypeInfo
 	
 	static unsigned short m_NumTypes, m_MaxTypes;
 	static TypeInfo **m_Types;
+	static TArray<TypeInfo *> m_RuntimeActors;
 
 	enum { HASH_SIZE = 256 };
 	static unsigned int TypeHash[HASH_SIZE];
 };
 
-#define RUNTIME_TYPE(object)	(object->StaticType())
-#define RUNTIME_CLASS(cls)		(&cls::_StaticType)
+#define RUNTIME_TYPE(object)	(object->GetClass())	// Passed an object, returns the type of that object
+#define RUNTIME_CLASS(cls)		(&cls::_StaticType)		// Passed a class name, returns a TypeInfo representing that class
+#define NATIVE_TYPE(object)		(object->StaticType())	// Passed an object, returns the type of the C++ class representing the object
+
+enum EInPlace { EC_InPlace };
 
 #define DECLARE_ABSTRACT_CLASS(cls,parent) \
 public: \
@@ -157,7 +163,7 @@ private: \
 
 #define DECLARE_CLASS(cls,parent) \
 	DECLARE_ABSTRACT_CLASS(cls,parent) \
-	protected: static DObject *CreateObject (); private:
+	private: static void InPlaceConstructor (void *mem);
 
 #define HAS_OBJECT_POINTERS \
 	static const size_t _Pointers_[];
@@ -190,16 +196,16 @@ private: \
 #endif
 
 #define _IMP_CREATE_OBJ(cls) \
-	DObject *cls::CreateObject() { return new cls; }
+	void cls::InPlaceConstructor(void *mem) { new((EInPlace *)mem) cls; }
 
 #define IMPLEMENT_POINTY_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
-	_IMP_TYPEINFO(cls,cls::_Pointers_,cls::CreateObject) \
+	_IMP_TYPEINFO(cls,cls::_Pointers_,cls::InPlaceConstructor) \
 	const size_t cls::_Pointers_[] = {
 
 #define IMPLEMENT_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
-	_IMP_TYPEINFO(cls,NULL,cls::CreateObject)
+	_IMP_TYPEINFO(cls,NULL,cls::InPlaceConstructor) 
 
 #define IMPLEMENT_ABSTRACT_CLASS(cls) \
 	_IMP_TYPEINFO(cls,NULL,NULL)
@@ -222,6 +228,7 @@ private: \
 
 public:
 	DObject ();
+	DObject (TypeInfo *inClass);
 	virtual ~DObject ();
 
 	inline bool IsKindOf (const TypeInfo *base) const
@@ -249,7 +256,48 @@ public:
 
 	static void STACK_ARGS StaticShutdown ();
 
+	TypeInfo *GetClass() const
+	{
+		if (Class == NULL)
+		{
+			// Save a little time the next time somebody wants this object's type
+			// by recording it now.
+			const_cast<DObject *>(this)->Class = StaticType();
+		}
+		return Class;
+	}
+
+	void SetClass (TypeInfo *inClass)
+	{
+		Class = inClass;
+	}
+
+	void *operator new(size_t len)
+	{
+		return Malloc(len);
+	}
+
+	void operator delete (void *mem)
+	{
+		free (mem);
+	}
+
+protected:
+	// This form of placement new and delete is for use *only* by TypeInfo's
+	// CreateNew() method. Do not use them for some other purpose.
+	void *operator new(size_t len, EInPlace *mem)
+	{
+		return (void *)mem;
+	}
+
+	void operator delete (void *mem, EInPlace *foo)
+	{
+		free (mem);
+	}
+
 private:
+	TypeInfo *Class;
+
 	static TArray<DObject *> Objects;
 	static TArray<size_t> FreeIndices;
 	static TArray<DObject *> ToDestroy;

@@ -7,6 +7,8 @@
 #include "s_sound.h"
 #include "m_random.h"
 
+static FRandom pr_tele ("TeleportSelf");
+
 // Teleport (self) ----------------------------------------------------------
 
 BASIC_ARTI (Teleport, arti_teleport, GStrings(TXT_ARTITELEPORT))
@@ -20,8 +22,8 @@ private:
 
 		if (deathmatch)
 		{
-			int selections = deathmatchstarts.Size ();
-			int i = P_Random() % selections;
+			size_t selections = deathmatchstarts.Size ();
+			size_t i = pr_tele() % selections;
 			destX = deathmatchstarts[i].x << FRACBITS;
 			destY = deathmatchstarts[i].y << FRACBITS;
 			destAngle = ANG45 * (deathmatchstarts[i].angle/45);
@@ -32,7 +34,7 @@ private:
 			destY = playerstarts[player - players].y << FRACBITS;
 			destAngle = ANG45 * (playerstarts[player - players].angle/45);
 		}
-		P_Teleport (player->mo, destX, destY, ONFLOORZ, destAngle, true);
+		P_Teleport (player->mo, destX, destY, ONFLOORZ, destAngle, true, false);
 		if (gameinfo.gametype == GAME_Hexen && player->morphTics)
 		{ // Teleporting away will undo any morph effects (pig)
 			P_UndoPlayerMorph (player);

@@ -888,8 +888,9 @@ void AM_changeWindowScale ()
 //
 void AM_doFollowPlayer ()
 {
-    if (f_oldloc.x != players[consoleplayer].camera->x ||
-		f_oldloc.y != players[consoleplayer].camera->y)
+    if (players[consoleplayer].camera != NULL &&
+		(f_oldloc.x != players[consoleplayer].camera->x ||
+		 f_oldloc.y != players[consoleplayer].camera->y))
 	{
 		m_x = FTOM(MTOF(players[consoleplayer].camera->x)) - m_w/2;
 		m_y = FTOM(MTOF(players[consoleplayer].camera->y)) - m_h/2;
@@ -1789,20 +1790,23 @@ void AM_drawPlayers ()
 		else
 			color = ColorMatcher.Pick
 				(RPART(p->userinfo.color), GPART(p->userinfo.color), BPART(p->userinfo.color));
-				
-		pt.x = p->mo->x;
-		pt.y = p->mo->y;
-		angle = p->mo->angle;
 
-		if (am_rotate)
+		if (p->mo != NULL)
 		{
-			AM_rotatePoint (&pt.x, &pt.y);
-			angle -= players[consoleplayer].camera->angle - ANG90;
-		}
+			pt.x = p->mo->x;
+			pt.y = p->mo->y;
+			angle = p->mo->angle;
 
-		AM_drawLineCharacter
-			(player_arrow, NUMPLYRLINES, 0, angle,
-			 color, pt.x, pt.y);
+			if (am_rotate)
+			{
+				AM_rotatePoint (&pt.x, &pt.y);
+				angle -= players[consoleplayer].camera->angle - ANG90;
+			}
+
+			AM_drawLineCharacter
+				(player_arrow, NUMPLYRLINES, 0, angle,
+				color, pt.x, pt.y);
+		}
     }
 }
 

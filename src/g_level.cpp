@@ -66,6 +66,7 @@
 #include "sc_man.h"
 #include "sbar.h"
 #include "a_lightning.h"
+#include "m_png.h"
 
 #include "gi.h"
 
@@ -76,6 +77,10 @@ EXTERN_CVAR (Int, disableautosave)
 
 #define lioffset(x)		myoffsetof(level_pwad_info_t,x)
 #define cioffset(x)		myoffsetof(cluster_info_t,x)
+
+#define SNAP_ID			MAKE_ID('s','n','A','p')
+#define VIST_ID			MAKE_ID('v','i','S','t')
+#define ACSD_ID			MAKE_ID('a','c','S','d')
 
 static level_info_t *FindDefLevelInfo (char *mapname);
 static cluster_info_t *FindDefClusterInfo (int cluster);
@@ -135,10 +140,10 @@ int starttime;
 
 
 // ACS variables with world scope
-int ACS_WorldVars[NUM_WORLDVARS];
+SDWORD ACS_WorldVars[NUM_WORLDVARS];
 
 // ACS variables with global scope
-int ACS_GlobalVars[NUM_GLOBALVARS];
+SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
 
 
 extern BOOL netdemo;
@@ -238,6 +243,7 @@ static const char *MapInfoMapLevel[] =
 enum EMIType
 {
 	MITYPE_EATNEXT,
+	MITYPE_IGNORE,
 	MITYPE_INT,
 	MITYPE_FLOAT,
 	MITYPE_HEX,
@@ -274,7 +280,7 @@ MapHandlers[] =
 	{ MITYPE_MUSIC,		lioffset(music), lioffset(musicorder) },
 	{ MITYPE_SETFLAG,	LEVEL_NOINTERMISSION, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_DOUBLESKY, 0 },
-	{ MITYPE_SETFLAG,	LEVEL_NOSOUNDCLIPPING, 0 },
+	{ MITYPE_IGNORE,	0, 0 },	// was nosoundclipping
 	{ MITYPE_SETFLAG,	LEVEL_MONSTERSTELEFRAG, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_MAP07SPECIAL, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_BRUISERSPECIAL, 0 },
@@ -491,6 +497,9 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			SC_MustGetString ();
 			break;
 
+		case MITYPE_IGNORE:
+			break;
+
 		case MITYPE_INT:
 			SC_MustGetNumber ();
 			*((int *)(info + handler->data1)) = sc_Number;
@@ -577,7 +586,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 				int seqnum = FindEndSequence (newSeq.EndType, newSeq.PicName);
 				if (seqnum == -1)
 				{
-					seqnum = EndSequences.Push (newSeq);
+					seqnum = (int)EndSequences.Push (newSeq);
 				}
 				strcpy ((char *)(info + handler->data1), "enDSeQ");
 				*((WORD *)(info + handler->data1 + 6)) = (WORD)seqnum;
@@ -664,7 +673,7 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 
 static int FindEndSequence (int type, const char *picname)
 {
-	int i, num;
+	size_t i, num;
 
 	num = EndSequences.Size ();
 	for (i = 0; i < num; i++)
@@ -672,7 +681,7 @@ static int FindEndSequence (int type, const char *picname)
 		if (EndSequences[i].EndType == type &&
 			(type != END_Pic || stricmp (EndSequences[i].PicName, picname) == 0))
 		{
-			return i;
+			return (int)i;
 		}
 	}
 	return -1;
@@ -688,7 +697,7 @@ static void SetEndSequence (char *nextmap, int type)
 		EndSequence newseq;
 		newseq.EndType = type;
 		memset (newseq.PicName, 0, sizeof(newseq.PicName));
-		seqnum = EndSequences.Push (newseq);
+		seqnum = (int)EndSequences.Push (newseq);
 	}
 	strcpy (nextmap, "enDSeQ");
 	*((WORD *)(nextmap + 6)) = (WORD)seqnum;
@@ -760,6 +769,10 @@ CCMD (map)
 			Printf ("No map %s\n", argv[1]);
 		else
 			G_DeferedInitNew (argv[1]);
+	}
+	else
+	{
+		Printf ("Usage: map <map name>\n");
 	}
 }
 
@@ -851,7 +864,7 @@ void G_InitNew (char *mapname)
 
 	if (!savegamerestore)
 	{
-		M_ClearRandom ();
+		FRandom::StaticClearRandom ();
 		memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
 		memset (ACS_GlobalVars, 0, sizeof(ACS_GlobalVars));
 		level.time = 0;
@@ -1108,9 +1121,6 @@ void G_DoLoadLevel (int position, bool autosave)
 		wipegamestate = GS_FORCEWIPE;
 
 	gamestate = GS_LEVEL; 
-	
-	if (demoplayback || oldgs == GS_STARTUP)
-		C_HideConsole ();
 
 	// Set the sky map.
 	// First thing, we have a dummy sky texture name,
@@ -1135,7 +1145,7 @@ void G_DoLoadLevel (int position, bool autosave)
 		memset (players[i].frags,0,sizeof(players[i].frags)); 
 		players[i].fragcount = 0;
 	}
-
+/*
 	// initialize the msecnode_t freelist.					phares 3/25/98
 	// any nodes in the freelist are gone by now, cleared
 	// by Z_FreeTags() when the previous level ended or player
@@ -1155,7 +1165,7 @@ void G_DoLoadLevel (int position, bool autosave)
 			actor->touching_sectorlist = NULL;
 		}
 	}
-
+*/
 	SN_StopAllSequences ();
 	P_SetupLevel (level.mapname, position);
 
@@ -1198,6 +1208,9 @@ void G_DoLoadLevel (int position, bool autosave)
 	level.starttime = I_GetTime ();
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
+	
+	if (demoplayback || oldgs == GS_STARTUP)
+		C_HideConsole ();
 
 	C_FlushDisplay ();
 
@@ -1281,6 +1294,7 @@ void G_InitLevelLocals ()
 
 	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
 	NormalLight.Maps = realcolormaps;
+	NormalLight.Color = PalEntry (255, 255, 255);
 
 	level.gravity = sv_gravity;
 	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);
@@ -1378,8 +1392,6 @@ void G_InitLevelLocals ()
 		set |= DF_NO_FREELOOK;
 
 	dmflags = (dmflags & ~clear) | set;
-
-	memset (level.vars, 0, sizeof(level.vars));
 
 	NormalLight.ChangeFade (level.fadeto);
 
@@ -1522,10 +1534,10 @@ void G_SetLevelStrings (void)
 		{
 			strcpy (LevelInfos[i+3*9].skypic1, "SKY1");
 		}
-		LevelInfos[7].flags = LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_SPECLOWERFLOOR|LEVEL_HEADSPECIAL;
-		LevelInfos[16].flags = LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_SPECLOWERFLOOR|LEVEL_MINOTAURSPECIAL;
-		LevelInfos[25].flags = LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_SPECLOWERFLOOR|LEVEL_SORCERER2SPECIAL;
-		LevelInfos[34].flags = LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_SPECLOWERFLOOR|LEVEL_HEADSPECIAL;
+		LevelInfos[7].flags = LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_HEADSPECIAL;
+		LevelInfos[16].flags = LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_SPECKILLMONSTERS|LEVEL_MINOTAURSPECIAL;
+		LevelInfos[25].flags = LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_SPECKILLMONSTERS|LEVEL_SORCERER2SPECIAL;
+		LevelInfos[34].flags = LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_SPECKILLMONSTERS|LEVEL_HEADSPECIAL;
 
 		SetEndSequence (LevelInfos[16].nextmap, END_Underwater);
 		SetEndSequence (LevelInfos[25].nextmap, END_Demon);
@@ -1628,11 +1640,6 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 
 	G_AirControlChanged ();
 
-	for (i = 0; i < NUM_MAPVARS; i++)
-	{
-		arc << level.vars[i];
-	}
-
 	BYTE t;
 
 	// Does this level have scrollers?
@@ -1656,6 +1663,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 		}
 	}
 
+	FBehavior::StaticSerializeModuleStates (arc);
 	P_SerializeThinkers (arc, hubLoad);
 	P_SerializeWorld (arc);
 	P_SerializePolyobjs (arc);
@@ -1711,12 +1719,15 @@ void G_SnapshotLevel ()
 	if (level.info->snapshot)
 		delete level.info->snapshot;
 
-	level.info->snapshot = new FCompressedMemFile;
-	level.info->snapshot->Open ();
+	if (level.info->mapname[0] != 0)
+	{
+		level.info->snapshot = new FCompressedMemFile;
+		level.info->snapshot->Open ();
 
-	FArchive arc (*level.info->snapshot);
+		FArchive arc (*level.info->snapshot);
 
-	G_SerializeLevel (arc, false);
+		G_SerializeLevel (arc, false);
+	}
 }
 
 // Unarchives the current level based on its snapshot
@@ -1726,12 +1737,15 @@ void G_UnSnapshotLevel (bool hubLoad)
 	if (level.info->snapshot == NULL)
 		return;
 
-	level.info->snapshot->Reopen ();
-	FArchive arc (*level.info->snapshot);
-	if (hubLoad)
-		arc.SetHubTravel ();
-	G_SerializeLevel (arc, hubLoad);
-	arc.Close ();
+	if (level.info->mapname[0] != 0)
+	{
+		level.info->snapshot->Reopen ();
+		FArchive arc (*level.info->snapshot);
+		if (hubLoad)
+			arc.SetHubTravel ();
+		G_SerializeLevel (arc, hubLoad);
+		arc.Close ();
+	}
 	// No reason to keep the snapshot around once the level's been entered.
 	delete level.info->snapshot;
 	level.info->snapshot = NULL;
@@ -1742,78 +1756,138 @@ void G_ClearSnapshots (void)
 	int i;
 
 	for (i = 0; i < numwadlevelinfos; i++)
+	{
 		if (wadlevelinfos[i].snapshot)
 		{
 			delete wadlevelinfos[i].snapshot;
 			wadlevelinfos[i].snapshot = NULL;
 		}
-
+	}
 	for (i = 0; LevelInfos[i].level_name; i++)
+	{
 		if (LevelInfos[i].snapshot)
 		{
 			delete LevelInfos[i].snapshot;
 			LevelInfos[i].snapshot = NULL;
 		}
+	}
+}
+
+static void writeMapName (FArchive &arc, const char *name)
+{
+	BYTE size;
+	if (name[7] != 0)
+	{
+		size = 8;
+	}
+	else
+	{
+		size = (BYTE)strlen (name);
+	}
+	arc << size;
+	arc.Write (name, size);
 }
 
 static void writeSnapShot (FArchive &arc, level_info_t *i)
 {
-	arc.Write (i->mapname, 8);
+	writeMapName (arc, i->mapname);
 	i->snapshot->Serialize (arc);
 }
 
-void G_SerializeSnapshots (FArchive &arc)
+void G_SerializeSnapshots (FILE *file, bool storing)
 {
-	if (arc.IsStoring ())
+	if (storing)
 	{
 		int i;
 
 		for (i = 0; i < numwadlevelinfos; i++)
+		{
 			if (wadlevelinfos[i].snapshot)
+			{
+				FPNGChunkArchive arc (file, SNAP_ID);
 				writeSnapShot (arc, &wadlevelinfos[i]);
+			}
+		}
 
 		for (i = 0; LevelInfos[i].level_name; i++)
+		{
 			if (LevelInfos[i].snapshot)
+			{
+				FPNGChunkArchive arc (file, SNAP_ID);
 				writeSnapShot (arc, &LevelInfos[i]);
+			}
+		}
 
-		// Signal end of snapshots
-		BYTE zero = 0;
-		arc << zero;
-
+		FPNGChunkArchive *arc = NULL;
+		
 		// Write out which levels have been visited
 		for (i = 0; i < numwadlevelinfos; ++i)
+		{
 			if (wadlevelinfos[i].flags & LEVEL_VISITED)
-				arc.Write (wadlevelinfos[i].mapname, 8);
+			{
+				if (arc == NULL)
+				{
+					arc = new FPNGChunkArchive (file, VIST_ID);
+				}
+				writeMapName (*arc, wadlevelinfos[i].mapname);
+			}
+		}
 
 		for (i = 0; LevelInfos[i].mapname[0]; ++i)
+		{
+			if (arc == NULL)
+			{
+				arc = new FPNGChunkArchive (file, VIST_ID);
+			}
 			if (LevelInfos[i].flags & LEVEL_VISITED)
-				arc.Write (LevelInfos[i].mapname, 8);
-
-		arc << zero;
+			{
+				writeMapName (*arc, LevelInfos[i].mapname);
+			}
+		}
+		if (arc != NULL)
+		{
+			BYTE zero = 0;
+			*arc << zero;
+			delete arc;
+		}
 	}
 	else
 	{
-		char mapname[8];
+		DWORD chunkLen;
+		BYTE namelen;
+		char mapname[256];
+		level_info_t *i;
 
 		G_ClearSnapshots ();
 
-		arc << mapname[0];
-		while (mapname[0])
+		chunkLen = (DWORD)M_FindPNGChunk (file, SNAP_ID);
+		while (chunkLen != 0)
 		{
-			arc.Read (&mapname[1], 7);
-			level_info_t *i = FindLevelInfo (mapname);
+			FPNGChunkArchive arc (file, SNAP_ID, chunkLen);
+
+			arc << namelen;
+			arc.Read (mapname, namelen);
+			mapname[namelen] = 0;
+			i = FindLevelInfo (mapname);
 			i->snapshot = new FCompressedMemFile;
 			i->snapshot->Serialize (arc);
-			arc << mapname[0];
+			chunkLen = (DWORD)M_NextPNGChunk (file, SNAP_ID);
 		}
 
-		arc << mapname[0];
-		while (mapname[0])
+		chunkLen = (DWORD)M_FindPNGChunk (file, VIST_ID);
+		if (chunkLen != 0)
 		{
-			arc.Read (&mapname[1], 7);
-			level_info_t *i = FindLevelInfo (mapname);
-			i->flags |= LEVEL_VISITED;
-			arc << mapname[0];
+			FPNGChunkArchive arc (file, VIST_ID, chunkLen);
+
+			arc << namelen;
+			while (namelen != 0)
+			{
+				arc.Read (mapname, namelen);
+				mapname[namelen] = 0;
+				i = FindLevelInfo (mapname);
+				i->flags |= LEVEL_VISITED;
+				arc << namelen;
+			}
 		}
 	}
 }
@@ -1821,49 +1895,74 @@ void G_SerializeSnapshots (FArchive &arc)
 
 static void writeDefereds (FArchive &arc, level_info_t *i)
 {
-	arc.Write (i->mapname, 8);
+	writeMapName (arc, i->mapname);
 	arc << i->defered;
 }
 
-void P_SerializeACSDefereds (FArchive &arc)
+void P_SerializeACSDefereds (FILE *file, bool storing)
 {
-	if (arc.IsStoring ())
+	if (storing)
 	{
+		FPNGChunkArchive *arc = NULL;
 		int i;
 
 		for (i = 0; i < numwadlevelinfos; i++)
+		{
 			if (wadlevelinfos[i].defered)
-				writeDefereds (arc, &wadlevelinfos[i]);
+			{
+				if (arc == NULL)
+				{
+					arc = new FPNGChunkArchive (file, ACSD_ID);
+				}
+				writeDefereds (*arc, &wadlevelinfos[i]);
+			}
+		}
 
 		for (i = 0; LevelInfos[i].level_name; i++)
+		{
 			if (LevelInfos[i].defered)
-				writeDefereds (arc, &LevelInfos[i]);
+			{
+				if (arc == NULL)
+				{
+					arc = new FPNGChunkArchive (file, ACSD_ID);
+				}
+				writeDefereds (*arc, &LevelInfos[i]);
+			}
+		}
 
-		// Signal end of defereds
-		BYTE zero = 0;
-		arc << zero;
+		if (arc != NULL)
+		{
+			// Signal end of defereds
+			BYTE zero = 0;
+			*arc << zero;
+			delete arc;
+		}
 	}
 	else
 	{
-		char mapname[8];
+		BYTE namelen;
+		char mapname[256];
+		size_t chunklen;
 
 		P_RemoveDefereds ();
 
-		arc << mapname[0];
-		while (mapname[0])
+		if ((chunklen = M_FindPNGChunk (file, ACSD_ID)) != 0)
 		{
-			arc.Read (&mapname[1], 7);
-			level_info_t *i = FindLevelInfo (mapname);
-			if (i == NULL)
-			{
-				char name[9];
+			FPNGChunkArchive arc (file, ACSD_ID, chunklen);
 
-				strncpy (name, mapname, 8);
-				name[8] = 0;
-				I_Error ("Unknown map '%s' in savegame", name);
+			arc << namelen;
+			while (namelen)
+			{
+				arc.Read (mapname, namelen);
+				mapname[namelen] = 0;
+				level_info_t *i = FindLevelInfo (mapname);
+				if (i == NULL)
+				{
+					I_Error ("Unknown map '%s' in savegame", mapname);
+				}
+				arc << i->defered;
+				arc << namelen;
 			}
-			arc << i->defered;
-			arc << mapname[0];
 		}
 	}
 }
@@ -1977,7 +2076,7 @@ level_info_t LevelInfos[] =
 		"SKY1",
 		1,
 		30,
-		LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_BRUISERSPECIAL|LEVEL_SPECLOWERFLOOR,
+		LEVEL_NOINTERMISSION|LEVEL_BRUISERSPECIAL|LEVEL_SPECLOWERFLOOR,
 	},
 	{
 		"E1M9",
@@ -2071,7 +2170,7 @@ level_info_t LevelInfos[] =
 		"SKY2",
 		2,
 		30,
-		LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_CYBORGSPECIAL,
+		LEVEL_NOINTERMISSION|LEVEL_CYBORGSPECIAL,
 	},
 	{
 		"E2M9",
@@ -2165,7 +2264,7 @@ level_info_t LevelInfos[] =
 		"SKY3",
 		3,
 		30,
-		LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_SPIDERSPECIAL,
+		LEVEL_NOINTERMISSION|LEVEL_SPIDERSPECIAL,
 	},
 	{
 		"E3M9",
@@ -2253,7 +2352,7 @@ level_info_t LevelInfos[] =
 		"SKY4",
 		4,
 		0,
-		LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_SPIDERSPECIAL|LEVEL_SPECLOWERFLOOR,
+		LEVEL_NOINTERMISSION|LEVEL_SPIDERSPECIAL|LEVEL_SPECLOWERFLOOR,
 	},
 	{
 		"E4M9",
@@ -2338,7 +2437,7 @@ level_info_t LevelInfos[] =
 		"SKY3",
 		15,
 		0,
-		LEVEL_NOINTERMISSION|LEVEL_NOSOUNDCLIPPING|LEVEL_SPECLOWERFLOOR|LEVEL_MINOTAURSPECIAL
+		LEVEL_NOINTERMISSION|LEVEL_SPECLOWERFLOOR|LEVEL_SPECKILLMONSTERS|LEVEL_MINOTAURSPECIAL
 	},
 	{
 		"E5M9",
@@ -2748,7 +2847,7 @@ level_info_t LevelInfos[] =
 
 	// End-of-list marker
 	{
-		"",
+		"", 0, "", "", "", "SKY1", 0, 0, 0, NULL, "Unnamed"
 	}
 };
 
@@ -2807,9 +2906,3 @@ cluster_info_t ClusterInfos[] =
 
 	{ 0 }		// End-of-clusters marker
 };
-
-
-
-
-
-

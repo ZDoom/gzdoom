@@ -60,7 +60,8 @@
 #include "st_stuff.h"
 #include "d_gui.h"
 #include "version.h"
-
+#include "m_png.h"
+#include "templates.h"
 #include "lists.h"
 #include "gi.h"
 
@@ -136,6 +137,7 @@ static void M_StartMessage (const char *string, void(*routine)(int), bool input)
 static void M_PlayerSetup (int choice);
 static void M_PlayerSetupTicker ();
 static void M_PlayerSetupDrawer ();
+static void M_RenderPlayerBackdrop ();
 static void M_DrawPlayerBackdrop (int x, int y);
 static void M_EditPlayerName (int choice);
 static void M_ChangePlayerTeam (int choice);
@@ -153,6 +155,7 @@ EXTERN_CVAR (String, name)
 EXTERN_CVAR (Int, team)
 
 extern bool		sendpause;
+extern int		flagsvar;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -177,10 +180,10 @@ static bool		messageNeedsInput;		// timed message = no input from user
 static void	  (*messageRoutine)(int response);
 
 static int 		genStringEnter;	// we are going to be entering a savegame string
-static int		genStringLen;	// [RH] Max # of chars that can be entered
+static size_t	genStringLen;	// [RH] Max # of chars that can be entered
 static void	  (*genStringEnd)(FSaveGameNode *);
 static int 		saveSlot;		// which slot to save in
-static int 		saveCharIndex;	// which char we're editing
+static size_t	saveCharIndex;	// which char we're editing
 
 static int		LINEHEIGHT;
 
@@ -595,13 +598,13 @@ void M_ReadSaveStrings ()
 {
 	if (SaveGames.IsEmpty ())
 	{
-		long filefirst;
+		void *filefirst;
 		findstate_t c_file;
 		char filter[PATH_MAX];
 
 		G_BuildSaveName (filter, "*.zds", -1);
 		filefirst = I_FindFirst (filter, &c_file);
-		if (filefirst != -1)
+		if (filefirst != ((void *)(-1)))
 		{
 			do
 			{
@@ -609,65 +612,92 @@ void M_ReadSaveStrings ()
 				char filepath[PATH_MAX];
 				G_BuildSaveName (filepath, I_FindName(&c_file), -1);
 				FILE *file = fopen (filepath, "rb");
+
 				if (file != NULL)
 				{
-					char sig[PATH_MAX];
+					char sig[16];
+					char title[SAVESTRINGSIZE];
+					bool oldVer = true;
+					bool addIt = false;
 
-					if (fread (sig, 1, 16, file) == 16)
+					// ZDoom 1.23 betas 21-33 have the savesig first.
+					// Earlier versions have the savesig second.
+					// Later versions have the savegame encapsulated inside a PNG.
+					//
+					// Old savegame versions are always added to the menu so
+					// the user can easily delete them if desired.
+
+					if (M_VerifyPNG (file))
 					{
-						char title[SAVESTRINGSIZE];
-						int i, c;
-						bool oldVer = true;
-						bool addIt = false;
-
-						if (strncmp (sig, SAVESIG, 9) == 0)
+						char *ver = M_GetPNGText (file, "ZDoom Save Version");
+						if (ver != NULL)
 						{
-							fread (title, 1, SAVESTRINGSIZE, file);
-							fseek (file, 8, SEEK_CUR);		// skip map name
-
-							if (strncmp (sig, SAVESIG, 16) == 0)
+							size_t titlelen = M_FindPNGText (file, "Title");
+							if (titlelen != 0)
+							{
+								memset (title, 0, SAVESTRINGSIZE);
+								fread (title, 1, MIN<size_t> (titlelen, SAVESTRINGSIZE), file);
+							}
+							else
+							{
+								strncpy (title, I_FindName(&c_file), SAVESTRINGSIZE);
+							}
+							if (strcmp (ver, SAVESIG) == 0)
 							{
 								// Was saved with a compatible ZDoom version,
 								// so check if it's for the current game.
 								// If it is, add it. Otherwise, ignore it.
-								i = 0;
-								do
+								char *iwad = M_GetPNGText (file, "Game WAD");
+								if (iwad != NULL)
 								{
-									c = fgetc (file);
-									sig[i++] = c;
-								} while (c != EOF && c != 0);
-								if (c != EOF && stricmp (sig, W_GetWadName (1)) == 0)
-								{
-									addIt = true;
-									oldVer = false;
+									if (stricmp (iwad, W_GetWadName (1)) == 0)
+									{
+										addIt = true;
+										oldVer = false;
+									}
+									delete[] iwad;
 								}
 							}
 							else
-							{ // Game is from a different ZDoom version. Add it
-							  // just so that the user has a means of deleting it
-							  // if desired.
+							{ // An old version
 								addIt = true;
 							}
+							delete[] ver;
 						}
-						else
-						{ // Before 1.23 beta 21, the savesig came after the title
-							memcpy (title, sig, 16);
-							if (fread (title + 16, 1, SAVESTRINGSIZE-16, file) == SAVESTRINGSIZE-16 &&
-								fread (sig, 1, 16, file) == 16 &&
-								strncmp (sig, SAVESIG, 9) == 0)
-							{ // Game is from an old ZDoom.
-								addIt = true;
-							}
-						}
-
-						if (addIt)
+					}
+					else
+					{
+						fseek (file, 0, SEEK_SET);
+						if (fread (sig, 1, 16, file) == 16)
 						{
-							FSaveGameNode *node = new FSaveGameNode;
-							node->Filename = copystring (filepath);
-							node->bOldVersion = oldVer;
-							memcpy (node->Title, title, SAVESTRINGSIZE);
-							M_InsertSaveNode (node);
+
+							if (strncmp (sig, "ZDOOMSAVE", 9) == 0)
+							{
+								if (fread (title, 1, SAVESTRINGSIZE, file) == SAVESTRINGSIZE)
+								{
+									addIt = true;
+								}
+							}
+							else
+							{
+								memcpy (title, sig, 16);
+								if (fread (title + 16, 1, SAVESTRINGSIZE-16, file) == SAVESTRINGSIZE-16 &&
+									fread (sig, 1, 16, file) == 16 &&
+									strncmp (sig, "ZDOOMSAVE", 9) == 0)
+								{
+									addIt = true;
+								}
+							}
 						}
+					}
+
+					if (addIt)
+					{
+						FSaveGameNode *node = new FSaveGameNode;
+						node->Filename = copystring (filepath);
+						node->bOldVersion = oldVer;
+						memcpy (node->Title, title, SAVESTRINGSIZE);
+						M_InsertSaveNode (node);
 					}
 					fclose (file);
 				}
@@ -813,79 +843,45 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 		!node->bOldVersion &&
 		(file = fopen (node->Filename, "rb")) != NULL)
 	{
-		WORD x, y;
-		int i;
-
-		fseek (file, 16+SAVESTRINGSIZE+8, SEEK_SET);
-
-		// Skip wad names
-		x = 1;
-		do
-		{
-			i = fgetc (file);
-			if (i == EOF)
-			{
-				return;
-			}
-			else if (i == 0)
-			{
-				x = x + 1;
-			}
-			else
-			{
-				x = 0;
-			}
-		} while (x != 2);
-
-		x = y = 0;
+		char *time, *comment;
+		size_t commentlen, totallen, timelen;
 
 		// Extract comment
-		fread (&x, 2, 1, file);
-		x = SHORT(x);
-		if (x != 0)
+		time = M_GetPNGText (file, "Creation Time");
+		commentlen = M_FindPNGText (file, "Comment");
+		if (time != NULL)
 		{
-			char *comment = new char[x];
-			if (fread (comment, 1, x, file) == x)
+			timelen = strlen (time);
+			totallen = timelen + commentlen + 3;
+		}
+		else
+		{
+			timelen = 0;
+			totallen = commentlen + 1;
+		}
+		if (totallen != 0)
+		{
+			comment = new char[totallen];
+
+			if (timelen)
 			{
-				SaveComment = V_BreakLines (216*screen->GetWidth()/640/CleanXfac, comment);
+				memcpy (comment, time, timelen);
+				comment[timelen] = '\n';
+				comment[timelen+1] = '\n';
+				timelen += 2;
 			}
+			if (commentlen)
+			{
+				fread (comment + timelen, 1, commentlen, file);
+			}
+			comment[timelen+commentlen] = 0;
+			SaveComment = V_BreakLines (216*screen->GetWidth()/640/CleanXfac, comment);
 			delete[] comment;
 		}
 
 		// Extract pic
-		fread (&x, 2, 1, file);
-		fread (&y, 2, 1, file);
-		x = SHORT(x);
-		y = SHORT(y);
-		if (x * y != 0)
-		{
-			DWORD len = 0;
-			fread (&len, 4, 1, file);
-			SavePic = new DSimpleCanvas (x, y);
-			if (len == 0)
-			{
-				SavePic->Lock ();
-				fread (SavePic->GetBuffer(), 1, x * y, file);
-				SavePic->Unlock ();
-			}
-			else
-			{
-				uLong newlen = x * y;
-				int r;
-				Byte *cprpic = new Byte[len];
+		SavePic = M_CreateCanvasFromPNG (file);
 
-				fread (cprpic, 1, len, file);
-				SavePic->Lock ();
-				r = uncompress (SavePic->GetBuffer(), &newlen, cprpic, len);
-				SavePic->Unlock ();
-				if (r != Z_OK || newlen != (uLong)(x * y))
-				{
-					delete SavePic;
-					SavePic = NULL;
-				}
-				delete[] cprpic;
-			}
-		}
 		fclose (file);
 	}
 }
@@ -1508,7 +1504,11 @@ static void M_PlayerSetup (int choice)
 	PlayerState = GetDefaultByType (PlayerClass)->SeeState;
 	PlayerTics = PlayerState->GetTics();
 	if (FireScreen == NULL)
+#if 0
 		FireScreen = new DSimpleCanvas (72, 72+5);
+#else
+		FireScreen = new DSimpleCanvas (144, 146);
+#endif
 }
 
 static void M_PlayerSetupTicker (void)
@@ -1597,80 +1597,15 @@ static void M_PlayerSetupDrawer ()
 		}
 		else
 		{
-			// [RH] The following fire code is based on the PTC fire demo
-			int a, b;
-			byte *from;
-			int width, height, pitch;
-
 			FireScreen->Lock ();
-
-			width = FireScreen->GetWidth();
-			height = FireScreen->GetHeight();
-			pitch = FireScreen->GetPitch();
-
-			from = FireScreen->GetBuffer() + (height - 3) * pitch;
-			for (a = 0; a < width; a++, from++)
-			{
-				*from = *(from + (pitch << 1)) = M_Random();
-			}
-
-			from = FireScreen->GetBuffer();
-			for (b = 0; b < FireScreen->GetHeight() - 4; b += 2)
-			{
-				byte *pixel = from;
-
-				// special case: first pixel on line
-				byte *p = pixel + (pitch << 1);
-				unsigned int top = *p + *(p + width - 1) + *(p + 1);
-				unsigned int bottom = *(pixel + (pitch << 2));
-				unsigned int c1 = (top + bottom) >> 2;
-				if (c1 > 1) c1--;
-				*pixel = c1;
-				*(pixel + pitch) = (c1 + bottom) >> 1;
-				pixel++;
-
-				// main line loop
-				for (a = 1; a < width-1; a++)
-				{
-					// sum top pixels
-					p = pixel + (pitch << 1);
-					top = *p + *(p - 1) + *(p + 1);
-
-					// bottom pixel
-					bottom = *(pixel + (pitch << 2));
-
-					// combine pixels
-					c1 = (top + bottom) >> 2;
-					if (c1 > 1) c1--;
-
-					// store pixels
-					*pixel = c1;
-					*(pixel + pitch) = (c1 + bottom) >> 1;		// interpolate
-
-					// next pixel
-					pixel++;
-				}
-
-				// special case: last pixel on line
-				p = pixel + (pitch << 1);
-				top = *p + *(p - 1) + *(p - width + 1);
-				bottom = *(pixel + (pitch << 2));
-				c1 = (top + bottom) >> 2;
-				if (c1 > 1) c1--;
-				*pixel = c1;
-				*(pixel + pitch) = (c1 + bottom) >> 1;
-
-				// next line
-				from += pitch << 1;
-			}
-
+			M_RenderPlayerBackdrop ();
 			M_DrawPlayerBackdrop (x, y - 1);
 			FireScreen->Unlock ();
 		}
 	}
 	{
 		spriteframe_t *sprframe =
-			&sprites[skins[players[consoleplayer].userinfo.skin].sprite].spriteframes[PlayerState->GetFrame()];
+			&SpriteFrames[sprites[skins[players[consoleplayer].userinfo.skin].sprite].spriteframes + PlayerState->GetFrame()];
 
 		V_ColorMap = translationtables[TRANSLATION_Players] + consoleplayer*256;
 		screen->DrawTranslatedPatchClean ((patch_t *)W_CacheLumpNum (
@@ -1729,17 +1664,246 @@ static void M_PlayerSetupDrawer ()
 		autoaim <= 3 ? "Very High" : "Always");
 }
 
+static BYTE naru[1024] =
+{
+	 11,11,11,11,13,15,18,17,16,16,15,14,11, 7, 6,11,14,12,10,10,12,15,13,11, 8, 8,10,13,14,12, 7,16,
+	 17,17,14,12,12,15,10,10, 9,10,10, 7, 6, 3, 1, 6, 9, 9, 5, 6,11,13,11, 8, 9,11, 9,11,14,14, 6,12,
+	 20,19,17,13, 9, 6, 5, 5, 4, 3, 2, 2, 2, 2, 2, 6,12, 8, 1, 1, 7, 6, 6, 9, 2, 9,13,14,15,13, 8,12,
+	 21,20,19,13, 7, 7,11, 8, 4, 2, 8, 6, 2, 0, 1, 7,13,11, 8, 8, 4, 6, 0,14, 7, 6,18,18,15,14,12, 9,
+	 19,19,16,12,11,19,14,11, 7, 8,13, 4, 2, 0, 0, 8,14,16,10,14, 5,13, 4,11,14, 6,14,24,19,17,15, 9,
+	 18,16,14,14,19,26,14,13,10,22,15, 6, 4, 0, 1, 6,14,19,14,14,11,12,10,10,18,11,12,21,21,16,16,17,
+	 18,14,10,10,26,23, 7,10,15,25,16,11,10, 3, 3, 6,12,21,16,17,15, 9,14, 4,19,13,10,12,14,15,16,17,
+	 21, 9, 5,15,22,12, 2, 8,17,13,13,15,11, 4, 6, 6,10,19,16, 9,17,11,14, 1,12,14, 7,13, 9,14,16,19,
+	 22,10, 6,11,14, 5, 4, 7,10, 8,14,14, 7, 4, 5, 5, 5,15,13, 7,10, 7,10, 5, 6,17, 8,13, 7,10,17,20,
+	 21, 7, 6, 8, 6, 6, 6, 5, 6, 7,16,13, 5,10, 8, 5, 3, 7, 9, 6, 4, 3, 3, 5, 4,14, 8,12, 6, 7,17,21,
+	 18, 6, 8, 8, 3, 8, 6, 3, 5, 9,17,16, 7,16,11, 4, 5, 4, 8, 7, 2, 3, 0, 4, 4,14, 9, 7, 8, 4,15,22,
+	 17,11, 9, 8, 4, 8, 5, 4, 5,13,20,18, 7,16,12,10, 3, 3, 4, 9, 4, 7, 3, 5, 4,14,10, 3, 8, 5,15,22,
+	 18,15,11, 8, 3, 9, 3, 3, 5,11,17,17, 7,17,16,14, 4, 5, 6, 9, 7, 1, 2, 6, 6,14, 9, 3, 6, 8,14,22,
+	 16,16,11, 6, 4, 8, 1, 1, 9,18,13, 9, 8,18,20,16,11, 6,11, 4, 3, 4, 4, 8, 3,11, 8, 4, 3, 7,11,20,
+	 13,14, 9, 4,10, 7, 2, 2,12,17,11, 0, 2,13,24,18,16, 7, 2, 1, 3, 0, 0, 6, 4, 8, 7, 4, 2, 4,10,17,
+	 11,11, 7, 5,14, 6, 3, 2, 6, 5, 8, 8, 8, 3,21,26,15, 4, 3,10,16,11, 7, 0, 1, 8, 8, 3, 3, 3,10,15,
+	  9,12, 7, 5,13, 3, 3, 1, 1, 5, 8, 9,15,16,10,26,11, 4, 9,13,18,20,18, 0, 0, 6, 9, 4, 2, 3,10,16,
+	 10,16, 9, 5,11, 3, 5, 0, 2, 7, 8, 9,13,20,13,25,11,10,16,15,16,17,18,11, 0, 6, 9, 4, 0, 3,12,19,
+	 19,21,11, 5,13, 4, 7, 0, 6,10,11,10,12,18,14,18, 8,16,21,18,18,17,17,15, 1, 3, 9, 5, 6, 1,14,21,
+	 23,22,14, 6,16, 9, 8, 0, 9,14,14,11,10,15,15,12,11,18,21,20,19,19,17,14, 4, 4, 8, 6,18, 4,15,21,
+	 22,20,19,11,17,13, 7, 0, 7,17,16,12, 7,11,12,19,20,14,19,18,18,20,17,11, 1, 5, 8, 7,17, 4,15,17,
+	 18,17,19,16,15,11, 5, 1, 7,21,18,13, 6, 9, 9,15,14, 8,12,16,17,19,17, 9, 4, 3, 6, 7,13, 5,14,13,
+	 15,17,18,17,12, 8, 5, 4, 8,13,18,14, 8, 6, 8,11, 9, 8, 6, 7, 9, 8, 7,12, 5, 2, 1, 3, 4, 4,10,11,
+	 16,18,17,16,12, 9, 8, 2, 4,14,10, 8,10,10,13,13, 7, 7,11,12, 9, 8,16,19, 5, 2, 0, 1, 1, 3, 8,10,
+	  6, 7, 5, 6,10, 9,11,10, 6, 7,14,16,17,17,16,14, 8, 8,11,16,19,20,22,18, 4, 2, 0, 2, 1, 2,10,10,
+	 12,12,10,11,11,12,13,13,11, 5,16,18,17,18,17,13,10, 7,11,17,22,22,21,14, 2, 3, 1, 3, 2, 6, 7, 9,
+	 18,18,19,18,13,13,13,12,12, 5, 9,16,16,14,12, 8, 6, 5,10,13,17,23,20, 5, 0, 3, 2, 4, 4, 5,10, 3,
+	 15,18,21,22,17,12,12,10,10, 3, 2, 7,12, 8, 8, 8, 9,10,13,17, 9,15, 6, 2, 4, 6, 9, 4, 4, 0, 5, 6,
+	 15,17,21,24,18,13,11, 9, 6, 2, 3, 2, 1, 9,12,11,10,10,13,16, 9, 0,11, 6, 1, 7,10, 6, 7, 5, 5, 6,
+	 14,15,19,23,19,14,10, 7, 6, 6, 1, 4, 2, 0, 5,10,10, 9,10, 6, 6, 5,13, 8, 2, 5, 8, 4, 8, 8, 5, 5,
+	 15,14,16,21,17,11, 6, 4, 7, 2, 5, 6, 4, 2, 0, 4, 4, 2, 3, 6, 9, 5,10, 8, 1, 5, 5, 3, 5, 4, 2, 4,
+	  9, 8,12,16, 9,10, 7, 5, 7, 5, 9, 7, 6, 4, 5, 8, 5, 4, 6, 8, 8, 4, 8, 8, 3, 5, 6, 4, 3, 4, 6, 6,
+};
+
+static BYTE smoke[1024] =
+{
+	  9, 9, 8, 8, 8, 8, 6, 6,13,13,11,21,19,21,23,18,23,24,19,19,24,17,18,12, 9,14, 8,12,12, 5, 8, 6,
+	 11,10, 6, 7, 8, 8, 9,13,10,11,17,15,23,22,23,22,20,26,27,26,17,21,20,14,12, 8,11, 8,11, 7, 8, 7,
+	  6, 9,13,13,10, 9,13, 7,12,13,16,19,16,20,22,25,22,25,27,22,21,23,15,10,14,14,15,13,12, 8,12, 6,
+	  6, 7,12,12,12,16, 9,12,12,15,16,11,21,24,19,24,23,26,28,27,26,21,14,15, 7, 7,10,15,12,11,10, 9,
+	  7,14,11,16,12,18,16,14,16,14,11,14,15,21,23,17,20,18,26,24,27,18,20,11,11,14,10,17,17,10, 6,10,
+	 13, 9,14,10,13,11,14,15,18,15,15,12,19,19,20,18,22,20,19,22,19,19,19,20,17,15,15,11,16,14,10, 8,
+	 13,16,12,16,17,19,17,18,15,19,14,18,15,14,15,17,21,19,23,18,23,22,18,18,17,15,15,16,12,12,15,10,
+	 10,12,14,10,16,11,18,15,21,20,20,17,18,19,16,19,14,20,19,14,19,25,22,21,22,24,18,12, 9, 9, 8, 6,
+	 10,10,13, 9,15,13,20,19,22,18,18,17,17,21,21,13,13,12,19,18,16,17,27,26,22,23,20,17,12,11, 8, 9,
+	  7,13,14,15,11,13,18,22,19,23,23,20,22,24,21,14,12,16,17,19,18,18,22,18,24,23,19,17,16,14, 8, 7,
+	 12,12, 8, 8,16,20,26,25,28,28,22,29,23,22,21,18,13,16,15,15,20,17,25,24,19,17,17,17,15,10, 8, 9,
+	  7,12,15,11,17,20,25,25,25,29,30,31,28,26,18,16,17,18,20,21,22,20,23,19,18,19,10,16,16,11,11, 8,
+	  5, 6, 8,14,14,17,17,21,27,23,27,31,27,22,23,21,19,19,21,19,20,19,17,22,13,17,12,15,10,10,12, 6,
+	  8, 9, 8,14,15,16,15,18,27,26,23,25,23,22,18,21,20,17,19,20,20,16,20,14,15,13,12, 8, 8, 7,11,13,
+	  7, 6,11,11,11,13,15,22,25,24,26,22,24,26,23,18,24,24,20,18,20,16,17,12,12,12,10, 8,11, 9, 6, 8,
+	  9,10, 9, 6, 5,14,16,19,17,21,26,20,23,19,19,17,20,21,26,25,23,21,17,13,12, 5,13,11, 7,12,10,12,
+	  6, 5, 4,10,11, 9,10,13,17,20,20,18,23,26,27,20,21,24,20,19,24,20,18,10,11, 3, 6,13, 9, 6, 8, 8,
+	  1, 2, 2,11,13,13,11,16,16,16,19,21,20,23,22,28,21,20,19,18,23,16,18, 7, 5, 9, 7, 6, 5,10, 8, 8,
+	  0, 0, 6, 9,11,15,12,12,19,18,19,26,22,24,26,30,23,22,22,16,20,19,12,12, 3, 4, 6, 5, 4, 7, 2, 4,
+	  2, 0, 0, 7,11, 8,14,13,15,21,26,28,25,24,27,26,23,24,22,22,15,17,12, 8,10, 7, 7, 4, 0, 5, 0, 1,
+	  1, 2, 0, 1, 9,14,13,10,19,24,22,29,30,28,30,30,31,23,24,19,17,14,13, 8, 8, 8, 1, 4, 0, 0, 0, 3,
+	  5, 2, 4, 2, 9, 8, 8, 8,18,23,20,27,30,27,31,25,28,30,28,24,24,15,11,14,10, 3, 4, 3, 0, 0, 1, 3,
+	  9, 3, 4, 3, 5, 6, 8,13,14,23,21,27,28,27,28,27,27,29,30,24,22,23,13,15, 8, 6, 2, 0, 4, 3, 4, 1,
+	  6, 5, 5, 3, 9, 3, 6,14,13,16,23,26,28,23,30,31,28,29,26,27,21,20,15,15,13, 9, 1, 0, 2, 0, 5, 8,
+	  8, 4, 3, 7, 2, 0,10, 7,10,14,21,21,29,28,25,27,30,28,25,24,27,22,19,13,10, 5, 0, 0, 0, 0, 0, 7,
+	  7, 6, 7, 0, 2, 2, 5, 6,15,11,19,24,22,29,27,31,30,30,31,28,23,18,14,14, 7, 5, 0, 0, 1, 0, 1, 0,
+	  5, 5, 5, 0, 0, 4, 5,11, 7,10,13,20,21,21,28,31,28,30,26,28,25,21, 9,12, 3, 3, 0, 2, 2, 2, 0, 1,
+	  3, 3, 0, 2, 0, 3, 5, 3,11,11,16,19,19,27,26,26,30,27,28,26,23,22,16, 6, 2, 2, 3, 2, 0, 2, 4, 0,
+	  0, 0, 0, 3, 3, 1, 0, 4, 5, 9,11,16,24,20,28,26,28,24,28,25,22,21,16, 5, 7, 5, 7, 3, 2, 3, 3, 6,
+	  0, 0, 2, 0, 2, 0, 4, 3, 8,12, 9,17,16,23,23,27,27,22,26,22,21,21,13,14, 5, 3, 7, 3, 2, 4, 6, 1,
+	  2, 5, 6, 4, 0, 1, 5, 8, 7, 6,15,17,22,20,24,28,23,25,20,21,18,16,13,15,13,10, 8, 5, 5, 9, 3, 7,
+	  7, 7, 0, 5, 1, 6, 7, 9,12, 9,12,21,22,25,24,22,23,25,24,18,24,22,17,13,10, 9,10, 9, 6,11, 6, 5,
+};
+
+static void M_RenderPlayerBackdrop ()
+{
+	byte *from;
+	int width, height, pitch;
+
+	width = FireScreen->GetWidth();
+	height = FireScreen->GetHeight();
+	pitch = FireScreen->GetPitch();
+
+	int x, y;
+	static angle_t time1 = ANGLE_1*180;
+	static angle_t time2 = ANGLE_1*56;
+	static angle_t time3 = ANGLE_1*99;
+	static angle_t time4 = ANGLE_1*1;
+	static angle_t t1ang = ANGLE_90;
+	static angle_t t2ang = 0;
+	static angle_t z1ang = 0;
+	static angle_t z2ang = ANGLE_90/2;
+
+	const angle_t a1add = ANGLE_1/2;
+	const angle_t a2add = ANGLE_MAX-ANGLE_1;
+	const angle_t a3add = ANGLE_1*5/7;
+	const angle_t a4add = ANGLE_MAX-ANGLE_1*4/3;
+
+	const angle_t t1add = ANGLE_MAX-ANGLE_1*2;
+	const angle_t t2add = ANGLE_MAX-ANGLE_1*3+ANGLE_1/6;
+	const angle_t t3add = ANGLE_1*16/7;
+	const angle_t t4add = ANGLE_MAX-ANGLE_1*2/3;
+	const angle_t x1add = 5<<ANGLETOFINESHIFT;
+	const angle_t x2add = ANGLE_MAX-(13<<ANGLETOFINESHIFT);
+	const angle_t z1add = 3<<ANGLETOFINESHIFT;
+	const angle_t z2add = 4<<ANGLETOFINESHIFT;
+
+	angle_t a1, a2, a3, a4;
+	fixed_t c1, c2, c3, c4;
+	DWORD tx, ty, tc, ts;
+	DWORD ux, uy, uc, us;
+	DWORD ltx, lty, lux, luy;
+
+	from = FireScreen->GetBuffer ();
+
+	a3 = time3;
+	a4 = time4;
+
+	fixed_t z1 = (finecosine[z2ang>>ANGLETOFINESHIFT]>>2)+FRACUNIT/2;
+	fixed_t z2 = (finecosine[z1ang>>ANGLETOFINESHIFT]>>2)+FRACUNIT*3/4;
+
+	tc = MulScale5 (finecosine[t1ang>>ANGLETOFINESHIFT], z1);
+	ts = MulScale5 (finesine[t1ang>>ANGLETOFINESHIFT], z1);
+	uc = MulScale5 (finecosine[t2ang>>ANGLETOFINESHIFT], z2);
+	us = MulScale5 (finesine[t2ang>>ANGLETOFINESHIFT], z2);
+
+	ltx = -width/2*tc;
+	lty = -width/2*ts;
+	lux = -width/2*uc;
+	luy = -width/2*us;
+
+	for (y = 0; y < height; ++y)
+	{
+		a1 = time1;
+		a2 = time2;
+		c3 = finecosine[a3>>ANGLETOFINESHIFT];
+		c4 = finecosine[a4>>ANGLETOFINESHIFT];
+		tx = ltx - (y-height/2)*ts;
+		ty = lty + (y-height/2)*tc;
+		ux = lux - (y-height/2)*us;
+		uy = luy + (y-height/2)*uc;
+		for (x = 0; x < width; ++x)
+		{
+			c1 = finecosine[a1>>ANGLETOFINESHIFT];
+			c2 = finecosine[a2>>ANGLETOFINESHIFT];
+			from[x] = ((c1 + c2 + c3 + c4) >> (FRACBITS+3-7)) + 128	// plasma
+			 + naru[(tx>>27)+((ty>>22)&992)]						// rotozoomer 1
+			 + smoke[(ux>>27)+((uy>>22)&992)];						// rotozoomer 2
+			tx += tc;
+			ty += ts;
+			ux += uc;
+			uy += us;
+			a1 += a1add;
+			a2 += a2add;
+		}
+		a3 += a3add;
+		a4 += a4add;
+		from += pitch;
+	}
+
+	time1 += t1add;
+	time2 += t2add;
+	time3 += t3add;
+	time4 += t4add;
+	t1ang += x1add;
+	t2ang += x2add;
+	z1ang += z1add;
+	z2ang += z2add;
+#if 0
+	// [RH] The following fire code is based on the PTC fire demo
+	int a, b;
+
+	from = FireScreen->GetBuffer() + (height - 3) * pitch;
+
+	for (a = 0; a < width; a++, from++)
+	{
+		*from = *(from + (pitch << 1)) = M_Random();
+	}
+
+	from = FireScreen->GetBuffer();
+	for (b = 0; b < FireScreen->GetHeight() - 4; b += 2)
+	{
+		byte *pixel = from;
+
+		// special case: first pixel on line
+		byte *p = pixel + (pitch << 1);
+		unsigned int top = *p + *(p + width - 1) + *(p + 1);
+		unsigned int bottom = *(pixel + (pitch << 2));
+		unsigned int c1 = (top + bottom) >> 2;
+		if (c1 > 1) c1--;
+		*pixel = c1;
+		*(pixel + pitch) = (c1 + bottom) >> 1;
+		pixel++;
+
+		// main line loop
+		for (a = 1; a < width-1; a++)
+		{
+			// sum top pixels
+			p = pixel + (pitch << 1);
+			top = *p + *(p - 1) + *(p + 1);
+
+			// bottom pixel
+			bottom = *(pixel + (pitch << 2));
+
+			// combine pixels
+			c1 = (top + bottom) >> 2;
+			if (c1 > 1) c1--;
+
+			// store pixels
+			*pixel = c1;
+			*(pixel + pitch) = (c1 + bottom) >> 1;		// interpolate
+
+			// next pixel
+			pixel++;
+		}
+
+		// special case: last pixel on line
+		p = pixel + (pitch << 1);
+		top = *p + *(p - 1) + *(p - width + 1);
+		bottom = *(pixel + (pitch << 2));
+		c1 = (top + bottom) >> 2;
+		if (c1 > 1) c1--;
+		*pixel = c1;
+		*(pixel + pitch) = (c1 + bottom) >> 1;
+
+		// next line
+		from += pitch << 1;
+	}
+#endif
+}
+
 static void M_DrawPlayerBackdrop (int x, int y)
 {
 	DCanvas *src = FireScreen;
 	DCanvas *dest = screen;
 	byte *destline, *srcline;
-	const int destwidth = src->GetWidth() * CleanXfac;
-	const int destheight = src->GetHeight() * CleanYfac;
+	const int destwidth = src->GetWidth() * CleanXfac / 2;
+	const int destheight = src->GetHeight() * CleanYfac / 2;
 	const int desty = y;
 	const int destx = x;
-	const fixed_t fracxstep = FRACUNIT / CleanXfac;
-	const fixed_t fracystep = FRACUNIT / CleanYfac;
+	const fixed_t fracxstep = FRACUNIT*2 / CleanXfac;
+	const fixed_t fracystep = FRACUNIT*2 / CleanYfac;
 	fixed_t fracx, fracy = 0;
 
 
@@ -1784,12 +1948,12 @@ static void M_ChangeGender (int choice)
 
 static void M_ChangeSkin (int choice)
 {
-	int skin = players[consoleplayer].userinfo.skin;
+	size_t skin = players[consoleplayer].userinfo.skin;
 
 	if (!choice)
 		skin = (skin == 0) ? numskins - 1 : skin - 1;
 	else
-		skin = (skin < (int)numskins - 1) ? skin + 1 : 0;
+		skin = (skin < numskins - 1) ? skin + 1 : 0;
 
 	cvar_set ("skin", skins[skin].name);
 }
@@ -2029,7 +2193,7 @@ BOOL M_Responder (event_t *ev)
 		{
 			ch = ev->data1;
 			if (saveCharIndex < genStringLen &&
-				screen->StringWidth (savegamestring) < (genStringLen-1)*8)
+				(size_t)screen->StringWidth (savegamestring) < (genStringLen-1)*8)
 			{
 				savegamestring[saveCharIndex] = ch;
 				savegamestring[++saveCharIndex] = 0;
@@ -2539,6 +2703,7 @@ void M_PopMenuStack (void)
 	M_DemoNoPlay = false;
 	InfoType = 0;
 	M_ClearSaveStuff ();
+	flagsvar = 0;
 	if (MenuStackDepth > 1)
 	{
 		MenuStackDepth -= 2;
@@ -2665,7 +2830,13 @@ void M_Init (void)
 	M_OptInit ();
 
 	// [RH] Build a palette translation table for the fire
-	for (i = 0; i < 255; i++)
+	for (i = 0; i < 256; i++)
+	{
+#if 0
 		FireRemap[i] = ColorMatcher.Pick (i, 0, 0);
+#else
+		FireRemap[i] = ColorMatcher.Pick (i/2+32, 0, i/4);
+#endif
+	}
 }
 

@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 
-struct patch_s;
+struct patch_t;
 
 struct RawImageHeader
 {
@@ -64,7 +64,7 @@ public:
 	int GetImageHeight (int index) const;
 
 protected:
-	static patch_s *CachePatch (const char *name, int namespc);
+	static patch_t *CachePatch (const char *name, int namespc);
 
 	int NumImages;
 	struct ImageData

@@ -59,7 +59,8 @@ enum
 	CVAR_AUTO			= 256,	// allocated; needs to be freed when destroyed
 	CVAR_NOINITCALL		= 512,	// don't call callback at game start
 	CVAR_GLOBALCONFIG	= 1024,	// cvar is saved to global config section
-	CVAR_VIDEOCONFIG	= 2048, // cvar is saved to video config section
+	CVAR_VIDEOCONFIG	= 2048, // cvar is saved to video config section (not implemented)
+	CVAR_NOSAVE			= 4096, // when used with CVAR_SERVERINFO, do not save var to savegame
 };
 
 union UCVarValue
@@ -116,7 +117,7 @@ public:
 	static void EnableCallbacks ();
 	static void ResetColors ();		// recalc color cvars' indices after screen change
 
-	static void ListVars (const char *filter);
+	static void ListVars (const char *filter, bool plain);
 
 protected:
 	FBaseCVar () {}

@@ -302,7 +302,7 @@ char *V_GetColorStringByName (const char *name)
 	char descr[5*3];
 	int rgblump;
 	int c[3], step;
-	int namelen;
+	size_t namelen;
 
 	rgblump = W_CheckNumForName ("X11R6RGB");
 	if (rgblump == -1)
@@ -355,7 +355,7 @@ char *V_GetColorStringByName (const char *name)
 			{
 				break;
 			}
-			int checklen = ++endp - rgb;
+			size_t checklen = ++endp - rgb;
 			if (checklen == namelen && strnicmp (rgb, name, checklen) == 0)
 			{
 				sprintf (descr, "%02x %02x %02x", c[0], c[1], c[2]);
@@ -647,6 +647,15 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	CleanXfac = width / 320;
 	CleanYfac = height / 200;
+
+	if (CleanXfac > 1 && CleanYfac > 1 && CleanXfac != CleanYfac)
+	{
+		if (CleanXfac < CleanYfac)
+			CleanYfac = CleanXfac;
+		else
+			CleanXfac = CleanYfac;
+	}
+
 	CleanWidth = width / CleanXfac;
 	CleanHeight = height / CleanYfac;
 
@@ -686,7 +695,8 @@ bool V_SetResolution (int width, int height, int bits)
 		if (!I_CheckResolution (oldwidth, oldheight, oldbits))
 		{ // Try previous resolution (if any)
 	   		return false;
-		} else
+		}
+		else
 		{
 			width = oldwidth;
 			height = oldheight;

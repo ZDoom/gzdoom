@@ -32,6 +32,8 @@
 #include "r_state.h"
 #include "gi.h"
 
+static FRandom pr_doplat ("DoPlat");
+
 IMPLEMENT_CLASS (DPlat)
 
 DPlat::DPlat ()
@@ -202,7 +204,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, int height,
 	{
 		if (!line || !(sec = line->backsector))
 			return false;
-		secnum = sec - sectors;
+		secnum = (int)(sec - sectors);
 		manual = true;
 		goto manual_plat;
 	}
@@ -316,7 +318,7 @@ manual_plat:
 			if (plat->m_High > sec->floorplane.d)
 				plat->m_High = sec->floorplane.d;
 
-			plat->m_Status = P_Random (pr_doplat) & 1 ? DPlat::up : DPlat::down;
+			plat->m_Status = pr_doplat() & 1 ? DPlat::up : DPlat::down;
 
 			plat->PlayPlatSound ("Platform");
 			break;

@@ -35,6 +35,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cmdlib.h"
+#include "actor.h"
 #include "dobject.h"
 #include "m_alloc.h"
 #include "doomstat.h"		// Ideally, DObjects can be used independant of Doom.
@@ -45,6 +47,7 @@
 #include "r_state.h"
 #include "stats.h"
 
+TArray<TypeInfo *> TypeInfo::m_RuntimeActors;
 TypeInfo **TypeInfo::m_Types;
 unsigned short TypeInfo::m_NumTypes;
 unsigned short TypeInfo::m_MaxTypes;
@@ -81,7 +84,7 @@ void TypeInfo::RegisterType ()
 	// Add type to list
 	if (m_NumTypes == m_MaxTypes)
 	{
-		m_MaxTypes = m_MaxTypes ? m_MaxTypes*2 : 32;
+		m_MaxTypes = m_MaxTypes ? m_MaxTypes*2 : 256;
 		m_Types = (TypeInfo **)Realloc (m_Types, m_MaxTypes * sizeof(*m_Types));
 	}
 	m_Types[m_NumTypes] = this;
@@ -152,6 +155,67 @@ const TypeInfo *TypeInfo::IFindType (const char *name)
 	return NULL;
 }
 
+// Create a new object that this type represents
+DObject *TypeInfo::CreateNew () const
+{
+	BYTE *mem = (BYTE *)Malloc (SizeOf);
+	ConstructNative (mem);
+	((DObject *)mem)->SetClass (const_cast<TypeInfo *>(this));
+
+	// If this is a scripted extension of a class but not an actor,
+	// initialize any extended space to zero. Actors have defaults, so
+	// we can initialize them better
+	if (ActorInfo != NULL)
+	{
+		AActor *actor = (AActor *)mem;
+		memcpy (&(actor->x), &(((AActor *)ActorInfo->Defaults)->x), SizeOf - myoffsetof(AActor,x));
+	}
+	else if (ParentType != 0 &&
+		ConstructNative == ParentType->ConstructNative &&
+		SizeOf > ParentType->SizeOf)
+	{
+		memset (mem + ParentType->SizeOf, 0, SizeOf - ParentType->SizeOf);
+	}
+	return (DObject *)mem;
+}
+
+// Create a new type based on an existing type
+TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
+{
+	TypeInfo *type = new TypeInfo;
+
+	type->Name = name;
+	type->ParentType = this;
+	type->SizeOf = size;
+	type->Pointers = NULL;
+	type->ConstructNative = ConstructNative;
+	type->RegisterType();
+
+	// If this class has an actor info, then any classes derived from it
+	// also need an actor info.
+	if (this->ActorInfo != NULL)
+	{
+		FActorInfo *info = type->ActorInfo = new FActorInfo;
+		info->Class = type;
+		info->Defaults = new BYTE[size];
+		info->GameFilter = GAME_Any;
+		info->SpawnID = 0;
+		info->DoomEdNum = -1;
+
+		memcpy (info->Defaults, ActorInfo->Defaults, SizeOf);
+		if (size > SizeOf)
+		{
+			memset (info->Defaults + SizeOf, 0, size - SizeOf);
+		}
+		m_RuntimeActors.Push (type);
+	}
+	else
+	{
+		type->ActorInfo = NULL;
+	}
+	return type;
+}
+
 CCMD (dumpclasses)
 {
 	const TypeInfo *root;
@@ -205,8 +269,17 @@ TArray<DObject *> DObject::ToDestroy;
 bool DObject::Inactive;
 
 DObject::DObject ()
+: Class(0), ObjectFlags(0)
 {
-	ObjectFlags = 0;
+	if (FreeIndices.Pop (Index))
+		Objects[Index] = this;
+	else
+		Index = Objects.Push (this);
+}
+
+DObject::DObject (TypeInfo *inClass)
+: Class(inClass), ObjectFlags(0)
+{
 	if (FreeIndices.Pop (Index))
 		Objects[Index] = this;
 	else
@@ -227,9 +300,9 @@ DObject::~DObject ()
 			// object is queued for deletion, but is not being deleted
 			// by the destruction process, so remove it from the
 			// ToDestroy array and do other necessary stuff.
-			int i;
+			size_t i;
 
-			for (i = ToDestroy.Size() - 1; i >= 0; i--)
+			for (i = ToDestroy.Size() - 1; i-- > 0; )
 			{
 				if (ToDestroy[i] == this)
 				{
@@ -268,7 +341,7 @@ void DObject::EndFrame ()
 	clock (StaleCycles);
 	if (ToDestroy.Size ())
 	{
-		StaleCount += ToDestroy.Size ();
+		StaleCount += (int)ToDestroy.Size ();
 		DestroyScan ();
 		//Printf ("Destroyed %d objects\n", ToDestroy.Size());
 
@@ -306,12 +379,12 @@ void DObject::DestroyScan (DObject *obj)
 	size_t i, highest;
 	highest = Objects.Size ();
 
-	for (i = 0; i < highest; i++)
+	for (i = 0; i <= highest; i++)
 	{
-		DObject *current = Objects[i];
+		DObject *current = i < highest ? Objects[i] : &bglobal;
 		if (current)
 		{
-			const TypeInfo *info = RUNTIME_TYPE(current);
+			const TypeInfo *info = NATIVE_TYPE(current);
 			while (info)
 			{
 				const size_t *offsets = info->Pointers;
@@ -363,12 +436,12 @@ void DObject::DestroyScan ()
 	destroycount = -destroycount;
 	highest = Objects.Size ();
 
-	for (i = 0; i < highest; i++)
+	for (i = 0; i <= highest; i++)
 	{
-		DObject *current = Objects[i];
+		DObject *current = i < highest ? Objects[i] : &bglobal;
 		if (current)
 		{
-			const TypeInfo *info = RUNTIME_TYPE(current);
+			const TypeInfo *info = NATIVE_TYPE(current);
 			while (info)
 			{
 				const size_t *offsets = info->Pointers;

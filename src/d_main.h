@@ -60,6 +60,7 @@ enum EIWADType
 	IWAD_Doom2TNT,
 	IWAD_Doom2Plutonia,
 	IWAD_Hexen,
+	IWAD_HexenDK,
 	IWAD_Doom2,
 	IWAD_HereticShareware,
 	IWAD_HereticExtended,

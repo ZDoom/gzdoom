@@ -21,6 +21,8 @@
 
 #include "stats.h"
 
+static FRandom pr_botchecksight ("BotCheckSight");
+static FRandom pr_checksight ("CheckSight");
 
 /*
 ==============================================================================
@@ -188,7 +190,7 @@ static bool P_SightBlockLinesIterator (int x, int y)
 
 static bool P_SightTraverseIntercepts ()
 {
-	int count;
+	size_t count;
 	fixed_t dist;
 	intercept_t *scan, *in;
 	size_t scanpos;
@@ -385,7 +387,7 @@ bool P_CheckSight (const AActor *t1, const AActor *t2, BOOL ignoreInvisibility)
 
 	const sector_t *s1 = t1->Sector;
 	const sector_t *s2 = t2->Sector;
-	int pnum = (s1 - sectors) * numsectors + (s2 - sectors);
+	int pnum = int(s1 - sectors) * numsectors + int(s2 - sectors);
 
 //
 // check for trivial rejection
@@ -407,7 +409,7 @@ sightcounts[0]++;
 		 (t2->RenderStyle >= STYLE_Translucent && t2->alpha == 0) ||
 		 (t2->renderflags & RF_INVISIBLE)))
 	{ // small chance of an attack being made anyway
-		if (P_Random (bglobal.m_Thinking ? pr_botchecksight : pr_checksight) > 50)
+		if ((bglobal.m_Thinking ? pr_botchecksight() : pr_checksight()) > 50)
 		{
 			res = false;
 			goto done;

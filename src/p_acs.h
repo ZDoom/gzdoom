@@ -38,7 +38,8 @@
 #include "dobject.h"
 #include "doomtype.h"
 
-#define LOCAL_SIZE	10
+#define LOCAL_SIZE				10
+#define NUM_MAPVARS				128
 
 class FFont;
 
@@ -70,7 +71,7 @@ struct ScriptFunction
 	BYTE ArgCount;
 	BYTE LocalCount;
 	BYTE HasReturnValue;
-	BYTE Pad;
+	BYTE ImportNum;
 	DWORD Address;
 };
 
@@ -92,7 +93,7 @@ enum ACSFormat { ACS_Old, ACS_Enhanced, ACS_LittleEnhanced, ACS_Unknown };
 class FBehavior
 {
 public:
-	FBehavior (BYTE *object, int len);
+	FBehavior (int lumpnum);
 	~FBehavior ();
 
 	bool IsGood ();
@@ -100,21 +101,38 @@ public:
 	BYTE *NextChunk (BYTE *chunk) const;
 	int *FindScript (int number) const;
 	void PrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
-	const char *LookupString (DWORD index, DWORD ofs=0) const;
-	const char *LocalizeString (DWORD index) const;
-	void StartTypedScripts (WORD type, AActor *activator) const;
-	DWORD PC2Ofs (int *pc) const { return (BYTE *)pc - Data; }
-	int *Ofs2PC (DWORD ofs) const { return (int *)(Data + ofs); }
+	void StartTypedScripts (WORD type, AActor *activator);
+	DWORD PC2Ofs (int *pc) const { return (DWORD)((BYTE *)pc - Data); }
+	int *Ofs2PC (DWORD ofs) const {	return (int *)(Data + ofs); }
 	ACSFormat GetFormat() const { return Format; }
-	ScriptFunction *GetFunction (int funcnum) const;
+	ScriptFunction *GetFunction (int funcnum, FBehavior *&module) const;
 	int GetArrayVal (int arraynum, int index) const;
 	void SetArrayVal (int arraynum, int index, int value);
+	int FindFunctionName (const char *funcname) const;
+	int FindMapVarName (const char *varname) const;
+	int FindMapArray (const char *arrayname) const;
+	int GetLibraryID () const { return LibraryID; }
+
+	SDWORD *MapVars[NUM_MAPVARS];
+
+	static FBehavior *StaticLoadModule (int lumpnum);
+	static void StaticUnloadModules ();
+	static bool StaticCheckAllGood ();
+	static FBehavior *StaticGetModule (int lib);
+	static void StaticSerializeModuleStates (FArchive &arc);
+
+	static int *StaticFindScript (int script, FBehavior *&module);
+	static const char *StaticLookupString (DWORD index);
+	static const char *StaticLocalizeString (DWORD index);
+	static void StaticPrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
+	static void StaticStartTypedScripts (WORD type, AActor *activator);
 
 private:
 	struct ArrayInfo;
 
 	ACSFormat Format;
 
+	int LumpNum;
 	BYTE *Data;
 	int DataSize;
 	BYTE *Chunks;
@@ -122,15 +140,30 @@ private:
 	int NumScripts;
 	BYTE *Functions;
 	int NumFunctions;
-	ArrayInfo *Arrays;
+	ArrayInfo *ArrayStore;
 	int NumArrays;
+	ArrayInfo **Arrays;
+	int NumTotalArrays;
 	DWORD LanguageNeutral;
 	DWORD Localized;
+	SDWORD MapVarStore[NUM_MAPVARS];
+	TArray<FBehavior *> Imports;
+	DWORD LibraryID;
+	char ModuleName[9];
+
+	static TArray<FBehavior *> StaticModules;
 
 	static int STACK_ARGS SortScripts (const void *a, const void *b);
 	void AddLanguage (DWORD lang);
 	DWORD FindLanguage (DWORD lang, bool ignoreregion) const;
 	DWORD *CheckIfInList (DWORD lang);
+	void UnencryptStrings ();
+	int FindStringInChunk (DWORD *chunk, const char *varname) const;
+	const char *LookupString (DWORD index, DWORD ofs=0) const;
+	const char *LocalizeString (DWORD index) const;
+
+	void SerializeVars (FArchive &arc);
+	void SerializeVarSet (FArchive &arc, SDWORD *vars, int max);
 };
 
 class DLevelScript : public DObject
@@ -366,6 +399,7 @@ public:
 		PCD_VECTORANGLE,
 		PCD_CHECKWEAPON,
 		PCD_SETWEAPON,
+		PCD_TAGSTRING,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -419,7 +453,7 @@ public:
 		SCRIPT_PleaseRemove
 	};
 
-	DLevelScript (AActor *who, line_t *where, int num, int *code,
+	DLevelScript (AActor *who, line_t *where, int num, int *code, FBehavior *module,
 		int lineSide, int arg0, int arg1, int arg2, int always, bool delay);
 
 	void Serialize (FArchive &arc);
@@ -428,14 +462,11 @@ public:
 	inline void SetState (EScriptState newstate) { state = newstate; }
 	inline EScriptState GetState () { return state; }
 
-	void *operator new (size_t size);
-	void operator delete (void *block);
-
 protected:
 	DLevelScript	*next, *prev;
 	int				script;
 	int				sp;
-	int				localvars[LOCAL_SIZE];
+	SDWORD			localvars[LOCAL_SIZE];
 	int				*pc;
 	EScriptState	state;
 	int				statedata;
@@ -443,6 +474,7 @@ protected:
 	line_t			*activationline;
 	int				lineSide;
 	FFont			*activefont;
+	FBehavior	    *activeBehavior;
 
 	void Link ();
 	void Unlink ();

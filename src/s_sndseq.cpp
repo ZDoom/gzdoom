@@ -192,6 +192,7 @@ static int SeqTrans[64*3];
 static unsigned int *ScriptTemp;
 static int ScriptTempSize;
 
+static FRandom pr_ssdelay ("SSDelay");
 
 // CODE --------------------------------------------------------------------
 
@@ -402,7 +403,7 @@ void S_ParseSndSeq (void)
 				{
 					if (stricmp (Sequences[curseq]->name, name) == 0)
 					{
-						Z_Free (Sequences[curseq]);
+						free (Sequences[curseq]);
 						Sequences[curseq] = NULL;
 						break;
 					}
@@ -501,7 +502,7 @@ void S_ParseSndSeq (void)
 					break;
 
 				case SS_STRING_END:
-					Sequences[curseq] = (sndseq_t *)Z_Malloc (sizeof(sndseq_t) + sizeof(int)*cursize, PU_STATIC, 0);
+					Sequences[curseq] = (sndseq_t *)Malloc (sizeof(sndseq_t) + sizeof(int)*cursize);
 					strcpy (Sequences[curseq]->name, name);
 					memcpy (Sequences[curseq]->script, ScriptTemp, sizeof(int)*cursize);
 					Sequences[curseq]->script[cursize] = SS_CMD_END << 24;
@@ -821,7 +822,7 @@ void DSeqNode::Tick ()
 
 	case SS_CMD_DELAYRAND:
 		m_DelayTics = GetData(*m_SequencePtr)+
-			P_Random(pr_ssdelay)%(*(m_SequencePtr+1)-GetData(*m_SequencePtr));
+			pr_ssdelay()%(*(m_SequencePtr+1)-GetData(*m_SequencePtr));
 		m_SequencePtr += 2;
 		m_CurrentSoundID = 0;
 		break;

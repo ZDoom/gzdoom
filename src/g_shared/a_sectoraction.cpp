@@ -35,7 +35,7 @@
 #include "r_defs.h"
 #include "p_lnspec.h"
 
-// The base class for sector actions
+// The base class for sector actions ----------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (ASectorAction, Any, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOSECTOR|MF_NOGRAVITY)
@@ -104,7 +104,7 @@ bool ASectorAction::CheckTrigger (AActor *triggerer) const
 	return false;
 }
 
-// Triggered when entering sector
+// Triggered when entering sector -------------------------------------------
 
 class ASecActEnter : public ASectorAction
 {
@@ -122,7 +122,7 @@ bool ASecActEnter::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when leaving sector
+// Triggered when leaving sector --------------------------------------------
 
 class ASecActExit : public ASectorAction
 {
@@ -140,7 +140,7 @@ bool ASecActExit::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when hitting sector's floor
+// Triggered when hitting sector's floor ------------------------------------
 
 class ASecActHitFloor : public ASectorAction
 {
@@ -160,7 +160,7 @@ bool ASecActHitFloor::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when hitting sector's ceiling
+// Triggered when hitting sector's ceiling ----------------------------------
 
 class ASecActHitCeil : public ASectorAction
 {
@@ -178,7 +178,7 @@ bool ASecActHitCeil::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when using inside sector
+// Triggered when using inside sector ---------------------------------------
 
 class ASecActUse : public ASectorAction
 {
@@ -196,7 +196,7 @@ bool ASecActUse::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when using a sector's wall
+// Triggered when using a sector's wall -------------------------------------
 
 class ASecActUseWall : public ASectorAction
 {
@@ -214,7 +214,7 @@ bool ASecActUseWall::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when eyes go below fake floor
+// Triggered when eyes go below fake floor ----------------------------------
 
 class ASecActEyesDive : public ASectorAction
 {
@@ -232,7 +232,7 @@ bool ASecActEyesDive::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when eyes go above fake floor
+// Triggered when eyes go above fake floor ----------------------------------
 
 class ASecActEyesSurface : public ASectorAction
 {
@@ -250,7 +250,7 @@ bool ASecActEyesSurface::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when eyes go below fake floor
+// Triggered when eyes go below fake floor ----------------------------------
 
 class ASecActEyesBelowC : public ASectorAction
 {
@@ -268,7 +268,7 @@ bool ASecActEyesBelowC::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
-// Triggered when eyes go above fake floor
+// Triggered when eyes go above fake floor ----------------------------------
 
 class ASecActEyesAboveC : public ASectorAction
 {
@@ -286,3 +286,20 @@ bool ASecActEyesAboveC::TriggerAction (AActor *triggerer, int activationType)
 	return didit | Super::TriggerAction (triggerer, activationType);
 }
 
+// Triggered when eyes go below fake floor ----------------------------------
+
+class ASecActHitFakeFloor : public ASectorAction
+{
+	DECLARE_STATELESS_ACTOR (ASecActHitFakeFloor, ASectorAction)
+public:
+	bool TriggerAction (AActor *triggerer, int activationType);
+};
+
+IMPLEMENT_STATELESS_ACTOR (ASecActHitFakeFloor, Any, 9989, 0)
+END_DEFAULTS
+
+bool ASecActHitFakeFloor::TriggerAction (AActor *triggerer, int activationType)
+{
+	bool didit = (activationType & SECSPAC_HitFakeFloor) ? CheckTrigger (triggerer) : false;
+	return didit | Super::TriggerAction (triggerer, activationType);
+}

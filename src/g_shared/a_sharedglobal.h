@@ -9,6 +9,8 @@ class FDecal;
 struct vertex_s;
 struct side_s;
 
+extern void P_SpawnDirt (AActor *actor, fixed_t radius);
+
 class AUnknown : public AActor
 {
 	DECLARE_ACTOR (AUnknown, AActor)
@@ -70,6 +72,9 @@ public:
 
 	void BeginPlay ();
 	void Destroy ();
+
+	void Serialize (FArchive &arc);
+	static void SerializeTime (FArchive &arc);
 
 protected:
 	AImpactDecal *CloneSelf (const FDecal *decal, fixed_t x, fixed_t y, fixed_t z, side_s *wall) const;

@@ -118,8 +118,11 @@ public:
 	void PrintAlias () { Printf ("%s : %s\n", m_Name, m_Command); }
 	void Archive (FConfigFile *f);
 	void Realias (const char *command);
+	void SafeDelete ();
 protected:
 	char *m_Command;
+	bool bRunning;
+	bool bKill;
 };
 
 // Actions

@@ -48,7 +48,6 @@
 //monster mod
 #define MSPAWN_DELAY 20//Tics between each spawn.
 #define MMAXSELECT   100 //Maximum number of monsters that can be selected at a time.
-#define MAXTHINGS	 400
 
 struct botskill_t
 {
@@ -70,16 +69,16 @@ struct botinfo_t
 	char *info;
 	botskill_t skill;
 	bool inuse;
+	int lastteam;
 };
 
-//Used to keep all the globally needed variables
-//in nice order.
+//Used to keep all the globally needed variables in nice order.
 class DCajunMaster : public DObject
 {
 	DECLARE_CLASS (DCajunMaster, DObject)
 	HAS_OBJECT_POINTERS
 public:
-	void ClearPlayer (int playernum);
+	void ClearPlayer (int playernum, bool keepTeam);
 
 	//(B_Game.c)
 	void Main (int buf);
@@ -115,11 +114,8 @@ public:
 	botinfo_t *botinfo;
 	int spawn_tries;
 	int wanted_botnum;
-	bool itemsdone; //When array filled. bots can start to think, prevents lock after level completion.
 	AActor *firstthing;
 
-	int		 thingnum;
-	AActor	*things[MAXTHINGS];
 	bool	 m_Thinking;
 
 private:

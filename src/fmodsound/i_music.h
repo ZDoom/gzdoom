@@ -49,28 +49,28 @@ void I_SetMIDIVolume (float volume);
 void I_SetMusicVolume (int volume);
 
 // PAUSE game handling.
-void I_PauseSong (long handle);
-void I_ResumeSong (long handle);
+void I_PauseSong (void *handle);
+void I_ResumeSong (void *handle);
 
 // Registers a song handle to song data.
-long I_RegisterSong (int handle, int pos, int len);
-long I_RegisterCDSong (int track, int cdid = 0);
+void *I_RegisterSong (int handle, int pos, int len);
+void *I_RegisterCDSong (int track, int cdid = 0);
 
 // Called by anything that wishes to start music.
 //	Plays a song, and when the song is done,
 //	starts playing it again in an endless loop.
-void I_PlaySong (long handle, int looping);
+void I_PlaySong (void *handle, int looping);
 
 // Stops a song.
-void I_StopSong (long handle);
+void I_StopSong (void *handle);
 
 // See above (register), then think backwards
-void I_UnRegisterSong (long handle);
+void I_UnRegisterSong (void *handle);
 
 // Set the current order (position) for a MOD
-bool I_SetSongPosition (long handle, int order);
+bool I_SetSongPosition (void *handle, int order);
 
 // Is the song still playing?
-bool I_QrySongPlaying (long handle);
+bool I_QrySongPlaying (void *handle);
 
 #endif //__I_MUSIC_H__

@@ -12,6 +12,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, MANA_1, 15);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return MANA_1;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -51,6 +55,10 @@ public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, MANA_2, 15);
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return MANA_2;
 	}
 protected:
 	const char *PickupMessage ()
@@ -103,6 +111,10 @@ public:
 		gotit |= P_GiveAmmo (toucher->player, MANA_2, 20);
 
 		return gotit;
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return MANA_BOTH;
 	}
 protected:
 	const char *PickupMessage ()

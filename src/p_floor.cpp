@@ -300,7 +300,7 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 	{
 		if (!line || !(sec = line->backsector))
 			return rtn;
-		secnum = sec-sectors;
+		secnum = (int)(sec-sectors);
 		manual = true;
 		goto manual_floor;
 	}
@@ -625,14 +625,14 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	int 				height;
 	fixed_t				stairstep;
 	int 				i;
-	int 				newsecnum;
+	int 				newsecnum = -1;
 	int 				texture;
 	int 				ok;
 	int					persteptime;
 	bool 				rtn = false;
 	
 	sector_t*			sec;
-	sector_t*			tsec;
+	sector_t*			tsec = NULL;
 	sector_t*			prev = NULL;
 
 	DFloor*				floor;
@@ -648,7 +648,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 	{
 		if (!line || !(sec = line->backsector))
 			return rtn;
-		secnum = sec-sectors;
+		secnum = (int)(sec-sectors);
 		manual = true;
 		goto manual_stair;
 	}
@@ -720,7 +720,7 @@ manual_stair:
 						continue;
 					}
 				}
-				newsecnum = tsec - sectors;
+				newsecnum = (int)(tsec - sectors);
 			}
 			else
 			{
@@ -730,14 +730,14 @@ manual_stair:
 						continue;
 
 					tsec = (sec->lines[i])->frontsector;
-					newsecnum = tsec-sectors;
+					newsecnum = (int)(tsec-sectors);
 
 					if (secnum != newsecnum)
 						continue;
 
 					tsec = (sec->lines[i])->backsector;
 					if (!tsec) continue;	//jff 5/7/98 if no backside, continue
-					newsecnum = tsec - sectors;
+					newsecnum = (int)(tsec - sectors);
 
 					if (!igntxt && tsec->floorpic != texture)
 						continue;
@@ -799,8 +799,13 @@ manual_stair:
 		// it can infinite loop when the first sector stops moving.
 		sectors[osecnum].prevsec = -1;	
 		if (manual)
+		{
 			return rtn;
-		secnum = osecnum;	//jff 3/4/98 restore loop index
+		}
+		if (!(compatflags & COMPATF_STAIRINDEX))
+		{
+			secnum = osecnum;	//jff 3/4/98 restore loop index
+		}
 	}
 	return rtn;
 }

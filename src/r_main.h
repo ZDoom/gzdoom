@@ -149,7 +149,7 @@ extern void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 inline int R_PointOnSide (fixed_t x, fixed_t y, const node_t *node)
 {
-	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) >= 0;
+	return DMulScale32 (y-node->y, node->dx, node->x-x, node->dy) > 0;
 }
 
 angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2);

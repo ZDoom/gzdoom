@@ -37,7 +37,8 @@
 #include "doomtype.h"
 #include "v_font.h"
 
-struct brokenlines_s {
+struct brokenlines_s
+{
 	short width;
 	byte nlterminated;
 	byte pad;
@@ -58,7 +59,7 @@ typedef struct brokenlines_s brokenlines_t;
 #define TEXTCOLOR_BLUE		"\x1c""H"
 #define TEXTCOLOR_ORANGE	"\x1c""I"
 #define TEXTCOLOR_WHITE		"\x1c""J"
-#define TEXTCOLOR_YELLOW	"\x1c""k"
+#define TEXTCOLOR_YELLOW	"\x1c""K"
 
 #define TEXTCOLOR_NORMAL	"\x1c-"
 #define TEXTCOLOR_BOLD		"\x1c+"

@@ -34,7 +34,10 @@ class AActor;
 struct sfxinfo_t
 {
 	char		name[MAX_SNDNAME+1];	// [RH] Sound name defined in SNDINFO
-	int 		lumpnum;				// lump number of sfx
+	short 		lumpnum;				// lump number of sfx
+
+	BYTE		PitchMask;
+	BYTE		MaxChannels;
 
 	// Next five fields are for use by i_sound.cpp. A non-null data means the
 	// sound has been loaded. The other fields are dependant on whether MIDAS
@@ -91,12 +94,21 @@ void S_LoopedSound (fixed_t *pt, int channel, const char *name, float volume, in
 void S_SoundID (int channel, int sfxid, float volume, int attenuation);
 void S_SoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
 void S_SoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
+void S_SoundID (fixed_t x, fixed_t y, fixed_t z, int channel, int sfxid, float volume, int attenuation);
 void S_LoopedSoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
 void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
 
 // sound channels
 // channel 0 never willingly overrides
 // other channels (1-7) always override a playing sound on that channel
+//
+// CHAN_AUTO searches down from channel 7 until it finds a channel not in use
+// CHAN_WEAPON is for weapons
+// CHAN_VOICE is for oof, sight, or other voice sounds
+// CHAN_ITEM is for small things and item pickup
+// CHAN_BODY is for generic body sounds
+// CHAN_PICKUP is can optionally be set as a local sound only for "compatibility"
+
 #define CHAN_AUTO				0
 #define CHAN_WEAPON				1
 #define CHAN_VOICE				2
@@ -105,7 +117,8 @@ void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int att
 // modifier flags
 #define CHAN_LISTENERZ			8
 #define CHAN_IMMOBILE			16
-
+#define CHAN_MAYBE_LOCAL		32
+#define CHAN_PICKUP				(CHAN_ITEM|CHAN_MAYBE_LOCAL)
 
 // sound attenuation values
 #define ATTN_NONE				0	// full volume the entire level
@@ -118,7 +131,7 @@ int S_PickReplacement (int refid);
 
 // [RH] From Hexen.
 //		Prevents too many of the same sound from playing simultaneously.
-BOOL S_StopSoundID (int sound_id, int priority, fixed_t x, fixed_t y);
+BOOL S_StopSoundID (int sound_id, int priority, int limit, fixed_t x, fixed_t y);
 
 // Stops a sound emanating from one of an entity's channels
 void S_StopSound (AActor *ent, int channel);

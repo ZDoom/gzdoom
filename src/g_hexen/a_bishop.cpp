@@ -5,6 +5,14 @@
 #include "p_enemy.h"
 #include "a_action.h"
 #include "m_random.h"
+#include "a_hexenglobal.h"
+
+static FRandom pr_boom ("BishopBoom");
+static FRandom pr_atk ("BishopAttack");
+static FRandom pr_decide ("BishopDecide");
+static FRandom pr_doblur ("BishopDoBlur");
+static FRandom pr_sblur ("BishopSpawnBlur");
+static FRandom pr_pain ("BishopPainBlur");
 
 void A_BishopDecide (AActor *);
 void A_BishopDoBlur (AActor *);
@@ -19,14 +27,6 @@ void A_BishopMissileWeave (AActor *);
 void A_BishopMissileSeek (AActor *);
 
 // Bishop -------------------------------------------------------------------
-
-class ABishop : public AActor
-{
-	DECLARE_ACTOR (ABishop, AActor)
-public:
-	void GetExplodeParms (int &damage, int &distance, bool &hurtSource);
-	bool NewTarget (AActor *other);
-};
 
 FState ABishop::States[] =
 {
@@ -87,7 +87,7 @@ IMPLEMENT_ACTOR (ABishop, Hexen, 114, 19)
 	PROP_PainChance (110)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_FLOAT|MF_NOGRAVITY|MF_NOBLOOD)
 	PROP_Flags2 (MF2_PASSMOBJ|MF2_PUSHWALL|MF2_TELESTOMP)
-	PROP_Flags3 (MF3_SEEISALSOACTIVE|MF3_DONTOVERLAP)
+	PROP_Flags3 (MF3_DONTOVERLAP)
 
 	PROP_SpawnState (S_BISHOP_LOOK)
 	PROP_SeeState (S_BISHOP_WALK)
@@ -100,12 +100,12 @@ IMPLEMENT_ACTOR (ABishop, Hexen, 114, 19)
 	PROP_AttackSound ("BishopAttack")
 	PROP_PainSound ("BishopPain")
 	PROP_DeathSound ("BishopDeath")
-	PROP_ActiveSound ("BishopActive")
+	PROP_ActiveSound ("BishopActiveSounds")
 END_DEFAULTS
 
 void ABishop::GetExplodeParms (int &damage, int &distance, bool &hurtSource)
-{
-	damage = 25 + (P_Random() & 15);
+{ // Bishop radius death
+	damage = 25 + (pr_boom() & 15);
 }
 
 bool ABishop::NewTarget (AActor *other)
@@ -241,12 +241,12 @@ void A_BishopAttack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
-		int damage = HITDICE(4);
+		int damage = pr_atk.HitDice (4);
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
 		return;
 	}
-	actor->special1 = (P_Random() & 3) + 5;
+	actor->special1 = (pr_atk() & 3) + 5;
 }
 
 //============================================================================
@@ -321,7 +321,7 @@ void A_BishopMissileSeek (AActor *actor)
 
 void A_BishopDecide (AActor *actor)
 {
-	if (P_Random() < 220)
+	if (pr_decide() < 220)
 	{
 		return;
 	}
@@ -339,12 +339,12 @@ void A_BishopDecide (AActor *actor)
 
 void A_BishopDoBlur (AActor *actor)
 {
-	actor->special1 = (P_Random() & 3) + 3; // Random number of blurs
-	if (P_Random() < 120)
+	actor->special1 = (pr_doblur() & 3) + 3; // Random number of blurs
+	if (pr_doblur() < 120)
 	{
 		P_ThrustMobj (actor, actor->angle + ANG90, 11*FRACUNIT);
 	}
-	else if (P_Random() > 125)
+	else if (pr_doblur() > 125)
 	{
 		P_ThrustMobj (actor, actor->angle - ANG90, 11*FRACUNIT);
 	}
@@ -369,7 +369,7 @@ void A_BishopSpawnBlur (AActor *actor)
 	{
 		actor->momx = 0;
 		actor->momy = 0;
-		if (P_Random() > 96)
+		if (pr_sblur() > 96)
 		{
 			actor->SetState (actor->SeeState);
 		}
@@ -425,13 +425,15 @@ void A_BishopPainBlur (AActor *actor)
 {
 	AActor *mo;
 
-	if (P_Random() < 64)
+	if (pr_pain() < 64)
 	{
 		actor->SetState (&ABishop::States[S_BISHOP_BLUR]);
 		return;
 	}
-	mo = Spawn<ABishopPainBlur> (actor->x + (PS_Random()<<12), actor->y
-		+ (PS_Random()<<12), actor->z + (PS_Random()<<11));
+	fixed_t x = actor->x + (pr_pain.Random2()<<12);
+	fixed_t y = actor->y + (pr_pain.Random2()<<12);
+	fixed_t z = actor->z + (pr_pain.Random2()<<11);
+	mo = Spawn<ABishopPainBlur> (x, y, z);
 	if (mo)
 	{
 		mo->angle = actor->angle;

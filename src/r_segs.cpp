@@ -184,6 +184,12 @@ static void BlastMaskedColumn (void (*blastfunc)(column_t *), int texnum)
 	spryscale += rw_scalestep;
 }
 
+//
+// BlastMaskedColumn2
+//
+// [RH] This function draws masked columns that use words to store run
+// lengths and offsets.
+//
 static void BlastMaskedColumn2 (void (*blastfunc)(column2_t *), int texnum)
 {
 	if (maskedtexturecol[dc_x] != SHRT_MAX)
@@ -218,9 +224,10 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	curline = ds->curline;
 
 	// killough 4/11/98: draw translucent 2s normal textures
-	// [RH] modified because we don't use user-definable
-	//		translucency maps
-	ESPSResult drawmode = R_SetPatchStyle (STYLE_Translucent,
+	// [RH] modified because we don't use user-definable translucency maps
+	ESPSResult drawmode;
+	
+	drawmode = R_SetPatchStyle (curline->sidedef->Flags & WALLF_ADDTRANS ? STYLE_Add : STYLE_Translucent,
 		curline->linedef->alpha < 255 ? curline->linedef->alpha<<8 : FRACUNIT,
 		0, 0);
 
@@ -832,18 +839,17 @@ void R_NewWall ()
 		if (rw_havehigh)
 		{ // top texture
 			toptexture = texturetranslation[sidedef->toptexture];
+			const int scale = texturescaley[toptexture] ? texturescaley[toptexture] : ty;
 
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // top of texture at top
-				rw_toptexturemid = frontsector->ceilingtexz;
+				rw_toptexturemid = MulScale3 (frontsector->ceilingtexz - viewz, scale);
 			}
 			else
 			{ // bottom of texture at bottom
-				rw_toptexturemid = backsector->ceilingtexz + textureheight[sidedef->toptexture];		
+				rw_toptexturemid = MulScale3 (backsector->ceilingtexz - viewz, scale) + textureheight[toptexture];
 			}
-			rw_toptexturemid = MulScale3 (rw_toptexturemid - viewz,
-				texturescaley[toptexture] ? texturescaley[toptexture] : ty)
-				+ sidedef->rowoffset;
+			rw_toptexturemid += sidedef->rowoffset;
 		}
 		if (rw_havelow)
 		{ // bottom texture
@@ -1641,8 +1647,8 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	}
 	else
 	{
-		WallSpriteTile = sprites[actor->sprite].spriteframes[actor->frame].lump[0];
-		flipx = sprites[actor->sprite].spriteframes[actor->frame].flip & 1;
+		WallSpriteTile = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].lump[0];
+		flipx = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].flip & 1;
 	}
 
 	// Determine left and right edges of sprite. Since this sprite is bound
@@ -1660,10 +1666,11 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	x1 *= xscale;
 	x2 *= xscale;
 
-	lx  = actor->x - MulScale6 (x1, finecosine[curline->angle >> ANGLETOFINESHIFT]) - viewx;
-	lx2 = actor->x + MulScale6 (x2, finecosine[curline->angle >> ANGLETOFINESHIFT]) - viewx;
-	ly  = actor->y - MulScale6 (x1, finesine[curline->angle >> ANGLETOFINESHIFT]) - viewy;
-	ly2 = actor->y + MulScale6 (x2, finesine[curline->angle >> ANGLETOFINESHIFT]) - viewy;
+	angle_t ang = R_PointToAngle2 (curline->v1->x, curline->v1->y, curline->v2->x, curline->v2->y) >> ANGLETOFINESHIFT;
+	lx  = actor->x - MulScale6 (x1, finecosine[ang]) - viewx;
+	lx2 = actor->x + MulScale6 (x2, finecosine[ang]) - viewx;
+	ly  = actor->y - MulScale6 (x1, finesine[ang]) - viewy;
+	ly2 = actor->y + MulScale6 (x2, finesine[ang]) - viewy;
 
 	WallTX1 = DMulScale20 (lx,  viewsin, -ly,  viewcos);
 	WallTX2 = DMulScale20 (lx2, viewsin, -ly2, viewcos);
@@ -1859,70 +1866,63 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 	do
 	{
 		dc_x = x1;
+		ESPSResult mode;
 
-		switch (R_SetPatchStyle (actor->RenderStyle, actor->alpha,
-			actor->Translation, actor->alphacolor))
+		mode = R_SetPatchStyle (actor->RenderStyle, actor->alpha, actor->Translation, actor->alphacolor);
+
+		if (mode == DontDraw)
 		{
-		case DontDraw:
 			needrepeat = 0;
-			break;
+		}
+		else
+		{
+			int stop4;
 
-		case DoDraw0:
-			// 1 column at a time
-			for (; dc_x < x2; dc_x++)
+			if (mode == DoDraw0)
+			{ // 1 column at a time
+				stop4 = dc_x;
+			}
+			else	 // DoDraw1
+			{ // up to 4 columns at a time
+				stop4 = x2 & ~3;
+			}
+
+			while ((dc_x < stop4) && (dc_x & 3))
 			{
 				if (calclighting)
 				{ // calculate lighting
 					dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
-				WallSpriteColumn (R_DrawMaskedColumn);
-			}
-			break;
 
-		case DoDraw1:
-			// up to 4 columns at a time
-			int stop = x2 & ~3;
-
-			if (calclighting)
-			{ // calculate lighting
-				dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
-			}
-
-			while ((dc_x < stop) && (dc_x & 3))
-			{
 				WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;
 			}
 
-			while (dc_x < stop)
+			while (dc_x < stop4)
 			{
 				if (calclighting)
 				{ // calculate lighting
 					dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
 				}
 				rt_initcols();
-				WallSpriteColumn (R_DrawMaskedColumnHoriz);
-				dc_x++;
-				WallSpriteColumn (R_DrawMaskedColumnHoriz);
-				dc_x++;
-				WallSpriteColumn (R_DrawMaskedColumnHoriz);
-				dc_x++;
-				WallSpriteColumn (R_DrawMaskedColumnHoriz);
-				rt_draw4cols (dc_x - 3);
-				dc_x++;
-			}
-
-			if (calclighting)
-			{ // calculate lighting
-				dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+				for (int zz = 4; zz; --zz)
+				{
+					WallSpriteColumn (R_DrawMaskedColumnHoriz);
+					dc_x++;
+				}
+				rt_draw4cols (dc_x - 4);
 			}
 
 			while (dc_x < x2)
 			{
+				if (calclighting)
+				{ // calculate lighting
+					dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+				}
+
 				WallSpriteColumn (R_DrawMaskedColumn);
 				dc_x++;
 			}
-			break;
 		}
 
 		// If this sprite is RF_CLIPFULL on a two-sided line, needrepeat will

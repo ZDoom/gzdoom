@@ -39,13 +39,11 @@
 #include "m_fixed.h"
 #include "tarray.h"
 
-#define NUM_MAPVARS				128
 #define NUM_WORLDVARS			256
 #define NUM_GLOBALVARS			64
 
 #define LEVEL_NOINTERMISSION	0x00000001
 #define	LEVEL_DOUBLESKY			0x00000004
-#define LEVEL_NOSOUNDCLIPPING	0x00000008
 
 #define LEVEL_MAP07SPECIAL		0x00000010
 #define LEVEL_BRUISERSPECIAL	0x00000020
@@ -174,7 +172,6 @@ struct level_locals_s
 	fixed_t		airfriction;
 
 	FBehavior	*behavior;
-	SDWORD		vars[NUM_MAPVARS];
 
 	FSectorScrollValues	*Scrolls;		// NULL if no DScrollers in this level
 
@@ -225,8 +222,8 @@ extern level_locals_t level;
 extern level_info_t LevelInfos[];
 extern cluster_info_t ClusterInfos[];
 
-extern int ACS_WorldVars[NUM_WORLDVARS];
-extern int ACS_GlobalVars[NUM_GLOBALVARS];
+extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
+extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
 
 extern BOOL savegamerestore;
 extern BOOL HexenHack;		// Semi-Hexen-compatibility mode
@@ -261,6 +258,6 @@ void G_ParseMapInfo (void);
 void G_ClearSnapshots (void);
 void G_SnapshotLevel (void);
 void G_UnSnapshotLevel (bool keepPlayers);
-void G_SerializeSnapshots (FArchive &arc);
+void G_SerializeSnapshots (FILE *file, bool storing);
 
 #endif //__G_LEVEL_H__

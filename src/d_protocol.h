@@ -40,12 +40,17 @@
 #include "m_fixed.h"
 #include "farchive.h"
 
-#define FORM_ID		(('F'<<24)|('O'<<16)|('R'<<8)|('M'))
-#define ZDEM_ID		(('Z'<<24)|('D'<<16)|('E'<<8)|('M'))
-#define ZDHD_ID		(('Z'<<24)|('D'<<16)|('H'<<8)|('D'))
-#define VARS_ID		(('V'<<24)|('A'<<16)|('R'<<8)|('S'))
-#define UINF_ID		(('U'<<24)|('I'<<16)|('N'<<8)|('F'))
-#define BODY_ID		(('B'<<24)|('O'<<16)|('D'<<8)|('Y'))
+// The IFF routines here all work with big-endian IDs, even if the host
+// system is little-endian.
+#define BIGE_ID(a,b,c,d)	((d)|((c)<<8)|((b)<<16)|((a)<<24))
+
+#define FORM_ID		BIGE_ID('F','O','R','M')
+#define ZDEM_ID		BIGE_ID('Z','D','E','M')
+#define ZDHD_ID		BIGE_ID('Z','D','H','D')
+#define VARS_ID		BIGE_ID('V','A','R','S')
+#define UINF_ID		BIGE_ID('U','I','N','F')
+#define COMP_ID		BIGE_ID('C','O','M','P')
+#define BODY_ID		BIGE_ID('B','O','D','Y')
 
 #define	ANGLE2SHORT(x)	((((x)/360) & 65535)
 #define	SHORT2ANGLE(x)	((x)*360)
@@ -122,6 +127,7 @@ enum EDemoCommand
 	DEM_SUMMON,			// String: Thing to fabricate
 	DEM_FOV,			// Byte: New FOV for all players
 	DEM_MYFOV,			// Byte: New FOV for this player
+	DEM_CHANGEMAP2,		// Byte: Position in new map, String: name of new map
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

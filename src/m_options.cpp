@@ -3,7 +3,7 @@
 ** New options menu code
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2002 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -94,6 +94,11 @@ EXTERN_CVAR (Bool, lookspring)
 EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Int, crosshair)
 EXTERN_CVAR (Bool, freelook)
+EXTERN_CVAR (Bool, use_joystick)
+EXTERN_CVAR (Int, snd_buffersize)
+EXTERN_CVAR (Int, snd_samplerate)
+EXTERN_CVAR (Bool, snd_3d)
+EXTERN_CVAR (Bool, snd_waterreverb)
 
 void M_ChangeMessages ();
 void M_SizeDisplay (int diff);
@@ -130,6 +135,14 @@ int		WaitingForKey;
 static char	   *OldMessage;
 static itemtype OldType;
 
+int flagsvar;
+enum
+{
+	SHOW_DMFlags = 1,
+	SHOW_DMFlags2 = 2,
+	SHOW_CompatFlags = 4
+};
+
 /*=======================================
  *
  * Options Menu
@@ -138,7 +151,9 @@ static itemtype OldType;
 
 static void CustomizeControls (void);
 static void GameplayOptions (void);
+static void CompatibilityOptions (void);
 static void VideoOptions (void);
+static void SoundOptions (void);
 static void GoToConsole (void);
 void Reset2Defaults (void);
 void Reset2Saved (void);
@@ -152,15 +167,13 @@ static menuitem_t OptionItems[] =
 	{ more,		"Customize Controls",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CustomizeControls} },
 	{ more,		"Go to console",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GoToConsole} },
 	{ more,		"Gameplay Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GameplayOptions} },
+	{ more,		"Compatibility Options",{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CompatibilityOptions} },
+	{ more,		"Sound Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)SoundOptions} },
 	{ more,		"Display Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)VideoOptions} },
 	{ more,		"Set video mode",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)SetVidMode} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ discrete,	"Enable Joystick",		{&use_joystick},		{2.0}, {0.0},	{0.0}, {YesNo} },
 	{ slider,	"Mouse speed",			{&mouse_sensitivity},	{0.5}, {2.5},	{0.1}, {NULL} },
-#ifdef _WIN32
-	{ slider,	"MIDI music volume",	{&snd_midivolume},		{0.0}, {1.0},	{0.05}, {NULL} },
-#endif
-	{ slider,	"MOD music volume",		{&snd_musicvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
-	{ slider,	"Sound volume",			{&snd_sfxvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
 	{ discrete,	"Always Run",			{&cl_run},				{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Always Mouselook",		{&freelook},			{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ discrete, "Invert Mouse",			{&invertmouse},			{2.0}, {0.0},	{0.0}, {OnOff} },
@@ -488,38 +501,129 @@ menu_t ModesMenu = {
  *
  *=======================================*/
 
-static FIntCVar *flagsvar;
-
 static menuitem_t DMFlagsItems[] = {
-	{ bitflag,	"Falling damage (old)",	{(FBaseCVar *)DF_FORCE_FALLINGZD},	{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Falling damage (Hexen)", {(FBaseCVar *)DF_FORCE_FALLINGHX},{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Weapons stay (DM)",	{(FBaseCVar *)DF_WEAPONS_STAY},		{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Allow powerups (DM)",	{(FBaseCVar *)DF_NO_ITEMS},			{1}, {0}, {0}, {NULL} },
-	{ bitflag,	"Allow health (DM)",	{(FBaseCVar *)DF_NO_HEALTH},		{1}, {0}, {0}, {NULL} },
-	{ bitflag,	"Allow armor (DM)",		{(FBaseCVar *)DF_NO_ARMOR},			{1}, {0}, {0}, {NULL} },
-	{ bitflag,	"Spawn farthest (DM)",	{(FBaseCVar *)DF_SPAWN_FARTHEST},	{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Same map (DM)",		{(FBaseCVar *)DF_SAME_LEVEL},		{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Force respawn (DM)",	{(FBaseCVar *)DF_FORCE_RESPAWN},	{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Allow exit (DM)",		{(FBaseCVar *)DF_NO_EXIT},			{1}, {0}, {0}, {NULL} },
-	{ bitflag,	"Infinite ammo",		{(FBaseCVar *)DF_INFINITE_AMMO},	{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"No monsters",			{(FBaseCVar *)DF_NO_MONSTERS},		{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Monsters respawn",		{(FBaseCVar *)DF_MONSTERS_RESPAWN},	{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Items respawn",		{(FBaseCVar *)DF_ITEMS_RESPAWN},	{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Fast monsters",		{(FBaseCVar *)DF_FAST_MONSTERS},	{0}, {0}, {0}, {NULL} },
-	{ bitflag,	"Allow jump",			{(FBaseCVar *)DF_NO_JUMP},			{1}, {0}, {0}, {NULL} },
-	{ bitflag,	"Allow freelook",		{(FBaseCVar *)DF_NO_FREELOOK},		{1}, {0}, {0}, {NULL} },
-	{ redtext,	" ",					{NULL},								{0.0}, {0.0},	{0.0}, {NULL} },
-	{ slider,	"Team damage scalar",	{&teamdamage},						{0.0}, {1.0},	{0.05},{NULL} },
-	{ discrete, "Teamplay",				{&teamplay},						{2.0}, {0.0},	{0.0}, {OnOff} }
+	{ discrete, "Teamplay",				{&teamplay},	{2.0}, {0.0}, {0.0}, {OnOff} },
+	{ slider,	"Team damage scalar",	{&teamdamage},	{0.0}, {1.0}, {0.05},{NULL} },
+	{ redtext,	" ",					{NULL},			{0.0}, {0.0}, {0.0}, {NULL} },
+	{ bitflag,	"Falling damage (old)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FORCE_FALLINGZD} },
+	{ bitflag,	"Falling damage (Hexen)",{&dmflags},	{0}, {0}, {0}, {(value_t *)DF_FORCE_FALLINGHX} },
+	{ bitflag,	"Weapons stay (DM)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_WEAPONS_STAY} },
+	{ bitflag,	"Allow powerups (DM)",	{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_ITEMS} },
+	{ bitflag,	"Allow health (DM)",	{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_HEALTH} },
+	{ bitflag,	"Allow armor (DM)",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_ARMOR} },
+	{ bitflag,	"Spawn farthest (DM)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_SPAWN_FARTHEST} },
+	{ bitflag,	"Same map (DM)",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_SAME_LEVEL} },
+	{ bitflag,	"Force respawn (DM)",	{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FORCE_RESPAWN} },
+	{ bitflag,	"Allow exit (DM)",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_EXIT} },
+	{ bitflag,	"Barrels respawn (DM)",	{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_BARRELS_RESPAWN} },
+	{ bitflag,	"Respawn protection (DM)",{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_INVUL} },
+	{ bitflag,	"Drop weapons",			{&dmflags2},	{0}, {0}, {0}, {(value_t *)DF2_YES_WEAPONDROP} },
+	{ bitflag,	"Infinite ammo",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_INFINITE_AMMO} },
+	{ bitflag,	"No monsters",			{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_NO_MONSTERS} },
+	{ bitflag,	"Monsters respawn",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_MONSTERS_RESPAWN} },
+	{ bitflag,	"Items respawn",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_ITEMS_RESPAWN} },
+	{ bitflag,	"Mega powerups respawn",{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_RESPAWN_SUPER} },
+	{ bitflag,	"Fast monsters",		{&dmflags},		{0}, {0}, {0}, {(value_t *)DF_FAST_MONSTERS} },
+	{ bitflag,	"Allow jump",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_JUMP} },
+	{ bitflag,	"Allow freelook",		{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FREELOOK} },
+	{ bitflag,	"Allow FOV",			{&dmflags},		{1}, {0}, {0}, {(value_t *)DF_NO_FOV} },
+	{ bitflag,	"Allow BFG aiming",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NO_FREEAIMBFG} }
 };
 
 static menu_t DMFlagsMenu = {
 	{ 'M','_','G','M','P','L','A','Y' },
 	"GAMEPLAY OPTIONS",
 	0,
-	20,
+	sizeof(DMFlagsItems)/sizeof(DMFlagsItems[0]),
 	0,
 	DMFlagsItems,
+};
+
+/*=======================================
+ *
+ * Compatibility Options Menu
+ *
+ *=======================================*/
+
+static menuitem_t CompatibilityItems[] = {
+	{ bitflag,	"Find shortest textures like Doom",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SHORTTEX} },
+	{ bitflag,	"Use buggier stair building",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_STAIRINDEX} },
+	{ bitflag,	"Limit Pain Elementals to 20 Lost Souls",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_LIMITPAIN} },
+	{ bitflag,	"Don't let others hear your pickups",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SILENTPICKUP} },
+	{ bitflag,	"Actors are infinitely tall",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NO_PASSMOBJ} },
+	{ bitflag,	"Allow silent BFG trick",					{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MAGICSILENCE} },
+	{ bitflag,	"Enable wall running",						{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_WALLRUN} },
+	{ bitflag,	"Spawn item drops on the floor",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOTOSSDROPS} },
+};
+
+static menu_t CompatibilityMenu = {
+	{ 0 },
+	"COMPATIBILITY OPTIONS",
+	0,
+	sizeof(CompatibilityItems)/sizeof(CompatibilityItems[0]),
+	0,
+	CompatibilityItems,
+};
+
+/*=======================================
+ *
+ * Sound Options Menu
+ *
+ *=======================================*/
+
+static void MakeSoundChanges (void);
+
+static value_t SampleRates[] =
+{
+	{ 4000.f, "4000 Hz" },
+	{ 8000.f, "8000 Hz" },
+	{ 11025.f, "11025 Hz" },
+	{ 22050.f, "22050 Hz" },
+	{ 32000.f, "32000 Hz" },
+	{ 44100.f, "44100 Hz" },
+	{ 48000.f, "48000 Hz" },
+	{ 65535.f, "65535 Hz" }
+};
+
+static value_t BufferSizes[] =
+{
+	{   0.f, "Default" },
+	{  20.f, "20 ms" },
+	{  40.f, "40 ms" },
+	{  60.f, "60 ms" },
+	{  80.f, "80 ms" },
+	{ 100.f, "100 ms" },
+	{ 120.f, "120 ms" },
+	{ 140.f, "140 ms" },
+	{ 160.f, "160 ms" },
+	{ 180.f, "180 ms" },
+	{ 200.f, "200 ms" },
+};
+
+static menuitem_t SoundItems[] = {
+	{ slider,	"Sound effects volume",	{&snd_sfxvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
+#ifdef _WIN32
+	{ slider,	"MIDI music volume",	{&snd_midivolume},		{0.0}, {1.0},	{0.05}, {NULL} },
+	{ slider,	"MOD music volume",		{&snd_musicvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
+#else
+	{ slider,	"Music volume",			{&snd_musicvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
+#endif
+	{ discrete, "Underwater Reverb",	{&snd_waterreverb},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ more,		"Activate changes made below", {NULL},			{0.0}, {0.0},	{0.0}, {(value_t *)MakeSoundChanges} },
+	{ discrete, "Sample Rate",			{&snd_samplerate},		{8.0}, {0.0},	{0.0}, {SampleRates} },
+	{ discrete, "Buffer Size",			{&snd_buffersize},		{11.0}, {0.0},	{0.0}, {BufferSizes} },
+	{ discrete, "3D Sound",				{&snd_3d},				{2.0}, {0.0},	{0.0}, {OnOff} },
+
+};
+
+static menu_t SoundMenu = {
+	{ 0 },
+	"SOUND OPTIONS",
+	0,
+	sizeof(SoundItems)/sizeof(SoundItems[0]),
+	0,
+	SoundItems,
 };
 
 void M_FreeValues (value_t **values, int num)
@@ -680,7 +784,7 @@ void M_SwitchMenu (menu_t *menu)
 		menu->indent = widest + 6;
 	}
 
-	flagsvar = NULL;
+	flagsvar = 0;
 }
 
 bool M_StartOptionsMenu (void)
@@ -849,9 +953,9 @@ void M_OptDrawer ()
 				else
 					value = YesNo;
 
-				if (flagsvar)
+				if (item->a.cvar)
 				{
-					if (*flagsvar & item->a.flagmask)
+					if ((*(item->a.intcvar)) & item->e.flagmask)
 						str = value[1].name;
 					else
 						str = value[0].name;
@@ -932,11 +1036,25 @@ void M_OptDrawer ()
 
 	if (flagsvar)
 	{
-		char flagsblah[64];
+		static const FIntCVar *const vars[3] = { &dmflags, &dmflags2, &compatflags };
+		char flagsblah[256];
+		char *fillptr = flagsblah;
+		bool printed = false;
 
-		sprintf (flagsblah, "%s = %d", flagsvar->GetName (), **flagsvar);
+		for (int i = 0; i < 3; ++i)
+		{
+			if (flagsvar & (1 << i))
+			{
+				if (printed)
+				{
+					fillptr += sprintf (fillptr, "    ");
+				}
+				printed = true;
+				fillptr += sprintf (fillptr, "%s = %d", vars[i]->GetName (), **vars[i]);
+			}
+		}
 		screen->DrawTextCleanMove (ValueColor,
-			160 - (screen->StringWidth (flagsblah) >> 1), 190, flagsblah);
+			160 - (screen->StringWidth (flagsblah) >> 1), 0, flagsblah);
 	}
 }
 
@@ -973,11 +1091,11 @@ void M_OptResponder (event_t *ev)
 		return;
 	}
 	
-	if (item->type == bitflag && flagsvar &&
+	if (item->type == bitflag &&
 		(ch == GK_LEFT || ch == GK_RIGHT || ch == '\r')
 		&& !demoplayback)
 	{
-		*flagsvar = *flagsvar ^ item->a.flagmask;
+		*(item->a.intcvar) = (*(item->a.intcvar)) ^ item->e.flagmask;
 		return;
 	}
 
@@ -1046,7 +1164,7 @@ void M_OptResponder (event_t *ev)
 				}
 				if (CurrentItem < 0)
 				{
-					CurrentMenu->scrollpos = MAX (0,CurrentMenu->numitems - 22 + CurrentMenu->scrolltop);
+					CurrentMenu->scrollpos = MAX (0,CurrentMenu->numitems - 21 + CurrentMenu->scrolltop);
 					CurrentItem = CurrentMenu->numitems - 1;
 				}
 			} while (CurrentMenu->items[CurrentItem].type == redtext ||
@@ -1402,14 +1520,37 @@ EXTERN_CVAR (Int, dmflags)
 static void GameplayOptions (void)
 {
 	M_SwitchMenu (&DMFlagsMenu);
-	flagsvar = &dmflags;
+	flagsvar = SHOW_DMFlags | SHOW_DMFlags2;
 }
 
-CCMD (menu_gameplay)
+static void CompatibilityOptions (void)
+{
+	M_SwitchMenu (&CompatibilityMenu);
+	flagsvar = SHOW_CompatFlags;
+}
+
+CCMD (menu_compatibility)
 {
 	M_StartControlPanel (true);
 	OptionsActive = true;
-	GameplayOptions ();
+	CompatibilityOptions ();
+}
+
+static void SoundOptions (void)
+{
+	M_SwitchMenu (&SoundMenu);
+}
+
+CCMD (menu_sound)
+{
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	SoundOptions ();
+}
+
+static void MakeSoundChanges (void)
+{
+	AddCommandString ("snd_reset");
 }
 
 static void VideoOptions (void)
@@ -1596,7 +1737,7 @@ void M_LoadKeys (const char *modname, bool dbl)
 
 int M_DoSaveKeys (FConfigFile *config, char *section, int i, bool dbl)
 {
-	int most = CustomControlsItems.Size();
+	int most = (int)CustomControlsItems.Size();
 
 	config->SetSection (section, true);
 	config->ClearCurrentSection ();
@@ -1619,8 +1760,8 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
 		return;
 
 	// Start after the normal controls
-	int i = sizeof(ControlsItems)/sizeof(ControlsItems[0]);
-	int most = CustomControlsItems.Size();
+	size_t i = sizeof(ControlsItems)/sizeof(ControlsItems[0]);
+	size_t most = CustomControlsItems.Size();
 
 	while (i < most)
 	{
@@ -1629,9 +1770,9 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
 		if (item->type == whitetext)
 		{
 			sprintf (subsection, "%s.Bindings", item->e.command);
-			M_DoSaveKeys (config, section, i, false);
+			M_DoSaveKeys (config, section, (int)i, false);
 			sprintf (subsection, "%s.DoubleBindings", item->e.command);
-			i = M_DoSaveKeys (config, section, i, true);
+			i = M_DoSaveKeys (config, section, (int)i, true);
 		}
 		else
 		{
@@ -1662,7 +1803,7 @@ CCMD (addkeysection)
 	}
 
 	// See if this section already exists
-	int last = CustomControlsItems.Size();
+	int last = (int)CustomControlsItems.Size();
 	for (i = numStdControls; i < last; ++i)
 	{
 		menuitem_t *item = &CustomControlsItems[i];
@@ -1744,5 +1885,5 @@ CCMD (addmenukey)
 				 sizeof(menuitem_t)*movecount);
 		CustomControlsItems[AddKeySpot++] = newItem;
 	}
-	ControlsMenu.numitems = CustomControlsItems.Size();
+	ControlsMenu.numitems = (int)CustomControlsItems.Size();
 }

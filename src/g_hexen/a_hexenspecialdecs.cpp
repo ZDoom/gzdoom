@@ -11,6 +11,16 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 
+static FRandom pr_pottery ("PotteryExplode");
+static FRandom pr_bit ("PotteryChooseBit");
+static FRandom pr_drip ("CorpseBloodDrip");
+static FRandom pr_foo ("CorpseExplode");
+static FRandom pr_leaf ("LeafSpawn");
+static FRandom pr_leafthrust ("LeafThrust");
+static FRandom pr_leafcheck ("LeafCheck");
+static FRandom pr_shroom ("PoisonShroom");
+static FRandom pr_soaexplode ("SoAExplode");
+
 // SwitchableDecoration: Activate and Deactivate change state ---------------
 
 class ASwitchableDecoration : public AActor
@@ -287,15 +297,15 @@ void A_PotteryExplode (AActor *actor)
 	AActor *mo = NULL;
 	int i;
 
-	for(i = (P_Random()&3)+3; i; i--)
+	for(i = (pr_pottery()&3)+3; i; i--)
 	{
 		mo = Spawn<APotteryBit> (actor->x, actor->y, actor->z);
-		mo->SetState (mo->SpawnState + (P_Random()%5));
+		mo->SetState (mo->SpawnState + (pr_pottery()%5));
 		if (mo)
 		{
-			mo->momz = ((P_Random()&7)+5)*(3*FRACUNIT/4);
-			mo->momx = (PS_Random())<<(FRACBITS-6);
-			mo->momy = (PS_Random())<<(FRACBITS-6);
+			mo->momz = ((pr_pottery()&7)+5)*(3*FRACUNIT/4);
+			mo->momx = (pr_pottery.Random2())<<(FRACBITS-6);
+			mo->momy = (pr_pottery.Random2())<<(FRACBITS-6);
 		}
 	}
 	S_Sound (mo, CHAN_BODY, "PotteryExplode", 1, ATTN_NORM);
@@ -318,8 +328,8 @@ void A_PotteryExplode (AActor *actor)
 
 void A_PotteryChooseBit (AActor *actor)
 {
-	actor->SetState (actor->DeathState+1 + 2*(P_Random()%5));
-	actor->tics = 256+(P_Random()<<1);
+	actor->SetState (actor->DeathState+1 + 2*(pr_bit()%5));
+	actor->tics = 256+(pr_bit()<<1);
 }
 
 //============================================================================
@@ -361,7 +371,6 @@ FState ABloodPool::States[] =
 
 IMPLEMENT_ACTOR (ABloodPool, Hexen, 111, 0)
 	PROP_Flags (MF_NOBLOCKMAP)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -432,10 +441,9 @@ END_DEFAULTS
 
 void A_CorpseBloodDrip (AActor *actor)
 {
-	if (P_Random() <= 128)
+	if (pr_drip() <= 128)
 	{
-		Spawn<ACorpseBloodDrip> (actor->x, actor->y,
-			actor->z + actor->height/2);
+		Spawn<ACorpseBloodDrip> (actor->x, actor->y, actor->z + actor->height/2);
 	}
 }
 
@@ -501,15 +509,15 @@ void A_CorpseExplode (AActor *actor)
 	AActor *mo;
 	int i;
 
-	for (i = (P_Random()&3)+3; i; i--)
+	for (i = (pr_foo()&3)+3; i; i--)
 	{
 		mo = Spawn<ACorpseBit> (actor->x, actor->y, actor->z);
-		mo->SetState (mo->SpawnState + (P_Random()%3));
+		mo->SetState (mo->SpawnState + (pr_foo()%3));
 		if (mo)
 		{
-			mo->momz = ((P_Random()&7)+5)*(3*FRACUNIT/4);
-			mo->momx = PS_Random()<<(FRACBITS-6);
-			mo->momy = PS_Random()<<(FRACBITS-6);
+			mo->momz = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
+			mo->momx = pr_foo.Random2()<<(FRACBITS-6);
+			mo->momy = pr_foo.Random2()<<(FRACBITS-6);
 		}
 	}
 	// Spawn a skull
@@ -517,9 +525,9 @@ void A_CorpseExplode (AActor *actor)
 	mo->SetState (mo->SpawnState + 3);
 	if (mo)
 	{
-		mo->momz = ((P_Random()&7)+5)*(3*FRACUNIT/4);
-		mo->momx = PS_Random()<<(FRACBITS-6);
-		mo->momy = PS_Random()<<(FRACBITS-6);
+		mo->momz = ((pr_foo()&7)+5)*(3*FRACUNIT/4);
+		mo->momx = pr_foo.Random2()<<(FRACBITS-6);
+		mo->momy = pr_foo.Random2()<<(FRACBITS-6);
 	}
 	S_SoundID (actor, CHAN_BODY, actor->DeathSound, 1, ATTN_IDLE);
 	actor->Destroy ();
@@ -634,15 +642,15 @@ void A_LeafSpawn (AActor *actor)
 	AActor *mo;
 	int i;
 
-	for (i = (P_Random()&3)+1; i; i--)
+	for (i = (pr_leaf()&3)+1; i; i--)
 	{
-		mo = Spawn (P_Random()&1 ? RUNTIME_CLASS(ALeaf1) : RUNTIME_CLASS(ALeaf2),
-			actor->x + (PS_Random()<<14),
-			actor->y + (PS_Random()<<14),
-			actor->z + (P_Random()<<14));
+		mo = Spawn (pr_leaf()&1 ? RUNTIME_CLASS(ALeaf1) : RUNTIME_CLASS(ALeaf2),
+			actor->x + (pr_leaf.Random2()<<14),
+			actor->y + (pr_leaf.Random2()<<14),
+			actor->z + (pr_leaf()<<14));
 		if (mo)
 		{
-			P_ThrustMobj (mo, actor->angle, (P_Random()<<9)+3*FRACUNIT);
+			P_ThrustMobj (mo, actor->angle, (pr_leaf()<<9)+3*FRACUNIT);
 			mo->target = actor;
 			mo->special1 = 0;
 		}
@@ -657,9 +665,9 @@ void A_LeafSpawn (AActor *actor)
 
 void A_LeafThrust (AActor *actor)
 {
-	if (P_Random() <= 96)
+	if (pr_leafthrust() <= 96)
 	{
-		actor->momz += (P_Random()<<9)+FRACUNIT;
+		actor->momz += (pr_leafthrust()<<9)+FRACUNIT;
 	}
 }
 
@@ -677,18 +685,18 @@ void A_LeafCheck (AActor *actor)
 		actor->SetState (NULL);
 		return;
 	}
-	if (P_Random() > 64)
+	if (pr_leafcheck() > 64)
 	{
 		if (!actor->momx && !actor->momy)
 		{
 			P_ThrustMobj (actor, actor->target->angle,
-				(P_Random()<<9)+FRACUNIT);
+				(pr_leafcheck()<<9)+FRACUNIT);
 		}
 		return;
 	}
 	actor->SetState (actor->SpawnState + 7);
-	actor->momz = (P_Random()<<9)+FRACUNIT;
-	P_ThrustMobj (actor, actor->target->angle, (P_Random()<<9)+2*FRACUNIT);
+	actor->momz = (pr_leafcheck()<<9)+FRACUNIT;
+	P_ThrustMobj (actor, actor->target->angle, (pr_leafcheck()<<9)+2*FRACUNIT);
 	actor->flags |= MF_MISSILE;
 }
 
@@ -896,7 +904,7 @@ void A_TreeDeath (AActor *actor)
 // Poison Shroom ------------------------------------------------------------
 
 void A_PoisonShroom (AActor *);
-void A_PoisonBagInit () {}	// FIXME
+void A_PoisonBagInit (AActor *);
 
 class AZPoisonShroom : public AActor
 {
@@ -923,6 +931,8 @@ IMPLEMENT_ACTOR (AZPoisonShroom, Hexen, 8104, 0)
 	PROP_RadiusFixed (6)
 	PROP_HeightFixed (20)
 	PROP_PainChance (255)
+	PROP_SpawnHealth (30)
+	PROP_MassLong (0x7fffffff)
 	PROP_Flags (MF_SHOOTABLE|MF_SOLID|MF_NOBLOOD)
 
 	PROP_SpawnState (S_ZPOISONSHROOM)
@@ -941,7 +951,7 @@ END_DEFAULTS
 
 void A_PoisonShroom (AActor *actor)
 {
-	actor->tics = 128+(P_Random()<<1);
+	actor->tics = 128+(pr_shroom()<<1);
 }
 
 // Fire Bull ----------------------------------------------------------------
@@ -1020,6 +1030,7 @@ IMPLEMENT_ACTOR (AZSuitOfArmor, Hexen, 8064, 0)
 	PROP_SpawnHealth (60)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (72)
+	PROP_MassLong (0x7fffffff)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
 
 	PROP_SpawnState (0)
@@ -1068,15 +1079,15 @@ void A_SoAExplode (AActor *actor)
 
 	for (i = 0; i < 10; i++)
 	{
-		mo = Spawn<AZArmorChunk> (actor->x+((P_Random()-128)<<12),
-			actor->y+((P_Random()-128)<<12), 
-			actor->z+(P_Random()*actor->height/256));
+		mo = Spawn<AZArmorChunk> (actor->x+((pr_soaexplode()-128)<<12),
+			actor->y+((pr_soaexplode()-128)<<12), 
+			actor->z+(pr_soaexplode()*actor->height/256));
 		mo->SetState (mo->SpawnState + i);
 		if (mo)
 		{
-			mo->momz = ((P_Random()&7)+5)*FRACUNIT;
-			mo->momx = PS_Random()<<(FRACBITS-6);
-			mo->momy = PS_Random()<<(FRACBITS-6);
+			mo->momz = ((pr_soaexplode()&7)+5)*FRACUNIT;
+			mo->momx = pr_soaexplode.Random2()<<(FRACBITS-6);
+			mo->momy = pr_soaexplode.Random2()<<(FRACBITS-6);
 		}
 	}
 	if (SpawnableThings[actor->args[0]])
@@ -1163,6 +1174,7 @@ IMPLEMENT_ACTOR (AZBell, Hexen, 8065, 0)
 	PROP_SpawnHealth (5)
 	PROP_RadiusFixed (56)
 	PROP_HeightFixed (120)
+	PROP_MassLong (0x7fffffff)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD|MF_NOGRAVITY|MF_SPAWNCEILING)
 
 	PROP_SpawnState (S_ZBELL)
@@ -1244,6 +1256,7 @@ IMPLEMENT_ACTOR (AZXmasTree, Hexen, 8068, 0)
 	PROP_SpawnHealth (20)
 	PROP_RadiusFixed (11)
 	PROP_HeightFixed (130)
+	PROP_MassLong (0x7fffffff)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
 
 	PROP_SpawnState (S_ZXMAS_TREE)

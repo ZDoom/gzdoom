@@ -37,7 +37,7 @@
 #include "doomtype.h"
 #include "farchive.h"
 
-struct patch_s;
+struct patch_t;
 class DCanvas;
 
 enum EColorRange
@@ -130,8 +130,8 @@ protected:
 	void LoadFON2 (BYTE *data);
 };
 
-void RawDrawPatch (patch_s *patch, byte *output, byte *tlate);
-void RecordPatchColors (patch_s *patch, byte *colorsused);
+void RawDrawPatch (patch_t *patch, byte *output, byte *tlate);
+void RecordPatchColors (patch_t *patch, byte *colorsused);
 
 extern FFont *SmallFont, *BigFont, *ConFont;
 

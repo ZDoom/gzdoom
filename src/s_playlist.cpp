@@ -54,7 +54,7 @@ FPlayList::~FPlayList ()
 bool FPlayList::ChangeList (const char *path)
 {
 	char linebuff[256];
-	int songlengths;
+	size_t songlengths;
 	int songcount;
 	FILE *file;
 
@@ -95,7 +95,7 @@ bool FPlayList::ChangeList (const char *path)
 		for (songcount = 0; songcount < NumSongs &&
 			NextLine (file, linebuff, sizeof(linebuff)); songcount++)
 		{
-			int len = strlen (linebuff) + 1;
+			size_t len = strlen (linebuff) + 1;
 
 			memcpy (SongList + songlengths, linebuff, len);
 			Songs[songcount] = SongList + songlengths;

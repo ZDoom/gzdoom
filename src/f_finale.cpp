@@ -49,7 +49,7 @@
 //	4 = Heretic title
 static unsigned int	finalestage;
 
-static unsigned int finalecount;
+static size_t finalecount;
 
 #define TEXTSPEED		2
 #define TEXTWAIT		250
@@ -210,7 +210,7 @@ void F_Ticker ()
 void F_TextWrite (void)
 {
 	int w, h, xo, yo;
-	int count;
+	size_t count;
 	char *ch;
 	int c;
 	int cx;
@@ -599,7 +599,7 @@ void F_CastDrawer (void)
 	
 	// draw the current frame in the middle of the screen
 	sprdef = &sprites[castsprite];
-	sprframe = &sprdef->spriteframes[caststate->GetFrame()];
+	sprframe = &SpriteFrames[sprdef->spriteframes + caststate->GetFrame()];
 	lump = sprframe->lump[0];
 	flip = (BOOL)sprframe->flip & 1;
 						
@@ -744,7 +744,7 @@ void F_DrawPatchCol (int x, const patch_t *patch, int col, const DCanvas *scrn)
 void F_DemonScroll ()
 {
 	static int yval = 0;
-	static unsigned int nextscroll = 0;
+	static size_t nextscroll = 0;
 
 	if (finalecount < 70)
 	{
@@ -806,8 +806,21 @@ void F_DrawUnderwater(void)
 		break;
 
 	case 4:
+		{
+		PalEntry *palette;
+		byte *orgpal;
+		int i;
+
+		orgpal = (byte *)W_CacheLumpName ("PLAYPAL", PU_CACHE);
+		palette = screen->GetPalette ();
+		for (i = 256; i > 0; i--, orgpal += 3)
+		{
+			*palette++ = PalEntry (orgpal[0], orgpal[1], orgpal[2]);
+		}
+		screen->UpdatePalette ();
 		screen->DrawPageBlock ((byte *)W_CacheLumpName ("TITLE", PU_CACHE));
 		break;
+		}
 	}
 }
 
@@ -825,8 +838,8 @@ void F_BunnyScroll (void)
 	patch_t*	p1;
 	patch_t*	p2;
 	char		name[10];
-	int 		stage;
-	static int	laststage;
+	size_t 		stage;
+	static size_t laststage;
 
 	p1 = (patch_t *)W_CacheLumpName ("PFUB2", PU_LEVEL);
 	p2 = (patch_t *)W_CacheLumpName ("PFUB1", PU_LEVEL);

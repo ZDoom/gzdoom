@@ -54,7 +54,7 @@ inline particle_t *NewParticle (void)
 		result = Particles + InactiveParticles;
 		InactiveParticles = result->tnext;
 		result->tnext = ActiveParticles;
-		ActiveParticles = result - Particles;
+		ActiveParticles = (int)(result - Particles);
 	}
 	return result;
 }

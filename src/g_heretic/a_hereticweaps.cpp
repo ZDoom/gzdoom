@@ -15,6 +15,28 @@
 #include "p_enemy.h"
 #include "gi.h"
 
+static FRandom pr_sap ("StaffAtkPL1");
+static FRandom pr_sap2 ("StaffAtkPL2");
+static FRandom pr_fgw ("FireWandPL1");
+static FRandom pr_fgw2 ("FireWandPL2");
+static FRandom pr_boltspark ("BoltSpark");
+static FRandom pr_spawnmace ("SpawnMace");
+static FRandom pr_macerespawn ("MaceRespawn");
+static FRandom pr_maceatk ("FireMacePL1");
+static FRandom pr_gatk ("GauntletAttack");
+static FRandom pr_bfx1 ("BlasterFX1");
+static FRandom pr_ripd ("RipperD");
+static FRandom pr_fb1 ("FireBlasterPL1");
+static FRandom pr_bfx1t ("BlasterFX1Tick");
+static FRandom pr_hrfx2 ("HornRodFX2");
+static FRandom pr_rp ("RainPillar");
+static FRandom pr_fsr1 ("FireSkullRodPL1");
+static FRandom pr_storm ("SkullRodStorm");
+static FRandom pr_impact ("RainImpact");
+static FRandom pr_pfx1 ("PhoenixFX1");
+static FRandom pr_pfx2 ("PhoenixFX2");
+static FRandom pr_fp2 ("FirePhoenixPL2");
+
 #define FLAME_THROWER_TICS (10*TICRATE)
 
 #define AMMO_GWND_WIMPY 10
@@ -74,13 +96,12 @@ void A_StaffAttackPL2 (player_t *, pspdef_t *);
 class AStaff : public AHereticWeapon
 {
 	DECLARE_ACTOR (AStaff, AHereticWeapon)
-	AT_GAME_SET_FRIEND (Staff)
-protected:
+public:
 	weapontype_t OldStyleID () const
 	{
 		return wp_staff;
 	}
-private:
+
 	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
 
@@ -162,15 +183,7 @@ FWeaponInfo AStaff::WeaponInfo2 =
 IMPLEMENT_ACTOR (AStaff, Heretic, -1, 0)
 END_DEFAULTS
 
-AT_GAME_SET (Staff)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		WeaponSlots[1].AddWeapon (wp_staff, 1);
-	}
-	wpnlev1info[wp_staff] = &AStaff::WeaponInfo1;
-	wpnlev2info[wp_staff] = &AStaff::WeaponInfo2;
-}
+WEAPON2 (wp_staff, AStaff)
 
 // Staff puff ---------------------------------------------------------------
 
@@ -184,6 +197,7 @@ FState AStaffPuff::States[] =
 
 IMPLEMENT_ACTOR (AStaffPuff, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_PUFFONACTORS)
 	PROP_SpawnState (0)
 	PROP_AttackSound ("weapons/staffhit")
 END_DEFAULTS
@@ -237,9 +251,9 @@ void A_StaffAttackPL1 (player_t *player, pspdef_t *psp)
 	int slope;
 
 	player->UseAmmo ();
-	damage = 5+(P_Random()&15);
+	damage = 5+(pr_sap()&15);
 	angle = player->mo->angle;
-	angle += PS_Random() << 18;
+	angle += pr_sap.Random2() << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	PuffType = RUNTIME_CLASS(AStaffPuff);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage);
@@ -266,9 +280,9 @@ void A_StaffAttackPL2 (player_t *player, pspdef_t *psp)
 
 	player->UseAmmo();
 	// P_inter.c:P_DamageMobj() handles target momentums
-	damage = 18+(P_Random()&63);
+	damage = 18+(pr_sap2()&63);
 	angle = player->mo->angle;
-	angle += PS_Random() << 18;
+	angle += pr_sap2.Random2() << 18;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
 	PuffType = RUNTIME_CLASS(AStaffPuff2);
 	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage);
@@ -295,6 +309,10 @@ public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_goldwand, health);
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_goldwand;
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -329,6 +347,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_goldwand, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_goldwand;
+	}
 protected:
 	virtual const char *PickupMessage ()
 	{
@@ -355,13 +377,12 @@ END_DEFAULTS
 class AGoldWand : public AHereticWeapon
 {
 	DECLARE_ACTOR (AGoldWand, AHereticWeapon)
-	AT_GAME_SET_FRIEND (GoldWand)
-protected:
+public:
 	weapontype_t OldStyleID () const
 	{
 		return wp_goldwand;
 	}
-private:
+
 	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
 
@@ -434,15 +455,7 @@ FWeaponInfo AGoldWand::WeaponInfo2 =
 IMPLEMENT_ACTOR (AGoldWand, Heretic, -1, 0)
 END_DEFAULTS
 
-AT_GAME_SET (GoldWand)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		WeaponSlots[2].AddWeapon (wp_goldwand, 3);
-	}
-	wpnlev1info[wp_goldwand] = &AGoldWand::WeaponInfo1;
-	wpnlev2info[wp_goldwand] = &AGoldWand::WeaponInfo2;
-}
+WEAPON2 (wp_goldwand, AGoldWand)
 
 // Gold wand FX1 ------------------------------------------------------------
 
@@ -518,6 +531,7 @@ FState AGoldWandPuff1::States[] =
 
 IMPLEMENT_ACTOR (AGoldWandPuff1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_PUFFONACTORS)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -547,11 +561,11 @@ void A_FireGoldWandPL1 (player_t *player, pspdef_t *psp)
 	mo = player->mo;
 	player->UseAmmo ();
 	P_BulletSlope(mo);
-	damage = 7+(P_Random()&7);
+	damage = 7+(pr_fgw()&7);
 	angle = mo->angle;
 	if (player->refire)
 	{
-		angle += PS_Random() << 18;
+		angle += pr_fgw.Random2() << 18;
 	}
 	PuffType = RUNTIME_CLASS(AGoldWandPuff1);
 	P_LineAttack (mo, angle, MISSILERANGE, bulletpitch, damage);
@@ -583,7 +597,7 @@ void A_FireGoldWandPL2 (player_t *player, pspdef_t *psp)
 	angle = mo->angle-(ANG45/8);
 	for(i = 0; i < 5; i++)
 	{
-		damage = 1+(P_Random()&7);
+		damage = 1+(pr_fgw2()&7);
 		P_LineAttack (mo, angle, MISSILERANGE, bulletpitch, damage);
 		angle += ((ANG45/8)*2)/4;
 	}
@@ -605,6 +619,10 @@ public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_crossbow, health);
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_crossbow;
 	}
 protected:
 	const char *PickupMessage ()
@@ -640,6 +658,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_crossbow, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_crossbow;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -666,18 +688,18 @@ END_DEFAULTS
 class ACrossbow : public AHereticWeapon
 {
 	DECLARE_ACTOR (ACrossbow, AHereticWeapon)
-	AT_GAME_SET_FRIEND (Crossbow)
-protected:
+public:
 	weapontype_t OldStyleID () const
 	{
 		return wp_crossbow;
 	}
+
+	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNCROSSBOW);
 	}
-private:
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
 
 FState ACrossbow::States[] =
@@ -779,15 +801,7 @@ IMPLEMENT_ACTOR (ACrossbow, Heretic, 2001, 27)
 	PROP_SpawnState (S_WBOW)
 END_DEFAULTS
 
-AT_GAME_SET (Crossbow)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		WeaponSlots[3].AddWeapon (wp_crossbow, 4);
-	}
-	wpnlev1info[wp_crossbow] = &ACrossbow::WeaponInfo1;
-	wpnlev2info[wp_crossbow] = &ACrossbow::WeaponInfo2;
-}
+WEAPON2 (wp_crossbow, ACrossbow)
 
 // Crossbow FX1 -------------------------------------------------------------
 
@@ -814,6 +828,7 @@ IMPLEMENT_ACTOR (ACrossbowFX1, Heretic, -1, 147)
 	PROP_Damage (10)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_CRBOWFX1)
 	PROP_DeathState (S_CRBOWFXI1)
@@ -838,6 +853,7 @@ FState ACrossbowFX2::States[] =
 IMPLEMENT_ACTOR (ACrossbowFX2, Heretic, -1, 148)
 	PROP_SpeedFixed (32)
 	PROP_Damage (6)
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (S_CRBOWFX2)
 END_DEFAULTS
 
@@ -863,6 +879,7 @@ IMPLEMENT_ACTOR (ACrossbowFX3, Heretic, -1, 149)
 	PROP_SpeedFixed (20)
 	PROP_Damage (2)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_CRBOWFX3)
 	PROP_DeathState (S_CRBOWFXI3)
@@ -887,6 +904,7 @@ FState ACrossbowFX4::States[] =
 IMPLEMENT_ACTOR (ACrossbowFX4, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP)
 	PROP_Flags2 (MF2_LOGRAV)
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (S_CRBOWFX4)
 END_DEFAULTS
 
@@ -936,11 +954,11 @@ void A_BoltSpark (AActor *bolt)
 {
 	AActor *spark;
 
-	if (P_Random() > 50)
+	if (pr_boltspark() > 50)
 	{
 		spark = Spawn<ACrossbowFX4> (bolt->x, bolt->y, bolt->z);
-		spark->x += PS_Random() << 10;
-		spark->y += PS_Random() << 10;
+		spark->x += pr_boltspark.Random2() << 10;
+		spark->y += pr_boltspark.Random2() << 10;
 	}
 }
 
@@ -965,6 +983,10 @@ public:
 	bool TryPickup (AActor *toucher)
 	{
 		return P_GiveAmmo (toucher->player, am_mace, health);
+	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_mace;
 	}
 protected:
 	const char *PickupMessage ()
@@ -999,6 +1021,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_mace, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_mace;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -1023,14 +1049,15 @@ class AMace : public AHereticWeapon
 {
 	DECLARE_ACTOR (AMace, AHereticWeapon)
 	HAS_OBJECT_POINTERS
-	AT_GAME_SET_FRIEND (Mace)
 public:
 	void Serialize (FArchive &arc);
-protected:
+public:
 	weapontype_t OldStyleID () const
 	{
 		return wp_mace;
 	}
+	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNMACE);
@@ -1039,7 +1066,6 @@ protected:
 	int NumMaceSpots;
 	AActor *FirstSpot;
 private:
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 
 	friend void A_SpawnMace (AActor *self);
 };
@@ -1134,15 +1160,7 @@ BEGIN_DEFAULTS (AMace, Heretic, -1, 0)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
-AT_GAME_SET (Mace)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		WeaponSlots[7].AddWeapon (wp_mace, 8);
-	}
-	wpnlev1info[wp_mace] = &AMace::WeaponInfo1;
-	wpnlev2info[wp_mace] = &AMace::WeaponInfo2;
-}
+WEAPON2 (wp_mace, AMace)
 
 // Mace FX1 -----------------------------------------------------------------
 
@@ -1171,7 +1189,8 @@ IMPLEMENT_ACTOR (AMaceFX1, Heretic, -1, 154)
 	PROP_SpeedFixed (20)
 	PROP_Damage (2)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_FLOORBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags3 (MF3_WARNBOT)
 
 	PROP_SpawnState (S_MACEFX1)
 	PROP_DeathState (S_MACEFXI1)
@@ -1202,7 +1221,7 @@ IMPLEMENT_ACTOR (AMaceFX2, Heretic, -1, 156)
 	PROP_SpeedFixed (10)
 	PROP_Damage (6)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_FLOORBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_LOGRAV|MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 
 	PROP_SpawnState (S_MACEFX2)
 	PROP_DeathState (S_MACEFXI2)
@@ -1210,9 +1229,9 @@ END_DEFAULTS
 
 // Mace FX3 -----------------------------------------------------------------
 
-class AMaceFX3 : public AActor
+class AMaceFX3 : public AMaceFX1
 {
-	DECLARE_ACTOR (AMaceFX3, AActor)
+	DECLARE_ACTOR (AMaceFX3, AMaceFX1)
 };
 
 FState AMaceFX3::States[] =
@@ -1223,16 +1242,12 @@ FState AMaceFX3::States[] =
 };
 
 IMPLEMENT_ACTOR (AMaceFX3, Heretic, -1, 155)
-	PROP_RadiusFixed (8)
-	PROP_HeightFixed (6)
 	PROP_SpeedFixed (7)
 	PROP_Damage (4)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_FLOORBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_LOGRAV|MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 
 	PROP_SpawnState (S_MACEFX3)
-	PROP_STATE_BASE (AMaceFX1)
-	PROP_DeathState (S_MACEFXI1)
 END_DEFAULTS
 
 // Mace FX4 -----------------------------------------------------------------
@@ -1259,7 +1274,7 @@ IMPLEMENT_ACTOR (AMaceFX4, Heretic, -1, 153)
 	PROP_SpeedFixed (7)
 	PROP_Damage (18)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_FLOORBOUNCE|MF2_THRUGHOST|MF2_TELESTOMP|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags2 (MF2_LOGRAV|MF2_HERETICBOUNCE|MF2_THRUGHOST|MF2_TELESTOMP|MF2_PCROSS|MF2_IMPACT)
 
 	PROP_SpawnState (S_MACEFX4)
 	PROP_DeathState (S_MACEFXI4)
@@ -1343,7 +1358,7 @@ void A_SpawnMace (AActor *self)
 	{
 		return;
 	}
-	if (!deathmatch && P_Random() < 64)
+	if (!deathmatch && pr_spawnmace() < 64)
 	{ // Sometimes doesn't show up if not in deathmatch
 		return;
 	}
@@ -1361,7 +1376,7 @@ void A_SpawnMace (AActor *self)
 
 bool AMace::DoRespawn ()
 {
-	int spotnum = P_Random () % NumMaceSpots;
+	int spotnum = pr_macerespawn () % NumMaceSpots;
 	AActor *spot = FirstSpot;
 
 	while (spotnum > 0)
@@ -1417,7 +1432,7 @@ void A_FireMacePL1 (player_t *player, pspdef_t *psp)
 {
 	AActor *ball;
 
-	if (P_Random() < 28)
+	if (pr_maceatk() < 28)
 	{
 		A_FireMacePL1B (player, psp);
 		return;
@@ -1426,10 +1441,10 @@ void A_FireMacePL1 (player_t *player, pspdef_t *psp)
 	{
 		return;
 	}
-	psp->sx = ((P_Random()&3)-2)*FRACUNIT;
-	psp->sy = WEAPONTOP+(P_Random()&3)*FRACUNIT;
+	psp->sx = ((pr_maceatk()&3)-2)*FRACUNIT;
+	psp->sy = WEAPONTOP+(pr_maceatk()&3)*FRACUNIT;
 	ball = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AMaceFX1),
-		player->mo->angle+(((P_Random()&7)-4)<<24));
+		player->mo->angle+(((pr_maceatk()&7)-4)<<24));
 	if (ball)
 	{
 		ball->special1 = 16; // tics till dropoff
@@ -1479,22 +1494,17 @@ void A_MacePL1Check (AActor *ball)
 
 void A_MaceBallImpact (AActor *ball)
 {
-	if ((ball->z <= ball->floorz) && P_HitFloor (ball))
-	{ // Landed in some sort of liquid
-		ball->Destroy ();
-		return;
-	}
-	if ((ball->health != MAGIC_JUNK) && (ball->z <= ball->floorz)
-		&& ball->momz)
+	if ((ball->health != MAGIC_JUNK) && (ball->flags & MF_INBOUNCE))
 	{ // Bounce
 		ball->health = MAGIC_JUNK;
-		ball->momz = (ball->momz*192)>>8;
-		ball->flags2 &= ~MF2_FLOORBOUNCE;
+		ball->momz = (ball->momz * 192) >> 8;
+		ball->flags2 &= ~MF2_BOUNCETYPE;
 		ball->SetState (ball->SpawnState);
 		S_Sound (ball, CHAN_BODY, "weapons/macebounce", 1, ATTN_NORM);
 	}
 	else
 	{ // Explode
+		ball->momx = ball->momy = ball->momz = 0;
 		ball->flags |= MF_NOGRAVITY;
 		ball->flags2 &= ~MF2_LOGRAV;
 		S_Sound (ball, CHAN_BODY, "weapons/macehit", 1, ATTN_NORM);
@@ -1512,20 +1522,27 @@ void A_MaceBallImpact2 (AActor *ball)
 	AActor *tiny;
 	angle_t angle;
 
-	if ((ball->z <= ball->floorz) && P_HitFloor(ball))
-	{ // Landed in some sort of liquid
-		ball->Destroy ();
-		return;
-	}
-	if ((ball->z != ball->floorz) || (ball->momz < 2*FRACUNIT))
-	{ // Explode
-		ball->momx = ball->momy = ball->momz = 0;
-		ball->flags |= MF_NOGRAVITY;
-		ball->flags2 &= ~(MF2_LOGRAV|MF2_FLOORBOUNCE);
-	}
-	else
-	{ // Bounce
-		ball->momz = (ball->momz*192)>>8;
+	if (ball->flags & MF_INBOUNCE)
+	{
+		fixed_t floordist = ball->z - ball->floorz;
+		fixed_t ceildist = ball->ceilingz - ball->z;
+		fixed_t vel;
+
+		if (floordist <= ceildist)
+		{
+			vel = MulScale32 (ball->momz, ball->Sector->floorplane.c);
+		}
+		else
+		{
+			vel = MulScale32 (ball->momz, ball->Sector->ceilingplane.c);
+		}
+		if (vel < 2)
+		{
+			goto boom;
+		}
+
+		// Bounce
+		ball->momz = (ball->momz * 192) >> 8;
 		ball->SetState (ball->SpawnState);
 
 		tiny = Spawn<AMaceFX3> (ball->x, ball->y, ball->z);
@@ -1551,6 +1568,13 @@ void A_MaceBallImpact2 (AActor *ball)
 			finesine[angle]);
 		tiny->momz = ball->momz;
 		P_CheckMissileSpawn (tiny);
+	}
+	else
+	{ // Explode
+boom:
+		ball->momx = ball->momy = ball->momz = 0;
+		ball->flags |= MF_NOGRAVITY;
+		ball->flags2 &= ~(MF2_LOGRAV|MF2_BOUNCETYPE);
 	}
 }
 
@@ -1598,8 +1622,26 @@ void A_DeathBallImpact (AActor *ball)
 		ball->Destroy ();
 		return;
 	}
-	if ((ball->z <= ball->floorz) && ball->momz)
-	{ // Bounce
+	if (ball->flags & MF_INBOUNCE)
+	{
+		fixed_t floordist = ball->z - ball->floorz;
+		fixed_t ceildist = ball->ceilingz - ball->z;
+		fixed_t vel;
+
+		if (floordist <= ceildist)
+		{
+			vel = MulScale32 (ball->momz, ball->Sector->floorplane.c);
+		}
+		else
+		{
+			vel = MulScale32 (ball->momz, ball->Sector->ceilingplane.c);
+		}
+		if (vel < 2)
+		{
+			goto boom;
+		}
+
+		// Bounce
 		newAngle = false;
 		target = ball->tracer;
 		if (target)
@@ -1644,6 +1686,8 @@ void A_DeathBallImpact (AActor *ball)
 	}
 	else
 	{ // Explode
+boom:
+		ball->momx = ball->momy = ball->momz = 0;
 		ball->flags |= MF_NOGRAVITY;
 		ball->flags2 &= ~MF2_LOGRAV;
 		S_Sound (ball, CHAN_BODY, "weapons/maceexplode", 1, ATTN_NORM);
@@ -1659,18 +1703,17 @@ void A_GauntletAttack (player_t *, pspdef_t *);
 class AGauntlets : public AHereticWeapon
 {
 	DECLARE_ACTOR (AGauntlets, AHereticWeapon)
-	AT_GAME_SET_FRIEND (Gauntlets)
-protected:
+public:
 	weapontype_t OldStyleID () const
 	{
 		return wp_gauntlets;
 	}
+	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNGAUNTLETS);
 	}
-private:
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
 
 FState AGauntlets::States[] =
@@ -1730,7 +1773,7 @@ FWeaponInfo AGauntlets::WeaponInfo1 =
 	&States[S_GAUNTLETATK1+2],
 	NULL,
 	RUNTIME_CLASS(AGauntlets),
-	150,
+	0,
 	15*FRACUNIT,
 	"weapons/gauntletsactivate",
 	NULL,
@@ -1751,7 +1794,7 @@ FWeaponInfo AGauntlets::WeaponInfo2 =
 	&States[S_GAUNTLETATK2+2],
 	NULL,
 	RUNTIME_CLASS(AGauntlets),
-	150,
+	0,
 	15*FRACUNIT,
 	"weapons/gauntletsactivate",
 	NULL,
@@ -1764,15 +1807,7 @@ IMPLEMENT_ACTOR (AGauntlets, Heretic, 2005, 32)
 	PROP_SpawnState (S_WGNT)
 END_DEFAULTS
 
-AT_GAME_SET (Gauntlets)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		WeaponSlots[1].AddWeapon (wp_gauntlets, 2);
-	}
-	wpnlev1info[wp_gauntlets] = &AGauntlets::WeaponInfo1;
-	wpnlev2info[wp_gauntlets] = &AGauntlets::WeaponInfo2;
-}
+WEAPON2 (wp_gauntlets, AGauntlets)
 
 // Gauntlet puff 1 ----------------------------------------------------------
 
@@ -1794,6 +1829,7 @@ FState AGauntletPuff1::States[] =
 
 IMPLEMENT_ACTOR (AGauntletPuff1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_PUFFONACTORS)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HR_SHADOW)
 	PROP_SpawnState (S_GAUNTLETPUFF1)
@@ -1844,35 +1880,35 @@ void A_GauntletAttack (player_t *player, pspdef_t *psp)
 	fixed_t dist;
 
 	player->UseAmmo ();
-	psp->sx = ((P_Random()&3)-2) * FRACUNIT;
-	psp->sy = WEAPONTOP + (P_Random()&3) * FRACUNIT;
+	psp->sx = ((pr_gatk()&3)-2) * FRACUNIT;
+	psp->sy = WEAPONTOP + (pr_gatk()&3) * FRACUNIT;
 	angle = player->mo->angle;
 	if (player->powers[pw_weaponlevel2])
 	{
-		damage = HITDICE(2);
+		damage = pr_gatk.HitDice (2);
 		dist = 4*MELEERANGE;
-		angle += PS_Random() << 17;
+		angle += pr_gatk.Random2() << 17;
 		PuffType = RUNTIME_CLASS(AGauntletPuff2);
 	}
 	else
 	{
-		damage = HITDICE(2);
+		damage = pr_gatk.HitDice (2);
 		dist = MELEERANGE+1;
-		angle += PS_Random() << 18;
+		angle += pr_gatk.Random2() << 18;
 		PuffType = RUNTIME_CLASS(AGauntletPuff1);
 	}
 	slope = P_AimLineAttack (player->mo, angle, dist);
 	P_LineAttack (player->mo, angle, dist, slope, damage);
 	if (!linetarget)
 	{
-		if (P_Random() > 64)
+		if (pr_gatk() > 64)
 		{
 			player->extralight = !player->extralight;
 		}
 		S_Sound (player->mo, CHAN_AUTO, "weapons/gauntletson", 1, ATTN_NORM);
 		return;
 	}
-	randVal = P_Random();
+	randVal = pr_gatk();
 	if (randVal < 64)
 	{
 		player->extralight = 0;
@@ -1930,6 +1966,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_blaster, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_blaster;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -1966,6 +2006,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_blaster, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_blaster;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -1991,18 +2035,17 @@ END_DEFAULTS
 class ABlaster : public AHereticWeapon
 {
 	DECLARE_ACTOR (ABlaster, AHereticWeapon)
-	AT_GAME_SET_FRIEND (Blaster)
-protected:
+public:
 	weapontype_t OldStyleID () const
 	{
 		return wp_blaster;
 	}
+	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNBLASTER);
 	}
-private:
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
 
 FState ABlaster::States[] =
@@ -2083,15 +2126,7 @@ IMPLEMENT_ACTOR (ABlaster, Heretic, 53, 28)
 	PROP_SpawnState (S_BLSR)
 END_DEFAULTS
 
-AT_GAME_SET (Blaster)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		WeaponSlots[4].AddWeapon (wp_blaster, 5);
-	}
-	wpnlev1info[wp_blaster] = &ABlaster::WeaponInfo1;
-	wpnlev2info[wp_blaster] = &ABlaster::WeaponInfo2;
-}
+WEAPON2 (wp_blaster, ABlaster)
 
 // Blaster FX 1 -------------------------------------------------------------
 
@@ -2125,7 +2160,6 @@ IMPLEMENT_ACTOR (ABlasterFX1, Heretic, -1, 0)
 	PROP_Damage (2)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
-	PROP_Flags3 (MF3_VERYFAST)
 
 	PROP_SpawnState (S_BLASTERFX1)
 	PROP_DeathState (S_BLASTERFXI1)
@@ -2137,7 +2171,7 @@ int ABlasterFX1::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->IsKindOf (TypeInfo::FindType ("Ironlich")))
 	{ // Less damage to Ironlich bosses
-		damage = P_Random() & 1;
+		damage = pr_bfx1() & 1;
 		if (!damage)
 		{
 			return -1;
@@ -2202,6 +2236,7 @@ IMPLEMENT_ACTOR (ARipper, Heretic, -1, 157)
 	PROP_Damage (1)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_RIP|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags3 (MF3_WARNBOT)
 
 	PROP_SpawnState (S_RIPPER)
 
@@ -2212,7 +2247,7 @@ int ARipper::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->IsKindOf (TypeInfo::FindType ("Ironlich")))
 	{ // Less damage to Ironlich bosses
-		damage = P_Random() & 1;
+		damage = pr_ripd() & 1;
 		if (!damage)
 		{
 			return -1;
@@ -2240,6 +2275,7 @@ FState ABlasterPuff1::States[] =
 
 IMPLEMENT_ACTOR (ABlasterPuff1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_Flags3 (MF3_PUFFONACTORS)
 
 	PROP_SpawnState (S_BLASTERPUFF1)
 END_DEFAULTS
@@ -2284,11 +2320,11 @@ void A_FireBlasterPL1 (player_t *player, pspdef_t *psp)
 	mo = player->mo;
 	player->UseAmmo ();
 	P_BulletSlope(mo);
-	damage = HITDICE(4);
+	damage = pr_fb1.HitDice (4);
 	angle = mo->angle;
 	if (player->refire)
 	{
-		angle += PS_Random() << 18;
+		angle += pr_fb1.Random2() << 18;
 	}
 	PuffType = RUNTIME_CLASS(ABlasterPuff1);
 	HitPuffType = RUNTIME_CLASS(ABlasterPuff2);
@@ -2384,7 +2420,7 @@ void ABlasterFX1::Tick ()
 				P_ExplodeMissile (this, NULL);
 				return;
 			}
-			if (changexy && (P_Random() < 64))
+			if (changexy && (pr_bfx1t() < 64))
 			{
 				Spawn<ABlasterSmoke> (x, y, MAX<fixed_t> (z - 8 * FRACUNIT, floorz));
 			}
@@ -2424,6 +2460,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_skullrod, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_skullrod;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -2458,6 +2498,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_skullrod, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_skullrod;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -2483,18 +2527,17 @@ END_DEFAULTS
 class ASkullRod : public AHereticWeapon
 {
 	DECLARE_ACTOR (ASkullRod, AHereticWeapon)
-	AT_GAME_SET_FRIEND (SkullRod)
-protected:
+public:
 	weapontype_t OldStyleID () const
 	{
 		return wp_skullrod;
 	}
+	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNSKULLROD);
 	}
-private:
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
 
 FState ASkullRod::States[] =
@@ -2575,15 +2618,7 @@ IMPLEMENT_ACTOR (ASkullRod, Heretic, 2004, 30)
 	PROP_SpawnState (S_WSKL)
 END_DEFAULTS
 
-AT_GAME_SET (SkullRod)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		WeaponSlots[5].AddWeapon (wp_skullrod, 6);
-	}
-	wpnlev1info[wp_skullrod] = &ASkullRod::WeaponInfo1;
-	wpnlev2info[wp_skullrod] = &ASkullRod::WeaponInfo2;
-}
+WEAPON2 (wp_skullrod, ASkullRod)
 
 // Horn Rod FX 1 ------------------------------------------------------------
 
@@ -2614,6 +2649,7 @@ IMPLEMENT_ACTOR (AHornRodFX1, Heretic, -1, 160)
 	PROP_Damage (3)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
+	PROP_Flags3 (MF3_WARNBOT)
 
 	PROP_SpawnState (S_HRODFX1)
 	PROP_DeathState (S_HRODFXI1)
@@ -2661,11 +2697,14 @@ IMPLEMENT_ACTOR (AHornRodFX2, Heretic, -1, 0)
 
 	PROP_SpawnState (S_HRODFX2)
 	PROP_DeathState (S_HRODFXI2)
+
+	PROP_SeeSound ("weapons/hornrodshoot")
+	PROP_DeathSound ("weapons/hornrodpowhit")
 END_DEFAULTS
 
 int AHornRodFX2::DoSpecialDamage (AActor *target, int damage)
 {
-	if (target->IsKindOf (RUNTIME_CLASS (ASorcerer2)) && P_Random() < 96)
+	if (target->IsKindOf (RUNTIME_CLASS (ASorcerer2)) && pr_hrfx2() < 96)
 	{ // D'Sparil teleports away
 		P_DSparilTeleport (target);
 		return -1;
@@ -2716,7 +2755,7 @@ int ARainPillar::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->flags2 & MF2_BOSS)
 	{ // Decrease damage for bosses
-		damage = (P_Random() & 7) + 1;
+		damage = (pr_rp() & 7) + 1;
 	}
 	return damage;
 }
@@ -2737,7 +2776,7 @@ void A_FireSkullRodPL1 (player_t *player, pspdef_t *psp)
 	}
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHornRodFX1));
 	// Randomize the first frame
-	if (mo && P_Random() > 128)
+	if (mo && pr_fsr1() > 128)
 	{
 		mo->SetState (mo->state->GetNextState());
 	}
@@ -2759,12 +2798,15 @@ void A_FireSkullRodPL2 (player_t *player, pspdef_t *psp)
 	// Use MissileActor instead of the return value from
 	// P_SpawnPlayerMissile because we need to give info to the mobj
 	// even if it exploded immediately.
-	MissileActor->special2 = player - players;
-	if (linetarget)
+	if (MissileActor != NULL)
 	{
-		MissileActor->tracer = linetarget;
+		MissileActor->special2 = (int)(player - players);
+		if (linetarget)
+		{
+			MissileActor->tracer = linetarget;
+		}
+		S_Sound (MissileActor, CHAN_WEAPON, "weapons/hornrodpowshoot", 1, ATTN_NORM);
 	}
-	S_Sound (MissileActor, CHAN_BODY, "weapons/hornrodpowshoot", 1, ATTN_NORM);
 }
 
 //----------------------------------------------------------------------------
@@ -2867,12 +2909,12 @@ void A_SkullRodStorm (AActor *actor)
 		actor->Destroy ();
 		return;
 	}
-	if (P_Random() < 25)
+	if (pr_storm() < 25)
 	{ // Fudge rain frequency
 		return;
 	}
-	x = actor->x + ((P_Random()&127) - 64) * FRACUNIT;
-	y = actor->y + ((P_Random()&127) - 64) * FRACUNIT;
+	x = actor->x + ((pr_storm()&127) - 64) * FRACUNIT;
+	y = actor->y + ((pr_storm()&127) - 64) * FRACUNIT;
 	mo = Spawn<ARainPillar> (x, y, ONCEILINGZ);
 	mo->Translation = multiplayer ?
 		TRANSLATION(TRANSLATION_PlayersExtra,actor->special2) : 0;
@@ -2899,7 +2941,7 @@ void A_RainImpact (AActor *actor)
 	{
 		actor->SetState (&ARainPillar::States[S_RAINAIRXPLR]);
 	}
-	else if (P_Random() < 40)
+	else if (pr_impact() < 40)
 	{
 		P_HitFloor (actor);
 	}
@@ -2936,6 +2978,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_phoenixrod, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_phoenixrod;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -2971,6 +3017,10 @@ public:
 	{
 		return P_GiveAmmo (toucher->player, am_phoenixrod, health);
 	}
+	virtual ammotype_t GetAmmoType () const
+	{
+		return am_phoenixrod;
+	}
 protected:
 	const char *PickupMessage ()
 	{
@@ -2996,18 +3046,17 @@ END_DEFAULTS
 class APhoenixRod : public AHereticWeapon
 {
 	DECLARE_ACTOR (APhoenixRod, AHereticWeapon)
-	AT_GAME_SET_FRIEND (PhoenixRod)
-protected:
+public:
 	weapontype_t OldStyleID () const
 	{
 		return wp_phoenixrod;
 	}
+	static FWeaponInfo WeaponInfo1, WeaponInfo2;
+protected:
 	const char *PickupMessage ()
 	{
 		return GStrings(TXT_WPNPHOENIXROD);
 	}
-private:
-	static FWeaponInfo WeaponInfo1, WeaponInfo2;
 };
 
 FState APhoenixRod::States[] =
@@ -3085,15 +3134,7 @@ IMPLEMENT_ACTOR (APhoenixRod, Heretic, 2003, 29)
 	PROP_SpawnState (S_WPHX)
 END_DEFAULTS
 
-AT_GAME_SET (PhoenixRod)
-{
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		WeaponSlots[6].AddWeapon (wp_phoenixrod, 7);
-	}
-	wpnlev1info[wp_phoenixrod] = &APhoenixRod::WeaponInfo1;
-	wpnlev2info[wp_phoenixrod] = &APhoenixRod::WeaponInfo2;
-}
+WEAPON2 (wp_phoenixrod, APhoenixRod)
 
 // Phoenix FX 1 -------------------------------------------------------------
 
@@ -3130,7 +3171,7 @@ END_DEFAULTS
 
 int APhoenixFX1::DoSpecialDamage (AActor *target, int damage)
 {
-	if (target->IsKindOf (RUNTIME_CLASS (ASorcerer2)) && P_Random() < 96)
+	if (target->IsKindOf (RUNTIME_CLASS (ASorcerer2)) && pr_pfx1() < 96)
 	{ // D'Sparil teleports away
 		P_DSparilTeleport (target);
 		return -1;
@@ -3203,7 +3244,7 @@ END_DEFAULTS
 
 int APhoenixFX2::DoSpecialDamage (AActor *target, int damage)
 {
-	if (target->player && P_Random () < 128)
+	if (target->player && pr_pfx2 () < 128)
 	{ // Freeze player for a bit
 		target->reactiontime += 4;
 	}
@@ -3294,8 +3335,8 @@ void A_FirePhoenixPL2 (player_t *player, pspdef_t *psp)
 	}
 	pmo = player->mo;
 	angle = pmo->angle;
-	x = pmo->x + (PS_Random() << 9);
-	y = pmo->y + (PS_Random() << 9);
+	x = pmo->x + (pr_fp2.Random2() << 9);
+	y = pmo->y + (pr_fp2.Random2() << 9);
 	z = pmo->z + 26*FRACUNIT + finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)];
 	z -= pmo->floorclip;
 	slope = finetangent[FINEANGLES/4-(pmo->pitch>>ANGLETOFINESHIFT)] + (FRACUNIT/10);

@@ -58,14 +58,14 @@ extern drawseg_t	*drawsegs;
 extern drawseg_t	*firstdrawseg;
 extern drawseg_t*	ds_p;
 
-extern TArray<int>	InterestingDrawsegs;	// drawsegs that have something drawn on them
-extern int			FirstInterestingDrawseg;
+extern TArray<size_t>	InterestingDrawsegs;	// drawsegs that have something drawn on them
+extern size_t			FirstInterestingDrawseg;
 
 extern int			WindowLeft, WindowRight;
 extern WORD			MirrorFlags;
 extern seg_t*		ActiveWallMirror;
 
-extern TArray<ptrdiff_t> WallMirrors;
+extern TArray<size_t>	WallMirrors;
 
 typedef void (*drawfunc_t) (int start, int stop);
 

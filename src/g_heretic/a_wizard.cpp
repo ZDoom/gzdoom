@@ -8,6 +8,8 @@
 #include "a_action.h"
 #include "gstrings.h"
 
+static FRandom pr_wizatk3 ("WizAtk3");
+
 void A_WizAtk1 (AActor *);
 void A_WizAtk2 (AActor *);
 void A_WizAtk3 (AActor *);
@@ -66,7 +68,7 @@ IMPLEMENT_ACTOR (AWizard, Heretic, 15, 19)
 	PROP_PainChance (64)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL|MF_FLOAT|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_PASSMOBJ)
-	PROP_Flags3 (MF3_SEEISALSOACTIVE|MF3_DONTOVERLAP)
+	PROP_Flags3 (MF3_DONTOVERLAP)
 
 	PROP_SpawnState (S_WIZARD_LOOK)
 	PROP_SeeState (S_WIZARD_WALK)
@@ -196,7 +198,7 @@ void A_WizAtk3 (AActor *actor)
 	S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange(actor))
 	{
-		int damage = HITDICE(4);
+		int damage = pr_wizatk3.HitDice (4);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		return;

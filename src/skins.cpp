@@ -4,6 +4,12 @@
 
 /*
 
+  NOTE: Please ignore this for now. I wrote this up and never bothered
+		to write the code that implements it. Some of these things are
+		already obsolete, such as the use of death1-death4. A single
+		death sound with a random choice like in SNDINFO would be better
+		and more flexible.
+
 Each skin uses a single wad file with a SKINDEF lump and supporting
 graphics and sounds. An S_SKIN lump is optional, for compatibilty
 with Doom Legacy. If both a SKINDEF and S_SKIN lump are present,

@@ -269,7 +269,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			return false;
 
 		// if the wrong side of door is pushed, give oof sound
-		if (line->sidenum[1]==-1)				// killough
+		if (line->sidenum[1] == NO_INDEX)			// killough
 		{
 			S_Sound (thing, CHAN_VOICE, "*usefail", 1, ATTN_NORM);
 			return false;
@@ -280,36 +280,46 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		secnum = sec-sectors;
 
 		// if door already has a thinker, use it
-		if (sec->ceilingdata && sec->ceilingdata->IsKindOf (RUNTIME_CLASS(DDoor)))
+		if (sec->ceilingdata)
 		{
-			DDoor *door = static_cast<DDoor *>(sec->ceilingdata);
-
-			// ONLY FOR "RAISE" DOORS, NOT "OPEN"s
-			if (door->m_Type == DDoor::doorRaise && type == DDoor::doorRaise)
+			if (sec->ceilingdata->IsKindOf (RUNTIME_CLASS(DDoor)))
 			{
-				if (door->m_Direction == -1)
-				{
-					door->m_Direction = 1;	// go back up
-				}
-				else if (GET_SPAC(line->flags) != SPAC_PUSH)
-					// [RH] activate push doors don't go back down when you
-					//		run into them (otherwise opening them would be
-					//		a real pain).
-				{
-					if (!thing->player || thing->player->isbot)
-						return false;	// JDC: bad guys never close doors
-										//Added by MC: Neither do bots.
+				DDoor *door = static_cast<DDoor *>(sec->ceilingdata);
 
-					door->m_Direction = -1;	// start going down immediately
+				// ONLY FOR "RAISE" DOORS, NOT "OPEN"s
+				if (door->m_Type == DDoor::doorRaise && type == DDoor::doorRaise)
+				{
+					if (door->m_Direction == -1)
+					{
+						door->m_Direction = 1;	// go back up
+					}
+					else if (GET_SPAC(line->flags) != SPAC_PUSH)
+						// [RH] activate push doors don't go back down when you
+						//		run into them (otherwise opening them would be
+						//		a real pain).
+					{
+						if (!thing->player || thing->player->isbot)
+							return false;	// JDC: bad guys never close doors
+											//Added by MC: Neither do bots.
 
-					// [RH] If this sector doesn't have a specific sound
-					// attached to it, start the door close sequence.
-					// Otherwise, just let the current one continue.
-					if (sec->seqType == -1)
-						door->DoorSound (false);
+						door->m_Direction = -1;	// start going down immediately
+
+						// [RH] If this sector doesn't have a specific sound
+						// attached to it, start the door close sequence.
+						// Otherwise, just let the current one continue.
+						if (sec->seqType == -1)
+						{
+							door->DoorSound (false);
+						}
+						return true;
+					}
+					else
+					{
+						return false;
+					}
 				}
-				return true;
 			}
+			return false;
 		}
 		if (new DDoor (sec, type, speed, delay))
 			rtn = true;

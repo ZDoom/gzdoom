@@ -50,6 +50,9 @@
 #include "r_state.h"
 #include "sbar.h"
 #include "gi.h"
+#include "m_random.h"
+
+static FRandom pr_pickteam ("PickRandomTeam");
 
 extern BOOL st_firsttime;
 
@@ -81,6 +84,11 @@ const char *TeamNames[NUM_TEAMS] =
 	"Red", "Blue", "Green", "Gold"
 };
 
+float TeamHues[NUM_TEAMS] =
+{
+	0.f, 240.f, 120.f, 60.f
+};
+
 const char *GenderNames[3] = { "male", "female", "cyborg" };
 
 static const char *UserInfoStrings[] =
@@ -107,7 +115,134 @@ int D_GenderToInt (const char *gender)
 		return GENDER_MALE;
 }
 
-void D_SetupUserInfo (void)
+void D_GetPlayerColor (int player, float *h, float *s, float *v)
+{
+	int color = players[player].userinfo.color;
+
+	RGBtoHSV (RPART(color)/255.f, GPART(color)/255.f, BPART(color)/255.f,
+		h, s, v);
+
+	if (teamplay && players[player].userinfo.team < NUM_TEAMS)
+	{
+		// In team play, force the player to use the team's hue
+		// and adjust the saturation and value so that the team
+		// hue is visible in the final color.
+		*h = TeamHues[players[player].userinfo.team];
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			*s = *s*0.15f+0.8f;
+			*v = *v*0.5f+0.4f;
+		}
+		else
+		{
+			// I'm not really happy with the red team color in Heretic...
+			*s = team == 0 ? 0.6f : 0.8f;
+			*v = *v*0.4f+0.3f;
+		}
+	}
+}
+
+// Find out which teams are present. If there is only one,
+// then another team should be chosen at random.
+//
+// Otherwise, join whichever team has fewest players. If
+// teams are tied for fewest players, pick one of those
+// at random.
+
+void D_PickRandomTeam (int player)
+{
+	static char teamline[8] = "\\team\\X";
+
+	byte *foo = (byte *)teamline;
+	teamline[6] = D_PickRandomTeam() + '0';
+	D_ReadUserInfoStrings (player, &foo, teamplay);
+}
+
+int D_PickRandomTeam ()
+{
+	int teamPresent[NUM_TEAMS] = { 0 };
+	int numTeams = 0;
+	int team;
+
+	for (int i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i])
+		{
+			if (players[i].userinfo.team < NUM_TEAMS)
+			{
+				if (teamPresent[players[i].userinfo.team]++ == 0)
+				{
+					numTeams++;
+				}
+			}
+		}
+	}
+
+	if (numTeams < 2)
+	{
+		do
+		{
+			team = pr_pickteam() % NUM_TEAMS;
+		} while (teamPresent[team] != 0);
+	}
+	else
+	{
+		int lowest = INT_MAX, lowestTie = 0, i;
+		int ties[NUM_TEAMS];
+
+		for (i = 0; i < NUM_TEAMS; ++i)
+		{
+			if (teamPresent[i] > 0)
+			{
+				if (teamPresent[i] < lowest)
+				{
+					lowest = teamPresent[i];
+					lowestTie = 0;
+					ties[0] = i;
+				}
+				else if (teamPresent[i] == lowest)
+				{
+					ties[++lowestTie] = i;
+				}
+			}
+		}
+		if (lowestTie == 0)
+		{
+			team = ties[0];
+		}
+		else
+		{
+			team = ties[pr_pickteam() % (lowestTie+1)];
+		}
+	}
+
+	return team;
+}
+
+int D_GetFragCount (player_t *player)
+{
+	if (!teamplay || player->userinfo.team >= NUM_TEAMS)
+	{
+		return player->fragcount;
+	}
+	else
+	{
+		// Count total frags for this player's team
+		const int team = player->userinfo.team;
+		int count = 0;
+
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i] && players[i].userinfo.team == team)
+			{
+				count += players[i].fragcount;
+			}
+		}
+		return count;
+	}
+}
+
+void D_SetupUserInfo ()
 {
 	int i;
 	userinfo_t *coninfo = &players[consoleplayer].userinfo;
@@ -116,7 +251,14 @@ void D_SetupUserInfo (void)
 		memset (&players[i].userinfo, 0, sizeof(userinfo_t));
 
 	strncpy (coninfo->netname, name, MAXPLAYERNAME);
-	coninfo->team = team;
+	if (teamplay && team >= NUM_TEAMS)
+	{
+		coninfo->team = D_PickRandomTeam ();
+	}
+	else
+	{
+		coninfo->team = team;
+	}
 	if (autoaim > 35.f || autoaim < 0.f)
 	{
 		coninfo->aimdist = ANGLE_1*35;
@@ -129,9 +271,9 @@ void D_SetupUserInfo (void)
 	coninfo->skin = R_FindSkin (skin);
 	coninfo->gender = D_GenderToInt (gender);
 	coninfo->neverswitch = neverswitchonpickup;
-	R_BuildPlayerTranslation (consoleplayer, coninfo->color);
 	coninfo->MoveBob = (fixed_t)(65536.f * movebob);
 	coninfo->StillBob = (fixed_t)(65536.f * stillbob);
+	R_BuildPlayerTranslation (consoleplayer);
 }
 
 void D_UserInfoChanged (FBaseCVar *cvar)
@@ -196,15 +338,17 @@ static const char *SetServerVar (char *name, ECVarType type, byte **stream)
 	return NULL;
 }
 
+EXTERN_CVAR (Float, sv_gravity)
+
 void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType type)
 {
-	int namelen;
+	size_t namelen;
 
 	namelen = strlen (cvar->GetName ());
 
 	Net_WriteByte (DEM_SINFCHANGED);
-	Net_WriteByte (namelen | (type << 6));
-	Net_WriteBytes ((BYTE *)cvar->GetName (), namelen);
+	Net_WriteByte ((BYTE)(namelen | (type << 6)));
+	Net_WriteBytes ((BYTE *)cvar->GetName (), (int)namelen);
 	switch (type)
 	{
 	case CVAR_Bool:		Net_WriteByte (value.Bool);		break;
@@ -374,27 +518,44 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 					strncpy (info->netname, value, MAXPLAYERNAME);
 					info->netname[MAXPLAYERNAME] = 0;
 
-					if (update)
+					if (update && strcmp (oldname, info->netname) != 0)
+					{
 						Printf ("%s is now known as %s\n", oldname, info->netname);
+					}
 				}
 				break;
 
-			case INFO_Team:
+			case INFO_Team:		{
+				int oldteam;
+
+				oldteam = info->team;
 				info->team = atoi (value);
-				if ((unsigned)info->team >= NUM_TEAMS)
-					info->team = TEAM_None;
-				if (update)
+
+				if (teamplay && info->team >= NUM_TEAMS)
+				{ // Force players onto teams in teamplay mode
+					info->team = D_PickRandomTeam ();
+				}
+				if (update && oldteam != info->team)
 				{
-					if (info->team != TEAM_None)
-						Printf ("%s is now on %s\n", info->netname, TeamNames[info->team]);
+					if (info->team < NUM_TEAMS)
+						Printf ("%s joined the %s team\n", info->netname, TeamNames[info->team]);
 					else
 						Printf ("%s is now a loner\n", info->netname);
 				}
+				// Let the player take on the team's color
+				R_BuildPlayerTranslation (i);
+				if (StatusBar != NULL && i == displayplayer)
+				{
+					StatusBar->AttachToPlayer (&players[i]);
+				}
+				if ((unsigned)info->team >= NUM_TEAMS)
+					info->team = TEAM_None;
+								}
 				break;
 
 			case INFO_Color:
 				info->color = V_GetColorFromString (NULL, value);
-				R_BuildPlayerTranslation (i, info->color);
+				R_BuildPlayerTranslation (i);
 				if (StatusBar != NULL && i == displayplayer)
 				{
 					StatusBar->AttachToPlayer (&players[i]);
@@ -424,11 +585,17 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 
 			case INFO_NeverSwitchOnPickup:
 				if (*value >= '0' && *value <= '9')
+				{
 					info->neverswitch = atoi (value) ? true : false;
+				}
 				else if (stricmp (value, "true") == 0)
+				{
 					info->neverswitch = 1;
+				}
 				else
+				{
 					info->neverswitch = 0;
+				}
 				break;
 
 			case INFO_MoveBob:

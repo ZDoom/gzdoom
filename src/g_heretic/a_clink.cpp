@@ -7,6 +7,8 @@
 #include "a_action.h"
 #include "gstrings.h"
 
+static FRandom pr_clinkattack ("ClinkAttack");
+
 void A_ClinkAttack (AActor *);
 
 // Clink --------------------------------------------------------------------
@@ -100,7 +102,7 @@ void A_ClinkAttack (AActor *actor)
 	S_SoundID (actor, CHAN_BODY, actor->AttackSound, 1, ATTN_NORM);
 	if (P_CheckMeleeRange (actor))
 	{
-		damage = ((P_Random()%7)+3);
+		damage = ((pr_clinkattack()%7)+3);
 		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 	}

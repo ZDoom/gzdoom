@@ -52,7 +52,7 @@ class TWeightedList
 	};
 
 	public:
-		TWeightedList (pr_class_t pr) : Choices (NULL), RandomClass (pr) {}
+		TWeightedList (FRandom &pr) : Choices (NULL), RandomClass (pr) {}
 		~TWeightedList ()
 		{
 			Choice<T> *choice = Choices;
@@ -69,7 +69,7 @@ class TWeightedList
 
 	private:
 		Choice<T> *Choices;
-		const pr_class_t RandomClass;
+		FRandom &RandomClass;
 
 		void RecalcRandomVals ();
 };
@@ -100,7 +100,7 @@ void TWeightedList<T>::AddEntry (T value, WORD weight)
 template<class T>
 T TWeightedList<T>::PickEntry () const
 {
-	BYTE randomnum = P_Random (RandomClass);
+	BYTE randomnum = RandomClass();
 	Choice<T> *choice = Choices;
 
 	while (choice != NULL && randomnum > choice->RandomVal)

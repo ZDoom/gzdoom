@@ -65,6 +65,7 @@ protected:
 	virtual void Deinit () {}
 	virtual void DefaultDispatch () {}
 	virtual DWORD Dispatch (DWORD method, DWORD parm1=0, DWORD parm2=0, DWORD parm3=0) = 0;
+	virtual const char *ThreadName () = 0;
 
 	HANDLE ThreadHandle;
 	DWORD ThreadID;

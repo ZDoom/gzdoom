@@ -171,9 +171,12 @@ void R_DrawColumnInCache (const column_t *patch, byte *cache,
 		}
 		int count = patch->length;
 		int position = originy + top;
+		int adv = 0;
 
 		if (position < 0)
 		{
+			// [RH] Correctly draw columns that start above the texture
+			adv = -position;
 			count += position;
 			position = 0;
 		}
@@ -183,7 +186,7 @@ void R_DrawColumnInCache (const column_t *patch, byte *cache,
 
 		if (count > 0)
 		{
-			memcpy (cache + position, (byte *)patch + 3, count);
+			memcpy (cache + position, (byte *)patch + adv + 3, count);
 
 			// killough 4/9/98: remember which cells in column have been drawn,
 			// so that column can later be converted into a series of posts, to
@@ -307,18 +310,29 @@ static void R_GenerateLookup(int texnum, int *const errors)
 
 	int i = texture->patchcount;
 	const texpatch_t *patch = texture->patches;
+	bool mustComposite = false;
 
 	// [RH] Some wads (I forget which!) have single-patch textures 256
 	// pixels tall that have patch lengths recorded as 0. I can't think of
 	// any good reason for them to do this, and since I didn't make note
 	// of which wad made me hack in support for them, the hack is gone
-	// because I've added support for DeePsea's real tall patches.
+	// because I've added support for DeePsea's true tall patches.
 	while (--i >= 0)
 	{
 		int pat = patch->patch;
 		const patch_t *realpatch = (patch_t *)W_CacheLumpNum (pat, PU_CACHE);
-		int x1 = patch++->originx, x2 = x1 + SHORT(realpatch->width), x = x1;
+		int x1 = patch->originx, x2 = x1 + SHORT(realpatch->width), x = x1;
 		const int *cofs = realpatch->columnofs-x1;
+
+		// [RH] Force composite generation if a patch starts above the top of
+		// the texture or does not cover the entire height of the texture.
+		if (patch->originy < 0 || patch->originy > 0 ||
+			SHORT(realpatch->height) < texture->height)
+		{
+			mustComposite = true;
+		}
+
+		patch++;
 
 		if (x2 > texture->width)
 			x2 = texture->width;
@@ -352,16 +366,17 @@ static void R_GenerateLookup(int texnum, int *const errors)
 		{
 			if (!count[x].patches)				// killough 4/9/98
 			{
-				Printf ("\nR_GenerateLookup: Column %d is without a patch in texture %.8s",
-						x, texture->name);
-						++*errors;
+				mustComposite = true;
+				//Printf ("\nR_GenerateLookup: Column %d is without a patch in texture %.8s",
+				//		x, texture->name);
+				//		++*errors;
 			}
 		}
 
 		// [RH] Always create a composite texture for multipatch textures
 		// or tall textures in order to keep things simpler.
 
-		if (texture->patchcount > 1 || texture->height > 254)
+		if (texture->patchcount > 1 || texture->height > 254 || mustComposite)
 		{
 			texturetype2[texnum] = 1;
 			x = texture->width;
@@ -370,9 +385,12 @@ static void R_GenerateLookup(int texnum, int *const errors)
 			{
 				if (!count[x].patches)				// killough 4/9/98
 				{
-					Printf ("\nR_GenerateLookup: Column %d is without a patch in texture %.8s",
-							x, texture->name);
-							++*errors;
+					//Printf ("\nR_GenerateLookup: Column %d is without a patch in texture %.8s",
+					//		x, texture->name);
+					//		++*errors;
+					collump[x] = -1;
+					colofs[x] = csize + 4;
+					csize += 6;
 				}
 				else
 				{
@@ -393,7 +411,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
 		}
 		else
 		{
-			csize = x*height;
+			csize = texture->width*height;
 		}
 		texturecompositesize[texnum] = csize;
 	}
@@ -544,9 +562,8 @@ void R_InitTextures (void)
 		mtexture = (maptexture_t *) ((byte *)maptex + offset);
 
 		texture = textures[i] = (texture_t *)
-			Z_Malloc (sizeof(texture_t)
-					  + sizeof(texpatch_t)*(SAFESHORT(mtexture->patchcount)-1),
-					  PU_STATIC, 0);
+			Malloc (sizeof(texture_t)
+					  + sizeof(texpatch_t)*(SAFESHORT(mtexture->patchcount)-1));
 
 		texture->width = SAFESHORT(mtexture->width);
 		texture->height = SAFESHORT(mtexture->height);
@@ -737,9 +754,9 @@ void R_InitColormaps ()
 		numfakecmaps = 1;
 	else
 		numfakecmaps = lastfakecmap - firstfakecmap;
-	realcolormaps = (byte *)Z_Malloc (256*NUMCOLORMAPS*numfakecmaps+255,PU_STATIC,0);
-	realcolormaps = (byte *)(((ptrdiff_t)realcolormaps + 255) & ~255);
-	fakecmaps = (FakeCmap *)Z_Malloc (sizeof(*fakecmaps) * numfakecmaps, PU_STATIC, 0);
+	realcolormaps = new BYTE[256*NUMCOLORMAPS*numfakecmaps+255];
+	realcolormaps = (BYTE *)(((ptrdiff_t)realcolormaps + 255) & ~255);
+	fakecmaps = new FakeCmap[numfakecmaps];
 
 	fakecmaps[0].name[0] = 0;
 	R_SetDefaultColormap ("COLORMAP");
@@ -888,6 +905,14 @@ int R_CheckTextureNumForName (const char *name)
 	return i;
 }
 
+const char *R_GetTextureName (int texnum)
+{
+	if (texnum <= 0 || texnum >= numtextures)
+	{
+		return "-";
+	}
+	return textures[texnum]->name;
+}
 
 
 //
@@ -981,7 +1006,7 @@ void R_PrecacheLevel (void)
 		return;
 
 	{
-		int size = (numflats > (int)sprites.Size ()) ? numflats : sprites.Size ();
+		int size = (numflats > (int)sprites.Size ()) ? numflats : (int)sprites.Size ();
 
 		hitlist = new byte[(numtextures > size) ? numtextures : size];
 	}
@@ -1041,7 +1066,7 @@ void R_PrecacheLevel (void)
 			hitlist[actor->sprite] = 1;
 	}
 
-	for (i = sprites.Size () - 1; i >= 0; i--)
+	for (i = (int)(sprites.Size () - 1); i >= 0; i--)
 	{
 		if (hitlist[i])
 		{
@@ -1050,9 +1075,9 @@ void R_PrecacheLevel (void)
 			{
 				for (k = 0; k < 8; k++)
 				{
-					if (sprites[i].spriteframes[j].lump[k] != -1)
+					if (SpriteFrames[sprites[i].spriteframes + j].lump[k] != -1)
 					{
-						R_CacheTileNum (sprites[i].spriteframes[j].lump[k], PU_CACHE);
+						R_CacheTileNum (SpriteFrames[sprites[i].spriteframes + j].lump[k], PU_CACHE);
 					}
 				}
 			}

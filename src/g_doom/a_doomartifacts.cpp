@@ -100,13 +100,17 @@ public:
 		bool gotarmor, gothealth;
 		player_t *player = toucher->player;
 
-		gotarmor = P_GiveArmor (player, (armortype_t)deh.BlueAC, 100*deh.BlueAC);
+		gotarmor = P_GiveArmor (player, (armortype_t)-deh.BlueAC, 100*deh.BlueAC);
 		if ((gothealth = player->health < deh.MegasphereHealth))
 		{
 			player->health = deh.MegasphereHealth;
 			player->mo->health = deh.MegasphereHealth;
 		}
-		return gotarmor || gothealth;
+
+		// Use the commented-out line if you don't want to be able to get a megasphere
+		// that won't do you any good.
+		//return gotarmor || gothealth;
+		return true;
 	}
 protected:
 	virtual const char *PickupMessage ()
@@ -295,11 +299,8 @@ END_DEFAULTS
 
 // Backpack -----------------------------------------------------------------
 
-// The backpack is alsa pickup, because there's not much point to carrying
+// The backpack is also a pickup, because there's not much point to carrying
 // a backpack around unused.
-//
-// Okay, I have no idea what I meant when I wrote that. In particular,
-// what does "alsa" mean?
 
 class ABackpack : public AInventory
 {

@@ -53,7 +53,7 @@ private:
 			else
 			{ // Succeeded
 				player->morphTics = 0;
-				S_Sound (player->mo, CHAN_WEAPON, "*evillaugh", 1, ATTN_IDLE);
+				S_Sound (player->mo, CHAN_VOICE, "*evillaugh", 1, ATTN_IDLE);
 			}
 		}
 		else

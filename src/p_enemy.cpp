@@ -46,6 +46,19 @@
 
 #include "gi.h"
 
+static FRandom pr_checkmissilerange ("CheckMissileRange");
+static FRandom pr_opendoor ("OpenDoor");
+static FRandom pr_trywalk ("TryWalk");
+static FRandom pr_newchasedir ("NewChaseDir");
+static FRandom pr_lookformonsters ("LookForMonsters");
+static FRandom pr_lookforplayers ("LookForPlayers");
+static FRandom pr_scaredycat ("Anubis");
+static FRandom pr_chase ("Chase");
+static FRandom pr_facetarget ("FaceTarget");
+static FRandom pr_railface ("RailFace");
+static FRandom pr_dropitem ("DropItem");
+static FRandom pr_fastchase ("FastChase");
+
 //
 // P_NewChaseDir related LUT.
 //
@@ -268,7 +281,7 @@ BOOL P_CheckMissileRange (AActor *actor)
 
 bool AActor::SuggestMissileAttack (fixed_t dist)
 {
-	return P_Random (pr_checkmissilerange) >= MIN<int> (dist >> FRACBITS, 200);
+	return pr_checkmissilerange() >= MIN<int> (dist >> FRACBITS, 200);
 }
 
 //
@@ -278,6 +291,7 @@ bool AActor::SuggestMissileAttack (fixed_t dist)
 //
 BOOL P_Move (AActor *actor)
 {
+
 	fixed_t tryx, tryy, deltax, deltay, origx, origy;
 	BOOL try_ok;
 	int speed;
@@ -394,7 +408,7 @@ BOOL P_Move (AActor *actor)
 				good |= ld == BlockingLine ? 1 : 2;
 			}
 		}
-		return good && ((P_Random (pr_opendoor) >= 203) ^ (good & 1));
+		return good && ((pr_opendoor() >= 203) ^ (good & 1));
 	}
 	else
 	{
@@ -416,13 +430,13 @@ BOOL P_Move (AActor *actor)
 // an OpenDoor call is made to start it opening.
 //
 BOOL P_TryWalk (AActor *actor)
-{		
+{
 	if (!P_Move (actor))
 	{
 		return false;
 	}
 
-	actor->movecount = P_Random (pr_trywalk) & 15;
+	actor->movecount = pr_trywalk() & 15;
 	return true;
 }
 
@@ -482,7 +496,7 @@ void P_NewChaseDir (AActor *actor)
 	}
 
 	// try other directions
-	if (P_Random (pr_newchasedir) > 200 || abs(deltay) > abs(deltax))
+	if (pr_newchasedir() > 200 || abs(deltay) > abs(deltax))
 	{
 		swap (d[1], d[2]);
 	}
@@ -520,7 +534,7 @@ void P_NewChaseDir (AActor *actor)
 	}
 
 	// randomly determine direction of search
-	if (P_Random (pr_newchasedir) & 1)	
+	if (pr_newchasedir() & 1)	
 	{
 		for (tdir = DI_EAST; tdir <= DI_SOUTHEAST; tdir++)
 		{
@@ -589,7 +603,7 @@ BOOL P_LookForMonsters (AActor *actor)
 		{ // Out of range
 			continue;
 		}
-		if (P_Random() < 16)
+		if (pr_lookformonsters() < 16)
 		{ // Skip
 			continue;
 		}
@@ -707,7 +721,7 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 			{ // Player is sneaking - can't detect
 				return false;
 			}
-			if (P_Random() < 225)
+			if (pr_lookforplayers() < 225)
 			{ // Player isn't sneaking, but still didn't detect
 				return false;
 			}
@@ -929,7 +943,7 @@ void A_Chase (AActor *actor)
 	// [RH] Scared monsters attack less frequently
 	if (actor->target->player == NULL ||
 		!(actor->target->player->cheats & CF_FRIGHTENING) ||
-		P_Random (pr_scaredycat) < 43)
+		pr_scaredycat() < 43)
 	{
 		// check for melee attack
 		if (actor->MeleeState && P_CheckMeleeRange (actor))
@@ -976,20 +990,9 @@ void A_Chase (AActor *actor)
 	}
 	
 	// make active sound
-	if (actor->ActiveSound && P_Random (pr_chase) < 3)
+	if (pr_chase() < 3)
 	{
-		int sound;
-
-		if ((actor->flags3 & MF3_SEEISALSOACTIVE) && P_Random (pr_chase) < 128)
-		{
-			sound = actor->SeeSound;
-		}
-		else
-		{
-			sound = actor->ActiveSound;
-		}
-		S_SoundID (actor, CHAN_VOICE, sound, 1,
-			(actor->flags3 & MF3_FULLVOLACTIVE) ? ATTN_NONE : ATTN_IDLE);
+		actor->PlayActiveSound ();
 	}
 }
 
@@ -1014,7 +1017,7 @@ void A_FaceTarget (AActor *actor)
 	
 	if (actor->target->flags & MF_SHADOW)
     {
-		actor->angle += PS_Random(pr_facetarget) << 21;
+		actor->angle += pr_facetarget.Random2() << 21;
     }
 }
 
@@ -1051,7 +1054,7 @@ void A_MonsterRail (AActor *actor)
 
 	if (actor->target->flags & MF_SHADOW)
     {
-		actor->angle += PS_Random(pr_facetarget) << 21;
+		actor->angle += pr_railface.Random2() << 21;
     }
 
 	P_RailAttack (actor, actor->damage, 0);
@@ -1090,13 +1093,22 @@ void A_XScream (AActor *actor)
 
 void P_DropItem (AActor *source, const TypeInfo *type, int special, int chance)
 {
-	if (P_Random() <= chance)
+	if (pr_dropitem() <= chance)
 	{
-		AActor *mo = Spawn (type, source->x, source->y,
-			source->z + (source->height>>1));
-		mo->momx = PS_Random() << 8;
-		mo->momy = PS_Random() << 8;
-		mo->momz = FRACUNIT*5 + (P_Random() << 10);
+		AActor *mo;
+		
+		if (compatflags & COMPATF_NOTOSSDROPS)
+		{
+			mo = Spawn (type, source->x, source->y, ONFLOORZ);
+		}
+		else
+		{
+			mo = Spawn (type, source->x, source->y,
+				source->z + (source->height>>1));
+			mo->momx = pr_dropitem.Random2() << 8;
+			mo->momy = pr_dropitem.Random2() << 8;
+			mo->momz = FRACUNIT*5 + (pr_dropitem() << 10);
+		}
 		mo->flags |= MF_DROPPED;
 		if (special >= 0)
 		{
@@ -1313,8 +1325,7 @@ int P_Massacre ()
 
 	while ( (actor = iterator.Next ()) )
 	{
-		if ((actor->flags & MF_SHOOTABLE) && (actor->flags & MF_COUNTKILL ||
-			(gameinfo.gametype == GAME_Doom && actor->IsKindOf (RUNTIME_CLASS(ALostSoul)))))
+		if ((actor->flags & (MF_SHOOTABLE|MF_COUNTKILL)) == (MF_SHOOTABLE|MF_COUNTKILL))
 		{
 			// killough 3/6/98: kill even if PE is dead
 			if (actor->health > 0)
@@ -1379,4 +1390,152 @@ bool A_RaiseMobj (AActor *actor)
 		}
 	}
 	return done;		// Reached target height
+}
+
+//============================================================================
+// Class Bosses
+//============================================================================
+#define CLASS_BOSS_STRAFE_RANGE	64*10*FRACUNIT
+
+void A_FastChase (AActor *actor)
+{
+	int delta;
+	fixed_t dist;
+	angle_t ang;
+	AActor *target;
+
+	if (actor->reactiontime)
+	{
+		actor->reactiontime--;
+	}
+
+	// Modify target threshold
+	if (actor->threshold)
+	{
+		actor->threshold--;
+	}
+
+	if (gameskill == sk_nightmare)
+	{ // Monsters move faster in nightmare mode
+		actor->tics -= actor->tics/2;
+		if (actor->tics < 3)
+		{
+			actor->tics = 3;
+		}
+	}
+
+//
+// turn towards movement direction if not there yet
+//
+	if (actor->movedir < 8)
+	{
+		actor->angle &= (7<<29);
+		delta = actor->angle-(actor->movedir << 29);
+		if (delta > 0)
+		{
+			actor->angle -= ANG90/2;
+		}
+		else if (delta < 0)
+		{
+			actor->angle += ANG90/2;
+		}
+	}
+
+	if (!actor->target || !(actor->target->flags&MF_SHOOTABLE))
+	{ // look for a new target
+		if (P_LookForPlayers(actor, true))
+		{ // got a new target
+			return;
+		}
+		actor->SetState (actor->SpawnState);
+		return;
+	}
+
+//
+// don't attack twice in a row
+//
+	if (actor->flags & MF_JUSTATTACKED)
+	{
+		actor->flags &= ~MF_JUSTATTACKED;
+		if (gameskill != sk_nightmare)
+			P_NewChaseDir (actor);
+		return;
+	}
+
+	// Strafe
+	if (actor->special2 > 0)
+	{
+		actor->special2--;
+	}
+	else
+	{
+		target = actor->target;
+		actor->special2 = 0;
+		actor->momx = actor->momy = 0;
+		dist = P_AproxDistance (actor->x - target->x,
+								actor->y - target->y);
+		if (dist < CLASS_BOSS_STRAFE_RANGE)
+		{
+			if (pr_fastchase() < 100)
+			{
+				ang = R_PointToAngle2(actor->x, actor->y,
+									target->x, target->y);
+				if (pr_fastchase() < 128)
+					ang += ANGLE_90;
+				else
+					ang -= ANGLE_90;
+				ang >>= ANGLETOFINESHIFT;
+				actor->momx = 13 * finecosine[ang];
+				actor->momy = 13 * finesine[ang];
+				actor->special2 = 3;		// strafe time
+			}
+		}
+	}
+
+//
+// check for missile attack
+//
+	if (actor->MissileState)
+	{
+		if (gameskill < sk_nightmare && actor->movecount)
+			goto nomissile;
+		if (!P_CheckMissileRange (actor))
+			goto nomissile;
+		actor->SetState (actor->MissileState);
+		actor->flags |= MF_JUSTATTACKED;
+		return;
+	}
+nomissile:
+
+//
+// possibly choose another target
+//
+	if (netgame && !actor->threshold && !P_CheckSight (actor, actor->target) )
+	{
+		if (P_LookForPlayers (actor, true))
+			return;         // got a new target
+	}
+
+//
+// chase towards player
+//
+	if (!actor->special2)
+	{
+		if (--actor->movecount<0 || !P_Move (actor))
+		{
+			P_NewChaseDir (actor);
+		}
+	}
+}
+
+void A_ClassBossHealth (AActor *actor)
+{
+	if (multiplayer && !deathmatch)		// co-op only
+	{
+		if (!actor->special1)
+		{
+			actor->health *= 5;
+			actor->special1 = true;   // has been initialized
+		}
+	}
 }

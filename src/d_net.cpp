@@ -112,9 +112,9 @@ extern	BOOL	 advancedemo;
 static struct TicSpecial
 {
 	byte *streams[BACKUPTICS];
-	int	  used[BACKUPTICS];
+	size_t used[BACKUPTICS];
 	byte *streamptr;
-	int	  streamoffs;
+	size_t streamoffs;
 	int   specialsize;
 	int	  lastmaketic;
 	BOOL  okay;
@@ -168,7 +168,7 @@ static struct TicSpecial
 		streamptr = streams[maketic%BACKUPTICS] + streamoffs;
 	}
 
-	void CheckSpace (int needed)
+	void CheckSpace (size_t needed)
 	{
 		if (streamoffs >= specialsize - needed)
 			GetMoreSpace ();
@@ -1049,10 +1049,13 @@ void TryRunTics (void)
 				// [RH] Handle all players without hardcoding it
 				skiptics = 1;
 				for (k = 0; k < MAXPLAYERS; k++)
-					if (!frameskip[k]) {
+				{
+					if (!frameskip[k])
+					{
 						skiptics = 0;
 						break;
 					}
+				}
 			}
 		}
 	}// !demoplayback
@@ -1202,6 +1205,7 @@ byte *FDynamicBuffer::GetData (int *len)
 //		at the beginning of the command's actual data.
 void Net_DoCommand (int type, byte **stream, int player)
 {
+	byte pos = 0;
 	char *s = NULL;
 	int i;
 
@@ -1209,17 +1213,32 @@ void Net_DoCommand (int type, byte **stream, int player)
 	{
 	case DEM_SAY:
 		{
+			const char *name = players[player].userinfo.netname;
 			byte who = ReadByte (stream);
 
 			s = ReadString (stream);
-			if ((who == 0) || players[player].userinfo.team == TEAM_None)
+			if (((who & 1) == 0) || players[player].userinfo.team == TEAM_None)
 			{ // Said to everyone
-				Printf (PRINT_CHAT, "%s: %s\n", players[player].userinfo.netname, s);
+				if (who & 2)
+				{
+					Printf (PRINT_CHAT, TEXTCOLOR_BOLD "* %s%s\n", name, s);
+				}
+				else
+				{
+					Printf (PRINT_CHAT, "%s: %s\n", name, s);
+				}
 				S_Sound (CHAN_VOICE, gameinfo.chatSound, 1, ATTN_NONE);
 			}
 			else if (players[player].userinfo.team == players[consoleplayer].userinfo.team)
 			{ // Said only to members of the player's team
-				Printf (PRINT_TEAMCHAT, "(%s): %s\n", players[player].userinfo.netname, s);
+				if (who & 2)
+				{
+					Printf (PRINT_TEAMCHAT, TEXTCOLOR_BOLD "* (%s)%s\n", name, s);
+				}
+				else
+				{
+					Printf (PRINT_TEAMCHAT, "(%s): %s\n", name, s);
+				}
 				S_Sound (CHAN_VOICE, gameinfo.chatSound, 1, ATTN_NONE);
 			}
 		}
@@ -1257,13 +1276,17 @@ void Net_DoCommand (int type, byte **stream, int player)
 		cht_DoCheat (&players[player], ReadByte (stream));
 		break;
 
+	case DEM_CHANGEMAP2:
+		pos = ReadByte (stream);
+		/* intentional fall-through */
 	case DEM_CHANGEMAP:
 		// Change to another map without disconnecting other players
 		s = ReadString (stream);
 		strncpy (level.nextmap, s, 8);
 		// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
+		// That was a long time ago. Maybe it works now?
 		level.flags |= LEVEL_CHANGEMAPCHEAT;
-		G_ExitLevel (0);
+		G_ExitLevel (pos);
 		break;
 
 	case DEM_SUICIDE:
@@ -1450,7 +1473,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 void Net_SkipCommand (int type, byte **stream)
 {
 	BYTE t;
-	int skip;
+	size_t skip;
 
 	switch (type)
 	{

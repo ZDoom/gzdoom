@@ -322,14 +322,13 @@ BestColor_MMX:
 	mov		edx,[esp+8]
 @BestColor_MMX@8:
 	pxor		mm0,mm0
-	mov		eax,ecx
-	shr		ecx,24		; ecx = count
-	and		ebx,0xffffff
-	movd		mm1,eax		; mm1 = color searching for
+	movd		mm1,ecx		; mm1 = color searching for
 	mov		eax,257*257+257*257+257*257	;eax = bestdist
 	push		ebx
 	punpcklbw	mm1,mm0
 	mov		ebx,ecx		; ebx = best color
+	shr		ecx,24		; ecx = count
+	and		ebx,0xffffff
 	push		esi
 	push		ebp
 

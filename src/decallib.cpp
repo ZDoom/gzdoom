@@ -52,6 +52,9 @@ static TArray<BYTE> DecalTranslations;
 // A decal group holds multiple decals and returns one randomly
 // when GetDecal() is called.
 
+static FRandom pr_decalchoice ("DecalChoice");
+static FRandom pr_decal ("Decal");
+
 class FDecalGroup : public FDecalBase
 {
 	friend class FDecalLib;
@@ -774,7 +777,7 @@ void FDecalLib::ParseColorchanger ()
 void FDecalLib::ParseCombiner ()
 {
 	char combinerName[64];
-	int first = FDecalCombinerAnim::AnimatorList.Size ();
+	size_t first = FDecalCombinerAnim::AnimatorList.Size ();
 
 	SC_MustGetString ();
 	strcpy (combinerName, sc_String);
@@ -792,13 +795,13 @@ void FDecalLib::ParseCombiner ()
 		SC_MustGetString ();
 	}
 
-	int last = FDecalCombinerAnim::AnimatorList.Size ();
+	size_t last = FDecalCombinerAnim::AnimatorList.Size ();
 
 	if (last > first)
 	{
 		FDecalCombinerAnim *combiner = new FDecalCombinerAnim (combinerName);
-		combiner->FirstAnimator = first;
-		combiner->NumAnimators = last - first;
+		combiner->FirstAnimator = (int)first;
+		combiner->NumAnimators = (int)(last - first);
 		Animators.Push (combiner);
 	}
 }
@@ -976,7 +979,7 @@ void FDecal::ApplyToActor (AActor *actor) const
 		(actor->renderflags & (RF_RELMASK|RF_CLIPMASK|RF_INVISIBLE|RF_ONESIDED));
 	if (RenderFlags & (DECAL_RandomFlipX|DECAL_RandomFlipY))
 	{
-		actor->renderflags ^= P_Random (pr_decal) &
+		actor->renderflags ^= pr_decal() &
 			((RenderFlags & (DECAL_RandomFlipX|DECAL_RandomFlipY)) >> 8);
 	}
 	if (Animator != NULL)
@@ -995,7 +998,7 @@ FDecalLib::FTranslation::FTranslation (DWORD start, DWORD end)
 	DWORD ri, gi, bi, rs, gs, bs;
 	PalEntry *first, *last;
 	BYTE *table;
-	int i, tablei;
+	size_t i, tablei;
 
 	StartColor = start;
 	EndColor = end;
@@ -1030,7 +1033,7 @@ FDecalLib::FTranslation::FTranslation (DWORD start, DWORD end)
 		table[i] = ColorMatcher.Pick (ri >> 24, gi >> 24, bi >> 24);
 	}
 	table[0] = table[1];
-	Index = TRANSLATION(TRANSLATION_Decals, tablei >> 8);
+	Index = (WORD)TRANSLATION(TRANSLATION_Decals, tablei >> 8);
 }
 
 FDecalLib::FTranslation *FDecalLib::FTranslation::LocateTranslation (DWORD start, DWORD end)
@@ -1285,7 +1288,7 @@ DThinker *FDecalCombinerAnim::CreateThinker (AActor *actor) const
 
 FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 {
-	int i;
+	size_t i;
 
 	for (i = Animators.Size ()-1; i >= 0; --i)
 	{

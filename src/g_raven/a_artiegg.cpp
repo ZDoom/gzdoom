@@ -11,6 +11,8 @@
 
 #define MORPHTICS (40*TICRATE)
 
+static FRandom pr_morphmonst ("MorphMonster");
+
 //---------------------------------------------------------------------------
 //
 // FUNC P_MorphPlayer
@@ -178,7 +180,7 @@ bool P_MorphMonster (AActor *actor)
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
-	morphed->special1 = MORPHTICS + P_Random();
+	morphed->special1 = MORPHTICS + pr_morphmonst();
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
 	morphed->special = actor->special;
 	memcpy (morphed->args, actor->args, sizeof(actor->args));
@@ -350,11 +352,16 @@ FState AArtiEgg::States[] =
 IMPLEMENT_ACTOR (AArtiEgg, Raven, 30, 14)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
+	PROP_SpawnState (S_ARTI_EGGC)
 END_DEFAULTS
 
 AT_GAME_SET (Egg)
 {
 	ArtiDispatch[arti_egg] = AArtiEgg::ActivateArti;
 	ArtiPics[arti_egg] = "ARTIEGGC";
-}
 
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		GetDefault<AArtiEgg>()->SpawnState = &AArtiEgg::States[S_ARTI_EGGP];
+	}
+}

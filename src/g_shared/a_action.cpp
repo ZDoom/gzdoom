@@ -7,12 +7,17 @@
 #include "d_player.h"
 #include "p_local.h"
 #include "p_terrain.h"
+#include "p_enemy.h"
+
+static FRandom pr_freezedeath ("FreezeDeath");
+static FRandom pr_icesettics ("IceSetTics");
+static FRandom pr_freeze ("FreezeDeathChunks");
 
 /***************************** IceChunk ************************************/
 
 class AIceChunk : public AActor
 {
-	DECLARE_ACTOR (AIceChunk, APlayerPawn)
+	DECLARE_ACTOR (AIceChunk, AActor)
 };
 
 FState AIceChunk::States[] =
@@ -43,7 +48,8 @@ class AIceChunkHead : public APlayerPawn
 
 FState AIceChunkHead::States[] =
 {
-	S_NORMAL (ICEC, 'A',   10, A_IceCheckHeadDone		, &States[0])
+	S_NORMAL (PLAY, 'A',	0, NULL						, &States[1]),
+	S_NORMAL (ICEC, 'A',   10, A_IceCheckHeadDone		, &States[1])
 };
 
 IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
@@ -76,6 +82,30 @@ void A_NoBlocking (AActor *actor)
 
 //==========================================================================
 //
+// A_SetFloorClip
+//
+//==========================================================================
+
+void A_SetFloorClip (AActor *actor)
+{
+	actor->flags2 |= MF2_FLOORCLIP;
+	actor->AdjustFloorClip ();
+}
+
+//==========================================================================
+//
+// A_UnSetFloorClip
+//
+//==========================================================================
+
+void A_UnSetFloorClip (AActor *actor)
+{
+	actor->flags2 &= ~MF2_FLOORCLIP;
+	actor->floorclip = 0;
+}
+
+//==========================================================================
+//
 // A_HideThing
 //
 //==========================================================================
@@ -96,22 +126,6 @@ void A_UnHideThing (AActor *actor)
 	actor->renderflags &= ~RF_INVISIBLE;
 }
 
-//===========================================================================
-//
-// A_CheckFloor - Checks if an object hit the floor
-//
-//===========================================================================
-
-void A_CheckFloor (AActor *actor)
-{
-	if (actor->z <= actor->floorz)
-	{
-		actor->z = actor->floorz;
-		actor->flags2 &= ~MF2_LOGRAV;
-		actor->SetState (actor->DeathState);
-	}
-}
-
 //============================================================================
 //
 // A_FreezeDeath
@@ -120,7 +134,8 @@ void A_CheckFloor (AActor *actor)
 
 void A_FreezeDeath (AActor *actor)
 {
-	actor->tics = 75+P_Random()+P_Random();
+	int t = pr_freezedeath();
+	actor->tics = 75+t+pr_freezedeath();
 	actor->flags |= MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD;
 	actor->flags2 |= MF2_PUSHABLE|MF2_TELESTOMP|MF2_PASSMOBJ|MF2_SLIDE;
 	actor->height <<= 2;
@@ -150,7 +165,7 @@ void A_IceSetTics (AActor *actor)
 {
 	int floor;
 
-	actor->tics = 70+(P_Random()&63);
+	actor->tics = 70+(pr_icesettics()&63);
 	floor = P_GetThingFloorType (actor);
 	if (Terrains[floor].DamageMOD == MOD_LAVA)
 	{
@@ -170,9 +185,9 @@ void A_IceSetTics (AActor *actor)
 
 void A_IceCheckHeadDone (AActor *actor)
 {
-	if (actor->special2 == 666)
+	if (actor->player == NULL)
 	{
-		actor->Destroy ();;
+		actor->Destroy ();
 	}
 }
 
@@ -184,43 +199,29 @@ void A_IceCheckHeadDone (AActor *actor)
 
 void A_FreezeDeathChunks (AActor *actor)
 {
+
 	int i;
 	AActor *mo;
 	
 	if (actor->momx || actor->momy || actor->momz)
 	{
-		actor->tics = 105;
+		actor->tics = 3*TICRATE;
 		return;
 	}
 	S_Sound (actor, CHAN_BODY, "FreezeShatter", 1, ATTN_NORM);
 
-	for (i = 12 + (P_Random()&15); i >= 0; i--)
+	for (i = 24 + (pr_freeze()&31); i >= 0; i--)
 	{
 		mo = Spawn<AIceChunk> (
-			actor->x + (((P_Random()-128)*actor->radius)>>7), 
-			actor->y + (((P_Random()-128)*actor->radius)>>7), 
-			actor->z + (P_Random()*actor->height/255));
-		mo->SetState (mo->SpawnState + (P_Random()%3));
+			actor->x + (((pr_freeze()-128)*actor->radius)>>7), 
+			actor->y + (((pr_freeze()-128)*actor->radius)>>7), 
+			actor->z + (pr_freeze()*actor->height/255));
+		mo->SetState (mo->SpawnState + (pr_freeze()%3));
 		if (mo)
 		{
 			mo->momz = FixedDiv(mo->z-actor->z, actor->height)<<2;
-			mo->momx = PS_Random () << (FRACBITS-7);
-			mo->momy = PS_Random () << (FRACBITS-7);
-			A_IceSetTics (mo); // set a random tic wait
-		}
-	}
-	for (i = 12 + (P_Random()&15); i >= 0; i--)
-	{
-		mo = Spawn<AIceChunk> (
-			actor->x + (((P_Random()-128)*actor->radius)>>7), 
-			actor->y + (((P_Random()-128)*actor->radius)>>7), 
-			actor->z + (P_Random()*actor->height/255));
-		mo->SetState (mo->SpawnState + (P_Random()%3));
-		if (mo)
-		{
-			mo->momz = FixedDiv (mo->z-actor->z, actor->height)<<2;
-			mo->momx = PS_Random() << (FRACBITS-7);
-			mo->momy = PS_Random() << (FRACBITS-7);
+			mo->momx = pr_freeze.Random2 () << (FRACBITS-7);
+			mo->momy = pr_freeze.Random2 () << (FRACBITS-7);
 			A_IceSetTics (mo); // set a random tic wait
 		}
 	}
@@ -228,8 +229,8 @@ void A_FreezeDeathChunks (AActor *actor)
 	{ // attach the player's view to a chunk of ice
 		AIceChunkHead *head = Spawn<AIceChunkHead> (actor->x, actor->y, actor->z+VIEWHEIGHT);
 		head->momz = FixedDiv(head->z-actor->z, actor->height)<<2;
-		head->momx = PS_Random() << (FRACBITS-7);
-		head->momy = PS_Random() << (FRACBITS-7);
+		head->momx = pr_freeze.Random2 () << (FRACBITS-7);
+		head->momy = pr_freeze.Random2 () << (FRACBITS-7);
 		head->player = actor->player;
 		actor->player = NULL;
 		head->health = actor->health;
@@ -492,4 +493,66 @@ void A_UnSetShootable (AActor *actor)
 {
 	actor->flags2 |= MF2_NONSHOOTABLE;
 	actor->flags &= ~MF_SHOOTABLE;
+}
+
+//===========================================================================
+//
+// A_NoGravity
+//
+//===========================================================================
+
+void A_NoGravity (AActor *actor)
+{
+	actor->flags |= MF_NOGRAVITY;
+}
+
+//===========================================================================
+//
+// FaceMovementDirection
+//
+//===========================================================================
+
+void FaceMovementDirection (AActor *actor)
+{
+	switch (actor->movedir)
+	{
+	case DI_EAST:
+		actor->angle = 0<<24;
+		break;
+	case DI_NORTHEAST:
+		actor->angle = 32<<24;
+		break;
+	case DI_NORTH:
+		actor->angle = 64<<24;
+		break;
+	case DI_NORTHWEST:
+		actor->angle = 96<<24;
+		break;
+	case DI_WEST:
+		actor->angle = 128<<24;
+		break;
+	case DI_SOUTHWEST:
+		actor->angle = 160<<24;
+		break;
+	case DI_SOUTH:
+		actor->angle = 192<<24;
+		break;
+	case DI_SOUTHEAST:
+		actor->angle = 224<<24;
+		break;
+	}
+}
+
+//----------------------------------------------------------------------------
+//
+// PROC A_CheckBurnGone
+//
+//----------------------------------------------------------------------------
+
+void A_CheckBurnGone (AActor *actor)
+{
+	if (actor->player == NULL)
+	{
+		actor->Destroy ();
+	}
 }

@@ -41,13 +41,6 @@
 
 #include "doomdef.h"
 
-// killough 11/98:
-// For torque simulation:
-
-#define OVERDRIVE 6
-#define MAXGEAR (OVERDRIVE+16)
-
-
 //
 // NOTES: AActor
 //
@@ -144,6 +137,7 @@ enum
 	MF_CORPSE		= 0x00100000,	// don't stop moving halfway off a step
 	MF_INFLOAT		= 0x00200000,	// floating to a height for a move, don't
 									// auto float to target's height
+	MF_INBOUNCE		= 0x00200000,	// used by Heretic bouncing missiles 
 
 	MF_COUNTKILL	= 0x00400000,	// count towards intermission kill total
 	MF_COUNTITEM	= 0x00800000,	// count towards intermission item total
@@ -152,28 +146,24 @@ enum
 	MF_NOTDMATCH	= 0x02000000,	// don't spawn in death match (key cards)
 
 	MF_UNMORPHED	= 0x10000000,	// [RH] Actor is the unmorphed version of something else
-	MF_FALLING		= 0x20000000,
+					//0x20000000
 	MF_STEALTH		= 0x40000000,	// [RH] Andy Baker's stealth monsters
 	MF_ICECORPSE	= 0x80000000,	// a frozen corpse (for blasting) [RH] was 0x800000
 
 // --- mobj.flags2 ---
 
 	MF2_LOGRAV			= 0x00000001,	// alternate gravity setting
-	MF2_WINDTHRUST		= 0x00000002,	// gets pushed around by the wind
-										// specials
-	MF2_FLOORBOUNCE		= 0x00000004,	// bounces off the floor
+	MF2_WINDTHRUST		= 0x00000002,	// gets pushed around by the wind specials
+	MF2_BOUNCE1			= 0x00000004,
 	MF2_BLASTED			= 0x00000008,	// missile will pass through ghosts
 	MF2_FLY				= 0x00000010,	// fly mode is active
 	MF2_FLOORCLIP		= 0x00000020,	// if feet are allowed to be clipped
 	MF2_SPAWNFLOAT		= 0x00000040,	// spawn random float z
 	MF2_NOTELEPORT		= 0x00000080,	// does not teleport
-	MF2_RIP				= 0x00000100,	// missile rips through solid
-										// targets
-	MF2_PUSHABLE		= 0x00000200,	// can be pushed by other moving
-										// mobjs
+	MF2_RIP				= 0x00000100,	// missile rips through solid targets
+	MF2_PUSHABLE		= 0x00000200,	// can be pushed by other moving actors
 	MF2_SLIDE			= 0x00000400,	// slides against walls
-	MF2_ONMOBJ			= 0x00000800,	// mobj is resting on top of another
-										// mobj
+	MF2_ONMOBJ			= 0x00000800,	// actor is resting on top of another actor
 	MF2_PASSMOBJ		= 0x00001000,	// Enable z block checking.  If on,
 										// this flag will allow the mobj to
 										// pass over/under other mobjs.
@@ -184,6 +174,7 @@ enum
 	MF2_NODMGTHRUST		= 0x00020000,	// does not thrust target when damaging
 	MF2_TELESTOMP		= 0x00040000,	// mobj can stomp another
 	MF2_FLOATBOB		= 0x00080000,	// use float bobbing z movement
+	MF2_BOUNCE2			= 0x00100000,
 	MF2_IMPACT			= 0x00200000, 	// an MF_MISSILE mobj can activate SPAC_IMPACT
 	MF2_PUSHWALL		= 0x00400000, 	// mobj can push walls
 	MF2_MCROSS			= 0x00800000,	// can activate monster cross lines
@@ -197,6 +188,19 @@ enum
 	MF2_SEEKERMISSILE	= 0x40000000,	// is a seeker (for reflection)
 	MF2_REFLECTIVE		= 0x80000000,	// reflects missiles
 
+	// The three types of bounciness are:
+	// HERETIC - Missile will only bounce off the floor once and then enter
+	//			 its death state. It does not bounce off walls at all.
+	// HEXEN -	 Missile bounces off of walls and floors indefinitely.
+	// DOOM -	 Like Hexen, but the bounce turns off if its vertical velocity
+	//			 is too low.
+
+	MF2_BOUNCETYPE		= MF2_BOUNCE1|MF2_BOUNCE2,
+	MF2_NOBOUNCE		= 0,
+	MF2_HERETICBOUNCE	= MF2_BOUNCE1,
+	MF2_HEXENBOUNCE		= MF2_BOUNCE2,
+	MF2_DOOMBOUNCE		= MF2_BOUNCE1|MF2_BOUNCE2,
+
 // --- mobj.flags3 ---
 
 	MF3_FLOORHUGGER		= 0x00000001,	// Missile stays on floor
@@ -204,9 +208,9 @@ enum
 	MF3_NORADIUSDMG		= 0x00000004,	// Actor does not take radius damage
 	MF3_GHOST			= 0x00000008,	// Actor is a ghost
 	MF3_ALWAYSPUFF		= 0x00000010,	// Puff always appears, even when hit nothing
-	MF3_SEEISALSOACTIVE	= 0x00000020,	// Play see sound instead of active 1/2 the time
+	MF3_SPECIALFLOORCLIP= 0x00000020,	// Actor uses floorclip for special effect (e.g. Wraith)
 	MF3_DONTSPLASH		= 0x00000040,	// Thing doesn't make a splash
-	MF3_VERYFAST		= 0x00000080,	// Don't offset missile as much when spawning
+					//	  0x00000080
 	MF3_DONTOVERLAP		= 0x00000100,	// Don't pass over/under other things with this bit set
 	MF3_DONTMORPH		= 0x00000200,	// Immune to arti_egg
 	MF3_DONTSQUASH		= 0x00000400,	// Death ball can't squash this actor
@@ -221,6 +225,15 @@ enum
 	MF3_DONTGIB			= 0x00080000,	// Don't gib this corpse
 	MF3_NOBLOCKMONST	= 0x00100000,	// Can cross ML_BLOCKMONSTERS lines
 	MF3_CRASHED			= 0x00200000,	// Actor entered its crash state
+	MF3_FULLVOLDEATH	= 0x00400000,	// DeathSound is played full volume (for missiles)
+	MF3_CANBOUNCEWATER	= 0x00800000,	// Missile can bounce on water
+	MF3_NOWALLBOUNCESND = 0x01000000,	// Don't make noise when bouncing off a wall
+	MF3_FOILINVUL		= 0x02000000,	// Actor can hurt MF2_INVULNERABLE things
+	MF3_NOTELEOTHER		= 0x04000000,	// Monster is unaffected by teleport other artifact
+	MF3_BLOODLESSIMPACT	= 0x08000000,	// Projectile does not leave blood
+	MF3_NOEXPLODEFLOOR	= 0x10000000,	// Missile stops at floor instead of exploding
+	MF3_WARNBOT			= 0x20000000,	// Missile warns bot
+	MF3_PUFFONACTORS	= 0x40000000,	// Puff appears even when hit actors
 
 // --- mobj.renderflags ---
 
@@ -302,6 +315,8 @@ inline T *GetDefault ()
 	return (T *)(RUNTIME_CLASS(T)->ActorInfo->Defaults);
 }
 
+struct secplane_t;
+
 // Map Object definition.
 class AActor : public DThinker
 {
@@ -379,8 +394,34 @@ public:
 	// Actor just hit the floor
 	virtual void HitFloor ();
 
+	// Called when an actor with MF_MISSILE and MF2_FLOORBOUNCE hits the floor
+	virtual bool FloorBounceMissile (secplane_t &plane);
+
+	// Adjusts the angle for deflection/reflection of incoming missiles
+	// Returns true if the missile should be allowed to explode anyway
+	virtual bool AdjustReflectionAngle (AActor *thing, angle_t &angle);
+
+	// Called when an actor is to be reflected by a disc of repulsion.
+	// Returns true to continue normal blast processing.
+	virtual bool SpecialBlastHandling (AActor *source, fixed_t strength);
+
+	// Called by RoughBlockCheck
+	virtual bool IsOkayToAttack (AActor *target);
+
 	virtual void ChangeSpecial (byte special, byte data1, byte data2,
 		byte data3, byte data4, byte data5);
+
+	// Plays the actor's ActiveSound if its voice isn't already making noise.
+	void PlayActiveSound ();
+
+	// Actor had MF_SKULLFLY set and rammed into something
+	// Returns false to stop moving and true to keep moving
+	virtual bool Slam (AActor *victim);
+
+	// Called by PIT_CheckThing() and needed for some Hexen things.
+	// Returns -1 for normal behavior, 0 to return false, and 1 to return true.
+	// I'm not sure I like it this way, but it will do for now.
+	virtual int SpecialMissileHit (AActor *victim);
 
 	// Set the alphacolor field properly
 	void SetShade (DWORD rgb);
@@ -409,52 +450,50 @@ public:
 	fixed_t			dropoffz;		// killough 11/98: the lowest floor over all contacted Sectors.
 
 	struct sector_t	*floorsector;
-	int				floorpic;			// contacted sec floorpic
+	SDWORD			floorpic;			// contacted sec floorpic
 	fixed_t			radius, height;		// for movement checking
 	fixed_t			momx, momy, momz;	// momentums
-	int				validcount;			// if == validcount, already checked
-	int				tics;				// state tic counter
+	DWORD			validcount;			// if == validcount, already checked
+	SDWORD			tics;				// state tic counter
 	FState			*state;
-	int				damage;			// For missiles
-	int				flags;
-	int				flags2;			// Heretic flags
-	int				flags3;			// Hexen/Heretic actor-dependant behavior made flagged
-	int				mapflags;		// Flags from map (MTF_*)
+	SDWORD			damage;			// For missiles and monster railgun
+	DWORD			flags;
+	DWORD			flags2;			// Heretic flags
+	DWORD			flags3;			// Hexen/Heretic actor-dependant behavior made flaggable
+	DWORD				mapflags;		// Flags from map (MTF_*)
 	int				special1;		// Special info
 	int				special2;		// Special info
 	int 			health;
-	byte			movedir;		// 0-7
-	char			visdir;
-	short			movecount;		// when 0, select a new dir
+	BYTE			movedir;		// 0-7
+	SBYTE			visdir;
+	SWORD			movecount;		// when 0, select a new dir
 	AActor			*target;		// thing being chased/attacked (or NULL)
 									// also the originator for missiles
 	AActor			*lastenemy;		// Last known enemy -- killogh 2/15/98
-	int				reactiontime;	// if non 0, don't attack yet
-									// used by player to freeze a bit after
-									// teleporting
-	int				threshold;		// if > 0, the target will be chased
+	SDWORD			reactiontime;	// if non 0, don't attack yet; used by
+									// player to freeze a bit after teleporting
+	SDWORD			threshold;		// if > 0, the target will be chased
 									// no matter what (even if shot)
 	player_s		*player;		// only valid if type of APlayerPawn
-	int				lastlook;		// player number last looked for
+	SDWORD			lastlook;		// player number last looked for
 	WORD			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;
 	AActor			*tracer;		// Thing being chased/attacked for tracers
 	fixed_t			floorclip;		// value to use for floor clipping
 	WORD			tid;			// thing identifier
-	byte			special;		// special
-	byte			args[5];		// special arguments
+	BYTE			special;		// special
+	BYTE			args[5];		// special arguments
 
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	AActor			*goal;			// Monster's goal if not chasing anything
-	byte			waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
+	BYTE			waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
 	BYTE			SpawnFlags;
-	SWORD			gear;			// killough 11/98: used in torque simulation
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98
 
 	//Added by MC:
-	int id;							// Player ID (for items, # in list.)
+	SDWORD id;							// Player ID (for items, # in list.)
 
 	BYTE FloatBobPhase;
 	WORD Translation;
@@ -466,9 +505,9 @@ public:
 	WORD DeathSound;
 	WORD ActiveSound;
 
-	int ReactionTime;
+	SDWORD ReactionTime;
 	fixed_t Speed;
-	int Mass;
+	SDWORD Mass;
 	SWORD PainChance;
 
 	FState *SpawnState;

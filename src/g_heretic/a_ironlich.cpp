@@ -7,6 +7,10 @@
 #include "a_action.h"
 #include "gstrings.h"
 
+static FRandom pr_foo ("WhirlwindDamage");
+static FRandom pr_atk ("LichAttack");
+static FRandom pr_seek ("WhirlwindSeek");
+
 void A_LichAttack (AActor *);
 void A_LichIceImpact (AActor *);
 void A_LichFireGrow (AActor *);
@@ -247,15 +251,12 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage)
 {
 	int randVal;
 
-	randVal = P_Random ();
-	target->angle += (randVal - P_Random()) << 20;
-	randVal = P_Random ();
-	target->momx += (randVal - P_Random()) << 10;
-	randVal = P_Random ();
-	target->momy += (randVal - P_Random()) << 10;
+	target->angle += pr_foo.Random2() << 20;
+	target->momx += pr_foo.Random2() << 10;
+	target->momy += pr_foo.Random2() << 10;
 	if ((level.time & 16) && !(target->flags2 & MF2_BOSS))
 	{
-		randVal = P_Random();
+		randVal = pr_foo();
 		if (randVal > 160)
 		{
 			randVal = 160;
@@ -304,14 +305,14 @@ void A_LichAttack (AActor *actor)
 	A_FaceTarget (actor);
 	if (P_CheckMeleeRange (actor))
 	{
-		int damage = HITDICE(6);
+		int damage = pr_atk.HitDice (6);
 		P_DamageMobj (target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, target, actor);
 		return;
 	}
 	dist = P_AproxDistance (actor->x-target->x, actor->y-target->y)
 		> 8*64*FRACUNIT;
-	randAttack = P_Random ();
+	randAttack = pr_atk ();
 	if (randAttack < atkResolve1[dist])
 	{ // Ice ball
 		P_SpawnMissile (actor, target, RUNTIME_CLASS(AHeadFX1));
@@ -375,7 +376,7 @@ void A_WhirlwindSeek (AActor *actor)
 	}
 	if ((actor->special2 -= 3) < 0)
 	{
-		actor->special2 = 58 + (P_Random() & 31);
+		actor->special2 = 58 + (pr_seek() & 31);
 		S_Sound (actor, CHAN_BODY, "ironlich/attack3", 1, ATTN_NORM);
 	}
 	if (actor->tracer && actor->tracer->flags&MF_SHADOW)

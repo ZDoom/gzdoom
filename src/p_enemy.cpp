@@ -645,13 +645,10 @@ BOOL P_LookForTID (AActor *actor, BOOL allaround)
 	AActor *other;
 
 	c = 0;
-	while ((other = iterator.Next()) != NULL)
+	while ((other = iterator.Next()) != actor->LastLook.Actor)
 	{
-		if (++c == 3 || other == actor->LastLook.Actor)
-		{
-			// done looking
-			break;
-		}
+		if (other == NULL)
+			continue;
 
 		if (other == actor)
 			continue;			// don't hate self
@@ -736,7 +733,14 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 
 	if (actor->TIDtoHate != 0)
 	{
-		return P_LookForTID (actor, allaround);
+		if (P_LookForTID (actor, allaround))
+		{
+			return true;
+		}
+		if (!(actor->flags3 & MF3_HUNTPLAYERS))
+		{
+			return false;
+		}
 	}
 
 	if (gameinfo.gametype != GAME_Doom &&
@@ -756,7 +760,7 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 		if (!playeringame[actor->LastLook.PlayerNumber])
 			continue;
 
-		if (++c == 3 || actor->LastLook.PlayerNumber == stop)
+		if (++c == MAXPLAYERS-1 || actor->LastLook.PlayerNumber == stop)
 		{
 			// done looking
 			if (actor->target == NULL)
@@ -860,7 +864,7 @@ void A_Look (AActor *actor)
 
 	if (actor->TIDtoHate != 0)
 	{
-		targ = NULL;
+		targ = actor->target;
 	}
 	else
 	{
@@ -1030,6 +1034,7 @@ void A_Chase (AActor *actor)
 		{
 			// reached the goal
 			TActorIterator<APatrolPoint> iterator (actor->goal->args[0]);
+			angle_t lastgoalang = actor->goal->angle;
 			actor->goal = iterator.Next ();
 			if (actor->goal != NULL)
 			{
@@ -1038,6 +1043,7 @@ void A_Chase (AActor *actor)
 			else
 			{
 				actor->reactiontime = actor->GetDefault()->reactiontime;
+				actor->angle = lastgoalang;		// Look in direction of last goal
 			}
 			actor->target = NULL;
 			actor->flags |= MF_JUSTATTACKED;

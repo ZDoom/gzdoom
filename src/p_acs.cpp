@@ -57,6 +57,7 @@
 #include "vectors.h"
 #include "m_swap.h"
 #include "a_sharedglobal.h"
+#include "a_doomglobal.h"
 #include "v_video.h"
 #include "w_wad.h"
 
@@ -2047,6 +2048,86 @@ void DLevelScript::DoSetFont (int fontnum)
 	}
 }
 
+#define APROP_Health		0
+#define APROP_Speed			1
+#define APROP_Damage		2
+#define APROP_Alpha			3
+#define APROP_RenderStyle	4
+#define APROP_SeeSound		5	// Sounds can only be set, not gotten
+#define APROP_AttackSound	6
+#define APROP_PainSound		7
+#define APROP_DeathSound	8
+#define APROP_ActiveSound	9
+
+void DLevelScript::SetActorProperty (int tid, int property, int value)
+{
+	if (tid == 0)
+	{
+		DoSetActorProperty (activator, property, value);
+	}
+	else
+	{
+		AActor *actor;
+		FActorIterator iterator (tid);
+
+		while ((actor = iterator.Next()) != NULL)
+		{
+			DoSetActorProperty (actor, property, value);
+		}
+	}
+}
+
+void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
+{
+	if (actor == NULL)
+	{
+		return;
+	}
+	switch (property)
+	{
+	case APROP_Health:		actor->health = value;		break;
+	case APROP_Speed:		actor->Speed = value;		break;
+	case APROP_Damage:		actor->damage = value;		break;
+	case APROP_Alpha:		actor->alpha = value;		break;
+	case APROP_RenderStyle:	actor->RenderStyle = value;	break;
+	case APROP_SeeSound:	actor->SeeSound = S_FindSound (FBehavior::StaticLookupString (value));		break;
+	case APROP_AttackSound:	actor->AttackSound = S_FindSound (FBehavior::StaticLookupString (value));	break;
+	case APROP_PainSound:	actor->PainSound = S_FindSound (FBehavior::StaticLookupString (value));		break;
+	case APROP_DeathSound:	actor->DeathSound = S_FindSound (FBehavior::StaticLookupString (value));	break;
+	case APROP_ActiveSound:	actor->ActiveSound = S_FindSound (FBehavior::StaticLookupString (value));	break;
+	}
+}
+
+int DLevelScript::GetActorProperty (int tid, int property)
+{
+	AActor *actor;
+
+	if (tid == 0)
+	{
+		actor = activator;
+	}
+	else
+	{
+		FActorIterator iterator (tid);
+
+		actor = iterator.Next();
+	}
+
+	if (actor == NULL)
+	{
+		return 0;
+	}
+	switch (property)
+	{
+	case APROP_Health:		return actor->health;
+	case APROP_Speed:		return actor->Speed;
+	case APROP_Damage:		return actor->damage;
+	case APROP_Alpha:		return actor->alpha;
+	case APROP_RenderStyle:	return actor->RenderStyle;
+	default:				return 0;
+	}
+}
+
 #define NEXTWORD	(LONG(*pc++))
 #define NEXTBYTE	(fmt==ACS_LittleEnhanced?getbyte(pc):NEXTWORD)
 #define STACK(a)	(Stack[sp - (a)])
@@ -3810,6 +3891,38 @@ void DLevelScript::RunScript ()
 					}
 				}
 			}
+			break;
+			
+		case PCD_SETMARINEWEAPON:
+			if (STACK(2) != 0)
+			{
+				AScriptedMarine *marine;
+				TActorIterator<AScriptedMarine> iterator (STACK(2));
+
+				while ((marine = iterator.Next()) != NULL)
+				{
+					marine->SetWeapon ((AScriptedMarine::EMarineWeapon)STACK(1));
+				}
+			}
+			else
+			{
+				if (activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
+				{
+					static_cast<AScriptedMarine *>(activator)->SetWeapon (
+						(AScriptedMarine::EMarineWeapon)STACK(1));
+				}
+			}
+			sp -= 2;
+			break;
+
+		case PCD_SETACTORPROPERTY:
+			SetActorProperty (STACK(3), STACK(2), STACK(1));
+			sp -= 3;
+			break;
+
+		case PCD_GETACTORPROPERTY:
+			STACK(2) = GetActorProperty (STACK(2), STACK(1));
+			sp -= 1;
 			break;
 		}
 	}

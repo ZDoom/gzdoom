@@ -108,9 +108,22 @@ void ABishop::GetExplodeParms (int &damage, int &distance, bool &hurtSource)
 	damage = 25 + (pr_boom() & 15);
 }
 
-bool ABishop::NewTarget (AActor *other)
-{ // Bishops never change their target until they've killed their current one.
-	return false;
+bool ABishop::OkayToSwitchTarget (AActor *other)
+{
+	if (target != NULL)
+	{ // Bishops never change their target until they've killed their current one.
+		return false;
+	}
+	if (!Super::OkayToSwitchTarget (other))
+	{
+		return false;
+	}
+	if (other->TIDtoHate == TIDtoHate &&
+		other->IsKindOf (RUNTIME_CLASS(AHeresiarch)))
+	{
+		return false;
+	}
+	return true;
 }
 
 // Bishop puff --------------------------------------------------------------

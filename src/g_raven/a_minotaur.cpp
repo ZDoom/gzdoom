@@ -254,10 +254,14 @@ void AMinotaur::Die (AActor *source, AActor *inflictor)
 	}
 }
 
-bool AMinotaur::NewTarget (AActor *other)
+bool AMinotaur::OkayToSwitchTarget (AActor *other)
 { // Minotaurs with masters never change their target until
   // they've killed their current one.
-	return (tracer == NULL || tracer->health <= 0) && (other != tracer);
+	if (tracer != NULL && tracer->health > 0)
+		return false;
+	if (other == tracer)
+		return false;		// Do not target the master
+	return Super::OkayToSwitchTarget (other);
 }
 
 // Minotaur Friend ----------------------------------------------------------

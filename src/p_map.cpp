@@ -3025,25 +3025,28 @@ BOOL PIT_RadiusAttack (AActor *thing)
 			int damage = (int)points;
 
 			P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
-			P_TraceBleed (damage, thing, bombspot);
+			if (!(bombspot->flags2 & MF2_NODMGTHRUST))
+			{
+				P_TraceBleed (damage, thing, bombspot);
 
-			thrust = points * 0.5f / (float)thing->Mass;
-			if (bombsource == thing)
-			{
-				thrust *= selfthrustscale;
+				thrust = points * 0.5f / (float)thing->Mass;
+				if (bombsource == thing)
+				{
+					thrust *= selfthrustscale;
+				}
+				momz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
+				if (bombsource != thing)
+				{
+					momz *= 0.5f;
+				}
+				else
+				{
+					momz *= 0.8f;
+				}
+				thing->momx = momx + (fixed_t)((thing->x - bombspot->x) * thrust);
+				thing->momy = momy + (fixed_t)((thing->y - bombspot->y) * thrust);
+				thing->momz += (fixed_t)momz;
 			}
-			momz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
-			if (bombsource != thing)
-			{
-				momz *= 0.5f;
-			}
-			else
-			{
-				momz *= 0.8f;
-			}
-			thing->momx = momx + (fixed_t)((thing->x - bombspot->x) * thrust);
-			thing->momy = momy + (fixed_t)((thing->y - bombspot->y) * thrust);
-			thing->momz += (fixed_t)momz;
 		}
 	}
 	else

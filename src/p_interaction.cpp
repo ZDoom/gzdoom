@@ -64,6 +64,7 @@ static FRandom pr_killmobj ("ActorDie");
 static FRandom pr_damagemobj ("ActorTakeDamage");
 static FRandom pr_lightning ("LightningDamage");
 static FRandom pr_poison ("PoisonDamage");
+static FRandom pr_switcher ("SwitchTarget");
 
 CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
@@ -723,7 +724,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	// (i.e. Guantlets/Chainsaw)
 	if (inflictor
 		&& !(target->flags & MF_NOCLIP)
-		&& (!source || !source->player || !(inflictor->flags2 & MF2_NODMGTHRUST)))
+		&& (!source || !source->player)
+		&& !(inflictor->flags2 & MF2_NODMGTHRUST))
 	{
 		int kickback;
 
@@ -868,6 +870,13 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			P_AutoUseHealth (player, damage - player->health + 1);
 		}
 		player->health -= damage;		// mirror mobj health here for Dave
+		if (target != player->mo)
+		{ // [RH] Make the shot voodoo doll reflect the player's real health
+		  // If there is more than one voodoo doll on the level, the player
+		  // could shot both of them enough to lose all is health but not
+		  // enough to kill either voodoo doll, so he would not actually die.
+			target->health = player->health + damage;
+		}
 		if (player->health < 0)
 		{
 			player->health = 0;
@@ -972,12 +981,9 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 	}
 	target->reactiontime = 0;			// we're awake now...	
-	if (source && source != target && !(source->flags3 & MF3_NOTARGET)
-		&& (infighting >= 0 || source->player)		// [RH] allow monsters to ignore each other
-		&& (target->TIDtoHate == 0 || target->TIDtoHate != source->TIDtoHate)	// [RH] If hating the same things, don't hate each other
-		&& !source->IsKindOf (RUNTIME_CLASS(AArchvile))
-		&& (!target->threshold || target->IsKindOf (RUNTIME_CLASS(AArchvile)))
-		&& target->NewTarget (source))
+	if (source &&
+		source != target->target &&
+		target->OkayToSwitchTarget (source))
 	{
 		// Target actor is not intent on another actor,
 		// so make him chase after source
@@ -985,18 +991,40 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		// killough 2/15/98: remember last enemy, to prevent
 		// sleeping early; 2/21/98: Place priority on players
 
-		if (!target->lastenemy || !target->lastenemy->player ||
-			 target->lastenemy->health <= 0)
+		if (target->lastenemy == NULL ||
+			(target->lastenemy->player == NULL && target->TIDtoHate == 0) ||
+			target->lastenemy->health <= 0)
+		{
 			target->lastenemy = target->target; // remember last enemy - killough
-
+		}
 		target->target = source;
 		target->threshold = BASETHRESHOLD;
-		if (target->state == target->SpawnState
-			&& target->SeeState != NULL)
+		if (target->state == target->SpawnState &&
+			target->SeeState != NULL)
 		{
 			target->SetState (target->SeeState);
 		}
 	}
+}
+
+bool AActor::OkayToSwitchTarget (AActor *other)
+{
+	if ((other->flags3 & MF3_NOTARGET) && (other->tid != TIDtoHate))
+		return false;
+	if (threshold != 0 && !(flags4 & MF4_QUICKTORETALIATE))
+		return false;
+	if (infighting < 0 && other->player == NULL)
+		return false;		// [RH] Allow monsters to ignore each other
+	if (TIDtoHate != 0 && TIDtoHate == other->TIDtoHate)
+		return false;		// [RH] Don't target "teammates"
+	if (other->player != NULL && (flags4 & MF4_NOHATEPLAYERS))
+		return false;		// [RH] Don't target players
+	if (target != NULL && target->health > 0 &&
+		TIDtoHate != 0 && target->tid == TIDtoHate && pr_switcher() < 128 &&
+		P_CheckSight (this, target))
+		return false;		// [RH] Don't be too quick to give up things we hate
+
+	return true;
 }
 
 //==========================================================================

@@ -1,4 +1,42 @@
+January 24, 2002
+- Uploaded 38.cab.
+- Added a fix to prevent you from becoming a zombie player when there are
+  voodoo dolls on a level, and each accumulates enough damage to kill you,
+  but none of the dolls receives enough damage individually to die.
+- Changed monster patrols so that when a monster reaches the end of a path,
+  it looks in the same direction as the final patrol point.
+- Fixed: PIT_RadiusAttack() ignored MF2_NODMGTHRUST, so Hexen's poison cloud
+  would push things away from it. I also used this to determine if that
+  function will spray blood splats, but perhaps a poison damage flag would
+  be better?
+- Added the ACS commands SetPlayerProperty and GetPlayerProperty.
+- Added different versions of the scripted marine that each use a different
+  weapon. There's also an ACS command to let you change their weapons at
+  any time.
+
+January 23, 2002
+- Added some more Thing_Hate types that can be used to make monsters that hunt
+  both monsters and players or to ignore players that attack them.
+- Made Bishops spawned by Heresiarchs and Wizards spawned by D'Sparil inherit
+  their masters' hate preferences.
+- Made Heresiarchs and Bishops ignore each other. I didn't check if this was
+  original Hexen behavior or not, but it seems stupid for a Heresiarch to kill
+  a Bishop it just summoned simply because the Bishop happened to hit it.
+- Added a new invisible thing (#9076) that you can make monsters attack using
+  Thing_Hate. It's probably best to place this next to something solid, since
+  it blocks projectiles (including the player's) and affects the player's aim.
+  The angle you give it determines how much health it has, 1 degree is 10 hit
+  points, 2 degrees is 20 hit points, etc. Give it an angle of 0, and it never
+  dies. The angle field is used for this instead of one of the argument fields
+  so that it can still execute a death special.
+- Fixed: P_NightmareRespawn() assigned the old body's spawn parameters to the
+  teleport flash instead of to the new body, so when the new body respawned,
+  it would respawn at (0,0) instead of its original location. Also set the
+  respawn chance back to ~1.6% instead of the 100% I had been using earlier
+  for testing.
+
 January 22, 2002
+- Uploaded 37.cab.
 - Played with A_Chase() a bit more so that monsters that hate monster groups
   will look for closer monsters on their way to a monster they can't see.
 

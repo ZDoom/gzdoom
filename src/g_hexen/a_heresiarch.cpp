@@ -71,51 +71,6 @@ static FRandom pr_heresiarch ("Heresiarch");
 
 // The Heresiarch him/itself ------------------------------------------------
 
-class AHeresiarch : public AActor
-{
-	DECLARE_ACTOR (AHeresiarch, AActor)
-public:
-	const TypeInfo *StopBall;
-
-	void Serialize (FArchive &arc)
-	{
-		Super::Serialize (arc);
-		if (arc.IsStoring())
-		{
-			arc.UserWriteClass (StopBall);
-		}
-		else
-		{
-			arc.UserReadClass (StopBall);
-		}
-	}
-
-	void Die (AActor *source, AActor *inflictor)
-	{
-		// The heresiarch just executes a script instead of a special upon death
-		int script = special;
-		special = 0;
-
-		Super::Die (source, inflictor);
-
-		if (script != 0)
-		{
-			P_StartScript (this, NULL, script, level.mapname, 0, 0, 0, 0, 0);
-		}
-	}
-
-	bool AdjustReflectionAngle (AActor *thing, angle_t &angle)
-	{
-		// Deflection
-		if (pr_heresiarch()<128)
-			angle += ANGLE_45;
-		else
-			angle -= ANGLE_45;
-
-		return false;
-	}
-};
-
 FState AHeresiarch::States[] =
 {
 #define S_SORC_SPAWN1 0
@@ -191,7 +146,60 @@ IMPLEMENT_ACTOR (AHeresiarch, Hexen, 10080, 0)
 	PROP_ActiveSound ("SorcererActive")
 END_DEFAULTS
 
+void AHeresiarch::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	if (arc.IsStoring())
+	{
+		arc.UserWriteClass (StopBall);
+	}
+	else
+	{
+		arc.UserReadClass (StopBall);
+	}
+}
+
+void AHeresiarch::Die (AActor *source, AActor *inflictor)
+{
+	// The heresiarch just executes a script instead of a special upon death
+	int script = special;
+	special = 0;
+
+	Super::Die (source, inflictor);
+
+	if (script != 0)
+	{
+		P_StartScript (this, NULL, script, level.mapname, 0, 0, 0, 0, 0);
+	}
+}
+
+bool AHeresiarch::AdjustReflectionAngle (AActor *thing, angle_t &angle)
+{
+	// Deflection
+	if (pr_heresiarch() < 128)
+		angle += ANGLE_45;
+	else
+		angle -= ANGLE_45;
+
+	return false;
+}
+
+bool AHeresiarch::OkayToSwitchTarget (AActor *other)
+{
+	if (!Super::OkayToSwitchTarget (other))
+	{
+		return false;
+	}
+	if (other->TIDtoHate == TIDtoHate &&
+		other->IsKindOf (RUNTIME_CLASS(ABishop)))
+	{
+		return false;
+	}
+	return true;
+}
+
 // Base class for the balls flying around the Heresiarch's head -------------
+
 class ASorcBall : public AActor
 {
 	DECLARE_STATELESS_ACTOR (ASorcBall, AActor)
@@ -1302,7 +1310,13 @@ void A_SpawnBishop(AActor *actor)
 		}
 		else if (actor->target != NULL)
 		{ // [RH] Make the new bishops inherit the Heriarch's target
-			mo->target = actor->target->target;
+			AActor *master = actor->target;
+
+			mo->target = master->target;
+			mo->TIDtoHate = master->TIDtoHate;
+			mo->LastLook = master->LastLook;
+			mo->flags3 |= master->flags3 & MF3_HUNTPLAYERS;
+			mo->flags4 |= master->flags4 & MF4_NOHATEPLAYERS;
 		}
 	}
 	actor->Destroy ();

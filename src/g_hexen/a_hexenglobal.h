@@ -22,7 +22,19 @@ class ABishop : public AActor
 	DECLARE_ACTOR (ABishop, AActor)
 public:
 	void GetExplodeParms (int &damage, int &distance, bool &hurtSource);
-	bool NewTarget (AActor *other);
+	bool OkayToSwitchTarget (AActor *other);
+};
+
+class AHeresiarch : public AActor
+{
+	DECLARE_ACTOR (AHeresiarch, AActor)
+public:
+	const TypeInfo *StopBall;
+
+	void Serialize (FArchive &arc);
+	void Die (AActor *source, AActor *inflictor);
+	bool AdjustReflectionAngle (AActor *thing, angle_t &angle);
+	bool OkayToSwitchTarget (AActor *other);
 };
 
 class AHolySpirit : public AActor

@@ -234,6 +234,12 @@ enum
 	MF3_NOEXPLODEFLOOR	= 0x10000000,	// Missile stops at floor instead of exploding
 	MF3_WARNBOT			= 0x20000000,	// Missile warns bot
 	MF3_PUFFONACTORS	= 0x40000000,	// Puff appears even when hit actors
+	MF3_HUNTPLAYERS		= 0x80000000,	// Used with TIDtoHate, means to hate players too
+
+// --- mobj.flags4 ---
+
+	MF4_NOHATEPLAYERS	= 0x00000001,	// Ignore player attacks
+	MF4_QUICKTORETALIATE= 0x00000002,	// Always switch targets when hurt
 
 // --- mobj.renderflags ---
 
@@ -379,9 +385,6 @@ public:
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	virtual void Howl ();
 
-	// Returns true if other should become the actor's new target
-	virtual bool NewTarget (AActor *other);
-
 	// Called by A_NoBlocking in case the actor wants to drop some presents
 	virtual void NoBlockingSet ();
 
@@ -423,6 +426,9 @@ public:
 	// I'm not sure I like it this way, but it will do for now.
 	virtual int SpecialMissileHit (AActor *victim);
 
+	// Returns true if it's okay to switch target to "other" after being attacked by it.
+	virtual bool OkayToSwitchTarget (AActor *other);
+
 	// Set the alphacolor field properly
 	void SetShade (DWORD rgb);
 	void SetShade (int r, int g, int b);
@@ -460,7 +466,8 @@ public:
 	SDWORD			damage;			// For missiles and monster railgun
 	DWORD			flags;
 	DWORD			flags2;			// Heretic flags
-	DWORD			flags3;			// Hexen/Heretic actor-dependant behavior made flaggable
+	DWORD			flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable
+	DWORD			flags4;			// [RH] Even more flags!
 	DWORD			mapflags;		// Flags from map (MTF_*)
 	int				special1;		// Special info
 	int				special2;		// Special info

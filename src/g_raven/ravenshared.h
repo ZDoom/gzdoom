@@ -24,7 +24,7 @@ public:
 	bool bIsFriend;
 	bool IsOkayToAttack (AActor *target);
 	void Die (AActor *source, AActor *inflictor);
-	bool NewTarget (AActor *other);
+	bool OkayToSwitchTarget (AActor *other);
 	bool Slam (AActor *);
 	void Tick ();
 };

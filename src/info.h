@@ -210,12 +210,15 @@ enum
 	ADEF_Flags,			// Use these flags exactly
 	ADEF_Flags2,		// "
 	ADEF_Flags3,		// "
+	ADEF_Flags4,		// "
 	ADEF_FlagsSet,		// Or these flags with previous
 	ADEF_Flags2Set,		// "
 	ADEF_Flags3Set,		// "
+	ADEF_Flags4Set,		// "
 	ADEF_FlagsClear,	// Clear these flags from previous
 	ADEF_Flags2Clear,	// "
 	ADEF_Flags3Clear,	// "
+	ADEF_Flags4Clear,	// "
 	ADEF_Alpha,
 	ADEF_RenderStyle,
 	ADEF_RenderFlags,

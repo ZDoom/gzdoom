@@ -733,7 +733,7 @@ const char *AShotgun::PickupMessage ()
 void A_FireShotgun (player_t *player, pspdef_t *psp)
 {
 	int i;
-		
+
 	S_Sound (player->mo, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	player->mo->PlayAttacking2 ();
 	player->UseAmmo ();
@@ -742,7 +742,7 @@ void A_FireShotgun (player_t *player, pspdef_t *psp)
 
 	P_BulletSlope (player->mo);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
-	
+
 	for (i=0 ; i<7 ; i++)
 		P_GunShot (player->mo, false);
 }
@@ -1319,13 +1319,6 @@ public:
 	weapontype_t OldStyleID () const;
 
 	static FWeaponInfo WeaponInfo;
-};
-
-class ABFGBall : public AActor
-{
-	DECLARE_ACTOR (ABFGBall, AActor)
-public:
-	int GetMOD () { return MOD_BFG_BOOM; }
 };
 
 class ABFGExtra : public AActor

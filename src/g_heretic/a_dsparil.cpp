@@ -291,9 +291,18 @@ void ASorcerer2::BeginPlay ()
 	}
 }
 
-bool ASorcerer2::NewTarget (AActor *other)
+bool ASorcerer2::OkayToSwitchTarget (AActor *other)
 {
-	return !other->IsKindOf (RUNTIME_CLASS(AWizard));
+	if (!Super::OkayToSwitchTarget (other))
+	{
+		return false;
+	}
+	if (other->TIDtoHate == TIDtoHate &&
+		other->IsKindOf (RUNTIME_CLASS(AWizard)))
+	{
+		return false;
+	}
+	return true;
 }
 
 const char *ASorcerer2::GetObituary ()
@@ -684,16 +693,29 @@ void A_GenWizard (AActor *actor)
 
 	mo = Spawn<AWizard> (actor->x, actor->y,
 		actor->z - GetDefault<AWizard>()->height/2);
-	if (P_TestMobjLocation(mo) == false)
-	{ // Didn't fit
-		mo->Destroy ();
-		return;
+	if (mo != NULL)
+	{
+		if (!P_TestMobjLocation (mo))
+		{ // Didn't fit
+			mo->Destroy ();
+		}
+		else
+		{ // [RH] Make the new wizards inherit D'Sparil's target
+			AActor *master = actor->target;
+
+			mo->target = master->target;
+			mo->TIDtoHate = master->TIDtoHate;
+			mo->LastLook = master->LastLook;
+			mo->flags3 |= master->flags3 & MF3_HUNTPLAYERS;
+			mo->flags4 |= master->flags4 & MF4_NOHATEPLAYERS;
+
+			actor->momx = actor->momy = actor->momz = 0;
+			actor->SetState (actor->DeathState);
+			actor->flags &= ~MF_MISSILE;
+			// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.
+			Spawn<ATeleportFog> (actor->x, actor->y, actor->z);
+		}
 	}
-	actor->momx = actor->momy = actor->momz = 0;
-	actor->SetState (actor->DeathState);
-	actor->flags &= ~MF_MISSILE;
-	// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.
-	Spawn<ATeleportFog> (actor->x, actor->y, actor->z);
 }
 
 //----------------------------------------------------------------------------

@@ -4,7 +4,9 @@
 	Version="7.00"
 	Name="zdoom"
 	SccProjectName=""
-	SccLocalPath="">
+	SccAuxPath=""
+	SccLocalPath=""
+	SccProvider="">
 	<Platforms>
 		<Platform
 			Name="Win32"/>
@@ -2560,6 +2562,9 @@
 						Name="VCCLCompilerTool"
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="g_shared\a_hatetarget.cpp">
 			</File>
 			<File
 				RelativePath=".\g_shared\a_lightning.cpp">

@@ -5,7 +5,9 @@
 	Name="zlib"
 	ProjectGUID="{F9D9E7D4-E1A2-4866-9E85-B1B14137EE63}"
 	SccProjectName=""
-	SccLocalPath="">
+	SccAuxPath=""
+	SccLocalPath=""
+	SccProvider="">
 	<Platforms>
 		<Platform
 			Name="Win32"/>

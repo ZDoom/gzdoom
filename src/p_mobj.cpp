@@ -279,6 +279,11 @@ void AActor::Serialize (FArchive &arc)
 		<< alphacolor
 		<< Translation;
 
+	if (SaveVersion >= 208)
+	{
+		arc << flags4;
+	}
+
 	if (flags2 & MF2_FLOATBOB)
 	{
 		int offs = FloatBobPhase + level.time;
@@ -1479,11 +1484,30 @@ void P_NightmareRespawn (AActor *mobj)
 	// something is occupying its position?
 	if (!P_TestMobjLocation (mo))
 	{
+		level.total_monsters--;
 		mo->Destroy ();
 		return;		// no respawn
 	}
 
 	z = mo->z;
+
+	// inherit attributes from deceased one
+	mo->SpawnPoint[0] = mobj->SpawnPoint[0];
+	mo->SpawnPoint[1] = mobj->SpawnPoint[1];
+	mo->SpawnPoint[2] = mobj->SpawnPoint[2];
+	mo->SpawnAngle = mobj->SpawnAngle;
+	mo->SpawnFlags = mobj->SpawnFlags;
+	mo->angle = ANG45 * (mobj->SpawnAngle/45);
+
+	if (mobj->SpawnFlags & MTF_AMBUSH)
+		mo->flags |= MF_AMBUSH;
+
+	mo->reactiontime = 18;
+
+	mo->TIDtoHate = mobj->TIDtoHate;
+	mo->LastLook = mobj->LastLook;
+	mo->flags3 |= mobj->flags3 & MF3_HUNTPLAYERS;
+	mo->flags4 |= mobj->flags4 & MF4_NOHATEPLAYERS;
 
 	// spawn a teleport fog at old spot because of removal of the body?
 	mo = Spawn ("TeleportFog", mobj->x, mobj->y, mobj->z);
@@ -1498,19 +1522,6 @@ void P_NightmareRespawn (AActor *mobj)
 	{
 		mo->z += TELEFOGHEIGHT;
 	}
-
-	// inherit attributes from deceased one
-	mo->SpawnPoint[0] = mobj->SpawnPoint[0];
-	mo->SpawnPoint[1] = mobj->SpawnPoint[1];
-	mo->SpawnPoint[2] = mobj->SpawnPoint[2];
-	mo->SpawnAngle = mobj->SpawnAngle;
-	mo->SpawnFlags = mobj->SpawnFlags;
-	mo->angle = ANG45 * (mobj->SpawnAngle/45);
-
-	if (mobj->SpawnFlags & MTF_AMBUSH)
-		mo->flags |= MF_AMBUSH;
-
-	mo->reactiontime = 18;
 
 	// remove the old monster
 	mobj->Destroy ();
@@ -1616,11 +1627,6 @@ void AActor::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
 
 void AActor::Howl ()
 {
-}
-
-bool AActor::NewTarget (AActor *other)
-{
-	return true;
 }
 
 void AActor::NoBlockingSet ()
@@ -2087,7 +2093,7 @@ void AActor::Tick ()
 		if (level.time & 31)
 			return;
 
-		if (pr_nightmarerespawn() > 400)
+		if (pr_nightmarerespawn() > 4)
 			return;
 
 		P_NightmareRespawn (this);

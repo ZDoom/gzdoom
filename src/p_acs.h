@@ -419,6 +419,9 @@ public:
 		PCD_MODGLOBALARRAY,
 		PCD_INCGLOBALARRAY,
 		PCD_DECGLOBALARRAY,
+		PCD_SETMARINEWEAPON,
+		PCD_SETACTORPROPERTY,
+		PCD_GETACTORPROPERTY,
 
 		PCODE_COMMAND_COUNT
 	};
@@ -510,6 +513,9 @@ protected:
 	void DoFadeRange (int r1, int g1, int b1, int a1,
 		int r2, int g2, int b2, int a2, fixed_t time);
 	void DoSetFont (int fontnum);
+	void SetActorProperty (int tid, int property, int value);
+	void DoSetActorProperty (AActor *actor, int property, int value);
+	int GetActorProperty (int tid, int property);
 
 private:
 	DLevelScript ();

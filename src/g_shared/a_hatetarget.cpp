@@ -1,8 +1,9 @@
 /*
-** version.h
+** a_hatetarget.cpp
+** Something for monsters to hate and shoot at
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2003 Randy Heit
+** Copyright 2003 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -31,25 +32,59 @@
 **
 */
 
-#ifndef __VERSION_H__
-#define __VERSION_H__
+#include "actor.h"
+#include "info.h"
 
-// Lots of different representations for the version number
-enum { VERSION = 202 };
-#define STRVERSION "202"
-#define DOTVERSIONSTR "2.0.38"
-#define GAMEVER (2*256+1)
+// Hate Target --------------------------------------------------------------
 
-// SAVEVER is the version of the information stored in level snapshots.
-// Note that SAVEVER is not directly comparable to VERSION.
-// SAVESIG should match SAVEVER.
-#define SAVEVER 208
-#define SAVESIG "ZDOOMSAVE208"
+class AHateTarget : public AActor
+{
+	DECLARE_ACTOR (AHateTarget, AActor)
+public:
+	void BeginPlay ();
+	void Tick ();
+	angle_t AngleIncrements (void);
+};
 
-// MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 200
+FState AHateTarget::States[] =
+{
+	S_NORMAL (TNT1, 'A',   -1, NULL							, NULL)
+};
 
-// The maximum length of one save game description for the menus.
-#define SAVESTRINGSIZE		24
+IMPLEMENT_ACTOR (AHateTarget, Any, 9076, 0)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (56)
+	PROP_Flags (MF_SHOOTABLE|MF_NOSECTOR|MF_NOGRAVITY|MF_NOBLOOD)
+	PROP_SpawnState (0)
+	PROP_MassLong (INT_MAX)
+END_DEFAULTS
 
-#endif //__VERSION_H__
+void AHateTarget::BeginPlay ()
+{
+	Super::BeginPlay ();
+	if (angle != 0)
+	{	// Each degree translates into 10 units of health
+		health = Scale (angle >> 1, 1800, 0x40000000);
+		// Round to the nearest 10 because of inaccuracy above
+		health = (health + 5) / 10 * 10;
+	}
+	else
+	{
+		special2 = 1;
+		health = 10000;
+	}
+}
+
+void AHateTarget::Tick ()
+{
+	Super::Tick ();
+	if (special2 != 0)
+	{
+		health = 10000;
+	}
+}
+
+angle_t AHateTarget::AngleIncrements (void)
+{
+	return ANGLE_1;
+}

@@ -1035,6 +1035,25 @@ FUNC(LS_Thing_Hate)
 {
 	FActorIterator haterIt (arg0);
 	AActor *hater, *hatee;
+	FActorIterator hateeIt (arg1);
+	bool nothingToHate = false;
+
+	if (arg1 != 0)
+	{
+		while ((hatee = hateeIt.Next ()))
+		{
+			if (hatee->flags & MF_SHOOTABLE	&&	// can't hate nonshootable things
+				hatee->health > 0 &&			// can't hate dead things
+				!(hatee->flags2 & MF2_DORMANT))	// can't target dormant things
+			{
+				break;
+			}
+		}
+		if (hatee == NULL)
+		{ // Nothing to hate
+			nothingToHate = true;
+		}
+	}
 
 	if (arg0 == 0)
 	{
@@ -1080,48 +1099,75 @@ FUNC(LS_Thing_Hate)
 					hater->lastenemy = NULL;
 				}
 			}
-			// Note here: If you use Thing_Hate (tid, 0, 2), you can make
-			// a monster go after a player without seeing him first.
-			if (arg2 == 2)
-			{
-				hater->flags3 |= MF3_NOSIGHTCHECK;
-			}
-			else
-			{
-				hater->flags3 &= ~MF3_NOSIGHTCHECK;
-			}
+		}
+		// Hate types for arg2:
+		//
+		// 0 - Just hate one specific actor
+		// 1 - Hate actors with given TID and attack players when shot
+		// 2 - Same as 1, but will go after enemies without seeing them first
+		// 3 - Hunt actors with given TID and also players
+		// 4 - Same as 3, but will go after monsters without seeing them first
+		// 5 - Hate actors with given TID and ignore player attacks
+		// 6 - Same as 5, but will go after enemies without seeing them first
+
+		// Note here: If you use Thing_Hate (tid, 0, 2), you can make
+		// a monster go after a player without seeing him first.
+		if (arg2 == 2 || arg2 == 4 || arg2 == 6)
+		{
+			hater->flags3 |= MF3_NOSIGHTCHECK;
 		}
 		else
 		{
-			if (arg1 == 0)
-			{
-				hatee = it;
-			}
-			else
-			{
-				FActorIterator hateeIt (arg1);
+			hater->flags3 &= ~MF3_NOSIGHTCHECK;
+		}
+		if (arg2 == 3 || arg2 == 4)
+		{
+			hater->flags3 |= MF3_HUNTPLAYERS;
+		}
+		else
+		{
+			hater->flags3 &= ~MF3_HUNTPLAYERS;
+		}
+		if (arg2 == 5 || arg2 == 6)
+		{
+			hater->flags4 |= MF4_NOHATEPLAYERS;
+		}
+		else
+		{
+			hater->flags4 &= ~MF4_NOHATEPLAYERS;
+		}
 
-				while ((hatee = hateeIt.Next ()))
-				{
-					if (hatee != hater &&				// can't hate self
-						hatee->flags & MF_SHOOTABLE	&&	// can't hate nonshootable things
-						hatee->health > 0)				// can't hate dead things
-					{
-						break;
-					}
-				}
-			}
-			if (hatee != NULL && hatee != hater)
+		if (arg1 == 0)
+		{
+			hatee = it;
+		}
+		else if (nothingToHate)
+		{
+			hatee = NULL;
+		}
+		else if (arg2 != 0)
+		{
+			do
 			{
-				if (hater->target)
-				{
-					hater->lastenemy = hater->target;
-				}
-				hater->target = hatee;
-				if (!(hater->flags2 & MF2_DORMANT))
-				{
-					hater->SetState (hater->SeeState);
-				}
+				hatee = hateeIt.Next ();
+			}
+			while ( hatee == NULL ||
+					hatee == hater ||					// can't hate self
+					!(hatee->flags & MF_SHOOTABLE) ||	// can't hate nonshootable things
+					hatee->health <= 0 ||				// can't hate dead things(hatee = hateeIt.Next ()))
+					(hatee->flags & MF2_DORMANT));		// can't target dormant things
+		}
+
+		if (hatee != NULL && hatee != hater && hater->target != hater->goal)
+		{
+			if (hater->target)
+			{
+				hater->lastenemy = hater->target;
+			}
+			hater->target = hatee;
+			if (!(hater->flags2 & MF2_DORMANT))
+			{
+				hater->SetState (hater->SeeState);
 			}
 		}
 		if (arg0 != 0)

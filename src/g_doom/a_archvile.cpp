@@ -79,6 +79,8 @@ IMPLEMENT_ACTOR (AArchvile, Doom, 64, 111)
 	PROP_PainChance (10)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
+	PROP_Flags3 (MF3_NOTARGET)
+	PROP_Flags4 (MF4_QUICKTORETALIATE)
 
 	PROP_SpawnState (S_VILE_STND)
 	PROP_SeeState (S_VILE_RUN)
@@ -274,6 +276,8 @@ void A_VileChase (AActor *self)
 					// You are the Archvile's minion now, so hate what it hates
 					corpsehit->TIDtoHate = self->TIDtoHate;
 					corpsehit->LastLook = self->LastLook;
+					corpsehit->flags3 |= self->flags3 & MF3_HUNTPLAYERS;
+					corpsehit->flags4 |= self->flags4 & MF4_NOHATEPLAYERS;
 
 					// [RH] If it's a monster, it gets to count as another kill
 					if (corpsehit->flags & MF_COUNTKILL)

@@ -191,12 +191,15 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_Flags:		actor->flags = dataint;			break;
 		case ADEF_Flags2:		actor->flags2 = dataint;		break;
 		case ADEF_Flags3:		actor->flags3 = dataint;		break;
+		case ADEF_Flags4:		actor->flags4 = dataint;		break;
 		case ADEF_FlagsSet:		actor->flags |= dataint;		break;
 		case ADEF_Flags2Set:	actor->flags2 |= dataint;		break;
 		case ADEF_Flags3Set:	actor->flags3 |= dataint;		break;
+		case ADEF_Flags4Set:	actor->flags4 |= dataint;		break;
 		case ADEF_FlagsClear:	actor->flags &= ~dataint;		break;
 		case ADEF_Flags2Clear:	actor->flags2 &= ~dataint;		break;
 		case ADEF_Flags3Clear:	actor->flags3 &= ~dataint;		break;
+		case ADEF_Flags4Clear:	actor->flags4 &= ~dataint;		break;
 		case ADEF_Alpha:		actor->alpha = dataint;			break;
 		case ADEF_RenderStyle:	actor->RenderStyle = dataint;	break;
 		case ADEF_RenderFlags:	actor->renderflags = dataint;	break;

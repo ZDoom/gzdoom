@@ -89,9 +89,18 @@ void AWizard::NoBlockingSet ()
 	P_DropItem (this, "ArtiTomeOfPower", 0, 4);
 }
 
-bool AWizard::NewTarget (AActor *other)
+bool AWizard::OkayToSwitchTarget (AActor *other)
 {
-	return !other->IsKindOf (RUNTIME_CLASS(ASorcerer2));
+	if (!Super::OkayToSwitchTarget (other))
+	{
+		return false;
+	}
+	if (other->TIDtoHate == TIDtoHate &&
+		other->IsKindOf (RUNTIME_CLASS(ASorcerer2)))
+	{
+		return false;
+	}
+	return true;
 }
 
 const char *AWizard::GetObituary ()

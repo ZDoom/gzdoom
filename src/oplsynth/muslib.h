@@ -126,7 +126,7 @@ void OPLplayMusic(struct musicBlock *mus);
 void OPLstopMusic(struct musicBlock *mus);
 
 int	OPLdriverParam(uint message, uint param1, void *param2);
-int	OPLloadBank(void *data);
+int	OPLloadBank(const void *data);
 
 extern ulong MLtime;
 

@@ -530,7 +530,7 @@ BOOL PIT_CheckThing (AActor *thing)
 		return true;	
 	}
 	BlockingMobj = thing;
-	if (!(compatflags & COMPATF_NO_PASSMOBJ))
+	if ((tmthing->flags2 & MF2_PASSMOBJ) && !(compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (tmthing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible
@@ -1167,7 +1167,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				goto pushline;
 			}
 		}
-		if (compatflags & COMPATF_NO_PASSMOBJ)
+		if (!(tmthing->flags2 & MF2_PASSMOBJ) || (compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			thing->z = oldz;
 			return false;
@@ -3269,8 +3269,9 @@ int P_PushUp (AActor *thing)
 	for (; firstintersect < lastintersect; firstintersect++)
 	{
 		AActor *intersect = intersectors[firstintersect];
-		if (!(intersect->flags & MF_COUNTKILL) &&
-			intersect->Mass > mymass)
+		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
+			(!(intersect->flags & MF_COUNTKILL) &&
+			 intersect->Mass > mymass))
 		{ // Can't push things more massive than ourself
 			return 2;
 		}
@@ -3310,8 +3311,9 @@ int P_PushDown (AActor *thing)
 	for (; firstintersect < lastintersect; firstintersect++)
 	{
 		AActor *intersect = intersectors[firstintersect];
-		if (!(intersect->flags & MF_COUNTKILL) &&
-			intersect->Mass > mymass)
+		if (!(intersect->flags2 & MF2_PASSMOBJ) ||
+			(!(intersect->flags & MF_COUNTKILL) &&
+			 intersect->Mass > mymass))
 		{ // Can't push things more massive than ourself
 			return 2;
 		}

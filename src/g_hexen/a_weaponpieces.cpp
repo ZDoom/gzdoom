@@ -83,6 +83,7 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 
 	checkAssembled = true;
 	gaveWeapon = false;
+	gaveMana = 0;
 	shouldStay = PrivateShouldStay ();
 	if (!MatchPlayerClass (toucher))
 	{ // Wrong class, but try to pick up for mana
@@ -151,7 +152,7 @@ bool AFourthWeaponPiece::TryPickup (AActor *toucher)
 		}
 		else
 		{
-			gaveWeapon = NULL;
+			gaveWeapon = false;
 		}
 	}
 	return gaveWeapon || gaveMana || checkAssembled;

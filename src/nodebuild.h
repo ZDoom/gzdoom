@@ -146,7 +146,7 @@ private:
 	void GroupSegPlanes ();
 	void FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolyStart> &anchors);
 	bool GetPolyExtents (int polynum, fixed_t bbox[4]);
-	int MarkLoop (int firstseg, int loopnum);
+	int MarkLoop (DWORD firstseg, int loopnum);
 	void AddSegToBBox (fixed_t bbox[4], const FPrivSeg *seg);
 	int CreateNode (DWORD set, fixed_t bbox[4]);
 	int CreateSubsector (DWORD set, fixed_t bbox[4]);
@@ -162,10 +162,10 @@ private:
 	void FixSplitSharers (const node_t &node);
 	double AddIntersection (const node_t &node, int vertex);
 	void AddMinisegs (const node_t &node, int splitseg, DWORD &fset, DWORD &rset);
-	int CheckLoopStart (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
-	int CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
-	void RemoveSegFromVert1 (int segnum, int vertnum);
-	void RemoveSegFromVert2 (int segnum, int vertnum);
+	DWORD CheckLoopStart (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
+	DWORD CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
+	void RemoveSegFromVert1 (DWORD segnum, int vertnum);
+	void RemoveSegFromVert2 (DWORD segnum, int vertnum);
 	DWORD AddMiniseg (int v1, int v2, DWORD partner, int seg1, int splitseg);
 	void SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const;
 
@@ -179,7 +179,7 @@ private:
 	// == 0 : on line
 	//  > 0 : behind line
 
-	inline int PointOnSide (int x, int y, int x1, int y1, int dx, int dy);
+	int PointOnSide (int x, int y, int x1, int y1, int dx, int dy);
 	double InterceptVector (const node_t &splitter, const FPrivSeg &seg);
 
 	void PrintSet (int l, DWORD set);

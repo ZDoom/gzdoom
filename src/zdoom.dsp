@@ -1201,6 +1201,10 @@ SOURCE=.\win32\I_system.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\win32\i_wad.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\win32\icon1.ico
 # End Source File
 # Begin Source File

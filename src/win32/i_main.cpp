@@ -401,6 +401,7 @@ extern FILE *Logfile;
 // To make this work with MinGW, you will need to use inline assembly
 // because GCC offers no native support for Windows' SEH.
 
+#ifndef __GNUC__
 void SleepForever ()
 {
 	Sleep (INFINITE);
@@ -430,6 +431,7 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	return EXCEPTION_CONTINUE_EXECUTION;
 	//return EXCEPTION_EXECUTE_HANDLER;
 }
+#endif
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {

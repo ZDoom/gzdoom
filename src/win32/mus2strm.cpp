@@ -165,7 +165,7 @@ static char FirstChannelAvailable (signed char MUS2MIDchannel[])
 
 static BOOL GetTrackEvent (MUSHeader *MUSh, MEVENT *me)
 {
-	byte event, data;
+	BYTE event, data = 0;
 	int MUSchannel, MIDIchannel;
 
 	me->pEvent = NULL;

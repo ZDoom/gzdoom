@@ -24,7 +24,7 @@ OPLmusicBlock::OPLmusicBlock (const void *mem, int len, int rate, int maxSamples
 
 	if (!gotInstrs)
 	{
-		void *genmidi = W_MapLumpName ("GENMIDI");
+		const void *genmidi = W_MapLumpName ("GENMIDI");
 		int failed = OPLloadBank (genmidi);
 		W_UnMapLump (genmidi);
 		if (failed)

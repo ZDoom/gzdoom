@@ -1,3 +1,24 @@
+January 2, 2003
+- Fixed: EV_DoCeiling() only set the crush value for the moving ceiling if it
+  had a crushing type, so BOOM generalized ceilings could not do crushing
+  damage.
+- More GCC 3.2 cleanup. Everything compiles now--except for zdoom.rc. Windres
+  can't handle it so I had to settle with a precompiled version.
+- Split off the system-specific code from w_wad.cpp into i_wad.cpp.
+- Changed AActor::StaticSpawn() so that it uses P_CheckPosition() to get the
+  real floorz and ceilingz to use in case the actor overlaps a line.
+- Gave the fatso's fireball spawnid 153. In zdefs.acs, T_CACODEMONSHOT was
+  incorrectly named T_MANCUBUSSHOT.
+- Created one-parameter version of the W_MapLump functions that return pointers
+  to const data so that the compiler can be issue warnings if they get assigned
+  to non-const pointers.
+- Added MF2_PUSHWALL to all the Heretic monsters.
+- Put back MF2_PASSMOBJ because of the unexpected consequence removing it had:
+  Overlapping things would push each other to the ceiling. This was most
+  visible with the invisible bridges, which people have commonly overlapped.
+  I have taken a different approach to the situation that caused me to remove
+  it: Now you can't push anything without MF2_PASSMOBJ while riding a lift.
+
 January 1, 2003
 - Uploaded 30.cab. I hope I didn't break anything I haven't already caught by
   getting rid of the zone heap and switching to memory-mapped files.

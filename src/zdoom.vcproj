@@ -2328,6 +2328,9 @@
 				RelativePath=".\win32\i_net.h">
 			</File>
 			<File
+				RelativePath="win32\i_wad.cpp">
+			</File>
+			<File
 				RelativePath=".\win32\icon1.ico">
 			</File>
 			<File

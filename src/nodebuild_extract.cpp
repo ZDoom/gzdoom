@@ -130,9 +130,10 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 	for (i = first + 1; i < max; ++i)
 	{
 		angle_t bestdiff = ANGLE_MAX;
-		FPrivSeg *bestseg;
+		FPrivSeg *bestseg = NULL;
 		int bestj = -1;
-		for (j = first; j < max; ++j)
+		j = first;
+		do
 		{
 			seg = &Segs[SegList[j].SegNum];
 			angle_t ang = PointToAngle (Vertices[seg->v1].x - midx, Vertices[seg->v1].y - midy);
@@ -151,6 +152,7 @@ int FNodeBuilder::CloseSubsector (TArray<seg_t> &segs, int subsector, vertex_t *
 				bestj = j;
 			}
 		}
+		while (++j < max);
 		seg = bestseg;
 		if (prev->v2 != seg->v1)
 		{
@@ -197,7 +199,7 @@ DWORD FNodeBuilder::PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_
 		newseg.linedef = NULL;
 		newseg.sidedef = NULL;
 	}
-	newseg.PartnerSeg = (seg_t *)(seg->partner == DWORD_MAX ? NULL : seg->partner + 1);
+	newseg.PartnerSeg = (seg_t *)(seg->partner == DWORD_MAX ? 0 : seg->partner + 1);
 	newseg.bPolySeg = false;
 	return (DWORD)segs.Push (newseg);
 }

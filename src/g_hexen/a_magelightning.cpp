@@ -382,7 +382,7 @@ void A_LightningReady (player_t *player, pspdef_t *psp)
 void A_LightningClip (AActor *actor)
 {
 	AActor *cMo;
-	AActor *target;
+	AActor *target = NULL;
 	int zigZag;
 
 	if (actor->flags3 & MF3_FLOORHUGGER)

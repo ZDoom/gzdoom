@@ -51,7 +51,6 @@
 /* Internal variables */
 static uint	OPLsinglevoice = 0;
 static struct OP2instrEntry *OPLinstruments = NULL;
-static bool OPL3mode = false;
 
 
 /* OPL channel (voice) data */
@@ -263,14 +262,14 @@ static int releaseSustain(struct musicBlock *mus, uint channel)
 
 static int findFreeChannel(struct musicBlock *mus, uint flag)
 {
-	static uint last = -1;
+	static uint last = 1000000;
 	uint i;
-	uint oldest = -1;
+	uint oldest = 1000000;
 	ulong oldesttime = MLtime;
 
 	if (last >= OPLchannels)
 	{
-		last = -1;
+		last = 1000000;
 	}
 
 	/* find free channel */
@@ -290,7 +289,7 @@ static int findFreeChannel(struct musicBlock *mus, uint flag)
 	{
 		if (channels[i].flags & CH_SECONDARY)
 		{
-			releaseChannel(mus, i, -1);
+			releaseChannel(mus, i, 0xff);
 			return i;
 		} else
 			if (channels[i].time < oldesttime)
@@ -301,9 +300,9 @@ static int findFreeChannel(struct musicBlock *mus, uint flag)
 	}
 
 	/* if possible, kill the oldest channel */
-	if ( !(flag & 2) && oldest != -1)
+	if ( !(flag & 2) && oldest != 1000000)
 	{
-		releaseChannel(mus, oldest, -1);
+		releaseChannel(mus, oldest, 0xff);
 		return oldest;
 	}
 
@@ -473,7 +472,7 @@ void OPLstopMusic(struct musicBlock *mus)
 	uint i;
 	for(i = 0; i < OPLchannels; i++)
 		if (!(channels[i].flags & CH_FREE))
-			releaseChannel(mus, i, -1);
+			releaseChannel(mus, i, 0xff);
 }
 
 void OPLchangeVolume(struct musicBlock *mus, uint volume)
@@ -513,7 +512,7 @@ int OPLdriverParam(uint message, uint param1, void *param2)
 	return 0;
 }
 
-int OPLloadBank(void *data)
+int OPLloadBank (const void *data)
 {
 	static uchar masterhdr[8] = { '#','O','P','L','_','I','I','#' };
 	struct OP2instrEntry *instruments;

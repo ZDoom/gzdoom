@@ -50,9 +50,9 @@ EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Float, vid_winscale)
 
 IVideo *Video;
-static IKeyboard *Keyboard;
-static IMouse *Mouse;
-static IJoystick *Joystick;
+//static IKeyboard *Keyboard;
+//static IMouse *Mouse;
+//static IJoystick *Joystick;
 
 void STACK_ARGS I_ShutdownHardware ()
 {

@@ -86,7 +86,7 @@ IMPLEMENT_ACTOR (AFatso, Doom, 67, 112)
 	PROP_SpeedFixed (8)
 	PROP_PainChance (80)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
-	PROP_Flags2 (MF2_MCROSS|MF2_PUSHWALL|MF2_FLOORCLIP)
+	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
 
 	PROP_SpawnState (S_FATT_STND)
 	PROP_SeeState (S_FATT_RUN)
@@ -131,7 +131,7 @@ FState AFatShot::States[] =
 	S_BRIGHT (MISL, 'D',	4, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (AFatShot, Doom, -1, 0)
+IMPLEMENT_ACTOR (AFatShot, Doom, -1, 153)
 	PROP_RadiusFixed (6)
 	PROP_HeightFixed (32)
 	PROP_SpeedFixed (20)

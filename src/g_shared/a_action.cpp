@@ -138,7 +138,7 @@ void A_FreezeDeath (AActor *actor)
 	int t = pr_freezedeath();
 	actor->tics = 75+t+pr_freezedeath();
 	actor->flags |= MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD;
-	actor->flags2 |= MF2_PUSHABLE|MF2_TELESTOMP|MF2_SLIDE;
+	actor->flags2 |= MF2_PUSHABLE|MF2_TELESTOMP|MF2_PASSMOBJ|MF2_SLIDE;
 	actor->height <<= 2;
 	S_Sound (actor, CHAN_BODY, "FreezeDeath", 1, ATTN_NORM);
 
@@ -341,6 +341,8 @@ public:
 protected:
 	AActor *CorpseQueue[CORPSEQUEUESIZE];
 };
+
+IMPLEMENT_CLASS(DCorpseQueue)
 
 void DCorpseQueue::Serialize (FArchive &arc)
 {

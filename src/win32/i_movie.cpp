@@ -38,6 +38,16 @@
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
 
+#include "c_cvars.h"
+
+CUSTOM_CVAR (Float, snd_movievolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 0.f)
+		self = 0.f;
+	else if (self > 1.f)
+		self = 1.f;
+}
+
 #ifdef I_DO_NOT_LIKE_BIG_DOWNLOADS
 
 #include "i_movie.h"
@@ -92,14 +102,6 @@ static void CheckIfVideo ();
 static void SetMovieSize ();
 static void SetTheVolume ();
 static void SizeWindowForVideo ();
-
-CUSTOM_CVAR (Float, snd_movievolume, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0.f)
-		self = 0.f;
-	else if (self > 1.f)
-		self = 1.f;
-}
 
 LRESULT CALLBACK MovieWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {

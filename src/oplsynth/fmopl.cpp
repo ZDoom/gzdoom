@@ -66,6 +66,10 @@ Revision History:
 #define INLINE			__forceinline
 #endif
 
+#ifdef __GNUC__
+#define INLINE			__inline
+#endif
+
 
 /* output final shift */
 #if (OPL_SAMPLE_BITS==16)
@@ -443,8 +447,8 @@ O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),O( 0),
 #define ML 2
 static const UINT8 mul_tab[16]= {
 /* 1/2, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,10,12,12,15,15 */
-   0.50*ML, 1.00*ML, 2.00*ML, 3.00*ML, 4.00*ML, 5.00*ML, 6.00*ML, 7.00*ML,
-   8.00*ML, 9.00*ML,10.00*ML,10.00*ML,12.00*ML,12.00*ML,15.00*ML,15.00*ML
+   UINT8(0.50*ML), UINT8(1.00*ML), UINT8(2.00*ML), UINT8(3.00*ML), UINT8(4.00*ML), UINT8(5.00*ML), UINT8(6.00*ML), UINT8(7.00*ML),
+   UINT8(8.00*ML), UINT8(9.00*ML),UINT8(10.00*ML),UINT8(10.00*ML),UINT8(12.00*ML),UINT8(12.00*ML),UINT8(15.00*ML),UINT8(15.00*ML)
 };
 #undef ML
 
@@ -644,7 +648,7 @@ INLINE void advance_lfo(FM_OPL *OPL)
 
 	/* LFO */
 	OPL->lfo_am_cnt += OPL->lfo_am_inc;
-	if (OPL->lfo_am_cnt >= (LFO_AM_TAB_ELEMENTS<<LFO_SH) )	/* lfo_am_table is 210 elements long */
+	if (OPL->lfo_am_cnt >= (UINT32)(LFO_AM_TAB_ELEMENTS<<LFO_SH) )	/* lfo_am_table is 210 elements long */
 		OPL->lfo_am_cnt -= (LFO_AM_TAB_ELEMENTS<<LFO_SH);
 
 	tmp = lfo_am_table[ OPL->lfo_am_cnt >> LFO_SH ];
@@ -1254,18 +1258,18 @@ static void OPL_initalize(FM_OPL *OPL)
 
 	/* Amplitude modulation: 27 output levels (triangle waveform); 1 level takes one of: 192, 256 or 448 samples */
 	/* One entry from LFO_AM_TABLE lasts for 64 samples */
-	OPL->lfo_am_inc = (1.0 / 64.0 ) * (1<<LFO_SH) * OPL->freqbase;
+	OPL->lfo_am_inc = UINT32((1.0 / 64.0 ) * (1<<LFO_SH) * OPL->freqbase);
 
 	/* Vibrato: 8 output levels (triangle waveform); 1 level takes 1024 samples */
-	OPL->lfo_pm_inc = (1.0 / 1024.0) * (1<<LFO_SH) * OPL->freqbase;
+	OPL->lfo_pm_inc = UINT32((1.0 / 1024.0) * (1<<LFO_SH) * OPL->freqbase);
 
 	/*logerror ("OPL->lfo_am_inc = %8x ; OPL->lfo_pm_inc = %8x\n", OPL->lfo_am_inc, OPL->lfo_pm_inc);*/
 
 	/* Noise generator: a step takes 1 sample */
-	OPL->noise_f = (1.0 / 1.0) * (1<<FREQ_SH) * OPL->freqbase;
+	OPL->noise_f = UINT32((1.0 / 1.0) * (1<<FREQ_SH) * OPL->freqbase);
 
-	OPL->eg_timer_add  = (1<<EG_SH)  * OPL->freqbase;
-	OPL->eg_timer_overflow = ( 1 ) * (1<<EG_SH);
+	OPL->eg_timer_add  = UINT32((1<<EG_SH)  * OPL->freqbase);
+	OPL->eg_timer_overflow = UINT32(( 1 ) * (1<<EG_SH));
 	/*logerror("OPLinit eg_timer_add=%8x eg_timer_overflow=%8x\n", OPL->eg_timer_add, OPL->eg_timer_overflow);*/
 
 }

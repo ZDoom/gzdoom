@@ -539,7 +539,7 @@ void MIDISong::SetStreamVolume ()
 		ret = midiOutLongMsg ((HMIDIOUT)m_MidiStream, &hdr, sizeof(hdr));
 		if (ret != MMSYSERR_NOERROR)
 		{
-			Printf ("long msg says: %08x\n", ret);
+			Printf ("long msg says: %08lx\n", ret);
 		}
 		while (MIDIERR_STILLPLAYING == (ret = midiOutUnprepareHeader ((HMIDIOUT)m_MidiStream, &hdr, sizeof(hdr))))
 		{
@@ -549,12 +549,12 @@ void MIDISong::SetStreamVolume ()
 		midiStreamRestart (m_MidiStream);
 		if (ret != MMSYSERR_NOERROR)
 		{
-			Printf ("unprep says: %08x\n", ret);
+			Printf ("unprep says: %08lx\n", ret);
 		}
 	}
 	else
 	{
-		Printf ("prep says: %08x\n", ret);
+		Printf ("prep says: %08lx\n", ret);
 	}
 
 #elif 1
@@ -1881,7 +1881,7 @@ bool TimiditySong::ValidateTimidity ()
 		Printf (PRINT_BOLD, "ZDoom requires a special version of TiMidity++\n");
 	}
 
-	UnmapViewOfFile (exeBase);
+	UnmapViewOfFile ((LPVOID)exeBase);
 	CloseHandle (mapping);
 	CloseHandle (diskFile);
 
@@ -1932,7 +1932,7 @@ bool TimiditySong::LaunchTimidity ()
 						FORMAT_MESSAGE_IGNORE_INSERTS,
 						NULL, err, 0, (LPTSTR)&msgBuf, 0, NULL))
 	{
-		sprintf (hres, "%08x", err);
+		sprintf (hres, "%08lx", err);
 		msgBuf = hres;
 	}
 
@@ -2020,7 +2020,7 @@ signed char STACK_ARGS TimiditySong::FillStream (FSOUND_STREAM *stream, void *bu
 		{
 			ReadFile (song->ReadWavePipe, (BYTE *)buff+didget, len-didget, &got, NULL);
 			didget += got;
-			if (didget >= len)
+			if (didget >= (DWORD)len)
 				break;
 
 			// Give TiMidity a chance to output something more to the pipe

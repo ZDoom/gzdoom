@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #include "actor.h"
 #include "info.h"
 #include "s_sound.h"

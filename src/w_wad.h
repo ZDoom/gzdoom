@@ -115,6 +115,7 @@ typedef enum {
 
 extern	lumpinfo_t*	lumpinfo;
 extern	int			numlumps;
+extern	int			numwads;
 
 extern	WORD		*FirstLumpIndex;	// [RH] Move hashing stuff out of
 extern	WORD		*NextLumpIndex;		// lumpinfo structure
@@ -123,6 +124,7 @@ void W_InitMultipleFiles (wadlist_t **filenames);
 int W_FakeLump (const char *filename);
 
 const char *W_GetWadName (int wadnum);
+const char *W_GetWadFullName (int wadnum);
 bool W_CheckIfWadLoaded (const char *wadname);
 
 int W_CheckNumForName (const char *name, int namespc);
@@ -137,11 +139,19 @@ inline int W_GetNumForName (const byte *name) { return W_GetNumForName ((const c
 int W_LumpLength (int lump);
 void W_ReadLump (int lump, void *dest);
 
-void *W_MapLumpNum (int lump, bool write=false);
+void *W_MapLumpNum (int lump, bool write);
+inline const void *W_MapLumpNum (int lump)
+{
+	return W_MapLumpNum (lump, false);
+}
 
-inline void *W_MapLumpName (const char *name, bool write = false)
+inline void *W_MapLumpName (const char *name, bool write)
 {
 	return W_MapLumpNum (W_GetNumForName (name), write);
+}
+inline const void *W_MapLumpName (const char *name)
+{
+	return W_MapLumpNum (W_GetNumForName (name), false);
 }
 
 void W_UnMapLump (const void *block);

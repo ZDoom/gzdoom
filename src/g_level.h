@@ -104,8 +104,29 @@ struct level_info_s
 };
 typedef struct level_info_s level_info_t;
 
-struct level_pwad_info_s : public level_info_s
+// The start of level_pwad_info_s must be the same as level_info_s.
+// I previously just subclassed it from level_info_s, but that makes
+// GCC 3.2 treat it as a non-POD class and spew lots of warnings when
+// using offsetof on it for the MAPINFO parser in g_level.cpp.
+
+struct level_pwad_info_s
 {
+	char		mapname[8];
+	int			levelnum;
+	char		pname[8];
+	char		nextmap[8];
+	char		secretmap[8];
+	char		skypic1[8];
+	int			cluster;
+	int			partime;
+	DWORD		flags;
+	char		*music;
+	char		*level_name;
+	int			musicorder;
+	FCompressedMemFile	*snapshot;
+	DWORD		snapshotVer;
+	struct acsdefered_s *defered;
+//------------------------------------//
 	char		skypic2[8];
 	fixed_t		skyspeed1;
 	fixed_t		skyspeed2;

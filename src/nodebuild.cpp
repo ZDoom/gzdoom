@@ -240,7 +240,7 @@ int FNodeBuilder::CountSegs (DWORD set) const
 bool FNodeBuilder::CheckSubsector (DWORD set, node_t &node, int &splitseg, int setsize)
 {
 	sector_t *sec;
-	int seg;
+	DWORD seg;
 
 	sec = NULL;
 	seg = set;
@@ -456,7 +456,7 @@ int FNodeBuilder::SelectSplitter (DWORD set, node_t &node, int &splitseg, int st
 		return nosplitters ? -1 : 0;
 	}
 
-	D(Printf ("split seg %d in set %d, score %d, step %d, nosplit %d\n", bestseg, set, bestvalue, step, nosplit));
+	D(Printf ("split seg %lu in set %d, score %d, step %d, nosplit %d\n", bestseg, set, bestvalue, step, nosplit));
 
 	splitseg = bestseg;
 	SetNodeFromSeg (node, &Segs[bestseg]);
@@ -773,7 +773,7 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, int splitseg, DWORD &outs
 
 			if (seg->loopnum)
 			{
-				Printf ("   Split seg %d (%ld,%ld)-(%ld,%ld) of sector %d in loop %d\n",
+				Printf ("   Split seg %lu (%ld,%ld)-(%ld,%ld) of sector %d in loop %d\n",
 					set,
 					Vertices[seg->v1].x>>16, Vertices[seg->v1].y>>16,
 					Vertices[seg->v2].x>>16, Vertices[seg->v2].y>>16,
@@ -943,7 +943,7 @@ DWORD FNodeBuilder::SplitSeg (DWORD segnum, int splitvert, int v1InFront)
 	return newnum;
 }
 
-void FNodeBuilder::RemoveSegFromVert1 (int segnum, int vertnum)
+void FNodeBuilder::RemoveSegFromVert1 (DWORD segnum, int vertnum)
 {
 	FPrivVert *v = &Vertices[vertnum];
 
@@ -953,7 +953,7 @@ void FNodeBuilder::RemoveSegFromVert1 (int segnum, int vertnum)
 	}
 	else
 	{
-		int prev, curr;
+		DWORD prev, curr;
 		prev = 0;
 		curr = v->segs;
 		while (curr != DWORD_MAX && curr != segnum)
@@ -968,7 +968,7 @@ void FNodeBuilder::RemoveSegFromVert1 (int segnum, int vertnum)
 	}
 }
 
-void FNodeBuilder::RemoveSegFromVert2 (int segnum, int vertnum)
+void FNodeBuilder::RemoveSegFromVert2 (DWORD segnum, int vertnum)
 {
 	FPrivVert *v = &Vertices[vertnum];
 
@@ -978,7 +978,7 @@ void FNodeBuilder::RemoveSegFromVert2 (int segnum, int vertnum)
 	}
 	else
 	{
-		int prev, curr;
+		DWORD prev, curr;
 		prev = 0;
 		curr = v->segs2;
 		while (curr != DWORD_MAX && curr != segnum)
@@ -1016,7 +1016,7 @@ double FNodeBuilder::InterceptVector (const node_t &splitter, const FPrivSeg &se
 	return frac;
 }
 
-inline int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int dy)
+int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int dy)
 {
 	// For most cases, a simple dot product is enough.
 	int foo = DMulScale32 (y-y1, dx, x1-x, dy);
@@ -1045,7 +1045,7 @@ void FNodeBuilder::PrintSet (int l, DWORD set)
 	Printf ("set %d:\n", l);
 	for (; set != DWORD_MAX; set = Segs[set].next)
 	{
-		Printf ("\t%d(%d):%d(%ld,%ld)-%d(%ld,%ld) ", set, Segs[set].frontsector-sectors,
+		Printf ("\t%lu(%d):%d(%ld,%ld)-%d(%ld,%ld) ", set, Segs[set].frontsector-sectors,
 			Segs[set].v1,
 			Vertices[Segs[set].v1].x>>16, Vertices[Segs[set].v1].y>>16,
 			Segs[set].v2,

@@ -291,7 +291,7 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 				// Scan right for the seg closest to the polyobject's center after it
 				// gets moved to its start spot.
 				fixed_t closestdist = FIXED_MAX;
-				long closestseg = 0;
+				DWORD closestseg = 0;
 
 				P(Printf ("start %d,%d -- center %d, %d\n", spot->x>>16, spot->y>>16, center.x>>16, center.y>>16));
 
@@ -337,9 +337,9 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 	}
 }
 
-int FNodeBuilder::MarkLoop (int firstseg, int loopnum)
+int FNodeBuilder::MarkLoop (DWORD firstseg, int loopnum)
 {
-	int seg;
+	DWORD seg;
 	sector_t *sec = Segs[firstseg].frontsector;
 
 	if (Segs[firstseg].loopnum != 0)
@@ -359,8 +359,8 @@ int FNodeBuilder::MarkLoop (int firstseg, int loopnum)
 				Vertices[s1->v1].x>>16, Vertices[s1->v1].y>>16,
 				Vertices[s1->v2].x>>16, Vertices[s1->v2].y>>16));
 
-		int bestseg = DWORD_MAX;
-		int tryseg = Vertices[s1->v2].segs;
+		DWORD bestseg = DWORD_MAX;
+		DWORD tryseg = Vertices[s1->v2].segs;
 		angle_t bestang = ANGLE_MAX;
 		angle_t ang1 = PointToAngle (Vertices[s1->v2].x - Vertices[s1->v1].x,
 			Vertices[s1->v2].y - Vertices[s1->v1].y);

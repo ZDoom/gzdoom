@@ -54,7 +54,7 @@ void OPLwriteReg(int which, uint reg, uchar data)
 * Write to an operator pair. To be used for register bases of 0x20, 0x40,
 * 0x60, 0x80 and 0xE0.
 */
-inline void OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2)
+void OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2)
 {
 	static const uint op_num[] = {
 		0x000, 0x001, 0x002, 0x008, 0x009, 0x00A, 0x010, 0x011, 0x012,

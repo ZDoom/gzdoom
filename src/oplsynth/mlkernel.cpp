@@ -121,34 +121,3 @@ int playTick(struct musicBlock *mus)
 	}
     return delay;
 }
-#if 0
-/*
- * Perform one timer tick using 140 Hz clock
- */
-void MLplayerInterrupt(void)
-{
-	uint i;
-	for (i = 0; i < MAXMUSBLOCK; i++)
-	{
-		register struct musicBlock *mus = MLmusicBlocks[i];
-		if (mus && mus->state == ST_PLAYING)
-		{
-			if (!mus->ticks || PLAYFAST)
-			{
-				if (playTick(mus))
-				{					// end of song
-					if (mus->loopcount &&
-						(mus->loopcount == -1U || --mus->loopcount)) // -1: loop forever
-						MEMrewind(&mus->score);
-					else
-						mus->state = ST_STOPPED;
-					continue;
-				}
-				mus->time += mus->ticks = delayTicks(mus);
-			}
-			mus->ticks--;
-		}
-	}
-	MLtime++;
-}
-#endif

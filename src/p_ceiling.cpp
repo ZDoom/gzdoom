@@ -244,7 +244,6 @@ manual_ceiling:
 		case DCeiling::ceilCrushRaiseAndStay:
 			ceiling->m_TopHeight = sec->ceilingplane.d;
 		case DCeiling::ceilLowerAndCrush:
-			ceiling->m_Crush = crush;
 			targheight = 8*FRACUNIT + sec->FindHighestFloorPoint (&spot);
 			ceiling->m_BottomHeight = sec->ceilingplane.PointToDist (spot, targheight);
 			ceiling->m_Direction = -1;
@@ -372,6 +371,7 @@ manual_ceiling:
 				
 		ceiling->m_Tag = tag;
 		ceiling->m_Type = type;
+		ceiling->m_Crush = crush;
 
 		// set texture/type change properties
 		if (change & 3)		// if a texture change is indicated

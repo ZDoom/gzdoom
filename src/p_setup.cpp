@@ -393,7 +393,7 @@ void P_LoadSegs (int lump)
 //
 void P_LoadSubsectors (int lump)
 {
-	int maxseg;
+	DWORD maxseg;
 	const byte *data;
 	int i;
 
@@ -420,7 +420,7 @@ void P_LoadSubsectors (int lump)
 
 		if (subsectors[i].firstline >= maxseg)
 		{
-			Printf ("Subsector %d contains invalid segs %d-%d\n"
+			Printf ("Subsector %d contains invalid segs %lu-%lu\n"
 				"The BSP will be rebuilt.\n", i, subsectors[i].firstline,
 				subsectors[i].firstline + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
@@ -430,7 +430,7 @@ void P_LoadSubsectors (int lump)
 		}
 		else if (subsectors[i].firstline + subsectors[i].numlines > maxseg)
 		{
-			Printf ("Subsector %d contains invalid segs %d-%d\n"
+			Printf ("Subsector %d contains invalid segs %lu-%lu\n"
 				"The BSP will be rebuilt.\n", i, maxseg,
 				subsectors[i].firstline + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
@@ -588,7 +588,7 @@ void P_LoadNodes (int lump)
 			else if (child >= numnodes)
 			{
 				Printf ("BSP node %d references invalid node %d.\n"
-					"The BSP will be rebuilt.\n", i, no->children[j]);
+					"The BSP will be rebuilt.\n", i, (node_t *)no->children[j] - nodes);
 				ForceNodeBuild = true;
 				delete[] nodes;
 				W_UnMapLump (data);
@@ -1048,7 +1048,7 @@ void P_FinishLoadingLineDefs ()
 
 void P_LoadLineDefs (int lump)
 {
-	const byte *data;
+	byte *data;
 	int i, skipped;
 	line_t *ld;
 		
@@ -1056,7 +1056,7 @@ void P_LoadLineDefs (int lump)
 	lines = new line_t[numlines];
 	linemap = new WORD[numlines];
 	memset (lines, 0, numlines*sizeof(line_t));
-	data = (byte *)W_MapLumpNum (lump);
+	data = (byte *)W_MapLumpNum (lump, true);
 
 	// [RH] Count the number of sidedef references. This is the number of
 	// sidedefs we need. The actual number in the SIDEDEFS lump might be less.
@@ -1116,7 +1116,7 @@ void P_LoadLineDefs (int lump)
 // [RH] Same as P_LoadLineDefs() except it uses Hexen-style LineDefs.
 void P_LoadLineDefs2 (int lump)
 {
-	const byte*			data;
+	byte*				data;
 	int 				i, skipped;
 	maplinedef2_t*		mld;
 	line_t* 			ld;
@@ -1937,9 +1937,9 @@ static void P_GroupLines (bool buildmap)
 
 		double accumx = 0.0, accumy = 0.0;
 
-		for (j = 0; j < subsectors[i].numlines; ++j)
+		for (jj = 0; jj < subsectors[i].numlines; ++jj)
 		{
-			seg_t *seg = &segs[subsectors[i].firstline + j];
+			seg_t *seg = &segs[subsectors[i].firstline + jj];
 			seg->Subsector = &subsectors[i];
 			accumx += seg->v1->x + seg->v2->x;
 			accumy += seg->v1->y + seg->v2->y;

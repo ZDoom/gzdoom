@@ -1867,7 +1867,7 @@ void G_SerializeSnapshots (FILE *file, bool storing)
 			if (wadlevelinfos[i].snapshot)
 			{
 				FPNGChunkArchive arc (file, SNAP_ID);
-				writeSnapShot (arc, &wadlevelinfos[i]);
+				writeSnapShot (arc, (level_info_t *)&wadlevelinfos[i]);
 			}
 		}
 
@@ -2039,7 +2039,7 @@ void P_SerializeACSDefereds (FILE *file, bool storing)
 				{
 					arc = new FPNGChunkArchive (file, ACSD_ID);
 				}
-				writeDefereds (*arc, &wadlevelinfos[i]);
+				writeDefereds (*arc, (level_info_t *)&wadlevelinfos[i]);
 			}
 		}
 

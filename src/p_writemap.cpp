@@ -197,9 +197,17 @@ static int WriteNODES (FILE *file)
 			{
 				mn.bbox[j][k] = SHORT(short(nodes[i].bbox[j][k] >> FRACBITS));
 			}
+			WORD child;
+			if ((size_t)nodes[i].children[j] & 1)
+			{
+				child = NF_SUBSECTOR | ((subsector_t *)((byte *)nodes[i].children[j] - 1) - subsectors);
+			}
+			else
+			{
+				child = (node_t *)nodes[i].children[j] - nodes;
+			}
+			mn.children[j] = SHORT(child);
 		}
-		mn.children[0] = SHORT(short(nodes[i].children[0]));
-		mn.children[1] = SHORT(short(nodes[i].children[1]));
 		fwrite (&mn, sizeof(mn), 1, file);
 	}
 	return numnodes * sizeof(mn);

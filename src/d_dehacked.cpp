@@ -671,17 +671,6 @@ static int PatchThing (int thingy)
 		MF_TRANSSHIFT	= 26,			// table for player colormaps
 	};
 
-	static const struct Key keys[] = {
-		{ "Hit points",			myoffsetof(AActor,health) },
-		{ "Reaction time",		myoffsetof(AActor,reactiontime) },
-		{ "Speed",				myoffsetof(AActor,Speed) },
-		{ "Width",				myoffsetof(AActor,radius) },
-		{ "Height",				myoffsetof(AActor,height) },
-		{ "Mass",				myoffsetof(AActor,Mass) },
-		{ "Missile damage",		myoffsetof(AActor,damage) },
-		{ NULL, }
-	};
-
 	int result;
 	AActor *info, dummy;
 	bool hadHeight = false;
@@ -691,6 +680,7 @@ static int PatchThing (int thingy)
 	const TypeInfo *type;
 	SWORD *ednum, dummyed;
 
+	type = NULL;
 	if (thingy > NumInfos || thingy <= 0)
 	{
 		info = &dummy;
@@ -724,222 +714,243 @@ static int PatchThing (int thingy)
 	{
 		char *endptr;
 		unsigned long val = strtoul (Line2, &endptr, 10);
+		size_t linelen = strlen (Line1);
 
-		if (HandleKey (keys, info, Line1, val))
+		if (linelen == 10 && stricmp (Line1, "Hit points") == 0)
 		{
-			size_t linelen = strlen (Line1);
-
-			if (linelen == 11 && stricmp (Line1, "Pain chance") == 0)
-			{
-				info->PainChance = val;
-			}
-			else if (linelen == 12 && stricmp (Line1, "Translucency") == 0)
-			{
-				info->alpha = val;
-				info->RenderStyle = STYLE_Translucent;
-				hadTranslucency = true;
-				hadStyle = true;
-			}
-			else if (linelen == 5)
-			{
-				if (stricmp (Line1, "Alpha") == 0)
-				{
-					info->alpha = (fixed_t)(atof (Line2) * FRACUNIT);
-					hadTranslucency = true;
-				}
-				else if (stricmp (Line1, "Scale") == 0)
-				{
-					info->xscale = clamp ((int)(atof (Line2) * 64), 1, 256) - 1;
-					info->yscale = clamp ((int)(atof (Line2) * 64), 1, 256) - 1;
-				}
-				else if (stricmp (Line1, "Decal") == 0)
-				{
-					stripwhite (Line2);
-					const FDecal *decal = DecalLibrary.GetDecalByName (Line2);
-					if (decal != NULL)
-					{
-						info->DecalGenerator = const_cast <FDecal *>(decal);
-					}
-					else
-					{
-						Printf ("Thing %d: Unknown decal %s\n", thingy, Line2);
-					}
-				}
-			}
-			else if (linelen == 12 && stricmp (Line1, "Render Style") == 0)
-			{
-				stripwhite (Line2);
-				int style = FindStyle (Line2);
-				if (style >= 0)
-				{
-					info->RenderStyle = style;
-					hadStyle = true;
-				}
-			}
-			else if (linelen > 6)
-			{
-				if (stricmp (Line1 + linelen - 6, " frame") == 0)
-				{
-					FState *state = FindState (val);
-
-					if (!strnicmp (Line1, "Initial", 7))
-						info->SpawnState = state ? state : GetDefault<AActor>()->SpawnState;
-					else if (!strnicmp (Line1, "First moving", 12))
-						info->SeeState = state;
-					else if (!strnicmp (Line1, "Injury", 6))
-						info->PainState = state;
-					else if (!strnicmp (Line1, "Close attack", 12))
-						info->MeleeState = state;
-					else if (!strnicmp (Line1, "Far attack", 10))
-						info->MissileState = state;
-					else if (!strnicmp (Line1, "Death", 5))
-						info->DeathState = state;
-					else if (!strnicmp (Line1, "Exploding", 9))
-						info->XDeathState = state;
-					else if (!strnicmp (Line1, "Respawn", 7))
-						info->RaiseState = state;
-				}
-				else if (stricmp (Line1 + linelen - 6, " sound") == 0)
-				{
-					int snd;
-					
-					if (val == 0 || val >= (unsigned long)NumSounds)
-					{
-						if (endptr == Line2)
-						{ // Sound was not a (valid) number,
-						  // so treat it as an actual sound name.
-							stripwhite (Line2);
-							snd = S_FindSound (Line2);
-						}
-						else
-						{
-							snd = 0;
-						}
-					}
-					else
-					{
-						snd = S_FindSound (GetName (SoundMap[val-1]));
-					}
-
-					if (!strnicmp (Line1, "Alert", 5))
-						info->SeeSound = snd;
-					else if (!strnicmp (Line1, "Attack", 6))
-						info->AttackSound = snd;
-					else if (!strnicmp (Line1, "Pain", 4))
-						info->PainSound = snd;
-					else if (!strnicmp (Line1, "Death", 5))
-						info->DeathSound = snd;
-					else if (!strnicmp (Line1, "Action", 6))
-						info->ActiveSound = snd;
-				}
-			}
-			else if (linelen == 4)
-			{
-				if (stricmp (Line1, "Bits") == 0)
-				{
-					DWORD value[4] = { 0, 0, 0 };
-					bool vchanged[4] = { false, false, false };
-					char *strval;
-
-					for (strval = Line2; (strval = strtok (strval, ",+| \t\f\r")); strval = NULL)
-					{
-						if (IsNum (strval))
-						{
-							// Force the top 4 bits to 0 so that the user is forced
-							// to use the mnemonics to change them.
-							value[0] |= atoi(strval) & 0x0fffffff;
-							vchanged[0] = true;
-						}
-						else
-						{
-							int min, max;
-							int name = FindName (strval);
-
-							if (name == -1)
-							{
-								DPrintf ("Unknown bit mnemonic %s\n", strval);
-							}
-							else
-							{
-								min = 0;
-								max = NumBitNames - 1;
-								while (min <= max)
-								{
-									int mid = (min + max) / 2;
-									if (BitNames[mid].Name == name)
-									{
-										vchanged[BitNames[mid].WhichFlags] = true;
-										value[BitNames[mid].WhichFlags] |= 1 << BitNames[mid].Bit;
-										break;
-									}
-									else if (BitNames[mid].Name < name)
-									{
-										min = mid + 1;
-									}
-									else
-									{
-										max = mid - 1;
-									}
-								}
-								if (min > max)
-								{
-									DPrintf("Unknown bit mnemonic %s\n", strval);
-								}
-							}
-						}
-					}
-					if (vchanged[0])
-					{
-						if (value[0] & MF_TRANSLATION)
-						{
-							info->Translation = TRANSLATION (TRANSLATION_Standard,
-								((value[0] & MF_TRANSLATION) >> (MF_TRANSSHIFT))-1);
-							value[0] &= ~MF_TRANSLATION;
-						}
-						info->flags = value[0];
-					}
-					if (vchanged[1])
-					{
-						info->flags2 = value[1];
-						if (info->flags2 & MF2_BOUNCE1)
-						{ // If a bex patch specifies FLOORBOUNCE, also set
-						  // BOUNCE2, because otherwise it will get HERETICBOUNCE
-						  // instead of DOOMBOUNCE.
-							info->flags2 |= MF2_BOUNCE2;
-						}
-					}
-					if (vchanged[2])
-					{
-						if (value[2] & 7)
-						{
-							hadTranslucency = true;
-							if (value[2] & 1)
-								info->alpha = TRANSLUC25;
-							else if (value[2] & 2)
-								info->alpha = TRANSLUC50;
-							else if (value[2] & 4)
-								info->alpha = TRANSLUC75;
-							info->RenderStyle = STYLE_Translucent;
-						}
-						if (value[2] & 8)
-							info->renderflags |= RF_INVISIBLE;
-						else
-							info->renderflags &= ~RF_INVISIBLE;
-					}
-					DPrintf ("Bits: %ld,%ld (0x%08lx,0x%08lx)\n", info->flags, info->flags2,
-															      info->flags, info->flags2);
-				}
-				else if (stricmp (Line1, "ID #") == 0)
-				{
-					*ednum = val;
-				}
-			}
-			else Printf (unknown_str, Line1, "Thing", thingy);
+			info->health = val;
 		}
-		else if (!stricmp (Line1, "Height"))
+		else if (linelen == 13 && stricmp (Line1, "Reaction time") == 0)
 		{
+			info->reactiontime = val;
+		}
+		else if (linelen == 11 && stricmp (Line1, "Pain chance") == 0)
+		{
+			info->PainChance = val;
+		}
+		else if (linelen == 12 && stricmp (Line1, "Translucency") == 0)
+		{
+			info->alpha = val;
+			info->RenderStyle = STYLE_Translucent;
+			hadTranslucency = true;
+			hadStyle = true;
+		}
+		else if (linelen == 6 && stricmp (Line1, "Height") == 0)
+		{
+			info->height = val;
 			hadHeight = true;
 		}
+		else if (linelen == 14 && stricmp (Line1, "Missile damage") == 0)
+		{
+			info->damage = val;
+		}
+		else if (linelen == 5)
+		{
+			if (stricmp (Line1, "Speed") == 0)
+			{
+				info->Speed = val;
+			}
+			else if (stricmp (Line1, "Width") == 0)
+			{
+				info->radius = val;
+			}
+			else if (stricmp (Line1, "Alpha") == 0)
+			{
+				info->alpha = (fixed_t)(atof (Line2) * FRACUNIT);
+				hadTranslucency = true;
+			}
+			else if (stricmp (Line1, "Scale") == 0)
+			{
+				info->xscale = clamp ((int)(atof (Line2) * 64), 1, 256) - 1;
+				info->yscale = clamp ((int)(atof (Line2) * 64), 1, 256) - 1;
+			}
+			else if (stricmp (Line1, "Decal") == 0)
+			{
+				stripwhite (Line2);
+				const FDecal *decal = DecalLibrary.GetDecalByName (Line2);
+				if (decal != NULL)
+				{
+					info->DecalGenerator = const_cast <FDecal *>(decal);
+				}
+				else
+				{
+					Printf ("Thing %d: Unknown decal %s\n", thingy, Line2);
+				}
+			}
+		}
+		else if (linelen == 12 && stricmp (Line1, "Render Style") == 0)
+		{
+			stripwhite (Line2);
+			int style = FindStyle (Line2);
+			if (style >= 0)
+			{
+				info->RenderStyle = style;
+				hadStyle = true;
+			}
+		}
+		else if (linelen > 6)
+		{
+			if (stricmp (Line1 + linelen - 6, " frame") == 0)
+			{
+				FState *state = FindState (val);
+
+				if (!strnicmp (Line1, "Initial", 7))
+					info->SpawnState = state ? state : GetDefault<AActor>()->SpawnState;
+				else if (!strnicmp (Line1, "First moving", 12))
+					info->SeeState = state;
+				else if (!strnicmp (Line1, "Injury", 6))
+					info->PainState = state;
+				else if (!strnicmp (Line1, "Close attack", 12))
+					info->MeleeState = state;
+				else if (!strnicmp (Line1, "Far attack", 10))
+					info->MissileState = state;
+				else if (!strnicmp (Line1, "Death", 5))
+					info->DeathState = state;
+				else if (!strnicmp (Line1, "Exploding", 9))
+					info->XDeathState = state;
+				else if (!strnicmp (Line1, "Respawn", 7))
+					info->RaiseState = state;
+			}
+			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
+			{
+				int snd;
+				
+				if (val == 0 || val >= (unsigned long)NumSounds)
+				{
+					if (endptr == Line2)
+					{ // Sound was not a (valid) number,
+						// so treat it as an actual sound name.
+						stripwhite (Line2);
+						snd = S_FindSound (Line2);
+					}
+					else
+					{
+						snd = 0;
+					}
+				}
+				else
+				{
+					snd = S_FindSound (GetName (SoundMap[val-1]));
+				}
+
+				if (!strnicmp (Line1, "Alert", 5))
+					info->SeeSound = snd;
+				else if (!strnicmp (Line1, "Attack", 6))
+					info->AttackSound = snd;
+				else if (!strnicmp (Line1, "Pain", 4))
+					info->PainSound = snd;
+				else if (!strnicmp (Line1, "Death", 5))
+					info->DeathSound = snd;
+				else if (!strnicmp (Line1, "Action", 6))
+					info->ActiveSound = snd;
+			}
+		}
+		else if (linelen == 4)
+		{
+			if (stricmp (Line1, "Mass") == 0)
+			{
+				info->Mass = val;
+			}
+			else if (stricmp (Line1, "Bits") == 0)
+			{
+				DWORD value[4] = { 0, 0, 0 };
+				bool vchanged[4] = { false, false, false };
+				char *strval;
+
+				for (strval = Line2; (strval = strtok (strval, ",+| \t\f\r")); strval = NULL)
+				{
+					if (IsNum (strval))
+					{
+						// Force the top 4 bits to 0 so that the user is forced
+						// to use the mnemonics to change them.
+						value[0] |= atoi(strval) & 0x0fffffff;
+						vchanged[0] = true;
+					}
+					else
+					{
+						int min, max;
+						int name = FindName (strval);
+
+						if (name == -1)
+						{
+							DPrintf ("Unknown bit mnemonic %s\n", strval);
+						}
+						else
+						{
+							min = 0;
+							max = NumBitNames - 1;
+							while (min <= max)
+							{
+								int mid = (min + max) / 2;
+								if (BitNames[mid].Name == name)
+								{
+									vchanged[BitNames[mid].WhichFlags] = true;
+									value[BitNames[mid].WhichFlags] |= 1 << BitNames[mid].Bit;
+									break;
+								}
+								else if (BitNames[mid].Name < name)
+								{
+									min = mid + 1;
+								}
+								else
+								{
+									max = mid - 1;
+								}
+							}
+							if (min > max)
+							{
+								DPrintf("Unknown bit mnemonic %s\n", strval);
+							}
+						}
+					}
+				}
+				if (vchanged[0])
+				{
+					if (value[0] & MF_TRANSLATION)
+					{
+						info->Translation = TRANSLATION (TRANSLATION_Standard,
+							((value[0] & MF_TRANSLATION) >> (MF_TRANSSHIFT))-1);
+						value[0] &= ~MF_TRANSLATION;
+					}
+					info->flags = value[0];
+				}
+				if (vchanged[1])
+				{
+					info->flags2 = value[1];
+					if (info->flags2 & MF2_BOUNCE1)
+					{ // If a bex patch specifies FLOORBOUNCE, also set
+						// BOUNCE2, because otherwise it will get HERETICBOUNCE
+						// instead of DOOMBOUNCE.
+						info->flags2 |= MF2_BOUNCE2;
+					}
+				}
+				if (vchanged[2])
+				{
+					if (value[2] & 7)
+					{
+						hadTranslucency = true;
+						if (value[2] & 1)
+							info->alpha = TRANSLUC25;
+						else if (value[2] & 2)
+							info->alpha = TRANSLUC50;
+						else if (value[2] & 4)
+							info->alpha = TRANSLUC75;
+						info->RenderStyle = STYLE_Translucent;
+					}
+					if (value[2] & 8)
+						info->renderflags |= RF_INVISIBLE;
+					else
+						info->renderflags &= ~RF_INVISIBLE;
+				}
+				DPrintf ("Bits: %ld,%ld (0x%08lx,0x%08lx)\n", info->flags, info->flags2,
+															    info->flags, info->flags2);
+			}
+			else if (stricmp (Line1, "ID #") == 0)
+			{
+				*ednum = val;
+			}
+		}
+		else Printf (unknown_str, Line1, "Thing", thingy);
 	}
 
 	if (info != &dummy)
@@ -1643,7 +1654,7 @@ static int PatchText (int oldSize)
 			}
 			// If this sprite is used by a pickup, then the DehackedPickup sprite map
 			// needs to be updated too.
-			for (i = 0; i < sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0]); ++i)
+			for (i = 0; (size_t)i < sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0]); ++i)
 			{
 				if (strncmp (DehSpriteMappings[i].Sprite, oldStr, 4) == 0)
 				{
@@ -1657,7 +1668,7 @@ static int PatchText (int oldSize)
 						swap (DehSpriteMappings[i-1], DehSpriteMappings[i]);
 						--i;
 					}
-					while (i < sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0])-1 &&
+					while ((size_t)i < sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0])-1 &&
 						strncmp (DehSpriteMappings[i+1].Sprite, newStr, 4) < 0)
 					{
 						swap (DehSpriteMappings[i+1], DehSpriteMappings[i]);

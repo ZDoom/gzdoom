@@ -68,6 +68,8 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 
 extern cycle_t BotSupportCycles;
 extern fixed_t attackrange;
+extern int tmfloorpic;
+extern sector_t *tmfloorsector;
 EXTERN_CVAR (Bool, r_drawfuzz);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -1985,7 +1987,7 @@ void AActor::Tick ()
 	}
 	if ((z != floorz && !(flags2 & MF2_FLOATBOB)) || momz || BlockingMobj)
 	{	// Handle Z momentum and gravity
-		if (!(compatflags & COMPATF_NO_PASSMOBJ))
+		if ((flags2 & MF2_PASSMOBJ) && !(compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			if (!(onmo = P_CheckOnmobj (this)))
 			{
@@ -2134,7 +2136,7 @@ void A_FreeTargMobj (AActor *mo)
 	mo->z = mo->ceilingz + 4*FRACUNIT;
 	mo->flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY|MF_SOLID);
 	mo->flags |= MF_CORPSE|MF_DROPOFF|MF_NOGRAVITY;
-	mo->flags2 &= ~(MF2_LOGRAV);
+	mo->flags2 &= ~(MF2_PASSMOBJ|MF2_LOGRAV);
 	mo->player = NULL;
 }
 
@@ -2206,9 +2208,14 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	// set subsector and/or block links
 	actor->LinkToWorld ();
 	actor->dropoffz =			// killough 11/98: for tracking dropoffs
-	actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
-	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
-	actor->floorsector = actor->Sector;
+	//actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
+	//actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
+	//actor->floorsector = actor->Sector;
+	P_CheckPosition (actor, ix, iy);
+	actor->floorz = tmfloorz;
+	actor->ceilingz = tmceilingz;
+	actor->floorpic = tmfloorpic;
+	actor->floorsector = tmfloorsector;
 
 	if (iz == ONFLOORZ)
 	{

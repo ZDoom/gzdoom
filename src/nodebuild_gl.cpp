@@ -141,7 +141,7 @@ void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, DWORD &fset, D
 	{
 		if (prev != NULL)
 		{
-			int fseg1, bseg1, fseg2, bseg2;
+			DWORD fseg1, bseg1, fseg2, bseg2;
 			DWORD fnseg, bnseg;
 
 			// Minisegs should only be added when they can create valid loops on both the front and
@@ -149,10 +149,10 @@ void FNodeBuilder::AddMinisegs (const node_t &node, int splitseg, DWORD &fset, D
 			// are unclosed, but at least we won't be needlessly creating subsectors in void space.
 			// Unclosed subsectors can be closed trivially once the BSP tree is complete.
 
-			if ((fseg1 = CheckLoopStart (node.dx, node.dy, prev->Info.Vertex, event->Info.Vertex)) >= 0 &&
-				(bseg1 = CheckLoopStart (-node.dx, -node.dy, event->Info.Vertex, prev->Info.Vertex)) >= 0 &&
-				(fseg2 = CheckLoopEnd (node.dx, node.dy, prev->Info.Vertex, event->Info.Vertex)) >= 0 &&
-				(bseg2 = CheckLoopEnd (-node.dx, -node.dy, event->Info.Vertex, prev->Info.Vertex)) >= 0)
+			if ((fseg1 = CheckLoopStart (node.dx, node.dy, prev->Info.Vertex, event->Info.Vertex)) != DWORD_MAX &&
+				(bseg1 = CheckLoopStart (-node.dx, -node.dy, event->Info.Vertex, prev->Info.Vertex)) != DWORD_MAX &&
+				(fseg2 = CheckLoopEnd (node.dx, node.dy, prev->Info.Vertex, event->Info.Vertex)) != DWORD_MAX &&
+				(bseg2 = CheckLoopEnd (-node.dx, -node.dy, event->Info.Vertex, prev->Info.Vertex)) != DWORD_MAX)
 			{
 				// Add miniseg on the front side
 				fnseg = AddMiniseg (prev->Info.Vertex, event->Info.Vertex, DWORD_MAX, fseg1, splitseg);
@@ -244,19 +244,19 @@ DWORD FNodeBuilder::AddMiniseg (int v1, int v2, DWORD partner, int seg1, int spl
 	return nseg;
 }
 
-int FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vertex2)
+DWORD FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vertex2)
 {
 	FPrivVert *v = &Vertices[vertex];
 	angle_t splitAngle = PointToAngle (dx, dy);
-	int segnum;
+	DWORD segnum;
 	angle_t bestang;
-	int bestseg;
+	DWORD bestseg;
 
 	// Find the seg ending at this vertex that forms the smallest angle
 	// to the splitter.
 	segnum = v->segs2;
 	bestang = ANGLE_MAX;
-	bestseg = -1;
+	bestseg = DWORD_MAX;
 	while (segnum != DWORD_MAX)
 	{
 		FPrivSeg *seg = &Segs[segnum];
@@ -278,9 +278,9 @@ int FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vertex
 		}
 		segnum = seg->nextforvert2;
 	}
-	if (bestseg < 0)
+	if (bestseg == DWORD_MAX)
 	{
-		return -1;
+		return DWORD_MAX;
 	}
 	// Now make sure there are no segs starting at this vertex that form
 	// an even smaller angle to the splitter.
@@ -290,32 +290,32 @@ int FNodeBuilder::CheckLoopStart (fixed_t dx, fixed_t dy, int vertex, int vertex
 		FPrivSeg *seg = &Segs[segnum];
 		if (seg->v2 == vertex2)
 		{
-			return -1;
+			return DWORD_MAX;
 		}
 		angle_t segAngle = PointToAngle (Vertices[seg->v2].x - v->x, Vertices[seg->v2].y - v->y);
 		angle_t diff = splitAngle - segAngle;
 		if (diff < bestang && seg->partner != bestseg)
 		{
-			return -1;
+			return DWORD_MAX;
 		}
 		segnum = seg->nextforvert;
 	}
 	return bestseg;
 }
 
-int FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex)
+DWORD FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex)
 {
 	FPrivVert *v = &Vertices[vertex];
 	angle_t splitAngle = PointToAngle (dx, dy) + ANGLE_180;
-	int segnum;
+	DWORD segnum;
 	angle_t bestang;
-	int bestseg;
+	DWORD bestseg;
 
 	// Find the seg starting at this vertex that forms the smallest angle
 	// to the splitter.
 	segnum = v->segs;
 	bestang = ANGLE_MAX;
-	bestseg = -1;
+	bestseg = DWORD_MAX;
 	while (segnum != DWORD_MAX)
 	{
 		FPrivSeg *seg = &Segs[segnum];
@@ -339,7 +339,7 @@ int FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex)
 	}
 	if (bestseg < 0)
 	{
-		return -1;
+		return DWORD_MAX;
 	}
 	// Now make sure there are no segs ending at this vertex that form
 	// an even smaller angle to the splitter.
@@ -351,7 +351,7 @@ int FNodeBuilder::CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex1, int vertex)
 		angle_t diff = segAngle - splitAngle;
 		if (diff < bestang && seg->partner != bestseg)
 		{
-			return -1;
+			return DWORD_MAX;
 		}
 		segnum = seg->nextforvert2;
 	}

@@ -115,6 +115,11 @@ void GenerateOrbitTable ()
 
 void A_BridgeOrbit (AActor *self)
 {
+	if (self->target == NULL)
+	{ // Don't crash if somebody spawned this into the world
+	  // independantly of a Bridge actor.
+		return;
+	}
 	if (self->target->special1)
 	{
 		self->SetState (NULL);
@@ -171,6 +176,10 @@ class AInvisibleBridge : public ABridge
 	DECLARE_ACTOR (AInvisibleBridge, ABridge)
 public:
 	void BeginPlay ();
+	void Tick ()
+	{
+		Super::Tick ();
+	}
 };
 
 FState AInvisibleBridge::States[] =

@@ -940,6 +940,7 @@ void R_DrawSkyBoxes ()
 	ptrdiff_t savedvissprite_p = vissprite_p - vissprites;
 	ptrdiff_t savedds_p = ds_p - drawsegs;
 	ptrdiff_t savedlastopening = lastopening;
+	int savedinteresting = FirstInterestingDrawseg;
 	float savedvisibility = R_GetVisibility ();
 	AActor *savedcamera = camera;
 	sector_t *savedsector = viewsector;
@@ -1006,27 +1007,18 @@ void R_DrawSkyBoxes ()
 
 		firstvissprite = vissprite_p;
 		firstdrawseg = ds_p++;
+		FirstInterestingDrawseg = InterestingDrawsegs.Size();
 
-		R_RenderBSPNode (numnodes - 1, -1);
+		R_RenderBSPNode (numnodes - 1);
 		R_DrawPlanes ();
-
-		if (r_particles)
-		{
-			// [RH] add all the particles
-			int i = ActiveParticles;
-			while (i != -1)
-			{
-				R_ProjectParticle (Particles + i);
-				i = Particles[i].next;
-			}
-		}
-
 		R_DrawMasked ();
 
 		firstvissprite = vissprites;
 		vissprite_p = vissprites + savedvissprite_p;
 		firstdrawseg = drawsegs;
 		ds_p = drawsegs + savedds_p;
+		InterestingDrawsegs.Resize (FirstInterestingDrawseg);
+		FirstInterestingDrawseg = savedinteresting;
 		lastopening = savedlastopening;
 	}
 

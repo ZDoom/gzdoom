@@ -118,8 +118,8 @@ public:
 	DSeqSectorNode (sector_t *sec, int sequence);
 	~DSeqSectorNode ();
 	void Serialize (FArchive &arc);
-	void MakeSound () { S_SoundID (&m_Sector->soundorg[0], CHAN_BODY, m_CurrentSoundID, m_Volume, m_Atten, m_Sector->tag); Looping = false; }
-	void MakeLoopedSound () { S_LoopedSoundID (&m_Sector->soundorg[0], CHAN_BODY, m_CurrentSoundID, m_Volume, m_Atten, m_Sector->tag); Looping = true; }
+	void MakeSound () { S_SoundID (&m_Sector->soundorg[0], CHAN_BODY, m_CurrentSoundID, m_Volume, m_Atten); Looping = false; }
+	void MakeLoopedSound () { S_LoopedSoundID (&m_Sector->soundorg[0], CHAN_BODY, m_CurrentSoundID, m_Volume, m_Atten); Looping = true; }
 	bool IsPlaying () { return S_GetSoundPlayingInfo (m_Sector->soundorg, m_CurrentSoundID); }
 	void *Source () { return m_Sector; }
 	bool Looping;

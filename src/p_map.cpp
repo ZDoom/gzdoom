@@ -2181,6 +2181,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			}
 			else if (puff != NULL &&
 				trace.CrossedWater == NULL &&
+				trace.Sector->heightsec == NULL &&
 				trace.HitType == TRACE_HitFloor)
 			{
 				P_HitWater (puff, trace.Sector);
@@ -2402,7 +2403,7 @@ static bool ProcessRailHit (FTraceResults &res)
 
 void P_RailAttack (AActor *source, int damage, int offset)
 {
-	fixed_t vx, vy, vz, shootz;
+	fixed_t vx, vy, vz;
 	angle_t angle, pitch;
 	fixed_t x1, y1;
 	vec3_t start, end;
@@ -2417,7 +2418,7 @@ void P_RailAttack (AActor *source, int damage, int offset)
 
 	x1 = source->x;
 	y1 = source->y;
-	shootz = source->z + (source->height >> 1) + 8*FRACUNIT;
+	shootz = source->z - source->floorclip + (source->height >> 1) + 8*FRACUNIT;
 
 	angle = (source->angle - ANG90) >> ANGLETOFINESHIFT;
 	x1 += offset*finecosine[angle];
@@ -2430,15 +2431,13 @@ void P_RailAttack (AActor *source, int damage, int offset)
 		8192*FRACUNIT, MF_SHOOTABLE, 0, source, trace,
 		TRACE_PCross|TRACE_Impact, ProcessRailHit);
 
-	if (trace.CrossedWater)
-	{
-		SpawnDeepSplash (source, trace, NULL, vx, vy, vz);
-	}
 	if (trace.HitType == TRACE_HitWall)
 	{
 		SpawnShootDecal (source, trace);
 	}
-	else if (trace.HitType == TRACE_HitFloor)
+	if (trace.HitType == TRACE_HitFloor &&
+		trace.CrossedWater == NULL &&
+		trace.Sector->heightsec == NULL)
 	{
 		fixed_t savex, savey, savez;
 
@@ -2448,6 +2447,15 @@ void P_RailAttack (AActor *source, int damage, int offset)
 		source->SetOrigin (trace.X, trace.Y, trace.Z);
 		P_HitWater (source, trace.Sector);
 		source->SetOrigin (savex, savey, savez);
+	}
+	if (trace.CrossedWater)
+	{
+		AActor *puff = Spawn<ABulletPuff> (0, 0, 0);
+		if (puff != NULL)
+		{
+			SpawnDeepSplash (source, trace, puff, vx, vy, vz);
+			puff->Destroy ();
+		}
 	}
 
 	// Now hurt anything the trace hit

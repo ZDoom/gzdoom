@@ -511,6 +511,13 @@ typedef struct post_s post_t;
 // column_t is a list of 0 or more post_t, (byte)-1 terminated
 typedef post_t	column_t;
 
+// [RH] Columns that allow for longer runs
+struct column2_t
+{
+	WORD		Length;			// 0 is the last post in a column
+	WORD		TopDelta;
+};
+
 
 //
 // OTHER TYPES

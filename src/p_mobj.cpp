@@ -83,6 +83,7 @@ CUSTOM_CVAR (Float, sv_gravity, 800.f, CVAR_SERVERINFO)
 
 CVAR (Float, sv_friction, 0.90625f, CVAR_SERVERINFO)
 CVAR (Bool, cl_missiledecals, true, CVAR_ARCHIVE)
+CVAR (Bool, addrocketexplosion, false, CVAR_ARCHIVE)
 
 fixed_t FloatBobOffsets[64] =
 {
@@ -465,8 +466,24 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 		// [RH] Change render style of exploding rockets
 		if (mo->IsKindOf (RUNTIME_CLASS(ARocket)))
 		{
-			mo->RenderStyle = deh.ExplosionStyle;
-			mo->alpha = deh.ExplosionAlpha;
+			if (deh.ExplosionStyle == 255)
+			{
+				if (addrocketexplosion)
+				{
+					mo->RenderStyle = STYLE_Add;
+					mo->alpha = FRACUNIT;
+				}
+				else
+				{
+					mo->RenderStyle = STYLE_Translucent;
+					mo->alpha = FRACUNIT*2/3;
+				}
+			}
+			else
+			{
+				mo->RenderStyle = deh.ExplosionStyle;
+				mo->alpha = deh.ExplosionAlpha;
+			}
 		}
 
 		if (gameinfo.gametype == GAME_Doom)
@@ -1512,6 +1529,8 @@ void AActor::Tick ()
 		return;
 	}
 
+	fixed_t oldz = z;
+
 	// [RH] Pulse in and out of visibility
 	if (effects & FX_VISIBILITYPULSE)
 	{
@@ -1819,11 +1838,7 @@ void AActor::Tick ()
 			return;		// actor was destroyed
 	}
 
-	byte lastwaterlevel = waterlevel;
-
-	UpdateWaterLevel ();
-
-	if (lastwaterlevel == 0 && waterlevel != 0)
+	if (UpdateWaterLevel (oldz))
 	{
 		P_HitWater (this, Sector);
 	}
@@ -1885,22 +1900,33 @@ void AActor::Tick ()
 //
 // AActor::UpdateWaterLevel
 //
+// Returns true if actor should splash
+//
 //==========================================================================
 
-void AActor::UpdateWaterLevel ()
+bool AActor::UpdateWaterLevel (fixed_t oldz)
 {
+	byte lastwaterlevel = waterlevel;
+
 	waterlevel = 0;
 
-	if (Sector)
+	if (Sector == NULL)
 	{
-		if (Sector->waterzone)
-			waterlevel = 3;
-		sector_t *hsec;
-		if ( (hsec = Sector->heightsec) && !(hsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+		return false;
+	}
+
+	if (Sector->waterzone)
+	{
+		waterlevel = 3;
+	}
+	else
+	{
+		const sector_t *hsec = Sector->heightsec;
+		if (hsec != NULL && !(hsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 		{
-			if (hsec->waterzone && !Sector->waterzone)
+			fixed_t fh = hsec->floorplane.ZatPoint (x, y);
+			if (hsec->waterzone)
 			{
-				fixed_t fh = hsec->floorplane.ZatPoint (x, y);
 				if (z < fh)
 				{
 					waterlevel = 1;
@@ -1916,8 +1942,14 @@ void AActor::UpdateWaterLevel ()
 					waterlevel = 3;
 				}
 			}
+			else
+			{
+				return (oldz >= fh) && (z < fh);
+			}
 		}
 	}
+
+	return (lastwaterlevel == 0 && waterlevel != 0);
 }
 
 //----------------------------------------------------------------------------
@@ -2044,7 +2076,7 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	{
 		actor->floorclip = 0;
 	}
-	actor->UpdateWaterLevel ();
+	actor->UpdateWaterLevel (actor->z);
 	if (!SpawningMapThing)
 	{
 		actor->BeginPlay ();
@@ -2762,7 +2794,7 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 	int terrainnum;
 	
 	if (sec->heightsec == NULL ||
-		!sec->heightsec->waterzone ||
+		//!sec->heightsec->waterzone ||
 		!(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) ||
 		!(sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES))
 	{
@@ -2782,7 +2814,7 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 		return Terrains[terrainnum].IsLiquid;
 
 	plane = (sec->heightsec != NULL &&
-		sec->heightsec->waterzone &&
+		//sec->heightsec->waterzone &&
 		!(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	  ? &sec->heightsec->floorplane : &sec->floorplane;
 	z = plane->ZatPoint (thing->x, thing->y);
@@ -2815,14 +2847,14 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 			mo->momz = splash->ChunkBaseZVel +
 				(P_Random() << splash->ChunkZVelShift);
 		}
-		if (!smallsplash && thing->player)
+		if (thing->player)
 		{
 			P_NoiseAlert (thing, thing);
 		}
 	}
 	if (mo)
 	{
-		S_SoundID (mo, CHAN_BODY, smallsplash ?
+		S_SoundID (mo, CHAN_ITEM, smallsplash ?
 			splash->SmallSplashSound : splash->NormalSplashSound,
 			1, ATTN_IDLE);
 	}

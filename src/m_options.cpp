@@ -1646,7 +1646,7 @@ CCMD (addkeysection)
 {
 	if (argv.argc() != 3)
 	{
-		Printf ("Usage: addkeysection <section name> <ini name>\n");
+		Printf ("Usage: addkeysection <menu section name> <ini name>\n");
 		return;
 	}
 
@@ -1693,8 +1693,8 @@ CCMD (addkeysection)
 		ControlsMenu.items = &CustomControlsItems[0];
 
 		// Load bindings for this section from the ini
-		M_LoadKeys (argv[1], 0);
-		M_LoadKeys (argv[1], 1);
+		M_LoadKeys (argv[2], 0);
+		M_LoadKeys (argv[2], 1);
 
 		AddKeySpot = 0;
 	}

@@ -82,6 +82,9 @@ drawseg_t		*drawsegs;
 drawseg_t*		firstdrawseg;
 drawseg_t*		ds_p;
 
+int				FirstInterestingDrawseg;
+TArray<int>		InterestingDrawsegs;
+
 fixed_t			WallTX1, WallTX2;	// x coords at left, right of wall in view space
 fixed_t			WallTY1, WallTY2;	// y coords at left, right of wall in view space
 
@@ -117,6 +120,8 @@ void R_ClearDrawSegs (void)
 		MaxDrawSegs = 256;		// [RH] Default. Increased as needed.
 		firstdrawseg = drawsegs = (drawseg_t *)Malloc (MaxDrawSegs * sizeof(drawseg_t));
 	}
+	FirstInterestingDrawseg = 0;
+	InterestingDrawsegs.Clear ();
 	ds_p = drawsegs;
 }
 
@@ -423,6 +428,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->ceilingplane = s->floorplane;
 			tempsec->ceilingplane.FlipVert ();
 			tempsec->ceilingplane.ChangeHeight (-1);
+			tempsec->floorcolormap = s->floorcolormap;
+			tempsec->ceilingcolormap = s->ceilingcolormap;
 		}
 
 		// killough 11/98: prevent sudden light changes from non-water sectors:
@@ -437,11 +444,9 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->base_floor_angle	= s->base_floor_angle;
 			tempsec->base_floor_yoffs	= s->base_floor_yoffs;
 
-			tempsec->floorcolormap		= s->floorcolormap;
 			tempsec->ceilingplane		= s->floorplane;
 			tempsec->ceilingplane.FlipVert ();
 			tempsec->ceilingplane.ChangeHeight (-1);
-			tempsec->ceilingcolormap	= s->ceilingcolormap;
 			if (s->ceilingpic == skyflatnum)
 			{
 				tempsec->floorplane			= tempsec->ceilingplane;
@@ -965,7 +970,7 @@ void R_Subsector (int num)
 	int          ceilinglightlevel;		// killough 4/11/98
 
 #ifdef RANGECHECK
-	if (num>=numsubsectors)
+	if ((unsigned)num>=(unsigned)numsubsectors)
 		I_Error ("R_Subsector: ss %i with numss = %i", num, numsubsectors);
 #endif
 
@@ -1030,6 +1035,13 @@ void R_Subsector (int num)
 	// lightlevels on floor & ceiling lightlevels in the surrounding area.
 	R_AddSprites (sub->sector, (floorlightlevel + ceilinglightlevel) / 2, FakeSide);
 
+	// [RH] Add particles
+	int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
+	for (WORD i = ParticlesInSubsec[num]; i != NO_PARTICLE; i = Particles[i].snext)
+	{
+		R_ProjectParticle (Particles + i, subsectors[num].sector, shade, FakeSide);
+	}
+
 	if (sub->poly)
 	{ // Render the polyobj in the subsector first
 		int polyCount = sub->poly->numsegs;
@@ -1051,10 +1063,8 @@ void R_Subsector (int num)
 // Renders all subsectors below a given node, traversing subtree recursively.
 // Just call with BSP root and -1.
 // killough 5/2/98: reformatted, removed tail recursion
-// [RH] Added subsecnum to restrict the subsectors drawn to just those
-// encountered *after* subsecnum. -1 does not restrict.
 
-int R_RenderBSPNode (int bspnum, int subsecnum)
+void R_RenderBSPNode (int bspnum)
 {
 	while (!(bspnum & NF_SUBSECTOR))  // Found a subsector?
 	{
@@ -1064,22 +1074,14 @@ int R_RenderBSPNode (int bspnum, int subsecnum)
 		int side = R_PointOnSide (viewx, viewy, bsp);
 
 		// Recursively divide front space (toward the viewer).
-		subsecnum = R_RenderBSPNode (bsp->children[side], subsecnum);
+		R_RenderBSPNode (bsp->children[side]);
 
 		// Possibly divide back space (away from the viewer).
 		side ^= 1;
 		if (!R_CheckBBox (bsp->bbox[side]))
-			return subsecnum;
+			return;
 
 		bspnum = bsp->children[side];
 	}
-	if (subsecnum == -1)
-	{
-		R_Subsector (bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
-	}
-	else if (subsecnum == (bspnum & ~NF_SUBSECTOR))
-	{
-		subsecnum = -1;
-	}
-	return subsecnum;
+	R_Subsector (bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
 }

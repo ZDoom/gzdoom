@@ -590,6 +590,10 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 				{
 					stuff = 0;
 				}
+				else if (stuff == 0)
+				{
+					args--;
+				}
 				if (argv != NULL)
 				{
 					*buffplace = stuff;
@@ -1046,13 +1050,34 @@ int C_ExecFile (const char *file, bool usePullin)
 		while (fgets (cmd, 4095, f))
 		{
 			// Comments begin with //
-			char *comment = strstr (cmd, "//");
-			if (comment)
-				continue;
+			char *stop = cmd + strlen (cmd) - 1;
+			char *comment = cmd;
+			int inQuote = 0;
 
-			char *end = cmd + strlen (cmd) - 1;
-			if (*end == '\n')
-				*end = 0;
+			if (*stop == '\n')
+				*stop-- = 0;
+
+			while (comment < stop)
+			{
+				if (*comment == '\"')
+				{
+					inQuote ^= 1;
+				}
+				else if (!inQuote && *comment == '/' && *(comment + 1) == '/')
+				{
+					break;
+				}
+				comment++;
+			}
+			if (comment == cmd)
+			{ // Comment at line beginning
+				continue;
+			}
+			else if (comment < stop)
+			{ // Comment in middle of line
+				*comment = 0;
+			}
+
 			AddCommandString (cmd);
 		}
 		if (!feof (f))

@@ -168,7 +168,7 @@ static BOOL PTR_TraceIterator (intercept_t *in)
 		if (Results->CrossedWater == NULL &&
 			CurSector->heightsec &&
 			!(CurSector->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
-			CurSector->heightsec->waterzone &&
+			//CurSector->heightsec->waterzone &&
 			hitz <= CurSector->heightsec->floorplane.ZatPoint (hitx, hity))
 		{
 			// hit crossed a water plane

@@ -1134,3 +1134,92 @@ nextpost:
 		}
 	}
 }
+
+void R_DrawMaskedColumnHoriz2 (column2_t *column)
+{
+	while (column->Length != 0)
+	{
+		const int length = column->Length;
+		const int top = column->TopDelta;
+
+		// calculate unclipped screen coordinates for post
+		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
+		dc_yh = (sprtopscreen + spryscale * (top + length) - FRACUNIT) >> FRACBITS;
+
+		if (sprflipvert)
+		{
+			swap (dc_yl, dc_yh);
+		}
+
+		if (dc_yh >= mfloorclip[dc_x])
+		{
+			dc_yh = mfloorclip[dc_x] - 1;
+		}
+		if (dc_yl < mceilingclip[dc_x])
+		{
+			dc_yl = mceilingclip[dc_x];
+		}
+
+		if (dc_yl <= dc_yh)
+		{
+			if (sprflipvert)
+			{
+				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
+					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
+				const fixed_t maxfrac = length << FRACBITS;
+				while (dc_texturefrac >= maxfrac)
+				{
+					if (++dc_yl > dc_yh)
+						goto nextpost;
+					dc_texturefrac += dc_iscale;
+				}
+				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
+				while (endfrac < 0)
+				{
+					if (--dc_yh < dc_yl)
+						goto nextpost;
+					endfrac -= dc_iscale;
+				}
+			}
+			else
+			{
+				dc_texturefrac = dc_texturemid - (top << FRACBITS)
+					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
+				while (dc_texturefrac < 0)
+				{
+					if (++dc_yl > dc_yh)
+						goto nextpost;
+					dc_texturefrac += dc_iscale;
+				}
+				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
+				const fixed_t maxfrac = length << FRACBITS;
+				while (endfrac >= maxfrac)
+				{
+					if (--dc_yh < dc_yl)
+						goto nextpost;
+					endfrac -= dc_iscale;
+				}
+			}
+			dc_source = (byte *)column + 4;
+			hcolfunc_pre ();
+		}
+nextpost:
+		column = (column2_t *)((byte *)column + length + 4);
+	}
+
+	if (sprflipvert)
+	{
+		unsigned int *front = horizspan[dc_x&3];
+		unsigned int *back = dc_ctspan[dc_x&3] - 2;
+
+		// Reorder the posts so that they get drawn top-to-bottom
+		// instead of bottom-to-top.
+		while (front < back)
+		{
+			swap (front[0], back[0]);
+			swap (front[1], back[1]);
+			front += 2;
+			back -= 2;
+		}
+	}
+}

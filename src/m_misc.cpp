@@ -252,6 +252,10 @@ static long ParseCommandLine (const char *args, int *argc, char **argv)
 				{
 					stuff = 0;
 				}
+				else if (stuff == 0)
+				{
+					args--;
+				}
 				if (argv != NULL)
 				{
 					*buffplace = stuff;

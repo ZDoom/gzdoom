@@ -1866,6 +1866,8 @@ void D_DoomMain (void)
 		BorderNeedRefresh = screen->GetPageCount ();
 		if (autostart || netgame)
 		{
+			G_NewInit ();
+			playeringame[consoleplayer] = 1;
 			G_InitNew (startmap);
 		}
 		else

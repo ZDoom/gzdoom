@@ -87,7 +87,7 @@ void	G_DoPlayDemo (void);
 void	G_DoCompleted (void);
 void	G_DoVictory (void);
 void	G_DoWorldDone (void);
-void	G_DoSaveGame (void);
+void	G_DoSaveGame (bool okForQuicksave);
 void	G_DoAutoSave (void);
 
 FIntCVar gameskill ("skill", 2, CVAR_SERVERINFO|CVAR_LATCH);
@@ -754,7 +754,7 @@ void G_Ticker ()
 			G_DoLoadGame ();
 			break;
 		case ga_savegame:
-			G_DoSaveGame ();
+			G_DoSaveGame (true);
 			break;
 		case ga_autosave:
 			G_DoAutoSave ();
@@ -1401,19 +1401,20 @@ void G_DoLoadGame (void)
 
 	arc << text[9];
 
-	arc.Close ();
-
 	if (text[9] == 0x1e)
 	{
 		arc << NextSkill;
 	}
-	else if (text[9] != 0x1d)
-	{
-		I_Error ("Bad savegame");
-	}
 	else
 	{
 		NextSkill = -1;
+	}
+
+	arc.Close ();
+
+	if (text[9] != 0x1d && text[9] != 0x1e)
+	{
+		I_Error ("Bad savegame");
 	}
 
 	LocalSelectedItem = players[consoleplayer].readyArtifact;
@@ -1507,7 +1508,7 @@ void G_DoAutoSave ()
 	strncpy (savedescription+9, readableTime+4, 12);
 	savedescription[9+12] = 0;
 
-	G_DoSaveGame ();
+	G_DoSaveGame (false);
 }
 
 
@@ -1629,7 +1630,7 @@ static void PutSavePic (FILE *file, int width, int height)
 	}
 }
 
-void G_DoSaveGame ()
+void G_DoSaveGame (bool okForQuicksave)
 {
 	int i;
 
@@ -1681,7 +1682,7 @@ void G_DoSaveGame ()
 	BYTE consist = 0x1e;			// consistancy marker
 	arc << consist << NextSkill;
 
-	M_NotifyNewSave (savegamefile, savedescription);
+	M_NotifyNewSave (savegamefile, savedescription, okForQuicksave);
 	gameaction = ga_nothing;
 	savedescription[0] = 0;
 

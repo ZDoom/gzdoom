@@ -68,6 +68,8 @@ fixed_t			sky2scale;			// [RH] Sky 2 scale factor
 
 static int		spriteshade;
 
+TArray<WORD>	ParticlesInSubsec;
+
 // constant arrays
 //	used for psprite clipping and initializing clipping
 short			negonearray[MAXWIDTH];
@@ -777,6 +779,79 @@ nextpost:
 	}
 }
 
+void R_DrawMaskedColumn2 (column2_t *column)
+{
+	while (column->Length != 0)
+	{
+		const int length = column->Length;
+		const int top = column->TopDelta;
+
+		// calculate unclipped screen coordinates for post
+		dc_yl = (sprtopscreen + spryscale * top) >> FRACBITS;
+		dc_yh = (sprtopscreen + spryscale * (top + length) - FRACUNIT) >> FRACBITS;
+
+		if (sprflipvert)
+		{
+			swap (dc_yl, dc_yh);
+		}
+
+		if (dc_yh >= mfloorclip[dc_x])
+		{
+			dc_yh = mfloorclip[dc_x] - 1;
+		}
+		if (dc_yl < mceilingclip[dc_x])
+		{
+			dc_yl = mceilingclip[dc_x];
+		}
+
+		if (dc_yl <= dc_yh)
+		{
+			if (sprflipvert)
+			{
+				dc_texturefrac = (dc_yl*dc_iscale) - (top << FRACBITS)
+					- FixedMul (centeryfrac, dc_iscale) - dc_texturemid;
+				const fixed_t maxfrac = length << FRACBITS;
+				while (dc_texturefrac >= maxfrac)
+				{
+					if (++dc_yl > dc_yh)
+						goto nextpost;
+					dc_texturefrac += dc_iscale;
+				}
+				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
+				while (endfrac < 0)
+				{
+					if (--dc_yh < dc_yl)
+						goto nextpost;
+					endfrac -= dc_iscale;
+				}
+			}
+			else
+			{
+				dc_texturefrac = dc_texturemid - (top << FRACBITS)
+					+ (dc_yl*dc_iscale) - FixedMul (centeryfrac-FRACUNIT, dc_iscale);
+				while (dc_texturefrac < 0)
+				{
+					if (++dc_yl > dc_yh)
+						goto nextpost;
+					dc_texturefrac += dc_iscale;
+				}
+				fixed_t endfrac = dc_texturefrac + (dc_yh-dc_yl)*dc_iscale;
+				const fixed_t maxfrac = length << FRACBITS;
+				while (endfrac >= maxfrac)
+				{
+					if (--dc_yh < dc_yl)
+						goto nextpost;
+					endfrac -= dc_iscale;
+				}
+			}
+			dc_source = (byte *)column + 4;
+			colfunc ();
+		}
+nextpost:
+		column = (column2_t *)((byte *)column + length + 4);
+	}
+}
+
 //
 // R_DrawVisSprite
 //	mfloorclip and mceilingclip should also be set.
@@ -788,12 +863,6 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 #endif
 	fixed_t 		frac;
 	patch_t*		patch;
-
-	if (vis->picnum == -1)
-	{ // [RH] It's a particle
-		R_DrawParticle (vis, x1, x2);
-		return;
-	}
 
 	patch = TileCache[R_CacheTileNum (vis->picnum, PU_CACHE)];
 
@@ -1413,6 +1482,13 @@ void R_DrawSprite (vissprite_t *spr)
 	short topclip, botclip;
 	short *clip1, *clip2;
 
+	// [RH] Check for particles
+	if (spr->picnum == -1)
+	{
+		R_DrawParticle (spr);
+		return;
+	}
+
 	// [RH] Quickly reject sprites with bad x ranges.
 	if (spr->x1 > spr->x2)
 		return;
@@ -1505,11 +1581,12 @@ void R_DrawSprite (vissprite_t *spr)
 
 	//		for (ds=ds_p-1 ; ds >= drawsegs ; ds--)    old buggy code
 
-	for (ds = ds_p; ds-- > firstdrawseg ; )  // new -- killough
+	for (ds = ds_p; ds-- > firstdrawseg; )  // new -- killough
 	{
 		// determine if the drawseg obscures the sprite
 		if (ds->x1 > spr->x2 || ds->x2 < spr->x1 ||
-			(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == -1) )
+			(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == -1 &&
+			 !ds->bFogBoundary) )
 		{
 			// does not cover sprite
 			continue;
@@ -1613,23 +1690,8 @@ void R_DrawMasked (void)
 //
 // [RH] Particle functions
 //
-#ifndef _MSC_VER
-// inlined with VC++
-particle_t *NewParticle (void)
-{
-	particle_t *result = NULL;
-	if (InactiveParticles != -1)
-	{
-		result = Particles + InactiveParticles;
-		InactiveParticles = result->next;
-		result->next = ActiveParticles;
-		ActiveParticles = result - Particles;
-	}
-	return result;
-}
-#endif
 
-void R_InitParticles (void)
+void R_InitParticles ()
 {
 	char *i;
 
@@ -1644,32 +1706,73 @@ void R_InitParticles (void)
 	R_ClearParticles ();
 }
 
-void R_ClearParticles (void)
+void R_ClearParticles ()
 {
 	int i;
 
 	memset (Particles, 0, NumParticles * sizeof(particle_t));
-	ActiveParticles = -1;
+	ActiveParticles = NO_PARTICLE;
 	InactiveParticles = 0;
 	for (i = 0; i < NumParticles-1; i++)
-		Particles[i].next = i + 1;
-	Particles[i].next = -1;
+		Particles[i].tnext = i + 1;
+	Particles[i].tnext = NO_PARTICLE;
 }
 
-void R_ProjectParticle (particle_t *particle)
+// Group particles by subsectors. Because particles are always
+// in motion, there is little benefit to caching this information
+// from one frame to the next.
+
+WORD filt = 0xffff;
+
+CCMD (pfilt)
+{
+	if (argv.argc() == 1)
+	{
+		filt = R_PointInSubsector (players[0].mo->x, players[0].mo->y) - subsectors;
+		Printf ("filtering %d\n", filt);
+	}
+	else
+	{
+		filt = 0xffff;
+	}
+}
+
+void R_FindParticleSubsectors ()
+{
+	if (ParticlesInSubsec.Size() < numsubsectors)
+	{
+		ParticlesInSubsec.Reserve (numsubsectors - ParticlesInSubsec.Size());
+	}
+
+	clearbufshort (&ParticlesInSubsec[0], numsubsectors, NO_PARTICLE);
+
+	if (!r_particles)
+	{
+		return;
+	}
+	for (WORD i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
+	{
+		subsector_t *ssec = R_PointInSubsector (Particles[i].x, Particles[i].y);
+		int ssnum = ssec-subsectors;
+		if (filt == 0xffff || ssnum == filt)
+		{
+			Particles[i].snext = ParticlesInSubsec[ssnum];
+			ParticlesInSubsec[ssnum] = i;
+		}
+	}
+}
+
+void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade, int fakeside)
 {
 	fixed_t 			tr_x;
 	fixed_t 			tr_y;
-	fixed_t				gzt;				// killough 3/27/98
-	fixed_t 			tx;
+	fixed_t 			tx, ty;
 	fixed_t 			tz, tiz;
-	fixed_t 			xscale;
-	int 				x1;
-	int 				x2;
+	fixed_t 			xscale, yscale;
+	int 				x1, x2, y1, y2;
 	vissprite_t*		vis;
-	sector_t			*sector = NULL;
-	sector_t*			heightsec = NULL;	// killough 3/27/98
-	int					fakeside = FAKED_Center;
+	sector_t*			heightsec = NULL;
+	byte*				map;
 
 	// transform the origin point
 	tr_x = particle->x - viewx;
@@ -1702,61 +1805,80 @@ void R_ProjectParticle (particle_t *particle)
 	x1 = MAX<int> (WindowLeft, (centerxfrac + MulScale12 (tx-psize, xscale)) >> FRACBITS);
 	x2 = MIN<int> (WindowRight, (centerxfrac + MulScale12 (tx+psize, xscale)) >> FRACBITS);
 
-	if (x1 > x2)
+	if (x1 >= x2)
 		return;
 
-	gzt = particle->z+1;
+	yscale = MulScale16 (yaspectmul, xscale);
+	ty = particle->z - viewz;
+	psize <<= 4;
+	y1 = (centeryfrac - FixedMul (ty+psize, yscale)) >> FRACBITS;
+	y2 = (centeryfrac - FixedMul (ty-psize, yscale)) >> FRACBITS;
 
-	// killough 3/27/98: exclude things totally separated
-	// from the viewer, by either water or fake ceilings
-	// killough 4/11/98: improve sprite clipping for underwater/fake ceilings
-	// [RH] Because we can see through windows into areas below the deep water surface,
-	// this is not entirely correct. The "right" thing to do would be to store particles
-	// in subsectors and clip them the same way as sprites. When there are lots of
-	// particles around the map, it would probably speed things up, too, since not every
-	// particle would need to be considered for drawing.
+	// Clip the particle now. Because it's a point and projected as its subsector is
+	// entered, we don't need to clip it to drawsegs like a normal sprite.
 
+	// Clip particles behind walls.
+	if (y1 <  ceilingclip[x1])		y1 = ceilingclip[x1];
+	if (y1 <  ceilingclip[x2-1])	y1 = ceilingclip[x2-1];
+	if (y2 >= floorclip[x1])		y2 = floorclip[x1] - 1;
+	if (y2 >= floorclip[x2-1])		y2 = floorclip[x2-1] - 1;
+
+	if (y1 >= y2)
+		return;
+
+	// Clip particles above the ceiling or below the floor.
+	heightsec = sector->heightsec;
+
+	if (heightsec != NULL && heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
 	{
-		subsector_t *subsector = R_PointInSubsector (particle->x, particle->y);
-		if (subsector)
-		{
-			sector = subsector->sector;
-			heightsec = sector->heightsec;
-			if (particle->z < sector->floorplane.ZatPoint (particle->x, particle->y) ||
-				particle->z > sector->ceilingplane.ZatPoint (particle->y, particle->z))
-				return;
-
-			if (heightsec != NULL)
-			{
-				if (particle->z < heightsec->floorplane.ZatPoint (particle->x, particle->y))
-				{
-					fakeside = FAKED_BelowFloor;
-				}
-				else if (particle->z >= heightsec->ceilingplane.ZatPoint (particle->z, particle->y))
-				{
-					fakeside = FAKED_AboveCeiling;
-				}
-			}
-		}
+		heightsec = NULL;
 	}
 
-	if (heightsec && !(heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
-	{ // only clip particles which are in special sectors
-		sector_t *phs = viewsector->heightsec;
-		if (phs != NULL && phs->MoreFlags & SECF_IGNOREHEIGHTSEC)
+	const secplane_t *topplane;
+	const secplane_t *botplane;
+	int toppic;
+	int botpic;
+
+	if (heightsec)	// only clip things which are in special sectors
+	{
+		if (fakeside == FAKED_AboveCeiling)
 		{
-			phs = NULL;
+			topplane = &sector->ceilingplane;
+			botplane = &heightsec->ceilingplane;
+			toppic = sector->ceilingpic;
+			botpic = heightsec->ceilingpic;
+			map = heightsec->floorcolormap->Maps;
 		}
-		if (phs && viewz < phs->floorplane.ZatPoint (viewx, viewy) ?
-			fakeside != FAKED_BelowFloor:
-			gzt < heightsec->floorplane.ZatPoint (particle->x, particle->y))
-		  return;
-		if (phs && viewz > phs->ceilingplane.ZatPoint (viewx, viewy) ?
-			gzt < heightsec->ceilingplane.ZatPoint (particle->x, particle->y) &&
-			viewz >= heightsec->ceilingplane.ZatPoint (viewx, viewy) :
-			fakeside == FAKED_AboveCeiling)
-		  return;
+		else if (fakeside == FAKED_BelowFloor)
+		{
+			topplane = &heightsec->floorplane;
+			botplane = &sector->floorplane;
+			toppic = heightsec->floorpic;
+			botpic = sector->floorpic;
+			map = heightsec->floorcolormap->Maps;
+		}
+		else
+		{
+			topplane = &heightsec->ceilingplane;
+			botplane = &heightsec->floorplane;
+			toppic = heightsec->ceilingpic;
+			botpic = heightsec->floorpic;
+			map = sector->floorcolormap->Maps;
+		}
 	}
+	else
+	{
+		topplane = &sector->ceilingplane;
+		botplane = &sector->floorplane;
+		toppic = sector->ceilingpic;
+		botpic = sector->floorpic;
+		map = sector->floorcolormap->Maps;
+	}
+
+	if (botpic != skyflatnum && particle->z < botplane->ZatPoint (particle->x, particle->y))
+		return;
+	if (toppic != skyflatnum && particle->z >= topplane->ZatPoint (particle->x, particle->y))
+		return;
 
 	// store information in a vissprite
 	vis = R_NewVisSprite ();
@@ -1768,9 +1890,8 @@ void R_ProjectParticle (particle_t *particle)
 	vis->cx = tx;
 	vis->gx = particle->x;
 	vis->gy = particle->y;
-	vis->gz = particle->z;
-	vis->gzt = gzt;
-	vis->texturemid = FixedMul (yaspectmul, vis->gzt - viewz);
+	vis->gz = y1;
+	vis->gzt = y2;
 	vis->x1 = x1;
 	vis->x2 = x2;
 	vis->Translation = 0;
@@ -1785,99 +1906,78 @@ void R_ProjectParticle (particle_t *particle)
 	{
 		vis->colormap = fixedcolormap;
 	}
-	else if (sector)
+	else if (fixedlightlev)
 	{
-		byte *map;
-
-		if (sector->heightsec == NULL ||
-			(sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
-		{
-			map = sector->floorcolormap->Maps;
-		}
-		else
-		{
-			const sector_t *s = sector->heightsec;
-			if (particle->z <= s->floorplane.ZatPoint (particle->x, particle->y) ||
-				particle->z > s->ceilingplane.ZatPoint (particle->x, particle->y))
-				map = s->floorcolormap->Maps;
-			else
-				map = sector->floorcolormap->Maps;
-		}
-
-		if (fixedlightlev)
-		{
-			vis->colormap = map + fixedlightlev;
-		}
-		else
-		{
-			vis->colormap = map + (GETPALOOKUP (FixedMul (tiz, r_ParticleVisibility),
-				LIGHT2SHADE(sector->lightlevel + r_actualextralight)) << COLORMAPSHIFT);
-		}
+		vis->colormap = map + fixedlightlev;
 	}
 	else
 	{
-		vis->colormap = realcolormaps;
+		vis->colormap = map + (GETPALOOKUP (FixedMul (tiz, r_ParticleVisibility),
+			shade) << COLORMAPSHIFT);
 	}
 }
 
-void R_DrawParticle (vissprite_t *vis, int x1, int x2)
+static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 {
+	const int x1 = vis->x1;
+	const int x2 = vis->x2;
+
+	// Draw any masked textures behind this particle so that when the
+	// particle is drawn, it will be in front of them.
+	for (int p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
+	{
+		drawseg_t *ds = &drawsegs[InterestingDrawsegs[p]];
+		if (ds->x1 >= x2 || ds->x2 < x1)
+		{
+			continue;
+		}
+		if ((//ds->neardepth > vis->depth || (ds->fardepth > vis->depth &&
+			DMulScale24 (vis->depth - ds->cy, ds->cdx,
+						 ds->cdy, ds->cx - vis->cx) < 0))
+		{
+			R_RenderMaskedSegRange (ds, MAX<int> (ds->x1, x1), MIN<int> (ds->x2, x2-1));
+		}
+	}
+}
+
+void R_DrawParticle (vissprite_t *vis)
+{
+	DWORD *bg2rgb;
+	int spacing;
+	byte *dest;
+	DWORD fg;
 	byte color = vis->colormap[vis->startfrac];
-	int yl = (centeryfrac - FixedMul(vis->texturemid, vis->xscale) + FRACUNIT - 1) >> FRACBITS;
-	int yh;
-	x1 = vis->x1;
-	x2 = vis->x2;
+	int yl = vis->gz;
+	int ycount = vis->gzt - yl;
+	int x1 = vis->x1;
+	int countbase = vis->x2 - x1;
 
-	yh = yl + (((x2 - x1)<<detailxshift)>>detailyshift);
-
-	// Don't bother clipping each individual column
-	if (yh >= mfloorclip[x1])
-		yh = mfloorclip[x1]-1;
-	if (yl < mceilingclip[x1])
-		yl = mceilingclip[x1];
-	if (yh >= mfloorclip[x2])
-		yh = mfloorclip[x2]-1;
-	if (yl < mceilingclip[x2])
-		yl = mceilingclip[x2];
+	R_DrawMaskedSegsBehindParticle (vis);
 
 	// vis->renderflags holds translucency level (0-255)
 	{
-		DWORD *bg2rgb;
-		int countbase = x2 - x1 + 1;
-		int ycount;
-		int spacing;
-		byte *dest;
-		DWORD fg;
+		fixed_t fglevel, bglevel;
+		DWORD *fg2rgb;
 
-		ycount = yh - yl;
-		if (ycount < 0)
-			return;
-		ycount++;
+		fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
+		bglevel = FRACUNIT-fglevel;
+		fg2rgb = Col2RGB8[fglevel>>10];
+		bg2rgb = Col2RGB8[bglevel>>10];
+		fg = fg2rgb[color];
+	}
 
-		{
-			fixed_t fglevel, bglevel;
-			DWORD *fg2rgb;
+	spacing = (RenderTarget->GetPitch()<<detailyshift) - countbase;
+	dest = ylookup[yl] + x1;
 
-			fglevel = ((vis->renderflags + 1) << 8) & ~0x3ff;
-			bglevel = FRACUNIT-fglevel;
-			fg2rgb = Col2RGB8[fglevel>>10];
-			bg2rgb = Col2RGB8[bglevel>>10];
-			fg = fg2rgb[color];
-		}
-
-		spacing = (RenderTarget->GetPitch()<<detailyshift) - countbase;
-		dest = ylookup[yl] + x1;
-
+	do
+	{
+		int count = countbase;
 		do
 		{
-			int count = countbase;
-			do
-			{
-				DWORD bg = bg2rgb[*dest];
-				bg = (fg+bg) | 0x1f07c1f;
-				*dest++ = RGB32k[0][0][bg & (bg>>15)];
-			} while (--count);
-			dest += spacing;
-		} while (--ycount);
-	}
+			DWORD bg = bg2rgb[*dest];
+			bg = (fg+bg) | 0x1f07c1f;
+			*dest++ = RGB32k[0][0][bg & (bg>>15)];
+		} while (--count);
+		dest += spacing;
+	} while (--ycount);
 }

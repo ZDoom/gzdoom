@@ -59,7 +59,10 @@ void P_Ticker (void)
 		return;
 	}
 
-	P_ThinkParticles ();	// [RH] make the particles think
+	if (!bglobal.freeze)
+	{
+		P_ThinkParticles ();	// [RH] make the particles think
+	}
 	StatusBar->Tick ();		// [RH] moved this here
 
 	for (i = 0; i<MAXPLAYERS; i++)

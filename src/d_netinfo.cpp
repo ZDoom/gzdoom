@@ -117,10 +117,13 @@ void D_SetupUserInfo (void)
 
 	strncpy (coninfo->netname, name, MAXPLAYERNAME);
 	coninfo->team = team;
-	coninfo->aimdist = abs ((int)(autoaim * (float)ANGLE_1));
-	if (coninfo->aimdist > ANGLE_1*35)
+	if (autoaim > 35.f || autoaim < 0.f)
 	{
 		coninfo->aimdist = ANGLE_1*35;
+	}
+	else
+	{
+		coninfo->aimdist = abs ((int)(autoaim * (float)ANGLE_1));
 	}
 	coninfo->color = color;
 	coninfo->skin = R_FindSkin (skin);
@@ -347,12 +350,19 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 
 			switch (infotype)
 			{
-			case INFO_Autoaim:
-				info->aimdist = abs ((int)(atof (value) * (float)ANGLE_1));
-				if (info->aimdist > ANGLE_1*35)
+			case INFO_Autoaim: {
+				double angles;
+
+				angles = atof (value);
+				if (angles > 35.f || angles < 0.f)
 				{
 					info->aimdist = ANGLE_1*35;
 				}
+				else
+				{
+					info->aimdist = abs ((int)(angles * (float)ANGLE_1));
+				}
+								}
 				break;
 
 			case INFO_Name:

@@ -69,7 +69,7 @@ IMPLEMENT_ACTOR (AScriptedMarine, Doom, 9100, 151)
 	PROP_SpeedFixed (8)
 	PROP_PainChance (200)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE)
-	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL)
+	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
 	PROP_Translation (TRANSLATION_Standard,0)	// Scripted marines wear black
 
 	PROP_SpawnState (S_MPLAY)

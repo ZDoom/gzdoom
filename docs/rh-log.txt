@@ -1,3 +1,66 @@
+February 5, 2002
+- Did away with the longest-playing change to S_StopSoundID because it made
+  looping sounds of the same type near each other fight for precedence, and
+  the result sounded horrible. Now I use distance to limit the set of sounds
+  considered for stopping. Only sounds within 256 units of the new sound will
+  possibly be stopped by this function. Also removed sound tags because they
+  served the same purpose as the distance comparison.
+- Added $playercompat SNDINFO command to create special aliases from the old
+  SNDINFO player sounds to the new ones. These are special in that after they
+  get created, any attempts to modify them will modify there target instead.
+- Added the addrocketexplosion cvar. If true, then rockets use additive
+  translucency when the explode. Otherwise, they use normal translucency. This
+  can still be overridden with a Dehacked patch.
+
+February 4, 2002
+- Realized that because I now project particles as their subsectors are
+  entered, I have enough information to clip the particles when they are
+  projected. By changing my code to take advantage of this, I can avoid
+  running through all the drawsegs for each particle on-screen. When there are
+  many drawsegs and particles on-screen at once, the improvement is quite
+  impressive--far better than I expected.
+
+February 2, 2002
+- Added MF2_FLOORCLIP to many of the Doom monsters so that they can have their
+  feet cut off when standing in shallow water, provided that the appropriate
+  terrain definitions exist.
+- Put back the limit of two identical sounds playing at once from Heretic and
+  Hexen in order to prevent the SSG from making super loud splashes that drown
+  out everything else. Tweaked S_StopSoundID so that it will use oldest time
+  for selecting a sound to stop if it can't find any with lower priority.
+- Set all the puffs except BeakPuff back to their default masses.
+- Changed splashes so that if a fake flat has a terrain with a splash, you can
+  shoot or drop below it and leave a splash.
+- Fixed anomalies with the way the railgun made splashes.
+- Added code to group particles into subsectors so that I can subject them to
+  the same fake floor clipping as normal sprites. I also found a problem with
+  lighting of particles in fake sectors and fixed it.
+
+January 31, 2002
+- Fixed: Fog boundaries could be erroneously drawn in underwater areas because
+  R_FakeFlat did not change the fake sector's colormap when calculating the
+  back side of a line.
+- Fixed: Using -skill at the command line always set skill to 0.
+- Added a check for freeze mode around P_ThinkParticles and the various
+  decal animator tickers.
+- Fixed .cfg file parsing so that if comments appear on the same line as a
+  command, the command will still be executed.
+- Fixed ParseCommandLine to work with unterminated quotes.
+- Added "proper" support for tall textures by introducing a different patch
+  format that uses words instead of bytes to store column lengths and offsets.
+  All tall and multipatch textures get converted to this format at runtime, so
+  tall textures work equally well on one-sided and two-sided lines, and I
+  don't have to worry about sliding windows while generating the composite
+  textures.
+
+January 30, 2002
+- Fixed: Addkeysection did not load bindings from the ini.
+- Fixed: Quicksave did not quicksave.
+- Fixed: Savegames could be listed in the menu twice, once with the full path
+  and again with just the file name.
+- Fixed: Suiciding and giving stuff to a player without an actor crashed.
+- Fixed: Loading savegames was broken.
+
 January 28, 2002
 - Fixed: Using allowdecals in ANIMDEFS was broken.
 - Added more ways to create slopes, all of which are thing-based:
@@ -528,7 +591,7 @@ October 25, 2001
 - Added autosave capabilities. Up to four autosaves are kept at a time,
   and they get created whenever a player enters a map. The level designer
   can also place them at strategic locations in the level using special
-  15 or linetype 338.
+  15 or linetypes 348/349.
 
 October 24, 2001
 - Fixed: The level name shown on the automap included the hours of the

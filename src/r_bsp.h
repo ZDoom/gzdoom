@@ -54,11 +54,12 @@ extern line_t*		linedef;
 extern sector_t*	frontsector;
 extern sector_t*	backsector;
 
-extern BOOL			skymap;
-
 extern drawseg_t	*drawsegs;
 extern drawseg_t	*firstdrawseg;
 extern drawseg_t*	ds_p;
+
+extern TArray<int>	InterestingDrawsegs;	// drawsegs that have something drawn on them
+extern int			FirstInterestingDrawseg;
 
 extern int			WindowLeft, WindowRight;
 extern WORD			MirrorFlags;
@@ -73,7 +74,7 @@ EXTERN_CVAR (Bool, r_drawflat)		// [RH] Don't texture segs?
 // BSP?
 void R_ClearClipSegs (short left, short right);
 void R_ClearDrawSegs ();
-int R_RenderBSPNode (int bspnum, int subsecnum);
+void R_RenderBSPNode (int bspnum);
 
 // killough 4/13/98: fake floors/ceilings for deep water / fake ceilings:
 sector_t *R_FakeFlat(sector_t *, sector_t *, int *, int *, BOOL);

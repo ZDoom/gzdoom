@@ -185,7 +185,6 @@ FState AStaffPuff::States[] =
 IMPLEMENT_ACTOR (AStaffPuff, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_SpawnState (0)
-	PROP_Mass (5)
 	PROP_AttackSound ("weapons/staffhit")
 END_DEFAULTS
 
@@ -216,7 +215,6 @@ FState AStaffPuff2::States[] =
 
 IMPLEMENT_ACTOR (AStaffPuff2, Heretic, -1, 0)
 	PROP_SpawnState (0)
-	PROP_Mass (5)
 	PROP_AttackSound ("weapons/staffpowerhit")
 END_DEFAULTS
 
@@ -520,7 +518,6 @@ FState AGoldWandPuff1::States[] =
 
 IMPLEMENT_ACTOR (AGoldWandPuff1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Mass (5)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -533,7 +530,6 @@ class AGoldWandPuff2 : public AGoldWandPuff1
 
 IMPLEMENT_STATELESS_ACTOR (AGoldWandPuff2, Heretic, -1, 0)
 	PROP_SpawnState (S_GWANDFXI1)
-	PROP_Mass (5)
 END_DEFAULTS
 
 //----------------------------------------------------------------------------
@@ -1801,7 +1797,6 @@ IMPLEMENT_ACTOR (AGauntletPuff1, Heretic, -1, 0)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HR_SHADOW)
 	PROP_SpawnState (S_GAUNTLETPUFF1)
-	PROP_Mass (5)
 END_DEFAULTS
 
 void AGauntletPuff1::BeginPlay ()
@@ -2245,7 +2240,6 @@ FState ABlasterPuff1::States[] =
 
 IMPLEMENT_ACTOR (ABlasterPuff1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Mass (5)
 
 	PROP_SpawnState (S_BLASTERPUFF1)
 END_DEFAULTS
@@ -2271,7 +2265,6 @@ FState ABlasterPuff2::States[] =
 
 IMPLEMENT_ACTOR (ABlasterPuff2, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Mass (5)
 
 	PROP_SpawnState (S_BLASTERPUFF2)
 END_DEFAULTS

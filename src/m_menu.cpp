@@ -663,7 +663,7 @@ void M_ReadSaveStrings ()
 						if (addIt)
 						{
 							FSaveGameNode *node = new FSaveGameNode;
-							node->Filename = copystring (I_FindName (&c_file));
+							node->Filename = copystring (filepath);
 							node->bOldVersion = oldVer;
 							memcpy (node->Title, title, SAVESTRINGSIZE);
 							M_InsertSaveNode (node);
@@ -713,7 +713,7 @@ void M_InsertSaveNode (FSaveGameNode *node)
 	}
 }
 
-void M_NotifyNewSave (const char *file, const char *title)
+void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
 {
 	FSaveGameNode *node;
 
@@ -732,25 +732,24 @@ void M_NotifyNewSave (const char *file, const char *title)
 		{
 			strcpy (node->Title, title);
 			node->bOldVersion = false;
-			/*if (quickSaveSlot == NULL)
-			{
-				quickSaveSlot = node;
-			}*/
-			return;
+			break;
 		}
 	}
 
-	node = new FSaveGameNode;
-	strcpy (node->Title, title);
-	node->Filename = copystring (file);
-	node->bOldVersion = false;
-	M_InsertSaveNode (node);
-	SelSaveGame = node;
-/*
-	if (quickSaveSlot == NULL)
+	if (node->Succ == NULL)
+	{
+		node = new FSaveGameNode;
+		strcpy (node->Title, title);
+		node->Filename = copystring (file);
+		node->bOldVersion = false;
+		M_InsertSaveNode (node);
+		SelSaveGame = node;
+	}
+
+	if (quickSaveSlot == NULL && okForQuicksave)
 	{
 		quickSaveSlot = node;
-	}*/
+	}
 }
 
 //

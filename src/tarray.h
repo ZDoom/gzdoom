@@ -136,6 +136,18 @@ public:
 			Array = (T *)Realloc (Array, sizeof(T)*Most);
 		}
 	}
+	// Resize Array so that it has exactly amount entries in use.
+	void Resize (size_t amount)
+	{
+		if (Count < amount)
+		{
+			Grow (amount - Count);
+		}
+		else if (Count > amount)
+		{
+			Count = amount;
+		}
+	}
 	// Reserves amount entries at the end of the array, but does nothing
 	// with them.
 	size_t Reserve (size_t amount)

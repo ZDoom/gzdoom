@@ -135,7 +135,6 @@ IMPLEMENT_ACTOR (ABishopPuff, Hexen, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HX_SHADOW)
-	PROP_Mass (5)
 
 	PROP_SpawnState (0)
 END_DEFAULTS

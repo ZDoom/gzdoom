@@ -24,7 +24,8 @@
 #define __R_THINGS__
 
 // [RH] Particle details
-struct particle_s {
+struct particle_s
+{
 	fixed_t	x,y,z;
 	fixed_t velx,vely,velz;
 	fixed_t accx,accy,accz;
@@ -33,7 +34,8 @@ struct particle_s {
 	byte	size;
 	byte	fade;
 	int		color;
-	int		next;
+	WORD	tnext;
+	WORD	snext;
 };
 typedef struct particle_s particle_t;
 
@@ -42,26 +44,28 @@ extern int	ActiveParticles;
 extern int	InactiveParticles;
 extern particle_t *Particles;
 
-#ifdef _MSC_VER
-__inline particle_t *NewParticle (void)
+const WORD NO_PARTICLE = 0xffff;
+
+inline particle_t *NewParticle (void)
 {
 	particle_t *result = NULL;
-	if (InactiveParticles != -1) {
+	if (InactiveParticles != NO_PARTICLE)
+	{
 		result = Particles + InactiveParticles;
-		InactiveParticles = result->next;
-		result->next = ActiveParticles;
+		InactiveParticles = result->tnext;
+		result->tnext = ActiveParticles;
 		ActiveParticles = result - Particles;
 	}
 	return result;
 }
-#else
-particle_t *NewParticle (void);
-#endif
-void R_InitParticles (void);
-void R_ClearParticles (void);
-void R_DrawParticle (vissprite_t *, int, int);
-void R_ProjectParticle (particle_t *);
 
+void R_InitParticles ();
+void R_ClearParticles ();
+void R_DrawParticle (vissprite_t *);
+void R_ProjectParticle (particle_t *, const sector_t *sector, int shade, int fakeside);
+void R_FindParticleSubsectors ();
+
+extern TArray<WORD>		ParticlesInSubsec;
 
 extern int MaxVisSprites;
 
@@ -87,6 +91,7 @@ extern fixed_t			pspritexiscale;
 
 
 void R_DrawMaskedColumn (column_t* column);
+void R_DrawMaskedColumn2 (column2_t* column);	// [RH]
 
 
 void R_CacheSprite (spritedef_t *sprite);

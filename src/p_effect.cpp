@@ -107,22 +107,22 @@ void P_ThinkParticles ()
 
 	i = ActiveParticles;
 	prev = NULL;
-	while (i != -1)
+	while (i != NO_PARTICLE)
 	{
 		byte oldtrans;
 
 		particle = Particles + i;
-		i = particle->next;
+		i = particle->tnext;
 		oldtrans = particle->trans;
 		particle->trans -= particle->fade;
 		if (oldtrans < particle->trans || --particle->ttl == 0)
-		{
+		{ // The particle has expired, so free it
 			memset (particle, 0, sizeof(particle_t));
 			if (prev)
-				prev->next = i;
+				prev->tnext = i;
 			else
 				ActiveParticles = i;
-			particle->next = InactiveParticles;
+			particle->tnext = InactiveParticles;
 			InactiveParticles = particle - Particles;
 			continue;
 		}

@@ -91,6 +91,7 @@ enum SICommands
 	SI_PlayerReserve,
 	SI_PlayerSound,
 	SI_PlayerSoundDup,
+	SI_PlayerCompat,
 	SI_PlayerAlias,
 	SI_Alias,
 	SI_Map,
@@ -114,7 +115,7 @@ struct FBloodSFX
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void S_StartNamedSound (AActor *ent, fixed_t *pt, int channel, 
-	const char *name, float volume, float attenuation, BOOL looping, int tag=0);
+	const char *name, float volume, float attenuation, BOOL looping);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -150,6 +151,7 @@ static const char *SICommandStrings[] =
 	"$playerreserve",
 	"$playersound",
 	"$playersounddup",
+	"$playercompat",
 	"$playeralias",
 	"$alias",
 	"$map",
@@ -352,6 +354,11 @@ static int S_AddSound (const char *logicalname, int lumpnum)
 		if (sfx->bPlayerReserve)
 		{
 			SC_ScriptError ("Sounds that are reserved for players cannot be reassigned", NULL);
+		}
+		// Redefining a player compatibility sound will redefine the target instead.
+		if (sfx->bPlayerCompat)
+		{
+			sfx = &S_sfx[sfx->link];
 		}
 		if (sfx->bRandomHeader)
 		{
@@ -664,6 +671,20 @@ static void S_AddSNDINFO (int lump)
 				}
 				break;
 
+			case SI_PlayerCompat: {
+				// $playercompat <logical name> <player class> <gender> <logical name>
+				char pclass[MAX_SNDNAME+1];
+				int gender, refid;
+				int sfxfrom, aliasto;
+
+				S_ParsePlayerSoundCommon (pclass, gender, refid);
+				sfxfrom = S_AddSound (sc_String, -1);
+				aliasto = S_LookupPlayerSound (pclass, gender, refid);
+				S_sfx[sfxfrom].link = aliasto;
+				S_sfx[sfxfrom].bPlayerCompat = true;
+				}
+				break;
+
 			case SI_PlayerAlias: {
 				// $playeralias <player class> <gender> <logical name> <logical name of existing sound>
 				char pclass[MAX_SNDNAME+1];
@@ -681,6 +702,10 @@ static void S_AddSNDINFO (int lump)
 				SC_MustGetString ();
 				sfxfrom = S_AddSound (sc_String, -1);
 				SC_MustGetString ();
+				if (S_sfx[sfxfrom].bPlayerCompat)
+				{
+					sfxfrom = S_sfx[sfxfrom].link;
+				}
 				S_sfx[sfxfrom].link = S_FindSoundTentative (sc_String);
 				}
 				break;

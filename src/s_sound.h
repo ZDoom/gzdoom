@@ -50,6 +50,7 @@ struct sfxinfo_t
 	WORD		bForce11025:1;
 	WORD		bForce22050:1;
 	WORD		bLoadRAW:1;
+	WORD		bPlayerCompat:1;
 
 	WORD		link;
 
@@ -83,15 +84,15 @@ void S_Start ();
 // Start sound for thing at <ent>
 void S_Sound (int channel, const char *name, float volume, int attenuation);
 void S_Sound (AActor *ent, int channel, const char *name, float volume, int attenuation);
-void S_Sound (fixed_t *pt, int channel, const char *name, float volume, int attenuation, int tag=0);
+void S_Sound (fixed_t *pt, int channel, const char *name, float volume, int attenuation);
 void S_Sound (fixed_t x, fixed_t y, int channel, const char *name, float volume, int attenuation);
 void S_LoopedSound (AActor *ent, int channel, const char *name, float volume, int attenuation);
 void S_LoopedSound (fixed_t *pt, int channel, const char *name, float volume, int attenuation);
 void S_SoundID (int channel, int sfxid, float volume, int attenuation);
 void S_SoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
-void S_SoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation, int tag=0);
+void S_SoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
 void S_LoopedSoundID (AActor *ent, int channel, int sfxid, float volume, int attenuation);
-void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation, int tag=0);
+void S_LoopedSoundID (fixed_t *pt, int channel, int sfxid, float volume, int attenuation);
 
 // sound channels
 // channel 0 never willingly overrides
@@ -117,7 +118,7 @@ int S_PickReplacement (int refid);
 
 // [RH] From Hexen.
 //		Prevents too many of the same sound from playing simultaneously.
-BOOL S_StopSoundID (int sound_id, int priority, int tag);
+BOOL S_StopSoundID (int sound_id, int priority, fixed_t x, fixed_t y);
 
 // Stops a sound emanating from one of an entity's channels
 void S_StopSound (AActor *ent, int channel);

@@ -95,7 +95,6 @@ IMPLEMENT_ACTOR (ABulletPuff, Doom, -1, 131)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (TRANSLUC50)
-	PROP_Mass (5)
 
 	PROP_SpawnState (0)
 END_DEFAULTS

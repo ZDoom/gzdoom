@@ -267,7 +267,7 @@ DehInfo deh =
 	  2,	// .KFAAC
 	  0,	// .Infight
 	"PLAY",	// Name of player sprite
-	STYLE_Translucent,	// Rocket explosion style
+	255,	// Rocket explosion style, 255=use cvar
 	FRACUNIT*2/3		// Rocket explosion alpha
 };
 

@@ -262,6 +262,11 @@ void cht_Give (player_t *player, char *name, int amount)
 	if (player != &players[consoleplayer])
 		Printf ("%s is a cheater: give %s\n", player->userinfo.netname, name);
 
+	if (player->mo == NULL)
+	{
+		return;
+	}
+
 	if (stricmp (name, "all") == 0)
 		giveall = true;
 	else
@@ -373,10 +378,13 @@ void cht_Give (player_t *player, char *name, int amount)
 
 void cht_Suicide (player_t *plyr)
 {
-	plyr->mo->flags |= MF_SHOOTABLE;
-	while (plyr->health > 0)
-		P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, 10000, MOD_SUICIDE);
-	plyr->mo->flags &= ~MF_SHOOTABLE;
+	if (plyr->mo != NULL)
+	{
+		plyr->mo->flags |= MF_SHOOTABLE;
+		while (plyr->health > 0)
+			P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, 10000, MOD_SUICIDE);
+		plyr->mo->flags &= ~MF_SHOOTABLE;
+	}
 }
 
 BOOL CheckCheatmode ();

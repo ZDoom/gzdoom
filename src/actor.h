@@ -507,7 +507,7 @@ public:
 	void SetOrigin (fixed_t x, fixed_t y, fixed_t z);
 	bool SetState (FState *newstate);
 	bool SetStateNF (FState *newstate);
-	void UpdateWaterLevel ();
+	bool UpdateWaterLevel (fixed_t oldz);
 
 	static FState States[];
 };

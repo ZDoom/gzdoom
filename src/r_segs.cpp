@@ -184,6 +184,27 @@ static void BlastMaskedColumn (void (*blastfunc)(column_t *), int texnum)
 	spryscale += rw_scalestep;
 }
 
+static void BlastMaskedColumn2 (void (*blastfunc)(column2_t *), int texnum)
+{
+	if (maskedtexturecol[dc_x] != SHRT_MAX)
+	{
+		// calculate lighting
+		if (!fixedcolormap)
+		{
+			dc_colormap = basecolormap + (GETPALOOKUP (rw_light, wallshade) << COLORMAPSHIFT);
+		}
+
+		dc_iscale = MaskedSWall[dc_x];
+		sprtopscreen = centeryfrac - FixedMul (dc_texturemid, spryscale);
+		
+		// draw the texture
+		blastfunc ((column2_t *)((byte *)R_GetColumn(texnum, maskedtexturecol[dc_x]) - 4));
+		maskedtexturecol[dc_x] = SHRT_MAX;
+	}
+	rw_light += rw_lightstep;
+	spryscale += rw_scalestep;
+}
+
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 {
 	int 		lightnum;
@@ -317,8 +338,16 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// draw the columns one at a time
 	if (drawmode == DoDraw0)
 	{
-		for (dc_x = x1; dc_x <= x2; dc_x++)
-			BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+		if (texturetype2[texnum])
+		{
+			for (dc_x = x1; dc_x <= x2; dc_x++)
+				BlastMaskedColumn2 (R_DrawMaskedColumn2, texnum);
+		}
+		else
+		{
+			for (dc_x = x1; dc_x <= x2; dc_x++)
+				BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+		}
 	}
 	else
 	{
@@ -326,34 +355,59 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		int stop = (x2+1) & ~3;
 
 		if (x1 >= x2)
-			return;;
+			return;
 
 		dc_x = x1;
 
-		while ((dc_x < stop) && (dc_x & 3))
+		if (texturetype2[texnum])
 		{
-			BlastMaskedColumn (R_DrawMaskedColumn, texnum);
-			dc_x++;
-		}
+			while ((dc_x < stop) && (dc_x & 3))
+			{
+				BlastMaskedColumn2 (R_DrawMaskedColumn2, texnum);
+				dc_x++;
+			}
 
-		while (dc_x < stop)
-		{
-			rt_initcols();
-			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
-			dc_x++;
-			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
-			dc_x++;
-			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
-			dc_x++;
-			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
-			rt_draw4cols (dc_x - 3);
-			dc_x++;
-		}
+			while (dc_x < stop)
+			{
+				rt_initcols();
+				BlastMaskedColumn2 (R_DrawMaskedColumnHoriz2, texnum); dc_x++;
+				BlastMaskedColumn2 (R_DrawMaskedColumnHoriz2, texnum); dc_x++;
+				BlastMaskedColumn2 (R_DrawMaskedColumnHoriz2, texnum); dc_x++;
+				BlastMaskedColumn2 (R_DrawMaskedColumnHoriz2, texnum);
+				rt_draw4cols (dc_x - 3);
+				dc_x++;
+			}
 
-		while (dc_x <= x2)
+			while (dc_x <= x2)
+			{
+				BlastMaskedColumn2 (R_DrawMaskedColumn2, texnum);
+				dc_x++;
+			}
+		}
+		else
 		{
-			BlastMaskedColumn (R_DrawMaskedColumn, texnum);
-			dc_x++;
+			while ((dc_x < stop) && (dc_x & 3))
+			{
+				BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+				dc_x++;
+			}
+
+			while (dc_x < stop)
+			{
+				rt_initcols();
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum); dc_x++;
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum); dc_x++;
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum); dc_x++;
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+				rt_draw4cols (dc_x - 3);
+				dc_x++;
+			}
+
+			while (dc_x <= x2)
+			{
+				BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+				dc_x++;
+			}
 		}
 	}
 
@@ -1079,6 +1133,11 @@ void R_StoreWallRange (int start, int stop)
 			ds_p->sx2 = WallSX2;
 			ds_p->sz1 = WallSZ1;
 			ds_p->sz2 = WallSZ2;
+
+			if (ds_p->bFogBoundary || ds_p->maskedtexturecol != -1)
+			{
+				InterestingDrawsegs.Push (ds_p - drawsegs);
+			}
 		}
 	}
 	

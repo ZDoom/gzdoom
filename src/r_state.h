@@ -37,10 +37,14 @@ extern fixed_t* 		textureheight;
 
 // [RH] needed for wallscan
 extern byte*			textureheightlog2;
+extern int*				texturewidthmask;
 
 // [RH] needed for texture scaling
 extern byte*			texturescalex;
 extern byte*			texturescaley;
+
+// [RH] texture uses 2 bytes for column lengths if true
+extern byte*			texturetype2;
 
 // [RH] don't slap decals on top of textures marked true
 extern byte*			texturenodecals;

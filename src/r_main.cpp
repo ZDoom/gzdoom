@@ -1037,18 +1037,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	WindowRight = ds->x2;
 	MirrorFlags = (depth + 1) & 1;
 
-	R_RenderBSPNode (numnodes - 1, -1);
-
-	if (r_particles)
-	{
-		// [RH] add all the particles
-		int i = ActiveParticles;
-		while (i != -1)
-		{
-			R_ProjectParticle (Particles + i);
-			i = Particles[i].next;
-		}
-	}
+	R_RenderBSPNode (numnodes - 1);
 
 	R_DrawPlanes ();
 	R_DrawSkyBoxes ();
@@ -1117,21 +1106,6 @@ static void R_SetupBuffer ()
 //
 //==========================================================================
 
-CVAR (Int, restrict, -1, 0)
-#ifdef _DEBUG
-#include "c_dispatch.h"
-CCMD (nodefun)
-{
-	if (argv.argc() != 2)
-		return;
-	int i = atoi (argv[1]);
-	unsigned short *kids = nodes[i].children;
-	Printf ("Left: %d (%c)   Right: %d (%c)\n",
-		kids[0] & ~NF_SUBSECTOR, kids[0] & NF_SUBSECTOR ? 's' : 'n',
-		kids[1] & ~NF_SUBSECTOR, kids[1] & NF_SUBSECTOR ? 's' : 'n');
-}
-#endif
-
 void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 {
 	WallCycles = PlaneCycles = MaskedCycles = WallScanCycles = 0;
@@ -1173,6 +1147,9 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 	// [RH] Hack to make windows into underwater areas possible
 	r_fakingunderwater = false;
 
+	// [RH] Setup particles for this frame
+	R_FindParticleSubsectors ();
+
 	clock (WallCycles);
 	// Never draw the player unless in chasecam mode
 	if (camera->player && !(player->cheats & CF_CHASECAM))
@@ -1180,26 +1157,15 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 		WORD savedflags = camera->renderflags;
 		camera->renderflags |= RF_INVISIBLE;
 //memset (screen->GetBuffer(), 255, screen->GetWidth()*screen->GetHeight());
-		R_RenderBSPNode (numnodes - 1, restrict);
+		R_RenderBSPNode (numnodes - 1);
 		camera->renderflags = savedflags;
 	}
 	else
 	{	// The head node is the last node output.
 		// [[RH] Not that this tells me anything...]
-		R_RenderBSPNode (numnodes - 1, -1);
+		R_RenderBSPNode (numnodes - 1);
 	}
 	unclock (WallCycles);
-
-	if (r_particles)
-	{
-		// [RH] add all the particles
-		int i = ActiveParticles;
-		while (i != -1)
-		{
-			R_ProjectParticle (Particles + i);
-			i = Particles[i].next;
-		}
-	}
 
 	if (lengthyCallback != NULL)	lengthyCallback ();
 

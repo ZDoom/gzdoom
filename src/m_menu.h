@@ -75,7 +75,7 @@ void M_RefreshModesList ();
 void M_ActivateMenuInput ();
 void M_DeactivateMenuInput ();
 
-void M_NotifyNewSave (const char *file, const char *title);
+void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave);
 
 //
 // MENU TYPEDEFS

@@ -27,6 +27,10 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	AActor *actor;
 
 	actor = p->mo;
+	if (actor == NULL)
+	{
+		return false;
+	}
 	if (actor->flags3 & MF3_DONTMORPH)
 	{
 		return false;
@@ -46,6 +50,7 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	}
 
 	morphed = Spawn (spawntype, actor->x, actor->y, actor->z);
+	DObject::PointerSubstitution (actor, morphed);
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
 	morphed->tracer = actor;
@@ -115,6 +120,7 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 	}
 	pmo->player = NULL;
 
+	DObject::PointerSubstitution (pmo, mo);
 	mo->angle = pmo->angle;
 	mo->player = player;
 	mo->reactiontime = 18;
@@ -166,6 +172,7 @@ bool P_MorphMonster (AActor *actor, const TypeInfo *spawntype)
 	}
 
 	morphed = Spawn (spawntype, actor->x, actor->y, actor->z);
+	DObject::PointerSubstitution (actor, morphed);
 	morphed->tid = actor->tid;
 	morphed->angle = actor->angle;
 	morphed->target = actor->target;
@@ -238,6 +245,7 @@ bool P_UpdateMorphedMonster (AActor *beast, int tics)
 	memcpy (actor->args, beast->args, sizeof(actor->args));
 	actor->AddToHash ();
 	beast->tracer = NULL;
+	DObject::PointerSubstitution (beast, actor);
 	beast->Destroy ();
 	Spawn<ATeleportFog> (beast->x, beast->y, beast->z + TELEFOGHEIGHT);
 	return true;
@@ -382,7 +390,7 @@ int APorkFX::DoSpecialDamage (AActor *target, int damage)
 
 // Porkalator ---------------------------------------------------------------
 
-BASIC_ARTI (Pork, arti_pork, "PORKALATOR")
+BASIC_ARTI (Pork, arti_pork, GStrings(TXT_ARTIEGG2))
 	AT_GAME_SET_FRIEND (Pork)
 private:
 	static bool ActivateArti (player_t *player, artitype_t arti)

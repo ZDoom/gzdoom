@@ -255,73 +255,6 @@ artitype_t P_FindNamedInventory (const char *name)
 	return arti_none;
 }
 
-
-#define HEAL_RADIUS_DIST	255*FRACUNIT
-
-// Do class specific effect for everyone in radius
-bool P_HealRadius (player_t *player)
-{
-	AActor *pmo = player->mo;
-	TThinkerIterator<APlayerPawn> iterator;
-	APlayerPawn *pawn;
-	bool effective = false;
-
-	while ( (pawn = iterator.Next ()) )
-	{
-		if (!pawn->player) continue;
-		if (pawn->health <= 0) continue;
-		if (HEAL_RADIUS_DIST <=
-			P_AproxDistance (pmo->x - pawn->x, pmo->y - pawn->y))
-		{ // Out of range
-			continue;
-		}
-
-		if (player->mo->HealOther (pawn->player))
-		{
-			effective = true;
-			S_Sound (pawn, CHAN_AUTO, "SFX_MYSTICINCANT", 1, ATTN_NORM);
-		}
-	}
-#if 0
-	int amount;
-		switch (player->class)
-		{
-			case PCLASS_FIGHTER:		// Radius armor boost
-				if ((P_GiveArmor(mo->player, ARMOR_ARMOR, 1)) ||
-					(P_GiveArmor(mo->player, ARMOR_SHIELD, 1)) ||
-					(P_GiveArmor(mo->player, ARMOR_HELMET, 1)) ||
-					(P_GiveArmor(mo->player, ARMOR_AMULET, 1)))
-				{
-					effective=true;
-					S_StartSound(mo, SFX_MYSTICINCANT);
-				}
-				break;
-			case PCLASS_CLERIC:			// Radius heal
-				amount = 50 + (P_Random()%50);
-				if (P_GiveBody(mo->player, amount))
-				{
-					effective=true;
-					S_StartSound(mo, SFX_MYSTICINCANT);
-				}
-				break;
-			case PCLASS_MAGE:			// Radius mana boost
-				amount = 50 + (P_Random()%50);
-				if ((P_GiveMana(mo->player, MANA_1, amount)) ||
-					(P_GiveMana(mo->player, MANA_2, amount)))
-				{
-					effective=true;
-					S_StartSound(mo, SFX_MYSTICINCANT);
-				}
-				break;
-			case PCLASS_PIG:
-			default:
-				break;
-		}
-	}
-#endif
-	return effective;
-}
-
 //----------------------------------------------------------------------------
 //
 // PROC P_PlayerRemoveArtifact
@@ -348,6 +281,10 @@ void P_PlayerRemoveArtifact (player_t *player, int slot)
 
 bool P_PlayerUseArtifact (player_t *player, artitype_t arti)
 {
+	if (player->cheats & CF_TOTALLYFROZEN)
+	{ // No artifact use if you're totally frozen
+		return false;
+	}
 	if (P_UseArtifact (player, arti))
 	{ // Artifact was used - remove it from inventory
 		P_PlayerRemoveArtifact (player, arti);
@@ -393,82 +330,4 @@ bool P_UseArtifact (player_t *player, artitype_t arti)
 		return ArtiDispatch[arti] (player, arti);
 	}
 	return false;
-#if 0
-	switch (arti)
-	{
-	case arti_summon:
-		mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(ASummonFX));
-		if (mo)
-		{
-			mo->target = player->mo;
-			mo->special1 = (long)(player->mo);
-			mo->momz = 5*FRACUNIT;
-		}
-		break;
-
-	case arti_teleportother:
-		P_ArtiTeleportOther (player);
-		break;
-
-	case arti_poisonbag:
-		player->mo->ThrowPoisonBag ();
-		break;
-
-	case arti_speed:
-		if (!P_GivePower (player, pw_speed))
-		{
-			return false;
-		}
-		break;
-
-	case arti_boostmana:
-		{
-			int i;
-			bool success = false;
-			for (i = 0; i < NUMAMMO; i++)
-			{
-				success |= P_GiveAmmo (player, (ammotype_t)i, player->maxammo[i]);
-			}
-			return success;
-		}
-		break;
-
-	case arti_boostarmor:
-		if (gameinfo.gametype == GAME_Hexen)
-		{
-			int count = 0;
-			int i;
-
-			for (i = 0; i < NUMARMOR; i++)
-			{
-				count += P_GiveArmor (player, (armortype_t)i, 1); // 1 point per armor
-			}
-			if (!count)
-			{
-				return false;
-			}
-		}
-		else
-		{
-			return false;
-		}
-		break;
-
-	default:
-		if (arti >= arti_firstpuzzitem && arti < NUMARTIFACTS)
-		{
-			if (P_UsePuzzleItem (player, arti - arti_firstpuzzitem))
-			{
-				return true;
-			}
-			else
-			{
-				//P_SetYellowMessage (player, TXT_USEPUZZLEFAILED, false);
-				return false;
-			}
-			break;
-		}
-		return false;
-	}
-#endif
 }

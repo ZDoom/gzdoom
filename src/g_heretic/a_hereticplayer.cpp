@@ -13,6 +13,9 @@ void A_PlayerScream (AActor *);
 void A_CheckSkullFloor (AActor *);
 void A_CheckSkullDone (AActor *);
 void A_FlameSnd (AActor *);
+void A_HereticSkinCheck1 (AActor *);
+void A_HereticSkinCheck2 (AActor *);
+void A_XScream (AActor *);
 
 // The player ---------------------------------------------------------------
 
@@ -43,7 +46,7 @@ FState AHereticPlayer::States[] =
 	S_NORMAL (PLAY, 'G',	4, A_Pain						, &States[S_PLAY]),
 
 #define S_PLAY_DIE (S_PLAY_PAIN+2)
-	S_NORMAL (PLAY, 'H',	6, NULL 						, &States[S_PLAY_DIE+1]),
+	S_NORMAL (PLAY, 'H',	6, A_HereticSkinCheck1			, &States[S_PLAY_DIE+1]),
 	S_NORMAL (PLAY, 'I',	6, A_PlayerScream				, &States[S_PLAY_DIE+2]),
 	S_NORMAL (PLAY, 'J',	6, NULL 						, &States[S_PLAY_DIE+3]),
 	S_NORMAL (PLAY, 'K',	6, NULL 						, &States[S_PLAY_DIE+4]),
@@ -54,7 +57,7 @@ FState AHereticPlayer::States[] =
 	S_NORMAL (PLAY, 'P',   -1, NULL							, NULL),
 
 #define S_PLAY_XDIE (S_PLAY_DIE+9)
-	S_NORMAL (PLAY, 'Q',	5, A_PlayerScream 				, &States[S_PLAY_XDIE+1]),
+	S_NORMAL (PLAY, 'Q',	5, A_HereticSkinCheck2			, &States[S_PLAY_XDIE+1]),
 	S_NORMAL (PLAY, 'R',	0, A_NoBlocking					, &States[S_PLAY_XDIE+2]),
 	S_NORMAL (PLAY, 'R',	5, A_SkullPop					, &States[S_PLAY_XDIE+3]),
 	S_NORMAL (PLAY, 'S',	5, NULL			 				, &States[S_PLAY_XDIE+4]),
@@ -84,7 +87,27 @@ FState AHereticPlayer::States[] =
 	S_BRIGHT (FDTH, 'P',	4, NULL 						, &States[S_PLAY_FDTH+16]),
 	S_BRIGHT (FDTH, 'Q',	5, NULL 						, &States[S_PLAY_FDTH+17]),
 	S_BRIGHT (FDTH, 'R',	4, NULL 						, &States[S_PLAY_FDTH+18]),
-	S_NORMAL (ACLO, 'E',   35, A_CheckBurnGone				, &States[S_PLAY_FDTH+18])
+	S_NORMAL (ACLO, 'E',   35, A_CheckBurnGone				, &States[S_PLAY_FDTH+18]),
+
+#define S_DOOM_DIE (S_PLAY_FDTH+19)
+	S_NORMAL (PLAY, 'H',   10, NULL 						, &States[S_DOOM_DIE+1]),
+	S_NORMAL (PLAY, 'I',   10, A_PlayerScream				, &States[S_DOOM_DIE+2]),
+	S_NORMAL (PLAY, 'J',   10, A_NoBlocking					, &States[S_DOOM_DIE+3]),
+	S_NORMAL (PLAY, 'K',   10, NULL 						, &States[S_DOOM_DIE+4]),
+	S_NORMAL (PLAY, 'L',   10, NULL 						, &States[S_DOOM_DIE+5]),
+	S_NORMAL (PLAY, 'M',   10, NULL 						, &States[S_DOOM_DIE+6]),
+	S_NORMAL (PLAY, 'N',   -1, NULL							, NULL),
+
+#define S_DOOM_XDIE (S_DOOM_DIE+7)
+	S_NORMAL (PLAY, 'O',	5, NULL 						, &States[S_DOOM_XDIE+1]),
+	S_NORMAL (PLAY, 'P',	5, A_XScream					, &States[S_DOOM_XDIE+2]),
+	S_NORMAL (PLAY, 'Q',	5, A_NoBlocking					, &States[S_DOOM_XDIE+3]),
+	S_NORMAL (PLAY, 'R',	5, NULL 						, &States[S_DOOM_XDIE+4]),
+	S_NORMAL (PLAY, 'S',	5, NULL 						, &States[S_DOOM_XDIE+5]),
+	S_NORMAL (PLAY, 'T',	5, NULL 						, &States[S_DOOM_XDIE+6]),
+	S_NORMAL (PLAY, 'U',	5, NULL 						, &States[S_DOOM_XDIE+7]),
+	S_NORMAL (PLAY, 'V',	5, NULL 						, &States[S_DOOM_XDIE+8]),
+	S_NORMAL (PLAY, 'W',   -1, NULL							, NULL)
 };
 
 IMPLEMENT_ACTOR (AHereticPlayer, Heretic, -1, 0)
@@ -219,3 +242,34 @@ void A_FlameSnd (AActor *actor)
 	S_Sound (actor, CHAN_BODY, "misc/burn", 1, ATTN_NORM);	// Burn sound
 }
 
+//==========================================================================
+//
+// A_HereticSkinCheck1
+//
+//==========================================================================
+
+void A_HereticSkinCheck1 (AActor *actor)
+{
+	if (skins[actor->player->userinfo.skin].game == GAME_Doom)
+	{
+		actor->SetState (&AHereticPlayer::States[S_DOOM_DIE]);
+	}
+}
+
+//==========================================================================
+//
+// A_HereticSkinCheck2
+//
+//==========================================================================
+
+void A_HereticSkinCheck2 (AActor *actor)
+{
+	if (skins[actor->player->userinfo.skin].game == GAME_Doom)
+	{
+		actor->SetState (&AHereticPlayer::States[S_DOOM_XDIE]);
+	}
+	else
+	{
+		A_PlayerScream (actor);
+	}
+}

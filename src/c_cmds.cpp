@@ -574,5 +574,8 @@ CCMD (warp)
 	{
 		Printf ("Usage: warp <x> <y>\n");
 	}
-	P_TeleportMove (players[consoleplayer].mo, fixed_t(atof(argv[1])*65536.0), fixed_t(atof(argv[2])*65536.0), ONFLOORZ, true);
+	else
+	{
+		P_TeleportMove (players[consoleplayer].mo, fixed_t(atof(argv[1])*65536.0), fixed_t(atof(argv[2])*65536.0), ONFLOORZ, true);
+	}
 }

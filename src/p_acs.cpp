@@ -35,6 +35,8 @@
 ** a fine tooth comb.
 */
 
+#include <assert.h>
+
 #include "templates.h"
 #include "doomdef.h"
 #include "p_local.h"
@@ -58,8 +60,10 @@
 #include "v_video.h"
 #include "w_wad.h"
 
- FRandom pr_acs ("ACS");
+FRandom pr_acs ("ACS");
 
+// I imagine this much stack space is probably overkill, but it could
+// potentially get used with recursive functions.
 #define STACK_SIZE 4096
 
 #define CLAMPCOLOR(c)	(EColorRange)((unsigned)(c)>CR_UNTRANSLATED?CR_UNTRANSLATED:(c))
@@ -1645,9 +1649,15 @@ void DLevelScript::Serialize (FArchive &arc)
 
 	Super::Serialize (arc);
 	arc << next << prev
-		<< script
-		<< sp
-		<< state
+		<< script;
+
+	if (SaveVersion < 306)
+	{
+		int sp;
+		arc << sp;
+	}
+
+	arc	<< state
 		<< statedata
 		<< activator
 		<< activationline
@@ -1911,6 +1921,12 @@ int DLevelScript::DoSpawn (int type, fixed_t x, fixed_t y, fixed_t z, int tid, i
 			}
 			else
 			{
+				// If this is a monster, subtract it from the total monster
+				// count, because it already added to it during spawning.
+				if (actor->flags & MF_COUNTKILL)
+				{
+					level.total_monsters--;
+				}
 				actor->Destroy ();
 				actor = NULL;
 			}
@@ -2103,7 +2119,7 @@ void DLevelScript::RunScript ()
 	}
 
 	int *pc = this->pc;
-	int sp = this->sp;
+	int sp = 0;
 	ACSFormat fmt = activeBehavior->GetFormat();
 	int runaway = 0;	// used to prevent infinite loops
 	int pcd;
@@ -2126,7 +2142,19 @@ void DLevelScript::RunScript ()
 			break;
 		}
 
-		pcd = NEXTBYTE;
+		if (fmt == ACS_LittleEnhanced)
+		{
+			pcd = getbyte(pc);
+			if (pcd >= 256-16)
+			{
+				pcd = (256-16) + ((pcd - (256-16)) << 8) + getbyte(pc);
+			}
+		}
+		else
+		{
+			pcd = NEXTWORD;
+		}
+
 		switch (pcd)
 		{
 		default:
@@ -2467,6 +2495,16 @@ void DLevelScript::RunScript ()
 			sp -= 2;
 			break;
 
+		case PCD_ASSIGNWORLDARRAY:
+			ACS_WorldArrays[NEXTBYTE].SetVal (STACK(2), STACK(1));
+			sp -= 2;
+			break;
+
+		case PCD_ASSIGNGLOBALARRAY:
+			ACS_GlobalArrays[NEXTBYTE].SetVal (STACK(2), STACK(1));
+			sp -= 2;
+			break;
+
 		case PCD_PUSHSCRIPTVAR:
 			PushToStack (locals[NEXTBYTE]);
 			break;
@@ -2485,6 +2523,14 @@ void DLevelScript::RunScript ()
 
 		case PCD_PUSHMAPARRAY:
 			STACK(1) = activeBehavior->GetArrayVal (*(activeBehavior->MapVars[NEXTBYTE]), STACK(1));
+			break;
+
+		case PCD_PUSHWORLDARRAY:
+			STACK(1) = ACS_WorldArrays[NEXTBYTE].GetVal (STACK(1));
+			break;
+
+		case PCD_PUSHGLOBALARRAY:
+			STACK(1) = ACS_GlobalArrays[NEXTBYTE].GetVal (STACK(1));
 			break;
 
 		case PCD_ADDSCRIPTVAR:
@@ -2512,6 +2558,24 @@ void DLevelScript::RunScript ()
 				int a = ACS_WorldVars[NEXTBYTE];
 				int i = STACK(2);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) + STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_ADDWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) + STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_ADDGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) + STACK(1));
 				sp -= 2;
 			}
 			break;
@@ -2545,6 +2609,24 @@ void DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_SUBWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) - STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_SUBGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) - STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_MULSCRIPTVAR:
 			locals[NEXTBYTE] *= STACK(1);
 			sp--;
@@ -2570,6 +2652,24 @@ void DLevelScript::RunScript ()
 				int a = ACS_WorldVars[NEXTBYTE];
 				int i = STACK(2);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) * STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_MULWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) * STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_MULGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) * STACK(1));
 				sp -= 2;
 			}
 			break;
@@ -2603,6 +2703,24 @@ void DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_DIVWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) / STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_DIVGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) / STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_MODSCRIPTVAR:
 			locals[NEXTBYTE] %= STACK(1);
 			sp--;
@@ -2632,6 +2750,24 @@ void DLevelScript::RunScript ()
 			}
 			break;
 
+		case PCD_MODWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) % STACK(1));
+				sp -= 2;
+			}
+			break;
+
+		case PCD_MODGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(2);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) % STACK(1));
+				sp -= 2;
+			}
+			break;
+
 		case PCD_INCSCRIPTVAR:
 			++locals[NEXTBYTE];
 			break;
@@ -2651,8 +2787,26 @@ void DLevelScript::RunScript ()
 		case PCD_INCMAPARRAY:
 			{
 				int a = ACS_WorldVars[NEXTBYTE];
-				int i = STACK(2);
+				int i = STACK(1);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) + 1);
+				sp--;
+			}
+			break;
+
+		case PCD_INCWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(1);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) + 1);
+				sp--;
+			}
+			break;
+
+		case PCD_INCGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(1);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) + 1);
 				sp--;
 			}
 			break;
@@ -2676,8 +2830,26 @@ void DLevelScript::RunScript ()
 		case PCD_DECMAPARRAY:
 			{
 				int a = ACS_WorldVars[NEXTBYTE];
-				int i = STACK(2);
+				int i = STACK(1);
 				activeBehavior->SetArrayVal (a, i, activeBehavior->GetArrayVal (a, i) - 1);
+				sp--;
+			}
+			break;
+
+		case PCD_DECWORLDARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(1);
+				ACS_WorldArrays[a].SetVal (i, ACS_WorldArrays[a].GetVal (i) - 1);
+				sp--;
+			}
+			break;
+
+		case PCD_DECGLOBALARRAY:
+			{
+				int a = NEXTBYTE;
+				int i = STACK(1);
+				ACS_GlobalArrays[a].SetVal (i, ACS_GlobalArrays[a].GetVal (i) - 1);
 				sp--;
 			}
 			break;
@@ -3114,7 +3286,7 @@ void DLevelScript::RunScript ()
 				{
 					S_Sound (
 						activationline->frontsector->soundorg,
-						CHAN_BODY,
+						CHAN_AUTO,
 						lookup,
 						(float)(STACK(1)) / 127.f,
 						ATTN_NORM);
@@ -3122,7 +3294,7 @@ void DLevelScript::RunScript ()
 				else
 				{
 					S_Sound (
-						CHAN_BODY,
+						CHAN_AUTO,
 						lookup,
 						(float)(STACK(1)) / 127.f,
 						ATTN_NORM);
@@ -3643,7 +3815,7 @@ void DLevelScript::RunScript ()
 	}
 
 	this->pc = pc;
-	this->sp = sp;
+	assert (sp == 0);
 
 	if (screen != NULL)
 	{
@@ -3689,7 +3861,6 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, int *code, FBeh
 		new DACSThinker;
 
 	script = num;
-	sp = 0;
 	localvars[0] = arg0;
 	localvars[1] = arg1;
 	localvars[2] = arg2;

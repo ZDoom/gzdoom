@@ -630,6 +630,92 @@ BOOL P_LookForMonsters (AActor *actor)
 	return false;
 }
 
+//============================================================================
+//
+// P_LookForTID
+//
+// Selects a live monster with the given TID
+//
+//============================================================================
+
+BOOL P_LookForTID (AActor *actor, BOOL allaround)
+{
+	FActorIterator iterator (actor->TIDtoHate, actor->LastLook.Actor);
+	int c;
+	AActor *other;
+
+	c = 0;
+	while ((other = iterator.Next()) != NULL)
+	{
+		if (++c == 3 || other == actor->LastLook.Actor)
+		{
+			// done looking
+			break;
+		}
+
+		if (other == actor)
+			continue;			// don't hate self
+
+		if (!(other->flags & MF_SHOOTABLE))
+			continue;			// not shootable (observer or dead)
+
+		if (other->health <= 0)
+			continue;			// dead
+
+		if (other->flags2 & MF2_DORMANT)
+			continue;			// don't target dormant things
+
+		if (!(actor->flags3 & MF3_NOSIGHTCHECK))
+		{
+			if (!P_CheckSight (actor, other, false))
+				continue;			// out of sight
+							
+			if (!allaround)
+			{
+				angle_t an = R_PointToAngle2 (actor->x, actor->y, 
+											other->x, other->y)
+					- actor->angle;
+				
+				if (an > ANG90 && an < ANG270)
+				{
+					fixed_t dist = P_AproxDistance (other->x - actor->x,
+											other->y - actor->y);
+					// if real close, react anyway
+					if (dist > MELEERANGE)
+						continue;	// behind back
+				}
+			}
+		}
+		
+		// [RH] Need to be sure the reactiontime is 0 if the monster is
+		//		leaving its goal to go after something else.
+		if (actor->goal && actor->target == actor->goal)
+			actor->reactiontime = 0;
+
+		actor->target = other;
+		actor->LastLook.Actor = other;
+		return true;
+	}
+	actor->LastLook.Actor = other;
+	if (actor->target == NULL)
+	{
+		// [RH] use goal as target
+		if (actor->goal != NULL)
+		{
+			actor->target = actor->goal;
+			return true;
+		}
+		// Use last known enemy if no hatee sighted -- killough 2/15/98:
+		if (actor->lastenemy != NULL && actor->lastenemy->health > 0)
+		{
+			actor->target = actor->lastenemy;
+			actor->lastenemy = NULL;
+			return true;
+		}
+	}
+	return false;
+}
+
 /*
 ================
 =
@@ -645,9 +731,13 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 	int 		c;
 	int 		stop;
 	player_t*	player;
-	sector_t*	sector;
 	angle_t 	an;
 	fixed_t 	dist;
+
+	if (actor->TIDtoHate != 0)
+	{
+		return P_LookForTID (actor, allaround);
+	}
 
 	if (gameinfo.gametype != GAME_Doom &&
 		!multiplayer &&
@@ -656,16 +746,17 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 		return P_LookForMonsters (actor);
 	}
 
-	sector = actor->Sector;	
 	c = 0;
-	stop = (actor->lastlook-1) & (MAXPLAYERS-1);
+	stop = (actor->LastLook.PlayerNumber - 1) & (MAXPLAYERS-1);
 		
-	for ( ; ; actor->lastlook = (actor->lastlook+1)&(MAXPLAYERS-1) )
+	for (;;)
 	{
-		if (!playeringame[actor->lastlook])
+		actor->LastLook.PlayerNumber = (actor->LastLook.PlayerNumber + 1) & (MAXPLAYERS-1);
+
+		if (!playeringame[actor->LastLook.PlayerNumber])
 			continue;
-						
-		if (++c == 3 || actor->lastlook == stop)
+
+		if (++c == 3 || actor->LastLook.PlayerNumber == stop)
 		{
 			// done looking
 			if (actor->target == NULL)
@@ -686,8 +777,8 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 			}
 			return false;
 		}
-		
-		player = &players[actor->lastlook];
+
+		player = &players[actor->LastLook.PlayerNumber];
 
 		if (!(player->mo->flags & MF_SHOOTABLE))
 			continue;			// not shootable (observer or dead)
@@ -700,7 +791,7 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 
 		if (!P_CheckSight (actor, player->mo, false))
 			continue;			// out of sight
-						
+
 		if (!allaround)
 		{
 			an = R_PointToAngle2 (actor->x,
@@ -708,7 +799,7 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 								  player->mo->x,
 								  player->mo->y)
 				- actor->angle;
-			
+
 			if (an > ANG90 && an < ANG270)
 			{
 				dist = P_AproxDistance (player->mo->x - actor->x,
@@ -766,16 +857,26 @@ void A_Look (AActor *actor)
 	}
 
 	actor->threshold = 0;		// any shot will wake up
-	targ = actor->Sector->soundtarget;
 
-	// [RH] If the soundtarget is dead, don't chase it
-	if (targ != NULL && targ->health <= 0)
+	if (actor->TIDtoHate != 0)
 	{
 		targ = NULL;
 	}
+	else
+	{
+		targ = actor->Sector->soundtarget;
 
-	if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
-		return;
+		// [RH] If the soundtarget is dead, don't chase it
+		if (targ != NULL && targ->health <= 0)
+		{
+			targ = NULL;
+		}
+
+		if (targ && targ->player && (targ->player->cheats & CF_NOTARGET))
+		{
+			return;
+		}
+	}
 
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
@@ -981,12 +1082,26 @@ void A_Chase (AActor *actor)
 
  nomissile:
 	// possibly choose another target
-	if (multiplayer
+	if ((multiplayer || actor->TIDtoHate)
 		&& !actor->threshold
 		&& !P_CheckSight (actor, actor->target, false) )
 	{
-		if (P_LookForPlayers (actor, true))
+		bool lookForBetter;
+		BOOL gotNew;
+		if (actor->flags3 & MF3_NOSIGHTCHECK)
+		{
+			actor->flags3 &= ~MF3_NOSIGHTCHECK;
+			lookForBetter = true;
+		}
+		gotNew = P_LookForPlayers (actor, true);
+		if (lookForBetter)
+		{
+			actor->flags3 |= MF3_NOSIGHTCHECK;
+		}
+		if (gotNew)
+		{
 			return; 	// got a new target
+		}
 	}
 	
 	// chase towards player
@@ -1516,10 +1631,26 @@ nomissile:
 //
 // possibly choose another target
 //
-	if (netgame && !actor->threshold && !P_CheckSight (actor, actor->target) )
+	if ((multiplayer || actor->TIDtoHate)
+		&& !actor->threshold
+		&& !P_CheckSight (actor, actor->target, false) )
 	{
-		if (P_LookForPlayers (actor, true))
-			return;         // got a new target
+		bool lookForBetter;
+		BOOL gotNew;
+		if (actor->flags3 & MF3_NOSIGHTCHECK)
+		{
+			actor->flags3 &= ~MF3_NOSIGHTCHECK;
+			lookForBetter = true;
+		}
+		gotNew = P_LookForPlayers (actor, true);
+		if (lookForBetter)
+		{
+			actor->flags3 |= MF3_NOSIGHTCHECK;
+		}
+		if (gotNew)
+		{
+			return; 	// got a new target
+		}
 	}
 
 //

@@ -61,7 +61,7 @@ static FRandom pr_botspawn ("BotSpawn");
 //Externs
 DCajunMaster bglobal;
 
-cycle_t BotThinkCycles, BotSupportCycles;
+cycle_t BotThinkCycles, BotSupportCycles, BotWTG;
 
 static const char *BotConfigStrings[] =
 {
@@ -642,7 +642,8 @@ bool DCajunMaster::LoadBots ()
 
 ADD_STAT (bots, out)
 {
-	sprintf (out, "think = %04.1f ms  support = %04.1f ms",
+	sprintf (out, "think = %04.1f ms  support = %04.1f ms  wtg = %u",
 		(double)BotThinkCycles * 1000 * SecondsPerCycle,
-		(double)BotSupportCycles * 1000 * SecondsPerCycle);
+		(double)BotSupportCycles * 1000 * SecondsPerCycle,
+		BotWTG);
 }

@@ -2353,9 +2353,6 @@ void P_SetupLevel (char *lumpname, int position)
 	int i, lumpnum;
 	bool buildmap;
 
-	level.total_monsters = level.total_items = level.total_secrets =
-		level.killed_monsters = level.found_items = level.found_secrets =
-		wminfo.maxfrags = 0;
 	wminfo.partime = 180;
 
 	if (!savegamerestore)
@@ -2394,6 +2391,9 @@ void P_SetupLevel (char *lumpname, int position)
 
 	// Free all level data from the previous map
 	DThinker::DestroyAllThinkers ();
+	level.total_monsters = level.total_items = level.total_secrets =
+		level.killed_monsters = level.found_items = level.found_secrets =
+		wminfo.maxfrags = 0;
 	if (vertexes != NULL)
 	{
 		delete[] vertexes;

@@ -252,6 +252,11 @@ public:
 	static void BeginFrame ();
 	static void EndFrame ();
 
+	// If you need to replace one object with another and want to
+	// change any pointers from the old object to the new object,
+	// use this method.
+	static void PointerSubstitution (DObject *old, DObject *notOld);
+
 	DWORD ObjectFlags;
 
 	static void STACK_ARGS StaticShutdown ();

@@ -147,10 +147,11 @@ int starttime;
 
 // ACS variables with world scope
 SDWORD ACS_WorldVars[NUM_WORLDVARS];
+TAutoGrowArray<SDWORD> ACS_WorldArrays[NUM_WORLDVARS];
 
 // ACS variables with global scope
 SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
-
+TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern BOOL netdemo;
 extern char BackupSaveName[PATH_MAX];
@@ -896,13 +897,24 @@ void G_InitNew (char *mapname)
 
 	if (!savegamerestore)
 	{
-		if (!netgame)
-		{ // [RH] Change the random seed for each new single player game
-			rngseed = rngseed*3/2;
+		if (!demoplayback)
+		{
+			if (!netgame)
+			{ // [RH] Change the random seed for each new single player game
+				rngseed = rngseed*3/2;
+			}
+			FRandom::StaticClearRandom ();
 		}
-		FRandom::StaticClearRandom ();
 		memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
 		memset (ACS_GlobalVars, 0, sizeof(ACS_GlobalVars));
+		for (i = 0; i < NUM_WORLDVARS; ++i)
+		{
+			ACS_WorldArrays[i].Clear ();
+		}
+		for (i = 0; i < NUM_GLOBALVARS; ++i)
+		{
+			ACS_GlobalArrays[i].Clear ();
+		}
 		level.time = 0;
 
 		if (!multiplayer || !deathmatch)
@@ -1086,6 +1098,10 @@ void G_DoCompleted (void)
 			if (mode == FINISH_NextHub)
 			{ // Reset world variables and deferred scripts for the new hub.
 				memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
+				for (i = 0; i < NUM_WORLDVARS; ++i)
+				{
+					ACS_WorldArrays[i].Clear ();
+				}
 				P_RemoveDefereds ();
 			}
 			else if (mode == FINISH_NoHub)
@@ -1403,8 +1419,11 @@ void G_InitLevelLocals ()
 
 	if (info->level_name)
 	{
+		cluster_info_t *clus = FindClusterInfo (info->cluster);
+
 		level.partime = info->partime;
 		level.cluster = info->cluster;
+		level.clusterflags = clus ? clus->flags : 0;
 		level.flags = info->flags;
 		level.levelnum = info->levelnum;
 		level.music = info->music;
@@ -1974,6 +1993,11 @@ void G_SerializeSnapshots (FILE *file, bool storing)
 			else
 			{
 				arc << snapver;
+				// Fix version number for snapshots that should have been 205
+				if (snapver == 204 && SaveVersion == 205)
+				{
+					snapver = 205;
+				}
 			}
 			arc << namelen;
 			arc.Read (mapname, namelen);

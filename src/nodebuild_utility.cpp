@@ -129,6 +129,7 @@ int FNodeBuilder::SelectVertexExact (FPrivVert &vertex)
 
 void FNodeBuilder::MakeSegsFromSides ()
 {
+	FPrivSeg *share1, *share2;
 	FPrivSeg seg;
 	int i, j;
 
@@ -156,13 +157,21 @@ void FNodeBuilder::MakeSegsFromSides ()
 			seg.v2 = (size_t)Level.Lines[i].v2;
 			seg.nextforvert = Vertices[seg.v1].segs;
 			seg.nextforvert2 = Vertices[seg.v2].segs2;
-			j = (int)Segs.Push (seg);
-			Vertices[seg.v1].segs = j;
-			Vertices[seg.v2].segs2 = j;
+			share1 = CheckSegForDuplicate (&seg);
+			if (share1 == NULL)
+			{
+				j = (int)Segs.Push (seg);
+				Vertices[seg.v1].segs = j;
+				Vertices[seg.v2].segs2 = j;
+			}
+			else
+			{
+				Printf ("Linedefs %d and %d share endpoints.\n", i, share1->linedef);
+			}
 		}
 		else
 		{
-			printf ("Linedef %d does not have a front side.\n", i);
+			Printf ("Linedef %d does not have a front side.\n", i);
 		}
 
 		if (Level.Lines[i].sidenum[1] != NO_INDEX)
@@ -178,17 +187,47 @@ void FNodeBuilder::MakeSegsFromSides ()
 			seg.v2 = (size_t)Level.Lines[i].v1;
 			seg.nextforvert = Vertices[seg.v1].segs;
 			seg.nextforvert2 = Vertices[seg.v2].segs2;
-			j = (int)Segs.Push (seg);
-			Vertices[seg.v1].segs = j;
-			Vertices[seg.v2].segs2 = j;
-
-			if (Level.Lines[i].sidenum[0] != NO_INDEX)
+			share2 = CheckSegForDuplicate (&seg);
+			if (share2 == NULL)
 			{
-				Segs[j-1].partner = j;
-				Segs[j].partner = j-1;
+				j = (int)Segs.Push (seg);
+				Vertices[seg.v1].segs = j;
+				Vertices[seg.v2].segs2 = j;
+
+				if (Level.Lines[i].sidenum[0] != NO_INDEX && share1 == NULL)
+				{
+					Segs[j-1].partner = j;
+					Segs[j].partner = j-1;
+				}
+			}
+			else if (share2->linedef != share1->linedef)
+			{
+				Printf ("Linedefs %d and %d share endpoints.\n", i, share2->linedef);
 			}
 		}
 	}
+}
+
+// Check for another seg with the same start and end vertices as this one.
+// Combined with its use above, this will find two-sided lines that are shadowed
+// by another one- or two-sided line, and it will also find one-sided lines that
+// shadow each other. It will not find one-sided lines that share endpoints but
+// face opposite directions. Although they should probably be a single two-sided
+// line, leaving them in will not generate bad nodes.
+
+FNodeBuilder::FPrivSeg *FNodeBuilder::CheckSegForDuplicate (const FNodeBuilder::FPrivSeg *check)
+{
+	DWORD segnum;
+
+	// Check for segs facing the same direction
+	for (segnum = check->nextforvert; segnum != DWORD_MAX; segnum = Segs[segnum].nextforvert)
+	{
+		if (Segs[segnum].v2 == check->v2)
+		{
+			return &Segs[segnum];
+		}
+	}
+	return NULL;
 }
 
 // Group colinear segs together so that only one seg per line needs to be checked

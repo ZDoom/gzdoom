@@ -210,7 +210,7 @@ enum
 	MF3_ALWAYSPUFF		= 0x00000010,	// Puff always appears, even when hit nothing
 	MF3_SPECIALFLOORCLIP= 0x00000020,	// Actor uses floorclip for special effect (e.g. Wraith)
 	MF3_DONTSPLASH		= 0x00000040,	// Thing doesn't make a splash
-					//	  0x00000080
+	MF3_NOSIGHTCHECK	= 0x00000080,	// Go after first acceptable target without checking sight
 	MF3_DONTOVERLAP		= 0x00000100,	// Don't pass over/under other things with this bit set
 	MF3_DONTMORPH		= 0x00000200,	// Immune to arti_egg
 	MF3_DONTSQUASH		= 0x00000400,	// Death ball can't squash this actor
@@ -438,6 +438,7 @@ public:
 	BYTE			RenderStyle;		// Style to draw this actor with
 	WORD			renderflags;		// Different rendering flags
 	WORD			picnum;				// Draw this instead of sprite if != 0xffff
+	WORD			TIDtoHate;			// TID of things to hate (0 if none)
 	DWORD			effects;			// [RH] see p_effect.h
 	fixed_t			alpha;
 	DWORD			alphacolor;			// Color to draw when STYLE_Shaded
@@ -460,7 +461,7 @@ public:
 	DWORD			flags;
 	DWORD			flags2;			// Heretic flags
 	DWORD			flags3;			// Hexen/Heretic actor-dependant behavior made flaggable
-	DWORD				mapflags;		// Flags from map (MTF_*)
+	DWORD			mapflags;		// Flags from map (MTF_*)
 	int				special1;		// Special info
 	int				special2;		// Special info
 	int 			health;
@@ -475,7 +476,11 @@ public:
 	SDWORD			threshold;		// if > 0, the target will be chased
 									// no matter what (even if shot)
 	player_s		*player;		// only valid if type of APlayerPawn
-	SDWORD			lastlook;		// player number last looked for
+	union
+	{
+		AActor		*Actor;			// Actor last looked for (if TIDtoHate != 0)
+		SDWORD		PlayerNumber;	// Player number last looked for
+	} LastLook;
 	WORD			SpawnPoint[3]; 	// For nightmare respawn
 	WORD			SpawnAngle;
 	AActor			*tracer;		// Thing being chased/attacked for tracers
@@ -555,6 +560,9 @@ class FActorIterator
 {
 public:
 	FActorIterator (int i) : base (NULL), id (i)
+	{
+	}
+	FActorIterator (int i, AActor *start) : base (start), id (i)
 	{
 	}
 	AActor *Next ()

@@ -154,7 +154,7 @@ void FNodeBuilder::FixSplitSharers (const node_t &node)
 				Segs[partner].next = endpartner;
 
 				Segs[seg].partner = endpartner;
-				Segs[endpartner].partner = seg;
+				Segs[partner].partner = newseg;
 			}
 
 			seg = newseg;

@@ -372,9 +372,7 @@ void DObject::RemoveFromArray ()
 	}
 }
 
-// Search for references to a single object and NULL them.
-// It should not be listed in ToDestroy.
-void DObject::DestroyScan (DObject *obj)
+void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 {
 	size_t i, highest;
 	highest = Objects.Size ();
@@ -392,9 +390,9 @@ void DObject::DestroyScan (DObject *obj)
 				{
 					while (*offsets != 0)
 					{
-						if (current->**offsets == obj)
+						if (current->**offsets == old)
 						{
-							current->**offsets = 0;
+							current->**offsets = notOld;
 						}
 						offsets++;
 					}
@@ -404,21 +402,21 @@ void DObject::DestroyScan (DObject *obj)
 		}
 	}
 
-	if (obj->IsKindOf (RUNTIME_CLASS(APlayerPawn)))
+	if (old->IsKindOf (RUNTIME_CLASS(APlayerPawn)))
 	{
-		AActor *actor = static_cast<AActor *>(obj);
+		AActor *actor = static_cast<AActor *>(old);
 		for (i = 0; i < (size_t)numsectors; i++)
 		{
 			if (sectors[i].soundtarget == actor)
-				sectors[i].soundtarget = NULL;
+				sectors[i].soundtarget = static_cast<AActor *>(notOld);
 		}
 	}
 
 	for (i = 0; i < BODYQUESIZE; ++i)
 	{
-		if (bodyque[i] == obj)
+		if (bodyque[i] == old)
 		{
-			bodyque[i] = NULL;
+			bodyque[i] = static_cast<AActor *>(notOld);
 		}
 	}
 
@@ -426,8 +424,15 @@ void DObject::DestroyScan (DObject *obj)
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
-			players[i].FixPointers (obj);
+			players[i].FixPointers (old, notOld);
 	}
+}
+
+// Search for references to a single object and NULL them.
+// It should not be listed in ToDestroy.
+void DObject::DestroyScan (DObject *obj)
+{
+	PointerSubstitution (obj, NULL);
 }
 
 // Search for references to all objects scheduled for
@@ -501,7 +506,7 @@ void DObject::DestroyScan ()
 			j = destroycount;
 			do
 			{
-				players[i].FixPointers (*(destroybase + j));
+				players[i].FixPointers (*(destroybase + j), NULL);
 			} while (++j);
 		}
 	}

@@ -72,32 +72,21 @@ int newtorchdelta;
 // that match the pointer passed in. If you add any pointers that point to
 // DObject (or a subclass), add them here too.
 
-void player_s::FixPointers (const DObject *obj)
+void player_s::FixPointers (const DObject *old, DObject *rep)
 {
-	if (mo == obj)
-		mo = NULL;
-	if (poisoner == obj)
-		poisoner = NULL;
-	if (attacker == obj)
-		attacker = NULL;
-	if (rain1 == obj)
-		rain1 = NULL;
-	if (rain2 == obj)
-		rain2 = NULL;
-	if (camera == obj)
-		camera = NULL;
-	if (dest == obj)
-		dest = NULL;
-	if (prev == obj)
-		prev = NULL;
-	if (enemy == obj)
-		enemy = NULL;
-	if (missile == obj)
-		missile = NULL;
-	if (mate == obj)
-		mate = NULL;
-	if (last_mate == obj)
-		last_mate = NULL;
+	APlayerPawn *replacement = static_cast<APlayerPawn *>(rep);
+	if (mo == old)			mo = replacement;
+	if (poisoner == old)	poisoner = replacement;
+	if (attacker == old)	attacker = replacement;
+	if (rain1 == old)		rain1 = replacement;
+	if (rain2 == old)		rain2 = replacement;
+	if (camera == old)		camera = replacement;
+	if (dest == old)		dest = replacement;
+	if (prev == old)		prev = replacement;
+	if (enemy == old)		enemy = replacement;
+	if (missile == old)		missile = replacement;
+	if (mate == old)		mate = replacement;
+	if (last_mate == old)	last_mate = replacement;
 }
 
 // Reduce the ammo used by the current weapon. Returns true
@@ -172,11 +161,6 @@ void APlayerPawn::PlayAttacking ()
 void APlayerPawn::PlayAttacking2 ()
 {
 	SetState (MissileState+1);
-}
-
-bool APlayerPawn::HealOther (player_s *pawn)
-{
-	return false;
 }
 
 void APlayerPawn::ThrowPoisonBag ()
@@ -1113,18 +1097,21 @@ void P_PlayerThink (player_t *player)
 	if (player->powers[pw_speed])
 		player->powers[pw_speed]--;
 
-	if (player->powers[pw_flight] && (multiplayer ||
-		((player->mo->flags2 & MF2_FLY) && (player->mo->waterlevel < 2))))
+	if (player->powers[pw_flight] && (multiplayer || !(level.clusterflags & CLUSTER_HUB)))
 	{
-		if (!--player->powers[pw_flight])
+		// [RH] Methinks this check is not right.
+		//if ((player->mo->flags2 & MF2_FLY) && (player->mo->waterlevel < 2))))
 		{
-			if (player->mo->z != player->mo->floorz)
+			if (!--player->powers[pw_flight])
 			{
-				player->centering = true;
+				if (player->mo->z != player->mo->floorz)
+				{
+					player->centering = true;
+				}
+				player->mo->flags2 &= ~MF2_FLY;
+				player->mo->flags &= ~MF_NOGRAVITY;
+				BorderTopRefresh = screen->GetPageCount (); //make sure the sprite's cleared out
 			}
-			player->mo->flags2 &= ~MF2_FLY;
-			player->mo->flags &= ~MF_NOGRAVITY;
-			BorderTopRefresh = screen->GetPageCount (); //make sure the sprite's cleared out
 		}
 	}
 
@@ -1289,9 +1276,15 @@ void player_s::Serialize (FArchive &arc)
 		<< armortype
 		<< readyArtifact
 		<< artifactCount
-		<< inventorytics
-		<< inventorySlotNum
-		<< pieces
+		<< inventorytics;
+
+	if (SaveVersion < 206)
+	{ // Skip inventorySlotNum field
+		int foo;
+		arc << foo;
+	}
+
+	arc << pieces
 		<< backpack
 		<< fragcount
 		<< spreecount
@@ -1330,8 +1323,95 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendA;
 	for (i = 0; i < NUMARMOR; i++)
 		arc << armorpoints[i];
-	for (i = 0; i < NUMINVENTORYSLOTS; i++)
-		arc << inventory[i];
+	if (SaveVersion < 206)
+	{ // versions before 205 do not have arti_pork
+		static const BYTE compatArtiNums[] =
+		{
+			arti_none,
+			arti_invulnerability,
+			arti_invisibility,
+			arti_health,
+			arti_superhealth,
+			arti_tomeofpower,
+			arti_healingradius,
+			arti_summon,
+			arti_torch,
+			arti_firebomb,
+			arti_egg,
+			arti_pork,
+			arti_fly,
+			arti_blastradius,
+			arti_poisonbag1,
+			arti_poisonbag2,
+			arti_poisonbag3,
+			arti_teleportother,
+			arti_speed,
+			arti_boostmana,
+			arti_boostarmor,
+			arti_teleport,
+			arti_firstpuzzitem,
+			arti_puzzskull,
+			arti_puzzgembig,
+			arti_puzzgemred,
+			arti_puzzgemgreen1,
+			arti_puzzgemgreen2,
+			arti_puzzgemblue1,
+			arti_puzzgemblue2,
+			arti_puzzbook1,
+			arti_puzzbook2,
+			arti_puzzskull2,
+			arti_puzzfweapon,
+			arti_puzzcweapon,
+			arti_puzzmweapon,
+			arti_puzzgear1,
+			arti_puzzgear2,
+			arti_puzzgear3,
+			arti_puzzgear4
+		};
+
+		for (i = 0; i < 11; ++i)
+			arc << inventory[compatArtiNums[i]];
+		if (SaveVersion == 205)
+			arc << inventory[compatArtiNums[12]];
+		for (i = 13; i < sizeof(compatArtiNums); ++i)
+			arc << inventory[compatArtiNums[i]];
+	}
+	else
+	{ // Post-205 stores inventory names with their counts,
+	  // so new artifacts can be added freely without breaking
+	  // savegames.
+		if (arc.IsStoring())
+		{
+			for (i = 0; i < NUMINVENTORYSLOTS; ++i)
+			{
+				if (inventory[i] != 0)
+				{
+					arc.WriteString (ArtifactNames[i]);
+					arc.WriteCount (inventory[i]);
+				}
+			}
+			arc.WriteString (NULL);
+		}
+		else
+		{
+			char *str = NULL;
+
+			arc << str;
+			while (str != NULL)
+			{
+				artitype_t arti;
+				DWORD count;
+
+				arti = P_FindNamedInventory (str);
+				count = arc.ReadCount ();
+				if (arti != arti_none)
+				{
+					inventory[arti] = (WORD)count;
+				}
+				arc << str;
+			}
+		}
+	}
 	for (i = 0; i < NUMPOWERS; i++)
 		arc << powers[i];
 	for (i = 0; i < NUMKEYS; i++)

@@ -319,7 +319,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	player_t *b = actor->player;
 
 #define typeis(x) item->IsKindOf (TypeInfo::FindType (#x))
-    if (!item //Under respawn and away. (handled in P_Mobj.c)
+	if ((item->renderflags & RF_INVISIBLE) //Under respawn and away.
 		|| item == b->prev)
 	{
 		return;

@@ -42,6 +42,7 @@
 
 static cycle_t ThinkCycles;
 extern cycle_t BotSupportCycles;
+extern cycle_t BotWTG;
 
 IMPLEMENT_CLASS (DThinker)
 
@@ -246,7 +247,7 @@ void DThinker::RunThinkers ()
 {
 	int i, count;
 
-	ThinkCycles = BotSupportCycles = 0;
+	ThinkCycles = BotSupportCycles = BotWTG = 0;
 
 	clock (ThinkCycles);
 

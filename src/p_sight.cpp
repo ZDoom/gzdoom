@@ -9,8 +9,9 @@
 //**
 //**************************************************************************
 
-#include "doomdef.h"
+#include <assert.h>
 
+#include "doomdef.h"
 #include "i_system.h"
 #include "p_local.h"
 #include "m_random.h"
@@ -384,6 +385,16 @@ bool P_CheckSight (const AActor *t1, const AActor *t2, BOOL ignoreInvisibility)
 	clock (SightCycles);
 
 	bool res;
+
+#ifdef _DEBUG
+	assert (t1 != NULL);
+	assert (t2 != NULL);
+#else
+	if (t1 == NULL || t2 == NULL)
+	{
+		return false;
+	}
+#endif
 
 	const sector_t *s1 = t1->Sector;
 	const sector_t *s2 = t2->Sector;

@@ -138,7 +138,7 @@ fixed_t AClericPlayer::GetArmorIncrement (int armortype)
 
 fixed_t AClericPlayer::GetJumpZ ()
 {
-	return 9*FRACUNIT;
+	return FRACUNIT*39/4;	// ~9.75
 }
 
 int AClericPlayer::GetArmorMax ()

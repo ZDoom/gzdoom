@@ -143,10 +143,7 @@ public:
 		{
 			Grow (amount - Count);
 		}
-		else if (Count > amount)
-		{
-			Count = amount;
-		}
+		Count = amount;
 	}
 	// Reserves amount entries at the end of the array, but does nothing
 	// with them.
@@ -192,6 +189,32 @@ private:
 		{
 			Array = NULL;
 		}
+	}
+};
+
+// An array with accessors that automatically grow the
+// array as needed. But can still be used as a normal
+// TArray if needed. Used by ACS world and global arrays.
+
+template <class T>
+class TAutoGrowArray : public TArray<T>
+{
+public:
+	T GetVal (size_t index)
+	{
+		if (index >= Size())
+		{
+			return 0;
+		}
+		return (*this)[index];
+	}
+	void SetVal (size_t index, T val)
+	{
+		if (index >= Size())
+		{
+			Resize (index + 1);
+		}
+		(*this)[index] = val;
 	}
 };
 

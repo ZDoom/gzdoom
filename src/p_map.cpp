@@ -749,15 +749,18 @@ BOOL PIT_CheckThing (AActor *thing)
 		{
 			return false;
 		}
+
+		if (thing == tmthing->target)
+		{ // Don't missile self
+			return true;
+		}
+
 		if (tmthing->target && (
 			tmthing->target->IsKindOf (RUNTIME_TYPE (thing)) ||
-			thing->IsKindOf (RUNTIME_TYPE (tmthing->target)) ) )
+			thing->IsKindOf (RUNTIME_TYPE (tmthing->target)) ||
+			(thing->TIDtoHate != 0 && thing->TIDtoHate == tmthing->target->TIDtoHate)) )
+			// [RH] Don't hurt monsters that hate the same thing as you do
 		{ // Don't hit same species as originator.
-			if (thing == tmthing->target)
-			{ // Don't missile self
-				return true;
-			}
-
 			// [RH] DeHackEd infighting is here.
 			if ((infighting == 0) && !thing->player)
 			{ // Hit same species as originator => explode, no damage

@@ -79,7 +79,7 @@ FState ASnout::States[] =
 
 FWeaponInfo ASnout::WeaponInfo =
 {
-	0,
+	WIF_DONTBOB,
 	am_noammo,
 	am_noammo,
 	0,

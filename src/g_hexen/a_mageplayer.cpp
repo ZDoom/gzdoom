@@ -157,7 +157,7 @@ void AMagePlayer::TweakSpeeds (int &forward, int &side)
 
 fixed_t AMagePlayer::GetJumpZ ()
 {
-	return 9*FRACUNIT;
+	return FRACUNIT*39/4;	// ~9.75
 }
 
 int AMagePlayer::GetArmorMax ()

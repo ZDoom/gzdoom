@@ -777,18 +777,25 @@ FArchive &FArchive::operator<< (char *&str)
 	else
 	{
 		DWORD size = ReadCount ();
+		char *str2;
+
 		if (size == 0)
 		{
-			ReplaceString ((char **)&str, NULL);
+			str2 = NULL;
 		}
 		else
 		{
-			char *str2 = new char[size];
+			str2 = new char[size];
 			size--;
 			Read (str2, size);
 			str2[size] = 0;
 			ReplaceString ((char **)&str, str2);
 		}
+		if (str)
+		{
+			delete[] str;
+		}
+		str = str2;
 	}
 	return *this;
 }
@@ -1161,9 +1168,9 @@ int FArchive::ReadSprite ()
 		Read (&name, 4);
 		hint = ReadCount ();
 
-		if (hint >= sprites.Size() || *(DWORD *)&sprites[hint].name != name)
+		if (hint >= NumStdSprites || *(DWORD *)&sprites[hint].name != name)
 		{
-			for (hint = (DWORD)sprites.Size(); hint-- != 0; )
+			for (hint = NumStdSprites; hint-- != 0; )
 			{
 				if (*(DWORD *)&sprites[hint].name == name)
 				{

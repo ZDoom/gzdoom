@@ -119,7 +119,7 @@ FState ABaronBall::States[] =
 	S_BRIGHT (BAL7, 'E',	6, NULL 						, NULL)
 };
 
-IMPLEMENT_ACTOR (ABaronBall, Doom, -1, 0)
+IMPLEMENT_ACTOR (ABaronBall, Doom, -1, 154)
 	PROP_RadiusFixed (6)
 	PROP_HeightFixed (16)
 	PROP_SpeedFixed (15)

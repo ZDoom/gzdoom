@@ -377,7 +377,7 @@ void AFighterPlayer::TweakSpeeds (int &forward, int &side)
 
 fixed_t AFighterPlayer::GetJumpZ ()
 {
-	return 9*FRACUNIT;
+	return FRACUNIT*39/4;	// ~9.75
 }
 
 int AFighterPlayer::GetArmorMax ()

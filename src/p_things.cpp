@@ -88,6 +88,12 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 			}
 			else
 			{
+				// If this is a monster, subtract it from the total monster
+				// count, because it already added to it during spawning.
+				if (mobj->flags & MF_COUNTKILL)
+				{
+					level.total_monsters--;
+				}
 				mobj->Destroy ();
 				rtn = false;
 			}
@@ -217,6 +223,12 @@ bool P_Thing_Projectile (int tid, int type, angle_t angle,
 					}
 					else if (!P_TestMobjLocation (mobj))
 					{
+						// If this is a monster, subtract it from the total monster
+						// count, because it already added to it during spawning.
+						if (mobj->flags & MF_COUNTKILL)
+						{
+							level.total_monsters--;
+						}
 						mobj->Destroy ();
 					}
 				}

@@ -4,6 +4,7 @@
 #include "gstrings.h"
 #include "p_local.h"
 #include "s_sound.h"
+#include "gi.h"
 
 // Health -------------------------------------------------------------------
 
@@ -105,7 +106,8 @@ AT_GAME_SET (ArtiFly)
 
 // Invulnerability ----------------------------------------------------------
 
-BASIC_ARTI (Invulnerability, arti_invulnerability, GStrings(TXT_ARTIINVULNERABILITY))
+BASIC_ARTI (Invulnerability, arti_invulnerability,
+	GStrings(gameinfo.gametype==GAME_Hexen?TXT_ARTIINVULNERABILITY2:TXT_ARTIINVULNERABILITY))
 	AT_GAME_SET_FRIEND (ArtiInvul)
 private:
 	static bool ActivateArti (player_t *player, artitype_t arti)

@@ -360,9 +360,6 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		{ // count for intermission
 			source->player->killcount++;
 			level.killed_monsters++;
-			// [RH] If the monster gets gibbed, don't reduce the monster
-			// count when the body is destroyed.
-			flags &= ~MF_COUNTKILL;
 		}
 
 		// Don't count any frags at level start, because they're just telefrags
@@ -389,6 +386,10 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			{
 				++source->player->fragcount;
 				++source->player->spreecount;
+				if (source->player->morphTics)
+				{ // Make a super chicken
+					P_GivePower (source->player, pw_weaponlevel2);
+				}
 				if (deathmatch && cl_showsprees)
 				{
 					const char *spreemsg;
@@ -503,7 +504,6 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		// even those caused by other monsters
 		players[0].killcount++;
 		level.killed_monsters++;
-		flags &= ~MF_COUNTKILL;
 	}
 	
 	if (player)
@@ -707,7 +707,10 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	if (player && gameskill == sk_baby)
 	{
 		// Take half damage in trainer mode
-		damage >>= 1;
+		if (damage > 1)
+		{
+			damage >>= 1;
+		}
 	}
 	// Special damage types
 	if (inflictor)
@@ -971,6 +974,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	target->reactiontime = 0;			// we're awake now...	
 	if (source && source != target && !(source->flags3 & MF3_NOTARGET)
 		&& (infighting >= 0 || source->player)		// [RH] allow monsters to ignore each other
+		&& (target->TIDtoHate == 0 || target->TIDtoHate != source->TIDtoHate)	// [RH] If hating the same things, don't hate each other
 		&& !source->IsKindOf (RUNTIME_CLASS(AArchvile))
 		&& (!target->threshold || target->IsKindOf (RUNTIME_CLASS(AArchvile)))
 		&& target->NewTarget (source))

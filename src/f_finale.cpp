@@ -122,11 +122,11 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 
 	if (ending)
 	{
-		TEXTSPEED = 3;	// Slow the text to its original rate to match the music.
 		FinaleSequence = *((WORD *)&level.nextmap[6]);
-		S_ChangeMusic ("hall", 0, loopmusic);
 		if (EndSequences[FinaleSequence].EndType == END_Chess)
 		{
+			TEXTSPEED = 3;	// Slow the text to its original rate to match the music.
+			S_ChangeMusic ("hall", 0, loopmusic);
 			FinaleStage = 10;
 			GetFinaleText ("win1msg");
 			V_SetBlend (0,0,0,256);

@@ -271,6 +271,16 @@ void A_VileChase (AActor *self)
 					corpsehit->health = info->health;
 					corpsehit->target = NULL;
 
+					// You are the Archvile's minion now, so hate what it hates
+					corpsehit->TIDtoHate = self->TIDtoHate;
+					corpsehit->LastLook = self->LastLook;
+
+					// [RH] If it's a monster, it gets to count as another kill
+					if (corpsehit->flags & MF_COUNTKILL)
+					{
+						level.total_monsters++;
+					}
+
 					return;
 				}
 			}

@@ -159,6 +159,7 @@ struct level_locals_s
 
 	level_info_t *info;
 	int			cluster;
+	int			clusterflags;
 	int			levelnum;
 	int			lumpnum;
 	char		level_name[64];			// the descriptive name (Outer Base, etc)
@@ -250,6 +251,8 @@ extern cluster_info_t ClusterInfos[];
 
 extern SDWORD ACS_WorldVars[NUM_WORLDVARS];
 extern SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
+extern TAutoGrowArray<SDWORD> ACS_WorldArrays[NUM_WORLDVARS];
+extern TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern BOOL savegamerestore;
 extern BOOL HexenHack;		// Semi-Hexen-compatibility mode

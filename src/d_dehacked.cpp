@@ -133,6 +133,7 @@ class ADehackedPickup : public AInventory
 public:
 	const char *PickupMessage ();
 	bool ShouldRespawn ();
+	bool ShouldStay ();
 	bool TryPickup (AActor *toucher);
 	void PlayPickupSound (AActor *toucher);
 	void Hide ();
@@ -2308,7 +2309,11 @@ void A_SpawnDehackedPickup (AActor *actor)
 {
 	if ((size_t)actor->health < DehackedPickups.Size())
 	{
-		Spawn (DehackedPickups[actor->health], actor->x, actor->y, actor->z);
+		AActor *real = Spawn (DehackedPickups[actor->health], actor->x, actor->y, actor->z);
+		if (real != NULL && (actor->flags & MF_DROPPED))
+		{
+			real->flags |= MF_DROPPED;
+		}
 	}
 }
 
@@ -2320,18 +2325,37 @@ bool ADehackedPickup::TryPickup (AActor *toucher)
 		return false;
 	}
 	RealPickup = static_cast<AInventory *>(Spawn (type, x, y, z));
-	if (!RealPickup->TryPickup (toucher))
+	if (RealPickup != NULL)
 	{
-		RealPickup->Destroy ();
-		RealPickup = NULL;
-		return false;
+		if (flags & MF_DROPPED)
+		{
+			RealPickup->flags |= MF_DROPPED;
+		}
+		if (!RealPickup->TryPickup (toucher))
+		{
+			RealPickup->Destroy ();
+			RealPickup = NULL;
+			return false;
+		}
+		return true;
 	}
-	return true;
+	return false;
 }
 
 const char *ADehackedPickup::PickupMessage ()
 {
 	return RealPickup->PickupMessage ();
+}
+
+bool ADehackedPickup::ShouldStay ()
+{
+	bool staying = RealPickup->ShouldStay ();
+	if (staying)
+	{
+		RealPickup->Destroy();
+		RealPickup = NULL;
+	}
+	return staying;
 }
 
 bool ADehackedPickup::ShouldRespawn ()

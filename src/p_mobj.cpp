@@ -67,6 +67,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern cycle_t BotSupportCycles;
+extern cycle_t BotWTG;
 extern fixed_t attackrange;
 extern int tmfloorpic;
 extern sector_t *tmfloorsector;
@@ -157,6 +158,7 @@ IMPLEMENT_POINTY_CLASS (AActor)
  DECLARE_POINTER (lastenemy)
  DECLARE_POINTER (tracer)
  DECLARE_POINTER (goal)
+ DECLARE_POINTER (LastLook)	// This is actually a union
 END_POINTERS
 
 AActor::~AActor ()
@@ -217,9 +219,27 @@ void AActor::Serialize (FArchive &arc)
 		<< lastenemy
 		<< reactiontime
 		<< threshold
-		<< player
-		<< lastlook
-		<< tracer
+		<< player;
+
+	if (SaveVersion < 207)
+	{
+		arc << LastLook.PlayerNumber;
+		TIDtoHate = 0;
+	}
+	else
+	{
+		arc << TIDtoHate;
+		if (TIDtoHate == 0)
+		{
+			arc << LastLook.PlayerNumber;
+		}
+		else
+		{
+			arc << LastLook.Actor;
+		}
+	}
+
+	arc << tracer
 		<< floorclip
 		<< tid
 		<< special
@@ -1809,7 +1829,10 @@ void AActor::Tick ()
 			}
 			else if (flags & MF_SPECIAL)
 			{ //Item pickup time
+				//clock (BotWTG);
 				bglobal.WhatToGet (players[i].mo, this);
+				//unclock (BotWTG);
+				BotWTG++;
 			}
 			else if (flags & MF_MISSILE)
 			{
@@ -2064,7 +2087,7 @@ void AActor::Tick ()
 		if (level.time & 31)
 			return;
 
-		if (pr_nightmarerespawn() > 4)
+		if (pr_nightmarerespawn() > 400)
 			return;
 
 		P_NightmareRespawn (this);
@@ -2195,7 +2218,8 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 	if (gameskill == sk_nightmare)
 		actor->reactiontime = 0;
 	
-	actor->lastlook = rng() % MAXPLAYERS;
+	actor->LastLook.PlayerNumber = rng() % MAXPLAYERS;
+	actor->TIDtoHate = 0;
 
 	// Set the state, but do not use SetState, because action
 	// routines can't be called yet.  If the spawnstate has an action
@@ -2338,12 +2362,6 @@ void AActor::Destroy ()
 	{
 		P_DelSeclist (sector_list);
 		sector_list = NULL;
-	}
-
-	// [RH] If destroyed before death, reduce the monster count
-	if (flags & MF_COUNTKILL)
-	{
-		level.total_monsters--;
 	}
 
 	// stop any playing sound

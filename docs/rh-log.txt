@@ -1,4 +1,92 @@
+January 22, 2002
+- Played with A_Chase() a bit more so that monsters that hate monster groups
+  will look for closer monsters on their way to a monster they can't see.
+
+January 21, 2002
+- Improved Thing_Hate with a third parameter. Now we have Thing_Hate (tid1,
+  tid2, type). If type is 0, it behaves just like before: Everything with tid1
+  chases after the first thing with tid2 and then promptly forgets their hate
+  once that thing dies. Set it to 1, and it's much like normal except instead
+  of looking for players everything with tid1 looks for something with tid2.
+  And if type is 2, it's just like type 1, except the monsters with tid1 don't
+  actually need to see any monsters with tid2 before they start chasing after
+  them, so it's somewhat closer to type 0 than type 1 is.
+- Changed Hexen player jumping velocities from 9 to 9.75 because they weren't
+  jumping as high as they should have been, even though 9 is the value Hexen
+  uses. The 9.75 was arrived at by playing Hexen.exe, standing next to a wall
+  to see how far up the texture the player gets when he jumps, and then
+  tweaking until ZDoom was approximately the same. It is enough, at least, to
+  make the clock gear in hexdd MAP57 accessible without the Wings of Wrath.
+
+January 20, 2002
+- Fixed: Dormant monsters should not enter their SeeState when Thing_Hate is
+  used on them.
+- Fixed: In Hexen, the Wings of Wrath do not expire at all in single player
+  games. I had erroneously believed that landing on the ground would
+  temporarily halt their timer until you started flying again (which is
+  incorrect).
+- Fixed: At the easiest difficulty, P_DamageMobj halves damage. If the damage
+  was one, it would become zero. Now if the damage is one, it stays one.
+
+January 18, 2002
+- Added a PointerSubstitution() method to DObject to replace all pointers
+  to one object with pointers to another object. This is so that when
+  something morhps or unmorphs, enemies targetting that actor will be
+  targetting the correct actor instead of the stale one.
+- Added: In Heretic, killing a player as a chicken turns you into a
+  "super chicken." ZDoom was missing this.
+- Removed the redundant P_HealRadius() function.
+- Fixed: Palette remapping isn't enough to make Doom skins work with Heretic
+  because the two games also use different death animations.
+- Fixed: The Icon of the Defender gave the name of the Ring of Invincibility
+  when it was picked up.
+- Fixed: The warp console command crashed if you didn't specify enough
+  parameters.
+- Added means-of-death as a third parameter to Thing_Damage.
+- Fixed: Items that had been dehacked would not have their MF_DROPPED bit set.
+- Added a ShouldStay() method to ADehackedPickup() so that it can get
+  rerouted to the real pickup.
+- Fixed: Single player demos played back with different RNG seeds than they
+  were recorded with.
+
+January 16, 2002
+- Fixed assignment of partner segs in FNodeBuilder::FixSplitSharers().
+
+January 14, 2002
+- Added NULL-actor checks to P_CheckSight().
+
+January 13, 2003
+- Fixed: Advancing to a new level would subtract the number of live monsters
+  on the old level from the total number of monsters on the new level.
+- Fixed: The game tried to play the hall music when doing non-Hexen endings.
+- Added world and global arrays for ACS. They are somewhat different from
+  map arrays: They are one-dimensional and you don't specify a size when
+  you declare them. Instead, they grow as-needed during normal use.
+- Removed sp from DLevelScript, because the stack pointer is always 0 when
+  RunScript() returns.
+- Fixed: PCD_INCMAPARRAY and PCD_DECMAPARRAY used the wrong stack value for
+  the array index.
+
+January 11, 2003
+- Assigned spawnid 154 to the Baron's fireball (to be added as T_BARONBALL
+  to zdefs.acs).
+
 January 10, 2003
+- Changed sectorsound to use CHAN_AUTO instead of CHAN_BODY. Otherwise, not
+  all the Hexen "puzzle" switches sound right.
+- Fixed: The STREAM_ENUM macro in a_artifacts.h used call-by-value instead of
+  call-by-reference, so artifact types could be written to an archive, but
+  they couldn't be read back from it.
+- Removed inventorySlotNum, as it was unused.
+- Fixed: Reading strings with FArchive would never return NULL, and it left
+  copies of all the strings read behind in memory.
+- Fixed: When sprites were renumbered in a recompile, the sprite scanner in
+  FArchive would find matching-named skin sprites instead of the real sprites.
+- Added a "vapor" SaveVersion 205. This is a version 204 save written by
+  versions 2.0.33-2.0.36 because arti_pork was added in 2.0.33 and I did not
+  bump the version. There will be no savegames that are actually written as
+  version 205, because I changed the way artifacts are saved so I won't have
+  to worry about this particular problem again in the future.
 - Uploaded 36.cab.
 - Added a new player property for ACS (PROP_TOTALLYFROZEN #4). When active, it
   won't let the player do anything but press +use, which is what PROP_FROZEN

@@ -4,7 +4,7 @@
 #include "a_pickups.h"
 
 #define STREAM_ENUM(e) \
-	inline FArchive &operator<< (FArchive &arc, e i) \
+	inline FArchive &operator<< (FArchive &arc, e &i) \
 	{ \
 		BYTE val = (BYTE)i; \
 		arc << val; \

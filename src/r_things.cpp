@@ -87,6 +87,7 @@ CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 //	and range check thing_t sprites patches
 TArray<spritedef_t> sprites;
 TArray<spriteframe_t> SpriteFrames;
+size_t			NumStdSprites;		// The first x sprites that don't belong to skins.
 
 spriteframe_t	sprtemp[MAX_SPRITE_FRAMES];
 int 			maxframe;
@@ -702,6 +703,7 @@ void R_InitSprites ()
 	}
 
 	R_InitSpriteDefs ();
+	NumStdSprites = sprites.Size();
 	if (gameinfo.gametype != GAME_Hexen)
 	{
 		R_InitSkins ();		// [RH] Finish loading skin data

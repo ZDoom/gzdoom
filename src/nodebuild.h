@@ -143,6 +143,7 @@ private:
 	int SelectVertexExact (FPrivVert &vertex);
 	void BuildTree ();
 	void MakeSegsFromSides ();
+	FPrivSeg *CheckSegForDuplicate (const FPrivSeg *check);
 	void GroupSegPlanes ();
 	void FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolyStart> &anchors);
 	bool GetPolyExtents (int polynum, fixed_t bbox[4]);

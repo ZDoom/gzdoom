@@ -1411,6 +1411,41 @@ static void ReadVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
 	}
 }
 
+static void ReadArrayVars (FILE *file, TArray<SDWORD> *vars, size_t count, DWORD id)
+{
+	size_t len = M_FindPNGChunk (file, id);
+	size_t i, k;
+
+	for (i = 0; i < count; ++i)
+	{
+		vars[i].Clear ();
+	}
+
+	if (len != 0)
+	{
+		DWORD max, size;
+		DWORD var;
+		FPNGChunkArchive arc (file, id, len);
+
+		i = arc.ReadCount ();
+		max = arc.ReadCount ();
+
+		for (; i <= max; ++i)
+		{
+			size = arc.ReadCount ();
+			if (size > 0)
+			{
+				vars[i].Resize (size);
+			}
+			for (k = 0; k < size; ++k)
+			{
+				arc << var;
+				vars[i][k] = var;
+			}
+		}
+	}
+}
+
 void G_DoLoadGame ()
 {
 	char *text = NULL;
@@ -1441,6 +1476,24 @@ void G_DoLoadGame ()
 		return;
 	}
 	delete[] text;
+
+	// Version 205 saves are created by version 2.0.33-2.0.36 but are marked as version
+	// 204 because I did not realize I needed to change the save version when adding
+	// inventory items. Later versions start with 206 because I redesigned the way
+	// inventory items are saved to avoid this problem in the future. So there will
+	// never be any savegames that are actually marked as being version 205.
+	if (SaveVersion == 204)
+	{
+		text = M_GetPNGText (stdfile, "Software");
+		if (strncmp (text, "ZDoom 2.0.", 10) == 0)
+		{
+			int revision = atoi (text+10);
+			if (revision >= 33 && revision <= 36)
+			{
+				SaveVersion = 205;
+			}
+		}
+	}
 
 	if (!G_CheckSaveGameWads (stdfile))
 	{
@@ -1492,6 +1545,8 @@ void G_DoLoadGame ()
 
 	ReadVars (stdfile, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
 	ReadVars (stdfile, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
+	ReadArrayVars (stdfile, ACS_WorldArrays, NUM_WORLDVARS, MAKE_ID('w','a','R','r'));
+	ReadArrayVars (stdfile, ACS_GlobalArrays, NUM_GLOBALVARS, MAKE_ID('g','a','R','r'));
 
 	NextSkill = -1;
 	if (M_FindPNGChunk (stdfile, MAKE_ID('s','n','X','t')) == 1)
@@ -1712,6 +1767,40 @@ static void WriteVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
 	}
 }
 
+static void WriteArrayVars (FILE *file, TArray<SDWORD> *vars, size_t count, DWORD id)
+{
+	size_t i, j, k;
+	SDWORD val;
+
+	for (i = 0; i < count; ++i)
+	{
+		if (vars[i].Size() != 0)
+			break;
+	}
+	if (i < count)
+	{
+		// Find last non-empty array. Anything beyond the last stored array
+		// will be emptied at load time.
+		for (j = count-1; j > i; --j)
+		{
+			if (vars[j].Size() != 0)
+				break;
+		}
+		FPNGChunkArchive arc (file, id);
+		arc.WriteCount (i);
+		arc.WriteCount (j);
+		for (i; i <= j; ++i)
+		{
+			arc.WriteCount (vars[i].Size());
+			for (k = 0; k < vars[i].Size(); ++k)
+			{
+				val = vars[i][k];
+				arc << val;
+			}
+		}
+	}
+}
+
 void G_DoSaveGame (bool okForQuicksave)
 {
 	char name[9];
@@ -1765,6 +1854,8 @@ void G_DoSaveGame (bool okForQuicksave)
 
 	WriteVars (stdfile, ACS_WorldVars, NUM_WORLDVARS, MAKE_ID('w','v','A','r'));
 	WriteVars (stdfile, ACS_GlobalVars, NUM_GLOBALVARS, MAKE_ID('g','v','A','r'));
+	WriteArrayVars (stdfile, ACS_WorldArrays, NUM_WORLDVARS, MAKE_ID('w','a','R','r'));
+	WriteArrayVars (stdfile, ACS_GlobalArrays, NUM_GLOBALVARS, MAKE_ID('g','a','R','r'));
 
 	if (NextSkill != -1)
 	{
@@ -2051,6 +2142,7 @@ BOOL G_ProcessIFFDemo (char *mapname)
 			mapname[8] = 0;
 			demo_p += 8;
 			rngseed = ReadLong (&demo_p);
+			FRandom::StaticClearRandom ();
 			consoleplayer = displayplayer = *demo_p++;
 			break;
 

@@ -55,7 +55,6 @@ public:
 	virtual void PlayRunning ();
 	virtual void PlayAttacking ();
 	virtual void PlayAttacking2 ();
-	virtual bool HealOther (player_s *pawn);	// returns true if effective
 	virtual void ThrowPoisonBag ();
 	virtual const TypeInfo *GetDropType ();
 	virtual void GiveDefaultInventory ();
@@ -119,7 +118,7 @@ class player_s
 {
 public:
 	void Serialize (FArchive &arc);
-	void FixPointers (const DObject *obj);
+	void FixPointers (const DObject *obj, DObject *replacement);
 
 	bool UseAmmo (bool noCheck=false);
 
@@ -158,7 +157,6 @@ public:
 	BYTE		CurrentPlayerClass;		// class # for this player instance
 	artitype_t	readyArtifact;
 	int			artifactCount;
-	int			inventorySlotNum;
 	int			powers[NUMPOWERS];
 	bool		keys[NUMKEYS];
 	int			pieces;					// Fourth Weapon pieces

@@ -983,7 +983,7 @@ FUNC(LS_Thing_Destroy)
 }
 
 FUNC(LS_Thing_Damage)
-// Thing_Damage (tid, amount)
+// Thing_Damage (tid, amount, MOD)
 {
 	FActorIterator iterator (arg0);
 	AActor *actor;
@@ -996,7 +996,7 @@ FUNC(LS_Thing_Damage)
 		{
 			if (arg1 > 0)
 			{
-				P_DamageMobj (actor, NULL, it, arg1, MOD_UNKNOWN);
+				P_DamageMobj (actor, NULL, it, arg1, arg2);
 			}
 			else if (actor->health < actor->GetDefault()->health)
 			{
@@ -1031,7 +1031,7 @@ FUNC(LS_Thing_ProjectileGravity)
 }
 
 FUNC(LS_Thing_Hate)
-// Thing_Hate (hater, hatee)
+// Thing_Hate (hater, hatee, group/"xray"?)
 {
 	FActorIterator haterIt (arg0);
 	AActor *hater, *hatee;
@@ -1060,32 +1060,69 @@ FUNC(LS_Thing_Hate)
 	}
 	while (hater != NULL)
 	{
-		if (arg1 == 0)
+		// If hating a group of things, record the TID and NULL
+		// the target (if its TID doesn't match). A_Look will
+		// find an appropriate thing to go chase after.
+		if (arg2 != 0)
 		{
-			hatee = it;
+			hater->TIDtoHate = arg1;
+			hater->LastLook.Actor = NULL;
+			// If the TID to hate is 0, then don't forget the target and
+			// lastenemy fields.
+			if (arg1 != 0)
+			{
+				if (hater->target != NULL && hater->target->tid != arg1)
+				{
+					hater->target = NULL;
+				}
+				if (hater->lastenemy != NULL && hater->lastenemy->tid != arg1)
+				{
+					hater->lastenemy = NULL;
+				}
+			}
+			// Note here: If you use Thing_Hate (tid, 0, 2), you can make
+			// a monster go after a player without seeing him first.
+			if (arg2 == 2)
+			{
+				hater->flags3 |= MF3_NOSIGHTCHECK;
+			}
+			else
+			{
+				hater->flags3 &= ~MF3_NOSIGHTCHECK;
+			}
 		}
 		else
 		{
-			FActorIterator hateeIt (arg1);
-
-			while ((hatee = hateeIt.Next ()))
+			if (arg1 == 0)
 			{
-				if (hatee != hater &&				// can't hate self
-					hatee->flags & MF_SHOOTABLE	&&	// can't hate nonshootable things
-					hatee->health > 0)				// can't hate dead things
+				hatee = it;
+			}
+			else
+			{
+				FActorIterator hateeIt (arg1);
+
+				while ((hatee = hateeIt.Next ()))
 				{
-					break;
+					if (hatee != hater &&				// can't hate self
+						hatee->flags & MF_SHOOTABLE	&&	// can't hate nonshootable things
+						hatee->health > 0)				// can't hate dead things
+					{
+						break;
+					}
 				}
 			}
-		}
-		if (hatee != NULL && hatee != hater)
-		{
-			if (hater->target)
+			if (hatee != NULL && hatee != hater)
 			{
-				hater->lastenemy = hater->target;
+				if (hater->target)
+				{
+					hater->lastenemy = hater->target;
+				}
+				hater->target = hatee;
+				if (!(hater->flags2 & MF2_DORMANT))
+				{
+					hater->SetState (hater->SeeState);
+				}
 			}
-			hater->target = hatee;
-			hater->SetState (hater->SeeState);
 		}
 		if (arg0 != 0)
 		{

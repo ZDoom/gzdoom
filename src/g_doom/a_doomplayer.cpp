@@ -4,10 +4,13 @@
 #include "s_sound.h"
 #include "d_player.h"
 #include "a_action.h"
+#include "p_local.h"
 
 void A_Pain (AActor *);
 void A_PlayerScream (AActor *);
 void A_XScream (AActor *);
+void A_DoomSkinCheck1 (AActor *);
+void A_DoomSkinCheck2 (AActor *);
 
 class ADoomPlayer : public APlayerPawn
 {
@@ -37,7 +40,7 @@ FState ADoomPlayer::States[] =
 	S_NORMAL (PLAY, 'G',	4, A_Pain						, &States[S_PLAY]),
 
 #define S_PLAY_DIE (S_PLAY_PAIN+2)
-	S_NORMAL (PLAY, 'H',   10, NULL 						, &States[S_PLAY_DIE+1]),
+	S_NORMAL (PLAY, 'H',   10, A_DoomSkinCheck1				, &States[S_PLAY_DIE+1]),
 	S_NORMAL (PLAY, 'I',   10, A_PlayerScream				, &States[S_PLAY_DIE+2]),
 	S_NORMAL (PLAY, 'J',   10, A_NoBlocking					, &States[S_PLAY_DIE+3]),
 	S_NORMAL (PLAY, 'K',   10, NULL 						, &States[S_PLAY_DIE+4]),
@@ -46,7 +49,7 @@ FState ADoomPlayer::States[] =
 	S_NORMAL (PLAY, 'N',   -1, NULL							, NULL),
 
 #define S_PLAY_XDIE (S_PLAY_DIE+7)
-	S_NORMAL (PLAY, 'O',	5, NULL 						, &States[S_PLAY_XDIE+1]),
+	S_NORMAL (PLAY, 'O',	5, A_DoomSkinCheck2				, &States[S_PLAY_XDIE+1]),
 	S_NORMAL (PLAY, 'P',	5, A_XScream					, &States[S_PLAY_XDIE+2]),
 	S_NORMAL (PLAY, 'Q',	5, A_NoBlocking					, &States[S_PLAY_XDIE+3]),
 	S_NORMAL (PLAY, 'R',	5, NULL 						, &States[S_PLAY_XDIE+4]),
@@ -54,7 +57,30 @@ FState ADoomPlayer::States[] =
 	S_NORMAL (PLAY, 'T',	5, NULL 						, &States[S_PLAY_XDIE+6]),
 	S_NORMAL (PLAY, 'U',	5, NULL 						, &States[S_PLAY_XDIE+7]),
 	S_NORMAL (PLAY, 'V',	5, NULL 						, &States[S_PLAY_XDIE+8]),
-	S_NORMAL (PLAY, 'W',   -1, NULL							, NULL)
+	S_NORMAL (PLAY, 'W',   -1, NULL							, NULL),
+
+#define S_HTIC_DIE (S_PLAY_XDIE+9)
+	S_NORMAL (PLAY, 'H',	6, NULL							, &States[S_HTIC_DIE+1]),
+	S_NORMAL (PLAY, 'I',	6, A_PlayerScream				, &States[S_HTIC_DIE+2]),
+	S_NORMAL (PLAY, 'J',	6, NULL 						, &States[S_HTIC_DIE+3]),
+	S_NORMAL (PLAY, 'K',	6, NULL 						, &States[S_HTIC_DIE+4]),
+	S_NORMAL (PLAY, 'L',	6, A_NoBlocking 				, &States[S_HTIC_DIE+5]),
+	S_NORMAL (PLAY, 'M',	6, NULL 						, &States[S_HTIC_DIE+6]),
+	S_NORMAL (PLAY, 'N',	6, NULL 						, &States[S_HTIC_DIE+7]),
+	S_NORMAL (PLAY, 'O',	6, NULL 						, &States[S_HTIC_DIE+8]),
+	S_NORMAL (PLAY, 'P',   -1, NULL							, NULL),
+
+#define S_HTIC_XDIE (S_HTIC_DIE+9)
+	S_NORMAL (PLAY, 'Q',	5, A_PlayerScream				, &States[S_HTIC_XDIE+1]),
+	S_NORMAL (PLAY, 'R',	0, A_NoBlocking					, &States[S_HTIC_XDIE+2]),
+	S_NORMAL (PLAY, 'R',	5, A_SkullPop					, &States[S_HTIC_XDIE+3]),
+	S_NORMAL (PLAY, 'S',	5, NULL			 				, &States[S_HTIC_XDIE+4]),
+	S_NORMAL (PLAY, 'T',	5, NULL 						, &States[S_HTIC_XDIE+5]),
+	S_NORMAL (PLAY, 'U',	5, NULL 						, &States[S_HTIC_XDIE+6]),
+	S_NORMAL (PLAY, 'V',	5, NULL 						, &States[S_HTIC_XDIE+7]),
+	S_NORMAL (PLAY, 'W',	5, NULL 						, &States[S_HTIC_XDIE+8]),
+	S_NORMAL (PLAY, 'X',	5, NULL 						, &States[S_HTIC_XDIE+9]),
+	S_NORMAL (PLAY, 'Y',   -1, NULL							, NULL),
 };
 
 IMPLEMENT_ACTOR (ADoomPlayer, Doom, -1, 0)
@@ -109,12 +135,15 @@ void A_PlayerScream (AActor *self)
 {
 	const char *sound;
 	int chan = CHAN_VOICE;
+	int gametype;
 
 	if (self->player == NULL || self->player->morphTics != 0)
 	{
 		S_SoundID (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
 		return;
 	}
+
+	gametype = skins[self->player->userinfo.skin].game;
 
 	// Handle the different player death screams
 	if ((((level.flags >> 15) | (dmflags)) &
@@ -124,7 +153,7 @@ void A_PlayerScream (AActor *self)
 		sound = "*splat";
 		chan = CHAN_BODY;
 	}
-	else if (gameinfo.gametype == GAME_Doom)
+	else if (gametype == GAME_Doom)
 	{
 		if (self->health < -50)
 		{ // IF THE PLAYER DIES LESS THAN -50% WITHOUT GIBBING
@@ -137,7 +166,7 @@ void A_PlayerScream (AActor *self)
 	}
 	else
 	{
-		if (gameinfo.gametype == GAME_Heretic && self->special1 < 10)
+		if (gametype == GAME_Heretic && self->special1 < 10)
 		{ // Wimpy death sound
 			sound = "*wimpydeath";
 		}
@@ -167,6 +196,34 @@ void A_PlayerScream (AActor *self)
 		}
 	}
 	S_Sound (self, CHAN_VOICE, sound, 1, ATTN_NORM);
+}
+
+//==========================================================================
+//
+// A_DoomSkinCheck1
+//
+//==========================================================================
+
+void A_DoomSkinCheck1 (AActor *actor)
+{
+	if (skins[actor->player->userinfo.skin].game != GAME_Doom)
+	{
+		actor->SetState (&ADoomPlayer::States[S_HTIC_DIE]);
+	}
+}
+
+//==========================================================================
+//
+// A_DoomSkinCheck2
+//
+//==========================================================================
+
+void A_DoomSkinCheck2 (AActor *actor)
+{
+	if (skins[actor->player->userinfo.skin].game != GAME_Doom)
+	{
+		actor->SetState (&ADoomPlayer::States[S_HTIC_XDIE]);
+	}
 }
 
 // Dead marine -------------------------------------------------------------

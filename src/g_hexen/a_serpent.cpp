@@ -475,10 +475,26 @@ void A_SerpentChase (AActor *actor)
 //
 // possibly choose another target
 //
-	if (netgame && !actor->threshold && !P_CheckSight (actor, actor->target) )
+	if ((multiplayer || actor->TIDtoHate)
+		&& !actor->threshold
+		&& !P_CheckSight (actor, actor->target, false) )
 	{
-		if (P_LookForPlayers (actor, true))
-			return;         // got a new target
+		bool lookForBetter;
+		BOOL gotNew;
+		if (actor->flags3 & MF3_NOSIGHTCHECK)
+		{
+			actor->flags3 &= ~MF3_NOSIGHTCHECK;
+			lookForBetter = true;
+		}
+		gotNew = P_LookForPlayers (actor, true);
+		if (lookForBetter)
+		{
+			actor->flags3 |= MF3_NOSIGHTCHECK;
+		}
+		if (gotNew)
+		{
+			return; 	// got a new target
+		}
 	}
 
 //
@@ -676,10 +692,26 @@ void A_SerpentWalk (AActor *actor)
 //
 // possibly choose another target
 //
-	if (netgame && !actor->threshold && !P_CheckSight (actor, actor->target) )
+	if ((multiplayer || actor->TIDtoHate)
+		&& !actor->threshold
+		&& !P_CheckSight (actor, actor->target, false) )
 	{
-		if (P_LookForPlayers (actor,true))
-			return;         // got a new target
+		bool lookForBetter;
+		BOOL gotNew;
+		if (actor->flags3 & MF3_NOSIGHTCHECK)
+		{
+			actor->flags3 &= ~MF3_NOSIGHTCHECK;
+			lookForBetter = true;
+		}
+		gotNew = P_LookForPlayers (actor, true);
+		if (lookForBetter)
+		{
+			actor->flags3 |= MF3_NOSIGHTCHECK;
+		}
+		if (gotNew)
+		{
+			return; 	// got a new target
+		}
 	}
 
 //

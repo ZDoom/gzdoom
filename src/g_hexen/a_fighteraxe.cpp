@@ -9,6 +9,7 @@
 #include "a_action.h"
 #include "p_pspr.h"
 #include "gstrings.h"
+#include "a_hexenglobal.h"
 
 #define AXERANGE	((fixed_t)(2.25*MELEERANGE))
 
@@ -26,9 +27,9 @@ extern void AdjustPlayerAngle (AActor *pmo);
 
 // The Fighter's Axe --------------------------------------------------------
 
-class AFWeapAxe : public AWeapon
+class AFWeapAxe : public AFighterWeapon
 {
-	DECLARE_ACTOR (AFWeapAxe, AWeapon)
+	DECLARE_ACTOR (AFWeapAxe, AFighterWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -106,8 +107,9 @@ FWeaponInfo AFWeapAxe::WeaponInfo =
 {
 	WIF_AXEBLOOD,
 	MANA_NONE,
+	MANA_1,
 	2,
-	0,
+	25,
 	&States[S_FAXEUP],
 	&States[S_FAXEDOWN],
 	&States[S_FAXEREADY],

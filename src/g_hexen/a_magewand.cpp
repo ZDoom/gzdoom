@@ -17,9 +17,9 @@ void A_MWandAttack (player_t *player, pspdef_t *psp);
 
 // The Mage's Wand ----------------------------------------------------------
 
-class AMWeapWand : public AWeapon
+class AMWeapWand : public AMageWeapon
 {
-	DECLARE_ACTOR (AMWeapWand, AWeapon)
+	DECLARE_ACTOR (AMWeapWand, AMageWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -49,6 +49,7 @@ FState AMWeapWand::States[] =
 FWeaponInfo AMWeapWand::WeaponInfo =
 {
 	0,
+	MANA_NONE,
 	MANA_NONE,
 	0,
 	0,

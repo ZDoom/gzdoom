@@ -202,6 +202,7 @@ public:
 
 	void Serialize (FArchive &arc)
 	{
+		Super::Serialize (arc);
 		arc << AngleOffset;
 	}
 

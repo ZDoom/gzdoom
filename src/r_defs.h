@@ -228,6 +228,25 @@ enum
 
 struct FDynamicColormap;
 
+struct FLightStack
+{
+	secplane_t Plane;		// Plane above this light (points up)
+	sector_t *Master;		// Sector to get light from (NULL for owner)
+	BITFIELD bBottom:1;		// Light is from the bottom of a block?
+	BITFIELD bFlooder:1;	// Light floods lower lights until another flooder is reached?
+	BITFIELD bOverlaps:1;	// Plane overlaps the next one
+};
+
+struct FExtraLight
+{
+	short Tag;
+	WORD NumLights;
+	WORD NumUsedLights;
+	FLightStack *Lights;	// Lights arranged from top to bottom
+
+	void InsertLight (const secplane_t &plane, line_s *line, int type);
+};
+
 struct sector_t
 {
 	// Member functions
@@ -247,6 +266,7 @@ struct sector_t
 	sector_t *NextSpecialSector (int type, sector_t *prev) const;		// [RH]
 	fixed_t FindLowestCeilingPoint (vertex_t **v) const;
 	fixed_t FindHighestFloorPoint (vertex_t **v) const;
+	void AdjustFloorClip () const;
 
 	// Member variables
 	fixed_t		CenterFloor () const { return floorplane.ZatPoint (soundorg[0], soundorg[1]); }
@@ -257,8 +277,7 @@ struct sector_t
 	fixed_t		floortexz, ceilingtexz;	// [RH] used for wall texture mapping
 
 	// [RH] give floor and ceiling even more properties
-	FDynamicColormap *floorcolormap;	// [RH] Per-sector colormap
-	FDynamicColormap *ceilingcolormap;
+	FDynamicColormap *ColorMap;	// [RH] Per-sector colormap
 
 	// killough 3/7/98: floor and ceiling texture offsets
 	fixed_t		  floor_xoffs,   floor_yoffs;
@@ -339,6 +358,11 @@ struct sector_t
 	// [RH] The sky box to render for this sector. NULL means use a
 	// regular sky.
 	ASkyViewpoint *SkyBox;
+
+	// Planes that partition this sector into different light zones.
+	FExtraLight *ExtraLights;
+
+	vertex_t *Triangle[3];	// Three points that can define a plane
 };
 
 
@@ -368,6 +392,8 @@ struct side_s
 	WORD		TexelLength;
 	SBYTE		Light;
 	BYTE		Flags;
+
+	int GetLightLevel (bool foggy, int baselight) const;
 };
 typedef struct side_s side_t;
 
@@ -432,6 +458,23 @@ typedef struct msecnode_s
 } msecnode_t;
 
 //
+// A SubSector.
+// References a Sector.
+// Basically, this is a list of LineSegs indicating the visible walls that
+// define (all or some) sides of a convex BSP leaf.
+//
+struct FPolyObj;
+typedef struct subsector_s
+{
+	sector_t	*sector;
+	WORD		numlines;
+	WORD		firstline;
+	FPolyObj	*poly;
+	int			validcount;
+	fixed_t		CenterX, CenterY;
+} subsector_t;
+
+//
 // The LineSeg.
 //
 struct seg_s
@@ -443,9 +486,11 @@ struct seg_s
 	line_t* 	linedef;
 
 	// Sector references. Could be retrieved from linedef, too.
-	sector_t*	frontsector;
-	sector_t*	backsector;		// NULL for one-sided lines
-	
+	sector_t*		frontsector;
+	sector_t*		backsector;		// NULL for one-sided lines
+
+	subsector_t*	Subsector;
+	seg_s*			PartnerSeg;
 };
 typedef struct seg_s seg_t;
 
@@ -466,20 +511,6 @@ typedef struct FPolyObj
 	fixed_t		size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 	DThinker	*specialdata;	// pointer to a thinker, if the poly is moving
 } polyobj_t;
-
-//
-// A SubSector.
-// References a Sector.
-// Basically, this is a list of LineSegs indicating the visible walls that
-// define (all or some) sides of a convex BSP leaf.
-//
-typedef struct subsector_s
-{
-	sector_t	*sector;
-	WORD		numlines;
-	WORD		firstline;
-	polyobj_t	*poly;
-} subsector_t;
 
 //
 // BSP node.
@@ -620,6 +651,8 @@ public:
 	byte		gender;		// This skin's gender (not really used)
 	byte		range0start;
 	byte		range0end;
+	byte		scale;
+	byte		game;
 	int			sprite;
 	int			namespc;	// namespace for this skin
 };

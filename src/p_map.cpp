@@ -233,12 +233,14 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 
 inline fixed_t secfriction (const sector_t *sec)
 {
-	return sec->friction;
+	fixed_t friction = Terrains[TerrainTypes[sec->floorpic]].Friction;
+	return friction != 0 ? friction : sec->friction;
 }
 
 inline fixed_t secmovefac (const sector_t *sec)
 {
-	return sec->movefactor;
+	fixed_t movefactor = Terrains[TerrainTypes[sec->floorpic]].MoveFactor;
+	return movefactor != 0 ? movefactor : sec->movefactor;
 }
 
 //
@@ -272,8 +274,13 @@ int P_GetFriction (const AActor *mo, int *frictionfactor)
 
 		for (m = mo->touching_sectorlist; m; m = m->m_tnext)
 		{
-			if ((sec = m->m_sector)->special & FRICTION_MASK &&
-				(sec->friction < friction || friction == ORIG_FRICTION) &&
+			sec = m->m_sector;
+			if (!(sec->special & FRICTION_MASK) &&
+				Terrains[TerrainTypes[sec->floorpic]].Friction == 0)
+			{
+				continue;
+			}
+			if ((secfriction(sec) < friction || friction == ORIG_FRICTION) &&
 				(mo->z <= sec->floorplane.ZatPoint (mo->x, mo->y) ||
 				(sec->heightsec && !(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
 				mo->z <= sec->heightsec->floorplane.ZatPoint (mo->x, mo->y))))
@@ -407,6 +414,7 @@ BOOL PIT_CheckLine (line_t *ld)
 			{
 				P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5);
 			}
+			BlockingLine = ld;
 			CheckForPushSpecial (ld, 0, tmthing);
 			return false;
 		}
@@ -599,7 +607,7 @@ BOOL PIT_CheckThing (AActor *thing)
 
 		// [RH] Extend DeHacked infighting to allow for monsters
 		// to never fight each other
-		if ((deh.Infight < 0) && !thing->player && thing != tmthing->target)
+		if ((infighting < 0) && !thing->player && (!tmthing->target || !tmthing->target->player) && thing != tmthing->target)
 		{
 			return false;
 		}
@@ -613,7 +621,7 @@ BOOL PIT_CheckThing (AActor *thing)
 			}
 
 			// [RH] DeHackEd infighting is here.
-			if ((deh.Infight == 0) && !thing->player)
+			if ((infighting == 0) && !thing->player)
 			{ // Hit same species as originator => explode, no damage
 				return false;
 			}
@@ -1260,6 +1268,23 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		} 
 	}
 
+	// [RH] Check status of eyes against fake floor/ceiling in case
+	// it slopes or the player's eyes are bobbing in and out.
+
+	bool oldAboveFakeFloor, oldAboveFakeCeiling;
+	fixed_t viewheight;
+	
+	viewheight = thing->player ? thing->player->viewheight : thing->height / 2;
+	oldAboveFakeFloor = oldAboveFakeCeiling = false;	// pacify GCC
+
+	if (oldsec->heightsec)
+	{
+		fixed_t eyez = oldz + viewheight;
+
+		oldAboveFakeFloor = eyez > oldsec->heightsec->floorplane.ZatPoint (thing->x, thing->y);
+		oldAboveFakeCeiling = eyez > oldsec->heightsec->ceilingplane.ZatPoint (thing->x, thing->y);
+	}
+
 	// the move is ok, so link the thing into its new position
 	thing->UnlinkFromWorld ();
 
@@ -1312,8 +1337,38 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		}
 	}
 
-	// [RH] If changing sectors, trigger transitions
+	// [RH] Check for crossing fake floor/ceiling
 	newsec = thing->Sector;
+	if (newsec->heightsec && oldsec->heightsec && newsec->SecActTarget)
+	{
+		const sector_t *hs = newsec->heightsec;
+		fixed_t eyez = thing->z + viewheight;
+		fixed_t fakez = hs->floorplane.ZatPoint (x, y);
+
+		if (!oldAboveFakeFloor && eyez > fakez)
+		{ // View went above fake floor
+			newsec->SecActTarget->TriggerAction (thing, SECSPAC_EyesSurface);
+		}
+		else if (oldAboveFakeFloor && eyez <= fakez)
+		{ // View went below fake floor
+			newsec->SecActTarget->TriggerAction (thing, SECSPAC_EyesDive);
+		}
+
+		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
+		{
+			fakez = hs->ceilingplane.ZatPoint (x, y);
+			if (!oldAboveFakeCeiling && eyez > fakez)
+			{ // View went above fake ceiling
+				newsec->SecActTarget->TriggerAction (thing, SECSPAC_EyesAboveC);
+			}
+			else if (oldAboveFakeCeiling && eyez <= fakez)
+			{ // View went below fake ceiling
+				newsec->SecActTarget->TriggerAction (thing, SECSPAC_EyesBelowC);
+			}
+		}
+	}
+
+	// [RH] If changing sectors, trigger transitions
 	if (oldsec != newsec)
 	{
 		if (oldsec->SecActTarget)
@@ -1502,7 +1557,7 @@ BOOL PTR_SlideTraverse (intercept_t* in)
 				
 	li = in->d.line;
 	
-	if ( ! (li->flags & ML_TWOSIDED) )
+	if ( !(li->flags & ML_TWOSIDED) || (li->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING)) )
 	{
 		if (P_PointOnLineSide (slidemo->x, slidemo->y, li))
 		{
@@ -1566,7 +1621,7 @@ BOOL PTR_SlideTraverse (intercept_t* in)
 //
 // This is a kludgy mess.
 //
-void P_SlideMove (AActor *mo)
+void P_SlideMove (AActor *mo, fixed_t tryx, fixed_t tryy, int numsteps)
 {
 	fixed_t leadx, leady;
 	fixed_t trailx, traily;
@@ -1583,7 +1638,7 @@ void P_SlideMove (AActor *mo)
 		goto stairstep; 		// don't loop forever
 	
 	// trace along the three leading corners
-	if (mo->momx > 0)
+	if (tryx > 0)
 	{
 		leadx = mo->x + mo->radius;
 		trailx = mo->x - mo->radius;
@@ -1594,7 +1649,7 @@ void P_SlideMove (AActor *mo)
 		trailx = mo->x + mo->radius;
 	}
 
-	if (mo->momy > 0)
+	if (tryy > 0)
 	{
 		leady = mo->y + mo->radius;
 		traily = mo->y - mo->radius;
@@ -1607,9 +1662,9 @@ void P_SlideMove (AActor *mo)
 
 	bestslidefrac = FRACUNIT+1;
 		
-	P_PathTraverse (leadx, leady, leadx+mo->momx, leady+mo->momy, PT_ADDLINES, PTR_SlideTraverse);
-	P_PathTraverse (trailx, leady, trailx+mo->momx, leady+mo->momy, PT_ADDLINES, PTR_SlideTraverse);
-	P_PathTraverse (leadx, traily, leadx+mo->momx, traily+mo->momy, PT_ADDLINES, PTR_SlideTraverse);
+	P_PathTraverse (leadx, leady, leadx+tryx, leady+tryy, PT_ADDLINES, PTR_SlideTraverse);
+	P_PathTraverse (trailx, leady, trailx+tryx, leady+tryy, PT_ADDLINES, PTR_SlideTraverse);
+	P_PathTraverse (leadx, traily, leadx+tryx, traily+tryy, PT_ADDLINES, PTR_SlideTraverse);
 	
 	// move up to the wall
 	if (bestslidefrac == FRACUNIT+1)
@@ -1617,11 +1672,11 @@ void P_SlideMove (AActor *mo)
 		// the move must have hit the middle, so stairstep
 	  stairstep:
 		// killough 3/15/98: Allow objects to drop off ledges
-		xmove = 0, ymove = mo->momy;
+		xmove = 0, ymove = tryy;
 		walkplane = P_CheckSlopeWalk (mo, xmove, ymove);
 		if (!P_TryMove (mo, mo->x + xmove, mo->y + ymove, true, walkplane))
 		{
-			xmove = mo->momx, ymove = 0;
+			xmove = tryx, ymove = 0;
 			walkplane = P_CheckSlopeWalk (mo, xmove, ymove);
 			P_TryMove (mo, mo->x + xmove, mo->y + ymove, true, walkplane);
 		}
@@ -1632,8 +1687,8 @@ void P_SlideMove (AActor *mo)
 	bestslidefrac -= FRACUNIT/32;
 	if (bestslidefrac > 0)
 	{
-		newx = FixedMul (mo->momx, bestslidefrac);
-		newy = FixedMul (mo->momy, bestslidefrac);
+		newx = FixedMul (tryx, bestslidefrac);
+		newy = FixedMul (tryy, bestslidefrac);
 		
 		// killough 3/15/98: Allow objects to drop off ledges
 		if (!P_TryMove (mo, mo->x+newx, mo->y+newy, true))
@@ -1647,21 +1702,21 @@ void P_SlideMove (AActor *mo)
 	else if (bestslidefrac <= 0)
 		return;
 
-	tmxmove = FixedMul (mo->momx, bestslidefrac);
-	tmymove = FixedMul (mo->momy, bestslidefrac);
+	tryx = tmxmove = FixedMul (tryx, bestslidefrac);
+	tryy = tmymove = FixedMul (tryy, bestslidefrac);
 
 	P_HitSlideLine (bestslideline); 	// clip the moves
 
-	mo->momx = tmxmove;
-	mo->momy = tmymove;
+	mo->momx = tmxmove * numsteps;
+	mo->momy = tmymove * numsteps;
 
 	// killough 10/98: affect the bobbing the same way (but not voodoo dolls)
 	if (mo->player && mo->player->mo == mo)
 	{
-		if (abs(mo->player->momx) > abs(tmxmove))
-			mo->player->momx = tmxmove;
-		if (abs(mo->player->momy) > abs(tmymove))
-			mo->player->momy = tmymove;
+		if (abs(mo->player->momx) > abs(mo->momx))
+			mo->player->momx = mo->momx;
+		if (abs(mo->player->momy) > abs(mo->momy))
+			mo->player->momy = mo->momy;
 	}
 
 	walkplane = P_CheckSlopeWalk (mo, tmxmove, tmymove);
@@ -2242,7 +2297,8 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 	int count;
 	int noise;
 
-	if ((actor->flags & MF_NOBLOOD) || (actor->flags2 & MF2_INVULNERABLE))
+	if ((actor->flags & MF_NOBLOOD) || (actor->flags2 & MF2_INVULNERABLE) ||
+		(actor->player && actor->player->cheats & CF_GODMODE))
 	{
 		return;
 	}
@@ -2311,6 +2367,11 @@ void P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch)
 void P_TraceBleed (int damage, AActor *target, AActor *missile)
 {
 	int pitch;
+
+	if (missile->flags3 & MF3_BLOODLESSIMPACT)
+	{
+		return;
+	}
 
 	if (missile->momz != 0)
 	{

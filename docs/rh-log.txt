@@ -1,3 +1,411 @@
+December 12, 2002
+- Uploaded 24.cab. Why cab? Because LZX compression is better than ZIP, and
+  I'm stuck uploading files with a 56k modem. That's why. The source code
+  archive alone is almost 700k smaller as a cab than as a zip. That's at
+  least three fewer minutes I need to wait uploading it.
+- Fixed: Bloodscourge projectiles would not pass through non-boss monsters
+  because AMageStaffFX2::SpecialMissileHit() was incomplete. It is a much
+  more dangerous weapon now.
+- Fixed: ACircleFlame needed a GetExplodeParms() member function so that it
+  would do the correct damage and not harm the player.
+- Uploaded 23.cab.
+- Fixed: Dehacked weapon patches did not set the new FWeaponInfo::givingammo
+  field.
+
+December 10, 2002
+- Uploaded 22.cab.
+- Fixed: If you had a bot with you in a co-op game and you switched levels,
+  the bot would come with you as normal, and it would also spawn a new copy
+  of itself later, so you would now have two bots instead of one.
+- Moved the player name display for spying up slightly so that it isn't
+  obscured by the Hexen status bar.
+- Added support for terrain-defined friction, so the Hexen ice flat can
+  behave like ice.
+- Fixed: Weapon pieces were not behaving like weapons with sv_weaponstay on.
+- Fixed: The spinning invulnerability and maulator icons that appear at the
+  top of the screen when they are active were not right-aligned.
+- Fixed: The maulator artifact had the wrong status bar image.
+- Fixed: Using Dragon Skin Bracers to get more than 100% armor would mess
+  up the armor display in Hexen's automap status bar.
+- Now I know why I didn't direct hudmessage and print commands to the
+  screen of spying players. Changed it back to the way it used to be, so
+  it doesn't pay attention to the player's camera when deciding whether it
+  should take effect or not. One solution for this would be to have
+  separate status bars for each player and just route the messages to the
+  appropriate status bars. Probably too much effort at this point.
+- Fixed: The player faces showed up on the scoreboard even when not playing
+  Hexen.
+- Fixed: The extralight from your gunshots would be used if you weren't
+  looking through the eyes of a player.
+- Uploaded 21.cab.
+- Fixed an accidental problem when travelling between levels because
+  I mis-blocked some code in WI_End().
+- Fixed: Using a flat as an intermission background instead of a full
+  graphic would not print any text.
+- Fixed: FWeaponSlots::StreamInSlots() only cleared the even slots,
+  so weapnext/weapprev failed, and weapon selection in odd slots would
+  work wrong.
+
+December 9, 2002
+- Fixed: Dormant monsters would respawn when monster respawning is
+  enabled, losing their dormant state and any specials they were given.
+- You can spy through your teammates' eyes in deathmatch now, and you
+  can also see them on the automap.
+- Added face icons to the Hexen scoreboard.
+- Gave the bots some minor knowledge of Hexen weapons.
+- Fixed: The fighter would not get any mana when he picked up his axe
+  or hammer.
+- Added the Hexen finale and intermission screens.
+
+December 6, 2002
+- Removed M_PBOX from zdoom.wad. M_DrawFrame() draws the box around the
+  player in the menu now, since it works with all games and not just Doom.
+- Added some more choices to the sound options menu.
+- Added support for setting player sounds by their real names in skins
+  (i.e. *xdeath instead of pspdiehi), and added a few more sound mappings
+  for the Legacy names.
+- Added simple palette remapping for skins so that Doom skins can be used
+  while playing Heretic.
+
+December 2, 2002
+- Added software OPL2-synthesis for MUS music in order to mimic "the
+  good old days." I haven't had a soundcard with an OPL chip in six years,
+  so I don't know how accurate the sound is, but I think it's reasonable.
+  Pity it takes around 10% of the CPU time on my Athlon XP 1600 (at 44.1 KHz).
+  The MUS player part of it comes from Vladimir Arnost's MUS Lib, and the
+  OPL2 part of it is from MAME.
+
+November 28, 2002
+- Fixed the player setup menu to work with scaled sprites, and added an
+  option to skins so you can set the scale for more than just the base
+  sprite.
+- Gave each player their own set of weapon slots, so custom slots can be
+  used in net games and demo playback.
+- Added player translations for Hexen.
+- Added player class filtering for the Hexen fourth weapon pieces.
+
+November 26, 2002
+- Added player class filtering for the Hexen weapons.
+- Added the "Healing Radius" artifact.
+- Fixed a hub travel bug when playing with bots. If there were more bots
+  in the level being travelled to than the one travelling from, the load
+  would fail.
+- Fixed: ASorcBall::Serialize() did not call its super method.
+- Fixed a hub travel bug introduced by the version tracking code:
+  SaveVersion would not be set before a game was actually saved or loaded,
+  so snapshots would not load back properly until that happened. Another
+  related problem is that somebody could load an old savegame with
+  multiple snapshots and then save it again without revisiting all the
+  snapshots. Thus, a savegame could have snapshots created with different
+  versions of the game, so each snapshot needs to carry version information
+  around with it.
+
+November 25, 2002
+- Changed the ACS print and hudmessage commands so that if a projectile
+  activates a script, they will print to the screen of whoever fired the
+  projectile instead of failing because the projectiles don't have a screen.
+  Also changed them so that they show up for anybody spying on the person
+  who activated the script.
+- Added the pig.
+- Disabled skins in Hexen, and changed the player setup menu to show class
+  instead of skin when playing Hexen.
+- Added "random" as a choice in the Hexen class/new-game menu.
+- Fixed: p_GiveArmor() gave the negative value of the desired armor, which is
+  effectively the same as always giving blue armor.
+- Fixed the weapon slots so that they can accurately determine if a weapon
+  using both types of mana can be selected.
+
+November 23, 2002
+- Put Hexen's new game menus in place, although you still can't select a
+  player class.
+- Disabled blood splats for players using the god mode cheat.
+- Added palette flashes for Hexen's poison and ice damage and the Wraithverge
+  and Bloodscourge.
+- Added the Bloodscourge and Wraithverge.
+- Changed sound loading to use the heap instead of zone memory, so large sounds
+  can be used (although it's probably a bad idea nonetheless). Also added a
+  fallback mechanism so that sounds that are too big for hardware buffers will
+  be created in software instead.
+- Fixed the Doom status bar so that removing a key from the player's inventory
+  will remove the key from the status bar without having to manually hide the
+  status bar first.
+- Added FloorClip as a property for use with DECORATE.
+
+November 22, 2002
+- Added WAVE loading to the alternate mixer.
+
+November 21, 2002
+- Added an alternate sound mixer that bypasses FMOD and and does all the sound
+  mixing itself, feeding it to a DirectSound buffer directly. This is not
+  meant to be a complete replacement for FMOD, so it's pretty basic. It's not
+  even particularly optimized. I only wrote it in the hope that it alleviates
+  the BSODs a very few people got without -nosound.
+
+November 19, 2002
+- Changed ThrustThing to mimic the original P_XYMovement() MAXMOVE clamping.
+  Setting the third parameter 1 will let you use any thrust you want.
+- Put back the maxmove restriction for underwater actors, but it should
+  probably be handled differently.
+- Fixed: Respawning in single player would execute respawn scripts instead of
+  enter scripts, and travelling to a new map without being dead would not
+  execute respawn or enter scripts.
+- Fixed: Only the first entry in each DECORATE lump would be processed.
+- Fixed P_XYMovement() so that startx, starty, onestepx, and onestepy are
+  properly recalculated after sliding along a wall. This seems to have fixed
+  the ability to go through walls at corners when moving very quickly. I hope
+  there aren't any other bugs lurking in there.
+- Fixed recording of compressed demos: The demobodyspot and democompspot
+  pointers were not being moved when demobuffer would get realloced, so
+  replacing the BODY chunk with compressed data would stomp on invalid memory.
+- Fixed: P_SlideMove()'s stairstep case still used mo->momx instead of tryx.
+- Fixed G_QueueBody() and the pointer cleanup in dobject.cpp so that it
+  doesn't try to destroy bodies that were already destroyed outside of
+  that function (such as by a crusher squishing the body).
+
+November 15, 2002
+- Added the Quietus.
+
+November 13, 2002
+- Hexen has a status bar now.
+
+November 9, 2002
+- Changed CheckIfExitIsGood() so that dead players cannot exit a level.
+- Fixed: The ThrustThing special is supposed to add to the actor's velocity,
+  not set it.
+
+November 8, 2002
+- Imported the node builder fix that splits segs collinear with a splitter
+  with any events they cross. This is only necessary for bad maps that have
+  overlapping linedefs.
+- Changed dehacked text replacement so that if a pickup sprite's name is
+  changed, the identification map used by DehackedPickup is also updated.
+  This lets you pick up Strain's shotgun, plasma rifle, and BFG replacements.
+- Changed bot_observer mode so that it does not set the player's MF_SHADOW
+  bit.
+- Changed P_LookForPlayer() so that it does not "find" players without the
+  MF_SHOOTABLE bit set.
+- Added floorclip adjustments for sectors that have their floorpics changed
+  or move their floors.
+- Fixed floorclipping so that it chops off the same amount of space for all
+  vertical sprite scales (as opposed to chopping off x rows from the bottom
+  of the source sprite).
+
+November 6, 2002
+- Removed the menu title graphics from zdoom.wad because they can just be
+  drawn using BigFont.
+- Moved "Player Setup" into the options menu and removed the last vestiges
+  of the old fire effect for that menu.
+- Extralights don't work with the release build. Oh well.
+- #if-ed out the decal-out-of-range code again, because I think it should
+  finally be fixed thanks to the recent changes to PrepWall.
+- Made some changes to allow for loading earlier format savegames. Right now,
+  that means ZDOOMSAVE200 games can still be loaded. Earlier versions won't be
+  supported.
+- Added Dehacked Gravity and LowGravity code pointers.
+- Made demo_compress a global config cvar.
+- Changed the ini's location to be "$PROGDIR/zdoom-$USERNAME.ini" because
+  some people have multiple copies of ZDoom installed in different directories
+  for different IWADs, and they might want to use different configs with them.
+- Fixed sector triangle finding for area-less sectors.
+
+November 4, 2002
+- Added more correctness checks to PrepWall() and PrepLWall() to check for
+  out-of-bounds texture columns. The very-near-a-decal-crashing problem should
+  be solved now.
+
+November 2, 2002
+- Restored the menu_gameplay command I had accidentally removed.
+
+October 31, 2002
+- Added a check to A_Lower() to ensure that the pendingweapon is not
+  wp_nochange.
+- Fixed: The ACS SetWeapon command checked if there was enough weapon to use
+  the current weapon, not the one being switched to.
+- Fixed: The FFont* serializer could only use already loaded fonts. It could
+  not load any new ones, so some FFont pointers could be initialized to NULL
+  after reloading a savegame from a previous session.
+
+October 30, 2002
+- Merged the separate floorcolormap and ceilingcolormap sector members back
+  into a single ColorMap member.
+- "3D lights" can color floors and ceilings now.
+
+October 29, 2002
+- Decided to do something fun, so I added support for rendering "3D lights"
+  on walls.
+- Changed HealThing special so that it does nothing if the actor's health
+  is already above the specified maximum.
+- Fixed: The eyes crossing fake floor/ceiling special actions were only
+  checked when moving vertically. They also need to be implemented for
+  horizontal movement in case the fake floor/ceiling is sloped.
+
+October 23, 2002
+- Fixed: The MF3_GHOST flag was not cleared when the invisibility
+  artifact wore off.
+
+October 21, 2002
+- Added Ceiling_Waggle as special 38.
+- Added a check for a 0 maxmove to P_XYMovement() because P_DoCrunch() sets
+  the gib's radius to 0.
+
+October 15, 2002
+- Restored the old x2 calculation in R_ProjectSprite and changed the
+  iscale calculation so that it is based on the x1, x2 values instead of
+  the inverse of xscale.
+
+October 14, 2002
+- Reenabled the error check in WallSpriteColumn() because it seems it can
+  still happen. Now it has a bunch more debug spew and exits with
+  I_FatalError().
+- Changed the x2 calculation in R_ProjectSprite() because the old method
+  could cause a sprite to be drawn one pixel too wide under rare
+  circumstances.
+- Fixed: R_ProjectSprite() did not add one to thing->xscale.
+- Added a check to the node builder for maps without any lines so that
+  it can exit gracefully instead of crashing.
+- Made Sector_SetFriction work from inside scripts.
+- Changed Floor_RaiseByValueTxTy so that if it isn't activated by a line,
+  the target's sector type is set to 0, and its floor is left alone. This
+  should be much better than crashing.
+
+October 12, 2002
+- Imported all the changes from the standalone node builder to increase
+  accuracy and add support for GL nodes.
+
+October 10, 2002
+- Fixed the ordering of the WTSRegisterSessionNotification call so that it
+  (again) occurs after the window is created, so the message loop can
+  actually receive the messages.
+- Replaced the %p and %I64x format specifiers I was using in i_crash.cpp to
+  equivalent %x replacements, because the Windows 9x version of wsprintf
+  does not understand them.
+- Made MinotaurSpecial, DSparilSpecial, IronlichSpecial, and
+  SpecialAction_KillMonsters accessable through MAPINFO.
+- Changed message handling in P_CheckKeys() so that the correct Heretic key
+  messages will show up even if you don't flag the keys as "either will do"--
+  a rather pointless thing for Heretic since it only has three unique keys.
+
+October 1, 2002
+- Fixed a bug in P_XYMovement() that could cause you to move exponentially
+  faster when running on a slope along a wall.
+
+September 30, 2002
+- Fixed the Doom status bar so that the ouch face will show up when it was
+  intended to.
+
+September 27, 2002
+- Removed Infight from DehInfo so that monster infighting can be completely
+  controlled by the cvar.
+
+September 26, 2002
+- Fixed FDoomEdMap so that it works with negative thing numbers without
+  crashing.
+- Fixed dehacked text substitution trying to compare against a null music name
+  in the predefined mapinfos.
+- Fixed "Monster Ignore Each Other" infighting mode so that player projectiles
+  can damage monsters.
+- Changed P_SlideMove so that it can use the smaller steps from
+  P_XYMovement, so if something is moving very fast and slides along the wall,
+  it shouldn't be able to pass right through small obstacles next to the wall.
+- Fixed: If a move was split into multiple steps and you went through a
+  teleporter, the remainder of the move would still be executed from your
+  original position, rendering the teleport useless.
+
+September 21, 2002
+- Played around with a 140 Hz TICRATE for a while. The high framerate was
+  nice, but there are too many places that implicitly depend on a 35 Hz TICRATE
+  (physics in particular) for me to try and truly fix the game for variable
+  TICRATEs before a final release.
+- Removed the unused P_CalcSwing() function and its related global variables.
+
+September 18, 2002
+- Fixed the use of seg grouping in the node builder so it actually works as
+  intended. The mechanism GroupSegPlanes() uses to group segs was also
+  changed before I discovered the real problem with it: SelectSplitter()
+  was using r = pseg->planenum & 7; instead of r = 1 << (pseg->planenum & 7);
+  The new grouping scheme may not have been necessary, but it should be
+  faster at least.
+
+September 17, 2002
+- Removed playernumber from DCajunMaster. The only time it was used for
+  something non-local was in the ThinkForMove method, but its use there
+  was inconsistant with its other uses. Apparently, ThinkForMove expected it
+  to be the maximum player number plus one, but SpawnBot stored the most
+  recently spawned bot there instead. This could crash ThinkForMove if
+  the most recent bot spawned was player 0. Replacing its use in ThinkForMove
+  with MAXPLAYERS seems acceptable.
+
+September 14, 2002
+- Added optional logging of ACS hud messages.
+- Upped the number of local script variables to 20 to match ACC 1.25.
+
+September 12, 2002
+- Changed ACS function importing so that imported functions cannot be
+  "chained" from one library to the next.
+- Added code to properly tag string arrays.
+- Fixed a hang that could occur when importing ACS arrays.
+- Added a little more information to the crash report.
+- Changed WndProc so that it only resets the language if the WM_SETTINGCHANGE
+  message was sent as the result of a locale change.
+- Figured out how to make the crash collector work with secondary threads:
+  Using an UnhandledExceptionFilter, the information for that thread is
+  collected, the thread is put to sleep, and an APC is queued on the primary
+  thread. Once the APC executes, it raises a software exception that gets
+  caught by the outer-most __try block, and the primary thread shuts down
+  and shows the crash dialog. I think it would be better if I could raise
+  exceptions in any thread I wanted, but this will suffice. As long as
+  I_GetEvent() is called often enough to put the thread in an alertable state
+  using SleepEx, the APC should be able to execute without much delay.
+
+September 11, 2002
+- Finished the crash information collection code.
+
+September 9, 2002
+- Changed "give armor" cheat to give armor equivalent to blue armor, even when
+  Dehacked is used to modify the blue AC.
+
+September 7, 2002
+- Fixed: Imported libraries had their source libraries recorded wrong.
+
+September 5, 2002
+- Fixed hud messages so that they restore the screen's previous font instead
+  of always assuming the previous font was "SmallFont".
+- Changed the node builder so that segs with the same front and back sector
+  can be a part of a subsector with segs from a different sector. Although the
+  result is not a proper subsector, it is okay because such segs can only add
+  masked mid textures to the scene, and those use the seg (not the subsector) to
+  find out which sector they belong to. This fixes the area by the fence in
+  tqtrust MAP04 when the internal node builder is used.
+- Changed PTR_SlideTraverse so that blocking two-sided lines are treated like
+  one-sided lines.
+- Fixed the nodebuilder so it works again without crashing.
+- Fixed: ExtractFileBase did not understand files with a drive specifier but
+  no path. i.e. It would consider the base file name for d:myfile.foo as
+  d:myfile and not myfile.
+
+September 3, 2002
+- Changed the "This map has errors that must be fixed" message to be more
+  specific about what exactly needs to be fixed.
+- Made MDK work only in non-deathmatch games, even if sv_cheats is true.
+- Added the following contributions from Stevie-O:
+  + Fixed: AImpactDecal::CloneSelf() would cause ImpactCount accounting to mess
+    up if the clone had to be destroyed because it hit the sv_maxdecals limit.
+  + Fixed: Using MDK cheat would print blank lines to the console.
+  + Fixed: Respawning monsters could spawn inside other things because
+    P_NightmareRespawn() was not changed to account for thing-over-thing.
+  + Fixed: Telefragged players would still show the FX_RESPAWNINVUL effect if
+    it was active when they died.
+  + When bot_observer is true, players can no longer fire their weapons.
+  + Added sv_fastweapons cvar.
+
+September 2, 2002
+- Fixed: New-style behavior lumps without any scripts would crash the game.
+
+August 31, 2002
+- Made R_InitTextures more forgiving of errors.
+- Changed DrawWrapper to clip columns to the patch's height. This "fixes"
+  malgnant.wad's corrupt titlepic that crashed the game.
+
 August 26, 2002
 - Added a workaround to the DObject::DestroyScan()s because the bglobal object
   is not showing up in the Objects list.
@@ -1626,7 +2034,7 @@ September 11, 2001
   significantly so--Vrack 2 spent between 4 and 6 times as much time checking
   site using the BSP as it did without. In the best case, the BSP routines
   were about as fast as the blockmap ones, so I took the BSP routines back
-  out, because they offer no benefit over the Hexen code I had ben using for
+  out, because they offer no benefit over the Hexen code I had been using for
   some time now.
 - Fixed: Maps with starts for players 5-8 would trample over memory
   when saving the starts for those players.

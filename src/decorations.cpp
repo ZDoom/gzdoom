@@ -185,7 +185,7 @@ static const char *FlagNames2[] =
 	"*",
 
 	"*",
-	"*",
+	"FloorClip",
 	"SpawnFloat",
 	"NoTeleport",
 
@@ -275,99 +275,100 @@ static void ParseDecorate (void (*process)(FState *, int))
 	char *typeName;
 
 	// Get actor class name. The A prefix is added automatically.
-	SC_MustGetString ();
-
-	if (SC_Compare ("Pickup"))
+	while (SC_GetString ())
 	{
-		parent = RUNTIME_CLASS(AFakeInventory);
-		def = DEF_Pickup;
+		if (SC_Compare ("Pickup"))
+		{
+			parent = RUNTIME_CLASS(AFakeInventory);
+			def = DEF_Pickup;
+			SC_MustGetString ();
+		}
+		else
+		{
+			parent = RUNTIME_CLASS(ADecoration);
+			def = DEF_Decoration;
+		}
+
+		type = new TypeInfo;
+		typeName = new char[strlen(sc_String)+2];
+		typeName[0] = 'A';
+		strcpy (&typeName[1], sc_String);
+
+		type = parent->CreateDerivedClass (typeName, parent->SizeOf);
+		info = type->ActorInfo;
+		info->GameFilter = 0x80;
+		Decorations.Push (info);
+
 		SC_MustGetString ();
-	}
-	else
-	{
-		parent = RUNTIME_CLASS(ADecoration);
-		def = DEF_Decoration;
-	}
-
-	type = new TypeInfo;
-	typeName = new char[strlen(sc_String)+2];
-	typeName[0] = 'A';
-	strcpy (&typeName[1], sc_String);
-
-	type = parent->CreateDerivedClass (typeName, parent->SizeOf);
-	info = type->ActorInfo;
-	info->GameFilter = 0x80;
-	Decorations.Push (info);
-
-	SC_MustGetString ();
-	while (!SC_Compare ("{"))
-	{
-		if (SC_Compare ("Doom"))
+		while (!SC_Compare ("{"))
 		{
-			info->GameFilter |= GAME_Doom;
+			if (SC_Compare ("Doom"))
+			{
+				info->GameFilter |= GAME_Doom;
+			}
+			else if (SC_Compare ("Heretic"))
+			{
+				info->GameFilter |= GAME_Heretic;
+			}
+			else if (SC_Compare ("Hexen"))
+			{
+				info->GameFilter |= GAME_Hexen;
+			}
+			else if (SC_Compare ("Raven"))
+			{
+				info->GameFilter |= GAME_Raven;
+			}
+			else if (SC_Compare ("Any"))
+			{
+				info->GameFilter = GAME_Any;
+			}
+			else
+			{
+				const char *name = sc_String;
+				SC_ScriptError ("Unknown game type %s", &name);
+			}
+			SC_MustGetString ();
 		}
-		else if (SC_Compare ("Heretic"))
-		{
-			info->GameFilter |= GAME_Heretic;
-		}
-		else if (SC_Compare ("Hexen"))
-		{
-			info->GameFilter |= GAME_Hexen;
-		}
-		else if (SC_Compare ("Raven"))
-		{
-			info->GameFilter |= GAME_Raven;
-		}
-		else if (SC_Compare ("Any"))
+		if (info->GameFilter == 0x80)
 		{
 			info->GameFilter = GAME_Any;
 		}
 		else
 		{
-			const char *name = sc_String;
-			SC_ScriptError ("Unknown game type %s", &name);
+			info->GameFilter &= ~0x80;
 		}
-		SC_MustGetString ();
-	}
-	if (info->GameFilter == 0x80)
-	{
-		info->GameFilter = GAME_Any;
-	}
-	else
-	{
-		info->GameFilter &= ~0x80;
-	}
 
-	states.Clear ();
-	ParseInsideDecoration (info, (AActor *)(info->Defaults), states, def);
+		states.Clear ();
+		ParseInsideDecoration (info, (AActor *)(info->Defaults), states, def);
 
-	info->NumOwnedStates = states.Size();
-	if (info->NumOwnedStates == 0)
-	{
-		const char *name = typeName + 1;
-		SC_ScriptError ("%s did not define any animation frames", &name);
-	}
-
-	info->OwnedStates = new FState[info->NumOwnedStates];
-	memcpy (info->OwnedStates, &states[0], info->NumOwnedStates * sizeof(info->OwnedStates[0]));
-	if (info->NumOwnedStates == 1)
-	{
-		info->OwnedStates->Tics = 0;
-		info->OwnedStates->Misc1 = 0;
-		info->OwnedStates->Frame &= ~SF_BIGTIC;
-	}
-	else
-	{
-		int i;
-
-		for (i = 0; i < info->NumOwnedStates-1; ++i)
+		info->NumOwnedStates = states.Size();
+		if (info->NumOwnedStates == 0)
 		{
-			info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+			const char *name = typeName + 1;
+			SC_ScriptError ("%s did not define any animation frames", &name);
 		}
-		info->OwnedStates[i].NextState = info->OwnedStates;
+
+		info->OwnedStates = new FState[info->NumOwnedStates];
+		memcpy (info->OwnedStates, &states[0], info->NumOwnedStates * sizeof(info->OwnedStates[0]));
+		if (info->NumOwnedStates == 1)
+		{
+			info->OwnedStates->Tics = 0;
+			info->OwnedStates->Misc1 = 0;
+			info->OwnedStates->Frame &= ~SF_BIGTIC;
+		}
+		else
+		{
+			int i;
+
+			for (i = 0; i < info->NumOwnedStates-1; ++i)
+			{
+				info->OwnedStates[i].NextState = &info->OwnedStates[i+1];
+			}
+			info->OwnedStates[i].NextState = info->OwnedStates;
+		}
+		((AActor *)(info->Defaults))->SpawnState = info->OwnedStates;
+		process (info->OwnedStates, info->NumOwnedStates);
 	}
-	((AActor *)(info->Defaults))->SpawnState = info->OwnedStates;
-	process (info->OwnedStates, info->NumOwnedStates);
 }
 
 //==========================================================================

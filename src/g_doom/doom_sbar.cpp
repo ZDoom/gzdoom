@@ -177,6 +177,7 @@ public:
 				OldArmor = -1;
 				OldActiveAmmo = -1;
 				OldFrags = -9999;
+				FaceHealth = -9999;
 			}
 			DrawMainBar ();
 		}
@@ -287,7 +288,7 @@ private:
 		{
 			for (j = 0; j < MAX_WEAPONS_PER_SLOT; j++)
 			{
-				weapontype_t weap = WeaponSlots[i+2].GetWeapon (j);
+				weapontype_t weap = CPlayer->WeaponSlots.Slots[i+2].GetWeapon (j);
 				if (weap < NUMWEAPONS && CPlayer->weaponowned[weap])
 				{
 					arms[i] = 1;
@@ -431,7 +432,10 @@ private:
 				int y = 3 + i*10;
 
 				DrawPartialImage (Images, imgSBAR, 239, y, 239, y, 8, 5);
-				DrawImage (Images, imgKEYS0+keys[i], 239, y);
+				if (keys[i] != 255)
+				{
+					DrawImage (Images, imgKEYS0+keys[i], 239, y);
+				}
 			}
 		}
 	}
@@ -663,10 +667,11 @@ private:
 				// being attacked
 				priority = 7;
 				
-				if (OldHealth != -1 && CPlayer->health - OldHealth > ST_MUCHPAIN)
+				if (FaceHealth != -9999 && FaceHealth - CPlayer->health > ST_MUCHPAIN)
 				{
 					FaceCount = ST_TURNCOUNT;
 					FaceIndex = CalcPainOffset() + ST_OUCHOFFSET;
+					priority = 8;
 				}
 				else
 				{
@@ -775,6 +780,7 @@ private:
 		}
 
 		FaceCount--;
+		FaceHealth = CPlayer->health;
 	}
 
 	enum
@@ -836,6 +842,7 @@ private:
 	int OldArmor;
 	int OldActiveAmmo;
 	int OldFrags;
+	int FaceHealth;
 
 	char HealthRefresh;
 	char ArmorRefresh;

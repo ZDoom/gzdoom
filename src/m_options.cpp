@@ -51,6 +51,11 @@
 
 #include "i_system.h"
 #include "i_video.h"
+
+#ifdef _WIN32
+#include "i_music.h"
+#endif
+
 #include "z_zone.h"
 #include "v_video.h"
 #include "v_text.h"
@@ -155,15 +160,15 @@ static void CompatibilityOptions (void);
 static void VideoOptions (void);
 static void SoundOptions (void);
 static void GoToConsole (void);
+void M_PlayerSetup (void);
 void Reset2Defaults (void);
 void Reset2Saved (void);
-
-EXTERN_CVAR (Float, snd_midivolume)
 
 static void SetVidMode (void);
 
 static menuitem_t OptionItems[] =
 {
+	{ more,		"Player Setup",			{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)M_PlayerSetup} },
 	{ more,		"Customize Controls",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CustomizeControls} },
 	{ more,		"Go to console",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GoToConsole} },
 	{ more,		"Gameplay Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GameplayOptions} },
@@ -184,8 +189,8 @@ static menuitem_t OptionItems[] =
 	{ more,		"Reset to last saved",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)Reset2Saved} }
 };
 
-menu_t OptionMenu = {
-	{ 'M','_','O','P','T','T','T','L' },
+menu_t OptionMenu =
+{
 	"OPTIONS",
 	0,
 	sizeof(OptionItems)/sizeof(OptionItems[0]),
@@ -250,8 +255,8 @@ static menuitem_t ControlsItems[] =
 
 static TArray<menuitem_t> CustomControlsItems (0);
 
-menu_t ControlsMenu = {
-	{ 'M','_','C','O','N','T','R','O' },
+menu_t ControlsMenu =
+{
 	"CUSTOMIZE CONTROLS",
 	3,
 	sizeof(ControlsItems)/sizeof(ControlsItems[0]),
@@ -352,8 +357,8 @@ static menuitem_t VideoItems[] = {
 	{ discrete, "Standard map colors",	{&am_usecustomcolors},	{2.0}, {0.0},	{0.0}, {NoYes} },
 };
 
-menu_t VideoMenu = {
-	"M_VIDEO",
+menu_t VideoMenu =
+{
 	"DISPLAY OPTIONS",
 	0,
 #ifdef _WIN32
@@ -416,8 +421,8 @@ static menuitem_t MessagesItems[] = {
 	{ cdiscrete, "Centered Messages",	{&msgmidcolor},			{11.0}, {0.0},	{0.0}, {TextColors} }
 };
 
-menu_t MessagesMenu = {
-	"M_MESS",
+menu_t MessagesMenu =
+{
 	"MESSAGES",
 	0,
 	12,
@@ -486,8 +491,8 @@ static menuitem_t ModesItems[] = {
 #define VM_MAKEDEFLINE	18
 #define VM_CURDEFLINE	19
 
-menu_t ModesMenu = {
-	{ 'M','_','V','I','D','M','O','D' },
+menu_t ModesMenu =
+{
 	"VIDEO MODE",
 	2,
 	20,
@@ -530,8 +535,8 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Allow BFG aiming",		{&dmflags2},	{1}, {0}, {0}, {(value_t *)DF2_NO_FREEAIMBFG} }
 };
 
-static menu_t DMFlagsMenu = {
-	{ 'M','_','G','M','P','L','A','Y' },
+static menu_t DMFlagsMenu =
+{
 	"GAMEPLAY OPTIONS",
 	0,
 	sizeof(DMFlagsItems)/sizeof(DMFlagsItems[0]),
@@ -556,8 +561,8 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"Spawn item drops on the floor",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOTOSSDROPS} },
 };
 
-static menu_t CompatibilityMenu = {
-	{ 0 },
+static menu_t CompatibilityMenu =
+{
 	"COMPATIBILITY OPTIONS",
 	0,
 	sizeof(CompatibilityItems)/sizeof(CompatibilityItems[0]),
@@ -571,7 +576,16 @@ static menu_t CompatibilityMenu = {
  *
  *=======================================*/
 
-static void MakeSoundChanges (void);
+#ifdef _WIN32
+EXTERN_CVAR (Float, snd_midivolume)
+EXTERN_CVAR (Float, snd_movievolume)
+#endif
+EXTERN_CVAR (Bool, snd_flipstereo)
+EXTERN_CVAR (Bool, snd_pitched)
+
+static void MakeSoundChanges ();
+static void AdvSoundOptions ();
+static void ChooseMIDI ();
 
 static value_t SampleRates[] =
 {
@@ -600,30 +614,95 @@ static value_t BufferSizes[] =
 	{ 200.f, "200 ms" },
 };
 
-static menuitem_t SoundItems[] = {
+static menuitem_t SoundItems[] =
+{
 	{ slider,	"Sound effects volume",	{&snd_sfxvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
 #ifdef _WIN32
 	{ slider,	"MIDI music volume",	{&snd_midivolume},		{0.0}, {1.0},	{0.05}, {NULL} },
-	{ slider,	"MOD music volume",		{&snd_musicvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
+	{ slider,	"Other music volume",	{&snd_musicvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
+	{ slider,	"Movie volume",			{&snd_movievolume},		{0.0}, {1.0},	{0.05}, {NULL} },
 #else
 	{ slider,	"Music volume",			{&snd_musicvolume},		{0.0}, {1.0},	{0.05}, {NULL} },
 #endif
-	{ discrete, "Underwater Reverb",	{&snd_waterreverb},		{2.0}, {0.0},	{0.0}, {OnOff} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ more,		"Activate changes made below", {NULL},			{0.0}, {0.0},	{0.0}, {(value_t *)MakeSoundChanges} },
+	{ discrete, "Underwater EAX Reverb",{&snd_waterreverb},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Flip Stereo Channels",	{&snd_flipstereo},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Random Pitch Variations", {&snd_pitched},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ more,		"Activate below settings", {NULL},			{0.0}, {0.0},	{0.0}, {(value_t *)MakeSoundChanges} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ discrete, "Sample Rate",			{&snd_samplerate},		{8.0}, {0.0},	{0.0}, {SampleRates} },
 	{ discrete, "Buffer Size",			{&snd_buffersize},		{11.0}, {0.0},	{0.0}, {BufferSizes} },
 	{ discrete, "3D Sound",				{&snd_3d},				{2.0}, {0.0},	{0.0}, {OnOff} },
 
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ more,		"Advanced Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)AdvSoundOptions} },
+#ifdef _WIN32
+	{ more,		"Select MIDI Device",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)ChooseMIDI} },
+#endif
 };
 
-static menu_t SoundMenu = {
-	{ 0 },
+static menu_t SoundMenu =
+{
 	"SOUND OPTIONS",
 	0,
 	sizeof(SoundItems)/sizeof(SoundItems[0]),
 	0,
 	SoundItems,
+};
+
+#ifdef _WIN32
+/*=======================================
+ *
+ * MIDI Device Menu
+ *
+ *=======================================*/
+
+EXTERN_CVAR (Int, snd_mididevice)
+
+static menuitem_t MidiDeviceItems[] =
+{
+	{ discrete, "Device",				{&snd_mididevice},	{0.0}, {0.0},	{0.0}, {NULL} },
+};
+
+static menu_t MidiDeviceMenu =
+{
+	"SELECT MIDI DEVICE",
+	0,
+	1,
+	0,
+	MidiDeviceItems,
+};
+#endif
+
+/*=======================================
+ *
+ * Advanced Sound Options Menu
+ *
+ *=======================================*/
+
+EXTERN_CVAR (Bool, opl_enable)
+EXTERN_CVAR (Int, opl_frequency)
+EXTERN_CVAR (Bool, opl_onechip)
+
+
+static menuitem_t AdvSoundItems[] =
+{
+	{ whitetext,"OPL Synthesis",			{NULL},				{0.0}, {0.0},	{0.0}, {NULL} },
+	{ discrete, "Use FM Synth for MUS music",{&opl_enable},		{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "Only emulate one OPL chip", {&opl_onechip},	{2.0}, {0.0},	{0.0}, {OnOff} },
+	{ discrete, "OPL synth sample rate",	 {&opl_frequency},	{8.0}, {0.0},	{0.0}, {SampleRates} },
+
+
+};
+
+static menu_t AdvSoundMenu =
+{
+	"ADVANCED SOUND OPTIONS",
+	0,
+	sizeof(AdvSoundItems)/sizeof(AdvSoundItems[0]),
+	0,
+	AdvSoundItems,
 };
 
 void M_FreeValues (value_t **values, int num)
@@ -830,17 +909,10 @@ void M_OptDrawer ()
 	menuitem_t *item;
 	UCVarValue value;
 
-	i = W_CheckNumForName (CurrentMenu->title);
-	if (gameinfo.gametype == GAME_Doom && i >= 0)
-	{
-		patch_t *title = (patch_t *)W_CacheLumpNum (i, PU_CACHE);
-		screen->DrawPatchClean (title, 160-SHORT(title->width)/2, 10);
-		y = 15 + title->height;
-	}
-	else if (BigFont && CurrentMenu->texttitle)
+	if (BigFont && CurrentMenu->texttitle)
 	{
 		screen->SetFont (BigFont);
-		screen->DrawTextCleanMove (CR_UNTRANSLATED,
+		screen->DrawTextCleanMove (gameinfo.gametype == GAME_Doom ? CR_RED : CR_UNTRANSLATED,
 			160-screen->StringWidth (CurrentMenu->texttitle)/2, 10,
 			CurrentMenu->texttitle);
 		screen->SetFont (SmallFont);
@@ -1019,7 +1091,7 @@ void M_OptDrawer ()
 		}
 	}
 
-	CanScrollUp = (CurrentMenu->scrollpos != 0);
+	CanScrollUp = (CurrentMenu->scrollpos > 0);
 	CanScrollDown = (i < CurrentMenu->numitems);
 	VisBottom = i - 1;
 
@@ -1523,6 +1595,13 @@ static void GameplayOptions (void)
 	flagsvar = SHOW_DMFlags | SHOW_DMFlags2;
 }
 
+CCMD (menu_gameplay)
+{
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	GameplayOptions ();
+}
+
 static void CompatibilityOptions (void)
 {
 	M_SwitchMenu (&CompatibilityMenu);
@@ -1536,7 +1615,7 @@ CCMD (menu_compatibility)
 	CompatibilityOptions ();
 }
 
-static void SoundOptions (void)
+static void SoundOptions ()
 {
 	M_SwitchMenu (&SoundMenu);
 }
@@ -1547,6 +1626,34 @@ CCMD (menu_sound)
 	OptionsActive = true;
 	SoundOptions ();
 }
+
+static void AdvSoundOptions ()
+{
+	M_SwitchMenu (&AdvSoundMenu);
+}
+
+CCMD (menu_advsound)
+{
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	AdvSoundOptions ();
+}
+
+#ifdef _WIN32
+static void ChooseMIDI ()
+{
+	I_BuildMIDIMenuList (&MidiDeviceItems[0].e.values,
+						 &MidiDeviceItems[0].b.min);
+	M_SwitchMenu (&MidiDeviceMenu);
+}
+
+CCMD (menu_mididevice)
+{
+	M_StartControlPanel (true);
+	OptionsActive = true;
+	ChooseMIDI ();
+}
+#endif
 
 static void MakeSoundChanges (void)
 {

@@ -10,36 +10,10 @@
 #include "a_hexenglobal.h"
 
 static FRandom pr_fpatk ("FPunchAttack");
-static FRandom pr_fswordflame ("FSwordFlame");
 
 void A_FSwordFlames (AActor *);
 
-/*
-int ArmorMax[NUMCLASSES] = { 20, 18, 16, 1 };
-int ArmorIncrement[NUMCLASSES][NUMARMOR] =
-{
-	{ 25*FRACUNIT, 20*FRACUNIT, 15*FRACUNIT, 5*FRACUNIT },		fighter
-	{ 10*FRACUNIT, 25*FRACUNIT, 5*FRACUNIT, 20*FRACUNIT },		cleric
-	{ 5*FRACUNIT, 15*FRACUNIT, 10*FRACUNIT, 25*FRACUNIT },		mage
-	{ 0, 0, 0, 0 }												pig
-};
-int AutoArmorSave[NUMCLASSES] = { 15*FRACUNIT, 10*FRACUNIT, 5*FRACUNIT, 0 };
-*/
-
 // The fighter --------------------------------------------------------------
-
-class AFighterPlayer : public APlayerPawn
-{
-	DECLARE_ACTOR (AFighterPlayer, APlayerPawn)
-public:
-	void PlayAttacking2 ();
-	void GiveDefaultInventory ();
-	const char *GetSoundClass ();
-	fixed_t GetJumpZ () { return 9*FRACUNIT; }
-	int GetArmorMax () { return 20; }
-	int GetAutoArmorSave () { return 15*FRACUNIT; }
-	fixed_t GetArmorIncrement (int armortype);
-};
 
 FState AFighterPlayer::States[] =
 {
@@ -106,14 +80,6 @@ FState AFighterPlayer::States[] =
 #define S_PLAY_F_FDTH (S_PLAY_FDTH+18)
 	S_BRIGHT (FDTH, 'A',	5, NULL 					, &States[S_PLAY_F_FDTH+1]),
 	S_BRIGHT (FDTH, 'B',	4, NULL 					, &States[S_PLAY_FDTH+2]),
-
-#define S_PLAY_C_FDTH (S_PLAY_F_FDTH+2)
-	S_BRIGHT (FDTH, 'C',	5, NULL 					, &States[S_PLAY_C_FDTH+1]),
-	S_BRIGHT (FDTH, 'D',	4, NULL 					, &States[S_PLAY_FDTH+2]),
-
-#define S_PLAY_M_FDTH (S_PLAY_C_FDTH+2)
-	S_BRIGHT (FDTH, 'E',	5, NULL 					, &States[S_PLAY_M_FDTH+1]),
-	S_BRIGHT (FDTH, 'F',	4, NULL 					, &States[S_PLAY_FDTH+2])
 };
 
 IMPLEMENT_ACTOR (AFighterPlayer, Hexen, -1, 0)
@@ -200,9 +166,9 @@ void AdjustPlayerAngle (AActor *pmo)
 
 void A_FPunchAttack (player_t *, pspdef_t *);
 
-class AFWeapFist : public AWeapon
+class AFWeapFist : public AFighterWeapon
 {
-	DECLARE_ACTOR (AFWeapFist, AWeapon)
+	DECLARE_ACTOR (AFWeapFist, AFighterWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -244,6 +210,7 @@ FState AFWeapFist::States[] =
 FWeaponInfo AFWeapFist::WeaponInfo =
 {
 	0,
+	MANA_NONE,
 	MANA_NONE,
 	0,
 	0,
@@ -380,116 +347,77 @@ punchdone:
 	return;		
 }
 
-// Fighter Sword Missile ----------------------------------------------------
-
-class AFSwordMissile : public AActor
+void AFighterPlayer::TweakSpeeds (int &forward, int &side)
 {
-	DECLARE_ACTOR (AFSwordMissile, AActor)
-public:
-	void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
-};
-
-FState AFSwordMissile::States[] =
-{
-#define S_FSWORD_MISSILE1 0
-	S_BRIGHT (FSFX, 'A',	3, NULL					    , &States[S_FSWORD_MISSILE1+1]),
-	S_BRIGHT (FSFX, 'B',	3, NULL					    , &States[S_FSWORD_MISSILE1+2]),
-	S_BRIGHT (FSFX, 'C',	3, NULL					    , &States[S_FSWORD_MISSILE1]),
-
-#define S_FSWORD_MISSILE_X1 (S_FSWORD_MISSILE1+3)
-	S_BRIGHT (FSFX, 'D',	4, NULL					    , &States[S_FSWORD_MISSILE_X1+1]),
-	S_BRIGHT (FSFX, 'E',	3, A_FSwordFlames		    , &States[S_FSWORD_MISSILE_X1+2]),
-	S_BRIGHT (FSFX, 'F',	4, A_Explode			    , &States[S_FSWORD_MISSILE_X1+3]),
-	S_BRIGHT (FSFX, 'G',	3, NULL					    , &States[S_FSWORD_MISSILE_X1+4]),
-	S_BRIGHT (FSFX, 'H',	4, NULL					    , &States[S_FSWORD_MISSILE_X1+5]),
-	S_BRIGHT (FSFX, 'I',	3, NULL					    , &States[S_FSWORD_MISSILE_X1+6]),
-	S_BRIGHT (FSFX, 'J',	4, NULL					    , &States[S_FSWORD_MISSILE_X1+7]),
-	S_BRIGHT (FSFX, 'K',	3, NULL					    , &States[S_FSWORD_MISSILE_X1+8]),
-	S_BRIGHT (FSFX, 'L',	3, NULL					    , &States[S_FSWORD_MISSILE_X1+9]),
-	S_BRIGHT (FSFX, 'M',	3, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AFSwordMissile, Hexen, -1, 0)
-	PROP_SpeedFixed (30)
-	PROP_RadiusFixed (16)
-	PROP_HeightFixed (8)
-	PROP_Damage (8)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
-
-	PROP_SpawnState (S_FSWORD_MISSILE1)
-	PROP_DeathState (S_FSWORD_MISSILE_X1)
-
-	PROP_DeathSound ("FighterSwordExplode")
-END_DEFAULTS
-
-void AFSwordMissile::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
-{
-	damage = 64;
-	hurtSource = false;
-}
-
-// Fighter Sword Flame ------------------------------------------------------
-
-class AFSwordFlame : public AActor
-{
-	DECLARE_ACTOR (AFSwordFlame, AActor)
-};
-
-FState AFSwordFlame::States[] =
-{
-	S_BRIGHT (FSFX, 'N',	3, NULL					    , &States[1]),
-	S_BRIGHT (FSFX, 'O',	3, NULL					    , &States[2]),
-	S_BRIGHT (FSFX, 'P',	3, NULL					    , &States[3]),
-	S_BRIGHT (FSFX, 'Q',	3, NULL					    , &States[4]),
-	S_BRIGHT (FSFX, 'R',	3, NULL					    , &States[5]),
-	S_BRIGHT (FSFX, 'S',	3, NULL					    , &States[6]),
-	S_BRIGHT (FSFX, 'T',	3, NULL					    , &States[7]),
-	S_BRIGHT (FSFX, 'U',	3, NULL					    , &States[8]),
-	S_BRIGHT (FSFX, 'V',	3, NULL					    , &States[9]),
-	S_BRIGHT (FSFX, 'W',	3, NULL					    , NULL),
-};
-
-IMPLEMENT_ACTOR (AFSwordFlame, Hexen, -1, 0)
-	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_RenderStyle (STYLE_Translucent)
-	PROP_Alpha (HX_SHADOW)
-	PROP_SpawnState (0)
-END_DEFAULTS
-
-//============================================================================
-//
-// A_FSwordAttack2
-//
-//============================================================================
-
-void A_FSwordAttack2 (AActor *actor)
-{
-	angle_t angle = actor->angle;
-
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/4, 0);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle+ANG45/8, 0);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle,         0);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/8, 0);
-	P_SpawnMissileAngle (actor, RUNTIME_CLASS(AFSwordMissile), angle-ANG45/4, 0);
-	S_Sound (actor, CHAN_WEAPON, "FighterSwordFire", 1, ATTN_NORM);
-}
-
-//============================================================================
-//
-// A_FSwordFlames
-//
-//============================================================================
-
-void A_FSwordFlames (AActor *actor)
-{
-	int i;
-
-	for (i = 1+(pr_fswordflame()&3); i; i--)
+	if ((unsigned int)(forward + 0x31ff) < 0x63ff)
 	{
-		fixed_t x = actor->x+((pr_fswordflame()-128)<<12);
-		fixed_t y = actor->y+((pr_fswordflame()-128)<<12);
-		fixed_t z = actor->z+((pr_fswordflame()-128)<<11);
-		Spawn<AFSwordFlame> (x, y, z);
+		forward = forward * 0x1d / 0x19;
 	}
+	else
+	{
+		forward = forward * 0x3c / 0x32;
+	}
+	if ((unsigned int)(side + 0x27ff) < 0x4fff)
+	{
+		side = side * 0x1b / 0x18;
+	}
+	else
+	{ // The fighter is a very fast strafer when running!
+		side = side * 0x3b / 0x28;
+	}
+	Super::TweakSpeeds (forward, side);
+}
+
+fixed_t AFighterPlayer::GetJumpZ ()
+{
+	return 9*FRACUNIT;
+}
+
+int AFighterPlayer::GetArmorMax ()
+{
+	return 20;
+}
+
+int AFighterPlayer::GetAutoArmorSave ()
+{
+	return 15*FRACUNIT;
+}
+
+// Radius armor boost
+bool AFighterPlayer::DoHealingRadius (APlayerPawn *other)
+{
+	if ((P_GiveArmor (other->player, ARMOR_ARMOR, 1)) ||
+		(P_GiveArmor (other->player, ARMOR_SHIELD, 1)) ||
+		(P_GiveArmor (other->player, ARMOR_HELMET, 1)) ||
+		(P_GiveArmor (other->player, ARMOR_AMULET, 1)))
+	{
+		S_Sound (other, CHAN_AUTO, "MysticIncant", 1, ATTN_NORM);
+		return true;
+	}
+	return false;
+}
+
+// Fighter Weapon Base Class ------------------------------------------------
+
+IMPLEMENT_ABSTRACT_ACTOR (AFighterWeapon)
+
+bool AFighterWeapon::TryPickup (AActor *toucher)
+{
+	// The Doom and Hexen players are not excluded from pickup in case
+	// somebody wants to use these weapons with either of those games.
+	if (toucher->IsKindOf (RUNTIME_CLASS(AClericPlayer)) ||
+		toucher->IsKindOf (RUNTIME_CLASS(AMagePlayer)))
+	{ // Wrong class, but try to pick up for mana
+		if (ShouldStay())
+		{ // Can't pick up weapons for other classes in coop netplay
+			return false;
+		}
+		weapontype_t type = OldStyleID ();
+		if (type < NUMWEAPONS)
+		{
+			return P_GiveAmmo (toucher->player, wpnlev1info[type]->ammo, wpnlev1info[type]->ammogive);
+		}
+		return false;
+	}
+	return Super::TryPickup (toucher);
 }

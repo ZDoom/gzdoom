@@ -49,4 +49,87 @@ public:
 	bool AdjustReflectionAngle (AActor *thing, angle_t &angle);
 };
 
+class AFourthWeaponPiece : public AInventory
+{
+	DECLARE_STATELESS_ACTOR (AFourthWeaponPiece, AInventory)
+	HAS_OBJECT_POINTERS
+public:
+	void Serialize (FArchive &arc);
+	bool TryPickup (AActor *toucher);
+	const char *PickupMessage ();
+	bool ShouldStay ();
+	void PlayPickupSound (AActor *toucher);
+protected:
+	virtual bool MatchPlayerClass (AActor *toucher);
+	virtual const char *PieceMessage ();
+	const TypeInfo *FourthWeaponClass;
+	int PieceValue;
+	AInventory *TempFourthWeapon;
+	bool PrivateShouldStay ();
+};
+
+class AFighterPlayer : public APlayerPawn
+{
+	DECLARE_ACTOR (AFighterPlayer, APlayerPawn)
+public:
+	void PlayAttacking2 ();
+	void GiveDefaultInventory ();
+	void TweakSpeeds (int &forward, int &side);
+	const char *GetSoundClass ();
+	fixed_t GetJumpZ ();
+	int GetArmorMax ();
+	int GetAutoArmorSave ();
+	fixed_t GetArmorIncrement (int armortype);
+	bool DoHealingRadius (APlayerPawn *other);
+};
+
+class AFighterWeapon : public AWeapon
+{
+	DECLARE_STATELESS_ACTOR (AFighterWeapon, AWeapon);
+public:
+	bool TryPickup (AActor *toucher);
+};
+
+class AClericPlayer : public APlayerPawn
+{
+	DECLARE_ACTOR (AClericPlayer, APlayerPawn)
+public:
+	void PlayAttacking2 ();
+	void GiveDefaultInventory ();
+	const char *GetSoundClass ();
+	fixed_t GetJumpZ ();
+	int GetArmorMax ();
+	int GetAutoArmorSave ();
+	fixed_t GetArmorIncrement (int armortype);
+};
+
+class AClericWeapon : public AWeapon
+{
+	DECLARE_STATELESS_ACTOR (AClericWeapon, AWeapon);
+public:
+	bool TryPickup (AActor *toucher);
+};
+
+class AMagePlayer : public APlayerPawn
+{
+	DECLARE_ACTOR (AMagePlayer, APlayerPawn)
+public:
+	void PlayAttacking2 ();
+	void GiveDefaultInventory ();
+	void TweakSpeeds (int &forward, int &side);
+	const char *GetSoundClass ();
+	fixed_t GetJumpZ ();
+	int GetArmorMax ();
+	int GetAutoArmorSave ();
+	fixed_t GetArmorIncrement (int armortype);
+	bool DoHealingRadius (APlayerPawn *other);
+};
+
+class AMageWeapon : public AWeapon
+{
+	DECLARE_STATELESS_ACTOR (AMageWeapon, AWeapon);
+public:
+	bool TryPickup (AActor *toucher);
+};
+
 #endif //__A_HEXENGLOBAL_H__

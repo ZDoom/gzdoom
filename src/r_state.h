@@ -73,6 +73,7 @@ extern int				numspritelumps;
 extern size_t			numskins;	// [RH]
 extern FPlayerSkin	*	skins;		// [RH]
 
+extern BYTE				OtherGameSkinRemap[256];
 
 
 //
@@ -100,6 +101,9 @@ extern line_t*			lines;
 
 extern int				numsides;
 extern side_t*			sides;
+
+extern FExtraLight*		ExtraLights;
+extern FLightStack*		LightStacks;
 
 inline FArchive &operator<< (FArchive &arc, sector_t *&sec)
 {

@@ -319,8 +319,11 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return DefWindowProc (hWnd, message, wParam, lParam);
 
 	case WM_SETTINGCHANGE:
-		// In case regional settings were changed, reget preferred languages
-		language.Callback ();
+		// If regional settings were changed, reget preferred languages
+		if (wParam == 0 && strcmp ((const char *)lParam, "intl") == 0)
+		{
+			language.Callback ();
+		}
 		return 0;
 
 	case WM_KILLFOCUS:
@@ -587,9 +590,11 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					I_MovieResumeSound ();
 				}
 			}
+#ifdef _DEBUG
 			char foo[256];
-			sprintf (foo, "%d %d\n", lParam, wParam);
+			sprintf (foo, "Session Change: %d %d\n", lParam, wParam);
 			OutputDebugString (foo);
+#endif
 		}
 		break;
 #endif
@@ -1303,6 +1308,10 @@ static void KeyRead ()
 void I_GetEvent ()
 {
 	MSG mess;
+
+	// Briefly enter an alertable state so that if a secondary thread
+	// crashed, we will execute the APC it sent now.
+	SleepEx (0, TRUE);
 
 //	for (;;) {
 		while (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE))

@@ -73,7 +73,8 @@ struct FTerrainDef
 	int LeftStepSound;
 	int RightStepSound;
 	bool IsLiquid;
-	bool ReducedFriction;
+	fixed_t Friction;
+	fixed_t MoveFactor;
 };
 
 extern TArray<FSplashDef> Splashes;

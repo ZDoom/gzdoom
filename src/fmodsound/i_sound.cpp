@@ -72,6 +72,17 @@ extern HINSTANCE g_hInst;
 
 #include "doomdef.h"
 
+extern void I_InitSound_Simple ();
+extern void I_MovieDisableSound_Simple ();
+extern int I_SetChannels_Simple (int numchannels);
+extern void I_UpdateSounds_Simple ();
+extern void I_SetSFXVolume_Simple (float volume);
+extern long I_StartSound_Simple (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOOL looping);
+extern void I_StopSound_Simple (int handle);
+extern int I_SoundIsPlaying_Simple (int handle);
+extern void I_UpdateSoundParams_Simple (int handle, int vol, int sep, int pitch);
+extern void I_LoadSound_Simple (sfxinfo_t *sfx);
+
 #define SCALE3D		96.f
 #define INVSCALE3D	(1.f/SCALE3D)
 #define ROLLOFF3D	0.5f
@@ -125,6 +136,8 @@ static struct ChanMap
 } *ChannelMap;
 
 int _nosound = 0;
+bool nofmod = false;
+bool simplesound = false;
 bool Sound3D;
 
 static int numChannels;
@@ -334,15 +347,23 @@ static int PutSampleData (FSOUND_SAMPLE *sample, BYTE *data, int len,
 
 static void DoLoad (void **slot, sfxinfo_t *sfx)
 {
+	byte *sfxdata;
 	int size;
 	int errcount;
 	unsigned long samplemode;
 
 	samplemode = Sound3D ? FSOUND_HW3D : FSOUND_2D;
+	sfxdata = NULL;
 
 	errcount = 0;
 	while (errcount < 2)
 	{
+		if (sfxdata != NULL)
+		{
+			delete[] sfxdata;
+			sfxdata = NULL;
+		}
+
 		if (errcount)
 			sfx->lumpnum = W_GetNumForName ("dsempty");
 
@@ -353,7 +374,8 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 			continue;
 		}
 
-		byte *sfxdata = (byte *)W_CacheLumpNum (sfx->lumpnum, PU_CACHE);
+		sfxdata = new byte[size];
+		W_ReadLump (sfx->lumpnum, sfxdata);
 		SDWORD len = ((SDWORD *)sfxdata)[1];
 
 		// If the sound is raw, just load it as such.
@@ -412,6 +434,11 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 		{
 			*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata,
 				samplemode|FSOUND_LOADMEMORY, size);
+			if (*slot == NULL && FSOUND_GetError() == FMOD_ERR_CREATEBUFFER && samplemode == FSOUND_HW3D)
+			{
+				DPrintf ("Trying to fall back to software sample\n");
+				*slot = FSOUND_Sample_Load (FSOUND_FREE, (char *)sfxdata, FSOUND_2D|FSOUND_LOADMEMORY, size);
+			}
 			if (*slot != NULL)
 			{
 				int probe;
@@ -423,6 +450,12 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 				sfx->ms = FSOUND_Sample_GetLength ((FSOUND_SAMPLE *)sfx->data);
 				sfx->length = sfx->ms;
 			}
+			else
+			{
+				int i;
+				i=FSOUND_GetError ();
+				i=i;
+			}
 		}
 		break;
 	}
@@ -431,6 +464,11 @@ static void DoLoad (void **slot, sfxinfo_t *sfx)
 	{
 		sfx->ms = (sfx->ms * 1000) / (sfx->frequency);
 		DPrintf ("sound loaded: %d Hz %d samples\n", sfx->frequency, sfx->length);
+	}
+
+	if (sfxdata != NULL)
+	{
+		delete[] sfxdata;
 	}
 }
 
@@ -455,17 +493,24 @@ static void getsfx (sfxinfo_t *sfx)
 			DPrintf ("Linked to %s (%d)\n", S_sfx[i].name, i);
 			sfx->link = i;
 			sfx->ms = S_sfx[i].ms;
-			sfx->data = S_sfx[i].data;
-			sfx->altdata = S_sfx[i].altdata;
+//			sfx->data = S_sfx[i].data;
+//			sfx->altdata = S_sfx[i].altdata;
 			return;
 		}
 	}
 
-	sfx->bHaveLoop = false;
-	sfx->normal = 0;
-	sfx->looping = 0;
-	sfx->altdata = NULL;
-	DoLoad (&sfx->data, sfx);
+	if (nofmod)
+	{
+		I_LoadSound_Simple (sfx);
+	}
+	else
+	{
+		sfx->bHaveLoop = false;
+		sfx->normal = 0;
+		sfx->looping = 0;
+		sfx->altdata = NULL;
+		DoLoad (&sfx->data, sfx);
+	}
 }
 
 
@@ -558,6 +603,10 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOI
 		self = 0.f;
 	else if (self > 1.f)
 		self = 1.f;
+	else if (nofmod)
+	{
+		I_SetSFXVolume_Simple (*self);
+	}
 	else
 	{
 		FSOUND_SetSFXMasterVolume ((int)(self * 255.f));
@@ -572,7 +621,13 @@ CUSTOM_CVAR (Float, snd_sfxvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOI
 //
 long I_StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOOL looping)
 {
-	if (_nosound || !ChannelMap)
+	if (_nosound)
+		return 0;
+
+	if (nofmod)
+		return I_StartSound_Simple (sfx, vol, sep, pitch, channel, looping);
+
+	if (!ChannelMap)
 		return 0;
 
 	int id = sfx - &S_sfx[0];
@@ -662,7 +717,16 @@ long I_StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int channel,
 
 void I_StopSound (int handle)
 {
-	if (_nosound || !handle || !ChannelMap)
+	if (_nosound || !handle)
+		return;
+
+	if (nofmod)
+	{
+		I_StopSound_Simple (handle);
+		return;
+	}
+
+	if (!ChannelMap)
 		return;
 
 	handle--;
@@ -678,7 +742,13 @@ void I_StopSound (int handle)
 
 int I_SoundIsPlaying (int handle)
 {
-	if (_nosound || !handle || !ChannelMap)
+	if (_nosound || !handle)
+		return 0;
+
+	if (nofmod)
+		return I_SoundIsPlaying_Simple (handle);
+
+	if (!ChannelMap)
 		return 0;
 
 	handle--;
@@ -723,7 +793,16 @@ int I_SoundIsPlaying (int handle)
 
 void I_UpdateSoundParams (int handle, int vol, int sep, int pitch)
 {
-	if (_nosound || !handle || !ChannelMap)
+	if (_nosound || !handle)
+		return;
+
+	if (nofmod)
+	{
+		I_UpdateSoundParams_Simple (handle, vol, sep, pitch);
+		return;
+	}
+
+	if (!ChannelMap)
 		return;
 
 	handle--;
@@ -769,6 +848,14 @@ void I_UpdateSoundParams3D (int handle, float pos[3], float vel[3])
 	lvel[1] = vel[1] * INVSCALE3D;
 	lvel[2] = vel[2] * INVSCALE3D;
 	FSOUND_3D_SetAttributes (ChannelMap[handle].channelID, lpos, lvel);
+}
+
+void I_UpdateSounds ()
+{
+	if (!_nosound && nofmod)
+	{
+		I_UpdateSounds_Simple ();
+	}
 }
 
 void I_UpdateListener (AActor *listener)
@@ -832,8 +919,7 @@ void I_LoadSound (sfxinfo_t *sfx)
 
 	if (!sfx->data)
 	{
-		int i = sfx - &S_sfx[0];
-		DPrintf ("loading sound \"%s\" (%d)\n", sfx->name, i);
+		DPrintf ("loading sound \"%s\" (%d)\n", sfx->name, sfx - &S_sfx[0]);
 		getsfx (sfx);
 	}
 }
@@ -890,6 +976,7 @@ void I_InitSound ()
 
 	if (_nosound)
 	{
+		nofmod = true;
 		I_InitMusic ();
 		return;
 	}
@@ -897,8 +984,26 @@ void I_InitSound ()
 	int outindex;
 	int trynum;
 
+	// clamp snd_samplerate to FMOD's limits
+	if (snd_samplerate < 4000)
+	{
+		snd_samplerate = 4000;
+	}
+	else if (snd_samplerate > 65535)
+	{
+		snd_samplerate = 65535;
+	}
+
+	nofmod = false;
 #ifdef _WIN32
-	if (stricmp (snd_output, "dsound") == 0 || stricmp (snd_output, "directsound") == 0)
+	if (stricmp (snd_output, "alternate") == 0)
+	{
+		Printf ("I_InitSound: Initializing alternate sound system\n");
+		nofmod = true;
+		I_InitSound_Simple ();
+		return;
+	}
+	else if (stricmp (snd_output, "dsound") == 0 || stricmp (snd_output, "directsound") == 0)
 	{
 		outindex = 0;
 	}
@@ -947,16 +1052,6 @@ void I_InitSound ()
 	else
 	{
 		FSOUND_SetMixer (FSOUND_MIXER_AUTODETECT);
-	}
-
-	// clamp snd_samplerate to FMOD's limits
-	if (snd_samplerate < 4000)
-	{
-		snd_samplerate = 4000;
-	}
-	else if (snd_samplerate > 65535)
-	{
-		snd_samplerate = 65535;
 	}
 
 #ifdef _WIN32
@@ -1119,6 +1214,11 @@ int I_SetChannels (int numchannels)
 		return numchannels;
 	}
 
+	if (nofmod)
+	{
+		return I_SetChannels_Simple (numchannels);
+	}
+
 	// If using 3D sound, use all the hardware channels available,
 	// regardless of what the user sets with snd_channels. If there
 	// are fewer than 8 hardware channels, then force software.
@@ -1158,7 +1258,7 @@ inline void check()
 
 void STACK_ARGS I_ShutdownSound (void)
 {
-	if (!_nosound && !SoundDown)
+	if (!_nosound && !SoundDown && !nofmod)
 	{
 		size_t i;
 
@@ -1185,6 +1285,7 @@ void STACK_ARGS I_ShutdownSound (void)
 		FSOUND_Close ();
 //check();
 	}
+	Sound3D = false;
 }
 
 CCMD (snd_status)
@@ -1193,6 +1294,10 @@ CCMD (snd_status)
 	{
 		Printf ("sound is not active\n");
 		return;
+	}
+	else if (nofmod)
+	{
+		Printf ("Using alternate sound system\n");
 	}
 
 	int output = FSOUND_GetOutput ();
@@ -1221,7 +1326,14 @@ void I_MovieDisableSound ()
 {
 	//OutputDebugString ("away\n");
 	I_ShutdownMusic ();
-	I_ShutdownSound ();
+	if (nofmod)
+	{
+		I_MovieDisableSound_Simple ();
+	}
+	else
+	{
+		I_ShutdownSound ();
+	}
 }
 
 void I_MovieResumeSound ()
@@ -1240,12 +1352,19 @@ CCMD (snd_reset)
 
 CCMD (snd_listdrivers)
 {
-	long numdrivers = FSOUND_GetNumDrivers ();
-	long i;
-
-	for (i = 0; i < numdrivers; i++)
+	if (nofmod)
 	{
-		Printf ("%ld. %s\n", i, FSOUND_GetDriverName (i));
+		Printf ("You can't specify a driver when not using FMOD\n");
+	}
+	else
+	{
+		long numdrivers = FSOUND_GetNumDrivers ();
+		long i;
+
+		for (i = 0; i < numdrivers; i++)
+		{
+			Printf ("%ld. %s\n", i, FSOUND_GetDriverName (i));
+		}
 	}
 }
 
@@ -1254,6 +1373,10 @@ ADD_STAT (sound, out)
 	if (_nosound)
 	{
 		strcpy (out, "no sound");
+	}
+	else if (nofmod)
+	{
+		strcpy (out, "no fmod, so no stats");
 	}
 	else
 	{

@@ -234,10 +234,12 @@ typedef struct MapThing
 #define MTF_AMBUSH			0x0008	// Thing is deaf
 */
 #define MTF_DORMANT			0x0010	// Thing is dormant (use Thing_Activate)
+#define MTF_FIGHTER			0x0020
+#define MTF_CLERIC			0x0040
+#define MTF_MAGE			0x0080
 #define MTF_SINGLE			0x0100	// Thing appears in single-player games
 #define MTF_COOPERATIVE		0x0200	// Thing appears in cooperative games
 #define MTF_DEATHMATCH		0x0400	// Thing appears in deathmatch games
-
 
 // BOOM and DOOM compatible versions of some of the above
 

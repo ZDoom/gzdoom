@@ -45,6 +45,10 @@
 
 angle_t bulletpitch;
 
+// [SO] 1=Weapons states are all 1 tick
+//		2=states with a function 1 tick, others 0 ticks.
+CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static weapontype_t DoomWeaponPrefs[] =
@@ -93,7 +97,14 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 			break;
 		}
 		psp->state = state;
-		psp->tics = state->GetTics(); // could be 0
+
+		if (sv_fastweapons >= 2)
+			psp->tics = (state->Action.acvoid == NULL) ? 0 : 1;
+		else if (sv_fastweapons)
+			psp->tics = 1;		// great for producing decals :)
+		else
+			psp->tics = state->GetTics(); // could be 0
+
 		if (state->GetMisc1())
 		{ // Set coordinates.
 			psp->sx = state->GetMisc1()<<FRACBITS;
@@ -145,30 +156,6 @@ void P_SetPspriteNF (player_t *player, int position, FState *state)
 		}
 		state = psp->state->GetNextState();
 	} while (!psp->tics); // An initial state of 0 could cycle through.
-}
-
-/*
-=================
-=
-= P_CalcSwing
-=
-=================
-*/
-
-fixed_t swingx, swingy;
-
-void P_CalcSwing (player_t *player)
-{
-	fixed_t swing;
-	int angle;
-		
-	swing = player->bob;
-
-	angle = (FINEANGLES/(TICRATE*2)*level.time)&FINEMASK;
-	swingx = FixedMul (swing, finesine[angle]);
-
-	angle = (FINEANGLES/(TICRATE*2)*level.time+FINEANGLES/2)&FINEMASK;
-	swingy = -FixedMul (swingx, finesine[angle]);
 }
 
 //---------------------------------------------------------------------------
@@ -377,10 +364,18 @@ void P_FireWeapon (player_t *player)
 	FWeaponInfo **wpinfo;
 	FState *attackState;
 
+	// [SO] 9/2/02: People were able to do an awful lot of damage
+	// when they were observers...
+	if (!player->isbot && bot_observer)
+	{
+		return;
+	}
+
 	if (!P_CheckAmmo (player))
 	{
 		return;
 	}
+
 	if (gameinfo.gametype == GAME_Heretic)
 	{
 		player->mo->PlayAttacking2 ();
@@ -490,7 +485,7 @@ void A_WeaponReady(player_t *player, pspdef_t *psp)
 	if (!(weapon->flags & WIF_DONTBOB))
 	{
 		// Bob the weapon based on movement speed.
-		angle = (128*level.time)&FINEMASK;
+		angle = (128*35/TICRATE*level.time)&FINEMASK;
 		psp->sx = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
 		angle &= FINEANGLES/2-1;
 		psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
@@ -550,7 +545,14 @@ void A_Lower (player_t *player, pspdef_t *psp)
 		P_SetPsprite (player,  ps_weapon, NULL);
 		return;
 	}
-	player->readyweapon = player->pendingweapon;
+	if (player->pendingweapon == wp_nochange)
+	{ // [RH] Make sure we're actually changing weapons.
+		player->pendingweapon = player->readyweapon;
+	}
+	else
+	{
+		player->readyweapon = player->pendingweapon;
+	}
 	P_BringUpWeapon (player);
 }
 

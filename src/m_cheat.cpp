@@ -58,6 +58,7 @@ void cht_DoCheat (player_t *player, int cheat)
 
 			player->health = deh.GodHealth;
 		}
+		// fall through to CHT_GOD
 	case CHT_GOD:
 		player->cheats ^= CF_GODMODE;
 		if (player->cheats & CF_GODMODE)
@@ -228,10 +229,18 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MDK:
-		P_LineAttack (player->mo, player->mo->angle, MISSILERANGE,
-			P_AimLineAttack (player->mo, player->mo->angle, MISSILERANGE), 10000);
+		// Don't allow this in deathmatch even with cheats enabled, because it's
+		// a very very cheap kill.
+		if (!deathmatch)
+		{
+			P_LineAttack (player->mo, player->mo->angle, MISSILERANGE,
+				P_AimLineAttack (player->mo, player->mo->angle, MISSILERANGE), 10000);
+		}
 		break;
 	}
+
+	if (!*msg)              // [SO] Don't print blank lines!
+		return;
 
 	if (player == &players[consoleplayer])
 		Printf ("%s\n", msg);
@@ -324,8 +333,8 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "armor") == 0)
 	{
-		player->armorpoints[0] = 200;
-		player->armortype = 2;
+		player->armorpoints[0] = 100*deh.BlueAC;
+		player->armortype = deh.BlueAC;
 
 		if (!giveall)
 			return;

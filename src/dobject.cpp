@@ -41,6 +41,7 @@
 #include "m_alloc.h"
 #include "doomstat.h"		// Ideally, DObjects can be used independant of Doom.
 #include "d_player.h"		// See p_user.cpp to find out why this doesn't work.
+#include "g_game.h"			// Needed for bodyque.
 #include "z_zone.h"
 #include "c_dispatch.h"
 #include "i_system.h"
@@ -414,6 +415,14 @@ void DObject::DestroyScan (DObject *obj)
 		}
 	}
 
+	for (i = 0; i < BODYQUESIZE; ++i)
+	{
+		if (bodyque[i] == obj)
+		{
+			bodyque[i] = NULL;
+		}
+	}
+
 	// This is an ugly hack, but it's the best I can do for now.
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -476,6 +485,14 @@ void DObject::DestroyScan ()
 					sectors[i].soundtarget = NULL;
 			}
 		}
+		for (i = 0; i < BODYQUESIZE; ++i)
+		{
+			if (bodyque[i] == *(destroybase + j))
+			{
+				bodyque[i] = NULL;
+			}
+		}
+
 	} while (++j);
 
 	// This is an ugly hack, but it's the best I can do for now.

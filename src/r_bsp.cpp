@@ -105,6 +105,18 @@ WORD MirrorFlags;
 seg_t *ActiveWallMirror;
 TArray<size_t> WallMirrors;
 
+struct SubsectorList
+{
+	SubsectorList *Next;
+	subsector_t *Subsector;
+};
+SubsectorList *SubsectorQueue;
+SubsectorList *SubsectorListStore;
+
+static void AddSubsectorToQueue (subsector_t *);
+static void FlushSubsectorQueue ();
+static void RemoveSubsectorFromQueueStart ();
+
 CVAR (Bool, r_drawflat, false, 0)		// [RH] Don't texture segs?
 
 
@@ -428,8 +440,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->ceilingplane = s->floorplane;
 			tempsec->ceilingplane.FlipVert ();
 			tempsec->ceilingplane.ChangeHeight (-1);
-			tempsec->floorcolormap = s->floorcolormap;
-			tempsec->ceilingcolormap = s->ceilingcolormap;
+			tempsec->ColorMap = s->ColorMap;
 		}
 
 		// killough 11/98: prevent sudden light changes from non-water sectors:
@@ -496,8 +507,8 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->floorplane			= s->ceilingplane;
 			tempsec->floorplane.FlipVert ();
 			tempsec->floorplane.ChangeHeight (+1);
-			tempsec->ceilingcolormap	= s->ceilingcolormap;
-			tempsec->floorcolormap		= s->floorcolormap;
+			tempsec->ColorMap			= s->ColorMap;
+			tempsec->ColorMap			= s->ColorMap;
 
 			tempsec->ceilingpic = diffTex ? sec->ceilingpic : s->ceilingpic;
 			tempsec->floorpic											= s->ceilingpic;
@@ -548,7 +559,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 // and adds any visible pieces to the line list.
 //
 
-void R_AddLine (seg_t *line)
+void R_AddLine (seg_t *line, bool add)
 {
 	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 	bool			solid;
@@ -624,6 +635,28 @@ void R_AddLine (seg_t *line)
 
 	if (WallSX1 > WindowRight || WallSX2 < WindowLeft)
 		return;
+
+	if (add && line->PartnerSeg != NULL)
+	{
+		subsector_t *backsubsector = line->PartnerSeg->Subsector;
+
+		if (backsubsector->validcount != validcount)
+		{
+			for (int x = WallSX1; x < WallSX2; ++x)
+			{
+				if (floorclip[x] > ceilingclip[x])
+				{
+					AddSubsectorToQueue (backsubsector);
+					break;
+				}
+			}
+		}
+	}
+
+	if (line->linedef == NULL)
+	{
+		return;
+	}
 
 	vertex_t *v1, *v2;
 
@@ -769,8 +802,7 @@ void R_AddLine (seg_t *line)
 			|| backsector->CeilingFlags != frontsector->CeilingFlags
 
 			// [RH] Also consider colormaps
-			|| backsector->floorcolormap != frontsector->floorcolormap
-			|| backsector->ceilingcolormap != frontsector->ceilingcolormap
+			|| backsector->ColorMap != frontsector->ColorMap
 
 			// [RH] and scaling
 			|| backsector->floor_xscale != frontsector->floor_xscale
@@ -954,13 +986,68 @@ static BOOL R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	return true;
 }
 
+void R_GetExtraLight (int *light, const secplane_t &plane, FExtraLight *el)
+{
+	byte *floodcolormap;
+	int floodlight;
+	bool flooding;
+	vertex_t **triangle;
+	int i, j;
+	fixed_t diff;
+
+	if (el == NULL)
+	{
+		return;
+	}
+
+	triangle = frontsector->Triangle;
+	flooding = false;
+	floodcolormap = basecolormap;
+	floodlight = *light;
+
+	for (i = 0; i < el->NumUsedLights; ++i)
+	{
+		for (j = 0; j < 3; ++j)
+		{
+			diff = plane.ZatPoint (triangle[j]) - el->Lights[i].Plane.ZatPoint (triangle[j]);
+			if (diff != 0)
+			{
+				break;
+			}
+		}
+		if (diff >= 0)
+		{
+			break;
+		}
+
+		if (!flooding || el->Lights[i].bFlooder)
+		{
+			if (el->Lights[i].Master == NULL)
+			{
+				basecolormap = floodcolormap;
+				*light = floodlight;
+			}
+			else
+			{
+				basecolormap = el->Lights[i].Master->ColorMap->Maps;
+				*light = el->Lights[i].Master->lightlevel;
+				if (el->Lights[i].bFlooder)
+				{
+					flooding = true;
+					floodcolormap = basecolormap;
+					floodlight = *light;
+				}
+			}
+		}
+	}
+}
 //
 // R_Subsector
 // Determine floor/ceiling planes.
 // Add sprites of things in sector.
 // Draw one or more line segments.
 //
-void R_Subsector (int num)
+void R_Subsector (int num, bool add)
 {
 	int 		 count;
 	seg_t*		 line;
@@ -983,7 +1070,8 @@ void R_Subsector (int num)
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
 						   &ceilinglightlevel, false);	// killough 4/11/98
 
-	basecolormap = frontsector->ceilingcolormap->Maps;
+	basecolormap = frontsector->ColorMap->Maps;
+	R_GetExtraLight (&ceilinglightlevel, frontsector->ceilingplane, frontsector->ExtraLights);
 
 	ceilingplane = frontsector->ceilingplane.ZatPoint (viewx, viewy) > viewz ||
 		frontsector->ceilingpic == skyflatnum ||
@@ -1003,7 +1091,8 @@ void R_Subsector (int num)
 					frontsector->SkyBox
 					) : NULL;
 
-	basecolormap = frontsector->floorcolormap->Maps;	// [RH] set basecolormap
+	basecolormap = frontsector->ColorMap->Maps;
+	R_GetExtraLight (&floorlightlevel, frontsector->floorplane, frontsector->ExtraLights);
 
 	// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
 	// killough 3/16/98: add floorlightlevel
@@ -1026,9 +1115,9 @@ void R_Subsector (int num)
 					) : NULL;
 
 	// [RH] set foggy flag
-	foggy = level.fadeto || frontsector->floorcolormap->Fade
-						 || frontsector->ceilingcolormap->Fade;
+	foggy = level.fadeto || frontsector->ColorMap->Fade;
 	r_actualextralight = foggy ? 0 : extralight << 4;
+	basecolormap = frontsector->ColorMap->Maps;
 
 	// killough 9/18/98: Fix underwater slowdown, by passing real sector 
 	// instead of fake one. Improve sprite lighting by basing sprite
@@ -1048,13 +1137,13 @@ void R_Subsector (int num)
 		seg_t **polySeg = sub->poly->segs;
 		while (polyCount--)
 		{
-			R_AddLine (*polySeg++);
+			R_AddLine (*polySeg++, false);
 		}
 	}
 
 	while (count--)
 	{
-		R_AddLine (line++);
+		R_AddLine (line++, add);
 	}
 }
 
@@ -1083,5 +1172,151 @@ void R_RenderBSPNode (int bspnum)
 
 		bspnum = bsp->children[side];
 	}
-	R_Subsector (bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR);
+	R_Subsector (bspnum == -1 ? 0 : bspnum & ~NF_SUBSECTOR, false);
+}
+
+bool R_SubsectorInFront (subsector_t *front, subsector_t *back)
+{
+	// Returns true if the first subsector is in front of the second one.
+	//
+	// In its current incarnation, it walks the BSP until it finds a node
+	// where each subsector is on different sides. Whichever subsector is
+	// on the same side as the viewer is the one that is in front.
+	//
+	// This is undesirable for a real implementation because it depends
+	// on the BSP tree. If we wanted to do that, R_RenderBSPNode works just
+	// fine and has a much better worst-case performance. What this function
+	// should do is project all the walls of each subsector into screen space
+	// and then compare as many lines of each subsector as necessary to
+	// decide which one is in front. Obviously, the subsectors should only
+	// be projected once. Some reorganization of R_Subsector, R_AddLine, and
+	// R_StoreWallRange could accommodate this, but that's more trouble than
+	// I want to go through for a prototype at this stage.
+	//
+	// The purpose of this routine at this stage is just to prove that I can
+	// walk between subsectors to render a scene without an explicit dependence
+	// on the BSP tree. Because the BSP's use is restricted to this function,
+	// this function can be changed without changing R_RenderSubsectors().
+
+	fixed_t fx, fy, bx, by;
+	node_t *node;
+	int pnode;
+	int fside, bside;
+
+	pnode = numnodes - 1;
+	fx = front->CenterX ;
+	fy = front->CenterY;
+	bx = back->CenterX;
+	by = back->CenterY;
+
+	do
+	{
+		node = &nodes[pnode];
+		fside = R_PointOnSide (fx, fy, node);
+		bside = R_PointOnSide (bx, by, node);
+		pnode = node->children[fside];
+	} while (fside == bside && !(pnode & NF_SUBSECTOR));
+
+	if (fside == bside)
+	{
+		// This really is not good enough. It is an attempt to catch "fix-up" nodes
+		// that were added to split off segs from convex regions that did not share
+		// the same sector as the rest of the region. The result is going to vary
+		// with the view angle because points don't carry around enough information
+		// to use them to determine which subsector is in front.
+		fixed_t tfy = DMulScale20 (fx - viewx, viewtancos, fy - viewy, viewtansin);
+		fixed_t fby = DMulScale20 (bx - viewx, viewtancos, by - viewy, viewtansin);
+		return tfy < fby;
+	}
+	else
+	{
+		return fside == R_PointOnSide (viewx, viewy, node);
+	}
+}
+
+extern bool UsingGLNodes;
+#include "v_video.h"
+
+void R_RenderSubsectors ()
+{
+	if (!UsingGLNodes)
+	{
+		screen->Clear (viewwindowx, viewwindowy,
+			viewwindowx+realviewwidth, viewwindowy+realviewheight, 123);
+	}
+
+	FlushSubsectorQueue ();
+	AddSubsectorToQueue (R_PointInSubsector (viewx, viewy));
+
+	while (SubsectorQueue != NULL)
+	{
+		subsector_t *subsector = SubsectorQueue->Subsector;
+		RemoveSubsectorFromQueueStart ();
+		R_Subsector (subsector - subsectors, true);
+		//Printf ("%d ", subsector - subsectors);
+	}
+	//Printf ("\n");
+}
+
+static void AddSubsectorToQueue (subsector_t *ssec)
+{
+	SubsectorList *node, *probe, **prev;
+
+	if (SubsectorListStore != NULL)
+	{
+		node = SubsectorListStore;
+		SubsectorListStore = node->Next;
+	}
+	else
+	{
+		node = new SubsectorList;
+	}
+
+	node->Subsector = ssec;
+	ssec->validcount = validcount;
+
+	if (SubsectorQueue == NULL)
+	{
+		node->Next = NULL;
+		SubsectorQueue = node;
+	}
+	else
+	{
+		prev = &SubsectorQueue;
+		probe = *prev;
+
+		// Add the new subsector into the queue in front of the
+		// first subsector found to be behind it.
+		while (probe != NULL)
+		{
+			if (R_SubsectorInFront (ssec, probe->Subsector))
+			{
+				break;
+			}
+			prev = &probe->Next;
+			probe = probe->Next;
+		}
+		node->Next = *prev;
+		*prev = node;
+	}
+}
+
+static void FlushSubsectorQueue ()
+{
+	SubsectorList *probe = SubsectorQueue;
+	while (probe != NULL)
+	{
+		SubsectorList *next = probe;
+		probe->Next = SubsectorListStore;
+		SubsectorListStore = probe;
+		probe = next;
+	}
+}
+
+static void RemoveSubsectorFromQueueStart ()
+{
+	SubsectorList *next = SubsectorQueue->Next;
+	SubsectorQueue->Next = SubsectorListStore;
+	SubsectorListStore = SubsectorQueue;
+	SubsectorQueue = next;
 }

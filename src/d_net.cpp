@@ -1372,7 +1372,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 			if (slot < NUM_WEAPON_SLOTS)
 			{
-				weapontype_t newweap = WeaponSlots[slot].PickWeapon (&players[player]);
+				weapontype_t newweap = players[player].WeaponSlots.Slots[slot].PickWeapon (&players[player]);
 				if (newweap < NUMWEAPONS && newweap != players[player].readyweapon)
 				{
 					players[player].pendingweapon = newweap;
@@ -1396,6 +1396,26 @@ void Net_DoCommand (int type, byte **stream, int player)
 				players[player].pendingweapon = newweap;
 			}
 		}
+		break;
+
+	case DEM_SLOTCHANGE:
+		{
+			byte slot = ReadByte (stream);
+
+			if (slot < NUM_WEAPON_SLOTS)
+			{
+				players[player].WeaponSlots.Slots[slot].StreamIn (stream);
+			}
+			else
+			{
+				slot = ReadByte (stream);
+				*stream += slot;
+			}
+		}
+		break;
+
+	case DEM_SLOTSCHANGE:
+		players[player].WeaponSlots.StreamInSlots (stream);
 		break;
 
 	case DEM_SUMMON:
@@ -1509,6 +1529,18 @@ void Net_SkipCommand (int type, byte **stream)
 		case DEM_SAVEGAME:
 			skip = strlen ((char *)(*stream)) + 1;
 			skip += strlen ((char *)(*stream) + skip) + 1;
+			break;
+
+		case DEM_SLOTCHANGE:
+			skip = 2 + *(*stream + 1);
+			break;
+
+		case DEM_SLOTSCHANGE:
+			{
+				FWeaponSlots foo;
+				foo.StreamInSlots (stream);
+				skip = 0;
+			}
 			break;
 
 		case DEM_SINFCHANGED:

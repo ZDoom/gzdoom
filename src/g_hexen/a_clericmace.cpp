@@ -19,9 +19,9 @@ void A_CMaceAttack (player_t *player, pspdef_t *psp);
 
 // The Cleric's Mace --------------------------------------------------------
 
-class ACWeapMace : public AWeapon
+class ACWeapMace : public AClericWeapon
 {
-	DECLARE_ACTOR (ACWeapMace, AWeapon)
+	DECLARE_ACTOR (ACWeapMace, AClericWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -65,6 +65,7 @@ FState ACWeapMace::States[] =
 FWeaponInfo ACWeapMace::WeaponInfo =
 {
 	0,
+	MANA_NONE,
 	MANA_NONE,
 	0,
 	0,

@@ -1129,18 +1129,21 @@ static void IterFindPolySegs (int x, int y, seg_t **segList)
 	}
 	for (i = 0; i < numsegs; i++)
 	{
-		if (segs[i].v1->x == x && segs[i].v1->y == y)
+		if (segs[i].linedef != NULL)
 		{
-			if (!segList)
+			if (segs[i].v1->x == x && segs[i].v1->y == y)
 			{
-				PolySegCount++;
+				if (!segList)
+				{
+					PolySegCount++;
+				}
+				else
+				{
+					*segList++ = &segs[i];
+				}
+				IterFindPolySegs (segs[i].v2->x, segs[i].v2->y, segList);
+				return;
 			}
-			else
-			{
-				*segList++ = &segs[i];
-			}
-			IterFindPolySegs (segs[i].v2->x, segs[i].v2->y, segList);
-			return;
 		}
 	}
 	I_Error ("IterFindPolySegs: Non-closed Polyobj located.\n");
@@ -1163,7 +1166,8 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 
 	for (i = 0; i < numsegs; i++)
 	{
-		if (segs[i].linedef->special == PO_LINE_START &&
+		if (segs[i].linedef != NULL &&
+			segs[i].linedef->special == PO_LINE_START &&
 			segs[i].linedef->args[0] == tag)
 		{
 			if (polyobjs[index].segs)
@@ -1201,7 +1205,8 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 			psIndexOld = psIndex;
 			for (i = 0; i < numsegs; i++)
 			{
-				if (segs[i].linedef->special == PO_LINE_EXPLICIT &&
+				if (segs[i].linedef != NULL &&
+					segs[i].linedef->special == PO_LINE_EXPLICIT &&
 					segs[i].linedef->args[0] == tag)
 				{
 					if (!segs[i].linedef->args[1])
@@ -1225,7 +1230,8 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 			// 	in the above loop, since we aren't guaranteed one seg per linedef.
 			for (i = 0; i < numsegs; i++)
 			{
-				if (segs[i].linedef->special == PO_LINE_EXPLICIT &&
+				if (segs[i].linedef != NULL &&
+					segs[i].linedef->special == PO_LINE_EXPLICIT &&
 					segs[i].linedef->args[0] == tag && segs[i].linedef->args[1] == j)
 				{
 					segs[i].linedef->special = 0;
@@ -1238,7 +1244,8 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 				// lines with the current tag value
 				for (i = 0; i < numsegs; i++)
 				{
-					if(segs[i].linedef->special == PO_LINE_EXPLICIT &&
+					if (segs[i].linedef != NULL &&
+						segs[i].linedef->special == PO_LINE_EXPLICIT &&
 						segs[i].linedef->args[0] == tag)
 					{
 						I_Error ("SpawnPolyobj: Missing explicit line %d for poly %d\n",

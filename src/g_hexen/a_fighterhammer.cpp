@@ -23,9 +23,9 @@ void A_HammerSound (AActor *);
 
 // The Fighter's Hammer -----------------------------------------------------
 
-class AFWeapHammer : public AWeapon
+class AFWeapHammer : public AFighterWeapon
 {
-	DECLARE_ACTOR (AFWeapHammer, AWeapon)
+	DECLARE_ACTOR (AFWeapHammer, AFighterWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -74,8 +74,9 @@ FWeaponInfo AFWeapHammer::WeaponInfo =
 {
 	0,
 	MANA_NONE,
+	MANA_2,
 	3,
-	0,
+	25,
 	&States[S_FHAMMERUP],
 	&States[S_FHAMMERDOWN],
 	&States[S_FHAMMERREADY],

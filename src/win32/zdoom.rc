@@ -79,6 +79,14 @@ BEGIN
         TOPMARGIN, 7
         BOTTOMMARGIN, 144
     END
+
+    IDD_CRASHDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 394
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 276
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -89,7 +97,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,0,0,13
+ FILEVERSION 2,0,0,24
  PRODUCTVERSION 2,0,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -108,7 +116,7 @@ BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
             VALUE "CompanyName", " "
             VALUE "FileDescription", "ZDoom"
-            VALUE "FileVersion", "2.0-Decor"
+            VALUE "FileVersion", "2.0-24"
             VALUE "InternalName", "ZDoom"
             VALUE "LegalCopyright", "Copyright © 1993-1996, id Software & 1998-2002, Randy Heit"
             VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
@@ -129,11 +137,12 @@ END
 // Dialog
 //
 
-IDD_FMODINITFAILED DIALOG  0, 0, 186, 62
-STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+IDD_FMODINITFAILED DIALOGEX 0, 0, 186, 62
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
 CAPTION "ZDoom Sound Initialization Failure"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "Retry",IDOK,129,7,50,14,WS_GROUP
     PUSHBUTTON      "No Sound",IDC_NOSOUND,129,24,50,14,WS_GROUP
@@ -143,10 +152,11 @@ BEGIN
 END
 
 IDD_IWADDIALOG DIALOGEX 0, 0, 212, 151
-STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
 CAPTION "Select an IWAD to use"
-FONT 8, "MS Sans Serif", 0, 0, 0x0
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     LISTBOX         IDC_IWADLIST,5,25,200,85,LBS_NOINTEGRALHEIGHT | 
                     WS_VSCROLL | WS_TABSTOP
@@ -158,6 +168,22 @@ BEGIN
                     140,8
     LTEXT           "Select from the list below to determine which one to use:",
                     IDC_STATIC,5,15,178,8
+END
+
+IDD_CRASHDIALOG DIALOGEX 0, 0, 401, 283
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | 
+    DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "ZDoom Very Fatal Error"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "Die!",IDOK,176,262,50,14
+    EDITTEXT        IDC_CRASHINFO,7,49,387,208,ES_MULTILINE | ES_AUTOHSCROLL | 
+                    ES_READONLY | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "ZDoom has crashed most unexpectedly. Please e-mail the following along with any other information you feel is relevant. With luck, this will provide me with enough information to fix the problem for future versions of ZDoom.",
+                    IDC_STATIC,7,7,387,19
+    LTEXT           "Note that you can highlight this text, copy it with the right mouse button or Ctrl+C, and then paste it into Notepad or your e-mail program. If console logging was turned on, this information will also be stored in the console log.",
+                    IDC_STATIC,7,28,387,19
 END
 
 

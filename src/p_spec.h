@@ -189,6 +189,8 @@ BOOL	P_TestActivateLine (line_t *ld, AActor *mo, int side, int activationType);
 void	P_PlayerInSpecialSector (player_t *player);
 void	P_PlayerOnSpecialFlat (player_t *player, int floorType);
 
+void	P_SetSectorFriction (int tag, int amount, bool alterFlag);
+
 //
 // getSide()
 // Will return a side_t*
@@ -801,14 +803,13 @@ inline FArchive &operator<< (FArchive &arc, DElevator::EElevator &type)
 	return arc;
 }
 
-class DFloorWaggle : public DMovingFloor
+class DWaggleBase : public DMover
 {
-	DECLARE_CLASS (DFloorWaggle, DMovingFloor)
+	DECLARE_CLASS (DWaggleBase, DMover)
 public:
-	DFloorWaggle (sector_t *sec);
+	DWaggleBase (sector_t *sec);
 
 	void Serialize (FArchive &arc);
-	void Tick ();
 
 protected:
 	fixed_t m_OriginalDist;
@@ -820,10 +821,31 @@ protected:
 	int m_Ticker;
 	int m_State;
 
-	friend bool EV_StartFloorWaggle (int tag, int height, int speed,
-		int offset, int timer);
+	friend bool EV_StartWaggle (int tag, int height, int speed,
+		int offset, int timer, bool ceiling);
+
+	void DoWaggle (bool ceiling);
+	DWaggleBase ();
+};
+
+class DFloorWaggle : public DWaggleBase
+{
+	DECLARE_CLASS (DFloorWaggle, DWaggleBase)
+public:
+	DFloorWaggle (sector_t *sec);
+	void Tick ();
 private:
 	DFloorWaggle ();
+};
+
+class DCeilingWaggle : public DWaggleBase
+{
+	DECLARE_CLASS (DCeilingWaggle, DWaggleBase)
+public:
+	DCeilingWaggle (sector_t *sec);
+	void Tick ();
+private:
+	DCeilingWaggle ();
 };
 
 //jff 3/15/98 pure texture/type change for better generalized support

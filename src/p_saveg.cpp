@@ -121,18 +121,19 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->SkyBox;
 		if (arc.IsStoring ())
 		{
-			arc << sec->floorcolormap->Color
-				<< sec->floorcolormap->Fade
-				<< sec->ceilingcolormap->Color
-				<< sec->ceilingcolormap->Fade;
+			arc << sec->ColorMap->Color
+				<< sec->ColorMap->Fade;
 		}
 		else
 		{
 			PalEntry color, fade;
 			arc << color << fade;
-			sec->floorcolormap = GetSpecialLights (color, fade);
-			arc << color << fade;
-			sec->ceilingcolormap = GetSpecialLights (color, fade);
+			sec->ColorMap = GetSpecialLights (color, fade);
+			if (SaveVersion < 201)
+			{ // Version 200 had separate colormaps for the floor and ceiling,
+			  // even though they were always the same.
+				arc << color << fade;
+			}
 		}
 	}
 

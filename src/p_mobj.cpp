@@ -89,6 +89,7 @@ static FRandom pr_chunk ("Chunk");
 static FRandom pr_checkmissilespawn ("CheckMissileSpawn");
 static FRandom pr_spawnmissile ("SpawnMissile");
 static FRandom pr_slam ("SkullSlam");
+static FRandom pr_multiclasschoice ("MultiClassChoice");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -338,12 +339,12 @@ bool AActor::SetState (FState *newstate)
 		  // this actor is attached to a player, use the player's skin's
 		  // sprite. If a player is not attached, do not change the sprite
 		  // unless it is different from the previous state's sprite; a
-		  // player may have been attached, died, and respawned elsewher,
+		  // player may have been attached, died, and respawned elsewhere,
 		  // and we do not want to lose the skin on the body. If it wasn't
 		  // for Dehacked, I would move sprite changing out of the states
 		  // altogether, since actors rarely change their sprites after
 		  // spawning.
-			if (player != NULL)
+			if (player != NULL && gameinfo.gametype != GAME_Hexen)
 			{
 				sprite = skins[player->userinfo.skin].sprite;
 			}
@@ -401,7 +402,7 @@ bool AActor::SetStateNF (FState *newstate)
 		newsprite = newstate->sprite.index;
 		if (newsprite == SpawnState->sprite.index)
 		{
-			if (player != NULL)
+			if (player != NULL && gameinfo.gametype != GAME_Hexen)
 			{
 				sprite = skins[player->userinfo.skin].sprite;
 			}
@@ -515,7 +516,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line)
 
 		if (gameinfo.gametype == GAME_Doom)
 		{
-			mo->tics -= pr_explodemissile() & 3;
+			mo->tics -= (pr_explodemissile() & 3) * TICRATE / 35;
 			if (mo->tics < 1)
 				mo->tics = 1;
 		}
@@ -716,7 +717,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 	fixed_t xmove, ymove;
 	bool walkplane;
 	static const int windTab[3] = {2048*5, 2048*10, 2048*25};
-	int steps, step;
+	int steps, step, totalsteps;
 	fixed_t startx, starty;
 
 	fixed_t maxmove = (mo->waterlevel < 2) || (mo->flags & MF_MISSILE) ? MAXMOVE : MAXMOVE/4;
@@ -745,7 +746,7 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 	// that large thrusts can't propel an actor through a wall, because wall
 	// running depends on the player's original movement continuing even after
 	// it gets blocked.
-	if (mo->player != NULL && (compatflags & COMPATF_WALLRUN))
+	if (mo->player != NULL && (compatflags & COMPATF_WALLRUN) || (mo->waterlevel >= 2))
 	{
 		xmove = mo->momx = clamp (mo->momx, -maxmove, maxmove);
 		ymove = mo->momy = clamp (mo->momy, -maxmove, maxmove);
@@ -772,6 +773,8 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 	player = mo->player;
 
 	// [RH] Adjust player movement on sloped floors
+	fixed_t startxmove = xmove;
+	fixed_t startymove = ymove;
 	walkplane = P_CheckSlopeWalk (mo, xmove, ymove);
 
 	// [RH] Take smaller steps when moving faster than the object's size permits.
@@ -781,7 +784,12 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 	// through the actor.
 
 	{
-		maxmove = mo->radius;
+		maxmove = mo->radius - FRACUNIT;
+
+		if (maxmove <= 0)
+		{ // gibs can have radius 0, so don't divide by zero below!
+			maxmove = MAXMOVE;
+		}
 
 		const fixed_t xspeed = abs (xmove);
 		const fixed_t yspeed = abs (ymove);
@@ -804,9 +812,15 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 		}
 	}
 
+	// P_SlideMove needs to know the step size before P_CheckSlopeWalk
+	// because it also calls P_CheckSlopeWalk on its clipped steps.
+	fixed_t onestepx = startxmove / steps;
+	fixed_t onestepy = startymove / steps;
+
 	startx = mo->x;
 	starty = mo->y;
 	step = 1;
+	totalsteps = steps;
 
 	do
 	{
@@ -819,12 +833,6 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 		{
 			// blocked move
 
-			// [RH] Here is the key to wall running: The original move still has a chance
-			// to continue even after being blocked. You effectively get two moves in one.
-			if (player == NULL || !(compatflags & COMPATF_WALLRUN))
-			{
-				steps = 0;
-			}
 			if (mo->flags2 & MF2_SLIDE || bForceSlide)
 			{
 				// try to slide along it
@@ -837,12 +845,40 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 					{
 						mo->momz = WATER_JUMP_SPEED;
 					}
-					P_SlideMove (mo);
+					if (player && (compatflags & COMPATF_WALLRUN))
+					{
+					// [RH] Here is the key to wall running: The move is clipped using its full speed.
+					// If the move is done a second time (because it was too fast for one move), it
+					// is still clipped against the wall at its full speed, so you effectively
+					// execute two moves in one tic.
+						P_SlideMove (mo, mo->momx, mo->momy, 1);
+					}
+					else
+					{
+						P_SlideMove (mo, onestepx, onestepy, totalsteps);
+					}
+					if ((mo->momx | mo->momy) == 0)
+					{
+						steps = 0;
+					}
+					else
+					{
+						if (!player || !(compatflags & COMPATF_WALLRUN))
+						{
+							xmove = mo->momx;
+							ymove = mo->momy;
+							onestepx = xmove / steps;
+							onestepy = ymove / steps;
+							P_CheckSlopeWalk (mo, xmove, ymove);
+						}
+						startx = mo->x - Scale (xmove, step, steps);
+						starty = mo->y - Scale (ymove, step, steps);
+					}
 				}
 				else
-				{ // slide against mobj
+				{ // slide against another actor
 					fixed_t tx, ty;
-					tx = 0, ty = ptryy - mo->y;
+					tx = 0, ty = onestepy;
 					walkplane = P_CheckSlopeWalk (mo, tx, ty);
 					if (P_TryMove (mo, mo->x + tx, mo->y + ty, true, walkplane))
 					{
@@ -850,12 +886,12 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 					}
 					else
 					{
-						tx = ptryx - mo->x, ty = 0;
+						tx = onestepx, ty = 0;
 						walkplane = P_CheckSlopeWalk (mo, tx, ty);
 						if (P_TryMove (mo, mo->x + tx, mo->y + ty, true, walkplane))
 						{
 							mo->momy = 0;
-					}
+						}
 						else
 						{
 							mo->momx = mo->momy = 0;
@@ -868,10 +904,12 @@ void P_XYMovement (AActor *mo, bool bForceSlide)
 						if (mo->momy == 0)
 							player->momy = 0;
 					}
+					steps = 0;
 				}
 			}
 			else if (mo->flags & MF_MISSILE)
 			{
+				steps = 0;
 				if (BlockingMobj)
 				{
 					if (mo->flags2 & MF2_BOUNCE2)
@@ -961,6 +999,26 @@ explode:
 			else
 			{
 				mo->momx = mo->momy = 0;
+				steps = 0;
+			}
+		}
+		else
+		{
+			if (mo->x != ptryx || mo->y != ptryy)
+			{
+				// If the new position does not match the desired position, the player
+				// must have gone through a teleporter, so stop moving right now if it
+				// was a regular teleporter. If it was a line-to-line or fogless teleporter,
+				// the move should continue, but startx and starty need to change.
+				if (mo->momx == 0 && mo->momy == 0)
+				{
+					step = steps;
+				}
+				else
+				{
+					startx = mo->x - Scale (xmove, step, steps);
+					starty = mo->y - Scale (ymove, step, steps);
+				}
 			}
 		}
 	} while (++step <= steps);
@@ -1373,6 +1431,7 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 //
 void P_NightmareRespawn (AActor *mobj)
 {
+	DWORD oldflags, oldflags2;
 	fixed_t x, y, z;
 	subsector_t *ss;
 	AActor *mo;
@@ -1380,9 +1439,22 @@ void P_NightmareRespawn (AActor *mobj)
 
 	x = mobj->SpawnPoint[0] << FRACBITS;
 	y = mobj->SpawnPoint[1] << FRACBITS;
+	// [SO] 9/2/02: This check doesn't work.  To start off, the object is at the wrong Z coordinate,
+	// and zero height.  Second of all, it's ~MF_SOLID, which allows it to go through other objects!
+	oldflags = mobj->flags;
+	oldflags2 = mobj->flags2;
+
+	mobj->flags |= MF_SOLID;
+	mobj->flags2 &= ~(MF2_PASSMOBJ);    // be lazy and just do total z-checking for this.
+
 	// something is occupying its position?
-	if (!P_CheckPosition (mobj, x, y)) 
+	if (!P_CheckPosition (mobj, x, y))
+	{
+		mobj->flags = oldflags;         // restore the old flags
+		mobj->flags2 = oldflags2;
 		return;		// no respawn
+	}
+	// Don't bother restoring the flags here, cuz at the end of this function, we Destroy() this mobj
 
 	// spawn a teleport fog at old spot because of removal of the body?
 	Spawn ("TeleportFog", mobj->x, mobj->y, ONFLOORZ);
@@ -1422,7 +1494,7 @@ void P_NightmareRespawn (AActor *mobj)
 
 	mo->reactiontime = 18;
 
-	// remove the old monster,
+	// remove the old monster
 	mobj->Destroy ();
 }
 
@@ -1960,9 +2032,6 @@ void AActor::Tick ()
 			return;		// actor was destroyed
 	}
 
-	//if (player)
-	//Printf ("%g\n", sqrtf ((momx>>16)*(momx>>16) + (momy>>16)*(momy>>16)));
-
 	if (UpdateWaterLevel (oldz))
 	{
 		P_HitWater (this, Sector);
@@ -1983,7 +2052,7 @@ void AActor::Tick ()
 	else
 	{
 		// check for nightmare respawn
-		if (!(flags & MF_COUNTKILL) || !respawnmonsters)
+		if (!respawnmonsters || !(flags & MF_COUNTKILL) || (flags2 & MF2_DORMANT))
 			return;
 
 		movecount++;
@@ -2349,17 +2418,37 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 
 	p = &players[playernum];
 
-	if (gameinfo.gametype == GAME_Doom)
+	if (p->cls == NULL)
 	{
-		p->cls = TypeInfo::FindType ("DoomPlayer");
-	}
-	else if (gameinfo.gametype == GAME_Heretic)
-	{
-		p->cls = TypeInfo::FindType ("HereticPlayer");
-	}
-	else
-	{
-		p->cls = TypeInfo::FindType ("FighterPlayer");
+		p->CurrentPlayerClass = 0;
+		if (gameinfo.gametype == GAME_Doom)
+		{
+			p->cls = TypeInfo::FindType ("DoomPlayer");
+		}
+		else if (gameinfo.gametype == GAME_Heretic)
+		{
+			p->cls = TypeInfo::FindType ("HereticPlayer");
+		}
+		else
+		{
+			static const char *classes[3] = { "FighterPlayer", "ClericPlayer", "MagePlayer" };
+			int type;
+
+			if (!deathmatch || !multiplayer)
+			{
+				type = SinglePlayerClass[playernum];
+			}
+			else
+			{
+				type = p->userinfo.PlayerClass;
+				if (type < 0)
+				{
+					type = pr_multiclasschoice() % 3;
+				}
+			}
+			p->CurrentPlayerClass = type;
+			p->cls = TypeInfo::FindType (classes[type]);
+		}
 	}
 
 	mobj = static_cast<APlayerPawn *>
@@ -2374,6 +2463,9 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 		G_PlayerReborn (playernum);
 	}
 
+	// [RH] Be sure the player has the right translation
+	R_BuildPlayerTranslation (playernum);
+
 	// [RH] set color translations for player sprites
 	mobj->Translation = TRANSLATION(TRANSLATION_Players,playernum);
 
@@ -2386,7 +2478,11 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 
 	// [RH] Set player sprite based on skin
 	p->skin = &skins[p->userinfo.skin];
-	mobj->sprite = p->skin->sprite;
+	if (gameinfo.gametype != GAME_Hexen)
+	{
+		mobj->sprite = p->skin->sprite;
+		mobj->xscale = mobj->yscale = p->skin->scale;
+	}
 
 	p->DesiredFOV = p->FOV = 90.f;
 	p->camera = p->mo;
@@ -2448,7 +2544,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	// [BC] Do script stuff
 	if (level.behavior != NULL)
 	{
-		if (state == PST_ENTER)
+		if (state == PST_ENTER || (state == PST_LIVE && !savegamerestore))
 		{
 			FBehavior::StaticStartTypedScripts (SCRIPT_Enter, p->mo);
 		}
@@ -2469,12 +2565,25 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 void P_SpawnMapThing (mapthing2_t *mthing, int position)
 {
 	const TypeInfo *i;
-	int bit;
+	int mask;
 	AActor *mobj;
 	fixed_t x, y, z;
+	static unsigned int classFlags[] =
+	{
+		MTF_FIGHTER,
+		MTF_CLERIC,
+		MTF_MAGE
+	};
 
 	if (mthing->type == 0 || mthing->type == -1)
 		return;
+
+	// count deathmatch start positions
+	if (mthing->type == 11)
+	{
+		deathmatchstarts.Push (*mthing);
+		return;
+	}
 
 	// [RH] Record polyobject-related things
 	if (HexenHack)
@@ -2526,44 +2635,70 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		}
 	}
 
-	if (mthing->type != 11 &&
-		((level.flags & LEVEL_FILTERSTARTS) || pnum == -1))
+	if (pnum == -1 || (level.flags & LEVEL_FILTERSTARTS))
 	{
+		// check for appropriate game type
 		if (deathmatch) 
 		{
-			if (!(mthing->flags & MTF_DEATHMATCH))
-				return;
+			mask = MTF_DEATHMATCH;
 		}
 		else if (multiplayer)
 		{
-			if (!(mthing->flags & MTF_COOPERATIVE))
-				return;
+			mask = MTF_COOPERATIVE;
 		}
 		else
 		{
-			if (!(mthing->flags & MTF_SINGLE))
-				return;
+			mask = MTF_SINGLE;
 		}
-	}
-
-	if ((level.flags & LEVEL_FILTERSTARTS) || pnum == -1)
-	{ // check for apropriate skill level
-		if (gameskill == sk_baby)
-			bit = 1;
-		else if (gameskill == sk_nightmare)
-			bit = 4;
-		else
-			bit = 1 << (gameskill - 1);
-
-		if (!(mthing->flags & bit))
+		if (!(mthing->flags & mask))
+		{
 			return;
-	}
+		}
 
-	// count deathmatch start positions
-	if (mthing->type == 11)
-	{
-		deathmatchstarts.Push (*mthing);
-		return;
+		// check for apropriate skill level
+		if (gameskill == sk_baby)
+		{
+			mask = MTF_EASY;
+		}
+		else if (gameskill == sk_nightmare)
+		{
+			mask = MTF_HARD;
+		}
+		else
+		{
+			mask = 1 << (gameskill - 1);
+		}
+		if (!(mthing->flags & mask))
+		{
+			return;
+		}
+
+		// Check current character classes with spawn flags
+		if (gameinfo.gametype == GAME_Hexen)
+		{
+			if (!multiplayer)
+			{ // Single player
+				if ((mthing->flags & classFlags[SinglePlayerClass[consoleplayer]]) == 0)
+				{ // Not for current class
+					return;
+				}
+			}
+			else if (!deathmatch)
+			{ // Cooperative
+				mask = 0;
+				for (int i = 0; i < MAXPLAYERS; i++)
+				{
+					if (playeringame[i])
+					{
+						mask |= classFlags[SinglePlayerClass[i]];
+					}
+				}
+				if ((mthing->flags & mask) == 0)
+				{
+					return;
+				}
+			}
+		}
 	}
 
 	if (pnum != -1)

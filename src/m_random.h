@@ -50,7 +50,7 @@
 // sync. Do not remove entries simply because they become unused later.
 //
 // [RH] Changed to use different class instances for different generators.
-// This makes added new RNGs easier, because I don't need to recompile every
+// This makes adding new RNGs easier, because I don't need to recompile every
 // file that uses random numbers.
 
 class FRandom

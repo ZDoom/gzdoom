@@ -96,6 +96,7 @@ char*			spritename;
 // [RH] skin globals
 FPlayerSkin		*skins;
 size_t			numskins;
+BYTE			OtherGameSkinRemap[256];
 
 // [RH] particle globals
 int				NumParticles;
@@ -322,20 +323,33 @@ void R_InitSpriteDefs ()
 // Reads in everything applicable to a skin. The skins should have already
 // been counted and had their identifiers assigned to namespaces.
 //
-#define NUMSKINSOUNDS 9
-static const char *skinsoundnames[NUMSKINSOUNDS][2] = {
+#define NUMSKINSOUNDS 17
+static const char *skinsoundnames[NUMSKINSOUNDS][2] =
+{ // The *painXXX sounds must be the first four
 	{ "dsplpain",	"*pain100" },
-	{ "dspldeth",	"*death" },
-	{ "dspdiehi",	"*xdeath" },
-	{ "dsoof",		"*land" },
+	{ "dsplpain",	"*pain75" },
+	{ "dsplpain",	"*pain50" },
+	{ "dsplpain",	"*pain25" },
+	{ "dsplpain",	"*poison" },
+
 	{ "dsoof",		"*grunt" },
+	{ "dsoof",		"*land" },
+
+	{ "dspldeth",	"*death" },
+	{ "dspldeth",	"*wimpydeath" },
+
+	{ "dspdiehi",	"*xdeath" },
+	{ "dspdiehi",	"*crazydeath" },
+
 	{ "dsnoway",	"*usefail" },
+	{ "dsnoway",	"*puzzfail" },
+
 	{ "dsslop",		"*gibbed" },
+	{ "dsslop",		"*splat" },
+
 	{ "dspunch",	"*fist" },
 	{ "dsjump",		"*jump" }
 };
-static const char painname[3][8] = { "*pain25", "*pain50", "*pain75" };
-static WORD playersoundrefs[NUMSKINSOUNDS+3];
 
 static int STACK_ARGS skinsorter (const void *a, const void *b)
 {
@@ -344,25 +358,23 @@ static int STACK_ARGS skinsorter (const void *a, const void *b)
 
 void R_InitSkins (void)
 {
+	WORD playersoundrefs[NUMSKINSOUNDS];
 	spritedef_t temp;
 	int sndlumps[NUMSKINSOUNDS];
-	char key[10];
+	char key[65];
 	int intname;
 	size_t i;
 	int j, k, base;
 	int lastlump;
+	int aliasid;
 
-	key[9] = 0;
+	key[sizeof(key)-1] = 0;
 	i = 0;
 	lastlump = 0;
 
 	for (j = 0; j < NUMSKINSOUNDS; ++j)
 	{
 		playersoundrefs[j] = S_FindSound (skinsoundnames[j][1]);
-	}
-	for (j = 0; j < 3; ++j)
-	{
-		playersoundrefs[j+NUMSKINSOUNDS] = S_FindSound (painname[j]);
 	}
 
 	while ((base = W_FindLump ("S_SKIN", &lastlump)) != -1)
@@ -383,7 +395,7 @@ void R_InitSkins (void)
 		// Data is stored as "key = data".
 		while (SC_GetString ())
 		{
-			strncpy (key, sc_String, 9);
+			strncpy (key, sc_String, sizeof(key)-1);
 			if (!SC_GetString() || sc_String[0] != '=')
 			{
 				Printf (PRINT_BOLD, "Bad format for skin %d: %s\n", i, key);
@@ -418,6 +430,48 @@ void R_InitSkins (void)
 			else if (0 == stricmp (key, "gender"))
 			{
 				skins[i].gender = D_GenderToInt (sc_String);
+			}
+			else if (0 == stricmp (key, "scale"))
+			{
+				skins[i].scale = clamp ((int)(atof (sc_String) * 64), 1, 256) - 1;
+			}
+			else if (0 == stricmp (key, "game"))
+			{
+				if (stricmp (sc_String, "heretic"))
+				{
+					skins[i].game = GAME_Heretic;
+					skins[i].range0start = 225;
+					skins[i].range0end = 240;
+				}
+			}
+			else if (key[0] == '*')
+			{ // Player sound replacment (ZDoom extension)
+				int lump = W_CheckNumForName (sc_String, skins[i].namespc);
+				if (lump == -1)
+				{
+					lump = W_CheckNumForName (sc_String);
+				}
+				if (lump != -1)
+				{
+					if (stricmp (key, "*pain") == 0)
+					{ // Replace all pain sounds in one go
+						aliasid = S_AddPlayerSound (skins[i].name, skins[i].gender,
+							playersoundrefs[0], lump);
+						for (int l = 3; l > 0; --l)
+						{
+							S_AddPlayerSoundExisting (skins[i].name, skins[i].gender,
+								playersoundrefs[l], aliasid);
+						}
+					}
+					else
+					{
+						int sndref = S_FindSoundNoHash (key);
+						if (sndref != 0)
+						{
+							S_AddPlayerSound (skins[i].name, skins[i].gender, sndref, lump);
+						}
+					}
+				}
 			}
 			else
 			{
@@ -485,21 +539,20 @@ void R_InitSkins (void)
 		R_InstallSprite (skins[i].sprite);
 
 		// Register any sounds this skin provides
+		aliasid = 0;
 		for (j = 0; j < NUMSKINSOUNDS; j++)
 		{
 			if (sndlumps[j] != -1)
 			{
-				int aliasid;
-
-				aliasid = S_AddPlayerSound (skins[i].name, skins[i].gender,
-					playersoundrefs[j], sndlumps[j]);
-				if (j == 0)
+				if (j == 0 || sndlumps[j] != sndlumps[j-1])
 				{
-					for (int l = 3; l > 0; --l)
-					{
-						S_AddPlayerSoundExisting (skins[i].name, skins[i].gender,
-							playersoundrefs[NUMSKINSOUNDS-1+l], aliasid);
-					}
+					aliasid = S_AddPlayerSound (skins[i].name, skins[i].gender,
+						playersoundrefs[j], sndlumps[j]);
+				}
+				else
+				{
+					S_AddPlayerSoundExisting (skins[i].name, skins[i].gender,
+						playersoundrefs[j], aliasid);
 				}
 			}
 		}
@@ -567,6 +620,16 @@ vissprite_t		*vissprite_p;
 vissprite_t		*lastvissprite;
 int 			newvissprite;
 
+static void R_CreateSkinTranslation (const char *palname)
+{
+	BYTE *otherPal = (BYTE *)W_CacheLumpName (palname, PU_CACHE);
+
+	for (int i = 0; i < 256; ++i)
+	{
+		OtherGameSkinRemap[i] = ColorMatcher.Pick (otherPal[0], otherPal[1], otherPal[2]);
+		otherPal += 3;
+	}
+}
 
 
 //
@@ -598,31 +661,49 @@ void R_InitSprites ()
 		rangestart = 225;
 		rangeend = 240;
 	}
-	else // Hexen
+	else // Hexen - Not used, because we don't do skins with Hexen
 	{
 		rangestart = 146;
 		rangeend = 163;
 	}
 
+	// [RH] Create a standard translation to map skins between Heretic and Doom
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		R_CreateSkinTranslation ("SPALHTIC");
+	}
+	else
+	{
+		R_CreateSkinTranslation ("SPALDOOM");
+	}
+
 	// [RH] Count the number of skins.
 	numskins = 1;
 	lastlump = 0;
-	while ((lump = W_FindLump ("S_SKIN", &lastlump)) != -1)
+	if (gameinfo.gametype != GAME_Hexen)
 	{
-		numskins++;
+		while ((lump = W_FindLump ("S_SKIN", &lastlump)) != -1)
+		{
+			numskins++;
+		}
 	}
 
 	// [RH] Do some preliminary setup
 	skins = new FPlayerSkin[numskins];
 	memset (skins, 0, sizeof(*skins) * numskins);
 	for (i = 0; i < numskins; i++)
-	{
-		skins[i].range0start = rangestart;
-		skins[i].range0end = rangeend;
+	{ // Assume Doom skin by default
+		skins[i].range0start = 112;
+		skins[i].range0end = 127;
+		skins[i].scale = 63;
+		skins[i].game = GAME_Doom;
 	}
 
 	R_InitSpriteDefs ();
-	R_InitSkins ();		// [RH] Finish loading skin data
+	if (gameinfo.gametype != GAME_Hexen)
+	{
+		R_InitSkins ();		// [RH] Finish loading skin data
+	}
 
 	// [RH] Set up base skin
 	strcpy (skins[0].name, "Base");
@@ -630,6 +711,13 @@ void R_InitSprites ()
 	skins[0].face[1] = 'T';
 	skins[0].face[2] = 'F';
 	skins[0].namespc = ns_global;
+	skins[0].scale = GetDefaultByName ("DoomPlayer")->xscale;
+	skins[0].game = gameinfo.gametype;
+	if (gameinfo.gametype == GAME_Heretic)
+	{
+		skins[0].range0start = 225;
+		skins[0].range0end = 240;
+	}
 
 	for (i = 0; i < sprites.Size (); i++)
 	{
@@ -1042,23 +1130,25 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	}
 
 	// calculate edges of the shape
-	const fixed_t thingxscalemul = thing->xscale << (16-6);
+	const fixed_t thingxscalemul = (thing->xscale+1) << (16-6);
 
 	tx -= TileSizes[lump].LeftOffset * thingxscalemul;
-	x1 = (centerxfrac + MulScale16 (tx, xscale)) >> FRACBITS;
+	x1 = centerx + MulScale32 (tx, xscale);
 
 	// off the right side?
 	if (x1 > WindowRight)
 		return;
-	
+
 	tx += TileSizes[lump].Width * thingxscalemul;
-	x2 = ((centerxfrac + MulScale16 (tx, xscale)) >> FRACBITS) - 1;
+	x2 = centerx + MulScale32 (tx, xscale);
 
 	// off the left side or too small?
-	if (x2 < WindowLeft || x2 < x1)
+	if (x2 < WindowLeft || x2 <= x1)
 		return;
 
-	xscale = MulScale6 (thing->xscale, xscale);
+	xscale = MulScale6 (thing->xscale+1, xscale);
+	iscale = (TileSizes[lump].Width << FRACBITS) / (x2 - x1);
+	x2--;
 
 	// killough 3/27/98: exclude things totally separated
 	// from the viewer, by either water or fake ceilings
@@ -1115,16 +1205,15 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->gy = thing->y;
 	vis->gz = gzb;		// [RH] use gzb, not thing->z
 	vis->gzt = gzt;		// killough 3/27/98
-	vis->floorclip = thing->floorclip;
+	vis->floorclip = SafeDivScale6 (thing->floorclip, (thing->yscale+1));
 	vis->texturemid = (TileSizes[lump].TopOffset << FRACBITS)
-		- SafeDivScale6 (viewz-thing->z, thing->yscale+1) - vis->floorclip;
+		- SafeDivScale6 (viewz-thing->z+thing->floorclip, (thing->yscale+1));
 	vis->x1 = x1 < WindowLeft ? WindowLeft : x1;
 	vis->x2 = x2 > WindowRight ? WindowRight : x2;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
 	vis->FakeFlatStat = fakeside;
 	vis->alpha = thing->alpha;
 	vis->picnum = lump;
-	iscale = DivScale32 (1, xscale);
 
 	if (flip)
 	{
@@ -1356,11 +1445,11 @@ void R_DrawPlayerSprites (void)
 		&ceilinglight, false);
 
 	// [RH] set foggy flag
-	foggy = (level.fadeto || sec->floorcolormap->Fade || sec->ceilingcolormap->Fade);
+	foggy = (level.fadeto || sec->ColorMap->Fade);
 	r_actualextralight = foggy ? 0 : extralight << 4;
 
 	// [RH] set basecolormap
-	basecolormap = sec->floorcolormap->Maps;
+	basecolormap = sec->ColorMap->Maps;
 
 	// get light level
 	lightnum = ((floorlight + ceilinglight) >> 1) + r_actualextralight;
@@ -1802,7 +1891,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 			botplane = &heightsec->ceilingplane;
 			toppic = sector->ceilingpic;
 			botpic = heightsec->ceilingpic;
-			map = heightsec->floorcolormap->Maps;
+			map = heightsec->ColorMap->Maps;
 		}
 		else if (fakeside == FAKED_BelowFloor)
 		{
@@ -1810,7 +1899,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 			botplane = &sector->floorplane;
 			toppic = heightsec->floorpic;
 			botpic = sector->floorpic;
-			map = heightsec->floorcolormap->Maps;
+			map = heightsec->ColorMap->Maps;
 		}
 		else
 		{
@@ -1818,7 +1907,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 			botplane = &heightsec->floorplane;
 			toppic = heightsec->ceilingpic;
 			botpic = heightsec->floorpic;
-			map = sector->floorcolormap->Maps;
+			map = sector->ColorMap->Maps;
 		}
 	}
 	else
@@ -1827,7 +1916,7 @@ void R_ProjectParticle (particle_t *particle, const sector_t *sector, int shade,
 		botplane = &sector->floorplane;
 		toppic = sector->ceilingpic;
 		botpic = sector->floorpic;
-		map = sector->floorcolormap->Maps;
+		map = sector->ColorMap->Maps;
 	}
 
 	if (botpic != skyflatnum && particle->z < botplane->ZatPoint (particle->x, particle->y))

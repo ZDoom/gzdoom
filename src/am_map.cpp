@@ -1779,17 +1779,32 @@ void AM_drawPlayers ()
 		int color;
 		mpoint_t pt;
 
-		if (!playeringame[i] ||
-			(deathmatch && !demoplayback) && p != players[consoleplayer].camera->player)
+		if (!playeringame[i] || p->mo == NULL)
+		{
+			continue;
+		}
+		
+		if (deathmatch && !demoplayback &&
+			!p->mo->IsTeammate (players[consoleplayer].mo) &&
+			p != players[consoleplayer].camera->player)
 		{
 			continue;
 		}
 
 		if (p->powers[pw_invisibility])
+		{
 			color = AlmostBackground;
+		}
 		else
-			color = ColorMatcher.Pick
-				(RPART(p->userinfo.color), GPART(p->userinfo.color), BPART(p->userinfo.color));
+		{
+			float h, s, v, r, g, b;
+
+			D_GetPlayerColor (i, &h, &s, &v);
+			HSVtoRGB (&r, &g, &b, h, s, v);
+
+			color = ColorMatcher.Pick (clamp (int(r*255.f),0,255),
+				clamp (int(g*255.f),0,255), clamp (int(b*255.f),0,255));
+		}
 
 		if (p->mo != NULL)
 		{

@@ -136,7 +136,7 @@ void DCajunMaster::Main (int buf)
 		Printf ("%s is now observer\n", players[consoleplayer].userinfo.netname);
 		observer = true;
 		players[consoleplayer].mo->UnlinkFromWorld ();
-		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_SHADOW|MF_NOTDMATCH|MF_NOGRAVITY;
+		players[consoleplayer].mo->flags = MF_DROPOFF|MF_NOBLOCKMAP|MF_NOCLIP|MF_NOTDMATCH|MF_NOGRAVITY;
 		players[consoleplayer].mo->flags2 |= MF2_FLY;
 		players[consoleplayer].mo->LinkToWorld ();
 	}
@@ -169,13 +169,11 @@ void DCajunMaster::Init ()
 	body2 = NULL;
 
 	//Remove all bots upon each level start, they'll get spawned instead.
-	playernumber = 0;
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		waitingforspawn[i] = false;
 		if (playeringame[i] && players[i].isbot)
 		{
-			playernumber++;
 			CleanBotstuff (&players[i]);
 			players[i].isbot = false;
 			botingame[i] = false;
@@ -227,6 +225,9 @@ void DCajunMaster::Init ()
 	combatdst[wp_staff]        = 1;
 	combatdst[wp_gauntlets]    = 1;
 	combatdst[wp_beak]         = 1;
+	combatdst[wp_snout]        = 1;
+	combatdst[wp_ffist]        = 1;
+	combatdst[wp_cmace]        = 1;
 
 	if (botinfo == NULL)
 	{
@@ -258,11 +259,17 @@ void DCajunMaster::End ()
 	{
 		if (playeringame[i] && players[i].isbot)
 		{
-			getspawned->AppendArg (players[i].userinfo.netname);
+			if (deathmatch)
+			{
+				getspawned->AppendArg (players[i].userinfo.netname);
+			}
 			CleanBotstuff (&players[i]);
 		}
 	}
-	wanted_botnum = botnum;
+	if (deathmatch)
+	{
+		wanted_botnum = botnum;
+	}
 }
 
 
@@ -285,6 +292,7 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 	static bool red; //ctf, spawning helper, spawn first blue then a red ...
 #endif
 	int i;
+	int playernumber;
 
 	//COLORS
 	static const char colors[11][17] =
@@ -586,6 +594,8 @@ bool DCajunMaster::LoadBots ()
 		}
 
 		botinfo_t *newinfo = new botinfo_t;
+		bool gotclass = false;
+
 		memset (newinfo, 0, sizeof(*newinfo));
 
 		newinfo->info = copystring ("\\autoaim\\0\\movebob\\.25\\team\\255");
@@ -626,11 +636,20 @@ bool DCajunMaster::LoadBots ()
 				break;
 
 			default:
+				if (stricmp (sc_String, "playerclass") == 0)
+				{
+					gotclass = true;
+				}
 				appendinfo (newinfo->info, sc_String);
 				SC_MustGetString ();
 				appendinfo (newinfo->info, sc_String);
 				break;
 			}
+		}
+		if (!gotclass)
+		{ // Bots that don't specify a class get a random one
+			appendinfo (newinfo->info, "playerclass");
+			appendinfo (newinfo->info, "random");
 		}
 		newinfo->next = bglobal.botinfo;
 		newinfo->lastteam = TEAM_None;

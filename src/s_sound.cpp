@@ -327,8 +327,8 @@ void S_Init ()
 	mus_paused = 0;
 
 	// Note that sounds have not been cached (yet).
-	for (i=1; (size_t)i < S_sfx.Size (); i++)
-		S_sfx[i].usefulness = -1;
+//	for (i=1; (size_t)i < S_sfx.Size (); i++)
+//		S_sfx[i].usefulness = -1;
 }
 
 //==========================================================================
@@ -740,10 +740,10 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	Channel[i].loop = looping ? true : false;
 	Channel[i].time = gametic;
 
-	if (sfx->usefulness < 0)
-		sfx->usefulness = 1;
-	else
-		sfx->usefulness++;
+//	if (sfx->usefulness < 0)
+//		sfx->usefulness = 1;
+//	else
+//		sfx->usefulness++;
 }
 
 //==========================================================================
@@ -1192,6 +1192,8 @@ void S_UpdateSounds (void *listener_p)
 	{
 		I_UpdateListener (players[consoleplayer].camera);
 	}
+
+	I_UpdateSounds ();
 }
 
 //==========================================================================
@@ -1460,7 +1462,7 @@ static void S_StopChannel (int cnum)
 		}
 		
 		// degrade usefulness of sound data
-		c->sfxinfo->usefulness--;
+//		c->sfxinfo->usefulness--;
 
 		c->sfxinfo = NULL;
 		c->handle = 0;

@@ -38,7 +38,7 @@
 #include "dobject.h"
 #include "doomtype.h"
 
-#define LOCAL_SIZE				10
+#define LOCAL_SIZE				20
 #define NUM_MAPVARS				128
 
 class FFont;

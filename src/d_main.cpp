@@ -129,6 +129,7 @@ extern gameinfo_t CommercialGameInfo;
 extern gameinfo_t HereticGameInfo;
 extern gameinfo_t HereticSWGameInfo;
 extern gameinfo_t HexenGameInfo;
+extern gameinfo_t HexenDKGameInfo;
 
 extern int testingmode;
 extern BOOL setmodeneeded;
@@ -1053,7 +1054,7 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		{ commercial,	&CommercialGameInfo,	pack_tnt },		// Doom2TNT
 		{ commercial,	&CommercialGameInfo,	pack_plut },	// Doom2Plutonia
 		{ commercial,	&HexenGameInfo,			doom2 },		// Hexen
-		{ commercial,	&HexenGameInfo,			doom2 },		// HexenDK
+		{ commercial,	&HexenDKGameInfo,		doom2 },		// HexenDK
 		{ commercial,	&CommercialGameInfo,	doom2 },		// Doom2
 		{ shareware,	&HereticSWGameInfo,		doom },			// HereticShareware
 		{ retail,		&HereticGameInfo,		doom },			// HereticExtended
@@ -1901,6 +1902,10 @@ void D_DoomMain (void)
 	else if (gameinfo.gametype == GAME_Heretic)
 	{
 		StatusBar = CreateHereticStatusBar ();
+	}
+	else if (gameinfo.gametype == GAME_Hexen)
+	{
+		StatusBar = CreateHexenStatusBar ();
 	}
 	else
 	{

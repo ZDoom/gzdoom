@@ -54,15 +54,11 @@ struct sfxinfo_t
 	WORD		bForce22050:1;
 	WORD		bLoadRAW:1;
 	WORD		bPlayerCompat:1;
+	WORD		b16bit:1;
 
 	WORD		link;
 
 	enum { NO_LINK = 0xffff };
-
-	// this is checked every second to see if sound
-	// can be thrown out (if 0, then decrement, if -1,
-	// then throw out, if > 0, then it is in use)
-	int 		usefulness;
 
 	unsigned int ms;					// [RH] length of sfx in milliseconds
 	unsigned int next, index;			// [RH] For hashing
@@ -178,6 +174,7 @@ void S_ParseSndInfo ();
 
 void S_HashSounds ();
 int S_FindSound (const char *logicalname);
+int S_FindSoundNoHash (const char *logicalname);
 int S_LookupPlayerSound (const char *playerclass, int gender, const char *logicalname);
 int S_LookupPlayerSound (const char *playerclass, int gender, int refid);
 int S_FindSkinnedSound (AActor *actor, const char *logicalname);

@@ -135,7 +135,6 @@ private:
 	void Set_enemy (AActor *actor);
 
 protected:
-	int		 playernumber;
 	bool	 ctf;
 	int		 loaded_bots;
 	int		 t_join;

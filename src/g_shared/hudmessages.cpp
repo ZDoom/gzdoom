@@ -114,6 +114,7 @@ void DHUDMessage::ScreenSizeChanged ()
 
 void DHUDMessage::ResetText (const char *text)
 {
+	FFont *oldfont = screen->Font;
 	screen->SetFont (Font);
 
 	Lines = V_BreakLines (con_scaletext ?
@@ -132,7 +133,7 @@ void DHUDMessage::ResetText (const char *text)
 		}
 	}
 
-	screen->SetFont (SmallFont);
+	screen->SetFont (oldfont);
 }
 
 bool DHUDMessage::Tick ()
@@ -152,6 +153,7 @@ void DHUDMessage::Draw (int bottom)
 	int ystep;
 	int i;
 	bool clean;
+	FFont *oldfont = screen->Font;
 
 	screen->SetFont (Font);
 
@@ -200,7 +202,7 @@ void DHUDMessage::Draw (int bottom)
 		y += ystep;
 	}
 
-	screen->SetFont (SmallFont);
+	screen->SetFont (oldfont);
 }
 
 void DHUDMessage::DrawSetup ()

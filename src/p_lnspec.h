@@ -77,6 +77,8 @@ typedef enum {
 	Floor_RaiseByValueTimes8 = 35,
 	Floor_LowerByValueTimes8 = 36,
 
+	Ceiling_Waggle = 38,	// [RH] Complement of Floor_Waggle
+
 	Ceiling_LowerByValue = 40,
 	Ceiling_RaiseByValue = 41,
 	Ceiling_CrushAndRaise = 42,
@@ -85,6 +87,8 @@ typedef enum {
 	Ceiling_CrushRaiseAndStay = 45,
 
 	Floor_CrushStop = 46,
+
+	ExtraFloor_LightOnly = 50,
 
 	Plat_PerpetualRaise = 60,
 	Plat_Stop = 61,

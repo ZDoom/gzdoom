@@ -58,6 +58,7 @@
 #include "c_dispatch.h"
 #include "cmdlib.h"
 #include "gi.h"
+#include "templates.h"
 
 IMPLEMENT_ABSTRACT_CLASS (DCanvas)
 IMPLEMENT_ABSTRACT_CLASS (DFrameBuffer)
@@ -217,6 +218,11 @@ void DCanvas::Dim () const
 		fixed_t amount;
 
 		amount = (fixed_t)(dimamount * 64);
+		if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
+		{ // On the Hexen title screen, the default dimming is not
+		  // enough to make the menus readable.
+			amount = MIN<fixed_t> (FRACUNIT, amount*2);
+		}
 		fg2rgb = Col2RGB8[amount];
 		bg2rgb = Col2RGB8[64-amount];
 		fg = fg2rgb[dimcolor.GetIndex ()];

@@ -63,6 +63,10 @@
 #include "z_zone.h"
 #include "r_draw.h"
 
+// [SO] Just the way Randy said to do it :)
+// [RH] Made this CVAR_SERVERINFO
+CVAR (Int, infighting, 0, CVAR_SERVERINFO)
+
 extern int clipammo[NUMAMMO];
 
 static bool LoadDehSupp ();
@@ -78,10 +82,12 @@ struct CodePtrMap
 static CodePtrMap *CodePtrNames;
 static int NumCodePtrs;
 
+// Prototype the dehacked code pointers
 #define WEAPON(x)	void A_##x(player_s*, pspdef_t*);
 #define ACTOR(x)	void A_##x(AActor*);
 #include "d_dehackedactions.h"
 
+// Declare the dehacked code pointers
 static const actionf_t CodePtrs[] =
 {
 	{(void *)NULL},
@@ -107,7 +113,6 @@ DehInfo deh =
 	  2,	// .FAAC
 	200,	// .KFAArmor
 	  2,	// .KFAAC
-	  0,	// .Infight
 	"PLAY",	// Name of player sprite
 	255,	// Rocket explosion style, 255=use cvar
 	FRACUNIT*2/3		// Rocket explosion alpha
@@ -154,6 +159,51 @@ END_DEFAULTS
 TArray<TypeInfo *> DehackedPickups;
 TArray<TypeInfo *> TouchedActors;
 
+// Sprite<->Class map for ADehackedPickup::DetermineType
+static struct DehSpriteMap
+{
+	char Sprite[5];
+	const char *ClassName;
+}
+DehSpriteMappings[] =
+{
+	{ "AMMO", "ClipBox" },
+	{ "ARM1", "GreenArmor" },
+	{ "ARM2", "BlueArmor" },
+	{ "BFUG", "BFG9000" },
+	{ "BKEY", "BlueCard" },
+	{ "BON1", "HealthBonus" },
+	{ "BON2", "ArmorBonus" },
+	{ "BPAK", "Backpack" },
+	{ "BROK", "RocketBox" },
+	{ "BSKU", "BlueSkull" },
+	{ "CELL", "Cell" },
+	{ "CELP", "CellPack" },
+	{ "CLIP", "Clip" },
+	{ "CSAW", "Chainsaw" },
+	{ "LAUN", "RocketLauncher" },
+	{ "MEDI", "Medikit" },
+	{ "MEGA", "Megasphere" },
+	{ "MGUN", "Chaingun" },
+	{ "PINS", "BlurSphere" },
+	{ "PINV", "InvulnerabilitySphere" },
+	{ "PLAS", "PlasmaRifle" },
+	{ "PMAP", "Allmap" },
+	{ "PSTR", "Berserk" },
+	{ "PVIS", "Infrared" },
+	{ "RKEY", "RedCard" },
+	{ "ROCK", "RocketAmmo" },
+	{ "RSKU", "RedSkull" },
+	{ "SBOX", "ShellBox" },
+	{ "SGN2", "SuperShotgun" },
+	{ "SHEL", "Shell" },
+	{ "SHOT", "Shotgun" },
+	{ "SOUL", "Soulsphere" },
+	{ "STIM", "Stimpack" },
+	{ "SUIT", "RadSuit" },
+	{ "YKEY", "YellowCard" },
+	{ "YSKU", "YellowSkull" }
+};
 
 #define LINESIZE 2048
 
@@ -1243,10 +1293,12 @@ static int PatchWeapon (int weapNum)
 				if (val == 5)
 				{
 					info->ammo = am_noammo;
+					info->givingammo = am_noammo;
 				}
 				else
 				{
 					info->ammo = (ammotype_t)val;
+					info->givingammo = (ammotype_t)val;
 				}
 				info->ammogive = clipammo[val];
 			}
@@ -1268,7 +1320,7 @@ static int PatchWeapon (int weapNum)
 				Printf ("Weapon %d: Unknown decal %s\n", weapNum, Line2);
 			}
 		}
-		else if (stricmp (Line1, "Ammo use") == 0)
+		else if (stricmp (Line1, "Ammo use") == 0 || stricmp (Line1, "Ammo per shot") == 0)
 		{
 			info->ammouse = val;
 		}
@@ -1352,7 +1404,6 @@ static int PatchMisc (int dummy)
 		{ "IDFA Armor Class",		myoffsetof(struct DehInfo,FAAC) },
 		{ "IDKFA Armor",			myoffsetof(struct DehInfo,KFAArmor) },
 		{ "IDKFA Armor Class",		myoffsetof(struct DehInfo,KFAAC) },
-		{ "Monsters Infight",		myoffsetof(struct DehInfo,Infight) },
 		{ NULL, }
 	};
 	int result;
@@ -1381,9 +1432,13 @@ static int PatchMisc (int dummy)
 			{
 				deh.ExplosionAlpha = (fixed_t)(atof (Line2) * FRACUNIT);
 			}
+			else if (stricmp (Line1, "Monsters Infight") == 0)
+			{
+				infighting = atoi (Line2);
+			}
 			else if (stricmp (Line1, "Monsters Ignore Each Other") == 0)
 			{
-				deh.Infight = atoi (Line2) ? -1 : 0;
+				infighting = atoi (Line2) ? -1 : 0;
 			}
 			else
 			{
@@ -1393,13 +1448,13 @@ static int PatchMisc (int dummy)
 	}
 
 	// 0xDD means "enable infighting"
-	if (deh.Infight == 0xDD)
+	if (infighting == 0xDD)
 	{
-		deh.Infight = 1;
+		infighting = 1;
 	}
-	else if (deh.Infight != -1)
+	else if (infighting != -1)
 	{
-		deh.Infight = 0;
+		infighting = 0;
 	}
 
 	return result;
@@ -1584,7 +1639,34 @@ static int PatchText (int oldSize)
 		{
 			strncpy (sprites[i].name, newStr, 4);
 			if (strncmp (deh.PlayerSprite, oldStr, 4) == 0)
+			{
 				strncpy (deh.PlayerSprite, newStr, 4);
+			}
+			// If this sprite is used by a pickup, then the DehackedPickup sprite map
+			// needs to be updated too.
+			for (i = 0; i < sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0]); ++i)
+			{
+				if (strncmp (DehSpriteMappings[i].Sprite, oldStr, 4) == 0)
+				{
+					// Found a match, so change it.
+					strncpy (DehSpriteMappings[i].Sprite, newStr, 4);
+
+					// Now shift the map's entries around so that it stays sorted.
+					// This must be done because the map is scanned using a binary search.
+					while (i > 0 && strncmp (DehSpriteMappings[i-1].Sprite, newStr, 4) > 0)
+					{
+						swap (DehSpriteMappings[i-1], DehSpriteMappings[i]);
+						--i;
+					}
+					while (i < sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0])-1 &&
+						strncmp (DehSpriteMappings[i+1].Sprite, newStr, 4) < 0)
+					{
+						swap (DehSpriteMappings[i+1], DehSpriteMappings[i]);
+						++i;
+					}
+					break;
+				}
+			}
 			goto donewithtext;
 		}
 	}
@@ -1598,7 +1680,7 @@ static int PatchText (int oldSize)
 
 		while (info->level_name)
 		{
-			if (stricmp (info->music, musname) == 0)
+			if (info->music && stricmp (info->music, musname) == 0)
 			{
 				good = true;
 				strcpy (info->music, musname);
@@ -2255,60 +2337,16 @@ const TypeInfo *ADehackedPickup::DetermineType ()
 {
 	// Look at the actor's current sprite to determine what kind of
 	// item to pretend to me.
-	static const struct
-	{
-		const char *Sprite;
-		const char *ClassName;
-	}
-	mappings[] = {
-	{ "AMMO", "ClipBox" },
-	{ "ARM1", "GreenArmor" },
-	{ "ARM2", "BlueArmor" },
-	{ "BFUG", "BFG9000" },
-	{ "BKEY", "BlueCard" },
-	{ "BON1", "HealthBonus" },
-	{ "BON2", "ArmorBonus" },
-	{ "BPAK", "Backpack" },
-	{ "BROK", "RocketBox" },
-	{ "BSKU", "BlueSkull" },
-	{ "CELL", "Cell" },
-	{ "CELP", "CellPack" },
-	{ "CLIP", "Clip" },
-	{ "CSAW", "Chainsaw" },
-	{ "LAUN", "RocketLauncher" },
-	{ "MEDI", "Medikit" },
-	{ "MEGA", "Megasphere" },
-	{ "MGUN", "Chaingun" },
-	{ "PINS", "BlurSphere" },
-	{ "PINV", "InvulnerabilitySphere" },
-	{ "PLAS", "PlasmaRifle" },
-	{ "PMAP", "Allmap" },
-	{ "PSTR", "Berserk" },
-	{ "PVIS", "Infrared" },
-	{ "RKEY", "RedCard" },
-	{ "ROCK", "RocketAmmo" },
-	{ "RSKU", "RedSkull" },
-	{ "SBOX", "ShellBox" },
-	{ "SGN2", "SuperShotgun" },
-	{ "SHEL", "Shell" },
-	{ "SHOT", "Shotgun" },
-	{ "SOUL", "Soulsphere" },
-	{ "STIM", "Stimpack" },
-	{ "SUIT", "RadSuit" },
-	{ "YKEY", "YellowCard" },
-	{ "YSKU", "YellowSkull" }
-	};
-
 	int min = 0;
-	int max = sizeof(mappings)/sizeof(mappings[0]) - 1;
+	int max = sizeof(DehSpriteMappings)/sizeof(DehSpriteMappings[0]) - 1;
 
 	while (min <= max)
 	{
 		int mid = (min + max) / 2;
-		int lex = memcmp (mappings[mid].Sprite, sprites[sprite].name, 4);
+		int lex = memcmp (DehSpriteMappings[mid].Sprite, sprites[sprite].name, 4);
 		if (lex == 0)
 		{
-			return TypeInfo::FindType (mappings[mid].ClassName);
+			return TypeInfo::FindType (DehSpriteMappings[mid].ClassName);
 		}
 		else if (lex < 0)
 		{

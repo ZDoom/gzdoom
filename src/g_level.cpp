@@ -3,7 +3,7 @@
 ** Parses MAPINFO and controls movement between levels
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2002 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,8 @@
 #include "sbar.h"
 #include "a_lightning.h"
 #include "m_png.h"
+#include "m_random.h"
+#include "version.h"
 
 #include "gi.h"
 
@@ -81,11 +83,16 @@ EXTERN_CVAR (Int, disableautosave)
 #define SNAP_ID			MAKE_ID('s','n','A','p')
 #define VIST_ID			MAKE_ID('v','i','S','t')
 #define ACSD_ID			MAKE_ID('a','c','S','d')
+#define RCLS_ID			MAKE_ID('r','c','L','s')
+#define PCLS_ID			MAKE_ID('p','c','L','s')
 
 static level_info_t *FindDefLevelInfo (char *mapname);
 static cluster_info_t *FindDefClusterInfo (int cluster);
 static int FindEndSequence (int type, const char *picname);
 static void SetEndSequence (char *nextmap, int type);
+static void InitPlayerClasses ();
+
+static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
 TArray<EndSequence> EndSequences;
 
@@ -207,9 +214,13 @@ static const char *MapInfoMapLevel[] =
 	"baronspecial",
 	"cyberdemonspecial",
 	"spidermastermindspecial",
+	"minotaurspecial",
+	"dsparilspecial",
+	"ironlichspecial",
 	"specialaction_exitlevel",
 	"specialaction_opendoor",
 	"specialaction_lowerfloor",
+	"specialaction_killmonsters",
 	"lightning",
 	"fadetable",
 	"evenlighting",
@@ -286,9 +297,13 @@ MapHandlers[] =
 	{ MITYPE_SETFLAG,	LEVEL_BRUISERSPECIAL, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_CYBORGSPECIAL, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_SPIDERSPECIAL, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_MINOTAURSPECIAL, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_SORCERER2SPECIAL, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_HEADSPECIAL, 0 },
 	{ MITYPE_SCFLAGS,	0, ~LEVEL_SPECACTIONSMASK },
 	{ MITYPE_SCFLAGS,	LEVEL_SPECOPENDOOR, ~LEVEL_SPECACTIONSMASK },
 	{ MITYPE_SCFLAGS,	LEVEL_SPECLOWERFLOOR, ~LEVEL_SPECACTIONSMASK },
+	{ MITYPE_SETFLAG,	LEVEL_SPECKILLMONSTERS, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_STARTLIGHTNING, 0 },
 	{ MITYPE_LUMPNAME,	lioffset(fadetable), 0 },
 	{ MITYPE_CLRBYTES,	lioffset(WallVertLight), lioffset(WallHorizLight) },
@@ -327,6 +342,8 @@ static const char *MapInfoClusterLevel[] =
 	"hub",
 	"cdtrack",
 	"cdid",
+	"entertextislump",
+	"exittextislump",
 	NULL
 };
 
@@ -338,7 +355,9 @@ MapInfoHandler ClusterHandlers[] =
 	{ MITYPE_LUMPNAME,	cioffset(finaleflat), 0 },
 	{ MITYPE_SETFLAG,	CLUSTER_HUB, 0 },
 	{ MITYPE_INT,		cioffset(cdtrack), 0 },
-	{ MITYPE_HEX,		cioffset(cdid), 0 }
+	{ MITYPE_HEX,		cioffset(cdid), 0 },
+	{ MITYPE_SETFLAG,	CLUSTER_ENTERTEXTINLUMP, 0 },
+	{ MITYPE_SETFLAG,	CLUSTER_EXITTEXTINLUMP, 0 }
 };
 
 static void ParseMapInfoLower (MapInfoHandler *handlers,
@@ -705,7 +724,11 @@ static void SetEndSequence (char *nextmap, int type)
 
 void G_SetForEndGame (char *nextmap)
 {
-	if (gamemode == commercial)
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		SetEndSequence (nextmap, END_Chess);
+	}
+	else if (gamemode == commercial)
 	{
 		SetEndSequence (nextmap, END_Cast);
 	}
@@ -864,14 +887,27 @@ void G_InitNew (char *mapname)
 
 	if (!savegamerestore)
 	{
+		if (!netgame)
+		{ // [RH] Change the random seed for each new single player game
+			rngseed = rngseed*3/2;
+		}
 		FRandom::StaticClearRandom ();
 		memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
 		memset (ACS_GlobalVars, 0, sizeof(ACS_GlobalVars));
 		level.time = 0;
 
+		if (!multiplayer || !deathmatch)
+		{
+			InitPlayerClasses ();
+		}
+
 		// force players to be initialized upon first level load
 		for (i = 0; i < MAXPLAYERS; i++)
 			players[i].playerstate = PST_ENTER;	// [BC]
+
+		// [RH] Send weapon assignments now
+		Net_WriteByte (DEM_SLOTSCHANGE);
+		LocalWeapons.StreamOutSlots ();
 	}
 
 	usergame = true;				// will be set false if a demo
@@ -1205,7 +1241,7 @@ void G_DoLoadLevel (int position, bool autosave)
 		}
 	}
 
-	level.starttime = I_GetTime ();
+	level.starttime = gametic;
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
 	
@@ -1243,7 +1279,9 @@ void G_WorldDone (void)
 	{
 		F_StartFinale (thiscluster->messagemusic, thiscluster->musicorder,
 			thiscluster->cdtrack, thiscluster->cdid,
-			thiscluster->finaleflat, thiscluster->exittext);
+			thiscluster->finaleflat, thiscluster->exittext,
+			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+			thiscluster->flags & CLUSTER_FINALEPIC);
 	}
 	else
 	{
@@ -1257,13 +1295,17 @@ void G_WorldDone (void)
 			{
 				F_StartFinale (nextcluster->messagemusic, nextcluster->musicorder,
 					nextcluster->cdtrack, nextcluster->cdid,
-					nextcluster->finaleflat, nextcluster->entertext);
+					nextcluster->finaleflat, nextcluster->entertext,
+					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
+					nextcluster->flags & CLUSTER_FINALEPIC);
 			}
 			else if (thiscluster->exittext)
 			{
 				F_StartFinale (thiscluster->messagemusic, thiscluster->musicorder,
 					thiscluster->cdtrack, nextcluster->cdid,
-					thiscluster->finaleflat, thiscluster->exittext);
+					thiscluster->finaleflat, thiscluster->exittext,
+					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+					thiscluster->flags & CLUSTER_FINALEPIC);
 			}
 		}
 	}
@@ -1296,7 +1338,7 @@ void G_InitLevelLocals ()
 	NormalLight.Maps = realcolormaps;
 	NormalLight.Color = PalEntry (255, 255, 255);
 
-	level.gravity = sv_gravity;
+	level.gravity = sv_gravity * 35/TICRATE;
 	level.aircontrol = (fixed_t)(sv_aircontrol * 65536.f);
 
 	if ((i = FindWadLevelInfo (level.mapname)) > -1)
@@ -1327,7 +1369,7 @@ void G_InitLevelLocals ()
 		level.WallHorizLight = pinfo->WallHorizLight;
 		if (pinfo->gravity != 0.f)
 		{
-			level.gravity = pinfo->gravity;
+			level.gravity = pinfo->gravity * 35/TICRATE;
 		}
 		if (pinfo->aircontrol != 0.f)
 		{
@@ -1552,6 +1594,21 @@ void G_SetLevelStrings (void)
 		SetEndSequence (LevelInfos[16].nextmap, END_Pic2);
 		SetEndSequence (LevelInfos[25].nextmap, END_Bunny);
 	}
+	else if (gameinfo.gametype == GAME_Hexen)
+	{
+		ClusterInfos[0].exittext = "clus1msg";
+		ClusterInfos[1].exittext = "clus2msg";
+		ClusterInfos[2].exittext = "clus3msg";
+		ClusterInfos[3].exittext = "clus4msg";
+		// Hexen could load a clus5msg lump even though it didn't use one itself.
+		ClusterInfos[4].exittext = "clus5msg";
+		for (i = 0; i < 5; ++i)
+		{
+			ClusterInfos[i].flags = CLUSTER_HUB | CLUSTER_EXITTEXTINLUMP | CLUSTER_FINALEPIC;
+			ClusterInfos[i].messagemusic = "hub";
+			strncpy (ClusterInfos[i].finaleflat, "INTERPIC", 8);
+		}
+	}
 
 	SetEndSequence (LevelInfos[7].nextmap, END_Pic1);
 	SetEndSequence (LevelInfos[34].nextmap, END_Pic3);
@@ -1565,8 +1622,11 @@ void G_SetLevelStrings (void)
 		ReplaceString (&LevelInfos[i+36].music, Musics1[i+36]);
 	}
 
-	for (i = 0; i < 4; i++)
-		ReplaceString (&ClusterInfos[i].exittext, GStrings(E1TEXT+i));
+	if (gameinfo.gametype != GAME_Hexen)
+	{
+		for (i = 0; i < 4; i++)
+			ReplaceString (&ClusterInfos[i].exittext, GStrings(E1TEXT+i));
+	}
 
 	if (gamemission == pack_plut)
 		start = PHUSTR_1;
@@ -1592,21 +1652,24 @@ void G_SetLevelStrings (void)
 		ReplaceString (&LevelInfos[48+i].music, Musics3[i]);
 	}
 
-	if (gamemission == pack_plut)
-		start = P1TEXT;		// P1TEXT
-	else if (gamemission == pack_tnt)
-		start = T1TEXT;		// T1TEXT
-	else
-		start = C1TEXT;		// C1TEXT
+	if (gameinfo.gametype != GAME_Hexen)
+	{
+		if (gamemission == pack_plut)
+			start = P1TEXT;		// P1TEXT
+		else if (gamemission == pack_tnt)
+			start = T1TEXT;		// T1TEXT
+		else
+			start = C1TEXT;		// C1TEXT
 
-	for (i = 0; i < 4; i++)
-		ReplaceString (&ClusterInfos[4 + i].exittext, GStrings(start+i));
-	for (; i < 6; i++)
-		ReplaceString (&ClusterInfos[4 + i].entertext, GStrings(start+i));
-	for (i = HE1TEXT; i <= HE5TEXT; i++)
-		ReplaceString (&ClusterInfos[10 + i - HE1TEXT].exittext, GStrings(i));
-	for (i = 0; i < 15; i++)
-		ReplaceString (&ClusterInfos[i].messagemusic, Musics4[i]);
+		for (i = 0; i < 4; i++)
+			ReplaceString (&ClusterInfos[4 + i].exittext, GStrings(start+i));
+		for (; i < 6; i++)
+			ReplaceString (&ClusterInfos[4 + i].entertext, GStrings(start+i));
+		for (i = HE1TEXT; i <= HE5TEXT; i++)
+			ReplaceString (&ClusterInfos[10 + i - HE1TEXT].exittext, GStrings(i));
+		for (i = 0; i < 15; i++)
+			ReplaceString (&ClusterInfos[i].messagemusic, Musics4[i]);
+	}
 
 	if (level.info)
 		strncpy (level.level_name, level.info->level_name, 63);
@@ -1721,11 +1784,13 @@ void G_SnapshotLevel ()
 
 	if (level.info->mapname[0] != 0)
 	{
+		level.info->snapshotVer = SAVEVER;
 		level.info->snapshot = new FCompressedMemFile;
 		level.info->snapshot->Open ();
 
 		FArchive arc (*level.info->snapshot);
 
+		SaveVersion = SAVEVER;
 		G_SerializeLevel (arc, false);
 	}
 }
@@ -1739,6 +1804,7 @@ void G_UnSnapshotLevel (bool hubLoad)
 
 	if (level.info->mapname[0] != 0)
 	{
+		SaveVersion = level.info->snapshotVer;
 		level.info->snapshot->Reopen ();
 		FArchive arc (*level.info->snapshot);
 		if (hubLoad)
@@ -1763,7 +1829,7 @@ void G_ClearSnapshots (void)
 			wadlevelinfos[i].snapshot = NULL;
 		}
 	}
-	for (i = 0; LevelInfos[i].level_name; i++)
+	for (i = 0; LevelInfos[i].mapname[0]; i++)
 	{
 		if (LevelInfos[i].snapshot)
 		{
@@ -1790,6 +1856,7 @@ static void writeMapName (FArchive &arc, const char *name)
 
 static void writeSnapShot (FArchive &arc, level_info_t *i)
 {
+	arc << i->snapshotVer;
 	writeMapName (arc, i->mapname);
 	i->snapshot->Serialize (arc);
 }
@@ -1809,7 +1876,7 @@ void G_SerializeSnapshots (FILE *file, bool storing)
 			}
 		}
 
-		for (i = 0; LevelInfos[i].level_name; i++)
+		for (i = 0; LevelInfos[i].mapname[0]; i++)
 		{
 			if (LevelInfos[i].snapshot)
 			{
@@ -1850,6 +1917,32 @@ void G_SerializeSnapshots (FILE *file, bool storing)
 			*arc << zero;
 			delete arc;
 		}
+
+		// Store player classes to be used when spawning a random class
+		if (multiplayer)
+		{
+			FPNGChunkArchive arc2 (file, RCLS_ID);
+			for (i = 0; i < MAXPLAYERS; ++i)
+			{
+				SBYTE cnum = SinglePlayerClass[i];
+				arc2 << cnum;
+			}
+		}
+
+		// Store player classes that are currently in use
+		FPNGChunkArchive arc3 (file, PCLS_ID);
+		for (i = 0; i < MAXPLAYERS; ++i)
+		{
+			BYTE pnum;
+			if (playeringame[i])
+			{
+				pnum = i;
+				arc3 << pnum;
+				arc3.UserWriteClass (players[i].cls);
+			}
+			pnum = 255;
+			arc3 << pnum;
+		}
 	}
 	else
 	{
@@ -1864,11 +1957,21 @@ void G_SerializeSnapshots (FILE *file, bool storing)
 		while (chunkLen != 0)
 		{
 			FPNGChunkArchive arc (file, SNAP_ID, chunkLen);
+			DWORD snapver;
 
+			if (SaveVersion < 203)
+			{
+				snapver = SaveVersion;
+			}
+			else
+			{
+				arc << snapver;
+			}
 			arc << namelen;
 			arc.Read (mapname, namelen);
 			mapname[namelen] = 0;
 			i = FindLevelInfo (mapname);
+			i->snapshotVer = snapver;
 			i->snapshot = new FCompressedMemFile;
 			i->snapshot->Serialize (arc);
 			chunkLen = (DWORD)M_NextPNGChunk (file, SNAP_ID);
@@ -1887,6 +1990,33 @@ void G_SerializeSnapshots (FILE *file, bool storing)
 				i = FindLevelInfo (mapname);
 				i->flags |= LEVEL_VISITED;
 				arc << namelen;
+			}
+		}
+
+		chunkLen = (DWORD)M_FindPNGChunk (file, RCLS_ID);
+		if (chunkLen != 0)
+		{
+			FPNGChunkArchive arc (file, PCLS_ID, chunkLen);
+			SBYTE cnum;
+
+			for (DWORD j = 0; j < chunkLen; ++j)
+			{
+				arc << cnum;
+				SinglePlayerClass[j] = cnum;
+			}
+		}
+
+		chunkLen = (DWORD)M_FindPNGChunk (file, PCLS_ID);
+		if (chunkLen != 0)
+		{
+			FPNGChunkArchive arc (file, RCLS_ID, chunkLen);
+			BYTE pnum;
+
+			arc << pnum;
+			while (pnum != 255)
+			{
+				arc.UserReadClass (players[pnum].cls);
+				arc << pnum;
 			}
 		}
 	}
@@ -1987,6 +2117,27 @@ void level_locals_s::AddScroller (DScroller *scroller, int secnum)
 	{
 		Scrolls = new FSectorScrollValues[numsectors];
 		memset (Scrolls, 0, sizeof(*Scrolls)*numsectors);
+	}
+}
+
+// Initializes player classes in case they are random.
+// This gets called at the start of a new game, and the classes
+// chosen here are used for the remainder of a single-player
+// or coop game. These are ignored for deathmatch.
+
+static void InitPlayerClasses ()
+{
+	if (!savegamerestore)
+	{
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			SinglePlayerClass[i] = players[i].userinfo.PlayerClass;
+			if (SinglePlayerClass[i] < 0 || !playeringame[i])
+			{
+				SinglePlayerClass[i] = (pr_classchoice() >> 6) % 3;
+			}
+			players[i].cls = NULL;
+		}
 	}
 }
 

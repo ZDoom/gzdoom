@@ -31,6 +31,8 @@
 #include "p_local.h"
 #include "p_acs.h"
 
+int SaveVersion;
+
 // Localizable strings
 FStringTable	GStrings;
 
@@ -65,3 +67,5 @@ CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
 int Net_Arbitrator = 0;
 
 int NextSkill = -1;
+
+int SinglePlayerClass[MAXPLAYERS];

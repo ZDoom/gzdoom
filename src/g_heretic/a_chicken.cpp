@@ -80,6 +80,7 @@ FWeaponInfo ABeak::WeaponInfo1 =
 {
 	0,
 	am_noammo,
+	am_noammo,
 	0,
 	0,
 	&States[S_BEAKUP],
@@ -100,6 +101,7 @@ FWeaponInfo ABeak::WeaponInfo1 =
 FWeaponInfo ABeak::WeaponInfo2 =
 {
 	0,
+	am_noammo,
 	am_noammo,
 	0,
 	0,

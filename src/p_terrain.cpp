@@ -46,6 +46,7 @@
 #include "sc_man.h"
 #include "s_sound.h"
 #include "p_local.h"
+#include "templates.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -79,7 +80,7 @@ enum ETerrainKeywords
 	TR_LEFTSTEPSOUNDS,
 	TR_RIGHTSTEPSOUNDS,
 	TR_LIQUID,
-	TR_LOWFRICTION
+	TR_FRICTION
 };
 
 enum EDamageKeywords
@@ -129,6 +130,7 @@ static int FindTerrain (const char *name);
 static void GenericParse (FGenericParse *parser, const char **keywords,
 	void *fields, const char *type, const char *name);
 static void ParseDamage (int keyword, void *fields);
+static void ParseFriction (int keyword, void *fields);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -183,7 +185,7 @@ static const char *TerrainKeywords[] =
 	"leftstepsounds",
 	"rightstepsounds",
 	"liquid",
-	"lowfriction",
+	"friction",
 	NULL
 };
 
@@ -225,7 +227,7 @@ static FGenericParse TerrainParser[] =
 	{ GEN_Sound,  {myoffsetof(FTerrainDef, LeftStepSound)} },
 	{ GEN_Sound,  {myoffsetof(FTerrainDef, RightStepSound)} },
 	{ GEN_Bool,   {myoffsetof(FTerrainDef, IsLiquid)} },
-	{ GEN_Bool,   {myoffsetof(FTerrainDef, ReducedFriction)} }
+	{ GEN_Custom, {(size_t)ParseFriction} }
 };
 
 /*
@@ -502,6 +504,37 @@ static void ParseDamage (int keyword, void *fields)
 		def->DamageFlags = 0;
 		break;
 	}
+}
+
+//==========================================================================
+//
+// ParseFriction
+//
+//==========================================================================
+
+static void ParseFriction (int keyword, void *fields)
+{
+	FTerrainDef *def = (FTerrainDef *)fields;
+	fixed_t friction, movefactor;
+
+	SC_MustGetFloat ();
+
+	// These calculations should match those in P_SetSectorFriction().
+	// A friction of 1.0 is equivalent to ORIG_FRICTION.
+
+	friction = (0x1EB8*(sc_Float*100))/0x80 + 0xD001;
+	friction = clamp<fixed_t> (friction, 0, FRACUNIT);
+
+	if (friction > ORIG_FRICTION)	// ice
+		movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
+	else
+		movefactor = ((friction - 0xDB34)*(0xA))/0x80;
+
+	if (movefactor < 32)
+		movefactor = 32;
+
+	def->Friction = friction;
+	def->MoveFactor = movefactor;
 }
 
 //==========================================================================

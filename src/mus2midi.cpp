@@ -62,7 +62,7 @@ static const BYTE CtrlTranslate[15] =
 	0,	// program change
 	0,	// bank select
 	1,	// modulation pot
-	7,	// valume
+	7,	// volume
 	10, // pan pot
 	11, // expression pot
 	91, // reverb depth

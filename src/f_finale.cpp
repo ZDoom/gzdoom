@@ -41,24 +41,30 @@
 
 #include "gi.h"
 
+static void FadePic ();
+static void GetFinaleText (const char *msgLumpName);
+
 // Stage of animation:
 //	0 = text
 //	1 = art screen
 //	2 = underwater screen
 //	3 = character cast
 //	4 = Heretic title
-static unsigned int	finalestage;
+static unsigned int	FinaleStage;
 
-static size_t finalecount;
+static size_t FinaleCount, FinaleEndCount;
 
-#define TEXTSPEED		2
+static int TEXTSPEED;
 #define TEXTWAIT		250
 
 static int FinaleSequence;
-static byte *DemonBuffer;
+static BYTE *DemonBuffer;
+static SBYTE FadeDir;
+static bool FinaleHasPic;
 
-char*	finaletext;
-char*	finaleflat;
+static char *FinaleText;
+static size_t FinaleTextLen;
+static char *FinaleFlat;
 
 void	F_StartCast (void);
 void	F_CastTicker (void);
@@ -68,55 +74,80 @@ void	F_CastDrawer (void);
 //
 // F_StartFinale
 //
-void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid, char *flat, char *text)
+void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid, char *flat, char *text,
+					BOOL textInLump, BOOL finalePic)
 {
+	bool ending = strncmp (level.nextmap, "enDSeQ", 6) == 0;
+	bool loopmusic = ending ? !(gameinfo.flags & GI_NOLOOPFINALEMUSIC) : true;
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;
 	viewactive = false;
 	automapactive = false;
 
 	// Okay - IWAD dependend stuff.
-	// This has been changed severly, and
-	//	some stuff might have changed in the process.
+	// This has been changed severly, and some stuff might have changed in the process.
+	//
 	// [RH] More flexible now (even more severe changes)
-	//  finaleflat, finaletext, and music are now
-	//  determined in G_WorldDone() based on data in
-	//  a level_info_t and a cluster_info_t.
+	//  FinaleFlat, FinaleText, and music are now determined in G_WorldDone() based on
+	//	data in a level_info_t and a cluster_info_t.
 
 	if (cdtrack == 0 || !S_ChangeCDMusic (cdtrack, cdid))
 	{
 		if (music == NULL)
-			S_ChangeMusic (gameinfo.finaleMusic, 0,
-				!(gameinfo.flags & GI_NOLOOPFINALEMUSIC));
+		{
+			S_ChangeMusic (gameinfo.finaleMusic, 0, loopmusic);
+		}
 		else
- 			S_ChangeMusic (music, musicorder, !(gameinfo.flags & GI_NOLOOPFINALEMUSIC));
+		{
+ 			S_ChangeMusic (music, musicorder, loopmusic);
+		}
 	}
 
-	if (*flat == 0)
-		finaleflat = gameinfo.finaleFlat;
-	else
-		finaleflat = flat;
+	FinaleFlat = (flat != NULL && *flat != 0) ? flat : gameinfo.finaleFlat;
 
-	if (text)
-		finaletext = text;
+	if (textInLump)
+	{
+		GetFinaleText (text);
+	}
 	else
-		finaletext = "Empty message";
+	{
+		FinaleText = (text != NULL) ? text : "Empty message";
+		FinaleTextLen = strlen (FinaleText);
+	}
 
-	finalestage = 0;
-	finalecount = 0;
+	FinaleStage = 0;
 	V_SetBlend (0,0,0,0);
+	TEXTSPEED = 2;
+
+	if (ending)
+	{
+		TEXTSPEED = 3;	// Slow the text to its original rate to match the music.
+		FinaleSequence = *((WORD *)&level.nextmap[6]);
+		S_ChangeMusic ("hall", 0, loopmusic);
+		if (EndSequences[FinaleSequence].EndType == END_Chess)
+		{
+			FinaleStage = 10;
+			GetFinaleText ("win1msg");
+			V_SetBlend (0,0,0,256);
+		}
+	}
+
+	FinaleHasPic = !!finalePic;
+	FinaleCount = 0;
+	FinaleEndCount = 70;
+	FadeDir = -1;
 	S_StopAllChannels ();
 }
 
 BOOL F_Responder (event_t *event)
 {
-	if (finalestage == 3)
+	if (FinaleStage == 3)
 	{
 		return F_CastResponder (event);
 	}
-	else if (finalestage == 2 && event->type == EV_KeyDown)
+	else if (FinaleStage == 2 && event->type == EV_KeyDown)
 	{ // We're showing the water pic; make any key kick to demo mode
-		finalestage = 4;
+		FinaleStage = 4;
 		V_ForceBlend (0, 0, 0, 0);
 		return true;
 	}
@@ -134,7 +165,7 @@ void F_Ticker ()
 	
 	// check for skipping
 	// [RH] Non-commercial can be skipped now, too
-	if (finalecount > 50 && finalestage == 0)
+	if (FinaleCount > 50 && FinaleStage == 0)
 	{
 		// go on to the next level
 		// [RH] or just reveal the entire message if we're still ticking it
@@ -149,11 +180,11 @@ void F_Ticker ()
 		}
 
 		if (i < MAXPLAYERS ||
-			(gamemode != commercial && finalecount > strlen (finaletext)*TEXTSPEED+TEXTWAIT))
+			(gamemode != commercial && FinaleCount > FinaleTextLen*TEXTSPEED+TEXTWAIT))
 		{
-			if (finalecount < strlen (finaletext)*TEXTSPEED)
+			if (FinaleCount < FinaleTextLen*TEXTSPEED)
 			{
-				finalecount = strlen (finaletext)*TEXTSPEED;
+				FinaleCount = FinaleTextLen*TEXTSPEED;
 			}
 			else
 			{
@@ -166,8 +197,8 @@ void F_Ticker ()
 					}
 					else
 					{
-						finalecount = 0;
-						finalestage = 1;
+						FinaleCount = 0;
+						FinaleStage = 1;
 						wipegamestate = GS_FORCEWIPE;
 						if (EndSequences[FinaleSequence].EndType == END_Bunny)
 						{
@@ -193,15 +224,73 @@ void F_Ticker ()
 			players[i].oldbuttons = players[i].cmd.ucmd.buttons;
 		}
 	}
+	else if (FinaleStage >= 10)
+	{
+		if (FinaleStage < 15 && FinaleCount >= FinaleEndCount)
+		{
+			FinaleCount = 0;
+			FinaleStage++;
+			switch (FinaleStage)
+			{
+			case 11: // Text 1
+				FinaleEndCount = FinaleTextLen*TEXTSPEED+TEXTWAIT;
+				break;
+
+			case 12: // Pic 2, Text 2
+				GetFinaleText ("win2msg");
+				FinaleEndCount = FinaleTextLen*TEXTSPEED+TEXTWAIT;
+				S_ChangeMusic ("orb", 0, !(gameinfo.flags & GI_NOLOOPFINALEMUSIC));
+				break;
+
+			case 13: // Pic 2 -- Fade out
+				FinaleEndCount = 70;
+				FadeDir = 1;
+				break;
+
+			case 14: // Pic 3 -- Fade in
+				FinaleEndCount = 71;
+				FadeDir = -1;
+				S_ChangeMusic ("chess", 0, !(gameinfo.flags & GI_NOLOOPFINALEMUSIC));
+				break;
+
+			case 15: // Pic 3, Text 3
+				GetFinaleText ("win3msg");
+				FinaleEndCount = FinaleTextLen*TEXTSPEED+TEXTWAIT;
+				break;
+			}
+			return;
+		}
+		if (FinaleStage == 10 || FinaleStage == 13 || FinaleStage == 14)
+		{
+			FadePic ();
+		}
+	}
 	
 	// advance animation
-	finalecount++;
+	FinaleCount++;
 		
-	if (finalestage == 3)
+	if (FinaleStage == 3)
 	{
 		F_CastTicker ();
 		return;
 	}
+}
+
+//===========================================================================
+//
+// FadePic
+//
+//===========================================================================
+
+static void FadePic ()
+{
+	int blend = 256*FinaleCount/70;
+
+	if (FadeDir < 0)
+	{
+		blend = 256 - blend;
+	}
+	V_SetBlend (0,0,0,blend);
 }
 
 //
@@ -221,22 +310,7 @@ void F_TextWrite (void)
 	int rowheight;
 	bool scale;
 	
-	// erase the entire screen to a tiled background
-	{
-		int lump = W_CheckNumForName (finaleflat, ns_flats);
-		if (lump >= 0)
-		{
-			screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT,
-						(byte *)W_CacheLumpNum (lump, PU_CACHE));
-		}
-		else
-		{
-			screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0);
-		}
-	}
-	V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
-	
-	if (finalecount < 11)
+	if (FinaleCount < 11)
 		return;
 
 	// draw some of the text onto the screen
@@ -246,10 +320,17 @@ void F_TextWrite (void)
 	scale = (CleanXfac != 1 || CleanYfac != 1);
 
 	cx = leftmargin;
-	cy = (gameinfo.gametype == GAME_Doom ? 10 : 5) - 100;
-	ch = finaletext;
+	if (FinaleStage == 15)
+	{
+		cy = 135 - 100;
+	}
+	else
+	{
+		cy = (gameinfo.gametype == GAME_Doom ? 10 : 5) - 100;
+	}
+	ch = FinaleText;
 		
-	count = (finalecount - 10)/TEXTSPEED;
+	count = (FinaleCount - 10)/TEXTSPEED;
 	range = screen->Font->GetColorTranslation (CR_UNTRANSLATED);
 
 	for ( ; count ; count-- )
@@ -423,7 +504,7 @@ void F_StartCast (void)
 		castsprite = caststate->sprite.index;
 	casttics = caststate->GetTics ();
 	castdeath = false;
-	finalestage = 3;
+	FinaleStage = 3;
 	castframes = 0;
 	castonmelee = 0;
 	castattacking = false;
@@ -746,20 +827,20 @@ void F_DemonScroll ()
 	static int yval = 0;
 	static size_t nextscroll = 0;
 
-	if (finalecount < 70)
+	if (FinaleCount < 70)
 	{
 		screen->DrawPageBlock (DemonBuffer+64000);
-		nextscroll = finalecount;
+		nextscroll = FinaleCount;
 		yval = 0;
 		return;
 	}
 	if (yval < 64000)
 	{
 		screen->DrawPageBlock (DemonBuffer+64000-yval);
-		if (finalecount >= nextscroll)
+		if (FinaleCount >= nextscroll)
 		{
 			yval += 320;
-			nextscroll = finalecount+3;
+			nextscroll = FinaleCount+3;
 		}
 	}
 	else
@@ -780,7 +861,7 @@ void F_DrawUnderwater(void)
 {
 	extern bool menuactive;
 
-	switch (finalestage)
+	switch (FinaleStage)
 	{
 	case 1:
 		{
@@ -796,7 +877,7 @@ void F_DrawUnderwater(void)
 		}
 		screen->UpdatePalette ();
 		screen->DrawPageBlock ((byte *)W_CacheLumpName ("E2END", PU_CACHE));
-		finalestage = 2;
+		FinaleStage = 2;
 		}
 
 		// intentional fall-through
@@ -846,7 +927,7 @@ void F_BunnyScroll (void)
 
 	V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
-	scrolled = 320 - ((signed)finalecount-230)/2;
+	scrolled = 320 - ((signed)FinaleCount-230)/2;
 	if (scrolled > 320)
 		scrolled = 320;
 	else if (scrolled < 0)
@@ -860,9 +941,9 @@ void F_BunnyScroll (void)
 			F_DrawPatchCol (x, p2, x+scrolled - 320, screen);
 	}
 
-	if (finalecount < 1130)
+	if (FinaleCount < 1130)
 		return;
-	if (finalecount < 1180)
+	if (FinaleCount < 1180)
 	{
 		screen->DrawPatchIndirect ((patch_t *)W_CacheLumpName ("END0",PU_CACHE),
 			(320-13*8)/2, (200-8*8)/2);
@@ -870,7 +951,7 @@ void F_BunnyScroll (void)
 		return;
 	}
 
-	stage = (finalecount-1180) / 5;
+	stage = (FinaleCount-1180) / 5;
 	if (stage > 6)
 		stage = 6;
 	if (stage > laststage)
@@ -892,10 +973,28 @@ void F_Drawer (void)
 {
 	const char *picname = NULL;
 
-	switch (finalestage)
+	switch (FinaleStage)
 	{
-	case 0:
-		F_TextWrite ();
+	case 0: // Intermission or end-of-episode text
+		// erase the entire screen to a tiled background (or picture)
+		if (!FinaleHasPic)
+		{
+			int lump = W_CheckNumForName (FinaleFlat, ns_flats);
+			if (lump >= 0)
+			{
+				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT,
+					(byte *)W_CacheLumpNum (lump, PU_CACHE));
+			}
+			else
+			{
+				screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0);
+			}
+		}
+		else
+		{
+			picname = FinaleFlat;
+		}
+		V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 		break;
 
 	case 1:
@@ -929,23 +1028,87 @@ void F_Drawer (void)
 			F_DemonScroll ();
 			break;
 		}
-		if (picname)
-		{
-			if (gameinfo.flags & GI_PAGESARERAW)
-			{
-				byte *data = (byte *)W_CacheLumpName (picname, PU_CACHE);
-				screen->DrawPageBlock (data);
-			}
-			else
-			{
-				patch_t *patch = (patch_t *)W_CacheLumpName (picname, PU_CACHE);
-				screen->DrawPatchIndirect (patch, 0, 0);
-			}
-		}
 		break;
 
 	case 3:
 		F_CastDrawer ();
 		break;
+
+	case 10:
+	case 11:
+		picname = "FINALE1";
+		break;
+
+	case 12:
+	case 13:
+		picname = "FINALE2";
+		break;
+
+	case 14:
+	case 15:
+		picname = "FINALE3";
+		break;
+	}
+	if (picname != NULL)
+	{
+		patch_t *patch;
+
+		if (gameinfo.flags & GI_PAGESARERAW)
+		{
+			byte *data = (byte *)W_CacheLumpName (picname, PU_CACHE);
+			screen->DrawPageBlock (data);
+		}
+		else
+		{
+			patch = (patch_t *)W_CacheLumpName (picname, PU_CACHE);
+			screen->DrawPatchIndirect (patch, 0, 0);
+		}
+		if (FinaleStage >= 14)
+		{ // Chess pic, draw the correct character graphic
+			if (multiplayer)
+			{
+				patch = (patch_t *)W_CacheLumpName ("chessall", PU_CACHE);
+				screen->DrawPatchIndirect (patch, 20, 0);
+			}
+			else if (players[consoleplayer].userinfo.PlayerClass > 0)
+			{
+				patch = (patch_t *)W_CacheLumpNum (W_GetNumForName ("chessc")+
+					players[consoleplayer].userinfo.PlayerClass-1, PU_CACHE);
+				screen->DrawPatchIndirect (patch, 60, 0);
+			}
+		}
+	}
+	switch (FinaleStage)
+	{
+	case 0:
+	case 11:
+	case 12:
+	case 15:
+		F_TextWrite ();
+		break;
+	}
+}
+
+//==========================================================================
+//
+// GetFinaleText
+//
+//==========================================================================
+
+static void GetFinaleText (const char *msgLumpName)
+{
+	int msgLump;
+
+	msgLump = W_CheckNumForName(msgLumpName);
+	if (msgLump != -1)
+	{
+		FinaleTextLen = W_LumpLength(msgLump);
+		FinaleText = (char *)W_CacheLumpNum (msgLump, PU_LEVEL);
+	}
+	else
+	{
+		FinaleTextLen = strlen (msgLumpName) + sizeof("Unknown message ") + 1;
+		FinaleText = (char *)Z_Malloc (FinaleTextLen, PU_LEVEL, 0);
+		sprintf (FinaleText, "Unknown message %s", msgLumpName);
 	}
 }

@@ -64,6 +64,7 @@
 #include "d_player.h"
 #include "r_main.h"
 #include "templates.h"
+#include "p_local.h"
 
 extern FILE *Logfile;
 
@@ -424,8 +425,28 @@ CCMD (puke)
 
 CCMD (error)
 {
-	char *textcopy = copystring (argv[1]);
-	I_Error (textcopy);
+	if (argv.argc() > 1)
+	{
+		char *textcopy = copystring (argv[1]);
+		I_Error (textcopy);
+	}
+	else
+	{
+		Printf ("Usage: error <error text>\n");
+	}
+}
+
+CCMD (error_fatal)
+{
+	if (argv.argc() > 1)
+	{
+		char *textcopy = copystring (argv[1]);
+		I_FatalError (textcopy);
+	}
+	else
+	{
+		Printf ("Usage: error_fatal <error text>\n");
+	}
 }
 
 CCMD (dir)
@@ -544,4 +565,31 @@ CCMD (r_visibility)
 	{
 		Printf ("Visibility cannot be changed in net games.\n");
 	}
+}
+
+//==========================================================================
+//
+// CCMD warp
+//
+// Warps to a specific location on a map
+//
+//==========================================================================
+
+CCMD (warp)
+{
+	if (gamestate != GS_LEVEL)
+	{
+		Printf ("You can only warp inside a level.\n");
+		return;
+	}
+	if (netgame)
+	{
+		Printf ("You cannot warp in a net game!\n");
+		return;
+	}
+	if (argv.argc() != 3)
+	{
+		Printf ("Usage: warp <x> <y>\n");
+	}
+	P_TeleportMove (players[consoleplayer].mo, atof(argv[1])*65536.0, atof(argv[2])*65536.0, ONFLOORZ, true);
 }

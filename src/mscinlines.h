@@ -19,7 +19,7 @@
 #include <string.h>
 #include <stddef.h>
 
-inline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
+__forceinline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 {
 	__asm mov eax,a
 	__asm mov ecx,c
@@ -27,7 +27,7 @@ inline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 	__asm idiv ecx
 }
 
-inline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
+__forceinline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
 {
 	__asm mov eax,a
 	__asm mov ecx,c
@@ -36,7 +36,7 @@ inline SDWORD MulScale (SDWORD a, SDWORD b, SDWORD c)
 }
 
 #define MAKECONSTMulScale(s) \
-	inline SDWORD MulScale##s (SDWORD a, SDWORD b) \
+	__forceinline SDWORD MulScale##s (SDWORD a, SDWORD b) \
 	{ \
 		__asm mov eax,a \
 		__asm imul b \
@@ -75,14 +75,14 @@ MAKECONSTMulScale(30)
 MAKECONSTMulScale(31)
 #undef MAKECONSTMulScale
 
-inline SDWORD MulScale32 (SDWORD a, SDWORD b)
+__forceinline SDWORD MulScale32 (SDWORD a, SDWORD b)
 {
 	__asm mov eax,a
 	__asm imul b
 	__asm mov eax,edx
 }
 
-inline SDWORD DMulScale (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD s)
+__forceinline SDWORD DMulScale (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD s)
 {
 	__asm mov eax,a
 	__asm imul b
@@ -97,7 +97,7 @@ inline SDWORD DMulScale (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD s)
 }
 
 #define MAKECONSTDMulScale(s) \
-	inline SDWORD DMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d) \
+	__forceinline SDWORD DMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d) \
 	{ \
 		__asm mov eax,a \
 		__asm imul b \
@@ -143,7 +143,7 @@ MAKECONSTDMulScale(30)
 MAKECONSTDMulScale(31)
 #undef MAKCONSTDMulScale
 
-inline SDWORD DMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d)
+__forceinline SDWORD DMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d)
 {
 	__asm mov eax,a
 	__asm imul b
@@ -157,7 +157,7 @@ inline SDWORD DMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d)
 }
 
 #define MAKECONSTTMulScale(s) \
-	inline SDWORD TMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) \
+	__forceinline SDWORD TMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) \
 	{ \
 		__asm mov eax,a \
 		__asm imul b \
@@ -207,7 +207,7 @@ MAKECONSTTMulScale(30)
 MAKECONSTTMulScale(31)
 #undef MAKECONSTTMulScale
 
-inline SDWORD TMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f)
+__forceinline SDWORD TMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f)
 {
 	__asm mov eax,a
 	__asm imul b
@@ -224,7 +224,7 @@ inline SDWORD TMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDW
 	__asm mov eax,edx
 }
 
-inline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)
+__forceinline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)
 {
 	__asm mov eax,a
 	__asm imul b
@@ -246,7 +246,7 @@ skipboundit:
 	;
 }
 
-inline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
+__forceinline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
 {
 	__asm mov eax,a
 	__asm mov ecx,c
@@ -257,7 +257,7 @@ inline SDWORD DivScale (SDWORD a, SDWORD b, SDWORD c)
 	__asm idiv b
 }
 
-inline SDWORD DivScale1 (SDWORD a, SDWORD b)
+__forceinline SDWORD DivScale1 (SDWORD a, SDWORD b)
 {
 	__asm mov eax,a
 	__asm add eax,eax
@@ -266,7 +266,7 @@ inline SDWORD DivScale1 (SDWORD a, SDWORD b)
 }
 
 #define MAKECONSTDivScale(s) \
-	inline SDWORD DivScale##s (SDWORD a, SDWORD b) \
+	__forceinline SDWORD DivScale##s (SDWORD a, SDWORD b) \
 	{ \
 		__asm mov edx,a \
 		__asm sar edx,32-s \
@@ -307,21 +307,21 @@ MAKECONSTDivScale(30)
 MAKECONSTDivScale(31)
 #undef MAKECONSTDivScale
 
-inline SDWORD DivScale32 (SDWORD a, SDWORD b)
+__forceinline SDWORD DivScale32 (SDWORD a, SDWORD b)
 {
 	__asm mov edx,a
 	__asm xor eax,eax
 	__asm idiv b
 }
 
-inline void clearbuf (void *buff, int count, SDWORD clear)
+__forceinline void clearbuf (void *buff, int count, SDWORD clear)
 {
 	SDWORD *b2 = (SDWORD *)buff;
 	while (count--)
 		*b2++ = clear;
 }
 
-inline void clearbufshort (void *buff, unsigned int count, WORD clear)
+__forceinline void clearbufshort (void *buff, unsigned int count, WORD clear)
 {
 	if (!count)
 		return;
@@ -338,7 +338,7 @@ inline void clearbufshort (void *buff, unsigned int count, WORD clear)
 	} while (--count);
 }
 
-inline void qinterpolatedown16 (SDWORD *out, DWORD count, SDWORD val, SDWORD delta)
+__forceinline void qinterpolatedown16 (SDWORD *out, DWORD count, SDWORD val, SDWORD delta)
 {
 	SDWORD odd = count;
 	if ((count >>= 1) != 0)
@@ -357,7 +357,7 @@ inline void qinterpolatedown16 (SDWORD *out, DWORD count, SDWORD val, SDWORD del
 	*out = val >> 16;
 }
 
-inline void qinterpolatedown16short (short *out, DWORD count, SDWORD val, SDWORD delta)
+__forceinline void qinterpolatedown16short (short *out, DWORD count, SDWORD val, SDWORD delta)
 {
 	if ((size_t)out & 2)
 	{ // align to dword boundary
@@ -385,7 +385,7 @@ inline void qinterpolatedown16short (short *out, DWORD count, SDWORD val, SDWORD
 
 
 	//returns num/den, dmval = num%den
-inline SDWORD DivMod (DWORD num, SDWORD den, SDWORD *dmval)
+__forceinline SDWORD DivMod (DWORD num, SDWORD den, SDWORD *dmval)
 {
 	__asm mov eax,num
 	__asm xor edx,edx
@@ -395,7 +395,7 @@ inline SDWORD DivMod (DWORD num, SDWORD den, SDWORD *dmval)
 }
 
 	//returns num%den, dmval = num/den
-inline SDWORD ModDiv (DWORD num, SDWORD den, SDWORD *dmval)
+__forceinline SDWORD ModDiv (DWORD num, SDWORD den, SDWORD *dmval)
 {
 	__asm mov eax,num
 	__asm xor edx,edx
@@ -405,7 +405,7 @@ inline SDWORD ModDiv (DWORD num, SDWORD den, SDWORD *dmval)
 	__asm mov eax,edx
 }
 
-inline SDWORD ksgn (SDWORD a)
+__forceinline SDWORD ksgn (SDWORD a)
 {
 	__asm mov edx,a
 	__asm add edx,edx
@@ -414,7 +414,7 @@ inline SDWORD ksgn (SDWORD a)
 	__asm adc eax,0
 }
 
-inline int toint (float v)
+__forceinline int toint (float v)
 {
 	QWORD res;
 	__asm fld v;
@@ -422,7 +422,7 @@ inline int toint (float v)
 	return (int)res;
 }
 
-inline int quickertoint (float v)
+__forceinline int quickertoint (float v)
 {
 	DWORD res;
 	__asm fld v;

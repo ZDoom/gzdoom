@@ -99,6 +99,7 @@ struct level_info_s
 	char		*level_name;
 	int			musicorder;
 	FCompressedMemFile	*snapshot;
+	DWORD		snapshotVer;
 	struct acsdefered_s *defered;
 };
 typedef struct level_info_s level_info_t;
@@ -215,8 +216,11 @@ struct cluster_info_s
 };
 typedef struct cluster_info_s cluster_info_t;
 
-// Only one cluster flag right now
-#define CLUSTER_HUB		0x00000001
+// Cluster flags
+#define CLUSTER_HUB				0x00000001
+#define CLUSTER_EXITTEXTINLUMP	0x00000002
+#define CLUSTER_ENTERTEXTINLUMP	0x00000004
+#define CLUSTER_FINALEPIC		0x00000008
 
 extern level_locals_t level;
 extern level_info_t LevelInfos[];

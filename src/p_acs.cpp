@@ -64,6 +64,7 @@
 #define STACK_SIZE 4096
 
 #define CLAMPCOLOR(c)	(EColorRange)((unsigned)(c)>CR_UNTRANSLATED?CR_UNTRANSLATED:(c))
+#define HUDMSG_LOG		(0x80000000)
 #define LANGREGIONMASK	MAKE_ID(0,0,0xff,0xff)	
 
 struct CallReturn
@@ -856,24 +857,31 @@ FBehavior::FBehavior (int lumpnum)
 	if (Format != ACS_Old)
 	{
 		Scripts = FindChunk (MAKE_ID('S','P','T','R'));
-		if (object[3] != 0)
+		if (Scripts == NULL)
 		{
-			NumScripts = ((DWORD *)Scripts)[1] / 12;
-			Scripts += 8;
-			for (i = 0; i < NumScripts; ++i)
-			{
-				ScriptPtr1 ptr1 = *(ScriptPtr1 *)(Scripts + 12*i);
-				ScriptPtr *ptr2 =  (ScriptPtr  *)(Scripts +  8*i);
-				ptr2->Number = ptr1.Number;
-				ptr2->Type = ptr1.Type;
-				ptr2->ArgCount = ptr1.ArgCount;
-				ptr2->Address = ptr1.Address;
-			}
+			NumScripts = 0;
 		}
 		else
 		{
-			NumScripts = ((DWORD *)Scripts)[1] / 8;
-			Scripts += 8;
+			if (object[3] != 0)
+			{
+				NumScripts = ((DWORD *)Scripts)[1] / 12;
+				Scripts += 8;
+				for (i = 0; i < NumScripts; ++i)
+				{
+					ScriptPtr1 ptr1 = *(ScriptPtr1 *)(Scripts + 12*i);
+					ScriptPtr *ptr2 =  (ScriptPtr  *)(Scripts +  8*i);
+					ptr2->Number = ptr1.Number;
+					ptr2->Type = ptr1.Type;
+					ptr2->ArgCount = ptr1.ArgCount;
+					ptr2->Address = ptr1.Address;
+				}
+			}
+			else
+			{
+				NumScripts = ((DWORD *)Scripts)[1] / 8;
+				Scripts += 8;
+			}
 		}
 
 		UnencryptStrings ();
@@ -1004,6 +1012,23 @@ FBehavior::FBehavior (int lumpnum)
 					MapVarStore[chunk[i+2]] |= LibraryID;
 				}
 			}
+
+			chunk = (DWORD *)FindChunk (MAKE_ID('A','S','T','R'));
+			if (chunk != NULL)
+			{
+				for (DWORD i = 0; i < chunk[1]/4; ++i)
+				{
+					int arraynum = MapVarStore[LONG(chunk[i+2])];
+					if ((unsigned)arraynum < (unsigned)NumArrays)
+					{
+						SDWORD *elems = ArrayStore[arraynum].Elements;
+						for (int j = ArrayStore[arraynum].ArraySize; j > 0; --j, ++elems)
+						{
+							*elems |= LibraryID;
+						}
+					}
+				}
+			}
 		}
 
 		if (NULL != (chunk = (DWORD *)FindChunk (MAKE_ID('L','O','A','D'))))
@@ -1046,26 +1071,31 @@ FBehavior::FBehavior (int lumpnum)
 				for (j = 0; j < NumFunctions; ++j)
 				{
 					ScriptFunction *func = &((ScriptFunction *)Functions)[j];
-					if (func->Address == 0)
+					if (func->Address == 0 && func->ImportNum == 0)
 					{
 						int libfunc = lib->FindFunctionName ((char *)(chunk + 2) + chunk[3+j]);
 						if (libfunc >= 0)
 						{
 							ScriptFunction *realfunc = &((ScriptFunction *)lib->Functions)[libfunc];
-							func->Address = libfunc;
-							func->ImportNum = j+1;
-							if (realfunc->ArgCount != func->ArgCount)
+							// Make sure that the library really defines this function. It might simply
+							// be importing it itself.
+							if (realfunc->Address != 0 && realfunc->ImportNum == 0)
 							{
-								Printf ("Function %s in %s has %d arguments. %s expects it to have %d.\n",
-									(char *)(chunk + 2) + chunk[3+j], lib->ModuleName, realfunc->ArgCount,
-									ModuleName, func->ArgCount);
-								Format = ACS_Unknown;
+								func->Address = libfunc;
+								func->ImportNum = i+1;
+								if (realfunc->ArgCount != func->ArgCount)
+								{
+									Printf ("Function %s in %s has %d arguments. %s expects it to have %d.\n",
+										(char *)(chunk + 2) + chunk[3+j], lib->ModuleName, realfunc->ArgCount,
+										ModuleName, func->ArgCount);
+									Format = ACS_Unknown;
+								}
+								// The next two properties do not effect code compatibility, so it is
+								// okay for them to be different in the imported module than they are
+								// in this one, as long as we make sure to use the real values.
+								func->LocalCount = realfunc->LocalCount;
+								func->HasReturnValue = realfunc->HasReturnValue;
 							}
-							// The next two properties do not effect code compatibility, so it is
-							// okay for them to be different in the imported module than they are
-							// in this one, as long as we make sure to use the real values.
-							func->LocalCount = realfunc->LocalCount;
-							func->HasReturnValue = realfunc->HasReturnValue;
 						}
 					}
 				}
@@ -1094,7 +1124,7 @@ FBehavior::FBehavior (int lumpnum)
 				{
 					chunk = (DWORD *)FindChunk(MAKE_ID('A','I','M','P'));
 					char *parse = (char *)&chunk[3];
-					for (i = 0; i < LONG(chunk[2]); ++i)
+					for (DWORD j = 0; j < LONG(chunk[2]); ++j)
 					{
 						DWORD varNum = LONG(*(DWORD *)parse);
 						parse += 4;
@@ -1103,8 +1133,8 @@ FBehavior::FBehavior (int lumpnum)
 						int impNum = lib->FindMapArray (parse);
 						if (impNum >= 0)
 						{
-							Arrays[NumArrays + i] = &lib->ArrayStore[impNum];
-							MapVarStore[varNum] = NumArrays + i;
+							Arrays[NumArrays + j] = &lib->ArrayStore[impNum];
+							MapVarStore[varNum] = NumArrays + j;
 							if (lib->ArrayStore[impNum].ArraySize != expectedSize)
 							{
 								Format = ACS_Unknown;
@@ -1210,10 +1240,6 @@ bool FBehavior::IsGood ()
 			bad = true;
 		}
 	}
-	if (bad)
-	{
-		return false;
-	}
 
 	// Check that all imported modules were loaded
 	for (i = Imports.Size() - 1; i >= 0; --i)
@@ -1225,8 +1251,7 @@ bool FBehavior::IsGood ()
 		}
 	}
 
-	// If we get here, the module is good
-	return true;
+	return !bad;
 }
 
 int *FBehavior::FindScript (int script) const
@@ -1838,9 +1863,17 @@ void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
 	{
 		if (floorOrCeiling == false)
-			sectors[secnum].floorpic = flat;
+		{
+			if (sectors[secnum].floorpic != flat)
+			{
+				sectors[secnum].floorpic = flat;
+				sectors[secnum].AdjustFloorClip ();
+			}
+		}
 		else
+		{
 			sectors[secnum].ceilingpic = flat;
+		}
 	}
 }
 
@@ -2109,7 +2142,7 @@ void DLevelScript::RunScript ()
 	ACSFormat fmt = activeBehavior->GetFormat();
 	int runaway = 0;	// used to prevent infinite loops
 	int pcd;
-	char work[4096], *workwhere = work;
+	char workreal[4096], *const work = workreal+2, *workwhere = work;
 	const char *lookup;
 	int optstart = -1;
 	int temp;
@@ -2955,8 +2988,18 @@ void DLevelScript::RunScript ()
 			strbin (work);
 			if (pcd != PCD_MOREHUDMESSAGE)
 			{
-				if (pcd == PCD_ENDPRINTBOLD || activator == NULL ||
-					(activator->player - players == consoleplayer))
+				AActor *screen = activator;
+				// If a missile is the activator, make the thing that
+				// launched the missile the target of the print command.
+				if (screen != NULL &&
+					screen->player == NULL &&
+					(screen->flags & MF_MISSILE) &&
+					screen->target != NULL)
+				{
+					screen = screen->target;
+				}
+				if (pcd == PCD_ENDPRINTBOLD || screen == NULL ||
+					players[consoleplayer].mo == screen)
 				{
 					strbin (work);
 					C_MidPrint (work);
@@ -2978,40 +3021,61 @@ void DLevelScript::RunScript ()
 			{
 				optstart = sp;
 			}
-			if (pcd == PCD_ENDHUDMESSAGEBOLD || activator == NULL ||
-				(activator->player - players == consoleplayer))
 			{
-				int type = Stack[optstart-6];
-				int id = Stack[optstart-5];
-				EColorRange color = CLAMPCOLOR(Stack[optstart-4]);
-				float x = FIXED2FLOAT(Stack[optstart-3]);
-				float y = FIXED2FLOAT(Stack[optstart-2]);
-				float holdTime = FIXED2FLOAT(Stack[optstart-1]);
-				DHUDMessage *msg;
-
-				switch (type)
+				AActor *screen = activator;
+				if (screen != NULL &&
+					screen->player == NULL &&
+					(screen->flags & MF_MISSILE) &&
+					screen->target != NULL)
 				{
-				default:	// normal
-					msg = new DHUDMessage (work, x, y, color, holdTime);
-					break;
-				case 1:		// fade out
-					{
-						float fadeTime = (optstart < sp) ?
-							FIXED2FLOAT(Stack[optstart]) : 0.5f;
-						msg = new DHUDMessageFadeOut (work, x, y, color, holdTime, fadeTime);
-					}
-					break;
-				case 2:		// type on, then fade out
-					{
-						float typeTime = (optstart < sp) ?
-							FIXED2FLOAT(Stack[optstart]) : 0.05f;
-						float fadeTime = (optstart < sp-1) ?
-							FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
-						msg = new DHUDMessageTypeOnFadeOut (work, x, y, color, typeTime, holdTime, fadeTime);
-					}
-					break;
+					screen = screen->target;
 				}
-				StatusBar->AttachMessage (msg, id ? 0xff000000|id : 0);
+				if (pcd == PCD_ENDHUDMESSAGEBOLD || screen == NULL ||
+					players[consoleplayer].mo == screen)
+				{
+					int type = Stack[optstart-6];
+					int id = Stack[optstart-5];
+					EColorRange color = CLAMPCOLOR(Stack[optstart-4]);
+					float x = FIXED2FLOAT(Stack[optstart-3]);
+					float y = FIXED2FLOAT(Stack[optstart-2]);
+					float holdTime = FIXED2FLOAT(Stack[optstart-1]);
+					DHUDMessage *msg;
+
+					switch (type & ~HUDMSG_LOG)
+					{
+					default:	// normal
+						msg = new DHUDMessage (work, x, y, color, holdTime);
+						break;
+					case 1:		// fade out
+						{
+							float fadeTime = (optstart < sp) ?
+								FIXED2FLOAT(Stack[optstart]) : 0.5f;
+							msg = new DHUDMessageFadeOut (work, x, y, color, holdTime, fadeTime);
+						}
+						break;
+					case 2:		// type on, then fade out
+						{
+							float typeTime = (optstart < sp) ?
+								FIXED2FLOAT(Stack[optstart]) : 0.05f;
+							float fadeTime = (optstart < sp-1) ?
+								FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							msg = new DHUDMessageTypeOnFadeOut (work, x, y, color, typeTime, holdTime, fadeTime);
+						}
+						break;
+					}
+					StatusBar->AttachMessage (msg, id ? 0xff000000|id : 0);
+					if (type & HUDMSG_LOG)
+					{
+						static char bar[] = TEXTCOLOR_ORANGE "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+					"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
+
+						workreal[0] = '\x1c';
+						workreal[1] = color >= CR_BRICK && color <= CR_YELLOW ? 'A' + color : '-';
+						AddToConsole (-1, bar);
+						AddToConsole (-1, workreal);
+						AddToConsole (-1, bar);
+					}
+				}
 			}
 			sp = optstart-6;
 			break;
@@ -3595,6 +3659,7 @@ void DLevelScript::RunScript ()
 						weapontype_t oldpend = activator->player->pendingweapon;
 						weapontype_t oldready = activator->player->readyweapon;
 
+						activator->player->readyweapon = (weapontype_t)i;
 						if (P_CheckAmmo (activator->player))
 						{
 							activator->player->pendingweapon = (weapontype_t)i;

@@ -88,6 +88,19 @@ FArchive &SerializeFFontPtr (FArchive &arc, FFont* &font)
 
 		arc << name;
 		font = FFont::FindFont (name);
+		if (font == NULL)
+		{
+			int lump = W_CheckNumForName (name);
+			if (lump != -1)
+			{
+				font = new FSingleLumpFont (name, lump);
+			}
+			if (font == NULL)
+			{
+				Printf ("Could not load font %s\n", name);
+				font = SmallFont;
+			}
+		}
 		delete[] name;
 	}
 	return arc;

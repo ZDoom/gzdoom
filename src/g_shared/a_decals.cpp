@@ -679,13 +679,13 @@ AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_
 AImpactDecal *AImpactDecal::CloneSelf (const FDecal *decal, fixed_t ix, fixed_t iy, fixed_t iz, side_t *wall) const
 {
 	AImpactDecal *actor = NULL;
+	// [SO] We used to have an 'else' here -- but that means we create an actor without increasing the
+	//		count!!!
+	// [RH] Moved this before the destroy, just so it can't go negative temporarily.
+	ImpactCount++;
 	if (ImpactCount >= cl_maxdecals)
 	{
 		FirstImpact->Destroy ();
-	}
-	else
-	{
-		ImpactCount++;
 	}
 	actor = Spawn<AImpactDecal> (ix, iy, iz);
 	if (actor != NULL)

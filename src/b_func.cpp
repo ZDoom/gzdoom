@@ -187,11 +187,12 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	dist = P_AproxDistance ((actor->x + actor->momx) - (enemy->x + enemy->momx),
 		(actor->y + actor->momy) - (enemy->y + enemy->momy));
 
-	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the ddf weapons go.
+	//FIRE EACH TYPE OF WEAPON DIFFERENT: Here should all the different weapons go.
 	switch (actor->player->readyweapon)
 	{
 	case wp_missile: //Special rules for RL
 	case wp_phoenixrod:
+	case wp_cfire:
 		an = FireRox (actor, enemy, cmd);
 		if(an)
 		{
@@ -204,9 +205,21 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 		}
 		break;
 
+	case wp_fhammer:
+		if (actor->player->ammo[MANA_2] == 0)
+		{
+			goto fighternoammo;
+		}
+	case wp_faxe:
 	case wp_plasma: //Plasma (prediction aiming)
 	case wp_skullrod:
 	case wp_crossbow:
+	case wp_cstaff:
+	case wp_mfrost:
+	case wp_mlightning:
+	case wp_fsword:
+	case wp_choly:
+	case wp_mstaff:
 		//Here goes the prediction.
 		dist = P_AproxDistance (actor->x - enemy->x, actor->y - enemy->y);
 		m = (dist/FRACUNIT);
@@ -227,6 +240,11 @@ void DCajunMaster::Dofire (AActor *actor, ticcmd_t *cmd)
 	case wp_fist:
 	case wp_staff:
 	case wp_gauntlets:
+	case wp_snout:
+	case wp_beak:
+	case wp_ffist:
+	case wp_cmace:
+fighternoammo:
 		no_fire = (dist > (MELEERANGE*4)); //*4 is for atmosphere,  the chainsaws sounding and all..
 		break;
 
@@ -386,9 +404,10 @@ AActor *DCajunMaster::Find_enemy (AActor *bot)
 	angle_t vangle;
 	AActor *observer;
 
-	//Allow monster killing. keep monster enemy.
 	if (!deathmatch)
-		return NULL;
+	{ // [RH] Take advantage of the Heretic/Hexen code to be a little smarter
+		return P_RoughMonsterSearch (bot, 20);
+	}
 
 	//Note: It's hard to ambush a bot who is not alone
 	if (bot->player->allround || bot->player->mate)

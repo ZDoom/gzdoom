@@ -427,10 +427,13 @@ bool CheckIfExitIsGood (AActor *self)
 	if (self == NULL)
 		return true;
 
+	if (self->player && self->player->playerstate == PST_DEAD)
+	{
+		return false;
+	}
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 	{
-		while (self->health > 0)
-			P_DamageMobj (self, self, self, 10000, MOD_EXIT);
+		P_DamageMobj (self, self, self, 10000, MOD_EXIT);
 		return false;
 	}
 	if (deathmatch)
@@ -540,16 +543,16 @@ BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote)
 		{
 			keyspecialtype_t Lock;
 			WORD ItemNum;
-			WORD ObjText, EquivText, UniqueText;
+			WORD ObjText, EquivText, UniqueText, HereticText;
 		}
 		KeyChecks[6] =
 		{
-			{ BCard,	it_bluecard,	PD_BLUEO,	PD_BLUEK,	PD_BLUEC },
-			{ BSkull,	it_blueskull,	PD_BLUEO,	PD_BLUEK,	PD_BLUES },
-			{ RCard,	it_redcard,		PD_REDO,	PD_REDK,	PD_REDC },
-			{ RSkull,	it_redskull,	PD_REDO,	PD_REDK,	PD_REDS },
-			{ YCard,	it_yellowcard,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWC },
-			{ YSkull,	it_yellowskull,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWS }
+			{ BCard,	it_bluecard,	PD_BLUEO,	PD_BLUEK,	PD_BLUEC,	TXT_NEEDBLUEKEY },
+			{ BSkull,	it_blueskull,	PD_BLUEO,	PD_BLUEK,	PD_BLUES,	TXT_NEEDBLUEKEY },
+			{ RCard,	it_redcard,		PD_REDO,	PD_REDK,	PD_REDC,	TXT_NEEDGREENKEY },
+			{ RSkull,	it_redskull,	PD_REDO,	PD_REDK,	PD_REDS,	TXT_NEEDGREENKEY },
+			{ YCard,	it_yellowcard,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWC,	TXT_NEEDYELLOWKEY },
+			{ YSkull,	it_yellowskull,	PD_YELLOWO,	PD_YELLOWK,	PD_YELLOWS,	TXT_NEEDYELLOWKEY }
 		};
 
 		BYTE HaveKeys[6];
@@ -611,8 +614,15 @@ BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote)
 			{
 				return true;
 			}
-			msg = equiv ? (remote ? KeyChecks[i].ObjText : KeyChecks[i].EquivText)
-				: KeyChecks[i].UniqueText;
+			if (gameinfo.gametype == GAME_Heretic)
+			{
+				msg = KeyChecks[i].HereticText;
+			}
+			else
+			{
+				msg = equiv ? (remote ? KeyChecks[i].ObjText : KeyChecks[i].EquivText)
+					: KeyChecks[i].UniqueText;
+			}
 			break;
 		}
 	}
@@ -622,15 +632,6 @@ BOOL P_CheckKeys (player_t *p, keyspecialtype_t lock, BOOL remote)
 	if (p->mo == players[consoleplayer].camera)
 	{
 		S_Sound (p->mo, CHAN_VOICE, "misc/keytry", 1, ATTN_NORM);
-		if (gameinfo.gametype == GAME_Heretic)
-		{
-			if (msg == PD_REDK)
-				msg = TXT_NEEDGREENKEY;
-			else if (msg == PD_BLUEK)
-				msg = TXT_NEEDBLUEKEY;
-			else if (msg == PD_YELLOWK)
-				msg = TXT_NEEDYELLOWKEY;
-		}
 		if (!keynameonly)
 		{
 			C_MidPrint (GStrings(msg));
@@ -1732,8 +1733,7 @@ static void P_SpawnFriction(void)
 	{
 		if (l->special == Sector_SetFriction)
 		{
-			int length, s;
-			fixed_t friction, movefactor;
+			int length;
 
 			if (l->args[1])
 			{	// [RH] Allow setting friction amount from parameter
@@ -1743,44 +1743,69 @@ static void P_SpawnFriction(void)
 			{
 				length = P_AproxDistance(l->dx,l->dy)>>FRACBITS;
 			}
-			friction = (0x1EB8*length)/0x80 + 0xD000;
 
-			// killough 8/28/98: prevent odd situations
-			if (friction > FRACUNIT)
-				friction = FRACUNIT;
-			if (friction < 0)
-				friction = 0;
+			P_SetSectorFriction (l->args[0], length, false);
+			l->special = 0;
+		}
+	}
+}
 
-			// The following check might seem odd. At the time of movement,
-			// the move distance is multiplied by 'friction/0x10000', so a
-			// higher friction value actually means 'less friction'.
+void P_SetSectorFriction (int tag, int amount, bool alterFlag)
+{
+	int s;
+	fixed_t friction, movefactor;
 
-			// [RH] Twiddled these values so that momentum on ice (with
-			//		friction 0xf900) is the same as in Heretic/Hexen.
-			if (friction > ORIG_FRICTION)	// ice
-//				movefactor = ((0x10092 - friction)*(0x70))/0x158;
-				movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
-			else
-				movefactor = ((friction - 0xDB34)*(0xA))/0x80;
+	// An amount of 100 should result in a friction of
+	// ORIG_FRICTION (0xE800)
+	friction = (0x1EB8*amount)/0x80 + 0xD001;
 
-			// killough 8/28/98: prevent odd situations
-			if (movefactor < 32)
-				movefactor = 32;
+	// killough 8/28/98: prevent odd situations
+	if (friction > FRACUNIT)
+		friction = FRACUNIT;
+	if (friction < 0)
+		friction = 0;
 
-			for (s = -1; (s = P_FindSectorFromTag(l->args[0],s)) >= 0 ; )
+	// The following check might seem odd. At the time of movement,
+	// the move distance is multiplied by 'friction/0x10000', so a
+	// higher friction value actually means 'less friction'.
+
+	// [RH] Twiddled these values so that momentum on ice (with
+	//		friction 0xf900) is the same as in Heretic/Hexen.
+	if (friction > ORIG_FRICTION)	// ice
+//		movefactor = ((0x10092 - friction)*(0x70))/0x158;
+		movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
+	else
+		movefactor = ((friction - 0xDB34)*(0xA))/0x80;
+
+	// killough 8/28/98: prevent odd situations
+	if (movefactor < 32)
+		movefactor = 32;
+
+	for (s = -1; (s = P_FindSectorFromTag (tag,s)) >= 0; )
+	{
+		// killough 8/28/98:
+		//
+		// Instead of spawning thinkers, which are slow and expensive,
+		// modify the sector's own friction values. Friction should be
+		// a property of sectors, not objects which reside inside them.
+		// Original code scanned every object in every friction sector
+		// on every tic, adjusting its friction, putting unnecessary
+		// drag on CPU. New code adjusts friction of sector only once
+		// at level startup, and then uses this friction value.
+
+		sectors[s].friction = friction;
+		sectors[s].movefactor = movefactor;
+		if (alterFlag)
+		{
+			// [RH] Rats, I forget what this was supposed to be.
+			// I'm keeping this in, so if I get any friction-related
+			// bug reports, this can be a clue for solving them.
+			if (friction == ORIG_FRICTION)
 			{
-				// killough 8/28/98:
-				//
-				// Instead of spawning thinkers, which are slow and expensive,
-				// modify the sector's own friction values. Friction should be
-				// a property of sectors, not objects which reside inside them.
-				// Original code scanned every object in every friction sector
-				// on every tic, adjusting its friction, putting unnecessary
-				// drag on CPU. New code adjusts friction of sector only once
-				// at level startup, and then uses this friction value.
 
-				sectors[s].friction = friction;
-				sectors[s].movefactor = movefactor;
+			}
+			else
+			{
 			}
 		}
 	}
@@ -2142,3 +2167,16 @@ static void P_SpawnPushers ()
 // phares 3/20/98: End of Pusher effects
 //
 ////////////////////////////////////////////////////////////////////////////
+
+void sector_t::AdjustFloorClip () const
+{
+	msecnode_t *node;
+
+	for (node = touching_thinglist; node; node = node->m_snext)
+	{
+		if (node->m_thing->flags2 & MF2_FLOORCLIP)
+		{
+			node->m_thing->AdjustFloorClip();
+		}
+	}
+}

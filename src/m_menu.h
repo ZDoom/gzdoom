@@ -128,7 +128,6 @@ typedef struct menuitem_s {
 } menuitem_t;
 
 typedef struct menu_s {
-	char			title[8];
 	char		   *texttitle;
 	int				lastOn;
 	int				numitems;

@@ -22,6 +22,7 @@
 //-----------------------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
+#define _WIN32_WINNT 0x0500
 #include <windows.h>
 #include <mmsystem.h>
 #include <objbase.h>
@@ -51,6 +52,7 @@
 #include "version.h"
 #include "i_video.h"
 #include "i_sound.h"
+#include "errorrep.h"
 
 #include "stats.h"
 
@@ -60,8 +62,13 @@
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 
+extern void CreateCrashLog (char *(*userCrashInfo)(char *text, char *maxtext));
+extern void DisplayCrashLog ();
+extern EXCEPTION_POINTERS CrashPointers;
+extern char *CrashText;
+
 // Will this work with something besides VC++?
-// Answer, yes it will.
+// Answer: yes it will.
 // Which brings up the question, what won't it work with?
 //
 //extern int __argc;
@@ -75,9 +82,12 @@ HINSTANCE		g_hInst;
 WNDCLASS		WndClass;
 HWND			Window;
 DWORD			SessionID;
+HANDLE			MainThread;
 
 HMODULE			hwtsapi32;		// handle to wtsapi32.dll
 HMODULE			hd3d8;			// handle to d3d8.dll
+
+BOOL			(*pIsDebuggerPresent)(VOID);
 
 extern UINT TimerPeriod;
 extern HCURSOR TheArrowCursor, TheInvisibleCursor;
@@ -148,55 +158,30 @@ static void CloseD3D8 (void)
 }
 #endif
 
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
+void DoMain (HINSTANCE hInstance)
 {
 	LONG WinWidth, WinHeight;
 	int height, width;
 	RECT cRect;
 	TIMECAPS tc;
 
-#ifdef _MSC_VER
-	_set_new_handler (NewFailure);
-#endif
-
 	try
 	{
+#ifdef _MSC_VER
+		_set_new_handler (NewFailure);
+#endif
+
 		g_hInst = hInstance;
 		Args.SetArgs (__argc, __argv);
 
-#ifndef NOWTS
 		// Under XP, get our session ID so we can know when the user changes/locks sessions.
 		// Since we need to remain binary compatible with older versions of Windows, we
 		// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
 		HMODULE kernel = LoadLibraryA ("kernel32.dll");
 		if (kernel != 0)
 		{
-			typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
-			pts pidsid = (pts)GetProcAddress (kernel, "ProcessIdToSessionId");
-			if (pidsid != 0)
-			{
-				if (!pidsid (GetCurrentProcessId(), &SessionID))
-				{
-					SessionID = 0;
-				}
-				hwtsapi32 = LoadLibraryA ("wtsapi32.dll");
-				if (hwtsapi32 != 0)
-				{
-					FARPROC reg = GetProcAddress (hwtsapi32, "WTSRegisterSessionNotification");
-					if (reg == 0 || !((BOOL(WINAPI *)(HWND, DWORD))reg) (Window, NOTIFY_FOR_THIS_SESSION))
-					{
-						FreeLibrary (hwtsapi32);
-						hwtsapi32 = 0;
-					}
-					else
-					{
-						atterm (UnWTS);
-					}
-				}
-			}
-			FreeLibrary (kernel);
+			pIsDebuggerPresent = (BOOL(*)())GetProcAddress (kernel, "IsDebuggerPresent");
 		}
-#endif
 
 #if 0
 		// Load the DirectX Graphics library if available, but don't depend on it.
@@ -216,15 +201,15 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		timeBeginPeriod (TimerPeriod);
 
 		/*
-		 killough 1/98:
+		killough 1/98:
 
-		 This fixes some problems with exit handling
-		 during abnormal situations.
+		This fixes some problems with exit handling
+		during abnormal situations.
 
-		 The old code called I_Quit() to end program,
-		 while now I_Quit() is installed as an exit
-		 handler and exit() is called to exit, either
-		 normally or abnormally.
+		The old code called I_Quit() to end program,
+		while now I_Quit() is installed as an exit
+		handler and exit() is called to exit, either
+		normally or abnormally.
 		*/
 
 		atexit (call_terms);
@@ -237,7 +222,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		FixPathSeperator (progdir);
 
 		height = GetSystemMetrics (SM_CYFIXEDFRAME) * 2 +
-				 GetSystemMetrics (SM_CYCAPTION) + 12 * 32;
+				GetSystemMetrics (SM_CYCAPTION) + 12 * 32;
 		width  = GetSystemMetrics (SM_CXFIXEDFRAME) * 2 + 8 * 78;
 
 		TheInvisibleCursor = LoadCursor (hInstance, MAKEINTRESOURCE(IDC_INVISIBLECURSOR));
@@ -254,7 +239,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		WndClass.lpszMenuName	= NULL;
 		WndClass.lpszClassName	= (LPCTSTR)WinClassName;
 		
-		/* register this new class with Windoze */
+		/* register this new class with Windows */
 		if (!RegisterClass((LPWNDCLASS)&WndClass))
 			I_FatalError ("Could not register window class");
 		
@@ -265,11 +250,42 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 				0/*CW_USEDEFAULT*/, 1/*CW_USEDEFAULT*/, width, height,
 				(HWND)   NULL,
 				(HMENU)  NULL,
-						 hInstance,
+						hInstance,
 				NULL);
 
 		if (!Window)
 			I_FatalError ("Could not open window");
+
+		if (kernel != 0)
+		{
+#ifndef NOWTS
+			typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
+			pts pidsid = (pts)GetProcAddress (kernel, "ProcessIdToSessionId");
+			if (pidsid != 0)
+			{
+				if (!pidsid (GetCurrentProcessId(), &SessionID))
+				{
+					SessionID = 0;
+				}
+				hwtsapi32 = LoadLibraryA ("wtsapi32.dll");
+				if (hwtsapi32 != 0)
+				{
+					FARPROC reg = GetProcAddress (hwtsapi32, "WTSRegisterSessionNotification");
+					if (reg == 0 || !((BOOL(WINAPI *)(HWND, DWORD))reg) (Window, NOTIFY_FOR_THIS_SESSION))
+					{
+						HRESULT hr = GetLastError();
+						FreeLibrary (hwtsapi32);
+						hwtsapi32 = 0;
+					}
+					else
+					{
+						atterm (UnWTS);
+					}
+				}
+			}
+#endif
+			FreeLibrary (kernel);
+		}
 
 		GetClientRect (Window, &cRect);
 
@@ -293,31 +309,155 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 				"ZDOOM Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
 		exit (-1);
 	}
-#if !defined(_DEBUG)
-	catch (...)
+}
+
+char *DoomSpecificInfo (char *text, char *maxtext)
+{
+	const char *arg;
+	int i;
+
+	text += wsprintf (text, "\r\nZDoom version " DOTVERSIONSTR "\r\n");
+
+	text += wsprintf (text, "\r\nCommand line:\r\n");
+	for (i = 0; i < Args.NumArgs(); ++i)
 	{
-		// If an exception is thrown, be sure to do a proper shutdown.
-		// This is especially important if we are in fullscreen mode,
-		// because the OS will only show the alert box if we are in
-		// windowed mode. Graphics gets shut down first in case something
-		// goes wrong calling the cleanup functions.
+		arg = Args.GetArg(i);
+		if (text + strlen(arg) + 4 >= maxtext)
+			goto done;
+		text += wsprintf (text, " %s", arg);
+	}
+
+	arg = W_GetWadName (1);
+	if (arg != NULL)
+	{
+		if (text + strlen(arg) + 10 >= maxtext)
+			goto done;
+		text += wsprintf (text, "\r\nIWAD: %s", arg);
+	}
+
+	if (gamestate != GS_LEVEL)
+	{
+		if (text + 32 < maxtext)
+			text += wsprintf (text, "\r\n\r\nNot in a level.");
+	}
+	else
+	{
+		char name[9];
+		if (text + 32 < maxtext)
+		{
+			strncpy (name, level.mapname, 8);
+			name[8] = 0;
+			text += wsprintf (text, "\r\n\r\nCurrent map: %s", name);
+		}
+		if (!viewactive)
+		{
+			if (text + 32 < maxtext)
+				text += wsprintf (text, "\r\n\r\nView not active.");
+		}
+		else
+		{
+			if (text + 32 < maxtext)
+				text += wsprintf (text, "\r\n\r\nviewx = %d", viewx);
+			if (text + 32 < maxtext)
+				text += wsprintf (text, "\r\nviewy = %d", viewy);
+			if (text + 32 < maxtext)
+				text += wsprintf (text, "\r\nviewz = %d", viewz);
+			if (text + 32 < maxtext)
+				text += wsprintf (text, "\r\nviewangle = %u", viewangle);
+		}
+	}
+
+done:
+	*text++ = '\r';
+	*text++ = '\n';
+	*text = 0;
+	return text;
+}
+
+extern FILE *Logfile;
+
+// Here is how the error logging system works.
+//
+// To catch exceptions that occur in secondary threads, CatchAllExceptions is
+// set as the UnhandledExceptionFilter for this process. It records the state
+// of the thread at the time of the crash using CreateCrashLog and then queues
+// an APC on the primary thread. When the APC executes, it raises a software
+// exception that gets caught by the __try/__except block in WinMain.
+// I_GetEvent calls SleepEx to put the primary thread in a waitable state
+// periodically so that the APC has a chance to execute.
+//
+// Exceptions on the primary thread are caught by the __try/__except block in
+// WinMain. Not only does it record the crash information, it also shuts
+// everything down and displays a dialog with the information present. If a
+// console log is being produced, the information will also be appended to it.
+//
+// If a debugger is running, CatchAllExceptions never executes, so secondary
+// thread exceptions will always be caught by the debugger. For the primary
+// thread, IsDebuggerPresent is called to determine if a debugger is present.
+// Note that this function is not present on Windows 95, so we cannot
+// statically link to it.
+//
+// To make this work with MinGW, you will need to use inline assembly
+// because GCC offers no native support for Windows' SEH.
+
+void SleepForever ()
+{
+	Sleep (INFINITE);
+}
+
+void CALLBACK TimeToDie (ULONG_PTR dummy)
+{
+	RaiseException (0xE0000000+'D'+'i'+'e'+'!', EXCEPTION_NONCONTINUABLE, 0, NULL);
+}
+
+LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
+{
+	CrashPointers = *info;
+
+#ifdef _DEBUG
+	if (info->ExceptionRecord->ExceptionCode == EXCEPTION_BREAKPOINT)
+	{
+		return EXCEPTION_CONTINUE_SEARCH;
+	}
+#endif
+
+	CreateCrashLog (DoomSpecificInfo);
+	QueueUserAPC (TimeToDie, MainThread, 0);
+
+	// Put the crashing thread to sleep until the process exits.
+	info->ContextRecord->Eip = (DWORD)SleepForever;
+	return EXCEPTION_CONTINUE_EXECUTION;
+	//return EXCEPTION_EXECUTE_HANDLER;
+}
+
+int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
+{
+	MainThread = INVALID_HANDLE_VALUE;
+	DuplicateHandle (GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &MainThread,
+		0, FALSE, DUPLICATE_SAME_ACCESS);
+	if (MainThread != INVALID_HANDLE_VALUE)
+	{
+		SetUnhandledExceptionFilter (CatchAllExceptions);
+	}
+
+	__try
+	{
+		DoMain (hInstance);
+	}
+	__except (pIsDebuggerPresent && pIsDebuggerPresent() ? EXCEPTION_CONTINUE_SEARCH :
+		(CrashPointers = *GetExceptionInformation(), CreateCrashLog (DoomSpecificInfo), EXCEPTION_EXECUTE_HANDLER))
+	{
+		SetUnhandledExceptionFilter (NULL);
 		I_ShutdownHardware ();
 		SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
 		call_terms ();
-
-		// Now let somebody who understands the exception deal with it.
-
-		// This is the top-level function, so throwing anything out of it
-		// causes the system exception handler to pop up.
-#if _MSC_VER
-#pragma warning (disable:4297)	// function assumed not to throw an exception but does
-#endif
-		throw;
-#if _MSC_VER
-#pragma warning (default:4297)
-#endif
+		if (CrashText != NULL && Logfile != NULL)
+		{
+			fprintf (Logfile, "**** EXCEPTION CAUGHT ****\n%s", CrashText);
+		}
+		DisplayCrashLog ();
 	}
-#endif
+	CloseHandle (MainThread);
+	MainThread = INVALID_HANDLE_VALUE;
 	return 0;
 }
-

@@ -280,9 +280,9 @@ void DCajunMaster::ThinkForMove (AActor *actor, ticcmd_t *cmd)
 				{
 					b->dest = b->mate;
 				}
-				else if ((playeringame[(r%bglobal.playernumber)]) && players[(r%bglobal.playernumber)].mo->health >= 0)
+				else if ((playeringame[(r&(MAXPLAYERS-1))]) && players[(r&(MAXPLAYERS-1))].mo->health > 0)
 				{
-					b->dest = players[(r%bglobal.playernumber)].mo; 
+					b->dest = players[(r&(MAXPLAYERS-1))].mo; 
 				}
 			}
 
@@ -324,7 +324,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 	{
 		return;
 	}
-	int weapgiveammo = !(dmflags & DF_WEAPONS_STAY);
+	int weapgiveammo = (alwaysapplydmflags || deathmatch) && !(dmflags & DF_WEAPONS_STAY);
 
 	//if(pos && !bglobal.thingvis[pos->id][item->id]) continue;
 	if (item->IsKindOf (RUNTIME_CLASS(AArtifact)))
@@ -399,11 +399,16 @@ void DCajunMaster::Set_enemy (AActor *actor)
 		oldenemy = NULL;
 	}
 
-	actor->player->allround = !!*enemy;
-	*enemy = NULL;
-	*enemy = Find_enemy(actor);
-	if (!*enemy)
-		*enemy = oldenemy; //Try go for last (it will be NULL if there wasn't anyone)
+	// [RH] Don't even bother looking for a different enemy if this is not deathmatch
+	// and we already have an existing enemy.
+	if (deathmatch || !*enemy)
+	{
+		actor->player->allround = !!*enemy;
+		*enemy = NULL;
+		*enemy = Find_enemy(actor);
+		if (!*enemy)
+			*enemy = oldenemy; //Try go for last (it will be NULL if there wasn't anyone)
+	}
 	//Verify that that enemy is really something alive that bot can kill.
 	if (*enemy && ((*enemy)->health < 0 || !((*enemy)->flags&MF_SHOOTABLE)))
 		*enemy = NULL;

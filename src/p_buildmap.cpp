@@ -196,7 +196,6 @@ static void LoadSectors (sectortype *bsec)
 		sec->floor_yoffs = bsec->floorypanning << FRACBITS;
 		sec->FloorLight = SHADE2LIGHT (bsec->floorshade);
 		sec->FloorFlags = SECF_ABSLIGHTING;
-		sec->floorcolormap = map;
 
 		sec->ceilingtexz = -(LONG(bsec->ceilingz) << 8);
 		sec->ceilingplane.d = sec->ceilingtexz;
@@ -210,7 +209,6 @@ static void LoadSectors (sectortype *bsec)
 		sec->ceiling_yoffs = bsec->ceilingypanning << FRACBITS;
 		sec->CeilingLight = SHADE2LIGHT (bsec->ceilingshade);
 		sec->CeilingFlags = SECF_ABSLIGHTING;
-		sec->ceilingcolormap = map;
 
 		sec->lightlevel = (sec->FloorLight + sec->CeilingLight) / 2;
 
@@ -220,6 +218,7 @@ static void LoadSectors (sectortype *bsec)
 		sec->gravity = 1.f;
 		sec->friction = ORIG_FRICTION;
 		sec->movefactor = ORIG_FRICTION_FACTOR;
+		sec->ColorMap = map;
 
 		if (bsec->floorstat & 4)
 		{

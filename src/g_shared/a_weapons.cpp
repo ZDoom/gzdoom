@@ -14,29 +14,6 @@
 
 FWeaponInfo *wpnlev1info[NUMWEAPONS], *wpnlev2info[NUMWEAPONS];
 
-int WeaponValue[] =
-{
-	1,		// fist
-	3,		// pistol
-	4,		// shotgun
-	6,		// chaingun
-	7,		// rocket launcher
-	8,		// plasma rifle
-	9,		// BFG
-	2,		// chainsaw
-	5,		// supershotgun
-
-	1,		// staff
-	3,		// goldwand
-	4,		// crossbow
-	5,		// blaster
-	6,		// skullrod
-	7,		// phoenixrod
-	8,		// mace
-	2,		// gauntlets
-	0		// beak
-};
-
 int maxammo[NUMAMMO] =
 {
 	200,		// bullets
@@ -149,8 +126,7 @@ bool P_GiveAmmo (player_t *player, ammotype_t ammo, int count)
 				break;
 				
 			case am_shell:
-				if (player->readyweapon == wp_fist
-					|| player->readyweapon == wp_pistol)
+				if (player->readyweapon == wp_fist || player->readyweapon == wp_pistol)
 				{
 					if (player->weaponowned[wp_shotgun])
 						player->pendingweapon = wp_shotgun;
@@ -158,8 +134,7 @@ bool P_GiveAmmo (player_t *player, ammotype_t ammo, int count)
 				break;
 				
 			case am_cell:
-				if (player->readyweapon == wp_fist
-					|| player->readyweapon == wp_pistol)
+				if (player->readyweapon == wp_fist || player->readyweapon == wp_pistol)
 				{
 					if (player->weaponowned[wp_plasma])
 						player->pendingweapon = wp_plasma;
@@ -178,8 +153,8 @@ bool P_GiveAmmo (player_t *player, ammotype_t ammo, int count)
 			break;
 
 		case GAME_Heretic:
-			if ((player->readyweapon == wp_staff
-				|| player->readyweapon == wp_gauntlets) && ammo < MANA_1)
+			if ((player->readyweapon == wp_staff || player->readyweapon == wp_gauntlets)
+				&& ammo < MANA_1)
 			{
 				if (player->weaponowned[GetAmmoChange[ammo]])
 				{
@@ -215,19 +190,17 @@ bool AWeapon::TryPickup (AActor *toucher)
 	player_t *player = toucher->player;
 
 	// Only players can pick up weapons
-	// [RH] Don't get the weapon if no graphics for it
 	if (player == NULL || !wpnlev1info[weapon] || weapon >= NUMWEAPONS)
 	{
 		return false;
 	}
 
+	// [RH] Don't get the weapon if no graphics for it
 	FState *state = wpnlev1info[weapon]->readystate;
 	if (state->GetFrame() >= sprites[state->sprite.index].numframes)
 		return false;
 
-	if (multiplayer &&
-		((!deathmatch && !alwaysapplydmflags) || (dmflags & DF_WEAPONS_STAY)) &&
-		!(flags & MF_DROPPED))
+	if (ShouldStay ())
 	{
 		// leave placed weapons forever on (cooperative) net games
 		if (player->weaponowned[weapon])
@@ -236,7 +209,7 @@ bool AWeapon::TryPickup (AActor *toucher)
 		player->bonuscount = BONUSADD;
 		player->weaponowned[weapon] = true;
 
-		P_GiveAmmo (player, wpnlev1info[weapon]->ammo,
+		P_GiveAmmo (player, wpnlev1info[weapon]->givingammo,
 			(deathmatch && gameinfo.gametype == GAME_Doom) ?
 				wpnlev1info[weapon]->ammogive*5/2 :
 				wpnlev1info[weapon]->ammogive);
@@ -247,17 +220,17 @@ bool AWeapon::TryPickup (AActor *toucher)
 		return true;
 	}
 		
-	if (wpnlev1info[weapon]->ammo != am_noammo)
+	if (wpnlev1info[weapon]->givingammo != am_noammo)
 	{
 		if (gameinfo.gametype == GAME_Doom && (flags & MF_DROPPED))
 		{ // give one clip with a dropped weapon,
 		  // two clips with a found weapon
-			gaveammo = P_GiveAmmo (player, wpnlev1info[weapon]->ammo,
+			gaveammo = P_GiveAmmo (player, wpnlev1info[weapon]->givingammo,
 				wpnlev1info[weapon]->ammogive / 2);
 		}
 		else
 		{
-			gaveammo = P_GiveAmmo (player, wpnlev1info[weapon]->ammo,
+			gaveammo = P_GiveAmmo (player, wpnlev1info[weapon]->givingammo,
 				wpnlev1info[weapon]->ammogive);
 		}
 	}
@@ -283,8 +256,8 @@ bool AWeapon::TryPickup (AActor *toucher)
 
 bool AWeapon::ShouldStay ()
 {
-	if (multiplayer &&
-		((!deathmatch && !alwaysapplydmflags) || (dmflags & DF_WEAPONS_STAY)) &&
+	if (((multiplayer &&
+		(!deathmatch && !alwaysapplydmflags)) || (dmflags & DF_WEAPONS_STAY)) &&
 		!(flags & MF_DROPPED))
 	{
 		return true;
@@ -299,7 +272,7 @@ weapontype_t AWeapon::OldStyleID () const
 
 /* Weapon slots ***********************************************************/
 
-FWeaponSlot WeaponSlots[NUM_WEAPON_SLOTS];
+FWeaponSlots LocalWeapons;
 
 FWeaponSlot::FWeaponSlot ()
 {
@@ -366,10 +339,19 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 			{
 				int weap = Weapons[j];
 
-				if (weap >= NUMWEAPONS
-					|| !player->weaponowned[weap]
-					|| (infos[weap]->ammo < NUMAMMO &&
-						player->ammo[infos[weap]->ammo] < infos[weap]->GetMinAmmo()))
+				if (weap >= NUMWEAPONS || !player->weaponowned[weap])
+				{
+					continue;
+				}
+				int count = infos[weap]->GetMinAmmo();
+				if (infos[weap]->ammo == MANA_BOTH)
+				{
+					if (player->ammo[MANA_1] < count || player->ammo[MANA_2] < count)
+					{
+						continue;
+					}
+				}
+				else if (infos[weap]->ammo < NUMAMMO && player->ammo[infos[weap]->ammo] < count)
 				{
 					continue;
 				}
@@ -382,10 +364,19 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 	{
 		weapontype_t weap = (weapontype_t)Weapons[i];
 
-		if (weap >= NUMWEAPONS
-			|| !player->weaponowned[weap]
-			|| (infos[weap]->ammo < NUMAMMO &&
-				player->ammo[infos[weap]->ammo] < infos[weap]->GetMinAmmo()))
+		if (weap >= NUMWEAPONS || !player->weaponowned[weap])
+		{
+			continue;
+		}
+		int count = infos[weap]->GetMinAmmo();
+		if (infos[weap]->ammo == MANA_BOTH)
+		{
+			if (player->ammo[MANA_1] < count || player->ammo[MANA_2] < count)
+			{
+				continue;
+			}
+		}
+		else if (infos[weap]->ammo < NUMAMMO && player->ammo[infos[weap]->ammo] < count)
 		{
 			continue;
 		}
@@ -394,7 +385,15 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 	return player->readyweapon;
 }
 
-bool FWeaponSlot::LocateWeapon (weapontype_t weap, int *const slot, int *const index)
+void FWeaponSlots::Clear ()
+{
+	for (int i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		Slots[i].Clear ();
+	}
+}
+
+bool FWeaponSlots::LocateWeapon (weapontype_t weap, int *const slot, int *const index)
 {
 	int i, j;
 
@@ -402,13 +401,13 @@ bool FWeaponSlot::LocateWeapon (weapontype_t weap, int *const slot, int *const i
 	{
 		for (j = 0; j < MAX_WEAPONS_PER_SLOT; j++)
 		{
-			if (WeaponSlots[i].Weapons[j] == weap)
+			if (Slots[i].Weapons[j] == weap)
 			{
 				*slot = i;
 				*index = j;
 				return true;
 			}
-			else if (WeaponSlots[i].Weapons[j] == NUMWEAPONS)
+			else if (Slots[i].Weapons[j] == NUMWEAPONS)
 			{ // No more weapons in this slot, so try the next
 				break;
 			}
@@ -423,7 +422,7 @@ static bool FindMostRecentWeapon (player_s *player, int *slot, int *index)
 	{
 		if (player->psprites[ps_weapon].state->GetAction().acp2 == A_Raise)
 		{
-			if (FWeaponSlot::LocateWeapon (player->pendingweapon, slot, index))
+			if (player->WeaponSlots.LocateWeapon (player->pendingweapon, slot, index))
 			{
 				P_SetPsprite (player, ps_weapon,
 					player->powers[pw_weaponlevel2] ?
@@ -435,12 +434,12 @@ static bool FindMostRecentWeapon (player_s *player, int *slot, int *index)
 		}
 		else
 		{
-			return FWeaponSlot::LocateWeapon (player->pendingweapon, slot, index);
+			return player->WeaponSlots.LocateWeapon (player->pendingweapon, slot, index);
 		}
 	}
 	else
 	{
-		return FWeaponSlot::LocateWeapon (player->readyweapon, slot, index);
+		return player->WeaponSlots.LocateWeapon (player->readyweapon, slot, index);
 	}
 }
 
@@ -461,12 +460,21 @@ weapontype_t PickNextWeapon (player_s *player)
 		{
 			int slot = (unsigned)((start + i) / MAX_WEAPONS_PER_SLOT) % NUM_WEAPON_SLOTS;
 			int index = (unsigned)(start + i) % MAX_WEAPONS_PER_SLOT;
-			int weap = WeaponSlots[slot].Weapons[index];
+			int weap = player->WeaponSlots.Slots[slot].Weapons[index];
 
-			if (weap >= NUMWEAPONS
-				|| !player->weaponowned[weap]
-				|| (infos[weap]->ammo < NUMAMMO &&
-					player->ammo[infos[weap]->ammo] < infos[weap]->GetMinAmmo()))
+			if (weap >= NUMWEAPONS || !player->weaponowned[weap])
+			{
+				continue;
+			}
+			int count = infos[weap]->GetMinAmmo();
+			if (infos[weap]->ammo == MANA_BOTH)
+			{
+				if (player->ammo[MANA_1] < count || player->ammo[MANA_2] < count)
+				{
+					continue;
+				}
+			}
+			else if (infos[weap]->ammo < NUMAMMO && player->ammo[infos[weap]->ammo] < count)
 			{
 				continue;
 			}
@@ -496,12 +504,21 @@ weapontype_t PickPrevWeapon (player_s *player)
 				slot += NUM_WEAPON_SLOTS * MAX_WEAPONS_PER_SLOT;
 			int index = slot % MAX_WEAPONS_PER_SLOT;
 			slot /= MAX_WEAPONS_PER_SLOT;
-			int weap = WeaponSlots[slot].Weapons[index];
+			int weap = player->WeaponSlots.Slots[slot].Weapons[index];
 
-			if (weap >= NUMWEAPONS
-				|| !player->weaponowned[weap]
-				|| (infos[weap]->ammo < NUMAMMO &&
-					player->ammo[infos[weap]->ammo] < infos[weap]->GetMinAmmo()))
+			if (weap >= NUMWEAPONS || !player->weaponowned[weap])
+			{
+				continue;
+			}
+			int count = infos[weap]->GetMinAmmo();
+			if (infos[weap]->ammo == MANA_BOTH)
+			{
+				if (player->ammo[MANA_1] < count || player->ammo[MANA_2] < count)
+				{
+					continue;
+				}
+			}
+			else if (infos[weap]->ammo < NUMAMMO && player->ammo[infos[weap]->ammo] < count)
 			{
 				continue;
 			}
@@ -522,17 +539,17 @@ CCMD (setslot)
 		{
 			Printf (" Slot %d:", slot);
 			for (i = 0;
-				i < MAX_WEAPONS_PER_SLOT && WeaponSlots[slot].GetWeapon(i) < NUMWEAPONS;
+				i < MAX_WEAPONS_PER_SLOT && LocalWeapons.Slots[slot].GetWeapon(i) < NUMWEAPONS;
 				++i)
 			{
-				Printf (" %s", wpnlev1info[WeaponSlots[slot].GetWeapon(i)]->type->Name+1);
+				Printf (" %s", wpnlev1info[LocalWeapons.Slots[slot].GetWeapon(i)]->type->Name+1);
 			}
 			Printf ("\n");
 		}
 		return;
 	}
 
-	WeaponSlots[slot].Clear();
+	LocalWeapons.Slots[slot].Clear();
 	if (argv.argc() == 2)
 	{
 		Printf ("Slot %d cleared\n", slot);
@@ -541,12 +558,15 @@ CCMD (setslot)
 	{
 		for (i = 2; i < argv.argc(); ++i)
 		{
-			if (!WeaponSlots[slot].AddWeapon (argv[i]))
+			if (!LocalWeapons.Slots[slot].AddWeapon (argv[i]))
 			{
 				Printf ("Could not add %s to slot %d\n", argv[i], slot);
 			}
 		}
 	}
+	Net_WriteByte (DEM_SLOTCHANGE);
+	Net_WriteByte (slot);
+	LocalWeapons.Slots[slot].StreamOut ();
 }
 
 CCMD (addslot)
@@ -559,13 +579,19 @@ CCMD (addslot)
 		return;
 	}
 
-	if (!WeaponSlots[slot].AddWeapon (argv[2]))
+	if (!LocalWeapons.Slots[slot].AddWeapon (argv[2]))
 	{
 		Printf ("Could not add %s to slot %d\n", argv[2], slot);
 	}
+	else
+	{
+		Net_WriteByte (DEM_SLOTCHANGE);
+		Net_WriteByte (slot);
+		LocalWeapons.Slots[slot].StreamOut ();
+	}
 }
 
-void FWeaponSlot::StaticRestoreSlots (FConfigFile &config)
+void FWeaponSlots::RestoreSlots (FConfigFile &config)
 {
 	char buff[MAX_WEAPONS_PER_SLOT*64];
 	const char *key, *value;
@@ -585,17 +611,17 @@ void FWeaponSlot::StaticRestoreSlots (FConfigFile &config)
 		strncpy (buff, value, sizeof(buff)-1);
 		char *tok;
 
-		WeaponSlots[slot].Clear ();
+		Slots[slot].Clear ();
 		tok = strtok (buff, " ");
 		while (tok != NULL)
 		{
-			WeaponSlots[slot].AddWeapon (tok);
+			Slots[slot].AddWeapon (tok);
 			tok = strtok (NULL, " ");
 		}
 	}
 }
 
-void FWeaponSlot::StaticSaveSlots (FConfigFile &config)
+void FWeaponSlots::SaveSlots (FConfigFile &config)
 {
 	char buff[MAX_WEAPONS_PER_SLOT*64];
 	char keyname[16];
@@ -606,7 +632,7 @@ void FWeaponSlot::StaticSaveSlots (FConfigFile &config)
 
 		for (int j = 0; j < MAX_WEAPONS_PER_SLOT; ++j)
 		{
-			if (WeaponSlots[i].Weapons[j] >= NUMWEAPONS)
+			if (Slots[i].Weapons[j] >= NUMWEAPONS)
 			{
 				break;
 			}
@@ -614,7 +640,7 @@ void FWeaponSlot::StaticSaveSlots (FConfigFile &config)
 			{
 				buff[index++] = ' ';
 			}
-			const char *name = wpnlev1info[WeaponSlots[i].Weapons[j]]->type->Name+1;
+			const char *name = wpnlev1info[Slots[i].Weapons[j]]->type->Name+1;
 			strcpy (buff+index, name);
 			index += (int)strlen (name);
 		}
@@ -624,4 +650,111 @@ void FWeaponSlot::StaticSaveSlots (FConfigFile &config)
 			config.SetValueForKey (keyname, buff);
 		}
 	}
+}
+
+int FWeaponSlot::CountWeapons ()
+{
+	int i;
+
+	for (i = 0; i < MAX_WEAPONS_PER_SLOT; ++i)
+	{
+		if (Weapons[i] >= NUMWEAPONS)
+		{
+			break;
+		}
+	}
+	return i;
+}
+
+// Write out the weapons in this slot
+void FWeaponSlot::StreamOut ()
+{
+	int count;
+
+	count = CountWeapons ();
+	Net_WriteByte (count);
+
+	for (int i = 0; i < count; ++i)
+	{
+		Net_WriteByte (Weapons[i]);
+	}
+}
+
+// Read in the weapons in this slot
+void FWeaponSlot::StreamIn (byte **stream)
+{
+	byte *p = *stream;
+	int count;
+
+	Clear ();
+	count = *p++;
+
+	for (int i = 0; i < count; ++i)
+	{
+		Weapons[i] = *p++;
+	}
+
+	*stream = p;
+}
+
+// Write out the weapons in every slot
+void FWeaponSlots::StreamOutSlots ()
+{
+	int counts[NUM_WEAPON_SLOTS];
+	BYTE val;
+	int i, j;
+
+	for (i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		counts[i] = Slots[i].CountWeapons();
+	}
+
+	// Pack the weapon counts into nibbles and send them.
+	for (i = 0; i < NUM_WEAPON_SLOTS; i += 2)
+	{
+		val = (counts[i] << 4) | counts[i+1];
+		Net_WriteByte (val);
+	}
+
+	// Now write the weapons themselves, but only those
+	// that are actually assigned so we save some space.
+	for (i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		for (j = 0; j < counts[i]; ++j)
+		{
+			val = Slots[i].Weapons[j];
+			Net_WriteByte (val);
+		}
+	}
+}
+
+// Read in the weapons in every slot
+void FWeaponSlots::StreamInSlots (byte **stream)
+{
+	// Just do the opposite of what StreamOutSlots() did.
+	BYTE *p = *stream;
+	int counts[NUM_WEAPON_SLOTS];
+	BYTE val;
+	int i, j;
+
+	// Read weapon counts
+	for (i = 0; i < NUM_WEAPON_SLOTS; i += 2)
+	{
+		val = *p++;
+		counts[i] = val >> 4;
+		counts[i+1] = val & 15;
+		Slots[i].Clear ();
+		Slots[i+1].Clear ();
+	}
+
+	// Read weapon assignments
+	for (i = 0; i < NUM_WEAPON_SLOTS; ++i)
+	{
+		for (j = 0; j < counts[i]; ++j)
+		{
+			Slots[i].Weapons[j] = *p++;
+		}
+	}
+
+	*stream = p;
 }

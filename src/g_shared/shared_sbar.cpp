@@ -374,7 +374,7 @@ void FBaseStatusBar::ShowPlayerName ()
 
 	color = (CPlayer == &players[consoleplayer]) ? CR_GOLD : CR_GREEN;
 	AttachMessage (new DHUDMessageFadeOut (CPlayer->userinfo.netname,
-		1.5f, 1.f, color, 2.f, 0.35f), 'PNAM');
+		1.5f, 0.92f, color, 2.f, 0.35f), 'PNAM');
 }
 
 //---------------------------------------------------------------------------
@@ -470,11 +470,23 @@ void FBaseStatusBar::DrawImageNoUpdate (const FImageCollection &coll, int img,
 	byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
 	if (data)
 	{
+		bool main;
+
+		if (y == -999999)
+		{ // Hack for Hexen status bar, which duplicates the top part of the
+		  // bar in the main bar graphic.
+			main = true;
+			y = RelTop - h;
+		}
+		else
+		{
+			y -= yo;
+			main = (y >= 0);
+		}
 		x -= xo;
-		y -= yo;
 		if (Scaled)
 		{
-			if (y < 0)
+			if (!main)
 			{
 				screen->ScaleMaskedBlock (x * screen->GetWidth() / 320,
 					::ST_Y + y * screen->GetHeight() / 200, w, h,
@@ -503,13 +515,66 @@ void FBaseStatusBar::DrawImage (const FImageCollection &coll, int img,
 	{
 		int w, h, xo, yo;
 		byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
-		x -= xo;
-		y -= yo;
-		if (data && y >= 0)
+		if (data != NULL)
 		{
-			ScaleCopy->Lock ();
-			CopyToScreen (x, y, w, h);
-			ScaleCopy->Unlock ();
+			x -= xo;
+			if (y == -999999)
+			{
+				y = 0;
+				h = MIN (RelTop, h);
+			}
+			else
+			{
+				y -= yo;
+			}
+			if (data && y >= 0)
+			{
+				ScaleCopy->Lock ();
+				CopyToScreen (x, y, w, h);
+				ScaleCopy->Unlock ();
+			}
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC DrawImage
+//
+// Draws a translucent image with the status bar's upper-left corner as the
+// origin.
+//
+//---------------------------------------------------------------------------
+
+void FBaseStatusBar::DrawFadedImage (const FImageCollection &coll, int img,
+	int x, int y, fixed_t shade) const
+{
+	int w, h, xo, yo;
+	byte *data = coll.GetImage (img, &w, &h, &xo, &yo);
+	if (data)
+	{
+		y -= yo;
+		x -= xo;
+		if (Scaled)
+		{
+			if (y < 0)
+			{
+				screen->ScaleTranslucentMaskedBlock (x * screen->GetWidth() / 320,
+					::ST_Y + y * screen->GetHeight() / 200, w, h,
+					(w * screen->GetWidth()) / 320, (h * screen->GetHeight()) / 200,
+					data, NULL, shade);
+			}
+			else
+			{
+				ScaleCopy->Lock ();
+				ScaleCopy->DrawTranslucentMaskedBlock (x, y, w, h, data, NULL, shade);
+				CopyToScreen (x, y, w, h);
+				ScaleCopy->Unlock ();
+			}
+		}
+		else
+		{
+			screen->DrawTranslucentMaskedBlock (x + ST_X, y + ST_Y, w, h, data, NULL, shade);
 		}
 	}
 }
@@ -608,13 +673,13 @@ bool FBaseStatusBar::RepositionCoords (int &x, int &y, int xo, int yo,
 
 //---------------------------------------------------------------------------
 //
-// PROC DrawFadedImage
+// PROC DrawOuterFadedImage
 //
 // Draws a translucenct image outside the status bar, possibly scaled.
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrawFadedImage (const FImageCollection &coll, int img,
+void FBaseStatusBar::DrawOuterFadedImage (const FImageCollection &coll, int img,
 	int x, int y, fixed_t shade) const
 {
 	int w, h, xo, yo;
@@ -719,7 +784,7 @@ void FBaseStatusBar::DrawOuterPatch (const patch_t *patch, int x, int y) const
 //
 //---------------------------------------------------------------------------
 
-void FBaseStatusBar::DrINumber (signed int val, int x, int y) const
+void FBaseStatusBar::DrINumber (signed int val, int x, int y, int imgBase) const
 {
 	int oldval;
 
@@ -734,21 +799,21 @@ void FBaseStatusBar::DrINumber (signed int val, int x, int y) const
 			return;
 		}
 		val = -val;
-		DrawImage (Images, imgINumbers+val, x+18, y);
+		DrawImage (Images, imgBase+val, x+18, y);
 		DrawImage (Images, imgNEGATIVE, x+9, y);
 		return;
 	}
 	if (val > 99)
 	{
-		DrawImage (Images, imgINumbers+val/100, x, y);
+		DrawImage (Images, imgBase+val/100, x, y);
 	}
 	val = val % 100;
 	if (val > 9 || oldval > 99)
 	{
-		DrawImage (Images, imgINumbers+val/10, x+9, y);
+		DrawImage (Images, imgBase+val/10, x+9, y);
 	}
 	val = val % 10;
-	DrawImage (Images, imgINumbers+val, x+18, y);
+	DrawImage (Images, imgBase+val, x+18, y);
 }
 
 //---------------------------------------------------------------------------
@@ -1063,6 +1128,33 @@ void FBaseStatusBar::ShadeChain (int left, int right, int top, int height) const
 
 //---------------------------------------------------------------------------
 //
+// PROC ClearRect
+//
+//---------------------------------------------------------------------------
+
+void FBaseStatusBar::ClearRect (int left, int top, int width, int height, int color) const
+{
+	if (width <= 0 || height <= 0)
+	{
+		return;
+	}
+	if (Scaled)
+	{
+		ScaleCopy->Lock ();
+		ScaleCopy->Clear (left, top, left + width, top + height, color);
+		CopyToScreen (left, top, width, height);
+		ScaleCopy->Unlock ();
+	}
+	else
+	{
+		top += ST_Y;
+		left += ST_X;
+		screen->Clear (left, top, left + width, top + height, color);
+	}
+}
+
+//---------------------------------------------------------------------------
+//
 // RefreshBackground
 //
 //---------------------------------------------------------------------------
@@ -1259,10 +1351,27 @@ void FBaseStatusBar::Draw (EHudState state)
 
 		// Draw map name
 		y = ::ST_Y - height;
-		if ((gameinfo.gametype == GAME_Heretic && SCREENWIDTH > 320 && !Scaled)
-			|| (gameinfo.gametype == GAME_Hexen))
+		if (gameinfo.gametype == GAME_Heretic && SCREENWIDTH > 320 && !Scaled)
 		{
 			y -= 8;
+		}
+		else if (gameinfo.gametype == GAME_Hexen)
+		{
+			if (Scaled)
+			{
+				y -= Scale (10, SCREENHEIGHT, 200);
+			}
+			else
+			{
+				if (SCREENWIDTH < 640)
+				{
+					y -= 11;
+				}
+				else
+				{ // Get past the tops of the gargoyles' wings
+					y -= 26;
+				}
+			}
 		}
 		cluster_info_t *cluster = FindClusterInfo (level.cluster);
 		i = 0;
@@ -1372,8 +1481,7 @@ void FBaseStatusBar::BlendView (float blend[4])
 {
 	int cnt;
 
-	AddBlend (BaseBlendR / 255.0f, BaseBlendG / 255.0f,
-		BaseBlendB / 255.0f, BaseBlendA, blend);
+	AddBlend (BaseBlendR / 255.f, BaseBlendG / 255.f, BaseBlendB / 255.f, BaseBlendA, blend);
 
 	if (CPlayer->powers[pw_ironfeet] > 4*32 || CPlayer->powers[pw_ironfeet]&8)
 	{
@@ -1382,7 +1490,7 @@ void FBaseStatusBar::BlendView (float blend[4])
 	if (CPlayer->bonuscount)
 	{
 		cnt = CPlayer->bonuscount << 3;
-		AddBlend (0.8431f, 0.7294f, 0.2706f, cnt > 128 ? 0.5f : cnt / 255.0f, blend);
+		AddBlend (0.8431f, 0.7333f, 0.2706f, cnt > 128 ? 0.5f : cnt / 255.f, blend);
 	}
 
 	cnt = DamageToAlpha[MIN (113, CPlayer->damagecount)];
@@ -1401,7 +1509,31 @@ void FBaseStatusBar::BlendView (float blend[4])
 		if (cnt > 228)
 			cnt = 228;
 
-		AddBlend (1.0f, 0.0f, 0.0f, cnt / 255.0f, blend);
+		AddBlend (1.f, 0.f, 0.f, cnt / 255.f, blend);
+	}
+
+	// Unlike Doom, I did not have any utility source to look at to find the
+	// exact numbers to use here, so I've had to guess by looking at how they
+	// affect the white color in Hexen's palette and picking an alpha value
+	// that seems reasonable.
+
+	if (CPlayer->mstaffcount)
+	{ // The bloodscourge's flash isn't really describable using a blend
+	  // because the blue component of each color is the same for each level.
+		AddBlend (0.59216f, 0.43529f, 0.f, CPlayer->mstaffcount/6.f, blend);
+	}
+	if (CPlayer->cholycount)
+	{
+		AddBlend (0.51373f, 0.51373f, 0.51373f, CPlayer->cholycount/6.f, blend);
+	}
+	if (CPlayer->poisoncount)
+	{
+		cnt = MIN (CPlayer->poisoncount, 64);
+		AddBlend (0.04f, 0.2571f, 0.f, cnt/93.2571428571f, blend);
+	}
+	if (CPlayer->mo->flags2 & MF2_ICEDAMAGE)
+	{
+		AddBlend (0.25f, 0.25f, 0.853f, 0.4f, blend);
 	}
 
 	if (CPlayer->camera != NULL && CPlayer->camera->player != NULL)
@@ -1455,6 +1587,10 @@ void FBaseStatusBar::SetFace (void *)
 }
 
 void FBaseStatusBar::NewGame ()
+{
+}
+
+void FBaseStatusBar::SetInteger (int pname, int param)
 {
 }
 

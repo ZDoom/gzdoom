@@ -142,6 +142,7 @@ FWeaponInfo AStaff::WeaponInfo1 =
 {
 	0,
 	am_noammo,
+	am_noammo,
 	0,
 	0,
 	&States[S_STAFFUP],
@@ -162,6 +163,7 @@ FWeaponInfo AStaff::WeaponInfo1 =
 FWeaponInfo AStaff::WeaponInfo2 =
 {
 	WIF_READYSNDHALF,
+	am_noammo,
 	am_noammo,
 	0,
 	0,
@@ -414,6 +416,7 @@ FWeaponInfo AGoldWand::WeaponInfo1 =
 {
 	0,
 	am_goldwand,
+	am_goldwand,
 	USE_GWND_AMMO_1,
 	25,
 	&States[S_GOLDWANDUP],
@@ -434,6 +437,7 @@ FWeaponInfo AGoldWand::WeaponInfo1 =
 FWeaponInfo AGoldWand::WeaponInfo2 =
 {
 	0,
+	am_goldwand,
 	am_goldwand,
 	USE_GWND_AMMO_2,
 	25,
@@ -758,6 +762,7 @@ FWeaponInfo ACrossbow::WeaponInfo1 =
 {
 	0,
 	am_crossbow,
+	am_crossbow,
 	USE_CBOW_AMMO_1,
 	10,
 	&States[S_CRBOWUP],
@@ -778,6 +783,7 @@ FWeaponInfo ACrossbow::WeaponInfo1 =
 FWeaponInfo ACrossbow::WeaponInfo2 =
 {
 	0,
+	am_crossbow,
 	am_crossbow,
 	USE_CBOW_AMMO_2,
 	10,
@@ -1117,6 +1123,7 @@ FWeaponInfo AMace::WeaponInfo1 =
 {
 	0,
 	am_mace,
+	am_mace,
 	USE_MACE_AMMO_1,
 	50,
 	&States[S_MACEUP],
@@ -1137,6 +1144,7 @@ FWeaponInfo AMace::WeaponInfo1 =
 FWeaponInfo AMace::WeaponInfo2 =
 {
 	0,
+	am_mace,
 	am_mace,
 	USE_MACE_AMMO_2,
 	50,
@@ -1376,17 +1384,20 @@ void A_SpawnMace (AActor *self)
 
 bool AMace::DoRespawn ()
 {
-	int spotnum = pr_macerespawn () % NumMaceSpots;
-	AActor *spot = FirstSpot;
-
-	while (spotnum > 0)
+	if (NumMaceSpots > 0)
 	{
-		spot = spot->target;
-		spotnum--;
-	}
+		int spotnum = pr_macerespawn () % NumMaceSpots;
+		AActor *spot = FirstSpot;
 
-	SetOrigin (spot->x, spot->y, spot->z);
-	z = floorz;
+		while (spotnum > 0)
+		{
+			spot = spot->target;
+			spotnum--;
+		}
+
+		SetOrigin (spot->x, spot->y, spot->z);
+		z = floorz;
+	}
 	return true;
 }
 
@@ -1764,6 +1775,7 @@ FWeaponInfo AGauntlets::WeaponInfo1 =
 {
 	0,
 	am_noammo,
+	am_noammo,
 	0,
 	0,
 	&States[S_GAUNTLETUP],
@@ -1784,6 +1796,7 @@ FWeaponInfo AGauntlets::WeaponInfo1 =
 FWeaponInfo AGauntlets::WeaponInfo2 =
 {
 	0,
+	am_noammo,
 	am_noammo,
 	0,
 	0,
@@ -2083,6 +2096,7 @@ FWeaponInfo ABlaster::WeaponInfo1 =
 {
 	0,
 	am_blaster,
+	am_blaster,
 	USE_BLSR_AMMO_1,
 	30,
 	&States[S_BLASTERUP],
@@ -2103,6 +2117,7 @@ FWeaponInfo ABlaster::WeaponInfo1 =
 FWeaponInfo ABlaster::WeaponInfo2 =
 {
 	0,
+	am_blaster,
 	am_blaster,
 	USE_BLSR_AMMO_2,
 	30,
@@ -2575,6 +2590,7 @@ FWeaponInfo ASkullRod::WeaponInfo1 =
 {
 	0,
 	am_skullrod,
+	am_skullrod,
 	USE_SKRD_AMMO_1,
 	50,
 	&States[S_HORNRODUP],
@@ -2595,6 +2611,7 @@ FWeaponInfo ASkullRod::WeaponInfo1 =
 FWeaponInfo ASkullRod::WeaponInfo2 =
 {
 	0,
+	am_skullrod,
 	am_skullrod,
 	USE_SKRD_AMMO_2,
 	50,
@@ -3091,6 +3108,7 @@ FWeaponInfo APhoenixRod::WeaponInfo1 =
 {
 	WIF_NOAUTOFIRE,
 	am_phoenixrod,
+	am_phoenixrod,
 	USE_PHRD_AMMO_1,
 	2,
 	&States[S_PHOENIXUP],
@@ -3111,6 +3129,7 @@ FWeaponInfo APhoenixRod::WeaponInfo1 =
 FWeaponInfo APhoenixRod::WeaponInfo2 =
 {
 	WIF_NOAUTOFIRE,
+	am_phoenixrod,
 	am_phoenixrod,
 	USE_PHRD_AMMO_2,
 	2,

@@ -273,7 +273,7 @@ FDoomEdMap::FDoomEdEntry *FDoomEdMap::DoomEdHash[DOOMED_HASHSIZE];
 
 void FDoomEdMap::AddType (int doomednum, const TypeInfo *type)
 {
-	int hash = doomednum % DOOMED_HASHSIZE;
+	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;
 	FDoomEdEntry *entry = DoomEdHash[hash];
 	while (entry && entry->DoomEdNum != doomednum)
 	{
@@ -296,7 +296,7 @@ void FDoomEdMap::AddType (int doomednum, const TypeInfo *type)
 
 void FDoomEdMap::DelType (int doomednum)
 {
-	int hash = doomednum % DOOMED_HASHSIZE;
+	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;
 	FDoomEdEntry **prev = &DoomEdHash[hash];
 	FDoomEdEntry *entry = *prev;
 	while (entry && entry->DoomEdNum != doomednum)
@@ -331,7 +331,7 @@ void FDoomEdMap::Empty ()
 
 const TypeInfo *FDoomEdMap::FindType (int doomednum) const
 {
-	int hash = doomednum % DOOMED_HASHSIZE;
+	unsigned int hash = (unsigned int)doomednum % DOOMED_HASHSIZE;
 	FDoomEdEntry *entry = DoomEdHash[hash];
 	while (entry && entry->DoomEdNum != doomednum)
 		entry = entry->HashNext;

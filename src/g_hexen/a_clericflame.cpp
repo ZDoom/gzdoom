@@ -24,9 +24,9 @@ void A_CFlameMissile (AActor *);
 
 // The Cleric's Flame Strike ------------------------------------------------
 
-class ACWeapFlame : public AWeapon
+class ACWeapFlame : public AClericWeapon
 {
-	DECLARE_ACTOR (ACWeapFlame, AWeapon)
+	DECLARE_ACTOR (ACWeapFlame, AClericWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -91,6 +91,7 @@ END_DEFAULTS
 FWeaponInfo ACWeapFlame::WeaponInfo =
 {
 	0,
+	MANA_2,
 	MANA_2,
 	4,
 	25,
@@ -212,6 +213,8 @@ END_DEFAULTS
 class ACircleFlame : public AActor
 {
 	DECLARE_ACTOR (ACircleFlame, AActor)
+public:
+	void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
 };
 
 FState ACircleFlame::States[] =
@@ -258,6 +261,12 @@ IMPLEMENT_ACTOR (ACircleFlame, Hexen, -1, 0)
 
 	PROP_DeathSound ("ClericFlameCircle")
 END_DEFAULTS
+
+void ACircleFlame::GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+{
+	damage = 20;
+	hurtSource = false;
+}
 
 // Flame Missile ------------------------------------------------------------
 

@@ -121,6 +121,7 @@ struct FWeaponInfo
 {
 	DWORD			flags;
 	ammotype_t		ammo;
+	ammotype_t		givingammo;
 	int				ammouse;
 	int				ammogive;
 	FState			*upstate;
@@ -167,24 +168,37 @@ public:
 	bool AddWeapon (const TypeInfo *type);
 	bool AddWeapon (weapontype_t weap);
 	weapontype_t PickWeapon (player_s *player);
+	int CountWeapons ();
+	void StreamOut ();
+	void StreamIn (byte **stream);
 
 	inline weapontype_t GetWeapon (int index) const
 	{
 		return (weapontype_t)Weapons[index];
 	}
 
-	static bool LocateWeapon (weapontype_t weap, int *const slot, int *const index);
-	static void StaticRestoreSlots (FConfigFile &config);
-	static void StaticSaveSlots (FConfigFile &config);
-
 	friend weapontype_t PickNextWeapon (player_s *player);
 	friend weapontype_t PickPrevWeapon (player_s *player);
+
+	friend struct FWeaponSlots;
 
 private:
 	byte Weapons[MAX_WEAPONS_PER_SLOT];
 };
 
-extern FWeaponSlot WeaponSlots[NUM_WEAPON_SLOTS];
+struct FWeaponSlots
+{
+	FWeaponSlot Slots[NUM_WEAPON_SLOTS];
+
+	void Clear ();
+	bool LocateWeapon (weapontype_t weap, int *const slot, int *const index);
+	void RestoreSlots (FConfigFile &config);
+	void SaveSlots (FConfigFile &config);
+	void StreamOutSlots ();
+	void StreamInSlots (byte **stream);
+};
+
+extern FWeaponSlots LocalWeapons;
 extern FWeaponInfo *wpnlev1info[NUMWEAPONS], *wpnlev2info[NUMWEAPONS];
 
 //

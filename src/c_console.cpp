@@ -97,7 +97,6 @@ static bool LineJoins[CONSOLELINES];
 static int TopLine, InsertLine;
 static char *BufferRover = ConsoleBuffer;
 
-static void AddToConsole (int printlevel, const char *text);
 static void ClearConsole ();
 
 
@@ -483,7 +482,7 @@ static void AddLine (const char *text, bool more, int len)
 	}
 }
 
-static void AddToConsole (int printlevel, const char *text)
+void AddToConsole (int printlevel, const char *text)
 {
 	static enum
 	{

@@ -363,6 +363,7 @@ FWeaponInfo AFist::WeaponInfo =
 {
 	0,
 	am_noammo,
+	am_noammo,
 	0,
 	0,
 	&States[S_PUNCHUP],
@@ -465,6 +466,7 @@ FWeaponInfo APistol::WeaponInfo =
 {
 	0,
 	am_clip,
+	am_clip,
 	1,
 	20,
 	&States[S_PISTOLUP],
@@ -549,6 +551,7 @@ FState AChainsaw::States[] =
 FWeaponInfo AChainsaw::WeaponInfo =
 {
 	0,
+	am_noammo,
 	am_noammo,
 	0,
 	0,
@@ -686,6 +689,7 @@ FWeaponInfo AShotgun::WeaponInfo =
 {
 	0,
 	am_shell,
+	am_shell,
 	1,
 	8,
 	&States[S_SGUNUP],
@@ -800,6 +804,7 @@ FState ASuperShotgun::States[] =
 FWeaponInfo ASuperShotgun::WeaponInfo =
 {
 	0,
+	am_shell,
 	am_shell,
 	2,
 	8,
@@ -941,6 +946,7 @@ FWeaponInfo AChaingun::WeaponInfo =
 {
 	0,
 	am_clip,
+	am_clip,
 	1,
 	20,
 	&States[S_CHAINUP],
@@ -1048,6 +1054,7 @@ FState ARocketLauncher::States[] =
 FWeaponInfo ARocketLauncher::WeaponInfo =
 {
 	WIF_NOAUTOFIRE,
+	am_misl,
 	am_misl,
 	1,
 	2,
@@ -1168,6 +1175,7 @@ FState APlasmaRifle::States[] =
 FWeaponInfo APlasmaRifle::WeaponInfo =
 {
 	0,
+	am_cell,
 	am_cell,
 	1,
 	40,
@@ -1353,6 +1361,7 @@ FState ABFG9000::States[] =
 FWeaponInfo ABFG9000::WeaponInfo =
 {
 	WIF_NOAUTOFIRE,
+	am_cell,
 	am_cell,
 	40,
 	40,

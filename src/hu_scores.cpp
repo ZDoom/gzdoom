@@ -52,6 +52,8 @@
 #include "i_input.h"
 #include "templates.h"
 
+static const char *FaceNames[3] = { "FITEFACE", "CLERFACE", "MAGEFACE" };
+
 static void HU_DrawTeamScores (player_t *, player_t *[MAXPLAYERS]);
 static void HU_DrawSingleScores (player_t *, player_t *[MAXPLAYERS]);
 static void HU_DrawTimeRemaining (int y);
@@ -242,6 +244,17 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 		clamp (int(g*255.f),0,255), clamp (int(b*255.f),0,255));
 
 	screen->Clear (x, y, x + 24*CleanXfac, y + height, color);
+
+	if (gameinfo.gametype == GAME_Hexen &&
+		player->CurrentPlayerClass >= 0 && player->CurrentPlayerClass < 3)
+	{
+		int lump = W_CheckNumForName (FaceNames[player->CurrentPlayerClass]);
+		if (lump != -1)
+		{
+			patch_t *face = (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
+			screen->DrawPatchCleanNoMove (face, x+(pack?20:32)*CleanXfac, y);
+		}
+	}
 
 	sprintf (str, "%d", player->fragcount);
 	screen->DrawTextClean (highlight ? CR_GREEN : CR_BRICK, x+(pack?28:40)*CleanXfac, y, str);

@@ -168,9 +168,9 @@ static bool P_SightBlockLinesIterator (int x, int y)
 		polyLink = polyLink->next;
 	}
 
-	offset = *(blockmap+offset);
+	offset = *(blockmap + offset);
 
-	for (list = blockmaplump + offset; *list != -1; list++)
+	for (list = blockmaplump + offset + 1; *list != -1; list++)
 	{
 		if (!P_SightCheckLine (&lines[*list]))
 			return false;

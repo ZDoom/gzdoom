@@ -55,6 +55,7 @@
 static FRandom pr_pickteam ("PickRandomTeam");
 
 extern BOOL st_firsttime;
+EXTERN_CVAR (Bool, teamplay)
 
 CVAR (Float,	autoaim,				5000.f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (String,	name,					"Player",	CVAR_USERINFO | CVAR_ARCHIVE);
@@ -65,6 +66,7 @@ CVAR (String,	gender,					"male",		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Bool,		neverswitchonpickup,	false,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	movebob,				0.25f,		CVAR_USERINFO | CVAR_ARCHIVE);
 CVAR (Float,	stillbob,				0.f,		CVAR_USERINFO | CVAR_ARCHIVE);
+CVAR (String,	playerclass,			"Fighter",	CVAR_USERINFO | CVAR_ARCHIVE);
 
 enum
 {
@@ -76,7 +78,13 @@ enum
 	INFO_Gender,
 	INFO_NeverSwitchOnPickup,
 	INFO_MoveBob,
-	INFO_StillBob
+	INFO_StillBob,
+	INFO_PlayerClass,
+};
+
+const char *PlayerClassNames[4] =
+{
+	"Random", "Fighter", "Cleric", "Mage"
 };
 
 const char *TeamNames[NUM_TEAMS] =
@@ -102,6 +110,7 @@ static const char *UserInfoStrings[] =
 	"neverswitchonpickup",
 	"movebob",
 	"stillbob",
+	"playerclass",
 	NULL
 };
 
@@ -113,6 +122,18 @@ int D_GenderToInt (const char *gender)
 		return GENDER_NEUTER;
 	else
 		return GENDER_MALE;
+}
+
+static int D_PlayerClassToInt (const char *classname)
+{
+	for (int i = 1; i <= 3; ++i)
+	{
+		if (stricmp (PlayerClassNames[i], classname) == 0)
+		{
+			return i-1;
+		}
+	}
+	return -1;
 }
 
 void D_GetPlayerColor (int player, float *h, float *s, float *v)
@@ -219,6 +240,35 @@ int D_PickRandomTeam ()
 	return team;
 }
 
+static void UpdateTeam (int pnum, int team, bool update)
+{
+	userinfo_t *info = &players[pnum].userinfo;
+	int oldteam;
+
+	oldteam = info->team;
+	info->team = team;
+
+	if (teamplay && info->team >= NUM_TEAMS)
+	{ // Force players onto teams in teamplay mode
+		info->team = D_PickRandomTeam ();
+	}
+	if (update && oldteam != info->team)
+	{
+		if (info->team < NUM_TEAMS)
+			Printf ("%s joined the %s team\n", info->netname, TeamNames[info->team]);
+		else
+			Printf ("%s is now a loner\n", info->netname);
+	}
+	// Let the player take on the team's color
+	R_BuildPlayerTranslation (pnum);
+	if (StatusBar != NULL && pnum == displayplayer)
+	{
+		StatusBar->AttachToPlayer (&players[pnum]);
+	}
+	if ((unsigned)info->team >= NUM_TEAMS)
+		info->team = TEAM_None;
+}
+
 int D_GetFragCount (player_t *player)
 {
 	if (!teamplay || player->userinfo.team >= NUM_TEAMS)
@@ -273,6 +323,7 @@ void D_SetupUserInfo ()
 	coninfo->neverswitch = neverswitchonpickup;
 	coninfo->MoveBob = (fixed_t)(65536.f * movebob);
 	coninfo->StillBob = (fixed_t)(65536.f * stillbob);
+	coninfo->PlayerClass = D_PlayerClassToInt (playerclass);
 	R_BuildPlayerTranslation (consoleplayer);
 }
 
@@ -327,6 +378,18 @@ static const char *SetServerVar (char *name, ECVarType type, byte **stream)
 	if (type == CVAR_String)
 	{
 		delete[] value.String;
+	}
+
+	if (var == &teamplay)
+	{
+		// Put players on teams if teamplay turned on
+		for (int i = 0; i < MAXPLAYERS; ++i)
+		{
+			if (playeringame[i])
+			{
+				UpdateTeam (i, players[i].userinfo.team, true);
+			}
+		}
 	}
 
 	if (var)
@@ -403,6 +466,7 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 					 "\\neverswitchonpickup\\%d"
 					 "\\movebob\\%g"
 					 "\\stillbob\\%g",
+					 "\\playerclass\\%s",
 					 info->netname,
 					 (double)info->aimdist / (float)ANGLE_1,
 					 RPART(info->color), GPART(info->color), BPART(info->color),
@@ -411,7 +475,8 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 						info->gender == GENDER_NEUTER ? "cyborg" : "male",
 					 info->neverswitch,
 					 (float)(info->MoveBob) / 65536.f,
-					 (float)(info->StillBob) / 65536.f
+					 (float)(info->StillBob) / 65536.f,
+					 PlayerClassNames[info->PlayerClass+1]
 					);
 		}
 		else
@@ -427,6 +492,7 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 				"\\%d"			// neverswitchonpickup
 				"\\%g"			// movebob
 				"\\%g"			// stillbob
+				"\\%s"			// playerclass
 				,
 				info->netname,
 				(double)info->aimdist / (float)ANGLE_1,
@@ -437,7 +503,8 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 					info->gender == GENDER_NEUTER ? "cyborg" : "male",
 				info->neverswitch,
 				(float)(info->MoveBob) / 65536.f,
-				(float)(info->StillBob) / 65536.f
+				(float)(info->StillBob) / 65536.f,
+				PlayerClassNames[info->PlayerClass+1]
 			);
 		}
 	}
@@ -525,32 +592,8 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 				}
 				break;
 
-			case INFO_Team:		{
-				int oldteam;
-
-				oldteam = info->team;
-				info->team = atoi (value);
-
-				if (teamplay && info->team >= NUM_TEAMS)
-				{ // Force players onto teams in teamplay mode
-					info->team = D_PickRandomTeam ();
-				}
-				if (update && oldteam != info->team)
-				{
-					if (info->team < NUM_TEAMS)
-						Printf ("%s joined the %s team\n", info->netname, TeamNames[info->team]);
-					else
-						Printf ("%s is now a loner\n", info->netname);
-				}
-				// Let the player take on the team's color
-				R_BuildPlayerTranslation (i);
-				if (StatusBar != NULL && i == displayplayer)
-				{
-					StatusBar->AttachToPlayer (&players[i]);
-				}
-				if ((unsigned)info->team >= NUM_TEAMS)
-					info->team = TEAM_None;
-								}
+			case INFO_Team:
+				UpdateTeam (i, atoi(value), update);
 				break;
 
 			case INFO_Color:
@@ -564,14 +607,22 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 
 			case INFO_Skin:
 				info->skin = R_FindSkin (value);
-				if (players[i].mo != NULL)
+				if (gameinfo.gametype != GAME_Hexen)
 				{
-					if (players[i].mo->state->sprite.index ==
-						GetDefaultByType (players[i].cls)->SpawnState->sprite.index)
-					{ // Only change the sprite if the player is using a standard one
-						players[i].mo->sprite = skins[info->skin].sprite;
+					if (players[i].mo != NULL && gameinfo.gametype != GAME_Hexen)
+					{
+						if (players[i].cls != NULL &&
+							players[i].mo->state->sprite.index ==
+							GetDefaultByType (players[i].cls)->SpawnState->sprite.index)
+						{ // Only change the sprite if the player is using a standard one
+							players[i].mo->sprite = skins[info->skin].sprite;
+							players[i].mo->xscale = players[i].mo->yscale = skins[info->skin].scale;
+						}
 					}
 					players[i].skin = &skins[info->skin];
+					// Rebuild translation in case the new skin uses a different range
+					// than the old one.
+					R_BuildPlayerTranslation (i);
 				}
 				if (StatusBar != NULL && i == displayplayer)
 				{
@@ -604,6 +655,10 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 
 			case INFO_StillBob:
 				info->StillBob = (fixed_t)(atof (value) * 65536.f);
+				break;
+
+			case INFO_PlayerClass:
+				info->PlayerClass = D_PlayerClassToInt (value);
 				break;
 
 			default:
@@ -671,5 +726,6 @@ CCMD (playerinfo)
 		Printf ("NeverSwitch: %d\n", players[i].userinfo.neverswitch);
 		Printf ("MoveBob:     %g\n", players[i].userinfo.MoveBob/65536.f);
 		Printf ("StillBob:    %g\n", players[i].userinfo.StillBob/65536.f);
+		Printf ("PlayerClass: %d\n", players[i].userinfo.PlayerClass);
 	}
 }

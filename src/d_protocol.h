@@ -128,6 +128,8 @@ enum EDemoCommand
 	DEM_FOV,			// Byte: New FOV for all players
 	DEM_MYFOV,			// Byte: New FOV for this player
 	DEM_CHANGEMAP2,		// Byte: Position in new map, String: name of new map
+	DEM_SLOTSCHANGE,	// Stream: New weapon slot assignments
+	DEM_SLOTCHANGE,		// Byte: Slot, Stream: Weapon assigments
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

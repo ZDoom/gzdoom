@@ -30,6 +30,10 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
+** I appologize for the mess that this file has become. It works, but it's
+** not pretty. The SPC, Timidity, and OPL playback routines are also too
+** FMOD-specific. I should have made some generic streaming class for them
+** to utilize so that they can work with other sound systems, too.
 */
 
 #ifndef NOSPC
@@ -75,15 +79,19 @@
 #include "m_swap.h"
 #include "i_cd.h"
 #include "tempfiles.h"
+#include "templates.h"
+#include "oplsynth/opl_mus_player.h"
 
 #include <fmod.h>
+
+EXTERN_CVAR (Int, snd_samplerate)
 
 void Enable_FSOUND_IO_Loader ();
 void Disable_FSOUND_IO_Loader ();
 
 static bool MusicDown = true;
 
-extern int _nosound;
+extern bool nofmod;
 
 class MusInfo
 {
@@ -375,6 +383,33 @@ CUSTOM_CVAR (Int, timidity_frequency, 22050, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 65000;
 }
 
+// MUS file played using a software OPL2 synth
+class OPLMUSSong : public StreamSong
+{
+public:
+	OPLMUSSong (int handle, int pos, int len);
+	~OPLMUSSong ();
+	void Play (bool looping);
+	bool IsPlaying ();
+	bool IsValid () const;
+
+protected:
+	static signed char STACK_ARGS FillStream (FSOUND_STREAM *stream, void *buff, int len, int param);
+
+	OPLmusicBlock *Music;
+};
+
+CUSTOM_CVAR (Int, opl_frequency, 11025, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{ // Clamp frequency to FMOD's limits
+	if (self < 4000)
+		self = 4000;
+	else if (self > 65535)
+		self = 65535;
+}
+
+CVAR (Bool, opl_enable, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+
 // CD track/disk played through the multimedia system
 class CDSong : public MusInfo
 {
@@ -623,6 +658,53 @@ CCMD (snd_listmididevices)
 		}
 	}
 }
+
+#include "m_menu.h"
+
+void I_BuildMIDIMenuList (struct value_s **outValues, float *numValues)
+{
+	if (*outValues == NULL)
+	{
+		int count = 2 + nummididevices + (nummididevices > 0);
+		value_t *values;
+
+		*outValues = values = new value_t[count];
+
+		values[0].name = "DirectMusic";
+		values[0].value = -3.0;
+		values[1].name = "TiMidity++";
+		values[1].value = -2.0;
+		if (nummididevices > 0)
+		{
+			UINT id;
+			int p;
+
+			values[2].name = "MIDI Mapper";
+			values[2].value = -1.0;
+			for (id = 0, p = 3; id < nummididevices; ++id)
+			{
+				MIDIOUTCAPS caps;
+				MMRESULT res;
+
+				res = midiOutGetDevCaps (id, &caps, sizeof(caps));
+				if (res == MMSYSERR_NOERROR)
+				{
+					size_t len = strlen (caps.szPname) + 1;
+					values[p].name = new char[len];
+					values[p].value = (float)id;
+					memcpy (values[p].name, caps.szPname, len);
+					++p;
+				}
+			}
+			*numValues = (float)p;
+		}
+		else
+		{
+			*numValues = 2.f;
+		}
+	}
+}
+
 #endif
 
 void I_InitMusic (void)
@@ -1322,19 +1404,26 @@ void *I_RegisterSong (int handle, int pos, int len)
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
 		// This is a mus file
+		if (!nofmod && opl_enable)
+		{
+			info = new OPLMUSSong (handle, pos, len);
+		}
+		if (info == NULL)
+		{
 #ifdef _WIN32
-		if (snd_mididevice == -3)
-		{
-			info = new DMusSong (handle, pos, len);
-		}
-		else if (snd_mididevice != -2)
-		{
-			info = new MUSSong (handle, pos, len);
-		}
-		else if (!_nosound)
+			if (snd_mididevice == -3)
+			{
+				info = new DMusSong (handle, pos, len);
+			}
+			else if (snd_mididevice != -2)
+			{
+				info = new MUSSong (handle, pos, len);
+			}
+			else if (!nofmod)
 #endif // _WIN32
-		{
-			info = new TimiditySong (handle, pos, len);
+			{
+				info = new TimiditySong (handle, pos, len);
+			}
 		}
 	}
 	else if (id == MAKE_ID('M','T','h','d'))
@@ -1349,7 +1438,7 @@ void *I_RegisterSong (int handle, int pos, int len)
 		{
 			info = new MIDISong (handle, pos, len);
 		}
-		else if (!_nosound)
+		else if (!nofmod)
 #endif // _WIN32
 		{
 			info = new TimiditySong (handle, pos, len);
@@ -1381,7 +1470,7 @@ void *I_RegisterSong (int handle, int pos, int len)
 				info = new CDDAFile (handle, pos, len);
 			}
 		}
-		if (info == NULL && !_nosound)	// no FSOUND => no modules/streams
+		if (info == NULL && !nofmod)	// no FMOD => no modules/streams
 		{
 			// First try loading it as MOD, then as a stream
 			info = new MODSong (handle, pos, len);
@@ -2235,11 +2324,14 @@ SPCSong::SPCSong (int handle, int pos, int len)
 		return;
 	}
 
+	// No sense in using a higher frequency than the final output
+	int freq = MIN (*spc_frequency, *snd_samplerate);
+
 	m_Stream = FSOUND_Stream_Create (FillStream, 16384,
 		FSOUND_SIGNED | FSOUND_2D |
 		(spc_stereo ? FSOUND_STEREO : FSOUND_MONO) |
 		(spc_8bit ? FSOUND_8BITS : FSOUND_16BITS),
-		spc_frequency, (int)this);
+		freq, (int)this);
 	if (m_Stream == NULL)
 	{
 		Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
@@ -2248,7 +2340,7 @@ SPCSong::SPCSong (int handle, int pos, int len)
 	}
 
 	ResetAPU (spc_amp);
-	SetAPUOpt (0, spc_stereo + 1, spc_8bit ? 8 : 16, spc_frequency, spc_quality,
+	SetAPUOpt (0, spc_stereo + 1, spc_8bit ? 8 : 16, freq, spc_quality,
 		(spc_lowpass ? 1 : 0) | (spc_oldsamples ? 2 : 0) | (spc_surround ? 4 : 0));
 
 	BYTE spcfile[66048];
@@ -2350,3 +2442,67 @@ void SPCSong::CloseEmu ()
 	}
 }
 #endif
+
+OPLMUSSong::OPLMUSSong (int handle, int pos, int len)
+{
+	// No sense in using a sample rate higher than the output rate
+	int rate = MIN (*opl_frequency, *snd_samplerate);
+
+	Music = new OPLmusicBlock (handle, pos, len, rate, 16384/2);
+
+	m_Stream = FSOUND_Stream_Create (FillStream, 16384,
+		FSOUND_SIGNED | FSOUND_2D | FSOUND_MONO | FSOUND_16BITS,
+		rate, (int)this);
+	if (m_Stream == NULL)
+	{
+		Printf (PRINT_BOLD, "Could not create FMOD music stream.\n");
+		delete Music;
+		return;
+	}
+}
+
+OPLMUSSong::~OPLMUSSong ()
+{
+	Stop ();
+	if (Music != NULL)
+	{
+		delete Music;
+	}
+}
+
+bool OPLMUSSong::IsValid () const
+{
+	return m_Stream != NULL;
+}
+
+bool OPLMUSSong::IsPlaying ()
+{
+	return m_Status == STATE_Playing;
+}
+
+void OPLMUSSong::Play (bool looping)
+{
+	int volume = (int)(snd_musicvolume * 255);
+
+	m_Status = STATE_Stopped;
+	m_Looping = looping;
+
+	Music->SetLooping (looping);
+	Music->Restart ();
+
+	m_Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, m_Stream, NULL, true);
+	if (m_Channel != -1)
+	{
+		FSOUND_SetVolumeAbsolute (m_Channel, volume);
+		FSOUND_SetPan (m_Channel, FSOUND_STEREOPAN);
+		FSOUND_SetPaused (m_Channel, false);
+		m_Status = STATE_Playing;
+	}
+}
+
+signed char STACK_ARGS OPLMUSSong::FillStream (FSOUND_STREAM *stream, void *buff, int len, int param)
+{
+	OPLMUSSong *song = (OPLMUSSong *)param;
+	song->Music->ServiceStream (buff, len);
+	return TRUE;
+}

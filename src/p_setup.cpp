@@ -41,7 +41,7 @@
 #include "p_local.h"
 #include "p_effect.h"
 #include "p_terrain.h"
-#include "p_nodebuild.h"
+#include "nodebuild.h"
 #include "s_sound.h"
 #include "doomstat.h"
 #include "p_lnspec.h"
@@ -51,6 +51,7 @@
 #include "vectors.h"
 #include "announcer.h"
 #include "wi_stuff.h"
+#include "stats.h"
 
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t *start);
@@ -63,6 +64,8 @@ extern unsigned int R_OldBlend;
 
 CVAR (Bool, genblockmap, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_GLOBALCONFIG);
+
+static void P_InitTagLists ();
 
 //
 // MAP related Lookup tables.
@@ -89,6 +92,9 @@ line_t* 		lines;
 int 			numsides;
 side_t* 		sides;
 
+FExtraLight*	ExtraLights;
+FLightStack*	LightStacks;
+
 int sidecount;
 struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 {
@@ -114,6 +120,8 @@ static WORD		*linemap;
 // [RH] Set true if the map contains a BEHAVIOR lump
 BOOL			HasBehavior;
 
+EXTERN_CVAR(Bool, r_experimental)
+bool			UsingGLNodes;
 
 // BLOCKMAP
 // Created from axis aligned bounding box
@@ -280,6 +288,7 @@ void P_LoadSegs (int lump)
 
 		li->v1 = &vertexes[SHORT(ml->v1)];
 		li->v2 = &vertexes[SHORT(ml->v2)];
+		li->PartnerSeg = NULL;
 
 		segangle = (WORD)SHORT(ml->angle);
 
@@ -503,13 +512,13 @@ void P_LoadSectors (int lump)
 		{
 			if (fogMap == NULL)
 				fogMap = GetSpecialLights (PalEntry (255,255,255), level.outsidefog);
-			ss->ceilingcolormap = ss->floorcolormap = fogMap;
+			ss->ColorMap = fogMap;
 		}
 		else
 		{
 			if (normMap == NULL)
 				normMap = GetSpecialLights (PalEntry (255,255,255), level.fadeto);
-			ss->ceilingcolormap = ss->floorcolormap = normMap;
+			ss->ColorMap = normMap;
 		}
 
 		// killough 8/28/98: initialize all sectors to normal friction
@@ -1406,8 +1415,7 @@ void P_LoadSideDefs2 (int lump)
 					{
 						if (sectors[s].tag == sidetemp[i].a.tag)
 						{
-							sectors[s].ceilingcolormap =
-								sectors[s].floorcolormap = colormap;
+							sectors[s].ColorMap = colormap;
 						}
 					}
 				}
@@ -1710,17 +1718,19 @@ static void P_CreateBlockMap ()
 		blockmaplump[ndx++] = -1;	// (Used for compression)
 
 		for (i = 4; (unsigned)i < tot; i++, bp++)
-		if (bp->n)											// Non-empty blocklist
 		{
-			blockmaplump[blockmaplump[i] = ndx++] = 0;		// Store index & header
-			do
-				blockmaplump[ndx++] = bp->list[--bp->n];	// Copy linedef list
-			while (bp->n);
-			blockmaplump[ndx++] = -1;						// Store trailer
-			free(bp->list);									// Free linedef list
+			if (bp->n)											// Non-empty blocklist
+			{
+				blockmaplump[blockmaplump[i] = ndx++] = 0;		// Store index & header
+				do
+					blockmaplump[ndx++] = bp->list[--bp->n];	// Copy linedef list
+				while (bp->n);
+				blockmaplump[ndx++] = -1;						// Store trailer
+				free(bp->list);									// Free linedef list
+			}
+			else			// Empty blocklist: point to reserved empty blocklist
+				blockmaplump[i] = tot;
 		}
-		else			// Empty blocklist: point to reserved empty blocklist
-			blockmaplump[i] = tot;
 
 		free (bmap);	// Free uncompressed blockmap
 	}
@@ -1744,7 +1754,7 @@ void P_LoadBlockMap (int lump)
 		Args.CheckParm("-blockmap") ||
 		W_LumpLength (lump) == 0)
 	{
-		DPrintf ("Generating BLOCKMAP lump\n");
+		DPrintf ("Generating BLOCKMAP\n");
 		P_CreateBlockMap ();
 	}
 	else
@@ -1790,33 +1800,53 @@ void P_LoadBlockMap (int lump)
 // P_GroupLines
 // Builds sector line lists and subsector sector numbers.
 // Finds block bounding boxes for sectors.
+// [RH] Handles extra lights
 //
-void P_GroupLines ()
+struct linf { short tag; WORD count; };
+static void P_GroupLines (bool buildmap)
 {
+	TArray<linf>		exLightTags;
 	line_t**			linebuffer;
 	int 				i;
 	int 				j;
 	int 				total;
+	int					totallights;
 	line_t* 			li;
 	sector_t*			sector;
 	DBoundingBox		bbox;
 	bool				flaggedNoFronts = false;
+	size_t				ii, jj;
 		
 	// look up sector number for each subsector
 	for (i = 0; i < numsubsectors; i++)
+	{
 		subsectors[i].sector = segs[subsectors[i].firstline].sidedef->sector;
+		subsectors[i].validcount = validcount;
+
+		double accumx = 0.0, accumy = 0.0;
+
+		for (j = 0; j < subsectors[i].numlines; ++j)
+		{
+			seg_t *seg = &segs[subsectors[i].firstline + j];
+			seg->Subsector = &subsectors[i];
+			accumx += seg->v1->x + seg->v2->x;
+			accumy += seg->v1->y + seg->v2->y;
+		}
+		subsectors[i].CenterX = fixed_t(accumx * 0.5 / subsectors[i].numlines);
+		subsectors[i].CenterY = fixed_t(accumy * 0.5 / subsectors[i].numlines);
+	}
 
 	// count number of lines in each sector
-	li = lines;
 	total = 0;
-	for (i = 0; i < numlines; i++, li++)
+	totallights = 0;
+	for (i = 0, li = lines; i < numlines; i++, li++)
 	{
 		if (li->frontsector == NULL)
 		{
 			if (!flaggedNoFronts)
 			{
 				flaggedNoFronts = true;
-				Printf ("The following lines do not have a frontsector:\n");
+				Printf ("The following lines do not have a front sidedef:\n");
 			}
 			Printf (" %d\n", i);
 		}
@@ -1831,10 +1861,46 @@ void P_GroupLines ()
 			li->backsector->linecount++;
 			total++;
 		}
+
+		// [RH] Count extra lights
+		if (li->special == ExtraFloor_LightOnly)
+		{
+			int adder = li->args[1] == 1 ? 2 : 1;
+
+			for (ii = 0; ii < exLightTags.Size(); ++ii)
+			{
+				if (exLightTags[ii].tag == li->args[0])
+					break;
+			}
+			if (ii == exLightTags.Size())
+			{
+				linf info = { li->args[0], adder };
+				exLightTags.Push (info);
+				totallights += adder;
+			}
+			else
+			{
+				totallights += adder;
+				exLightTags[ii].count += adder;
+			}
+		}
 	}
 	if (flaggedNoFronts)
 	{
-		I_Error ("This map contains errors that must be fixed.\n");
+		I_Error ("You need to fix these lines to play this map.\n");
+	}
+
+	// collect extra light info
+	LightStacks = (FLightStack *)Z_Malloc(totallights*sizeof(FLightStack), PU_LEVEL, NULL);
+	ExtraLights = (FExtraLight *)Z_Malloc(exLightTags.Size()*sizeof(FExtraLight), PU_LEVEL, NULL);
+	memset (ExtraLights, 0, exLightTags.Size()*sizeof(FExtraLight));
+
+	for (ii = 0, jj = 0; ii < exLightTags.Size(); ++ii)
+	{
+		ExtraLights[ii].Tag = exLightTags[ii].tag;
+		ExtraLights[ii].NumLights = exLightTags[ii].count;
+		ExtraLights[ii].Lights = &LightStacks[jj];
+		jj += ExtraLights[ii].NumLights;
 	}
 
 	// build line tables for each sector		
@@ -1872,6 +1938,42 @@ void P_GroupLines ()
 		sector->soundorg[0] = (bbox.Right()+bbox.Left())/2;
 		sector->soundorg[1] = (bbox.Top()+bbox.Bottom())/2;
 
+		// Find a triangle in the sector for sorting extra lights
+		// The points must be in the sector, because intersecting
+		// planes are okay so long as they intersect beyond all
+		// sectors that use them.
+		if (sector->linecount == 0)
+		{ // If the sector has no lines, its tag is guaranteed to be 0, which
+		  // means it cannot be used for extralights. So just use some dummy
+		  // vertices for the triangle.
+			sector->Triangle[0] = vertexes;
+			sector->Triangle[1] = vertexes;
+			sector->Triangle[2] = vertexes;
+		}
+		else
+		{
+			sector->Triangle[0] = sector->lines[0]->v1;
+			sector->Triangle[1] = sector->lines[0]->v2;
+			sector->Triangle[2] = sector->Triangle[0];	// failsafe
+			if (sector->linecount > 1)
+			{
+				fixed_t dx = sector->Triangle[1]->x - sector->Triangle[0]->x;
+				fixed_t dy = sector->Triangle[1]->y - sector->Triangle[1]->y;
+				// Find another point in the sector that does not lie
+				// on the same line as the first two points.
+				for (j = 2; j < sector->linecount*2; ++j)
+				{
+					vertex_t *v;
+
+					v = (j & 1) ? sector->lines[j>>1]->v1 : sector->lines[j>>1]->v2;
+					if (DMulScale32 (v->y - sector->Triangle[0]->y, dx,
+									sector->Triangle[0]->x - v->x, dy) != 0)
+					{
+						sector->Triangle[2] = v;
+					}
+				}
+			}
+		}
 #if 0
 		int block;
 
@@ -1892,6 +1994,89 @@ void P_GroupLines ()
 		block = block < 0 ? 0 : block;
 		//sector->blockbox.Left()=block;
 #endif
+	}
+
+	// [RH] Moved this here
+	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
+
+	if (!buildmap)
+	{
+		P_SetSlopes ();
+	}
+
+	for (i = 0, li = lines; i < numlines; ++i, ++li)
+	{
+		if (li->special == ExtraFloor_LightOnly)
+		{
+			for (ii = 0; ii < exLightTags.Size(); ++ii)
+			{
+				if (ExtraLights[ii].Tag == li->args[0])
+					break;
+			}
+			if (ii < exLightTags.Size())
+			{
+				ExtraLights[ii].InsertLight (li->frontsector->ceilingplane, li, li->args[1] == 2);
+				if (li->args[1] == 1)
+				{
+					ExtraLights[ii].InsertLight (li->frontsector->floorplane, li, 2);
+				}
+				j = -1;
+				while ((j = P_FindSectorFromTag (li->args[0], j)) >= 0)
+				{
+					sectors[j].ExtraLights = &ExtraLights[ii];
+				}
+			}
+		}
+	}
+}
+
+void FExtraLight::InsertLight (const secplane_t &inplane, line_t *line, int type)
+{
+	// type 0 : !bottom, !flooder
+	// type 1 : !bottom, flooder
+	// type 2 : bottom, !flooder
+
+	vertex_t **triangle = line->frontsector->Triangle;
+	int i, j;
+	fixed_t diff;
+	secplane_t plane = inplane;
+
+	if (type != 2)
+	{
+		plane.FlipVert ();
+	}
+
+	// Find the first plane this light is above and insert it there
+	for (i = 0; i < NumUsedLights; ++i)
+	{
+		for (j = 0; j < 3; ++j)
+		{
+			diff = plane.ZatPoint (triangle[j]) - Lights[i].Plane.ZatPoint (triangle[j]);
+			if (diff != 0)
+			{
+				break;
+			}
+		}
+		if (diff >= 0)
+		{
+			break;
+		}
+	}
+	if (i < NumLights)
+	{
+		for (j = MIN<int>(NumUsedLights, NumLights-1); j > i; --j)
+		{
+			Lights[j] = Lights[j-1];
+		}
+		Lights[i].Plane = plane;
+		Lights[i].Master = type == 2 ? NULL : line->frontsector;
+		Lights[i].bBottom = type == 2;
+		Lights[i].bFlooder = type == 1;
+		Lights[i].bOverlaps = diff == 0;
+		if (NumUsedLights < NumLights)
+		{
+			++NumUsedLights;
+		}
 	}
 }
 
@@ -2008,7 +2193,6 @@ static void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, T
 //
 // P_SetupLevel
 //
-extern AActor *bodyquesize[];
 extern polyblock_t **PolyBlockMap;
 
 // [RH] position indicates the start spot to spawn at
@@ -2112,24 +2296,37 @@ void P_SetupLevel (char *lumpname, int position)
 
 	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
 
+	UsingGLNodes = false;
 	if (!ForceNodeBuild) P_LoadNodes (lumpnum+ML_NODES);
 	if (!ForceNodeBuild) P_LoadSubsectors (lumpnum+ML_SSECTORS);
 	if (!ForceNodeBuild) P_LoadSegs (lumpnum+ML_SEGS);
 	if (ForceNodeBuild)
 	{
+		cycle_t nodeBuildCycles = 0;
+
+		clock (nodeBuildCycles);
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
 		P_GetPolySpots (lumpnum+ML_THINGS, polyspots, anchors);
-		FNodeBuilder builder (lines, numlines, vertexes, numvertexes, sides, numsides, polyspots, anchors);
+		FNodeBuilder::FLevel leveldata =
+		{
+			vertexes, numvertexes,
+			sides, numsides,
+			lines, numlines
+		};
+		FNodeBuilder builder (leveldata, polyspots, anchors, r_experimental);
+		UsingGLNodes = r_experimental;
 		Z_Free (vertexes);
-		builder.Create (nodes, numnodes,
+		builder.Extract (nodes, numnodes,
 			segs, numsegs,
 			subsectors, numsubsectors,
 			vertexes, numvertexes);
+		unclock (nodeBuildCycles);
+		Printf ("BSP generation took %.5f sec\n", SecondsPerCycle * (double)nodeBuildCycles);
 	}
 
 	P_LoadReject (lumpnum+ML_REJECT, buildmap);
 
-	P_GroupLines ();
+	P_GroupLines (buildmap);
 
 	bodyqueslot = 0;
 // phares 8/10/98: Clear body queue so the corpses from previous games are
@@ -2143,13 +2340,6 @@ void P_SetupLevel (char *lumpname, int position)
 	po_NumPolyobjs = 0;
 
 	deathmatchstarts.Clear ();
-
-	if (!buildmap)
-	{
-		P_SetSlopes ();
-	}
-
-	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
 
 	if (!buildmap)
 	{

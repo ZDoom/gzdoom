@@ -262,8 +262,8 @@ public:
 	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
 	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
 
-	char *operator= (char *stringrep)
-		{ UCVarValue val; val.String = stringrep; SetGenericRep (val, CVAR_String); return stringrep; }
+	const char *operator= (const char *stringrep)
+		{ UCVarValue val; val.String = const_cast<char *>(stringrep); SetGenericRep (val, CVAR_String); return stringrep; }
 	inline operator const char * () const { return Value; }
 	inline const char *operator *() const { return Value; }
 

@@ -101,6 +101,8 @@ ACTOR(UnSetReflectiveInvulnerable)
 ACTOR(SetShootable)
 ACTOR(UnSetShootable)
 ACTOR(NoGravity)
+ACTOR(Gravity)
+ACTOR(LowGravity)
 
 #undef WEAPON
 #undef ACTOR

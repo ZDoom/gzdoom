@@ -264,6 +264,8 @@ void P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx, f
 // lookups maintaining lists of things inside
 // these structures need to be updated.
 //
+int linkfoo;
+
 void AActor::UnlinkFromWorld ()
 {
 	sector_list = NULL;
@@ -276,10 +278,12 @@ void AActor::UnlinkFromWorld ()
 		// pointers, allows head node pointers to be treated like everything else
 		AActor **prev = sprev;
 		AActor  *next = snext;
+		linkfoo = 1;
 		if ((*prev = next))  // unlink from sector list
 			next->sprev = prev;
 		snext = NULL;
-		sprev = NULL;
+		sprev = (AActor **)0xbeefcafe;
+		linkfoo = 0;
 
 		// phares 3/14/98
 		//
@@ -336,12 +340,14 @@ void AActor::LinkToWorld ()
 		// killough 8/11/98: simpler scheme using pointer-to-pointer prev
 		// pointers, allows head nodes to be treated like everything else
 
+		linkfoo = 1;
 		AActor **link = &sec->thinglist;
 		AActor *next = *link;
 		if ((snext = next))
 			next->sprev = &snext;
 		sprev = link;
 		*link = this;
+		linkfoo = 0;
 
 		// phares 3/16/98
 		//
@@ -461,12 +467,11 @@ BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*))
 		/* <-- Polyobj stuff from Hexen */
 
 		offset = *(blockmap + offset);
-		list = blockmaplump + offset;
 
-		// [RH] Get past starting 0 (from BOOM)
-		list++;
-
-		for (; *list != -1; list++)
+		// There is an extra entry at the beginning of every block.
+		// Apparently, id had originally intended for it to be used
+		// to keep track of things, but the final code does not do that.
+		for (list = blockmaplump + offset + 1; *list != -1; list++)
 		{
 			line_t *ld = &lines[*list];
 

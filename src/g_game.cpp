@@ -125,7 +125,7 @@ int 			consoleplayer;			// player taking events and displaying
 int 			displayplayer;			// view being displayed 
 int 			gametic;
 
-CVAR(Bool, demo_compress, true, CVAR_ARCHIVE);
+CVAR(Bool, demo_compress, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 char			demoname[256];
 BOOL 			demorecording;
 BOOL 			demoplayback;
@@ -209,23 +209,7 @@ artitype_t LocalSelectedItem;
 
 EXTERN_CVAR (Int, team)
 
-CUSTOM_CVAR (Bool, teamplay, false, CVAR_SERVERINFO)
-{
-	// Update player colors for team play
-	for (int i = 0; i < MAXPLAYERS; ++i)
-	{
-		if (playeringame[i])
-		{
-			R_BuildPlayerTranslation (i);
-		}
-	}
-	if (StatusBar != NULL)
-	{
-		StatusBar->AttachToPlayer (&players[displayplayer]);
-	}
-	// Update the player's userinfo team with their team cvar
-	team = team;
-}
+CVAR (Bool, teamplay, false, CVAR_SERVERINFO)
 
 // [RH] Allow turbo setting anytime during game
 CUSTOM_CVAR (Float, turbo, 100.f, 0)
@@ -529,13 +513,6 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	else if (side < -MAXPLMOVE)
 		side = -MAXPLMOVE;
 
-	if (players[consoleplayer].powers[pw_speed]
-		&& !players[consoleplayer].morphTics)
-	{ // Adjust for a player with a speed artifact
-		forward = (3*forward)>>1;
-		side = (3*side)>>1;
-	}
-
 	cmd->ucmd.forwardmove += forward;
 	cmd->ucmd.sidemove += side;
 	cmd->ucmd.pitch = look;
@@ -615,16 +592,22 @@ CVAR (Bool, bot_allowspy, false, 0)
 CCMD (spynext)
 {
 	// allow spy mode changes even during the demo
-	if (gamestate == GS_LEVEL && (demoplayback || !netgame || !deathmatch))
+	if (gamestate == GS_LEVEL)
 	{
-		if (deathmatch && bglobal.botnum && !bot_allowspy)
-			return;
+		bool checkTeam = !demoplayback && deathmatch;
+
 		do
 		{
 			displayplayer++;
 			if (displayplayer == MAXPLAYERS)
 				displayplayer = 0;
-		} while (!playeringame[displayplayer] && displayplayer != consoleplayer);
+			if (playeringame[displayplayer] &&
+				(!checkTeam || players[displayplayer].mo->IsTeammate (players[consoleplayer].mo) ||
+				(bot_allowspy && players[displayplayer].isbot)))
+			{
+				break;
+			}
+		} while (displayplayer != consoleplayer);
 
 		ChangeSpy ();
 	}
@@ -633,17 +616,22 @@ CCMD (spynext)
 CCMD (spyprev)
 {
 	// allow spy mode changes even during the demo
-	if (gamestate == GS_LEVEL && (demoplayback || !netgame || !deathmatch))
+	if (gamestate == GS_LEVEL)
 	{
-		if (deathmatch && bglobal.botnum && !bot_allowspy)
-			return;
-		do 
-		{ 
-			displayplayer--; 
-			if (displayplayer < 0) 
-				displayplayer = MAXPLAYERS - 1; 
-		} while (!playeringame[displayplayer] && displayplayer != consoleplayer);
+		bool checkTeam = !demoplayback && deathmatch;
 
+		do
+		{
+			displayplayer--;
+			if (displayplayer < 0)
+				displayplayer = MAXPLAYERS - 1;
+			if (playeringame[displayplayer] &&
+				(!checkTeam || players[displayplayer].mo->IsTeammate (players[consoleplayer].mo) ||
+				(bot_allowspy && players[displayplayer].isbot)))
+			{
+				break;
+			}
+		} while (displayplayer != consoleplayer);
 		ChangeSpy ();
 	}
 }
@@ -985,7 +973,9 @@ void G_PlayerReborn (int player)
 	int 		killcount;
 	int 		itemcount;
 	int 		secretcount;
+	BYTE		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
+	FWeaponSlots slots;		// save weapon slots too
 	botskill_t  b_skill;//Added by MC:
 	APlayerPawn *actor;
 	const TypeInfo *cls;
@@ -997,6 +987,8 @@ void G_PlayerReborn (int player)
 	killcount = p->killcount;
 	itemcount = p->itemcount;
 	secretcount = p->secretcount;
+	currclass = p->CurrentPlayerClass;
+	slots = p->WeaponSlots;
     b_skill = p->skill;    //Added by MC:
 	memcpy (&userinfo, &p->userinfo, sizeof(userinfo));
 	actor = p->mo;
@@ -1009,6 +1001,8 @@ void G_PlayerReborn (int player)
 	p->killcount = killcount;
 	p->itemcount = itemcount;
 	p->secretcount = secretcount;
+	p->CurrentPlayerClass = currclass;
+	p->WeaponSlots = slots;
 	memcpy (&p->userinfo, &userinfo, sizeof(userinfo));
 	p->mo = actor;
 	p->cls = cls;
@@ -1196,9 +1190,13 @@ void G_DeathMatchSpawnPlayer (int playernum)
 static void G_QueueBody (AActor *body)
 {
 	// flush an old corpse if needed
-	if (bodyqueslot >= BODYQUESIZE)
-		bodyque[bodyqueslot%BODYQUESIZE]->Destroy ();
-	bodyque[bodyqueslot%BODYQUESIZE] = body;
+	int modslot = bodyqueslot%BODYQUESIZE;
+
+	if (bodyqueslot >= BODYQUESIZE && bodyque[modslot] != NULL)
+	{
+		bodyque[modslot]->Destroy ();
+	}
+	bodyque[modslot] = body;
 	bodyqueslot++;
 }
 
@@ -1327,9 +1325,12 @@ static bool CheckSingleWad (char *name, bool &printRequires)
 		if (!printRequires)
 		{
 			printRequires = true;
-			Printf ("This savegame needs these wads:\n");
+			Printf ("This savegame needs these wads:\n%s", name);
 		}
-		Printf ("%s, ", name);
+		else
+		{
+			Printf (", %s", name);
+		}
 		delete[] name;
 		return false;
 	}
@@ -1395,11 +1396,14 @@ void G_DoLoadGame ()
 		return;
 	}
 
+	SaveVersion = 0;
+
 	if (!M_VerifyPNG (stdfile) ||
 		!(text = M_GetPNGText (stdfile, "ZDoom Save Version")) ||
-		0 != strcmp (text, SAVESIG))
+		0 != strncmp (text, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
+		(SaveVersion = atoi (text+9)) < MINSAVEVER)	// 200 is the minimum supported savever
 	{
-		Printf ("Savegame is from a different version\n");
+		Printf ("Savegame is from an incompatible version\n");
 		if (text != NULL)
 		{
 			delete[] text;
@@ -1685,6 +1689,7 @@ void G_DoSaveGame (bool okForQuicksave)
 		return;
 	}
 
+	SaveVersion = SAVEVER;
 	PutSavePic (stdfile, SAVEPICWIDTH, SAVEPICHEIGHT);
 	M_AppendPNGText (stdfile, "Software", "ZDoom " DOTVERSIONSTR);
 	M_AppendPNGText (stdfile, "ZDoom Save Version", SAVESIG);
@@ -1822,11 +1827,15 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 	{
 		ptrdiff_t pos = demo_p - demobuffer;
 		ptrdiff_t spot = lenspot - demobuffer;
+		ptrdiff_t comp = democompspot - demobuffer;
+		ptrdiff_t body = demobodyspot - demobuffer;
 		// [RH] Allocate more space for the demo
 		maxdemosize += 0x20000;
 		demobuffer = (byte *)Realloc (demobuffer, maxdemosize);
 		demo_p = demobuffer + pos;
 		lenspot = demobuffer + spot;
+		democompspot = demobuffer + comp;
+		demobodyspot = demobuffer + body;
 	}
 }
 
@@ -2223,7 +2232,7 @@ BOOL G_CheckDemoStatus (void)
 			// contents of the COMP chunk will be changed to indicate the
 			// uncompressed size of the BODY.
 			uLong len = demo_p - demobodyspot;
-			uLong outlen = (len + len/1000 + 12);
+			uLong outlen = (len + len/100 + 12);
 			Byte *compressed = new Byte[outlen];
 			int r = compress2 (compressed, &outlen, demobodyspot, len, 9);
 			if (r == Z_OK && outlen < len)

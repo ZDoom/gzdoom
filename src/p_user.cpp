@@ -44,6 +44,7 @@
 
 static FRandom pr_morphplayerthink ("MorphPlayerThink");
 static FRandom pr_torch ("Torch");
+static FRandom pr_healradius ("HealRadius");
 
 extern void P_UpdateBeak (player_t *, pspdef_t *);
 
@@ -116,6 +117,16 @@ bool player_s::UseAmmo (bool doCheck)
 			if (doCheck && ammo[info->ammo] < info->ammouse)
 				return false;
 			ammo[info->ammo] -= info->ammouse;
+		}
+		else if (info->ammo == MANA_BOTH)
+		{
+			if (doCheck)
+			{
+				if (ammo[MANA_1] < info->ammouse || ammo[MANA_2] < info->ammouse)
+					return false;
+			}
+			ammo[MANA_1] -= info->ammouse;
+			ammo[MANA_2] -= info->ammouse;
 		}
 	}
 	return true;
@@ -219,6 +230,26 @@ void APlayerPawn::NoBlockingSet ()
 			P_DropItem (this, droptype, -1, 256);
 		}
 	}
+}
+
+void APlayerPawn::TweakSpeeds (int &forward, int &side)
+{
+	if (player->powers[pw_speed] && !player->morphTics)
+	{ // Adjust for a player with a speed artifact
+		forward = (3*forward)>>1;
+		side = (3*side)>>1;
+	}
+}
+
+// The standard healing radius behavior is the cleric's
+bool APlayerPawn::DoHealingRadius (APlayerPawn *other)
+{
+	if (P_GiveBody (other->player, 50 + (pr_healradius()%50)))
+	{
+		S_Sound (other, CHAN_AUTO, "MysticIncant", 1, ATTN_NORM);
+		return true;
+	}
+	return false;
 }
 
 class APlayerSpeedTrail : public AActor
@@ -361,7 +392,7 @@ void P_CalcHeight (player_t *player)
 	{
 		if (player->health > 0)
 		{
-			angle = (FINEANGLES/120*level.time) & FINEMASK;
+			angle = DivScale13 (level.time, 120*TICRATE/35) & FINEMASK;
 			bob = FixedMul (player->userinfo.StillBob, finesine[angle]);
 		}
 		else
@@ -371,7 +402,8 @@ void P_CalcHeight (player_t *player)
 	}
 	else
 	{
-		angle = (FINEANGLES/20*level.time) & FINEMASK;
+		// DivScale 13 because FINEANGLES == (1<<13)
+		angle = DivScale13 (level.time, 20*TICRATE/35) & FINEMASK;
 		bob = FixedMul (player->bob>>(player->mo->waterlevel > 1 ? 2 : 1), finesine[angle]);
 	}
 
@@ -439,7 +471,7 @@ CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)
 void P_MovePlayer (player_t *player)
 {
 	ticcmd_t *cmd = &player->cmd;
-	AActor *mo = player->mo;
+	APlayerPawn *mo = player->mo;
 
 	// [RH] 180-degree turn overrides all other yaws
 	if (player->turnticks)
@@ -470,6 +502,7 @@ void P_MovePlayer (player_t *player)
 		fixed_t forwardmove, sidemove;
 		int bobfactor;
 		int friction, movefactor;
+		int fm, sm;
 
 		movefactor = P_GetMoveFactor (mo, &friction);
 		if (player->morphTics && gameinfo.gametype == GAME_Heretic)
@@ -483,8 +516,13 @@ void P_MovePlayer (player_t *player)
 			movefactor = FixedMul (movefactor, level.aircontrol);
 			bobfactor = FixedMul (bobfactor, level.aircontrol);
 		}
-		forwardmove = (cmd->ucmd.forwardmove * movefactor) >> 8;
-		sidemove = (cmd->ucmd.sidemove * movefactor) >> 8;
+
+		fm = cmd->ucmd.forwardmove;
+		sm = cmd->ucmd.sidemove;
+		mo->TweakSpeeds (fm, sm);
+
+		forwardmove = (fm * movefactor * 35/TICRATE) >> 8;
+		sidemove = (sm * movefactor * 35/TICRATE) >> 8;
 
 		if (forwardmove)
 		{
@@ -684,7 +722,8 @@ void P_DeathThink (player_t *player)
 	{
 		if (level.time >= player->respawn_time || ((player->cmd.ucmd.buttons & BT_USE) && !player->isbot))
 		{
-			player->playerstate = PST_REBORN;
+			player->cls = NULL;		// Force a new class if the player is using a random class
+			player->playerstate = multiplayer ? PST_REBORN : PST_ENTER;
 			if (player->mo->special1 > 2)
 			{
 				player->mo->special1 = 0;
@@ -744,14 +783,7 @@ void P_MorphPlayerThink (player_t *player)
 		}
 		if (pr_morphplayerthink() < 48)
 		{
-			if (pr_morphplayerthink() < 128)
-			{
-				S_Sound (pmo, CHAN_VOICE, "PigActive1", 1, ATTN_NORM);
-			}
-			else
-			{
-				S_Sound (pmo, CHAN_VOICE, "PigActive2", 1, ATTN_NORM);
-			}
+			S_Sound (pmo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
 		}
 	}
 }
@@ -924,10 +956,10 @@ void P_PlayerThink (player_t *player)
 			}
 			else if (!(dmflags & DF_NO_JUMP) && onground && !player->jumpTics)
 			{
-				player->mo->momz += player->mo->GetJumpZ ();
+				player->mo->momz += player->mo->GetJumpZ ()*35/TICRATE;
 				S_Sound (player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
 				player->mo->flags2 &= ~MF2_ONMOBJ;
-				player->jumpTics = 18;
+				player->jumpTics = 18*TICRATE/35;
 			}
 		}
 
@@ -1044,11 +1076,15 @@ void P_PlayerThink (player_t *player)
 		player->powers[pw_strength]++;
 
 	if (player->powers[pw_invisibility])
+	{
 		if (!--player->powers[pw_invisibility])
 		{
 			player->mo->flags &= ~MF_SHADOW;
+			player->mo->flags3 &= ~MF3_GHOST;
 			player->mo->RenderStyle = STYLE_Normal;
+			player->mo->alpha = OPAQUE;
 		}
+	}
 
 	if (player->powers[pw_infrared])
 		player->powers[pw_infrared]--;
@@ -1293,6 +1329,26 @@ void player_s::Serialize (FArchive &arc)
 		arc << ammo[i] << maxammo[i];
 	for (i = 0; i < NUMPSPRITES; i++)
 		arc << psprites[i];
+
+	if (SaveVersion < 204)
+	{ // I'm the only one who would have been playing with some class
+	  // other than the Fighter with an earlier version savegame, so
+	  // setting this to zero is okay.
+		CurrentPlayerClass = 0;
+	}
+	else
+	{
+		arc << CurrentPlayerClass;
+	}
+
+	if (SaveVersion < 202)
+	{
+		mstaffcount = cholycount = 0;
+	}
+	else
+	{
+		arc << mstaffcount << cholycount;
+	}
 
 	if (isbot)
 	{

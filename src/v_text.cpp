@@ -141,7 +141,7 @@ void DCanvas::TextWrapper (EWrapperCode drawer, int normalcolor, int x, int y, c
 	int			height;
 	const byte *data;
 
-	if (Font == NULL)
+	if (Font == NULL || string == NULL)
 		return;
 
 	if (normalcolor >= NUM_TEXT_COLORS)
@@ -238,7 +238,7 @@ void DCanvas::TextSWrapper (EWrapperCode drawer, int normalcolor, int x, int y, 
 	int			height;
 	const byte *data;
 
-	if (Font == NULL)
+	if (Font == NULL || string == NULL)
 		return;
 
 	if (normalcolor > NUM_TEXT_COLORS)

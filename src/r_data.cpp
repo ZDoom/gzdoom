@@ -598,8 +598,19 @@ void R_InitTextures (void)
 				memcpy (name, texture->name, 8);
 				name[8] = 0;
 				Printf ("R_InitTextures: Missing patch in texture %s\n", name);
-				errors++;
+				--texture->patchcount;
+				--patch;
+				--j;
+				//errors++;
 			}
+		}
+		if (texture->patchcount == 0)
+		{
+			char name[9];
+			memcpy (name, texture->name, 8);
+			name[8] = 0;
+			Printf ("R_InitTextures: Texture %s is left without any patches\n", name);
+			//errors++;
 		}
 		texturecolumnlump[i] = new short[texture->width];
 		texturecolumnofs[i] = new unsigned int[texture->width];

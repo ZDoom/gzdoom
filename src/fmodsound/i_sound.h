@@ -89,17 +89,16 @@ I_StartSound3D
   float			vel[3] );
 
 void I_UpdateListener (AActor *listener);
+void I_UpdateSounds ();
 
 // Stops a sound channel.
 void I_StopSound (int handle);
 
-// Called by S_*() functions
-//	to see if a channel is still playing.
+// Called by S_*() functions to see if a channel is still playing.
 // Returns 0 if no longer playing, 1 if playing.
 int I_SoundIsPlaying (int handle);
 
-// Updates the volume, separation,
-//	and pitch of a sound channel.
+// Updates the volume, separation, and pitch of a sound channel.
 void I_UpdateSoundParams (int handle, int vol, int sep, int pitch);
 void I_UpdateSoundParams3D (int handle, float pos[3], float vel[3]);
 

@@ -552,7 +552,8 @@ void EV_StartLightFading (int tag, int value, int tics)
 }
 
 
-// [RH] Phased lighting ala Hexen
+// [RH] Phased lighting ala Hexen, but implemented without the help of the Hexen source
+// The effect is a little different, but close enough, I feel.
 
 IMPLEMENT_CLASS (DPhased)
 

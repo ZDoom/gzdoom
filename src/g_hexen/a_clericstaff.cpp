@@ -22,9 +22,9 @@ void A_CStaffMissileSlither (AActor *);
 
 // The Cleric's Serpent Staff -----------------------------------------------
 
-class ACWeapStaff : public AWeapon
+class ACWeapStaff : public AClericWeapon
 {
-	DECLARE_ACTOR (ACWeapStaff, AWeapon)
+	DECLARE_ACTOR (ACWeapStaff, AClericWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -91,6 +91,7 @@ FState ACWeapStaff::States[] =
 FWeaponInfo ACWeapStaff::WeaponInfo =
 {
 	0,
+	MANA_1,
 	MANA_1,
 	1,
 	25,
@@ -290,17 +291,13 @@ void A_CStaffMissileSlither (AActor *actor)
 
 	weaveXY = actor->special2;
 	angle = (actor->angle+ANG90)>>ANGLETOFINESHIFT;
-	newX = actor->x-FixedMul(finecosine[angle], 
-		FloatBobOffsets[weaveXY]);
-	newY = actor->y-FixedMul(finesine[angle],
-		FloatBobOffsets[weaveXY]);
+	newX = actor->x-FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
+	newY = actor->y-FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
 	weaveXY = (weaveXY+3)&63;
-	newX += FixedMul(finecosine[angle], 
-		FloatBobOffsets[weaveXY]);
-	newY += FixedMul(finesine[angle], 
-		FloatBobOffsets[weaveXY]);
-	P_TryMove(actor, newX, newY, true);
-	actor->special2 = weaveXY;	
+	newX += FixedMul(finecosine[angle], FloatBobOffsets[weaveXY]);
+	newY += FixedMul(finesine[angle], FloatBobOffsets[weaveXY]);
+	P_TryMove (actor, newX, newY, true);
+	actor->special2 = weaveXY;
 }
 
 //============================================================================

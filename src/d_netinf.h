@@ -40,9 +40,21 @@ EXTERN_CVAR (Float, autoaim)
 
 #define MAXPLAYERNAME	15
 
-#define GENDER_MALE		0
-#define GENDER_FEMALE	1
-#define GENDER_NEUTER	2
+enum
+{
+	GENDER_MALE,
+	GENDER_FEMALE,
+	GENDER_NEUTER
+};
+
+enum
+{
+	PLAYERCLASS_Random = -1,
+	PLAYERCLASS_Fighter,
+	PLAYERCLASS_Cleric,
+	PALYERCLASS_Mage
+};
+extern const char *PlayerClassNames[4];
 
 int D_GenderToInt (const char *gender);
 extern const char *GenderNames[3];
@@ -57,6 +69,7 @@ struct userinfo_s
 	int			gender;
 	bool		neverswitch;
 	fixed_t		MoveBob, StillBob;
+	int			PlayerClass;
 };
 typedef struct userinfo_s userinfo_t;
 

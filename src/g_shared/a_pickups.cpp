@@ -87,7 +87,7 @@ bool P_GiveArmor (player_t *player, armortype_t armortype, int amount)
 		{
 			return false;
 		}
-		player->armortype = armortype;
+		player->armortype = -armortype;
 		player->armorpoints[0] = amount;
 		return true;
 	}

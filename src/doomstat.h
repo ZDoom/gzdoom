@@ -96,7 +96,11 @@ EXTERN_CVAR (Bool, teamplay)
 
 // [RH] Friendly fire amount
 EXTERN_CVAR (Float, teamdamage)
-		
+
+// [RH] The class the player will spawn as in single player,
+// in case using a random class with Hexen.
+extern int SinglePlayerClass[MAXPLAYERS];
+
 // -------------------------
 // Internal parameters for sound rendering.
 
@@ -162,7 +166,7 @@ extern	BOOL			singledemo;
 
 extern	gamestate_t 	gamestate;
 
-
+extern	int				SaveVersion;
 
 
 
@@ -300,12 +304,12 @@ struct DehInfo
 	int FAAC;
 	int KFAArmor;
 	int KFAAC;
-	int Infight;
 	char PlayerSprite[5];
 	BYTE ExplosionStyle;
 	fixed_t ExplosionAlpha;
 };
 extern DehInfo deh;
+EXTERN_CVAR (Int, infighting)
 
 // [RH] Deathmatch flags
 

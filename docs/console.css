@@ -34,6 +34,7 @@ DIV.c
 	padding-top: 0.2em;
 	border-bottom: 1px solid;
 	background-color: palegreen;
+	margin-bottom: 0px;
 }
 DIV.b
 {
@@ -46,6 +47,7 @@ DIV.b
 	padding-top: 0.5em;
 	border-bottom: 2px solid;
 	background-color: honeydew;
+	margin-top: 0px;
 }
 
 /* Variable Descriptions */
@@ -105,16 +107,39 @@ H1, H2
 }
 BODY
 {
-	margin-left: 2em;
-	margin-right: 2em;
-	background-color: White;
+	margin: 2em 2em 2em 2em;
+	background-color: white;
 }
 PRE
 {
-	border-right: thin ridge;
-	border-top: thin ridge;
-	border-left: thin ridge;
-	border-bottom: thin ridge;
+	border: ridge 2px;
 	background-color: rgb(210,210,210);
 	padding: 1em 1em 1em 1em;
+}
+DIV.index
+{
+	padding-right: 0.8em;
+	padding-left: 0.8em;
+	left: 0px;
+	float: left;
+	padding-bottom: 1em;
+	overflow: auto;
+	clip: rect(auto auto auto auto);
+	padding-top: 0.5em;
+	position: absolute;
+	top: 0px;
+	background-color: #ffffcc;
+	border-right: solid 1px #808080;
+	border-bottom: solid 1px #808080;
+}
+H3
+{
+	font-weight: bold;
+	font-family: Verdana, Arial, Helvetica, Sans-Serif;
+	left: 0em;
+}
+DIV.main
+{
+	margin-left: 11em;
+	height: 50%;
 }

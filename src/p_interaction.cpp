@@ -328,6 +328,10 @@ EXTERN_CVAR (Int, fraglimit)
 
 void AActor::Die (AActor *source, AActor *inflictor)
 {
+	// [SO] 9/2/02 -- It's rather funny to see an exploded player body with the invuln sparkle active :) 
+	effects &= ~FX_RESPAWNINVUL;
+	//flags &= ~MF_INVINCIBLE;
+
 	if (flags & MF_MISSILE)
 	{ // [RH] When missiles die, they just explode
 		P_ExplodeMissile (this, NULL);
@@ -959,7 +963,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	target->reactiontime = 0;			// we're awake now...	
 	if (source && source != target && !(source->flags3 & MF3_NOTARGET)
-		&& deh.Infight >= 0		// [RH] allow monsters to ignore each other
+		&& (infighting >= 0 || source->player)		// [RH] allow monsters to ignore each other
 		&& !source->IsKindOf (RUNTIME_CLASS(AArchvile))
 		&& (!target->threshold || target->IsKindOf (RUNTIME_CLASS(AArchvile)))
 		&& target->NewTarget (source))

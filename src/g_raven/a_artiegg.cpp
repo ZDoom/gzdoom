@@ -358,10 +358,13 @@ END_DEFAULTS
 AT_GAME_SET (Egg)
 {
 	ArtiDispatch[arti_egg] = AArtiEgg::ActivateArti;
-	ArtiPics[arti_egg] = "ARTIEGGC";
-
 	if (gameinfo.gametype == GAME_Hexen)
 	{
+		ArtiPics[arti_egg] = "ARTIPORK";
 		GetDefault<AArtiEgg>()->SpawnState = &AArtiEgg::States[S_ARTI_EGGP];
+	}
+	else
+	{
+		ArtiPics[arti_egg] = "ARTIEGGC";
 	}
 }

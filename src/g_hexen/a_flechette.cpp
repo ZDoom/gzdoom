@@ -294,11 +294,7 @@ int APoisonCloud::DoSpecialDamage (AActor *target, int damage)
 				15+(pr_poisoncloudd()&15), false); // Don't play painsound
 			P_PoisonPlayer (target->player, this, 50);
 
-			// [RH] Don't cough if already making a mouth noise
-			if (!S_IsActorPlayingSomething (target, CHAN_VOICE))
-			{
-				S_Sound (target, CHAN_VOICE, "*poison", 1, ATTN_NORM);
-			}
+			S_Sound (target, CHAN_VOICE, "*poison", 1, ATTN_NORM);
 		}	
 		return -1;
 	}

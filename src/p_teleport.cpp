@@ -243,7 +243,7 @@ bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool
 	fixed_t momx, momy;
 	TActorIterator<ATeleportDest> iterator (tid);
 
-	if (!thing)
+	if (thing == NULL)
 	{ // Teleport function called with an invalid actor
 		return false;
 	}
@@ -264,15 +264,24 @@ bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool
 	{
 		return false;
 	}
-	count = 1 + (pr_teleport() % count);
-	searcher = NULL;
-	while (count > 0)
+	if (count == 1)
 	{
 		searcher = iterator.Next ();
-		count--;
 	}
-	if (!searcher)
-		I_Error ("Can't find teleport mapspot %d\n", tid);
+	else
+	{
+		count = 1 + (pr_teleport() % count);
+		searcher = NULL;
+		while (count > 0)
+		{
+			searcher = iterator.Next ();
+			count--;
+		}
+	}
+	if (searcher == NULL)
+	{ // Should not happen
+		Printf (PRINT_BOLD, "Can't find teleport destination %d\n", tid);
+	}
 	// [RH] Lee Killough's changes for silent teleporters from BOOM
 	if (keepOrientation && line)
 	{
@@ -280,8 +289,7 @@ bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
-		angle =
-			R_PointToAngle2 (0, 0, line->dx, line->dy) - thing->angle + ANG90;
+		angle = R_PointToAngle2 (0, 0, line->dx, line->dy) - thing->angle + ANG90;
 
 		// Sine, cosine of angle adjustment
 		s = finesine[angle>>ANGLETOFINESHIFT];

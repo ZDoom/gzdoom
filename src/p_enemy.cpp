@@ -686,6 +686,9 @@ BOOL P_LookForPlayers (AActor *actor, BOOL allaround)
 		
 		player = &players[actor->lastlook];
 
+		if (!(player->mo->flags & MF_SHOOTABLE))
+			continue;			// not shootable (observer or dead)
+
 		if (player->cheats & CF_NOTARGET)
 			continue;			// no target
 

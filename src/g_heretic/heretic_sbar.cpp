@@ -10,6 +10,7 @@
 #include "st_stuff.h"
 #include "v_video.h"
 #include "r_draw.h"
+#include "templates.h"
 
 static FRandom pr_chainwiggle ("ChainWiggle");
 
@@ -74,7 +75,6 @@ public:
 
 	void Tick ()
 	{
-		int delta;
 		int curHealth;
 
 		FBaseStatusBar::Tick ();
@@ -89,29 +89,11 @@ public:
 		}
 		if (curHealth < HealthMarker)
 		{
-			delta = (HealthMarker - curHealth) >> 2;
-			if (delta < 1)
-			{
-				delta = 1;
-			}
-			else if (delta > 8)
-			{
-				delta = 8;
-			}
-			HealthMarker -= delta;
+			HealthMarker -= clamp ((HealthMarker - curHealth) >> 2, 1, 8);
 		}
 		else if (curHealth > HealthMarker)
 		{
-			delta = (curHealth - HealthMarker)>>2;
-			if (delta < 1)
-			{
-				delta = 1;
-			}
-			else if (delta > 8)
-			{
-				delta = 8;
-			}
-			HealthMarker += delta;
+			HealthMarker += clamp ((curHealth - HealthMarker) >> 2, 1, 8);
 		}
 	}
 
@@ -213,12 +195,8 @@ public:
 						hitCenterFrame = true;
 					}
 				}
-				BorderTopRefresh = screen->GetPageCount ();
 			}
-			else
-			{
-				BorderTopRefresh = screen->GetPageCount ();
-			}
+			BorderTopRefresh = screen->GetPageCount ();
 		}
 
 		if (CPlayer->powers[pw_weaponlevel2] && !CPlayer->morphTics)
@@ -229,12 +207,8 @@ public:
 				frame = (level.time/3)&15;
 				DrawOuterPatch ((patch_t *)W_CacheLumpNum (
 					spinbooklump+frame, PU_CACHE), -20, 17);
-				BorderTopRefresh = screen->GetPageCount ();
 			}
-			else
-			{
-				BorderTopRefresh = screen->GetPageCount ();
-			}
+			BorderTopRefresh = screen->GetPageCount ();
 		}
 
 		if (ArtifactFlash > 0)
@@ -536,12 +510,12 @@ private:
 		{
 			if (ArtifactFlash)
 			{
-				DrawFadedImage (Images, imgARTIBOX, -61, -31, TRANSLUC50);
+				DrawOuterFadedImage (Images, imgARTIBOX, -61, -31, TRANSLUC50);
 				DrawOuterImage (Images, imgUSEARTIA + ArtifactFlash, -61, -31);
 			}
 			else if (CPlayer->inventory[CPlayer->readyArtifact] > 0)
 			{
-				DrawFadedImage (Images, imgARTIBOX, -61, -31, TRANSLUC50);
+				DrawOuterFadedImage (Images, imgARTIBOX, -61, -31, TRANSLUC50);
 				DrawOuterImage (ArtiImages, CPlayer->readyArtifact, -61, -31);
 				if (CPlayer->inventory[CPlayer->readyArtifact] != 1)
 				{
@@ -560,7 +534,7 @@ private:
 			{
 				if (CPlayer->inventory[x])
 				{
-					DrawFadedImage (Images, imgARTIBOX, -100+i*31, -32, TRANSLUC50);
+					DrawOuterFadedImage (Images, imgARTIBOX, -100+i*31, -32, TRANSLUC50);
 					DrawOuterImage (ArtiImages, x, -100+i*31, -32);
 					if (CPlayer->inventory[x] != 1)
 					{
@@ -577,7 +551,7 @@ private:
 			{
 				for (; i < 7; i++)
 				{
-					DrawFadedImage (Images, imgARTIBOX, -100+i*31, -32, TRANSLUC50);
+					DrawOuterFadedImage (Images, imgARTIBOX, -100+i*31, -32, TRANSLUC50);
 				}
 			}
 			if (left)

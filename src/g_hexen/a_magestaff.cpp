@@ -5,10 +5,245 @@
 #include "s_sound.h"
 #include "p_enemy.h"
 #include "a_hexenglobal.h"
+#include "gstrings.h"
 
 static FRandom pr_mstafftrack ("MStaffTrack");
+static FRandom pr_bloodscourgedrop ("BloodScourgeDrop");
 
 void A_MStaffTrack (AActor *);
+void A_DropBloodscourgePieces (AActor *);
+void A_MStaffAttack (player_t *, pspdef_t *);
+void A_MStaffPalette (player_t *, pspdef_t *);
+
+//==========================================================================
+
+class AMageWeaponPiece : public AFourthWeaponPiece
+{
+	DECLARE_STATELESS_ACTOR (AMageWeaponPiece, AFourthWeaponPiece)
+public:
+	void BeginPlay ();
+protected:
+	bool MatchPlayerClass (AActor *toucher);
+	const char *PieceMessage ();
+};
+
+IMPLEMENT_ABSTRACT_ACTOR (AMageWeaponPiece)
+
+const char *AMageWeaponPiece::PieceMessage ()
+{
+	return GStrings (TXT_BLOODSCOURGE_PIECE);
+}
+
+bool AMageWeaponPiece::MatchPlayerClass (AActor *toucher)
+{
+	return !toucher->IsKindOf (RUNTIME_CLASS(AFighterPlayer)) &&
+		   !toucher->IsKindOf (RUNTIME_CLASS(AClericPlayer));
+}
+
+//==========================================================================
+
+class AMWeaponPiece1 : public AMageWeaponPiece
+{
+	DECLARE_ACTOR (AMWeaponPiece1, AMageWeaponPiece)
+public:
+	void BeginPlay ();
+};
+
+FState AMWeaponPiece1::States[] =
+{
+	S_BRIGHT (WMS1, 'A',   -1, NULL					    , NULL),
+};
+
+IMPLEMENT_ACTOR (AMWeaponPiece1, Hexen, 21, 37)
+	PROP_Flags (MF_SPECIAL)
+	PROP_Flags2 (MF2_FLOATBOB)
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+void AMWeaponPiece1::BeginPlay ()
+{
+	Super::BeginPlay ();
+	PieceValue = WPIECE1<<6;
+}
+
+//==========================================================================
+
+class AMWeaponPiece2 : public AMageWeaponPiece
+{
+	DECLARE_ACTOR (AMWeaponPiece2, AMageWeaponPiece)
+public:
+	void BeginPlay ();
+};
+
+FState AMWeaponPiece2::States[] =
+{
+	S_BRIGHT (WMS2, 'A',   -1, NULL					    , NULL),
+};
+
+IMPLEMENT_ACTOR (AMWeaponPiece2, Hexen, 22, 38)
+	PROP_Flags (MF_SPECIAL)
+	PROP_Flags2 (MF2_FLOATBOB)
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+void AMWeaponPiece2::BeginPlay ()
+{
+	Super::BeginPlay ();
+	PieceValue = WPIECE2<<6;
+}
+
+//==========================================================================
+
+class AMWeaponPiece3 : public AMageWeaponPiece
+{
+	DECLARE_ACTOR (AMWeaponPiece3, AMageWeaponPiece)
+public:
+	void BeginPlay ();
+};
+
+FState AMWeaponPiece3::States[] =
+{
+	S_BRIGHT (WMS3, 'A',   -1, NULL					    , NULL),
+};
+
+IMPLEMENT_ACTOR (AMWeaponPiece3, Hexen, 23, 39)
+	PROP_Flags (MF_SPECIAL)
+	PROP_Flags2 (MF2_FLOATBOB)
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+void AMWeaponPiece3::BeginPlay ()
+{
+	Super::BeginPlay ();
+	PieceValue = WPIECE3<<6;
+}
+
+// An actor that spawns the three pieces of the mage's fourth weapon --------
+
+// This gets spawned if weapon drop is on so that other players can pick up
+// this player's weapon.
+
+class ABloodscourgeDrop : public AActor
+{
+	DECLARE_ACTOR (ABloodscourgeDrop, AActor)
+};
+
+FState ABloodscourgeDrop::States[] =
+{
+	S_NORMAL (TNT1, 'A', 1, NULL, &States[1]),
+	S_NORMAL (TNT1, 'A', 1, A_DropBloodscourgePieces, NULL)
+};
+
+IMPLEMENT_ACTOR (ABloodscourgeDrop, Hexen, -1, 0)
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+// The Mages's Staff (Bloodscourge) -----------------------------------------
+
+class AMWeapBloodscourge : public AMageWeapon
+{
+	DECLARE_ACTOR (AMWeapBloodscourge, AMageWeapon)
+public:
+	weapontype_t OldStyleID () const
+	{
+		return wp_mstaff;
+	}
+
+	static FWeaponInfo WeaponInfo;
+
+protected:
+	const char *PickupMessage ()
+	{
+		return GStrings (TXT_WEAPON_M4);
+	}
+};
+
+FState AMWeapBloodscourge::States[] =
+{
+	// Dummy state, because the fourth weapon does not appear in a level directly.
+	S_NORMAL (TNT1, 'A',   -1, NULL					    , NULL),
+
+#define S_MSTAFFREADY 1
+	S_NORMAL (MSTF, 'A',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+1]),
+	S_NORMAL (MSTF, 'A',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+2]),
+	S_NORMAL (MSTF, 'A',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+3]),
+	S_NORMAL (MSTF, 'A',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+4]),
+	S_NORMAL (MSTF, 'A',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+5]),
+	S_NORMAL (MSTF, 'A',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+6]),
+	S_NORMAL (MSTF, 'B',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+7]),
+	S_NORMAL (MSTF, 'B',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+8]),
+	S_NORMAL (MSTF, 'B',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+9]),
+	S_NORMAL (MSTF, 'B',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+10]),
+	S_NORMAL (MSTF, 'B',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+11]),
+	S_NORMAL (MSTF, 'B',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+12]),
+	S_NORMAL (MSTF, 'C',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+13]),
+	S_NORMAL (MSTF, 'C',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+14]),
+	S_NORMAL (MSTF, 'C',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+15]),
+	S_NORMAL (MSTF, 'C',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+16]),
+	S_NORMAL (MSTF, 'C',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+17]),
+	S_NORMAL (MSTF, 'C',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+18]),
+	S_NORMAL (MSTF, 'D',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+19]),
+	S_NORMAL (MSTF, 'D',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+20]),
+	S_NORMAL (MSTF, 'D',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+21]),
+	S_NORMAL (MSTF, 'D',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+22]),
+	S_NORMAL (MSTF, 'D',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+23]),
+	S_NORMAL (MSTF, 'D',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+24]),
+	S_NORMAL (MSTF, 'E',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+25]),
+	S_NORMAL (MSTF, 'E',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+26]),
+	S_NORMAL (MSTF, 'E',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+27]),
+	S_NORMAL (MSTF, 'E',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+28]),
+	S_NORMAL (MSTF, 'E',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+29]),
+	S_NORMAL (MSTF, 'E',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+30]),
+	S_NORMAL (MSTF, 'F',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+31]),
+	S_NORMAL (MSTF, 'F',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+32]),
+	S_NORMAL (MSTF, 'F',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+33]),
+	S_NORMAL (MSTF, 'F',	1, A_WeaponReady		    , &States[S_MSTAFFREADY+34]),
+	S_NORMAL (MSTF, 'F',	1, A_WeaponReady		    , &States[S_MSTAFFREADY]),
+
+#define S_MSTAFFDOWN (S_MSTAFFREADY+35)
+	S_NORMAL (MSTF, 'A',	1, A_Lower				    , &States[S_MSTAFFDOWN]),
+
+#define S_MSTAFFUP (S_MSTAFFDOWN+1)
+	S_NORMAL (MSTF, 'A',	1, A_Raise				    , &States[S_MSTAFFUP]),
+
+#define S_MSTAFFATK (S_MSTAFFUP+1)
+	S_NORMAL2 (MSTF, 'G',	4, NULL					    , &States[S_MSTAFFATK+1], 0, 40),
+	S_BRIGHT2 (MSTF, 'H',	4, A_MStaffAttack		    , &States[S_MSTAFFATK+2], 0, 48),
+	S_BRIGHT2 (MSTF, 'H',	2, A_MStaffPalette		    , &States[S_MSTAFFATK+3], 0, 48),
+	S_NORMAL2 (MSTF, 'I',	2, A_MStaffPalette		    , &States[S_MSTAFFATK+4], 0, 48),
+	S_NORMAL2 (MSTF, 'I',	2, A_MStaffPalette		    , &States[S_MSTAFFATK+5], 0, 48),
+	S_NORMAL2 (MSTF, 'I',	1, NULL					    , &States[S_MSTAFFATK+6], 0, 40),
+	S_NORMAL2 (MSTF, 'J',	5, NULL					    , &States[S_MSTAFFREADY], 0, 36)
+};
+
+FWeaponInfo AMWeapBloodscourge::WeaponInfo =
+{
+	0,								// flags
+	MANA_BOTH,						// ammo
+	MANA_BOTH,						// givingammo
+	15,								// ammouse
+	0,								// ammogive
+	&States[S_MSTAFFUP],			// upstate
+	&States[S_MSTAFFDOWN],			// downstate
+	&States[S_MSTAFFREADY],			// readystate
+	&States[S_MSTAFFATK],			// atkstate
+	&States[S_MSTAFFATK],			// holdatkstate
+	NULL,							// flashstate
+	RUNTIME_CLASS(ABloodscourgeDrop),	// droptype
+	150,							// kickback
+	20*FRACUNIT,					// yadjust
+	NULL,							// upsound
+	NULL,							// readysound
+	RUNTIME_CLASS(AMWeapBloodscourge),	// type
+	15								// minammo
+};
+
+IMPLEMENT_ACTOR (AMWeapBloodscourge, Hexen, -1, 0)
+	PROP_Flags (MF_SPECIAL)
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+WEAPON1 (wp_mstaff, AMWeapBloodscourge)
 
 // Mage Staff FX2 (Bloodscourge) --------------------------------------------
 
@@ -65,6 +300,7 @@ int AMageStaffFX2::SpecialMissileHit (AActor *victim)
 		!(victim->flags2 & MF2_BOSS))
 	{
 		P_DamageMobj (victim, this, target, 10);
+		return 1;	// Keep going
 	}
 	return -1;
 }
@@ -152,20 +388,58 @@ void A_MStaffAttack2 (AActor *actor)
 // MStaffSpawn
 //
 //============================================================================
-#if 0
+
 void MStaffSpawn (AActor *pmo, angle_t angle)
 {
 	AActor *mo;
 
-	// spawn at z+40, not z+32
-	mo = P_SPMAngle (pmo, MT_MSTAFF_FX2, angle);
+	mo = P_SpawnPlayerMissile (pmo, pmo->x, pmo->y, pmo->z+8*FRACUNIT,
+		RUNTIME_CLASS(AMageStaffFX2), angle);
 	if (mo)
 	{
 		mo->target = pmo;
-		mo->special1 = (int)P_RoughMonsterSearch(mo, 10);
+		// [RH] Let's try and actually track what the player aimed at
+		mo->tracer = linetarget ? linetarget : P_RoughMonsterSearch (mo, 10);
 	}
 }
-#endif
+
+//============================================================================
+//
+// A_MStaffAttack
+//
+//============================================================================
+
+void A_MStaffAttack (player_t *player, pspdef_t *psp)
+{
+	angle_t angle;
+	AActor *pmo;
+
+	if (player->UseAmmo (true))
+	{
+		pmo = player->mo;
+		angle = pmo->angle;
+		
+		MStaffSpawn (pmo, angle);
+		MStaffSpawn (pmo, angle-ANGLE_1*5);
+		MStaffSpawn (pmo, angle+ANGLE_1*5);
+		S_Sound (pmo, CHAN_WEAPON, "MageStaffFire", 1, ATTN_NORM);
+		player->mstaffcount = 3;
+	}
+}
+
+//============================================================================
+//
+// A_MStaffPalette
+//
+//============================================================================
+
+void A_MStaffPalette (player_t *player, pspdef_t *psp)
+{
+	if (player->mstaffcount)
+	{
+		player->mstaffcount--;
+	}
+}
 
 //============================================================================
 //
@@ -180,4 +454,40 @@ void A_MStaffTrack (AActor *actor)
 		actor->tracer = P_RoughMonsterSearch (actor, 10);
 	}
 	P_SeekerMissile (actor, ANGLE_1*2, ANGLE_1*10);
+}
+
+//============================================================================
+//
+// A_DropBloodscourgePieces
+//
+//============================================================================
+
+void A_DropBloodscourgePieces (AActor *actor)
+{
+	static const TypeInfo *pieces[3] =
+	{
+		RUNTIME_CLASS(AMWeaponPiece1),
+		RUNTIME_CLASS(AMWeaponPiece2),
+		RUNTIME_CLASS(AMWeaponPiece3)
+	};
+
+	for (int i = 0, j = 0, fineang = 0; i < 3; ++i)
+	{
+		AActor *piece = Spawn (pieces[j], actor->x, actor->y, actor->z);
+		if (piece != NULL)
+		{
+			piece->momx = actor->momx + finecosine[fineang];
+			piece->momy = actor->momy + finesine[fineang];
+			piece->momz = actor->momz;
+			piece->flags |= MF_DROPPED;
+			fineang += FINEANGLES/3;
+			j = (j == 0) ? (pr_bloodscourgedrop() & 1) + 1 : 3-j;
+		}
+	}
+}
+
+void AMageWeaponPiece::BeginPlay ()
+{
+	Super::BeginPlay ();
+	FourthWeaponClass = RUNTIME_CLASS(AMWeapBloodscourge);
 }

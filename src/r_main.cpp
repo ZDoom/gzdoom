@@ -79,6 +79,7 @@ static FRandom pr_torchflicker ("TorchFlicker");
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
+CVAR (Bool, r_experimental, false, 0)
 
 fixed_t			r_BaseVisibility;
 fixed_t			r_WallVisibility;
@@ -787,7 +788,9 @@ void R_SetViewAngle (angle_t ang)
 // R_SetupFrame
 //
 //==========================================================================
-
+#include "a_sharedglobal.h"
+#include "w_wad.h"
+#include "decallib.h"
 void R_SetupFrame (player_t *player)
 {
 	unsigned int newblend;
@@ -803,6 +806,19 @@ void R_SetupFrame (player_t *player)
 	{
 		I_Error ("You lost your body. Bad dehacked work is likely to blame.");
 	}
+
+#if 0	// DEBUG
+	static bool first = 0;
+	if (!first)
+	{
+		first = 1;
+		players[0].mo->SetOrigin (53474678, -144813982, 2687414);
+		players[0].mo->angle = 988938240;
+		ADecal *decal = AImpactDecal::StaticCreate (DecalLibrary.GetDecalByName("BulletChip1"), 53477376, -143874293, -2727933, sides+lines[598].sidenum[0]);
+		decal->picnum = W_GetNumForName ("ASCRG2");
+		decal->renderflags = 0x1500;
+	}
+#endif	// DEBUG
 
 	if ((player->cheats & CF_CHASECAM) &&
 		(camera->RenderStyle != STYLE_None) &&
@@ -827,6 +843,7 @@ void R_SetupFrame (player_t *player)
 	{
 		player = camera->player;
 	}
+
 	R_SetViewAngle (camera->angle + viewangleoffset);
 
 	// Keep the view within the sector's floor and ceiling
@@ -851,7 +868,7 @@ void R_SetupFrame (player_t *player)
 					-(intensity<<1))<<FRACBITS;
 	}
 
-	extralight = player ? player->extralight : 0;
+	extralight = camera->player ? camera->player->extralight : 0;
 
 	// killough 3/20/98, 4/4/98: select colormap based on player status
 	// [RH] Can also select a blend
@@ -1239,13 +1256,27 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 		WORD savedflags = camera->renderflags;
 		camera->renderflags |= RF_INVISIBLE;
 //memset (screen->GetBuffer(), 255, screen->GetWidth()*screen->GetHeight());
-		R_RenderBSPNode (numnodes - 1);
+		if (!r_experimental)
+		{
+			R_RenderBSPNode (numnodes - 1);
+		}
+		else
+		{
+			R_RenderSubsectors ();
+		}
 		camera->renderflags = savedflags;
 	}
 	else
 	{	// The head node is the last node output.
 		// [[RH] Not that this tells me anything...]
-		R_RenderBSPNode (numnodes - 1);
+		if (!r_experimental)
+		{
+			R_RenderBSPNode (numnodes - 1);
+		}
+		else
+		{
+			R_RenderSubsectors ();
+		}
 	}
 	unclock (WallCycles);
 

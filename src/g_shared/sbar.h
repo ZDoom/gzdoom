@@ -153,22 +153,24 @@ public:
 	virtual void NewGame ();
 	virtual void ScreenSizeChanged ();
 	virtual void MultiplayerChanged ();
+	virtual void SetInteger (int pname, int param);
 
 protected:
 	void UpdateRect (int x, int y, int width, int height) const;
 	void DrawImage (const FImageCollection &collection, int image, int x, int y, byte *translation=NULL) const;
 	void DrawImageNoUpdate (const FImageCollection &collection, int image, int x, int y, byte *translation=NULL) const;
+	void DrawFadedImage (const FImageCollection &collection, int image, int x, int y, fixed_t shade) const;
 	void DrawPartialImage (const FImageCollection &collection, int image, int x, int y, int wx, int wy, int ww, int wh) const;
 
 	void SetHorizCentering (bool which) { Centering = which; }
 	void OverrideImageOrigin (bool which) { FixedOrigin = which; }
 
-	void DrawFadedImage (const FImageCollection &collection, int image, int x, int y, fixed_t shade) const;
+	void DrawOuterFadedImage (const FImageCollection &collection, int image, int x, int y, fixed_t shade) const;
 	void DrawShadowedImage (const FImageCollection &collection, int image, int x, int y, fixed_t shade) const;
 	void DrawOuterImage (const FImageCollection &collection, int image, int x, int y) const;
 	void DrawOuterPatch (const patch_t *patch, int x, int y) const;
 
-	void DrINumber (signed int val, int x, int y) const;
+	void DrINumber (signed int val, int x, int y, int imgBase=imgINumbers) const;
 	void DrBNumber (signed int val, int x, int y, int w=3) const;
 	void DrSmallNumber (int val, int x, int y) const;
 
@@ -177,6 +179,7 @@ protected:
 	void DrSmallNumberOuter (int val, int x, int y) const;
 
 	void ShadeChain (int left, int right, int top, int height) const;
+	void ClearRect (int left, int top, int width, int height, int color) const;
 	void DrawCrosshair ();
 
 	void CopyToScreen (int x, int y, int w, int h) const;

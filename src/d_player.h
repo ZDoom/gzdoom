@@ -64,6 +64,8 @@ public:
 	virtual int GetArmorMax ();
 	virtual const char *GetSoundClass ();
 	virtual fixed_t GetJumpZ ();
+	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
+	virtual bool DoHealingRadius (APlayerPawn *other);
 
 	virtual void NoBlockingSet ();
 
@@ -105,6 +107,9 @@ typedef enum
 	CF_INSTANTWEAPSWITCH= 2048,	// [RH] Switch weapons instantly
 } cheat_t;
 
+#define WPIECE1		1
+#define WPIECE2		2
+#define WPIECE3		4
 
 //
 // Extended player object info: player_t
@@ -122,6 +127,7 @@ public:
 	ticcmd_t	cmd;
 
 	userinfo_t	userinfo;				// [RH] who is this?
+	FWeaponSlots WeaponSlots;			// Weapon slot assignments for this player
 	
 	const TypeInfo *cls;				// class of associated PlayerPawn
 
@@ -148,6 +154,7 @@ public:
 
 	int			inventorytics;
 	WORD		inventory[NUMINVENTORYSLOTS];
+	BYTE		CurrentPlayerClass;		// class # for this player instance
 	artitype_t	readyArtifact;
 	int			artifactCount;
 	int			inventorySlotNum;
@@ -173,6 +180,8 @@ public:
 	short		inconsistant;
 	int			killcount, itemcount, secretcount;		// for intermission
 	int			damagecount, bonuscount;// for screen flashing
+	int			mstaffcount;			// for mage's bloodscourge flash
+	int			cholycount;				// for cleric's wraithverge flash
 	int			flamecount;				// for flame thrower duration
 	int			poisoncount;			// screen flash for poison damage
 	AActor		*poisoner;				// NULL for non-player actors

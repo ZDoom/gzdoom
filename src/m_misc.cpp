@@ -563,7 +563,7 @@ void M_ScreenShot (char *filename)
 		lbmname = filename;
 	}
 
-	// save the pcx file
+	// save the screenshot
 	D_Display (true);
 
 	PalEntry palette[256];

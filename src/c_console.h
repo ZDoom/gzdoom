@@ -56,6 +56,7 @@ void C_NewModeAdjust (void);
 
 void C_Ticker (void);
 
+void AddToConsole (int printlevel, const char *string);
 int PrintString (int printlevel, const char *string);
 int VPrintf (int printlevel, const char *format, va_list parms) GCCFORMAT(2);
 

@@ -33,7 +33,7 @@ END_DEFAULTS
 AT_GAME_SET (Summon)
 {
 	ArtiDispatch[arti_summon] = AArtiDarkServant::ActivateArti;
-	ArtiPics[arti_summon] = "ARTIBLST";
+	ArtiPics[arti_summon] = "ARTISUMN";
 }
 
 // Summoning Doll -----------------------------------------------------------

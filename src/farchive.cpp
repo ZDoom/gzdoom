@@ -964,6 +964,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 				Write (id, 1);
 			}
 			WriteClass (type);
+//			Printf ("Make class %s (%u)\n", type->Name, m_File->Tell());
 			MapObject (obj);
 			obj->Serialize (*this);
 			obj->CheckIfSerialized ();
@@ -993,6 +994,7 @@ FArchive &FArchive::WriteObject (DObject *obj)
 					Write (id, 1);
 				}
 				WriteCount (m_TypeMap[type->TypeIndex].toArchive);
+//				Printf ("Reuse class %s (%u)\n", type->Name, m_File->Tell());
 				MapObject (obj);
 				obj->Serialize (*this);
 				obj->CheckIfSerialized ();
@@ -1038,20 +1040,32 @@ FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
 		{
 			// If travelling inside a hub, use the existing player actor
 			type = ReadClass (wanttype);
+//			Printf ("New player class: %s (%u)\n", type->Name, m_File->Tell());
 			obj = players[playerNum].mo;
-			MapObject (obj);
 
 			// But also create a new one so that we can get past the one
 			// stored in the archive.
 			DObject *tempobj = type->CreateNew ();
 			tempobj->Serialize (*this);
 			tempobj->CheckIfSerialized ();
-			tempobj->Destroy ();
+			// If this player is not present anymore, keep the new body
+			// around just so that the load will succeed.
+			if (obj != NULL)
+			{
+				tempobj->Destroy ();
+			}
+			else
+			{
+				obj = tempobj;
+				players[playerNum].mo = static_cast<APlayerPawn *>(obj);
+			}
+			MapObject (obj);
 			break;
 		}
 		/* fallthrough */
 	case NEW_CLS_OBJ:
 		type = ReadClass (wanttype);
+//		Printf ("New class: %s (%u)\n", type->Name, m_File->Tell());
 		obj = type->CreateNew ();
 		MapObject (obj);
 		obj->Serialize (*this);
@@ -1063,18 +1077,28 @@ FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
 		if (m_HubTravel)
 		{
 			type = ReadStoredClass (wanttype);
+//			Printf ("Use player class: %s (%u)\n", type->Name, m_File->Tell());
 			obj = players[playerNum].mo;
-			MapObject (obj);
 
 			DObject *tempobj = type->CreateNew ();
 			tempobj->Serialize (*this);
 			tempobj->CheckIfSerialized ();
-			tempobj->Destroy ();
+			if (obj != NULL)
+			{
+				tempobj->Destroy ();
+			}
+			else
+			{
+				obj = tempobj;
+				players[playerNum].mo = static_cast<APlayerPawn *>(obj);
+			}
+			MapObject (obj);
 			break;
 		}
 		/* fallthrough */
 	case NEW_OBJ:
 		type = ReadStoredClass (wanttype);
+//		Printf ("Use class: %s (%u)\n", type->Name, m_File->Tell());
 		obj = type->CreateNew ();
 		MapObject (obj);
 		obj->Serialize (*this);

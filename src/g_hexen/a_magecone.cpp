@@ -23,9 +23,9 @@ void A_ShedShard (AActor *);
 
 // The Mage's Frost Cone ----------------------------------------------------
 
-class AMWeapFrost : public AWeapon
+class AMWeapFrost : public AMageWeapon
 {
-	DECLARE_ACTOR (AMWeapFrost, AWeapon)
+	DECLARE_ACTOR (AMWeapFrost, AMageWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -74,6 +74,7 @@ END_DEFAULTS
 FWeaponInfo AMWeapFrost::WeaponInfo =
 {
 	0,
+	MANA_1,
 	MANA_1,
 	3,
 	25,

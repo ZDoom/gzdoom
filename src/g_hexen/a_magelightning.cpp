@@ -31,9 +31,9 @@ void A_FreeTargMobj (AActor *);
 
 // The Mage's Lightning Arc of Death ----------------------------------------
 
-class AMWeapLightning : public AWeapon
+class AMWeapLightning : public AMageWeapon
 {
-	DECLARE_ACTOR (AMWeapLightning, AWeapon)
+	DECLARE_ACTOR (AMWeapLightning, AMageWeapon)
 public:
 	weapontype_t OldStyleID () const
 	{
@@ -113,6 +113,7 @@ END_DEFAULTS
 FWeaponInfo AMWeapLightning::WeaponInfo =
 {
 	0,
+	MANA_2,
 	MANA_2,
 	5,
 	25,

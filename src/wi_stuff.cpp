@@ -844,6 +844,7 @@ void WI_drawTime (int x, int y, int t)
 
 void WI_End ()
 {
+	state = LeavingIntermission;
 	WI_unloadData ();
 	if (background)
 	{
@@ -852,8 +853,10 @@ void WI_End ()
 	}
 
 	//Added by mc
-	bglobal.RemoveAllBots (consoleplayer != Net_Arbitrator);
-	state = LeavingIntermission;
+	if (deathmatch)
+	{
+		bglobal.RemoveAllBots (consoleplayer != Net_Arbitrator);
+	}
 }
 
 void WI_initNoState ()
@@ -995,13 +998,16 @@ void WI_initDeathmatchStats (void)
 
 void WI_updateDeathmatchStats ()
 {
+	/*
 	int i, j;
 	BOOL stillticking;
+	*/
 
 	WI_updateAnimatedBack();
 
 	if (acceleratestage && dm_state != 4)
 	{
+		/*
 		acceleratestage = 0;
 
 		for (i=0 ; i<MAXPLAYERS ; i++)
@@ -1016,13 +1022,14 @@ void WI_updateDeathmatchStats ()
 			}
 		}
 		
-
 		S_Sound (CHAN_VOICE, NEXTSTAGE, 1, ATTN_NONE);
+		*/
 		dm_state = 4;
 	}
 
 	if (dm_state == 2)
 	{
+		/*
 		if (!(bcnt&3))
 			S_Sound (CHAN_VOICE, "weapons/pistol", 1, ATTN_NONE);
 		
@@ -1066,7 +1073,8 @@ void WI_updateDeathmatchStats ()
 			S_Sound (CHAN_VOICE, NEXTSTAGE, 1, ATTN_NONE);
 			dm_state++;
 		}
-
+		*/
+		dm_state = 3;
 	}
 	else if (dm_state == 4)
 	{
@@ -1673,6 +1681,8 @@ void WI_Ticker ()
 		// intermission music
 		if (gameinfo.gametype == GAME_Heretic)
 			S_ChangeMusic ("mus_intr");
+		else if (gameinfo.gametype == GAME_Hexen)
+			S_ChangeMusic ("hub");
 		else if (gamemode == commercial)
 			S_ChangeMusic ("d_dm2int");
 		else
@@ -1710,6 +1720,25 @@ void WI_loadData ()
 	int i, j;
 	char name[9];
 	in_anim_t *a;
+
+	if (gameinfo.gametype != GAME_Doom)
+	{
+		for (i = 0; i < 2; i++)
+		{
+			lnames[i] = NULL;
+			lnametexts[i] = FindLevelInfo (i == 0 ? wbs->current : wbs->next)->level_name;
+			lnamewidths[i] = WI_CalcWidth (lnametexts[i]);
+		}
+		if (gameinfo.gametype == GAME_Hexen)
+		{
+			byte *bg = (byte *)W_CacheLumpName ("INTERPIC", PU_CACHE);
+			background = I_NewStaticCanvas (320, 200);
+			background->Lock ();
+			background->DrawPageBlock (bg);
+			background->Unlock ();
+			return;
+		}
+	}
 
 	if (gameinfo.gametype == GAME_Doom &&
 		gamemode != commercial &&
@@ -1814,19 +1843,17 @@ void WI_loadData ()
 			sprintf (name, "FONTB%d", 16 + i);
 			num[i] = (patch_t *)W_CacheLumpName (name, PU_STATIC);
 		}
-
-		for (i = 0; i < 2; i++)
-		{
-			lnames[i] = NULL;
-			lnametexts[i] = FindLevelInfo (i == 0 ? wbs->current : wbs->next)->level_name;
-			lnamewidths[i] = WI_CalcWidth (lnametexts[i]);
-		}
 	}
 }
 
 void WI_unloadData ()
 {
 	int i, j;
+
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		return;
+	}
 
 	Z_ChangeTag (wiminus, PU_CACHE);
 

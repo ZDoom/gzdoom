@@ -46,6 +46,7 @@
 #include "a_lightning.h"
 #include "statnums.h"
 #include "s_sound.h"
+#include "templates.h"
 
 #define FUNC(a) static bool a (line_t *ln, AActor *it, int arg0, int arg1, \
 							   int arg2, int arg3, int arg4)
@@ -287,7 +288,13 @@ FUNC(LS_Floor_LowerToLowestTxTy)
 FUNC(LS_Floor_Waggle)
 // Floor_Waggle (tag, amplitude, frequency, delay, time)
 {
-	return EV_StartFloorWaggle (arg0, arg1, arg2, arg3, arg4);
+	return EV_StartWaggle (arg0, arg1, arg2, arg3, arg4, false);
+}
+
+FUNC(LS_Ceiling_Waggle)
+// Ceiling_Waggle (tag, amplitude, frequency, delay, time)
+{
+	return EV_StartWaggle (arg0, arg1, arg2, arg3, arg4, true);
 }
 
 FUNC(LS_Floor_TransferTrigger)
@@ -748,14 +755,19 @@ FUNC(LS_Teleport_Line)
 }
 
 FUNC(LS_ThrustThing)
-// ThrustThing (angle, force)
+// ThrustThing (angle, force, nolimit)
 {
 	if (it)
 	{
 		angle_t angle = BYTEANGLE(arg0) >> ANGLETOFINESHIFT;
 
-		it->momx = arg1 * finecosine[angle];
-		it->momy = arg1 * finesine[angle];
+		it->momx += arg1 * finecosine[angle];
+		it->momy += arg1 * finesine[angle];
+		if (!arg2)
+		{
+			it->momx = clamp<fixed_t> (it->momx, -MAXMOVE, MAXMOVE);
+			it->momy = clamp<fixed_t> (it->momy, -MAXMOVE, MAXMOVE);
+		}
 		return true;
 	}
 	return false;
@@ -869,14 +881,18 @@ FUNC(LS_HealThing)
 			max = deh.MaxSoulsphere;
 		}
 
-		it->health += arg0;
-		if (it->health > max && max > 0)
+		// If health is already above max, do nothing
+		if (it->health < max)
 		{
-			it->health = max;
-		}
-		if (it->player)
-		{
-			it->player->health = it->health;
+			it->health += arg0;
+			if (it->health > max && max > 0)
+			{
+				it->health = max;
+			}
+			if (it->player)
+			{
+				it->player->health = it->health;
+			}
 		}
 	}
 
@@ -1460,9 +1476,10 @@ FUNC(LS_Sector_SetCurrent)
 }
 
 FUNC(LS_Sector_SetFriction)
-// Sector_SetFriction ()
+// Sector_SetFriction (tag, amount)
 {
-	return false;
+	P_SetSectorFriction (arg0, arg1, true);
+	return true;
 }
 
 static void SetWallScroller (int id, int sidechoice, fixed_t dx, fixed_t dy)
@@ -1668,10 +1685,7 @@ FUNC(LS_Sector_SetColor)
 	
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
-		sectors[secnum].floorcolormap = GetSpecialLights (
-			color, sectors[secnum].floorcolormap->Fade);
-		sectors[secnum].ceilingcolormap = GetSpecialLights (
-			color, sectors[secnum].ceilingcolormap->Fade);
+		sectors[secnum].ColorMap = GetSpecialLights (color, sectors[secnum].ColorMap->Fade);
 	}
 
 	return true;
@@ -1685,10 +1699,7 @@ FUNC(LS_Sector_SetFade)
 
 	while ((secnum = P_FindSectorFromTag (arg0, secnum)) >= 0)
 	{
-		sectors[secnum].floorcolormap = GetSpecialLights (
-			sectors[secnum].floorcolormap->Color, fade);
-		sectors[secnum].ceilingcolormap = GetSpecialLights (
-			sectors[secnum].ceilingcolormap->Color, fade);
+		sectors[secnum].ColorMap = GetSpecialLights (sectors[secnum].ColorMap->Color, fade);
 	}
 	return true;
 }
@@ -2014,7 +2025,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_Floor_RaiseByValueTimes8,
 	LS_Floor_LowerByValueTimes8,
 	LS_NOP,		// 37
-	LS_NOP,		// 38
+	LS_Ceiling_Waggle,
 	LS_NOP,		// 39
 	LS_Ceiling_LowerByValue,
 	LS_Ceiling_RaiseByValue,

@@ -374,12 +374,22 @@ void DCanvas::DrawWrapper (EWrapperCode drawer, const patch_t *patch, int x, int
 			{
 				top = column->topdelta;
 			}
-			if (column->length != 0)
+			int len = column->length;
+			if (len != 0)
 			{
-				drawfunc ((byte *)column + 3,
-						  desttop + top * Pitch,
-						  column->length,
-						  Pitch);
+				if (top + len > patch->height)
+				{
+					len = patch->height - top;
+					if (len > 0)
+					{
+						drawfunc ((byte *)column + 3, desttop + top * Pitch, len, Pitch);
+						break;
+					}
+				}
+				else
+				{
+					drawfunc ((byte *)column + 3, desttop + top * Pitch, len, Pitch);
+				}
 			}
 			column = (column_t *)((byte *)column + column->length + 4);
 		}
@@ -399,6 +409,7 @@ void DCanvas::DrawSWrapper (EWrapperCode drawer, const patch_t *patch, int x0, i
 	byte*		desttop;
 	vdrawsfunc	drawfunc;
 	int			colstep;
+	int			maxy;
 
 	int			xinc, yinc, col, w, ymul, xmul;
 
@@ -446,6 +457,7 @@ void DCanvas::DrawSWrapper (EWrapperCode drawer, const patch_t *patch, int x0, i
 	desttop = Buffer + y0*Pitch + x0 * colstep;
 
 	w = destwidth * xinc;
+	maxy = SHORT(patch->height);
 
 	for ( ; col<w ; col += xinc, desttop += colstep)
 	{
@@ -473,8 +485,8 @@ void DCanvas::DrawSWrapper (EWrapperCode drawer, const patch_t *patch, int x0, i
 					top = (top) >> 16;
 					drawfunc ((byte *)column + 3, desttop + top * Pitch,
 						bot, Pitch, yinc);
-					column = (column_t *)((byte *)column + column->length + 4);
 				}
+				column = (column_t *)((byte *)column + column->length + 4);
 			}
 			else
 			{

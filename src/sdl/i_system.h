@@ -32,37 +32,102 @@
 // Index values into the LanguageIDs array
 enum
 {
-        LANGIDX_UserPreferred,
-        LANGIDX_UserDefault,
-        LANGIDX_SysPreferred,
-        LANGIDX_SysDefault
+	LANGIDX_UserPreferred,
+	LANGIDX_UserDefault,
+	LANGIDX_SysPreferred,
+	LANGIDX_SysDefault
 };
 extern DWORD LanguageIDs[4];
 extern void SetLanguageIDs ();
 
-extern "C"
+struct CPUInfo	// 92 bytes
 {
-    extern byte CPUFamily, CPUModel, CPUStepping;
+	char VendorID[16];
+	char CPUString[48];
+
+	BYTE Stepping;
+	BYTE Model;
+	BYTE Family;
+	BYTE Type;
+
+	BYTE BrandIndex;
+	BYTE CLFlush;
+	BYTE CPUCount;
+	BYTE APICID;
+
+	DWORD bSSE3:1;
+	DWORD DontCare1:31;
+
+	DWORD bFPU:1;
+	DWORD bVME:1;
+	DWORD bDE:1;
+	DWORD bPSE:1;
+	DWORD bRDTSC:1;
+	DWORD bMSR:1;
+	DWORD bPAE:1;
+	DWORD bMCE:1;
+	DWORD bCX8:1;
+	DWORD bAPIC:1;
+	DWORD bReserved1:1;
+	DWORD bSEP:1;
+	DWORD bMTRR:1;
+	DWORD bPGE:1;
+	DWORD bMCA:1;
+	DWORD bCMOV:1;
+	DWORD bPAT:1;
+	DWORD bPSE36:1;
+	DWORD bPSN:1;
+	DWORD bCFLUSH:1;
+	DWORD bReserved2:1;
+	DWORD bDS:1;
+	DWORD bACPI:1;
+	DWORD bMMX:1;
+	DWORD bFXSR:1;
+	DWORD bSSE:1;
+	DWORD bSSE2:1;
+	DWORD bSS:1;
+	DWORD bHTT:1;
+	DWORD bTM:1;
+	DWORD bReserved3:1;
+	DWORD bPBE:1;
+
+	DWORD DontCare2:22;
+	DWORD bMMXPlus:1;		// AMD's MMX extensions
+	DWORD bMMXAgain:1;		// Just a copy of bMMX above
+	DWORD DontCare3:6;
+	DWORD b3DNowPlus:1;
+	DWORD b3DNow:1;
+
+	BYTE AMDStepping;
+	BYTE AMDModel;
+	BYTE AMDFamily;
+	BYTE bIsAMD;
+
+	BYTE DataL1LineSize;
+	BYTE DataL1LinesPerTag;
+	BYTE DataL1Associativity;
+	BYTE DataL1SizeKB;
+};
+
+
+extern "C" {
+	extern CPUInfo CPU;
 }
 
 // Called by DoomMain.
 void I_Init (void);
 
-// Called by startup code to create a block of memory for
-// zone management. *size should be the preferred intial size,
-// which may get shrunk depending on memory available.
-byte *I_ZoneBase (size_t *size);
-
-
 // Called by D_DoomLoop,
 // returns current time in tics.
-extern int (*I_GetTime) (void);
+extern int (*I_GetTime) (bool saveMS);
 
 // like I_GetTime, except it waits for a new tic before returning
 extern int (*I_WaitForTic) (int);
 
-int I_GetTimePolled (void);
+int I_GetTimePolled (bool saveMS);
 int I_GetTimeFake (void);
+
+fixed_t I_GetTimeFrac (DWORD *ms);
 
 
 //
@@ -99,16 +164,10 @@ ticcmd_t *I_BaseTiccmd (void);
 void STACK_ARGS I_Quit (void);
 
 
-// Allocates from low memory under dos,
-// just mallocs under unix
-byte* I_AllocLow (int length);
-
 void I_Tactile (int on, int off, int total);
 
-extern "C" {
 void STACK_ARGS I_Error (const char *error, ...) GCCPRINTF(1,2);
 void STACK_ARGS I_FatalError (const char *error, ...) GCCPRINTF(1,2);
-}
 
 void addterm (void (STACK_ARGS *func)(void), const char *name);
 #define atterm(t) addterm (t, #t)
@@ -124,12 +183,11 @@ void I_SetTitleString (const char *title);
 int I_PickIWad (WadStuff *wads, int numwads);
 
 // [RH] Returns millisecond-accurate time
-QWORD I_MSTime (void);
+unsigned int I_MSTime (void);
 
 // [RH] Title string to display at bottom of console during startup
 extern char DoomStartupTitle[256];
 
-void I_FinishClockCalibration ();
 
 
 // Directory searching routines
@@ -141,9 +199,9 @@ typedef struct
     int current;
 } findstate_t;
 
-long I_FindFirst (const char *filespec, findstate_t *fileinfo);
-int I_FindNext (long handle, findstate_t *fileinfo);
-int I_FindClose (long handle);
+void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
+int I_FindNext (void *handle, findstate_t *fileinfo);
+int I_FindClose (void *handle);
 int I_FindAttr (findstate_t *fileinfo); 
 
 #define I_FindName(a)	((a)->namelist[(a)->current]->d_name)

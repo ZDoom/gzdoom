@@ -227,7 +227,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_CenterOffset:
-			if (va_arg (tags, bool))
+			if (va_arg (tags, int))
 			{
 				left = img->GetWidth() / 2;
 				top = img->GetHeight() / 2;
@@ -235,7 +235,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			break;
 
 		case DTA_CenterBottomOffset:
-			if (va_arg (tags, bool))
+			if (va_arg (tags, int))
 			{
 				left = img->GetWidth() / 2;
 				top = img->GetHeight();
@@ -504,7 +504,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 
 	dc_destorg = destorgsave;
 
-	if (ticdup != 0)
+	if (ticdup != 0 && menuactive == MENU_Off)
 	{
 		NetUpdate ();
 	}

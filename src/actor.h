@@ -263,6 +263,7 @@ enum
 	MF4_SPECTRAL		= 0x00040000,
 	MF4_FIRERESIST		= 0x00080000,	// Actor takes half damage from fire
 	MF4_NOSPLASHALERT	= 0x00100000,	// Splashes don't alert this monster
+	MF4_SYNCHRONIZED	= 0x00200000,	// For actors spawned at load-time only: Do not randomize tics
 
 // --- mobj.renderflags ---
 

@@ -641,7 +641,7 @@ END_DEFAULTS
 
 // Klaxon Warning Light -----------------------------------------------------
 
-void A_1f608 (AActor *self)
+void A_TurretLook (AActor *self)
 {
 	AActor *target;
 
@@ -661,19 +661,20 @@ void A_1f608 (AActor *self)
 		{
 			S_SoundID (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
 		}
+		self->LastHeard = NULL;
 		self->threshold = 10;
 		self->SetState (self->SeeState);
 	}
 }
 
-void A_21c0c (AActor *self)
+void A_KlaxonBlare (AActor *self)
 {
-	if (--self->threshold < 0)
+	if (--self->reactiontime < 0)
 	{
 		self->target = NULL;
 		self->reactiontime = self->GetDefault()->reactiontime;
-		A_1f608 (self);
-		if (self->threshold == 0)
+		A_TurretLook (self);
+		if (self->target == NULL)
 		{
 			self->SetState (self->SpawnState);
 		}
@@ -702,10 +703,10 @@ class AKlaxonWarningLight : public AActor
 
 FState AKlaxonWarningLight::States[] =
 {
-	S_NORMAL (KLAX, 'A',  5, A_1f608,	&States[0]),
+	S_NORMAL (KLAX, 'A',  5, A_TurretLook,	&States[0]),
 
-	S_NORMAL (KLAX, 'B',  6, A_21c0c,	&States[2]),
-	S_NORMAL (KLAX, 'C', 60, NULL,		&States[1])
+	S_NORMAL (KLAX, 'B',  6, A_KlaxonBlare,	&States[2]),
+	S_NORMAL (KLAX, 'C', 60, NULL,			&States[1])
 };
 
 IMPLEMENT_ACTOR (AKlaxonWarningLight, Strife, 24, 0)
@@ -713,7 +714,7 @@ IMPLEMENT_ACTOR (AKlaxonWarningLight, Strife, 24, 0)
 	PROP_SeeState (1)
 	PROP_ReactionTime (60)
 	PROP_Flags (MF_NOBLOCKMAP|MF_AMBUSH|MF_SPAWNCEILING|MF_NOGRAVITY)
-	PROP_Flags4 (MF4_FIXMAPTHINGPOS|MF4_NOSPLASHALERT)
+	PROP_Flags4 (MF4_FIXMAPTHINGPOS|MF4_NOSPLASHALERT|MF4_SYNCHRONIZED)
 	PROP_StrifeType (121)
 END_DEFAULTS
 
@@ -728,7 +729,7 @@ class ACeilingTurret : public AActor
 
 FState ACeilingTurret::States[] =
 {
-	S_NORMAL (TURT, 'A',  5, A_1f608,			&States[0]),
+	S_NORMAL (TURT, 'A',  5, A_TurretLook,		&States[0]),
 
 	S_NORMAL (TURT, 'A',  2, A_Chase,			&States[1]),
 
@@ -854,7 +855,7 @@ FState AExplosiveBarrel2::States[] =
 	S_BRIGHT (BART, 'I',  2, NULL,			&States[9]),
 	S_BRIGHT (BART, 'J',  2, NULL,			&States[10]),
 	S_BRIGHT (BART, 'K',  3, NULL,			&States[11]),
-	S_BRIGHT (BART, 'L', -1, NULL,			NULL),
+	S_NORMAL (BART, 'L', -1, NULL,			NULL),
 	
 };
 
@@ -2932,6 +2933,11 @@ END_DEFAULTS
 
 void A_ItBurnsItBurns (AActor *self)
 {
+	int burnsound = S_FindSound ("human/imonfire");
+	if (burnsound != 0)
+	{
+		self->DeathSound = burnsound;
+	}
 	A_Scream (self);
 	if (self->player != NULL)
 	{

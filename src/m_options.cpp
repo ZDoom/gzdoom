@@ -1882,6 +1882,10 @@ void M_OptResponder (event_t *ev)
 
 	case GK_ESCAPE:
 		CurrentMenu->lastOn = CurrentItem;
+		if (CurrentMenu->EscapeHandler != NULL)
+		{
+			CurrentMenu->EscapeHandler ();
+		}
 		M_PopMenuStack ();
 		break;
 

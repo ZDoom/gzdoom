@@ -28,6 +28,21 @@ IMPLEMENT_ABSTRACT_ACTOR (AAmmo)
 
 //===========================================================================
 //
+// AAmmo :: Serialize
+//
+//===========================================================================
+
+void AAmmo::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	if (SaveVersion >= 223)
+	{
+		arc << BackpackAmount << BackpackMaxAmount;
+	}
+}
+
+//===========================================================================
+//
 // AAmmo :: PlayPickupSound
 //
 //===========================================================================
@@ -419,7 +434,7 @@ void AInventory::Tick ()
 	{
 		if (--DropTime == 0)
 		{
-			flags |= MF_SPECIAL;
+			flags |= GetDefault()->flags & (MF_SPECIAL|MF_SOLID);
 		}
 	}
 }
@@ -550,8 +565,9 @@ bool AInventory::GoAway ()
 		{
 			return true;
 		}
+		return false;
 	}
-	return false;
+	return true;
 }
 
 //===========================================================================
@@ -628,7 +644,7 @@ AInventory *AInventory::CreateTossable ()
 	{
 		BecomePickup ();
 		DropTime = 30;
-		flags &= ~MF_SPECIAL;
+		flags &= ~(MF_SPECIAL|MF_SOLID);
 		return this;
 	}
 	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->x,
@@ -640,7 +656,7 @@ AInventory *AInventory::CreateTossable ()
 		Amount--;
 	}
 	copy->DropTime = 30;
-	copy->flags &= ~MF_SPECIAL;
+	copy->flags &= ~(MF_SPECIAL|MF_SOLID);
 	return copy;
 }
 
@@ -1074,7 +1090,7 @@ bool AInventory::TryPickup (AActor *toucher)
 		bool usegood = Use ();
 		toucher->RemoveInventory (this);
 
-		if (usegood)
+		if (usegood || (ItemFlags & IF_ALWAYSPICKUP))
 		{
 			GoAwayAndDie ();
 		}
@@ -1122,7 +1138,7 @@ CCMD (printinv)
 
 	for (item = players[consoleplayer].mo->Inventory; item != NULL; item = item->Inventory)
 	{
-		Printf ("%s #%d (%d/%d)\n", item->GetClass()->Name+1, item->InventoryID, item->Amount, item->MaxAmount);
+		Printf ("%s #%lu (%d/%d)\n", item->GetClass()->Name+1, item->InventoryID, item->Amount, item->MaxAmount);
 	}
 }
 
@@ -1164,7 +1180,8 @@ END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (ABasicArmorBonus, Any, -1, 0)
 	PROP_Inventory_MaxAmount (0)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_BasicArmorBonus_SavePercent (FRACUNIT/3)
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (AHexenArmor, Any, -1, 0)
@@ -1274,12 +1291,17 @@ AInventory *ABasicArmorBonus::CreateCopy (AActor *other)
 bool ABasicArmorBonus::Use ()
 {
 	ABasicArmor *armor = Owner->FindInventory<ABasicArmor> ();
+	int saveAmount = MIN (SaveAmount, MaxSaveAmount);
 
+	if (saveAmount <= 0)
+	{ // If it can't give you anything, it's as good as used.
+		return true;
+	}
 	if (armor == NULL)
 	{
 		armor = Spawn<ABasicArmor> (0,0,0);
 		armor->SavePercent = SavePercent;
-		armor->Amount = SaveAmount;
+		armor->Amount = saveAmount;
 		armor->MaxAmount = MaxSaveAmount;
 		armor->Icon = Icon;
 		Owner->AddInventory (armor);
@@ -1291,7 +1313,7 @@ bool ABasicArmorBonus::Use ()
 	{
 		return false;
 	}
-	armor->Amount += SaveAmount;
+	armor->Amount += saveAmount;
 	armor->MaxAmount = MAX (armor->MaxAmount, MaxSaveAmount);
 	return true;
 }
@@ -1306,6 +1328,39 @@ void ABasicArmor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << SavePercent;
+}
+
+//===========================================================================
+//
+// ABasicArmor :: PostBeginPlay
+//
+// If BasicArmor is given to the player by means other than a
+// BasicArmorPickup, then it may not have an icon set. Fix that here.
+//
+//===========================================================================
+
+void ABasicArmor::PostBeginPlay ()
+{
+	if (Icon == 0)
+	{
+		switch (gameinfo.gametype)
+		{
+		case GAME_Doom:
+			Icon = TexMan.CheckForTexture (SavePercent == FRACUNIT/3 ? "ARM1A0" : "ARM2A0", FTexture::TEX_Any);
+			break;
+
+		case GAME_Heretic:
+			Icon = TexMan.CheckForTexture (SavePercent == FRACUNIT/2 ? "SHLDA0" : "SHD2A0", FTexture::TEX_Any);
+			break;
+
+		case GAME_Strife:
+			Icon = TexMan.CheckForTexture (SavePercent == FRACUNIT/3 ? "I_ARM2" : "I_ARM1", FTexture::TEX_Any);
+			break;
+		
+		default:
+			break;
+		}
+	}
 }
 
 //===========================================================================
@@ -1515,7 +1570,6 @@ void AHexenArmor::AbsorbDamage (int damage, int &newdamage)
 				{
 					Slots[i] -= 
 						Scale (damage, ppawn != NULL ? ppawn->GetArmorIncrement (i) : 5*FRACUNIT, 300);
-					Printf ("%d\n", Slots[i]>>16);
 					if (Slots[i] < 2*FRACUNIT)
 					{
 						Slots[i] = 0;
@@ -1541,7 +1595,7 @@ void AHexenArmor::AbsorbDamage (int damage, int &newdamage)
 }
 
 IMPLEMENT_STATELESS_ACTOR (AHealth, Any, -1, 0)
-	PROP_Inventory_MaxAmount (100)
+	PROP_Inventory_MaxAmount (0)
 END_DEFAULTS
 
 //===========================================================================
@@ -1568,7 +1622,7 @@ bool AHealth::TryPickup (AActor *other)
 	
 	if (max == 0)
 	{
-		max = MAXHEALTH;
+		max = MAXHEALTH + (player != NULL ? player->stamina : 0);
 		if (player->morphTics)
 		{
 			max = MAXMORPHHEALTH;
@@ -1576,12 +1630,19 @@ bool AHealth::TryPickup (AActor *other)
 	}
 	if (player->health >= max)
 	{
+		// You should be able to pick up the Doom health bonus even if
+		// you are already full on health.
+		if (ItemFlags & IF_ALWAYSPICKUP)
+		{
+			GoAwayAndDie ();
+			return true;
+		}
 		return false;
 	}
 	player->health += Amount;
-	if (player->health > MaxAmount)
+	if (player->health > max)
 	{
-		player->health = MaxAmount;
+		player->health = max;
 	}
 	player->mo->health = player->health;
 	GoAwayAndDie ();
@@ -1671,24 +1732,25 @@ bool ABackpack::TryPickup (AActor *other)
 		const TypeInfo *type = TypeInfo::m_Types[i];
 
 		if (type->ParentType == RUNTIME_CLASS(AAmmo) &&
-			strcmp (type->Name+1, "Coin") != 0)
+			((AAmmo *)GetDefaultByType (type))->BackpackAmount > 0)
 		{
-			AInventory *ammo = other->FindInventory (type);
+			AAmmo *ammo = static_cast<AAmmo *>(other->FindInventory (type));
 			if (ammo == NULL)
 			{
-				ammo = static_cast<AInventory *>(Spawn (type, 0, 0, 0));
+				ammo = static_cast<AAmmo *>(Spawn (type, 0, 0, 0));
+				ammo->Amount = ammo->BackpackAmount;
+				ammo->MaxAmount = ammo->BackpackMaxAmount;
 				ammo->AttachToOwner (other);
-				ammo->MaxAmount *= 2;
 			}
 			else
 			{
-				if (ammo->MaxAmount == static_cast<AInventory*>(ammo->GetDefault())->MaxAmount)
+				if (ammo->MaxAmount < ammo->BackpackMaxAmount)
 				{
-					ammo->MaxAmount *= 2;
+					ammo->MaxAmount = ammo->BackpackMaxAmount;
 				}
 				if (ammo->Amount < ammo->MaxAmount)
 				{
-					ammo->Amount += static_cast<AInventory*>(ammo->GetDefault())->Amount;
+					ammo->Amount += static_cast<AAmmo*>(ammo->GetDefault())->BackpackAmount;
 					if (ammo->Amount > ammo->MaxAmount)
 					{
 						ammo->Amount = ammo->MaxAmount;
@@ -1709,14 +1771,14 @@ bool ABackpack::TryPickup (AActor *other)
 
 void ABackpack::DetachFromOwner ()
 {
-	// When removing a backpack, drop the player's ammo maximums by half
+	// When removing a backpack, drop the player's ammo maximums to normal
 	AInventory *item;
 
 	for (item = Owner->Inventory; item != NULL; item = item->Inventory)
 	{
 		if (item->GetClass()->ParentType == RUNTIME_CLASS(AAmmo))
 		{
-			item->MaxAmount /= 2;
+			item->MaxAmount = static_cast<AInventory*>(item->GetDefault())->MaxAmount;
 			if (item->Amount > item->MaxAmount)
 			{
 				item->Amount = item->MaxAmount;

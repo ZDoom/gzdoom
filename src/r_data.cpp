@@ -2577,7 +2577,6 @@ void R_SetDefaultColormap (const char *name)
 		}
 		else
 		{
-			Printf ("use colormap\n");
 			lump = Wads.CheckNumForName (name, ns_colormaps);
 			if (lump == -1)
 				lump = Wads.CheckNumForName (name, ns_global);

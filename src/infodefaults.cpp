@@ -113,6 +113,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 	AKey *const key = (AKey *)defaults;
 	AWeapon *const weapon = (AWeapon *)defaults;
 	ASigil *const sigil = (ASigil *)defaults;
+	AAmmo *const ammo = (AAmmo *)defaults;
 
 	FState *states = DefaultStates (Class);
 	const BYTE *parser = DefaultList;
@@ -254,6 +255,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_RenderStyle:	actor->RenderStyle = dataint;	break;
 		case ADEF_RenderFlags:	actor->renderflags = dataint;	break;
 		case ADEF_Translation:	actor->Translation = dataint;	break;
+		case ADEF_MinMissileChance: actor->MinMissileChance = dataint; break;
 
 		case ADEF_SpawnState:	actor->SpawnState = datastate;	break;
 		case ADEF_SeeState:		actor->SeeState = datastate;	break;
@@ -299,6 +301,9 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 
 		case ADEF_Key_KeyNumber:		key->KeyNumber = dataint; break;
 		case ADEF_Key_AltKeyNumber:		key->AltKeyNumber = dataint; break;
+
+		case ADEF_Ammo_BackpackAmount:	ammo->BackpackAmount = dataint; break;
+		case ADEF_Ammo_BackpackMaxAmount:ammo->BackpackMaxAmount = dataint; break;
 
 		case ADEF_Weapon_Flags:			weapon->WeaponFlags = dataint; break;
 		case ADEF_Weapon_UpSound:		weapon->UpSound = datasound; break;

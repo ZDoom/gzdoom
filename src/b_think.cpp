@@ -44,7 +44,7 @@ void DCajunMaster::Think (AActor *actor, ticcmd_t *cmd)
 
 		cmd->ucmd.yaw = (short)((actor->angle - oldyaw) >> 16) / ticdup;
 		cmd->ucmd.pitch = (short)((oldpitch - actor->pitch) >> 16);
-		if (cmd->ucmd.pitch == -37268)
+		if (cmd->ucmd.pitch == -32768)
 			cmd->ucmd.pitch = -32767;
 		cmd->ucmd.pitch /= ticdup;
 		actor->angle = oldyaw + (cmd->ucmd.yaw << 16) * ticdup;
@@ -332,6 +332,7 @@ void DCajunMaster::WhatToGet (AActor *actor, AActor *item)
 //		return;	// don't know how to use artifacts
 	if (item->IsKindOf (RUNTIME_CLASS(AWeapon)))
 	{
+		// FIXME
 		AWeapon *weapon = static_cast<AWeapon *> (item);
 		AWeapon *heldWeapon;
 

@@ -254,6 +254,7 @@ extern "C"
 {
 int 	fuzzoffset[FUZZTABLE+1];	// [RH] +1 for the assembly routine
 int 	fuzzpos = 0; 
+int		fuzzviewheight;
 }
 /*
 	FUZZOFF,-FUZZOFF,FUZZOFF,-FUZZOFF,FUZZOFF,FUZZOFF,-FUZZOFF,
@@ -283,6 +284,8 @@ void R_InitFuzzTable (int fuzzoff)
 	{
 		fuzzoffset[i] = fuzzinit[i] * fuzzoff;
 	}
+	// Maximum row the fuzzer can draw to
+	fuzzviewheight = viewheight - 2;
 }
 
 #ifndef USEASM
@@ -301,8 +304,8 @@ void R_DrawFuzzColumnP_C (void)
 		dc_yl = 1;
 
 	// .. and high.
-	if (dc_yh == realviewheight-1)
-		dc_yh = realviewheight - 2;
+	if (dc_yh > fuzzviewheight)
+		dc_yh = fuzzviewheight;
 
 	count = dc_yh - dc_yl;
 

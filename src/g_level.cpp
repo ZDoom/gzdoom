@@ -1533,7 +1533,7 @@ void G_DoLoadLevel (int position, bool autosave)
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{ 
-		if (playeringame[i] && players[i].playerstate == PST_DEAD) 
+		if (playeringame[i] && (deathmatch || players[i].playerstate == PST_DEAD))
 			players[i].playerstate = PST_ENTER;	// [BC]
 		memset (players[i].frags,0,sizeof(players[i].frags)); 
 		players[i].fragcount = 0;
@@ -1692,14 +1692,18 @@ void G_StartTravel ()
 			AActor *pawn = players[i].mo;
 			AInventory *inv;
 
-			pawn->UnlinkFromWorld ();
-			pawn->RemoveFromHash ();
-			pawn->ChangeStatNum (STAT_TRAVELLING);
-
-			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
+			// Only living players travel. Dead ones get a new body on the new level.
+			if (players[i].health > 0)
 			{
-				inv->ChangeStatNum (STAT_TRAVELLING);
-				inv->UnlinkFromWorld ();
+				pawn->UnlinkFromWorld ();
+				pawn->RemoveFromHash ();
+				pawn->ChangeStatNum (STAT_TRAVELLING);
+
+				for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
+				{
+					inv->ChangeStatNum (STAT_TRAVELLING);
+					inv->UnlinkFromWorld ();
+				}
 			}
 		}
 	}
@@ -1730,38 +1734,46 @@ void G_FinishTravel ()
 		pawn->ChangeStatNum (STAT_PLAYER);
 		pawndup = pawn->player->mo;
 		assert (pawn != pawndup);
-		if (!startkeepfacing)
-		{
-			pawn->angle = pawndup->angle;
-			pawn->pitch = pawndup->pitch;
+		if (pawndup == NULL)
+		{ // Oh no! there was no start for this player!
+			pawn->flags |= MF_NOSECTOR|MF_NOBLOCKMAP;
+			pawn->Destroy ();
 		}
-		pawn->x = pawndup->x;
-		pawn->y = pawndup->y;
-		pawn->z = pawndup->z;
-		pawn->momx = pawndup->momx;
-		pawn->momy = pawndup->momy;
-		pawn->momz = pawndup->momz;
-		pawn->Sector = pawndup->Sector;
-		pawn->floorz = pawndup->floorz;
-		pawn->ceilingz = pawndup->ceilingz;
-		pawn->dropoffz = pawndup->dropoffz;
-		pawn->floorsector = pawndup->floorsector;
-		pawn->floorpic = pawndup->floorpic;
-		pawn->floorclip = pawndup->floorclip;
-		pawn->waterlevel = pawndup->waterlevel;
-		pawn->target = NULL;
-		pawn->lastenemy = NULL;
-		pawn->AddToHash ();
-		pawn->player->mo = pawn;
-		DObject::PointerSubstitution (pawndup, pawn);
-		pawndup->Destroy ();
-		pawn->LinkToWorld ();
-		pawn->AddToHash ();
-
-		for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
+		else
 		{
-			inv->ChangeStatNum (STAT_INVENTORY);
-			inv->LinkToWorld ();
+			if (!startkeepfacing)
+			{
+				pawn->angle = pawndup->angle;
+				pawn->pitch = pawndup->pitch;
+			}
+			pawn->x = pawndup->x;
+			pawn->y = pawndup->y;
+			pawn->z = pawndup->z;
+			pawn->momx = pawndup->momx;
+			pawn->momy = pawndup->momy;
+			pawn->momz = pawndup->momz;
+			pawn->Sector = pawndup->Sector;
+			pawn->floorz = pawndup->floorz;
+			pawn->ceilingz = pawndup->ceilingz;
+			pawn->dropoffz = pawndup->dropoffz;
+			pawn->floorsector = pawndup->floorsector;
+			pawn->floorpic = pawndup->floorpic;
+			pawn->floorclip = pawndup->floorclip;
+			pawn->waterlevel = pawndup->waterlevel;
+			pawn->target = NULL;
+			pawn->lastenemy = NULL;
+			pawn->AddToHash ();
+			pawn->player->mo = pawn;
+			DObject::PointerSubstitution (pawndup, pawn);
+			pawndup->Destroy ();
+			pawn->LinkToWorld ();
+			pawn->AddToHash ();
+
+			for (inv = pawn->Inventory; inv != NULL; inv = inv->Inventory)
+			{
+				inv->ChangeStatNum (STAT_INVENTORY);
+				inv->LinkToWorld ();
+			}
 		}
 	}
 }

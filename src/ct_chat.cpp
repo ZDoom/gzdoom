@@ -325,14 +325,6 @@ static void ShoveChatStr (const char *str, BYTE who)
 
 static bool DoSubstitution (char *out, const char *in)
 {
-	static const char *ammoNames[] =
-	{
-		"bullets", "shells", "cells", "rockets",
-		"wand crystals", "ethereal arrows", "claw orbs", "runes", "flame orbs", "mace spheres",
-		"blue mana", "green mana",
-		"strange ammo", "both mana", "no ammo"
-	};
-
 	player_t *player = &players[consoleplayer];
 	AWeapon *weapon = player->ReadyWeapon;
 	const char *a, *b;

@@ -29,7 +29,7 @@ IMPLEMENT_ACTOR (AArtiInvisibility, Heretic, 75, 135)
 	PROP_Inventory_RespawnTics (30+4200)
 	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIINVS")
-	PROP_PowerupGiver_Powerup ("PowerInvisibility")
+	PROP_PowerupGiver_Powerup ("PowerGhost")
 END_DEFAULTS
 
 const char *AArtiInvisibility::PickupMessage ()
@@ -56,6 +56,7 @@ IMPLEMENT_ACTOR (AArtiTomeOfPower, Heretic, 86, 134)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIPWBK")
 	PROP_PowerupGiver_Powerup ("PowerWeaponLevel2")
 END_DEFAULTS

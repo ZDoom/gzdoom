@@ -281,6 +281,7 @@ void A_Beacon (AActor *self)
 	}
 	// Once the rebels start teleporting in, you can't pick up the beacon anymore.
 	self->flags &= ~MF_SPECIAL;
+	static_cast<AInventory *>(self)->DropTime = 0;
 	// Set up the new rebel.
 	friendNum = owner->player != NULL ? owner->player - players + 1 : 0;
 	rebel->FriendPlayer = friendNum;

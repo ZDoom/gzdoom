@@ -119,7 +119,7 @@ IMPLEMENT_ACTOR (AFWeapAxe, Hexen, 8010, 27)
 	PROP_Weapon_AtkState (S_FAXEATK)
 	PROP_Weapon_HoldAtkState (S_FAXEATK)
 	PROP_Weapon_Kickback (150)
-	PROP_Weapon_YAdjust (-12)
+	PROP_Weapon_YAdjust (0-12)
 	PROP_Weapon_AmmoType1 ("Mana1")
 END_DEFAULTS
 

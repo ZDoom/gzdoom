@@ -35,10 +35,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
-#include <dsound.h>
 #include <malloc.h>
 #include <assert.h>
 
@@ -80,7 +76,6 @@ struct Channel
 	SDWORD LeftVolume;
 	SDWORD RightVolume;
 	bool Looping;
-	CRITICAL_SECTION CriticalSection;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -91,14 +86,12 @@ struct Channel
 
 static void STACK_ARGS I_ShutdownSound_Simple ();
 static void CopyAndClip (SWORD *buffer, DWORD count, DWORD start);
-static DWORD WINAPI MixerThreadFunc (LPVOID param);
 static void UpdateSound ();
 static void AddChannel8 (Channel *chan, DWORD count);
 static void AddChannel16 (Channel *chan, DWORD count);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern HWND Window;
 extern int _nosound;
 
 EXTERN_CVAR (Int, snd_samplerate)
@@ -109,9 +102,6 @@ EXTERN_CVAR (Bool, snd_pitched)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static LPDIRECTSOUND lpds;
-static LPDIRECTSOUNDBUFFER lpdsb, lpdsbPrimary;
-
 static int Frequency;
 static bool SimpleDown;
 static int Amp;
@@ -120,8 +110,6 @@ static DWORD WritePos;
 static DWORD BufferTime;
 static DWORD MaxWaitTime;
 static SDWORD *RenderBuffer;
-static HANDLE MixerThread;
-static HANDLE MixerEvent;
 static bool MixerQuit;
 
 static Channel *Channels;
@@ -137,135 +125,8 @@ static int NumChannels;
 
 void I_InitSound_Simple ()
 {
-	HRESULT hr;
-	WAVEFORMATEX wfx =
-	{
-		WAVE_FORMAT_PCM,	// wFormatTag
-		2,					// nChannels
-		snd_samplerate,		// nSamplesPerSec
-		snd_samplerate * 4,	// nAvgBytesPerSec
-		4,					// nBlockAlign
-		16,					// wBitsPerSample
-		0					// cbSize
-	};
-	DSBUFFERDESC dsbdesc = { sizeof(dsbdesc), DSBCAPS_PRIMARYBUFFER };
-
-	lpds = NULL;
-	MixerEvent = NULL;
-	MixerQuit = false;
-
-	//hr = DirectSoundCreate (NULL, &lpds, NULL);
-	hr = CoCreateInstance (CLSID_DirectSound, 0, CLSCTX_INPROC_SERVER, IID_IDirectSound, (void **)&lpds);
-	if (FAILED (hr))
-	{
-		Printf ("Could not create DirectSound interface: %08lx\n", hr);
-		goto fail;
-	}
-
-	hr = lpds->Initialize (0);
-	if (FAILED (hr))
-	{
-		Printf ("Could not initialize DirectSound interface: %08lx\n", hr);
-		goto fail;
-	}
-
-	hr = lpds->SetCooperativeLevel (Window, DSSCL_PRIORITY);
-	if (FAILED (hr))
-	{
-		Printf ("Could not set DirectSound co-op level: %08lx\n", hr);
-		lpds->Release ();
-		goto fail;
-	}
-
-	hr = lpds->CreateSoundBuffer (&dsbdesc, &lpdsbPrimary, NULL);
-	if (FAILED (hr))
-	{
-		Printf ("Could not get DirectSound primary buffer: %08lx\n", hr);
-		lpds->Release ();
-		goto fail;
-	}
-
-	hr = lpdsbPrimary->SetFormat (&wfx);
-
-	// Now see what format we really got
-	hr = lpdsbPrimary->GetFormat (&wfx, sizeof(wfx), NULL);
-
-	Frequency = wfx.nSamplesPerSec;
-
-	BufferSamples = MAX (*snd_buffersize, 30);
-	BufferSamples = (wfx.nSamplesPerSec * BufferSamples / 1000);
-	BufferBytes = BufferSamples << 2;
-	dsbdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2;
-	dsbdesc.dwBufferBytes = BufferBytes;
-	dsbdesc.lpwfxFormat = &wfx;
-	wfx.wBitsPerSample = 16;	// Let DirectSound worry about 8-bit primary buffers
-	wfx.nChannels = 2;			// Also let DirectSound worry about mono primary buffers
-
-	hr = lpds->CreateSoundBuffer (&dsbdesc, &lpdsb, NULL);
-	if (FAILED (hr))
-	{
-		Printf ("Could not create secondary DirectSound buffer: %08lx\n", hr);
-		goto fail;
-	}
-
-	hr = lpdsb->Play (0, 0, DSBPLAY_LOOPING);
-	if (FAILED (hr))
-	{
-		Printf ("Could not play secondary buffer: %08lx\n", hr);
-		goto fail;
-	}
-
-	RenderBuffer = (SDWORD *)malloc (BufferBytes << 1);
-	if (RenderBuffer == NULL)
-	{
-		Printf ("Could not alloc sound render buffer\n");
-		goto fail;
-	}
-
-	MixerEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
-	if (MixerEvent == NULL)
-	{
-		Printf ("Could not create mixer event: %08lx\n", GetLastError());
-		goto fail;
-	}
-
-	MaxWaitTime = BufferSamples * 333 / wfx.nSamplesPerSec;
-
-	DWORD dummy;
-	MixerThread = CreateThread (NULL, 0, MixerThreadFunc, NULL, 0, &dummy);
-	if (MixerThread == NULL)
-	{
-		Printf ("Could not create mixer thread: %08lx\n", GetLastError());
-		goto fail;
-	}
-	SetThreadPriority (MixerThread, THREAD_PRIORITY_ABOVE_NORMAL);
-
-	WritePos = 0;
-	SimpleDown = false;
-	atterm (I_ShutdownSound_Simple);
-	snd_sfxvolume.Callback ();
-
-	I_InitMusic ();
-	return;
-
-fail:
-	if (MixerEvent != NULL)
-	{
-		CloseHandle (MixerEvent);
-		MixerEvent = NULL;
-	}
-	if (RenderBuffer != NULL)
-	{
-		free (RenderBuffer);
-		RenderBuffer = NULL;
-	}
-	if (lpds != NULL)
-	{
-		lpds->Release ();
-	}
 	SimpleDown = true;
 	_nosound = true;
-	lpds = NULL;
 	I_InitMusic ();
 }
 
@@ -277,39 +138,6 @@ fail:
 
 static void STACK_ARGS I_ShutdownSound_Simple ()
 {
-	if (lpds != NULL && !SimpleDown)
-	{
-		MixerQuit = true;
-		SetEvent (MixerEvent);
-		WaitForSingleObject (MixerThread, INFINITE);
-		CloseHandle (MixerEvent);
-		MixerEvent = NULL;
-
-		lpds->Release ();
-		lpds = NULL;
-
-		free (RenderBuffer);
-		RenderBuffer = NULL;
-
-		if (Channels != NULL)
-		{
-			for (int i = 0; i < NumChannels; ++i)
-			{
-				DeleteCriticalSection (&Channels[i].CriticalSection);
-			}
-			delete[] Channels;
-			NumChannels = 0;
-		}
-
-		for (size_t i = 0; i < S_sfx.Size(); ++i)
-		{
-			if (S_sfx[i].data != NULL)
-			{
-				delete[] (BYTE *)S_sfx[i].data;
-				S_sfx[i].data = NULL;
-			}
-		}
-	}
 	SimpleDown = true;
 }
 
@@ -345,7 +173,6 @@ int I_SetChannels_Simple (int numchannels)
 		Channels[i].LeftVolume = 0;
 		Channels[i].RightVolume = 0;
 		Channels[i].Looping = false;
-		InitializeCriticalSection (&Channels[i].CriticalSection);
 	}
 
 	return numchannels;
@@ -360,7 +187,6 @@ int I_SetChannels_Simple (int numchannels)
 void I_SetSFXVolume_Simple (float volume)
 {
 	Amp = (int)(volume * 256.0);
-	SetEvent (MixerEvent);
 }
 
 //==========================================================================
@@ -371,46 +197,7 @@ void I_SetSFXVolume_Simple (float volume)
 
 long I_StartSound_Simple (sfxinfo_t *sfx, int vol, int sep, int pitch, int channel, BOOL looping)
 {
-	if (sfx->data == NULL || Channels == NULL)
-	{
-		return 0;
-	}
-
-	Channel *chan = Channels + channel;
-	QWORD step = ((QWORD)PITCH (sfx->frequency, pitch) << 32) / Frequency;
-	SDWORD left, right;
-
-	if (sep < -1)
-	{
-		left = right = 191 * vol / 255;
-	}
-	else if (sep == -1)
-	{
-		left = 191 * vol / 255;
-		right = -left;
-	}
-	else
-	{
-		sep += 1;
-		left = vol - ((vol*sep*sep) >> 16);
-		sep -= 257;
-		right = vol - ((vol*sep*sep) >> 16);
-		/*
-		left = 256 * (255 - sep) / 255;
-		right = 256 * sep / 255;
-		*/
-	}
-
-	EnterCriticalSection (&chan->CriticalSection);
-	chan->Sample = sfx;
-	chan->SamplePos = 0;
-	chan->SampleStep = step;
-	chan->LeftVolume = left;
-	chan->RightVolume = right;
-	chan->Looping = !!looping;
-	LeaveCriticalSection (&chan->CriticalSection);
-
-	return channel + 1;
+	return 0;
 }
 
 //==========================================================================
@@ -451,37 +238,7 @@ int I_SoundIsPlaying_Simple (int handle)
 
 void I_UpdateSoundParams_Simple (int handle, int vol, int sep, int pitch)
 {
-	if (Channels == NULL) return;
-
-	Channel *chan = Channels + handle - 1;
-
-	SDWORD left, right;
-
-	if (sep < -1)
-	{
-		left = right = 191 * vol / 255;
-	}
-	else if (sep == -1)
-	{
-		left = 191 * vol / 255;
-		right = -left;
-	}
-	else
-	{
-		sep += 1;
-		left = vol - ((vol*sep*sep) >> 16);
-		sep -= 257;
-		right = vol - ((vol*sep*sep) >> 16);
-	}
-
-	EnterCriticalSection (&chan->CriticalSection);
-	if (chan->Sample != NULL)
-	{
-		chan->SampleStep = ((QWORD)PITCH (chan->Sample->frequency, pitch) << 32) / Frequency;
-		chan->LeftVolume = left;
-		chan->RightVolume = right;
-	}
-	LeaveCriticalSection (&chan->CriticalSection);
+	return;
 }
 
 //==========================================================================
@@ -522,57 +279,6 @@ void I_LoadSound_Simple (sfxinfo_t *sfx)
 			sfx->frequency = (sfx->bForce22050 ? 22050 : 11025);
 			sfxstart = sfxdata;
 			sfx->b16bit = false;
-		}
-		else if (*(DWORD *)sfxdata == ID_RIFF)
-		{ // WAVE
-			BYTE *sfxend, *sfx_p;
-			WAVEFORMAT fmtchunk;
-
-			if (LONG(((SDWORD *)sfxdata)[1]) > size - 8)
-			{ // lump is too short
-				goto badwave;
-			}
-			if (((DWORD *)sfxdata)[2] != ID_WAVE)
-			{ // not really a WAVE
-				goto badwave;
-			}
-
-			sfxend = sfxdata + LONG(((DWORD *)sfxdata)[1]) + 8;
-			sfx_p = sfxdata + 4*3;
-			fmtchunk.wFormatTag = ~0;
-
-			while (sfx_p < sfxend)
-			{
-				DWORD chunkid = ((DWORD *)sfx_p)[0];
-				DWORD chunklen = LONG(((DWORD *)sfx_p)[1]);
-				sfx_p += 4*2;
-				if (chunkid == ID_fmt)
-				{
-					if (chunklen < sizeof(fmtchunk))
-					{ // fmt chunk is too short
-						continue;
-					}
-					memcpy (&fmtchunk, sfx_p, sizeof(fmtchunk));
-					fmtchunk.wFormatTag = SHORT(fmtchunk.wFormatTag);
-					fmtchunk.nChannels = SHORT(fmtchunk.nChannels);
-					fmtchunk.nSamplesPerSec = SHORT(fmtchunk.nSamplesPerSec);
-					fmtchunk.nAvgBytesPerSec = SHORT(fmtchunk.nAvgBytesPerSec);
-					fmtchunk.nBlockAlign = SHORT(fmtchunk.nBlockAlign);
-				}
-				else if (chunkid == ID_data)
-				{
-					if (fmtchunk.wFormatTag == WAVE_FORMAT_PCM)
-					{
-						sfxstart = sfx_p;
-						len = chunklen;
-						sfx->frequency = fmtchunk.nSamplesPerSec;
-						stereo = fmtchunk.nChannels > 1;
-						sfx->b16bit = (fmtchunk.nBlockAlign >> (stereo?1:0)) == 2;
-					}
-					break;
-				}
-				sfx_p += chunklen;
-			}
 		}
 		else
 		{ // DMX
@@ -645,7 +351,7 @@ void I_UnloadSound_Simple (sfxinfo_t *sfx)
 {
 	if (sfx->data != NULL)
 	{
-		delete[] (BYTE *)sfx->data;
+		delete sfx->data;
 		sfx->data = NULL;
 	}
 }
@@ -658,94 +364,8 @@ void I_UnloadSound_Simple (sfxinfo_t *sfx)
 
 void I_UpdateSounds_Simple ()
 {
-	SetEvent (MixerEvent);
 }
 
-//==========================================================================
-//
-// MixerThreadFunc
-//
-// Sits in a loop, periodically updating the sound buffer. The idea to
-// use an event to get sound changes to happen at specific times comes
-// from one of KB's articles about FR-08's sound system. So is the idea to
-// use just a single buffer rather than doublebuffering with position
-// notifications. See <http://kebby.org/articles/fr08snd3.html>
-//
-//==========================================================================
-
-static DWORD WINAPI MixerThreadFunc (LPVOID param)
-{
-	for (;;)
-	{
-		WaitForSingleObject (MixerEvent, MaxWaitTime);
-		if (MixerQuit)
-		{
-			return 0;
-		}
-		UpdateSound ();
-	}
-}
-
-//==========================================================================
-//
-// UpdateSound
-//
-//==========================================================================
-
-static void UpdateSound ()
-{
-	HRESULT hr;
-	DWORD play, write, total;
-	SWORD *ptr1; DWORD bytes1;
-	SWORD *ptr2; DWORD bytes2;
-
-	hr = lpdsb->GetCurrentPosition (&play, &write);
-	if (FAILED (hr))
-	{
-		return;
-	}
-
-	if (play < WritePos)
-	{
-		total = (BufferBytes - WritePos) + play;
-	}
-	else
-	{
-		total = play - WritePos;
-	}
-
-	memset (RenderBuffer, 0, total << 1);
-	for (int i = 0; i < NumChannels; ++i)
-	{
-		EnterCriticalSection (&Channels[i].CriticalSection);
-		if (Channels[i].Sample != NULL)
-		{
-			if (Channels[i].Sample->b16bit)
-			{
-				AddChannel16 (Channels + i, total >> 2);
-			}
-			else
-			{
-				AddChannel8 (Channels + i, total >> 2);
-			}
-		}
-		LeaveCriticalSection (&Channels[i].CriticalSection);
-	}
-
-	hr = lpdsb->Lock (WritePos, total, (LPVOID *)&ptr1, &bytes1, (LPVOID *)&ptr2, &bytes2, 0);
-	if (FAILED (hr))
-	{
-		return;
-	}
-
-	CopyAndClip (ptr1, bytes1 >> 1, 0);
-	if (ptr2 != NULL) CopyAndClip (ptr2, bytes2 >> 1, bytes1 >> 1);
-
-	lpdsb->Unlock (ptr1, bytes1, ptr2, bytes2);
-
-	WritePos = play;
-	BufferTime += total;
-}
 
 //==========================================================================
 //

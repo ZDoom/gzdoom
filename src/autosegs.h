@@ -84,7 +84,7 @@ class TAutoSegIteratorNoArrow
 			do
 			{
 				++Probe;
-			} while (*Probe == NULL && Probe < (T *)REGMARKER(tail));
+			} while (*Probe == 0 && Probe < (T *)REGMARKER(tail));
 			return *this;
 		}
 		void Reset ()
@@ -102,6 +102,6 @@ class TAutoSegIterator : public TAutoSegIteratorNoArrow<T, head, tail>
 	public:
 		T operator->() const
 		{
-			return *Probe;
+			return *(this->Probe);
 		}
 };

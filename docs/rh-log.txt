@@ -1,3 +1,134 @@
+October 30, 2004
+- Fixed: G_StartTravel() should only affect living players. Otherwise, the body of a
+  dead player will replace the live body that was spawned on the new level and the
+  player will stay dead.
+- Fixed: Strife line type 188 needs to be repeatable so you can cross over it without
+  QuestItem16 and then cross over it again later with the item for it to have effect.
+  This opens the door to the castle.
+
+October 29, 2004
+- Fixed: The idclev cheat needs to call G_StartTravel().
+- Added a BackpackAmount and BackpackMaxAmount to the Ammo definition, so the amount of
+  ammo received with a backpack can differ from the amount picked up from a base ammo
+  item, and so the max amount can be configured too.
+- Fixed: If you already had enough of something a merchant tried to give you, you would
+  get both the "enough" response and the affirmative response.
+- Fixed: The Sigil was draining armor and not just health.
+- Fixed: The Oracle's spectre wouldn't immediately chase after you if you killed the
+  Oracle with a dagger, and it wouldn't aggressively attack until you attacked it.
+- Fixed: Strife floater blocking lines were not properly translated.
+- AActor::DropInventory() now clears the MF_NOGRAVITY flag, since several Hexen items
+  had the flag set.
+- Fixed: Not coop/deathmatch thing flags in BOOM maps did not work. MBF's friendly flag
+  wasn't handled either.
+
+October 28, 2004
+- Fixed: The player's inventory was wiped out when switching levels in deathmatch. The
+  player needs to be reborn every time they are spawned in a deathmatch game so that
+  they can get the default inventory.
+- Fixed: P_ThingProjectile() should set the spawned thing's speed only if it is truely
+  a missile.
+- Fixed: FindMostRecentWeapon() failed if a tome-ed weapon was ready.
+- Fixed: AInventory::GoAway() returned false for items that should stay.
+- Fixed: The flags for maplinedef2_t were signed. They were correctly unsigned for
+  maplinedef_t.
+- Fixed: Ripper didn't set its death state.
+- Fixed: GoldWandPuff2 should inherit from GoldWandFX1, not GoldWandPuff1.
+- Fixed: AWeapon::CheckAmmo() thought you had enough ammo to use a weapon's alternate
+  fire mode if it didn't have an alternate fire. Hence, you could e.g. select the poison
+  crossbow right after receiving Strife's crossbow, even if you didn't have any poison
+  bolts.
+- Fixed: The StrifePuff had the hit actor and hit wall states swapped.
+- Fixed: APigPlayer::ActivateMorphWeapon() didn't check if you already had a snout.
+- Fixed: The +moveup and +movedown keys only worked under water.
+- Fixed: G_FinishTravel() needs to check for NULL duplicate players, which can happen if
+  a start spot doesn't exist for the player on the new map.
+- Fixed: Puzzle items did not define their own use sound.
+- Fixed: Most of the Doom powerups were stackable.
+- Fixed: The fuzzy column drawer did not correctly clip the bottom of the posts to the
+  screen bottom of y-doubling was turned on.
+- Fixed: The chainsaw's UpSound was mis-spelled as "weapos/sawup".
+- Fixed: FindMostRecentWeapon() called P_SetPsprite to drop the old PendingWeapon.
+  But since it was a PendingWeapon, this meant it wasn't actually visible, so doing so
+  would change the weapon sprite. Worse, this function is only processed locally, so
+  it could mess up multiplayer and demos. Now A_Raise() checks for a pending weapon and
+  starts the current one dropping if it finds one.
+- Added a NULL name check to FFont::FindFont() and FWadCollection::CheckNumForName() to
+  fix Daedalus crashing immediately. To fix it for real, the FBehavior constructor needs
+  to call UnencryptStrings() before calling FindLanguage(). Otherwise, none of the
+  strings are available.
+- Fixed: Weapons you dropped magically had ammo, so you could cheat by dropping your
+  weapon and then picking it back up to give yourself more ammo.
+- Fixed: DCanvas::DrawTexture() called NetUpdate() when a menu was open. This is bad
+  because it can cause menu keypresses to be processed during the menu's drawer
+  function. Specifically, the case that brought the badness of this to my attention
+  was the Strife conversation menu. If a choice was made while the menu was being drawn,
+  it would alter the data used for drawing the menu, and it could crash. This is probably
+  also why the screenshot in the load menu would sometimes disappear after selecting a
+  game.
+
+October 27, 2004
+- Fixed: AM_drawThings() drew bounding boxes in the wrong locations if am_rotate
+  was false.
+- Did some miscellaneous GCC 3.4 cleanup.
+- Moved the project files out of the src directory and into the base directory.
+
+October 26, 2004
+- Fixed: AHealth should have a default MaxAmount of 0, not 100, so it maxes out at
+  whatever the player's current max health is.
+- Fixed: Using Dehacked to make an ammo-less weapon use ammo left the AmmoUse1
+  property at 0.
+- Fixed: A_CallSpecial() parsing was broken.
+- Fixed: The peasants are not all the same speed.
+- Fixed: A_AcolyteDie() was incomplete.
+- Fixed: Light green and blue acolytes are supposed to have 60 health, not 70.
+- Fixed: Changing Dehacked MaxArmor did not update ArmorBonus. Changing Dehacked
+  MaxSoulsphere did not update HealthBonus.
+
+October 25, 2004
+- Fixed: A_KlaxonBlare() used threshold when it should have used reactiontime.
+- Fixed: The KlaxonWarningLight from Strife should not have its initial tic randomized,
+  so all the klaxons in a level can stay synchronized.
+- Fixed: A_ItBurnsItBurns() didn't set the death sound to the burning death sound.
+- Fixed: The "peasant/death" sound no longer links to all three death sounds, just the
+  first one, because that's the only one Strife actually played.
+- Fixed: AActor::DropInventory() needs to call P_TryMove() on the dropped item, or
+  sector information might not be filled out correctly.
+- Fixed: After changing item dropping to start the item out as not-pickup-able,
+  A_Beacon() was no longer able to clear the MF_SPECIAL flag, because AInventory::Tick()
+  would set it again. A_Beacon() needs to set DropTime to 0 as well.
+- Fixed: The final frame for ExplosiveBarrel2 was fullbright.
+- Fixed: If a powerup was blinking and you used an item to restore it, APowerup::
+  HandlePickup() would restore the powerup without actually using the item.
+- Fixed: AInventory::Tick() and AInventory::CreateTossable() now handle solid items
+  (specifically, the Degnin ore).
+- Fixed: ASigil::SpecialDropAction() now gives a Sigil piece to every player in the
+  game. Previously, it tried giving it only to whoever the Sigil dropper was
+  targetting. If the monster was killed quickly enough, it was possible for it to
+  be targetting nothing at all. And there was also the possibility for it to be
+  targetting a non-player.
+- Added a NULL player check to AWeapon::AttachToOwner().
+- Added IF_ALWAYSPICKUP for auto-activated items that you can have a maximum of 0 of
+  (such as the armor bonus), so you can take them off the map even if you don't really
+  need them. AHealth::TryPickup() also uses it for the Doom health bonuses.
+- Fixed: Doom HUD crashed when trying to draw an inventory item without a valid icon.
+- Fixed: ArtiBoostArmor tried to give the player BasicArmor instead of a
+  BasicArmorBonus when not playing Hexen.
+- Fixed: A_FireCGun() could crash if the weapon's state was before the first
+  attack state.
+- Fixed: Monsters always activated player-cross lines.
+- Changed ArtiInvisibility to give you the newly added PowerGhost instead of
+  PowerInvisibility. Now you can use both types of invisibility without being
+  restricted by whether or not you are playing Heretic.
+- Fixed: I forgot to make PowerupGiver's EffectTics do anything. Also added
+  BlendColor to PowerupGiver at Graf's suggestion.
+- Fixed: I forgot to add IF_PICKUPFLASH for the Speed Boots and Tome of Power.
+- Changed P_DamageMobj() so that spectral entities are subject to non-spectral
+  damage if the damage amount is one million or more. This lets P_Massacre()
+  kill them.
+- Fixed mobj_statenames[] array in thingdef.cpp
+- Fixed: I forgot to add a case for ADEF_MinMissileChance in infodefaults.cpp.
+
 October 21, 2004
 - 2.0.91 time, just so people stop posting the same crash log.
 - Added a pickup delay after dropping, but it still seems to be problematic.
@@ -9,7 +140,7 @@ October 21, 2004
   I know if it ever cleared it anywhere.
 - Fixed: AInventory::GoAwayAndDie() left the MF_SPECIAL flag set, so it was possible
   for a player to try to pick up the item in the next tic before it destroyed itself.
-- Fixed: AHealthPickup::TryPickup() ignored its superclass's return value.
+- Fixed: AHealthTraining::TryPickup() ignored its superclass's return value.
 - Fixed: Intermission screen tried to show post-E3 maps in Heretic.
 - Fixed: Now that FWadCollection::FindLump() ignores lumps outside the global
   namespace, skins couldn't be loaded.

@@ -778,7 +778,6 @@ void F_CastDrawer (void)
 void F_DemonScroll ()
 {
 	int yval;
-	FTexture *final1 = TexMan("FINAL1");
 	int swidth = screen->GetWidth();
 	int sheight = screen->GetHeight();
 

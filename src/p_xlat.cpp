@@ -86,7 +86,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		}
 		if (flags & ML_BLOCK_FLOATERS_STRIFE)
 		{
-			flags |= ML_BLOCK_FLOATERS_STRIFE;
+			flags |= ML_BLOCK_FLOATERS;
 		}
 		flags |= ML_CLIP_MIDTEX;
 		passthrough = 0;

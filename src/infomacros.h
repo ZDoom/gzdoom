@@ -282,6 +282,9 @@ public:
 #define PROP_Key_KeyNumber(x)			ADD_BYTE_PROP(ADEF_Key_KeyNumber,x)
 #define PROP_Key_AltKeyNumber(x)		ADD_BYTE_PROP(ADEF_Key_AltKeyNumber,x)
 
+#define PROP_Ammo_BackpackAmount(x)		ADD_WORD_PROP(ADEF_Ammo_BackpackAmount,x)
+#define PROP_Ammo_BackpackMaxAmount(x)	ADD_WORD_PROP(ADEF_Ammo_BackpackMaxAmount,x)
+
 #define PROP_Weapon_Flags(x)			ADD_LONG_PROP(ADEF_Weapon_Flags,x)
 #define PROP_Weapon_AmmoGive1(x)		ADD_BYTE_PROP(ADEF_Weapon_AmmoGive1,x)
 #define PROP_Weapon_AmmoGive2(x)		ADD_BYTE_PROP(ADEF_Weapon_AmmoGive2,x)

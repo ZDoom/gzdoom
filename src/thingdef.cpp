@@ -458,7 +458,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 	if (self->target == NULL)
 		return;
 
-	int index = self->state->GetMisc1_2();
+	size_t index = self->state->GetMisc1_2();
 	if (index >= BasicAttackList.Size())
 		return;
 
@@ -620,7 +620,7 @@ void A_ExplodeParms (AActor *self)
 	int damage = 128;
 	int distance = 128;
 	bool hurtSource = true;
-	int index = self->state->GetMisc1_2();
+	size_t index = self->state->GetMisc1_2();
 
 	if (index < AttackList.Size())
 	{
@@ -663,7 +663,7 @@ void A_NoBlocking (AActor *actor)
 
 	actor->flags &= ~MF_SOLID;
 
-	int index = actor->GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
+	size_t index = actor->GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
 
 	// If the actor has a conversation that sets an item to drop, drop that.
 	if (actor->Conversation != NULL && actor->Conversation->DropType != NULL)
@@ -715,10 +715,9 @@ void A_CallSpecial(AActor * self)
 //==========================================================================
 void A_CustomMissile(AActor * self)
 {
-	int index = self->state->GetMisc1_2();
+	size_t index = self->state->GetMisc1_2();
 	AActor * targ;
 	AActor * missile;
-
 
 	if (self->target != NULL && index>=0 && index<AttackList.Size())
 	{
@@ -791,7 +790,7 @@ void A_CustomBulletAttack (AActor *self)
 	int bslope;
 	const TypeInfo *pufftype;
 
-	int index=self->state->GetMisc1_2();
+	size_t index=self->state->GetMisc1_2();
 
 	if (self->target && index>=0 && index<BulletAttackList.Size())
 	{
@@ -1241,8 +1240,8 @@ inline bool TestCom()
 
 // These strings must be in the same order as the respective variables in the actor struct!
 static const char * mobj_statenames[]={"SPAWN","SEE","PAIN","MELEE","MISSILE","CRASH",
-									   "DEATH","XDEATH", "BURN","ICE","RAISE",
-									  NULL};
+							"DEATH","XDEATH", "BURN","ICE","DISINTEGRATE","RAISE","WOUND",
+							NULL};
 
 static const char * weapon_statenames[]={"up","down","ready","attack","holdattack",
 	"altattack","altholdattack","flash",NULL};
@@ -1386,7 +1385,7 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 			SC_ScriptError("You cannot use a special with a state duration larger than 254!");
 		}
 		SC_MustGetStringName("(");
-		for (i = 0; i < 5; ++i)
+		for (i = 0; i < 5; )
 		{
 			if (SC_CheckNumber ())
 			{
@@ -1394,6 +1393,7 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 			}
 			else if (!TestCom ())
 			{
+				SC_UnGet ();
 				break;
 			}
 		}
@@ -2132,7 +2132,7 @@ static int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 						if (v)
 						{
 							SC_ScriptError("Attempt to get invalid state from actor %s\n", actor->Class->Name);
-							return NULL;
+							return 0;
 						}
 					}
 				}
@@ -2361,19 +2361,19 @@ static void ActorDamage (AActor *defaults, Baggage &bag)
 static void ActorSpeed (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->Speed=sc_Float*FRACUNIT;
+	defaults->Speed=fixed_t(sc_Float*FRACUNIT);
 }
 
 static void ActorRadius (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->radius=sc_Float*FRACUNIT;
+	defaults->radius=fixed_t(sc_Float*FRACUNIT);
 }
 
 static void ActorHeight (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->height=sc_Float*FRACUNIT;
+	defaults->height=fixed_t(sc_Float*FRACUNIT);
 }
 
 static void ActorMass (AActor *defaults, Baggage &bag)
@@ -2385,19 +2385,19 @@ static void ActorMass (AActor *defaults, Baggage &bag)
 static void ActorXScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->xscale=(sc_Float*64)-1;
+	defaults->xscale=BYTE(sc_Float*64)-1;
 }
 
 static void ActorYScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->yscale=(sc_Float*64)-1;
+	defaults->yscale=BYTE(sc_Float*64)-1;
 }
 
 static void ActorScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->xscale=defaults->yscale=sc_Float*64-1;
+	defaults->xscale=defaults->yscale=BYTE(sc_Float*64)-1;
 }
 
 static void ActorSeeSound (AActor *defaults, Baggage &bag)
@@ -2535,7 +2535,7 @@ static void ActorRenderStyle (AActor *defaults, Baggage &bag)
 static void ActorAlpha (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->alpha=sc_Float*FRACUNIT;
+	defaults->alpha=fixed_t(sc_Float*FRACUNIT);
 }
 
 static void ActorObituary (AActor *defaults, Baggage &bag)
@@ -2570,7 +2570,7 @@ static void ActorExplosionDamage (AActor *defaults, Baggage &bag)
 static void ActorDeathHeight (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	fixed_t h = sc_Float * FRACUNIT;
+	fixed_t h = fixed_t(sc_Float * FRACUNIT);
 	// AActor::Die() uses a height of 0 to mean "cut the height to 1/4",
 	// so if a height of 0 is desired, store it as -1.
 	bag.Info->Class->Meta.SetMetaFixed (AMETA_DeathHeight, h <= 0 ? -1 : h);
@@ -2579,7 +2579,7 @@ static void ActorDeathHeight (AActor *defaults, Baggage &bag)
 static void ActorBurnHeight (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	fixed_t h = sc_Float * FRACUNIT;
+	fixed_t h = fixed_t(sc_Float * FRACUNIT);
 	// The note above for AMETA_DeathHeight also applies here.
 	bag.Info->Class->Meta.SetMetaFixed (AMETA_BurnHeight, h <= 0 ? -1 : h);
 }
@@ -2605,7 +2605,7 @@ static void ActorMissileType (AActor *defaults, Baggage &bag)
 static void ActorMissileHeight (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	bag.BAttack.MissileHeight = sc_Float*FRACUNIT;
+	bag.BAttack.MissileHeight = fixed_t(sc_Float*FRACUNIT);
 }
 
 static void ActorTranslation (AActor *defaults, Baggage &bag)

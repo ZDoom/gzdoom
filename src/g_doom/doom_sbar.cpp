@@ -608,8 +608,9 @@ private:
 		GetCurrentAmmo (ammo1, ammo2, ammocount1, ammocount2);
 		if (ammo1 != NULL)
 		{
+			FTexture *ammoIcon = TexMan(ammo1->Icon);
 			// Draw primary ammo in the bottom-right corner
-			screen->DrawTexture (TexMan(ammo1->Icon), -14, -4,
+			screen->DrawTexture (ammoIcon, -14, -4,
 				DTA_HUDRules, HUD_Normal,
 				DTA_CenterBottomOffset, true,
 				TAG_DONE);
@@ -617,7 +618,7 @@ private:
 			if (ammo2 != NULL)
 			{
 				// Draw secondary ammo just above the primary ammo
-				int y = MIN (-5 - BigHeight, -5 - TexMan(ammo1->Icon)->GetHeight());
+				int y = MIN (-5 - BigHeight, -5 - (ammoIcon != NULL ? ammoIcon->GetHeight() : 0));
 				screen->DrawTexture (TexMan(ammo2->Icon), -14, y,
 					DTA_HUDRules, HUD_Normal,
 					DTA_CenterBottomOffset, true,
@@ -642,27 +643,30 @@ private:
 				if (item->Icon > 0 && item->IsKindOf (RUNTIME_CLASS(AKey)))
 				{
 					FTexture *keypic = TexMan(item->Icon);
-					int w = keypic->GetWidth ();
-					int h = keypic->GetHeight ();
-					if (w > maxw)
+					if (keypic != NULL)
 					{
-						maxw = w;
-					}
-					screen->DrawTexture (keypic, x, y,
-						DTA_LeftOffset, w,
-						DTA_TopOffset, 0,
-						DTA_HUDRules, HUD_Normal,
-						TAG_DONE);
-					if (++count == 3)
-					{
-						count = 0;
-						y = 2;
-						x -= maxw + 2;
-						maxw = 0;
-					}
-					else
-					{
-						y += h + 2;
+						int w = keypic->GetWidth ();
+						int h = keypic->GetHeight ();
+						if (w > maxw)
+						{
+							maxw = w;
+						}
+						screen->DrawTexture (keypic, x, y,
+							DTA_LeftOffset, w,
+							DTA_TopOffset, 0,
+							DTA_HUDRules, HUD_Normal,
+							TAG_DONE);
+						if (++count == 3)
+						{
+							count = 0;
+							y = 2;
+							x -= maxw + 2;
+							maxw = 0;
+						}
+						else
+						{
+							y += h + 2;
+						}
 					}
 				}
 			}
@@ -677,8 +681,7 @@ private:
 				{
 					screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -14, -24,
 						DTA_HUDRules, HUD_Normal,
-						DTA_LeftOffset, TexMan(CPlayer->InvSel->Icon)->GetWidth()/2,
-						DTA_TopOffset, TexMan(CPlayer->InvSel->Icon)->GetHeight(),
+						DTA_CenterBottomOffset, true,
 						TAG_DONE);
 					DrBNumberOuter (CPlayer->InvSel->Amount, -67, -41);
 				}
@@ -706,8 +709,7 @@ private:
 						{
 							screen->DrawTexture (Images[imgSELECTBOX], -91+i*31, -3,
 								DTA_HUDRules, HUD_HorizCenter,
-								DTA_LeftOffset, Images[imgSELECTBOX]->GetWidth()/2,
-								DTA_TopOffset, Images[imgSELECTBOX]->GetHeight(),
+								DTA_CenterBottomOffset, true,
 								TAG_DONE);
 						}
 					}
@@ -905,7 +907,7 @@ private:
 		{
 			// invulnerability
 			if ((CPlayer->cheats & CF_GODMODE)
-				|| (CPlayer->mo->flags2 & MF2_INVULNERABLE))
+				|| (CPlayer->mo != NULL && CPlayer->mo->flags2 & MF2_INVULNERABLE))
 			{
 				priority = 4;
 				FaceIndex = ST_GODFACE;

@@ -98,7 +98,7 @@ typedef struct
 {
 	WORD	v1;
 	WORD	v2;
-	short	flags;
+	WORD	flags;
 	byte	special;
 	byte	args[5];
 	WORD	sidenum[2];

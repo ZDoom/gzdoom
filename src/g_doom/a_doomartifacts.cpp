@@ -34,7 +34,8 @@ FState AInvulnerabilitySphere::States[] =
 IMPLEMENT_ACTOR (AInvulnerabilitySphere, Doom, 2022, 133)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_Inventory_MaxAmount (0)
 	PROP_PowerupGiver_Powerup ("PowerInvulnerable")
 END_DEFAULTS
 
@@ -54,14 +55,13 @@ class ASoulsphere : public AInventory
 {
 	DECLARE_ACTOR (ASoulsphere, AInventory)
 public:
-	virtual bool TryPickup (AActor *toucher)
+	virtual bool Use ()
 	{
-		player_t *player = toucher->player;
+		player_t *player = Owner->player;
 		player->health += deh.SoulsphereHealth;
 		if (player->health > deh.MaxSoulsphere)
 			player->health = deh.MaxSoulsphere;
 		player->mo->health = player->health;
-		GoAwayAndDie ();
 		return true;
 	}
 protected:
@@ -83,6 +83,8 @@ FState ASoulsphere::States[] =
 
 IMPLEMENT_ACTOR (ASoulsphere, Doom, 2013, 25)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_Inventory_MaxAmount (0)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -92,12 +94,12 @@ class AMegasphere : public APowerupGiver
 {
 	DECLARE_ACTOR (AMegasphere, APowerupGiver)
 public:
-	virtual bool TryPickup (AActor *toucher)
+	virtual bool Use ()
 	{
-		player_t *player = toucher->player;
+		player_t *player = Owner->player;
 
 		ABasicArmorPickup *armor = static_cast<ABasicArmorPickup *> (Spawn ("BlueArmor", 0,0,0));
-		if (!armor->TryPickup (toucher))
+		if (!armor->TryPickup (Owner))
 		{
 			armor->Destroy ();
 		}
@@ -106,7 +108,6 @@ public:
 			player->health = deh.MegasphereHealth;
 			player->mo->health = deh.MegasphereHealth;
 		}
-		GoAwayAndDie ();
 		return true;
 	}
 protected:
@@ -126,6 +127,8 @@ FState AMegasphere::States[] =
 
 IMPLEMENT_ACTOR (AMegasphere, Doom, 83, 132)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_Inventory_MaxAmount (0)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -168,7 +171,8 @@ FState ABerserk::States[] =
 IMPLEMENT_ACTOR (ABerserk, Doom, 2023, 134)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_Inventory_MaxAmount (0)
 	PROP_PowerupGiver_Powerup ("PowerStrength")
 END_DEFAULTS
 
@@ -207,7 +211,8 @@ IMPLEMENT_ACTOR (ABlurSphere, Doom, 2024, 135)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_SpawnState (0)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_Inventory_MaxAmount (0)
 	PROP_PowerupGiver_Powerup ("PowerInvisibility")
 END_DEFAULTS
 
@@ -232,7 +237,8 @@ IMPLEMENT_ACTOR (ARadSuit, Doom, 2025, 136)
 	PROP_HeightFixed (46)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_Inventory_MaxAmount (0)
 	PROP_PowerupGiver_Powerup ("PowerIronFeet")
 END_DEFAULTS
 
@@ -257,7 +263,8 @@ FState AInfrared::States[] =
 IMPLEMENT_ACTOR (AInfrared, Doom, 2045, 138)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
-	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE|IF_ALWAYSPICKUP)
+	PROP_Inventory_MaxAmount (0)
 	PROP_PowerupGiver_Powerup ("PowerLightAmp")
 END_DEFAULTS
 
@@ -291,5 +298,7 @@ FState AAllmap::States[] =
 
 IMPLEMENT_ACTOR (AAllmap, Doom, 2026, 137)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
+	PROP_Inventory_FlagsSet (IF_ALWAYSPICKUP)
+	PROP_Inventory_MaxAmount (0)
 	PROP_SpawnState (0)
 END_DEFAULTS

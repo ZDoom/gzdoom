@@ -38,9 +38,10 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#include "errors.h"
+#include "doomerrors.h"
 #include <math.h>
 
+#include "SDL/SDL.h"
 #include "doomtype.h"
 #include "version.h"
 #include "doomdef.h"
@@ -56,7 +57,7 @@
 #include "g_game.h"
 #include "i_system.h"
 #include "c_dispatch.h"
-#include "i_system.h"
+#include "templates.h"
 
 #include "stats.h"
 #include "hardware.h"
@@ -64,21 +65,18 @@
 EXTERN_CVAR (String, language)
 
 #ifdef USEASM
-extern "C" BOOL STACK_ARGS CheckMMX (char *vendorid);
+extern "C" BOOL STACK_ARGS CheckMMX (CPUInfo *cpu);
 #endif
 
 extern "C"
 {
-	BOOL		HaveRDTSC = 0;
-	BOOL		HaveCMOV = 0;
-	double		SecondsPerCycle = 1e-6;
-	double		CyclesPerSecond = 1e6;
-	byte		CPUFamily, CPUModel, CPUStepping;
+	double		SecondsPerCycle = 1e-8;
+	double		CyclesPerSecond = 1e8;
+	CPUInfo		CPU;
 }
 
 void CalculateCPUSpeed ();
 
-BOOL UseMMX;
 DWORD LanguageIDs[4] =
 {
 	MAKE_ID ('e','n','u',0),
@@ -87,7 +85,7 @@ DWORD LanguageIDs[4] =
 	MAKE_ID ('e','n','u',0)
 };
 	
-int (*I_GetTime) (void);
+int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
 
 void I_Tactile (int on, int off, int total)
@@ -102,19 +100,6 @@ ticcmd_t *I_BaseTiccmd(void)
     return &emptycmd;
 }
 
-byte *I_ZoneBase (size_t *size)
-{
-	void *zone;
-
-	while (NULL == (zone = malloc (*size)) &&
-		   *size >= 2*1024*1024)
-	{
-		*size -= 1024*1024;
-	}
-
-	return (byte *)zone;
-}
-
 void I_BeginRead(void)
 {
 }
@@ -123,67 +108,57 @@ void I_EndRead(void)
 {
 }
 
-byte *I_AllocLow(int length)
-{
-    byte *mem;
-
-    mem = (byte *)malloc (length);
-    if (mem) {
-		memset (mem,0,length);
-    }
-    return mem;
-}
-
-
-// CPhipps - believe it or not, it is possible with consecutive calls to 
-// gettimeofday to receive times out of order, e.g you query the time twice and 
-// the second time is earlier than the first. Cheap'n'cheerful fix here.
-// NOTE: only occurs with bad kernel drivers loaded, e.g. pc speaker drv
-
-static QWORD lasttimereply;
-static QWORD basetime;
-
 // [RH] Returns time in milliseconds
-QWORD I_MSTime (void)
+unsigned int I_MSTime (void)
 {
-	struct timeval tv;
-	struct timezone tz;
-    QWORD thistimereply;
-
-	gettimeofday(&tv, &tz);
-
-	thistimereply = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-
-	// Fix for time problem
-	if (!basetime) {
-		basetime = thistimereply; thistimereply = 0;
-	} else thistimereply -= basetime;
-
-	if (thistimereply < lasttimereply)
-		thistimereply = lasttimereply;
-
-	return (lasttimereply = thistimereply);
+	return SDL_GetTicks ();
 }
+
+static DWORD TicStart;
+static DWORD TicNext;
 
 //
 // I_GetTime
 // returns time in 1/35th second tics
 //
-int I_GetTimePolled (void)
+int I_GetTimePolled (bool saveMS)
 {
-	return I_MSTime() * TICRATE / 1000;
+	DWORD tm = SDL_GetTicks ();
+
+	if (saveMS)
+	{
+		TicStart = tm;
+		TicNext = Scale ((Scale (tm, TICRATE, 1000) + 1), 1000, TICRATE);
+	}
+	return Scale (tm, TICRATE, 1000);
 }
 
 int I_WaitForTicPolled (int prevtic)
 {
     int time;
 
-    while ((time = I_GetTimePolled()) <= prevtic)
+    while ((time = I_GetTimePolled(false)) <= prevtic)
 		;
 
     return time;
 }
 
+// Returns the fractional amount of a tic passed since the most recent tic
+fixed_t I_GetTimeFrac (DWORD *ms)
+{
+	DWORD now = SDL_GetTicks ();
+	if (ms) *ms = TicNext;
+	DWORD step = TicNext - TicStart;
+	if (step == 0)
+	{
+		return FRACUNIT;
+	}
+	else
+	{
+		fixed_t frac = clamp<fixed_t> ((now - TicStart)*FRACUNIT/step, 0, FRACUNIT);
+		return frac;
+	}
+}
 
 void I_WaitVBL (int count)
 {
@@ -205,26 +180,53 @@ void SetLanguageIDs ()
 void I_Init (void)
 {
 #ifndef USEASM
-    UseMMX = 0;
+    memset (&CPU, 0, sizeof(CPU));
 #else
-    char vendorid[13];
-
-    vendorid[0] = vendorid[12] = 0;
-    UseMMX = CheckMMX (vendorid);
-    if (Args.CheckParm ("-nommx"))
-		UseMMX = 0;
-
-   if (vendorid[0])
-		Printf (PRINT_HIGH, "CPUID: %s  (", vendorid);
-
-    if (UseMMX)
-		Printf (PRINT_HIGH, "using MMX)\n");
-    else
-		Printf (PRINT_HIGH, "not using MMX)\n");
-
-    Printf (PRINT_HIGH, "-> family %d, model %d, stepping %d\n", CPUFamily, CPUModel, CPUStepping);
-    CalculateCPUSpeed ();
+	CheckMMX (&CPU);
+	CalculateCPUSpeed ();
+	
+	// Why does Intel right-justify this string?
+	char *f = CPU.CPUString, *t = f;
+	
+	while (*f == ' ')
+	{
+		++f;
+	}
+	if (f != t)
+	{
+		while (*f != 0)
+		{
+			*t++ = *f++;
+		}
+	}
 #endif
+	if (CPU.VendorID[0])
+	{
+		Printf ("CPU Vendor ID: %s\n", CPU.VendorID);
+		if (CPU.CPUString[0])
+		{
+			Printf ("  Name: %s\n", CPU.CPUString);
+		}
+		if (CPU.bIsAMD)
+		{
+			Printf ("  Family %d (%d), Model %d, Stepping %d\n",
+				CPU.Family, CPU.AMDFamily, CPU.AMDModel, CPU.AMDStepping);
+		}
+		else
+		{
+			Printf ("  Family %d, Model %d, Stepping %d\n",
+				CPU.Family, CPU.Model, CPU.Stepping);
+		}
+		Printf ("  Features:");
+		if (CPU.bMMX)		Printf (" MMX");
+		if (CPU.bMMXPlus)	Printf (" MMX+");
+		if (CPU.bSSE)		Printf (" SSE");
+		if (CPU.bSSE2)		Printf (" SSE2");
+		if (CPU.bSSE3)		Printf (" SSE3");
+		if (CPU.b3DNow)		Printf (" 3DNow!");
+		if (CPU.b3DNowPlus)	Printf (" 3DNow!+");
+		Printf ("\n");
+	}
 
 	I_GetTime = I_GetTimePolled;
 	I_WaitForTic = I_WaitForTicPolled;
@@ -238,7 +240,7 @@ void CalculateCPUSpeed ()
 	cycle_t ClockCycles;
 	DWORD usec;
 
-	if (HaveRDTSC)
+	if (CPU.bRDTSC)
 	{
 		ClockCycles = 0;
 		clock (ClockCycles);
@@ -376,18 +378,17 @@ int I_PickIWad (WadStuff *wads, int numwads)
 }
 
 static const char *pattern;
-static findstate_t *findstates[8];
 
 #ifdef OSF1
-static int select (struct dirent *ent)
+static int matchfile (struct dirent *ent)
 #else
-static int select (const struct dirent *ent)
+static int matchfile (const struct dirent *ent)
 #endif
 {
     return fnmatch (pattern, ent->d_name, FNM_NOESCAPE) == 0;
 }
 
-long I_FindFirst (const char *filespec, findstate_t *fileinfo)
+void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
 {
 	char *slash = strrchr (filespec, '/');
 	if (slash)
@@ -397,22 +398,17 @@ long I_FindFirst (const char *filespec, findstate_t *fileinfo)
 
     fileinfo->current = 0;
     fileinfo->count = scandir (".", &fileinfo->namelist,
-							   select, alphasort);
+							   matchfile, alphasort);
     if (fileinfo->count > 0)
     {
-		for (int i = 0; i < 8; i++)
-			if (findstates[i] == NULL)
-			{
-				findstates[i] = fileinfo;
-				return i;
-			}
+		return fileinfo;
     }
-    return -1;
+    return NULL;
 }
 
-int I_FindNext (long handle, findstate_t *fileinfo)
+int I_FindNext (void *handle, findstate_t *fileinfo)
 {
-    findstate_t *state = findstates[handle];
+    findstate_t *state = (findstate_t *)handle;
     if (state->current < fileinfo->count)
     {
 	    return ++state->current < fileinfo->count ? 0 : -1;
@@ -420,10 +416,15 @@ int I_FindNext (long handle, findstate_t *fileinfo)
 	return -1;
 }
 
-int I_FindClose (long handle)
+int I_FindClose (void *handle)
 {
-	findstates[handle]->count = 0;
-	findstates[handle]->namelist = NULL;
+	findstate_t *state = (findstate_t *)handle;
+	if (state->count > 0)
+	{
+		state->count = 0;
+		free (state->namelist);
+		state->namelist = NULL;
+	}
 	return 0;
 }
 

@@ -202,7 +202,7 @@ class TAutoGrowArray : public TArray<T>
 public:
 	T GetVal (size_t index)
 	{
-		if (index >= Size())
+		if (index >= this->Size())
 		{
 			return 0;
 		}
@@ -210,9 +210,9 @@ public:
 	}
 	void SetVal (size_t index, T val)
 	{
-		if (index >= Size())
+		if (index >= this->Size())
 		{
-			Resize (index + 1);
+			this->Resize (index + 1);
 		}
 		(*this)[index] = val;
 	}

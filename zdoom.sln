@@ -1,15 +1,15 @@
 Microsoft Visual Studio Solution File, Format Version 8.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "_zdoom", "zdoom.vcproj", "{8049475B-5C87-46F9-9358-635218A4EF18}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zdoom", "zdoom.vcproj", "{8049475B-5C87-46F9-9358-635218A4EF18}"
 	ProjectSection(ProjectDependencies) = postProject
 		{873F2EEA-24DF-454C-B245-CB9738BA993E} = {873F2EEA-24DF-454C-B245-CB9738BA993E}
 		{F9D9E7D4-E1A2-4866-9E85-B1B14137EE63} = {F9D9E7D4-E1A2-4866-9E85-B1B14137EE63}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "zlib-1.2.1\zlib.vcproj", "{F9D9E7D4-E1A2-4866-9E85-B1B14137EE63}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zlib", "src\zlib-1.2.1\zlib.vcproj", "{F9D9E7D4-E1A2-4866-9E85-B1B14137EE63}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FLAC", "FLAC\FLAC.vcproj", "{873F2EEA-24DF-454C-B245-CB9738BA993E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FLAC", "src\FLAC\FLAC.vcproj", "{873F2EEA-24DF-454C-B245-CB9738BA993E}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject

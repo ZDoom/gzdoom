@@ -153,6 +153,7 @@ typedef struct menu_s {
 	int				y;
 	void		  (*PreDraw)(void);
 	bool			DontDim;
+	void		  (*EscapeHandler)(void);
 } menu_t;
 
 typedef struct value_s {

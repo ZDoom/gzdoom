@@ -44,6 +44,8 @@ IMPLEMENT_ACTOR (AClip, Doom, 2007, 11)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_Amount (10)
 	PROP_Inventory_MaxAmount (200)
+	PROP_Ammo_BackpackAmount (10)
+	PROP_Ammo_BackpackMaxAmount (400)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("CLIPA0")
 END_DEFAULTS
@@ -96,6 +98,8 @@ IMPLEMENT_ACTOR (ARocketAmmo, Doom, 2010, 140)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_Amount (1)
 	PROP_Inventory_MaxAmount (50)
+	PROP_Ammo_BackpackAmount (1)
+	PROP_Ammo_BackpackMaxAmount (100)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("ROCKA0")
 END_DEFAULTS
@@ -148,6 +152,8 @@ IMPLEMENT_ACTOR (ACell, Doom, 2047, 75)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_Amount (20)
 	PROP_Inventory_MaxAmount (300)
+	PROP_Ammo_BackpackAmount (20)
+	PROP_Ammo_BackpackMaxAmount (600)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("CELLA0")
 END_DEFAULTS
@@ -200,6 +206,8 @@ IMPLEMENT_ACTOR (AShell, Doom, 2008, 12)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_Amount (4)
 	PROP_Inventory_MaxAmount (50)
+	PROP_Ammo_BackpackAmount (4)
+	PROP_Ammo_BackpackMaxAmount (100)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("SHELA0")
 END_DEFAULTS
@@ -454,7 +462,7 @@ IMPLEMENT_ACTOR (AChainsaw, Doom, 2005, 32)
 	PROP_Weapon_ReadyState (S_SAW)
 	PROP_Weapon_AtkState (S_SAW1)
 	PROP_Weapon_HoldAtkState (S_SAW1)
-	PROP_Weapon_UpSound ("weapos/sawup")
+	PROP_Weapon_UpSound ("weapons/sawup")
 	PROP_Weapon_ReadySound ("weapons/sawidle")
 END_DEFAULTS
 
@@ -847,13 +855,13 @@ void A_FireCGun (AActor *actor)
 {
 	player_t *player;
 
-	if (NULL == (player = actor->player))
+	if (actor == NULL || NULL == (player = actor->player))
 	{
 		return;
 	}
 	S_Sound (actor, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 
-	AWeapon *weapon = actor->player->ReadyWeapon;
+	AWeapon *weapon = player->ReadyWeapon;
 	if (weapon != NULL)
 	{
 		if (!weapon->DepleteAmmo (weapon->bAltFire))
@@ -861,7 +869,7 @@ void A_FireCGun (AActor *actor)
 		if (weapon->FlashState != NULL)
 		{
 			// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
-			int theflash = MIN (1, players->psprites[ps_weapon].state - weapon->AtkState);
+			int theflash = clamp (players->psprites[ps_weapon].state - weapon->AtkState, 0, 1);
 
 			if (weapon->FlashState[theflash].sprite.index != weapon->FlashState->sprite.index)
 			{

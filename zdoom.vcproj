@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="_zdoom"
+	Name=" zdoom"
 	SccProjectName=""
 	SccAuxPath=""
 	SccLocalPath=""
@@ -29,7 +29,7 @@
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="TRUE"
-				AdditionalIncludeDirectories="win32,sound,.,zlib-1.2.1,g_shared,g_doom,g_raven,g_heretic,g_hexen,g_strife;flac"
+				AdditionalIncludeDirectories="src\win32,src\sound,src,src\zlib-1.2.1,src\g_shared,src\g_doom,src\g_raven,src\g_heretic,src\g_hexen,src\g_strife;src\flac"
 				PreprocessorDefinitions="NDEBUG,WIN32,_WIN32,_WINDOWS,USEASM,HAVE_STRUPR,HAVE_FILELENGTH"
 				StringPooling="TRUE"
 				RuntimeLibrary="0"
@@ -53,7 +53,7 @@
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib"
 				ShowProgress="0"
-				OutputFile="../../zdoom.exe"
+				OutputFile="../zdoom.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="TRUE"
 				IgnoreDefaultLibraryNames=""
@@ -109,7 +109,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "
 				Optimization="0"
-				AdditionalIncludeDirectories="win32;sound;.;&quot;zlib-1.2.1&quot;;g_shared;g_doom;g_raven;g_heretic;g_hexen;g_strife;flac"
+				AdditionalIncludeDirectories="src\win32;src\sound;src;&quot;src\zlib-1.2.1&quot;;src\g_shared;src\g_doom;src\g_raven;src\g_heretic;src\g_hexen;src\g_strife;src\flac"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WIN32,_WINDOWS,USEASM,_CRTDBG_MAP_ALLOC,HAVE_STRUPR,HAVE_FILELENGTH"
 				MinimalRebuild="TRUE"
 				RuntimeLibrary="1"
@@ -130,10 +130,10 @@
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
 				AdditionalDependencies="dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib"
-				OutputFile="../../zdoomd.exe"
+				OutputFile="../zdoomd.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
-				AdditionalLibraryDirectories="d:\gnu\flac-1.1.0\obj\debug\lib"
+				AdditionalLibraryDirectories="d:\gnu\src\flac-1.1.0\obj\debug\lib"
 				IgnoreDefaultLibraryNames="libcmt;msvcrtd;msvcrt"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile=".\Debug/doomdbg.pdb"
@@ -178,7 +178,7 @@
 			Name="Source Files"
 			Filter="c;cpp">
 			<File
-				RelativePath=".\Am_map.cpp">
+				RelativePath=".\src\am_map.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -193,7 +193,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\autostart.cpp">
+				RelativePath=".\src\autostart.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -208,7 +208,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\autozend.cpp">
+				RelativePath=".\src\autozend.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -223,7 +223,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\b_bot.cpp">
+				RelativePath=".\src\b_bot.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -238,7 +238,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\B_func.cpp">
+				RelativePath=".\src\B_func.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -253,7 +253,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\B_game.cpp">
+				RelativePath=".\src\B_game.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -268,7 +268,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\b_move.cpp">
+				RelativePath=".\src\b_move.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -283,7 +283,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\B_think.cpp">
+				RelativePath=".\src\B_think.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -298,7 +298,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\bbannouncer.cpp">
+				RelativePath=".\src\bbannouncer.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -313,7 +313,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\c_bind.cpp">
+				RelativePath=".\src\c_bind.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -328,7 +328,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\c_cmds.cpp">
+				RelativePath=".\src\c_cmds.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -343,7 +343,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\c_console.cpp">
+				RelativePath=".\src\c_console.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -358,7 +358,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\c_cvars.cpp">
+				RelativePath=".\src\c_cvars.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -373,7 +373,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\c_dispatch.cpp">
+				RelativePath=".\src\c_dispatch.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -388,7 +388,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\c_expr.cpp">
+				RelativePath=".\src\c_expr.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -403,7 +403,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\cmdlib.cpp">
+				RelativePath=".\src\cmdlib.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -418,7 +418,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\colormatcher.cpp">
+				RelativePath=".\src\colormatcher.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -433,7 +433,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\configfile.cpp">
+				RelativePath=".\src\configfile.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -448,7 +448,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\ct_chat.cpp">
+				RelativePath=".\src\ct_chat.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -463,7 +463,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\d_dehacked.cpp">
+				RelativePath=".\src\d_dehacked.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -478,7 +478,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\D_main.cpp">
+				RelativePath=".\src\D_main.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -493,7 +493,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\d_net.cpp">
+				RelativePath=".\src\d_net.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -508,7 +508,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\d_netinfo.cpp">
+				RelativePath=".\src\d_netinfo.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -523,7 +523,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\d_protocol.cpp">
+				RelativePath=".\src\d_protocol.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -538,7 +538,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\decallib.cpp">
+				RelativePath=".\src\decallib.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -553,7 +553,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\dobject.cpp">
+				RelativePath=".\src\dobject.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -568,7 +568,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\doomdef.cpp">
+				RelativePath=".\src\doomdef.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -583,7 +583,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\doomstat.cpp">
+				RelativePath=".\src\doomstat.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -598,7 +598,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\dsectoreffect.cpp">
+				RelativePath=".\src\dsectoreffect.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -613,7 +613,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\dthinker.cpp">
+				RelativePath=".\src\dthinker.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -628,7 +628,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\f_finale.cpp">
+				RelativePath=".\src\f_finale.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -643,7 +643,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\f_wipe.cpp">
+				RelativePath=".\src\f_wipe.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -658,7 +658,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\farchive.cpp">
+				RelativePath=".\src\farchive.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -673,10 +673,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\files.cpp">
+				RelativePath=".\src\files.cpp">
 			</File>
 			<File
-				RelativePath=".\g_game.cpp">
+				RelativePath=".\src\g_game.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -691,7 +691,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_level.cpp">
+				RelativePath=".\src\g_level.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -706,7 +706,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\gameconfigfile.cpp">
+				RelativePath=".\src\gameconfigfile.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -721,7 +721,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\gi.cpp">
+				RelativePath=".\src\gi.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -736,7 +736,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\hu_scores.cpp">
+				RelativePath=".\src\hu_scores.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -751,7 +751,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\info.cpp">
+				RelativePath=".\src\info.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -766,7 +766,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\infodefaults.cpp">
+				RelativePath=".\src\infodefaults.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -781,7 +781,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\lumpconfigfile.cpp">
+				RelativePath=".\src\lumpconfigfile.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -796,7 +796,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_alloc.cpp">
+				RelativePath=".\src\m_alloc.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -811,7 +811,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_argv.cpp">
+				RelativePath=".\src\m_argv.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -826,7 +826,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_bbox.cpp">
+				RelativePath=".\src\m_bbox.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -841,7 +841,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_cheat.cpp">
+				RelativePath=".\src\m_cheat.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -856,7 +856,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_fixed.cpp">
+				RelativePath=".\src\m_fixed.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -871,7 +871,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_menu.cpp">
+				RelativePath=".\src\m_menu.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -886,7 +886,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_misc.cpp">
+				RelativePath=".\src\m_misc.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -901,7 +901,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_options.cpp">
+				RelativePath=".\src\m_options.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -916,7 +916,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_png.cpp">
+				RelativePath=".\src\m_png.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -931,7 +931,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\m_random.cpp">
+				RelativePath=".\src\m_random.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -946,7 +946,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\mus2midi.cpp">
+				RelativePath=".\src\mus2midi.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -961,22 +961,22 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="nodebuild.cpp">
+				RelativePath=".\src\nodebuild.cpp">
 			</File>
 			<File
-				RelativePath="nodebuild_events.cpp">
+				RelativePath=".\src\nodebuild_events.cpp">
 			</File>
 			<File
-				RelativePath="nodebuild_extract.cpp">
+				RelativePath=".\src\nodebuild_extract.cpp">
 			</File>
 			<File
-				RelativePath="nodebuild_gl.cpp">
+				RelativePath=".\src\nodebuild_gl.cpp">
 			</File>
 			<File
-				RelativePath="nodebuild_utility.cpp">
+				RelativePath=".\src\nodebuild_utility.cpp">
 			</File>
 			<File
-				RelativePath=".\p_acs.cpp">
+				RelativePath=".\src\p_acs.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -991,7 +991,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_buildmap.cpp">
+				RelativePath=".\src\p_buildmap.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1006,7 +1006,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_ceiling.cpp">
+				RelativePath=".\src\p_ceiling.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1021,10 +1021,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_conversation.cpp">
+				RelativePath=".\src\p_conversation.cpp">
 			</File>
 			<File
-				RelativePath=".\p_doors.cpp">
+				RelativePath=".\src\p_doors.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1039,7 +1039,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_effect.cpp">
+				RelativePath=".\src\p_effect.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1054,7 +1054,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_enemy.cpp">
+				RelativePath=".\src\p_enemy.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1069,7 +1069,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_floor.cpp">
+				RelativePath=".\src\p_floor.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1084,7 +1084,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_interaction.cpp">
+				RelativePath=".\src\p_interaction.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1099,7 +1099,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_lights.cpp">
+				RelativePath=".\src\p_lights.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1114,7 +1114,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_lnspec.cpp">
+				RelativePath=".\src\p_lnspec.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1130,7 +1130,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_map.cpp">
+				RelativePath=".\src\p_map.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1145,7 +1145,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_maputl.cpp">
+				RelativePath=".\src\p_maputl.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1160,7 +1160,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_mobj.cpp">
+				RelativePath=".\src\p_mobj.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1175,7 +1175,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_pillar.cpp">
+				RelativePath=".\src\p_pillar.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1190,7 +1190,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_plats.cpp">
+				RelativePath=".\src\p_plats.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1205,7 +1205,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_pspr.cpp">
+				RelativePath=".\src\p_pspr.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1220,7 +1220,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_saveg.cpp">
+				RelativePath=".\src\p_saveg.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1235,7 +1235,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_sectors.cpp">
+				RelativePath=".\src\p_sectors.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1250,7 +1250,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_setup.cpp">
+				RelativePath=".\src\p_setup.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1265,7 +1265,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_sight.cpp">
+				RelativePath=".\src\p_sight.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1280,7 +1280,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_spec.cpp">
+				RelativePath=".\src\p_spec.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1295,7 +1295,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_switch.cpp">
+				RelativePath=".\src\p_switch.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1310,7 +1310,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_teleport.cpp">
+				RelativePath=".\src\p_teleport.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1325,7 +1325,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_terrain.cpp">
+				RelativePath=".\src\p_terrain.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1340,7 +1340,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_things.cpp">
+				RelativePath=".\src\p_things.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1355,7 +1355,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_tick.cpp">
+				RelativePath=".\src\p_tick.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1370,7 +1370,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_trace.cpp">
+				RelativePath=".\src\p_trace.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1385,7 +1385,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_user.cpp">
+				RelativePath=".\src\p_user.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1400,7 +1400,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_writemap.cpp">
+				RelativePath=".\src\p_writemap.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1415,7 +1415,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\p_xlat.cpp">
+				RelativePath=".\src\p_xlat.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1430,7 +1430,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\po_man.cpp">
+				RelativePath=".\src\po_man.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1445,7 +1445,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\s_advsound.cpp">
+				RelativePath=".\src\s_advsound.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1460,10 +1460,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="s_environment.cpp">
+				RelativePath=".\src\s_environment.cpp">
 			</File>
 			<File
-				RelativePath=".\s_playlist.cpp">
+				RelativePath=".\src\s_playlist.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1478,7 +1478,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\s_sndseq.cpp">
+				RelativePath=".\src\s_sndseq.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1493,7 +1493,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\s_sound.cpp">
+				RelativePath=".\src\s_sound.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1508,7 +1508,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\sc_man.cpp">
+				RelativePath=".\src\sc_man.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1523,7 +1523,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\skins.cpp">
+				RelativePath=".\src\skins.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1538,7 +1538,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\st_stuff.cpp">
+				RelativePath=".\src\st_stuff.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1553,7 +1553,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\stats.cpp">
+				RelativePath=".\src\stats.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1568,7 +1568,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\stringtable.cpp">
+				RelativePath=".\src\stringtable.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1583,7 +1583,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\tables.cpp">
+				RelativePath=".\src\tables.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1598,7 +1598,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\tempfiles.cpp">
+				RelativePath=".\src\tempfiles.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1613,7 +1613,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\v_collection.cpp">
+				RelativePath=".\src\v_collection.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1628,7 +1628,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\v_draw.cpp">
+				RelativePath=".\src\v_draw.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1643,7 +1643,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\v_font.cpp">
+				RelativePath=".\src\v_font.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1658,7 +1658,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\v_palette.cpp">
+				RelativePath=".\src\v_palette.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1673,7 +1673,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\v_pfx.cpp">
+				RelativePath=".\src\v_pfx.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1688,7 +1688,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\v_text.cpp">
+				RelativePath=".\src\v_text.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1703,7 +1703,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\v_video.cpp">
+				RelativePath=".\src\v_video.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1718,7 +1718,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\vectors.cpp">
+				RelativePath=".\src\vectors.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1733,7 +1733,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\w_wad.cpp">
+				RelativePath=".\src\w_wad.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1748,7 +1748,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\wi_stuff.cpp">
+				RelativePath=".\src\wi_stuff.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -1766,10 +1766,10 @@
 				Name="Decorate++"
 				Filter="">
 				<File
-					RelativePath="decorations.cpp">
+					RelativePath=".\src\decorations.cpp">
 				</File>
 				<File
-					RelativePath=".\thingdef.cpp">
+					RelativePath=".\src\thingdef.cpp">
 				</File>
 			</Filter>
 		</Filter>
@@ -1777,314 +1777,314 @@
 			Name="Header Files"
 			Filter="h">
 			<File
-				RelativePath=".\actor.h">
+				RelativePath=".\src\actor.h">
 			</File>
 			<File
-				RelativePath=".\am_map.h">
+				RelativePath=".\src\am_map.h">
 			</File>
 			<File
-				RelativePath=".\announcer.h">
+				RelativePath=".\src\announcer.h">
 			</File>
 			<File
-				RelativePath=".\autosegs.h">
+				RelativePath=".\src\autosegs.h">
 			</File>
 			<File
-				RelativePath=".\B_BOT.H">
+				RelativePath=".\src\b_bot.H">
 			</File>
 			<File
-				RelativePath=".\basicinlines.h">
+				RelativePath=".\src\basicinlines.h">
 			</File>
 			<File
-				RelativePath=".\c_bind.h">
+				RelativePath=".\src\c_bind.h">
 			</File>
 			<File
-				RelativePath=".\c_console.h">
+				RelativePath=".\src\c_console.h">
 			</File>
 			<File
-				RelativePath=".\c_cvars.h">
+				RelativePath=".\src\c_cvars.h">
 			</File>
 			<File
-				RelativePath=".\c_dispatch.h">
+				RelativePath=".\src\c_dispatch.h">
 			</File>
 			<File
-				RelativePath=".\cmdlib.h">
+				RelativePath=".\src\cmdlib.h">
 			</File>
 			<File
-				RelativePath=".\colormatcher.h">
+				RelativePath=".\src\colormatcher.h">
 			</File>
 			<File
-				RelativePath=".\configfile.h">
+				RelativePath=".\src\configfile.h">
 			</File>
 			<File
-				RelativePath=".\d_dehacked.h">
+				RelativePath=".\src\d_dehacked.h">
 			</File>
 			<File
-				RelativePath=".\d_dehackedactions.h">
+				RelativePath=".\src\d_dehackedactions.h">
 			</File>
 			<File
-				RelativePath=".\d_event.h">
+				RelativePath=".\src\d_event.h">
 			</File>
 			<File
-				RelativePath=".\d_gui.h">
+				RelativePath=".\src\d_gui.h">
 			</File>
 			<File
-				RelativePath=".\d_main.h">
+				RelativePath=".\src\d_main.h">
 			</File>
 			<File
-				RelativePath=".\d_net.h">
+				RelativePath=".\src\d_net.h">
 			</File>
 			<File
-				RelativePath=".\d_netinf.h">
+				RelativePath=".\src\d_netinf.h">
 			</File>
 			<File
-				RelativePath=".\d_player.h">
+				RelativePath=".\src\d_player.h">
 			</File>
 			<File
-				RelativePath=".\d_protocol.h">
+				RelativePath=".\src\d_protocol.h">
 			</File>
 			<File
-				RelativePath=".\d_textur.h">
+				RelativePath=".\src\d_textur.h">
 			</File>
 			<File
-				RelativePath=".\d_ticcmd.h">
+				RelativePath=".\src\d_ticcmd.h">
 			</File>
 			<File
-				RelativePath=".\decallib.h">
+				RelativePath=".\src\decallib.h">
 			</File>
 			<File
-				RelativePath=".\dobject.h">
+				RelativePath=".\src\dobject.h">
 			</File>
 			<File
-				RelativePath=".\doomdata.h">
+				RelativePath=".\src\doomdata.h">
 			</File>
 			<File
-				RelativePath=".\doomdef.h">
+				RelativePath=".\src\doomdef.h">
 			</File>
 			<File
-				RelativePath="doomerrors.h">
+				RelativePath=".\src\doomerrors.h">
 			</File>
 			<File
-				RelativePath=".\doomstat.h">
+				RelativePath=".\src\doomstat.h">
 			</File>
 			<File
-				RelativePath=".\doomtype.h">
+				RelativePath=".\src\doomtype.h">
 			</File>
 			<File
-				RelativePath=".\dsectoreffect.h">
+				RelativePath=".\src\dsectoreffect.h">
 			</File>
 			<File
-				RelativePath=".\dthinker.h">
+				RelativePath=".\src\dthinker.h">
 			</File>
 			<File
-				RelativePath=".\f_finale.h">
+				RelativePath=".\src\f_finale.h">
 			</File>
 			<File
-				RelativePath=".\f_wipe.h">
+				RelativePath=".\src\f_wipe.h">
 			</File>
 			<File
-				RelativePath=".\farchive.h">
+				RelativePath=".\src\farchive.h">
 			</File>
 			<File
-				RelativePath=".\files.h">
+				RelativePath=".\src\files.h">
 			</File>
 			<File
-				RelativePath=".\g_game.h">
+				RelativePath=".\src\g_game.h">
 			</File>
 			<File
-				RelativePath=".\g_level.h">
+				RelativePath=".\src\g_level.h">
 			</File>
 			<File
-				RelativePath=".\gameconfigfile.h">
+				RelativePath=".\src\gameconfigfile.h">
 			</File>
 			<File
-				RelativePath=".\gccinlines.h">
+				RelativePath=".\src\gccinlines.h">
 			</File>
 			<File
-				RelativePath=".\gi.h">
+				RelativePath=".\src\gi.h">
 			</File>
 			<File
-				RelativePath=".\gstrings.h">
+				RelativePath=".\src\gstrings.h">
 			</File>
 			<File
-				RelativePath=".\hu_stuff.h">
+				RelativePath=".\src\hu_stuff.h">
 			</File>
 			<File
-				RelativePath=".\i_cd.h">
+				RelativePath=".\src\i_cd.h">
 			</File>
 			<File
-				RelativePath=".\i_movie.h">
+				RelativePath=".\src\i_movie.h">
 			</File>
 			<File
-				RelativePath=".\Info.h">
+				RelativePath=".\src\Info.h">
 			</File>
 			<File
-				RelativePath=".\infomacros.h">
+				RelativePath=".\src\infomacros.h">
 			</File>
 			<File
-				RelativePath=".\lists.h">
+				RelativePath=".\src\lists.h">
 			</File>
 			<File
-				RelativePath=".\lumpconfigfile.h">
+				RelativePath=".\src\lumpconfigfile.h">
 			</File>
 			<File
-				RelativePath=".\m_alloc.h">
+				RelativePath=".\src\m_alloc.h">
 			</File>
 			<File
-				RelativePath=".\m_argv.h">
+				RelativePath=".\src\m_argv.h">
 			</File>
 			<File
-				RelativePath=".\m_bbox.h">
+				RelativePath=".\src\m_bbox.h">
 			</File>
 			<File
-				RelativePath=".\m_cheat.h">
+				RelativePath=".\src\m_cheat.h">
 			</File>
 			<File
-				RelativePath=".\m_crc32.h">
+				RelativePath=".\src\m_crc32.h">
 			</File>
 			<File
-				RelativePath=".\m_fixed.h">
+				RelativePath=".\src\m_fixed.h">
 			</File>
 			<File
-				RelativePath=".\m_menu.h">
+				RelativePath=".\src\m_menu.h">
 			</File>
 			<File
-				RelativePath=".\m_misc.h">
+				RelativePath=".\src\m_misc.h">
 			</File>
 			<File
-				RelativePath=".\m_png.h">
+				RelativePath=".\src\m_png.h">
 			</File>
 			<File
-				RelativePath=".\m_random.h">
+				RelativePath=".\src\m_random.h">
 			</File>
 			<File
-				RelativePath=".\m_swap.h">
+				RelativePath=".\src\m_swap.h">
 			</File>
 			<File
-				RelativePath=".\mscinlines.h">
+				RelativePath=".\src\mscinlines.h">
 			</File>
 			<File
-				RelativePath=".\mus2midi.h">
+				RelativePath=".\src\mus2midi.h">
 			</File>
 			<File
-				RelativePath="nodebuild.h">
+				RelativePath=".\src\nodebuild.h">
 			</File>
 			<File
-				RelativePath=".\p_acs.h">
+				RelativePath=".\src\p_acs.h">
 			</File>
 			<File
-				RelativePath=".\p_conversation.h">
+				RelativePath=".\src\p_conversation.h">
 			</File>
 			<File
-				RelativePath=".\p_effect.h">
+				RelativePath=".\src\p_effect.h">
 			</File>
 			<File
-				RelativePath=".\p_enemy.h">
+				RelativePath=".\src\p_enemy.h">
 			</File>
 			<File
-				RelativePath=".\p_lnspec.h">
+				RelativePath=".\src\p_lnspec.h">
 			</File>
 			<File
-				RelativePath=".\p_local.h">
+				RelativePath=".\src\p_local.h">
 			</File>
 			<File
-				RelativePath=".\p_pspr.h">
+				RelativePath=".\src\p_pspr.h">
 			</File>
 			<File
-				RelativePath=".\p_saveg.h">
+				RelativePath=".\src\p_saveg.h">
 			</File>
 			<File
-				RelativePath=".\p_setup.h">
+				RelativePath=".\src\p_setup.h">
 			</File>
 			<File
-				RelativePath=".\p_spec.h">
+				RelativePath=".\src\p_spec.h">
 			</File>
 			<File
-				RelativePath=".\p_terrain.h">
+				RelativePath=".\src\p_terrain.h">
 			</File>
 			<File
-				RelativePath=".\p_tick.h">
+				RelativePath=".\src\p_tick.h">
 			</File>
 			<File
-				RelativePath=".\p_trace.h">
+				RelativePath=".\src\p_trace.h">
 			</File>
 			<File
-				RelativePath=".\s_playlist.h">
+				RelativePath=".\src\s_playlist.h">
 			</File>
 			<File
-				RelativePath=".\s_sndseq.h">
+				RelativePath=".\src\s_sndseq.h">
 			</File>
 			<File
-				RelativePath=".\s_sound.h">
+				RelativePath=".\src\s_sound.h">
 			</File>
 			<File
-				RelativePath=".\sc_man.h">
+				RelativePath=".\src\sc_man.h">
 			</File>
 			<File
-				RelativePath=".\skins.h">
+				RelativePath=".\src\skins.h">
 			</File>
 			<File
-				RelativePath=".\st_stuff.h">
+				RelativePath=".\src\st_stuff.h">
 			</File>
 			<File
-				RelativePath=".\statnums.h">
+				RelativePath=".\src\statnums.h">
 			</File>
 			<File
-				RelativePath=".\stats.h">
+				RelativePath=".\src\stats.h">
 			</File>
 			<File
-				RelativePath=".\stringenums.h">
+				RelativePath=".\src\stringenums.h">
 			</File>
 			<File
-				RelativePath=".\stringtable.h">
+				RelativePath=".\src\stringtable.h">
 			</File>
 			<File
-				RelativePath=".\Tables.h">
+				RelativePath=".\src\Tables.h">
 			</File>
 			<File
-				RelativePath=".\tarray.h">
+				RelativePath=".\src\tarray.h">
 			</File>
 			<File
-				RelativePath=".\tempfiles.h">
+				RelativePath=".\src\tempfiles.h">
 			</File>
 			<File
-				RelativePath=".\templates.h">
+				RelativePath=".\src\templates.h">
 			</File>
 			<File
-				RelativePath=".\v_collection.h">
+				RelativePath=".\src\v_collection.h">
 			</File>
 			<File
-				RelativePath=".\v_font.h">
+				RelativePath=".\src\v_font.h">
 			</File>
 			<File
-				RelativePath=".\v_palette.h">
+				RelativePath=".\src\v_palette.h">
 			</File>
 			<File
-				RelativePath=".\v_pfx.h">
+				RelativePath=".\src\v_pfx.h">
 			</File>
 			<File
-				RelativePath=".\v_text.h">
+				RelativePath=".\src\v_text.h">
 			</File>
 			<File
-				RelativePath=".\v_video.h">
+				RelativePath=".\src\v_video.h">
 			</File>
 			<File
-				RelativePath=".\vectors.h">
+				RelativePath=".\src\vectors.h">
 			</File>
 			<File
-				RelativePath=".\w_wad.h">
+				RelativePath=".\src\w_wad.h">
 			</File>
 			<File
-				RelativePath=".\weightedlist.h">
+				RelativePath=".\src\weightedlist.h">
 			</File>
 			<File
-				RelativePath=".\wi_stuff.h">
+				RelativePath=".\src\wi_stuff.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Assembly Files"
 			Filter="nas; asm">
 			<File
-				RelativePath=".\a.nas">
+				RelativePath=".\src\a.nas">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2105,7 +2105,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\misc.nas">
+				RelativePath=".\src\misc.nas">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2126,7 +2126,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\tmap.nas">
+				RelativePath=".\src\tmap.nas">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2147,7 +2147,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\tmap2.nas">
+				RelativePath=".\src\tmap2.nas">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2168,7 +2168,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\tmap3.nas">
+				RelativePath=".\src\tmap3.nas">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2193,13 +2193,13 @@
 			Name="Win32 Files"
 			Filter="">
 			<File
-				RelativePath=".\win32\cursor1.cur">
+				RelativePath=".\src\win32\cursor1.cur">
 			</File>
 			<File
-				RelativePath="win32\eaxedit.cpp">
+				RelativePath="src\win32\eaxedit.cpp">
 			</File>
 			<File
-				RelativePath=".\win32\hardware.cpp">
+				RelativePath=".\src\win32\hardware.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2214,10 +2214,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\win32\hardware.h">
+				RelativePath=".\src\win32\hardware.h">
 			</File>
 			<File
-				RelativePath=".\win32\helperthread.cpp">
+				RelativePath=".\src\win32\helperthread.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2232,13 +2232,13 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\win32\helperthread.h">
+				RelativePath=".\src\win32\helperthread.h">
 			</File>
 			<File
-				RelativePath="win32\i_altsound.cpp">
+				RelativePath="src\win32\i_altsound.cpp">
 			</File>
 			<File
-				RelativePath=".\win32\i_cd.cpp">
+				RelativePath=".\src\win32\i_cd.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2253,10 +2253,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="win32\i_crash.cpp">
+				RelativePath="src\win32\i_crash.cpp">
 			</File>
 			<File
-				RelativePath=".\win32\i_input.cpp">
+				RelativePath=".\src\win32\i_input.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2271,10 +2271,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\win32\i_input.h">
+				RelativePath=".\src\win32\i_input.h">
 			</File>
 			<File
-				RelativePath=".\win32\i_main.cpp">
+				RelativePath=".\src\win32\i_main.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2289,7 +2289,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\win32\i_movie.cpp">
+				RelativePath=".\src\win32\i_movie.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2304,7 +2304,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\win32\i_net.cpp">
+				RelativePath=".\src\win32\i_net.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2319,10 +2319,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\win32\i_net.h">
+				RelativePath=".\src\win32\i_net.h">
 			</File>
 			<File
-				RelativePath=".\win32\I_system.cpp">
+				RelativePath=".\src\win32\I_system.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2337,19 +2337,19 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\win32\I_system.h">
+				RelativePath=".\src\win32\I_system.h">
 			</File>
 			<File
-				RelativePath=".\win32\icon1.ico">
+				RelativePath=".\src\win32\icon1.ico">
 			</File>
 			<File
-				RelativePath=".\win32\resource.h">
+				RelativePath=".\src\win32\resource.h">
 			</File>
 			<File
-				RelativePath=".\win32\win32iface.h">
+				RelativePath=".\src\win32\win32iface.h">
 			</File>
 			<File
-				RelativePath=".\win32\win32video.cpp">
+				RelativePath=".\src\win32\win32video.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2364,14 +2364,14 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="win32\zdoom.exe.manifest">
+				RelativePath="src\win32\zdoom.exe.manifest">
 			</File>
 		</Filter>
 		<Filter
 			Name="Shared Game"
 			Filter="">
 			<File
-				RelativePath=".\g_shared\a_action.cpp">
+				RelativePath=".\src\g_shared\a_action.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2386,10 +2386,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_action.h">
+				RelativePath=".\src\g_shared\a_action.h">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_artifacts.cpp">
+				RelativePath=".\src\g_shared\a_artifacts.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2404,10 +2404,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_artifacts.h">
+				RelativePath=".\src\g_shared\a_artifacts.h">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_bridge.cpp">
+				RelativePath=".\src\g_shared\a_bridge.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2422,7 +2422,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_camera.cpp">
+				RelativePath=".\src\g_shared\a_camera.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2437,7 +2437,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_debris.cpp">
+				RelativePath=".\src\g_shared\a_debris.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2452,7 +2452,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_decals.cpp">
+				RelativePath=".\src\g_shared\a_decals.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2468,7 +2468,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_flashfader.cpp">
+				RelativePath=".\src\g_shared\a_flashfader.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2483,7 +2483,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_fountain.cpp">
+				RelativePath=".\src\g_shared\a_fountain.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2498,16 +2498,16 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_shared\a_hatetarget.cpp">
+				RelativePath="src\g_shared\a_hatetarget.cpp">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_keys.cpp">
+				RelativePath=".\src\g_shared\a_keys.cpp">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_keys.h">
+				RelativePath=".\src\g_shared\a_keys.h">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_lightning.cpp">
+				RelativePath=".\src\g_shared\a_lightning.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2522,10 +2522,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_lightning.h">
+				RelativePath=".\src\g_shared\a_lightning.h">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_movingcamera.cpp">
+				RelativePath=".\src\g_shared\a_movingcamera.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2540,7 +2540,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_pickups.cpp">
+				RelativePath=".\src\g_shared\a_pickups.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2555,10 +2555,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_pickups.h">
+				RelativePath=".\src\g_shared\a_pickups.h">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_quake.cpp">
+				RelativePath=".\src\g_shared\a_quake.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2573,7 +2573,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_secrettrigger.cpp">
+				RelativePath=".\src\g_shared\a_secrettrigger.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2588,7 +2588,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_sectoraction.cpp">
+				RelativePath=".\src\g_shared\a_sectoraction.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2603,10 +2603,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_sharedglobal.h">
+				RelativePath=".\src\g_shared\a_sharedglobal.h">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_sharedmisc.cpp">
+				RelativePath=".\src\g_shared\a_sharedmisc.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2621,7 +2621,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_skies.cpp">
+				RelativePath=".\src\g_shared\a_skies.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2636,10 +2636,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_shared\a_soundenvironment.cpp">
+				RelativePath="src\g_shared\a_soundenvironment.cpp">
 			</File>
 			<File
-				RelativePath=".\g_shared\a_spark.cpp">
+				RelativePath=".\src\g_shared\a_spark.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2654,7 +2654,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_splashes.cpp">
+				RelativePath=".\src\g_shared\a_splashes.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2669,7 +2669,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_waterzone.cpp">
+				RelativePath=".\src\g_shared\a_waterzone.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2684,7 +2684,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\a_weapons.cpp">
+				RelativePath=".\src\g_shared\a_weapons.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2699,7 +2699,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\hudmessages.cpp">
+				RelativePath=".\src\g_shared\hudmessages.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2714,10 +2714,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_shared\sbar.h">
+				RelativePath=".\src\g_shared\sbar.h">
 			</File>
 			<File
-				RelativePath=".\g_shared\shared_sbar.cpp">
+				RelativePath=".\src\g_shared\shared_sbar.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2736,7 +2736,7 @@
 			Name="Doom Game"
 			Filter="">
 			<File
-				RelativePath=".\g_doom\a_arachnotron.cpp">
+				RelativePath=".\src\g_doom\a_arachnotron.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2751,7 +2751,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_archvile.cpp">
+				RelativePath=".\src\g_doom\a_archvile.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2766,7 +2766,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_bossbrain.cpp">
+				RelativePath=".\src\g_doom\a_bossbrain.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2781,7 +2781,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_bruiser.cpp">
+				RelativePath=".\src\g_doom\a_bruiser.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2796,7 +2796,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_cacodemon.cpp">
+				RelativePath=".\src\g_doom\a_cacodemon.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2811,7 +2811,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_cyberdemon.cpp">
+				RelativePath=".\src\g_doom\a_cyberdemon.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2826,7 +2826,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_demon.cpp">
+				RelativePath=".\src\g_doom\a_demon.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2841,7 +2841,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomarmor.cpp">
+				RelativePath=".\src\g_doom\a_doomarmor.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2856,7 +2856,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomartifacts.cpp">
+				RelativePath=".\src\g_doom\a_doomartifacts.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2871,7 +2871,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomdecorations.cpp">
+				RelativePath=".\src\g_doom\a_doomdecorations.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2886,10 +2886,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomglobal.h">
+				RelativePath=".\src\g_doom\a_doomglobal.h">
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomhealth.cpp">
+				RelativePath=".\src\g_doom\a_doomhealth.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2904,7 +2904,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomimp.cpp">
+				RelativePath=".\src\g_doom\a_doomimp.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2919,7 +2919,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomkeys.cpp">
+				RelativePath=".\src\g_doom\a_doomkeys.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2934,7 +2934,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doommisc.cpp">
+				RelativePath=".\src\g_doom\a_doommisc.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2949,7 +2949,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomplayer.cpp">
+				RelativePath=".\src\g_doom\a_doomplayer.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2964,7 +2964,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_doomweaps.cpp">
+				RelativePath=".\src\g_doom\a_doomweaps.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2979,7 +2979,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_fatso.cpp">
+				RelativePath=".\src\g_doom\a_fatso.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -2994,7 +2994,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_keen.cpp">
+				RelativePath=".\src\g_doom\a_keen.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3009,7 +3009,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_lostsoul.cpp">
+				RelativePath=".\src\g_doom\a_lostsoul.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3024,7 +3024,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_painelemental.cpp">
+				RelativePath=".\src\g_doom\a_painelemental.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3039,7 +3039,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_possessed.cpp">
+				RelativePath=".\src\g_doom\a_possessed.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3054,7 +3054,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_revenant.cpp">
+				RelativePath=".\src\g_doom\a_revenant.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3069,7 +3069,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_scriptedmarine.cpp">
+				RelativePath=".\src\g_doom\a_scriptedmarine.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3084,7 +3084,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\a_spidermaster.cpp">
+				RelativePath=".\src\g_doom\a_spidermaster.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3099,7 +3099,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_doom\doom_sbar.cpp">
+				RelativePath=".\src\g_doom\doom_sbar.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3118,7 +3118,7 @@
 			Name="Raven Shared"
 			Filter="">
 			<File
-				RelativePath=".\g_raven\a_artiegg.cpp">
+				RelativePath=".\src\g_raven\a_artiegg.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3133,7 +3133,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_raven\a_artitele.cpp">
+				RelativePath=".\src\g_raven\a_artitele.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3148,7 +3148,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_raven\a_minotaur.cpp">
+				RelativePath=".\src\g_raven\a_minotaur.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3163,7 +3163,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_raven\a_ravenambient.cpp">
+				RelativePath=".\src\g_raven\a_ravenambient.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3178,7 +3178,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_raven\a_ravenartifacts.cpp">
+				RelativePath=".\src\g_raven\a_ravenartifacts.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3193,7 +3193,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_raven\a_ravenhealth.cpp">
+				RelativePath=".\src\g_raven\a_ravenhealth.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3208,14 +3208,14 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_raven\ravenshared.h">
+				RelativePath=".\src\g_raven\ravenshared.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Heretic Game"
 			Filter="">
 			<File
-				RelativePath=".\g_heretic\a_beast.cpp">
+				RelativePath=".\src\g_heretic\a_beast.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3230,7 +3230,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_chicken.cpp">
+				RelativePath=".\src\g_heretic\a_chicken.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3245,7 +3245,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_clink.cpp">
+				RelativePath=".\src\g_heretic\a_clink.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3260,7 +3260,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_dsparil.cpp">
+				RelativePath=".\src\g_heretic\a_dsparil.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3275,7 +3275,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticambience.cpp">
+				RelativePath=".\src\g_heretic\a_hereticambience.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3290,7 +3290,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticarmor.cpp">
+				RelativePath=".\src\g_heretic\a_hereticarmor.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3305,7 +3305,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticartifacts.cpp">
+				RelativePath=".\src\g_heretic\a_hereticartifacts.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3320,7 +3320,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticdecorations.cpp">
+				RelativePath=".\src\g_heretic\a_hereticdecorations.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3335,10 +3335,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticglobal.h">
+				RelativePath=".\src\g_heretic\a_hereticglobal.h">
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticimp.cpp">
+				RelativePath=".\src\g_heretic\a_hereticimp.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3353,7 +3353,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_heretickeys.cpp">
+				RelativePath=".\src\g_heretic\a_heretickeys.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3368,7 +3368,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticmisc.cpp">
+				RelativePath=".\src\g_heretic\a_hereticmisc.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3383,7 +3383,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticplayer.cpp">
+				RelativePath=".\src\g_heretic\a_hereticplayer.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3398,7 +3398,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_hereticweaps.cpp">
+				RelativePath=".\src\g_heretic\a_hereticweaps.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3413,7 +3413,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_ironlich.cpp">
+				RelativePath=".\src\g_heretic\a_ironlich.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3428,7 +3428,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_knight.cpp">
+				RelativePath=".\src\g_heretic\a_knight.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3443,7 +3443,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_mummy.cpp">
+				RelativePath=".\src\g_heretic\a_mummy.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3458,7 +3458,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_snake.cpp">
+				RelativePath=".\src\g_heretic\a_snake.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3473,7 +3473,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\a_wizard.cpp">
+				RelativePath=".\src\g_heretic\a_wizard.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3488,7 +3488,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_heretic\heretic_sbar.cpp">
+				RelativePath=".\src\g_heretic\heretic_sbar.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3507,7 +3507,7 @@
 			Name="Hexen Game"
 			Filter="">
 			<File
-				RelativePath=".\g_hexen\a_bats.cpp">
+				RelativePath=".\src\g_hexen\a_bats.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3522,7 +3522,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_bishop.cpp">
+				RelativePath=".\src\g_hexen\a_bishop.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3537,7 +3537,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_blastradius.cpp">
+				RelativePath=".\src\g_hexen\a_blastradius.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3552,7 +3552,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_boostarmor.cpp">
+				RelativePath=".\src\g_hexen\a_boostarmor.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3567,7 +3567,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_centaur.cpp">
+				RelativePath=".\src\g_hexen\a_centaur.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3582,7 +3582,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_clericboss.cpp">
+				RelativePath=".\src\g_hexen\a_clericboss.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3597,7 +3597,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_clericflame.cpp">
+				RelativePath=".\src\g_hexen\a_clericflame.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3612,7 +3612,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_clericholy.cpp">
+				RelativePath=".\src\g_hexen\a_clericholy.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3627,7 +3627,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_clericmace.cpp">
+				RelativePath=".\src\g_hexen\a_clericmace.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3642,10 +3642,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_hexen\a_clericplayer.cpp">
+				RelativePath="src\g_hexen\a_clericplayer.cpp">
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_clericstaff.cpp">
+				RelativePath=".\src\g_hexen\a_clericstaff.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3660,7 +3660,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_demons.cpp">
+				RelativePath=".\src\g_hexen\a_demons.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3675,7 +3675,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_dragon.cpp">
+				RelativePath=".\src\g_hexen\a_dragon.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3690,7 +3690,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_ettin.cpp">
+				RelativePath=".\src\g_hexen\a_ettin.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3705,7 +3705,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_fighteraxe.cpp">
+				RelativePath=".\src\g_hexen\a_fighteraxe.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3720,7 +3720,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_fighterboss.cpp">
+				RelativePath=".\src\g_hexen\a_fighterboss.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3735,7 +3735,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_fighterhammer.cpp">
+				RelativePath=".\src\g_hexen\a_fighterhammer.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3750,13 +3750,13 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_hexen\a_fighterplayer.cpp">
+				RelativePath="src\g_hexen\a_fighterplayer.cpp">
 			</File>
 			<File
-				RelativePath="g_hexen\a_fighterquietus.cpp">
+				RelativePath="src\g_hexen\a_fighterquietus.cpp">
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_firedemon.cpp">
+				RelativePath=".\src\g_hexen\a_firedemon.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3771,7 +3771,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_flame.cpp">
+				RelativePath=".\src\g_hexen\a_flame.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3786,7 +3786,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_flechette.cpp">
+				RelativePath=".\src\g_hexen\a_flechette.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3801,7 +3801,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_fog.cpp">
+				RelativePath=".\src\g_hexen\a_fog.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3816,10 +3816,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_hexen\a_healingradius.cpp">
+				RelativePath="src\g_hexen\a_healingradius.cpp">
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_heresiarch.cpp">
+				RelativePath=".\src\g_hexen\a_heresiarch.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3834,7 +3834,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_hexenarmor.cpp">
+				RelativePath=".\src\g_hexen\a_hexenarmor.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3849,7 +3849,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_hexendecorations.cpp">
+				RelativePath=".\src\g_hexen\a_hexendecorations.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3864,10 +3864,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_hexenglobal.h">
+				RelativePath=".\src\g_hexen\a_hexenglobal.h">
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_hexenkeys.cpp">
+				RelativePath=".\src\g_hexen\a_hexenkeys.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3882,7 +3882,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_hexenspecialdecs.cpp">
+				RelativePath=".\src\g_hexen\a_hexenspecialdecs.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3897,7 +3897,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_iceguy.cpp">
+				RelativePath=".\src\g_hexen\a_iceguy.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3912,7 +3912,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_korax.cpp">
+				RelativePath=".\src\g_hexen\a_korax.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3927,7 +3927,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_mageboss.cpp">
+				RelativePath=".\src\g_hexen\a_mageboss.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3942,7 +3942,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_magecone.cpp">
+				RelativePath=".\src\g_hexen\a_magecone.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3957,7 +3957,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_magelightning.cpp">
+				RelativePath=".\src\g_hexen\a_magelightning.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3972,10 +3972,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_hexen\a_mageplayer.cpp">
+				RelativePath="src\g_hexen\a_mageplayer.cpp">
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_magestaff.cpp">
+				RelativePath=".\src\g_hexen\a_magestaff.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -3990,7 +3990,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_magewand.cpp">
+				RelativePath=".\src\g_hexen\a_magewand.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4005,7 +4005,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_mana.cpp">
+				RelativePath=".\src\g_hexen\a_mana.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4020,10 +4020,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_hexen\a_pig.cpp">
+				RelativePath="src\g_hexen\a_pig.cpp">
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_puzzleitems.cpp">
+				RelativePath=".\src\g_hexen\a_puzzleitems.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4038,7 +4038,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_scriptprojectiles.cpp">
+				RelativePath=".\src\g_hexen\a_scriptprojectiles.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4053,7 +4053,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_serpent.cpp">
+				RelativePath=".\src\g_hexen\a_serpent.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4068,7 +4068,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_speedboots.cpp">
+				RelativePath=".\src\g_hexen\a_speedboots.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4083,7 +4083,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_spike.cpp">
+				RelativePath=".\src\g_hexen\a_spike.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4098,7 +4098,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_summon.cpp">
+				RelativePath=".\src\g_hexen\a_summon.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4113,7 +4113,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_teleportother.cpp">
+				RelativePath=".\src\g_hexen\a_teleportother.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4128,10 +4128,10 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_hexen\a_weaponpieces.cpp">
+				RelativePath="src\g_hexen\a_weaponpieces.cpp">
 			</File>
 			<File
-				RelativePath=".\g_hexen\a_wraith.cpp">
+				RelativePath=".\src\g_hexen\a_wraith.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4146,98 +4146,98 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="g_hexen\hexen_sbar.cpp">
+				RelativePath="src\g_hexen\hexen_sbar.cpp">
 			</File>
 		</Filter>
 		<Filter
 			Name="Strife Game"
 			Filter="">
 			<File
-				RelativePath=".\g_strife\a_acolyte.cpp">
+				RelativePath=".\src\g_strife\a_acolyte.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_alienspectres.cpp">
+				RelativePath=".\src\g_strife\a_alienspectres.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_beggars.cpp">
+				RelativePath=".\src\g_strife\a_beggars.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_coin.cpp">
+				RelativePath=".\src\g_strife\a_coin.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_crusader.cpp">
+				RelativePath=".\src\g_strife\a_crusader.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_entityboss.cpp">
+				RelativePath=".\src\g_strife\a_entityboss.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_inquisitor.cpp">
+				RelativePath=".\src\g_strife\a_inquisitor.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_loremaster.cpp">
+				RelativePath=".\src\g_strife\a_loremaster.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_macil.cpp">
+				RelativePath=".\src\g_strife\a_macil.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_merchants.cpp">
+				RelativePath=".\src\g_strife\a_merchants.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_oracle.cpp">
+				RelativePath=".\src\g_strife\a_oracle.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_peasant.cpp">
+				RelativePath=".\src\g_strife\a_peasant.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_programmer.cpp">
+				RelativePath=".\src\g_strife\a_programmer.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_questitems.cpp">
+				RelativePath=".\src\g_strife\a_questitems.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_ratbuddy.cpp">
+				RelativePath=".\src\g_strife\a_ratbuddy.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_reaver.cpp">
+				RelativePath=".\src\g_strife\a_reaver.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_rebels.cpp">
+				RelativePath=".\src\g_strife\a_rebels.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_sentinel.cpp">
+				RelativePath=".\src\g_strife\a_sentinel.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_spectral.cpp">
+				RelativePath=".\src\g_strife\a_spectral.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_stalker.cpp">
+				RelativePath=".\src\g_strife\a_stalker.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifeammo.cpp">
+				RelativePath=".\src\g_strife\a_strifeammo.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifearmor.cpp">
+				RelativePath=".\src\g_strife\a_strifearmor.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifebishop.cpp">
+				RelativePath=".\src\g_strife\a_strifebishop.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifeglobal.h">
+				RelativePath=".\src\g_strife\a_strifeglobal.h">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifeitems.cpp">
+				RelativePath=".\src\g_strife\a_strifeitems.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifekeys.cpp">
+				RelativePath=".\src\g_strife\a_strifekeys.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifeplayer.cpp">
+				RelativePath=".\src\g_strife\a_strifeplayer.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifestuff.cpp">
+				RelativePath=".\src\g_strife\a_strifestuff.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifeweapons.cpp">
+				RelativePath=".\src\g_strife\a_strifeweapons.cpp">
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
@@ -4246,19 +4246,19 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\g_strife\a_strifeweaps.h">
+				RelativePath=".\src\g_strife\a_strifeweaps.h">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_templar.cpp">
+				RelativePath=".\src\g_strife\a_templar.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_thingstoblowup.cpp">
+				RelativePath=".\src\g_strife\a_thingstoblowup.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\a_zombie.cpp">
+				RelativePath=".\src\g_strife\a_zombie.cpp">
 			</File>
 			<File
-				RelativePath=".\g_strife\strife_sbar.cpp">
+				RelativePath=".\src\g_strife\strife_sbar.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -4268,7 +4268,7 @@
 				Name="Render Sources"
 				Filter="">
 				<File
-					RelativePath=".\r_bsp.cpp">
+					RelativePath=".\src\r_bsp.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4283,7 +4283,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\r_data.cpp">
+					RelativePath=".\src\r_data.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4298,7 +4298,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\r_draw.cpp">
+					RelativePath=".\src\r_draw.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4313,7 +4313,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\r_drawt.cpp">
+					RelativePath=".\src\r_drawt.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4328,7 +4328,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\r_main.cpp">
+					RelativePath=".\src\r_main.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4343,7 +4343,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\r_plane.cpp">
+					RelativePath=".\src\r_plane.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4358,7 +4358,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\r_segs.cpp">
+					RelativePath=".\src\r_segs.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4373,7 +4373,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\r_sky.cpp">
+					RelativePath=".\src\r_sky.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4388,7 +4388,7 @@
 					</FileConfiguration>
 				</File>
 				<File
-					RelativePath=".\r_things.cpp">
+					RelativePath=".\src\r_things.cpp">
 					<FileConfiguration
 						Name="Release|Win32">
 						<Tool
@@ -4407,37 +4407,37 @@
 				Name="Render Headers"
 				Filter="">
 				<File
-					RelativePath=".\r_bsp.h">
+					RelativePath=".\src\r_bsp.h">
 				</File>
 				<File
-					RelativePath=".\r_data.h">
+					RelativePath=".\src\r_data.h">
 				</File>
 				<File
-					RelativePath=".\r_defs.h">
+					RelativePath=".\src\r_defs.h">
 				</File>
 				<File
-					RelativePath=".\r_draw.h">
+					RelativePath=".\src\r_draw.h">
 				</File>
 				<File
-					RelativePath=".\r_local.h">
+					RelativePath=".\src\r_local.h">
 				</File>
 				<File
-					RelativePath=".\r_main.h">
+					RelativePath=".\src\r_main.h">
 				</File>
 				<File
-					RelativePath=".\r_plane.h">
+					RelativePath=".\src\r_plane.h">
 				</File>
 				<File
-					RelativePath=".\r_segs.h">
+					RelativePath=".\src\r_segs.h">
 				</File>
 				<File
-					RelativePath=".\r_sky.h">
+					RelativePath=".\src\r_sky.h">
 				</File>
 				<File
-					RelativePath=".\r_state.h">
+					RelativePath=".\src\r_state.h">
 				</File>
 				<File
-					RelativePath=".\r_things.h">
+					RelativePath=".\src\r_things.h">
 				</File>
 			</Filter>
 		</Filter>
@@ -4445,40 +4445,40 @@
 			Name="Text Files"
 			Filter="txt">
 			<File
-				RelativePath="..\docs\classes.txt">
+				RelativePath="docs\classes.txt">
 			</File>
 			<File
-				RelativePath="..\docs\colors.txt">
+				RelativePath="docs\colors.txt">
 			</File>
 			<File
-				RelativePath="..\docs\commands.txt">
+				RelativePath="docs\commands.txt">
 			</File>
 			<File
-				RelativePath="..\docs\console.html">
+				RelativePath="docs\console.html">
 			</File>
 			<File
-				RelativePath="..\docs\history.txt">
+				RelativePath="docs\history.txt">
 			</File>
 			<File
-				RelativePath="..\docs\notes.txt">
+				RelativePath="docs\notes.txt">
 			</File>
 			<File
-				RelativePath="..\docs\rh-log.txt">
+				RelativePath="docs\rh-log.txt">
 			</File>
 			<File
-				RelativePath="..\docs\thingdef_doc.txt">
+				RelativePath="docs\thingdef_doc.txt">
 			</File>
 			<File
-				RelativePath="..\docs\zdoom.txt">
+				RelativePath="docs\zdoom.txt">
 			</File>
 			<Filter
 				Name="Licenses"
 				Filter="">
 				<File
-					RelativePath="..\docs\BUILDLIC.TXT">
+					RelativePath="docs\BUILDLIC.TXT">
 				</File>
 				<File
-					RelativePath="..\docs\doomlic.txt">
+					RelativePath="docs\doomlic.txt">
 				</File>
 			</Filter>
 		</Filter>
@@ -4486,21 +4486,21 @@
 			Name="Versioning"
 			Filter="">
 			<File
-				RelativePath=".\version.h">
+				RelativePath=".\src\version.h">
 			</File>
 			<File
-				RelativePath=".\win32\zdoom.rc">
+				RelativePath=".\src\win32\zdoom.rc">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+						AdditionalIncludeDirectories="src\win32;$(NoInherit)"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Debug|Win32">
 					<Tool
 						Name="VCResourceCompilerTool"
-						AdditionalIncludeDirectories="win32;$(NoInherit)"/>
+						AdditionalIncludeDirectories="src\win32;$(NoInherit)"/>
 				</FileConfiguration>
 			</File>
 		</Filter>
@@ -4508,10 +4508,10 @@
 			Name="OPL Synth"
 			Filter="">
 			<File
-				RelativePath="oplsynth\DEFTYPES.H">
+				RelativePath=".\src\oplsynth\DEFTYPES.H">
 			</File>
 			<File
-				RelativePath="oplsynth\fmopl.cpp">
+				RelativePath=".\src\oplsynth\fmopl.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -4520,84 +4520,84 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="oplsynth\fmopl.h">
+				RelativePath=".\src\oplsynth\fmopl.h">
 			</File>
 			<File
-				RelativePath="oplsynth\mlkernel.cpp">
+				RelativePath=".\src\oplsynth\mlkernel.cpp">
 			</File>
 			<File
-				RelativePath="oplsynth\mlopl.cpp">
+				RelativePath=".\src\oplsynth\mlopl.cpp">
 			</File>
 			<File
-				RelativePath="oplsynth\mlopl_io.cpp">
+				RelativePath=".\src\oplsynth\mlopl_io.cpp">
 			</File>
 			<File
-				RelativePath="oplsynth\muslib.h">
+				RelativePath=".\src\oplsynth\muslib.h">
 			</File>
 			<File
-				RelativePath="oplsynth\opl_mus_player.cpp">
+				RelativePath=".\src\oplsynth\opl_mus_player.cpp">
 			</File>
 			<File
-				RelativePath="oplsynth\opl_mus_player.h">
+				RelativePath=".\src\oplsynth\opl_mus_player.h">
 			</File>
 		</Filter>
 		<Filter
 			Name="Audio Files"
 			Filter="">
 			<File
-				RelativePath="sound\i_music.cpp">
+				RelativePath="src\sound\i_music.cpp">
 			</File>
 			<File
-				RelativePath="sound\i_music.h">
+				RelativePath="src\sound\i_music.h">
 			</File>
 			<File
-				RelativePath="sound\i_musicinterns.h">
+				RelativePath="src\sound\i_musicinterns.h">
 			</File>
 			<File
-				RelativePath="sound\i_sound.cpp">
+				RelativePath="src\sound\i_sound.cpp">
 			</File>
 			<File
-				RelativePath="sound\i_sound.h">
+				RelativePath="src\sound\i_sound.h">
 			</File>
 			<File
-				RelativePath="sound\music_cd.cpp">
+				RelativePath="src\sound\music_cd.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_flac.cpp">
+				RelativePath="src\sound\music_flac.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_midi_midiout.cpp">
+				RelativePath="src\sound\music_midi_midiout.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_midi_stream.cpp">
+				RelativePath="src\sound\music_midi_stream.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_midi_timidity.cpp">
+				RelativePath="src\sound\music_midi_timidity.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_mod.cpp">
+				RelativePath="src\sound\music_mod.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_mus_midiout.cpp">
+				RelativePath="src\sound\music_mus_midiout.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_mus_opl.cpp">
+				RelativePath="src\sound\music_mus_opl.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_spc.cpp">
+				RelativePath="src\sound\music_spc.cpp">
 			</File>
 			<File
-				RelativePath="sound\music_stream.cpp">
+				RelativePath="src\sound\music_stream.cpp">
 			</File>
 			<File
-				RelativePath="sound\sample_flac.cpp">
+				RelativePath="src\sound\sample_flac.cpp">
 			</File>
 			<File
-				RelativePath="sound\sample_flac.h">
+				RelativePath="src\sound\sample_flac.h">
 			</File>
 		</Filter>
 		<File
-			RelativePath="win32\icon2.ico">
+			RelativePath="src\win32\icon2.ico">
 		</File>
 	</Files>
 	<Globals>

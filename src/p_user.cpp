@@ -277,8 +277,10 @@ AWeapon *APlayerPawn::PickNewWeapon (const TypeInfo *ammotype)
 		{
 			P_SetPsprite (player, ps_weapon, player->ReadyWeapon->DownState);
 		}
-		else
+		else if (player->PendingWeapon != WP_NOCHANGE)
 		{
+			player->ReadyWeapon = player->PendingWeapon;
+			player->PendingWeapon = WP_NOCHANGE;
 			P_BringUpWeapon (player);
 		}
 	}
@@ -1059,7 +1061,6 @@ void P_PlayerThink (player_t *player)
 	else
 	{
 		P_MovePlayer (player);
-		AActor *pmo = player->mo;
 
 		// [RH] check for jump
 		if (cmd->ucmd.buttons & BT_JUMP)
@@ -1091,7 +1092,7 @@ void P_PlayerThink (player_t *player)
 		}
 		else if (cmd->ucmd.upmove != 0)
 		{
-			if (player->mo->waterlevel >= 2 || player->mo->FindInventory (RUNTIME_CLASS(APowerFlight)))
+			if (player->mo->waterlevel >= 2 || (player->mo->flags2 & MF2_FLY))
 			{
 				player->mo->momz = cmd->ucmd.upmove << 9;
 				if (player->mo->waterlevel < 2 && !(player->mo->flags2 & MF2_FLY))

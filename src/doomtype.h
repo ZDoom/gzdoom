@@ -86,10 +86,8 @@ typedef signed __int64          SQWORD;
 
 typedef DWORD                           BITFIELD;
 
-// w32api and the Platform SDK use different names for this #define
-#if !defined(GUID_DEFINED) && !defined(_GUID_DEFINED)
+#if !defined(GUID_DEFINED)
 #define GUID_DEFINED
-#define _GUID_DEFINED
 typedef struct _GUID
 {
     DWORD	Data1;

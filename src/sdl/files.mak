@@ -21,7 +21,7 @@ HW_X_LDFLAGS = -L$(X_libs) -lX11 -lXext -lXxf86dga -lXxf86vm
 
 # libraries to link with
 #LIBS = -lm -ldl -lpthread midas/lib/linux/gcretail/libmidas.a
-LIBS = -lm -lfmod-3.4 -lz -lSDL -lpthread
+LIBS = -lm -lfmod-3.71 -lz -lSDL -lpthread -L~/fmodapi371linux/api -lFLAC -lFLAC++
 
 SYSINT = $(INTDIR)/$(SYSTEM)
 
@@ -34,7 +34,8 @@ SYSOBJS = \
 	$(SYSINT)/i_movie.o \
 	$(SYSINT)/hardware.o \
 	$(SYSINT)/sdlvideo.o \
-	$(SYSINT)/expandorama.o
+	$(SYSINT)/i_altsound.o
+#	$(SYSINT)/expandorama.o
 
 SYSSOURCES = \
 	$(IMPDIR)/i_main.cpp \
@@ -45,7 +46,8 @@ SYSSOURCES = \
 	$(IMPDIR)/i_movie.cpp \
 	$(IMPDIR)/hardware.cpp \
 	$(IMPDIR)/sdlvideo.cpp \
-	$(IMPDIR)/expandorama.nas
+	$(IMPDIR)/i_altsound.cpp
+#	$(IMPDIR)/expandorama.nas
 
 install: $(INTDIR)/$(OUTFILE)
 	$(INSTALL) -d $(zdoomshare_dir) $(lib_dir) $(bin_dir) $(doc_dir)

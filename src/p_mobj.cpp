@@ -426,7 +426,6 @@ bool AActor::SetState (FState *newstate)
 	{
 		if (newstate == NULL)
 		{
-			FState *oldstate = state;
 			state = NULL;
 			Destroy ();
 			return false;
@@ -690,11 +689,13 @@ AInventory *AActor::DropInventory (AInventory *item)
 	drop->x = x;
 	drop->y = y;
 	drop->z = z + 10*FRACUNIT;
+	P_TryMove (drop, x, y, true);
 #endif
 	drop->angle = angle;
 	drop->momx = momx + 5 * finecosine[an];
 	drop->momy = momy + 5 * finesine[an];
 	drop->momz = momz + FRACUNIT;
+	drop->flags &= ~MF_NOGRAVITY;	// Don't float
 	return drop;
 }
 
@@ -2528,7 +2529,6 @@ void AActor::Tick ()
 		// of 0 tics work as expected.
 		if (tics <= 0)
 		{
-			FState *oldstate = state;
 			if (!SetState (state->GetNextState()))
 				return; 		// freed itself
 		}
@@ -2807,7 +2807,7 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 
 void AActor::LevelSpawned ()
 {
-	if (tics > 0)
+	if (tics > 0 && !(flags4 & MF4_SYNCHRONIZED))
 		tics = 1 + (pr_spawnmapthing() % tics);
 	angle_t incs = AngleIncrements ();
 	angle -= angle % incs;
@@ -3503,7 +3503,7 @@ AActor *P_SpawnPuff (const TypeInfo *pufftype, fixed_t x, fixed_t y, fixed_t z, 
 	// If a puff has a crash state and an actor was not hit,
 	// it will enter the crash state. This is used by the StrifeSpark
 	// and BlasterPuff.
-	if (hitthing == NULL && puff->CrashState != NULL)
+	if (hitthing == false && puff->CrashState != NULL)
 	{
 		puff->SetState (puff->CrashState);
 	}

@@ -36,7 +36,7 @@
 // be read using DirectInput instead of winmm.
 
 #define DIRECTINPUT_VERSION 0x800
-#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0400
+#if !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0501)
 #define _WIN32_WINNT 0x0501			// Support the mouse wheel and session notification.
 #endif
 
@@ -56,9 +56,7 @@
 #include <string.h>
 
 // Compensate for w32api's lack
-#ifndef WM_XBUTTONDOWN
-#define WM_XBUTTONDOWN 0x020B
-#define WM_XBUTTONUP 0x020C
+#ifndef GET_XBUTTON_WPARAM
 #define GET_XBUTTON_WPARAM(wParam) (HIWORD(wParam))
 #endif
 #ifndef WM_WTSSESSION_CHANGE
@@ -71,30 +69,9 @@
 #ifndef SetClassLongPtr
 #define SetClassLongPtr SetClassLong
 #endif
-
-#ifdef __GNUC__
-// I don't know if the new MinGW DirectX 9 libs define these or not.
-const GUID IID_IDirectInput8A = { 0xBF798030,0x483A,0x4DA2,{0xAA,0x99,0x5D,0x64,0xED,0x36,0x97,0x00}};
-const GUID CLSID_DirectInput8 = { 0x25E609E4,0xB259,0x11CF,{0xBF,0xC7,0x44,0x45,0x53,0x54,0x00,0x00}};
-static DIOBJECTDATAFORMAT MouseObjectData2[11] =
-{
-	{&GUID_XAxis,  0, 0x00ffff03, 0},
-	{&GUID_YAxis,  4, 0x00ffff03, 0},
-	{&GUID_ZAxis,  8, 0x80ffff03, 0},
-	{NULL,		  12, 0x00ffff0c, 0},
-	{NULL,		  13, 0x00ffff0c, 0},
-	{NULL,		  14, 0x80ffff0c, 0},
-	{NULL,		  15, 0x80ffff0c, 0},
-	{NULL,		  16, 0x80ffff0c, 0},
-	{NULL,		  17, 0x80ffff0c, 0},
-	{NULL,		  18, 0x80ffff0c, 0},
-	{NULL,		  19, 0x80ffff0c, 0},
-};
-
-const DIDATAFORMAT c_dfDIMouse2 =
-{
-	24, 16, 2, 20, 11, MouseObjectData2
-};
+#ifndef PBT_APMSUSPEND
+// w32api does not #define the PBT_ macros in winuser.h like the PSDK does
+#include <pbt.h>
 #endif
 
 #include "c_dispatch.h"
@@ -826,7 +803,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 #ifdef _DEBUG
 			char foo[256];
-			sprintf (foo, "Session Change: %d %d\n", lParam, wParam);
+			sprintf (foo, "Session Change: %ld %d\n", lParam, wParam);
 			OutputDebugString (foo);
 #endif
 		}
@@ -1759,21 +1736,24 @@ static void MouseRead_DI ()
 		count++;
 
 		/* Look at the element to see what happened */
-		switch (od.dwOfs)
+		// GCC does not like putting the DIMOFS_ macros in case statements,
+		// so use ifs instead.
+		if (od.dwOfs == DIMOFS_X)
 		{
-		case DIMOFS_X:	dx += od.dwData;						break;
-		case DIMOFS_Y:	dy += od.dwData;						break;
-		case DIMOFS_Z:	WheelMove += od.dwData; WheelMoved ();	break;
-
-		/* [RH] Mouse button events mimic keydown/up events */
-		case DIMOFS_BUTTON0:
-		case DIMOFS_BUTTON1:
-		case DIMOFS_BUTTON2:
-		case DIMOFS_BUTTON3:
-		case DIMOFS_BUTTON4:
-		case DIMOFS_BUTTON5:
-		case DIMOFS_BUTTON6:
-		case DIMOFS_BUTTON7:
+			dx += od.dwData;
+		}
+		else if (od.dwOfs == DIMOFS_Y)
+		{
+			dy += od.dwData;
+		}
+		else if (od.dwOfs == DIMOFS_Z)
+		{
+			WheelMove += od.dwData;
+			WheelMoved ();
+		}
+		else if (od.dwOfs >= DIMOFS_BUTTON0 && od.dwOfs <= DIMOFS_BUTTON7)
+		{
+			/* [RH] Mouse button events mimic keydown/up events */
 			if (!GUICapture)
 			{
 				event.type = (od.dwData & 0x80) ? EV_KeyDown : EV_KeyUp;
@@ -1781,7 +1761,6 @@ static void MouseRead_DI ()
 				DIKState[ActiveDIKState][event.data1] = (event.type == EV_KeyDown);
 				D_PostEvent (&event);
 			}
-			break;
 		}
 	}
 

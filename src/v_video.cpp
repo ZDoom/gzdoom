@@ -159,34 +159,7 @@ bool DCanvas::IsValid ()
 // [RH] Fill an area with a 64x64 flat texture
 //		right and bottom are one pixel *past* the boundaries they describe.
 void DCanvas::FlatFill (int left, int top, int right, int bottom, FTexture *src)
-{/*
-	int x, y;
-	int advance;
-	int width;
-
-	width = right - left;
-	right = width >> 6;
-
-	byte *dest;
-
-	advance = Pitch - width;
-	dest = Buffer + top * Pitch + left;
-
-	for (y = top; y < bottom; y++)
-	{
-		for (x = 0; x < right; x++)
-		{
-			memcpy (dest, src + ((y&63)<<6), 64);
-			dest += 64;
-		}
-
-		if (width & 63)
-		{
-			memcpy (dest, src + ((y&63)<<6), width & 63);
-			dest += width & 63;
-		}
-		dest += advance;
-	}*/
+{
 	int w = src->GetWidth();
 	int h = src->GetHeight();
 

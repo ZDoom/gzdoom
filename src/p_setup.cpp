@@ -977,11 +977,15 @@ void P_LoadThings (int lump, int position)
 			if (flags & STF_AMBUSH)			mt2.flags |= MTF_AMBUSH;
 			if (flags & STF_FRIENDLY)		mt2.flags |= MTF_FRIENDLY;
 		}
-		else if (flags & BTF_BADEDITORCHECK)
+		else
 		{
-			flags &= 0x1F;
-			if (flags & BTF_NOTDEATHMATCH)		mt2.flags &= ~MTF_DEATHMATCH;
-			if (flags & BTF_NOTCOOPERATIVE)		mt2.flags &= ~MTF_COOPERATIVE;
+			if (flags & BTF_BADEDITORCHECK)
+			{
+				flags &= 0x1F;
+			}
+			if (flags & BTF_NOTDEATHMATCH)	mt2.flags &= ~MTF_DEATHMATCH;
+			if (flags & BTF_NOTCOOPERATIVE)	mt2.flags &= ~MTF_COOPERATIVE;
+			if (flags & BTF_FRIENDLY)		mt2.flags |= MTF_FRIENDLY;
 		}
 		if (flags & BTF_NOTSINGLE)			mt2.flags &= ~MTF_SINGLE;
 
@@ -2544,7 +2548,11 @@ static void P_GroupLines (bool buildmap)
 		Printf ("---Group Lines Times---\n");
 		for (i = 0; i < 7; ++i)
 		{
+#ifdef _MSC_VER
 			Printf (" time %d:%10I64u\n", i, times[i]);
+#else
+			Printf (" time %d:%10lu\n", i, times[i]);
+#endif
 		}
 	}
 }
@@ -3245,7 +3253,11 @@ void P_SetupLevel (char *lumpname, int position)
 				"init polys",
 				"precache"
 			};
+#ifdef _MSC_VER
 			Printf ("Time%3d:%10I64u cycles (%s)\n", i, times[i], timenames[i]);
+#else
+			Printf ("Time%3d:%10lu cycles (%s)\n", i, times[i], timenames[i]);
+#endif
 		}
 	}
 }

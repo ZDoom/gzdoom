@@ -249,7 +249,7 @@ void D_ProcessEvents (void)
 		return;
 	}
 		
-	for (; eventtail != eventhead ; eventtail = (++eventtail)&(MAXEVENTS-1))
+	for (; eventtail != eventhead ; eventtail = (eventtail+1)&(MAXEVENTS-1))
 	{
 		ev = &events[eventtail];
 		if (C_Responder (ev))
@@ -292,7 +292,7 @@ void D_PostEvent (const event_t *ev)
 			return;
 		}
 	}
-	eventhead = (++eventhead)&(MAXEVENTS-1);
+	eventhead = (eventhead+1)&(MAXEVENTS-1);
 }
 
 //==========================================================================

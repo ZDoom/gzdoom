@@ -209,6 +209,9 @@ void DDoor::DoorSound (bool raise) const
 	{
 		switch (gameinfo.gametype)
 		{
+		default:
+			break;
+
 		case GAME_Heretic:
 			snd = raise ? "HereticDoorOpen" : "HereticDoorClose";
 			break;
@@ -758,13 +761,15 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 
 	while (tag != 0 && (secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
 	{
+		int i;
+		
 		sec = &sectors[secnum];
 		if (sec->ceilingdata != NULL)
 		{
 			continue;
 		}
 
-		for (int i = 0; i < sec->linecount && tag != 0; ++i)
+		for (i = 0; i < sec->linecount && tag != 0; ++i)
 		{
 			line = sec->lines[i];
 			if (line->backsector == NULL)

@@ -80,7 +80,7 @@ IMPLEMENT_ACTOR (APeasant, Strife, -1, 0)
 
 	PROP_SpawnHealth (31)
 	PROP_PainChance (200)
-	PROP_SpeedFixed (4)
+	PROP_SpeedFixed (8)
 	PROP_RadiusFixed (20)
 	PROP_HeightFixed (56)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_JUSTHIT|MF_FRIENDLY)
@@ -105,6 +105,7 @@ class APeasant1 : public APeasant
 IMPLEMENT_STATELESS_ACTOR (APeasant1, Strife, 3004, 0)
 	PROP_StrifeType (6)
 	PROP_StrifeTeaserType (6)
+	PROP_SpeedFixed (4)
 END_DEFAULTS
 
 // Peasant Variant 2 --------------------------------------------------------
@@ -117,6 +118,7 @@ class APeasant2 : public APeasant
 IMPLEMENT_STATELESS_ACTOR (APeasant2, Strife, 130, 0)
 	PROP_StrifeType (7)
 	PROP_StrifeTeaserType (7)
+	PROP_SpeedFixed (5)
 END_DEFAULTS
 
 // Peasant Variant 3 --------------------------------------------------------
@@ -129,6 +131,7 @@ class APeasant3 : public APeasant
 IMPLEMENT_STATELESS_ACTOR (APeasant3, Strife, 131, 0)
 	PROP_StrifeType (8)
 	PROP_StrifeTeaserType (8)
+	PROP_SpeedFixed (5)
 END_DEFAULTS
 
 // Peasant Variant 4 --------------------------------------------------------
@@ -142,6 +145,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant4, Strife, 65, 0)
 	PROP_Translation (TRANSLATION_Standard,0)
 	PROP_StrifeType (9)
 	PROP_StrifeTeaserType (9)
+	PROP_SpeedFixed (7)
 END_DEFAULTS
 
 // Peasant Variant 5 --------------------------------------------------------
@@ -155,6 +159,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant5, Strife, 132, 0)
 	PROP_Translation (TRANSLATION_Standard,0)
 	PROP_StrifeType (10)
 	PROP_StrifeTeaserType (10)
+	PROP_SpeedFixed (7)
 END_DEFAULTS
 
 // Peasant Variant 6 --------------------------------------------------------
@@ -168,6 +173,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant6, Strife, 133, 0)
 	PROP_Translation (TRANSLATION_Standard,0)
 	PROP_StrifeType (11)
 	PROP_StrifeTeaserType (11)
+	PROP_SpeedFixed (7)
 END_DEFAULTS
 
 // Peasant Variant 7 --------------------------------------------------------
@@ -233,6 +239,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant11, Strife, 136, 0)
 	PROP_Translation (TRANSLATION_Standard,1)
 	PROP_StrifeType (16)
 	PROP_StrifeTeaserType (16)
+	PROP_SpeedFixed (7)
 END_DEFAULTS
 
 // Peasant Variant 12 --------------------------------------------------------

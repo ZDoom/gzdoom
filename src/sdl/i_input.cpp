@@ -13,7 +13,7 @@
 #include "c_cvars.h"
 #include "i_system.h"
 #include "dikeys.h"
-
+#include "templates.h"
 #include "s_sound.h"
 
 static void I_CheckGUICapture ();
@@ -24,15 +24,115 @@ static bool NativeMouse = true;
 
 extern BOOL paused;
 
-CVAR (Bool,  i_remapkeypad,			true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-CVAR (Bool,  use_joystick,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_speedmultiplier,	1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_xsensitivity,		1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_ysensitivity,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_xthreshold,		0.15f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Float, joy_ythreshold,		0.15f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+float JoyAxes[6];
+//static int JoyActive;
+//static BYTE JoyButtons[128];
+//static BYTE JoyPOV[4];
+static BYTE JoyAxisMap[8];
+static float JoyAxisThresholds[8];
+char *JoyAxisNames[8];
+static const BYTE POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x09, 0x00 };
+
+TArray<GUIDName> JoystickNames;
+CVAR (Bool,  use_joystick,	false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (GUID, joy_guid,		NULL, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+
+static void MapAxis (FIntCVar &var, int num)
+{
+	if (var < JOYAXIS_NONE || var > JOYAXIS_UP)
+	{
+		var = JOYAXIS_NONE;
+	}
+	else
+	{
+		JoyAxisMap[num] = var;
+	}
+}
+
+CUSTOM_CVAR (Int, joy_xaxis,	JOYAXIS_YAW,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 0);
+}
+CUSTOM_CVAR (Int, joy_yaxis,	JOYAXIS_FORWARD, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 1);
+}
+CUSTOM_CVAR (Int, joy_zaxis,	JOYAXIS_SIDE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 2);
+}
+CUSTOM_CVAR (Int, joy_xrot,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 3);
+}
+CUSTOM_CVAR (Int, joy_yrot,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 4);
+}
+CUSTOM_CVAR (Int, joy_zrot,		JOYAXIS_PITCH,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 5);
+}
+CUSTOM_CVAR (Int, joy_slider,	JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 6);
+}
+CUSTOM_CVAR (Int, joy_dial,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	MapAxis (self, 7);
+}
+
+CUSTOM_CVAR (Float, joy_xthreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[0] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_ythreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[1] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_zthreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[2] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_xrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[3] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_yrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[4] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_zrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[5] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_sliderthreshold,	0.f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[6] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_dialthreshold,	0.f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[7] = clamp (self * 256.f, 0.f, 256.f);
+}
+
+CVAR (Float, joy_speedmultiplier,1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_yawspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_pitchspeed,	-.75f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_forwardspeed,	-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_sidespeed,		 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Float, joy_upspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+static FBaseCVar * const JoyConfigVars[] =
+{
+	&joy_xaxis, &joy_yaxis, &joy_zaxis, &joy_xrot, &joy_yrot, &joy_zrot, &joy_slider, &joy_dial,
+	&joy_xthreshold, &joy_ythreshold, &joy_zthreshold, &joy_xrotthreshold, &joy_yrotthreshold, &joy_zrotthreshold, &joy_sliderthreshold, &joy_dialthreshold,
+	&joy_speedmultiplier, &joy_yawspeed, &joy_pitchspeed, &joy_forwardspeed, &joy_sidespeed,
+	&joy_upspeed
+};
 
 EXTERN_CVAR (Bool, fullscreen)
 
@@ -97,11 +197,14 @@ static void I_CheckGUICapture ()
 {
 	bool wantCapt;
 
-	wantCapt = 
-		ConsoleState == c_down ||
-		ConsoleState == c_falling ||
-		(menuactive && !WaitingForKey) ||
-		chatmodeon;
+	if (menuactive == MENU_Off)
+	{
+		wantCapt = ConsoleState == c_down || ConsoleState == c_falling || chatmodeon;
+	}
+	else
+	{
+		wantCapt = (menuactive == MENU_On || menauctive == MENU_OnNoPause);
+	}
 
 	if (wantCapt != GUICapture)
 	{
@@ -148,6 +251,8 @@ static void I_CheckNativeMouse ()
 
 void MessagePump (const SDL_Event &sev)
 {
+	static int lastx = 0, lasty = 0;
+	int x, y;
 	event_t event = { 0, };
 	
 	switch (sev.type)
@@ -173,8 +278,25 @@ void MessagePump (const SDL_Event &sev)
 		break;
 
 	case SDL_MOUSEMOTION:
-		event.x = sev.motion.xrel << 2;
-		event.y = -sev.motion.yrel << 1;
+		x = sev.motion.xrel;
+		y = -sev.motion.yrel;
+		if (!m_noprescale)
+		{
+			x *= 3;
+			y *= 2;
+		}
+		if (m_filter)
+		{
+			event.x = (x + lastx) / 2;
+			event.y = (y + lasty) / 2;
+		}
+		else
+		{
+			event.x = x;
+			event.y = y;
+		}
+		lastx = x;
+		lasty = y;
 		event.type = EV_Mouse;
 		D_PostEvent (&event);
 		break;

@@ -32,6 +32,7 @@ IMPLEMENT_ACTOR (AHealthBonus, Doom, 2014, 152)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Inventory_Amount (1)
 	PROP_Inventory_MaxAmount (200)		// deh.MaxSoulsphere
+	PROP_Inventory_FlagsSet (IF_ALWAYSPICKUP)
 	PROP_SpawnState (0)
 END_DEFAULTS
 

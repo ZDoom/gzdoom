@@ -74,7 +74,6 @@ void P_SerializeWorld (FArchive &arc)
 	sector_t *sec;
 	line_t *li;
 	zone_t *zn;
-	BYTE waterflag = 0;
 
 	// do sectors
 	for (i = 0, sec = sectors; i < numsectors; i++, sec++)

@@ -27,6 +27,8 @@ IMPLEMENT_ACTOR (AHEGrenadeRounds, Strife, 152, 0)
 	PROP_StrifeTeaserType (170)
 	PROP_Inventory_Amount (12)
 	PROP_Inventory_MaxAmount (30)
+	PROP_Ammo_BackpackAmount (6)
+	PROP_Ammo_BackpackMaxAmount (60)
 	PROP_Inventory_Icon ("I_GRN1")
 	PROP_Tag ("HE-Grenade_Rounds")
 END_DEFAULTS
@@ -50,6 +52,8 @@ IMPLEMENT_ACTOR (APhosphorusGrenadeRounds, Strife, 153, 0)
 	PROP_StrifeTeaserType (171)
 	PROP_Inventory_Amount (8)
 	PROP_Inventory_MaxAmount (16)
+	PROP_Ammo_BackpackAmount (2)
+	PROP_Ammo_BackpackMaxAmount (32)
 	PROP_Inventory_Icon ("I_GRN2")
 	PROP_Tag ("Phoshorus-Grenade_Rounds")	// "Fire-Grenade_Rounds" in the Teaser
 END_DEFAULTS
@@ -73,6 +77,8 @@ IMPLEMENT_ACTOR (AClipOfBullets, Strife, 2007, 11)
 	PROP_StrifeTeaserType (173)
 	PROP_Inventory_Amount (10)
 	PROP_Inventory_MaxAmount (250)
+	PROP_Ammo_BackpackAmount (20)
+	PROP_Ammo_BackpackMaxAmount (500)
 	PROP_Inventory_Icon ("I_BLIT")
 	PROP_Tag ("clip_of_bullets")	// "bullets" in the Teaser
 END_DEFAULTS
@@ -117,6 +123,8 @@ IMPLEMENT_ACTOR (AMiniMissiles, Strife, 2010, 140)
 	PROP_StrifeTeaserType (175)
 	PROP_Inventory_Amount (8)
 	PROP_Inventory_MaxAmount (100)
+	PROP_Ammo_BackpackAmount (4)
+	PROP_Ammo_BackpackMaxAmount (200)
 	PROP_Inventory_Icon ("I_ROKT")
 	PROP_Tag ("mini_missiles")	//"rocket" in the Teaser
 END_DEFAULTS
@@ -162,6 +170,8 @@ IMPLEMENT_ACTOR (AEnergyPod, Strife, 2047, 75)
 	PROP_StrifeTeaserType (177)
 	PROP_Inventory_Amount (40)
 	PROP_Inventory_MaxAmount (400)
+	PROP_Ammo_BackpackAmount (20)
+	PROP_Ammo_BackpackMaxAmount (800)
 	PROP_Inventory_Icon ("I_BRY1")
 	PROP_Tag ("energy_pod")
 END_DEFAULTS
@@ -207,6 +217,8 @@ IMPLEMENT_ACTOR (APoisonBolts, Strife, 115, 0)
 	PROP_StrifeTeaserType (179)
 	PROP_Inventory_Amount (20)
 	PROP_Inventory_MaxAmount (25)
+	PROP_Ammo_BackpackAmount (2)
+	PROP_Ammo_BackpackMaxAmount (50)
 	PROP_Inventory_Icon ("I_PQRL")
 	PROP_Tag ("poison_bolts")	// "poison_arrows" in the Teaser
 END_DEFAULTS
@@ -230,6 +242,8 @@ IMPLEMENT_ACTOR (AElectricBolts, Strife, 114, 0)
 	PROP_StrifeTeaserType (180)
 	PROP_Inventory_Amount (20)
 	PROP_Inventory_MaxAmount (50)
+	PROP_Ammo_BackpackAmount (4)
+	PROP_Ammo_BackpackMaxAmount (100)
 	PROP_Inventory_Icon ("I_XQRL")
 	PROP_Tag ("electric_bolts")	// "electric_arrows" in the Teaser
 END_DEFAULTS

@@ -47,8 +47,8 @@ FState AStrifePuff::States[] =
 };
 
 IMPLEMENT_ACTOR (AStrifePuff, Strife, -1, 0)
-	PROP_SpawnState (0)
-	PROP_CrashState (4)
+	PROP_SpawnState (4)
+	PROP_CrashState (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_Alpha (TRANSLUC25)
 	PROP_RenderStyle (STYLE_Translucent)
@@ -57,9 +57,9 @@ END_DEFAULTS
 // A spark when you hit something that doesn't bleed ------------------------
 // Only used by the dagger.
 
-class AStrifeSpark : public AStrifePuff
+class AStrifeSpark : public AActor
 {
-	DECLARE_ACTOR (AStrifeSpark, AStrifePuff)
+	DECLARE_ACTOR (AStrifeSpark, AActor)
 };
 
 FState AStrifeSpark::States[] =
@@ -72,11 +72,18 @@ FState AStrifeSpark::States[] =
 	S_NORMAL (POW3, 'E', 3, NULL, &States[5]),
 	S_NORMAL (POW3, 'F', 3, NULL, &States[6]),
 	S_NORMAL (POW3, 'G', 3, NULL, &States[7]),
-	S_NORMAL (POW3, 'H', 3, NULL, NULL)
+	S_NORMAL (POW3, 'H', 3, NULL, NULL),
+
+	// When you hit something else
+	S_NORMAL (POW2, 'A', 4, NULL, &States[9]),
+	S_NORMAL (POW2, 'B', 4, NULL, &States[10]),
+	S_NORMAL (POW2, 'C', 4, NULL, &States[11]),
+	S_NORMAL (POW2, 'D', 4, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (AStrifeSpark, Strife, -1, 0)
 	PROP_SpawnState (0)
+	PROP_CrashState (8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_Alpha (TRANSLUC25)
@@ -2008,7 +2015,7 @@ bool ASigil::HandlePickup (AInventory *item)
 	{
 		return Inventory->HandlePickup (item);
 	}
-	return NULL;
+	return false;
 }
 
 //============================================================================
@@ -2176,7 +2183,7 @@ void A_FireSigil1 (AActor *actor)
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 1*4);
+	P_DamageMobj (actor, actor, NULL, 1*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
 	P_BulletSlope (actor);
@@ -2218,7 +2225,7 @@ void A_FireSigil2 (AActor *actor)
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 2*4);
+	P_DamageMobj (actor, actor, NULL, 2*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
 	spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningH1));
@@ -2243,7 +2250,7 @@ void A_FireSigil3 (AActor *actor)
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 3*4);
+	P_DamageMobj (actor, actor, NULL, 3*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
 	actor->angle -= ANGLE_90;
@@ -2274,7 +2281,7 @@ void A_FireSigil4 (AActor *actor)
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 4*4);
+	P_DamageMobj (actor, actor, NULL, 4*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
 	P_BulletSlope (actor);
@@ -2313,7 +2320,7 @@ void A_FireSigil5 (AActor *actor)
 	if (player == NULL || player->ReadyWeapon == NULL)
 		return;
 
-	P_DamageMobj (actor, actor, NULL, 5*4);
+	P_DamageMobj (actor, actor, NULL, 5*4, 0, DMG_NO_ARMOR);
 	S_Sound (actor, CHAN_WEAPON, "weapons/sigilcharge", 1, ATTN_NORM);
 
 	spot = P_SpawnPlayerMissile (actor, RUNTIME_CLASS(ASpectralLightningBigBall1));
@@ -2335,49 +2342,54 @@ void A_FireSigil5 (AActor *actor)
 
 bool ASigil::SpecialDropAction (AActor *dropper)
 {
-	AActor *receiver = dropper->target;
+	AActor *receiver;
 	ASigil *sigil;
 
-	if (receiver == NULL)
+	// Give a Sigil piece to every player in the game
+	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		return false;
-	}
-	sigil = receiver->FindInventory<ASigil> ();
-	if (sigil == NULL)
-	{
-		int oldpieces = NumPieces;
-		int oldicon = Icon;
-		NumPieces = 1;
-		Icon = ((AInventory*)GetDefaultByType (RUNTIME_CLASS(ASigil1)))->Icon;
-		if (!this->TryPickup (receiver))
+		if (!playeringame[i])
 		{
-			NumPieces = oldpieces;
-			return false;
+			continue;
 		}
-		sigil = this;
-	}
-	else
-	{
-		if (sigil->NumPieces < 5)
+		receiver = players[i].mo;
+
+		sigil = receiver->FindInventory<ASigil> ();
+		if (sigil == NULL)
 		{
-			++sigil->NumPieces;
-			static const TypeInfo *const sigils[5] =
+			int oldpieces = NumPieces;
+			NumPieces = 1;
+			Icon = ((AInventory*)GetDefaultByType (RUNTIME_CLASS(ASigil1)))->Icon;
+			if (!this->TryPickup (receiver))
 			{
-				RUNTIME_CLASS(ASigil1),
-				RUNTIME_CLASS(ASigil2),
-				RUNTIME_CLASS(ASigil3),
-				RUNTIME_CLASS(ASigil4),
-				RUNTIME_CLASS(ASigil5)
-			};
-			sigil->Icon = ((AInventory*)GetDefaultByType (sigils[MAX(0,sigil->NumPieces-1)]))->Icon;
-			// If the player has the Sigil out, drop it and bring it back up.
-			if (sigil->Owner->player != NULL && sigil->Owner->player->ReadyWeapon == sigil)
-			{
-				sigil->Owner->player->PendingWeapon = sigil;
-				sigil->DownPieces = sigil->NumPieces - 1;
+				NumPieces = oldpieces;
+				return false;
 			}
+			sigil = this;
 		}
-		Destroy ();
+		else
+		{
+			if (sigil->NumPieces < 5)
+			{
+				++sigil->NumPieces;
+				static const TypeInfo *const sigils[5] =
+				{
+					RUNTIME_CLASS(ASigil1),
+					RUNTIME_CLASS(ASigil2),
+					RUNTIME_CLASS(ASigil3),
+					RUNTIME_CLASS(ASigil4),
+					RUNTIME_CLASS(ASigil5)
+				};
+				sigil->Icon = ((AInventory*)GetDefaultByType (sigils[MAX(0,sigil->NumPieces-1)]))->Icon;
+				// If the player has the Sigil out, drop it and bring it back up.
+				if (sigil->Owner->player != NULL && sigil->Owner->player->ReadyWeapon == sigil)
+				{
+					sigil->Owner->player->PendingWeapon = sigil;
+					sigil->DownPieces = sigil->NumPieces - 1;
+				}
+			}
+			Destroy ();
+		}
 	}
 	return true;
 }

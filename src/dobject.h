@@ -366,15 +366,4 @@ private:
 	size_t Index;
 };
 
-template<class T>
-inline
-FArchive &operator<< (FArchive &arc, T* &object)
-{
-	return arc.SerializeObject ((DObject*&)object, RUNTIME_CLASS(T));
-}
-
-#include "farchive.h"
-
-FArchive &operator<< (FArchive &arc, const TypeInfo * &info);
-
 #endif //__DOBJECT_H__

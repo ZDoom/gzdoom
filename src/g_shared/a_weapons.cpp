@@ -11,6 +11,7 @@
 #include "m_misc.h"
 #include "gameconfigfile.h"
 #include "cmdlib.h"
+#include "templates.h"
 
 #define BONUSADD 6
 
@@ -179,6 +180,27 @@ AInventory *AWeapon::CreateCopy (AActor *other)
 
 //===========================================================================
 //
+// AWeapon :: CreateTossable
+//
+// A weapon that's tossed out should contain no ammo, so you can't cheat
+// by dropping it and then picking it back up.
+//
+//===========================================================================
+
+AInventory *AWeapon::CreateTossable ()
+{
+	AWeapon *copy = static_cast<AWeapon *> (Super::CreateTossable ());
+
+	if (copy != NULL)
+	{
+		copy->AmmoGive1 = 0;
+		copy->AmmoGive2 = 0;
+	}
+	return copy;
+}
+
+//===========================================================================
+//
 // AWeapon :: AttachToOwner
 //
 //===========================================================================
@@ -190,7 +212,7 @@ void AWeapon::AttachToOwner (AActor *other)
 	Ammo1 = AddAmmo (Owner, AmmoType1, AmmoGive1);
 	Ammo2 = AddAmmo (Owner, AmmoType2, AmmoGive2);
 	SisterWeapon = AddWeapon (SisterWeaponType);
-	if (!Owner->player->userinfo.neverswitch)
+	if (Owner->player != NULL && !Owner->player->userinfo.neverswitch)
 	{
 		Owner->player->PendingWeapon = this;
 	}
@@ -216,7 +238,7 @@ AAmmo *AWeapon::AddAmmo (AActor *other, const TypeInfo *ammotype, int amount)
 	if (ammo == NULL)
 	{
 		ammo = static_cast<AAmmo *>(Spawn (ammotype, 0, 0, 0));
-		ammo->Amount = amount;
+		ammo->Amount = MIN (amount, ammo->MaxAmount);
 		ammo->AttachToOwner (other);
 	}
 	else if (ammo->Amount < ammo->MaxAmount)
@@ -339,6 +361,10 @@ bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo)
 	{
 		enoughmask = 1 << altFire;
 	}
+	if (altFire && AltAtkState == NULL)
+	{ // If this weapon has no alternate fire, then there is never enough ammo for it
+		enough &= 1;
+	}
 	if ((enough & enoughmask) == enoughmask)
 	{
 		return true;
@@ -426,13 +452,16 @@ void AWeapon::PostMorphWeapon ()
 
 void AWeapon::EndPowerup ()
 {
-	if (ReadyState != SisterWeapon->ReadyState)
+	if (SisterWeapon != NULL)
 	{
-		Owner->player->PendingWeapon = SisterWeapon;
-	}
-	else
-	{
-		Owner->player->ReadyWeapon = SisterWeapon;
+		if (ReadyState != SisterWeapon->ReadyState)
+		{
+			Owner->player->PendingWeapon = SisterWeapon;
+		}
+		else
+		{
+			Owner->player->ReadyWeapon = SisterWeapon;
+		}
 	}
 }
 
@@ -628,7 +657,6 @@ static bool FindMostRecentWeapon (player_s *player, int *slot, int *index)
 		{
 			if (LocalWeapons.LocateWeapon (player->PendingWeapon->GetClass(), slot, index))
 			{
-				P_SetPsprite (player, ps_weapon, player->PendingWeapon->GetDownState());
 				return true;
 			}
 			return false;
@@ -640,7 +668,16 @@ static bool FindMostRecentWeapon (player_s *player, int *slot, int *index)
 	}
 	else if (player->ReadyWeapon != NULL)
 	{
-		return LocalWeapons.LocateWeapon (player->ReadyWeapon->GetClass(), slot, index);
+		AWeapon *weap = player->ReadyWeapon;
+		if (!LocalWeapons.LocateWeapon (weap->GetClass(), slot, index))
+		{
+			if (weap->WeaponFlags & WIF_POWERED_UP && weap->SisterWeaponType != NULL)
+			{
+				return LocalWeapons.LocateWeapon (weap->SisterWeaponType, slot, index);
+			}
+			return false;
+		}
+		return true;
 	}
 	else
 	{

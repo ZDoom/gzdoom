@@ -171,8 +171,7 @@ FArchive &operator<< (FArchive &arc, FState *&state);
 #endif
 
 #define _S__FR_TIC_(spr,frm,tic,m1,m2,cmd,next) \
-	_S__SPRITE_(spr), (tic+1)&255, m1|((tic+1)>>8), m2, (tic>254)?SF_BIGTIC|(frm):(frm), \
-	{cmd}, next }
+	_S__SPRITE_(spr), (tic+1)&255, m1|((tic+1)>>8), m2, (tic>254)?SF_BIGTIC|(frm):(frm), cmd, next }
 
 #define S_NORMAL2(spr,frm,tic,cmd,next,m1,m2) \
 	_S__FR_TIC_(spr, (frm) - 'A', tic, m1, m2, cmd, next)
@@ -300,6 +299,9 @@ enum
 
 	ADEF_Key_KeyNumber,
 	ADEF_Key_AltKeyNumber,
+
+	ADEF_Ammo_BackpackAmount,
+	ADEF_Ammo_BackpackMaxAmount,
 
 	ADEF_Weapon_Flags,
 	ADEF_Weapon_AmmoGive1,

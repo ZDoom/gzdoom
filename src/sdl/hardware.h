@@ -1,8 +1,8 @@
 /*
-** version.h
+** hardware.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2003 Randy Heit
+** Copyright 1998-2001 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -31,25 +31,64 @@
 **
 */
 
-#ifndef __VERSION_H__
-#define __VERSION_H__
+#ifndef __HARDWARE_H__
+#define __HARDWARE_H__
 
-// Lots of different representations for the version number
-enum { GAMEVERSION = 205 };
-#define STRVERSION "205"
-#define DOTVERSIONSTR "2.0.92 \"Stinkoman\""
-#define GAMEVER (2*256+2)
+#include "i_video.h"
+#include "v_video.h"
 
-// SAVEVER is the version of the information stored in level snapshots.
-// Note that SAVEVER is not directly comparable to VERSION.
-// SAVESIG should match SAVEVER.
-#define SAVEVER 223
-#define SAVESIG "ZDOOMSAVE223"
+class IVideo
+{
+ public:
+	virtual ~IVideo () {}
 
-// MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 221	// Used by 2.0.90
+	virtual EDisplayType GetDisplayType () = 0;
+	virtual void SetWindowedScale (float scale) = 0;
 
-// The maximum length of one save game description for the menus.
-#define SAVESTRINGSIZE		24
+	virtual DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old) = 0;
 
-#endif //__VERSION_H__
+	virtual bool FullscreenChanged (bool fs) = 0;
+	virtual int GetModeCount () = 0;
+	virtual void StartModeIterator (int bits) = 0;
+	virtual bool NextMode (int *width, int *height) = 0;
+};
+
+class IInputDevice
+{
+ public:
+	virtual ~IInputDevice () {}
+	virtual void ProcessInput (bool parm) = 0;
+};
+
+class IKeyboard : public IInputDevice
+{
+ public:
+	virtual void ProcessInput (bool consoleOpen) = 0;
+	virtual void SetKeypadRemapping (bool remap) = 0;
+};
+
+class IMouse : public IInputDevice
+{
+ public:
+	virtual void SetGrabbed (bool grabbed) = 0;
+	virtual void ProcessInput (bool active) = 0;
+};
+
+class IJoystick : public IInputDevice
+{
+ public:
+	enum EJoyProp
+	{
+		JOYPROP_SpeedMultiplier,
+		JOYPROP_XSensitivity,
+		JOYPROP_YSensitivity,
+		JOYPROP_XThreshold,
+		JOYPROP_YThreshold
+	};
+	virtual void SetProperty (EJoyProp prop, float val) = 0;
+};
+
+void I_InitHardware ();
+void STACK_ARGS I_ShutdownHardware ();
+
+#endif	// __HARDWARE_H__

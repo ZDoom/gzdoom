@@ -43,7 +43,7 @@ public:
 
 private:
 	PalEntry SourcePalette[256];
-	BYTE GammaTable[256];
+	BYTE GammaTable[3][256];
 	PalEntry Flash;
 	int FlashAmount;
 	float Gamma;
@@ -53,6 +53,7 @@ private:
 	
 	bool NeedPalUpdate;
 	bool NeedGammaUpdate;
+	bool NotPaletted;
 	
 	void UpdateColors ();
 };
@@ -72,7 +73,33 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 
 extern IVideo *Video;
 
+EXTERN_CVAR (Float, Gamma)
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CVAR (Int, vid_displaybits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR (Float, rgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
+}
+CUSTOM_CVAR (Float, ggamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
+}
+CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma (Gamma);
+	}
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -275,9 +302,10 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 	NeedPalUpdate = false;
 	NeedGammaUpdate = false;
 	UpdatePending = false;
+	NotPaletted = false;
 	
-	Screen = SDL_SetVideoMode (width, height, 8,
-		SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|
+	Screen = SDL_SetVideoMode (width, height, vid_displaybits,
+		SDL_HWSURFACE|SDL_HWPALETTE|SDL_DOUBLEBUF|SDL_ANYFORMAT|
 		(fullscreen ? SDL_FULLSCREEN : 0));
 
 	if (Screen == NULL)
@@ -285,7 +313,15 @@ SDLFB::SDLFB (int width, int height, bool fullscreen)
 
 	for (i = 0; i < 256; i++)
 	{
-		GammaTable[i] = i;
+		GammaTable[0][i] = GammaTable[1][i] = GammaTable[2][i] = i;
+	}
+	if (Screen->format->palette == NULL)
+	{
+		NotPaletted = true;
+		GPfx.SetFormat (Screen->format->BitsPerPixel,
+			Screen->format->Rmask,
+			Screen->format->Gmask,
+			Screen->format->Bmask);
 	}
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdateColors ();
@@ -354,15 +390,24 @@ void SDLFB::Update ()
 	if (SDL_LockSurface (Screen) == -1)
 		return;
 
-	if (Screen->pitch == Pitch)
+	if (NotPaletted)
 	{
-		memcpy (Screen->pixels, MemBuffer, Width*Height);
+		GPfx.Convert (MemBuffer, Pitch,
+			Screen->pixels, Screen->pitch, Width, Height,
+			FRACUNIT, FRACUNIT, 0, 0);
 	}
 	else
 	{
-		for (int y = 0; y < Height; ++y)
+		if (Screen->pitch == Pitch)
 		{
-			memcpy ((BYTE *)Screen->pixels+y*Screen->pitch, MemBuffer+y*Width, Width);
+			memcpy (Screen->pixels, MemBuffer, Width*Height);
+		}
+		else
+		{
+			for (int y = 0; y < Height; ++y)
+			{
+				memcpy ((BYTE *)Screen->pixels+y*Screen->pitch, MemBuffer+y*Pitch, Width);
+			}
 		}
 	}
 	
@@ -377,7 +422,9 @@ void SDLFB::Update ()
 	if (NeedGammaUpdate)
 	{
 		NeedGammaUpdate = false;
-		CalcGamma (Gamma, GammaTable);
+		CalcGamma (Windowed || rgamma == 0.f ? Gamma : Gamma * rgamma, GammaTable[0]);
+		CalcGamma (Windowed || ggamma == 0.f ? Gamma : Gamma * ggamma, GammaTable[1]);
+		CalcGamma (Windowed || bgamma == 0.f ? Gamma : Gamma * bgamma, GammaTable[2]);
 		NeedPalUpdate = true;
 	}
 	
@@ -390,21 +437,42 @@ void SDLFB::Update ()
 
 void SDLFB::UpdateColors ()
 {
-	SDL_Color colors[256];
+	if (NotPaletted)
+	{
+		PalEntry palette[256];
 		
-	for (int i = 0; i < 256; ++i)
-	{
-		colors[i].r = GammaTable[SourcePalette[i].r];
-		colors[i].g = GammaTable[SourcePalette[i].g];
-		colors[i].b = GammaTable[SourcePalette[i].b];
+		for (int i = 0; i < 256; ++i)
+		{
+			palette[i].r = GammaTable[0][SourcePalette[i].r];
+			palette[i].g = GammaTable[1][SourcePalette[i].g];
+			palette[i].b = GammaTable[2][SourcePalette[i].b];
+		}
+		if (FlashAmount)
+		{
+			DoBlending (palette, palette,
+				256, GammaTable[0][Flash.r], GammaTable[1][Flash.g], GammaTable[2][Flash.b],
+				FlashAmount);
+		}
+		GPfx.SetPalette (palette);
 	}
-	if (FlashAmount)
+	else
 	{
-		DoBlending ((PalEntry *)colors, (PalEntry *)colors,
-			256, GammaTable[Flash.b], GammaTable[Flash.g], GammaTable[Flash.r],
-			FlashAmount);
+		SDL_Color colors[256];
+		
+		for (int i = 0; i < 256; ++i)
+		{
+			colors[i].r = GammaTable[0][SourcePalette[i].r];
+			colors[i].g = GammaTable[1][SourcePalette[i].g];
+			colors[i].b = GammaTable[2][SourcePalette[i].b];
+		}
+		if (FlashAmount)
+		{
+			DoBlending ((PalEntry *)colors, (PalEntry *)colors,
+				256, GammaTable[2][Flash.b], GammaTable[1][Flash.g], GammaTable[0][Flash.r],
+				FlashAmount);
+		}
+		SDL_SetPalette (Screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 256);
 	}
-	SDL_SetPalette (Screen, SDL_LOGPAL|SDL_PHYSPAL, colors, 0, 256);
 }
 
 PalEntry *SDLFB::GetPalette ()

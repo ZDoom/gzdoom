@@ -1049,7 +1049,7 @@ BitVal (bitval)
 	}
 	BitNum = bit;
 
-	assert ((1 << BitNum) == BitVal);
+	assert ((1u << BitNum) == BitVal);
 }
 
 ECVarType FFlagCVar::GetRealType () const

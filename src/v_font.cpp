@@ -283,6 +283,10 @@ FFont::~FFont ()
 
 FFont *FFont::FindFont (const char *name)
 {
+	if (name == NULL)
+	{
+		return NULL;
+	}
 	FFont *font = FirstFont;
 
 	while (font != NULL)

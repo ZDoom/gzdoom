@@ -88,8 +88,8 @@ public:
 	~WadFileRecord ();
 
 	char *Name;
-	int FirstLump;
-	int LastLump;
+	DWORD FirstLump;
+	DWORD LastLump;
 };
 
 
@@ -457,6 +457,11 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 	char uname[8];
 	WORD i;
 
+	if (name == NULL)
+	{
+		return -1;
+	}
+
 	uppercopy (uname, name);
 	i = FirstLumpIndex[LumpNameHash (uname) % NumLumps];
 
@@ -687,7 +692,7 @@ void FWadCollection::ScanForFlatHack (int startlump)
 						return;
 					}
 				}
-				if (i < NumLumps)
+				if (i < (int)NumLumps)
 				{
 					// Look for flats-F_END
 					for (j = ++i; (DWORD)j < NumLumps; ++j)

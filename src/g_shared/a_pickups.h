@@ -74,16 +74,17 @@ enum
 
 enum
 {
-	IF_ACTIVATABLE		= 1<<0,	// can be activated
-	IF_ACTIVATED		= 1<<1,	// is currently activated
-	IF_PICKUPGOOD		= 1<<2,	// HandlePickup wants normal pickup FX to happen
-	IF_QUIET			= 1<<3,	// Don't give feedback when picking up
-	IF_AUTOACTIVATE		= 1<<4,	// Automatically activate item on pickup
-	IF_UNDROPPABLE		= 1<<5,	// The player cannot manually drop the item
-	IF_INVBAR			= 1<<6,	// Item appears in the inventory bar
-	IF_HUBPOWER			= 1<<7,	// Powerup is kept when moving in a hub
-	IF_INTERHUBSTRIP	= 1<<8,	// Item is removed when travelling between hubs
-	IF_PICKUPFLASH		= 1<<9,	// Item "flashes" when picked up
+	IF_ACTIVATABLE		= 1<<0,		// can be activated
+	IF_ACTIVATED		= 1<<1,		// is currently activated
+	IF_PICKUPGOOD		= 1<<2,		// HandlePickup wants normal pickup FX to happen
+	IF_QUIET			= 1<<3,		// Don't give feedback when picking up
+	IF_AUTOACTIVATE		= 1<<4,		// Automatically activate item on pickup
+	IF_UNDROPPABLE		= 1<<5,		// The player cannot manually drop the item
+	IF_INVBAR			= 1<<6,		// Item appears in the inventory bar
+	IF_HUBPOWER			= 1<<7,		// Powerup is kept when moving in a hub
+	IF_INTERHUBSTRIP	= 1<<8,		// Item is removed when travelling between hubs
+	IF_PICKUPFLASH		= 1<<9,		// Item "flashes" when picked up
+	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
 };
 
 struct vissprite_t;
@@ -152,11 +153,14 @@ class AAmmo : public AInventory
 {
 	DECLARE_STATELESS_ACTOR (AAmmo, AInventory)
 public:
+	void Serialize (FArchive &arc);
 	bool TryPickup (AActor *toucher);
 	AInventory *CreateCopy (AActor *other);
 	bool HandlePickup (AInventory *item);
 	const TypeInfo *GetParentAmmo () const;
 	virtual void PlayPickupSound (AActor *toucher);
+
+	int BackpackAmount, BackpackMaxAmount;
 };
 
 // A weapon is just that.
@@ -198,6 +202,7 @@ public:
 	virtual void AttachToOwner (AActor *other);
 	virtual bool HandlePickup (AInventory *item);
 	virtual AInventory *CreateCopy (AActor *other);
+	virtual AInventory *CreateTossable ();
 	virtual bool TryPickup (AActor *toucher);
 	virtual bool PickupForAmmo (AWeapon *ownedWeapon);
 	virtual bool Use ();
@@ -289,6 +294,7 @@ class ABasicArmor : public AArmor
 	DECLARE_STATELESS_ACTOR (ABasicArmor, AArmor)
 public:
 	virtual void Serialize (FArchive &arc);
+	virtual void PostBeginPlay ();
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual bool HandlePickup (AInventory *item);
 	virtual void AbsorbDamage (int damage, int &newdamage);

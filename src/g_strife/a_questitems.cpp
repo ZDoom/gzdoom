@@ -7,7 +7,7 @@
  *  4 Accepted the governor's power coupling mission
  *  5 Accepted the governor's mission to kill Derwin
  *  6 You broke the Front's power coupling
- *  7
+ *  7 You took out the scanning team
  *  8 You got the broken power coupling
  *  9 You got the ear
  * 10 You got the prison pass

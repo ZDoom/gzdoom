@@ -84,13 +84,13 @@
 #define LEVEL_SWAPSKIES				0x10000000		// Used by lightning
 #define LEVEL_NOALLIES				0x20000000		// i.e. Inside Strife's front base
 #define LEVEL_CHANGEMAPCHEAT		0x40000000		// Don't display cluster messages
-#define LEVEL_VISITED				((QWORD)0x80000000)		// Used for intermission map
+#define LEVEL_VISITED				UCONST64(0x80000000)		// Used for intermission map
 
-#define LEVEL_DEATHSLIDESHOW		0x100000000		// Slideshow on death
-#define LEVEL_ALLMAP				0x200000000		// The player picked up a map on this level
+#define LEVEL_DEATHSLIDESHOW		UCONST64(0x100000000)		// Slideshow on death
+#define LEVEL_ALLMAP				UCONST64(0x200000000)		// The player picked up a map on this level
 
-#define LEVEL_LAXMONSTERACTIVATION	0x400000000		// Monsters can open doors depending on the door speed
-#define LEVEL_LAXACTIVATIONMAPINFO	0x800000000		// LEVEL_LAXMONSTERACTIVATION is not a default.
+#define LEVEL_LAXMONSTERACTIVATION	UCONST64(0x400000000)		// Monsters can open doors depending on the door speed
+#define LEVEL_LAXACTIVATIONMAPINFO	UCONST64(0x800000000)		// LEVEL_LAXMONSTERACTIVATION is not a default.
 
 struct acsdefered_s;
 class FBehavior;

@@ -32,7 +32,7 @@
 **
 */
 
-#ifndef _DEBUG
+#if !defined(_DEBUG) || !defined(_MSC_VER)
 
 #include "i_system.h"
 #include "m_alloc.h"

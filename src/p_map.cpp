@@ -3324,7 +3324,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		{
 			points = points * 0.25f;
 		}
-		if (points > 0.f &&P_CheckSight (thing, bombspot, 1))
+		if (points > 0.f && P_CheckSight (thing, bombspot, 1))
 		{ // OK to damage; target is in direct path
 			float momz;
 			float thrust;

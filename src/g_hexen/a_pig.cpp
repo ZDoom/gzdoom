@@ -198,7 +198,11 @@ void APigPlayer::ActivateMorphWeapon ()
 {
 	player->PendingWeapon = WP_NOCHANGE;
 	player->psprites[ps_weapon].sy = WEAPONTOP;
-	player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (RUNTIME_CLASS(ASnout)));;
+	player->ReadyWeapon = player->mo->FindInventory<ASnout> ();
+	if (player->ReadyWeapon == NULL)
+	{
+		player->ReadyWeapon = static_cast<AWeapon *>(player->mo->GiveInventoryType (RUNTIME_CLASS(ASnout)));
+	}
 	P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
 }
 

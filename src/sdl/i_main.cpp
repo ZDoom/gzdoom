@@ -24,15 +24,15 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
-#include <new.h>
+#include <new>
 #include <sys/param.h>
 
+#include "doomerrors.h"
 #include "m_argv.h"
 #include "d_main.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "c_console.h"
-#include "z_zone.h"
 #include "errors.h"
 #include "version.h"
 
@@ -73,13 +73,13 @@ void STACK_ARGS call_terms ()
 
 static void STACK_ARGS NewFailure ()
 {
-    I_FatalError ("Failed to allocate memory from system heap\nTry using a smaller -heapsize");
+    I_FatalError ("Failed to allocate memory from system heap");
 }
 
 int main (int argc, char **argv)
 {
 	seteuid (getuid ());
-    set_new_handler (NewFailure);
+    std::set_new_handler (NewFailure);
 
 	if (SDL_Init (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_NOPARACHUTE) == -1)
 	{
@@ -111,7 +111,6 @@ int main (int argc, char **argv)
 		*/
 
 		atexit (call_terms);
-		Z_Init();					// 1/18/98 killough: start up memory stuff first
 		atterm (I_Quit);
 
 		if (realpath (argv[0], progdir) == NULL)
@@ -125,7 +124,7 @@ int main (int argc, char **argv)
 		C_InitConsole (80*8, 25*8, false);
 		D_DoomMain ();
     }
-    catch (CDoomError &error)
+    catch (class CDoomError &error)
     {
 		if (error.GetMessage ())
 			fprintf (stderr, "%s\n", error.GetMessage ());

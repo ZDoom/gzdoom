@@ -246,7 +246,6 @@ END_DEFAULTS
 
 bool AArtiPoisonBag3::Use ()
 {
-	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
 	AActor *mo;
 
 	mo = Spawn<AThrowingBomb> (Owner->x, Owner->y, 

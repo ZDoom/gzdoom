@@ -50,6 +50,7 @@ EXTERN fuzzpos
 EXTERN fuzzoffset
 EXTERN NormalLight
 EXTERN realviewheight
+EXTERN fuzzviewheight
 EXTERN CPU
 
 EXTERN dc_pitch
@@ -88,6 +89,7 @@ EXTERN _fuzzpos
 EXTERN _fuzzoffset
 EXTERN _NormalLight
 EXTERN _realviewheight
+EXTERN _fuzzviewheight
 EXTERN _CPU
 
 EXTERN _dc_pitch
@@ -124,6 +126,7 @@ GLOBAL _ds_curcolormap
 %define fuzzoffset	_fuzzoffset
 %define NormalLight	_NormalLight
 %define realviewheight	_realviewheight
+%define fuzzviewheight	_fuzzviewheight
 %define CPU		_CPU
 
 %define dc_pitch	_dc_pitch
@@ -724,13 +727,12 @@ _R_DrawFuzzColumnP_ASM:
 	nop
 
 ; ...and high.
-.ylok	mov	edx,[realviewheight]
+.ylok	mov	edx,[fuzzviewheight]
 	 mov	esi,[dc_yh]
-	lea	ecx,[edx-2]
-	cmp	esi,ecx
+	cmp	esi,edx
 	 jle	.yhok
 
-	mov	esi,ecx
+	mov	esi,edx
 	nop
 
 .yhok	mov	edx,[dc_x]

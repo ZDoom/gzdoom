@@ -1678,6 +1678,17 @@ AInventory *P_DropItem (AActor *source, const TypeInfo *type, int special, int c
 			{
 				static_cast<AInventory *>(mo)->Amount = special;
 			}
+			else if (mo->IsKindOf (RUNTIME_CLASS(AAmmo)))
+			{
+				// Half ammo when dropped by bad guys.
+				static_cast<AInventory *>(mo)->Amount /= 2;
+			}
+			else if (mo->IsKindOf (RUNTIME_CLASS(AWeapon)))
+			{
+				// The same goes for ammo from a weapon.
+				static_cast<AWeapon *>(mo)->AmmoGive1 /= 2;
+				static_cast<AWeapon *>(mo)->AmmoGive2 /= 2;
+			}
 			if (static_cast<AInventory *>(mo)->SpecialDropAction (source))
 			{
 				return NULL;

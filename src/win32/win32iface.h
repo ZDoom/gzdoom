@@ -139,12 +139,14 @@ public:
 	void DoSpeedTest ();
 
 private:
+	enum LockSurfRes { NoGood, Good, GoodWasLost };
+	
 	bool CreateResources ();
 	void ReleaseResources ();
 	bool CreateSurfacesAttached ();
 	bool CreateSurfacesComplex ();
 	bool CreateBlitterSource ();
-	enum LockSurfRes { NoGood, Good, GoodWasLost } LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE surf);
+	LockSurfRes LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE surf);
 	void RebuildColorTable ();
 	void MaybeCreatePalette ();
 	bool AddBackBuf (LPDIRECTDRAWSURFACE *surface, int num);

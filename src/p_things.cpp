@@ -310,7 +310,10 @@ nolead:
 						mobj->momz = vspeed;
 					}
 					// Set the missile's speed to reflect the speed it was spawned at.
-					mobj->Speed = fixed_t (sqrtf (float(speed*speed + vspeed*vspeed)));
+					if (mobj->flags & MF_MISSILE)
+					{
+						mobj->Speed = fixed_t (sqrtf (float(speed*speed + vspeed*vspeed)));
+					}
 					// Hugger missiles don't have any vertical velocity
 					if (mobj->flags3 & (MF3_FLOORHUGGER|MF3_CEILINGHUGGER))
 					{

@@ -165,6 +165,11 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 				}
 				failtext = "You need all the keys";
 				break;
+				
+			default:
+				// The other enumerations won't reach this switch, but make GCC happy.
+				failtext = "That doesn't seem to work";
+				break;
 			}
 		}
 		break;

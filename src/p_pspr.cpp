@@ -165,6 +165,7 @@ void P_SetPspriteNF (player_t *player, int position, FState *state)
 // PROC P_BringUpWeapon
 //
 // Starts bringing the pending weapon up from the bottom of the screen.
+// This is only called to start the rising, not throughout it.
 //
 //---------------------------------------------------------------------------
 
@@ -392,9 +393,6 @@ void P_CheckWeaponFire (player_t *player)
 {
 	AWeapon *weapon = player->ReadyWeapon;
 
-	if (weapon == NULL)
-		return;
-
 	// Put the weapon away if the player has a pending weapon or has
 	// died.
 	if ((player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE) || player->health <= 0)
@@ -402,6 +400,9 @@ void P_CheckWeaponFire (player_t *player)
 		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
 		return;
 	}
+
+	if (weapon == NULL)
+		return;
 
 	// Check for fire. Some weapons do not auto fire.
 	if (player->cmd.ucmd.buttons & BT_ATTACK)
@@ -441,7 +442,7 @@ void A_ReFire (AActor *actor)
 	{
 		player->refire = 0;
 		player->ReadyWeapon->CheckAmmo (player->ReadyWeapon->bAltFire
-			? AWeapon::PrimaryFire : AWeapon::AltFire, true);
+			? AWeapon::AltFire : AWeapon::PrimaryFire, true);
 	}
 }
 
@@ -503,10 +504,10 @@ void A_Lower (AActor *actor)
 		P_SetPsprite (player,  ps_weapon, NULL);
 		return;
 	}
-	if (player->PendingWeapon != WP_NOCHANGE)
+/*	if (player->PendingWeapon != WP_NOCHANGE)
 	{ // [RH] Make sure we're actually changing weapons.
 		player->ReadyWeapon = player->PendingWeapon;
-	}
+	} */
 	// [RH] Clear the flash state. Only needed for Strife.
 	P_SetPsprite (player, ps_flash, NULL);
 	P_BringUpWeapon (player);
@@ -529,6 +530,11 @@ void A_Raise (AActor *actor)
 
 	if (NULL == player)
 	{
+		return;
+	}
+	if (player->PendingWeapon != WP_NOCHANGE)
+	{
+		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetDownState());
 		return;
 	}
 	psp = &player->psprites[ps_weapon];

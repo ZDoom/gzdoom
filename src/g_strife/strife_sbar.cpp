@@ -441,8 +441,6 @@ private:
 
 	void DrawFullScreenStuff ()
 	{
-		int bigheight = BigFont->GetHeight ();
-
 		// Draw health
 		DrINumberOuter (CPlayer->health, 4, -10, false, 7);
 		screen->DrawTexture (Images[imgMEDI], 14, -17,
@@ -498,15 +496,15 @@ private:
 				if (ItemFlash > 0)
 				{
 					FTexture *cursor = Images[gameinfo.flags & GI_SHAREWARE ? imgCURSOR01 : imgINVCURS];
-					screen->DrawTexture (cursor, -23, -15,
+					screen->DrawTexture (cursor, -28, -15,
 						DTA_HUDRules, HUD_Normal,
 						DTA_LeftOffset, cursor->GetWidth(),
 						DTA_TopOffset, cursor->GetHeight(),
 						DTA_Alpha, ItemFlash,
 						TAG_DONE);
 				}
-				DrINumberOuter (CPlayer->InvSel->Amount, -46, -10, false, 7);
-				screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -37, -17,
+				DrINumberOuter (CPlayer->InvSel->Amount, -51, -10, false, 7);
+				screen->DrawTexture (TexMan(CPlayer->InvSel->Icon), -42, -17,
 					DTA_HUDRules, HUD_Normal,
 					DTA_CenterBottomOffset, true,
 					TAG_DONE);

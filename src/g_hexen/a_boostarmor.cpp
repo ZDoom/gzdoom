@@ -49,7 +49,7 @@ bool AArtiBoostArmor::Use ()
 
 		for (int i = 0; i < 4; ++i)
 		{
-			armor = static_cast<AHexenArmor*>(Spawn (RUNTIME_CLASS(AHexenArmor),0,0,0));
+			armor = Spawn<AHexenArmor> (0,0,0);
 			armor->flags |= MF_DROPPED;
 			armor->Amount = i;
 			armor->MaxAmount = 1;
@@ -66,10 +66,10 @@ bool AArtiBoostArmor::Use ()
 	}
 	else
 	{
-		ABasicArmor *armor = static_cast<ABasicArmor*>(Spawn (RUNTIME_CLASS(ABasicArmor),0,0,0));
+		ABasicArmorBonus *armor = Spawn<ABasicArmorBonus> (0,0,0);
 		armor->flags |= MF_DROPPED;
-		armor->Amount = 50;
-		armor->MaxAmount = 300;
+		armor->SaveAmount = 50;
+		armor->MaxSaveAmount = 300;
 		if (!armor->TryPickup (Owner))
 		{
 			armor->Destroy ();

@@ -1110,10 +1110,9 @@ retry:
 void SaveEnvironments (HWND owner, const ReverbContainer *defEnv)
 {
 	MySaveData msd (defEnv);
-	OPENFILENAME ofn;
+	OPENFILENAME ofn = { sizeof(ofn) };
 	char filename[PATH_MAX];
 
-	ofn.lStructSize = sizeof(ofn);
 	ofn.hwndOwner = owner;
 	ofn.hInstance = g_hInst;
 	ofn.lpstrFilter = "Text Files\0*.txt\0All Files\0*.*\0";
@@ -1134,9 +1133,6 @@ void SaveEnvironments (HWND owner, const ReverbContainer *defEnv)
 	ofn.lCustData = (LPARAM)&msd;
 	ofn.lpfnHook = SaveHookProc;
 	ofn.lpTemplateName = MAKEINTRESOURCE(IDD_SAVEEAX);
-	ofn.pvReserved = NULL;
-	ofn.dwReserved = 0;
-	ofn.FlagsEx = 0;
 
 	filename[0] = 0;
 

@@ -1555,11 +1555,11 @@ void C_MidPrint (const char *msg)
 		AddToConsole (-1, buff);
 
 		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f, 0, 0,
-			(EColorRange)PrintColors[PRINTLEVELS], con_midtime), 'CNTR');
+			(EColorRange)PrintColors[PRINTLEVELS], con_midtime), MAKE_ID('C','N','T','R'));
 	}
 	else
 	{
-		StatusBar->DetachMessage ('CNTR');
+		StatusBar->DetachMessage (MAKE_ID('C','N','T','R'));
 	}
 }
 
@@ -1579,11 +1579,11 @@ void C_MidPrintBold (const char *msg)
 		AddToConsole (-1, buff);
 
 		StatusBar->AttachMessage (new DHUDMessage (msg, 1.5f, 0.375f, 0, 0,
-			(EColorRange)PrintColors[PRINTLEVELS+1], con_midtime), 'CNTR');
+			(EColorRange)PrintColors[PRINTLEVELS+1], con_midtime), MAKE_ID('C','N','T','R'));
 	}
 	else
 	{
-		StatusBar->DetachMessage ('CNTR');
+		StatusBar->DetachMessage (MAKE_ID('C','N','T','R'));
 	}
 }
 

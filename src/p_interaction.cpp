@@ -421,7 +421,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						player->userinfo.gender, player->userinfo.netname,
 						player->userinfo.netname);
 					StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
-							1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), 'KSPR');
+							1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 				}
 			}
 			else
@@ -466,7 +466,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 							SexMessage (GStrings(SPREEOVER), buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
-								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), 'KSPR');
+								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 						}
 					}
 					else if (spreemsg != NULL)
@@ -476,7 +476,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 							SexMessage (spreemsg, buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
-								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), 'KSPR');
+								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 						}
 					}
 				}
@@ -524,7 +524,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 							SexMessage (multimsg, buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
-								1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), 'MKIL');
+								1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), MAKE_ID('M','K','I','L'));
 						}
 					}
 				}
@@ -776,7 +776,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		return;
 	}
 	// Spectral targets only take damage from spectral projectiles.
-	if (target->flags4 & MF4_SPECTRAL)
+	if (target->flags4 & MF4_SPECTRAL && damage < 1000000)
 	{
 		if (inflictor == NULL || !(inflictor->flags4 & MF4_SPECTRAL))
 		{

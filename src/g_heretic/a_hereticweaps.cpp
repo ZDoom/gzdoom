@@ -303,6 +303,8 @@ FState AGoldWandAmmo::States[] =
 IMPLEMENT_ACTOR (AGoldWandAmmo, Heretic, 10, 11)
 	PROP_Inventory_Amount (AMMO_GWND_WIMPY)
 	PROP_Inventory_MaxAmount (100)
+	PROP_Ammo_BackpackAmount (AMMO_GWND_WIMPY)
+	PROP_Ammo_BackpackMaxAmount (200)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("INAMGLD")
@@ -475,9 +477,9 @@ END_DEFAULTS
 
 // Gold wand puff 2 ---------------------------------------------------------
 
-class AGoldWandPuff2 : public AGoldWandPuff1
+class AGoldWandPuff2 : public AGoldWandFX1
 {
-	DECLARE_STATELESS_ACTOR (AGoldWandPuff2, AGoldWandPuff1)
+	DECLARE_STATELESS_ACTOR (AGoldWandPuff2, AGoldWandFX1)
 };
 
 IMPLEMENT_STATELESS_ACTOR (AGoldWandPuff2, Heretic, -1, 0)
@@ -588,6 +590,8 @@ FState ACrossbowAmmo::States[] =
 IMPLEMENT_ACTOR (ACrossbowAmmo, Heretic, 18, 33)
 	PROP_Inventory_Amount (AMMO_CBOW_WIMPY)
 	PROP_Inventory_MaxAmount (50)
+	PROP_Ammo_BackpackAmount (AMMO_CBOW_WIMPY)
+	PROP_Ammo_BackpackMaxAmount (100)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("INAMBOW")
@@ -930,6 +934,8 @@ FState AMaceAmmo::States[] =
 IMPLEMENT_ACTOR (AMaceAmmo, Heretic, 13, 35)
 	PROP_Inventory_Amount (AMMO_MACE_WIMPY)
 	PROP_Inventory_MaxAmount (150)
+	PROP_Ammo_BackpackAmount (AMMO_MACE_WIMPY)
+	PROP_Ammo_BackpackMaxAmount (300)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("INAMLOB")
@@ -1899,6 +1905,8 @@ FState ABlasterAmmo::States[] =
 IMPLEMENT_ACTOR (ABlasterAmmo, Heretic, 54, 37)
 	PROP_Inventory_Amount (AMMO_BLSR_WIMPY)
 	PROP_Inventory_MaxAmount (200)
+	PROP_Ammo_BackpackAmount (AMMO_BLSR_WIMPY)
+	PROP_Ammo_BackpackMaxAmount (400)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("INAMBST")
@@ -2116,6 +2124,7 @@ IMPLEMENT_ACTOR (ARipper, Heretic, -1, 157)
 	PROP_Flags3 (MF3_WARNBOT)
 
 	PROP_SpawnState (S_RIPPER)
+	PROP_DeathState (S_RIPPERX)
 
 	PROP_DeathSound ("weapons/blasterpowhit")
 END_DEFAULTS
@@ -2355,6 +2364,8 @@ FState ASkullRodAmmo::States[] =
 IMPLEMENT_ACTOR (ASkullRodAmmo, Heretic, 20, 158)
 	PROP_Inventory_Amount (AMMO_SKRD_WIMPY)
 	PROP_Inventory_MaxAmount (200)
+	PROP_Ammo_BackpackAmount (AMMO_SKRD_WIMPY)
+	PROP_Ammo_BackpackMaxAmount (400)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("INAMRAM")
@@ -2877,6 +2888,8 @@ FState APhoenixRodAmmo::States[] =
 IMPLEMENT_ACTOR (APhoenixRodAmmo, Heretic, 22, 161)
 	PROP_Inventory_Amount (AMMO_PHRD_WIMPY)
 	PROP_Inventory_MaxAmount (20)
+	PROP_Ammo_BackpackAmount (AMMO_PHRD_WIMPY)
+	PROP_Ammo_BackpackMaxAmount (40)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("INAMPNX")

@@ -796,8 +796,13 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 			}
 			break;
 		}
-		if (noway)
-			return false;
+		return !noway;
+	}
+	if (activationType == SPAC_MCROSS &&
+		lineActivation != activationType &&
+		!(line->flags & ML_MONSTERSCANACTIVATE))
+	{
+		return false;
 	}
 	return true;
 }

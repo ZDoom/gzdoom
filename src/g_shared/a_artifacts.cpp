@@ -15,6 +15,7 @@
 #include "d_player.h"
 #include "m_random.h"
 #include "v_video.h"
+#include "templates.h"
 
 static FRandom pr_torch ("Torch");
 
@@ -42,9 +43,18 @@ IMPLEMENT_ABSTRACT_ACTOR (APowerup)
 bool APowerupGiver::Use ()
 {
 	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType, 0, 0, 0));
-	
+
+	power->ItemFlags |= ItemFlags & IF_ALWAYSPICKUP;
 	if (power->TryPickup (Owner))
 	{
+		if (EffectTics != 0)
+		{
+			power->EffectTics = EffectTics;
+		}
+		if (BlendColor != 0)
+		{
+			power->BlendColor = BlendColor;
+		}
 		return true;
 	}
 	power->GoAwayAndDie ();
@@ -61,6 +71,10 @@ void APowerupGiver::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << PowerupType;
+	if (SaveVersion >= 223)
+	{
+		arc << EffectTics << BlendColor;
+	}
 }
 
 // Powerup -------------------------------------------------------------------
@@ -73,7 +87,11 @@ void APowerupGiver::Serialize (FArchive &arc)
 
 void APowerup::Tick ()
 {
-	if (EffectTics > 0)
+	if (Owner == NULL)
+	{
+		Destroy ();
+	}
+	else if (EffectTics > 0)
 	{
 		DoEffect ();
 		if (--EffectTics == 0)
@@ -185,22 +203,21 @@ bool APowerup::HandlePickup (AInventory *item)
 {
 	if (item->GetClass() == GetClass())
 	{
-		APowerup *power = static_cast<APowerup*>(item->GetDefault());
+		APowerup *power = static_cast<APowerup*>(item);
 		if (power->EffectTics == 0)
 		{
-			item->GoAwayAndDie ();
+			power->ItemFlags |= IF_PICKUPGOOD;
 			return true;
 		}
-		if (gameinfo.gametype != GAME_Doom &&
-			power->EffectTics < 0 &&
-			EffectTics > BLINKTHRESHOLD)
+		// If it's not blinking yet, you can't replenish the power unless the
+		// powerup is required to be picked up.
+		if (EffectTics > BLINKTHRESHOLD && !(power->ItemFlags & IF_ALWAYSPICKUP))
 		{
-			item->GoAwayAndDie ();
 			return true;
 		}
-		EffectTics = abs (power->EffectTics);
-		InitEffect ();
-		item->GoAwayAndDie ();
+		// Only increase the EffectTics, not decrease it.
+		EffectTics = MAX (EffectTics, power->EffectTics);
+		power->ItemFlags |= IF_PICKUPGOOD;
 		return true;
 	}
 	if (Inventory != NULL)
@@ -241,7 +258,7 @@ AInventory *APowerup::CreateTossable ()
 // Invulnerability Powerup ---------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerInvulnerable, Any, -1, 0)
-	PROP_Powerup_EffectTics (-INVULNTICS)
+	PROP_Powerup_EffectTics (INVULNTICS)
 	PROP_Inventory_Icon ("SPSHLD0")
 END_DEFAULTS
 
@@ -290,6 +307,11 @@ void APowerInvulnerable::DoEffect ()
 
 void APowerInvulnerable::EndEffect ()
 {
+	if (Owner == NULL)
+	{
+		return;
+	}
+
 	Owner->flags2 &= ~MF2_INVULNERABLE;
 	Owner->effects &= ~FX_RESPAWNINVUL;
 	if (Owner->player != NULL)
@@ -355,7 +377,7 @@ PalEntry APowerStrength::GetBlend ()
 // Invisibility Powerup ------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerInvisibility, Any, -1, 0)
-	PROP_Powerup_EffectTics (-INVISTICS)
+	PROP_Powerup_EffectTics (INVISTICS)
 END_DEFAULTS
 
 //===========================================================================
@@ -367,17 +389,8 @@ END_DEFAULTS
 void APowerInvisibility::InitEffect ()
 {
 	Owner->flags |= MF_SHADOW;
-	if (gameinfo.gametype == GAME_Heretic)
-	{
-		Owner->flags3 |= MF3_GHOST;
-		Owner->alpha = HR_SHADOW;
-		Owner->RenderStyle = STYLE_Translucent;
-	}
-	else if (gameinfo.gametype != GAME_Hexen)
-	{
-		Owner->alpha = FRACUNIT/5;
-		Owner->RenderStyle = STYLE_OptFuzzy;
-	}
+	Owner->alpha = FRACUNIT/5;
+	Owner->RenderStyle = STYLE_OptFuzzy;
 }
 
 //===========================================================================
@@ -416,6 +429,26 @@ void APowerInvisibility::AlterWeaponSprite (vissprite_t *vis)
 	}
 }
 
+// Ghost Powerup (Heretic's version of invisibility) -------------------------
+
+IMPLEMENT_STATELESS_ACTOR (APowerGhost, Any, -1, 0)
+	PROP_Powerup_EffectTics (INVISTICS)
+END_DEFAULTS
+
+//===========================================================================
+//
+// APowerInvisibility :: InitEffect
+//
+//===========================================================================
+
+void APowerGhost::InitEffect ()
+{
+	Owner->flags |= MF_SHADOW;
+	Owner->flags3 |= MF3_GHOST;
+	Owner->alpha = HR_SHADOW;
+	Owner->RenderStyle = STYLE_Translucent;
+}
+
 // Ironfeet Powerup ----------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerIronFeet, Any, -1, 0)
@@ -434,7 +467,7 @@ END_DEFAULTS
 // Light-Amp Powerup ---------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerLightAmp, Any, -1, 0)
-	PROP_Powerup_EffectTics (-INFRATICS)
+	PROP_Powerup_EffectTics (INFRATICS)
 END_DEFAULTS
 
 //===========================================================================
@@ -466,7 +499,7 @@ void APowerLightAmp::DoEffect ()
 
 void APowerLightAmp::EndEffect ()
 {
-	if (Owner->player != NULL)
+	if (Owner != NULL && Owner->player != NULL)
 	{
 		Owner->player->fixedcolormap = 0;
 	}
@@ -475,7 +508,7 @@ void APowerLightAmp::EndEffect ()
 // Torch Powerup -------------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerTorch, Any, -1, 0)
-	PROP_Powerup_EffectTics (-INFRATICS)
+	PROP_Powerup_EffectTics (INFRATICS)
 END_DEFAULTS
 
 //===========================================================================
@@ -529,7 +562,7 @@ void APowerTorch::DoEffect ()
 // Flight (aka Wings of Wrath) powerup ---------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerFlight, Any, -1, 0)
-	PROP_Powerup_EffectTics (-FLIGHTTICS)
+	PROP_Powerup_EffectTics (FLIGHTTICS)
 	PROP_Inventory_FlagsSet (IF_HUBPOWER)
 END_DEFAULTS
 
@@ -590,6 +623,10 @@ void APowerFlight::DoEffect ()
 
 void APowerFlight::EndEffect ()
 {
+	if (Owner == NULL || Owner->player == NULL)
+	{
+		return;
+	}
 	if (!(Owner->player->cheats & CF_FLY))
 	{
 		if (Owner->z != Owner->floorz)
@@ -651,7 +688,7 @@ bool APowerFlight::DrawPowerup (int x, int y)
 // Weapon Level 2 (aka Tome of Power) Powerup --------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerWeaponLevel2, Any, -1, 0)
-	PROP_Powerup_EffectTics (-WPNLEV2TICS)
+	PROP_Powerup_EffectTics (WPNLEV2TICS)
 	PROP_Inventory_Icon ("SPINBK0")
 END_DEFAULTS
 
@@ -745,7 +782,7 @@ void APlayerSpeedTrail::Tick ()
 // Speed Powerup -------------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerSpeed, Any, -1, 0)
-	PROP_Powerup_EffectTics (-SPEEDTICS)
+	PROP_Powerup_EffectTics (SPEEDTICS)
 	PROP_Inventory_Icon ("SPBOOT0")
 END_DEFAULTS
 
@@ -802,7 +839,7 @@ void APowerSpeed::DoEffect ()
 
 void APowerSpeed::EndEffect ()
 {
-	if (Owner != NULL)
+	if (Owner != NULL && Owner->player != NULL)
 	{
 		Owner->player->Powers &= ~PW_SPEED;
 	}

@@ -1323,7 +1323,7 @@ bool S_ChangeCDMusic (int track, unsigned int id, bool looping)
 // Starts some music with the given name.
 //==========================================================================
 
-bool S_StartMusic (char *m_id)
+bool S_StartMusic (const char *m_id)
 {
 	return S_ChangeMusic (m_id, 0, false);
 }

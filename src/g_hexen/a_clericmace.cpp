@@ -65,7 +65,7 @@ IMPLEMENT_ACTOR (ACWeapMace, Hexen, -1, 0)
 	PROP_Weapon_AtkState (S_CMACEATK)
 	PROP_Weapon_HoldAtkState (S_CMACEATK)
 	PROP_Weapon_Kickback (150)
-	PROP_Weapon_YAdjust (-8)
+	PROP_Weapon_YAdjust (0-8)
 END_DEFAULTS
 
 //===========================================================================

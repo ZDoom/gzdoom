@@ -219,7 +219,7 @@ CCMD (chase)
 
 CCMD (idclev)
 {
-	if (CheckCheatmode ())
+	if (CheckCheatmode () || netgame)
 		return;
 
 	if ((argv.argc() > 1) && (*(argv[1] + 2) == 0) && *(argv[1] + 1) && *argv[1])
@@ -250,6 +250,7 @@ CCMD (idclev)
 		// So be it.
 		Printf ("%s\n", GStrings(STSTR_CLEV));
       	G_DeferedInitNew (mapname);
+		G_StartTravel ();
 	}
 }
 

@@ -29,6 +29,7 @@ IMPLEMENT_ACTOR (AArtiSpeedBoots, Hexen, 8002, 13)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTISPED")
 	PROP_PowerupGiver_Powerup ("PowerSpeed")
 END_DEFAULTS

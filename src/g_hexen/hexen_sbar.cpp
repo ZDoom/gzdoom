@@ -361,10 +361,12 @@ private:
 		}
 		if (HealthRefresh)
 		{
+			int lifeClass = LifeBarClass;
+			
 			HealthRefresh--;
 			healthPos = clamp (HealthMarker, 0, 100);
-			DrawImage (ClassImages[LifeBarClass][imgCHAIN], 35+((healthPos*196/100)%9), 31);
-			DrawImage (ClassImages[LifeBarClass][imgLIFEGEM], 7+(healthPos*11/5), 31, multiplayer ?
+			DrawImage (ClassImages[lifeClass][imgCHAIN], 35+((healthPos*196/100)%9), 31);
+			DrawImage (ClassImages[lifeClass][imgLIFEGEM], 7+(healthPos*11/5), 31, multiplayer ?
 				translationtables[TRANSLATION_PlayersExtra] + (CPlayer-players)*256 : NULL);
 			DrawImage (Images[imgLFEDGE], 0, 31);
 			DrawImage (Images[imgRTEDGE], 277, 31);
@@ -851,24 +853,25 @@ private:
 			{ 190, 205, 224 },
 		};
 		int pieces = (CPlayer->pieces >> FourthWeaponShift) & 7;
+		int weapClass = FourthWeaponClass;
 
 		if (pieces == 7)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgWEAPONFULL], 190, 0);
+			DrawImage (ClassImages[weapClass][imgWEAPONFULL], 190, 0);
 			return;
 		}
-		DrawImage (ClassImages[FourthWeaponClass][imgWEAPONSLOT], 190, 0);
+		DrawImage (ClassImages[weapClass][imgWEAPONSLOT], 190, 0);
 		if (pieces & WPIECE1)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgPIECE1], PieceX[FourthWeaponClass][0], 0);
+			DrawImage (ClassImages[weapClass][imgPIECE1], PieceX[weapClass][0], 0);
 		}
 		if (pieces & WPIECE2)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgPIECE2], PieceX[FourthWeaponClass][1], 0);
+			DrawImage (ClassImages[weapClass][imgPIECE2], PieceX[weapClass][1], 0);
 		}
 		if (pieces & WPIECE3)
 		{
-			DrawImage (ClassImages[FourthWeaponClass][imgPIECE3], PieceX[FourthWeaponClass][2], 0);
+			DrawImage (ClassImages[weapClass][imgPIECE3], PieceX[weapClass][2], 0);
 		}
 	}
 

@@ -88,9 +88,9 @@ static int NumCodePtrs;
 // Declare the dehacked code pointers
 static const actionf_p CodePtrs[] =
 {
-	{NULL},
-#define WEAPON(x)	{A_##x},
-#define ACTOR(x)	{A_##x},
+	NULL,
+#define WEAPON(x)	A_##x,
+#define ACTOR(x)	A_##x,
 #include "d_dehackedactions.h"
 };
 
@@ -1391,6 +1391,10 @@ static int PatchWeapon (int weapNum)
 				if (info->AmmoType1 != NULL)
 				{
 					info->AmmoGive1 = ((AAmmo*)GetDefaultByType (info->AmmoType1))->Amount * 2;
+					if (info->AmmoUse1 == 0)
+					{
+						info->AmmoUse1 = 1;
+					}
 				}
 			}
 			else
@@ -1596,7 +1600,7 @@ static int PatchMisc (int dummy)
 		}
 	}
 
-	// Update default armor properties
+	// Update default item properties
 	ABasicArmorPickup *armor;
 
 	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("GreenArmor"));
@@ -1605,6 +1609,14 @@ static int PatchMisc (int dummy)
 	armor = static_cast<ABasicArmorPickup *> (GetDefaultByName ("BlueArmor"));
 	armor->SaveAmount = 100 * deh.BlueAC;
 	armor->SavePercent = deh.BlueAC == 1 ? FRACUNIT/3 : FRACUNIT/2;
+
+	ABasicArmorBonus *barmor;
+	barmor = static_cast<ABasicArmorBonus *> (GetDefaultByName ("ArmorBonus"));
+	barmor->MaxSaveAmount = deh.MaxArmor;
+
+	AHealth *health;
+	health = static_cast<AHealth *> (GetDefaultByName ("HealthBonus"));
+	health->MaxAmount = deh.MaxSoulsphere;
 
 	// 0xDD means "enable infighting"
 	if (infighting == 0xDD)

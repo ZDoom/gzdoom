@@ -668,9 +668,9 @@ FBehavior::FBehavior (int lumpnum)
 	}
 	else
 	{
+		UnencryptStrings ();
 		LanguageNeutral = FindLanguage (0, false);
 		PrepLocale (LanguageIDs[0], LanguageIDs[1], LanguageIDs[2], LanguageIDs[3]);
-		UnencryptStrings ();
 	}
 
 	if (Format == ACS_Old)
@@ -1029,6 +1029,9 @@ void FBehavior::LoadScriptsDirectory ()
 				ptr2->Address = LONG(ptr1->Address);
 			}
 		}
+		break;
+		
+	default:
 		break;
 	}
 	for (i = 0; i < NumScripts; ++i)
@@ -1594,7 +1597,7 @@ void DLevelScript::Serialize (FArchive &arc)
 	{
 		localvars = new SDWORD[numlocalvars];
 	}
-	for (i = 0; i < numlocalvars; i++)
+	for (i = 0; i < (DWORD)numlocalvars; i++)
 	{
 		arc << localvars[i];
 	}

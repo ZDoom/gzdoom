@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "actor.h"
 #include "r_data.h"
 #include "p_conversation.h"
@@ -68,11 +70,12 @@ static TArray<menuitem_t> ConversationItems;
 static int ConversationPauseTic;
 
 static void LoadScriptFile (const char *name);
-static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, int &prevSpeakerType);
-static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, int &prevSpeakerType);
+static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, DWORD &prevSpeakerType);
+static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, DWORD &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static void DrawConversationMenu ();
 static void PickConversationReply ();
+static void CleanupConversationMenu ();
 
 static FStrifeDialogueNode *CurNode;
 static brokenlines_t *DialogueLines;
@@ -255,7 +258,7 @@ static void LoadScriptFile (const char *name)
 {
 	int lumpnum = Wads.CheckNumForName (name);
 	int numnodes, i;
-	int prevSpeakerType;
+	DWORD prevSpeakerType;
 	FStrifeDialogueNode *node;
 	FWadLump *lump;
 
@@ -311,7 +314,7 @@ static void LoadScriptFile (const char *name)
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, int &prevSpeakerType)
+static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, DWORD &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	Speech speech;
@@ -381,7 +384,7 @@ static FStrifeDialogueNode *ReadRetailNode (FWadLump *lump, int &prevSpeakerType
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, int &prevSpeakerType)
+static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, DWORD &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	TeaserSpeech speech;
@@ -419,12 +422,12 @@ static FStrifeDialogueNode *ReadTeaserNode (FWadLump *lump, int &prevSpeakerType
 	// The speaker's voice for this node, if any.
 	if (speech.VoiceNumber != 0)
 	{
-		sprintf (fullsound, "svox/voc%d", speech.VoiceNumber);
+		sprintf (fullsound, "svox/voc%lu", speech.VoiceNumber);
 		node->SpeakerVoice = S_FindSound (fullsound);
 	}
 	else
 	{
-		node->SpeakerVoice = NULL;
+		node->SpeakerVoice = 0;
 	}
 
 	// The speaker's name, if any.
@@ -513,7 +516,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		{
 			char moneystr[128];
 
-			sprintf (moneystr, "%s for %d", rsp->Reply, rsp->Count[0]);
+			sprintf (moneystr, "%s for %lu", rsp->Reply, rsp->Count[0]);
 			reply->Reply = copystring (moneystr);
 		}
 		else
@@ -689,19 +692,6 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	ConversationPC = pc;
 	ConversationNPC = npc;
 
-	// Clean up after the previous dialogue, if any.
-	if (CurNode != NULL)
-	{
-		for (reply = CurNode->Children; reply != NULL; reply = reply->Next)
-		{
-			if (reply->ReplyLines != NULL)
-			{
-				V_FreeBrokenLines (reply->ReplyLines);
-				reply->ReplyLines = NULL;
-			}
-		}
-	}
-
 	CurNode = npc->Conversation;
 
 	if (pc->player == &players[consoleplayer])
@@ -736,12 +726,11 @@ void P_StartConversation (AActor *npc, AActor *pc)
 		S_SoundID (npc, CHAN_VOICE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 	}
 
+	// Set up the menu
 	ConversationMenu.PreDraw = DrawConversationMenu;
+	ConversationMenu.EscapeHandler = CleanupConversationMenu;
 
-	if (DialogueLines != NULL)
-	{
-		V_FreeBrokenLines (DialogueLines);
-	}
+	// Format the speaker's message.
 	toSay = CurNode->Dialogue;
 	if (strncmp (toSay, "RANDOM_", 7) == 0)
 	{
@@ -756,9 +745,9 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	}
 	DialogueLines = V_BreakLines (screen->GetWidth()/CleanXfac-24*2, toSay);
 
+	// Fill out the possible choices
 	item.type = numberedmore;
 	item.e.mfunc = PickConversationReply;
-	ConversationItems.Clear ();
 	for (reply = CurNode->Children, i = 1; reply != NULL; reply = reply->Next)
 	{
 		if (reply->Reply == NULL)
@@ -780,6 +769,7 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	item.c.extra = NULL;
 	ConversationItems.Push (item);
 
+	// Determine where the top of the reply list should be positioned.
 	i = (gameinfo.gametype & GAME_Raven) ? 9 : 8;
 	ConversationMenu.y = MIN<int> (140, 192 - ConversationItems.Size() * i);
 	for (i = 0; DialogueLines[i].width != -1; ++i)
@@ -791,13 +781,16 @@ void P_StartConversation (AActor *npc, AActor *pc)
 	}
 	ConversationMenu.indent = 50;
 
+	// Finish setting up the menu
 	ConversationMenu.items = &ConversationItems[0];
 	ConversationMenu.numitems = ConversationItems.Size();
 	ConversationMenu.lastOn = 0;
 	ConversationMenu.DontDim = true;
 
+	// Give the NPC a chance to play a brief animation
 	ConversationNPC->ConversationAnimation (0);
 
+	// And open the menu
 	M_StartControlPanel (false);
 	OptionsActive = true;
 	menuactive = MENU_OnNoPause;
@@ -826,11 +819,14 @@ void P_ResumeConversation ()
 // DrawConversationMenu
 //
 //============================================================================
-
+static bool inDrawer;
 static void DrawConversationMenu ()
 {
 	int i, x, y, linesize;
 
+	assert (DialogueLines != NULL);
+	assert (CurNode != NULL);
+inDrawer = true;
 	if (CurNode == NULL)
 	{
 		M_ClearMenus ();
@@ -850,7 +846,7 @@ static void DrawConversationMenu ()
 	y = 16 * screen->GetHeight() / 200;
 	linesize = 10 * CleanYfac;
 
-	// Dim the screen behind the dialogue.
+	// Dim the screen behind the dialogue (but only if there is no backdrop).
 	if (CurNode->Backdrop <= 0)
 	{
 		for (i = 0; DialogueLines[i].width != -1; ++i)
@@ -881,6 +877,7 @@ static void DrawConversationMenu ()
 			DTA_CleanNoMove, true, TAG_DONE);
 		y += linesize;
 	}
+	inDrawer = false;
 }
 
 //============================================================================
@@ -890,13 +887,16 @@ static void DrawConversationMenu ()
 // FIXME: Make this work in multiplayer
 //
 //============================================================================
+
 static void PickConversationReply ()
 {
+	const char *replyText = NULL;
 	FStrifeDialogueReply *reply = (FStrifeDialogueReply *)ConversationItems[ConversationMenu.lastOn].c.extra;
 	bool takestuff;
 	int i;
 
 	M_ClearMenus ();
+	CleanupConversationMenu ();
 	if (reply == NULL)
 	{
 		return;
@@ -907,6 +907,7 @@ static void PickConversationReply ()
 	{
 		if (!CheckStrifeItem (reply->ItemCheck[i], reply->ItemCheckAmount[i]))
 		{
+			// No, you don't. Say so and let the NPC animate negatively.
 			if (reply->QuickNo)
 			{
 				Printf ("%s\n", reply->QuickNo);
@@ -916,6 +917,7 @@ static void PickConversationReply ()
 		}
 	}
 
+	// Yay, you do! Let the NPC animate affirmatively.
 	ConversationNPC->ConversationAnimation (1);
 
 	// If this reply gives you something, then try to receive it.
@@ -938,10 +940,11 @@ static void PickConversationReply ()
 		{
 			TakeStrifeItem (reply->ItemCheck[i], reply->ItemCheckAmount[i]);
 		}
+		replyText = reply->QuickYes;
 	}
 	else
 	{
-		Printf ("You seem to have enough!\n");
+		replyText = "You seem to have enough!";
 	}
 
 	// Update the quest log, if needed.
@@ -951,7 +954,7 @@ static void PickConversationReply ()
 	}
 
 	// Does this reply alter the speaker's conversation node? If NextNode is positive,
-	// the next time the talk, the will show the new node. If it is negative, then they
+	// the next time they talk, the will show the new node. If it is negative, then they
 	// will show the new node right away without terminating the dialogue.
 	if (reply->NextNode != 0)
 	{
@@ -975,10 +978,45 @@ static void PickConversationReply ()
 		}
 	}
 
-	if (reply->QuickYes)
+	if (replyText != NULL)
 	{
-		Printf ("%s\n", reply->QuickYes);
+		Printf ("%s\n", replyText);
 	}
 
 	ConversationNPC->angle = ConversationNPCAngle;
 }
+
+//============================================================================
+//
+// CleanupConversationMenu
+//
+// Release the resources used to create the most recent conversation menu.
+//
+//============================================================================
+
+void CleanupConversationMenu ()
+{
+	FStrifeDialogueReply *reply;
+
+	if (inDrawer)
+		inDrawer = inDrawer;
+	if (CurNode != NULL)
+	{
+		for (reply = CurNode->Children; reply != NULL; reply = reply->Next)
+		{
+			if (reply->ReplyLines != NULL)
+			{
+				V_FreeBrokenLines (reply->ReplyLines);
+				reply->ReplyLines = NULL;
+			}
+		}
+		CurNode = NULL;
+	}
+	if (DialogueLines != NULL)
+	{
+		V_FreeBrokenLines (DialogueLines);
+		DialogueLines = NULL;
+	}
+	ConversationItems.Clear ();
+}
+

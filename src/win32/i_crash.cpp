@@ -32,6 +32,9 @@
 **
 */
 
+#ifndef __GNUC__
+// GCC knows nothing about structured exception handling (pity).
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winnt.h>
@@ -697,3 +700,5 @@ void DisplayCrashLog ()
 		CrashText = NULL;
 	}
 }
+
+#endif

@@ -384,7 +384,7 @@ void FBaseStatusBar::ShowPlayerName ()
 
 	color = (CPlayer == &players[consoleplayer]) ? CR_GOLD : CR_GREEN;
 	AttachMessage (new DHUDMessageFadeOut (CPlayer->userinfo.netname,
-		1.5f, 0.92f, 0, 0, color, 2.f, 0.35f), 'PNAM');
+		1.5f, 0.92f, 0, 0, color, 2.f, 0.35f), MAKE_ID('P','N','A','M'));
 }
 
 //---------------------------------------------------------------------------

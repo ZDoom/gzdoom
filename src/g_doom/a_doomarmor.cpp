@@ -35,6 +35,7 @@ IMPLEMENT_ACTOR (AArmorBonus, Doom, 2015, 22)
 	PROP_BasicArmorBonus_SavePercent (FRACUNIT/3)
 	PROP_BasicArmorBonus_SaveAmount (1)
 	PROP_BasicArmorBonus_MaxSaveAmount (200)	// deh.MaxArmor
+	PROP_Inventory_FlagsSet (IF_ALWAYSPICKUP)
 
 	PROP_SpawnState (0)
 	PROP_Inventory_Icon ("ARM1A0")

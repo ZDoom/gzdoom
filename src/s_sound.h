@@ -153,7 +153,7 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel);
 void S_RelinkSound (AActor *from, AActor *to);
 
 // Start music using <music_name>
-bool S_StartMusic (char *music_name);
+bool S_StartMusic (const char *music_name);
 
 // Start music using <music_name>, and set whether looping
 bool S_ChangeMusic (const char *music_name, int order=0, bool looping=true, bool force=false);

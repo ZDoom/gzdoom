@@ -70,7 +70,7 @@ FState AAcolyte::States[] =
 	S_NORMAL (AGRD, 'J',	3, NULL,				&States[S_ACOLYTE_DIE+4]),
 	S_NORMAL (AGRD, 'K',	3, A_NoBlocking,		&States[S_ACOLYTE_DIE+5]),
 	S_NORMAL (AGRD, 'L',	3, NULL,				&States[S_ACOLYTE_DIE+6]),
-	S_NORMAL (AGRD, 'M',	3, A_AcolyteDie,				&States[S_ACOLYTE_DIE+7]),
+	S_NORMAL (AGRD, 'M',	3, A_AcolyteDie,		&States[S_ACOLYTE_DIE+7]),
 	S_NORMAL (AGRD, 'N', 1400, NULL,				NULL),
 
 #define S_ACOLYTE_XDIE (S_ACOLYTE_DIE+8)
@@ -222,6 +222,7 @@ class AAcolyteLGreen : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteLGreen, Strife, 232, 0)
 	PROP_Translation (TRANSLATION_Standard, 5)
+	PROP_SpawnHealth (60)
 	PROP_StrifeType (59)
 END_DEFAULTS
 
@@ -234,6 +235,7 @@ class AAcolyteBlue : public AAcolyte
 
 IMPLEMENT_STATELESS_ACTOR (AAcolyteBlue, Strife, 231, 0)
 	PROP_Translation (TRANSLATION_Standard, 6)
+	PROP_SpawnHealth (60)
 	PROP_StrifeType (60)
 END_DEFAULTS
 
@@ -358,7 +360,10 @@ void A_AcolyteDie (AActor *self)
 		}
 	}
 
-	// Give TOKN type 318? to the player and show log message 14
+	players[0].mo->GiveInventoryType (QuestItemClasses[6]);
+	players[0].SetLogNumber (14);
+	S_StopSound ((fixed_t *)NULL, CHAN_VOICE);
+	S_Sound (CHAN_VOICE, "svox/voc14", 1, ATTN_NORM);
 }
 
 //============================================================================

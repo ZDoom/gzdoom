@@ -25,6 +25,7 @@ typedef enum
 	arti_torch,
 	arti_firebomb,
 	arti_egg,
+	arti_pork,
 	arti_fly,
 	arti_blastradius,
 	arti_poisonbag1,

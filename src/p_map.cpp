@@ -112,6 +112,123 @@ msecnode_t* sector_list = NULL;		// phares 3/16/98
 extern sector_t *openbottomsec;
 
 
+//==========================================================================
+//
+// PIT_FindFloorCeiling
+//
+//==========================================================================
+
+static BOOL PIT_FindFloorCeiling (line_t *ld)
+{
+	if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
+		|| tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
+		|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
+		|| tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP] )
+		return true;
+
+	if (P_BoxOnLineSide (tmbbox, ld) != -1)
+		return true;
+
+	// A line has been hit
+	
+	if (!ld->backsector)
+	{ // One sided line
+		return true;
+	}
+
+	fixed_t sx, sy;
+
+	// set openrange, opentop, openbottom
+	if (((ld->frontsector->floorplane.a | ld->frontsector->floorplane.b) |
+		 (ld->backsector->floorplane.a | ld->backsector->floorplane.b) |
+		 (ld->frontsector->ceilingplane.a | ld->frontsector->ceilingplane.b) |
+		 (ld->backsector->ceilingplane.a | ld->backsector->ceilingplane.b)) == 0)
+	{
+		P_LineOpening (ld, sx=tmx, sy=tmy, tmx, tmy);
+	}
+	else
+	{ // Find the point on the line closest to the actor's center, and use
+	  // that to calculate openings
+		float dx = (float)ld->dx;
+		float dy = (float)ld->dy;
+		fixed_t r = (fixed_t)(((float)(tmx - ld->v1->x) * dx +
+				 			   (float)(tmy - ld->v1->y) * dy) /
+							  (dx*dx + dy*dy) * 16777216.f);
+		if (r <= 0)
+		{
+			P_LineOpening (ld, sx=ld->v1->x, sy=ld->v1->y, tmx, tmy);
+		}
+		else if (r >= (1<<24))
+		{
+			P_LineOpening (ld, sx=ld->v2->x, sy=ld->v2->y, tmthing->x, tmthing->y);
+		}
+		else
+		{
+			P_LineOpening (ld, sx=ld->v1->x + MulScale24 (r, ld->dx),
+				sy=ld->v1->y + MulScale24 (r, ld->dy), tmx, tmy);
+		}
+	}
+
+	// adjust floor / ceiling heights
+	if (opentop < tmceilingz)
+	{
+		tmceilingz = opentop;
+		ceilingline = ld;
+		BlockingLine = ld;
+	}
+
+	if (openbottom > tmfloorz)
+	{
+		tmfloorz = openbottom;
+		tmfloorsector = openbottomsec;
+		BlockingLine = ld;
+	}
+
+	if (lowfloor < tmdropoffz)
+		tmdropoffz = lowfloor;
+	
+	return true;
+}
+
+//==========================================================================
+//
+// P_FindFloorCeiling
+//
+//==========================================================================
+
+void P_FindFloorCeiling (AActor *actor)
+{
+	int	xl,xh,yl,yh,bx,by;
+	fixed_t x, y;
+	sector_t *sec;
+
+	tmx = x = actor->x;
+	tmy = y = actor->y;
+	tmthing = actor;
+
+	tmbbox[BOXTOP] = y + actor->radius;
+	tmbbox[BOXBOTTOM] = y - actor->radius;
+	tmbbox[BOXRIGHT] = x + actor->radius;
+	tmbbox[BOXLEFT] = x - actor->radius;
+
+	sec = R_PointInSubsector (x, y)->sector;
+	tmfloorz = tmdropoffz = sec->floorplane.ZatPoint (x, y);
+	tmceilingz = sec->ceilingplane.ZatPoint (x, y);
+	tmfloorpic = sec->floorpic;
+	tmfloorsector = sec;
+	validcount++;
+
+	xl = (tmbbox[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
+	xh = (tmbbox[BOXRIGHT] - bmaporgx)>>MAPBLOCKSHIFT;
+	yl = (tmbbox[BOXBOTTOM] - bmaporgy )>>MAPBLOCKSHIFT;
+	yh = (tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
+
+	for (bx = xl; bx <= xh; bx++)
+		for (by = yl; by <= yh; by++)
+			if (!P_BlockLinesIterator (bx, by, PIT_FindFloorCeiling))
+				return;
+}
+
 //
 // TELEPORT MOVE
 // 
@@ -211,9 +328,19 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
 	for (bx=xl ; bx<=xh ; bx++)
+	{
 		for (by=yl ; by<=yh ; by++)
+		{
 			if (!P_BlockThingsIterator(bx,by,PIT_StompThing))
+			{
 				return false;
+			}
+			if (!P_BlockLinesIterator(bx,by,PIT_FindFloorCeiling))
+			{
+				return false;
+			}
+		}
+	}
 	
 	// the move is ok, so link the thing into its new position
 	thing->SetOrigin (x, y, z);
@@ -825,7 +952,7 @@ BOOL P_TestMobjLocation (AActor *mobj)
 //
 // P_CheckPosition
 // This is purely informative, nothing is modified
-// (except things picked up).
+// (except things picked up and missile damage applied).
 // 
 // in:
 //	a AActor (can be valid or invalid)

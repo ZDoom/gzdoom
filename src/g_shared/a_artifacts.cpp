@@ -58,6 +58,7 @@ static const char *ArtifactNames[NUMARTIFACTS] =
 	"ArtiTorch",
 	"ArtiTimeBomb",
 	"ArtiEgg",
+	"ArtiPork",
 	"ArtiFly",
 	"ArtiBlastRadius",
 	"ArtiPoisonBag1",

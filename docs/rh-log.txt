@@ -1,4 +1,15 @@
 January 2, 2003
+- Uploaded 33.cab.
+- Fixed A_RestoreSpecialPosition() for MF2_FLOATBOB actors.
+- Fixed: Made the porkalator and morph ovum separate artifacts.
+- Fixed: In Heretic and Hexen, MF2_FLOATBOB objects are always positioned
+  relative to the floor. In ZDoom, they bob around a central z height, so
+  they need to have gravity applied to them in order to best approximate
+  the orginal behavior.
+- Created a new function (P_FindFloorCeiling) to find the floor and ceiling
+  for newly-spawned things. P_CheckPosition() has side effects, so I can't
+  use it. This is also used by P_TeleportMove() now.
+- Uploaded 32.cab.
 - Fixed: EV_DoCeiling() only set the crush value for the moving ceiling if it
   had a crushing type, so BOOM generalized ceilings could not do crushing
   damage.

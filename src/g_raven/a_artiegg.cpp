@@ -21,11 +21,10 @@ static FRandom pr_morphmonst ("MorphMonster");
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphPlayer (player_t *p)
+bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 {
 	AActor *morphed;
 	AActor *actor;
-	const TypeInfo *spawntype;
 
 	actor = p->mo;
 	if (actor->flags3 & MF3_DONTMORPH)
@@ -40,11 +39,6 @@ bool P_MorphPlayer (player_t *p)
 	{ // Player is already a beast
 		return false;
 	}
-
-	if (gameinfo.gametype == GAME_Heretic)
-		spawntype = TypeInfo::FindType ("ChickenPlayer");
-	else
-		spawntype = TypeInfo::FindType ("PigPlayer");
 
 	if (spawntype == NULL)
 	{
@@ -160,10 +154,9 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 //
 //---------------------------------------------------------------------------
 
-bool P_MorphMonster (AActor *actor)
+bool P_MorphMonster (AActor *actor, const TypeInfo *spawntype)
 {
 	AActor *morphed;
-	const TypeInfo *spawntype;
 
 	if (actor->player ||
 		actor->flags3 & MF3_DONTMORPH ||
@@ -171,11 +164,6 @@ bool P_MorphMonster (AActor *actor)
 	{
 		return false;
 	}
-
-	if (gameinfo.gametype == GAME_Heretic)
-		spawntype = TypeInfo::FindType ("Chicken");
-	else
-		spawntype = TypeInfo::FindType ("Pig");
 
 	morphed = Spawn (spawntype, actor->x, actor->y, actor->z);
 	morphed->tid = actor->tid;
@@ -278,15 +266,9 @@ FState AEggFX::States[] =
 	S_BRIGHT (FX01, 'F',	3, NULL, &States[S_EGGFXI1+2]),
 	S_BRIGHT (FX01, 'G',	3, NULL, &States[S_EGGFXI1+3]),
 	S_BRIGHT (FX01, 'H',	3, NULL, NULL),
-
-#define S_EGGFXI2 (S_EGGFXI1+4)
-	S_BRIGHT (FHFX, 'I',	3, NULL, &States[S_EGGFXI2+1]),
-	S_BRIGHT (FHFX, 'J',	3, NULL, &States[S_EGGFXI2+2]),
-	S_BRIGHT (FHFX, 'K',	3, NULL, &States[S_EGGFXI2+3]),
-	S_BRIGHT (FHFX, 'L',	3, NULL, NULL)
 };
 
-IMPLEMENT_ACTOR (AEggFX, Raven, -1, 40)
+IMPLEMENT_ACTOR (AEggFX, Heretic, -1, 40)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (18)
@@ -295,27 +277,23 @@ IMPLEMENT_ACTOR (AEggFX, Raven, -1, 40)
 	PROP_Flags2 (MF2_NOTELEPORT)
 
 	PROP_SpawnState (S_EGGFX)
+	PROP_DeathState (S_EGGFXI1)
 END_DEFAULTS
-
-AT_GAME_SET (EggFX)
-{
-	AEggFX *def = GetDefault<AEggFX> ();
-
-	def->DeathState = &AEggFX::States[gameinfo.gametype == GAME_Heretic ? S_EGGFXI1 : S_EGGFXI2];
-}
 
 int AEggFX::DoSpecialDamage (AActor *target, int damage)
 {
 	if (target->player)
 	{
-		P_MorphPlayer (target->player);
+		P_MorphPlayer (target->player, TypeInfo::FindType ("ChickenPlayer"));
 	}
 	else
 	{
-		P_MorphMonster (target);
+		P_MorphMonster (target, TypeInfo::FindType ("Chicken"));
 	}
 	return -1;
 }
+
+// Morph Ovum ---------------------------------------------------------------
 
 BASIC_ARTI (Egg, arti_egg, GStrings(TXT_ARTIEGG))
 	AT_GAME_SET_FRIEND (Egg)
@@ -334,39 +312,111 @@ private:
 
 FState AArtiEgg::States[] =
 {
-#define S_ARTI_EGGC 0
-	S_NORMAL (EGGC, 'A',	6, NULL, &States[S_ARTI_EGGC+1]),
-	S_NORMAL (EGGC, 'B',	6, NULL, &States[S_ARTI_EGGC+2]),
-	S_NORMAL (EGGC, 'C',	6, NULL, &States[S_ARTI_EGGC+3]),
-	S_NORMAL (EGGC, 'B',	6, NULL, &States[S_ARTI_EGGC+0]),
-
-#define S_ARTI_EGGP (S_ARTI_EGGC+4)
-	S_NORMAL (PORK, 'A',	5, NULL, &States[S_ARTI_EGGP+1]),
-	S_NORMAL (PORK, 'B',	5, NULL, &States[S_ARTI_EGGP+2]),
-	S_NORMAL (PORK, 'C',	5, NULL, &States[S_ARTI_EGGP+3]),
-	S_NORMAL (PORK, 'D',	5, NULL, &States[S_ARTI_EGGP+4]),
-	S_NORMAL (PORK, 'E',	5, NULL, &States[S_ARTI_EGGP+5]),
-	S_NORMAL (PORK, 'F',	5, NULL, &States[S_ARTI_EGGP+6]),
-	S_NORMAL (PORK, 'G',	5, NULL, &States[S_ARTI_EGGP+7]),
-	S_NORMAL (PORK, 'H',	5, NULL, &States[S_ARTI_EGGP+0])
+	S_NORMAL (EGGC, 'A',	6, NULL, &States[1]),
+	S_NORMAL (EGGC, 'B',	6, NULL, &States[2]),
+	S_NORMAL (EGGC, 'C',	6, NULL, &States[3]),
+	S_NORMAL (EGGC, 'B',	6, NULL, &States[0]),
 };
 
-IMPLEMENT_ACTOR (AArtiEgg, Raven, 30, 14)
+IMPLEMENT_ACTOR (AArtiEgg, Heretic, 30, 14)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
-	PROP_SpawnState (S_ARTI_EGGC)
+	PROP_SpawnState (0)
 END_DEFAULTS
 
 AT_GAME_SET (Egg)
 {
 	ArtiDispatch[arti_egg] = AArtiEgg::ActivateArti;
-	if (gameinfo.gametype == GAME_Hexen)
+	ArtiPics[arti_egg] = "ARTIEGGC";
+}
+
+// Pork thing ---------------------------------------------------------------
+
+class APorkFX : public AActor
+{
+	DECLARE_ACTOR (APorkFX, AActor)
+public:
+	int DoSpecialDamage (AActor *target, int damage);
+};
+
+FState APorkFX::States[] =
+{
+//#define S_EGGFX 0
+	S_NORMAL (EGGM, 'A',	4, NULL, &States[S_EGGFX+1]),
+	S_NORMAL (EGGM, 'B',	4, NULL, &States[S_EGGFX+2]),
+	S_NORMAL (EGGM, 'C',	4, NULL, &States[S_EGGFX+3]),
+	S_NORMAL (EGGM, 'D',	4, NULL, &States[S_EGGFX+4]),
+	S_NORMAL (EGGM, 'E',	4, NULL, &States[S_EGGFX+0]),
+
+#define S_EGGFXI2 (S_EGGFX+5)
+	S_BRIGHT (FHFX, 'I',	3, NULL, &States[S_EGGFXI2+1]),
+	S_BRIGHT (FHFX, 'J',	3, NULL, &States[S_EGGFXI2+2]),
+	S_BRIGHT (FHFX, 'K',	3, NULL, &States[S_EGGFXI2+3]),
+	S_BRIGHT (FHFX, 'L',	3, NULL, NULL)
+};
+
+IMPLEMENT_ACTOR (APorkFX, Hexen, -1, 40)
+	PROP_RadiusFixed (8)
+	PROP_HeightFixed (8)
+	PROP_SpeedFixed (18)
+	PROP_Damage (1)
+	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
+	PROP_Flags2 (MF2_NOTELEPORT)
+
+	PROP_SpawnState (S_EGGFX)
+	PROP_DeathState (S_EGGFXI2)
+END_DEFAULTS
+
+int APorkFX::DoSpecialDamage (AActor *target, int damage)
+{
+	if (target->player)
 	{
-		ArtiPics[arti_egg] = "ARTIPORK";
-		GetDefault<AArtiEgg>()->SpawnState = &AArtiEgg::States[S_ARTI_EGGP];
+		P_MorphPlayer (target->player, TypeInfo::FindType ("PigPlayer"));
 	}
 	else
 	{
-		ArtiPics[arti_egg] = "ARTIEGGC";
+		P_MorphMonster (target, TypeInfo::FindType ("Pig"));
 	}
+	return -1;
+}
+
+// Porkalator ---------------------------------------------------------------
+
+BASIC_ARTI (Pork, arti_pork, "PORKALATOR")
+	AT_GAME_SET_FRIEND (Pork)
+private:
+	static bool ActivateArti (player_t *player, artitype_t arti)
+	{
+		AActor *mo = player->mo;
+		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX));
+		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX), mo->angle-(ANG45/6));
+		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX), mo->angle+(ANG45/6));
+		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX), mo->angle-(ANG45/3));
+		P_SpawnPlayerMissile (mo, RUNTIME_CLASS(APorkFX), mo->angle+(ANG45/3));
+		return true;
+	}
+};
+
+FState AArtiPork::States[] =
+{
+	S_NORMAL (PORK, 'A',	5, NULL, &States[1]),
+	S_NORMAL (PORK, 'B',	5, NULL, &States[2]),
+	S_NORMAL (PORK, 'C',	5, NULL, &States[3]),
+	S_NORMAL (PORK, 'D',	5, NULL, &States[4]),
+	S_NORMAL (PORK, 'E',	5, NULL, &States[5]),
+	S_NORMAL (PORK, 'F',	5, NULL, &States[6]),
+	S_NORMAL (PORK, 'G',	5, NULL, &States[7]),
+	S_NORMAL (PORK, 'H',	5, NULL, &States[0])
+};
+
+IMPLEMENT_ACTOR (AArtiPork, Hexen, 30, 14)
+	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
+	PROP_Flags2 (MF2_FLOATBOB)
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+AT_GAME_SET (Pork)
+{
+	ArtiDispatch[arti_pork] = AArtiPork::ActivateArti;
+	ArtiPics[arti_pork] = "ARTIPORK";
 }

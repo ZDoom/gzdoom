@@ -234,6 +234,7 @@ void A_RestoreSpecialPosition (AActor *self)
 {
 	// Move item back to its original location
 	fixed_t _x, _y;
+	fixed_t orgz = self->z;
 	sector_t *sec;
 
 	_x = self->SpawnPoint[0] << FRACBITS;
@@ -263,6 +264,10 @@ void A_RestoreSpecialPosition (AActor *self)
 	else
 	{
 		self->z = (self->SpawnPoint[2] << FRACBITS) + self->floorz;
+		if (self->flags2 & MF2_FLOATBOB)
+		{
+			self->z += FloatBobOffsets[(self->FloatBobPhase + level.time) & 63];
+		}
 	}
 }
 

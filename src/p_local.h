@@ -276,6 +276,7 @@ void	P_ResetSightCounters (bool full);
 void	P_UseLines (player_t* player);
 bool	P_UsePuzzleItem (player_t *player, int itemType);
 void	PIT_ThrustSpike (AActor *actor);
+void P_FindFloorCeiling (AActor *actor);
 
 bool	P_ChangeSector (sector_t* sector, int crunch, int amt, int floorOrCeil);
 
@@ -339,7 +340,7 @@ bool P_GiveArtifact (player_t *player, artitype_t arti);
 bool P_GiveArmor (player_t *player, armortype_t armortype, int amount);
 bool P_GiveBody (player_t *player, int num);
 bool P_GivePower (player_t *player, powertype_t power);
-bool P_MorphPlayer (player_t *player);
+bool P_MorphPlayer (player_t *player, const TypeInfo *morphClass);
 void P_PoisonPlayer (player_t *player, AActor *poisoner, int poison);
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
 

@@ -93,7 +93,8 @@ void cht_DoCheat (player_t *player, int cheat)
 				msg = "You feel like yourself again";
 			}
 		}
-		else if (P_MorphPlayer (player))
+		else if (P_MorphPlayer (player,
+			TypeInfo::FindType (gameinfo.gametype==GAME_Heretic?"ChickenPlayer":"PigPlayer")))
 		{
 			msg = "You feel strange...";
 		}

@@ -1985,7 +1985,10 @@ void AActor::Tick ()
 	{ // Floating item bobbing motion
 		z += FloatBobDiffs[(FloatBobPhase + level.time) & 63];
 	}
-	if ((z != floorz && !(flags2 & MF2_FLOATBOB)) || momz || BlockingMobj)
+	if (momz || BlockingMobj ||
+		(z != floorz && (!(flags2 & MF2_FLOATBOB) ||
+		(z - FloatBobOffsets[(FloatBobPhase + level.time) & 63] != floorz)
+		)))
 	{	// Handle Z momentum and gravity
 		if ((flags2 & MF2_PASSMOBJ) && !(compatflags & COMPATF_NO_PASSMOBJ))
 		{
@@ -2207,12 +2210,14 @@ AActor *AActor::StaticSpawn (const TypeInfo *type, fixed_t ix, fixed_t iy, fixed
 
 	// set subsector and/or block links
 	actor->LinkToWorld ();
-	actor->dropoffz =			// killough 11/98: for tracking dropoffs
+	//actor->dropoffz =			// killough 11/98: for tracking dropoffs
 	//actor->floorz = actor->Sector->floorplane.ZatPoint (ix, iy);
 	//actor->ceilingz = actor->Sector->ceilingplane.ZatPoint (ix, iy);
 	//actor->floorsector = actor->Sector;
-	P_CheckPosition (actor, ix, iy);
+	//actor->floorpic = actor->floorsector->floorpic;
+	P_FindFloorCeiling (actor);
 	actor->floorz = tmfloorz;
+	actor->dropoffz = tmdropoffz;
 	actor->ceilingz = tmceilingz;
 	actor->floorpic = tmfloorpic;
 	actor->floorsector = tmfloorsector;

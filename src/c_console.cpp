@@ -53,7 +53,6 @@
 #include "v_video.h"
 #include "v_text.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "r_main.h"
 #include "r_draw.h"
 #include "sbar.h"
@@ -227,7 +226,7 @@ void C_InitConsole (int width, int height, BOOL ingame)
 				isRaw = gameinfo.flags & GI_PAGESARERAW;
 			}
 
-			bg = (patch_t *)W_CacheLumpNum (num, PU_CACHE);
+			bg = (patch_t *)W_MapLumpNum (num);
 
 			if (isRaw)
 				conback = I_NewStaticCanvas (320, 200);
@@ -241,9 +240,11 @@ void C_InitConsole (int width, int height, BOOL ingame)
 			else
 				conback->DrawPatch (bg, 0, 0);
 
+			W_UnMapLump (bg);
+
 			if (stylize)
 			{
-				byte *fadetable = (byte *)W_CacheLumpName ("COLORMAP", PU_CACHE), *i;
+				byte *fadetable = (byte *)W_MapLumpName ("COLORMAP"), *i;
 				int x, y, s;
 				byte *v;
 
@@ -282,6 +283,8 @@ void C_InitConsole (int width, int height, BOOL ingame)
 						i += pitch;
 					}
 				}
+
+				W_UnMapLump (fadetable);
 			}
 			conback->Unlock ();
 			sprintf (VersionString, "v" DOTVERSIONSTR);

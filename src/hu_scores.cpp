@@ -35,7 +35,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "doomdef.h"
-#include "z_zone.h"
 #include "m_swap.h"
 #include "hu_stuff.h"
 #include "w_wad.h"
@@ -251,8 +250,9 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 		int lump = W_CheckNumForName (FaceNames[player->CurrentPlayerClass]);
 		if (lump != -1)
 		{
-			patch_t *face = (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
+			const patch_t *face = (patch_t *)W_MapLumpNum (lump);
 			screen->DrawPatchCleanNoMove (face, x+(pack?20:32)*CleanXfac, y);
+			W_UnMapLump (face);
 		}
 	}
 

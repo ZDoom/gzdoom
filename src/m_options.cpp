@@ -56,7 +56,6 @@
 #include "i_music.h"
 #endif
 
-#include "z_zone.h"
 #include "v_video.h"
 #include "v_text.h"
 #include "w_wad.h"

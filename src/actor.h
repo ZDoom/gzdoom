@@ -164,9 +164,7 @@ enum
 	MF2_PUSHABLE		= 0x00000200,	// can be pushed by other moving actors
 	MF2_SLIDE			= 0x00000400,	// slides against walls
 	MF2_ONMOBJ			= 0x00000800,	// actor is resting on top of another actor
-	MF2_PASSMOBJ		= 0x00001000,	// Enable z block checking.  If on,
-										// this flag will allow the mobj to
-										// pass over/under other mobjs.
+						//0x00001000,
 	MF2_CANNOTPUSH		= 0x00002000,	// cannot push other pushable mobjs
 	MF2_THRUGHOST		= 0x00004000,	// missile will pass through ghosts [RH] was 8
 	MF2_BOSS			= 0x00008000,	// mobj is a major boss

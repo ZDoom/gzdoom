@@ -36,7 +36,6 @@
 
 #include "templates.h"
 #include "i_system.h"
-#include "z_zone.h"
 #include "w_wad.h"
 
 #include "doomdef.h"
@@ -671,7 +670,7 @@ static DWORD lastskycol[4];
 static int skycolplace;
 
 // Get a column of sky when there is only one sky texture.
-static BYTE *R_GetOneSkyColumn (int fronttex, int x)
+static const BYTE *R_GetOneSkyColumn (int fronttex, int x)
 {
 	angle_t column = MulScale3 (frontxscale, viewangle + xtoviewangle[x]);
 
@@ -680,7 +679,7 @@ static BYTE *R_GetOneSkyColumn (int fronttex, int x)
 }
 
 // Get a column of sky when there are two overlapping sky textures
-static BYTE *R_GetTwoSkyColumns (int fronttex, int x)
+static const BYTE *R_GetTwoSkyColumns (int fronttex, int x)
 {
 	DWORD ang = (viewangle + xtoviewangle[x])^skyflip;
 	DWORD angle1 = (((DWORD)MulScale3 (frontxscale, ang) >> sky1shift) + frontpos) >> FRACBITS;
@@ -706,8 +705,8 @@ static BYTE *R_GetTwoSkyColumns (int fronttex, int x)
 	// The ordering of the following code has been tuned to allow VC++ to optimize
 	// it well. In particular, this arrangement lets it keep count in a register
 	// instead of on the stack.
-	BYTE *front = R_GetColumn (fronttex, angle1);
-	BYTE *back = R_GetColumn (backskytex, angle2);
+	const BYTE *front = R_GetColumn (fronttex, angle1);
+	const BYTE *back = R_GetColumn (backskytex, angle2);
 
 	int count = MIN<int> (512, MIN (textureheight[backskytex], textureheight[fronttex]) >> FRACBITS);
 	i = 0;
@@ -865,8 +864,10 @@ void R_DrawPlanes ()
 			{ // regular flat
 				int useflatnum = flattranslation[pl->picnum];
 				int lumplen;
+				byte *flatInWad;
 
-				ds_source = (byte *)W_CacheLumpNum (firstflat + useflatnum, PU_STATIC);
+				ds_source = (byte *)W_MapLumpNum (firstflat + useflatnum);
+				flatInWad = ds_source;
 				lumplen = W_LumpLength (firstflat + useflatnum);
 
 				switch (lumplen)
@@ -907,9 +908,12 @@ void R_DrawPlanes ()
 				// [RH] warp a flat if desired
 				if (flatwarp[useflatnum])
 				{
-					if ((!warpedflats[useflatnum]
-						 && Z_Malloc (64*64, PU_STATIC, &warpedflats[useflatnum]))
-						|| flatwarpedwhen[useflatnum] != level.time)
+					if (!warpedflats[useflatnum])
+					{
+						warpedflats[useflatnum] = new BYTE[lumplen];
+						flatwarpedwhen[useflatnum] = level.time+1;
+					}
+					if (flatwarpedwhen[useflatnum] != level.time)
 					{
 						static byte buffer[64];
 						int timebase = level.time*23;
@@ -936,15 +940,9 @@ void R_DrawPlanes ()
 								*dest++ = *(source+xf);
 							memcpy (warped+y*64, buffer, 64);
 						}
-						Z_ChangeTag (ds_source, PU_CACHE);
 						ds_source = warped;
 					}
-					else
-					{
-						Z_ChangeTag (ds_source, PU_CACHE);
-						ds_source = warpedflats[useflatnum];
-						Z_ChangeTag (ds_source, PU_STATIC);
-					}
+					ds_source = warpedflats[useflatnum];
 				}
 
 				basecolormap = pl->colormap;
@@ -959,7 +957,7 @@ void R_DrawPlanes ()
 					R_DrawTiltedPlane (pl);
 				}
 
-				Z_ChangeTag (ds_source, PU_CACHE);
+				W_UnMapLump (flatInWad);
 			}
 		}
 	}

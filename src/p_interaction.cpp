@@ -339,7 +339,6 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	}
 	flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY|MF_NOGRAVITY);
 	flags |= MF_CORPSE|MF_DROPOFF;
-	flags2 &= ~MF2_PASSMOBJ;
 	height >>= 2;
 
 	// [RH] If the thing has a special, execute and remove it

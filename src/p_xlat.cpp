@@ -46,7 +46,6 @@
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "w_wad.h"
-#include "z_zone.h"
 
 // define names for the TriggerType field of the general linedefs
 
@@ -64,23 +63,12 @@ typedef enum
 
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 {
-	BYTE *tlate;
+	const BYTE *tlate, *tlatebase;
 	short special = SHORT(mld->special);
 	short tag = SHORT(mld->tag);
 	short flags = SHORT(mld->flags);
 	BOOL passthrough;
 	int i;
-
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		tlate = (BYTE *)W_CacheLumpName ("DOOMX", PU_CACHE);
-	}
-	else
-	{
-		tlate = (BYTE *)W_CacheLumpName ("HERETICX", PU_CACHE);
-	}
-
-	passthrough = (flags & ML_PASSUSE_BOOM);
 
 	flags = flags & 0x01ff;	// Ignore flags unknown to DOOM
 
@@ -99,6 +87,18 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		return;
 	}
 
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		tlatebase = (BYTE *)W_MapLumpName ("DOOMX");
+	}
+	else
+	{
+		tlatebase = (BYTE *)W_MapLumpName ("HERETICX");
+	}
+	tlate = tlatebase;
+
+	passthrough = (flags & ML_PASSUSE_BOOM);
+
 	// Check if this is a regular linetype
 	if (tlate[0] == 'N' && tlate[1] == 'O' && tlate[2] == 'R' && tlate[3] == 'M')
 	{
@@ -111,7 +111,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			tlate += 4;
 			if (special >= low && special <= high)
 			{ // found it, so use the LUT
-				BYTE *specialmap = tlate + (special - low) * 7;
+				const BYTE *specialmap = tlate + (special - low) * 7;
 
 				ld->flags = flags | ((specialmap[0] & 0x3f) << 9);
 
@@ -133,6 +133,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 				case 0x80: case 0x40:		// First argument is a tag
 					ld->args[0] = tag;
 				}
+				W_UnMapLump (tlatebase);
 				return;
 			}
 			tlate += (high - low + 1) * 7;
@@ -283,6 +284,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 			if (special >= low && special <= high)
 			{ // Really found it, so we're done
 				ld->flags = flags;
+				W_UnMapLump (tlatebase);
 				return;
 			}
 
@@ -295,6 +297,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	ld->special = 0;
 	ld->flags = flags;
 	memset (ld->args, 0, sizeof(ld->args));
+	W_UnMapLump (tlatebase);
 }
 
 // The teleport specials that use things as destinations also require

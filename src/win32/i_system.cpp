@@ -102,31 +102,6 @@ ticcmd_t *I_BaseTiccmd(void)
 	return &emptycmd;
 }
 
-byte *I_ZoneBase (size_t *size)
-{
-	void *zone;
-
-	while (NULL == (zone = malloc (*size)) &&
-		   *size >= 2*1024*1024)
-	{
-		*size -= 1024*1024;
-	}
-
-	return (byte *)zone;
-}	
-
-byte *I_AllocLow(int length)
-{
-	byte *mem;
-
-	mem = (byte *)malloc (length);
-	if (mem) {
-		memset (mem,0,length);
-	}
-	return mem;
-}
-
-
 static DWORD basetime = 0;
 
 // [RH] Returns time in milliseconds

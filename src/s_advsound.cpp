@@ -49,7 +49,6 @@
 #include "r_data.h"
 #include "m_random.h"
 #include "d_netinf.h"
-#include "z_zone.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -551,7 +550,7 @@ static void S_AddSNDINFO (int lump)
 				}
 				else
 				{
-					ambient = (AmbientSound *)Z_Malloc (sizeof(AmbientSound), PU_STATIC, NULL);
+					ambient = new AmbientSound;
 					Ambients[sc_Number] = ambient;
 				}
 				memset (ambient, 0, sizeof(AmbientSound));
@@ -843,12 +842,13 @@ static void S_AddSNDINFO (int lump)
 static void S_AddBloodSFX (int lumpnum)
 {
 	char name[13];
-	FBloodSFX *sfx = (FBloodSFX *)W_CacheLumpNum (lumpnum, PU_CACHE);
+	const FBloodSFX *sfx = (FBloodSFX *)W_MapLumpNum (lumpnum);
 	int rawlump = W_CheckNumForName (sfx->RawName, ns_bloodraw);
 	int sfxnum;
 
 	if (rawlump == -1)
 	{
+		W_UnMapLump (sfx);
 		return;
 	}
 
@@ -865,6 +865,7 @@ static void S_AddBloodSFX (int lumpnum)
 		S_sfx[sfxnum].bForce11025 = true;
 	}
 	S_sfx[sfxnum].bLoadRAW = true;
+	W_UnMapLump (sfx);
 }
 
 //==========================================================================

@@ -4,7 +4,6 @@
 #include "sbar.h"
 #include "r_defs.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "m_random.h"
 #include "d_player.h"
 #include "st_stuff.h"
@@ -101,6 +100,7 @@ public:
 	{
 		int frame;
 		static bool hitCenterFrame;
+		const patch_t *patch;
 
 		FBaseStatusBar::Draw (state);
 
@@ -170,13 +170,15 @@ public:
 				{
 					if (hitCenterFrame && (frame != 15 && frame != 0))
 					{
-						DrawOuterPatch ((patch_t *)W_CacheLumpNum (spinflylump+15,
-							PU_CACHE), 20, 17);
+						patch = (patch_t *)W_MapLumpNum (spinflylump+15);
+						DrawOuterPatch (patch, 20, 17);
+						W_UnMapLump (patch);
 					}
 					else
 					{
-						DrawOuterPatch ((patch_t *)W_CacheLumpNum (spinflylump+frame,
-							PU_CACHE), 20, 17);
+						patch = (patch_t *)W_MapLumpNum (spinflylump+frame);
+						DrawOuterPatch (patch, 20, 17);
+						W_UnMapLump (patch);
 						hitCenterFrame = false;
 					}
 				}
@@ -184,14 +186,16 @@ public:
 				{
 					if (!hitCenterFrame && (frame != 15 && frame != 0))
 					{
-						DrawOuterPatch ((patch_t *)W_CacheLumpNum (spinflylump+frame,
-							PU_CACHE), 20, 17);
+						patch = (patch_t *)W_MapLumpNum (spinflylump+frame);
+						DrawOuterPatch (patch, 20, 17);
+						W_UnMapLump (patch);
 						hitCenterFrame = false;
 					}
 					else
 					{
-						DrawOuterPatch ((patch_t *)W_CacheLumpNum (spinflylump+15,
-							PU_CACHE), 20, 17);
+						patch = (patch_t *)W_MapLumpNum (spinflylump+frame);
+						DrawOuterPatch (patch, 20, 17);
+						W_UnMapLump (patch);
 						hitCenterFrame = true;
 					}
 				}
@@ -205,8 +209,9 @@ public:
 				|| !(CPlayer->powers[pw_weaponlevel2] & 16))
 			{
 				frame = (level.time/3)&15;
-				DrawOuterPatch ((patch_t *)W_CacheLumpNum (
-					spinbooklump+frame, PU_CACHE), -20, 17);
+				patch = (patch_t *)W_MapLumpNum (spinbooklump+frame);
+				DrawOuterPatch (patch, -20, 17);
+				W_UnMapLump (patch);
 			}
 			BorderTopRefresh = screen->GetPageCount ();
 		}

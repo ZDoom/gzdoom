@@ -165,7 +165,9 @@ bool P_MorphMonster (AActor *actor)
 	AActor *morphed;
 	const TypeInfo *spawntype;
 
-	if (actor->player || actor->flags3 & MF3_DONTMORPH)
+	if (actor->player ||
+		actor->flags3 & MF3_DONTMORPH ||
+		!(actor->flags & MF_COUNTKILL))
 	{
 		return false;
 	}

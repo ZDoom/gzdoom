@@ -41,7 +41,6 @@
 #include "p_terrain.h"
 #include "gi.h"
 #include "r_state.h"
-#include "z_zone.h"
 #include "w_wad.h"
 #include "sc_man.h"
 #include "s_sound.h"

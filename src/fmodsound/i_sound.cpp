@@ -56,7 +56,6 @@ extern HINSTANCE g_hInst;
 #include <fmod.h>
 
 #include "m_swap.h"
-#include "z_zone.h"
 #include "stats.h"
 
 #include "c_cvars.h"
@@ -172,105 +171,6 @@ static const char *FmodErrors[] =
 	"Failed to allocate a new channel"
 };
 #endif
-
-// Simple file loader for FSOUND using an already-opened
-// file handle. Also supports loading from a WAD opened
-// in w_wad.cpp.
-
-static unsigned int _cdecl FIO_Open (const char *name)
-{
-	return (unsigned int)name;
-}
-
-static void _cdecl FIO_Close (unsigned int handle)
-{
-	if (handle)
-	{
-		delete (FileHandle *)handle;
-	}
-}
-
-static int _cdecl FIO_Read (void *buffer, int size, unsigned int handle)
-{
-	if (handle)
-	{
-		FileHandle *file = (FileHandle *)handle;
-		if (size + file->pos > file->len)
-			size = file->len - file->pos;
-		if (size < 0)
-		{
-			size = 0;
-		}
-		else if (size > 0)
-		{
-			if (lseek (file->handle, file->base + file->pos, SEEK_SET) == -1)
-				return 0;
-			size = read (file->handle, buffer, size);
-			file->pos += size;
-		}
-		return size;
-	}
-	return 0;
-}
-
-static int _cdecl FIO_Seek (unsigned int handle, int pos, signed char mode)
-{
-	if (handle)
-	{
-		FileHandle *file = (FileHandle *)handle;
-
-		switch (mode)
-		{
-		case SEEK_SET:
-			file->pos = pos;
-			break;
-		case SEEK_CUR:
-			file->pos += pos;
-			break;
-		case SEEK_END:
-			file->pos = file->len + pos;
-			break;
-		}
-		if (file->pos < 0)
-		{
-			file->pos = 0;
-			return -1;
-		}
-		if (file->pos > file->len)
-		{
-			file->pos = file->len;
-			return -1;
-		}
-		return 0;
-	}
-	return -1;
-}
-
-static int _cdecl FIO_Tell (unsigned int handle)
-{
-	return handle ? ((FileHandle *)handle)->pos : 0;
-}
-
-void Enable_FSOUND_IO_Loader ()
-{
-	typedef unsigned int	(_cdecl *OpenCallback)(const char *name);
-	typedef void			(_cdecl *CloseCallback)(unsigned int handle);
-	typedef int				(_cdecl *ReadCallback)(void *buffer, int size, unsigned int handle);
-	typedef int				(_cdecl *SeekCallback)(unsigned int handle, int pos, signed char mode);
-	typedef int				(_cdecl *TellCallback)(unsigned int handle);
-	
-	FSOUND_File_SetCallbacks	
-		((OpenCallback)FIO_Open,
-		 (CloseCallback)FIO_Close,
-		 (ReadCallback)FIO_Read,
-		 (SeekCallback)FIO_Seek,
-		 (TellCallback)FIO_Tell);
-}
-
-void Disable_FSOUND_IO_Loader ()
-{
-	FSOUND_File_SetCallbacks (NULL, NULL, NULL, NULL, NULL);
-}
 
 // FSOUND_Sample_Upload seems to mess up the signedness of sound data when
 // uploading to hardware buffers. The pattern is not particularly predictable,
@@ -1183,23 +1083,21 @@ void I_InitSound ()
 
 	if (!_nosound)
 	{
-		Enable_FSOUND_IO_Loader ();
 		OutputType = FSOUND_GetOutput ();
 		if (snd_3d)
 		{
 			Sound3D = true;
 			if (gameinfo.gametype == GAME_Doom)
-			{ // I'm not sure why Doom gets the lowest rolloff factor
-			  // when it also has the smallest range.
+			{ 
 				FSOUND_3D_SetRolloffFactor (1.7f);
 			}
 			else if (gameinfo.gametype == GAME_Heretic)
 			{
-				FSOUND_3D_SetRolloffFactor (7.5f);
+				FSOUND_3D_SetRolloffFactor (1.24f);
 			}
 			else
 			{
-				FSOUND_3D_SetRolloffFactor (5.6f);
+				FSOUND_3D_SetRolloffFactor (0.96f);
 			}
 			FSOUND_3D_SetDopplerFactor (1.f);
 			FSOUND_3D_SetDistanceFactor (100.f);	// Distance factor only effects doppler!

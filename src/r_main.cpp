@@ -42,7 +42,6 @@
 #include "c_cvars.h"
 #include "v_video.h"
 #include "stats.h"
-#include "z_zone.h"
 #include "i_video.h"
 #include "i_system.h"
 #include "vectors.h"

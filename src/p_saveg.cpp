@@ -33,7 +33,6 @@
 */
 
 #include "i_system.h"
-#include "z_zone.h"
 #include "p_local.h"
 
 // State.

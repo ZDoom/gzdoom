@@ -103,39 +103,6 @@ void I_UpdateSoundParams (int handle, int vol, int sep, int pitch);
 void I_UpdateSoundParams3D (int handle, float pos[3], float vel[3]);
 
 
-struct FileHandle
-{
-	FileHandle (int hndl, int start, int size)
-		: len (size),
-		  pos (0),
-		  base (start),
-		  bNeedClose (true)
-	{
-		handle = dup (hndl);
-	}
-
-	FileHandle (int lump)
-		: pos (0),
-		  bNeedClose (false)
-	{
-		handle = W_FileHandleFromWad (lumpinfo[lump].wadnum);
-		base = lumpinfo[lump].position;
-		len = lumpinfo[lump].size;
-	}
-
-	~FileHandle ()
-	{
-		if (bNeedClose)
-			close (handle);
-	}
-
-	int handle;
-	int len;
-	int pos;
-	int base;
-	bool bNeedClose;
-};
-
 // For use by I_PlayMovie
 void I_MovieDisableSound ();
 void I_MovieResumeSound ();

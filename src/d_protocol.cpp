@@ -40,7 +40,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "cmdlib.h"
-#include "z_zone.h"
 
 
 char *ReadString (byte **stream)

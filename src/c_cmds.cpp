@@ -56,7 +56,6 @@
 #include "s_sound.h"
 #include "g_game.h"
 #include "p_inter.h"
-#include "z_zone.h"
 #include "w_wad.h"
 #include "g_level.h"
 #include "gi.h"
@@ -345,22 +344,6 @@ CCMD (exec)
 		default: break;
 		}
 	}
-}
-
-CCMD (dumpheap)
-{
-	int lo = 0, hi = 255;
-
-	if (argv.argc() >= 2)
-	{
-		lo = atoi (argv[1]);
-		if (argv.argc() >= 3)
-		{
-			hi = atoi (argv[2]);
-		}
-	}
-
-	Z_DumpHeap (lo, hi);
 }
 
 CCMD (logfile)

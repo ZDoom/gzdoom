@@ -8,7 +8,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "p_local.h"
-#include "z_zone.h"
 #include "m_swap.h"
 #include "v_palette.h"
 #include "w_wad.h"
@@ -178,7 +177,7 @@ static void LoadSectors (sectortype *bsec)
 	FDynamicColormap *map = GetSpecialLights (PalEntry (255,255,255), level.fadeto);
 	sector_t *sec;
 
-	sec = sectors = (sector_t *)Z_Malloc (sizeof(sector_t)*numsectors, PU_LEVEL, 0);
+	sec = sectors = new sector_t[numsectors];
 	memset (sectors, 0, sizeof(sector_t)*numsectors);
 
 	for (int i = 0; i < numsectors; ++i, ++bsec, ++sec)
@@ -284,10 +283,10 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	numsides = numvertexes = numwalls;
 	numlines = 0;
 
-	sides = (side_t *)Z_Malloc (numsides*sizeof(side_t), PU_LEVEL, 0);
+	sides = new side_t[numsides];
 	memset (sides, 0, numsides*sizeof(side_t));
 
-	vertexes = (vertex_t *)Z_Malloc (numvertexes*sizeof(vertex_t), PU_LEVEL, 0);
+	vertexes = new vertex_t[numvertexes];
 	numvertexes = 0;
 
 	// First mark each sidedef with the sector it belongs to
@@ -340,7 +339,7 @@ static void LoadWalls (walltype *walls, int numwalls, sectortype *bsec)
 	}
 
 	// Set line properties that Doom doesn't store per-sidedef
-	lines = (line_t *)Z_Malloc (numlines*sizeof(line_t), PU_LEVEL, 0);
+	lines = new line_t[numlines];
 	memset (lines, 0, numlines*sizeof(line_t));
 
 	for (i = 0, j = -1; i < numwalls; ++i)

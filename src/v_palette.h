@@ -71,9 +71,9 @@ inline FArchive &operator<< (FArchive &arc, PalEntry &p)
 struct FPalette
 {
 	FPalette ();
-	FPalette (BYTE *colors);
+	FPalette (const BYTE *colors);
 
-	void SetPalette (BYTE *colors);
+	void SetPalette (const BYTE *colors);
 	void GammaAdjust ();
 
 	PalEntry	Colors[256];		// gamma corrected palette

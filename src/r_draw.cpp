@@ -29,7 +29,6 @@
 #include "m_alloc.h"
 #include "doomdef.h"
 #include "i_system.h"
-#include "z_zone.h"
 #include "w_wad.h"
 #include "r_local.h"
 #include "v_video.h"
@@ -111,7 +110,7 @@ DWORD			*dc_srcblend;			// [RH] Source and destination
 DWORD			*dc_destblend;			// blending lookups
 
 // first pixel in a column (possibly virtual) 
-byte*			dc_source;				
+const byte*		dc_source;				
 
 byte*			dc_dest;
 int				dc_count;
@@ -119,7 +118,7 @@ int				dc_count;
 DWORD			vplce[4];
 DWORD			vince[4];
 BYTE*			palookupoffse[4];
-BYTE*			bufplce[4];
+const BYTE*		bufplce[4];
 
 // just for profiling 
 int 			dccount;
@@ -231,7 +230,7 @@ void R_StretchColumnP_C (void)
 	frac = dc_texturefrac;
 
 	{
-		byte *source = dc_source;
+		const byte *source = dc_source;
 		int pitch = dc_pitch;
 
 		do
@@ -486,7 +485,7 @@ void R_DrawAddColumnP_C (void)
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
 		byte *colormap = dc_colormap;
-		byte *source = dc_source;
+		const byte *source = dc_source;
 		int pitch = dc_pitch;
 
 		do
@@ -546,7 +545,7 @@ void R_DrawTranslatedColumnP_C (void)
 		// [RH] Local copies of global vars to improve compiler optimizations
 		byte *colormap = dc_colormap;
 		byte *translation = dc_translation;
-		byte *source = dc_source;
+		const byte *source = dc_source;
 		int pitch = dc_pitch;
 
 		do
@@ -593,7 +592,7 @@ void R_DrawTlatedAddColumnP_C (void)
 		DWORD *bg2rgb = dc_destblend;
 		byte *translation = dc_translation;
 		byte *colormap = dc_colormap;
-		byte *source = dc_source;
+		const byte *source = dc_source;
 		int pitch = dc_pitch;
 
 		do
@@ -641,7 +640,7 @@ void R_DrawShadedColumnP_C (void)
 	frac = dc_texturefrac;
 
 	{
-		byte *source = dc_source;
+		const byte *source = dc_source;
 		byte *colormap = dc_colormap;
 		int pitch = dc_pitch;
 		DWORD *fgstart = &Col2RGB8[0][dc_color];
@@ -689,7 +688,7 @@ void R_DrawAddClampColumnP_C ()
 
 	{
 		byte *colormap = dc_colormap;
-		byte *source = dc_source;
+		const byte *source = dc_source;
 		int pitch = dc_pitch;
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
@@ -743,7 +742,7 @@ void R_DrawAddClampTranslatedColumnP_C ()
 	{
 		byte *translation = dc_translation;
 		byte *colormap = dc_colormap;
-		byte *source = dc_source;
+		const byte *source = dc_source;
 		int pitch = dc_pitch;
 		DWORD *fg2rgb = dc_srcblend;
 		DWORD *bg2rgb = dc_destblend;
@@ -1387,8 +1386,9 @@ void R_DrawBorder (int x1, int y1, int x2, int y2)
 	lump = W_CheckNumForName (gameinfo.borderFlat, ns_flats);
 	if (lump >= 0)
 	{
-		screen->FlatFill (x1 & ~63, y1, x2, y2,
-			(byte *)W_CacheLumpNum (lump, PU_CACHE));
+		byte *flat = (byte *)W_MapLumpNum (lump);
+		screen->FlatFill (x1 & ~63, y1, x2, y2, flat);
+		W_UnMapLump (flat);
 	}
 	else
 	{
@@ -1447,6 +1447,7 @@ int BorderTopRefresh;
 
 void R_DrawTopBorder ()
 {
+	const patch_t *p1, *p2;
 	int x, y;
 	int offset;
 	int size;
@@ -1460,23 +1461,30 @@ void R_DrawTopBorder ()
 
 	if (viewwindowy < 35)
 	{
+		p1 = (patch_t *)W_MapLumpName(gameinfo.border->t);
 		for (x = viewwindowx; x < viewwindowx + realviewwidth; x += size)
 		{
-			screen->DrawPatch ((patch_t *)W_CacheLumpName(gameinfo.border->t, PU_CACHE),
-				x, viewwindowy - offset);
+			screen->DrawPatch (p1, x, viewwindowy - offset);
 		}
+		W_UnMapLump (p1);
+
+		p1 = (patch_t *)W_MapLumpName (gameinfo.border->l);
+		p2 = (patch_t *)W_MapLumpName (gameinfo.border->r);
 		for (y = viewwindowy; y < 35; y += size)
 		{
-			screen->DrawPatch ((patch_t *)W_CacheLumpName (gameinfo.border->l, PU_CACHE),
-				viewwindowx - offset, y);
-			screen->DrawPatch ((patch_t *)W_CacheLumpName(gameinfo.border->r, PU_CACHE),
-				viewwindowx + realviewwidth, y);
+			screen->DrawPatch (p1, viewwindowx - offset, y);
+			screen->DrawPatch (p2, viewwindowx + realviewwidth, y);
 		}
+		W_UnMapLump (p1);
+		W_UnMapLump (p2);
 
-		screen->DrawPatch ((patch_t *)W_CacheLumpName(gameinfo.border->tl, PU_CACHE),
-			viewwindowx-offset, viewwindowy - offset);
-		screen->DrawPatch ((patch_t *)W_CacheLumpName(gameinfo.border->tr, PU_CACHE),
-			viewwindowx+realviewwidth, viewwindowy - offset);
+		p1 = (patch_t *)W_MapLumpName(gameinfo.border->tl);
+		screen->DrawPatch (p1, viewwindowx-offset, viewwindowy - offset);
+		W_UnMapLump (p1);
+
+		p1 = (patch_t *)W_MapLumpName(gameinfo.border->tr);
+		screen->DrawPatch (p1, viewwindowx+realviewwidth, viewwindowy - offset);
+		W_UnMapLump (p1);
 	}
 }
 

@@ -23,7 +23,6 @@
 
 
 #include "templates.h"
-#include "z_zone.h"
 #include "m_random.h"
 
 #include "doomdef.h"

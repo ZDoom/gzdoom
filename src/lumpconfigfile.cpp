@@ -40,19 +40,18 @@
 #include "doomtype.h"
 #include "lumpconfigfile.h"
 #include "w_wad.h"
-#include "z_zone.h"
 
 FLumpConfigFile::FLumpConfigFile (int lump)
 {
 	State.lump = lump;
-	State.lumpdata = (char *)W_CacheLumpNum (lump, PU_STATIC);
+	State.lumpdata = (char *)W_MapLumpNum (lump);
 	State.end = State.lumpdata + lumpinfo[lump].size;
 	State.pos = State.lumpdata;
 }
 
 FLumpConfigFile::~FLumpConfigFile ()
 {
-	Z_Free (State.lumpdata);
+	W_UnMapLump (State.lumpdata);
 }
 
 void FLumpConfigFile::LoadConfigFile ()

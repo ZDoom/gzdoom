@@ -1,4 +1,54 @@
+January 1, 2003
+- Uploaded 30.cab. I hope I didn't break anything I haven't already caught by
+  getting rid of the zone heap and switching to memory-mapped files.
+- Made more input cvars global config (such as m_pitch and m_yaw).
+- Changed the sound rolloff factors for Heretic and Hexen.
+- Fixed: Unlike Doom and Heretic, Hexen crushers do not continue to move if
+  there is something being crushed underneath them. Instead, they wait for the
+  thing underneath to either die or move out of the way. The crushing pillars
+  you find the first time you visit Hexen MAP03 do not actually kill you if
+  they don't wait for you to die before fully closing.
+- Added support for "fake" lumps so that the music system can continue to play
+  on-disk music files without having to include them on the command line with
+  -file. These "fake" lumps are automatically unmapped when they are done being
+  used so that their memory can be decommitted, but their file handles remain
+  open because I don't want to deal with also removing lumps at runtime.
+
+December 31, 2002
+- Changed FRandom::StaticClearRandom() so that different seeds produce more
+  disparate results in the different RNGs.
+- Fixed: FRandom::StaticClearRandom() was not being called after rngseed was
+  set at game startup.
+- Changed the wad loader to use memory mapped files, so now I have better
+  caching than what the zone heap could hope for, since the VM system does all
+  the work for me.
+- Added a fixup in R_InitTextures() for the Doom E1 sky, which has its patch's
+  y origin at -8 instead of 0.
+- Added the F_EndFinale() function to clean up after the finale is over, since
+  I can't let the zone heap do it automatically anymore.
+
+December 30, 2002
+- Removed the zone heap. Everything is done using new/delete and malloc/free
+  now, so you don't have to worry about specifying a heap large enough.
+- Fixed: The [.NetServerInfo] ini sections were still read in single player
+  games.
+- Fixed: The player class filter in P_SpawnMapThing() used SinglePlayerClass[]
+  instead of player_t::CurrentPlayerClass.
+- Put the FMUSIC loader back the way it was so that MODs in WADs work again.
+- Changed EV_Teleport() so that if it can't find any teleport destinations,
+  it looks for a matching map spot instead. This fixes the southern teleporter
+  in Hexen MAP10.
+- Added MF3_DONTMORPH to the Hexen boss monsters.
+- Removed MF2_PASSMOBJ flag and made it standard behavior for all actors
+  because of a test map I received: If an actor with MF2_PASSMOBJ rides up
+  a lift underneath a non-MF2_PASSMOBJ actor, the top actor would fall inside
+  of the bottom one once the lift stops.
+
 December 28, 2002
+- Changed the nodebuilder timer to use I_MSTime() instead of clock/unclock,
+  because very large maps can make it exceed the 32-bit resolution of
+  the clock/unclock macros.
+- Uploaded 29.cab.
 - Moved the R_ClearParticles() call out of G_InitNew() and into P_SetupLevel().
 - Experimented with the 3D sound parameters to find a rolloff factor that
   best approximates the software sound.

@@ -154,7 +154,7 @@ void FRandom::StaticClearRandom ()
 		// [RH] Use the RNG's name's CRC to modify the original seed.
 		// This way, new RNGs can be added later, and it doesn't matter
 		// which order they get initialized in.
-		rng->Seed = seed + rng->NameCRC;
+		rng->Seed = seed * rng->NameCRC;
 		rng = rng->Next;
 	}
 }

@@ -32,6 +32,8 @@
 **
 */
 
+#ifndef _DEBUG
+
 #include "i_system.h"
 #include "m_alloc.h"
 
@@ -64,3 +66,5 @@ void *Realloc (void *memblock, size_t size)
 
 	return zone;
 }
+
+#endif

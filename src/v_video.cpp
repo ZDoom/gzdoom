@@ -52,7 +52,6 @@
 #include "v_text.h"
 
 #include "w_wad.h"
-#include "z_zone.h"
 
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -317,7 +316,7 @@ char *V_GetColorStringByName (const char *name)
 		return NULL;
 	}
 
-	rgb = rgbNames = (char *)W_CacheLumpNum (rgblump, PU_CACHE);
+	rgb = rgbNames = (char *)W_MapLumpNum (rgblump, true);
 	rgbEnd = rgbNames + W_LumpLength (rgblump);
 	step = 0;
 	namelen = strlen (name);
@@ -375,6 +374,7 @@ char *V_GetColorStringByName (const char *name)
 	{
 		Printf ("X11R6RGB lump is corrupt\n");
 	}
+	W_UnMapLump (rgbNames);
 	return NULL;
 }
 

@@ -47,7 +47,6 @@
 #include "m_alloc.h"
 #include "d_player.h"
 #include "configfile.h"
-#include "z_zone.h"
 #include "m_crc32.h"
 
 
@@ -651,7 +650,7 @@ FCommandLine::~FCommandLine ()
 {
 	if (_argv != NULL)
 	{
-		Z_Free (_argv);
+		delete[] _argv;
 	}
 }
 
@@ -669,7 +668,7 @@ char *FCommandLine::operator[] (int i)
 	if (_argv == NULL)
 	{
 		int count = argc();
-		_argv = (char **)Z_Malloc (count*sizeof(char *) + argsize, PU_STATIC, 0);
+		_argv = new char *[count + (argsize+sizeof(char*)-1)/sizeof(char*)];
 		_argv[0] = (char *)_argv + count*sizeof(char *);
 		ParseCommandLine (cmd, NULL, _argv);
 	}

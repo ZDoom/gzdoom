@@ -12,19 +12,17 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 #include <stdlib.h>
-#ifndef unix
-#include <io.h>
-#endif
 #include <ctype.h>
 #include <sys/types.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
-
-#ifndef _WIN32
-#include <unistd.h>
-#endif
+#include <set>
+#include <map>
 
 #include "m_alloc.h"
 #include "doomtype.h"
@@ -33,25 +31,12 @@
 #include "m_swap.h"
 #include "m_argv.h"
 #include "i_system.h"
-#include "z_zone.h"
 #include "cmdlib.h"
 #include "w_wad.h"
 #include "m_crc32.h"
 #include "templates.h"
 
 // MACROS ------------------------------------------------------------------
-
-#ifdef NeXT
-// NeXT doesn't need a binary flag in open call
-#define O_BINARY 0
-#endif
-
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
-#define MAX_PERM_OPEN_WADS	3	// Max # of wads to always keep open
-#define MAX_OPEN_WADS		16	// Max # of additional wads to have open at a time
 
 #define NULL_INDEX		(0xffff)
 
@@ -60,10 +45,12 @@
 struct FWadFileHandle
 {
 	char *Name;
-	int Handle;
 	int FirstLump;
 	int LastLump;
-	int ActivePos;
+	HANDLE FileHandle;
+	HANDLE MappingHandle;
+	const BYTE *ViewBase;
+	bool DontMap;
 };
 
 union MergedHeader
@@ -80,7 +67,6 @@ union MergedHeader
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void W_SkinHack (int baselump);
-static void PutWadToFront (int wadnum, int oldpos);
 static void BloodCrypt (void *data, int key, int len);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -89,14 +75,16 @@ static void BloodCrypt (void *data, int key, int len);
 
 lumpinfo_t *lumpinfo;
 int numlumps;
-void **lumpcache;
 WORD *FirstLumpIndex, *NextLumpIndex;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static TArray<FWadFileHandle> ActiveWads (MAX_OPEN_WADS);
-static int OpenWads[MAX_OPEN_WADS];
-static int NumOpenWads;
+static TArray<FWadFileHandle> ActiveWads;
+static DWORD numhashlumps;
+static std::set<const void *> NonMappedPointers;
+static std::map<const void *, size_t> ExtraLumpPointers;
+static size_t FirstExtraFile;
+static int FirstExtraLump;
 
 // CODE --------------------------------------------------------------------
 
@@ -111,26 +99,6 @@ void strupr (char *s)
 {
     while (*s)
 	*s++ = toupper (*s);
-}
-#endif
-
-//==========================================================================
-//
-// filelength
-//
-//==========================================================================
-
-#ifdef NO_FILELENGTH
-int filelength (int handle)
-{
-    struct stat fileinfo;
-
-    if (fstat (handle, &fileinfo) == -1)
-	{
-		close (handle);
-		I_Error ("Error fstating");
-	}
-    return fileinfo.st_size;
 }
 #endif
 
@@ -161,44 +129,39 @@ void uppercopy (char *to, const char *from)
 // [RH] Removed reload hack
 //==========================================================================
 
-void W_AddFile (char *filename)
+void W_AddFile (const char *filename)
 {
 	FWadFileHandle	wadhandle;
-	char			name[256];
 	MergedHeader	header;
 	lumpinfo_t*		lump_p;
 	unsigned		i;
-	int				handle;
+	HANDLE			handle;
+	DWORD			bytesRead;
 	int				startlump;
 	wadlump_t*		fileinfo, *fileinfo2free;
 	wadlump_t		singleinfo;
 
-	// [RH] Automatically append .wad extension if none is specified.
-	FixPathSeperator (filename);
-	strcpy (name, filename);
-	DefaultExtension (name, ".wad");
-
-	if (NumOpenWads >= MAX_OPEN_WADS)
-	{
-		NumOpenWads--;
-		close (ActiveWads[OpenWads[NumOpenWads]].Handle);
-		ActiveWads[OpenWads[NumOpenWads]].Handle = -1;
-	}
-
 	// open the file and add to directory
-	if ((handle = open (name, O_RDONLY|O_BINARY)) == -1)
+	handle = CreateFileA (filename, GENERIC_READ, FILE_SHARE_READ, NULL,
+		OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, NULL);
+	if (handle == INVALID_HANDLE_VALUE)
 	{ // Didn't find file
-		Printf (" couldn't open %s\n",filename);
+		Printf (" couldn't open %s\n", filename);
 		return;
 	}
 
-	Printf (" adding %s", name);
+	Printf (" adding %s", filename);
 	startlump = numlumps;
 
 	// [RH] Determine if file is a WAD based on its signature, not its name.
-	read (handle, &header, sizeof(header));
+	if (!ReadFile (handle, &header, sizeof(header), &bytesRead, NULL) || bytesRead == 0)
+	{
+		Printf (" couldn't read %s\n", filename);
+		CloseHandle (handle);
+		return;
+	}
 
-	wadhandle.Name = copystring (name);
+	wadhandle.Name = copystring (filename);
 
 	if (header.magic == IWAD_ID || header.magic == PWAD_ID)
 	{ // This is a WAD file
@@ -206,8 +169,8 @@ void W_AddFile (char *filename)
 		header.wad.NumLumps = LONG(header.wad.NumLumps);
 		header.wad.InfoTableOfs = LONG(header.wad.InfoTableOfs);
 		fileinfo = fileinfo2free = new wadlump_t[header.wad.NumLumps];
-		lseek (handle, header.wad.InfoTableOfs, SEEK_SET);
-		read (handle, fileinfo, header.wad.NumLumps * sizeof(wadlump_t));
+		SetFilePointer (handle, header.wad.InfoTableOfs, 0, FILE_BEGIN);
+		ReadFile (handle, fileinfo, header.wad.NumLumps * sizeof(wadlump_t), &bytesRead, NULL);
 		numlumps += header.wad.NumLumps;
 		Printf (" (%ld lumps)", header.wad.NumLumps);
 	}
@@ -220,8 +183,8 @@ void W_AddFile (char *filename)
 		header.rff.NumLumps = LONG(header.rff.NumLumps);
 		header.rff.DirOfs = LONG(header.rff.DirOfs);
 		lumps = new rfflump_t[header.rff.NumLumps];
-		lseek (handle, header.rff.DirOfs, SEEK_SET);
-		read (handle, lumps, header.rff.NumLumps * sizeof(rfflump_t));
+		SetFilePointer (handle, header.rff.DirOfs, 0, FILE_BEGIN);
+		ReadFile (handle, lumps, header.rff.NumLumps * sizeof(rfflump_t), &bytesRead, NULL);
 		BloodCrypt (lumps, header.rff.DirOfs, header.rff.NumLumps * sizeof(rfflump_t));
 
 		numlumps += header.rff.NumLumps;
@@ -262,11 +225,12 @@ void W_AddFile (char *filename)
 	}
 	else
 	{ // This is just a single lump file
+		char name[PATH_MAX];
 
 		fileinfo2free = NULL;
 		fileinfo = &singleinfo;
 		singleinfo.FilePos = 0;
-		singleinfo.Size = LONG(filelength(handle));
+		singleinfo.Size = LONG(GetFileSize (handle, NULL));
 		ExtractFileBase (filename, name);
 		strupr (name);
 		strncpy (singleinfo.Name, name, 8);
@@ -296,15 +260,13 @@ void W_AddFile (char *filename)
 		}
 	}
 
-	wadhandle.Handle = handle;
+	wadhandle.FileHandle = handle;
+	wadhandle.MappingHandle = NULL;
+	wadhandle.ViewBase = NULL;
+	wadhandle.DontMap = false;
 	wadhandle.FirstLump = startlump;
 	wadhandle.LastLump = numlumps - 1;
-
-	if (ActiveWads.Push (wadhandle) >= MAX_PERM_OPEN_WADS)
-	{
-		PutWadToFront ((int)(ActiveWads.Size() - 1), NumOpenWads);
-		NumOpenWads++;
-	}
+	ActiveWads.Push (wadhandle);
 }
 
 //==========================================================================
@@ -320,7 +282,6 @@ void W_AddFile (char *filename)
 
 void W_InitMultipleFiles (wadlist_t **filenames)
 {
-	int i;
 	int numfiles;
 
 	// open all the files, load headers, and count lumps
@@ -332,9 +293,15 @@ void W_InitMultipleFiles (wadlist_t **filenames)
 	{
 		wadlist_t *next = (*filenames)->next;
 		int baselump = numlumps;
+		char name[PATH_MAX];
 
-		W_AddFile ((*filenames)->name);
-		Z_Free (*filenames);
+		// [RH] Automatically append .wad extension if none is specified.
+		strcpy (name, (*filenames)->name);
+		FixPathSeperator (name);
+		DefaultExtension (name, ".wad");
+
+		W_AddFile (name);
+		free (*filenames);
 		*filenames = next;
 
 		// The first two files are always zdoom.wad and the IWAD, which
@@ -359,91 +326,37 @@ void W_InitMultipleFiles (wadlist_t **filenames)
 	// [RH] Set up hash table
 	FirstLumpIndex = new WORD[numlumps];
 	NextLumpIndex = new WORD[numlumps];
+	numhashlumps = numlumps;
 	W_InitHashChains ();
 
-	// set up caching
-	i = numlumps * sizeof(*lumpcache);
-	lumpcache = new void *[numlumps];
-	memset (lumpcache, 0, i);
+	FirstExtraFile = ActiveWads.Size();
+	FirstExtraLump = numlumps;
 }
 
 //===========================================================================
 //
-// W_InitFile
+// W_FakeLump
 //
-// Initialize the primary from a single file.
+// Adds another file to the wad list after initialization has occurred.
 //
-//==========================================================================
+//===========================================================================
 
-void W_InitFile (char *filename)
+int W_FakeLump (const char *filename)
 {
-	wadlist_t *names = (wadlist_t *)Z_Malloc (sizeof(*names)+strlen(filename), PU_STATIC, 0);
+	size_t i;
 
-	names->next = NULL;
-	strcpy (names->name, filename);
-	W_InitMultipleFiles (&names);
-}
-
-//==========================================================================
-//
-// PutWadToFront
-//
-// Marks the indicated wad as most-recently-used.
-//
-//==========================================================================
-
-static void PutWadToFront (int wadnum, int oldpos)
-{
-	int i;
-
-	for (i = oldpos; i > 0; i--)
+	for (i = FirstExtraFile; i < ActiveWads.Size(); ++i)
 	{
-		OpenWads[i] = OpenWads[i-1];
-		ActiveWads[OpenWads[i]].ActivePos = i;
-	}
-	OpenWads[i] = wadnum;
-	ActiveWads[wadnum].ActivePos = 0;
-}
-
-//==========================================================================
-//
-// W_FileHandleFromWad
-//
-// Returns a file handle to access the specified wad with. If the wad was
-// not open, it gets opened and added to the list of open wads, possibly
-// closing the oldest wad on the list. Thus, handles returned by this
-// function are not guaranteed to stay valid across multiple calls to this
-// function.
-//
-//==========================================================================
-
-int W_FileHandleFromWad (int wadnum)
-{
-	if ((unsigned int) wadnum >= ActiveWads.Size ())
-	{
-		return -1;
-	}
-	if (ActiveWads[wadnum].Handle == -1)
-	{
-		if (NumOpenWads >= MAX_OPEN_WADS)
+		if (stricmp (filename, ActiveWads[i].Name) == 0)
 		{
-			close (ActiveWads[OpenWads[MAX_OPEN_WADS-1]].Handle);
-			ActiveWads[OpenWads[MAX_OPEN_WADS-1]].Handle = -1;
-			NumOpenWads--;
+			return FirstExtraLump + (i - FirstExtraFile);
 		}
-		if ((ActiveWads[wadnum].Handle = open (ActiveWads[wadnum].Name,
-			O_RDONLY|O_BINARY)) == -1)
-		{
-			I_FatalError ("Could not reopen %s\n", ActiveWads[wadnum].Name);
-		}
-		PutWadToFront (wadnum, NumOpenWads);
-		NumOpenWads++;
 	}
-	else if (wadnum >= MAX_PERM_OPEN_WADS)
-	{
-		PutWadToFront (wadnum, ActiveWads[wadnum].ActivePos);
-	}
-	return ActiveWads[wadnum].Handle;
+
+	// The new lump does not need to be accessible to GetNumForName,
+	// so no need to update the hash table.
+	W_AddFile (filename);
+	return numlumps - 1;
 }
 
 //==========================================================================
@@ -533,7 +446,7 @@ int W_CheckNumForName (const char *name, int space)
 	WORD i;
 
 	uppercopy (uname, name);
-	i = FirstLumpIndex[W_LumpNameHash (uname) % (unsigned)numlumps];
+	i = FirstLumpIndex[W_LumpNameHash (uname) % numhashlumps];
 
 	while (i != NULL_INDEX &&
 		(*(__int64 *)&lumpinfo[i].name != *(__int64 *)&uname ||
@@ -556,7 +469,7 @@ int W_CheckNumForName (const char *name, int space, int wadnum)
 	}
 
 	uppercopy (uname, name);
-	i = FirstLumpIndex[W_LumpNameHash (uname) % (unsigned)numlumps];
+	i = FirstLumpIndex[W_LumpNameHash (uname) % numhashlumps];
 
 	while (i != NULL_INDEX &&
 		(*(__int64 *)&lumpinfo[i].name != *(__int64 *)&uname ||
@@ -618,21 +531,30 @@ int W_LumpLength (int lump)
 
 void W_ReadLump (int lump, void *dest)
 {
-	int c, handle;
 	lumpinfo_t *l;
+	FWadFileHandle *wad;
 	
 	if (lump >= numlumps)
 	{
 		I_Error ("W_ReadLump: %i >= numlumps",lump);
 	}
 	l = lumpinfo + lump;
-	handle = W_FileHandleFromWad (l->wadnum);
-	lseek (handle, l->position, SEEK_SET);
-	c = read (handle, dest, l->size);
-	if (c < l->size)
+	wad = &ActiveWads[l->wadnum];
+	if (wad->ViewBase != NULL)
 	{
-		I_Error ("W_ReadLump: only read %i of %i on lump %i\n(%s)",
-			c, l->size, lump, strerror(errno));	
+		memcpy (dest, wad->ViewBase + l->position, l->size);
+	}
+	else
+	{
+		DWORD bytesRead;
+
+		SetFilePointer (wad->FileHandle, l->position, 0, FILE_BEGIN);
+		ReadFile (wad->FileHandle, dest, l->size, &bytesRead, NULL);
+		if (bytesRead < l->size)
+		{
+			I_Error ("W_ReadLump: only read %ul of %i on lump %i\n(%s)",
+				bytesRead, l->size, lump, strerror(errno));	
+		}
 	}
 	if (l->flags & LUMPF_BLOODCRYPT)
 	{
@@ -642,46 +564,91 @@ void W_ReadLump (int lump, void *dest)
 
 //==========================================================================
 //
-// W_CacheLumpNum
+// W_MapLumpNum
 //
 //==========================================================================
 
-#ifndef _DEBUG
-void *W_CacheLumpNum (int lump, int tag)
-#else
-void *W_CacheLumpNum2 (int lump, int tag, const char *file, int line)
-#endif
+void *W_MapLumpNum (int lump, bool writeable)
 {
-	byte *ptr;
-	int lumplen;
+	lumpinfo_t *l;
+	FWadFileHandle *wad;
+	void *ptr;
 
 	if ((unsigned)lump >= (unsigned)numlumps)
 	{
-		I_Error ("W_CacheLumpNum: %u >= numlumps",lump);
+		I_Error ("W_MapLumpNum: %u >= numlumps",lump);
 	}
-	if (!lumpcache[lump])
+
+	// If the wad is not yet mapped, try to make it so.
+	l = &lumpinfo[lump];
+	wad = &ActiveWads[l->wadnum];
+	if (wad->ViewBase == NULL && !wad->DontMap)
 	{
-		// read the lump in
-		//DPrintf ("cache miss on lump %i\n", lump);
-		// [RH] Allocate one byte more than necessary for the
-		//		lump and set the extra byte to zero so that
-		//		various text parsing routines can just call
-		//		W_CacheLumpNum() and not choke.
-		lumplen = W_LumpLength (lump);
-#ifndef _DEBUG
-		ptr = (byte *)Z_Malloc (lumplen + 1, tag, &lumpcache[lump]);
-#else
-		ptr = (byte *)Z_Malloc2 (lumplen + 1, tag, &lumpcache[lump], file, line);
-#endif
-		W_ReadLump (lump, lumpcache[lump]);
-		ptr[lumplen] = 0;
+		if (wad->MappingHandle == NULL)
+		{
+			wad->MappingHandle = CreateFileMapping (wad->FileHandle,
+				NULL, PAGE_READONLY, 0, 0, NULL);
+			if (wad->MappingHandle == NULL)
+			{ // Assume it will fail in the future, too.
+				wad->DontMap = true;
+			}
+		}
+		wad->ViewBase = (BYTE *)MapViewOfFile (wad->MappingHandle, FILE_MAP_READ, 0, 0, 0);
+		if (wad->ViewBase == NULL)
+		{
+			CloseHandle (wad->MappingHandle);
+			wad->DontMap = true;
+		}
 	}
-	else
+
+	// Blood encryption requires write access to the lump.
+	if (writeable || l->flags & LUMPF_BLOODCRYPT)
 	{
-		//DPrintf ("cache hit on lump %i\n",lump);
-		Z_ChangeTagSafe (lumpcache[lump], tag);
+		ptr = Malloc (l->size);
+		NonMappedPointers.insert (ptr);
+		W_ReadLump (lump, ptr);
+		return ptr;
 	}
-	return lumpcache[lump];
+
+	// The file is memory-mapped, so just return a pointer into it.
+	if (l->wadnum >= FirstExtraFile)
+	{
+		ExtraLumpPointers.insert (std::pair<const void *, size_t>
+			(wad->ViewBase + l->position, l->wadnum));
+	}
+	return (BYTE *)wad->ViewBase + l->position;
+}
+
+//==========================================================================
+//
+// W_UnMapLump
+//
+//==========================================================================
+
+void W_UnMapLump (const void *data)
+{
+	std::set<const void *>::iterator iter;
+
+	// If the pointer is in the set, then free it from the heap.
+	iter = NonMappedPointers.find (data);
+	if (iter != NonMappedPointers.end())
+	{
+		NonMappedPointers.erase (iter);
+		free ((LPVOID)data);
+	}
+
+	// If this is an "extra" lump, unmap the associated file.
+	std::map<const void *, size_t>::iterator it2;
+	it2 = ExtraLumpPointers.find (data);
+	if (it2 != ExtraLumpPointers.end())
+	{
+		FWadFileHandle *wad = &ActiveWads[it2->second];
+		ExtraLumpPointers.erase (it2);
+		if (UnmapViewOfFile (wad->ViewBase))
+		{
+			wad->ViewBase = NULL;
+		}
+	}
 }
 
 //==========================================================================
@@ -731,7 +698,7 @@ void W_InitHashChains (void)
 	for (i = 0; i < (unsigned)numlumps; i++)
 	{
 		uppercopy (name, lumpinfo[i].name);
-		j = W_LumpNameHash (name) % (unsigned) numlumps;
+		j = W_LumpNameHash (name) % numhashlumps;
 		NextLumpIndex[i] = FirstLumpIndex[j];
 		FirstLumpIndex[j] = i;
 	}
@@ -910,58 +877,6 @@ void W_MergeLumps (const char *start, const char *end, int space)
 
 	delete[] newlumpinfos;
 }
-
-//==========================================================================
-//
-// W_Profile
-//
-//==========================================================================
-
-// [RH] Unused
-void W_Profile (const char *fname)
-{
-#if 0
-	int			i;
-	memblock_t*	block;
-	void*		ptr;
-	char		ch;
-	FILE*		f;
-	int			j;
-	char		name[9];
-	
-	f = fopen (fname,"wt");
-	name[8] = 0;
-
-	for (i=0 ; i<numlumps ; i++)
-	{
-		ptr = lumpcache ? lumpcache[i] : NULL;
-		if (!ptr)
-		{
-			ch = ' ';
-		}
-		else
-		{
-			block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
-			if (block->tag < PU_PURGELEVEL)
-				ch = 'S';
-			else
-				ch = 'P';
-		}
-		memcpy (name,lumpinfo[i].name,8);
-
-		for (j=0 ; j<8 ; j++)
-			if (!name[j])
-				break;
-
-		for ( ; j<8 ; j++)
-			name[j] = ' ';
-
-		fprintf (f,"%s   %c  %u\n",name,ch,lumpinfo[i].namespc);
-	}
-	fclose (f);
-#endif
-}
-
 
 //==========================================================================
 //

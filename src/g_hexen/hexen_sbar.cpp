@@ -4,7 +4,6 @@
 #include "sbar.h"
 #include "r_defs.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "m_random.h"
 #include "d_player.h"
 #include "st_stuff.h"
@@ -235,6 +234,7 @@ private:
 	{
 		int frame;
 		static bool hitCenterFrame;
+		const patch_t *patch;
 
 		// Flight icons
 		if (CPlayer->powers[pw_flight])
@@ -247,13 +247,15 @@ private:
 				{
 					if (hitCenterFrame && (frame != 15 && frame != 0))
 					{
-						DrawOuterPatch ((patch_t *)W_CacheLumpNum (SpinFlyLump+15,
-							PU_CACHE), 20, 19);
+						patch = (patch_t *)W_MapLumpNum (SpinFlyLump+15);
+						DrawOuterPatch (patch, 20, 19);
+						W_UnMapLump (patch);
 					}
 					else
 					{
-						DrawOuterPatch ((patch_t *)W_CacheLumpNum (SpinFlyLump+frame,
-							PU_CACHE), 20, 19);
+						patch = (patch_t *)W_MapLumpNum (SpinFlyLump+frame);
+						DrawOuterPatch (patch, 20, 19);
+						W_UnMapLump (patch);
 						hitCenterFrame = false;
 					}
 				}
@@ -261,14 +263,16 @@ private:
 				{
 					if (!hitCenterFrame && (frame != 15 && frame != 0))
 					{
-						DrawOuterPatch ((patch_t *)W_CacheLumpNum (SpinFlyLump+frame,
-							PU_CACHE), 20, 19);
+						patch = (patch_t *)W_MapLumpNum (SpinFlyLump+frame);
+						DrawOuterPatch (patch, 20, 19);
+						W_UnMapLump (patch);
 						hitCenterFrame = false;
 					}
 					else
 					{
-						DrawOuterPatch ((patch_t *)W_CacheLumpNum (SpinFlyLump+15,
-							PU_CACHE), 20, 19);
+						patch = (patch_t *)W_MapLumpNum (SpinFlyLump+15);
+						DrawOuterPatch (patch, 20, 19);
+						W_UnMapLump (patch);
 						hitCenterFrame = true;
 					}
 				}
@@ -283,8 +287,9 @@ private:
 				|| !(CPlayer->powers[pw_speed] & 16))
 			{
 				frame = (level.time/3)&15;
-				DrawOuterPatch ((patch_t *)W_CacheLumpNum (SpinSpeedLump+frame,
-					PU_CACHE), 60, 19);
+				patch = (patch_t *)W_MapLumpNum (SpinSpeedLump+frame);
+				DrawOuterPatch (patch, 60, 19);
+				W_UnMapLump (patch);
 			}
 			BorderTopRefresh = screen->GetPageCount ();
 		}
@@ -296,8 +301,9 @@ private:
 				|| !(CPlayer->powers[pw_invulnerability] & 16))
 			{
 				frame = (level.time/3)&15;
-				DrawOuterPatch ((patch_t *)W_CacheLumpNum (SpinDefenseLump+frame,
-					PU_CACHE), -60, 19);
+				patch = (patch_t *)W_MapLumpNum (SpinDefenseLump+frame);
+				DrawOuterPatch (patch, -60, 19);
+				W_UnMapLump (patch);
 			}
 			BorderTopRefresh = screen->GetPageCount ();
 		}
@@ -309,8 +315,9 @@ private:
 				|| !(CPlayer->powers[pw_minotaur]&16))
 			{
 				frame = (level.time/3)&15;
-				DrawOuterPatch ((patch_t *)W_CacheLumpNum (SpinMinotaurLump+frame,
-					PU_CACHE), -20, 19);
+				patch = (patch_t *)W_MapLumpNum (SpinMinotaurLump+frame);
+				DrawOuterPatch (patch, -20, 19);
+				W_UnMapLump (patch);
 			}
 			BorderTopRefresh = screen->GetPageCount ();
 		}

@@ -5,14 +5,13 @@
 #include "fmopl.h"
 #include "opl_mus_player.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "templates.h"
 #include "c_cvars.h"
 #include "i_system.h"
 
 EXTERN_CVAR (Bool, opl_onechip)
 
-OPLmusicBlock::OPLmusicBlock (int handle, int pos, int len, int rate, int maxSamples)
+OPLmusicBlock::OPLmusicBlock (const void *mem, int len, int rate, int maxSamples)
 	: SampleRate (rate), NextTickIn (0), Looping (false)
 {
 	static bool gotInstrs;
@@ -25,7 +24,10 @@ OPLmusicBlock::OPLmusicBlock (int handle, int pos, int len, int rate, int maxSam
 
 	if (!gotInstrs)
 	{
-		if (OPLloadBank (W_CacheLumpName ("GENMIDI", PU_CACHE)))
+		void *genmidi = W_MapLumpName ("GENMIDI");
+		int failed = OPLloadBank (genmidi);
+		W_UnMapLump (genmidi);
+		if (failed)
 		{
 			return;
 		}
@@ -34,9 +36,8 @@ OPLmusicBlock::OPLmusicBlock (int handle, int pos, int len, int rate, int maxSam
 	SampleBuff = new int[maxSamples];
 
 	scoredata = new BYTE[len];
-	if (lseek (handle, pos, SEEK_SET) < 0 ||
-		read (handle, scoredata, len) != len ||
-		OPLinit (TwoChips + 1, rate))
+	memcpy (scoredata, mem, len);
+	if (OPLinit (TwoChips + 1, rate))
 	{
 		delete[] scoredata;
 		scoredata = NULL;

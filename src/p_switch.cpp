@@ -42,7 +42,6 @@
 #include "s_sound.h"
 #include "doomstat.h"
 #include "r_state.h"
-#include "z_zone.h"
 #include "w_wad.h"
 #include "tarray.h"
 #include "cmdlib.h"
@@ -130,8 +129,8 @@ void P_InitSwitchList ()
 
 	if (lump != -1)
 	{
-		byte *alphSwitchList = (byte *)W_CacheLumpNum (lump, PU_STATIC);
-		byte *list_p;
+		const byte *alphSwitchList = (byte *)W_MapLumpNum (lump);
+		const byte *list_p;
 		FSwitchDef *def1, *def2;
 
 		for (list_p = alphSwitchList; list_p[18] || list_p[19]; list_p += 20)
@@ -153,7 +152,7 @@ void P_InitSwitchList ()
 			}
 		}
 
-		Z_Free (alphSwitchList);
+		W_UnMapLump (alphSwitchList);
 	}
 
 	SwitchList.ShrinkToFit ();

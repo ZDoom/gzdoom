@@ -374,7 +374,8 @@ void AActor::LinkToWorld ()
 		int blockx = (x - bmaporgx)>>MAPBLOCKSHIFT;
 		int blocky = (y - bmaporgy)>>MAPBLOCKSHIFT;
 
-		if (blockx >= 0 && blockx < bmapwidth && blocky >= 0 && blocky < bmapheight)
+		if ((unsigned int)blockx < (unsigned int)bmapwidth &&
+			(unsigned int)blocky < (unsigned int)bmapheight)
         {
 			// killough 8/11/98: simpler scheme using pointer-to-pointer prev
 			// pointers, allows head nodes to be treated like everything else

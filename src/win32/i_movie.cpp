@@ -55,7 +55,6 @@ int I_PlayMovie (const char *movie)
 #include <dshow.h>
 
 #include "i_movie.h"
-#include "z_zone.h"
 #include "i_sound.h"
 #include "v_video.h"
 #include "c_console.h"
@@ -198,7 +197,7 @@ int I_PlayMovie (const char *name)
 {
 	int returnval = MOVIE_Failed;
 	size_t namelen = strlen (name) + 1;
-	wchar_t *uniname = (wchar_t *)Z_Malloc (namelen*sizeof(wchar_t), PU_STATIC, NULL);
+	wchar_t *uniname = new wchar_t[namelen];
 	bool returnSound = false;
 	bool runningFull = false;
 	bool hotkey = false;
@@ -368,7 +367,7 @@ bomb2:
 	}
 
 bomb1:
-	Z_Free (uniname);
+	delete[] uniname;
 
 	return returnval;
 }

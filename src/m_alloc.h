@@ -33,6 +33,8 @@
 
 #ifndef __M_ALLOC_H__
 #define __M_ALLOC_H__
+
+#if !defined(_DEBUG) || !defined(_MSC_VER)
 #include <stdlib.h>
 
 // These are the same as the same stdlib functions,
@@ -42,5 +44,17 @@
 void *Malloc (size_t size);
 void *Calloc (size_t num, size_t size);
 void *Realloc (void *memblock, size_t size);
+
+#else
+
+// Make the debug heap record more info
+#define CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
+#define Malloc malloc
+#define Calloc calloc
+#define Realloc realloc
+#endif
 
 #endif //__M_ALLOC_H__

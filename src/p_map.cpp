@@ -47,7 +47,6 @@
 #include "doomstat.h"
 #include "r_state.h"
 
-#include "z_zone.h"
 #include "gi.h"
 
 #include "a_sharedglobal.h"
@@ -531,7 +530,7 @@ BOOL PIT_CheckThing (AActor *thing)
 		return true;	
 	}
 	BlockingMobj = thing;
-	if (tmthing->flags2 & MF2_PASSMOBJ && !(compatflags & COMPATF_NO_PASSMOBJ))
+	if (!(compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (tmthing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible
@@ -1168,7 +1167,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				goto pushline;
 			}
 		}
-		if (!(tmthing->flags2 & MF2_PASSMOBJ) || (compatflags & COMPATF_NO_PASSMOBJ))
+		if (compatflags & COMPATF_NO_PASSMOBJ)
 		{
 			thing->z = oldz;
 			return false;
@@ -3216,15 +3215,12 @@ void P_DoCrunch (AActor *thing)
 	if ((crushchange > 0) && !(level.time & 3))
 	{
 		P_DamageMobj (thing, NULL, NULL, crushchange, MOD_CRUSH);
-		if (!(thing->flags & MF_NOBLOOD))
-		{
-			P_TraceBleed (crushchange, thing);
-		}
 
 		// spray blood in a random direction
 		if ((!(thing->flags&MF_NOBLOOD)) &&
 			(!(thing->flags2&MF2_INVULNERABLE)))
 		{
+			P_TraceBleed (crushchange, thing);
 			if (cl_bloodtype <= 1)
 			{
 				AActor *mo;

@@ -6,7 +6,7 @@
 class OPLmusicBlock : protected musicBlock
 {
 public:
-	OPLmusicBlock (int handle, int pos, int len, int rate, int maxSamples);
+	OPLmusicBlock (const void *mem, int len, int rate, int maxSamples);
 	~OPLmusicBlock ();
 	bool IsValid () const;
 

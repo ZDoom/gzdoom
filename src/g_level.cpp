@@ -46,7 +46,6 @@
 #include "w_wad.h"
 #include "am_map.h"
 #include "c_dispatch.h"
-#include "z_zone.h"
 #include "i_system.h"
 #include "p_setup.h"
 #include "p_local.h"
@@ -1211,7 +1210,6 @@ void G_DoLoadLevel (int position, bool autosave)
 	displayplayer = consoleplayer;		// view the guy you are playing
 	StatusBar->AttachToPlayer (&players[consoleplayer]);
 	gameaction = ga_nothing; 
-	Z_CheckHeap ();
 
 	// clear cmd building stuff
 	ResetButtonStates ();
@@ -2134,6 +2132,7 @@ static void InitPlayerClasses ()
 				SinglePlayerClass[i] = (pr_classchoice() >> 6) % 3;
 			}
 			players[i].cls = NULL;
+			players[i].CurrentPlayerClass = SinglePlayerClass[i];
 		}
 	}
 }

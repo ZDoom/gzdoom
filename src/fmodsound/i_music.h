@@ -54,7 +54,7 @@ void I_PauseSong (void *handle);
 void I_ResumeSong (void *handle);
 
 // Registers a song handle to song data.
-void *I_RegisterSong (int handle, int pos, int len);
+void *I_RegisterSong (int lumpnum);
 void *I_RegisterCDSong (int track, int cdid = 0);
 
 // Called by anything that wishes to start music.

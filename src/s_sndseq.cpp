@@ -20,7 +20,6 @@
 #include "s_sound.h"
 #include "s_sndseq.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "i_system.h"
 #include "cmdlib.h"
 #include "p_local.h"

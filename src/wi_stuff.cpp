@@ -25,7 +25,6 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#include "z_zone.h"
 #include "m_random.h"
 #include "m_swap.h"
 #include "i_system.h"
@@ -365,8 +364,9 @@ void WI_slamBackground ()
 		int lump = W_CheckNumForName ("FLOOR16", ns_flats);
 		if (lump >= 0)
 		{
-			FB->FlatFill (0, 0, SCREENWIDTH, SCREENHEIGHT,
-				(byte *)W_CacheLumpNum (lump, PU_CACHE));
+			const byte *flat = (byte *)W_MapLumpNum (lump);
+			FB->FlatFill (0, 0, SCREENWIDTH, SCREENHEIGHT, flat);
+			W_UnMapLump (flat);
 		}
 		else
 		{
@@ -592,18 +592,19 @@ void WI_initAnimatedBack ()
 	else if (state == ShowNextLoc)
 	{
 		char name[9];
-		patch_t *bg;
+		const patch_t *bg;
 		int lump;
 
 		sprintf (name, "MAPE%d", epsd - 9);
 		lump = W_CheckNumForName (name);
 		if (lump >= 0)
 		{
-			bg = (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
+			bg = (patch_t *)W_MapLumpNum (lump);
 			background = I_NewStaticCanvas (SHORT(bg->width), SHORT(bg->height));
 			background->Lock ();
 			background->DrawPatch (bg, 0, 0);
 			background->Unlock ();
+			W_UnMapLump (bg);
 		}
 	}
 }
@@ -611,7 +612,7 @@ void WI_initAnimatedBack ()
 void WI_DrawDoomBack ()
 {
 	char name[9];
-	patch_t *bg;
+	const patch_t *bg;
 
 	if ((gamemode == commercial) ||
 		(gamemode == retail && epsd >= 3))
@@ -620,7 +621,7 @@ void WI_DrawDoomBack ()
 		sprintf (name, "WIMAP%d", epsd);
 
 	// background
-	bg = (patch_t *)W_CacheLumpName (name, PU_CACHE);
+	bg = (patch_t *)W_MapLumpName (name);
 	if (background != NULL &&
 		(SHORT(bg->width) != background->GetWidth() ||
 		 SHORT(bg->height) != background->GetHeight()))
@@ -644,6 +645,7 @@ void WI_DrawDoomBack ()
 		anims[1][7].data = 8;
 	}
 	background->Unlock ();
+	W_UnMapLump (bg);
 }
 
 void WI_updateAnimatedBack (void)
@@ -1731,11 +1733,12 @@ void WI_loadData ()
 		}
 		if (gameinfo.gametype == GAME_Hexen)
 		{
-			byte *bg = (byte *)W_CacheLumpName ("INTERPIC", PU_CACHE);
+			const byte *bg = (byte *)W_MapLumpName ("INTERPIC");
 			background = I_NewStaticCanvas (320, 200);
 			background->Lock ();
 			background->DrawPageBlock (bg);
 			background->Unlock ();
+			W_UnMapLump (bg);
 			return;
 		}
 	}
@@ -1754,7 +1757,7 @@ void WI_loadData ()
 				{
 					// animations
 					sprintf (name, "WIA%d%.2d%.2d", epsd, j, i);  
-					a->p[i] = (patch_t *)W_CacheLumpName (name, PU_STATIC);
+					a->p[i] = (patch_t *)W_MapLumpName (name);
 				}
 				else
 				{
@@ -1777,7 +1780,7 @@ void WI_loadData ()
 
 			if (j >= 0)
 			{
-				lnames[i] = (patch_t *)W_CacheLumpNum (j, PU_STATIC);
+				lnames[i] = (patch_t *)W_MapLumpNum (j);
 			}
 			else
 			{
@@ -1796,52 +1799,52 @@ void WI_loadData ()
 	{
 		if (gamemode != commercial)
 		{
-			yah[0] = (patch_t *)W_CacheLumpName ("WIURH0", PU_STATIC);	// you are here
-			yah[1] = (patch_t *)W_CacheLumpName ("WIURH1", PU_STATIC);	// you are here (alt.)
-			splat = (patch_t *)W_CacheLumpName ("WISPLAT", PU_STATIC);	// splat
+			yah[0] = (patch_t *)W_MapLumpName ("WIURH0");	// you are here
+			yah[1] = (patch_t *)W_MapLumpName ("WIURH1");	// you are here (alt.)
+			splat = (patch_t *)W_MapLumpName ("WISPLAT");	// splat
 		}
-		wiminus = (patch_t *)W_CacheLumpName ("WIMINUS", PU_STATIC);	// minus sign
-		percent = (patch_t *)W_CacheLumpName ("WIPCNT", PU_STATIC);		// percent sign
-		finished = (patch_t *)W_CacheLumpName ("WIF", PU_STATIC);		// "finished"
-		entering = (patch_t *)W_CacheLumpName ("WIENTER", PU_STATIC);	// "entering"
-		kills = (patch_t *)W_CacheLumpName ("WIOSTK", PU_STATIC);		// "kills"
-		secret = (patch_t *)W_CacheLumpName ("WIOSTS", PU_STATIC);		// "scrt"
-		sp_secret = (patch_t *)W_CacheLumpName ("WISCRT2", PU_STATIC);	// "secret"
-		items = (patch_t *)W_CacheLumpName ("WIOSTI", PU_STATIC);		// "items"
-		frags = (patch_t *)W_CacheLumpName ("WIFRGS", PU_STATIC);		// "frgs"
-		colon = (patch_t *)W_CacheLumpName ("WICOLON", PU_STATIC);		// ":"
-		timepic = (patch_t *)W_CacheLumpName ("WITIME", PU_STATIC);		// "time"
-		sucks = (patch_t *)W_CacheLumpName ("WISUCKS", PU_STATIC);		// "sucks"
-		par = (patch_t *)W_CacheLumpName ("WIPAR", PU_STATIC);			// "par"
-		killers = (patch_t *)W_CacheLumpName ("WIKILRS", PU_STATIC);	// "killers" (vertical)
-		victims = (patch_t *)W_CacheLumpName ("WIVCTMS", PU_STATIC);	// "victims" (horiz)
-		total = (patch_t *)W_CacheLumpName ("WIMSTT", PU_STATIC);		// "total"
-		star = (patch_t *)W_CacheLumpName ("STFST01", PU_STATIC);		// your face
-		bstar = (patch_t *)W_CacheLumpName("STFDEAD0", PU_STATIC);		// dead face
-		p = (patch_t *)W_CacheLumpName ("STPBANY", PU_STATIC);
+		wiminus = (patch_t *)W_MapLumpName ("WIMINUS");		// minus sign
+		percent = (patch_t *)W_MapLumpName ("WIPCNT");		// percent sign
+		finished = (patch_t *)W_MapLumpName ("WIF");		// "finished"
+		entering = (patch_t *)W_MapLumpName ("WIENTER");	// "entering"
+		kills = (patch_t *)W_MapLumpName ("WIOSTK");		// "kills"
+		secret = (patch_t *)W_MapLumpName ("WIOSTS");		// "scrt"
+		sp_secret = (patch_t *)W_MapLumpName ("WISCRT2");	// "secret"
+		items = (patch_t *)W_MapLumpName ("WIOSTI");		// "items"
+		frags = (patch_t *)W_MapLumpName ("WIFRGS");		// "frgs"
+		colon = (patch_t *)W_MapLumpName ("WICOLON");		// ":"
+		timepic = (patch_t *)W_MapLumpName ("WITIME");		// "time"
+		sucks = (patch_t *)W_MapLumpName ("WISUCKS");		// "sucks"
+		par = (patch_t *)W_MapLumpName ("WIPAR");			// "par"
+		killers = (patch_t *)W_MapLumpName ("WIKILRS");		// "killers" (vertical)
+		victims = (patch_t *)W_MapLumpName ("WIVCTMS");		// "victims" (horiz)
+		total = (patch_t *)W_MapLumpName ("WIMSTT");		// "total"
+		star = (patch_t *)W_MapLumpName ("STFST01");		// your face
+		bstar = (patch_t *)W_MapLumpName("STFDEAD0");		// dead face
+		p = (patch_t *)W_MapLumpName ("STPBANY");
 
 		for (i = 0; i < 10; i++)
 		{ // numbers 0-9
 			sprintf (name, "WINUM%d", i);	 
-			num[i] = (patch_t *)W_CacheLumpName (name, PU_STATIC);
+			num[i] = (patch_t *)W_MapLumpName (name);
 		}
 	}
 	else
 	{
 		yah[0] =
-		yah[1] = (patch_t *)W_CacheLumpName ("IN_YAH", PU_STATIC);
-		splat = (patch_t *)W_CacheLumpName ("IN_X", PU_STATIC);
-		wiminus = (patch_t *)W_CacheLumpName ("FONTB13", PU_STATIC);
-		percent = (patch_t *)W_CacheLumpName ("FONTB05", PU_STATIC);
-		colon = (patch_t *)W_CacheLumpName ("FONTB26", PU_STATIC);
-		slash = (patch_t *)W_CacheLumpName ("FONTB15", PU_STATIC);
-		star = (patch_t *)W_CacheLumpName ("FACEA0", PU_STATIC);
-		bstar = (patch_t *)W_CacheLumpName ("FACEB0", PU_STATIC);
+		yah[1] = (patch_t *)W_MapLumpName ("IN_YAH");
+		splat = (patch_t *)W_MapLumpName ("IN_X");
+		wiminus = (patch_t *)W_MapLumpName ("FONTB13");
+		percent = (patch_t *)W_MapLumpName ("FONTB05");
+		colon = (patch_t *)W_MapLumpName ("FONTB26");
+		slash = (patch_t *)W_MapLumpName ("FONTB15");
+		star = (patch_t *)W_MapLumpName ("FACEA0");
+		bstar = (patch_t *)W_MapLumpName ("FACEB0");
 
 		for (i = 0; i < 10; i++)
 		{
 			sprintf (name, "FONTB%d", 16 + i);
-			num[i] = (patch_t *)W_CacheLumpName (name, PU_STATIC);
+			num[i] = (patch_t *)W_MapLumpName (name);
 		}
 	}
 }
@@ -1855,27 +1858,27 @@ void WI_unloadData ()
 		return;
 	}
 
-	Z_ChangeTag (wiminus, PU_CACHE);
+	W_UnMapLump (wiminus);
 
 	for (i = 0; i < 10; i++)
 	{
-		Z_ChangeTag (num[i], PU_CACHE);
+		W_UnMapLump (num[i]);
 	}
 
 	for (i = 0; i < 2; i++)
 	{
 		if (lnames[i])
 		{
-			Z_ChangeTag (lnames[i], PU_CACHE);
+			W_UnMapLump (lnames[i]);
 			lnames[i] = NULL;
 		}
 	}
 	
 	if (gamemode != commercial)
 	{
-		Z_ChangeTag (yah[0], PU_CACHE);
-		Z_ChangeTag (yah[1], PU_CACHE);
-		Z_ChangeTag (splat, PU_CACHE);
+		W_UnMapLump (yah[0]);
+		W_UnMapLump (yah[1]);
+		W_UnMapLump (splat);
 		
 		if (gameinfo.gametype == GAME_Doom && epsd < 3)
 		{
@@ -1884,31 +1887,31 @@ void WI_unloadData ()
 				if (epsd != 1 || j != 8)
 				{
 					for (i = 0; i < anims[epsd][j].nanims; i++)
-						Z_ChangeTag (anims[epsd][j].p[i], PU_CACHE);
+						W_UnMapLump (anims[epsd][j].p[i]);
 				}
 			}
 		}
 	}
 
-	if (percent)	{ Z_ChangeTag (percent, PU_CACHE);		percent = NULL; }
-	if (colon)		{ Z_ChangeTag (colon, PU_CACHE);		colon = NULL; }
-	if (finished)	{ Z_ChangeTag (finished, PU_CACHE);		finished = NULL; }
-	if (entering)	{ Z_ChangeTag (entering, PU_CACHE);		entering = NULL; }
-	if (kills)		{ Z_ChangeTag (kills, PU_CACHE);		kills = NULL; }
-	if (secret)		{ Z_ChangeTag (secret, PU_CACHE);		secret = NULL; }
-	if (sp_secret)	{ Z_ChangeTag (sp_secret, PU_CACHE);	sp_secret = NULL; }
-	if (items)		{ Z_ChangeTag (items, PU_CACHE);		items = NULL; }
-	if (frags)		{ Z_ChangeTag (frags, PU_CACHE);		frags = NULL; }
-	if (timepic)	{ Z_ChangeTag (timepic, PU_CACHE);		timepic = NULL; }
-	if (sucks)		{ Z_ChangeTag (sucks, PU_CACHE);		sucks = NULL; }
-	if (par)		{ Z_ChangeTag (par, PU_CACHE);			par = NULL; }
-	if (victims)	{ Z_ChangeTag (victims, PU_CACHE);		victims = NULL; }
-	if (killers)	{ Z_ChangeTag (killers, PU_CACHE);		killers = NULL; }
-	if (total)		{ Z_ChangeTag (total, PU_CACHE);		total = NULL; }
-	if (p)			{ Z_ChangeTag (p, PU_CACHE);			p = NULL; }
-	if (slash)		{ Z_ChangeTag (slash, PU_CACHE);		slash = NULL; }
-	if (star)		{ Z_ChangeTag (star, PU_CACHE);			star = NULL; }
-	if (bstar)		{ Z_ChangeTag (bstar, PU_CACHE);		bstar = NULL; }
+	if (percent)	{ W_UnMapLump (percent);	percent = NULL; }
+	if (colon)		{ W_UnMapLump (colon);		colon = NULL; }
+	if (finished)	{ W_UnMapLump (finished);	finished = NULL; }
+	if (entering)	{ W_UnMapLump (entering);	entering = NULL; }
+	if (kills)		{ W_UnMapLump (kills);		kills = NULL; }
+	if (secret)		{ W_UnMapLump (secret);		secret = NULL; }
+	if (sp_secret)	{ W_UnMapLump (sp_secret);	sp_secret = NULL; }
+	if (items)		{ W_UnMapLump (items);		items = NULL; }
+	if (frags)		{ W_UnMapLump (frags);		frags = NULL; }
+	if (timepic)	{ W_UnMapLump (timepic);	timepic = NULL; }
+	if (sucks)		{ W_UnMapLump (sucks);		sucks = NULL; }
+	if (par)		{ W_UnMapLump (par);		par = NULL; }
+	if (victims)	{ W_UnMapLump (victims);	victims = NULL; }
+	if (killers)	{ W_UnMapLump (killers);	killers = NULL; }
+	if (total)		{ W_UnMapLump (total);		total = NULL; }
+	if (p)			{ W_UnMapLump (p);			p = NULL; }
+	if (slash)		{ W_UnMapLump (slash);		slash = NULL; }
+	if (star)		{ W_UnMapLump (star);		star = NULL; }
+	if (bstar)		{ W_UnMapLump (bstar);		bstar = NULL; }
 }
 
 void WI_Drawer (void)

@@ -262,9 +262,15 @@ bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool
 	}
 	if (count == 0)
 	{
-		return false;
+		// Try to find a matching map spot (fixes Hexen MAP10)
+		TActorIterator<AMapSpot> it2 (tid);
+		searcher = it2.Next ();
+		if (searcher == NULL)
+		{
+			return false;
+		}
 	}
-	if (count == 1)
+	else if (count == 1)
 	{
 		searcher = iterator.Next ();
 	}

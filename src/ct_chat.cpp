@@ -13,7 +13,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "doomdef.h"
-#include "z_zone.h"
 #include "m_swap.h"
 #include "hu_stuff.h"
 #include "w_wad.h"

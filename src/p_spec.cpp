@@ -41,7 +41,6 @@
 #include "gstrings.h"
 
 #include "i_system.h"
-#include "z_zone.h"
 #include "m_argv.h"
 #include "m_random.h"
 #include "m_bbox.h"
@@ -348,8 +347,8 @@ void P_InitPicAnims (void)
 {
 	if (W_CheckNumForName ("ANIMATED") != -1)
 	{
-		byte *animdefs = (byte *)W_CacheLumpName ("ANIMATED", PU_STATIC);
-		byte *anim_p;
+		const byte *animdefs = (byte *)W_MapLumpName ("ANIMATED");
+		const byte *anim_p;
 
 		// Init animation
 
@@ -414,7 +413,7 @@ void P_InitPicAnims (void)
 
 			lastanim++;
 		}
-		Z_Free (animdefs);
+		W_UnMapLump (animdefs);
 	}
 	// [RH] Load any ANIMDEFS lumps
 	P_InitAnimDefs ();

@@ -533,10 +533,6 @@ SOURCE=.\w_wad.cpp
 
 SOURCE=.\wi_stuff.cpp
 # End Source File
-# Begin Source File
-
-SOURCE=.\z_zone.cpp
-# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -944,10 +940,6 @@ SOURCE=.\weightedlist.h
 # Begin Source File
 
 SOURCE=.\wi_stuff.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\z_zone.h
 # End Source File
 # End Group
 # Begin Group "Assembly Files"

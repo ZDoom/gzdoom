@@ -126,12 +126,12 @@ public:
 protected:
 	void BuildTranslations2 ();
 	void FixupPalette (BYTE *identity, double *luminosity, const BYTE *palette, bool rescale);
-	void LoadFON1 (BYTE *data);
-	void LoadFON2 (BYTE *data);
+	void LoadFON1 (const BYTE *data);
+	void LoadFON2 (const BYTE *data);
 };
 
-void RawDrawPatch (patch_t *patch, byte *output, byte *tlate);
-void RecordPatchColors (patch_t *patch, byte *colorsused);
+void RawDrawPatch (const patch_t *patch, byte *output, byte *tlate);
+void RecordPatchColors (const patch_t *patch, byte *colorsused);
 
 extern FFont *SmallFont, *BigFont, *ConFont;
 

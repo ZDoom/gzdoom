@@ -41,7 +41,7 @@ extern "C" DWORD		*dc_srcblend;
 extern "C" DWORD		*dc_destblend;
 
 // first pixel in a column
-extern "C" byte*		dc_source;
+extern "C" const byte*	dc_source;
 
 extern "C" byte*		dc_dest;
 extern "C" int			dc_count;
@@ -49,7 +49,7 @@ extern "C" int			dc_count;
 extern "C" DWORD		vplce[4];
 extern "C" DWORD		vince[4];
 extern "C" BYTE*		palookupoffse[4];
-extern "C" BYTE*		bufplce[4];
+extern "C" const BYTE*	bufplce[4];
 
 // [RH] Temporary buffer for column drawing
 extern "C" byte			dc_temp[MAXHEIGHT*4];
@@ -245,7 +245,7 @@ ESPSResult R_SetPatchStyle (int style, fixed_t alpha, int translation, DWORD col
 // style was STYLE_Shade
 void R_FinishSetPatchStyle ();
 
-extern byte *R_GetColumn (int tex, int col);
-void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, byte *(*getcol)(int tex, int col)=R_GetColumn);
+extern const byte *R_GetColumn (int tex, int col);
+void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal, const byte *(*getcol)(int tex, int col)=R_GetColumn);
 
 #endif

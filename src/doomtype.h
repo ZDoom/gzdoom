@@ -24,8 +24,6 @@
 #ifndef __DOOMTYPE__
 #define __DOOMTYPE__
 
-#include <limits.h>
-
 #ifdef _MSC_VER
 // VC++ does not define PATH_MAX, but the Windows headers do define MAX_PATH.
 // However, we want to avoid including the Windows headers in most of the
@@ -33,6 +31,8 @@
 // currently is:
 #define PATH_MAX 260
 #endif
+
+#include <limits.h>
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__

@@ -28,7 +28,7 @@
 #include "r_state.h"
 
 // Retrieve column data for span blitting.
-byte *R_GetColumn (int tex, int col);
+const byte *R_GetColumn (int tex, int col);
 
 
 // I/O, setting up the stuff.
@@ -57,10 +57,10 @@ enum ETileType
 };
 
 extern FTileSize *TileSizes;
-extern patch_t **TileCache;
+extern const patch_t **TileCache;
 
-int R_CacheTileNum (int picnum, int purgelevel);
-int R_CacheTileName (const char *name, ETileType type, int purgelevel);
+int R_CacheTileNum (int picnum);
+int R_CacheTileName (const char *name, ETileType type);
 int R_CheckTileNumForName (const char *name, ETileType type);
 
 // Called by P_Ticker for switches and animations,

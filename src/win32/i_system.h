@@ -58,12 +58,6 @@ extern "C" {
 // Called by DoomMain.
 void I_Init (void);
 
-// Called by startup code to create a block of memory for
-// zone management. *size should be the preferred intial size,
-// which may get shrunk depending on memory available.
-byte *I_ZoneBase (size_t *size);
-
-
 // Called by D_DoomLoop,
 // returns current time in tics.
 extern int (*I_GetTime) (void);
@@ -108,10 +102,6 @@ ticcmd_t *I_BaseTiccmd (void);
 // Clean exit, displays sell blurb.
 void STACK_ARGS I_Quit (void);
 
-
-// Allocates from low memory under dos,
-// just mallocs under unix
-byte* I_AllocLow (int length);
 
 void I_Tactile (int on, int off, int total);
 

@@ -40,7 +40,6 @@
 #include "p_trace.h"
 #include "decallib.h"
 #include "statnums.h"
-#include "z_zone.h"
 #include "c_dispatch.h"
 
 // Decals overload snext and sprev to keep a list of decals attached to a wall.
@@ -650,7 +649,7 @@ AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_
 
 		if (TileSizes[actor->picnum].Width == 0xffff)
 		{
-			R_CacheTileNum (actor->picnum, PU_CACHE);
+			R_CacheTileNum (actor->picnum);
 		}
 
 		xscale = (actor->xscale + 1) << (FRACBITS - 6);

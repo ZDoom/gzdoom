@@ -21,6 +21,8 @@
 //
 //-----------------------------------------------------------------------------
 
+//#include <crtdbg.h>
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0500
 #include <windows.h>
@@ -49,7 +51,6 @@
 #include "d_main.h"
 #include "i_system.h"
 #include "c_console.h"
-#include "z_zone.h"
 #include "version.h"
 #include "i_video.h"
 #include "i_sound.h"
@@ -121,7 +122,7 @@ static void STACK_ARGS call_terms (void)
 #ifdef _MSC_VER
 static int STACK_ARGS NewFailure (size_t size)
 {
-	I_FatalError ("Failed to allocate %d bytes from system heap\n(Try using a smaller -heapsize)");
+	I_FatalError ("Failed to allocate %d bytes from process heap");
 	return 0;
 }
 #endif
@@ -435,6 +436,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	MainThread = INVALID_HANDLE_VALUE;
 	DuplicateHandle (GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &MainThread,
 		0, FALSE, DUPLICATE_SAME_ACCESS);
+	//_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #ifndef __GNUC__
 	if (MainThread != INVALID_HANDLE_VALUE)
 	{

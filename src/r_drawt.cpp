@@ -947,7 +947,7 @@ void R_DrawColumnHorizP_C (void)
 	frac = dc_texturefrac;
 
 	{
-		byte *source = dc_source;
+		const byte *source = dc_source;
 
 		if (count & 1) {
 			*dest = source[frac>>FRACBITS];

@@ -33,7 +33,6 @@
 */
 
 #include "dthinker.h"
-#include "z_zone.h"
 #include "stats.h"
 #include "p_local.h"
 #include "statnums.h"

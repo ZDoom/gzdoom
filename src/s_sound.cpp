@@ -37,7 +37,6 @@
 #include "s_sndseq.h"
 #include "s_playlist.h"
 #include "c_dispatch.h"
-#include "z_zone.h"
 #include "m_random.h"
 #include "w_wad.h"
 #include "doomdef.h"
@@ -1312,29 +1311,18 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	else
 	{
 		int lumpnum = -1;
-		int handle;
-		int len;
-		int pos;
 
-		if (-1 == (handle = open (musicname, O_BINARY|O_RDONLY)))
+		if (!FileExists (musicname))
 		{
 			if ((lumpnum = W_CheckNumForName (musicname)) == -1)
 			{
 				Printf ("Music \"%s\" not found\n", musicname);
 				return false;
 			}
-			else
-			{
-				handle = W_FileHandleFromWad (lumpinfo[lumpnum].wadnum);
-				pos = lumpinfo[lumpnum].position;
-				len = lumpinfo[lumpnum].size;
-			}
 		}
 		else
 		{
-			len = lseek (handle, 0, SEEK_END);
-			lseek (handle, 0, SEEK_SET);
-			pos = 0;
+			lumpnum = W_FakeLump (musicname);
 		}
 
 		// shutdown old music
@@ -1345,12 +1333,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		{
 			delete[] mus_playing.name;
 		}
-		mus_playing.handle = I_RegisterSong (handle, pos, len);
-
-		if (lumpnum == -1)
-		{
-			close (handle);
-		}
+		mus_playing.handle = I_RegisterSong (lumpnum);
 	}
 
 	mus_playing.loop = looping;

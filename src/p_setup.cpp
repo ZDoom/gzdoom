@@ -31,7 +31,6 @@
 #include "templates.h"
 #include "m_alloc.h"
 #include "m_argv.h"
-#include "z_zone.h"
 #include "m_swap.h"
 #include "m_bbox.h"
 #include "g_game.h"
@@ -153,6 +152,7 @@ AActor**		blocklinks;		// for thing chains
 //	used as a PVS lookup as well.
 //
 byte*			rejectmatrix;
+static bool		rejectmapped;
 
 static bool		ForceNodeBuild;
 
@@ -206,18 +206,18 @@ static void SetTextureNoErr (short *texture, DWORD *color, char *name)
 //
 void P_LoadVertexes (int lump)
 {
-	byte *data;
+	const byte *data;
 	int i;
 
 	// Determine number of vertices:
 	//	total lump length / vertex record length.
 	numvertexes = W_LumpLength (lump) / sizeof(mapvertex_t);
 
-	// Allocate zone memory for buffer.
-	vertexes = (vertex_t *)Z_Malloc (numvertexes*sizeof(vertex_t), PU_LEVEL, 0);		
+	// Allocate memory for buffer.
+	vertexes = new vertex_t[numvertexes];		
 
 	// Load data into cache.
-	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
+	data = (byte *)W_MapLumpNum (lump);
 		
 	// Copy and convert vertex coordinates,
 	// internal representation as fixed.
@@ -228,7 +228,7 @@ void P_LoadVertexes (int lump)
 	}
 
 	// Free buffer memory.
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 
@@ -241,8 +241,8 @@ void P_LoadVertexes (int lump)
 void P_LoadSegs (int lump)
 {
 	int  i;
-	byte *data;
-	byte *vertchanged = (byte *)Z_Malloc (numvertexes,PU_LEVEL,0);	// phares 10/4/98
+	const byte *data;
+	byte *vertchanged = new byte[numvertexes];	// phares 10/4/98
 	DWORD segangle;
 	line_t* line;		// phares 10/4/98
 	int ptp_angle;		// phares 10/4/98
@@ -258,15 +258,15 @@ void P_LoadSegs (int lump)
 	if (numsegs == 0)
 	{
 		Printf ("This map has no segs.\n");
-		Z_Free (subsectors);
-		Z_Free (nodes);
+		delete[] subsectors;
+		delete[] nodes;
 		ForceNodeBuild = true;
 		return;
 	}
 
-	segs = (seg_t *)Z_Malloc (numsegs*sizeof(seg_t), PU_LEVEL, 0);
+	segs = new seg_t[numsegs];
 	memset (segs, 0, numsegs*sizeof(seg_t));
-	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
+	data = (byte *)W_MapLumpNum (lump);
 
 	// phares: 10/4/98: Vertchanged is an array that represents the vertices.
 	// Mark those used by linedefs. A marked vertex is one that is not a
@@ -333,11 +333,11 @@ void P_LoadSegs (int lump)
 		{
 			Printf ("Seg %d references a nonexistant vertex.\n"
 					"The BSP will be rebuilt.\n", i);
-			Z_Free (vertchanged);
-			Z_Free (data);
-			Z_Free (segs);
-			Z_Free (subsectors);
-			Z_Free (nodes);
+			delete[] vertchanged;
+			W_UnMapLump (data);
+			delete[] segs;
+			delete[] subsectors;
+			delete[] nodes;
 			ForceNodeBuild = true;
 			return;
 		}
@@ -383,8 +383,8 @@ void P_LoadSegs (int lump)
 		}
 	}
 
-	Z_Free (data);
-	Z_Free(vertchanged); // phares 10/4/98
+	W_UnMapLump (data);
+	delete[] vertchanged; // phares 10/4/98
 }
 
 
@@ -394,7 +394,7 @@ void P_LoadSegs (int lump)
 void P_LoadSubsectors (int lump)
 {
 	int maxseg;
-	byte *data;
+	const byte *data;
 	int i;
 
 	numsubsectors = W_LumpLength (lump) / sizeof(mapsubsector_t);
@@ -403,13 +403,13 @@ void P_LoadSubsectors (int lump)
 	if (numsubsectors == 0 || maxseg == 0)
 	{
 		Printf ("This map has an incomplete BSP tree.\n");
-		Z_Free (nodes);
+		delete[] nodes;
 		ForceNodeBuild = true;
 		return;
 	}
 
-	subsectors = (subsector_t *)Z_Malloc (numsubsectors*sizeof(subsector_t),PU_LEVEL,0);		
-	data = (byte *)W_CacheLumpNum (lump,PU_STATIC);
+	subsectors = new subsector_t[numsubsectors];		
+	data = (byte *)W_MapLumpNum (lump);
 		
 	memset (subsectors, 0, numsubsectors*sizeof(subsector_t));
 	
@@ -424,8 +424,8 @@ void P_LoadSubsectors (int lump)
 				"The BSP will be rebuilt.\n", i, subsectors[i].firstline,
 				subsectors[i].firstline + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
-			Z_Free (nodes);
-			Z_Free (subsectors);
+			delete[] nodes;
+			delete[] subsectors;
 			break;
 		}
 		else if (subsectors[i].firstline + subsectors[i].numlines > maxseg)
@@ -434,13 +434,13 @@ void P_LoadSubsectors (int lump)
 				"The BSP will be rebuilt.\n", i, maxseg,
 				subsectors[i].firstline + subsectors[i].numlines - 1);
 			ForceNodeBuild = true;
-			Z_Free (nodes);
-			Z_Free (subsectors);
+			delete[] nodes;
+			delete[] subsectors;
 			break;
 		}
 	}
 
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 
@@ -450,7 +450,7 @@ void P_LoadSubsectors (int lump)
 //
 void P_LoadSectors (int lump)
 {
-	byte*				data;
+	const byte*			data;
 	int 				i;
 	mapsector_t*		ms;
 	sector_t*			ss;
@@ -458,9 +458,9 @@ void P_LoadSectors (int lump)
 	FDynamicColormap	*fogMap, *normMap;
 
 	numsectors = W_LumpLength (lump) / sizeof(mapsector_t);
-	sectors = (sector_t *)Z_Malloc (numsectors*sizeof(sector_t), PU_LEVEL, 0);		
+	sectors = new sector_t[numsectors];		
 	memset (sectors, 0, numsectors*sizeof(sector_t));
-	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
+	data = (byte *)W_MapLumpNum (lump);
 
 	if (level.flags & LEVEL_SNDSEQTOTALCTRL)
 		defSeqType = 0;
@@ -526,7 +526,7 @@ void P_LoadSectors (int lump)
 		ss->movefactor = ORIG_FRICTION_FACTOR;
 	}
 		
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 
@@ -535,7 +535,7 @@ void P_LoadSectors (int lump)
 //
 void P_LoadNodes (int lump)
 {
-	byte*		data;
+	const byte*	data;
 	int 		i;
 	int 		j;
 	int 		k;
@@ -554,8 +554,8 @@ void P_LoadNodes (int lump)
 	}
 
 	
-	nodes = (node_t *)Z_Malloc (numnodes*sizeof(node_t), PU_LEVEL, 0);		
-	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
+	nodes = new node_t[numnodes];		
+	data = (byte *)W_MapLumpNum (lump);
 	used = (WORD *)alloca (sizeof(WORD)*numnodes);
 	memset (used, 0, sizeof(WORD)*numnodes);
 
@@ -579,8 +579,8 @@ void P_LoadNodes (int lump)
 					Printf ("BSP node %d references invalid subsector %d.\n"
 						"The BSP will be rebuilt.\n", i, child);
 					ForceNodeBuild = true;
-					Z_Free (nodes);
-					Z_Free (data);
+					delete[] nodes;
+					W_UnMapLump (data);
 					return;
 				}
 				no->children[j] = (BYTE *)&subsectors[child] + 1;
@@ -590,8 +590,8 @@ void P_LoadNodes (int lump)
 				Printf ("BSP node %d references invalid node %d.\n"
 					"The BSP will be rebuilt.\n", i, no->children[j]);
 				ForceNodeBuild = true;
-				Z_Free (nodes);
-				Z_Free (data);
+				delete[] nodes;
+				W_UnMapLump (data);
 				return;
 			}
 			else if (used[child])
@@ -600,8 +600,8 @@ void P_LoadNodes (int lump)
 					"which is already used by node %d.\n"
 					"The BSP will be rebuilt.\n", i, child, used[child]-1);
 				ForceNodeBuild = true;
-				Z_Free (nodes);
-				Z_Free (data);
+				delete[] nodes;
+				W_UnMapLump (data);
 				return;
 			}
 			else
@@ -616,7 +616,7 @@ void P_LoadNodes (int lump)
 		}
 	}
 		
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 
@@ -626,9 +626,9 @@ void P_LoadNodes (int lump)
 void P_LoadThings (int lump)
 {
 	mapthing2_t mt2;		// [RH] for translation
-	byte *data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
-	mapthing_t *mt = (mapthing_t *)data;
-	mapthing_t *lastmt = (mapthing_t *)(data + W_LumpLength (lump));
+	const byte *data = (byte *)W_MapLumpNum (lump, true);
+	const mapthing_t *mt = (mapthing_t *)data;
+	const mapthing_t *lastmt = (mapthing_t *)(data + W_LumpLength (lump));
 
 	// [RH] ZDoom now uses Hexen-style maps as its native format.
 	//		Since this is the only place where Doom-style Things are ever
@@ -657,7 +657,7 @@ void P_LoadThings (int lump)
 		P_SpawnMapThing (&mt2, 0);
 	}
 		
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 //
@@ -863,7 +863,7 @@ static void P_SpawnSlopeMakers (mapthing2_t *mt, mapthing2_t *lastmt)
 //
 void P_LoadThings2 (int lump, int position)
 {
-	byte *data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
+	byte *data = (byte *)W_MapLumpNum (lump, true);
 	mapthing2_t *mt = (mapthing2_t *)data;
 	mapthing2_t *lastmt = (mapthing2_t *)(data + W_LumpLength (lump));
 
@@ -888,7 +888,7 @@ void P_LoadThings2 (int lump, int position)
 		P_SpawnMapThing (mt, position);
 	}
 
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 
@@ -1048,15 +1048,15 @@ void P_FinishLoadingLineDefs ()
 
 void P_LoadLineDefs (int lump)
 {
-	byte *data;
+	const byte *data;
 	int i, skipped;
 	line_t *ld;
 		
 	numlines = W_LumpLength (lump) / sizeof(maplinedef_t);
-	lines = (line_t *)Z_Malloc (numlines*sizeof(line_t), PU_LEVEL, 0);
-	linemap = (WORD *)Z_Malloc (numlines*sizeof(WORD), PU_LEVEL, 0);
+	lines = new line_t[numlines];
+	linemap = new WORD[numlines];
 	memset (lines, 0, numlines*sizeof(line_t));
-	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
+	data = (byte *)W_MapLumpNum (lump);
 
 	// [RH] Count the number of sidedef references. This is the number of
 	// sidedefs we need. The actual number in the SIDEDEFS lump might be less.
@@ -1110,22 +1110,22 @@ void P_LoadLineDefs (int lump)
 		P_SaveLineSpecial (ld);
 	}
 		
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 // [RH] Same as P_LoadLineDefs() except it uses Hexen-style LineDefs.
 void P_LoadLineDefs2 (int lump)
 {
-	byte*				data;
+	const byte*			data;
 	int 				i, skipped;
 	maplinedef2_t*		mld;
 	line_t* 			ld;
 
 	numlines = W_LumpLength (lump) / sizeof(maplinedef2_t);
-	lines = (line_t *)Z_Malloc (numlines*sizeof(line_t), PU_LEVEL, 0);
-	linemap = (WORD *)Z_Malloc (numlines*sizeof(WORD), PU_LEVEL, 0);
+	lines = new line_t[numlines];
+	linemap = new WORD[numlines];
 	memset (lines, 0, numlines*sizeof(line_t));
-	data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
+	data = (byte *)W_MapLumpNum (lump, true);
 
 	// [RH] Remove any lines that have 0 length and count sidedefs used
 	for (skipped = sidecount = i = 0; i < numlines; )
@@ -1180,7 +1180,7 @@ void P_LoadLineDefs2 (int lump)
 		P_SaveLineSpecial (ld);
 	}
 		
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 
@@ -1197,11 +1197,10 @@ static void P_AllocateSideDefs (int count)
 {
 	int i;
 
-	sides = (side_t *)Z_Malloc (count*sizeof(side_t), PU_LEVEL, 0);
+	sides = new side_t[count];
 	memset (sides, 0, count*sizeof(side_t));
 
-	sidetemp = (sidei_t *)Z_Malloc (MAX(count,numvertexes)
-		*sizeof(sidei_t), PU_LEVEL, 0);
+	sidetemp = new sidei_t[MAX(count,numvertexes)];
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
@@ -1347,7 +1346,7 @@ static void P_LoopSidedefs ()
 	}
 
 	// Throw away sidedef init info now that we're done with it
-	Z_Free (sidetemp);
+	delete[] sidetemp;
 	sidetemp = NULL;
 }
 
@@ -1357,7 +1356,7 @@ static void P_LoopSidedefs ()
 
 void P_LoadSideDefs2 (int lump)
 {
-	byte *data = (byte *)W_CacheLumpNum (lump, PU_STATIC);
+	const byte *data = (byte *)W_MapLumpNum (lump);
 	int  i;
 
 	for (i = 0; i < numsides; i++)
@@ -1443,7 +1442,7 @@ void P_LoadSideDefs2 (int lump)
 			break;
 		}
 	}
-	Z_Free (data);
+	W_UnMapLump (data);
 }
 
 // [RH] Set slopes for sectors, based on line specials
@@ -1841,7 +1840,7 @@ static void P_CreateBlockMap ()
 	CreatePackedBlockmap (BlockMap, BlockLists, bmapwidth, bmapheight);
 	delete[] BlockLists;
 
-	blockmaplump = (int *)Z_Malloc(sizeof(*blockmaplump) * BlockMap.Size(), PU_LEVEL, 0);
+	blockmaplump = new int[BlockMap.Size()];
 	for (size_t ii = 0; ii < BlockMap.Size(); ++ii)
 	{
 		blockmaplump[ii] = BlockMap[ii];
@@ -1871,9 +1870,9 @@ void P_LoadBlockMap (int lump)
 	}
 	else
 	{
-		short *wadblockmaplump = (short *)W_CacheLumpNum (lump, PU_LEVEL);
+		const short *wadblockmaplump = (short *)W_MapLumpNum (lump);
 		int i;
-		blockmaplump = (int *)Z_Malloc(sizeof(*blockmaplump) * count, PU_LEVEL, 0);
+		blockmaplump = new int[count];
 
 		// killough 3/1/98: Expand wad blockmap into larger internal one,
 		// by treating all offsets except -1 as unsigned and zero-extending
@@ -1891,7 +1890,7 @@ void P_LoadBlockMap (int lump)
 			blockmaplump[i] = t == -1 ? (DWORD)0xffffffff : (DWORD) t & 0xffff;
 		}
 
-		Z_Free (wadblockmaplump);
+		W_UnMapLump (wadblockmaplump);
 	}
 
 	bmaporgx = blockmaplump[0]<<FRACBITS;
@@ -1900,9 +1899,9 @@ void P_LoadBlockMap (int lump)
 	bmapheight = blockmaplump[3];
 
 	// clear out mobj chains
-	count = sizeof(*blocklinks) * bmapwidth*bmapheight;
-	blocklinks = (AActor **)Z_Malloc (count, PU_LEVEL, 0);
-	memset (blocklinks, 0, count);
+	count = bmapwidth*bmapheight;
+	blocklinks = new AActor *[count];
+	memset (blocklinks, 0, count*sizeof(*blocklinks));
 	blockmap = blockmaplump+4;
 }
 
@@ -1915,10 +1914,11 @@ void P_LoadBlockMap (int lump)
 // [RH] Handles extra lights
 //
 struct linf { short tag; WORD count; };
+line_t**				linebuffer;
+
 static void P_GroupLines (bool buildmap)
 {
 	TArray<linf>		exLightTags;
-	line_t**			linebuffer;
 	int 				i;
 	int 				j;
 	int 				total;
@@ -2003,8 +2003,8 @@ static void P_GroupLines (bool buildmap)
 	}
 
 	// collect extra light info
-	LightStacks = (FLightStack *)Z_Malloc(totallights*sizeof(FLightStack), PU_LEVEL, NULL);
-	ExtraLights = (FExtraLight *)Z_Malloc(exLightTags.Size()*sizeof(FExtraLight), PU_LEVEL, NULL);
+	LightStacks = new FLightStack[totallights];
+	ExtraLights = new FExtraLight[exLightTags.Size()];
 	memset (ExtraLights, 0, exLightTags.Size()*sizeof(FExtraLight));
 
 	for (ii = 0, jj = 0; ii < exLightTags.Size(); ++ii)
@@ -2016,7 +2016,8 @@ static void P_GroupLines (bool buildmap)
 	}
 
 	// build line tables for each sector		
-	linebuffer = (line_t **)Z_Malloc (total*sizeof(line_t *), PU_LEVEL, 0);
+	linebuffer = new line_t *[total];
+	line_t **lineb_p = linebuffer;
 	sector = sectors;
 	for (i = 0; i < numsectors; i++, sector++)
 	{
@@ -2029,18 +2030,18 @@ static void P_GroupLines (bool buildmap)
 		}
 		else
 		{
-			sector->lines = linebuffer;
+			sector->lines = lineb_p;
 			li = lines;
 			for (j = 0; j < numlines; j++, li++)
 			{
 				if (li->frontsector == sector || li->backsector == sector)
 				{
-					*linebuffer++ = li;
+					*lineb_p++ = li;
 					bbox.AddToBox (li->v1->x, li->v1->y);
 					bbox.AddToBox (li->v2->x, li->v2->y);
 				}
 			}
-			if (linebuffer - sector->lines != sector->linecount)
+			if (lineb_p - sector->lines != sector->linecount)
 			{
 				I_Error ("P_GroupLines: miscounted");
 			}
@@ -2206,7 +2207,8 @@ void P_LoadReject (int lump, bool junk)
 		{
 			Printf ("REJECT is %d byte%s too small.\n", neededsize - rejectsize,
 				neededsize-rejectsize==1?"":"s");
-			rejectmatrix = (byte *)Z_Malloc (neededsize, PU_LEVEL, 0);
+			rejectmatrix = new byte[neededsize];
+			rejectmapped = false;
 			W_ReadLump (lump, rejectmatrix);
 			memset (rejectmatrix+rejectsize, 0, neededsize-rejectsize);
 		}
@@ -2217,7 +2219,8 @@ void P_LoadReject (int lump, bool junk)
 	}
 	else
 	{
-		rejectmatrix = (byte *)W_CacheLumpNum (lump, PU_LEVEL);
+		rejectmatrix = (byte *)W_MapLumpNum (lump);
+		rejectmapped = true;
 	}
 
 	// Check if the reject has some actual content. If not, free it.
@@ -2244,7 +2247,14 @@ void P_LoadReject (int lump, bool junk)
 	}
 
 	// Reject has no data, so pretend it isn't there.
-	Z_Free (rejectmatrix);
+	if (rejectmapped)
+	{
+		W_UnMapLump (rejectmatrix);
+	}
+	else
+	{
+		delete[] rejectmatrix;
+	}
 	rejectmatrix = NULL;
 }
 
@@ -2293,7 +2303,7 @@ static void P_GetPolySpots (int lump, TArray<FNodeBuilder::FPolyStart> &spots, T
 	if (HasBehavior)
 	{
 		int spot1, spot2, anchor;
-		mapthing2_t *mt = (mapthing2_t *)W_CacheLumpNum (lump, PU_CACHE);
+		const mapthing2_t *mt = (mapthing2_t *)W_MapLumpNum (lump);
 		int num = W_LumpLength (lump) / sizeof(*mt);
 
 		if (HexenHack)
@@ -2381,8 +2391,115 @@ void P_SetupLevel (char *lumpname, int position)
 	C_MidPrint (NULL);
 	PolyBlockMap = NULL;
 
+	// Free all level data from the previous map
 	DThinker::DestroyAllThinkers ();
-	Z_FreeTags (PU_LEVEL, PU_PURGELEVEL-1);
+	if (vertexes != NULL)
+	{
+		delete[] vertexes;
+		vertexes = NULL;
+	}
+	if (segs != NULL)
+	{
+		delete[] segs;
+		segs = NULL;
+	}
+	if (sectors != NULL)
+	{
+		delete[] sectors;
+		sectors = NULL;
+	}
+	if (subsectors != NULL)
+	{
+		delete[] subsectors;
+		subsectors = NULL;
+	}
+	if (nodes != NULL)
+	{
+		delete[] nodes;
+		nodes = NULL;
+	}
+	if (lines != NULL)
+	{
+		delete[] lines;
+		lines = NULL;
+	}
+	if (sides != NULL)
+	{
+		delete[] sides;
+		sides = NULL;
+	}
+	if (blockmaplump != NULL)
+	{
+		delete[] blockmaplump;
+		blockmaplump = NULL;
+	}
+	if (blocklinks != NULL)
+	{
+		delete[] blocklinks;
+		blocklinks = NULL;
+	}
+	if (PolyBlockMap != NULL)
+	{
+		for (i = bmapwidth*bmapheight-1; i >= 0; --i)
+		{
+			polyblock_t *link = PolyBlockMap[i];
+			while (link != NULL)
+			{
+				polyblock_t *next = link->next;
+				delete link;
+				link = next;
+			}
+		}
+		delete[] PolyBlockMap;
+		PolyBlockMap = NULL;
+	}
+	if (rejectmatrix != NULL)
+	{
+		if (rejectmapped)
+		{
+			W_UnMapLump (rejectmatrix);
+		}
+		else
+		{
+			delete[] rejectmatrix;
+		}
+		rejectmatrix = NULL;
+	}
+	if (LightStacks != NULL)
+	{
+		delete[] LightStacks;
+		LightStacks = NULL;
+	}
+	if (ExtraLights != NULL)
+	{
+		delete[] ExtraLights;
+		ExtraLights = NULL;
+	}
+	if (linebuffer != NULL)
+	{
+		delete[] linebuffer;
+		linebuffer = NULL;
+	}
+	if (polyobjs != NULL)
+	{
+		for (i = 0; i < po_NumPolyobjs; ++i)
+		{
+			if (polyobjs[i].segs != NULL)
+			{
+				delete[] polyobjs[i].segs;
+			}
+			if (polyobjs[i].originalPts != NULL)
+			{
+				delete[] polyobjs[i].originalPts;
+			}
+			if (polyobjs[i].prevPts != NULL)
+			{
+				delete[] polyobjs[i].prevPts;
+			}
+		}
+		delete[] polyobjs;
+		polyobjs = NULL;
+	}
 
 	// UNUSED W_Profile ();
 
@@ -2426,7 +2543,7 @@ void P_SetupLevel (char *lumpname, int position)
 		P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
 		P_FinishLoadingLineDefs ();
 		P_LoopSidedefs ();
-		Z_Free (linemap);
+		delete[] linemap;
 		linemap = NULL;
 	}
 	else
@@ -2442,9 +2559,9 @@ void P_SetupLevel (char *lumpname, int position)
 	if (!ForceNodeBuild) P_LoadSegs (lumpnum+ML_SEGS);
 	if (ForceNodeBuild)
 	{
-		cycle_t nodeBuildCycles = 0;
+		QWORD startTime, endTime;
 
-		clock (nodeBuildCycles);
+		startTime = I_MSTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
 		P_GetPolySpots (lumpnum+ML_THINGS, polyspots, anchors);
 		FNodeBuilder::FLevel leveldata =
@@ -2455,13 +2572,13 @@ void P_SetupLevel (char *lumpname, int position)
 		};
 		FNodeBuilder builder (leveldata, polyspots, anchors, r_experimental);
 		UsingGLNodes = r_experimental;
-		Z_Free (vertexes);
+		delete[] vertexes;
 		builder.Extract (nodes, numnodes,
 			segs, numsegs,
 			subsectors, numsubsectors,
 			vertexes, numvertexes);
-		unclock (nodeBuildCycles);
-		Printf ("BSP generation took %.5f sec\n", SecondsPerCycle * (double)nodeBuildCycles);
+		endTime = I_MSTime ();
+		Printf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 	}
 
 	P_LoadReject (lumpnum+ML_REJECT, buildmap);
@@ -2470,9 +2587,7 @@ void P_SetupLevel (char *lumpname, int position)
 
 	bodyqueslot = 0;
 // phares 8/10/98: Clear body queue so the corpses from previous games are
-// not assumed to be from this one. The actors belonging to these corpses
-// are cleared in the normal freeing of zoned memory between maps, so all
-// we have to do here is clear the pointers to them.
+// not assumed to be from this one.
 
 	for (i = 0; i < BODYQUESIZE; i++)
 		bodyque[i] = NULL;

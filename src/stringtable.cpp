@@ -39,7 +39,6 @@
 #include "cmdlib.h"
 #include "m_swap.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "i_system.h"
 
 struct FStringTable::Header
@@ -106,7 +105,7 @@ void FStringTable::FreeStandardStrings ()
 #include "doomerrors.h"
 void FStringTable::LoadStrings (int lump, int expectedSize, bool enuOnly)
 {
-	BYTE *strData = (BYTE *)W_CacheLumpNum (lump, PU_CACHE);
+	BYTE *strData = (BYTE *)W_MapLumpNum (lump, true);
 	int lumpLen = LONG(((Header *)strData)->FileSize);
 	int nameCount = SHORT(((Header *)strData)->NameCount);
 	int nameLen = SHORT(((Header *)strData)->NameLen);
@@ -170,6 +169,8 @@ void FStringTable::LoadStrings (int lump, int expectedSize, bool enuOnly)
 	{
 		I_FatalError ("Loaded %d strings (expected %d)", loadedCount, nameCount);
 	}
+
+	W_UnMapLump (strData);
 }
 
 void FStringTable::ReloadStrings ()
@@ -282,12 +283,13 @@ int FStringTable::SumStringSizes () const
 
 void FStringTable::LoadNames () const
 {
-	BYTE *lump = (BYTE *)W_CacheLumpNum (LumpNum, PU_CACHE);
+	const BYTE *lump = (BYTE *)W_MapLumpNum (LumpNum);
 	int nameLen = SHORT(((Header *)lump)->NameLen);
 
 	FlushNames ();
 	Names = new BYTE[nameLen + 4*NumStrings];
 	memcpy (Names, lump + sizeof(Header), nameLen + 4*NumStrings);
+	W_UnMapLump (lump);
 }
 
 void FStringTable::FlushNames () const

@@ -48,7 +48,6 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "gstrings.h"
-#include "z_zone.h"
 #include "w_wad.h"
 #include "s_sound.h"
 #include "v_video.h"
@@ -477,7 +476,7 @@ void D_Display (bool screenshot)
 		}
 		if (lump >= 0)
 		{
-			patch_t *pause = TileCache[R_CacheTileNum (lump, PU_CACHE)];
+			const patch_t *pause = TileCache[R_CacheTileNum (lump)];
 			int x = (SCREENWIDTH - SHORT(pause->width)*CleanXfac)/2 +
 				SHORT(pause->leftoffset)*CleanXfac;
 			screen->DrawPatchCleanNoMove (pause, x, 4);
@@ -492,9 +491,9 @@ void D_Display (bool screenshot)
 		D_DrawIcon = NULL;
 		if (lump >= 0)
 		{
-			patch_t *p = (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
-
+			const patch_t *p = (patch_t *)W_MapLumpNum (lump);
 			screen->DrawPatchIndirect (p, 160-SHORT(p->width)/2, 100-SHORT(p->height)/2);
+			W_UnMapLump (p);
 		}
 		NoWipe = 10;
 	}
@@ -756,7 +755,9 @@ void D_DoAdvanceDemo (void)
 			if (page)
 			{
 				page->Lock ();
-				page->DrawPatch ((patch_t *)W_CacheLumpName ("ADVISOR", PU_CACHE), 4, 160);
+				const patch_t *p = (patch_t *)W_MapLumpName ("ADVISOR");
+				page->DrawPatch (p, 4, 160);
+				W_UnMapLump (p);
 			}
 			page->Unlock ();
 			demosequence = 1;
@@ -811,17 +812,17 @@ void D_DoAdvanceDemo (void)
 	if (pagename)
 	{
 		int width, height;
-		patch_t *data;
+		const patch_t *data;
 
 		if (gameinfo.flags & GI_PAGESARERAW)
 		{
-			data = (patch_t *)W_CacheLumpName (pagename, PU_CACHE);
+			data = (patch_t *)W_MapLumpName (pagename);
 			width = 320;
 			height = 200;
 		}
 		else
 		{
-			data = (patch_t *)W_CacheLumpName (pagename, PU_CACHE);
+			data = (patch_t *)W_MapLumpName (pagename);
 			width = SHORT(data->width);
 			height = SHORT(data->height);
 		}
@@ -841,6 +842,7 @@ void D_DoAdvanceDemo (void)
 		else
 			page->DrawPatch (data, 0, 0);
 		page->Unlock ();
+		W_UnMapLump (data);
 	}
 }
 
@@ -897,7 +899,7 @@ void D_AddFile (const char *file)
 		}
 		file = f;
 	}
-	wadlist_t *wad = (wadlist_t *)Z_Malloc (sizeof(*wad) + strlen(file), PU_STATIC, 0);
+	wadlist_t *wad = (wadlist_t *)Malloc (sizeof(*wad) + strlen(file));
 
 	*wadtail = wad;
 	wad->next = NULL;
@@ -1603,9 +1605,9 @@ void D_DoomMain (void)
 	SetLanguageIDs ();
 
 	rngseed = (DWORD)time (NULL);
+	FRandom::StaticClearRandom ();
 	M_FindResponseFile ();
 	M_LoadDefaults ();			// load before initing other systems
-	Z_Init ();	// [RH] Init zone heap after loading config file
 
 	// [RH] Make sure zdoom.wad is always loaded,
 	// as it contains magic stuff we need.
@@ -1916,6 +1918,13 @@ void D_DoomMain (void)
 	// [RH] Lock any cvars that should be locked now that we're
 	// about to begin the game.
 	FBaseCVar::EnableNoSet ();
+
+	// [RH] Print an informative message if -heapsize is used
+	if (Args.CheckParm ("-heapsize"))
+	{
+		Printf (TEXTCOLOR_ORANGE "Starting with -heapsize is unnecessary.\n"
+				TEXTCOLOR_ORANGE "The zone heap is not used anymore.\n");
+	}
 
 	// [RH] Run any saved commands from the command line or autoexec.cfg now.
 	gamestate = GS_FULLCONSOLE;

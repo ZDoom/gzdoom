@@ -923,14 +923,15 @@ void D_CheckNetGame (void)
 	netbuffer = &doomcom->data;
 	consoleplayer = displayplayer = doomcom->consoleplayer;
 
-	// [RH] Read network ServerInfo cvars
-	GameConfig->ReadNetVars ();
 
 	// [RH] Setup user info
 	D_SetupUserInfo ();
 
 	if (netgame)
+	{
+		GameConfig->ReadNetVars ();	// [RH] Read network ServerInfo cvars
 		D_ArbitrateNetStart ();
+	}
 
 	// read values out of doomcom
 	ticdup = doomcom->ticdup;

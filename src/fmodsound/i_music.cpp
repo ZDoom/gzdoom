@@ -73,7 +73,6 @@
 #include "w_wad.h"
 #include "c_console.h"
 #include "c_dispatch.h"
-#include "z_zone.h"
 #include "i_system.h"
 #include "i_sound.h"
 #include "m_swap.h"
@@ -96,8 +95,8 @@ extern bool nofmod;
 class MusInfo
 {
 public:
-	MusInfo () : m_Status(STATE_Stopped) {}
-	virtual ~MusInfo () {}
+	MusInfo () : m_Status(STATE_Stopped), m_LumpMem(0) {}
+	virtual ~MusInfo () { if (m_LumpMem != 0) W_UnMapLump (m_LumpMem); }
 	virtual void SetVolume (float volume) = 0;
 	virtual void Play (bool looping) = 0;
 	virtual void Pause () = 0;
@@ -115,6 +114,7 @@ public:
 		STATE_Paused
 	} m_Status;
 	bool m_Looping;
+	const void *m_LumpMem;
 };
 
 static MusInfo *currSong;
@@ -178,7 +178,7 @@ int ChildQuit;
 class MIDISong : public MusInfo
 {
 public:
-	MIDISong (int handle, int pos, int len);
+	MIDISong (const void *mem, int len);
 	~MIDISong ();
 	void SetVolume (float volume);
 	void Play (bool looping);
@@ -220,7 +220,7 @@ protected:
 class MUSSong : public MIDISong
 {
 public:
-	MUSSong (int handle, int pos, int len);
+	MUSSong (const void *mem, int len);
 };
 #endif // _WIN32
 
@@ -228,7 +228,7 @@ public:
 class MODSong : public MusInfo
 {
 public:
-	MODSong (int handle, int pos, int len);
+	MODSong (const void *mem, int len);
 	~MODSong ();
 	void SetVolume (float volume);
 	void Play (bool looping);
@@ -251,7 +251,7 @@ protected:
 class DMusSong : public MODSong
 {
 public:
-	DMusSong (int handle, int pos, int len);
+	DMusSong (const void *mem, int len);
 
 protected:
 	FTempFileName DiskName;
@@ -262,7 +262,7 @@ protected:
 class StreamSong : public MusInfo
 {
 public:
-	StreamSong (int handle, int pos, int len);
+	StreamSong (const void *mem, int len);
 	~StreamSong ();
 	void SetVolume (float volume);
 	void Play (bool looping);
@@ -294,7 +294,7 @@ typedef void *(__stdcall *EmuAPU_TYPE) (void *, DWORD, BYTE);
 class SPCSong : public StreamSong
 {
 public:
-	SPCSong (int handle, int pos, int len);
+	SPCSong (const void *mem, int len);
 	~SPCSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -321,7 +321,7 @@ protected:
 class TimiditySong : public StreamSong
 {
 public:
-	TimiditySong (int handle, int pos, int len);
+	TimiditySong (const void *mem, int len);
 	~TimiditySong ();
 	void Play (bool looping);
 	void Stop ();
@@ -387,7 +387,7 @@ CUSTOM_CVAR (Int, timidity_frequency, 22050, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (int handle, int pos, int len);
+	OPLMUSSong (const void *mem, int len);
 	~OPLMUSSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -447,7 +447,7 @@ protected:
 class CDDAFile : public CDSong
 {
 public:
-	CDDAFile (int handle, int pos, int len);
+	CDDAFile (const void *mem, int len);
 };
 
 #if !defined(_WIN32) && 0
@@ -1438,8 +1438,10 @@ CDSong::~CDSong ()
 	m_Inited = false;
 }
 
-void *I_RegisterSong (int handle, int pos, int len)
+void *I_RegisterSong (int lump)
 {
+	const void *mem;
+	int len;
 	MusInfo *info = NULL;
 	DWORD id;
 
@@ -1448,31 +1450,32 @@ void *I_RegisterSong (int handle, int pos, int len)
 		return 0;
 	}
 
-	lseek (handle, pos, SEEK_SET);
-	read (handle, &id, 4);
+	mem = W_MapLumpNum (lump);
+	len = W_LumpLength (lump);
+	id = *(const DWORD *)mem;
 
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
 		// This is a mus file
 		if (!nofmod && opl_enable)
 		{
-			info = new OPLMUSSong (handle, pos, len);
+			info = new OPLMUSSong (mem, len);
 		}
 		if (info == NULL)
 		{
 #ifdef _WIN32
 			if (snd_mididevice == -3)
 			{
-				info = new DMusSong (handle, pos, len);
+				info = new DMusSong (mem, len);
 			}
 			else if (snd_mididevice != -2)
 			{
-				info = new MUSSong (handle, pos, len);
+				info = new MUSSong (mem, len);
 			}
 			else if (!nofmod)
 #endif // _WIN32
 			{
-				info = new TimiditySong (handle, pos, len);
+				info = new TimiditySong (mem, len);
 			}
 		}
 	}
@@ -1482,28 +1485,25 @@ void *I_RegisterSong (int handle, int pos, int len)
 #ifdef _WIN32
 		if (snd_mididevice == -3)
 		{
-			info = new DMusSong (handle, pos, len);
+			info = new DMusSong (mem, len);
 		}
 		else if (snd_mididevice != -2)
 		{
-			info = new MIDISong (handle, pos, len);
+			info = new MIDISong (mem, len);
 		}
 		else if (!nofmod)
 #endif // _WIN32
 		{
-			info = new TimiditySong (handle, pos, len);
+			info = new TimiditySong (mem, len);
 		}
 	}
 	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
 	{
-		char tag[0x23-4];
-
-		if (read (handle, tag, 0x23-4) == 0x23-4 &&
-			strncmp (tag, "-SPC700 Sound File Data", 23) == 0 &&
-			tag[0x21-4] == 26 &&
-			tag[0x22-4] == 26)
+		if (strncmp (((const char *)mem)+4, "-SPC700 Sound File Data", 23) == 0 &&
+			((const byte *)mem)[0x21] == 26 &&
+			((const byte *)mem)[0x22] == 26)
 		{
-			info = new SPCSong (handle, pos, len);
+			info = new SPCSong (mem, len);
 		}
 	}
 
@@ -1512,22 +1512,21 @@ void *I_RegisterSong (int handle, int pos, int len)
 		if (id == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
 		{
 			DWORD subid = 0;
-			lseek (handle, pos+8, SEEK_SET);
-			read (handle, &subid, 4);
+			subid = ((DWORD *)mem)[2];
 			if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
 			{
 				// This is a CDDA file
-				info = new CDDAFile (handle, pos, len);
+				info = new CDDAFile (mem, len);
 			}
 		}
 		if (info == NULL && !nofmod)	// no FMOD => no modules/streams
 		{
 			// First try loading it as MOD, then as a stream
-			info = new MODSong (handle, pos, len);
+			info = new MODSong (mem, len);
 			if (!info->IsValid ())
 			{
 				delete info;
-				info = new StreamSong (handle, pos, len);
+				info = new StreamSong (mem, len);
 			}
 		}
 	}
@@ -1536,6 +1535,15 @@ void *I_RegisterSong (int handle, int pos, int len)
 	{
 		delete info;
 		info = NULL;
+	}
+
+	if (info != NULL)
+	{
+		info->m_LumpMem = mem;
+	}
+	else
+	{
+		W_UnMapLump (mem);
 	}
 
 	return info;
@@ -1560,49 +1568,36 @@ MIDISong::MIDISong ()
 {
 }
 
-MIDISong::MIDISong (int handle, int pos, int len)
+MIDISong::MIDISong (const void *mem, int len)
 {
 	m_Buffers = NULL;
 	m_IsMUS = false;
-	if (nummididevices > 0 && lseek (handle, pos, SEEK_SET) != -1)
+	if (nummididevices > 0)
 	{
-		byte *data = new byte[len];
-		if (read (handle, data, len) == len)
-		{
-			m_Buffers = mid2strmConvert ((LPBYTE)data, len);
-		}
-		delete[] data;
+		m_Buffers = mid2strmConvert ((LPBYTE)mem, len);
 	}
 }
 
-MUSSong::MUSSong (int handle, int pos, int len) : MIDISong ()
+MUSSong::MUSSong (const void *mem, int len) : MIDISong ()
 {
 	m_Buffers = NULL;
 	m_IsMUS = true;
-	if (nummididevices > 0 && lseek (handle, pos, SEEK_SET) != -1)
+	if (nummididevices > 0)
 	{
-		byte *data = new byte[len];
-		if (read (handle, data, len) == len)
-		{
-			m_Buffers = mus2strmConvert ((LPBYTE)data, len);
-		}
-		delete[] data;
+		m_Buffers = mus2strmConvert ((LPBYTE)mem, len);
 	}
 }
 #endif // _WIN32
 
-MODSong::MODSong (int handle, int pos, int len)
+MODSong::MODSong (const void *mem, int len)
 {
-	BYTE *song = new BYTE[len];
-	lseek (handle, SEEK_SET, pos);
-	read (handle, song, len);
-	m_Module = FMUSIC_LoadSongMemory (song, len);
-	delete[] song;
-	//m_Module = FMUSIC_LoadSong ((char *)new FileHandle (handle, pos, len));
+	// Is this const_cast safe or do I need to copy the lump to
+	// readable memory?
+	m_Module = FMUSIC_LoadSongMemory (const_cast<void *>(mem), len);
 }
 
 #ifdef _WIN32
-DMusSong::DMusSong (int handle, int pos, int len)
+DMusSong::DMusSong (const void *mem, int len)
 : DiskName ("zmid")
 {
 	FILE *f = fopen (DiskName, "wb");
@@ -1612,15 +1607,8 @@ DMusSong::DMusSong (int handle, int pos, int len)
 		return;
 	}
 
-	BYTE *buf = new BYTE[len];
+	const BYTE *buf = (const BYTE *)mem;
 	bool success;
-
-	if (lseek (handle, pos, SEEK_SET) == -1 || read (handle, buf, len) != len)
-	{
-		fclose (f);
-		Printf (PRINT_BOLD, "Could not read source music file\n");
-		return;
-	}
 
 	// The file type has already been checked before this class instance was
 	// created, so we only need to check one character to determine if this
@@ -1634,13 +1622,10 @@ DMusSong::DMusSong (int handle, int pos, int len)
 		success = ProduceMIDI (buf, f);
 	}
 	fclose (f);
-	delete[] buf;
 
 	if (success)
 	{
-		Disable_FSOUND_IO_Loader ();
 		m_Module = FMUSIC_LoadSong (DiskName);
-		Enable_FSOUND_IO_Loader ();
 	}
 	else
 	{
@@ -1649,14 +1634,14 @@ DMusSong::DMusSong (int handle, int pos, int len)
 }
 #endif
 
-StreamSong::StreamSong (int handle, int pos, int len)
+StreamSong::StreamSong (const void *mem, int len)
 : m_Channel (-1)
 {
-	m_Stream = FSOUND_Stream_OpenFile ((char *)new FileHandle (handle, pos, len),
-		FSOUND_LOOP_NORMAL|FSOUND_NORMAL|FSOUND_2D, 0);
+	m_Stream = FSOUND_Stream_OpenFile ((const char *)mem,
+		FSOUND_LOOP_NORMAL|FSOUND_NORMAL|FSOUND_2D|FSOUND_LOADMEMORY, len);
 }
 
-TimiditySong::TimiditySong (int handle, int pos, int len)
+TimiditySong::TimiditySong (const void *mem, int len)
 	: DiskName ("zmid"),
 #ifdef _WIN32
 	  ReadWavePipe (INVALID_HANDLE_VALUE), WriteWavePipe (INVALID_HANDLE_VALUE),
@@ -1688,14 +1673,7 @@ TimiditySong::TimiditySong (int handle, int pos, int len)
 		return;
 	}
 
-	BYTE *buf = new BYTE[len];
-
-	if (lseek (handle, pos, SEEK_SET) == -1 || read (handle, buf, len) != len)
-	{
-		fclose (f);
-		Printf (PRINT_BOLD, "Could not read source music file\n");
-		return;
-	}
+	const BYTE *buf = (const BYTE *)mem;
 
 	// The file type has already been checked before this class instance was
 	// created, so we only need to check one character to determine if this
@@ -1709,7 +1687,6 @@ TimiditySong::TimiditySong (int handle, int pos, int len)
 		success = ProduceMIDI (buf, f);
 	}
 	fclose (f);
-	delete[] buf;
 
 	if (success)
 	{
@@ -2097,9 +2074,10 @@ CDSong::CDSong (int track, int id)
 	}
 }
 
-CDDAFile::CDDAFile (int handle, int pos, int len)
+CDDAFile::CDDAFile (const void *mem, int len)
 	: CDSong ()
 {
+	const BYTE *ptr = (const BYTE *)mem;
 	DWORD chunk;
 	WORD track;
 	DWORD discid;
@@ -2110,32 +2088,23 @@ CDDAFile::CDDAFile (int handle, int pos, int len)
 
 	while (cursor < len - 8)
 	{
-		if (lseek (handle, pos+cursor, SEEK_SET) == -1)
-			return;
-		if (read (handle, &chunk, 4) != 4)
-			return;
+		ptr += cursor;
+		chunk = *(DWORD *)ptr;
 		if (chunk != (('f')|(('m')<<8)|(('t')<<16)|((' ')<<24)))
 		{
-			if (read (handle, &chunk, 4) != 4)
-				return;
-			cursor += LONG(chunk) + 8;
+			chunk = *(DWORD *)(ptr + 4);
+			ptr += LONG(chunk) + 8;
 		}
 		else
 		{
-			if (lseek (handle, pos+cursor+10, SEEK_SET) != -1)
-			{
-				if (read (handle, &track, 2) == 2 &&
-					read (handle, &discid, 4) == 4)
-				{
-					track = SHORT(track);
-					discid = LONG(discid);
+			ptr += 10;
+			track = SHORT(*(WORD *)ptr);
+			discid = LONG(*(DWORD *)(ptr + 2));
 
-					if (CD_InitID (discid) && CD_CheckTrack (track))
-					{
-						m_Inited = true;
-						m_Track = track;
-					}
-				}
+			if (CD_InitID (discid) && CD_CheckTrack (track))
+			{
+				m_Inited = true;
+				m_Track = track;
 			}
 			return;
 		}
@@ -2372,7 +2341,7 @@ CUSTOM_CVAR (Int, spc_frequency, 32000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-SPCSong::SPCSong (int handle, int pos, int len)
+SPCSong::SPCSong (const void *mem, int len)
 {
 	if (!LoadEmu ())
 	{
@@ -2400,12 +2369,7 @@ SPCSong::SPCSong (int handle, int pos, int len)
 
 	BYTE spcfile[66048];
 
-	lseek (handle, pos, SEEK_SET);
-	if (66048 != read (handle, spcfile, 66048))
-	{
-		CloseEmu ();
-		return;
-	}
+	memcpy (spcfile, mem, 66048);
 
 	void *apuram;
 	BYTE *extraram;
@@ -2498,12 +2462,12 @@ void SPCSong::CloseEmu ()
 }
 #endif
 
-OPLMUSSong::OPLMUSSong (int handle, int pos, int len)
+OPLMUSSong::OPLMUSSong (const void *mem, int len)
 {
 	// No sense in using a sample rate higher than the output rate
 	int rate = MIN (*opl_frequency, *snd_samplerate);
 
-	Music = new OPLmusicBlock (handle, pos, len, rate, 16384/2);
+	Music = new OPLmusicBlock (mem, len, rate, 16384/2);
 
 	m_Stream = FSOUND_Stream_Create (FillStream, 16384,
 		FSOUND_SIGNED | FSOUND_2D | FSOUND_MONO | FSOUND_16BITS,

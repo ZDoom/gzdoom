@@ -33,13 +33,15 @@
 BOOL F_Responder (event_t* ev);
 
 // Called by main loop.
-void F_Ticker (void);
+void F_Ticker ();
 
 // Called by main loop.
-void F_Drawer (void);
+void F_Drawer ();
 
 
 void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid, char *flat, char *text,
 					BOOL textInLump, BOOL finalePic);
+
+void F_EndFinale ();
 
 #endif

@@ -44,7 +44,6 @@
 #include "d_main.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "z_zone.h"
 #include "v_video.h"
 #include "w_wad.h"
 #include "r_local.h"
@@ -808,9 +807,10 @@ void M_DrawLoad (void)
 {
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		patch_t *title = (patch_t *)W_CacheLumpName ("M_LOADG", PU_CACHE);
+		const patch_t *title = (patch_t *)W_MapLumpName ("M_LOADG");
 		screen->DrawPatchCleanNoMove (title,
 			(SCREENWIDTH-SHORT(title)->width*CleanXfac)/2, 20*CleanYfac);
+		W_UnMapLump (title);
 	}
 	else
 	{
@@ -830,23 +830,33 @@ void M_DrawLoad (void)
 //
 void M_DrawSaveLoadBorder (int x, int y, int len)
 {
+	const patch_t *patch;
+
 	if (gameinfo.gametype == GAME_Doom)
 	{
 		int i;
 
-		screen->DrawPatchClean ((patch_t *)W_CacheLumpName ("M_LSLEFT",PU_CACHE), x-8, y+7);
+		patch = (patch_t *)W_MapLumpName ("M_LSLEFT");
+		screen->DrawPatchClean (patch, x-8, y+7);
+		W_UnMapLump (patch);
 			
+		patch = (patch_t *)W_MapLumpName ("M_LSCNTR");
 		for (i = 0; i < len; i++)
 		{
-			screen->DrawPatchClean ((patch_t *)W_CacheLumpName ("M_LSCNTR",PU_CACHE), x, y+7);
+			screen->DrawPatchClean (patch, x, y+7);
 			x += 8;
 		}
+		W_UnMapLump (patch);
 
-		screen->DrawPatchClean ((patch_t *)W_CacheLumpName ("M_LSRGHT",PU_CACHE), x, y+7);
+		patch = (patch_t *)W_MapLumpName ("M_LSRGHT");
+		screen->DrawPatchClean (patch, x, y+7);
+		W_UnMapLump (patch);
 	}
 	else
 	{
-		screen->DrawPatchClean ((patch_t *)W_CacheLumpName ("M_FSLOT",PU_CACHE), x, y+1);
+		patch = (patch_t *)W_MapLumpName ("M_FSLOT");
+		screen->DrawPatchClean (patch, x, y+1);
+		W_UnMapLump (patch);
 	}
 }
 
@@ -1063,41 +1073,52 @@ static void M_DrawSaveLoadCommon ()
 // frame graphics. The border is drawn outside the area, not in it.
 void M_DrawFrame (int left, int top, int width, int height)
 {
+	const patch_t *p1, *p2;
 	gameborder_t *border = gameinfo.border;
 	int offset = border->offset;
 	int size = border->size;
 	int x, y;
 
+	p1 = (patch_t *)W_MapLumpName (border->t);
+	p2 = (patch_t *)W_MapLumpName (border->b);
 	for (x = left; x < left + width; x += size)
 	{
 		if (x + size > left + width)
 			x = left + width - size;
-		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->t, PU_CACHE),
-			x, top - offset);
-		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->b, PU_CACHE),
-			x, top + height);
+		screen->DrawPatch (p1, x, top - offset);
+		screen->DrawPatch (p2, x, top + height);
 	}
+	W_UnMapLump (p1);
+	W_UnMapLump (p2);
+
+	p1 = (patch_t *)W_MapLumpName (border->l);
+	p2 = (patch_t *)W_MapLumpName (border->r);
 	for (y = top; y < top + height; y += size)
 	{
 		if (y + size > top + height)
 			y = top + height - size;
-		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->l, PU_CACHE),
-			left - offset, y);
-		screen->DrawPatch ((patch_t *)W_CacheLumpName (border->r, PU_CACHE),
-			left + width, y);
+		screen->DrawPatch (p1, left - offset, y);
+		screen->DrawPatch (p2, left + width, y);
 	}
+	W_UnMapLump (p1);
+	W_UnMapLump (p2);
+
 	// Draw beveled edge.
-	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->tl, PU_CACHE),
-		left-offset, top-offset);
-	
-	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->tr, PU_CACHE),
-		left+width, top-offset);
-	
-	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->bl, PU_CACHE),
-		left-offset, top+height);
-	
-	screen->DrawPatch ((patch_t *)W_CacheLumpName (border->br, PU_CACHE),
-		left+width, top+height);
+	p1 = (patch_t *)W_MapLumpName (border->tl);
+	screen->DrawPatch (p1, left-offset, top-offset);
+	W_UnMapLump (p1);
+
+	p1 = (patch_t *)W_MapLumpName (border->tr);
+	screen->DrawPatch (p1, left+width, top-offset);
+	W_UnMapLump (p1);
+
+	p1 = (patch_t *)W_MapLumpName (border->bl);
+	screen->DrawPatch (p1, left-offset, top+height);
+	W_UnMapLump (p1);
+
+	p1 = (patch_t *)W_MapLumpName (border->br);
+	screen->DrawPatch (p1, left+width, top+height);
+	W_UnMapLump (p1);
 }
 
 //
@@ -1126,9 +1147,10 @@ void M_DrawSave()
 {
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		patch_t *title = (patch_t *)W_CacheLumpName ("M_SAVEG", PU_CACHE);
+		patch_t *title = (patch_t *)W_MapLumpName ("M_SAVEG");
 		screen->DrawPatchCleanNoMove (title,
 			(SCREENWIDTH-SHORT(title)->width*CleanXfac)/2, 20*CleanYfac);
+		W_UnMapLump (title);
 	}
 	else
 	{
@@ -1279,14 +1301,18 @@ void M_DrawReadThis ()
 {
 	if (gameinfo.flags & GI_PAGESARERAW)
 	{
-		screen->DrawPageBlock ((byte *)W_CacheLumpNum (
+		const byte *title = (byte *)W_MapLumpNum (
 			W_GetNumForName (gameinfo.info.indexed.basePage) +
-			InfoType, PU_CACHE));
+			InfoType);
+		screen->DrawPageBlock (title);
+		W_UnMapLump (title);
 	}
 	else
 	{
-		screen->DrawPatchIndirect ((patch_t *)W_CacheLumpName (
-			gameinfo.info.infoPage[InfoType-1], PU_CACHE), 0, 0);
+		const patch_t *title = (patch_t *)W_MapLumpName (
+			gameinfo.info.infoPage[InfoType-1]);
+		screen->DrawPatchIndirect (title, 0, 0);
+		W_UnMapLump (title);
 	}
 }
 
@@ -1295,17 +1321,27 @@ void M_DrawReadThis ()
 //
 void M_DrawMainMenu (void)
 {
-	screen->DrawPatchClean ((patch_t *)W_CacheLumpName("M_DOOM",PU_CACHE), 94, 2);
+	const patch_t *patch = (patch_t *)W_MapLumpName("M_DOOM");
+	screen->DrawPatchClean (patch, 94, 2);
+	W_UnMapLump (patch);
 }
 
 void M_DrawHereticMainMenu ()
 {
 	int frame = (MenuTime / 3) % 18;
-	screen->DrawPatchClean ((patch_t *)W_CacheLumpName("M_HTIC",PU_CACHE), 88, 0);
-	screen->DrawPatchClean ((patch_t *)W_CacheLumpNum(SkullBaseLump+(17-frame),
-		PU_CACHE), 40, 10);
-	screen->DrawPatchClean ((patch_t *)W_CacheLumpNum(SkullBaseLump+frame,
-		PU_CACHE), 232, 10);
+	const patch_t *patch;
+
+	patch = (patch_t *)W_MapLumpName("M_HTIC");
+	screen->DrawPatchClean (patch, 88, 0);
+	W_UnMapLump (patch);
+
+	patch = (patch_t *)W_MapLumpNum(SkullBaseLump+(17-frame));
+	screen->DrawPatchClean (patch, 40, 10);
+	W_UnMapLump (patch);
+
+	patch = (patch_t *)W_MapLumpNum(SkullBaseLump+frame);
+	screen->DrawPatchClean (patch, 232, 10);
+	W_UnMapLump (patch);
 }
 
 //
@@ -1313,10 +1349,17 @@ void M_DrawHereticMainMenu ()
 //
 void M_DrawNewGame(void)
 {
+	const patch_t *patch;
+
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		screen->DrawPatchClean ((patch_t *)W_CacheLumpName("M_NEWG",PU_CACHE), 96, 14);
-		screen->DrawPatchClean ((patch_t *)W_CacheLumpName("M_SKILL",PU_CACHE), 54, 38);
+		patch = (patch_t *)W_MapLumpName("M_NEWG");
+		screen->DrawPatchClean (patch, 96, 14);
+		W_UnMapLump (patch);
+
+		patch = (patch_t *)W_MapLumpName("M_SKILL");
+		screen->DrawPatchClean (patch, 54, 38);
+		W_UnMapLump (patch);
 	}
 }
 
@@ -1359,6 +1402,7 @@ void M_NewGame(int choice)
 
 static void DrawClassMenu(void)
 {
+	const patch_t *patch;
 	int classnum;
 
 	static char *boxLumpName[3] =
@@ -1380,9 +1424,14 @@ static void DrawClassMenu(void)
 	{
 		classnum = (MenuTime>>2) % 3;
 	}
-	screen->DrawPatchClean ((patch_t *)W_CacheLumpName(boxLumpName[classnum], PU_CACHE), 174, 8);
-	screen->DrawPatchClean ((patch_t *)W_CacheLumpNum(W_GetNumForName(walkLumpName[classnum])
-		+((MenuTime>>3)&3), PU_CACHE), 174+24, 8+12);
+	patch = (patch_t *)W_MapLumpName(boxLumpName[classnum]);
+	screen->DrawPatchClean (patch, 174, 8);
+	W_UnMapLump (patch);
+
+	patch = (patch_t *)W_MapLumpNum(W_GetNumForName(walkLumpName[classnum])
+		+((MenuTime>>3)&3));
+	screen->DrawPatchClean (patch, 174+24, 8+12);
+	W_UnMapLump (patch);
 }
 
 //---------------------------------------------------------------------------
@@ -1406,8 +1455,9 @@ void M_DrawEpisode ()
 {
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		screen->DrawPatchClean ((patch_t *)W_CacheLumpName (
-			"M_EPISOD", PU_CACHE), 54, 38);
+		const patch_t *patch = (patch_t *)W_MapLumpName ("M_EPISOD");
+		screen->DrawPatchClean (patch, 54, 38);
+		W_UnMapLump (patch);
 	}
 }
 
@@ -1767,12 +1817,13 @@ static void M_PlayerSetupDrawer ()
 		if (sprframe != NULL)
 		{
 			V_ColorMap = translationtables[TRANSLATION_Players] + consoleplayer*256;
-			patch_t *patch = (patch_t *)W_CacheLumpNum (sprframe->lump[PlayerRotation], PU_CACHE);
+			const patch_t *patch = (patch_t *)W_MapLumpNum (sprframe->lump[PlayerRotation]);
 			int dw = MulScale6 (SHORT(patch->width) * CleanXfac, scale);
 			int dh = MulScale6 (SHORT(patch->height) * CleanYfac, scale);
 			screen->DrawTranslatedPatchStretched (patch,
 				(320 - 52 - 32 + xo - 160)*CleanXfac + (SCREENWIDTH)/2,
 				(PSetupDef.y + LINEHEIGHT*3 + 57 - 100)*CleanYfac + (SCREENHEIGHT/2), dw, dh);
+			W_UnMapLump (patch);
 		}
 
 		const char *str = "PRESS " TEXTCOLOR_WHITE "SPACE";
@@ -2683,6 +2734,7 @@ void M_StartControlPanel (bool makeSound)
 //
 void M_Drawer ()
 {
+	const patch_t *patch;
 	int i, x, y, max;
 
 	// Horiz. & Vertically center string and print it.
@@ -2738,8 +2790,9 @@ void M_Drawer ()
 					}
 					else
 					{
-						screen->DrawPatchClean ((patch_t *)W_CacheLumpName (
-							currentMenu->menuitems[i].name ,PU_CACHE), x, y);
+						patch = (patch_t *)W_MapLumpName (currentMenu->menuitems[i].name);
+						screen->DrawPatchClean (patch, x, y);
+						W_UnMapLump (patch);
 					}
 				}
 				y += LINEHEIGHT;
@@ -2751,16 +2804,19 @@ void M_Drawer ()
 			{
 				if (gameinfo.gametype == GAME_Doom)
 				{
-					screen->DrawPatchClean ((patch_t *)W_CacheLumpName (
-						skullName[whichSkull], PU_CACHE),
+					patch = (patch_t *)W_MapLumpName (skullName[whichSkull]);
+					screen->DrawPatchClean (patch,
 						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT);
+					W_UnMapLump (patch);
 				}
 				else
 				{
-					screen->DrawPatchClean ((patch_t *)W_CacheLumpName (
-						MenuTime & 16 ? "M_SLCTR1" : "M_SLCTR2", PU_CACHE),
+					patch = (patch_t *)W_MapLumpName (
+						MenuTime & 16 ? "M_SLCTR1" : "M_SLCTR2");
+					screen->DrawPatchClean (patch,
 						x + SELECTOR_XOFFSET,
 						currentMenu->y + itemOn*LINEHEIGHT + SELECTOR_YOFFSET);
+					W_UnMapLump (patch);
 				}
 			}
 		}

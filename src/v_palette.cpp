@@ -41,7 +41,6 @@
 #include "m_alloc.h"
 #include "r_main.h"		// For lighting constants
 #include "w_wad.h"
-#include "z_zone.h"
 #include "i_video.h"
 #include "c_dispatch.h"
 #include "g_level.h"
@@ -123,12 +122,12 @@ FPalette::FPalette ()
 {
 }
 
-FPalette::FPalette (BYTE *colors)
+FPalette::FPalette (const BYTE *colors)
 {
 	SetPalette (colors);
 }
 
-void FPalette::SetPalette (BYTE *colors)
+void FPalette::SetPalette (const BYTE *colors)
 {
 	int i;
 
@@ -140,10 +139,14 @@ void FPalette::SetPalette (BYTE *colors)
 
 void InitPalette ()
 {
+	const BYTE *pal;
 	BYTE *shade;
 	int c;
 
-	GPalette.SetPalette ((BYTE *)W_CacheLumpName ("PLAYPAL", PU_CACHE));
+	pal = (BYTE *)W_MapLumpName ("PLAYPAL");
+	GPalette.SetPalette (pal);
+	W_UnMapLump (pal);
+
 	ColorMatcher.SetPalette ((DWORD *)GPalette.BaseColors);
 	Near0 = BestColor ((DWORD *)GPalette.BaseColors,
 		GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1);

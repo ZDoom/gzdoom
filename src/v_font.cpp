@@ -45,7 +45,6 @@
 #include "v_video.h"
 #include "w_wad.h"
 #include "r_data.h"
-#include "z_zone.h"
 #include "i_system.h"
 #include "gi.h"
 #include "cmdlib.h"
@@ -143,7 +142,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		}
 		if (lump >= 0)
 		{
-			patch_t *patch = (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
+			const patch_t *patch = (patch_t *)W_MapLumpNum (lump);
 			int height = SHORT(patch->height);
 			int yoffs = SHORT(patch->topoffset);
 
@@ -160,6 +159,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 			Chars[i].XOffs = SHORT(patch->leftoffset);
 			totalwidth += Chars[i].Width;
 			RecordPatchColors (patch, usedcolors);
+			W_UnMapLump (patch);
 		}
 		else
 		{
@@ -185,12 +185,13 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		}
 		if (lump >= 0)
 		{
-			patch_t *patch = (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
+			const patch_t *patch = (patch_t *)W_MapLumpNum (lump);
 			Chars[i].Data = Bitmaps + neededsize;
 			neededsize += Chars[i].Width * FontHeight;
 			RawDrawPatch (patch,
 				Chars[i].Data + (maxyoffs - SHORT(patch->topoffset))*Chars[i].Width,
 				translated);
+			W_UnMapLump (patch);
 		}
 		else
 		{
@@ -244,7 +245,7 @@ FFont *FFont::FindFont (const char *name)
 	return font;
 }
 
-void RecordPatchColors (patch_t *patch, byte *usedcolors)
+void RecordPatchColors (const patch_t *patch, byte *usedcolors)
 {
 	int x;
 
@@ -270,7 +271,7 @@ void RecordPatchColors (patch_t *patch, byte *usedcolors)
 	}
 }
 
-void RawDrawPatch (patch_t *patch, byte *out, byte *tlate)
+void RawDrawPatch (const patch_t *patch, byte *out, byte *tlate)
 {
 	int width = SHORT(patch->width);
 	byte *desttop = out;
@@ -535,7 +536,7 @@ FFont::FFont ()
 
 FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 {
-	byte *data = (byte *)W_CacheLumpNum (lump, PU_CACHE);
+	const byte *data = (byte *)W_MapLumpNum (lump);
 
 	if (data[0] != 'F' || data[1] != 'O' || data[2] != 'N' ||
 		(data[3] != '1' && data[3] != '2'))
@@ -556,13 +557,15 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump)
 		break;
 	}
 
+	W_UnMapLump (data);
+
 	Next = FirstFont;
 	FirstFont = this;
 }
 
-void FSingleLumpFont::LoadFON1 (BYTE *data)
+void FSingleLumpFont::LoadFON1 (const BYTE *data)
 {
-	BYTE *data_p;
+	const BYTE *data_p;
 	int w, h, i;
 
 	Chars = new CharData[256];
@@ -611,14 +614,14 @@ void FSingleLumpFont::LoadFON1 (BYTE *data)
 	}
 }
 
-void FSingleLumpFont::LoadFON2 (BYTE *data)
+void FSingleLumpFont::LoadFON2 (const BYTE *data)
 {
 	int count, i, totalwidth;
 	BYTE identity[256];
 	double luminosity[256];
 	WORD *widths;
-	BYTE *palette;
-	BYTE *data_p;
+	const BYTE *palette;
+	const BYTE *data_p;
 	BYTE *bitmap_p;
 
 	FontHeight = data[4] + data[5]*256;

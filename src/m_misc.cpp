@@ -45,8 +45,6 @@
 
 #include "doomdef.h"
 
-#include "z_zone.h"
-
 #include "m_swap.h"
 #include "m_argv.h"
 
@@ -125,7 +123,7 @@ int M_ReadFile (char const *name, byte **buffer)
 	if (fstat (handle,&fileinfo) == -1)
 		I_Error ("Couldn't read file %s", name);
 	length = fileinfo.st_size;
-	buf = (byte *)Z_Malloc (length, PU_STATIC, NULL);
+	buf = new BYTE[length];
 	count = read (handle, buf, length);
 	close (handle);
 

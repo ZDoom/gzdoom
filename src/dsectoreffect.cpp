@@ -23,7 +23,7 @@
 //-----------------------------------------------------------------------------
 
 #include "dsectoreffect.h"
-
+#include "gi.h"
 #include "p_local.h"
 
 IMPLEMENT_CLASS (DSectorEffect)
@@ -186,7 +186,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 				flag = P_ChangeSector (m_Sector, crush, speed, 0);
 				if (flag)
 				{
-					if (crush >= 0)
+					if (crush >= 0 && gameinfo.gametype != GAME_Hexen)
 					{
 						m_Sector->floortexz += m_Sector->floorplane.HeightDiff (lastpos);
 						m_Sector->AdjustFloorClip ();
@@ -244,7 +244,7 @@ DMover::EResult DMover::MovePlane (fixed_t speed, fixed_t dest, int crush,
 				flag = P_ChangeSector (m_Sector, crush, -speed, 1);
 				if (flag)
 				{
-					if (crush >= 0)
+					if (crush >= 0 && gameinfo.gametype != GAME_Hexen)
 					{
 						m_Sector->ceilingtexz += m_Sector->ceilingplane.HeightDiff (lastpos);
 						return crushed;

@@ -5,7 +5,6 @@
 #include "sbar.h"
 #include "r_defs.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "m_random.h"
 #include "d_player.h"
 #include "st_stuff.h"
@@ -518,9 +517,9 @@ private:
 
 		if (desttop != NULL)
 		{
-			patch_t *arms = (patch_t *)W_CacheLumpName (name, PU_CACHE);
+			const patch_t *arms = (patch_t *)W_MapLumpName (name);
 			int w = SHORT(arms->width);
-			int *ofs = &arms->columnofs[0];
+			const int *ofs = &arms->columnofs[0];
 			desttop += x + 320*y;
 
 			if (colormap == NULL)
@@ -589,6 +588,7 @@ private:
 					desttop++;
 				} while (--w);
 			}
+			W_UnMapLump (arms);
 		}
 	}
 

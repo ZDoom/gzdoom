@@ -42,7 +42,6 @@
 
 #include "m_swap.h"
 #include "w_wad.h"
-#include "z_zone.h"
 
 #define WALLYREPEAT 8
 
@@ -428,7 +427,7 @@ clearfog:
 extern int *texturewidthmask;
 
 // prevlineasm1 is like vlineasm1 but skips the loop if only drawing one pixel
-inline fixed_t prevline1 (fixed_t vince, byte *colormap, int count, fixed_t vplce, byte *bufplce, byte *dest)
+inline fixed_t prevline1 (fixed_t vince, byte *colormap, int count, fixed_t vplce, const byte *bufplce, byte *dest)
 {
 	dc_iscale = vince;
 	dc_colormap = colormap;
@@ -441,7 +440,7 @@ inline fixed_t prevline1 (fixed_t vince, byte *colormap, int count, fixed_t vplc
 
 //extern cycle_t WallScanCycles;
 void wallscan (int x1, int x2, short *uwal, short *dwal, fixed_t *swal, fixed_t *lwal,
-			   BYTE *(*getcol)(int tex, int x))
+			   const BYTE *(*getcol)(int tex, int x))
 {
 	long x, shiftval;
 	long y1ve[4], y2ve[4], u4, d4, z;
@@ -1797,7 +1796,7 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 
 	if (TileSizes[WallSpriteTile].Width == 0xffff)
 	{
-		R_CacheTileNum (WallSpriteTile, PU_CACHE);
+		R_CacheTileNum (WallSpriteTile);
 	}
 
 	x1 = TileSizes[WallSpriteTile].LeftOffset;
@@ -1988,7 +1987,7 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 		calclighting = true;
 
 	// Draw it
-	R_CacheTileNum (WallSpriteTile, PU_CACHE);
+	R_CacheTileNum (WallSpriteTile);
 
 	if (actor->renderflags & RF_YFLIP)
 	{

@@ -35,7 +35,6 @@
 
 #include <stddef.h>
 #include "i_system.h"
-#include "z_zone.h"
 #include "m_alloc.h"
 
 #include "m_swap.h"
@@ -105,7 +104,7 @@ typedef struct
 } texture_t;
 
 FTileSize		*TileSizes;
-patch_t			**TileCache;
+const patch_t	**TileCache;
 
 int 			firstflat;
 int 			lastflat;
@@ -226,8 +225,8 @@ void R_DrawColumnInCache (const column_t *patch, byte *cache,
 
 void R_GenerateComposite (int texnum)
 {
-	byte *block = (byte *)Z_Malloc (texturecompositesize[texnum], PU_STATIC,
-						   (void **) &texturecomposite[texnum]);
+	texturecomposite[texnum] = new byte[texturecompositesize[texnum]];
+	byte *block = texturecomposite[texnum];
 	texture_t *texture = textures[texnum];
 	// Composite the columns together.
 	texpatch_t *patch = texture->patches;
@@ -239,7 +238,7 @@ void R_GenerateComposite (int texnum)
 
 	for (; --i >=0; patch++)
 	{
-		patch_t *realpatch = (patch_t *)W_CacheLumpNum (patch->patch, PU_CACHE);
+		const patch_t *realpatch = (patch_t *)W_MapLumpNum (patch->patch);
 		int x1 = patch->originx, x2 = x1 + SHORT(realpatch->width);
 		const int *cofs = realpatch->columnofs-x1;
 		if (x1<0)
@@ -252,6 +251,7 @@ void R_GenerateComposite (int texnum)
 				R_DrawColumnInCache((column_t*)((byte*)realpatch+LONG(cofs[x1])),
 									block+colofs[x1],patch->originy,texture->height,
 									marks + x1 * texture->height,texture->BadPatched);
+		W_UnMapLump (realpatch);
 	}
 
 	// killough 4/9/98: Next, convert multipatched columns into true columns,
@@ -296,11 +296,6 @@ void R_GenerateComposite (int texnum)
 	}
 	delete[] source;			// free temporary column
 	free(marks);				// free transparency marks
-
-	// Now that the texture has been built in column cache,
-	// it is purgable from zone memory.
-
-	Z_ChangeTag (block, PU_CACHE);
 }
 
 //
@@ -343,7 +338,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
 		// Check if this patch is likely to be a problem.
 		// It must be 256 pixels tall, and all its columns must have exactly
 		// one post, where each post has a supposed length of 0.
-		const patch_t *realpatch = (patch_t *)W_CacheLumpNum (patch->patch, PU_CACHE);
+		const patch_t *realpatch = (patch_t *)W_MapLumpNum (patch->patch);
 		const int *cofs = realpatch->columnofs;
 		int x, x2 = SHORT(realpatch->width);
 
@@ -371,19 +366,20 @@ static void R_GenerateLookup(int texnum, int *const errors)
 				mustFix = true;
 			}
 		}
+		W_UnMapLump (realpatch);
 	}
 
 	while (--i >= 0)
 	{
 		int pat = patch->patch;
-		const patch_t *realpatch = (patch_t *)W_CacheLumpNum (pat, PU_CACHE);
+		const patch_t *realpatch = (patch_t *)W_MapLumpNum (pat);
 		int x1 = patch->originx, x2 = x1 + SHORT(realpatch->width), x = x1;
 		const int *cofs = realpatch->columnofs-x1;
 
 		// [RH] Force composite generation if a patch starts above the top of
 		// the texture or does not cover the entire height of the texture.
-		if (patch->originy < 0 || patch->originy > 0 ||
-			SHORT(realpatch->height) < texture->height)
+		if ((patch->originy < 0 || patch->originy > 0 ||
+			 SHORT(realpatch->height) < texture->height))
 		{
 			mustComposite = true;
 		}
@@ -413,6 +409,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
 			collump[x] = pat;
 			colofs[x] = LONG(cofs[x])+3;
 		}
+		W_UnMapLump (realpatch);
 	}
 
 	// Now count the number of columns that are covered by more than one patch.
@@ -485,7 +482,7 @@ static void R_GenerateLookup(int texnum, int *const errors)
 //
 // R_GetColumn
 //
-byte *R_GetColumn (int tex, int col)
+const byte *R_GetColumn (int tex, int col)
 {
 	int lump;
 	int ofs;
@@ -495,7 +492,14 @@ byte *R_GetColumn (int tex, int col)
 	ofs = texturecolumnofs[tex][col];
 	
 	if (lump > 0)
-		return (byte *)W_CacheLumpNum(lump,PU_CACHE)+ofs;
+		//return (byte *)W_MapLumpNum(lump)+ofs;
+	{
+		if (TileCache[lump] == NULL)
+		{
+			R_CacheTileNum (lump);
+		}
+		return (const byte *)TileCache[lump]+ofs;
+	}
 
 	if (!texturecomposite[tex])
 		R_GenerateComposite (tex);
@@ -521,9 +525,9 @@ void R_InitTextures (void)
 	int					i;
 	int 				j;
 
-	int*				maptex;
-	int*				maptex2;
-	int*				maptex1;
+	const int*			maptex;
+	const int*			maptex2;
+	const int*			maptex1;
 	
 	int*				patchlookup;
 	
@@ -535,15 +539,15 @@ void R_InitTextures (void)
 	int					numtextures1;
 	int					numtextures2;
 
-	int*				directory;
+	const int*			directory;
 
 	int					errors = 0;
 
 	
 	// Load the patch names from pnames.lmp.
 	{
-		char *names = (char *)W_CacheLumpName ("PNAMES", PU_STATIC);
-		char *name_p = names+4;
+		const char *names = (char *)W_MapLumpName ("PNAMES");
+		const char *name_p = names+4;
 
 		nummappatches = LONG ( *((int *)names) );
 		patchlookup = new int[nummappatches];
@@ -564,20 +568,20 @@ void R_InitTextures (void)
 				patchlookup[i] = W_CheckNumForName (name_p + i*8, ns_sprites);
 			}
 		}
-		Z_Free (names);
+		W_UnMapLump (names);
 	}
 	
 	// Load the map texture definitions from textures.lmp.
 	// The data is contained in one or two lumps,
 	//	TEXTURE1 for shareware, plus TEXTURE2 for commercial.
-	maptex = maptex1 = (int *)W_CacheLumpName ("TEXTURE1", PU_STATIC);
+	maptex = maptex1 = (int *)W_MapLumpName ("TEXTURE1");
 	numtextures1 = LONG(*maptex);
 	maxoff = W_LumpLength (W_GetNumForName ("TEXTURE1"));
 	directory = maptex+1;
 		
 	if (W_CheckNumForName ("TEXTURE2") != -1)
 	{
-		maptex2 = (int *)W_CacheLumpName ("TEXTURE2", PU_STATIC);
+		maptex2 = (int *)W_MapLumpName ("TEXTURE2");
 		numtextures2 = LONG(*maptex2);
 		maxoff2 = W_LumpLength (W_GetNumForName ("TEXTURE2"));
 	}
@@ -634,20 +638,6 @@ void R_InitTextures (void)
 		texture->patchcount = SAFESHORT(mtexture->patchcount);
 		uppercopy (texture->name, mtexture->name);
 
-		// [RH] Heretic sky textures are marked as only 128 pixels tall,
-		// even though they are really 200 pixels tall. Hack around this.
-		if (gameinfo.gametype == GAME_Heretic &&
-			texture->name[0] == 'S' &&
-			texture->name[1] == 'K' &&
-			texture->name[2] == 'Y' &&
-			texture->name[4] == 0 &&
-			texture->name[3] >= '1' &&
-			texture->name[3] <= '3' &&
-			texture->height == 128)
-		{
-			texture->height = 200;
-		}
-
 		mpatch = &mtexture->patches[0];
 		patch = &texture->patches[0];
 
@@ -676,6 +666,35 @@ void R_InitTextures (void)
 			Printf ("R_InitTextures: Texture %s is left without any patches\n", name);
 			//errors++;
 		}
+
+		// [RH] Heretic sky textures are marked as only 128 pixels tall,
+		// even though they are really 200 pixels tall. Hack around this.
+		if (gameinfo.gametype == GAME_Heretic &&
+			texture->name[0] == 'S' &&
+			texture->name[1] == 'K' &&
+			texture->name[2] == 'Y' &&
+			texture->name[4] == 0 &&
+			texture->name[3] >= '1' &&
+			texture->name[3] <= '3' &&
+			texture->height == 128)
+		{
+			texture->height = 200;
+		}
+		// [RH] The Doom E1 sky has its patch's y offset at -8 instead of 0.
+		else if (gameinfo.gametype == GAME_Doom &&
+			!(gameinfo.flags & GI_MAPxx) &&
+			texture->height == 128 &&
+			texture->patchcount == 1 &&
+			texture->patches->originy == -8 &&
+			texture->name[0] == 'S' &&
+			texture->name[1] == 'K' &&
+			texture->name[2] == 'Y' &&
+			texture->name[3] == '1' &&
+			texture->name[4] == 0)
+		{
+			texture->patches->originy = 0;
+		}
+
 		texturecolumnlump[i] = new short[texture->width];
 		texturecolumnofs[i] = new unsigned int[texture->width];
 
@@ -702,9 +721,9 @@ void R_InitTextures (void)
 	}
 	delete[] patchlookup;
 
-	Z_Free (maptex1);
+	W_UnMapLump (maptex1);
 	if (maptex2)
-		Z_Free (maptex2);
+		W_UnMapLump (maptex2);
 	
 	if (errors)
 		I_FatalError ("%d errors in R_InitTextures.", errors);
@@ -735,7 +754,6 @@ void R_InitTextures (void)
 	
 	for (i = 0; i < numtextures; i++)
 		texturetranslation[i] = i;
-
 }
 
 
@@ -806,9 +824,9 @@ void R_SetDefaultColormap (const char *name)
 		lump = W_CheckNumForName (name, ns_colormaps);
 		if (lump == -1)
 			lump = W_CheckNumForName (name, ns_global);
-		byte *data = (byte *)W_CacheLumpNum (lump, PU_CACHE);
-
+		const byte *data = (byte *)W_MapLumpNum (lump);
 		memcpy (realcolormaps, data, NUMCOLORMAPS*256);
+		W_UnMapLump (data);
 		uppercopy (fakecmaps[0].name, name);
 		fakecmaps[0].blend = 0;
 	}
@@ -846,10 +864,12 @@ void R_InitColormaps ()
 			if (W_LumpLength (i) >= (NUMCOLORMAPS+1)*256)
 			{
 				int k, r, g, b;
-				byte *map = (byte *)W_CacheLumpNum (i, PU_CACHE);
+				const byte *map = (byte *)W_MapLumpNum (i);
 
 				memcpy (realcolormaps+NUMCOLORMAPS*256*j,
 						map, NUMCOLORMAPS*256);
+
+				W_UnMapLump (map);
 
 				r = g = b = 0;
 
@@ -896,14 +916,18 @@ DWORD R_BlendForColormap (DWORD map)
 //
 // Initialize the tile cache.
 //
+static int NumTileLumps;
+
 void R_InitTiles ()
 {
 	int i;
 
-	TileSizes = new FTileSize[numlumps];
-	TileCache = new patch_t *[numlumps];
+	NumTileLumps = numlumps;
 
-	for (i = 0; i < numlumps; i++)
+	TileSizes = new FTileSize[NumTileLumps];
+	TileCache = new const patch_t *[NumTileLumps];
+
+	for (i = 0; i < NumTileLumps; i++)
 	{
 		TileSizes[i].Width = 0xffff;
 		TileCache[i] = NULL;
@@ -1038,14 +1062,13 @@ int R_CheckTileNumForName (const char *name, ETileType type)
 //
 // R_CacheTileNum
 //
-int R_CacheTileNum (int picnum, int purgelevel)
+int R_CacheTileNum (int picnum)
 {
 	if (TileCache[picnum] != NULL)
 	{
 		return picnum;
 	}
-	Z_Malloc (W_LumpLength (picnum), purgelevel, &TileCache[picnum]);
-	W_ReadLump (picnum, TileCache[picnum]);
+	TileCache[picnum] = (const patch_t *)W_MapLumpNum (picnum);
 	TileSizes[picnum].Width = SHORT(TileCache[picnum]->width);
 	TileSizes[picnum].Height = SHORT(TileCache[picnum]->height);
 	TileSizes[picnum].LeftOffset = SHORT(TileCache[picnum]->leftoffset);
@@ -1056,14 +1079,14 @@ int R_CacheTileNum (int picnum, int purgelevel)
 //
 // R_CacheTileName
 //
-int R_CacheTileName (const char *name, ETileType type, int purgelevel)
+int R_CacheTileName (const char *name, ETileType type)
 {
 	int picnum = R_CheckTileNumForName (name, type);
 	if (picnum == -1)
 	{
 		I_Error ("Can't find tile \"%s\"\n", name);
 	}
-	return R_CacheTileNum (picnum, purgelevel);
+	return R_CacheTileNum (picnum);
 }
 
 //
@@ -1080,6 +1103,25 @@ void R_PrecacheLevel (void)
 	if (demoplayback)
 		return;
 
+	// Unmap all loaded tiles (if they are memory-mapped, this does nothing)
+	for (i = NumTileLumps - 1; i >= 0; --i)
+	{
+		if (TileCache[i] != NULL)
+		{
+			W_UnMapLump (TileCache[i]);
+			TileCache[i] = NULL;
+		}
+	}
+	// Decommit composite textures.
+	for (i = numtextures - 1; i >= 0; --i)
+	{
+		if (texturecomposite[i] != NULL)
+		{
+			delete[] texturecomposite[i];
+			texturecomposite[i] = NULL;
+		}
+	}
+
 	{
 		int size = (numflats > (int)sprites.Size ()) ? numflats : (int)sprites.Size ();
 
@@ -1094,7 +1136,7 @@ void R_PrecacheLevel (void)
 		
 	for (i = numflats - 1; i >= 0; i--)
 		if (hitlist[i])
-			W_CacheLumpNum (firstflat + i, PU_CACHE);
+			W_MapLumpNum (firstflat + i);
 	
 	// Precache textures.
 	memset (hitlist, 0, numtextures);
@@ -1126,7 +1168,7 @@ void R_PrecacheLevel (void)
 			texture_t *texture = textures[i];
 
 			for (j = texture->patchcount - 1; j > 0; j--)
-				W_CacheLumpNum(texture->patches[j].patch, PU_CACHE);
+				R_CacheTileNum (texture->patches[j].patch);
 		}
 	}
 
@@ -1152,7 +1194,7 @@ void R_PrecacheLevel (void)
 				{
 					if (SpriteFrames[sprites[i].spriteframes + j].lump[k] != -1)
 					{
-						R_CacheTileNum (SpriteFrames[sprites[i].spriteframes + j].lump[k], PU_CACHE);
+						R_CacheTileNum (SpriteFrames[sprites[i].spriteframes + j].lump[k]);
 					}
 				}
 			}

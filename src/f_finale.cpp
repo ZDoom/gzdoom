@@ -28,7 +28,6 @@
 
 #include "i_system.h"
 #include "m_swap.h"
-#include "z_zone.h"
 #include "v_video.h"
 #include "i_video.h"
 #include "v_text.h"
@@ -62,7 +61,7 @@ static BYTE *DemonBuffer;
 static SBYTE FadeDir;
 static bool FinaleHasPic;
 
-static const char *FinaleText;
+static char *FinaleText;
 static size_t FinaleTextLen;
 static char *FinaleFlat;
 
@@ -111,8 +110,10 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 	}
 	else
 	{
-		FinaleText = (text != NULL) ? text : "Empty message";
-		FinaleTextLen = strlen (FinaleText);
+		const char *from = (text != NULL) ? text : "Empty message";
+		FinaleTextLen = strlen (from) + 1;
+		FinaleText = new char[FinaleTextLen];
+		memcpy (FinaleText, from, FinaleTextLen);
 	}
 
 	FinaleStage = 0;
@@ -137,6 +138,21 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 	FinaleEndCount = 70;
 	FadeDir = -1;
 	S_StopAllChannels ();
+}
+
+void F_EndFinale ()
+{
+	if (FinaleText != NULL)
+	{
+		delete[] FinaleText;
+		FinaleText = NULL;
+		FinaleTextLen = 0;
+	}
+	if (DemonBuffer != NULL)
+	{
+		delete[] DemonBuffer;
+		DemonBuffer = NULL;
+	}
 }
 
 BOOL F_Responder (event_t *event)
@@ -206,9 +222,12 @@ void F_Ticker ()
 						}
 						else if (EndSequences[FinaleSequence].EndType == END_Demon)
 						{
-							DemonBuffer = (byte *)Z_Malloc (128000, PU_LEVEL, &DemonBuffer);
-							W_ReadLump (W_GetNumForName ("FINAL2"), DemonBuffer);
-							W_ReadLump (W_GetNumForName ("FINAL1"), DemonBuffer+64000);
+							if (DemonBuffer == NULL)
+							{
+								DemonBuffer = new BYTE[128000];
+								W_ReadLump (W_GetNumForName ("FINAL2"), DemonBuffer);
+								W_ReadLump (W_GetNumForName ("FINAL1"), DemonBuffer+64000);
+							}
 						}
 					}
 				}
@@ -669,10 +688,12 @@ void F_CastDrawer (void)
 	spriteframe_t*		sprframe;
 	int 				lump;
 	BOOL	 			flip;
-	patch_t*			patch;
+	const patch_t*		patch;
 	
 	// erase the entire screen to a background
-	screen->DrawPatchIndirect ((patch_t *)W_CacheLumpName ("BOSSBACK", PU_CACHE), 0, 0);
+	patch = (patch_t *)W_MapLumpName ("BOSSBACK");
+	screen->DrawPatchIndirect (patch, 0, 0);
+	W_UnMapLump (patch);
 
 	screen->DrawTextClean (CR_RED,
 		(SCREENWIDTH - screen->StringWidth (GStrings(castorder[castnum].name)) * CleanXfac)/2,
@@ -684,11 +705,12 @@ void F_CastDrawer (void)
 	lump = sprframe->lump[0];
 	flip = (BOOL)sprframe->flip & 1;
 						
-	patch = (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
+	patch = (patch_t *)W_MapLumpNum (lump);
 	if (flip)
 		screen->DrawPatchFlipped (patch, 160, 170);
 	else
 		screen->DrawPatchIndirect (patch, 160, 170);
+	W_UnMapLump (patch);
 }
 
 
@@ -866,17 +888,21 @@ void F_DrawUnderwater(void)
 	case 1:
 		{
 		PalEntry *palette;
-		byte *orgpal;
+		const byte *orgpal;
+		const byte *pic;
 		int i;
 
-		orgpal = (byte *)W_CacheLumpName ("E2PAL", PU_CACHE);
+		orgpal = (byte *)W_MapLumpName ("E2PAL");
 		palette = screen->GetPalette ();
 		for (i = 256; i > 0; i--, orgpal += 3)
 		{
 			*palette++ = PalEntry (orgpal[0], orgpal[1], orgpal[2]);
 		}
+		W_UnMapLump (orgpal);
 		screen->UpdatePalette ();
-		screen->DrawPageBlock ((byte *)W_CacheLumpName ("E2END", PU_CACHE));
+		pic = (byte *)W_MapLumpName ("E2END");
+		screen->DrawPageBlock (pic);
+		W_UnMapLump (pic);
 		FinaleStage = 2;
 		}
 
@@ -889,17 +915,21 @@ void F_DrawUnderwater(void)
 	case 4:
 		{
 		PalEntry *palette;
-		byte *orgpal;
+		const byte *orgpal;
+		const byte *pic;
 		int i;
 
-		orgpal = (byte *)W_CacheLumpName ("PLAYPAL", PU_CACHE);
+		orgpal = (byte *)W_MapLumpName ("PLAYPAL");
 		palette = screen->GetPalette ();
 		for (i = 256; i > 0; i--, orgpal += 3)
 		{
 			*palette++ = PalEntry (orgpal[0], orgpal[1], orgpal[2]);
 		}
+		W_UnMapLump (orgpal);
 		screen->UpdatePalette ();
-		screen->DrawPageBlock ((byte *)W_CacheLumpName ("TITLE", PU_CACHE));
+		pic = (byte *)W_MapLumpName ("TITLE");
+		screen->DrawPageBlock (pic);
+		W_UnMapLump (pic);
 		break;
 		}
 	}
@@ -916,14 +946,11 @@ void F_BunnyScroll (void)
 {
 	int 		scrolled;
 	int 		x;
-	patch_t*	p1;
-	patch_t*	p2;
+	const patch_t*p1;
+	const patch_t*p2;
 	char		name[10];
 	size_t 		stage;
 	static size_t laststage;
-
-	p1 = (patch_t *)W_CacheLumpName ("PFUB2", PU_LEVEL);
-	p2 = (patch_t *)W_CacheLumpName ("PFUB1", PU_LEVEL);
 
 	V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
@@ -933,6 +960,9 @@ void F_BunnyScroll (void)
 	else if (scrolled < 0)
 		scrolled = 0;
 
+	p1 = (patch_t *)W_MapLumpName ("PFUB2");
+	p2 = (patch_t *)W_MapLumpName ("PFUB1");
+
 	for (x = 0; x < 320; x++)
 	{
 		if (x+scrolled < 320)
@@ -940,13 +970,18 @@ void F_BunnyScroll (void)
 		else
 			F_DrawPatchCol (x, p2, x+scrolled - 320, screen);
 	}
+	W_UnMapLump (p1);
+	W_UnMapLump (p2);
 
 	if (FinaleCount < 1130)
+	{
 		return;
+	}
 	if (FinaleCount < 1180)
 	{
-		screen->DrawPatchIndirect ((patch_t *)W_CacheLumpName ("END0",PU_CACHE),
-			(320-13*8)/2, (200-8*8)/2);
+		p1 = (patch_t *)W_MapLumpName ("END0");
+		screen->DrawPatchIndirect (p1, (320-13*8)/2, (200-8*8)/2);
+		W_UnMapLump (p1);
 		laststage = 0;
 		return;
 	}
@@ -961,8 +996,8 @@ void F_BunnyScroll (void)
 	}
 
 	sprintf (name,"END%i",stage);
-	screen->DrawPatchIndirect ((patch_t *)W_CacheLumpName (name,PU_CACHE),
-		(320-13*8)/2, (200-8*8)/2);
+	p1 = (patch_t *)W_MapLumpName (name);
+	screen->DrawPatchIndirect (p1, (320-13*8)/2, (200-8*8)/2);
 }
 
 
@@ -972,6 +1007,7 @@ void F_BunnyScroll (void)
 void F_Drawer (void)
 {
 	const char *picname = NULL;
+	const patch_t *patch;
 
 	switch (FinaleStage)
 	{
@@ -982,8 +1018,9 @@ void F_Drawer (void)
 			int lump = W_CheckNumForName (FinaleFlat, ns_flats);
 			if (lump >= 0)
 			{
-				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT,
-					(byte *)W_CacheLumpNum (lump, PU_CACHE));
+				const byte *flat = (byte *)W_MapLumpNum (lump);
+				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, flat);
+				W_UnMapLump (flat);
 			}
 			else
 			{
@@ -1005,15 +1042,18 @@ void F_Drawer (void)
 		default:
 		case END_Pic1:
 			picname = gameinfo.finalePage1;
-			screen->DrawPatchIndirect ((patch_t *)W_CacheLumpName (gameinfo.finalePage1, PU_CACHE), 0, 0);
+			patch = (patch_t *)W_MapLumpName (gameinfo.finalePage1);
+			screen->DrawPatchIndirect (patch, 0, 0);
 			break;
 		case END_Pic2:
 			picname = gameinfo.finalePage2;
-			screen->DrawPatchIndirect ((patch_t *)W_CacheLumpName (gameinfo.finalePage2, PU_CACHE), 0, 0);
+			patch = (patch_t *)W_MapLumpName (gameinfo.finalePage2);
+			screen->DrawPatchIndirect (patch, 0, 0);
 			break;
 		case END_Pic3:
 			picname = gameinfo.finalePage3;
-			screen->DrawPatchIndirect ((patch_t *)W_CacheLumpName (gameinfo.finalePage3, PU_CACHE), 0, 0);
+			patch = (patch_t *)W_MapLumpName (gameinfo.finalePage3);
+			screen->DrawPatchIndirect (patch, 0, 0);
 			break;
 		case END_Pic:
 			picname = EndSequences[FinaleSequence].PicName;
@@ -1051,30 +1091,34 @@ void F_Drawer (void)
 	}
 	if (picname != NULL)
 	{
-		patch_t *patch;
+		const patch_t *patch;
 
 		if (gameinfo.flags & GI_PAGESARERAW)
 		{
-			byte *data = (byte *)W_CacheLumpName (picname, PU_CACHE);
+			const byte *data = (byte *)W_MapLumpName (picname);
 			screen->DrawPageBlock (data);
+			W_UnMapLump (data);
 		}
 		else
 		{
-			patch = (patch_t *)W_CacheLumpName (picname, PU_CACHE);
+			patch = (patch_t *)W_MapLumpName (picname);
 			screen->DrawPatchIndirect (patch, 0, 0);
+			W_UnMapLump (patch);
 		}
 		if (FinaleStage >= 14)
 		{ // Chess pic, draw the correct character graphic
 			if (multiplayer)
 			{
-				patch = (patch_t *)W_CacheLumpName ("chessall", PU_CACHE);
+				patch = (patch_t *)W_MapLumpName ("chessall");
 				screen->DrawPatchIndirect (patch, 20, 0);
+				W_UnMapLump (patch);
 			}
 			else if (players[consoleplayer].userinfo.PlayerClass > 0)
 			{
-				patch = (patch_t *)W_CacheLumpNum (W_GetNumForName ("chessc")+
-					players[consoleplayer].userinfo.PlayerClass-1, PU_CACHE);
+				patch = (patch_t *)W_MapLumpNum (W_GetNumForName ("chessc")+
+					players[consoleplayer].userinfo.PlayerClass-1);
 				screen->DrawPatchIndirect (patch, 60, 0);
+				W_UnMapLump (patch);
 			}
 		}
 	}
@@ -1103,12 +1147,13 @@ static void GetFinaleText (const char *msgLumpName)
 	if (msgLump != -1)
 	{
 		FinaleTextLen = W_LumpLength(msgLump);
-		FinaleText = (char *)W_CacheLumpNum (msgLump, PU_LEVEL);
+		FinaleText = new char[FinaleTextLen];
+		W_ReadLump (msgLump, FinaleText);
 	}
 	else
 	{
 		FinaleTextLen = strlen (msgLumpName) + sizeof("Unknown message ") + 1;
-		FinaleText = (const char *)Z_Malloc (FinaleTextLen, PU_LEVEL, 0);
+		FinaleText = new char[FinaleTextLen];
 		sprintf (const_cast<char *>(FinaleText), "Unknown message %s", msgLumpName);
 	}
 }

@@ -30,7 +30,6 @@
 #include "m_swap.h"
 #include "m_argv.h"
 #include "i_system.h"
-#include "z_zone.h"
 #include "w_wad.h"
 #include "r_local.h"
 #include "p_effect.h"
@@ -622,13 +621,16 @@ int 			newvissprite;
 
 static void R_CreateSkinTranslation (const char *palname)
 {
-	BYTE *otherPal = (BYTE *)W_CacheLumpName (palname, PU_CACHE);
+	const BYTE *otherPal = (BYTE *)W_MapLumpName (palname);
+	const BYTE *pal_p = otherPal;
 
 	for (int i = 0; i < 256; ++i)
 	{
 		OtherGameSkinRemap[i] = ColorMatcher.Pick (otherPal[0], otherPal[1], otherPal[2]);
 		otherPal += 3;
 	}
+
+	W_UnMapLump (pal_p);
 }
 
 
@@ -947,7 +949,7 @@ nextpost:
 void R_DrawVisSprite (vissprite_t *vis)
 {
 	fixed_t 		frac;
-	patch_t*		patch;
+	const patch_t*	patch;
 	int				x2, stop4;
 	fixed_t			xiscale;
 	ESPSResult		mode;
@@ -969,7 +971,7 @@ void R_DrawVisSprite (vissprite_t *vis)
 			stop4 = (vis->x2 + 1) & ~3;
 		}
 
-		patch = TileCache[R_CacheTileNum (vis->picnum, PU_CACHE)];
+		patch = TileCache[R_CacheTileNum (vis->picnum)];
 		spryscale = vis->yscale;
 		sprflipvert = false;
 		dc_iscale = 0xffffffffu / (unsigned)vis->yscale;
@@ -1115,7 +1117,7 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 
 	if (TileSizes[lump].Width == 0xffff)
 	{
-		R_CacheTileNum (lump, PU_CACHE);	// [RH] get sprite's size
+		R_CacheTileNum (lump);	// [RH] get sprite's size
 	}
 	
 	// [RH] Added scaling
@@ -1321,7 +1323,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 
 	if (TileSizes[lump].Width == 0xffff)
 	{
-		R_CacheTileNum (lump, PU_CACHE);
+		R_CacheTileNum (lump);
 	}
 
 	// calculate edges of the shape
@@ -1614,7 +1616,7 @@ void R_DrawSprite (vissprite_t *spr)
 	{ // [RH] Move floorclip stuff from R_DrawVisSprite to here
 		if (TileSizes[spr->picnum].Width == 0xffff)
 		{
-			R_CacheTileNum (spr->picnum, PU_CACHE);
+			R_CacheTileNum (spr->picnum);
 		}
 		int clip = ((centeryfrac - FixedMul (spr->texturemid -
 			(TileSizes[spr->picnum].Height<<FRACBITS) +

@@ -3,7 +3,7 @@
 ** Parses dehacked/bex patches and changes game structures accordingly
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2002 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,6 @@
 #include "gi.h"
 #include "c_dispatch.h"
 #include "decallib.h"
-#include "z_zone.h"
 #include "r_draw.h"
 
 // [SO] Just the way Randy said to do it :)
@@ -2031,14 +2030,7 @@ static short *GetWordSpace (void *in, size_t size)
 	short *ptr;
 	size_t i;
 
-	if ((size_t)in & 1)
-	{
-		ptr = (short *)Z_Malloc (size*2, PU_DEHACKED, NULL);
-	}
-	else
-	{
-		ptr = (short *)in;
-	}
+	ptr = (short *)in;
 
 	for (i = 0; i < size; i++)
 	{
@@ -2048,13 +2040,36 @@ static short *GetWordSpace (void *in, size_t size)
 }
 
 static int DehUseCount;
+static BYTE *DehSuppLump;
 
 static void UnloadDehSupp ()
 {
 	if (--DehUseCount <= 0)
 	{
 		DehUseCount = 0;
-		Z_FreeTags (PU_DEHACKED, PU_DEHACKED);
+		W_UnMapLump (DehSuppLump);
+		DehSuppLump = NULL;
+		if (OrgSprNames != NULL)
+		{
+			delete[] OrgSprNames[0];
+			delete[] OrgSprNames;
+			OrgSprNames = NULL;
+		}
+		if (StateMap != NULL)
+		{
+			delete[] StateMap;
+			StateMap = NULL;
+		}
+		if (BitNames != NULL)
+		{
+			delete[] BitNames;
+			BitNames = NULL;
+		}
+		if (StyleNames != NULL)
+		{
+			delete[] StyleNames;
+			StyleNames = NULL;
+		}
 		GStrings.FlushNames ();
 		GStrings.Compact ();
 		G_SetLevelStrings ();
@@ -2078,7 +2093,15 @@ static bool LoadDehSupp ()
 		return true;
 	}
 
-	supp = (BYTE *)W_CacheLumpNum (lump, PU_DEHACKED);
+	if (DehSuppLump != NULL)
+	{
+		supp = DehSuppLump;
+	}
+	else
+	{
+		supp = (BYTE *)W_MapLumpNum (lump, true);
+		DehSuppLump = supp;
+	}
 
 	for (;;)
 	{
@@ -2125,19 +2148,16 @@ static bool LoadDehSupp ()
 			char *sprites;
 
 			NumSprites = GetWord (supp + 4);
-			Z_Malloc (NumSprites*sizeof(char*), PU_DEHACKED, &OrgSprNames);
-			sprites = (char *)Z_Malloc (NumSprites*8, PU_DEHACKED, NULL);
+			OrgSprNames = new char *[NumSprites];
+			sprites = new char[NumSprites*5];
 			for (i = 0; i < NumSprites; i++)
 			{
-				sprites[i*4+0] = supp[6+i*4+0];
-				sprites[i*4+1] = supp[6+i*4+1];
-				sprites[i*4+2] = supp[6+i*4+2];
-				sprites[i*4+3] = supp[6+i*4+3];
-				sprites[i*4+4] = 0;
-				sprites[i*4+5] = 0;
-				sprites[i*4+6] = 0;
-				sprites[i*4+7] = 0;
-				OrgSprNames[i] = sprites + i*4;
+				sprites[i*5+0] = supp[6+i*4+0];
+				sprites[i*5+1] = supp[6+i*4+1];
+				sprites[i*5+2] = supp[6+i*4+2];
+				sprites[i*5+3] = supp[6+i*4+3];
+				sprites[i*5+4] = 0;
+				OrgSprNames[i] = sprites + i*5;
 			}
 			supp += 6 + NumSprites * 4;
 		}
@@ -2149,7 +2169,7 @@ static bool LoadDehSupp ()
 				return false;
 			}
 			NumStateMaps = GetWord (supp + 4);
-			Z_Malloc (NumStateMaps*sizeof(*StateMap), PU_DEHACKED, &StateMap);
+			StateMap = new StateMapper[NumStateMaps];
 			for (i = 0; i < NumStateMaps; i++)
 			{
 				const char *name = GetName (GetWord (supp + 6 + i*4));
@@ -2202,7 +2222,7 @@ static bool LoadDehSupp ()
 		else if (CompareLabel ("TBIT", supp))
 		{
 			NumBitNames = GetWord (supp + 4);
-			Z_Malloc (sizeof(BitName)*NumBitNames, PU_DEHACKED, &BitNames);
+			BitNames = new BitName[NumBitNames];
 			for (i = 0; i < NumBitNames; i++)
 			{
 				BitNames[i].Name = GetWord (supp + 6 + i*3);
@@ -2214,7 +2234,7 @@ static bool LoadDehSupp ()
 		else if (CompareLabel ("REND", supp))
 		{
 			NumStyleNames = GetWord (supp + 4);
-			Z_Malloc (sizeof(StyleName)*NumStyleNames, PU_DEHACKED, &StyleNames);
+			StyleNames = new StyleName[NumStyleNames];
 			for (i = 0; i < NumStyleNames; i++)
 			{
 				StyleNames[i].Name = GetWord (supp + 6 + i*3);

@@ -113,7 +113,6 @@ typedef enum {
 	ns_bloodmisc
 } namespace_t;
 
-extern	void**		lumpcache;
 extern	lumpinfo_t*	lumpinfo;
 extern	int			numlumps;
 
@@ -121,8 +120,8 @@ extern	WORD		*FirstLumpIndex;	// [RH] Move hashing stuff out of
 extern	WORD		*NextLumpIndex;		// lumpinfo structure
 
 void W_InitMultipleFiles (wadlist_t **filenames);
+int W_FakeLump (const char *filename);
 
-int W_FileHandleFromWad (int wadnum);
 const char *W_GetWadName (int wadnum);
 bool W_CheckIfWadLoaded (const char *wadname);
 
@@ -138,15 +137,14 @@ inline int W_GetNumForName (const byte *name) { return W_GetNumForName ((const c
 int W_LumpLength (int lump);
 void W_ReadLump (int lump, void *dest);
 
-#ifndef _DEBUG
-void *W_CacheLumpNum (int lump, int tag);
-#else
-void *W_CacheLumpNum2 (int lump, int tag, const char *file, int line);
-#define W_CacheLumpNum(l,t) W_CacheLumpNum2 (l, t, __FILE__, __LINE__)
-#endif
+void *W_MapLumpNum (int lump, bool write=false);
 
-// [RH] W_CacheLumpName() is now a macro
-#define W_CacheLumpName(name,tag) W_CacheLumpNum (W_GetNumForName(name), (tag))
+inline void *W_MapLumpName (const char *name, bool write = false)
+{
+	return W_MapLumpNum (W_GetNumForName (name), write);
+}
+
+void W_UnMapLump (const void *block);
 
 void W_Profile (const char *fname);
 

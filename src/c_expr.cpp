@@ -40,7 +40,6 @@
 
 #include "c_dispatch.h"
 #include "c_cvars.h"
-#include "z_zone.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -233,8 +232,8 @@ missing:
 	Printf ("Missing argument to %s\n", token);
 
 done:
-	if (prod2 != NULL) Z_Free (prod2);
-	if (prod1 != NULL) Z_Free (prod1);
+	if (prod2 != NULL) free (prod2);
+	if (prod1 != NULL) free (prod1);
 	return prod3;
 }
 
@@ -306,7 +305,7 @@ static const char *IsNum (const char *str)
 
 static FStringProd *NewStringProd (const char *str)
 {
-	FStringProd *prod = (FStringProd *)Z_Malloc (sizeof(FStringProd)+strlen(str), PU_STATIC, 0);
+	FStringProd *prod = (FStringProd *)Malloc (sizeof(FStringProd)+strlen(str));
 	prod->Type = PROD_String;
 	strcpy (prod->Value, str);
 	return prod;
@@ -320,7 +319,7 @@ static FStringProd *NewStringProd (const char *str)
 
 static FStringProd *NewStringProd (size_t len)
 {
-	FStringProd *prod = (FStringProd *)Z_Malloc (sizeof(FStringProd)+len, PU_STATIC, 0);
+	FStringProd *prod = (FStringProd *)Malloc (sizeof(FStringProd)+len);
 	prod->Type = PROD_String;
 	prod->Value[0] = 0;
 	return prod;
@@ -334,7 +333,7 @@ static FStringProd *NewStringProd (size_t len)
 
 static FDoubleProd *NewDoubleProd (double val)
 {
-	FDoubleProd *prod = (FDoubleProd *)Z_Malloc (sizeof(FDoubleProd), PU_STATIC, 0);
+	FDoubleProd *prod = (FDoubleProd *)Malloc (sizeof(FDoubleProd));
 	prod->Type = PROD_Double;
 	prod->Value = val;
 	return prod;
@@ -353,7 +352,7 @@ static FStringProd *DoubleToString (FProduction *prod)
 
 	sprintf (buf, "%g", static_cast<FDoubleProd *>(prod)->Value);
 	newprod = NewStringProd (buf);
-	Z_Free (prod);
+	free (prod);
 	return newprod;
 }
 
@@ -368,7 +367,7 @@ static FDoubleProd *StringToDouble (FProduction *prod)
 	FDoubleProd *newprod;
 	
 	newprod = NewDoubleProd (atof (static_cast<FStringProd *>(prod)->Value));
-	Z_Free (prod);
+	free (prod);
 	return newprod;
 }
 
@@ -746,7 +745,7 @@ CCMD (test)
 	}
 	if (prod != NULL)
 	{
-		Z_Free (prod);
+		free (prod);
 	}
 }
 
@@ -802,7 +801,7 @@ CCMD (eval)
 					Printf ("%s\n", static_cast<FStringProd *>(prod)->Value);
 				}
 			}
-			Z_Free (prod);
+			free (prod);
 			return;
 		}
 	}

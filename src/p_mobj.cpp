@@ -26,7 +26,6 @@
 #include "templates.h"
 #include "m_alloc.h"
 #include "i_system.h"
-#include "z_zone.h"
 #include "m_random.h"
 #include "doomdef.h"
 #include "p_local.h"
@@ -1431,44 +1430,11 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 //
 void P_NightmareRespawn (AActor *mobj)
 {
-	DWORD oldflags, oldflags2;
 	fixed_t x, y, z;
-	subsector_t *ss;
 	AActor *mo;
 	AActor *info = mobj->GetDefault();
 
-	x = mobj->SpawnPoint[0] << FRACBITS;
-	y = mobj->SpawnPoint[1] << FRACBITS;
-	// [SO] 9/2/02: This check doesn't work.  To start off, the object is at the wrong Z coordinate,
-	// and zero height.  Second of all, it's ~MF_SOLID, which allows it to go through other objects!
-	oldflags = mobj->flags;
-	oldflags2 = mobj->flags2;
-
-	mobj->flags |= MF_SOLID;
-	mobj->flags2 &= ~(MF2_PASSMOBJ);    // be lazy and just do total z-checking for this.
-
-	// something is occupying its position?
-	if (!P_CheckPosition (mobj, x, y))
-	{
-		mobj->flags = oldflags;         // restore the old flags
-		mobj->flags2 = oldflags2;
-		return;		// no respawn
-	}
-	// Don't bother restoring the flags here, cuz at the end of this function, we Destroy() this mobj
-
-	// spawn a teleport fog at old spot because of removal of the body?
-	Spawn ("TeleportFog", mobj->x, mobj->y, ONFLOORZ);
-
-	ss = R_PointInSubsector (x,y);
-
-	// spawn a teleport fog at the new spot
-	mo = Spawn ("TeleportFog", x, y, ONFLOORZ);
-	if (mo != NULL)
-	{
-		mo->z += TELEFOGHEIGHT;
-	}
-
-	// spawn the new monster
+	// spawn the new monster (assume the spawn will be good)
 	if (info->flags & MF_SPAWNCEILING)
 		z = ONCEILINGZ;
 	else if (info->flags2 & MF2_SPAWNFLOAT)
@@ -1479,19 +1445,45 @@ void P_NightmareRespawn (AActor *mobj)
 		z = ONFLOORZ;
 
 	// spawn it
+	x = mobj->SpawnPoint[0] << FRACBITS;
+	y = mobj->SpawnPoint[1] << FRACBITS;
+	mo = Spawn (RUNTIME_TYPE(mobj), x, y, z);
+
+	if (z == ONFLOORZ)
+		mo->z += mo->SpawnPoint[2] << FRACBITS;
+	else if (z == ONCEILINGZ)
+		mo->z -= mo->SpawnPoint[2] << FRACBITS;
+
+	// something is occupying its position?
+	if (!P_TestMobjLocation (mo))
+	{
+		mo->Destroy ();
+		return;		// no respawn
+	}
+
+	z = mo->z;
+
+	// spawn a teleport fog at old spot because of removal of the body?
+	mo = Spawn ("TeleportFog", mobj->x, mobj->y, mobj->z);
+	if (mo != NULL)
+	{
+		mo->z += TELEFOGHEIGHT;
+	}
+
+	// spawn a teleport fog at the new spot
+	mo = Spawn ("TeleportFog", x, y, z);
+	if (mo != NULL)
+	{
+		mo->z += TELEFOGHEIGHT;
+	}
+
 	// inherit attributes from deceased one
-	mo = Spawn (RUNTIME_TYPE(mobj), x, y, ONFLOORZ);
 	mo->SpawnPoint[0] = mobj->SpawnPoint[0];
 	mo->SpawnPoint[1] = mobj->SpawnPoint[1];
 	mo->SpawnPoint[2] = mobj->SpawnPoint[2];
 	mo->SpawnAngle = mobj->SpawnAngle;
 	mo->SpawnFlags = mobj->SpawnFlags;
 	mo->angle = ANG45 * (mobj->SpawnAngle/45);
-
-	if (z == ONFLOORZ)
-		mo->z += mo->SpawnPoint[2] << FRACBITS;
-	else if (z == ONCEILINGZ)
-		mo->z -= mo->SpawnPoint[2] << FRACBITS;
 
 	if (mobj->SpawnFlags & MTF_AMBUSH)
 		mo->flags |= MF_AMBUSH;
@@ -1993,7 +1985,7 @@ void AActor::Tick ()
 	}
 	if ((z != floorz && !(flags2 & MF2_FLOATBOB)) || momz || BlockingMobj)
 	{	// Handle Z momentum and gravity
-		if ((flags2 & MF2_PASSMOBJ) && !(compatflags & COMPATF_NO_PASSMOBJ))
+		if (!(compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			if (!(onmo = P_CheckOnmobj (this)))
 			{
@@ -2142,7 +2134,7 @@ void A_FreeTargMobj (AActor *mo)
 	mo->z = mo->ceilingz + 4*FRACUNIT;
 	mo->flags &= ~(MF_SHOOTABLE|MF_FLOAT|MF_SKULLFLY|MF_SOLID);
 	mo->flags |= MF_CORPSE|MF_DROPOFF|MF_NOGRAVITY;
-	mo->flags2 &= ~(MF2_PASSMOBJ|MF2_LOGRAV);
+	mo->flags2 &= ~(MF2_LOGRAV);
 	mo->player = NULL;
 }
 
@@ -2682,7 +2674,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 		{
 			if (!multiplayer)
 			{ // Single player
-				if ((mthing->flags & classFlags[SinglePlayerClass[consoleplayer]]) == 0)
+				if ((mthing->flags & classFlags[players[consoleplayer].CurrentPlayerClass]) == 0)
 				{ // Not for current class
 					return;
 				}
@@ -2694,7 +2686,7 @@ void P_SpawnMapThing (mapthing2_t *mthing, int position)
 				{
 					if (playeringame[i])
 					{
-						mask |= classFlags[SinglePlayerClass[i]];
+						mask |= classFlags[players[i].CurrentPlayerClass];
 					}
 				}
 				if ((mthing->flags & mask) == 0)

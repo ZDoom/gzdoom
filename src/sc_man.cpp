@@ -18,7 +18,6 @@
 #include "i_system.h"
 #include "sc_man.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "cmdlib.h"
 #include "m_misc.h"
 
@@ -63,10 +62,11 @@ static char *ScriptBuffer;
 static char *ScriptPtr;
 static char *ScriptEndPtr;
 static char StringBuffer[MAX_STRING_SIZE];
-static BOOL ScriptOpen = false;
+static bool ScriptOpen = false;
 static int ScriptSize;
-static BOOL AlreadyGot = false;
-static BOOL FreeScript = false;
+static bool AlreadyGot = false;
+static bool FreeScript = false;
+static bool UnMapScript = false;
 static char *SavedScriptPtr;
 static int SavedScriptLine;
 
@@ -87,7 +87,7 @@ void SC_Open (const char *name)
 //
 // SC_OpenFile
 //
-// Loads a script (from a file). Uses the zone memory allocator for
+// Loads a script (from a file). Uses the new/delete memory allocator for
 // memory allocation and de-allocation.
 //
 //==========================================================================
@@ -98,6 +98,7 @@ void SC_OpenFile (const char *name)
 	ScriptSize = M_ReadFile (name, (byte **)&ScriptBuffer);
 	ExtractFileBase (name, ScriptName);
 	FreeScript = true;
+	UnMapScript = false;
 	SC_PrepareScript ();
 }
 
@@ -117,6 +118,7 @@ void SC_OpenMem (const char *name, char *buffer, int size)
 	ScriptBuffer = buffer;
 	strcpy (ScriptName, name);
 	FreeScript = false;
+	UnMapScript = false;
 	SC_PrepareScript ();
 }
 
@@ -131,10 +133,11 @@ void SC_OpenMem (const char *name, char *buffer, int size)
 void SC_OpenLumpNum (int lump, const char *name)
 {
 	SC_Close ();
-	ScriptBuffer = (char *)W_CacheLumpNum (lump, PU_STATIC);
+	ScriptBuffer = (char *)W_MapLumpNum (lump);
 	ScriptSize = W_LumpLength (lump);
 	strcpy (ScriptName, name);
-	FreeScript = true;
+	FreeScript = false;
+	UnMapScript = true;
 	SC_PrepareScript ();
 }
 
@@ -168,8 +171,17 @@ void SC_Close (void)
 {
 	if (ScriptOpen)
 	{
-		if (FreeScript && ScriptBuffer)
-			Z_Free (ScriptBuffer);
+		if (ScriptBuffer)
+		{
+			if (FreeScript)
+			{
+				delete[] ScriptBuffer;
+			}
+			else if (UnMapScript)
+			{
+				W_UnMapLump (ScriptBuffer);
+			}
+		}
 		ScriptBuffer = NULL;
 		ScriptOpen = false;
 	}

@@ -3,7 +3,6 @@
 #include "nodebuild.h"
 #include "templates.h"
 #include "r_main.h"
-#include "z_zone.h"
 
 void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	seg_t *&outSegs, int &segCount,
@@ -13,8 +12,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	int i;
 
 	vertCount = Vertices.Size ();
-	outVerts = (vertex_t *)Z_Malloc (vertCount*sizeof(vertex_t), PU_LEVEL, 0);
-	memcpy (outVerts, &Vertices[0], vertCount*sizeof(vertex_t));
+	outVerts = new vertex_t[vertCount];
 
 	for (i = 0; i < vertCount; ++i)
 	{
@@ -26,7 +24,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	outSubs = new subsector_t[subCount];
 
 	nodeCount = Nodes.Size ();
-	outNodes = (node_t *)Z_Malloc (nodeCount*sizeof(node_t), PU_LEVEL, 0);
+	outNodes = new node_t[nodeCount];
 
 	memcpy (outNodes, &Nodes[0], nodeCount*sizeof(node_t));
 	for (i = 0; i < nodeCount; ++i)
@@ -57,7 +55,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		}
 
 		segCount = segs.Size ();
-		outSegs = (seg_t *)Z_Malloc (segCount*sizeof(seg_t), PU_LEVEL, 0);
+		outSegs = new seg_t[segCount];
 		memcpy (outSegs, &segs[0], segCount*sizeof(seg_t));
 
 		for (i = 0; i < segCount; ++i)
@@ -72,7 +70,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 	{
 		memcpy (outSubs, &Subsectors[0], subCount*sizeof(subsector_t));
 		segCount = Segs.Size ();
-		outSegs = (seg_t *)Z_Malloc (segCount*sizeof(seg_t), PU_LEVEL, 0);
+		outSegs = new seg_t[segCount];
 		for (i = 0; i < segCount; ++i)
 		{
 			const FPrivSeg *org = &Segs[SegList[i].SegNum];

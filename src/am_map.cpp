@@ -26,7 +26,6 @@
 #include "doomdef.h"
 #include "templates.h"
 #include "g_level.h"
-#include "z_zone.h"
 #include "doomdef.h"
 #include "st_stuff.h"
 #include "p_local.h"
@@ -638,7 +637,7 @@ void AM_loadPics ()
 		marknums[i] = R_CheckTileNumForName (namebuf, TILE_Patch);
 		if (marknums[i] != -1)
 		{
-			R_CacheTileNum (marknums[i], PU_CACHE);
+			R_CacheTileNum (marknums[i]);
 		}
 	}
 }

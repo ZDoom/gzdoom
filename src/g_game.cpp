@@ -35,7 +35,6 @@
 #include "doomstat.h"
 #include "d_protocol.h"
 #include "d_netinf.h"
-#include "z_zone.h"
 #include "f_finale.h"
 #include "m_argv.h"
 #include "m_misc.h"
@@ -164,14 +163,14 @@ int				lookspeed[2] = {450, 512};
 
 #define SLOWTURNTICS	6 
 
-CVAR (Bool,		cl_run,			false,	CVAR_ARCHIVE)		// Always run?
-CVAR (Bool,		invertmouse,	false,	CVAR_ARCHIVE)		// Invert mouse look down/up?
-CVAR (Bool,		freelook,		false,	CVAR_ARCHIVE)		// Always mlook?
-CVAR (Bool,		lookstrafe,		false,	CVAR_ARCHIVE)		// Always strafe with mouse?
-CVAR (Float,	m_pitch,		1.f,	CVAR_ARCHIVE)		// Mouse speeds
-CVAR (Float,	m_yaw,			1.f,	CVAR_ARCHIVE)
-CVAR (Float,	m_forward,		1.f,	CVAR_ARCHIVE)
-CVAR (Float,	m_side,			2.f,	CVAR_ARCHIVE)
+CVAR (Bool,		cl_run,			false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always run?
+CVAR (Bool,		invertmouse,	false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Invert mouse look down/up?
+CVAR (Bool,		freelook,		false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always mlook?
+CVAR (Bool,		lookstrafe,		false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always strafe with mouse?
+CVAR (Float,	m_pitch,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Mouse speeds
+CVAR (Float,	m_yaw,			1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+CVAR (Float,	m_forward,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
+CVAR (Float,	m_side,			2.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
  
 int 			turnheld;								// for accelerative turning 
  
@@ -829,10 +828,17 @@ void G_Ticker ()
 		C_AdjustBottom ();
 	}
 
-	if (oldgamestate == GS_DEMOSCREEN && oldgamestate != gamestate && page)
+	if (oldgamestate != gamestate)
 	{
-		delete page;
-		page = NULL;
+		if (oldgamestate == GS_DEMOSCREEN && page)
+		{
+			delete page;
+			page = NULL;
+		}
+		else if (oldgamestate == GS_FINALE)
+		{
+			F_EndFinale ();
+		}
 	}
 
 	// get commands, check consistancy, and build new consistancy check
@@ -2081,15 +2087,15 @@ BOOL G_ProcessIFFDemo (char *mapname)
 
 	if (uncompSize > 0)
 	{
-		BYTE *uncompressed = (BYTE *)Z_Malloc (uncompSize, PU_STATIC, 0);
+		BYTE *uncompressed = new BYTE[uncompSize];
 		int r = uncompress (uncompressed, &uncompSize, demo_p, zdembodyend - demo_p);
 		if (r != Z_OK)
 		{
 			Printf ("Could not decompress demo!\n");
-			Z_Free (uncompressed);
+			delete[] uncompressed;
 			return true;
 		}
-		Z_Free (demobuffer);
+		delete[] demobuffer;
 		zdembodyend = uncompressed + uncompSize;
 		demobuffer = demo_p = uncompressed;
 	}
@@ -2108,15 +2114,17 @@ void G_DoPlayDemo (void)
 	demolump = W_CheckNumForName (defdemoname);
 	if (demolump >= 0)
 	{
-		demobuffer = demo_p = (byte *)W_CacheLumpNum (demolump, PU_STATIC);
+		int demolen = W_LumpLength (demolump);
+		demobuffer = new byte[demolen];
+		W_ReadLump (demolump, demobuffer);
 	}
 	else
 	{
 		FixPathSeperator (defdemoname);
 		DefaultExtension (defdemoname, ".lmp");
 		M_ReadFile (defdemoname, &demobuffer);
-		demo_p = demobuffer;
 	}
+	demo_p = demobuffer;
 
 	Printf ("Playing demo %s\n", defdemoname);
 
@@ -2204,7 +2212,7 @@ BOOL G_CheckDemoStatus (void)
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 
-		Z_Free (demobuffer);
+		delete[] demobuffer;
 		demoplayback = false;
 		netdemo = false;
 		netgame = false;

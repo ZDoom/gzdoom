@@ -39,7 +39,6 @@
 #include "m_swap.h"
 #include "r_draw.h"
 #include "w_wad.h"
-#include "z_zone.h"
 #include "v_text.h"
 #include "s_sound.h"
 #include "gi.h"

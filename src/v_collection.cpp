@@ -37,7 +37,6 @@
 #include "v_video.h"
 #include "m_swap.h"
 #include "w_wad.h"
-#include "z_zone.h"
 
 FImageCollection::FImageCollection ()
 {
@@ -68,7 +67,7 @@ void FImageCollection::Init (const char **patchNames, int numPatches, int namesp
 
 	for (i = neededsize = 0; i < numPatches; i++)
 	{
-		patch_t *patch = CachePatch (patchNames[i], namespc);
+		const patch_t *patch = CachePatch (patchNames[i], namespc);
 		if (patch)
 		{
 			if (((byte *)patch)[0] == 'I' &&
@@ -90,6 +89,7 @@ void FImageCollection::Init (const char **patchNames, int numPatches, int namesp
 				Images[i].YOffs = SHORT(patch->topoffset);
 			}
 			neededsize += Images[i].Width * Images[i].Height;
+			W_UnMapLump (patch);
 		}
 		else
 		{
@@ -109,7 +109,7 @@ void FImageCollection::Init (const char **patchNames, int numPatches, int namesp
 
 	for (i = neededsize = 0; i < numPatches; i++)
 	{
-		patch_t *patch = CachePatch (patchNames[i], namespc);
+		const patch_t *patch = CachePatch (patchNames[i], namespc);
 		if (patch)
 		{
 			Images[i].Data = Bitmaps + neededsize;
@@ -155,6 +155,7 @@ void FImageCollection::Init (const char **patchNames, int numPatches, int namesp
 				RawDrawPatch (patch, Images[i].Data, translate);
 			}
 			neededsize += Images[i].Width * Images[i].Height;
+			W_UnMapLump (patch);
 		}
 		else
 		{
@@ -178,7 +179,7 @@ void FImageCollection::Uninit ()
 	NumImages = 0;
 }
 
-patch_t *FImageCollection::CachePatch (const char *name, int namespc)
+const patch_t *FImageCollection::CachePatch (const char *name, int namespc)
 {
 	int lump;
 	
@@ -189,7 +190,7 @@ patch_t *FImageCollection::CachePatch (const char *name, int namespc)
 		lump = W_CheckNumForName (name, ns_sprites);
 	if (lump == -1)
 		return NULL;
-	return (patch_t *)W_CacheLumpNum (lump, PU_CACHE);
+	return (const patch_t *)W_MapLumpNum (lump);
 }
 
 byte *FImageCollection::GetImage (int code, int *const width, int *const height,

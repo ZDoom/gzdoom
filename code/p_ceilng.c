@@ -24,6 +24,8 @@ static const char
 rcsid[] = "$Id: p_ceilng.c,v 1.4 1997/02/03 16:47:53 b1 Exp $";
 
 
+#include "m_alloc.h"
+
 #include "z_zone.h"
 #include "doomdef.h"
 #include "p_local.h"
@@ -42,7 +44,8 @@ rcsid[] = "$Id: p_ceilng.c,v 1.4 1997/02/03 16:47:53 b1 Exp $";
 //
 
 
-ceiling_t*		activeceilings[MAXCEILINGS];
+int				MaxCeilings;
+ceiling_t		**activeceilings;
 
 
 //
@@ -65,7 +68,7 @@ void T_MoveCeiling (ceiling_t* ceiling)
 						  ceiling->topheight,
 						  false,1,ceiling->direction);
 		
-		if (!(leveltime&7))
+		if (!(level.time&7))
 		{
 			switch(ceiling->type)
 			{
@@ -109,7 +112,7 @@ void T_MoveCeiling (ceiling_t* ceiling)
 						  ceiling->bottomheight,
 						  ceiling->crush,1,ceiling->direction);
 		
-		if (!(leveltime&7))
+		if (!(level.time&7))
 		{
 			switch(ceiling->type)
 			{
@@ -250,16 +253,23 @@ EV_DoCeiling
 //
 void P_AddActiveCeiling(ceiling_t* c)
 {
-	int 		i;
+	int i;
 	
-	for (i = 0; i < MAXCEILINGS;i++)
-	{
-		if (activeceilings[i] == NULL)
-		{
+	for (i = 0; i < MaxCeilings;i++) {
+		if (activeceilings[i] == NULL) {
 			activeceilings[i] = c;
 			return;
 		}
 	}
+
+	// [RH] If we got here, there was no room in the activeceilings
+	// list, so we need to make some.
+
+	MaxCeilings += 2;
+	activeceilings = Realloc (activeceilings, MaxCeilings * sizeof(ceiling_t *));
+	activeceilings[i] = c;
+	activeceilings[i+1] = NULL;
+	DEVONLY (Printf, "MaxCeilings increased to %d\n", MaxCeilings, 0);
 }
 
 
@@ -271,7 +281,7 @@ void P_RemoveActiveCeiling(ceiling_t* c)
 {
 	int 		i;
 		
-	for (i = 0;i < MAXCEILINGS;i++)
+	for (i = 0;i < MaxCeilings;i++)
 	{
 		if (activeceilings[i] == c)
 		{
@@ -292,7 +302,7 @@ void P_ActivateInStasisCeiling(line_t* line)
 {
 	int 		i;
 		
-	for (i = 0;i < MAXCEILINGS;i++)
+	for (i = 0;i < MaxCeilings;i++)
 	{
 		if (activeceilings[i]
 			&& (activeceilings[i]->tag == line->tag)
@@ -317,7 +327,7 @@ int 	EV_CeilingCrushStop(line_t		*line)
 	int 		rtn;
 		
 	rtn = 0;
-	for (i = 0;i < MAXCEILINGS;i++)
+	for (i = 0;i < MaxCeilings;i++)
 	{
 		if (activeceilings[i]
 			&& (activeceilings[i]->tag == line->tag)

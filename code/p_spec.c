@@ -28,6 +28,8 @@
 static const char
 rcsid[] = "$Id: p_spec.c,v 1.6 1997/02/03 22:45:12 b1 Exp $";
 
+#include "m_alloc.h"
+
 #include <stdlib.h>
 
 #include "doomdef.h"
@@ -52,6 +54,7 @@ rcsid[] = "$Id: p_spec.c,v 1.6 1997/02/03 22:45:12 b1 Exp $";
 // Data.
 #include "sounds.h"
 
+#include "c_console.h"
 
 //
 // Animating textures and planes
@@ -320,10 +323,6 @@ fixed_t P_FindHighestFloorSurrounding(sector_t *sec)
 //
 // P_FindNextHighestFloor
 // FIND NEXT HIGHEST FLOOR IN SURROUNDING SECTORS
-// Note: this should be doable w/o a fixed array.
-
-// 20 adjoining sectors max!
-#define MAX_ADJOINING_SECTORS			20
 
 fixed_t
 P_FindNextHighestFloor
@@ -331,46 +330,26 @@ P_FindNextHighestFloor
   int			currentheight )
 {
 	int 				i;
-	int 				h;
-	int 				min;
 	line_t* 			check;
 	sector_t*			other;
-	fixed_t 			height = currentheight;
+	fixed_t				min;
 
-	
-	fixed_t 			heightlist[MAX_ADJOINING_SECTORS];				
+	min = MAXINT;
 
-	for (i=0, h=0 ;i < sec->linecount ; i++)
-	{
+	for (i = 0; i < sec->linecount; i++) {
 		check = sec->lines[i];
-		other = getNextSector(check,sec);
+		other = getNextSector (check, sec);
 
 		if (!other)
 			continue;
-		
-		if (other->floorheight > height)
-			heightlist[h++] = other->floorheight;
 
-		// Check for overflow. Exit.
-		if ( h >= MAX_ADJOINING_SECTORS )
-		{
-			fprintf( stderr,
-					 "Sector with more than 20 adjoining sectors\n" );
-			break;
-		}
+		if (other->floorheight > currentheight && other->floorheight < min)
+			min = other->floorheight;
 	}
-	
-	// Find lowest height in list
-	if (!h)
+
+	if (min == MAXINT)
 		return currentheight;
-				
-	min = heightlist[0];
-	
-	// Range checking? 
-	for (i = 1;i < h;i++)
-		if (heightlist[i] < min)
-			min = heightlist[i];
-						
+	else
 	return min;
 }
 
@@ -1022,14 +1001,14 @@ void P_PlayerInSpecialSector (player_t* player)
 	  case 5:
 		// HELLSLIME DAMAGE
 		if (!player->powers[pw_ironfeet])
-			if (!(leveltime&0x1f))
+			if (!(level.time&0x1f))
 				P_DamageMobj (player->mo, NULL, NULL, 10);
 		break;
 		
 	  case 7:
 		// NUKAGE DAMAGE
 		if (!player->powers[pw_ironfeet])
-			if (!(leveltime&0x1f))
+			if (!(level.time&0x1f))
 				P_DamageMobj (player->mo, NULL, NULL, 5);
 		break;
 		
@@ -1040,7 +1019,7 @@ void P_PlayerInSpecialSector (player_t* player)
 		if (!player->powers[pw_ironfeet]
 			|| (P_Random()<5) )
 		{
-			if (!(leveltime&0x1f))
+			if (!(level.time&0x1f))
 				P_DamageMobj (player->mo, NULL, NULL, 20);
 		}
 		break;
@@ -1048,6 +1027,7 @@ void P_PlayerInSpecialSector (player_t* player)
 	  case 9:
 		// SECRET SECTOR
 		player->secretcount++;
+		level.found_secrets++;
 		sector->special = 0;
 		if (player == &players[displayplayer]) {
 			C_MidPrint ("You found a secret area!");
@@ -1059,7 +1039,7 @@ void P_PlayerInSpecialSector (player_t* player)
 		// EXIT SUPER DAMAGE! (for E1M8 finale)
 		player->cheats &= ~CF_GODMODE;
 
-		if (!(leveltime&0x1f))
+		if (!(level.time&0x1f))
 			P_DamageMobj (player->mo, NULL, NULL, 20);
 
 		if (player->health <= 10)
@@ -1105,7 +1085,7 @@ void P_UpdateSpecials (void)
 	{
 		for (i=anim->basepic ; i<anim->basepic+anim->numpics ; i++)
 		{
-			pic = anim->basepic + ( (leveltime/anim->speed + i)%anim->numpics );
+			pic = anim->basepic + ( (level.time/anim->speed + i)%anim->numpics );
 			if (anim->istexture)
 				texturetranslation[i] = pic;
 			else
@@ -1258,14 +1238,14 @@ void P_SpawnSpecials (void)
 	if (i && deathmatch)
 	{
 		levelTimer = true;
-		levelTimeCount = 20 * 60 * 35;
+		levelTimeCount = 20 * 60 * TICRATE;
 	}
 		
 	i = M_CheckParm("-timer");
 	if (i && deathmatch)
 	{
 		int 	time;
-		time = atoi(myargv[i+1]) * 60 * 35;
+		time = atoi(myargv[i+1]) * 60 * TICRATE;
 		levelTimer = true;
 		levelTimeCount = time;
 	}
@@ -1306,7 +1286,7 @@ void P_SpawnSpecials (void)
 			break;
 		  case 9:
 			// SECRET SECTOR
-			totalsecret++;
+			level.total_secrets++;
 			break;
 			
 		  case 10:
@@ -1352,10 +1332,18 @@ void P_SpawnSpecials (void)
 
 	
 	//	Init other misc stuff
-	for (i = 0;i < MAXCEILINGS;i++)
+	if (!activeceilings) {
+		MaxCeilings = 30;		// [RH] Default. Increased as needed.
+		activeceilings = Malloc (MaxCeilings * sizeof(ceiling_t *));
+	}
+	for (i = 0;i < MaxCeilings;i++)
 		activeceilings[i] = NULL;
 
-	for (i = 0;i < MAXPLATS;i++)
+	if (!activeplats) {
+		MaxPlats = 30;			// [RH] Default. Increased as needed.
+		activeplats = Malloc (MaxPlats * sizeof(plat_t *));
+	}
+	for (i = 0;i < MaxPlats;i++)
 		activeplats[i] = NULL;
 	
 	for (i = 0;i < MAXBUTTONS;i++)

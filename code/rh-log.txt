@@ -1,0 +1,378 @@
+April 7, 1998
+- Updated the documentation and uploaded 1.12 to cdrom.com.
+- Put the integer divide code back in FixedDiv_ASM().
+  I'm pretty sure the real problem was with my overflow
+  detection code, which I fixed yesterday when I put in
+  the float code. It works properly now and always
+  rounds down. (Some code such as the sprite drawer assumed
+  that this was the case, but using floats rounded to the
+  nearest integer.) I just don't understand why the problem
+  didn't show up much sooner.
+
+April 6, 1998
+- Added am_showsecrets, am_showmonsters, and
+  am_showtime cvars.
+- Added V_DrawPatchTranslatedCleanNoMove() and
+  V_DrawTextClean(). Changed console notify text
+  code and automap text code to clean scale their
+  text.
+- Made a change to P_CrossSubsector() that ought
+  to speed things up marginally.
+- Fixed a small bug in P_DivlineSide() that was
+  in the original id code.
+- Rewrote FixedDiv_ASM() to use floating point
+  math, and it worked. Also removed division by
+  zero check, since it appears it's still being
+  called with b==0. It looks like DOOM doesn't
+  ensure that it never divides by zero and makes
+  an assumption about the way FixedDiv() will
+  handle these cases.
+- #defined NOASM to disable the use of assembly
+  routines, and it seemed to run fine. Recompiled
+  with assembly routines except FixedDiv_ASM() and
+  it still worked.
+
+April 3, 1998
+- This crashing stuff is getting even weirder. At
+  first, if I disabled optimization in the release
+  build, it went away. Now it's showing up under
+  all configurations, and I haven't done anything
+  to the code. I'm at a loss as to what to do. :-(
+- Fixed an obscure bug in FixedDiv_ASM(). When it
+  overflowed, it was popping esi instead of ebx.
+  Also added a check for division by zero.
+
+April 2, 1998
+- Did some bug hunting. The problem is happening in
+  P_CrossSubsector(), so it's likely something that
+  happens before then, since I never touched that
+  function.
+- Moved the FPS drawer in I_FinishUpdate() before
+  the -devparm dot drawer.
+
+April 1, 1998
+- Added Andy Baker's stealth monsters code. Upon
+  tessting, a discovered the release build was still
+  crashing even without loading a .deh file. My guess
+  is that this is the same problem I had on the P60,
+  and adding the DeHackEd code just reorganized things
+  enough for the problem to show up on my machine too.
+- Changed P_TouchSpecialThing() so that picking up a
+  power plays a surround sound.
+- Continued DeHackEd support. Most text strings now
+  get replaced, and almost all miscellaneous info is
+  supported as well. Still crashes in the release build.
+
+March 31, 1998
+- Continued work on DeHackEd support. Everything except
+  miscellaneous info and text changing is supported.
+  Unfortunately, my release build is experiencing crash
+  problems not present in the debug build now. :-(
+- Ripped the MHFX_LAXSPRITEROTATIONS fix out of
+  DOSDoom's r_things.c.
+
+March 30, 1998
+- Started work on DeHackEd support: things, frames,
+  and weapons done. Sounds mostly done.
+- Added minimal code to handle changes to userinfo cvars.
+- Changed player movement code to allow for very minimal
+  corrections to momentum while in mid-air.
+- Did a quick test of z-checking for collisions. Needs
+  more work; disabled for now.
+- Optimized FixedDiv_ASM() further using a neat absolute
+  value trick I discovered on a website somewhere.
+- Did the same thing for P_BulletSlope(). One unexpected
+  twist: bullets always hit walls no matter what their slope.
+- Added shoot up/down for projectile weapons with a
+  quick hack to P_SpawnPlayerMissile().
+- Moved ysheer out of player_t and into mobj_t as pitch.
+- Changed P_ExplodeMissile() to set missile explosion
+  sprites translucent.
+- Changed D_DoomMain() so that it always loads zdoom.wad
+  first instead of second.
+- Added m_alloc.(c|h) so that I can finally check to
+  make sure I get all the memory I ask for.
+- Finished automap overlay. Use am_overlay cvar.
+- Moved automap framebuffer boundary determination out of
+  AM_LevelInit() and into AM_Drawer(). Did other mucking
+  about in the automap code so it clips the automap to the
+  view window when the map is overlayed on top of it.
+
+March 29, 1998
+- Jotted down some code for truecolor routines.
+
+March 28, 1998
+- Worked on automap overlay.
+- Changed C_DoKey() to return true if the key generated a
+  command, and false if it didn't.
+- Automap can now rotate. Use am_rotate cvar to control it.
+- Finished new HUD (for now). It gets the job done, and it's not
+  too cluttered.
+
+March 27, 1998
+- Continued work on new options menu: Removed old sound menu.
+  Created new menu title patches. Created controls menu.
+  Created video menu.
+
+March 26, 1998
+- Started work on the new options menu.
+- Created binddefaults command.
+- Created a bunch of menu_* commands to access the different
+  menus directly. Also added some of them to the default
+  bindings string.
+- Fixed sky height bug. The key is that skytexturemid is NOT
+  resolution-dependant. It is a constant.
+- Changed yesterday's sky height fix so that it is based on Doom
+  Legacy's aspect ratio correction rather than what DOSDoom did.
+  (BTW, this was not done in the 1.11 Doom Legacy source.)
+
+March 25, 1998
+- Fixed sky height with a little help from DOSDoom.
+- Started work on the new HUD. Not yet sure what I like.
+- Created the C version of Print2CharP_MMX. It sucks. I know there
+  must be a clever way to do it using bit shifts and masking, but
+  I don't feel like persuing it right now, since I have an MMX
+  machine, and MMX makes it very easy to do.
+
+March 24, 1998
+- Ran ZDoom on the Pentium 60 sitting next to me. It crashed whenever
+  I tried to enter a level. Some testing is obviously called for. :-(
+- Added code to check for the presence of MMX support.
+- Created misc.nas and moved the assembly versions of FixedMul() and
+  FixedDiv() into it. Also created an assembly inner loop for
+  V_DimScreen(). Also created an assembly routine to plot one conchar
+  to the screen (Print1CharP) and an MMX version that doubles the
+  conchar in size.
+- Made command parameters in commands.txt consistant with other
+  parameter lists. (<> for required params, [] for ones that aren't.)
+  Also added brief descriptions of the different cvar types at the.
+- Removed idmypos command. It was redundant with the
+  "toggle idmypos" command.
+
+March 23, 1998
+- Added dimamount and dimcolor (defaults to gold) cvars for
+  V_DimScreen() so that it can shade the screen to any color instead
+  of just darkening it (although it will revert to its old behavior if
+  translucency is disabled).
+- Added assembly version of R_DrawFuzzColumn as well as a proper
+  assembly version of R_DrawTranslucentColumn().
+- Changed fuzztable in r_draw.c from 50 to 64 entries so that I can
+  use a simple mask in R_DrawFuzzColumn() instead of conditionals.
+  This should speed up that loop significantly (especially once it's
+  in assembly). Also removed references to frac and fracstep from
+  R_DrawFuzzColumn() since they weren't needed.
+- Can't seem to get V_DrawPatchFlipped() to position patches properly
+  (they keep getting drawn too far to the left and up), so for now,
+  it just calls V_DrawPatchIndirect().
+- Added special case to V_DrawPatchStretched for full-screen patches.
+  Also added a scrn parameter to F_DrawPatchCol to accomodate this.
+- Changed cyberdemon and spider mastermind sight and death sounds
+  in the cast finale to surround.
+- Changed brain's pain sound to use ORIGIN_SURROUND2. That way, the
+  things it throws out won't override it.
+- Added ORIGIN_AMBIENT3-4 and ORIGIN_SURROUND2-4 to s_sound.(c|h).
+
+March 19, 1998
+- Fixed UpdateCursorPosition() in i_input.c so that mouse
+  sensitivity is independent of the framerate.
+- Increased speed of text wipe in f_finale.c.
+- Added V_DrawRedTextClean(), V_DrawWhiteTextClean(), and
+  V_DrawTranslatedPatchStretched(), and V_DrawTranslatedPatchClean()
+  to v_video.c.
+- Fixed bug in V_DrawPatchStretched(). Was using unsigned ints where
+  I should have used signed ints.
+- Rewrote F_Ticker().
+- Specifying -nomusic no longer causes I_InitSound() to allocate
+  channels for MOD music.
+- Changed several V_DrawPatch()es and V_DrawPatchDirect()s to
+  V_DrawPatchClean() and V_DrawPatchIndirect() in various source files.
+- Added V_DrawPatchIndirect(), V_DrawPatchClean(), and
+  V_DrawPatchCleanNoMove() to v_video.c.
+- Made lots of changes relating to level and cluster handling.
+- Fixed problem in wi_stuff.c that prevented par times from appearing
+  on Doom II levels 12 and above.
+
+March 18, 1998
+- Changed idmus command to changemus. Now it expects its input
+  to be an actual song name. (Consquently, the idmus cheat is gone.)
+- Moved stuff from S_music[] into LevelInfos[];
+- Changed all references to leveltime, totalsecret, totalkills, and
+  totalitems to level.time, level.total_secrets, level.total_monsters,
+  and level.total_items respectively. levelstarttic was never used;
+  got rid of it.
+- Remaved mapnames* arrays from hu_stuff.c and some ST_MAP* #defines
+  in st_stuff.c.
+- Moved drawing of level name in automap out of hu_stuff.c into am_map.c.
+
+March 17, 1998
+- Started laying the framework for better customizability of maps.
+  (Any lump can be a map, use any map for the next and secret maps,
+  give custom maps a name, custom par times, etc.)
+- Played at 640x480 for about 1.5 hours trying to get my machine
+  to crash. I have had a report of intermittant crashing possibly
+  related to high resolutions, but have been unable to duplicate
+  the problem on my machine. On a side note, 640x480 is way too slow.
+  Doom95 does ~32 fps at 640x400, and Duke 3D does ~25 fps at 640x480.
+  I get ~10 fps at 640x480 and ~12 fps at 640x400. Wish I knew how
+  they do it...
+
+March 16, 1998
+- Hacked in some code into S_ChangeMusic() to allow it to play songs
+  stored as individual files on disk. Added primarily because I
+  have a large collection of MODs, and I don't want to be forced
+  to pick which ones I want to listen to when I start the game
+  (by specifying them with the -file parameter).
+- Discovered the Win32 Demo Programming FAQ. Now I can disable
+  code segment protection so self-modifying code can stay in
+  the same segment as all the other code instead of hiding in
+  the data segment.
+- Put in the R_DrawColumn code from Doom Legacy. Took me awhile to
+  realize that ylookup and columnofs are now pointers instead of
+  arrays.
+
+March 15, 1998
+- Nothing.
+
+March 14, 1998
+- mb_used changed to a float, so the heap doesn't need to be an
+  integral number of megs in size.
+- Added -heapsize parameter to set size of zone heap at run time.
+- Increased size of demoname[] from 32 to 256 chars.
+- Rewrote snippets of -playdemo code so that demos can be played
+  from any directory and with any path.
+- Removed all references to basedefault, since it's been replaced
+  by configfile.
+- Fixed a really dumb bug in FixPathSeperator. Was initializing
+  c to progdir instead of path. Now you can add lumps in different
+  directories, and still refer to them by name.
+- Reformatted w_wad.c for 4 character tabs.
+- Looked through the PTC archive. It needs better documentation, but
+  I think I'll probably switch to it for the third release of ZDoom.
+
+March 13, 1998
+- Added back some of the stuff I had originally added to w_wad.c.
+- Borrowed BT_JUMP and BT_DUCK from DOSDoom. Also added jumping code.
+- IDFA and IDKFA now include the backpack.
+- Downloaded Prometheus Truecolor. Trying to decide if I should use it
+  for high- and true-color support.
+- Added support for caching the translucency tables to disk.
+  (TODO: Compress this file.)
+- Added support for 25% and 75% translucency (because DOSDoom 0.60
+  has it.)
+- Copied w_wad.c and w_wad.h from DOSDoom 0.60. (decided not to
+  bother trying to get PACK support in)
+- Moved ConChars data into zdoom.wad as an ordinary patch. zDoom now
+  generates the neccessary data on the fly.
+- Removed MAXCEILINGS limit. (was 30)
+- Removed MAX_DEATHMATCH_STARTS limit. (was 10)
+- Removed MAXPLATS limit. (was 30)
+
+March 12, 1998
+- Rewrote P_FindNextHighestFloor() so that it doesn't use an internal
+  array (thus also removing the MAX_ADJOINING_SECTORS limit).
+- Removed some files from the code directory I had added but never used.
+- Removed MAXSEGS limit. (was 32.. What are solidsegs anyway?)
+- Removed MAXDRAWSEGS limit. (was 256)
+- Now allocate R_DrawSprite()'s clipbot and cliptop arrays inside
+  R_MultiresInit() instead of each time the function is called. Should
+  have done this in the first place, but I obviously wasn't thinking.
+  One particularly sprite-laden scene went from ~25 fps to almost 35 fps.
+- Created R_MultiresInit() function. Now V_SetResolution() calls it, and
+  it calls the various R_*() functions related to supporting multiple
+  resolutions.
+- Changed the default am_gridcolor to a decent color that actually fits
+  with the rest of the color scheme.
+- Took a cue from WinDoom and split my keyboard handler between the
+  DirectInput code and the window's message handler. Ugly, but at least
+  now it handles Pause and Alt-Tab properly. (The original problem with
+  Alt-Tab, incidentally, was that I was failing to reacquire the keyboard
+  when I regained the input focus.)
+- Inserting text at the command line in the console now works properly.
+- Pressing ` to hide the console now clears the command line. This is
+  the same behavior as Quake, but previously only Escape would clear the
+  command line in ZDoom. I found that to be too annoying.
+- Pressing up and down arrow keys in the console to scroll through the
+  history now ensures that the cursor is always visible.
+- Changed BuildString() so that if it is called with argc==1, it just
+  returns a copy of the string unmodified instead of sticking it in
+  quotes if it contains a space.
+- Renamed setcolorbyname to setcolor. The former was just too long.
+- Added setcolorbyname command and corresponding V_GetColorStringByName()
+  function and X11R6RGB lump listing a bunch of named colors.
+
+March 11, 1998
+- Added crosshair cvar and corresponding code to draw the crosshair.
+  Put some cheezy crosshairs in zdoom.wad, too. (Now if only you could
+  actually aim up and down...)
+- Added V_DrawLucentPatch() function to draw translucent patches.
+- Added freelook, lookspring, lookstrafe, m_pitch, m_yaw, m_forward,
+  and m_side cvars.
+
+March 10, 1998
+- Added invertmouse cvar.
+- Put the colon back into the "startskill..." message in d_net.c.
+- ylookup[] and columnofs[] tables in r_draw.c are now allocated
+  dynamically based on screen size. Hacked this into R_InitFuzzTable().
+- Status bar finally properly draws borders to the left and right
+  of itself if the screen is wider than it is.
+- Added documentation for am_* and developer cvars in commands.txt.
+- Discovered that lines not yet seen but visible thanks to the
+  automap powerup were not color-configurable. Changed it.
+- Changed all color #defines in am_map.c into ints that get
+  initialized from color values in cvars each time
+  AM_initVariables is called. Also added back support for the
+  original automap color scheme regardless of what the user's colors are
+  through the am_usecustomcolors cvar.
+- In single player, automap can now draw the player's arrow using
+  any color and not just WHITE.
+- Removed all references to lightlev in am_map.c, including the
+  AM_updateLightLev() function. The "strobe" effect was really cheap
+  anyway, never used, and will be fairly difficult to implement
+  cleanly when I make the automap colors customizable.
+- Changed I_Error() call in ParseHex() to a Printf() call.
+- Removed "extern byte *demo_p;" from d_protocol.c. It didn't need to
+  be there anyway.
+- Added V_GetColorFromString() to v_video.c.
+- Changed BASEYCENTER #define in r_things.c from
+  (100-((SCREENHEIGHT-200)/12)) to (100). PlayerSprites are now drawn
+  in approximately the same location at all resolutions.
+
+March 9, 1998
+- Seem to have finally fixed the problem with my visplane growing
+  code. Using calloc() in PrepVisPlanes() instead of malloc() seems
+  to have solved all my woes. Now on to something else!
+- Boy do I feel dumb. Found a bug in C_DrawConsole () where the
+  revealed variable wasn't always being set before it was used.
+  Now I rewrote it so that it doesn't need to calculate
+  revealed at all. It ought to be marginally faster, too (although
+  it probably won't make a bit of difference during gameplay).
+
+March 8, 1998
+- Did nothing. Stupid parental restrictions on Sunday activities.
+
+March 7, 1998
+- Still working on MaxVisPlanes bug. This is proving to be more
+  elusive than I had expected, since VC++ is being most unhelpful.
+  The bug doesn't show up in the debug build (heap checking doesn't
+  even catch anything), and I can't use the debugger on the release
+  build where the bug does show up! Grrr!
+
+March 6, 1998
+
+- Started changing MAXVISPLANES constant into the growing integer
+  MaxVisPlanes. Moved some code from R_PlaneInitData() to
+  R_InitPlanes() and added the GetMoreVisPlanes() function to
+  allocate more planes. Strange crashing bugs in release but not
+  debug builds. Probably stomping on memory somewhere.
+- Fixed stupid bug in I_ShutdownSound: was calling MIDASfreeSample()
+  when I should have been calling MIDASfreeChannel(). Also moved
+  freeing of channels to another for loop (probably not necessary, but...).
+- Fixed -file parameter to work with console commands on the
+  command line.
+- Changed MAXVISSPRITES constant into the integer MaxVisSprites,
+  which is the size of the vissprites[] array. This value can now
+  grow as needed to accomodate more vissprites.
+- Added developer cvar and DEVONLY macro.
+- Functions in i_music.c now pay attention to the looping flag.
+- C_AddNotifyString() now pays attention to show_messages cvar.
+- Added support for specifying console commands on the command line.

@@ -29,6 +29,7 @@ rcsid[] = "$Id: m_bbox.c,v 1.1 1997/02/03 22:45:10 b1 Exp $";
 #pragma implementation "doomstat.h"
 #endif
 #include "doomstat.h"
+#include "c_cvars.h"
 
 
 // Game Mode - identify IWAD as shareware, retail etc.
@@ -41,6 +42,5 @@ Language_t   language = english;
 // Set if homebrew PWAD stuff has been added.
 boolean modifiedgame;
 
-
-
-
+// Show developer messages if true.
+cvar_t		*developer;

@@ -369,11 +369,11 @@ void P_ArchiveSpecials (void)
 	{
 		if (th->function.acv == (actionf_v)NULL)
 		{
-			for (i = 0; i < MAXCEILINGS;i++)
+			for (i = 0; i < MaxCeilings;i++)
 				if (activeceilings[i] == (ceiling_t *)th)
 					break;
 			
-			if (i<MAXCEILINGS)
+			if (i<MaxCeilings)
 			{
 				*save_p++ = tc_ceiling;
 				PADSAVEP();

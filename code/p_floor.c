@@ -215,7 +215,7 @@ void T_MoveFloor(floormove_t* floor)
 					  floor->floordestheight,
 					  floor->crush,0,floor->direction);
 	
-	if (!(leveltime&7))
+	if (!(level.time&7))
 		S_StartSound((mobj_t *)&floor->sector->soundorg,
 					 sfx_stnmov);
 	

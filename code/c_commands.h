@@ -4,9 +4,28 @@ void C_InstallCommands (void);
 
 #define CMD(a) void a (player_t *plyr, int argc, char **argv);
 
+// am_map.c
+CMD(Cmd_Togglemap)
+
 // m_menu.c
+CMD(Cmd_Menu_Main)
+CMD(Cmd_Menu_Load)
+CMD(Cmd_Menu_Save)
+CMD(Cmd_Menu_Help)
+CMD(Cmd_Quicksave)
+CMD(Cmd_Quickload)
+CMD(Cmd_Menu_Endgame)
+CMD(Cmd_Menu_Quit)
+CMD(Cmd_Menu_Game)
+CMD(Cmd_Menu_Options)
+CMD(Cmd_Bumpgamma)
+CMD(Cmd_ToggleMessages)
+
+// m_options.c
 CMD(Cmd_Sizedown)
 CMD(Cmd_Sizeup)
+CMD(Cmd_Menu_Video)
+CMD(Cmd_Menu_Keys)
 
 // g_game.c
 CMD(Cmd_Impulse)
@@ -21,6 +40,7 @@ CMD(Cmd_Key)
 
 // c_bindings.c
 CMD(Cmd_Bind)
+CMD(Cmd_BindDefaults)
 CMD(Cmd_Unbind)
 CMD(Cmd_Unbindall)
 
@@ -40,9 +60,8 @@ CMD(Cmd_Give)
 CMD(Cmd_God)
 CMD(Cmd_Notarget)
 CMD(Cmd_Noclip)
-CMD(Cmd_idmus)
+CMD(Cmd_ChangeMus)
 CMD(Cmd_idclev)
-CMD(Cmd_idmypos)
 CMD(Cmd_Gameversion)
 CMD(Cmd_Exec)
 CMD(Cmd_DumpHeap)
@@ -59,5 +78,6 @@ CMD(Cmd_Kill)
 
 // v_video.c
 CMD(Cmd_Gamma)
+CMD(Cmd_SetColor)
 
 #undef CMD

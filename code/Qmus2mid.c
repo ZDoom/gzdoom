@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "m_alloc.h"
+
 int Printf (char *, ...);
 
 /* [Petteri]  warning C4761: integral size mismatch in argument; conversion
@@ -160,7 +162,7 @@ int ReadMUSheader( MUSheader *MUSh, FILE *file )
   if( fread( &(MUSh->SecChannels),  2, 1, file ) != 1 ) return COMUSFILE ;
   if( fread( &(MUSh->InstrCnt),  2, 1, file ) != 1 ) return COMUSFILE ;
   if( fread( &(MUSh->dummy),  2, 1, file ) != 1 ) return COMUSFILE ;
-  MUSh->instruments = (int2 *) calloc(MUSh->InstrCnt, sizeof(int2)) ;
+  MUSh->instruments = (int2 *) Calloc(MUSh->InstrCnt, sizeof(int2)) ;
   if( fread( MUSh->instruments, 2, MUSh->InstrCnt, file ) != MUSh->InstrCnt )
     {
       free( MUSh->instruments ) ;

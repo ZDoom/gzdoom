@@ -99,7 +99,7 @@ boolean PIT_StompThing (mobj_t* thing)
 		return true;
 	
 	// monsters don't stomp things except on boss level
-	if ( !tmthing->player && gamemap != 30)
+	if ( !tmthing->player && level.levelnum != 30)
 		return false;	
 				
 	P_DamageMobj (thing, tmthing, tmthing, 10000);
@@ -271,6 +271,17 @@ boolean PIT_CheckThing (mobj_t* thing)
 	if (thing == tmthing)
 		return true;
 	
+#if 0
+	// [RH] Z-Check
+    if (tmthing->player)
+    {
+        if (tmthing->z > thing->z + thing->height)
+            return true;        // overhead
+        if (tmthing->z+tmthing->height < thing->z)
+            return true;        // underneath
+    }
+#endif
+
 	// check for skulls slamming into things
 	if (tmthing->flags & MF_SKULLFLY)
 	{
@@ -1036,8 +1047,9 @@ P_AimLineAttack
 	shootz = t1->z + (t1->height>>1) + 8*FRACUNIT;
 
 	// can't shoot outside view angles
-	topslope = 100*FRACUNIT/160;		
-	bottomslope = -100*FRACUNIT/160;
+	// [RH] adjust for view pitch
+	topslope = 100*FRACUNIT/160 - t1->pitch / 2;
+	bottomslope = -100*FRACUNIT/160 - t1->pitch / 2;
 	
 	attackrange = distance;
 	linetarget = NULL;
@@ -1295,7 +1307,7 @@ boolean PIT_ChangeSector (mobj_t*		thing)
 	
 	nofit = true;
 
-	if (crushchange && !(leveltime&3) )
+	if (crushchange && !(level.time&3) )
 	{
 		P_DamageMobj(thing,NULL,NULL,10);
 

@@ -26,6 +26,7 @@ static const char
 rcsid[] = "$Id: f_finale.c,v 1.5 1997/02/03 21:26:34 b1 Exp $";
 
 #include <ctype.h>
+#include <math.h>
 
 // Functions.
 #include "i_system.h"
@@ -53,34 +54,8 @@ unsigned int	finalestage;
 
 unsigned int	finalecount;
 
-#define TEXTSPEED		3
+#define TEXTSPEED		2
 #define TEXTWAIT		250
-
-char*	e1text = E1TEXT;
-char*	e2text = E2TEXT;
-char*	e3text = E3TEXT;
-char*	e4text = E4TEXT;
-
-char*	c1text = C1TEXT;
-char*	c2text = C2TEXT;
-char*	c3text = C3TEXT;
-char*	c4text = C4TEXT;
-char*	c5text = C5TEXT;
-char*	c6text = C6TEXT;
-
-char*	p1text = P1TEXT;
-char*	p2text = P2TEXT;
-char*	p3text = P3TEXT;
-char*	p4text = P4TEXT;
-char*	p5text = P5TEXT;
-char*	p6text = P6TEXT;
-
-char*	t1text = T1TEXT;
-char*	t2text = T2TEXT;
-char*	t3text = T3TEXT;
-char*	t4text = T4TEXT;
-char*	t5text = T5TEXT;
-char*	t6text = T6TEXT;
 
 char*	finaletext;
 char*	finaleflat;
@@ -93,7 +68,7 @@ void	F_CastDrawer (void);
 //
 // F_StartFinale
 //
-void F_StartFinale (void)
+void F_StartFinale (char *music, char *flat, char *text)
 {
 	gameaction = ga_nothing;
 	gamestate = GS_FINALE;
@@ -103,91 +78,17 @@ void F_StartFinale (void)
 	// Okay - IWAD dependend stuff.
 	// This has been changed severly, and
 	//	some stuff might have changed in the process.
-	switch ( gamemode )
-	{
+	// [RH] More flexible now (even more severe changes)
+	//  finaleflat, finaletext, and music are now
+	//  determined in G_WorldDone() based on data in
+	//  a level_info_t and a cluster_info_t.
 
-	  // DOOM 1 - E1, E3 or E4, but each nine missions
-	  case shareware:
-	  case registered:
-	  case retail:
-	  {
-		S_ChangeMusic("d_victor", true);
-		
-		switch (gameepisode)
-		{
-		  case 1:
-			finaleflat = "FLOOR4_8";
-			finaletext = e1text;
-			break;
-		  case 2:
-			finaleflat = "SFLR6_1";
-			finaletext = e2text;
-			break;
-		  case 3:
-			finaleflat = "MFLR8_4";
-			finaletext = e3text;
-			break;
-		  case 4:
-			finaleflat = "MFLR8_3";
-			finaletext = e4text;
-			break;
-		  default:
-			// Ouch.
-			break;
-		}
-		break;
-	  }
-	  
-	  // DOOM II and missions packs with E1, M34
-	  case commercial:
-	  {
-		  S_ChangeMusic("d_read_m", true);
+ 	S_ChangeMusic (music, true);
+	finaleflat = flat;
+	finaletext = text;
 
-		  switch (gamemap)
-		  {
-			case 6:
-			  finaleflat = "SLIME16";
-			  finaletext = c1text;
-			  break;
-			case 11:
-			  finaleflat = "RROCK14";
-			  finaletext = c2text;
-			  break;
-			case 20:
-			  finaleflat = "RROCK07";
-			  finaletext = c3text;
-			  break;
-			case 30:
-			  finaleflat = "RROCK17";
-			  finaletext = c4text;
-			  break;
-			case 15:
-			  finaleflat = "RROCK13";
-			  finaletext = c5text;
-			  break;
-			case 31:
-			  finaleflat = "RROCK19";
-			  finaletext = c6text;
-			  break;
-			default:
-			  // Ouch.
-			  break;
-		  }
-		  break;
-	  } 
-
-   
-	  // Indeterminate.
-	  default:
-		S_ChangeMusic("d_read_m", true);
-		finaleflat = "F_SKY1"; // Not used anywhere else.
-		finaletext = c1text;  // FIXME - other text, music?
-		break;
-	}
-	
 	finalestage = 0;
 	finalecount = 0;
-		
 }
 
 
@@ -196,7 +97,7 @@ boolean F_Responder (event_t *event)
 {
 	if (finalestage == 2)
 		return F_CastResponder (event);
-		
+
 	return false;
 }
 
@@ -209,21 +110,33 @@ void F_Ticker (void)
 	int 		i;
 	
 	// check for skipping
-	if ( (gamemode == commercial)
-	  && ( finalecount > 50) )
-	{
-	  // go on to the next level
-	  for (i=0 ; i<MAXPLAYERS ; i++)
-		if (players[i].cmd.ucmd.buttons)
-		  break;
-								
-	  if (i < MAXPLAYERS)
-	  { 
-		if (gamemap == 30)
-		  F_StartCast ();
-		else
-		  gameaction = ga_worlddone;
-	  }
+	// [RH] Non-commercial can be skipped now, too
+	if (finalecount > 50) {
+		// go on to the next level
+		// [RH] or just reveal the entire message if we're still ticking it
+		for (i=0 ; i<MAXPLAYERS ; i++)
+			if (players[i].cmd.ucmd.buttons)
+				break;
+
+		if (i < MAXPLAYERS) {
+			if (finalecount < strlen (finaletext)*TEXTSPEED) {
+				finalecount = strlen (finaletext)*TEXTSPEED;
+			} else {
+				if (!strncmp (level.nextmap, "EndGame", 7)) {
+					if (level.nextmap[7] == 'C') {
+						F_StartCast ();
+					} else {
+						finalecount = 0;
+						finalestage = 1;
+						wipegamestate = -1;		// force a wipe
+						if (level.nextmap[7] == '3')
+							S_StartMusic ("d_bunny");
+					}
+				} else {
+					gameaction = ga_worlddone;
+				}
+			}
+		}
 	}
 	
 	// advance animation
@@ -233,18 +146,6 @@ void F_Ticker (void)
 	{
 		F_CastTicker ();
 		return;
-	}
-		
-	if ( gamemode == commercial)
-		return;
-				
-	if (!finalestage && finalecount>strlen (finaletext)*TEXTSPEED + TEXTWAIT)
-	{
-		finalecount = 0;
-		finalestage = 1;
-		wipegamestate = -1; 			// force a wipe
-		if (gameepisode == 3)
-			S_StartMusic ("d_bunny");
 	}
 }
 
@@ -298,7 +199,7 @@ void F_TextWrite (void)
 		
 	count = (finalecount - 10)/TEXTSPEED;
 	if (count < 0)
-		count = 0;
+		return;
 	for ( ; count ; count-- )
 	{
 		c = *ch++;
@@ -321,7 +222,7 @@ void F_TextWrite (void)
 		w = SHORT (hu_font[c]->width);
 		if (cx+w > SCREENWIDTH)
 			break;
-		V_DrawPatch(cx, cy, 0, hu_font[c]);
+		V_DrawPatchClean(cx, cy, 0, hu_font[c]);
 		cx+=w;
 	}
 		
@@ -397,7 +298,8 @@ void F_CastTicker (void)
 {
 	int 		st;
 	int 		sfx;
-		
+	void		*origin;
+
 	if (--casttics > 0)
 		return; 				// not time to change state yet
 				
@@ -408,8 +310,18 @@ void F_CastTicker (void)
 		castdeath = false;
 		if (castorder[castnum].name == NULL)
 			castnum = 0;
-		if (mobjinfo[castorder[castnum].type].seesound)
-			S_StartSound (ORIGIN_AMBIENT, mobjinfo[castorder[castnum].type].seesound);
+		if (mobjinfo[castorder[castnum].type].seesound) {
+			switch (castorder[castnum].type) {
+				case MT_CYBORG:
+				case MT_SPIDER:
+					origin = ORIGIN_SURROUND;
+					break;
+				default:
+					origin = ORIGIN_AMBIENT;
+					break;
+			}
+			S_StartSound (origin, mobjinfo[castorder[castnum].type].seesound);
+		}
 		caststate = &states[mobjinfo[castorder[castnum].type].seestate];
 		castframes = 0;
 	}
@@ -502,6 +414,8 @@ void F_CastTicker (void)
 
 boolean F_CastResponder (event_t* ev)
 {
+	void *origin;
+
 	if (ev->type != ev_keydown)
 		return false;
 				
@@ -514,8 +428,18 @@ boolean F_CastResponder (event_t* ev)
 	casttics = caststate->tics;
 	castframes = 0;
 	castattacking = false;
-	if (mobjinfo[castorder[castnum].type].deathsound)
-		S_StartSound (ORIGIN_AMBIENT, mobjinfo[castorder[castnum].type].deathsound);
+	if (mobjinfo[castorder[castnum].type].deathsound) {
+		switch (castorder[castnum].type) {
+			case MT_CYBORG:
+			case MT_SPIDER:
+				origin = ORIGIN_SURROUND;
+				break;
+			default:
+				origin = ORIGIN_AMBIENT;
+				break;
+		}
+		S_StartSound (origin, mobjinfo[castorder[castnum].type].deathsound);
+	}
 		
 	return true;
 }
@@ -550,7 +474,7 @@ void F_CastPrint (char* text)
 	}
 	
 	// draw it
-	cx = 160-width/2;
+	cx = (CleanWidth-width)/2;
 	ch = text;
 	while (ch)
 	{
@@ -565,18 +489,16 @@ void F_CastPrint (char* text)
 		}
 				
 		w = SHORT (hu_font[c]->width);
-		V_DrawPatch(cx, 180, 0, hu_font[c]);
+		V_DrawPatchCleanNoMove (cx, (SCREENHEIGHT * 180) / 200, 0, hu_font[c]);
 		cx+=w;
 	}
 		
 }
 
-
+int V_DrawPatchFlipped (int, int, int, patch_t *);
 //
 // F_CastDrawer
 //
-void V_DrawPatchFlipped (int x, int y, int scrn, patch_t *patch);
-
 void F_CastDrawer (void)
 {
 	spritedef_t*		sprdef;
@@ -586,7 +508,7 @@ void F_CastDrawer (void)
 	patch_t*			patch;
 	
 	// erase the entire screen to a background
-	V_DrawPatch (0,0,0, W_CacheLumpName ("BOSSBACK", PU_CACHE));
+	V_DrawPatchIndirect (0,0,0, W_CacheLumpName ("BOSSBACK", PU_CACHE));
 
 	F_CastPrint (castorder[castnum].name);
 	
@@ -600,39 +522,106 @@ void F_CastDrawer (void)
 	if (flip)
 		V_DrawPatchFlipped (160,170,0,patch);
 	else
-		V_DrawPatch (160,170,0,patch);
+		V_DrawPatchIndirect (160,170,0,patch);
 }
 
 
 //
 // F_DrawPatchCol
 //
-void
-F_DrawPatchCol
-( int			x,
-  patch_t*		patch,
-  int			col )
+void F_DrawPatchCol (int x, patch_t *patch, int col, int scrn)
 {
 	column_t*	column;
 	byte*		source;
 	byte*		dest;
 	byte*		desttop;
-	int 		count;
-		
+	unsigned	count;
+	int			repeat;
+	int			c;
+	unsigned	step;
+	unsigned	invstep;
+	float		mul;
+	float		fx;
+	byte		p;
+
+	// [RH] figure out how many times to repeat this column
+	// (for screens wider than 320 pixels)
+	mul = SCREENWIDTH / (float)320;
+	fx = (float)x;
+	repeat = (int)(floor (mul*(fx+1)) - floor(mul*fx));
+	if (repeat == 0)
+		return;
+
+	// [RH] Remap virtual-x to real-x
+	x = (int)floor (mul*x);
+
+	// [RH] Figure out per-row fixed-point step
+	step = (200<<16) / SCREENHEIGHT;
+	invstep = (SCREENHEIGHT<<16) / 200;
+
 	column = (column_t *)((byte *)patch + LONG(patch->columnofs[col]));
-	desttop = screens[0]+x;
+	desttop = screens[scrn]+x;
 
 	// step through the posts in a column
 	while (column->topdelta != 0xff )
 	{
 		source = (byte *)column + 3;
-		dest = desttop + column->topdelta*SCREENPITCH;
-		count = column->length;
-				
-		while (count--)
-		{
-			*dest = *source++;
-			dest += SCREENPITCH;
+		dest = desttop + ((column->topdelta*invstep)>>16)*SCREENPITCH;
+		count = (column->length * invstep) >> 16;
+		c = 0;
+
+		switch (repeat) {
+			case 1:
+				do {
+					*dest = source[c>>16];
+					dest += SCREENPITCH;
+					c += step;
+				} while (--count);
+				break;
+			case 2:
+				do {
+					p = source[c>>16];
+					dest[0] = p;
+					dest[1] = p;
+					dest += SCREENPITCH;
+					c += step;
+				} while (--count);
+				break;
+			case 3:
+				do {
+					p = source[c>>16];
+					dest[0] = p;
+					dest[1] = p;
+					dest[2] = p;
+					dest += SCREENPITCH;
+					c += step;
+				} while (--count);
+				break;
+			case 4:
+				do {
+					p = source[c>>16];
+					dest[0] = p;
+					dest[1] = p;
+					dest[2] = p;
+					dest[3] = p;
+					dest += SCREENPITCH;
+					c += step;
+				} while (--count);
+				break;
+			default:
+				{
+					int count2;
+
+					do {
+						p = source[c>>16];
+						for (count2 = repeat; count2; count2--) {
+							dest[count2] = p;
+						}
+						dest += SCREENPITCH;
+						c += step;
+					} while (--count);
+				}
+				break;
 		}
 		column = (column_t *)(	(byte *)column + column->length + 4 );
 	}
@@ -663,20 +652,20 @@ void F_BunnyScroll (void)
 	if (scrolled < 0)
 		scrolled = 0;
 				
-	for ( x=0 ; x<SCREENWIDTH ; x++)
+	for ( x=0 ; x<320 ; x++)
 	{
 		if (x+scrolled < 320)
-			F_DrawPatchCol (x, p1, x+scrolled);
+			F_DrawPatchCol (x, p1, x+scrolled, 0);
 		else
-			F_DrawPatchCol (x, p2, x+scrolled - 320);			
+			F_DrawPatchCol (x, p2, x+scrolled - 320, 0);			
 	}
 		
 	if (finalecount < 1130)
 		return;
 	if (finalecount < 1180)
 	{
-		V_DrawPatch ((SCREENWIDTH-13*8)/2,
-					 (SCREENHEIGHT-8*8)/2,0, W_CacheLumpName ("END0",PU_CACHE));
+		V_DrawPatchIndirect ((320-13*8)/2,
+					 (200-8*8)/2,0, W_CacheLumpName ("END0",PU_CACHE));
 		laststage = 0;
 		return;
 	}
@@ -691,7 +680,7 @@ void F_BunnyScroll (void)
 	}
 		
 	sprintf (name,"END%i",stage);
-	V_DrawPatch ((SCREENWIDTH-13*8)/2, (SCREENHEIGHT-8*8)/2,0, W_CacheLumpName (name,PU_CACHE));
+	V_DrawPatchIndirect ((320-13*8)/2, (200-8*8)/2,0, W_CacheLumpName (name,PU_CACHE));
 }
 
 
@@ -700,40 +689,38 @@ void F_BunnyScroll (void)
 //
 void F_Drawer (void)
 {
-	if (finalestage == 2)
-	{
-		F_CastDrawer ();
-		return;
-	}
+	switch (finalestage) {
+		case 0:
+			F_TextWrite ();
+			break;
 
-	if (!finalestage)
-		F_TextWrite ();
-	else
-	{
-		switch (gameepisode)
-		{
-		  case 1:
-			if ( gamemode == retail )
-			  V_DrawPatch (0,0,0,
-						 W_CacheLumpName("CREDIT",PU_CACHE));
-			else
-			  V_DrawPatch (0,0,0,
-						 W_CacheLumpName("HELP2",PU_CACHE));
+		case 1:
+			switch (level.nextmap[7])
+			{
+			  case '1':
+				if ( gamemode == retail )
+				  V_DrawPatchIndirect (0,0,0,W_CacheLumpName("CREDIT",PU_CACHE));
+				else
+				  V_DrawPatchIndirect (0,0,0,W_CacheLumpName("HELP2",PU_CACHE));
+				break;
+			  case '2':
+				V_DrawPatchIndirect (0,0,0,W_CacheLumpName("VICTORY2",PU_CACHE));
+				break;
+			  case '3':
+				F_BunnyScroll ();
+				break;
+			  case '4':
+				V_DrawPatchIndirect (0,0,0,W_CacheLumpName("ENDPIC",PU_CACHE));
+				break;
+			  // [RH] sucks
+			  default:
+				  V_DrawPatchIndirect (0,0,0,W_CacheLumpName("HELP2",PU_CACHE));
+				break;
+			}
 			break;
-		  case 2:
-			V_DrawPatch(0,0,0,
-						W_CacheLumpName("VICTORY2",PU_CACHE));
+
+		case 2:
+			F_CastDrawer ();
 			break;
-		  case 3:
-			F_BunnyScroll ();
-			break;
-		  case 4:
-			V_DrawPatch (0,0,0,
-						 W_CacheLumpName("ENDPIC",PU_CACHE));
-			break;
-		}
 	}
-						
 }
-
-

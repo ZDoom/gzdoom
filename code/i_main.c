@@ -44,7 +44,7 @@ LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 extern int __argc;
 extern char **__argv;
 
-const char WinClassName[] = "zDOOM WndClass";
+const char WinClassName[] = "ZDOOM WndClass";
 
 HINSTANCE		g_hInst;
 WNDCLASS		WndClass;
@@ -64,6 +64,20 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	g_hInst = hInstance;
 	myargc = __argc;
 	myargv = __argv;
+
+#ifdef USEASM
+	{
+		// Disable write-protection of code segment
+		// (from Win32 Demo Programming FAQ)
+		DWORD OldRights;
+		BYTE *pBaseOfImage = GetModuleHandle(0);
+		IMAGE_OPTIONAL_HEADER *pHeader = (IMAGE_OPTIONAL_HEADER *)
+		(pBaseOfImage + ((IMAGE_DOS_HEADER*)pBaseOfImage)->e_lfanew +
+		sizeof(IMAGE_NT_SIGNATURE) + sizeof(IMAGE_FILE_HEADER));
+		if (!VirtualProtect(pBaseOfImage+pHeader->BaseOfCode,pHeader->SizeOfCode,PAGE_READWRITE,&OldRights))
+			I_FatalError ("Could not make code writable\n");
+	}
+#endif
 
 	height = GetSystemMetrics (SM_CYFIXEDFRAME) * 2 +
 			 GetSystemMetrics (SM_CYCAPTION) + 12 * 32;
@@ -86,7 +100,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	
 	/* create window */
 	Window = CreateWindow((LPCTSTR)WinClassName,
-			(LPCTSTR) "zDOOM",
+			(LPCTSTR) "ZDOOM (" __DATE__ ")",
 			WS_CAPTION | WS_OVERLAPPED | WS_POPUP |
 			WS_SYSMENU | WS_MINIMIZEBOX,
 			CW_USEDEFAULT, CW_USEDEFAULT, width, height,

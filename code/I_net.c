@@ -61,6 +61,7 @@ i_net_rcsid[] = "$Id: i_net.c,v 1.2 1997/12/29 19:50:54 pekangas Exp $";
 #include "d_event.h"
 #include "d_net.h"
 #include "m_argv.h"
+#include "m_alloc.h"
 
 #include "doomstat.h"
 
@@ -322,7 +323,7 @@ void I_InitNetwork (void)
 	WSADATA 	wsad;
 #endif
 	
-	doomcom = malloc (sizeof (*doomcom) );
+	doomcom = Malloc (sizeof (*doomcom) );
 	memset (doomcom, 0, sizeof(*doomcom) );
 	
 	// set up for network

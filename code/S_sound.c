@@ -40,6 +40,7 @@ s_sound_rcsid[] = "$Id: s_sound.c,v 1.3 1998/01/05 16:26:08 pekangas Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "m_alloc.h"
 
 #include "i_system.h"
 #include "i_sound.h"
@@ -55,6 +56,7 @@ s_sound_rcsid[] = "$Id: s_sound.c,v 1.3 1998/01/05 16:26:08 pekangas Exp $";
 #include "p_local.h"
 
 #include "doomstat.h"
+#include "cmdlib.h"
 
 
 // Purpose?
@@ -127,7 +129,6 @@ static boolean			mus_paused;
 static struct {
 	char *name;
 	int   handle;
-	void *data;
 } mus_playing;
 
 // following is set
@@ -209,7 +210,6 @@ void S_Init (int sfxVolume, int musicVolume)
 void S_Start(void)
 {
 	int cnum;
-	int mnum;
 
 	// kill all playing sounds at start of level
 	//	(trust me - a good idea)
@@ -220,36 +220,8 @@ void S_Start(void)
 	// start new music for the level
 	mus_paused = 0;
 	
-	if (gamemode == commercial)
-		mnum = mus_runnin + gamemap - 1;
-	else
-	{
-		int spmus[]=
-		{
-			// Song - Who? - Where?
-			
-			mus_e3m4, // American 		e4m1
-			mus_e3m2, // Romero 		e4m2
-			mus_e3m3, // Shawn			e4m3
-			mus_e1m5, // American 		e4m4
-			mus_e2m7, // Tim			e4m5
-			mus_e2m4, // Romero 		e4m6
-			mus_e2m6, // J.Anderson 	e4m7 CHIRON.WAD
-			mus_e2m5, // Shawn			e4m8
-			mus_e1m9	// Tim			e4m9
-		};
-		
-		if (gameepisode < 4)
-			mnum = mus_e1m1 + (gameepisode-1)*9 + gamemap-1;
-		else
-			mnum = spmus[gamemap-1];
-		}
-	
-	// HACK FOR COMMERCIAL
-	//	if (commercial && mnum > mus_e3m9)
-	//			mnum -= mus_e3m9;
-	
-	S_ChangeMusic(S_music[mnum].name, true);
+	// [RH] This is a lot simpler now.
+	S_ChangeMusic(level.music, true);
 	
 	nextcleanup = 15;
 }
@@ -301,7 +273,7 @@ void S_StartSoundAtVolume (void *origin_p, int sfx_id, int volume)
 
 	// Check to see if it is audible,
 	//	and if not, modify the params
-	if (((unsigned int)origin > 2) && origin != players[displayplayer].mo)
+	if (((unsigned int)origin >= (unsigned int)ORIGIN_STARTOFNORMAL) && origin != players[displayplayer].mo)
 	{
 		rc = S_AdjustSoundParams(players[displayplayer].mo,
 								 origin,
@@ -317,7 +289,8 @@ void S_StartSoundAtVolume (void *origin_p, int sfx_id, int volume)
 		
 		if (!rc)
 			return;
-	} else if (origin == ORIGIN_SURROUND) {
+	} else if ((unsigned int)origin >= (unsigned int)ORIGIN_SURROUND
+			&& (unsigned int)origin <= (unsigned int)ORIGIN_SURROUND4) {
 		sep = -1;
 	} else {
 		sep = NORM_SEP;
@@ -492,7 +465,7 @@ void S_UpdateSounds(void* listener_p)
 
 				// check non-local sounds for distance clipping
 				//	or modify their params
-				if ((unsigned int)c->origin > 2u && listener_p != c->origin)
+				if (c->origin >= ORIGIN_STARTOFNORMAL && listener_p != c->origin)
 				{
 					audible = S_AdjustSoundParams(listener,
 												  c->origin,
@@ -565,27 +538,39 @@ extern int musicLump;
 void S_ChangeMusic (char *musicname, int looping)
 {
 	int lumpnum;
-
-	if ((lumpnum = W_CheckNumForName (musicname)) == -1) {
-		Printf ("Music lump \"%s\" not found\n", musicname);
-		return;
-	}
+	void *data;
+	int len;
+	FILE *f;
 
 	if (mus_playing.name && !stricmp (mus_playing.name, musicname))
 		return;
 
+	if (!(f = fopen (musicname, "rb"))) {
+		if ((lumpnum = W_CheckNumForName (musicname)) == -1) {
+			Printf ("Music lump \"%s\" not found\n", musicname);
+			return;
+		}
+	} else {
+		lumpnum = -1;
+		len = Q_filelength (f);
+		data = Malloc (len);
+		fread (data, len, 1, f);
+		fclose (f);
+	}
+
 	// shutdown old music
 	S_StopMusic();
-
-	/* [Petteri]: */
-	musicLump = lumpnum;
 
 	// load & register it
 	if (mus_playing.name)
 		free (mus_playing.name);
 	mus_playing.name = copystring (musicname);
-	mus_playing.data = (void *)W_CacheLumpNum(lumpnum, PU_MUSIC);
-	mus_playing.handle = I_RegisterSong(mus_playing.data);
+	if (lumpnum != -1) {
+		mus_playing.handle = I_RegisterSong(W_CacheLumpNum(lumpnum, PU_CACHE), W_LumpLength (lumpnum));
+	} else {
+		mus_playing.handle = I_RegisterSong(data, len);
+		free (data);
+	}
 
 	// play it
 	I_PlaySong(mus_playing.handle, looping);
@@ -601,9 +586,7 @@ void S_StopMusic(void)
 
 		I_StopSong(mus_playing.handle);
 		I_UnRegisterSong(mus_playing.handle);
-		Z_ChangeTag(mus_playing.data, PU_CACHE);
-		
-		mus_playing.data = 0;
+
 		free (mus_playing.name);
 		mus_playing.name = NULL;
 		mus_playing.handle = 0;
@@ -674,7 +657,8 @@ S_AdjustSoundParams
 	// From _GG1_ p.428. Appox. eucledian distance fast.
 	approx_dist = adx + ady - ((adx < ady ? adx : ady)>>1);
 	
-	if (gamemap != 8
+	if (gamemode != commercial && 
+		(level.levelnum % 10) != 8
 		&& approx_dist > S_CLIPPING_DIST)
 	{
 		return 0;
@@ -701,7 +685,7 @@ S_AdjustSoundParams
 	{
 		*vol = 255;
 	}
-	else if (gamemap == 8)
+	else if (gamemode != commercial && (level.levelnum % 10) == 8)
 	{
 		if (approx_dist > S_CLIPPING_DIST)
 			approx_dist = S_CLIPPING_DIST;

@@ -160,6 +160,9 @@ void R_Init (void);
 // Called by M_Responder.
 void R_SetViewSize (int blocks);
 
+// [RH] Initialize multires stuff for renderer
+void R_MultiresInit (void);
+
 #endif
 //-----------------------------------------------------------------------------
 //

@@ -72,11 +72,7 @@ int 	clipammo[NUMAMMO] = {10, 4, 20, 1};
 // Returns false if the ammo can't be picked up at all
 //
 
-boolean
-P_GiveAmmo
-( player_t* 	player,
-  ammotype_t	ammo,
-  int			num )
+boolean P_GiveAmmo (player_t *player, ammotype_t ammo, int num)
 {
 	int 		oldammo;
 		
@@ -166,11 +162,7 @@ P_GiveAmmo
 // P_GiveWeapon
 // The weapon name may have a MF_DROPPED flag ored in.
 //
-boolean
-P_GiveWeapon
-( player_t* 	player,
-  weapontype_t	weapon,
-  boolean		dropped )
+boolean P_GiveWeapon (player_t *player, weapontype_t weapon, boolean dropped)
 {
 	boolean 	gaveammo;
 	boolean 	gaveweapon;
@@ -227,10 +219,7 @@ P_GiveWeapon
 // P_GiveBody
 // Returns false if the body isn't needed at all
 //
-boolean
-P_GiveBody
-( player_t* 	player,
-  int			num )
+boolean P_GiveBody (player_t *player, int num)
 {
 	if (player->health >= MAXHEALTH)
 		return false;
@@ -250,10 +239,7 @@ P_GiveBody
 // Returns false if the armor is worse
 // than the current armor.
 //
-boolean
-P_GiveArmor
-( player_t* 	player,
-  int			armortype )
+boolean P_GiveArmor (player_t *player, int armortype)
 {
 	int 		hits;
 		
@@ -272,10 +258,7 @@ P_GiveArmor
 //
 // P_GiveCard
 //
-void
-P_GiveCard
-( player_t* 	player,
-  card_t		card )
+void P_GiveCard (player_t *player, card_t card)
 {
 	if (player->cards[card])
 		return;
@@ -288,10 +271,7 @@ P_GiveCard
 //
 // P_GivePower
 //
-boolean
-P_GivePower
-( player_t* 	player,
-  int /*powertype_t*/	power )
+boolean P_GivePower (player_t *player, int /*powertype_t*/ power)
 {
 	if (power == pw_invulnerability)
 	{
@@ -337,10 +317,7 @@ P_GivePower
 //
 // P_TouchSpecialThing
 //
-void
-P_TouchSpecialThing
-( mobj_t*		special,
-  mobj_t*		toucher )
+void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 {
 	player_t*	player;
 	int 		i;
@@ -370,13 +347,13 @@ P_TouchSpecialThing
 	{
 		// armor
 	  case SPR_ARM1:
-		if (!P_GiveArmor (player, 1))
+		if (!P_GiveArmor (player, deh_GreenAC))
 			return;
 		player->message = GOTARMOR;
 		break;
 				
 	  case SPR_ARM2:
-		if (!P_GiveArmor (player, 2))
+		if (!P_GiveArmor (player, deh_BlueAC))
 			return;
 		player->message = GOTMEGA;
 		break;
@@ -384,25 +361,25 @@ P_TouchSpecialThing
 		// bonus items
 	  case SPR_BON1:
 		player->health++;				// can go over 100%
-		if (player->health > 200)
-			player->health = 200;
+		if (player->health > deh_MaxHealth)
+			player->health = deh_MaxHealth;
 		player->mo->health = player->health;
 		player->message = GOTHTHBONUS;
 		break;
 		
 	  case SPR_BON2:
 		player->armorpoints++;			// can go over 100%
-		if (player->armorpoints > 200)
-			player->armorpoints = 200;
+		if (player->armorpoints > deh_MaxArmor)
+			player->armorpoints = deh_MaxArmor;
 		if (!player->armortype)
-			player->armortype = 1;
+			player->armortype = deh_GreenAC;
 		player->message = GOTARMBONUS;
 		break;
 		
 	  case SPR_SOUL:
-		player->health += 100;
-		if (player->health > 200)
-			player->health = 200;
+		player->health += deh_SoulsphereHealth;
+		if (player->health > deh_MaxSoulsphere)
+			player->health = deh_MaxSoulsphere;
 		player->mo->health = player->health;
 		player->message = GOTSUPER;
 		sound = sfx_getpow;
@@ -411,9 +388,9 @@ P_TouchSpecialThing
 	  case SPR_MEGA:
 		if (gamemode != commercial)
 			return;
-		player->health = 200;
+		player->health = deh_MegasphereHealth;
 		player->mo->health = player->health;
-		P_GiveArmor (player,2);
+		P_GiveArmor (player,deh_BlueAC);
 		player->message = GOTMSPHERE;
 		sound = sfx_getpow;
 		break;
@@ -654,22 +631,25 @@ P_TouchSpecialThing
 		I_Error ("P_SpecialThing: Unknown gettable thing");
 	}
 		
-	if (special->flags & MF_COUNTITEM)
+	if (special->flags & MF_COUNTITEM) {
 		player->itemcount++;
+		level.found_items++;
+	}
 	P_RemoveMobj (special);
 	player->bonuscount += BONUSADD;
-	if (player == &players[consoleplayer])
-		S_StartSound (ORIGIN_AMBIENT, sound);
+	if (player == &players[consoleplayer]) {
+		if (sound == sfx_getpow)
+			S_StartSound (ORIGIN_SURROUND3, sound);
+		else
+			S_StartSound (ORIGIN_AMBIENT, sound);
+	}
 }
 
 
 //
 // KillMobj
 //
-void
-P_KillMobj
-( mobj_t*		source,
-  mobj_t*		target )
+void P_KillMobj (mobj_t *source, mobj_t *target)
 {
 	mobjtype_t	item;
 	mobj_t* 	mo;
@@ -685,8 +665,10 @@ P_KillMobj
 	if (source && source->player)
 	{
 		// count for intermission
-		if (target->flags & MF_COUNTKILL)
-			source->player->killcount++;		
+		if (target->flags & MF_COUNTKILL) {
+			source->player->killcount++;
+			level.killed_monsters++;
+		}
 
 		if (target->player)
 			source->player->frags[target->player-players]++;
@@ -696,6 +678,7 @@ P_KillMobj
 		// count all monster deaths,
 		// even those caused by other monsters
 		players[0].killcount++;
+		level.killed_monsters++;
 	}
 	
 	if (target->player)
@@ -773,12 +756,7 @@ P_KillMobj
 // Source can be NULL for slime, barrel explosions
 // and other environmental stuff.
 //
-void
-P_DamageMobj
-( mobj_t*		target,
-  mobj_t*		inflictor,
-  mobj_t*		source,
-  int			damage )
+void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage)
 {
 	unsigned	ang;
 	int 		saved;
@@ -791,6 +769,12 @@ P_DamageMobj
 				
 	if (target->health <= 0)
 		return;
+
+	// [RH] Andy Baker's Stealth monsters
+	if (target->flags & MF_STEALTH)
+	{
+		P_BecomeVisible(target);
+	}
 
 	if ( target->flags & MF_SKULLFLY )
 	{
@@ -855,7 +839,7 @@ P_DamageMobj
 		
 		if (player->armortype)
 		{
-			if (player->armortype == 1)
+			if (player->armortype == deh_GreenAC)
 				saved = damage/3;
 			else
 				saved = damage/2;

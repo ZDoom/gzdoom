@@ -25,6 +25,7 @@
 static const char
 rcsid[] = "$Id: r_bsp.c,v 1.4 1997/02/03 22:45:12 b1 Exp $";
 
+#include "m_alloc.h"
 
 #include "doomdef.h"
 
@@ -50,7 +51,8 @@ line_t* 		linedef;
 sector_t*		frontsector;
 sector_t*		backsector;
 
-drawseg_t		drawsegs[MAXDRAWSEGS];
+int				MaxDrawSegs;
+drawseg_t		*drawsegs;
 drawseg_t*		ds_p;
 
 
@@ -67,6 +69,10 @@ R_StoreWallRange
 //
 void R_ClearDrawSegs (void)
 {
+	if (!drawsegs) {
+		MaxDrawSegs = 256;		// [RH] Default. Increased as needed.
+		drawsegs = Malloc (MaxDrawSegs * sizeof(drawseg_t));
+	}
 	ds_p = drawsegs;
 }
 
@@ -85,12 +91,12 @@ typedef struct
 } cliprange_t;
 
 
-#define MAXSEGS 		32
+int				MaxSegs;
 
 // newend is one past the last valid seg
 cliprange_t*	newend;
-cliprange_t 	solidsegs[MAXSEGS];
-
+cliprange_t		*solidsegs;
+cliprange_t		*lastsolidseg;
 
 
 
@@ -121,6 +127,17 @@ R_ClipSolidWallSegment
 			// Post is entirely visible (above start),
 			//	so insert a new clippost.
 			R_StoreWallRange (first, last);
+			// [RH] Get more solidsegs if needed.
+			if (newend == lastsolidseg) {
+				int i = start - solidsegs;
+
+				MaxSegs += 8;
+				solidsegs = Realloc (solidsegs, MaxSegs * sizeof(cliprange_t));
+				newend = &solidsegs[MaxSegs - 8];
+				start = &solidsegs[i];
+				lastsolidseg = &solidsegs[MaxSegs];
+				DEVONLY (Printf, "MaxSegs increased to %d\n", MaxSegs, 0);
+			}
 			next = newend;
 			newend++;
 			
@@ -244,6 +261,11 @@ R_ClipPassWallSegment
 //
 void R_ClearClipSegs (void)
 {
+	if (!solidsegs) {
+		MaxSegs = 32;	// [RH] Default. Increased as needed.
+		solidsegs = Malloc (MaxSegs * sizeof(cliprange_t));
+		lastsolidseg = &solidsegs[MaxSegs];
+	}
 	solidsegs[0].first = -0x7fffffff;
 	solidsegs[0].last = -1;
 	solidsegs[1].first = viewwidth;

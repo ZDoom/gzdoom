@@ -68,6 +68,12 @@ rcsid[] = "$Id: st_stuff.c,v 1.6 1997/02/03 22:45:13 b1 Exp $";
 
 cvar_t *idmypos;
 
+
+// functions in st_new.c
+void ST_initNew (void);
+void ST_unloadNew (void);
+void ST_newDraw (void);
+
 //
 // STATUS BAR DATA
 //
@@ -263,18 +269,9 @@ cvar_t *idmypos;
  // Height, in lines. 
 #define ST_OUTHEIGHT			1
 
-#define ST_MAPWIDTH 	\
-	(strlen(mapnames[(gameepisode-1)*9+(gamemap-1)]))
-
-#define ST_MAPTITLEX \
-	(SCREENWIDTH - ST_MAPWIDTH * ST_CHATFONTWIDTH)
-
-#define ST_MAPTITLEY			0
-#define ST_MAPHEIGHT			1
-
-			
 // main player in game
-static player_t*		plyr; 
+// [RH] not static
+player_t*				plyr; 
 
 // ST_Start() has just been called
 static boolean			st_firsttime;
@@ -322,10 +319,12 @@ static boolean			st_fragson;
 static patch_t* 		sbar;
 
 // 0-9, tall numbers
-static patch_t* 		tallnum[10];
+// [RH] no longer static
+patch_t*		 		tallnum[10];
 
 // tall % sign
-static patch_t* 		tallpercent;
+// [RH] no longer static
+patch_t*		 		tallpercent;
 
 // 0-9, short, yellow (,different!) numbers
 static patch_t* 		shortnum[10];
@@ -334,7 +333,8 @@ static patch_t* 		shortnum[10];
 static patch_t* 		keys[NUMCARDS]; 
 
 // face status patches
-static patch_t* 		faces[ST_NUMFACES];
+// [RH] no longer static
+patch_t* 				faces[ST_NUMFACES];
 
 // face background
 static patch_t* 		faceback;
@@ -391,7 +391,8 @@ static boolean	oldweaponsowned[NUMWEAPONS];
 static int		st_facecount = 0;
 
 // current face index, used by w_faces
-static int		st_faceindex = 0;
+// [RH] not static anymore
+int				st_faceindex = 0;
 
 // holds key-type for each key box on bar
 static int		keyboxes[3]; 
@@ -404,11 +405,6 @@ static int		st_randomnumber;
 // Massive bunches of cheat shit
 //	to keep it from being easy to figure them out.
 // Yeah, right...
-unsigned char	cheat_mus_seq[] =
-{
-	0xb2, 0x26, 0xb6, 0xae, 0xea, 1, 0, 0, 0xff
-};
-
 unsigned char	cheat_choppers_seq[] =
 {
 	0xb2, 0x26, 0xe2, 0x32, 0xf6, 0x2a, 0x2a, 0xa6, 0x6a, 0xea, 0xff // id...
@@ -471,7 +467,6 @@ unsigned char	cheat_mypos_seq[] =
 
 
 // Now what?
-cheatseq_t		cheat_mus = { cheat_mus_seq, 0 };
 cheatseq_t		cheat_god = { cheat_god_seq, 0 };
 cheatseq_t		cheat_ammo = { cheat_ammo_seq, 0 };
 cheatseq_t		cheat_ammonokey = { cheat_ammonokey_seq, 0 };
@@ -494,10 +489,6 @@ cheatseq_t		cheat_clev = { cheat_clev_seq, 0 };
 cheatseq_t		cheat_mypos = { cheat_mypos_seq, 0 };
 
 
-// 
-extern char*	mapnames[];
-
-
 //
 // STATUS BAR CODE
 //
@@ -505,9 +496,25 @@ void ST_Stop(void);
 
 void ST_refreshBackground(void)
 {
+	// [RH] Used to draw background around status bar
+	int side, ofs, i;
 
 	if (st_statusbaron)
 	{
+		// [RH] if SCREENWIDTH > 320, draw stuff around status bar
+		if (SCREENWIDTH > 320) {
+			ofs = (ST_Y) * SCREENPITCH;
+			side = (SCREENWIDTH - 320) / 2;
+			R_VideoErase (ofs, side);
+
+			ofs += SCREENWIDTH - side;
+			for (i = ST_Y; i < SCREENHEIGHT; i++) {
+				R_VideoErase (ofs, side << 1);
+				ofs += SCREENPITCH;
+			}
+			R_VideoErase (ofs, side);
+		}
+
 		V_DrawPatch(ST_X, 0, BG, sbar);
 
 		if (netgame)
@@ -515,7 +522,6 @@ void ST_refreshBackground(void)
 
 		V_CopyRect(ST_X, 0, BG, ST_WIDTH, ST_HEIGHT, ST_X, ST_Y, FG);
 	}
-
 }
 
 
@@ -561,29 +567,19 @@ ST_Responder (event_t* ev)
 	  // 'fa' cheat for killer fucking arsenal
 	  else if (cht_CheckCheat(&cheat_ammonokey, (char)ev->data2))
 	  {
-		AddCommandString ("give mega armor; give weapons; give ammo");
+		AddCommandString ("give backpack; give weapons; give ammo");
+		plyr->armorpoints = deh_FAArmor;
+		plyr->armortype = deh_FAAC;
 		plyr->message = STSTR_FAADDED;
 	  }
 
 	  // 'kfa' cheat for key full ammo
 	  else if (cht_CheckCheat(&cheat_ammo, (char)ev->data2))
 	  {
-		AddCommandString ("give mega armor; give weapons; give ammo; give keys");
+		AddCommandString ("give backpack; give weapons; give ammo; give keys");
+		plyr->armorpoints = deh_KFAArmor;
+		plyr->armorpoints = deh_KFAAC;
 		plyr->message = STSTR_KFAADDED;
-	  }
-
-	  // 'mus' cheat for changing music
-	  else if (cht_CheckCheat(&cheat_mus, (char)ev->data2))
-	  {
-		char	buf[3];
-		char	*argv[2];
-		
-		cht_GetParam(&cheat_mus, buf);
-		buf[2] = 0;
-
-		argv[0] = "idmus";
-		argv[1] = buf;
-		Cmd_idmus (plyr, 2, argv);
 	  }
 
 	  // Simplified, accepting both "noclip" and "idspispopd".
@@ -626,7 +622,7 @@ ST_Responder (event_t* ev)
 	  // 'mypos' for player position
 	  else if (cht_CheckCheat(&cheat_mypos, (char)ev->data2))
 	  {
-		Cmd_idmypos (plyr, 0, NULL);
+		AddCommandString ("toggle idmypos");
 	  }
 	
 	  // 'clev' change-level cheat
@@ -1173,6 +1169,7 @@ void ST_unloadGraphics(void)
 void ST_unloadData(void)
 {
 	ST_unloadGraphics();
+	ST_unloadNew();
 }
 
 void ST_initData(void)
@@ -1203,6 +1200,7 @@ void ST_initData(void)
 		keyboxes[i] = -1;
 
 	STlib_init();
+	ST_initNew();
 
 }
 

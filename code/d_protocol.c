@@ -1,11 +1,8 @@
-#include <malloc.h>
-#include <stdlib.h>
+#include "m_alloc.h"
 
 #include "d_protocol.h"
 #include "doomdef.h"
 #include "cmdlib.h"
-
-extern byte *demo_p;
 
 char *ReadString (byte **stream)
 {

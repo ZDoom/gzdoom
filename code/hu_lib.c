@@ -110,7 +110,7 @@ HUlib_drawTextLine
 	unsigned char		c;
 
 	// draw the new stuff
-	x = l->x;
+	x = l->x * CleanXfac;
 	for (i=0;i<l->len;i++)
 	{
 		c = toupper(l->l[i]);
@@ -118,15 +118,15 @@ HUlib_drawTextLine
 			&& c >= l->sc
 			&& c <= '_')
 		{
-			w = SHORT(l->f[c - l->sc]->width);
+			w = SHORT(l->f[c - l->sc]->width) * CleanXfac;
 			if (x+w > SCREENWIDTH)
 				break;
-			V_DrawPatchDirect(x, l->y, FG, l->f[c - l->sc]);
+			V_DrawPatchCleanNoMove(x, l->y, FG, l->f[c - l->sc]);
 			x += w;
 		}
 		else
 		{
-			x += 4;
+			x += 4 * CleanXfac;
 			if (x >= SCREENWIDTH)
 				break;
 		}
@@ -134,9 +134,9 @@ HUlib_drawTextLine
 
 	// draw the cursor if requested
 	if (drawcursor
-		&& x + SHORT(l->f['_' - l->sc]->width) <= SCREENWIDTH)
+		&& x + SHORT(l->f['_' - l->sc]->width) * CleanXfac <= SCREENWIDTH)
 	{
-		V_DrawPatchDirect(x, l->y, FG, l->f['_' - l->sc]);
+		V_DrawPatchCleanNoMove(x, l->y, FG, l->f['_' - l->sc]);
 	}
 }
 

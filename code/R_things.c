@@ -28,10 +28,11 @@ rcsid[] = "$Id: r_things.c,v 1.5 1997/02/03 16:47:56 b1 Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "m_alloc.h"
 
 #include "doomdef.h"
 #include "m_swap.h"
+#include "m_argv.h"
 
 #include "i_system.h"
 #include "z_zone.h"
@@ -39,7 +40,7 @@ rcsid[] = "$Id: r_things.c,v 1.5 1997/02/03 16:47:56 b1 Exp $";
 
 #include "r_local.h"
 
-#include "c_console.h"
+#include "c_cvars.h"
 
 #include "doomstat.h"
 
@@ -48,11 +49,12 @@ rcsid[] = "$Id: r_things.c,v 1.5 1997/02/03 16:47:56 b1 Exp $";
 
 
 #define MINZ							(FRACUNIT*4)
-#define BASEYCENTER 					(100-((SCREENHEIGHT-200)/12))
+#define BASEYCENTER 					(100)
 
 //void R_DrawColumn (void);
 //void R_DrawFuzzColumn (void);
 
+cvar_t *crosshair;
 
 
 typedef struct
@@ -78,6 +80,7 @@ typedef struct
 fixed_t 		pspritescale;
 fixed_t 		pspriteiscale;
 fixed_t			pspriteyscale;		// [RH] Aspect ratio handling (from doom3)
+fixed_t			skyiscale;			// [RH] Sky scale factor
 
 lighttable_t**	spritelights;
 
@@ -102,6 +105,26 @@ spriteframe_t	sprtemp[29];
 int 			maxframe;
 char*			spritename;
 
+//
+// Define MHFX_LAXSPRITEROTATIONS for a temporary fix to the problem
+// of PWADS that define sprite rotations in different orders. This
+// should be regarded as a temporary fix only and might not work
+// properly in all cases. See README.sprites for details and
+// ESPECIALLY before using "-sprnolim" - you have been warned!
+//
+// Basically, this works by removing the checks on two WAD entries that
+// map to the same sprite, having both a "no rotations" version of a
+// sprite and various rotations of a sprite, and so forth. I cannot, so
+// far, see any reason for Doom to check for this internally, as it seems
+// to use the most recently loaded version of a sprite (which is, after all,
+// what we want), so I assume that it is designed to protect against a
+// corrupted IWAD or a buggy PWAD, or something like that.
+//
+#define MHFX_LAXSPRITEROTATIONS
+
+#ifdef MHFX_LAXSPRITEROTATIONS
+int  lax_sprite_rotations=0;
+#endif
 
 
 
@@ -128,11 +151,22 @@ R_InstallSpriteLump
 	if (rotation == 0)
 	{
 		// the lump should be used for all rotations
-		if (sprtemp[frame].rotate == false)
+        // false=0, true=1, but array initialised to -1
+        // allows doom to have a "no value set yet" boolean value!
+
+		if ( (sprtemp[frame].rotate == false)
+#ifdef MHFX_LAXSPRITEROTATIONS
+            && (!lax_sprite_rotations)
+#endif
+			)
 			I_Error ("R_InitSprites: Sprite %s frame %c has "
 					 "multip rot=0 lump", spritename, 'A'+frame);
 
-		if (sprtemp[frame].rotate == true)
+		if ( (sprtemp[frame].rotate == true)
+#ifdef MHFX_LAXSPRITEROTATIONS
+            && (!lax_sprite_rotations)
+#endif
+			)
 			I_Error ("R_InitSprites: Sprite %s frame %c has rotations "
 					 "and a rot=0 lump", spritename, 'A'+frame);
 						
@@ -146,7 +180,11 @@ R_InstallSpriteLump
 	}
 		
 	// the lump is only used for one rotation
-	if (sprtemp[frame].rotate == false)
+	if ((sprtemp[frame].rotate == false)
+#ifdef MHFX_LAXSPRITEROTATIONS
+            && (!lax_sprite_rotations)
+#endif
+		)
 		I_Error ("R_InitSprites: Sprite %s frame %c has rotations "
 				 "and a rot=0 lump", spritename, 'A'+frame);
 				
@@ -154,7 +192,11 @@ R_InstallSpriteLump
 
 	// make 0 based
 	rotation--; 		
-	if (sprtemp[frame].lump[rotation] != -1)
+	if ((sprtemp[frame].lump[rotation] != -1)
+#ifdef MHFX_LAXSPRITEROTATIONS
+            && (!lax_sprite_rotations)
+#endif
+		)
 		I_Error ("R_InitSprites: Sprite %s : %c : %c "
 				 "has two lumps mapped to it",
 				 spritename, 'A'+frame, '1'+rotation);
@@ -293,8 +335,10 @@ void R_InitSpriteDefs (char** namelist)
 //
 // GAME FUNCTIONS
 //
-vissprite_t 	vissprites[MAXVISSPRITES];
-vissprite_t*	vissprite_p;
+int MaxVisSprites;
+vissprite_t 	*vissprites;
+vissprite_t		*vissprite_p;
+vissprite_t		*lastvissprite;
 int 			newvissprite;
 
 
@@ -307,13 +351,23 @@ void R_InitSprites (char** namelist)
 {
 	int 		i;
 		
-	negonearray = malloc (sizeof(short) * SCREENWIDTH);
+	negonearray = Malloc (sizeof(short) * SCREENWIDTH);
 
 	for (i=0 ; i<SCREENWIDTH ; i++)
 	{
 		negonearray[i] = -1;
 	}
-		
+
+	MaxVisSprites = 128;	// [RH] This is the initial default value. It grows as needed.
+	vissprites = Malloc (MaxVisSprites * sizeof(vissprite_t));
+	lastvissprite = &vissprites[MaxVisSprites];
+
+#ifdef MHFX_LAXSPRITEROTATIONS
+    lax_sprite_rotations=( M_CheckParm("-gfixall")
+                          ||
+                           M_CheckParm("-gignrot") );
+#endif
+
 	R_InitSpriteDefs (namelist);
 }
 
@@ -332,12 +386,17 @@ void R_ClearSprites (void)
 //
 // R_NewVisSprite
 //
-vissprite_t 	overflowsprite;
-
 vissprite_t* R_NewVisSprite (void)
 {
-	if (vissprite_p == &vissprites[MAXVISSPRITES])
-		return &overflowsprite;
+	if (vissprite_p == lastvissprite) {
+		int prevvisspritenum = vissprite_p - vissprites;
+
+		MaxVisSprites += 32;
+		vissprites = Realloc (vissprites, MaxVisSprites * sizeof(vissprite_t));
+		lastvissprite = &vissprites[MaxVisSprites];
+		vissprite_p = &vissprites[prevvisspritenum];
+		DEVONLY (Printf, "MaxVisSprites increased to %d\n", MaxVisSprites, 0);
+	}
 	
 	vissprite_p++;
 	return vissprite_p-1;
@@ -429,13 +488,14 @@ R_DrawVisSprite
 		dc_translation = translationtables - 256 +
 			( (vis->mobjflags & MF_TRANSLATION) >> (MF_TRANSSHIFT-8) );
 	}
-	else if ((vis->mobjflags & MF_TRANSLUCENT) && TransTable)		// [RH] draw translucent column
+	else if ((vis->mobjflags & MF_TRANSLUCBITS) && TransTable)		// [RH] draw translucent column
 	{
 		colfunc = lucentcolfunc;
+		dc_transmap = TransTable + ((vis->mobjflags & MF_TRANSLUCBITS) >> (MF_TRANSLUCSHIFT - 16));
 	}
 		
 	//dc_iscale = abs(vis->xiscale)>>detailshift;
-	dc_iscale = FixedDiv (FRACUNIT, vis->scale);	// [RH] from doom3
+	dc_iscale = FixedDiv (FRACUNIT, vis->scale);	// [RH] from Doom Legacy
 	dc_texturemid = vis->texturemid;
 	frac = vis->startfrac;
 	spryscale = vis->scale;
@@ -444,10 +504,14 @@ R_DrawVisSprite
 	for (dc_x=vis->x1 ; dc_x<=vis->x2 ; dc_x++, frac += vis->xiscale)
 	{
 		texturecolumn = frac>>FRACBITS;
+
 #ifdef RANGECHECK
-		if (texturecolumn < 0 || texturecolumn >= SHORT(patch->width))
-			I_Error ("R_DrawSpriteRange: bad texturecolumn");
+		if ((unsigned)texturecolumn >= (unsigned)SHORT(patch->width)) {
+			DEVONLY (Printf, "R_DrawSpriteRange: bad texturecolumn (%d)\n", texturecolumn, 0);
+			continue;
+		}
 #endif
+
 		column = (column_t *) ((byte *)patch +
 							   LONG(patch->columnofs[texturecolumn]));
 		R_DrawMaskedColumn (column);
@@ -493,7 +557,11 @@ void R_ProjectSprite (mobj_t* thing)
 	
 	angle_t 			ang;
 	fixed_t 			iscale;
-	
+
+	// [RH] Andy Baker's stealth monsters
+	if (thing->invisible == true)
+		return;
+
 	// transform the origin point
 	tr_x = thing->x - viewx;
 	tr_y = thing->y - viewy;
@@ -508,7 +576,7 @@ void R_ProjectSprite (mobj_t* thing)
 		return;
 	
 	xscale = FixedDiv(projection, tz);
-	// [RH] aspect ratio fix (from doom3)
+	// [RH] aspect ratio fix (from Doom Legacy)
 	yscale = FixedDiv(projectiony, tz);
 		
 	gxt = -FixedMul(tr_x,viewsin); 
@@ -752,7 +820,7 @@ void R_DrawPSprite (pspdef_t* psp)
 		vis->colormap = spritelights[MAXLIGHTSCALE-1];
 	}
 		
-	R_DrawVisSprite (vis, vis->x1, vis->x2);
+		R_DrawVisSprite (vis, vis->x1, vis->x2);
 }
 
 
@@ -788,7 +856,8 @@ void R_DrawPlayerSprites (void)
 			int centerhack = centery;
 
 			centery = viewheight >> 1;
-			centeryfrac = viewheight << (FRACBITS - 1);
+			centeryfrac = centery << FRACBITS;
+
 			// add all active psprites
 			for (i=0, psp=viewplayer->psprites;
 				 i<NUMPSPRITES;
@@ -863,15 +932,15 @@ void R_SortVisSprites (void)
 }
 
 
-
+// [RH] Allocated in R_MultiresInit() to
+// SCREENWIDTH entries each.
+short *r_dsclipbot, *r_dscliptop;
 //
 // R_DrawSprite
 //
 void R_DrawSprite (vissprite_t* spr)
 {
 	drawseg_t*			ds;
-	short				*clipbot;
-	short				*cliptop;
 	int 				x;
 	int 				r1;
 	int 				r2;
@@ -879,15 +948,8 @@ void R_DrawSprite (vissprite_t* spr)
 	fixed_t 			lowscale;
 	int 				silhouette;
 
-	if (!(clipbot = malloc (sizeof(short) * SCREENWIDTH * 2))) {
-		Printf ("R_DrawSprite: no memory for cliparrays\n");
-		return;
-	}
-
-	cliptop = clipbot + SCREENWIDTH;
-
 	for (x = spr->x1 ; x<=spr->x2 ; x++)
-		clipbot[x] = cliptop[x] = -2;
+		r_dsclipbot[x] = r_dscliptop[x] = -2;
 	
 	// Scan drawsegs from end to start for obscuring segs.
 	// The first drawseg that has a greater scale
@@ -943,25 +1005,25 @@ void R_DrawSprite (vissprite_t* spr)
 		{
 			// bottom sil
 			for (x=r1 ; x<=r2 ; x++)
-				if (clipbot[x] == -2)
-					clipbot[x] = ds->sprbottomclip[x];
+				if (r_dsclipbot[x] == -2)
+					r_dsclipbot[x] = ds->sprbottomclip[x];
 		}
 		else if (silhouette == 2)
 		{
 			// top sil
 			for (x=r1 ; x<=r2 ; x++)
-				if (cliptop[x] == -2)
-					cliptop[x] = ds->sprtopclip[x];
+				if (r_dscliptop[x] == -2)
+					r_dscliptop[x] = ds->sprtopclip[x];
 		}
 		else if (silhouette == 3)
 		{
 			// both
 			for (x=r1 ; x<=r2 ; x++)
 			{
-				if (clipbot[x] == -2)
-					clipbot[x] = ds->sprbottomclip[x];
-				if (cliptop[x] == -2)
-					cliptop[x] = ds->sprtopclip[x];
+				if (r_dsclipbot[x] == -2)
+					r_dsclipbot[x] = ds->sprbottomclip[x];
+				if (r_dscliptop[x] == -2)
+					r_dscliptop[x] = ds->sprtopclip[x];
 			}
 		}
 				
@@ -972,22 +1034,61 @@ void R_DrawSprite (vissprite_t* spr)
 	// check for unclipped columns
 	for (x = spr->x1 ; x<=spr->x2 ; x++)
 	{
-		if (clipbot[x] == -2)			
-			clipbot[x] = viewheight;
+		if (r_dsclipbot[x] == -2)			
+			r_dsclipbot[x] = viewheight;
 
-		if (cliptop[x] == -2)
-			cliptop[x] = -1;
+		if (r_dscliptop[x] == -2)
+			r_dscliptop[x] = -1;
 	}
 				
-	mfloorclip = clipbot;
-	mceilingclip = cliptop;
+	mfloorclip = r_dsclipbot;
+	mceilingclip = r_dscliptop;
 	R_DrawVisSprite (spr, spr->x1, spr->x2);
-
-	free (clipbot);
 }
 
+static void R_DrawCrosshair (void)
+{
+	static float lastXhair = 0.0;
+	static int xhair = -1;
+	static patch_t *patch = NULL;
+	static boolean transparent = false;
 
+	if (lastXhair != crosshair->value) {
+		int xhairnum = (int)crosshair->value;
+		char xhairname[16];
 
+		if (xhairnum) {
+			if (xhairnum < 0) {
+				transparent = true;
+				xhairnum = -xhairnum;
+			} else {
+				transparent = false;
+			}
+			sprintf (xhairname, "XHAIR%d", xhairnum);
+			if ((xhair = W_CheckNumForName (xhairname)) == -1) {
+				xhair = W_CheckNumForName ("XHAIR1");
+			}
+		} else {
+			xhair = -1;
+		}
+		lastXhair = crosshair->value;
+		if (xhair != -1) {
+			if (patch)
+				Z_Free (patch);
+			patch = W_CacheLumpNum (xhair, PU_STATIC);
+		} else if (patch) {
+			Z_Free (patch);
+			patch = NULL;
+		}
+	}
+
+	if (patch) {
+		if (transparent)
+			V_DrawLucentPatch (viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, 0, patch);
+		else
+			V_DrawPatch (viewwidth / 2 + viewwindowx, viewheight / 2 + viewwindowy, 0, patch);
+	}
+}
 
 //
 // R_DrawMasked
@@ -1018,8 +1119,10 @@ void R_DrawMasked (void)
 	
 	// draw the psprites on top of everything
 	//	but does not draw on side views
-	if (!viewangleoffset)				
+	if (!viewangleoffset) {
+		R_DrawCrosshair (); // [RH] Draw crosshair (if active)
 		R_DrawPlayerSprites ();
+	}
 }
 
 

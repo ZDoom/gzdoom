@@ -53,6 +53,8 @@ void ST_Start (void);
 // Called by startup code.
 void ST_Init (void);
 
+// Draw the HUD (only if old status bar is not drawn)
+void ST_newDraw (void);
 
 
 // States for status bar code.

@@ -8,9 +8,11 @@
 #include "c_console.h"
 #include "c_commands.h"
 #include "c_dispatch.h"
+#include "m_argv.h"
 #include "doomstat.h"
+#include "m_alloc.h"
 
-void *mymalloc (size_t size);
+cvar_t *lookspring;			// Generate centerview when -mlook encountered?
 
 struct CmdData *FindNameInHashTable (struct CmdData **table, char *name);
 struct CmdData *ScanChainForName (struct CmdData *start, char *name, struct CmdData **prev);
@@ -130,6 +132,11 @@ void C_DoCommand (char *cmd)
 	} else if (*com_token == '-') {
 		check = GetActionBit (MakeKey (com_token + 1));
 		Actions &= ~check;
+		if (check == ACTION_MLOOK) {
+			if (lookspring->value) {
+				Cmd_CenterView (&players[consoleplayer], 0, NULL);
+			}
+		}
 	}
 	
 	// Check if this is a normal command
@@ -142,8 +149,8 @@ void C_DoCommand (char *cmd)
 			argsize += strlen (com_token) + 1;
 		}
 
-		args = mymalloc (argsize);
-		argv = mymalloc (sizeof (char *) * argc);
+		args = Malloc (argsize);
+		argv = Malloc (sizeof (char *) * argc);
 
 		arg = args;
 		data = cmd;
@@ -314,7 +321,7 @@ static boolean AddToHash (struct CmdData **table, char *name, void *data)
 	if (ScanChainForName (table[key % HASH_SIZE], name, &insert)) {
 		return false;
 	} else {
-		struct CmdData *newcmd = mymalloc (sizeof(struct CmdData));
+		struct CmdData *newcmd = Malloc (sizeof(struct CmdData));
 	
 		newcmd->name = name;
 		newcmd->generic = data;
@@ -351,16 +358,20 @@ char *BuildString (int argc, char **argv)
 	char *cur;
 	int arg;
 
-	cur = temp;
-	for (arg = 0; arg < argc; arg++) {
-		if (strchr (argv[arg], ' ')) {
-			cur += sprintf (cur, "\"%s\" ", argv[arg]);
-		} else {
-			cur += sprintf (cur, "%s ", argv[arg]);
+	if (argc == 1) {
+		return copystring (*argv);
+	} else {
+		cur = temp;
+		for (arg = 0; arg < argc; arg++) {
+			if (strchr (argv[arg], ' ')) {
+				cur += sprintf (cur, "\"%s\" ", argv[arg]);
+			} else {
+				cur += sprintf (cur, "%s ", argv[arg]);
+			}
 		}
+		temp[strlen (temp) - 1] = 0;
+		return copystring (temp);
 	}
-	temp[strlen (temp) - 1] = 0;
-	return copystring (temp);
 }
 
 static int DumpHash (struct CmdData **table, boolean showcommand)
@@ -413,7 +424,7 @@ void Cmd_Alias (player_t *player, int argc, char **argv)
 				free (alias->name);
 				free (alias->command);
 			} else {
-				alias = mymalloc (sizeof(struct CmdData));
+				alias = Malloc (sizeof(struct CmdData));
 				if (prev) {
 					alias->next = prev->next;
 					prev->next = alias;
@@ -449,5 +460,39 @@ void Cmd_Key (player_t *plyr, int argc, char **argv)
 			argv++;
 		}
 		Printf ("\n");
+	}
+}
+
+// Execute any console commands specified on the command line.
+// These all begin with '+' as opposed to '-'.
+// If onlyset is true, only "set" commands will be executed,
+// otherwise only non-"set" commands are executed.
+void C_ExecCmdLineParams (int onlyset)
+{
+	int currArg, setComp, cmdlen, argstart;
+	char *cmdString;
+
+	for (currArg = 1; currArg < myargc; ) {
+		if (*myargv[currArg++] == '+') {
+			setComp = stricmp (myargv[currArg - 1] + 1, "set");
+			if ((onlyset && setComp) || (!onlyset && !setComp)) {
+				continue;
+			}
+
+			cmdlen = 1;
+			argstart = currArg - 1;
+
+			while (currArg < myargc) {
+				if (*myargv[currArg] == '-' || *myargv[currArg] == '+')
+					break;
+				currArg++;
+				cmdlen++;
+			}
+
+			if (cmdString = BuildString (cmdlen, &myargv[argstart])) {
+				C_DoCommand (cmdString + 1);
+				free (cmdString);
+			}
+		}
 	}
 }

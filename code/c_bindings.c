@@ -8,10 +8,11 @@
 #include <stdlib.h>
 
 /* These bindings are equivalent to the
- * original DOOM's keymappings
+ * original DOOM's keymappings plus
+ * some new keys.
  */
 char DefBindings[] =
-	"bind ` toggleconsole; "
+	"bind ` toggleconsole; "			// <- This is new
 	"bind 1 \"impulse 1\"; "
 	"bind 2 \"impulse 2\"; "
 	"bind 3 \"impulse 3\"; "
@@ -34,13 +35,23 @@ char DefBindings[] =
 	"bind mouse1 +attack; "
 	"bind mouse2 +strafe; "
 	"bind mouse3 +forward; "
-	"bind mouse4 +speed; "				// <- This is new
+	"bind mouse4 +speed; "				// <- So is this
 	"bind joy1 +attack; "
 	"bind joy2 +strafe; "
 	"bind joy3 +speed; "
 	"bind joy4 +use; "
-	"bind capslock \"toggle cl_run\"";	// <- So is this
-
+	"bind capslock \"toggle cl_run\"; "	// <- This too
+	"bind f1 menu_help; "
+	"bind f2 menu_save; "
+	"bind f3 menu_load; "
+	"bind f4 menu_options; "			// <- Since we don't have a separate sound menu anymore
+	"bind f5 menu_video; "				// <- Since we no longer have a detail level setting
+	"bind f6 quicksave; "
+	"bind f7 menu_endgame; "
+	"bind f8 togglemessages; "
+	"bind f9 quickload; "
+	"bind f10 menu_quit; "
+	"bind tab togglemap";
 
 static const char *KeyNames[256+8+32] = {
 	// This array is dependant on the particular keyboard input
@@ -183,7 +194,12 @@ void Cmd_Bind (void *plyr, int argc, char **argv)
 	}
 }
 
-void C_DoKey (int key, boolean up)
+void Cmd_BindDefaults (void *plyr, int argc, char **argv)
+{
+	AddCommandString (DefBindings);
+}
+
+boolean C_DoKey (int key, boolean up)
 {
 	if (Bindings[key]) {
 		if (!up) {
@@ -194,7 +210,7 @@ void C_DoKey (int key, boolean up)
 		
 			achar = strchr (Bindings[key], '+');
 			if (!achar)
-				return;
+				return false;
 
 			if ((achar == Bindings[key]) || (*(achar - 1) <= ' ')) {
 				*achar = '-';
@@ -202,7 +218,9 @@ void C_DoKey (int key, boolean up)
 				*achar = '+';
 			}
 		}
+		return true;
 	}
+	return false;
 }
 
 void C_ArchiveBindings (FILE *f)
@@ -215,4 +233,63 @@ void C_ArchiveBindings (FILE *f)
 			fprintf (f, "bind \"%s\" \"%s\"\n", KeyName (i), Bindings[i]);
 		}
 	}
+}
+
+int C_GetKeysForCommand (char *cmd, int *first, int *second)
+{
+	int c, i;
+
+	*first = *second = c = i = 0;
+
+	while (i < 256+8+32 && c < 2) {
+		if (Bindings[i] && !stricmp (cmd, Bindings[i])) {
+			if (c++ == 0)
+				*first = i;
+			else
+				*second = i;
+		}
+		i++;
+	}
+	return c;
+}
+
+void C_NameKeys (char *str, int first, int second)
+{
+	int c = 0;
+
+	*str = 0;
+	if (first) {
+		c++;
+		strcpy (str, KeyName (first));
+		if (second)
+			strcat (str, " or ");
+	}
+
+	if (second) {
+		c++;
+		strcat (str, KeyName (second));
+	}
+
+	if (!c)
+		strcpy (str, "???");
+}
+
+void C_UnbindACommand (char *str)
+{
+	int i;
+
+	for (i = 0; i < 256+8+32; i++) {
+		if (Bindings[i] && !stricmp (str, Bindings[i])) {
+			free (Bindings[i]);
+			Bindings[i] = NULL;
+		}
+	}
+}
+
+void C_ChangeBinding (char *str, int newone)
+{
+	if (Bindings[newone])
+		free (Bindings[newone]);
+
+	Bindings[newone] = copystring (str);
 }

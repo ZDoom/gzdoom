@@ -1,9 +1,10 @@
-#include <malloc.h>
+#include "m_alloc.h"
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
 
+#include "dstrings.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -40,6 +41,9 @@ char		VersionString[8];
 #define SCROLLDN 2
 #define SCROLLNO 0
 
+extern cvar_t *showMessages;
+extern boolean message_dontfuckwithme;		// Who came up with this name?
+
 struct History {
 	struct History *Older;
 	struct History *Newer;
@@ -52,7 +56,7 @@ struct History {
 // CmdLine[259]= offset from beginning of cmdline to display
 static byte CmdLine[260];
 
-static byte printormask;
+static byte printxormask;
 
 #define MAXHISTSIZE 50
 static struct History *HistHead = NULL, *HistTail = NULL, *HistPos = NULL;
@@ -84,16 +88,6 @@ static int C_hu_CharWidth (int c)
 		return 4;
 
 	return hu_font[c]->width;
-}
-
-void *mymalloc (size_t size)
-{
-	void *result;
-
-	if ((result = malloc (size)) == 0) {
-		I_FatalError ("Not enough memory to allocate %d bytes\n", size);
-	}
-	return result;
 }
 
 void C_InitConsole (int width, int height, boolean ingame)
@@ -163,7 +157,7 @@ void C_InitConsole (int width, int height, boolean ingame)
 	ConRows = PhysRows * 10;
 
 	old = Lines;
-	Lines = mymalloc (ConRows * (ConCols + 2) + 1);
+	Lines = Malloc (ConRows * (ConCols + 2) + 1);
 
 	for (row = 0, zap = Lines; row < ConRows; row++, zap += ConCols + 2) {
 		zap[0] = 0;
@@ -216,8 +210,8 @@ void C_AddNotifyString (char *s)
 		}
 		*nl = 0;
 		splitpos = strlen (s) - 1;
-		if ((width = M_StringWidth (s)) > SCREENWIDTH) {
-			while ((width -= C_hu_CharWidth (s[splitpos])) > SCREENWIDTH) {
+		if ((width = M_StringWidth (s)) > CleanWidth) {
+			while ((width -= C_hu_CharWidth (s[splitpos])) > CleanWidth) {
 				splitpos--;
 			}
 		}
@@ -235,6 +229,9 @@ void C_AddNotifyString (char *s)
 
 	if (ShowRows > 4)
 		ShowRows = 4;
+
+	if (showMessages->value == 0.0)
+		ShowRows = message_dontfuckwithme;
 
 	ConsoleTicker = (int)(NotifyTime->value * TICRATE) + gametic;
 }
@@ -286,7 +283,7 @@ int VPrintf (const char *outline) {
 			int x;
 
 			for (x = xp, poop = cp; poop < newcp; poop++, x++) {
-				Last[x + 2] = (*poop) | printormask;
+				Last[x + 2] = (*poop) ^ printxormask;
 			}
 
 			if (Last[1] < xp + (newcp - cp))
@@ -324,7 +321,7 @@ int VPrintf (const char *outline) {
 		}
 	}
 
-	printormask = 0;
+	printxormask = 0;
 
 	return strlen (outline);
 }
@@ -350,7 +347,7 @@ int Printf_Bold (const char *format, ...)
 	vsprintf (outline, format, argptr);
 	va_end (argptr);
 
-	printormask = 0x80;
+	printxormask = 0x80;
 	return VPrintf (outline);
 }
 
@@ -412,38 +409,37 @@ void C_Ticker (void)
 
 static void C_DrawNotifyText (char *zap)
 {
-	int lines;
+	int lines, fact;
 	
 	if (ShowRows == 0 || gamestate != GS_LEVEL)
 		return;
 
-	if (!automapactive && (viewwindowy || viewwindowx)) {
-		C_EraseLines (0, (ShowRows + (ShowRows < 4)) * 8);
+	fact = 8 * CleanYfac;
+
+	if (viewactive && (viewwindowy || viewwindowx)) {
+		C_EraseLines (0, (ShowRows + (ShowRows < 4)) * fact);
 	}
 
 	for (lines = 0; lines < ShowRows; lines++) {
-		V_DrawText (0, (ShowRows - lines - 1) * 8, NotifyStrings[3 - lines]);
+		V_DrawTextClean (0, (ShowRows - lines - 1) * fact, NotifyStrings[3 - lines]);
 	}
 }
 
 void C_DrawConsole (void)
 {
 	char *zap;
-	int lines, left, revealed;
+	int lines, left;
 	static int oldbottom = 0;
 
 	left = 8;
 	lines = ConBottom - 2;
 	zap = Last - (SkipRows + RowAdjust) * (ConCols + 2);
 
-	if (ConBottom < oldbottom) {
-		revealed = (oldbottom - ConBottom) * 8;
+	if ((ConBottom < oldbottom) && (gamestate == GS_LEVEL) && (viewwindowx || viewwindowy)) {
+		C_EraseLines (ConBottom * 8, oldbottom * 8);
 	}
-	oldbottom = ConBottom;
 
-	if (gamestate == GS_LEVEL && revealed && (viewwindowx || viewwindowy)) {
-		C_EraseLines (ConBottom * 8, ConBottom * 8 + revealed);
-	}
+	oldbottom = ConBottom;
 
 	if (ConsoleState == up) {
 		C_DrawNotifyText (zap);
@@ -676,6 +672,7 @@ boolean C_Responder (event_t *ev)
 				strcpy (&CmdLine[2], HistPos->String);
 				CmdLine[0] = CmdLine[1] = strlen (&CmdLine[2]);
 				CmdLine[259] = 0;
+				makestartposgood();
 			}
 			break;
 		case KEY_DOWNARROW:
@@ -691,6 +688,7 @@ boolean C_Responder (event_t *ev)
 				CmdLine[0] = CmdLine[1] = 0;
 			}
 			CmdLine[259] = 0;
+			makestartposgood();
 			break;
 		default:
 			if (ev->data2 == 13) {
@@ -706,7 +704,7 @@ boolean C_Responder (event_t *ev)
 					// or there is nothing in the history list,
 					// so add it to the history list.
 
-					struct History *temp = mymalloc (sizeof(struct History) + CmdLine[0]);
+					struct History *temp = Malloc (sizeof(struct History) + CmdLine[0]);
 
 					strcpy (temp->String, &CmdLine[2]);
 					temp->Older = HistHead;
@@ -733,13 +731,10 @@ boolean C_Responder (event_t *ev)
 				CmdLine[0] = CmdLine[1] = CmdLine[259] = 0;
 				AddCommandString (&CmdLine[2]);
 			} else if (ev->data2 == '`' || ev->data1 == KEY_ESCAPE) {
-				// Close console, ESC clears command line
+				// Close console, both ` and ESC clear command line
 
-				if (ev->data1 == KEY_ESCAPE) {
-					CmdLine[0] = CmdLine[1] = CmdLine[259] = 0;
-					HistPos = NULL;
-				}
-
+				CmdLine[0] = CmdLine[1] = CmdLine[259] = 0;
+				HistPos = NULL;
 				C_ToggleConsole ();
 			} else if (ev->data2 < 32 || ev->data2 > 126) {
 				// Do nothing
@@ -761,10 +756,10 @@ boolean C_Responder (event_t *ev)
 					} else {
 						char *c, *e;
 
-						e = &CmdLine[CmdLine[0] + 2];
+						e = &CmdLine[CmdLine[0] + 1];
 						c = &CmdLine[CmdLine[1] + 2];
 
-						for (; e > c; e--)
+						for (; e >= c; e--)
 							*(e + 1) = *e;
 
 						*c = data;
@@ -841,7 +836,10 @@ void C_DrawMid (void)
 	if (MidMsg) {
 		if (MidLines == 1) {
 			len = strlen (MidMsg);
-			V_PrintStr ((SCREENWIDTH / 2) - (len * 4), (ST_Y/2) - 4, MidMsg, len, 0);
+			if (SCREENWIDTH < 640)
+				V_PrintStr ((SCREENWIDTH / 2) - (len * 4), (ST_Y/2) - 4, MidMsg, len, 0);
+			else
+				V_PrintStr2 ((SCREENWIDTH / 2) - (len * 8), (ST_Y/2) - 8, MidMsg, len, 0);
 		} else {
 			start = MidMsg;
 			for (line = 0; line < MidLines; line++) {
@@ -850,8 +848,12 @@ void C_DrawMid (void)
 					looker++;
 				}
 				len = looker - start;
-				V_PrintStr ((SCREENWIDTH / 2) - len * 4, (ST_Y/2) - MidLines * 4 + line * 8,
-							start, len, 0);
+				if (SCREENWIDTH < 640)
+					V_PrintStr ((SCREENWIDTH / 2) - len * 4, (ST_Y/2) - MidLines * 4 + line * 8,
+								start, len, 0);
+				else
+					V_PrintStr2 ((SCREENWIDTH / 2) - len * 8, (ST_Y/2) - MidLines * 8 + line * 16,
+								start, len, 0);
 				start = looker + 1;
 			}
 		}

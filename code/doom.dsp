@@ -125,6 +125,10 @@ SOURCE=.\cmdlib.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\d_dehack.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\d_items.c
 # End Source File
 # Begin Source File
@@ -134,6 +138,10 @@ SOURCE=.\d_main.c
 # Begin Source File
 
 SOURCE=.\d_net.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\d_netinfo.c
 # End Source File
 # Begin Source File
 
@@ -162,6 +170,10 @@ SOURCE=.\f_wipe.c
 # Begin Source File
 
 SOURCE=.\g_game.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_level.c
 # End Source File
 # Begin Source File
 
@@ -205,6 +217,10 @@ SOURCE=.\info.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\m_alloc.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\m_argv.c
 # End Source File
 # Begin Source File
@@ -226,6 +242,10 @@ SOURCE=.\m_menu.c
 # Begin Source File
 
 SOURCE=.\m_misc.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\m_options.c
 # End Source File
 # Begin Source File
 
@@ -313,10 +333,6 @@ SOURCE=.\p_user.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\precache.c
-# End Source File
-# Begin Source File
-
 SOURCE=.\Qmus2mid.c
 # End Source File
 # Begin Source File
@@ -362,6 +378,10 @@ SOURCE=.\sounds.c
 # Begin Source File
 
 SOURCE=.\st_lib.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\st_new.c
 # End Source File
 # Begin Source File
 
@@ -425,6 +445,10 @@ SOURCE=.\conchars.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\d_dehack.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\d_englsh.h
 # End Source File
 # Begin Source File
@@ -446,6 +470,10 @@ SOURCE=.\d_main.h
 # Begin Source File
 
 SOURCE=.\d_net.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\d_netinfo.h
 # End Source File
 # Begin Source File
 
@@ -501,6 +529,10 @@ SOURCE=.\g_game.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\g_level.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\hu_lib.h
 # End Source File
 # Begin Source File
@@ -534,6 +566,10 @@ SOURCE=.\i_video.h
 # Begin Source File
 
 SOURCE=.\info.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\m_alloc.h
 # End Source File
 # Begin Source File
 
@@ -598,10 +634,6 @@ SOURCE=.\p_spec.h
 # Begin Source File
 
 SOURCE=.\p_tick.h
-# End Source File
-# Begin Source File
-
-SOURCE=.\precache.h
 # End Source File
 # Begin Source File
 
@@ -690,22 +722,54 @@ SOURCE=.\z_zone.h
 # End Group
 # Begin Source File
 
-SOURCE=..\commands.html
+SOURCE=..\commands.txt
+# End Source File
+# Begin Source File
+
+SOURCE=.\cursor1.cur
 # End Source File
 # Begin Source File
 
 SOURCE=.\doom.rc
+# End Source File
+# Begin Source File
+
+SOURCE=.\icon1.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\misc.nas
 
 !IF  "$(CFG)" == "doom - Win32 Release"
 
+# Begin Custom Build - Executing NASM...
+IntDir=.\Release
+InputPath=.\misc.nas
+InputName=misc
+
+"$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	d:\nasm\nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+
+# End Custom Build
+
 !ELSEIF  "$(CFG)" == "doom - Win32 Debug"
+
+# Begin Custom Build - Executing NASM...
+IntDir=.\Debug
+InputPath=.\misc.nas
+InputName=misc
+
+"$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	d:\nasm\nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+
+# End Custom Build
 
 !ENDIF 
 
 # End Source File
 # Begin Source File
 
-SOURCE=.\icon1.ico
+SOURCE=".\rh-log.txt"
 # End Source File
 # Begin Source File
 

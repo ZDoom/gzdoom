@@ -41,14 +41,13 @@ static const char rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 #elif defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <stdlib.h>
-#include <malloc.h>
 #include <io.h>
 #include <direct.h>
 #include <errno.h>
 #define R_OK 0
 #endif
 
+#include "m_alloc.h"
 
 #include "doomdef.h"
 #include "doomstat.h"
@@ -71,6 +70,7 @@ static const char rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 
 #include "c_console.h"
 #include "c_commands.h"
+#include "c_dispatch.h"
 
 #include "i_system.h"
 #include "i_sound.h"
@@ -88,6 +88,7 @@ static const char rcsid[] = "$Id: d_main.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 
 
 #include "d_main.h"
+#include "d_dehack.h"
 
 #include "cmdlib.h"
 
@@ -110,7 +111,9 @@ char*			wadfiles[MAXWADFILES];
 boolean 		devparm;		// started game with -devparm
 boolean 		nomonsters; 	// checkparm of -nomonsters
 boolean 		respawnparm;	// checkparm of -respawn
-int 					fastparm;		// checkparm of -fast
+int 			fastparm;		// checkparm of -fast
+
+boolean			DrawNewHUD;		// [RH] Draw the new HUD?
 
 boolean 		drone;
 
@@ -138,7 +141,6 @@ boolean 		advancedemo;
 
 char			wadfile[1024];			// primary wad file
 char			mapdir[1024];			// directory of development maps
-char			basedefault[1024];		// default file
 
 
 void D_CheckNetGame (void);
@@ -204,7 +206,6 @@ void D_ProcessEvents (void)
 // wipegamestate can be set to -1 to force a wipe on the next draw
 gamestate_t 	wipegamestate = GS_DEMOSCREEN;
 extern	boolean setsizeneeded;
-extern	cvar_t *showMessages;
 void R_ExecuteSetViewSize (void);
 
 void D_Display (void)
@@ -228,7 +229,6 @@ void D_Display (void)
 		return; 				   // for comparative timing / profiling
 
 	redrawsbar = false;
-	
 	if (!menuwasactive && menuactive)
 		menuwasactive = true;
 	
@@ -249,8 +249,9 @@ void D_Display (void)
 	else
 		wipe = false;
 
-	if (gamestate == GS_LEVEL && gametic)
+	if (gamestate == GS_LEVEL && gametic) {
 		HU_Erase();
+	}
 	
 	// do buffered drawing
 	switch (gamestate)
@@ -258,8 +259,6 @@ void D_Display (void)
 	  case GS_LEVEL:
 		if (!gametic)
 			break;
-		if (automapactive)
-			AM_Drawer ();
 		if (wipe || (viewheight != SCREENHEIGHT && fullscreen) || menuwasactive) {
 			if (!menuactive)
 				menuwasactive = false;
@@ -289,11 +288,21 @@ void D_Display (void)
 	I_UpdateNoBlit ();
 
 	// draw the view directly
-	if (gamestate == GS_LEVEL && !automapactive && gametic)
+	if (gamestate == GS_LEVEL && (!automapactive || viewactive) && gametic) {
 		R_RenderPlayerView (&players[displayplayer]);
+	}
 
-	if (gamestate == GS_LEVEL && gametic)
+	if (gamestate == GS_LEVEL && DrawNewHUD && viewactive) {
+		ST_newDraw ();
+	}
+
+	if (automapactive) {
+		AM_Drawer ();
+	}
+
+	if (gamestate == GS_LEVEL && gametic) {
 		HU_Drawer ();
+	}
 
 	if (gamestate == GS_LEVEL)
 		C_DrawMid ();
@@ -310,7 +319,7 @@ void D_Display (void)
 	}
 
 	// see if the border needs to be updated to the screen
-	if (gamestate == GS_LEVEL && !automapactive)
+	if (gamestate == GS_LEVEL && (!automapactive || viewactive))
 	{
 		if (menuactive || menuactivestate || !viewactivestate)
 			borderdrawcount = 3;
@@ -327,20 +336,26 @@ void D_Display (void)
 	inhelpscreensstate = inhelpscreens;
 	oldgamestate = wipegamestate = gamestate;
 	
+	// [RH] Refresh the border here if the menu is active
+	// since it might be dimming the background.
+	if (menuactive && viewactive)
+		R_DrawViewBorder ();
+
 	// draw pause pic
 	if (paused)
 	{
-		if (automapactive)
+		patch_t *pause = W_CacheLumpName ("M_PAUSE", PU_CACHE);
+
+		if (automapactive && !viewactive)
 			y = 4;
 		else
 			y = viewwindowy+4;
-		V_DrawPatchDirect(viewwindowx+(scaledviewwidth-68)/2,
-						  y,0,W_CacheLumpName ("M_PAUSE", PU_CACHE));
+		V_DrawPatchCleanNoMove((SCREENWIDTH-(pause->width)*CleanXfac)/2,y,0,pause);
 	}
 
+	C_DrawConsole ();	  // draw console
 
 	// menus go directly to the screen
-	C_DrawConsole ();	  // draw console
 	M_Drawer ();		  // menu is drawn even on top of everything
 	NetUpdate ();		  // send out any new accumulation
 
@@ -393,10 +408,14 @@ void D_DoomLoop (void)
 		Printf ("debug output to: %s\n",filename);
 		debugfile = fopen (filename,"w");
 	}
-		
 	I_InitGraphics ();
 	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);
 	InitItems ();
+
+	// [RH] Now that all game subsystems have been initialized,
+	// do all commands on the command line other than +set
+	C_ExecCmdLineParams (false);
+
 
 	while (1)
 	{
@@ -460,7 +479,7 @@ void D_PageTicker (void)
 //
 void D_PageDrawer (void)
 {
-	V_DrawPatchStretched (0,0, 0, W_CacheLumpName(pagename, PU_CACHE), SCREENWIDTH, SCREENHEIGHT);
+	V_DrawPatchIndirect (0,0, 0, W_CacheLumpName(pagename, PU_CACHE));
 }
 
 
@@ -569,16 +588,12 @@ char			title[128];
 //
 void D_AddFile (char *file)
 {
-	int 	numwadfiles;
-	char	*newfile;
+	int numwadfiles;
 		
 	for (numwadfiles = 0 ; wadfiles[numwadfiles] ; numwadfiles++)
 		;
 
-	newfile = malloc (strlen(file)+1);
-	strcpy (newfile, file);
-		
-	wadfiles[numwadfiles] = newfile;
+	wadfiles[numwadfiles] = copystring (file);
 }
 
 //
@@ -608,30 +623,28 @@ void IdentifyVersion (void)
 	doomwaddir = home = progdir;
 
 	// Commercial.
-	doom2wad = malloc(strlen(doomwaddir)+9+1);
+	doom2wad = Malloc(strlen(doomwaddir)+9+1);
 	sprintf(doom2wad, "%sdoom2.wad", doomwaddir);
 
 	// Registered.
-	doomwad = malloc(strlen(doomwaddir)+8+1);
+	doomwad = Malloc(strlen(doomwaddir)+8+1);
 	sprintf(doomwad, "%sdoom.wad", doomwaddir);
 	
 	// Shareware.
-	doom1wad = malloc(strlen(doomwaddir)+9+1);
+	doom1wad = Malloc(strlen(doomwaddir)+9+1);
 	sprintf(doom1wad, "%sdoom1.wad", doomwaddir);
 
 	 // Bug, dear Shawn.
 	// Insufficient malloc, caused spurious realloc errors.
-	plutoniawad = malloc(strlen(doomwaddir)+/*9*/12+1);
+	plutoniawad = Malloc(strlen(doomwaddir)+/*9*/12+1);
 	sprintf(plutoniawad, "%splutonia.wad", doomwaddir);
 
-	tntwad = malloc(strlen(doomwaddir)+9+1);
+	tntwad = Malloc(strlen(doomwaddir)+9+1);
 	sprintf(tntwad, "%stnt.wad", doomwaddir);
 
 	// French stuff.
-	doom2fwad = malloc(strlen(doomwaddir)+10+1);
+	doom2fwad = Malloc(strlen(doomwaddir)+10+1);
 	sprintf(doom2fwad, "%sdoom2f.wad", doomwaddir);
-
-	sprintf(basedefault, "%s.doomrc", home);
 
 	if (M_CheckParm ("-shdev"))
 	{
@@ -640,7 +653,6 @@ void IdentifyVersion (void)
 		D_AddFile (DEVDATA"doom1.wad");
 		D_AddFile (DEVMAPS"data_se/texture1.lmp");
 		D_AddFile (DEVMAPS"data_se/pnames.lmp");
-		strcpy (basedefault,DEVDATA"default.cfg");
 		return;
 	}
 
@@ -652,7 +664,6 @@ void IdentifyVersion (void)
 		D_AddFile (DEVMAPS"data_se/texture1.lmp");
 		D_AddFile (DEVMAPS"data_se/texture2.lmp");
 		D_AddFile (DEVMAPS"data_se/pnames.lmp");
-		strcpy (basedefault,DEVDATA"default.cfg");
 		return;
 	}
 
@@ -670,7 +681,6 @@ void IdentifyVersion (void)
 			
 		D_AddFile (DEVMAPS"cdata/texture1.lmp");
 		D_AddFile (DEVMAPS"cdata/pnames.lmp");
-		strcpy (basedefault,DEVDATA"default.cfg");
 		return;
 	}
 
@@ -759,7 +769,7 @@ void FindResponseFile (void)
 			fseek (handle,0,SEEK_END);
 			size = ftell(handle);
 			fseek (handle,0,SEEK_SET);
-			file = malloc (size);
+			file = Malloc (size);
 			fread (file,size,1,handle);
 			fclose (handle);
 						
@@ -768,7 +778,7 @@ void FindResponseFile (void)
 				moreargs[index++] = myargv[k];
 						
 			firstargv = myargv[0];
-			myargv = malloc(sizeof(char *)*MAXARGVS);
+			myargv = Malloc(sizeof(char *)*MAXARGVS);
 			memset(myargv,0,sizeof(char *)*MAXARGVS);
 			myargv[0] = firstargv;
 						
@@ -806,24 +816,26 @@ void FindResponseFile (void)
 void D_DoomMain (void)
 {
 	int 			p;
-	char					file[256];
+	char			file[256];
 
 	SetProgDir ();
 
 	C_InstallCommands ();
 
 	FindResponseFile ();
-		
-	IdentifyVersion ();
 
 	{
+		// [RH] Make sure zdoom.wad is always loaded, since
+		// it contains stuff we need.
 		char *zdoomwad;
 
-		zdoomwad = malloc (strlen (progdir) + 10);
+		zdoomwad = Malloc (strlen (progdir) + 10);
 		sprintf (zdoomwad, "%szdoom.wad", progdir);
 		D_AddFile (zdoomwad);
 	}
-		
+
+	IdentifyVersion ();
+
 	modifiedgame = false;
 		
 	nomonsters = M_CheckParm ("-nomonsters");
@@ -843,8 +855,6 @@ void D_DoomMain (void)
 	if (M_CheckParm("-cdrom"))
 	{
 		Printf(D_CDROM);
-		mkdir("c:\\doomdata");
-		strcpy (basedefault,"c:/doomdata/default.cfg");
 	}	
 	
 	// turbo option
@@ -907,7 +917,7 @@ void D_DoomMain (void)
 		// the parms after p are wadfile/lump names,
 		// until end of parms or another - preceded parm
 		modifiedgame = true;			// homebrew levels
-		while (++p != myargc && myargv[p][0] != '-')
+		while (++p != myargc && myargv[p][0] != '-' && myargv[p][0] != '+')
 			D_AddFile (myargv[p]);
 	}
 
@@ -918,9 +928,10 @@ void D_DoomMain (void)
 
 	if (p && p < myargc-1)
 	{
-		sprintf (file,"%s.lmp", myargv[p+1]);
+		strcpy (file, myargv[p+1]);
+		DefaultExtension (file, ".lmp");
 		D_AddFile (file);
-		Printf("Playing demo %s.lmp.\n",myargv[p+1]);
+		Printf("Playing demo %s.\n", file);
 	}
 	
 	// get skill / episode / map from parms
@@ -976,7 +987,20 @@ void D_DoomMain (void)
 	Printf ("M_LoadDefaults: Load system defaults.\n");
 	M_LoadDefaults ();				// load before initing other systems
 
+	// [RH] do all +set commands on the command line
+	C_ExecCmdLineParams (true);
+	// [RH] Lock any cvars that should be locked now that we have given
+	// the user a chance to change them with the command line.
 	C_EnableNoSet ();
+
+	// [RH] Apply any DeHackEd patch
+	{
+		int hack;
+
+		hack = M_CheckParm ("-deh");
+		if (hack && hack < myargc - 1)
+			DoDehPatch (myargv[hack + 1]);
+	}
 
 	Printf ("Z_Init: Init zone memory allocation daemon. \n");
 	Z_Init ();
@@ -1109,8 +1133,14 @@ void D_DoomMain (void)
 	p = M_CheckParm ("-playdemo");
 	if (p && p < myargc-1)
 	{
+		char blah[256];
+
 		singledemo = true;				// quit after one demo
-		G_DeferedPlayDemo (myargv[p+1]);
+
+		strcpy (blah, myargv[p+1]);
+		FixPathSeperator (blah);
+		ExtractFileBase (blah, file);
+		G_DeferedPlayDemo (file);
 		D_DoomLoop ();	// never returns
 	}
 		
@@ -1135,7 +1165,7 @@ void D_DoomMain (void)
 	if ( gameaction != ga_loadgame )
 	{
 		if (autostart || netgame)
-			G_InitNew (startskill, startepisode, startmap);
+			G_InitNew (startskill, CalcMapName (startepisode, startmap));
 		else
 			D_StartTitle ();				// start up intro loop
 

@@ -40,7 +40,7 @@ void F_Ticker (void);
 void F_Drawer (void);
 
 
-void F_StartFinale (void);
+void F_StartFinale (char *music, char *flat, char *text);
 
 
 

@@ -24,6 +24,8 @@ void C_RegisterCommands (struct CmdDispatcher *cmd);
 
 void C_DoCommand (char *cmd);
 
+void C_ExecCmdLineParams (int onlyset);
+
 // add commands to the console as if they were typed in
 // for map changing, etc
 void AddCommandString (char *text);

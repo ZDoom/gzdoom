@@ -23,12 +23,14 @@ extern FILE *Logfile;
 cvar_t *sv_cheats;
 
 struct CmdDispatcher CmdList[] = {
+	"togglemap",				Cmd_Togglemap,
 	"echo",						Cmd_Echo,
 	"clear",					Cmd_Clear,
 	"toggleconsole",			C_ToggleConsole,
 	"centerview",				Cmd_CenterView,
 	"pause",					Cmd_Pause,
 	"gamma",					Cmd_Gamma,
+	"setcolor",					Cmd_SetColor,
 	"kill",						Cmd_Kill,
 	"sizedown",					Cmd_Sizedown,
 	"sizeup",					Cmd_Sizeup,
@@ -38,6 +40,7 @@ struct CmdDispatcher CmdList[] = {
 	"unbind",					Cmd_Unbind,
 	"unbindall",				Cmd_Unbindall,
 	"bind",						Cmd_Bind,
+	"binddefaults",				Cmd_BindDefaults,
 	"dumpheap",					Cmd_DumpHeap,
 	"exec",						Cmd_Exec,
 	"gameversion",				Cmd_Gameversion,
@@ -49,8 +52,7 @@ struct CmdDispatcher CmdList[] = {
 	"idclev",					Cmd_idclev,
 	"idclip",					Cmd_Noclip,
 	"iddqd",					Cmd_God,
-	"idmus",					Cmd_idmus,
-	"idmypos",					Cmd_idmypos,
+	"changemus",				Cmd_ChangeMus,
 	"idspispopd",				Cmd_Noclip,
 	"key",						Cmd_Key,
 	"logfile",					Cmd_Logfile,
@@ -62,6 +64,20 @@ struct CmdDispatcher CmdList[] = {
 	"vid_describecurrentmode",	Cmd_Vid_DescribeCurrentMode,
 	"vid_describedrivers",		Cmd_Vid_DescribeDrivers,
 	"vid_describemodes",		Cmd_Vid_DescribeModes,
+	"menu_main",				Cmd_Menu_Main,
+	"menu_load",				Cmd_Menu_Load,
+	"menu_save",				Cmd_Menu_Save,
+	"menu_help",				Cmd_Menu_Help,
+	"quicksave",				Cmd_Quicksave,
+	"quickload",				Cmd_Quickload,
+	"menu_endgame",				Cmd_Menu_Endgame,
+	"menu_quit",				Cmd_Menu_Quit,
+	"menu_game",				Cmd_Menu_Game,
+	"menu_options",				Cmd_Menu_Options,
+	"menu_video",				Cmd_Menu_Video,
+	"menu_keys",				Cmd_Menu_Keys,
+	"bumpgamma",				Cmd_Bumpgamma,
+	"togglemessages",			Cmd_ToggleMessages,
 	"stop",						Cmd_Stop,
 	NULL
 };
@@ -86,29 +102,10 @@ boolean CheckCheatmode (void)
 	}
 }
 
-void Cmd_idmus (player_t *plyr, int argc, char **argv)
+void Cmd_ChangeMus (player_t *plyr, int argc, char **argv)
 {
 	if (argc > 1) {
-		int musnum;
-
-		musnum = atoi (argv[1]);
-		if (musnum) {
-			if (gamemode == commercial) {
-				if (musnum < 1 || musnum > 35)
-					Printf (STSTR_NOMUS);
-				else
-					S_ChangeMusic (S_music[mus_runnin + musnum - 1].name, 1);
-			} else {
-				musnum = (argv[1][0]-'1')*9 + (argv[1][1]-'1') + argv[1][2] * 64;
-			  
-				if (musnum > 31)
-					Printf (STSTR_NOMUS);
-				else
-					S_ChangeMusic (S_music[mus_e1m1 + musnum].name, 1);
-			}
-		} else {
-			S_ChangeMusic (argv[1], 1);
-		}
+		S_ChangeMusic (argv[1], 1);
 	}
 }
 
@@ -136,9 +133,9 @@ void Cmd_God (player_t *plyr, int argc, char **argv)
 			// iddqd compatibility
 
 			if (plyr->mo)
-				plyr->mo->health = 100;
-	  
-			plyr->health = 100;
+				plyr->mo->health = deh_GodHealth;
+
+			plyr->health = deh_GodHealth;
 		}
 	} else {
 		msg = STSTR_DQDOFF;
@@ -184,16 +181,6 @@ void Cmd_Noclip (player_t *plyr, int argc, char **argv)
 		Printf (STSTR_NCOFF);
 }
 
-void Cmd_idmypos (player_t *plyr, int argc, char **argv)
-{
-	extern cvar_t *idmypos;
-
-	if (idmypos->value)
-		SetCVar (idmypos, "0");
-	else
-		SetCVar (idmypos, "1");
-}
-
 void Cmd_idclev (player_t *plyr, int argc, char **argv)
 {
 	if (CheckCheatmode ())
@@ -236,7 +223,7 @@ void Cmd_idclev (player_t *plyr, int argc, char **argv)
 		// So be it.
 		Printf (STSTR_CLEV);
       
-		G_DeferedInitNew(gameskill->value, epsd, map);
+		G_DeferedInitNew(gameskill->value, CalcMapName (epsd, map));
 	}
 }
 

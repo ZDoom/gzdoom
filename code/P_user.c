@@ -105,7 +105,7 @@ void P_CalcHeight (player_t* player)
 		return;
 	}
 				
-	angle = (FINEANGLES/20*leveltime)&FINEMASK;
+	angle = (FINEANGLES/20*level.time)&FINEMASK;
 	bob = FixedMul ( player->bob/2, finesine[angle]);
 
 
@@ -153,8 +153,7 @@ void P_MovePlayer (player_t* player)
 		
 	player->mo->angle += (cmd->ucmd.yaw<<16);
 
-	// Do not let the player control movement
-	//	if not onground.
+	// [RH] allow very limited movement if not on ground.
 	onground = (player->mo->z <= player->mo->floorz);
 
 	if (onground) {
@@ -163,6 +162,12 @@ void P_MovePlayer (player_t* player)
 
 		if (cmd->ucmd.sidemove)
 			P_Thrust (player, player->mo->angle-ANG90, cmd->ucmd.sidemove*8);
+	} else {
+		if (cmd->ucmd.forwardmove)
+			P_Thrust (player, player->mo->angle, cmd->ucmd.forwardmove/8);
+
+		if (cmd->ucmd.sidemove)
+			P_Thrust (player, player->mo->angle-ANG90, cmd->ucmd.sidemove/8);
 	}
 
 	if ( (cmd->ucmd.forwardmove || cmd->ucmd.sidemove) 
@@ -270,17 +275,17 @@ void P_PlayerThink (player_t* player)
 		if (look) {
 			if (look == -32768) {
 				// center view
-				player->ysheer = 0;
+				player->mo->pitch = 0;
 			} else if (look > 0) {
 				// look up
-				player->ysheer -= look;
-				if (player->ysheer < -FRACUNIT)
-					player->ysheer = -FRACUNIT;
+				player->mo->pitch -= look;
+				if (player->mo->pitch < -FRACUNIT)
+					player->mo->pitch = -FRACUNIT;
 			} else {
 				// look down
-				player->ysheer -= look;
-				if (player->ysheer > FRACUNIT)
-					player->ysheer = FRACUNIT;
+				player->mo->pitch -= look;
+				if (player->mo->pitch > FRACUNIT)
+					player->mo->pitch = FRACUNIT;
 			}
 		}
 	}
@@ -353,6 +358,16 @@ void P_PlayerThink (player_t* player)
 	}
 	else
 		player->usedown = false;
+
+	// [RH] check for jump
+	if ((cmd->ucmd.buttons & BT_JUMP) == BT_JUMP) {
+		if (!player->jumpdown) {
+			// only jump if we are on the ground
+			if (player->mo->z <= player->mo->floorz)
+				player->mo->momz += 8 * FRACUNIT;
+			player->jumpdown = true;
+		}
+	} else player->jumpdown = false;
 
 	// cycle psprites
 	P_MovePsprites (player);

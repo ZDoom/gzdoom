@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "m_alloc.h"
+
 #define PATHSEPERATOR   '/'
 
 char		com_token[1024];
@@ -106,7 +108,7 @@ void FixPathSeperator (char *path)
 #ifdef _WIN32
 	char *c;
 
-	for (c = progdir; *c; c++)
+	for (c = path; *c; c++)
 		if (*c == '\\')
 			*c = PATHSEPERATOR;
 #endif
@@ -156,7 +158,7 @@ char *ExpandPathAndArchive (char *path)
 char *copystring(char *s)
 {
 	char	*b;
-	b = malloc(strlen(s)+1);
+	b = Malloc(strlen(s)+1);
 	strcpy (b, s);
 	return b;
 }
@@ -423,7 +425,7 @@ int    LoadFile (char *filename, void **bufferptr)
 
 	f = SafeOpenRead (filename);
 	length = Q_filelength (f);
-	buffer = malloc (length+1);
+	buffer = Malloc (length+1);
 	((char *)buffer)[length] = 0;
 	SafeRead (f, buffer, length);
 	fclose (f);
@@ -452,7 +454,7 @@ int    TryLoadFile (char *filename, void **bufferptr)
 	if (!f)
 		return -1;
 	length = Q_filelength (f);
-	buffer = malloc (length+1);
+	buffer = Malloc (length+1);
 	((char *)buffer)[length] = 0;
 	SafeRead (f, buffer, length);
 	fclose (f);
@@ -621,8 +623,10 @@ int ParseHex (char *hex)
 			num += 10 + *str-'a';
 		else if (*str >= 'A' && *str <= 'F')
 			num += 10 + *str-'A';
-		else
-			I_Error ("Bad hex number: %s",hex);
+		else {
+			Printf ("Bad hex number: %s\n",hex);
+			return 0;
+		}
 		str++;
 	}
 
@@ -639,6 +643,22 @@ int ParseNum (char *str)
 	return atol (str);
 }
 
+
+// [RH] Returns true if the specified string is a valid decimal number
+
+boolean IsNum (char *str)
+{
+	boolean result = true;
+
+	while (*str) {
+		if ((*str < '0') || (*str > '9')) {
+			result = false;
+			break;
+		}
+		str++;
+	}
+	return result;
+}
 
 
 /*

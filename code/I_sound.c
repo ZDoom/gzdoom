@@ -345,7 +345,7 @@ void I_SetSfxVolume(int volume)
 	// volume range is 0-15
 	// volmul range is 0-1.whatever
 
-	volmul = (volume / 15.0) * (256.0 / 255.0);
+	volmul = (float)((volume / 15.0) * (256.0 / 255.0));
 }
 
 
@@ -452,8 +452,6 @@ int I_QrySongPlaying(int handle);
 
 void I_UpdateSound( void )
 {
-	/* Loop song if necessary: */
-	I_QrySongPlaying(1);
 }
 
 
@@ -512,8 +510,11 @@ void I_ShutdownSound(void)
 	Printf("I_ShutdownSound: Stopping sounds\n");
 	for ( i = 0; i < NUM_CHANNELS; i++ ) {
 		MIDASstopSample (channelPlayHandles[i]);
+	}
+
+	for (i = 0; i < NUM_CHANNELS; i++) {
 		if (midaschannel[i] != MIDAS_ILLEGAL_CHANNEL)
-			MIDASfreeSample (midaschannel[i]);
+			MIDASfreeChannel (midaschannel[i]);
 	}
 	
 	Printf("I_ShutdownSound: Uninitializing MIDAS\n");
@@ -572,8 +573,15 @@ I_InitSound()
 		MIDASerror();
 	if ( !MIDASstartBackgroundPlay(100) )
 		MIDASerror();
-	if ( !MIDASopenChannels(NUM_CHANNELS+64) )
-		MIDASerror();
+	{
+		int needchannels;
+
+		needchannels = NUM_CHANNELS;
+		if (!M_CheckParm ("-nomusic"))
+			needchannels += 64;
+		if ( !MIDASopenChannels(needchannels) )
+			MIDASerror();
+	}
 
 	for ( i = 0; i < NUM_CHANNELS; i++ ) {
 		channelPlayHandles[i] = 0;

@@ -28,9 +28,9 @@
 #pragma interface
 #endif
 
-#define MAXVISSPRITES	256
+extern int MaxVisSprites;
 
-extern vissprite_t		vissprites[MAXVISSPRITES];
+extern vissprite_t		*vissprites;
 extern vissprite_t* 	vissprite_p;
 extern vissprite_t		vsprsortedhead;
 
@@ -47,7 +47,8 @@ extern fixed_t			sprtopscreen;
 
 extern fixed_t			pspritescale;
 extern fixed_t			pspriteiscale;
-extern fixed_t			pspriteyscale;		// [RH] Aspect ratio stuff (from doom3)
+extern fixed_t			pspriteyscale;		// [RH] Aspect ratio stuff (from Doom Legacy)
+extern fixed_t			skyiscale;			// [RH] Sky scale factor
 
 
 void R_DrawMaskedColumn (column_t* column);

@@ -1,0 +1,238 @@
+Sprites (and flats and patches) in a PWAD  (V5, 9th March 1998)
+
+Quick Summary of What's New:
+
+   Compatibility default - all support turned off by default
+   Enable sprites        -gfixspr
+   Enable flats          -gfixflt
+   Optimise patches      -gfixpat
+   Enable all the above  -gfixsfp
+   Enable some odd pwads -gignrot
+   Enable all the above  -gfixall
+
+This file is divided into two sections; following this is a "how to" aimed at
+a practical viewpoint and then follows the theoretical section for those of
+you who are interested.
+
+
+How To
+======
+
+It is not possible to use sprites in a PWAD directly at all, there are some
+restrictions on using flats in a PWAD directly, and patches seem to work ok;
+but the bottom line is that to put sprites in a PWAD you currently have to
+use DeuSF to "append sprites" in order to make it work.  It would be nice if,
+given the release of the Doom source code, there was a "magic" way of making
+all sprite-bearing PWADs work directly in Doom without DeuSF, but there are
+many non-standard and some buggy sprite-bearing PWADs that DeuSF fixes up so
+that you can use them, in addition to its normal job of appending sprites.
+
+In short, a lot of work will be required to support directly in Doom all the
+possible ways in which sprites have been used in PWADs, so this software gives
+you as much as is possible at the time; most sprite-bearing PWADs work with
+it and is disabled by default so that it won't interfere with DeuSF's work
+when you want to use a PWAD that it can't yet handle.
+
+   Simple Wads
+   ===========
+
+   Most sprite PWADs simply define their own versions of sprites already in
+   the Doom or Doom 2 WAD, with the same name but with different artwork.
+
+   To use these, specify the command line switch "-gfixspr" to tell Doom
+   to "group" sprites together - this does something similar to what DeuSF
+   does, but "inside" DOOM, not in your PWAD.
+
+
+   Rotation Wads
+   =============
+   These are sprite PWADs that define view angles (rotations) of a sprite
+   that do not normally exist in Doom; for example the yellow key normally
+   has only two sprites but to turn it into, for example a cat (as in Michael
+   Gummelt's "Aliens vs Predator" WAD), you need the normal animal running
+   views that you get with monsters and players. Such WADs almost always come
+   with a DeHackEd patch to enable the new sprite views as most such views
+   cannot be detected by Doom.
+
+   You can detect one these WADs because with normal sprite support turned on
+   as described above ("-gfixspr") Doom will complain about a sprite having
+   "more than one lump mapped to it" or else it will complain about a sprite's
+   rotations; for example, "TROO: A 3 has rotations and a rot=0 lump". 
+
+   I am not sure exactly what DeuSF does with these, but for the meantime
+   there is an **experimental** way of enabling these WADs; because it is
+   experimental, it has to be enabled in addition to "-gfixspr" - the command
+   is "-gignrot". This is usually ok, but it theoretically might cause Doom
+   to crash out to DOS (or a DOS box) in some PWADs, which is why it is only
+   experimental for now; in fairness, I have only ever had it crash when
+   the PWAD being used had a serious design bug (see next section).
+
+
+   Buggy Wads
+   ==========
+   These are PWADs that have design bugs in them, such as missing sprite list
+   markers, or where the designer has forgotten to remove blank sprites that
+   are sometimes used when putting graphics into a WAD with some tools. Most
+   such WADs will appear to work fine with DeuSF but not all will and some
+   may work only partially - this applies especially to "rotation wads".
+
+   There is currently NO support for such WADs in this software so you must
+   use DeuSF in the usual way to make the WAD work. When using DeuSf, do not
+   turn on the "-gfixspr" or "-gignrot" switches as they will undermine DeuSF.
+
+   I am currently thinking about whether it is worth supporting such WADs; a
+   large amount of programming, and run-time in the game, would be needed to
+   do this and since such WADs ought to be fixed by the designer using, I feel
+   that it may be sort-of "unethical" to do this as it may encourage bad design.
+
+
+Flats and Patches
+=================
+Although flats usually work OK in a PWAD provided the WAD is designed
+correctly, and wall patches work anyway, flats and patches are handled inside
+Doom in much the same way as sprites (except that they don't have rotations).
+
+There must be some reason why this is so and so this software also allows you
+to treat flats and patches in the same way; in fact some older flat-bearing
+WADs will require DeuSF unless you use this facility on them. The commands to
+do this are "-gfixflt" (flats) and "-gfixpat" (patches).
+
+There are two additional switches that you can use if you want: "-gfixsfp"
+turns on sprites, flats and patches together as if you had said all three of
+the above ("-gfixspr -gfixflt -gfixpat") on the same command line; "-gfixall"
+does the same and also turns on "-gignrot".
+
+
+Technical Stuff
+===============
+
+With the release of the Doom source code comes the possibility
+to make all kinds of interesting changes to the game; one of the
+most sought-after is the ability to use sprites (and flats) in a
+PWAD without having to use DeuSF to append all sprites and/or
+flats to the PWAD first. Although later versions of Doom can use
+flats in a PWAD, sprites are still a problem.
+
+The problem exists because, in a nutshell, Doom builds an internal
+list of lumps (sprites, flats, level entries, and so on) that is a
+copy of each WAD directory, but also includes a handle for the WAD
+that the lump came from; a "master directory", if you like. The code
+in Doom for sprites assumes that there is only one
+S_START...S_END list in the master directory and that all sprites
+are located in it within this list; it doesn't seem to care if
+the sprites in the list are not in one file, provided they are
+all together in one list; this is why DeuSF works and all sprites
+for the release Dooms have to be in one WAD - there's no way to
+consolidate the multiple sprite lists together into one without
+access to the source code.
+
+I don't know if that is the full story, and more investigation
+is needed, but my experiments seem to bear this out so far. In
+fact, the same limitation ought to apply to flats and patches as
+well; but Doom appears to have no trouble with patches in a PWAD
+and flats are ok if used with caution.
+
+The Current State of Play
+
+Using Chi Hoang's (cyhoang@acs.ucalgary.ca) port of the Doom source
+code (www.frag.com/dosdoom) that was released by iD Software
+(www.idsoftware.com), I have developed a basic fix for the "Sprites
+in a PWAD" problem; it wasn't particularly robust, but did
+basically work. I then fixed the memory-leak problems it had (due
+to my inexperience with C - I'm a Pascal man, myself) and it
+works on most PWADs that contain sprites.
+
+This module is a replacement for the w_wad.c file as found in DosDoom
+version 0.51. It handles most sprite PWADs, including those that use
+SS_START and SS_END (although these keywords are not proper Doom WAD
+syntax, many editors and WAD utilities use them). Because flats and
+patches are also treated in much the same way, as mentioned above,
+it also performs the same functions for those.
+
+There are also a few PWADs that do peculiar things with sprites,
+like redefining the names with different rotations; for example,
+SPOSC2C8 in the PWAD where the IWAD calls it SPOSC8C2, or where a
+sprite that normally has no rotations is given two (or four, or 
+eight) views; such WADs are usually encountered accompanied by
+DeHackEd patches - Aliens vs Predator and the StarWars Beta are
+two examples of this.
+
+There is now an __experimental__ hack that will allow you
+use such PWADs; because it is experimental, and because DeHackEd
+support will vary according to which Doom variation you are using,
+this feature is disabled by default; the command-line switch to
+enable it is "-gignrot".
+
+This works by suppressing the normal checks that Doom makes for 
+sprites that have more than one lump mapped to them, or invalid
+combinations of rotations (ie., some in the PWAD and some in the 
+IWAD); since Doom appears to use only the ones it wants and then
+the last-one found of conflicting entries, it seems to work.
+
+These checks appear to have been in Doom originally to notify the
+user of buggy PWADs or a corrupted IWAD; certainly there doesn't seem
+to be any functional reason for them other than the minor performance
+improvements that would have resulted from enforcing such checks.
+
+I have never had it crash Doom by itself (although DeHackEd patches
+made for such PWADs sometimes do); and I normally have it enabled by
+default on the Doom command line. I have tested the StarWars beta OK
+with it; with Aliens vs Predator, the sprites __seem__ ok, but until
+DeHackEd support is finalised in DosDoom (which is what I am testing 
+it with), I won't know if the right things are being displayed.
+
+BTW, the SS_START and so on syntax isn't strictly proper Doom WAD 
+syntax, so there is also a switch "-gstrict" that forces Doom
+to quit if any of these "nonstandard" list flags is encountered. 
+
+There are also a few PWADs that use S1_START, P1_END and similar 
+list flags; these flags are silently removed from the internal WAD 
+list as they are ignored by  Doom and are only used by editors. I
+suppose I should treat these as or SS_START and so on, but I am not
+really sure at this stage if doing so is a good idea.
+
+Finally, I am of course working on making the module function with
+these "sprite rotation" problem PWADs in a better way that that
+outlined above, but since the sprite logic in Doom is very complex
+and is distributed across multiple source files, this won't happen
+at once. I'll announce on my web site when it is ready for testing.
+(http://dspace.dial.pipex.com/martin.howe/dmsprite.htm)
+
+Legal Stuff
+
+The bottom of this file gives my "standard terms and contitions"
+that are unfortunately required in this age of increasingly
+frivolous lawsuits; the software has been tested with many PWADs
+and if it fails, is unlikely to do anything worse than cause the
+program using it to prematurely exit to DOS (or the DOS box you
+started it from) with either one of Doom's various internal errors
+or a segmentation violation reported by the relevant DPMI module;
+however, since it is experimental, it isn't perfect, so here in 
+addition are the specifics for the modified w_wad.c and r_things.c:
+
+You may use the modified w_wad.c and r_things.c ("the software") in your
+own Doom source code ports, or use such ports in compiled form, provided
+that you understand that it is experimental and incomplete and accept the 
+risks that using experimental and/or incomplete software carries; in
+particular, but without prejudice to the generality of the foregoing,
+IT IS A CONDITION OF USE OF THE SOFTWARE THAT YOU ACCEPT THE RISKS
+INVOLVED IN USING IT; IF YOU DO NOT FREELY ACCEPT THESE RISKS OF
+YOUR OWN FREE WILL, YOU MAY NOT USE THE SOFTWARE.
+
+You must also recognise iD Software's ownership of the Doom source code
+in its original form, any rights that they claim regarding derivations
+from it (including this software) and any conditions of use that they
+attach to it, especially as noted in the Doom Source Code License,
+available from them at www.idsoftware.com with the original Doom
+Source Code release. You must also respect any rights legally asserted
+by the author of whatever Doom implementation(s) that you use it in
+conjunction with. DOOM is a trademark of iD Software.
+
+This information file is copyright (c) Martin Charles Howe, February 1998.
+All information, including any software referred to previously,
+is provided in good faith based on personal experience, knowledge or belief,
+so "errors and omissions excepted" is the rule; in other words, like most
+information and/or software provided free as being potentially helpful to
+like-minded people it may be incorrect or incomplete.
+
+Martin Howe, March 1998 (martin.howe@dial.pipex.com)

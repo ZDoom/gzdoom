@@ -66,6 +66,7 @@ void	ExtractFileExtension (char *path, char *dest);
 
 int		ParseHex (char *str);
 int 	ParseNum (char *str);
+boolean IsNum (char *str);		// [RH] added
 
 short	BigShort (short l);
 short	LittleShort (short l);

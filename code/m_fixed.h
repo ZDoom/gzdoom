@@ -37,9 +37,18 @@
 
 typedef int fixed_t;
 
-fixed_t FixedMul		(fixed_t a, fixed_t b);
-fixed_t FixedDiv		(fixed_t a, fixed_t b);
+fixed_t FixedMul_ASM			(fixed_t a, fixed_t b);
+fixed_t FixedDiv_ASM			(fixed_t a, fixed_t b);
+fixed_t FixedMul_C				(fixed_t a, fixed_t b);
+fixed_t FixedDiv_C				(fixed_t a, fixed_t b);
 
+#ifdef	USEASM
+#define FixedMul(a,b)			FixedMul_ASM(a,b)
+#define FixedDiv(a,b)			FixedDiv_ASM(a,b)
+#else
+#define FixedMul(a,b)			FixedMul_C(a,b)
+#define FixedDiv(a,b)			FixedDiv_C(a,b)
+#endif
 
 #endif
 //-----------------------------------------------------------------------------

@@ -42,6 +42,7 @@ rcsid[] = "$Id: m_menu.c,v 1.7 1997/02/03 22:45:10 b1 Exp $";
 #include "doomdef.h"
 #include "dstrings.h"
 
+#include "c_console.h"
 #include "c_dispatch.h"
 
 #include "d_main.h"
@@ -74,20 +75,8 @@ rcsid[] = "$Id: m_menu.c,v 1.7 1997/02/03 22:45:10 b1 Exp $";
 
 
 extern patch_t* 		hu_font[HU_FONTSIZE];
-extern boolean			message_dontfuckwithme;
 
 extern boolean			chat_on;				// in heads-up code
-
-//
-// defaulted values
-//
-cvar_t 					*mouseSensitivity;		// has default
-
-// Show messages has default, 0 = off, 1 = on
-cvar_t 					*showMessages;
-		
-
-cvar_t 					*screenblocks;			// has default
 
 // temp for screenblocks (0-9)
 int 					screenSize; 			
@@ -111,15 +100,6 @@ boolean 				messageNeedsInput;
 void	(*messageRoutine)(int response);
 
 #define SAVESTRINGSIZE	24
-
-char gammamsg[5][26] =
-{
-	GAMMALVL0,
-	GAMMALVL1,
-	GAMMALVL2,
-	GAMMALVL3,
-	GAMMALVL4
-};
 
 // we are going to be entering a savegame string
 int 					saveStringEnter;			  
@@ -175,6 +155,7 @@ typedef struct menu_s
 short			itemOn; 				// menu item skull is on
 short			skullAnimCounter;		// skull animation counter
 short			whichSkull; 			// which skull to draw
+boolean			drawSkull;				// [RH] don't always draw skull
 
 // graphic name of skulls
 // warning: initializer-string for array of chars is too long
@@ -197,12 +178,7 @@ void M_ReadThis(int choice);
 void M_ReadThis2(int choice);
 void M_QuitDOOM(int choice);
 
-void M_ChangeMessages(int choice);
-void M_ChangeSensitivity(int choice);
-void M_SfxVol(int choice);
-void M_MusicVol(int choice);
 void M_ChangeDetail(int choice);
-void M_SizeDisplay(int choice);
 void M_StartGame(int choice);
 void M_Sound(int choice);
 
@@ -225,7 +201,6 @@ void M_DrawSave(void);
 
 void M_DrawSaveLoadBorder(int x,int y);
 void M_SetupNextMenu(menu_t *menudef);
-void M_DrawThermo(int x,int y,int thermWidth,int thermDot);
 void M_DrawEmptyCell(menu_t *menu,int item);
 void M_DrawSelCell(menu_t *menu,int item);
 int  M_StringWidth(char *string);
@@ -341,36 +316,17 @@ menu_t	NewDef =
 //
 // OPTIONS MENU
 //
-enum
-{
-	endgame,
-	messages,
-	scrnsize,
-	option_empty1,
-	mousesens,
-	option_empty2,
-	soundvol,
-	opt_end
-} options_e;
-
-menuitem_t OptionsMenu[]=
-{
-	{1,"M_ENDGAM",		M_EndGame,'e'},
-	{1,"M_MESSG",		M_ChangeMessages,'m'},
-	{2,"M_SCRNSZ",		M_SizeDisplay,'s'},
-	{-1,"",0},
-	{2,"M_MSENS",		M_ChangeSensitivity,'m'},
-	{-1,"",0},
-	{1,"M_SVOL",		M_Sound,'s'}
-};
+// [RH] This menu is now handled in m_options.c
+//
+boolean OptionsActive;
 
 menu_t	OptionsDef =
 {
-	opt_end,
+	0,
 	&MainDef,
-	OptionsMenu,
-	M_DrawOptions,
-	60,37,
+	NULL,
+	NULL,
+	0,0,
 	0
 };
 
@@ -416,36 +372,6 @@ menu_t	ReadDef2 =
 	ReadMenu2,
 	M_DrawReadThis2,
 	330,175,
-	0
-};
-
-//
-// SOUND VOLUME MENU
-//
-enum
-{
-	sfx_vol,
-	sfx_empty1,
-	music_vol,
-	sfx_empty2,
-	sound_end
-} sound_e;
-
-menuitem_t SoundMenu[]=
-{
-	{2,"M_SFXVOL",M_SfxVol,'s'},
-	{-1,"",0},
-	{2,"M_MUSVOL",M_MusicVol,'m'},
-	{-1,"",0}
-};
-
-menu_t	SoundDef =
-{
-	sound_end,
-	&OptionsDef,
-	SoundMenu,
-	M_DrawSound,
-	80,64,
 	0
 };
 
@@ -507,6 +433,96 @@ menu_t	SaveDef =
 };
 
 
+// [RH] Most menus can now be accessed directly
+// through console commands.
+void Cmd_Menu_Main (void *plyr, int argc, char **argv)
+{
+	M_StartControlPanel ();
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+}
+
+void Cmd_Menu_Load (void *plyr, int argc, char **argv)
+{	// F3
+	M_StartControlPanel();
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_LoadGame(0);
+}
+
+void Cmd_Menu_Save (void *plyr, int argc, char **argv)
+{	// F2
+	M_StartControlPanel();
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_SaveGame(0);
+}
+
+void Cmd_Menu_Help (void *plyr, int argc, char **argv)
+{	// F1
+	M_StartControlPanel ();
+
+	if ( gamemode == retail )
+	  currentMenu = &ReadDef2;
+	else
+	  currentMenu = &ReadDef1;
+	
+	itemOn = 0;
+	drawSkull = false;
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+}
+
+void Cmd_Quicksave (void *plyr, int argc, char **argv)
+{	// F6
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_QuickSave();
+}
+
+void Cmd_Quickload (void *plyr, int argc, char **argv)
+{	// F9
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_QuickLoad();
+}
+
+void Cmd_Menu_Endgame (void *plyr, int argc, char **argv)
+{	// F7
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_EndGame(0);
+}
+
+void Cmd_Menu_Quit (void *plyr, int argc, char **argv)
+{	// F10
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_QuitDOOM(0);
+}
+
+void Cmd_Menu_Game (void *plyr, int argc, char **argv)
+{
+	M_StartControlPanel ();
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_NewGame(0);
+}
+								
+void Cmd_Menu_Options (void *plyr, int argc, char **argv)
+{
+	M_StartControlPanel ();
+	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	M_Options(0);
+}
+
+void Cmd_Bumpgamma (void *plyr, int argc, char **argv)
+{
+	// [RH] Gamma correction tables are now generated
+	// on the fly for *any* gamma level.
+	// Q: What are reasonable limits to use here?
+
+	double newgamma = gammalevel + 0.1;
+	char cmd[32];
+
+	if (newgamma > 3.0)
+		newgamma = 1.0;
+
+	sprintf (cmd, "gamma %g", newgamma);
+	AddCommandString (cmd);
+}
+
 //
 // M_ReadSaveStrings
 //	read the strings from the savegame files
@@ -546,11 +562,11 @@ void M_DrawLoad(void)
 {
 	int 			i;
 		
-	V_DrawPatchDirect (72,28,0,W_CacheLumpName("M_LOADG",PU_CACHE));
+	V_DrawPatchClean (72,28,0,W_CacheLumpName("M_LOADG",PU_CACHE));
 	for (i = 0;i < load_end; i++)
 	{
 		M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-		V_DrawRedText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
+		V_DrawRedTextClean(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
 	}
 }
 
@@ -563,15 +579,15 @@ void M_DrawSaveLoadBorder(int x,int y)
 {
 	int 			i;
 		
-	V_DrawPatchDirect (x-8,y+7,0,W_CacheLumpName("M_LSLEFT",PU_CACHE));
+	V_DrawPatchClean (x-8,y+7,0,W_CacheLumpName("M_LSLEFT",PU_CACHE));
 		
 	for (i = 0;i < 24;i++)
 	{
-		V_DrawPatchDirect (x,y+7,0,W_CacheLumpName("M_LSCNTR",PU_CACHE));
+		V_DrawPatchClean (x,y+7,0,W_CacheLumpName("M_LSCNTR",PU_CACHE));
 		x += 8;
 	}
 
-	V_DrawPatchDirect (x,y+7,0,W_CacheLumpName("M_LSRGHT",PU_CACHE));
+	V_DrawPatchClean (x,y+7,0,W_CacheLumpName("M_LSRGHT",PU_CACHE));
 }
 
 
@@ -614,17 +630,17 @@ void M_DrawSave(void)
 {
 	int 			i;
 		
-	V_DrawPatchDirect (72,28,0,W_CacheLumpName("M_SAVEG",PU_CACHE));
+	V_DrawPatchClean (72,28,0,W_CacheLumpName("M_SAVEG",PU_CACHE));
 	for (i = 0;i < load_end; i++)
 	{
 		M_DrawSaveLoadBorder(LoadDef.x,LoadDef.y+LINEHEIGHT*i);
-		V_DrawRedText(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
+		V_DrawRedTextClean(LoadDef.x,LoadDef.y+LINEHEIGHT*i,savegamestrings[i]);
 	}
 		
 	if (saveStringEnter)
 	{
 		i = M_StringWidth(savegamestrings[saveSlot]);
-		V_DrawRedText(LoadDef.x + i,LoadDef.y+LINEHEIGHT*saveSlot,"_");
+		V_DrawRedTextClean(LoadDef.x + i,LoadDef.y+LINEHEIGHT*saveSlot,"_");
 	}
 }
 
@@ -758,12 +774,12 @@ void M_DrawReadThis1(void)
 	switch ( gamemode )
 	{
 	  case commercial:
-		V_DrawPatchStretched (0,0,0,W_CacheLumpName("HELP",PU_CACHE),SCREENWIDTH,SCREENHEIGHT);
+		V_DrawPatchIndirect (0,0,0,W_CacheLumpName("HELP",PU_CACHE));
 		break;
 	  case shareware:
 	  case registered:
 	  case retail:
-		V_DrawPatchStretched (0,0,0,W_CacheLumpName("HELP1",PU_CACHE),SCREENWIDTH,SCREENHEIGHT);
+		V_DrawPatchIndirect (0,0,0,W_CacheLumpName("HELP1",PU_CACHE));
 		break;
 	  default:
 		break;
@@ -784,11 +800,11 @@ void M_DrawReadThis2(void)
 	  case retail:
 	  case commercial:
 		// This hack keeps us from having to change menus.
-		V_DrawPatchStretched (0,0,0,W_CacheLumpName("CREDIT",PU_CACHE),SCREENWIDTH,SCREENHEIGHT);
+		V_DrawPatchIndirect (0,0,0,W_CacheLumpName("CREDIT",PU_CACHE));
 		break;
 	  case shareware:
 	  case registered:
-		V_DrawPatchStretched (0,0,0,W_CacheLumpName("HELP2",PU_CACHE),SCREENWIDTH,SCREENHEIGHT);
+		V_DrawPatchIndirect (0,0,0,W_CacheLumpName("HELP2",PU_CACHE));
 		break;
 	  default:
 		break;
@@ -798,67 +814,11 @@ void M_DrawReadThis2(void)
 
 
 //
-// Change Sfx & Music volumes
-//
-void M_DrawSound(void)
-{
-	V_DrawPatchDirect (60,38,0,W_CacheLumpName("M_SVOL",PU_CACHE));
-
-	M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(sfx_vol+1),
-				 16,(int)snd_SfxVolume->value);
-
-	M_DrawThermo(SoundDef.x,SoundDef.y+LINEHEIGHT*(music_vol+1),
-				 65,(int)snd_MusicVolume->value);
-}
-
-void M_Sound(int choice)
-{
-	M_SetupNextMenu(&SoundDef);
-}
-
-void M_SfxVol(int choice)
-{
-	switch(choice)
-	{
-	  case 0:
-		if (snd_SfxVolume->value > 0.0)
-			SetCVarFloat (snd_SfxVolume, snd_SfxVolume->value - 1.0);
-		break;
-	  case 1:
-		if (snd_SfxVolume->value < 15.0)
-			SetCVarFloat (snd_SfxVolume, snd_SfxVolume->value + 1.0);
-		break;
-	}
-		
-	S_SetSfxVolume((int)snd_SfxVolume->value /* *8 */);
-}
-
-void M_MusicVol(int choice)
-{
-	switch(choice)
-	{
-	  case 0:
-		if (snd_MusicVolume->value > 0.0)
-			SetCVarFloat (snd_MusicVolume, snd_MusicVolume->value - 1.0);
-		break;
-	  case 1:
-		if (snd_MusicVolume->value < 64.0)
-			SetCVarFloat (snd_MusicVolume, snd_MusicVolume->value + 1.0);
-		break;
-	}
-		
-	S_SetMusicVolume((int)snd_MusicVolume->value);
-}
-
-
-
-
-//
 // M_DrawMainMenu
 //
 void M_DrawMainMenu(void)
 {
-	V_DrawPatchDirect (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
+	V_DrawPatchClean (94,2,0,W_CacheLumpName("M_DOOM",PU_CACHE));
 }
 
 
@@ -869,8 +829,8 @@ void M_DrawMainMenu(void)
 //
 void M_DrawNewGame(void)
 {
-	V_DrawPatchDirect (96,14,0,W_CacheLumpName("M_NEWG",PU_CACHE));
-	V_DrawPatchDirect (54,38,0,W_CacheLumpName("M_SKILL",PU_CACHE));
+	V_DrawPatchClean (96,14,0,W_CacheLumpName("M_NEWG",PU_CACHE));
+	V_DrawPatchClean (54,38,0,W_CacheLumpName("M_SKILL",PU_CACHE));
 }
 
 void M_NewGame(int choice)
@@ -895,7 +855,7 @@ int 	epi;
 
 void M_DrawEpisode(void)
 {
-	V_DrawPatchDirect (54,38,0,W_CacheLumpName("M_EPISOD",PU_CACHE));
+	V_DrawPatchClean (54,38,0,W_CacheLumpName("M_EPISOD",PU_CACHE));
 }
 
 void M_VerifyNightmare(int ch)
@@ -903,7 +863,7 @@ void M_VerifyNightmare(int ch)
 	if (ch != 'y')
 		return;
 				
-	G_DeferedInitNew(nightmare,epi+1,1);
+	G_DeferedInitNew(nightmare,CalcMapName (epi+1, 1));
 	M_ClearMenus ();
 }
 
@@ -915,7 +875,7 @@ void M_ChooseSkill(int choice)
 		return;
 	}
 		
-	G_DeferedInitNew((float)choice,epi+1,1);
+	G_DeferedInitNew((float)choice,CalcMapName (epi+1, 1));
 	M_ClearMenus ();
 }
 
@@ -951,45 +911,16 @@ char	msgNames[2][9]			= {"M_MSGOFF","M_MSGON"};
 
 void M_DrawOptions(void)
 {
-	V_DrawPatchDirect (108,15,0,W_CacheLumpName("M_OPTTTL",PU_CACHE));
-	
-	if (showMessages->value != 0.0)			// Sanity check
-		SetCVarFloat (showMessages, 1.0);
-
-	V_DrawPatchDirect (OptionsDef.x + 120,OptionsDef.y+LINEHEIGHT*messages,0,
-					   W_CacheLumpName(msgNames[(int)showMessages->value],PU_CACHE));
-
-	M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(mousesens+1),
-				 10,(int)(mouseSensitivity->value*10-5));
-		
-	M_DrawThermo(OptionsDef.x,OptionsDef.y+LINEHEIGHT*(scrnsize+1),
-				 9,screenSize);
+	V_DrawPatchClean (108,15,0,W_CacheLumpName("M_OPTTTL",PU_CACHE));
 }
 
 void M_Options(int choice)
 {
-	M_SetupNextMenu(&OptionsDef);
+	//M_SetupNextMenu(&OptionsDef);
+	OptionsActive = M_StartOptionsMenu();
 }
 
 
-
-//
-//		Toggle messages on/off
-//
-void M_ChangeMessages(int choice)
-{
-	// warning: unused parameter `int choice'
-	choice = 0;
-	if (showMessages->value) {
-		SetCVarFloat (showMessages, 0.0);
-		players[consoleplayer].message = MSGOFF;
-	} else {
-		SetCVarFloat (showMessages, 1.0);
-		players[consoleplayer].message = MSGON ;
-	}
-
-	message_dontfuckwithme = true;
-}
 
 
 //
@@ -1033,12 +964,14 @@ void M_ReadThis(int choice)
 {
 	choice = 0;
 	M_SetupNextMenu(&ReadDef1);
+	drawSkull = false;
 }
 
 void M_ReadThis2(int choice)
 {
 	choice = 0;
 	M_SetupNextMenu(&ReadDef2);
+	drawSkull = false;
 }
 
 void M_FinishReadThis(int choice)
@@ -1112,110 +1045,15 @@ void M_QuitDOOM(int choice)
 
 
 
-void M_ChangeSensitivity(int choice)
-{
-	switch(choice)
-	{
-	  case 0:
-		if (mouseSensitivity->value > 0.5)
-			SetCVarFloat (mouseSensitivity, mouseSensitivity->value - 0.1);
-		break;
-	  case 1:
-		if (mouseSensitivity->value < 1.4)
-			SetCVarFloat (mouseSensitivity, mouseSensitivity->value + 0.1);
-		break;
-	}
-}
-
-
-
-
-void M_ChangeDetail(int choice)
-{
-}
-
-
-
-
-void M_SizeDisplay(int choice)
-{
-	switch(choice)
-	{
-	  case 0:
-		if (screenSize > 0)
-		{
-			SetCVarFloat (screenblocks, screenblocks->value - 1.0);
-			screenSize--;
-		}
-		break;
-	  case 1:
-		if (screenSize < 8)
-		{
-			SetCVarFloat (screenblocks, screenblocks->value + 1.0);
-			screenSize++;
-		}
-		break;
-	}
-		
-
-	R_SetViewSize ((int)screenblocks->value);
-}
-
-void Cmd_Sizedown (void *plyr, int argc, char **argv)
-{
-//	if (automapactive || chat_on)
-//		return false;
-	M_SizeDisplay (0);
-	S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
-}
-
-void Cmd_Sizeup (void *plyr, int argc, char **argv)
-{
-//	if (automapactive || chat_on)
-//		return false;
-	M_SizeDisplay(1);
-	S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
-}
-
-
 //
 //		Menu Functions
 //
-void
-M_DrawThermo
-( int	x,
-  int	y,
-  int	thermWidth,
-  int	thermDot )
-{
-	int 		xx;
-	int 		i;
-	int			width;
-
-	xx = x;
-	V_DrawPatchDirect (xx,y,0,W_CacheLumpName("M_THERML",PU_CACHE));
-	xx += 8;
-	width = (thermWidth == 65) ? 16 : thermWidth;
-
-	for (i=0;i<width;i++)
-	{
-		V_DrawPatchDirect (xx,y,0,W_CacheLumpName("M_THERMM",PU_CACHE));
-		xx += 8;
-	}
-	V_DrawPatchDirect (xx,y,0,W_CacheLumpName("M_THERMR",PU_CACHE));
-
-	V_DrawPatchDirect ((x+8) + thermDot*((thermWidth == 65)?2:8),y,
-					   0,W_CacheLumpName("M_THERMO",PU_CACHE));
-}
-
-
-
 void
 M_DrawEmptyCell
 ( menu_t*		menu,
   int			item )
 {
-	V_DrawPatchDirect (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, 0,
+	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, 0,
 					   W_CacheLumpName("M_CELL1",PU_CACHE));
 }
 
@@ -1224,7 +1062,7 @@ M_DrawSelCell
 ( menu_t*		menu,
   int			item )
 {
-	V_DrawPatchDirect (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, 0,
+	V_DrawPatchClean (menu->x - 10,		menu->y+item*LINEHEIGHT - 1, 0,
 					   W_CacheLumpName("M_CELL2",PU_CACHE));
 }
 
@@ -1235,6 +1073,7 @@ M_StartMessage
   void* 		routine,
   boolean		input )
 {
+	C_HideConsole ();
 	messageLastMenuActive = menuactive;
 	messageToPrint = 1;
 	messageString = string;
@@ -1313,6 +1152,15 @@ boolean M_Responder (event_t* ev)
 		
 	ch = ch2 = -1;
 		
+	if (menuactive && OptionsActive) {
+		if (ev->type == ev_keydown) {
+			OptionsActive = M_OptResponder (ev->data1);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	if (ev->type == ev_joystick && joywait < I_GetTime())
 	{
 		if (ev->data3 == -1)
@@ -1458,86 +1306,7 @@ boolean M_Responder (event_t* ev)
 	}
 				
 	
-	// F-Keys
-	if (!menuactive)
-		switch(ch)
-		{
-		  case KEY_F1:			  // Help key
-			M_StartControlPanel ();
-
-			if ( gamemode == retail )
-			  currentMenu = &ReadDef2;
-			else
-			  currentMenu = &ReadDef1;
-			
-			itemOn = 0;
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			return true;
-								
-		  case KEY_F2:			  // Save
-			M_StartControlPanel();
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			M_SaveGame(0);
-			return true;
-								
-		  case KEY_F3:			  // Load
-			M_StartControlPanel();
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			M_LoadGame(0);
-			return true;
-								
-		  case KEY_F4:			  // Sound Volume
-			M_StartControlPanel ();
-			currentMenu = &SoundDef;
-			itemOn = sfx_vol;
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			return true;
-								
-		  case KEY_F5:			  // Detail toggle
-			return false;
-								
-		  case KEY_F6:			  // Quicksave
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			M_QuickSave();
-			return true;
-								
-		  case KEY_F7:			  // End game
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			M_EndGame(0);
-			return true;
-								
-		  case KEY_F8:			  // Toggle messages
-			M_ChangeMessages(0);
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			return true;
-								
-		  case KEY_F9:			  // Quickload
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			M_QuickLoad();
-			return true;
-								
-		  case KEY_F10: 		  // Quit DOOM
-			S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
-			M_QuitDOOM(0);
-			return true;
-								
-		  case KEY_F11: 		  // gamma toggle
-			  {	// [RH] Gamma correction tables are now generated
-				// on the fly for *any* gammy level.
-				// Q: What are reasonable limits to use here?
-				  double newgamma = gammalevel + 0.1;
-				  char cmd[32];
-
-				  if (newgamma > 3.0)
-					  newgamma = 1.0;
-
-				  sprintf (cmd, "gamma %g", newgamma);
-				  AddCommandString (cmd);
-			  }
-			  return true;
-								
-		}
-
+	// [RH] F-Keys are now just normal keys that can be bound
 	
 	// Pop-up menu?
 	if (!menuactive)
@@ -1667,6 +1436,8 @@ void M_StartControlPanel (void)
 	menuactive = 1;
 	currentMenu = &MainDef; 		// JDC
 	itemOn = currentMenu->lastOn;	// JDC
+	C_HideConsole ();				// [RH] Make sure console goes bye bye.
+	OptionsActive = false;			// [RH] Make sure none of the options menus appear.
 }
 
 
@@ -1711,7 +1482,7 @@ void M_Drawer (void)
 			}
 								
 			x = 160 - M_StringWidth(string)/2;
-			V_DrawRedText(x,y,string);
+			V_DrawRedTextClean(x,y,string);
 			y += SHORT(hu_font[0]->height);
 		}
 		return;
@@ -1722,27 +1493,32 @@ void M_Drawer (void)
 
 	V_DimScreen (0);
 
-	if (currentMenu->routine)
-		currentMenu->routine(); 		// call Draw routine
+	if (OptionsActive) {
+		M_OptDrawer ();
+	} else {
+		if (currentMenu->routine)
+			currentMenu->routine(); 		// call Draw routine
 	
-	// DRAW MENU
-	x = currentMenu->x;
-	y = currentMenu->y;
-	max = currentMenu->numitems;
+		// DRAW MENU
+		x = currentMenu->x;
+		y = currentMenu->y;
+		max = currentMenu->numitems;
 
-	for (i=0;i<max;i++)
-	{
-		if (currentMenu->menuitems[i].name[0])
-			V_DrawPatchDirect (x,y,0,
-							   W_CacheLumpName(currentMenu->menuitems[i].name ,PU_CACHE));
-		y += LINEHEIGHT;
+		for (i=0;i<max;i++)
+		{
+			if (currentMenu->menuitems[i].name[0])
+				V_DrawPatchClean (x,y,0,
+								   W_CacheLumpName(currentMenu->menuitems[i].name ,PU_CACHE));
+			y += LINEHEIGHT;
+		}
+
+		
+		// DRAW SKULL
+		if (drawSkull) {
+			V_DrawPatchClean(x + SKULLXOFF,currentMenu->y - 5 + itemOn*LINEHEIGHT, 0,
+							 W_CacheLumpName(skullName[whichSkull],PU_CACHE));
+		}
 	}
-
-	
-	// DRAW SKULL
-	V_DrawPatchDirect(x + SKULLXOFF,currentMenu->y - 5 + itemOn*LINEHEIGHT, 0,
-					  W_CacheLumpName(skullName[whichSkull],PU_CACHE));
-
 }
 
 
@@ -1752,6 +1528,7 @@ void M_Drawer (void)
 void M_ClearMenus (void)
 {
 	menuactive = 0;
+	drawSkull = true;
 	// if (!netgame && usergame && paused)
 	//		 sendpause = true;
 }
@@ -1766,6 +1543,7 @@ void M_SetupNextMenu(menu_t *menudef)
 {
 	currentMenu = menudef;
 	itemOn = currentMenu->lastOn;
+	drawSkull = true;
 }
 
 
@@ -1787,11 +1565,15 @@ void M_Ticker (void)
 //
 void M_Init (void)
 {
+	extern cvar_t *screenblocks;
+
 	currentMenu = &MainDef;
+	OptionsActive = false;
 	menuactive = 0;
 	itemOn = currentMenu->lastOn;
 	whichSkull = 0;
 	skullAnimCounter = 10;
+	drawSkull = true;
 	screenSize = (int)screenblocks->value - 3;
 	messageToPrint = 0;
 	messageString = NULL;

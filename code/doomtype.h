@@ -65,6 +65,9 @@ typedef unsigned char byte;
 
 
 
+// This gets used all over; define it here:
+int Printf (const char *, ...);
+
 
 #endif
 //-----------------------------------------------------------------------------

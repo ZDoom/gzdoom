@@ -25,8 +25,9 @@
 static const char
 rcsid[] = "$Id: p_setup.c,v 1.5 1997/02/03 22:45:12 b1 Exp $";
 
-
 #include <math.h>
+
+#include "m_alloc.h"
 
 #include "z_zone.h"
 
@@ -106,9 +107,8 @@ byte*			rejectmatrix;
 
 
 // Maintain single and multi player starting spots.
-#define MAX_DEATHMATCH_STARTS	10
-
-mapthing_t		deathmatchstarts[MAX_DEATHMATCH_STARTS];
+int				MaxDeathmatchStarts;
+mapthing_t		*deathmatchstarts;
 mapthing_t* 	deathmatch_p;
 mapthing_t		playerstarts[MAXPLAYERS];
 
@@ -580,18 +580,14 @@ void P_GroupLines (void)
 //
 // P_SetupLevel
 //
-void
-P_SetupLevel
-( int			episode,
-  int			map,
-  int			playermask,
-  skill_t		skill)
+void P_SetupLevel (char *lumpname, int playermask, skill_t skill)
 {
 	int 		i;
-	char		lumpname[9];
 	int 		lumpnum;
 		
-	totalkills = totalitems = totalsecret = wminfo.maxfrags = 0;
+	level.total_monsters = level.total_items = level.total_secrets =
+		level.killed_monsters = level.found_items = level.found_secrets =
+		wminfo.maxfrags = 0;
 	wminfo.partime = 180;
 	for (i=0 ; i<MAXPLAYERS ; i++)
 	{
@@ -622,26 +618,10 @@ P_SetupLevel
 	// if working with a devlopment map, reload it
 	W_Reload ();						
 		   
-	// find map name
-	if ( gamemode == commercial)
-	{
-		if (map<10)
-			sprintf (lumpname,"map0%i", map);
-		else
-			sprintf (lumpname,"map%i", map);
-	}
-	else
-	{
-		lumpname[0] = 'E';
-		lumpname[1] = '0' + episode;
-		lumpname[2] = 'M';
-		lumpname[3] = '0' + map;
-		lumpname[4] = 0;
-	}
-
+	// find map num
 	lumpnum = W_GetNumForName (lumpname);
 		
-	leveltime = 0;
+	level.time = 0;
 		
 	// note: most of this ordering is important 
 	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
@@ -659,6 +639,10 @@ P_SetupLevel
 	P_GroupLines ();
 
 	bodyqueslot = 0;
+	if (!deathmatchstarts) {
+		MaxDeathmatchStarts = 10;	// [RH] Default. Increased as needed.
+		deathmatchstarts = Malloc (MaxDeathmatchStarts * sizeof(mapthing_t));
+	}
 	deathmatch_p = deathmatchstarts;
 	P_LoadThings (lumpnum+ML_THINGS);
 	

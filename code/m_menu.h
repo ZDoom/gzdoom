@@ -54,8 +54,14 @@ void M_Init (void);
 // does nothing if menu is already up.
 void M_StartControlPanel (void);
 
+// [RH] Setup options menu
+boolean M_StartOptionsMenu (void);
 
+// [RH] Handle keys for options menu
+boolean M_OptResponder (int ch);
 
+// [RH] Draw options menu
+void M_OptDrawer (void);
 
 
 

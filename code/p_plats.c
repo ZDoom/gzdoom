@@ -25,6 +25,8 @@ static const char
 rcsid[] = "$Id: p_plats.c,v 1.5 1997/02/03 22:45:12 b1 Exp $";
 
 
+#include "m_alloc.h"
+
 #include "i_system.h"
 #include "z_zone.h"
 #include "m_random.h"
@@ -42,7 +44,8 @@ rcsid[] = "$Id: p_plats.c,v 1.5 1997/02/03 22:45:12 b1 Exp $";
 #include "sounds.h"
 
 
-plat_t* 		activeplats[MAXPLATS];
+int				MaxPlats;
+plat_t			**activeplats;
 
 
 
@@ -64,7 +67,7 @@ void T_PlatRaise(plat_t* plat)
 		if (plat->type == raiseAndChange
 			|| plat->type == raiseToNearestAndChange)
 		{
-			if (!(leveltime&7))
+			if (!(level.time&7))
 				S_StartSound((mobj_t *)&plat->sector->soundorg,
 							 sfx_stnmov);
 		}
@@ -259,7 +262,7 @@ void P_ActivateInStasis(int tag)
 {
 	int 		i;
 		
-	for (i = 0;i < MAXPLATS;i++)
+	for (i = 0;i < MaxPlats;i++)
 		if (activeplats[i]
 			&& (activeplats[i])->tag == tag
 			&& (activeplats[i])->status == in_stasis)
@@ -274,7 +277,7 @@ void EV_StopPlat(line_t* line)
 {
 	int 		j;
 		
-	for (j = 0;j < MAXPLATS;j++)
+	for (j = 0;j < MaxPlats;j++)
 		if (activeplats[j]
 			&& ((activeplats[j])->status != in_stasis)
 			&& ((activeplats[j])->tag == line->tag))
@@ -289,19 +292,26 @@ void P_AddActivePlat(plat_t* plat)
 {
 	int 		i;
 	
-	for (i = 0;i < MAXPLATS;i++)
+	for (i = 0;i < MaxPlats;i++)
 		if (activeplats[i] == NULL)
 		{
 			activeplats[i] = plat;
 			return;
 		}
-	I_Error ("P_AddActivePlat: no more plats!");
+
+	// [RH] If we got here, there were no free plats;
+	// get some more.
+	MaxPlats += 2;
+	activeplats = Realloc (activeplats, MaxPlats * sizeof(plat_t *));
+	activeplats[i] = plat;
+	activeplats[i+1] = NULL;
+	return;
 }
 
 void P_RemoveActivePlat(plat_t* plat)
 {
 	int 		i;
-	for (i = 0;i < MAXPLATS;i++)
+	for (i = 0;i < MaxPlats;i++)
 		if (plat == activeplats[i])
 		{
 			(activeplats[i])->sector->specialdata = NULL;

@@ -51,8 +51,9 @@ extern	int 	dirtybox[4];
 extern	byte	newgamma[256];
 extern	double	gammalevel;
 
-extern	byte*	TransTable;			// Translucency table
+extern	byte*	TransTable;			// Translucency tables (minus 65536)
 
+extern	int		CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 
 // Allocates buffer screens, call before R_Init.
 void V_Init (void);
@@ -78,11 +79,28 @@ V_DrawPatch
   patch_t*		patch);
 
 void
+V_DrawLucentPatch
+( int			x,
+  int			y,
+  int			scrn,
+  patch_t*		patch);
+
+void
 V_DrawPatchDirect
 ( int			x,
   int			y,
   int			scrn,
   patch_t*		patch );
+
+void
+V_DrawTranslatedPatchStretched
+( int			x,
+  int			y,
+  int			scrn,
+  patch_t*		patch,
+  byte*			map,
+  int			destwidth,
+  int			destheight );
 
 void
 V_DrawPatchStretched
@@ -92,6 +110,43 @@ V_DrawPatchStretched
   patch_t*		patch,
   int			destwidth,
   int			destheight );
+
+void
+V_DrawPatchIndirect
+( int			x,
+  int			y,
+  int			scrn,
+  patch_t*		patch );
+
+void
+V_DrawPatchClean
+( int			x,
+  int			y,
+  int			scrn,
+  patch_t*		patch );
+
+void
+V_DrawPatchCleanNoMove
+( int			x,
+  int			y,
+  int			scrn,
+  patch_t*		patch );
+
+void
+V_DrawTranslatedPatchClean
+( int			x,
+  int			y,
+  int			scrn,
+  patch_t*		patch,
+  byte*			map );
+
+void
+V_DrawTranslatedPatchCleanNoMove
+( int			x,
+  int			y,
+  int			scrn,
+  patch_t*		patch,
+  byte*			map );
 
 
 // Draw a linear block of pixels into the view buffer.
@@ -126,14 +181,21 @@ V_MarkRect
 
 // BestColor
 byte BestColor (const byte *palette, const int r, const int g, const int b);
+// Returns the closest color to the one desired. String
+// should be of the form "rrrr gggg bbbb".
+int V_GetColorFromString (const byte *palette, const char *colorstring);
 
 // Output a line of text using the console font
 void V_PrintStr (int x, int y, byte *str, int count, byte ormask);
+void V_PrintStr2 (int x, int y, byte *str, int count, byte ormask);
 
 // Output some text with wad heads-up font
 void V_DrawText (int x, int y, byte *str);
 void V_DrawWhiteText (int x, int y, byte *str);
 void V_DrawRedText (int x, int y, byte *str);
+void V_DrawTextClean (int x, int y, byte *str);		// <- Does not adjust x and y
+void V_DrawWhiteTextClean (int x, int y, byte *str);
+void V_DrawRedTextClean (int x, int y, byte *str);
 
 boolean V_SetResolution (int width, int height);
 

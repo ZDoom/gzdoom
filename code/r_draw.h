@@ -40,26 +40,41 @@ extern fixed_t			dc_texturemid;
 extern byte*			dc_source;				
 
 
+#ifndef USEASM
 // The span blitting interface.
 // Hook in assembler or system specific BLT
 //	here.
-void	R_DrawColumn (void);
-void	R_DrawColumnLow (void);
-void	ASM_R_DrawColumn (void);
+void	R_DrawColumn_C (void);
 
 // The Spectre/Invisibility effect.
-void	R_DrawFuzzColumn (void);
-void	R_DrawFuzzColumnLow (void);
+void	R_DrawFuzzColumn_C (void);
 
 // Draw translucent column;
-void	R_DrawTranslucentColumn (void);
-void	ASM_R_DrawTranslucentColumn (void);
+void	R_DrawTranslucentColumn_C (void);
 
 // Draw with color translation tables,
 //	for player sprite rendering,
 //	Green/Red/Blue/Indigo shirts.
-void	R_DrawTranslatedColumn (void);
-void	R_DrawTranslatedColumnLow (void);
+void	R_DrawTranslatedColumn_C (void);
+
+#define R_DrawColumn			R_DrawColumn_C
+#define R_DrawFuzzColumn		R_DrawFuzzColumn_C
+#define R_DrawTranslucentColumn	R_DrawTranslucentColumn_C
+#define R_DrawTranslatedColumn	R_DrawTranslatedColumn_C
+
+#else	/* USEASM */
+
+void	R_DrawColumn_ASM (void);
+void	R_DrawFuzzColumn_ASM (void);
+void	R_DrawTranslucentColumn_ASM (void);
+void	R_DrawTranslatedColumn_C (void);
+
+#define R_DrawColumn			R_DrawColumn_ASM
+#define R_DrawFuzzColumn		R_DrawFuzzColumn_ASM
+#define R_DrawTranslucentColumn	R_DrawTranslucentColumn_ASM
+#define R_DrawTranslatedColumn	R_DrawTranslatedColumn_C
+
+#endif
 
 void
 R_VideoErase
@@ -83,6 +98,8 @@ extern byte*			ds_source;
 extern byte*			translationtables;
 extern byte*			dc_translation;
 
+extern byte*			dc_transmap;
+
 
 // Span blitting for rows, floor/ceiling.
 // No Sepctre effect needed.
@@ -90,8 +107,8 @@ void	R_DrawSpan (void);
 
 /* [Petteri] R_DrawSpan8() optimized inner loop (does two pixels
    per cycle) */
-void __cdecl ASM_DrawSpan8Loop (fixed_t xfrac, fixed_t yfrac, int count,
-								byte *dest);
+void __cdecl DrawSpan8Loop (fixed_t xfrac, fixed_t yfrac, int count,
+							byte *dest);
 
 // Low resolution mode, 160x200?
 void	R_DrawSpanLow (void);

@@ -28,6 +28,7 @@ static const char rcsid[] = "$Id: r_main.c,v 1.5 1997/02/03 22:45:12 b1 Exp $";
 
 
 
+#include "m_alloc.h"
 #include <stdlib.h>
 #include <math.h>
 
@@ -123,6 +124,8 @@ lighttable_t*			zlight[LIGHTLEVELS][MAXLIGHTZ];
 
 // bumped light from gun blasts
 int 					extralight;
+
+extern boolean DrawNewHUD;		// [RH] Defined in d_main.c.
 
 
 
@@ -675,7 +678,7 @@ void R_ExecuteSetViewSize (void)
 
 	setsizeneeded = false;
 
-	if (setblocks == 11)
+	if (setblocks == 11 || setblocks == 12)
 	{
 		scaledviewwidth = SCREENWIDTH;
 		viewheight = SCREENHEIGHT;
@@ -688,6 +691,11 @@ void R_ExecuteSetViewSize (void)
 		scaledviewwidth = (setblocks*SCREENWIDTH)/10;
 		viewheight = ((setblocks*ST_Y)/10)&~7;
 	}
+
+	if (setblocks == 11)
+		DrawNewHUD = true;
+	else
+		DrawNewHUD = false;
 	
 	viewwidth = scaledviewwidth;
 
@@ -706,18 +714,8 @@ void R_ExecuteSetViewSize (void)
 	projection = centerxfrac;
 	projectiony = (((SCREENHEIGHT*centerx*320)/200)/SCREENWIDTH)<<FRACBITS;
 
-#ifndef USEASM
 	colfunc = basecolfunc = R_DrawColumn;
 	lucentcolfunc = R_DrawTranslucentColumn;
-#else
-// something strange going on here...
-//	colfunc = basecolfunc = ASM_R_DrawColumn;
-	colfunc = basecolfunc = R_DrawColumn;
-// The assembly version has a bug which becomes
-// even more apparent when an Archvile
-// resurrects someone. (They are drawn fullbright.)
-	lucentcolfunc = R_DrawTranslucentColumn;
-#endif
 	fuzzcolfunc = R_DrawFuzzColumn;
 	transcolfunc = R_DrawTranslatedColumn;
 	spanfunc = R_DrawSpan;
@@ -727,24 +725,24 @@ void R_ExecuteSetViewSize (void)
 	R_InitTextureMapping ();
 	
 	// psprite scales
-//	  pspritescale = FRACUNIT*viewwidth/SCREENWIDTH;
-//	  pspriteiscale = FRACUNIT*SCREENWIDTH/viewwidth;
 	pspritescale = (viewwidth << FRACBITS) / 320;
 	pspriteiscale = (320 << FRACBITS) / viewwidth;
-	// [RH] Aspect ratio fix (from doom legacy)
+	// [RH] Aspect ratio fix (from Doom Legacy)
 	pspriteyscale = (((SCREENHEIGHT * viewwidth) / SCREENWIDTH) << FRACBITS) / 200;
-	
+	// [RH] Sky height fix for screens not 200 pixels tall
+	skyiscale = (200 << FRACBITS) / ((SCREENHEIGHT * viewwidth) / SCREENWIDTH);
+
 	// thing clipping
 	for (i=0 ; i<viewwidth ; i++)
 		screenheightarray[i] = viewheight;
 	
 	// planes
 
-	// [RH] aspect ratio stuff (from doom legacy)
+	// [RH] aspect ratio stuff (from Doom Legacy)
 	aspectx = (((SCREENHEIGHT * centerx * 320) / 200) / SCREENWIDTH);
 
 	// [RH] Calculates yslopes for twice the view height
-	// to allow for freelook
+	// to allow for freelook (again from Doom Legacy)
 	for (i=0 ; i<viewheight*2 ; i++)
 	{
 		dy = ((i-viewheight)<<FRACBITS)+FRACUNIT/2;
@@ -777,9 +775,6 @@ void R_ExecuteSetViewSize (void)
 			scalelight[i][j] = colormaps + level*256;
 		}
 	}
-
-	// Yeah, this is dumb...
-	R_FillBackScreen ();
 }
 
 
@@ -881,7 +876,7 @@ void R_SetupFrame (player_t* player)
 		fixedcolormap = 0;
 
 	// [RH] freelook stuff
-	dy = FixedMul (viewheight << (FRACBITS/2), player->ysheer) >> 9;
+	dy = FixedMul (viewheight << (FRACBITS/2), player->mo->pitch) >> 9;
 	yslope = yslopetab + (viewheight >> 1) + dy;
 	centery = (viewheight >> 1) - dy;
 	centeryfrac = centery << FRACBITS;
@@ -923,4 +918,31 @@ void R_RenderPlayerView (player_t* player)
 
 	// Check for new console commands.
 	NetUpdate ();								
+}
+
+// [RH] Do all multires stuff. Called from V_SetResolution
+void R_MultiresInit (void)
+{
+	// in r_things.c
+	extern short *r_dscliptop, *r_dsclipbot;
+	// in r_draw.c
+	extern byte **ylookup;
+	extern int *columnofs;
+
+	R_InitFuzzTable ();
+	R_PlaneInitData ();
+
+	if (ylookup)
+		free (ylookup);
+	if (columnofs)
+		free (columnofs);
+	if (r_dscliptop)
+		free (r_dscliptop);
+	if (r_dsclipbot)
+		free (r_dsclipbot);
+
+	ylookup = Malloc (SCREENHEIGHT * sizeof(byte *));
+	columnofs = Malloc (SCREENWIDTH * sizeof(int));
+	r_dscliptop = Malloc (SCREENWIDTH * sizeof(short));
+	r_dsclipbot = Malloc (SCREENWIDTH * sizeof(short));
 }

@@ -18,7 +18,6 @@ extern void *DDBack;
 extern HWND Window;
 
 LPDIRECTINPUTDEVICE g_pMouse;
-BOOL g_fActive;
 
 cvar_t *i_remapkeypad;
 cvar_t *usejoystick;
@@ -246,8 +245,14 @@ static const char Convert []={
 
 };
 
+static BOOL altdown = FALSE;
+
 LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	event_t event;
+
+	event.data1 = event.data2 = event.data3 = 0;
+
 	switch(message) {
 		case WM_DESTROY:
 			PostQuitMessage (0);
@@ -266,36 +271,72 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (wParam == MCI_NOTIFY_SUCCESSFUL)
 				I_RestartSong ();
 			break;
-
+/*
 		case WM_ACTIVATE:
 			{
-			//	WORD fActive = LOWORD (wParam);
+				WORD fActive = LOWORD (wParam);
 			//	BOOL fMinimized = (BOOL) HIWORD (wParam);
 
-				if (g_fActive) {
+				if (fActive) {
 					if (g_pMouse) IDirectInputDevice_Acquire (g_pMouse);
+					if (g_pKey) IDirectInputDevice_Acquire (g_pKey);
 				} else {
 					if (g_pMouse) IDirectInputDevice_Unacquire (g_pMouse);
+					if (g_pKey) IDirectInputDevice_Unacquire (g_pKey);
 				}
 			}
 			break;
-
+*/
 		case WM_KILLFOCUS:
-			if (g_fActive) {
-				if (g_pMouse) IDirectInputDevice_Unacquire (g_pMouse);
+			if (g_pKey) IDirectInputDevice_Unacquire (g_pKey);
+			if (g_pMouse) IDirectInputDevice_Unacquire (g_pMouse);
+			if (altdown) {
+				altdown = FALSE;
+				event.type = ev_keyup;
+				event.data1 = DIK_LALT;
+				D_PostEvent (&event);
 			}
 //			paused = 1;
 			break;
 
 		case WM_SETFOCUS:
-			if (g_fActive) {
-				if (g_pMouse) IDirectInputDevice_Acquire (g_pMouse);
-			}
+			if (g_pKey) IDirectInputDevice_Acquire (g_pKey);
+			if (g_pMouse) IDirectInputDevice_Acquire (g_pMouse);
 			break;
 
+		// Being forced to separate my keyboard input handler into
+		// two pieces like this really stinks. (IMHO)
 		case WM_KEYDOWN:
 		case WM_KEYUP:
-			return 0;
+			if (message == WM_KEYUP) {
+				event.type = ev_keyup;
+			} else {
+				if (lParam & 0x40000000)
+					event.type = ev_keyrepeat;
+				else
+					event.type = ev_keydown;
+			}
+
+			switch (wParam) {
+				case VK_PAUSE:
+					event.data1 = KEY_PAUSE;
+					break;
+				case VK_TAB:
+					event.data1 = DIK_TAB;
+					break;
+				case VK_NUMLOCK:
+					event.data1 = DIK_NUMLOCK;
+					break;
+				case VK_SHIFT:
+					event.data1 = KEY_LSHIFT;
+					break;
+				case VK_CONTROL:
+					event.data1 = KEY_LCTRL;
+					break;
+			}
+			if (event.data1)
+				D_PostEvent (&event);
+			break;
 
 		case WM_SYSKEYDOWN:
 			SendMessage (hWnd, WM_KEYDOWN, wParam, lParam);
@@ -498,7 +539,6 @@ BOOL DI_Init(HWND hwnd)
 	}
 
 	IDirectInputDevice_Acquire (g_pMouse);
-	g_fActive = 1;
 
 nextinit:
 	DI_Init2();
@@ -534,8 +574,8 @@ void UpdateCursorPosition(int dx, int dy)
 
 	MouseCurX += dx;
 	MouseCurY -= dy;
-	if (dx) GDx = dx;
-	if (dy) GDy = dy;
+	if (dx) GDx += dx;
+	if (dy) GDy += dy;
 	/* Clip the cursor to our client area */
 	if (MouseCurX < 0)				MouseCurX = 0;
 	if (MouseCurX >= SCREENWIDTH)	MouseCurX = SCREENWIDTH;
@@ -716,22 +756,7 @@ BOOL DI_Init2(void)
 	return TRUE;
 }
 
-static const event_t PauseEvents[3] = {
-	{ ev_keydown,	DIK_LCONTROL,	0, 0 },
-	{ ev_keydown,	DIK_NUMLOCK,	0, 0 },
-	{ ev_keyup,		DIK_LCONTROL,	0, 0 }
-};
-
-static void SendEatenKeys (int count)
-{
-	int i;
-
-	for (i = 0; i < count; i++)
-		D_PostEvent (&PauseEvents[i]);
-}
-
 void KeyRead() {
-	static DWORD pausetime = 0, pauseseq = 0;
 	HRESULT  hr;
 	event_t event;
 
@@ -753,116 +778,76 @@ void KeyRead() {
 			for (elem = 0; elem < dwElements; elem++) {
 				key = data[elem].dwOfs;
 
-				if (pauseseq == 0
-					&& key == DIK_LCONTROL
-					&& (data[elem].dwData & 0x80)) {
-						pauseseq++;
-						pausetime = data[elem].dwTimeStamp;
-						continue;
-				} else if (pauseseq && (data[elem].dwTimeStamp - pausetime) < 20) {
-					if (data[elem].dwData & 0x80) {
-						// key is going down
-						if (pauseseq == 1 && key == DIK_NUMLOCK) {
-							pauseseq++;
-							pausetime = data[elem].dwTimeStamp;
-							continue;
-						}
-					} else {
-						// key is going up
-						if (pauseseq == 2 && key == DIK_LCONTROL) {
-							pauseseq++;
-							pausetime = data[elem].dwTimeStamp;
-							continue;
-						} else if (pauseseq == 3 && key == DIK_NUMLOCK) {
-							pauseseq = 0;
-							key = KEY_PAUSE;
-						}
-					}
+				if (data[elem].dwData & 0x80) {
+					event.type = ev_keydown;
+				} else {
+					event.type = ev_keyup;
 				}
 
-				if (pauseseq > 0) {
-					// If we get here, a pause sequence began but never finished
-					// (i.e. pause was not actually pressed). We need to send out
-					// the key presses we previously ate.
-					SendEatenKeys (pauseseq);
-					pauseseq = 0;
-				}
-
-				if (key != KEY_PAUSE) {
-					if (data[elem].dwData & 0x80) {
-						event.type = ev_keydown;
-					} else {
-						event.type = ev_keyup;
-					}
-
-					event.data3 = Convert2[key];
-					switch (key) {
-						case DIK_NUMPADENTER:
-							key = DIK_RETURN;
-							break;
-						case DIK_RCONTROL:
-							key = DIK_LCONTROL;
-							break;
-						case DIK_RMENU:
-							key = DIK_LMENU;
-							break;
-						case DIK_RSHIFT:
-							key = DIK_LSHIFT;
-							break;
-						default:
-							if (i_remapkeypad->value) {
-								switch (key) {
-									case DIK_NUMPAD4:
-										key = DIK_LEFT;
-										break;
-									case DIK_NUMPAD6:
-										key = DIK_RIGHT;
-										break;
-									case DIK_NUMPAD8:
-										key = DIK_UP;
-										break;
-									case DIK_NUMPAD2:
-										key = DIK_DOWN;
-										break;
-									case DIK_NUMPAD7:
-										key = DIK_HOME;
-										break;
-									case DIK_NUMPAD9:
-										key = DIK_PRIOR;
-										break;
-									case DIK_NUMPAD3:
-										key = DIK_NEXT;
-										break;
-									case DIK_NUMPAD1:
-										key = DIK_END;
-										break;
-									case DIK_NUMPAD0:
-										key = DIK_INSERT;
-										break;
-									case DIK_DECIMAL:
-										key = DIK_DELETE;
-										break;
-								}
+				event.data3 = Convert2[key];
+				switch (key) {
+					case DIK_NUMPADENTER:	// These keys always translated
+						key = DIK_RETURN;
+						break;
+					case DIK_RMENU:
+						key = DIK_LMENU;
+						break;
+					case DIK_RCONTROL:		// These keys are handled by the message handler
+					case DIK_LCONTROL:
+					case DIK_RSHIFT:
+					case DIK_LSHIFT:
+					case DIK_TAB:
+					case DIK_NUMLOCK:
+						key = 0;
+						break;
+					default:
+						if (i_remapkeypad->value) {
+							switch (key) {
+								case DIK_NUMPAD4:
+									key = DIK_LEFT;
+									break;
+								case DIK_NUMPAD6:
+									key = DIK_RIGHT;
+									break;
+								case DIK_NUMPAD8:
+									key = DIK_UP;
+									break;
+								case DIK_NUMPAD2:
+									key = DIK_DOWN;
+									break;
+								case DIK_NUMPAD7:
+									key = DIK_HOME;
+									break;
+								case DIK_NUMPAD9:
+									key = DIK_PRIOR;
+									break;
+								case DIK_NUMPAD3:
+									key = DIK_NEXT;
+									break;
+								case DIK_NUMPAD1:
+									key = DIK_END;
+									break;
+								case DIK_NUMPAD0:
+									key = DIK_INSERT;
+									break;
+								case DIK_DECIMAL:
+									key = DIK_DELETE;
+									break;
 							}
-					}
+						}
+				}
 
+				if (key) {
 					event.data1 = key;
 					event.data2 = Convert[key];
-				} else {
-					event.type = ev_keydown;
-					event.data1 = KEY_PAUSE;
-					event.data2 = event.data3 = 0;
+					event.data3 = Convert2[key];
+					D_PostEvent (&event);
+					if (key == DIK_LALT)
+						altdown = (event.type == ev_keydown);
 				}
-				D_PostEvent (&event);
 			}
 		}
 	} while (SUCCEEDED (hr) && dwElements);
-
-	if (pauseseq && (GetTickCount () - pausetime) > 20) {
-		SendEatenKeys (pauseseq);
-		pauseseq = 0;
-	}
-
 }
 
 void I_GetEvent(void)

@@ -27,6 +27,7 @@
 static const char
 rcsid[] = "$Id: r_draw.c,v 1.4 1997/02/03 16:47:55 b1 Exp $";
 
+#include "m_alloc.h"
 
 #include "doomdef.h"
 
@@ -41,6 +42,8 @@ rcsid[] = "$Id: r_draw.c,v 1.4 1997/02/03 16:47:55 b1 Exp $";
 
 // State.
 #include "doomstat.h"
+
+#include "st_stuff.h"
 
 
 // ?
@@ -66,8 +69,8 @@ int 			scaledviewwidth;
 int 			viewheight;
 int 			viewwindowx;
 int 			viewwindowy; 
-byte*			ylookup[MAXHEIGHT]; 
-int 			columnofs[MAXWIDTH]; 
+byte**			ylookup;
+int* 			columnofs; 
 
 // Color tables for different players,
 //	translate a limited part to another
@@ -95,6 +98,7 @@ byte*					dc_source;
 // just for profiling 
 int 					dccount;
 
+#ifndef	USEASM
 //
 // A column is a vertical slice/span from a wall texture that,
 //	given the DOOM style restrictions on the view orientation,
@@ -102,7 +106,7 @@ int 					dccount;
 // Thus a special case loop for very fast rendering can
 //	be used. It has also been used with Wolfenstein 3D.
 // 
-void R_DrawColumn (void) 
+void R_DrawColumn_C (void) 
 { 
 	int 				count; 
 	byte*				dest; 
@@ -118,8 +122,10 @@ void R_DrawColumn (void)
 #ifdef RANGECHECK 
 	if (dc_x >= SCREENWIDTH
 		|| dc_yl < 0
-		|| dc_yh >= SCREENHEIGHT) 
-		I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x); 
+		|| dc_yh >= SCREENHEIGHT) {
+		Printf ("R_DrawColumn: %i to %i at %i\n", dc_yl, dc_yh, dc_x);
+		return;
+	}
 #endif 
 
 	// Framebuffer destination address.
@@ -146,60 +152,13 @@ void R_DrawColumn (void)
 		
 	} while (count--); 
 } 
-
-
-
-
-#if 0
-void R_DrawColumnLow (void) 
-{ 
-	int 				count; 
-	byte*				dest; 
-	byte*				dest2;
-	fixed_t 			frac;
-	fixed_t 			fracstep;		 
- 
-	count = dc_yh - dc_yl; 
-
-	// Zero length.
-	if (count < 0) 
-		return; 
-								 
-#ifdef RANGECHECK 
-	if (dc_x >= SCREENWIDTH
-		|| dc_yl < 0
-		|| dc_yh >= SCREENHEIGHT)
-	{
-		
-		I_Error ("R_DrawColumn: %i to %i at %i", dc_yl, dc_yh, dc_x);
-	}
-	//	dccount++; 
-#endif 
-	// Blocky mode, need to multiply by 2.
-	dc_x <<= 1;
-	
-	dest = ylookup[dc_yl] + columnofs[dc_x];
-	dest2 = ylookup[dc_yl] + columnofs[dc_x+1];
-	
-	fracstep = dc_iscale; 
-	frac = dc_texturemid + (dc_yl-centery)*fracstep;
-	
-	do 
-	{
-		// Hack. Does not work corretly.
-		*dest2 = *dest = dc_colormap[dc_source[(frac>>FRACBITS)&127]];
-		dest += SCREENPITCH;
-		dest2 += SCREENPITCH;
-		frac += fracstep; 
-
-	} while (count--);
-}
-#endif
+#endif	// USEASM
 
 //
 // Spectre/Invisibility.
 //
-#define FUZZTABLE	50 
+// [RH] FUZZTABLE changed from 50 to 64
+#define FUZZTABLE	64
 #define FUZZOFF		(SCREENWIDTH)
 
 
@@ -215,13 +174,14 @@ int 	fuzzoffset[FUZZTABLE];
 */
 
 static const signed char fuzzinit[FUZZTABLE] = {
-	1,-1, 1,-1, 1, 1,-1,
-	1, 1,-1, 1, 1, 1,-1,
-	1, 1, 1,-1,-1,-1,-1,
-	1,-1,-1, 1, 1, 1, 1,-1,
-	1,-1, 1, 1,-1,-1, 1,
-	1,-1,-1,-1,-1, 1, 1,
-	1, 1,-1, 1, 1,-1, 1
+	1,-1, 1,-1, 1, 1,-1, 1,
+	1,-1, 1, 1, 1,-1, 1, 1,
+	1,-1,-1,-1,-1, 1,-1,-1,
+	1, 1, 1, 1,-1, 1,-1, 1,
+	1,-1,-1, 1, 1,-1,-1,-1,
+   -1, 1, 1, 1, 1,-1, 1, 1,
+   -1, 1, 1, 1,-1, 1, 1, 1,
+   -1, 1, 1,-1, 1, 1,-1, 1
 };
 
 int 	fuzzpos = 0; 
@@ -234,6 +194,7 @@ void R_InitFuzzTable (void)
 		fuzzoffset[i] = fuzzinit[i] * FUZZOFF;
 }
 
+#ifndef USEASM
 //
 // Framebuffer postprocessing.
 // Creates a fuzzy image by copying pixels
@@ -242,12 +203,11 @@ void R_InitFuzzTable (void)
 //	could create the SHADOW effect,
 //	i.e. spectres and invisible players.
 //
-void R_DrawFuzzColumn (void) 
+void R_DrawFuzzColumn_C (void) 
 { 
 	int 				count; 
-	byte*				dest; 
-	fixed_t 			frac;
-	fixed_t 			fracstep;		 
+	byte*				dest;
+	byte*				map;
 
 	// Adjust borders. Low... 
 	if (!dc_yl) 
@@ -263,6 +223,7 @@ void R_DrawFuzzColumn (void)
 	if (count < 0) 
 		return; 
 
+	map = colormaps + 6*256;
 	
 #ifdef RANGECHECK 
 	if (dc_x >= SCREENWIDTH
@@ -277,10 +238,6 @@ void R_DrawFuzzColumn (void)
 	// Does not work with blocky mode.
 	dest = ylookup[dc_yl] + columnofs[dc_x];
 
-	// Looks familiar.
-	fracstep = dc_iscale; 
-	frac = dc_texturemid + (dc_yl-centery)*fracstep; 
-
 	// Looks like an attempt at dithering,
 	//	using the colormap #6 (of 0-31, a bit
 	//	brighter than average).
@@ -290,23 +247,25 @@ void R_DrawFuzzColumn (void)
 		//	a pixel that is either one column
 		//	left or right of the current one.
 		// Add index from colormap to index.
-		*dest = colormaps[6*256+dest[fuzzoffset[fuzzpos]]]; 
+		*dest = map[dest[fuzzoffset[fuzzpos]]]; 
 
 		// Clamp table lookup index.
-		if (++fuzzpos == FUZZTABLE) 
-			fuzzpos = 0;
+		fuzzpos = (fuzzpos + 1) & (FUZZTABLE - 1);
 		
 		dest += SCREENPITCH;
+	} while (count--);
 
-		frac += fracstep; 
-	} while (count--); 
+	fuzzpos += 3;
 } 
- 
-  
+#endif	// USEASM
+
 //
 // R_DrawTranlucentColumn
 //
-void R_DrawTranslucentColumn (void) 
+byte *dc_transmap;
+
+#ifndef USEASM
+void R_DrawTranslucentColumn_C (void) 
 { 
 	int 				count; 
 	byte*				dest; 
@@ -322,7 +281,7 @@ void R_DrawTranslucentColumn (void)
 		|| dc_yl < 0
 		|| dc_yh >= SCREENHEIGHT)
 	{
-		I_Error ( "R_DrawColumn: %i to %i at %i",
+		I_Error ( "R_DrawTranslucentColumn: %i to %i at %i",
 				  dc_yl, dc_yh, dc_x);
 	}
 	
@@ -338,13 +297,13 @@ void R_DrawTranslucentColumn (void)
 
 	do 
 	{
-		*dest = TransTable[(dc_colormap[dc_source[frac>>FRACBITS]]<<8) + (*dest)];
+		*dest = dc_transmap[dc_colormap[dc_source[(frac>>FRACBITS)&0x7f]] + ((*dest)<<8)];
 		dest += SCREENPITCH;
 		
 		frac += fracstep; 
 	} while (count--); 
 } 
- 
+#endif	// USEASM 
 
 //
 // R_DrawTranslatedColumn
@@ -360,7 +319,7 @@ byte*	translationtables;
 
 extern byte *WhiteMap;
 
-void R_DrawTranslatedColumn (void) 
+void R_DrawTranslatedColumn_C (void) 
 { 
 	int 				count; 
 	byte*				dest; 
@@ -376,7 +335,7 @@ void R_DrawTranslatedColumn (void)
 		|| dc_yl < 0
 		|| dc_yh >= SCREENHEIGHT)
 	{
-		I_Error ( "R_DrawColumn: %i to %i at %i",
+		I_Error ( "R_DrawTranslatedColumn: %i to %i at %i",
 				  dc_yl, dc_yh, dc_x);
 	}
 	
@@ -419,7 +378,7 @@ void R_InitTranslationTables (void)
 {
 	int 		i;
 		
-	translationtables = Z_Malloc (256*3+255, PU_STATIC, 0);
+	translationtables = Z_Malloc (256*4+255, PU_STATIC, 0);
 	translationtables = (byte *)(( (int)translationtables + 255 )& ~255);
 	
 	// translate just the 16 green colors
@@ -441,7 +400,7 @@ void R_InitTranslationTables (void)
 	}
 
 	// Create the red->white table for text routines
-	WhiteMap = Z_Malloc (256, PU_STATIC, 0);
+	WhiteMap = translationtables + 768;
 
 	for (i = 0; i < 256; i++) {
 		if (i >= 176 && i <= 191) {
@@ -524,7 +483,7 @@ void R_DrawSpan (void)
 #ifdef USEASM    
 	if ( count > 2 ) {
 		count++; /* the do-loop below does count+1 pixels */
-		ASM_DrawSpan8Loop(xfrac, yfrac, count & (~1), dest);
+		DrawSpan8Loop(xfrac, yfrac, count & (~1), dest);
 		if ( (count & 1) == 0 )
 			return;
 		xfrac += ds_xstep * (count & (~1));
@@ -549,59 +508,6 @@ void R_DrawSpan (void)
 	} while (count--);
 } 
 
-
-
-
-
-//
-// Again..
-//
-#if 0
-void R_DrawSpanLow (void) 
-{ 
-	fixed_t 			xfrac;
-	fixed_t 			yfrac; 
-	byte*				dest; 
-	int 				count;
-	int 				spot; 
-		 
-#ifdef RANGECHECK 
-	if (ds_x2 < ds_x1
-		|| ds_x1<0
-		|| ds_x2>=SCREENWIDTH  
-		|| ds_y>SCREENHEIGHT)
-	{
-		I_Error( "R_DrawSpan: %i to %i at %i",
-				 ds_x1,ds_x2,ds_y);
-	}
-//		dscount++; 
-#endif 
-		 
-	xfrac = ds_xfrac; 
-	yfrac = ds_yfrac; 
-
-	// Blocky mode, need to multiply by 2.
-	ds_x1 <<= 1;
-	ds_x2 <<= 1;
-	
-	dest = ylookup[ds_y] + columnofs[ds_x1];
-  
-	
-	count = ds_x2 - ds_x1; 
-	do 
-	{ 
-		spot = ((yfrac>>(16-6))&(63*64)) + ((xfrac>>16)&63);
-		// Lowres/blocky mode does it twice,
-		//	while scale is adjusted appropriately.
-		*dest++ = ds_colormap[ds_source[spot]]; 
-		*dest++ = ds_colormap[ds_source[spot]];
-		
-		xfrac += ds_xstep; 
-		yfrac += ds_ystep; 
-
-	} while (count--); 
-}
-#endif 
 
 //
 // R_InitBuffer 
@@ -661,10 +567,9 @@ void R_FillBackScreen (void)
 	//char		name2[] = "GRNROCK";	
 
 	char*		name;
-		
-	if (scaledviewwidth == SCREENWIDTH)
-		return;
-		
+
+	// [RH] Always draws something now.
+
 	if ( gamemode == commercial)
 		name = "GRNROCK";
 	else
@@ -672,8 +577,8 @@ void R_FillBackScreen (void)
 	
 	src = W_CacheLumpName (name, PU_CACHE); 
 	dest = screens[1]; 
-		 
-	for (y=0 ; y<SCREENHEIGHT; y++) 
+
+	for (y=0; y<SCREENHEIGHT; y++) 
 	{ 
 		for (x=0 ; x<SCREENWIDTH/64 ; x++) 
 		{ 
@@ -688,15 +593,19 @@ void R_FillBackScreen (void)
 		} 
 		dest += SCREENPITCH - SCREENWIDTH;
 	} 
-		
-	patch = W_CacheLumpName ("brdr_t",PU_CACHE);
 
-	for (x=0 ; x<scaledviewwidth ; x+=8)
-		V_DrawPatch (viewwindowx+x,viewwindowy-8,1,patch);
+	if (scaledviewwidth == SCREENWIDTH)
+		return;
+
 	patch = W_CacheLumpName ("brdr_b",PU_CACHE);
 
 	for (x=0 ; x<scaledviewwidth ; x+=8)
 		V_DrawPatch (viewwindowx+x,viewwindowy+viewheight,1,patch);
+
+	patch = W_CacheLumpName ("brdr_t",PU_CACHE);
+
+	for (x=0 ; x<scaledviewwidth ; x+=8)
+		V_DrawPatch (viewwindowx+x,viewwindowy-8,1,patch);
 	patch = W_CacheLumpName ("brdr_l",PU_CACHE);
 
 	for (y=0 ; y<viewheight ; y+=8)
@@ -766,22 +675,15 @@ void R_DrawViewBorder (void)
 	int 		ofs;
 	int 		i; 
  
-	//if screenwidth>320, draw stuff around status bar, even if scaledviewwidth==SCREENWIDTH
-	if ((SCREENWIDTH > 320) && (SCREENHEIGHT != viewheight)) {
-		ofs = (SCREENHEIGHT - SBARHEIGHT) * SCREENPITCH;
-		side = (SCREENWIDTH - 320) / 2;
-		R_VideoErase (ofs, side);
-
-		ofs += SCREENWIDTH - side;
-		for (i = 1; i < SBARHEIGHT; i++) {
-			R_VideoErase (ofs, side << 1);
-			ofs += SCREENPITCH;
-		}
-		R_VideoErase (ofs, side);
+	// [RH] Redraw the status bar if SCREENWIDTH > status bar width.
+	// Will draw borders around itself, too.
+	if (SCREENWIDTH > 320) {
+		ST_Drawer (viewheight == SCREENHEIGHT, true);
 	}
 
-	if (scaledviewwidth == SCREENWIDTH) 
+	if (scaledviewwidth == SCREENWIDTH) {
 		return; 
+	}
   
 	top = ((SCREENHEIGHT-SBARHEIGHT)-viewheight)/2; 
 	side = (SCREENWIDTH-scaledviewwidth)/2; 

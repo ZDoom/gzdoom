@@ -33,6 +33,7 @@ static const char rcsid[] = "$Id: d_net.c,v 1.3 1997/02/03 22:01:47 b1 Exp $";
 #include "g_game.h"
 #include "doomdef.h"
 #include "doomstat.h"
+#include "c_console.h"
 
 #define NCMD_EXIT				0x80000000
 #define NCMD_RETRANSMIT 		0x40000000
@@ -574,7 +575,7 @@ void D_CheckNetGame (void)
 	if (netgame)
 		D_ArbitrateNetStart ();
 
-	Printf ("startskill %i  deathmatch: %i  startmap: %i  startepisode: %i\n",
+	Printf ("startskill: %i  deathmatch: %i  startmap: %i  startepisode: %i\n",
 			(int)startskill, deathmatch, startmap, startepisode);
 		
 	// read values out of doomcom
@@ -644,14 +645,14 @@ void TryRunTics (void)
 	int 		counts;
 	int 		numplaying;
 	
-	// get real tics			
+	// get real tics
 	entertic = I_GetTime ()/ticdup;
 	realtics = entertic - oldentertics;
 	oldentertics = entertic;
 	
 	// get available tics
 	NetUpdate ();
-		
+
 	lowtic = MAXINT;
 	numplaying = 0;
 	for (i=0 ; i<doomcom->numnodes ; i++)
@@ -684,7 +685,7 @@ void TryRunTics (void)
 				 realtics, availabletics,counts);
 
 	if (!demoplayback)
-	{	
+	{
 		// ideally nettics[0] should be 1 - 3 tics above lowtic
 		// if we are consistantly slower, speed up time
 		for (i=0 ; i<MAXPLAYERS ; i++)
@@ -710,29 +711,29 @@ void TryRunTics (void)
 			}
 		}
 	}// demoplayback
-		
+
 	// wait for new tics if needed
-	while (lowtic < gametic/ticdup + counts)	
+	while (lowtic < gametic/ticdup + counts)
 	{
-		NetUpdate ();	
+		NetUpdate ();
 		lowtic = MAXINT;
-		
+
 		for (i=0 ; i<doomcom->numnodes ; i++)
 			if (nodeingame[i] && nettics[i] < lowtic)
 				lowtic = nettics[i];
-		
+
 		if (lowtic < gametic/ticdup)
 			I_Error ("TryRunTics: lowtic < gametic");
-								
+
 		// don't stay in here forever -- give the menu a chance to work
 		if (I_GetTime ()/ticdup - entertic >= 20)
 		{
 			C_Ticker ();
 			M_Ticker ();
 			return;
-		} 
+		}
 	}
-	
+
 	// run the count * ticdup tics
 	while (counts--)
 	{

@@ -151,7 +151,7 @@ static WORD pitchtable[] = {				    /* pitch wheel */
 
 
 static void writeFrequency(uint slot, uint note, int pitch, uint keyOn)
-{
+{/*
 	uint freq = freqtable[note];
 	uint octave = octavetable[note];
 
@@ -168,7 +168,8 @@ static void writeFrequency(uint slot, uint note, int pitch, uint keyOn)
 	}
 	if (octave > 7)
 		octave = 7;
-	OPLwriteFreq(slot, freq, octave, keyOn);
+	OPLwriteFreq(slot, freq, octave, keyOn);*/
+	OPLwriteFreq (slot, note, pitch, keyOn);
 }
 
 static void writeModulation(uint slot, struct OPL2instrument *instr, int state)
@@ -212,7 +213,7 @@ static int occupyChannel(struct musicBlock *mus, uint slot, uint channel,
 	else if (channel == PERCUSSION)
 		note = 60;			// C-5
 	if (secondary && (instrument->flags & FL_DOUBLE_VOICE))
-		ch->finetune = instrument->finetune - 0x80;
+		ch->finetune = (instrument->finetune - 0x80) >> 1;
 	else
 		ch->finetune = 0;
 	ch->pitch = ch->finetune + data->channelPitch[channel];
@@ -221,10 +222,13 @@ static int occupyChannel(struct musicBlock *mus, uint slot, uint channel,
 	else
 		instr = &instrument->instr[0];
 	ch->instr = instr;
-	if ( (note += instr->basenote) < 0)
-		while ((note += 12) < 0) {}
-	else if (note > HIGHEST_NOTE)
-		while ((note -= 12) > HIGHEST_NOTE) {}
+	if (channel != PERCUSSION && !(instrument->flags & FL_FIXED_PITCH))
+	{
+		if ( (note += instr->basenote) < 0)
+			while ((note += 12) < 0) {}
+		else if (note > HIGHEST_NOTE)
+			while ((note -= 12) > HIGHEST_NOTE) {}
+	}
 	ch->realnote = note;
 
 	OPLwriteInstrument(slot, instr);
@@ -347,6 +351,8 @@ static int findFreeChannel(struct musicBlock *mus, uint flag, uint channel, ucha
 	return -1;
 }
 
+CVAR (Int, instr, -1, 0)
+
 static struct OP2instrEntry *getInstrument(struct musicBlock *mus, uint channel, uchar note)
 {
 	uint instrnumber;
@@ -359,6 +365,11 @@ static struct OP2instrEntry *getInstrument(struct musicBlock *mus, uint channel,
 	} else
 		instrnumber = mus->driverdata.channelInstr[channel];
 
+	if (instr >= 0 && instr <= 174)
+	{
+		instrnumber = instr;
+	}
+
 	if (OPLinstruments)
 		return &OPLinstruments[instrnumber];
 	else
@@ -367,6 +378,8 @@ static struct OP2instrEntry *getInstrument(struct musicBlock *mus, uint channel,
 
 
 // code 1: play note
+CVAR (Bool, sv, 0, 0)
+
 void OPLplayNote(struct musicBlock *mus, uint channel, uchar note, int volume)
 {
 	int i;
@@ -384,7 +397,7 @@ void OPLplayNote(struct musicBlock *mus, uint channel, uchar note, int volume)
 	if ( (i = findFreeChannel(mus, (channel == PERCUSSION) ? 2 : 0, channel, note)) != -1)
 	{
 		occupyChannel(mus, i, channel, note, volume, instr, 0);
-		if (!OPLsinglevoice && instr->flags == FL_DOUBLE_VOICE)
+		if (!OPLsinglevoice && (instr->flags & FL_DOUBLE_VOICE) && !sv)
 		{
 			if ( (i = findFreeChannel(mus, (channel == PERCUSSION) ? 3 : 1, channel, note)) != -1)
 				occupyChannel(mus, i, channel, note, volume, instr, 1);
@@ -419,6 +432,8 @@ void OPLpitchWheel(struct musicBlock *mus, uint channel, int pitch)
 	uint id = channel;
 	struct OPLdata *data = &mus->driverdata;
 
+	//pitch -= 0x80;
+	pitch >>= 1;
 	data->channelPitch[channel] = pitch;
 	for(i = 0; i < OPLchannels; i++)
 	{
@@ -510,6 +525,7 @@ void OPLplayMusic(struct musicBlock *mus)
 		data->channelVolume[i] = 127;	/* default volume 127 (full volume) */
 		data->channelSustain[i] = 0;
 		data->channelLastVolume[i] = 64;
+		data->channelPitch[i] = 64;
 	}
 }
 
@@ -573,6 +589,17 @@ int OPLloadBank (const void *data)
 		free(OPLinstruments);
 	}
 	OPLinstruments = instruments;
+#if 0
+	for (int i = 0; i < 175; ++i)
+	{
+		Printf ("%3d.%-33s%3d %3d %3d %d\n", i,
+			(BYTE *)data+6308+i*32,
+			OPLinstruments[i].instr[0].basenote,
+			OPLinstruments[i].instr[1].basenote,
+			OPLinstruments[i].note,
+			OPLinstruments[i].flags);
+	}
+#endif
 	return 0;
 }
 

@@ -66,6 +66,8 @@ EXTERN_CVAR (Int, msgmidcolor)
 EXTERN_CVAR (Int, msgmidcolor2)
 EXTERN_CVAR (Bool, snd_pitched)
 
+char *WeaponSection;
+
 FGameConfigFile::FGameConfigFile ()
 {
 	char *pathname;
@@ -428,7 +430,7 @@ void FGameConfigFile::ReadCVars (DWORD flags)
 
 void FGameConfigFile::ArchiveGameData (const char *gamename)
 {
-	char section[64], *subsection;
+	char section[32*3], *subsection;
 
 	subsection = section + sprintf (section, "%s.", gamename);
 
@@ -444,7 +446,7 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 
 	strcpy (subsection, netgame ? "NetServerInfo" : "LocalServerInfo");
 	if (!netgame || consoleplayer == 0)
-	{ // Do not overwrite this section if playing a netgame, and the
+	{ // Do not overwrite this section if playing a netgame, and
 	  // this machine was not the initial host.
 		SetSection (section, true);
 		ClearCurrentSection ();
@@ -473,7 +475,14 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 	ClearCurrentSection ();
 	C_ArchiveBindings (this, true);
 
-	strcpy (subsection, "WeaponSlots");
+	if (WeaponSection == NULL)
+	{
+		strcpy (subsection, "WeaponSlots");
+	}
+	else
+	{
+		sprintf (subsection, "%s.WeaponSlots", WeaponSection);
+	}
 	SetSection (section, true);
 	ClearCurrentSection ();
 	LocalWeapons.SaveSlots (*this);

@@ -66,6 +66,15 @@ public:
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);
 	virtual bool DoHealingRadius (APlayerPawn *other);
 
+	enum EInvulState
+	{
+		INVUL_Start,
+		INVUL_Active,
+		INVUL_Stop
+	};
+
+	virtual void SpecialInvulnerabilityHandling (EInvulState state);
+
 	virtual void NoBlockingSet ();
 
 	void BeginPlay ();

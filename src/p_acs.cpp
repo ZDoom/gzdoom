@@ -717,6 +717,8 @@ void FBehavior::SerializeVarSet (FArchive &arc, SDWORD *vars, int max)
 			last = max;
 		}
 
+		memset (vars, 0, max*sizeof(*vars));
+
 		while (first < last)
 		{
 			arc << vars[first];
@@ -897,7 +899,7 @@ FBehavior::FBehavior (int lumpnum)
 		chunk = (DWORD *)FindChunk (MAKE_ID('M','I','N','I'));
 		while (chunk != NULL)
 		{
-			int numvars = LONG(chunk[1])/4;
+			int numvars = LONG(chunk[1])/4 - 1;
 			int firstvar = LONG(chunk[2]);
 			for (i = 0; i < numvars; ++i)
 			{
@@ -3329,16 +3331,22 @@ void DLevelScript::RunScript ()
 		case PCD_PLAYERHEALTH:
 			if (activator)
 				PushToStack (activator->health);
+			else
+				PushToStack (0);
 			break;
 
 		case PCD_PLAYERARMORPOINTS:
 			if (activator && activator->player)
 				PushToStack (activator->player->armorpoints[0]);
+			else
+				PushToStack (0);
 			break;
 
 		case PCD_PLAYERFRAGS:
 			if (activator && activator->player)
 				PushToStack (activator->player->fragcount);
+			else
+				PushToStack (0);
 			break;
 
 		case PCD_MUSICCHANGE:
@@ -3915,6 +3923,38 @@ void DLevelScript::RunScript ()
 			sp -= 2;
 			break;
 
+		case PCD_SETMARINESPRITE:
+			{
+				const TypeInfo *type = TypeInfo::FindType (FBehavior::StaticLookupString (STACK(1)));
+
+				if (type != NULL)
+				{
+					if (STACK(2) != 0)
+					{
+						AScriptedMarine *marine;
+						TActorIterator<AScriptedMarine> iterator (STACK(2));
+
+						while ((marine = iterator.Next()) != NULL)
+						{
+							marine->SetSprite (type);
+						}
+					}
+					else
+					{
+						if (activator->IsKindOf (RUNTIME_CLASS(AScriptedMarine)))
+						{
+							static_cast<AScriptedMarine *>(activator)->SetSprite (type);
+						}
+					}
+				}
+				else
+				{
+					Printf ("Unknown actor type: %s\n", FBehavior::StaticLookupString (STACK(1)));
+				}
+			}
+			sp -= 2;
+			break;
+
 		case PCD_SETACTORPROPERTY:
 			SetActorProperty (STACK(3), STACK(2), STACK(1));
 			sp -= 3;
@@ -3923,6 +3963,28 @@ void DLevelScript::RunScript ()
 		case PCD_GETACTORPROPERTY:
 			STACK(2) = GetActorProperty (STACK(2), STACK(1));
 			sp -= 1;
+			break;
+
+		case PCD_PLAYERNUMBER:
+			if (activator == NULL || activator->player == NULL)
+			{
+				PushToStack (-1);
+			}
+			else
+			{
+				PushToStack (activator->player - players);
+			}
+			break;
+
+		case PCD_ACTIVATORTID:
+			if (activator == NULL)
+			{
+				PushToStack (0);
+			}
+			else
+			{
+				PushToStack (activator->tid);
+			}
 			break;
 		}
 	}

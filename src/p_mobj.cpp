@@ -1178,7 +1178,7 @@ void P_ZMovement (AActor *mo)
 //	
 // check for smooth step up
 //
-	if (mo->player && mo->z < mo->floorz)
+	if (mo->player && mo->player->mo == mo && mo->z < mo->floorz)
 	{
 		mo->player->viewheight -= mo->floorz - mo->z;
 		mo->player->deltaviewheight = (VIEWHEIGHT - mo->player->viewheight)>>3;
@@ -1324,7 +1324,7 @@ void P_ZMovement (AActor *mo)
 		{ // The skull slammed into something
 			mo->momz = -mo->momz;
 		}
-		if (mo->CrashState) if (
+		if (mo->CrashState &&
 			(mo->flags & MF_CORPSE) &&
 			!(mo->flags3 & MF3_CRASHED) &&
 			!(mo->flags2 & MF2_ICEDAMAGE))
@@ -1432,7 +1432,10 @@ void P_ZMovement (AActor *mo)
 
 static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 {
-	mo->player->deltaviewheight = mo->momz>>3;
+	if (mo->player && mo->player->mo == mo)
+	{
+		mo->player->deltaviewheight = mo->momz>>3;
+	}
 	P_FallingDamage (mo);
 
 	// [RH] only make noise if alive
@@ -2024,10 +2027,7 @@ void AActor::Tick ()
 			if (!(onmo = P_CheckOnmobj (this)))
 			{
 				P_ZMovement (this);
-				if (flags2 & MF2_ONMOBJ)
-				{
-					flags2 &= ~MF2_ONMOBJ;
-				}
+				flags2 &= ~MF2_ONMOBJ;
 			}
 			else
 			{
@@ -2041,7 +2041,7 @@ void AActor::Tick ()
 				}
 				if (onmo->z + onmo->height - z <= 24*FRACUNIT)
 				{
-					if (player)
+					if (player && player->mo == this)
 					{
 						player->viewheight -= onmo->z + onmo->height - z;
 						player->deltaviewheight =
@@ -2051,6 +2051,14 @@ void AActor::Tick ()
 				}
 				flags2 |= MF2_ONMOBJ;
 				momz = 0;
+				if (CrashState &&
+					(flags & MF_CORPSE) &&
+					!(flags3 & MF3_CRASHED) &&
+					!(flags2 & MF2_ICEDAMAGE))
+				{
+					flags3 |= MF3_CRASHED;
+					SetState (CrashState);
+				}
 			}
 		}
 		else
@@ -2060,6 +2068,17 @@ void AActor::Tick ()
 
 		if (ObjectFlags & OF_MassDestruction)
 			return;		// actor was destroyed
+	}
+	else if (z <= floorz)
+	{
+		if (CrashState &&
+			(flags & MF_CORPSE) &&
+			!(flags3 & MF3_CRASHED) &&
+			!(flags2 & MF2_ICEDAMAGE))
+		{
+			flags3 |= MF3_CRASHED;
+			SetState (CrashState);
+		}
 	}
 
 	if (UpdateWaterLevel (oldz))
@@ -2417,7 +2436,7 @@ void AActor::AdjustFloorClip ()
 	{
 		floorclip = shallowestclip;
 	}
-	if (player && oldclip != floorclip)
+	if (player && player->mo == this && oldclip != floorclip)
 	{
 		player->viewheight -= oldclip - floorclip;
 		player->deltaviewheight = (VIEWHEIGHT - player->viewheight) >> 3;
@@ -3519,7 +3538,7 @@ int AActor::DoSpecialDamage (AActor *target, int damage)
 	{ // actor is invulnerable
 		return -1;
 	}
-	else if (target->player && damage < 1000 &&
+	else if (target->player && target->player->mo == target && damage < 1000 &&
 		((target->player->cheats & CF_GODMODE)
 		|| target->player->powers[pw_invulnerability]))
 	{

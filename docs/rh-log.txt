@@ -1,3 +1,115 @@
+February 2, 2002
+- Uploaded 39.cab.
+- Fixed: Dormant actors still bled.
+- Added a PatrolSpecial actor (doomednum 9047). It works like
+  InterpolationSpecial, but for PatrolPoints instead of InterpolationPoints:
+  When a monster reaches a PatrolPoint, it will execute the specials of any
+  PatrolSpecials with the same TID as that PatrolPoint.
+- Added a new ACS command: SetMarineSprite (tid, "otherClass"); You give it
+  TID of the marine(s) to change and the name of an actor class to get the
+  sprite from.
+
+February 1, 2002
+- Fixed a Heretic/Hexen bug: Actors with a crash state would not crash if
+  they died on the ground.
+- Changed I_InitInput to request a DirectInput 3 interface instead of
+  whatever the header specifies. It should work with NT 4 again, now.
+- Added checks to the marines' attacks to prevent crashes if their targets
+  unexpectedly disappear.
+- Fixed: Monsters could start targetting themselves if they blew up a
+  nearby barrel (or pod).
+- Changed A_VileAttack() so that the Archvile can't hurt itself with its
+  own fire.
+- Fixed: In Hexen you can queue scripts for maps on other hubs. They don't
+  get cleared along with the world variables, as I had mistakenly believed.
+
+January 31, 2002
+- Removed the need to press D to set the default resolution at the video
+  modes menu. This seemed to be a common point of confusion (despite having
+  the directions right there in the menu), but more importantly it makes the
+  menu fit on one screen when using 9 pixels per row of text instead of 8.
+  Heretic and Hexen both look better with 9 pixels of room rather than 8.
+- Fixed: Scrolling up past the top of the menu was hard-coded to assume
+  the Doom font when finding the bottom of a menu, so it didn't work
+  correctly for Heretic or Hexen.
+- Fixed: When pressing up arrow to scroll the top of a menu, it's scrollpos
+  could get set to -1.
+- Removed the limit on the number of frames that can assigned to an
+  animation sequence with ANIMDEFS.
+
+January 30, 2002
+- Fixed: The old Thing_Hate behavior no longer worked.
+- Added the Thing_ChangeTID(oldtid, newtid) special to change the TID of
+  anything with oldtid to newtid. If oldtid is zero, then whatever activates
+  it gets its TID changed to newtid.
+- Added the ActivatorTID() ACS command to retrieve the TID of the actor
+  that activated a script.
+- Added the PlayerNumber() ACS command for finding out which player is
+  executing a script. Returns 0-7 for an actual player and -1 for
+  anything else.
+- At GooberMan's request, added bool as a synonym for int to ACC.
+- Added support for a KEYCONF lump. This is a limited console script that
+  can only execute the commands alias, defaultbind, addkeysection,
+  addmenukey, weaponsection, and addslotdefault. Now a wad with custom
+  key and weapon bindings doesn't need a separate .cfg file to operate.
+- Added weaponsection console command for specifying that the weapon slot
+  assignments go to some ini section other than the default.
+- Fixed: Processing an ACS object's MINI chunk initialized one map variable
+  too many.
+- Fixed: Map variables that were not stored in a savegame were not
+  zero'd when the game was loaded.
+- Changed: Include directives in Dehacked patches will now look for the
+  specified file in the same directory as the patch they are used from
+  before they look in the current directory.
+
+January 29, 2002
+- Changed: Just loading a game is no longer enough to assign a quicksave
+  slot. You need to either save a game or quickload first.
+- New: The pullin command now looks for wads in the same directory as the
+  script that executed it before it looks for them in the current directory.
+- Fixed: Switch definitions in ANIMDEFS with an on state that ends on the same
+  texture it began on would crash instead of properly detecting the error
+  and quitting with a useful error message.
+- Changed: Voodoo dolls no longer affect a player's deltaviewheight.
+- Changed: Voodoo dolls can now be pushed around by damage even when the
+  player is invulnerable.
+- Fixed a bug in P_DamageMobj() I introduced after some reformatting that
+  prevented voodoo dolls from being pushed around.
+- Changed the final output of the OPL2 synth to look like this:
+      final_output = (chip_output * 1.5) - 18000
+  This is because most of the instruments the Doom games use create
+  waveforms that are primarily located in the upper half of the wave.
+  (Because, of the four basic waveforms of the OPL2, all but one of them
+  only use the upper half of a sine wave.)
+- Fixed the assembly part of OPLmusicBlock::ServiceStream() to work with
+  non-even buffer sizes.
+- Fixed: When the player does not have the invisibility power active, the
+  weapon would always be drawn with STYLE_Normal instead of whatever style
+  the player had.
+- Added the cleric and mage Icon of the Defender behavior.
+
+January 27, 2002
+- Fixed the finetuning of double-voice OPL2 instruments, so now the Heretic
+  musics don't sound like crap.
+- Changed the OPL2 emulator to write data to the output buffer a voice at a
+  time instead of a sample at a time. The speedup isn't as great as I would
+  have liked, but it does let me avoid doing work for voices that aren't
+  playing anything, and it should make it easier to optimize in the future.
+- Just a note: I think the OPL2 outputs samples at ~49716 Hz.
+- Removed the x2 amplification from fmopl2.c's output, because some of the
+  Heretic songs made it overflow. Looking at sampled output however, it seems
+  most of the data is going only into the positive half of the wave, so perhaps
+  I could subtract some constant from the data and keep the amplification.
+- Reduced the length of the OPL stream so that it gets filled fourteen times
+  each second, so that it interrupts the main thread more consistantly and
+  has less of an impact on the game's "smoothness".
+
+January 25, 2002
+- Changed the frequency calculations in the OPL2 player to match DMX's (or
+  so I think).
+- Fixed an amplitude problem with the OPL2 synth I inadvertantly introduced
+  while trying to optimize it.
+
 January 24, 2002
 - Uploaded 38.cab.
 - Added a fix to prevent you from becoming a zombie player when there are

@@ -92,7 +92,7 @@ int playTick(struct musicBlock *mus)
 				OPLplayNote(mus, channel, note, -1);
 				} break;
 		case 2:	// pitch wheel
-			OPLpitchWheel(mus, channel, *mus->score++ - 0x80);
+			OPLpitchWheel(mus, channel, *mus->score++);
 			break;
 		case 3:	// system event (valueless controller)
 			OPLchangeControl(mus, channel, *mus->score++, 0);

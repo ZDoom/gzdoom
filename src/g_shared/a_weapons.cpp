@@ -8,7 +8,9 @@
 #include "r_state.h"
 #include "p_pspr.h"
 #include "c_dispatch.h"
-#include "configfile.h"
+#include "m_misc.h"
+#include "gameconfigfile.h"
+#include "cmdlib.h"
 
 #define BONUSADD 6
 
@@ -622,6 +624,51 @@ CCMD (addslot)
 	}
 }
 
+CCMD (weaponsection)
+{
+	if (argv.argc() != 2)
+	{
+		Printf ("Usage: weaponsection <ini name>\n");
+	}
+	else
+	{
+		// Limit the section name to 32 chars
+		if (strlen(argv[1]) > 32)
+		{
+			argv[1][32] = 0;
+		}
+		ReplaceString (&WeaponSection, argv[1]);
+
+		// If the ini already has definitions for this section, load them
+		char fullSection[32*3];
+		char *tackOn;
+
+		if (gameinfo.gametype == GAME_Hexen)
+		{
+			strcpy (fullSection, "Hexen");
+			tackOn = fullSection + 5;
+		}
+		else if (gameinfo.gametype == GAME_Heretic)
+		{
+			strcpy (fullSection, "Heretic");
+			tackOn = fullSection + 7;
+		}
+		else
+		{
+			strcpy (fullSection, "Doom");
+			tackOn = fullSection + 4;
+		}
+
+		sprintf (tackOn, ".%s.WeaponSlots", WeaponSection);
+		if (GameConfig->SetSection (fullSection))
+		{
+			LocalWeapons.RestoreSlots (*GameConfig);
+		}
+		Net_WriteByte (DEM_SLOTSCHANGE);
+		LocalWeapons.StreamOutSlots ();
+	}
+}
+
 CCMD (addslotdefault)
 {
 	size_t slot;
@@ -629,6 +676,12 @@ CCMD (addslotdefault)
 	if (argv.argc() != 3 || (slot = atoi (argv[1])) >= NUM_WEAPON_SLOTS)
 	{
 		Printf ("Usage: addslotdefault <slot> <weapon>\n");
+		return;
+	}
+
+	if (ParsingKeyConf && !WeaponSection)
+	{
+		Printf ("You need to use weaponsection before using addslotdefault\n");
 		return;
 	}
 
@@ -653,8 +706,15 @@ void FWeaponSlots::RestoreSlots (FConfigFile &config)
 {
 	char buff[MAX_WEAPONS_PER_SLOT*64];
 	const char *key, *value;
+	int slot;
 
 	buff[sizeof(buff)-1] = 0;
+
+	for (slot = 0; slot < NUM_WEAPON_SLOTS; ++slot)
+	{
+		Slots[slot].Clear ();
+	}
+
 	while (config.NextInSection (key, value))
 	{
 		if (strnicmp (key, "Slot[", 5) != 0 ||
@@ -665,7 +725,7 @@ void FWeaponSlots::RestoreSlots (FConfigFile &config)
 		{
 			continue;
 		}
-		int slot = key[5] - '0';
+		slot = key[5] - '0';
 		strncpy (buff, value, sizeof(buff)-1);
 		char *tok;
 

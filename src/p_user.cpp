@@ -236,6 +236,10 @@ bool APlayerPawn::DoHealingRadius (APlayerPawn *other)
 	return false;
 }
 
+void APlayerPawn::SpecialInvulnerabilityHandling (EInvulState setting)
+{
+}
+
 class APlayerSpeedTrail : public AActor
 {
 	DECLARE_STATELESS_ACTOR (APlayerSpeedTrail, AActor)
@@ -1030,44 +1034,12 @@ void P_PlayerThink (player_t *player)
 	// Other Counters
 	if (player->powers[pw_invulnerability])
 	{
-		if (player->mo->flags3 & MF3_CLERICINVUL)
-		{
-			player->mo->RenderStyle = STYLE_Translucent;
-			if (!(level.time & 7) && player->mo->alpha > 0
-				&& player->mo->alpha < OPAQUE)
-			{
-				if (player->mo->alpha == HX_SHADOW)
-				{
-					player->mo->alpha = HX_ALTSHADOW;
-				}
-				else
-				{
-					player->mo->alpha = 0;
-					player->mo->flags2 |= MF2_NONSHOOTABLE;
-				}
-			}
-			if (!(level.time & 31))
-			{
-				if (player->mo->alpha == 0)
-				{
-					player->mo->flags2 &= ~MF2_NONSHOOTABLE;
-					player->mo->alpha = HX_ALTSHADOW;
-				}
-				else
-				{
-					player->mo->alpha = HX_SHADOW;
-				}
-			}
-		}
+		player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Active);
 		if (!(--player->powers[pw_invulnerability]))
 		{
-			player->mo->flags2 &= ~(MF2_INVULNERABLE|MF2_REFLECTIVE);
-			player->mo->effects &= ~ FX_RESPAWNINVUL;
-			if (player->mo->flags3 & MF3_CLERICINVUL)
-			{
-				player->mo->flags2 &= ~MF2_NONSHOOTABLE;
-				player->mo->RenderStyle = STYLE_Normal;
-			}
+			player->mo->flags2 &= ~MF2_INVULNERABLE;
+			player->mo->effects &= ~FX_RESPAWNINVUL;
+			player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Stop);
 		}
 	}
 	// Strength counts up to diminish fade.

@@ -119,6 +119,7 @@ public:
 	void Archive (FConfigFile *f);
 	void Realias (const char *command);
 	void SafeDelete ();
+	bool bNoSave;
 protected:
 	char *m_Command;
 	bool bRunning;
@@ -146,6 +147,7 @@ extern FButtonStatus Button_Mlook, Button_Klook, Button_Use,
 	Button_Strafe, Button_LookDown, Button_LookUp, Button_Back,
 	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
 	Button_MoveUp, Button_Jump, Button_ShowScores;
+extern bool ParsingKeyConf;
 
 void ResetButtonTriggers ();	// Call ResetTriggers for all buttons
 void ResetButtonStates ();		// Same as above, but also clear bDown

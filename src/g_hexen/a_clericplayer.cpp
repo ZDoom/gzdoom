@@ -151,6 +151,44 @@ int AClericPlayer::GetAutoArmorSave ()
 	return 10*FRACUNIT;
 }
 
+void AClericPlayer::SpecialInvulnerabilityHandling (EInvulState state)
+{
+	if (state == INVUL_Active)
+	{
+		RenderStyle = STYLE_Translucent;
+		if (!(level.time & 7) && alpha > 0 && alpha < OPAQUE)
+		{
+			if (alpha == HX_SHADOW)
+			{
+				alpha = HX_ALTSHADOW;
+			}
+			else
+			{
+				alpha = 0;
+				flags2 |= MF2_NONSHOOTABLE;
+			}
+		}
+		if (!(level.time & 31))
+		{
+			if (alpha == 0)
+			{
+				flags2 &= ~MF2_NONSHOOTABLE;
+				alpha = HX_ALTSHADOW;
+			}
+			else
+			{
+				alpha = HX_SHADOW;
+			}
+		}
+	}
+	else if (state == INVUL_Stop)
+	{
+		flags2 &= ~MF2_NONSHOOTABLE;
+		RenderStyle = STYLE_Normal;
+		alpha = OPAQUE;
+	}
+}
+
 // Cleric Weapon Base Class -------------------------------------------------
 
 IMPLEMENT_ABSTRACT_ACTOR (AClericWeapon)

@@ -28,6 +28,16 @@ IMPLEMENT_STATELESS_ACTOR (APatrolPoint, Any, 9024, 0)
 	PROP_RenderStyle (STYLE_None)
 END_DEFAULTS
 
+// A special to execute when a monster reaches a matching patrol point ------
+
+IMPLEMENT_STATELESS_ACTOR (APatrolSpecial, Any, 9047, 0)
+	PROP_RadiusFixed (8)
+	PROP_HeightFixed (8)
+	PROP_Mass (10)
+	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_RenderStyle (STYLE_None)
+END_DEFAULTS
+
 // Blood sprite - adjusts itself for each game -----------------------------
 
 FState ABlood::States[] =

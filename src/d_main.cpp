@@ -98,6 +98,7 @@ struct GameAtExit
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void M_RestoreMode ();
+extern void M_SetDefaultMode ();
 extern void R_ExecuteSetViewSize ();
 extern void G_NewInit ();
 
@@ -222,7 +223,11 @@ void D_ProcessEvents (void)
 	// [RH] If testing mode, do not accept input until test is over
 	if (testingmode)
 	{
-		if (testingmode <= I_GetTime())
+		if (testingmode == 1)
+		{
+			M_SetDefaultMode ();
+		}
+		else if (testingmode <= I_GetTime())
 		{
 			M_RestoreMode ();
 		}
@@ -1564,6 +1569,81 @@ bool ConsiderPatches (const char *arg, const char *ext)
 
 //==========================================================================
 //
+// D_LoadWadSettings
+//
+// Parses any loaded KEYCONF lumps. These are restricted console scripts
+// that can only execute the alias, defaultbind, addkeysection,
+// addmenukey, weaponsection, and addslotdefault commands.
+//
+//==========================================================================
+
+void D_LoadWadSettings ()
+{
+	char cmd[4096];
+	int lump, lastlump = 0;
+
+	ParsingKeyConf = true;
+
+	while ((lump = W_FindLump ("KEYCONF", &lastlump)) != -1)
+	{
+		const char *data = (const char *)W_MapLumpNum (lump);
+		const char *eof = data + W_LumpLength (lump);
+		const char *conf = data;
+
+		while (conf < eof)
+		{
+			size_t i;
+
+			// Fetch a line to execute
+			for (i = 0; conf + i < eof && conf[i] != '\n'; ++i)
+			{
+				cmd[i] = conf[i];
+			}
+			cmd[i] = 0;
+			conf += i;
+			if (*conf == '\n')
+			{
+				conf++;
+			}
+
+			// Comments begin with //
+			char *stop = cmd + i - 1;
+			char *comment = cmd;
+			int inQuote = 0;
+
+			if (*stop == '\r')
+				*stop-- = 0;
+
+			while (comment < stop)
+			{
+				if (*comment == '\"')
+				{
+					inQuote ^= 1;
+				}
+				else if (!inQuote && *comment == '/' && *(comment + 1) == '/')
+				{
+					break;
+				}
+				comment++;
+			}
+			if (comment == cmd)
+			{ // Comment at line beginning
+				continue;
+			}
+			else if (comment < stop)
+			{ // Comment in middle of line
+				*comment = 0;
+			}
+
+			AddCommandString (cmd);
+		}
+		W_UnMapLump (data);
+	}
+	ParsingKeyConf = false;
+}
+
+//==========================================================================
+//
 // D_MultiExec
 //
 //==========================================================================
@@ -1711,6 +1791,9 @@ void D_DoomMain (void)
 
 	// [RH] Parse any SNDINFO lumps
 	S_ParseSndInfo ();
+
+	// [RH] Load custom key and weapon settings from WADs
+	D_LoadWadSettings ();
 
 	FActorInfo::StaticInit ();
 	FActorInfo::StaticGameSet ();

@@ -167,6 +167,7 @@ FState AHereticImpChunk1::States[] =
 
 IMPLEMENT_ACTOR (AHereticImpChunk1, Heretic, -1, 0)
 	PROP_Mass (5)
+	PROP_Radius (4)
 	PROP_Flags (MF_NOBLOCKMAP)
 
 	PROP_SpawnState (0)
@@ -188,6 +189,7 @@ FState AHereticImpChunk2::States[] =
 
 IMPLEMENT_ACTOR (AHereticImpChunk2, Heretic, -1, 0)
 	PROP_Mass (5)
+	PROP_Radius (4)
 	PROP_Flags (MF_NOBLOCKMAP)
 
 	PROP_SpawnState (0)
@@ -352,7 +354,7 @@ void A_ImpDeath (AActor *self)
 	self->flags2 |= MF2_FLOORCLIP;
 	if (self->z <= self->floorz)
 	{
-		self->SetState (&AHereticImp::States[S_IMP_CRASH]);
+		//self->SetState (&AHereticImp::States[S_IMP_CRASH]);
 	}
 }
 

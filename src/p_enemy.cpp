@@ -1034,6 +1034,17 @@ void A_Chase (AActor *actor)
 		{
 			// reached the goal
 			TActorIterator<APatrolPoint> iterator (actor->goal->args[0]);
+			TActorIterator<APatrolSpecial> specit (actor->goal->tid);
+			AActor *spec;
+
+			// Execute the specials of any PatrolSpecials with the same TID
+			// as the goal.
+			while ( (spec = specit.Next()) )
+			{
+				LineSpecials[spec->special] (NULL, actor, spec->args[0],
+					spec->args[1], spec->args[2], spec->args[3], spec->args[4]);
+			}
+
 			angle_t lastgoalang = actor->goal->angle;
 			actor->goal = iterator.Next ();
 			if (actor->goal != NULL)

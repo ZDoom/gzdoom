@@ -164,17 +164,21 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 			mov ecx, numsamples
 			mov esi, samples1
 			mov edi, samples
-			lea esi, [esi+ecx*4]
-			lea edi, [edi+ecx*2]
 			shr ecx, 1
+			lea esi, [esi+ecx*8]
+			lea edi, [edi+ecx*4]
 			neg ecx
 			mov edx, 0x00007fff
 looper:		mov eax, [esi+ecx*8]
 			mov ebx, [esi+ecx*8+4]
 
-			// It's a might quiet, so amplify the sound a little
-			add eax, eax
-			add ebx, ebx
+			// Shift the samples down to reduce the chance of clipping at the high end.
+			// Since most of the waveforms we produce only use the upper half of the
+			// sine wave, this is a good thing. Although it does leave less room at
+			// the bottom of the sine before clipping, almost none of the songs I tested
+			// went below -9000.
+			sub eax, 18000
+			sub ebx, 18000
 
 			// Clamp high
 			cmp eax, edx
@@ -195,21 +199,39 @@ looper:		mov eax, [esi+ecx*8]
 
 			inc ecx
 			jnz looper
+
+			test numsamples, 1
+			jz done
+
+			mov eax, [esi+ecx*8]
+			sub eax, 18000
+			cmp eax, edx
+			cmovg eax, edx
+			not edx
+			cmp eax, edx
+			cmovl eax, edx
+			mov [edi+ecx*2], ax
+done:
+		}
+	}
+	else
+#endif
+	{
+		for (int i = 1; i < numsamples; i+=2)
+		{
+			int u = samples1[i-1] - 18000;
+			int v = samples1[i  ] - 18000;
+			if (u < -32768) u = -32768; else if (u > 32767) u = 32767;
+			if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
+			samples[i-1] = u;
+			samples[i  ] = v;
 		}
 		if (numsamples & 1)
 		{
-			int v = clamp (samples1[numsamples-1]<<1, -32768, 32767);;
+ 			int v = samples1[numsamples-1] - 18000;
+			if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
 			samples[numsamples-1] = v;
 		}
-		return true;
-	}
-#endif
-
-	for (int i = 0; i < numsamples; ++i)
-	{
-		int v = samples1[i]<<1;
-		if (v < -32768) v = -32768; else if (v > 32767) v = 32767;
-		samples[i] = v;
 	}
 	return true;
 }

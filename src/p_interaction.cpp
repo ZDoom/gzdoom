@@ -724,8 +724,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	// (i.e. Guantlets/Chainsaw)
 	if (inflictor
 		&& !(target->flags & MF_NOCLIP)
-		&& (!source || !source->player)
-		&& !(inflictor->flags2 & MF2_NODMGTHRUST))
+		&& (!source || !source->player || !(inflictor->flags2 & MF2_NODMGTHRUST)))
 	{
 		int kickback;
 
@@ -873,7 +872,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		if (target != player->mo)
 		{ // [RH] Make the shot voodoo doll reflect the player's real health
 		  // If there is more than one voodoo doll on the level, the player
-		  // could shot both of them enough to lose all is health but not
+		  // could shoot both of them enough to lose all his health but not
 		  // enough to kill either voodoo doll, so he would not actually die.
 			target->health = player->health + damage;
 		}
@@ -1009,6 +1008,8 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 
 bool AActor::OkayToSwitchTarget (AActor *other)
 {
+	if (other == this)
+		return false;		// [RH] Don't hate self (can happen when shooting barrels)
 	if ((other->flags3 & MF3_NOTARGET) && (other->tid != TIDtoHate))
 		return false;
 	if (threshold != 0 && !(flags4 & MF4_QUICKTORETALIATE))

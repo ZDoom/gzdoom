@@ -21,6 +21,11 @@ class APatrolPoint : public AActor
 	DECLARE_STATELESS_ACTOR (APatrolPoint, AActor)
 };
 
+class APatrolSpecial : public AActor
+{
+	DECLARE_STATELESS_ACTOR (APatrolSpecial, AActor)
+};
+
 class ABlood : public AActor
 {
 	DECLARE_ACTOR (ABlood, AActor)

@@ -49,6 +49,19 @@
 #include "configfile.h"
 #include "m_crc32.h"
 
+bool ParsingKeyConf;
+
+static const char *KeyConfCommands[] =
+{
+	"alias",
+	"defaultbind",
+	"addkeysection",
+	"addmenukey",
+	"addslotdefault",
+	"weaponsection"
+};
+
+
 
 static long ParseCommandLine (const char *args, int *argc, char **argv);
 
@@ -382,6 +395,27 @@ void C_DoCommand (const char *cmd, int keynum)
 			;
 	}
 
+	const int len = end - beg;
+
+	if (ParsingKeyConf)
+	{
+		int i;
+
+		for (i = sizeof(KeyConfCommands)/sizeof(KeyConfCommands[0])-1; i >= 0; --i)
+		{
+			if (strnicmp (beg, KeyConfCommands[i], len) == 0 &&
+				KeyConfCommands[i][len] == 0)
+			{
+				break;
+			}
+		}
+		if (i < 0)
+		{
+			Printf ("Invalid command for KEYCONF: %s\n", beg);
+			return;
+		}
+	}
+
 	// Check if this is an action
 	if (*beg == '+' || *beg == '-')
 	{
@@ -406,8 +440,6 @@ void C_DoCommand (const char *cmd, int keynum)
 		}
 	}
 	
-	const int len = end - beg;
-
 	// Parse it as a normal command
 	// Checking for matching commands follows this search order:
 	//	1. Check the Commands[] hash table
@@ -497,7 +529,8 @@ void AddCommandString (char *cmd, int keynum)
 				cmd++;
 			if (*cmd)
 			{
-				if (cmd[0] == 'w' && cmd[1] == 'a' && cmd[2] == 'i' && cmd[3] == 't' &&
+				if (!ParsingKeyConf &&
+					cmd[0] == 'w' && cmd[1] == 'a' && cmd[2] == 'i' && cmd[3] == 't' &&
 					(cmd[4] == 0 || cmd[4] == ' '))
 				{
 					int tics;
@@ -862,7 +895,7 @@ static int DumpHash (FConsoleCommand **table, BOOL aliases)
 
 void FConsoleAlias::Archive (FConfigFile *f)
 {
-	if (f != NULL)
+	if (f != NULL && !bNoSave)
 	{
 		f->SetValueForKey ("Name", m_Name, true);
 		f->SetValueForKey ("Command", m_Command, true);
@@ -945,11 +978,16 @@ CCMD (alias)
 				else
 				{
 					Printf ("%s is a normal command\n", alias->m_Name);
+					alias = NULL;
 				}
 			}
 			else
 			{
-				new FConsoleAlias (argv[1], argv[2]);
+				alias = new FConsoleAlias (argv[1], argv[2]);
+			}
+			if (alias != NULL)
+			{ // To avoid clutter, aliases added by KEYCONF are not saved to the ini
+				static_cast<FConsoleAlias *> (alias)->bNoSave = ParsingKeyConf;
 			}
 		}
 	}
@@ -1062,6 +1100,7 @@ void FConsoleAlias::SafeDelete ()
 
 extern void D_AddFile (const char *file);
 static byte PullinBad = 2;
+static const char *PullinFile;
 
 int C_ExecFile (const char *file, bool usePullin)
 {
@@ -1069,9 +1108,14 @@ int C_ExecFile (const char *file, bool usePullin)
 	char cmd[4096];
 	int retval = 0;
 
+	BYTE pullinSaved = PullinBad;
+	const char *fileSaved = PullinFile;
+
 	if ( (f = fopen (file, "r")) )
 	{
 		PullinBad = 1-usePullin;
+		PullinFile = file;
+
 		while (fgets (cmd, 4095, f))
 		{
 			// Comments begin with //
@@ -1115,7 +1159,8 @@ int C_ExecFile (const char *file, bool usePullin)
 	{
 		retval = 1;
 	}
-	PullinBad = 2;
+	PullinBad = pullinSaved;
+	PullinFile = fileSaved;
 	return retval;
 }
 
@@ -1128,6 +1173,18 @@ CCMD (pullin)
 	}
 	else if (argv.argc() > 1)
 	{
+		const char *lastSlash;
+
+#ifdef unix
+		lastSlash = strrchr (PullinFile, '/');
+#else
+		const char *lastSlash1, *lastSlash2;
+
+		lastSlash1 = strrchr (PullinFile, '/');
+		lastSlash2 = strrchr (PullinFile, '\\');
+		lastSlash = MAX (lastSlash1, lastSlash2);
+#endif
+
 		if (PullinBad)
 		{
 			Printf ("Not loading:");
@@ -1140,7 +1197,31 @@ CCMD (pullin)
 			}
 			else
 			{
-				D_AddFile (argv[i]);
+				// Try looking for the wad in the same directory as the .cfg
+				// before looking for it in the current directory.
+				char *path = argv[i];
+
+				if (lastSlash != NULL)
+				{
+					size_t pathlen = lastSlash - PullinFile + strlen (argv[i]) + 2;
+					path = new char[pathlen];
+					strncpy (path, PullinFile, (lastSlash - PullinFile) + 1);
+					strcpy (path + (lastSlash - PullinFile) + 1, argv[i]);
+					if (!FileExists (path))
+					{
+						delete[] path;
+						path = argv[i];
+					}
+					else
+					{
+						FixPathSeperator (path);
+					}
+				}
+				D_AddFile (path);
+				if (path != argv[i])
+				{
+					delete[] path;
+				}
 			}
 		}
 		if (PullinBad)

@@ -183,6 +183,18 @@ bool AMagePlayer::DoHealingRadius (APlayerPawn *other)
 	return false;
 }
 
+void AMagePlayer::SpecialInvulnerabilityHandling (EInvulState state)
+{
+	if (state == INVUL_Start)
+	{
+		flags2 |= MF2_REFLECTIVE;
+	}
+	else if (state == INVUL_Stop)
+	{
+		flags2 &= ~MF2_REFLECTIVE;
+	}
+}
+
 // Mage Weapon Base Class ---------------------------------------------------
 
 IMPLEMENT_ABSTRACT_ACTOR (AMageWeapon)

@@ -921,7 +921,8 @@ BOOL I_InitInput (void *hwnd)
 		I_FatalError ("Could not get address of DirectInputCreateA");
 
 	// Register with DirectInput and get an IDirectInput to play with.
-	hr = DirectInputCreateFunction (g_hInst, DIRECTINPUT_VERSION, &g_pdi, NULL);
+	// Force DirectInput 3.0 compatibility.
+	hr = DirectInputCreateFunction (g_hInst, 0x300, &g_pdi, NULL);
 
 	if (FAILED(hr))
 		I_FatalError ("Could not obtain DirectInput interface");

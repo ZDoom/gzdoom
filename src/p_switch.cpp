@@ -194,6 +194,7 @@ static int STACK_ARGS SortSwitchDefs (const void *a, const void *b)
 // Parse a switch block in ANIMDEFS and add the definitions to SwitchList
 void P_ProcessSwitchDef ()
 {
+	char *picname;
 	FSwitchDef *def1, *def2;
 	SWORD picnum;
 	byte max;
@@ -230,6 +231,7 @@ void P_ProcessSwitchDef ()
 	}
 	SC_MustGetString ();
 	picnum = R_CheckTextureNumForName (sc_String);
+	picname = copystring (sc_String);
 	while (SC_GetString ())
 	{
 		if (SC_Compare ("on"))
@@ -273,6 +275,7 @@ void P_ProcessSwitchDef ()
 		{
 			free (def1);
 		}
+		free (picname);
 		return;
 	}
 
@@ -289,8 +292,14 @@ void P_ProcessSwitchDef ()
 
 	def1->PreTexture = picnum;
 	def2->PreTexture = def1->u.Textures[def1->NumFrames*2+def1->NumFrames-1];
+	if (def1->PreTexture == def2->PreTexture)
+	{
+		const char *args[2] = { picname, picname };
+		SC_ScriptError ("The on state for switch %s must end with a texture other than %s", args);
+	}
 	def2->PairIndex = AddSwitchDef (def1);
 	def1->PairIndex = AddSwitchDef (def2);
+	free (picname);
 }
 
 FSwitchDef *ParseSwitchDef (bool ignoreBad)

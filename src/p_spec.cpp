@@ -112,32 +112,27 @@ void DPusher::Serialize (FArchive &arc)
 
 //
 // Animating textures and planes
-// There is another anim_t used in wi_stuff, unrelated.
 //
 // [RH] Expanded to work with a Hexen ANIMDEFS lump
 //
-#define MAX_ANIM_FRAMES	32
 
-typedef struct
+struct FAnimDef
 {
-	short 	basepic;
-	short	numframes;
-	byte 	istexture;
-	byte	uniqueframes;
-	byte	countdown;
-	byte	curframe;
-	byte 	speedmin[MAX_ANIM_FRAMES];
-	byte	speedmax[MAX_ANIM_FRAMES];
-	short	framepic[MAX_ANIM_FRAMES];
-} anim_t;
+	WORD 	BasePic;
+	WORD	NumFrames;
+	WORD	CurFrame;
+	BYTE 	bIsTexture:1;
+	BYTE	bUniqueFrames:1;
+	BYTE	Countdown;
+	struct FAnimFrame
+	{
+		BYTE	SpeedMin;
+		BYTE	SpeedRange;
+		WORD	FramePic;
+	}		Frames[1];
+};
 
-
-
-#define MAXANIMS	32		// Really just a starting point
-
-static anim_t*  lastanim;
-static anim_t*  anims;
-static size_t	maxanims;
+TArray<FAnimDef *> Anims;
 
 // killough 3/7/98: Initialize generalized scrolling
 static void P_SpawnScrollers();
@@ -208,55 +203,29 @@ static void P_InitAnimDefs ()
 
 static void ParseAnim (byte istex)
 {
-	anim_t sink;
-	short picnum;
-	anim_t *place;
-	byte min, max;
-	int frame;
+	TArray<FAnimDef::FAnimFrame> frames (32);
+	FAnimDef::FAnimFrame frame;
+	FAnimDef sink;
+	FAnimDef *newAnim;
+	int picnum;
+	int framenum;
+	int min, max;
+	size_t i;
 
 	SC_MustGetString ();
 	picnum = istex ? R_CheckTextureNumForName (sc_String)
 		: W_CheckNumForName (sc_String, ns_flats) - firstflat;
 
-	if (picnum == -1)
-	{ // Base pic is not present, so skip this definition
-		place = &sink;
-	}
-	else
-	{
-		for (place = anims; place < lastanim; place++)
-		{
-			if (place->basepic == picnum && place->istexture == istex)
-			{
-				break;
-			}
-		}
-		if (place == lastanim)
-		{
-			lastanim++;
-			if (lastanim > anims + maxanims)
-			{
-				size_t newmax = maxanims ? maxanims*2 : MAXANIMS;
-				anims = (anim_t *)Realloc (anims, newmax*sizeof(*anims));
-				place = anims + maxanims;
-				lastanim = place + 1;
-				maxanims = newmax;
-			}
-		}
-		// no decals on animating textures by default
-		if (istex)
-		{
-			texturenodecals[picnum] = 1;
-		}
-	}
+	sink.CurFrame = 0;
+	sink.BasePic = picnum;
+	sink.bUniqueFrames = true;
+	sink.bIsTexture = istex;
 
-	place->uniqueframes = true;
-	place->curframe = 0;
-	place->numframes = 0;
-	place->basepic = picnum;
-	place->istexture = istex;
-	memset (place->speedmin, 1, MAX_ANIM_FRAMES * sizeof(*place->speedmin));
-	memset (place->speedmax, 1, MAX_ANIM_FRAMES * sizeof(*place->speedmax));
+	// no decals on animating textures, by default
+	if (istex)
+	{
+		texturenodecals[picnum] = 1;
+	}
 
 	while (SC_GetString ())
 	{
@@ -274,15 +243,10 @@ static void ParseAnim (byte istex)
 			break;
 		}
 
-		if (place->numframes == MAX_ANIM_FRAMES)
-		{
-			SC_ScriptError ("Animation has too many frames");
-		}
-
-		min = max = 1;	// Shut up, GCC
+		min = max = 1;
 		
 		SC_MustGetNumber ();
-		frame = sc_Number;
+		framenum = sc_Number;
 		SC_MustGetString ();
 		if (SC_Compare ("tics"))
 		{
@@ -296,27 +260,58 @@ static void ParseAnim (byte istex)
 		else if (SC_Compare ("rand"))
 		{
 			SC_MustGetNumber ();
-			min = sc_Number >= 0 ? sc_Number : 0;
+			min = clamp (sc_Number, 0, 255);
 			SC_MustGetNumber ();
-			max = sc_Number <= 255 ? sc_Number : 255;
+			max = clamp (sc_Number, min, min+255);
 		}
 		else
 		{
 			SC_ScriptError ("Must specify a duration for animation frame");
 		}
 
-		place->speedmin[place->numframes] = min;
-		place->speedmax[place->numframes] = max;
-		place->framepic[place->numframes] = frame + picnum - 1;
-		place->numframes++;
+		if (picnum >= 0)
+		{
+			frame.SpeedMin = min;
+			frame.SpeedRange = max - min;
+			frame.FramePic = picnum + framenum - 1;
+			frames.Push (frame);
+		}
 	}
 
-	if (place->numframes < 2)
+	if (picnum >= 0)	// If base pic is not present, don't add this anim
 	{
-		SC_ScriptError ("Animation needs at least 2 frames");
-	}
+		if (frames.Size() < 2)
+		{
+			SC_ScriptError ("Animation needs at least 2 frames");
+		}
 
-	place->countdown = place->speedmin[0];
+		sink.Countdown = frames[0].SpeedMin;
+		sink.NumFrames = frames.Size();
+
+		newAnim = (FAnimDef *)Malloc (sizeof(FAnimDef) + (frames.Size()-1)*sizeof(FAnimDef::FAnimFrame));
+		*newAnim = sink;
+
+		for (i = 0; i < frames.Size(); ++i)
+		{
+			newAnim->Frames[i] = frames[i];
+		}
+
+		// See if there is already an anim with the same base pic.
+		// If so, replace it
+		for (i = Anims.Size(); i-- > 0; )
+		{
+			if (Anims[i]->BasePic == picnum && Anims[i]->bIsTexture == istex)
+			{
+				free (Anims[i]);
+				Anims[i] = newAnim;
+				break;
+			}
+		}
+		if (i == 0-1)
+		{
+			Anims.Push (newAnim);
+		}
+	}
 }
 
 //
@@ -347,22 +342,17 @@ void P_InitPicAnims (void)
 {
 	if (W_CheckNumForName ("ANIMATED") != -1)
 	{
+		FAnimDef anim, *newAnim;
 		const byte *animdefs = (byte *)W_MapLumpName ("ANIMATED");
 		const byte *anim_p;
 
 		// Init animation
 
+		anim.bUniqueFrames = false;
+		anim.CurFrame = 0;
+
 		for (anim_p = animdefs; *anim_p != 255; anim_p += 23)
 		{
-			// 1/11/98 killough -- removed limit by array-doubling
-			if (lastanim >= anims + maxanims)
-			{
-				size_t newmax = maxanims ? maxanims*2 : MAXANIMS;
-				anims = (anim_t *)Realloc(anims, newmax*sizeof(*anims));   // killough
-				lastanim = anims + maxanims;
-				maxanims = newmax;
-			}
-
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
@@ -370,16 +360,16 @@ void P_InitPicAnims (void)
 					R_CheckTextureNumForName (anim_p + 1 /* .endname */) == -1)
 					continue;		
 
-				lastanim->basepic = R_TextureNumForName (anim_p + 10 /* .startname */);
-				lastanim->numframes = R_TextureNumForName (anim_p + 1 /* .endname */)
-									  - lastanim->basepic + 1;
+				anim.BasePic = R_TextureNumForName (anim_p + 10 /* .startname */);
+				anim.NumFrames = R_TextureNumForName (anim_p + 1 /* .endname */)
+								 - anim.BasePic + 1;
 				if (*anim_p & 2)
 				{ // [RH] Bit 1 set means allow decals on walls with this texture
-					texturenodecals[lastanim->basepic] = 0;
+					texturenodecals[anim.BasePic] = 0;
 				}
 				else
 				{
-					texturenodecals[lastanim->basepic] = 1;
+					texturenodecals[anim.BasePic] = 1;
 				}
 			}
 			else
@@ -388,30 +378,34 @@ void P_InitPicAnims (void)
 					W_CheckNumForName (anim_p + 1 /* .startname */, ns_flats) == -1)
 					continue;
 
-				lastanim->basepic = R_FlatNumForName (anim_p + 10 /* .startname */);
-				lastanim->numframes = R_FlatNumForName (anim_p + 1 /* .endname */)
-									  - lastanim->basepic + 1;
+				anim.BasePic = R_FlatNumForName (anim_p + 10 /* .startname */);
+				anim.NumFrames = R_FlatNumForName (anim_p + 1 /* .endname */)
+								 - anim.BasePic + 1;
 			}
 
-			lastanim->istexture = *anim_p /* .istexture */;
-			lastanim->uniqueframes = false;
-			lastanim->curframe = 0;
+			anim.bIsTexture = *anim_p /* .istexture */;
+			anim.bUniqueFrames = false;
+			anim.CurFrame = 0;
 
-			if (lastanim->numframes < 2)
+			if (anim.NumFrames < 2)
 				I_FatalError ("P_InitPicAnims: bad cycle from %s to %s",
 						 anim_p + 10 /* .startname */,
 						 anim_p + 1 /* .endname */);
 			
-			lastanim->speedmin[0] = lastanim->speedmax[0] = lastanim->countdown =
+			anim.Frames[0].SpeedMin =
 						/* .speed */
 						(anim_p[19] << 0) |
 						(anim_p[20] << 8) |
 						(anim_p[21] << 16) |
 						(anim_p[22] << 24);
 
-			lastanim->countdown--;
+			anim.Frames[0].SpeedRange = 0;
+			anim.Frames[0].FramePic = anim.BasePic;
+			anim.Countdown = anim.Frames[0].SpeedMin - 1;
 
-			lastanim++;
+			newAnim = (FAnimDef *)Malloc (sizeof(FAnimDef));
+			*newAnim = anim;
+			Anims.Push (newAnim);
 		}
 		W_UnMapLump (animdefs);
 	}
@@ -959,7 +953,7 @@ EXTERN_CVAR (Float, timelimit)
 
 void P_UpdateSpecials ()
 {
-	anim_t *anim;
+	size_t j;
 	int i;
 	
 	// LEVEL TIMER
@@ -974,42 +968,46 @@ void P_UpdateSpecials ()
 	
 	// ANIMATE FLATS AND TEXTURES GLOBALLY
 	// [RH] Changed significantly to work with ANIMDEFS lumps
-	for (anim = anims; anim < lastanim; anim++)
+	for (j = 0; j < Anims.Size(); ++j)
 	{
-		if (--anim->countdown == 0)
+		FAnimDef *anim = Anims[j];
+		if (--anim->Countdown == 0)
 		{
 			int speedframe;
 
-			anim->curframe = (anim->curframe + 1) % anim->numframes;
+			anim->CurFrame = (anim->CurFrame + 1) % anim->NumFrames;
 			
-			speedframe = (anim->uniqueframes) ? anim->curframe : 0;
+			speedframe = (anim->bUniqueFrames) ? anim->CurFrame : 0;
 
-			if (anim->speedmin[speedframe] == anim->speedmax[speedframe])
-				anim->countdown = anim->speedmin[speedframe];
+			if (anim->Frames[speedframe].SpeedRange == 0)
+			{
+				anim->Countdown = anim->Frames[speedframe].SpeedMin;
+			}
 			else
-				anim->countdown = pr_animatepictures() %
-					(anim->speedmax[speedframe] - anim->speedmin[speedframe]) +
-					anim->speedmin[speedframe];
+			{
+				anim->Countdown = pr_animatepictures() % anim->Frames[speedframe].SpeedRange
+								  + anim->Frames[speedframe].SpeedMin;
+			}
 		}
 
-		if (anim->uniqueframes)
+		if (anim->bUniqueFrames)
 		{
-			int pic = anim->framepic[anim->curframe];
+			int pic = anim->Frames[anim->CurFrame].FramePic;
 
-			if (anim->istexture)
-				for (i = 0; i < anim->numframes; i++)
-					texturetranslation[anim->framepic[i]] = pic;
+			if (anim->bIsTexture)
+				for (i = 0; i < anim->NumFrames; i++)
+					texturetranslation[anim->Frames[i].FramePic] = pic;
 			else
-				for (i = 0; i < anim->numframes; i++)
-					flattranslation[anim->framepic[i]] = pic;
+				for (i = 0; i < anim->NumFrames; i++)
+					flattranslation[anim->Frames[i].FramePic] = pic;
 		}
 		else
 		{
-			for (i = anim->basepic; i < anim->basepic + anim->numframes; i++)
+			for (i = anim->BasePic; i < anim->BasePic + anim->NumFrames; i++)
 			{
-				int pic = anim->basepic + (anim->curframe + i) % anim->numframes;
+				int pic = anim->BasePic + (anim->CurFrame + i) % anim->NumFrames;
 
-				if (anim->istexture)
+				if (anim->bIsTexture)
 					texturetranslation[i] = pic;
 				else
 					flattranslation[i] = pic;

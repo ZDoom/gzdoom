@@ -69,4 +69,6 @@ private:
 	char *subsection;
 };
 
+extern char *WeaponSection;
+
 #endif //__GAMECONFIGFILE_H__

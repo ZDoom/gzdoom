@@ -31,7 +31,7 @@ struct MUSheader {
 	WORD	scoreLen;		// score length
 	WORD	scoreStart;		// score start
 	WORD	channels;		// primary channels
-	WORD	sec_channels;		// secondary channels (??)
+	WORD	sec_channels;	// secondary channels (??)
 	WORD    instrCnt;		// used instrument count
 	WORD	dummy;
 //	WORD	instruments[...];	// table of used instruments
@@ -40,20 +40,20 @@ struct MUSheader {
 /* OPL2 instrument */
 struct OPL2instrument {
 /*00*/	BYTE    trem_vibr_1;	/* OP 1: tremolo/vibrato/sustain/KSR/multi */
-/*01*/	BYTE	att_dec_1;	/* OP 1: attack rate/decay rate */
-/*02*/	BYTE	sust_rel_1;	/* OP 1: sustain level/release rate */
-/*03*/	BYTE	wave_1;		/* OP 1: waveform select */
-/*04*/	BYTE	scale_1;	/* OP 1: key scale level */
-/*05*/	BYTE	level_1;	/* OP 1: output level */
-/*06*/	BYTE	feedback;	/* feedback/AM-FM (both operators) */
+/*01*/	BYTE	att_dec_1;		/* OP 1: attack rate/decay rate */
+/*02*/	BYTE	sust_rel_1;		/* OP 1: sustain level/release rate */
+/*03*/	BYTE	wave_1;			/* OP 1: waveform select */
+/*04*/	BYTE	scale_1;		/* OP 1: key scale level */
+/*05*/	BYTE	level_1;		/* OP 1: output level */
+/*06*/	BYTE	feedback;		/* feedback/AM-FM (both operators) */
 /*07*/	BYTE    trem_vibr_2;	/* OP 2: tremolo/vibrato/sustain/KSR/multi */
-/*08*/	BYTE	att_dec_2;	/* OP 2: attack rate/decay rate */
-/*09*/	BYTE	sust_rel_2;	/* OP 2: sustain level/release rate */
-/*0A*/	BYTE	wave_2;		/* OP 2: waveform select */
-/*0B*/	BYTE	scale_2;	/* OP 2: key scale level */
-/*0C*/	BYTE	level_2;	/* OP 2: output level */
+/*08*/	BYTE	att_dec_2;		/* OP 2: attack rate/decay rate */
+/*09*/	BYTE	sust_rel_2;		/* OP 2: sustain level/release rate */
+/*0A*/	BYTE	wave_2;			/* OP 2: waveform select */
+/*0B*/	BYTE	scale_2;		/* OP 2: key scale level */
+/*0C*/	BYTE	level_2;		/* OP 2: output level */
 /*0D*/	BYTE	unused;
-/*0E*/	sshort	basenote;	/* base note offset */
+/*0E*/	sshort	basenote;		/* base note offset */
 };
 
 /* OP2 instrument file entry */

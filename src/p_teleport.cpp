@@ -447,7 +447,7 @@ bool EV_SilentLineTeleport (line_t *line, int side, AActor *thing, int id,
 			thing->momy = DMulScale16 (y, c,  x, s);
 
 			// Adjust a player's view, in case there has been a height change
-			if (player)
+			if (player && player->mo == thing)
 			{
 				// Adjust player's local copy of momentum
 				x = player->momx;

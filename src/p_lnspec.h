@@ -179,6 +179,7 @@ typedef enum {
 	Sector_ChangeSound = 140,
 
 // [RH] Begin new specials for ZDoom
+	Thing_ChangeTID = 176,
 	Thing_Hate = 177,
 	Thing_ProjectileAimed = 178,
 	ChangeSkill = 179,

@@ -167,9 +167,9 @@ static void SetVidMode (void);
 
 static menuitem_t OptionItems[] =
 {
-	{ more,		"Player Setup",			{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)M_PlayerSetup} },
 	{ more,		"Customize Controls",	{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CustomizeControls} },
 	{ more,		"Go to console",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GoToConsole} },
+	{ more,		"Player Setup",			{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)M_PlayerSetup} },
 	{ more,		"Gameplay Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)GameplayOptions} },
 	{ more,		"Compatibility Options",{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)CompatibilityOptions} },
 	{ more,		"Sound Options",		{NULL},					{0.0}, {0.0},	{0.0}, {(value_t *)SoundOptions} },
@@ -478,23 +478,18 @@ static menuitem_t ModesItems[] = {
 	{ redtext,  VMEnterText,			{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,  VMTestText,				{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,  {NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ redtext,  {NULL},					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} }
 };
 
 #define VM_DEPTHITEM	0
 #define VM_RESSTART		4
 #define VM_ENTERLINE	14
 #define VM_TESTLINE		16
-#define VM_MAKEDEFLINE	18
-#define VM_CURDEFLINE	19
 
 menu_t ModesMenu =
 {
 	"VIDEO MODE",
 	2,
-	20,
+	17,
 	130,
 	ModesItems,
 };
@@ -905,9 +900,10 @@ int M_FindCurVal (float cur, value_t *values, int numvals)
 void M_OptDrawer ()
 {
 	EColorRange color;
-	int y, width, i, x, ytop;
+	int y, width, i, x, ytop, fontheight;
 	menuitem_t *item;
 	UCVarValue value;
+	int labelofs;
 
 	if (BigFont && CurrentMenu->texttitle)
 	{
@@ -923,9 +919,21 @@ void M_OptDrawer ()
 		y = 15;
 	}
 
+	if (gameinfo.gametype != GAME_Doom)
+	{
+		labelofs = 2;
+		y -= 2;
+		fontheight = 9;
+	}
+	else
+	{
+		labelofs = 0;
+		fontheight = 8;
+	}
+
 	ytop = y + CurrentMenu->scrolltop * 8;
-	for (i = 0; i < CurrentMenu->numitems &&
-		y <= 200 - SmallFont->GetHeight (); i++, y += 8)
+
+	for (i = 0; i < CurrentMenu->numitems && y <= 200 - SmallFont->GetHeight(); i++, y += fontheight)
 	{
 		if (i == CurrentMenu->scrolltop)
 		{
@@ -1000,7 +1008,7 @@ void M_OptDrawer ()
 
 			case slider:
 				value = item->a.cvar->GetGenericRep (CVAR_Float);
-				M_DrawSlider (CurrentMenu->indent + 14, y, item->b.min, item->c.max, value.Float);
+				M_DrawSlider (CurrentMenu->indent + 14, y + labelofs, item->b.min, item->c.max, value.Float);
 				break;
 
 			case control:
@@ -1010,7 +1018,7 @@ void M_OptDrawer ()
 				C_NameKeys (description, item->b.key1, item->c.key2);
 				screen->SetFont (ConFont);
 				screen->DrawTextCleanMove (CR_WHITE,
-					CurrentMenu->indent + 14, y-1, description);
+					CurrentMenu->indent + 14, y-1+labelofs, description);
 				screen->SetFont (SmallFont);
 			}
 			break;
@@ -1049,7 +1057,7 @@ void M_OptDrawer ()
 			if (i == CurrentItem && (skullAnimCounter < 6 || WaitingForKey))
 			{
 				screen->SetFont (ConFont);
-				screen->DrawTextCleanMove (CR_RED, CurrentMenu->indent + 3, y-1, "\xd");
+				screen->DrawTextCleanMove (CR_RED, CurrentMenu->indent + 3, y-1+labelofs, "\xd");
 				screen->SetFont (SmallFont);
 			}
 		}
@@ -1085,7 +1093,7 @@ void M_OptDrawer ()
 			if (i == CurrentItem && ((item->a.selmode != -1 && (skullAnimCounter < 6 || WaitingForKey)) || testingmode))
 			{
 				screen->SetFont (ConFont);
-				screen->DrawTextCleanMove (CR_RED, item->a.selmode * 104 + 8, y, "\xd");
+				screen->DrawTextCleanMove (CR_RED, item->a.selmode * 104 + 8, y-1 + labelofs, "\xd");
 				screen->SetFont (SmallFont);
 			}
 		}
@@ -1098,11 +1106,11 @@ void M_OptDrawer ()
 	screen->SetFont (ConFont);
 	if (CanScrollUp)
 	{
-		screen->DrawTextCleanMove (CR_ORANGE, 3, ytop, "\x1a");
+		screen->DrawTextCleanMove (CR_ORANGE, 3, ytop + labelofs, "\x1a");
 	}
 	if (CanScrollDown)
 	{
-		screen->DrawTextCleanMove (CR_ORANGE, 3, y - 8, "\x1b");
+		screen->DrawTextCleanMove (CR_ORANGE, 3, y - 8 + labelofs, "\x1b");
 	}
 	screen->SetFont (SmallFont);
 
@@ -1229,14 +1237,36 @@ void M_OptResponder (event_t *ev)
 			do
 			{
 				CurrentItem--;
-				if (CanScrollUp &&
+				if (CurrentMenu->scrollpos > 0 &&
 					CurrentItem == CurrentMenu->scrolltop + CurrentMenu->scrollpos)
 				{
 					CurrentMenu->scrollpos--;
 				}
 				if (CurrentItem < 0)
 				{
-					CurrentMenu->scrollpos = MAX (0,CurrentMenu->numitems - 21 + CurrentMenu->scrolltop);
+					int maxitems, rowheight;
+
+					// Figure out how many lines of text fit on the menu
+					if (BigFont && CurrentMenu->texttitle)
+					{
+						maxitems = 15 + BigFont->GetHeight ();
+					}
+					else
+					{
+						maxitems = 15;
+					}
+					if (gameinfo.gametype != GAME_Doom)
+					{
+						maxitems -= 2;
+						rowheight = 9;
+					}
+					else
+					{
+						rowheight = 8;
+					}
+					maxitems = (200 - SmallFont->GetHeight () - maxitems) / rowheight + 1;
+
+					CurrentMenu->scrollpos = MAX (0,CurrentMenu->numitems - maxitems + CurrentMenu->scrolltop);
 					CurrentItem = CurrentMenu->numitems - 1;
 				}
 			} while (CurrentMenu->items[CurrentItem].type == redtext ||
@@ -1252,7 +1282,7 @@ void M_OptResponder (event_t *ev)
 		break;
 
 	case GK_PGUP:
-		if (CanScrollUp)
+		if (CurrentMenu->scrollpos > 0)
 		{
 			CurrentMenu->scrollpos -= VisBottom - CurrentMenu->scrollpos - CurrentMenu->scrolltop;
 			if (CurrentMenu->scrollpos < 0)
@@ -1455,8 +1485,12 @@ void M_OptResponder (event_t *ev)
 				NewWidth = SCREENWIDTH;
 				NewHeight = SCREENHEIGHT;
 			}
-			NewBits = BitTranslate[DummyDepthCvar];
-			setmodeneeded = true;
+			else
+			{
+				testingmode = 1;
+				setmodeneeded = true;
+				NewBits = BitTranslate[DummyDepthCvar];
+			}
 			S_Sound (CHAN_VOICE, "menu/choose", 1, ATTN_NONE);
 			SetModesMenu (NewWidth, NewHeight, NewBits);
 		}
@@ -1531,14 +1565,6 @@ void M_OptResponder (event_t *ev)
 				S_Sound (CHAN_VOICE, "menu/choose", 1, ATTN_NONE);
 				SetModesMenu (NewWidth, NewHeight, NewBits);
 			}
-		}
-		else if (ch == 'd' && CurrentMenu == &ModesMenu)
-		{
-			// Make current resolution the default
-			vid_defwidth = SCREENWIDTH;
-			vid_defheight = SCREENHEIGHT;
-			vid_defbits = DisplayBits;
-			SetModesMenu (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 		}
 		break;
 	}
@@ -1761,39 +1787,28 @@ static int FindBits (int bits)
 
 static void SetModesMenu (int w, int h, int bits)
 {
-	char strtemp[64];
-
 	DummyDepthCvar = FindBits (bits);
 
-	if (!testingmode)
+	if (testingmode <= 1)
 	{
 		if (ModesItems[VM_ENTERLINE].label != VMEnterText)
 			free (ModesItems[VM_ENTERLINE].label);
 		ModesItems[VM_ENTERLINE].label = VMEnterText;
 		ModesItems[VM_TESTLINE].label = VMTestText;
-
-		sprintf (strtemp, "D to make %dx%dx%d the default", w, h, bits);
-		ReplaceString (&ModesItems[VM_MAKEDEFLINE].label, strtemp);
-
-		sprintf (strtemp, "Current default is %dx%dx%d",
-				 *vid_defwidth,
-				 *vid_defheight,
-				 *vid_defbits);
-		ReplaceString (&ModesItems[VM_CURDEFLINE].label, strtemp);
 	}
 	else
 	{
+		char strtemp[64];
+
 		sprintf (strtemp, "TESTING %dx%dx%d", w, h, bits);
 		ModesItems[VM_ENTERLINE].label = copystring (strtemp);
 		ModesItems[VM_TESTLINE].label = "Please wait 5 seconds...";
-		ModesItems[VM_MAKEDEFLINE].label = copystring (" ");
-		ModesItems[VM_CURDEFLINE].label = copystring (" ");
 	}
 
 	BuildModesList (w, h, bits);
 }
 
-void M_RestoreMode (void)
+void M_RestoreMode ()
 {
 	NewWidth = OldWidth;
 	NewHeight = OldHeight;
@@ -1803,7 +1818,17 @@ void M_RestoreMode (void)
 	SetModesMenu (OldWidth, OldHeight, OldBits);
 }
 
-static void SetVidMode (void)
+void M_SetDefaultMode ()
+{
+	// Make current resolution the default
+	vid_defwidth = SCREENWIDTH;
+	vid_defheight = SCREENHEIGHT;
+	vid_defbits = DisplayBits;
+	testingmode = 0;
+	SetModesMenu (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
+}
+
+static void SetVidMode ()
 {
 	SetModesMenu (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
 	if (ModesMenu.items[ModesMenu.lastOn].type == screenres)

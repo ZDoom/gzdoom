@@ -1288,6 +1288,8 @@ void M_QuickLoad ()
 	if (quickSaveSlot == NULL)
 	{
 		M_StartControlPanel(false);
+		// signal that whatever gets loaded should be the new quicksave
+		quickSaveSlot = (FSaveGameNode *)1;
 		M_LoadGame (0);
 		return;
 	}
@@ -2659,12 +2661,12 @@ static void M_LoadSelect (const FSaveGameNode *file)
 	{
 		gamestate = GS_HIDECONSOLE;
 	}
-	M_ClearMenus ();
-	BorderNeedRefresh = screen->GetPageCount ();
-	if (quickSaveSlot == NULL)
+	if (quickSaveSlot == (FSaveGameNode *)1)
 	{
 		quickSaveSlot = SelSaveGame;
 	}
+	M_ClearMenus ();
+	BorderNeedRefresh = screen->GetPageCount ();
 }
 
 //
@@ -2855,6 +2857,10 @@ static void M_ClearSaveStuff ()
 		{
 			TopSaveGame = static_cast<FSaveGameNode *>(SaveGames.Head);
 		}
+	}
+	if (quickSaveSlot == (FSaveGameNode *)1)
+	{
+		quickSaveSlot = NULL;
 	}
 }
 

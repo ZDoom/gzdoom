@@ -113,6 +113,7 @@ public:
 	int GetArmorMax ();
 	int GetAutoArmorSave ();
 	fixed_t GetArmorIncrement (int armortype);
+	void SpecialInvulnerabilityHandling (EInvulState state);
 };
 
 class AClericWeapon : public AWeapon
@@ -135,6 +136,7 @@ public:
 	int GetAutoArmorSave ();
 	fixed_t GetArmorIncrement (int armortype);
 	bool DoHealingRadius (APlayerPawn *other);
+	void SpecialInvulnerabilityHandling (EInvulState state);
 };
 
 class AMageWeapon : public AWeapon

@@ -209,7 +209,7 @@ DehSpriteMappings[] =
 
 #define CHECKKEY(a,b)		if (!stricmp (Line1, (a))) (b) = atoi(Line2);
 
-static char *PatchFile, *PatchPt;
+static char *PatchFile, *PatchPt, *PatchName;
 static char *Line1, *Line2;
 static int	 dversion, pversion;
 static BOOL  including, includenotext;
@@ -1802,7 +1802,7 @@ static int DoInclude (int dummy)
 {
 	char *data;
 	int savedversion, savepversion;
-	char *savepatchfile, *savepatchpt;
+	char *savepatchfile, *savepatchpt, *savepatchname;
 
 	if (including)
 	{
@@ -1833,15 +1833,40 @@ static int DoInclude (int dummy)
 	{
 		data = Line2;
 		DPrintf ("Including %s\n", data);
+		savepatchname = PatchName;
 		savepatchfile = PatchFile;
 		savepatchpt = PatchPt;
 		savedversion = dversion;
 		savepversion = pversion;
 		including = true;
 
-		DoDehPatch (data, false);
+		// Try looking for the included file in the same directory
+		// as the patch before looking in the current file.
+		const char *lastSlash = savepatchname ? strrchr (savepatchname, '/') : NULL;
+		char *path = data;
+
+		if (lastSlash != NULL)
+		{
+			size_t pathlen = lastSlash - savepatchname + strlen (data) + 2;
+			path = new char[pathlen];
+			strncpy (path, savepatchname, (lastSlash - savepatchname) + 1);
+			strcpy (path + (lastSlash - savepatchname) + 1, data);
+			if (!FileExists (path))
+			{
+				delete[] path;
+				path = data;
+			}
+		}
+
+		DoDehPatch (path, false);
+
+		if (data != path)
+		{
+			delete[] path;
+		}
 
 		DPrintf ("Done with include\n");
+		PatchName = savepatchname;
 		PatchFile = savepatchfile;
 		PatchPt = savepatchpt;
 		dversion = savedversion;
@@ -1861,6 +1886,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 	int lump;
 
 	PatchFile = NULL;
+	PatchName = NULL;
 
 	lump = W_CheckNumForName ("DEHACKED");
 
@@ -1903,6 +1929,8 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 			{
 				fread (PatchFile, 1, filelen, deh);
 				fclose (deh);
+				PatchName = copystring (patchfile);
+				FixPathSeperator (PatchName);
 			}
 		}
 
@@ -1964,6 +1992,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 		}
 		if (!cont || dversion == -1 || pversion == -1)
 		{
+			if (PatchName != NULL) delete[] PatchName;
 			delete[] PatchFile;
 			Printf ("\"%s\" is not a DeHackEd patch file\n", file);
 			return;
@@ -2003,6 +2032,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 	if (!LoadDehSupp ())
 	{
 		Printf ("Could not load DEH support data\n");
+		if (PatchName != NULL) delete[] PatchName;
 		delete[] PatchFile;
 		UnloadDehSupp ();
 		return;
@@ -2022,6 +2052,7 @@ void DoDehPatch (const char *patchfile, BOOL autoloading)
 	} while (cont);
 
 	UnloadDehSupp ();
+	if (PatchName != NULL) delete[] PatchName;
 	delete[] PatchFile;
 	Printf ("Patch installed\n");
 

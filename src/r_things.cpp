@@ -1416,6 +1416,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 		vis->colormap = basecolormap + (GETPALOOKUP (0, spriteshade) << COLORMAPSHIFT);
 	}
 	if (camera->player &&
+		camera->player->powers[pw_invisibility] > 0 &&
 		camera->player->powers[pw_invisibility] < 4*32 &&
 		!(camera->player->powers[pw_invisibility] & 8))
 	{

@@ -495,7 +495,8 @@ void A_MinotaurAtk1 (AActor *actor)
 		int damage = pr_minotauratk1.HitDice (4);
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
-		if ((player = actor->target->player) != NULL)
+		if ((player = actor->target->player) != NULL &&
+			player->mo == actor->target)
 		{ // Squish the player
 			player->deltaviewheight = -16*FRACUNIT;
 		}
@@ -665,7 +666,8 @@ void A_MinotaurAtk3 (AActor *actor)
 		damage = pr_minotauratk3.HitDice (static_cast<AMinotaur *>(actor)->bIsFriend ? 3 : 5);
 		P_DamageMobj (actor->target, actor, actor, damage);
 		P_TraceBleed (damage, actor->target, actor);
-		if ((player = actor->target->player) != NULL)
+		if ((player = actor->target->player) != NULL &&
+			player->mo == actor->target)
 		{ // Squish the player
 			player->deltaviewheight = -16*FRACUNIT;
 		}

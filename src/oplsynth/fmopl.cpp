@@ -9,6 +9,9 @@
 ** Version 0.60
 **
 
+[RH] The non-YM3816 and rhythm parts have been ripped out in the interest of trying
+to make this a bit faster, since Doom music doesn't need them.
+
 Revision History:
 
 04-28-2002 Jarek Burczynski:
@@ -118,7 +121,6 @@ Revision History:
 #define EG_REL			1
 #define EG_OFF			0
 
-
 /* save output as raw 16-bit sample */
 
 /*#define SAVE_SAMPLE*/
@@ -225,8 +227,6 @@ typedef struct fm_opl_f {
 	UINT32	eg_timer_add;			/* step of eg_timer						*/
 	UINT32	eg_timer_overflow;		/* envelope generator timer overlfows every 1 sample (on real chip) */
 
-	UINT8	rhythm;					/* Rhythm mode					*/
-
 	UINT32	fn_tab[1024];			/* fnumber->increment counter	*/
 
 	/* LFO */
@@ -236,10 +236,6 @@ typedef struct fm_opl_f {
 	UINT32	lfo_am_inc;
 	UINT32	lfo_pm_cnt;
 	UINT32	lfo_pm_inc;
-
-	UINT32	noise_rng;				/* 23 bit noise shift register	*/
-	UINT32	noise_p;				/* current noise 'phase'		*/
-	UINT32	noise_f;				/* current noise period			*/
 
 	UINT8	wavesel;				/* waveform select enable flag	*/
 
@@ -579,7 +575,6 @@ static int num_lock = 0;
 
 /* work table */
 static void *cur_chip = NULL;	/* current chip point */
-OPL_SLOT *SLOT7_1,*SLOT7_2,*SLOT8_1,*SLOT8_2;
 
 static signed int phase_modulation;		/* phase modulation input (SLOT 2) */
 static signed int output[1];
@@ -587,16 +582,8 @@ static signed int output[1];
 static UINT32	LFO_AM;
 static INT32	LFO_PM;
 
+static bool CalcVoice (FM_OPL *OPL, int voice, INT32 *buffer, int length);
 
-
-INLINE int limit( int val, int max, int min ) {
-	if ( val > max )
-		val = max;
-	else if ( val < min )
-		val = min;
-
-	return val;
-}
 
 
 /* status set and IRQ handling */
@@ -710,7 +697,7 @@ INLINE void advance(FM_OPL *OPL)
 				{
 					op->volume += eg_inc[op->eg_sel_dr + ((OPL->eg_cnt>>op->eg_sh_dr)&7)];
 
-					if ( (UINT32)op->volume >= op->sl )
+					if ( op->volume >= (INT32)op->sl )
 						op->state = EG_SUS;
 
 				}
@@ -791,42 +778,6 @@ INLINE void advance(FM_OPL *OPL)
 			op->Cnt += op->Incr;
 		}
 	}
-
-	/*	The Noise Generator of the YM3812 is 23-bit shift register.
-	*	Period is equal to 2^23-2 samples.
-	*	Register works at sampling frequency of the chip, so output
-	*	can change on every sample.
-	*
-	*	Output of the register and input to the bit 22 is:
-	*	bit0 XOR bit14 XOR bit15 XOR bit22
-	*
-	*	Simply use bit 22 as the noise output.
-	*/
-
-	OPL->noise_p += OPL->noise_f;
-	i = OPL->noise_p >> FREQ_SH;		/* number of events (shifts of the shift register) */
-	OPL->noise_p &= FREQ_MASK;
-	while (i)
-	{
-		/*
-		UINT32 j;
-		j = ( (OPL->noise_rng) ^ (OPL->noise_rng>>14) ^ (OPL->noise_rng>>15) ^ (OPL->noise_rng>>22) ) & 1;
-		OPL->noise_rng = (j<<22) | (OPL->noise_rng>>1);
-		*/
-
-		/*
-			Instead of doing all the logic operations above, we
-			use a trick here (and use bit 0 as the noise output).
-			The difference is only that the noise bit changes one
-			step ahead. This doesn't matter since we don't know
-			what is real state of the noise_rng after the reset.
-		*/
-
-		if (OPL->noise_rng & 1) OPL->noise_rng ^= 0x800302;
-		OPL->noise_rng >>= 1;
-
-		i--;
-	}
 }
 
 
@@ -889,211 +840,10 @@ INLINE void OPL_CALC_CH( OPL_CH *CH )
 	SLOT++;
 	env = volume_calc(SLOT);
 	if( env < ENV_QUIET )
+	{
 		output[0] += op_calc(SLOT->Cnt, env, phase_modulation, SLOT->wavetable);
+	}
 }
-
-/*
-	operators used in the rhythm sounds generation process:
-
-	Envelope Generator:
-
-channel  operator  register number   Bass  High  Snare Tom  Top
-/ slot   number    TL ARDR SLRR Wave Drum  Hat   Drum  Tom  Cymbal
- 6 / 0   12        50  70   90   f0  +
- 6 / 1   15        53  73   93   f3  +
- 7 / 0   13        51  71   91   f1        +
- 7 / 1   16        54  74   94   f4              +
- 8 / 0   14        52  72   92   f2                    +
- 8 / 1   17        55  75   95   f5                          +
-
-	Phase Generator:
-
-channel  operator  register number   Bass  High  Snare Tom  Top
-/ slot   number    MULTIPLE          Drum  Hat   Drum  Tom  Cymbal
- 6 / 0   12        30                +
- 6 / 1   15        33                +
- 7 / 0   13        31                      +     +           +
- 7 / 1   16        34                -----  n o t  u s e d -----
- 8 / 0   14        32                                  +
- 8 / 1   17        35                      +                 +
-
-channel  operator  register number   Bass  High  Snare Tom  Top
-number   number    BLK/FNUM2 FNUM    Drum  Hat   Drum  Tom  Cymbal
-   6     12,15     B6        A6      +
-
-   7     13,16     B7        A7            +     +           +
-
-   8     14,17     B8        A8            +           +     +
-
-*/
-
-/* calculate rhythm */
-
-INLINE void OPL_CALC_RH( OPL_CH *CH, unsigned int noise )
-{
-	OPL_SLOT *SLOT;
-	signed int out;
-	unsigned int env;
-
-
-	/* Bass Drum (verified on real YM3812):
-	  - depends on the channel 6 'connect' register:
-	      when connect = 0 it works the same as in normal (non-rhythm) mode (op1->op2->out)
-	      when connect = 1 _only_ operator 2 is present on output (op2->out), operator 1 is ignored
-	  - output sample always is multiplied by 2
-	*/
-
-	phase_modulation = 0;
-	/* SLOT 1 */
-	SLOT = &CH[6].SLOT[SLOT1];
-	env = volume_calc(SLOT);
-
-	out = SLOT->op1_out[0] + SLOT->op1_out[1];
-	SLOT->op1_out[0] = SLOT->op1_out[1];
-
-	if (!SLOT->CON)
-		phase_modulation = SLOT->op1_out[0];
-	//else ignore output of operator 1
-
-	SLOT->op1_out[1] = 0;
-	if( env < ENV_QUIET )
-	{
-		if (!SLOT->FB)
-			out = 0;
-		SLOT->op1_out[1] = op_calc1(SLOT->Cnt, env, (out<<SLOT->FB), SLOT->wavetable );
-	}
-
-	/* SLOT 2 */
-	SLOT++;
-	env = volume_calc(SLOT);
-	if( env < ENV_QUIET )
-		output[0] += op_calc(SLOT->Cnt, env, phase_modulation, SLOT->wavetable) * 2;
-
-
-	/* Phase generation is based on: */
-	// HH  (13) channel 7->slot 1 combined with channel 8->slot 2 (same combination as TOP CYMBAL but different output phases)
-	// SD  (16) channel 7->slot 1
-	// TOM (14) channel 8->slot 1
-	// TOP (17) channel 7->slot 1 combined with channel 8->slot 2 (same combination as HIGH HAT but different output phases)
-
-	/* Envelope generation based on: */
-	// HH  channel 7->slot1
-	// SD  channel 7->slot2
-	// TOM channel 8->slot1
-	// TOP channel 8->slot2
-
-
-	/* The following formulas can be well optimized.
-	   I leave them in direct form for now (in case I've missed something).
-	*/
-
-	/* High Hat (verified on real YM3812) */
-	env = volume_calc(SLOT7_1);
-	if( env < ENV_QUIET )
-	{
-
-		/* high hat phase generation:
-			phase = d0 or 234 (based on frequency only)
-			phase = 34 or 2d0 (based on noise)
-		*/
-
-		/* base frequency derived from operator 1 in channel 7 */
-		unsigned char bit7 = ((SLOT7_1->Cnt>>FREQ_SH)>>7)&1;
-		unsigned char bit3 = ((SLOT7_1->Cnt>>FREQ_SH)>>3)&1;
-		unsigned char bit2 = ((SLOT7_1->Cnt>>FREQ_SH)>>2)&1;
-
-		unsigned char res1 = (bit2 ^ bit7) | bit3;
-
-		/* when res1 = 0 phase = 0x000 | 0xd0; */
-		/* when res1 = 1 phase = 0x200 | (0xd0>>2); */
-		UINT32 phase = res1 ? (0x200|(0xd0>>2)) : 0xd0;
-
-		/* enable gate based on frequency of operator 2 in channel 8 */
-		unsigned char bit5e= ((SLOT8_2->Cnt>>FREQ_SH)>>5)&1;
-		unsigned char bit3e= ((SLOT8_2->Cnt>>FREQ_SH)>>3)&1;
-
-		unsigned char res2 = (bit3e ^ bit5e);
-
-		/* when res2 = 0 pass the phase from calculation above (res1); */
-		/* when res2 = 1 phase = 0x200 | (0xd0>>2); */
-		if (res2)
-			phase = (0x200|(0xd0>>2));
-
-
-		/* when phase & 0x200 is set and noise=1 then phase = 0x200|0xd0 */
-		/* when phase & 0x200 is set and noise=0 then phase = 0x200|(0xd0>>2), ie no change */
-		if (phase&0x200)
-		{
-			if (noise)
-				phase = 0x200|0xd0;
-		}
-		else
-		/* when phase & 0x200 is clear and noise=1 then phase = 0xd0>>2 */
-		/* when phase & 0x200 is clear and noise=0 then phase = 0xd0, ie no change */
-		{
-			if (noise)
-				phase = 0xd0>>2;
-		}
-
-		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
-	}
-
-	/* Snare Drum (verified on real YM3812) */
-	env = volume_calc(SLOT7_2);
-	if( env < ENV_QUIET )
-	{
-		/* base frequency derived from operator 1 in channel 7 */
-		unsigned char bit8 = ((SLOT7_1->Cnt>>FREQ_SH)>>8)&1;
-
-		/* when bit8 = 0 phase = 0x100; */
-		/* when bit8 = 1 phase = 0x200; */
-		UINT32 phase = bit8 ? 0x200 : 0x100;
-
-		/* Noise bit XOR'es phase by 0x100 */
-		/* when noisebit = 0 pass the phase from calculation above */
-		/* when noisebit = 1 phase ^= 0x100; */
-		/* in other words: phase ^= (noisebit<<8); */
-		if (noise)
-			phase ^= 0x100;
-
-		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
-	}
-
-	/* Tom Tom (verified on real YM3812) */
-	env = volume_calc(SLOT8_1);
-	if( env < ENV_QUIET )
-		output[0] += op_calc(SLOT8_1->Cnt, env, 0, SLOT->wavetable) * 2;
-
-	/* Top Cymbal (verified on real YM3812) */
-	env = volume_calc(SLOT8_2);
-	if( env < ENV_QUIET )
-	{
-		/* base frequency derived from operator 1 in channel 7 */
-		unsigned char bit7 = ((SLOT7_1->Cnt>>FREQ_SH)>>7)&1;
-		unsigned char bit3 = ((SLOT7_1->Cnt>>FREQ_SH)>>3)&1;
-		unsigned char bit2 = ((SLOT7_1->Cnt>>FREQ_SH)>>2)&1;
-
-		unsigned char res1 = (bit2 ^ bit7) | bit3;
-
-		/* when res1 = 0 phase = 0x000 | 0x100; */
-		/* when res1 = 1 phase = 0x200 | 0x100; */
-		UINT32 phase = res1 ? 0x300 : 0x100;
-
-		/* enable gate based on frequency of operator 2 in channel 8 */
-		unsigned char bit5e= ((SLOT8_2->Cnt>>FREQ_SH)>>5)&1;
-		unsigned char bit3e= ((SLOT8_2->Cnt>>FREQ_SH)>>3)&1;
-
-		unsigned char res2 = (bit3e ^ bit5e);
-		/* when res2 = 0 pass the phase from calculation above (res1); */
-		/* when res2 = 1 phase = 0x200 | 0x100; */
-		if (res2)
-			phase = 0x300;
-
-		output[0] += op_calc(phase<<FREQ_SH, env, 0, SLOT->wavetable) * 2;
-	}
-
-}
-
 
 /* generic table initialize */
 static int init_tables(void)
@@ -1113,19 +863,16 @@ static int init_tables(void)
 
 		n = (int)m;		/* 16 bits here */
 		n >>= 4;		/* 12 bits here */
-		if (n&1)		/* round to nearest */
-			n = (n>>1)+1;
-		else
-			n = n>>1;
+		n = (n+1)>>1;	/* round to nearest */
 						/* 11 bits here (rounded) */
 		n <<= 1;		/* 12 bits here (as in real chip) */
 		tl_tab[ x*2 + 0 ] = n;
-		tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 0 ];
+		tl_tab[ x*2 + 1 ] = -tl_tab[ x*2 + 1 ];
 
 		for (i=1; i<12; i++)
 		{
 			tl_tab[ x*2+0 + i*2*TL_RES_LEN ] =  tl_tab[ x*2+0 ]>>i;
-			tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 + i*2*TL_RES_LEN ];
+			tl_tab[ x*2+1 + i*2*TL_RES_LEN ] = -tl_tab[ x*2+0 ]>>i;
 		}
 	#if 0
 			logerror("tl %04i", x*2);
@@ -1265,9 +1012,6 @@ static void OPL_initalize(FM_OPL *OPL)
 
 	/*logerror ("OPL->lfo_am_inc = %8x ; OPL->lfo_pm_inc = %8x\n", OPL->lfo_am_inc, OPL->lfo_pm_inc);*/
 
-	/* Noise generator: a step takes 1 sample */
-	OPL->noise_f = UINT32((1.0 / 1.0) * (1<<FREQ_SH) * OPL->freqbase);
-
 	OPL->eg_timer_add  = UINT32((1<<EG_SH)  * OPL->freqbase);
 	OPL->eg_timer_overflow = UINT32(( 1 ) * (1<<EG_SH));
 	/*logerror("OPLinit eg_timer_add=%8x eg_timer_overflow=%8x\n", OPL->eg_timer_add, OPL->eg_timer_overflow);*/
@@ -1302,7 +1046,7 @@ INLINE void FM_KEYOFF(OPL_SLOT *SLOT, UINT32 key_clr)
 }
 
 /* update phase increment counter of operator (also update the EG rates if necessary) */
-INLINE void CALC_FCSLOT(OPL_CH *CH,OPL_SLOT *SLOT)
+void CALC_FCSLOT(OPL_CH *CH,OPL_SLOT *SLOT)
 {
 	int ksr;
 
@@ -1333,7 +1077,7 @@ INLINE void CALC_FCSLOT(OPL_CH *CH,OPL_SLOT *SLOT)
 }
 
 /* set multi,am,vib,EG-TYP,KSR,mul */
-INLINE void set_mul(FM_OPL *OPL,int slot,int v)
+void set_mul(FM_OPL *OPL,int slot,int v)
 {
 	OPL_CH   *CH   = &OPL->P_CH[slot/2];
 	OPL_SLOT *SLOT = &CH->SLOT[slot&1];
@@ -1347,7 +1091,7 @@ INLINE void set_mul(FM_OPL *OPL,int slot,int v)
 }
 
 /* set ksl & tl */
-INLINE void set_ksl_tl(FM_OPL *OPL,int slot,int v)
+void set_ksl_tl(FM_OPL *OPL,int slot,int v)
 {
 	OPL_CH   *CH   = &OPL->P_CH[slot/2];
 	OPL_SLOT *SLOT = &CH->SLOT[slot&1];
@@ -1384,7 +1128,7 @@ INLINE void set_ar_dr(FM_OPL *OPL,int slot,int v)
 }
 
 /* set sustain level & release rate */
-INLINE void set_sl_rr(FM_OPL *OPL,int slot,int v)
+void set_sl_rr(FM_OPL *OPL,int slot,int v)
 {
 	OPL_CH   *CH   = &OPL->P_CH[slot/2];
 	OPL_SLOT *SLOT = &CH->SLOT[slot&1];
@@ -1491,49 +1235,6 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 		{
 			OPL->lfo_am_depth = v & 0x80;
 			OPL->lfo_pm_depth_range = (v&0x40) ? 8 : 0;
-
-			OPL->rhythm  = v&0x3f;
-
-			if(OPL->rhythm&0x20)
-			{
-				/* BD key on/off */
-				if(v&0x10)
-				{
-					FM_KEYON (&OPL->P_CH[6].SLOT[SLOT1], 2);
-					FM_KEYON (&OPL->P_CH[6].SLOT[SLOT2], 2);
-				}
-				else
-				{
-					FM_KEYOFF(&OPL->P_CH[6].SLOT[SLOT1],~2);
-					FM_KEYOFF(&OPL->P_CH[6].SLOT[SLOT2],~2);
-				}
-				/* HH key on/off */
-				if(v&0x01) FM_KEYON (&OPL->P_CH[7].SLOT[SLOT1], 2);
-				else       FM_KEYOFF(&OPL->P_CH[7].SLOT[SLOT1],~2);
-				/* SD key on/off */
-				if(v&0x08) FM_KEYON (&OPL->P_CH[7].SLOT[SLOT2], 2);
-				else       FM_KEYOFF(&OPL->P_CH[7].SLOT[SLOT2],~2);
-				/* TOM key on/off */
-				if(v&0x04) FM_KEYON (&OPL->P_CH[8].SLOT[SLOT1], 2);
-				else       FM_KEYOFF(&OPL->P_CH[8].SLOT[SLOT1],~2);
-				/* TOP-CY key on/off */
-				if(v&0x02) FM_KEYON (&OPL->P_CH[8].SLOT[SLOT2], 2);
-				else       FM_KEYOFF(&OPL->P_CH[8].SLOT[SLOT2],~2);
-			}
-			else
-			{
-				/* BD key off */
-				FM_KEYOFF(&OPL->P_CH[6].SLOT[SLOT1],~2);
-				FM_KEYOFF(&OPL->P_CH[6].SLOT[SLOT2],~2);
-				/* HH key off */
-				FM_KEYOFF(&OPL->P_CH[7].SLOT[SLOT1],~2);
-				/* SD key off */
-				FM_KEYOFF(&OPL->P_CH[7].SLOT[SLOT2],~2);
-				/* TOM key off */
-				FM_KEYOFF(&OPL->P_CH[8].SLOT[SLOT1],~2);
-				/* TOP-CY off */
-				FM_KEYOFF(&OPL->P_CH[8].SLOT[SLOT2],~2);
-			}
 			return;
 		}
 		/* keyon,block,fnum */
@@ -1672,7 +1373,6 @@ static void OPLResetChip(FM_OPL *OPL)
 	OPL->eg_timer = 0;
 	OPL->eg_cnt   = 0;
 
-	OPL->noise_rng = 1;	/* noise shift register */
 	OPL->mode   = 0;	/* normal mode */
 	OPL_STATUS_RESET(OPL,0x7f);
 
@@ -1910,18 +1610,14 @@ void YM3812SetUpdateHandler(int which,OPL_UPDATEHANDLER UpdateHandler,int param)
 void YM3812UpdateOne(int which, INT32 *buffer, int length)
 {
 	FM_OPL		*OPL = OPL_YM3812[which];
-	UINT8		rhythm = OPL->rhythm&0x20;
 	INT32		*buf = buffer;
-	int i, j;
+	int i;
 
-	if( (void *)OPL != cur_chip ){
+	if( (void *)OPL != cur_chip )
+	{
 		cur_chip = (void *)OPL;
-		/* rhythm slots */
-		SLOT7_1 = &OPL->P_CH[7].SLOT[SLOT1];
-		SLOT7_2 = &OPL->P_CH[7].SLOT[SLOT2];
-		SLOT8_1 = &OPL->P_CH[8].SLOT[SLOT1];
-		SLOT8_2 = &OPL->P_CH[8].SLOT[SLOT2];
 	}
+#if 0
 	for( i=0; i < length ; i++ )
 	{
 		output[0] = 0;
@@ -1929,43 +1625,229 @@ void YM3812UpdateOne(int which, INT32 *buffer, int length)
 		advance_lfo(OPL);
 
 		/* FM part */
-		for (j = 0; j <= 5; ++j)
+		for (int j = 0; j <= 8; ++j)
 		{
 			OPL_CALC_CH(&OPL->P_CH[j]);
 		}
-
-		if(!rhythm)
-		{
-			do
-			{
-				OPL_CALC_CH(&OPL->P_CH[j]);
-				OPL_CALC_CH(&OPL->P_CH[j]);
-				OPL_CALC_CH(&OPL->P_CH[j]);
-			} while (++j <= 8);
-		}
-		else		/* Rhythm part */
-		{
-			OPL_CALC_RH(&OPL->P_CH[0], (OPL->noise_rng>>0)&1 );
-		}
-#if 1
 		// [RH] Just add to the output. Clamping will happen later.
 		buf[i] += output[0];
-#else
-		int lt = output[0];
-
-		lt >>= FINAL_SH;
-
-		/* limit check */
-		lt = limit( lt , MAXOUT, MINOUT );
-
-		#ifdef SAVE_SAMPLE
-			SAVE_ALL_CHANNELS
-		#endif
-
-		/* store to sound buffer */
-		buf[i] = lt;
-#endif
 		advance(OPL);
 	}
+#else
+	UINT32 lfo_am_cnt_bak = OPL->lfo_am_cnt;
+	UINT32 eg_timer_bak = OPL->eg_timer;
+	UINT32 eg_cnt_bak = OPL->eg_cnt;
 
+	UINT32 lfo_am_cnt_out = lfo_am_cnt_bak;
+	UINT32 eg_timer_out = eg_timer_bak;
+	UINT32 eg_cnt_out = eg_cnt_bak;
+
+	for (i = 0; i <= 8; ++i)
+	{
+		OPL->lfo_am_cnt = lfo_am_cnt_bak;
+		OPL->eg_timer = eg_timer_bak;
+		OPL->eg_cnt = eg_cnt_bak;
+		if (CalcVoice (OPL, i, buf, length))
+		{
+			lfo_am_cnt_out = OPL->lfo_am_cnt;
+			eg_timer_out = OPL->eg_timer;
+			eg_cnt_out = OPL->eg_cnt;
+		}
+	}
+
+	OPL->lfo_am_cnt = lfo_am_cnt_out;
+	OPL->eg_timer = eg_timer_out;
+	OPL->eg_cnt = eg_cnt_out;
+#endif
+}
+
+// [RH] Render a whole voice at once. If nothing else, it lets us avoid
+// wasting a lot of time on voices that aren't playing anything.
+
+static bool CalcVoice (FM_OPL *OPL, int voice, INT32 *buffer, int length)
+{
+	OPL_CH *const CH = &OPL->P_CH[voice];
+	int i, j;
+
+	if (CH->SLOT[0].state == EG_OFF && CH->SLOT[1].state == EG_OFF)
+	{ // Voice is not playing, so don't do anything for it
+		return false;
+	}
+
+	for (i = 0; i < length; ++i)
+	{
+		// advance_lfo
+		UINT8 tmp;
+
+		/* LFO */
+		OPL->lfo_am_cnt += OPL->lfo_am_inc;
+		if (OPL->lfo_am_cnt >= (UINT32)(LFO_AM_TAB_ELEMENTS<<LFO_SH) )	/* lfo_am_table is 210 elements long */
+			OPL->lfo_am_cnt -= (LFO_AM_TAB_ELEMENTS<<LFO_SH);
+
+		tmp = lfo_am_table[ OPL->lfo_am_cnt >> LFO_SH ];
+
+		if (OPL->lfo_am_depth)
+			LFO_AM = tmp;
+		else
+			LFO_AM = tmp>>2;
+
+		OPL->lfo_pm_cnt += OPL->lfo_pm_inc;
+		LFO_PM = ((OPL->lfo_pm_cnt>>LFO_SH) & 7) | OPL->lfo_pm_depth_range;
+
+		// OPL_CALC_CH
+		OPL_SLOT *SLOT;
+		unsigned int env;
+		signed int out;
+		UINT32 p;
+
+		phase_modulation = 0;
+		output[0] = 0;
+
+		/* SLOT 1 */
+		SLOT = &CH->SLOT[SLOT1];
+		env  = volume_calc(SLOT);
+		out  = SLOT->op1_out[0] + SLOT->op1_out[1];
+		SLOT->op1_out[0] = SLOT->op1_out[1];
+		*SLOT->connect1 += SLOT->op1_out[0];
+		SLOT->op1_out[1] = 0;
+		if( env < ENV_QUIET )
+		{
+			if (!SLOT->FB)
+				out = 0;
+			p = (env<<4) + sin_tab[SLOT->wavetable + ((((SLOT->Cnt & ~FREQ_MASK) + (out<<SLOT->FB))>>FREQ_SH) & SIN_MASK)];
+			SLOT->op1_out[1] = p >= TL_TAB_LEN ? 0 : tl_tab[p];
+		}
+
+		/* SLOT 2 */
+		SLOT++;
+		env = volume_calc(SLOT);
+		if( env < ENV_QUIET )
+		{
+			p = (env<<4) + sin_tab[SLOT->wavetable + ((((signed int)((SLOT->Cnt & ~FREQ_MASK) + (phase_modulation<<16))) >> FREQ_SH ) & SIN_MASK) ];
+			if (p < TL_TAB_LEN)
+			{
+				output[0] += tl_tab[p];
+			}
+			// [RH] make the output louder.
+			buffer[i] += (output[0] + (output[0]>>1));
+		}
+
+		// advance
+		OPL->eg_timer += OPL->eg_timer_add;
+
+		while (OPL->eg_timer >= OPL->eg_timer_overflow)
+		{
+			OPL->eg_timer -= OPL->eg_timer_overflow;
+
+			OPL->eg_cnt++;
+
+			for (j = 0; j < 2; ++j)
+			{
+				OPL_SLOT *op  = &CH->SLOT[j];
+
+				/* Envelope Generator */
+				switch(op->state)
+				{
+				case EG_ATT:		/* attack phase */
+				{
+
+					if ( !(OPL->eg_cnt & ((1<<op->eg_sh_ar)-1) ) )
+					{
+						op->volume += (~op->volume *
+	                        					(eg_inc[op->eg_sel_ar + ((OPL->eg_cnt>>op->eg_sh_ar)&7)])
+        										) >>3;
+
+						if (op->volume <= MIN_ATT_INDEX)
+						{
+							op->volume = MIN_ATT_INDEX;
+							op->state = EG_DEC;
+						}
+
+					}
+
+				}
+				break;
+
+				case EG_DEC:	/* decay phase */
+					if ( !(OPL->eg_cnt & ((1<<op->eg_sh_dr)-1) ) )
+					{
+						op->volume += eg_inc[op->eg_sel_dr + ((OPL->eg_cnt>>op->eg_sh_dr)&7)];
+
+						if ( op->volume >= (INT32)op->sl )
+							op->state = EG_SUS;
+
+					}
+				break;
+
+				case EG_SUS:	/* sustain phase */
+
+					/* this is important behaviour:
+					one can change percusive/non-percussive modes on the fly and
+					the chip will remain in sustain phase - verified on real YM3812 */
+
+					if(op->eg_type)		/* non-percussive mode */
+					{
+										/* do nothing */
+					}
+					else				/* percussive mode */
+					{
+						/* during sustain phase chip adds Release Rate (in percussive mode) */
+						if ( !(OPL->eg_cnt & ((1<<op->eg_sh_rr)-1) ) )
+						{
+							op->volume += eg_inc[op->eg_sel_rr + ((OPL->eg_cnt>>op->eg_sh_rr)&7)];
+
+							if ( op->volume >= MAX_ATT_INDEX )
+								op->volume = MAX_ATT_INDEX;
+						}
+						/* else do nothing in sustain phase */
+					}
+				break;
+
+				case EG_REL:	/* release phase */
+					if ( !(OPL->eg_cnt & ((1<<op->eg_sh_rr)-1) ) )
+					{
+						op->volume += eg_inc[op->eg_sel_rr + ((OPL->eg_cnt>>op->eg_sh_rr)&7)];
+
+						if ( op->volume >= MAX_ATT_INDEX )
+						{
+							op->volume = MAX_ATT_INDEX;
+							op->state = EG_OFF;
+						}
+
+					}
+				break;
+
+				default:
+				break;
+				}
+
+				/* Phase Generator */
+				if(op->vib)
+				{
+					UINT8 block;
+					unsigned int block_fnum = CH->block_fnum;
+
+					unsigned int fnum_lfo   = (block_fnum&0x0380) >> 7;
+
+					signed int lfo_fn_table_index_offset = lfo_pm_table[LFO_PM + 16*fnum_lfo ];
+
+					if (lfo_fn_table_index_offset)	/* LFO phase modulation active */
+					{
+						block_fnum += lfo_fn_table_index_offset;
+						block = (block_fnum&0x1c00) >> 10;
+						op->Cnt += (OPL->fn_tab[block_fnum&0x03ff] >> (7-block)) * op->mul;//ok
+					}
+					else	/* LFO phase modulation  = zero */
+					{
+						op->Cnt += op->Incr;
+					}
+				}
+				else	/* LFO phase modulation disabled for this operator */
+				{
+					op->Cnt += op->Incr;
+				}
+			}
+		}
+	}
+	return true;
 }

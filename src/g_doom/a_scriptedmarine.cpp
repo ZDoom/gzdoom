@@ -192,6 +192,23 @@ IMPLEMENT_ACTOR (AScriptedMarine, Doom, 9100, 151)
 	PROP_PainSound ("*pain50")
 END_DEFAULTS
 
+void AScriptedMarine::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+
+	if (SaveVersion >= 209)
+	{
+		if (arc.IsStoring ())
+		{
+			arc.WriteSprite (SpriteOverride);
+		}
+		else
+		{
+			SpriteOverride = arc.ReadSprite ();
+		}
+	}
+}
+
 void AScriptedMarine::Activate (AActor *activator)
 {
 	if (flags2 & MF2_DORMANT)
@@ -213,6 +230,12 @@ void AScriptedMarine::Deactivate (AActor *activator)
 void AScriptedMarine::Tick ()
 {
 	Super::Tick ();
+
+	// Override the standard sprite, if desired
+	if (SpriteOverride != 0 && sprite == States[0].sprite.index)
+	{
+		sprite = SpriteOverride;
+	}
 
 	if (special1 != 0)
 	{
@@ -307,6 +330,18 @@ void AScriptedMarine::SetWeapon (EMarineWeapon type)
 	}
 }
 
+void AScriptedMarine::SetSprite (const TypeInfo *source)
+{
+	if (source == NULL || source->ActorInfo == NULL)
+	{ // A valid actor class wasn't passed, so use the standard sprite
+		SpriteOverride = sprite = States[0].sprite.index;
+	}
+	else
+	{ // Use the same sprite the passed class spawns with
+		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite.index;
+	}
+}
+
 //============================================================================
 //
 // A_M_Refire
@@ -383,6 +418,9 @@ void A_MarineNoise (AActor *self)
 
 void A_M_Saw (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	A_FaceTarget (self);
 	if (P_CheckMeleeRange (self))
 	{
@@ -439,6 +477,9 @@ void A_M_Punch (AActor *self)
 	int 		damage;
 	int 		pitch;
 
+	if (self->target == NULL)
+		return;
+
 	damage = (pr_m_punch()%10+1) << 1;
 
 	A_FaceTarget (self);
@@ -466,6 +507,9 @@ void A_M_BerserkPunch (AActor *self)
 	angle_t 	angle;
 	int 		damage;
 	int 		pitch;
+
+	if (self->target == NULL)
+		return;
 
 	damage = ((pr_m_punch()%10+1) << 1) * 10;
 
@@ -513,6 +557,9 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch)
 
 void A_M_FirePistol (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
@@ -527,6 +574,9 @@ void A_M_FirePistol (AActor *self)
 
 void A_M_FirePistolInaccurate (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	S_Sound (self, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NORM);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
@@ -542,6 +592,9 @@ void A_M_FirePistolInaccurate (AActor *self)
 void A_M_FireShotgun (AActor *self)
 {
 	int pitch;
+
+	if (self->target == NULL)
+		return;
 
 	S_Sound (self, CHAN_WEAPON,  "weapons/shotgf", 1, ATTN_NORM);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
@@ -562,7 +615,7 @@ void A_M_FireShotgun (AActor *self)
 
 void A_M_CheckAttack (AActor *self)
 {
-	if (self->special1 != 0)
+	if (self->special1 != 0 || self->target == NULL)
 	{
 		self->SetState (&AScriptedMarine::States[S_MPLAY_SKIP_ATTACK]);
 	}
@@ -581,6 +634,9 @@ void A_M_CheckAttack (AActor *self)
 void A_M_FireShotgun2 (AActor *self)
 {
 	int pitch;
+
+	if (self->target == NULL)
+		return;
 
 	S_Sound (self, CHAN_WEAPON, "weapons/sshotf", 1, ATTN_NORM);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
@@ -605,6 +661,9 @@ void A_M_FireShotgun2 (AActor *self)
 
 void A_M_FireCGunAccurate (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
@@ -619,6 +678,9 @@ void A_M_FireCGunAccurate (AActor *self)
 
 void A_M_FireCGun (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	S_Sound (self, CHAN_WEAPON, "weapons/chngun", 1, ATTN_NORM);
 	PuffType = RUNTIME_CLASS(ABulletPuff);
 	A_FaceTarget (self);
@@ -637,6 +699,9 @@ void A_M_FireCGun (AActor *self)
 
 void A_M_FireMissile (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	if (P_CheckMeleeRange (self))
 	{ // If too close, punch it
 		A_M_Punch (self);
@@ -656,6 +721,9 @@ void A_M_FireMissile (AActor *self)
 
 void A_M_FireRailgun (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	A_MonsterRail (self);
 	self->special1 = level.time + 50;
 }
@@ -668,6 +736,9 @@ void A_M_FireRailgun (AActor *self)
 
 void A_M_FirePlasma (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	A_FaceTarget (self);
 	P_SpawnMissile (self, self->target, RUNTIME_CLASS(APlasmaBall));
 	self->special1 = level.time + 20;
@@ -681,6 +752,9 @@ void A_M_FirePlasma (AActor *self)
 
 void A_M_BFGsound (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	if (self->special1 != 0)
 	{
 		self->SetState (self->SeeState);
@@ -702,6 +776,9 @@ void A_M_BFGsound (AActor *self)
 
 void A_M_FireBFG (AActor *self)
 {
+	if (self->target == NULL)
+		return;
+
 	A_FaceTarget (self);
 	P_SpawnMissile (self, self->target, RUNTIME_CLASS(ABFGBall));
 	self->special1 = level.time + 30;

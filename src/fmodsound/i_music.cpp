@@ -2466,10 +2466,11 @@ OPLMUSSong::OPLMUSSong (const void *mem, int len)
 {
 	// No sense in using a sample rate higher than the output rate
 	int rate = MIN (*opl_frequency, *snd_samplerate);
+	int samples = rate/14;
 
-	Music = new OPLmusicBlock (mem, len, rate, 16384/2);
+	Music = new OPLmusicBlock (mem, len, rate, samples);
 
-	m_Stream = FSOUND_Stream_Create (FillStream, 16384,
+	m_Stream = FSOUND_Stream_Create (FillStream, samples*2,
 		FSOUND_SIGNED | FSOUND_2D | FSOUND_MONO | FSOUND_16BITS,
 		rate, (int)this);
 	if (m_Stream == NULL)

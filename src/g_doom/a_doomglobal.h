@@ -92,6 +92,11 @@ public:
 	void Deactivate (AActor *activator);
 	void Tick ();
 	void SetWeapon (EMarineWeapon);
+	void SetSprite (const TypeInfo *source);
+	void Serialize (FArchive &arc);
+
+protected:
+	int SpriteOverride;
 };
 
 #endif //__A_DOOMGLOBAL_H__

@@ -148,6 +148,8 @@ bool P_GivePower (player_t *player, powertype_t power)
 	else if (power == pw_invulnerability)
 	{
 		player->mo->effects &= ~FX_RESPAWNINVUL;
+		player->mo->flags2 |= MF2_INVULNERABLE;
+		player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Start);
 	}
 	return true;
 }

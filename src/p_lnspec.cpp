@@ -828,6 +828,37 @@ FUNC(LS_Thing_SetSpecial)	// [BC]
 	return true;
 }
 
+FUNC(LS_Thing_ChangeTID)
+// Thing_ChangeTID (oldtid, newtid)
+{
+	if (arg0 == 0)
+	{
+		if (it != NULL)
+		{
+			it->RemoveFromHash ();
+			it->tid = arg1;
+			it->AddToHash ();
+		}
+	}
+	else
+	{
+		FActorIterator iterator (arg0);
+		AActor *actor, *next;
+
+		next = iterator.Next ();
+		while (next != NULL)
+		{
+			actor = next;
+			next = iterator.Next ();
+
+			actor->RemoveFromHash ();
+			actor->tid = arg1;
+			actor->AddToHash ();
+		}
+	}
+	return true;
+}
+
 FUNC(LS_DamageThing)
 // DamageThing (damage)
 {
@@ -1086,6 +1117,7 @@ FUNC(LS_Thing_Hate)
 		{
 			hater->TIDtoHate = arg1;
 			hater->LastLook.Actor = NULL;
+
 			// If the TID to hate is 0, then don't forget the target and
 			// lastenemy fields.
 			if (arg1 != 0)
@@ -1154,11 +1186,11 @@ FUNC(LS_Thing_Hate)
 			while ( hatee == NULL ||
 					hatee == hater ||					// can't hate self
 					!(hatee->flags & MF_SHOOTABLE) ||	// can't hate nonshootable things
-					hatee->health <= 0 ||				// can't hate dead things(hatee = hateeIt.Next ()))
+					hatee->health <= 0 ||				// can't hate dead things
 					(hatee->flags & MF2_DORMANT));		// can't target dormant things
 		}
 
-		if (hatee != NULL && hatee != hater && hater->target != hater->goal)
+		if (hatee != NULL && hatee != hater && (arg2 == 0 || (hater->goal != NULL && hater->target != hater->goal)))
 		{
 			if (hater->target)
 			{
@@ -2257,7 +2289,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 173
 	LS_NOP,		// 174
 	LS_NOP,		// 175
-	LS_NOP,		// 176
+	LS_Thing_ChangeTID,
 	LS_Thing_Hate,
 	LS_Thing_ProjectileAimed,
 	LS_ChangeSkill,

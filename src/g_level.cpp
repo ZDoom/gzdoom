@@ -1096,13 +1096,12 @@ void G_DoCompleted (void)
 			G_ClearSnapshots ();
 
 			if (mode == FINISH_NextHub)
-			{ // Reset world variables and deferred scripts for the new hub.
+			{ // Reset world variables for the new hub.
 				memset (ACS_WorldVars, 0, sizeof(ACS_WorldVars));
 				for (i = 0; i < NUM_WORLDVARS; ++i)
 				{
 					ACS_WorldArrays[i].Clear ();
 				}
-				P_RemoveDefereds ();
 			}
 			else if (mode == FINISH_NoHub)
 			{ // Reset time to zero if not entering/staying in a hub.

@@ -775,7 +775,7 @@ BOOL PIT_CheckThing (AActor *thing)
 		{
 			if (!(thing->flags & MF_NOBLOOD) &&
 				!(thing->flags2 & MF2_REFLECTIVE) &&
-				!(thing->flags2 & MF2_INVULNERABLE))
+				!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{ // Ok to spawn blood
 				P_RipperBlood (tmthing);
 			}
@@ -800,7 +800,7 @@ BOOL PIT_CheckThing (AActor *thing)
 			if (gameinfo.gametype != GAME_Doom &&
 				!(thing->flags & MF_NOBLOOD) &&
 				!(thing->flags2 & MF2_REFLECTIVE) &&
-				!(thing->flags2 & MF2_INVULNERABLE) &&
+				!(thing->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)) &&
 				!(tmthing->flags3 & MF3_BLOODLESSIMPACT) &&
 				(pr_checkthing() < 192))
 			{
@@ -2361,13 +2361,13 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 			AActor *puffDefaults = GetDefaultByType (PuffType);
 			if ((puffDefaults->flags3 & MF3_PUFFONACTORS) ||
 				(trace.Actor->flags & MF_NOBLOOD) ||
-				(trace.Actor->flags2 & MF2_INVULNERABLE))
+				(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
 				puff = P_SpawnPuff (hitx, hity, hitz, angle - ANG180, 2, true);
 			}
 			if (gameinfo.gametype == GAME_Doom &&
 				!(trace.Actor->flags & MF_NOBLOOD) &&
-				!(trace.Actor->flags2 & MF2_INVULNERABLE))
+				!(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
 				P_SpawnBlood (hitx, hity, hitz, angle - ANG180, damage);
 			}
@@ -2401,7 +2401,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 					}
 
 					if (!(trace.Actor->flags&MF_NOBLOOD) &&
-						!(trace.Actor->flags2&MF2_INVULNERABLE))
+						!(trace.Actor->flags2&(MF2_INVULNERABLE|MF2_DORMANT)))
 					{
 						if (wflags & WIF_AXEBLOOD)
 						{
@@ -2438,7 +2438,8 @@ void P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *actor, a
 	int count;
 	int noise;
 
-	if ((actor->flags & MF_NOBLOOD) || (actor->flags2 & MF2_INVULNERABLE) ||
+	if ((actor->flags & MF_NOBLOOD) ||
+		(actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)) ||
 		(actor->player && actor->player->cheats & CF_GODMODE))
 	{
 		return;
@@ -2639,7 +2640,8 @@ void P_RailAttack (AActor *source, int damage, int offset)
 		y = y1 + FixedMul (RailHits[i].Distance, vy);
 		z = shootz + FixedMul (RailHits[i].Distance, vz);
 
-		if (RailHits[i].HitActor->flags & MF_NOBLOOD)
+		if ((RailHits[i].HitActor->flags & MF_NOBLOOD) ||
+			(RailHits[i].HitActor->flags2 & (MF2_DORMANT|MF2_INVULNERABLE)))
 		{
 			P_SpawnPuff (x, y, z, source->angle - ANG180, 1, true);
 		}
@@ -3367,7 +3369,7 @@ void P_DoCrunch (AActor *thing)
 
 		// spray blood in a random direction
 		if ((!(thing->flags&MF_NOBLOOD)) &&
-			(!(thing->flags2&MF2_INVULNERABLE)))
+			(!(thing->flags2&(MF2_INVULNERABLE|MF2_DORMANT))))
 		{
 			P_TraceBleed (crushchange, thing);
 			if (cl_bloodtype <= 1)

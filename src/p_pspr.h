@@ -89,11 +89,13 @@ bool P_CheckAmmo (player_s *player);
 weapontype_t P_PickNewWeapon (player_s *player);
 void P_FireWeapon (player_s *player);
 void P_DropWeapon (player_s *player);
+void P_BobWeapon (player_s *player, pspdef_t *psp, fixed_t *x, fixed_t *y);
 void P_BulletSlope (AActor *mo);
 void P_GunShot (AActor *mo, BOOL accurate);
 
 void A_WeaponReady (AActor *actor, pspdef_t *psp);
 void A_ReFire (AActor *actor, pspdef_t *psp);
+void A_CheckReload (AActor *actor, pspdef_t *psp);
 void A_Lower (AActor *actor, pspdef_t *psp);
 void A_Raise (AActor *actor, pspdef_t *psp);
 void A_GunFlash (AActor *actor, pspdef_t *psp);

@@ -387,6 +387,7 @@ void	EV_StartLightStrobing (int tag, int utics, int ltics);
 void	EV_TurnTagLightsOff (int tag);
 void	EV_LightTurnOn (int tag, int bright);
 void	EV_LightChange (int tag, int value);
+void	EV_StopLightEffect (int tag);
 
 void	P_SpawnGlowingLight (sector_t *sector);
 

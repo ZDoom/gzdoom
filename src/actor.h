@@ -246,6 +246,7 @@ enum
 	MF4_NOSKIN			= 0x00000020,	// Player cannot use skins
 	MF4_FIXMAPTHINGPOS	= 0x00000040,	// Fix this actor's position when spawned as a map thing
 	MF4_ACTLIKEBRIDGE	= 0x00000080,	// Pickups can "stand" on this actor
+	MF4_STRIFEDAMAGE	= 0x00000100,	// Strife projectiles only do up to 4x damage, not 8x
 
 // --- mobj.renderflags ---
 
@@ -492,7 +493,6 @@ public:
 	SDWORD			floorpic;			// contacted sec floorpic
 	fixed_t			radius, height;		// for movement checking
 	fixed_t			momx, momy, momz;	// momentums
-	DWORD			validcount;			// if == validcount, already checked
 	SDWORD			tics;				// state tic counter
 	FState			*state;
 	SDWORD			damage;			// For missiles and monster railgun
@@ -549,7 +549,6 @@ public:
 	WORD DeathSound;
 	WORD ActiveSound;
 
-	SDWORD ReactionTime;
 	fixed_t Speed;
 	SDWORD Mass;
 	SWORD PainChance;

@@ -523,9 +523,8 @@ static AActor *FrontBlockCheck (AActor *mo, int index)
 
 	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
 	{
-		if (link->Me != mo && link->Me->validcount != validcount)
+		if (link->Me != mo)
 		{
-			link->Me->validcount = validcount;
 			if (P_PointOnDivlineSide (link->Me->x, link->Me->y, &BlockCheckLine) == 0 &&
 				mo->IsOkayToAttack (link->Me))
 			{

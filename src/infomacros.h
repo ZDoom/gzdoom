@@ -102,14 +102,15 @@ typedef void (*voidfunc_)();
 	extern const FWeaponInfoInit *wpinit##wp##ptr; \
 	__declspec(allocate(".wreg$u")) const FWeaponInfoInit *wpinit##wp##ptr = &wpinit##wp;
 
+// Doom and Hexen weapons with only one firing mode
 #define WEAPON1(wp,inf) \
 static const FWeaponInfoInit wpinit##wp = { wp, &inf::WeaponInfo, &inf::WeaponInfo }; \
 	ADDWPINF(wp)
 
+// Heretic weapons with two firing modes
 #define WEAPON2(wp,inf) \
 static const FWeaponInfoInit wpinit##wp = { wp, &inf::WeaponInfo1, &inf::WeaponInfo2 }; \
 	ADDWPINF(wp)
-
 
 #elif defined(__GNUC__)
 
@@ -209,6 +210,7 @@ public:
 #define PROP_PainSound(x)		ADD_STRING_PROP(ADEF_PainSound,"\3",x)
 #define PROP_DeathSound(x)		ADD_STRING_PROP(ADEF_DeathSound,"\4",x)
 #define PROP_ActiveSound(x)		ADD_STRING_PROP(ADEF_ActiveSound,"\5",x)
+#define PROP_Tag(x)				ADD_STRING_PROP(ADEF_Tag,"\6",x)
 
 #define PROP_XScale(x)			ADD_BYTE_PROP(ADEF_XScale,x)
 #define PROP_YScale(x)			ADD_BYTE_PROP(ADEF_YScale,x)

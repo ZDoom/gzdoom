@@ -186,11 +186,17 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	{
 		sprintf (buffer, nametemplate, i + start);
 		lump = Wads.CheckNumForName (buffer);
-		if (doomtemplate && lump >= 0 &&
-			i + start == 121 && Wads.GetLumpFile (lump) == 1)
+		if (doomtemplate && lump >= 0 && i + start == 121)
 		{ // HACKHACK: Don't load STCFN121 in doom(2), because
-		  // it's not really a lower-case 'y' but an upper-case 'I'
-			lump = -1;
+		  // it's not really a lower-case 'y' but an upper-case 'I'.
+		  // Because a lot of wads with their own font seem to foolishly
+		  // copy STCFN121 and make it an 'I' themselves, wads must
+		  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load.
+			if (Wads.CheckNumForName ("STCFN120") == -1 ||
+				Wads.CheckNumForName ("STCFN122") == -1)
+			{
+				lump = -1;
+			}
 		}
 		charlumps[i] = lump;
 		if (lump >= 0)

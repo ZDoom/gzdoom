@@ -67,6 +67,30 @@ static byte DoomPaletteVals[11*3] =
 	0x80,0x80,0x80, 0x6c,0x6c,0x6c
 };
 
+#define MAPBITS 12
+#define MapDiv SafeDivScale12
+#define MapMul MulScale12
+#define MAPUNIT (1<<MAPBITS)
+#define FRACTOMAPBITS (FRACBITS-MAPBITS)
+
+// scale on entry
+#define INITSCALEMTOF (.2*MAPUNIT)
+// used by MTOF to scale from map-to-frame-buffer coords
+static fixed_t scale_mtof = (fixed_t)INITSCALEMTOF;
+// used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
+static fixed_t scale_ftom;
+
+// translates between frame-buffer and map distances
+inline fixed_t FTOM(fixed_t x)
+{
+	return x * scale_ftom;
+}
+
+inline fixed_t MTOF(fixed_t x)
+{
+	return MulScale24 (x, scale_mtof);
+}
+
 static int WeightingScale;
 
 CVAR (Bool,  am_rotate,				false,		CVAR_ARCHIVE);
@@ -115,21 +139,19 @@ CVAR (Color, am_interlevelcolor,	0xff0000,	CVAR_ARCHIVE);
 
 #define AM_NUMMARKPOINTS 10
 
-// scale on entry
-#define INITSCALEMTOF (.2*FRACUNIT)
+// player radius for automap checking
+#define PLAYERRADIUS	16*MAPUNIT
+
 // how much the automap moves window per tic in frame-buffer coordinates
-// moves 140 pixels in 1 second
-#define F_PANINC	(140/TICRATE)
+// moves 140 pixels at 320x200 in 1 second
+#define F_PANINC		(140/TICRATE)
 // how much zoom-in per tic
 // goes to 2x in 1 second
-#define M_ZOOMIN        ((int) (1.02*FRACUNIT))
+#define M_ZOOMIN        ((int) (1.02*MAPUNIT))
 // how much zoom-out per tic
 // pulls out to 0.5x in 1 second
-#define M_ZOOMOUT       ((int) (FRACUNIT/1.02))
+#define M_ZOOMOUT       ((int) (MAPUNIT/1.02))
 
-// translates between frame-buffer and map distances
-#define FTOM(x) FixedMul(((x)<<16),scale_ftom)
-#define MTOF(x) (FixedMul((x),scale_mtof)>>16)
 // translates between frame-buffer and map coordinates
 #define CXMTOF(x)  (MTOF((x)-m_x)/* - f_x*/)
 #define CYMTOF(y)  (f_h - MTOF((y)-m_y)/* + f_y*/)
@@ -196,7 +218,7 @@ mline_t cheat_player_arrow[] = {
 #undef R
 #define NUMCHEATPLYRLINES (sizeof(cheat_player_arrow)/sizeof(mline_t))
 
-#define R (FRACUNIT)
+#define R (MAPUNIT)
 // [RH] Avoid lots of warnings without compiler-specific #pragmas
 #define L(a,b,c,d) { {(fixed_t)((a)*R),(fixed_t)((b)*R)}, {(fixed_t)((c)*R),(fixed_t)((d)*R)} }
 mline_t triangle_guy[] = {
@@ -282,11 +304,6 @@ static fixed_t old_m_x, old_m_y;
 // old location used by the Follower routine
 static mpoint_t f_oldloc;
 
-// used by MTOF to scale from map-to-frame-buffer coords
-static fixed_t scale_mtof = (fixed_t)INITSCALEMTOF;
-// used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
-static fixed_t scale_ftom;
-
 static int marknums[10]; // numbers used for marking by the automap
 static mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
 static int markpointnum = 0; // next point to be assigned
@@ -323,7 +340,7 @@ static BOOL stopped = true;
 #define CDWALLCOLORS	-3
 
 #define WEIGHTBITS		6
-#define WEIGHTSHIFT		(FRACBITS-WEIGHTBITS)
+#define WEIGHTSHIFT		(16-WEIGHTBITS)
 #define NUMWEIGHTS		(1<<WEIGHTBITS)
 #define WEIGHTMASK		(NUMWEIGHTS-1)
 static byte antialias[NUMALIASES][NUMWEIGHTS];
@@ -395,15 +412,15 @@ void AM_restoreScaleAndLoc ()
     }
 	else
 	{
-		m_x = players[consoleplayer].camera->x - m_w/2;
-		m_y = players[consoleplayer].camera->y - m_h/2;
+		m_x = (players[consoleplayer].camera->x >> FRACTOMAPBITS) - m_w/2;
+		m_y = (players[consoleplayer].camera->y >> FRACTOMAPBITS)- m_h/2;
     }
 	m_x2 = m_x + m_w;
 	m_y2 = m_y + m_h;
 
 	// Change the scaling multipliers
-	scale_mtof = FixedDiv(f_w<<FRACBITS, m_w);
-	scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+	scale_mtof = MapDiv(f_w<<MAPBITS, m_w);
+	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
 }
 
 //
@@ -434,7 +451,8 @@ void AM_findMinMaxBoundaries ()
 	min_x = min_y = FIXED_MAX;
 	max_x = max_y = FIXED_MIN;
   
-	for (i=0;i<numvertexes;i++) {
+	for (i = 0; i < numvertexes; i++)
+	{
 		if (vertexes[i].x < min_x)
 			min_x = vertexes[i].x;
 		else if (vertexes[i].x > max_x)
@@ -446,17 +464,17 @@ void AM_findMinMaxBoundaries ()
 			max_y = vertexes[i].y;
 	}
   
-	max_w = max_x - min_x;
-	max_h = max_y - min_y;
+	max_w = (max_x >>= FRACTOMAPBITS) - (min_x >>= FRACTOMAPBITS);
+	max_h = (max_y >>= FRACTOMAPBITS) - (min_y >>= FRACTOMAPBITS);
 
 	min_w = 2*PLAYERRADIUS; // const? never changed?
 	min_h = 2*PLAYERRADIUS;
 
-	a = FixedDiv (SCREENWIDTH << FRACBITS, max_w);
-	b = FixedDiv (SCREENHEIGHT << FRACBITS, max_h);
+	a = MapDiv (SCREENWIDTH << MAPBITS, max_w);
+	b = MapDiv (::ST_Y << MAPBITS, max_h);
 
 	min_scale_mtof = a < b ? a : b;
-	max_scale_mtof = FixedDiv (SCREENHEIGHT << FRACBITS, 2*PLAYERRADIUS);
+	max_scale_mtof = MapDiv (SCREENHEIGHT << MAPBITS, 2*PLAYERRADIUS);
 }
 
 
@@ -527,8 +545,8 @@ void AM_initVariables ()
 	amclock = 0;
 
 	m_paninc.x = m_paninc.y = 0;
-	ftom_zoommul = FRACUNIT;
-	mtof_zoommul = FRACUNIT;
+	ftom_zoommul = MAPUNIT;
+	mtof_zoommul = MAPUNIT;
 
 	m_w = FTOM(SCREENWIDTH);
 	m_h = FTOM(SCREENHEIGHT);
@@ -539,8 +557,8 @@ void AM_initVariables ()
 			if (playeringame[pnum])
 				break;
   
-	m_x = players[pnum].camera->x - m_w/2;
-	m_y = players[pnum].camera->y - m_h/2;
+	m_x = (players[pnum].camera->x >> FRACTOMAPBITS) - m_w/2;
+	m_y = (players[pnum].camera->y >> FRACTOMAPBITS) - m_h/2;
 	AM_changeWindowLoc();
 
 	// for saving & restoring
@@ -736,10 +754,10 @@ void AM_LevelInit ()
 	AM_clearMarks();
 
 	AM_findMinMaxBoundaries();
-	scale_mtof = FixedDiv(min_scale_mtof, (int) (0.7*FRACUNIT));
+	scale_mtof = MapDiv(min_scale_mtof, (int) (0.7*MAPUNIT));
 	if (scale_mtof > max_scale_mtof)
 		scale_mtof = min_scale_mtof;
-	scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
 }
 
 
@@ -781,7 +799,7 @@ void AM_Start ()
 void AM_minOutWindowScale ()
 {
 	scale_mtof = min_scale_mtof;
-	scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
 }
 
 //
@@ -790,7 +808,7 @@ void AM_minOutWindowScale ()
 void AM_maxOutWindowScale ()
 {
 	scale_mtof = max_scale_mtof;
-	scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
 }
 
 
@@ -943,8 +961,8 @@ BOOL AM_Responder (event_t *ev)
 		case AM_ZOOMOUTKEY2:
 		case AM_ZOOMINKEY:
 		case AM_ZOOMINKEY2:
-			mtof_zoommul = FRACUNIT;
-			ftom_zoommul = FRACUNIT;
+			mtof_zoommul = MAPUNIT;
+			ftom_zoommul = MAPUNIT;
 			break;
 		}
 	}
@@ -959,8 +977,8 @@ BOOL AM_Responder (event_t *ev)
 void AM_changeWindowScale ()
 {
 	// Change the scaling multipliers
-	scale_mtof = FixedMul(scale_mtof, mtof_zoommul);
-	scale_ftom = FixedDiv(FRACUNIT, scale_mtof);
+	scale_mtof = MapMul(scale_mtof, mtof_zoommul);
+	scale_ftom = MapDiv(MAPUNIT, scale_mtof);
 
 	if (scale_mtof < min_scale_mtof)
 		AM_minOutWindowScale();
@@ -975,20 +993,20 @@ void AM_changeWindowScale ()
 void AM_doFollowPlayer ()
 {
     if (players[consoleplayer].camera != NULL &&
-		(f_oldloc.x != players[consoleplayer].camera->x ||
-		 f_oldloc.y != players[consoleplayer].camera->y))
+		(f_oldloc.x != (players[consoleplayer].camera->x >> FRACTOMAPBITS) ||
+		 f_oldloc.y != (players[consoleplayer].camera->y >> FRACTOMAPBITS)))
 	{
-		m_x = FTOM(MTOF(players[consoleplayer].camera->x)) - m_w/2;
-		m_y = FTOM(MTOF(players[consoleplayer].camera->y)) - m_h/2;
+		m_x = FTOM(MTOF(players[consoleplayer].camera->x >> FRACTOMAPBITS)) - m_w/2;
+		m_y = FTOM(MTOF(players[consoleplayer].camera->y >> FRACTOMAPBITS)) - m_h/2;
 		m_x2 = m_x + m_w;
 		m_y2 = m_y + m_h;
 
   		// do the parallax parchment scrolling.
-		AM_ScrollParchment (MTOF(players[consoleplayer].camera->x)-MTOF(f_oldloc.x),
-			MTOF(f_oldloc.y)-MTOF(players[consoleplayer].camera->y));
+		AM_ScrollParchment (MTOF(players[consoleplayer].camera->x >> FRACTOMAPBITS)-MTOF(f_oldloc.x),
+			MTOF(f_oldloc.y)-MTOF(players[consoleplayer].camera->y >> FRACTOMAPBITS));
 
-		f_oldloc.x = players[consoleplayer].camera->x;
-		f_oldloc.y = players[consoleplayer].camera->y;
+		f_oldloc.x = players[consoleplayer].camera->x >> FRACTOMAPBITS;
+		f_oldloc.y = players[consoleplayer].camera->y >> FRACTOMAPBITS;
 	}
 }
 
@@ -1006,7 +1024,7 @@ void AM_Ticker ()
 		AM_doFollowPlayer();
 
 	// Change the zoom if necessary
-	if (ftom_zoommul != FRACUNIT)
+	if (ftom_zoommul != MAPUNIT)
 		AM_changeWindowScale();
 
 	// Change x,y location
@@ -1394,8 +1412,8 @@ void DrawWuLine (int x0, int y0, int x1, int y1, byte *baseColor)
 				// weighting for this pixel, and the complement of the weighting
 				// for the paired pixel
 				int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-				PUTDOT (x0 - (errorAcc >> FRACBITS), y0, &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
-				PUTDOT (x0 - (errorAcc >> FRACBITS) - 1, y0,
+				PUTDOT (x0 - (errorAcc >> 16), y0, &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
+				PUTDOT (x0 - (errorAcc >> 16) - 1, y0,
 						&baseColor[WEIGHTMASK - weighting], &baseColor[NUMWEIGHTS-1]);
 			}
 		}
@@ -1406,8 +1424,8 @@ void DrawWuLine (int x0, int y0, int x1, int y1, byte *baseColor)
 				errorAcc += errorAdj;
 				y0++;	// Y-major, so always advance Y
 				int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-				PUTDOT (x0 + (errorAcc >> FRACBITS), y0, &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
-				PUTDOT (x0 + (errorAcc >> FRACBITS) + 1, y0,
+				PUTDOT (x0 + (errorAcc >> 16), y0, &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
+				PUTDOT (x0 + (errorAcc >> 16) + 1, y0,
 						&baseColor[WEIGHTMASK - weighting], &baseColor[NUMWEIGHTS-1]);
 			}
 		}
@@ -1425,8 +1443,8 @@ void DrawWuLine (int x0, int y0, int x1, int y1, byte *baseColor)
 			errorAcc += errorAdj;
 			x0 += xDir;	// X-major, so always advance X
 			int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-			PUTDOT (x0, y0 + (errorAcc >> FRACBITS), &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
-			PUTDOT (x0, y0 + (errorAcc >> FRACBITS) + 1,
+			PUTDOT (x0, y0 + (errorAcc >> 16), &baseColor[weighting], &baseColor[NUMWEIGHTS-1]);
+			PUTDOT (x0, y0 + (errorAcc >> 16) + 1,
 					&baseColor[WEIGHTMASK - weighting], &baseColor[NUMWEIGHTS-1]);
 		}
 	}
@@ -1546,7 +1564,7 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 
 	if (deltaY > deltaX)
 	{ // y-major line
-		fixed_t errorAdj = (((unsigned)deltaX << FRACBITS) / (unsigned)deltaY) & 0xffff;
+		fixed_t errorAdj = (((unsigned)deltaX << 16) / (unsigned)deltaY) & 0xffff;
 		if (xDir < 0)
 		{
 			if (WeightingScale == 0)
@@ -1556,8 +1574,8 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 					errorAcc += errorAdj;
 					y0++;
 					int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-					PUTTRANSDOT (x0 - (errorAcc >> FRACBITS), y0, baseColor, weighting);
-					PUTTRANSDOT (x0 - (errorAcc >> FRACBITS) - 1, y0,
+					PUTTRANSDOT (x0 - (errorAcc >> 16), y0, baseColor, weighting);
+					PUTTRANSDOT (x0 - (errorAcc >> 16) - 1, y0,
 							baseColor, WEIGHTMASK - weighting);
 				}
 			}
@@ -1568,8 +1586,8 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 					errorAcc += errorAdj;
 					y0++;
 					int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
-					PUTTRANSDOT (x0 - (errorAcc >> FRACBITS), y0, baseColor, weighting);
-					PUTTRANSDOT (x0 - (errorAcc >> FRACBITS) - 1, y0,
+					PUTTRANSDOT (x0 - (errorAcc >> 16), y0, baseColor, weighting);
+					PUTTRANSDOT (x0 - (errorAcc >> 16) - 1, y0,
 							baseColor, WEIGHTMASK - weighting);
 				}
 			}
@@ -1583,8 +1601,8 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 					errorAcc += errorAdj;
 					y0++;
 					int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-					PUTTRANSDOT (x0 + (errorAcc >> FRACBITS), y0, baseColor, weighting);
-					PUTTRANSDOT (x0 + (errorAcc >> FRACBITS) + xDir, y0,
+					PUTTRANSDOT (x0 + (errorAcc >> 16), y0, baseColor, weighting);
+					PUTTRANSDOT (x0 + (errorAcc >> 16) + xDir, y0,
 							baseColor, WEIGHTMASK - weighting);
 				}
 			}
@@ -1595,8 +1613,8 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 					errorAcc += errorAdj;
 					y0++;
 					int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
-					PUTTRANSDOT (x0 + (errorAcc >> FRACBITS), y0, baseColor, weighting);
-					PUTTRANSDOT (x0 + (errorAcc >> FRACBITS) + xDir, y0,
+					PUTTRANSDOT (x0 + (errorAcc >> 16), y0, baseColor, weighting);
+					PUTTRANSDOT (x0 + (errorAcc >> 16) + xDir, y0,
 							baseColor, WEIGHTMASK - weighting);
 				}
 			}
@@ -1613,8 +1631,8 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 				errorAcc += errorAdj;
 				x0 += xDir;
 				int weighting = (errorAcc >> WEIGHTSHIFT) & WEIGHTMASK;
-				PUTTRANSDOT (x0, y0 + (errorAcc >> FRACBITS), baseColor, weighting);
-				PUTTRANSDOT (x0, y0 + (errorAcc >> FRACBITS) + 1,
+				PUTTRANSDOT (x0, y0 + (errorAcc >> 16), baseColor, weighting);
+				PUTTRANSDOT (x0, y0 + (errorAcc >> 16) + 1,
 						baseColor, WEIGHTMASK - weighting);
 			}
 		}
@@ -1625,8 +1643,8 @@ void DrawTransWuLine (int x0, int y0, int x1, int y1, byte baseColor)
 				errorAcc += errorAdj;
 				x0 += xDir;
 				int weighting = ((errorAcc * WeightingScale) >> (WEIGHTSHIFT+8)) & WEIGHTMASK;
-				PUTTRANSDOT (x0, y0 + (errorAcc >> FRACBITS), baseColor, weighting);
-				PUTTRANSDOT (x0, y0 + (errorAcc >> FRACBITS) + 1,
+				PUTTRANSDOT (x0, y0 + (errorAcc >> 16), baseColor, weighting);
+				PUTTRANSDOT (x0, y0 + (errorAcc >> 16) + 1,
 						baseColor, WEIGHTMASK - weighting);
 			}
 		}
@@ -1670,13 +1688,13 @@ void AM_drawGrid (int color)
 
 	// Figure out start of vertical gridlines
 	start = minx - extx;
-	if ((start-bmaporgx)%(MAPBLOCKUNITS<<FRACBITS))
-		start += (MAPBLOCKUNITS<<FRACBITS)
-			- ((start-bmaporgx)%(MAPBLOCKUNITS<<FRACBITS));
+	if ((start-bmaporgx)%(MAPBLOCKUNITS<<MAPBITS))
+		start += (MAPBLOCKUNITS<<MAPBITS)
+			- ((start-bmaporgx)%(MAPBLOCKUNITS<<MAPBITS));
 	end = minx + minlen - extx;
 
 	// draw vertical gridlines
-	for (x = start; x < end; x += (MAPBLOCKUNITS<<FRACBITS))
+	for (x = start; x < end; x += (MAPBLOCKUNITS<<MAPBITS))
 	{
 		ml.a.x = x;
 		ml.b.x = x;
@@ -1692,13 +1710,13 @@ void AM_drawGrid (int color)
 
 	// Figure out start of horizontal gridlines
 	start = miny - exty;
-	if ((start-bmaporgy)%(MAPBLOCKUNITS<<FRACBITS))
-		start += (MAPBLOCKUNITS<<FRACBITS)
-			- ((start-bmaporgy)%(MAPBLOCKUNITS<<FRACBITS));
+	if ((start-bmaporgy)%(MAPBLOCKUNITS<<MAPBITS))
+		start += (MAPBLOCKUNITS<<MAPBITS)
+			- ((start-bmaporgy)%(MAPBLOCKUNITS<<MAPBITS));
 	end = miny + minlen - exty;
 
 	// draw horizontal gridlines
-	for (y=start; y<end; y+=(MAPBLOCKUNITS<<FRACBITS))
+	for (y=start; y<end; y+=(MAPBLOCKUNITS<<MAPBITS))
 	{
 		ml.a.x = minx - extx;
 		ml.b.x = ml.a.x + minlen;
@@ -1724,10 +1742,10 @@ void AM_drawWalls ()
 
 	for (i = 0; i < numlines; i++)
 	{
-		l.a.x = lines[i].v1->x;
-		l.a.y = lines[i].v1->y;
-		l.b.x = lines[i].v2->x;
-		l.b.y = lines[i].v2->y;
+		l.a.x = lines[i].v1->x >> FRACTOMAPBITS;
+		l.a.y = lines[i].v1->y >> FRACTOMAPBITS;
+		l.b.x = lines[i].v2->x >> FRACTOMAPBITS;
+		l.b.y = lines[i].v2->y >> FRACTOMAPBITS;
 
 		if (am_rotate)
 		{
@@ -1812,11 +1830,11 @@ void AM_rotate (fixed_t *x, fixed_t *y, angle_t a)
 
 void AM_rotatePoint (fixed_t *x, fixed_t *y)
 {
-	*x -= players[consoleplayer].camera->x;
-	*y -= players[consoleplayer].camera->y;
+	*x -= players[consoleplayer].camera->x >> FRACTOMAPBITS;
+	*y -= players[consoleplayer].camera->y >> FRACTOMAPBITS;
 	AM_rotate (x, y, ANG90 - players[consoleplayer].camera->angle);
-	*x += players[consoleplayer].camera->x;
-	*y += players[consoleplayer].camera->y;
+	*x += players[consoleplayer].camera->x >> FRACTOMAPBITS;
+	*y += players[consoleplayer].camera->y >> FRACTOMAPBITS;
 }
 
 void
@@ -1837,8 +1855,8 @@ AM_drawLineCharacter
 		l.a.y = lineguy[i].a.y;
 
 		if (scale) {
-			l.a.x = FixedMul(scale, l.a.x);
-			l.a.y = FixedMul(scale, l.a.y);
+			l.a.x = MapMul(scale, l.a.x);
+			l.a.y = MapMul(scale, l.a.y);
 		}
 
 		if (angle)
@@ -1851,8 +1869,8 @@ AM_drawLineCharacter
 		l.b.y = lineguy[i].b.y;
 
 		if (scale) {
-			l.b.x = FixedMul(scale, l.b.x);
-			l.b.y = FixedMul(scale, l.b.y);
+			l.b.x = MapMul(scale, l.b.x);
+			l.b.y = MapMul(scale, l.b.y);
 		}
 
 		if (angle)
@@ -1880,11 +1898,11 @@ void AM_drawPlayers ()
 		if (am_cheat != 0)
 			AM_drawLineCharacter
 			(cheat_player_arrow, NUMCHEATPLYRLINES, 0,
-			 angle, YourColor, players[consoleplayer].camera->x, players[consoleplayer].camera->y);
+			 angle, YourColor, players[consoleplayer].camera->x >> FRACTOMAPBITS, players[consoleplayer].camera->y >> FRACTOMAPBITS);
 		else
 			AM_drawLineCharacter
 			(player_arrow, NUMPLYRLINES, 0, angle,
-			 YourColor, players[consoleplayer].camera->x, players[consoleplayer].camera->y);
+			 YourColor, players[consoleplayer].camera->x >> FRACTOMAPBITS, players[consoleplayer].camera->y >> FRACTOMAPBITS);
 		return;
 	}
 
@@ -1923,8 +1941,8 @@ void AM_drawPlayers ()
 
 		if (p->mo != NULL)
 		{
-			pt.x = p->mo->x;
-			pt.y = p->mo->y;
+			pt.x = p->mo->x >> FRACTOMAPBITS;
+			pt.y = p->mo->y >> FRACTOMAPBITS;
 			angle = p->mo->angle;
 
 			if (am_rotate)
@@ -1952,8 +1970,8 @@ void AM_drawThings (int color)
 		t = sectors[i].thinglist;
 		while (t)
 		{
-			p.x = t->x;
-			p.y = t->y;
+			p.x = t->x >> FRACTOMAPBITS;
+			p.y = t->y >> FRACTOMAPBITS;
 			angle = t->angle;
 
 			if (am_rotate)
@@ -1964,7 +1982,7 @@ void AM_drawThings (int color)
 
 			AM_drawLineCharacter
 			(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
-			 16<<FRACBITS, angle, color, p.x, p.y);
+			 16<<MAPBITS, angle, color, p.x, p.y);
 			t = t->snext;
 		}
 	}

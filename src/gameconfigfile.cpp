@@ -303,12 +303,14 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 {
 	const char *key;
 	const char *value;
-	enum { Doom, Heretic, Hexen } game;
+	enum { Doom, Heretic, Hexen, Strife } game;
 
 	if (strcmp (gamename, "Heretic") == 0)
 		game = Heretic;
 	else if (strcmp (gamename, "Hexen") == 0)
 		game = Hexen;
+	else if (strcmp (gamename, "Strife") == 0)
+		game = Strife;
 	else
 		game = Doom;
 
@@ -330,7 +332,7 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		ReadCVars (0);
 	}
 
-	if (game != Doom)
+	if (game != Doom && game != Strife)
 	{
 		SetRavenDefaults (game == Hexen);
 	}
@@ -393,8 +395,10 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		}
 	}
 
+	// Until all the Strife weapons are coded, always reset
+	// the Strife weapon slots.
 	strcpy (subsection, "WeaponSlots");
-	if (SetSection (section))
+	if (game != Strife && SetSection (section))
 	{
 		LocalWeapons.RestoreSlots (*this);
 	}
@@ -750,6 +754,20 @@ void FGameConfigFile::SetupWeaponList (const char *gamename)
 		LocalWeapons.Slots[2].AddWeapon ("MWeapFrost");
 		LocalWeapons.Slots[3].AddWeapon ("MWeapLightning");
 		LocalWeapons.Slots[4].AddWeapon ("MWeapBloodscourge");
+	}
+	else if (strcmp (gamename, "Strife") == 0)
+	{
+		LocalWeapons.Slots[1].AddWeapon ("PunchDagger");
+		LocalWeapons.Slots[2].AddWeapon ("StrifeCrossbow2");
+		LocalWeapons.Slots[2].AddWeapon ("StrifeCrossbow");
+		LocalWeapons.Slots[3].AddWeapon ("AssaultGun");
+		LocalWeapons.Slots[4].AddWeapon ("MiniMissileLauncher");
+		LocalWeapons.Slots[5].AddWeapon ("GrenadeLauncher2");
+		LocalWeapons.Slots[5].AddWeapon ("GrenadeLauncher");
+		LocalWeapons.Slots[6].AddWeapon ("FlameThrower");
+		LocalWeapons.Slots[7].AddWeapon ("Mauler2");
+		LocalWeapons.Slots[7].AddWeapon ("Mauler");
+		LocalWeapons.Slots[8].AddWeapon ("Sigil");
 	}
 	else // Doom
 	{

@@ -143,6 +143,7 @@ typedef enum {
 	Light_Glow = 114,
 	Light_Flicker = 115,
 	Light_Strobe = 116,
+	Light_Stop = 117,
 
 	Thing_Damage = 119,
 
@@ -327,6 +328,10 @@ typedef enum {
 	dDamage_LavaWimpy = 82,
 	dDamage_LavaHefty = 83,
 	dScroll_EastLavaDamage = 84,
+
+	// And here are some for Strife
+	Damage_InstantDeath = 115,
+	Scroll_StrifeCurrent = 118,
 
 	Light_OutdoorLightning = 197,
 	Light_IndoorLightning1 = 198,

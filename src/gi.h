@@ -55,12 +55,14 @@ enum EGameType
 	GAME_Doom	 = 1,
 	GAME_Heretic = 2,
 	GAME_Hexen	 = 4,
-	GAME_Raven	 = 6,
-	GAME_Strife	 = 8
+	GAME_Strife	 = 8,
+
+	GAME_Raven		= GAME_Heretic|GAME_Hexen,
+	GAME_DoomStrife	= GAME_Doom|GAME_Strife
 };
 #endif
 
-extern const char *GameNames[5];
+extern const char *GameNames[9];
 
 typedef struct
 {
@@ -109,6 +111,7 @@ typedef struct
 	EGameType gametype;
 	int defKickback;
 	char SkyFlatName[9];
+	fixed_t StepHeight;
 } gameinfo_t;
 
 extern gameinfo_t gameinfo;

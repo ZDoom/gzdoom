@@ -25,6 +25,7 @@
 #include "p_pspr.h"
 #include "p_effect.h"
 #include "a_doomglobal.h"
+#include "templates.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -53,15 +54,15 @@ CVAR(Int, sv_fastweapons, false, CVAR_SERVERINFO);
 
 static weapontype_t WeaponPrefs[] =
 {
-	wp_plasma, wp_skullrod,
-	wp_supershotgun, wp_blaster,
-	wp_chaingun, wp_crossbow, wp_fhammer, wp_cfire, wp_mlightning,
-	wp_shotgun, wp_mace, wp_faxe, wp_cstaff, wp_mfrost,
-	wp_pistol, wp_goldwand,
-	wp_chainsaw, wp_gauntlets,
-	wp_missile, wp_phoenixrod,
-	wp_bfg, wp_fsword, wp_choly, wp_mstaff,
-	wp_ffist, wp_cmace, wp_mwand, wp_fist, wp_staff,
+	wp_plasma, wp_skullrod, wp_maulerscatter,
+	wp_supershotgun, wp_blaster, wp_assaultgun,
+	wp_chaingun, wp_crossbow, wp_fhammer, wp_cfire, wp_mlightning, wp_electricxbow,
+	wp_shotgun, wp_mace, wp_faxe, wp_cstaff, wp_mfrost, wp_minimissile,
+	wp_pistol, wp_goldwand, wp_flamethrower,
+	wp_chainsaw, wp_gauntlets, wp_hegrenadelauncher,
+	wp_missile, wp_phoenixrod, wp_poisonxbow,
+	wp_bfg, wp_fsword, wp_choly, wp_mstaff, wp_phgrenadelauncher, wp_maulertorpedo,
+	wp_ffist, wp_cmace, wp_mwand, wp_fist, wp_staff, wp_dagger,
 	NUMWEAPONS
 };
 
@@ -362,7 +363,10 @@ void P_FireWeapon (player_t *player)
 			: wpinfo[player->readyweapon]->atkstate;
 	}
 	P_SetPsprite (player, ps_weapon, attackState);
-	P_NoiseAlert (player->mo, player->mo);
+	if (!(wpinfo[player->readyweapon]->flags & WIF_NOALERT))
+	{
+		P_NoiseAlert (player->mo, player->mo);
+	}
 	if (player->readyweapon == wp_gauntlets && !player->refire)
 	{ // Play the sound for the initial gauntlet attack
 		S_Sound (player->mo, CHAN_WEAPON, "weapons/gauntletsuse", 1, ATTN_NORM);
@@ -391,6 +395,71 @@ void P_DropWeapon (player_t *player)
 	}
 }
 
+//============================================================================
+//
+// P_BobWeapon
+//
+// [RH] Moved this out of A_WeaponReady so that the weapon can bob every
+// tic and not just when A_WeaponReady is called. Not all weapons execute
+// A_WeaponReady every tic, and it looks bad if they don't bob smoothly.
+//
+//============================================================================
+
+void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
+{
+	static fixed_t curbob;
+
+	FWeaponInfo *weapon;
+	fixed_t bobtarget;
+
+	weapon = player->powers[pw_weaponlevel2] ?
+		wpnlev2info[player->readyweapon] : wpnlev1info[player->readyweapon];
+
+	if (weapon->flags & WIF_DONTBOB)
+	{
+		*x = *y = 0;
+		return;
+	}
+
+	// Bob the weapon based on movement speed.
+	int angle = (128*35/TICRATE*level.time)&FINEMASK;
+
+	// [RH] Smooth transitions between bobbing and not-bobbing frames.
+	// This also fixes the bug where you can "stick" a weapon off-center by
+	// shooting it when it's at the peak of its swing.
+	bobtarget = (psp->state->Action.acp2 == A_WeaponReady) ? player->bob : 0;
+	if (curbob != bobtarget)
+	{
+		if (abs (bobtarget - curbob) <= 1*FRACUNIT)
+		{
+			curbob = bobtarget;
+		}
+		else
+		{
+			fixed_t zoom = MAX<fixed_t> (1*FRACUNIT, abs (curbob - bobtarget) / 40);
+			if (curbob > bobtarget)
+			{
+				curbob -= zoom;
+			}
+			else
+			{
+				curbob += zoom;
+			}
+		}
+	}
+
+	if (curbob != 0)
+	{
+		*x = FixedMul(player->bob, finecosine[angle]);
+		*y = FixedMul(player->bob, finesine[angle & (FINEANGLES/2-1)]);
+	}
+	else
+	{
+		*x = 0;
+		*y = 0;
+	}
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC A_WeaponReady
@@ -402,7 +471,6 @@ void P_DropWeapon (player_t *player)
 void A_WeaponReady(AActor *actor, pspdef_t *psp)
 {
 	FWeaponInfo *weapon;
-	int angle;
 	player_t *player;
 
 	if (NULL == (player = actor->player))
@@ -447,15 +515,6 @@ void A_WeaponReady(AActor *actor, pspdef_t *psp)
 			return;
 		}
 	}
-
-	if (!(weapon->flags & WIF_DONTBOB))
-	{
-		// Bob the weapon based on movement speed.
-		angle = (128*35/TICRATE*level.time)&FINEMASK;
-		psp->sx = FRACUNIT + FixedMul(player->bob, finecosine[angle]);
-		angle &= FINEANGLES/2-1;
-		psp->sy = WEAPONTOP + FixedMul(player->bob, finesine[angle]);
-	}
 }
 
 //---------------------------------------------------------------------------
@@ -484,6 +543,24 @@ void A_ReFire (AActor *actor, pspdef_t *psp)
 	{
 		player->refire = 0;
 		P_CheckAmmo (player);
+	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC A_CheckReload
+//
+// Present in Doom, but unused. Also present in Strife, and actually used.
+// This and what I call A_XBowReFire are actually the same thing in Strife,
+// not two separate functions as I have them here.
+//
+//---------------------------------------------------------------------------
+
+void A_CheckReload (AActor *actor, pspdef_t *psp)
+{
+	if (actor->player != NULL)
+	{
+		P_CheckAmmo (actor->player);
 	}
 }
 
@@ -530,6 +607,8 @@ void A_Lower (AActor *actor, pspdef_t *psp)
 	else
 	{
 		player->readyweapon = player->pendingweapon;
+		// [RH] Clear the flash state. Only needed for Strife.
+		P_SetPsprite (player, ps_flash, NULL);
 	}
 	P_BringUpWeapon (player);
 }

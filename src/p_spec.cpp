@@ -846,7 +846,7 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 				switch (line->special)
 				{
 				case Door_Raise:
-					if (line->args[1] > 32)
+					if (line->args[1] >= 64)
 					{
 						break;
 					}
@@ -1144,18 +1144,13 @@ void P_UpdateSpecials ()
 
 		if (anim->bUniqueFrames)
 		{
-			int pic = anim->Frames[anim->CurFrame].FramePic;
-
-			for (i = 0; i < anim->NumFrames; i++)
-				TexMan.SetTranslation (anim->Frames[i].FramePic, pic);
+			TexMan.SetTranslation (anim->BasePic, anim->Frames[anim->CurFrame].FramePic);
 		}
 		else
 		{
-			int pic = anim->BasePic + anim->CurFrame;
-
-			for (i = anim->BasePic; i < anim->BasePic + anim->NumFrames; i++)
+			for (i = 0; i < anim->NumFrames; i++)
 			{
-				TexMan.SetTranslation (i, pic);
+				TexMan.SetTranslation (anim->BasePic + i, anim->BasePic + (i + anim->CurFrame) % anim->NumFrames);
 			}
 		}
 	}
@@ -2105,6 +2100,7 @@ extern fixed_t tmbbox[4];
 
 void DPusher::Tick ()
 {
+	static TArray<AActor *> pushbt;
 	sector_t *sec;
 	AActor *thing;
 	msecnode_t *node;
@@ -2154,7 +2150,7 @@ void DPusher::Tick ()
 		tmbbox[BOXRIGHT]  = m_X + radius;
 		tmbbox[BOXLEFT]   = m_X - radius;
 
-		validcount++;
+		pushbt.Clear();
 
 		xl = (tmbbox[BOXLEFT] - bmaporgx - MAXRADIUS)>>MAPBLOCKSHIFT;
 		xh = (tmbbox[BOXRIGHT] - bmaporgx + MAXRADIUS)>>MAPBLOCKSHIFT;
@@ -2162,7 +2158,7 @@ void DPusher::Tick ()
 		yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 		for (bx=xl ; bx<=xh ; bx++)
 			for (by=yl ; by<=yh ; by++)
-				P_BlockThingsIterator (bx, by, PIT_PushThing);
+				P_BlockThingsIterator (bx, by, PIT_PushThing, pushbt);
 		return;
 	}
 

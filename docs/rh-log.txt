@@ -1,3 +1,113 @@
+November 15, 2003
+- Added Strife's high-explosive and white phosphorous grenades (but not the
+  grenade launchers).
+- Fixed: AActor defined both reactiontime and ReactionTime.
+- Moved weapon bobbing out of A_WeaponReady so that weapons can bob every
+  tic even if A_WeaponReady isn't called every tic. (Such was the case with
+  the mauler, and it looked really bad seeing it move jerkily only every six
+  or seven tics.)
+- Added Strife's mauler, minus the disintegration.
+- Added a few of Strife's cheat codes.
+
+November 14, 2003
+- Added the Light_Stop line special to stop a currently running light effect.
+- Changed the Door_Raise speed checks for monsters in P_TestActivateLine()
+  so that they are consistant for cross, use, and push lines.
+- Changed text lookups for map names and intermission text so that they
+  happen each time they are needed and not just when the MAPINFO is parsed.
+- Added a check for the null texture to R_RenderBoundWallSprite.
+- Added a check for non-positive-sized patches, so if one tries to load,
+  it gets replaced by the new -BADPATCH graphic I just added to zdoom.wad.
+- Added support for flechette inventory graphics named ARTIPSB1, ARTIPSB2,
+  and ARTIPSB3 that can be used in place of ARTIPSBG to differentiate
+  between the different forms of the flechette when a script gives the
+  player specific ones.
+- Cluster infos now get created the first time they are referenced by a
+  map. Without this, all Hexen maps were implicitly on the same hub (the
+  "default" one), because Hexen didn't use clusterdef MAPINFO entries.
+- Brought back the blockmap-based P_CheckSight and fixed the iterator in
+  it and its equivalent in p_maputl.cpp so that it properly handles the
+  case where a trace crosses the corner of a block.
+
+November 12, 2003
+- Added Strife's flame thrower.
+- Added Strife's mini-missile launcher.
+- Added Strife's assault gun.
+- Added Strife's electric and poison crossbows. However, the poison bolt
+  does not have any of its special properties implemented, so it currently
+  acts like a super high damage projectile.
+- Added all the Strife ammo pickups.
+- Added Strife's scrolling sector type.
+- Added the Strife weapon preferences to the WeaponPrefs array.
+- Added placeholder weapon and ammo slots for the Strife weapons so that
+  when/if I add more, I won't need to update the player_t serializer again
+  to maintain compatibility with old save games.
+- Added StepHeight to gameinfo_t to indicate the maximum height step a
+  player can walk up. This is 24 in every game except Strife, which has it
+  lower at 16.
+
+November 10, 2003
+- Fixed: ANIMDEFS animations animated every frame in the animation instead
+  of just the base texture.
+- Fixed: Texture animations defined in ANIMATED did not animate each frame
+  in the sequence properly.
+
+November 2, 2003
+- Stopped using validcount to keep track of which Actors have already been
+  checked by P_BlockThingsIterator. P_CheckSight and P_TraceBleed can both
+  make validcount go up, so it is totally useless for P_RadiusAttack, which
+  wound up doing damage to a thing for each block it touched that was in the
+  blast area.
+- Added DTA_ClipTop, DTA_ClipLeft, and DTA_ClipRight so that FlatFill can now
+  use DrawTexture and draw the textures right-side-up again.
+- Renamed negonearray to zeroarray to better reflect its contents.
+- Changed PTR_TraceIterator() so that it will look at a line's flags and if
+  it doesn't have ML_TWOSIDED set, then it will pretend it doesn't have a
+  back side, even if it does.
+- Fixed: BFG Marines could crash with a stack overflow during their refire
+  pause because A_M_BFGSound() switches the marine back to its chase state,
+  which tries to switch it back to its attack state. The solution: Make sure
+  the marine's MF_JUSTATTACKED bit is set as long as its special1 is non-zero.
+  Then A_Chase won't try to attack.
+- Reduced the player's missile range from 20480 to 8192, because Doom's trace
+  code is too inaccurate for long traces.
+
+November 1, 2003
+- Removed the missile attack from the chainsaw marine.
+- Fixed: The cast finale ignored the player's gender setting because it didn't
+  actually play the player's death sound from the player.
+- Fixed: The Heretic episode 2 ending restored the palette in PLAYPAL instead
+  of the one computed from PLAYPAL at the start of the game.
+- Removed gamma stuff from FPalette, since Win32Video is responsible for
+  handling gamma.
+- Changed P_DoCrunch() so that it copies the render style from the crushed
+  thing to the gib actor.
+- Changed PIT_FloorDrop() so that only Hexen will let things fall with gravity
+  when a floor quickly drops. The other games will yank them down.
+- Changed missile attacks so that monsters behind block everything lines will
+  try to shoot through the lines if they are set for impact activation and
+  run a script. The assumption is that the script will remove the blocking
+  flag so they can shoot past the line on their next attack.
+- Changed back to the BSP-based sight checking for better accuracy.
+- Changed the automap so that it uses 12 bits of fractional precision instead
+  of 16 in order to display maps that are relatively close to the limits of
+  the possible map extents.
+- Changed the STCFN121 hack so that instead of discarding STCFN121 if it's
+  in the IWAD, it will discard it if STCFN120 and STCFN 122 are not present.
+  This should accomodate wads that provide their own fonts and copied it as
+  an I instead of a y, and also wads that provide a real set of lower-case
+  characters.
+- Changed the sector soundorg calculation so that it can't overflow.
+
+October 31, 2003
+- Added Strife's Reaver. Aside from it's unknown flag, it should be fully
+  functional.
+- Added Strife's dagger-wielding fist. It has a chance of doing 0 damage,
+  which seems odd.
+- Extended P_SpawnPuff() so that you can give a puff a crash state, and then
+  it will use that state if something was hit.
+- Added a simple status bar for strife.
+
 October 30, 2003
 - Moved SKYFLATNAME into the gameinfo structure.
 - Added a bunch more Strife things.

@@ -367,8 +367,7 @@ void WI_slamBackground ()
 		int picnum = TexMan.CheckForTexture ("FLOOR16", FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 		if (picnum >= 0)
 		{
-			FTexture *pic = TexMan(picnum);
-			screen->FlatFill (0, 0, SCREENWIDTH, SCREENHEIGHT, pic->GetPixels());
+			screen->FlatFill (0, 0, SCREENWIDTH, SCREENHEIGHT, TexMan(picnum));
 		}
 		else
 		{

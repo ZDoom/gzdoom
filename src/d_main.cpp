@@ -1794,7 +1794,7 @@ void D_DoomMain (void)
 
 	// [RH] Now that all text strings are set up,
 	// insert them into the level and cluster data.
-	G_SetLevelStrings ();
+	G_MakeEpisodes ();
 	
 	// [RH] Parse through all loaded mapinfo lumps
 	G_ParseMapInfo ();
@@ -2007,6 +2007,10 @@ void D_DoomMain (void)
 	else if (gameinfo.gametype == GAME_Hexen)
 	{
 		StatusBar = CreateHexenStatusBar ();
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		StatusBar = CreateStrifeStatusBar ();
 	}
 	else
 	{

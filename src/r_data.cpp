@@ -1098,10 +1098,17 @@ const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_ou
 void FPatchTexture::GetDimensions ()
 {
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
-
 	patch_t dummy;
-	lump >> dummy.width >> dummy.height >> dummy.leftoffset >> dummy.topoffset;
 
+	lump >> dummy.width >> dummy.height;
+
+	if (dummy.width <= 0 || dummy.height <= 0)
+	{
+		lump = Wads.OpenLumpName ("-BADPATCH");
+		lump >> dummy.width >> dummy.height;
+	}
+
+	lump >> dummy.leftoffset >> dummy.topoffset;
 	Width = dummy.width;
 	Height = dummy.height;
 	LeftOffset = dummy.leftoffset;
@@ -1120,6 +1127,14 @@ void FPatchTexture::MakeTexture ()
 
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const patch_t *patch = (const patch_t *)lump.GetMem();
+
+	// Check for badly-sized patches
+	if (SHORT(patch->width) <= 0 || SHORT(patch->height) <= 0)
+	{
+		lump = Wads.ReadLump ("-BADPATCH");
+		patch = (const patch_t *)lump.GetMem();
+		Printf (PRINT_BOLD, "Patch %s has a non-positive size.\n", Name);
+	}
 
 	Width = SHORT(patch->width);
 	Height = SHORT(patch->height);

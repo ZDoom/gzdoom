@@ -140,7 +140,6 @@ void FPalette::SetPalette (const BYTE *colors)
 		BaseColors[i] = PalEntry (colors[0], colors[1], colors[2]);
 		Remap[i] = i;
 	}
-	GammaAdjust ();
 }
 
 // In ZDoom's new texture system, color 0 is used as the transparent color.
@@ -192,7 +191,6 @@ void FPalette::MakeGoodRemap ()
 				Remap[0] = new0;
 				Remap[new0] = dup;
 				BaseColors[new0] = color0;
-				Colors[new0] = Colors[0];
 				break;
 			}
 		}
@@ -353,10 +351,6 @@ void InitPalette ()
 			GPalette.Remap[0] = BestColor ((DWORD *)GPalette.BaseColors,
 				GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 		}
-
-		// Make color 0 magenta
-		//GPalette.BaseColors[0] = PalEntry (255, 0, 255);
-		//GPalette.Colors[0] = PalEntry (newgamma[255], newgamma[0], newgamma[255]);
 	}
 
 // NormalLight.Maps will be set to realcolormaps no later than G_InitLevelLocals()
@@ -444,17 +438,6 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		}
 	}
 
-}
-
-void FPalette::GammaAdjust ()
-{
-	int i;
-
-	for (i = 0; i < 256; i++)
-	{
-		PalEntry color = BaseColors[i];
-		Colors[i] = PalEntry (newgamma[color.r], newgamma[color.g], newgamma[color.b]);
-	}
 }
 
 void V_SetBlend (int blendr, int blendg, int blendb, int blenda)

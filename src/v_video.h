@@ -92,7 +92,10 @@ enum
 	DTA_LeftOffset,		// override texture's left offset
 	DTA_WindowLeft,		// don't draw anything left of this column (on source, not dest)
 	DTA_WindowRight,	// don't draw anything at or to the right of this column (on source, not dest)
+	DTA_ClipTop,		// don't draw anything above this row (on dest, not source)
 	DTA_ClipBottom,		// don't draw anything at or below this row (on dest, not source)
+	DTA_ClipLeft,		// don't draw anything to the left of this column (on dest, not source)
+	DTA_ClipRight,		// don't draw anything at or to the right of this column (on dest, not source)
 	DTA_Masked,			// true(default)=use masks from texture, false=ignore masks
 };
 
@@ -139,8 +142,8 @@ public:
 	// Darken the entire canvas
 	virtual void Dim () const;
 
-	// Fill an area with a 64x64 flat texture
-	virtual void FlatFill (int left, int top, int right, int bottom, const byte *src) const;
+	// Fill an area with a texture
+	void FlatFill (int left, int top, int right, int bottom, FTexture *src);
 
 	// Set an area to a specified color
 	virtual void Clear (int left, int top, int right, int bottom, int color) const;

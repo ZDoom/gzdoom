@@ -1096,6 +1096,17 @@ void FBaseStatusBar::Draw (EHudState state)
 				}
 			}
 		}
+		else if (gameinfo.gametype == GAME_Strife)
+		{
+			if (Scaled)
+			{
+				y -= Scale (8, SCREENHEIGHT, 200);
+			}
+			else
+			{
+				y -= 8;
+			}
+		}
 		cluster_info_t *cluster = FindClusterInfo (level.cluster);
 		i = 0;
 		if (cluster == NULL || !(cluster->flags & CLUSTER_HUB))

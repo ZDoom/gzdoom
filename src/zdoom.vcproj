@@ -3484,6 +3484,9 @@
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\r_main.h">
+			</File>
 		</Filter>
 		<Filter
 			Name="Hexen Game"
@@ -4150,10 +4153,28 @@
 			Name="Strife Game"
 			Filter="">
 			<File
+				RelativePath=".\g_strife\a_strifeammo.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_strifeglobal.h">
+			</File>
+			<File
 				RelativePath=".\g_strife\a_strifeplayer.cpp">
 			</File>
 			<File
 				RelativePath=".\g_strife\a_strifestuff.cpp">
+			</File>
+			<File
+				RelativePath=".\g_strife\a_strifeweapons.cpp">
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						GeneratePreprocessedFile="0"/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\g_strife\strife_sbar.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -4315,9 +4336,6 @@
 				</File>
 				<File
 					RelativePath=".\r_local.h">
-				</File>
-				<File
-					RelativePath=".\r_main.h">
 				</File>
 				<File
 					RelativePath=".\r_plane.h">

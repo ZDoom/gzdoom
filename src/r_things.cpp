@@ -72,7 +72,7 @@ TArray<WORD>	ParticlesInSubsec;
 
 // constant arrays
 //	used for psprite clipping and initializing clipping
-short			negonearray[MAXWIDTH];
+short			zeroarray[MAXWIDTH];
 short			screenheightarray[MAXWIDTH];
 
 #define MAX_SPRITE_FRAMES	29		// [RH] Macro-ized as in BOOM.
@@ -700,10 +700,7 @@ void R_InitSprites ()
 	int lump, lastlump;
 	size_t i;
 
-	for (i = 0; i < MAXWIDTH; i++)
-	{
-		negonearray[i] = 0;
-	}
+	clearbufshort (zeroarray, MAXWIDTH, 0);
 
 	MaxVisSprites = 128;	// [RH] This is the initial default value. It grows as needed.
 	firstvissprite = vissprites = (vissprite_t *)Malloc (MaxVisSprites * sizeof(vissprite_t));
@@ -1301,7 +1298,7 @@ void R_AddSprites (sector_t *sec, int lightlevel, int fakeside)
 //
 // R_DrawPSprite
 //
-void R_DrawPSprite (pspdef_t* psp, AActor *owner)
+void R_DrawPSprite (pspdef_t* psp, AActor *owner, fixed_t sx, fixed_t sy)
 {
 	fixed_t 			tx;
 	int 				x1;
@@ -1314,7 +1311,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	FTexture*			tex;
 	vissprite_t*		vis;
 	vissprite_t 		avis;
-	
+
 	// decide which patch to use
 #ifdef RANGECHECK
 	if ( (unsigned)psp->state->sprite.index >= (unsigned)sprites.Size ())
@@ -1340,7 +1337,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	picwidth = tex->GetWidth ();
 
 	// calculate edges of the shape
-	tx = psp->sx-((320/2)<<FRACBITS);
+	tx = sx-((320/2)<<FRACBITS);
 		
 	tx -= tex->LeftOffset << FRACBITS;
 	x1 = (centerxfrac + FixedMul (tx, pspritexscale)) >>FRACBITS;
@@ -1360,7 +1357,7 @@ void R_DrawPSprite (pspdef_t* psp, AActor *owner)
 	vis = &avis;
 	vis->renderflags = owner->renderflags;
 	vis->floorclip = 0;
-	vis->texturemid = (BASEYCENTER<<FRACBITS) - (psp->sy - (tex->TopOffset << FRACBITS));
+	vis->texturemid = (BASEYCENTER<<FRACBITS) - (sy - (tex->TopOffset << FRACBITS));
 	if (camera->player && (RenderTarget != screen ||
 		realviewheight == RenderTarget->GetHeight() ||
 		(RenderTarget->GetWidth() > 320 && !st_scale)))
@@ -1472,14 +1469,17 @@ void R_DrawPlayerSprites (void)
 
 	// clip to screen bounds
 	mfloorclip = screenheightarray;
-	mceilingclip = negonearray;
+	mceilingclip = zeroarray;
 
 	if (camera->player != NULL)
 	{
 		fixed_t centerhack = centeryfrac;
+		fixed_t ofsx, ofsy;
 
 		centery = viewheight >> 1;
 		centeryfrac = centery << FRACBITS;
+
+		P_BobWeapon (camera->player, &camera->player->psprites[ps_weapon], &ofsx, &ofsy);
 
 		// add all active psprites
 		for (i = 0, psp = camera->player->psprites;
@@ -1487,7 +1487,9 @@ void R_DrawPlayerSprites (void)
 			 i++, psp++)
 		{
 			if (psp->state)
-				R_DrawPSprite (psp, camera);
+			{
+				R_DrawPSprite (psp, camera, psp->sx + ofsx, psp->sy + ofsy);
+			}
 		}
 
 		centeryfrac = centerhack;

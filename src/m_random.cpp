@@ -134,6 +134,13 @@ int FRandom::Random2 ()
 	return t - u;
 }
 
+int FRandom::Random2 (int mask)
+{
+	int t = (UpdateSeed (Seed) >> 20) & mask;
+	int u = (UpdateSeed (Seed) >> 20) & mask;
+	return t - u;
+}
+
 int FRandom::HitDice (int count)
 {
 	return (1 + ((UpdateSeed (Seed) >> 20) & 7)) * count;

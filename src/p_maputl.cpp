@@ -665,7 +665,8 @@ BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*))
 //
 // P_BlockThingsIterator
 //
-BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), AActor *actor)
+
+BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), TArray<AActor *> &checkarray, AActor *actor)
 {
 	if ((unsigned int)x >= (unsigned int)bmapwidth ||
 		(unsigned int)y >= (unsigned int)bmapheight)
@@ -696,9 +697,19 @@ BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), AActor *actor)
 		while (block != NULL)
 		{
 			FBlockNode *next = block->NextActor;
-			if (block->Me->validcount != validcount)
+			int i;
+
+			// Don't recheck things that were already checked
+			for (i = (int)checkarray.Size() - 1; i >= 0; --i)
 			{
-				block->Me->validcount = validcount;
+				if (checkarray[i] == block->Me)
+				{
+					break;
+				}
+			}
+			if (i < 0)
+			{
+				checkarray.Push (block->Me);
 				if (!func (block->Me))
 				{
 					return false;
@@ -792,6 +803,11 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 	divline_t line;
 	int i;
 
+	// [RH] Don't check a corner to corner crossection for hit.
+	// Instead, check against the actual bounding box.
+
+	// There's probably a smarter way to determine which two sides
+	// of the thing face the trace than by trying all four sides...
 	for (i = 0; i < 4; ++i)
 	{
 		switch (i)
@@ -850,66 +866,6 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 
 	// Didn't hit it
 	return true;
-#if 0
-	fixed_t 		x1;
-	fixed_t 		y1;
-	fixed_t 		x2;
-	fixed_t 		y2;
-	
-	int 			s1;
-	int 			s2;
-	
-	BOOL 			tracepositive;
-
-	divline_t		dl;
-	
-	fixed_t 		frac;
-		
-	tracepositive = (trace.dx ^ trace.dy)>0;
-				
-	// [RH] Don't check a corner to corner crossection for hit.
-	// Instead, check against the actual bounding box
-	if (tracepositive)
-	{
-		x1 = thing->x - thing->radius;
-		y1 = thing->y + thing->radius;
-				
-		x2 = thing->x + thing->radius;
-		y2 = thing->y - thing->radius;					
-	}
-	else
-	{
-		x1 = thing->x - thing->radius;
-		y1 = thing->y - thing->radius;
-				
-		x2 = thing->x + thing->radius;
-		y2 = thing->y + thing->radius;					
-	}
-	
-	s1 = P_PointOnDivlineSide (x1, y1, &trace);
-	s2 = P_PointOnDivlineSide (x2, y2, &trace);
-
-	if (s1 == s2)
-		return true;			// line isn't crossed
-		
-	dl.x = x1;
-	dl.y = y1;
-	dl.dx = x2-x1;
-	dl.dy = y2-y1;
-	
-	frac = P_InterceptVector (&trace, &dl);
-
-	if (frac < 0)
-		return true;			// behind source
-
-	intercept_t newintercept;
-	newintercept.frac = frac;
-	newintercept.isaline = false;
-	newintercept.d.thing = thing;
-	intercepts.Push (newintercept);
-
-	return true;				// keep going
-#endif
 }
 
 
@@ -965,6 +921,8 @@ BOOL P_TraverseIntercepts (traverser_t func, fixed_t maxfrac)
 //
 BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, BOOL (*trav) (intercept_t *))
 {
+	static TArray<AActor *> pathbt;
+
 	fixed_t 	xt1;
 	fixed_t 	yt1;
 	fixed_t 	xt2;
@@ -990,6 +948,7 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 				
 	validcount++;
 	intercepts.Clear ();
+	pathbt.Clear ();
 		
 	if ( ((x1-bmaporgx)&(MAPBLOCKSIZE-1)) == 0)
 		x1 += FRACUNIT; // don't side exactly on a line
@@ -1060,7 +1019,7 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 	mapx = xt1;
 	mapy = yt1;
 		
-	for (count = 0 ; count < 64 ; count++)
+	for (count = 0 ; count < 100 ; count++)
 	{
 		if (flags & PT_ADDLINES)
 		{
@@ -1070,7 +1029,7 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 		
 		if (flags & PT_ADDTHINGS)
 		{
-			if (!P_BlockThingsIterator (mapx, mapy, PIT_AddThingIntercepts))
+			if (!P_BlockThingsIterator (mapx, mapy, PIT_AddThingIntercepts, pathbt))
 				return false;	// early out
 		}
 				
@@ -1078,18 +1037,48 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 		{
 			break;
 		}
-		
-		if ( (yintercept >> FRACBITS) == mapy)
+
+		// [RH] Handle corner cases properly instead of pretending they don't exist.
+		switch ((((yintercept >> FRACBITS) == mapy) << 1) | ((xintercept >> FRACBITS) == mapx))
 		{
-			yintercept += ystep;
-			mapx += mapxstep;
-		}
-		else if ( (xintercept >> FRACBITS) == mapx)
-		{
+		case 0:		// neither xintercept nor yintercept match!
+			count = 100;	// Stop traversing, because somebody screwed up.
+			break;
+
+		case 1:		// xintercept matches
 			xintercept += xstep;
 			mapy += mapystep;
+			break;
+
+		case 2:		// yintercept matches
+			yintercept += ystep;
+			mapx += mapxstep;
+			break;
+
+		case 3:		// xintercept and yintercept both match
+			// The trace is exiting a block through its corner. Not only does the block
+			// being entered need to be checked (which will happen when this loop
+			// continues), but the other two blocks adjacent to the corner also need to
+			// be checked.
+			if (flags & PT_ADDLINES)
+			{
+				if (!P_BlockLinesIterator (mapx + mapxstep, mapy, PIT_AddLineIntercepts) ||
+					!P_BlockLinesIterator (mapx, mapy + mapystep, PIT_AddLineIntercepts))
+					return false;	// early out
+			}
+			
+			if (flags & PT_ADDTHINGS)
+			{
+				if (!P_BlockThingsIterator (mapx + mapxstep, mapy, PIT_AddThingIntercepts, pathbt) ||
+					!P_BlockThingsIterator (mapx, mapy + mapystep, PIT_AddThingIntercepts, pathbt))
+					return false;	// early out
+			}
+			xintercept += xstep;
+			yintercept += ystep;
+			mapx += mapxstep;
+			mapy += mapystep;
+			break;
 		}
-				
 	}
 	// go through the sorted list
 	return P_TraverseIntercepts ( trav, FRACUNIT );
@@ -1209,9 +1198,8 @@ static AActor *RoughBlockCheck (AActor *mo, int index)
 
 	for (link = blocklinks[index]; link != NULL; link = link->NextActor)
 	{
-		if (link->Me != mo && link->Me->validcount != validcount)
+		if (link->Me != mo)
 		{
-			link->Me->validcount = validcount;
 			if (mo->IsOkayToAttack (link->Me))
 			{
 				return link->Me;

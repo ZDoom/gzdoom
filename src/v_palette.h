@@ -74,11 +74,10 @@ struct FPalette
 	FPalette (const BYTE *colors);
 
 	void SetPalette (const BYTE *colors);
-	void GammaAdjust ();
 
 	void MakeGoodRemap ();
 
-	PalEntry	Colors[256];		// gamma corrected palette
+	//PalEntry	Colors[256];		// gamma corrected palette
 	PalEntry	BaseColors[256];	// non-gamma corrected palette
 	BYTE		Remap[256];			// remap original palette indices to in-game indices
 

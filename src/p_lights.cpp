@@ -402,7 +402,8 @@ void EV_LightChange (int tag, int value)
 {
 	int secnum = -1;
 
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0) {
+	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	{
 		int newlight = sectors[secnum].lightlevel + value;
 		sectors[secnum].lightlevel = clamp (newlight, 0, 255);
 	}
@@ -633,4 +634,26 @@ DPhased::DPhased (sector_t *sector, int baselevel, int phase)
 	m_BaseLevel = baselevel;
 	m_Phase = phase;
 	sector->special &= 0xff00;
+}
+
+//============================================================================
+//
+// EV_StopLightEffect
+//
+// Stops a lighting effect that is currently running in a sector.
+//
+//============================================================================
+
+void EV_StopLightEffect (int tag)
+{
+	TThinkerIterator<DLighting> iterator;
+	DLighting *effect;
+
+	while ((effect = iterator.Next()) != NULL)
+	{
+		if (effect->GetSector()->tag == tag)
+		{
+			delete effect;
+		}
+	}
 }

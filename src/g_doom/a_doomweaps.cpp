@@ -69,7 +69,14 @@ END_DEFAULTS
 
 AT_GAME_SET (Clip)
 {
-	AmmoPics[am_clip] = "CLIPA0";
+	if (gameinfo.gametype == GAME_Doom)
+	{
+		AmmoPics[am_clip] = "CLIPA0";
+	}
+	else
+	{
+		AmmoPics[am_clip] = "I_BLIT";	// for Strife
+	}
 }
 
 // Clip box ----------------------------------------------------------------
@@ -776,7 +783,6 @@ void A_FireShotgun (AActor *actor, pspdef_t *psp)
 // Super Shotgun ------------------------------------------------------------
 
 void A_FireShotgun2 (AActor *actor, pspdef_t *);
-void A_CheckReload (AActor *actor, pspdef_t *);
 void A_OpenShotgun2 (AActor *actor, pspdef_t *);
 void A_LoadShotgun2 (AActor *actor, pspdef_t *);
 void A_CloseShotgun2 (AActor *actor, pspdef_t *);
@@ -910,14 +916,6 @@ void A_FireShotgun2 (AActor *actor, pspdef_t *psp)
 					  angle,
 					  PLAYERMISSILERANGE,
 					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage);
-	}
-}
-
-void A_CheckReload (AActor *actor, pspdef_t *psp)
-{
-	if (actor->player != NULL)
-	{
-		P_CheckAmmo (actor->player);
 	}
 }
 

@@ -1404,5 +1404,8 @@ void FArchive::UserReadClass (const TypeInfo *&type)
 	case 2:
 		type = NULL;
 		break;
+	default:
+		I_Error ("Unknown class type %d in archive.\n", type);
+		break;
 	}
 }

@@ -84,15 +84,11 @@ END_DEFAULTS
 void AStrifePlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
-	player->weaponowned[wp_fist] = true;
-	player->weaponowned[wp_pistol] = true;
-	player->ammo[am_clip] = deh.StartBullets;
-	if (deh.StartBullets > 0)
-	{
-		player->readyweapon = player->pendingweapon = wp_pistol;
-	}
-	else
-	{
-		player->readyweapon = player->pendingweapon = wp_fist;
-	}
+	player->weaponowned[wp_dagger] = true;
+//	player->weaponowned[wp_pistol] = true;
+//	player->ammo[am_clip] = deh.StartBullets;
+	player->maxammo[am_clip] = 250;
+	player->maxammo[am_cell] = 400;
+	player->maxammo[am_misl] = 100;
+	player->readyweapon = player->pendingweapon = wp_dagger;
 }

@@ -78,6 +78,7 @@
 
 #define LEVEL_STARTLIGHTNING	0x01000000		// Automatically start lightning
 #define LEVEL_FILTERSTARTS		0x02000000		// Apply mapthing filtering to player starts
+#define LEVEL_LOOKUPLEVELNAME	0x04000000		// Level name is the name of a language string
 
 #define LEVEL_SWAPSKIES			0x10000000		// Used by lightning
 #define LEVEL_DEFINEDINMAPINFO	0x20000000		// Level was defined in a MAPINFO lump
@@ -217,10 +218,12 @@ struct cluster_info_s
 typedef struct cluster_info_s cluster_info_t;
 
 // Cluster flags
-#define CLUSTER_HUB				0x00000001
-#define CLUSTER_EXITTEXTINLUMP	0x00000002
-#define CLUSTER_ENTERTEXTINLUMP	0x00000004
-#define CLUSTER_FINALEPIC		0x00000008
+#define CLUSTER_HUB				0x00000001	// Cluster uses hub behavior
+#define CLUSTER_EXITTEXTINLUMP	0x00000002	// Exit text is the name of a lump
+#define CLUSTER_ENTERTEXTINLUMP	0x00000004	// Enter text is the name of a lump
+#define CLUSTER_FINALEPIC		0x00000008	// Finale "flat" is actually a full-sized image
+#define CLUSTER_LOOKUPEXITTEXT	0x00000010	// Exit text is the name of a language string
+#define CLUSTER_LOOKUPENTERTEXT	0x00000020	// Enter text is the name of a language string
 
 extern level_locals_t level;
 
@@ -255,7 +258,8 @@ void G_InitLevelLocals (void);
 
 void G_AirControlChanged ();
 
-void G_SetLevelStrings (void);
+void G_MakeEpisodes (void);
+void G_MaybeLookupLevelName (void);
 
 cluster_info_t *FindClusterInfo (int cluster);
 level_info_t *FindLevelInfo (char *mapname);

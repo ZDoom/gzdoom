@@ -2208,7 +2208,6 @@ static void UnloadDehSupp ()
 		}
 		GStrings.FlushNames ();
 		GStrings.Compact ();
-		G_SetLevelStrings ();
 	}
 }
 

@@ -138,7 +138,8 @@ static const char *AmmoNames[NUMAMMO] =
 	"Clip", "Shell", "Cell", "RocketAmmo",
 	"GoldWandAmmo", "CrossbowAmmo", "BlasterAmmo",
 	"SkullRodAmmo", "PhoenixRodAmmo", "MaceAmmo",
-	"Mana1", "Mana2"
+	"Mana1", "Mana2", "ElectricBolts", "PoisonBolts",
+	"HEGrenadeRounds", "PhGrenadeRounds"
 };
 
 static const char *WeaponNames[NUMWEAPONS] =
@@ -151,7 +152,10 @@ static const char *WeaponNames[NUMWEAPONS] =
 	"FWeapFist", "CWeapMace", "MWeapWand",
 	"FWeapAxe", "CWeapStaff", "MWeapFrost",
 	"FWeapHammer", "CWeapFlame", "MWeapLightning",
-	"FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge"
+	"FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge",
+	"Dagger", "ElectricCrossbow", "AssaultGun", "MiniMissileLauncher",
+	"HEGrenadeLauncher", "FlameThrower", "MaulerScatter",
+	"Sigil", "PoisonCrossbow", "PhGrenadeLauncher", "MaulerTorpedo"
 };
 
 static const char *HereticKeyNames[3] =

@@ -48,9 +48,6 @@
 #define MAPBTOFRAC		(MAPBLOCKSHIFT-FRACBITS)
 
 
-// player radius for movement checking
-#define PLAYERRADIUS	16*FRACUNIT
-
 // MAXRADIUS is for precalculated sector block boxes
 // the spider demon is larger,
 // but we do not have any moving sectors nearby
@@ -62,7 +59,7 @@
 #define USERANGE		(64*FRACUNIT)
 #define MELEERANGE		(64*FRACUNIT)
 #define MISSILERANGE	(32*64*FRACUNIT)
-#define PLAYERMISSILERANGE	(32*64*10*FRACUNIT)	// [RH] New MISSILERANGE for players
+#define PLAYERMISSILERANGE	(8192*FRACUNIT)	// [RH] New MISSILERANGE for players
 
 // follow a player exlusively for 3 seconds
 #define BASETHRESHOLD	100
@@ -225,7 +222,8 @@ extern fixed_t			lowfloor;
 void	P_LineOpening (const line_t *linedef, fixed_t x, fixed_t y, fixed_t refx=FIXED_MIN, fixed_t refy=0);
 
 BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*));
-BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), AActor *start=NULL);
+BOOL P_BlockThingsIterator (int x, int y, BOOL(*func)(AActor*), TArray<AActor *> &checkarray, AActor *start=NULL);
+
 
 #define PT_ADDLINES 	1
 #define PT_ADDTHINGS	2

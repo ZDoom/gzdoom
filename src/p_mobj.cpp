@@ -287,9 +287,14 @@ void AActor::Serialize (FArchive &arc)
 		<< AR_SOUNDW(AttackSound)
 		<< AR_SOUNDW(PainSound)
 		<< AR_SOUNDW(DeathSound)
-		<< AR_SOUNDW(ActiveSound)
-		<< ReactionTime
-		<< Speed
+		<< AR_SOUNDW(ActiveSound);
+
+	if (SaveVersion < 218)
+	{
+		SDWORD fakereactiontime;
+		arc << fakereactiontime;
+	}
+	arc << Speed
 		<< Mass
 		<< PainChance
 		<< SpawnState
@@ -2032,6 +2037,15 @@ void AActor::Tick ()
 				{ // Special Heretic scroll special
 					scrollx += 2048*28;
 				}
+				else if (scrolltype == Scroll_StrifeCurrent)
+				{ // Strife scroll special
+					int anglespeed = sec->tag - 100;
+					fixed_t carryspeed = (anglespeed % 10) << (FRACBITS - 4);
+					angle_t fineangle = (anglespeed / 10) << (32-3);
+					fineangle >>= ANGLETOFINESHIFT;
+					scrollx += FixedMul (carryspeed, finecosine[fineangle]);
+					scrolly += FixedMul (carryspeed, finesine[fineangle]);
+				}
 			}
 
 			if ((scrollx | scrolly) == 0)
@@ -2094,7 +2108,7 @@ void AActor::Tick ()
 				const sector_t *sec = node->m_sector;
 				if (sec->floorplane.c >= STEEPSLOPE)
 				{
-					if (sec->floorplane.ZatPoint (x, y) >= z - 24*FRACUNIT)
+					if (sec->floorplane.ZatPoint (x, y) >= z - gameinfo.StepHeight)
 					{
 						dopush = false;
 						break;
@@ -2151,7 +2165,7 @@ void AActor::Tick ()
 						PlayerLandedOnThing (this, onmo);
 					}
 				}
-				if (onmo->z + onmo->height - z <= 24*FRACUNIT)
+				if (onmo->z + onmo->height - z <= gameinfo.StepHeight)
 				{
 					if (player && player->mo == this && player->deltaviewheight == 0)
 					{
@@ -3130,10 +3144,21 @@ AActor *P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown, b
 
 	z += pr_spawnpuff.Random2 () << 10;
 
-	if (!hitthing || HitPuffType == NULL)
+	if (hitthing == NULL || HitPuffType == NULL)
+	{
 		puff = Spawn (PuffType, x, y, z);
+
+		// If a puff has a crash state and an actor was not hit,
+		// it will enter the crash state. This is used by the StrifeSpark.
+		if (hitthing == NULL && puff->CrashState != NULL)
+		{
+			puff->SetState (puff->CrashState);
+		}
+	}
 	else
+	{
 		puff = Spawn (HitPuffType, x, y, z);
+	}
 
 	if (gameinfo.gametype == GAME_Doom)
 	{

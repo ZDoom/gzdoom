@@ -290,7 +290,17 @@ bool EV_Teleport (int tid, line_t *line, int side, AActor *thing, bool fog, bool
 		searcher = it2.Next ();
 		if (searcher == NULL)
 		{
-			return false;
+			// Try to find a matching non-blocking spot of any type (fixes Caldera MAP13)
+			FActorIterator it3 (tid);
+			searcher = it3.Next ();
+			while (searcher != NULL && (searcher->flags & MF_SOLID))
+			{
+				searcher = it3.Next ();
+			}
+			if (searcher == NULL)
+			{
+				return false;
+			}
 		}
 	}
 	else if (count == 1)

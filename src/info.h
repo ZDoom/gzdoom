@@ -176,8 +176,10 @@ enum EGameType
 	GAME_Doom	 = 1,
 	GAME_Heretic = 2,
 	GAME_Hexen	 = 4,
-	GAME_Raven	 = 6,
-	GAME_Strife  = 8
+	GAME_Strife	 = 8,
+
+	GAME_Raven		= GAME_Heretic|GAME_Hexen,
+	GAME_DoomStrife	= GAME_Doom|GAME_Strife
 };
 #endif
 
@@ -195,7 +197,8 @@ enum
 	ADEF_PainSound,
 	ADEF_DeathSound,
 	ADEF_ActiveSound,
-	ADEF_LastString = ADEF_ActiveSound,
+	ADEF_Tag,			// Used by Strife, but I'm not sure how
+	ADEF_LastString = ADEF_Tag,
 
 	// The rest of the properties use their type field (upper 2 bits)
 	ADEF_XScale,

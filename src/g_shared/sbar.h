@@ -232,3 +232,4 @@ extern FBaseStatusBar *StatusBar;
 FBaseStatusBar *CreateDoomStatusBar ();
 FBaseStatusBar *CreateHereticStatusBar ();
 FBaseStatusBar *CreateHexenStatusBar ();
+FBaseStatusBar *CreateStrifeStatusBar ();

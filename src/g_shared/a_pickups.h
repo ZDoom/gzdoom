@@ -35,11 +35,22 @@ typedef enum
 	MANA_1,
 	MANA_2,
 
+// Strife ammo
+	// am_clip
+	am_electricbolt,
+	am_poisonbolt,
+	// am_cell
+	// am_misl
+	am_hegrenade,
+	am_phgrenade,
+
 	NUMAMMO,
 
 	MANA_BOTH,
 	am_noammo,	// Unlimited for chainsaw / fist.
-	MANA_NONE = am_noammo
+	MANA_NONE = am_noammo,
+
+	SAVEVER217_NUMAMMO = MANA_2+1
 
 } ammotype_t;
 
@@ -108,9 +119,24 @@ typedef enum
 	wp_choly,
 	wp_mstaff,
 
+// Strife weapons
+	wp_dagger,
+	wp_electricxbow,
+	wp_assaultgun,
+	wp_minimissile,
+	wp_hegrenadelauncher,
+	wp_flamethrower,
+	wp_maulerscatter,
+	wp_sigil,
+	wp_poisonxbow,
+	wp_phgrenadelauncher,
+	wp_maulertorpedo,
+
 	NUMWEAPONS,
 	
-	wp_nochange		// No pending weapon change.
+	wp_nochange,		// No pending weapon change.
+
+	SAVEVER217_NUMWEAPONS = wp_mstaff+1
 
 } weapontype_t;
 
@@ -151,6 +177,7 @@ enum
 	WIF_DONTBOB =			0x00000004, // don't bob the weapon
 	WIF_AXEBLOOD =			0x00000008, // weapon makes axe blood on impact (Hexen only)
 	WIF_FIREDAMAGE =		0x00000010, // weapon does fire damage on impact
+	WIF_NOALERT =			0x00000020,	// weapon does not alert monsters
 };
 
 #define MAX_WEAPONS_PER_SLOT	8

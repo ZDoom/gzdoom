@@ -8,6 +8,7 @@
 #include "m_random.h"
 #include "a_action.h"
 #include "a_hexenglobal.h"
+#include "w_wad.h"
 
 static FRandom pr_poisonbag ("PoisonBag");
 static FRandom pr_poisoncloud ("PoisonCloud");
@@ -219,9 +220,9 @@ AT_GAME_SET (PoisonBag)
 	ArtiDispatch[arti_poisonbag1] = &AArtiPoisonBag::ActivateArti;
 	ArtiDispatch[arti_poisonbag2] = &AArtiPoisonBag::ActivateArti;
 	ArtiDispatch[arti_poisonbag3] = &AArtiPoisonBag::ActivateArti;
-	ArtiPics[arti_poisonbag1] = "ARTIPSBG";
-	ArtiPics[arti_poisonbag2] = "ARTIPSBG";
-	ArtiPics[arti_poisonbag3] = "ARTIPSBG";
+	ArtiPics[arti_poisonbag1] = Wads.CheckNumForName("ARTIPSB1") >= 0 ? "ARTIPSB1" : "ARTIPSBG";
+	ArtiPics[arti_poisonbag2] = Wads.CheckNumForName("ARTIPSB2") >= 0 ? "ARTIPSB2" : "ARTIPSBG";
+	ArtiPics[arti_poisonbag3] = Wads.CheckNumForName("ARTIPSB3") >= 0 ? "ARTIPSB3" : "ARTIPSBG";
 }
 
 // Poison Cloud -------------------------------------------------------------

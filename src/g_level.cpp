@@ -368,8 +368,8 @@ static const char *MapInfoClusterLevel[] =
 
 MapInfoHandler ClusterHandlers[] =
 {
-	{ MITYPE_STRING,	cioffset(entertext), 0 },
-	{ MITYPE_STRING,	cioffset(exittext), 0 },
+	{ MITYPE_STRING,	cioffset(entertext), CLUSTER_LOOKUPENTERTEXT },
+	{ MITYPE_STRING,	cioffset(exittext), CLUSTER_LOOKUPEXITTEXT },
 	{ MITYPE_MUSIC,		cioffset(messagemusic), cioffset(musicorder) },
 	{ MITYPE_LUMPNAME,	cioffset(finaleflat), 0 },
 	{ MITYPE_SETFLAG,	CLUSTER_HUB, 0 },
@@ -531,41 +531,9 @@ static void G_DoParseMapInfo (int lump)
 			SC_MustGetString ();
 			if (SC_Compare ("lookup"))
 			{
-				const char *thename;
-				int strnum;
-
 				SC_MustGetString ();
-				strnum = GStrings.FindString (sc_String);
-				if (strnum < 0)
-				{
-					thename = sc_String;
-				}
-				else
-				{
-					const char *lookedup = GStrings(strnum);
-					char checkstring[32];
-
-					// Strip out the header from the localized string
-					if (levelinfo->mapname[0] == 'E' && levelinfo->mapname[2] == 'M')
-					{
-						sprintf (checkstring, "%s: ", levelinfo->mapname);
-					}
-					else if (levelinfo->mapname[0] == 'M' && levelinfo->mapname[1] == 'A' &&
-						levelinfo->mapname[2] == 'P')
-					{
-						sprintf (checkstring, "level %d: ", atoi(levelinfo->mapname + 3));
-					}
-					thename = strstr (lookedup, checkstring);
-					if (thename == NULL)
-					{
-						thename = lookedup;
-					}
-					else
-					{
-						thename += strlen (checkstring);
-					}
-				}
-				ReplaceString (&levelinfo->level_name, thename);
+				ReplaceString (&levelinfo->level_name, sc_String);
+				levelflags |= LEVEL_LOOKUPLEVELNAME;
 			}
 			else
 			{
@@ -818,11 +786,21 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 		case MITYPE_CLUSTER:
 			SC_MustGetNumber ();
 			*((int *)(info + handler->data1)) = sc_Number;
-			if (HexenHack)
+			// If this cluster hasn't been defined yet, add it. This is especially needed
+			// for Hexen, because it doesn't have clusterdefs. If we don't do this, every
+			// level on Hexen will sometimes be considered as being on the same hub,
+			// depending on the check done.
+			if (FindWadClusterInfo (sc_Number) == -1)
 			{
-				cluster_info_t *cluster = FindClusterInfo (sc_Number);
-				if (cluster)
-					cluster->flags |= CLUSTER_HUB;
+				int clusterindex = numwadclusterinfos++;
+				wadclusterinfos = (cluster_info_t *)Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
+				clusterinfo = wadclusterinfos + clusterindex;
+				memset (clusterinfo, 0, sizeof(cluster_info_t));
+				clusterinfo->cluster = sc_Number;
+				if (gameinfo.gametype == GAME_Hexen)
+				{
+					clusterinfo->flags |= CLUSTER_HUB;
+				}
 			}
 			break;
 
@@ -830,13 +808,8 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 			SC_MustGetString ();
 			if (SC_Compare ("lookup"))
 			{
+				flags |= handler->data2;
 				SC_MustGetString ();
-				int strnum = GStrings.FindString (sc_String);
-				if (strnum >= 0)
-				{
-					ReplaceString ((char **)(info + handler->data1), GStrings(strnum));
-					break;
-				}
 			}
 			ReplaceString ((char **)(info + handler->data1), sc_String);
 			break;
@@ -1381,8 +1354,7 @@ void G_DoCompleted (void)
 		cluster_info_t *nextcluster = FindClusterInfo (FindLevelInfo (level.nextmap)->cluster);
 		EFinishLevelType mode;
 
-		if (thiscluster != nextcluster ||
-			deathmatch ||
+		if (thiscluster != nextcluster || deathmatch ||
 			!(thiscluster->flags & CLUSTER_HUB))
 		{
 			if (nextcluster->flags & CLUSTER_HUB)
@@ -1625,7 +1597,8 @@ void G_WorldDone (void)
 			thiscluster->cdtrack, thiscluster->cdid,
 			thiscluster->finaleflat, thiscluster->exittext,
 			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-			thiscluster->flags & CLUSTER_FINALEPIC);
+			thiscluster->flags & CLUSTER_FINALEPIC,
+			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT);
 	}
 	else
 	{
@@ -1641,7 +1614,8 @@ void G_WorldDone (void)
 					nextcluster->cdtrack, nextcluster->cdid,
 					nextcluster->finaleflat, nextcluster->entertext,
 					nextcluster->flags & CLUSTER_ENTERTEXTINLUMP,
-					nextcluster->flags & CLUSTER_FINALEPIC);
+					nextcluster->flags & CLUSTER_FINALEPIC,
+					nextcluster->flags & CLUSTER_LOOKUPENTERTEXT);
 			}
 			else if (thiscluster->exittext)
 			{
@@ -1649,7 +1623,8 @@ void G_WorldDone (void)
 					thiscluster->cdtrack, nextcluster->cdid,
 					thiscluster->finaleflat, thiscluster->exittext,
 					thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-					thiscluster->flags & CLUSTER_FINALEPIC);
+					thiscluster->flags & CLUSTER_FINALEPIC,
+					thiscluster->flags & CLUSTER_LOOKUPEXITTEXT);
 			}
 		}
 	}
@@ -1737,6 +1712,7 @@ void G_InitLevelLocals ()
 		level.musicorder = info->musicorder;
 
 		strncpy (level.level_name, info->level_name, 63);
+		G_MaybeLookupLevelName ();
 		strncpy (level.nextmap, info->nextmap, 8);
 		level.nextmap[8] = 0;
 		strncpy (level.secretmap, info->secretmap, 8);
@@ -1843,12 +1819,49 @@ cluster_info_t *FindClusterInfo (int cluster)
 		return &TheDefaultClusterInfo;
 }
 
-void G_SetLevelStrings (void)
+void G_MaybeLookupLevelName ()
+{
+	if (level.info != NULL && level.info->flags & LEVEL_LOOKUPLEVELNAME)
+	{
+		const char *thename;
+		int strnum;
+
+		strnum = GStrings.FindString (level.info->level_name);
+		if (strnum < 0)
+		{
+			thename = sc_String;
+		}
+		else
+		{
+			const char *lookedup = GStrings(strnum);
+			char checkstring[32];
+
+			// Strip out the header from the localized string
+			if (level.info->mapname[0] == 'E' && level.info->mapname[2] == 'M')
+			{
+				sprintf (checkstring, "%s: ", level.info->mapname);
+			}
+			else if (level.info->mapname[0] == 'M' && level.info->mapname[1] == 'A' && level.info->mapname[2] == 'P')
+			{
+				sprintf (checkstring, "%d: ", atoi(level.info->mapname + 3));
+			}
+			thename = strstr (lookedup, checkstring);
+			if (thename == NULL)
+			{
+				thename = lookedup;
+			}
+			else
+			{
+				thename += strlen (checkstring);
+			}
+		}
+		strncpy (level.level_name, thename, 63);
+	}
+}
+
+void G_MakeEpisodes ()
 {
 	int i;
-
-	if (level.info)
-		strncpy (level.level_name, level.info->level_name, 63);
 
 	// Set the default episodes
 	if (EpiDef.numitems == 0)

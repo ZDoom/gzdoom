@@ -147,8 +147,8 @@ bool DCanvas::IsValid ()
 
 // [RH] Fill an area with a 64x64 flat texture
 //		right and bottom are one pixel *past* the boundaries they describe.
-void DCanvas::FlatFill (int left, int top, int right, int bottom, const byte *src) const
-{
+void DCanvas::FlatFill (int left, int top, int right, int bottom, FTexture *src)
+{/*
 	int x, y;
 	int advance;
 	int width;
@@ -175,6 +175,24 @@ void DCanvas::FlatFill (int left, int top, int right, int bottom, const byte *sr
 			dest += width & 63;
 		}
 		dest += advance;
+	}*/
+	int w = src->GetWidth();
+	int h = src->GetHeight();
+
+	// Repeatedly draw the texture, left-to-right, top-to-bottom. The
+	// texture is positioned so that no matter what coordinates you pass
+	// to FlatFill, the origin of the repeating pattern is always (0,0).
+	for (int y = top / h * h; y < bottom; y += h)
+	{
+		for (int x = left / w * w; x < right; x += w)
+		{
+			DrawTexture (src, x, y,
+				DTA_ClipLeft, left,
+				DTA_ClipRight, right,
+				DTA_ClipTop, top,
+				DTA_ClipBottom, bottom,
+				TAG_DONE);
+		}
 	}
 }
 

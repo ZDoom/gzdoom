@@ -22,6 +22,7 @@
 #include "tables.h"
 #include "s_sndseq.h"
 #include "a_sharedglobal.h"
+#include "r_main.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1076,9 +1077,10 @@ static void LinkPolyobj (polyobj_t *po)
 
 static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 {
+	static TArray<AActor *> checker;
 	FBlockNode *block;
 	AActor *mobj;
-	int i, j;
+	int i, j, k;
 	int left, right, top, bottom;
 	fixed_t tmbbox[4];
 	line_t *ld;
@@ -1092,7 +1094,7 @@ static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 	right = (ld->bbox[BOXRIGHT]-bmaporgx+MAXRADIUS)>>MAPBLOCKSHIFT;
 
 	blocked = false;
-	validcount++;
+	checker.Clear();
 
 	bottom = bottom < 0 ? 0 : bottom;
 	bottom = bottom >= bmapheight ? bmapheight-1 : bottom;
@@ -1110,31 +1112,37 @@ static BOOL CheckMobjBlocking (seg_t *seg, polyobj_t *po)
 			for (block = blocklinks[j+i]; block != NULL; block = block->NextActor)
 			{
 				mobj = block->Me;
-				if (mobj->validcount == validcount)
+				for (k = (int)checker.Size()-1; k >= 0; --k)
 				{
-					continue;
+					if (checker[k] == mobj)
+					{
+						break;
+					}
 				}
-				mobj->validcount = validcount;
-				if ((mobj->flags&MF_SOLID) && !(mobj->flags&MF_NOCLIP))
+				if (k < 0)
 				{
-					tmbbox[BOXTOP] = mobj->y+mobj->radius;
-					tmbbox[BOXBOTTOM] = mobj->y-mobj->radius;
-					tmbbox[BOXLEFT] = mobj->x-mobj->radius;
-					tmbbox[BOXRIGHT] = mobj->x+mobj->radius;
+					checker.Push (mobj);
+					if ((mobj->flags&MF_SOLID) && !(mobj->flags&MF_NOCLIP))
+					{
+						tmbbox[BOXTOP] = mobj->y+mobj->radius;
+						tmbbox[BOXBOTTOM] = mobj->y-mobj->radius;
+						tmbbox[BOXLEFT] = mobj->x-mobj->radius;
+						tmbbox[BOXRIGHT] = mobj->x+mobj->radius;
 
-					if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
-						||      tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-						||      tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
-						||      tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
-					{
-						continue;
+						if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT]
+							|| tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
+							|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM]
+							|| tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+						{
+							continue;
+						}
+						if (P_BoxOnLineSide(tmbbox, ld) != -1)
+						{
+							continue;
+						}
+						ThrustMobj (mobj, seg, po);
+						blocked = true;
 					}
-					if (P_BoxOnLineSide(tmbbox, ld) != -1)
-					{
-						continue;
-					}
-					ThrustMobj (mobj, seg, po);
-					blocked = true;
 				}
 			}
 		}

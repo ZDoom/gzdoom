@@ -40,7 +40,7 @@ static fixed_t topslope, bottomslope;	// slopes to top and bottom of target
 static int SeePastBlockEverything;
 
 // Performance meters
-static int sightcounts[4];
+static int sightcounts[6];
 static cycle_t SightCycles;
 static cycle_t MaxSightCycles;
 
@@ -214,8 +214,10 @@ static bool P_SightTraverseIntercepts ()
 
 //
 // go through in order
+// [RH] Is it really necessary to go through in order? All we care about is if
+// the trace is obstructed, not what specifically obstructed it.
 //
-	in = 0;					// shut up compiler warning
+	in = NULL;
 
 	while (count--)
 	{
@@ -230,9 +232,12 @@ static bool P_SightTraverseIntercepts ()
 			}
 		}
 
-		if (!PTR_SightTraverse (in))
-			return false;					// don't bother going farther
-		in->frac = FIXED_MAX;
+		if (in != NULL)
+		{
+			if (!PTR_SightTraverse (in))
+				return false;					// don't bother going farther
+			in->frac = FIXED_MAX;
+		}
 	}
 
 	return true;			// everything was traversed
@@ -334,7 +339,7 @@ static bool P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 	mapx = xt1;
 	mapy = yt1;
 
-	for (count = 0 ; count < 64 ; count++)
+	for (count = 0 ; count < 100 ; count++)
 	{
 		if (!P_SightBlockLinesIterator (mapx, mapy))
 		{
@@ -345,21 +350,50 @@ sightcounts[1]++;
 		if ((mapxstep | mapystep) == 0)
 			break;
 
-		if ( (yintercept >> FRACBITS) == mapy)
+		switch ((((yintercept >> FRACBITS) == mapy) << 1) | ((xintercept >> FRACBITS) == mapx))
 		{
-			yintercept += ystep;
-			mapx += mapxstep;
-			if (mapx == xt2)
-				mapxstep = 0;
-		}
-		else if ( (xintercept >> FRACBITS) == mapx)
-		{
+		case 0:		// neither xintercept nor yintercept match!
+sightcounts[5]++;
+			// Continuing might won't make things any better, so we might as well stop right here
+			count = 100;
+			break;
+
+		case 1:		// xintercept matches
 			xintercept += xstep;
 			mapy += mapystep;
 			if (mapy == yt2)
 				mapystep = 0;
-		}
+			break;
 
+		case 2:		// yintercept matches
+			yintercept += ystep;
+			mapx += mapxstep;
+			if (mapx == xt2)
+				mapxstep = 0;
+			break;
+
+		case 3:		// xintercept and yintercept both match
+			sightcounts[4]++;
+			// The trace is exiting a block through its corner. Not only does the block
+			// being entered need to be checked (which will happen when this loop
+			// continues), but the other two blocks adjacent to the corner also need to
+			// be checked.
+			if (!P_SightBlockLinesIterator (mapx + mapxstep, mapy) ||
+				!P_SightBlockLinesIterator (mapx, mapy + mapystep))
+			{
+sightcounts[1]++;
+				return false;
+			}
+			xintercept += xstep;
+			yintercept += ystep;
+			mapx += mapxstep;
+			mapy += mapystep;
+			if (mapx == xt2)
+				mapxstep = 0;
+			if (mapy == yt2)
+				mapystep = 0;
+			break;
+		}
 	}
 
 
@@ -470,10 +504,10 @@ done:
 
 ADD_STAT (sight, out)
 {
-	sprintf (out, "%04.1f ms (%04.1f max), %5d %2d %3d %3d\n",
+	sprintf (out, "%04.1f ms (%04.1f max), %5d %2d%4d%4d%4d%4d%4d\n",
 		(double)SightCycles * 1000 * SecondsPerCycle,
 		(double)MaxSightCycles * 1000 * SecondsPerCycle,
-		sightcounts[3], sightcounts[0], sightcounts[1], sightcounts[2]);
+		sightcounts[3], sightcounts[0], sightcounts[1], sightcounts[2], sightcounts[3], sightcounts[4], sightcounts[5]);
 }
 
 void P_ResetSightCounters (bool full)
@@ -487,5 +521,5 @@ void P_ResetSightCounters (bool full)
 		MaxSightCycles = SightCycles;
 	}
 	SightCycles = 0;
-	sightcounts[0] = sightcounts[1] = sightcounts[2] = sightcounts[3] = 0;
+	memset (sightcounts, 0, sizeof(sightcounts));
 }

@@ -58,7 +58,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	FTexture::Span unmaskedSpan[2];
 	const FTexture::Span **spanptr, *spans;
 	static BYTE identitymap[256];
-	static short bottomclipper[MAXWIDTH];
+	static short bottomclipper[MAXWIDTH], topclipper[MAXWIDTH];
 	va_list tags;
 	DWORD tag;
 	BOOL boolval;
@@ -67,6 +67,9 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 	int windowleft = 0;
 	int windowright = img->GetWidth();
 	int dclip = this->GetHeight();
+	int uclip = 0;
+	int lclip = 0;
+	int rclip = this->GetWidth();
 	int destwidth = windowright << FRACBITS;
 	int destheight = img->GetHeight() << FRACBITS;
 	int top = img->TopOffset;
@@ -193,11 +196,35 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			windowright = va_arg (tags, int);
 			break;
 
+		case DTA_ClipTop:
+			uclip = va_arg (tags, int);
+			if (uclip < 0)
+			{
+				uclip = 0;
+			}
+			break;
+
 		case DTA_ClipBottom:
 			dclip = va_arg (tags, int);
 			if (dclip > this->GetHeight())
 			{
 				dclip = this->GetHeight();
+			}
+			break;
+
+		case DTA_ClipLeft:
+			lclip = va_arg (tags, int);
+			if (lclip < 0)
+			{
+				lclip = 0;
+			}
+			break;
+
+		case DTA_ClipRight:
+			rclip = va_arg (tags, int);
+			if (rclip > this->GetWidth())
+			{
+				rclip = this->GetWidth();
 			}
 			break;
 
@@ -332,7 +359,18 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 				}
 			}
 		}
-		mceilingclip = negonearray;
+		if (uclip != 0)
+		{
+			if (topclipper[0] != uclip)
+			{
+				clearbufshort (topclipper, screen->GetWidth(), (short)uclip);
+			}
+			mceilingclip = topclipper;
+		}
+		else
+		{
+			mceilingclip = zeroarray;
+		}
 		mfloorclip = bottomclipper;
 
 		if (flipX)
@@ -349,14 +387,14 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			frac += windowleft << FRACBITS;
 			x2 -= ((img->GetWidth() - windowright) * xscale) >> FRACBITS;
 		}
-		if (dc_x < 0)
+		if (dc_x < lclip)
 		{
-			frac += -dc_x * xiscale;
-			dc_x = 0;
+			frac += (lclip - dc_x) * xiscale;
+			dc_x = lclip;
 		}
-		if (x2 > Width)
+		if (x2 > rclip)
 		{
-			x2 = Width;
+			x2 = rclip;
 		}
 
 		if (destheight < 32*FRACUNIT)

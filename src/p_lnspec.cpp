@@ -1482,6 +1482,13 @@ FUNC(LS_Light_MaxNeighbor)
 	return true;
 }
 
+FUNC(LS_Light_Stop)
+// Light_Stop (tag)
+{
+	EV_StopLightEffect (arg0);
+	return true;
+}
+
 FUNC(LS_Radius_Quake)
 // Radius_Quake (intensity, duration, damrad, tremrad, tid)
 {
@@ -2237,7 +2244,7 @@ lnSpecFunc LineSpecials[256] =
 	LS_Light_Glow,
 	LS_Light_Flicker,
 	LS_Light_Strobe,
-	LS_NOP,		// 117
+	LS_Light_Stop,
 	LS_NOP,		// 118
 	LS_Thing_Damage,
 	LS_Radius_Quake,

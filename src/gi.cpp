@@ -39,9 +39,9 @@
 
 gameinfo_t gameinfo;
 
-const char *GameNames[5] =
+const char *GameNames[9] =
 {
-	NULL, "Doom", "Heretic", NULL, "Hexen"
+	NULL, "Doom", "Heretic", NULL, "Hexen", NULL, NULL, NULL, "Strife"
 };
 
 static char *quitsounds[8] =
@@ -117,6 +117,7 @@ gameinfo_t HexenGameInfo =
 	GAME_Hexen,
 	150,
 	"F_SKY",
+	24*FRACUNIT
 };
 
 gameinfo_t HexenDKGameInfo =
@@ -144,6 +145,7 @@ gameinfo_t HexenDKGameInfo =
 	GAME_Hexen,
 	150,
 	"F_SKY",
+	24*FRACUNIT
 };
 
 gameinfo_t HereticGameInfo =
@@ -171,6 +173,7 @@ gameinfo_t HereticGameInfo =
 	GAME_Heretic,
 	150,
 	"F_SKY1",
+	24*FRACUNIT
 };
 
 gameinfo_t HereticSWGameInfo =
@@ -198,6 +201,7 @@ gameinfo_t HereticSWGameInfo =
 	GAME_Heretic,
 	150,
 	"F_SKY1",
+	24*FRACUNIT
 };
 
 gameinfo_t SharewareGameInfo =
@@ -225,6 +229,7 @@ gameinfo_t SharewareGameInfo =
 	GAME_Doom,
 	100,
 	"F_SKY1",
+	24*FRACUNIT
 };
 
 gameinfo_t RegisteredGameInfo =
@@ -252,6 +257,7 @@ gameinfo_t RegisteredGameInfo =
 	GAME_Doom,
 	100,
 	"F_SKY1",
+	24*FRACUNIT
 };
 
 gameinfo_t RetailGameInfo =
@@ -279,6 +285,7 @@ gameinfo_t RetailGameInfo =
 	GAME_Doom,
 	100,
 	"F_SKY1",
+	24*FRACUNIT
 };
 
 gameinfo_t CommercialGameInfo =
@@ -306,6 +313,7 @@ gameinfo_t CommercialGameInfo =
 	GAME_Doom,
 	100,
 	"F_SKY1",
+	24*FRACUNIT
 };
 
 gameinfo_t StrifeGameInfo =
@@ -333,4 +341,5 @@ gameinfo_t StrifeGameInfo =
 	GAME_Strife,
 	150,
 	"F_SKY001",
+	16*FRACUNIT
 };

@@ -16,6 +16,7 @@
 #include "r_main.h"
 #include "i_system.h"
 #include "p_lnspec.h"
+#include "gi.h"
 
 #ifndef M_PI
 #define M_PI		3.14159265358979323846	// matches value in gcc v2 math.h
@@ -285,7 +286,7 @@ bool DCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
     if (!(thing->flags & MF_NOCLIP) )
     {
-        fixed_t maxstep = 24*FRACUNIT /*MAXSTEPMOVE*/;
+        fixed_t maxstep = gameinfo.StepHeight;
         if (tmceilingz - tmfloorz < thing->height)
             return false;       // doesn't fit
 
@@ -295,7 +296,7 @@ bool DCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 				return false;
 
 			//Jumpable
-			if(tmfloorz>(thing->Sector->floorplane.ZatPoint (x, y)+24*FRACUNIT /*MAXSTEPMOVE*/))
+			if(tmfloorz>(thing->Sector->floorplane.ZatPoint (x, y)+gameinfo.StepHeight))
 				cmd->ucmd.buttons |= BT_JUMP;
 
 
@@ -313,7 +314,7 @@ bool DCajunMaster::CleanAhead (AActor *thing, fixed_t x, fixed_t y, ticcmd_t *cm
 
 
 			if ( !(thing->flags&(MF_DROPOFF|MF_FLOAT))
-			&& tmfloorz - tmdropoffz > 24*FRACUNIT /*MAXSTEPMOVE*/ )
+			&& tmfloorz - tmdropoffz > gameinfo.StepHeight )
 				return false;       // don't stand over a dropoff
 
 		}

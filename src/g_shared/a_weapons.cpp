@@ -31,7 +31,12 @@ int maxammo[NUMAMMO] =
 	150,		// mace
 
 	MAX_MANA,	// blue mana
-	MAX_MANA	// green mana
+	MAX_MANA,	// green mana
+
+	50,			// electric bolts
+	25,			// poison bolts
+	30,			// high-explosive grenades
+	16,			// white phosphorus grenades
 };
 
 static weapontype_t GetAmmoChange[] =
@@ -224,7 +229,7 @@ bool AWeapon::TryPickup (AActor *toucher)
 		
 	if (wpnlev1info[weapon]->givingammo != am_noammo)
 	{
-		if (gameinfo.gametype == GAME_Doom && (flags & MF_DROPPED))
+		if ((gameinfo.gametype & (GAME_Doom|GAME_Strife)) && (flags & MF_DROPPED))
 		{ // give one clip with a dropped weapon,
 		  // two clips with a found weapon
 			gaveammo = P_GiveAmmo (player, wpnlev1info[weapon]->givingammo,

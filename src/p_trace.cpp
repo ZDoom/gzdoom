@@ -160,7 +160,15 @@ static BOOL PTR_TraceIterator (intercept_t *in)
 				CurSector = lineside ? in->d.line->backsector : in->d.line->frontsector;
 			}
 		}
-		entersector = (lineside == 0) ? in->d.line->backsector : in->d.line->frontsector;
+
+		if (!(in->d.line->flags & ML_TWOSIDED))
+		{
+			entersector = NULL;
+		}
+		else
+		{
+			entersector = (lineside == 0) ? in->d.line->backsector : in->d.line->frontsector;
+		}
 
 		ff = CurSector->floorplane.ZatPoint (hitx, hity);
 		fc = CurSector->ceilingplane.ZatPoint (hitx, hity);

@@ -260,7 +260,7 @@ BOOL P_CheckMissileRange (AActor *actor)
 {
 	fixed_t dist;
 		
-	if (!P_CheckSight (actor, actor->target, 0))
+	if (!P_CheckSight (actor, actor->target, 4))
 		return false;
 		
 	if (actor->flags & MF_JUSTHIT)
@@ -314,7 +314,7 @@ BOOL P_Move (AActor *actor)
 	if (!(actor->flags & MF_NOGRAVITY) && actor->z > actor->floorz
 		&& !(actor->flags2 & MF2_ONMOBJ))
 	{
-		if (actor->z > actor->floorz + 24*FRACUNIT)
+		if (actor->z > actor->floorz + gameinfo.StepHeight)
 		{
 			return false;
 		}

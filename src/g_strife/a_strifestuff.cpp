@@ -6,11 +6,19 @@
 #include "a_action.h"
 #include "p_local.h"
 #include "a_doomglobal.h"
+#include "a_strifeglobal.h"
 #include "p_enemy.h"
+#include "p_lnspec.h"
+
+// Notes so I don't forget them:
+// Strife does some extra stuff in A_Explode if a player caused the explosion.
+// See the instructions @ 21249.
 
 /* These mobjinfos have been converted:
 
 	  1 StrifePlayer
+
+     27 MaulerPuff
 
 	 31 Tank1
 	 32 Tank2
@@ -19,6 +27,9 @@
 	 35 Tank5
 	 36 Tank6
 
+	 51 RocketTrail
+	 52 Reaver (incomplete)
+
 	 76 EntityNest
 	 77 EntityPod
 
@@ -26,12 +37,48 @@
 
 	 88 Zap5 (incomplete)
 
+	 99 MiniMissile
+
+    102 ElectricBolt
+	103 PoisonBolt
+
+	106 HEGrenade
+	107 PhosphorousGrenade
+
+	109 PhosphorousFire
+	110 MaulerTorpedo
+	111 MaulerTorpedoWave
+	112 FlameMissile
+	113 FastFlameMissile
+	114 ElectricBoltAmmo
+	115 StrifePuff
+    116 StrifeSpark
+
 	121 KlaxonWarningLight (incomplete)
 
 	124 Computer (incomplete)
 
 	131 WaterBottle
 	132 Mug
+
+	177 HEGrenadeRounds
+	178 PhosphorusGrenadeRounds
+	179 ClipOfBullets
+	180 BoxOfBullets
+	181 MiniMissiles
+	182 CrateOfMissiles
+	183 EnergyPod
+	184 EnergyPack
+	185 PoisonBolts
+	186 ElectricBolts
+	187 AmmoSatchel
+	188 AssaultGun
+	189 AssaultGunStanding
+	190 FlameThrower
+
+	192 MiniMissileLauncher
+	193 Mauler
+	194 ElectricCrossbow
 
 	201 PowerCrystal (incomplete)
 
@@ -134,14 +181,15 @@
 static FRandom pr_gibtosser ("GibTosser");
 static FRandom pr_bang4cloud ("Bang4Cloud");
 static FRandom pr_lightout ("LightOut");
+static FRandom pr_reaverattack ("ReaverAttack");
 
 void A_TossGib (AActor *);
 void A_LoopActiveSound (AActor *);
 void A_FLoopActiveSound (AActor *);
-void A_TimedExplode (AActor *);
+void A_Countdown (AActor *);
 void A_Bang4Cloud (AActor *);
 void A_LightGoesOut (AActor *);
-
+void A_XXScream (AActor *);
 
 // Tank 1 (Huge) ------------------------------------------------------------
 
@@ -269,6 +317,137 @@ IMPLEMENT_ACTOR (ATank6, Strife, 229, 0)
 	PROP_Flags (MF_SOLID)
 END_DEFAULTS
 
+// Reaver -------------------------------------------------------------------
+
+void A_ReaverMelee (AActor *self);
+void A_ReaverRanged (AActor *self);
+
+void A_21230 (AActor *) {}
+
+class AReaver : public AActor
+{
+	DECLARE_ACTOR (AReaver, AActor)
+public:
+	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+	{
+		damage = dist = 32;
+	}
+};
+
+FState AReaver::States[] =
+{
+#define S_REAVER_STND (0)
+	S_NORMAL (ROB1, 'A',   10, A_Look,				&States[S_REAVER_STND]),
+	// Needless duplication of the previous state removed
+
+#define S_REAVER_RUN (S_REAVER_STND+1)
+	S_NORMAL (ROB1, 'B',	3, A_Chase,				&States[S_REAVER_RUN+1]),
+	S_NORMAL (ROB1, 'B',	3, A_Chase,				&States[S_REAVER_RUN+2]),
+	S_NORMAL (ROB1, 'C',	3, A_Chase,				&States[S_REAVER_RUN+3]),
+	S_NORMAL (ROB1, 'C',	3, A_Chase,				&States[S_REAVER_RUN+4]),
+	S_NORMAL (ROB1, 'D',	3, A_Chase,				&States[S_REAVER_RUN+5]),
+	S_NORMAL (ROB1, 'D',	3, A_Chase,				&States[S_REAVER_RUN+6]),
+	S_NORMAL (ROB1, 'E',	3, A_Chase,				&States[S_REAVER_RUN+7]),
+	S_NORMAL (ROB1, 'E',	3, A_Chase,				&States[S_REAVER_RUN]),
+
+#define S_REAVER_MELEE (S_REAVER_RUN+8)
+	S_NORMAL (ROB1, 'H',	6, A_FaceTarget,		&States[S_REAVER_MELEE+1]),
+	S_NORMAL (ROB1, 'I',	8, A_ReaverMelee,		&States[S_REAVER_MELEE+2]),
+	S_NORMAL (ROB1, 'H',	6, NULL,				&States[S_REAVER_RUN]),
+
+#define S_REAVER_MISSILE (S_REAVER_MELEE+3)
+	S_NORMAL (ROB1, 'F',	8, A_FaceTarget,		&States[S_REAVER_MISSILE+1]),
+	S_BRIGHT (ROB1, 'G',   11, A_ReaverRanged,		&States[S_REAVER_RUN]),
+
+#define S_REAVER_PAIN (S_REAVER_MISSILE+2)
+	S_NORMAL (ROB1, 'A',	2, NULL,				&States[S_REAVER_PAIN+1]),
+	S_NORMAL (ROB1, 'A',	2, A_Pain,				&States[S_REAVER_RUN]),
+
+#define S_REAVER_DEATH (S_REAVER_PAIN+2)
+	S_BRIGHT (ROB1, 'J',	6, NULL,				&States[S_REAVER_DEATH+1]),
+	S_BRIGHT (ROB1, 'K',	6, A_Scream,			&States[S_REAVER_DEATH+2]),
+	S_BRIGHT (ROB1, 'L',	5, NULL,				&States[S_REAVER_DEATH+3]),
+	S_BRIGHT (ROB1, 'M',	5, A_NoBlocking,		&States[S_REAVER_DEATH+4]),
+	S_BRIGHT (ROB1, 'N',	5, NULL,				&States[S_REAVER_DEATH+5]),
+	S_BRIGHT (ROB1, 'O',	5, NULL,				&States[S_REAVER_DEATH+6]),
+	S_BRIGHT (ROB1, 'P',	5, NULL,				&States[S_REAVER_DEATH+7]),
+	S_BRIGHT (ROB1, 'Q',	6, A_Explode,			&States[S_REAVER_DEATH+8]),
+	S_NORMAL (ROB1, 'R',   -1, NULL,				NULL),
+
+#define S_REAVER_XDEATH (S_REAVER_DEATH+9)
+	S_BRIGHT (ROB1, 'L',	5, A_TossGib,			&States[S_REAVER_XDEATH+1]),
+	S_BRIGHT (ROB1, 'M',	5, A_XXScream,			&States[S_REAVER_XDEATH+2]),
+	S_BRIGHT (ROB1, 'N',	5, A_TossGib,			&States[S_REAVER_XDEATH+3]),
+	S_BRIGHT (ROB1, 'O',	5, A_NoBlocking,		&States[S_REAVER_XDEATH+4]),
+	S_BRIGHT (ROB1, 'P',	5, A_TossGib,			&States[S_REAVER_XDEATH+5]),
+	S_BRIGHT (ROB1, 'Q',	6, A_Explode,			&States[S_REAVER_XDEATH+6]),
+	S_NORMAL (ROB1, 'R',   -1, NULL,				NULL),
+};
+
+IMPLEMENT_ACTOR (AReaver, Strife, 3001, 0)
+	PROP_SpawnHealth (150)
+	PROP_PainChance (128)
+	PROP_SpeedFixed (12)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (60)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
+	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP)
+
+	PROP_Mass (500)
+	PROP_SpawnState (S_REAVER_STND)
+	PROP_SeeState (S_REAVER_RUN)
+	PROP_PainState (S_REAVER_PAIN)
+	PROP_MeleeState (S_REAVER_MELEE)
+	PROP_MissileState (S_REAVER_MISSILE)
+	PROP_DeathState (S_REAVER_DEATH)
+	PROP_XDeathState (S_REAVER_XDEATH)
+
+	PROP_SeeSound ("reaver/sight")
+	PROP_PainSound ("reaver/pain")
+	PROP_DeathSound ("reaver/death")
+	PROP_ActiveSound ("reaver/active")
+END_DEFAULTS
+
+void A_ReaverMelee (AActor *self)
+{
+	if (self->target != NULL)
+	{
+		A_FaceTarget (self);
+
+		if (P_CheckMeleeRange (self))
+		{
+			int damage;
+
+			S_Sound (self, CHAN_WEAPON, "reaver/blade", 1, ATTN_NORM);
+			damage = ((pr_reaverattack() & 7) + 1) * 3;
+			P_DamageMobj (self->target, self, self, damage, MOD_HIT);
+			P_TraceBleed (damage, self->target, self);
+		}
+	}
+}
+
+void A_ReaverRanged (AActor *self)
+{
+	if (self->target != NULL)
+	{
+		angle_t bangle;
+		int pitch;
+
+		PuffType = RUNTIME_CLASS(AStrifePuff);
+		A_FaceTarget (self);
+		S_Sound (self, CHAN_WEAPON, "reaver/attack", 1, ATTN_NORM);
+		bangle = self->angle;
+		pitch = P_AimLineAttack (self, bangle, MISSILERANGE);
+
+		for (int i = 0; i < 3; ++i)
+		{
+			angle_t angle = bangle + (pr_reaverattack.Random2() << 20);
+			int damage = ((pr_reaverattack() & 7) + 1) * 3;
+			P_LineAttack (self, angle, MISSILERANGE, pitch, damage);
+		}
+	}
+}
+
 // Entity Nest --------------------------------------------------------------
 
 class AEntityNest : public AActor
@@ -361,10 +540,10 @@ class AZap5 : public AActor
 
 FState AZap5::States[] =
 {
-	S_BRIGHT (ZAP5, 'A', 4, A_TimedExplode, &States[1]),
+	S_BRIGHT (ZAP5, 'A', 4, A_Countdown, &States[1]),
 	S_BRIGHT (ZAP5, 'B', 4, A_201fc, &States[2]),
-	S_BRIGHT (ZAP5, 'C', 4, A_TimedExplode, &States[3]),
-	S_BRIGHT (ZAP5, 'D', 4, A_TimedExplode, &States[0]),
+	S_BRIGHT (ZAP5, 'C', 4, A_Countdown, &States[3]),
+	S_BRIGHT (ZAP5, 'D', 4, A_Countdown, &States[0]),
 };
 
 IMPLEMENT_ACTOR (AZap5, Strife, -1, 0)
@@ -407,7 +586,7 @@ void A_2100c (AActor *self)
 	// This function does a lot more than just this
 	if (self->DeathSound != 0)
 	{
-		S_SoundID (self, CHAN_BODY, self->DeathSound, 1.0, ATTN_NORM);
+		S_SoundID (self, CHAN_VOICE, self->DeathSound, 1.0, ATTN_NORM);
 		S_SoundID (self, 6, self->DeathSound, 1.0, ATTN_NORM);
 	}
 }
@@ -644,6 +823,11 @@ END_DEFAULTS
 class AExplosiveBarrel2 : public AExplosiveBarrel
 {
 	DECLARE_ACTOR (AExplosiveBarrel2, AExplosiveBarrel)
+public:
+	void GetExplodeParms (int &damage, int &dist, bool &hurtSource)
+	{
+		damage = dist = 64;
+	}
 };
 
 FState AExplosiveBarrel2::States[] =
@@ -680,7 +864,27 @@ class ATargetPractice : public AActor
 	DECLARE_ACTOR (ATargetPractice, AActor)
 };
 
-void A_20e10 (AActor *) {}
+void A_20e10 (AActor *self)
+{
+	sector_t *sec = self->Sector;
+
+	if (self->z == sec->floorplane.ZatPoint (self->x, self->y))
+	{
+		if ((sec->special & 0xFF) == Damage_InstantDeath)
+		{
+			P_DamageMobj (self, NULL, NULL, 999);
+		}
+		else if ((sec->special & 0xFF) == Scroll_StrifeCurrent)
+		{
+			int anglespeed = sec->tag - 100;
+			fixed_t speed = (anglespeed % 10) << (FRACBITS - 4);
+			angle_t finean = (anglespeed / 10) << (32-3);
+			finean >>= ANGLETOFINESHIFT;
+			self->momx += FixedMul (speed, finecosine[finean]);
+			self->momy += FixedMul (speed, finesine[finean]);
+		}
+	}
+}
 
 FState ATargetPractice::States[] =
 {
@@ -2196,7 +2400,7 @@ FState AAmmoFiller::States[] =
 	S_NORMAL (AFED, 'A', -1, NULL, NULL)
 };
 
-IMPLEMENT_ACTOR (AAmmoFiller, Strife, 189, 0)
+IMPLEMENT_ACTOR (AAmmoFiller, Strife, 228, 0)
 	PROP_SpawnState (0)
 	PROP_RadiusFixed (12)
 	PROP_HeightFixed (24)
@@ -2509,11 +2713,11 @@ void A_FLoopActiveSound (AActor *self)
 {
 	if (self->ActiveSound != 0 && !(level.time & 7))
 	{
-		S_SoundID (self, CHAN_BODY, self->ActiveSound, 1, ATTN_NORM);
+		S_SoundID (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
 	}
 }
 
-void A_TimedExplode (AActor *self)
+void A_Countdown (AActor *self)
 {
 	if (--self->reactiontime <= 0)
 	{
@@ -2549,8 +2753,8 @@ void A_LightGoesOut (AActor *self)
 
 void A_LoopActiveSound (AActor *self)
 {
-	if (self->ActiveSound != 0 && !S_IsActorPlayingSomething (self, CHAN_BODY))
+	if (self->ActiveSound != 0 && !S_IsActorPlayingSomething (self, CHAN_VOICE))
 	{
-		S_LoopedSoundID (self, CHAN_BODY, self->ActiveSound, 1, ATTN_NORM);
+		S_LoopedSoundID (self, CHAN_VOICE, self->ActiveSound, 1, ATTN_NORM);
 	}
 }

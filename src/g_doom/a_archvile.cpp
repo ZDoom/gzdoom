@@ -221,6 +221,7 @@ BOOL PIT_VileCheck (AActor *thing)
 //
 void A_VileChase (AActor *self)
 {
+	static TArray<AActor *> vilebt;
 	int xl, xh, yl, yh;
 	int bx, by;
 
@@ -242,6 +243,7 @@ void A_VileChase (AActor *self)
 		
 		vileobj = self;
 		validcount++;
+		vilebt.Clear();
 
 		for (bx = xl; bx <= xh; bx++)
 		{
@@ -250,7 +252,7 @@ void A_VileChase (AActor *self)
 				// Call PIT_VileCheck to check
 				// whether object is a corpse
 				// that canbe raised.
-				if (!P_BlockThingsIterator (bx, by, PIT_VileCheck))
+				if (!P_BlockThingsIterator (bx, by, PIT_VileCheck, vilebt))
 				{
 					// got one!
 					temp = self->target;

@@ -2377,8 +2377,8 @@ static void P_GroupLines (bool buildmap)
 		}
 
 		// set the soundorg to the middle of the bounding box
-		sector->soundorg[0] = (bbox.Right()+bbox.Left())/2;
-		sector->soundorg[1] = (bbox.Top()+bbox.Bottom())/2;
+		sector->soundorg[0] = bbox.Right()/2 + bbox.Left()/2;
+		sector->soundorg[1] = bbox.Top()/2 + bbox.Bottom()/2;
 		sector->soundorg[2] = sector->floorplane.ZatPoint (sector->soundorg[0], sector->soundorg[1]);
 
 		// Find a triangle in the sector for sorting extra lights

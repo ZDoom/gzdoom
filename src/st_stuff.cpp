@@ -66,6 +66,17 @@ BYTE CheatPowerup[7][10] =
 	{ 'i','d','b','e','h','o','l','d','l', 255 },
 	{ 'i','d','b','e','h','o','l','d', 255 }
 };
+BYTE CheatPowerup2[8][10] =
+{
+	{ 'p','u','m','p','u','p','b',255 },
+	{ 'p','u','m','p','u','p','i',255 },
+	{ 'p','u','m','p','u','p','m',255 },
+	{ 'p','u','m','p','u','p','h',255 },
+	{ 'p','u','m','p','u','p','p',255 },
+	{ 'p','u','m','p','u','p','s',255 },
+	{ 'p','u','m','p','u','p','t',255 },
+	{ 'p','u','m','p','u','p',255 },
+};
 
 // Smashing Pumpkins Into Small Piles Of Putrid Debris. 
 static BYTE CheatNoclip[] =		{ 'i','d','s','p','i','s','p','o','p','d',255 };
@@ -113,6 +124,21 @@ static BYTE CheatScript1[] =	{ 'p','u','k','e',255 };
 static BYTE CheatScript2[] =	{ 'p','u','k','e',0,255 };
 static BYTE CheatScript3[] =	{ 'p','u','k','e',0,0,255 };
 #endif
+
+static BYTE CheatSpin[] =		{ 's','p','i','n',0,0,255 };
+static BYTE CheatRift[] =		{ 'r','i','f','t',0,0,255 };
+static BYTE CheatGPS[] =		{ 'g','p','s',255 };
+static BYTE CheatGripper[] =	{ 'g','r','i','p','p','e','r',255 };
+static BYTE CheatLego[] =		{ 'l','e','g','o',255 };
+static BYTE CheatDots[] =		{ 'd','o','t','s',255 };
+static BYTE CheatScoot[] =		{ 's','c','o','o','t',0,255 };
+static BYTE CheatDonnyTrump[] =	{ 'd','o','n','n','y','t','r','u','m','p',255 };
+static BYTE CheatOmnipotent[] =	{ 'o','m','n','i','p','o','t','e','n','t',255 };
+static BYTE CheatJimmy[] =		{ 'j','i','m','m','y',255 };
+static BYTE CheatBoomstix[] =	{ 'b','o','o','m','s','t','i','x',255 };
+static BYTE CheatStoneCold[] =	{ 's','t','o','n','e','c','o','l','d',255 };
+static BYTE CheatElvis[] =		{ 'e','l','v','i','s' };
+static BYTE CheatTopo[] =		{ 't','o','p','o',255 };
 
 static cheatseq_t DoomCheats[] =
 {
@@ -170,6 +196,23 @@ static cheatseq_t HexenCheats[] =
 	{ CheatMapsco,			0, 0, 0, {0,0},				Cht_AutoMap }
 };
 
+static cheatseq_t StrifeCheats[] =
+{
+	{ CheatSpin,			0, 1, 0, {0,0},				Cht_Music },
+	{ CheatPowerup2[7],		0, 1, 0, {0,0},				Cht_BeholdMenu },
+	{ CheatGPS,				0, 1, 0, {0,0},				Cht_MyPos },
+	{ CheatTopo,			0, 0, 0, {0,0},				Cht_AutoMap },
+	{ CheatDots,			0, 1, 0, {0,0},				Cht_Ticker },
+	{ CheatOmnipotent,		0, 0, 0, {CHT_IDDQD,0},		Cht_Generic },
+	{ CheatJimmy,			0, 0, 0, {CHT_KEYS,0},		Cht_Generic },
+	{ CheatBoomstix,		0, 0, 0, {CHT_IDFA,0},		Cht_Generic },
+	{ CheatElvis,			0, 0, 0, {CHT_NOCLIP,0},	Cht_Generic },
+	{ CheatStoneCold,		0, 0, 0, {CHT_MASSACRE,0},	Cht_Generic },
+	{ CheatPowerup2[0],		0, 0, 0, {CHT_BEHOLDS,0},	Cht_Generic },
+	{ CheatPowerup2[1],		0, 0, 0, {CHT_BEHOLDI,0},	Cht_Generic },
+	{ CheatRift,			0, 0, 0, {0,0},				Cht_ChangeLevel }
+};
+
 extern BOOL CheckCheatmode ();
 
 // Respond to keyboard input events, intercept cheats.
@@ -178,45 +221,35 @@ BOOL ST_Responder (event_t *ev)
 {
 	BOOL eat = false;
 
-#if 0
-	// Filter automap on/off.
-	if (ev->type == EV_KeyUp && ((ev->data1 & 0xffff0000) == AM_MSGHEADER))
-	{
-		switch (ev->data1 & 0xffff0000)
-		{
-		case AM_MSGENTERED:
-			break;
-			
-		case AM_MSGEXITED:
-			break;
-		}
-	}
-	else
-#endif
-
 	if (ev->type == EV_KeyDown)
 	{
 		cheatseq_t *cheats;
 		int numcheats;
 		int i;
 
-		if (gameinfo.gametype == GAME_Doom)
+		switch (gameinfo.gametype)
 		{
+		case GAME_Doom:
 			cheats = DoomCheats;
 			numcheats = COUNT_CHEATS(DoomCheats);
-		}
-		else if (gameinfo.gametype == GAME_Heretic)
-		{
+			break;
+
+		case GAME_Heretic:
 			cheats = HereticCheats;
 			numcheats = COUNT_CHEATS(HereticCheats);
-		}
-		else if (gameinfo.gametype == GAME_Hexen)
-		{
+			break;
+
+		case GAME_Hexen:
 			cheats = HexenCheats;
 			numcheats = COUNT_CHEATS(HexenCheats);
-		}
-		else
-		{
+			break;
+
+		case GAME_Strife:
+			cheats = StrifeCheats;
+			numcheats = COUNT_CHEATS(StrifeCheats);
+			break;
+
+		default:
 			return false;
 		}
 

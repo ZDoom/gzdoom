@@ -158,6 +158,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_PainSound:	actor->PainSound = datasound;	break;
 		case ADEF_DeathSound:	actor->DeathSound = datasound;	break;
 		case ADEF_ActiveSound:	actor->ActiveSound = datasound;	break;
+		case ADEF_Tag:			/* Do nothing for now */		break;
 
 		case ADEF_XScale:		actor->xscale = dataint;		break;
 		case ADEF_YScale:		actor->yscale = dataint;		break;

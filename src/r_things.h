@@ -75,7 +75,7 @@ extern vissprite_t		vsprsortedhead;
 
 // Constant arrays used for psprite clipping
 //	and initializing clipping.
-extern short			negonearray[MAXWIDTH];
+extern short			zeroarray[MAXWIDTH];
 extern short			screenheightarray[MAXWIDTH];
 
 // vars for R_DrawMaskedColumn

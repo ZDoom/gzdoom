@@ -19,6 +19,7 @@ void A_MarineLook (AActor *);
 void A_MarineNoise (AActor *);
 void A_MarineChase (AActor *);
 void A_M_Refire (AActor *);
+void A_M_SawRefire (AActor *);
 void A_M_Saw (AActor *);
 void A_M_Punch (AActor *);
 void A_M_BerserkPunch (AActor *);
@@ -96,7 +97,7 @@ FState AScriptedMarine::States[] =
 #define S_MPLAY_ATK_CHAINSAW (S_MPLAY_RAISE+6)
 	S_NORMAL (PLAY, 'E',	4, A_MarineNoise				, &States[S_MPLAY_ATK_CHAINSAW+1]),
 	S_BRIGHT (PLAY, 'F',	4, A_M_Saw						, &States[S_MPLAY_ATK_CHAINSAW+2]),
-	S_BRIGHT (PLAY, 'F',	0, A_M_Refire					, &States[S_MPLAY_ATK_CHAINSAW+1]),
+	S_BRIGHT (PLAY, 'F',	0, A_M_SawRefire				, &States[S_MPLAY_ATK_CHAINSAW+1]),
 	S_NORMAL (PLAY, 'A',	0, NULL							, &States[S_MPLAY_RUN]),
 
 #define S_MPLAY_ATK_FIST (S_MPLAY_ATK_CHAINSAW+4)
@@ -282,6 +283,10 @@ void AScriptedMarine::Tick ()
 			{
 				special1 = 0;
 			}
+			else
+			{
+				flags |= MF_JUSTATTACKED;
+			}
 		}
 	}
 }
@@ -307,7 +312,7 @@ void AScriptedMarine::SetWeapon (EMarineWeapon type)
 		break;
 
 	case WEAPON_Chainsaw:
-		MeleeState = MissileState = &States[S_MPLAY_ATK_CHAINSAW];
+		MeleeState = &States[S_MPLAY_ATK_CHAINSAW];
 		break;
 
 	case WEAPON_Pistol:
@@ -382,6 +387,25 @@ void A_M_Refire (AActor *self)
 	}
 	if (!P_CheckSight (self, self->target) ||
 		pr_m_refire() < 4)	// Small chance of stopping even when target not dead
+	{
+		self->SetState (self->state + 1);
+	}
+}
+
+//============================================================================
+//
+// A_M_SawRefire
+//
+//============================================================================
+
+void A_M_SawRefire (AActor *self)
+{
+	if (self->target == NULL || self->target->health <= 0)
+	{
+		self->SetState (self->state + 1);
+		return;
+	}
+	if (!P_CheckMeleeRange (self))
 	{
 		self->SetState (self->state + 1);
 	}
@@ -480,7 +504,7 @@ void A_M_Saw (AActor *self)
 	{
 		S_Sound (self, CHAN_WEAPON, "weapons/sawfull", 1, ATTN_NORM);
 	}
-	A_Chase (self);
+	//A_Chase (self);
 }
 
 //============================================================================
@@ -839,7 +863,7 @@ class AMarineChainsaw : public AScriptedMarine
 IMPLEMENT_STATELESS_ACTOR (AMarineChainsaw, Doom, 9103, 0)
 	PROP_SpawnState (S_MPLAYSTILL)
 	PROP_MeleeState (S_MPLAY_ATK_CHAINSAW)
-	PROP_MissileState (S_MPLAY_ATK_CHAINSAW)
+	PROP_MissileState (255)
 END_DEFAULTS
 
 //---------------------------------------------------------------------------

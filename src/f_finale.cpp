@@ -38,7 +38,7 @@
 #include "r_state.h"
 #include "r_draw.h"
 #include "hu_stuff.h"
-
+#include "cmdlib.h"
 #include "gi.h"
 
 static void FadePic ();
@@ -75,7 +75,7 @@ void	F_CastDrawer (void);
 // F_StartFinale
 //
 void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid, char *flat, char *text,
-					BOOL textInLump, BOOL finalePic)
+					BOOL textInLump, BOOL finalePic, BOOL lookupText)
 {
 	bool ending = strncmp (level.nextmap, "enDSeQ", 6) == 0;
 	bool loopmusic = ending ? !(gameinfo.flags & GI_NOLOOPFINALEMUSIC) : true;
@@ -115,6 +115,15 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 		FinaleTextLen = strlen (from) + 1;
 		FinaleText = new char[FinaleTextLen];
 		memcpy (FinaleText, from, FinaleTextLen);
+	}
+	if (lookupText)
+	{
+		int strnum = GStrings.FindString (FinaleText);
+		if (strnum >= 0)
+		{
+			ReplaceString (&FinaleText, GStrings(strnum));
+			FinaleTextLen = strlen (FinaleText) + 1;
+		}
 	}
 
 	FinaleStage = 0;
@@ -688,7 +697,8 @@ BOOL F_CastResponder (event_t* ev)
 		castattacking = false;
 		if (castnum == 16)
 		{
-			S_Sound (CHAN_VOICE, "*death", 1, ATTN_NONE);
+			//int id = S_LookupPlayerSound (
+			S_Sound (players[consoleplayer].mo, CHAN_VOICE, "*death", 1, ATTN_NONE);
 		}
 		else if (castorder[castnum].info->DeathSound)
 		{
@@ -930,16 +940,14 @@ void F_DrawUnderwater(void)
 		{
 		PalEntry *palette;
 		FMemLump lump;
-		const byte *orgpal;
 		int i;
 
-		lump = Wads.ReadLump ("PLAYPAL");
-		orgpal = (byte *)lump.GetMem();
 		palette = screen->GetPalette ();
-		for (i = 256; i > 0; i--, orgpal += 3)
+		for (i = 0; i < 256; ++i)
 		{
-			*palette++ = PalEntry (orgpal[0], orgpal[1], orgpal[2]);
+			palette[i] = GPalette.BaseColors[i];
 		}
+		screen->UpdatePalette ();
 
 		screen->UpdatePalette ();
 		lump = Wads.ReadLump ("TITLE");
@@ -1026,8 +1034,7 @@ void F_Drawer (void)
 			int picnum = TexMan.CheckForTexture (FinaleFlat, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
 			if (picnum >= 0)
 			{
-				FTexture *pic = TexMan(picnum);
-				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, pic->GetPixels());
+				screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan(picnum));
 			}
 			else
 			{

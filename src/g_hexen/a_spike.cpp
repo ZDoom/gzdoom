@@ -62,6 +62,8 @@ BOOL PIT_ThrustStompThing (AActor *thing)
 
 void P_ThrustSpike (AActor *actor)
 {
+	static TArray<AActor *> spikebt;
+
 	int xl,xh,yl,yh,bx,by;
 	int x0,x2,y0,y2;
 
@@ -77,10 +79,12 @@ void P_ThrustSpike (AActor *actor)
 	yl = (y0 - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
 	yh = (y2 - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
+	spikebt.Clear();
+
 	// stomp on any things contacted
 	for (bx = xl; bx <= xh; bx++)
 		for (by = yl; by <= yh; by++)
-			P_BlockThingsIterator (bx, by, PIT_ThrustStompThing);
+			P_BlockThingsIterator (bx, by, PIT_ThrustStompThing, spikebt);
 }
 
 // AThrustFloor is just a container for all the spike states.

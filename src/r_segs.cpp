@@ -1794,6 +1794,10 @@ static void R_RenderBoundWallSprite (AActor *actor, drawseg_t *clipper, int pass
 		//flipx = SpriteFrames[sprites[actor->sprite].spriteframes + actor->frame].flip & 1;
 		return;
 	}
+	if (WallSpriteTile->UseType == FTexture::TEX_Null)
+	{
+		return;
+	}
 
 	// Determine left and right edges of sprite. Since this sprite is bound
 	// to a wall, we use the wall's angle instead of the actor's. This is

@@ -640,8 +640,36 @@ void FWadCollection::ScanForFlatHack (int startlump)
 
 				// When F_END is found, back up past any lumps of length
 				// 4096, then insert an F_START marker.
-				for (j = i - 1; LumpInfo[j].size == 4096; --j)
+				for (j = i - 1; j >= startlump && LumpInfo[j].size == 4096; --j)
 				{
+				}
+				if (j == i - 1)
+				{
+					// Oh no! There are no flats immediately before F_END. Maybe they are
+					// at the beginning of the wad (e.g. slipgate.wad).
+					for (j = startlump; LumpInfo[j].size == 4096; ++j)
+					{
+					}
+					if (j > startlump)
+					{
+						// Okay, there are probably flats at the beginning of the wad.
+						// Move the F_END marker so it immediately follows them, and
+						// then add an F_START marker at the start of the wad.
+						for (; i > j; --i)
+						{
+							LumpInfo[i] = LumpInfo[i-1];
+						}
+						strcpy (LumpInfo[j].name, "F_END");
+						LumpInfo[j].size = 0;
+						LumpInfo[j].namespc = ns_global;
+						LumpInfo[j].flags = 0;
+						j = startlump - 1;
+					}
+					else
+					{
+						// Oh well. There won't be any flats loaded from this wad, I guess.
+						j = i - 1;
+					}
 				}
 				++NumLumps;
 				LumpInfo = (LumpRecord *)Realloc (LumpInfo, NumLumps*sizeof(LumpRecord));
@@ -649,11 +677,11 @@ void FWadCollection::ScanForFlatHack (int startlump)
 				{
 					LumpInfo[i+1] = LumpInfo[i];
 				}
-				++j;
-				strcpy (LumpInfo[j].name, "F_START");
-				LumpInfo[j].size = 0;
-				LumpInfo[j].namespc = ns_global;
-				LumpInfo[j].flags = 0;
+				++i;
+				strcpy (LumpInfo[i].name, "F_START");
+				LumpInfo[i].size = 0;
+				LumpInfo[i].namespc = ns_global;
+				LumpInfo[i].flags = 0;
 				return;
 			}
 		}

@@ -1307,8 +1307,7 @@ void R_DrawBorder (int x1, int y1, int x2, int y2)
 	picnum = TexMan.CheckForTexture (gameinfo.borderFlat, FTexture::TEX_Flat);
 	if (picnum >= 0)
 	{
-		const BYTE *flat = TexMan[picnum]->GetPixels ();
-		screen->FlatFill (x1 & ~63, y1, x2, y2, flat);
+		screen->FlatFill (x1, y1, x2, y2, TexMan(picnum));
 	}
 	else
 	{

@@ -1386,6 +1386,7 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendG
 		<< BlendB
 		<< BlendA;
+	pendingweapon = wp_nochange;
 	for (i = 0; i < NUMARMOR; i++)
 	{
 		arc << armorpoints[i];
@@ -1431,10 +1432,24 @@ void player_s::Serialize (FArchive &arc)
 		arc << keys[i];
 	for (i = 0; i < MAXPLAYERS; i++)
 		arc << frags[i];
-	for (i = 0; i < NUMWEAPONS; i++)
-		arc << weaponowned[i];
-	for (i = 0; i < NUMAMMO; i++)
-		arc << ammo[i] << maxammo[i];
+	if (SaveVersion < 218)
+	{
+		for (i = 0; i < SAVEVER217_NUMWEAPONS; i++)
+			arc << weaponowned[i];
+		for (; i < NUMWEAPONS; ++i)
+			weaponowned[i] = 0;
+		for (i = 0; i < SAVEVER217_NUMAMMO; i++)
+			arc << ammo[i] << maxammo[i];
+		for (; i < NUMAMMO; ++i)
+			ammo[i] = maxammo[i] = 0;
+	}
+	else
+	{
+		for (i = 0; i < NUMWEAPONS; i++)
+			arc << weaponowned[i];
+		for (i = 0; i < NUMAMMO; i++)
+			arc << ammo[i] << maxammo[i];
+	}
 	for (i = 0; i < NUMPSPRITES; i++)
 		arc << psprites[i];
 

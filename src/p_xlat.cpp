@@ -401,13 +401,20 @@ int P_TranslateSectorSpecial (int special)
 		return SECRET_MASK;
 	}
 
-	if (gameinfo.gametype == GAME_Doom)
+	if (gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Strife)
 	{
 		// This supports phased lighting with specials 21-24
 		high = (special & 0xfe0) << 3;
 		special &= 0x1f;
 		if (special < 21)
 		{
+			if (gameinfo.gametype == GAME_Strife)
+			{
+				if (special == 15 || special == 18)
+				{
+					return high | (special + 100);
+				}
+			}
 			return high | (special + 64);
 		}
 		else if (special < 40)

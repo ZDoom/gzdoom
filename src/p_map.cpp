@@ -292,6 +292,8 @@ BOOL PIT_StompThing (AActor *thing)
 //		was being teleported between two non-overlapping height ranges.
 BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag)
 {
+	static TArray<AActor *> telebt;
+
 	int 				xl;
 	int 				xh;
 	int 				yl;
@@ -327,6 +329,7 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 					
 	validcount++;
 	spechit.Clear ();
+	telebt.Clear();
 
 	StompAlwaysFrags = tmthing->player || (level.flags & LEVEL_MONSTERSTELEFRAG) || telefrag;
 
@@ -340,7 +343,7 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	{
 		for (by=yl ; by<=yh ; by++)
 		{
-			if (!P_BlockThingsIterator(bx,by,PIT_StompThing))
+			if (!P_BlockThingsIterator(bx,by,PIT_StompThing,telebt))
 			{
 				return false;
 			}
@@ -695,7 +698,7 @@ BOOL PIT_CheckThing (AActor *thing)
 	{
 		// [RH] Let monsters walk on actors as well as floors
 		if ((tmthing->flags3 & MF3_ISMONSTER) &&
-			topz >= tmfloorz && topz <= tmthing->z + 24*FRACUNIT)
+			topz >= tmfloorz && topz <= tmthing->z + gameinfo.StepHeight)
 		{
 			// The commented-out if is an attempt to prevent monsters from walking off a
 			// thing further than they would walk off a ledge. I can't think of an easy
@@ -839,7 +842,16 @@ BOOL PIT_CheckThing (AActor *thing)
 			return true;
 		}
 		// Do damage
-		damage = ((pr_checkthing()%8)+1) * tmthing->damage;
+		damage = pr_checkthing();
+		if (tmthing->flags4 & MF4_STRIFEDAMAGE)
+		{
+			damage &= 3;
+		}
+		else
+		{
+			damage &= 7;
+		}
+		damage = (damage + 1) * tmthing->damage;
 		if (damage)
 		{
 			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->GetMOD ());
@@ -873,7 +885,7 @@ BOOL PIT_CheckThing (AActor *thing)
 		// [RH] The next condition is to compensate for the extra height
 		// that gets added by P_CheckPosition() so that you cannot pick
 		// up things that are above your true height.
-		&& thing->z < tmthing->z + tmthing->height - 24*FRACUNIT)
+		&& thing->z < tmthing->z + tmthing->height - gameinfo.StepHeight)
 	{ // Can be picked up by tmthing
 		P_TouchSpecialThing (thing, tmthing);	// can remove thing
 	}
@@ -1041,6 +1053,8 @@ BOOL P_TestMobjLocation (AActor *mobj)
 //   blocked, or blocked by a line).
 BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 {
+	static TArray<AActor *> checkpbt;
+
 	int xl, xh;
 	int yl, yh;
 	int bx, by;
@@ -1075,6 +1089,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 
 	validcount++;
 	spechit.Clear ();
+	checkpbt.Clear ();
 
 	if ((tmflags & MF_NOCLIP) && !(tmflags & MF_SKULLFLY))
 		return true;
@@ -1094,7 +1109,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	fakedblocker = NULL;
 	if (thing->player)
 	{ // [RH] Fake taller height to catch stepping up into things.
-		thing->height = realheight + 24*FRACUNIT;
+		thing->height = realheight + gameinfo.StepHeight;
 	}
 	for (bx = xl; bx <= xh; bx++)
 	{
@@ -1104,7 +1119,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 			do
 			{
 				stepthing = NULL;
-				if (!P_BlockThingsIterator (bx, by, PIT_CheckThing, robin))
+				if (!P_BlockThingsIterator (bx, by, PIT_CheckThing, checkpbt, robin))
 				{ // [RH] If a thing can be stepped up on, we need to continue checking
 				  // other things in the blocks and see if we hit something that is
 				  // definitely blocking. Otherwise, we need to check the lines, or we
@@ -1115,7 +1130,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 						return false;
 					}
 					else if (!BlockingMobj->player && !(thing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY)) &&
-						BlockingMobj->z+BlockingMobj->height-thing->z <= 24*FRACUNIT)
+						BlockingMobj->z+BlockingMobj->height-thing->z <= gameinfo.StepHeight)
 					{
 						if (thingblocker == NULL ||
 							BlockingMobj->z > thingblocker->z)
@@ -1126,7 +1141,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 						BlockingMobj = NULL;
 					}
 					else if (thing->player &&
-						thing->z + thing->height - BlockingMobj->z <= 24*FRACUNIT)
+						thing->z + thing->height - BlockingMobj->z <= gameinfo.StepHeight)
 					{
 						if (thingblocker)
 						{ // There is something to step up on. Return this thing as
@@ -1224,6 +1239,8 @@ AActor *P_CheckOnmobj (AActor *thing)
 
 bool P_TestMobjZ (AActor *actor)
 {
+	static TArray<AActor *> mobjzbt;
+
 	int	xl,xh,yl,yh,bx,by;
 	fixed_t x, y;
 
@@ -1248,11 +1265,11 @@ bool P_TestMobjZ (AActor *actor)
 	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
 	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
-	validcount++;
+	mobjzbt.Clear();
 
 	for (bx = xl; bx <= xh; bx++)
 		for (by = yl; by <= yh; by++)
-			if (!P_BlockThingsIterator (bx, by, PIT_CheckOnmobjZ))
+			if (!P_BlockThingsIterator (bx, by, PIT_CheckOnmobjZ, mobjzbt))
 				return false;
 
 	return true;
@@ -1362,7 +1379,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				goto pushline;
 			}
 			else if (BlockingMobj->z+BlockingMobj->height-thing->z 
-				> 24*FRACUNIT 
+				> gameinfo.StepHeight
 				|| (BlockingMobj->Sector->ceilingplane.ZatPoint (x, y)
 				- (BlockingMobj->z+BlockingMobj->height) < thing->height)
 				|| (tmceilingz-(BlockingMobj->z+BlockingMobj->height) 
@@ -1411,7 +1428,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 				thing->momz = -8*FRACUNIT;
 				goto pushline;
 			}
-			else if (thing->z < tmfloorz && tmfloorz-tmdropoffz > 24*FRACUNIT)
+			else if (thing->z < tmfloorz && tmfloorz-tmdropoffz > gameinfo.StepHeight)
 			{
 				thing->momz = 8*FRACUNIT;
 				goto pushline;
@@ -1420,7 +1437,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 		}
 		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
 		{
-			if (tmfloorz-thing->z > 24*FRACUNIT)
+			if (tmfloorz-thing->z > gameinfo.StepHeight)
 			{ // too big a step up
 				goto pushline;
 			}
@@ -1452,7 +1469,7 @@ BOOL P_TryMove (AActor *thing, fixed_t x, fixed_t y,
 			{
 				floorz = MAX(thing->z, tmfloorz);
 			}
-			if (floorz - tmdropoffz > 24*FRACUNIT &&
+			if (floorz - tmdropoffz > gameinfo.StepHeight &&
 				!(thing->flags2 & MF2_BLASTED))
 			{ // Can't move over a dropoff unless it's been blasted
 				thing->z = oldz;
@@ -1810,7 +1827,7 @@ BOOL PTR_SlideTraverse (intercept_t* in)
 	if (opentop - slidemo->z < slidemo->height)
 		goto isblocking;				// mobj is too high
 
-	if (openbottom - slidemo->z > 24*FRACUNIT)
+	if (openbottom - slidemo->z > gameinfo.StepHeight)
 	{
 		goto isblocking;				// too big a step up
 	}
@@ -2016,7 +2033,7 @@ bool P_CheckSlopeWalk (AActor *actor, fixed_t &xmove, fixed_t &ymove)
 							const sector_t *sec = node->m_sector;
 							if (sec->floorplane.c >= STEEPSLOPE)
 							{
-								if (sec->floorplane.ZatPoint (destx, desty) >= actor->z - 24*FRACUNIT)
+								if (sec->floorplane.ZatPoint (destx, desty) >= actor->z - gameinfo.StepHeight)
 								{
 									dopush = false;
 									break;
@@ -2892,7 +2909,7 @@ BOOL PTR_NoWayTraverse (intercept_t *in)
 		P_LineOpening(ld, trace.x + FixedMul (trace.dx, in->frac),
 			trace.y + FixedMul (trace.dy, in->frac)),			// Find openings
 		openrange <= 0 ||						// No opening
-		openbottom > usething->z+24*FRACUNIT ||	// Too high it blocks
+		openbottom > usething->z+gameinfo.StepHeight ||	// Too high it blocks
 		opentop < usething->z+usething->height	// Too low it blocks
 	)
 	);
@@ -3144,7 +3161,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 		{
 			points = points * 0.25f;
 		}
-		if (points > 0.f && P_CheckSight (thing, bombspot, 1))
+		if (points > 0.f &&P_CheckSight (thing, bombspot, 1))
 		{ // OK to damage; target is in direct path
 			float momz;
 			float thrust;
@@ -3216,6 +3233,8 @@ BOOL PIT_RadiusAttack (AActor *thing)
 void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
 	bool hurtSource, int mod)
 {
+	static TArray<AActor *> radbt;
+
 	int x, y;
 	int xl, xh, yl, yh;
 	fixed_t dist;
@@ -3238,11 +3257,11 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
 	bombmod = mod;
 	VectorPosition (spot, bombvec);
 
-	validcount++;
+	radbt.Clear();
 
 	for (y = yl; y <= yh; y++)
 		for (x = xl; x <= xh; x++)
-			P_BlockThingsIterator (x, y, PIT_RadiusAttack);
+			P_BlockThingsIterator (x, y, PIT_RadiusAttack, radbt);
 }
 
 
@@ -3364,6 +3383,8 @@ BOOL PIT_FindBelowIntersectors (AActor *thing)
 
 void P_FindAboveIntersectors (AActor *actor)
 {
+	static TArray<AActor *> abovebt;
+
 	int	xl,xh,yl,yh,bx,by;
 	fixed_t x, y;
 
@@ -3391,11 +3412,11 @@ void P_FindAboveIntersectors (AActor *actor)
 	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
 	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
-	validcount++;
+	abovebt.Clear();
 
 	for (bx = xl; bx <= xh; bx++)
 		for (by = yl; by <= yh; by++)
-			if (!P_BlockThingsIterator (bx, by, PIT_FindAboveIntersectors))
+			if (!P_BlockThingsIterator (bx, by, PIT_FindAboveIntersectors, abovebt))
 				return;
 
 	return;
@@ -3409,6 +3430,8 @@ void P_FindAboveIntersectors (AActor *actor)
 
 void P_FindBelowIntersectors (AActor *actor)
 {
+	static TArray<AActor *> belowbt;
+
 	int	xl,xh,yl,yh,bx,by;
 	fixed_t x, y;
 
@@ -3436,11 +3459,11 @@ void P_FindBelowIntersectors (AActor *actor)
 	yl = (tmbbox[BOXBOTTOM] - bmaporgy - MAXRADIUS)>>MAPBLOCKSHIFT;
 	yh = (tmbbox[BOXTOP] - bmaporgy + MAXRADIUS)>>MAPBLOCKSHIFT;
 
-	validcount++;
+	belowbt.Clear();
 
 	for (bx = xl; bx <= xh; bx++)
 		for (by = yl; by <= yh; by++)
-			if (!P_BlockThingsIterator (bx, by, PIT_FindBelowIntersectors))
+			if (!P_BlockThingsIterator (bx, by, PIT_FindBelowIntersectors, belowbt))
 				return;
 
 	return;
@@ -3462,6 +3485,8 @@ void P_DoCrunch (AActor *thing)
 		if (!(thing->flags & MF_NOBLOOD))
 		{
 			AActor *gib = Spawn<ARealGibs> (thing->x, thing->y, thing->z);
+			gib->RenderStyle = thing->RenderStyle;
+			gib->alpha = thing->alpha;
 			gib->height = 0;
 			gib->radius = 0;
 			S_Sound (thing, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
@@ -3635,7 +3660,7 @@ void PIT_FloorDrop (AActor *thing)
 		fixed_t oldz = thing->z;
 
 		// If float bob, always stay the same approximate distance above
-		// the floor, otherwise only move things standing on the floor,
+		// the floor; otherwise only move things standing on the floor,
 		// and only do it if the drop is slow enough.
 		if (thing->flags2 & MF2_FLOATBOB)
 		{
@@ -3643,7 +3668,8 @@ void PIT_FloorDrop (AActor *thing)
 			P_CheckFakeFloorTriggers (thing, oldz);
 		}
 		else if ((thing->flags & MF_NOGRAVITY) ||
-			(moveamt < 9*FRACUNIT && thing->z - thing->floorz <= moveamt))
+			((gameinfo.gametype != GAME_Hexen || moveamt < 9*FRACUNIT)
+			 && thing->z - thing->floorz <= moveamt))
 		{
 			thing->z = thing->floorz;
 			P_CheckFakeFloorTriggers (thing, oldz);

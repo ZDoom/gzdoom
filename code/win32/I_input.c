@@ -60,7 +60,7 @@ typedef HRESULT WINAPI (*DIRECTINPUTCREATE_FUNCTION) (HINSTANCE, DWORD, LPDIRECT
 
 static HMODULE DirectInputInstance;
 
-extern void InitKeyboardObjectData (void);
+void InitKeyboardObjectData (void);
 
 typedef enum { win32, dinput } mousemode_t;
 static mousemode_t mousemode;
@@ -555,7 +555,7 @@ static BOOL I_GetDIMouse (void)
 	hr = IDirectInputDevice_SetProperty (g_pMouse, DIPROP_BUFFERSIZE, &dipdw.diph);
 
 	if (FAILED(hr)) {
-		Printf ("Could not set mouse buffer size");
+		Printf (PRINT_HIGH, "Could not set mouse buffer size");
 		IDirectInputDevice_Release (g_pMouse);
 		g_pMouse = NULL;
 		return FALSE;
@@ -635,7 +635,7 @@ BOOL I_InitInput (void *hwnd)
 
 
 // Free all input resources
-void I_ShutdownInput (void)
+void STACK_ARGS I_ShutdownInput (void)
 {
 	if (g_pKey) {
 		IDirectInputDevice_Unacquire (g_pKey);
@@ -963,9 +963,40 @@ static void KeyRead (void) {
 						key = 0;
 						break;
 					default:
-						// Don't remap the keypad if the console is accepting input.
-						if (i_remapkeypad->value &&
-							ConsoleState != c_falling && ConsoleState != c_down) {
+						if (ConsoleState == c_falling || ConsoleState == c_down) {
+							switch (key) {
+								case DIK_NUMPAD4:
+									key = DIK_4;
+									break;
+								case DIK_NUMPAD6:
+									key = DIK_6;
+									break;
+								case DIK_NUMPAD8:
+									key = DIK_8;
+									break;
+								case DIK_NUMPAD2:
+									key = DIK_2;
+									break;
+								case DIK_NUMPAD7:
+									key = DIK_7;
+									break;
+								case DIK_NUMPAD9:
+									key = DIK_9;
+									break;
+								case DIK_NUMPAD3:
+									key = DIK_3;
+									break;
+								case DIK_NUMPAD1:
+									key = DIK_1;
+									break;
+								case DIK_NUMPAD0:
+									key = DIK_0;
+									break;
+								case DIK_NUMPAD5:
+									key = DIK_5;
+									break;
+							}
+						} else if (i_remapkeypad->value) {
 							switch (key) {
 								case DIK_NUMPAD4:
 									key = DIK_LEFT;
@@ -1003,10 +1034,35 @@ static void KeyRead (void) {
 
 				if (key) {
 					event.data1 = key;
-					event.data2 = Convert[key];
-					event.data3 = Convert2[key][(altdown << ALT_SHIFT) |
-												(shiftdown << SHIFT_SHIFT) |
-												(ctrldown << CTRL_SHIFT)];
+					if (ConsoleState == c_falling || ConsoleState == c_down) {
+						switch (event.data1) {
+							case DIK_DIVIDE:
+								event.data2 = event.data3 = '/';
+								break;
+							case DIK_MULTIPLY:
+								event.data2 = event.data3 = '*';
+								break;
+							case DIK_ADD:
+								event.data2 = event.data3 = '+';
+								break;
+							case DIK_SUBTRACT:
+								event.data2 = event.data3 = '-';
+								break;
+							case DIK_DECIMAL:
+								event.data2 = event.data3 = '.';
+								break;
+							default:
+								event.data2 = Convert[key];
+								event.data3 = Convert2[key][(altdown << ALT_SHIFT) |
+															(shiftdown << SHIFT_SHIFT) |
+															(ctrldown << CTRL_SHIFT)];
+						}
+					} else {
+						event.data2 = Convert[key];
+						event.data3 = Convert2[key][(altdown << ALT_SHIFT) |
+													(shiftdown << SHIFT_SHIFT) |
+													(ctrldown << CTRL_SHIFT)];
+					}
 					D_PostEvent (&event);
 					if (key == DIK_LALT)
 						altdown = (event.type == ev_keydown);

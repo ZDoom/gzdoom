@@ -81,6 +81,8 @@ extern int				scalelightfixed[MAXLIGHTSCALE];
 extern int				zlight[LIGHTLEVELS][MAXLIGHTZ];
 
 extern int				extralight;
+extern BOOL				foggy;
+extern int				fixedlightlev;
 extern lighttable_t*	fixedcolormap;
 
 extern int				lightscalexmul;	// [RH] for hires lighting fix
@@ -105,8 +107,16 @@ extern void 			(*colfunc) (void);
 extern void 			(*basecolfunc) (void);
 extern void 			(*fuzzcolfunc) (void);
 extern void				(*lucentcolfunc) (void);
+extern void				(*transcolfunc) (void);
+extern void				(*tlatedlucentcolfunc) (void);
 // No shadow effects on floors.
 extern void 			(*spanfunc) (void);
+
+// [RH] Function pointers for the horizontal column drawers.
+extern void (*hcolfunc_pre) (void);
+extern void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
+extern void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
+extern void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 
 //

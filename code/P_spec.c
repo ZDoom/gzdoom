@@ -134,7 +134,7 @@ static void P_InitAnimDefs (void)
 		byte *animdefs = W_CacheLumpNum (lump, PU_CACHE);
 		byte *data;
 
-		while (data = COM_Parse (animdefs)) {
+		while ( (data = COM_Parse (animdefs)) ) {
 			if (com_token[0] == ';') {
 				// Handle comments from Hexen ANIMDEFS lumps
 				while (*animdefs && *animdefs != ';')
@@ -323,7 +323,7 @@ BOOL CheckIfExitIsGood (mobj_t *self)
 		return false;
 	}
 	if (deathmatch->value)
-		Printf ("%s exited the level.\n", self->player->userinfo.netname);
+		Printf (PRINT_HIGH, "%s exited the level.\n", self->player->userinfo.netname);
 	return true;
 }
 
@@ -429,20 +429,16 @@ sector_t *P_NextSpecialSector (sector_t *sec, int type, sector_t *nogood)
 //
 int P_SectorActive(special_e t,sector_t *sec)
 {
-	if (olddemo) {	// return whether any thinker is active
-		return sec->floordata || sec->ceilingdata || sec->lightingdata;
-	} else {
-		switch (t)	// return whether thinker of same type is active
-		{
-			case floor_special:
-				return (int)sec->floordata;
-			case ceiling_special:
-				return (int)sec->ceilingdata;
-			case lighting_special:
-				return (int)sec->lightingdata;
-		}
-		return 1;	// don't know which special, must be active, shouldn't be here
+	switch (t)	// return whether thinker of same type is active
+	{
+		case floor_special:
+			return (int)sec->floordata;
+		case ceiling_special:
+			return (int)sec->ceilingdata;
+		case lighting_special:
+			return (int)sec->lightingdata;
 	}
+	return 1;	// don't know which special, must be active, shouldn't be here
 }
 
 
@@ -769,8 +765,7 @@ sector_t *P_FindModelFloorSector (fixed_t floordestheight, int secnum)
 	//jff 5/23/98 don't disturb sec->linecount while searching
 	// but allow early exit in old demos
 	linecount = sec->linecount;
-	for (i = 0; i < (olddemo && sec->linecount < linecount ?
-					sec->linecount : linecount); i++)
+	for (i = 0; i < linecount; i++)
 	{
 		if (twoSided(secnum, i))
 		{
@@ -809,10 +804,8 @@ sector_t *P_FindModelCeilingSector (fixed_t ceildestheight, int secnum)
 	int linecount;
 
 	//jff 5/23/98 don't disturb sec->linecount while searching
-	// but allow early exit in old demos
 	linecount = sec->linecount;
-	for (i = 0; i < (olddemo && sec->linecount < linecount ?
-					 sec->linecount : linecount); i++)
+	for (i = 0; i < linecount; i++)
 	{
 		if (twoSided (secnum, i))
 		{
@@ -915,7 +908,9 @@ int P_FindMinSurroundingLight (sector_t *sector, int max)
 
 BOOL P_CheckKeys (player_t *p, keytype_t lock, BOOL remote)
 {
-	if (lock & 0x7f == NoKey)
+	int keytrysound;
+
+	if ((lock & 0x7f) == NoKey)
 		return true;
 
 	if (!p)
@@ -997,186 +992,100 @@ BOOL P_CheckKeys (player_t *p, keytype_t lock, BOOL remote)
 		// If we get here, we don't have the right key,
 		// so print an appropriate message and grunt.
 		C_MidPrint (msg);
-		S_StartSound (ORIGIN_AMBIENT, "misc/keytry", 96);
+		keytrysound = S_FindSound ("misc/keytry");
+		if (keytrysound > -1)
+			S_Sound (p->mo, CHAN_VOICE, "misc/keytry", 1, ATTN_NORM);
+		else
+			S_Sound (p->mo, CHAN_VOICE, "*grunt1", 1, ATTN_NORM);
 	}
 	return false;
 }
 
 
+//============================================================================
 //
-// EVENTS
-// Events are operations triggered by using, crossing,
-// or shooting special lines, or by timed thinkers.
+// P_ActivateLine
 //
+//============================================================================
 
-//
-// P_CrossSpecialLine - TRIGGER
-// Called every time a thing origin is about
-//	to cross a line with a non 0 special that has
-//	ML_ACTIVATECROSS or ML_ACTIVATEMONSTERCROSS set.
-//
-void P_CrossSpecialLine (int linenum, int side, mobj_t *thing)
+BOOL P_ActivateLine (line_t *line, mobj_t *mo, int side, int activationType)
 {
-	line_t *line = &lines[linenum];
-	int		activate = line->flags & ML_ACTIVATIONMASK;
+	int lineActivation;
+	BOOL repeat;
+	BOOL buttonSuccess;
 
-	// [RH] Leave if player crossed an ML_ACTIVATEMONSTERCROSS line.
-	if (thing->player && (activate == ML_ACTIVATEMONSTERCROSS))
-		return;
-
-	//	Triggers that other things can activate
-	if (!thing->player)
+	lineActivation = GET_SPAC(line->flags);
+	if (lineActivation == SPAC_USETHROUGH)
+		lineActivation = SPAC_USE;
+	if (lineActivation != activationType &&
+		!(activationType == SPAC_MCROSS && lineActivation == SPAC_CROSS))
 	{
-		// Things that should NOT trigger specials...
-		// [RH] ...unless the line says they can
-		switch(thing->type)
-		{
-		  case MT_ROCKET:
-		  case MT_PLASMA:
-		  case MT_BFG:
-		  case MT_TROOPSHOT:
-		  case MT_HEADSHOT:
-		  case MT_BRUISERSHOT:
-			if (!olddemo) {
-				TeleportSide = side;
-				P_ShotCrossSpecialLine (thing, lines + linenum);
-			}
-			return;
-			break;
-			
-		  default: break;
-		}
-
-		// [RH] Leave if this line says monsters can't activate it.
-		//		(Some specials imply ML_MONSTERSCANACTIVATE)
-		if (line->flags & ML_SECRET)
-			return;
-		if (activate == ML_ACTIVATECROSS &&
-			!(line->flags & ML_MONSTERSCANACTIVATE) &&
-			line->special != Teleport &&
-			line->special != Door_Raise &&
-			line->special != Plat_DownWaitUpStayLip &&
-			line->special != Plat_DownWaitUpStay &&
-			line->special != Teleport_NoFog &&
-			line->special != Teleport_Line)
-			return;
-	}
-	
-	// [RH] Leave if line is not triggered when crossed
-	if (activate != ML_ACTIVATEMONSTERCROSS &&
-		activate != ML_ACTIVATECROSS)
-		return;
-
-	TeleportSide = side;
-
-	// [RH] Use LineSpecials[] dispatcher table
-	{
-		BOOL success = LineSpecials[line->special]
-							(line, thing, line->args[0],
-							 line->args[1], line->args[2],
-							 line->args[3], line->args[4]);
-
-		// Erase the line special if this special isn't repeatable.
-		// DOOM always cleared the special whether it succeded or not.
-		if (!(line->flags & ML_REPEATABLE) && (success || olddemo))
-			line->special = 0;
-	}
-
-	TeleportSide = 0;
-}
-
-
-
-//
-// P_ShootSpecialLine - IMPACT SPECIALS
-// Called when a thing shoots a special line.
-//
-void P_ShootSpecialLine (mobj_t *thing, line_t *line)
-{
-	// [RH] Rewritten to use LineSpecials[] dispatcher.
-
-	if ((line->flags & ML_ACTIVATIONMASK) != ML_ACTIVATEPROJECTILEHIT)
-		return;
-	
-	if (!thing->player &&
-		!(thing->flags & MF_MISSILE) &&
-		!(line->flags & ML_MONSTERSCANACTIVATE) &&
-		line->special != Door_Open)
-		return;
-
-	{
-		BOOL success = LineSpecials[line->special]
-							(line, thing, line->args[0],
-							 line->args[1], line->args[2],
-							 line->args[3], line->args[4]);
-
-		if (success) {
-			P_ChangeSwitchTexture (line, line->flags & ML_REPEATABLE);
-			if (!(line->flags & ML_REPEATABLE))
-				line->special = 0;
-		}
-	}
-}
-
-//
-// [RH] P_ShotCrossSpecialLine
-// Called when a projectile or bullet crosses a special line.
-//
-void P_ShotCrossSpecialLine (mobj_t *thing, line_t *line)
-{
-	if ((line->flags & ML_ACTIVATIONMASK) != ML_ACTIVATEPROJECTILECROSS)
-		return;
-
-	if (LineSpecials[line->special]
-			(line, thing, line->args[0],
-			line->args[1], line->args[2],
-			line->args[3], line->args[4])
-		&& !(line->flags & ML_REPEATABLE))
-		line->special = 0;
-
-	TeleportSide = 0;	// may have been set by P_CrossSecialLine
-}
-
-//
-// [RH] P_PushSpecialLine
-// Called when a player tries to walk into a special line (and fails).
-//
-BOOL P_PushSpecialLine (mobj_t *thing, int side, line_t *line)
-{
-	BOOL result;
-
-	if ((line->flags & ML_ACTIVATIONMASK) != ML_ACTIVATEPUSH)
 		return false;
-
-	// [RH] Don't let monsters activate the special unless the line says they can.
-	//		(Some lines automatically imply ML_MONSTERSCANACTIVATE)
-	if (!thing->player) {
-		if (line->flags & ML_SECRET)
-			return false;	// monsters never activate secrets
-		if (!(line->flags & ML_MONSTERSCANACTIVATE) &&
-			(line->special != Door_Raise || line->args[0] != 0) &&
-			line->special != Teleport &&
-			line->special != Teleport_NoFog)
-			return false;
 	}
+	if (!mo->player && !(mo->flags & MF_MISSILE))
+	{
+		if ((activationType == SPAC_USE || activationType == SPAC_PUSH)
+			&& (line->flags & ML_SECRET))
+			return false;		// never open secret doors
+		if (!(line->flags & ML_MONSTERSCANACTIVATE))
+		{ // [RH] monsters' ability to activate this line depends on its type
+		  // (in hexen, only MCROSS lines could be activated by monsters)
+			BOOL noway = true;
 
+			switch (lineActivation) {
+				case SPAC_IMPACT:
+				case SPAC_PCROSS:
+					// shouldn't really be here if not a missile
+				case SPAC_MCROSS:
+					noway = false;
+					break;
+				case SPAC_CROSS:
+					switch (line->special) {
+						case Teleport:
+						case Teleport_NoFog:
+						case Teleport_Line:
+						case Door_Raise:
+						case Plat_DownWaitUpStayLip:
+						case Plat_DownWaitUpStay:
+							noway = false;
+					}
+					break;
+				case SPAC_USE:
+				case SPAC_PUSH:
+					switch (line->special) {
+						case Door_Raise:
+							if (line->args[0] == 0)
+								noway = false;
+							break;
+						case Teleport:
+						case Teleport_NoFog:
+							noway = false;
+					}
+					break;
+			}
+			if (noway)
+				return false;
+		}
+	}
+	repeat = line->flags & ML_REPEAT_SPECIAL;
+	buttonSuccess = false;
 	TeleportSide = side;
-
-	if ((result = LineSpecials[line->special]
-					(line, thing, line->args[0],
+	buttonSuccess = LineSpecials[line->special]
+					(line, mo, line->args[0],
 					line->args[1], line->args[2],
-					line->args[3], line->args[4]))
-			&& !(line->flags & ML_REPEATABLE))
+					line->args[3], line->args[4]);
+
+	if (!repeat && buttonSuccess)
+	{ // clear the special on non-retriggerable lines
 		line->special = 0;
-
-	if (result)
-		P_ChangeSwitchTexture (line, line->flags & ML_REPEATABLE);
-
-	TeleportSide = 0;
-
-	return result;
+	}
+	if ((lineActivation == SPAC_USE || lineActivation == SPAC_IMPACT) 
+		&& buttonSuccess)
+	{
+		P_ChangeSwitchTexture (line, repeat);
+	}
+	return true;
 }
-
 
 //
 // P_PlayerInSpecialSector
@@ -1282,8 +1191,8 @@ void P_PlayerInSpecialSector (player_t *player)
 			level.found_secrets++;
 			sector->special &= ~SECRET_MASK;
 			if (player->mo == players[consoleplayer].camera) {
-				C_MidPrint ("You found a secret area!");
-				S_StartSound (ORIGIN_AMBIENT2, "misc/secret", 90);
+				C_MidPrint ("A secret is revealed!");
+				S_Sound (player->mo, CHAN_AUTO, "misc/secret", 1, ATTN_NORM);
 			}
 		}
 	}
@@ -1305,10 +1214,10 @@ void P_UpdateSpecials (void)
 	int i;
 	
 	// LEVEL TIMER
-	if (timelimit->value)
+	if (deathmatch->value && timelimit->value)
 	{
 		if (level.time >= (int)(timelimit->value * TICRATE * 60)) {
-			Printf ("Timelimit hit.\n");
+			Printf (PRINT_HIGH, "Timelimit hit.\n");
 			G_ExitLevel(0);
 		}
 	}
@@ -1378,7 +1287,7 @@ void P_UpdateSpecials (void)
 				sides[button->line->sidenum[0]].bottomtexture = button->btexture;
 				break;
 			}
-			S_StartSound (button->soundorg, "switches/normbutn", 78);
+			S_PositionedSound (button->x, button->y, CHAN_VOICE, "switches/normbutn", 1, ATTN_STATIC);
 			*prev = button->next;
 			Z_Free (button);
 			button = *prev;
@@ -1574,6 +1483,32 @@ void P_SpawnSpecials (void)
 				sec = sides[*lines[i].sidenum].sector-sectors;
 				for (s = -1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
 					sectors[s].ceilinglightsec = sec;
+				break;
+
+			// [RH] ZDoom Static_Init settings
+			case Static_Init:
+				switch (lines[i].args[1]) {
+					case Init_Gravity:
+						{
+						float grav = ((float)P_AproxDistance (lines[i].dx, lines[i].dy)) / (FRACUNIT * 100.0f);
+						for (s = -1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;)
+							sectors[s].gravity = grav;
+						}
+						break;
+
+					//case Init_Color:
+					// handled in P_LoadSideDefs2()
+
+					case Init_Damage:
+						{
+							int damage = P_AproxDistance (lines[i].dx, lines[i].dy) >> FRACBITS;
+							for (s = -1; (s = P_FindSectorFromTag(lines[i].args[0],s)) >= 0;) {
+								sectors[s].damage = damage;
+								sectors[s].mod = MOD_UNKNOWN;
+							}
+						}
+						break;
+				}
 				break;
 		}
 
@@ -1890,97 +1825,56 @@ static void P_SpawnScrollers(void)
 // their floors. Players satisfying this condition are given new friction
 // values that are applied by the player movement code later.
 
-/////////////////////////////
 //
-// Add a friction thinker to the thinker list
+// killough 8/28/98:
 //
-// Add_Friction adds a new friction thinker to the list of active thinkers.
+// Completely redid code, which did not need thinkers, and which put a heavy
+// drag on CPU. Friction is now a property of sectors, NOT objects inside
+// them. All objects, not just players, are affected by it, if they touch
+// the sector's floor. Code simpler and faster, only calling on friction
+// calculations when an object needs friction considered, instead of doing
+// friction calculations on every sector during every tic.
 //
-
-static void Add_Friction (int friction, int movefactor, int affectee)
-{
-	friction_t *f = Z_Malloc (sizeof *f, PU_LEVSPEC, 0);
-
-	f->thinker.function.acp1 = (actionf_p1) T_Friction;
-	f->friction = friction;
-	f->movefactor = movefactor;
-	f->affectee = affectee;
-	P_AddThinker (&f->thinker);
-}
-
-/////////////////////////////
+// Although this -might- ruin Boom demo sync involving friction, it's the only
+// way, short of code explosion, to fix the original design bug. Fixing the
+// design bug in Boom's original friction code, while maintaining demo sync
+// under every conceivable circumstance, would double or triple code size, and
+// would require maintenance of buggy legacy code which is only useful for old
+// demos. Doom demos, which are more important IMO, are not affected by this
+// change.
 //
-// This is where abnormal friction is applied to objects in the sectors.
-// A friction thinker has been spawned for each sector where less or
-// more friction should be applied. The amount applied is proportional to
-// the length of the controlling linedef.
-
-void T_Friction(friction_t *f)
-{
-	sector_t *sec;
-	msecnode_t* node;
-
-	if (olddemo || !boom_friction)
-		return;
-
-	sec = sectors + f->affectee;
-
-	// Be sure the special sector type is still turned on. If so, proceed.
-	// Else, bail out; the sector type has been changed on us.
-
-	if (!(sec->special & FRICTION_MASK))
-		return;
-
-	// Assign the friction value to players on the floor, non-floating,
-	// and clipped. Normally the object's friction value is kept at
-	// ORIG_FRICTION and this thinker changes it for icy or muddy floors.
-
-	// In Phase II, you can apply friction to Things other than players.
-
-	// When the object is straddling sectors with the same
-	// floorheight that have different frictions, use the lowest
-	// friction value (muddy has precedence over icy).
-
-	node = sec->touching_thinglist; // things touching this sector
-	while (node)
-	{
-		mobj_t *thing = node->m_thing;
-		if (thing->player &&
-			!(thing->flags & (MF_NOGRAVITY | MF_NOCLIP)) &&
-			thing->z <= sec->floorheight)
-		{
-			if ((thing->friction == ORIG_FRICTION) ||	// normal friction?
-				(f->friction < thing->friction))
-			{
-				thing->friction   = f->friction;
-				thing->movefactor = f->movefactor;
-			}
-		}
-		node = node->m_snext;
-	}
-}
-
+// [RH] On the other hand, since I've given up on trying to maintain demo
+//		sync between versions, these considerations aren't a big deal to me.
+//
 /////////////////////////////
 //
 // Initialize the sectors where friction is increased or decreased
 
-static void P_SpawnFriction (void)
+static void P_SpawnFriction(void)
 {
 	int i;
 	line_t *l = lines;
-	register int s;
-	int length;     // line length controls magnitude
-	int friction;   // friction value to be applied during movement
-	int movefactor; // applied to each player move to simulate inertia
+
+	// killough 8/28/98: initialize all sectors to normal friction first
+	for (i = 0; i < numsectors; i++)
+	{
+		sectors[i].friction = ORIG_FRICTION;
+		sectors[i].movefactor = ORIG_FRICTION_FACTOR;
+	}
 
 	for (i = 0 ; i < numlines ; i++,l++)
+	{
 		if (l->special == Sector_SetFriction)
 		{
-			if (l->args[1]) {
-				// [RH] Allow setting friction amount from parameter
+			int length, friction, movefactor, s;
+
+			if (l->args[1])
+			{	// [RH] Allow setting friction amount from parameter
 				length = l->args[1] <= 200 ? l->args[1] : 200;
-			} else {
-				length = P_AproxDistance (l->dx, l->dy)>>FRACBITS;
+			}
+			else
+			{
+				length = P_AproxDistance(l->dx,l->dy)>>FRACBITS;
 			}
 			friction = (0x1EB8*length)/0x80 + 0xD000;
 
@@ -1992,9 +1886,32 @@ static void P_SpawnFriction (void)
 				movefactor = ((0x10092 - friction)*(0x70))/0x158;
 			else
 				movefactor = ((friction - 0xDB34)*(0xA))/0x80;
-			for (s = -1; (s = P_FindSectorFromTag (l->args[0], s)) >= 0 ; )
-				Add_Friction (friction, movefactor, s);
+
+			// killough 8/28/98: prevent odd situations
+			if (friction > FRACUNIT)
+				friction = FRACUNIT;
+			if (friction < 0)
+				friction = 0;
+			if (movefactor < 32)
+				movefactor = 32;
+
+			for (s = -1; (s = P_FindSectorFromTag(l->args[0],s)) >= 0 ; )
+			{
+				// killough 8/28/98:
+				//
+				// Instead of spawning thinkers, which are slow and expensive,
+				// modify the sector's own friction values. Friction should be
+				// a property of sectors, not objects which reside inside them.
+				// Original code scanned every object in every friction sector
+				// on every tic, adjusting its friction, putting unnecessary
+				// drag on CPU. New code adjusts friction of sector only once
+				// at level startup, and then uses this friction value.
+
+				sectors[s].friction = friction;
+				sectors[s].movefactor = movefactor;
+			}
 		}
+	}
 }
 
 //
@@ -2231,7 +2148,7 @@ void T_Pusher (pusher_t *p)
 		}
 		else // p_current
 		{
-			if (sec->heightsec == -1) // NOT special water sector
+			if (sec->heightsec == -1) { // NOT special water sector
 				if (thing->z > sec->floorheight) // above ground
 					xspeed = yspeed = 0; // no force
 				else // on ground
@@ -2239,7 +2156,7 @@ void T_Pusher (pusher_t *p)
 					xspeed = p->x_mag; // full force
 					yspeed = p->y_mag;
 				}
-			else // special water sector
+			} else { // special water sector
 				if (thing->z > ht) // above ground
 					xspeed = yspeed = 0; // no force
 				else // underwater
@@ -2247,6 +2164,7 @@ void T_Pusher (pusher_t *p)
 					xspeed = p->x_mag; // full force
 					yspeed = p->y_mag;
 				}
+			}
 		}
 		thing->momx += xspeed<<(FRACBITS-PUSH_FACTOR);
 		thing->momy += yspeed<<(FRACBITS-PUSH_FACTOR);
@@ -2317,7 +2235,7 @@ static void P_SpawnPushers(void)
 			} else {	// [RH] Find thing by tid
 				mobj_t *thing = NULL;
 
-				while (thing = P_FindMobjByTid (thing, l->args[1])) {
+				while ( (thing = P_FindMobjByTid (thing, l->args[1])) ) {
 					if (thing->type == MT_PUSH || thing->type == MT_PULL)
 						Add_Pusher (p_push, l->args[3] ? l : NULL, l->args[2],
 									0, thing, thing->subsector->sector - sectors);

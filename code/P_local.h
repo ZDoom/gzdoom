@@ -100,6 +100,8 @@ void	P_PlayerThink (player_t *player);
 //
 #define ONFLOORZ		MININT
 #define ONCEILINGZ		MAXINT
+#define FLOATRANDZ		(MAXINT-1)
+#define FROMCEILINGZ128	(MAXINT-2)
 
 // Time interval for item respawning.
 #define ITEMQUESIZE 	128
@@ -120,14 +122,14 @@ mobj_t *P_FindGoal (mobj_t *mobj, int tid, int type);
 
 void	P_RespawnSpecials (void);
 
-mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int onfloor);
+mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type);
 
 void	P_RemoveMobj (mobj_t* th);
 BOOL	P_SetMobjState (mobj_t* mobj, statenum_t state);
 void	P_MobjThinker (mobj_t* mobj);
 
-void	P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z);
-void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, int damage);
+void	P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int updown);
+void	P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, angle_t dir, int damage);
 mobj_t* P_SpawnMissile (mobj_t* source, mobj_t* dest, mobjtype_t type);
 void	P_SpawnPlayerMissile (mobj_t* source, mobjtype_t type);
 
@@ -240,13 +242,20 @@ extern fixed_t			tmfloorz;
 extern fixed_t			tmceilingz;
 extern msecnode_t		*sector_list;		// phares 3/16/98
 extern BOOL				oldshootactivation;	// [RH]
+extern mobj_t			*BlockingMobj;
+extern line_t			*BlockingLine;		// Used only by P_Move
+											// This is not necessarily a *blocking* line
 
 extern	line_t* 		ceilingline;
 
+BOOL	P_TestMobjLocation (mobj_t *mobj);
 BOOL	P_CheckPosition (mobj_t *thing, fixed_t x, fixed_t y);
+mobj_t	*P_CheckOnmobj (mobj_t *thing);
+void	P_FakeZMovement (mobj_t *mo);
 BOOL	P_TryMove (mobj_t* thing, fixed_t x, fixed_t y, BOOL dropoff);
 BOOL	P_TeleportMove (mobj_t* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
 void	P_SlideMove (mobj_t* mo);
+void	P_BounceWall (mobj_t *mo);
 BOOL	P_CheckSight (const mobj_t* t1, const mobj_t* t2, BOOL ignoreInvisibility);
 void	P_UseLines (player_t* player);
 
@@ -255,40 +264,29 @@ BOOL	P_ChangeSector (sector_t* sector, int crunch);
 extern	mobj_t*	linetarget; 	// who got hit (or NULL)
 
 fixed_t P_AimLineAttack (mobj_t *t1, angle_t angle, fixed_t distance);
-
 void	P_LineAttack (mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, int damage);
+void	P_RailAttack (mobj_t *source, int damage);		// [RH] Shoot a railgun
+int		P_HitFloor (mobj_t *thing);
+
+// [RH] Position the chasecam
+void	P_AimCamera (mobj_t *t1);
+extern	fixed_t CameraX, CameraY, CameraZ;
 
 // [RH] Means of death
 void	P_RadiusAttack (mobj_t *spot, mobj_t *source, int damage, int mod);
 
-//jff 3/19/98 P_CheckSector(): new routine to replace P_ChangeSector()
-BOOL	P_CheckSector(sector_t *sector, int crunch);
 void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
 void	P_CreateSecNodeList(mobj_t*,fixed_t,fixed_t);		// phares 3/14/98
-int		P_GetMoveFactor(mobj_t* mo);						// phares  3/6/98
+int		P_GetMoveFactor(const mobj_t *mo, int *frictionp);	// phares  3/6/98
+int		P_GetFriction(const mobj_t *mo, int *frictionfactor);
 BOOL	Check_Sides(mobj_t *, int, int);					// phares
-
-
-// [RH] Finds the mobj thing is standing on/in.
-// Returns NULL if nothing, -1 if the ground,
-// or a pointer to another mobj.
-mobj_t *P_FindFloor (mobj_t *thing);
-
-// [RH] Same as above except it checks the
-// head instead of the feet.
-mobj_t *P_FindCeiling (mobj_t *thing);
-
-// [RH] Adjusts the Z position of thing so
-// that it is on top of spot. If spot is
-// NULL or -1, puts thing on top of whatever
-// its feet are inside of.
-void P_StandOnThing (mobj_t *thing, mobj_t *spot);
 
 
 //
 // P_SETUP
 //
 extern byte*			rejectmatrix;	// for fast sight rejection
+extern BOOL				rejectempty;
 extern int*				blockmaplump;	// offsets in blockmap are from here
 extern int*				blockmap;
 extern int				bmapwidth;
@@ -323,7 +321,7 @@ void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage
 #define MOD_BFG_SPLASH		9
 #define MOD_CHAINSAW		10
 #define MOD_SSHOTGUN		11
-#define MOD_WATER			12		// I have an idea for water...
+#define MOD_WATER			12
 #define MOD_SLIME			13
 #define MOD_LAVA			14
 #define MOD_CRUSH			15
@@ -334,9 +332,88 @@ void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage
 #define MOD_EXIT			20
 #define MOD_SPLASH			21
 #define MOD_HIT				22
+#define MOD_RAILGUN			23
 #define MOD_FRIENDLY_FIRE	0x80000000
 
 extern	int MeansOfDeath;
+
+
+// ===== PO_MAN =====
+
+typedef enum
+{
+	PODOOR_NONE,
+	PODOOR_SLIDE,
+	PODOOR_SWING,
+} podoortype_t;
+
+typedef struct
+{
+	thinker_t thinker;
+	int polyobj;
+	int speed;
+	unsigned int dist;
+	int angle;
+	fixed_t xSpeed; // for sliding walls
+	fixed_t ySpeed;
+} polyevent_t;
+
+typedef struct
+{
+	thinker_t thinker;
+	int polyobj;
+	int speed;
+	int dist;
+	int totalDist;
+	int direction;
+	fixed_t xSpeed, ySpeed;
+	int tics;
+	int waitTics;
+	podoortype_t type;
+	BOOL close;
+} polydoor_t;
+
+// [RH] Data structure for P_SpawnMapThing() to keep track
+//		of polyobject-related things.
+typedef struct polyspawns_s
+{
+	struct polyspawns_s *next;
+	fixed_t x;
+	fixed_t y;
+	short angle;
+	short type;
+} polyspawns_t;
+
+enum
+{
+	PO_HEX_ANCHOR_TYPE = 3000,
+	PO_HEX_SPAWN_TYPE,
+	PO_HEX_SPAWNCRUSH_TYPE,
+
+	// [RH] Thing numbers that don't conflict with Doom things
+	PO_ANCHOR_TYPE = 9300,
+	PO_SPAWN_TYPE,
+	PO_SPAWNCRUSH_TYPE
+};
+
+#define PO_LINE_START 1 // polyobj line start special
+#define PO_LINE_EXPLICIT 5
+
+extern polyobj_t *polyobjs; // list of all poly-objects on the level
+extern int po_NumPolyobjs;
+extern polyspawns_t *polyspawns;	// [RH] list of polyobject things to spawn
+
+void T_PolyDoor (polydoor_t *pd);
+void T_RotatePoly (polyevent_t *pe);
+BOOL EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle, int direction, BOOL overRide);
+void T_MovePoly (polyevent_t *pe);
+BOOL EV_MovePoly (line_t *line, int polyNum, int speed, angle_t angle, fixed_t dist, BOOL overRide);
+BOOL EV_OpenPolyDoor (line_t *line, int polyNum, int speed, angle_t angle, int delay, int distance, podoortype_t type);
+
+BOOL PO_MovePolyobj (int num, int x, int y);
+BOOL PO_RotatePolyobj (int num, angle_t angle);
+void PO_Init (void);
+BOOL PO_Busy (int polyobj);
 
 
 //

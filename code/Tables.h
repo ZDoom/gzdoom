@@ -37,13 +37,10 @@
 #define __TABLES__
 
 
-
-#ifdef LINUX
 #include <math.h>
-#else
+
 #ifndef PI
 #define PI				3.14159265358979323846		// matches value in gcc v2 math.h
-#endif
 #endif
 
 
@@ -72,6 +69,13 @@ extern fixed_t			finetangent[FINEANGLES/2];
 #define ANG180			0x80000000
 #define ANG270			0xc0000000
 
+#define ANGLE_45		0x20000000
+#define ANGLE_90		0x40000000
+#define ANGLE_180		0x80000000
+#define ANGLE_MAX		0xffffffff
+#define ANGLE_1			(ANGLE_45/45)
+#define ANGLE_60		(ANGLE_180/3)
+
 
 #define SLOPERANGE		2048
 #define SLOPEBITS		11
@@ -88,10 +92,7 @@ extern angle_t			tantoangle[SLOPERANGE+1];
 
 // Utility function,
 //	called by R_PointToAngle.
-int
-SlopeDiv
-( unsigned		num,
-  unsigned		den);
+int SlopeDiv (unsigned int num, unsigned den);
 
 #define CALC_TABLES
 

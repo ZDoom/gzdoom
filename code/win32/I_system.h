@@ -89,7 +89,7 @@ ticcmd_t *I_BaseTiccmd (void);
 
 // Called by M_Responder when quit is selected.
 // Clean exit, displays sell blurb.
-void I_Quit (void);
+void STACK_ARGS I_Quit (void);
 
 
 // Allocates from low memory under dos,
@@ -99,8 +99,8 @@ byte* I_AllocLow (int length);
 void I_Tactile (int on, int off, int total);
 
 
-void I_Error (char *error, ...);
-void I_FatalError (char *error, ...);
+void STACK_ARGS I_Error (char *error, ...);
+void STACK_ARGS I_FatalError (char *error, ...);
 
 
 // Repaint the pre-game console

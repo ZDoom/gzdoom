@@ -5,6 +5,7 @@
 #include "c_bind.h"
 #include "g_level.h"
 #include "dstrings.h"
+#include "hu_stuff.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -173,7 +174,7 @@ void Cmd_Unbind (void *plyr, int argc, char **argv)
 				Bindings[i] = NULL;
 			}
 		} else {
-			Printf ("Unknown key \"%s\"\n", argv[1]);
+			Printf (PRINT_HIGH, "Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
 
@@ -187,20 +188,20 @@ void Cmd_Bind (void *plyr, int argc, char **argv)
 	if (argc > 1) {
 		i = GetKeyFromName (argv[1]);
 		if (!i) {
-			Printf ("Unknown key \"%s\"\n", argv[1]);
+			Printf (PRINT_HIGH, "Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
 		if (argc == 2) {
-			Printf ("\"%s\" = \"%s\"\n", argv[1], (Bindings[i] ? Bindings[i] : ""));
+			Printf (PRINT_HIGH, "\"%s\" = \"%s\"\n", argv[1], (Bindings[i] ? Bindings[i] : ""));
 		} else {
 			ReplaceString (&Bindings[i], argv[2]);
 		}
 	} else {
-		Printf ("Current key bindings:\n");
+		Printf (PRINT_HIGH, "Current key bindings:\n");
 		
 		for (i = 0; i < NUM_KEYS; i++) {
 			if (Bindings[i])
-				Printf ("%s \"%s\"\n", KeyName (i), Bindings[i]);
+				Printf (PRINT_HIGH, "%s \"%s\"\n", KeyName (i), Bindings[i]);
 		}
 	}
 }
@@ -216,7 +217,7 @@ void Cmd_UnDoubleBind (void *plyr, int argc, char **argv)
 				DoubleBindings[i] = NULL;
 			}
 		} else {
-			Printf ("Unknown key \"%s\"\n", argv[1]);
+			Printf (PRINT_HIGH, "Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
 
@@ -230,20 +231,20 @@ void Cmd_DoubleBind (void *plyr, int argc, char **argv)
 	if (argc > 1) {
 		i = GetKeyFromName (argv[1]);
 		if (!i) {
-			Printf ("Unknown key \"%s\"\n", argv[1]);
+			Printf (PRINT_HIGH, "Unknown key \"%s\"\n", argv[1]);
 			return;
 		}
 		if (argc == 2) {
-			Printf ("\"%s\" = \"%s\"\n", argv[1], (DoubleBindings[i] ? DoubleBindings[i] : ""));
+			Printf (PRINT_HIGH, "\"%s\" = \"%s\"\n", argv[1], (DoubleBindings[i] ? DoubleBindings[i] : ""));
 		} else {
 			ReplaceString (&DoubleBindings[i], argv[2]);
 		}
 	} else {
-		Printf ("Current key doublebindings:\n");
+		Printf (PRINT_HIGH, "Current key doublebindings:\n");
 		
 		for (i = 0; i < NUM_KEYS; i++) {
 			if (DoubleBindings[i])
-				Printf ("%s \"%s\"\n", KeyName (i), DoubleBindings[i]);
+				Printf (PRINT_HIGH, "%s \"%s\"\n", KeyName (i), DoubleBindings[i]);
 		}
 	}
 }
@@ -255,7 +256,6 @@ void Cmd_BindDefaults (void *plyr, int argc, char **argv)
 
 BOOL C_DoKey (event_t *ev)
 {
-	extern BOOL chat_on;
 	char *binding = NULL;
 	int dclickspot;
 	byte dclickmask;
@@ -289,7 +289,7 @@ BOOL C_DoKey (event_t *ev)
 	if (!binding)
 		binding = Bindings[ev->data1];
 
-	if (binding && (!chat_on || ev->data1 < 256)) {
+	if (binding && (chatmodeon == 0 || ev->data1 < 256)) {
 		if (ev->type == ev_keydown) {
 			AddCommandString (binding);
 		} else {

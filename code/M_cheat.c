@@ -142,6 +142,14 @@ void cht_DoCheat (player_t *player, int cheat)
 				msg = "notarget OFF";
 			break;
 
+		case CHT_CHASECAM:
+			player->cheats ^= CF_CHASECAM;
+			if (player->cheats & CF_CHASECAM)
+				msg = "chasecam ON";
+			else
+				msg = "chasecam OFF";
+			break;
+
 		case CHT_CHAINSAW:
 			player->weaponowned[wp_chainsaw] = true;
 			player->powers[pw_invulnerability] = true;
@@ -202,14 +210,11 @@ void cht_DoCheat (player_t *player, int cheat)
 						(((mobj_t *) currentthinker)->flags & MF_COUNTKILL ||
 						 ((mobj_t *) currentthinker)->type == MT_SKULL))
 						{
-							if (((mobj_t *) currentthinker)->flags2 & MF2_INDESTRUCTABLE)
-								continue;	// [RH] Don't kill if indestructable
-
 							// killough 3/6/98: kill even if PE is dead
 							if (((mobj_t *) currentthinker)->health > 0)
 							{
 								killcount++;
-								((mobj_t *)currentthinker)->flags2 &= ~MF2_INVULNERABLE;
+								((mobj_t *)currentthinker)->flags2 &= ~(MF2_DORMANT|MF2_INVULNERABLE);
 								P_DamageMobj((mobj_t *)currentthinker, NULL, NULL, 10000, MOD_UNKNOWN);
 							}
 							if (((mobj_t *) currentthinker)->type == MT_PAIN)
@@ -226,9 +231,9 @@ void cht_DoCheat (player_t *player, int cheat)
 			break;
 	}
 	if (player == &players[consoleplayer])
-		Printf ("%s\n", msg);
+		Printf (PRINT_HIGH, "%s\n", msg);
 	else
-		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
+		Printf (PRINT_HIGH, "%s is a cheater: %s\n", player->userinfo.netname, msg);
 }
 
 void cht_Give (player_t *player, char *name)
@@ -238,7 +243,7 @@ void cht_Give (player_t *player, char *name)
 	gitem_t *it;
 
 	if (player != &players[consoleplayer])
-		Printf ("%s is a cheater: give %s\n", player->userinfo.netname, name);
+		Printf (PRINT_HIGH, "%s is a cheater: give %s\n", player->userinfo.netname, name);
 
 	if (stricmp (name, "all") == 0)
 		giveall = true;
@@ -280,8 +285,10 @@ void cht_Give (player_t *player, char *name)
 	}
 
 	if (giveall || stricmp (name, "weapons") == 0) {
+		int pendweap = player->pendingweapon;
 		for (i = 0; i<NUMWEAPONS; i++)
-			player->weaponowned[i] = true;
+			P_GiveWeapon (player, i, false);
+		player->pendingweapon = pendweap;
 
 		if (!giveall)
 			return;
@@ -319,7 +326,7 @@ void cht_Give (player_t *player, char *name)
 		it = FindItemByClassname (name);
 		if (!it) {
 			if (player == &players[consoleplayer])
-				Printf ("Unknown item\n");
+				Printf (PRINT_HIGH, "Unknown item\n");
 			return;
 		}
 	}

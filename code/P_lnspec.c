@@ -31,6 +31,66 @@ FUNC(LS_NOP)
 	return false;
 }
 
+FUNC(LS_Polyobj_RotateLeft)
+// Polyobj_RotateLeft (po, speed, angle)
+{
+	return EV_RotatePoly (ln, arg0, arg1, arg2, 1, false);
+}
+
+FUNC(LS_Polyobj_RotateRight)
+// Polyobj_rotateRight (po, speed, angle)
+{
+	return EV_RotatePoly (ln, arg0, arg1, arg2, -1, false);
+}
+
+FUNC(LS_Polyobj_Move)
+// Polyobj_Move (po, speed, angle, distance)
+{
+	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT, false);
+}
+
+FUNC(LS_Polyobj_MoveTimes8)
+// Polyobj_MoveTimes8 (po, speed, angle, distance)
+{
+	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT * 8, false);
+}
+
+FUNC(LS_Polyobj_DoorSwing)
+// Polyobj_DoorSwing (po, speed, angle, delay)
+{
+	return EV_OpenPolyDoor (ln, arg0, arg1, BYTEANGLE(arg2), arg3, 0, PODOOR_SWING);
+}
+
+FUNC(LS_Polyobj_DoorSlide)
+// Polyobj_DoorSlide (po, speed, angle, distance, delay)
+{
+	return EV_OpenPolyDoor (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg4, arg3*FRACUNIT, PODOOR_SLIDE);
+}
+
+FUNC(LS_Polyobj_OR_RotateLeft)
+// Polyobj_OR_RotateLeft (po, speed, angle)
+{
+	return EV_RotatePoly (ln, arg0, arg1, arg2, 1, true);
+}
+
+FUNC(LS_Polyobj_OR_RotateRight)
+// Polyobj_OR_RotateRight (po, speed, angle)
+{
+	return EV_RotatePoly (ln, arg0, arg1, arg2, -1, true);
+}
+
+FUNC(LS_Polyobj_OR_Move)
+// Polyobj_OR_Move (po, speed, angle, distance)
+{
+	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT, true);
+}
+
+FUNC(LS_Polyobj_OR_MoveTimes8)
+// Polyobj_OR_MoveTimes8 (po, speed, angle, distance)
+{
+	return EV_MovePoly (ln, arg0, SPEED(arg1), BYTEANGLE(arg2), arg3 * FRACUNIT * 8, true);
+}
+
 FUNC(LS_Door_Close)
 // Door_Close (tag, speed)
 {
@@ -72,6 +132,7 @@ FUNC(LS_Generic_Door)
 		case 1: type = doorOpen;			break;
 		case 2: type = doorCloseWaitOpen;	break;
 		case 3: type = doorClose;			break;
+		default: return false;
 	}
 	return EV_DoDoor (type, ln, it, arg0, SPEED(arg1), OCTICS(arg3), arg4);
 }
@@ -188,7 +249,7 @@ FUNC(LS_Floor_LowerToLowestTxTy)
 FUNC(LS_Floor_Waggle)
 // Floor_Waggle (tag, amplitude, frequency, delay, time)
 {
-	return EV_DoFloorWaggle (arg0, arg1*FRACUNIT/8, arg2, TICS(arg3), arg4*TICRATE);
+	return EV_StartFloorWaggle (arg0, arg1, arg2, arg3, arg4);
 }
 
 FUNC(LS_Floor_TransferTrigger)
@@ -283,7 +344,7 @@ FUNC(LS_Generic_Stairs)
 	BOOL res = EV_BuildStairs (arg0, type, ln,
 							   arg2 * FRACUNIT, SPEED(arg1), 0, arg4, arg3 & 2, 0);
 
-	if (res && ln && (ln->flags & ML_REPEATABLE) && ln->special == Generic_Stairs)
+	if (res && ln && (ln->flags & ML_REPEAT_SPECIAL) && ln->special == Generic_Stairs)
 		// Toggle direction of next activation of repeatable stairs
 		ln->args[3] ^= 1;
 
@@ -637,8 +698,12 @@ FUNC(LS_ThrustThing)
 FUNC(LS_DamageThing)
 // DamageThing (damage)
 {
-	if (it)
-		P_DamageMobj (it, NULL, NULL, arg0, MOD_UNKNOWN);
+	if (it) {
+		if (arg0)
+			P_DamageMobj (it, NULL, NULL, arg0, MOD_UNKNOWN);
+		else
+			P_DamageMobj (it, NULL, NULL, 10000, MOD_UNKNOWN);
+	}
 
 	return it ? true : false;
 }
@@ -797,7 +862,7 @@ FUNC(LS_ACS_LockedExecute)
 	if (arg4 && !P_CheckKeys (it->player, arg4, 2))
 		return false;
 	else
-		LS_ACS_Execute (ln, it, arg0, arg1, arg2, arg3, 0);
+		return LS_ACS_Execute (ln, it, arg0, arg1, arg2, arg3, 0);
 }
 
 FUNC(LS_ACS_Suspend)
@@ -828,40 +893,16 @@ FUNC(LS_ACS_Terminate)
 	return true;
 }
 
-FUNC(LS_Polyobj_OR_RotateLeft)
-// Polyobj_OR_RotateLeft (po, speed, angle)
-{
-	return false;
-}
-
-FUNC(LS_Polyobj_OR_RotateRight)
-// Polyobj_OR_RotateRight (po, speed, angle)
-{
-	return false;
-}
-
-FUNC(LS_Polyobj_OR_Move)
-// Polyobj_OR_Move (po, speed, angle, distance)
-{
-	return false;
-}
-
-FUNC(LS_Polyobj_OR_MoveTimes8)
-// Polyobj_OR_MoveTimes8 (po, speed, angle, distance)
-{
-	return false;
-}
-
 FUNC(LS_FloorAndCeiling_LowerByValue)
 // FloorAndCeiling_LowerByValue (tag, speed, height)
 {
-	return EV_DoElevator (ln, elevateLower, SPEED(arg1), arg2*8*FRACUNIT, arg0);
+	return EV_DoElevator (ln, elevateLower, SPEED(arg1), arg2*FRACUNIT, arg0);
 }
 
 FUNC(LS_FloorAndCeiling_RaiseByValue)
-// FloorAndCelinig_RaiseByValue (tag, speed, height)
+// FloorAndCeiling_RaiseByValue (tag, speed, height)
 {
-	return EV_DoElevator (ln, elevateRaise, SPEED(arg1), arg2*8*FRACUNIT, arg0);
+	return EV_DoElevator (ln, elevateRaise, SPEED(arg1), arg2*FRACUNIT, arg0);
 }
 
 FUNC(LS_FloorAndCeiling_LowerRaise)
@@ -933,7 +974,7 @@ FUNC(LS_Light_Glow)
 FUNC(LS_Light_Flicker)
 // Light_Flicker (tag, upper, lower)
 {
-	EV_StartLightFlashing (arg0, arg1, arg2);
+	EV_StartLightFlickering (arg0, arg1, arg2);
 	return true;
 }
 
@@ -980,7 +1021,20 @@ FUNC(LS_UsePuzzleItem)
 FUNC(LS_Sector_ChangeSound)
 // Sector_ChangeSound (tag, sound)
 {
-	return false;
+	int secNum;
+	BOOL rtn;
+
+	if (!arg0)
+		return false;
+
+	secNum = -1;
+	rtn = false;
+	while ((secNum = P_FindSectorFromTag (arg0,	secNum)) >= 0)
+	{
+		sectors[secNum].seqType = arg1;
+		rtn = true;
+	}
+	return rtn;
 }
 
 FUNC(LS_Sector_SetWind)
@@ -1079,39 +1133,98 @@ FUNC(LS_Sector_SetFade)
 }
 
 FUNC(LS_ChangeCamera)
-// ChangeCamera (tid, who)
+// ChangeCamera (tid, who, revert?)
 {
 	mobj_t *camera = P_FindGoal (NULL, arg0, MT_CAMERA);
 
-	if (!it->player || arg1) {
+	if (!it || !it->player || arg1) {
 		int i;
 
 		for (i = 0; i < MAXPLAYERS; i++) {
 			if (!playeringame[i])
 				continue;
 
-			if (camera)
+			if (camera) {
 				players[i].camera = camera;
-			else
+				if (arg2)
+					players[i].cheats |= CF_REVERTPLEASE;
+			} else {
 				players[i].camera = players[i].mo;
+				players[i].cheats &= ~CF_REVERTPLEASE;
+			}
 		}
-	} else
-		it->player->camera = camera ? camera : it->player->mo;
+	} else {
+		if (camera) {
+			it->player->camera = camera;
+			if (arg2)
+				it->player->cheats |= CF_REVERTPLEASE;
+		} else {
+			it->player->camera = it;
+			it->player->cheats &= ~CF_REVERTPLEASE;
+		}
+	}
 
 	return true;
+}
+
+FUNC(LS_SetPlayerProperty)
+// SetPlayerProperty (who, set, which)
+{
+#define PROP_FROZEN		0
+#define PROP_NOTARGET	1
+
+	int mask = 0;
+
+	if (!it->player && !arg0)
+		return false;
+
+	switch (arg2)
+	{
+		case PROP_FROZEN:
+			mask = CF_FROZEN;
+			break;
+		case PROP_NOTARGET:
+			mask = CF_NOTARGET;
+			break;
+	}
+
+	if (arg1 == 0)
+	{
+		if (arg1)
+			it->player->cheats |= mask;
+		else
+			it->player->cheats &= ~mask;
+	}
+	else
+	{
+		int i;
+
+		for (i = 0; i < MAXPLAYERS; i++)
+		{
+			if (!playeringame[i])
+				continue;
+
+			if (arg1)
+				players[i].cheats |= mask;
+			else
+				players[i].cheats &= ~mask;
+		}
+	}
+
+	return !!mask;
 }
 
 lnSpecFunc LineSpecials[256] =
 {
 	LS_NOP,
-	LS_NOP,		// Polyobj_StartLine
-	LS_NOP,		// Polyobj_RotateLeft
-	LS_NOP,		// Polyobj_RotateRight
-	LS_NOP,		// Polyobj_Move
+	LS_NOP,		// Polyobj_StartLine,
+	LS_Polyobj_RotateLeft,
+	LS_Polyobj_RotateRight,
+	LS_Polyobj_Move,
 	LS_NOP,		// Polyobj_ExplicitLine
-	LS_NOP,		// Polyobj_MoveTimes8
-	LS_NOP,		// Polyobj_DoorSwing
-	LS_NOP,		// Polyobj_DoorSlide
+	LS_Polyobj_MoveTimes8,
+	LS_Polyobj_DoorSwing,
+	LS_Polyobj_DoorSlide,
 	LS_NOP,		// 9
 	LS_Door_Close,
 	LS_Door_Open,
@@ -1293,8 +1406,8 @@ lnSpecFunc LineSpecials[256] =
 	LS_NOP,		// 187
 	LS_NOP,		// 188
 	LS_NOP,		// 189
-	LS_NOP,		// 190
-	LS_NOP,		// 191
+	LS_NOP,		// Static_Init
+	LS_SetPlayerProperty,
 	LS_Ceiling_LowerToHighestFloor,
 	LS_Ceiling_LowerInstant,
 	LS_Ceiling_RaiseInstant,

@@ -444,7 +444,7 @@ static void Cmd_TestBlend (void *plyr, int argc, char **argv)
 	float amt;
 
 	if (argc < 3) {
-		Printf ("testblend <color> <amount>\n");
+		Printf (PRINT_HIGH, "testblend <color> <amount>\n");
 	} else {
 		if ( (colorstring = V_GetColorStringByName (argv[1])) ) {
 			color = V_GetColorFromString (NULL, colorstring);
@@ -471,7 +471,7 @@ static void Cmd_TestFade (void *plyr, int argc, char **argv)
 	int color;
 
 	if (argc < 2) {
-		Printf ("testfade <color>\n");
+		Printf (PRINT_HIGH, "testfade <color>\n");
 	} else {
 		if ( (colorstring = V_GetColorStringByName (argv[1])) ) {
 			color = V_GetColorFromString (NULL, colorstring);
@@ -620,7 +620,7 @@ static void Cmd_TestColor (void *plyr, int argc, char **argv)
 	int color;
 
 	if (argc < 2) {
-		Printf ("testcolor <color>\n");
+		Printf (PRINT_HIGH, "testcolor <color>\n");
 	} else {
 		if ( (colorstring = V_GetColorStringByName (argv[1])) ) {
 			color = V_GetColorFromString (NULL, colorstring);

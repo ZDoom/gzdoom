@@ -18,7 +18,7 @@ void P_RunQuakes (void)
 		int i;
 
 		if (level.time % 48 == 0)
-			S_StartSound (quake->quakespot, "world/quake", 200);
+			S_Sound (quake->quakespot, CHAN_BODY, "world/quake", 1, ATTN_NORM);
 
 		for (i = 0; i < MAXPLAYERS; i++) {
 			if (playeringame[i] && !(players[i].cheats & CF_NOCLIP)) {
@@ -35,7 +35,7 @@ void P_RunQuakes (void)
 
 				if (mo->x >= quake->tremorbox[BOXLEFT] && mo->x < quake->tremorbox[BOXRIGHT] &&
 					 mo->y >= quake->tremorbox[BOXTOP] && mo->y < quake->tremorbox[BOXBOTTOM]) {
-					players[i].xviewshift = ((P_Random (pr_quake)-128) * quake->intensity) / 48;
+					players[i].xviewshift = quake->intensity;
 				}
 			}
 		}

@@ -63,8 +63,8 @@ typedef struct screen_s screen_t;
 extern palette_t *DefaultPalette;
 
 // Screen 0 is the screen updated by I_Update screen.
-// Screen 1 is an extra buffer.
-extern	screen_t screens[2];
+// Screen 1 is used to be an extra buffer for wipes.
+extern	screen_t screens[1];
 
 extern	int 	dirtybox[4];
 

@@ -33,6 +33,7 @@
 
 #include "r_main.h"
 #include "r_plane.h"
+#include "r_draw.h"
 #include "r_things.h"
 
 // State.
@@ -56,6 +57,8 @@ int				doorclosed;
 int				MaxDrawSegs;
 drawseg_t		*drawsegs;
 drawseg_t*		ds_p;
+
+cvar_t*			r_drawflat;		// [RH] Don't texture segs?
 
 
 void R_StoreWallRange (int start, int stop);
@@ -387,7 +390,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 // Clips the given segment
 // and adds any visible pieces to the line list.
 //
-void R_AddLine (seg_t*	line)
+void R_AddLine (seg_t *line)
 {
 	int 			x1;
 	int 			x2;
@@ -398,6 +401,9 @@ void R_AddLine (seg_t*	line)
 	static sector_t tempsec;	// killough 3/8/98: ceiling/water hack
 	
 	curline = line;
+
+	// [RH] Color if not texturing line
+	dc_color = ((line - segs) & 31) * 4;
 
 	// OPTIMIZE: quickly reject orthogonal back sides.
 	angle1 = R_PointToAngle (line->v1->x, line->v1->y);
@@ -634,8 +640,7 @@ static BOOL R_CheckBBox (fixed_t *bspcoord)	// killough 1/28/98: static
 	while (start->last < sx2)
 		start++;
 	
-	if (sx1 >= start->first
-		&& sx2 <= start->last)
+	if (sx1 >= start->first && sx2 <= start->last)
 	{
 		// The clippost contains the new span.
 		return false;
@@ -701,14 +706,27 @@ void R_Subsector (int num)
 					frontsector->ceiling_yoffs
 					) : NULL;
 
-	// [RH] Fix BOOM bug where things in deep water sectors with
-	//		several subsectors caused massive slowdown.
-	R_AddSprites (sub->sector);
+	// [RH] set foggy flag
+	foggy = (level.fadeto || sub->sector->colormap->fade);
+
+	// killough 9/18/98: Fix underwater slowdown, by passing real sector 
+	// instead of fake one. Improve sprite lighting by basing sprite
+	// lightlevels on floor & ceiling lightlevels in the surrounding area.
+	R_AddSprites (sub->sector, (floorlightlevel + ceilinglightlevel) / 2);
+
+	if (sub->poly)
+	{ // Render the polyobj in the subsector first
+		int polyCount = sub->poly->numsegs;
+		seg_t **polySeg = sub->poly->segs;
+		while (polyCount--)
+		{
+			R_AddLine (*polySeg++);
+		}
+	}
 
 	while (count--)
 	{
-		R_AddLine (line);
-		line++;
+		R_AddLine (line++);
 	}
 }
 
@@ -722,7 +740,7 @@ void R_Subsector (int num)
 // Just call with BSP root.
 // killough 5/2/98: reformatted, removed tail recursion
 
-void R_RenderBSPNode(int bspnum)
+void R_RenderBSPNode (int bspnum)
 {
 	while (!(bspnum & NF_SUBSECTOR))  // Found a subsector?
 	{

@@ -30,11 +30,12 @@
 // [RH] Turned these into variables
 // Size of statusbar.
 // Now ([RH] truly) sensitive for scaling.
-extern	int				ST_HEIGHT;
-extern	int				ST_WIDTH;
-extern	int				ST_X;
-extern	int				ST_Y;
+extern int ST_HEIGHT;
+extern int ST_WIDTH;
+extern int ST_X;
+extern int ST_Y;
 
+extern int SB_state;
 
 //
 // STATUS BAR
@@ -47,7 +48,7 @@ BOOL ST_Responder (event_t* ev);
 void ST_Ticker (void);
 
 // Called by main loop.
-void ST_Drawer (BOOL fullscreen, BOOL refresh);
+void ST_Drawer (void);
 
 // Called when the console player is spawned on each level.
 void ST_Start (void);
@@ -57,6 +58,9 @@ void ST_Init (void);
 
 // Draw the HUD (only if old status bar is not drawn)
 void ST_newDraw (void);
+
+// Draws name of player currently in control of the status bar
+void ST_nameDraw (int y);
 
 // Called on init and whenever player's skin changes
 void ST_loadGraphics (void);

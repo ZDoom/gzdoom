@@ -32,7 +32,7 @@
 #include "m_random.h"
 #include "p_saveg.h"
 #include "p_acs.h"
-
+#include "s_sndseq.h"
 #include "v_palett.h"
 
 extern button_t *buttonlist;
@@ -95,7 +95,6 @@ void P_UnArchivePlayers (void)
 		
 		memcpy (&players[i].userinfo, &userinfo, sizeof(userinfo));
 		players[i].mo = NULL;			// will be set when unarc thinker
-		players[i].message = NULL;
 		players[i].attacker = NULL;
 
 		for (j = 0; j < NUMPSPRITES; j++)
@@ -124,7 +123,7 @@ void P_ArchiveWorld (void)
 
 	// killough 3/22/98: fix bug caused by hoisting save_p too early
 
-	size_t size = (sizeof(unsigned int)*2+sizeof(float)+sizeof(short)*9)*numsectors
+	size_t size = (sizeof(unsigned int)*2+sizeof(float)+sizeof(short)*10)*numsectors
 				  + (sizeof(short)*8)*numlines + 4;
 
 	for (i = 0; i < numlines; i++)
@@ -152,7 +151,8 @@ void P_ArchiveWorld (void)
 		put[6] = sec->tag;
 		put[7] = sec->damage;	// [RH]
 		put[8] = sec->mod;	// [RH]
-		save_p = (byte *)(put + 9);	// [RH]
+		put[9] = sec->seqType;	// [RH]
+		save_p = (byte *)(put + 10);	// [RH]
 		PADSAVEP();	// [RH]
 		*((float *)save_p)++ = sec->gravity;	// [RH]
 		*((unsigned int *)save_p)++ = sec->colormap->color;	// [RH]
@@ -219,7 +219,8 @@ void P_UnArchiveWorld (void)
 		sec->tag = get[6];
 		sec->damage = get[7];	// [RH]
 		sec->mod = get[8];	// [RH]
-		save_p = (byte *)(get + 9);	// [RH]
+		sec->seqType = get[9];	// [RH]
+		save_p = (byte *)(get + 10);	// [RH]
 		PADSAVEP();
 		sec->gravity = *((float *)save_p)++;	// [RH]
 		color = *((unsigned int *)save_p)++;	// [RH]
@@ -516,6 +517,10 @@ enum
 	tc_pillar,
 	tc_friction,	// phares 3/18/98:  new friction effect thinker
 	tc_pusher,		// phares 3/22/98:  new push/pull effect thinker
+	tc_rotate_poly,
+	tc_move_poly,
+	tc_poly_door,
+	tc_flicker,
 	tc_endspecials
 } specials_e;	
 
@@ -531,15 +536,18 @@ enum
 // T_StrobeFlash, (strobe_t: sector_t *),
 // T_Glow, (glow_t: sector_t *),
 // T_PlatRaise, (plat_t: sector_t *), - active list
-// T_FireFlicker (fireflicker_t: sector_t * swizze),	// [RH] Was missed in original code
+// T_FireFlicker (fireflicker_t: sector_t * swizzle),	// [RH] Was missed in original code
+// T_Flicker (flicker_t: sector_t * swizzle)			// [RH] Hexen flicker
 // T_MoveElevator, (plat_t: sector_t *), - active list	// jff 2/22/98
 // T_Scroll												// killough 3/7/98
 // T_Glow2, (glow2_t: sector_t *)						// [RH]
-// T_Waggle, (waggle_t: sector_t *)						// [RH]
+// T_Waggle, (floorWaggle_t: sector_t *)				// [RH]
 // T_PhasedLight, (phased_t: sector_t *)				// [RH]
 // T_Pillar (pillar_t: sector_t *)						// [RH]
-// T_Friction											// phares 3/18/98
 // T_Pusher	(pusher_t: mobj_t *)						// phares 3/22/98
+// T_RotatePoly
+// T_MovePoly
+// T_PolyDoor
 //
 void P_ArchiveSpecials (void)
 {
@@ -608,12 +616,12 @@ void P_ArchiveSpecials (void)
 				th->function.acp1==(actionf_p1)T_Glow		  ? 4+sizeof(glow_t)	:
 				th->function.acp1==(actionf_p1)T_Glow2		  ? 4+sizeof(glow2_t)	:
 				th->function.acp1==(actionf_p1)T_FireFlicker  ? 4+sizeof(fireflicker_t):
+				th->function.acp1==(actionf_p1)T_Flicker	  ? 4+sizeof(fireflicker_t):
 				th->function.acp1==(actionf_p1)T_PhasedLight  ? 4+sizeof(phased_t)	:
 				th->function.acp1==(actionf_p1)T_MoveElevator ? 4+sizeof(elevator_t):
 				th->function.acp1==(actionf_p1)T_Scroll		  ? 4+sizeof(scroll_t)	:
-				th->function.acp1==(actionf_p1)T_Waggle		  ? 4+sizeof(waggle_t)	:
+				th->function.acp1==(actionf_p1)T_FloorWaggle  ? 4+sizeof(floorWaggle_t):
 				th->function.acp1==(actionf_p1)T_Pillar		  ? 4+sizeof(pillar_t)	:
-				th->function.acp1==(actionf_p1)T_Friction	  ? 4+sizeof(friction_t):
 				th->function.acp1==(actionf_p1)T_Pusher		  ? 4+sizeof(pusher_t)	:
 				0;
 
@@ -630,7 +638,6 @@ void P_ArchiveSpecials (void)
 			but = (button_t *)save_p;
 			save_p += sizeof(*button);
 			but->line = (line_t *)(but->line ? but->line - lines : -1);
-			but->soundorg = (mobj_t *)but->soundorg->thinker.prev;
 			button = button->next;
 		}
 	} else {
@@ -748,6 +755,17 @@ void P_ArchiveSpecials (void)
 			save_p += sizeof(*flick);
 			flick->sector = (sector_t *)(flick->sector - sectors);
 		}
+		else if (th->function.acp1 == (actionf_p1)T_Flicker)
+		{
+			fireflicker_t *flick;
+
+			*save_p++ = tc_flicker;
+			PADSAVEP();
+			flick = (fireflicker_t *)save_p;
+			memcpy (flick, th, sizeof(*flick));
+			save_p += sizeof(*flick);
+			flick->sector = (sector_t *)(flick->sector - sectors);
+		}
 		else if (th->function.acp1 == (actionf_p1)T_MoveElevator)
 		{		//jff 2/22/98 new case for elevators
 
@@ -779,13 +797,13 @@ void P_ArchiveSpecials (void)
 			save_p += sizeof(*glow);
 			glow->sector = (sector_t *)(glow->sector - sectors);
 		}
-		else if (th->function.acp1 == (actionf_p1) T_Waggle)
+		else if (th->function.acp1 == (actionf_p1) T_FloorWaggle)
 		{		// [RH] Waggling floors
-			waggle_t *waggle;
+			floorWaggle_t *waggle;
 
 			*save_p++ = tc_waggle;
 			PADSAVEP();
-			waggle = (waggle_t *)save_p;
+			waggle = (floorWaggle_t *)save_p;
 			memcpy (waggle, th, sizeof(*waggle));
 			save_p += sizeof(*waggle);
 			waggle->sector = (sector_t *)(waggle->sector - sectors);
@@ -812,13 +830,6 @@ void P_ArchiveSpecials (void)
 			save_p += sizeof(*pillar);
 			pillar->sector = (sector_t *)(pillar->sector - sectors);
 		}
-		else if (th->function.acp1 == (actionf_p1) T_Friction)
-		{		// phares 3/18/98: Friction effect thinkers
-			*save_p++ = tc_friction;
-			memcpy (save_p, th, sizeof(friction_t));
-			save_p += sizeof(friction_t);
-			continue;
-		}
 		else if (th->function.acp1 == (actionf_p1) T_Pusher)
 		{		// phares 3/22/98: Push/Pull effect thinkers
 			pusher_t *pusher;
@@ -829,6 +840,26 @@ void P_ArchiveSpecials (void)
 			save_p += sizeof(*pusher);
 			pusher->source = (mobj_t *) pusher->source->thinker.prev;	// [RH] remember source
 			continue;
+		}
+		else if (th->function.acp1 == (actionf_p1) T_RotatePoly)
+		{
+			*save_p++ = tc_rotate_poly;
+			memcpy (save_p, th, sizeof(polyevent_t));
+			save_p += sizeof(polyevent_t);
+			continue;
+		}
+		else if (th->function.acp1 == (actionf_p1) T_MovePoly)
+		{
+			*save_p++ = tc_move_poly;
+			memcpy (save_p, th, sizeof(polyevent_t));
+			save_p += sizeof(polyevent_t);
+			continue;
+		}
+		else if (th->function.acp1 == (actionf_p1) T_PolyDoor)
+		{
+			*save_p++ = tc_poly_door;
+			memcpy (save_p, th, sizeof(polydoor_t));
+			save_p += sizeof(polydoor_t);
 		}
 	}
 
@@ -861,7 +892,6 @@ void P_UnArchiveSpecials (void)
 			PADSAVEP();
 			memcpy (button, save_p, sizeof(*button));
 			button->line = (((int)button->line) == -1) ? NULL : &lines[(int)button->line];
-			button->soundorg = (mobj_t *)mobj_p[(size_t)(button->soundorg)];
 			*buttonptr = button;
 			buttonptr = &button->next;
 			save_p += sizeof(*button);
@@ -984,6 +1014,16 @@ void P_UnArchiveSpecials (void)
 			P_AddThinker (&flick->thinker);
 			break;
 
+		  case tc_flicker:
+			PADSAVEP();
+			flick = Z_Malloc (sizeof(*flick), PU_LEVEL, NULL);
+			memcpy (flick, save_p, sizeof(*flick));
+			save_p += sizeof(*flick);
+			flick->sector = &sectors[(int)flick->sector];
+			flick->thinker.function.acp1 = (actionf_p1)T_Flicker;
+			P_AddThinker (&flick->thinker);
+			break;
+
 		  //jff 2/22/98 new case for elevators
 		  case tc_elevator:
 			PADSAVEP();
@@ -1023,13 +1063,13 @@ void P_UnArchiveSpecials (void)
 			
 		  case tc_waggle:		// [RH] Waggling floors
 			{
-			  waggle_t *waggle = Z_Malloc (sizeof(*waggle), PU_LEVEL, NULL);
+			  floorWaggle_t *waggle = Z_Malloc (sizeof(*waggle), PU_LEVEL, NULL);
 			  PADSAVEP();
 			  memcpy (waggle, save_p, sizeof(*waggle));
 			  save_p += sizeof(*waggle);
 			  waggle->sector = &sectors[(int)waggle->sector];
 			  waggle->sector->floordata = waggle;
-			  waggle->thinker.function.acp1 = (actionf_p1)T_Waggle;
+			  waggle->thinker.function.acp1 = (actionf_p1)T_FloorWaggle;
 			  P_AddThinker (&waggle->thinker);
 			  break;
 			}
@@ -1058,16 +1098,6 @@ void P_UnArchiveSpecials (void)
 			  break;
 			}
 
-		  case tc_friction:		// phares 3/18/98: new friction effect thinkers
-			{
-			  friction_t *friction = Z_Malloc (sizeof(friction_t), PU_LEVEL, NULL);
-			  memcpy (friction, save_p, sizeof(friction_t));
-			  save_p += sizeof(friction_t);
-			  friction->thinker.function.acp1 = (actionf_p1) T_Friction;
-			  P_AddThinker(&friction->thinker);
-			  break;
-			}
-
 		  case tc_pusher:		// phares 3/22/98: new Push/Pull effect thinkers
 			{
 			  pusher_t *pusher = Z_Malloc (sizeof(pusher_t), PU_LEVEL, NULL);
@@ -1079,6 +1109,36 @@ void P_UnArchiveSpecials (void)
 			  P_AddThinker (&pusher->thinker);
 			  break;
 			}
+
+		  case tc_rotate_poly:
+			{
+			  polyevent_t *event = Z_Malloc (sizeof(polyevent_t), PU_LEVEL, NULL);
+			  memcpy (event, save_p, sizeof(polyevent_t));
+			  save_p += sizeof(polyevent_t);
+			  event->thinker.function.acp1 = (actionf_p1) T_RotatePoly;
+			  P_AddThinker (&event->thinker);
+			}
+			break;
+
+		  case tc_move_poly:
+			{
+			  polyevent_t *event = Z_Malloc (sizeof(polyevent_t), PU_LEVEL, NULL);
+			  memcpy (event, save_p, sizeof(polyevent_t));
+			  save_p += sizeof(polyevent_t);
+			  event->thinker.function.acp1 = (actionf_p1) T_MovePoly;
+			  P_AddThinker (&event->thinker);
+			}
+			break;
+
+		  case tc_poly_door:
+			{
+			  polyevent_t *door = Z_Malloc (sizeof(polydoor_t), PU_LEVEL, NULL);
+			  memcpy (door, save_p, sizeof(polydoor_t));
+			  save_p += sizeof(polydoor_t);
+			  door->thinker.function.acp1 = (actionf_p1) T_PolyDoor;
+			  P_AddThinker (&door->thinker);
+			}
+			break;
 
 		  default:
 			I_Error ("P_UnarchiveSpecials: Unknown tclass %i in snapshot", tclass);
@@ -1106,7 +1166,7 @@ typedef enum
 {
 	tc_script = 98,
 	tc_scrend
-};
+} scriptclass_t;
 
 // [RH] Store state of all running scripts
 void P_ArchiveScripts (void)
@@ -1177,4 +1237,163 @@ void P_UnArchiveScripts (void)
 
 	if (*(save_p - 1) != tc_scrend)
 		I_Error ("Unknown sclass %d in snapshot", *(save_p - 1));
+}
+
+//==========================================================================
+//
+// ArchiveSounds
+//
+//==========================================================================
+
+#define ASEG_SOUNDS 109
+
+void P_ArchiveSounds (void)
+{
+	seqnode_t *node;
+	sector_t *sec;
+	int difference;
+	int i;
+
+	WriteLong (ASEG_SOUNDS, &save_p);
+
+	// Save the sound sequences
+	WriteLong (ActiveSequences, &save_p);
+	for (node = SequenceListHead; node; node = node->next)
+	{
+		WriteString (Sequences[node->sequence]->name, &save_p);
+		WriteLong (node->delayTics, &save_p);
+		WriteLong (*((int *)&node->volume), &save_p);
+		WriteLong (SN_GetSequenceOffset (node->sequence,
+			node->sequencePtr), &save_p);
+		WriteString (S_sfx[node->currentSoundID].name, &save_p);
+		for (i = 0; i < po_NumPolyobjs; i++)
+		{
+			if (node->mobj == (mobj_t *)&polyobjs[i].startSpot)
+			{
+				break;
+			}
+		}
+		if (i == po_NumPolyobjs)
+		{ // Sound is attached to a sector, not a polyobj
+			sec = R_PointInSubsector(node->mobj->x, node->mobj->y)->sector;
+			difference = (int)((byte *)sec
+				-(byte *)&sectors[0])/sizeof(sector_t);
+			WriteLong (0, &save_p); // 0 -- sector sound origin
+		}
+		else
+		{
+			WriteLong (1, &save_p); // 1 -- polyobj sound origin
+			difference = i;
+		}
+		WriteLong (difference, &save_p);
+	}
+}
+
+//==========================================================================
+//
+// UnarchiveSounds
+//
+//==========================================================================
+
+void P_UnArchiveSounds (void)
+{
+	int i;
+	int numSequences;
+	int delayTics;
+	int volTemp;
+	float volume;
+	int seqOffset;
+	int polySnd;
+	int secNum;
+	char *soundName;
+	char *sequenceName;
+	mobj_t *sndMobj;
+
+	i = ReadLong (&save_p);
+	if (i != ASEG_SOUNDS)
+		I_Error ("Sound sequence marker missing");
+
+	// Reload and restart all sound sequences
+	numSequences = ReadLong (&save_p);
+	i = 0;
+	while (i < numSequences)
+	{
+		sequenceName = ReadString (&save_p);
+		delayTics = ReadLong (&save_p);
+		volTemp = ReadLong (&save_p);
+		volume = *((float *)&volTemp);
+		seqOffset = ReadLong (&save_p);
+
+		soundName = ReadString (&save_p);
+		polySnd = ReadLong (&save_p);
+		secNum = ReadLong (&save_p);
+		if (!polySnd)
+		{
+			sndMobj = (mobj_t *)&sectors[secNum].soundorg;
+		}
+		else
+		{
+			sndMobj = (mobj_t *)&polyobjs[secNum].startSpot;
+		}
+		SN_StartSequenceName (sndMobj, sequenceName);
+		SN_ChangeNodeData (i, seqOffset, delayTics, volume, S_FindSound (soundName));
+		free (soundName);
+		free (sequenceName);
+		i++;
+	}
+}
+
+//==========================================================================
+//
+// ArchivePolyobjs
+//
+//==========================================================================
+#define ASEG_POLYOBJS	104
+
+void P_ArchivePolyobjs (void)
+{
+	int i;
+
+	WriteLong (ASEG_POLYOBJS, &save_p);
+	WriteLong (po_NumPolyobjs, &save_p);
+	for(i = 0; i < po_NumPolyobjs; i++)
+	{
+		WriteLong (polyobjs[i].tag, &save_p);
+		WriteLong (polyobjs[i].angle, &save_p);
+		WriteLong (polyobjs[i].startSpot.x, &save_p);
+		WriteLong (polyobjs[i].startSpot.y, &save_p);
+  	}
+}
+
+//==========================================================================
+//
+// UnarchivePolyobjs
+//
+//==========================================================================
+
+void P_UnArchivePolyobjs (void)
+{
+	int i, data;
+	fixed_t deltaX;
+	fixed_t deltaY;
+
+	data = ReadLong (&save_p);
+	if (data != ASEG_POLYOBJS)
+		I_Error ("Polyobject marker missing");
+
+	if (ReadLong (&save_p) != po_NumPolyobjs)
+	{
+		I_Error ("UnarchivePolyobjs: Bad polyobj count");
+	}
+	for (i = 0; i < po_NumPolyobjs; i++)
+	{
+		if (ReadLong (&save_p) != polyobjs[i].tag)
+		{
+			I_Error ("UnarchivePolyobjs: Invalid polyobj tag");
+		}
+		PO_RotatePolyobj (polyobjs[i].tag, (angle_t)ReadLong (&save_p));
+		deltaX = ReadLong (&save_p) - polyobjs[i].startSpot.x;
+		deltaY = ReadLong (&save_p) - polyobjs[i].startSpot.y;
+		PO_MovePolyobj (polyobjs[i].tag, deltaX, deltaY);
+	}
 }

@@ -41,6 +41,10 @@ void P_ArchiveScripts (void);		// [RH]
 void P_UnArchiveScripts (void);		// [RH]
 void P_ArchiveACSDefereds (void);	// [RH]
 void P_UnArchiveACSDefereds (void);	// [RH]
+void P_ArchivePolyobjs (void);
+void P_UnArchivePolyobjs (void);
+void P_ArchiveSounds (void);
+void P_UnArchiveSounds (void);
 
 extern byte *save_p, *savebuffer;
 extern size_t savegamesize;

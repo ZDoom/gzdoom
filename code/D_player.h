@@ -73,8 +73,13 @@ typedef enum
 	// Not really a cheat, just a debug aid.
 	CF_NOMOMENTUM		= 4,
 	// [RH] Monsters don't target
-	CF_NOTARGET			= 8
-
+	CF_NOTARGET			= 8,
+	// [RH] Put camera behind player
+	CF_CHASECAM			= 16,
+	// [RH] Don't let the player move
+	CF_FROZEN			= 32,
+	// [RH] Stick camera in player's head if he moves
+	CF_REVERTPLEASE		= 64
 } cheat_t;
 
 
@@ -83,97 +88,57 @@ typedef enum
 //
 typedef struct player_s
 {
-	mobj_t* 			mo;
-	playerstate_t		playerstate;
-	ticcmd_t			cmd;
+	mobj_t *mo;
+	playerstate_t playerstate;
+	ticcmd_t cmd;
 
-	// Determine POV,
-	//	including viewpoint bobbing during movement.
-	// Focal origin above r.z
-	fixed_t 			viewz;
-	// Base height above floor for viewz.
-	fixed_t 			viewheight;
-	// Bob/squat speed.
-	fixed_t 			deltaviewheight;
-	// bounded/scaled total momentum.
-	fixed_t 			bob;
-
-	// This is only used between levels,
-	// mo->health is used during levels.
-	int 				health; 
-	int 				armorpoints;
-	// Armor type is 0-2.
-	int 				armortype;		
-
-	// Power ups. invinc and invis are tic counters.
-	int 				powers[NUMPOWERS];
-	BOOL 				cards[NUMCARDS];
-	BOOL	 			backpack;
+	userinfo_t	userinfo;				// [RH] who is this?
 	
-	// Frags, kills of other players.
-	int 				frags[MAXPLAYERS];
-	int					fragcount;			// [RH] Cumulative frags for this player
+	fixed_t		viewz;					// focal origin above r.z
+	fixed_t		viewheight;				// base height above floor for viewz
+	fixed_t		deltaviewheight;		// squat speed.
+	fixed_t		bob;					// bounded/scaled total momentum
 
-	weapontype_t		readyweapon;
+	// killough 10/98: used for realistic bobbing (i.e. not simply overall speed)
+	// mo->momx and mo->momy represent true momenta experienced by player.
+	// This only represents the thrust that the player applies himself.
+	// This avoids anomolies with such things as Boom ice and conveyors.
+	fixed_t		momx, momy;				// killough 10/98
+
+	int			health;					// only used between levels, mo->health
+										// is used during levels
+	int			armorpoints;
+	int			armortype;				// armor type is 0-2
+
+
+	int			powers[NUMPOWERS];		// invinc and invis are tic counters
+	BOOL		cards[NUMCARDS];
+	BOOL		backpack;
 	
-	// Is wp_nochange if not changing.
-	weapontype_t		pendingweapon;
+	int			frags[MAXPLAYERS];		// kills of other players
+	int			fragcount;				// [RH] Cumulative frags for this player
 
-	BOOL	 			weaponowned[NUMWEAPONS];
-	int 				ammo[NUMAMMO];
-	int 				maxammo[NUMAMMO];
+	weapontype_t	readyweapon;
+	weapontype_t	pendingweapon;		// wp_nochange if not changing
+	BOOL		weaponowned[NUMWEAPONS];
+	int			ammo[NUMAMMO];
+	int			maxammo[NUMAMMO];
 
-	// True if button down last tic.
-	int 				attackdown;
-	int 				usedown;
-	int					jumpdown;		// [RH] Don't jump like a fool
+	int			attackdown, usedown;	// true if button down last tic
+	int			cheats;					// bit flags
+	int			refire;					// refired shots are less accurate
+	int			killcount, itemcount, secretcount;		// for intermission
+	int			damagecount, bonuscount;// for screen flashing
+	mobj_t		*attacker;				// who did damage (NULL for floors
+	int			extralight;				// so gun flashes light up areas
+	int			fixedcolormap;			// can be set to REDCOLORMAP, etc.
+	int			xviewshift;				// [RH] view shift (for earthquakes)
+	pspdef_t	psprites[NUMPSPRITES];	// view sprites (gun, etc)
+	int			jumpTics;				// delay the next jump for a moment
 
-	// Bit flags, for cheats and debug.
-	// See cheat_t, above.
-	int 				cheats; 		
-
-	// Refired shots are less accurate.
-	int 				refire; 		
-
-	 // For intermission stats.
-	int 				killcount;
-	int 				itemcount;
-	int 				secretcount;
-
-	// Hint messages.
-	char*				message;		
-	
-	// For screen flashing (red or bright).
-	int 				damagecount;
-	int 				bonuscount;
-
-	// Who did damage (NULL for floors/ceilings).
-	mobj_t* 			attacker;
-	
-	// So gun flashes light up areas.
-	int 				extralight;
-
-	// Current PLAYPAL, ???
-	//	can be set to REDCOLORMAP for pain, etc.
-	int 				fixedcolormap;
-
-	// [RH] Amount to shift view horizontally (for earthquakes)
-	int 				xviewshift;		
-
-	// Overlay view sprites (gun, etc).
-	pspdef_t			psprites[NUMPSPRITES];
-
-	// [RH] A userinfo struct
-	userinfo_t			userinfo;
-
-	// [RH] Tic when respawning is allowed
-	int					respawn_time;
-
-	// [RH] Used for calculating falling damage
-	fixed_t				oldvelocity[3];
-
-	// [RH] Camera to use to draw view from. Normally same as mo
-	mobj_t				*camera;
+	int			respawn_time;			// [RH] delay respawning until this tic
+	fixed_t		oldvelocity[3];			// [RH] Used for falling damage
+	mobj_t		*camera;				// [RH] Whose eyes this player sees through
 } player_t;
 
 
@@ -183,51 +148,42 @@ typedef struct player_s
 //
 typedef struct
 {
-	BOOL	 	in; 	// whether the player is in game
+	BOOL		in;			// whether the player is in game
 	
 	// Player stats, kills, collected items etc.
-	int 		skills;
-	int 		sitems;
-	int 		ssecret;
-	int 		stime; 
-	int 		frags[MAXPLAYERS];
+	int			skills;
+	int			sitems;
+	int			ssecret;
+	int			stime;
+	int			frags[MAXPLAYERS];
 	int			fragcount;	// [RH] Cumulative frags for this player
-	int 		score;	// current score on entry, modified on return
-  
+	int			score;		// current score on entry, modified on return
+
 } wbplayerstruct_t;
 
 typedef struct
 {
-	int 		epsd;	// episode # (0-2)
+	int			epsd;	// episode # (0-2)
 
-	// [RH] Name of map just finished
-	char		current[8];
-
-	// next level, [RH] actual map name
-	char 		next[8];
+	char		current[8];	// [RH] Name of map just finished
+	char		next[8];	// next level, [RH] actual map name
 
 	char		lname0[8];
 	char		lname1[8];
 	
-	int 		maxkills;
-	int 		maxitems;
-	int 		maxsecret;
-	int 		maxfrags;
+	int			maxkills;
+	int			maxitems;
+	int			maxsecret;
+	int			maxfrags;
 
 	// the par time
-	int 		partime;
+	int			partime;
 	
 	// index of this player in game
-	int 		pnum;	
+	int			pnum;	
 
 	wbplayerstruct_t	plyr[MAXPLAYERS];
-
 } wbstartstruct_t;
 
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

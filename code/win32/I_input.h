@@ -6,9 +6,9 @@
 extern int KeyRepeatRate;
 extern int KeyRepeatDelay;
 
-BOOL I_InitInput(void *hwnd);
-void I_ShutdownInput(void);
+BOOL I_InitInput (void *hwnd);
+void STACK_ARGS I_ShutdownInput (void);
 
-void I_GetEvent(void);
+void I_GetEvent (void);
 
 #endif

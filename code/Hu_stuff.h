@@ -33,33 +33,20 @@
 // Calculate # of glyphs in font.
 #define HU_FONTSIZE 	(HU_FONTEND - HU_FONTSTART + 1) 
 
-#define HU_BROADCAST	5
-
-#define HU_MSGREFRESH	KEY_ENTER
-#define HU_MSGX 		0
-#define HU_MSGY 		0
-#define HU_MSGWIDTH 	64		// in characters
-#define HU_MSGHEIGHT	1		// in lines
-
-#define HU_MSGTIMEOUT	(4*TICRATE)
-
 //
-// HEADS UP TEXT
+// Chat routines
 //
 
-void HU_Init(void);
-void HU_Start(void);
+void CT_Init (void);
+BOOL CT_Responder (event_t* ev);
+void CT_Drawer (void);
 
-BOOL HU_Responder(event_t* ev);
-
-void HU_Ticker(void);
-void HU_Drawer(void);
-char HU_dequeueChatChar(void);
-void HU_Erase(void);
+extern int chatmodeon;
 
 // [RH] Draw deathmatch scores
 
-void HU_DrawScores (int me);
+struct player_s;
+void HU_DrawScores (struct player_s *me);
 
 #endif
 //-----------------------------------------------------------------------------

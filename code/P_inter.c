@@ -56,6 +56,12 @@ int 	maxammo[NUMAMMO] = {200, 50, 300, 50};
 int 	clipammo[NUMAMMO] = {10, 4, 20, 1};
 
 
+static void PickupMessage (mobj_t *toucher, const char *message)
+{
+	if (toucher == players[consoleplayer].camera)
+		Printf (PRINT_LOW, "%s\n", message);
+}
+
 //
 // GET STUFF
 //
@@ -69,7 +75,7 @@ int 	clipammo[NUMAMMO] = {10, 4, 20, 1};
 
 BOOL P_GiveAmmo (player_t *player, ammotype_t ammo, int num)
 {
-	int 		oldammo;
+	int oldammo;
 		
 	if (ammo == am_noammo)
 		return false;
@@ -161,7 +167,12 @@ BOOL P_GiveWeapon (player_t *player, weapontype_t weapon, BOOL dropped)
 {
 	BOOL 	gaveammo;
 	BOOL 	gaveweapon;
-		
+
+	// [RH] Don't get the weapon if no graphics for it
+	state_t *state = states + weaponinfo[weapon].readystate;
+	if ((state->frame & FF_FRAMEMASK) >= sprites[state->sprite].numframes)
+		return false;
+
 	if (netgame && (!deathmatch->value || dmflags & DF_WEAPONS_STAY) && !dropped)
 	{
 		// leave placed weapons forever on net games
@@ -175,10 +186,10 @@ BOOL P_GiveWeapon (player_t *player, weapontype_t weapon, BOOL dropped)
 			P_GiveAmmo (player, weaponinfo[weapon].ammo, 5);
 		else
 			P_GiveAmmo (player, weaponinfo[weapon].ammo, 2);
-		player->pendingweapon = weapon;
+		if (!player->userinfo.neverswitch)
+			player->pendingweapon = weapon;
 
-		if (player->mo == players[consoleplayer].camera)	// [RH] Use camera
-			S_StartSound (ORIGIN_AMBIENT, "misc/w_pkup", 78);
+		S_Sound (player->mo, CHAN_ITEM, "misc/w_pkup", 1, ATTN_NORM);
 		return false;
 	}
 		
@@ -200,7 +211,8 @@ BOOL P_GiveWeapon (player_t *player, weapontype_t weapon, BOOL dropped)
 	{
 		gaveweapon = true;
 		player->weaponowned[weapon] = true;
-		player->pendingweapon = weapon;
+		if (!player->userinfo.neverswitch)
+			player->pendingweapon = weapon;
 	}
 		
 	return (gaveweapon || gaveammo);
@@ -319,13 +331,11 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 				
 	delta = special->z - toucher->z;
 
-	if (delta > toucher->height
-		|| delta < -8*FRACUNIT)
+	if (delta > toucher->height || delta < -8*FRACUNIT)
 	{
 		// out of reach
 		return;
 	}
-	
 		
 	sound = 0; 
 	player = toucher->player;
@@ -342,13 +352,13 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 	  case SPR_ARM1:
 		if (!P_GiveArmor (player, deh.GreenAC))
 			return;
-		player->message = GOTARMOR;
+		PickupMessage (toucher, GOTARMOR);
 		break;
 				
 	  case SPR_ARM2:
 		if (!P_GiveArmor (player, deh.BlueAC))
 			return;
-		player->message = GOTMEGA;
+		PickupMessage (toucher, GOTMEGA);
 		break;
 		
 		// bonus items
@@ -357,7 +367,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		if (player->health > deh.MaxSoulsphere)
 			player->health = deh.MaxSoulsphere;
 		player->mo->health = player->health;
-		player->message = GOTHTHBONUS;
+		PickupMessage (toucher, GOTHTHBONUS);
 		break;
 		
 	  case SPR_BON2:
@@ -366,7 +376,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 			player->armorpoints = deh.MaxArmor;
 		if (!player->armortype)
 			player->armortype = deh.GreenAC;
-		player->message = GOTARMBONUS;
+		PickupMessage (toucher, GOTARMBONUS);
 		break;
 		
 	  case SPR_SOUL:
@@ -374,7 +384,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		if (player->health > deh.MaxSoulsphere)
 			player->health = deh.MaxSoulsphere;
 		player->mo->health = player->health;
-		player->message = GOTSUPER;
+		PickupMessage (toucher, GOTSUPER);
 		sound = 1;
 		break;
 		
@@ -384,7 +394,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		player->health = deh.MegasphereHealth;
 		player->mo->health = player->health;
 		P_GiveArmor (player,deh.BlueAC);
-		player->message = GOTMSPHERE;
+		PickupMessage (toucher, GOTMSPHERE);
 		sound = 1;
 		break;
 		
@@ -392,7 +402,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		// leave cards for everyone
 	  case SPR_BKEY:
 		if (!player->cards[it_bluecard])
-			player->message = GOTBLUECARD;
+			PickupMessage (toucher, GOTBLUECARD);
 		P_GiveCard (player, it_bluecard);
 		sound = 3;
 		if (!netgame)
@@ -401,7 +411,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		
 	  case SPR_YKEY:
 		if (!player->cards[it_yellowcard])
-			player->message = GOTYELWCARD;
+			PickupMessage (toucher, GOTYELWCARD);
 		P_GiveCard (player, it_yellowcard);
 		sound = 3;
 		if (!netgame)
@@ -410,7 +420,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		
 	  case SPR_RKEY:
 		if (!player->cards[it_redcard])
-			player->message = GOTREDCARD;
+			PickupMessage (toucher, GOTREDCARD);
 		P_GiveCard (player, it_redcard);
 		sound = 3;
 		if (!netgame)
@@ -419,7 +429,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		
 	  case SPR_BSKU:
 		if (!player->cards[it_blueskull])
-			player->message = GOTBLUESKUL;
+			PickupMessage (toucher, GOTBLUESKUL);
 		P_GiveCard (player, it_blueskull);
 		sound = 3;
 		if (!netgame)
@@ -428,7 +438,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		
 	  case SPR_YSKU:
 		if (!player->cards[it_yellowskull])
-			player->message = GOTYELWSKUL;
+			PickupMessage (toucher, GOTYELWSKUL);
 		P_GiveCard (player, it_yellowskull);
 		sound = 3;
 		if (!netgame)
@@ -437,7 +447,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		
 	  case SPR_RSKU:
 		if (!player->cards[it_redskull])
-			player->message = GOTREDSKULL;
+			PickupMessage (toucher, GOTREDSKULL);
 		P_GiveCard (player, it_redskull);
 		sound = 3;
 		if (!netgame)
@@ -448,7 +458,7 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 	  case SPR_STIM:
 		if (!P_GiveBody (player, 10))
 			return;
-		player->message = GOTSTIM;
+		PickupMessage (toucher, GOTSTIM);
 		break;
 		
 	  case SPR_MEDI:
@@ -456,9 +466,9 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 			return;
 
 		if (player->health < 25)
-			player->message = GOTMEDINEED;
+			PickupMessage (toucher, GOTMEDINEED);
 		else
-			player->message = GOTMEDIKIT;
+			PickupMessage (toucher, GOTMEDIKIT);
 		break;
 
 		
@@ -466,14 +476,14 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 	  case SPR_PINV:
 		if (!P_GivePower (player, pw_invulnerability))
 			return;
-		player->message = GOTINVUL;
+		PickupMessage (toucher, GOTINVUL);
 		sound = 1;
 		break;
 		
 	  case SPR_PSTR:
 		if (!P_GivePower (player, pw_strength))
 			return;
-		player->message = GOTBERSERK;
+		PickupMessage (toucher, GOTBERSERK);
 		if (player->readyweapon != wp_fist)
 			player->pendingweapon = wp_fist;
 		sound = 1;
@@ -482,28 +492,28 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 	  case SPR_PINS:
 		if (!P_GivePower (player, pw_invisibility))
 			return;
-		player->message = GOTINVIS;
+		PickupMessage (toucher, GOTINVIS);
 		sound = 1;
 		break;
 		
 	  case SPR_SUIT:
 		if (!P_GivePower (player, pw_ironfeet))
 			return;
-		player->message = GOTSUIT;
+		PickupMessage (toucher, GOTSUIT);
 		sound = 1;
 		break;
 		
 	  case SPR_PMAP:
 		if (!P_GivePower (player, pw_allmap))
 			return;
-		player->message = GOTMAP;
+		PickupMessage (toucher, GOTMAP);
 		sound = 1;
 		break;
 		
 	  case SPR_PVIS:
 		if (!P_GivePower (player, pw_infrared))
 			return;
-		player->message = GOTVISOR;
+		PickupMessage (toucher, GOTVISOR);
 		sound = 1;
 		break;
 		
@@ -519,49 +529,49 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 			if (!P_GiveAmmo (player,am_clip,1))
 				return;
 		}
-		player->message = GOTCLIP;
+		PickupMessage (toucher, GOTCLIP);
 		break;
 		
 	  case SPR_AMMO:
 		if (!P_GiveAmmo (player, am_clip,5))
 			return;
-		player->message = GOTCLIPBOX;
+		PickupMessage (toucher, GOTCLIPBOX);
 		break;
 		
 	  case SPR_ROCK:
 		if (!P_GiveAmmo (player, am_misl,1))
 			return;
-		player->message = GOTROCKET;
+		PickupMessage (toucher, GOTROCKET);
 		break;
 		
 	  case SPR_BROK:
 		if (!P_GiveAmmo (player, am_misl,5))
 			return;
-		player->message = GOTROCKBOX;
+		PickupMessage (toucher, GOTROCKBOX);
 		break;
 		
 	  case SPR_CELL:
 		if (!P_GiveAmmo (player, am_cell,1))
 			return;
-		player->message = GOTCELL;
+		PickupMessage (toucher, GOTCELL);
 		break;
 		
 	  case SPR_CELP:
 		if (!P_GiveAmmo (player, am_cell,5))
 			return;
-		player->message = GOTCELLBOX;
+		PickupMessage (toucher, GOTCELLBOX);
 		break;
 		
 	  case SPR_SHEL:
 		if (!P_GiveAmmo (player, am_shell,1))
 			return;
-		player->message = GOTSHELLS;
+		PickupMessage (toucher, GOTSHELLS);
 		break;
 		
 	  case SPR_SBOX:
 		if (!P_GiveAmmo (player, am_shell,5))
 			return;
-		player->message = GOTSHELLBOX;
+		PickupMessage (toucher, GOTSHELLBOX);
 		break;
 		
 	  case SPR_BPAK:
@@ -573,88 +583,94 @@ void P_TouchSpecialThing (mobj_t *special, mobj_t *toucher)
 		}
 		for (i=0 ; i<NUMAMMO ; i++)
 			P_GiveAmmo (player, i, 1);
-		player->message = GOTBACKPACK;
+		PickupMessage (toucher, GOTBACKPACK);
 		break;
 		
 		// weapons
 	  case SPR_BFUG:
 		if (!P_GiveWeapon (player, wp_bfg, false) )
 			return;
-		player->message = GOTBFG9000;
+		PickupMessage (toucher, GOTBFG9000);
 		sound = 2;		
 		break;
 		
 	  case SPR_MGUN:
-		if (!P_GiveWeapon (player, wp_chaingun, special->flags&MF_DROPPED) )
+		if (!P_GiveWeapon (player, wp_chaingun, special->flags & MF_DROPPED))
 			return;
-		player->message = GOTCHAINGUN;
+		PickupMessage (toucher, GOTCHAINGUN);
 		sound = 2;		
 		break;
 		
 	  case SPR_CSAW:
 		if (!P_GiveWeapon (player, wp_chainsaw, false) )
 			return;
-		player->message = GOTCHAINSAW;
+		PickupMessage (toucher, GOTCHAINSAW);
 		sound = 2;		
 		break;
 		
 	  case SPR_LAUN:
 		if (!P_GiveWeapon (player, wp_missile, false) )
 			return;
-		player->message = GOTLAUNCHER;
+		PickupMessage (toucher, GOTLAUNCHER);
 		sound = 2;		
 		break;
 		
 	  case SPR_PLAS:
 		if (!P_GiveWeapon (player, wp_plasma, false) )
 			return;
-		player->message = GOTPLASMA;
+		PickupMessage (toucher, GOTPLASMA);
 		sound = 2;		
 		break;
 		
 	  case SPR_SHOT:
-		if (!P_GiveWeapon (player, wp_shotgun, special->flags&MF_DROPPED ) )
+		if (!P_GiveWeapon (player, wp_shotgun, special->flags & MF_DROPPED))
 			return;
-		player->message = GOTSHOTGUN;
+		PickupMessage (toucher, GOTSHOTGUN);
 		sound = 2;		
 		break;
 				
 	  case SPR_SGN2:
-		if (!P_GiveWeapon (player, wp_supershotgun, special->flags&MF_DROPPED ) )
+		if (!P_GiveWeapon (player, wp_supershotgun, special->flags & MF_DROPPED))
 			return;
-		player->message = GOTSHOTGUN2;
+		PickupMessage (toucher, GOTSHOTGUN2);
 		sound = 2;		
 		break;
 				
 	  default:
 		I_Error ("P_SpecialThing: Unknown gettable thing");
 	}
-		
+
+	// [RH] Execute an attached special (if any)
+	if (special->special) {
+		LineSpecials[special->special] (NULL, toucher, special->args[0],
+			special->args[1], special->args[2], special->args[3], special->args[4]);
+		special->special = 0;
+	}
+
 	if (special->flags & MF_COUNTITEM) {
 		player->itemcount++;
 		level.found_items++;
 	}
 	P_RemoveMobj (special);
 	player->bonuscount += BONUSADD;
-	if (player->mo == players[consoleplayer].camera) {	// [RH] Use camera
-		switch (sound) {
-			case 0:
-			case 3:
-				S_StartSound (ORIGIN_AMBIENT, "misc/i_pkup", 78);
-				break;
-			case 1:
-				S_StartSound (ORIGIN_SURROUND3, "misc/p_pkup", 78);
-				break;
-			case 2:
-				S_StartSound (ORIGIN_AMBIENT, "misc/w_pkup", 78);
-				break;
-		}
+	switch (sound) {
+		case 0:
+		case 3:
+			S_Sound (player->mo, CHAN_ITEM, "misc/i_pkup", 1, ATTN_NORM);
+			break;
+		case 1:
+			S_Sound (player->mo, CHAN_ITEM, "misc/p_pkup", 1,
+				(player->mo == players[consoleplayer].camera) ? ATTN_SURROUND : ATTN_NORM);
+			break;
+		case 2:
+			S_Sound (player->mo, CHAN_ITEM, "misc/w_pkup", 1, ATTN_NORM);
+			break;
 	}
 }
 
 
 // [RH]
-// SexMessage: Replace parts of strings with gender-specific phrases
+// SexMessage: Replace parts of strings with gender-specific pronouns
 //
 // The following expansions are performed:
 //		%g -> he/she/it
@@ -711,6 +727,10 @@ void ClientObituary (mobj_t *self, mobj_t *inflictor, mobj_t *attacker)
 		return;
 
 	gender = self->player->userinfo.gender;
+
+	// Treat voodoo dolls as unknown deaths
+	if (inflictor && inflictor->player == self->player)
+		MeansOfDeath = MOD_UNKNOWN;
 
 	if (netgame && !deathmatch->value)
 		MeansOfDeath |= MOD_FRIENDLY_FIRE;
@@ -885,7 +905,7 @@ void ClientObituary (mobj_t *self, mobj_t *inflictor, mobj_t *attacker)
 
 	if (message) {
 		SexMessage (message, gendermessage, gender);
-		Printf ("%s %s.\n", self->player->userinfo.netname, gendermessage);
+		Printf (PRINT_MEDIUM, "%s %s.\n", self->player->userinfo.netname, gendermessage);
 		return;
 	}
 
@@ -896,6 +916,7 @@ void ClientObituary (mobj_t *self, mobj_t *inflictor, mobj_t *attacker)
 			attacker->player->fragcount -= 2;
 			attacker->player->frags[attacker->player-players]++;
 			self = attacker;
+			gender = self->player->userinfo.gender;
 
 			if (rnum < 64)
 				message = OB_FRIENDLY1;
@@ -943,6 +964,9 @@ void ClientObituary (mobj_t *self, mobj_t *inflictor, mobj_t *attacker)
 				case MOD_TELEFRAG:
 					message = OB_MPTELEFRAG;
 					break;
+				case MOD_RAILGUN:
+					message = OB_RAILGUN;
+					break;
 			}
 		}
 	}
@@ -952,13 +976,13 @@ void ClientObituary (mobj_t *self, mobj_t *inflictor, mobj_t *attacker)
 
 		SexMessage (message, gendermessage, gender);
 		sprintf (work, "%%s %s\n", gendermessage);
-		Printf (work, self->player->userinfo.netname,
+		Printf (PRINT_MEDIUM, work, self->player->userinfo.netname,
 				attacker->player->userinfo.netname);
 		return;
 	}
 
 	SexMessage (OB_DEFAULT, gendermessage, gender);
-	Printf ("%s %s.\n", self->player->userinfo.netname, gendermessage);
+	Printf (PRINT_MEDIUM, "%s %s.\n", self->player->userinfo.netname, gendermessage);
 }
 
 
@@ -978,18 +1002,19 @@ void P_KillMobj (mobj_t *source, mobj_t *target, mobj_t *inflictor)
 		target->flags &= ~MF_NOGRAVITY;
 
 	target->flags |= MF_CORPSE|MF_DROPOFF;
+	target->flags2 &= ~MF2_PASSMOBJ;
 	target->height >>= 2;
 
 	// [RH] If the thing has a special, execute and remove it
 	//		Note that the thing that killed it is considered
 	//		the activator of the script.
-	if (target->special) {
+	if ((target->flags & MF_COUNTKILL) && target->special) {
 		LineSpecials[target->special] (NULL, source, target->args[0],
 									   target->args[1], target->args[2],
 									   target->args[3], target->args[4]);
 		target->special = 0;
 	}
-	// [RH] Also set the thing's tid to 0.
+	// [RH] Also set the thing's tid to 0. [why?]
 	target->tid = 0;
 
 	if (source && source->player)
@@ -1013,7 +1038,7 @@ void P_KillMobj (mobj_t *source, mobj_t *target, mobj_t *inflictor)
 			// [RH] Implement fraglimit
 			if (deathmatch->value && fraglimit->value &&
 				(int)fraglimit->value == source->player->fragcount) {
-				Printf ("Fraglimit hit.\n");
+				Printf (PRINT_HIGH, "Fraglimit hit.\n");
 				G_ExitLevel (0);
 			}
 		}
@@ -1029,10 +1054,7 @@ void P_KillMobj (mobj_t *source, mobj_t *target, mobj_t *inflictor)
 	if (target->player)
 	{
 		// [RH] Force a delay between death and respawn
-		if (!olddemo)
-			target->player->respawn_time = level.time + TICRATE;
-		else
-			target->player->respawn_time = level.time;
+		target->player->respawn_time = level.time + TICRATE;
 
 		// count environment kills against you
 		if (!source) {
@@ -1046,8 +1068,7 @@ void P_KillMobj (mobj_t *source, mobj_t *target, mobj_t *inflictor)
 
 		if (target->player == &players[consoleplayer] && automapactive)
 		{
-			// don't die in auto map,
-			// switch view prior to dying
+			// don't die in auto map, switch view prior to dying
 			AM_Stop ();
 		}
 	}
@@ -1065,7 +1086,7 @@ void P_KillMobj (mobj_t *source, mobj_t *target, mobj_t *inflictor)
 		target->tics = 1;
 				
 	// [RH] Death messages
-	if (target->player && level.time && !olddemo)
+	if (target->player && level.time)
 		ClientObituary (target, inflictor, source);
 
 	// Drop stuff.
@@ -1090,7 +1111,7 @@ void P_KillMobj (mobj_t *source, mobj_t *target, mobj_t *inflictor)
 		return;
 	}
 
-	mo = P_SpawnMobj (target->x,target->y,0, item, ONFLOORZ);
+	mo = P_SpawnMobj (target->x, target->y, ONFLOORZ, item);
 	mo->flags |= MF_DROPPED;	// special versions of items
 }
 
@@ -1176,7 +1197,7 @@ void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage
 	if (player)
 	{
 		// end of game hell hack
-		if (target->subsector->sector->special & 255 == dDamage_End
+		if ((target->subsector->sector->special & 255) == dDamage_End
 			&& damage >= target->health)
 		{
 			damage = target->health - 1;
@@ -1235,7 +1256,7 @@ void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage
 	
 	// do the damage
 	// [RH] Only if not immune
-	if (!(target->flags2 & (MF2_INVULNERABLE | MF2_INDESTRUCTABLE))) {
+	if (!(target->flags2 & (MF2_INVULNERABLE | MF2_DORMANT))) {
 		target->health -= damage;	
 		if (target->health <= 0)
 		{

@@ -297,16 +297,16 @@ PSTREAMBUF mus2strmConvert (BYTE *inFile, DWORD inSize)
 	int error = DoConversion (inFile, inSize, 0);
 
 	if (error) {
-		Printf ("MUS error: ");
+		Printf (PRINT_HIGH, "MUS error: ");
 		switch (error) {
 			case NOTMUSFILE:
-				Printf ("Not a MUS file.\n"); break;
+				Printf (PRINT_HIGH, "Not a MUS file.\n"); break;
 			case MUSFILECOR:
-				Printf ("MUS file is corrupt.\n"); break;
+				Printf (PRINT_HIGH, "MUS file is corrupt.\n"); break;
 			case TOOMCHAN:
-				Printf ("MUS file has more than 16 channels.\n"); break;
+				Printf (PRINT_HIGH, "MUS file has more than 16 channels.\n"); break;
 			case MEMALLOC:
-				Printf ("Not enough memory.\n"); break;
+				Printf (PRINT_HIGH, "Not enough memory.\n"); break;
 		}
 		mus2strmCleanup ();
 		return NULL;

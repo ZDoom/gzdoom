@@ -5,7 +5,7 @@
 #include "p_local.h"
 #include "p_spec.h"
 #include "g_level.h"
-#include "s_sound.h"
+#include "s_sndseq.h"
 
 void T_Pillar (pillar_t *pillar)
 {
@@ -23,14 +23,11 @@ void T_Pillar (pillar_t *pillar)
 						 pillar->crush, 1, 1);
 	}
 
-	if (!(level.time&7))
-		S_StartSound ((mobj_t *)&pillar->sector->soundorg, "plats/pt1_mid", 119);
-
 	if (r == pastdest && s == pastdest) {
+		SN_StopSequence ((mobj_t *)&pillar->sector->soundorg);
 		pillar->sector->floordata = NULL;
 		pillar->sector->ceilingdata = NULL;
 		P_RemoveThinker (&pillar->thinker);
-		S_StartSound ((mobj_t *)&pillar->sector->soundorg, "plats/pt1_stop", 100);
 	}
 }
 
@@ -105,6 +102,11 @@ BOOL EV_DoPillar (pillar_e type, int tag, fixed_t speed, fixed_t height,
 			pillar->ceilingspeed = speed;
 			pillar->floorspeed = FixedDiv (FixedMul (speed, floordist), ceilingdist);
 		}
+
+		if (sec->seqType >= 0)
+			SN_StartSequence ((mobj_t *)&sec->soundorg, sec->seqType, SEQ_PLATFORM);
+		else
+			SN_StartSequenceName ((mobj_t *)&sec->soundorg, "Floor");
 	}
 	return rtn;
 }

@@ -265,7 +265,7 @@ int ParseHex (char *hex)
 		else if (*str >= 'A' && *str <= 'F')
 			num += 10 + *str-'A';
 		else {
-			Printf ("Bad hex number: %s\n",hex);
+			Printf (PRINT_HIGH, "Bad hex number: %s\n",hex);
 			return 0;
 		}
 		str++;

@@ -23,11 +23,11 @@ void C_NewModeAdjust (void);
 
 void C_Ticker (void);
 
-int PrintString (const char *string);
-int VPrintf (const char *format, va_list parms);
-int Printf_Bold (const char *format, ...);
+int PrintString (int printlevel, const char *string);
+int VPrintf (int printlevel, const char *format, va_list parms);
+int STACK_ARGS Printf_Bold (const char *format, ...);
 
-void C_AddNotifyString (const char *s);
+void C_AddNotifyString (int printlevel, const char *s);
 void C_DrawConsole (void);
 void C_ToggleConsole (void);
 void C_FullConsole (void);
@@ -35,10 +35,11 @@ void C_HideConsole (void);
 void C_AdjustBottom (void);
 void C_FlushDisplay (void);
 
+void C_InitTicker (const char *label, unsigned int max);
+void C_SetTicker (unsigned int at);
+
 void C_MidPrint (char *message);
 void C_DrawMid (void);
-
-void C_EraseLines (int top, int bottom);
 
 BOOL C_Responder (event_t *ev);
 

@@ -36,6 +36,7 @@
 #include "i_system.h"
 #include "c_consol.h"
 #include "z_zone.h"
+#include "version.h"
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 
@@ -49,18 +50,14 @@ HINSTANCE		g_hInst;
 WNDCLASS		WndClass;
 HWND			Window;
 HINSTANCE		hInstance;
-LONG			OemWidth, OemHeight;
-LONG			WinWidth, WinHeight;
-HFONT			OemFont;
-HDC				WinDC;
 
 extern float mb_used;
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
-	int wantHeight, wantWidth, height, width;
+	LONG WinWidth, WinHeight;
+	int height, width;
 	RECT cRect;
-	TEXTMETRIC metrics;
 
 	g_hInst = hInstance;
 	myargc = __argc;
@@ -104,14 +101,14 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 			 GetSystemMetrics (SM_CYCAPTION) + 12 * 32;
 	width  = GetSystemMetrics (SM_CXFIXEDFRAME) * 2 + 8 * 78;
 
-	WndClass.style			= CS_OWNDC;
+	WndClass.style			= 0;
 	WndClass.lpfnWndProc	= WndProc;
 	WndClass.cbClsExtra		= 0;
 	WndClass.cbWndExtra		= 0;
 	WndClass.hInstance		= hInstance;
 	WndClass.hIcon			= LoadIcon (hInstance, MAKEINTRESOURCE(IDI_ICON1));
 	WndClass.hCursor		= LoadCursor (NULL, IDC_ARROW);
-	WndClass.hbrBackground	= (HBRUSH)GetStockObject (BLACK_BRUSH);
+	WndClass.hbrBackground	= NULL;
 	WndClass.lpszMenuName	= NULL;
 	WndClass.lpszClassName	= (LPCTSTR)WinClassName;
 	
@@ -132,40 +129,17 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	if (!Window)
 		I_FatalError ("Could not open window");
 
-	WinDC = GetDC (Window);
-	if (!WinDC)
-		I_FatalError ("Could not obtain device context");
-
-	OemFont = GetStockObject (OEM_FIXED_FONT);	// This should not fail
-	SelectObject (WinDC, OemFont);
-
-	GetTextMetrics (WinDC, &metrics);
-	OemWidth = metrics.tmAveCharWidth;
-	OemHeight = metrics.tmHeight;
-
-	wantHeight = 32 * OemHeight;
-	wantWidth = 78 * OemWidth;
-
-	GetClientRect (Window, &cRect);
-
-	if (wantHeight != cRect.bottom)
-		height += wantHeight - cRect.bottom;
-	if (wantWidth != cRect.right)
-		width += wantWidth = cRect.right;
-
-	SetWindowPos (Window, 0, 0, 0, width, height, SWP_NOMOVE|SWP_NOZORDER);
 	GetClientRect (Window, &cRect);
 
 	WinWidth = cRect.right;
 	WinHeight = cRect.bottom;
 
-	C_InitConsole (((WinWidth / OemWidth) + 2) * 8, (WinHeight / OemHeight) * 8, false);
+	C_InitConsole (((WinWidth / 8) + 2) * 8, (WinHeight / 12) * 8, false);
 
-	Printf ("Heapsize: %g megabytes\n", mb_used);
+	Printf (PRINT_HIGH, "Heapsize: %g megabytes\n", mb_used);
 
 	D_DoomMain ();
 
 	return 0;
 }
-
 

@@ -44,19 +44,16 @@
 
 
 
-int
-SlopeDiv
-( unsigned		num,
-  unsigned		den)
+int SlopeDiv (unsigned int num, unsigned int den)
 {
-		unsigned		ans;
+	unsigned int ans;
 
-		if (den < 512)
-				return SLOPERANGE;
+	if (den < 512)
+		return SLOPERANGE;
 
-		ans = (num<<3)/(den>>8);
+	ans = (num<<3)/(den>>8);
 
-		return ans <= SLOPERANGE ? ans : SLOPERANGE;
+	return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
 

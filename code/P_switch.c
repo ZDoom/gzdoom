@@ -100,7 +100,7 @@ void P_InitSwitchList(void)
 // Start a button counting down till it turns off.
 // [RH] Rewritten to remove MAXBUTTONS limit and use temporary soundorgs.
 //
-void P_StartButton (line_t *line, bwhere_e w, int texture, int time, mobj_t *soundorg)
+void P_StartButton (line_t *line, bwhere_e w, int texture, int time, fixed_t x, fixed_t y)
 {
 	button_t *button;
 	
@@ -118,7 +118,8 @@ void P_StartButton (line_t *line, bwhere_e w, int texture, int time, mobj_t *sou
 	button->where = w;
 	button->btexture = texture;
 	button->btimer = time;
-	button->soundorg = soundorg;
+	button->x = x;
+	button->y = y;
 	button->next = buttonlist;
 	buttonlist = button;
 }
@@ -160,70 +161,25 @@ void P_ChangeSwitchTexture (line_t *line, int useAgain)
 		if (switchlist[i] == texTop) {
 			texture = &sides[line->sidenum[0]].toptexture;
 			where = top;
-		} else if (switchlist[i] == texMid) {
-			texture = &sides[line->sidenum[0]].midtexture;
-			where = middle;
 		} else if (switchlist[i] == texBot) {
 			texture = &sides[line->sidenum[0]].bottomtexture;
 			where = bottom;
+		} else if (switchlist[i] == texMid) {
+			texture = &sides[line->sidenum[0]].midtexture;
+			where = middle;
 		}
 
 		if (texture) {
-			// [RH] The original code played the sound at buttonlist->soundorg.
-			//		I spawn a temporary mobj on the button's line to play the
-			//		sound. It automatically removes itself after 60 seconds.
-			mobj_t *soundorg = P_SpawnMobj (
-									line->v1->x + (line->dx >> 1),
-									line->v1->y + (line->dy >> 1),
-									0, // z doesn't matter
-									MT_SWITCHTEMP,
-									0);
-			S_StartSound (soundorg, sound, 78);
+			// [RH] The original code played the sound at buttonlist->soundorg,
+			//		which wasn't necessarily anywhere near the switch if it was
+			//		facing a big sector.
+			fixed_t x = line->v1->x + (line->dx >> 1);
+			fixed_t y = line->v1->y + (line->dy >> 1);
+			S_PositionedSound (x, y, CHAN_VOICE, sound, 1, ATTN_STATIC);
 			*texture = (short)switchlist[i^1];
 			if (useAgain)
-				P_StartButton (line, where, switchlist[i], BUTTONTIME, soundorg);
+				P_StartButton (line, where, switchlist[i], BUTTONTIME, x, y);
 			break;
 		}
 	}
 }
-
-
-
-//
-// P_UseSpecialLine
-// Called when a thing uses a special line.
-// Only the front sides of lines are usable.
-//
-BOOL P_UseSpecialLine (mobj_t *thing, line_t *line, int side)
-{
-	BOOL result;
-
-	// [RH] Line needs to be setup for use activation
-	if ((line->flags & ML_ACTIVATIONMASK) != ML_ACTIVATEUSE)
-		return false;
-
-	// [RH] Don't let monsters activate the special unless the line says they can.
-	//		(Some lines automatically imply ML_MONSTERSCANACTIVATE)
-	if (!thing->player) {
-		if (line->flags & ML_SECRET)
-			return false;	// monsters never activate secrets
-		if (!(line->flags & ML_MONSTERSCANACTIVATE) &&
-			(line->special != Door_Raise || line->args[0] != 0) &&
-			line->special != Teleport &&
-			line->special != Teleport_NoFog)
-			return false;
-	}
-
-	// [RH] Use LineSpecials[] dispatcher table.
-	result = LineSpecials[line->special] (line, thing, line->args[0],
-										  line->args[1], line->args[2],
-										  line->args[3], line->args[4]);
-
-	// [RH] It's possible for a script to render the line unusable even if it has the
-	//		repeatable flag set by calling clearlinespecial().
-	if (result)
-		P_ChangeSwitchTexture (line, (line->flags & ML_REPEATABLE) && line->special);
-
-	return result;
-}
-

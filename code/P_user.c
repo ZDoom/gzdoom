@@ -31,6 +31,7 @@
 #include "p_local.h"
 #include "doomstat.h"
 #include "s_sound.h"
+#include "i_system.h"
 
 
 
@@ -45,8 +46,7 @@
 // 16 pixels of bob
 #define MAXBOB	0x100000		
 
-// [RH] Now a pointer since it uses P_FindFloor()
-mobj_t 		*onground;
+BOOL onground;
 
 
 //
@@ -61,57 +61,66 @@ void P_Thrust (player_t *player, angle_t angle, fixed_t move)
 	player->mo->momy += FixedMul(move,finesine[angle]);
 }
 
+//
+// P_Bob
+// Same as P_Thrust, but only affects bobbing.
+//
+// killough 10/98: We apply thrust separately between the real physical player
+// and the part which affects bobbing. This way, bobbing only comes from player
+// motion, nothing external, avoiding many problems, e.g. bobbing should not
+// occur on conveyors, unless the player walks on one, and bobbing should be
+// reduced at a regular rate, even on ice (where the player coasts).
+//
 
+void P_Bob (player_t *player, angle_t angle, fixed_t move)
+{
+	angle >>= ANGLETOFINESHIFT;
 
+	player->momx += FixedMul(move,finecosine[angle]);
+	player->momy += FixedMul(move,finesine[angle]);
+}
 
 //
 // P_CalcHeight
 // Calculate the walking / running height adjustment
 //
-void P_CalcHeight (player_t* player) 
+void P_CalcHeight (player_t *player) 
 {
 	int 		angle;
 	fixed_t 	bob;
 
 	// Regular movement bobbing
-	// (needs to be calculated for gun swing
-	// even if not on ground)
+	// (needs to be calculated for gun swing even if not on ground)
 	// OPTIMIZE: tablify angle
-	// Note: a LUT allows for effects
-	//	like a ramp with low health.
-	player->bob = FixedMul(player->mo->momx,player->mo->momx)
-				+ FixedMul(player->mo->momy,player->mo->momy);
+
+	// killough 10/98: Make bobbing depend only on player-applied motion.
+	//
+	// Note: don't reduce bobbing here if on ice: if you reduce bobbing here,
+	// it causes bobbing jerkiness when the player moves from ice to non-ice,
+	// and vice-versa.
+
+	player->bob = FixedMul (player->momx,player->momx)
+				+ FixedMul (player->momy,player->momy);
 	player->bob >>= 2;
 
-	// phares 9/9/98: If player is standing on ice, reduce his bobbing.
+	if (player->bob > MAXBOB)
+		player->bob = MAXBOB;
 
-	if (player->mo->friction > ORIG_FRICTION) // ice?
-	{
-		if (player->bob > (MAXBOB>>2))
-			player->bob = MAXBOB>>2;
-	}
-	else													//   ^
-		if (player->bob > MAXBOB)							//   |
-			player->bob = MAXBOB;							// phares 2/26/98
+	if ((player->mo->flags2 & MF2_FLY) && !onground)
+		player->bob = FRACUNIT / 2;
 
-	if ((player->cheats & CF_NOMOMENTUM) || !onground)
+	if (!onground || (player->cheats & CF_NOMOMENTUM))
 	{
 		player->viewz = player->mo->z + VIEWHEIGHT;
 
 		if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
 			player->viewz = player->mo->ceilingz-4*FRACUNIT;
 
-// The following line was in the Id source and appears		// phares 2/25/98
-// to be a bug. player->viewz is checked in a similar
-// manner at a different exit below.
-
-//		player->viewz = player->mo->z + player->viewheight;
 		return;
 	}
 				
-	angle = (FINEANGLES/20*level.time)&FINEMASK;
-	bob = FixedMul ( player->bob/2, finesine[angle]);
-
+	angle = (FINEANGLES/20*level.time) & FINEMASK;
+	bob = FixedMul (player->bob/2, finesine[angle]);
 
 	// move viewheight
 	if (player->playerstate == PST_LIVE)
@@ -152,37 +161,64 @@ void P_CalcHeight (player_t* player)
 void P_MovePlayer (player_t *player)
 {
 	ticcmd_t *cmd = &player->cmd;
-	int		  movefactor;       // movement factor                    // phares
-	fixed_t	  forwardmove;
-	fixed_t	  sidemove;
+	mobj_t *mo = player->mo;
 
-	player->mo->angle += (cmd->ucmd.yaw<<16);
+	mo->angle += (cmd->ucmd.yaw << 16);
 
-	onground = P_FindFloor (player->mo);
+	onground = (mo->z <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ);
 
-	movefactor = P_GetMoveFactor (player->mo);
-	if (!onground) {
-		if (!olddemo) {
+	// [RH] Don't let frozen players move
+	if (player->cheats & CF_FROZEN)
+		return;
+
+	// killough 10/98:
+	//
+	// We must apply thrust to the player and bobbing separately, to avoid
+	// anomalies. The thrust applied to bobbing is always the same strength on
+	// ice, because the player still "works just as hard" to move, while the
+	// thrust applied to the movement varies with 'movefactor'.
+
+	if (cmd->ucmd.forwardmove | cmd->ucmd.sidemove)
+	{
+		fixed_t forwardmove, sidemove;
+		int bobfactor;
+		int friction, movefactor;
+
+		movefactor = P_GetMoveFactor (mo, &friction);
+		if (!onground && !(player->mo->flags2 & MF2_FLY))
+		{
 			// [RH] allow very limited movement if not on ground.
 			movefactor >>= 8;
-		} else {
-			movefactor = 0;
+			bobfactor = 0;
 		}
-	}
+		else
+		{
+			bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
+		}
+		forwardmove = (cmd->ucmd.forwardmove * movefactor) >> 8;
+		sidemove = (cmd->ucmd.sidemove * movefactor) >> 8;
 
-	forwardmove = (cmd->ucmd.forwardmove * movefactor) >> 8;
-	sidemove = (cmd->ucmd.sidemove * movefactor) >> 8;
+		if (forwardmove)
+		{
+			P_Bob (player, mo->angle, (cmd->ucmd.forwardmove * bobfactor) >> 8);
+			P_Thrust (player, mo->angle, forwardmove);
+		}
+		if (sidemove)
+		{
+			P_Bob (player, mo->angle, (cmd->ucmd.sidemove * bobfactor) >> 8);
+			P_Thrust (player, mo->angle-ANG90, sidemove);
+		}
 
-	if (forwardmove)
-		P_Thrust (player, player->mo->angle, forwardmove);
+		if (mo->state == &states[S_PLAY])
+		{
+			P_SetMobjState (player->mo, S_PLAY_RUN1);
+		}
 
-	if (sidemove)
-		P_Thrust (player, player->mo->angle-ANG90, sidemove);
-
-	if ( (cmd->ucmd.forwardmove || cmd->ucmd.sidemove) 
-		 && player->mo->state == &states[S_PLAY] )
-	{
-		P_SetMobjState (player->mo, S_PLAY_RUN1);
+		if (player->cheats & CF_REVERTPLEASE)
+		{
+			player->cheats &= ~CF_REVERTPLEASE;
+			player->camera = player->mo;
+		}
 	}
 }		
 
@@ -191,7 +227,6 @@ void P_MovePlayer (player_t *player)
 //
 void P_FallingDamage (mobj_t *ent)
 {
-	mobj_t *groundentity;
 	float	delta;
 	int		damage;
 
@@ -201,15 +236,16 @@ void P_FallingDamage (mobj_t *ent)
 	if (ent->flags & MF_NOCLIP)
 		return;
 
-	groundentity = P_FindFloor (ent);
-
-	if ((ent->player->oldvelocity[2] < 0) && (ent->momz > ent->player->oldvelocity[2]) && (!groundentity))
+	if ((ent->player->oldvelocity[2] < 0)
+		&& (ent->momz > ent->player->oldvelocity[2])
+		&& (!(ent->flags2 & MF2_ONMOBJ)
+			|| !(ent->z <= ent->floorz)))
 	{
 		delta = (float)ent->player->oldvelocity[2];
 	}
 	else
 	{
-		if (!groundentity)
+		if (!(ent->flags2 & MF2_ONMOBJ))
 			return;
 		delta = (float)(ent->momz - ent->player->oldvelocity[2]);
 	}
@@ -249,12 +285,13 @@ void P_FallingDamage (mobj_t *ent)
 //
 #define ANG5	(ANG90/18)
 
-void P_DeathThink (player_t* player)
+void P_DeathThink (player_t *player)
 {
 	angle_t 			angle;
 	angle_t 			delta;
 
 	P_MovePsprites (player);
+	onground = (player->mo->z <= player->mo->floorz);
 		
 	// fall to the ground
 	if (player->viewheight > 6*FRACUNIT)
@@ -264,7 +301,6 @@ void P_DeathThink (player_t* player)
 		player->viewheight = 6*FRACUNIT;
 
 	player->deltaviewheight = 0;
-	onground = P_FindFloor (player->mo);
 	P_CalcHeight (player);
 		
 	if (player->attacker && player->attacker != player->mo)
@@ -312,6 +348,10 @@ void P_PlayerThink (player_t *player)
 	ticcmd_t *cmd;
 	weapontype_t newweapon;
 
+	// [RH] Error out if player doesn't have an mobj
+	if (!player->mo)
+		I_Error ("No player %ld start\n", player - players + 1);
+
 	player->xviewshift = 0;		// [RH] Make sure view is in right place
 
 	// fixme: do this in the cheat code
@@ -335,6 +375,10 @@ void P_PlayerThink (player_t *player)
 	{
 		P_DeathThink (player);
 		return;
+	}
+	if (player->jumpTics)
+	{
+		player->jumpTics--;
 	}
 
 	// [RH] Look up/down stuff
@@ -399,8 +443,7 @@ void P_PlayerThink (player_t *player)
 				newweapon = wp_chainsaw;
 			}
 			
-			if ( (gamemode == commercial)
-				&& newweapon == wp_shotgun 
+			if (newweapon == wp_shotgun 
 				&& player->weaponowned[wp_supershotgun]
 				&& player->readyweapon != wp_supershotgun)
 			{
@@ -412,30 +455,20 @@ void P_PlayerThink (player_t *player)
 			if (player->weaponowned[newweapon]
 				&& newweapon != player->readyweapon)
 			{
-				// Do not go to plasma or BFG in shareware,
-				//	even if cheated.
-				if ((newweapon != wp_plasma
-					 && newweapon != wp_bfg)
-					|| (gamemode != shareware) )
-				{
-					player->pendingweapon = newweapon;
-				}
+				player->pendingweapon = newweapon;
 			}
 		}
 	}
 
 	// [RH] check for jump
 	if ((cmd->ucmd.buttons & BT_JUMP) == BT_JUMP) {
-		if (!player->jumpdown && !(dmflags & DF_NO_JUMP)) {
-			// only jump if we are on the ground
-			if (P_FindFloor (player->mo)) {
-				player->mo->momz += 8 * FRACUNIT;
-				player->mo->flags2 |= MF2_JUMPING;
-				S_StartSound (player->mo, "*jump1", 100);
-			}
-			player->jumpdown = true;
+		if (!(dmflags & DF_NO_JUMP) && onground && !player->jumpTics) {
+			player->mo->momz += 8 * FRACUNIT;
+			S_Sound (player->mo, CHAN_BODY, "*jump1", 1, ATTN_NORM);
+			player->mo->flags2 &= ~MF2_ONMOBJ;
+			player->jumpTics = 18;
 		}
-	} else player->jumpdown = false;
+	}
 
 	// check for use
 	if (cmd->ucmd.buttons & BT_USE)

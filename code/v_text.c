@@ -17,7 +17,6 @@ extern patch_t *hu_font[HU_FONTSIZE];
 
 static byte *ConChars;
 
-byte *WhiteMap;
 byte *Ranges;
 
 // Convert the CONCHARS patch into the internal format used by
@@ -85,12 +84,15 @@ void V_InitConChars (byte transcolor)
 extern void STACK_ARGS PrintChar1P (long *charimg, byte *dest, int screenpitch);
 extern void STACK_ARGS PrintChar2P_MMX (long *charimg, byte *dest, int screenpitch);
 
-void V_PrintStr (int x, int y, byte *str, int count)
+void V_PrintStr (int x, int y, const byte *str, int count)
 {
 	byte *temp;
 	long *charimg;
 	
-	if (y > (screens[0].height - 8))
+	if (!screens[0].buffer)
+		return;
+
+	if (y > (screens[0].height - 8) || y<0)
 		return;
 
 	if (x < 0) {
@@ -163,7 +165,7 @@ void V_PrintStr (int x, int y, byte *str, int count)
 // V_PrintStr2
 // Same as V_PrintStr but doubles the size of every character.
 //
-void V_PrintStr2 (int x, int y, byte *str, int count)
+void V_PrintStr2 (int x, int y, const byte *str, int count)
 {
 	byte *temp;
 	long *charimg;
@@ -249,20 +251,27 @@ void V_PrintStr2 (int x, int y, byte *str, int count)
 }
 
 //
-//		Write a string using the hu_font
+// V_DrawText
+//
+// Write a string using the hu_font
 //
 extern patch_t *hu_font[HU_FONTSIZE];
+extern byte *Ranges;
 
-void V_DrawText (int x, int y, byte *string)
+static void drawtext (int drawer, int normalcolor, int x, int y, const byte *string)
 {
 	int 		w;
-	byte*		ch;
+	const byte *ch;
 	int 		c;
 	int 		cx;
 	int 		cy;
-	int			drawer;
+	int			boldcolor;
 
-	V_ColorMap = WhiteMap;
+	if (normalcolor > NUM_TEXT_COLORS)
+		normalcolor = CR_RED;
+	boldcolor = normalcolor ? normalcolor - 1 : NUM_TEXT_COLORS - 1;
+
+	V_ColorMap = Ranges + normalcolor * 256;
 
 	ch = string;
 	cx = x;
@@ -272,16 +281,28 @@ void V_DrawText (int x, int y, byte *string)
 		c = *ch++;
 		if (!c)
 			break;
-		if (c & 0x80) {
-			drawer = V_DRAWPATCH;
-			c &= 0x7f;
-		} else {
-			drawer = V_DRAWTRANSLATEDPATCH;
-		}
 
+		if (c == 0x8a) {
+			int newcolor = toupper(*ch++);
+
+			if (newcolor == 0) {
+				return;
+			} else if (newcolor == '-') {
+				newcolor = normalcolor;
+			} else if (newcolor >= 'A' && newcolor < 'A' + NUM_TEXT_COLORS) {
+				newcolor -= 'A';
+			} else if (newcolor == '+') {
+				newcolor = boldcolor;
+			} else {
+				continue;
+			}
+			V_ColorMap = Ranges + newcolor * 256;
+			continue;
+		}
+		
 		if (c == '\n') {
 			cx = x;
-			cy += 12;
+			cy += 9;
 			continue;
 		}
 
@@ -300,16 +321,20 @@ void V_DrawText (int x, int y, byte *string)
 	}
 }
 
-void V_DrawTextClean (int x, int y, byte *string)
+static void drawscaledtext (int drawer, int normalcolor, int x, int y, const byte *string)
 {
 	int 		w;
-	byte*		ch;
+	const byte *ch;
 	int 		c;
 	int 		cx;
 	int 		cy;
-	int			drawer;
+	int			boldcolor;
 
-	V_ColorMap = WhiteMap;
+	if (normalcolor > NUM_TEXT_COLORS)
+		normalcolor = CR_RED;
+	boldcolor = normalcolor ? normalcolor - 1 : NUM_TEXT_COLORS - 1;
+
+	V_ColorMap = Ranges + normalcolor * 256;
 
 	ch = string;
 	cx = x;
@@ -319,16 +344,28 @@ void V_DrawTextClean (int x, int y, byte *string)
 		c = *ch++;
 		if (!c)
 			break;
-		if (c & 0x80) {
-			drawer = V_DRAWPATCH;
-			c &= 0x7f;
-		} else {
-			drawer = V_DRAWTRANSLATEDPATCH;
-		}
 
+		if (c == 0x8a) {
+			int newcolor = toupper(*ch++);
+
+			if (newcolor == 0) {
+				return;
+			} else if (newcolor == '-') {
+				newcolor = normalcolor;
+			} else if (newcolor >= 'A' && newcolor < 'A' + NUM_TEXT_COLORS) {
+				newcolor -= 'A';
+			} else if (newcolor == '+') {
+				newcolor = boldcolor;
+			} else {
+				continue;
+			}
+			V_ColorMap = Ranges + newcolor * 256;
+			continue;
+		}
+		
 		if (c == '\n') {
 			cx = x;
-			cy += 12 * CleanYfac;
+			cy += 9 * CleanYfac;
 			continue;
 		}
 
@@ -343,189 +380,66 @@ void V_DrawTextClean (int x, int y, byte *string)
 			break;
 
 		V_DrawCNMWrapper (drawer, cx, cy, &screens[0], hu_font[c]);
-		cx += w;
-	}
-}
-
-void V_DrawWhiteText (int x, int y, byte *string)
-{
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-
-	V_ColorMap = WhiteMap;			
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while(1) {
-		c = *ch++;
-		if (!c)
-			break;
-		c &= 0x7f;
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > screens[0].width)
-			break;
-		V_DrawTranslatedPatch (cx, cy, &screens[0], hu_font[c]);
 		cx+=w;
 	}
 }
 
-void V_DrawRedText (int x, int y, byte *string)
+void V_DrawText (int normalcolor, int x, int y, const byte *string)
 {
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-				
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while (1) {
-		c = *ch++;
-		if (!c)
-			break;
-		c &= 0x7f;
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > screens[0].width)
-			break;
-		V_DrawPatch (cx, cy, &screens[0], hu_font[c]);
-		cx+=w;
-	}
+	drawtext (V_DRAWTRANSLATEDPATCH, normalcolor, x, y, string);
 }
 
-void V_DrawWhiteTextClean (int x, int y, byte *string)
+void V_DrawTextLuc (int normalcolor, int x, int y, const byte *string)
 {
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-
-	V_ColorMap = WhiteMap;
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while (1) {
-		c = *ch++;
-		if (!c)
-			break;
-		c &= 0x7f;
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > 320)
-			break;
-		V_DrawTranslatedPatchClean (cx, cy, &screens[0], hu_font[c]);
-		cx+=w;
-	}
+	drawtext (V_DRAWTLATEDLUCENTPATCH, normalcolor, x, y, string);
 }
 
-void V_DrawRedTextClean (int x, int y, byte *string)
+void V_DrawTextClean (int normalcolor, int x, int y, const byte *string)
 {
-	int 		w;
-	byte*		ch;
-	int 		c;
-	int 		cx;
-	int 		cy;
-				
-
-	ch = string;
-	cx = x;
-	cy = y;
-		
-	while (1) {
-		c = *ch++;
-		if (!c)
-			break;
-		c &= 0x7f;
-
-		if (c == '\n') {
-			cx = x;
-			cy += 12;
-			continue;
-		}
-
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c>= HU_FONTSIZE) {
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		if (cx+w > 320)
-			break;
-		V_DrawPatchClean (cx, cy, &screens[0], hu_font[c]);
-		cx+=w;
-	}
+	drawscaledtext (V_DRAWTRANSLATEDPATCH, normalcolor, x, y, string);
 }
+
+void V_DrawTextCleanLuc (int normalcolor, int x, int y, const byte *string)
+{
+	drawscaledtext (V_DRAWTLATEDLUCENTPATCH, normalcolor, x, y, string);
+}
+
+void V_DrawTextCleanMove (int normalcolor, int x, int y, const byte *string)
+{
+	drawscaledtext (V_DRAWTRANSLATEDPATCH, normalcolor,
+		(x - 160) * CleanXfac + screens[0].width / 2,
+		(y - 100) * CleanYfac + screens[0].height / 2,
+		string);
+}
+
 
 //
 // Find string width from hu_font chars
 //
-int V_StringWidth (byte *string)
+int V_StringWidth (const byte *string)
 {
 	int w = 0, c;
 		
 	while (*string) {
-		c = toupper((*string++) & 0x7f) - HU_FONTSTART;
-		if (c < 0 || c >= HU_FONTSIZE)
-			w += 4;
-		else
-			w += SHORT (hu_font[c]->width);
+		if (*string == 0x8a) {
+			if (*(++string))
+				string++;
+			continue;
+		} else {
+			c = toupper((*string++) & 0x7f) - HU_FONTSTART;
+			if (c < 0 || c >= HU_FONTSIZE) {
+				w += 4;
+			} else {
+				w += SHORT (hu_font[c]->width);
+			}
+		}
 	}
 				
 	return w;
 }
 
 //
-// [RH] Break long lines of text into multiple lines no
-//		longer than maxwidth pixels.
+// Break long lines of text into multiple lines no longer than maxwidth pixels
 //
 static void breakit (brokenlines_t *line, const byte *start, const byte *string)
 {
@@ -550,6 +464,12 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string)
 	i = w = 0;
 
 	while ( (c = *string++) ) {
+		if (c == 0x8a) {
+			if (*string)
+				string++;
+			continue;
+		}
+
 		if (isspace(c)) {
 			if (!lastWasSpace) {
 				space = string - 1;

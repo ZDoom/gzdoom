@@ -56,15 +56,6 @@ typedef struct {
 	} type;					// Type of scroll effect
 } scroll_t;
 
-// phares 3/12/98: added new model of friction for ice/sludge effects
-
-typedef struct {
-	thinker_t thinker;		// Thinker structure for friction
-	int friction;			// friction value (E800 = normal)
-	int movefactor;			// inertia factor when adding to momentum
-	int affectee;			// Number of affected sector
-} friction_t;
-
 // phares 3/20/98: added new model of Pushers for push/pull effects
 
 typedef struct {
@@ -124,11 +115,7 @@ void	P_SpawnSpecials (void);
 void	P_UpdateSpecials (void);
 
 // when needed
-BOOL	P_UseSpecialLine (mobj_t *thing, line_t *line, int side);
-void	P_ShootSpecialLine (mobj_t *thing, line_t *line);
-void	P_ShotCrossSpecialLine (mobj_t *thing, line_t *line);	// [RH]
-void	P_CrossSpecialLine (int linenum, int side, mobj_t *thing);
-BOOL	P_PushSpecialLine (mobj_t *thing, int side, line_t *line);	// [RH]
+BOOL	P_ActivateLine (line_t *ld, mobj_t *mo, int side, int activationType);
 
 void	P_PlayerInSpecialSector (player_t *player);
 
@@ -165,7 +152,6 @@ sector_t *getNextSector (line_t *line, sector_t *sec);
 sector_t *P_NextSpecialSector (sector_t *sec, int type, sector_t *back2);	// [RH]
 
 void	T_Scroll (scroll_t *);		// killough 3/7/98: scroll effect thinker
-void	T_Friction (friction_t *);	// phares 3/12/98: friction thinker
 void	T_Pusher (pusher_t *);		// phares 3/20/98: Push thinker
 
 
@@ -261,7 +247,8 @@ void	T_StrobeFlash (strobe_t *flash);
 void	P_SpawnStrobeFlash (sector_t *sector, int upper, int lower,
 							int utics, int ltics, int inSync);
 
-void	EV_StartLightFlashing (int tag, int upper, int lower);
+void	T_Flicker (fireflicker_t *flick);
+void	EV_StartLightFlickering (int tag, int upper, int lower);
 void	EV_StartLightStrobing (int tag, int upper, int lower,
 							   int utics, int ltics);
 void	EV_TurnTagLightsOff (int tag);
@@ -308,7 +295,7 @@ typedef struct button_s
 	bwhere_e	where;
 	int 		btexture;
 	int 		btimer;
-	mobj_t* 	soundorg;
+	fixed_t		x, y;		// [RH] Location of switch sound, independent of any mobjs
 
 } button_t;
 
@@ -519,10 +506,8 @@ typedef struct ceiling_s
 	fixed_t		speed1;		// [RH] dnspeed of crushers
 	fixed_t		speed2;		// [RH] upspeed of crushers
 	int 		crush;
-	int			silent;		// [RH] 1=noise at stops, 2=no noise at all
-
-	// 1 = up, 0 = waiting, -1 = down
-	int 		direction;
+	int			silent;
+	int 		direction;	// 1 = up, 0 = waiting, -1 = down
 
 	// [RH] Need these for BOOM-ish transfering ceilings
 	int			texture;
@@ -531,12 +516,7 @@ typedef struct ceiling_s
 	// ID
 	int 		tag;
 	int 		olddirection;
-	
 } ceiling_t;
-
-
-
-
 
 extern ceiling_t *activeceilings;
 
@@ -652,17 +632,19 @@ typedef struct
 	fixed_t		speed;
 } elevator_t;
 
-typedef struct {
-	thinker_t   thinker;
-	sector_t   *sector;
-	int			x;
-	int			amp;
-	int			freq;
-	int			timetodie;
-	fixed_t		baseline;
-	int			stage;
-	int			ampfactor;
-} waggle_t;
+typedef struct
+{
+	thinker_t thinker;
+	sector_t *sector;
+	fixed_t originalHeight;
+	fixed_t accumulator;
+	fixed_t accDelta;
+	fixed_t targetScale;
+	fixed_t scale;
+	fixed_t scaleDelta;
+	int ticker;
+	int state;
+} floorWaggle_t;
 
 
 typedef enum
@@ -686,9 +668,10 @@ BOOL EV_DoFloor (floor_e floortype, line_t *line, int tag,
 				 fixed_t speed, fixed_t height, int crush, int change);
 BOOL EV_FloorCrushStop (int tag);
 BOOL EV_DoChange (line_t *line, change_e changetype, int tag);
-BOOL EV_DoFloorWaggle (int tag, fixed_t amplitude, fixed_t speed, int delay, int count);
+BOOL EV_StartFloorWaggle(int tag, int height, int speed, int offset,
+	int timer);
 
-void T_Waggle (waggle_t *w);
+void T_FloorWaggle (floorWaggle_t *w);
 void T_MoveFloor (floormove_t *floor);
 void T_MoveElevator (elevator_t *elevator);
 

@@ -18,9 +18,9 @@
 //
 // DESCRIPTION:
 //	Sky rendering. The DOOM sky is a texture map like any
-//	wall, wrapping around. A 1024 columns equal 360 degrees.
+//	wall, wrapping around. 1024 columns equal 360 degrees.
 //	The default sky map is 256 columns and repeats 4 times
-//	on a 320 screen?
+//	on a 320 screen.
 //	
 //
 //-----------------------------------------------------------------------------
@@ -29,13 +29,9 @@
 
 // Needed for FRACUNIT.
 #include "m_fixed.h"
-
-// Needed for Flat retrieval.
 #include "r_data.h"
-
 #include "c_cvars.h"
-
-
+#include "g_level.h"
 #include "r_sky.h"
 
 extern int dmflags;
@@ -45,10 +41,10 @@ extern int dmflags;
 //
 int 					skyflatnum;
 int 					sky1texture,	sky2texture;
-int 					sky1texturemid,	sky2texturemid;
-int						sky1stretch,	sky2stretch;
-fixed_t					sky1scale,		sky2scale;
-fixed_t					sky1height,		sky2height;
+fixed_t					skytexturemid;
+fixed_t					skyscale;
+int						skystretch;
+fixed_t					skyheight;					
 
 fixed_t					sky1pos=0,		sky1speed=0;
 fixed_t					sky2pos=0,		sky2speed=0;
@@ -58,43 +54,42 @@ cvar_t					*r_stretchsky;
 
 char SKYFLATNAME[8] = "F_SKY1";
 
-//
-// R_InitSkyMap
-// Called whenever the view size changes.
-//
 extern int detailxshift, detailyshift;
 extern fixed_t freelookviewheight;
+
+//==========================================================================
+//
+// R_InitSkyMap
+//
+// Called whenever the view size changes.
+//
+//==========================================================================
 
 void R_InitSkyMap (cvar_t *var)
 {
 	// [RH] We are also the callback for r_stretchsky.
 	r_stretchsky->u.callback = R_InitSkyMap;
 
-	if (textureheight[sky1texture] <= (128 << FRACBITS)) {
-		sky1texturemid = 200/2*FRACUNIT;
-		sky1stretch = (var->value && !(dmflags & DF_NO_FREELOOK)) ? 1 : 0;
-	} else {
-		sky1texturemid = 200*FRACUNIT;
-		sky1stretch = 0;
+	if (textureheight[sky1texture] != textureheight[sky2texture])
+	{
+		Printf (PRINT_HIGH, "\x8a+Both sky textures must be the same height.\x8a-\n");
+		sky2texture = sky1texture;
 	}
-	sky1height = textureheight[sky1texture] << sky1stretch;
 
 	if (textureheight[sky1texture] <= (128 << FRACBITS)) {
-		sky2texturemid = 200/2*FRACUNIT;
-		sky2stretch = (var->value && !(dmflags & DF_NO_FREELOOK)) ? 1 : 0;
+		skytexturemid = 200/2*FRACUNIT;
+		skystretch = (var->value
+					  && !(dmflags & DF_NO_FREELOOK)
+					  && !(level.flags & LEVEL_FORCENOSKYSTRETCH)) ? 1 : 0;
 	} else {
-		sky2texturemid = 200*FRACUNIT;
-		sky2stretch = 0;
+		skytexturemid = 200*FRACUNIT;
+		skystretch = 0;
 	}
-	sky2height = textureheight[sky2texture] << sky2stretch;
+	skyheight = textureheight[sky1texture] << skystretch;
 
 	if (viewwidth && viewheight) {
-		sky1iscale = (200*FRACUNIT) / (((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
-		sky1scale = ((((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift)) << FRACBITS) /
-					(200);
-
-		sky2iscale = (200*FRACUNIT) / (((viewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
-		sky2scale = ((((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift)) << FRACBITS) /
+		skyiscale = (200*FRACUNIT) / (((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
+		skyscale = ((((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift)) << FRACBITS) /
 					(200);
 	}
 }

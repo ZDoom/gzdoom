@@ -440,16 +440,17 @@ typedef struct gamestring_s {
 #define OB_FRIENDLY2		(Strings[329].string)
 #define OB_FRIENDLY3		(Strings[330].string)
 #define OB_FRIENDLY4		(Strings[331].string)
+#define OB_RAILGUN			(Strings[332].string)	
 
-#define SAVEGAMENAME		(Strings[332].string)
+#define SAVEGAMENAME		(Strings[333].string)
 
-#define STARTUP1			(Strings[333].string)
-#define STARTUP2			(Strings[334].string)
-#define STARTUP3			(Strings[335].string)
-#define STARTUP4			(Strings[336].string)
-#define STARTUP5			(Strings[337].string)
+#define STARTUP1			(Strings[334].string)
+#define STARTUP2			(Strings[335].string)
+#define STARTUP3			(Strings[336].string)
+#define STARTUP4			(Strings[337].string)
+#define STARTUP5			(Strings[338].string)
 
-#define NUMSTRINGS			338
+#define NUMSTRINGS			339
 
 extern gamestring_t Strings[];
 

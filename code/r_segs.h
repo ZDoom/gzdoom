@@ -26,6 +26,13 @@
 
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2);
 
+// [RH] There are two different RenderSegLoops.
+struct cvar_s;
+extern void (*R_RenderSegLoop)(void);
+struct cvar_s *r_columnmethod;
+
+void R_RenderSegLoop1 (void);
+void R_RenderSegLoop2 (void);
 
 #endif
 //-----------------------------------------------------------------------------

@@ -100,8 +100,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,15,0,0
- PRODUCTVERSION 1,15,0,0
+ FILEVERSION 1,17,0,0
+ PRODUCTVERSION 1,17,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -119,13 +119,13 @@ BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on.\0"
             VALUE "CompanyName", " \0"
             VALUE "FileDescription", "ZDoom\0"
-            VALUE "FileVersion", "1.15\0"
+            VALUE "FileVersion", "1.17\0"
             VALUE "InternalName", "ZDoom\0"
-            VALUE "LegalCopyright", "Copyright © 1998, id Software & Randy Heit\0"
+            VALUE "LegalCopyright", "Copyright © 1999, id Software & Randy Heit\0"
             VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc.\0"
             VALUE "OriginalFilename", "zdoom.exe\0"
             VALUE "ProductName", "ZDoom\0"
-            VALUE "ProductVersion", "1.15\0"
+            VALUE "ProductVersion", "1.17\0"
         END
     END
     BLOCK "VarFileInfo"

@@ -43,7 +43,7 @@ typedef struct script_s
 
 extern script_t *LastScript;
 extern script_t *Scripts;	// List of all running scripts
-extern script_t *RunningScripts[256];	// Array of all synchronous scripts
+extern script_t *RunningScripts[1000];	// Array of all synchronous scripts
 
 void P_RunScripts (void);
 

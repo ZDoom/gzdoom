@@ -72,14 +72,24 @@ typedef long long __int64;
 #ifndef USEASM
 #define USEASM
 #endif
+#else
+#ifdef USEASM
+#undef USEASM
+#endif
 #endif
 
 
 
 // [RH] This gets used all over; define it here:
-int Printf (const char *, ...);
+int STACK_ARGS Printf (int printlevel, const char *, ...);
 // [RH] Same here:
-int DPrintf (const char *, ...);
+int STACK_ARGS DPrintf (const char *, ...);
 
+// game print flags
+#define	PRINT_LOW			0		// pickup messages
+#define	PRINT_MEDIUM		1		// death messages
+#define	PRINT_HIGH			2		// critical messages
+#define	PRINT_CHAT			3		// chat messages
+#define PRINT_TEAMCHAT		4		// chat messages from a teammate
 
 #endif

@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /G5 /MT /W3 /GX /O2 /I "../ptc/source" /I "win32" /I "." /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /YX /FD /c
+# ADD CPP /nologo /Gr /MT /W3 /GX /O2 /I "../ptc/source" /I "win32" /I "." /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /FAs /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o NUL /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /machine:I386
-# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ..\midas\lib\win32\vcretail\midas.lib wsock32.lib d:\games\doom\ptc\library\win32\vc5.x\release.lib winmm.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /out:"../zdoom.exe"
+# ADD LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib ..\midas\lib\win32\vcretail\midas.lib wsock32.lib ..\ptc\library\win32\vc5.x\release.lib winmm.lib /nologo /subsystem:windows /pdb:none /map /machine:I386 /nodefaultlib:"libc" /out:"../zdoom.exe"
 # SUBTRACT LINK32 /verbose /profile /debug
 
 !ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
@@ -70,7 +70,7 @@ LINK32=link.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /Gm /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
-# ADD CPP /nologo /G5 /MTd /W3 /Gm /GX /Zi /Od /I "../ptc/source" /I "win32" /I "." /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "USEASM" /FAs /YX /FD /c
+# ADD CPP /nologo /G5 /Gr /MTd /W3 /Gm /GX /Zi /Od /I "../ptc/source" /I "win32" /I "." /D "_DEBUG" /D "WIN32" /D "_WINDOWS" /D "NOASM" /YX /FD /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o NUL /win32
 # ADD BASE RSC /l 0x409 /d "_DEBUG"
@@ -181,6 +181,10 @@ SOURCE=.\cmdlib.c
 
 !ENDIF 
 
+# End Source File
+# Begin Source File
+
+SOURCE=.\ct_chat.c
 # End Source File
 # Begin Source File
 
@@ -373,42 +377,6 @@ SOURCE=.\g_game.c
 # Begin Source File
 
 SOURCE=.\g_level.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=.\hu_lib.c
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-# ADD CPP /FAs
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-# ADD BASE CPP /FAs
-# ADD CPP /FAs
-
-!ENDIF 
-
-# End Source File
-# Begin Source File
-
-SOURCE=.\hu_stuff.c
 
 !IF  "$(CFG)" == "zdoom - Win32 Release"
 
@@ -651,6 +619,10 @@ SOURCE=.\p_doors.c
 
 !ENDIF 
 
+# End Source File
+# Begin Source File
+
+SOURCE=.\p_effect.c
 # End Source File
 # Begin Source File
 
@@ -980,6 +952,10 @@ SOURCE=.\p_xlat.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\Po_man.c
+# End Source File
+# Begin Source File
+
 SOURCE=.\r_bsp.c
 
 !IF  "$(CFG)" == "zdoom - Win32 Release"
@@ -1031,6 +1007,10 @@ SOURCE=.\r_draw.c
 
 !ENDIF 
 
+# End Source File
+# Begin Source File
+
+SOURCE=.\r_drawt.c
 # End Source File
 # Begin Source File
 
@@ -1143,6 +1123,10 @@ SOURCE=.\s_sound.c
 
 !ENDIF 
 
+# End Source File
+# Begin Source File
+
+SOURCE=.\sc_man.c
 # End Source File
 # Begin Source File
 
@@ -1426,10 +1410,6 @@ SOURCE=.\g_level.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\hu_lib.h
-# End Source File
-# Begin Source File
-
 SOURCE=.\hu_stuff.h
 # End Source File
 # Begin Source File
@@ -1483,6 +1463,10 @@ SOURCE=.\minilzo.h
 # Begin Source File
 
 SOURCE=.\p_acs.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\p_effect.h
 # End Source File
 # Begin Source File
 
@@ -1566,7 +1550,15 @@ SOURCE=.\r_things.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\s_sndseq.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\s_sound.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\sc_man.h
 # End Source File
 # Begin Source File
 
@@ -1606,6 +1598,10 @@ SOURCE=.\w_wad.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\wave.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\wi_stuff.h
 # End Source File
 # Begin Source File
@@ -1618,29 +1614,62 @@ SOURCE=.\z_zone.h
 # PROP Default_Filter "*.nas; *.asm"
 # Begin Source File
 
-SOURCE=.\misc.nas
+SOURCE=.\linear.nas
 
 !IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# Begin Custom Build - Executing NASM...
+# Begin Custom Build - Assembling...
 IntDir=.\Release
-InputPath=.\misc.nas
-InputName=misc
+InputPath=.\linear.nas
+InputName=linear
 
-"$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	d:\nasm\nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+"$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
 
 # End Custom Build
 
 !ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-# Begin Custom Build - Executing NASM...
+# Begin Custom Build - Assembling...
+IntDir=.\Debug
+InputPath=.\linear.nas
+InputName=linear
+
+"$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
+
+!ENDIF 
+
+# End Source File
+# Begin Source File
+
+SOURCE=.\misc.nas
+
+!IF  "$(CFG)" == "zdoom - Win32 Release"
+
+# Begin Custom Build - Assembling...
+IntDir=.\Release
+InputPath=.\misc.nas
+InputName=misc
+
+"$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+
+# End Custom Build
+
+!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
+
+# Begin Custom Build - Assembling...
 IntDir=.\Debug
 InputPath=.\misc.nas
 InputName=misc
 
 "$(IntDir)/$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	d:\nasm\nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
 
 # End Custom Build
 
@@ -1665,25 +1694,25 @@ SOURCE=.\tmap.nas
 
 !IF  "$(CFG)" == "zdoom - Win32 Release"
 
-# Begin Custom Build - Executing NASM...
+# Begin Custom Build - Assembling...
 IntDir=.\Release
 InputPath=.\tmap.nas
 InputName=tmap
 
 "$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	d:\nasm\nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
 
 # End Custom Build
 
 !ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
 
-# Begin Custom Build - Executing NASM...
+# Begin Custom Build - Assembling...
 IntDir=.\Debug
 InputPath=.\tmap.nas
 InputName=tmap
 
 "$(IntDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
-	d:\nasm\nasm -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
+	nasmw -o $(IntDir)\$(InputName).obj -f win32 $(InputPath)
 
 # End Custom Build
 
@@ -1712,15 +1741,7 @@ SOURCE=..\commands.txt
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\..\tempzd\listacs.txt
-# End Source File
-# Begin Source File
-
 SOURCE=".\docs\Rh-log.txt"
-# End Source File
-# Begin Source File
-
-SOURCE=..\..\..\tempzd\zwadconv.txt
 # End Source File
 # End Group
 # Begin Group "Win32 Files"
@@ -1809,15 +1830,6 @@ SOURCE=.\win32\resource.h
 # Begin Source File
 
 SOURCE=.\win32\zdoom.rc
-
-!IF  "$(CFG)" == "zdoom - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Debug"
-
-!ELSEIF  "$(CFG)" == "zdoom - Win32 Profiling"
-
-!ENDIF 
-
 # End Source File
 # End Group
 # End Target

@@ -12,11 +12,12 @@
 #include "m_random.h"
 #include "doomstat.h"
 #include "c_consol.h"
+#include "s_sndseq.h"
 
 
 script_t *LastScript;
 script_t *Scripts;
-script_t *RunningScripts[256];
+script_t *RunningScripts[1000];
 
 
 #define NEXTWORD	(*(script->pc)++)
@@ -26,7 +27,7 @@ void P_ClearScripts (void)
 {
 	int i;
 
-	for (i = 0; i < 256; i++)
+	for (i = 0; i < 1000; i++)
 		RunningScripts[i] = NULL;
 
 	Scripts = NULL;
@@ -121,7 +122,7 @@ static void putScriptFirst (script_t *script)
 static __inline void pushToStack (script_t *script, int val)
 {
 	if (script->sp == STACK_SIZE) {
-		Printf ("Stack overflow in script %d\n", script->script);
+		Printf (PRINT_HIGH, "Stack overflow in script %d\n", script->script);
 		script->state = removeThisThingNow;
 	}
 	STACK(0) = val;
@@ -131,16 +132,17 @@ static __inline void pushToStack (script_t *script, int val)
 static int acs_Random (int min, int max)
 {
 	int num1, num2, num3, num4;
-	__int64 num;
+	unsigned int num;
 
 	num1 = P_Random(pr_acs);
 	num2 = P_Random(pr_acs);
 	num3 = P_Random(pr_acs);
 	num4 = P_Random(pr_acs);
 
-	num = ((num1 << 24) | (num2 << 16) | (num3 << 8) | num4) & 0x7fffffff;
-
-	return (int)(((num) * (max - min) / (0x7fffffff)) + min);
+	num = ((num1 << 24) | (num2 << 16) | (num3 << 8) | num4);
+	num %= (max - min + 1);
+	num += min;
+	return (int)num;
 }
 
 static int acs_ThingCount (int type, int tid)
@@ -245,14 +247,14 @@ static void T_ACS (script_t *script)
 	switch (script->state) {
 		case delayed:
 			// Decrement the delay counter and enter state running
-			// if it hits 0.
+			// if it hits 0
 			if (--script->statedata == 0)
 				script->state = running;
 			break;
 
 		case tagwait:
 			// Wait for tagged sector(s) to go inactive, then enter
-			// state running.
+			// state running
 			{
 				int secnum = -1;
 
@@ -266,24 +268,21 @@ static void T_ACS (script_t *script)
 			break;
 
 		case polywait:
-			// Wait for polyobj(s) to stop moving, then enter
-			// state running.
+			// Wait for polyobj(s) to stop moving, then enter state running
+			if (!PO_Busy (script->statedata))
 			{
-				// TODO
 				script->state = running;
 			}
 			break;
 
 		case scriptwaitpre:
-			// Wait for a script to start running, then enter
-			// state scriptwait.
+			// Wait for a script to start running, then enter state scriptwait
 			if (RunningScripts[script->statedata])
 				script->state = scriptwait;
 			break;
 
 		case scriptwait:
-			// Wait for a script to stop running, then enter
-			// state running.
+			// Wait for a script to stop running, then enter state running
 			if (RunningScripts[script->statedata])
 				return;
 
@@ -294,14 +293,14 @@ static void T_ACS (script_t *script)
 
 	while (script->state == running) {
 		if (++runaway > 500000) {
-			Printf ("Runaway script %d terminated\n", script->script);
+			Printf (PRINT_HIGH, "Runaway script %d terminated\n", script->script);
 			script->state = removeThisThingNow;
 			break;
 		}
 
 		switch ( (pcd = NEXTWORD) ) {
 			default:
-				Printf ("Unknown P-Code %d in script %d\n", pcd, script->script);
+				Printf (PRINT_HIGH, "Unknown P-Code %d in script %d\n", pcd, script->script);
 				// fall through
 			case PCD_TERMINATE:
 				script->state = removeThisThingNow;
@@ -823,26 +822,41 @@ static void T_ACS (script_t *script)
 				break;
 
 			case PCD_SECTORSOUND:
-				if (STACK(2) < level.strings[0] && script->activationline) {
-					S_StartSoundAtVolume (
-						(mobj_t *)&script->activationline->frontsector->soundorg,
+				if (STACK(2) < level.strings[0]) {
+					mobj_t *mobj;
+
+					if (script->activationline)
+						mobj = (mobj_t *)&script->activationline->frontsector->soundorg;
+					else
+						mobj = NULL;
+					S_Sound (
+						mobj,
+						CHAN_BODY,
 						level.behavior + level.strings[STACK(2)+1],
-						64,
-						STACK(1) * 2);
+						(STACK(1)) / 127,
+						ATTN_NORM);
 				}
 				script->sp -= 2;
 				break;
 
 			case PCD_AMBIENTSOUND:
 				if (STACK(2) < level.strings[0])
-					S_StartAmbient (level.behavior + level.strings[STACK(2)+1],
-									STACK(1) * 2,
-									false);
+					S_Sound (NULL, CHAN_BODY,
+							 level.behavior + level.strings[STACK(2)+1],
+							 (STACK(1)) / 127, ATTN_NONE);
 				script->sp -= 2;
 				break;
 
 			case PCD_SOUNDSEQUENCE:
-				// TODO
+				if (STACK(1) < level.strings[0]) {
+					mobj_t *mobj;
+
+					if (script->activationline)
+						mobj = (mobj_t *)&script->activationline->frontsector->soundorg;
+					else
+						mobj = NULL;
+					SN_StartSequenceName (mobj, level.behavior + level.strings[STACK(1)+1]);
+				}
 				script->sp--;
 				break;
 
@@ -890,10 +904,9 @@ static void T_ACS (script_t *script)
 					mobj_t *spot = NULL;
 
 					while ( (spot = P_FindMobjByTid (spot, STACK(3))) )
-						S_StartSoundAtVolume (spot,
-											  level.behavior + level.strings[STACK(2)+1],
-											  32,
-											  STACK(1)*2);
+						S_Sound (spot, CHAN_BODY,
+								 level.behavior + level.strings[STACK(2)+1],
+								 (STACK(1))/127, ATTN_NORM);
 				}
 				script->sp -= 3;
 				break;
@@ -920,7 +933,7 @@ void P_RunScripts (void)
 }
 
 static BOOL P_GetScriptGoing (mobj_t *who, line_t *where, int num, int *code,
-							  int lineSide, int arg0, int arg1, int arg2, int always)
+							  int lineSide, int arg0, int arg1, int arg2, int always, BOOL delay)
 {
 	script_t *script;
 
@@ -942,10 +955,17 @@ static BOOL P_GetScriptGoing (mobj_t *who, line_t *where, int num, int *code,
 	script->locals[1] = arg1;
 	script->locals[2] = arg2;
 	script->pc = code;
-	script->state = running;
 	script->activator = who;
 	script->activationline = where;
 	script->lineSide = lineSide;
+	if (delay) {
+		// From Hexen: Give the world some time to set itself up before
+		// running open scripts.
+		script->state = delayed;
+		script->statedata = TICRATE;
+	} else {
+		script->state = running;
+	}
 
 	if (!always)
 		RunningScripts[num] = script;
@@ -966,6 +986,7 @@ static void SetScriptState (int script, int state)
 void P_DoDeferedScripts (void)
 {
 	acsdefered_t *def;
+	int *scriptdata;
 
 	// Handle defered scripts in this step, too
 	def = level.info->defered;
@@ -974,8 +995,14 @@ void P_DoDeferedScripts (void)
 		switch (def->type) {
 			case defexecute:
 			case defexealways:
-				P_StartScript (NULL, NULL, def->script, level.mapname, 0,
-							   def->arg0, def->arg1, def->arg2, def->type == defexealways);
+				scriptdata = P_FindScript (def->script);
+				if (scriptdata) {
+					P_GetScriptGoing (NULL, NULL, def->script,
+									 (int *)(scriptdata[1] + level.behavior),
+									 0, def->arg0, def->arg1, def->arg2,
+									 def->type == defexealways, true);
+				} else
+					Printf (PRINT_HIGH, "P_DoDeferredScripts: Unknown script %d\n", def->script);
 				break;
 			case defsuspend:
 				SetScriptState (def->script, suspended);
@@ -1002,7 +1029,7 @@ void P_StartOpenScripts (void)
 		for (; numscripts; numscripts--, script += 3) {
 			if (script[0] >= 1000) {
 				P_GetScriptGoing (NULL, NULL, script[0] - 1000,
-								  (int *)(level.behavior + script[1]), 0, 0, 0, 0, 0);
+								  (int *)(level.behavior + script[1]), 0, 0, 0, 0, 0, true);
 			}
 		}
 	}
@@ -1030,12 +1057,12 @@ BOOL P_StartScript (mobj_t *who, line_t *where, int script, char *map, int lineS
 	if (!strnicmp (level.mapname, map, 8)) {
 		int *scriptdata = P_FindScript (script);
 
-		if (script) {
+		if (scriptdata) {
 			return P_GetScriptGoing (who, where, script,
 									 (int *)(scriptdata[1] + level.behavior),
-									 lineSide, arg0, arg1, arg2, always);
+									 lineSide, arg0, arg1, arg2, always, false);
 		} else
-			Printf ("P_StartScript: Unknown script %d\n", script);
+			Printf (PRINT_HIGH, "P_StartScript: Unknown script %d\n", script);
 	} else {
 		addDefered (FindLevelInfo (map), always ? defexealways : defexecute,
 					script, arg0, arg1, arg2);

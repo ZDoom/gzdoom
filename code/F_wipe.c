@@ -176,6 +176,7 @@ int wipe_doMelt (int width, int height, int ticks)
 			else if (y[i] < height)
 			{
 				dy = (y[i] < 16) ? y[i]+1 : 8;
+				dy = (dy * screens[0].height) / 200;
 				if (y[i]+dy >= height) dy = height - y[i];
 				s = &wipe_scr_end[i*height+y[i]];
 				d = &((short *)wipe_scr->buffer)[y[i]*(wipe_scr->pitch/2)+i];

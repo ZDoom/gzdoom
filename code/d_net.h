@@ -25,8 +25,6 @@
 
 #include "d_player.h"
 
-#define MAX_MSGLEN				1400
-
 
 //
 // Network play related stuff.
@@ -36,84 +34,61 @@
 //	be transmitted.
 //
 
-#define DOOMCOM_ID				0x12345678l
+#define DOOMCOM_ID		0x12345678l
+#define MAXNETNODES		8	// max computers in a game
+#define BACKUPTICS		12	// number of tics to remember
 
-// Max computers/players in a game.
-#define MAXNETNODES 			8
+#ifdef DJGPP
+// The DOS drivers provide a pretty skimpy buffer.
+// Should be enough, anyway.
+#define MAX_MSGLEN		(BACKUPTICS*10)
+#else
+#define MAX_MSGLEN		1400
+#endif
 
-
-// Networking and tick handling related.
-#define BACKUPTICS				12
-
-typedef enum
-{
-	CMD_SEND	= 1,
-	CMD_GET 	= 2
-
-} command_t;
-
+#define CMD_SEND	1
+#define CMD_GET		2
 
 //
 // Network packet data.
 //
 typedef struct
 {
-	// High bit is retransmit request.
-	unsigned			checksum;
-	// Only valid if NCMD_RETRANSMIT.
-	byte				retransmitfrom;
-	
-	byte				starttic;
-	byte				numtics;
-
-	byte				player;
-	byte				cmds[MAX_MSGLEN-8];
-
+	unsigned	checksum;					// high bit is retransmit request
+	byte		retransmitfrom;				// only valid if NCMD_RETRANSMIT
+	byte		starttic;
+	byte		player, numtics;
+	byte		cmds[MAX_MSGLEN-8];
 } doomdata_t;
-
-
-
 
 typedef struct
 {
-	// Supposed to be DOOMCOM_ID?
-	long				id;
-	
-	// DOOM executes an int to execute commands.
-	short				intnum; 		
-	// Communication between DOOM and the driver.
-	// Is CMD_SEND or CMD_GET.
-	short				command;
-	// Is dest for send, set by get (-1 = no packet).
-	short				remotenode;
-	
-	// Number of bytes in doomdata to be sent
-	short				datalength;
+	long	id;				// should be DOOMCOM_ID
+	short	intnum;			// DOOM executes an int to execute commands
 
-	// Info common to all nodes.
-	// Console is allways node 0.
-	short				numnodes;
-	// Flag: 1 = no duplication, 2-5 = dup for slow nets.
-	short				ticdup;
-	// Flag: 1 = send a backup tic in every packet.
-	short				extratics;
+// communication between DOOM and the driver
+	short	command;		// CMD_SEND or CMD_GET
+	short	remotenode;		// dest for send, set by get (-1 = no packet).
+	short	datalength;		// bytes in doomdata to be sent
 
-	// Info specific to this node.
-	short				consoleplayer;
-	short				numplayers;
-/*
-	// These are related to the 3-display mode,
-	//	in which two drones looking left and right
-	//	were used to render two additional views
-	//	on two additional computers.
-	// Probably not operational anymore.
-	// 1 = left, 0 = center, -1 = right
-	short				angleoffset;
-	// 1 = drone
-	short				drone;			
-*/
-	// The packet data to be sent.
-	doomdata_t			data;
+// info common to all nodes
+	short	numnodes;		// console is always node 0.
+	short	ticdup;			// 1 = no duplication, 2-5 = dup for slow nets
+	short	extratics;		// 1 = send a backup tic in every packet
+#ifdef DJGPP
+	short	pad[5];			// keep things aligned for DOS drivers
+#endif
+
+// info specific to this node
+	short	consoleplayer;
+	short	numplayers;
+#ifdef DJGPP
+	short	angleoffset;	// does not work, but needed to preserve
+	short	drone;			// alignment for DOS drivers
+#endif
+
+// packet data to be sent
+	doomdata_t	data;
 	
 } doomcom_t;
 
@@ -124,7 +99,7 @@ void NetUpdate (void);
 
 // Broadcasts special packets to other players
 //	to notify of game exit
-void D_QuitNetGame (void);
+void STACK_ARGS D_QuitNetGame (void);
 
 //? how many ticks to run?
 void TryRunTics (void);

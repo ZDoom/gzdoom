@@ -121,6 +121,9 @@ typedef enum {
 	Sector_ChangeSound = 140,
 
 // [RH] Begin new specials for ZDoom
+	Static_Init = 190,
+
+	SetPlayerProperty = 191,
 
 	Ceiling_LowerToHighestFloor = 192,
 	Ceiling_LowerInstant = 193,
@@ -211,6 +214,14 @@ typedef enum {
 	Ceiling_LowerToFloor = 254,
 	Ceiling_CrushRaiseAndStaySilA = 255
 } linespecial_t;
+
+typedef enum {
+	Init_Gravity = 0,
+	Init_Color = 1,
+	Init_Damage = 2,
+
+	NUM_STATIC_INITS
+} staticinit_t;
 
 typedef enum {
 	Light_Phased = 1,

@@ -58,9 +58,9 @@ void SetCVar (cvar_t *var, char *value)
 	if (var->flags & CVAR_LATCH && gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP) {
 		var->modified = true;
 		var->u.latched_string = copystring (value);
-	} else if (var->flags & CVAR_SERVERINFO && gamestate != GS_STARTUP) {
+	} else if (var->flags & CVAR_SERVERINFO && gamestate != GS_STARTUP && !demoplayback) {
 		if (netgame && consoleplayer != 0) {
-			Printf ("Only player 1 can change %s\n", var->name);
+			Printf (PRINT_HIGH, "Only player 1 can change %s\n", var->name);
 			return;
 		}
 		D_SendServerInfoChange (var, value);
@@ -135,16 +135,16 @@ void Cmd_Set (player_t *plyr, int argc, char **argv)
 	cvar_t *var, *prev;
 
 	if (argc != 3) {
-		Printf ("usage: set <variable> <value>\n");
+		Printf (PRINT_HIGH, "usage: set <variable> <value>\n");
 	} else {
 		if (!cvar_set (argv[1], argv[2]))
 			cvar (argv[1], argv[2], CVAR_UNSETTABLE);
 
 		var = FindCVar (argv[1], &prev);
 		if (var->flags & CVAR_NOSET)
-			Printf ("%s is write protected.\n", argv[1]);
+			Printf (PRINT_HIGH, "%s is write protected.\n", argv[1]);
 		else if (var->flags & CVAR_LATCH)
-			Printf ("%s will be changed for next game.\n", argv[1]);
+			Printf (PRINT_HIGH, "%s will be changed for next game.\n", argv[1]);
 	}
 }
 
@@ -154,12 +154,12 @@ void Cmd_Get (player_t *plyr, int argc, char **argv)
 
 	if (argc >= 2) {
 		if ( (var = FindCVar (argv[1], &prev)) ) {
-			Printf ("\"%s\" is \"%s\"\n", var->name, var->string);
+			Printf (PRINT_HIGH, "\"%s\" is \"%s\"\n", var->name, var->string);
 		} else {
-			Printf ("\"%s\" is unset\n", argv[1]);
+			Printf (PRINT_HIGH, "\"%s\" is unset\n", argv[1]);
 		}
 	} else {
-		Printf ("get: need variable name\n");
+		Printf (PRINT_HIGH, "get: need variable name\n");
 	}
 }
 
@@ -170,7 +170,7 @@ void Cmd_Toggle (player_t *plyr, int argc, char **argv)
 	if (argc > 1) {
 		if ( (var = FindCVar (argv[1], &prev)) ) {
 			SetCVarFloat (var, (float)(!var->value));
-			Printf ("\"%s\" is \"%s\"\n", var->name, var->string);
+			Printf (PRINT_HIGH, "\"%s\" is \"%s\"\n", var->name, var->string);
 		}
 	}
 }
@@ -184,7 +184,7 @@ void Cmd_CvarList (player_t *plyr, int argc, char **argv)
 		unsigned flags = var->flags;
 
 		count++;
-		Printf ("%c%c%c%c %s \"%s\"\n",
+		Printf (PRINT_HIGH, "%c%c%c%c %s \"%s\"\n",
 				flags & CVAR_ARCHIVE ? 'A' : ' ',
 				flags & CVAR_USERINFO ? 'U' : ' ',
 				flags & CVAR_SERVERINFO ? 'S' : ' ',
@@ -196,7 +196,7 @@ void Cmd_CvarList (player_t *plyr, int argc, char **argv)
 				var->string);
 		var = var->next;
 	}
-	Printf ("%d cvars\n", count);
+	Printf (PRINT_HIGH, "%d cvars\n", count);
 }
 
 void C_EnableNoSet (void)

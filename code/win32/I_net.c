@@ -195,13 +195,6 @@ void PacketGet (void)
 		return;
 	}
 
-	{
-		static int first=1;
-		if (first)
-			Printf("len=%d:p=[0x%x]\n", c, netbuffer);
-		first = 0;
-	}
-
 	// find remote node number
 	for (i = 0; i<doomcom->numnodes; i++)
 		if ( fromaddress.sin_addr.s_addr == sendaddress[i].sin_addr.s_addr )
@@ -291,7 +284,7 @@ void I_InitNetwork (void)
 	if (p && p<myargc-1)
 	{
 		DOOMPORT = atoi (myargv[p+1]);
-		Printf ("using alternate port %i\n",DOOMPORT);
+		Printf (PRINT_HIGH, "using alternate port %i\n",DOOMPORT);
 	}
 	
 	// parse network game options,
@@ -315,7 +308,7 @@ void I_InitNetwork (void)
 
 	// parse player number and host list
 	doomcom->consoleplayer = (short)(myargv[i+1][0]-'1');
-	Printf ("Console player number: %d\n", doomcom->consoleplayer);
+	Printf (PRINT_HIGH, "Console player number: %d\n", doomcom->consoleplayer);
 
 	doomcom->numnodes = 1;		// this node for sure
 		
@@ -334,7 +327,7 @@ void I_InitNetwork (void)
 			*portpart = 0;
 			port = atoi (portpart + 1);
 			if (!port) {
-				Printf ("Weird port: %s (using %d)\n", portpart + 1, DOOMPORT);
+				Printf (PRINT_HIGH, "Weird port: %s (using %d)\n", portpart + 1, DOOMPORT);
 				port = DOOMPORT;
 			}
 		} else {
@@ -353,7 +346,7 @@ void I_InitNetwork (void)
 		{
 			sendaddress[doomcom->numnodes].sin_addr.s_addr 
 				= inet_addr (myargv[i]);
-			Printf ("Node number %d address %s\n", doomcom->numnodes, myargv[i]);
+			Printf (PRINT_HIGH, "Node number %d address %s\n", doomcom->numnodes, myargv[i]);
 		}
 		else
 		{
@@ -366,7 +359,7 @@ void I_InitNetwork (void)
 #endif
 			sendaddress[doomcom->numnodes].sin_addr.s_addr 
 				= *(int *)hostentry->h_addr_list[0];
-			Printf ("Node number %d hostname %s\n", doomcom->numnodes, hostentry->h_name);
+			Printf (PRINT_HIGH, "Node number %d hostname %s\n", doomcom->numnodes, hostentry->h_name);
 		}
 
 		if (portpart)
@@ -375,7 +368,7 @@ void I_InitNetwork (void)
 		doomcom->numnodes++;
 	}
 
-	Printf ("Total players: %d\n", doomcom->numnodes);
+	Printf (PRINT_HIGH, "Total players: %d\n", doomcom->numnodes);
 		
 	doomcom->id = DOOMCOM_ID;
 	doomcom->numplayers = doomcom->numnodes;

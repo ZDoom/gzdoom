@@ -25,7 +25,6 @@
 
 
 
-
 #include "m_alloc.h"
 #include <stdlib.h>
 #include <stddef.h>
@@ -88,13 +87,67 @@ static fixed_t	bottomstep;
 
 static short	*maskedtexturecol;
 
+// [RH] Selects which version of the seg renderers to use.
+cvar_t *r_columnmethod;
+void (*R_RenderSegLoop)(void);
+
 
 //
 // R_RenderMaskedSegRange
 //
+static void BlastMaskedColumn (void (*blastfunc)(column_t *column), int texnum)
+{
+	if (maskedtexturecol[dc_x] != MAXSHORT)
+	{
+		// calculate lighting
+		if (!fixedcolormap)
+		{
+			unsigned index = (spryscale*lightscalexmul)>>LIGHTSCALESHIFT;	// [RH]
+
+			if (index >= MAXLIGHTSCALE)
+				index = MAXLIGHTSCALE-1;
+
+			dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
+		}
+					
+		// killough 3/2/98:
+		//
+		// This calculation used to overflow and cause crashes in Doom:
+		//
+		// sprtopscreen = centeryfrac - FixedMul(dc_texturemid, spryscale);
+		//
+		// This code fixes it, by using double-precision intermediate
+		// arithmetic and by skipping the drawing of 2s normals whose
+		// mapping to screen coordinates is totally out of range:
+
+		{
+			__int64 t = ((__int64) centeryfrac << FRACBITS) -
+				(__int64) dc_texturemid * spryscale;
+// [RH] This doesn't work properly as-is with freelook. Probably just me.
+//				if (t + (__int64) textureheight[texnum] * spryscale < 0 ||
+//					 t > (__int64) screens[0].height << FRACBITS*2)
+//					continue;		// skip if the texture is out of screen's range
+			sprtopscreen = (long)(t >> FRACBITS);
+		}
+		dc_iscale = 0xffffffffu / (unsigned)spryscale;
+		
+		// killough 1/25/98: here's where Medusa came in, because
+		// it implicitly assumed that the column was all one patch.
+		// Originally, Doom did not construct complete columns for
+		// multipatched textures, so there were no header or trailer
+		// bytes in the column referred to below, which explains
+		// the Medusa effect. The fix is to construct true columns
+		// when forming multipatched textures (see r_data.c).
+
+		// draw the texture
+		blastfunc ((column_t *)((byte *)R_GetColumn(texnum, maskedtexturecol[dc_x]) -3));
+		maskedtexturecol[dc_x] = MAXSHORT;
+	}
+	spryscale += rw_scalestep;
+}
+
 void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 {
-	column_t*	col;
 	int 		lightnum;
 	int 		texnum;
 	sector_t	tempsec;		// killough 4/13/98
@@ -108,13 +161,27 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// killough 4/11/98: draw translucent 2s normal textures
 	// [RH] modified because we don't use user-definable
 	//		translucency maps
-	colfunc = basecolfunc;
-	if (curline->linedef->lucency < 240)
-	{
-		colfunc = lucentcolfunc;
-		dc_transmap = TransTable + ((curline->linedef->lucency << 10) & 0x30000);
+	if (!r_columnmethod->value) {
+		if (curline->linedef->lucency < 240) {
+			colfunc = lucentcolfunc;
+			dc_transmap = TransTable + ((curline->linedef->lucency << 10) & 0x30000);
+		} else
+			colfunc = basecolfunc;
+		// killough 4/11/98: end translucent 2s normal code
+	} else {
+		// [RH] Alternate drawer functions
+		if (curline->linedef->lucency < 240) {
+			colfunc = lucentcolfunc;
+			hcolfunc_post1 = rt_lucent1col;
+			hcolfunc_post2 = rt_lucent2cols;
+			hcolfunc_post4 = rt_lucent4cols;
+			dc_transmap = TransTable + ((curline->linedef->lucency << 10) & 0x30000);
+		} else {
+			hcolfunc_post1 = rt_map1col;
+			hcolfunc_post2 = rt_map2cols;
+			hcolfunc_post4 = rt_map4cols;
+		}
 	}
-	// killough 4/11/98: end translucent 2s normal code
 
 	frontsector = curline->frontsector;
 	backsector = curline->backsector;
@@ -125,12 +192,15 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 	// killough 4/13/98: get correct lightlevel for 2s normal textures
 	lightnum = (R_FakeFlat(frontsector, &tempsec, NULL, NULL, false)
-				->lightlevel >> LIGHTSEGSHIFT)+extralight;
+			->lightlevel >> LIGHTSEGSHIFT) + (foggy ? 0 : extralight);
 
-	if (curline->v1->y == curline->v2->y)
-		lightnum--;
-	else if (curline->v1->x == curline->v2->x)
-		lightnum++;
+	// [RH] Only do it if not foggy and allowed
+	if (!foggy && !(level.flags & LEVEL_EVENLIGHTING)) {
+		if (curline->v1->y == curline->v2->y)
+			lightnum--;
+		else if (curline->v1->x == curline->v2->x)
+			lightnum++;
+	}
 
 	walllights = lightnum >= LIGHTLEVELS ? scalelight[LIGHTLEVELS-1] :
 		lightnum <  0           ? scalelight[0] : scalelight[lightnum];
@@ -157,64 +227,69 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	}
 	dc_texturemid += curline->sidedef->rowoffset;
 						
-	if (fixedcolormap)
+	if (fixedlightlev)
+		dc_colormap = basecolormap + fixedlightlev;
+	else if (fixedcolormap)
 		dc_colormap = fixedcolormap;
 	
 	// draw the columns
-	for (dc_x = x1 ; dc_x <= x2 ; dc_x++)
-	{
-		if (maskedtexturecol[dc_x] != MAXSHORT)
-		{
-			// calculate lighting
-			if (!fixedcolormap)
-			{
-				unsigned index = (spryscale*lightscalexmul)>>LIGHTSCALESHIFT;	// [RH]
+	if (!r_columnmethod->value) {
+		for (dc_x = x1; dc_x <= x2; dc_x++)
+			BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+	} else {
+		// [RH] Draw them through the temporary buffer
+		int stop = (++x2) & ~3;
 
-				if (index >= MAXLIGHTSCALE)
-					index = MAXLIGHTSCALE-1;
+		if (x1 >= x2)
+			return;
 
-				dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
-			}
-						
-			// killough 3/2/98:
-			//
-			// This calculation used to overflow and cause crashes in Doom:
-			//
-			// sprtopscreen = centeryfrac - FixedMul(dc_texturemid, spryscale);
-			//
-			// This code fixes it, by using double-precision intermediate
-			// arithmetic and by skipping the drawing of 2s normals whose
-			// mapping to screen coordinates is totally out of range:
+		dc_x = x1;
 
-			{
-				__int64 t = ((__int64) centeryfrac << FRACBITS) -
-					(__int64) dc_texturemid * spryscale;
-// [RH] This doesn't work properly as-is with freelook. Probably just me.
-//				if (t + (__int64) textureheight[texnum] * spryscale < 0 ||
-//					 t > (__int64) screens[0].height << FRACBITS*2)
-//					continue;		// skip if the texture is out of screen's range
-				sprtopscreen = (long)(t >> FRACBITS);
-			}
-			dc_iscale = 0xffffffffu / (unsigned)spryscale;
-			
-			// killough 1/25/98: here's where Medusa came in, because
-			// it implicitly assumed that the column was all one patch.
-			// Originally, Doom did not construct complete columns for
-			// multipatched textures, so there were no header or trailer
-			// bytes in the column referred to below, which explains
-			// the Medusa effect. The fix is to construct true columns
-			// when forming multipatched textures (see r_data.c).
-
-			// draw the texture
-			col = (column_t *)( 
-				(byte *)R_GetColumn(texnum,maskedtexturecol[dc_x]) -3);
-						
-			R_DrawMaskedColumn (col);
-			maskedtexturecol[dc_x] = MAXSHORT;
+		if (dc_x & 1) {
+			BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+			dc_x++;
 		}
-		spryscale += rw_scalestep;
-	}
-		
+
+		if (dc_x & 2) {
+			if (dc_x < x2 - 1) {
+				rt_initcols();
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+				dc_x++;
+				BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+				rt_draw2cols ((dc_x - 1) & 3, dc_x - 1);
+				dc_x++;
+			} else if (dc_x == x2 - 1) {
+				BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+				dc_x++;
+			}
+		}
+
+		while (dc_x < stop) {
+			rt_initcols();
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+			dc_x++;
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+			dc_x++;
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+			dc_x++;
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+			rt_draw4cols (dc_x - 3);
+			dc_x++;
+		}
+
+		if (x2 - dc_x == 1) {
+			BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+		} else if (x2 - dc_x >= 2) {
+			rt_initcols();
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+			dc_x++;
+			BlastMaskedColumn (R_DrawMaskedColumnHoriz, texnum);
+			rt_draw2cols ((dc_x - 1) & 3, dc_x - 1);
+			if (++dc_x < x2) {
+				BlastMaskedColumn (R_DrawMaskedColumn, texnum);
+			}
+		}
+	}	
 }
 
 
@@ -231,162 +306,287 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 #define HEIGHTBITS				12
 #define HEIGHTUNIT				(1<<HEIGHTBITS)
 
-void R_RenderSegLoop (void)
+static void BlastColumn (void (*blastfunc)())
 {
-	int 	yl;
-	int 	yh;
 	fixed_t texturecolumn;
+	int yl, yh;
 
-	if (fixedcolormap)
-		dc_colormap = fixedcolormap;
+	// mark floor / ceiling areas
+	yl = (topfrac+HEIGHTUNIT-1)>>HEIGHTBITS;
 
-	for ( ; rw_x < rw_stopx ; rw_x++)
+	// no space above wall?
+	if (yl < ceilingclip[rw_x]+1)
+		yl = ceilingclip[rw_x]+1;
+	
+	if (markceiling)
 	{
-		// mark floor / ceiling areas
-		yl = (topfrac+HEIGHTUNIT-1)>>HEIGHTBITS;
+		int top = ceilingclip[rw_x]+1;
+		int bottom = yl-1;
 
-		// no space above wall?
-		if (yl < ceilingclip[rw_x]+1)
-			yl = ceilingclip[rw_x]+1;
-		
-		if (markceiling)
+		if (bottom >= floorclip[rw_x])
+			bottom = floorclip[rw_x]-1;
+
+		if (top <= bottom)
 		{
-			int top = ceilingclip[rw_x]+1;
-			int bottom = yl-1;
+			ceilingplane->top[rw_x] = top;
+			ceilingplane->bottom[rw_x] = bottom;
+		}
+	}
+			
+	yh = bottomfrac>>HEIGHTBITS;
 
-			if (bottom >= floorclip[rw_x])
-				bottom = floorclip[rw_x]-1;
+	if (yh >= floorclip[rw_x])
+		yh = floorclip[rw_x]-1;
 
-			if (top <= bottom)
+	if (markfloor)
+	{
+		int top = yh+1;
+		int bottom = floorclip[rw_x]-1;
+		if (top <= ceilingclip[rw_x])
+			top = ceilingclip[rw_x]+1;
+		if (top <= bottom)
+		{
+			floorplane->top[rw_x] = top;
+			floorplane->bottom[rw_x] = bottom;
+		}
+	}
+	
+	// texturecolumn and lighting are independent of wall tiers
+	if (segtextured)
+	{
+		// calculate texture offset
+		texturecolumn = rw_offset-FixedMul(finetangent[(rw_centerangle + xtoviewangle[rw_x])>>ANGLETOFINESHIFT],rw_distance);
+		texturecolumn >>= FRACBITS;
+
+		dc_iscale = 0xffffffffu / (unsigned)rw_scale;
+	}
+	
+	// draw the wall tiers
+	if (midtexture)
+	{
+		// single sided line
+		dc_yl = yl;
+		dc_yh = yh;
+		dc_texturemid = rw_midtexturemid;
+		dc_source = R_GetColumn(midtexture,texturecolumn);
+		blastfunc ();
+		ceilingclip[rw_x] = viewheight;
+		floorclip[rw_x] = -1;
+	}
+	else
+	{
+		// two sided line
+		if (toptexture)
+		{
+			// top wall
+			int mid = pixhigh>>HEIGHTBITS;
+			pixhigh += pixhighstep;
+
+			if (mid >= floorclip[rw_x])
+				mid = floorclip[rw_x]-1;
+
+			if (mid >= yl)
 			{
-				ceilingplane->top[rw_x] = top;
-				ceilingplane->bottom[rw_x] = bottom;
+				dc_yl = yl;
+				dc_yh = mid;
+				dc_texturemid = rw_toptexturemid;
+				dc_source = R_GetColumn(toptexture,texturecolumn);
+				blastfunc ();
+				ceilingclip[rw_x] = mid;
 			}
-		}
-				
-		yh = bottomfrac>>HEIGHTBITS;
-
-		if (yh >= floorclip[rw_x])
-			yh = floorclip[rw_x]-1;
-
-		if (markfloor)
-		{
-			int top = yh+1;
-			int bottom = floorclip[rw_x]-1;
-			if (top <= ceilingclip[rw_x])
-				top = ceilingclip[rw_x]+1;
-			if (top <= bottom)
-			{
-				floorplane->top[rw_x] = top;
-				floorplane->bottom[rw_x] = bottom;
-			}
-		}
-		
-		// texturecolumn and lighting are independent of wall tiers
-		if (segtextured)
-		{
-			// calculate texture offset
-			texturecolumn = rw_offset-FixedMul(finetangent[(rw_centerangle + xtoviewangle[rw_x])>>ANGLETOFINESHIFT],rw_distance);
-			texturecolumn >>= FRACBITS;
-
-			if (!fixedcolormap) {
-				// calculate lighting
-				unsigned index = (rw_scale*lightscalexmul)>>LIGHTSCALESHIFT;
-
-				if (index >= MAXLIGHTSCALE)
-					index = MAXLIGHTSCALE-1;
-
-				dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
-			}
-
-			dc_x = rw_x;
-			dc_iscale = 0xffffffffu / (unsigned)rw_scale;
-		}
-		
-		// draw the wall tiers
-		if (midtexture)
-		{
-			// single sided line
-			dc_yl = yl;
-			dc_yh = yh;
-			dc_texturemid = rw_midtexturemid;
-			dc_source = R_GetColumn(midtexture,texturecolumn);
-			colfunc ();
-			ceilingclip[rw_x] = viewheight;
-			floorclip[rw_x] = -1;
+			else
+				ceilingclip[rw_x] = yl-1;
 		}
 		else
 		{
-			// two sided line
-			if (toptexture)
-			{
-				// top wall
-				int mid = pixhigh>>HEIGHTBITS;
-				pixhigh += pixhighstep;
-
-				if (mid >= floorclip[rw_x])
-					mid = floorclip[rw_x]-1;
-
-				if (mid >= yl)
-				{
-					dc_yl = yl;
-					dc_yh = mid;
-					dc_texturemid = rw_toptexturemid;
-					dc_source = R_GetColumn(toptexture,texturecolumn);
-					colfunc ();
-					ceilingclip[rw_x] = mid;
-				}
-				else
-					ceilingclip[rw_x] = yl-1;
-			}
-			else
-			{
-				// no top wall
-				if (markceiling)
-					ceilingclip[rw_x] = yl-1;
-			}
-						
-			if (bottomtexture)
-			{
-				// bottom wall
-				int mid = (pixlow+HEIGHTUNIT-1)>>HEIGHTBITS;
-				pixlow += pixlowstep;
-
-				// no space above wall?
-				if (mid <= ceilingclip[rw_x])
-					mid = ceilingclip[rw_x]+1;
-				
-				if (mid <= yh)
-				{
-					dc_yl = mid;
-					dc_yh = yh;
-					dc_texturemid = rw_bottomtexturemid;
-					dc_source = R_GetColumn(bottomtexture,
-											texturecolumn);
-					colfunc ();
-					floorclip[rw_x] = mid;
-				}
-				else
-					floorclip[rw_x] = yh+1;
-			}
-			else
-			{
-				// no bottom wall
-				if (markfloor)
-					floorclip[rw_x] = yh+1;
-			}
-						
-			if (maskedtexture)
-			{
-				// save texturecol
-				//	for backdrawing of masked mid texture
-				maskedtexturecol[rw_x] = texturecolumn;
-			}
+			// no top wall
+			if (markceiling)
+				ceilingclip[rw_x] = yl-1;
 		}
-				
-		rw_scale += rw_scalestep;
-		topfrac += topstep;
-		bottomfrac += bottomstep;
+					
+		if (bottomtexture)
+		{
+			// bottom wall
+			int mid = (pixlow+HEIGHTUNIT-1)>>HEIGHTBITS;
+			pixlow += pixlowstep;
+
+			// no space above wall?
+			if (mid <= ceilingclip[rw_x])
+				mid = ceilingclip[rw_x]+1;
+			
+			if (mid <= yh)
+			{
+				dc_yl = mid;
+				dc_yh = yh;
+				dc_texturemid = rw_bottomtexturemid;
+				dc_source = R_GetColumn(bottomtexture,
+										texturecolumn);
+				blastfunc ();
+				floorclip[rw_x] = mid;
+			}
+			else
+				floorclip[rw_x] = yh+1;
+		}
+		else
+		{
+			// no bottom wall
+			if (markfloor)
+				floorclip[rw_x] = yh+1;
+		}
+					
+		if (maskedtexture)
+		{
+			// save texturecol
+			//	for backdrawing of masked mid texture
+			maskedtexturecol[rw_x] = texturecolumn;
+		}
+	}
+			
+	rw_scale += rw_scalestep;
+	topfrac += topstep;
+	bottomfrac += bottomstep;
+}
+
+
+// [RH] This is DOOM's original R_RenderSegLoop() with most of the work
+//		having been split off into a separate BlastColumn() function. It
+//		just draws the columns straight to the frame buffer, and at least
+//		on a Pentium II, can be slower than R_RenderSegLoop2().
+void R_RenderSegLoop1 (void)
+{
+	if (fixedlightlev)
+		dc_colormap = basecolormap + fixedlightlev;
+	else if (fixedcolormap)
+		dc_colormap = fixedcolormap;
+	else if (!walllights)
+		walllights = scalelight[0];
+
+	for ( ; rw_x < rw_stopx ; rw_x++)
+	{
+		dc_x = rw_x;
+		if (!fixedcolormap) {
+			// calculate lighting
+			unsigned index = (rw_scale*lightscalexmul)>>LIGHTSCALESHIFT;
+
+			if (index >= MAXLIGHTSCALE)
+				index = MAXLIGHTSCALE-1;
+
+			dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
+		}
+		BlastColumn (colfunc);
+	}
+}
+
+// [RH] This is a cache optimized version of R_RenderSegLoop(). It first
+//		draws columns into a temporary buffer with a pitch of 4 and then
+//		copies them to the framebuffer using a bunch of byte, word, and
+//		longword moves. This may seem like a lot of extra work just to
+//		draw columns to the screen (and it is), but it's actually faster
+//		than drawing them directly to the screen like R_RenderSegLoop1().
+//		On a Pentium II 300, using this code with rendering functions in
+//		C is about twice as fast as using R_RenderSegLoop1() with an
+//		assembly rendering function.
+
+void R_RenderSegLoop2 (void)
+{
+	int stop = rw_stopx & ~3;
+
+	if (rw_x >= rw_stopx)
+		return;
+
+	if (fixedlightlev)
+		dc_colormap = basecolormap + fixedlightlev;
+	else if (fixedcolormap)
+		dc_colormap = fixedcolormap;
+	else {
+		// calculate lighting
+		unsigned index = (rw_scale*lightscalexmul)>>LIGHTSCALESHIFT;
+
+		if (index >= MAXLIGHTSCALE)
+			index = MAXLIGHTSCALE-1;
+
+		if (!walllights)
+			walllights = scalelight[0];
+
+		dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
+	}
+
+	if (rw_x & 1) {
+		dc_x = rw_x;
+		BlastColumn (colfunc);
+		rw_x++;
+	}
+
+	if (rw_x & 2) {
+		if (rw_x < rw_stopx - 1) {
+			rt_initcols();
+			dc_x = 0;
+			BlastColumn (hcolfunc_pre);
+			rw_x++;
+			dc_x = 1;
+			BlastColumn (hcolfunc_pre);
+			rt_draw2cols (0, rw_x - 1);
+			rw_x++;
+		} else if (rw_x == rw_stopx - 1) {
+			dc_x = rw_x;
+			BlastColumn (colfunc);
+			rw_x++;
+		}
+	}
+
+	while (rw_x < stop) {
+		if (!fixedcolormap) {
+			// calculate lighting
+			unsigned index = (rw_scale*lightscalexmul)>>LIGHTSCALESHIFT;
+
+			if (index >= MAXLIGHTSCALE)
+				index = MAXLIGHTSCALE-1;
+
+			dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
+		}
+		rt_initcols();
+		dc_x = 0;
+		BlastColumn (hcolfunc_pre);
+		rw_x++;
+		dc_x = 1;
+		BlastColumn (hcolfunc_pre);
+		rw_x++;
+		dc_x = 2;
+		BlastColumn (hcolfunc_pre);
+		rw_x++;
+		dc_x = 3;
+		BlastColumn (hcolfunc_pre);
+		rt_draw4cols (rw_x - 3);
+		rw_x++;
+	}
+
+	if (!fixedcolormap) {
+		// calculate lighting
+		unsigned index = (rw_scale*lightscalexmul)>>LIGHTSCALESHIFT;
+
+		if (index >= MAXLIGHTSCALE)
+			index = MAXLIGHTSCALE-1;
+
+		dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
+	}
+
+	if (rw_stopx - rw_x == 1) {
+		dc_x = rw_x;
+		BlastColumn (colfunc);
+		rw_x++;
+	} else if (rw_stopx - rw_x >= 2) {
+		rt_initcols();
+		dc_x = 0;
+		BlastColumn (hcolfunc_pre);
+		rw_x++;
+		dc_x = 1;
+		BlastColumn (hcolfunc_pre);
+		rt_draw2cols (0, rw_x - 1);
+		if (++rw_x < rw_stopx) {
+			dc_x = rw_x;
+			BlastColumn (colfunc);
+			rw_x++;
+		}
 	}
 }
 
@@ -422,12 +622,11 @@ void R_StoreWallRange (int start, int stop)
 	fixed_t 			hyp;
 	fixed_t 			sineval;
 	angle_t 			distangle, offsetangle;
-	fixed_t 			vtop;
-	int 				lightnum;
+	int					flatcolor;		// [RH] Color of planes if r_drawflat is 1
 
 #ifdef RANGECHECK
 	if (start >=viewwidth || start > stop)
-		I_Error ("Bad R_RenderWallRange: %i to %i", start , stop);
+		I_FatalError ("Bad R_StoreWallRange: %i to %i", start , stop);
 #endif
 
 	// don't overflow and crash
@@ -527,8 +726,7 @@ void R_StoreWallRange (int start, int stop)
 
 		if (linedef->flags & ML_DONTPEGBOTTOM)
 		{
-			vtop = frontsector->floorheight +
-				textureheight[sidedef->midtexture];
+			fixed_t vtop = frontsector->floorheight + textureheight[sidedef->midtexture];
 			// bottom of texture at bottom
 			rw_midtexturemid = vtop - viewz;	
 		}
@@ -539,15 +737,6 @@ void R_StoreWallRange (int start, int stop)
 		}
 
 		rw_midtexturemid += sidedef->rowoffset;
-
-		{	// killough 3/27/98: reduce offset
-			/* [RH] Not necessary unless I do BOOM's fix for wrapping
-			 * textures of any height
-			fixed_t h = textureheight[sidedef->midtexture];
-			if (h & (h-FRACUNIT))
-				rw_midtexturemid %= h;
-			 */
-		}
 
 		ds_p->silhouette = SIL_BOTH;
 		ds_p->sprtopclip = screenheightarray;
@@ -629,45 +818,50 @@ void R_StoreWallRange (int start, int stop)
 		{
 			worldtop = worldhigh;
 		}
-								
-		markfloor = worldlow != worldbottom
-			|| backsector->lightlevel != frontsector->lightlevel
-			|| backsector->floorpic != frontsector->floorpic
 
-			// killough 3/7/98: Add checks for (x,y) offsets
-			|| backsector->floor_xoffs != frontsector->floor_xoffs
-			|| backsector->floor_yoffs != frontsector->floor_yoffs
+		if (spanfunc == R_FillSpan) {
+			markfloor = markceiling = frontsector != backsector;
+			flatcolor = ((frontsector - sectors) & 31) * 4;
+		} else {
+			markfloor = worldlow != worldbottom
+				|| backsector->lightlevel != frontsector->lightlevel
+				|| backsector->floorpic != frontsector->floorpic
 
-			// killough 4/15/98: prevent 2s normals
-			// from bleeding through deep water
-			|| frontsector->heightsec != -1
+				// killough 3/7/98: Add checks for (x,y) offsets
+				|| backsector->floor_xoffs != frontsector->floor_xoffs
+				|| backsector->floor_yoffs != frontsector->floor_yoffs
 
-			// killough 4/17/98: draw floors if different light levels
-			|| backsector->floorlightsec != frontsector->floorlightsec
+				// killough 4/15/98: prevent 2s normals
+				// from bleeding through deep water
+				|| frontsector->heightsec != -1
 
-			// [RH] Add checks for colormaps
-			|| backsector->colormap != frontsector->colormap
-			;
+				// killough 4/17/98: draw floors if different light levels
+				|| backsector->floorlightsec != frontsector->floorlightsec
 
-		markceiling = worldhigh != worldtop
-			|| backsector->lightlevel != frontsector->lightlevel
-			|| backsector->ceilingpic != frontsector->ceilingpic
+				// [RH] Add checks for colormaps
+				|| backsector->colormap != frontsector->colormap
+				;
 
-			// killough 3/7/98: Add checks for (x,y) offsets
-			|| backsector->ceiling_xoffs != frontsector->ceiling_xoffs
-			|| backsector->ceiling_yoffs != frontsector->ceiling_yoffs
+			markceiling = worldhigh != worldtop
+				|| backsector->lightlevel != frontsector->lightlevel
+				|| backsector->ceilingpic != frontsector->ceilingpic
 
-			// killough 4/15/98: prevent 2s normals
-			// from bleeding through fake ceilings
-			|| (frontsector->heightsec != -1 &&
-				frontsector->ceilingpic!=skyflatnum)
+				// killough 3/7/98: Add checks for (x,y) offsets
+				|| backsector->ceiling_xoffs != frontsector->ceiling_xoffs
+				|| backsector->ceiling_yoffs != frontsector->ceiling_yoffs
 
-			// killough 4/17/98: draw ceilings if different light levels
-			|| backsector->ceilinglightsec != frontsector->ceilinglightsec
+				// killough 4/15/98: prevent 2s normals
+				// from bleeding through fake ceilings
+				|| (frontsector->heightsec != -1 &&
+					frontsector->ceilingpic!=skyflatnum)
 
-			// [RH] Add check for colormaps
-			|| backsector->colormap != frontsector->colormap
-			;
+				// killough 4/17/98: draw ceilings if different light levels
+				|| backsector->ceilinglightsec != frontsector->ceilinglightsec
+
+				// [RH] Add check for colormaps
+				|| backsector->colormap != frontsector->colormap
+				;
+		}
 
 		if (backsector->ceilingheight <= frontsector->floorheight
 			|| backsector->floorheight >= frontsector->ceilingheight)
@@ -676,7 +870,6 @@ void R_StoreWallRange (int start, int stop)
 			markceiling = markfloor = true;
 		}
 		
-
 		if (worldhigh < worldtop)
 		{
 			// top texture
@@ -688,10 +881,7 @@ void R_StoreWallRange (int start, int stop)
 			}
 			else
 			{
-				vtop =
-					backsector->ceilingheight
-					+ textureheight[sidedef->toptexture];
-				
+				fixed_t vtop = backsector->ceilingheight + textureheight[sidedef->toptexture];
 				// bottom of texture
 				rw_toptexturemid = vtop - viewz;		
 			}
@@ -710,30 +900,10 @@ void R_StoreWallRange (int start, int stop)
 			else		// top of texture at top
 				rw_bottomtexturemid = worldlow;
 		}
+
 		rw_toptexturemid += sidedef->rowoffset;
-
-		// killough 3/27/98: reduce offset
-		{
-			/* [RH] Not necessary unless I do BOOM's fix for wrapping
-			 * textures of any height
-			fixed_t h = textureheight[sidedef->toptexture];
-			if (h & (h-FRACUNIT))
-				rw_toptexturemid %= h;
-			 */
-		}
-
 		rw_bottomtexturemid += sidedef->rowoffset;
 
-		// killough 3/27/98: reduce offset
-		{
-			/* [RH] Not necessary unless I do BOOM's fix for wrapping
-			 * textures of any height
-			fixed_t h = textureheight[sidedef->bottomtexture];
-			if (h & (h-FRACUNIT))
-				rw_bottomtexturemid %= h;
-			 */
-		}
-		
 		// allocate space for masked texture tables
 		if (sidedef->midtexture)
 		{
@@ -771,12 +941,16 @@ void R_StoreWallRange (int start, int stop)
 		// OPTIMIZE: get rid of LIGHTSEGSHIFT globally
 		if (!fixedcolormap)
 		{
-			lightnum = (frontsector->lightlevel >> LIGHTSEGSHIFT)+extralight;
+			int lightnum = (frontsector->lightlevel >> LIGHTSEGSHIFT)
+					+ (foggy ? 0 : extralight);
 
-			if (curline->v1->y == curline->v2->y)
-				lightnum--;
-			else if (curline->v1->x == curline->v2->x)
-				lightnum++;
+			// [RH] Only do it if not foggy and allowed
+			if (!foggy && !(level.flags & LEVEL_EVENLIGHTING)) {
+				if (curline->v1->y == curline->v2->y)
+					lightnum--;
+				else if (curline->v1->x == curline->v2->x)
+					lightnum++;
+			}
 
 			if (lightnum < 0)			
 				walllights = scalelight[0];
@@ -808,7 +982,7 @@ void R_StoreWallRange (int start, int stop)
 	topstep = -FixedMul (rw_scalestep, worldtop);
 	topfrac = (centeryfrac>>4) - FixedMul (worldtop, rw_scale);
 
-	bottomstep = -FixedMul (rw_scalestep,worldbottom);
+	bottomstep = -FixedMul (rw_scalestep, worldbottom);
 	bottomfrac = (centeryfrac>>4) - FixedMul (worldbottom, rw_scale);
 		
 	if (backsector)
@@ -831,21 +1005,22 @@ void R_StoreWallRange (int start, int stop)
 	
 	// render it
 	if (markceiling) {
-	    if (ceilingplane)	// killough 4/11/98: add NULL ptr checks
+		if (ceilingplane) {	// killough 4/11/98: add NULL ptr checks
 			ceilingplane = R_CheckPlane (ceilingplane, rw_x, rw_stopx-1);
-		else
+			ceilingplane->color = flatcolor;	// [RH] for r_drawflat 1
+		} else
 			markceiling = 0;
 	}
 	
 	if (markfloor) {
-	    if (floorplane)		// killough 4/11/98: add NULL ptr checks
+		if (floorplane)	{	// killough 4/11/98: add NULL ptr checks
 			floorplane = R_CheckPlane (floorplane, rw_x, rw_stopx-1);
-		else
+			floorplane->color = flatcolor;	// [RH] for r_drawflat 1
+		} else
 			markfloor = 0;
 	}
 
 	R_RenderSegLoop ();
-
 	
 	// save sprite clipping info
 	if ( ((ds_p->silhouette & SIL_TOP) || maskedtexture) && !ds_p->sprtopclip)

@@ -1,4 +1,4 @@
-This is the source code for ZDoom 1.16 released on 22 December 1998.
+This is the source code for ZDoom 1.17 released on 17 February 1999.
 
 It is based on the Linux DOOM sources that were prepared by B. Krenheimer
 and generously released by John Carmack shortly before Christmas, 1997. If
@@ -6,9 +6,10 @@ you wish to obtain the original Linux source distribution, you can find it
 at ftp://ftp.idsoftware.com/source/doomsrc.zip. Portions of code were also
 taken from various other source ports, the majority of them coming from
 the BOOM Phase I source released on 27 May 1998 (credit Team TNT and Chi
-Hoang). Many changes are, of course, my own, and I've tried to flag them as
-such with [RH] comments blocks (although I missed a few before I started
-the commenting convention).
+Hoang). There's even stuff from Hexen (though not much) in there. Many
+changes are, of course, my own, and I've tried to flag them as such with
+[RH] comments blocks (although I missed a few before I started the
+commenting convention).
 
 The file rh-log.txt in the code directory lists my adventures with the
 source code on a mostly day-by-day basis. This file only goes back to the
@@ -57,7 +58,7 @@ packages if you don't already have them. These are:
     If you don't want to use NASM, you can #define NOASM while compiling
     ZDoom, and it will use C code instead.
 
-The included project file (doom.dsp) is for Visual C++ 5.x and makes a few
+The included project file (doom.dsp) is for Visual C++ 5.0 and makes a few
 assumptions about the development environment:
 
     MIDAS is installed at the same location in the directory hierarchy as
@@ -83,6 +84,11 @@ the Watcom linker:
 (The line I use is "nasm -o file.obj -f win32 file.nas" which works with
 Microsoft's linker, but not Watcom's.)
 
+If you want to recompile the DOS code, you need DJGPP and allegro. Allegro
+is only needed because MIDAS uses its interrupt wrappers. I don't use it
+for anything myself. The makefile.dj file can be used with make to
+generate either a release or debug build. (Create the appropriate
+subdirectories in the code/djgpp directory first.)
 
 
 Randy Heit

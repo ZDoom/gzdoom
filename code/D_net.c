@@ -36,6 +36,8 @@
 #include "cmdlib.h"
 #include "s_sound.h"
 #include "m_cheat.h"
+#include "p_effect.h"
+#include "p_local.h"
 
 #define NCMD_EXIT				0x80000000
 #define NCMD_RETRANSMIT 		0x40000000
@@ -310,12 +312,17 @@ void GetPackets (void)
 			playeringame[netconsole] = false;
 
 			if (deathmatch->value) {
-				Printf ("%s left the game with %d frags\n",
+				Printf (PRINT_HIGH, "%s left the game with %d frags\n",
 						 players[netconsole].userinfo.netname,
 						 players[netconsole].fragcount);
 			} else {
-				Printf ("%s left the game\n", players[netconsole].userinfo.netname);
+				Printf (PRINT_HIGH, "%s left the game\n", players[netconsole].userinfo.netname);
 			}
+
+			// [RH] Make the player disappear
+			P_DisconnectEffect (players[netconsole].mo);
+			P_RemoveMobj (players[netconsole].mo);
+			players[netconsole].mo = NULL;
 
 			if (demorecording) {
 				G_CheckDemoStatus ();
@@ -437,7 +444,7 @@ void NetUpdate (void)
 		if (maketic - gameticdiv >= BACKUPTICS/2-1)
 			break;			// can't hold any more
 		
-		//Printf ("mk:%i ",maketic);
+		//Printf (PRINT_HIGH, "mk:%i ",maketic);
 		G_BuildTiccmd (&localcmds[maketic%BACKUPTICS]);
 		maketic++;
 		Net_NewMakeTic ();
@@ -497,16 +504,16 @@ void NetUpdate (void)
 void CheckAbort (void)
 {
 	event_t *ev;
-	int 		stoptic;
+	int stoptic;
 
-	Printf ("");	// [RH] Give the console a chance to redraw itself
+	Printf (PRINT_HIGH, "");	// [RH] Give the console a chance to redraw itself
 	stoptic = I_GetTime () + 2; 
 	while (I_GetTime() < stoptic) 
 		I_StartTic (); 
 
 	I_StartTic ();
 	for ( ; eventtail != eventhead 
-			  ; eventtail = (++eventtail)&(MAXEVENTS-1) ) 
+		  ; eventtail = (++eventtail)&(MAXEVENTS-1) ) 
 	{ 
 		ev = &events[eventtail]; 
 		if (ev->type == ev_keydown && ev->data1 == KEY_ESCAPE)
@@ -538,7 +545,8 @@ void D_ArbitrateNetStart (void)
 	nodesdetected[0] = 1;	// Detect ourselves
 
 	// [RH] Rewrote this loop based on Doom Legacy 1.11's code.
-	Printf ("Waiting for %d more player%s...\n", doomcom->numnodes - 1, (doomcom->numnodes == 2) ? "" : "s");
+	Printf (PRINT_HIGH, "Waiting for %d more player%s...\n",
+		doomcom->numnodes - 1, (doomcom->numnodes == 2) ? "" : "s");
 	do {
 		CheckAbort ();
 
@@ -575,7 +583,7 @@ void D_ArbitrateNetStart (void)
 
 								D_ReadUserInfoStrings (netbuffer->player, &stream, false);
 
-								Printf ("%s joined the game (node %d, player %d)\n",
+								Printf (PRINT_HIGH, "%s joined the game (node %d, player %d)\n",
 										players[netbuffer->player].userinfo.netname,
 										doomcom->remotenode,
 										netbuffer->player);
@@ -673,7 +681,7 @@ void D_CheckNetGame (void)
 	for (i = 0; i < doomcom->numnodes; i++)
 		nodeingame[i] = true;
 		
-	Printf ("player %i of %i (%i nodes)\n",
+	Printf (PRINT_HIGH, "player %i of %i (%i nodes)\n",
 			consoleplayer+1, doomcom->numplayers, doomcom->numnodes);
 }
 
@@ -683,7 +691,7 @@ void D_CheckNetGame (void)
 // Called before quitting to leave a net game
 // without hanging the other players
 //
-void D_QuitNetGame (void)
+void STACK_ARGS D_QuitNetGame (void)
 {
 	int i, j;
 		
@@ -782,7 +790,7 @@ void TryRunTics (void)
 			if (nettics[0] <= nettics[nodeforplayer[i]])
 			{
 				gametime--;
-				// Printf ("-");
+				// DPrintf ("-");
 			}
 			frameskip[frameon&(MAXPLAYERS-1)] = (oldnettics > nettics[nodeforplayer[i]]);
 			oldnettics = nettics[0];
@@ -936,22 +944,22 @@ void Net_DoCommand (int type, byte **stream, int player)
 				s = ReadString (stream);
 				if ((who == 0) || players[player].userinfo.team[0] == 0) {
 					// Said to everyone
-					Printf_Bold ("%s: %s\n", players[player].userinfo.netname, s);
+					Printf (PRINT_CHAT, "%s: %s\n", players[player].userinfo.netname, s);
 					
 					if (gamemode == commercial) {
-						S_StartSound (ORIGIN_AMBIENT3, "misc/chat", 60);
+						S_Sound (NULL, CHAN_VOICE, "misc/chat", 1, ATTN_NONE);
 					} else {
-						S_StartSound (ORIGIN_AMBIENT3, "misc/chat2", 60);
+						S_Sound (NULL, CHAN_VOICE, "misc/chat2", 1, ATTN_NONE);
 					}
 				} else if (!stricmp (players[player].userinfo.team,
 									 players[consoleplayer].userinfo.team)) {
 					// Said only to members of the player's team
-					Printf_Bold ("(%s): %s\n", players[player].userinfo.netname, s);
+					Printf (PRINT_TEAMCHAT, "(%s): %s\n", players[player].userinfo.netname, s);
 					
 					if (gamemode == commercial) {
-						S_StartSound (ORIGIN_AMBIENT3, "misc/chat", 60);
+						S_Sound (NULL, CHAN_VOICE, "misc/chat", 1, ATTN_NONE);
 					} else {
-						S_StartSound (ORIGIN_AMBIENT3, "misc/chat2", 60);
+						S_Sound (NULL, CHAN_VOICE, "misc/chat2", 1, ATTN_NONE);
 					}
 				}
 			}
@@ -964,7 +972,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 		case DEM_PRINT:
 			s = ReadString (stream);
-			Printf (s);
+			Printf (PRINT_HIGH, s);
 			break;
 
 		case DEM_CENTERPRINT:
@@ -1017,6 +1025,6 @@ void Cmd_Pings (void *plyr, int argc, char **argv)
 
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (playeringame[i])
-			Printf ("% 4u %s\n", currrecvtime[i] - lastrecvtime[i],
+			Printf (PRINT_HIGH, "% 4u %s\n", currrecvtime[i] - lastrecvtime[i],
 					players[i].userinfo.netname);
 }

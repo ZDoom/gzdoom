@@ -47,8 +47,7 @@
 
 void	Z_Init (void);
 void*	Z_Malloc (size_t size, int tag, void *ptr);
-void	Z_Free2 (void *ptr, char *f, int l);
-#define Z_Free(p) Z_Free2 ((p), __FILE__, __LINE__)
+void	Z_Free (void *ptr);
 void	Z_FreeTags (int lowtag, int hightag);
 void	Z_DumpHeap (int lowtag, int hightag);
 void	Z_FileDumpHeap (FILE *f);

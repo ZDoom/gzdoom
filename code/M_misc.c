@@ -253,7 +253,7 @@ void M_LoadDefaults (void)
 
 	if (configver->value <= 113.0f) {
 		AddCommandString ("bind t messagemode; bind \\ +showscores; bind f12 spynext; bind sysrq screenshot");
-		if (!stricmp (C_GetBinding (KEY_F5), "menu_video"))
+		if (C_GetBinding (KEY_F5) && !stricmp (C_GetBinding (KEY_F5), "menu_video"))
 			AddCommandString ("bind f5 menu_display");
 	}
 
@@ -388,7 +388,7 @@ void M_ScreenShot (char *filename)
 			lbmname = autoname;
 		}
 		if (!FindFreeName (lbmname, "tga\0pcx" + (screens[0].is8bit << 2))) {
-			Printf ("M_ScreenShot: Delete some screenshots\n");
+			Printf (PRINT_HIGH, "M_ScreenShot: Delete some screenshots\n");
 			return;
 		}
 		filename = autoname;
@@ -409,7 +409,7 @@ void M_ScreenShot (char *filename)
 		// save the tga file
 		//I_WriteTGAfile (filename, &screens[0]);
 	}
-	Printf ("screen shot\n");
+	Printf (PRINT_HIGH, "screen shot\n");
 }
 
 void Cmd_Screenshot (void *plyr, int argc, char **argv)

@@ -58,7 +58,7 @@ void M_StartControlPanel (void);
 BOOL M_StartOptionsMenu (void);
 
 // [RH] Handle keys for options menu
-BOOL M_OptResponder (event_t *ev);
+void M_OptResponder (event_t *ev);
 
 // [RH] Draw options menu
 void M_OptDrawer (void);
@@ -66,8 +66,10 @@ void M_OptDrawer (void);
 // [RH] Initialize options menu
 void M_OptInit (void);
 
+struct menu_s;
 void M_SwitchMenu (struct menu_s *menu);
 
+void M_PopMenuStack (void);
 
 //
 // MENU TYPEDEFS
@@ -78,6 +80,7 @@ typedef enum {
 	more,
 	slider,
 	discrete,
+	cdiscrete,
 	control,
 	screenres,
 	bitflag,
@@ -123,7 +126,6 @@ typedef struct menu_s {
 	int				numitems;
 	int				indent;
 	menuitem_t	   *items;
-	struct menu_s  *prevmenu;
 } menu_t;
 
 typedef struct value_s {
@@ -150,19 +152,37 @@ typedef struct
 typedef struct oldmenu_s
 {
 	short				numitems;		// # of menu items
-	struct oldmenu_s*	prevMenu;		// previous menu
 	oldmenuitem_t		*menuitems;		// menu items
-	void				(*routine)();	// draw routine
+	void				(*routine)(void);	// draw routine
 	short				x;
 	short				y;				// x,y of menu
 	short				lastOn; 		// last item user was on in menu
 } oldmenu_t;
 
+typedef struct
+{
+	union {
+		menu_t *new;
+		oldmenu_t *old;
+	} menu;
+	BOOL isNewStyle;
+	BOOL drawSkull;
+} menustack_t;
+
 extern value_t YesNo[2];
 extern value_t NoYes[2];
 extern value_t OnOff[2];
 
-#endif	  
+extern menustack_t MenuStack[16];
+extern int MenuStackDepth;
+
+extern menu_t  *CurrentMenu;
+extern int		CurrentItem;
+
+extern short	 itemOn;
+extern oldmenu_t *currentMenu;
+
+#endif
 //-----------------------------------------------------------------------------
 //
 // $Log:$

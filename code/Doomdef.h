@@ -67,12 +67,14 @@ typedef enum
 } Language_t;
 
 
-// If rangecheck is undefined,
-// most parameter validation debugging code will not be compiled
+// If rangecheck is undefined, most parameter validation debugging code
+// will not be compiled
+#ifndef NORANGECHECKING
 #define RANGECHECK
+#endif
 
 // The maximum number of players, multiplayer/networking.
-#define MAXPLAYERS				8
+#define MAXPLAYERS		8
 
 // State updates, number of tics / second.
 #define TICRATE 		35

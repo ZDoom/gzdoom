@@ -47,8 +47,8 @@ static int ListActionCommands (void)
 	int i;
 
 	for (i = 0; i < NUM_ACTIONS; i++) {
-		Printf ("+%s\n", actionbits[i].name);
-		Printf ("-%s\n", actionbits[i].name);
+		Printf (PRINT_HIGH, "+%s\n", actionbits[i].name);
+		Printf (PRINT_HIGH, "-%s\n", actionbits[i].name);
 	}
 	return NUM_ACTIONS * 2;
 }
@@ -174,11 +174,11 @@ void C_DoCommand (char *cmd)
 					// Hack
 					Cmd_Set (&players[consoleplayer], argc + 1, argv - 1);
 				} else {
-					Printf ("\"%s\" is \"%s\"\n", var->name, var->string);
+					Printf (PRINT_HIGH, "\"%s\" is \"%s\"\n", var->name, var->string);
 				}
 			} else {
 				// We don't know how to handle this command
-				Printf ("Unknown command \"%s\"\n", argv[0]);
+				Printf (PRINT_HIGH, "Unknown command \"%s\"\n", argv[0]);
 			}
 		}
 		free (argv);
@@ -357,7 +357,7 @@ void C_RegisterCommand (char *name, void (*func)())
 
 
 	if (!AddToHash (Commands, name, func))
-		Printf ("C_RegisterCommand: %s exists\n", name);
+		Printf (PRINT_HIGH, "C_RegisterCommand: %s exists\n", name);
 	else
 		C_AddTabCommand (name);
 }
@@ -404,9 +404,9 @@ static int DumpHash (struct CmdData **table, BOOL showcommand)
 		while (cmd) {
 			count++;
 			if (showcommand)
-				Printf ("%s : %s\n", cmd->name, cmd->call.command);
+				Printf (PRINT_HIGH, "%s : %s\n", cmd->name, cmd->call.command);
 			else
-				Printf ("%s\n", cmd->name);
+				Printf (PRINT_HIGH, "%s\n", cmd->name);
 			cmd = cmd->next;
 		}
 	}
@@ -432,7 +432,7 @@ void Cmd_Alias (player_t *player, int argc, char **argv)
 	struct CmdData *prev, *alias, **chain;
 
 	if (argc == 1) {
-		Printf ("Current alias commands:\n");
+		Printf (PRINT_HIGH, "Current alias commands:\n");
 		DumpHash (Aliases, true);
 	} else {
 		chain = &Aliases[MakeKey (argv[1]) % HASH_SIZE];
@@ -485,18 +485,18 @@ void Cmd_Cmdlist (player_t *plyr, int argc, char **argv)
 
 	count = ListActionCommands ();
 	count += DumpHash (Commands, false);
-	Printf ("%d commands\n", count);
+	Printf (PRINT_HIGH, "%d commands\n", count);
 }
 
 void Cmd_Key (player_t *plyr, int argc, char **argv)
 {
 	if (argc > 1) {
 		while (argc > 1) {
-			Printf (" %08x", MakeKey (argv[1]));
+			Printf (PRINT_HIGH, " %08x", MakeKey (argv[1]));
 			argc--;
 			argv++;
 		}
-		Printf ("\n");
+		Printf (PRINT_HIGH, "\n");
 	}
 }
 

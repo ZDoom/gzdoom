@@ -25,6 +25,8 @@
 #include "p_saveg.h"
 #include "p_acs.h"
 #include "d_proto.h"
+#include "v_text.h"
+#include "s_sndseq.h"
 
 #include "minilzo.h"
 
@@ -86,6 +88,13 @@ static int FindWadClusterInfo (int cluster)
 	return -1;
 }
 
+static void SetLevelDefaults (level_pwad_info_t *levelinfo)
+{
+	memset (levelinfo, 0, sizeof(*levelinfo));
+	levelinfo->snapshot = NULL;
+	levelinfo->outsidefog = 0xff000000;
+	strncpy (levelinfo->fadetable, "COLORMAP", 8);
+}
 
 //
 // G_ParseMapInfo
@@ -98,6 +107,7 @@ void G_ParseMapInfo (void)
 	char *mapinfo, *data;
 	int levelindex = -1, clusterindex = -1;
 	level_pwad_info_t *levelinfo;
+	level_pwad_info_t defaultinfo;
 	cluster_info_t *clusterinfo;
 	unsigned levelflags;
 
@@ -105,6 +115,7 @@ void G_ParseMapInfo (void)
 	while ((lump = W_FindLump ("MAPINFO", &lastlump)) != -1) {
 		mapinfo = W_CacheLumpNum (lump, PU_CACHE);
 
+		SetLevelDefaults (&defaultinfo);
 		while ( (data = COM_Parse (mapinfo)) ) {
 			if (com_token[0] == ';') {
 				// Handle comments from Hexen MAPINFO lumps
@@ -114,13 +125,26 @@ void G_ParseMapInfo (void)
 					mapinfo++;
 				continue;
 			}
-			if (!stricmp (com_token, "map")) {
-				// map <MAPNAME> <Nice Name>
+			if (!stricmp (com_token, "defaultmap")) {
+				// defaultmap
 				if (levelindex > -1) {
 					// Store previous level's flags
 					levelinfo->flags = levelflags;
 				}
 				levelflags = 0;
+				clusterindex = -1;
+				SetLevelDefaults (&defaultinfo);
+				levelindex = 0;
+				levelinfo = &defaultinfo;
+				mapinfo = data;
+
+			} else if (!stricmp (com_token, "map")) {
+				// map <MAPNAME> <Nice Name>
+				if (levelindex > -1) {
+					// Store previous level's flags
+					levelinfo->flags = levelflags;
+				}
+				levelflags = defaultinfo.flags;
 				clusterindex = -1;
 				data = COM_Parse (data);
 				if (IsNum (com_token)) {
@@ -129,21 +153,20 @@ void G_ParseMapInfo (void)
 					sprintf (com_token, "MAP%02u", map);
 					SKYFLATNAME[5] = 0;
 					// Hexen levels are automatically nointermission
-					levelflags = LEVEL_NOINTERMISSION;
+					// and even lighting and no auto sound sequences
+					levelflags = LEVEL_NOINTERMISSION
+								 | LEVEL_EVENLIGHTING
+								 | LEVEL_SNDSEQTOTALCTRL;
 					HexenHack = true;
 				}
 				if ((levelindex = FindWadLevelInfo (com_token)) == -1)
 				{
 					levelindex = numwadlevelinfos++;
 					wadlevelinfos = Realloc (wadlevelinfos, sizeof(level_pwad_info_t)*numwadlevelinfos);
-					memset (wadlevelinfos + levelindex, 0, sizeof(level_pwad_info_t));
 				}
 				levelinfo = wadlevelinfos + levelindex;
-				levelinfo->snapshot = NULL;
-				levelinfo->outsidefog = 0xff000000;
+				memcpy (levelinfo, &defaultinfo, sizeof(*levelinfo));
 				strncpy (levelinfo->mapname, com_token, 8);
-				strncpy (levelinfo->fadetable, "COLORMAP", 8);
-
 				data = COM_Parse (data);
 				ReplaceString (&levelinfo->level_name, com_token);
 
@@ -194,14 +217,20 @@ void G_ParseMapInfo (void)
 					mapinfo = COM_Parse (data);
 					strncpy (levelinfo->skypic1, com_token, 8);
 					mapinfo = COM_Parse (mapinfo);
-					levelinfo->skyspeed1 = (int)(atof (com_token) * 65536.0);
+					if (HexenHack)
+						levelinfo->skyspeed1 = atoi (com_token) << 8;
+					else
+						levelinfo->skyspeed1 = (int)(atof (com_token) * 65536.0);
 
 				} else if (!stricmp (com_token, "sky2")) {
 					// sky2 <sky2texture> <sky2scrollspeed>
 					mapinfo = COM_Parse (data);
 					strncpy (levelinfo->skypic2, com_token, 8);
 					mapinfo = COM_Parse (mapinfo);
-					levelinfo->skyspeed2 = (int)(atof (com_token) * 65536.0);
+					if (HexenHack)
+						levelinfo->skyspeed2 = atoi (com_token) << 8;
+					else
+						levelinfo->skyspeed2 = (int)(atof (com_token) * 65536.0);
 
 				} else if (!stricmp (com_token, "fade")) {
 					// fade <colorname> OR fade <colordescriptor>
@@ -305,6 +334,21 @@ void G_ParseMapInfo (void)
 					// fadetable
 					mapinfo = COM_Parse (data);
 					uppercopy (levelinfo->fadetable, com_token);
+
+				} else if (!stricmp (com_token, "evenlighting")) {
+					// evenlighting
+					mapinfo = data;
+					levelflags |= LEVEL_EVENLIGHTING;
+
+				} else if (!stricmp (com_token, "noautosequences")) {
+					// noautosequences
+					mapinfo = data;
+					levelflags |= LEVEL_SNDSEQTOTALCTRL;
+
+				} else if (!stricmp (com_token, "forcenoskystretch")) {
+					// forcenoskystretch
+					mapinfo = data;
+					levelflags |= LEVEL_FORCENOSKYSTRETCH;
 
 				} else if (!stricmp (com_token, "cdtrack") ||
 						   !stricmp (com_token, "cd_start_track") ||
@@ -416,7 +460,7 @@ void Cmd_Map (void *plyr, int argc, char **argv)
 {
 	if (argc > 1) {
 		if (W_CheckNumForName (argv[1]) == -1)
-			Printf ("No map %s\n", argv[1]);
+			Printf (PRINT_HIGH, "No map %s\n", argv[1]);
 		else
 			G_DeferedInitNew (argv[1]);
 	}
@@ -424,10 +468,9 @@ void Cmd_Map (void *plyr, int argc, char **argv)
 
 void G_DoNewGame (void)
 {
-	olddemo = false;
 	if (demoplayback) {
-		demoplayback = false;
 		C_RestoreCVars ();
+		demoplayback = false;
 		D_SetupUserInfo ();
 	}
 	netdemo = false;
@@ -447,12 +490,14 @@ void G_DoNewGame (void)
 	gameaction = ga_nothing;
 }
 
-// Set if the last call to G_InitNew() was in nightmare mode
-BOOL lastwasadream = false;
-
 void G_InitNew (char *mapname)
 {
+	static BOOL isFast;
+	BOOL wantFast;
 	int i;
+
+	// [RH] Remove all particles
+	R_ClearParticles ();
 
 	if (!savegamerestore)
 		G_ClearSnapshots ();
@@ -491,23 +536,24 @@ void G_InitNew (char *mapname)
 	else
 		respawnmonsters = false;
 
-	if (dmflags & DF_FAST_MONSTERS || (gameskill->value == sk_nightmare && !lastwasadream) )
-	{
-		lastwasadream = true;
-		for (i=S_SARG_RUN1 ; i<=S_SARG_PAIN2 ; i++)
-			states[i].tics >>= 1;
-		mobjinfo[MT_BRUISERSHOT].speed = 20*FRACUNIT;
-		mobjinfo[MT_HEADSHOT].speed = 20*FRACUNIT;
-		mobjinfo[MT_TROOPSHOT].speed = 20*FRACUNIT;
-	}
-	else if (gameskill->value != sk_nightmare && lastwasadream)
-	{
-		lastwasadream = false;
-		for (i=S_SARG_RUN1 ; i<=S_SARG_PAIN2 ; i++)
-			states[i].tics <<= 1;
-		mobjinfo[MT_BRUISERSHOT].speed = 15*FRACUNIT;
-		mobjinfo[MT_HEADSHOT].speed = 10*FRACUNIT;
-		mobjinfo[MT_TROOPSHOT].speed = 10*FRACUNIT;
+	wantFast = (dmflags & DF_FAST_MONSTERS) || (gameskill->value == sk_nightmare);
+	if (wantFast != isFast) {
+		if (wantFast) {
+			for (i=S_SARG_RUN1 ; i<=S_SARG_PAIN2 ; i++)
+				states[i].tics >>= 1;
+			mobjinfo[MT_BRUISERSHOT].speed = 20*FRACUNIT;
+			mobjinfo[MT_HEADSHOT].speed = 20*FRACUNIT;
+			mobjinfo[MT_TROOPSHOT].speed = 20*FRACUNIT;
+		}
+		else
+		{
+			for (i=S_SARG_RUN1 ; i<=S_SARG_PAIN2 ; i++)
+				states[i].tics <<= 1;
+			mobjinfo[MT_BRUISERSHOT].speed = 15*FRACUNIT;
+			mobjinfo[MT_HEADSHOT].speed = 10*FRACUNIT;
+			mobjinfo[MT_TROOPSHOT].speed = 10*FRACUNIT;
+		}
+		isFast = wantFast;
 	}
 
 	if (!savegamerestore)
@@ -528,6 +574,7 @@ void G_InitNew (char *mapname)
 	demoplayback = false;
 	automapactive = false;
 	viewactive = true;
+	BorderNeedRefresh = true;
 
 	strncpy (level.mapname, mapname, 8);
 	G_DoLoadLevel (0);
@@ -661,8 +708,8 @@ void G_DoCompleted (void)
 			level.time = 0;	// Reset time to zero if not entering/staying in a hub
 
 		if (!deathmatch->value &&
-			(level.flags & LEVEL_NOINTERMISSION) ||
-			((nextcluster == thiscluster) && (thiscluster->flags & CLUSTER_HUB))) {
+			((level.flags & LEVEL_NOINTERMISSION) ||
+			((nextcluster == thiscluster) && (thiscluster->flags & CLUSTER_HUB)))) {
 			G_WorldDone ();
 			return;
 		}
@@ -698,8 +745,10 @@ void G_DoLoadLevel (int position)
 
 	G_InitLevelLocals ();
 
-	Printf ("\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n%s\n\n",
+	Printf (PRINT_HIGH, 
+			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n"
+			TEXTCOLOR_BOLD "%s\n\n",
 			level.level_name);
 
 	if (wipegamestate == GS_LEVEL) 
@@ -727,7 +776,7 @@ void G_DoLoadLevel (int position)
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap (r_stretchsky);
 
-	for (i=0 ; i<MAXPLAYERS ; i++) 
+	for (i = 0; i < MAXPLAYERS; i++) 
 	{ 
 		if (playeringame[i] && players[i].playerstate == PST_DEAD) 
 			players[i].playerstate = PST_REBORN; 
@@ -745,10 +794,10 @@ void G_DoLoadLevel (int position)
 		headsecnode = NULL;
 	}
 
+	SN_StopAllSequences ();
 	P_SetupLevel (level.mapname, position);	 
 	displayplayer = consoleplayer;				// view the guy you are playing
 	ST_Start();		// [RH] Make sure status bar knows who we are
-	HU_Start();
 	gameaction = ga_nothing; 
 	Z_CheckHeap ();
 	
@@ -816,7 +865,7 @@ void G_DoWorldDone (void)
 	if (wminfo.next[0] == 0) {
 		// Don't die if no next map is given,
 		// just repeat the current one.
-		Printf ("No next map specified.\n");
+		Printf (PRINT_HIGH, "No next map specified.\n");
 	} else {
 		strncpy (level.mapname, wminfo.next, 8);
 	}
@@ -853,6 +902,7 @@ void G_InitLevelLocals ()
 			R_SetDefaultColormap (pinfo->fadetable);
 		}
 		level.outsidefog = pinfo->outsidefog;
+		level.flags |= LEVEL_DEFINEDINMAPINFO;
 	} else {
 		info = FindDefLevelInfo (level.mapname);
 		level.info = info;
@@ -1056,13 +1106,11 @@ void G_SnapshotLevel (void)
 	save_p += sizeof(level.vars);
 
 	P_ArchiveWorld ();
-	Z_CheckHeap ();
+	P_ArchivePolyobjs ();
 	P_ArchiveThinkers ();
-	Z_CheckHeap ();
 	P_ArchiveSpecials ();
-	Z_CheckHeap ();
 	P_ArchiveScripts ();
-	Z_CheckHeap ();
+	P_ArchiveSounds ();
 
 	// Now compress it. This seems to shrink the data down to
 	// about 20% of its original size fairly consistantly.
@@ -1073,14 +1121,14 @@ void G_SnapshotLevel (void)
 		lzo_byte *wrkmem;
 		int r;
 
-		compressed = Z_Malloc (OUT_LEN(len), PU_STATIC, 0);
-		wrkmem = Z_Malloc (LZO1X_1_MEM_COMPRESS, PU_STATIC, 0);
+		compressed = Malloc (OUT_LEN(len));
+		wrkmem = Malloc (LZO1X_1_MEM_COMPRESS);
 		r = lzo1x_1_compress (savebuffer, len, compressed, &outlen, wrkmem);
-		Z_Free (wrkmem);
+		free (wrkmem);
 
 		// If the data could not be compressed, store it as-is.
 		if (r != LZO_E_OK || outlen > len) {
-			DPrintf ("Snapshot uncompressable\n");
+			DPrintf ("Snapshot not compressable\n");
 			outlen = 0;
 		} else {
 			DPrintf ("Snapshot: %d .. %d bytes\n", len, outlen);
@@ -1093,7 +1141,7 @@ void G_SnapshotLevel (void)
 			memcpy (level.info->snapshot + sizeof(int)*2, savebuffer, len);
 		else
 			memcpy (level.info->snapshot + sizeof(int)*2, compressed, outlen);
-		Z_Free (compressed);
+		free (compressed);
 	}
 	free (savebuffer);
 	savebuffer = save_p = NULL;
@@ -1118,7 +1166,7 @@ void G_UnSnapshotLevel (BOOL keepPlayers)
 		expand = Z_Malloc (expandsize, PU_STATIC, 0);
 		r = lzo1x_decompress (level.info->snapshot + sizeof(int)*2, cprlen, expand, &newlen, NULL);
 		if (r != LZO_E_OK || newlen != expandsize) {
-			Printf ("Could not decompress snapshot");
+			Printf (PRINT_HIGH, "Could not decompress snapshot");
 			Z_Free (expand);
 			return;
 		}
@@ -1137,9 +1185,11 @@ void G_UnSnapshotLevel (BOOL keepPlayers)
 	save_p += sizeof(level.vars);
 
 	P_UnArchiveWorld ();
+	P_UnArchivePolyobjs ();
 	P_UnArchiveThinkers (keepPlayers);
 	P_UnArchiveSpecials ();
 	P_UnArchiveScripts ();
+	P_UnArchiveSounds ();
 
 	if (expand)
 		Z_Free (expand);

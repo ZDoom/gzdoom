@@ -127,7 +127,6 @@ static short codepconv[448] = {  1,    2,   3,   4,    6,   9,  10,   11,  12,  
 
 BOOL BackedUpData = false;
 // This is the original data before it gets replaced by a patch.
-//char *OrgSfxNames[NUMSFX];
 char *OrgSprNames[NUMSPRITES];
 actionf_t OrgActionPtrs[NUMSTATES];
 
@@ -246,80 +245,82 @@ char *SoundMap[] = {
 };
 
 // Functions used in a .bex [CODEPTR] chunk
-void A_Light0();
-void A_WeaponReady();
-void A_Lower();
-void A_Raise();
-void A_Punch();
-void A_ReFire();
-void A_FirePistol();
-void A_Light1();
-void A_FireShotgun();
-void A_Light2();
-void A_FireShotgun2();
-void A_CheckReload();
-void A_OpenShotgun2();
-void A_LoadShotgun2();
-void A_CloseShotgun2();
-void A_FireCGun();
-void A_GunFlash();
-void A_FireMissile();
-void A_Saw();
-void A_FirePlasma();
-void A_BFGsound();
-void A_FireBFG();
-void A_BFGSpray();
-void A_Explode();
-void A_Pain();
-void A_PlayerScream();
-void A_Fall();
-void A_XScream();
-void A_Look();
-void A_Chase();
-void A_FaceTarget();
-void A_PosAttack();
-void A_Scream();
-void A_SPosAttack();
-void A_VileChase();
-void A_VileStart();
-void A_VileTarget();
-void A_VileAttack();
-void A_StartFire();
-void A_Fire();
-void A_FireCrackle();
-void A_Tracer();
-void A_SkelWhoosh();
-void A_SkelFist();
-void A_SkelMissile();
-void A_FatRaise();
-void A_FatAttack1();
-void A_FatAttack2();
-void A_FatAttack3();
-void A_BossDeath();
-void A_CPosAttack();
-void A_CPosRefire();
-void A_TroopAttack();
-void A_SargAttack();
-void A_HeadAttack();
-void A_BruisAttack();
-void A_SkullAttack();
-void A_Metal();
-void A_SpidRefire();
-void A_BabyMetal();
-void A_BspiAttack();
-void A_Hoof();
-void A_CyberAttack();
-void A_PainAttack();
-void A_PainDie();
-void A_KeenDie();
-void A_BrainPain();
-void A_BrainScream();
-void A_BrainDie();
-void A_BrainAwake();
-void A_BrainSpit();
-void A_SpawnSound();
-void A_SpawnFly();
-void A_BrainExplode();
+void A_FireRailgun(player_t*, pspdef_t*);
+void A_RailWait(player_t*, pspdef_t*);
+void A_Light0(player_t*, pspdef_t*);
+void A_WeaponReady(player_t*, pspdef_t*);
+void A_Lower(player_t*, pspdef_t*);
+void A_Raise(player_t*, pspdef_t*);
+void A_Punch(player_t*, pspdef_t*);
+void A_ReFire(player_t*, pspdef_t*);
+void A_FirePistol(player_t*, pspdef_t*);
+void A_Light1(player_t*, pspdef_t*);
+void A_FireShotgun(player_t*, pspdef_t*);
+void A_Light2(player_t*, pspdef_t*);
+void A_FireShotgun2(player_t*, pspdef_t*);
+void A_CheckReload(player_t*, pspdef_t*);
+void A_OpenShotgun2(player_t*, pspdef_t*);
+void A_LoadShotgun2(player_t*, pspdef_t*);
+void A_CloseShotgun2(player_t*, pspdef_t*);
+void A_FireCGun(player_t*, pspdef_t*);
+void A_GunFlash(player_t*, pspdef_t*);
+void A_FireMissile(player_t*, pspdef_t*);
+void A_Saw(player_t*, pspdef_t*);
+void A_FirePlasma(player_t*, pspdef_t*);
+void A_BFGsound(player_t*, pspdef_t*);
+void A_FireBFG(player_t*, pspdef_t*);
+void A_BFGSpray(mobj_t*);
+void A_Explode(mobj_t*);
+void A_Pain(mobj_t*);
+void A_PlayerScream(mobj_t*);
+void A_Fall(mobj_t*);
+void A_XScream(mobj_t*);
+void A_Look(mobj_t*);
+void A_Chase(mobj_t*);
+void A_FaceTarget(mobj_t*);
+void A_PosAttack(mobj_t*);
+void A_Scream(mobj_t*);
+void A_SPosAttack(mobj_t*);
+void A_VileChase(mobj_t*);
+void A_VileStart(mobj_t*);
+void A_VileTarget(mobj_t*);
+void A_VileAttack(mobj_t*);
+void A_StartFire(mobj_t*);
+void A_Fire(mobj_t*);
+void A_FireCrackle(mobj_t*);
+void A_Tracer(mobj_t*);
+void A_SkelWhoosh(mobj_t*);
+void A_SkelFist(mobj_t*);
+void A_SkelMissile(mobj_t*);
+void A_FatRaise(mobj_t*);
+void A_FatAttack1(mobj_t*);
+void A_FatAttack2(mobj_t*);
+void A_FatAttack3(mobj_t*);
+void A_BossDeath(mobj_t*);
+void A_CPosAttack(mobj_t*);
+void A_CPosRefire(mobj_t*);
+void A_TroopAttack(mobj_t*);
+void A_SargAttack(mobj_t*);
+void A_HeadAttack(mobj_t*);
+void A_BruisAttack(mobj_t*);
+void A_SkullAttack(mobj_t*);
+void A_Metal(mobj_t*);
+void A_SpidRefire(mobj_t*);
+void A_BabyMetal(mobj_t*);
+void A_BspiAttack(mobj_t*);
+void A_Hoof(mobj_t*);
+void A_CyberAttack(mobj_t*);
+void A_PainAttack(mobj_t*);
+void A_PainDie(mobj_t*);
+void A_KeenDie(mobj_t*);
+void A_BrainPain(mobj_t*);
+void A_BrainScream(mobj_t*);
+void A_BrainDie(mobj_t*);
+void A_BrainAwake(mobj_t*);
+void A_BrainSpit(mobj_t*);
+void A_SpawnSound(mobj_t*);
+void A_SpawnFly(mobj_t*);
+void A_BrainExplode(mobj_t*);
 
 struct CodePtr {
 	char *name;
@@ -327,81 +328,83 @@ struct CodePtr {
 };
 
 static const struct CodePtr CodePtrs[] = {
-	{ "NULL",			{(actionf_p1)NULL}, },
-	{ "Light0",			{(actionf_p1)A_Light0}, },
-	{ "WeaponReady",	{(actionf_p1)A_WeaponReady}, },
-	{ "Lower",			{(actionf_p1)A_Lower}, },
-	{ "Raise",			{(actionf_p1)A_Raise}, },
-	{ "Punch",			{(actionf_p1)A_Punch}, },
-	{ "ReFire",			{(actionf_p1)A_ReFire}, },
-	{ "FirePistol",		{(actionf_p1)A_FirePistol}, },
-	{ "Light1",			{(actionf_p1)A_Light1}, },
-	{ "FireShotgun",	{(actionf_p1)A_FireShotgun}, },
-	{ "Light2",			{(actionf_p1)A_Light2}, },
-	{ "FireShotgun2",	{(actionf_p1)A_FireShotgun2}, },
-	{ "CheckReload",	{(actionf_p1)A_CheckReload}, },
-	{ "OpenShotgun2",	{(actionf_p1)A_OpenShotgun2}, },
-	{ "LoadShotgun2",	{(actionf_p1)A_LoadShotgun2}, },
-	{ "CloseShotgun2",	{(actionf_p1)A_CloseShotgun2}, },
-	{ "FireCGun",		{(actionf_p1)A_FireCGun}, },
-	{ "A_GunFlash",		{(actionf_p1)A_GunFlash}, },
-	{ "FireMissile",	{(actionf_p1)A_FireMissile}, },
-	{ "Saw",			{(actionf_p1)A_Saw}, },
-	{ "FirePlasma",		{(actionf_p1)A_FirePlasma}, },
-	{ "BFGsound",		{(actionf_p1)A_BFGsound}, },
-	{ "FireBFG",		{(actionf_p1)A_FireBFG}, },
-	{ "BFGSpray",		{(actionf_p1)A_BFGSpray}, },
-	{ "Explode",		{(actionf_p1)A_Explode}, },
-	{ "Pain",			{(actionf_p1)A_Pain}, },
-	{ "PlayerScream",	{(actionf_p1)A_PlayerScream}, },
-	{ "Fall",			{(actionf_p1)A_Fall}, },
-	{ "XScream",		{(actionf_p1)A_XScream}, },
-	{ "Look",			{(actionf_p1)A_Look}, },
-	{ "Chase",			{(actionf_p1)A_Chase}, },
-	{ "FaceTarget",		{(actionf_p1)A_FaceTarget}, },
-	{ "PosAttack",		{(actionf_p1)A_PosAttack}, },
-	{ "Scream",			{(actionf_p1)A_Scream}, },
-	{ "SPosAttack",		{(actionf_p1)A_SPosAttack}, },
-	{ "VileChase",		{(actionf_p1)A_VileChase}, },
-	{ "VileStart",		{(actionf_p1)A_VileStart}, },
-	{ "VileTarget",		{(actionf_p1)A_VileTarget}, },
-	{ "VileAttack",		{(actionf_p1)A_VileAttack}, },
-	{ "StartFire",		{(actionf_p1)A_StartFire}, },
-	{ "Fire",			{(actionf_p1)A_Fire}, },
-	{ "FireCrackle",	{(actionf_p1)A_FireCrackle}, },
-	{ "Tracer",			{(actionf_p1)A_Tracer}, },
-	{ "SkelWhoosh",		{(actionf_p1)A_SkelWhoosh}, },
-	{ "SkelFist",		{(actionf_p1)A_SkelFist}, },
-	{ "SkelMissile",	{(actionf_p1)A_SkelMissile}, },
-	{ "FatRaise",		{(actionf_p1)A_FatRaise}, },
-	{ "FatAttack1",		{(actionf_p1)A_FatAttack1}, },
-	{ "FatAttack2",		{(actionf_p1)A_FatAttack2}, },
-	{ "FatAttack3",		{(actionf_p1)A_FatAttack3}, },
-	{ "BossDeath",		{(actionf_p1)A_BossDeath}, },
-	{ "CPosAttack",		{(actionf_p1)A_CPosAttack}, },
-	{ "CPosRefire",		{(actionf_p1)A_CPosRefire}, },
-	{ "TroopAttack",	{(actionf_p1)A_TroopAttack}, },
-	{ "SargAttack",		{(actionf_p1)A_SargAttack}, },
-	{ "HeadAttack",		{(actionf_p1)A_HeadAttack}, },
-	{ "BruisAttack",	{(actionf_p1)A_BruisAttack}, },
-	{ "SkullAttack",	{(actionf_p1)A_SkullAttack}, },
-	{ "Metal",			{(actionf_p1)A_Metal}, },
-	{ "SpidRefire",		{(actionf_p1)A_SpidRefire}, },
-	{ "BabyMetal",		{(actionf_p1)A_BabyMetal}, },
-	{ "BspiAttack",		{(actionf_p1)A_BspiAttack}, },
-	{ "Hoof",			{(actionf_p1)A_Hoof}, },
-	{ "CyberAttack",	{(actionf_p1)A_CyberAttack}, },
-	{ "PainAttack",		{(actionf_p1)A_PainAttack}, },
-	{ "PainDie",		{(actionf_p1)A_PainDie}, },
-	{ "KeenDie",		{(actionf_p1)A_KeenDie}, },
-	{ "BrainPain",		{(actionf_p1)A_BrainPain}, },
-	{ "BrainScream",	{(actionf_p1)A_BrainScream}, },
-	{ "BrainDie",		{(actionf_p1)A_BrainDie}, },
-	{ "BrainAwake",		{(actionf_p1)A_BrainAwake}, },
-	{ "BrainSpit",		{(actionf_p1)A_BrainSpit}, },
-	{ "SpawnSound",		{(actionf_p1)A_SpawnSound}, },
-	{ "SpawnFly",		{(actionf_p1)A_SpawnFly}, },
-	{ "BrainExplode",	{(actionf_p1)A_BrainExplode}, },
+	{ "NULL",			{(actionf_p1)NULL} },
+	{ "FireRailgun",	{(actionf_p1)A_FireRailgun} },
+	{ "RailWait",		{(actionf_p1)A_RailWait} },
+	{ "Light0",			{(actionf_p1)A_Light0} },
+	{ "WeaponReady",	{(actionf_p1)A_WeaponReady} },
+	{ "Lower",			{(actionf_p1)A_Lower} },
+	{ "Raise",			{(actionf_p1)A_Raise} },
+	{ "Punch",			{(actionf_p1)A_Punch} },
+	{ "ReFire",			{(actionf_p1)A_ReFire} },
+	{ "FirePistol",		{(actionf_p1)A_FirePistol} },
+	{ "Light1",			{(actionf_p1)A_Light1} },
+	{ "FireShotgun",	{(actionf_p1)A_FireShotgun} },
+	{ "Light2",			{(actionf_p1)A_Light2} },
+	{ "FireShotgun2",	{(actionf_p1)A_FireShotgun2} },
+	{ "CheckReload",	{(actionf_p1)A_CheckReload} },
+	{ "OpenShotgun2",	{(actionf_p1)A_OpenShotgun2} },
+	{ "LoadShotgun2",	{(actionf_p1)A_LoadShotgun2} },
+	{ "CloseShotgun2",	{(actionf_p1)A_CloseShotgun2} },
+	{ "FireCGun",		{(actionf_p1)A_FireCGun} },
+	{ "A_GunFlash",		{(actionf_p1)A_GunFlash} },
+	{ "FireMissile",	{(actionf_p1)A_FireMissile} },
+	{ "Saw",			{(actionf_p1)A_Saw} },
+	{ "FirePlasma",		{(actionf_p1)A_FirePlasma} },
+	{ "BFGsound",		{(actionf_p1)A_BFGsound} },
+	{ "FireBFG",		{(actionf_p1)A_FireBFG} },
+	{ "BFGSpray",		{(actionf_p1)A_BFGSpray} },
+	{ "Explode",		{(actionf_p1)A_Explode} },
+	{ "Pain",			{(actionf_p1)A_Pain} },
+	{ "PlayerScream",	{(actionf_p1)A_PlayerScream} },
+	{ "Fall",			{(actionf_p1)A_Fall} },
+	{ "XScream",		{(actionf_p1)A_XScream} },
+	{ "Look",			{(actionf_p1)A_Look} },
+	{ "Chase",			{(actionf_p1)A_Chase} },
+	{ "FaceTarget",		{(actionf_p1)A_FaceTarget} },
+	{ "PosAttack",		{(actionf_p1)A_PosAttack} },
+	{ "Scream",			{(actionf_p1)A_Scream} },
+	{ "SPosAttack",		{(actionf_p1)A_SPosAttack} },
+	{ "VileChase",		{(actionf_p1)A_VileChase} },
+	{ "VileStart",		{(actionf_p1)A_VileStart} },
+	{ "VileTarget",		{(actionf_p1)A_VileTarget} },
+	{ "VileAttack",		{(actionf_p1)A_VileAttack} },
+	{ "StartFire",		{(actionf_p1)A_StartFire} },
+	{ "Fire",			{(actionf_p1)A_Fire} },
+	{ "FireCrackle",	{(actionf_p1)A_FireCrackle} },
+	{ "Tracer",			{(actionf_p1)A_Tracer} },
+	{ "SkelWhoosh",		{(actionf_p1)A_SkelWhoosh} },
+	{ "SkelFist",		{(actionf_p1)A_SkelFist} },
+	{ "SkelMissile",	{(actionf_p1)A_SkelMissile} },
+	{ "FatRaise",		{(actionf_p1)A_FatRaise} },
+	{ "FatAttack1",		{(actionf_p1)A_FatAttack1} },
+	{ "FatAttack2",		{(actionf_p1)A_FatAttack2} },
+	{ "FatAttack3",		{(actionf_p1)A_FatAttack3} },
+	{ "BossDeath",		{(actionf_p1)A_BossDeath} },
+	{ "CPosAttack",		{(actionf_p1)A_CPosAttack} },
+	{ "CPosRefire",		{(actionf_p1)A_CPosRefire} },
+	{ "TroopAttack",	{(actionf_p1)A_TroopAttack} },
+	{ "SargAttack",		{(actionf_p1)A_SargAttack} },
+	{ "HeadAttack",		{(actionf_p1)A_HeadAttack} },
+	{ "BruisAttack",	{(actionf_p1)A_BruisAttack} },
+	{ "SkullAttack",	{(actionf_p1)A_SkullAttack} },
+	{ "Metal",			{(actionf_p1)A_Metal} },
+	{ "SpidRefire",		{(actionf_p1)A_SpidRefire} },
+	{ "BabyMetal",		{(actionf_p1)A_BabyMetal} },
+	{ "BspiAttack",		{(actionf_p1)A_BspiAttack} },
+	{ "Hoof",			{(actionf_p1)A_Hoof} },
+	{ "CyberAttack",	{(actionf_p1)A_CyberAttack} },
+	{ "PainAttack",		{(actionf_p1)A_PainAttack} },
+	{ "PainDie",		{(actionf_p1)A_PainDie} },
+	{ "KeenDie",		{(actionf_p1)A_KeenDie} },
+	{ "BrainPain",		{(actionf_p1)A_BrainPain} },
+	{ "BrainScream",	{(actionf_p1)A_BrainScream} },
+	{ "BrainDie",		{(actionf_p1)A_BrainDie} },
+	{ "BrainAwake",		{(actionf_p1)A_BrainAwake} },
+	{ "BrainSpit",		{(actionf_p1)A_BrainSpit} },
+	{ "SpawnSound",		{(actionf_p1)A_SpawnSound} },
+	{ "SpawnFly",		{(actionf_p1)A_SpawnFly} },
+	{ "BrainExplode",	{(actionf_p1)A_BrainExplode} },
 	{ NULL, }
 };
 
@@ -480,7 +483,7 @@ static int HandleMode (const char *mode, int num)
 		return Modes[i].func (num);
 
 	// Handle unknown or unimplemented data
-	Printf ("Unknown chunk %s encountered. Skipping.\n", mode);
+	Printf (PRINT_HIGH, "Unknown chunk %s encountered. Skipping.\n", mode);
 	do
 		i = GetLine ();
 	while (i == 1);
@@ -501,7 +504,7 @@ static BOOL HandleKey (const struct Key *keys, void *structure, const char *key,
 	return true;
 }
 
-static void BackUpData (void)
+static void BackupData (void)
 {
 	int i;
 
@@ -562,7 +565,7 @@ static void ReplaceSpecialChars (char *str)
 	char *p = str, c;
 	int i;
 
-	while (c = *p++) {
+	while ( (c = *p++) ) {
 		if (c != '\\') {
 			*str++ = c;
 		} else {
@@ -630,7 +633,7 @@ static char *skipwhite (char *str)
 {
 	if (str)
 		while (*str && isspace(*str))
-			*str++;
+			str++;
 	return str;
 }
 
@@ -738,44 +741,88 @@ static int PatchThing (int thingNum)
 		{ "Height",				myoffsetof(mobjinfo_t,height) },
 		{ "Mass",				myoffsetof(mobjinfo_t,mass) },
 		{ "Missile damage",		myoffsetof(mobjinfo_t,damage) },
-		{ "Bits",				myoffsetof(mobjinfo_t,flags) },
 		{ "Respawn frame",		myoffsetof(mobjinfo_t,raisestate) },
 		{ NULL, }
 	};
-	// a .bex extension:
-	static const char *bitnames[32] = {
-		"SPECIAL",
-		"SOLID",
-		"SHOOTABLE",
-		"NOSECTOR",
-		"NOBLOCKMAP",
-		"AMBUSH",
-		"JUSTHIT",
-		"JUSTATTACKED",
-		"SPAWNCEILING",
-		"NOGRAVITY",
-		"DROPOFF",
-		"PICKUP",
-		"NOCLIP",
-		"SLIDE",
-		"FLOAT",
-		"TELEPORT",
-		"MISSILE",
-		"DROPPED",
-		"SHADOW",
-		"NOBLOOD",
-		"CORPSE",
-		"INFLOAT",
-		"COUNTKILL",
-		"COUNTITEM",
-		"SKULLFLY",
-		"NOTDMATCH",
-		"TRANSLATION1",
-		"TRANSLATION2",
-		"STEALTH",
-		"TRANSLUC25",
-		"TRANSLUCENT",		// (aka TRANSLUC50) BOOM actually has this as the last bit
-		"UNUSED1"
+
+	// flags can be specified by name (a .bex extension):
+	static const struct {
+		short bit;
+		short whichflags;
+		const char *name;
+	} bitnames[] = {
+		{ 0, 0, "SPECIAL"},
+		{ 1, 0, "SOLID"},
+		{ 2, 0, "SHOOTABLE"},
+		{ 3, 0, "NOSECTOR"},
+		{ 4, 0, "NOBLOCKMAP"},
+		{ 5, 0, "AMBUSH"},
+		{ 6, 0, "JUSTHIT"},
+		{ 7, 0, "JUSTATTACKED"},
+		{ 8, 0, "SPAWNCEILING"},
+		{ 9, 0, "NOGRAVITY"},
+		{10, 0, "DROPOFF"},
+		{11, 0, "PICKUP"},
+		{12, 0, "NOCLIP"},
+		{14, 0, "FLOAT"},
+		{15, 0, "TELEPORT"},
+		{16, 0, "MISSILE"},
+		{17, 0, "DROPPED"},
+		{18, 0, "SHADOW"},
+		{19, 0, "NOBLOOD"},
+		{20, 0, "CORPSE"},
+		{21, 0, "INFLOAT"},
+		{22, 0, "COUNTKILL"},
+		{23, 0, "COUNTITEM"},
+		{24, 0, "SKULLFLY"},
+		{25, 0, "NOTDMATCH"},
+		{26, 0, "TRANSLATION1"},
+		{26, 0, "TRANSLATION"},		// BOOM compatibility
+		{27, 0, "TRANSLATION2"},
+		{27, 0, "UNUSED1"},			// BOOM compatibility
+		{28, 0, "STEALTH"},
+		{28, 0, "UNUSED2"},			// BOOM compatibility
+		{29, 0, "TRANSLUC25"},
+		{29, 0, "UNUSED3"},			// BOOM compatibility
+		{30, 0, "TRANSLUC50"},
+		{(29<<8)|30, 0, "TRANSLUC75"},
+		{30, 0, "UNUSED4"},			// BOOM compatibility
+		{30, 0, "TRANSLUCENT"},		// BOOM compatibility?
+		{31, 0, "RESERVED"},
+
+		// Names for flags2
+		{ 0, 1, "LOGRAV"},
+		{ 1, 1, "WINDTHRUST"},
+		{ 2, 1, "FLOORBOUNCE"},
+		{ 3, 1, "BLASTED"},
+		{ 4, 1, "FLY"},
+		{ 5, 1, "FLOORCLIP"},
+		{ 6, 1, "SPAWNFLOAT"},
+		{ 7, 1, "NOTELEPORT"},
+		{ 8, 1, "RIP"},
+		{ 9, 1, "PUSHABLE"},
+		{10, 1, "CANSLIDE"},			// Avoid conflict with SLIDE from BOOM
+		{11, 1, "ONMOBJ"},
+		{12, 1, "PASSMOBJ"},
+		{13, 1, "CANNOTPUSH"},
+		{14, 1, "DROPPED"},
+		{15, 1, "BOSS"},
+		{16, 1, "FIREDAMAGE"},
+		{17, 1, "NODMGTHRUST"},
+		{18, 1, "TELESTOMP"},
+		{19, 1, "FLOATBOB"},
+		{20, 1, "DONTDRAW"},
+		{21, 1, "IMPACT"},
+		{22, 1, "PUSHWALL"},
+		{23, 1, "MCROSS"},
+		{24, 1, "PCROSS"},
+		{25, 1, "CANTLEAVEFLOORPIC"},
+		{26, 1, "NONSHOOTABLE"},
+		{27, 1, "INVULNERABLE"},
+		{28, 1, "DORMANT"},
+		{29, 1, "ICEDAMAGE"},
+		{30, 1, "SEEKERMISSILE"},
+		{31, 1, "REFLECTIVE"}
 	};
 	int result;
 	mobjinfo_t *info, dummy;
@@ -787,7 +834,7 @@ static int PatchThing (int thingNum)
 		DPrintf ("Thing %d\n", thingNum);
 	} else {
 		info = &dummy;
-		Printf ("Thing %d out of range.\n", thingNum + 1);
+		Printf (PRINT_HIGH, "Thing %d out of range.\n", thingNum + 1);
 	}
 
 	// Turn off transparency for the mobj, since original DOOM
@@ -812,28 +859,60 @@ static int PatchThing (int thingNum)
 				info->deathsound = SoundMap[sndmap];
 			else if (!stricmp (Line1, "Action sound"))
 				info->activesound = SoundMap[sndmap];
-			else Printf (unknown_str, Line1, "Thing", thingNum);
+			else if (!stricmp (Line1, "Bits"))
+			{
+				int value = 0, value2 = 0;
+				BOOL vchanged = false, v2changed = false;
+				char *strval;
+
+				for (strval = Line2; (strval = strtok (strval, ",+| \t\f\r")); strval = NULL)
+				{
+					int iy;
+
+					if (IsNum (strval))
+					{
+						// Force the top 4 bits to 0 so that the user is forced
+						// to use the mnemonics to change them.
+						value |= (atoi(strval) & 0x0fffffff);
+						vchanged = true;
+					}
+					else
+					{
+						for (iy = 0; iy < sizeof(bitnames)/sizeof(bitnames[0]); iy++)
+						{
+							if (!stricmp (strval, bitnames[iy].name))
+							{
+								if (bitnames[iy].whichflags)
+								{
+									v2changed = true;
+									if (bitnames[iy].bit & 0xff00)
+										value2 |= 1 << (bitnames[iy].bit >> 8);
+									value2 |= 1 << (bitnames[iy].bit & 0xff);
+								}
+								else
+								{
+									vchanged = true;
+									if (bitnames[iy].bit & 0xff00)
+										value |= 1 << (bitnames[iy].bit >> 8);
+									value |= 1 << (bitnames[iy].bit & 0xff);
+								}
+								break;
+							}
+						}
+						if (iy >= sizeof(bitnames)/sizeof(bitnames[0]))
+							DPrintf("Unknown bit mnemonic %s\n", strval);
+					}
+				}
+				if (vchanged)
+					info->flags = value;
+				if (v2changed)
+					info->flags2 = value2;
+				DPrintf ("Bits: %d,%d (0x%08x,0x%08x)\n", info->flags, info->flags2,
+														  info->flags, info->flags2);
+			}
+			else Printf (PRINT_HIGH, unknown_str, Line1, "Thing", thingNum);
 		} else if (!stricmp (Line1, "Height")) {
 			hadHeight = true;
-		} else if (!stricmp (Line1, "Bits")) {
-			if (!IsNum (Line2)) {
-				char *data = COM_Parse (Line2);
-
-				while (data) {
-					int i = 0;
-
-					for (i = 0; i < 32; i++)
-						if (!stricmp (bitnames[i], com_token))
-							break;
-
-					if (i == 32)
-						Printf ("Unknown bit %s\n", com_token);
-					else
-						info->flags += 1 << i;
-					data = COM_Parse (data);
-				}
-				DPrintf ("Flags: %d\n", info->flags);
-			}
 		}
 	}
 
@@ -914,12 +993,12 @@ static int PatchFrame (int frameNum)
 		DPrintf ("Frame %d\n", frameNum);
 	} else {
 		info = &dummy;
-		Printf ("Frame %d out of range\n", frameNum);
+		Printf (PRINT_HIGH, "Frame %d out of range\n", frameNum);
 	}
 
 	while ((result = GetLine ()) == 1)
 		if (HandleKey (keys, info, Line1, atoi (Line2)))
-			Printf (unknown_str, Line1, "Frame", frameNum);
+			Printf (PRINT_HIGH, unknown_str, Line1, "Frame", frameNum);
 
 	return result;
 }
@@ -932,14 +1011,14 @@ static int PatchSprite (int sprNum)
 	if (sprNum >= 0 && sprNum < NUMSPRITES) {
 		DPrintf ("Sprite %d\n", sprNum);
 	} else {
-		Printf ("Sprite %d out of range.\n", sprNum);
+		Printf (PRINT_HIGH, "Sprite %d out of range.\n", sprNum);
 		sprNum = -1;
 	}
 
 	while ((result = GetLine ()) == 1) {
 		if (!stricmp ("Offset", Line1))
 			offset = atoi (Line2);
-		else Printf (unknown_str, Line1, "Sprite", sprNum);
+		else Printf (PRINT_HIGH, unknown_str, Line1, "Sprite", sprNum);
 	}
 
 	if (offset > 0 && sprNum != -1) {
@@ -949,7 +1028,7 @@ static int PatchSprite (int sprNum)
 		if (offset >= 0 && offset < NUMSPRITES) {
 			sprnames[sprNum] = OrgSprNames[offset];
 		} else {
-			Printf ("Sprite name %d out of range.\n", offset);
+			Printf (PRINT_HIGH, "Sprite name %d out of range.\n", offset);
 		}
 	}
 
@@ -970,14 +1049,14 @@ static int PatchAmmo (int ammoNum)
 		max = &maxammo[ammoNum];
 		per = &clipammo[ammoNum];
 	} else {
-		Printf ("Ammo %d out of range.\n", ammoNum);
+		Printf (PRINT_HIGH, "Ammo %d out of range.\n", ammoNum);
 		max = per = &dummy;
 	}
 
 	while ((result = GetLine ()) == 1) {
 			 CHECKKEY ("Max ammo", *max)
 		else CHECKKEY ("Per ammo", *per)
-		else Printf (unknown_str, Line1, "Ammo", ammoNum);
+		else Printf (PRINT_HIGH, unknown_str, Line1, "Ammo", ammoNum);
 	}
 
 	return result;
@@ -1002,12 +1081,12 @@ static int PatchWeapon (int weapNum)
 		DPrintf ("Weapon %d\n", weapNum);
 	} else {
 		info = &dummy;
-		Printf ("Weapon %d out of range.\n", weapNum);
+		Printf (PRINT_HIGH, "Weapon %d out of range.\n", weapNum);
 	}
 
 	while ((result = GetLine ()) == 1)
 		if (HandleKey (keys, info, Line1, atoi (Line2)))
-			Printf (unknown_str, Line1, "Weapon", weapNum);
+			Printf (PRINT_HIGH, unknown_str, Line1, "Weapon", weapNum);
 
 	return result;
 }
@@ -1019,14 +1098,14 @@ static int PatchPointer (int ptrNum)
 	if (ptrNum >= 0 && ptrNum < 448) {
 		DPrintf ("Pointer %d\n", ptrNum);
 	} else {
-		Printf ("Pointer %d out of range.\n", ptrNum);
+		Printf (PRINT_HIGH, "Pointer %d out of range.\n", ptrNum);
 		ptrNum = -1;
 	}
 
 	while ((result = GetLine ()) == 1) {
 		if ((ptrNum != -1) && (!stricmp (Line1, "Codep Frame")))
 			states[codepconv[ptrNum]].action = OrgActionPtrs[atoi (Line2)];
-		else Printf (unknown_str, Line1, "Pointer", ptrNum);
+		else Printf (PRINT_HIGH, unknown_str, Line1, "Pointer", ptrNum);
 	}
 	return result;
 }
@@ -1067,7 +1146,7 @@ static int PatchCheats (int dummy)
 			i++;
 
 		if (!keys[i].name)
-			Printf ("Unknown cheat %s.\n", Line2);
+			Printf (PRINT_HIGH, "Unknown cheat %s.\n", Line2);
 		else
 			ChangeCheat (Line2, keys[i].cheatseq, keys[i].needsval);
 	}
@@ -1102,7 +1181,7 @@ static int PatchMisc (int dummy)
 
 	while ((result = GetLine()) == 1)
 		if (HandleKey (keys, &deh, Line1, atoi (Line2)))
-			Printf ("Unknown miscellaneous info %s.\n", Line2);
+			Printf (PRINT_HIGH, "Unknown miscellaneous info %s.\n", Line2);
 
 	if ( (item = FindItem ("Basic Armor")) )
 		item->offset = deh.GreenAC;
@@ -1127,7 +1206,7 @@ static int PatchPars (int dummy)
 	while ( (result = GetLine()) ) {
 		// Argh! .bex doesn't follow the same rules as .deh
 		if (result == 1) {
-			Printf ("Unknown key in [PARS] section: %s\n", Line1);
+			Printf (PRINT_HIGH, "Unknown key in [PARS] section: %s\n", Line1);
 			continue;
 		}
 		if (stricmp ("par", Line1))
@@ -1136,7 +1215,7 @@ static int PatchPars (int dummy)
 		space = strchr (Line2, ' ');
 
 		if (!space) {
-			Printf ("Need data after par.\n");
+			Printf (PRINT_HIGH, "Need data after par.\n");
 			continue;
 		}
 
@@ -1158,7 +1237,7 @@ static int PatchPars (int dummy)
 		}
 
 		if (!(info = FindLevelInfo (mapname)) ) {
-			Printf ("No map %s\n", mapname);
+			Printf (PRINT_HIGH, "No map %s\n", mapname);
 			continue;
 		}
 
@@ -1179,7 +1258,7 @@ static int PatchCodePtrs (int dummy)
 			int frame = atoi (Line1 + 5);
 
 			if (frame < 0 || frame >= NUMSTATES) {
-				Printf ("Frame %d out of range\n", frame);
+				Printf (PRINT_HIGH, "Frame %d out of range\n", frame);
 			} else {
 				int i = 0;
 				char *data;
@@ -1191,7 +1270,7 @@ static int PatchCodePtrs (int dummy)
 				else
 					data = com_token;
 
-				while (CodePtrs[i].name && stricmp (CodePtrs[i].name, Line2))
+				while (CodePtrs[i].name && stricmp (CodePtrs[i].name, data))
 					i++;
 
 				if (CodePtrs[i].name) {
@@ -1199,7 +1278,7 @@ static int PatchCodePtrs (int dummy)
 					DPrintf ("Frame %d set to %s\n", frame, CodePtrs[i].name);
 				} else {
 					states[frame].action.acp1 = NULL;
-					DPrintf ("Unknown code pointer: %s\n", Line2);
+					DPrintf ("Unknown code pointer: %s\n", com_token);
 				}
 			}
 		}
@@ -1219,7 +1298,7 @@ static int PatchText (int oldSize)
 
 	temp = COM_Parse (Line2);		// Skip old size, since we already have it
 	if (!COM_Parse (temp)) {
-		Printf ("Text chunk is missing size of new string.\n");
+		Printf (PRINT_HIGH, "Text chunk is missing size of new string.\n");
 		return 2;
 	}
 	newSize = atoi (com_token);
@@ -1228,7 +1307,7 @@ static int PatchText (int oldSize)
 	newStr = malloc (newSize + 1);
 
 	if (!oldStr || !newStr) {
-		Printf ("Out of memory.\n");
+		Printf (PRINT_HIGH, "Out of memory.\n");
 		goto donewithtext;
 	}
 
@@ -1238,12 +1317,12 @@ static int PatchText (int oldSize)
 	if (!good) {
 		free (newStr);
 		free (oldStr);
-		Printf ("Unexpected end-of-file.\n");
+		Printf (PRINT_HIGH, "Unexpected end-of-file.\n");
 		return 0;
 	}
 
 	if (includenotext) {
-		Printf ("Skipping text chunk in included patch.\n");
+		Printf (PRINT_HIGH, "Skipping text chunk in included patch.\n");
 		goto donewithtext;
 	}
 
@@ -1366,12 +1445,12 @@ static int PatchStrings (int dummy)
 				break;
 
 		if (i == NUMSTRINGS) {
-			Printf ("Unknown string: %s\n", Line1);
+			Printf (PRINT_HIGH, "Unknown string: %s\n", Line1);
 		} else {
 			ReplaceSpecialChars (holdstring);
 			ReplaceString (&Strings[i].string, copystring (holdstring));
 			Strings[i].type = str_patched;
-			Printf ("%s set to:\n%s\n", Line1, holdstring);
+			Printf (PRINT_HIGH, "%s set to:\n%s\n", Line1, holdstring);
 		}
 	}
 
@@ -1385,7 +1464,7 @@ static int DoInclude (int dummy)
 	char *savepatchfile, *savepatchpt;
 
 	if (including) {
-		Printf ("Sorry, can't nest includes\n");
+		Printf (PRINT_HIGH, "Sorry, can't nest includes\n");
 		goto endinclude;
 	}
 
@@ -1397,7 +1476,7 @@ static int DoInclude (int dummy)
 
 	if (!com_token[0]) {
 		includenotext = false;
-		Printf ("Include directive is missing filename\n");
+		Printf (PRINT_HIGH, "Include directive is missing filename\n");
 		goto endinclude;
 	}
 
@@ -1426,10 +1505,10 @@ void DoDehPatch (char *patchfile, BOOL autoloading)
 {
 	char file[256];
 	int cont;
-	int filelen;
+	int filelen = 0;	// Be quiet, gcc
 	int lump;
 
-	BackUpData ();
+	BackupData ();
 	PatchFile = NULL;
 
 	lump = W_CheckNumForName ("DEHACKED");
@@ -1440,7 +1519,7 @@ void DoDehPatch (char *patchfile, BOOL autoloading)
 		if ( (PatchFile = malloc (filelen + 1)) ) {
 			W_ReadLump (lump, PatchFile);
 		} else {
-			Printf ("Not enough memory to apply patch\n");
+			Printf (PRINT_HIGH, "Not enough memory to apply patch\n");
 			return;
 		}
 	} else if (patchfile) {
@@ -1478,14 +1557,14 @@ void DoDehPatch (char *patchfile, BOOL autoloading)
 				if ( (PatchFile = malloc (filelen + 1)) ) {
 					W_ReadLump (lump, PatchFile);
 				} else {
-					Printf ("Not enough memory to apply patch\n");
+					Printf (PRINT_HIGH, "Not enough memory to apply patch\n");
 					return;
 				}
 			}
 		}
 
 		if (!PatchFile) {
-			Printf ("Could not open DeHackEd patch \"%s\"\n", file);
+			Printf (PRINT_HIGH, "Could not open DeHackEd patch \"%s\"\n", file);
 			return;
 		}
 	} else {
@@ -1507,7 +1586,7 @@ void DoDehPatch (char *patchfile, BOOL autoloading)
 		}
 		if (!cont || dversion == -1 || pversion == -1) {
 			free (PatchFile);
-			Printf ("\"%s\" is not a DeHackEd patch file\n");
+			Printf (PRINT_HIGH, "\"%s\" is not a DeHackEd patch file\n");
 			return;
 		}
 	} else {
@@ -1520,7 +1599,7 @@ void DoDehPatch (char *patchfile, BOOL autoloading)
 	}
 
 	if (pversion != 6) {
-		Printf ("DeHackEd patch version is %d.\nUnexpected results may occur.\n", pversion);
+		Printf (PRINT_HIGH, "DeHackEd patch version is %d.\nUnexpected results may occur.\n", pversion);
 	}
 
 	if (dversion == 16)
@@ -1534,18 +1613,18 @@ void DoDehPatch (char *patchfile, BOOL autoloading)
 	else if (dversion == 21)
 		dversion = 4;
 	else {
-		Printf ("Patch created with unknown DOOM version.\nAssuming version 1.9.\n");
+		Printf (PRINT_HIGH, "Patch created with unknown DOOM version.\nAssuming version 1.9.\n");
 		dversion = 3;
 	}
 
 	do {
 		if (cont == 1) {
-			Printf ("Key %s encountered out of context\n", Line1);
+			Printf (PRINT_HIGH, "Key %s encountered out of context\n", Line1);
 			cont = 0;
 		} else if (cont == 2)
 			cont = HandleMode (Line1, atoi (Line2));
 	} while (cont);
 
 	free (PatchFile);
-	Printf ("Patch installed\n");
+	Printf (PRINT_HIGH, "Patch installed\n");
 }

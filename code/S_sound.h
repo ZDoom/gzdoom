@@ -27,6 +27,8 @@
 
 #define MAX_SNDNAME	63
 
+struct mobj_s;
+
 //
 // SoundFX struct.
 //
@@ -47,6 +49,8 @@ struct sfxinfo_struct
 	int 		lumpnum;				// lump number of sfx
 	unsigned int ms;					// [RH] length of sfx in milliseconds
 	unsigned int next, index;			// [RH] For hashing
+	unsigned int frequency;				// [RH] Preferred playback rate
+	unsigned int length;				// [RH] Length of the sound in bytes
 };
 
 // the complete set of sound effects
@@ -67,41 +71,52 @@ void S_Init (int sfxVolume, int musicVolume);
 //
 void S_Start(void);
 
-// Start sound for thing at <origin> using <sound_id> from sounds.h
-// [RH] macro-fied
-#define S_StartSound(o,n,p) S_StartSoundAtVolume (o,n,p,255)
-#define S_StartSfx(o,n,p) S_StartSfxAtVolume (o,n,p,255)
+// Start sound for thing at <ent>
+void S_Sound (struct mobj_s *ent, int channel, char *name, float volume, int attenuation);
+void S_PositionedSound (int x, int y, int channel, char *name, float volume, int attenuation);
+void S_SoundID (struct mobj_s *ent, int channel, int sfxid, float volume, int attenuation);
 
-// Will start a sound at a given volume.
-void S_StartSoundAtVolume (void *origin, char *name, int pri, int volume);
-void S_StartSfxAtVolume (void *origin, int sfxid, int pri, int volume);
-
-#define ORIGIN_SURROUNDBIT (128)
-#define ORIGIN_AMBIENT	(NULL)					// Sound is not attenuated
-#define ORIGIN_AMBIENT2 ((void *)1)				// [RH] Same as ORIGIN_AMBIENT, just diff. channel
-#define ORIGIN_AMBIENT3 ((void *)2)
-#define ORIGIN_AMBIENT4 ((void *)3)
-#define ORIGIN_SURROUND ((void *)(0|128))		// [RH] Sound is not attenuated and played surround
-#define	ORIGIN_SURROUND2 ((void *)(1|128))
-#define ORIGIN_SURROUND3 ((void *)(2|128))
-#define ORIGIN_SURROUND4 ((void *)(3|128))
-#define ORIGIN_WORLDAMBIENTS ((void *)8)		// Used by ambient sounds
-
-#define ORIGIN_STARTOFNORMAL	((void *)256)	// [RH] Used internally
-
-// [RH] Simplified world ambient playing. Will cycle through all
-//		ORIGIN_WORLDAMBIENTS positions automatically.
-void S_StartAmbient (char *name, int volume, int surround);
+// sound channels
+// channel 0 never willingly overrides
+// other channels (1-7) allways override a playing sound on that channel
+#define CHAN_AUTO				0
+#define CHAN_WEAPON				1
+#define CHAN_VOICE				2
+#define CHAN_ITEM				3
+#define CHAN_BODY				4
+// modifier flags
+//#define CHAN_NO_PHS_ADD		8	// send to all clients, not just ones in PHS (ATTN 0 will also do this)
+//#define CHAN_RELIABLE			16	// send by reliable message, not datagram
 
 
-// Stop sound for thing at <origin>
-void S_StopSound (void *origin);
+// sound attenuation values
+#define ATTN_NONE				0	// full volume the entire level
+#define ATTN_NORM				1
+#define ATTN_IDLE				2
+#define ATTN_STATIC				3	// diminish very rapidly with distance
+#define ATTN_SURROUND			4	// like ATTN_NONE, but plays in surround sound
+
+
+// [RH] From Hexen.
+//		Prevents too many of the same sound from playing simultaneously.
+BOOL S_StopSoundID (int sound_id, int priority);
+
+// Stops a sound emanating from one of an entity's channels
+void S_StopSound (struct mobj_s *ent, int channel);
+
+// Stop sound for all channels
+void S_StopAllChannels (void);
+
+// Is the sound playing on one of the entity's channels?
+BOOL S_GetSoundPlayingInfo (struct mobj_s *ent, int sound_id);
+
+// Moves all sounds from one mobj to another
+void S_RelinkSound (struct mobj_s *from, struct mobj_s *to);
 
 // Start music using <music_name>
 void S_StartMusic (char *music_name);
 
-// Start music using <music_name>,
-//	and set whether looping
+// Start music using <music_name>, and set whether looping
 void S_ChangeMusic (char *music_name, int looping);
 
 // Stops the music fer sure.
@@ -123,7 +138,7 @@ void S_SetSfxVolume (int volume);
 
 // [RH] Activates an ambient sound. Called when the thing is added to the map.
 //		(0-biased)
-void S_ActivateAmbient (void *mobj, int ambient);
+void S_ActivateAmbient (struct mobj_s *mobj, int ambient);
 
 // [RH] S_sfx "maintenance" routines
 void S_ParseSndInfo (void);
@@ -142,11 +157,3 @@ extern struct cvar_s *noisedebug;
 
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log: s_sound.h,v $
-// Revision 1.1.1.1  1997/12/28 12:59:03  pekangas
-// Initial DOOM source release from id Software
-//
-//
-//-----------------------------------------------------------------------------

@@ -40,6 +40,18 @@ _FixedMul_ASM:
 	shrd	eax,edx,16
 	ret
 
+; Version of FixedMul_ASM for MSVC's __fastcall
+
+GLOBAL @FixedMul_ASM@8
+
+	align	16
+
+@FixedMul_ASM@8:
+	mov		eax,ecx
+	imul	edx
+	shrd	eax,edx,16
+	ret
+
 ;-----------------------------------------------------------
 ;
 ; FixedDiv_ASM

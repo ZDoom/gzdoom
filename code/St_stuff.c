@@ -33,36 +33,24 @@
 #include "z_zone.h"
 #include "m_random.h"
 #include "w_wad.h"
-
 #include "doomdef.h"
-
 #include "g_game.h"
-
 #include "st_stuff.h"
 #include "st_lib.h"
 #include "r_local.h"
-
 #include "p_local.h"
 #include "p_inter.h"
-
 #include "am_map.h"
 #include "m_cheat.h"
-
 #include "s_sound.h"
-
-// Needs access to LFB.
 #include "v_video.h"
-
-// State.
+#include "v_text.h"
 #include "doomstat.h"
-
-// Data.
 #include "dstrings.h"
-
-// Cheats and cvars
 #include "c_cmds.h"
 #include "c_cvars.h"
 #include "c_dispch.h"
+#include "version.h"
 
 cvar_t *idmypos;
 cvar_t *st_scale;		// Stretch status bar to full screen width?
@@ -70,12 +58,13 @@ cvar_t *st_scale;		// Stretch status bar to full screen width?
 // [RH] Needed when status bar scale changes
 BOOL setsizeneeded;
 BOOL automapactive;
-BOOL am_needtodrawstatusbar;
 
 // [RH] Status bar background screen
 screen_t stbarscreen;
 // [RH] Active status bar screen
 screen_t stnumscreen;
+
+BOOL DrawNewHUD;		// [RH] Draw the new HUD?
 
 
 // functions in st_new.c
@@ -279,6 +268,8 @@ int						ST_WIDTH;
 int						ST_X;
 int						ST_Y;
 
+int						SB_state = -1;
+
 
 // main player in game
 // [RH] not static
@@ -338,7 +329,7 @@ patch_t*		 		tallpercent;
 static patch_t* 		shortnum[10];
 
 // 3 key-cards, 3 skulls, [RH] 3 combined
-static patch_t* 		keys[NUMCARDS+NUMCARDS/2]; 
+patch_t* 				keys[NUMCARDS+NUMCARDS/2]; 
 
 // face status patches [RH] no longer static
 patch_t* 				faces[ST_NUMFACES];
@@ -514,8 +505,8 @@ void ST_refreshBackground(void)
 		// [RH] If screen is wider than the status bar,
 		//      draw stuff around status bar.
 		if (FG.width > ST_WIDTH) {
-			R_VideoErase (0, ST_Y, ST_X, FG.height);
-			R_VideoErase (FG.width - ST_X, ST_Y, FG.width, FG.height);
+			R_DrawBorder (0, ST_Y, ST_X, FG.height);
+			R_DrawBorder (FG.width - ST_X, ST_Y, FG.width, FG.height);
 		}
 
 		V_DrawPatch(0, 0, &BG, sbar);
@@ -633,7 +624,7 @@ BOOL ST_Responder (event_t *ev)
 		  if (CheckCheatmode ())
 			  return false;
 
-		  plyr->message = STSTR_BEHOLD;
+		  Printf (PRINT_HIGH, "%s\n", STSTR_BEHOLD);
 	  }
 
 	  // 'choppers' invulnerability & chainsaw
@@ -1084,29 +1075,53 @@ void ST_diffDraw(void)
 	ST_drawWidgets(false);
 }
 
-void ST_Drawer (BOOL fullscreen, BOOL refresh)
+void ST_Drawer (void)
 {
+	if (noisedebug->value)
+		S_NoiseDebug ();
 
-	st_statusbaron = (!fullscreen) || automapactive;
-	st_firsttime = st_firsttime || refresh;
+	if (demoplayback && demover != GAMEVER)
+		V_DrawTextClean (CR_TAN, 0, ST_Y - 40 * CleanYfac,
+			"Demo was recorded with a different version\n"
+			"of ZDoom. Expect it to go out of sync.");
+
+	if (realviewheight == screens[0].height && viewactive)
+	{
+		if (DrawNewHUD)
+			ST_newDraw ();
+		SB_state = -1;
+	}
+	else
+	{
+		V_LockScreen (&stbarscreen);
+		V_LockScreen (&stnumscreen);
+
+		if (SB_state)
+		{
+			ST_doRefresh ();
+			SB_state = 0;
+		}
+		else
+		{
+			ST_diffDraw ();
+		}
+
+		V_UnlockScreen (&stnumscreen);
+		V_UnlockScreen (&stbarscreen);
+	}
+
+		
+	if (viewheight <= ST_Y)
+		ST_nameDraw (ST_Y - 11 * CleanYfac);
+	else
+		ST_nameDraw (screens[0].height - 11 * CleanYfac);
 
 	// Do red-/gold-shifts from damage/items
 	ST_doPaletteStuff();
 
-	V_LockScreen (&stbarscreen);
-	V_LockScreen (&stnumscreen);
-
-	// If just after ST_Start(), refresh all
-	if (st_firsttime) ST_doRefresh();
-	// Otherwise, update as little as possible
-	else ST_diffDraw();
-
-	V_UnlockScreen (&stnumscreen);
-	V_UnlockScreen (&stbarscreen);
-
 	// [RH] Hey, it's somewhere to put the idmypos stuff!
 	if (idmypos->value)
-		Printf ("ang=%d;x,y=(%d,%d)\n",
+		Printf (PRINT_HIGH, "ang=%d;x,y=(%d,%d)\n",
 				players[consoleplayer].camera->angle/FRACUNIT,
 				players[consoleplayer].camera->x/FRACUNIT,
 				players[consoleplayer].camera->y/FRACUNIT);
@@ -1464,6 +1479,7 @@ void ST_Start (void)
 	ST_initData();
 	ST_createWidgets();
 	st_stopped = false;
+	SB_state = -1;
 
 }
 
@@ -1501,9 +1517,7 @@ void ST_ChangeScale (cvar_t *var)
 	ST_Y = screens[0].height - ST_HEIGHT;
 
 	setsizeneeded = true;
-
-	if (automapactive)
-		am_needtodrawstatusbar = true;
+	SB_state = -1;
 }
 
 void ST_Init (void)

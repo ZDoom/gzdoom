@@ -110,6 +110,7 @@ typedef struct usercmd_s usercmd_t;
 #define CHT_BEHOLDL			11
 #define CHT_IDDQD			12	// Same as CHT_GOD but sets health
 #define CHT_MASSACRE		13
+#define CHT_CHASECAM		14
 
 #define DEM_GIVECHEAT		11
 // String: arguments to give command

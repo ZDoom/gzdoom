@@ -107,7 +107,7 @@ void   *W_CacheLumpNum (int lump, int tag);
 #define W_CacheLumpName(name,tag) \
 		W_CacheLumpNum (W_GetNumForName(name), (tag))
 
-void	W_Profile (void);
+void	W_Profile (const char *fname);
 
 int		W_FindLump (const char *name, int *lastlump);	// [RH]	Find lumps with duplication
 BOOL	W_CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name

@@ -22,7 +22,11 @@
 #define LEVEL_SPECACTIONSMASK	0x00000300
 
 #define LEVEL_MONSTERSTELEFRAG	0x00000400
+#define LEVEL_EVENLIGHTING		0x00000800
+#define LEVEL_SNDSEQTOTALCTRL	0x00001000
+#define LEVEL_FORCENOSKYSTRETCH	0x00002000
 
+#define LEVEL_DEFINEDINMAPINFO	0x20000000		// Level was defined in a MAPINFO lump
 #define LEVEL_CHANGEMAPCHEAT	0x40000000		// Don't display cluster messages
 #define LEVEL_VISITED			0x80000000		// Used for intermission map
 
@@ -132,6 +136,7 @@ extern cluster_info_t ClusterInfos[];
 extern int WorldVars[NUM_WORLDVARS];
 
 extern BOOL savegamerestore;
+extern BOOL HexenHack;		// Semi-Hexen-compatibility mode
 
 void G_InitNew (char *mapname);
 

@@ -107,6 +107,8 @@ typedef enum {
 	pr_quake,					// 55
 	pr_playerscream,			// 56
 	pr_playerpain,				// 57
+	pr_bounce,					// 58
+	pr_opendoor,				// 59
 	// Start new entries -- add new entries below
 
 	// End of new entries

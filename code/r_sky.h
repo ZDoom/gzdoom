@@ -33,12 +33,12 @@ extern char SKYFLATNAME[8];
 #define ANGLETOSKYSHIFT 		22
 
 extern int 				sky1texture,	sky2texture;
-extern int				sky1texturemid, sky2texturemid;
 extern fixed_t			sky1pos,		sky2pos;
-extern int				sky1stretch,	sky2stretch;
-fixed_t					sky1iscale,		sky2iscale;
-fixed_t					sky1scale,		sky2scale;
-fixed_t					sky1height,		sky2height;
+extern int				skytexturemid;
+extern int				skystretch;
+fixed_t					skyiscale;
+int						skyscale;
+fixed_t					skyheight;
 
 extern cvar_t			*r_stretchsky;
 

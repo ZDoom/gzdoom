@@ -21,20 +21,17 @@
 //
 //-----------------------------------------------------------------------------
 
-
-
 #include "z_zone.h"
 #include "doomdef.h"
 #include "p_local.h"
 #include "p_lnspec.h"
-
 #include "s_sound.h"
-
-// State.
+#include "s_sndseq.h"
 #include "doomstat.h"
 #include "r_state.h"
-
 #include "tables.h"
+
+extern fixed_t FloatBobOffsets[64];
 
 //
 // FLOORS
@@ -59,11 +56,11 @@ T_MovePlane
 	fixed_t		destheight;	//jff 02/04/98 used to keep floors/ceilings
 							// from moving thru each other
 
-	switch(floorOrCeiling)
+	switch (floorOrCeiling)
 	{
 	  case 0:
 		// FLOOR
-		switch(direction)
+		switch (direction)
 		{
 		  case -1:
 			// DOWN
@@ -71,11 +68,11 @@ T_MovePlane
 			{
 				lastpos = sector->floorheight;
 				sector->floorheight = dest;
-				flag = P_CheckSector (sector, crush);
+				flag = P_ChangeSector (sector, crush);
 				if (flag == true)
 				{
 					sector->floorheight = lastpos;
-					P_CheckSector (sector, crush);
+					P_ChangeSector (sector, crush);
 					//return crushed;
 				}
 				return pastdest;
@@ -84,11 +81,11 @@ T_MovePlane
 			{
 				lastpos = sector->floorheight;
 				sector->floorheight -= speed;
-				flag = P_CheckSector (sector, crush);
+				flag = P_ChangeSector (sector, crush);
 				if (flag == true)
 				{
 					sector->floorheight = lastpos;
-					P_CheckSector (sector, crush);
+					P_ChangeSector (sector, crush);
 					return crushed;
 				}
 			}
@@ -97,18 +94,16 @@ T_MovePlane
 		  case 1:
 			// UP
 			// jff 02/04/98 keep floor from moving thru ceilings
-			// jff 2/22/98 weaken check to demo_compatibility
-			destheight = (olddemo || dest < sector->ceilingheight) ?
-						  dest : sector->ceilingheight;
+			destheight = (dest < sector->ceilingheight) ? dest : sector->ceilingheight;
 			if (sector->floorheight + speed > destheight)
 			{
 				lastpos = sector->floorheight;
 				sector->floorheight = destheight;
-				flag = P_CheckSector (sector, crush);
+				flag = P_ChangeSector (sector, crush);
 				if (flag == true)
 				{
 					sector->floorheight = lastpos;
-					P_CheckSector (sector, crush);
+					P_ChangeSector (sector, crush);
 					//return crushed;
 				}
 				return pastdest;
@@ -118,13 +113,13 @@ T_MovePlane
 				// COULD GET CRUSHED
 				lastpos = sector->floorheight;
 				sector->floorheight += speed;
-				flag = P_CheckSector (sector, crush);
+				flag = P_ChangeSector (sector, crush);
 				if (flag == true)
 				{
 					if (crush == true)
 						return crushed;
 					sector->floorheight = lastpos;
-					P_CheckSector (sector, crush);
+					P_ChangeSector (sector, crush);
 					return crushed;
 				}
 			}
@@ -139,19 +134,17 @@ T_MovePlane
 		  case -1:
 			// DOWN
 			// jff 02/04/98 keep ceiling from moving thru floors
-			// jff 2/22/98 weaken check to demo_compatibility
-			destheight = (olddemo || dest > sector->floorheight) ?
-						  dest : sector->floorheight;
+			destheight = (dest > sector->floorheight) ? dest : sector->floorheight;
 			if (sector->ceilingheight - speed < destheight)
 			{
 				lastpos = sector->ceilingheight;
 				sector->ceilingheight = destheight;
-				flag = P_CheckSector (sector, crush);
+				flag = P_ChangeSector (sector, crush);
 
 				if (flag == true)
 				{
 					sector->ceilingheight = lastpos;
-					P_CheckSector (sector, crush);
+					P_ChangeSector (sector, crush);
 					//return crushed;
 				}
 				return pastdest;
@@ -161,14 +154,14 @@ T_MovePlane
 				// COULD GET CRUSHED
 				lastpos = sector->ceilingheight;
 				sector->ceilingheight -= speed;
-				flag = P_CheckSector (sector, crush);
+				flag = P_ChangeSector (sector, crush);
 
 				if (flag == true)
 				{
 					if (crush == true)
 						return crushed;
 					sector->ceilingheight = lastpos;
-					P_CheckSector (sector, crush);
+					P_ChangeSector (sector, crush);
 					return crushed;
 				}
 			}
@@ -180,11 +173,11 @@ T_MovePlane
 			{
 				lastpos = sector->ceilingheight;
 				sector->ceilingheight = dest;
-				flag = P_CheckSector (sector,crush);
+				flag = P_ChangeSector (sector,crush);
 				if (flag == true)
 				{
 					sector->ceilingheight = lastpos;
-					P_CheckSector (sector, crush);
+					P_ChangeSector (sector, crush);
 					//return crushed;
 				}
 				return pastdest;
@@ -193,13 +186,13 @@ T_MovePlane
 			{
 				lastpos = sector->ceilingheight;
 				sector->ceilingheight += speed;
-				flag = P_CheckSector (sector, crush);
+				flag = P_ChangeSector (sector, crush);
 // UNUSED
 #if 0
 				if (flag == true)
 				{
 					sector->ceilingheight = lastpos;
-					P_CheckSector (sector, crush);
+					P_ChangeSector (sector, crush);
 					return crushed;
 				}
 #endif
@@ -230,8 +223,6 @@ void T_MoveFloor (floormove_t *floor)
 			}
 		}
 		if (floor->pausetime) {
-			if (!(level.time&7))
-				S_StartSound ((mobj_t *)&floor->sector->soundorg, "plats/pt1_mid", 119);
 			floor->pausetime--;
 			return;
 		} else if (floor->steptime) {
@@ -250,13 +241,9 @@ void T_MoveFloor (floormove_t *floor)
 					  floor->floordestheight,
 					  floor->crush,0,floor->direction);
 	
-	if (!(level.time&7) && (floor->type != resetStair) && (res != pastdest))
-		S_StartSound ((mobj_t *)&floor->sector->soundorg, "plats/pt1_mid", 119);
-	
 	if (res == pastdest)
 	{
-		if (floor->type != resetStair)
-			S_StartSound ((mobj_t *)&floor->sector->soundorg, "plats/pt1_stop", 100);
+		SN_StopSequence ((mobj_t *)&floor->sector->soundorg);
 
 		if (floor->type == buildStair)
 			floor->type = waitStair;
@@ -390,18 +377,26 @@ void T_MoveElevator (elevator_t* elevator)
 			);
 	}
 
-	// make floor move sound
-	if (!(level.time&7))
-		S_StartSound((mobj_t *)&elevator->sector->soundorg, "plats/pt1_mid", 119);
-
 	if (res == pastdest)			// if destination height acheived
 	{
+		// make floor stop sound
+		SN_StopSequence ((mobj_t *)&elevator->sector->soundorg);
+
 		elevator->sector->floordata = NULL;		//jff 2/22/98
 		elevator->sector->ceilingdata = NULL;	//jff 2/22/98
 		P_RemoveThinker(&elevator->thinker);	// remove elevator from actives
+	}
+}
 
-		// make floor stop sound
-		S_StartSound((mobj_t *)&elevator->sector->soundorg, "plats/pt1_stop", 100);
+static void StartFloorSound (sector_t *sec)
+{
+	if (sec->seqType >= 0)
+	{
+		SN_StartSequence ((mobj_t *)&sec->soundorg, sec->seqType, SEQ_PLATFORM);
+	}
+	else
+	{
+		SN_StartSequenceName ((mobj_t *)&sec->soundorg, "Floor");
 	}
 }
 
@@ -452,6 +447,8 @@ manual_floor:
 		floor->sector = sec;
 		floor->resetcount = 0;					// [RH]
 		floor->orgheight = sec->floorheight;	// [RH]
+
+		StartFloorSound (sec);
 
 		switch(floortype)
 		{
@@ -652,8 +649,9 @@ BOOL EV_FloorCrushStop (int tag)
 		sector_t *sec = sectors + secnum;
 
 		if (sec->floordata &&
-			((thinker_t *)(sec->floordata))->function.acp1 == T_MoveFloor &&
+			((thinker_t *)(sec->floordata))->function.acp1 == (actionf_p1) T_MoveFloor &&
 			((floormove_t *)(sec->floordata))->type == floorRaiseAndCrush) {
+			SN_StopSequence ((mobj_t *)&sec->soundorg);
 			P_RemoveThinker ((thinker_t *)(sec->floordata));
 			sec->floordata = NULL;
 		}
@@ -789,8 +787,7 @@ manual_stair:
 		floor->pausetime = 0;
 		floor->steptime = floor->persteptime = persteptime;
 
-		if (!olddemo)
-			floor->crush = (!usespecials && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
+		floor->crush = (!usespecials && speed == 4*FRACUNIT) ? 10 : -1; //jff 2/27/98 fix uninitialized crush field
 
 		floor->speed = speed;
 		height = sec->floorheight + stairsize * floor->direction;
@@ -873,6 +870,8 @@ manual_stair:
 				floor = Z_Malloc (sizeof(*floor), PU_LEVSPEC, 0);
 				P_AddThinker (&floor->thinker);
 
+				StartFloorSound (sec);
+
 				sec->floordata = floor;	//jff 2/22/98
 				floor->thinker.function.acp1 = (actionf_p1) T_MoveFloor;
 				floor->direction = (type == buildUp) ? 1 : -1;
@@ -893,8 +892,7 @@ manual_stair:
 				}
 				floor->type = buildStair;	//jff 3/31/98 do not leave uninited
 				//jff 2/27/98 fix uninitialized crush field
-				if (!olddemo)
-					floor->crush = (!usespecials && speed == 4*FRACUNIT) ? 10 : -1;
+				floor->crush = (!usespecials && speed == 4*FRACUNIT) ? 10 : -1;
 				floor->resetcount = reset;	// [RH] Tics until reset (0 if never)
 				floor->orgheight = sec->floorheight;	// [RH] Height to reset to
 			}
@@ -952,6 +950,7 @@ int EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 			floor->texture = s3->floorpic;
 			floor->newspecial = 0;
 			floor->floordestheight = s3->floorheight;
+			StartFloorSound (s2);
 			
 			//	Spawn lowering donut-hole
 			floor = Z_Malloc (sizeof(*floor), PU_LEVSPEC, 0);
@@ -964,6 +963,7 @@ int EV_DoDonut (int tag, fixed_t pillarspeed, fixed_t slimespeed)
 			floor->sector = s1;
 			floor->speed = pillarspeed;
 			floor->floordestheight = s3->floorheight;
+			StartFloorSound (s1);
 			break;
 		}
 	}
@@ -1012,6 +1012,7 @@ BOOL EV_DoElevator (line_t *line, elevator_e elevtype,
 		elevator->type = elevtype;
 		elevator->sector = sec;
 		elevator->speed = speed;
+		StartFloorSound (sec);
 
 		// set up the fields according to the type of elevator action
 		switch (elevtype)
@@ -1062,75 +1063,93 @@ BOOL EV_DoElevator (line_t *line, elevator_e elevtype,
 }
 
 
+//==========================================================================
 //
-// [RH]
-// Floor waggling
+// T_FloorWaggle
 //
-// The floor waggles through a sine wave with ~4096 entries.
-void T_Waggle (waggle_t *w)
+//==========================================================================
+
+#define WGLSTATE_EXPAND 1
+#define WGLSTATE_STABLE 2
+#define WGLSTATE_REDUCE 3
+
+void T_FloorWaggle (floorWaggle_t *waggle)
 {
-	fixed_t destheight = FixedMul (finesine[w->x], (w->amp*w->ampfactor)>>6) + w->baseline;
-
-	T_MovePlane(w->sector,
-				1,
-				destheight,
-				2,0,
-				destheight < w->sector->floorheight ? 1 : -1);
-	w->x = (w->x + w->freq) & (FINEANGLES - 1);
-
-	switch (w->stage) {
-		case -1:
-			if ( ++w->ampfactor > 64 ) {
-				w->ampfactor = 64;
-				w->stage = 0;
+	switch(waggle->state)
+	{
+		case WGLSTATE_EXPAND:
+			if((waggle->scale += waggle->scaleDelta)
+				>= waggle->targetScale)
+			{
+				waggle->scale = waggle->targetScale;
+				waggle->state = WGLSTATE_STABLE;
 			}
 			break;
-
-		case 0:
-			if (w->timetodie)
-				if (--w->timetodie == 0)
-					w->stage = 1;
+		case WGLSTATE_REDUCE:
+			if((waggle->scale -= waggle->scaleDelta) <= 0)
+			{ // Remove
+				waggle->sector->floorheight = waggle->originalHeight;
+				P_ChangeSector(waggle->sector, true);
+				waggle->sector->floordata = NULL;
+				P_RemoveThinker(&waggle->thinker);
+				return;
+			}
 			break;
-
-		case 1:
-			if ( w->ampfactor-- <= 0 ) {
-				w->sector->floordata = NULL;
-				P_RemoveThinker (&w->thinker);
+		case WGLSTATE_STABLE:
+			if(waggle->ticker != -1)
+			{
+				if(!--waggle->ticker)
+				{
+					waggle->state = WGLSTATE_REDUCE;
+				}
 			}
 			break;
 	}
+	waggle->accumulator += waggle->accDelta;
+	waggle->sector->floorheight = waggle->originalHeight
+		+FixedMul(FloatBobOffsets[(waggle->accumulator>>FRACBITS)&63],
+		waggle->scale);
+	P_ChangeSector(waggle->sector, true);
 }
 
-BOOL EV_DoFloorWaggle (int tag, fixed_t amp, fixed_t freq, int offset, int time)
+//==========================================================================
+//
+// EV_StartFloorWaggle
+//
+//==========================================================================
+
+BOOL EV_StartFloorWaggle (int tag, int height, int speed, int offset,
+	int timer)
 {
-	int  secnum;
-	BOOL rtn;
+	int sectorIndex;
+	sector_t *sector;
+	floorWaggle_t *waggle;
+	BOOL retCode;
 
-	secnum = -1;
-	rtn = false;
-	while ((secnum = P_FindSectorFromTag (tag, secnum)) >= 0)
+	retCode = false;
+	sectorIndex = -1;
+	while ((sectorIndex = P_FindSectorFromTag(tag, sectorIndex)) >= 0)
 	{
-		sector_t *sec = sectors + secnum;
-		waggle_t *w;
-
-		if (P_SectorActive (floor_special, sec))
+		sector = &sectors[sectorIndex];
+		if (sector->floordata)
+		{ // Already busy with another thinker
 			continue;
-
-		rtn = true;
-
-		w = Z_Malloc (sizeof(*w), PU_LEVSPEC, 0);
-		P_AddThinker (&w->thinker);
-		sec->floordata = w;
-		w->thinker.function.acp1 = (actionf_p1) T_Waggle;
-
-		w->sector = sec;
-		w->baseline = sec->floorheight;
-		w->x = offset & (FINEANGLES-1);
-		w->amp = amp;
-		w->freq = freq * 2;
-		w->timetodie = time;
-		w->ampfactor = 0;
-		w->stage = -1;
+		}
+		retCode = true;
+		waggle = Z_Malloc(sizeof(*waggle), PU_LEVSPEC, 0);
+		sector->floordata = waggle;
+		waggle->thinker.function.acp1 = (actionf_p1) T_FloorWaggle;
+		waggle->sector = sector;
+		waggle->originalHeight = sector->floorheight;
+		waggle->accumulator = offset*FRACUNIT;
+		waggle->accDelta = speed<<10;
+		waggle->scale = 0;
+		waggle->targetScale = height<<10;
+		waggle->scaleDelta = waggle->targetScale
+			/(35+((3*35)*height)/255);
+		waggle->ticker = timer ? timer*TICRATE : -1;
+		waggle->state = WGLSTATE_EXPAND;
+		P_AddThinker(&waggle->thinker);
 	}
-	return rtn;
+	return retCode;
 }

@@ -25,16 +25,18 @@
 
 
 
-
 #include "m_alloc.h"
 #include <stdlib.h>
 #include <math.h>
 
-
 #include "doomdef.h"
 #include "d_net.h"
+#include "doomstat.h"
+#include "m_random.h"
 
 #include "m_bbox.h"
+
+#include "p_local.h"
 
 #include "r_local.h"
 #include "r_sky.h"
@@ -60,7 +62,7 @@ int 					viewangleoffset;
 int 					validcount = 1; 		
 
 lighttable_t*			basecolormap;	// [RH] colormap currently drawing with
-
+int						fixedlightlev;
 lighttable_t*			fixedcolormap;
 extern int*				walllights;		// [RH] changed from lighttable_t** to int*
 
@@ -127,7 +129,7 @@ int						lightscalexmul;	// [RH] used to keep hires modes dark enough
 int						lightscaleymul;
 
 int 					extralight;		// bumped light from gun blasts
-
+BOOL					foggy;			// [RH] ignore extralight and fullbright
 extern BOOL				DrawNewHUD;		// [RH] Defined in d_main.c.
 
 cvar_t					*r_detail;		// [RH] Detail mode
@@ -138,8 +140,13 @@ void (*basecolfunc) (void);
 void (*fuzzcolfunc) (void);
 void (*lucentcolfunc) (void);
 void (*transcolfunc) (void);
+void (*tlatedlucentcolfunc) (void);
 void (*spanfunc) (void);
 
+void (*hcolfunc_pre) (void);
+void (*hcolfunc_post1) (int hx, int sx, int yl, int yh);
+void (*hcolfunc_post2) (int hx, int sx, int yl, int yh);
+void (*hcolfunc_post4) (int sx, int yl, int yh);
 
 
 //
@@ -536,7 +543,7 @@ void R_InitTextureMapping (void)
 // R_InitLightTables
 // Only inits the zlight table,
 //	because the scalelight table changes with view size.
-// [RH] This now setups indices into a colormap rather than pointers into the
+// [RH] This now sets up indices into a colormap rather than pointers into the
 //		colormap, because the colormap can vary by sector, but the indices
 //		into it don't.
 //
@@ -558,7 +565,7 @@ void R_InitLightTables (void)
 		startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
 		for (j=0 ; j<MAXLIGHTZ ; j++)
 		{
-			scale = FixedDiv ((160*FRACUNIT), (j+1)<<LIGHTZSHIFT);
+			scale = FixedDiv (160*FRACUNIT, (j+1)<<LIGHTZSHIFT);
 			scale >>= LIGHTSCALESHIFT-LIGHTSCALEMULBITS;
 			level = startmap - scale/DISTMAP;
 			
@@ -571,8 +578,7 @@ void R_InitLightTables (void)
 		}
 	}
 
-	lightscalexmul = 320 * (1<<LIGHTSCALEMULBITS) / screens[0].width;
-	lightscaleymul = 200 * (1<<LIGHTSCALEMULBITS) / screens[0].height;
+	lightscalexmul = ((320<<detailyshift) * (1<<LIGHTSCALEMULBITS)) / screens[0].width;
 }
 
 
@@ -606,7 +612,7 @@ void R_DetailCallback (cvar_t *var)
 	}
 
 	if (var->value < 0.0 || var->value > 3.0) {
-		Printf ("Bad detail mode. (Use 0-3)\n");
+		Printf (PRINT_HIGH, "Bad detail mode. (Use 0-3)\n");
 		badrecovery = true;
 		SetCVarFloat (var, (float)((detailyshift << 1)|detailxshift));
 		return;
@@ -635,9 +641,17 @@ void R_ExecuteSetViewSize (void)
 	int			lightmapsize = 8 + (screens[0].is8bit ? 0 : 2);
 
 	setsizeneeded = false;
+	BorderNeedRefresh = true;
 
 	if (setdetail >= 0) {
-		detailxshift = setdetail & 1;
+		if (!r_columnmethod->value) {
+			R_RenderSegLoop = R_RenderSegLoop1;
+			// [RH] x-doubling only works with the standard column drawer
+			detailxshift = setdetail & 1;
+		} else {
+			R_RenderSegLoop = R_RenderSegLoop2;
+			detailxshift = 0;
+		}
 		detailyshift = (setdetail >> 1) & 1;
 		setdetail = -1;
 	}
@@ -694,17 +708,28 @@ void R_ExecuteSetViewSize (void)
 	lucentcolfunc = R_DrawTranslucentColumn;
 	fuzzcolfunc = R_DrawFuzzColumn;
 	transcolfunc = R_DrawTranslatedColumn;
+	tlatedlucentcolfunc = R_DrawTlatedLucentColumn;
 	spanfunc = R_DrawSpan;
 
+	// [RH] Horizontal column drawers
+	hcolfunc_pre = R_DrawColumnHoriz;
+	hcolfunc_post1 = rt_map1col;
+	hcolfunc_post2 = rt_map2cols;
+	hcolfunc_post4 = rt_map4cols;
+
 	R_InitBuffer (viewwidth, viewheight);
-		
 	R_InitTextureMapping ();
 	
 	// psprite scales
 	pspritescale = (viewwidth << FRACBITS) / 320;
 	pspriteiscale = (320 << FRACBITS) / viewwidth;
-	// [RH] Aspect ratio fix (from Doom Legacy)
-	pspriteyscale = (((virtheight * viewwidth) / virtwidth) << FRACBITS) / 200;
+	{
+		// [RH] Aspect ratio fix (from Doom Legacy, sort of)
+		float h = (float)virtheight;
+		float w1 = (float)viewwidth;
+		float w2 = (float)virtwidth;
+		pspriteyscale = (fixed_t)((h*w1*0.005*FRACUNIT)/w2);
+	}
 	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
 	R_InitSkyMap (r_stretchsky);
 
@@ -736,14 +761,13 @@ void R_ExecuteSetViewSize (void)
 	}
 	
 	// Calculate the light levels to use for each level / scale combination.
-	// [RH] This just stores indices into the colormap rather than pointers into it.
+	// [RH] This just stores indices into the colormap rather than pointers to a specific one.
 	for (i=0 ; i< LIGHTLEVELS ; i++)
 	{
 		startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
 		for (j=0 ; j<MAXLIGHTSCALE ; j++)
 		{
-			level = startmap - (j*screens[0].width)/((realviewwidth*DISTMAP)>>detailyshift);
-			
+			level = startmap - (j*(screens[0].width>>detailxshift))/((viewwidth*DISTMAP));
 			if (level < 0)
 				level = 0;
 			else if (level >= NUMCOLORMAPS)
@@ -778,6 +802,15 @@ static void screenblocksCallback (cvar_t *var)
 	R_SetViewSize ((int)var->value);
 }
 
+static void PickColumnMethod (cvar_t *var)
+{
+	if (var->value != 0 && var->value != 1)
+		SetCVarFloat (var, 1);
+	else
+		// Trigger the change with a setdetail event
+		SetCVarFloat (r_detail, r_detail->value);
+}
+
 void R_Init (void)
 {
 	// [RH] Automatically sense changes to screenblocks cvar
@@ -797,7 +830,15 @@ void R_Init (void)
 	R_InitPlanes ();
 	R_InitLightTables ();
 	R_InitTranslationTables ();
-		
+
+	R_InitParticles ();	// [RH] Setup particle engine
+
+	// [RH] Setup the seg rendering loop
+	r_columnmethod = cvar ("r_columnmethod", "1", CVAR_ARCHIVE|CVAR_CALLBACK);
+	r_columnmethod->u.callback = PickColumnMethod;
+
+	r_drawflat = cvar ("r_drawflat", "0", 0);
+
 	framecount = 0;
 }
 
@@ -841,11 +882,31 @@ void R_SetupFrame (player_t *player)
 	int dy;
 	
 	camera = player->camera;	// [RH] Use camera instead of viewplayer
-	viewx = camera->x;
-	viewy = camera->y;
+
+	if (player->cheats & CF_CHASECAM) {
+		// [RH] Use chasecam view
+		P_AimCamera (camera);
+		viewx = CameraX;
+		viewy = CameraY;
+		viewz = CameraZ;
+	} else {
+		viewx = camera->x;
+		viewy = camera->y;
+		viewz = camera->player ? camera->player->viewz : camera->z;
+	}
+
 	viewangle = camera->angle + viewangleoffset;
+
+	if (camera->player && camera->player->xviewshift && !paused)
+	{
+		int intensity = camera->player->xviewshift;;
+		viewx += ((M_Random() % (intensity<<2))
+					-(intensity<<1))<<FRACBITS;
+		viewy += ((M_Random()%(intensity<<2))
+					-(intensity<<1))<<FRACBITS;
+	}
+
 	extralight = camera == player->mo ? player->extralight : 0;
-	viewz = camera->player ? camera->player->viewz : camera->z;
 
 	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
 	viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
@@ -884,24 +945,30 @@ void R_SetupFrame (player_t *player)
 		}
 	}
 
+	fixedcolormap = NULL;
+	fixedlightlev = 0;
+
 	if (camera == player->mo && player->fixedcolormap)
 	{
-		if (screens[0].is8bit)
-			fixedcolormap =
-				DefaultPalette->maps.colormaps
-				+ player->fixedcolormap*256;
-		else
-			fixedcolormap = (lighttable_t *)
-				(DefaultPalette->maps.shades
-				+ player->fixedcolormap*256);
+		if (player->fixedcolormap < NUMCOLORMAPS) {
+			fixedlightlev = player->fixedcolormap*256;
+			fixedcolormap = DefaultPalette->maps.colormaps;
+		} else {
+			if (screens[0].is8bit)
+				fixedcolormap =
+					DefaultPalette->maps.colormaps
+					+ player->fixedcolormap*256;
+			else
+				fixedcolormap = (lighttable_t *)
+					(DefaultPalette->maps.shades
+					+ player->fixedcolormap*256);
+		}
 		
 		walllights = scalelightfixed;
 
 		// [RH] scalelightfixed is an int* now, not a lighttable_t**
 		memset (scalelightfixed, 0, MAXLIGHTSCALE*sizeof(*scalelightfixed));
 	}
-	else
-		fixedcolormap = NULL;
 
 	// [RH] freelook stuff
 	dy = FixedMul (freelookviewheight << (FRACBITS/2), camera->pitch) >> 9;
@@ -912,6 +979,24 @@ void R_SetupFrame (player_t *player)
 
 	framecount++;
 	validcount++;
+
+	if (BorderNeedRefresh)
+	{
+		if (setblocks < 10)
+		{
+			R_DrawViewBorder();
+		}
+		BorderNeedRefresh = false;
+		BorderTopRefresh = false;
+	}
+	else if (BorderTopRefresh)
+	{
+		if (setblocks < 10)
+		{
+			R_DrawTopBorder();
+		}
+		BorderTopRefresh = false;
+	}
 }
 
 
@@ -921,14 +1006,6 @@ void R_SetupFrame (player_t *player)
 //
 void R_RenderPlayerView (player_t *player)
 {
-	angle_t an;
-
-	// [RH] Shift view for earthquakes
-	if (player->xviewshift) {
-		an = (player->mo->angle-ANG90) >> ANGLETOFINESHIFT;
-		player->mo->x += finecosine[an]*player->xviewshift;
-		player->mo->y += finesine[an]*player->xviewshift;
-	}
 	R_SetupFrame (player);
 
 	// Clear buffers.
@@ -940,13 +1017,36 @@ void R_RenderPlayerView (player_t *player)
 	// check for new console commands.
 	NetUpdate ();
 
-	// The head node is the last node output.
-	R_RenderBSPNode (numnodes-1);
+	// [RH] Show off segs if r_drawflat is 1
+	if (r_drawflat->value) {
+		hcolfunc_pre = R_FillColumnHorizP;
+		hcolfunc_post1 = rt_copy1col;
+		hcolfunc_post2 = rt_copy2cols;
+		hcolfunc_post4 = rt_copy4cols;
+		colfunc = R_FillColumnP;
+		//spanfunc = R_FillSpan;
+	}
+
+	hcolfunc_pre = R_DrawColumnHoriz;
+	colfunc = basecolfunc;
+	hcolfunc_post1 = rt_map1col;
+	hcolfunc_post2 = rt_map2cols;
+	hcolfunc_post4 = rt_map4cols;
 	
+	// Never draw the player unless in chasecam mode
+	if (camera->player && !(camera->player->cheats & CF_CHASECAM)) {
+		camera->flags2 |= MF2_DONTDRAW;
+		R_RenderBSPNode (numnodes - 1);
+		camera->flags2 &= ~MF2_DONTDRAW;
+	} else
+		R_RenderBSPNode (numnodes-1);	// The head node is the last node output.
+
 	// Check for new console commands.
 	NetUpdate ();
 	
 	R_DrawPlanes ();
+
+	spanfunc = R_DrawSpan;
 	
 	// Check for new console commands.
 	NetUpdate ();
@@ -958,12 +1058,6 @@ void R_RenderPlayerView (player_t *player)
 
 	// [RH] Apply detail mode doubling
 	R_DetailDouble ();
-
-	// [RH] Undo view shift
-	if (player->xviewshift) {
-		player->mo->x -= finecosine[an]*player->xviewshift;
-		player->mo->y -= finesine[an]*player->xviewshift;
-	}
 }
 
 // [RH] Do all multires stuff. Called from V_SetResolution()

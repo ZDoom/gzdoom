@@ -168,7 +168,7 @@ static BOOL Init (LPBYTE in, DWORD insize)
 		(cbHeader = DWORDSWAP(*lpcbHeader)) < sizeof(MIDIFILEHDR) ||
 		NULL == (pHeader = (MIDIFILEHDR*)GetInFileData(cbHeader)))
 	{
-		Printf (szInitErrInFile);
+		Printf (PRINT_HIGH, szInitErrInFile);
 		goto Init_Cleanup;
 	}
 
@@ -186,7 +186,7 @@ static BOOL Init (LPBYTE in, DWORD insize)
 	ifs.apIts = (INTRACKSTATE*)malloc(ifs.cTrack*sizeof(INTRACKSTATE));
 	if (NULL == ifs.apIts)
 	{
-		Printf (szInitErrMem);
+		Printf (PRINT_HIGH, szInitErrMem);
 		goto Init_Cleanup;
 	}
 
@@ -196,7 +196,7 @@ static BOOL Init (LPBYTE in, DWORD insize)
 			*lpdwTag != MTrk ||
 			NULL == (lpcbHeader = (LPDWORD)GetInFileData(sizeof(*lpcbHeader))))
 		{
-			Printf (szInitErrInFile);
+			Printf (PRINT_HIGH, szInitErrInFile);
 			goto Init_Cleanup;
 		}
 
@@ -206,7 +206,7 @@ static BOOL Init (LPBYTE in, DWORD insize)
 		pTs->pTrack = GetInFileData(cbHeader);
 		if (NULL == pTs->pTrack)
 		{
-			Printf (szInitErrInFile);
+			Printf (PRINT_HIGH, szInitErrInFile);
 			goto Init_Cleanup;
 		}
 
@@ -231,7 +231,7 @@ static BOOL Init (LPBYTE in, DWORD insize)
 		//
 		if (!GetTrackVDWord(pTs, &pTs->tkNextEventDue))
 		{
-			Printf (szInitErrInFile);
+			Printf (PRINT_HIGH, szInitErrInFile);
 			goto Init_Cleanup;
 		}
 	}
@@ -340,7 +340,7 @@ static PSTREAMBUF BuildNewTracks(void)
 
 		if (!GetTrackEvent(pTsFound, &me))
 		{
-			Printf ("MIDI file is corrupt!\n");
+			Printf (PRINT_HIGH, "MIDI file is corrupt!\n");
 			return FALSE;
 		}
 
@@ -351,7 +351,7 @@ static PSTREAMBUF BuildNewTracks(void)
 		
 		if (!AddEventToStream(&me))
 		{
-			Printf ("Out of memory building tracks.\n");
+			Printf (PRINT_HIGH, "Out of memory building tracks.\n");
 			return NULL;
 		}
 	}	
@@ -670,7 +670,7 @@ BOOL			AddEventToStream(MEVENT *pMe)
 	}
 	else if (pMe->abEvent[0] == MIDI_SYSEX || pMe->abEvent[0] == MIDI_SYSEXEND)
 	{
-		Printf ("NOTE: Ignoring SysEx for now.\n");
+		Printf (PRINT_HIGH, "NOTE: Ignoring SysEx for now.\n");
 	}
 	else
 	{
@@ -758,8 +758,8 @@ static LPBYTE		GetOutStreamBytes(DWORD tkNow, DWORD cbNeeded)
 	//
 	if (cbNeeded > ots.pLast->cbLeft)
 	{
-		Printf ("NOTE: An event requested %lu bytes of memory; the\n", cbNeeded);
-		Printf ("      maximum configured buffer size is %lu.\n", (DWORD)CB_STREAMBUF);
+		Printf (PRINT_HIGH, "NOTE: An event requested %lu bytes of memory; the\n", cbNeeded);
+		Printf (PRINT_HIGH, "      maximum configured buffer size is %lu.\n", (DWORD)CB_STREAMBUF);
 
 		return NULL;
 	}
@@ -784,10 +784,10 @@ PSTREAMBUF mid2strmConvert (BYTE *inFile, DWORD inSize)
 }
 
 #ifdef _DEBUG
-static void 			ShowTrackError(INTRACKSTATE* pTs, char* szErr)
+static void ShowTrackError(INTRACKSTATE* pTs, char* szErr)
 {
-	Printf ("Track %u: %s\n", pTs->nTrack, szErr);		
-	Printf ("Track offset %lu\n", (DWORD)(pTs->pTrackPointer - pTs->pTrack));
-	Printf ("Track total %lu  Track left %lu\n", pTs->cbTrack, pTs->cbLeft);
+	Printf (PRINT_HIGH, "Track %u: %s\n", pTs->nTrack, szErr);		
+	Printf (PRINT_HIGH, "Track offset %lu\n", (DWORD)(pTs->pTrackPointer - pTs->pTrack));
+	Printf (PRINT_HIGH, "Track total %lu  Track left %lu\n", pTs->cbTrack, pTs->cbLeft);
 }
 #endif

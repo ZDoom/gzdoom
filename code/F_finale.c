@@ -108,11 +108,7 @@ void F_StartFinale (char *music, char *flat, char *text)
 	finalestage = 0;
 	finalecount = 0;
 
-	// [RH] Set TextSpeed based on state of olddemo flag
-	if (olddemo)
-		TextSpeed = 3;		// Speed in original Doom
-	else
-		TextSpeed = TEXTSPEED;
+	TextSpeed = TEXTSPEED;
 }
 
 
@@ -328,7 +324,7 @@ void F_StartCast (void)
 void F_CastTicker (void)
 {
 	int st;
-	void *origin;
+	int atten;
 
 	if (--casttics > 0)
 		return; 				// not time to change state yet
@@ -341,16 +337,11 @@ void F_CastTicker (void)
 		if (castorder[castnum].name == NULL)
 			castnum = 0;
 		if (mobjinfo[castorder[castnum].type].seesound) {
-			switch (castorder[castnum].type) {
-				case MT_CYBORG:
-				case MT_SPIDER:
-					origin = ORIGIN_SURROUND;
-					break;
-				default:
-					origin = ORIGIN_AMBIENT;
-					break;
-			}
-			S_StartSound (origin, mobjinfo[castorder[castnum].type].seesound, 90);
+			if (mobjinfo[castorder[castnum].type].flags2 & MF2_BOSS)
+				atten = ATTN_SURROUND;
+			else
+				atten = ATTN_NONE;
+			S_Sound (NULL, CHAN_VOICE, mobjinfo[castorder[castnum].type].seesound, 1, atten);
 		}
 		caststate = &states[mobjinfo[castorder[castnum].type].seestate];
 		if (castorder[castnum].type == MT_PLAYER)
@@ -402,8 +393,10 @@ void F_CastTicker (void)
 		  default: sfx = 0; break;
 		}
 				
-		if (sfx)
-			S_StartSound (ORIGIN_AMBIENT, sfx, 90);
+		if (sfx) {
+			S_StopAllChannels ();
+			S_Sound (NULL, CHAN_WEAPON, sfx, 1, ATTN_NONE);
+		}
 	}
 		
 	if (castframes == 12)
@@ -450,7 +443,7 @@ void F_CastTicker (void)
 
 BOOL F_CastResponder (event_t* ev)
 {
-	void *origin;
+	int attn;
 
 	if (ev->type != ev_keydown)
 		return false;
@@ -468,15 +461,15 @@ BOOL F_CastResponder (event_t* ev)
 		switch (castorder[castnum].type) {
 			case MT_CYBORG:
 			case MT_SPIDER:
-				origin = ORIGIN_SURROUND;
+				attn = ATTN_SURROUND;
 				break;
 			default:
-				origin = ORIGIN_AMBIENT;
+				attn = ATTN_NONE;
 				break;
 		}
 		if (castorder[castnum].type == MT_PLAYER) {
 			static const char sndtemplate[] = "player/%s/death1";
-			static const char *genders[] = { "male", "female", "neuter" };
+			static const char *genders[] = { "male", "female", "cyborg" };
 			char nametest[128];
 			int sndnum;
 
@@ -488,9 +481,9 @@ BOOL F_CastResponder (event_t* ev)
 				if (sndnum == -1)
 					sndnum = S_FindSound ("player/male/death1");
 			}
-			S_StartSfx (origin, sndnum, 90);
+			S_SoundID (NULL, CHAN_VOICE, sndnum, 1, ATTN_NONE);
 		} else
-			S_StartSound (origin, mobjinfo[castorder[castnum].type].deathsound, 90);
+			S_Sound (NULL, CHAN_VOICE, mobjinfo[castorder[castnum].type].deathsound, 1, attn);
 	}
 		
 	return true;
@@ -504,7 +497,8 @@ void F_CastPrint (char *text)
 	while (*text)
 		*t2++ = *text++ ^ 0x80;
 	*t2 = 0;
-	V_DrawTextClean ((screens[0].width - V_StringWidth (text2) * CleanXfac) >> 1,
+	V_DrawTextClean (CR_RED,
+					 (screens[0].width - V_StringWidth (text2) * CleanXfac) >> 1,
 					 (screens[0].height * 180) / 200, text2);
 }
 
@@ -690,7 +684,7 @@ void F_BunnyScroll (void)
 		stage = 6;
 	if (stage > laststage)
 	{
-		S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
+		S_Sound (NULL, CHAN_WEAPON, "weapons/pistol", 1, ATTN_NONE);
 		laststage = stage;
 	}
 		
@@ -713,7 +707,7 @@ void F_Drawer (void)
 			switch (level.nextmap[7])
 			{
 			  case '1':
-				if ( gamemode == retail )
+				if (gamemode == retail)
 				  V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("CREDIT",PU_CACHE));
 				else
 				  V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP2",PU_CACHE));
@@ -727,9 +721,8 @@ void F_Drawer (void)
 			  case '4':
 				V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("ENDPIC",PU_CACHE));
 				break;
-			  // [RH] sucks
 			  default:
-				  V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP2",PU_CACHE));
+				V_DrawPatchIndirect (0,0,&screens[0],W_CacheLumpName("HELP2",PU_CACHE));
 				break;
 			}
 			break;

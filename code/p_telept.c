@@ -23,7 +23,7 @@
 
 
 
-
+#include "doomtype.h"
 #include "doomdef.h"
 
 #include "s_sound.h"
@@ -81,11 +81,11 @@ BOOL EV_Teleport (int tid, int side, mobj_t *thing)
 		player->viewz = thing->z + thing->player->viewheight;
 
 	// spawn teleport fog at source and destination
-	S_StartSound (P_SpawnMobj (oldx, oldy, oldz, MT_TFOG, 0), "misc/teleport", 32);
+	S_Sound (P_SpawnMobj (oldx, oldy, oldz, MT_TFOG), CHAN_VOICE, "misc/teleport", 1, ATTN_NORM);
 	an = m->angle >> ANGLETOFINESHIFT;
 	// emit sound at new spot
-	S_StartSound (P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an],
-							   thing->z, MT_TFOG, 0), "misc/teleport", 32);
+	S_Sound (P_SpawnMobj (m->x+20*finecosine[an], m->y+20*finesine[an], thing->z, MT_TFOG),
+			 CHAN_VOICE, "misc/teleport", 1, ATTN_NORM);
 	
 	// don't move for a bit
 	if (player)
@@ -93,6 +93,10 @@ BOOL EV_Teleport (int tid, int side, mobj_t *thing)
 
 	thing->momx = thing->momy = thing->momz = 0;
 	thing->angle = m->angle;
+
+	// killough 10/98: kill all bobbing momentum too
+	if (player)
+		player->momx = player->momy = 0;
 
 	return true;
 }

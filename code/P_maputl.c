@@ -56,32 +56,22 @@ fixed_t P_AproxDistance (fixed_t dx, fixed_t dy)
 
 //
 // P_PointOnLineSide
-// Returns 0 or 1
+// Returns 0 (front) or 1 (back)
 //
 int P_PointOnLineSide (fixed_t x, fixed_t y, const line_t *line)
 {
 	if (!line->dx)
 	{
-		if (x <= line->v1->x)
-			return line->dy > 0;
-		
-		return line->dy < 0;
+		return (x <= line->v1->x) ? (line->dy > 0) : (line->dy < 0);
 	}
 	else if (!line->dy)
 	{
-		if (y <= line->v1->y)
-			return line->dx < 0;
-		
-		return line->dx > 0;
+		return (y <= line->v1->y) ? (line->dx < 0) : (line->dx > 0);
 	}
 	else
 	{
-		fixed_t left = FixedMul ( line->dy>>FRACBITS , (x - line->v1->x) );
-		fixed_t right = FixedMul ( (y - line->v1->y) , line->dx>>FRACBITS );
-
-		if (right < left)
-			return 0;				// front side
-		return 1;					// back side
+		return FixedMul (line->dy >> FRACBITS, x - line->v1->x)
+			   <= FixedMul (y - line->v1->y , line->dx >> FRACBITS);
 	}
 }
 
@@ -130,31 +120,23 @@ int P_BoxOnLineSide (const fixed_t *tmbox, const line_t *ld)
 		break;
 	}
 
-	if (p1 == p2)
-		return p1;
-	return -1;
+	return (p1 == p2) ? p1 : -1;
 }
 
 
 //
 // P_PointOnDivlineSide
-// Returns 0 or 1.
+// Returns 0 (front) or 1 (back).
 //
 int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
 {
 	if (!line->dx)
 	{
-		if (x <= line->x)
-			return line->dy > 0;
-		
-		return line->dy < 0;
+		return (x <= line->x) ? (line->dy > 0) : (line->dy < 0);
 	}
 	else if (!line->dy)
 	{
-		if (y <= line->y)
-			return line->dx < 0;
-
-		return line->dx > 0;
+		return (y <= line->y) ? (line->dx < 0) : (line->dx > 0);
 	}
 	else
 	{
@@ -162,20 +144,13 @@ int P_PointOnDivlineSide (fixed_t x, fixed_t y, const divline_t *line)
 		fixed_t dy = (y - line->y);
 		
 		// try to quickly decide by looking at sign bits
-		if ( (line->dy ^ line->dx ^ dx ^ dy)&0x80000000 )
-		{
-			if ( (line->dy ^ dx) & 0x80000000 )
-				return 1;			// (left is negative)
-			return 0;
+		if ((line->dy ^ line->dx ^ dx ^ dy) & 0x80000000)
+		{	// (left is negative)
+			return ((line->dy ^ dx) & 0x80000000) ? 1 : 0;
 		}
 		else
-		{
-			fixed_t left = FixedMul ( line->dy>>8, dx>>8 );
-			fixed_t right = FixedMul ( dy>>8 , line->dx>>8 );
-				
-			if (right < left)
-				return 0;				// front side
-			return 1;					// back side
+		{	// if (left >= right), return 1, 0 otherwise
+			return FixedMul (dy >> 8, line->dx >> 8) >= FixedMul (line->dy >> 8, dx >> 8);
 		}
 	}
 }
@@ -221,26 +196,17 @@ fixed_t P_InterceptVector (const divline_t *v2, const divline_t *v1)
 
 	return frac;
 #else	// UNUSED, float debug.
-	float		frac;
-	float		num;
-	float		den;
-	float		v1x;
-	float		v1y;
-	float		v1dx;
-	float		v1dy;
-	float		v2x;
-	float		v2y;
-	float		v2dx;
-	float		v2dy;
-
-	v1x = (float)v1->x/FRACUNIT;
-	v1y = (float)v1->y/FRACUNIT;
-	v1dx = (float)v1->dx/FRACUNIT;
-	v1dy = (float)v1->dy/FRACUNIT;
-	v2x = (float)v2->x/FRACUNIT;
-	v2y = (float)v2->y/FRACUNIT;
-	v2dx = (float)v2->dx/FRACUNIT;
-	v2dy = (float)v2->dy/FRACUNIT;
+	float frac;
+	float num;
+	float den;
+	float v1x = (float)v1->x/FRACUNIT;
+	float v1y = (float)v1->y/FRACUNIT;
+	float v1dx = (float)v1->dx/FRACUNIT;
+	float v1dy = (float)v1->dy/FRACUNIT;
+	float v2x = (float)v2->x/FRACUNIT;
+	float v2y = (float)v2->y/FRACUNIT;
+	float v2dx = (float)v2->dx/FRACUNIT;
+	float v2dy = (float)v2->dy/FRACUNIT;
 		
 	den = v1dy*v2dx - v1dx*v2dy;
 
@@ -266,21 +232,20 @@ fixed_t openbottom;
 fixed_t openrange;
 fixed_t lowfloor;
 
-
 void P_LineOpening (const line_t *linedef)
 {
 	sector_t *front, *back;
-		
+
 	if (linedef->sidenum[1] == -1)
 	{
 		// single sided line
 		openrange = 0;
 		return;
 	}
-		 
+
 	front = linedef->frontsector;
 	back = linedef->backsector;
-		
+
 	opentop = (front->ceilingheight < back->ceilingheight) ?
 		opentop = front->ceilingheight :
 		back->ceilingheight;
@@ -295,7 +260,7 @@ void P_LineOpening (const line_t *linedef)
 		openbottom = back->floorheight;
 		lowfloor = front->floorheight;
 	}
-		
+
 	openrange = opentop - openbottom;
 }
 
@@ -316,7 +281,7 @@ void P_UnsetThingPosition (mobj_t *thing)
 {
 	if (!(thing->flags & MF_NOSECTOR))
 	{
-		// inert things don't need to be in blockmap?
+		// inert things don't need to be in sector list
 		// unlink from subsector
 		if (thing->snext)
 			thing->snext->sprev = thing->sprev;
@@ -465,19 +430,47 @@ void P_SetThingPosition (mobj_t *thing)
 // to P_BlockLinesIterator, then make one or more calls
 // to it.
 //
+extern polyblock_t **PolyBlockMap;
+
 BOOL P_BlockLinesIterator (int x, int y, BOOL(*func)(line_t*))
 {
 	if (x<0 || y<0 || x>=bmapwidth || y>=bmapheight)
 		return true;
 	else
 	{
-		int	offset = *(blockmap+(y*bmapwidth+x));
-		int *list = blockmaplump + offset;
+		int	offset;
+		int *list;
 
+		/* [RH] Polyobj stuff from Hexen --> */
+		polyblock_t *polyLink;
+
+		offset = y*bmapwidth + x;
+		if (PolyBlockMap) {
+			polyLink = PolyBlockMap[offset];
+			while (polyLink) {
+				if (polyLink->polyobj && polyLink->polyobj->validcount != validcount) {
+					int i;
+					seg_t **tempSeg = polyLink->polyobj->segs;
+					polyLink->polyobj->validcount = validcount;
+
+					for (i = polyLink->polyobj->numsegs; i; i--, tempSeg++) {
+						if ((*tempSeg)->linedef->validcount != validcount) {
+							(*tempSeg)->linedef->validcount = validcount;
+							if (!func ((*tempSeg)->linedef))
+								return false;
+						}
+					}
+				}
+				polyLink = polyLink->next;
+			}
+		}
+		/* <-- Polyobj stuff from Hexen */
+
+		offset = *(blockmap + offset);
+		list = blockmaplump + offset;
 
 		// [RH] Get past starting 0 (from BOOM)
-		if (!olddemo)
-			list++;
+		list++;
 
 		for (; *list != -1; list++)
 		{

@@ -23,12 +23,13 @@ cvar_t *color;
 cvar_t *skin;
 cvar_t *team;
 cvar_t *gender;
+cvar_t *neverswitchonpickup;
 
 int D_GenderToInt (const char *gender)
 {
 	if (!stricmp (gender, "female"))
 		return GENDER_FEMALE;
-	else if (!stricmp (gender, "neuter"))
+	else if (!stricmp (gender, "cyborg"))
 		return GENDER_NEUTER;
 	else
 		return GENDER_MALE;
@@ -48,6 +49,7 @@ void D_SetupUserInfo (void)
 	coninfo->color = V_GetColorFromString (NULL, color->string);
 	coninfo->skin = R_FindSkin (skin->string);
 	coninfo->gender = D_GenderToInt (gender->string);
+	coninfo->neverswitch = (int)neverswitchonpickup->value;
 	R_BuildPlayerTranslation (consoleplayer, coninfo->color);
 }
 
@@ -119,7 +121,7 @@ void D_DoServerInfoChange (byte **stream)
 			*breakpt = 0;
 
 		if (SetServerVar (ptr, value) && netgame)
-			Printf ("%s changed to %s\n", ptr, value);
+			Printf (PRINT_HIGH, "%s changed to %s\n", ptr, value);
 
 		*(value - 1) = '\\';
 		if (breakpt) {
@@ -140,13 +142,20 @@ void D_WriteUserInfoStrings (int i, byte **stream)
 	} else {
 		userinfo_t *info = &players[i].userinfo;
 
-		sprintf (*stream, "\\name\\%s\\autoaim\\%g\\color\\%x %x %x\\skin\\%s\\team\\%s\\gender\\%s",
+		sprintf (*stream, "\\name\\%s"
+						  "\\autoaim\\%g"
+						  "\\color\\%x %x %x"
+						  "\\skin\\%s"
+						  "\\team\\%s"
+						  "\\gender\\%s"
+						  "\\neverswitchonpickup\\%d",
 						  info->netname,
 						  (double)info->aimdist / 16384.0,
 						  RPART(info->color), GPART(info->color), BPART(info->color),
 						  skins[info->skin].name, info->team,
 						  info->gender == GENDER_FEMALE ? "female" :
-								info->gender == GENDER_NEUTER ? "neuter" : "male"
+								info->gender == GENDER_NEUTER ? "cyborg" : "male",
+						  info->neverswitch
 						  );
 	}
 
@@ -181,15 +190,15 @@ void D_ReadUserInfoStrings (int i, byte **stream, BOOL update)
 				info->netname[MAXPLAYERNAME] = 0;
 
 				if (update)
-					Printf ("%s is now known as %s\n", oldname, info->netname);
+					Printf (PRINT_HIGH, "%s is now known as %s\n", oldname, info->netname);
 			} else if (!stricmp (ptr, "team")) {
 				strncpy (info->team, value, MAXPLAYERNAME);
 				info->team[MAXPLAYERNAME] = 0;
 				if (update) {
 					if (info->team[0])
-						Printf ("%s joined the %s team\n", info->netname, info->team);
+						Printf (PRINT_HIGH, "%s joined the %s team\n", info->netname, info->team);
 					else
-						Printf ("%s is not on a team\n", info->netname);
+						Printf (PRINT_HIGH, "%s is not on a team\n", info->netname);
 				}
 			} else if (!stricmp (ptr, "color")) {
 				info->color = V_GetColorFromString (NULL, value);
@@ -203,6 +212,8 @@ void D_ReadUserInfoStrings (int i, byte **stream, BOOL update)
 				st_firsttime = true;
 			} else if (!stricmp (ptr, "gender")) {
 				info->gender = D_GenderToInt (value);
+			} else if (!stricmp (ptr, "neverswitchonpickup")) {
+				info->neverswitch = atoi (value);
 			}
 
 			*(value - 1) = '\\';

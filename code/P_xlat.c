@@ -1,6 +1,7 @@
 // p_xlat.c: Translate old linedefs to new linedefs
 
 #include "doomtype.h"
+#include "g_level.h"
 #include "p_lnspec.h"
 #include "doomdata.h"
 #include "r_data.h"
@@ -57,13 +58,15 @@
 //Define masks, shifts, for fields in generalized linedef types
 // (from BOOM's p_psec.h file)
 
-#define GenFloorBase          0x6000
-#define GenCeilingBase        0x4000
-#define GenDoorBase           0x3c00
-#define GenLockedBase         0x3800
-#define GenLiftBase           0x3400
-#define GenStairsBase         0x3000
-#define GenCrusherBase        0x2F80
+#define GenFloorBase          (0x6000)
+#define GenCeilingBase        (0x4000)
+#define GenDoorBase           (0x3c00)
+#define GenLockedBase         (0x3800)
+#define GenLiftBase           (0x3400)
+#define GenStairsBase         (0x3000)
+#define GenCrusherBase        (0x2F80)
+
+#define ZDoomStaticInits      (333)
 
 // define names for the TriggerType field of the general linedefs
 
@@ -89,12 +92,12 @@ typedef struct {
 
 #define TAG	123		// Special value that gets replaced with the line tag
 
-#define WALK	(ML_ACTIVATECROSS>>8)
-#define USE		(ML_ACTIVATEUSE>>8)
-#define SHOOT	(ML_ACTIVATEPROJECTILEHIT>>8)
-#define MONST	(ML_MONSTERSCANACTIVATE>>8)
-#define MONWALK (ML_ACTIVATEMONSTERCROSS>>8)
-#define REP		(ML_REPEATABLE>>8)
+#define WALK	((byte)((SPAC_CROSS<<ML_SPAC_SHIFT)>>8))
+#define USE		((byte)((SPAC_USE<<ML_SPAC_SHIFT)>>8))
+#define SHOOT	((byte)((SPAC_IMPACT<<ML_SPAC_SHIFT)>>8))
+#define MONST	((byte)(ML_MONSTERSCANACTIVATE>>8))
+#define MONWALK ((byte)((SPAC_MCROSS<<ML_SPAC_SHIFT)>>8))
+#define REP		((byte)(ML_REPEAT_SPECIAL>>8))
 
 static const xlat_t SpecialTranslation[] = {
 /*   0 */ { 0 },
@@ -231,7 +234,7 @@ static const xlat_t SpecialTranslation[] = {
 /* 131 */ { USE,			Floor_RaiseToNearest,		 { TAG, F_FAST } },
 /* 132 */ { USE|REP,		Floor_RaiseToNearest,		 { TAG, F_FAST } },
 /* 133 */ { USE,			Door_LockedRaise,			 { TAG, D_FAST, 0, BCard | CardIsSkull } },
-/* 134 */ { USE|REP,		Door_LockedRaise,			 { TAG, D_FAST, 0, BCard | CardIsSkull } },
+/* 134 */ { USE|REP,		Door_LockedRaise,			 { TAG, D_FAST, 0, RCard | CardIsSkull } },
 /* 135 */ { USE,			Door_LockedRaise,			 { TAG, D_FAST, 0, RCard | CardIsSkull } },
 /* 136 */ { USE|REP,		Door_LockedRaise,			 { TAG, D_FAST, 0, YCard | CardIsSkull } },
 /* 137 */ { USE,			Door_LockedRaise,			 { TAG, D_FAST, 0, YCard | CardIsSkull } },
@@ -378,45 +381,59 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	short special = SHORT(mld->special);
 	short tag = SHORT(mld->tag);
 	short flags = SHORT(mld->flags);
+	BOOL passthrough;
 	int i;
 
-	if (flags & ML_PASSUSEORG)	// Remap ML_PASSUSE flag from BOOM.
-		flags = (flags & ~ML_PASSUSEORG) | ML_PASSUSE;
+	passthrough = (flags & ML_PASSUSE_BOOM);
 
-	flags = flags & 0x41ff;	// Ignore flags unknown in DOOM.
+	flags = flags & 0x01ff;	// Ignore flags unknown to DOOM
 
 	if (special <= NUM_SPECIALS) {
 		// This is a regular special; translate thru LUT
 		flags = flags | (SpecialTranslation[special].flags << 8);
+		if (passthrough && (GET_SPAC(flags) == SPAC_USE)) {
+			flags &= ~ML_SPAC_MASK;
+			flags |= SPAC_USETHROUGH << ML_SPAC_SHIFT;
+		}
 		ld->special = SpecialTranslation[special].newspecial;
 		for (i = 0; i < 5; i++)
 			ld->args[i] = SpecialTranslation[special].args[i] == TAG ? tag :
 						  SpecialTranslation[special].args[i];
 	} else if (special <= GenCrusherBase) {
-		// This is an unknown special. Just zero it.
-		ld->special = 0;
-		memset (ld->args, 0, sizeof(ld->args));
+		if (special >= ZDoomStaticInits && special < ZDoomStaticInits + NUM_STATIC_INITS) {
+			// A ZDoom Static_Init special
+			ld->special = Static_Init;
+			ld->args[0] = tag;
+			ld->args[1] = special - ZDoomStaticInits;
+		} else {
+			// This is an unknown special. Just zero it.
+			ld->special = 0;
+			memset (ld->args, 0, sizeof(ld->args));
+		}
 	} else {
 		// Anything else is a BOOM generalized linedef type
 		switch (special & 0x0007) {
 			case WalkMany:
-				flags |= ML_REPEATABLE;
+				flags |= ML_REPEAT_SPECIAL;
 			case WalkOnce:
-				flags |= ML_ACTIVATECROSS;
+				flags |= SPAC_CROSS << ML_SPAC_SHIFT;
 				break;
 
 			case SwitchMany:
 			case PushMany:
-				flags |= ML_REPEATABLE;
+				flags |= ML_REPEAT_SPECIAL;
 			case SwitchOnce:
 			case PushOnce:
-				flags |= ML_ACTIVATEUSE;
+				if (passthrough)
+					flags |= SPAC_USETHROUGH << ML_SPAC_SHIFT;
+				else
+					flags |= SPAC_USE << ML_SPAC_SHIFT;
 				break;
 
 			case GunMany:
-				flags |= ML_REPEATABLE;
+				flags |= ML_REPEAT_SPECIAL;
 			case GunOnce:
-				flags |= ML_ACTIVATEPROJECTILEHIT;
+				flags |= SPAC_IMPACT << ML_SPAC_SHIFT;
 				break;
 		}
 

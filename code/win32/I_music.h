@@ -9,7 +9,7 @@
 //	MUSIC I/O
 //
 void I_InitMusic(void);
-void I_ShutdownMusic(void);
+void STACK_ARGS I_ShutdownMusic(void);
 // Volume.
 void I_SetMIDIVolume (float volume);
 void I_SetMusicVolume (int volume);
@@ -22,10 +22,7 @@ int I_RegisterSong(void *data, int length);
 //	plays a song, and when the song is done,
 //	starts playing it again in an endless loop.
 // Horrible thing to do, considering.
-void
-I_PlaySong
-( int			handle,
-  int			looping );
+void I_PlaySong (int handle, int looping);
 // Stops a song over 3 seconds.
 void I_StopSong(int handle);
 // See above (register), then think backwards

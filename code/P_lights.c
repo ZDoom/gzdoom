@@ -34,10 +34,6 @@
 // State.
 #include "r_state.h"
 
-// [RH] These functions only change the sector special in
-//		demo compatibility mode.
-extern BOOL olddemo;
-
 // [RH] Make sure the light level is in bounds.
 #define CLIPLIGHT(l)	(((l) < 0) ? 0 : (((l) > 255) ? 255 : (l)))
 
@@ -74,9 +70,6 @@ void P_SpawnFireFlicker (sector_t *sector)
 {
 	fireflicker_t *flick;
 
-	if (olddemo)
-		sector->special &= 0xff00;
-
 	flick = Z_Malloc ( sizeof(*flick), PU_LEVSPEC, 0);
 
 	P_AddThinker (&flick->thinker);
@@ -88,6 +81,49 @@ void P_SpawnFireFlicker (sector_t *sector)
 	flick->count = 4;
 }
 
+//
+// [RH] flickering light like Hexen's
+//
+void T_Flicker (fireflicker_t *light)
+{
+	if (light->count)
+	{
+		light->count--;	
+		return;
+	}
+	if (light->sector->lightlevel == light->minlight)
+	{
+		light->sector->lightlevel = light->maxlight;
+		light->count = (P_Random(pr_misc)&7)+1;
+	}
+	else
+	{
+		light->sector->lightlevel = light->minlight;
+		light->count = (P_Random(pr_misc)&31)+1;
+	}
+}
+
+void EV_StartLightFlickering (int tag, int upper, int lower)
+{
+	fireflicker_t *flick;
+	int secnum;
+		
+	secnum = -1;
+	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
+	{
+		sector_t *sector = &sectors[secnum];
+
+		flick = Z_Malloc ( sizeof(*flick), PU_LEVSPEC, 0);
+
+		P_AddThinker (&flick->thinker);
+
+		flick->thinker.function.acp1 = (actionf_p1) T_Flicker;
+		flick->sector = sector;
+		flick->maxlight = sector->lightlevel;
+		flick->minlight = P_FindMinSurroundingLight(sector,sector->lightlevel)+16;
+		flick->count = (P_Random(pr_misc)&64)+1;
+	}
+}
 
 
 //
@@ -128,10 +164,7 @@ void P_SpawnLightFlash (sector_t *sector, int min, int max)
 {
 	lightflash_t *flash;
 
-	if (olddemo)
-		sector->special &= 0xff00;
-		
-	flash = Z_Malloc ( sizeof(*flash), PU_LEVSPEC, 0);
+	flash = Z_Malloc (sizeof(*flash), PU_LEVSPEC, 0);
 
 	P_AddThinker (&flash->thinker);
 
@@ -149,22 +182,6 @@ void P_SpawnLightFlash (sector_t *sector, int min, int max)
 	flash->maxtime = 64;
 	flash->mintime = 7;
 	flash->count = (P_Random (pr_spawnlightflash) & flash->maxtime) + 1;
-}
-
-// [RH] New function to start light flashing on-demand.
-void EV_StartLightFlashing (int tag, int upper, int lower)
-{
-	int secnum;
-		
-	secnum = -1;
-	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
-	{
-		sector_t *sec = &sectors[secnum];
-		if (P_SectorActive (lighting_special, sec))
-			continue;
-		
-		P_SpawnLightFlash (sec, lower, upper);
-	}
 }
 
 
@@ -231,8 +248,6 @@ void P_SpawnStrobeFlash (sector_t *sector, int upper, int lower,
 		flash->minlight = CLIPLIGHT(lower);
 		flash->count = 1;	// Hexen-style is always in sync.
 	}
-	if (olddemo)
-		sector->special &= 0xff00;
 }
 
 
@@ -382,9 +397,6 @@ void P_SpawnGlowingLight (sector_t *sector)
 	g->maxlight = sector->lightlevel;
 	g->thinker.function.acp1 = (actionf_p1) T_Glow;
 	g->direction = -1;
-
-	if (olddemo)
-		sector->special &= 0xff00;
 }
 
 //

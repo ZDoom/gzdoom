@@ -1,3 +1,429 @@
+February 17, 1999
+- Made a final "final" compile of 1.17.
+- Removed the hack that could transform normal exits into Teleport_NewMaps
+  during the level translation process.
+- Realized I had forgotten to do the following, so I did them:
+  * Support the MF_TRANSLATION bits for DeHackEd patches that use them.
+  * Add a TRANSLUC75 .bex mnemonic for symmetry.
+  * Add a defaultmap entry for MAPINFO lumps.
+  * Make r_columnmethod 1 the default.
+  * Add a neverswitchonpickup cvar.
+  * Extralight and fullbright need to be ignored in foggy areas.
+
+February 16, 1999
+- Did a final compile for 1.17 under both DOS and Win32. This will be the
+  first release where I release versions for both operating systems
+  simultaneously. Eventually, I'll have to abandon DOS if I want to keep
+  progressing, but for now it's nice to be able to do this.
+- Removed the limit on the number of sound sequences that can be loaded.
+  There's still a limit on the number of translation slots, and I think
+  it's good to leave it that way.
+- Added a menu stack, so that pressing escape to back out of a menu only
+  backs up through the menus the user has visited.
+- Tried adding some code to djgpp/i_video.cpp so that it could write
+  directly to VGA memory. Then I found out that regular VGA mode 13h
+  doesn't support page flipping, so I took it out.
+
+February 14, 1999
+- Added some #ifdef's to i_sound.c so that it works equally well with
+  both VC++ and DJGPP.
+- Added support for Hexen's parallax skies. I'm not sure why I thought
+  the front one was a normal masked texture. (It uses color 0 to indicate
+  transparency instead.) I also removed R_DrawMaskedSky() and added the
+  restriction that both sky textures must be the same height.
+
+February 13, 1999
+- Tried boomedit.wad, and it turns out I was wrong about ML_PASSUSE. Non-
+  use lines could and did eat uses. Changed it so that only SPAC_USE
+  does now.
+- Moved the functionality of the ML_PASSUSE flag into a new activation
+  type: SPAC_USETHROUGH. The flag was only applicable to use activation
+  lines, so it seemed sensely to have it wasting a bit for all other
+  types. Now I have a free linedef flag if I need it.
+- Removed the hack to allow players to move if they were currently stuck.
+  With it in, polyobjects could push players through walls, which is even
+  more undesirable. Since I'm now using MBF's momentum code (which, like
+  Doom's but not Boom's, allows players to build up enough momentum to
+  escape from walls if they're trivially inside them), I don't really need
+  the "fix" anyway.
+- Added a revert argument to the ChangeCamera special that causes the camera
+  to move back inside the player's head if he moves.
+- Added a SetPlayerProperty special.
+- Created things for the particle fountains and sparks.
+- Created sound sequences for the appropriate Doom sector movements. I also
+  had to expand on the language as defined by Hexen a bit.
+- Replaced my floor waggling code with Hexen's, so now it's right.
+- Added three new level flags:
+	* evenlighting
+	* noautosequences
+	* forcenoskystretch
+- Added a progress indicator for the translucency table building process.
+
+February 12, 1999
+- Removed the round-robin assignment of virtual channels in i_sound.c. Since
+  we're no longer letting MIDAS pick the sfx channels for us, this is
+  pointless (and potentially hazard-prone if many sounds are being played
+  very frequently).
+- Added support for sound sequences, so now the polyobjects aren't silent
+  when they move.
+
+February 11, 1999
+- Added "support" for 0-length sounds. (Meaning they get replaced by dsempty
+  instead of crashing when malloc tries to alloc 4 gigs for them.)
+
+February 10, 1999
+- Adopted Hexen's script parsing code (sc_man.c). It lends itself toward
+  much cleaner script handling code. [no association with ACS]
+
+February 7, 1999
+- Incorporated MBF's friction code in place of BOOM's. (Incidentally, I also
+  discovered that I had left out some of BOOM's. No matter now.)
+- Added a hack to P_XYMovement() so that players will still be able to move
+  if they get stuck inside a line or another thing.
+
+February 6, 1999
+- Played some deathmatch with gothicdm2 and noticed two problems:
+    * On rare occasions, I would spawn and be stuck.
+	* Weapon pickup messages would sometimes print more than once. (Was I
+	  picking them up more than once when I ran over them? Not sure.)
+	* Once when the other player died, he didn't turn into a corpse.
+- Added the ability to activate scripts by picking up items.
+- Changed the polyobject functions called from p_lnspec.c so that they take
+  individual paremeters rather than a byte array of args.
+- Demos can now be played from disk without first loading them with the
+  -file parameter.
+- The automap will now follow the console player's camera rather than the
+  console player himself.
+- Added a notice warning that a demo will go out of sync if it was recorded
+  with a different version of the game.
+- Added playdemo and timedemo commands.
+- Added colored text support and different message levels. This was
+  planned for several months, and now I've finally written the code for it.
+
+February 4, 1999
+- Modified C_AddNotifyString() so that it properly supports lines
+  ending with '\r' or '\n' instead of assuming that they all end with
+  '\n' and starting each on a new line.
+- Fixed a problem with PTR_CameraTraverse() that could position the
+  chasecam inside a two-sided wall.
+- Removed the handling for ANIM_RANDOM from wi_stuff.c since it wasn't
+  used anywhere.
+
+February 3, 1999
+- Removed the use of screens[1] in wi_stuff.c by allocating a new screen
+  just big enough to hold the background image and then blitting that to
+  the screen each frame.
+- Changed the demo loop a bit so that it will automatically try to play
+  any number of demos beginning with DEMO1 and continuing up in sequence.
+  (Of course, since I removed the ability to play old-style demos, it's
+  only of use for wads that provide their own demos.)
+- Did a bunch of miscellaneous cleanup from the Hexen source.
+- Fixed player extreme deaths playing "*gibbed" instead of "*xdeath1".
+- When a player leaves a network game, their body is now removed.
+- Removed the check against monsters crossing secret lines. They *can*
+  cross secret lines and activate them, they just don't use/push secret
+  lines.
+
+January 31, 1999
+- Linedef type 134 was being improperly translated to require a blue key.
+  It should have been red.
+- Fixed a round-off problem in P_ZMovement() that could cause the player's
+  landing sound to play when the player wasn't falling fast enough. For
+  some reason, converting the floating point minimum momz to an it was
+  subtracting one (even though it was already integral). So, for normal
+  gravity, it was comparing the player's z momentum against -524287
+  instead of -524288.
+- Fixed a crash bug in M_LoadDefaults() when migrating from a pre-1.14
+  config file without any binding for F5.
+
+January 30, 1999
+- Added blood, gunshot, and grenade particle effects.
+
+January 29, 1999
+- Fixed up the handling of .bex thing mnemonics and added the names for
+  the second set of flags (albeit, not many are actually implemented).
+
+January 27, 1999
+- Created a new traversal function for the rail gun.
+- Finally figured out why so many lost souls spawned by pain elementals
+  were getting stuck. I was spawning two lost souls in the same spot (where
+  there should have been only one). Oops.
+- Found a case where the sight-checking code could trace a line that missed
+  its ending cell and continue off the edge of the map, thus crashing the
+  game. Made some changes to compensate: When the ending column or row is
+  reached, mapxstep or mapystep will be set to 0 to prevent it from
+  traversing any further in that direction.
+- Using spynext and spyprev now briefly display the name of the player
+  you switched to.
+
+January 25, 1999
+- Added armor and keys to the fullscreen HUD.
+
+January 24, 1999
+- Imported Hexen's z-checking code in place of my own. Hopefully it will
+  work better. Also added a few other Hexenism while I was at it, like
+  bouncy objects.
+- Sped up wipes on tall screens so they should be about the same speed as
+  one 200 pixels tall.
+- Fixed plats so that they properly rebound off the ceiling. I was
+  checking if the plat's crush field was non-zero when I should have been
+  checking that it wasn't -1.
+- Made some more improvements to D_ErrorLoop().
+- Fixed some problems with the lighting with different r_detail values.
+- columnofs[] was being constructed wrong for horizontally stretched
+  detailed modes (too far to the right). Fixed.
+- Added some unrolled drawers based off the Hexen source for 320x200
+  and 320x240. I don't expect anything but a 386/486 to benefit from them.
+
+January 23, 1999
+- Fixed the light-amp so that it doesn't turn off colored lighting.
+- Added positional sounds. Now that I have them, I also removed the
+  temporary switch mobj that was used to provide a place to play the
+  switch sounds.
+- During demo playback, the chase command will now let you switch to
+  and from the chasecam, so chasedemo isn't really needed unless you want
+  to start the demo in chasecam mode.
+- Added the player's score to the fullscreen HUD in deathmatch.
+- Fixed the spynext/spyprev commands so that they properly update the
+  status bar when you switch to another player. Also fixed it so the
+  camera doesn't stay in a dead player's corpse if you're not watching
+  the person who recorded the demo.
+- Fixed the alignment of the scores display at high resolutions and also
+  added a level countdown timer if timelimit is in effect (ala Lithium).
+- Removed Hexen's solution for getting the player to produce more than
+  one sound and adopted Quake's: each mobj has 8 channels with some of
+  them set aside for predefined uses.
+
+January 21, 1999
+- Stopped using MIDAS's auto effect channels and started using the ones
+  calculated by the game's own sound code. This seems to have fixed all
+  the previous problems with sounds cutting out prematurely.
+
+January 20, 1999
+- Adjusted the WEAPONTOP #define in p_pspr.c so that the player sprites
+  will meet the bottom of the screen at higher resolutions instead of
+  leaving a gap.
+
+January 17, 1999
+- Added a chasedemo cvar. When it's true, the demo is played back in
+  chasecam mode.
+- Fixed a memory leak when the game had to generate a translucency table.
+  (out was not being freed.)
+- Stopped using Z_Malloc() for temporary compression buffers and switched
+  to the libc functions. (libc has a bigger memory pool.)
+- Fixed problem with skins that used sounds in the IWAD.
+- Fixed a bug that could crash the game if something went amiss during
+  the startup process but after setjmp() was called. Now D_ErrorLoop()
+  explicitly enters the GS_FULLCONSOLE state before doing anything else.
+
+January 16, 1999
+- Added particle fountain effects with the following colors:
+	red, green, blue, yellow, purple, black, and white
+- Got rocket trails into a state I think looks nice.
+- Improved the particle system further by making the particle sizes
+  adjustable, letting particles fade out over time, and moving all of
+  the particle thinking out of the renderer and into the play simulation.
+- Imported some of Hexen's sound code to limit the total number of same
+  sounds playing and also to allow players to make more than one noise
+  at a time.
+- Fixed the operation of FloorAndCeiling_(Raise/Lower)ByValue. Contrary
+  to what the Hexen specs state, they do not multiply their height
+  argument by 8.
+
+January 14, 1999
+- Switched to the p_sight.c of Hexen. This is benefitial for two reasons:
+  1. It knows about polyobjects.
+  2. It doesn't traverse the BSP tree. Yes, I know this means it's slower,
+     but it also means I can use it with a portal engine, which doesn't
+	 even have a BSP tree.
+- Moved the locating of the polyobj spots out of PO_Init() and into
+  P_SpawnMapThing().
+
+January 12, 1999
+- Added the polyobject stuff from Hexen.
+- Copied Hexen's earthquake viewshifting code into R_SetupFrame().
+- Changed P_Thing_Projectile() so that it can play a thing's sight sound
+  and sets some other values properly.
+- Added a delay to open and deferred scripts of one second after seeing
+  that the Hexen code does it (and it's a good way of avoiding delays in
+  open scripts to get past the screen wipe).
+- Fixed a bug in P_StartScript() that would cause it to crash if someone
+  tried to start a nonexistant script.
+
+January 11, 1999
+- Added an r_drawflat cvar to draw segs as flat colors instead of textures.
+- In R_StoreWallRange(), changed the lighting calculation so that lines will
+  have the same amount of light no matter what their orientation if a
+  non-black fade is applied to them (otherwise the fog effect looks dumb).
+
+January 10, 1999
+- Added a rocket trail using the particle system.
+- Added a particle system.
+- Added support for PWADs like Gothic DM2 that used a hack to get sprites-in-
+  a-pwad with regular Doom by making some changes to W_MergeLumps().
+
+January 9, 1999
+- Added a progress-meter to the console.
+- Made a fix (submitted by John Cole) to the height-checking code so that if a
+  player stands on another player, the player on the bottom doesn't get
+  stuck.
+- Changed P_GiveWeapon() to check if there are any graphics for a weapon. If
+  there aren't, then it won't give the player the weapon. Also changed "give
+  weapons" to call P_GiveWeapon() so that it won't give the player a weapon
+  that doesn't exist in the current iwad (like the ssg with doom.wad).
+- Fixed psprites so that the muzzleflash has the same visibility (fuzz) flags
+  as the weapon sprite.
+- Added the setting of YourColor when am_usecustomcolors is 0. It should have
+  been there a long time ago.
+
+January 8, 1999
+- Since the new column rendering code is essentially done (unless I decide
+  that it's actually worth the hassle to draw columns in bunches of 8--4 was
+  enough bother), I took some timings with the new and old routines. These
+  are for looking directly at a wall, the worst-case scenario for the old
+  routines. I tried disabling vbl wait, but DirectDraw always seems to do it
+  even when I don't tell it to, so the numbers for the low resolutions aren't
+  very informative since they cap at the screen's refresh rate. Rates from
+  twoBuild games under similar conditions are also given for comparison.
+  This is on my PII-350:
+
+	mode		old		new		Blood	Duke3D
+	320x200		70		70		212		324
+	320x240		60		60		174		274
+	400x300		60		60		120		212
+	480x360		60		60		91		147
+	512x384		40		60		80		128
+	640x400		32		64		60		96
+	640x480		27		57		51		83
+	800x600		27		42		34		51
+	960x720		12		27		24		37
+	1024x768	8		21		21		33
+	1152x864	9		19		17		23
+	1280x1024	6		15		12		17
+
+  It looks like the new routines are about twice as fast as the old ones. It
+  also looks like I can draw walls faster than Blood but not Duke. For
+  rendering a real scene that consists of more than just a single wall, ZDoom
+  beats them both, since a single wall is the best-case scenario for Build.
+  Frame rates in ZDoom seems to be pretty even now, which is nice since the
+  old routines were significantly slower at drawing walls than anything else.
+
+- Put in a check in R_RenderSegLoop1() and R_RenderSegLoop2() for NULL
+  walllights. Right after starting a level, it seems walllights isn't
+  getting set properly, but it appears to work fine afterward. Hmm...
+- Got back to school and had a chance to try the new routines on my machine
+  and, wow! I can now do a steady 35 fps at 800x600. 960x720 hovers around
+  27 fps. 1024x768 is around 20 fps. Not bad.
+
+January 6, 1999
+- Wrote a better assembly version of R_DrawColumnHoriz() with no partial
+  register stalls and presumably no AGI stalls on regular Pentiums. If it's
+  faster than the C code, it's not much faster. (At least it's not
+  significantly slower, anyway.)
+
+January 5, 1999
+- Tried an assembly version of R_DrawColumnHoriz(). It was actually
+  slower than the C code by about 8 fps. Probably because of all the
+  partial register stalls. I guess they really can kill performance.
+  Stupid Intel processors. :-)
+- Continued work on the optimized column drawers so that they have
+  analogues of all the regular column drawers and can also be used to
+  draw sprites. On this P-II 300, 720x480 runs at a pretty consistent
+  35 fps. 864x480 isn't much worse, either. (Yeah, weird modes, I know.)
+  800x600 runs at about 25 fps. Not bad, considering that this is all
+  C code.
+- Added R_StretchColumn() and R_DrawTlatedLucentColumn() functions.
+
+January 4, 1999
+- Recompiled everything with __fastcall as the default parameter-passing
+  convention. Is it better? Not sure, but the exe did shrink by 11k. I
+  think the framerate may have risen by 0.5 fps, too.
+
+January 3, 1999
+- Added support for using RIFF WAVEs as sound lumps.
+
+January 2, 1999
+- Fixed EV_StopPlat() so that it doesn't get stuck looping on the first
+  plat because I had forgot to advance scan inside the while loop.
+- Fixed P_LineAttack() so that it can still spawn bullet puffs on the
+  floor or ceiling even if the bullet path never hits a line within range.
+
+January 1, 1999
+- Worked some more with the cache optimized column drawers. Now they work
+  for masked walls and skies as well as solid walls.
+
+December 28, 1998
+- Added some C code to do "interleaved column drawing" (the method that
+  proved to be the fastest in my test two days ago). Wall drawing is about
+  twice as fast at 1024x768. Lower resolutions show less, but still
+  measurable, improvement. Hopefully converting it to assembly will
+  result in a further speedup.
+- Fixed problem with monsters continuing to attack their target even after
+  they had killed it.
+- Adjusted the minimum distance between the chasecam and a wall/floor/
+  ceiling.
+
+December 27, 1998
+- Added a chasecam. Use the chase command to turn it on and off.
+
+December 26, 1998
+- Ran a simple texturing test drawing a 128-pixel tall texture into a
+  1024x768 block using several different methods. The methods and
+  average times for one pass of each method are:
+  > drawing it directly to the buffer: 94.18 ms
+  > drawing four columns into a temp array and then merging
+    them into the buffer: 24.456 ms
+  > interleaving four columns into a temp array and then copying them
+    into the buffer as a series of longword writes: 24.338 ms
+  > interleaving four columns into a temp array and then colormapping them
+    as they get copied to the buffer: 21.71 ms
+
+  using variations of the fourth method for translated columns:
+  > translating during the copy to the buffer: 21.684 ms
+  > translation during the mapping to the temp array: 24.29 ms
+
+  using variations of the third and fourth method for translucent columns:
+  > colormapping into the temp array: 31.75 ms
+  > colormapping during the copy to the buffer: 30.42 ms
+
+  using variations of the third and fourth method for translated,
+  translucent columns:
+  > translating into the temp array: 32.58 ms
+  > translating during the copy to the buffer: 31.45 ms
+
+  These tests give me an idea of what I need to do to improve the game's
+  renderer.
+
+- Added an extension to normal exit lines during translation so that if a
+  map has a MAPINFO entry, then it gets translated to Teleport_NewMap
+  instead of Exit_Normal. The levelnum is (tag % 1000) and position is
+  (tag / 1000). Thus, you can create hubs with regular Doom maps provided
+  that they have MAPINFO entries.
+- The video drivers on this machine at home have a weird bug. Apparently at
+  random, when the palette is changed, random colors will have their blue
+  values set to the opposite of what they should be. I can't see any way to
+  work around it. Ah well. It's not my machine anyway... :-)
+- Fixed togglemap so that it does nothing if the player isn't in a level.
+  (Could have crashed if used on the title screen.)
+
+December 25, 1998
+- Added Static_Init special (190) to handle BOOM-like control linedefs for
+  setting sector properties (at the moment: color, fog, damage, and gravity)
+  at level load time.
+
+December 24, 1998
+- Fixed a problem in G_CheckSpot() where a corpse would get moved vertically
+  to check for collisions in a spawn spot, but then it wouldn't be restored
+  to its original height after the check.
+- Fixed a problem I had introduced in P_LookForPlayers(). I had been
+  operating under the assumption that whenever it was called, actor->target
+  was NULL. Thus, I thought that assigning actor->goal to actor->target was
+  safe even if actor->goal was NULL. This isn't the case. In coop, this
+  function can be called with a valid actor->target. Setting it to NULL can
+  then play havoc with P_NewChaseDir(), which can get called immediately
+  afterward in A_Chase(). Now it only sets actor->target to actor->goal if
+  actor->target is already NULL.
+
 December 22, 1998
 - Fixed the thing spawners so that they don't spawn monsters if the
   nomonsters dmflag is set.

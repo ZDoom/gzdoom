@@ -124,11 +124,11 @@ void W_AddFile (char *filename)
 
 	if ((handle = fopen (name, "rb")) == NULL)
 	{
-		Printf (" couldn't open %s\n",filename);
+		Printf (PRINT_HIGH, " couldn't open %s\n",filename);
 		return;
 	}
 
-	Printf (" adding %s", name);
+	Printf (PRINT_HIGH, " adding %s", name);
 	startlump = numlumps;
 	
 	// [RH] Determine if file is a WAD based on its signature, not its name.
@@ -145,7 +145,7 @@ void W_AddFile (char *filename)
 		fseek (handle, header.infotableofs, SEEK_SET);
 		fread (fileinfo, 1, length, handle);
 		numlumps += header.numlumps;
-		Printf (" (%d lumps)", header.numlumps);
+		Printf (PRINT_HIGH, " (%d lumps)", header.numlumps);
 	} else {
 		// This is just a single lump file
 
@@ -158,7 +158,7 @@ void W_AddFile (char *filename)
 		strncpy (singleinfo.name, name, 8);
 		numlumps++;
 	}
-	Printf ("\n");
+	Printf (PRINT_HIGH, "\n");
 
 	// Fill in lumpinfo
 	lumpinfo = Realloc (lumpinfo, numlumps*sizeof(lumpinfo_t));
@@ -222,9 +222,11 @@ void W_InitMultipleFiles (wadlist_t **filenames)
 	// [RH] Merge sprite and flat groups.
 	//		(We don't need to bother with patches, since
 	//		Doom doesn't use markers to identify them.)
-
+	W_Profile ("waddump1.txt");
 	W_MergeLumps ("S_START", "S_END", ns_sprites);
+	W_Profile ("waddump2.txt");
 	W_MergeLumps ("F_START", "F_END", ns_flats);
+	W_Profile ("waddump3.txt");
 	W_MergeLumps ("C_START", "C_END", ns_colormaps);
 
 	// [RH] Set up hash table
@@ -347,9 +349,6 @@ void W_ReadLump (int lump, void *dest)
 				 c,l->size,lump);	
 }
 
-
-
-
 //
 // W_CacheLumpNum
 //
@@ -436,10 +435,10 @@ void W_InitHashChains (void)
 }
 
 // [RH] From Boom also
-static BOOL IsMarker (const char *name, const char *marker)
+static BOOL IsMarker (const lumpinfo_t *lump, const char *marker)
 {
-	return !strncmp (name, marker, 8) || 
-			(*name == *marker && !strncmp (name + 1, marker, 7));
+	return (lump->namespc == ns_global) && (!strncmp (lump->name, marker, 8) || 
+			(*(lump->name) == *marker && !strncmp (lump->name + 1, marker, 7)));
 }
 
 // [RH] Merge multiple tagged groups into one
@@ -452,22 +451,39 @@ void W_MergeLumps (const char *start, const char *end, int space)
 	lumpinfo_t *newlumpinfos;
 	int newlumps, oldlumps, i;
 	BOOL insideBlock;
-	BOOL haveEndMarker;
+	int flatHack;
 
 	uppercopy (ustart, start);
 	uppercopy (uend, end);
+
+	// Some pwads use an icky hack to get flats with regular Doom.
+	// This tries to detect them.
+	flatHack = 0;
+	if (!strcmp ("F_START", ustart) && !M_CheckParm ("-noflathack")) {
+		int fudge = 0, start = 0;
+
+		for (i = 0; i < numlumps; i++) {
+			if (IsMarker (lumpinfo + i, ustart))
+				fudge++, start = i;
+			else if (IsMarker (lumpinfo + i, uend))
+				fudge--, flatHack = i;
+		}
+		if (start > flatHack)
+			fudge--;
+		if (fudge >= 0)
+			flatHack = 0;
+	}
 
 	newlumpinfos = Malloc (numlumps * sizeof(lumpinfo_t));
 
 	newlumps = 0;
 	oldlumps = 0;
 	insideBlock = false;
-	haveEndMarker = false;
 
 	for (i = 0; i < numlumps; i++) {
 		if (!insideBlock) {
 			// Check if this is the start of a block
-			if (IsMarker (lumpinfo[i].name, ustart)) {
+			if (IsMarker (lumpinfo + i, ustart)) {
 				insideBlock = true;
 
 				// Create start marker if we haven't already
@@ -485,10 +501,25 @@ void W_MergeLumps (const char *start, const char *end, int space)
 			}
 		} else {
 			// Check if this is the end of a block
-			if (IsMarker (lumpinfo[i].name, uend)) {
+			if (flatHack) {
+				if (flatHack == i) {
+					insideBlock = false;
+					flatHack = 0;
+				} else {
+					if (lumpinfo[i].size != 4096) {
+						lumpinfo[oldlumps++] = lumpinfo[i];
+					} else {
+						newlumpinfos[newlumps] = lumpinfo[i];
+						newlumpinfos[newlumps++].namespc = space;
+					}
+				}
+			} else if (i && lumpinfo[i].handle != lumpinfo[i-1].handle) {
+				// Blocks cannot span multiple files
+				insideBlock = false;
+				lumpinfo[oldlumps++] = lumpinfo[i];
+			} else if (IsMarker (lumpinfo + i, uend)) {
 				// It is. We'll add the end marker once
 				// we've processed everything.
-				haveEndMarker = true;
 				insideBlock = false;
 			} else {
 				newlumpinfos[newlumps] = lumpinfo[i];
@@ -500,33 +531,32 @@ void W_MergeLumps (const char *start, const char *end, int space)
 	// Now copy the merged lumps to the end of the old list
 	// and create the end marker entry.
 
-	// Only create an end marker if there was one in the original list.
-	if (haveEndMarker) {
-		strncpy (newlumpinfos[newlumps].name, uend, 8);
-		newlumpinfos[newlumps].handle = NULL;
-		newlumpinfos[newlumps].position =
-			newlumpinfos[newlumps].size = 0;
-		newlumpinfos[newlumps].namespc = ns_global;
-		newlumps++;
+	if (newlumps) {
+		if (oldlumps + newlumps > numlumps)
+			lumpinfo = Realloc (lumpinfo, oldlumps + newlumps);
+
+		memcpy (lumpinfo + oldlumps, newlumpinfos, sizeof(lumpinfo_t) * newlumps);
+
+		numlumps = oldlumps + newlumps;
+		
+		strncpy (lumpinfo[numlumps].name, uend, 8);
+		lumpinfo[numlumps].handle = NULL;
+		lumpinfo[numlumps].position =
+			lumpinfo[numlumps].size = 0;
+		lumpinfo[numlumps].namespc = ns_global;
+		numlumps++;
 	}
 
-	memcpy (lumpinfo + oldlumps, newlumpinfos, sizeof(lumpinfo_t) * newlumps);
-
 	free (newlumpinfos);
-
-	numlumps = oldlumps + newlumps;
 }
 
 //
 // W_Profile
 //
 // [RH] Unused
-#if 0
-int		info[2500][10];
-int		profilecount;
-
-void W_Profile (void)
+void W_Profile (const char *fname)
 {
+#if 0
 	int			i;
 	memblock_t*	block;
 	void*		ptr;
@@ -535,14 +565,15 @@ void W_Profile (void)
 	int			j;
 	char		name[9];
 	
-	
+	f = fopen (fname,"wt");
+	name[8] = 0;
+
 	for (i=0 ; i<numlumps ; i++)
 	{
-		ptr = lumpcache[i];
+		ptr = lumpcache ? lumpcache[i] : NULL;
 		if (!ptr)
 		{
 			ch = ' ';
-			continue;
 		}
 		else
 		{
@@ -552,15 +583,6 @@ void W_Profile (void)
 			else
 				ch = 'P';
 		}
-		info[i][profilecount] = ch;
-	}
-	profilecount++;
-	
-	f = fopen ("waddump.txt","wt");
-	name[8] = 0;
-
-	for (i=0 ; i<numlumps ; i++)
-	{
 		memcpy (name,lumpinfo[i].name,8);
 
 		for (j=0 ; j<8 ; j++)
@@ -570,18 +592,11 @@ void W_Profile (void)
 		for ( ; j<8 ; j++)
 			name[j] = ' ';
 
-		fprintf (f,"%s ",name);
-
-//		for (j=0 ; j<profilecount ; j++)
-//			fprintf (f,"    %c",info[i][j]);
-
-		fprintf (f, "%d %d", lumpinfo[i].index, lumpinfo[i].next);
-
-		fprintf (f,"\n");
+		fprintf (f,"%s   %c  %u\n",name,ch,lumpinfo[i].namespc);
 	}
 	fclose (f);
-}
 #endif
+}
 
 
 // [RH] Find a named lump. Specifically allows duplicates for

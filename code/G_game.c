@@ -119,6 +119,9 @@ char			demoname[256];
 BOOL 			demorecording; 
 BOOL 			demoplayback; 
 BOOL 			netdemo; 
+cvar_t*			chasedemo;				// [RH] Play demo through chasecam?
+BOOL			demonew;				// [RH] Only used around G_InitNew for demos
+int				demover;
 byte*			demobuffer;
 byte*			demo_p;
 size_t			maxdemosize;
@@ -490,17 +493,15 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 //		One goes forward; the other goes backward.
 static void ChangeSpy (void)
 {
-	// [RH] Use some BOOM code here:
-	ST_Start();		// killough 3/7/98: switch status bar views too
-	HU_Start();
 	players[consoleplayer].camera = players[displayplayer].mo;
 	S_UpdateSounds(players[consoleplayer].camera);
+	ST_Start();		// killough 3/7/98: switch status bar views too
 }
 
 void Cmd_SpyNext (player_t *plyr, int argc, char **argv)
 {
 	// allow spy mode changes even during the demo
-	if (gamestate == GS_LEVEL && (singledemo || !deathmatch->value)) {
+	if (gamestate == GS_LEVEL && (demoplayback || !deathmatch->value)) {
 		do 
 		{ 
 			displayplayer++; 
@@ -515,7 +516,7 @@ void Cmd_SpyNext (player_t *plyr, int argc, char **argv)
 void Cmd_SpyPrev (player_t *plyr, int argc, char **argv)
 {
 	// allow spy mode changes even during the demo
-	if (gamestate == GS_LEVEL && (singledemo || !deathmatch->value)) {
+	if (gamestate == GS_LEVEL && (demoplayback || !deathmatch->value)) {
 		do 
 		{ 
 			displayplayer--; 
@@ -532,11 +533,11 @@ void Cmd_SpyPrev (player_t *plyr, int argc, char **argv)
 // G_Responder	
 // Get info needed to make ticcmd_ts for the players.
 // 
-BOOL G_Responder (event_t* ev) 
+BOOL G_Responder (event_t *ev) 
 { 
 	// any other key pops up menu if in demos
 	// [RH] But only if the key isn't bound to a "special" command
-	if (gameaction == ga_nothing && !singledemo && 
+	if (gameaction == ga_nothing && 
 		(demoplayback || gamestate == GS_DEMOSCREEN)) 
 	{
 		char *cmd = C_GetBinding (ev->data1);
@@ -552,6 +553,7 @@ BOOL G_Responder (event_t* ev)
 				stricmp (cmd, "togglemap") &&
 				stricmp (cmd, "spynext") &&
 				stricmp (cmd, "spyprev") &&
+				stricmp (cmd, "chase") &&
 				stricmp (cmd, "+showscores") &&
 				stricmp (cmd, "bumpgamma") &&
 				stricmp (cmd, "screenshot"))) {
@@ -569,24 +571,15 @@ BOOL G_Responder (event_t* ev)
  
 	if (gamestate == GS_LEVEL) 
 	{ 
-#if 0
-		if (devparm && ev->type == ev_keydown && ev->data2 == ';') 
-		{ 
-			G_DeathMatchSpawnPlayer (0); 
-			return true; 
-		} 
-#endif 
-
-		if (HU_Responder (ev)) 
+		if (CT_Responder (ev)) 
 			return true;		// chat ate the event 
 		if (ST_Responder (ev)) 
 			return true;		// status window ate it 
 		if (!viewactive)
 			if (AM_Responder (ev))
 				return true;	// automap ate it 
-	} 
-		 
-	if (gamestate == GS_FINALE) 
+	}
+	else if (gamestate == GS_FINALE) 
 	{ 
 		if (F_Responder (ev)) 
 			return true;		// finale ate the event 
@@ -716,7 +709,7 @@ void G_Ticker (void)
 			if (cmd->ucmd.forwardmove > TURBOTHRESHOLD
 				&& !(gametic&31) && ((gametic>>5)&3) == i )
 			{
-				Printf ("%s is turbo!\n", players[i].userinfo.netname);
+				Printf (PRINT_HIGH, "%s is turbo!\n", players[i].userinfo.netname);
 			}
 
 			if (netgame && !netdemo && !(gametic%ticdup) )
@@ -774,7 +767,6 @@ void G_Ticker (void)
 		P_Ticker ();
 		ST_Ticker ();
 		AM_Ticker ();
-		HU_Ticker ();
 		break;
 
 	  case GS_INTERMISSION:
@@ -864,7 +856,7 @@ void G_PlayerReborn (int player)
 	p->secretcount = secretcount;
 	memcpy (&p->userinfo, &userinfo, sizeof(userinfo));
 
-	p->usedown = p->attackdown = p->jumpdown = true;	// don't do anything immediately
+	p->usedown = p->attackdown = true;	// don't do anything immediately
 	p->playerstate = PST_LIVE;
 	p->health = deh.StartHealth;		// [RH] Used to be MAXHEALTH
 	p->readyweapon = p->pendingweapon = wp_pistol;
@@ -888,7 +880,7 @@ BOOL G_CheckSpot (int playernum, mapthing2_t *mthing)
 {
 	fixed_t 			x;
 	fixed_t 			y;
-	fixed_t				z;
+	fixed_t				z, oldz;
 	subsector_t*		ss;
 	unsigned			an;
 	mobj_t* 			mo;
@@ -910,7 +902,8 @@ BOOL G_CheckSpot (int playernum, mapthing2_t *mthing)
 		return true;
 	}
 
-	players[playernum].mo->z = z;	// [RH] Checks are now full 3-D
+	oldz = players[playernum].mo->z;	// [RH] Need to save corpse's z-height
+	players[playernum].mo->z = z;		// [RH] Checks are now full 3-D
 
 	// killough 4/2/98: fix bug where P_CheckPosition() uses a non-solid
 	// corpse to detect collisions with other players in DM starts
@@ -922,6 +915,7 @@ BOOL G_CheckSpot (int playernum, mapthing2_t *mthing)
 	players[playernum].mo->flags |=  MF_SOLID;
 	i = P_CheckPosition(players[playernum].mo, x, y);
 	players[playernum].mo->flags &= ~MF_SOLID;
+	players[playernum].mo->z = oldz;	// [RH] Restore corpse's height
 	if (!i)
 		return false;
 
@@ -934,12 +928,10 @@ BOOL G_CheckSpot (int playernum, mapthing2_t *mthing)
 	// spawn a teleport fog
 	an = ( ANG45 * (mthing->angle/45) ) >> ANGLETOFINESHIFT;
 
-	mo = P_SpawnMobj (x+20*finecosine[an], y+20*finesine[an]
-					  , z
-					  , MT_TFOG, 0);
+	mo = P_SpawnMobj (x+20*finecosine[an], y+20*finesine[an], z, MT_TFOG);
 
 	if (level.time)
-		S_StartSound (mo, "misc/teleport", 32);	// don't start sound on first frame 
+		S_Sound (mo, CHAN_VOICE, "misc/teleport", 1, ATTN_NORM);	// don't start sound on first frame 
 
 	return true;
 }
@@ -1006,7 +998,7 @@ static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, int selections)
 	}
 
 	// [RH] return a spot anyway, since we allow telefragging when a player spawns
-	return olddemo ? NULL : &deathmatchstarts[i];
+	return &deathmatchstarts[i];
 }
 
 void G_DeathMatchSpawnPlayer (int playernum)
@@ -1171,12 +1163,6 @@ void G_DoLoadGame (void)
 	// done
 	Z_Free (savebuffer);
 	save_p = savebuffer = NULL;
-
-	if (setsizeneeded)
-		R_ExecuteSetViewSize ();
-	
-	// draw the pattern into the back screen
-	R_FillBackScreen ();
 }
 
 
@@ -1260,7 +1246,7 @@ void G_DoSaveGame (void)
 			fwrite (savebuffer, 1, save_p - savebuffer, file);
 			fclose (file);
 		} else {
-			Printf ("Could not create savegame\n");
+			Printf (PRINT_HIGH, "Could not create savegame\n");
 		}
 	}
 
@@ -1270,7 +1256,7 @@ void G_DoSaveGame (void)
 	gameaction = ga_nothing;
 	savedescription[0] = 0;
 
-	players[consoleplayer].message = GGSAVED;
+	Printf (PRINT_HIGH, GGSAVED);
 }
 
 
@@ -1292,57 +1278,43 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 {
 	static int clonecount = 0;
 	int i;
+	int id = DEM_BAD;
 
-	if (olddemo) {
-		if (*demo_p == DEMOMARKER) {
-			// end of demo data stream
+	while (!clonecount && id != DEM_USERCMD && id != DEM_USERCMDCLONE) {
+		if (!demorecording && demo_p >= zdembodyend) {
+			// nothing left in the BODY chunk, so end playback.
 			G_CheckDemoStatus ();
-		} else {
-			cmd->ucmd.forwardmove = ((signed char)demo_p[0]) * 256;
-			cmd->ucmd.sidemove = ((signed char)demo_p[1]) * 256;
-			cmd->ucmd.yaw = ((unsigned char)demo_p[2]) * 256;
-			cmd->ucmd.buttons = (unsigned char)demo_p[3];
-			demo_p += 4;
+			break;
 		}
-	} else {
-		int id = DEM_BAD;
 
-		while (!clonecount && id != DEM_USERCMD && id != DEM_USERCMDCLONE) {
-			if (!demorecording && demo_p >= zdembodyend) {
-				// nothing left in the BODY chunk, so end playback.
+		id = ReadByte (&demo_p);
+
+		switch (id) {
+			case DEM_STOP:
+				// end of demo stream
 				G_CheckDemoStatus ();
 				break;
-			}
+			case DEM_USERCMD:
+				UnpackUserCmd (&cmd->ucmd, &demo_p);
+				memcpy (&LastUserCmd, &cmd->ucmd, sizeof(usercmd_t));
+				break;
+			case DEM_USERCMDCLONE:
+				clonecount = ReadByte (&demo_p) + 1;
+				break;
 
-			id = ReadByte (&demo_p);
+			case DEM_DROPPLAYER:
+				i = ReadByte (&demo_p);
+				if (i < MAXPLAYERS)
+					playeringame[i] = false;
 
-			switch (id) {
-				case DEM_STOP:
-					// end of demo stream
-					G_CheckDemoStatus ();
-					break;
-				case DEM_USERCMD:
-					UnpackUserCmd (&cmd->ucmd, &demo_p);
-					memcpy (&LastUserCmd, &cmd->ucmd, sizeof(usercmd_t));
-					break;
-				case DEM_USERCMDCLONE:
-					clonecount = ReadByte (&demo_p) + 1;
-					break;
-
-				case DEM_DROPPLAYER:
-					i = ReadByte (&demo_p);
-					if (i < MAXPLAYERS)
-						playeringame[i] = false;
-
-				default:
-					Net_DoCommand (id, &demo_p, player);
-					break;
-			}
+			default:
+				Net_DoCommand (id, &demo_p, player);
+				break;
 		}
-		if (clonecount) {
-			clonecount--;
-			memcpy (&cmd->ucmd, &LastUserCmd, sizeof(usercmd_t));
-		}
+	}
+	if (clonecount) {
+		clonecount--;
+		memcpy (&cmd->ucmd, &LastUserCmd, sizeof(usercmd_t));
 	}
 } 
 
@@ -1359,8 +1331,11 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player)
 	static int clonecount = 0;
 	static byte *clonepos = NULL;
 
-	if (stoprecording)			// use "stop" console command to end demo recording
+	if (stoprecording) {		// use "stop" console command to end demo recording
 		G_CheckDemoStatus ();
+		gameaction = ga_fullconsole;
+		return;
+	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
 	if (DemoQueue[player].size) {
@@ -1437,7 +1412,6 @@ void G_BeginRecording (void)
 
 	MakeEmptyUserCmd();
 
-	olddemo = false;
 	demo_p = demobuffer;
 
 	WriteLong (FORM_ID, &demo_p);			// Write FORM ID
@@ -1480,12 +1454,28 @@ void G_BeginRecording (void)
 // G_PlayDemo
 //
 
-char*	defdemoname;
+char defdemoname[128];
 
-void G_DeferedPlayDemo (char* name)
+void G_DeferedPlayDemo (char *name)
 {
-	defdemoname = name;
+	strncpy (defdemoname, name, 127);
 	gameaction = ga_playdemo;
+}
+
+void Cmd_PlayDemo (player_t *player, int argc, char **argv)
+{
+	if (argc > 1) {
+		G_DeferedPlayDemo (argv[1]);
+		singledemo = true;
+	}
+}
+
+void Cmd_TimeDemo (player_t *player, int argc, char **argv)
+{
+	if (argc > 1) {
+		G_TimeDemo (argv[1]);
+		singledemo = true;
+	}
 }
 
 // [RH] Process all the information in a FORM ZDEM
@@ -1498,6 +1488,8 @@ BOOL G_ProcessIFFDemo (char *mapname)
 	int id, len, i;
 	byte *nextchunk;
 
+	demoplayback = true;
+
 	for (i = 0; i < MAXPLAYERS; i++)
 		playeringame[i] = 0;
 
@@ -1509,7 +1501,7 @@ BOOL G_ProcessIFFDemo (char *mapname)
 
 	id = ReadLong (&demo_p);
 	if (id != ZDEM_ID) {
-		Printf ("Not a ZDoom demo file!\n");
+		Printf (PRINT_HIGH, "Not a ZDoom demo file!\n");
 		return true;
 	}
 
@@ -1520,7 +1512,7 @@ BOOL G_ProcessIFFDemo (char *mapname)
 		len = ReadLong (&demo_p);
 		nextchunk = demo_p + len + (len & 1);
 		if (nextchunk > zdemformend) {
-			Printf ("Demo is mangled!\n");
+			Printf (PRINT_HIGH, "Demo is mangled!\n");
 			return true;
 		}
 
@@ -1528,16 +1520,16 @@ BOOL G_ProcessIFFDemo (char *mapname)
 			case ZDHD_ID:
 				headerHit = true;
 
-				ReadWord (&demo_p);			// ZDoom version demo was created with
+				demover = ReadWord (&demo_p);	// ZDoom version demo was created with
 				if (ReadWord (&demo_p) > GAMEVER) {		// Minimum ZDoom version
-					Printf ("Demo requires a newer version of ZDoom!\n");
+					Printf (PRINT_HIGH, "Demo requires a newer version of ZDoom!\n");
 					return true;
 				}
 				memcpy (mapname, demo_p, 8);	// Read map name
 				mapname[8] = 0;
 				demo_p += 8;
 				rngseed = ReadLong (&demo_p);
-				consoleplayer = *demo_p++;
+				consoleplayer = displayplayer = *demo_p++;
 				break;
 
 			case VARS_ID:
@@ -1564,13 +1556,13 @@ BOOL G_ProcessIFFDemo (char *mapname)
 	}
 
 	if (!numPlayers) {
-		Printf ("Demo has no players!\n");
+		Printf (PRINT_HIGH, "Demo has no players!\n");
 		return true;
 	}
 
 	if (!bodyHit) {
 		zdembodyend = NULL;
-		Printf ("Demo has no BODY chunk!\n");
+		Printf (PRINT_HIGH, "Demo has no BODY chunk!\n");
 		return true;
 	}
 
@@ -1582,104 +1574,49 @@ BOOL G_ProcessIFFDemo (char *mapname)
 
 void G_DoPlayDemo (void)
 {
-	skill_t skill;
-	int		i;
-	int		demoversion = 5;
-	char	mapname[9];
+	char mapname[9];
+	int demolump;
 
 	gameaction = ga_nothing;
-	demobuffer = demo_p = W_CacheLumpName (defdemoname, PU_STATIC);
+
+	// [RH] Allow for demos not loaded as lumps
+	demolump = W_CheckNumForName (defdemoname);
+	if (demolump >= 0) {
+		demobuffer = demo_p = W_CacheLumpNum (demolump, PU_STATIC);
+	} else {
+		FixPathSeperator (defdemoname);
+		DefaultExtension (defdemoname, ".lmp");
+		M_ReadFile (defdemoname, &demobuffer);
+		demo_p = demobuffer;
+	}
+
+	Printf (PRINT_HIGH, "Playing demo %s\n", defdemoname);
 
 	C_BackupCVars ();		// [RH] Save cvars that might be affected by demo
 	MakeEmptyUserCmd ();
 
 	if (ReadLong (&demo_p) != FORM_ID) {
-		olddemo = true;
-		demo_p -= 4;
-		demoversion = *demo_p++;
-
-		if (demoversion > 4 && demoversion < 104) {
-			Printf ("Demo is from unknown game version!\n");
+		if (singledemo)
+			I_Error ("Doom v1.9 demos are no longer supported.");
+		else {
+			Printf (PRINT_HIGH, "Doom v1.9 demos are no longer supported.\n");
 			gameaction = ga_nothing;
-			return;
 		}
-
-		if (demoversion <= 4) {
-			skill = (float)demoversion;
-			strcpy (mapname, CalcMapName (demo_p[0], demo_p[1]));
-			demo_p += 2;
-			consoleplayer = 0;
-			SetCVarFloat (deathmatch, 0);
-			SetCVarFloat (dmflagsvar, DF_NO_FREELOOK|DF_NO_JUMP);
-		} else {
-			int flags = DF_NO_FREELOOK|DF_NO_JUMP;
-
-			skill = (float)(*demo_p++);
-			strcpy (mapname, CalcMapName (demo_p[0], demo_p[1]));
-			if (demo_p[2]) {
-				SetCVarFloat (deathmatch, 1.0f);
-				if (demo_p[2] == 2)
-					flags |= DF_ITEMS_RESPAWN;
-				else
-					flags |= DF_WEAPONS_STAY;
-			}
-			if (demo_p[3])
-				flags |= DF_MONSTERS_RESPAWN;
-			if (demo_p[4])
-				flags |= DF_FAST_MONSTERS;
-			if (demo_p[5])
-				flags |= DF_NO_MONSTERS;
-			consoleplayer = demo_p[6];
-			demo_p += 7;
-			SetCVarFloat (dmflagsvar, (float)flags);
-		}
-
-		// Old demos only have four players
-		for (i=0 ; i < 4 ; i++)
-			playeringame[i] = demo_p[i];
-
-		demo_p += i;
-
-		if (playeringame[1]) {
-			netgame = true;
-			netdemo = true;
-		}
-
-		SetCVarFloat (gameskill, skill);
-
-		AddCommandString ("set fraglimit 0; set timelimit 0; set cheats 0; sv_gravity 800");
-
-		{
-			// Setup compatible userinfo
-			static char *playerStreams[4] = {
-				"\\name\\Green\\autoaim\\5000\\color\\74 fc 6c\\skin\\base\\gender\\male",
-				"\\name\\Indigo\\autoaim\\5000\\color\\80 80 80\\skin\\base\\gender\\male",
-				"\\name\\Brown\\autoaim\\5000\\color\\bc 78 48\\skin\\base\\gender\\male",
-				"\\name\\Red\\autoaim\\5000\\color\\fc 00 00\\skin\\base\\gender\\male"
-			};
-			byte *stream;
-			int jookie;
-
-			for (jookie = 0; jookie < 4; jookie++) {
-				stream = playerStreams[jookie];
-				D_ReadUserInfoStrings (jookie, &stream, false);
-			}
-			R_BuildCompatiblePlayerTranslations ();
-		}
+	} else if (G_ProcessIFFDemo (mapname)) {
+		gameaction = ga_nothing;
+		demoplayback = false;
 	} else {
-		if (G_ProcessIFFDemo (mapname)) {
-			gameaction = ga_nothing;
-			return;
-		}
+		// don't spend a lot of time in loadlevel 
+		precache = false;
+		demonew = true;
+		G_InitNew (mapname);
+		C_HideConsole ();
+		demonew = false;
+		precache = true;
+
+		usergame = false;
+		demoplayback = true;
 	}
-
-	// don't spend a lot of time in loadlevel 
-	precache = false;
-	G_InitNew (mapname);
-	precache = true;
-
-	usergame = false;
-	demoplayback = true;
 }
 
 //
@@ -1692,7 +1629,7 @@ void G_TimeDemo (char* name)
 	timingdemo = true;
 	singletics = true;
 
-	defdemoname = name;
+	strncpy (defdemoname, name, 128);
 	gameaction = ga_playdemo;
 }
 
@@ -1720,42 +1657,44 @@ BOOL G_CheckDemoStatus (void)
 		D_UserInfoChanged (color);
 	}
 
-	if (timingdemo)
+	if (demoplayback)
 	{
 		extern int starttime;
 		int endtime;
 
-		endtime = I_GetTimeReally () - starttime;
+		if (timingdemo)
+			endtime = I_GetTimeReally () - starttime;
+			
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 
-		I_Error ("timed %i gametics in %i realtics (%.1f fps)", gametic,
-				 endtime, (float)gametic/(float)endtime*(float)TICRATE);
-	}
-
-	if (demoplayback)
-	{
-		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
-
-		if (singledemo)
-			exit (0);
-
-		Z_ChangeTag (demobuffer, PU_CACHE);
-		olddemo = false;
+		Z_Free (demobuffer);
 		demoplayback = false;
 		netdemo = false;
 		netgame = false;
-//		deathmatch = 0;
+		singletics = false;
 		{
 			int i;
 
 			for (i = 1; i < MAXPLAYERS; i++)
 				playeringame[i] = 0;
 		}
-//		respawnparm = false;
-//		fastparm = 0;
-//		nomonsters = false;
 		consoleplayer = 0;
-		D_AdvanceDemo (); 
+
+		if (singledemo || timingdemo) {
+			if (timingdemo)
+				// Trying to get back to a stable state after timing a demo
+				// seems to cause problems. I don't feel like fixing that
+				// right now.
+				I_FatalError ("timed %i gametics in %i realtics (%.1f fps)", gametic,
+							  endtime, (float)gametic/(float)endtime*(float)TICRATE);
+			else
+				Printf (PRINT_HIGH, "Demo ended.\n");
+			gameaction = ga_fullconsole;
+			timingdemo = false;
+			return false;
+		} else {
+			D_AdvanceDemo (); 
+		}
 
 		return true; 
 	}
@@ -1773,7 +1712,7 @@ BOOL G_CheckDemoStatus (void)
 		free (demobuffer); 
 		demorecording = false;
 		stoprecording = false;
-		Printf ("Demo %s recorded\n", demoname); 
+		Printf (PRINT_HIGH, "Demo %s recorded\n", demoname); 
 	}
 
 	return false; 

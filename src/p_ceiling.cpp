@@ -332,7 +332,7 @@ manual_ceiling:
 		case DCeiling::ceilRaiseToLowest:
 			targheight = sec->FindLowestCeilingSurrounding (&spot);
 			ceiling->m_TopHeight = sec->ceilingplane.PointToDist (spot, targheight);
-			ceiling->m_Direction = -1;
+			ceiling->m_Direction = 1;
 			break;
 
 		case DCeiling::ceilLowerToFloor:

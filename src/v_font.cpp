@@ -663,7 +663,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	widths2 = new int[count];
 	if (data[11] & 1)
 	{
-		GlobalKerning = data[12] + data[13]*256;
+		GlobalKerning = SHORT(*(SWORD *)&data[12]);
 		widths = (WORD *)(data + 14);
 	}
 	else

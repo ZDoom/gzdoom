@@ -71,6 +71,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 	BOOL passthrough;
 	int i;
 
+	passthrough = (flags & ML_PASSUSE_BOOM);
 	flags = flags & 0x01ff;	// Ignore flags unknown to DOOM
 
 	// For purposes of maintaining BOOM compatibility, each
@@ -105,8 +106,6 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 		}
 	}
 	tlate = (const BYTE *)tlatebase.GetMem();
-
-	passthrough = (flags & ML_PASSUSE_BOOM);
 
 	// Check if this is a regular linetype
 	if (tlate[0] == 'N' && tlate[1] == 'O' && tlate[2] == 'R' && tlate[3] == 'M')

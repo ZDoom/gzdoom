@@ -1,4 +1,13 @@
-November 24, 2004
+November 26, 2003
+- Fixed: Ceiling type ceilRaiseToLowest (used exclusively by Ceiling_Generic)
+  set the direction to -1 instead of 1.
+- Fixed: P_TranslateLineDef() ignored the BOOM passthrough flag due to
+  bad ordering.
+- Fixed: A_WeaponReady did not center the sprites in case they had been
+  repositioned earlier. (Only really an issue with Hexen.)
+- Fixed kerning support in V_BreakLines.
+
+November 24, 2003
 - Moved the +mlook and +strafe button handling for joysticks into
   DI_JoyCheck().
 - Changed bots.cfg loading so that it is relative to progdir instead of the

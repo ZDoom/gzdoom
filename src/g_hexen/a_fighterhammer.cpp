@@ -20,6 +20,7 @@ extern void AdjustPlayerAngle (AActor *pmo);
 void A_FHammerAttack (AActor *actor, pspdef_t *psp);
 void A_FHammerThrow (AActor *actor, pspdef_t *psp);
 void A_HammerSound (AActor *);
+void A_BeAdditive (AActor *);
 
 // The Fighter's Hammer -----------------------------------------------------
 
@@ -121,7 +122,7 @@ FState AHammerMissile::States[] =
 	S_BRIGHT (FHFX, 'H',	2, NULL					    , &States[S_HAMMER_MISSILE_1]),
 
 #define S_HAMMER_MISSILE_X1 (S_HAMMER_MISSILE_1+8)
-	S_BRIGHT (FHFX, 'I',	3, NULL					    , &States[S_HAMMER_MISSILE_X1+1]),
+	S_BRIGHT (FHFX, 'I',	3, A_BeAdditive			    , &States[S_HAMMER_MISSILE_X1+1]),
 	S_BRIGHT (FHFX, 'J',	3, NULL					    , &States[S_HAMMER_MISSILE_X1+2]),
 	S_BRIGHT (FHFX, 'K',	3, A_Explode			    , &States[S_HAMMER_MISSILE_X1+3]),
 	S_BRIGHT (FHFX, 'L',	3, NULL					    , &States[S_HAMMER_MISSILE_X1+4]),

@@ -522,7 +522,10 @@ void A_WeaponReady(AActor *actor, pspdef_t *psp)
 		}
 	}
 
+	// Prepare for bobbing action.
 	player->cheats |= CF_WEAPONREADY;
+	psp->sx = 0;
+	psp->sy = WEAPONTOP;
 }
 
 //---------------------------------------------------------------------------

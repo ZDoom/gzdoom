@@ -1100,7 +1100,7 @@ void P_DropItem (AActor *source, const TypeInfo *type, int special, int chance)
 	{
 		AActor *mo;
 		
-		if (compatflags & COMPATF_NOTOSSDROPS)
+		if (compatflags & COMPATF_NOTOSSDROPS || (GetDefaultByType(type)->flags & MF_NOGRAVITY))
 		{
 			mo = Spawn (type, source->x, source->y, ONFLOORZ);
 		}

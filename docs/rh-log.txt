@@ -1,4 +1,45 @@
+December 19, 2002
+- Fixed: TELEFOGHEIGHT was not being used everywhere it needed to be.
+- Changed: P_DropItem() uses the standard Doom drop for items that don't
+  have gravity (such as the Mage's lightning weapon).
+- Changed: Dying puts you into chasecam mode.
+- Fixed: The fighter's axe and hammer could not be picked up for mana by the
+  other classes.
+- Moved the assignment to waitingforspawn inside SpawnBot() past the checks
+  to see if any bots are left to spawn.
+
+December 18, 2002
+- Fixed the "give armor" cheat for Hexen.
+- Added artifacts and puzzlepieces as categories for the give cheat.
+- Replaced Killough's blockmap builder with the one I had written for ZDBSP.
+  The MBF one was found to be incorrect near vertex 0 of Doom's E3M6. There
+  are probably other problem spots, but that's the one that was first
+  noticed.
+- Fixed: Hexen_sbar.cpp had WPIECEM1 misspelled as WPEICEM1, so the top
+  part of the Bloodscourge would not appear in the status bar until you had
+  the complete weapon, which causes a different graphic to be drawn.
+- Fixed the elusive hub crashing bug introduced by my November 26 but/hub
+  "fix". Parsing of NEW_PLR_OBJ and NEW_PLR_CLS_OBJ when m_HubTravel is
+  true would wait until the object had been parsed before mapping it to
+  an index. It needs to be mapped immediately after being created so that
+  any references to it in its stored data will actually refer to it and
+  not the next object in line.
+- Fixed P_SetSectorFriction() so that using a friction amount of 100
+  calculates the standard movefactor 2048 instead of 255.
+- Changed Sector_SetFriction so that when it's used from a script, it will
+  clear and set the sector's friction flag as needed.
+- Fixed: The fighter's axe and hammer would still use mana when infinite
+  ammo was turned on.
+- Fixed: P_SpawnPlayerMissile spawned missiles with a facing direction
+  slightly to the right of their real direction when there were no monsters
+  for it to autoaim at. Among other things, this made the frost cone fire
+  right of center.
+- Fixed: Picking up a flechette would only give you the fighter's variety
+  because I forgot to uncomment some code after adding the other two player
+  classes.
+
 December 13, 2002
+- Uploaded 25.cab.
 - Added a hack for 256-tall textures with patches that mark their post
   lengths as 0. This lets pleiades.wad and its skies work.
 - Multiplied the output of the OPL chips by two so that they aren't so

@@ -1136,6 +1136,7 @@ static void IterFindPolySegs (int x, int y, seg_t **segList)
 				else
 				{
 					*segList++ = &segs[i];
+					segs[i].bPolySeg = true;
 				}
 				IterFindPolySegs (segs[i].v2->x, segs[i].v2->y, segList);
 				return;
@@ -1172,6 +1173,7 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 			}
 			segs[i].linedef->special = 0;
 			segs[i].linedef->args[0] = 0;
+			segs[i].bPolySeg = true;
 			PolySegCount = 1;
 			PolyStartX = segs[i].v1->x;
 			PolyStartY = segs[i].v1->y;
@@ -1232,6 +1234,7 @@ static void SpawnPolyobj (int index, int tag, BOOL crush)
 				{
 					segs[i].linedef->special = 0;
 					segs[i].linedef->args[0] = 0;
+					segs[i].bPolySeg = true;
 				}
 			}
 			if (psIndex == psIndexOld)

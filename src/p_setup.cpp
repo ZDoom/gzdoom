@@ -1571,168 +1571,277 @@ void P_SetSlopes ()
 
 
 //
-// killough 10/98:
+// [RH] My own blockmap builder, not Killough's or TeamTNT's.
 //
-// Rewritten to use faster algorithm.
+// Killough's turned out not to be correct enough, and I had
+// written this for ZDBSP before I discovered that, so
+// replacing the one he wrote for MBF seemed like the easiest
+// thing to do. (Doom E3M6, near vertex 0--the one furthest east
+// on the map--had problems.)
 //
-// New procedure uses Bresenham-like algorithm on the linedefs, adding the
-// linedef to each block visited from the beginning to the end of the linedef.
+// Using a hash table to get the minimum possible blockmap size
+// seems like overkill, but I wanted to change the code as little
+// as possible from its ZDBSP incarnation.
 //
-// The algorithm's complexity is on the order of nlines*total_linedef_length.
-//
-// Please note: This section of code is not interchangable with TeamTNT's
-// code which attempts to fix the same problem.
+
+static unsigned int BlockHash (TArray<WORD> *block)
+{
+	int hash = 0;
+	WORD *ar = &(*block)[0];
+	for (size_t i = 0; i < block->Size(); ++i)
+	{
+		hash = hash * 12235 + ar[i];
+	}
+	return hash & 0x7fffffff;
+}
+
+static bool BlockCompare (TArray<WORD> *block1, TArray<WORD> *block2)
+{
+	size_t size = block1->Size();
+
+	if (size != block2->Size())
+	{
+		return false;
+	}
+	if (size == 0)
+	{
+		return true;
+	}
+	WORD *ar1 = &(*block1)[0];
+	WORD *ar2 = &(*block2)[0];
+	for (size_t i = 0; i < size; ++i)
+	{
+		if (ar1[i] != ar2[i])
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+static void CreatePackedBlockmap (TArray<int> &BlockMap, TArray<WORD> *blocks, int bmapwidth, int bmapheight)
+{
+	int buckets[4096];
+	int *hashes, hashblock;
+	TArray<WORD> *block;
+	int zero = 0;
+	int terminator = -1;
+	WORD *array;
+	int i, hash;
+	int hashed = 0, nothashed = 0;
+
+	hashes = new int[bmapwidth * bmapheight];
+
+	memset (hashes, 0xff, sizeof(WORD)*bmapwidth*bmapheight);
+	memset (buckets, 0xff, sizeof(buckets));
+
+	for (i = 0; i < bmapwidth * bmapheight; ++i)
+	{
+		block = &blocks[i];
+		hash = BlockHash (block) % 4096;
+		hashblock = buckets[hash];
+		while (hashblock != -1)
+		{
+			if (BlockCompare (block, &blocks[hashblock]))
+			{
+				break;
+			}
+			hashblock = hashes[hashblock];
+		}
+		if (hashblock != -1)
+		{
+			BlockMap[4+i] = BlockMap[4+hashblock];
+			hashed++;
+		}
+		else
+		{
+			hashes[i] = buckets[hash];
+			buckets[hash] = i;
+			BlockMap[4+i] = BlockMap.Size ();
+			BlockMap.Push (zero);
+			array = &(*block)[0];
+			for (size_t j = 0; j < block->Size(); ++j)
+			{
+				BlockMap.Push (array[j]);
+			}
+			BlockMap.Push (terminator);
+			nothashed++;
+		}
+	}
+
+	delete[] hashes;
+
+//	printf ("%d blocks written, %d blocks saved\n", nothashed, hashed);
+}
+
+#define BLOCKBITS 7
+#define BLOCKSIZE 128
 
 static void P_CreateBlockMap ()
 {
-	register int i;
-	fixed_t minx = FIXED_MAX, miny = FIXED_MAX,
-			maxx = FIXED_MIN, maxy = FIXED_MIN;
+	TArray<WORD> *BlockLists, *block, *endblock;
+	WORD adder;
+	int bmapwidth, bmapheight;
+	int minx, maxx, miny, maxy;
+	int i;
+	WORD line;
 
-	// First find limits of map
+	if (numvertexes <= 0)
+		return;
 
-	for (i = 0; i < numvertexes; i++)
+	// Find map extents for the blockmap
+	minx = maxx = vertexes[0].x;
+	miny = maxy = vertexes[0].y;
+
+	for (i = 1; i < numvertexes; ++i)
 	{
-		if (vertexes[i].x < minx)
-			minx = vertexes[i].x;
-		else if (vertexes[i].x > maxx)
-			maxx = vertexes[i].x;
-		if (vertexes[i].y < miny)
-			miny = vertexes[i].y;
-		else if (vertexes[i].y > maxy)
-			maxy = vertexes[i].y;
+			 if (vertexes[i].x < minx) minx = vertexes[i].x;
+		else if (vertexes[i].x > maxx) maxx = vertexes[i].x;
+			 if (vertexes[i].y < miny) miny = vertexes[i].y;
+		else if (vertexes[i].y > maxy) maxy = vertexes[i].y;
 	}
 
-	minx >>= FRACBITS;
-	miny >>= FRACBITS;
 	maxx >>= FRACBITS;
+	minx >>= FRACBITS;
 	maxy >>= FRACBITS;
+	miny >>= FRACBITS;
 
-	// Save blockmap parameters
+	bmapwidth =	 ((maxx - minx) >> BLOCKBITS) + 1;
+	bmapheight = ((maxy - miny) >> BLOCKBITS) + 1;
 
-	bmaporgx = minx << FRACBITS;
-	bmaporgy = miny << FRACBITS;
-	bmapwidth  = ((maxx-minx) >> MAPBTOFRAC) + 1;
-	bmapheight = ((maxy-miny) >> MAPBTOFRAC) + 1;
+	TArray<int> BlockMap (bmapwidth * bmapheight * 3 + 4);
 
-	// Compute blockmap, which is stored as a 2d array of variable-sized lists.
-	//
-	// Pseudocode:
-	//
-	// For each linedef:
-	//
-	//   Map the starting and ending vertices to blocks.
-	//
-	//   Starting in the starting vertex's block, do:
-	//
-	//     Add linedef to current block's list, dynamically resizing it.
-	//
-	//     If current block is the same as the ending vertex's block, exit loop.
-	//
-	//     Move to an adjacent block by moving towards the ending block in 
-	//     either the x or y direction, to the block which contains the linedef.
+	adder = minx;			BlockMap.Push (adder);
+	adder = miny;			BlockMap.Push (adder);
+	adder = bmapwidth;		BlockMap.Push (adder);
+	adder = bmapheight;		BlockMap.Push (adder);
 
-	struct bmap_t { int n, nalloc, *list; };			// blocklist structure
-	unsigned tot = bmapwidth * bmapheight;				// size of blockmap
-	bmap_t *bmap = (bmap_t *)calloc(sizeof *bmap, tot);	// array of blocklists
+	BlockLists = new TArray<WORD>[bmapwidth * bmapheight];
 
-	for (i = 0; i < numlines; i++)
+	for (line = 0; line < numlines; ++line)
 	{
-		// starting coordinates
-		int x = (lines[i].v1->x >> FRACBITS) - minx;
-		int y = (lines[i].v1->y >> FRACBITS) - miny;
+		int x1 = lines[line].v1->x >> FRACBITS;
+		int y1 = lines[line].v1->y >> FRACBITS;
+		int x2 = lines[line].v2->x >> FRACBITS;
+		int y2 = lines[line].v2->y >> FRACBITS;
+		int dx = x2 - x1;
+		int dy = y2 - y1;
+		int bx = (x1 - minx) >> BLOCKBITS;
+		int by = (y1 - miny) >> BLOCKBITS;
+		int bx2 = (x2 - minx) >> BLOCKBITS;
+		int by2 = (y2 - miny) >> BLOCKBITS;
 
-		// x-y deltas
-		int adx = lines[i].dx >> FRACBITS, dx = adx < 0 ? -1 : 1;
-		int ady = lines[i].dy >> FRACBITS, dy = ady < 0 ? -1 : 1; 
+		block = &BlockLists[bx + by * bmapwidth];
+		endblock = &BlockLists[bx2 + by2 * bmapwidth];
 
-		// difference in preferring to move across y (>0) instead of x (<0)
-		int diff = !adx ? 1 : !ady ? -1 :
-		  (((x >> MAPBTOFRAC) << MAPBTOFRAC) + 
-		   (dx > 0 ? MAPBLOCKUNITS-1 : 0) - x) * (ady = abs(ady)) * dx -
-		  (((y >> MAPBTOFRAC) << MAPBTOFRAC) + 
-		   (dy > 0 ? MAPBLOCKUNITS-1 : 0) - y) * (adx = abs(adx)) * dy;
-
-		// starting block, and pointer to its blocklist structure
-		int b = (y >> MAPBTOFRAC)*bmapwidth + (x >> MAPBTOFRAC);
-
-		// ending block
-		int bend = (((lines[i].v2->y >> FRACBITS) - miny) >> MAPBTOFRAC) *
-		  bmapwidth + (((lines[i].v2->x >> FRACBITS) - minx) >> MAPBTOFRAC);
-
-		// delta for pointer when moving across y
-		dy *= bmapwidth;
-
-		// deltas for diff inside the loop
-		adx <<= MAPBTOFRAC;
-		ady <<= MAPBTOFRAC;
-
-		// Now we simply iterate block-by-block until we reach the end block.
-		while ((unsigned) b < tot)		// failsafe -- should ALWAYS be true
+		if (block == endblock)	// Single block
 		{
-			// Increase size of allocated list if necessary
-			if (bmap[b].n >= bmap[b].nalloc)
-				bmap[b].list = (int *)realloc(bmap[b].list, 
-					(bmap[b].nalloc = bmap[b].nalloc ? 
-					 bmap[b].nalloc*2 : 8)*sizeof*bmap->list);
-
-			// Add linedef to end of list
-			bmap[b].list[bmap[b].n++] = i;
-
-			// If we have reached the last block, exit
-			if (b == bend)
-				break;
-
-			// Move in either the x or y direction to the next block
-			if (diff < 0) 
-				diff += ady, b += dx;
-			else
-				diff -= adx, b += dy;
+			block->Push (line);
 		}
-	}
-
-	// Compute the total size of the blockmap.
-	//
-	// Compression of empty blocks is performed by reserving two offset words
-	// at tot and tot+1.
-	//
-	// 4 words, unused if this routine is called, are reserved at the start.
-
-	{
-		int count = tot+6;  // we need at least 1 word per block, plus reserved's
-
-		for (i = 0; (unsigned)i < tot; i++)
-			if (bmap[i].n)
-				count += bmap[i].n + 2; // 1 header word + 1 trailer word + blocklist
-
-		// Allocate blockmap lump with computed count
-		blockmaplump = (int *)Z_Malloc(sizeof(*blockmaplump) * count, PU_LEVEL, 0);
-	}
-
-	// Now compress the blockmap.
-	{
-		int ndx = tot += 4;			// Advance index to start of linedef lists
-		bmap_t *bp = bmap;			// Start of uncompressed blockmap
-
-		blockmaplump[ndx++] = 0;	// Store an empty blockmap list at start
-		blockmaplump[ndx++] = -1;	// (Used for compression)
-
-		for (i = 4; (unsigned)i < tot; i++, bp++)
+		else if (by == by2)		// Horizontal line
 		{
-			if (bp->n)											// Non-empty blocklist
+			if (bx > bx2)
 			{
-				blockmaplump[blockmaplump[i] = ndx++] = 0;		// Store index & header
-				do
-					blockmaplump[ndx++] = bp->list[--bp->n];	// Copy linedef list
-				while (bp->n);
-				blockmaplump[ndx++] = -1;						// Store trailer
-				free(bp->list);									// Free linedef list
+				swap (block, endblock);
 			}
-			else			// Empty blocklist: point to reserved empty blocklist
-				blockmaplump[i] = tot;
+			do
+			{
+				block->Push (line);
+				block += 1;
+			} while (block <= endblock);
 		}
+		else if (bx == bx2)	// Vertical line
+		{
+			if (by > by2)
+			{
+				swap (block, endblock);
+			}
+			do
+			{
+				block->Push (line);
+				block += bmapwidth;
+			} while (block <= endblock);
+		}
+		else				// Diagonal line
+		{
+			int xchange = (dx < 0) ? -1 : 1;
+			int ychange = (dy < 0) ? -1 : 1;
+			int ymove = ychange * bmapwidth;
+			int adx = abs (dx);
+			int ady = abs (dy);
 
-		free (bmap);	// Free uncompressed blockmap
+			if (adx == ady)		// 45 degrees
+			{
+				int xb = (x1 - minx) & (BLOCKSIZE-1);
+				int yb = (y1 - miny) & (BLOCKSIZE-1);
+				if (dx < 0)
+				{
+					xb = BLOCKSIZE-xb;
+				}
+				if (dy < 0)
+				{
+					yb = BLOCKSIZE-yb;
+				}
+				if (xb < yb)
+					adx--;
+			}
+			if (adx >= ady)		// X-major
+			{
+				int yadd = dy < 0 ? -1 : BLOCKSIZE;
+				do
+				{
+					int stop = (Scale ((by << BLOCKBITS) + yadd - (y1 - miny), dx, dy) + (x1 - minx)) >> BLOCKBITS;
+					while (bx != stop)
+					{
+						block->Push (line);
+						block += xchange;
+						bx += xchange;
+					}
+					block->Push (line);
+					block += ymove;
+					by += ychange;
+				} while (by != by2);
+				while (block != endblock)
+				{
+					block->Push (line);
+					block += xchange;
+				}
+				block->Push (line);
+			}
+			else					// Y-major
+			{
+				int xadd = dx < 0 ? -1 : BLOCKSIZE;
+				do
+				{
+					int stop = (Scale ((bx << BLOCKBITS) + xadd - (x1 - minx), dy, dx) + (y1 - miny)) >> BLOCKBITS;
+					while (by != stop)
+					{
+						block->Push (line);
+						block += ymove;
+						by += ychange;
+					}
+					block->Push (line);
+					block += xchange;
+					bx += xchange;
+				} while (bx != bx2);
+				while (block != endblock)
+				{
+					block->Push (line);
+					block += ymove;
+				}
+				block->Push (line);
+			}
+		}
+	}
+
+	BlockMap.Reserve (bmapwidth * bmapheight);
+	CreatePackedBlockmap (BlockMap, BlockLists, bmapwidth, bmapheight);
+	delete[] BlockLists;
+
+	blockmaplump = (int *)Z_Malloc(sizeof(*blockmaplump) * BlockMap.Size(), PU_LEVEL, 0);
+	for (i = 0; i < BlockMap.Size(); ++i)
+	{
+		blockmaplump[i] = BlockMap[i];
 	}
 }
 
@@ -1780,12 +1889,12 @@ void P_LoadBlockMap (int lump)
 		}
 
 		Z_Free (wadblockmaplump);
-
-		bmaporgx = blockmaplump[0]<<FRACBITS;
-		bmaporgy = blockmaplump[1]<<FRACBITS;
-		bmapwidth = blockmaplump[2];
-		bmapheight = blockmaplump[3];
 	}
+
+	bmaporgx = blockmaplump[0]<<FRACBITS;
+	bmaporgy = blockmaplump[1]<<FRACBITS;
+	bmapwidth = blockmaplump[2];
+	bmapheight = blockmaplump[3];
 
 	// clear out mobj chains
 	count = sizeof(*blocklinks) * bmapwidth*bmapheight;

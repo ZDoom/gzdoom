@@ -255,12 +255,11 @@ void A_ShedShard (AActor *actor)
 	}
 	if (spawndir & SHARDSPAWN_UP)
 	{
-		mo = P_SpawnMissileAngleZSpeed (actor, actor->z, RUNTIME_CLASS(AFrostMissile), actor->angle, 
+		mo = P_SpawnMissileAngleZSpeed (actor, actor->z+8*FRACUNIT, RUNTIME_CLASS(AFrostMissile), actor->angle, 
 											 0, (15+2*spermcount)<<FRACBITS);
 		if (mo)
 		{
 			mo->momz = actor->momz;
-			mo->z += 8*FRACUNIT;
 			if (spermcount & 1)			// Every other reproduction
 				mo->special1 = SHARDSPAWN_UP | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
 			else
@@ -272,12 +271,11 @@ void A_ShedShard (AActor *actor)
 	}
 	if (spawndir & SHARDSPAWN_DOWN)
 	{
-		mo = P_SpawnMissileAngleZSpeed (actor, actor->z, RUNTIME_CLASS(AFrostMissile), actor->angle, 
+		mo = P_SpawnMissileAngleZSpeed (actor, actor->z-4*FRACUNIT, RUNTIME_CLASS(AFrostMissile), actor->angle, 
 											 0, (15+2*spermcount)<<FRACBITS);
 		if (mo)
 		{
 			mo->momz = actor->momz;
-			mo->z -= 4*FRACUNIT;
 			if (spermcount & 1)			// Every other reproduction
 				mo->special1 = SHARDSPAWN_DOWN | SHARDSPAWN_LEFT | SHARDSPAWN_RIGHT;
 			else

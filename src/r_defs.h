@@ -491,6 +491,8 @@ struct seg_s
 
 	subsector_t*	Subsector;
 	seg_s*			PartnerSeg;
+
+	BITFIELD		bPolySeg:1;
 };
 typedef struct seg_s seg_t;
 

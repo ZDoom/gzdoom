@@ -1046,6 +1046,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
 			// But also create a new one so that we can get past the one
 			// stored in the archive.
 			DObject *tempobj = type->CreateNew ();
+			MapObject (obj != NULL ? obj : tempobj);
 			tempobj->Serialize (*this);
 			tempobj->CheckIfSerialized ();
 			// If this player is not present anymore, keep the new body
@@ -1059,10 +1060,9 @@ FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
 				obj = tempobj;
 				players[playerNum].mo = static_cast<APlayerPawn *>(obj);
 			}
-			MapObject (obj);
 			break;
 		}
-		/* fallthrough */
+		/* fallthrough when not travelling to a previous level */
 	case NEW_CLS_OBJ:
 		type = ReadClass (wanttype);
 //		Printf ("New class: %s (%u)\n", type->Name, m_File->Tell());
@@ -1081,6 +1081,7 @@ FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
 			obj = players[playerNum].mo;
 
 			DObject *tempobj = type->CreateNew ();
+			MapObject (obj != NULL ? obj : tempobj);
 			tempobj->Serialize (*this);
 			tempobj->CheckIfSerialized ();
 			if (obj != NULL)
@@ -1092,10 +1093,9 @@ FArchive &FArchive::ReadObject (DObject* &obj, TypeInfo *wanttype)
 				obj = tempobj;
 				players[playerNum].mo = static_cast<APlayerPawn *>(obj);
 			}
-			MapObject (obj);
 			break;
 		}
-		/* fallthrough */
+		/* fallthrough when not travelling to a previous level */
 	case NEW_OBJ:
 		type = ReadStoredClass (wanttype);
 //		Printf ("Use class: %s (%u)\n", type->Name, m_File->Tell());

@@ -201,7 +201,7 @@ bool AMageWeapon::TryPickup (AActor *toucher)
 		weapontype_t type = OldStyleID ();
 		if (type < NUMWEAPONS)
 		{
-			return P_GiveAmmo (toucher->player, wpnlev1info[type]->ammo, wpnlev1info[type]->ammogive);
+			return P_GiveAmmo (toucher->player, wpnlev1info[type]->givingammo, wpnlev1info[type]->ammogive);
 		}
 		return false;
 	}

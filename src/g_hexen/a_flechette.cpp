@@ -143,17 +143,16 @@ class AArtiPoisonBag : public AArtifact
 	AT_GAME_SET_FRIEND (PoisonBag)
 public:
 	bool TryPickup (AActor *toucher)
-	{/*
-		if (toucher->IsKindOf (RUNTIME_CLASS(AClericPlayer))
+	{
+		if (toucher->IsKindOf (RUNTIME_CLASS(AClericPlayer)))
 		{
 			return P_GiveArtifact (toucher->player, arti_poisonbag1);
 		}
-		else if (toucher->IsKindOf (RUNTIME_CLASS(AMagePlayer))
+		else if (toucher->IsKindOf (RUNTIME_CLASS(AMagePlayer)))
 		{
 			return P_GiveArtifact (toucher->player, arti_poisonbag2);
 		}
 		else
-	 */
 		{
 			return P_GiveArtifact (toucher->player, arti_poisonbag3);
 		}

@@ -820,7 +820,7 @@ void R_SetupFrame (player_t *player)
 	}
 #endif	// DEBUG
 
-	if ((player->cheats & CF_CHASECAM) &&
+	if (((player->cheats & CF_CHASECAM) || (camera->health <= 0)) &&
 		(camera->RenderStyle != STYLE_None) &&
 		!(camera->renderflags & RF_INVISIBLE) &&
 		camera->sprite != 0)	// Sprite 0 is always TNT1
@@ -1251,7 +1251,7 @@ void R_RenderPlayerView (player_t *player, void (*lengthyCallback)())
 
 	clock (WallCycles);
 	// Never draw the player unless in chasecam mode
-	if (camera->player && !(player->cheats & CF_CHASECAM))
+	if (camera->player && !(player->cheats & CF_CHASECAM) && camera->health > 0)
 	{
 		WORD savedflags = camera->renderflags;
 		camera->renderflags |= RF_INVISIBLE;

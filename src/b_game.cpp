@@ -325,8 +325,6 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 		return false;
 	}
 
-	waitingforspawn[playernumber] = true;
-
 	botinfo_t *thebot;
 
 	if (name)
@@ -367,6 +365,8 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 		return false;
 	}
 
+	waitingforspawn[playernumber] = true;
+
 	Net_WriteByte (DEM_ADDBOT);
 	Net_WriteByte (playernumber);
 	{
@@ -385,24 +385,6 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 	}
 
 	players[playernumber].skill = thebot->skill;
-
-#if 0
-	if (ctf && color==NOCOLOR)
-	{
-		if (red)
-		{
-			players[bnum].redteam=true;
-//			players[bnum].skincolor = 6;
-			red=false;
-		}
-		else
-		{
-			players[bnum].redteam=false;
-//			players[bnum].skincolor = 7;
-			red=true;
-		}
-	}
-#endif
 
 	thebot->inuse = true;
 

@@ -369,11 +369,14 @@ void A_FAxeAttack (player_t *player, pspdef_t *psp)
 axedone:
 	if (useMana == 2)
 	{
-		player->ammo[MANA_1] -= wpnlev1info[player->readyweapon]->ammouse;
-		if (player->ammo[MANA_1] <= 0)
+		if (!(dmflags & DF_INFINITE_AMMO))
 		{
-			player->ammo[MANA_1] = 0;
-			P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEATK+5]);
+			player->ammo[MANA_1] -= wpnlev1info[player->readyweapon]->ammouse;
+			if (player->ammo[MANA_1] <= 0)
+			{
+				player->ammo[MANA_1] = 0;
+				P_SetPsprite (player, ps_weapon, &AFWeapAxe::States[S_FAXEATK+5]);
+			}
 		}
 	}
 	return;		

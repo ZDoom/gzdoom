@@ -692,6 +692,7 @@ void A_GenWizard (AActor *actor)
 	actor->momx = actor->momy = actor->momz = 0;
 	actor->SetState (actor->DeathState);
 	actor->flags &= ~MF_MISSILE;
+	// Heretic did not offset it by TELEFOGHEIGHT, so I won't either.
 	Spawn<ATeleportFog> (actor->x, actor->y, actor->z);
 }
 

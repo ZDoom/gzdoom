@@ -37,6 +37,8 @@
 #include "stats.h"
 #include "p_local.h"
 #include "statnums.h"
+#include "i_system.h"
+
 
 static cycle_t ThinkCycles;
 extern cycle_t BotSupportCycles;
@@ -61,7 +63,7 @@ void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
 	// the archiver catch the rest. (Which leads to buttloads of recursion
 	// and makes the file larger.) Instead, we explicitly save each thinker
 	// in sequence. When restoring an archive, we also have to maintain
-	// the thinker lists here instead of relying an the archiver to do it
+	// the thinker lists here instead of relying on the archiver to do it
 	// for us.
 
 	if (arc.IsStoring ())
@@ -277,6 +279,11 @@ int DThinker::TickThinkers (List *list, List *dest)
 			}
 			thinker->PostBeginPlay ();
 		}
+		else if (dest != NULL)
+		{ // Move thinker from this list to the destination list
+			I_Error ("There is a thinker in the fresh list that has already ticked.\n");
+		}
+
 		if (!(thinker->ObjectFlags & OF_MassDestruction))
 		{ // Only tick thinkers not scheduled for destruction
 			thinker->Tick ();

@@ -37,6 +37,7 @@
 #include "sbar.h"
 #include "c_dispatch.h"
 #include "v_video.h"
+#include "w_wad.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -209,22 +210,12 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_ALLARTI:
-		for (i = arti_none+1; i < arti_firstpuzzitem; i++)
-		{
-			int j;
-			for (j = 0; j < 25; j++)
-			{
-				P_GiveArtifact (player, (artitype_t)i);
-			}
-		}
+		cht_Give (player, "artifacts");
 		msg = GStrings(TXT_CHEATARTIFACTS3);
 		break;
 
 	case CHT_PUZZLE:
-		for (i = arti_firstpuzzitem; i < NUMARTIFACTS; i++)
-		{
-			P_GiveArtifact (player, (artitype_t)i);
-		}
+		cht_Give (player, "puzzlepieces");
 		msg = GStrings(TXT_CHEATARTIFACTS3);
 		break;
 
@@ -333,8 +324,18 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "armor") == 0)
 	{
-		player->armorpoints[0] = 100*deh.BlueAC;
-		player->armortype = deh.BlueAC;
+		if (gameinfo.gametype != GAME_Hexen)
+		{
+			player->armorpoints[0] = 100*deh.BlueAC;
+			player->armortype = deh.BlueAC;
+		}
+		else
+		{
+			for (i = 0; i < NUMARMOR; ++i)
+			{
+				P_GiveArmor (player, (armortype_t)i, -1);
+			}
+		}
 
 		if (!giveall)
 			return;
@@ -362,6 +363,35 @@ void cht_Give (player_t *player, char *name, int amount)
 		}
 		player->pendingweapon = savedpending;
 
+		if (!giveall)
+			return;
+	}
+
+	if (giveall || stricmp (name, "artifacts") == 0)
+	{
+		for (i = arti_none+1; i < arti_firstpuzzitem; ++i)
+		{
+			if (W_CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
+			{
+				for (int j = 0; j < 25; ++j)
+				{
+					P_GiveArtifact (player, (artitype_t)i);
+				}
+			}
+		}
+		if (!giveall)
+			return;
+	}
+
+	if (giveall || stricmp (name, "puzzlepieces") == 0)
+	{
+		for (i = arti_firstpuzzitem; i < NUMARTIFACTS; ++i)
+		{
+			if (W_CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
+			{
+				P_GiveArtifact (player, (artitype_t)i);
+			}
+		}
 		if (!giveall)
 			return;
 	}

@@ -265,7 +265,10 @@ void A_FHammerThrow (player_t *player, pspdef_t *psp)
 	{
 		return;
 	}
-	player->ammo[MANA_2] -= wpnlev1info[player->readyweapon]->ammouse;
+	if (!(dmflags & DF_INFINITE_AMMO))
+	{
+		player->ammo[MANA_2] -= wpnlev1info[player->readyweapon]->ammouse;
+	}
 	mo = P_SpawnPlayerMissile (player->mo, RUNTIME_CLASS(AHammerMissile)); 
 	if (mo)
 	{

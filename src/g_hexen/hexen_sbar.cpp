@@ -41,7 +41,7 @@ public:
 				"WPIECEC3",	"CHAIN2",	"LIFEGMC2"
 			},
 			{
-				"WPSLOT2",	"WPFULL2",	"WPEICEM1",	"WPIECEM2",
+				"WPSLOT2",	"WPFULL2",	"WPIECEM1",	"WPIECEM2",
 				"WPIECEM3",	"CHAIN3",	"LIFEGMM2"
 			}
 		};
@@ -331,8 +331,7 @@ private:
 			HealthRefresh--;
 			healthPos = clamp (HealthMarker, 0, 100);
 			DrawImage (ClassImages[LifeBarClass], imgCHAIN, 35+((healthPos*196/100)%9), 32);
-			//DrawImage (ClassImages[LifeBarClass], imgLIFEGEM, 7+(healthPos*11/5), 32);
-			DrawImage (ClassImages[LifeBarClass], imgLIFEGEM, 7+(healthPos*11/5), 32, multiplayer|1 ?
+			DrawImage (ClassImages[LifeBarClass], imgLIFEGEM, 7+(healthPos*11/5), 32, multiplayer ?
 				translationtables[TRANSLATION_PlayersExtra] + (CPlayer-players)*256 : NULL);
 			DrawImage (Images, imgLFEDGE, 0, 32);
 			DrawImage (Images, imgRTEDGE, 277, 32);

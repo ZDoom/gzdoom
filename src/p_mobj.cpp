@@ -1462,7 +1462,11 @@ void P_NightmareRespawn (AActor *mobj)
 	ss = R_PointInSubsector (x,y);
 
 	// spawn a teleport fog at the new spot
-	Spawn ("TeleportFog", x, y, ONFLOORZ);
+	mo = Spawn ("TeleportFog", x, y, ONFLOORZ);
+	if (mo != NULL)
+	{
+		mo->z += TELEFOGHEIGHT;
+	}
 
 	// spawn the new monster
 	if (info->flags & MF_SPAWNCEILING)
@@ -2535,7 +2539,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	if (multiplayer)
 	{
 		unsigned an = ( ANG45 * (mthing->angle/45) ) >> ANGLETOFINESHIFT;
-		Spawn ("TeleportFog", mobj->x+20*finecosine[an], mobj->y+20*finesine[an], mobj->z);
+		AActor *fog = Spawn ("TeleportFog", mobj->x+20*finecosine[an], mobj->y+20*finesine[an], mobj->z + TELEFOGHEIGHT);
 	}
 
 	// [RH] If someone is in the way, kill them
@@ -3408,6 +3412,11 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 		an = angle + angdiff[i];
 		pitch = P_AimLineAttack (source, an, 16*64*FRACUNIT);
 	} while (linetarget == NULL && --i >= 0);
+
+	if (linetarget == NULL)
+	{
+		an = angle;
+	}
 
 	i = GetDefaultByType (type)->flags3;
 

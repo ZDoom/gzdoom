@@ -1771,7 +1771,7 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 
 	// [RH] Twiddled these values so that momentum on ice (with
 	//		friction 0xf900) is the same as in Heretic/Hexen.
-	if (friction > ORIG_FRICTION)	// ice
+	if (friction >= ORIG_FRICTION)	// ice
 //		movefactor = ((0x10092 - friction)*(0x70))/0x158;
 		movefactor = ((0x10092 - friction) * 1024) / 4352 + 568;
 	else
@@ -1797,15 +1797,15 @@ void P_SetSectorFriction (int tag, int amount, bool alterFlag)
 		sectors[s].movefactor = movefactor;
 		if (alterFlag)
 		{
-			// [RH] Rats, I forget what this was supposed to be.
-			// I'm keeping this in, so if I get any friction-related
-			// bug reports, this can be a clue for solving them.
+			// When used inside a script, the sectors' friction flags
+			// can be enabled and disabled at will.
 			if (friction == ORIG_FRICTION)
 			{
-
+				sectors[s].special &= ~FRICTION_MASK;
 			}
 			else
 			{
+				sectors[s].special |= FRICTION_MASK;
 			}
 		}
 	}

@@ -1143,7 +1143,11 @@ void R_Subsector (int num, bool add)
 
 	while (count--)
 	{
-		R_AddLine (line++, add);
+		if (!line->bPolySeg)
+		{
+			R_AddLine (line, add);
+		}
+		line++;
 	}
 }
 

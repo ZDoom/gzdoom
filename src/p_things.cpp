@@ -43,6 +43,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "a_sharedglobal.h"
+#include "gi.h"
 
 // List of spawnable things for the Thing_Spawn and Thing_Projectile specials.
 const TypeInfo *SpawnableThings[MAX_SPAWNABLES];
@@ -75,7 +76,7 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 				mobj->angle = (angle != ANGLE_MAX ? angle : spot->angle);
 				if (fog)
 				{
-					Spawn<ATeleportFog> (spot->x, spot->y, spot->z);
+					Spawn<ATeleportFog> (spot->x, spot->y, spot->z + TELEFOGHEIGHT);
 				}
 				if (mobj->flags & MF_SPECIAL)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
@@ -116,8 +117,8 @@ bool P_Thing_Move (int tid, int mapspot)
 		source->SetOrigin (target->x, target->y, target->z);
 		if (P_TestMobjLocation (source))
 		{
-			Spawn<ATeleportFog> (target->x, target->y, target->z);
-			Spawn<ATeleportFog> (oldx, oldy, oldz);
+			Spawn<ATeleportFog> (target->x, target->y, target->z + TELEFOGHEIGHT);
+			Spawn<ATeleportFog> (oldx, oldy, oldz + TELEFOGHEIGHT);
 			return true;
 		}
 		else

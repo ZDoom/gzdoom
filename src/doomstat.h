@@ -311,6 +311,7 @@ struct DehInfo
 	char PlayerSprite[5];
 	BYTE ExplosionStyle;
 	fixed_t ExplosionAlpha;
+	int NoAutofreeze;
 };
 extern DehInfo deh;
 EXTERN_CVAR (Int, infighting)

@@ -1785,8 +1785,16 @@ void WI_loadData ()
 			else
 			{
 				lnames[i] = NULL;
-				lnametexts[i] = FindLevelInfo (i == 0 ? wbs->current : wbs->next)->level_name;
-				lnamewidths[i] = WI_CalcWidth (lnametexts[i]);
+				if (i == 1 && strncmp (wbs->next, "enDSeQ", 6) == 0)
+				{
+					lnametexts[i] = NULL;
+					lnamewidths[i] = 0;
+				}
+				else
+				{
+					lnametexts[i] = FindLevelInfo (i == 0 ? wbs->current : wbs->next)->level_name;
+					lnamewidths[i] = WI_CalcWidth (lnametexts[i]);
+				}
 			}
 		}
 	}

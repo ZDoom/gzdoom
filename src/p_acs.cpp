@@ -2094,7 +2094,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	{
 	case APROP_Health:
 		actor->health = value;
-		if (actor->player->health != 0)
+		if (actor->player != NULL)
 		{
 			actor->player->health = value;
 		}

@@ -79,7 +79,7 @@ IMPLEMENT_ABSTRACT_ACTOR (ADecoration)
 
 class ABreakableDecoration : public ADecoration
 {
-	DECLARE_STATELESS_ACTOR (ABreakableDecoration, AActor);
+	DECLARE_STATELESS_ACTOR (ABreakableDecoration, ADecoration);
 public:
 	void Serialize (FArchive &arc)
 	{

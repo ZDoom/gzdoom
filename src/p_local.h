@@ -123,6 +123,7 @@ AActor *P_SpawnPlayerMissile (AActor* source, const TypeInfo *type);
 AActor *P_SpawnPlayerMissile (AActor *source, const TypeInfo *type, angle_t angle);
 AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z, const TypeInfo *type, angle_t angle);
 
+void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz);
 
 //
 // [RH] P_THINGS

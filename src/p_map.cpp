@@ -3049,7 +3049,8 @@ BOOL PIT_RadiusAttack (AActor *thing)
 			int damage = (int)points;
 
 			P_DamageMobj (thing, bombspot, bombsource, damage, bombmod);
-			if (!(bombspot->flags2 & MF2_NODMGTHRUST))
+			if (!(bombspot->flags2 & MF2_NODMGTHRUST) &&
+				!(thing->flags & MF_ICECORPSE))
 			{
 				P_TraceBleed (damage, thing, bombspot);
 
@@ -3522,17 +3523,22 @@ void PIT_FloorDrop (AActor *thing)
 	if (thing->momz == 0 &&
 		(!(thing->flags & MF_NOGRAVITY) ||
 		 (thing->z == oldfloorz && !(thing->flags & MF_NOLIFTDROP))))
-	{ // If float bob, always stay the same approximate distance above
-	  // the floor, otherwise only move things standing on the floor,
-	  // and only do it if the drop is slow enough.
+	{
+		fixed_t oldz = thing->z;
+
+		// If float bob, always stay the same approximate distance above
+		// the floor, otherwise only move things standing on the floor,
+		// and only do it if the drop is slow enough.
 		if (thing->flags2 & MF2_FLOATBOB)
 		{
 			thing->z = thing->z - oldfloorz + thing->floorz;
+			P_CheckFakeFloorTriggers (thing, oldz);
 		}
 		else if ((thing->flags & MF_NOGRAVITY) ||
 			(moveamt < 9*FRACUNIT && thing->z - thing->floorz <= moveamt))
 		{
 			thing->z = thing->floorz;
+			P_CheckFakeFloorTriggers (thing, oldz);
 		}
 	}
 }
@@ -3568,11 +3574,12 @@ void PIT_FloorRaise (AActor *thing)
 		}
 		switch (P_PushUp (thing))
 		{
+		default:
+			P_CheckFakeFloorTriggers (thing, oldz);
+			break;
 		case 1:
 			P_DoCrunch (thing);
-			// DOOM compatibility: Sink the thing into the floor
-// Perhaps not so compatible
-//			thing->z = thing->ceilingz - thing->height;
+			P_CheckFakeFloorTriggers (thing, oldz);
 			break;
 		case 2:
 			P_DoCrunch (thing);
@@ -3598,17 +3605,20 @@ void PIT_CeilingLower (AActor *thing)
 	if (thing->z + thing->height > thing->ceilingz)
 	{
 		intersectors.Clear ();
-		//fixed_t oldz = thing->z;
+		fixed_t oldz = thing->z;
 		thing->z = thing->ceilingz - thing->height;
 		switch (P_PushDown (thing))
 		{
 		case 2:
-			//thing->z = oldz;
 			// intentional fall-through
 		case 1:
 			if (onfloor)
 				thing->z = thing->floorz;
 			P_DoCrunch (thing);
+			P_CheckFakeFloorTriggers (thing, oldz);
+			break;
+		default:
+			P_CheckFakeFloorTriggers (thing, oldz);
 			break;
 		}
 	}
@@ -3630,11 +3640,13 @@ void PIT_CeilingRaise (AActor *thing)
 	if (thing->z < thing->floorz &&
 		thing->z + thing->height >= thing->ceilingz - moveamt)
 	{
+		fixed_t oldz = thing->z;
 		thing->z = thing->floorz;
 		if (thing->z + thing->height > thing->ceilingz)
 		{
 			thing->z = thing->ceilingz - thing->height;
 		}
+		P_CheckFakeFloorTriggers (thing, oldz);
 	}
 	else if (!isgood && thing->z + thing->height < thing->ceilingz)
 	{

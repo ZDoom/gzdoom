@@ -561,7 +561,8 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		SetState (BDeathState);
 	}
 	else if ((flags2 & MF2_ICEDAMAGE) &&
-		(IDeathState || (!(flags4 & MF4_NOICEDEATH) &&
+		(IDeathState || (
+		(!deh.NoAutofreeze && !(flags4 & MF4_NOICEDEATH)) &&
 		(player || (flags3 & MF3_ISMONSTER)))))
 	{ // Ice death
 		flags |= MF_ICECORPSE;

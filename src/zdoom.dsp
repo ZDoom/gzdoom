@@ -1324,6 +1324,10 @@ SOURCE=.\g_shared\a_fountain.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\g_shared\a_hatetarget.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\g_shared\a_lightning.cpp
 # End Source File
 # Begin Source File
@@ -1365,6 +1369,10 @@ SOURCE=.\g_shared\a_sharedmisc.cpp
 # Begin Source File
 
 SOURCE=.\g_shared\a_skies.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_shared\a_soundenvironment.cpp
 # End Source File
 # Begin Source File
 

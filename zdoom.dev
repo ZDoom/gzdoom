@@ -1,7 +1,7 @@
 [Project]
 FileName=ZDoom.dev
 Name=ZDoom
-UnitCount=468
+UnitCount=469
 Type=0
 Ver=1
 ObjFiles=""
@@ -4714,6 +4714,16 @@ BuildCmd=
 FileName=src\flac\stream_decoder.c
 CompileCpp=0
 Folder=FLAC
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit469]
+FileName=src\g_shared\a_soundenvironment.cpp
+CompileCpp=0
+Folder=Game: Common
 Compile=1
 Link=1
 Priority=1000

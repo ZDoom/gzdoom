@@ -5,20 +5,13 @@
 #include "d_player.h"
 #include "a_action.h"
 #include "p_local.h"
+#include "a_doomglobal.h"
 
 void A_Pain (AActor *);
 void A_PlayerScream (AActor *);
 void A_XScream (AActor *);
 void A_DoomSkinCheck1 (AActor *);
 void A_DoomSkinCheck2 (AActor *);
-
-class ADoomPlayer : public APlayerPawn
-{
-	DECLARE_ACTOR (ADoomPlayer, APlayerPawn)
-public:
-	void GiveDefaultInventory ();
-	int GetMOD ();
-};
 
 FState ADoomPlayer::States[] =
 {

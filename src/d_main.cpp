@@ -1714,7 +1714,7 @@ void D_DoomMain (void)
 
 	C_ExecCmdLineParams ();		// [RH] do all +set commands on the command line
 
-	// [RH] zvox.wad - A wad I had intended to be automatically generate
+	// [RH] zvox.wad - A wad I had intended to be automatically generated
 	// from Q2's pak0.pak so the female and cyborg player could have
 	// voices. I never got around to writing the utility to do it, though.
 	wad = BaseFileSearch ("zvox.wad", NULL);

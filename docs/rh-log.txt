@@ -1,4 +1,35 @@
+April 9, 2003
+- Time to upload 2.0.45.
+- Made "cyborg" a synonym for the "other" gender, for compatibility reasons.
+- Fixed: Forget "== 0" after stricmp (Line1, "No Ice Death").
+
+April 8, 2003
+- Uploaded 2.0.44.
+- Changed A_FreezeDeathChunks() to not use S_FREETARGMOBJ. It just destroys
+  the actor instead. I should probably get rid of S_FREETARGMOBJ globally,
+  since it isn't really needed with my stale pointer cleanup code.
+- Fixed lockups caused by changing the TID of an actor stored in another
+  actor's LastLook member because of Thing_Hate.
+- Made MF4_NOICEDEATH accessible through Dehacked as "No Ice Death".
+- Added "No Autofreeze" as a misc Dehacked setting.
+- Fixed the "Entering Unnamed" text that could be seen when finishing a game.
+- Fixed: Frozen things could not be shattered with radius damage, because the
+  thrust they got after the damage would reset their tic counters to 3 seconds.
+- New: The marines now start with the same sprite scaling as the player, and
+  AScriptedMarine::SetSprite() now copies the scaling of the actor it's taking
+  the new sprite from.
+- Added some code to check for fake floor/ceiling sector actions when an actor
+  moves up or down because of moving floors and ceilings.
+- Fixed: SetActorProperty for APROP_Health assumed you were working with
+  players after I added the player fix for it.
+- Fixed: The plasma ball still had MF2_ICEDAMAGE from my testing.
+- Fixed: Gender selection in the menu was broken because I had changed to
+  "cyborg" to "other" in m_menu.cpp but not in d_netinfo.cpp. Justification:
+  You can have male and female cyborgs, so cyborg isn't a proper gender.
+- Some files were missing from the VC6 and Dev-C++ projects, so fixed that.
+
 April 7, 2003
+- Uploaded 2.0.43.
 - Fixed incorrect end-of-LevelInfos detection. Interestingly, it only crashed
   when compiled with GCC.
 - Updated the crash logger to display the exception information for an
@@ -93,7 +124,8 @@ March 21, 2003
 - Added Alt-Enter as a hotkey for toggling between fullscreen and windowed
   modes, as is customary for Windows programs. Also discovered that I can't
   seem to run fullscreen through the debugger anymore without the game
-  window minimizing.
+  window minimizing. [Must have been something screwy going on then; I can
+  run it fullscreen under the debugger now.]
 - Revamped the joystick menu to support axis mapping and multiple controllers.
   Under Windows versions that send DBT_DEVNODES_CHANGED broadcasts, it even
   updates itself automatically when you attach/detach USB controllers.

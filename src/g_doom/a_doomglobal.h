@@ -3,6 +3,7 @@
 
 #include "dobject.h"
 #include "info.h"
+#include "d_player.h"
 
 class ABossBrain : public AActor
 {
@@ -90,6 +91,7 @@ public:
 
 	void Activate (AActor *activator);
 	void Deactivate (AActor *activator);
+	void BeginPlay ();
 	void Tick ();
 	void SetWeapon (EMarineWeapon);
 	void SetSprite (const TypeInfo *source);
@@ -97,6 +99,14 @@ public:
 
 protected:
 	int SpriteOverride;
+};
+
+class ADoomPlayer : public APlayerPawn
+{
+	DECLARE_ACTOR (ADoomPlayer, APlayerPawn)
+public:
+	void GiveDefaultInventory ();
+	int GetMOD ();
 };
 
 #endif //__A_DOOMGLOBAL_H__

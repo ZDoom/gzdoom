@@ -734,6 +734,15 @@ BOOL P_LookForTID (AActor *actor, BOOL allaround)
 		return true;
 	}
 
+	// The actor's TID could change because of death or because of
+	// Thing_ChangeTID. If it's not what we expect, then don't use
+	// it as a base for the iterator.
+	if (actor->LastLook.Actor != NULL &&
+		actor->LastLook.Actor->tid != actor->TIDtoHate)
+	{
+		actor->LastLook.Actor = NULL;
+	}
+
 	FActorIterator iterator (actor->TIDtoHate, actor->LastLook.Actor);
 	int c = (pr_look3() & 31) + 7;	// Look for between 7 and 38 hatees at a time
 	while ((other = iterator.Next()) != actor->LastLook.Actor)

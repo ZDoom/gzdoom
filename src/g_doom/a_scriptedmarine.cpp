@@ -228,6 +228,15 @@ void AScriptedMarine::Deactivate (AActor *activator)
 	}
 }
 
+void AScriptedMarine::BeginPlay ()
+{
+	Super::BeginPlay ();
+
+	// Copy the standard player's scaling
+	xscale = GetDefaultByType(RUNTIME_CLASS(ADoomPlayer))->xscale;
+	yscale = GetDefaultByType(RUNTIME_CLASS(ADoomPlayer))->yscale;
+}
+
 void AScriptedMarine::Tick ()
 {
 	Super::Tick ();
@@ -336,10 +345,14 @@ void AScriptedMarine::SetSprite (const TypeInfo *source)
 	if (source == NULL || source->ActorInfo == NULL)
 	{ // A valid actor class wasn't passed, so use the standard sprite
 		SpriteOverride = sprite = States[0].sprite.index;
+		xscale = GetDefaultByType(RUNTIME_CLASS(ADoomPlayer))->xscale;
+		yscale = GetDefaultByType(RUNTIME_CLASS(ADoomPlayer))->yscale;
 	}
 	else
 	{ // Use the same sprite the passed class spawns with
 		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite.index;
+		xscale = GetDefaultByType(source)->xscale;
+		yscale = GetDefaultByType(source)->yscale;
 	}
 }
 

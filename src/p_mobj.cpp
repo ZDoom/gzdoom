@@ -1410,7 +1410,11 @@ void P_ZMovement (AActor *mo)
 			return;
 		}
 	}
+	P_CheckFakeFloorTriggers (mo, oldz);
+}
 
+void P_CheckFakeFloorTriggers (AActor *mo, fixed_t oldz)
+{
 	if (mo->Sector->heightsec != NULL && mo->Sector->SecActTarget != NULL)
 	{
 		sector_t *hs = mo->Sector->heightsec;

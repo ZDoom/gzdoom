@@ -264,9 +264,7 @@ void A_FreezeDeathChunks (AActor *actor)
 	}
 	A_NoBlocking (actor);
 
-	actor->RemoveFromHash ();
-	actor->SetState (&AActor::States[S_FREETARGMOBJ]);
-	actor->renderflags |= RF_INVISIBLE;
+	actor->Destroy ();
 }
 
 //----------------------------------------------------------------------------

@@ -1557,7 +1557,7 @@ static level_info_t *FindDefLevelInfo (char *mapname)
 	while (i->mapname[0])
 	{
 		if (!strnicmp (i->mapname, mapname, 8))
-			break;
+			return i;
 		i++;
 	}
 	return i;

@@ -114,7 +114,8 @@ DehInfo deh =
 	  2,	// .KFAAC
 	"PLAY",	// Name of player sprite
 	255,	// Rocket explosion style, 255=use cvar
-	FRACUNIT*2/3		// Rocket explosion alpha
+	FRACUNIT*2/3,		// Rocket explosion alpha
+	false,	// .NoAutofreeze
 };
 
 // Doom identified pickup items by their sprites. ZDoom prefers to use their
@@ -791,7 +792,18 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen > 6)
 		{
-			if (stricmp (Line1 + linelen - 6, " frame") == 0)
+			if (linelen == 12 && stricmp (Line1, "No Ice Death") == 0)
+			{
+				if (val)
+				{
+					info->flags4 |= MF4_NOICEDEATH;
+				}
+				else
+				{
+					info->flags4 &= ~MF4_NOICEDEATH;
+				}
+			}
+			else if (stricmp (Line1 + linelen - 6, " frame") == 0)
 			{
 				FState *state = FindState (val);
 
@@ -1425,6 +1437,7 @@ static int PatchMisc (int dummy)
 		{ "IDFA Armor Class",		myoffsetof(struct DehInfo,FAAC) },
 		{ "IDKFA Armor",			myoffsetof(struct DehInfo,KFAArmor) },
 		{ "IDKFA Armor Class",		myoffsetof(struct DehInfo,KFAAC) },
+		{ "No Autofreeze",			myoffsetof(struct DehInfo,NoAutofreeze) },
 		{ NULL, }
 	};
 	int result;

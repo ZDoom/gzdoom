@@ -653,7 +653,7 @@ BOOL F_CastResponder (event_t* ev)
 		if (castnum == 16)
 		{
 			static const char sndtemplate[] = "player/%s/death1";
-			static const char *genders[] = { "male", "female", "cyborg" };
+			static const char *genders[] = { "male", "female", "other" };
 			char nametest[128];
 			int sndnum;
 

@@ -97,7 +97,7 @@ float TeamHues[NUM_TEAMS] =
 	0.f, 240.f, 120.f, 60.f
 };
 
-const char *GenderNames[3] = { "male", "female", "cyborg" };
+const char *GenderNames[3] = { "male", "female", "other" };
 
 static const char *UserInfoStrings[] =
 {
@@ -118,7 +118,7 @@ int D_GenderToInt (const char *gender)
 {
 	if (!stricmp (gender, "female"))
 		return GENDER_FEMALE;
-	else if (!stricmp (gender, "cyborg"))
+	else if (!stricmp (gender, "other") || !stricmp (gender, "cyborg"))
 		return GENDER_NEUTER;
 	else
 		return GENDER_MALE;
@@ -473,7 +473,7 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 					 RPART(info->color), GPART(info->color), BPART(info->color),
 					 skins[info->skin].name, info->team,
 					 info->gender == GENDER_FEMALE ? "female" :
-						info->gender == GENDER_NEUTER ? "cyborg" : "male",
+						info->gender == GENDER_NEUTER ? "other" : "male",
 					 info->neverswitch,
 					 (float)(info->MoveBob) / 65536.f,
 					 (float)(info->StillBob) / 65536.f,
@@ -501,7 +501,7 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 				skins[info->skin].name,
 				info->team,
 				info->gender == GENDER_FEMALE ? "female" :
-					info->gender == GENDER_NEUTER ? "cyborg" : "male",
+					info->gender == GENDER_NEUTER ? "other" : "male",
 				info->neverswitch,
 				(float)(info->MoveBob) / 65536.f,
 				(float)(info->StillBob) / 65536.f,

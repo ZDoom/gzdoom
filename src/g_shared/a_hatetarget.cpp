@@ -71,7 +71,7 @@ void AHateTarget::BeginPlay ()
 	else
 	{
 		special2 = 1;
-		health = 10000;
+		health = 1000001;
 	}
 }
 
@@ -80,7 +80,7 @@ void AHateTarget::Tick ()
 	Super::Tick ();
 	if (special2 != 0)
 	{
-		health = 10000;
+		health = 1000001;
 	}
 }
 

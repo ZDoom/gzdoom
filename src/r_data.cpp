@@ -2232,6 +2232,27 @@ void FMultiPatchTexture::CheckForHacks ()
 		return;
 	}
 
+	// BIGDOOR7 in Doom also has patches at y offset -4 instead of 0.
+	if (gameinfo.gametype == GAME_Doom &&
+		!(gameinfo.flags & GI_MAPxx) &&
+		NumParts == 2 &&
+		Height == 128 &&
+		Parts[0].OriginY == -4 &&
+		Parts[1].OriginY == -4 &&
+		Name[0] == 'B' &&
+		Name[1] == 'I' &&
+		Name[2] == 'G' &&
+		Name[3] == 'D' &&
+		Name[4] == 'O' &&
+		Name[5] == 'O' &&
+		Name[6] == 'R' &&
+		Name[7] == '7')
+	{
+		Parts[0].OriginY = 0;
+		Parts[1].OriginY = 0;
+		return;
+	}
+
 	// [RH] Some wads (I forget which!) have single-patch textures 256
 	// pixels tall that have patch lengths recorded as 0. I can't think of
 	// any good reason for them to do this, and since I didn't make note
@@ -2434,11 +2455,12 @@ void R_InitTextures (void)
 	int lastlump = 0, lump;
 	int texlump1 = -1, texlump2 = -1, texlump1a, texlump2a;
 	int i;
+	int pfile;
 
 	// For each PNAMES lump, load the TEXTURE1 and/or TEXTURE2 lumps from the same wad.
 	while ((lump = Wads.FindLump ("PNAMES", &lastlump)) != -1)
 	{
-		int pfile = Wads.GetLumpFile (lump);
+		pfile = Wads.GetLumpFile (lump);
 
 		TexMan.AddPatches (lump);
 		texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, pfile);
@@ -2450,11 +2472,11 @@ void R_InitTextures (void)
 	// they have not been loaded yet, so load them now.
 	texlump1a = Wads.CheckNumForName ("TEXTURE1");
 	texlump2a = Wads.CheckNumForName ("TEXTURE2");
-	if (texlump1a == texlump1)
+	if (texlump1a != -1 && (texlump1a == texlump1 || Wads.GetLumpFile (texlump1a) <= pfile))
 	{
 		texlump1a = -1;
 	}
-	if (texlump2a == texlump2)
+	if (texlump2a != -1 && (texlump2a == texlump2 || Wads.GetLumpFile (texlump2a) <= pfile))
 	{
 		texlump2a = -1;
 	}
@@ -2718,9 +2740,6 @@ void R_PrecacheLevel (void)
 	if (demoplayback)
 		return;
 
-	// Decommit composite textures.
-	TexMan.UnloadAll ();
-
 	hitlist = new BYTE[TexMan.NumTextures()];
 	spritelist = new BYTE[sprites.Size()];
 	
@@ -2789,12 +2808,16 @@ void R_PrecacheLevel (void)
 
 	for (i = TexMan.NumTextures() - 1; i >= 0; i--)
 	{
-		if (hitlist[i])
+		FTexture *tex = TexMan[i];
+		if (tex != NULL)
 		{
-			FTexture *tex = TexMan[i];
-			if (tex != NULL)
+			if (hitlist[i])
 			{
 				tex->GetPixels ();
+			}
+			else
+			{
+				tex->Unload ();
 			}
 		}
 	}

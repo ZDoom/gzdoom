@@ -97,7 +97,7 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 		}
 		psp->state = state;
 
-		if (sv_fastweapons >= 2)
+		if (sv_fastweapons >= 2 && position == ps_weapon)
 			psp->tics = (state->Action.acvoid == NULL) ? 0 : 1;
 		else if (sv_fastweapons)
 			psp->tics = 1;		// great for producing decals :)
@@ -245,6 +245,10 @@ bool P_CheckAmmo (player_t *player)
 	{
 		wpinfo = wpnlev1info;
 	}
+	if (wpinfo[player->readyweapon]->flags & WIF_AMMO_OPTIONAL)
+	{
+		return true;
+	}
 	ammo = wpinfo[player->readyweapon]->ammo;
 	count = wpinfo[player->readyweapon]->GetMinAmmo();
 	if (ammo == MANA_BOTH)
@@ -295,6 +299,10 @@ weapontype_t P_PickNewWeapon (player_t *player)
 		{
 			int count = wpinfo[*prefs]->GetMinAmmo();
 			ammotype_t ammo = wpinfo[*prefs]->ammo;
+			if (wpinfo[*prefs]->flags & WIF_AMMO_OPTIONAL)
+			{
+				player->pendingweapon = *prefs;
+			}
 			if (ammo == MANA_BOTH)
 			{
 				if (player->ammo[MANA_1] >= count && player->ammo[MANA_2] >= count)
@@ -502,7 +510,30 @@ void A_WeaponReady(AActor *actor, pspdef_t *psp)
 			S_Sound (actor, CHAN_WEAPON, weapon->readysound, 1, ATTN_NORM);
 		}
 	}
-	
+
+	// Prepare for bobbing and firing action.
+	player->cheats |= CF_WEAPONREADY;
+	psp->sx = 0;
+	psp->sy = WEAPONTOP;
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC P_CheckWeaponFire
+//
+// The player can fire the weapon or change to another weapon at this time.
+// [RH] This was in A_WeaponReady before, but that only works well when the
+// weapon's ready frames have a one tic delay.
+//
+//---------------------------------------------------------------------------
+
+void P_CheckWeaponFire (player_t *player)
+{
+	FWeaponInfo *weapon;
+
+	weapon = player->powers[pw_weaponlevel2] ?
+		wpnlev2info[player->readyweapon] : wpnlev1info[player->readyweapon];
+
 	// Put the weapon away if the player has a pending weapon or has
 	// died.
 	if ((player->morphTics == 0 && player->pendingweapon != wp_nochange) || player->health <= 0)
@@ -521,11 +552,6 @@ void A_WeaponReady(AActor *actor, pspdef_t *psp)
 			return;
 		}
 	}
-
-	// Prepare for bobbing action.
-	player->cheats |= CF_WEAPONREADY;
-	psp->sx = 0;
-	psp->sy = WEAPONTOP;
 }
 
 //---------------------------------------------------------------------------
@@ -800,6 +826,11 @@ void P_MovePsprites (player_t *player)
 	}
 	player->psprites[ps_flash].sx = player->psprites[ps_weapon].sx;
 	player->psprites[ps_flash].sy = player->psprites[ps_weapon].sy;
+
+	if (player->cheats & CF_WEAPONREADY)
+	{
+		P_CheckWeaponFire (player);
+	}
 }
 
 FArchive &operator<< (FArchive &arc, pspdef_t &def)

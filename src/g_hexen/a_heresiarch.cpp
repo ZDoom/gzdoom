@@ -830,9 +830,7 @@ void A_SorcBallOrbit(AActor *ball)
 	actor->special1 = angle;		// Set previous angle
 	x = parent->x + FixedMul(dist, finecosine[angle]);
 	y = parent->y + FixedMul(dist, finesine[angle]);
-	actor->x = x;
-	actor->y = y;
-	actor->z = parent->z - parent->floorclip + parent->height;
+	actor->SetOrigin (x, y, parent->z - parent->floorclip + parent->height);
 	actor->floorz = parent->floorz;
 	actor->ceilingz = parent->ceilingz;
 }
@@ -1296,9 +1294,7 @@ void A_SorcFX2Orbit (AActor *actor)
 		Spawn<ASorcFX2T1> (x, y, z);
 	}
 
-	actor->x = x;
-	actor->y = y;
-	actor->z = z;
+	actor->SetOrigin (x, y, z);
 	actor->floorz = parent->floorz;
 	actor->ceilingz = parent->ceilingz;
 }

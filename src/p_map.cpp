@@ -273,9 +273,10 @@ BOOL PIT_StompThing (AActor *thing)
 		return true;        // underneath
 
 	// monsters don't stomp things except on boss level
-	if (StompAlwaysFrags)
+	// [RH] Some Heretic/Hexen monsters can telestomp
+	if (StompAlwaysFrags || (tmthing->flags2 & MF2_TELESTOMP))
 	{
-		P_DamageMobj (thing, tmthing, tmthing, 10000, MOD_TELEFRAG);
+		P_DamageMobj (thing, tmthing, tmthing, 1000000, MOD_TELEFRAG);
 		return true;
 	}
 	return false;
@@ -414,7 +415,7 @@ BOOL PIT_StompThing2 (AActor *thing)
 	if (tmthing->z + tmthing->height < thing->z)
 		return true;        // underneath
 
-	P_DamageMobj (thing, tmthing, tmthing, 10000, MOD_TELEFRAG);
+	P_DamageMobj (thing, tmthing, tmthing, 1000000, MOD_TELEFRAG);
 	return true;
 }
 
@@ -1035,7 +1036,7 @@ BOOL PIT_CheckOnmobjZ (AActor *thing)
 	{ // Can't hit thing
 		return true;
 	}
-	if (thing->flags & (MF_CORPSE|MF_SPECIAL|MF_NOCLIP))
+	if (thing->flags & (MF_SPECIAL|MF_NOCLIP))
 	{ // [RH] Corpses and specials and noclippers don't block moves
 		return true;
 	}
@@ -1884,13 +1885,17 @@ BOOL PTR_SlideTraverse (intercept_t* in)
 				
 	li = in->d.line;
 	
-	if ( !(li->flags & ML_TWOSIDED) || (li->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING)) )
+	if ( !(li->flags & ML_TWOSIDED) )
 	{
 		if (P_PointOnLineSide (slidemo->x, slidemo->y, li))
 		{
 			// don't hit the back side
 			return true;				
 		}
+		goto isblocking;
+	}
+	if (li->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING))
+	{
 		goto isblocking;
 	}
 
@@ -2801,7 +2806,7 @@ void P_RailAttack (AActor *source, int damage, int offset)
 	VectorFixedSet (start, x1, y1, shootz);
 
 	Trace (x1, y1, shootz, source->Sector, vx, vy, vz,
-		8192*FRACUNIT, MF_SHOOTABLE, 0, source, trace,
+		8192*FRACUNIT, MF_SHOOTABLE, ML_BLOCKEVERYTHING, source, trace,
 		TRACE_PCross|TRACE_Impact, ProcessRailHit);
 
 	if (trace.HitType == TRACE_HitWall)
@@ -3060,10 +3065,6 @@ BOOL PTR_PuzzleItemTraverse (intercept_t *in)
 				trace.y + FixedMul (trace.dy, in->frac));
 			if (openrange <= 0)
 			{
-				if (PuzzleItemUser->player)
-				{
-					S_Sound (PuzzleItemUser, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
-				}
 				return false; // can't use through a wall
 			}
 			return true; // Continue searching
@@ -3075,11 +3076,6 @@ BOOL PTR_PuzzleItemTraverse (intercept_t *in)
 		}
 		if (PuzzleItemType != in->d.line->args[0])
 		{ // Item type doesn't match
-			// [RH] Play "hmm" on one-sided lines
-			if (PuzzleItemUser->player && in->d.line->backsector == NULL)
-			{
-				S_Sound (PuzzleItemUser, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
-			}
 			return false;
 		}
 		P_StartScript (PuzzleItemUser, in->d.line, in->d.line->args[1], NULL, 0,

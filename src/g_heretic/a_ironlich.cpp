@@ -30,27 +30,27 @@ public:
 FState AIronlich::States[] =
 {
 #define S_HEAD_LOOK 0
-	S_NORMAL (HEAD, 'A',   10, A_Look					, &States[S_HEAD_LOOK]),
+	S_NORMAL (LICH, 'A',   10, A_Look					, &States[S_HEAD_LOOK]),
 
 #define S_HEAD_FLOAT (S_HEAD_LOOK+1)
-	S_NORMAL (HEAD, 'A',	4, A_Chase					, &States[S_HEAD_FLOAT]),
+	S_NORMAL (LICH, 'A',	4, A_Chase					, &States[S_HEAD_FLOAT]),
 
 #define S_HEAD_ATK (S_HEAD_FLOAT+1)
-	S_NORMAL (HEAD, 'A',	5, A_FaceTarget 			, &States[S_HEAD_ATK+1]),
-	S_NORMAL (HEAD, 'B',   20, A_LichAttack 			, &States[S_HEAD_FLOAT]),
+	S_NORMAL (LICH, 'A',	5, A_FaceTarget 			, &States[S_HEAD_ATK+1]),
+	S_NORMAL (LICH, 'B',   20, A_LichAttack 			, &States[S_HEAD_FLOAT]),
 
 #define S_HEAD_PAIN (S_HEAD_ATK+2)
-	S_NORMAL (HEAD, 'A',	4, NULL 					, &States[S_HEAD_PAIN+1]),
-	S_NORMAL (HEAD, 'A',	4, A_Pain					, &States[S_HEAD_FLOAT]),
+	S_NORMAL (LICH, 'A',	4, NULL 					, &States[S_HEAD_PAIN+1]),
+	S_NORMAL (LICH, 'A',	4, A_Pain					, &States[S_HEAD_FLOAT]),
 
 #define S_HEAD_DIE (S_HEAD_PAIN+2)
-	S_NORMAL (HEAD, 'C',	7, NULL 					, &States[S_HEAD_DIE+1]),
-	S_NORMAL (HEAD, 'D',	7, A_Scream 				, &States[S_HEAD_DIE+2]),
-	S_NORMAL (HEAD, 'E',	7, NULL 					, &States[S_HEAD_DIE+3]),
-	S_NORMAL (HEAD, 'F',	7, NULL 					, &States[S_HEAD_DIE+4]),
-	S_NORMAL (HEAD, 'G',	7, A_NoBlocking 			, &States[S_HEAD_DIE+5]),
-	S_NORMAL (HEAD, 'H',	7, NULL 					, &States[S_HEAD_DIE+6]),
-	S_NORMAL (HEAD, 'I',   -1, A_BossDeath				, NULL)
+	S_NORMAL (LICH, 'C',	7, NULL 					, &States[S_HEAD_DIE+1]),
+	S_NORMAL (LICH, 'D',	7, A_Scream 				, &States[S_HEAD_DIE+2]),
+	S_NORMAL (LICH, 'E',	7, NULL 					, &States[S_HEAD_DIE+3]),
+	S_NORMAL (LICH, 'F',	7, NULL 					, &States[S_HEAD_DIE+4]),
+	S_NORMAL (LICH, 'G',	7, A_NoBlocking 			, &States[S_HEAD_DIE+5]),
+	S_NORMAL (LICH, 'H',	7, NULL 					, &States[S_HEAD_DIE+6]),
+	S_NORMAL (LICH, 'I',   -1, A_BossDeath				, NULL)
 };
 
 IMPLEMENT_ACTOR (AIronlich, Heretic, 6, 20)

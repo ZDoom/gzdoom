@@ -155,7 +155,7 @@ void A_PainShootSkull (AActor *self, angle_t angle)
         (other->z < other->Sector->floorplane.ZatPoint (other->x, other->y)))
 	{
 		// kill it immediately
-		P_DamageMobj (other, self, self, 10000, MOD_UNKNOWN);		//   ^
+		P_DamageMobj (other, self, self, 1000000, MOD_UNKNOWN);		//   ^
 		return;														//   |
 	}																// phares
 
@@ -164,7 +164,7 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	if (!P_CheckPosition (other, other->x, other->y))
 	{
 		// kill it immediately
-		P_DamageMobj (other, self, self, 10000, MOD_UNKNOWN);		
+		P_DamageMobj (other, self, self, 1000000, MOD_UNKNOWN);		
 		return;
 	}
 

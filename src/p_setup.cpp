@@ -66,6 +66,7 @@ extern unsigned int R_OldBlend;
 CVAR (Bool, genblockmap, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, gennodes, false, CVAR_SERVERINFO|CVAR_GLOBALCONFIG);
 CVAR (Bool, genglnodes, false, CVAR_SERVERINFO);
+CVAR (Bool, showloadtimes, false, 0);
 
 static void P_InitTagLists ();
 
@@ -861,7 +862,7 @@ void P_LoadNodes (int lump)
 	node_t* 	no;
 	int			maxss;
 	WORD*		used;
-		
+
 	numnodes = Wads.LumpLength (lump) / sizeof(mapnode_t);
 	maxss = Wads.LumpLength (lump - ML_NODES + ML_SSECTORS) / sizeof(mapsubsector_t);
 
@@ -1311,7 +1312,7 @@ void P_FinishLoadingLineDefs ()
 		}
 
 		// [RH] Set some new sidedef properties
-		len = (int)sqrtf (dx*dx + dy*dy);
+		len = (int)(sqrtf (dx*dx + dy*dy) + 0.5f);
 		light = dy == 0 ? level.WallHorizLight :
 				dx == 0 ? level.WallVertLight : 0;
 
@@ -2252,7 +2253,9 @@ line_t**				linebuffer;
 
 static void P_GroupLines (bool buildmap)
 {
+	cycle_t times[16] = { 0 };
 	TArray<linf>		exLightTags;
+	int*				linesDoneInEachSector;
 	int 				i;
 	int 				j;
 	int 				total;
@@ -2264,6 +2267,7 @@ static void P_GroupLines (bool buildmap)
 	size_t				ii, jj;
 		
 	// look up sector number for each subsector
+	clock (times[0]);
 	for (i = 0; i < numsubsectors; i++)
 	{
 		subsectors[i].sector = segs[subsectors[i].firstline].sidedef->sector;
@@ -2281,8 +2285,10 @@ static void P_GroupLines (bool buildmap)
 		subsectors[i].CenterX = fixed_t(accumx * 0.5 / subsectors[i].numlines);
 		subsectors[i].CenterY = fixed_t(accumy * 0.5 / subsectors[i].numlines);
 	}
+	unclock (times[0]);
 
 	// count number of lines in each sector
+	clock (times[1]);
 	total = 0;
 	totallights = 0;
 	for (i = 0, li = lines; i < numlines; i++, li++)
@@ -2335,8 +2341,10 @@ static void P_GroupLines (bool buildmap)
 	{
 		I_Error ("You need to fix these lines to play this map.\n");
 	}
+	unclock (times[1]);
 
 	// collect extra light info
+	clock (times[2]);
 	LightStacks = new FLightStack[totallights];
 	ExtraLights = new FExtraLight[exLightTags.Size()];
 	memset (ExtraLights, 0, exLightTags.Size()*sizeof(FExtraLight));
@@ -2348,14 +2356,17 @@ static void P_GroupLines (bool buildmap)
 		ExtraLights[ii].Lights = &LightStacks[jj];
 		jj += ExtraLights[ii].NumLights;
 	}
+	unclock (times[2]);
 
-	// build line tables for each sector		
+	// build line tables for each sector
+	clock (times[3]);
 	linebuffer = new line_t *[total];
 	line_t **lineb_p = linebuffer;
-	sector = sectors;
-	for (i = 0; i < numsectors; i++, sector++)
+	linesDoneInEachSector = new int[numsectors];
+	memset (linesDoneInEachSector, 0, sizeof(int)*numsectors);
+
+	for (sector = sectors, i = 0; i < numsectors; i++, sector++)
 	{
-		bbox.ClearBox ();
 		if (sector->linecount == 0)
 		{
 			Printf ("Sector %i (tag %i) has no lines\n", i, sector->tag);
@@ -2365,19 +2376,36 @@ static void P_GroupLines (bool buildmap)
 		else
 		{
 			sector->lines = lineb_p;
-			li = lines;
-			for (j = 0; j < numlines; j++, li++)
+			lineb_p += sector->linecount;
+		}
+	}
+
+	for (i = numlines, li = lines; i > 0; --i, ++li)
+	{
+		if (li->frontsector != NULL)
+		{
+			li->frontsector->lines[linesDoneInEachSector[li->frontsector - sectors]++] = li;
+		}
+		if (li->backsector != NULL && li->backsector != li->frontsector)
+		{
+			li->backsector->lines[linesDoneInEachSector[li->backsector - sectors]++] = li;
+		}
+	}
+
+	for (i = 0, sector = sectors; i < numsectors; ++i, ++sector)
+	{
+		if (linesDoneInEachSector[i] != sector->linecount)
+		{
+			I_Error ("P_GroupLines: miscounted");
+		}
+		if (sector->linecount != 0)
+		{
+			bbox.ClearBox ();
+			for (j = 0; j < sector->linecount; ++j)
 			{
-				if (li->frontsector == sector || li->backsector == sector)
-				{
-					*lineb_p++ = li;
-					bbox.AddToBox (li->v1->x, li->v1->y);
-					bbox.AddToBox (li->v2->x, li->v2->y);
-				}
-			}
-			if (lineb_p - sector->lines != sector->linecount)
-			{
-				I_Error ("P_GroupLines: miscounted");
+				li = sector->lines[j];
+				bbox.AddToBox (li->v1->x, li->v1->y);
+				bbox.AddToBox (li->v2->x, li->v2->y);
 			}
 		}
 
@@ -2443,15 +2471,22 @@ static void P_GroupLines (bool buildmap)
 		//sector->blockbox.Left()=block;
 #endif
 	}
+	delete[] linesDoneInEachSector;
+	unclock (times[3]);
 
 	// [RH] Moved this here
+	clock (times[4]);
 	P_InitTagLists();   // killough 1/30/98: Create xref tables for tags
+	unclock (times[4]);
 
+	clock (times[5]);
 	if (!buildmap)
 	{
 		P_SetSlopes ();
 	}
+	unclock (times[5]);
 
+	clock (times[6]);
 	for (i = 0, li = lines; i < numlines; ++i, ++li)
 	{
 		if (li->special == ExtraFloor_LightOnly)
@@ -2474,6 +2509,16 @@ static void P_GroupLines (bool buildmap)
 					sectors[j].ExtraLights = &ExtraLights[ii];
 				}
 			}
+		}
+	}
+	unclock (times[6]);
+
+	if (showloadtimes)
+	{
+		Printf ("---Group Lines Times---\n");
+		for (i = 0; i < 7; ++i)
+		{
+			Printf (" time %d:%10I64u\n", i, times[i]);
 		}
 	}
 }
@@ -2798,6 +2843,7 @@ void P_FreeLevelData ()
 // [RH] position indicates the start spot to spawn at
 void P_SetupLevel (char *lumpname, int position)
 {
+	cycle_t times[20] = { 0 };
 	mapthing2_t *buildthings;
 	int numbuildthings;
 	int i, lumpnum;
@@ -2879,9 +2925,12 @@ void P_SetupLevel (char *lumpname, int position)
 			P_LoadBehavior (Wads.CheckNumForName ("STRFHELP", ns_acslibrary));
 		}
 
+		clock (times[0]);
 		P_LoadVertexes (lumpnum+ML_VERTEXES);
+		unclock (times[0]);
 		
 		// Check for maps without any BSP data at all (e.g. SLIGE)
+		clock (times[1]);
 		Wads.GetLumpName (lname, lumpnum+ML_SEGS);
 		if (strcmp (lname, "SECTORS") == 0)
 		{
@@ -2892,15 +2941,31 @@ void P_SetupLevel (char *lumpname, int position)
 		{
 			P_LoadSectors (lumpnum+ML_SECTORS);
 		}
+		unclock (times[1]);
 
+		clock (times[2]);
 		P_LoadSideDefs (lumpnum+ML_SIDEDEFS);
+		unclock (times[2]);
+
+		clock (times[3]);
 		if (!HasBehavior)
 			P_LoadLineDefs (lumpnum+ML_LINEDEFS);
 		else
 			P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);	// [RH] Load Hexen-style linedefs
+		unclock (times[3]);
+
+		clock (times[4]);
 		P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
+		unclock (times[4]);
+
+		clock (times[5]);
 		P_FinishLoadingLineDefs ();
+		unclock (times[5]);
+
+		clock (times[6]);
 		P_LoopSidedefs ();
+		unclock (times[6]);
+
 		delete[] linemap;
 		linemap = NULL;
 	}
@@ -2959,9 +3024,17 @@ void P_SetupLevel (char *lumpname, int position)
 		}
 		else
 		{
+			clock (times[7]);
 			P_LoadSubsectors (lumpnum+ML_SSECTORS);
+			unclock (times[7]);
+
+			clock (times[8]);
 			if (!ForceNodeBuild) P_LoadNodes (lumpnum+ML_NODES);
+			unclock (times[8]);
+
+			clock (times[9]);
 			if (!ForceNodeBuild) P_LoadSegs (lumpnum+ML_SEGS);
+			unclock (times[9]);
 		}
 
 		/* Checking for compressed GL nodes is similar to above, and
@@ -3004,11 +3077,21 @@ void P_SetupLevel (char *lumpname, int position)
 		Printf ("BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
 	}
 
+	clock (times[10]);
 	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
-	P_LoadReject (lumpnum+ML_REJECT, buildmap);
+	unclock (times[10]);
 
+	clock (times[11]);
+	P_LoadReject (lumpnum+ML_REJECT, buildmap);
+	unclock (times[11]);
+
+	clock (times[12]);
 	P_GroupLines (buildmap);
+	unclock (times[12]);
+
+	clock (times[13]);
 	P_FloodZones ();
+	unclock (times[13]);
 
 	bodyqueslot = 0;
 // phares 8/10/98: Clear body queue so the corpses from previous games are
@@ -3023,13 +3106,17 @@ void P_SetupLevel (char *lumpname, int position)
 
 	if (!buildmap)
 	{
+		clock (times[14]);
 		if (!HasBehavior)
 			P_LoadThings (lumpnum+ML_THINGS, position);
 		else
 			P_LoadThings2 (lumpnum+ML_THINGS, position);	// [RH] Load Hexen-style things
+		unclock (times[14]);
 
+		clock (times[15]);
 		if (!HasBehavior)
 			P_TranslateTeleportThings ();	// [RH] Assign teleport destination TIDs
+		unclock (times[15]);
 	}
 	else
 	{
@@ -3040,7 +3127,9 @@ void P_SetupLevel (char *lumpname, int position)
 		delete[] buildthings;
 	}
 
+	clock (times[16]);
 	PO_Init ();	// Initialize the polyobjs
+	unclock (times[16]);
 
 	// if deathmatch, randomly spawn the active players
 	if (deathmatch)
@@ -3066,9 +3155,11 @@ void P_SetupLevel (char *lumpname, int position)
 	// [RH] Remove all particles
 	R_ClearParticles ();
 
+	clock (times[17]);
 	// preload graphics
 	if (precache)
 		R_PrecacheLevel ();
+	unclock (times[17]);
 
 	if (deathmatch)
 	{
@@ -3077,6 +3168,36 @@ void P_SetupLevel (char *lumpname, int position)
 
 	P_ResetSightCounters (true);
 	//Printf ("free memory: 0x%x\n", Z_FreeMemory());
+
+	if (showloadtimes)
+	{
+		Printf ("---Total load times---\n");
+		for (i = 0; i < 18; ++i)
+		{
+			static const char *timenames[] =
+			{
+				"load vertexes",
+				"load sectors",
+				"load sides",
+				"load lines",
+				"load sides 2",
+				"load lines 2",
+				"loop sides",
+				"load subsectors",
+				"load nodes",
+				"load segs",
+				"load blockmap",
+				"load reject",
+				"group lines",
+				"flood zones",
+				"load things",
+				"translate teleports",
+				"init polys",
+				"precache"
+			};
+			Printf ("Time%3d:%10I64u cycles (%s)\n", i, times[i], timenames[i]);
+		}
+	}
 }
 
 

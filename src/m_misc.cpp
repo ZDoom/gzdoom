@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <malloc.h>
 
 #if defined(_WIN32)
 #include <io.h>
@@ -78,6 +79,7 @@ FGameConfigFile *GameConfig;
 
 CVAR(Bool, screenshot_quiet, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(String, screenshot_type, "png", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(String, screenshot_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 static long ParseCommandLine (const char *args, int *argc, char **argv);
 
@@ -515,14 +517,14 @@ void WritePNGfile (FILE *file, const DCanvas *canvas, const PalEntry *palette)
 //
 // M_ScreenShot
 //
-static BOOL FindFreeName (char *lbmname, const char *extension)
+static BOOL FindFreeName (char *fullname, char *lbmname, const char *extension)
 {
 	int i;
 
 	for (i = 0; i <= 9999; i++)
 	{
 		sprintf (lbmname, "DOOM%04d.%s", i, extension);
-		if (!FileExists (lbmname))
+		if (!FileExists (fullname))
 			return true;		// file doesn't exist
 	}
 	return false;
@@ -531,34 +533,41 @@ static BOOL FindFreeName (char *lbmname, const char *extension)
 void M_ScreenShot (char *filename)
 {
 	FILE *file;
-	char  autoname[32];
-	char *lbmname;
+	char *autoname;
 	bool writepcx = (stricmp (screenshot_type, "pcx") == 0);	// PNG is the default
 
 	// find a file name to save it to
-	if (!filename)
+	if (filename == NULL)
 	{
+		int dirlen;
+
 #ifndef unix
 		if (Args.CheckParm ("-cdrom"))
 		{
+			autoname = (char *)alloca (12 + 16);
 			strcpy (autoname, "C:\\ZDOOMDAT\\");
-			lbmname = autoname + 12;
+			dirlen = 12;
 		}
 		else
 #endif
 		{
-			lbmname = autoname;
+			dirlen = strlen (screenshot_dir);
+			autoname = (char *)alloca (dirlen + 16);
+			if (dirlen > 0)
+			{
+				strcpy (autoname, screenshot_dir);
+				if (autoname[dirlen-1] != '/' && autoname[dirlen-1] != '\\')
+				{
+					autoname[dirlen++] = '/';
+				}
+			}
 		}
-		if (!FindFreeName (lbmname, writepcx ? "pcx" : "png"))
+		if (!FindFreeName (autoname, autoname + dirlen, writepcx ? "pcx" : "png"))
 		{
 			Printf ("M_ScreenShot: Delete some screenshots\n");
 			return;
 		}
 		filename = autoname;
-	}
-	else
-	{
-		lbmname = filename;
 	}
 
 	// save the screenshot
@@ -572,6 +581,7 @@ void M_ScreenShot (char *filename)
 	if (file == NULL)
 	{
 		Printf ("Could not open %s\n", filename);
+		screen->Unlock ();
 		return;
 	}
 
@@ -588,7 +598,7 @@ void M_ScreenShot (char *filename)
 
 	if (!screenshot_quiet)
 	{
-		Printf ("Captured %s\n", lbmname);
+		Printf ("Captured %s\n", filename);
 	}
 }
 

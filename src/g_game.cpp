@@ -580,7 +580,14 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 void G_AddViewPitch (int look)
 {
-	LocalViewPitch += look << 16;
+	if (dmflags & DF_NO_FREELOOK)
+	{
+		LocalViewPitch = 0;
+	}
+	else
+	{
+		LocalViewPitch += look << 16;
+	}
 	if (look != 0)
 	{
 		LocalKeyboardTurner = false;

@@ -156,7 +156,7 @@ void STACK_ARGS DCanvas::DrawTexture (FTexture *img, int x0, int y0, DWORD tags_
 			
 		case DTA_VirtualHeight:
 			intval = va_arg (tags, int);
-			y0 = Scale (Width, y0, intval);
+			y0 = Scale (Height, y0, intval);
 			destheight = FixedDiv (Height * img->GetHeight(), intval);
 			break;
 

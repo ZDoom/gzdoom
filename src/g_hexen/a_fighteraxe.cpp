@@ -105,8 +105,8 @@ FState AFWeapAxe::States[] =
 
 FWeaponInfo AFWeapAxe::WeaponInfo =
 {
-	WIF_AXEBLOOD,
-	MANA_NONE,
+	WIF_AXEBLOOD | WIF_AMMO_OPTIONAL,
+	MANA_1,
 	MANA_1,
 	2,
 	25,

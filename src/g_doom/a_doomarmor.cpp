@@ -14,9 +14,8 @@ public:
 	virtual bool TryPickup (AActor *toucher)
 	{
 		player_t *player = toucher->player;
-		player->armorpoints[0]++;		// can go over 100%
-		if (player->armorpoints[0] > deh.MaxArmor)
-			player->armorpoints[0] = deh.MaxArmor;
+		if (player->armorpoints[0] < deh.MaxArmor)
+			player->armorpoints[0]++;		// can go over 100%
 		if (!player->armortype)
 			player->armortype = deh.GreenAC;
 		return true;

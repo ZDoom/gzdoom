@@ -375,7 +375,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 		// Rotate 90 degrees, so that walking perpendicularly across
 		// teleporter linedef causes thing to exit in the direction
 		// indicated by the exit thing.
-		angle = R_PointToAngle2 (0, 0, line->dx, line->dy) - thing->angle + ANG90;
+		angle = R_PointToAngle2 (0, 0, line->dx, line->dy) - searcher->angle + ANG90;
 
 		// Sine, cosine of angle adjustment
 		s = finesine[angle>>ANGLETOFINESHIFT];
@@ -397,17 +397,17 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, bool 
 	}
 	if (P_Teleport (thing, searcher->x, searcher->y, z, searcher->angle, fog, keepOrientation))
 	{
-		return true;
-	}
-	// [RH] Lee Killough's changes for silent teleporters from BOOM
-	if (!fog && line && keepOrientation)
-	{
-		// Rotate thing according to difference in angles
-		thing->angle += angle;
+		// [RH] Lee Killough's changes for silent teleporters from BOOM
+		if (!fog && line && keepOrientation)
+		{
+			// Rotate thing according to difference in angles
+			thing->angle += angle;
 
-		// Rotate thing's momentum to come out of exit just like it entered
-		thing->momx = FixedMul(momx, c) - FixedMul(momy, s);
-		thing->momy = FixedMul(momy, c) + FixedMul(momx, s);
+			// Rotate thing's momentum to come out of exit just like it entered
+			thing->momx = FixedMul(momx, c) - FixedMul(momy, s);
+			thing->momy = FixedMul(momy, c) + FixedMul(momx, s);
+		}
+		return true;
 	}
 	return false;
 }

@@ -1715,14 +1715,17 @@ int P_Massacre ()
 	{
 		if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER))
 		{
-			actor->flags |= MF_SHOOTABLE;
-
 			// killough 3/6/98: kill even if PE is dead
 			if (actor->health > 0)
 			{
 				killcount++;
+				actor->flags |= MF_SHOOTABLE;
 				actor->flags2 &= ~(MF2_DORMANT|MF2_INVULNERABLE);
-				P_DamageMobj (actor, NULL, NULL, 10000, MOD_UNKNOWN);
+				do
+				{
+					P_DamageMobj (actor, NULL, NULL, 1000000, MOD_UNKNOWN);
+				}
+				while (actor->health > 0);
 			}
 			if (actor->IsKindOf (RUNTIME_CLASS(APainElemental)))
 			{

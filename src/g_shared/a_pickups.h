@@ -178,6 +178,7 @@ enum
 	WIF_AXEBLOOD =			0x00000008, // weapon makes axe blood on impact (Hexen only)
 	WIF_FIREDAMAGE =		0x00000010, // weapon does fire damage on impact
 	WIF_NOALERT =			0x00000020,	// weapon does not alert monsters
+	WIF_AMMO_OPTIONAL =		0x00000040, // weapon can use ammo but does not require it
 };
 
 #define MAX_WEAPONS_PER_SLOT	8

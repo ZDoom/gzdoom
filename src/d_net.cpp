@@ -607,6 +607,14 @@ void PlayerIsGone (int netnode, int netconsole)
 		Printf ("%s left the game\n", players[netconsole].userinfo.netname);
 	}
 
+	// [RH] Revert to your own view if spying through the player who left
+	if (players[consoleplayer].camera == players[netconsole].mo)
+	{
+		players[consoleplayer].camera = players[consoleplayer].mo;
+		StatusBar->AttachToPlayer (&players[consoleplayer]);
+		displayplayer = consoleplayer;
+	}
+
 	// [RH] Make the player disappear
 	P_DisconnectEffect (players[netconsole].mo);
 	players[netconsole].mo->Destroy ();
@@ -1978,7 +1986,11 @@ void Net_DoCommand (int type, byte **stream, int player)
 		break;
 
 	case DEM_SINFCHANGED:
-		D_DoServerInfoChange (stream);
+		D_DoServerInfoChange (stream, false);
+		break;
+
+	case DEM_SINFCHANGEDXOR:
+		D_DoServerInfoChange (stream, true);
 		break;
 
 	case DEM_GIVECHEAT:
@@ -2141,16 +2153,19 @@ void Net_DoCommand (int type, byte **stream, int player)
 			if (type != NULL && type->ActorInfo != NULL)
 			{
 				AActor *source = players[player].mo;
-				if (GetDefaultByType (type)->flags & MF_MISSILE)
+				if (source != NULL)
 				{
-					P_SpawnPlayerMissile (source, type);
-				}
-				else
-				{
-					const AActor *def = GetDefaultByType (type);
-					Spawn (type, source->x + FixedMul (def->radius * 2 + source->radius, finecosine[source->angle>>ANGLETOFINESHIFT]),
-								source->y + FixedMul (def->radius * 2 + source->radius, finesine[source->angle>>ANGLETOFINESHIFT]),
-								source->z + 8 * FRACUNIT);
+					if (GetDefaultByType (type)->flags & MF_MISSILE)
+					{
+						P_SpawnPlayerMissile (source, type);
+					}
+					else
+					{
+						const AActor *def = GetDefaultByType (type);
+						Spawn (type, source->x + FixedMul (def->radius * 2 + source->radius, finecosine[source->angle>>ANGLETOFINESHIFT]),
+									source->y + FixedMul (def->radius * 2 + source->radius, finesine[source->angle>>ANGLETOFINESHIFT]),
+									source->z + 8 * FRACUNIT);
+					}
 				}
 			}
 		}
@@ -2303,20 +2318,28 @@ void Net_SkipCommand (int type, byte **stream)
 			}
 			break;
 
+		case DEM_SINFCHANGEDXOR:
 		case DEM_SINFCHANGED:
 			t = **stream;
 			skip = 1 + (t & 63);
-			switch (t >> 6)
+			if (type == DEM_SINFCHANGED)
 			{
-			case CVAR_Bool:
+				switch (t >> 6)
+				{
+				case CVAR_Bool:
+					skip += 1;
+					break;
+				case CVAR_Int: case CVAR_Float:
+					skip += 4;
+					break;
+				case CVAR_String:
+					skip += strlen ((char *)(*stream + skip)) + 1;
+					break;
+				}
+			}
+			else
+			{
 				skip += 1;
-				break;
-			case CVAR_Int: case CVAR_Float:
-				skip += 4;
-				break;
-			case CVAR_String:
-				skip += strlen ((char *)(*stream + skip)) + 1;
-				break;
 			}
 			break;
 

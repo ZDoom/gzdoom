@@ -206,7 +206,7 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor)
 {
 	Super::Die (source, inflictor);
 
-	if (player->mo != this)
+	if (player != NULL && player->mo != this)
 	{ // Make the real player die, too
 		player->mo->Die (source, inflictor);
 	}
@@ -597,7 +597,7 @@ void P_FallingDamage (AActor *actor)
 		}
 		if (mom >= 63*FRACUNIT)
 		{ // automatic death
-			damage = 10000;
+			damage = 1000000;
 		}
 		else
 		{
@@ -618,7 +618,7 @@ void P_FallingDamage (AActor *actor)
 		}
 		if (mom >= 84*FRACUNIT)
 		{ // automatic death
-			damage = 10000;
+			damage = 1000000;
 		}
 		else
 		{
@@ -634,7 +634,7 @@ void P_FallingDamage (AActor *actor)
 	{
 		S_Sound (actor, CHAN_AUTO, "*land", 1, ATTN_NORM);
 		P_NoiseAlert (actor, actor);
-		if (damage == 10000 && (actor->player->cheats & CF_GODMODE))
+		if (damage == 1000000 && (actor->player->cheats & CF_GODMODE))
 		{
 			damage = 999;
 		}
@@ -964,7 +964,7 @@ void P_PlayerThink (player_t *player)
 		}
 		else if (cmd->ucmd.upmove != 0)
 		{
-			if (player->mo->waterlevel >= 2 || player->powers[pw_flight])
+			if (player->mo->waterlevel >= 2 || player->powers[pw_flight] || player->mo->flags2 & MF2_FLY)
 			{
 				player->mo->momz = cmd->ucmd.upmove << 9;
 				if (player->mo->waterlevel < 2 && !(player->mo->flags2 & MF2_FLY))

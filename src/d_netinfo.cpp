@@ -35,6 +35,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "doomtype.h"
 #include "doomdef.h"
@@ -356,18 +357,45 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 	Net_WriteString (foo);
 }
 
-static const char *SetServerVar (char *name, ECVarType type, byte **stream)
+static const char *SetServerVar (char *name, ECVarType type, byte **stream, bool singlebit)
 {
 	FBaseCVar *var = FindCVar (name, NULL);
 	UCVarValue value;
 
-	switch (type)
+	if (singlebit)
 	{
-	case CVAR_Bool:		value.Bool = ReadByte (stream) ? 1 : 0;	break;
-	case CVAR_Int:		value.Int = ReadLong (stream);			break;
-	case CVAR_Float:	value.Float = ReadFloat (stream);		break;
-	case CVAR_String:	value.String = ReadString (stream);		break;
-	default: break;	// Silence GCC
+		if (var != NULL)
+		{
+			int bitdata;
+			int mask;
+
+			value = var->GetFavoriteRep (&type);
+			if (type != CVAR_Int)
+			{
+				return NULL;
+			}
+			bitdata = ReadByte (stream);
+			mask = 1 << (bitdata & 31);
+			if (bitdata & 32)
+			{
+				value.Int |= mask;
+			}
+			else
+			{
+				value.Int &= ~mask;
+			}
+		}
+	}
+	else
+	{
+		switch (type)
+		{
+		case CVAR_Bool:		value.Bool = ReadByte (stream) ? 1 : 0;	break;
+		case CVAR_Int:		value.Int = ReadLong (stream);			break;
+		case CVAR_Float:	value.Float = ReadFloat (stream);		break;
+		case CVAR_String:	value.String = ReadString (stream);		break;
+		default: break;	// Silence GCC
+		}
 	}
 
 	if (var)
@@ -422,7 +450,19 @@ void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType 
 	}
 }
 
-void D_DoServerInfoChange (byte **stream)
+void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set)
+{
+	size_t namelen;
+
+	namelen = strlen (cvar->GetName ());
+
+	Net_WriteByte (DEM_SINFCHANGEDXOR);
+	Net_WriteByte (namelen);
+	Net_WriteBytes ((BYTE *)cvar->GetName (), (int)namelen);
+	Net_WriteByte (bitnum | (set << 5));
+}
+
+void D_DoServerInfoChange (byte **stream, bool singlebit)
 {
 	const char *value;
 	char name[64];
@@ -438,7 +478,7 @@ void D_DoServerInfoChange (byte **stream)
 	*stream += len;
 	name[len] = 0;
 
-	if ( (value = SetServerVar (name, (ECVarType)type, stream)) && netgame)
+	if ( (value = SetServerVar (name, (ECVarType)type, stream, singlebit)) && netgame)
 	{
 		Printf ("%s changed to %s\n", name, value);
 	}

@@ -48,6 +48,13 @@
 
 // MACROS ------------------------------------------------------------------
 
+#if 0
+#define TEST_X 1051721
+#define TEST_Y -64542001
+#define TEST_Z 2686976
+#define TEST_ANGLE 990880375
+#endif
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -929,6 +936,13 @@ void R_SetupFrame (player_t *player)
 	}
 
 	R_InterpolateView (player, r_TicFrac);
+
+#ifdef TEST_X
+	viewx = TEST_X;
+	viewy = TEST_Y;
+	viewz = TEST_Z;
+	viewangle = TEST_ANGLE;
+#endif
 
 	R_SetViewAngle ();
 

@@ -48,8 +48,8 @@ FState AAcolyte::States[] =
 #define S_ACOLYTE_CHASE (S_ACOLYTE_ALTCHASE+1)
 	S_NORMAL (AGRD, 'A',	6, A_AcolyteBits,		&States[S_ACOLYTE_CHASE+1]),
 	S_NORMAL (AGRD, 'B',	6, A_Chase,				&States[S_ACOLYTE_CHASE+2]),
-	S_NORMAL (AGRD, 'B',	6, A_Chase,				&States[S_ACOLYTE_CHASE+3]),
-	S_NORMAL (AGRD, 'B',	6, A_Chase,				&States[S_ACOLYTE_CHASE]),
+	S_NORMAL (AGRD, 'C',	6, A_Chase,				&States[S_ACOLYTE_CHASE+3]),
+	S_NORMAL (AGRD, 'D',	6, A_Chase,				&States[S_ACOLYTE_CHASE]),
 
 #define S_ACOLYTE_ATK (S_ACOLYTE_CHASE+4)
 	S_NORMAL (AGRD, 'E',	8, A_FaceTarget,		&States[S_ACOLYTE_ATK+1]),

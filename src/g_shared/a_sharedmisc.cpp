@@ -82,8 +82,7 @@ END_DEFAULTS
 
 FState ARealGibs::States[] =
 {
-	S_NORMAL (POL5, 'A', -1, NULL, NULL),
-	S_NORMAL (GIBS, 'A', -1, NULL, NULL),
+	S_NORMAL (POL5, 'A', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (ARealGibs, Any, -1, 0)
@@ -91,20 +90,6 @@ IMPLEMENT_ACTOR (ARealGibs, Any, -1, 0)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_Flags3 (MF3_DONTGIB)
 END_DEFAULTS
-
-AT_GAME_SET (RealGibs)
-{
-	ARealGibs *def = GetDefault<ARealGibs>();
-
-	if (gameinfo.gametype == GAME_Doom)
-	{
-		def->SpawnState = &ARealGibs::States[0];
-	}
-	else if (gameinfo.gametype & GAME_Raven)
-	{
-		def->SpawnState = &ARealGibs::States[1];
-	}
-}
 
 // Gibs that can be placed on a map. ---------------------------------------
 //

@@ -167,6 +167,12 @@ static const char *DoomKeyNames[6] =
 	"BlueCard", "YellowCard", "RedCard",
 	"BlueSkull", "YellowSkull", "RedSkull"
 };
+static const char *HexenKeyNames[11] =
+{
+	"KeySteel", "KeyCave", "KeyAxe", "KeyFire",
+	"KeyEmerald", "KeyDungeon", "KeySilver", "KeyRusted",
+	"KeyHorn", "KeySwamp", "KeyCastle"
+};
 
 static void DoGiveInv (player_t *player, const char *type, int amount)
 {
@@ -370,7 +376,7 @@ static void DoTakeInv (player_t *player, const char *type, int amount)
 			TakeBackpack (player);
 		}
 	}
-	else
+	else if (gameinfo.gametype == GAME_Heretic)
 	{
 		for (i = 0; i < 3; ++i)
 		{
@@ -382,6 +388,16 @@ static void DoTakeInv (player_t *player, const char *type, int amount)
 		if (strcmp ("BagOfHolding", type) == 0)
 		{
 			TakeBackpack (player);
+		}
+	}
+	else if (gameinfo.gametype == GAME_Hexen)
+	{
+		for (i = 0; i < 11; ++i)
+		{
+			if (strcmp (HexenKeyNames[i], type) == 0)
+			{
+				player->keys[i] = 0;
+			}
 		}
 	}
 }
@@ -460,11 +476,11 @@ static int CheckInventory (AActor *activator, const char *type)
 			return player->backpack ? 1 : 0;
 		}
 	}
-	else
+	else if (gameinfo.gametype == GAME_Heretic)
 	{
 		for (i = 0; i < 3; ++i)
 		{
-			if (strcmp (HereticKeyNames[i], type) == 3)
+			if (strcmp (HereticKeyNames[i], type) == 0)
 			{
 				return player->keys[i] ? 1 : 0;
 			}
@@ -472,6 +488,16 @@ static int CheckInventory (AActor *activator, const char *type)
 		if (strcmp ("BagOfHolding", type) == 0)
 		{
 			return player->backpack ? 1 : 0;
+		}
+	}
+	else if (gameinfo.gametype == GAME_Hexen)
+	{
+		for (i = 0; i < 11; ++i)
+		{
+			if (strcmp (HexenKeyNames[i], type) == 0)
+			{
+				return player->keys[i] ? 1 : 0;
+			}
 		}
 	}
 	return 0;
@@ -4338,6 +4364,7 @@ bool P_StartScript (AActor *who, line_t *where, int script, char *map, int lineS
 		addDefered (FindLevelInfo (map),
 					always ? acsdefered_t::defexealways : acsdefered_t::defexecute,
 					script, arg0, arg1, arg2, who);
+		return true;
 	}
 	return false;
 }

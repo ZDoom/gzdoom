@@ -138,6 +138,7 @@ IMPLEMENT_STATELESS_ACTOR (AWraithBuried, Hexen, 10011, 9)
 	PROP_Flags2 (MF2_FLOORCLIP|MF2_PASSMOBJ|MF2_TELESTOMP|MF2_PUSHWALL)
 	PROP_Flags3 (MF3_DONTMORPH|MF3_DONTBLAST|MF3_SPECIALFLOORCLIP|MF3_STAYMORPHED)
 	PROP_RenderFlags (RF_INVISIBLE)
+	PROP_PainChance (0)
 
 	PROP_SpawnState (S_WRAITH_LOOK1)
 	PROP_SeeState (S_WRAITH_RAISE1)
@@ -360,6 +361,8 @@ void A_WraithRaise (AActor *actor)
 		// morphable, right?
 		actor->flags3 &= ~(MF3_DONTMORPH|MF3_SPECIALFLOORCLIP);
 		actor->SetState (&AWraith::States[S_WRAITH_CHASE1]);
+		// [RH] Reset PainChance to a normal wraith's.
+		actor->PainChance = GetDefault<AWraith>()->PainChance;
 	}
 
 	P_SpawnDirt (actor, actor->radius);

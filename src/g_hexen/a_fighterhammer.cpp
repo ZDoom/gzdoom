@@ -73,8 +73,8 @@ FState AFWeapHammer::States[] =
 
 FWeaponInfo AFWeapHammer::WeaponInfo =
 {
-	0,
-	MANA_NONE,
+	WIF_AMMO_OPTIONAL,
+	MANA_2,
 	MANA_2,
 	3,
 	25,

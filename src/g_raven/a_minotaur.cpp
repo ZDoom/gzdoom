@@ -32,7 +32,6 @@ void A_MinotaurFade2 (AActor *);
 void A_MinotaurLook (AActor *);
 void A_MinotaurRoam (AActor *);
 void A_SmokePuffExit (AActor *);
-void A_MinotaurLook (AActor *);
 void A_MinotaurChase (AActor *);
 
 void P_MinotaurSlam (AActor *source, AActor *target);
@@ -776,7 +775,7 @@ void A_MinotaurRoam (AActor *actor)
 
 	if (self->StartTime >= 0 && (level.time - self->StartTime) >= MAULATORTICS)
 	{
-		P_DamageMobj (actor, NULL, NULL, 10000);
+		P_DamageMobj (actor, NULL, NULL, 1000000);
 		return;
 	}
 
@@ -864,7 +863,7 @@ void A_MinotaurLook (AActor *actor)
 			if (dist > MINOTAUR_LOOK_DIST) continue;
 			if ((mo == master) || (mo == actor)) continue;
 			if ((mo->IsKindOf (RUNTIME_CLASS(AMinotaur))) &&
-				(mo->special1 == actor->special1)) continue;
+				(mo->tracer == master)) continue;
 			actor->target = mo;
 			break;			// Found actor to attack
 		}
@@ -889,7 +888,7 @@ void A_MinotaurChase (AActor *actor)
 
 	if (self->StartTime >= 0 && (level.time - self->StartTime) >= MAULATORTICS)
 	{
-		P_DamageMobj (actor, NULL, NULL, 10000);
+		P_DamageMobj (actor, NULL, NULL, 1000000);
 		return;
 	}
 

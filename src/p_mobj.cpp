@@ -1262,13 +1262,13 @@ void P_MonsterFallingDamage (AActor *mo)
 	mom = abs(mo->momz);
 	if (mom > 35*FRACUNIT)
 	{ // automatic death
-		damage=10000;
+		damage = 1000000;
 	}
 	else
 	{
 		damage = ((mom - (23*FRACUNIT))*6)>>FRACBITS;
 	}
-	damage = 10000;	// always kill 'em
+	damage = 1000000;	// always kill 'em
 	P_DamageMobj (mo, NULL, NULL, damage);
 }
 
@@ -1328,9 +1328,9 @@ void P_ZMovement (AActor *mo)
 			dist = P_AproxDistance (mo->x - mo->target->x, mo->y - mo->target->y);
 			delta = (mo->target->z + (mo->height>>1)) - mo->z;
 			if (delta < 0 && dist < -(delta*3))
-				mo->z -= FLOATSPEED;
+				mo->z -= FLOATSPEED, mo->momz = 0;
 			else if (delta > 0 && dist < (delta*3))
-				mo->z += FLOATSPEED;
+				mo->z += FLOATSPEED, mo->momz = 0;
 		}
 	}
 	if (mo->player && (mo->flags2 & MF2_FLY) && (mo->z > mo->floorz))
@@ -2539,7 +2539,7 @@ void AActor::BeginPlay ()
 
 void AActor::Activate (AActor *activator)
 {
-	if ((flags3 & MF3_ISMONSTER) && health > 0)
+	if ((flags3 & MF3_ISMONSTER) && (health > 0 || (flags & MF_ICECORPSE)))
 	{
 		if (flags2 & MF2_DORMANT)
 		{
@@ -2551,7 +2551,7 @@ void AActor::Activate (AActor *activator)
 
 void AActor::Deactivate (AActor *activator)
 {
-	if ((flags3 & MF3_ISMONSTER) && health > 0)
+	if ((flags3 & MF3_ISMONSTER) && (health > 0 || (flags & MF_ICECORPSE)))
 	{
 		if (!(flags2 & MF2_DORMANT))
 		{
@@ -3358,7 +3358,7 @@ bool P_HitWater (AActor *thing, sector_t *sec)
 	
 	if (sec->heightsec == NULL ||
 		//!sec->heightsec->waterzone ||
-		!(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) ||
+		(sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) ||
 		!(sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES))
 	{
 		terrainnum = TerrainTypes[sec->floorpic];
@@ -3792,7 +3792,7 @@ bool AActor::IsTeammate (AActor *other)
 
 int AActor::DoSpecialDamage (AActor *target, int damage)
 {
-	if ((target->flags2 & MF2_INVULNERABLE) && damage < 10000)
+	if ((target->flags2 & MF2_INVULNERABLE) && damage < 1000000)
 	{ // actor is invulnerable
 		return -1;
 	}

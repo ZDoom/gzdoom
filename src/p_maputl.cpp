@@ -951,7 +951,7 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 	fixed_t 	xstep;
 	fixed_t 	ystep;
 	
-	fixed_t 	partial;
+	fixed_t 	partialx, partialy;
 	
 	fixed_t 	xintercept;
 	fixed_t 	yintercept;
@@ -994,45 +994,65 @@ BOOL P_PathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2, int flags, 
 	if (xt2 > xt1)
 	{
 		mapxstep = 1;
-		partial = FRACUNIT - ((x1>>MAPBTOFRAC)&(FRACUNIT-1));
+		partialx = FRACUNIT - ((x1>>MAPBTOFRAC)&(FRACUNIT-1));
 		ystep = FixedDiv (y2-y1,abs(x2-x1));
 	}
 	else if (xt2 < xt1)
 	{
 		mapxstep = -1;
-		partial = (x1>>MAPBTOFRAC)&(FRACUNIT-1);
+		partialx = (x1>>MAPBTOFRAC)&(FRACUNIT-1);
 		ystep = FixedDiv (y2-y1,abs(x2-x1));
 	}
 	else
 	{
 		mapxstep = 0;
-		partial = FRACUNIT;
+		partialx = FRACUNIT;
 		ystep = 256*FRACUNIT;
 	}	
-
-	yintercept = (y1>>MAPBTOFRAC) + FixedMul (partial, ystep);
+	yintercept = (y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
 
 		
 	if (yt2 > yt1)
 	{
 		mapystep = 1;
-		partial = FRACUNIT - ((y1>>MAPBTOFRAC)&(FRACUNIT-1));
+		partialy = FRACUNIT - ((y1>>MAPBTOFRAC)&(FRACUNIT-1));
 		xstep = FixedDiv (x2-x1,abs(y2-y1));
 	}
 	else if (yt2 < yt1)
 	{
 		mapystep = -1;
-		partial = (y1>>MAPBTOFRAC)&(FRACUNIT-1);
+		partialy = (y1>>MAPBTOFRAC)&(FRACUNIT-1);
 		xstep = FixedDiv (x2-x1,abs(y2-y1));
 	}
 	else
 	{
 		mapystep = 0;
-		partial = FRACUNIT;
+		partialy = FRACUNIT;
 		xstep = 256*FRACUNIT;
 	}	
-	xintercept = (x1>>MAPBTOFRAC) + FixedMul (partial, xstep);
-	
+	xintercept = (x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
+
+	// [RH] Fix for traces that pass only through blockmap corners. In that case,
+	// xintercept and yintercept can both be set ahead of mapx and mapy, so the
+	// for loop would never advance anywhere.
+
+	if (abs(xstep) == FRACUNIT && abs(ystep) == FRACUNIT)
+	{
+		if (ystep < 0)
+		{
+			partialx = FRACUNIT - partialx;
+		}
+		if (xstep < 0)
+		{
+			partialy = FRACUNIT - partialy;
+		}
+		if (partialx == partialy)
+		{
+			xintercept = xt1 << FRACBITS;
+			yintercept = yt1 << FRACBITS;
+		}
+	}
+
 	// Step through map blocks.
 	// Count is present to prevent a round off error
 	// from skipping the break statement.

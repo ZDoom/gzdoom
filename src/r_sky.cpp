@@ -33,6 +33,7 @@
 #include "g_level.h"
 #include "r_sky.h"
 #include "r_main.h"
+#include "v_text.h"
 #include "gi.h"
 
 extern int *texturewidthmask;
@@ -82,7 +83,7 @@ void R_InitSkyMap ()
 
 	if (skytex1->GetHeight() != skytex2->GetHeight())
 	{
-		Printf ("\x1f+Both sky textures must be the same height.\x1f-\n");
+		Printf (TEXTCOLOR_BOLD "Both sky textures must be the same height." TEXTCOLOR_NORMAL "\n");
 		sky2texture = sky1texture;
 	}
 

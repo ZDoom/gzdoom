@@ -127,6 +127,9 @@ class FWadCollection
 public:
 	FWadCollection ();
 
+	// The wadnum for the IWAD
+	enum { IWAD_FILENUM = 1 };
+
 	void InitMultipleFiles (wadlist_t **filenames);
 	void AddFile (const char *filename);
 	bool CheckIfWadLoaded (const char *name);
@@ -181,11 +184,12 @@ protected:
 	void InitHashChains ();								// [RH] Set up the lumpinfo hashing
 
 	// [RH] Combine multiple marked ranges of lumps into one.
-	void MergeLumps (const char *start, const char *end, int);
+	int MergeLumps (const char *start, const char *end, int name_space);
 	bool IsMarker (const LumpRecord *lump, const char *marker) const;
 
 private:
 	void ScanForFlatHack (int startlump);
+	void RenameSprites (int startlump);
 };
 
 extern FWadCollection Wads;

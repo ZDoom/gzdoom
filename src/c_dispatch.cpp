@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "templates.h"
 #include "doomtype.h"
@@ -244,6 +245,8 @@ static int ListActionCommands (const char *pattern)
 
 unsigned int MakeKey (const char *s)
 {
+	assert (s != NULL);
+
 	DWORD key = 0xffffffff;
 	const DWORD *table = GetCRCTable ();
 
@@ -256,6 +259,8 @@ unsigned int MakeKey (const char *s)
 
 unsigned int MakeKey (const char *s, size_t len)
 {
+	assert (s != NULL);
+
 	if (len == 0)
 	{
 		return 0xffffffff;

@@ -34,6 +34,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "cmdlib.h"
 #include "configfile.h"
@@ -1035,7 +1036,20 @@ FFlagCVar::FFlagCVar (const char *name, FIntCVar &realvar, DWORD bitval)
 ValueVar (realvar),
 BitVal (bitval)
 {
+	int bit;
+
 	Flags &= ~CVAR_ISDEFAULT;
+
+	assert (bitval != 0);
+
+	bit = 0;
+	while ((bitval >>= 1) != 0)
+	{
+		++bit;
+	}
+	BitNum = bit;
+
+	assert ((1 << BitNum) == BitVal);
 }
 
 ECVarType FFlagCVar::GetRealType () const
@@ -1090,14 +1104,30 @@ void FFlagCVar::SetGenericRepDefault (UCVarValue value, ECVarType type)
 void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 {
 	bool newval = ToBool (value, type);
-	ECVarType dummy;
-	UCVarValue val;
-	val = ValueVar.GetFavoriteRep (&dummy);
-	if (newval)
-		val.Int |= BitVal;
+
+	// Server cvars that get changed by this need to use a special message, because
+	// changes are not processed until the next net update. This is a problem with
+	// exec scripts because all flags will base their changes off of the value of
+	// the "master" cvar at the time the script was run, overriding any changes
+	// another flag might have made to the same cvar earlier in the script.
+	if ((ValueVar.Flags & CVAR_SERVERINFO) && gamestate != GS_STARTUP && !demoplayback)
+	{
+		if (netgame && consoleplayer != Net_Arbitrator)
+		{
+			Printf ("Only player %d can change %s\n", Net_Arbitrator+1, Name);
+			return;
+		}
+		D_SendServerFlagChange (&ValueVar, BitNum, newval);
+	}
 	else
-		val.Int &= ~BitVal;
-	ValueVar = val.Int;
+	{
+		int val = *ValueVar;
+		if (newval)
+			val |= BitVal;
+		else
+			val &= ~BitVal;
+		ValueVar = val;
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////

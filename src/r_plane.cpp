@@ -1345,7 +1345,7 @@ void R_DrawTiltedPlane (visplane_t *pl)
 		}
 	}
 
-#if defined(USEASM) && 1
+#if defined(USEASM)
 	if (ds_source != ds_curtiltedsource)
 		R_SetTiltedSpanSource_ASM (ds_source);
 	R_MapVisPlane (pl, R_DrawTiltedPlane_ASM);

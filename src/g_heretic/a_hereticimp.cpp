@@ -110,11 +110,11 @@ IMPLEMENT_ACTOR (AHereticImp, Heretic, 66, 5)
 	PROP_DeathState (S_IMP_DIE)
 	PROP_XDeathState (S_IMP_XDIE)
 
-	PROP_SeeSound ("imp/sight")
-	PROP_AttackSound ("imp/attack")
-	PROP_PainSound ("imp/pain")
-	PROP_DeathSound ("imp/death")
-	PROP_ActiveSound ("imp/active")
+	PROP_SeeSound ("himp/sight")
+	PROP_AttackSound ("himp/attack")
+	PROP_PainSound ("himp/pain")
+	PROP_DeathSound ("himp/death")
+	PROP_ActiveSound ("himp/active")
 END_DEFAULTS
 
 const char *AHereticImp::GetObituary ()
@@ -148,7 +148,7 @@ IMPLEMENT_ACTOR (AHereticImpLeader, Heretic, 5, 7)
 	PROP_MeleeState (~0)
 	PROP_MissileState (S_IMP_MSATK2)
 
-	PROP_AttackSound ("imp/leaderattack")
+	PROP_AttackSound ("himp/leaderattack")
 END_DEFAULTS
 
 // Heretic imp chunk 1 ------------------------------------------------------

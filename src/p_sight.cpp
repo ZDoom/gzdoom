@@ -119,7 +119,7 @@ static bool P_SightCheckLine (line_t *ld)
 	}
 
 // try to early out the check
-	if (!ld->backsector)
+	if (!ld->backsector || !(ld->flags & ML_TWOSIDED))
 		return false;	// stop checking
 
 	// [RH] don't see past block everything lines
@@ -277,7 +277,7 @@ static bool P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 {
 	fixed_t xt1,yt1,xt2,yt2;
 	fixed_t xstep,ystep;
-	fixed_t partial;
+	fixed_t partialx, partialy;
 	fixed_t xintercept, yintercept;
 	int mapx, mapy, mapxstep, mapystep;
 	int count;
@@ -313,43 +313,64 @@ static bool P_SightPathTraverse (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 	if (xt2 > xt1)
 	{
 		mapxstep = 1;
-		partial = FRACUNIT - ((x1>>MAPBTOFRAC)&(FRACUNIT-1));
+		partialx = FRACUNIT - ((x1>>MAPBTOFRAC)&(FRACUNIT-1));
 		ystep = FixedDiv (y2-y1,abs(x2-x1));
 	}
 	else if (xt2 < xt1)
 	{
 		mapxstep = -1;
-		partial = (x1>>MAPBTOFRAC)&(FRACUNIT-1);
+		partialx = (x1>>MAPBTOFRAC)&(FRACUNIT-1);
 		ystep = FixedDiv (y2-y1,abs(x2-x1));
 	}
 	else
 	{
 		mapxstep = 0;
-		partial = FRACUNIT;
+		partialx = FRACUNIT;
 		ystep = 256*FRACUNIT;
 	}
-	yintercept = (y1>>MAPBTOFRAC) + FixedMul (partial, ystep);
+	yintercept = (y1>>MAPBTOFRAC) + FixedMul (partialx, ystep);
 
 
 	if (yt2 > yt1)
 	{
 		mapystep = 1;
-		partial = FRACUNIT - ((y1>>MAPBTOFRAC)&(FRACUNIT-1));
+		partialy = FRACUNIT - ((y1>>MAPBTOFRAC)&(FRACUNIT-1));
 		xstep = FixedDiv (x2-x1,abs(y2-y1));
 	}
 	else if (yt2 < yt1)
 	{
 		mapystep = -1;
-		partial = (y1>>MAPBTOFRAC)&(FRACUNIT-1);
+		partialy = (y1>>MAPBTOFRAC)&(FRACUNIT-1);
 		xstep = FixedDiv (x2-x1,abs(y2-y1));
 	}
 	else
 	{
 		mapystep = 0;
-		partial = FRACUNIT;
+		partialy = FRACUNIT;
 		xstep = 256*FRACUNIT;
 	}
-	xintercept = (x1>>MAPBTOFRAC) + FixedMul (partial, xstep);
+	xintercept = (x1>>MAPBTOFRAC) + FixedMul (partialy, xstep);
+
+	// [RH] Fix for traces that pass only through blockmap corners. In that case,
+	// xintercept and yintercept can both be set ahead of mapx and mapy, so the
+	// for loop would never advance anywhere.
+
+	if (abs(xstep) == FRACUNIT && abs(ystep) == FRACUNIT)
+	{
+		if (ystep < 0)
+		{
+			partialx = FRACUNIT - partialx;
+		}
+		if (xstep < 0)
+		{
+			partialy = FRACUNIT - partialy;
+		}
+		if (partialx == partialy)
+		{
+			xintercept = xt1 << FRACBITS;
+			yintercept = yt1 << FRACBITS;
+		}
+	}
 
 //
 // step through map blocks
@@ -372,7 +393,7 @@ sightcounts[1]++;
 		{
 		case 0:		// neither xintercept nor yintercept match!
 sightcounts[5]++;
-			// Continuing might won't make things any better, so we might as well stop right here
+			// Continuing won't make things any better, so we might as well stop right here
 			count = 100;
 			break;
 
@@ -524,10 +545,10 @@ done:
 
 ADD_STAT (sight, out)
 {
-	sprintf (out, "%04.1f ms (%04.1f max), %5d %2d%4d%4d%4d%4d%4d\n",
+	sprintf (out, "%04.1f ms (%04.1f max), %5d %2d%4d%4d%4d%4d\n",
 		(double)SightCycles * 1000 * SecondsPerCycle,
 		(double)MaxSightCycles * 1000 * SecondsPerCycle,
-		sightcounts[3], sightcounts[0], sightcounts[1], sightcounts[2], sightcounts[3], sightcounts[4], sightcounts[5]);
+		sightcounts[3], sightcounts[0], sightcounts[1], sightcounts[2], sightcounts[4], sightcounts[5]);
 }
 
 void P_ResetSightCounters (bool full)

@@ -23,6 +23,8 @@
 //		angle += pr_spawnmissile.Random2() << 22
 // Note that these numbers are different from those used by all the other Doom engine games.
 
+// Strife seems to use the mass of armor for something, since it's not the default value.
+
 /* These mobjinfos have been converted:
 
 	  0
@@ -153,8 +155,8 @@
 	126
 	127
 	128
-	129
-	130
+	129 MetalArmor
+	130 LeatherArmor
 	131 WaterBottle
 	132 Mug
 	133
@@ -188,7 +190,7 @@
 	161
 	162
 	163
-	164
+	164 StrifeMap
 	165
 	166
 	167
@@ -834,13 +836,13 @@ FState ACrusaderMissile::States[] =
 {
 	S_BRIGHT (MICR, 'A', 6, A_RocketInFlight,	&States[0]),
 
-	S_BRIGHT (MISL, 'A', 5, A_RocketDead,		&States[2]),
-	S_BRIGHT (MISL, 'B', 5, NULL,				&States[3]),
-	S_BRIGHT (MISL, 'C', 4, NULL,				&States[4]),
-	S_BRIGHT (MISL, 'D', 2, NULL,				&States[5]),
-	S_BRIGHT (MISL, 'E', 2, NULL,				&States[6]),
-	S_BRIGHT (MISL, 'F', 2, NULL,				&States[7]),
-	S_BRIGHT (MISL, 'G', 2, NULL,				NULL),
+	S_BRIGHT (SMIS, 'A', 5, A_RocketDead,		&States[2]),
+	S_BRIGHT (SMIS, 'B', 5, NULL,				&States[3]),
+	S_BRIGHT (SMIS, 'C', 4, NULL,				&States[4]),
+	S_BRIGHT (SMIS, 'D', 2, NULL,				&States[5]),
+	S_BRIGHT (SMIS, 'E', 2, NULL,				&States[6]),
+	S_BRIGHT (SMIS, 'F', 2, NULL,				&States[7]),
+	S_BRIGHT (SMIS, 'G', 2, NULL,				NULL),
 };
 
 IMPLEMENT_ACTOR (ACrusaderMissile, Strife, -1, 0)
@@ -1030,13 +1032,13 @@ FState ABishopMissile::States[] =
 	S_BRIGHT (MISS, 'A',	4, A_RocketInFlight,	&States[1]),
 	S_BRIGHT (MISS, 'B',	3, A_Tracer2,			&States[0]),
 
-	S_BRIGHT (MISL, 'A',	5, A_Explode,			&States[3]),
-	S_BRIGHT (MISL, 'B',	5, NULL,				&States[4]),
-	S_BRIGHT (MISL, 'C',	4, NULL,				&States[5]),
-	S_BRIGHT (MISL, 'D',	2, NULL,				&States[6]),
-	S_BRIGHT (MISL, 'E',	2, NULL,				&States[7]),
-	S_BRIGHT (MISL, 'F',	2, NULL,				&States[8]),
-	S_BRIGHT (MISL, 'G',	2, NULL,				NULL),
+	S_BRIGHT (SMIS, 'A',	5, A_Explode,			&States[3]),
+	S_BRIGHT (SMIS, 'B',	5, NULL,				&States[4]),
+	S_BRIGHT (SMIS, 'C',	4, NULL,				&States[5]),
+	S_BRIGHT (SMIS, 'D',	2, NULL,				&States[6]),
+	S_BRIGHT (SMIS, 'E',	2, NULL,				&States[7]),
+	S_BRIGHT (SMIS, 'F',	2, NULL,				&States[8]),
+	S_BRIGHT (SMIS, 'G',	2, NULL,				NULL),
 };
 
 IMPLEMENT_ACTOR (ABishopMissile, Strife, -1, 0)
@@ -1126,9 +1128,9 @@ void A_Tracer2 (AActor *self)
 
 // Sentinel -----------------------------------------------------------------
 
-void A_1fc30 (AActor *);
-void A_1fa58 (AActor *);
-void A_1fa10 (AActor *);
+void A_SentinelBob (AActor *);
+void A_SentinelAttack (AActor *);
+void A_SentinelRefire (AActor *);
 
 class ASentinel : public AActor
 {
@@ -1141,13 +1143,13 @@ FState ASentinel::States[] =
 	S_NORMAL (SEWR, 'A',   10, A_Look,				&States[S_SENTINEL_STND]),
 
 #define S_SENTINEL_RUN (S_SENTINEL_STND+1)
-	S_NORMAL (SEWR, 'A',	6, A_1fc30,				&States[S_SENTINEL_RUN+1]),
+	S_NORMAL (SEWR, 'A',	6, A_SentinelBob,		&States[S_SENTINEL_RUN+1]),
 	S_NORMAL (SEWR, 'A',	6, A_Chase,				&States[S_SENTINEL_RUN]),
 
 #define S_SENTINEL_ATK (S_SENTINEL_RUN+2)
 	S_NORMAL (SEWR, 'B',	4, A_FaceTarget,		&States[S_SENTINEL_ATK+1]),
-	S_BRIGHT (SEWR, 'C',	8, A_1fa58,				&States[S_SENTINEL_ATK+2]),
-	S_BRIGHT (SEWR, 'C',	4, A_1fa10,				&States[S_SENTINEL_ATK+1]),
+	S_BRIGHT (SEWR, 'C',	8, A_SentinelAttack,	&States[S_SENTINEL_ATK+2]),
+	S_BRIGHT (SEWR, 'C',	4, A_SentinelRefire,	&States[S_SENTINEL_ATK+1]),
 
 #define S_SENTINEL_PAIN (S_SENTINEL_ATK+3)
 	S_NORMAL (SEWR, 'D',	5, A_Pain,				&States[S_SENTINEL_ATK+2]),
@@ -1175,8 +1177,8 @@ IMPLEMENT_ACTOR (ASentinel, Strife, 3006, 0)
 	PROP_RadiusFixed (23)
 	PROP_HeightFixed (53)
 	PROP_Mass (300)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_SPAWNCEILING|MF_NOGRAVITY|
-				MF_STRIFEx800|MF_FLOAT|MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_SPAWNCEILING|MF_NOGRAVITY|MF_DROPOFF|
+				MF_STRIFEx800|/*MF_FLOAT|*/MF_STRIFEx8000|MF_NOBLOOD|MF_COUNTKILL)
 
 	PROP_SeeSound ("sentinel/sight")
 	PROP_DeathSound ("sentinel/death")
@@ -1228,14 +1230,19 @@ IMPLEMENT_STATELESS_ACTOR (ASentinelFX2, Strife, -1, 0)
 	PROP_SeeSound ("sentinel/plasma")
 END_DEFAULTS
 
-void A_1fc30 (AActor *self)
+void A_SentinelBob (AActor *self)
 {
 	fixed_t minz, maxz;
 
-	if (self->threshold != 0 || (self->flags & MF_INFLOAT))
+	if (self->flags & MF_INFLOAT)
+	{
+		self->momz = 0;
+		return;
+	}
+	if (self->threshold != 0)
 		return;
 
-	maxz =  self->ceilingz - self->height - 16*FRACUNIT;;
+	maxz =  self->ceilingz - self->height - 16*FRACUNIT;
 	minz = self->floorz + 96*FRACUNIT;
 	if (minz > maxz)
 	{
@@ -1249,17 +1256,11 @@ void A_1fc30 (AActor *self)
 	{
 		self->momz += FRACUNIT;
 	}
-	self->reactiontime = (minz == self->z) ? 4 : 0;
+	self->reactiontime = (minz >= self->z) ? 4 : 0;
 }
 
-void A_1fa58 (AActor *self)
-{/*
-	[esp+04] = self->x
-	[esp+08] = self->y
-	[esp+0C] = -missile.default.radius
-	[esp+10] = self
-	[esp+14] = 4*(self->angle >> ANGLETOFINESHIFT)
-*/
+void A_SentinelAttack (AActor *self)
+{
 	AActor *missile, *trail;
 
 	missile = P_SpawnMissileZAimed (self, self->z + 32*FRACUNIT, self->target, RUNTIME_CLASS(ASentinelFX2));
@@ -1287,7 +1288,7 @@ void A_1fa58 (AActor *self)
 
 static FRandom pr_sentinelrefire ("SentinelRefire");
 
-void A_1fa10 (AActor *self)
+void A_SentinelRefire (AActor *self)
 {
 	A_FaceTarget (self);
 
@@ -1484,7 +1485,85 @@ IMPLEMENT_ACTOR (AComputer, Strife, 182, 0)
 	PROP_DeathSound ("misc/explosion")
 END_DEFAULTS
 
-// A Cloud use for varius explosions ----------------------------------------
+// Metal Armor --------------------------------------------------------------
+
+class AMetalArmor : public AArmor
+{
+	DECLARE_ACTOR (AMetalArmor, AArmor)
+public:
+	virtual bool TryPickup (AActor *toucher)
+	{
+		return P_GiveArmor (toucher->player, (armortype_t)-2, 200);
+	}
+protected:
+	virtual const char *PickupMessage ()
+	{
+		return "You picked up the Metal Armor";
+	}
+};
+
+FState AMetalArmor::States[] =
+{
+	S_NORMAL (ARM3, 'A', -1, NULL, NULL),
+};
+
+IMPLEMENT_ACTOR (AMetalArmor, Strife, 2019, 69)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (16)
+	PROP_Flags (MF_SPECIAL)
+	PROP_SpawnState (0)
+	PROP_Mass (3)
+	PROP_Tag ("Metal_Armor")
+END_DEFAULTS
+
+AT_GAME_SET (MetalArmor)
+{
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		ArmorPics[0] = "ARM3A0";
+	}
+}
+
+// Leather Armor ------------------------------------------------------------
+
+class ALeatherArmor : public AArmor
+{
+	DECLARE_ACTOR (ALeatherArmor, AArmor)
+public:
+	virtual bool TryPickup (AActor *toucher)
+	{
+		return P_GiveArmor (toucher->player, (armortype_t)-1, 100);
+	}
+protected:
+	virtual const char *PickupMessage ()
+	{
+		return "You picked up the Leather Armor";
+	}
+};
+
+FState ALeatherArmor::States[] =
+{
+	S_NORMAL (ARM4, 'A', -1, NULL, NULL),
+};
+
+IMPLEMENT_ACTOR (ALeatherArmor, Strife, 2018, 68)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (16)
+	PROP_Flags (MF_SPECIAL)
+	PROP_SpawnState (0)
+	PROP_Mass (5)
+	PROP_Tag ("Leather_Armor")
+END_DEFAULTS
+
+AT_GAME_SET (LeatherArmor)
+{
+	if (gameinfo.gametype == GAME_Strife)
+	{
+		ArmorPics[0] = "ARM4A0";
+	}
+}
+
+// A Cloud used for varius explosions ---------------------------------------
 // This actor has no direct equivalent in strife. To create this, Strife
 // spawned a spark and then changed its state to that of this explosion
 // cloud. Weird.
@@ -1561,6 +1640,36 @@ FState AMug::States[] =
 };
 
 IMPLEMENT_ACTOR (AMug, Strife, 164, 0)
+	PROP_SpawnState (0)
+END_DEFAULTS
+
+// StrifeMap ----------------------------------------------------------------
+
+class AStrifeMap : public AInventory
+{
+	DECLARE_ACTOR (AStrifeMap, AInventory)
+public:
+	virtual bool TryPickup (AActor *toucher)
+	{
+		return P_GivePower (toucher->player, pw_allmap);
+	}
+protected:
+	virtual const char *PickupMessage ()
+	{
+		return "You picked up the map";
+	}
+	// Which sound does it play in Strife? Powerup or normal pickup?
+	// Does Strife even have a powerup sound?
+};
+
+FState AStrifeMap::States[] =
+{
+	S_BRIGHT (SMAP, 'A',	6, NULL 				, &States[1]),
+	S_BRIGHT (SMAP, 'B',	6, NULL 				, &States[0]),
+};
+
+IMPLEMENT_ACTOR (AStrifeMap, Strife, 2026, 137)
+	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -2081,7 +2190,7 @@ class ACandle : public AActor
 
 FState ACandle::States[] =
 {
-	S_BRIGHT (CNDL, 'A', -1, NULL, NULL)
+	S_BRIGHT (KNDL, 'A', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (ACandle, Strife, 34, 0)
@@ -2389,10 +2498,10 @@ class AStrifeBurningBarrel : public AActor
 
 FState AStrifeBurningBarrel::States[] =
 {
-	S_BRIGHT (BARL, 'A', 4, NULL, &States[1]),
-	S_BRIGHT (BARL, 'B', 4, NULL, &States[2]),
-	S_BRIGHT (BARL, 'C', 4, NULL, &States[3]),
-	S_BRIGHT (BARL, 'D', 4, NULL, &States[0]),
+	S_BRIGHT (BBAR, 'A', 4, NULL, &States[1]),
+	S_BRIGHT (BBAR, 'B', 4, NULL, &States[2]),
+	S_BRIGHT (BBAR, 'C', 4, NULL, &States[3]),
+	S_BRIGHT (BBAR, 'D', 4, NULL, &States[0]),
 };
 
 IMPLEMENT_ACTOR (AStrifeBurningBarrel, Strife, 70, 0)
@@ -2457,10 +2566,10 @@ class ASmallTorchLit : public AActor
 
 FState ASmallTorchLit::States[] =
 {
-	S_BRIGHT (TRCH, 'A', 4, NULL, &States[1]),
-	S_BRIGHT (TRCH, 'B', 4, NULL, &States[2]),
-	S_BRIGHT (TRCH, 'C', 4, NULL, &States[3]),
-	S_BRIGHT (TRCH, 'D', 4, NULL, &States[0])
+	S_BRIGHT (TRHL, 'A', 4, NULL, &States[1]),
+	S_BRIGHT (TRHL, 'B', 4, NULL, &States[2]),
+	S_BRIGHT (TRHL, 'C', 4, NULL, &States[3]),
+	S_BRIGHT (TRHL, 'D', 4, NULL, &States[0])
 };
 
 IMPLEMENT_ACTOR (ASmallTorchLit, Strife, 107, 0)
@@ -2709,10 +2818,10 @@ class AStickInWater : public AActor
 
 FState AStickInWater::States[] =
 {
-	S_NORMAL (LOGG, 'A', 5, A_LoopActiveSound, &States[1]),
-	S_NORMAL (LOGG, 'B', 5, A_LoopActiveSound, &States[2]),
-	S_NORMAL (LOGG, 'C', 5, A_LoopActiveSound, &States[3]),
-	S_NORMAL (LOGG, 'D', 5, A_LoopActiveSound, &States[0])
+	S_NORMAL (LOGW, 'A', 5, A_LoopActiveSound, &States[1]),
+	S_NORMAL (LOGW, 'B', 5, A_LoopActiveSound, &States[2]),
+	S_NORMAL (LOGW, 'C', 5, A_LoopActiveSound, &States[3]),
+	S_NORMAL (LOGW, 'D', 5, A_LoopActiveSound, &States[0])
 };
 
 IMPLEMENT_ACTOR (AStickInWater, Strife, 215, 0)
@@ -2988,7 +3097,7 @@ class ATreeStub : public AActor
 
 FState ATreeStub::States[] =
 {
-	S_NORMAL (TRE1, 'A', -1, NULL, NULL)
+	S_NORMAL (TRET, 'A', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (ATreeStub, Strife, 33, 0)
@@ -3064,7 +3173,7 @@ class ABarricadeColumn : public AActor
 
 FState ABarricadeColumn::States[] =
 {
-	S_NORMAL (BAR1, 'A', -1, NULL, NULL)
+	S_NORMAL (BARC, 'A', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (ABarricadeColumn, Strife, 69, 0)
@@ -3083,7 +3192,7 @@ class APot : public AActor
 
 FState APot::States[] =
 {
-	S_NORMAL (VASE, 'A', -1, NULL, NULL)
+	S_NORMAL (VAZE, 'A', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (APot, Strife, 165, 0)
@@ -3102,7 +3211,7 @@ class APitcher : public AActor
 
 FState APitcher::States[] =
 {
-	S_NORMAL (VASE, 'B', -1, NULL, NULL)
+	S_NORMAL (VAZE, 'B', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (APitcher, Strife, 188, 0)
@@ -3140,7 +3249,7 @@ class AMetalPot : public AActor
 
 FState AMetalPot::States[] =
 {
-	S_NORMAL (POT1, 'A', -1, NULL, NULL)
+	S_NORMAL (MPOT, 'A', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (AMetalPot, Strife, 190, 0)
@@ -3193,7 +3302,7 @@ class ATechLampSilver : public AActor
 
 FState ATechLampSilver::States[] =
 {
-	S_NORMAL (TLMP, 'A', -1, NULL, NULL)
+	S_NORMAL (TECH, 'A', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (ATechLampSilver, Strife, 196, 0)
@@ -3212,7 +3321,7 @@ class ATechLampBrass : public AActor
 
 FState ATechLampBrass::States[] =
 {
-	S_NORMAL (TLMP, 'B', -1, NULL, NULL)
+	S_NORMAL (TECH, 'B', -1, NULL, NULL)
 };
 
 IMPLEMENT_ACTOR (ATechLampBrass, Strife, 197, 0)

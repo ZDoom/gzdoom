@@ -416,6 +416,8 @@ static void SetLevelDefaults (level_info_t *levelinfo)
 	levelinfo->WallHorizLight = -8;
 	levelinfo->WallVertLight = +8;
 	strncpy (levelinfo->fadetable, "COLORMAP", 8);
+	strcpy (levelinfo->skypic1, "-NOFLAT-");
+	strcpy (levelinfo->skypic2, "-NOFLAT-");
 }
 
 //
@@ -559,6 +561,11 @@ static void G_DoParseMapInfo (int lump)
 				levelinfo->levelnum = epinum*10 + mapnum;
 			}
 			ParseMapInfoLower (MapHandlers, MapInfoMapLevel, levelinfo, NULL, levelflags);
+			// When the second sky is -NOFLAT-, make it a copy of the first sky
+			if (strcmp (levelinfo->skypic2, "-NOFLAT-") == 0)
+			{
+				strcpy (levelinfo->skypic2, levelinfo->skypic1);
+			}
 			SetLevelNum (levelinfo, levelinfo->levelnum);	// Wipe out matching levelnums from other maps.
 			if (levelinfo->pname[0] != 0 && TexMan.CheckForTexture (levelinfo->pname, FTexture::TEX_MiscPatch) < 0)
 			{
@@ -1108,6 +1115,8 @@ CCMD (map)
 
 void G_NewInit ()
 {
+	int i;
+
 	G_ClearSnapshots ();
 	SB_state = screen->GetPageCount ();
 	netgame = false;
@@ -1121,6 +1130,10 @@ void G_NewInit ()
 	}
 	LocalSelectedItem = arti_none;
 	memset (playeringame, 0, sizeof(playeringame));
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		players[i].playerstate = PST_DEAD;
+	}
 	BackupSaveName[0] = 0;
 	consoleplayer = 0;
 	NextSkill = -1;

@@ -3,6 +3,7 @@
 #include "a_artifacts.h"
 #include "gstrings.h"
 #include "p_local.h"
+#include "gi.h"
 
 // Boost Armor Artifact (Dragonskin Bracers) --------------------------------
 
@@ -13,11 +14,21 @@ private:
 	{
 		int count = 0;
 
-		for (armortype_t i = ARMOR_ARMOR; i < NUMARMOR; i = (armortype_t)(i+1))
+		if (gameinfo.gametype == GAME_Hexen)
 		{
-			count += P_GiveArmor (player, i, 1); // 1 point per armor type
+			for (armortype_t i = ARMOR_ARMOR; i < NUMARMOR; i = (armortype_t)(i+1))
+			{
+				count += P_GiveArmor (player, i, 1); // 1 point per armor type
+			}
+			return count != 0;
 		}
-		return count != 0;
+		else
+		{
+			player->armorpoints[0] += 50;
+			if (!player->armortype)
+				player->armortype = deh.GreenAC;
+			return true;
+		}
 	}
 };
 

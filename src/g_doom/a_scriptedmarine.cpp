@@ -291,80 +291,6 @@ void AScriptedMarine::Tick ()
 	}
 }
 
-void AScriptedMarine::SetWeapon (EMarineWeapon type)
-{
-	MissileState = NULL;
-	MeleeState = NULL;
-
-	switch (type)
-	{
-	default:
-	case WEAPON_Dummy:
-		MissileState = &States[S_MPLAY_ATK];
-		break;
-
-	case WEAPON_Fist:
-		MeleeState = &States[S_MPLAY_ATK_FIST];
-		break;
-
-	case WEAPON_BerserkFist:
-		MeleeState = &States[S_MPLAY_ATK_BERSERK];
-		break;
-
-	case WEAPON_Chainsaw:
-		MeleeState = &States[S_MPLAY_ATK_CHAINSAW];
-		break;
-
-	case WEAPON_Pistol:
-		MissileState = &States[S_MPLAY_ATK_PISTOL];
-		break;
-
-	case WEAPON_Shotgun:
-		MissileState = &States[S_MPLAY_ATK_SHOTGUN];
-		break;
-
-	case WEAPON_SuperShotgun:
-		MissileState = &States[S_MPLAY_ATK_DSHOTGUN];
-		break;
-
-	case WEAPON_Chaingun:
-		MissileState = &States[S_MPLAY_ATK_CHAINGUN];
-		break;
-
-	case WEAPON_RocketLauncher:
-		MissileState = &States[S_MPLAY_ATK_ROCKET];
-		break;
-
-	case WEAPON_PlasmaRifle:
-		MissileState = &States[S_MPLAY_ATK_PLASMA];
-		break;
-
-	case WEAPON_Railgun:
-		MissileState = &States[S_MPLAY_ATK_RAILGUN];
-		break;
-
-	case WEAPON_BFG:
-		MissileState = &States[S_MPLAY_ATK_BFG];
-		break;
-	}
-}
-
-void AScriptedMarine::SetSprite (const TypeInfo *source)
-{
-	if (source == NULL || source->ActorInfo == NULL)
-	{ // A valid actor class wasn't passed, so use the standard sprite
-		SpriteOverride = sprite = States[0].sprite.index;
-		xscale = GetDefaultByType(RUNTIME_CLASS(ADoomPlayer))->xscale;
-		yscale = GetDefaultByType(RUNTIME_CLASS(ADoomPlayer))->yscale;
-	}
-	else
-	{ // Use the same sprite the passed class spawns with
-		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite.index;
-		xscale = GetDefaultByType(source)->xscale;
-		yscale = GetDefaultByType(source)->yscale;
-	}
-}
-
 //============================================================================
 //
 // A_M_Refire
@@ -385,7 +311,8 @@ void A_M_Refire (AActor *self)
 		self->SetState (self->state + 1);
 		return;
 	}
-	if (!P_CheckSight (self, self->target) ||
+	if ((self->MissileState == NULL && !P_CheckMeleeRange (self)) ||
+		!P_CheckSight (self, self->target) ||
 		pr_m_refire() < 4)	// Small chance of stopping even when target not dead
 	{
 		self->SetState (self->state + 1);
@@ -969,3 +896,92 @@ IMPLEMENT_STATELESS_ACTOR (AMarineBFG, Doom, 9111, 0)
 	PROP_MeleeState (255)
 	PROP_MissileState (S_MPLAY_ATK_BFG)
 END_DEFAULTS
+
+//---------------------------------------------------------------------------
+
+void AScriptedMarine::SetWeapon (EMarineWeapon type)
+{
+	MissileState = NULL;
+	MeleeState = NULL;
+	DecalGenerator = NULL;
+
+	switch (type)
+	{
+	default:
+	case WEAPON_Dummy:
+		MissileState = &States[S_MPLAY_ATK];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AScriptedMarine))->DecalGenerator;
+		break;
+
+	case WEAPON_Fist:
+		MeleeState = &States[S_MPLAY_ATK_FIST];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineFist))->DecalGenerator;
+		break;
+
+	case WEAPON_BerserkFist:
+		MeleeState = &States[S_MPLAY_ATK_BERSERK];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineBerserk))->DecalGenerator;
+		break;
+
+	case WEAPON_Chainsaw:
+		MeleeState = &States[S_MPLAY_ATK_CHAINSAW];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineChainsaw))->DecalGenerator;
+		break;
+
+	case WEAPON_Pistol:
+		MissileState = &States[S_MPLAY_ATK_PISTOL];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarinePistol))->DecalGenerator;
+		break;
+
+	case WEAPON_Shotgun:
+		MissileState = &States[S_MPLAY_ATK_SHOTGUN];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineShotgun))->DecalGenerator;
+		break;
+
+	case WEAPON_SuperShotgun:
+		MissileState = &States[S_MPLAY_ATK_DSHOTGUN];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineSSG))->DecalGenerator;
+		break;
+
+	case WEAPON_Chaingun:
+		MissileState = &States[S_MPLAY_ATK_CHAINGUN];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineChaingun))->DecalGenerator;
+		break;
+
+	case WEAPON_RocketLauncher:
+		MissileState = &States[S_MPLAY_ATK_ROCKET];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineRocket))->DecalGenerator;
+		break;
+
+	case WEAPON_PlasmaRifle:
+		MissileState = &States[S_MPLAY_ATK_PLASMA];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarinePlasma))->DecalGenerator;
+		break;
+
+	case WEAPON_Railgun:
+		MissileState = &States[S_MPLAY_ATK_RAILGUN];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineRailgun))->DecalGenerator;
+		break;
+
+	case WEAPON_BFG:
+		MissileState = &States[S_MPLAY_ATK_BFG];
+		DecalGenerator = GetDefaultByType (RUNTIME_CLASS(AMarineBFG))->DecalGenerator;
+		break;
+	}
+}
+
+void AScriptedMarine::SetSprite (const TypeInfo *source)
+{
+	if (source == NULL || source->ActorInfo == NULL)
+	{ // A valid actor class wasn't passed, so use the standard sprite
+		SpriteOverride = sprite = States[0].sprite.index;
+		xscale = GetDefaultByType(RUNTIME_CLASS(ADoomPlayer))->xscale;
+		yscale = GetDefaultByType(RUNTIME_CLASS(ADoomPlayer))->yscale;
+	}
+	else
+	{ // Use the same sprite the passed class spawns with
+		SpriteOverride = sprite = GetDefaultByType (source)->SpawnState->sprite.index;
+		xscale = GetDefaultByType(source)->xscale;
+		yscale = GetDefaultByType(source)->yscale;
+	}
+}

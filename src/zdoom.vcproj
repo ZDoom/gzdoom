@@ -3484,9 +3484,6 @@
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\r_main.h">
-			</File>
 		</Filter>
 		<Filter
 			Name="Hexen Game"
@@ -4354,6 +4351,9 @@
 				</File>
 				<File
 					RelativePath=".\r_local.h">
+				</File>
+				<File
+					RelativePath=".\r_main.h">
 				</File>
 				<File
 					RelativePath=".\r_plane.h">

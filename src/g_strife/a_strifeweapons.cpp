@@ -595,7 +595,7 @@ FState AAssaultGun::States[] =
 
 FWeaponInfo AAssaultGun::WeaponInfo =
 {
-	WIF_NOALERT,
+	0,
 	am_clip,
 	am_clip,
 	1,
@@ -743,7 +743,7 @@ FState AMiniMissileLauncher::States[] =
 
 FWeaponInfo AMiniMissileLauncher::WeaponInfo =
 {
-	WIF_NOALERT,
+	0,
 	am_misl,
 	am_misl,
 	1,
@@ -823,13 +823,13 @@ FState AMiniMissile::States[] =
 {
 	S_BRIGHT (MICR, 'A', 6, A_RocketInFlight,	&States[0]),
 
-	S_BRIGHT (MISL, 'A', 5, A_Explode,			&States[2]),
-	S_BRIGHT (MISL, 'B', 5, NULL,				&States[3]),
-	S_BRIGHT (MISL, 'C', 4, NULL,				&States[4]),
-	S_BRIGHT (MISL, 'D', 2, NULL,				&States[5]),
-	S_BRIGHT (MISL, 'E', 2, NULL,				&States[6]),
-	S_BRIGHT (MISL, 'F', 2, NULL,				&States[7]),
-	S_BRIGHT (MISL, 'G', 2, NULL,				NULL),
+	S_BRIGHT (SMIS, 'A', 5, A_Explode,			&States[2]),
+	S_BRIGHT (SMIS, 'B', 5, NULL,				&States[3]),
+	S_BRIGHT (SMIS, 'C', 4, NULL,				&States[4]),
+	S_BRIGHT (SMIS, 'D', 2, NULL,				&States[5]),
+	S_BRIGHT (SMIS, 'E', 2, NULL,				&States[6]),
+	S_BRIGHT (SMIS, 'F', 2, NULL,				&States[7]),
+	S_BRIGHT (SMIS, 'G', 2, NULL,				NULL),
 };
 
 IMPLEMENT_ACTOR (AMiniMissile, Strife, -1, 0)
@@ -922,12 +922,12 @@ FState AFlameThrower::States[] =
 
 #define S_FLAMERATK (S_FLAMERUP+1)
 	S_NORMAL (FLMF, 'A', 2, A_FireFlamer,	&States[S_FLAMERATK+1]),
-	S_NORMAL (FLMF, 'A', 3, A_ReFire,		&States[S_FLAMER])
+	S_NORMAL (FLMF, 'B', 3, A_ReFire,		&States[S_FLAMER])
 };
 
 FWeaponInfo AFlameThrower::WeaponInfo =
 {
-	WIF_NOALERT,
+	0,
 	am_cell,
 	am_cell,
 	1,
@@ -1059,47 +1059,47 @@ FState AMauler::States[] =
 	S_NORMAL (TRPD, 'A', -1, NULL,				NULL),
 
 #define S_MAULER1 1
-	S_NORMAL (BLST, 'F',  6, A_WeaponReady,		&States[S_MAULER1+1]),
-	S_NORMAL (BLST, 'G',  6, A_WeaponReady,		&States[S_MAULER1+2]),
-	S_NORMAL (BLST, 'H',  6, A_WeaponReady,		&States[S_MAULER1+3]),
-	S_NORMAL (BLST, 'A',  6, A_WeaponReady,		&States[S_MAULER1]),
+	S_NORMAL (MAUL, 'F',  6, A_WeaponReady,		&States[S_MAULER1+1]),
+	S_NORMAL (MAUL, 'G',  6, A_WeaponReady,		&States[S_MAULER1+2]),
+	S_NORMAL (MAUL, 'H',  6, A_WeaponReady,		&States[S_MAULER1+3]),
+	S_NORMAL (MAUL, 'A',  6, A_WeaponReady,		&States[S_MAULER1]),
 
 #define S_MAULER1DOWN (S_MAULER1+4)
-	S_NORMAL (BLST, 'A',  1, A_Lower,			&States[S_MAULER1DOWN]),
+	S_NORMAL (MAUL, 'A',  1, A_Lower,			&States[S_MAULER1DOWN]),
 
 #define S_MAULER1UP (S_MAULER1DOWN+1)
-	S_NORMAL (BLST, 'A',  1, A_Raise,			&States[S_MAULER1UP]),
+	S_NORMAL (MAUL, 'A',  1, A_Raise,			&States[S_MAULER1UP]),
 
 #define S_MAULER1ATK (S_MAULER1UP+1)
 	// Why does the firing picture have its own sprite?
 	S_BRIGHT (BLSF, 'A',  5, A_FireMauler1,		&States[S_MAULER1ATK+1]),
-	S_BRIGHT (BLST, 'B',  3, A_Light1,			&States[S_MAULER1ATK+2]),
-	S_NORMAL (BLST, 'C',  2, A_Light2,			&States[S_MAULER1ATK+3]),
-	S_NORMAL (BLST, 'D',  2, NULL,				&States[S_MAULER1ATK+4]),
-	S_NORMAL (BLST, 'E',  2, NULL,				&States[S_MAULER1ATK+5]),
-	S_NORMAL (BLST, 'A',  7, A_Light0,			&States[S_MAULER1ATK+6]),
-	S_NORMAL (BLST, 'H',  7, NULL,				&States[S_MAULER1ATK+7]),
-	S_NORMAL (BLST, 'G',  7, A_CheckReload,		&States[S_MAULER1]),
+	S_BRIGHT (MAUL, 'B',  3, A_Light1,			&States[S_MAULER1ATK+2]),
+	S_NORMAL (MAUL, 'C',  2, A_Light2,			&States[S_MAULER1ATK+3]),
+	S_NORMAL (MAUL, 'D',  2, NULL,				&States[S_MAULER1ATK+4]),
+	S_NORMAL (MAUL, 'E',  2, NULL,				&States[S_MAULER1ATK+5]),
+	S_NORMAL (MAUL, 'A',  7, A_Light0,			&States[S_MAULER1ATK+6]),
+	S_NORMAL (MAUL, 'H',  7, NULL,				&States[S_MAULER1ATK+7]),
+	S_NORMAL (MAUL, 'G',  7, A_CheckReload,		&States[S_MAULER1]),
 
 #define S_MAULER2 (S_MAULER1ATK+8)
-	S_NORMAL (BLST, 'I',  7, A_WeaponReady,		&States[S_MAULER2+1]),
-	S_NORMAL (BLST, 'J',  7, A_WeaponReady,		&States[S_MAULER2+2]),
-	S_NORMAL (BLST, 'K',  7, A_WeaponReady,		&States[S_MAULER2+3]),
-	S_NORMAL (BLST, 'L',  7, A_WeaponReady,		&States[S_MAULER2]),
+	S_NORMAL (MAUL, 'I',  7, A_WeaponReady,		&States[S_MAULER2+1]),
+	S_NORMAL (MAUL, 'J',  7, A_WeaponReady,		&States[S_MAULER2+2]),
+	S_NORMAL (MAUL, 'K',  7, A_WeaponReady,		&States[S_MAULER2+3]),
+	S_NORMAL (MAUL, 'L',  7, A_WeaponReady,		&States[S_MAULER2]),
 
 #define S_MAULER2DOWN (S_MAULER2+4)
-	S_NORMAL (BLST, 'I',  1, A_Lower,			&States[S_MAULER2DOWN]),
+	S_NORMAL (MAUL, 'I',  1, A_Lower,			&States[S_MAULER2DOWN]),
 
 #define S_MAULER2UP (S_MAULER2DOWN+1)
-	S_NORMAL (BLST, 'I',  1, A_Raise,			&States[S_MAULER2UP]),
+	S_NORMAL (MAUL, 'I',  1, A_Raise,			&States[S_MAULER2UP]),
 
 #define S_MAULER2ATK (S_MAULER2UP+1)
-	S_NORMAL (BLST, 'J', 20, A_FireMauler2Pre,	&States[S_MAULER2ATK+1]),
+	S_NORMAL (MAUL, 'J', 20, A_FireMauler2Pre,	&States[S_MAULER2ATK+1]),
 	S_BRIGHT (BLSF, 'A', 10, A_Light1,			&States[S_MAULER2ATK+2]),
-	S_BRIGHT (BLST, 'B', 10, A_FireMauler2,		&States[S_MAULER2ATK+3]),
-	S_NORMAL (BLST, 'C',  2, NULL,				&States[S_MAULER2ATK+4]),
-	S_NORMAL (BLST, 'D',  2, A_Light0,			&States[S_MAULER2ATK+5]),
-	S_NORMAL (BLST, 'E',  2, A_ReFire,			&States[S_MAULER2]),
+	S_BRIGHT (MAUL, 'B', 10, A_FireMauler2,		&States[S_MAULER2ATK+3]),
+	S_NORMAL (MAUL, 'C',  2, NULL,				&States[S_MAULER2ATK+4]),
+	S_NORMAL (MAUL, 'D',  2, A_Light0,			&States[S_MAULER2ATK+5]),
+	S_NORMAL (MAUL, 'E',  2, A_ReFire,			&States[S_MAULER2]),
 };
 
 // The scatter version
@@ -1194,8 +1194,8 @@ class AMaulerPuff : public AActor
 
 FState AMaulerPuff::States[] =
 {
-	S_NORMAL (SHT2, 'A', 5, NULL, &States[1]),
-	S_NORMAL (SHT2, 'B', 5, NULL, &States[2]),
+	S_NORMAL (MPUF, 'A', 5, NULL, &States[1]),
+	S_NORMAL (MPUF, 'B', 5, NULL, &States[2]),
 	S_NORMAL (POW1, 'A', 4, NULL, &States[3]),
 	S_NORMAL (POW1, 'B', 4, NULL, &States[4]),
 	S_NORMAL (POW1, 'C', 4, NULL, &States[5]),

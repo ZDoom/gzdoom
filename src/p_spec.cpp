@@ -574,7 +574,7 @@ bool CheckIfExitIsGood (AActor *self)
 
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 	{
-		P_DamageMobj (self, self, self, 10000, MOD_EXIT);
+		P_DamageMobj (self, self, self, 1000000, MOD_EXIT);
 		return false;
 	}
 	if (deathmatch)

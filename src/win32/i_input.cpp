@@ -1446,7 +1446,7 @@ BOOL I_InitInput (void *hwnd)
 			hr = dic (g_hInst, 0x0300, &g_pdi3, NULL);
 			if (FAILED(hr))
 			{
-				I_FatalError ("Could not create DirectInput interface: %08lx", hr);
+				I_FatalError ("DirectInputCreate failed: %08lx", hr);
 			}
 
 			Printf ("Tip for NT 4: \"regsvr32 dinput.dll\"\n");

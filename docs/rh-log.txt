@@ -1,3 +1,197 @@
+January 22, 2004
+- Optimized R_PrecacheLevel() so that it does not unload graphics that are
+  definitely used on the level.
+- Optimized the primary loop in P_GroupLines() so that it is much faster on
+  large maps. It was previously O(m*n); now it is O(m+n), and Vrack 3 loads
+  in well under a second.
+- Changed the Heretic's imp's sounds to use the himp/ prefix instead of imp/.
+
+January 21, 2004
+- Fixed: The Heresiarch's spell balls above his head did not update their
+  sector information as they rotated. Neither did his shield balls.
+- Fixed silent teleporter orientation in EV_Teleport().
+- Fixed calls to P_Teleport() in a_korax.cpp and a_teleportother.cpp that used
+  weird parameters.
+- Changed FDecalLib::GetDecalByName() so that it does not call GetDecal() on
+  the decal it finds, so it can be used to get decal groups.
+- Fixed: Saving a game on one version of a map, then adding a BEHAVIOR to it,
+  then reloading would not fully invalidate the player when starting a new
+  game after the resulting error message. (G_NewInit now initializes players
+  to PST_DEAD).
+- Added a screenshot_dir cvar to allow automatically-named screenshots to be
+  saved somewhere other than the current directory.
+- Fixed: M_ScreenShot left the display locked if it could not open the file to
+  write to.
+- Added decals for the marine hitscan weapons. (I think it's funny that the
+  term "hitscan" has come to be used to describe Doom's instant-hit weapons
+  even though it comes from Build. :-)
+
+January 17, 2004
+- Fixed: PIT_CheckOnmobjZ would not let things stand on corpses.
+- Fixed a bug in A_MinotaurLook where I forgot to convert a special1 reference
+  to a tracer reference.
+- Fixed: Obituaries were shown when voodoo dolls died.
+- Fixed: Light_Fade and Light_Glow divided by zero when using zero as the
+  tics argument.
+- Fixed: Killing a PlayerPawn that isn't attached to a player crashed.
+- Fixed: Summoning before starting a game crashed.
+- Fixed: Block everything lines did not block railguns.
+
+January 13, 2004
+- Fixed: +moveup and +movedown did not work with the fly cheat.
+- Fixed: The Sentinel was missing the MF_DROPOFF flag. Also reduced its
+  "bouncing" when it was in a float. I still wasn't satisfied with that, so
+  I took its MF_FLOAT bit away.
+- Fixed: The Strife flamethrower's refire state wasn't using frame B.
+- Fixed: Acolytes only used frames A and B in their chase states because I
+  forgot to change them when copying and pasting.
+- Removed the nightmare warning when starting a bloodbath game in Strife.
+- Fixed: Nightmare skill ignored the starting map defined with episodedef.
+- Changed sv_fastweapon 2 handling so that it only applies to weapon
+  psprites and not flash psprites.
+- Changed Thing_Activate/Deactivate so they can be used to prevent frozen
+  corpses from shattering automatically after a delay. (They can still be
+  shattered by shooting them or pushing them off a ledge, however.)
+
+January 12, 2004
+- Changed AKey::TryPickup so that it doesn't fail if the player already has a
+  key of the same type.
+- Fixed: The TranslucentLine special could not used in a script if a line was
+  used to activate the script.
+- Changed the damage amount for automatic death from 10 thousand to 1 million,
+  for people who like really strong monstres.
+
+January 8, 2004
+- Added some more player properties that let you add and remove player powers
+  through ACS.
+- Renamed pw_shield and pw_health2 to pw_unused1 and pw_unused2 because Heretic
+  never used them. For the sake of savegame compatibility, they have not been
+  removed.
+- Changed the dragon skin bracers so that when they're used outside of Hexen,
+  they add 50 points of armor. Also changed the armor bonus so that if you have
+  more than 200 armor points, picking one up won't drop you down to 200.
+- Added the WIF_AMMO_OPTIONAL flag so that the fighter's hammer and axe can be
+  specified as using ammo so that they show up in Doom's fullscreen HUD.
+- Changed masked texture drawing so that Y offsets behave like any other walls:
+  by texel unless the texture requests otherwise.
+- Changed APuzzleItem::ActivateArti() so that it always plays *puzzfail if the
+  puzzle item could not be used.
+- Fixed: Splashing on a fake floor with SECF_CLIPFAKEPLANES set would use the
+  main sector's floor terrain instead of the control sector's floor terrain.
+- Moved even more functionality out of A_WeaponReady so that weapon ready
+  animations can use delays longer than one tic and still fire well.
+- Fixed my September 25, 2003 "fix" of the massacre code so that it doesn't
+  make already dead bodies shootable.
+- Changed P_SightCheckLine() so that it also uses the absence of ML_TWOSIDED as
+  an indicator to stop the search, as it did a long time ago.
+- Fixed: A_M_Refire did not terminate the attack if the marine had no missile
+  attack and the target had moved out of range.
+- Fixed: DTA_VirtualHeight scaled the texture's y location by the display's
+  width instead of its height.
+- Added sprite renaming so that unique actors can use unique sprites. Only
+  sprites in the main IWAD are renamed, so if you want to supply a new sprite
+  in a PWAD, you need to use the sprite's new name instead of its old name.
+  Sprites are renamed as follows:
+	heretic.wad:	HEAD -> LICH
+	
+	hexen.wad:	ARM1 -> AR_1
+			ARM2 -> AR_2
+			ARM3 -> AR_3
+			ARM4 -> AR_4
+			BARL -> ZBAR
+			CAND -> BCAN
+			GIBS -> POL5	(this makes it the same as Doom's gib sprite)
+			ROCK -> ROKK
+			SUIT -> ZSUI
+			TRE1 -> ZTRE
+			TRE2 -> TRES
+			WATR -> UWAT	(unused, but Strife also has a WATR)
+			
+	strife1.wad:	ARM1 -> ARM3
+			ARM2 -> ARM4
+			BAR1 -> BARC
+			BARL -> BBAR
+			BLST -> MAUL
+			CNDL -> KNDL
+			LOGG -> LOGW
+			MISL -> SMIS
+			PMAP -> SMAP
+			POT1 -> MPOT
+			SHRD -> SHAR
+			SHT2 -> MPUF
+			SPID -> STLK
+			TLMP -> TECH
+			TRE1 -> TRET
+			TRCH -> TRHL
+			VASE -> VAZE
+- Fixed: The Doom Allmap powerup played the normal item pickup sound instead of
+  the powerup pickup sound.
+- Fixed: Fog boundaries were still drawn when using a fixed colormap.
+
+January 6, 2004
+- Fixed: R_InitTextures() did not ensure that the final TEXTURE1/TEXTURE2 lumps
+  had not already been read, so it could end up loading them with the wrong
+  PNAMES. The easiest example of this bug is to start the game with:
+	-iwad doom2 -file doom doom2
+- Fixed: You could take Heretic keys but you couldn't check them with ACS. Also
+  added support for doing both with Hexen keys, since it was missing.
+- Added some checks to A_SpawnFly to appease anybody who tries to break things
+  by using dehacked patches where they don't belong.
+- Fixed: If you used spynext/spyprev to look through another player's eyes and
+  that player quit, the game would crash because it will still try to draw
+  through that player's eyes.
+- Added a DEM_SINFCHANGEDXOR message for flag cvars that alter server settings
+  (i.e. all of them). The reason for this is because if you exec a script that
+  alters multiple flags, only the last change would take effect, because they
+  don't get processed until after the script finishes execution.
+- Fixed: G_AddViewPitch() adjusted LocalViewPitch even when the dmflag
+  DF_NO_FREELOOK was set.
+- Fixed: PIT_StompThing was missing the MF2_TELESTOMP check for Heretic/Hexen.
+- Fixed: Starting a game with the dmflag DF_NO_FOV set would set everybody's
+  view to an FOV of 0 because the dmflags callback gets called before the
+  arbitrator's DesiredFOV is initialized.
+
+January 2, 2004
+- Changed P_FinishLoadingLineDefs so that it rounds the wall length to the
+  nearest integer when determining TexelLength instead of always round down.
+- Fixed: Using an empty string with HUDMSG_TYPEON caused a crash.
+- Fixed: A buried wraith could enter its pain state while rising from the
+  ground and not properly finish raising, so it's bottom portion would remain
+  clipped for the rest of its existance.
+- Fixed: Using a switch to start a script on another map would not make the
+  switch switch.
+- Fixed: Sliding along the backside of a blocking two-sided line was bad.
+- Fixed: The second sky on a map defaulted to -NOFLAT- instead of the same
+  texture as the first sky.
+- Moved the key blocks from Heretic's fullscreen HUD so that they don't overlap
+  the health vial.
+
+December 13, 2003
+- Added another case to ScanForFlatHack to fix darkhour.wad: F_START - flats -
+  FF_END - more flats - F_END. I'm surprised it worked before, but it did, so
+  I'm inclined to again make it work unmodified, even if the wad _is_ wrong.
+
+December 12, 2003
+- Added a hack check for Doom 1's BIGDOOR7 texture, which y offsets its patches
+  at -4. (Doom clamped all negative patch y offsets to 0, which is why it shows
+  up okay in Doom.)
+- Added a fix to the blockmap tracers where all the blocks along the trace are
+  crossed on their corners.
+- Fixed a potential crash in FBaseStatusBar::DrawMessages() when a HUD message
+  removes itself as part of its drawing process.
+- Fixed: A few of the Strife weapons were erroneously defined with WIF_NOALERT.
+- Fixed: Sky textures defaulted to 0 if a map had a MAPINFO that did not
+  specify the sky. Now they default to -NOFLAT- so you don't have to worry
+  about division by zero in R_DrawSkyStriped if the map tries to show a sky.
+- Fixed: The floorLowerAndChange type for EV_DoFloor modified sec instead of
+  a temporary, which could cause crashes at worst and odd behavior at best
+  because sec is used again to determine whether a floor moved instantly.
+- Changed a DivScale19 in R_RenderMaskedSegRange into a SafeDivScale19.
+- Fixed: Trying to use the mdk command before starting a game caused a crash.
+- Fixed: CreateFrameBuffer would not properly retry.
+- Changed the maybedrawnow recursion inhibitter to use the current state
+  of the screen object instead of a local static variable.
+
 December 8, 2003
 - Fixed: If a wad had TEXTURE1 and TEXTURE2 lumps, then any duplicates in
   TEXTURE2 took precedence over TEXTURE1. It is supposed to be the other way

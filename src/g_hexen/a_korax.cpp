@@ -249,7 +249,7 @@ void A_KoraxChase (AActor *actor)
 		spot = iterator.Next ();
 		if (spot != NULL)
 		{
-			P_Teleport (actor, spot->x, spot->y, spot->angle, true, true, false);
+			P_Teleport (actor, spot->x, spot->y, ONFLOORZ, spot->angle, true, false);
 		}
 
 		P_StartScript (actor, NULL, 249, NULL, 0, 0, 0, 0, 0);
@@ -288,7 +288,7 @@ void A_KoraxChase (AActor *actor)
 			actor->tracer = spot;
 			if (spot)
 			{
-				P_Teleport (actor, spot->x, spot->y, spot->angle, true, true, false);
+				P_Teleport (actor, spot->x, spot->y, ONFLOORZ, spot->angle, true, false);
 			}
 		}
 	}

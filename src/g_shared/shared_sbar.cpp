@@ -1012,8 +1012,9 @@ void FBaseStatusBar::DrawMessages (int bottom) const
 	DHUDMessage *msg = Messages;
 	while (msg)
 	{
+		DHUDMessage *next = msg->Next;
 		msg->Draw (bottom);
-		msg = msg->Next;
+		msg = next;
 	}
 }
 

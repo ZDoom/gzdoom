@@ -138,7 +138,7 @@ CVAR(Bool, r_fogboundary, true, 0)
 
 inline bool IsFogBoundary (sector_t *front, sector_t *back)
 {
-	return r_fogboundary && front->ColorMap->Fade &&
+	return r_fogboundary && !fixedcolormap && front->ColorMap->Fade &&
 		front->ColorMap->Fade != back->ColorMap->Fade &&
 		(front->ceilingpic != skyflatnum || back->ceilingpic != skyflatnum);
 }
@@ -264,22 +264,31 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	rw_scalestep = ds->iscalestep;
 
 	// find positioning
+	scaley = tex->ScaleY ? tex->ScaleY : ty;
+	texheight = SafeDivScale19 (tex->GetHeight(), scaley);
 	if (curline->linedef->flags & ML_DONTPEGBOTTOM)
 	{
-		dc_texturemid = MAX (frontsector->floortexz, backsector->floortexz);
-		dc_texturemid += DivScale19 (tex->GetHeight(), tex->ScaleY ? tex->ScaleY : ty);
+		dc_texturemid = MAX (frontsector->floortexz, backsector->floortexz) + texheight;
 	}
 	else
 	{
 		dc_texturemid = MIN (frontsector->ceilingtexz, backsector->ceilingtexz);
 	}
-	// rowoffset is added before the MulScale3 so that the masked texture will
-	// still be positioned in world units rather than texels. This is different
-	// from the solid texture positioning in R_NewWall().
-	dc_texturemid += curline->sidedef->rowoffset - viewz;
-	textop = dc_texturemid;
-	scaley = tex->ScaleY ? tex->ScaleY : ty;
-	dc_texturemid = MulScale3 (dc_texturemid, scaley);
+	if (tex->bWorldPanning)
+	{
+		// rowoffset is added before the MulScale3 so that the masked texture will
+		// still be positioned in world units rather than texels.
+		dc_texturemid += curline->sidedef->rowoffset - viewz;
+		textop = dc_texturemid;
+		dc_texturemid = MulScale3 (dc_texturemid, scaley);
+	}
+	else
+	{
+		// rowoffset is added outside the multiply so that it positions the texture
+		// by texels instead of world units.
+		textop = dc_texturemid - viewz + SafeDivScale3 (curline->sidedef->rowoffset, scaley);
+		dc_texturemid = MulScale3 (dc_texturemid - viewz, scaley) + curline->sidedef->rowoffset;
+	}
 
 	// [RH] Don't bother drawing segs that are completely offscreen
 	if (MulScale12 (globaldclip, ds->neardepth) < -textop &&
@@ -288,7 +297,6 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 		goto clearfog;
 	}
 
-	texheight = SafeDivScale19 (tex->GetHeight(), scaley);
 	if (MulScale12 (globaluclip, ds->neardepth) > texheight - textop &&
 		MulScale12 (globaluclip, ds->fardepth) > texheight - textop)
 	{ // Texture bottom is above the top of the screen

@@ -280,6 +280,12 @@ protected:
 	{
 		return GStrings(GOTMAP);
 	}
+	void PlayPickupSound (AActor *toucher)
+	{
+		S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+			toucher == NULL || toucher == players[consoleplayer].camera
+			? ATTN_SURROUND : ATTN_NORM);
+	}
 };
 
 FState AAllmap::States[] =

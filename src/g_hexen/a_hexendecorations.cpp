@@ -94,17 +94,17 @@ DECHANGNS (AZChandelierUnlit, 8063, 20, 60, 1)
 
 DEC (AZTreeDead, 24, 10, 96, 1)
 {
-	S_NORMAL (TRE1, 'A', -1, NULL, NULL)
+	S_NORMAL (ZTRE, 'A', -1, NULL, NULL)
 };
 
 DEC (AZTree, 25, 15, 128, 1)
 {
-	S_NORMAL (TRE1, 'A', -1, NULL, NULL)
+	S_NORMAL (ZTRE, 'A', -1, NULL, NULL)
 };
 
 DEC (AZTreeSwamp150, 26, 10, 150, 1)
 {
-	S_NORMAL (TRE2, 'A', -1, NULL, NULL)
+	S_NORMAL (TRES, 'A', -1, NULL, NULL)
 };
 
 DEC (AZTreeSwamp120, 27, 10, 120, 1)
@@ -456,7 +456,7 @@ DECNBNG (AZCandle, 119, 20, 16, 3)
 
 DEC (AZBarrel, 8100, 15, 32, 1)
 {
-	S_NORMAL (BARL, 'A', -1, NULL, NULL)
+	S_NORMAL (ZBAR, 'A', -1, NULL, NULL)
 };
 
 DECHANG (AZBucket, 8103, 8, 72, 1)
@@ -496,11 +496,11 @@ DEC (ABrassTorch, 8061, 6, 35, 13)
 
 DECNBLOCK (AZBlueCandle, 8066, 20, 16, 5)
 {
-	S_BRIGHT (CAND, 'A',  5, NULL, &States[1]),
-	S_BRIGHT (CAND, 'B',  5, NULL, &States[2]),
-	S_BRIGHT (CAND, 'C',  5, NULL, &States[3]),
-	S_BRIGHT (CAND, 'D',  5, NULL, &States[4]),
-	S_BRIGHT (CAND, 'E',  5, NULL, &States[0])
+	S_BRIGHT (BCAN, 'A',  5, NULL, &States[1]),
+	S_BRIGHT (BCAN, 'B',  5, NULL, &States[2]),
+	S_BRIGHT (BCAN, 'C',  5, NULL, &States[3]),
+	S_BRIGHT (BCAN, 'D',  5, NULL, &States[4]),
+	S_BRIGHT (BCAN, 'E',  5, NULL, &States[0])
 };
 
 DEC (AZIronMaiden, 8067, 12, 60, 1)

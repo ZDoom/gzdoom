@@ -48,7 +48,7 @@ private:
 		{ // Attempt to undo chicken
 			if (P_UndoPlayerMorph (player) == false)
 			{ // Failed
-				P_DamageMobj (player->mo, NULL, NULL, 10000);
+				P_DamageMobj (player->mo, NULL, NULL, 1000000);
 			}
 			else
 			{ // Succeeded

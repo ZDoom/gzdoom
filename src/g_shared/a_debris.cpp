@@ -35,8 +35,8 @@ static FRandom pr_dirt ("SpawnDirt");
 
 DEBRIS (ARock1, 41, 2, S_ROCK1_D)
 {
-	S_NORMAL (ROCK, 'A',   20, NULL, &States[S_ROCK1]),
-	S_NORMAL (ROCK, 'A',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'A',   20, NULL, &States[S_ROCK1]),
+	S_NORMAL (ROKK, 'A',   10, NULL, NULL)
 };
 
 #define S_ROCK2 0
@@ -44,8 +44,8 @@ DEBRIS (ARock1, 41, 2, S_ROCK1_D)
 
 DEBRIS (ARock2, 42, 2, S_ROCK2_D)
 {
-	S_NORMAL (ROCK, 'B',   20, NULL, &States[S_ROCK2]),
-	S_NORMAL (ROCK, 'B',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'B',   20, NULL, &States[S_ROCK2]),
+	S_NORMAL (ROKK, 'B',   10, NULL, NULL)
 };
 
 #define S_ROCK3 0
@@ -53,8 +53,8 @@ DEBRIS (ARock2, 42, 2, S_ROCK2_D)
 
 DEBRIS (ARock3, 43, 2, S_ROCK3_D)
 {
-	S_NORMAL (ROCK, 'C',   20, NULL, &States[S_ROCK3+0]),
-	S_NORMAL (ROCK, 'C',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'C',   20, NULL, &States[S_ROCK3+0]),
+	S_NORMAL (ROKK, 'C',   10, NULL, NULL)
 };
 
 // Dirt ---------------------------------------------------------------------
@@ -64,8 +64,8 @@ DEBRIS (ARock3, 43, 2, S_ROCK3_D)
 
 DEBRIS (ADirt1, 44, 2, S_DIRT1_D)
 {
-	S_NORMAL (ROCK, 'D',   20, NULL, &States[S_DIRT1]),
-	S_NORMAL (ROCK, 'D',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'D',   20, NULL, &States[S_DIRT1]),
+	S_NORMAL (ROKK, 'D',   10, NULL, NULL)
 };
 
 #define S_DIRT2 0
@@ -73,8 +73,8 @@ DEBRIS (ADirt1, 44, 2, S_DIRT1_D)
 
 DEBRIS (ADirt2, 45, 2, S_DIRT2_D)
 {
-	S_NORMAL (ROCK, 'E',   20, NULL, &States[S_DIRT2]),
-	S_NORMAL (ROCK, 'E',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'E',   20, NULL, &States[S_DIRT2]),
+	S_NORMAL (ROKK, 'E',   10, NULL, NULL)
 };
 
 #define S_DIRT3 0
@@ -82,8 +82,8 @@ DEBRIS (ADirt2, 45, 2, S_DIRT2_D)
 
 DEBRIS (ADirt3, 46, 2, S_DIRT3_D)
 {
-	S_NORMAL (ROCK, 'F',   20, NULL, &States[S_DIRT3]),
-	S_NORMAL (ROCK, 'F',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'F',   20, NULL, &States[S_DIRT3]),
+	S_NORMAL (ROKK, 'F',   10, NULL, NULL)
 };
 
 #define S_DIRT4 0
@@ -91,8 +91,8 @@ DEBRIS (ADirt3, 46, 2, S_DIRT3_D)
 
 DEBRIS (ADirt4, 47, 2, S_DIRT4_D)
 {
-	S_NORMAL (ROCK, 'G',   20, NULL, &States[S_DIRT4]),
-	S_NORMAL (ROCK, 'G',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'G',   20, NULL, &States[S_DIRT4]),
+	S_NORMAL (ROKK, 'G',   10, NULL, NULL)
 };
 
 #define S_DIRT5 0
@@ -100,8 +100,8 @@ DEBRIS (ADirt4, 47, 2, S_DIRT4_D)
 
 DEBRIS (ADirt5, 48, 2, S_DIRT5_D)
 {
-	S_NORMAL (ROCK, 'H',   20, NULL, &States[S_DIRT5]),
-	S_NORMAL (ROCK, 'H',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'H',   20, NULL, &States[S_DIRT5]),
+	S_NORMAL (ROKK, 'H',   10, NULL, NULL)
 };
 
 #define S_DIRT6 0
@@ -109,8 +109,8 @@ DEBRIS (ADirt5, 48, 2, S_DIRT5_D)
 
 DEBRIS (ADirt6, 49, 2, S_DIRT6_D)
 {
-	S_NORMAL (ROCK, 'I',   20, NULL, &States[S_DIRT6]),
-	S_NORMAL (ROCK, 'I',   10, NULL, NULL)
+	S_NORMAL (ROKK, 'I',   20, NULL, &States[S_DIRT6]),
+	S_NORMAL (ROKK, 'I',   10, NULL, NULL)
 };
 
 // Stained glass ------------------------------------------------------------

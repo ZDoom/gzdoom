@@ -131,6 +131,7 @@ enum EDemoCommand
 	DEM_SLOTSCHANGE,	// 30 Stream: New weapon slot assignments
 	DEM_SLOTCHANGE,		// 31 Byte: Slot, Stream: Weapon assigments
 	DEM_RUNSCRIPT,		// 32 Word: Script#, Byte: # of args; each arg is a 4-byte int
+	DEM_SINFCHANGEDXOR,	// 33 Like DEM_SINFCHANGED, but data is a byte indicating how to set a bit
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp

@@ -310,11 +310,14 @@ void A_SpawnFly (AActor *self)
 	newmobj = Spawn (type, targ->x, targ->y, targ->z);
 	if (newmobj != NULL)
 	{
-		if (P_LookForPlayers (newmobj, true))
+		if (newmobj->SeeState != NULL && P_LookForPlayers (newmobj, true))
 			newmobj->SetState (newmobj->SeeState);
-		
-		// telefrag anything in this spot
-		P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);
+
+		if (!(newmobj->ObjectFlags & OF_MassDestruction))
+		{
+			// telefrag anything in this spot
+			P_TeleportMove (newmobj, newmobj->x, newmobj->y, newmobj->z, true);
+		}
 	}
 
 	// remove self (i.e., cube).

@@ -477,11 +477,12 @@ manual_floor:
 			floor->m_NewSpecial = sec->special; 
 
 			//jff 5/23/98 use model subroutine to unify fixes and handling
-			sec = sec->FindModelFloorSector (newheight);
-			if (sec)
+			sector_t *modelsec;
+			modelsec = sec->FindModelFloorSector (newheight);
+			if (modelsec != NULL)
 			{
-				floor->m_Texture = sec->floorpic;
-				floor->m_NewSpecial = sec->special;
+				floor->m_Texture = modelsec->floorpic;
+				floor->m_NewSpecial = modelsec->special;
 			}
 			break;
 

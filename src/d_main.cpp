@@ -309,8 +309,19 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 	// If nofov is set, force everybody to the arbitrator's FOV.
 	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
 	{
+		BYTE fov;
+
 		Net_WriteByte (DEM_FOV);
-		Net_WriteByte ((BYTE)players[consoleplayer].DesiredFOV);
+
+		// If the game is started with DF_NO_FOV set, the arbitrator's
+		// DesiredFOV will not be set when this callback is run, so
+		// be sure not to transmit a 0 FOV.
+		fov = (BYTE)players[consoleplayer].DesiredFOV;
+		if (fov == 0)
+		{
+			fov = 90;
+		}
+		Net_WriteByte (fov);
 	}
 }
 

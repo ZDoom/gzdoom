@@ -2039,3 +2039,14 @@ void R_DrawParticle (vissprite_t *vis)
 		dest += spacing;
 	} while (--ycount);
 }
+
+CCMD (sprlist)
+{
+	for (size_t i = 0; i < sprites.Size(); ++i)
+	{
+		if (sprites[i].numframes != 0)
+		{
+			Printf ("%s\n", sprites[i].name);
+		}
+	}
+}

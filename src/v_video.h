@@ -128,6 +128,7 @@ public:
 	// Access control
 	virtual bool Lock () = 0;		// Returns true if the surface was lost since last time
 	virtual void Unlock () = 0;
+	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
 
 	// Copy blocks from one canvas to another
 	virtual void Blit (int srcx, int srcy, int srcwidth, int srcheight, DCanvas *dest, int destx, int desty, int destwidth, int destheight);

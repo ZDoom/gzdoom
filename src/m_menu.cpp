@@ -1523,14 +1523,14 @@ void M_VerifyNightmare (int ch)
 		return;
 		
 	gameskill = 4;
-	G_DeferedInitNew (CalcMapName (epi+1, 1));
+	G_DeferedInitNew (EpisodeMaps[epi]);
 	gamestate = gamestate == GS_FULLCONSOLE ? GS_HIDECONSOLE : gamestate;
 	M_ClearMenus ();
 }
 
 void M_ChooseSkill (int choice)
 {
-	if (gameinfo.gametype & (GAME_Doom|GAME_Strife) && choice == NewDef.numitems - 1)
+	if (gameinfo.gametype == GAME_Doom && choice == NewDef.numitems - 1)
 	{
 		M_StartMessage (GStrings(NIGHTMARE), M_VerifyNightmare, true);
 		return;

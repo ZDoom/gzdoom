@@ -26,6 +26,7 @@
 #include "m_crc32.h"
 #include "v_text.h"
 #include "templates.h"
+#include "gi.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -185,7 +186,7 @@ void FWadCollection::InitMultipleFiles (wadlist_t **filenames)
 	// [RH] Merge sprite and flat groups.
 	//		(We don't need to bother with patches, since
 	//		Doom doesn't use markers to identify them.)
-	MergeLumps ("S_START", "S_END", ns_sprites);
+	RenameSprites (MergeLumps ("S_START", "S_END", ns_sprites));
 	MergeLumps ("F_START", "F_END", ns_flats);
 	MergeLumps ("C_START", "C_END", ns_colormaps);
 	MergeLumps ("A_START", "A_END", ns_acslibrary);
@@ -621,11 +622,56 @@ void FWadCollection::ScanForFlatHack (int startlump)
 	{
 		if (LumpInfo[i].name[0] == 'F')
 		{
+			int j;
+
 			if (strcmp (LumpInfo[i].name + 1, "_START") == 0 ||
 				strncmp (LumpInfo[i].name + 1, "F_START", 7) == 0)
 			{
-				// If the wad has a F_START/FF_START marker, don't
-				// try to fix it.
+				// If the wad has a F_START/FF_START marker, check for
+				// a FF_START-flats-FF_END-flats-F_END pattern as seen
+				// in darkhour.wad. At what point do I stop making hacks
+				// for wads that are incorrect?
+				for (i = i + 1; i < NumLumps; ++i)
+				{
+					if (LumpInfo[i].name[0] == 'F' && strcmp (LumpInfo[i].name + 1, "F_END") == 0)
+					{
+						// Found FF_END
+						break;
+					}
+					if (LumpInfo[i].size != 4096)
+					{
+						return;
+					}
+				}
+				if (i < NumLumps)
+				{
+					// Look for flats-F_END
+					for (j = ++i; j < NumLumps; ++j)
+					{
+						if (LumpInfo[j].name[0] == 'F' && strcmp (LumpInfo[j].name + 1, "_END") == 0)
+						{
+							// Found F_END, so bump all the flats between FF_END/F_END up and move the
+							// FF_END so it immediately precedes F_END.
+							if (i != j - 1)
+							{
+								for (; i < j; ++i)
+								{
+									LumpInfo[i - 1] = LumpInfo[i];
+								}
+								--i;
+								strcpy (LumpInfo[i].name, "FF_END");
+								LumpInfo[i].size = 0;
+								LumpInfo[i].namespc = ns_global;
+								LumpInfo[i].flags = 0;
+							}
+							return;
+						}
+						if (LumpInfo[j].size != 4096)
+						{
+							return;
+						}
+					}
+				}
 				return;
 			}
 
@@ -636,8 +682,6 @@ void FWadCollection::ScanForFlatHack (int startlump)
 			// determine where to put the F_START anyway.
 			if (strcmp (LumpInfo[i].name + 1, "_END") == 0)
 			{
-				int j;
-
 				// When F_END is found, back up past any lumps of length
 				// 4096, then insert an F_START marker.
 				for (j = i - 1; j >= startlump && LumpInfo[j].size == 4096; --j)
@@ -690,6 +734,103 @@ void FWadCollection::ScanForFlatHack (int startlump)
 
 //==========================================================================
 //
+// RenameSprites
+//
+// Renames sprites in IWADs so that unique actors can have unique sprites,
+// making it possible to import any actor from any game into any other
+// game without jumping through hoops to resolve duplicate sprite names.
+// You just need to know what the sprite's new name is.
+//
+//==========================================================================
+
+void FWadCollection::RenameSprites (int startlump)
+{
+	static const DWORD HereticRenames[] =
+	{ MAKE_ID('H','E','A','D'), MAKE_ID('L','I','C','H'),		// Ironlich
+	};
+
+	static const DWORD HexenRenames[] =
+	{ MAKE_ID('B','A','R','L'), MAKE_ID('Z','B','A','R'),		// ZBarrel
+	  MAKE_ID('A','R','M','1'), MAKE_ID('A','R','_','1'),		// MeshArmor
+	  MAKE_ID('A','R','M','2'), MAKE_ID('A','R','_','2'),		// FalconShield
+	  MAKE_ID('A','R','M','3'), MAKE_ID('A','R','_','3'),		// PlatinumHelm
+	  MAKE_ID('A','R','M','4'), MAKE_ID('A','R','_','4'),		// AmuletOfWarding
+	  MAKE_ID('S','U','I','T'), MAKE_ID('Z','S','U','I'),		// ZSuitOfArmor and ZArmorChunk
+	  MAKE_ID('T','R','E','1'), MAKE_ID('Z','T','R','E'),		// ZTree and ZTreeDead
+	  MAKE_ID('T','R','E','2'), MAKE_ID('T','R','E','S'),		// ZTreeSwamp150
+	  MAKE_ID('C','A','N','D'), MAKE_ID('B','C','A','N'),		// ZBlueCandle
+	  MAKE_ID('R','O','C','K'), MAKE_ID('R','O','K','K'),		// rocks and dirt in a_debris.cpp
+	  MAKE_ID('W','A','T','R'), MAKE_ID('U','W','A','T'),		// this is unused but conflicts with Strife
+	  MAKE_ID('G','I','B','S'), MAKE_ID('P','O','L','5'),		// RealGibs
+	};
+
+	static const DWORD StrifeRenames[] =
+	{ MAKE_ID('M','I','S','L'), MAKE_ID('S','M','I','S'),		// lots of places
+	  MAKE_ID('A','R','M','1'), MAKE_ID('A','R','M','3'),		// MetalArmor
+	  MAKE_ID('A','R','M','2'), MAKE_ID('A','R','M','4'),		// LeatherArmor
+	  MAKE_ID('P','M','A','P'), MAKE_ID('S','M','A','P'),		// StrifeMap
+	  MAKE_ID('T','L','M','P'), MAKE_ID('T','E','C','H'),		// TechLampSilver and TechLampBrass
+	  MAKE_ID('T','R','E','1'), MAKE_ID('T','R','E','T'),		// TreeStub
+	  MAKE_ID('B','A','R','1'), MAKE_ID('B','A','R','C'),		// BarricadeColumn
+	  MAKE_ID('S','H','T','2'), MAKE_ID('M','P','U','F'),		// MaulerPuff
+	  MAKE_ID('B','A','R','L'), MAKE_ID('B','B','A','R'),		// StrifeBurningBarrel
+	  MAKE_ID('T','R','C','H'), MAKE_ID('T','R','H','L'),		// SmallTorchLit
+	  MAKE_ID('S','H','R','D'), MAKE_ID('S','H','A','R'),		// unimplemented glass shards
+	  MAKE_ID('B','L','S','T'), MAKE_ID('M','A','U','L'),		// Mauler
+	  MAKE_ID('L','O','G','G'), MAKE_ID('L','O','G','W'),		// StickInWater
+	  MAKE_ID('V','A','S','E'), MAKE_ID('V','A','Z','E'),		// Pot and Pitcher
+	  MAKE_ID('C','N','D','L'), MAKE_ID('K','N','D','L'),		// Candle
+	  MAKE_ID('P','O','T','1'), MAKE_ID('M','P','O','T'),		// MetalPot
+	  MAKE_ID('S','P','I','D'), MAKE_ID('S','T','L','K'),		// Stalker (unimplemented)
+	};
+
+	const DWORD *renames;
+	int numrenames;
+
+	switch (gameinfo.gametype)
+	{
+	case GAME_Doom:
+		// Doom's sprites don't get renamed.
+		return;
+
+	case GAME_Heretic:
+		renames = HereticRenames;
+		numrenames = sizeof(HereticRenames)/8;
+		break;
+
+	case GAME_Hexen:
+		renames = HexenRenames;
+		numrenames = sizeof(HexenRenames)/8;
+		break;
+
+	case GAME_Strife:
+		renames = StrifeRenames;
+		numrenames = sizeof(StrifeRenames)/8;
+		break;
+	}
+
+	for (int i = startlump + 1;
+		i < NumLumps && 
+		 *(DWORD *)LumpInfo[i].name != MAKE_ID('S','_','E','N') &&
+		 *(((DWORD *)LumpInfo[i].name) + 1) != MAKE_ID('D',0,0,0);
+		++i)
+	{
+		// Only sprites in the IWAD get renamed
+		if (LumpInfo[i].wadnum == IWAD_FILENUM)
+		{
+			for (int j = 0; j < numrenames; ++j)
+			{
+				if (*(DWORD *)LumpInfo[i].name == renames[j*2])
+				{
+					*(DWORD *)LumpInfo[i].name = renames[j*2+1];
+				}
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
 // MergeLumps
 //
 // Merge multiple tagged groups into one
@@ -697,11 +838,12 @@ void FWadCollection::ScanForFlatHack (int startlump)
 //
 //==========================================================================
 
-void FWadCollection::MergeLumps (const char *start, const char *end, int space)
+int FWadCollection::MergeLumps (const char *start, const char *end, int space)
 {
 	char ustart[8], uend[8];
 	LumpRecord *newlumpinfos;
 	int newlumps, oldlumps;
+	int markerpos;
     size_t i;
 	BOOL insideBlock;
 
@@ -722,6 +864,7 @@ void FWadCollection::MergeLumps (const char *start, const char *end, int space)
 			if (IsMarker (LumpInfo + i, ustart))
 			{
 				insideBlock = true;
+				markerpos = i;
 
 				// Create start marker if we haven't already
 				if (!newlumps)
@@ -771,7 +914,7 @@ void FWadCollection::MergeLumps (const char *start, const char *end, int space)
 			LumpInfo = (LumpRecord *)Realloc (LumpInfo, oldlumps + newlumps);
 
 		memcpy (LumpInfo + oldlumps, newlumpinfos, sizeof(LumpRecord) * newlumps);
-
+		markerpos = oldlumps;
 		NumLumps = oldlumps + newlumps;
 		
 		strncpy (LumpInfo[NumLumps].name, uend, 8);
@@ -783,6 +926,7 @@ void FWadCollection::MergeLumps (const char *start, const char *end, int space)
 	}
 
 	delete[] newlumpinfos;
+	return markerpos;
 }
 
 //==========================================================================

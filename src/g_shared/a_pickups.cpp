@@ -613,9 +613,6 @@ bool AKey::TryPickup (AActor *toucher)
 {
 	keytype_t keytype = GetKeyType ();
 	player_t *player = toucher->player;
-	if (player->keys[keytype])
-		return false;
-
 	P_GiveKey (player, keytype);
 	return true;
 }

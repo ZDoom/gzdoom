@@ -5,7 +5,7 @@
 #include "p_enemy.h"
 #include "s_sound.h"
 
-void A_1fa10 (AActor *);
+void A_SentinelRefire (AActor *);
 void A_PeasantAttack (AActor *);
 void A_TossGib (AActor *);
 
@@ -33,7 +33,7 @@ FState ABeggar::States[] =
 	S_NORMAL (BEGR, 'D',	8, NULL,					&States[S_BEGGAR_ATTACK+1]),
 	S_NORMAL (BEGR, 'E',	8, A_PeasantAttack,			&States[S_BEGGAR_ATTACK+2]),
 	S_NORMAL (BEGR, 'E',	1, A_Chase,					&States[S_BEGGAR_ATTACK+3]),
-	S_NORMAL (BEGR, 'D',	8, A_1fa10,					&States[S_BEGGAR_ATTACK]),
+	S_NORMAL (BEGR, 'D',	8, A_SentinelRefire,		&States[S_BEGGAR_ATTACK]),
 
 #define S_BEGGAR_PAIN (S_BEGGAR_ATTACK+4)
 	S_NORMAL (BEGR, 'A',	3, A_Pain,					&States[S_BEGGAR_PAIN+1]),

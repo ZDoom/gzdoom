@@ -199,6 +199,10 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	if (self->player == NULL)
 		return;
 
+	// No obituaries for voodoo dolls
+	if (self->player->mo != self)
+		return;
+
 	gender = self->player->userinfo.gender;
 
 	// Treat voodoo dolls as unknown deaths
@@ -713,7 +717,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		}
 		return;
 	}
-	if ((target->flags2 & MF2_INVULNERABLE) && damage < 10000)
+	if ((target->flags2 & MF2_INVULNERABLE) && damage < 1000000)
 	{ // actor is invulnerable
 		if (target->player) return;		// for players, no exceptions
 		if (!inflictor || !(inflictor->flags3 & MF3_FOILINVUL))
@@ -838,7 +842,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 		if (source != NULL && player != source->player && target->IsTeammate (source))
 		{
 			MeansOfDeath |= MOD_FRIENDLY_FIRE;
-			if (damage < 10000)
+			if (damage < 1000000)
 			{ // Still allow telefragging :-(
 				damage = (int)((float)damage * teamdamage);
 				if (damage <= 0)
@@ -1121,7 +1125,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 	{
 		return;
 	}
-	if (target->flags2&MF2_INVULNERABLE && damage < 10000)
+	if (target->flags2&MF2_INVULNERABLE && damage < 1000000)
 	{ // target is invulnerable
 		return;
 	}

@@ -894,13 +894,13 @@ FUNC(LS_DamageThing)
 		{
 			if (arg0 == 0)
 			{
-				arg0 = 10000;
+				arg0 = 1000000;
 			}
 			P_DamageMobj (it, NULL, NULL, arg0, MOD_UNKNOWN);
 		}
 		else
 		{ // If zero damage, guarantee a kill
-			P_DamageMobj (it, NULL, NULL, 10000, MOD_UNKNOWN);
+			P_DamageMobj (it, NULL, NULL, 1000000, MOD_UNKNOWN);
 		}
 	}
 
@@ -1019,7 +1019,7 @@ FUNC(LS_Thing_Destroy)
 		{
 			AActor *temp = iterator.Next ();
 			if (actor->flags & MF_SHOOTABLE)
-				P_DamageMobj (actor, NULL, it, arg1 ? 10000 : actor->health, MOD_UNKNOWN);
+				P_DamageMobj (actor, NULL, it, arg1 ? 1000000 : actor->health, MOD_UNKNOWN);
 			actor = temp;
 		}
 	}
@@ -2024,7 +2024,19 @@ enum
 	PROP_NOTARGET,
 	PROP_INSTANTWEAPONSWITCH,
 	PROP_FLY,
-	PROP_TOTALLYFROZEN
+	PROP_TOTALLYFROZEN,
+
+	PROP_INVULNERABILITY,
+	PROP_STRENGTH,
+	PROP_INVISIBILITY,
+	PROP_RADIATIONSUIT,
+	PROP_ALLMAP,
+	PROP_INFRARED,
+	PROP_WEAPONLEVEL2,
+	PROP_FLIGHT,
+	PROP_UNUSED1,
+	PROP_UNUSED2,
+	PROP_SPEED,
 };
 
 FUNC(LS_SetPlayerProperty)
@@ -2035,6 +2047,47 @@ FUNC(LS_SetPlayerProperty)
 	if ((!it || !it->player) && !arg0)
 		return false;
 
+	// Add or remove a power
+	if (arg2 >= PROP_INVULNERABILITY && arg2 <= PROP_SPEED)
+	{
+		powertype_t power = (powertype_t)(arg2 - PROP_INVULNERABILITY);
+
+		if (arg0 == 0)
+		{
+			if (arg1)
+			{
+				if (!it->player->powers[power])
+					P_GivePower (it->player, power);
+			}
+			else
+			{
+				it->player->powers[power] = power == pw_strength ? 0 : 1;
+			}
+		}
+		else
+		{
+			int i;
+
+			for (i = 0; i < MAXPLAYERS; i++)
+			{
+				if (!playeringame[i])
+					continue;
+
+				if (arg1)
+				{
+					if (!players[i].powers[power])
+						P_GivePower (&players[i], power);
+				}
+				else
+				{
+					players[i].powers[power] = power == pw_strength ? 0 : 1;
+				}
+			}
+		}
+		return true;
+	}
+
+	// Set or clear a flag
 	switch (arg2)
 	{
 	case PROP_FROZEN:
@@ -2083,9 +2136,6 @@ FUNC(LS_SetPlayerProperty)
 FUNC(LS_TranslucentLine)
 // TranslucentLine (id, amount, type)
 {
-	if (ln)
-		return false;
-
 	int linenum = -1;
 	while ((linenum = P_FindLineFromID (arg0, linenum)) >= 0)
 	{

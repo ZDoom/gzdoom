@@ -558,7 +558,14 @@ void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
 {
 	int secnum;
 
-	if (upper < lower) {
+	// If tics is non-positive, then we can't really do anything.
+	if (tics <= 0)
+	{
+		return;
+	}
+
+	if (upper < lower)
+	{
 		int temp = upper;
 		upper = lower;
 		lower = temp;
@@ -578,7 +585,7 @@ void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
 void EV_StartLightFading (int tag, int value, int tics)
 {
 	int secnum;
-		
+
 	secnum = -1;
 	while ((secnum = P_FindSectorFromTag (tag,secnum)) >= 0)
 	{
@@ -586,11 +593,18 @@ void EV_StartLightFading (int tag, int value, int tics)
 		if (sec->lightingdata)
 			continue;
 
-		// No need to fade if lightlevel is already at desired value.
-		if (sec->lightlevel == value)
-			continue;
+		if (tics <= 0)
+		{
+			sec->lightlevel = value;
+		}
+		else
+		{
+			// No need to fade if lightlevel is already at desired value.
+			if (sec->lightlevel == value)
+				continue;
 
-		new DGlow2 (sec, sec->lightlevel, value, tics, true);
+			new DGlow2 (sec, sec->lightlevel, value, tics, true);
+		}
 	}
 }
 

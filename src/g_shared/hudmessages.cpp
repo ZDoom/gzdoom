@@ -417,7 +417,14 @@ DHUDMessageTypeOnFadeOut::DHUDMessageTypeOnFadeOut (const char *text, float x, f
 	if (TypeOnTime == 0.f)
 		TypeOnTime = 0.1f;
 	CurrLine = 0;
-	LineLen = (int)strlen (Lines[0].string);
+	if (Lines[0].string != NULL)
+	{
+		LineLen = (int)strlen (Lines[0].string);
+	}
+	else
+	{
+		LineLen = 0;
+	}
 	LineVisible = 0;
 	State = 3;
 }

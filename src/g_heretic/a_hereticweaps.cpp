@@ -1347,7 +1347,7 @@ int AMaceFX4::DoSpecialDamage (AActor *target, int damage)
 			return -1;
 		}
 	}
-	return 10000; // Something's gonna die
+	return 1000000; // Something's gonna die
 }
 
 // Mace spawn spot ----------------------------------------------------------

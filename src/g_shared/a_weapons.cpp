@@ -352,6 +352,10 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 				{
 					continue;
 				}
+				if (infos[weap]->flags & WIF_AMMO_OPTIONAL)
+				{
+					break;
+				}
 				int count = infos[weap]->GetMinAmmo();
 				if (infos[weap]->ammo == MANA_BOTH)
 				{
@@ -376,6 +380,10 @@ weapontype_t FWeaponSlot::PickWeapon (player_t *player)
 		if (weap >= NUMWEAPONS || !player->weaponowned[weap])
 		{
 			continue;
+		}
+		if (infos[weap]->flags & WIF_AMMO_OPTIONAL)
+		{
+			return weap;
 		}
 		int count = infos[weap]->GetMinAmmo();
 		if (infos[weap]->ammo == MANA_BOTH)
@@ -504,6 +512,10 @@ weapontype_t PickNextWeapon (player_s *player)
 			{
 				continue;
 			}
+			if (infos[weap]->flags & WIF_AMMO_OPTIONAL)
+			{
+				return (weapontype_t)weap;
+			}
 			int count = infos[weap]->GetMinAmmo();
 			if (infos[weap]->ammo == MANA_BOTH)
 			{
@@ -549,6 +561,10 @@ weapontype_t PickPrevWeapon (player_s *player)
 				continue;
 			}
 			int count = infos[weap]->GetMinAmmo();
+			if (infos[weap]->flags & WIF_AMMO_OPTIONAL)
+			{
+				return (weapontype_t)weap;
+			}
 			if (infos[weap]->ammo == MANA_BOTH)
 			{
 				if (player->ammo[MANA_1] < count || player->ammo[MANA_2] < count)

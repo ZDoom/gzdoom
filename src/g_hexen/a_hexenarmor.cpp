@@ -23,7 +23,7 @@ protected:
 
 FState AMeshArmor::States[] =
 {
-	S_NORMAL (ARM1, 'A',   -1, NULL					    , NULL),
+	S_NORMAL (AR_1, 'A',   -1, NULL					    , NULL),
 };
 
 IMPLEMENT_ACTOR (AMeshArmor, Hexen, 8005, 68)
@@ -50,7 +50,7 @@ protected:
 
 FState AFalconShield::States[] =
 {
-	S_NORMAL (ARM2, 'A',   -1, NULL					    , NULL),
+	S_NORMAL (AR_2, 'A',   -1, NULL					    , NULL),
 };
 
 IMPLEMENT_ACTOR (AFalconShield, Hexen, 8006, 69)
@@ -77,7 +77,7 @@ protected:
 
 FState APlatinumHelm::States[] =
 {
-	S_NORMAL (ARM3, 'A',   -1, NULL					    , NULL),
+	S_NORMAL (AR_3, 'A',   -1, NULL					    , NULL),
 };
 
 IMPLEMENT_ACTOR (APlatinumHelm, Hexen, 8007, 70)
@@ -104,7 +104,7 @@ protected:
 
 FState AAmuletOfWarding::States[] =
 {
-	S_NORMAL (ARM4, 'A',   -1, NULL					    , NULL),
+	S_NORMAL (AR_4, 'A',   -1, NULL					    , NULL),
 };
 
 IMPLEMENT_ACTOR (AAmuletOfWarding, Hexen, 8008, 71)

@@ -1031,8 +1031,8 @@ class AZSuitOfArmor : public AActor
 
 FState AZSuitOfArmor::States[] =
 {
-	S_NORMAL (SUIT, 'A',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'A',	1, A_SoAExplode 			, NULL)
+	S_NORMAL (ZSUI, 'A',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'A',	1, A_SoAExplode 			, NULL)
 };
 
 IMPLEMENT_ACTOR (AZSuitOfArmor, Hexen, 8064, 0)
@@ -1058,16 +1058,16 @@ class AZArmorChunk : public AActor
 
 FState AZArmorChunk::States[] =
 {
-	S_NORMAL (SUIT, 'B',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'C',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'D',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'E',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'F',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'G',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'H',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'I',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'J',   -1, NULL 					, NULL),
-	S_NORMAL (SUIT, 'K',   -1, NULL 					, NULL)
+	S_NORMAL (ZSUI, 'B',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'C',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'D',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'E',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'F',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'G',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'H',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'I',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'J',   -1, NULL 					, NULL),
+	S_NORMAL (ZSUI, 'K',   -1, NULL 					, NULL)
 };
 
 IMPLEMENT_ACTOR (AZArmorChunk, Hexen, -1, 0)

@@ -325,6 +325,7 @@ protected:
 
 	FIntCVar &ValueVar;
 	DWORD BitVal;
+	int BitNum;
 };
 
 class FGUIDCVar : public FBaseCVar

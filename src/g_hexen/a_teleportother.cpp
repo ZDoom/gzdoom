@@ -282,7 +282,7 @@ void P_TeleportToPlayerStarts (AActor *victim)
 	destX = playerstarts[i].x << FRACBITS;
 	destY = playerstarts[i].y << FRACBITS;
 	destAngle = ANG45 * (playerstarts[i].angle/45);
-	P_Teleport (victim, destX, destY, destAngle, ONFLOORZ, true, false);
+	P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, false);
 }
 
 //===========================================================================
@@ -304,7 +304,7 @@ void P_TeleportToDeathmatchStarts (AActor *victim)
 		destX = deathmatchstarts[i].x << FRACBITS;
 		destY = deathmatchstarts[i].y << FRACBITS;
 		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
-		P_Teleport (victim, destX, destY, destAngle, ONFLOORZ, true, false);
+		P_Teleport (victim, destX, destY, ONFLOORZ, destAngle, true, false);
 	}
 	else
 	{

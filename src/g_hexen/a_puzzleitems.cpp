@@ -40,6 +40,8 @@ bool APuzzleItem::ActivateArti (player_t *player, artitype_t arti)
 	{
 		return true;
 	}
+	// [RH] Always play the sound if the use fails.
+	S_Sound (player->mo, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
 	C_MidPrintBold (GStrings(TXT_USEPUZZLEFAILED));
 	return false;
 }

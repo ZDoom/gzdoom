@@ -222,12 +222,16 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MDK:
-		// Don't allow this in deathmatch even with cheats enabled, because it's
-		// a very very cheap kill.
-		if (!deathmatch)
+		if (player->mo == NULL)
 		{
+			Printf ("MDK won't work outside of a game.\n");
+		}
+		else if (!deathmatch)
+		{
+			// Don't allow this in deathmatch even with cheats enabled, because it's
+			// a very very cheap kill.
 			P_LineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE,
-				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), 10000);
+				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), 1000000);
 		}
 		break;
 	}
@@ -431,7 +435,7 @@ void cht_Suicide (player_t *plyr)
 	{
 		plyr->mo->flags |= MF_SHOOTABLE;
 		while (plyr->health > 0)
-			P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, 10000, MOD_SUICIDE);
+			P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, 1000000, MOD_SUICIDE);
 		plyr->mo->flags &= ~MF_SHOOTABLE;
 	}
 }

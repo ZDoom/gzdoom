@@ -79,8 +79,8 @@ typedef enum
 // Powerups added in Heretic
 	pw_weaponlevel2,
 	pw_flight,
-	pw_shield,
-	pw_health2,
+	pw_unused1,		// was pw_shield
+	pw_unused2,		// was pw_health2
 
 // Powerups added in Hexen
 	pw_speed,

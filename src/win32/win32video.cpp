@@ -373,8 +373,6 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 	DDrawFB *fb = new DDrawFB (width, height, fullscreen);
 	LOG1 ("New fb created @ %p\n", fb);
 
-	retry = 0;
-
 	// If we could not create the framebuffer, try again with slightly
 	// different parameters in this order:
 	// 1. Try with the closest size
@@ -1446,8 +1444,8 @@ void DDrawFB::Update ()
 		{
 			if (FlipFlags & DDFLIP_NOVSYNC)
 			{
-				Printf ("disabled vsync\n");
 				FlipFlags &= ~DDFLIP_NOVSYNC;
+				Printf ("Can't disable vsync\n");
 				PrimarySurf->Flip (NULL, FlipFlags);
 			}
 		}

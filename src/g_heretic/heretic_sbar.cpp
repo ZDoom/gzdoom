@@ -583,20 +583,20 @@ private:
 		else
 		{
 			// Draw keys
-			i = -8;
+			i = -7;
 			if (CPlayer->keys[key_blue])
 			{
-				DrawOuterImage (Images[imgBKEYICON], 45, i);
+				DrawOuterImage (Images[imgBKEYICON], 54, i);
 				i -= 8;
 			}
 			if (CPlayer->keys[key_green])
 			{
-				DrawOuterImage (Images[imgGKEYICON], 45, i);
+				DrawOuterImage (Images[imgGKEYICON], 54, i);
 				i -= 8;
 			}
 			if (CPlayer->keys[key_yellow])
 			{
-				DrawOuterImage (Images[imgYKEYICON], 45, i);
+				DrawOuterImage (Images[imgYKEYICON], 54, i);
 			}
 		}
 

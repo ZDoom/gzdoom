@@ -520,10 +520,7 @@ char *FGameConfigFile::GetConfigPath (bool tryProg)
 		return copystring (path);
 
 #ifndef unix
-	char appDir[MAX_PATH];
-
 	path = NULL;
-	ITEMIDLIST *idList;
 	HRESULT hr;
 
 	TCHAR uname[UNLEN+1];
@@ -535,7 +532,7 @@ char *FGameConfigFile::GetConfigPath (bool tryProg)
 	if (SUCCEEDED(hr) && uname[0] != 0)
 	{
 		// Is it valid for a user name to have slashes?
-		// Check for them and susbstitute just in case.
+		// Check for them and substitute just in case.
 		char *probe = uname;
 		while (*probe != 0)
 		{
@@ -565,32 +562,6 @@ char *FGameConfigFile::GetConfigPath (bool tryProg)
 			else
 			{
 				fclose (checker);
-			}
-		}
-	}
-
-	if (path == NULL)
-	{
-		//Win95 does not provide SHGetSpecialFolderPath without IE 4 installed.
-		//hr = SHGetSpecialFolderPath (Window, appDir, CSIDL_APPDATA, TRUE);
-		hr = SHGetSpecialFolderLocation (Window, CSIDL_APPDATA, &idList);
-		if (SUCCEEDED(hr))
-		{
-			SHGetPathFromIDListA (idList, appDir);
-			LPMALLOC shellAlloc;
-			if (SUCCEEDED(SHGetMalloc (&shellAlloc)))
-			{
-				shellAlloc->Free (idList);
-				shellAlloc->Release ();
-			}
-			path = new char[strlen (appDir) + 11];
-			sprintf (path, "%s\\zdoom.ini", appDir);
-			// If zdoom.ini does not already exist in the user's profile,
-			// then look for it in the program directory instead.
-			if (tryProg && !FileExists (path))
-			{
-				delete[] path;
-				path = NULL;
 			}
 		}
 	}

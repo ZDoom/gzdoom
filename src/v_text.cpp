@@ -98,6 +98,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 	const byte *range;
 	int			height;
 	int			scalex, scaley;
+	int			kerning;
 	FTexture *pic;
 
 	if (Font == NULL || string == NULL)
@@ -109,6 +110,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 
 	range = Font->GetColorTranslation ((EColorRange)normalcolor);
 	height = Font->GetHeight () + 1;
+	kerning = Font->GetDefaultKerning ();
 
 	ch = (const byte *)string;
 	cx = x;
@@ -229,7 +231,7 @@ void STACK_ARGS DCanvas::DrawText (int normalcolor, int x, int y, const char *st
 			DrawTexture (pic, cx, cy, DTA_Translation, range, TAG_MORE, taglist);
 			va_end (taglist);
 		}
-		cx += w * scalex;
+		cx += (w + kerning) * scalex;
 	}
 }
 
@@ -258,7 +260,7 @@ int FFont::StringWidth (const BYTE *string) const
 		}
 		else
 		{
-			w += GetCharWidth (*string++);
+			w += GetCharWidth (*string++) + GlobalKerning;
 		}
 	}
 				
@@ -307,6 +309,7 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 	int i, c, w, nw;
 	char lastcolor = 0, linecolor = 0;
 	BOOL lastWasSpace = false;
+	int kerning = screen->Font->GetDefaultKerning ();
 
 	i = w = 0;
 
@@ -369,7 +372,7 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string, bool keepspace)
 		}
 		else
 		{
-			w += nw;
+			w += nw + kerning;
 		}
 	}
 

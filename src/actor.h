@@ -531,7 +531,7 @@ public:
 	AActor			*inext, **iprev;// Links to other mobjs in same bucket
 	AActor			*goal;			// Monster's goal if not chasing anything
 	BYTE			waterlevel;		// 0=none, 1=feet, 2=waist, 3=eyes
-	BYTE			SpawnFlags;
+	WORD			SpawnFlags;
 
 	// a linked list of sectors where this object appears
 	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98

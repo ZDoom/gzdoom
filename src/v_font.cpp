@@ -175,6 +175,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	FirstChar = first;
 	LastChar = first + count - 1;
 	FontHeight = 0;
+	GlobalKerning = false;
 	memset (usedcolors, 0, 256);
 	Name = copystring (name);
 	Next = FirstFont;
@@ -611,6 +612,7 @@ void FSingleLumpFont::LoadFON1 (int lump, const BYTE *data)
 	ActiveColors = 255;
 	FirstChar = 0;
 	LastChar = 255;
+	GlobalKerning = 0;
 
 	BuildTranslations2 ();
 
@@ -659,7 +661,16 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 	count = LastChar - FirstChar + 1;
 	Chars = new CharData[count];
 	widths2 = new int[count];
-	widths = (WORD *)(data + 12);
+	if (data[11] & 1)
+	{
+		GlobalKerning = data[12] + data[13]*256;
+		widths = (WORD *)(data + 14);
+	}
+	else
+	{
+		GlobalKerning = 0;
+		widths = (WORD *)(data + 12);
+	}
 	totalwidth = 0;
 
 	if (data[8])
@@ -670,7 +681,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const BYTE *data)
 			widths2[i] = totalwidth;
 		}
 		totalwidth *= count;
-		palette = data + 14;
+		palette = (BYTE *)&widths[1];
 	}
 	else
 	{

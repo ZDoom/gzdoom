@@ -250,6 +250,11 @@ WEAPON1 (wp_mstaff, AMWeapBloodscourge)
 
 // Mage Staff FX2 (Bloodscourge) --------------------------------------------
 
+void A_BeAdditive (AActor *self)
+{
+	self->RenderStyle = STYLE_Add;
+}
+
 class AMageStaffFX2 : public AActor
 {
 	DECLARE_ACTOR (AMageStaffFX2, AActor)
@@ -269,7 +274,7 @@ FState AMageStaffFX2::States[] =
 	S_BRIGHT (MSP2, 'D',	2, A_MStaffTrack		    , &States[S_MSTAFF_FX2_1]),
 
 #define S_MSTAFF_FX2_X1 (S_MSTAFF_FX2_1+4)
-	S_BRIGHT (MSP2, 'E',	4, NULL					    , &States[S_MSTAFF_FX2_X1+1]),
+	S_BRIGHT (MSP2, 'E',	4, A_BeAdditive			    , &States[S_MSTAFF_FX2_X1+1]),
 	S_BRIGHT (MSP2, 'F',	5, A_Explode			    , &States[S_MSTAFF_FX2_X1+2]),
 	S_BRIGHT (MSP2, 'G',	5, NULL					    , &States[S_MSTAFF_FX2_X1+3]),
 	S_BRIGHT (MSP2, 'H',	5, NULL					    , &States[S_MSTAFF_FX2_X1+4]),

@@ -304,12 +304,18 @@ CCMD (weapprev)
 
 CCMD (invnext)
 {
+	if (m_Instigator == NULL)
+		return;
+
 	LocalSelectedItem = P_NextInventory (m_Instigator->player, LocalSelectedItem);
 	SendItemSelect = (argv.argc() == 1) ? 2 : 1;
 }
 
 CCMD (invprev)
 {
+	if (m_Instigator == NULL)
+		return;
+
 	LocalSelectedItem = P_PrevInventory (m_Instigator->player, LocalSelectedItem);
 	SendItemSelect = (argv.argc() == 1) ? 2 : 1;
 }
@@ -335,6 +341,9 @@ CCMD (use)
 CCMD (useflechette)
 { // Select from one of arti_poisonbag1-3, whichever the player has
 	int i, j;
+
+	if (m_Instigator == NULL)
+		return;
 
 	i = (m_Instigator->player->CurrentPlayerClass + 2) % 3;
 
@@ -460,17 +469,6 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		cmd->ucmd.buttons |= BT_JUMP;
 
 	// [RH] Scale joystick moves to full range of allowed speeds
-	if (strafe || (Button_Mlook.bDown && lookstrafe))
-	{
-		JoyAxes[JOYAXIS_SIDE] += JoyAxes[JOYAXIS_YAW];
-		JoyAxes[JOYAXIS_YAW] = 0;
-	}
-	if (Button_Mlook.bDown)
-	{
-		JoyAxes[JOYAXIS_PITCH] += JoyAxes[JOYAXIS_FORWARD];
-		JoyAxes[JOYAXIS_FORWARD] = 0;
-	}
-
 	if (JoyAxes[JOYAXIS_PITCH] != 0)
 	{
 		G_AddViewPitch (int((JoyAxes[JOYAXIS_PITCH] * 2048) / 256));

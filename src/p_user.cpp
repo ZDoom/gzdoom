@@ -1187,7 +1187,10 @@ void P_PlayerThink (player_t *player)
 		}
 
 		// Handle air supply
-		if (player->mo->waterlevel < 3 || player->powers[pw_ironfeet])
+		if (player->mo->waterlevel < 3 ||
+			player->powers[pw_ironfeet] ||
+			player->powers[pw_invulnerability] ||
+			(player->mo->flags2 & MF2_INVULNERABLE))
 		{
 			player->air_finished = level.time + 10*TICRATE;
 		}

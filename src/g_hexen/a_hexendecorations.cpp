@@ -46,6 +46,13 @@
 		PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY) \
 	_DECSTARTSTATES(cls,ns)
 
+#define DECNBNGT(cls,ednum,rad,hi,ns) \
+	_DECCOMMON(cls,ednum,rad,hi,ns) \
+		PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY) \
+		PROP_RenderStyle (STYLE_Translucent) \
+		PROP_Alpha (OPAQUE*8/10) \
+	_DECSTARTSTATES(cls,ns)
+
 // Definitions --------------------------------------------------------------
 
 DEC (AZWingedStatue, 5, 10, 62, 1)
@@ -586,7 +593,7 @@ DECNBLOCK (ATableShit10, 8509, 20, 16, 1)
 	S_NORMAL (TST0, 'A', -1, NULL, NULL)
 };
 
-DECNBNG (ATeleSmoke, 140, 20, 16, 26)
+DECNBNGT (ATeleSmoke, 140, 20, 16, 26)
 {
 	S_NORMAL (TSMK, 'A',  4, NULL, &States[1]),
 	S_NORMAL (TSMK, 'B',  3, NULL, &States[2]),

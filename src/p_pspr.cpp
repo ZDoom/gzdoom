@@ -81,6 +81,12 @@ void P_SetPsprite (player_t *player, int position, FState *state)
 {
 	pspdef_t *psp;
 
+	if (position == ps_weapon)
+	{
+		// A_WeaponReady will re-set this as needed
+		player->cheats &= ~CF_WEAPONREADY;
+	}
+
 	psp = &player->psprites[position];
 	do
 	{
@@ -427,7 +433,7 @@ void P_BobWeapon (player_t *player, pspdef_t *psp, fixed_t *x, fixed_t *y)
 	// [RH] Smooth transitions between bobbing and not-bobbing frames.
 	// This also fixes the bug where you can "stick" a weapon off-center by
 	// shooting it when it's at the peak of its swing.
-	bobtarget = (psp->state->Action.acp2 == A_WeaponReady) ? player->bob : 0;
+	bobtarget = (player->cheats & CF_WEAPONREADY) ? player->bob : 0;
 	if (curbob != bobtarget)
 	{
 		if (abs (bobtarget - curbob) <= 1*FRACUNIT)
@@ -515,6 +521,8 @@ void A_WeaponReady(AActor *actor, pspdef_t *psp)
 			return;
 		}
 	}
+
+	player->cheats |= CF_WEAPONREADY;
 }
 
 //---------------------------------------------------------------------------

@@ -960,6 +960,8 @@ void P_LoadThings (int lump, int position)
 		if (flags & BTF_NOTSINGLE)			mt2.flags &= ~MTF_SINGLE;
 		if (flags & BTF_NOTDEATHMATCH)		mt2.flags &= ~MTF_DEATHMATCH;
 		if (flags & BTF_NOTCOOPERATIVE)		mt2.flags &= ~MTF_COOPERATIVE;
+		if (flags & 256)					mt2.flags |= MTF_STRIFEBIT8;
+		if (flags & 512)					mt2.flags |= MTF_STRIFEBIT9;
 
 		mt2.x = SHORT(mt->x);
 		mt2.y = SHORT(mt->y);

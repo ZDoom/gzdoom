@@ -6,6 +6,7 @@
 
 void A_20e10 (AActor *);
 void A_TossGib (AActor *);
+void A_SpawnZombie (AActor *);
 
 // Zombie -------------------------------------------------------------------
 
@@ -50,3 +51,34 @@ IMPLEMENT_ACTOR (AZombie, Strife, 169, 0)
 
 	PROP_DeathSound ("zombie/death")
 END_DEFAULTS
+
+// Zombie Spawner -----------------------------------------------------------
+
+class AZombieSpawner : public AActor
+{
+	DECLARE_ACTOR (AZombieSpawner, AActor)
+};
+
+FState AZombieSpawner::States[] =
+{
+	S_NORMAL (TNT1, 'A',  175, A_SpawnZombie,		&States[0])
+};
+
+IMPLEMENT_ACTOR (AZombieSpawner, Strife, 170, 0)
+	PROP_SpawnHealth (20)
+	PROP_Flags (MF_SHOOTABLE|MF_NOSECTOR)
+	PROP_SpawnState (0)
+	PROP_RenderStyle (STYLE_None)
+	PROP_ActiveSound ("zombie/spawner")	// Does Strife use this somewhere else?
+END_DEFAULTS
+
+//============================================================================
+//
+// A_SpawnZombie
+//
+//============================================================================
+
+void A_SpawnZombie (AActor *self)
+{
+	Spawn<AZombie> (self->x, self->y, self->z);
+}

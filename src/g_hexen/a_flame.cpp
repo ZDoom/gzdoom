@@ -24,6 +24,7 @@ FState AFlameSmallTemp::States[] =
 
 IMPLEMENT_ACTOR (AFlameSmallTemp, Hexen, 10500, 96)
 	PROP_Flags2 (MF2_NOTELEPORT)
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -56,6 +57,7 @@ FState AFlameLargeTemp::States[] =
 
 IMPLEMENT_ACTOR (AFlameLargeTemp, Hexen, 10502, 98)
 	PROP_Flags2 (MF2_NOTELEPORT)
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -89,6 +91,7 @@ FState AFlameSmall::States[] =
 
 IMPLEMENT_ACTOR (AFlameSmall, Hexen, 10501, 97)
 	PROP_Flags2 (MF2_NOTELEPORT|RF_INVISIBLE)
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (S_FLAME_SMALL1)
 END_DEFAULTS
 
@@ -148,6 +151,7 @@ FState AFlameLarge::States[] =
 IMPLEMENT_ACTOR (AFlameLarge, Hexen, 10503, 99)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_RenderFlags (RF_INVISIBLE)
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (S_FLAME_LARGE1)
 END_DEFAULTS
 

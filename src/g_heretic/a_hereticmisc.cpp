@@ -279,6 +279,7 @@ FState ATeleGlitter1::States[] =
 
 IMPLEMENT_ACTOR (ATeleGlitter1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -300,7 +301,7 @@ FState ATeleGlitter2::States[] =
 
 IMPLEMENT_ACTOR (ATeleGlitter2, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
-
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (0)
 END_DEFAULTS
 

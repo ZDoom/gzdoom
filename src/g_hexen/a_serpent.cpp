@@ -207,7 +207,7 @@ FState ASerpentFX::States[] =
 #define S_SERPENT_FX1 0
 	// [RH] This 0-length state was added so that the looping sound can start
 	// playing as soon as possible, because action functions are not called
-	// when an actor is spawned. (Should I change that?)
+	// when an actor is spawned. (Should I change that? No.)
 	S_BRIGHT (SSFX, 'A',	0, NULL					    , &States[S_SERPENT_FX1+1]),
 	S_BRIGHT (SSFX, 'A',	3, A_SerpentFXSound		    , &States[S_SERPENT_FX1+2]),
 	S_BRIGHT (SSFX, 'B',	3, NULL					    , &States[S_SERPENT_FX1+3]),
@@ -230,6 +230,7 @@ IMPLEMENT_ACTOR (ASerpentFX, Hexen, -1, 0)
 	PROP_Damage (4)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT)
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_SERPENT_FX1)
 	PROP_DeathState (S_SERPENT_FX_X1)

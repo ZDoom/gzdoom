@@ -737,7 +737,7 @@ CCMD (countdecalsreal)
 
 CCMD (spray)
 {
-	if (argv.argc() < 2)
+	if (argv.argc() < 2 || m_Instigator == NULL)
 	{
 		Printf ("Usage: spray <decal>\n");
 		return;

@@ -35,7 +35,7 @@ OPLmusicBlock::OPLmusicBlock (FILE *file, int len, int rate, int maxSamples)
 	SampleBuff = new int[maxSamples];
 
 	scoredata = new BYTE[len];
-	if (fread (scoredata, 1, len, file) != len || OPLinit (TwoChips + 1, rate))
+	if (fread (scoredata, 1, len, file) != (size_t)len || OPLinit (TwoChips + 1, rate))
 	{
 		delete[] scoredata;
 		scoredata = NULL;

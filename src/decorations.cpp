@@ -156,21 +156,12 @@ public:
 
 	bool TryPickup (AActor *toucher)
 	{
-		if (LineSpecials[special] (NULL, toucher, args[0], args[1], args[2], args[3], args[4]))
-		{
-			special = 0;
-			return true;
-		}
-		return false;
+		return LineSpecials[special] (NULL, toucher, args[0], args[1], args[2], args[3], args[4]);
 	}
 
 	void DoPickupSpecial (AActor *toucher)
 	{
-		if (special)
-		{
-			LineSpecials[special] (NULL, toucher,
-				args[0], args[1], args[2], args[3], args[4]);
-		}
+		// The special was already executed by TryPickup, so do nothing here
 	}
 
 	void PlayPickupSound (AActor *toucher)

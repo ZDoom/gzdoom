@@ -3824,7 +3824,11 @@ SOURCE=g_hexen\hexen_sbar.cpp
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\g_strife\a_becomingacolyte.cpp
+SOURCE=.\g_strife\a_acolyte.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_beggars.cpp
 # End Source File
 # Begin Source File
 
@@ -3833,6 +3837,10 @@ SOURCE=.\g_strife\a_merchants.cpp
 # Begin Source File
 
 SOURCE=.\g_strife\a_peasant.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\g_strife\a_rebels.cpp
 # End Source File
 # Begin Source File
 

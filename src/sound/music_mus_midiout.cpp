@@ -31,7 +31,7 @@ MUSSong2::MUSSong2 (FILE *file, int len)
   MusBuffer (0), MusHeader (0)
 {
 	MusHeader = (MUSHeader *)new BYTE[len];
-	if (fread (MusHeader, 1, len, file) != len)
+	if (fread (MusHeader, 1, len, file) != (size_t)len)
 		return;
 
 	// Do some validation of the MUS file

@@ -77,6 +77,7 @@ public:
 	byte *GetColorTranslation (EColorRange range) const;
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
+	int GetDefaultKerning () const { return GlobalKerning; }
 
 	static FFont *FindFont (const char *fontname);
 
@@ -94,6 +95,7 @@ protected:
 	int FirstChar, LastChar;
 	int SpaceWidth;
 	int FontHeight;
+	int GlobalKerning;
 	struct CharData
 	{
 		FTexture *Pic;

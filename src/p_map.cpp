@@ -713,7 +713,9 @@ BOOL PIT_CheckThing (AActor *thing)
 			}
 		}
 	}
-	if ((tmthing->flags2 & MF2_PASSMOBJ) && !(compatflags & COMPATF_NO_PASSMOBJ))
+	// [RH] If the other thing is a bridge, then treat the moving thing as if it had MF2_PASSMOBJ, so
+	// you can use a scrolling floor to move scenery items underneath a bridge.
+	if ((tmthing->flags2 & MF2_PASSMOBJ || thing->flags4 & MF4_ACTLIKEBRIDGE) && !(compatflags & COMPATF_NO_PASSMOBJ))
 	{ // check if a mobj passed over/under another object
 		if (tmthing->flags3 & thing->flags3 & MF3_DONTOVERLAP)
 		{ // Some things prefer not to overlap each other, if possible

@@ -31,7 +31,6 @@
 #include "doomstat.h"
 #include "sbar.h"
 
-extern constate_e ConsoleState;
 extern gamestate_t wipegamestate;
 
 //

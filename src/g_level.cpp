@@ -1852,7 +1852,7 @@ const char *G_MaybeLookupLevelName (level_info_t *ininfo)
 		}
 		return thename;
 	}
-	return NULL;
+	return info != NULL ? info->level_name : NULL;
 }
 
 void G_MakeEpisodes ()

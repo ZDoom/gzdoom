@@ -54,8 +54,8 @@
 	 26 Peasant21
      27 Peasant22
 	 28 Zombie
-	 29
-	 30
+	 29 AcolyteToBe
+	 30 ZombieSpawner
 	 31 Tank1
 	 32 Tank2
 	 33 Tank3
@@ -63,30 +63,30 @@
 	 35 Tank5
 	 36 Tank6
 	 37 KneelingGuy
-	 38
-	 39
-	 40
-	 41
-	 42
-	 43
-	 44
-	 45
-	 46
-	 47
-	 48
+	 38 Beggar1
+	 39 Beggar2
+	 40 Beggar3
+	 41 Beggar4
+	 42 Beggar5
+	 43 Rebel1
+	 44 Rebel2
+	 45 Rebel3
+	 46 Rebel4
+	 47 Rebel5
+	 48 Rebel6
 	 49
 	 50
 	 51 RocketTrail
 	 52 Reaver (incomplete)
-	 53
-	 54
-	 55
-	 56
-	 57
-	 58
-	 59
-	 60
-	 61
+	 53 AcolyteTan
+	 54 AcolyteRed
+	 55 AcolyteRust
+	 56 AcolyteGray
+	 57 AcolyteDGreen
+	 58 AcolyteGold
+	 59 AcolyteLGreen
+	 60 AcolyteBlue
+	 61 AcolyteShadow
 	 63 Crusader
 	 64 StrifeBishop
 	 65

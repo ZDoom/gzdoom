@@ -128,6 +128,7 @@ FState ACFlameFloor::States[] =
 
 IMPLEMENT_ACTOR (ACFlameFloor, Hexen, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -159,6 +160,7 @@ IMPLEMENT_ACTOR (AFlamePuff, Hexen, -1, 0)
 	PROP_RadiusFixed (1)
 	PROP_HeightFixed (1)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (0)
 
@@ -201,6 +203,7 @@ IMPLEMENT_ACTOR (AFlamePuff2, Hexen, -1, 0)
 	PROP_RadiusFixed (1)
 	PROP_HeightFixed (1)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (0)
 
@@ -255,6 +258,7 @@ IMPLEMENT_ACTOR (ACircleFlame, Hexen, -1, 0)
 	PROP_Damage (2)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_FIREDAMAGE)
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_CIRCLE_FLAME1)
 	PROP_DeathState (S_CIRCLE_FLAME_X1)
@@ -296,6 +300,7 @@ IMPLEMENT_ACTOR (ACFlameMissile, Hexen, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_FIREDAMAGE|MF2_IMPACT|MF2_PCROSS)
 	PROP_RenderFlags (RF_INVISIBLE)
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_CFLAME_MISSILE1)
 	PROP_DeathState (S_CFLAME_MISSILE_X)

@@ -136,6 +136,7 @@ IMPLEMENT_ACTOR (ABeastBall, Heretic, -1, 120)
 	PROP_Damage (4)
 	PROP_Flags (MF_NOBLOCKMAP|MF_MISSILE|MF_DROPOFF|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_WINDTHRUST|MF2_NOTELEPORT)
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (S_BEASTBALL)
 	PROP_DeathState (S_BEASTBALLX)
@@ -170,6 +171,9 @@ IMPLEMENT_ACTOR (APuffy, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_Flags3 (MF3_DONTSPLASH)
+
+	// It's a tough call between Add and Translucent.
+	PROP_RenderStyle (STYLE_Add)
 
 	PROP_SpawnState (0)
 END_DEFAULTS

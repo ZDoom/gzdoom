@@ -168,6 +168,7 @@ extern void UpdateJoystickMenu ();
 extern menu_t JoystickMenu;
 
 EXTERN_CVAR (String, language)
+EXTERN_CVAR (Bool, lookstrafe)
 
 
 typedef enum { win32, dinput } mousemode_t;
@@ -216,8 +217,6 @@ static const size_t Axes[8] =
 	myoffsetof(DIJOYSTATE2,rglSlider[1])
 };
 static const BYTE POVButtons[9] = { 0x01, 0x03, 0x02, 0x06, 0x04, 0x0C, 0x08, 0x09, 0x00 };
-
-extern constate_e ConsoleState;
 
 BOOL AppActive = TRUE;
 int SessionState = 0;
@@ -948,8 +947,20 @@ void DI_JoyCheck ()
 
 	for (i = 0; i < 8; ++i)
 	{
-		if (JoyAxisMap[i] != JOYAXIS_NONE)
+		int vaxis = JoyAxisMap[i];
+
+		if (vaxis != JOYAXIS_NONE)
 		{
+			if (vaxis == JOYAXIS_YAW && (Button_Strafe.bDown ||
+				(Button_Mlook.bDown && lookstrafe)))
+			{
+				vaxis = JOYAXIS_SIDE;
+			}
+			else if (vaxis == JOYAXIS_FORWARD && Button_Mlook.bDown)
+			{
+				vaxis = JOYAXIS_PITCH;
+			}
+
 			float axisval = *((LONG *)((BYTE *)&js + Axes[i]));
 			if (fabsf(axisval) > JoyAxisThresholds[i])
 			{
@@ -961,7 +972,7 @@ void DI_JoyCheck ()
 				{
 					axisval += JoyAxisThresholds[i];
 				}
-				JoyAxes[JoyAxisMap[i]] += axisval * mul * 256.f / (256.f - JoyAxisThresholds[i]);
+				JoyAxes[vaxis] += axisval * mul * 256.f / (256.f - JoyAxisThresholds[i]);
 			}
 		}
 	}

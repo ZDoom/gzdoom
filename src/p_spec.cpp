@@ -525,10 +525,6 @@ bool CheckIfExitIsGood (AActor *self)
 	if (self == NULL)
 		return true;
 
-	if (self->player && self->player->playerstate == PST_DEAD)
-	{
-		return false;
-	}
 	if ((deathmatch || alwaysapplydmflags) && (dmflags & DF_NO_EXIT))
 	{
 		P_DamageMobj (self, self, self, 10000, MOD_EXIT);

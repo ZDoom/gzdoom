@@ -42,6 +42,8 @@ public:
 
 IMPLEMENT_STATELESS_ACTOR (ABeakPuff, Heretic, -1, 0)
 	PROP_Mass (5)
+	PROP_RenderStyle (STYLE_Translucent)
+	PROP_Alpha (HR_SHADOW)
 	PROP_AttackSound ("chicken/attack")
 END_DEFAULTS
 

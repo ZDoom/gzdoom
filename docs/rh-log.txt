@@ -1,3 +1,39 @@
+November 24, 2004
+- Moved the +mlook and +strafe button handling for joysticks into
+  DI_JoyCheck().
+- Changed bots.cfg loading so that it is relative to progdir instead of the
+  current directory.
+- Removed support for loading zdoom.ini from the user's profile directory.
+- Added Strife's acolytes.
+- Added Strife's rebel(s).
+- Added Strife's beggar(s).
+- Added Strife's zombie spawner.
+- Fixed: No map names were shown for custom maps in the intermissions.
+- Added simple default kerning for fonts so that DBIGFONT can use it to
+  overlap the edges of two adjoining character cells. It does not support
+  per-character kerning pairs and probably never will.
+- Added error checks to invnext, invprev, and useflechette so that they won't
+  crash if you try to use them before starting a game.
+- Fixed: Picking up a DECORATE item would clear its special, so you wouldn't
+  be able to pick it up again if it respawned.
+- Added translucency to lots of Heretic and Hexen actors.
+- In PIT_CheckThing(), any checks against a bridge will treat the moving
+  actor as if it has MF2_PASSMOBJ set, even if it doesn't. This lets scrolling
+  floors carry scenery items underneath a bridge without causing the chaos
+  that removing MF2_PASSMOBJ globally would cause.
+- Removed the dead player check from CheckIfExitIsGood() so that dead
+  players can exit a level, as they could in Doom.
+- Added god mode and invulnerability as things that can replenish your air
+  supply, so you won't die almost immediately if you spend your time
+  underwater with them on and then they go away before you surface.
+- Added checks to D_PostEvent so that it won't turn the players head when
+  the game is effectively paused.
+- Added a new player flag, CF_WEAPONREADY, so that weapons which don't use
+  A_WeaponReady (like the fighter's axe) can still bob.
+- Fixed: The savegame version number for 2.0.54/2.0.55 didn't get bumped
+  up. So the .55 update really only helps people who want to load pre-.52
+  savegames. :-(
+
 November 23, 2003
 - Oops. Quick update from 2.0.54 to 2.0.55 to let old savegames load again.
   Hopefully nobody downloaded 2.0.54 in the hour it was available.

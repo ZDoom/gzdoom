@@ -248,6 +248,9 @@ typedef struct MapThing
 #define MTF_COOPERATIVE		0x0200	// Thing appears in cooperative games
 #define MTF_DEATHMATCH		0x0400	// Thing appears in deathmatch games
 
+#define MTF_STRIFEBIT8		0x1000
+#define MTF_STRIFEBIT9		0x2000
+
 // BOOM and DOOM compatible versions of some of the above
 
 #define BTF_NOTSINGLE		0x0010	// (TF_COOPERATIVE|TF_DEATHMATCH)

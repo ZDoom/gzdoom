@@ -293,7 +293,11 @@ void AActor::Serialize (FArchive &arc)
 	{
 		SDWORD fakereactiontime;
 		arc << fakereactiontime;
+	}
+	if (SaveVersion < 219)
+	{
 		Sector = NULL;
+		SpawnFlags = 0;
 	}
 	else
 	{
@@ -315,12 +319,23 @@ void AActor::Serialize (FArchive &arc)
 		<< RaiseState
 		<< dropoffz
 		<< SpawnPoint[0] << SpawnPoint[1] << SpawnPoint[2]
-		<< SpawnAngle << SpawnFlags
-		<< FloatBobPhase
-		<< alphacolor
-		<< Translation;
+		<< SpawnAngle;
+	// SpawnFlags was a byte before, now it's a word.
+	if (SaveVersion < 219)
+	{
+		BYTE foo;
+		arc << foo;
+		SpawnFlags = foo;
+	}
+	else
+	{
+		arc << SpawnFlags;
+	}
 
-	arc << flags4;
+	arc << FloatBobPhase
+		<< alphacolor
+		<< Translation
+		<< flags4;
 
 	if (flags2 & MF2_FLOATBOB)
 	{

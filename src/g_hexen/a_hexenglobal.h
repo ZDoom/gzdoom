@@ -91,9 +91,6 @@ public:
 	void TweakSpeeds (int &forward, int &side);
 	const char *GetSoundClass ();
 	fixed_t GetJumpZ ();
-	int GetArmorMax ();
-	int GetAutoArmorSave ();
-	fixed_t GetArmorIncrement (int armortype);
 	bool DoHealingRadius (APlayerPawn *other);
 };
 
@@ -112,9 +109,6 @@ public:
 	void GiveDefaultInventory ();
 	const char *GetSoundClass ();
 	fixed_t GetJumpZ ();
-	int GetArmorMax ();
-	int GetAutoArmorSave ();
-	fixed_t GetArmorIncrement (int armortype);
 	void SpecialInvulnerabilityHandling (EInvulState state);
 };
 
@@ -134,9 +128,6 @@ public:
 	void TweakSpeeds (int &forward, int &side);
 	const char *GetSoundClass ();
 	fixed_t GetJumpZ ();
-	int GetArmorMax ();
-	int GetAutoArmorSave ();
-	fixed_t GetArmorIncrement (int armortype);
 	bool DoHealingRadius (APlayerPawn *other);
 	void SpecialInvulnerabilityHandling (EInvulState state);
 };

@@ -107,9 +107,21 @@ TArray<FBehavior *> FBehavior::StaticModules;
 
 static void DoClearInv (AActor *actor)
 {
-	while (actor->Inventory != NULL)
+	AInventory *inv = actor->Inventory;
+
+	while (inv != NULL)
 	{
-		actor->Inventory->Destroy ();
+		AInventory *next = inv->Inventory;
+		if (!(inv->ItemFlags & IF_UNDROPPABLE))
+		{
+			inv->Destroy ();
+		}
+		else if (inv->GetClass() == RUNTIME_CLASS(AHexenArmor))
+		{
+			AHexenArmor *harmor = static_cast<AHexenArmor *> (inv);
+			harmor->Slots[3] = harmor->Slots[2] = harmor->Slots[1] = harmor->Slots[0] = 0;
+		}
+		inv = next;
 	}
 	if (actor->player != NULL)
 	{
@@ -158,15 +170,23 @@ static void DoGiveInv (AActor *actor, const TypeInfo *info, int amount)
 		? actor->player->PendingWeapon : NULL;
 	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
 
-	do
+	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0));
+	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
 	{
-		AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0));
-		if (!item->TryPickup (actor))
-		{
-			item->Destroy ();
-		}
-	} while (--amount > 0);
-
+		static_cast<ABasicArmorPickup*>(item)->SaveAmount = amount;
+	}
+	else if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
+	{
+		static_cast<ABasicArmorBonus*>(item)->SaveAmount = amount;
+	}
+	else
+	{
+		item->Amount = amount;
+	}
+	if (!item->TryPickup (actor))
+	{
+		item->Destroy ();
+	}
 	// If the item was a weapon, don't bring it up automatically
 	// unless the player was not already using a weapon.
 	if (savedPendingWeap != NULL && hadweap)
@@ -193,7 +213,7 @@ static void GiveInventory (AActor *activator, const char *type, int amount)
 	}
 	if (strcmp (type, "Armor") == 0)
 	{
-		type = "BasicArmor";
+		type = "BasicArmorPickup";
 	}
 	info = TypeInfo::FindType (type);
 	if (info == NULL)
@@ -3317,18 +3337,22 @@ int DLevelScript::RunScript ()
 						break;
 					case 1:		// fade out
 						{
-							float fadeTime = (optstart < sp) ?
-								FIXED2FLOAT(Stack[optstart]) : 0.5f;
+							float fadeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
 							msg = new DHUDMessageFadeOut (work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
 						{
-							float typeTime = (optstart < sp) ?
-								FIXED2FLOAT(Stack[optstart]) : 0.05f;
-							float fadeTime = (optstart < sp-1) ?
-								FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							float typeTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.05f;
+							float fadeTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
 							msg = new DHUDMessageTypeOnFadeOut (work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
+						}
+						break;
+					case 3:		// fade in, then fade out
+						{
+							float inTime = (optstart < sp) ? FIXED2FLOAT(Stack[optstart]) : 0.5f;
+							float outTime = (optstart < sp-1) ? FIXED2FLOAT(Stack[optstart+1]) : 0.5f;
+							msg = new DHUDMessageFadeInOut (work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;
 					}
@@ -4152,6 +4176,22 @@ int DLevelScript::RunScript ()
 			}
 			sp -= 3;
 			break;
+
+		case PCD_GETLEVELINFO:
+			switch (STACK(1))
+			{
+			case LEVELINFO_START_TIME:		STACK(1) = level.starttime;			break;
+			case LEVELINFO_PAR_TIME:		STACK(1) = level.partime;			break;
+			case LEVELINFO_CLUSTERNUM:		STACK(1) = level.cluster;			break;
+			case LEVELINFO_LEVELNUM:		STACK(1) = level.levelnum;			break;
+			case LEVELINFO_TOTAL_SECRETS:	STACK(1) = level.total_secrets;		break;
+			case LEVELINFO_FOUND_SECRETS:	STACK(1) = level.found_secrets;		break;
+			case LEVELINFO_TOTAL_ITEMS:		STACK(1) = level.total_items;		break;
+			case LEVELINFO_FOUND_ITEMS:		STACK(1) = level.found_items;		break;
+			case LEVELINFO_TOTAL_MONSTERS:	STACK(1) = level.total_monsters;	break;
+			case LEVELINFO_KILLED_MONSTERS:	STACK(1) = level.killed_monsters;	break;
+			default:						STACK(1) = 0;						break;
+			}
 		}
 	}
 

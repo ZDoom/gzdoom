@@ -122,7 +122,7 @@ void A_ShootGun (AActor *self)
 	pitch = P_AimLineAttack (self, self->angle, MISSILERANGE);
 	P_LineAttack (self, self->angle + (pr_shootgun.Random2() << 19),
 		MISSILERANGE, pitch,
-		3*(pr_shootgun() % 5 + 1), RUNTIME_CLASS(AStrifePuff));
+		3*(pr_shootgun() % 5 + 1), MOD_UNKNOWN, RUNTIME_CLASS(AStrifePuff));
 }
 
 // Rebel 1 ------------------------------------------------------------------
@@ -137,6 +137,7 @@ public:
 IMPLEMENT_STATELESS_ACTOR (ARebel1, Strife, 9, 0)
 	PROP_StrifeType (43)
 	PROP_StrifeTeaserType (42)
+	PROP_StrifeTeaserType2 (43)
 END_DEFAULTS
 
 //============================================================================
@@ -162,6 +163,7 @@ class ARebel2 : public ARebel
 IMPLEMENT_STATELESS_ACTOR (ARebel2, Strife, 144, 0)
 	PROP_StrifeType (44)
 	PROP_StrifeTeaserType (43)
+	PROP_StrifeTeaserType2 (44)
 END_DEFAULTS
 
 // Rebel 3 ------------------------------------------------------------------
@@ -174,6 +176,7 @@ class ARebel3 : public ARebel
 IMPLEMENT_STATELESS_ACTOR (ARebel3, Strife, 145, 0)
 	PROP_StrifeType (45)
 	PROP_StrifeTeaserType (44)
+	PROP_StrifeTeaserType2 (45)
 END_DEFAULTS
 
 // Rebel 4 ------------------------------------------------------------------
@@ -186,6 +189,7 @@ class ARebel4 : public ARebel
 IMPLEMENT_STATELESS_ACTOR (ARebel4, Strife, 149, 0)
 	PROP_StrifeType (46)
 	PROP_StrifeTeaserType (45)
+	PROP_StrifeTeaserType2 (46)
 END_DEFAULTS
 
 // Rebel 5 ------------------------------------------------------------------
@@ -198,6 +202,7 @@ class ARebel5 : public ARebel
 IMPLEMENT_STATELESS_ACTOR (ARebel5, Strife, 150, 0)
 	PROP_StrifeType (47)
 	PROP_StrifeTeaserType (46)
+	PROP_StrifeTeaserType2 (47)
 END_DEFAULTS
 
 // Rebel 6 ------------------------------------------------------------------
@@ -210,6 +215,7 @@ class ARebel6 : public ARebel
 IMPLEMENT_STATELESS_ACTOR (ARebel6, Strife, 151, 0)
 	PROP_StrifeType (48)
 	PROP_StrifeTeaserType (47)
+	PROP_StrifeTeaserType2 (48)
 END_DEFAULTS
 
 // Teleporter Beacon --------------------------------------------------------
@@ -218,7 +224,7 @@ class ATeleporterBeacon : public AInventory
 {
 	DECLARE_ACTOR (ATeleporterBeacon, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 };
 
 FState ATeleporterBeacon::States[] =
@@ -243,7 +249,7 @@ IMPLEMENT_ACTOR (ATeleporterBeacon, Strife, 10, 0)
 	PROP_Tag ("Teleporter_Beacon")
 END_DEFAULTS
 
-bool ATeleporterBeacon::Use ()
+bool ATeleporterBeacon::Use (bool pickup)
 {
 	AInventory *drop;
 

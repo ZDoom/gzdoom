@@ -61,9 +61,6 @@ public:
 	virtual void PlayAttacking2 ();
 	virtual void ThrowPoisonBag ();
 	virtual void GiveDefaultInventory ();
-	virtual int GetAutoArmorSave ();
-	virtual fixed_t GetArmorIncrement (int armortype);
-	virtual int GetArmorMax ();
 	virtual const char *GetSoundClass ();
 	virtual fixed_t GetJumpZ ();
 	virtual void TweakSpeeds (int &forwardmove, int &sidemove);

@@ -138,9 +138,9 @@ class ABerserk : public APowerupGiver
 {
 	DECLARE_ACTOR (ABerserk, APowerupGiver)
 public:
-	virtual bool Use ()
+	virtual bool Use (bool pickup)
 	{
-		if (Super::Use ())
+		if (Super::Use (pickup))
 		{
 			const TypeInfo *fistType = TypeInfo::FindType ("Fist");
 			if (Owner->player->ReadyWeapon == NULL ||

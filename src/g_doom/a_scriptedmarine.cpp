@@ -398,7 +398,7 @@ void A_M_Saw (AActor *self)
 		
 		P_LineAttack (self, angle, MELEERANGE+1,
 					P_AimLineAttack (self, angle, MELEERANGE+1), damage,
-					RUNTIME_CLASS(ABulletPuff));
+					MOD_HIT, RUNTIME_CLASS(ABulletPuff));
 
 		if (!linetarget)
 		{
@@ -451,7 +451,7 @@ void A_M_Punch (AActor *self)
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, MOD_HIT, RUNTIME_CLASS(ABulletPuff));
 
 	// turn to face target
 	if (linetarget)
@@ -481,7 +481,7 @@ void A_M_BerserkPunch (AActor *self)
 	A_FaceTarget (self);
 	angle = self->angle + (pr_m_punch.Random2() << 18);
 	pitch = P_AimLineAttack (self, angle, MELEERANGE);
-	P_LineAttack (self, angle, MELEERANGE, pitch, damage, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (self, angle, MELEERANGE, pitch, damage, MOD_HIT, RUNTIME_CLASS(ABulletPuff));
 
 	// turn to face target
 	if (linetarget)
@@ -510,7 +510,7 @@ void P_GunShot2 (AActor *mo, bool accurate, int pitch, const TypeInfo *pufftype)
 		angle += pr_m_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, MISSILERANGE, pitch, damage, pufftype);
+	P_LineAttack (mo, angle, MISSILERANGE, pitch, damage, MOD_UNKNOWN, pufftype);
 }
 
 //============================================================================
@@ -611,7 +611,7 @@ void A_M_FireShotgun2 (AActor *self)
 
 		P_LineAttack (self, angle, MISSILERANGE,
 					  pitch + (pr_m_fireshotgun2.Random2() * 332063), damage,
-					  RUNTIME_CLASS(ABulletPuff));
+					  MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
 	}
 	self->special1 = level.time;
 }

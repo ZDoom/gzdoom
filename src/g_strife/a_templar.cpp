@@ -77,6 +77,7 @@ FState ATemplar::States[] =
 IMPLEMENT_ACTOR (ATemplar, Strife, 3003, 0)
 	PROP_StrifeType (62)
 	PROP_StrifeTeaserType (61)
+	PROP_StrifeTeaserType2 (62)
 	PROP_SpawnHealth (300)
 	PROP_SpawnState (S_TEMPLAR_STAND)
 	PROP_SeeState (S_TEMPLAR_CHASE)
@@ -135,6 +136,6 @@ void A_1fce8 (AActor *self)
 		damage = (pr_templar() & 4) * 2;
 		angle = self->angle + (pr_templar.Random2() << 19);
 		pitchdiff = pr_templar.Random2() * 332063;
-		P_LineAttack (self, angle, MISSILERANGE+64*FRACUNIT, pitch+pitchdiff, damage, RUNTIME_CLASS(AMaulerPuff));
+		P_LineAttack (self, angle, MISSILERANGE+64*FRACUNIT, pitch+pitchdiff, damage, MOD_DISINTEGRATE, RUNTIME_CLASS(AMaulerPuff));
 	}
 }

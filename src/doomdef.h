@@ -282,7 +282,7 @@ enum
 #define MOD_BFG_SPLASH		9
 #define MOD_WATER			12
 #define MOD_SLIME			13
-#define MOD_LAVA			14
+#define MOD_FIRE			14
 #define MOD_CRUSH			15
 #define MOD_TELEFRAG		16
 #define MOD_FALLING			17
@@ -293,6 +293,9 @@ enum
 #define MOD_HIT				22
 #define MOD_RAILGUN			23
 #define MOD_ICE				24
+#define MOD_DISINTEGRATE	25
+#define MOD_POISON			26
+#define MOD_ELECTRIC		27
 #define MOD_FRIENDLY_FIRE	0x80000000
 
 #define BLINKTHRESHOLD (4*32)

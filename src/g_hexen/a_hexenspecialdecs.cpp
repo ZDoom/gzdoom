@@ -201,7 +201,7 @@ END_DEFAULTS
 void APottery1::HitFloor ()
 {
 	Super::HitFloor ();
-	P_DamageMobj (this, NULL, NULL, 25);
+	P_DamageMobj (this, NULL, NULL, 25, MOD_UNKNOWN);
 }
 
 // Pottery2 -----------------------------------------------------------------
@@ -894,7 +894,7 @@ void AZShrub2::GetExplodeParms (int &damage, int &distance, bool &hurtSrc)
 
 void A_TreeDeath (AActor *actor)
 {
-	if (!(actor->flags2 & MF2_FIREDAMAGE))
+	if (actor->DamageType != MOD_FIRE)
 	{
 		actor->height <<= 2;
 		actor->flags |= MF_SHOOTABLE;
@@ -1197,7 +1197,7 @@ void AZBell::Activate (AActor *activator)
 {
 	if (health > 0)
 	{
-		P_DamageMobj (this, activator, activator, 10); // 'ring' the bell
+		P_DamageMobj (this, activator, activator, 10, MOD_HIT); // 'ring' the bell
 	}
 }
 

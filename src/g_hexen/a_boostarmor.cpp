@@ -12,7 +12,7 @@ class AArtiBoostArmor : public AInventory
 {
 	DECLARE_ACTOR (AArtiBoostArmor, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 };
@@ -39,7 +39,7 @@ IMPLEMENT_ACTOR (AArtiBoostArmor, Hexen, 8041, 22)
 	PROP_Inventory_Icon ("ARTIBRAC")
 END_DEFAULTS
 
-bool AArtiBoostArmor::Use ()
+bool AArtiBoostArmor::Use (bool pickup)
 {
 	int count = 0;
 
@@ -51,8 +51,8 @@ bool AArtiBoostArmor::Use ()
 		{
 			armor = Spawn<AHexenArmor> (0,0,0);
 			armor->flags |= MF_DROPPED;
-			armor->Amount = i;
-			armor->MaxAmount = 1;
+			armor->health = i;
+			armor->Amount = 1;
 			if (!armor->TryPickup (Owner))
 			{
 				armor->Destroy ();

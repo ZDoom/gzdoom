@@ -161,7 +161,7 @@ class AArtiBoostMana : public AInventory
 {
 	DECLARE_ACTOR (AArtiBoostMana, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 protected:
@@ -189,7 +189,7 @@ void AArtiBoostMana::PlayPickupSound (AActor *toucher)
 		? ATTN_SURROUND : ATTN_NORM);
 }
 
-bool AArtiBoostMana::Use ()
+bool AArtiBoostMana::Use (bool pickup)
 {
 	bool success;
 

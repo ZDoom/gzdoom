@@ -55,8 +55,6 @@
 #include "gi.h"
 #include "p_conversation.h"
 
-extern void P_InitSlidingDoorFrames();
-
 extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
 extern bool P_LoadBuildMap (BYTE *mapdata, size_t len, mapthing2_t **things, int *numthings);
 
@@ -3274,7 +3272,6 @@ void P_Init ()
 	P_InitSwitchList ();
 	P_InitTerrainTypes ();
 	R_InitSprites ();
-	P_InitSlidingDoorFrames ();	// [RH]
 }
 
 #if 0

@@ -138,6 +138,7 @@ extern gameinfo_t HexenGameInfo;
 extern gameinfo_t HexenDKGameInfo;
 extern gameinfo_t StrifeGameInfo;
 extern gameinfo_t StrifeTeaserGameInfo;
+extern gameinfo_t StrifeTeaser2GameInfo;
 
 extern int testingmode;
 extern BOOL setmodeneeded;
@@ -191,7 +192,8 @@ const char *IWADTypeNames[NUM_IWAD_TYPES] =
 	"The Ultimate DOOM",
 	"DOOM Registered",
 	"Strife: Quest for the Sigil",
-	"Strife: Teaser Version"
+	"Strife: Teaser (Old Version)",
+	"Strife: Teaser (New Version)"
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -1236,6 +1238,7 @@ static void SetIWAD (const char *iwadpath, EIWADType type)
 		{ registered,	&RegisteredGameInfo,	doom },			// DoomRegistered
 		{ commercial,	&StrifeGameInfo,		doom2 },		// Strife
 		{ commercial,	&StrifeTeaserGameInfo,	doom2 },		// StrifeTeaser
+		{ commercial,	&StrifeTeaser2GameInfo,	doom2 },		// StrifeTeaser2
 	};
 
 	D_AddFile (iwadpath);
@@ -1277,6 +1280,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		{ 'E','X','T','E','N','D','E','D'},
 		"ENDSTRF",
 		"MAP33",
+		"INVCURS",
 		"E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
 		"E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		"DPHOOF","BFGGA0","HEADA1","CYBRA1",
@@ -1295,6 +1299,7 @@ static EIWADType ScanIWAD (const char *iwad)
 		Check_Extended,
 		Check_endstrf,
 		Check_map33,
+		Check_invcurs,
 		Check_e2m1
 	};
 	int lumpsfound[NUM_CHECKLUMPS];
@@ -1336,6 +1341,10 @@ static EIWADType ScanIWAD (const char *iwad)
 		if (lumpsfound[Check_map01])
 		{
 			return IWAD_Strife;
+		}
+		else if (lumpsfound[Check_invcurs])
+		{
+			return IWAD_StrifeTeaser2;
 		}
 		else
 		{

@@ -2875,6 +2875,7 @@ static void R_InitPatches ()
 		"M_HTIC",
 		"M_STRIFE",
 		"M_NEWG",
+		"M_NGAME",
 		"M_SKILL",
 		"M_EPISOD",
 		"M_EPI1",

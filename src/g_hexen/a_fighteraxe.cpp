@@ -391,7 +391,7 @@ void A_FAxeAttack (AActor *actor)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, pufftype);
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, MOD_HIT, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -404,7 +404,7 @@ void A_FAxeAttack (AActor *actor)
 		slope = P_AimLineAttack (pmo, angle, AXERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, AXERANGE, slope, damage, pufftype);
+			P_LineAttack (pmo, angle, AXERANGE, slope, damage, MOD_HIT, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -419,7 +419,7 @@ void A_FAxeAttack (AActor *actor)
 
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
-	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, pufftype);
+	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, MOD_HIT, pufftype);
 
 axedone:
 	if (useMana == 2)

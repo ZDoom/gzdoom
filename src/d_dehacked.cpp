@@ -1310,6 +1310,14 @@ static int PatchAmmo (int ammoNum)
 		else Printf (unknown_str, Line1, "Ammo", ammoNum);
 	}
 
+	// Calculate the new backpack-given amounts for this ammo.
+	if (ammoType != NULL)
+	{
+		defaultAmmo->BackpackMaxAmount = defaultAmmo->MaxAmount * 2;
+		defaultAmmo->BackpackAmount = defaultAmmo->Amount;
+	}
+
+	// Fix per-ammo/max-ammo amounts for descendants of the base ammo class
 	if (oldclip != *per)
 	{
 		for (int i = 0; i < TypeInfo::m_NumTypes; ++i)

@@ -49,8 +49,10 @@ static bool CheatAddKey (cheatseq_t *cheat, byte key, BOOL *eat);
 static BOOL Cht_Generic (cheatseq_t *);
 static BOOL Cht_Music (cheatseq_t *);
 static BOOL Cht_BeholdMenu (cheatseq_t *);
+static BOOL Cht_PumpupMenu (cheatseq_t *);
 static BOOL Cht_AutoMap (cheatseq_t *);
 static BOOL Cht_ChangeLevel (cheatseq_t *);
+static BOOL Cht_ChangeStartSpot (cheatseq_t *);
 static BOOL Cht_WarpTransLevel (cheatseq_t *);
 static BOOL Cht_MyPos (cheatseq_t *);
 static BOOL Cht_Sound (cheatseq_t *);
@@ -199,18 +201,27 @@ static cheatseq_t HexenCheats[] =
 static cheatseq_t StrifeCheats[] =
 {
 	{ CheatSpin,			0, 1, 0, {0,0},				Cht_Music },
-	{ CheatPowerup2[7],		0, 1, 0, {0,0},				Cht_BeholdMenu },
 	{ CheatGPS,				0, 1, 0, {0,0},				Cht_MyPos },
 	{ CheatTopo,			0, 0, 0, {0,0},				Cht_AutoMap },
 	{ CheatDots,			0, 1, 0, {0,0},				Cht_Ticker },
 	{ CheatOmnipotent,		0, 0, 0, {CHT_IDDQD,0},		Cht_Generic },
+	{ CheatGripper,			0, 0, 0, {CHT_NOMOMENTUM,0},Cht_Generic },
 	{ CheatJimmy,			0, 0, 0, {CHT_KEYS,0},		Cht_Generic },
 	{ CheatBoomstix,		0, 0, 0, {CHT_IDFA,0},		Cht_Generic },
 	{ CheatElvis,			0, 0, 0, {CHT_NOCLIP,0},	Cht_Generic },
 	{ CheatStoneCold,		0, 0, 0, {CHT_MASSACRE,0},	Cht_Generic },
+	{ CheatPowerup2[7],		0, 1, 0, {0,0},				Cht_PumpupMenu },
 	{ CheatPowerup2[0],		0, 0, 0, {CHT_BEHOLDS,0},	Cht_Generic },
-	{ CheatPowerup2[1],		0, 0, 0, {CHT_BEHOLDI,0},	Cht_Generic },
-	{ CheatRift,			0, 0, 0, {0,0},				Cht_ChangeLevel }
+	{ CheatPowerup2[1],		0, 0, 0, {CHT_PUMPUPI,0},	Cht_Generic },
+	{ CheatPowerup2[2],		0, 0, 0, {CHT_PUMPUPM,0},	Cht_Generic },
+	{ CheatPowerup2[3],		0, 0, 0, {CHT_PUMPUPH,0},	Cht_Generic },
+	{ CheatPowerup2[4],		0, 0, 0, {CHT_PUMPUPP,0},	Cht_Generic },
+	{ CheatPowerup2[5],		0, 0, 0, {CHT_PUMPUPS,0},	Cht_Generic },
+	{ CheatPowerup2[6],		0, 0, 0, {CHT_PUMPUPT,0},	Cht_Generic },
+	{ CheatRift,			0, 0, 0, {0,0},				Cht_ChangeLevel },
+	{ CheatDonnyTrump,		0, 0, 0, {CHT_DONNYTRUMP,0},Cht_Generic },
+	{ CheatScoot,			0, 0, 0, {0,0},				Cht_ChangeStartSpot },
+	{ CheatLego,			0, 0, 0, {CHT_LEGO,0},		Cht_Generic },
 };
 
 extern BOOL CheckCheatmode ();
@@ -341,6 +352,14 @@ static BOOL Cht_BeholdMenu (cheatseq_t *cheat)
 	return false;
 }
 
+static BOOL Cht_PumpupMenu (cheatseq_t *cheat)
+{
+	// How many people knew about the PUMPUPT cheat, since
+	// it isn't printed in the list?
+	Printf ("Bzrk, Inviso, Mask, Health, Pack, Stats\n");
+	return false;
+}
+
 static BOOL Cht_AutoMap (cheatseq_t *cheat)
 {
 	if (automapactive)
@@ -360,6 +379,15 @@ static BOOL Cht_ChangeLevel (cheatseq_t *cheat)
 
 	cmd[7] = cheat->Args[0];
 	cmd[8] = cheat->Args[1];
+	C_DoCommand (cmd);
+	return true;
+}
+
+static BOOL Cht_ChangeStartSpot (cheatseq_t *cheat)
+{
+	char cmd[64];
+	
+	sprintf (cmd, "changemap %s %c", level.mapname, cheat->Args[0]);
 	C_DoCommand (cmd);
 	return true;
 }

@@ -367,7 +367,7 @@ bool AHolySpirit::Slam (AActor *thing)
 				// ghost burns out faster when attacking players/bosses
 				health -= 6;
 			}
-			P_DamageMobj (thing, this, target, dam);
+			P_DamageMobj (thing, this, target, dam, MOD_HIT);
 			if (pr_spiritslam() < 128)
 			{
 				Spawn<AHolyPuff> (x, y, z);

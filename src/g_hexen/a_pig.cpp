@@ -92,9 +92,6 @@ class APigPlayer : public APlayerPawn
 public:
 	fixed_t GetJumpZ () { return 6*FRACUNIT; }
 	void TweakSpeeds (int &forward, int &side);
-	int GetArmorMax () { return 1; }
-	int GetAutoArmorSave () { return 0; }
-	fixed_t GetArmorIncrement (int armortype) { return 0; }
 	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();
 };
@@ -321,7 +318,7 @@ void A_SnoutAttack (AActor *actor)
 	angle = player->mo->angle;
 	slope = P_AimLineAttack(player->mo, angle, MELEERANGE);
 	PuffSpawned = NULL;
-	P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, RUNTIME_CLASS(ASnoutPuff));
+	P_LineAttack(player->mo, angle, MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(ASnoutPuff));
 	S_Sound(player->mo, CHAN_VOICE, "PigActive", 1, ATTN_NORM);
 	if(linetarget)
 	{
@@ -381,7 +378,7 @@ void A_PigAttack (AActor *actor)
 	}
 	if (actor->CheckMeleeRange ())
 	{
-		P_DamageMobj(actor->target, actor, actor, 2+(pr_pigattack()&1));
+		P_DamageMobj(actor->target, actor, actor, 2+(pr_pigattack()&1), MOD_HIT);
 		S_Sound(actor, CHAN_WEAPON, "PigAttack", 1, ATTN_NORM);
 	}
 }

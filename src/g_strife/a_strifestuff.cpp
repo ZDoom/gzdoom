@@ -885,7 +885,7 @@ void A_20e10 (AActor *self)
 	{
 		if ((sec->special & 0xFF) == Damage_InstantDeath)
 		{
-			P_DamageMobj (self, NULL, NULL, 999);
+			P_DamageMobj (self, NULL, NULL, 999, MOD_UNKNOWN);
 		}
 		else if ((sec->special & 0xFF) == Scroll_StrifeCurrent)
 		{
@@ -1913,6 +1913,7 @@ FState AStickInWater::States[] =
 IMPLEMENT_ACTOR (AStickInWater, Strife, 215, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_NOBLOCKMAP)
+	PROP_Flags2 (MF2_FLOORCLIP)
 	PROP_StrifeType (254)
 	PROP_ActiveSound ("world/river")
 END_DEFAULTS
@@ -2943,6 +2944,8 @@ void A_ItBurnsItBurns (AActor *self)
 	{
 		P_SetPsprite (self->player, ps_weapon, &AStrifeHumanoid::States[S_FIREHANDS]);
 		P_SetPsprite (self->player, ps_flash, NULL);
+		self->player->ReadyWeapon = NULL;
+		self->player->PendingWeapon = WP_NOCHANGE;
 	}
 }
 
@@ -2950,5 +2953,5 @@ void A_DropFire (AActor *self)
 {
 	AActor *drop = Spawn<AFireDroplet> (self->x, self->y, self->z + 24*FRACUNIT);
 	drop->momz = -FRACUNIT;
-	P_RadiusAttack (self, self, 64, 64, false, 0);
+	P_RadiusAttack (self, self, 64, 64, MOD_FIRE, false);
 }

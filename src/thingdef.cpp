@@ -96,8 +96,8 @@ static const char * flagnames[]={
 	"COUNTITEM",
 	"SKULLFLY",
 	"NOTDMATCH",
-	"*",			// MF_TRANSLATION1 - better use ACS for this!
-	"*",			// MF_TRANSLATION2 - better use ACS for this!
+	"*",			// Unused
+	"FRIENDLY",
 	"*",			// MF_UNMORPHED - not to be used in an actor definition.
 	"NOLIFTDROP",
 	"STEALTH",
@@ -122,7 +122,7 @@ static const char * flag2names[]={
 	"CANNOTPUSH",
 	"THRUGHOST",
 	"BOSS",
-	"FIREDAMAGE",
+	"*",
 	"NODAMAGETHRUST",
 	"TELESTOMP",
 	"FLOATBOB",
@@ -135,7 +135,7 @@ static const char * flag2names[]={
 	"NONSHOOTABLE",
 	"INVULNERABLE",
 	"DORMANT",
-	"ICEDAMAGE",
+	"*",
 	"SEEKERMISSILE",
 	"REFLECTIVE",
 	NULL
@@ -564,7 +564,7 @@ void A_BulletAttack (AActor *self)
     {
 		int angle = bangle + (pr_cabullet.Random2() << 20);
 		int damage = ((pr_cabullet()%5)+1)*3;
-		P_LineAttack(self, angle, MISSILERANGE, slope, damage, RUNTIME_CLASS(ABulletPuff));
+		P_LineAttack(self, angle, MISSILERANGE, slope, damage, MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
     }
 }
 
@@ -637,7 +637,7 @@ void A_ExplodeParms (AActor *self)
 		hurtSource = parms->HurtShooter;
 	}
 
-	P_RadiusAttack (self, self->target, damage, distance, hurtSource, self->GetMOD ());
+	P_RadiusAttack (self, self->target, damage, self->DamageType, distance, hurtSource);
 	if (self->z <= self->floorz + (distance<<FRACBITS))
 	{
 		P_HitFloor (self);
@@ -812,7 +812,7 @@ void A_CustomBulletAttack (AActor *self)
 			int angle = bangle + pr_cabullet.Random2() * att->Spread_XY * (ANGLE_1/255);
 			int slope = bslope + pr_cabullet.Random2() * att->Spread_Z * (ANGLE_1/255);
 			int damage = ((pr_cabullet()%3)+1)*att->DamagePerBullet;
-			P_LineAttack(self, angle, MISSILERANGE, slope, damage, pufftype);
+			P_LineAttack(self, angle, MISSILERANGE, slope, damage, MOD_UNKNOWN, pufftype);
 		}
     }
 }
@@ -2385,19 +2385,19 @@ static void ActorMass (AActor *defaults, Baggage &bag)
 static void ActorXScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->xscale=BYTE(sc_Float*64)-1;
+	defaults->xscale=BYTE(sc_Float*64-1);
 }
 
 static void ActorYScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->yscale=BYTE(sc_Float*64)-1;
+	defaults->yscale=BYTE(sc_Float*64-1);
 }
 
 static void ActorScale (AActor *defaults, Baggage &bag)
 {
 	SC_MustGetFloat();
-	defaults->xscale=defaults->yscale=BYTE(sc_Float*64)-1;
+	defaults->xscale=defaults->yscale=BYTE(sc_Float*64-1);
 }
 
 static void ActorSeeSound (AActor *defaults, Baggage &bag)
@@ -2649,6 +2649,17 @@ static void ActorFlagSetOrReset (AActor *defaults, Baggage &bag)
 	{
 		if (mod=='+') defaults->flags2|=MF2_DOOMBOUNCE;
 		else defaults->flags2&=~MF2_DOOMBOUNCE;
+	}
+	// Fire and ice damage were once flags but now are not.
+	else if (SC_Compare ("FIREDAMAGE"))
+	{
+		if (mod=='+') defaults->DamageType = MOD_FIRE;
+		else defaults->DamageType = MOD_UNKNOWN;
+	}
+	else if (SC_Compare ("ICEDAMAGE"))
+	{
+		if (mod=='+') defaults->DamageType = MOD_ICE;
+		else defaults->DamageType = MOD_UNKNOWN;
 	}
 	else if ((v=SC_MatchString(flagnames))!=-1)
 	{

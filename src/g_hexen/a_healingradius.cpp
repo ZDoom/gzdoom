@@ -18,7 +18,7 @@ class AArtiHealingRadius : public AInventory
 {
 	DECLARE_ACTOR (AArtiHealingRadius, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 };
@@ -52,7 +52,7 @@ IMPLEMENT_ACTOR (AArtiHealingRadius, Hexen, 10120, 0)
 	PROP_Inventory_Icon ("ARTIHRAD")
 END_DEFAULTS
 
-bool AArtiHealingRadius::Use ()
+bool AArtiHealingRadius::Use (bool pickup)
 {
 	bool effective = false;
 

@@ -221,7 +221,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	case MOD_EXIT:			messagenum = OB_EXIT;		break;
 	case MOD_WATER:			messagenum = OB_WATER;		break;
 	case MOD_SLIME:			messagenum = OB_SLIME;		break;
-	case MOD_LAVA:			messagenum = OB_LAVA;		break;
+	case MOD_FIRE:			messagenum = OB_LAVA;		break;
 	case MOD_BARREL:		messagenum = OB_BARREL;		break;
 	case MOD_SPLASH:		messagenum = OB_SPLASH;		break;
 	}
@@ -367,7 +367,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	}
 	// [RH] Allow the death height to be overridden using metadata.
 	fixed_t metaheight = 0;
-	if (flags2 & MF2_FIREDAMAGE)
+	if (DamageType == MOD_FIRE)
 	{
 		metaheight = GetClass()->Meta.GetMetaFixed (AMETA_BurnHeight);
 	}
@@ -606,15 +606,15 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		return;
 	}
 
-	if ((flags2 & MF2_ELECTRICDAMAGE) == MF2_ELECTRICDAMAGE && EDeathState)
-	{ // Elecrocution death
+	if (DamageType == MOD_DISINTEGRATE && EDeathState)
+	{ // Electrocution death
 		SetState (EDeathState);
 	}
-	else if (flags2 & MF2_FIREDAMAGE && BDeathState)
+	else if (DamageType == MOD_FIRE && BDeathState)
 	{ // Burn death
 		SetState (BDeathState);
 	}
-	else if ((flags2 & MF2_ICEDAMAGE) &&
+	else if (DamageType == MOD_ICE &&
 		(IDeathState || (
 		(!deh.NoAutofreeze && !(flags4 & MF4_NOICEDEATH)) &&
 		(player || (flags3 & MF3_ISMONSTER)))))
@@ -637,7 +637,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	}
 	else
 	{ // Normal death
-		flags2 &= ~MF2_ICEDAMAGE;	// [RH] "Frozen" barrels shouldn't do freezing damage
+		DamageType = MOD_UNKNOWN;	// [RH] "Frozen" barrels shouldn't do freezing damage
 		SetState (DeathState);
 	}
 
@@ -789,7 +789,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 	}
 	if (target->health <= 0)
 	{
-		if (inflictor && (inflictor->flags2 & MF2_ICEDAMAGE))
+		if (inflictor && mod == MOD_ICE)
 		{
 			return;
 		}
@@ -858,7 +858,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 					return;
 			}
 		}
-		if (inflictor->flags2 & MF2_FIREDAMAGE && target->flags4 & MF4_FIRERESIST)
+		if (mod == MOD_FIRE && target->flags4 & MF4_FIRERESIST)
 		{
 			damage /= 2;
 		}
@@ -968,17 +968,15 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 					return;
 			}
 		}
-		if (inflictor != NULL &&
-			inflictor->flags2 & MF2_FIREDAMAGE &&
-			player->mo->FindInventory (RUNTIME_CLASS(APowerMask)))
-		{
-			return;
-		}
 		if (!(flags & DMG_NO_ARMOR) && player->mo->Inventory != NULL)
 		{
 			int newdam = damage;
-			player->mo->Inventory->AbsorbDamage (damage, newdam);
+			player->mo->Inventory->AbsorbDamage (damage, mod, newdam);
 			damage = newdam;
+			if (damage <= 0)
+			{
+				return;
+			}
 		}
 
 		if (damage >= player->health
@@ -1028,8 +1026,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			target->target = source;
 		}
 		// check for special fire damage or ice damage deaths
-		if ((inflictor && (inflictor->flags2 & MF2_FIREDAMAGE)) ||
-			(flags & DMG_FIRE_DAMAGE))
+		if (mod == MOD_FIRE)
 		{
 			if (player && !player->morphTics)
 			{ // Check for flame death
@@ -1037,18 +1034,17 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 					((target->health > -50) && (damage > 25)) ||
 					!inflictor->IsKindOf (RUNTIME_CLASS(APhoenixFX1)))
 				{
-					target->flags2 |= MF2_FIREDAMAGE;
+					target->DamageType = MOD_FIRE;
 				}
 			}
 			else
 			{
-				target->flags2 |= MF2_FIREDAMAGE;
+				target->DamageType = MOD_FIRE;
 			}
 		}
-		if ((inflictor && inflictor->flags2 & MF2_ICEDAMAGE) ||
-			(flags & DMG_ICE_DAMAGE))
+		else
 		{
-			target->flags2 |= MF2_ICEDAMAGE;
+			target->DamageType = mod;
 		}
 		if (source && source->tracer && source->IsKindOf (RUNTIME_CLASS (AMinotaur)))
 		{ // Minotaur's kills go to his master
@@ -1115,8 +1111,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 				target->SetState (target->SeeState);
 			}
 		}
-		else if (source != target->target &&
-			target->OkayToSwitchTarget (source))
+		else if (source != target->target && target->OkayToSwitchTarget (source))
 		{
 			// Target actor is not intent on another actor,
 			// so make him chase after source
@@ -1152,6 +1147,13 @@ bool AActor::OkayToSwitchTarget (AActor *other)
 	{ // [RH] Friendlies don't target other friendlies
 		if (!deathmatch || other->FriendPlayer == 0 || FriendPlayer == 0 ||
 			other->FriendPlayer != FriendPlayer)
+		{
+			return false;
+		}
+	}
+	if ((flags & MF_FRIENDLY) && other->player != NULL)
+	{ // [RH] Friendlies don't target their player friends either
+		if (!deathmatch || other->player - players == FriendPlayer)
 		{
 			return false;
 		}
@@ -1258,14 +1260,14 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage,
 		target->special1 = damage;
 		if (player && inflictor && !player->morphTics)
 		{ // Check for flame death
-			if ((inflictor->flags2&MF2_FIREDAMAGE)
+			if ((inflictor->DamageType == MOD_FIRE)
 				&& (target->health > -50) && (damage > 25))
 			{
-				target->flags2 |= MF2_FIREDAMAGE;
+				target->DamageType = MOD_FIRE;
 			}
-			if (inflictor->flags2&MF2_ICEDAMAGE)
+			if (inflictor->DamageType == MOD_ICE)
 			{
-				target->flags2 |= MF2_ICEDAMAGE;
+				target->DamageType = MOD_ICE;
 			}
 		}
 		target->Die (source, source);

@@ -280,7 +280,7 @@ void A_CentaurAttack (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_centaurattack()%7+3;
-		P_DamageMobj (actor->target, actor, actor, damage);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 	}
 }

@@ -136,11 +136,11 @@ int ALightning::SpecialMissileHit (AActor *thing)
 		{
 			if (thing->IsKindOf(RUNTIME_CLASS(ACentaur)))
 			{ // Lightning does more damage to centaurs
-				P_DamageMobj(thing, this, target, 9);
+				P_DamageMobj(thing, this, target, 9, MOD_ELECTRIC);
 			}
 			else
 			{
-				P_DamageMobj(thing, this, target, 3);
+				P_DamageMobj(thing, this, target, 3, MOD_ELECTRIC);
 			}
 			if (!(S_IsActorPlayingSomething (this, CHAN_WEAPON)))
 			{

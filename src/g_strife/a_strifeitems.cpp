@@ -30,6 +30,7 @@ IMPLEMENT_ACTOR (AMedPatch, Strife, 2011, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (125)
 	PROP_StrifeTeaserType (121)
+	PROP_StrifeTeaserType2 (124)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_MaxAmount (20)
 	PROP_Tag ("Med_patch")
@@ -60,6 +61,7 @@ IMPLEMENT_ACTOR (AMedicalKit, Strife, 2012, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (126)
 	PROP_StrifeTeaserType (122)
+	PROP_StrifeTeaserType2 (125)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_MaxAmount (15)
 	PROP_Tag ("Medical_kit")
@@ -78,6 +80,7 @@ class ASurgeryKit : public AHealthPickup
 	DECLARE_ACTOR (ASurgeryKit, AHealthPickup);
 protected:
 	const char *PickupMessage ();
+	bool Use (bool pickup);
 };
 
 FState ASurgeryKit::States[] =
@@ -87,10 +90,10 @@ FState ASurgeryKit::States[] =
 };
 
 IMPLEMENT_ACTOR (ASurgeryKit, Strife, 83, 0)
-	PROP_SpawnHealth (100)
 	PROP_SpawnState (0)
 	PROP_StrifeType (127)
 	PROP_StrifeTeaserType (123)
+	PROP_StrifeTeaserType2 (126)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_MaxAmount (5)
 	PROP_Tag ("Surgery_Kit")	// "full_health" in the Teaser
@@ -100,6 +103,11 @@ END_DEFAULTS
 const char *ASurgeryKit::PickupMessage ()
 {
 	return "You picked up the Surgery Kit.";
+}
+
+bool ASurgeryKit::Use (bool pickup)
+{
+	return P_GiveBody (Owner->player, -100);
 }
 
 // StrifeMap ----------------------------------------------------------------
@@ -127,6 +135,7 @@ IMPLEMENT_ACTOR (AStrifeMap, Strife, 2026, 137)
 	PROP_SpawnState (0)
 	PROP_StrifeType (164)
 	PROP_StrifeTeaserType (160)
+	PROP_StrifeTeaserType2 (163)
 END_DEFAULTS
 
 // Degnin Ore ---------------------------------------------------------------
@@ -151,6 +160,7 @@ FState ADegninOre::States[] =
 IMPLEMENT_ACTOR (ADegninOre, Strife, 59, 0)
 	PROP_StrifeType (128)
 	PROP_StrifeTeaserType (124)
+	PROP_StrifeTeaserType2 (127)
 	PROP_SpawnHealth (10)
 	PROP_SpawnState (0)
 	PROP_DeathState (1)
@@ -216,6 +226,7 @@ IMPLEMENT_ACTOR (ABeldinsRing, Strife, -1, 0)
 	PROP_Flags (MF_SPECIAL|MF_NOTDMATCH)
 	PROP_StrifeType (173)
 	PROP_StrifeTeaserType (165)
+	PROP_StrifeTeaserType2 (169)
 	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Tag ("ring")
 	PROP_Inventory_Icon ("I_RING")
@@ -254,6 +265,7 @@ FState AOfferingChalice::States[] =
 IMPLEMENT_ACTOR (AOfferingChalice, Strife, 205, 0)
 	PROP_StrifeType (174)
 	PROP_StrifeTeaserType (166)
+	PROP_StrifeTeaserType2 (170)
 	PROP_SpawnState (0)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (16)
@@ -296,6 +308,7 @@ FState AEar::States[] =
 IMPLEMENT_ACTOR (AEar, Strife, -1, 0)
 	PROP_StrifeType (175)
 	PROP_StrifeTeaserType (167)
+	PROP_StrifeTeaserType2 (171)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_FlagsSet (IF_INVBAR)
@@ -385,10 +398,11 @@ FState AShadowArmor::States[] =
 IMPLEMENT_ACTOR (AShadowArmor, Strife, 2024, 135)
 	PROP_StrifeType (160)
 	PROP_StrifeTeaserType (156)
+	PROP_StrifeTeaserType2 (159)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_MaxAmount (2)
-	PROP_PowerupGiver_Powerup ("PowerInvisibility")
+	PROP_PowerupGiver_Powerup ("PowerShadow")
 	PROP_Tag ("Shadow_armor")
 	PROP_Inventory_Icon ("I_SHD1")
 END_DEFAULTS
@@ -415,6 +429,7 @@ FState AEnvironmentalSuit::States[] =
 IMPLEMENT_ACTOR (AEnvironmentalSuit, Strife, 2025, 136)
 	PROP_StrifeType (161)
 	PROP_StrifeTeaserType (157)
+	PROP_StrifeTeaserType2 (160)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
 	PROP_Inventory_MaxAmount (5)
@@ -446,6 +461,7 @@ FState AGuardUniform::States[] =
 IMPLEMENT_ACTOR (AGuardUniform, Strife, 90, 0)
 	PROP_StrifeType (162)
 	PROP_StrifeTeaserType (158)
+	PROP_StrifeTeaserType2 (161)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_FlagsSet (IF_INVBAR)
@@ -485,6 +501,7 @@ FState AOfficersUniform::States[] =
 IMPLEMENT_ACTOR (AOfficersUniform, Strife, 52, 0)
 	PROP_StrifeType (163)
 	PROP_StrifeTeaserType (159)
+	PROP_StrifeTeaserType2 (162)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_FlagsSet (IF_INVBAR)
@@ -517,7 +534,9 @@ FState AInterrogatorReport::States[] =
 IMPLEMENT_ACTOR (AInterrogatorReport, Strife, -1, 0)
 	PROP_StrifeType (308)
 	PROP_StrifeTeaserType (289)
+	PROP_StrifeTeaserType2 (306)
 	PROP_Flags (MF_SPECIAL)
+	PROP_Tag ("report")
 END_DEFAULTS
 
 const char *AInterrogatorReport::PickupMessage ()
@@ -607,6 +626,7 @@ FState AInfo::States[] =
 IMPLEMENT_ACTOR (AInfo, Strife, -1, 0)
 	PROP_StrifeType (300)
 	PROP_StrifeTeaserType (282)
+	PROP_StrifeTeaserType2 (299)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_FlagsSet (IF_INVBAR)
@@ -636,6 +656,7 @@ FState ATargeter::States[] =
 IMPLEMENT_ACTOR (ATargeter, Strife, 207, 0)
 	PROP_StrifeType (167)
 	PROP_StrifeTeaserType (169)
+	PROP_StrifeTeaserType2 (173)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_Inventory_MaxAmount (5)
@@ -656,7 +677,7 @@ class AScanner : public APowerupGiver
 	DECLARE_ACTOR (AScanner, APowerupGiver)
 public:
 	const char *PickupMessage ();
-	bool Use ();
+	bool Use (bool pickup);
 };
 
 FState AScanner::States[] =
@@ -680,7 +701,7 @@ const char *AScanner::PickupMessage ()
 	return "You picked up the scanner.";
 }
 
-bool AScanner::Use ()
+bool AScanner::Use (bool pickup)
 {
 	if (!(level.flags & LEVEL_ALLMAP))
 	{
@@ -690,7 +711,7 @@ bool AScanner::Use ()
 		}
 		return false;
 	}
-	return Super::Use ();
+	return Super::Use (pickup);
 }
 
 //---------------------------------------------------------------------------
@@ -721,6 +742,7 @@ public:
 IMPLEMENT_STATELESS_ACTOR (ARaiseAlarm, Strife, -1, 0)
 	PROP_StrifeType (301)
 	PROP_StrifeTeaserType (283)
+	PROP_StrifeTeaserType2 (300)
 	PROP_Tag ("alarm")
 END_DEFAULTS
 
@@ -755,6 +777,7 @@ public:
 IMPLEMENT_STATELESS_ACTOR (AOpenDoor222, Strife, -1, 0)
 	PROP_StrifeType (302)
 	PROP_StrifeTeaserType (284)
+	PROP_StrifeTeaserType2 (301)
 END_DEFAULTS
 
 bool AOpenDoor222::TryPickup (AActor *toucher)
@@ -777,6 +800,7 @@ public:
 IMPLEMENT_STATELESS_ACTOR (ACloseDoor222, Strife, -1, 0)
 	PROP_StrifeType (303)
 	PROP_StrifeTeaserType (285)
+	PROP_StrifeTeaserType2 (302)
 END_DEFAULTS
 
 bool ACloseDoor222::TryPickup (AActor *toucher)
@@ -838,6 +862,7 @@ public:
 IMPLEMENT_STATELESS_ACTOR (AAmmoFillup, Strife, -1, 0)
 	PROP_StrifeType (298)
 	PROP_StrifeTeaserType (280)
+	PROP_StrifeTeaserType2 (297)
 	PROP_Tag ("Ammo")
 END_DEFAULTS
 
@@ -876,6 +901,7 @@ public:
 IMPLEMENT_STATELESS_ACTOR (AHealthFillup, Strife, -1, 0)
 	PROP_StrifeType (299)
 	PROP_StrifeTeaserType (281)
+	PROP_StrifeTeaserType2 (298)
 	PROP_Tag ("Health")
 END_DEFAULTS
 
@@ -896,6 +922,7 @@ bool AHealthFillup::TryPickup (AActor *toucher)
 IMPLEMENT_STATELESS_ACTOR (AUpgradeStamina, Strife, -1, 0)
 	PROP_StrifeType (306)
 	PROP_StrifeTeaserType (287)
+	PROP_StrifeTeaserType2 (307)
 END_DEFAULTS
 
 bool AUpgradeStamina::TryPickup (AActor *toucher)
@@ -913,6 +940,7 @@ bool AUpgradeStamina::TryPickup (AActor *toucher)
 IMPLEMENT_STATELESS_ACTOR (AUpgradeAccuracy, Strife, -1, 0)
 	PROP_StrifeType (307)
 	PROP_StrifeTeaserType (288)
+	PROP_StrifeTeaserType2 (308)
 END_DEFAULTS
 
 bool AUpgradeAccuracy::TryPickup (AActor *toucher)

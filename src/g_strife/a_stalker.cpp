@@ -152,7 +152,7 @@ void A_StalkerAttack (AActor *self)
 		{
 			int damage = (pr_stalker() & 7) * 2 + 2;
 
-			P_DamageMobj (self->target, self, self, damage);
+			P_DamageMobj (self->target, self, self, damage, MOD_HIT);
 			P_TraceBleed (damage, self->target, self);
 		}
 	}

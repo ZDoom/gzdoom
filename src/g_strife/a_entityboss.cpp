@@ -180,7 +180,7 @@ void AEntityBoss::BeginPlay ()
 
 void AEntityBoss::Touch (AActor *toucher)
 {
-	P_DamageMobj (toucher, this, this, 5);
+	P_DamageMobj (toucher, this, this, 5, MOD_HIT);
 }
 
 // Second Entity Boss -------------------------------------------------------
@@ -269,7 +269,7 @@ END_DEFAULTS
 
 void AEntitySecond::Touch (AActor *toucher)
 {
-	P_DamageMobj (toucher, this, this, 5);
+	P_DamageMobj (toucher, this, this, 5, MOD_HIT);
 }
 
 void A_SubEntityDeath (AActor *self)

@@ -98,6 +98,7 @@ public:
 	void Serialize (FArchive &arc);
 	const char *PickupMessage ();
 	bool SpecialDropAction (AActor *dropper);
+	static int GiveSigilPiece (AActor *daPlayer);
 
 	int NumPieces, DownPieces;
 };

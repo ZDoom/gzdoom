@@ -371,3 +371,31 @@ gameinfo_t StrifeTeaserGameInfo =
 	"F_SKY001",
 	16*FRACUNIT
 };
+
+gameinfo_t StrifeTeaser2GameInfo =
+{
+	GI_MAPxx | GI_INFOINDEXED | GI_ALWAYSFALLINGDAMAGE | GI_SHAREWARE | GI_TEASER2,
+	"TITLEPIC",
+	"CREDIT",
+	"CREDIT",
+	"D_LOGO",
+	280/35,
+	0,
+	200/35,
+	"Chat",
+	"d_intro",
+	"-NOFLAT",
+	"CREDIT",
+	"CREDIT",
+	"CREDIT",
+	{ { "CREDIT", {4} } },
+	NULL,
+	49,
+	"F_PAVE01",
+	&StrifeBorder,
+	0,
+	GAME_Strife,
+	150,
+	"F_SKY001",
+	16*FRACUNIT
+};

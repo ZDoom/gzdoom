@@ -286,6 +286,8 @@ private:
 
 		Images.Init (strifeLumpNames, NUM_STRIFESB_IMAGES);
 
+		CursorImage = Images[imgINVCURS] != NULL ? imgINVCURS : imgCURSOR01;
+
 		SB_state = screen->GetPageCount ();
 
 		CurrentPop = POP_None;
@@ -425,7 +427,7 @@ private:
 		{
 			if (item == CPlayer->InvSel)
 			{
-				screen->DrawTexture (Images[gameinfo.flags & GI_SHAREWARE ? imgCURSOR01 : imgINVCURS],
+				screen->DrawTexture (Images[CursorImage],
 					42 + 35*i + ST_X, 12 + ST_Y,
 					DTA_320x200, Scaled,
 					DTA_Alpha, FRACUNIT - ItemFlash,
@@ -495,7 +497,7 @@ private:
 			{
 				if (ItemFlash > 0)
 				{
-					FTexture *cursor = Images[gameinfo.flags & GI_SHAREWARE ? imgCURSOR01 : imgINVCURS];
+					FTexture *cursor = Images[CursorImage];
 					screen->DrawTexture (cursor, -28, -15,
 						DTA_HUDRules, HUD_Normal,
 						DTA_LeftOffset, cursor->GetWidth(),
@@ -521,7 +523,7 @@ private:
 				{
 					if (item == CPlayer->InvSel)
 					{
-						screen->DrawTexture (Images[gameinfo.flags & GI_SHAREWARE ? imgCURSOR01 : imgINVCURS], -100+i*35, -21,
+						screen->DrawTexture (Images[CursorImage], -100+i*35, -21,
 							DTA_HUDRules, HUD_HorizCenter,
 							DTA_Alpha, TRANSLUC75,
 							TAG_DONE);
@@ -824,6 +826,7 @@ private:
 	FImageCollection Images;
 	FHealthBar HealthBar;
 
+	int CursorImage;
 	int CurrentPop, PendingPop, PopHeight, PopHeightChange;
 	int KeyPopPos, KeyPopScroll;
 	fixed_t ItemFlash;

@@ -3,7 +3,7 @@
 ** Neato messages for the HUD
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2004 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -43,11 +43,18 @@ EXTERN_CVAR (Bool, con_scaletext)
 
 IMPLEMENT_CLASS (DHUDMessage)
 IMPLEMENT_CLASS (DHUDMessageFadeOut)
+IMPLEMENT_CLASS (DHUDMessageFadeInOut)
 IMPLEMENT_CLASS (DHUDMessageTypeOnFadeOut)
 
+/*************************************************************************
+ * Basic HUD message. Appears and disappears without any special effects *
+ *************************************************************************/
+
+//============================================================================
 //
-// Basic HUD message. Appears and disappears without any special effects
+// DHUDMessage Constructor
 //
+//============================================================================
 
 DHUDMessage::DHUDMessage (const char *text, float x, float y, int hudwidth, int hudheight,
 						  EColorRange textColor, float holdTime)
@@ -123,6 +130,12 @@ DHUDMessage::DHUDMessage (const char *text, float x, float y, int hudwidth, int 
 	ResetText (SourceText);
 }
 
+//============================================================================
+//
+// DHUDMessage Destructor
+//
+//============================================================================
+
 DHUDMessage::~DHUDMessage ()
 {
 	if (Lines)
@@ -136,6 +149,12 @@ DHUDMessage::~DHUDMessage ()
 		delete[] SourceText;
 	}
 }
+
+//============================================================================
+//
+// DHUDMessage :: Serialize
+//
+//============================================================================
 
 void DHUDMessage::Serialize (FArchive &arc)
 {
@@ -151,6 +170,12 @@ void DHUDMessage::Serialize (FArchive &arc)
 	}
 }
 
+//============================================================================
+//
+// DHUDMessage :: ScreenSizeChanged
+//
+//============================================================================
+
 void DHUDMessage::ScreenSizeChanged ()
 {
 	if (HUDWidth == 0)
@@ -158,6 +183,12 @@ void DHUDMessage::ScreenSizeChanged ()
 		ResetText (SourceText);
 	}
 }
+
+//============================================================================
+//
+// DHUDMessage :: ResetText
+//
+//============================================================================
 
 void DHUDMessage::ResetText (const char *text)
 {
@@ -198,6 +229,12 @@ void DHUDMessage::ResetText (const char *text)
 	screen->SetFont (oldfont);
 }
 
+//============================================================================
+//
+// DHUDMessage :: Tick
+//
+//============================================================================
+
 bool DHUDMessage::Tick ()
 {
 	Tics++;
@@ -207,6 +244,12 @@ bool DHUDMessage::Tick ()
 	}
 	return false;
 }
+
+//============================================================================
+//
+// DHUDMessage :: Draw
+//
+//============================================================================
 
 void DHUDMessage::Draw (int bottom)
 {
@@ -314,9 +357,21 @@ void DHUDMessage::Draw (int bottom)
 	screen->SetFont (oldfont);
 }
 
+//============================================================================
+//
+// DHUDMessage :: DrawSetup
+//
+//============================================================================
+
 void DHUDMessage::DrawSetup ()
 {
 }
+
+//============================================================================
+//
+// DHUDMessage :: DoDraw
+//
+//============================================================================
 
 void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 {
@@ -335,9 +390,15 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 	}
 }
 
+/******************************
+ * HUD message that fades out *
+ ******************************/
+
+//============================================================================
 //
-// HUD message that fades out
+// DHUDMessageFadeOut Constructor
 //
+//============================================================================
 
 DHUDMessageFadeOut::DHUDMessageFadeOut (const char *text, float x, float y,
 	int hudwidth, int hudheight,									
@@ -348,11 +409,23 @@ DHUDMessageFadeOut::DHUDMessageFadeOut (const char *text, float x, float y,
 	State = 1;
 }
 
+//============================================================================
+//
+// DHUDMessageFadeOut :: Serialize
+//
+//============================================================================
+
 void DHUDMessageFadeOut::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << FadeOutTics;
 }
+
+//============================================================================
+//
+// DHUDMessageFadeOut :: Tick
+//
+//============================================================================
 
 bool DHUDMessageFadeOut::Tick ()
 {
@@ -368,6 +441,12 @@ bool DHUDMessageFadeOut::Tick ()
 	}
 	return false;
 }
+
+//============================================================================
+//
+// DHUDMessageFadeOut :: DoDraw
+//
+//============================================================================
 
 void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 {
@@ -397,9 +476,100 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 	}
 }
 
+/***************************************
+ * HUD message that fades in, then out *
+ ***************************************/
+
+//============================================================================
 //
-// HUD message that gets "typed" on, then fades out
+// DHUDMessageFadeInOut Constructor
 //
+//============================================================================
+
+DHUDMessageFadeInOut::DHUDMessageFadeInOut (const char *text, float x, float y,
+	int hudwidth, int hudheight,									
+	EColorRange textColor, float holdTime, float fadeInTime, float fadeOutTime)
+	: DHUDMessageFadeOut (text, x, y, hudwidth, hudheight, textColor, holdTime, fadeOutTime)
+{
+	FadeInTics = (int)(fadeInTime * TICRATE);
+	State = 0;
+}
+
+//============================================================================
+//
+// DHUDMessageFadeInOut :: Serialize
+//
+//============================================================================
+
+void DHUDMessageFadeInOut::Serialize (FArchive &arc)
+{
+	Super::Serialize (arc);
+	arc << FadeInTics;
+}
+
+//============================================================================
+//
+// DHUDMessageFadeInOut :: Tick
+//
+//============================================================================
+
+bool DHUDMessageFadeInOut::Tick ()
+{
+	if (!Super::Tick ())
+	{
+		if (State == 0 && FadeInTics <= Tics)
+		{
+			State++;
+			Tics -= FadeInTics;
+		}
+		return false;
+	}
+	return true;
+}
+
+//============================================================================
+//
+// DHUDMessageFadeInOut :: DoDraw
+//
+//============================================================================
+
+void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
+{
+	if (State == 0)
+	{
+		fixed_t trans = Tics * FRACUNIT / FadeInTics;
+		if (hudheight == 0)
+		{
+			screen->DrawText (TextColor, x, y, Lines[linenum].string,
+				DTA_CleanNoMove, clean,
+				DTA_Alpha, trans,
+				TAG_DONE);
+		}
+		else
+		{
+			screen->DrawText (TextColor, x, y, Lines[linenum].string,
+				DTA_VirtualWidth, HUDWidth,
+				DTA_VirtualHeight, hudheight,
+				DTA_Alpha, trans,
+				TAG_DONE);
+		}
+		BorderNeedRefresh = screen->GetPageCount ();
+	}
+	else
+	{
+		Super::DoDraw (linenum, x, y, clean, hudheight);
+	}
+}
+
+/****************************************************
+ * HUD message that gets "typed" on, then fades out *
+ ****************************************************/
+
+//============================================================================
+//
+// DHUDMessageTypeOnFadeOut Constructor
+//
+//============================================================================
 
 DHUDMessageTypeOnFadeOut::DHUDMessageTypeOnFadeOut (const char *text, float x, float y,
 	int hudwidth, int hudheight,
@@ -422,11 +592,23 @@ DHUDMessageTypeOnFadeOut::DHUDMessageTypeOnFadeOut (const char *text, float x, f
 	State = 3;
 }
 
+//============================================================================
+//
+// DHUDMessageTypeOnFadeOut :: Serialize
+//
+//============================================================================
+
 void DHUDMessageTypeOnFadeOut::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << TypeOnTime << CurrLine << LineVisible << LineLen;
 }
+
+//============================================================================
+//
+// DHUDMessageTypeOnFadeOut :: Tick
+//
+//============================================================================
 
 bool DHUDMessageTypeOnFadeOut::Tick ()
 {
@@ -455,6 +637,12 @@ bool DHUDMessageTypeOnFadeOut::Tick ()
 	return true;
 }
 
+//============================================================================
+//
+// DHUDMessageTypeOnFadeOut :: ScreenSizeChanged
+//
+//============================================================================
+
 void DHUDMessageTypeOnFadeOut::ScreenSizeChanged ()
 {
 	int charCount = 0, i;
@@ -474,6 +662,12 @@ void DHUDMessageTypeOnFadeOut::ScreenSizeChanged ()
 		Tick ();
 	}
 }
+
+//============================================================================
+//
+// DHUDMessageTypeOnFadeOut :: DoDraw
+//
+//============================================================================
 
 void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 {

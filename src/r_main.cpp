@@ -70,6 +70,7 @@ void R_SpanInitData ();
 extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
 extern short *openings;
 extern bool r_fakingunderwater;
+extern "C" int fuzzviewheight;
 EXTERN_CVAR (Bool, r_particles)
 EXTERN_CVAR (Bool, cl_capfps)
 
@@ -592,6 +593,7 @@ void R_SetWindow (int windowSize, int fullWidth, int fullHeight, int stHeight)
 	
 	viewwidth = realviewwidth >> detailxshift;
 	viewheight = realviewheight >> detailyshift;
+	fuzzviewheight = viewheight - 2;	// Maximum row the fuzzer can draw to
 	freelookviewheight >>= detailyshift;
 	halfviewwidth = (viewwidth >> 1) - 1;
 

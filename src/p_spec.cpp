@@ -223,6 +223,10 @@ static void P_InitAnimDefs ()
 					}
 				}
 			}
+			else if (SC_Compare ("animatedDoor"))
+			{
+				P_ParseAnimatedDoor ();
+			}
 			else
 			{
 				SC_ScriptError (NULL);
@@ -889,7 +893,7 @@ void P_PlayerInSpecialSector (player_t *player)
 		case dScroll_EastLavaDamage:
 			if (!(level.time & 15))
 			{
-				P_DamageMobj(player->mo, NULL, NULL, 5, MOD_LAVA, DMG_FIRE_DAMAGE);
+				P_DamageMobj(player->mo, NULL, NULL, 5, MOD_FIRE);
 				P_HitFloor(player->mo);
 			}
 			break;
@@ -897,7 +901,7 @@ void P_PlayerInSpecialSector (player_t *player)
 		case dDamage_LavaHefty:
 			if(!(level.time & 15))
 			{
-				P_DamageMobj(player->mo, NULL, NULL, 8, MOD_LAVA, DMG_FIRE_DAMAGE);
+				P_DamageMobj(player->mo, NULL, NULL, 8, MOD_FIRE);
 				P_HitFloor(player->mo);
 			}
 			break;
@@ -916,7 +920,7 @@ void P_PlayerInSpecialSector (player_t *player)
 			break;
 		case 0x100: // 2/5 damage per 31 ticks
 			if (ironfeet == NULL && !(level.time&0x1f))
-				P_DamageMobj (player->mo, NULL, NULL, 5, MOD_LAVA);
+				P_DamageMobj (player->mo, NULL, NULL, 5, MOD_FIRE);
 			break;
 		case 0x200: // 5/10 damage per 31 ticks
 			if (ironfeet == NULL && !(level.time&0x1f))
@@ -962,7 +966,7 @@ void P_PlayerInSpecialSector (player_t *player)
 		(level.time & Terrains[terrainnum].DamageTimeMask))
 	{
 		P_DamageMobj (player->mo, NULL, NULL, Terrains[terrainnum].DamageAmount,
-			Terrains[terrainnum].DamageMOD, Terrains[terrainnum].DamageFlags);
+			Terrains[terrainnum].DamageMOD);
 	}
 
 	if (sector->special & SECRET_MASK)
@@ -996,7 +1000,7 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 		!(level.time & Terrains[floorType].DamageTimeMask))
 	{
 		P_DamageMobj (player->mo, NULL, NULL, Terrains[floorType].DamageAmount,
-			Terrains[floorType].DamageMOD, Terrains[floorType].DamageFlags);
+			Terrains[floorType].DamageMOD);
 		if (Terrains[floorType].Splash != -1)
 		{
 			S_SoundID (player->mo, CHAN_AUTO,

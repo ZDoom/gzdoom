@@ -32,6 +32,7 @@ FState AOracle::States[] =
 IMPLEMENT_ACTOR (AOracle, Strife, 199, 0)
 	PROP_StrifeType (65)
 	PROP_StrifeTeaserType (62)
+	PROP_StrifeTeaserType2 (63)
 	PROP_SpawnHealth (1)
 	PROP_SpawnState (0)
 	PROP_DeathState (1)

@@ -1722,9 +1722,6 @@ void G_StartTravel ()
 
 void G_FinishTravel ()
 {
-	if (deathmatch)
-		return;
-
 	TThinkerIterator<APlayerPawn> it (STAT_TRAVELLING);
 	APlayerPawn *pawn, *pawndup;
 	AInventory *inv;

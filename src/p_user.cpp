@@ -279,8 +279,6 @@ AWeapon *APlayerPawn::PickNewWeapon (const TypeInfo *ammotype)
 		}
 		else if (player->PendingWeapon != WP_NOCHANGE)
 		{
-			player->ReadyWeapon = player->PendingWeapon;
-			player->PendingWeapon = WP_NOCHANGE;
 			P_BringUpWeapon (player);
 		}
 	}
@@ -329,27 +327,12 @@ void APlayerPawn::GiveDefaultInventory ()
 {
 }
 
-int APlayerPawn::GetAutoArmorSave ()
-{
-	return 0;
-}
-
-int APlayerPawn::GetArmorMax ()
-{
-	return 0;
-}
-
 void APlayerPawn::MorphPlayerThink ()
 {
 }
 
 void APlayerPawn::ActivateMorphWeapon ()
 {
-}
-
-fixed_t APlayerPawn::GetArmorIncrement (int armortype)
-{
-	return 10*FRACUNIT;
 }
 
 fixed_t APlayerPawn::GetJumpZ ()
@@ -829,7 +812,7 @@ void P_DeathThink (player_t *player)
 			}
 		}
 	}
-	else if (!(player->mo->flags2 & MF2_ICEDAMAGE))
+	else if (player->mo->DamageType != MOD_ICE)
 	{ // Fall to ground (if not frozen)
 		player->deltaviewheight = 0;
 		if (player->viewheight > 6*FRACUNIT)
@@ -1180,14 +1163,14 @@ void P_PlayerThink (player_t *player)
 
 		// Handle air supply
 		if (player->mo->waterlevel < 3 ||
-			/*(player->Powers & PW_IRONFEET) ||*/
-			(player->mo->flags2 & MF2_INVULNERABLE))
+			(player->mo->flags2 & MF2_INVULNERABLE) ||
+			(player->cheats & CF_GODMODE))
 		{
 			player->air_finished = level.time + 10*TICRATE;
 		}
 		else if (player->air_finished <= level.time && !(level.time & 31))
 		{
-			P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), MOD_WATER, DMG_NO_ARMOR);
+			P_DamageMobj (player->mo, NULL, NULL, 2 + 2*((level.time-player->air_finished)/TICRATE), MOD_WATER);
 		}
 	}
 

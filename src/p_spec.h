@@ -568,6 +568,19 @@ inline FArchive &operator<< (FArchive &arc, DDoor::EVlDoor &type)
 	return arc;
 }
 
+struct FDoorAnimation
+{
+	int BaseTexture;
+	int *TextureFrames;
+	int NumTextureFrames;
+	char *OpenSound;
+	char *CloseSound;
+};
+
+extern TArray<FDoorAnimation> DoorAnimations;
+
+void P_ParseAnimatedDoor ();
+
 class DAnimatedDoor : public DMovingCeiling
 {
 	DECLARE_CLASS (DAnimatedDoor, DMovingCeiling)

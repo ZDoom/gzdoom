@@ -284,8 +284,6 @@ void R_InitFuzzTable (int fuzzoff)
 	{
 		fuzzoffset[i] = fuzzinit[i] * fuzzoff;
 	}
-	// Maximum row the fuzzer can draw to
-	fuzzviewheight = viewheight - 2;
 }
 
 #ifndef USEASM
@@ -1283,6 +1281,7 @@ void R_InitTranslationTables ()
 	}
 	else if (gameinfo.gametype == GAME_Strife)
 	{
+#if 0
 		for (i = 0x80; i < 0x90; i++)
 		{
 			translationtables[TRANSLATION_Standard][i      ] = 0x40 + (i&0xf); // red
@@ -1293,6 +1292,55 @@ void R_InitTranslationTables ()
 			translationtables[TRANSLATION_Standard][i+5*256] = 0x60 + (i&0xf); // bright green
 			translationtables[TRANSLATION_Standard][i+6*256] = 0x90 + (i&0xf); // blue
 		}
+#else
+		for (i = 0x20; i <= 0x3F; ++i)
+		{
+			translationtables[TRANSLATION_Standard][i      ] = i - 0x20;
+			translationtables[TRANSLATION_Standard][i+1*256] = i - 0x20;
+			translationtables[TRANSLATION_Standard][i+2*256] = 0xD0 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+3*256] = 0xD0 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+4*256] = i - 0x20;
+			translationtables[TRANSLATION_Standard][i+5*256] = i - 0x20;
+			translationtables[TRANSLATION_Standard][i+6*256] = i - 0x20;
+		}
+		for (i = 0x50; i <= 0x5F; ++i)
+		{
+			translationtables[TRANSLATION_Standard][i+4*256] = 0x80 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+5*256] = 0x90 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+6*256] = 0x40 + (i&0xf);
+		}
+		for (i = 0x80; i <= 0x8F; ++i)
+		{
+			translationtables[TRANSLATION_Standard][i      ] = 0x40 + (i&0xf); // red
+			translationtables[TRANSLATION_Standard][i+1*256] = 0xB0 + (i&0xf); // rust
+			translationtables[TRANSLATION_Standard][i+2*256] = 0x10 + (i&0xf); // gray
+			translationtables[TRANSLATION_Standard][i+3*256] = 0x30 + (i&0xf); // dark green
+			translationtables[TRANSLATION_Standard][i+4*256] = 0x50 + (i&0xf); // gold
+			translationtables[TRANSLATION_Standard][i+5*256] = 0x60 + (i&0xf); // bright green
+			translationtables[TRANSLATION_Standard][i+6*256] = 0x90 + (i&0xf); // blue
+		}
+		for (i = 0xC0; i <= 0xCF; ++i)
+		{
+			translationtables[TRANSLATION_Standard][i+4*256] = 0xA0 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+5*256] = 0x20 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+6*256] = (i&0xf);
+		}
+		translationtables[TRANSLATION_Standard][0xC0+6*256] = 1;
+		for (i = 0xD0; i <= 0xDF; ++i)
+		{
+			translationtables[TRANSLATION_Standard][i+4*256] = 0xB0 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+5*256] = 0x30 + (i&0xf);
+			translationtables[TRANSLATION_Standard][i+6*256] = 0x10 + (i&0xf);
+		}
+		for (i = 0xF1; i <= 0xF6; ++i)
+		{
+			translationtables[TRANSLATION_Standard][i      ] = 0xDF + (i&0xf);
+		}
+		for (i = 0xF7; i <= 0xFB; ++i)
+		{
+			translationtables[TRANSLATION_Standard][i      ] = i - 6;
+		}
+#endif
 	}
 
 	// Create the ice translation table, based on Hexen's. Alas, the standard

@@ -105,6 +105,7 @@ class APeasant1 : public APeasant
 IMPLEMENT_STATELESS_ACTOR (APeasant1, Strife, 3004, 0)
 	PROP_StrifeType (6)
 	PROP_StrifeTeaserType (6)
+	PROP_StrifeTeaserType2 (6)
 	PROP_SpeedFixed (4)
 END_DEFAULTS
 
@@ -118,6 +119,7 @@ class APeasant2 : public APeasant
 IMPLEMENT_STATELESS_ACTOR (APeasant2, Strife, 130, 0)
 	PROP_StrifeType (7)
 	PROP_StrifeTeaserType (7)
+	PROP_StrifeTeaserType2 (7)
 	PROP_SpeedFixed (5)
 END_DEFAULTS
 
@@ -131,6 +133,7 @@ class APeasant3 : public APeasant
 IMPLEMENT_STATELESS_ACTOR (APeasant3, Strife, 131, 0)
 	PROP_StrifeType (8)
 	PROP_StrifeTeaserType (8)
+	PROP_StrifeTeaserType2 (8)
 	PROP_SpeedFixed (5)
 END_DEFAULTS
 
@@ -145,6 +148,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant4, Strife, 65, 0)
 	PROP_Translation (TRANSLATION_Standard,0)
 	PROP_StrifeType (9)
 	PROP_StrifeTeaserType (9)
+	PROP_StrifeTeaserType2 (9)
 	PROP_SpeedFixed (7)
 END_DEFAULTS
 
@@ -159,6 +163,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant5, Strife, 132, 0)
 	PROP_Translation (TRANSLATION_Standard,0)
 	PROP_StrifeType (10)
 	PROP_StrifeTeaserType (10)
+	PROP_StrifeTeaserType2 (10)
 	PROP_SpeedFixed (7)
 END_DEFAULTS
 
@@ -173,6 +178,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant6, Strife, 133, 0)
 	PROP_Translation (TRANSLATION_Standard,0)
 	PROP_StrifeType (11)
 	PROP_StrifeTeaserType (11)
+	PROP_StrifeTeaserType2 (11)
 	PROP_SpeedFixed (7)
 END_DEFAULTS
 
@@ -187,6 +193,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant7, Strife, 66, 0)
 	PROP_Translation (TRANSLATION_Standard,2)
 	PROP_StrifeType (12)
 	PROP_StrifeTeaserType (12)
+	PROP_StrifeTeaserType2 (12)
 END_DEFAULTS
 
 // Peasant Variant 8 --------------------------------------------------------
@@ -200,6 +207,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant8, Strife, 134, 0)
 	PROP_Translation (TRANSLATION_Standard,2)
 	PROP_StrifeType (13)
 	PROP_StrifeTeaserType (13)
+	PROP_StrifeTeaserType2 (13)
 END_DEFAULTS
 
 // Peasant Variant 9 --------------------------------------------------------
@@ -213,6 +221,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant9, Strife, 135, 0)
 	PROP_Translation (TRANSLATION_Standard,2)
 	PROP_StrifeType (14)
 	PROP_StrifeTeaserType (14)
+	PROP_StrifeTeaserType2 (14)
 END_DEFAULTS
 
 // Peasant Variant 10 --------------------------------------------------------
@@ -226,6 +235,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant10, Strife, 67, 0)
 	PROP_Translation (TRANSLATION_Standard,1)
 	PROP_StrifeType (15)
 	PROP_StrifeTeaserType (15)
+	PROP_StrifeTeaserType2 (15)
 END_DEFAULTS
 
 // Peasant Variant 11 --------------------------------------------------------
@@ -239,6 +249,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant11, Strife, 136, 0)
 	PROP_Translation (TRANSLATION_Standard,1)
 	PROP_StrifeType (16)
 	PROP_StrifeTeaserType (16)
+	PROP_StrifeTeaserType2 (16)
 	PROP_SpeedFixed (7)
 END_DEFAULTS
 
@@ -253,6 +264,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant12, Strife, 137, 0)
 	PROP_Translation (TRANSLATION_Standard,1)
 	PROP_StrifeType (17)
 	PROP_StrifeTeaserType (17)
+	PROP_StrifeTeaserType2 (17)
 END_DEFAULTS
 
 // Peasant Variant 13 --------------------------------------------------------
@@ -266,6 +278,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant13, Strife, 172, 0)
 	PROP_Translation (TRANSLATION_Standard,3)
 	PROP_StrifeType (18)
 	PROP_StrifeTeaserType (18)
+	PROP_StrifeTeaserType2 (18)
 END_DEFAULTS
 
 // Peasant Variant 14 --------------------------------------------------------
@@ -279,6 +292,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant14, Strife, 173, 0)
 	PROP_Translation (TRANSLATION_Standard,3)
 	PROP_StrifeType (19)
 	PROP_StrifeTeaserType (19)
+	PROP_StrifeTeaserType2 (19)
 END_DEFAULTS
 
 // Peasant Variant 15 --------------------------------------------------------
@@ -292,6 +306,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant15, Strife, 174, 0)
 	PROP_Translation (TRANSLATION_Standard,3)
 	PROP_StrifeType (20)
 	PROP_StrifeTeaserType (20)
+	PROP_StrifeTeaserType2 (20)
 END_DEFAULTS
 
 // Peasant Variant 16 --------------------------------------------------------
@@ -305,6 +320,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant16, Strife, 175, 0)
 	PROP_Translation (TRANSLATION_Standard,5)
 	PROP_StrifeType (21)
 	PROP_StrifeTeaserType (21)
+	PROP_StrifeTeaserType2 (21)
 END_DEFAULTS
 
 // Peasant Variant 17 --------------------------------------------------------
@@ -318,6 +334,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant17, Strife, 176, 0)
 	PROP_Translation (TRANSLATION_Standard,5)
 	PROP_StrifeType (22)
 	PROP_StrifeTeaserType (22)
+	PROP_StrifeTeaserType2 (22)
 END_DEFAULTS
 
 // Peasant Variant 18 --------------------------------------------------------
@@ -331,6 +348,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant18, Strife, 177, 0)
 	PROP_Translation (TRANSLATION_Standard,5)
 	PROP_StrifeType (23)
 	PROP_StrifeTeaserType (23)
+	PROP_StrifeTeaserType2 (23)
 END_DEFAULTS
 
 // Peasant Variant 19 --------------------------------------------------------
@@ -344,6 +362,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant19, Strife, 178, 0)
 	PROP_Translation (TRANSLATION_Standard,4)
 	PROP_StrifeType (24)
 	PROP_StrifeTeaserType (24)
+	PROP_StrifeTeaserType2 (24)
 END_DEFAULTS
 
 // Peasant Variant 20 --------------------------------------------------------
@@ -357,6 +376,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant20, Strife, 179, 0)
 	PROP_Translation (TRANSLATION_Standard,4)
 	PROP_StrifeType (25)
 	PROP_StrifeTeaserType (25)
+	PROP_StrifeTeaserType2 (25)
 END_DEFAULTS
 
 // Peasant Variant 21 --------------------------------------------------------
@@ -370,6 +390,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant21, Strife, 180, 0)
 	PROP_Translation (TRANSLATION_Standard,4)
 	PROP_StrifeType (26)
 	PROP_StrifeTeaserType (26)
+	PROP_StrifeTeaserType2 (26)
 END_DEFAULTS
 
 // Peasant Variant 22 --------------------------------------------------------
@@ -383,6 +404,7 @@ IMPLEMENT_STATELESS_ACTOR (APeasant22, Strife, 181, 0)
 	PROP_Translation (TRANSLATION_Standard,6)
 	PROP_StrifeType (27)
 	PROP_StrifeTeaserType (27)
+	PROP_StrifeTeaserType2 (27)
 END_DEFAULTS
 
 //============================================================================
@@ -400,6 +422,6 @@ void A_PeasantAttack (AActor *self)
 
 	if (self->CheckMeleeRange ())
 	{
-		P_DamageMobj (self->target, self, self, (pr_peasatk() % 5) * 2 + 2);
+		P_DamageMobj (self->target, self, self, (pr_peasatk() % 5) * 2 + 2, MOD_HIT);
 	}
 }

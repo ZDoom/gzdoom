@@ -239,6 +239,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_Height:		actor->height = dataint;		break;
 		case ADEF_Mass:			actor->Mass = dataint;			break;
 		case ADEF_Damage:		actor->damage = dataint;		break;
+		case ADEF_DamageType:	actor->DamageType = dataint;	break;
 		case ADEF_Flags:		actor->flags = dataint;			break;
 		case ADEF_Flags2:		actor->flags2 = dataint;		break;
 		case ADEF_Flags3:		actor->flags3 = dataint;		break;
@@ -272,7 +273,15 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_WoundState:	actor->WoundState = datastate;	break;
 
 		case ADEF_StrifeType:	if (!(gameinfo.flags & GI_SHAREWARE)) StrifeTypes[dataint] = Class;	break;
-		case ADEF_StrifeTeaserType: if (gameinfo.flags & GI_SHAREWARE) StrifeTypes[dataint] = Class; break;
+		case ADEF_StrifeTeaserType:
+			if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE))
+				StrifeTypes[dataint] = Class;
+			break;
+		case ADEF_StrifeTeaserType2:
+			if ((gameinfo.flags & (GI_SHAREWARE|GI_TEASER2)) == (GI_SHAREWARE|GI_TEASER2))
+				StrifeTypes[dataint] = Class;
+			break;
+
 
 		case ADEF_Inventory_FlagsSet:	((AInventory*)actor)->ItemFlags |= dataint; break;
 		case ADEF_Inventory_FlagsClear:	((AInventory*)actor)->ItemFlags &= ~dataint; break;

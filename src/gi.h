@@ -46,6 +46,7 @@
 #define GI_MENUHACK_EXTENDED	0x00000040	// (Heretic)
 #define GI_MENUHACK_COMMERCIAL	0x00000060
 #define GI_ALWAYSFALLINGDAMAGE	0x00000080
+#define GI_TEASER2				0x00000100	// Alternate version of the Strife Teaser
 
 #ifndef EGAMETYPE
 #define EGAMETYPE

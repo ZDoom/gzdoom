@@ -86,7 +86,7 @@ CVAR (Int, vid_defheight, 480, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, vid_defbits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, vid_fps, false, 0)
 CVAR (Bool, ticker, false, 0)
-CVAR (Bool, vid_showpalette, false, 0)
+CVAR (Int, vid_showpalette, 0, 0)
 
 CUSTOM_CVAR (Float, dimamount, 0.2f, CVAR_ARCHIVE)
 {
@@ -641,7 +641,17 @@ void DFrameBuffer::DrawRateStuff ()
 			{
 				for (l = 0; l < 16; ++l)
 				{
-					memset (buffer, k, 8);
+					int color;
+
+					if (vid_showpalette > 1 && vid_showpalette < 9)
+					{
+						color = translationtables[TRANSLATION_Standard][(vid_showpalette-2)*256+k];
+					}
+					else
+					{
+						color = k;
+					}
+					memset (buffer, color, 8);
 					buffer += 8;
 					k++;
 				}

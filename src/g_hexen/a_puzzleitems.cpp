@@ -51,7 +51,7 @@ bool APuzzleItem::HandlePickup (AInventory *item)
 	return Super::HandlePickup (item);
 }
 
-bool APuzzleItem::Use ()
+bool APuzzleItem::Use (bool pickup)
 {
 	if (P_UsePuzzleItem (Owner, PuzzleItemNumber))
 	{

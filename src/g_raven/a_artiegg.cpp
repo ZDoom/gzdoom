@@ -325,7 +325,7 @@ class AArtiEgg : public AInventory
 {
 	DECLARE_ACTOR (AArtiEgg, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 };
@@ -347,7 +347,7 @@ IMPLEMENT_ACTOR (AArtiEgg, Heretic, 30, 14)
 	PROP_Inventory_Icon ("ARTIEGGC")
 END_DEFAULTS
 
-bool AArtiEgg::Use ()
+bool AArtiEgg::Use (bool pickup)
 {
 	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX));
 	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(AEggFX), Owner->angle-(ANG45/6));
@@ -425,7 +425,7 @@ class AArtiPork : public AInventory
 {
 	DECLARE_ACTOR (AArtiPork, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 };
@@ -451,7 +451,7 @@ IMPLEMENT_ACTOR (AArtiPork, Hexen, 30, 14)
 	PROP_Inventory_Icon ("ARTIPORK")
 END_DEFAULTS
 
-bool AArtiPork::Use ()
+bool AArtiPork::Use (bool pickup)
 {
 	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX));
 	P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(APorkFX), Owner->angle-(ANG45/6));

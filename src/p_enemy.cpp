@@ -606,7 +606,7 @@ void P_RandomChaseDir (AActor *actor)
 
 	if (pr_newchasedir() & 1)
 	{
-		for (tdir = DI_WEST; tdir <= DI_NORTHWEST; ++tdir)
+		for (tdir = DI_EAST; tdir <= DI_SOUTHEAST; ++tdir)
 		{
 			if (tdir != turnaround)
 			{
@@ -618,7 +618,7 @@ void P_RandomChaseDir (AActor *actor)
 	}
 	else
 	{
-		for (tdir = DI_NORTHWEST; tdir >= DI_WEST; --tdir)
+		for (tdir = DI_SOUTHEAST; tdir >= DI_EAST; --tdir)
 		{
 			if (tdir != turnaround)
 			{
@@ -1207,7 +1207,18 @@ void A_Look (AActor *actor)
 	{
 		if (actor->flags & targ->flags & MF_FRIENDLY)
 		{
-			A_Wander (actor);
+			// Let the actor wander around aimlessly looking for a fight
+			if (actor->SeeState != NULL)
+			{
+				if (!(actor->flags & MF_INCHASE))
+				{
+					actor->SetState (actor->SeeState);
+				}
+			}
+			else
+			{
+				A_Wander (actor);
+			}
 		}
 		else
 		{
@@ -1247,8 +1258,10 @@ void A_Look (AActor *actor)
 		}
 	}
 
-	if (actor->target)
+	if (actor->target && !(actor->flags & MF_INCHASE))
+	{
 		actor->SetState (actor->SeeState);
+	}
 }
 
 void A_Wander (AActor *self)
@@ -1351,6 +1364,8 @@ void A_Chase (AActor *actor)
 {
 	int delta;
 
+	actor->flags |= MF_INCHASE;
+
 	// [RH] Andy Baker's stealth monsters
 	if (actor->flags & MF_STEALTH)
 	{
@@ -1416,12 +1431,27 @@ void A_Chase (AActor *actor)
 	{ // look for a new target
 		if (P_LookForPlayers (actor, true) && actor->target != actor->goal)
 		{ // got a new target
+			actor->flags &= ~MF_INCHASE;
 			return;
 		}
 		if (actor->target == NULL)
 		{
-			actor->SetState (actor->SpawnState);
-			return;
+			if (actor->flags & MF_FRIENDLY)
+			{
+				A_Look (actor);
+				if (actor->target == NULL)
+				{
+					A_Wander (actor);
+					actor->flags &= ~MF_INCHASE;
+					return;
+				}
+			}
+			else
+			{
+				actor->SetState (actor->SpawnState);
+				actor->flags &= ~MF_INCHASE;
+				return;
+			}
 		}
 	}
 	
@@ -1430,7 +1460,10 @@ void A_Chase (AActor *actor)
 	{
 		actor->flags &= ~MF_JUSTATTACKED;
 		if ((gameskill != sk_nightmare) && !(dmflags & DF_FAST_MONSTERS))
+		{
 			P_NewChaseDir (actor);
+		}
+		actor->flags &= ~MF_INCHASE;
 		return;
 	}
 	
@@ -1467,6 +1500,7 @@ void A_Chase (AActor *actor)
 			actor->flags |= MF_JUSTATTACKED;
 			actor->flags4 |= MF4_INCOMBAT;
 			actor->SetState (actor->SpawnState);
+			actor->flags &= ~MF_INCHASE;
 			return;
 		}
 		goto nomissile;
@@ -1484,6 +1518,7 @@ void A_Chase (AActor *actor)
 				S_SoundID (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
 
 			actor->SetState (actor->MeleeState);
+			actor->flags &= ~MF_INCHASE;
 			return;
 		}
 		
@@ -1502,6 +1537,7 @@ void A_Chase (AActor *actor)
 			actor->SetState (actor->MissileState);
 			actor->flags |= MF_JUSTATTACKED;
 			actor->flags4 |= MF4_INCOMBAT;
+			actor->flags &= ~MF_INCHASE;
 			return;
 		}
 	}
@@ -1526,6 +1562,7 @@ void A_Chase (AActor *actor)
 		}
 		if (gotNew)
 		{
+			actor->flags &= ~MF_INCHASE;
 			return; 	// got a new target
 		}
 	}
@@ -1541,6 +1578,8 @@ void A_Chase (AActor *actor)
 	{
 		actor->PlayActiveSound ();
 	}
+
+	actor->flags &= ~MF_INCHASE;
 }
 
 
@@ -1761,7 +1800,7 @@ void A_Die (AActor *actor)
 
 void A_Detonate (AActor *mo)
 {
-	P_RadiusAttack (mo, mo->target, mo->damage, mo->damage, true, MOD_UNKNOWN);
+	P_RadiusAttack (mo, mo->target, mo->damage, mo->damage, mo->DamageType, true);
 	if (mo->z <= mo->floorz + (mo->damage<<FRACBITS))
 	{
 		P_HitFloor (mo);
@@ -1779,7 +1818,7 @@ void A_Explode (AActor *thing)
 
 	thing->PreExplode ();
 	thing->GetExplodeParms (damage, distance, hurtSource);
-	P_RadiusAttack (thing, thing->target, damage, distance, hurtSource, thing->GetMOD ());
+	P_RadiusAttack (thing, thing->target, damage, distance, thing->DamageType, hurtSource);
 	if (thing->z <= thing->floorz + (distance<<FRACBITS))
 	{
 		P_HitFloor (thing);

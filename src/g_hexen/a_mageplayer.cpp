@@ -122,18 +122,15 @@ void AMagePlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
 	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(player->mo->GiveInventoryType (TypeInfo::FindType ("MWeapWand")));
-}
-
-fixed_t AMagePlayer::GetArmorIncrement (int armortype)
-{
-	static const fixed_t increment[4] = { 5*FRACUNIT, 15*FRACUNIT, 10*FRACUNIT, 25*FRACUNIT };
-
-	if ((unsigned)armortype <= 3)
-	{
-		return increment[armortype];
-	}
-	return 0;
+		(GiveInventoryType (TypeInfo::FindType ("MWeapWand")));
+	
+	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
+	AHexenArmor *armor = FindInventory<AHexenArmor>();
+	armor->Slots[4] = 5*FRACUNIT;
+	armor->SlotsIncrement[0] =  5*FRACUNIT;
+	armor->SlotsIncrement[1] = 15*FRACUNIT;
+	armor->SlotsIncrement[2] = 10*FRACUNIT;
+	armor->SlotsIncrement[3] = 25*FRACUNIT;
 }
 
 void AMagePlayer::TweakSpeeds (int &forward, int &side)
@@ -160,16 +157,6 @@ void AMagePlayer::TweakSpeeds (int &forward, int &side)
 fixed_t AMagePlayer::GetJumpZ ()
 {
 	return FRACUNIT*39/4;	// ~9.75
-}
-
-int AMagePlayer::GetArmorMax ()
-{
-	return 16;
-}
-
-int AMagePlayer::GetAutoArmorSave ()
-{
-	return 5*FRACUNIT;
 }
 
 // Radius mana boost

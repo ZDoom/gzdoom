@@ -242,6 +242,7 @@ enum
 	ADEF_Height,
 	ADEF_Mass,
 	ADEF_Damage,
+	ADEF_DamageType,
 	ADEF_Flags,			// Use these flags exactly
 	ADEF_Flags2,		// "
 	ADEF_Flags3,		// "
@@ -276,6 +277,7 @@ enum
 
 	ADEF_StrifeType,	// Not really a property. Used to init StrifeTypes[] in p_conversation.h.
 	ADEF_StrifeTeaserType,
+	ADEF_StrifeTeaserType2,
 
 	ADEF_Inventory_Amount,
 	ADEF_Inventory_MaxAmount,

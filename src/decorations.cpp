@@ -96,7 +96,7 @@ public:
 	{
 		Super::Die (source, inflictor);
 		flags &= ~MF_CORPSE;	// Don't be a corpse
-		if (flags2 & MF2_FIREDAMAGE)
+		if (DamageType == MOD_FIRE)
 		{
 			height = BurnHeight;	// Use burn height
 		}
@@ -801,17 +801,15 @@ static void ParseInsideDecoration (FActorInfo *info, AActor *defaults,
 			SC_MustGetString ();
 			if (SC_Compare ("Normal"))
 			{
-				defaults->flags2 &= ~(MF2_ICEDAMAGE|MF2_FIREDAMAGE);
+				defaults->DamageType = 0;
 			}
 			else if (SC_Compare ("Ice"))
 			{
-				defaults->flags2 &= ~MF2_FIREDAMAGE;
-				defaults->flags2 |= MF2_ICEDAMAGE;
+				defaults->DamageType = MOD_ICE;
 			}
 			else if (SC_Compare ("Fire"))
 			{
-				defaults->flags2 &= ~MF2_ICEDAMAGE;
-				defaults->flags2 |= MF2_FIREDAMAGE;
+				defaults->DamageType = MOD_FIRE;
 			}
 			else
 			{

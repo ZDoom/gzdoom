@@ -40,7 +40,7 @@ IMPLEMENT_ABSTRACT_ACTOR (APowerup)
 //
 //===========================================================================
 
-bool APowerupGiver::Use ()
+bool APowerupGiver::Use (bool pickup)
 {
 	APowerup *power = static_cast<APowerup *> (Spawn (PowerupType, 0, 0, 0));
 
@@ -437,7 +437,7 @@ END_DEFAULTS
 
 //===========================================================================
 //
-// APowerInvisibility :: InitEffect
+// APowerGhost :: InitEffect
 //
 //===========================================================================
 
@@ -449,12 +449,53 @@ void APowerGhost::InitEffect ()
 	Owner->RenderStyle = STYLE_Translucent;
 }
 
+// Shadow Powerup (Strife's version of invisibility) -------------------------
+
+IMPLEMENT_STATELESS_ACTOR (APowerShadow, Any, -1, 0)
+	PROP_Powerup_EffectTics (55*TICRATE)
+END_DEFAULTS
+
+//===========================================================================
+//
+// APowerShadow :: InitEffect
+//
+//===========================================================================
+
+void APowerShadow::InitEffect ()
+{
+	Owner->flags |= MF_SHADOW;
+	Owner->alpha = TRANSLUC25;
+	Owner->RenderStyle = STYLE_Translucent;
+}
+
 // Ironfeet Powerup ----------------------------------------------------------
 
 IMPLEMENT_STATELESS_ACTOR (APowerIronFeet, Any, -1, 0)
 	PROP_Powerup_EffectTics (IRONTICS)
 	PROP_Powerup_Color (32, 0, 255, 0)
 END_DEFAULTS
+
+//===========================================================================
+//
+// APowerIronFeet :: AbsorbDamage
+//
+//===========================================================================
+
+void APowerIronFeet::AbsorbDamage (int damage, int damageType, int &newdamage)
+{
+	if (damageType == MOD_WATER)
+	{
+		newdamage = 0;
+		if (Owner->player != NULL)
+		{
+			Owner->player->air_finished = level.time + 10*TICRATE;
+		}
+	}
+	else if (Inventory != NULL)
+	{
+		Inventory->AbsorbDamage (damage, damageType, newdamage);
+	}
+}
 
 // Strife Environment Suit Powerup -------------------------------------------
 
@@ -463,6 +504,39 @@ IMPLEMENT_STATELESS_ACTOR (APowerMask, Any, -1, 0)
 	PROP_Powerup_Color (0, 0, 0, 0)
 	PROP_Inventory_Icon ("I_MASK")
 END_DEFAULTS
+
+//===========================================================================
+//
+// APowerMask :: AbsorbDamage
+//
+//===========================================================================
+
+void APowerMask::AbsorbDamage (int damage, int damageType, int &newdamage)
+{
+	if (damageType == MOD_FIRE)
+	{
+		newdamage = 0;
+	}
+	else
+	{
+		Super::AbsorbDamage (damage, damageType, newdamage);
+	}
+}
+
+//===========================================================================
+//
+// APowerMask :: DoEffect
+//
+//===========================================================================
+
+void APowerMask::DoEffect ()
+{
+	Super::DoEffect ();
+	if (!(level.time & 0x3f))
+	{
+		S_Sound (Owner, CHAN_AUTO, "misc/mask", 1, ATTN_STATIC);
+	}
+}
 
 // Light-Amp Powerup ---------------------------------------------------------
 
@@ -853,16 +927,6 @@ IMPLEMENT_STATELESS_ACTOR (APowerMinotaur, Any, -1, 0)
 END_DEFAULTS
 
 // Targeter powerup ---------------------------------------------------------
-
-class APowerTargeter : public APowerup
-{
-	DECLARE_ACTOR (APowerTargeter, APowerup)
-protected:
-	void InitEffect ();
-	void DoEffect ();
-	void EndEffect ();
-	void PositionAccuracy ();
-};
 
 FState APowerTargeter::States[] =
 {

@@ -241,7 +241,7 @@ void A_ExtraLightOff (AActor *self)
 
 void A_Explode512 (AActor *self)
 {
-	P_RadiusAttack (self, self->target, 512, 512, true, MOD_UNKNOWN);
+	P_RadiusAttack (self, self->target, 512, 512, MOD_UNKNOWN, true);
 	if (self->target != NULL && self->target->player != NULL)
 	{
 		self->target->player->extralight = 5;

@@ -39,7 +39,6 @@ typedef struct wbplayerstruct_s
 	int			stime;
 	int			frags[MAXPLAYERS];
 	int			fragcount;	// [RH] Cumulative frags for this player
-	int			score;		// current score on entry, modified on return
 
 } wbplayerstruct_t;
 

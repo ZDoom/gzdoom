@@ -965,15 +965,23 @@ void R_DrawSinglePlane (visplane_t *pl, fixed_t alpha, bool masked)
 CVAR (Bool, r_skyboxes, true, 0)
 static int numskyboxes;
 
+struct VisplaneAndAlpha
+{
+	visplane_t *Visplane;
+	fixed_t Alpha;
+};
+
 void R_DrawSkyBoxes ()
 {
 	static TArray<size_t> interestingStack;
 	static TArray<ptrdiff_t> drawsegStack;
 	static TArray<ptrdiff_t> visspriteStack;
+	static TArray<VisplaneAndAlpha> visplaneStack;
 
 	if (visplanes[MAXVISPLANES] == NULL)
 		return;
 
+	VisplaneAndAlpha vaAdder;
 	int savedextralight = extralight;
 	fixed_t savedx = viewx;
 	fixed_t savedy = viewy;
@@ -1079,35 +1087,40 @@ void R_DrawSkyBoxes ()
 		interestingStack.Push (FirstInterestingDrawseg);
 		drawsegStack.Push (firstdrawseg - drawsegs);
 		visspriteStack.Push (firstvissprite - vissprites);
+		vaAdder.Visplane = pl;
+		vaAdder.Alpha = sky->PlaneAlpha;
+		visplaneStack.Push (vaAdder);
 
 		R_RenderBSPNode (nodes + numnodes - 1);
 		R_DrawPlanes ();
 
 		sky->bInSkybox = false;
-
-		if (sky->PlaneAlpha != 0)
-		{
-			R_DrawSinglePlane (pl, sky->PlaneAlpha, true);
-		}
-
-		*freehead = pl;
-		freehead = &pl->next;
 	}
 
 	// Draw all the masked textures in a second pass, in the reverse order they
 	// were added. This must be done separately from the previous step for the
 	// sake of nested skyboxes.
-	while (interestingStack.Size() != 0)
+	while (interestingStack.Pop (FirstInterestingDrawseg))
 	{
 		ptrdiff_t pd;
 
-		interestingStack.Pop (FirstInterestingDrawseg);
 		drawsegStack.Pop (pd);
 		firstdrawseg = drawsegs + pd;
 		visspriteStack.Pop (pd);
 		firstvissprite = vissprites + pd;
 
 		R_DrawMasked ();
+
+		ds_p = firstdrawseg;
+		vissprite_p = firstvissprite;
+
+		visplaneStack.Pop (vaAdder);
+		if (vaAdder.Alpha > 0)
+		{
+			R_DrawSinglePlane (vaAdder.Visplane, vaAdder.Alpha, true);
+		}
+		*freehead = vaAdder.Visplane;
+		freehead = &vaAdder.Visplane->next;
 	}
 	firstvissprite = vissprites;
 	vissprite_p = vissprites + savedvissprite_p;
@@ -1116,7 +1129,7 @@ void R_DrawSkyBoxes ()
 	InterestingDrawsegs.Resize (FirstInterestingDrawseg);
 	FirstInterestingDrawseg = savedinteresting;
 
-		lastopening = savedlastopening;
+	lastopening = savedlastopening;
 
 	camera = savedcamera;
 	viewsector = savedsector;

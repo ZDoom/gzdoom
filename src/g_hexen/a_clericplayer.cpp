@@ -124,33 +124,20 @@ void AClericPlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
 	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(player->mo->GiveInventoryType (TypeInfo::FindType ("CWeapMace")));
-}
+		(GiveInventoryType (TypeInfo::FindType ("CWeapMace")));
 
-fixed_t AClericPlayer::GetArmorIncrement (int armortype)
-{
-	static const fixed_t increment[4] = { 10*FRACUNIT, 25*FRACUNIT, 5*FRACUNIT, 20*FRACUNIT };
-
-	if ((unsigned)armortype <= 3)
-	{
-		return increment[armortype];
-	}
-	return 0;
+	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
+	AHexenArmor *armor = FindInventory<AHexenArmor>();
+	armor->Slots[4] = 10*FRACUNIT;
+	armor->SlotsIncrement[0] = 10*FRACUNIT;
+	armor->SlotsIncrement[1] = 25*FRACUNIT;
+	armor->SlotsIncrement[2] =  5*FRACUNIT;
+	armor->SlotsIncrement[3] = 20*FRACUNIT;
 }
 
 fixed_t AClericPlayer::GetJumpZ ()
 {
 	return FRACUNIT*39/4;	// ~9.75
-}
-
-int AClericPlayer::GetArmorMax ()
-{
-	return 18;
-}
-
-int AClericPlayer::GetAutoArmorSave ()
-{
-	return 10*FRACUNIT;
 }
 
 void AClericPlayer::SpecialInvulnerabilityHandling (EInvulState state)

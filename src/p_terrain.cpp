@@ -498,18 +498,15 @@ static void ParseDamage (int keyword, void *fields)
 	switch (SC_MustMatchString (DamageKeywords))
 	{
 	case DAM_Lava:
-		def->DamageMOD = MOD_LAVA;
-		def->DamageFlags = DMG_FIRE_DAMAGE;
+		def->DamageMOD = MOD_FIRE;
 		break;
 
 	case DAM_Ice:
 		def->DamageMOD = MOD_ICE;
-		def->DamageFlags = DMG_ICE_DAMAGE;
 		break;
 
 	case DAM_Slime:
 		def->DamageMOD = MOD_SLIME;
-		def->DamageFlags = 0;
 		break;
 	}
 }

@@ -15,7 +15,7 @@ class AArtiDarkServant : public AInventory
 {
 	DECLARE_ACTOR (AArtiDarkServant, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 };
@@ -119,7 +119,7 @@ END_DEFAULTS
 //
 //============================================================================
 
-bool AArtiDarkServant::Use ()
+bool AArtiDarkServant::Use (bool pickup)
 {
 	AActor *mo = P_SpawnPlayerMissile (Owner, RUNTIME_CLASS(ASummoningDoll));
 	if (mo)

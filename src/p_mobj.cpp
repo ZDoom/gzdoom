@@ -303,6 +303,10 @@ void AActor::Serialize (FArchive &arc)
 		<< EDeathState
 		<< RaiseState
 		<< WoundState;
+	if (SaveVersion >= 224)
+	{
+		arc << DamageType;
+	}
 	if (arc.IsStoring ())
 	{
 		int convnum = 0;
@@ -634,7 +638,7 @@ bool AActor::UseInventory (AInventory *item)
 	{
 		return false;
 	}
-	if (!item->Use ())
+	if (!item->Use (false))
 	{
 		return false;
 	}
@@ -1544,7 +1548,7 @@ void P_MonsterFallingDamage (AActor *mo)
 		damage = ((mom - (23*FRACUNIT))*6)>>FRACBITS;
 	}
 	damage = 1000000;	// always kill 'em
-	P_DamageMobj (mo, NULL, NULL, damage);
+	P_DamageMobj (mo, NULL, NULL, damage, MOD_FALLING);
 }
 
 //
@@ -1683,7 +1687,7 @@ void P_ZMovement (AActor *mo)
 
 				// Spawn splashes, etc.
 				P_HitFloor (mo);
-				if (mo->flags2 & MF2_ICEDAMAGE && mom < minmom)
+				if (mo->DamageType == MOD_ICE && mom < minmom)
 				{
 					mo->tics = 1;
 					mo->momx = 0;
@@ -1713,7 +1717,7 @@ void P_ZMovement (AActor *mo)
 			if (mo->CrashState &&
 				(mo->flags & MF_CORPSE) &&
 				!(mo->flags3 & MF3_CRASHED) &&
-				!(mo->flags2 & MF2_ICEDAMAGE))
+				mo->DamageType != MOD_ICE)
 			{
 				mo->flags3 |= MF3_CRASHED;
 				mo->SetState (mo->CrashState);
@@ -2059,7 +2063,7 @@ void AActor::HitFloor ()
 bool AActor::Slam (AActor *thing)
 {
 	int dam = ((pr_slam()%8)+1) * damage;
-	P_DamageMobj (thing, this, this, dam);
+	P_DamageMobj (thing, this, this, dam, MOD_HIT);
 	P_TraceBleed (dam, thing, this);
 	flags &= ~MF_SKULLFLY;
 	momx = momy = momz = 0;
@@ -2481,7 +2485,7 @@ void AActor::Tick ()
 				if (CrashState &&
 					(flags & MF_CORPSE) &&
 					!(flags3 & MF3_CRASHED) &&
-					!(flags2 & MF2_ICEDAMAGE))
+					DamageType != MOD_ICE)
 				{
 					flags3 |= MF3_CRASHED;
 					SetState (CrashState);
@@ -2501,7 +2505,7 @@ void AActor::Tick ()
 		if (CrashState &&
 			(flags & MF_CORPSE) &&
 			!(flags3 & MF3_CRASHED) &&
-			!(flags2 & MF2_ICEDAMAGE))
+			DamageType != MOD_ICE)
 		{
 			flags3 |= MF3_CRASHED;
 			SetState (CrashState);
@@ -3040,6 +3044,12 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	if (state == PST_REBORN || state == PST_ENTER)
 	{
 		G_PlayerReborn (playernum);
+	}
+	else if (oldactor != NULL && oldactor->player == p)
+	{
+		// Move the voodoo doll's inventory to the new player.
+		mobj->Inventory = oldactor->Inventory;
+		oldactor->Inventory = NULL;
 	}
 
 	// [RH] Be sure the player has the right translation
@@ -4074,6 +4084,13 @@ AActor *P_SpawnPlayerMissile (AActor *source, fixed_t x, fixed_t y, fixed_t z,
 	{
 		an = angle + angdiff[i];
 		pitch = P_AimLineAttack (source, an, 16*64*FRACUNIT);
+
+		if (source->player != NULL &&
+			!(dmflags & DF_NO_FREELOOK) &&
+			source->player->userinfo.aimdist <= ANGLE_1/2)
+		{
+			break;
+		}
 	} while (linetarget == NULL && --i >= 0);
 
 	if (linetarget == NULL)

@@ -270,7 +270,7 @@ int AWhirlwind::DoSpecialDamage (AActor *target, int damage)
 	}
 	if (!(level.time & 7))
 	{
-		P_DamageMobj (target, NULL, this->target, 3);
+		P_DamageMobj (target, NULL, this->target, 3, MOD_HIT);
 	}
 	return -1;
 }

@@ -44,7 +44,7 @@ class APowerupGiver : public AInventory
 {
 	DECLARE_STATELESS_ACTOR (APowerupGiver, AInventory)
 public:
-	virtual bool Use ();
+	virtual bool Use (bool pickup);
 	virtual void Serialize (FArchive &arc);
 
 	const TypeInfo *PowerupType;
@@ -89,14 +89,26 @@ protected:
 	void InitEffect ();
 };
 
+class APowerShadow : public APowerInvisibility
+{
+	DECLARE_STATELESS_ACTOR (APowerShadow, APowerInvisibility)
+protected:
+	void InitEffect ();
+};
+
 class APowerIronFeet : public APowerup
 {
 	DECLARE_STATELESS_ACTOR (APowerIronFeet, APowerup)
+public:
+	void AbsorbDamage (int damage, int damageType, int &newdamage);
 };
 
 class APowerMask : public APowerIronFeet
 {
 	DECLARE_STATELESS_ACTOR (APowerMask, APowerIronFeet)
+public:
+	void AbsorbDamage (int damage, int damageType, int &newdamage);
+	void DoEffect ();
 };
 
 class APowerLightAmp : public APowerup
@@ -157,6 +169,16 @@ class APowerMinotaur : public APowerup
 class APowerScanner : public APowerup
 {
 	DECLARE_STATELESS_ACTOR (APowerScanner, APowerup)
+};
+
+class APowerTargeter : public APowerup
+{
+	DECLARE_ACTOR (APowerTargeter, APowerup)
+protected:
+	void InitEffect ();
+	void DoEffect ();
+	void EndEffect ();
+	void PositionAccuracy ();
 };
 
 class player_s;

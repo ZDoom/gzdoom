@@ -1360,7 +1360,7 @@ void M_DrawMainMenu (void)
 	}
 	else
 	{
-        screen->DrawTexture (TexMan["M_STRIFE"], 94, 2, DTA_Clean, true, TAG_DONE);
+        screen->DrawTexture (TexMan["M_STRIFE"], 84, 2, DTA_Clean, true, TAG_DONE);
 	}
 }
 
@@ -1399,10 +1399,7 @@ void M_DrawNewGame(void)
 {
 	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
-		if (gameinfo.gametype == GAME_Doom)
-		{
-			screen->DrawTexture (TexMan["M_NEWG"], 96, 14, DTA_Clean, true, TAG_DONE);
-		}
+		screen->DrawTexture (TexMan[gameinfo.gametype == GAME_Doom ? "M_NEWG" : "M_NGAME"], 96, 14, DTA_Clean, true, TAG_DONE);
 		screen->DrawTexture (TexMan["M_SKILL"], 54, 38, DTA_Clean, true, TAG_DONE);
 	}
 }
@@ -2927,7 +2924,7 @@ void M_Drawer ()
 				else if (gameinfo.gametype == GAME_Strife)
 				{
 					screen->DrawTexture (TexMan[cursName[(MenuTime >> 2) & 7]],
-						x + SKULLXOFF, currentMenu->y - 5 + itemOn*LINEHEIGHT,
+						x - 28, currentMenu->y - 5 + itemOn*LINEHEIGHT,
 						DTA_Clean, true, TAG_DONE);
 				}
 				else
@@ -3071,6 +3068,11 @@ void M_Init (void)
 	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
 	{
 		TopLevelMenu = currentMenu = &MainDef;
+		if (gameinfo.gametype == GAME_Strife)
+		{
+			MainDef.y = 45;
+			NewDef.lastOn = 1;
+		}
 	}
 	else
 	{
@@ -3096,9 +3098,13 @@ void M_Init (void)
 	underscore[0] = (gameinfo.gametype & (GAME_Doom|GAME_Strife)) ? '_' : '[';
 	underscore[1] = '\0';
 
-	if (gameinfo.gametype & (GAME_Doom|GAME_Strife))
+	if (gameinfo.gametype == GAME_Doom)
 	{
 		LINEHEIGHT = 16;
+	}
+	else if (gameinfo.gametype == GAME_Strife)
+	{
+		LINEHEIGHT = 19;
 	}
 	else
 	{

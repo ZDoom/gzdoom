@@ -313,7 +313,7 @@ void A_Punch (AActor *actor)
 
 	angle += pr_punch.Random2() << 18;
 	pitch = P_AimLineAttack (actor, angle, MELEERANGE);
-	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, RUNTIME_CLASS(ABulletPuff));
+	P_LineAttack (actor, angle, MELEERANGE, pitch, damage, MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
 
 	// turn to face target
 	if (linetarget)
@@ -508,7 +508,7 @@ void A_Saw (AActor *actor)
 	// the walls.
 	P_LineAttack (actor, angle, MELEERANGE+1,
 				  P_AimLineAttack (actor, angle, MELEERANGE+1), damage,
-				  RUNTIME_CLASS(ABulletPuff));
+				  MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
 
 	if (!linetarget)
 	{
@@ -762,7 +762,7 @@ void A_FireShotgun2 (AActor *actor)
 					  angle,
 					  PLAYERMISSILERANGE,
 					  bulletpitch + (pr_fireshotgun2.Random2() * 332063), damage,
-					  RUNTIME_CLASS(ABulletPuff));
+					  MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
 	}
 }
 

@@ -122,8 +122,9 @@ IMPLEMENT_ACTOR (AHammerMissile, Hexen, -1, 0)
 	PROP_RadiusFixed (14)
 	PROP_HeightFixed (20)
 	PROP_Damage (10)
+	PROP_DamageType (MOD_FIRE)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_FIREDAMAGE|MF2_IMPACT|MF2_PCROSS)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_IMPACT|MF2_PCROSS)
 
 	PROP_SpawnState (S_HAMMER_MISSILE_1)
 	PROP_DeathState (S_HAMMER_MISSILE_X1)
@@ -196,7 +197,7 @@ void A_FHammerAttack (AActor *actor)
 		slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE);
 		if (linetarget)
 		{
-			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
+			P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(AHammerPuff));
 			AdjustPlayerAngle(pmo);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -209,7 +210,7 @@ void A_FHammerAttack (AActor *actor)
 		slope = P_AimLineAttack(pmo, angle, HAMMER_RANGE);
 		if(linetarget)
 		{
-			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
+			P_LineAttack(pmo, angle, HAMMER_RANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(AHammerPuff));
 			AdjustPlayerAngle(pmo);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
@@ -223,7 +224,7 @@ void A_FHammerAttack (AActor *actor)
 	PuffSpawned = NULL;
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, HAMMER_RANGE);
-	P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
+	P_LineAttack (pmo, angle, HAMMER_RANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(AHammerPuff));
 	if (PuffSpawned)
 	{
 		pmo->special1 = false;

@@ -16,7 +16,7 @@ class AArtiBlastRadius : public AInventory
 {
 	DECLARE_ACTOR (AArtiBlastRadius, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 protected:
@@ -92,7 +92,7 @@ END_DEFAULTS
 //
 //==========================================================================
 
-bool AArtiBlastRadius::Use ()
+bool AArtiBlastRadius::Use (bool pickup)
 {
 	AActor *mo;
 	TThinkerIterator<AActor> iterator;

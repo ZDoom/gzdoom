@@ -99,6 +99,7 @@ class ABeggar1 : public ABeggar
 IMPLEMENT_STATELESS_ACTOR (ABeggar1, Strife, 141, 0)
 	PROP_StrifeType (38)
 	PROP_StrifeTeaserType (37)
+	PROP_StrifeTeaserType2 (38)
 END_DEFAULTS
 
 // Beggar 2 -----------------------------------------------------------------
@@ -111,6 +112,7 @@ class ABeggar2 : public ABeggar
 IMPLEMENT_STATELESS_ACTOR (ABeggar2, Strife, 155, 0)
 	PROP_StrifeType (39)
 	PROP_StrifeTeaserType (38)
+	PROP_StrifeTeaserType2 (39)
 END_DEFAULTS
 
 // Beggar 3 -----------------------------------------------------------------
@@ -123,6 +125,7 @@ class ABeggar3 : public ABeggar
 IMPLEMENT_STATELESS_ACTOR (ABeggar3, Strife, 156, 0)
 	PROP_StrifeType (40)
 	PROP_StrifeTeaserType (39)
+	PROP_StrifeTeaserType2 (40)
 END_DEFAULTS
 
 // Beggar 4 -----------------------------------------------------------------
@@ -135,6 +138,7 @@ class ABeggar4 : public ABeggar
 IMPLEMENT_STATELESS_ACTOR (ABeggar4, Strife, 157, 0)
 	PROP_StrifeType (41)
 	PROP_StrifeTeaserType (40)
+	PROP_StrifeTeaserType2 (41)
 END_DEFAULTS
 
 // Beggar 5 -----------------------------------------------------------------
@@ -147,4 +151,5 @@ class ABeggar5 : public ABeggar
 IMPLEMENT_STATELESS_ACTOR (ABeggar5, Strife, 158, 0)
 	PROP_StrifeType (42)
 	PROP_StrifeTeaserType (41)
+	PROP_StrifeTeaserType2 (42)
 END_DEFAULTS

@@ -107,6 +107,23 @@ protected:
 	DHUDMessageFadeOut() {}
 };
 
+class DHUDMessageFadeInOut : public DHUDMessageFadeOut
+{
+	DECLARE_CLASS (DHUDMessageFadeInOut, DHUDMessageFadeOut)
+public:
+	DHUDMessageFadeInOut (const char *text, float x, float y, int hudwidth, int hudheight,
+		EColorRange textColor, float holdTime, float fadeInTime, float fadeOutTime);
+
+	virtual void Serialize (FArchive &arc);
+	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
+	virtual bool Tick ();
+
+protected:
+	int FadeInTics;
+
+	DHUDMessageFadeInOut() {}
+};
+
 class DHUDMessageTypeOnFadeOut : public DHUDMessageFadeOut
 {
 	DECLARE_CLASS (DHUDMessageTypeOnFadeOut, DHUDMessageFadeOut)

@@ -61,7 +61,10 @@ typedef void (*voidfunc_)();
 
 #if defined(_MSC_VER)
 
-// Visual C++ macros
+/************************************************
+************** Visual C++ macros ****************
+************************************************/
+
 #pragma data_seg(".areg$u")		// ActorInfo initializer list
 #pragma data_seg(".greg$u")		// AT_GAME_SET list
 #pragma data_seg(".sreg$u")		// AT_SPEED_SET list
@@ -107,7 +110,9 @@ typedef void (*voidfunc_)();
 
 #elif defined(__GNUC__)
 
-// GCC macros
+/************************************************
+****************** GCC macros *******************
+************************************************/
 
 #define DOOMEDNUMOF(actor) actor##Defaults_::TheInfo.DoomEdNum
 
@@ -125,14 +130,14 @@ typedef void (*voidfunc_)();
 
 // Be very careful! If any of these arrays ends up being all zero, later GCCs will move the array into the BSS
 // section, which we do not want.
-#define END_DEFAULTS WORD endoflist = ADEF_EOL; }
+#define END_DEFAULTS extern BYTE endoflist[2]; BYTE endoflist[2] = { BREAK_WORD(ADEF_EOL) }; }
 
 #define ADD_BYTE_PROP(prop,val) extern BYTE prop##_1[3]; BYTE prop##_1[3] = { BREAK_WORD(prop|ADEFTYPE_Byte), val };
 #define ADD_FIXD_PROP(prop,val) extern BYTE prop##_1[3]; BYTE prop##_1[3] = { BREAK_WORD(prop|ADEFTYPE_FixedMul), val };
 #define ADD_WORD_PROP(prop,val) extern BYTE prop##_1[4]; BYTE prop##_1[4] = { BREAK_WORD(prop|ADEFTYPE_Word), BREAK_WORD(val) };
 #define ADD_LONG_PROP(prop,val) extern BYTE prop##_1[6]; BYTE prop##_1[6] = { BREAK_WORD(prop|ADEFTYPE_Long), BREAK_LONG(val) };
-#define ADD_STRING_PROP(prop1,prop2,val) struct prop1##_s { WORD label; BYTE content[sizeof(val)]; }; extern prop1##_s prop1##_1; \
-								prop1##_s prop1##_1 = { prop1, val };
+#define ADD_STRING_PROP(prop1,prop2,val) struct prop1##_s { BYTE label[2]; BYTE content[sizeof(val)]; }; extern prop1##_s prop1##_1; \
+								prop1##_s prop1##_1 = { BREAK_WORD(prop1), val };
 	
 #define AT_GAME_SET(ns) \
 	extern void ns##_gs(); \
@@ -222,6 +227,7 @@ public:
 #define PROP_MassLong(x)				ADD_LONG_PROP(ADEF_Mass,x)
 #define PROP_Damage(x)					ADD_BYTE_PROP(ADEF_Damage,x)
 #define PROP_DamageLong(x)				ADD_LONG_PROP(ADEF_Damage,x)
+#define PROP_DamageType(x)				ADD_BYTE_PROP(ADEF_DamageType,x)
 #define PROP_Flags(x)					ADD_LONG_PROP(ADEF_Flags,x)
 #define PROP_Flags2(x)					ADD_LONG_PROP(ADEF_Flags2,x)
 #define PROP_Flags3(x)					ADD_LONG_PROP(ADEF_Flags3,x)
@@ -256,6 +262,7 @@ public:
 
 #define PROP_StrifeType(x)				ADD_WORD_PROP(ADEF_StrifeType,x)
 #define PROP_StrifeTeaserType(x)		ADD_WORD_PROP(ADEF_StrifeTeaserType,x)
+#define PROP_StrifeTeaserType2(x)		ADD_WORD_PROP(ADEF_StrifeTeaserType2,x)
 
 #define PROP_Inventory_Amount(x)		ADD_BYTE_PROP(ADEF_Inventory_Amount,x)
 #define PROP_Inventory_AmountWord(x)	ADD_WORD_PROP(ADEF_Inventory_Amount,x)

@@ -794,7 +794,7 @@ void A_SerpentMeleeAttack (AActor *actor)
 	if (actor->CheckMeleeRange ())
 	{
 		int damage = pr_serpentmeattack.HitDice (5);
-		P_DamageMobj (actor->target, actor, actor, damage);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 		S_Sound (actor, CHAN_BODY, "SerpentMeleeHit", 1, ATTN_NORM);
 	}

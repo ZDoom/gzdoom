@@ -123,18 +123,15 @@ void AFighterPlayer::GiveDefaultInventory ()
 {
 	player->health = GetDefault()->health;
 	player->ReadyWeapon = player->PendingWeapon = static_cast<AWeapon *>
-		(player->mo->GiveInventoryType (TypeInfo::FindType ("FWeapFist")));
-}
+		(GiveInventoryType (TypeInfo::FindType ("FWeapFist")));
 
-fixed_t AFighterPlayer::GetArmorIncrement (int armortype)
-{
-	static const fixed_t increment[4] = { 25*FRACUNIT, 20*FRACUNIT, 15*FRACUNIT, 5*FRACUNIT };
-
-	if ((unsigned)armortype <= 3)
-	{
-		return increment[armortype];
-	}
-	return 0;
+	GiveInventoryType (RUNTIME_CLASS(AHexenArmor));
+	AHexenArmor *armor = FindInventory<AHexenArmor>();
+	armor->Slots[4] = 15*FRACUNIT;
+	armor->SlotsIncrement[0] = 25*FRACUNIT;
+	armor->SlotsIncrement[1] = 20*FRACUNIT;
+	armor->SlotsIncrement[2] = 15*FRACUNIT;
+	armor->SlotsIncrement[3] =  5*FRACUNIT;
 }
 
 // --- Fighter Weapons ------------------------------------------------------
@@ -296,7 +293,7 @@ void A_FPunchAttack (AActor *actor)
 				power = 6*FRACUNIT;
 				pufftype = RUNTIME_CLASS(AHammerPuff);
 			}
-			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, pufftype);
+			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, MOD_HIT, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -315,7 +312,7 @@ void A_FPunchAttack (AActor *actor)
 				power = 6*FRACUNIT;
 				pufftype = RUNTIME_CLASS(AHammerPuff);
 			}
-			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, pufftype);
+			P_LineAttack (pmo, angle, 2*MELEERANGE, slope, damage, MOD_HIT, pufftype);
 			if (linetarget->flags3&MF3_ISMONSTER || linetarget->player)
 			{
 				P_ThrustMobj (linetarget, angle, power);
@@ -329,7 +326,7 @@ void A_FPunchAttack (AActor *actor)
 
 	angle = pmo->angle;
 	slope = P_AimLineAttack (pmo, angle, MELEERANGE);
-	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, pufftype);
+	P_LineAttack (pmo, angle, MELEERANGE, slope, damage, MOD_HIT, pufftype);
 
 punchdone:
 	if (pmo->special1 == 3)
@@ -365,16 +362,6 @@ void AFighterPlayer::TweakSpeeds (int &forward, int &side)
 fixed_t AFighterPlayer::GetJumpZ ()
 {
 	return FRACUNIT*39/4;	// ~9.75
-}
-
-int AFighterPlayer::GetArmorMax ()
-{
-	return 20;
-}
-
-int AFighterPlayer::GetAutoArmorSave ()
-{
-	return 15*FRACUNIT;
 }
 
 // Radius armor boost

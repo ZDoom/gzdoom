@@ -100,6 +100,7 @@ static inline void StuffPalette (const PalEntry *from, BYTE *to);
 static bool StuffBitmap (const DCanvas *canvas, FILE *file);
 static bool WriteIDAT (FILE *file, const BYTE *data, int len);
 static void UnfilterRow (int width, BYTE *dest, BYTE *stream, BYTE *prev);
+static void UnpackPixels (int width, int bytesPerRow, int bitdepth, BYTE *row);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -528,10 +529,20 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 	int err;
 	int y;
 	bool lastIDAT;
+	int bytesPerRowIn;
 
 	inputLine = (Byte *)alloca (1+width*2);
 	prev = inputLine + 1 + width;
 	memset (prev, 0, width);
+
+	switch (bitdepth)
+	{
+	case 8:		bytesPerRowIn = width;			break;
+	case 4:		bytesPerRowIn = (width+1)/2;	break;
+	case 2:		bytesPerRowIn = (width+3)/4;	break;
+	case 1:		bytesPerRowIn = (width+7)/8;	break;
+	default:	return false;
+	}
 
 	stream.next_in = Z_NULL;
 	stream.avail_in = 0;
@@ -545,7 +556,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 	y = 0;
 	curr = buffer;
 	stream.next_out = inputLine;
-	stream.avail_out = width+1;
+	stream.avail_out = bytesPerRowIn+1;
 	lastIDAT = false;
 
 	do
@@ -568,12 +579,12 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 
 			if (stream.avail_out == 0)
 			{
-				UnfilterRow (width, curr, inputLine, prev);
+				UnfilterRow (bytesPerRowIn, curr, inputLine, prev);
 				prev = curr;
 				curr += pitch;
 				y++;
 				stream.next_out = inputLine;
-				stream.avail_out = width+1;
+				stream.avail_out = bytesPerRowIn+1;
 			}
 
 			if (chunklen == 0 && !lastIDAT)
@@ -597,6 +608,14 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 	} while (err == Z_OK && y < height);
 
 	inflateEnd (&stream);
+
+	if (bitdepth < 8)
+	{
+		for (curr = buffer; curr <= prev; curr += pitch)
+		{
+			UnpackPixels (width, bytesPerRowIn, bitdepth, curr);
+		}
+	}
 	return true;
 }
 
@@ -829,6 +848,67 @@ void UnfilterRow (int width, BYTE *dest, BYTE *row, BYTE *prev)
 
 	default:	// Treat everything else as filter type 0 (none)
 		memcpy (dest, row, width);
+		break;
+	}
+}
+
+//==========================================================================
+//
+// UnpackPixels
+//
+// Unpacks a row of pixels whose depth is less than 8 into so that each
+// pixel occupies a single byte. The packed pixels must be at the start
+// of the row, and the row must be "width" bytes long. "bytesPerRow" is
+// the number of bytes for the packed row.
+//
+//==========================================================================
+
+static void UnpackPixels (int width, int bytesPerRow, int bitdepth, BYTE *row)
+{
+	BYTE *out, *in;
+	BYTE pack;
+
+	out = row + width;
+	in = row + bytesPerRow;
+
+	switch (bitdepth)
+	{
+	case 1:
+		while (in-- > row)
+		{
+			pack = *in;
+			out -= 8;
+			out[0] = (pack >> 7) & 1;
+			out[1] = (pack >> 6) & 1;
+			out[2] = (pack >> 5) & 1;
+			out[3] = (pack >> 4) & 1;
+			out[4] = (pack >> 3) & 1;
+			out[5] = (pack >> 2) & 1;
+			out[6] = (pack >> 1) & 1;
+			out[7] = pack & 1;
+		}
+		break;
+
+	case 2:
+		while (in-- > row)
+		{
+			pack = *in;
+			out -= 4;
+			out[0] = pack >> 6;
+			out[1] = (pack >> 4) & 3;
+			out[2] = (pack >> 2) & 3;
+			out[3] = pack & 3;
+		}
+		break;
+
+	case 4:
+		while (in-- > row)
+		{
+			pack = *in;
+			out -= 2;
+			out[0] = pack >> 4;
+			out[1] = pack & 15;
+		}
 		break;
 	}
 }

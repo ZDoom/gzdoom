@@ -94,7 +94,7 @@ void A_CMaceAttack (AActor *actor)
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
+			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(AHammerPuff));
 			AdjustPlayerAngle (player->mo);
 //			player->mo->angle = R_PointToAngle2(player->mo->x,
 //				player->mo->y, linetarget->x, linetarget->y);
@@ -104,7 +104,7 @@ void A_CMaceAttack (AActor *actor)
 		slope = P_AimLineAttack (player->mo, angle, 2*MELEERANGE);
 		if (linetarget)
 		{
-			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
+			P_LineAttack (player->mo, angle, 2*MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(AHammerPuff));
 			AdjustPlayerAngle (player->mo);
 //			player->mo->angle = R_PointToAngle2(player->mo->x,
 //				player->mo->y, linetarget->x, linetarget->y);
@@ -116,7 +116,7 @@ void A_CMaceAttack (AActor *actor)
 
 	angle = player->mo->angle;
 	slope = P_AimLineAttack (player->mo, angle, MELEERANGE);
-	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, RUNTIME_CLASS(AHammerPuff));
+	P_LineAttack (player->mo, angle, MELEERANGE, slope, damage, MOD_HIT, RUNTIME_CLASS(AHammerPuff));
 macedone:
 	return;		
 }

@@ -126,7 +126,7 @@ enum
 	MF_DROPOFF		= 0x00000400,	// allow jumps from high places
 	MF_PICKUP		= 0x00000800,	// for players to pick up items
 	MF_NOCLIP		= 0x00001000,	// player cheat
-	MF_SLIDE		= 0x00002000,	// keep info about sliding along walls
+	MF_INCHASE		= 0x00002000,	// used by A_Chase and A_Look to avoid recursion
 	MF_FLOAT		= 0x00004000,	// allow moves to any height, no gravity
 	MF_TELEPORT		= 0x00008000,	// don't cross lines or look at heights
 	MF_MISSILE		= 0x00010000,	// don't hit same species, explode on block
@@ -171,7 +171,7 @@ enum
 	MF2_CANNOTPUSH		= 0x00002000,	// cannot push other pushable mobjs
 	MF2_THRUGHOST		= 0x00004000,	// missile will pass through ghosts [RH] was 8
 	MF2_BOSS			= 0x00008000,	// mobj is a major boss
-	MF2_FIREDAMAGE		= 0x00010000,	// does fire damage
+
 	MF2_NODMGTHRUST		= 0x00020000,	// does not thrust target when damaging
 	MF2_TELESTOMP		= 0x00040000,	// mobj can stomp another
 	MF2_FLOATBOB		= 0x00080000,	// use float bobbing z movement
@@ -185,7 +185,7 @@ enum
 										// but still considered solid
 	MF2_INVULNERABLE	= 0x08000000,	// mobj is invulnerable
 	MF2_DORMANT			= 0x10000000,	// thing is dormant
-	MF2_ICEDAMAGE		= 0x20000000,	// does ice damage
+
 	MF2_SEEKERMISSILE	= 0x40000000,	// is a seeker (for reflection)
 	MF2_REFLECTIVE		= 0x80000000,	// reflects missiles
 
@@ -201,8 +201,6 @@ enum
 	MF2_HERETICBOUNCE	= MF2_BOUNCE1,
 	MF2_HEXENBOUNCE		= MF2_BOUNCE2,
 	MF2_DOOMBOUNCE		= MF2_BOUNCE1|MF2_BOUNCE2,
-
-	MF2_ELECTRICDAMAGE	= MF2_FIREDAMAGE|MF2_ICEDAMAGE,
 
 // --- mobj.flags3 ---
 
@@ -295,8 +293,6 @@ enum
 
 // --- dummies for unknown/unimplemented Strife flags ---
 
-	MF_STRIFEx40 = 0,			// looks like this is still MF_JUSTHIT
-	MF_STRIFEx8000 = 0,
 	MF_STRIFEx8000000 = 0,		// seems related to MF_SHADOW
 };
 
@@ -628,6 +624,7 @@ public:
 	fixed_t Speed;
 	SDWORD Mass;
 	SWORD PainChance;
+	BYTE DamageType;
 
 	FState *SpawnState;
 	FState *SeeState;

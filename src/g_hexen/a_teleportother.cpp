@@ -27,7 +27,7 @@ class AArtiTeleportOther : public AInventory
 {
 	DECLARE_ACTOR (AArtiTeleportOther, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 };
@@ -222,7 +222,7 @@ void A_CheckTeleRing (AActor *actor)
 //
 //===========================================================================
 
-bool AArtiTeleportOther::Use ()
+bool AArtiTeleportOther::Use (bool pickup)
 {
 	AActor *mo;
 

@@ -56,6 +56,7 @@ class AQuestItem1 : public AQuestItem
 IMPLEMENT_STATELESS_ACTOR (AQuestItem1, Strife, -1, 0)
 	PROP_StrifeType (312)
 	PROP_StrifeTeaserType (293)
+	PROP_StrifeTeaserType2 (310)
 END_DEFAULTS
 
 // Quest Item 2 -------------------------------------------------------------
@@ -68,6 +69,7 @@ class AQuestItem2 : public AQuestItem
 IMPLEMENT_STATELESS_ACTOR (AQuestItem2, Strife, -1, 0)
 	PROP_StrifeType (313)
 	PROP_StrifeTeaserType (294)
+	PROP_StrifeTeaserType2 (311)
 	// "Blown_Up_the_Crystal" in the Teaser
 END_DEFAULTS
 
@@ -81,6 +83,7 @@ class AQuestItem3 : public AQuestItem
 IMPLEMENT_STATELESS_ACTOR (AQuestItem3, Strife, -1, 0)
 	PROP_StrifeType (314)
 	PROP_StrifeTeaserType (295)
+	PROP_StrifeTeaserType2 (312)
 	// "Blown_Up_the_Gates" in the Teaser
 END_DEFAULTS
 
@@ -94,6 +97,7 @@ class AQuestItem4 : public AQuestItem
 IMPLEMENT_STATELESS_ACTOR (AQuestItem4, Strife, -1, 0)
 	PROP_StrifeType (315)
 	PROP_StrifeTeaserType (296)
+	PROP_StrifeTeaserType2 (313)
 	PROP_Tag ("quest4")
 END_DEFAULTS
 
@@ -107,6 +111,7 @@ class AQuestItem5 : public AQuestItem
 IMPLEMENT_STATELESS_ACTOR (AQuestItem5, Strife, -1, 0)
 	PROP_StrifeType (316)
 	PROP_StrifeTeaserType (297)
+	PROP_StrifeTeaserType2 (314)
 	PROP_Tag ("quest5")
 END_DEFAULTS
 
@@ -120,6 +125,7 @@ class AQuestItem6 : public AQuestItem
 IMPLEMENT_STATELESS_ACTOR (AQuestItem6, Strife, -1, 0)
 	PROP_StrifeType (317)
 	PROP_StrifeTeaserType (298)
+	PROP_StrifeTeaserType2 (315)
 	PROP_Tag ("quest6")
 END_DEFAULTS
 

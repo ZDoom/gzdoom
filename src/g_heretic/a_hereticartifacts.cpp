@@ -43,7 +43,7 @@ class AArtiTomeOfPower : public APowerupGiver
 {
 	DECLARE_ACTOR (AArtiTomeOfPower, APowerupGiver)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 };
 
@@ -61,13 +61,13 @@ IMPLEMENT_ACTOR (AArtiTomeOfPower, Heretic, 86, 134)
 	PROP_PowerupGiver_Powerup ("PowerWeaponLevel2")
 END_DEFAULTS
 
-bool AArtiTomeOfPower::Use ()
+bool AArtiTomeOfPower::Use (bool pickup)
 {
 	if (Owner->player->morphTics)
 	{ // Attempt to undo chicken
 		if (P_UndoPlayerMorph (Owner->player) == false)
 		{ // Failed
-			P_DamageMobj (Owner, NULL, NULL, 1000000);
+			P_DamageMobj (Owner, NULL, NULL, 1000000, MOD_TELEFRAG);
 		}
 		else
 		{ // Succeeded
@@ -78,7 +78,7 @@ bool AArtiTomeOfPower::Use ()
 	}
 	else
 	{
-		return Super::Use ();
+		return Super::Use (pickup);
 	}
 }
 
@@ -129,7 +129,7 @@ class AArtiTimeBomb : public AInventory
 {
 	DECLARE_ACTOR (AArtiTimeBomb, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 };
@@ -148,7 +148,7 @@ IMPLEMENT_ACTOR (AArtiTimeBomb, Heretic, 34, 72)
 	PROP_Inventory_Icon ("ARTIFBMB")
 END_DEFAULTS
 
-bool AArtiTimeBomb::Use ()
+bool AArtiTimeBomb::Use (bool pickup)
 {
 	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
 	AActor *mo = Spawn<AActivatedTimeBomb> (

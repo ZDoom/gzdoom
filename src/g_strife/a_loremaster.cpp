@@ -77,6 +77,7 @@ FState ALoremaster::States[] =
 IMPLEMENT_ACTOR (ALoremaster, Strife, 12, 0)
 	PROP_StrifeType (66)
 	PROP_StrifeTeaserType (63)
+	PROP_StrifeTeaserType2 (64)
 	PROP_SpawnHealth (800)
 	PROP_SpawnState (S_PRIEST_STND)
 	PROP_SeeState (S_PRIEST_RUN)
@@ -186,7 +187,7 @@ void A_20538 (AActor *self)
 
 	damage = (pr_atk1() & 9) * 5;
 
-	P_DamageMobj (self->target, self, self, damage);
+	P_DamageMobj (self->target, self, self, damage, MOD_UNKNOWN);
 	P_TraceBleed (damage, self->target, self);
 }
 

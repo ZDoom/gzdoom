@@ -298,7 +298,7 @@ extern	AActor*	linetarget; 	// who got hit (or NULL)
 extern	AActor *PuffSpawned;	// points to last puff spawned
 
 fixed_t P_AimLineAttack (AActor *t1, angle_t angle, fixed_t distance, fixed_t vrange=0);
-void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, const TypeInfo *pufftype);
+void	P_LineAttack (AActor *t1, angle_t angle, fixed_t distance, int pitch, int damage, int damageType, const TypeInfo *pufftype);
 void	P_TraceBleed (int damage, fixed_t x, fixed_t y, fixed_t z, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, angle_t angle, int pitch);
 void	P_TraceBleed (int damage, AActor *target, AActor *missile);		// missile version
@@ -314,7 +314,7 @@ extern	fixed_t CameraX, CameraY, CameraZ;
 extern	sector_t *CameraSector;
 
 // [RH] Means of death
-void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, bool hurtSelf, int mod);
+void	P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int damageType, bool hurtSelf);
 
 void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
 void	P_CreateSecNodeList(AActor*,fixed_t,fixed_t);		// phares 3/14/98
@@ -344,7 +344,7 @@ extern FBlockNode**		blocklinks; 	// for thing chains
 //
 void P_TouchSpecialThing (AActor *special, AActor *toucher);
 
-void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int mod=0, int flags=0);
+void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, int mod, int flags=0);
 
 bool P_GiveBody (player_t *player, int num);
 bool P_MorphPlayer (player_t *player, const TypeInfo *morphClass);
@@ -352,8 +352,6 @@ void P_PoisonPlayer (player_t *player, AActor *poisoner, AActor *source, int poi
 void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPainSound);
 
 #define DMG_NO_ARMOR		1
-#define DMG_FIRE_DAMAGE		2
-#define DMG_ICE_DAMAGE		4
 
 extern	int MeansOfDeath;
 

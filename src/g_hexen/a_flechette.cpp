@@ -75,8 +75,8 @@ FState AFireBomb::States[] =
 };
 
 IMPLEMENT_ACTOR (AFireBomb, Hexen, -1, 0)
+	PROP_DamageType (MOD_FIRE)
 	PROP_Flags (MF_NOGRAVITY)
-	PROP_Flags2 (MF2_FIREDAMAGE)
 	PROP_Flags3 (MF3_FOILINVUL)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_Alpha (HX_ALTSHADOW)
@@ -127,8 +127,9 @@ IMPLEMENT_ACTOR (AThrowingBomb, Hexen, -1, 0)
 	PROP_SpeedFixed (12)
 	PROP_RadiusFixed (8)
 	PROP_HeightFixed (10)
+	PROP_DamageType (MOD_FIRE)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_HEXENBOUNCE|MF2_FIREDAMAGE)
+	PROP_Flags2 (MF2_HEXENBOUNCE)
 
 	PROP_SpawnState (S_THROWINGBOMB1)
 	PROP_DeathState (S_THROWINGBOMB_X1)
@@ -177,14 +178,14 @@ class AArtiPoisonBag1 : public AArtiPoisonBag
 {
 	DECLARE_STATELESS_ACTOR (AArtiPoisonBag1, AArtiPoisonBag)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 };
 
 IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag1, Hexen, -1, 0)
 	PROP_Inventory_Icon ("ARTIPSB1")
 END_DEFAULTS
 
-bool AArtiPoisonBag1::Use ()
+bool AArtiPoisonBag1::Use (bool pickup)
 {
 	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
 	AActor *mo;
@@ -207,14 +208,14 @@ class AArtiPoisonBag2 : public AArtiPoisonBag
 {
 	DECLARE_STATELESS_ACTOR (AArtiPoisonBag2, AArtiPoisonBag)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 };
 
 IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag2, Hexen, -1, 0)
 	PROP_Inventory_Icon ("ARTIPSB2")
 END_DEFAULTS
 
-bool AArtiPoisonBag2::Use ()
+bool AArtiPoisonBag2::Use (bool pickup)
 {
 	angle_t angle = Owner->angle >> ANGLETOFINESHIFT;
 	AActor *mo;
@@ -237,14 +238,14 @@ class AArtiPoisonBag3 : public AArtiPoisonBag
 {
 	DECLARE_STATELESS_ACTOR (AArtiPoisonBag3, AArtiPoisonBag)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 };
 
 IMPLEMENT_STATELESS_ACTOR (AArtiPoisonBag3, Hexen, -1, 0)
 	PROP_Inventory_Icon ("ARTIPSB3")
 END_DEFAULTS
 
-bool AArtiPoisonBag3::Use ()
+bool AArtiPoisonBag3::Use (bool pickup)
 {
 	AActor *mo;
 

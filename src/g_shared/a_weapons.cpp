@@ -95,7 +95,7 @@ bool AWeapon::TryPickup (AActor *toucher)
 //
 //===========================================================================
 
-bool AWeapon::Use ()
+bool AWeapon::Use (bool pickup)
 {
 	AWeapon *useweap = this;
 
@@ -189,10 +189,25 @@ AInventory *AWeapon::CreateCopy (AActor *other)
 
 AInventory *AWeapon::CreateTossable ()
 {
+	// Only drop the weapon that is meant to be placed in a level. That is,
+	// only drop the weapon that normally gives you ammo.
+	if (SisterWeapon != NULL && 
+		((AWeapon*)GetDefault())->AmmoGive1 == 0 &&
+		((AWeapon*)GetDefault())->AmmoGive2 == 0 &&
+		(((AWeapon*)SisterWeapon->GetDefault())->AmmoGive1 > 0 ||
+		 ((AWeapon*)SisterWeapon->GetDefault())->AmmoGive2 > 0))
+	{
+		return SisterWeapon->CreateTossable ();
+	}
 	AWeapon *copy = static_cast<AWeapon *> (Super::CreateTossable ());
 
 	if (copy != NULL)
 	{
+		// If this weapon has a sister, remove it from the inventory too.
+		if (SisterWeapon != NULL)
+		{
+			SisterWeapon->Destroy ();
+		}
 		copy->AmmoGive1 = 0;
 		copy->AmmoGive2 = 0;
 	}

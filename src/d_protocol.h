@@ -152,6 +152,12 @@ enum ECheatCommand
 	CHT_BEHOLDR,
 	CHT_BEHOLDA,
 	CHT_BEHOLDL,
+	CHT_PUMPUPI,
+	CHT_PUMPUPM,
+	CHT_PUMPUPT,
+	CHT_PUMPUPH,
+	CHT_PUMPUPP,
+	CHT_PUMPUPS,
 	CHT_IDDQD,			// Same as CHT_GOD, but sets health
 	CHT_MASSACRE,
 	CHT_CHASECAM,
@@ -166,6 +172,9 @@ enum ECheatCommand
 	CHT_PUZZLE,
 	CHT_MDK,			// Kill actor player is aiming at
 	CHT_ANUBIS,
+	CHT_NOMOMENTUM,
+	CHT_DONNYTRUMP,
+	CHT_LEGO,
 };
 
 void StartChunk (int id, byte **stream);

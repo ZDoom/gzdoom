@@ -15,7 +15,7 @@ class AArtiTeleport : public AInventory
 {
 	DECLARE_ACTOR (AArtiTeleport, AInventory)
 public:
-	bool Use ();
+	bool Use (bool pickup);
 	const char *PickupMessage ();
 	void PlayPickupSound (AActor *toucher);
 };
@@ -37,7 +37,7 @@ IMPLEMENT_ACTOR (AArtiTeleport, Raven, 36, 18)
 	PROP_Inventory_Icon ("ARTIATLP")
 END_DEFAULTS
 
-bool AArtiTeleport::Use ()
+bool AArtiTeleport::Use (bool pickup)
 {
 	fixed_t destX;
 	fixed_t destY;

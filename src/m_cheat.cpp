@@ -31,6 +31,7 @@
 #include "gstrings.h"
 #include "p_local.h"
 #include "a_doomglobal.h"
+#include "a_strifeglobal.h"
 #include "gi.h"
 #include "p_enemy.h"
 #include "sbar.h"
@@ -38,6 +39,7 @@
 #include "v_video.h"
 #include "w_wad.h"
 #include "a_keys.h"
+#include "templates.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -45,14 +47,17 @@
 
 void cht_DoCheat (player_t *player, int cheat)
 {
-	static const TypeInfo *BeholdPowers[6] =
+	static const TypeInfo *BeholdPowers[9] =
 	{
 		RUNTIME_CLASS(APowerInvulnerable),
 		RUNTIME_CLASS(APowerStrength),
 		RUNTIME_CLASS(APowerInvisibility),
 		RUNTIME_CLASS(APowerIronFeet),
 		NULL, // MapRevealer
-		RUNTIME_CLASS(APowerLightAmp)
+		RUNTIME_CLASS(APowerLightAmp),
+		RUNTIME_CLASS(APowerShadow),
+		RUNTIME_CLASS(APowerMask),
+		RUNTIME_CLASS(APowerTargeter)
 	};
 	const TypeInfo *type;
 	AInventory *item;
@@ -86,6 +91,14 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings(STSTR_NCON);
 		else
 			msg = GStrings(STSTR_NCOFF);
+		break;
+
+	case CHT_NOMOMENTUM:
+		player->cheats ^= CF_NOMOMENTUM;
+		if (player->cheats & CF_NOMOMENTUM)
+			msg = "LEAD BOOTS ON";
+		else
+			msg = "LEAD BOOTS OFF";
 		break;
 
 	case CHT_FLY:
@@ -184,6 +197,9 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_BEHOLDR:
 	case CHT_BEHOLDA:
 	case CHT_BEHOLDL:
+	case CHT_PUMPUPI:
+	case CHT_PUMPUPM:
+	case CHT_PUMPUPT:
 		i = cheat - CHT_BEHOLDV;
 
 		if (i == 4)
@@ -274,8 +290,48 @@ void cht_DoCheat (player_t *player, int cheat)
 			// a very very cheap kill.
 			P_LineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE,
 				P_AimLineAttack (player->mo, player->mo->angle, PLAYERMISSILERANGE), 1000000,
-				RUNTIME_CLASS(ABulletPuff));
+				MOD_UNKNOWN, RUNTIME_CLASS(ABulletPuff));
 		}
+		break;
+
+	case CHT_DONNYTRUMP:
+		cht_Give (player, "HealthTraining");
+		msg = "YOU GOT THE MIDAS TOUCH, BABY";
+		break;
+
+	case CHT_LEGO:
+		if (player->mo != NULL)
+		{
+			int oldpieces = ASigil::GiveSigilPiece (player->mo);
+			item = player->mo->FindInventory (RUNTIME_CLASS(ASigil));
+
+			if (oldpieces == 5)
+			{
+				item->Destroy ();
+			}
+			else
+			{
+				player->PendingWeapon = static_cast<AWeapon *> (item);
+			}
+		}
+		break;
+
+	case CHT_PUMPUPH:
+		cht_Give (player, "MedPatch");
+		cht_Give (player, "MedicalKit");
+		cht_Give (player, "SurgeryKit");
+		msg = "you got the stuff!";
+		break;
+
+	case CHT_PUMPUPP:
+		cht_Give (player, "AmmoSatchel");
+		msg = "you got the stuff!";
+		break;
+
+	case CHT_PUMPUPS:
+		cht_Give (player, "UpgradeStamina");
+		cht_Give (player, "UpgradeAccuracy");
+		msg = "you got the stuff!";
 		break;
 	}
 
@@ -288,13 +344,27 @@ void cht_DoCheat (player_t *player, int cheat)
 		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
 }
 
-void GiveSpawner (player_t *player, const TypeInfo *type)
+void GiveSpawner (player_t *player, const TypeInfo *type, int amount)
 {
 	AInventory *item = static_cast<AInventory *>
 		(Spawn (type, player->mo->x, player->mo->y, player->mo->z));
 	if (item != NULL)
 	{
-		item->Amount = item->MaxAmount;
+		if (amount > 0)
+		{
+			if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
+			{
+				static_cast<ABasicArmorPickup*>(item)->SaveAmount = amount;
+			}
+			else if (type->IsDescendantOf (RUNTIME_CLASS(ABasicArmorBonus)))
+			{
+				static_cast<ABasicArmorBonus*>(item)->SaveAmount = amount;
+			}
+			else
+			{
+				item->Amount = MIN (amount, item->MaxAmount);
+			}
+		}
 		if (!item->TryPickup (player->mo))
 		{
 			item->Destroy ();
@@ -316,10 +386,7 @@ void cht_Give (player_t *player, char *name, int amount)
 		return;
 	}
 
-	if (stricmp (name, "all") == 0)
-		giveall = true;
-	else
-		giveall = false;
+	giveall = (stricmp (name, "all") == 0);
 
 	if (giveall || stricmp (name, "health") == 0)
 	{
@@ -342,14 +409,6 @@ void cht_Give (player_t *player, char *name, int amount)
 	  
 			player->health = deh.GodHealth;
 		}
-
-		if (!giveall)
-			return;
-	}
-
-	if (giveall || stricmp (name, "backpack") == 0)
-	{
-		GiveSpawner (player, RUNTIME_CLASS(ABackpack));
 
 		if (!giveall)
 			return;
@@ -387,8 +446,8 @@ void cht_Give (player_t *player, char *name, int amount)
 	{
 		if (gameinfo.gametype != GAME_Hexen)
 		{
-			ABasicArmor *armor = Spawn<ABasicArmor> (0,0,0);
-			armor->Amount = 100*deh.BlueAC;
+			ABasicArmorPickup *armor = Spawn<ABasicArmorPickup> (0,0,0);
+			armor->SaveAmount = 100*deh.BlueAC;
 			armor->SavePercent = FRACUNIT/2;
 			if (!armor->TryPickup (player->mo))
 			{
@@ -400,8 +459,8 @@ void cht_Give (player_t *player, char *name, int amount)
 			for (i = 0; i < 4; ++i)
 			{
 				AHexenArmor *armor = Spawn<AHexenArmor> (0,0,0);
-				armor->Amount = i;
-				armor->MaxAmount = 0;
+				armor->health = i;
+				armor->Amount = 0;
 				if (!armor->TryPickup (player->mo))
 				{
 					armor->Destroy ();
@@ -443,7 +502,11 @@ void cht_Give (player_t *player, char *name, int amount)
 			if (type != RUNTIME_CLASS(AWeapon) &&
 				type->IsDescendantOf (RUNTIME_CLASS(AWeapon)))
 			{
-				GiveSpawner (player, type);
+				AInventory *def = (AInventory*)GetDefaultByType (type);
+				if (!(def->ItemFlags & IF_CHEATNOTWEAPON))
+				{
+					GiveSpawner (player, type, 1);
+				}
 			}
 		}
 		player->PendingWeapon = savedpending;
@@ -457,14 +520,15 @@ void cht_Give (player_t *player, char *name, int amount)
 		for (i = 0; i < TypeInfo::m_NumTypes; ++i)
 		{
 			type = TypeInfo::m_Types[i];
-			if (type->IsDescendantOf (RUNTIME_CLASS(AInventory)) &&
-				!type->IsDescendantOf (RUNTIME_CLASS(APuzzleItem)) &&
-				!type->IsDescendantOf (RUNTIME_CLASS(APowerup)))
+			if (type->IsDescendantOf (RUNTIME_CLASS(AInventory)))
 			{
 				AInventory *def = (AInventory*)GetDefaultByType (type);
-				if (def->Icon > 0)
+				if (def->Icon > 0 && def->MaxAmount > 1 &&
+					!type->IsDescendantOf (RUNTIME_CLASS(APuzzleItem)) &&
+					!type->IsDescendantOf (RUNTIME_CLASS(APowerup)) &&
+					!type->IsDescendantOf (RUNTIME_CLASS(AArmor)))
 				{
-					GiveSpawner (player, type);
+					GiveSpawner (player, type, 1);
 				}
 			}
 		}
@@ -482,7 +546,7 @@ void cht_Give (player_t *player, char *name, int amount)
 				AInventory *def = (AInventory*)GetDefaultByType (type);
 				if (def->Icon > 0)
 				{
-					GiveSpawner (player, type);
+					GiveSpawner (player, type, 1);
 				}
 			}
 		}
@@ -501,10 +565,7 @@ void cht_Give (player_t *player, char *name, int amount)
 	}
 	else
 	{
-		for (i = amount ? amount : 1; i; --i)
-		{
-			GiveSpawner (player, type);
-		}
+		GiveSpawner (player, type, amount);
 	}
 	return;
 }

@@ -85,6 +85,8 @@ enum
 	IF_INTERHUBSTRIP	= 1<<8,		// Item is removed when travelling between hubs
 	IF_PICKUPFLASH		= 1<<9,		// Item "flashes" when picked up
 	IF_ALWAYSPICKUP		= 1<<10,	// For IF_AUTOACTIVATE, MaxAmount=0 items: Always "pick up", even if it doesn't do anything
+
+	IF_CHEATNOTWEAPON	= 1<<30,	// Give cheat considers this not a weapon (used by Sigil)
 };
 
 struct vissprite_t;
@@ -136,9 +138,9 @@ public:
 	virtual bool GoAway ();
 	virtual void GoAwayAndDie ();
 	virtual bool HandlePickup (AInventory *item);
-	virtual bool Use ();
+	virtual bool Use (bool pickup);
 
-	virtual void AbsorbDamage (int damage, int &newdamage);
+	virtual void AbsorbDamage (int damage, int damageType, int &newdamage);
 	virtual void AlterWeaponSprite (vissprite_t *vis);
 
 	virtual PalEntry GetBlend ();
@@ -205,7 +207,7 @@ public:
 	virtual AInventory *CreateTossable ();
 	virtual bool TryPickup (AActor *toucher);
 	virtual bool PickupForAmmo (AWeapon *ownedWeapon);
-	virtual bool Use ();
+	virtual bool Use (bool pickup);
 
 	virtual FState *GetUpState ();
 	virtual FState *GetDownState ();
@@ -275,7 +277,7 @@ public:
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual bool HandlePickup (AInventory *item);
-	virtual bool Use ();
+	virtual bool Use (bool pickup);
 };
 
 // Armor absorbs some damage for the player.
@@ -297,7 +299,7 @@ public:
 	virtual void PostBeginPlay ();
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual bool HandlePickup (AInventory *item);
-	virtual void AbsorbDamage (int damage, int &newdamage);
+	virtual void AbsorbDamage (int damage, int damageType, int &newdamage);
 
 	fixed_t SavePercent;
 };
@@ -309,7 +311,7 @@ class ABasicArmorPickup : public AArmor
 public:
 	virtual void Serialize (FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
-	virtual bool Use ();
+	virtual bool Use (bool pickup);
 
 	fixed_t SavePercent;
 	int SaveAmount;
@@ -322,7 +324,7 @@ class ABasicArmorBonus : public AArmor
 public:
 	virtual void Serialize (FArchive &arc);
 	virtual AInventory *CreateCopy (AActor *other);
-	virtual bool Use ();
+	virtual bool Use (bool pickup);
 
 	fixed_t SavePercent;	// The default, for when you don't already have armor
 	int MaxSaveAmount;
@@ -339,9 +341,10 @@ public:
 	virtual AInventory *CreateCopy (AActor *other);
 	virtual AInventory *CreateTossable ();
 	virtual bool HandlePickup (AInventory *item);
-	virtual void AbsorbDamage (int damage, int &newdamage);
+	virtual void AbsorbDamage (int damage, int damageType, int &newdamage);
 
-	fixed_t Slots[4];
+	fixed_t Slots[5];
+	fixed_t SlotsIncrement[4];
 
 protected:
 	bool AddArmorToSlot (AActor *actor, int slot, int amount);
@@ -355,7 +358,7 @@ public:
 	void Serialize (FArchive &arc);
 	void PlayPickupSound (AActor *toucher);
 	bool ShouldStay ();
-	bool Use ();
+	bool Use (bool pickup);
 	bool HandlePickup (AInventory *item);
 
 	int PuzzleItemNumber;

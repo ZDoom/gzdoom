@@ -30,6 +30,7 @@ FState ARatBuddy::States[] =
 IMPLEMENT_ACTOR (ARatBuddy, Strife, 85, 0)
 	PROP_StrifeType (202)
 	PROP_StrifeTeaserType (196)
+	PROP_StrifeTeaserType2 (200)
 	PROP_SpawnHealth (5)
 	PROP_SpawnState (S_RAT_STAND)
 	PROP_SeeState (S_RAT_CHASE)

@@ -12,6 +12,10 @@ void A_PlayerScream (AActor *);
 void A_XXScream (AActor *);
 void A_TossGib (AActor *);
 
+void A_ItBurnsItBurns (AActor *);
+void A_DropFire (AActor *);
+void A_Wander (AActor *);
+
 // The player ---------------------------------------------------------------
 
 class AStrifePlayer : public APlayerPawn
@@ -59,7 +63,48 @@ FState AStrifePlayer::States[] =
 	S_NORMAL (RGIB, 'E',	5, A_TossGib					, &States[S_PLAY_XDIE+5]),
 	S_NORMAL (RGIB, 'F',	5, A_TossGib					, &States[S_PLAY_XDIE+6]),
 	S_NORMAL (RGIB, 'G',	5, A_TossGib					, &States[S_PLAY_XDIE+7]),
-	S_NORMAL (RGIB, 'H',   -1, A_TossGib	 				, NULL)
+	S_NORMAL (RGIB, 'H',   -1, A_TossGib	 				, NULL),
+
+	// [RH] These weren't bright in Strife, but I think they should be.
+	// (After all, they are now a light source.)
+#define S_PLAY_BURNDEATH (S_PLAY_XDIE+8)
+	S_BRIGHT (BURN, 'A', 3, A_ItBurnsItBurns,	&States[S_PLAY_BURNDEATH+1]),
+	S_BRIGHT (BURN, 'B', 3, A_DropFire,			&States[S_PLAY_BURNDEATH+2]),
+	S_BRIGHT (BURN, 'C', 3, A_Wander,			&States[S_PLAY_BURNDEATH+3]),
+	S_BRIGHT (BURN, 'D', 3, A_NoBlocking,		&States[S_PLAY_BURNDEATH+4]),
+	S_BRIGHT (BURN, 'E', 5, A_DropFire,			&States[S_PLAY_BURNDEATH+5]),
+	S_BRIGHT (BURN, 'F', 5, A_Wander,			&States[S_PLAY_BURNDEATH+6]),
+	S_BRIGHT (BURN, 'G', 5, A_Wander,			&States[S_PLAY_BURNDEATH+7]),
+	S_BRIGHT (BURN, 'H', 5, A_Wander,			&States[S_PLAY_BURNDEATH+8]),
+	S_BRIGHT (BURN, 'I', 5, A_DropFire,			&States[S_PLAY_BURNDEATH+9]),
+	S_BRIGHT (BURN, 'J', 5, A_Wander,			&States[S_PLAY_BURNDEATH+10]),
+	S_BRIGHT (BURN, 'K', 5, A_Wander,			&States[S_PLAY_BURNDEATH+11]),
+	S_BRIGHT (BURN, 'L', 5, A_Wander,			&States[S_PLAY_BURNDEATH+12]),
+	S_BRIGHT (BURN, 'M', 3, A_DropFire,			&States[S_PLAY_BURNDEATH+13]),
+	S_BRIGHT (BURN, 'N', 3, NULL,				&States[S_PLAY_BURNDEATH+14]),
+	S_BRIGHT (BURN, 'O', 5, NULL,				&States[S_PLAY_BURNDEATH+15]),
+	S_BRIGHT (BURN, 'P', 5, NULL,				&States[S_PLAY_BURNDEATH+16]),
+	S_BRIGHT (BURN, 'Q', 5, NULL,				&States[S_PLAY_BURNDEATH+17]),
+	S_BRIGHT (BURN, 'P', 5, NULL,				&States[S_PLAY_BURNDEATH+18]),
+	S_BRIGHT (BURN, 'Q', 5, NULL,				&States[S_PLAY_BURNDEATH+19]),
+	S_BRIGHT (BURN, 'R', 7, NULL,				&States[S_PLAY_BURNDEATH+20]),
+	S_BRIGHT (BURN, 'S', 7, NULL,				&States[S_PLAY_BURNDEATH+21]),
+	S_BRIGHT (BURN, 'T', 7, NULL,				&States[S_PLAY_BURNDEATH+22]),
+	S_BRIGHT (BURN, 'U', 7, NULL,				&States[S_PLAY_BURNDEATH+23]),
+	S_NORMAL (BURN, 'V',-1, NULL,				NULL),
+
+#define S_PLAY_ZAPDEATH (S_PLAY_BURNDEATH+24)
+	S_NORMAL (DISR, 'A', 5, NULL,				&States[S_PLAY_ZAPDEATH+1]),
+	S_NORMAL (DISR, 'B', 5, NULL,				&States[S_PLAY_ZAPDEATH+2]),
+	S_NORMAL (DISR, 'C', 5, NULL,				&States[S_PLAY_ZAPDEATH+3]),
+	S_NORMAL (DISR, 'D', 5, A_NoBlocking,		&States[S_PLAY_ZAPDEATH+4]),
+	S_NORMAL (DISR, 'E', 5, NULL,				&States[S_PLAY_ZAPDEATH+5]),
+	S_NORMAL (DISR, 'F', 5, NULL,				&States[S_PLAY_ZAPDEATH+6]),
+	S_NORMAL (DISR, 'G', 4, NULL,				&States[S_PLAY_ZAPDEATH+7]),
+	S_NORMAL (DISR, 'H', 4, NULL,				&States[S_PLAY_ZAPDEATH+8]),
+	S_NORMAL (DISR, 'I', 4, NULL,				&States[S_PLAY_ZAPDEATH+9]),
+	S_NORMAL (DISR, 'J', 4, NULL,				&States[S_PLAY_ZAPDEATH+10]),
+	S_NORMAL (MEAT, 'D',-1, NULL,				NULL)
 };
 
 IMPLEMENT_ACTOR (AStrifePlayer, Strife, -1, 0)
@@ -79,6 +124,8 @@ IMPLEMENT_ACTOR (AStrifePlayer, Strife, -1, 0)
 	PROP_MissileState (S_PLAY_ATK)
 	PROP_DeathState (S_PLAY_DIE)
 	PROP_XDeathState (S_PLAY_XDIE)
+	PROP_BDeathState (S_PLAY_BURNDEATH)
+	PROP_EDeathState (S_PLAY_ZAPDEATH)
 END_DEFAULTS
 
 void AStrifePlayer::GiveDefaultInventory ()

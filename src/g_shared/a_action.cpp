@@ -57,8 +57,9 @@ FState AIceChunkHead::States[] =
 IMPLEMENT_ACTOR (AIceChunkHead, Any, -1, 0)
 	PROP_RadiusFixed (3)
 	PROP_HeightFixed (4)
+	PROP_DamageType (MOD_ICE)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF)
-	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH|MF2_ICEDAMAGE)
+	PROP_Flags2 (MF2_LOGRAV|MF2_CANNOTPUSH)
 
 	PROP_SpawnState (0)
 END_DEFAULTS
@@ -150,7 +151,7 @@ void A_IceSetTics (AActor *actor)
 
 	actor->tics = 70+(pr_icesettics()&63);
 	floor = P_GetThingFloorType (actor);
-	if (Terrains[floor].DamageMOD == MOD_LAVA)
+	if (Terrains[floor].DamageMOD == MOD_FIRE)
 	{
 		actor->tics >>= 2;
 	}

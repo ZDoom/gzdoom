@@ -161,7 +161,7 @@ void A_EttinAttack (AActor *actor)
 	if (actor->CheckMeleeRange())
 	{
 		int damage = pr_ettinatk.HitDice (2);
-		P_DamageMobj (actor->target, actor, actor, damage);
+		P_DamageMobj (actor->target, actor, actor, damage, MOD_HIT);
 		P_TraceBleed (damage, actor->target, actor);
 	}
 }

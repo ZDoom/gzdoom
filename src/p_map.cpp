@@ -625,7 +625,7 @@ BOOL PIT_CheckLine (line_t *ld)
 	{ // One sided line
 		if (tmthing->flags2 & MF2_BLASTED)
 		{
-			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5);
+			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, MOD_HIT);
 		}
 		BlockingLine = ld;
 		CheckForPushSpecial (ld, 0, tmthing);
@@ -644,7 +644,7 @@ BOOL PIT_CheckLine (line_t *ld)
 		{
 			if (tmthing->flags2 & MF2_BLASTED)
 			{
-				P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5);
+				P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, MOD_HIT);
 			}
 			BlockingLine = ld;
 			CheckForPushSpecial (ld, 0, tmthing);
@@ -722,7 +722,15 @@ BOOL PIT_CheckLine (line_t *ld)
 	/*	Printf ("    %d %d %d\n", sx, sy, openbottom);*/
 	}
 
-	if (rail)
+	if (rail &&
+		// Eww! Gross! This check means the rail only exists if you stand on the
+		// high side of the rail. So if you're walking on the low side of the rail,
+		// it's possible to get stuck in the rail until you jump out. Unfortunately,
+		// there is an area on Strife MAP04 that requires this behavior. Still, it's
+		// better than Strife's handling of rails, which lets you jump into rails
+		// from either side. How long until somebody reports this as a bug and I'm
+		// forced to say, "It's not a bug. It's a feature?" Ugh.
+		openbottom == tmthing->Sector->floorplane.ZatPoint (sx, sy))
 	{
 		openbottom += 32*FRACUNIT;
 	}
@@ -831,10 +839,10 @@ BOOL PIT_CheckThing (AActor *thing)
 			if ((thing->momx + thing->momy) > 3*FRACUNIT)
 			{
 				damage = (tmthing->Mass / 100) + 1;
-				P_DamageMobj (thing, tmthing, tmthing, damage);
+				P_DamageMobj (thing, tmthing, tmthing, damage, tmthing->DamageType);
 				P_TraceBleed (damage, thing, tmthing);
 				damage = (thing->Mass / 100) + 1;
-				P_DamageMobj (tmthing, thing, thing, damage >> 2);
+				P_DamageMobj (tmthing, thing, thing, damage >> 2, tmthing->DamageType);
 				P_TraceBleed (damage, tmthing, thing);
 			}
 			return false;
@@ -926,7 +934,7 @@ BOOL PIT_CheckThing (AActor *thing)
 				}
 				S_Sound (tmthing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
 				damage = ((pr_checkthing()&3)+2)*tmthing->damage;
-				P_DamageMobj (thing, tmthing, tmthing->target, damage);
+				P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);
 				P_TraceBleed (damage, thing, tmthing);
 				if (thing->flags2 & MF2_PUSHABLE
 					&& !(tmthing->flags2 & MF2_CANNOTPUSH))
@@ -951,7 +959,7 @@ BOOL PIT_CheckThing (AActor *thing)
 		damage = (damage + 1) * tmthing->damage;
 		if (damage)
 		{
-			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->GetMOD ());
+			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);
 			if (gameinfo.gametype != GAME_Doom &&
 				!(thing->flags & MF_NOBLOOD) &&
 				!(thing->flags2 & MF2_REFLECTIVE) &&
@@ -1751,7 +1759,7 @@ pushline:
 
 		if (tmthing->flags2 & MF2_BLASTED)
 		{
-			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5);
+			P_DamageMobj (tmthing, NULL, NULL, tmthing->Mass >> 5, MOD_HIT);
 		}
 		numSpecHitTemp = (int)spechit.Size ();
 		while (numSpecHitTemp > 0)
@@ -2551,7 +2559,7 @@ static bool CheckForSpectral (FTraceResults &res)
 }
 
 void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
-				   int pitch, int damage, const TypeInfo *pufftype)
+				   int pitch, int damage, int damageType, const TypeInfo *pufftype)
 {
 	fixed_t vx, vy, vz, shootz;
 	FTraceResults trace;
@@ -2666,7 +2674,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 						}
 					}
 				}
-				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, t1->GetMOD ());
+				P_DamageMobj (trace.Actor, puff ? puff : t1, t1, damage, damageType);
 				// [RH] Stick blood to walls
 				P_TraceBleed (damage, trace.X, trace.Y, trace.Z,
 					trace.Actor, srcangle, srcpitch);
@@ -3341,14 +3349,21 @@ BOOL PIT_RadiusAttack (AActor *thing)
 				{
 					thrust *= selfthrustscale;
 				}
-				momz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
-				if (bombsource != thing)
+				if (bombmod == MOD_FIRE)
 				{
-					momz *= 0.5f;
+					momz = 0.f;
 				}
 				else
 				{
-					momz *= 0.8f;
+					momz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
+					if (bombsource != thing)
+					{
+						momz *= 0.5f;
+					}
+					else
+					{
+						momz *= 0.8f;
+					}
 				}
 				angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
 				thing->momx += fixed_t (finecosine[ang] * thrust);
@@ -3393,8 +3408,8 @@ BOOL PIT_RadiusAttack (AActor *thing)
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
-void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
-	bool hurtSource, int mod)
+void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int damageType,
+	bool hurtSource)
 {
 	static TArray<AActor *> radbt;
 
@@ -3417,7 +3432,7 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance,
 	bombdistancefloat = 1.f / (float)distance;
 	DamageSource = hurtSource;
 	bombdamagefloat = (float)damage;
-	bombmod = mod;
+	bombmod = damageType;
 	VectorPosition (spot, bombvec);
 
 	radbt.Clear();
@@ -3654,7 +3669,12 @@ void P_DoCrunch (AActor *thing)
 			gib->radius = 0;
 			S_Sound (thing, CHAN_BODY, "misc/fallingsplat", 1, ATTN_IDLE);
 		}
-		if (thing->player)
+		if (thing->flags & MF_ICECORPSE)
+		{
+			thing->tics = 1;
+			thing->momx = thing->momy = thing->momz = 0;
+		}
+		else if (thing->player)
 		{
 			thing->flags |= MF_NOCLIP;
 			thing->flags3 |= MF3_DONTGIB;

@@ -393,6 +393,9 @@ void P_CheckWeaponFire (player_t *player)
 {
 	AWeapon *weapon = player->ReadyWeapon;
 
+	if (weapon == NULL)
+		return;
+
 	// Put the weapon away if the player has a pending weapon or has
 	// died.
 	if ((player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE) || player->health <= 0)
@@ -400,9 +403,6 @@ void P_CheckWeaponFire (player_t *player)
 		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
 		return;
 	}
-
-	if (weapon == NULL)
-		return;
 
 	// Check for fire. Some weapons do not auto fire.
 	if (player->cmd.ucmd.buttons & BT_ATTACK)
@@ -461,8 +461,8 @@ void A_CheckReload (AActor *actor)
 	if (actor->player != NULL)
 	{
 		actor->player->ReadyWeapon->CheckAmmo (
-			actor->player->ReadyWeapon->bAltFire ? AWeapon::PrimaryFire
-			: AWeapon::AltFire, true);
+			actor->player->ReadyWeapon->bAltFire ? AWeapon::AltFire
+			: AWeapon::PrimaryFire, true);
 	}
 }
 
@@ -596,6 +596,13 @@ void P_BulletSlope (AActor *mo)
 	{
 		an = mo->angle + angdiff[i];
 		bulletpitch = P_AimLineAttack (mo, an, 16*64*FRACUNIT);
+
+		if (mo->player != NULL &&
+			!(dmflags & DF_NO_FREELOOK) &&
+			mo->player->userinfo.aimdist <= ANGLE_1/2)
+		{
+			break;
+		}
 	} while (linetarget == NULL && --i >= 0);
 }
 
@@ -616,7 +623,7 @@ void P_GunShot (AActor *mo, BOOL accurate, const TypeInfo *pufftype)
 		angle += pr_gunshot.Random2 () << 18;
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, pufftype);
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, MOD_UNKNOWN, pufftype);
 }
 
 void A_Light0 (AActor *actor)
@@ -680,7 +687,7 @@ void P_MovePsprites (player_t *player)
 	FState *state;
 
 	// [RH] If you don't have a weapon, then the psprites should be NULL.
-	if (player->ReadyWeapon == NULL)
+	if (player->ReadyWeapon == NULL && (player->health > 0 || player->mo->DamageType != MOD_FIRE))
 	{
 		P_SetPsprite (player, ps_weapon, NULL);
 		P_SetPsprite (player, ps_flash, NULL);

@@ -196,7 +196,7 @@ bool P_GiveBody (player_t *player, int num)
 	{
 		max = MAXMORPHHEALTH;
 	}
-	// [RH] For Strife: A negative body gives sets you up with a percentage
+	// [RH] For Strife: A negative body sets you up with a percentage
 	// of your full health.
 	if (num < 0)
 	{
@@ -717,11 +717,11 @@ void AInventory::BecomePickup ()
 //
 //===========================================================================
 
-void AInventory::AbsorbDamage (int damage, int &newdamage)
+void AInventory::AbsorbDamage (int damage, int damageType, int &newdamage)
 {
 	if (Inventory != NULL)
 	{
-		Inventory->AbsorbDamage (damage, newdamage);
+		Inventory->AbsorbDamage (damage, damageType, newdamage);
 	}
 }
 
@@ -744,11 +744,11 @@ void AInventory::AlterWeaponSprite (vissprite_t *vis)
 
 //===========================================================================
 //
-// AInventory :: Activate
+// AInventory :: Use
 //
 //===========================================================================
 
-bool AInventory::Use ()
+bool AInventory::Use (bool pickup)
 {
 	return false;
 }
@@ -1087,7 +1087,7 @@ bool AInventory::TryPickup (AActor *toucher)
 		}
 		// The item is placed in the inventory just long enough to be used.
 		toucher->AddInventory (this);
-		bool usegood = Use ();
+		bool usegood = Use (true);
 		toucher->RemoveInventory (this);
 
 		if (usegood || (ItemFlags & IF_ALWAYSPICKUP))
@@ -1111,7 +1111,7 @@ bool AInventory::TryPickup (AActor *toucher)
 		copy->AttachToOwner (toucher);
 		if (ItemFlags & IF_AUTOACTIVATE)
 		{
-			if (copy->Use ())
+			if (copy->Use (true))
 			{
 				if (--copy->Amount <= 0)
 				{
@@ -1185,7 +1185,7 @@ IMPLEMENT_STATELESS_ACTOR (ABasicArmorBonus, Any, -1, 0)
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (AHexenArmor, Any, -1, 0)
-	PROP_HexenArmor_ArmorAmount (0)
+	PROP_Inventory_FlagsSet (IF_UNDROPPABLE)
 END_DEFAULTS
 
 
@@ -1224,11 +1224,13 @@ AInventory *ABasicArmorPickup::CreateCopy (AActor *other)
 // ABasicArmorPickup :: Use
 //
 // Either gives you new armor or replaces the armor you already have (if
-// the SaveAmount is greater than the amount of armor you own).
+// the SaveAmount is greater than the amount of armor you own). When the
+// item is auto-activated, it will only be activated if its max amount is 0
+// or if you have no armor active already.
 //
 //===========================================================================
 
-bool ABasicArmorPickup::Use ()
+bool ABasicArmorPickup::Use (bool pickup)
 {
 	ABasicArmor *armor = Owner->FindInventory<ABasicArmor> ();
 
@@ -1244,6 +1246,11 @@ bool ABasicArmorPickup::Use ()
 	// If you already have more armor than this item gives you, you can't
 	// use it.
 	if (armor->Amount >= SaveAmount)
+	{
+		return false;
+	}
+	// Don't use it if you're picking it up and already have some.
+	if (pickup && armor->Amount > 0 && MaxAmount > 0)
 	{
 		return false;
 	}
@@ -1288,7 +1295,7 @@ AInventory *ABasicArmorBonus::CreateCopy (AActor *other)
 //
 //===========================================================================
 
-bool ABasicArmorBonus::Use ()
+bool ABasicArmorBonus::Use (bool pickup)
 {
 	ABasicArmor *armor = Owner->FindInventory<ABasicArmor> ();
 	int saveAmount = MIN (SaveAmount, MaxSaveAmount);
@@ -1408,23 +1415,46 @@ bool ABasicArmor::HandlePickup (AInventory *item)
 //
 //===========================================================================
 
-void ABasicArmor::AbsorbDamage (int damage, int &newdamage)
+void ABasicArmor::AbsorbDamage (int damage, int damageType, int &newdamage)
 {
-	int saved = FixedMul (damage, SavePercent);
-	if (Amount < saved)
+	if (damageType != MOD_WATER)
 	{
-		saved = Amount;
-	}
-	newdamage -= saved;
-	Amount -= saved;
-	if (Amount == 0)
-	{
-		// The armor has become useless
-		SavePercent = 0;
+		int saved = FixedMul (damage, SavePercent);
+		if (Amount < saved)
+		{
+			saved = Amount;
+		}
+		newdamage -= saved;
+		Amount -= saved;
+		if (Amount == 0)
+		{
+			// The armor has become useless
+			SavePercent = 0;
+			// Now see if the player has some more armor in their inventory
+			// and use it if so. As in Strife, the worst armor is used up first.
+			ABasicArmorPickup *worst = NULL;
+			AInventory *probe = Owner->Inventory;
+			while (probe != NULL)
+			{
+				if (probe->IsKindOf (RUNTIME_CLASS(ABasicArmorPickup)))
+				{
+					ABasicArmorPickup *inInv = static_cast<ABasicArmorPickup*>(probe);
+					if (worst == NULL || worst->SavePercent > inInv->SavePercent)
+					{
+						worst = inInv;
+					}
+				}
+				probe = probe->Inventory;
+			}
+			if (worst != NULL)
+			{
+				Owner->UseInventory (worst);
+			}
+		}
 	}
 	if (Inventory != NULL)
 	{
-		Inventory->AbsorbDamage (damage, newdamage);
+		Inventory->AbsorbDamage (damage, damageType, newdamage);
 	}
 }
 
@@ -1438,6 +1468,12 @@ void AHexenArmor::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << Slots[0] << Slots[1] << Slots[2] << Slots[3];
+	if (SaveVersion >= 224)
+	{
+		arc << Slots[4]
+			<< SlotsIncrement[0] << SlotsIncrement[1] << SlotsIncrement[2]
+			<< SlotsIncrement[3];
+	}
 }
 
 //===========================================================================
@@ -1519,18 +1555,19 @@ bool AHexenArmor::AddArmorToSlot (AActor *actor, int slot, int amount)
 	}
 	if (amount <= 0)
 	{
-		hits = ppawn != NULL ? ppawn->GetArmorIncrement (slot) : 5*FRACUNIT;
+		hits = SlotsIncrement[slot];
 		if (Slots[slot] < hits)
 		{
 			Slots[slot] = hits;
 			return true;
 		}
 	}
-	else if (ppawn != NULL)
+	else
 	{
 		hits = amount * 5 * FRACUNIT;
-		fixed_t total = Slots[0]+Slots[1]+Slots[2]+Slots[3]+ppawn->GetAutoArmorSave();
-		if (total < ppawn->GetArmorMax()*5*FRACUNIT)
+		fixed_t total = Slots[0]+Slots[1]+Slots[2]+Slots[3]+Slots[4];
+		fixed_t max = SlotsIncrement[0]+SlotsIncrement[1]+SlotsIncrement[2]+SlotsIncrement[3]+Slots[4]+4*5*FRACUNIT;
+		if (total < max)
 		{
 			Slots[slot] += hits;
 			return true;
@@ -1545,52 +1582,50 @@ bool AHexenArmor::AddArmorToSlot (AActor *actor, int slot, int amount)
 //
 //===========================================================================
 
-void AHexenArmor::AbsorbDamage (int damage, int &newdamage)
+void AHexenArmor::AbsorbDamage (int damage, int damageType, int &newdamage)
 {
-	fixed_t savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3];
-	APlayerPawn *ppawn = Owner->player != NULL ? Owner->player->mo : NULL;
-
-	if (ppawn != NULL)
+	if (damageType != MOD_WATER)
 	{
-		savedPercent += ppawn->GetAutoArmorSave ();
-	}
-	if (savedPercent)
-	{ // armor absorbed some damage
-		if (savedPercent > 100*FRACUNIT)
-		{
-			savedPercent = 100*FRACUNIT;
-		}
-		for (int i = 0; i < 4; i++)
-		{
-			if (Slots[i])
+		fixed_t savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
+		APlayerPawn *ppawn = Owner->player != NULL ? Owner->player->mo : NULL;
+
+		if (savedPercent)
+		{ // armor absorbed some damage
+			if (savedPercent > 100*FRACUNIT)
 			{
-				// 300 damage always wipes out the armor unless some was added
-				// with the dragon skin bracers.
-				if (damage < 10000)
+				savedPercent = 100*FRACUNIT;
+			}
+			for (int i = 0; i < 4; i++)
+			{
+				if (Slots[i])
 				{
-					Slots[i] -= 
-						Scale (damage, ppawn != NULL ? ppawn->GetArmorIncrement (i) : 5*FRACUNIT, 300);
-					if (Slots[i] < 2*FRACUNIT)
+					// 300 damage always wipes out the armor unless some was added
+					// with the dragon skin bracers.
+					if (damage < 10000)
+					{
+						Slots[i] -= Scale (damage, SlotsIncrement[i], 300);
+						if (Slots[i] < 2*FRACUNIT)
+						{
+							Slots[i] = 0;
+						}
+					}
+					else
 					{
 						Slots[i] = 0;
 					}
 				}
-				else
-				{
-					Slots[i] = 0;
-				}
 			}
+			int saved = Scale (damage, savedPercent, 100*FRACUNIT);
+			if (saved > savedPercent >> (FRACBITS-1))
+			{	
+				saved = savedPercent >> (FRACBITS-1);
+			}
+			newdamage -= saved;
 		}
-		int saved = Scale (damage, savedPercent, 100*FRACUNIT);
-		if (saved > savedPercent >> (FRACBITS-1))
-		{	
-			saved = savedPercent >> (FRACBITS-1);
-		}
-		newdamage -= saved;
 	}
 	if (Inventory != NULL)
 	{
-		Inventory->AbsorbDamage (damage, newdamage);
+		Inventory->AbsorbDamage (damage, damageType, newdamage);
 	}
 }
 
@@ -1710,7 +1745,7 @@ bool AHealthPickup::HandlePickup (AInventory *item)
 //
 //===========================================================================
 
-bool AHealthPickup::Use ()
+bool AHealthPickup::Use (bool pickup)
 {
 	return P_GiveBody (Owner->player, health);
 }
@@ -1837,6 +1872,7 @@ IMPLEMENT_ACTOR (ACommunicator, Strife, 206, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (176)
 	PROP_StrifeTeaserType (168)
+	PROP_StrifeTeaserType2 (172)
 	PROP_Inventory_Icon ("I_COMM")
 	PROP_Tag ("Communicator")
 END_DEFAULTS

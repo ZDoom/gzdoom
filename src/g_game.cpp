@@ -1092,6 +1092,7 @@ void G_PlayerReborn (int player)
 	p->playerstate = PST_LIVE;
 
 	actor->GiveDefaultInventory ();
+	p->ReadyWeapon = p->PendingWeapon;
 
     //Added by MC: Init bot structure.
     if (bglobal.botingame[player])

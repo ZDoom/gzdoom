@@ -33,17 +33,21 @@ END_DEFAULTS
 
 FState AStrifePuff::States[] =
 {
-	// When you hit an actor
+	// When you don't hit an actor
 	S_BRIGHT (PUFY, 'A', 4, NULL, &States[1]),
 	S_NORMAL (PUFY, 'B', 4, NULL, &States[2]),
 	S_NORMAL (PUFY, 'C', 4, NULL, &States[3]),
 	S_NORMAL (PUFY, 'D', 4, NULL, NULL),
 
-	// When you hit something else
-	S_NORMAL (POW2, 'A', 4, NULL, &States[5]),
-	S_NORMAL (POW2, 'B', 4, NULL, &States[6]),
-	S_NORMAL (POW2, 'C', 4, NULL, &States[7]),
-	S_NORMAL (POW2, 'D', 4, NULL, NULL)
+	// When you do hit an actor
+	S_NORMAL (POW3, 'A', 3, NULL, &States[5]),
+	S_NORMAL (POW3, 'B', 3, NULL, &States[6]),
+	S_NORMAL (POW3, 'C', 3, NULL, &States[7]),
+	S_NORMAL (POW3, 'D', 3, NULL, &States[8]),
+	S_NORMAL (POW3, 'E', 3, NULL, &States[9]),
+	S_NORMAL (POW3, 'F', 3, NULL, &States[10]),
+	S_NORMAL (POW3, 'G', 3, NULL, &States[11]),
+	S_NORMAL (POW3, 'H', 3, NULL, NULL),
 };
 
 IMPLEMENT_ACTOR (AStrifePuff, Strife, -1, 0)
@@ -204,7 +208,7 @@ void A_JabDagger (AActor *actor)
 
 	angle = actor->angle + (pr_jabdagger.Random2() << 18);
 	pitch = P_AimLineAttack (actor, angle, 80*FRACUNIT);
-	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, RUNTIME_CLASS(AStrifeSpark));
+	P_LineAttack (actor, angle, 80*FRACUNIT, pitch, damage, MOD_HIT, RUNTIME_CLASS(AStrifeSpark));
 
 	// turn to face target
 	if (linetarget)
@@ -416,6 +420,7 @@ IMPLEMENT_ACTOR (AStrifeCrossbow, Strife, 2001, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (194)
 	PROP_StrifeTeaserType (188)
+	PROP_StrifeTeaserType2 (192)
 
 	PROP_Weapon_SelectionOrder (1200)
 	PROP_Weapon_Flags (WIF_NOALERT)
@@ -616,6 +621,7 @@ IMPLEMENT_ACTOR (AAssaultGun, Strife, 2002, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (188)
 	PROP_StrifeTeaserType (182)
+	PROP_StrifeTeaserType2 (186)
 
 	PROP_Weapon_SelectionOrder (600)
 	PROP_Weapon_AmmoUse1 (1)
@@ -678,7 +684,7 @@ void P_StrifeGunShot (AActor *mo, bool accurate)
 		angle += pr_sgunshot.Random2() << (20 - mo->player->accuracy * 5 / 100);
 	}
 
-	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, RUNTIME_CLASS(AStrifePuff));
+	P_LineAttack (mo, angle, PLAYERMISSILERANGE, bulletpitch, damage, MOD_UNKNOWN, RUNTIME_CLASS(AStrifePuff));
 }
 
 //============================================================================
@@ -724,6 +730,7 @@ IMPLEMENT_ACTOR (AAssaultGunStanding, Strife, 2006, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (189)
 	PROP_StrifeTeaserType (183)
+	PROP_StrifeTeaserType2 (187)
 	// "pulse_rifle" in the Teaser
 END_DEFAULTS
 
@@ -787,6 +794,7 @@ IMPLEMENT_ACTOR (AMiniMissileLauncher, Strife, 2003, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (192)
 	PROP_StrifeTeaserType (186)
+	PROP_StrifeTeaserType2 (190)
 
 	PROP_Weapon_SelectionOrder (1800)
 	PROP_Weapon_AmmoUse1 (1)
@@ -826,6 +834,17 @@ IMPLEMENT_ACTOR (ARocketTrail, Strife, -1, 0)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_StrifeType (51)
 	PROP_SeeSound ("misc/missileinflight")
+END_DEFAULTS
+
+// Rocket Puff --------------------------------------------------------------
+
+class AMiniMissilePuff : public AStrifePuff
+{
+	DECLARE_STATELESS_ACTOR (AMiniMissilePuff, AStrifePuff)
+};
+
+IMPLEMENT_STATELESS_ACTOR (AMiniMissilePuff, Strife, -1, 0)
+	PROP_SpawnState (0)
 END_DEFAULTS
 
 // Mini Missile -------------------------------------------------------------
@@ -914,7 +933,7 @@ void A_RocketInFlight (AActor *self)
 	AActor *trail;
 
 	S_Sound (self, CHAN_VOICE, "misc/missileinflight", 1, ATTN_NORM);
-	P_SpawnPuff (RUNTIME_CLASS(AStrifePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, true);
+	P_SpawnPuff (RUNTIME_CLASS(AMiniMissilePuff), self->x, self->y, self->z, self->angle - ANGLE_180, 2, true);
 	trail = Spawn<ARocketTrail> (self->x - self->momx, self->y - self->momy, self->z);
 	if (trail != NULL)
 	{
@@ -960,6 +979,7 @@ IMPLEMENT_ACTOR (AFlameThrower, Strife, 2005, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (190)
 	PROP_StrifeTeaserType (184)
+	PROP_StrifeTeaserType2 (188)
 
 	PROP_Weapon_SelectionOrder (2100)
 	PROP_Weapon_Flags (WIF_BOT_MELEE)
@@ -996,6 +1016,7 @@ IMPLEMENT_ACTOR (AFlameThrowerParts, Strife, -1, 0)
 	PROP_Flags (MF_SPECIAL)
 	PROP_StrifeType (191)
 	PROP_StrifeTeaserType (185)
+	PROP_StrifeTeaserType2 (189)
 	PROP_Inventory_Icon ("I_BFLM")
 	PROP_Tag ("flame_thrower_parts")
 END_DEFAULTS
@@ -1028,9 +1049,10 @@ IMPLEMENT_ACTOR (AFlameMissile, Strife, -1, 0)
 	PROP_HeightFixed (11)
 	PROP_Mass (10)
 	PROP_Damage (4)
+	PROP_DamageType (MOD_FIRE)
 	PROP_ReactionTime (8)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_FIREDAMAGE)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_Alpha (OPAQUE)
@@ -1151,6 +1173,7 @@ IMPLEMENT_ACTOR (AMauler, Strife, 2004, 0)
 	PROP_SpawnState (0)
 	PROP_StrifeType (193)
 	PROP_StrifeTeaserType (187)
+	PROP_StrifeTeaserType2 (191)
 
 	PROP_Weapon_SelectionOrder (300)
 	PROP_Weapon_AmmoUse1 (20)
@@ -1212,8 +1235,8 @@ FState AMaulerPuff::States[] =
 
 IMPLEMENT_ACTOR (AMaulerPuff, Strife, -1, 0)
 	PROP_SpawnState (0)
+	PROP_DamageType (MOD_DISINTEGRATE)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
-	PROP_Flags2 (MF2_ELECTRICDAMAGE)
 	PROP_Flags3 (MF3_PUFFONACTORS)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
@@ -1246,8 +1269,9 @@ IMPLEMENT_ACTOR (AMaulerTorpedo, Strife, -1, 0)
 	PROP_RadiusFixed (13)
 	PROP_HeightFixed (8)
 	PROP_Damage (1)
+	PROP_DamageType (MOD_DISINTEGRATE)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_ELECTRICDAMAGE)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_SeeSound ("weapons/mauler2fire")
@@ -1275,8 +1299,9 @@ IMPLEMENT_ACTOR (AMaulerTorpedoWave, Strife, -1, 0)
 	PROP_RadiusFixed (13)
 	PROP_HeightFixed (13)
 	PROP_Damage (10)
+	PROP_DamageType (MOD_DISINTEGRATE)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_DROPOFF|MF_MISSILE)
-	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_ELECTRICDAMAGE)
+	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
@@ -1319,7 +1344,7 @@ void A_FireMauler1 (AActor *self)
 		// it should use a different puff. ZDoom's default range is longer
 		// than this, so let's not handicap it by being too faithful to the
 		// original.
-		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, RUNTIME_CLASS(AMaulerPuff));
+		P_LineAttack (self, angle, PLAYERMISSILERANGE, pitch, damage, MOD_DISINTEGRATE, RUNTIME_CLASS(AMaulerPuff));
 	}
 }
 
@@ -1363,7 +1388,7 @@ void A_FireMauler2 (AActor *self)
 		self->player->mo->PlayAttacking2 ();
 	}
 	P_SpawnPlayerMissile (self, RUNTIME_CLASS(AMaulerTorpedo));
-	P_DamageMobj (self, self, NULL, 20);
+	P_DamageMobj (self, self, NULL, 20, self->DamageType);
 	P_ThrustMobj (self, self->angle + ANGLE_180, 0x7D000);
 }
 
@@ -1467,6 +1492,7 @@ IMPLEMENT_ACTOR (AHEGrenade, Strife, -1, 0)
 	PROP_ReactionTime (30)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_DOOMBOUNCE)
+	PROP_Flags3 (MF3_CANBOUNCEWATER)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
 	PROP_StrifeType (106)
 	PROP_SeeSound ("weapons/hegrenadeshoot")
@@ -1513,6 +1539,7 @@ IMPLEMENT_ACTOR (APhosphorousGrenade, Strife, -1, 0)
 	PROP_ReactionTime (40)
 	PROP_Flags (MF_NOBLOCKMAP|MF_DROPOFF|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_PCROSS|MF2_IMPACT|MF2_DOOMBOUNCE)
+	PROP_Flags3 (MF3_CANBOUNCEWATER)
 	PROP_Flags4 (MF4_STRIFEDAMAGE)
 	PROP_StrifeType (107)
 	PROP_SeeSound ("weapons/phgrenadeshoot")
@@ -1554,8 +1581,9 @@ IMPLEMENT_ACTOR (APhosphorousFire, Strife, -1, 0)
 	PROP_SpawnState (S_BURNINATION)
 	PROP_DeathState (S_BURNDWINDLE)
 	PROP_ReactionTime (120)
+	PROP_DamageType (MOD_FIRE)
 	PROP_Flags (MF_NOBLOCKMAP)
-	PROP_Flags2 (MF2_FIREDAMAGE|MF2_NOTELEPORT)
+	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_RenderStyle (STYLE_Add)
 END_DEFAULTS
 
@@ -1693,6 +1721,7 @@ IMPLEMENT_ACTOR (AStrifeGrenadeLauncher, Strife, 154, 0)
 	PROP_SpawnState (S_HEPICKUP)
 	PROP_StrifeType (195)
 	PROP_StrifeTeaserType (189)
+	PROP_StrifeTeaserType2 (193)
 
 	PROP_Weapon_SelectionOrder (2400)
 	PROP_Weapon_AmmoUse1 (1)
@@ -1894,6 +1923,7 @@ IMPLEMENT_ACTOR (ASigil, Strife, -1, 0)
 	PROP_Sigil_NumPieces (1)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
+	PROP_Inventory_FlagsSet (IF_CHEATNOTWEAPON)
 	PROP_Tag ("SIGIL")
 	PROP_Inventory_Icon ("I_SGL1")
 END_DEFAULTS
@@ -1909,6 +1939,7 @@ IMPLEMENT_STATELESS_ACTOR (ASigil1, Strife, 77, 0)
 	PROP_Sigil_NumPieces (1)
 	PROP_StrifeType (196)
 	PROP_StrifeTeaserType (190)
+	PROP_StrifeTeaserType2 (194)
 	PROP_Tag ("SIGIL")
 	PROP_Inventory_Icon ("I_SGL1")
 END_DEFAULTS
@@ -1924,6 +1955,7 @@ IMPLEMENT_STATELESS_ACTOR (ASigil2, Strife, 78, 0)
 	PROP_Sigil_NumPieces (2)
 	PROP_StrifeType (197)
 	PROP_StrifeTeaserType (191)
+	PROP_StrifeTeaserType2 (195)
 	PROP_Tag ("SIGIL")
 	PROP_Inventory_Icon ("I_SGL2")
 END_DEFAULTS
@@ -1939,6 +1971,7 @@ IMPLEMENT_STATELESS_ACTOR (ASigil3, Strife, 79, 0)
 	PROP_Sigil_NumPieces (3)
 	PROP_StrifeType (198)
 	PROP_StrifeTeaserType (192)
+	PROP_StrifeTeaserType2 (196)
 	PROP_Tag ("SIGIL")
 	PROP_Inventory_Icon ("I_SGL3")
 END_DEFAULTS
@@ -1954,6 +1987,7 @@ IMPLEMENT_STATELESS_ACTOR (ASigil4, Strife, 80, 0)
 	PROP_Sigil_NumPieces (4)
 	PROP_StrifeType (199)
 	PROP_StrifeTeaserType (193)
+	PROP_StrifeTeaserType2 (197)
 	PROP_Tag ("SIGIL")
 	PROP_Inventory_Icon ("I_SGL4")
 END_DEFAULTS
@@ -1969,6 +2003,7 @@ IMPLEMENT_STATELESS_ACTOR (ASigil5, Strife, 81, 0)
 	PROP_Sigil_NumPieces (5)
 	PROP_StrifeType (200)
 	PROP_StrifeTeaserType (194)
+	PROP_StrifeTeaserType2 (198)
 	PROP_Tag ("SIGIL")
 	PROP_Inventory_Icon ("I_SGL5")
 END_DEFAULTS
@@ -2342,54 +2377,63 @@ void A_FireSigil5 (AActor *actor)
 
 bool ASigil::SpecialDropAction (AActor *dropper)
 {
-	AActor *receiver;
-	ASigil *sigil;
-
 	// Give a Sigil piece to every player in the game
 	for (int i = 0; i < MAXPLAYERS; ++i)
 	{
-		if (!playeringame[i])
+		if (playeringame[i] && players[i].mo != NULL)
 		{
-			continue;
-		}
-		receiver = players[i].mo;
-
-		sigil = receiver->FindInventory<ASigil> ();
-		if (sigil == NULL)
-		{
-			int oldpieces = NumPieces;
-			NumPieces = 1;
-			Icon = ((AInventory*)GetDefaultByType (RUNTIME_CLASS(ASigil1)))->Icon;
-			if (!this->TryPickup (receiver))
-			{
-				NumPieces = oldpieces;
-				return false;
-			}
-			sigil = this;
-		}
-		else
-		{
-			if (sigil->NumPieces < 5)
-			{
-				++sigil->NumPieces;
-				static const TypeInfo *const sigils[5] =
-				{
-					RUNTIME_CLASS(ASigil1),
-					RUNTIME_CLASS(ASigil2),
-					RUNTIME_CLASS(ASigil3),
-					RUNTIME_CLASS(ASigil4),
-					RUNTIME_CLASS(ASigil5)
-				};
-				sigil->Icon = ((AInventory*)GetDefaultByType (sigils[MAX(0,sigil->NumPieces-1)]))->Icon;
-				// If the player has the Sigil out, drop it and bring it back up.
-				if (sigil->Owner->player != NULL && sigil->Owner->player->ReadyWeapon == sigil)
-				{
-					sigil->Owner->player->PendingWeapon = sigil;
-					sigil->DownPieces = sigil->NumPieces - 1;
-				}
-			}
+			GiveSigilPiece (players[i].mo);
 			Destroy ();
 		}
 	}
 	return true;
+}
+
+//============================================================================
+//
+// ASigil :: GiveSigilPiece
+//
+// Gives the actor another Sigil piece, up to 5. Returns the number of Sigil
+// pieces the actor previously held.
+//
+//============================================================================
+
+int ASigil::GiveSigilPiece (AActor *receiver)
+{
+	ASigil *sigil;
+
+	sigil = receiver->FindInventory<ASigil> ();
+	if (sigil == NULL)
+	{
+		sigil = Spawn<ASigil1> (0,0,0);
+		if (!sigil->TryPickup (receiver))
+		{
+			sigil->Destroy ();
+		}
+		return 0;
+	}
+	else if (sigil->NumPieces < 5)
+	{
+		++sigil->NumPieces;
+		static const TypeInfo *const sigils[5] =
+		{
+			RUNTIME_CLASS(ASigil1),
+			RUNTIME_CLASS(ASigil2),
+			RUNTIME_CLASS(ASigil3),
+			RUNTIME_CLASS(ASigil4),
+			RUNTIME_CLASS(ASigil5)
+		};
+		sigil->Icon = ((AInventory*)GetDefaultByType (sigils[MAX(0,sigil->NumPieces-1)]))->Icon;
+		// If the player has the Sigil out, drop it and bring it back up.
+		if (sigil->Owner->player != NULL && sigil->Owner->player->ReadyWeapon == sigil)
+		{
+			sigil->Owner->player->PendingWeapon = sigil;
+			sigil->DownPieces = sigil->NumPieces - 1;
+		}
+		return sigil->NumPieces - 1;
+	}
+	else
+	{
+		return 5;
+	}
 }

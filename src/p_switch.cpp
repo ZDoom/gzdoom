@@ -499,6 +499,10 @@ bool P_ChangeSwitchTexture (side_t *side, int useAgain, byte special, bool *ques
 	}
 	else
 	{
+		if (quest != NULL)
+		{
+			*quest = false;
+		}
 		return false;
 	}
 

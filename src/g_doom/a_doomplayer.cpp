@@ -83,7 +83,7 @@ IMPLEMENT_ACTOR (ADoomPlayer, Doom, -1, 0)
 	PROP_Mass (100)
 	PROP_PainChance (255)
 	PROP_SpeedFixed (1)
-	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH)
+	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_DROPOFF|MF_PICKUP|MF_NOTDMATCH|MF_FRIENDLY)
 	PROP_Flags2 (MF2_SLIDE|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_FLOORCLIP|MF2_WINDTHRUST)
 	PROP_Flags3 (MF3_NOBLOCKMONST)
 
@@ -109,8 +109,8 @@ void ADoomPlayer::GiveDefaultInventory ()
 	{
 		bullets->Amount = deh.StartBullets;		// [RH] Used to be 50
 	}
-	player->ReadyWeapon = player->PendingWeapon =
-		static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
+//	player->ReadyWeapon = player->PendingWeapon =
+//		static_cast<AWeapon *> (deh.StartBullets > 0 ? pistol : fist);
 }
 
 void A_PlayerScream (AActor *self)

@@ -1,3 +1,84 @@
+November 2, 2004
+- Added HUDMSG_FADEINOUT style HUD messages.
+- Added the GetLevelInfo ACS command, which can be used to collect information
+  before jumping to an intermission-style map.
+- Added support for loading 1, 2, and 4 bit PNG images.
+- Merged in Graf Zahl's customizable animated doors submission.
+- Added the sound effect for Strife's mask powerup.
+- Reimplemented water-breathing with the iron feet.
+- Fixed: Closing doors made frozen corpses disappear instead of shatter.
+- Added fire and disintegration deaths for the Strife player.
+- Removed MF2_ICEDAMAGE, MF2_FIREDAMAGE, and GetMod() from AActor in favor of
+  a DamageType property.
+- Fixed: Masked textures visible through multiple skyboxes would be rendered
+  multiple times.
+- Fixed: Skybox planes were drawn in front of any masked textures behind them.
+- Fixed: Strife's armor is auto-activated when you pick it up only if you don't
+  already have some in your inventory.
+- Fixed: The ACS ClearInventory command should leave undroppable items in place,
+  but there is a special exception to zero out the armor slots for a HexenArmor
+  item, which is almost the same as removing it.
+
+November 1, 2004
+- Fixed: ArtiBoostArmor didn't work in Hexen.
+- Fixed: Hexen players need to start with HexenArmor in their inventory, or else
+  they won't get their class-specific armor bonuses until they pick up other armor.
+  Since each player must start with HexenArmor, that means I can make a fifth slot
+  to hold their class armor and get rid of GetAutoArmorSave(), GetArmorMax(),
+  and GetArmorIncrement() and make the armor handling somewhat more homogenous.
+- Disabled left-right aiming when autoaim is 0.
+- Added support for the newer version of the Strife Teaser that everybody but
+  me seems to have downloaded.
+- Changed rail handling to be closer to Strife's: If you approach the rail from
+  the low side, you can jump "into" the railing. This is still better than
+  Strife's approach, which lets you jump into rails from either side. It's needed
+  to get out of an area on MAP04, and possible others as well. Unfortunately, it's
+  really ugly behavior and will probably be reported as a bug by somebody who
+  doesn't know why he got stuck in a rail.
+- Fixed: P_ChangeSwitchTexture() did not set a value for *quest if no switch
+  textures were found on the sidedef, so you could get random stat increases in
+  Strife by breaking two-sided glass lines if only one side of the line had a
+  "switch" texture.
+- Improved the wandering behavior of friendly monsters. Now they use the actual
+  chase states instead of the look states, so they animate naturally.
+- Fixed: P_RandomChaseDir() thought angles were sorted in the wrong order, so it
+  never picked a random chase direction.
+- Fixed: I forgot to flag the DoomPlayer as friendly.
+- Added the friendly flag for use in DECORATE.
+- Fixed: AWeapon::CreateTossable() let you drop sister weapons independantly from
+  each other. It should only create a tossable version of the primary weapon and
+  make the other one go "poof."
+- Fixed: Shadow Armor used the same invisibility powerup as Doom. It should be
+  a separate one, because Strife doesn't have the fuzz effect.
+- Fixed: Strife uses a LINEHEIGHT of 19 for its menus, not 16 like Doom. There are
+  also a few other positional differences between the menus.
+- ZDoom now offers the exact same translation tables as Strife, which change the
+  colors for more than just the player's suit.
+- Changed P_RadiusAttack() so that anything that does fire damage does not thrust
+  the thing it hurts vertically. This fixes the phosphorous grenades' fire.
+- Fixed: The Strife grenades should have MF3_CANBOUNCEWATER set so they can bounce
+  off liquid flats. They're not like Heretic bouncers in this respect.
+- Fixed: Strife liquid flats *do* clip sprites ala Heretic/Hexen. I did not
+  know that. That means the StickInWater also needs to have MF2_FLOORCLIP set.
+  That also explains why WaterfallSplash doesn't show up in Strife.
+- Fixed: StrifePuff should use the same actor-hit animation as StrifeSpark. They
+  only differ by their non-actor-hit animations.
+- Fixed: The surgery kit ought to give you full health, not 100 health.
+- Fixed: Flying mini-missiles used the wrong states from StrifePuff.
+- Fixed: G_PlayerReborn() only gives the default inventory to the first copy of a
+  player in a level, which means a voodoo doll can get the inventory, while the
+  real player gets nothing. P_SpawnPlayer() must check if the player already had
+  an actor spawned for it and if so, transfer the old actor's inventory to the new
+  actor.
+- Fixed: R_InitFuzzTable() is the wrong place to initialize fuzzviewheight.
+- Fixed: The "give armor" cheat gave you the wrong armor.
+- Fixed: The Dehacked ammo parser didn't calculate new BackpackAmount and
+  BackpackMaxAmount values.
+- Fixed: A_CheckReload() still had AltFire and PrimaryFire swapped.
+- Fixed: The NULL weapon check in P_CheckWeaponFire() was in the wrong spot.
+- Fixed: The give cheat gave you X number of item instances instead of just setting
+  the item's Amount field. The same goes for ACS's GiveInventory command.
+
 October 30, 2004
 - Fixed: G_StartTravel() should only affect living players. Otherwise, the body of a
   dead player will replace the live body that was spawned on the new level and the

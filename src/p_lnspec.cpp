@@ -2349,7 +2349,7 @@ FUNC(LS_ForceField)
 {
 	if (it != NULL)
 	{
-		P_DamageMobj (it, NULL, NULL, 16);
+		P_DamageMobj (it, NULL, NULL, 16, MOD_UNKNOWN);
 		P_ThrustMobj (it, it->angle + ANGLE_180, 0x7D000);
 	}
 	return true;

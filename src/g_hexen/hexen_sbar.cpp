@@ -801,7 +801,7 @@ private:
 				{
 					DrawFadedImage (Images[imgARMSLOT1+i], 150+31*i, 2,
 						MIN<fixed_t> (OPAQUE, Scale (armor->Slots[i], OPAQUE,
-											CPlayer->mo->GetArmorIncrement (i))));
+											armor->SlotsIncrement[i])));
 				}
 			}
 			oldarmor = temp;
@@ -817,13 +817,14 @@ private:
 	fixed_t GetArmorPercent (AHexenArmor **armorp)
 	{
 		AHexenArmor *harmor = CPlayer->mo->FindInventory<AHexenArmor>();
-		fixed_t amount = CPlayer->mo->GetAutoArmorSave();
+		fixed_t amount;
 		if (harmor != NULL)
 		{
-			amount += harmor->Slots[0]
+			amount  = harmor->Slots[0]
 					+ harmor->Slots[1]
 					+ harmor->Slots[2]
-					+ harmor->Slots[3];
+					+ harmor->Slots[3]
+					+ harmor->Slots[4];
 		}
 		// [RH] Count basic armor too.
 		ABasicArmor *barmor = CPlayer->mo->FindInventory<ABasicArmor>();

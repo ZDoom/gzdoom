@@ -20,9 +20,6 @@
 //-----------------------------------------------------------------------------
 
 
-
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "m_alloc.h"
@@ -30,8 +27,8 @@
 #include "i_system.h"
 #include "i_sound.h"
 #include "i_music.h"
-#include "sounds.h"
 #include "s_sound.h"
+#include "c_dispch.h"
 
 #include "z_zone.h"
 #include "m_random.h"
@@ -42,6 +39,8 @@
 
 #include "doomstat.h"
 #include "cmdlib.h"
+#include "v_video.h"
+#include "v_text.h"
 
 
 #define S_MAX_VOLUME			255
@@ -72,26 +71,31 @@ typedef struct
 	void*		origin;		// origin of sound
 	int 		handle;		// handle of the sound being played
 	int			volume;		// [RH] volume of sound at origin
+	int			priority;	// [RH] priority of sound
 } channel_t;
 
+// [RH] Hacks for pitch variance
+int sfx_sawup, sfx_sawidl, sfx_sawful, sfx_sawhit;
+int sfx_itemup, sfx_tink;
 
-typedef struct sndname_s
-{
-	struct sndname_s   *left, *right;
-	int					sfxid;
-	char				name[1];
-} sndname_t;
+// [RH] Use surround sounds?
+cvar_t *snd_surround;
 
+// [RH] Print sound debugging info?
+cvar_t *noisedebug;
 
 // the set of channels available
-static channel_t*		channels;
+static channel_t *channels;
 
 // Maximum volume of a sound effect.
 // Internal default is max out of 0-15.
 cvar_t 			*snd_SfxVolume;
 
-// Maximum volume of music. Almost useless so far.
+// Maximum volume of MOD music.
 cvar_t 			*snd_MusicVolume; 
+
+// Maximum volume of MIDI/MUS music.
+cvar_t			*snd_MidiVolume;
 
 // whether songs are mus_paused
 static BOOL		mus_paused; 	
@@ -105,31 +109,80 @@ static struct {
 // following is set
 //	by the defaults code in M_misc:
 // number of channels available
-cvar_t 					*snd_channels;
-int						numChannels;
+cvar_t 			*snd_channels;
+int				numChannels;
 
-static int				nextcleanup;
+static int		nextcleanup;
 
+
+//
+// [RH] Separated out of S_UpdateSoundParams
+//
+static fixed_t P_ApproxDistance (mobj_t *one, mobj_t *two)
+{
+	// calculate the distance to sound origin
+	//	and clip it if necessary
+	fixed_t adx = abs (one->x - two->x);
+	fixed_t ady = abs (one->y - two->y);
+	// From _GG1_ p.428. Appox. eucledian distance fast.
+	return adx + ady - ((adx < ady ? adx : ady)>>1);
+}
+
+//
+// [RH] Print sound debug info. Called from D_Display()
+//
+void S_NoiseDebug (void)
+{
+	int i, y;
+
+	y = 32;
+	if (level.time & 16)
+		V_DrawText (0, y, "*** SOUND DEBUG INFO ***");
+	y += 8;
+
+	V_DrawText (0, y, "name");
+	V_DrawText (100, y, "mo.x");
+	V_DrawText (150, y, "mo.y");
+	V_DrawText (200, y, "id");
+	V_DrawText (230, y, "pri");
+	V_DrawText (260, y, "dist");
+	y += 8;
+
+	for (i = 0; i < numChannels && y < screens[0].height - 16; i++, y += 8) {
+		if (channels[i].sfxinfo) {
+			char temp[16];
+			mobj_t *origin = (mobj_t *)channels[i].origin;
+
+			if ((unsigned int)origin < (unsigned int)ORIGIN_STARTOFNORMAL)
+				origin = players[consoleplayer].camera;
+
+			strcpy (temp, lumpinfo[channels[i].sfxinfo->lumpnum].name);
+			temp[8] = 0;
+			V_DrawText (0, y, temp);
+			sprintf (temp, "%d", origin->x / FRACUNIT);
+			V_DrawText (100, y, temp);
+			sprintf (temp, "%d", origin->y / FRACUNIT);
+			V_DrawText (150, y, temp);
+			sprintf (temp, "%d", channels[i].sfxinfo - S_sfx);
+			V_DrawText (200, y, temp);
+			sprintf (temp, "%d", channels[i].priority);
+			V_DrawText (230, y, temp);
+			sprintf (temp, "%d", P_ApproxDistance (players[consoleplayer].camera, origin) / FRACUNIT);
+			V_DrawText (260, y, temp);
+		} else {
+			V_DrawText (0, y, "------");
+		}
+	}
+}
 
 
 //
 // Internals.
 //
-int
-S_getChannel
-( void* 		origin,
-  sfxinfo_t*	sfxinfo );
-
-
-int
-S_AdjustSoundParams
-( mobj_t*		listener,
-  mobj_t*		source,
-  int*			vol,
-  int*			sep,
-  int*			pitch );
-
-void S_StopChannel(int cnum);
+static int S_getChannel (void *origin, sfxinfo_t *sfxinfo, int pri);
+static int S_AdjustSoundParams (mobj_t *listener, mobj_t *source,
+								int *vol, int *sep, int *pitch );
+static void S_StopChannel (int cnum);
 
 
 static void ChangeMusicVol (cvar_t *var)
@@ -142,6 +195,10 @@ static void ChangeSfxVol (cvar_t *var)
 	S_SetSfxVolume ((int)var->value);
 }
 
+static void ChangeMidiVol (cvar_t *var)
+{
+	I_SetMIDIVolume (var->value);
+}
 
 //
 // Initializes sound stuff, including volume
@@ -152,24 +209,27 @@ void S_Init (int sfxVolume, int musicVolume)
 {
 	int i;
 
+	snd_MidiVolume->u.callback = ChangeMidiVol;
 	snd_MusicVolume->u.callback = ChangeMusicVol;
 	snd_SfxVolume->u.callback = ChangeSfxVol;
+	ChangeMidiVol (snd_MidiVolume);
 
 	Printf ("S_Init: default sfx volume %d\n", sfxVolume);
+
+	// [RH] Read in sound sequences (TODO)
+	//S_ParseSndSeq ();
 
 	// Whatever these did with DMX, these are rather dummies now.
 	I_SetChannels();
 	
 	S_SetSfxVolume(sfxVolume);
-	// No music with Linux - another dummy.
 	S_SetMusicVolume(musicVolume);
 
 	// Allocating the internal channels for mixing
 	// (the maximum numer of sounds rendered
 	// simultaneously) within zone memory.
 	numChannels = (int)snd_channels->value;
-	channels =
-		(channel_t *) Z_Malloc(numChannels*sizeof(channel_t), PU_STATIC, 0);
+	channels = (channel_t *) Z_Malloc(numChannels*sizeof(channel_t), PU_STATIC, 0);
 	
 	// Free all channels for use
 	for (i=0 ; i<numChannels ; i++)
@@ -179,10 +239,9 @@ void S_Init (int sfxVolume, int musicVolume)
 	mus_paused = 0;
 
 	// Note that sounds have not been cached (yet).
-	for (i=1 ; i<NUMSFX ; i++)
-		S_sfx[i].lumpnum = S_sfx[i].usefulness = -1;
+	for (i=1; i < numsfx; i++)
+		S_sfx[i].usefulness = -1;
 }
-
 
 
 
@@ -197,103 +256,111 @@ void S_Start(void)
 
 	// kill all playing sounds at start of level
 	//	(trust me - a good idea)
-	for (cnum=0 ; cnum<numChannels ; cnum++)
+	for (cnum = 0; cnum < numChannels; cnum++)
 		if (channels[cnum].sfxinfo)
-			S_StopChannel(cnum);
+			S_StopChannel (cnum);
 	
 	// start new music for the level
 	mus_paused = 0;
 	
 	// [RH] This is a lot simpler now.
-	S_ChangeMusic(level.music, true);
+	S_ChangeMusic (level.music, true);
 	
 	nextcleanup = 15;
 }
 
 
-
-
-
-void S_StartSoundAtVolume (void *origin_p, int sfx_id, int volume)
+// [RH] Split S_StartSoundAtVolume into two parts so that sounds can
+//		be specified both by id and by name.
+void S_StartSfxAtVolume (void *origin_p, int sfx_id, int pri, int volume)
 {
-
-	int 			rc;
-	int 			sep;
-	int 			pitch;
-	int 			priority;
-	sfxinfo_t*		sfx;
-	int 			cnum;
+	int 		rc;
+	int 		sep;
+	int 		pitch;
+	int 		priority;
+	sfxinfo_t*	sfx;
+	int 		cnum;
 	
-	mobj_t* 		origin = (mobj_t *) origin_p;
+	mobj_t* 	origin = (mobj_t *) origin_p;
 	
+	if (sfx_id == -1) {
+		S_StopSound (origin);
+		return;
+	}
 	
 	// Debug.
 	/*fprintf( stderr,
 			   "S_StartSoundAtVolume: playing sound %d (%s)\n",
 			   sfx_id, S_sfx[sfx_id].name );*/
 	
-	// check for bogus sound #
-	if (sfx_id < 1 || sfx_id > NUMSFX)
-		I_Error("Bad sfx #: %d", sfx_id);
-	
+
 	sfx = &S_sfx[sfx_id];
 	
 	// Initialize sound parameters
-	if (sfx->link)
-	{
-		pitch = sfx->pitch;
-		priority = sfx->priority;
-		volume += sfx->volume;
-		
-		if (volume < 1)
-			return;
-	}
-	else
-	{
-		pitch = NORM_PITCH;
-		priority = NORM_PRIORITY;
-	}
-
+	pitch = NORM_PITCH;
+	priority = NORM_PRIORITY;
 
 	// Check to see if it is audible,
 	//	and if not, modify the params
 	if (((unsigned int)origin >= (unsigned int)ORIGIN_STARTOFNORMAL) &&
-		origin != players[displayplayer].mo)
+		origin != players[consoleplayer].camera)	// [RH] Use camera
 	{
-		rc = S_AdjustSoundParams(players[displayplayer].mo,
+		rc = S_AdjustSoundParams(players[consoleplayer].camera,	// [RH] Use camera
 								 origin,
 								 &volume,
 								 &sep,
 								 &pitch);
 				
-		if ( origin->x == players[displayplayer].mo->x
-				 && origin->y == players[displayplayer].mo->y)
+		if (!rc)
+			return;
+
+		if ( origin->x == players[consoleplayer].camera->x	// [RH] use camera
+				 && origin->y == players[consoleplayer].camera->y)
 		{
 			sep = NORM_SEP;
 		}
-		
-		if (!rc)
-			return;
+#if 0
+		else
+		{
+			// [RH] Don't play more than two sounds w/ approximately
+			//		the same origin. (Doesn't work.)
+			int similarseps = 0;
+			int i;
+
+			for (i = 0; i < numChannels; i++) {
+				if (channels[i].sfxinfo && channels[i].origin &&
+					P_ApproxDistance (channels[i].origin, origin) < 64)
+					similarseps++;
+			}
+			if (similarseps > 1)
+				return;
+		}
+#endif
 	} else if (((unsigned int)origin < (unsigned int)ORIGIN_STARTOFNORMAL) &&
-				((unsigned int)origin) & 128) {
+				(((unsigned int)origin) & 128) &&
+				snd_surround->value) {
 		sep = -1;
 	} else {
 		sep = NORM_SEP;
 	}
 	// hacks to vary the sfx pitches
-	if (sfx_id >= sfx_sawup	&& sfx_id <= sfx_sawhit)
+	if (sfx_id == sfx_sawup	|| sfx_id == sfx_sawhit ||
+		sfx_id == sfx_sawidl || sfx_id == sfx_sawful)
 		pitch += 8 - (M_Random()&15);
 	else if (sfx_id != sfx_itemup && sfx_id != sfx_tink)
 		pitch += 16 - (M_Random()&31);
 
 	// kill old sound
-	S_StopSound(origin);
+	S_StopSound (origin);
 
 	// try to find a channel
-	cnum = S_getChannel(origin, sfx);
+	cnum = S_getChannel (origin, sfx, pri);
 	
-	if (cnum<0)
+	if (cnum < 0)
 		return;
+
+	if (sfx->link)
+		sfx = sfx->link;
 
 	//
 	// This is supposed to handle the loading/caching.
@@ -301,14 +368,13 @@ void S_StartSoundAtVolume (void *origin_p, int sfx_id, int volume)
 	//	each time the sound is needed?
 	//
 	
-	// get lumpnum if necessary
-	if (sfx->lumpnum < 0)
-		sfx->lumpnum = I_GetSfxLumpNum(sfx);
-
 	// cache data if necessary
 	if (!sfx->data)
 	{
-		Printf ("S_StartSoundAtVolume: 16bit and not pre-cached - wtf?\n");
+		//Printf ("S_StartSoundAtVolume: 16bit and not pre-cached - wtf?\n");
+		I_LoadSound (sfx);
+		if (sfx->link)
+			sfx = sfx->link;
 
 		// DOS remains, 8bit handling
 		//sfx->data = (void *) W_CacheLumpNum(sfx->lumpnum, PU_MUSIC);
@@ -327,7 +393,7 @@ void S_StartSoundAtVolume (void *origin_p, int sfx_id, int volume)
 
 	// Assigns the handle to one of the channels in the
 	//	mix/output buffer.
-	channels[cnum].handle = I_StartSound(sfx_id,
+	channels[cnum].handle = I_StartSound(sfx,
 										 /*sfx->data,*/
 										 volume,
 										 sep,
@@ -335,20 +401,45 @@ void S_StartSoundAtVolume (void *origin_p, int sfx_id, int volume)
 										 priority);
 }
 
-void S_StartSound (void *origin, int sfx_id)
+void S_StartSoundAtVolume (void *origin_p, char *name, int pri, int volume)
 {
-	S_StartSoundAtVolume(origin, sfx_id, 255);
+	int sfx_id;
+	
+	if (*name == '*') {
+		// Sexed sound
+		char nametemp[128];
+		const char templat[] = "player/%s/%s";
+		const char *genders[] = { "male", "female", "neuter" };
+		player_t *player;
+
+		sfx_id = -1;
+		if (origin_p >= ORIGIN_STARTOFNORMAL && (player = ((mobj_t *)origin_p)->player)) {
+			sprintf (nametemp, templat, skins[player->userinfo.skin].name, name + 1);
+			sfx_id = S_FindSound (nametemp);
+			if (sfx_id == -1) {
+				sprintf (nametemp, templat, genders[player->userinfo.gender], name + 1);
+				sfx_id = S_FindSound (nametemp);
+			}
+		}
+		if (sfx_id == -1) {
+			sprintf (nametemp, templat, "male", name + 1);
+			sfx_id = S_FindSound (nametemp);
+		}
+	} else
+		sfx_id = S_FindSound (name);
+
+	if (sfx_id == -1)
+		DPrintf ("Unknown sound %s\n", name);
+
+	S_StartSfxAtVolume (origin_p, sfx_id, pri, volume);
 }
 
 
-
-
-void S_StopSound(void *origin)
+void S_StopSound (void *origin)
 {
-
 	int cnum;
 
-	for (cnum=0 ; cnum<numChannels ; cnum++)
+	for (cnum = 0; cnum < numChannels; cnum++)
 	{
 		if (channels[cnum].sfxinfo && channels[cnum].origin == origin)
 		{
@@ -357,13 +448,6 @@ void S_StopSound(void *origin)
 		}
 	}
 }
-
-
-
-
-
-
-
 
 
 //
@@ -378,11 +462,11 @@ void S_PauseSound(void)
 	}
 }
 
-void S_ResumeSound(void)
+void S_ResumeSound (void)
 {
 	if (mus_playing.handle && mus_paused)
 	{
-		I_ResumeSong(mus_playing.handle);
+		I_ResumeSong (mus_playing.handle);
 		mus_paused = false;
 	}
 }
@@ -391,7 +475,7 @@ void S_ResumeSound(void)
 //
 // Updates music & sounds
 //
-void S_UpdateSounds(void* listener_p)
+void S_UpdateSounds (void *listener_p)
 {
 	int 		audible;
 	int 		cnum;
@@ -412,8 +496,7 @@ void S_UpdateSounds(void* listener_p)
 	{
 		for (i=1 ; i<NUMSFX ; i++)
 		{
-			if (S_sfx[i].usefulness < 1
-				&& S_sfx[i].usefulness > -1)
+			if (S_sfx[i].usefulness < 1 && S_sfx[i].usefulness > -1)
 			{
 				if (--S_sfx[i].usefulness == -1)
 				{
@@ -425,30 +508,19 @@ void S_UpdateSounds(void* listener_p)
 		nextcleanup = gametic + 15;
 	}*/
 	
-	for (cnum=0 ; cnum<numChannels ; cnum++)
+	for (cnum = 0; cnum < numChannels; cnum++)
 	{
 		c = &channels[cnum];
 		sfx = c->sfxinfo;
 
 		if (c->sfxinfo)
 		{
-			if (I_SoundIsPlaying(c->handle))
+			if (I_SoundIsPlaying (c->handle))
 			{
 				// initialize parameters
 				volume = c->volume;
 				pitch = NORM_PITCH;
 				sep = NORM_SEP;
-
-				if (sfx->link)
-				{
-					pitch = sfx->pitch;
-					volume += sfx->volume;
-					if (volume < 1)
-					{
-						S_StopChannel(cnum);
-						continue;
-					}
-				}
 
 				// check non-local sounds for distance clipping
 				//	or modify their params
@@ -462,10 +534,10 @@ void S_UpdateSounds(void* listener_p)
 					
 					if (!audible)
 					{
-						S_StopChannel(cnum);
+						S_StopChannel (cnum);
 					}
 					else
-						I_UpdateSoundParams(c->handle, volume, sep, pitch);
+						I_UpdateSoundParams (c->handle, volume, sep, pitch);
 				}
 			}
 			else
@@ -589,7 +661,7 @@ void S_StopMusic(void)
 
 
 
-void S_StopChannel(int cnum)
+static void S_StopChannel(int cnum)
 {
 
 	int 		i;
@@ -629,20 +701,13 @@ void S_StopChannel(int cnum)
 // If the sound is not audible, returns a 0.
 // Otherwise, modifies parameters and returns 1.
 //
-int S_AdjustSoundParams (mobj_t *listener, mobj_t *source, int *vol, int *sep, int *pitch)
+static int S_AdjustSoundParams (mobj_t *listener, mobj_t *source,
+								int *vol, int *sep, int *pitch)
 {
 	fixed_t 	approx_dist;
-	fixed_t 	adx;
-	fixed_t 	ady;
 	angle_t 	angle;
 
-	// calculate the distance to sound origin
-	//	and clip it if necessary
-	adx = abs(listener->x - source->x);
-	ady = abs(listener->y - source->y);
-
-	// From _GG1_ p.428. Appox. eucledian distance fast.
-	approx_dist = adx + ady - ((adx < ady ? adx : ady)>>1);
+	approx_dist = P_ApproxDistance (listener, source);
 	
 	if (!(level.flags & LEVEL_NOSOUNDCLIPPING) && approx_dist > S_CLIPPING_DIST)
 	{
@@ -694,18 +759,14 @@ int S_AdjustSoundParams (mobj_t *listener, mobj_t *source, int *vol, int *sep, i
 // S_getChannel :
 //	 If none available, return -1.	Otherwise channel #.
 //
-int
-S_getChannel
-( void* 		origin,
-  sfxinfo_t*	sfxinfo )
+static int S_getChannel (void *origin, sfxinfo_t *sfxinfo, int pri)
 {
 	// channel number to use
-	int 		cnum;
-	
-	channel_t*	c;
+	int cnum;
+	channel_t *c;
 
 	// Find an open channel
-	for (cnum=0 ; cnum<numChannels ; cnum++)
+	for (cnum = 0; cnum < numChannels; cnum++)
 	{
 		if (!channels[cnum].sfxinfo)
 			break;
@@ -720,8 +781,8 @@ S_getChannel
 	if (cnum == numChannels)
 	{
 		// Look for lower priority
-		for (cnum=0 ; cnum<numChannels ; cnum++)
-			if (channels[cnum].sfxinfo->priority >= sfxinfo->priority) break;
+		for (cnum = 0; cnum < numChannels; cnum++)
+			if (channels[cnum].priority >= pri) break;
 
 		if (cnum == numChannels)
 		{
@@ -740,6 +801,7 @@ S_getChannel
 	// channel is decided to be cnum.
 	c->sfxinfo = sfxinfo;
 	c->origin = origin;
+	c->priority = pri;
 
 	return cnum;
 }
@@ -750,110 +812,105 @@ S_getChannel
 //
 // =============================== [RH]
 
-typedef struct {
-	thinker_t thinker;
-	struct AmbientSound *ambient;
-	int ticker;
-} ambientthinker_t;
+sfxinfo_t *S_sfx;	// [RH] This is no longer defined in sounds.c
+static int maxsfx;	// [RH] Current size of S_sfx array.
+int numsfx;			// [RH] Current number of sfx defined.
 
 static struct AmbientSound {
 	unsigned	type;		// type of ambient sound
 	int			periodmin;	// # of tics between repeats
 	int			periodmax;	// max # of tics for random ambients
 	int			volume;		// relative volume of sound
-	int			sfxid;		// ID of attached real sound
-	ambientthinker_t *thinker;	// thinker for world sound
-} Ambients[64];
+	char		sound[MAX_SNDNAME+1]; // Logical name of sound to play
+} Ambients[256];
 
 #define RANDOM		1
 #define PERIODIC	2
 #define POSITIONAL	4
 #define SURROUND	16
 
-static sndname_t *LogicalNames;
-
-int S_GetFreeSoundIndex (void)
+void S_HashSounds (void)
 {
-	static int freeIndex = sfx_ambient0;
+	int i;
+	unsigned j;
 
-	if (freeIndex <= sfx_ambient63)
-		return freeIndex++;
-	else
-		return sfx_None;
+	// Mark all buckets as empty
+	for (i = 0; i < numsfx; i++)
+		S_sfx[i].index = -1;
+
+	// Now set up the chains
+	for (i = 0; i < numsfx; i++) {
+		j = MakeKey (S_sfx[i].name) % (unsigned)numsfx;
+		S_sfx[i].next = S_sfx[j].index;
+		S_sfx[j].index = i;
+	}
 }
 
-int S_GetSoundIndexFromLumpName (char *lumpname)
+int S_FindSound (const char *logicalname)
 {
 	int i;
 
-	for (i = sfx_ambient0; i <= sfx_ambient63; i++)
-		if (S_sfx[i].name)
-			if (!stricmp (S_sfx[i].name, lumpname))
-				return i;
+	i = S_sfx[MakeKey (logicalname) % (unsigned)numsfx].index;
 
-	return sfx_None;
+	while ((i != -1) && strnicmp (S_sfx[i].name, logicalname, MAX_SNDNAME))
+		i = S_sfx[i].next;
+
+	return i;
 }
 
-static sndname_t **InsertionPoint;
-
-sndname_t *S_FindLogicalName (char *logicalname)
+int S_FindSoundByLump (int lump)
 {
-	sndname_t *sound;
-	int cmpval;
+	if (lump != -1) {
+		int i;
 
-	InsertionPoint = &LogicalNames;
-	sound = LogicalNames;
+		for (i = 0; i < numsfx; i++)
+			if (S_sfx[i].lumpnum == lump)
+				return i;
+	}
+	return -1;
+}
 
-	while (sound) {
-		cmpval = strcmp (sound->name, logicalname);
-		if (cmpval == 0) {
-			return sound;
-		} else if (cmpval < 0) {
-			InsertionPoint = &sound->left;
-			sound = sound->left;
-		} else {
-			InsertionPoint = &sound->right;
-			sound = sound->right;
-		}
+int S_AddSoundLump (char *logicalname, int lump)
+{
+	if (numsfx == maxsfx) {
+		maxsfx = maxsfx ? maxsfx*2 : 128;
+		S_sfx = Realloc (S_sfx, maxsfx * sizeof(*S_sfx));
 	}
 
-	return NULL;
+	// logicalname MUST be < MAX_SNDNAME chars long
+	strcpy (S_sfx[numsfx].name, logicalname);
+	S_sfx[numsfx].data = NULL;
+	S_sfx[numsfx].link = NULL;
+	S_sfx[numsfx].usefulness = 0;
+	S_sfx[numsfx].lumpnum = lump;
+	return numsfx++;
 }
 
-void S_AddLogicalName (char *logicalname, char *lumpname)
+int S_AddSound (char *logicalname, char *lumpname)
 {
-	sndname_t *sound;
 	int sfxid;
 
-	lumpname += 2;		// Skip ds header
+	// If the sound has already been defined, change the old definition.
+	for (sfxid = 0; sfxid < numsfx; sfxid++)
+		if (0 == stricmp (logicalname, S_sfx[sfxid].name))
+			break;
 
-	if (!(sound = S_FindLogicalName (logicalname))) {
-		sound = Malloc (sizeof(sndname_t) + strlen (logicalname));
-		sound->left = NULL;
-		sound->right = NULL;
-		strcpy (sound->name, logicalname);
-		*InsertionPoint = sound;
+	// Otherwise, prepare a new one.
+	if (sfxid == numsfx) {
+		sfxid = S_AddSoundLump (logicalname, W_CheckNumForName (lumpname));
+	} else {
+		S_sfx[sfxid].lumpnum = W_CheckNumForName (lumpname);
 	}
 
-	if ((sfxid = S_GetSoundIndexFromLumpName (lumpname)) == sfx_None) {
-		if ((sfxid = S_GetFreeSoundIndex ()) == sfx_None) {
-			Printf ("no room to add %s to sound table\n", lumpname);
-		} else {
-			S_sfx[sfxid].name = copystring (lumpname);
-		}
-	}
-
-	sound->sfxid = sfxid;
+	return sfxid;
 }
 
 // S_ParseSndInfo
-// Parses all loaded SNDINFO lumps. Currently, this is only used
-// to gather information for ambient sounds.
+// Parses all loaded SNDINFO lumps.
 void S_ParseSndInfo (void)
 {
 	int lastlump, lump;
 	char *sndinfo;
-	char *logicalname;
 	char *data;
 
 	lastlump = 0;
@@ -876,41 +933,31 @@ void S_ParseSndInfo (void)
 				if (!stricmp (com_token + 1, "ambient")) {
 					// $ambient <num> <logical name> [point|surround] <type> [secs] <relative volume>
 					struct AmbientSound *ambient, dummy;
-					sndname_t *logicalinfo;
 					int index;
 
 					sndinfo = COM_Parse (sndinfo);
 					index = atoi (com_token);
-					if (index < 1 || index > 64) {
+					if (index < 0 || index > 255) {
 						Printf ("Bad ambient index (%d)\n", index);
 						ambient = &dummy;
 					} else {
-						index--;
 						ambient = Ambients + index;
 					}
 					memset (ambient, 0, sizeof(struct AmbientSound));
 
 					sndinfo = COM_Parse (sndinfo);
-					logicalinfo = S_FindLogicalName (com_token);
-					if (logicalinfo)
-						ambient->sfxid = logicalinfo->sfxid;
-					else
-						ambient->sfxid = sfx_None;
+					strncpy (ambient->sound, com_token, MAX_SNDNAME);
+					ambient->sound[MAX_SNDNAME] = 0;
 
 					sndinfo = COM_Parse (sndinfo);
 					if (!stricmp (com_token, "point")) {
 						ambient->type = POSITIONAL;
 						sndinfo = COM_Parse (sndinfo);
-						if (ambient != &dummy) {
-							mobjinfo[MT_AMBIENT0 + index].spawnstate = S_AMBIENTSOUND;
-						}
 					} else {
 						if (!stricmp (com_token, "surround")) {
 							ambient->type = SURROUND;
 							sndinfo = COM_Parse (sndinfo);
 						}
-						if (ambient != &dummy)
-							mobjinfo[MT_AMBIENT0 + index].spawnstate = S_NULL;
 					}
 
 					if (!stricmp (com_token, "continuous")) {
@@ -951,14 +998,57 @@ void S_ParseSndInfo (void)
 				}
 			} else {
 				// com_token is a logical sound mapping
+				char name[MAX_SNDNAME+1];
 
-				logicalname = copystring (com_token);
+				strncpy (name, com_token, MAX_SNDNAME);
+				name[MAX_SNDNAME] = 0;
 				sndinfo = COM_Parse (sndinfo);
-				S_AddLogicalName (logicalname, com_token);
-				free (logicalname);
+				S_AddSound (name, com_token);
 			}
 		}
 	}
+	S_HashSounds ();
+
+	// [RH] Hack for pitch varying
+	sfx_sawup = S_FindSound ("weapons/sawup");
+	sfx_sawidl = S_FindSound ("weapons/sawidle");
+	sfx_sawful = S_FindSound ("weapons/sawfull");
+	sfx_sawhit = S_FindSound ("weapons/sawhit");
+	sfx_itemup = S_FindSound ("misc/i_pkup");
+	sfx_tink = S_FindSound ("misc/chat2");
+}
+
+void Cmd_Soundlist (void *plyr, int argc, char **argv)
+{
+	char lumpname[9];
+	int i;
+
+	lumpname[8] = 0;
+	for (i = 0; i < numsfx; i++)
+		if (S_sfx[i].lumpnum != -1) {
+			strncpy (lumpname, lumpinfo[S_sfx[i].lumpnum].name, 8);
+			Printf ("%3d. %s (%s)\n", i+1, S_sfx[i].name, lumpname);
+		} else
+			Printf ("%3d. %s **not present**\n", i+1, S_sfx[i].name);
+}
+
+void Cmd_Soundlinks (void *plyr, int argc, char **argv)
+{
+	int i;
+
+	for (i = 0; i < numsfx; i++)
+		if (S_sfx[i].link)
+			Printf ("%s -> %s\n", S_sfx[i].name, S_sfx[i].link->name);
+}
+
+void S_StartAmbient (char *name, int volume, BOOL surround)
+{
+	static int last = -1;
+
+	if (++last >= 64)
+		last = 0;
+
+	S_StartSoundAtVolume ((mobj_t *)((8+last)|(surround?128:0)), name, 32, volume);
 }
 
 static void SetTicker (int *tics, struct AmbientSound *ambient)
@@ -974,12 +1064,13 @@ static void SetTicker (int *tics, struct AmbientSound *ambient)
 
 void A_Ambient (mobj_t *actor)
 {
-	struct AmbientSound *ambient;
+	struct AmbientSound *ambient = &Ambients[actor->args[0]];
 
-	ambient = &Ambients[actor->type - MT_AMBIENT0];
-
-	if (ambient->sfxid) {
-		S_StartSoundAtVolume (actor, ambient->sfxid, ambient->volume);
+	if (ambient->sound[0]) {
+		if (ambient->type & POSITIONAL)
+			S_StartSoundAtVolume (actor, ambient->sound, 32, ambient->volume);
+		else
+			S_StartAmbient (ambient->sound, ambient->volume, ambient->type & SURROUND);
 
 		SetTicker (&actor->tics, ambient);
 	} else {
@@ -987,58 +1078,21 @@ void A_Ambient (mobj_t *actor)
 	}
 }
 
-void T_WorldAmbient (ambientthinker_t *thinker)
-{
-	struct AmbientSound *ambient;
-	int channel;
-
-	if (thinker->ticker) {
-		thinker->ticker--;
-		return;
-	}
-
-	ambient = thinker->ambient;
-
-	channel = ambient - Ambients + 8;
-	if (ambient->type & SURROUND)
- 		channel |= 128;
-	S_StartSoundAtVolume ((void *)channel, ambient->sfxid, ambient->volume);
-	SetTicker (&thinker->ticker, ambient);
-}
-
-void S_ActivateAmbient (void *origin, int ambient)
+void S_ActivateAmbient (mobj_t *origin, int ambient)
 {
 	struct AmbientSound *amb = &Ambients[ambient];
 
-	if (!(amb->type & 3) && !amb->periodmin)
-		amb->periodmin = (S_sfx[amb->sfxid].ms * TICRATE) / 1000;
+	if (!(amb->type & 3) && !amb->periodmin) {
+		sfxinfo_t *sfx = S_sfx + S_FindSound (amb->sound);
 
-	if (amb->type & POSITIONAL) {
-		// Point sounds
-	} else {
-		// World sounds
-		DPrintf ("ActivateAmbient %d\n", ambient);
-
-		if (!amb->thinker) {
-			Z_Malloc (sizeof(ambientthinker_t), PU_LEVSPEC, &amb->thinker);
-			P_AddThinker (&amb->thinker->thinker);
-			amb->thinker->ambient = amb;
-			amb->thinker->thinker.function.acp1 = (actionf_p1) T_WorldAmbient;
-			if (amb->type & 3)
-				SetTicker (&amb->thinker->ticker, amb);
-			else
-				amb->thinker->ticker = 0;
-		}
+		// Make sure the sound has been loaded so we know how long it is
+		if (!sfx->data)
+			I_LoadSound (sfx);
+		amb->periodmin = (sfx->ms * TICRATE) / 1000;
 	}
-}
 
-void S_ClearAmbients (void)
-{
-	int i;
-
-	for (i = 0; i < 64; i++)
-		if (Ambients[i].thinker) {
-			P_RemoveThinker ((thinker_t *)Ambients[i].thinker);
-			Ambients[i].thinker = NULL;
-		}
+	if (amb->type & (RANDOM|PERIODIC))
+		SetTicker (&origin->tics, amb);
+	else
+		origin->tics = 1;
 }

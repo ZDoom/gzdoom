@@ -157,19 +157,23 @@ typedef struct player_s
 	//	can be set to REDCOLORMAP for pain, etc.
 	int 				fixedcolormap;
 
-	// Player skin colorshift,
-	//	0-3 for which color to draw player.
-	int 				colormap;		
+	// [RH] Amount to shift view horizontally (for earthquakes)
+	int 				xviewshift;		
 
 	// Overlay view sprites (gun, etc).
 	pspdef_t			psprites[NUMPSPRITES];
 
-	// [RH] Pointer to a userinfo struct
-	userinfo_t			*userinfo;
+	// [RH] A userinfo struct
+	userinfo_t			userinfo;
 
 	// [RH] Tic when respawning is allowed
 	int					respawn_time;
 
+	// [RH] Used for calculating falling damage
+	fixed_t				oldvelocity[3];
+
+	// [RH] Camera to use to draw view from. Normally same as mo
+	mobj_t				*camera;
 } player_t;
 
 

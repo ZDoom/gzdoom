@@ -254,7 +254,7 @@ void R_DrawFuzzColumnP_C (void)
 	if (count < 0) 
 		return; 
 
-	map = DefaultPalette->colormaps + 6*256;
+	map = DefaultPalette->maps.colormaps + 6*256;
 	
 #ifdef RANGECHECK 
 	if (dc_x >= screens[0].width
@@ -494,6 +494,8 @@ void R_DrawSpanP (void)
 /*										*/
 /****************************************/
 
+#define dc_shademap ((unsigned int *)dc_colormap)
+
 void R_DrawColumnD_C (void) 
 { 
 	int 				count; 
@@ -523,7 +525,7 @@ void R_DrawColumnD_C (void)
 
 	do 
 	{
-		*dest = V_Palette[dc_colormap[dc_source[(frac>>FRACBITS)&dc_mask]]];
+		*dest = dc_shademap[dc_source[(frac>>FRACBITS)&dc_mask]];
 		
 		dest += dc_pitch >> 2; 
 		frac += fracstep;
@@ -608,7 +610,7 @@ void R_DrawTranslucentColumnD_C (void)
 	do 
 	{
 		*dest = ((*dest >> 1) & 0x7f7f7f) +
-				((V_Palette[dc_colormap[dc_source[(frac>>FRACBITS)&dc_mask]]] >> 1) & 0x7f7f7f);
+				((dc_shademap[dc_source[(frac>>FRACBITS)&dc_mask]] >> 1) & 0x7f7f7f);
 		dest += dc_pitch >> 2;
 		
 		frac += fracstep;
@@ -646,7 +648,7 @@ void R_DrawTranslatedColumnD_C (void)
 	// Here we do an additional index re-mapping.
 	do
 	{
-		*dest = V_Palette[dc_colormap[dc_translation[dc_source[(frac>>FRACBITS) & dc_mask]]]];
+		*dest = dc_shademap[dc_translation[dc_source[(frac>>FRACBITS) & dc_mask]]];
 		dest += dc_pitch >> 2;
 		
 		frac += fracstep;
@@ -686,7 +688,7 @@ void R_DrawSpanD (void)
 
 		// Lookup pixel from flat texture tile,
 		//  re-index using light/colormap.
-		*dest = V_Palette[ds_colormap[ds_source[spot]]];
+		*dest = ((unsigned int *)ds_colormap)[ds_source[spot]];
 		dest += ds_colsize >> 2;
 
 		// Next step in u,v.

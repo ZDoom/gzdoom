@@ -55,12 +55,10 @@ void UnlatchCVars (void)
 
 void SetCVar (cvar_t *var, char *value)
 {
-	// TODO: Find a better way to not send serverinfo updates
-	//		 when not inside a game.
-	if (var->flags & CVAR_LATCH) {
+	if (var->flags & CVAR_LATCH && gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP) {
 		var->modified = true;
 		var->u.latched_string = copystring (value);
-	} else if (var->flags & CVAR_SERVERINFO && gamestate > -1) {
+	} else if (var->flags & CVAR_SERVERINFO && gamestate != GS_STARTUP) {
 		if (netgame && consoleplayer != 0) {
 			Printf ("Only player 1 can change %s\n", var->name);
 			return;
@@ -85,6 +83,8 @@ void SetCVarFloat (cvar_t *var, float value)
 	SetCVar (var, string);
 }
 
+int cvar_defflags;
+
 cvar_t *cvar (char *var_name, char *value, int flags)
 {
 	cvar_t *var, *dummy;
@@ -104,7 +104,7 @@ cvar_t *cvar (char *var_name, char *value, int flags)
 		CVars = var;
 		C_AddTabCommand (var_name);
 	}
-	var->flags = flags;
+	var->flags = flags | cvar_defflags;;
 	return var;
 }
 

@@ -25,12 +25,9 @@
 #ifndef __D_MAIN__
 #define __D_MAIN__
 
+#include <setjmp.h>
 #include "d_event.h"
 
-
-
-#define MAXWADFILES 			20
-extern char*			wadfiles[MAXWADFILES];
 
 void D_AddFile (char *file);
 
@@ -47,7 +44,7 @@ void D_DoomMain (void);
 // Called by IO functions when input is detected.
 void D_PostEvent (const event_t* ev);
 
-		
+
 
 //
 // BASE LEVEL
@@ -56,5 +53,14 @@ void D_PageTicker (void);
 void D_PageDrawer (void);
 void D_AdvanceDemo (void);
 void D_StartTitle (void);
+
+
+// [RH] Set this to something to draw an icon during the next screen refresh.
+extern char *D_DrawIcon;
+
+// [RH] Allow for recoverable errors to drop to console only
+extern char errortext[2048];
+extern jmp_buf errorjmp;
+extern BOOL errorjmpable;
 
 #endif

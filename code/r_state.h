@@ -37,14 +37,6 @@
 // needed for texture pegging
 extern fixed_t* 		textureheight;
 
-// needed for pre rendering (fracs)
-extern fixed_t* 		spritewidth;
-
-extern fixed_t* 		spriteoffset;
-extern fixed_t* 		spritetopoffset;
-
-extern lighttable_t*	colormaps;
-
 extern int				viewwidth;
 extern int				realviewwidth;
 extern int				viewheight;
@@ -67,6 +59,9 @@ extern int				numspritelumps;
 //
 // Lookup tables for map data.
 //
+extern size_t			numskins;	// [RH]
+extern playerskin_t*	skins;		// [RH]
+
 extern int				numsprites;
 extern spritedef_t* 	sprites;
 
@@ -100,7 +95,7 @@ extern fixed_t			viewy;
 extern fixed_t			viewz;
 
 extern angle_t			viewangle;
-extern player_t*		viewplayer;
+extern mobj_t*			camera;		// [RH] camera instead of viewplayer
 
 
 // ?

@@ -42,6 +42,7 @@ void G_LoadGame (char* name);
 void G_DoLoadGame (void);
 
 // Called by M_Responder.
+void G_BuildSaveName (char *name, int slot);
 void G_SaveGame (int slot, char* description);
 
 // Only called by startup code.
@@ -62,10 +63,10 @@ void G_ScreenShot (char *filename);
 
 void G_PlayerFinishLevel (int player);
 
+#define BODYQUESIZE 	32
+struct mobj_s;
+extern struct mobj_s *bodyque[BODYQUESIZE]; 
+extern int bodyqueslot; 
+
 
 #endif
-//-----------------------------------------------------------------------------
-//
-// $Log:$
-//
-//-----------------------------------------------------------------------------

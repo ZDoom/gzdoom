@@ -48,6 +48,7 @@ typedef unsigned char byte;
 // Predefined with some OS.
 #ifdef __GNUC__
 #include <values.h>
+typedef long long __int64;
 #else
 /* [Petteri] Don't redefine if we already have these */
 #ifndef MAXCHAR
@@ -68,7 +69,9 @@ typedef unsigned char byte;
 
 
 #ifndef NOASM
+#ifndef USEASM
 #define USEASM
+#endif
 #endif
 
 

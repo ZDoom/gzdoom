@@ -385,7 +385,7 @@ void V_DrawWrapper (int drawer, int x, int y, screen_t *scrn, patch_t *patch)
 	{
 	  // Printf ("Patch at %d,%d exceeds LFB\n", x,y );
 	  // No I_Error abort - what is up with TNT.WAD?
-	  Printf ("V_DrawWrapper: bad patch (ignored)\n");
+	  DPrintf ("V_DrawWrapper: bad patch (ignored)\n");
 	  return;
 	}
 #endif
@@ -472,9 +472,9 @@ void V_DrawSWrapper (int drawer, int x0, int y0, screen_t *scrn, patch_t *patch,
 		|| y0<0
 		|| y0+destheight> scrn->height)
 	{
-	  //Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
-	  Printf ("V_DrawSWrapper: bad patch (ignored)\n");
-	  return;
+		//Printf ("Patch at %d,%d exceeds LFB\n", x0,y0 );
+		DPrintf ("V_DrawSWrapper: bad patch (ignored)\n");
+		return;
 	}
 #endif
 

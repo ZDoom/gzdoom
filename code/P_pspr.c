@@ -37,9 +37,6 @@
 // State.
 #include "doomstat.h"
 
-// Data.
-#include "sounds.h"
-
 #include "p_pspr.h"
 
 #define LOWERSPEED				FRACUNIT*6
@@ -137,7 +134,7 @@ void P_BringUpWeapon (player_t *player)
 		player->pendingweapon = player->readyweapon;
 				
 	if (player->pendingweapon == wp_chainsaw)
-		S_StartSound (player->mo, sfx_sawup);
+		S_StartSound (player->mo, "weapons/sawup", 64);
 				
 	newstate = weaponinfo[player->pendingweapon].upstate;
 
@@ -161,7 +158,7 @@ BOOL P_CheckAmmo (player_t *player)
 
 	// Minimal amount for one shot varies.
 	if (player->readyweapon == wp_bfg)
-		count = deh_BFGCells;
+		count = deh.BFGCells;
 	else if (player->readyweapon == wp_supershotgun)
 		count = 2;		// Double barrel.
 	else
@@ -287,7 +284,7 @@ void A_WeaponReady (player_t *player, pspdef_t *psp)
 	if (player->readyweapon == wp_chainsaw
 		&& psp->state == &states[S_SAW])
 	{
-		S_StartSound (player->mo, sfx_sawidl);
+		S_StartSound (player->mo, "weapons/sawidle", 118);
 	}
 	
 	// check for change
@@ -463,7 +460,7 @@ void A_Punch (player_t *player, pspdef_t *psp)
 	// turn to face target
 	if (linetarget)
 	{
-		S_StartSound (player->mo, sfx_punch);
+		S_StartSound (player->mo, "*fist", 64);
 		player->mo->angle = R_PointToAngle2 (player->mo->x,
 											 player->mo->y,
 											 linetarget->x,
@@ -493,10 +490,10 @@ void A_Saw (player_t *player, pspdef_t *psp)
 
 	if (!linetarget)
 	{
-		S_StartSound (player->mo, sfx_sawful);
+		S_StartSound (player->mo, "weapons/sawfull", 64);
 		return;
 	}
-	S_StartSound (player->mo, sfx_sawhit);
+	S_StartSound (player->mo, "weapons/sawhit", 64);
 		
 	// turn to face target
 	angle = R_PointToAngle2 (player->mo->x, player->mo->y,
@@ -534,11 +531,24 @@ void A_FireMissile (player_t *player, pspdef_t *psp)
 //
 // A_FireBFG
 //
+cvar_t *nobfgaim;
+
 void A_FireBFG (player_t *player, pspdef_t *psp)
 {
+	// [RH] bfg can be forced to not use freeaim
+	fixed_t storedpitch = player->mo->pitch;
+	int storedaimdist = player->userinfo.aimdist;
+
 	if (!(dmflags & DF_INFINITE_AMMO))
-		player->ammo[weaponinfo[player->readyweapon].ammo] -= deh_BFGCells;
+		player->ammo[weaponinfo[player->readyweapon].ammo] -= deh.BFGCells;
+
+	if (nobfgaim->value) {
+		player->mo->pitch = 0;
+		player->userinfo.aimdist = 81920000;
+	}
 	P_SpawnPlayerMissile (player->mo, MT_BFG);
+	player->mo->pitch = storedpitch;
+	player->userinfo.aimdist = storedaimdist;
 }
 
 
@@ -596,7 +606,7 @@ void P_BulletSlope (mobj_t *mo)
 	}
 	if (linetarget && mo->player)
 		if (!(dmflags & DF_NO_FREELOOK)
-			&& abs(bulletslope - pitchslope) > mo->player->userinfo->aimdist) {
+			&& abs(bulletslope - pitchslope) > mo->player->userinfo.aimdist) {
 			bulletslope = pitchslope;
 			an = mo->angle;
 		}
@@ -626,12 +636,9 @@ void P_GunShot (mobj_t *mo, BOOL accurate)
 //
 // A_FirePistol
 //
-void
-A_FirePistol
-( player_t* 	player,
-  pspdef_t* 	psp ) 
+void A_FirePistol (player_t *player, pspdef_t *psp)
 {
-	S_StartSound (player->mo, sfx_pistol);
+	S_StartSound (player->mo, "weapons/pistol", 64);
 
 	P_SetMobjState (player->mo, S_PLAY_ATK2);
 	if (!(dmflags & DF_INFINITE_AMMO))
@@ -649,14 +656,11 @@ A_FirePistol
 //
 // A_FireShotgun
 //
-void
-A_FireShotgun
-( player_t* 	player,
-  pspdef_t* 	psp ) 
+void A_FireShotgun (player_t *player, pspdef_t *psp)
 {
-	int 		i;
+	int i;
 		
-	S_StartSound (player->mo, sfx_shotgn);
+	S_StartSound (player->mo, "weapons/shotgf", 64);
 	P_SetMobjState (player->mo, S_PLAY_ATK2);
 
 	if (!(dmflags & DF_INFINITE_AMMO))
@@ -677,10 +681,7 @@ A_FireShotgun
 //
 // A_FireShotgun2
 //
-void
-A_FireShotgun2
-( player_t* 	player,
-  pspdef_t* 	psp ) 
+void A_FireShotgun2 (player_t *player, pspdef_t *psp)
 {
 	int 		i;
 	angle_t 	angle;
@@ -688,7 +689,7 @@ A_FireShotgun2
 	int			t;
 				
 		
-	S_StartSound (player->mo, sfx_dshtgn);
+	S_StartSound (player->mo, "weapons/sshotf", 64);
 	P_SetMobjState (player->mo, S_PLAY_ATK2);
 
 	if (!(dmflags & DF_INFINITE_AMMO))
@@ -718,12 +719,9 @@ A_FireShotgun2
 //
 // A_FireCGun
 //
-void
-A_FireCGun
-( player_t* 	player,
-  pspdef_t* 	psp ) 
+void A_FireCGun (player_t *player, pspdef_t *psp)
 {
-	S_StartSound (player->mo, sfx_pistol);
+	S_StartSound (player->mo, "weapons/chngun", 64);
 
 	if (!player->ammo[weaponinfo[player->readyweapon].ammo])
 		return;
@@ -768,14 +766,14 @@ void A_Light2 (player_t *player, pspdef_t *psp)
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
 //
-void A_BFGSpray (mobj_t* mo) 
+void A_BFGSpray (mobj_t *mo) 
 {
 	int 				i;
 	int 				j;
 	int 				damage;
 	angle_t 			an;
 
-	// [RH] Needed for The New Breed
+	// [RH] Don't crash if no target
 	if (!mo->target)
 		return;
 
@@ -809,12 +807,9 @@ void A_BFGSpray (mobj_t* mo)
 //
 // A_BFGsound
 //
-void
-A_BFGsound
-( player_t* 	player,
-  pspdef_t* 	psp )
+void A_BFGsound (player_t *player, pspdef_t *psp)
 {
-	S_StartSound (player->mo, sfx_bfg);
+	S_StartSound (player->mo, "weapons/bfgf", 64);
 }
 
 

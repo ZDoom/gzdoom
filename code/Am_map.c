@@ -29,6 +29,7 @@
 #include "doomdef.h"
 #include "st_stuff.h"
 #include "p_local.h"
+#include "p_lnspec.h"
 #include "w_wad.h"
 
 #include "m_cheat.h"
@@ -55,7 +56,8 @@ static int Background, YourColor, WallColor, TSWallColor,
 		   FDWallColor, CDWallColor, ThingColor,
 		   SecretWallColor, GridColor, XHairColor,
 		   NotSeenColor,
-		   Key1Color, Key2Color, Key3Color;
+		   LockedColor,
+		   AlmostBackground;
 
 cvar_t	*am_backcolor,
 		*am_yourcolor,
@@ -67,12 +69,7 @@ cvar_t	*am_backcolor,
 		*am_gridcolor,
 		*am_xhaircolor,
 		*am_notseencolor,
-		*am_key1color,
-		*am_key2color,
-		*am_key3color,
-		*am_key4color,
-		*am_key5color,
-		*am_key6color,
+		*am_lockedcolor,
 		*am_usecustomcolors,
 		*am_ovyourcolor,
 		*am_ovwallcolor,
@@ -499,9 +496,7 @@ void AM_initColors (BOOL overlayed)
 		ThingColor = V_GetColorFromString (palette, am_ovthingcolor->string);
 		FDWallColor =
 			CDWallColor =
-			Key1Color =
-			Key2Color =
-			Key3Color = V_GetColorFromString (palette, am_ovotherwallscolor->string);
+			LockedColor = V_GetColorFromString (palette, am_ovotherwallscolor->string);
 		NotSeenColor =
 			TSWallColor = V_GetColorFromString (palette, am_ovunseencolor->string);
 	} else if (am_usecustomcolors->value) {
@@ -517,24 +512,39 @@ void AM_initColors (BOOL overlayed)
 		GridColor = V_GetColorFromString (palette, am_gridcolor->string);
 		XHairColor = V_GetColorFromString (palette, am_xhaircolor->string);
 		NotSeenColor = V_GetColorFromString (palette, am_notseencolor->string);
-		Key1Color = V_GetColorFromString (palette, am_key1color->string);
-		Key2Color = V_GetColorFromString (palette, am_key2color->string);
-		Key3Color = V_GetColorFromString (palette, am_key3color->string);
+		LockedColor = V_GetColorFromString (palette, am_lockedcolor->string);
+		{
+			unsigned int ba = V_GetColorFromString (NULL, am_backcolor->string);
+			int r = RPART(ba) - 16;
+			int g = GPART(ba) - 16;
+			int b = BPART(ba) - 16;
+			if (r < 0)
+				r += 32;
+			if (g < 0)
+				g += 32;
+			if (b < 0)
+				b += 32;
+
+			if (screens[0].is8bit)
+				AlmostBackground = BestColor (DefaultPalette->basecolors, r, g , b, DefaultPalette->numcolors);
+			else
+				AlmostBackground = MAKERGB(r,g,b);
+		}
+
 	} else {
 		/* Use colors corresponding to the original Doom's */
-		Background = V_GetColorFromString (palette, "0000 0000 0000");
+		Background = V_GetColorFromString (palette, "00 00 00");
+		AlmostBackground = V_GetColorFromString (palette, "10 10 10");
 		SecretWallColor =
-			WallColor = V_GetColorFromString (palette, "fcfc 0000 0000");
-		TSWallColor = V_GetColorFromString (palette, "8080 8080 8080");
-		FDWallColor = V_GetColorFromString (palette, "bcbc 7878 4848");
-		Key1Color =
-			Key2Color =
-			Key3Color =
-			CDWallColor = V_GetColorFromString (palette, "fcfc fcfc 0000");
-		ThingColor = V_GetColorFromString (palette, "7474 fcfc 6c6c");
-		GridColor = V_GetColorFromString (palette, "4c4c 4c4c 4c4c");
-		XHairColor = V_GetColorFromString (palette, "8080 8080 8080");
-		NotSeenColor = V_GetColorFromString (palette, "6c6c 6c6c 6c6c");
+			WallColor = V_GetColorFromString (palette, "fc 00 00");
+		TSWallColor = V_GetColorFromString (palette, "80 80 80");
+		FDWallColor = V_GetColorFromString (palette, "bc 78 48");
+		LockedColor =
+			CDWallColor = V_GetColorFromString (palette, "fc fc 00");
+		ThingColor = V_GetColorFromString (palette, "74 fc 6c");
+		GridColor = V_GetColorFromString (palette, "4c 4c 4c");
+		XHairColor = V_GetColorFromString (palette, "80 80 80");
+		NotSeenColor = V_GetColorFromString (palette, "6c 6c 6c");
 	}
 }
 
@@ -546,9 +556,9 @@ void AM_loadPics(void)
 	int i;
 	char namebuf[9];
   
-	for (i=0;i<10;i++) {
+	for (i = 0; i < 10; i++) {
 		sprintf(namebuf, "AMMNUM%d", i);
-		marknums[i] = W_CacheLumpName(namebuf, PU_STATIC);
+		marknums[i] = W_CacheLumpName (namebuf, PU_STATIC);
 	}
 }
 
@@ -556,8 +566,8 @@ void AM_unloadPics(void)
 {
 	int i;
   
-	for (i=0;i<10;i++)
-		Z_ChangeTag(marknums[i], PU_CACHE);
+	for (i = 0; i < 10; i++)
+		Z_ChangeTag (marknums[i], PU_CACHE);
 }
 
 void AM_clearMarks(void)
@@ -596,7 +606,7 @@ void AM_Stop (void)
 {
 	static event_t st_notify = { 0, ev_keyup, AM_MSGEXITED };
 
-	AM_unloadPics();
+	AM_unloadPics ();
 	automapactive = false;
 	ST_Responder(&st_notify);
 	stopped = true;
@@ -663,7 +673,7 @@ void Cmd_Togglemap (void *plyr, int argc, char **argv)
 //
 // Handle events (user inputs) in automap mode
 //
-BOOL AM_Responder( event_t*	ev )
+BOOL AM_Responder (event_t *ev)
 {
 	int rc;
 	static int cheatstate=0;
@@ -736,7 +746,7 @@ BOOL AM_Responder( event_t*	ev )
 				}
 		}
 		if (!deathmatch->value && cht_CheckCheat(&cheat_amap, (char)ev->data2)) {
-			rc = false;
+			rc = true;	// [RH] Eat last keypress of cheat sequence
 			cheating = (cheating+1) % 3;
 		}
 	}
@@ -773,7 +783,7 @@ BOOL AM_Responder( event_t*	ev )
 //
 // Zooming
 //
-void AM_changeWindowScale(void)
+void AM_changeWindowScale (void)
 {
 	// Change the scaling multipliers
 	scale_mtof = FixedMul(scale_mtof, mtof_zoommul);
@@ -999,7 +1009,7 @@ AM_drawFline
     static fuck = 0;
 
     // For debugging only
-    if (      fl->a.x < 0 || fl->a.x >= f_w
+    if (  fl->a.x < 0 || fl->a.x >= f_w
 	   || fl->a.y < 0 || fl->a.y >= f_h
 	   || fl->b.x < 0 || fl->b.x >= f_w
 	   || fl->b.y < 0 || fl->b.y >= f_h)
@@ -1087,17 +1097,14 @@ AM_drawFline
 
 
 //
-// Clip lines, draw visible part sof lines.
+// Clip lines, draw visible parts of lines.
 //
-void
-AM_drawMline
-( mline_t*	ml,
-  int		color )
+void AM_drawMline (mline_t *ml, int color)
 {
 	static fline_t fl;
 
-	if (AM_clipMline(ml, &fl))
-		AM_drawFline(&fl, color); // draws it on frame buffer using fb coords
+	if (AM_clipMline (ml, &fl))
+		AM_drawFline (&fl, color); // draws it on frame buffer using fb coords
 }
 
 
@@ -1185,21 +1192,9 @@ void AM_drawWalls(void)
 						AM_drawMline(&l, SecretWallColor);
 				    else
 						AM_drawMline(&l, WallColor);
-				} else if (lines[i].special == 26 ||
-						   lines[i].special == 32 ||
-						   lines[i].special == 133 ||
-						   lines[i].special == 99) {
-					AM_drawMline (&l, Key1Color);  // blue key doors
-				} else if (lines[i].special == 28 ||
-						   lines[i].special == 33 ||
-						   lines[i].special == 135 ||
-						   lines[i].special == 13) {
-					AM_drawMline (&l, Key2Color);  // red key doors
-				} else if (lines[i].special == 27 ||
-						   lines[i].special == 34 ||
-						   lines[i].special == 137 ||
-						   lines[i].special == 136) {
-				   AM_drawMline (&l, Key3Color); // yellow key doors
+				} else if (lines[i].special == Door_LockedRaise ||
+						   lines[i].special == ACS_LockedExecute) {
+					AM_drawMline (&l, LockedColor);  // [RH] locked special
 				} else if (lines[i].backsector->floorheight
 					!= lines[i].frontsector->floorheight) {
 					AM_drawMline(&l, FDWallColor); // floor level change
@@ -1329,15 +1324,15 @@ void AM_drawPlayers(void)
 			continue;
 
 		if (p->powers[pw_invisibility])
-			color = 246; // *close* to black
+			color = AlmostBackground;
 		else if (screens[0].is8bit)
 			color = BestColor (DefaultPalette->basecolors,
-							   RPART(p->userinfo->color),
-							   GPART(p->userinfo->color),
-							   BPART(p->userinfo->color),
+							   RPART(p->userinfo.color),
+							   GPART(p->userinfo.color),
+							   BPART(p->userinfo.color),
 							   DefaultPalette->numcolors);
 		else
-			color = p->userinfo->color;
+			color = p->userinfo.color;
 				
 		pt.x = p->mo->x;
 		pt.y = p->mo->y;

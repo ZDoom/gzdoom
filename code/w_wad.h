@@ -33,6 +33,14 @@
 #define PWAD_ID (('P')|('W'<<8)|('A'<<16)|('D'<<24))
 #endif
 
+// [RH] Remove limit on number of WAD files
+typedef struct wadlist_s {
+	struct wadlist_s *next;
+	char name[1];	// +size of string
+} wadlist_t;
+extern wadlist_t *wadfiles;
+
+
 //
 // TYPES
 //
@@ -60,7 +68,7 @@ typedef struct
 typedef struct lumpinfo_s
 {
 	char		name[8];
-	int			handle;
+	FILE		*handle;	// [RH] Use stdio routines
 	int			position;
 	int			size;
 
@@ -76,14 +84,15 @@ typedef enum {
 	ns_global = 0,
 	ns_sprites,
 	ns_flats,
-	ns_colormaps
+	ns_colormaps,
+	ns_skinbase = 0x80000000	// Each skin's status bar face gets own namespace
 } namespace_t;
 
 extern	void**		lumpcache;
 extern	lumpinfo_t*	lumpinfo;
 extern	int			numlumps;
 
-void	W_InitMultipleFiles (char** filenames);
+void	W_InitMultipleFiles (wadlist_t** filenames);
 
 #define W_CheckNumForName(name) (W_CheckNumForName)(name, ns_global)
 int		(W_CheckNumForName) (const char *name, int);
@@ -109,8 +118,17 @@ void	W_InitHashChains (void);						// [RH] Set up the lumpinfo hashing
 // [RH] Combine multiple marked ranges of lumps into one.
 void	W_MergeLumps (const char *start, const char *end, int);
 
-// Copy an 8-char string and uppercase it.
+// [RH] Copy an 8-char string and uppercase it.
 void uppercopy (char *to, const char *from);
+
+// [RH] Copies the lump name to to using uppercopy
+void W_GetLumpName (char *to, int lump);
+
+// [RH] Returns file ptr for specified lump
+FILE *W_GetLumpFile (int lump);
+
+// [RH] Put a lump in a certain namespace
+void W_SetLumpNamespace (int lump, int nmspace);
 
 #endif
 //-----------------------------------------------------------------------------

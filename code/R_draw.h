@@ -28,6 +28,7 @@
 extern int				dc_pitch;		// [RH] Distance between rows
 
 extern lighttable_t*	dc_colormap;
+extern unsigned int*	dc_shademap;	// [RH] For high/true color modes
 extern int				dc_x;
 extern int				dc_yl;
 extern int				dc_yh;

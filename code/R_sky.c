@@ -74,7 +74,7 @@ void R_InitSkyMap (cvar_t *var)
 		sky1texturemid = 200/2*FRACUNIT;
 		sky1stretch = (var->value && !(dmflags & DF_NO_FREELOOK)) ? 1 : 0;
 	} else {
-		sky1texturemid = 240/2*FRACUNIT;
+		sky1texturemid = 200*FRACUNIT;
 		sky1stretch = 0;
 	}
 	sky1height = textureheight[sky1texture] << sky1stretch;
@@ -83,18 +83,19 @@ void R_InitSkyMap (cvar_t *var)
 		sky2texturemid = 200/2*FRACUNIT;
 		sky2stretch = (var->value && !(dmflags & DF_NO_FREELOOK)) ? 1 : 0;
 	} else {
-		sky2texturemid = 240/2*FRACUNIT;
+		sky2texturemid = 200*FRACUNIT;
 		sky2stretch = 0;
 	}
 	sky2height = textureheight[sky2texture] << sky2stretch;
-	if (viewwidth && viewheight) {
-		sky1iscale = (sky1texturemid << 1) / (((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
-		sky1scale = ((((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift)) << FRACBITS) /
-					(sky1texturemid>>(FRACBITS-1));
 
-		sky2iscale = (sky2texturemid << FRACBITS) / (((viewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
-		sky2scale = ((((viewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift)) << FRACBITS) /
-					(sky2texturemid>>(FRACBITS-1));
+	if (viewwidth && viewheight) {
+		sky1iscale = (200*FRACUNIT) / (((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
+		sky1scale = ((((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift)) << FRACBITS) /
+					(200);
+
+		sky2iscale = (200*FRACUNIT) / (((viewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift));
+		sky2scale = ((((freelookviewheight<<detailxshift) * viewwidth) / (viewwidth<<detailxshift)) << FRACBITS) /
+					(200);
 	}
 }
 

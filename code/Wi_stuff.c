@@ -42,9 +42,6 @@
 
 #include "doomstat.h"
 
-// Data.
-#include "sounds.h"
-
 // Needs access to LFB.
 #include "v_video.h"
 
@@ -976,7 +973,7 @@ void WI_updateDeathmatchStats(void)
 		}
 		
 
-		S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+		S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 		dm_state = 4;
 	}
 
@@ -984,7 +981,7 @@ void WI_updateDeathmatchStats(void)
 	if (dm_state == 2)
 	{
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 		
 		stillticking = false;
 
@@ -1023,7 +1020,7 @@ void WI_updateDeathmatchStats(void)
 		}
 		if (!stillticking)
 		{
-			S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+			S_StartSound(ORIGIN_AMBIENT, "weapons/rocklx", 60);
 			dm_state++;
 		}
 
@@ -1032,7 +1029,7 @@ void WI_updateDeathmatchStats(void)
 	{
 		if (acceleratestage)
 		{
-			S_StartSound(ORIGIN_AMBIENT, sfx_slop);
+			S_StartSound(ORIGIN_AMBIENT, "players/male/gibbed", 78);
 
 			if ( gamemode == commercial)
 				WI_initNoState();
@@ -1206,16 +1203,16 @@ void WI_updateNetgameStats(void)
 			cnt_secret[i] = plrs[i].ssecret;
 
 			if (dofrags)
-				cnt_frags[i] = WI_fragSum(i);
+				cnt_frags[i] = WI_fragSum (i);
 		}
-		S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+		S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 		ng_state = 10;
 	}
 
 	if (ng_state == 2)
 	{
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 
 		stillticking = false;
 
@@ -1234,14 +1231,14 @@ void WI_updateNetgameStats(void)
 		
 		if (!stillticking)
 		{
-			S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 			ng_state++;
 		}
 	}
 	else if (ng_state == 4)
 	{
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 
 		stillticking = false;
 
@@ -1258,14 +1255,14 @@ void WI_updateNetgameStats(void)
 		}
 		if (!stillticking)
 		{
-			S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 			ng_state++;
 		}
 	}
 	else if (ng_state == 6)
 	{
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 
 		stillticking = false;
 
@@ -1284,14 +1281,14 @@ void WI_updateNetgameStats(void)
 		
 		if (!stillticking)
 		{
-			S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 			ng_state += 1 + 2*!dofrags;
 		}
 	}
 	else if (ng_state == 8)
 	{
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 
 		stillticking = false;
 
@@ -1310,7 +1307,7 @@ void WI_updateNetgameStats(void)
 		
 		if (!stillticking)
 		{
-			S_StartSound(ORIGIN_AMBIENT, sfx_pldeth);
+			S_StartSound (ORIGIN_AMBIENT, "player/male/death1", 32);
 			ng_state++;
 		}
 	}
@@ -1318,7 +1315,7 @@ void WI_updateNetgameStats(void)
 	{
 		if (acceleratestage)
 		{
-			S_StartSound(ORIGIN_AMBIENT, sfx_sgcock);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/shotgr", 64);
 			if ( gamemode == commercial )
 				WI_initNoState();
 			else
@@ -1425,7 +1422,7 @@ void WI_updateStats(void)
 		cnt_secret[0] = plrs[me].ssecret;
 		cnt_time = plrs[me].stime / TICRATE;
 		cnt_par = wbs->partime / TICRATE;
-		S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+		S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 		sp_state = 10;
 	}
 
@@ -1434,12 +1431,12 @@ void WI_updateStats(void)
 		cnt_kills[0] += 2;
 
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 
 		if (cnt_kills[0] >= plrs[me].skills)
 		{
 			cnt_kills[0] = plrs[me].skills;
-			S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 			sp_state++;
 		}
 	}
@@ -1448,12 +1445,12 @@ void WI_updateStats(void)
 		cnt_items[0] += 2;
 
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 
 		if (cnt_items[0] >= plrs[me].sitems)
 		{
 			cnt_items[0] = plrs[me].sitems;
-			S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 			sp_state++;
 		}
 	}
@@ -1462,12 +1459,12 @@ void WI_updateStats(void)
 		cnt_secret[0] += 2;
 
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 
 		if (cnt_secret[0] >= plrs[me].ssecret)
 		{
 			cnt_secret[0] = plrs[me].ssecret;
-			S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 			sp_state++;
 		}
 	}
@@ -1475,7 +1472,7 @@ void WI_updateStats(void)
 	else if (sp_state == 8)
 	{
 		if (!(bcnt&3))
-			S_StartSound(ORIGIN_AMBIENT, sfx_pistol);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 
 		cnt_time += 3;
 
@@ -1490,7 +1487,7 @@ void WI_updateStats(void)
 
 			if (cnt_time >= plrs[me].stime / TICRATE)
 			{
-				S_StartSound(ORIGIN_AMBIENT, sfx_barexp);
+				S_StartSound (ORIGIN_AMBIENT, "weapons/rocklx", 60);
 				sp_state++;
 			}
 		}
@@ -1499,7 +1496,7 @@ void WI_updateStats(void)
 	{
 		if (acceleratestage)
 		{
-			S_StartSound(ORIGIN_AMBIENT, sfx_sgcock);
+			S_StartSound (ORIGIN_AMBIENT, "weapons/shotgr", 64);
 
 			if (gamemode == commercial)
 				WI_initNoState();

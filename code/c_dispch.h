@@ -68,4 +68,6 @@ struct ActionBits {
 	char			name[12];
 };
 
+extern unsigned int MakeKey (const char *s);
+
 #endif //__C_DISPATCH_H__

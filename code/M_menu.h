@@ -26,6 +26,7 @@
 
 
 #include "d_event.h"
+#include "c_cvars.h"
 
 //
 // MENUS
@@ -36,7 +37,6 @@
 // this can resize the view and change game parameters.
 // Does all the real work of the menu interaction.
 BOOL M_Responder (event_t *ev);
-
 
 // Called by main loop,
 // only used for menu (skull cursor) animation.
@@ -66,7 +66,101 @@ void M_OptDrawer (void);
 // [RH] Initialize options menu
 void M_OptInit (void);
 
+void M_SwitchMenu (struct menu_s *menu);
 
+
+//
+// MENU TYPEDEFS
+//
+typedef enum {
+	whitetext,
+	redtext,
+	more,
+	slider,
+	discrete,
+	control,
+	screenres,
+	bitflag,
+	listelement
+} itemtype;
+
+typedef struct menuitem_s {
+	itemtype		  type;
+	char			 *label;
+	union {
+		cvar_t			**cvar;
+		int				  selmode;
+		int				  flagmask;
+	} a;
+	union {
+		float			  min;		/* aka numvalues aka invflag */
+		int				  key1;
+		char			 *res1;
+	} b;
+	union {
+		float			  max;
+		int				  key2;
+		char			 *res2;
+	} c;
+	union {
+		float			  step;
+		char			 *res3;
+	} d;
+	union {
+		struct value_s	 *values;
+		char			 *command;
+		void			(*cfunc)(cvar_t *cvar, float newval);
+		void			(*mfunc)(void);
+		void			(*lfunc)(int);
+		int				  highlight;
+		int				 *flagint;
+	} e;
+} menuitem_t;
+
+typedef struct menu_s {
+	char			title[8];
+	int				lastOn;
+	int				numitems;
+	int				indent;
+	menuitem_t	   *items;
+	struct menu_s  *prevmenu;
+} menu_t;
+
+typedef struct value_s {
+	float		value;
+	char		*name;
+} value_t;
+
+typedef struct
+{
+	// -1 = no cursor here, 1 = ok, 2 = arrows ok
+	short		status;
+	
+	char		name[10];
+	
+	// choice = menu item #.
+	// if status = 2,
+	//	 choice=0:leftarrow,1:rightarrow
+	void		(*routine)(int choice);
+	
+	// hotkey in menu
+	char		alphaKey;						
+} oldmenuitem_t;
+
+typedef struct oldmenu_s
+{
+	short				numitems;		// # of menu items
+	struct oldmenu_s*	prevMenu;		// previous menu
+	oldmenuitem_t		*menuitems;		// menu items
+	void				(*routine)();	// draw routine
+	short				x;
+	short				y;				// x,y of menu
+	short				lastOn; 		// last item user was on in menu
+} oldmenu_t;
+
+extern value_t YesNo[2];
+extern value_t NoYes[2];
+extern value_t OnOff[2];
 
 #endif	  
 //-----------------------------------------------------------------------------

@@ -154,13 +154,6 @@ static byte**	texturecomposite;
 int*			flattranslation;
 int*			texturetranslation;
 
-// needed for pre rendering
-fixed_t*		spritewidth;	
-fixed_t*		spriteoffset;
-fixed_t*		spritetopoffset;
-
-//lighttable_t	*colormaps;
-
 
 //
 // MAPTEXTURE_T CACHING
@@ -502,21 +495,8 @@ void R_InitTextures (void)
 #undef ALLOC
 
 	totalwidth = 0;
-	
-	//	Really complex printing shit...
-	{
-		int temp3 = (((W_GetNumForName ("S_END") - 1) -
-						W_GetNumForName ("S_START") + 127) >> 7) +
-						((numtextures+127) >> 8);
 
-		Printf("[");
-		for (i = temp3; i > 0; i--)
-			Printf(" ");
-		Printf("        ]");
-		for (i = temp3; i > 0; i--)
-			Printf("\x8");
-		Printf("\x8\x8\x8\x8\x8\x8\x8\x8\x8\x8");	
-	}
+	// [RH] Removed the complex printing shit
 
 	for (i = 0; i < numtextures; i++, directory++)
 	{
@@ -534,7 +514,7 @@ void R_InitTextures (void)
 		offset = LONG(*directory);
 
 		if (offset > maxoff)
-			I_Error ("R_InitTextures: bad texture directory");
+			I_FatalError ("R_InitTextures: bad texture directory");
 		
 		mtexture = (maptexture_t *) ( (byte *)maptex + offset);
 
@@ -589,7 +569,7 @@ void R_InitTextures (void)
 		Z_Free (maptex2);
 	
 	if (errors)
-		I_Error ("%d errors in R_InitTextures.", errors);
+		I_FatalError ("%d errors in R_InitTextures.", errors);
 
 	// [RH] Setup hash chains. Go from back to front so that if
 	//		duplicates are found, the first one gets used instead
@@ -609,7 +589,7 @@ void R_InitTextures (void)
 		R_GenerateLookup (i, &errors);
 
 	if (errors)
-		I_Error ("%d errors encountered during texture generation.", errors);
+		I_FatalError ("%d errors encountered during texture generation.", errors);
 	
 	// Create translation table for global animation.
 	texturetranslation = Z_Malloc ((numtextures+1)*sizeof(*texturetranslation), PU_STATIC, 0);
@@ -648,51 +628,112 @@ void R_InitFlats (void)
 //
 void R_InitSpriteLumps (void)
 {
-	int			i;
-	patch_t 	*patch;
-		
 	firstspritelump = W_GetNumForName ("S_START") + 1;
 	lastspritelump = W_GetNumForName ("S_END") - 1;
-	
-	numspritelumps = lastspritelump - firstspritelump + 1;
-	spritewidth = Z_Malloc (numspritelumps*4, PU_STATIC, 0);
-	spriteoffset = Z_Malloc (numspritelumps*4, PU_STATIC, 0);
-	spritetopoffset = Z_Malloc (numspritelumps*4, PU_STATIC, 0);
-		
-	for (i = 0; i < numspritelumps; i++)
-	{
-		if (!(i&127))
-			Printf (".");
 
-		patch = W_CacheLumpNum (firstspritelump+i, PU_CACHE);
-		spritewidth[i] = SHORT(patch->width)<<FRACBITS;
-		spriteoffset[i] = SHORT(patch->leftoffset)<<FRACBITS;
-		spritetopoffset[i] = SHORT(patch->topoffset)<<FRACBITS;
-	}
+	numspritelumps = lastspritelump - firstspritelump + 1;
+
+	// [RH] Rather than maintaining separate spritewidth, spriteoffset,
+	//		and spritetopoffset arrays, this data has now been moved into
+	//		the sprite frame definition and gets initialized by
+	//		R_InstallSpriteLump(), so there really isn't anything to do here.
 }
 
 
+static struct {
+	char name[8];
+	unsigned int blend;
+} *fakecmaps;
+size_t numfakecmaps;
+int firstfakecmap;
+byte *realcolormaps;
+int lastusedcolormap;
+
+void R_SetDefaultColormap (const char *name)
+{
+	if (strnicmp (fakecmaps[0].name, name, 8)) {
+		byte *data = W_CacheLumpName (name, PU_CACHE);
+
+		memcpy (realcolormaps, data, (NUMCOLORMAPS+1)*256);
+		uppercopy (fakecmaps[0].name, name);
+		fakecmaps[0].blend = 0;
+	}
+}
 
 //
 // R_InitColormaps
 //
 void R_InitColormaps (void)
 {
-	// [RH] This is all done dynamically in v_palette.c
-#if 0
-	int lump, length;
+	// [RH] Try and convert BOOM colormaps into blending values.
+	//		This is a really rough hack, but it's better than
+	//		not doing anything with them at all (right?)
+	int lastfakecmap = W_CheckNumForName ("C_END");
+	firstfakecmap = W_CheckNumForName ("C_START");
 
-	// Load in the light tables,
-	//	256 byte align tables.
-	lump = W_GetNumForName("COLORMAP");
-	length = W_LumpLength (lump) + 255;
-	colormaps = Z_Malloc (length, PU_STATIC, 0);
-	colormaps = (byte *)( ((int)colormaps + 255)&~0xff);
-	W_ReadLump (lump,colormaps);
-#endif
+	if (firstfakecmap == -1 || lastfakecmap == -1)
+		numfakecmaps = 1;
+	else
+		numfakecmaps = lastfakecmap - firstfakecmap;
+	realcolormaps = Z_Malloc (256*(NUMCOLORMAPS+1)*numfakecmaps+255,PU_STATIC,0);
+	realcolormaps = (byte *)((int)(realcolormaps + 255) & ~255);
+	fakecmaps = Z_Malloc (sizeof(*fakecmaps) * numfakecmaps, PU_STATIC, 0);
+
+	fakecmaps[0].name[0] = 0;
+	R_SetDefaultColormap ("COLORMAP");
+
+	if (numfakecmaps > 1)
+	{
+		int i;
+		size_t j;
+		palette_t *pal = GetDefaultPalette ();
+
+		for (i = ++firstfakecmap, j = 1; j < numfakecmaps; i++, j++) {
+			if (W_LumpLength (i) >= (NUMCOLORMAPS+1)*256) {
+				int k, r, g, b;
+				byte *map = W_CacheLumpNum (i, PU_CACHE);
+
+				memcpy (realcolormaps+(NUMCOLORMAPS+1)*256*j,
+						map, (NUMCOLORMAPS+1)*256);
+
+				r = RPART(pal->basecolors[*map]);
+				g = GPART(pal->basecolors[*map]);
+				b = BPART(pal->basecolors[*map]);
+
+				W_GetLumpName (fakecmaps[j].name, i);
+				for (k = 1; k < 256; k++) {
+					r = (r + RPART(pal->basecolors[map[k]])) >> 1;
+					g = (g + GPART(pal->basecolors[map[k]])) >> 1;
+					b = (b + BPART(pal->basecolors[map[k]])) >> 1;
+				}
+				fakecmaps[j].blend = MAKEARGB (255, r, g, b);
+			}
+		}
+	}
 }
 
+// [RH] Returns an index into realcolormaps. Multiply it by
+//		256*(NUMCOLORMAPS+1) to find the start of the colormap to use.
+//		WATERMAP is an exception and returns a blending value instead.
+int R_ColormapNumForName (const char *name)
+{
+	int lump, blend = 0;
 
+	if (strnicmp (name, "COLORMAP", 8))	{	// COLORMAP always returns 0
+		if (-1 != (lump = (W_CheckNumForName)(name, ns_colormaps)) )
+			blend = lump - firstfakecmap + 1;
+		else if (!strnicmp (name, "WATERMAP", 8))
+			blend = MAKEARGB (128,0,0x4f,0xa5);
+	}
+
+	return blend;
+}
+
+unsigned int R_BlendForColormap (int map)
+{
+	return APART(map) ? map : 
+		   (unsigned)map < numfakecmaps ? fakecmaps[map].blend : 0;
+}
 
 //
 // R_InitData
@@ -882,7 +923,7 @@ void R_PrecacheLevel (void)
 				int k;
 
 				for (k = 7; k >= 0; k--)
-					W_CacheLumpNum(firstspritelump + sflumps[k], PU_CACHE);
+					W_CacheLumpNum(sflumps[k], PU_CACHE);
 			}
 		}
 	}

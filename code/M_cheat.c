@@ -114,9 +114,9 @@ void cht_DoCheat (player_t *player, int cheat)
 		case CHT_IDDQD:
 			if (!(player->cheats & CF_GODMODE)) {
 				if (player->mo)
-					player->mo->health = deh_GodHealth;
+					player->mo->health = deh.GodHealth;
 
-				player->health = deh_GodHealth;
+				player->health = deh.GodHealth;
 			}
 		case CHT_GOD:
 			player->cheats ^= CF_GODMODE;
@@ -153,8 +153,8 @@ void cht_DoCheat (player_t *player, int cheat)
 			cht_Give (player, "weapons");
 			cht_Give (player, "ammo");
 			cht_Give (player, "keys");
-			player->armorpoints = deh_KFAArmor;
-			player->armortype = deh_KFAAC;
+			player->armorpoints = deh.KFAArmor;
+			player->armortype = deh.KFAAC;
 			msg = STSTR_KFAADDED;
 			break;
 
@@ -162,8 +162,8 @@ void cht_DoCheat (player_t *player, int cheat)
 			cht_Give (player, "backpack");
 			cht_Give (player, "weapons");
 			cht_Give (player, "ammo");
-			player->armorpoints = deh_FAArmor;
-			player->armortype = deh_FAAC;
+			player->armorpoints = deh.FAArmor;
+			player->armortype = deh.FAAC;
 			msg = STSTR_FAADDED;
 			break;
 
@@ -201,10 +201,15 @@ void cht_DoCheat (player_t *player, int cheat)
 					if (currentthinker->function.acp1 == (actionf_p1) P_MobjThinker &&
 						(((mobj_t *) currentthinker)->flags & MF_COUNTKILL ||
 						 ((mobj_t *) currentthinker)->type == MT_SKULL))
-						{ // killough 3/6/98: kill even if PE is dead
+						{
+							if (((mobj_t *) currentthinker)->flags2 & MF2_INDESTRUCTABLE)
+								continue;	// [RH] Don't kill if indestructable
+
+							// killough 3/6/98: kill even if PE is dead
 							if (((mobj_t *) currentthinker)->health > 0)
 							{
 								killcount++;
+								((mobj_t *)currentthinker)->flags2 &= ~MF2_INVULNERABLE;
 								P_DamageMobj((mobj_t *)currentthinker, NULL, NULL, 10000, MOD_UNKNOWN);
 							}
 							if (((mobj_t *) currentthinker)->type == MT_PAIN)
@@ -223,7 +228,7 @@ void cht_DoCheat (player_t *player, int cheat)
 	if (player == &players[consoleplayer])
 		Printf ("%s\n", msg);
 	else
-		Printf ("%s is cheating: %s\n", player->userinfo->netname, msg);
+		Printf ("%s is a cheater: %s\n", player->userinfo.netname, msg);
 }
 
 void cht_Give (player_t *player, char *name)
@@ -233,7 +238,7 @@ void cht_Give (player_t *player, char *name)
 	gitem_t *it;
 
 	if (player != &players[consoleplayer])
-		Printf ("%s is cheating: give %s\n", player->userinfo->netname, name);
+		Printf ("%s is a cheater: give %s\n", player->userinfo.netname, name);
 
 	if (stricmp (name, "all") == 0)
 		giveall = true;
@@ -252,9 +257,9 @@ void cht_Give (player_t *player, char *name)
 			}
 		} else {
 			if (player->mo)
-				player->mo->health = deh_GodHealth;
+				player->mo->health = deh.GodHealth;
 	  
-			player->health = deh_GodHealth;
+			player->health = deh.GodHealth;
 		}
 
 		if (!giveall)
@@ -332,7 +337,7 @@ void cht_Give (player_t *player, char *name)
 		P_GiveWeapon (player, it->offset, 0);
 	} else if (it->flags & IT_KEY) {
 		P_GiveCard (player, it->offset);
-	} else if (it->flags & IT_POWER) {
+	} else if (it->flags & IT_POWERUP) {
 		P_GivePower (player, it->offset);
 	} else if (it->flags & IT_ARMOR) {
 		P_GiveArmor (player, it->offset);

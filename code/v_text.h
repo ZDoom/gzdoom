@@ -11,8 +11,8 @@ typedef struct brokenlines_s brokenlines_t;
 
 
 // Output a line of text using the console font
-void V_PrintStr (int x, int y, byte *str, int count, byte ormask);
-void V_PrintStr2 (int x, int y, byte *str, int count, byte ormask);
+void V_PrintStr (int x, int y, byte *str, int count);
+void V_PrintStr2 (int x, int y, byte *str, int count);
 
 // Output some text with wad heads-up font
 void V_DrawText (int x, int y, byte *str);

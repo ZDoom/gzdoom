@@ -4,13 +4,16 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "version.h"
 #include "dstrings.h"
+#include "g_game.h"
 #include "c_consol.h"
 #include "c_cvars.h"
 #include "c_dispch.h"
 #include "hu_stuff.h"
 #include "i_input.h"
 #include "i_system.h"
+#include "i_video.h"
 #include "m_swap.h"
 #include "v_video.h"
 #include "v_text.h"
@@ -19,6 +22,7 @@
 #include "r_main.h"
 #include "r_draw.h"
 #include "st_stuff.h"
+#include "s_sound.h"
 
 #include "doomstat.h"
 
@@ -31,11 +35,7 @@ static screen_t conback;		// As of 1.13, Console backdrop is just another screen
 
 extern int		gametic;
 extern BOOL		automapactive;	// in AM_map.c
-
-typedef enum cstate_t {
-	up=0, down=1, falling=2, rising=3
-} constate;
-
+extern BOOL		advancedemo;
 
 int			ConRows, ConCols, PhysRows;
 char		*Lines, *Last = NULL;
@@ -43,7 +43,7 @@ BOOL		vidactive = false, gotconback = false;
 BOOL		cursoron = false;
 int			ShowRows, SkipRows, ConsoleTicker, ConBottom, ConScroll, RowAdjust;
 int			CursorTicker, ScrollState = 0;
-int			ConsoleState = up;
+constate_e	ConsoleState = c_up;
 char		VersionString[8];
 
 event_t		RepeatEvent;		// always type ev_keydown
@@ -56,8 +56,7 @@ BOOL		KeysShifted;
 #define SCROLLNO 0
 
 extern cvar_t *showMessages;
-extern BOOL message_dontfuckwithme;		// Who came up with this name?
-
+extern BOOL message_dontfuckwithme;
 extern BOOL chat_on;
 
 struct History {
@@ -86,7 +85,7 @@ FILE *Logfile = NULL;
 
 extern patch_t *hu_font[HU_FONTSIZE];	// from hu_stuff.c
 
-void C_HandleKey (event_t *ev, byte *buffer, int len);
+BOOL C_HandleKey (event_t *ev, byte *buffer, int len);
 
 
 static int C_hu_CharWidth (int c)
@@ -152,8 +151,15 @@ void C_InitConsole (int width, int height, BOOL ingame)
 					}
 				}
 			}
-			sprintf (VersionString, "v%d.%d", VERSION / 100, VERSION % 100);
 
+			{
+				int i;
+
+				VersionString[0] = 0x11;
+				for (i = 0; i < strlen(DOTVERSIONSTR); i++)
+					VersionString[i+1] = DOTVERSIONSTR[i]-30;
+				VersionString[i+1] = 0;
+			}
 			V_UnlockScreen (&conback);
 
 			gotconback = true;
@@ -179,9 +185,10 @@ void C_InitConsole (int width, int height, BOOL ingame)
 
 	if (old) {
 		char string[256];
-		FILE *templog;
+		gamestate_t oldstate = gamestate;	// Don't print during reformatting
+		FILE *templog = Logfile;		// Don't log our reformatting pass
 
-		templog = Logfile;		// Don't log our reformatting pass
+		gamestate = -1;
 		Logfile = NULL;
 
 		for (row = 0, zap = old; row < rows; row++, zap += cols + 2) {
@@ -198,7 +205,11 @@ void C_InitConsole (int width, int height, BOOL ingame)
 		ShowRows = 0;
 
 		Logfile = templog;
+		gamestate = oldstate;
 	}
+
+	if (ingame && gamestate == GS_STARTUP)
+		C_FullConsole ();
 }
 
 void C_AddNotifyString (const char *source)
@@ -303,12 +314,30 @@ int PrintString (const char *outline) {
 
 	printxormask = 0;
 
+	if (vidactive &&
+		((gameaction != ga_nothing && ConsoleState == c_down)
+		|| gamestate == GS_STARTUP)) {
+		static size_t lastprinttime = 0;
+		size_t nowtime = I_GetTime();
+
+		if (nowtime - lastprinttime > 1) {
+			I_BeginUpdate ();
+			C_DrawConsole ();
+			I_FinishUpdate ();
+			lastprinttime = nowtime;
+		}
+	}
+
 	return strlen (outline);
 }
 
+extern BOOL gameisdead;
 int VPrintf (const char *format, va_list parms)
 {
 	char outline[8192];
+
+	if (gameisdead)
+		return 0;
 
 	vsprintf (outline, format, parms);
 	return PrintString (outline);
@@ -359,12 +388,19 @@ void C_FlushDisplay (void)
 	ShowRows = 0;
 }
 
+void C_AdjustBottom (void)
+{
+	if (gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP)
+		ConBottom = screens[0].height / 8;
+	else if (ConBottom > screens[0].height / 16 || ConsoleState == c_down)
+		ConBottom = screens[0].height / 16;
+}
+
 void C_NewModeAdjust (void)
 {
 	C_InitConsole (screens[0].width, screens[0].height, true);
 	ShowRows = 0;
-	if (ConBottom > screens[0].height / 16 || ConsoleState == down)
-		ConBottom = screens[0].height / 16;
+	C_AdjustBottom ();
 }
 
 void C_Ticker (void)
@@ -374,7 +410,7 @@ void C_Ticker (void)
 	if (lasttic == 0)
 		lasttic = gametic - 1;
 
-	if (ConsoleState != up) {
+	if (ConsoleState != c_up) {
 		// Handle repeating keys
 		switch (ScrollState) {
 			case SCROLLUP:
@@ -396,16 +432,16 @@ void C_Ticker (void)
 				break;
 		}
 
-		if (ConsoleState == falling) {
+		if (ConsoleState == c_falling) {
 			ConBottom += (gametic - lasttic) * (screens[0].height / 100);
 			if (ConBottom >= screens[0].height / 16) {
 				ConBottom = screens[0].height / 16;
-				ConsoleState = down;
+				ConsoleState = c_down;
 			}
-		} else if (ConsoleState == rising) {
+		} else if (ConsoleState == c_rising) {
 			ConBottom -= (gametic - lasttic) * (screens[0].height / 100);
 			if (ConBottom <= 0) {
-				ConsoleState = up;
+				ConsoleState = c_up;
 				ConBottom = 0;
 			}
 		}
@@ -474,7 +510,7 @@ void C_DrawConsole (void)
 
 	oldbottom = ConBottom;
 
-	if (ConsoleState == up) {
+	if (ConsoleState == c_up) {
 		C_DrawNotifyText ();
 		return;
 	} else if (ConBottom) {
@@ -486,60 +522,88 @@ void C_DrawConsole (void)
 		V_Blit (&conback, 0, conback.height - realheight, conback.width, realheight,
 				&screens[0], 0, 0, screens[0].width, visheight);
 
-		if (ConBottom >= 2)
+		if (ConBottom >= 2) {
 			V_PrintStr (screens[0].width - 8 - strlen(VersionString) * 8,
 						ConBottom * 8 - 16,
-						VersionString, strlen(VersionString), 0x80);
+						VersionString, strlen (VersionString));
+			if (gamestate == GS_STARTUP)
+				V_PrintStr (8, ConBottom * 8 - 16, DoomStartupTitle, strlen (DoomStartupTitle));
+		}
 	}
+
+	if (menuactive)
+		return;
 
 	if (lines > 0) {
 		for (; lines; lines--) {
-			V_PrintStr (left, -8 + lines * 8, &zap[2], zap[1], 0);
+			V_PrintStr (left, -8 + lines * 8, &zap[2], zap[1]);
 			zap -= ConCols + 2;
 		}
 		if (ConBottom > 1) {
-			V_PrintStr (left, (ConBottom - 2) * 8, "]", 1, 0x80);
+			if (gamestate != GS_STARTUP)
+				V_PrintStr (left, (ConBottom - 2) * 8, "\x8c", 1);
 #define MIN(a,b) (((a)<(b))?(a):(b))
 			V_PrintStr (left + 8, (ConBottom - 2) * 8,
 						&CmdLine[2+CmdLine[259]],
-						MIN(CmdLine[0] - CmdLine[259], ConCols - 1), 0);
+						MIN(CmdLine[0] - CmdLine[259], ConCols - 1));
 #undef MIN
 			if (cursoron) {
 				V_PrintStr (left + 8 + (CmdLine[1] - CmdLine[259])* 8,
-							(ConBottom - 2) * 8, "\xb", 1, 0);
+							(ConBottom - 2) * 8, "\xb", 1);
 			}
 			if (RowAdjust && ConBottom > 2) {
 				char c;
 
-				// Indicate that the view has been scrolled up...
-				if (SkipRows + RowAdjust + ConBottom != ConRows)
-					c = '^';
-				// and if we can scroll no further
-				else
-					c = '*';
-				V_PrintStr (0, (ConBottom - 3) * 8 + 6, &c, 1, 0x80);
+				// Indicate that the view has been scrolled up (10)
+				// and if we can scroll no further (12)
+				c = (SkipRows + RowAdjust + ConBottom != ConRows) ? 10 : 12;
+				V_PrintStr (0, (ConBottom - 3) * 8 + 4, &c, 1);
 			}
 		}
 	}
 }
 
+void C_FullConsole (void)
+{
+	if (demoplayback)
+		G_CheckDemoStatus ();
+	advancedemo = false;
+	ConsoleState = c_down;
+	HistPos = NULL;
+	TabbedLast = false;
+	if (gamestate != GS_STARTUP) {
+		gamestate = GS_FULLCONSOLE;
+		level.music[0] = '\0';
+		S_Start ();
+		I_PauseMouse ();
+	} else
+		C_AdjustBottom ();
+}
+
 void C_ToggleConsole (void)
 {
-	// Only let the console go up if chat mode is on
-	if (!chat_on && (ConsoleState == up || ConsoleState == rising)) {
-		ConsoleState = falling;
+	if (gamestate == GS_DEMOSCREEN || demoplayback) {
+		gameaction = ga_fullconsole;
+	} else if (!chat_on && (ConsoleState == c_up || ConsoleState == c_rising)) {
+		ConsoleState = c_falling;
 		HistPos = NULL;
 		TabbedLast = false;
-	} else {
-		ConsoleState = rising;
+		I_PauseMouse ();
+	} else if (gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP) {
+		ConsoleState = c_rising;
+		I_ResumeMouse ();
 	}
 }
 
 void C_HideConsole (void)
 {
-	ConsoleState = up;
-	ConBottom = 0;
-	HistPos = NULL;
+	if (gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP) {
+		ConsoleState = c_up;
+		ConBottom = 0;
+		HistPos = NULL;
+		if (!menuactive)
+			I_ResumeMouse ();
+	}
 }
 
 static void makestartposgood (void)
@@ -571,7 +635,7 @@ static void makestartposgood (void)
 	CmdLine[259] = n;
 }
 
-void C_HandleKey (event_t *ev, byte *buffer, int len)
+BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 {
 	switch (ev->data1) {
 		case KEY_TAB:
@@ -744,8 +808,11 @@ void C_HandleKey (event_t *ev, byte *buffer, int len)
 				AddCommandString (&buffer[2]);
 				TabbedLast = false;
 			} else if (ev->data2 == '`' || ev->data1 == KEY_ESCAPE) {
-				// Close console, both ` and ESC clear command line
-
+				// Close console, clear command line, but if we're in the
+				// fullscreen console mode, there's nothing to fall back on
+				// if it's closed.
+				if (gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP)
+					return false;
 				buffer[0] = buffer[1] = buffer[len+4] = 0;
 				HistPos = NULL;
 				C_ToggleConsole ();
@@ -779,11 +846,12 @@ void C_HandleKey (event_t *ev, byte *buffer, int len)
 			}
 			break;
 	}
+	return true;
 }
 
 BOOL C_Responder (event_t *ev)
 {
-	if (ConsoleState == up || ConsoleState == rising) {
+	if (ConsoleState == c_up || ConsoleState == c_rising || menuactive) {
 		return false;
 	}
 
@@ -816,12 +884,9 @@ BOOL C_Responder (event_t *ev)
 		// Others do.
 			RepeatCountdown = KeyRepeatDelay;
 		RepeatEvent = *ev;
-		C_HandleKey (ev, CmdLine, 255);
-
+		return C_HandleKey (ev, CmdLine, 255);
 	} else
 		return false;
-
-	return true;
 }
 
 void Cmd_History (player_t *plyr, int argc, char **argv)
@@ -880,11 +945,11 @@ void C_DrawMid (void)
 		int i, line, x, y;
 		byte *holdwhite = WhiteMap;
 
-		// Hack! Hack! I need to get mult-colored text output written...
+		// Hack! Hack! I need to get multi-colored text output written (still)...
 		WhiteMap = Ranges + 5 * 256;
 		y = 8 * CleanYfac;
 		x = screens[0].width >> 1;
-		for (i = 0, line = (ST_Y >> 1) - MidLines * 4 * CleanYfac; i < MidLines; i++, line += y) {
+		for (i = 0, line = (ST_Y * 3) / 8 - MidLines * 4 * CleanYfac; i < MidLines; i++, line += y) {
 			V_DrawTextClean (x - (MidMsg[i].width >> 1) * CleanXfac, line, MidMsg[i].string);
 		}
 

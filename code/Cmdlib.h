@@ -31,10 +31,10 @@ BOOL FileExists (char *filename);
 extern	char	progdir[1024];
 
 void	FixPathSeperator (char *path);
-void	SetProgDir (void);
 
 void 	DefaultExtension (char *path, char *extension);
 
+void	ExtractFilePath (char *path, char *dest);
 void 	ExtractFileBase (char *path, char *dest);
 
 int		ParseHex (char *str);

@@ -38,6 +38,7 @@
 // State.
 #include "doomstat.h"
 #include "r_state.h"
+#include "v_palett.h"
 
 //#include "r_local.h"
 
@@ -302,7 +303,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 	if (sec->heightsec != -1)
 	{
 		const sector_t *s = &sectors[sec->heightsec];
-		int heightsec = viewplayer->mo->subsector->sector->heightsec;
+		int heightsec = camera->subsector->sector->heightsec;
 		int underwater = heightsec!=-1 && viewz<=sectors[heightsec].floorheight;
 
 		// Replace sector being drawn, with a copy to be hacked
@@ -320,7 +321,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 			tempsec->floor_xoffs = s->floor_xoffs;
 			tempsec->floor_yoffs = s->floor_yoffs;
 
-			if (underwater)
+			if (underwater) {
 				if (s->ceilingpic == skyflatnum)
 				{
 					tempsec->floorheight   = tempsec->ceilingheight+1;
@@ -334,6 +335,7 @@ sector_t *R_FakeFlat(sector_t *sec, sector_t *tempsec,
 					tempsec->ceiling_xoffs = s->ceiling_xoffs;
 					tempsec->ceiling_yoffs = s->ceiling_yoffs;
 				}
+			}
 
 			tempsec->lightlevel  = s->lightlevel;
 
@@ -480,9 +482,9 @@ void R_AddLine (seg_t*	line)
 	// Identical floor and ceiling on both sides,
 	// identical light levels on both sides,
 	// and no middle texture.
-	if (backsector->ceilingpic == frontsector->ceilingpic
+	if (backsector->lightlevel == frontsector->lightlevel
 		&& backsector->floorpic == frontsector->floorpic
-		&& backsector->lightlevel == frontsector->lightlevel
+		&& backsector->ceilingpic == frontsector->ceilingpic
 		&& curline->sidedef->midtexture == 0
 
 		// killough 3/7/98: Take flats offsets into account:
@@ -494,6 +496,9 @@ void R_AddLine (seg_t*	line)
 		// killough 4/16/98: consider altered lighting
 		&& backsector->floorlightsec == frontsector->floorlightsec
 		&& backsector->ceilinglightsec == frontsector->ceilinglightsec
+
+		// [RH] Also consider colormaps
+		&& backsector->colormap == frontsector->colormap
 		)
 	{
 		return;
@@ -655,7 +660,7 @@ void R_Subsector (int num)
 	sector_t     tempsec;				// killough 3/7/98: deep water hack
 	int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
 	int          ceilinglightlevel;		// killough 4/11/98
-		
+
 #ifdef RANGECHECK
 	if (num>=numsubsectors)
 		I_Error ("R_Subsector: ss %i with numss = %i", num, numsubsectors);
@@ -665,6 +670,8 @@ void R_Subsector (int num)
 	frontsector = sub->sector;
 	count = sub->numlines;
 	line = &segs[sub->firstline];
+
+	basecolormap = frontsector->colormap->maps;	// [RH] set basecolormap
 
 	// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
 	frontsector = R_FakeFlat(frontsector, &tempsec, &floorlightlevel,
@@ -694,7 +701,9 @@ void R_Subsector (int num)
 					frontsector->ceiling_yoffs
 					) : NULL;
 
-	R_AddSprites (frontsector); 
+	// [RH] Fix BOOM bug where things in deep water sectors with
+	//		several subsectors caused massive slowdown.
+	R_AddSprites (sub->sector);
 
 	while (count--)
 	{

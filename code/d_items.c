@@ -128,7 +128,7 @@ weaponinfo_t	weaponinfo[NUMWEAPONS] =
 int num_items;
 
 // [RH] Guess what. These next three functions are from Quake2:
-//	game/g_items.c
+//	g_items.c
 
 /*
 ===============
@@ -140,7 +140,7 @@ gitem_t	*GetItemByIndex (int index)
 	if (index == 0 || index >= num_items)
 		return NULL;
 
-	return &ItemList[index];
+	return &itemlist[index];
 }
 
 
@@ -150,19 +150,15 @@ FindItemByClassname
 
 ===============
 */
-gitem_t	*FindItemByClassname (char *classname)
+gitem_t	*FindItemByClassname (const char *classname)
 {
 	int		i;
 	gitem_t	*it;
 
-	it = ItemList;
-	for (i=0 ; i<num_items ; i++, it++)
-	{
-		if (!it->classname)
-			continue;
-		if (!stricmp(it->classname, classname))
+	it = itemlist;
+	for (i = 0; i < num_items; i++, it++)
+		if (it->classname && !stricmp(it->classname, classname))
 			return it;
-	}
 
 	return NULL;
 }
@@ -173,19 +169,15 @@ FindItem
 
 ===============
 */
-gitem_t	*FindItem (char *pickup_name)
+gitem_t	*FindItem (const char *pickup_name)
 {
 	int		i;
 	gitem_t	*it;
 
-	it = ItemList;
-	for (i=0 ; i<num_items ; i++, it++)
-	{
-		if (!it->pickup_name)
-			continue;
-		if (!stricmp(it->pickup_name, pickup_name))
+	it = itemlist;
+	for (i = 0; i < num_items; i++, it++)
+		if (it->pickup_name && !stricmp(it->pickup_name, pickup_name))
 			return it;
-	}
 
 	return NULL;
 }
@@ -195,7 +187,7 @@ gitem_t	*FindItem (char *pickup_name)
 // Used mainly by the give command. Hopefully will
 // become more general-purpose later.
 // (Yes, this was inspired by Quake 2)
-gitem_t ItemList[] = {
+gitem_t itemlist[] = {
 	{
 		NULL
 	},	// leave index 0 alone
@@ -241,6 +233,16 @@ gitem_t ItemList[] = {
 	},
 
 	{
+		"weapon_chainsaw",
+		NULL,
+		NULL,
+		IT_WEAPON,
+		wp_chainsaw,
+		0,
+		"Chainsaw"
+	},
+
+	{
 		"weapon_pistol",
 		NULL,
 		NULL,
@@ -258,6 +260,16 @@ gitem_t ItemList[] = {
 		wp_shotgun,
 		0,
 		"Shotgun"
+	},
+
+	{
+		"weapon_supershotgun",
+		NULL,
+		NULL,
+		IT_WEAPON,
+		wp_supershotgun,
+		0,
+		"Super Shotgun"
 	},
 
 	{
@@ -298,26 +310,6 @@ gitem_t ItemList[] = {
 		wp_bfg,
 		0,
 		"BFG9000"
-	},
-
-	{
-		"weapon_chainsaw",
-		NULL,
-		NULL,
-		IT_WEAPON,
-		wp_chainsaw,
-		0,
-		"Chainsaw"
-	},
-
-	{
-		"weapon_supershotgun",
-		NULL,
-		NULL,
-		IT_WEAPON,
-		wp_supershotgun,
-		0,
-		"Super Shotgun"
 	},
 
 	{
@@ -367,7 +359,7 @@ gitem_t ItemList[] = {
 		"item_invulnerability",
 		NULL,
 		NULL,
-		IT_POWER,
+		IT_POWERUP,
 		pw_invulnerability,
 		0,
 		"Invulnerability"
@@ -377,7 +369,7 @@ gitem_t ItemList[] = {
 		"item_berserk",
 		NULL,
 		NULL,
-		IT_POWER,
+		IT_POWERUP,
 		pw_strength,
 		0,
 		"Berserk"
@@ -387,7 +379,7 @@ gitem_t ItemList[] = {
 		"item_invisibility",
 		NULL,
 		NULL,
-		IT_POWER,
+		IT_POWERUP,
 		pw_invisibility,
 		0,
 		"Partial Invisibility"
@@ -397,7 +389,7 @@ gitem_t ItemList[] = {
 		"item_ironfeet",
 		NULL,
 		NULL,
-		IT_POWER,
+		IT_POWERUP,
 		pw_ironfeet,
 		0,
 		"Iron Feet"
@@ -407,7 +399,7 @@ gitem_t ItemList[] = {
 		"item_allmap",
 		NULL,
 		NULL,
-		IT_POWER,
+		IT_POWERUP,
 		pw_allmap,
 		0,
 		"Computer Map"
@@ -417,7 +409,7 @@ gitem_t ItemList[] = {
 		"item_visor",
 		NULL,
 		NULL,
-		IT_POWER,
+		IT_POWERUP,
 		pw_infrared,
 		0,
 		"Light Amplification Visor"
@@ -493,5 +485,5 @@ gitem_t ItemList[] = {
 
 void InitItems (void)
 {
-	num_items = sizeof(ItemList)/sizeof(ItemList[0]) - 1;
+	num_items = sizeof(itemlist)/sizeof(itemlist[0]) - 1;
 }

@@ -15,8 +15,6 @@
 // for more details.
 //
 //
-// $Log:$
-//
 // DESCRIPTION:
 //		Switches, buttons. Two-state animation. Exits.
 //
@@ -27,13 +25,11 @@
 #include "i_system.h"
 #include "doomdef.h"
 #include "p_local.h"
+#include "p_lnspec.h"
 
 #include "g_game.h"
 
 #include "s_sound.h"
-
-// Data.
-#include "sounds.h"
 
 // State.
 #include "doomstat.h"
@@ -49,7 +45,7 @@
 static int *switchlist;
 static int  numswitches;
 
-button_t	buttonlist[MAXBUTTONS];
+button_t   *buttonlist;		// [RH] remove limit on number of buttons
 
 //
 // P_InitSwitchList
@@ -100,46 +96,32 @@ void P_InitSwitchList(void)
 	Z_Free (alphSwitchList);
 }
 
-
 //
 // Start a button counting down till it turns off.
+// [RH] Rewritten to remove MAXBUTTONS limit and use temporary soundorgs.
 //
-void P_StartButton (line_t *line, bwhere_e w, int texture, int time)
+void P_StartButton (line_t *line, bwhere_e w, int texture, int time, mobj_t *soundorg)
 {
-	int i;
+	button_t *button;
 	
 	// See if button is already pressed
-	for (i = 0;i < MAXBUTTONS;i++)
-	{
-		if (buttonlist[i].btimer
-			&& buttonlist[i].line == line)
-		{
-			
+	button = buttonlist;
+	while (button) {
+		if (button->line == line)
 			return;
-		}
+		button = button->next;
 	}
 
+	button = Z_Malloc (sizeof(*button), PU_LEVEL, 0);
 
-
-	for (i = 0;i < MAXBUTTONS;i++)
-	{
-		if (!buttonlist[i].btimer)
-		{
-			buttonlist[i].line = line;
-			buttonlist[i].where = w;
-			buttonlist[i].btexture = texture;
-			buttonlist[i].btimer = time;
-			buttonlist[i].soundorg = (mobj_t *)&line->frontsector->soundorg;
-			return;
-		}
-	}
-
-	I_Error("P_StartButton: no button slots left!");
+	button->line = line;
+	button->where = w;
+	button->btexture = texture;
+	button->btimer = time;
+	button->soundorg = soundorg;
+	button->next = buttonlist;
+	buttonlist = button;
 }
-
-
-
-
 
 //
 // Function that changes wall texture.
@@ -147,11 +129,11 @@ void P_StartButton (line_t *line, bwhere_e w, int texture, int time)
 //
 void P_ChangeSwitchTexture (line_t *line, int useAgain)
 {
-	int 	texTop;
-	int 	texMid;
-	int 	texBot;
-	int 	i;
-	int 	sound;
+	int texTop;
+	int texMid;
+	int texBot;
+	int i;
+	char *sound;
 
 	if (!useAgain)
 		line->special = 0;
@@ -160,55 +142,50 @@ void P_ChangeSwitchTexture (line_t *line, int useAgain)
 	texMid = sides[line->sidenum[0]].midtexture;
 	texBot = sides[line->sidenum[0]].bottomtexture;
 
-	sound = sfx_swtchn;
-
 	// EXIT SWITCH?
-	if (line->special == 11)
-		sound = sfx_swtchx;
+	if (line->special == Exit_Normal ||
+		line->special == Exit_Secret ||
+		line->special == Teleport_NewMap ||
+		line->special == Teleport_EndGame)
+		sound = "switches/exitbutn";
+	else
+		sound = "switches/normbutn";
 
-	for (i = 0;i < numswitches*2;i++)
+	for (i = 0; i < numswitches*2; i++)
 	{
-		if (switchlist[i] == texTop)
-		{
-			S_StartSound(buttonlist->soundorg,sound);
-			sides[line->sidenum[0]].toptexture = (short)switchlist[i^1];
+		// [RH] Rewritten slightly to be more compact
+		short *texture = NULL;
+		bwhere_e where;
 
-			if (useAgain)
-				P_StartButton(line,top,switchlist[i],BUTTONTIME);
-
-			return;
+		if (switchlist[i] == texTop) {
+			texture = &sides[line->sidenum[0]].toptexture;
+			where = top;
+		} else if (switchlist[i] == texMid) {
+			texture = &sides[line->sidenum[0]].midtexture;
+			where = middle;
+		} else if (switchlist[i] == texBot) {
+			texture = &sides[line->sidenum[0]].bottomtexture;
+			where = bottom;
 		}
-		else
-		{
-			if (switchlist[i] == texMid)
-			{
-				S_StartSound(buttonlist->soundorg,sound);
-				sides[line->sidenum[0]].midtexture = (short)switchlist[i^1];
 
-				if (useAgain)
-					P_StartButton(line, middle,switchlist[i],BUTTONTIME);
-
-				return;
-			}
-			else
-			{
-				if (switchlist[i] == texBot)
-				{
-					S_StartSound(buttonlist->soundorg,sound);
-					sides[line->sidenum[0]].bottomtexture = (short)switchlist[i^1];
-
-					if (useAgain)
-						P_StartButton(line, bottom,switchlist[i],BUTTONTIME);
-
-					return;
-				}
-			}
+		if (texture) {
+			// [RH] The original code played the sound at buttonlist->soundorg.
+			//		I spawn a temporary mobj on the button's line to play the
+			//		sound. It automatically removes itself after 60 seconds.
+			mobj_t *soundorg = P_SpawnMobj (
+									line->v1->x + (line->dx >> 1),
+									line->v1->y + (line->dy >> 1),
+									0, // z doesn't matter
+									MT_SWITCHTEMP,
+									0);
+			S_StartSound (soundorg, sound, 78);
+			*texture = (short)switchlist[i^1];
+			if (useAgain)
+				P_StartButton (line, where, switchlist[i], BUTTONTIME, soundorg);
+			break;
 		}
 	}
 }
-
-
-
 
 
 
@@ -219,381 +196,34 @@ void P_ChangeSwitchTexture (line_t *line, int useAgain)
 //
 BOOL P_UseSpecialLine (mobj_t *thing, line_t *line, int side)
 {
+	BOOL result;
 
-	// Err...
-	// Use the back sides of VERY SPECIAL lines...
-	if (side)
-	{
-		switch(line->special)
-		{
-		  case 124:
-			// Sliding door open&close
-			// UNUSED?
-			break;
+	// [RH] Line needs to be setup for use activation
+	if ((line->flags & ML_ACTIVATIONMASK) != ML_ACTIVATEUSE)
+		return false;
 
-		  default:
-			return false;
-			break;
-		}
-	}
-
-
-	// Switches that other things can activate.
-	if (!thing->player)
-	{
-		// never open secret doors
+	// [RH] Don't let monsters activate the special unless the line says they can.
+	//		(Some lines automatically imply ML_MONSTERSCANACTIVATE)
+	if (!thing->player) {
 		if (line->flags & ML_SECRET)
+			return false;	// monsters never activate secrets
+		if (!(line->flags & ML_MONSTERSCANACTIVATE) &&
+			(line->special != Door_Raise || line->args[0] != 0) &&
+			line->special != Teleport &&
+			line->special != Teleport_NoFog)
 			return false;
-		
-		switch(line->special)
-		{
-		  case 1:		// MANUAL DOOR RAISE
-		  case 32:		// MANUAL BLUE
-		  case 33:		// MANUAL RED
-		  case 34:		// MANUAL YELLOW
-			break;
-			
-		  default:
-			return false;
-			break;
-		}
 	}
 
+	// [RH] Use LineSpecials[] dispatcher table.
+	result = LineSpecials[line->special] (line, thing, line->args[0],
+										  line->args[1], line->args[2],
+										  line->args[3], line->args[4]);
 
-	// do something  
-	switch (line->special)
-	{
-		// MANUALS
-	  case 1:			// Vertical Door
-	  case 26:			// Blue Door/Locked
-	  case 27:			// Yellow Door /Locked
-	  case 28:			// Red Door /Locked
+	// [RH] It's possible for a script to render the line unusable even if it has the
+	//		repeatable flag set by calling clearlinespecial().
+	if (result)
+		P_ChangeSwitchTexture (line, (line->flags & ML_REPEATABLE) && line->special);
 
-	  case 31:			// Manual door open
-	  case 32:			// Blue locked door open
-	  case 33:			// Red locked door open
-	  case 34:			// Yellow locked door open
-
-	  case 117: 		// Blazing door raise
-	  case 118: 		// Blazing door open
-		EV_VerticalDoor (line, thing);
-		break;
-		
-		//UNUSED - Door Slide Open&Close
-		// case 124:
-		// EV_SlidingDoor (line, thing);
-		// break;
-
-		// SWITCHES
-	  case 7:
-		// Build Stairs
-		if (EV_BuildStairs(line,build8))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 9:
-		// Change Donut
-		if (EV_DoDonut(line))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 11:
-		// Exit level
-		if (CheckIfExitIsGood (thing)) {
-			P_ChangeSwitchTexture(line,0);
-			G_ExitLevel ();
-		}
-		break;
-
-	  case 14:
-		// Raise Floor 32 and change texture
-		if (EV_DoPlat(line,raiseAndChange,32))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 15:
-		// Raise Floor 24 and change texture
-		if (EV_DoPlat(line,raiseAndChange,24))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 18:
-		// Raise Floor to next highest floor
-		if (EV_DoFloor(line, raiseFloorToNearest))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 20:
-		// Raise Plat next highest floor and change texture
-		if (EV_DoPlat(line,raiseToNearestAndChange,0))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 21:
-		// PlatDownWaitUpStay
-		if (EV_DoPlat(line,downWaitUpStay,0))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 23:
-		// Lower Floor to Lowest
-		if (EV_DoFloor(line,lowerFloorToLowest))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 29:
-		// Raise Door
-		if (EV_DoDoor(line,normal))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 41:
-		// Lower Ceiling to Floor
-		if (EV_DoCeiling(line,lowerToFloor))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 71:
-		// Turbo Lower Floor
-		if (EV_DoFloor(line,turboLower))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 49:
-		// Ceiling Crush And Raise
-		if (EV_DoCeiling(line,crushAndRaise))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 50:
-		// Close Door
-		if (EV_DoDoor(line,close))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 51:
-		// Secret EXIT
-		if (CheckIfExitIsGood (thing)) {
-			P_ChangeSwitchTexture(line,0);
-			G_SecretExitLevel ();
-		}
-		break;
-
-	  case 55:
-		// Raise Floor Crush
-		if (EV_DoFloor(line,raiseFloorCrush))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 101:
-		// Raise Floor
-		if (EV_DoFloor(line,raiseFloor))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 102:
-		// Lower Floor to Surrounding floor height
-		if (EV_DoFloor(line,lowerFloor))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 103:
-		// Open Door
-		if (EV_DoDoor(line,open))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 111:
-		// Blazing Door Raise (faster than TURBO!)
-		if (EV_DoDoor (line,blazeRaise))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 112:
-		// Blazing Door Open (faster than TURBO!)
-		if (EV_DoDoor (line,blazeOpen))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 113:
-		// Blazing Door Close (faster than TURBO!)
-		if (EV_DoDoor (line,blazeClose))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 122:
-		// Blazing PlatDownWaitUpStay
-		if (EV_DoPlat(line,blazeDWUS,0))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 127:
-		// Build Stairs Turbo 16
-		if (EV_BuildStairs(line,turbo16))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 131:
-		// Raise Floor Turbo
-		if (EV_DoFloor(line,raiseFloorTurbo))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 133:
-		// BlzOpenDoor BLUE
-	  case 135:
-		// BlzOpenDoor RED
-	  case 137:
-		// BlzOpenDoor YELLOW
-		if (EV_DoLockedDoor (line,blazeOpen,thing))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-	  case 140:
-		// Raise Floor 512
-		if (EV_DoFloor(line,raiseFloor512))
-			P_ChangeSwitchTexture(line,0);
-		break;
-
-		// BUTTONS
-	  case 42:
-		// Close Door
-		if (EV_DoDoor(line,close))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 43:
-		// Lower Ceiling to Floor
-		if (EV_DoCeiling(line,lowerToFloor))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 45:
-		// Lower Floor to Surrounding floor height
-		if (EV_DoFloor(line,lowerFloor))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 60:
-		// Lower Floor to Lowest
-		if (EV_DoFloor(line,lowerFloorToLowest))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 61:
-		// Open Door
-		if (EV_DoDoor(line,open))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 62:
-		// PlatDownWaitUpStay
-		if (EV_DoPlat(line,downWaitUpStay,1))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 63:
-		// Raise Door
-		if (EV_DoDoor(line,normal))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 64:
-		// Raise Floor to ceiling
-		if (EV_DoFloor(line,raiseFloor))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 66:
-		// Raise Floor 24 and change texture
-		if (EV_DoPlat(line,raiseAndChange,24))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 67:
-		// Raise Floor 32 and change texture
-		if (EV_DoPlat(line,raiseAndChange,32))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 65:
-		// Raise Floor Crush
-		if (EV_DoFloor(line,raiseFloorCrush))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 68:
-		// Raise Plat to next highest floor and change texture
-		if (EV_DoPlat(line,raiseToNearestAndChange,0))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 69:
-		// Raise Floor to next highest floor
-		if (EV_DoFloor(line, raiseFloorToNearest))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 70:
-		// Turbo Lower Floor
-		if (EV_DoFloor(line,turboLower))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 114:
-		// Blazing Door Raise (faster than TURBO!)
-		if (EV_DoDoor (line,blazeRaise))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 115:
-		// Blazing Door Open (faster than TURBO!)
-		if (EV_DoDoor (line,blazeOpen))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 116:
-		// Blazing Door Close (faster than TURBO!)
-		if (EV_DoDoor (line,blazeClose))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 123:
-		// Blazing PlatDownWaitUpStay
-		if (EV_DoPlat(line,blazeDWUS,0))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 132:
-		// Raise Floor Turbo
-		if (EV_DoFloor(line,raiseFloorTurbo))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 99:
-		// BlzOpenDoor BLUE
-	  case 134:
-		// BlzOpenDoor RED
-	  case 136:
-		// BlzOpenDoor YELLOW
-		if (EV_DoLockedDoor (line,blazeOpen,thing))
-			P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 138:
-		// Light Turn On
-		EV_LightTurnOn(line,255);
-		P_ChangeSwitchTexture(line,1);
-		break;
-
-	  case 139:
-		// Light Turn Off
-		EV_LightTurnOn(line,35);
-		P_ChangeSwitchTexture(line,1);
-		break;
-
-	}
-
-	return true;
+	return result;
 }
 

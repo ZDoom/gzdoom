@@ -101,6 +101,12 @@ typedef enum {
 	pr_throwgib,				// 49
 	pr_vel4dmg,					// 50
 	pr_gengib,					// 51
+	pr_acs,						// 52
+	pr_animatepictures,			// 53
+	pr_obituary,				// 54
+	pr_quake,					// 55
+	pr_playerscream,			// 56
+	pr_playerpain,				// 57
 	// Start new entries -- add new entries below
 
 	// End of new entries

@@ -1,5 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "doomtype.h"
 #include "doomdef.h"
@@ -11,28 +12,43 @@
 #include "v_video.h"
 #include "i_system.h"
 #include "r_draw.h"
+#include "r_state.h"
+#include "st_stuff.h"
 
 extern BOOL st_firsttime;
 
 cvar_t *autoaim;
 cvar_t *name;
 cvar_t *color;
+cvar_t *skin;
+cvar_t *team;
+cvar_t *gender;
 
-static userinfo_t userinfos[MAXPLAYERS];
+int D_GenderToInt (const char *gender)
+{
+	if (!stricmp (gender, "female"))
+		return GENDER_FEMALE;
+	else if (!stricmp (gender, "neuter"))
+		return GENDER_NEUTER;
+	else
+		return GENDER_MALE;
+}
 
 void D_SetupUserInfo (void)
 {
 	int i;
+	userinfo_t *coninfo = &players[consoleplayer].userinfo;
 
-	for (i = 0; i < MAXPLAYERS; i++) {
-		memset (&userinfos[i], 0, sizeof(userinfo_t));
-		players[i].userinfo = &userinfos[i];
-	}
+	for (i = 0; i < MAXPLAYERS; i++)
+		memset (&players[i].userinfo, 0, sizeof(userinfo_t));
 
-	strncpy (userinfos[consoleplayer].netname, name->string, MAXPLAYERNAME);
-	userinfos[consoleplayer].aimdist = (fixed_t)(autoaim->value * 16384.0);
-	userinfos[consoleplayer].color = V_GetColorFromString (NULL, color->string);
-	R_BuildPlayerTranslation (consoleplayer, userinfos[consoleplayer].color);
+	strncpy (coninfo->netname, name->string, MAXPLAYERNAME);
+	strncpy (coninfo->team, team->string, MAXPLAYERNAME);
+	coninfo->aimdist = (fixed_t)(autoaim->value * 16384.0);
+	coninfo->color = V_GetColorFromString (NULL, color->string);
+	coninfo->skin = R_FindSkin (skin->string);
+	coninfo->gender = D_GenderToInt (gender->string);
+	R_BuildPlayerTranslation (consoleplayer, coninfo->color);
 }
 
 void D_UserInfoChanged (cvar_t *cvar)
@@ -122,12 +138,15 @@ void D_WriteUserInfoStrings (int i, byte **stream)
 	if (i >= MAXPLAYERS) {
 		WriteByte (0, stream);
 	} else {
-		userinfo_t *info = players[i].userinfo;
+		userinfo_t *info = &players[i].userinfo;
 
-		sprintf (*stream, "\\name\\%s\\autoaim\\%g\\color\\%x %x %x",
+		sprintf (*stream, "\\name\\%s\\autoaim\\%g\\color\\%x %x %x\\skin\\%s\\team\\%s\\gender\\%s",
 						  info->netname,
 						  (double)info->aimdist / 16384.0,
-						  RPART(info->color), GPART(info->color), BPART(info->color)
+						  RPART(info->color), GPART(info->color), BPART(info->color),
+						  skins[info->skin].name, info->team,
+						  info->gender == GENDER_FEMALE ? "female" :
+								info->gender == GENDER_NEUTER ? "neuter" : "male"
 						  );
 	}
 
@@ -136,7 +155,7 @@ void D_WriteUserInfoStrings (int i, byte **stream)
 
 void D_ReadUserInfoStrings (int i, byte **stream, BOOL update)
 {
-	userinfo_t *info = players[i].userinfo;
+	userinfo_t *info = &players[i].userinfo;
 	byte *ptr = *stream;
 	byte *breakpt;
 	byte *value;
@@ -163,10 +182,27 @@ void D_ReadUserInfoStrings (int i, byte **stream, BOOL update)
 
 				if (update)
 					Printf ("%s is now known as %s\n", oldname, info->netname);
+			} else if (!stricmp (ptr, "team")) {
+				strncpy (info->team, value, MAXPLAYERNAME);
+				info->team[MAXPLAYERNAME] = 0;
+				if (update) {
+					if (info->team[0])
+						Printf ("%s joined the %s team\n", info->netname, info->team);
+					else
+						Printf ("%s is not on a team\n", info->netname);
+				}
 			} else if (!stricmp (ptr, "color")) {
 				info->color = V_GetColorFromString (NULL, value);
 				R_BuildPlayerTranslation (i, info->color);
 				st_firsttime = true;
+			} else if (!stricmp (ptr, "skin")) {
+				info->skin = R_FindSkin (value);
+				if (players[i].mo)
+					players[i].mo->sprite = skins[info->skin].sprite;
+				ST_loadGraphics ();
+				st_firsttime = true;
+			} else if (!stricmp (ptr, "gender")) {
+				info->gender = D_GenderToInt (value);
 			}
 
 			*(value - 1) = '\\';

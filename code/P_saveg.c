@@ -30,15 +30,14 @@
 #include "doomstat.h"
 #include "r_state.h"
 #include "m_random.h"
+#include "p_saveg.h"
+#include "p_acs.h"
 
 #include "v_palett.h"
 
+extern button_t *buttonlist;
+
 byte *save_p;
-
-
-// Pads save_p to a 4-byte boundary
-//	so that the load/save works on SGI&Gecko.
-#define PADSAVEP()		save_p += (4 - ((int) save_p & 3)) & 3
 
 
 
@@ -47,11 +46,11 @@ byte *save_p;
 //
 void P_ArchivePlayers (void)
 {
-	int 		i;
-	int 		j;
-	player_t*	dest;
+	int i, j;
+	player_t *dest;
 				
-	for (i=0 ; i<MAXPLAYERS ; i++)
+	CheckSaveGame (sizeof(player_t) * MAXPLAYERS); // killough
+	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i])
 			continue;
@@ -61,7 +60,7 @@ void P_ArchivePlayers (void)
 		dest = (player_t *)save_p;
 		memcpy (dest,&players[i],sizeof(player_t));
 		save_p += sizeof(player_t);
-		for (j=0 ; j<NUMPSPRITES ; j++)
+		for (j = 0; j < NUMPSPRITES; j++)
 		{
 			if (dest->psprites[j].state)
 			{
@@ -79,25 +78,27 @@ void P_ArchivePlayers (void)
 //
 void P_UnArchivePlayers (void)
 {
-	int 		i;
-	int 		j;
+	int i, j;
+	userinfo_t userinfo;
 		
-	for (i=0 ; i<MAXPLAYERS ; i++)
+	for (i = 0; i < MAXPLAYERS; i++)
 	{
 		if (!playeringame[i])
 			continue;
 		
 		PADSAVEP();
 
-		memcpy (&players[i],save_p, sizeof(player_t));
+		memcpy (&userinfo, &players[i].userinfo, sizeof(userinfo));	// [RH] remember userinfo
+
+		memcpy (&players[i], save_p, sizeof(player_t));
 		save_p += sizeof(player_t);
 		
-		// will be set when unarc thinker
-		players[i].mo = NULL;	
+		memcpy (&players[i].userinfo, &userinfo, sizeof(userinfo));
+		players[i].mo = NULL;			// will be set when unarc thinker
 		players[i].message = NULL;
 		players[i].attacker = NULL;
 
-		for (j=0 ; j<NUMPSPRITES ; j++)
+		for (j = 0; j < NUMPSPRITES; j++)
 		{
 			if (players[i]. psprites[j].state)
 			{
@@ -114,35 +115,62 @@ void P_UnArchivePlayers (void)
 //
 void P_ArchiveWorld (void)
 {
-	int 				i;
-	int 				j;
-	sector_t*			sec;
-	line_t* 			li;
-	side_t* 			si;
-	short*				put;
-		
-	put = (short *)save_p;
-	
-	// do sectors
-	for (i=0, sec = sectors ; i<numsectors ; i++,sec++)
+	int 		i;
+	int 		j;
+	sector_t*	sec;
+	line_t* 	li;
+	side_t* 	si;
+	short*		put;
+
+	// killough 3/22/98: fix bug caused by hoisting save_p too early
+
+	size_t size = (sizeof(unsigned int)*2+sizeof(float)+sizeof(short)*9)*numsectors
+				  + (sizeof(short)*8)*numlines + 4;
+
+	for (i = 0; i < numlines; i++)
 	{
-		*put++ = (short)(sec->floorheight >> FRACBITS);
-		*put++ = (short)(sec->ceilingheight >> FRACBITS);
-		*put++ = sec->floorpic;
-		*put++ = sec->ceilingpic;
-		*put++ = sec->lightlevel;
-		*put++ = sec->special;			// needed?
-		*put++ = sec->tag;				// needed?
+		if (lines[i].sidenum[0] != -1)
+			size += sizeof(short)*5;
+		if (lines[i].sidenum[1] != -1)
+			size += sizeof(short)*5;
 	}
 
-	
-	// do lines
-	for (i=0, li = lines ; i<numlines ; i++,li++)
+	CheckSaveGame (size);	// killough
+
+	PADSAVEP();				// killough 3/22/98
+
+	// do sectors
+	for (i = 0, sec = sectors; i < numsectors; i++, sec++)
 	{
-		*put++ = li->flags;
-		*put++ = li->special;
-		*put++ = li->tag;
-		for (j=0 ; j<2 ; j++)
+		put = (short *)save_p;
+		put[0] = (short)(sec->floorheight >> FRACBITS);
+		put[1] = (short)(sec->ceilingheight >> FRACBITS);
+		put[2] = sec->floorpic;
+		put[3] = sec->ceilingpic;
+		put[4] = sec->lightlevel;
+		put[5] = sec->special;
+		put[6] = sec->tag;
+		put[7] = sec->damage;	// [RH]
+		put[8] = sec->mod;	// [RH]
+		save_p = (byte *)(put + 9);	// [RH]
+		PADSAVEP();	// [RH]
+		*((float *)save_p)++ = sec->gravity;	// [RH]
+		*((unsigned int *)save_p)++ = sec->colormap->color;	// [RH]
+		*((unsigned int *)save_p)++ = sec->colormap->fade;	// [RH];
+	}
+
+	put = (short *)save_p;	// [RH]
+
+	// do lines
+	for (i = 0, li = lines; i < numlines; i++, li++)
+	{
+		put[0] = li->flags;
+		put[1] = (li->special << 8) | li->lucency;	// [RH]
+		put[2] = li->id;		// [RH]
+		memcpy (put + 3, li->args, sizeof(li->args)); // [RH]
+		put += 3 + sizeof(li->args)/sizeof(*put);
+
+		for (j = 0; j < 2; j++)
 		{
 			if (li->sidenum[j] == -1)
 				continue;
@@ -173,31 +201,52 @@ void P_UnArchiveWorld (void)
 	line_t* 			li;
 	side_t* 			si;
 	short*				get;
-		
-	get = (short *)save_p;
+
+	PADSAVEP();					// killough 3/22/98
 	
 	// do sectors
 	for (i=0, sec = sectors ; i<numsectors ; i++,sec++)
 	{
-		sec->floorheight = *get++ << FRACBITS;
-		sec->ceilingheight = *get++ << FRACBITS;
-		sec->floorpic = *get++;
-		sec->ceilingpic = *get++;
-		sec->lightlevel = *get++;
-		sec->special = *get++;
-		sec->tag = *get++;
+		unsigned int color, fade;
+
+		get = (short *)save_p;
+		sec->floorheight = get[0] << FRACBITS;
+		sec->ceilingheight = get[1] << FRACBITS;
+		sec->floorpic = get[2];
+		sec->ceilingpic = get[3];
+		sec->lightlevel = get[4];
+		sec->special = get[5];
+		sec->tag = get[6];
+		sec->damage = get[7];	// [RH]
+		sec->mod = get[8];	// [RH]
+		save_p = (byte *)(get + 9);	// [RH]
+		PADSAVEP();
+		sec->gravity = *((float *)save_p)++;	// [RH]
+		color = *((unsigned int *)save_p)++;	// [RH]
+		fade = *((unsigned int *)save_p)++;	// [RH]
+
+		sec->colormap = GetSpecialLights (
+			RPART(color), GPART(color), BPART(color),
+			RPART(fade), GPART(fade), BPART(fade));	// [RH]
+
 		sec->ceilingdata = 0;	//jff 2/22/98 now three thinker fields not two
 		sec->floordata = 0;
 		sec->lightingdata = 0;
 		sec->soundtarget = 0;
 	}
-	
+
+	get = (short *)save_p;	// [RH]
+
 	// do lines
 	for (i=0, li = lines ; i<numlines ; i++,li++)
 	{
 		li->flags = *get++;
-		li->special = *get++;
-		li->tag = *get++;
+		li->special = *get >> 8;	// [RH]
+		li->lucency = (*get++) & 255;	// [RH]
+		li->id = *get++;	// [RH]
+		memcpy (li->args, get, sizeof(li->args));	// [RH]
+		get += sizeof(li->args) / sizeof(*get);
+
 		for (j=0 ; j<2 ; j++)
 		{
 			if (li->sidenum[j] == -1)
@@ -210,7 +259,7 @@ void P_UnArchiveWorld (void)
 			si->midtexture = *get++;
 		}
 	}
-	save_p = (byte *)get;		
+	save_p = (byte *)get;
 }
 
 
@@ -232,33 +281,85 @@ typedef enum
 //
 // P_ArchiveThinkers
 //
+// 2/14/98 killough: substantially modified to fix savegame bugs
+
 void P_ArchiveThinkers (void)
 {
-	thinker_t*			th;
-	mobj_t* 			mobj;
-		
+	thinker_t  *th;
+	size_t		size = 0;
+
+	CheckSaveGame (sizeof brain);	// killough 3/26/98: Save boss brain state
+	memcpy (save_p, &brain, sizeof brain);
+	save_p += sizeof brain;
+
+	// killough 2/14/98:
+	// count the number of thinkers, and mark each one with its index, using
+	// the prev field as a placeholder, since it can be restored later.
+
+	for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
+		if (th->function.acp1 == (actionf_p1) P_MobjThinker)
+			th->prev = (thinker_t *) ++size;
+
+	// check that enough room is available in savegame buffer
+	CheckSaveGame (size*(sizeof(mobj_t)+4));	// killough 2/14/98
+
 	// save off the current thinkers
 	for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
-	{
-		if (th->function.acp1 == (actionf_p1)P_MobjThinker)
+		if (th->function.acp1 == (actionf_p1) P_MobjThinker)
 		{
+			mobj_t *mobj;
+
 			*save_p++ = tc_mobj;
 			PADSAVEP();
 			mobj = (mobj_t *)save_p;
 			memcpy (mobj, th, sizeof(*mobj));
 			save_p += sizeof(*mobj);
 			mobj->state = (state_t *)(mobj->state - states);
-			
+
+			// killough 2/14/98: convert pointers into indices.
+			// Fixes many savegame problems, by properly saving
+			// target and tracer fields. Note: we store NULL if
+			// the thinker pointed to by these fields is not a
+			// mobj thinker.
+
+			if (mobj->target)
+				mobj->target = mobj->target->thinker.function.acp1 ==
+					(actionf_p1) P_MobjThinker ?
+					(mobj_t *) mobj->target->thinker.prev : NULL;
+
+			if (mobj->tracer)
+				mobj->tracer = mobj->tracer->thinker.function.acp1 ==
+					(actionf_p1) P_MobjThinker ?
+					(mobj_t *) mobj->tracer->thinker.prev : NULL;
+
+			if (mobj->goal)		// [RH] Save goal properly
+				mobj->goal = mobj->goal->thinker.function.acp1 ==
+					(actionf_p1) P_MobjThinker ?
+					(mobj_t *) mobj->goal->thinker.prev : NULL;
+
+			// killough 2/14/98: new field: save last known enemy. Prevents
+			// monsters from going to sleep after killing monsters and not
+			// seeing player anymore.
+
+			if (mobj->lastenemy)
+				mobj->lastenemy = mobj->lastenemy->thinker.function.acp1 ==
+					(actionf_p1) P_MobjThinker ?
+					(mobj_t *) mobj->lastenemy->thinker.prev : NULL;
+
+			// killough 2/14/98: end changes
+
 			if (mobj->player)
 				mobj->player = (player_t *)((mobj->player-players) + 1);
-			continue;
 		}
-				
-		// I_Error ("P_ArchiveThinkers: Unknown thinker function");
-	}
 
 	// add a terminating marker
 	*save_p++ = tc_end; 
+
+	// [RH] Don't restore mobj prev fields until the end of
+	//		P_ArchiveThinkers() since we need the indices for
+	//		archiving ACS scripts, too.
+
+	// killough 2/14/98: end changes
 }
 
 
@@ -266,63 +367,131 @@ void P_ArchiveThinkers (void)
 //
 // P_UnArchiveThinkers
 //
-void P_UnArchiveThinkers (void)
+// 2/14/98 killough: substantially modified to fix savegame bugs
+
+// [RH] Moved this out of P_UnArchiveThinkers so that it's visible
+//		within P_UnArchiveScripts() and P_UnArchiveSpecials().
+static mobj_t    **mobj_p;		// killough 2/14/98: Translation table
+
+// [RH] Added keepPlayers. When true, the player mobjs that were
+//		spawned during level initialization are kept instead of
+//		being replaced by the ones in the snapshot.
+void P_UnArchiveThinkers (BOOL keepPlayers)
 {
-	byte				tclass;
-	thinker_t*			currentthinker;
-	thinker_t*			next;
-	mobj_t* 			mobj;
-	
+	thinker_t *th;
+	size_t    size;			// killough 2/14/98: size of or index into table
+
+	// killough 3/26/98: Load boss brain state
+	memcpy (&brain, save_p, sizeof brain);
+	save_p += sizeof brain;
+
 	// remove all the current thinkers
-	currentthinker = thinkercap.next;
-	while (currentthinker != &thinkercap)
-	{
-		next = currentthinker->next;
-		
-		if (currentthinker->function.acp1 == (actionf_p1)P_MobjThinker)
-			P_RemoveMobj ((mobj_t *)currentthinker);
-		else
-			Z_Free (currentthinker);
+	P_ClearTidHashes ();	// [RH] Clear the tid hash table
 
-		currentthinker = next;
-	}
-	P_InitThinkers ();
-		
-	// read in saved thinkers
-	while (1)
+	for (th = thinkercap.next; th != &thinkercap; )
 	{
-		tclass = *save_p++;
-		switch (tclass)
-		{
-		  case tc_end:
-			return; 	// end of list
-						
-		  case tc_mobj:
-			PADSAVEP();
-			mobj = Z_Malloc (sizeof(*mobj), PU_LEVEL, NULL);
-			memcpy (mobj, save_p, sizeof(*mobj));
-			save_p += sizeof(*mobj);
-			mobj->state = &states[(int)mobj->state];
-			mobj->target = NULL;
-			if (mobj->player)
-			{
-				mobj->player = &players[(int)mobj->player-1];
-				mobj->player->mo = mobj;
-			}
-			P_SetThingPosition (mobj);
-			mobj->info = &mobjinfo[mobj->type];
-			mobj->floorz = mobj->subsector->sector->floorheight;
-			mobj->ceilingz = mobj->subsector->sector->ceilingheight;
-			mobj->thinker.function.acp1 = (actionf_p1)P_MobjThinker;
-			P_AddThinker (&mobj->thinker);
-			break;
-						
-		  default:
-			I_Error ("Unknown tclass %i in savegame",tclass);
+		thinker_t *next = th->next;
+		if (th->function.acp1 == (actionf_p1) P_MobjThinker) {
+			if (!keepPlayers || !(((mobj_t *)th)->player))
+				P_RemoveMobj ((mobj_t *) th);
+		} else {
+			// time to remove it
+			th->next->prev = th->prev;
+			th->prev->next = th->next;
+			Z_Free (th);
 		}
-		
+		th = next;
 	}
 
+//	if (!keepPlayers)
+//		P_InitThinkers ();
+
+	// killough 2/14/98: count number of thinkers by skipping through them
+	{
+		byte *sp = save_p;	// save pointer and skip header
+		for (size = 1; *save_p++ == tc_mobj; size++)	// killough 2/14/98
+		{					// skip all entries, adding up count
+			PADSAVEP();
+			save_p += sizeof(mobj_t);
+		}
+
+		if (*--save_p != tc_end)
+			I_Error ("Unknown tclass %i in snapshot", *save_p);
+
+		// first table entry special: 0 maps to NULL
+		*(mobj_p = Z_Malloc(size * sizeof *mobj_p, PU_STATIC, 0)) = 0;	// table of pointers
+		save_p = sp;		// restore save pointer
+	}
+
+	// read in saved thinkers
+	for (size = 1; *save_p++ == tc_mobj; size++)		// killough 2/14/98
+	{
+		mobj_t *mobj = Z_Malloc(sizeof(mobj_t), PU_LEVEL, NULL);
+
+		// killough 2/14/98 -- insert pointers to thinkers into table, in order:
+		mobj_p[size] = mobj;
+
+		PADSAVEP();
+		memcpy (mobj, save_p, sizeof(mobj_t));
+		save_p += sizeof(mobj_t);
+		mobj->state = states + (int) mobj->state;
+
+		if (mobj->player) {
+			// [RH] If we're re-entering a level as part of movement in a hub,
+			//		use the currently existing player mobj instead of the one
+			//		in the snapshot. Note that this doesn't work with voodoo
+			//		dolls, and fixing that isn't worth the trouble since
+			//		scripting offers everything voodoo dolls did and more.
+			if (keepPlayers) {
+				Z_Free (mobj);
+				mobj_p[size] = players[(int)mobj->player - 1].mo;
+				continue;
+			}
+			(mobj->player = &players[(int) mobj->player - 1]) -> mo = mobj;
+			mobj->player->camera = mobj;	// [RH] Reset the camera to the player's viewpoint
+		}
+
+		P_SetThingPosition (mobj);
+		mobj->info = &mobjinfo[mobj->type];
+
+		// killough 2/28/98:
+		// Fix for falling down into a wall after savegame loaded:
+		//      mobj->floorz = mobj->subsector->sector->floorheight;
+		//      mobj->ceilingz = mobj->subsector->sector->ceilingheight;
+
+		mobj->thinker.function.acp1 = (actionf_p1) P_MobjThinker;
+		P_AddThinker (&mobj->thinker);
+
+		P_AddMobjToHash (mobj);	// [RH] Add mobj to tid hash table
+	}
+
+	// killough 2/14/98: adjust target and tracer fields, plus
+	// lastenemy field, to correctly point to mobj thinkers.
+	// NULL entries automatically handled by first table entry.
+
+	for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
+	{
+		if (th->function.acp1 != (actionf_p1) P_MobjThinker)
+			continue;
+
+		if (!keepPlayers || !((mobj_t *)th)->player) {
+			((mobj_t *) th)->target =
+			  mobj_p[(size_t)((mobj_t *)th)->target];
+
+			((mobj_t *) th)->tracer =
+			  mobj_p[(size_t)((mobj_t *)th)->tracer];
+
+			((mobj_t *) th)->lastenemy =
+			  mobj_p[(size_t)((mobj_t *)th)->lastenemy];
+
+			((mobj_t *) th)->goal =		// [RH] restore goal
+			  mobj_p[(size_t)((mobj_t *)th)->goal];
+		}
+	}
+
+	// killough 3/26/98: Spawn icon landings:
+	if (gamemode == commercial)
+		P_SpawnBrainTargets();
 }
 
 
@@ -339,8 +508,14 @@ enum
 	tc_strobe,
 	tc_glow,
 	tc_fireflicker,
-	tc_elevator,
-	tc_scroll,
+	tc_elevator,	//jff 2/22/98 new elevator type thinker
+	tc_scroll,		// killough 3/7/98: new scroll effect thinker
+	tc_glow2,
+	tc_waggle,
+	tc_phased,
+	tc_pillar,
+	tc_friction,	// phares 3/18/98:  new friction effect thinker
+	tc_pusher,		// phares 3/22/98:  new push/pull effect thinker
 	tc_endspecials
 } specials_e;	
 
@@ -356,9 +531,15 @@ enum
 // T_StrobeFlash, (strobe_t: sector_t *),
 // T_Glow, (glow_t: sector_t *),
 // T_PlatRaise, (plat_t: sector_t *), - active list
-// T_FireFlicker (fireflicker_t: sector_t * swizze),	[RH] Was missed in original code
+// T_FireFlicker (fireflicker_t: sector_t * swizze),	// [RH] Was missed in original code
 // T_MoveElevator, (plat_t: sector_t *), - active list	// jff 2/22/98
 // T_Scroll												// killough 3/7/98
+// T_Glow2, (glow2_t: sector_t *)						// [RH]
+// T_Waggle, (waggle_t: sector_t *)						// [RH]
+// T_PhasedLight, (phased_t: sector_t *)				// [RH]
+// T_Pillar (pillar_t: sector_t *)						// [RH]
+// T_Friction											// phares 3/18/98
+// T_Pusher	(pusher_t: mobj_t *)						// phares 3/22/98
 //
 void P_ArchiveSpecials (void)
 {
@@ -370,31 +551,129 @@ void P_ArchiveSpecials (void)
 	lightflash_t*		flash;
 	strobe_t*			strobe;
 	glow_t* 			glow;
-	int 				i;
+	button_t*			button;
+	quake_t*			quake;
 		
+	size_t				size = 0;			// killough
+
+	// save off the current thinkers (memory size calculation -- killough)
+
+	// [RH] save buttonlist, too
+	button = buttonlist;
+	while (button) {
+		size += sizeof(*button);
+		button = button->next;
+	}
+	size++;
+
+	// [RH] Also save earthquakes
+	quake = ActiveQuakes;
+	while (quake) {
+		size += sizeof(*quake);
+		quake = quake->next;
+	}
+	size++;
+
+	for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
+		if (th->function.acv == (actionf_v)NULL)
+		{
+			// [RH] Search for active plat or ceiling list that's in-stasis
+			for (ceiling = activeceilings; ceiling; ceiling = ceiling->next)
+				if (ceiling == (ceiling_t *)th)
+					break;
+
+			if (ceiling) {
+				size += 4+sizeof(ceiling_t);
+				goto end;
+			}
+
+			for (plat = activeplats; plat; plat = plat->next)
+				if (plat == (plat_t *)th)
+					break;
+
+			if (plat) {
+				size += 4+sizeof(plat_t);
+				goto end;
+			}
+			end:;
+		}
+		else
+			size +=
+				th->function.acp1==(actionf_p1)T_MoveCeiling  ? 4+sizeof(ceiling_t)	:
+				th->function.acp1==(actionf_p1)T_VerticalDoor ? 4+sizeof(vldoor_t)	:
+				th->function.acp1==(actionf_p1)T_MoveFloor    ? 4+sizeof(floormove_t):
+				th->function.acp1==(actionf_p1)T_PlatRaise    ? 4+sizeof(plat_t)	:
+				th->function.acp1==(actionf_p1)T_LightFlash   ? 4+sizeof(lightflash_t):
+				th->function.acp1==(actionf_p1)T_StrobeFlash  ? 4+sizeof(strobe_t)	:
+				th->function.acp1==(actionf_p1)T_Glow		  ? 4+sizeof(glow_t)	:
+				th->function.acp1==(actionf_p1)T_Glow2		  ? 4+sizeof(glow2_t)	:
+				th->function.acp1==(actionf_p1)T_FireFlicker  ? 4+sizeof(fireflicker_t):
+				th->function.acp1==(actionf_p1)T_PhasedLight  ? 4+sizeof(phased_t)	:
+				th->function.acp1==(actionf_p1)T_MoveElevator ? 4+sizeof(elevator_t):
+				th->function.acp1==(actionf_p1)T_Scroll		  ? 4+sizeof(scroll_t)	:
+				th->function.acp1==(actionf_p1)T_Waggle		  ? 4+sizeof(waggle_t)	:
+				th->function.acp1==(actionf_p1)T_Pillar		  ? 4+sizeof(pillar_t)	:
+				th->function.acp1==(actionf_p1)T_Friction	  ? 4+sizeof(friction_t):
+				th->function.acp1==(actionf_p1)T_Pusher		  ? 4+sizeof(pusher_t)	:
+				0;
+
+	CheckSaveGame(size);		// killough
+
+	// [RH] save the active buttons
+	button = buttonlist;
+	if (button) {
+		*save_p++ = 1;
+		while (button) {
+			button_t *but;
+			PADSAVEP();
+			memcpy (save_p, button, sizeof(*button));
+			but = (button_t *)save_p;
+			save_p += sizeof(*button);
+			but->line = (line_t *)(but->line ? but->line - lines : -1);
+			but->soundorg = (mobj_t *)but->soundorg->thinker.prev;
+			button = button->next;
+		}
+	} else {
+		*save_p++ = 0;
+	}
+
+	// [RH] save the active quakes
+	quake = ActiveQuakes;
+	if (quake) {
+		*save_p++ = 1;
+		while (quake) {
+			quake_t *q;
+			PADSAVEP();
+			memcpy (save_p, quake, sizeof(*quake));
+			q = (quake_t *)save_p;
+			q->quakespot = (mobj_t *)q->quakespot->thinker.prev;
+			save_p += sizeof(*quake);
+			quake = quake->next;
+		}
+	} else {
+		*save_p++ = 0;
+	}
+
 	// save off the current thinkers
 	for (th = thinkercap.next ; th != &thinkercap ; th=th->next)
 	{
 		if (th->function.acv == (actionf_v)NULL)
 		{
-			for (i = 0; i < MaxCeilings;i++)
-				if (activeceilings[i] == (ceiling_t *)th)
-					break;
-			
-			if (i<MaxCeilings)
-			{
-				*save_p++ = tc_ceiling;
-				PADSAVEP();
-				ceiling = (ceiling_t *)save_p;
-				memcpy (ceiling, th, sizeof(*ceiling));
-				save_p += sizeof(*ceiling);
-				ceiling->sector = (sector_t *)(ceiling->sector - sectors);
-			}
+			// [RH] Use the linked list for both plats and ceilings
+			for (ceiling = activeceilings; ceiling; ceiling = ceiling->next)
+				if (ceiling == (ceiling_t *)th)
+					goto ceiling;
+
+			for (plat = activeplats; plat; plat = plat->next)
+				if (plat == (plat_t *)th)
+					goto plat;
+
 			continue;
 		}
 
 		if (th->function.acp1 == (actionf_p1)T_MoveCeiling)
 		{
+		ceiling:
 			*save_p++ = tc_ceiling;
 			PADSAVEP();
 			ceiling = (ceiling_t *)save_p;
@@ -422,6 +701,7 @@ void P_ArchiveSpecials (void)
 		}
 		else if (th->function.acp1 == (actionf_p1)T_PlatRaise)
 		{
+		plat:
 			*save_p++ = tc_plat;
 			PADSAVEP();
 			plat = (plat_t *)save_p;
@@ -468,7 +748,7 @@ void P_ArchiveSpecials (void)
 			save_p += sizeof(*flick);
 			flick->sector = (sector_t *)(flick->sector - sectors);
 		}
-		else if (th->function.acp1 == (actionf_p1) T_MoveElevator)
+		else if (th->function.acp1 == (actionf_p1)T_MoveElevator)
 		{		//jff 2/22/98 new case for elevators
 
 			elevator_t *elevator;		//jff 2/22/98
@@ -488,12 +768,72 @@ void P_ArchiveSpecials (void)
 			save_p += sizeof(scroll_t);
 			continue;
 		}
+		else if (th->function.acp1 == (actionf_p1) T_Glow2)
+		{		// [RH] Second type of glowing sectors
+			glow2_t *glow;
 
+			*save_p++ = tc_glow2;
+			PADSAVEP();
+			glow = (glow2_t *)save_p;
+			memcpy (glow, th, sizeof(*glow));
+			save_p += sizeof(*glow);
+			glow->sector = (sector_t *)(glow->sector - sectors);
+		}
+		else if (th->function.acp1 == (actionf_p1) T_Waggle)
+		{		// [RH] Waggling floors
+			waggle_t *waggle;
+
+			*save_p++ = tc_waggle;
+			PADSAVEP();
+			waggle = (waggle_t *)save_p;
+			memcpy (waggle, th, sizeof(*waggle));
+			save_p += sizeof(*waggle);
+			waggle->sector = (sector_t *)(waggle->sector - sectors);
+		}
+		else if (th->function.acp1 == (actionf_p1) T_PhasedLight)
+		{		// [RH] Phased lighting
+			phased_t *phased;
+
+			*save_p++ = tc_phased;
+			PADSAVEP();
+			phased = (phased_t *)save_p;
+			memcpy (phased, th, sizeof(*phased));
+			save_p += sizeof(*phased);
+			phased->sector = (sector_t *)(phased->sector - sectors);
+		}
+		else if (th->function.acp1 == (actionf_p1) T_Pillar)
+		{		// [RH] Pillar builders
+			pillar_t *pillar;
+
+			*save_p++ = tc_pillar;
+			PADSAVEP();
+			pillar = (pillar_t *)save_p;
+			memcpy (pillar, th, sizeof(*pillar));
+			save_p += sizeof(*pillar);
+			pillar->sector = (sector_t *)(pillar->sector - sectors);
+		}
+		else if (th->function.acp1 == (actionf_p1) T_Friction)
+		{		// phares 3/18/98: Friction effect thinkers
+			*save_p++ = tc_friction;
+			memcpy (save_p, th, sizeof(friction_t));
+			save_p += sizeof(friction_t);
+			continue;
+		}
+		else if (th->function.acp1 == (actionf_p1) T_Pusher)
+		{		// phares 3/22/98: Push/Pull effect thinkers
+			pusher_t *pusher;
+			*save_p++ = tc_pusher;
+			PADSAVEP();
+			pusher = (pusher_t *)save_p;
+			memcpy (save_p, th, sizeof(*pusher));
+			save_p += sizeof(*pusher);
+			pusher->source = (mobj_t *) pusher->source->thinker.prev;	// [RH] remember source
+			continue;
+		}
 	}
 
 	// add a terminating marker
-	*save_p++ = tc_endspecials; 
-
+	*save_p++ = tc_endspecials;
 }
 
 
@@ -512,7 +852,37 @@ void P_UnArchiveSpecials (void)
 	glow_t* 			glow;
 	fireflicker_t*		flick;
 		
-		
+	// [RH] read the active buttons
+	if (*save_p++) {
+		button_t *button, **buttonptr;
+		buttonptr = &buttonlist;
+		do {
+			button = Z_Malloc (sizeof(*button), PU_LEVEL, 0);
+			PADSAVEP();
+			memcpy (button, save_p, sizeof(*button));
+			button->line = (((int)button->line) == -1) ? NULL : &lines[(int)button->line];
+			button->soundorg = (mobj_t *)mobj_p[(size_t)(button->soundorg)];
+			*buttonptr = button;
+			buttonptr = &button->next;
+			save_p += sizeof(*button);
+		} while (*buttonptr);
+	}
+
+	// [RH] read the active quakes
+	if (*save_p++) {
+		quake_t *quake, **quakeptr;
+		quakeptr = &ActiveQuakes;
+		do {
+			quake = Z_Malloc (sizeof(*quake), PU_LEVEL, 0);
+			PADSAVEP();
+			memcpy (quake, save_p, sizeof(*quake));
+			*quakeptr = quake;
+			quake->quakespot = (mobj_t *)mobj_p[(size_t)(quake->quakespot)];
+			quakeptr = &quake->next;
+			save_p += sizeof(*quake);
+		} while (*quakeptr);
+	}
+
 	// read in saved thinkers
 	while (1)
 	{
@@ -639,19 +1009,87 @@ void P_UnArchiveSpecials (void)
 			  break;
 			}
 
-		  default:
-			I_Error ("P_UnarchiveSpecials:Unknown tclass %i "
-					 "in savegame",tclass);
-		}
-		
-	}
+		  case tc_glow2:		// [RH] Another style of glowing light
+			{
+			  glow2_t *glow2 = Z_Malloc (sizeof(*glow2), PU_LEVEL, NULL);
+			  PADSAVEP();
+			  memcpy (glow2, save_p, sizeof(*glow2));
+			  save_p += sizeof(*glow2);
+			  glow2->sector = &sectors[(int)glow2->sector];
+			  glow2->thinker.function.acp1 = (actionf_p1)T_Glow2;
+			  P_AddThinker (&glow2->thinker);
+			  break;
+			}
+			
+		  case tc_waggle:		// [RH] Waggling floors
+			{
+			  waggle_t *waggle = Z_Malloc (sizeof(*waggle), PU_LEVEL, NULL);
+			  PADSAVEP();
+			  memcpy (waggle, save_p, sizeof(*waggle));
+			  save_p += sizeof(*waggle);
+			  waggle->sector = &sectors[(int)waggle->sector];
+			  waggle->sector->floordata = waggle;
+			  waggle->thinker.function.acp1 = (actionf_p1)T_Waggle;
+			  P_AddThinker (&waggle->thinker);
+			  break;
+			}
 
+		  case tc_phased:		// [RH] Phased lighting
+			{
+			  phased_t *phased = Z_Malloc (sizeof(*phased), PU_LEVEL, NULL);
+			  PADSAVEP();
+			  memcpy (phased, save_p, sizeof(*phased));
+			  save_p += sizeof(*phased);
+			  phased->sector = &sectors[(int)phased->sector];
+			  phased->thinker.function.acp1 = (actionf_p1)T_PhasedLight;
+			  P_AddThinker (&phased->thinker);
+			  break;
+			}
+
+		  case tc_pillar:		// [RH] Pillar builders
+			{
+			  pillar_t *pillar = Z_Malloc (sizeof(*pillar), PU_LEVEL, NULL);
+			  PADSAVEP();
+			  memcpy (pillar, save_p, sizeof(*pillar));
+			  save_p += sizeof(*pillar);
+			  pillar->sector = &sectors[(int)pillar->sector];
+			  pillar->thinker.function.acp1 = (actionf_p1)T_Pillar;
+			  P_AddThinker (&pillar->thinker);
+			  break;
+			}
+
+		  case tc_friction:		// phares 3/18/98: new friction effect thinkers
+			{
+			  friction_t *friction = Z_Malloc (sizeof(friction_t), PU_LEVEL, NULL);
+			  memcpy (friction, save_p, sizeof(friction_t));
+			  save_p += sizeof(friction_t);
+			  friction->thinker.function.acp1 = (actionf_p1) T_Friction;
+			  P_AddThinker(&friction->thinker);
+			  break;
+			}
+
+		  case tc_pusher:		// phares 3/22/98: new Push/Pull effect thinkers
+			{
+			  pusher_t *pusher = Z_Malloc (sizeof(pusher_t), PU_LEVEL, NULL);
+			  PADSAVEP();
+			  memcpy (pusher, save_p, sizeof(pusher_t));
+			  save_p += sizeof(pusher_t);
+			  pusher->thinker.function.acp1 = (actionf_p1) T_Pusher;
+			  pusher->source = mobj_p[(size_t)pusher->source];	// [RH] remember source
+			  P_AddThinker (&pusher->thinker);
+			  break;
+			}
+
+		  default:
+			I_Error ("P_UnarchiveSpecials: Unknown tclass %i in snapshot", tclass);
+		}
+	}
 }
 
 // [RH] Save the state of the random number generator
 void P_ArchiveRNGState (void)
 {
-	PADSAVEP();
+	CheckSaveGame (sizeof(rng));
 	memcpy (save_p, &rng, sizeof(rng));
 	save_p += sizeof(rng);
 }
@@ -659,61 +1097,84 @@ void P_ArchiveRNGState (void)
 // [RH] Load the state of the random number generator
 void P_UnArchiveRNGState (void)
 {
-	PADSAVEP();
 	memcpy (&rng, save_p, sizeof(rng));
 	save_p += sizeof(rng);
 }
 
-// [RH] Save level local info
-void P_ArchiveLevelLocals (void)
+
+typedef enum
 {
-	PADSAVEP();
-	memcpy (save_p, &level, sizeof(level));
-	save_p += sizeof(level);
+	tc_script = 98,
+	tc_scrend
+};
 
-	if (gamemode != commercial) {
-		// Also save list of visited levels
-		int epsd, map;
-		char name[8] = "E M ";
-		level_info_t *info;
+// [RH] Store state of all running scripts
+void P_ArchiveScripts (void)
+{
+	script_t *scr = Scripts, *script;
 
-		for (epsd = '1'; epsd <= '3'; epsd++) {
-			for (map = '1'; map <= '9'; map++) {
-				name[1] = epsd;
-				name[3] = map;
-				if ( (info = FindLevelInfo (name)) ) {
-					if (info->level_name && info->flags & LEVEL_VISITED) {
-						memcpy (save_p, info->mapname, 8);
-						save_p += 8;
-					}
-				}
-			}
-		}
+	while (scr) {
+		CheckSaveGame (sizeof(*scr));
+		*save_p++ = tc_script;
+		PADSAVEP();
+
+		script = (script_t *)save_p;
+		memcpy (script, scr, sizeof(*script));
+		save_p += sizeof(*script);
+		script->pc = (int *)(script->pc - (int *)level.behavior);
+		script->activationline = (line_t *)
+			(script->activationline ? script->activationline - lines : -1);
+		if (script->activator)
+			script->activator = script->activator->thinker.function.acp1 ==
+				(actionf_p1) P_MobjThinker ?
+				(mobj_t *) script->activator->thinker.prev : NULL;
+		if (RunningScripts[script->script] != scr)
+			script->script += 2000;	// ACS_ExecuteAlways script
+		scr = script->next;
 	}
-	*save_p++ = 0;
+	*save_p++ = tc_scrend;
+
+	// killough 2/14/98: restore prev pointers
+	{
+		thinker_t *prev = &thinkercap, *th;
+		for (th = thinkercap.next ; th != &thinkercap ; prev=th, th=th->next)
+			th->prev = prev;
+	}
 }
 
-// [RH] Restore the level local info
-void P_UnArchiveLevelLocals (void)
+// [RH] Restore state of all running scripts
+void P_UnArchiveScripts (void)
 {
-	level_info_t *info = level.info;
+	script_t **scripttail = &Scripts, *scriptprev = NULL;
 
-	PADSAVEP();
-	memcpy (&level, save_p, sizeof(level));
-	save_p += sizeof(level);
-	level.info = info;
+	P_ClearScripts ();
+	Z_FreeTags (PU_LEVACS, PU_LEVACS);
 
-	while (*save_p) {
-		level_info_t *info;
+	while (*save_p++ == tc_script) {
+		script_t *script = Z_Malloc (sizeof(*script), PU_LEVACS, NULL);
+		PADSAVEP();
+		memcpy (script, save_p, sizeof(*script));
+		save_p += sizeof(*script);
+		script->pc = ((int)script->pc) + (int *)level.behavior;
+		script->activationline = (((int)script->activationline) == -1) ? NULL :
+								 &lines[(int)script->activationline];
+		script->activator = mobj_p[(size_t)script->activator];
+		if (script->script < 2000)
+			RunningScripts[script->script] = script;
+		else
+			script->script -= 2000;
 
-		if ( (info = FindLevelInfo (save_p)) ) {
-			if (info->level_name)
-				info->flags |= LEVEL_VISITED;
-		}
-		save_p += 8;
+		*scripttail = script;
+		scripttail = &script->next;
+		script->prev = scriptprev;
+		scriptprev = script;
 	}
-	save_p++;
 
-	// In case testfade was used, we need to rebuild the colormaps
-	RefreshPalettes();
+	*scripttail = NULL;
+	LastScript = scriptprev;
+
+	Z_Free (mobj_p);	// free translation table
+
+	if (*(save_p - 1) != tc_scrend)
+		I_Error ("Unknown sclass %d in snapshot", *(save_p - 1));
 }

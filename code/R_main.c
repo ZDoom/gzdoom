@@ -50,7 +50,7 @@ cvar_t *r_viewsize;
 extern int dmflags;
 
 // Fineangles in the SCREENWIDTH wide window.
-#define FIELDOFVIEW 	2048	
+#define FIELDOFVIEW 	2048
 
 
 
@@ -59,9 +59,10 @@ int 					viewangleoffset;
 // increment every time a check is made
 int 					validcount = 1; 		
 
+lighttable_t*			basecolormap;	// [RH] colormap currently drawing with
 
 lighttable_t*			fixedcolormap;
-extern lighttable_t**	walllights;
+extern int*				walllights;		// [RH] changed from lighttable_t** to int*
 
 int 					centerx;
 int 					centery;
@@ -89,7 +90,7 @@ angle_t 				viewangle;
 fixed_t 				viewcos;
 fixed_t 				viewsin;
 
-player_t*				viewplayer;
+mobj_t*					camera;		// [RH] camera to draw from. doesn't have to be a player
 
 //
 // precalculated math tables
@@ -117,13 +118,15 @@ angle_t 				*xtoviewangle;
 // fixed_t				finesine[5*FINEANGLES/4];
 fixed_t*				finecosine = &finesine[FINEANGLES/4];
 
+// [RH] Changed these from lighttable_t* to int.
+int						scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
+int						scalelightfixed[MAXLIGHTSCALE];
+int						zlight[LIGHTLEVELS][MAXLIGHTZ];
 
-lighttable_t*			scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
-lighttable_t*			scalelightfixed[MAXLIGHTSCALE];
-lighttable_t*			zlight[LIGHTLEVELS][MAXLIGHTZ];
+int						lightscalexmul;	// [RH] used to keep hires modes dark enough
+int						lightscaleymul;
 
-// bumped light from gun blasts
-int 					extralight;
+int 					extralight;		// bumped light from gun blasts
 
 extern BOOL				DrawNewHUD;		// [RH] Defined in d_main.c.
 
@@ -144,11 +147,7 @@ void (*spanfunc) (void);
 // Expand a given bbox
 // so that it encloses a given point.
 //
-void
-R_AddPointToBox
-( int			x,
-  int			y,
-  fixed_t*		box )
+void R_AddPointToBox (int x, int y, fixed_t *box)
 {
 	if (x< box[BOXLEFT])
 		box[BOXLEFT] = x;
@@ -163,123 +162,87 @@ R_AddPointToBox
 
 //
 // R_PointOnSide
-// Traverse BSP (sub) tree,
-//	check point against partition plane.
+// Traverse BSP (sub) tree, check point against partition plane.
 // Returns side 0 (front) or 1 (back).
+// [RH] Re-arranged slightly.
 //
-int
-R_PointOnSide
-( fixed_t		x,
-  fixed_t		y,
-  node_t*		node )
+int R_PointOnSide (fixed_t x, fixed_t y, node_t *node)
 {
-	fixed_t 	dx;
-	fixed_t 	dy;
-	fixed_t 	left;
-	fixed_t 	right;
-		
 	if (!node->dx)
 	{
-		if (x <= node->x)
-			return node->dy > 0;
-		
-		return node->dy < 0;
+		return (x <= node->x) ? (node->dy > 0) : (node->dy < 0);
 	}
-	if (!node->dy)
+	else if (!node->dy)
 	{
-		if (y <= node->y)
-			return node->dx < 0;
-		
-		return node->dx > 0;
+		return (y <= node->y) ? (node->dx < 0) : (node->dx > 0);
 	}
-		
-	dx = (x - node->x);
-	dy = (y - node->y);
-		
-	// Try to quickly decide by looking at sign bits.
-	if ( (node->dy ^ node->dx ^ dx ^ dy)&0x80000000 )
+	else
 	{
-		if	( (node->dy ^ dx) & 0x80000000 )
+		fixed_t dx = (x - node->x);
+		fixed_t dy = (y - node->y);
+		
+		// Try to quickly decide by looking at sign bits.
+		if ( (node->dy ^ node->dx ^ dx ^ dy)&0x80000000 )
 		{
-			// (left is negative)
-			return 1;
+			if	( (node->dy ^ dx) & 0x80000000 )
+			{
+				// (left is negative)
+				return 1;
+			}
+			return 0;
 		}
-		return 0;
-	}
 
-	left = FixedMul ( node->dy>>FRACBITS , dx );
-	right = FixedMul ( dy , node->dx>>FRACBITS );
-		
-	if (right < left)
-	{
-		// front side
-		return 0;
+		if (FixedMul (dy, node->dx>>FRACBITS) < FixedMul (node->dy>>FRACBITS, dx))
+		{
+			// front side
+			return 0;
+		}
+		// back side
+		return 1;
 	}
-	// back side
-	return 1;					
 }
 
-
-int
-R_PointOnSegSide
-( fixed_t		x,
-  fixed_t		y,
-  seg_t*		line )
+// [RH] Rearranged this slightly, too.
+int R_PointOnSegSide (fixed_t x, fixed_t y, seg_t *line)
 {
-	fixed_t 	lx;
-	fixed_t 	ly;
-	fixed_t 	ldx;
-	fixed_t 	ldy;
-	fixed_t 	dx;
-	fixed_t 	dy;
-	fixed_t 	left;
-	fixed_t 	right;
-		
-	lx = line->v1->x;
-	ly = line->v1->y;
-		
-	ldx = line->v2->x - lx;
-	ldy = line->v2->y - ly;
-		
+	fixed_t lx = line->v1->x;
+	fixed_t ly = line->v1->y;
+
+	fixed_t ldx = line->v2->x - lx;
+	fixed_t ldy = line->v2->y - ly;
+
 	if (!ldx)
 	{
-		if (x <= lx)
-			return ldy > 0;
-		
-		return ldy < 0;
+		return (x <= lx) ? (ldy > 0) : (ldy < 0);
 	}
-	if (!ldy)
+	else if (!ldy)
 	{
-		if (y <= ly)
-			return ldx < 0;
-		
-		return ldx > 0;
+		return (y <= ly) ? (ldx < 0) : (ldx > 0);
 	}
-		
-	dx = (x - lx);
-	dy = (y - ly);
-		
-	// Try to quickly decide by looking at sign bits.
-	if ( (ldy ^ ldx ^ dx ^ dy)&0x80000000 )
+	else
 	{
-		if	( (ldy ^ dx) & 0x80000000 )
-		{
-			// (left is negative)
-			return 1;
-		}
-		return 0;
-	}
+		fixed_t dx = (x - lx);
+		fixed_t dy = (y - ly);
 
-	left = FixedMul ( ldy>>FRACBITS , dx );
-	right = FixedMul ( dy , ldx>>FRACBITS );
-		
-	if (right < left)
-	{
-		// front side
-		return 0;
+		// Try to quickly decide by looking at sign bits.
+		if ( (ldy ^ ldx ^ dx ^ dy)&0x80000000 )
+		{
+			if	( (ldy ^ dx) & 0x80000000 )
+			{
+				// (left is negative)
+				return 1;
+			}
+			return 0;
+		}
+
+		if (FixedMul (dy, ldx>>FRACBITS) < FixedMul (ldy>>FRACBITS, dx))
+		{
+			// front side
+			return 0;
+		}
+		// back side
+		return 1;
 	}
-	// back side
-	return 1;					
 }
 
 
@@ -293,10 +256,6 @@ R_PointOnSegSide
 //	tantoangle[] table.
 
 //
-
-
-
-
 angle_t R_PointToAngle (fixed_t x, fixed_t y)
 {		
 	x -= viewx;
@@ -379,12 +338,7 @@ angle_t R_PointToAngle (fixed_t x, fixed_t y)
 }
 
 
-angle_t
-R_PointToAngle2
-( fixed_t		x1,
-  fixed_t		y1,
-  fixed_t		x2,
-  fixed_t		y2 )
+angle_t R_PointToAngle2 (fixed_t x1, fixed_t y1, fixed_t x2, fixed_t y2)
 {		
 	viewx = x1;
 	viewy = y1;
@@ -398,7 +352,10 @@ R_PointToAngle2
 //
 void R_InitPointToAngle (void)
 {
-	// UNUSED - now getting from tables.c [or are we? -RH]
+	// UNUSED - now getting from tables.c
+	// [RH] Actually, if you define CALC_TABLES, the game will use the FPU
+	//		to calculate these tables at runtime so that a little space
+	//		can be saved on disk.
 #ifdef CALC_TABLES
 	double		i, f;
 //
@@ -480,7 +437,9 @@ fixed_t R_ScaleFromGlobalAngle (angle_t visangle)
 //
 void R_InitTables (void)
 {
-	// UNUSED: now getting from tables.c [or are we? -RH]
+	// UNUSED: now getting from tables.c
+	// [RH] As with R_InitPointToAngle, you can #define CALC_TABLES
+	//		to generate these tables at runtime.
 #ifdef CALC_TABLES
 	int 		i;
 	double		a;
@@ -512,10 +471,10 @@ void R_InitTables (void)
 //
 void R_InitTextureMapping (void)
 {
-	int 				i;
-	int 				x;
-	int 				t;
-	fixed_t 			focallength;
+	int 	i;
+	int 	x;
+	int 	t;
+	fixed_t focallength;
 	
 	// Use tangent table to generate viewangletox:
 	//	viewangletox will give the next greatest x
@@ -526,7 +485,7 @@ void R_InitTextureMapping (void)
 	focallength = FixedDiv (centerxfrac,
 							finetangent[FINEANGLES/4+FIELDOFVIEW/2] );
 		
-	for (i=0 ; i<FINEANGLES/2 ; i++)
+	for (i = 0; i < FINEANGLES/2; i++)
 	{
 		if (finetangent[i] > FRACUNIT*2)
 			t = -1;
@@ -548,7 +507,7 @@ void R_InitTextureMapping (void)
 	// Scan viewangletox[] to generate xtoviewangle[]:
 	//	xtoviewangle will give the smallest view angle
 	//	that maps to x. 
-	for (x=0;x<=viewwidth;x++)
+	for (x = 0; x <= viewwidth; x++)
 	{
 		i = 0;
 		while (viewangletox[i]>x)
@@ -557,7 +516,7 @@ void R_InitTextureMapping (void)
 	}
 	
 	// Take out the fencepost cases from viewangletox.
-	for (i=0 ; i<FINEANGLES/2 ; i++)
+	for (i = 0; i < FINEANGLES/2; i++)
 	{
 		t = FixedMul (finetangent[i], focallength);
 		t = centerx - t;
@@ -577,37 +536,43 @@ void R_InitTextureMapping (void)
 // R_InitLightTables
 // Only inits the zlight table,
 //	because the scalelight table changes with view size.
+// [RH] This now setups indices into a colormap rather than pointers into the
+//		colormap, because the colormap can vary by sector, but the indices
+//		into it don't.
 //
-#define DISTMAP 		2
+#define DISTMAP 2
 
 void R_InitLightTables (void)
 {
-	int 		i;
-	int 		j;
-	int 		level;
-	int 		startmap;		
-	int 		scale;
-	
+	int i;
+	int j;
+	int level;
+	int startmap;		
+	int scale;
+	int lightmapsize = 8 + (screens[0].is8bit ? 0 : 2);
+
 	// Calculate the light levels to use
 	//	for each level / distance combination.
-	for (i=0 ; i< LIGHTLEVELS ; i++)
+	for (i = 0; i < LIGHTLEVELS; i++)
 	{
 		startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
 		for (j=0 ; j<MAXLIGHTZ ; j++)
 		{
-			scale = FixedDiv ((screens[0].width/2*FRACUNIT), (j+1)<<LIGHTZSHIFT);
-			scale >>= LIGHTSCALESHIFT;
+			scale = FixedDiv ((160*FRACUNIT), (j+1)<<LIGHTZSHIFT);
+			scale >>= LIGHTSCALESHIFT-LIGHTSCALEMULBITS;
 			level = startmap - scale/DISTMAP;
 			
 			if (level < 0)
 				level = 0;
-
-			if (level >= NUMCOLORMAPS)
+			else if (level >= NUMCOLORMAPS)
 				level = NUMCOLORMAPS-1;
 
-			zlight[i][j] = DefaultPalette->maps.colormaps + level*256;
+			zlight[i][j] = level << lightmapsize;
 		}
 	}
+
+	lightscalexmul = 320 * (1<<LIGHTSCALEMULBITS) / screens[0].width;
+	lightscaleymul = 200 * (1<<LIGHTSCALEMULBITS) / screens[0].height;
 }
 
 
@@ -618,9 +583,9 @@ void R_InitLightTables (void)
 //	because it might be in the middle of a refresh.
 // The change will take effect next refresh.
 //
-BOOL	 		setsizeneeded;
-int 			setblocks;
-int				setdetail = -1;
+BOOL setsizeneeded;
+int	 setblocks;
+int	 setdetail = -1;
 
 
 void R_SetViewSize (int blocks)
@@ -667,6 +632,7 @@ void R_ExecuteSetViewSize (void)
 	int 		startmap;
 	int			aspectx;
 	int			virtheight, virtwidth;
+	int			lightmapsize = 8 + (screens[0].is8bit ? 0 : 2);
 
 	setsizeneeded = false;
 
@@ -685,7 +651,8 @@ void R_ExecuteSetViewSize (void)
 		realviewwidth = screens[0].width;
 		realviewheight = ST_Y;
 		freelookviewheight = screens[0].height;
-	} else
+	}
+	else
 	{
 		realviewwidth = ((setblocks*screens[0].width)/10) & (~(15>>(screens[0].is8bit ? 0 : 2)));
 		realviewheight = ((setblocks*ST_Y)/10)&~7;
@@ -717,7 +684,7 @@ void R_ExecuteSetViewSize (void)
 	virtwidth = screens[0].width >> detailxshift;
 	virtheight = screens[0].height >> detailyshift;
 
-	// [RH] aspect ratio stuff (based Doom Legacy's)
+	// [RH] aspect ratio stuff (based on Doom Legacy's)
 	aspectx = ((virtheight * centerx * 320) / 200) / virtwidth * FRACUNIT;
 
 	projection = centerxfrac;
@@ -768,8 +735,8 @@ void R_ExecuteSetViewSize (void)
 		distscale[i] = FixedDiv (FRACUNIT,cosadj);
 	}
 	
-	// Calculate the light levels to use
-	//	for each level / scale combination.
+	// Calculate the light levels to use for each level / scale combination.
+	// [RH] This just stores indices into the colormap rather than pointers into it.
 	for (i=0 ; i< LIGHTLEVELS ; i++)
 	{
 		startmap = ((LIGHTLEVELS-1-i)*2)*NUMCOLORMAPS/LIGHTLEVELS;
@@ -779,13 +746,15 @@ void R_ExecuteSetViewSize (void)
 			
 			if (level < 0)
 				level = 0;
-
-			if (level >= NUMCOLORMAPS)
+			else if (level >= NUMCOLORMAPS)
 				level = NUMCOLORMAPS-1;
 
-			scalelight[i][j] = DefaultPalette->maps.colormaps + level*256;
+			scalelight[i][j] = level << lightmapsize;
 		}
 	}
+
+	// [RH] Initialize z-light tables here
+	R_InitLightTables ();
 }
 
 
@@ -820,29 +789,14 @@ void R_Init (void)
 	R_DetailCallback (r_detail);
 
 	R_InitData ();
-	Printf (".");
-//	Printf ("\nR_InitData");
 	R_InitPointToAngle ();
-	Printf (".");
-//	Printf ("\nR_InitPointToAngle");
 	R_InitTables ();
 	// viewwidth / viewheight are set by the defaults
-	Printf (".");
-//	Printf ("\nR_InitTables");
 
 	R_SetViewSize ((int)screenblocks->value);
 	R_InitPlanes ();
-	Printf (".");
-//	Printf ("\nR_InitPlanes");
 	R_InitLightTables ();
-	Printf (".");
-//	Printf ("\nR_InitLightTables");
-//	R_InitSkyMap ();
-	Printf (".");
-//	Printf ("\nR_InitSkyMap");
 	R_InitTranslationTables ();
-	Printf (".");
-//	Printf ("\nR_InitTranslationsTables");
 		
 	framecount = 0;
 }
@@ -851,10 +805,7 @@ void R_Init (void)
 //
 // R_PointInSubsector
 //
-subsector_t*
-R_PointInSubsector
-( fixed_t		x,
-  fixed_t		y )
+subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
 {
 	node_t* 	node;
 	int 		side;
@@ -881,38 +832,79 @@ R_PointInSubsector
 //
 // R_SetupFrame
 //
-void R_SetupFrame (player_t* player)
+extern dyncolormap_t NormalLight;
+
+void R_SetupFrame (player_t *player)
 {				
-	int i;
+	static unsigned int oldblend = ~0;
+	unsigned int newblend;
 	int dy;
 	
-	viewplayer = player;
-	viewx = player->mo->x;
-	viewy = player->mo->y;
-	viewangle = player->mo->angle + viewangleoffset;
-	extralight = player->extralight;
-
-	viewz = player->viewz;
+	camera = player->camera;	// [RH] Use camera instead of viewplayer
+	viewx = camera->x;
+	viewy = camera->y;
+	viewangle = camera->angle + viewangleoffset;
+	extralight = camera == player->mo ? player->extralight : 0;
+	viewz = camera->player ? camera->player->viewz : camera->z;
 
 	viewsin = finesine[viewangle>>ANGLETOFINESHIFT];
 	viewcos = finecosine[viewangle>>ANGLETOFINESHIFT];
 		
-	if (player->fixedcolormap)
+	// killough 3/20/98, 4/4/98: select colormap based on player status
+	// [RH] Can also select a blend
+
+	if (camera->subsector->sector->heightsec != -1)
 	{
-		fixedcolormap =
-			DefaultPalette->maps.colormaps
-			+ player->fixedcolormap*256*sizeof(lighttable_t);
+		const sector_t *s = camera->subsector->sector->heightsec + sectors;
+		newblend = viewz < s->floorheight ? s->bottommap : viewz > s->ceilingheight ?
+				   s->topmap : s->midmap;
+		if (!screens[0].is8bit)
+			newblend = R_BlendForColormap (newblend);
+		else if (APART(newblend) == 0 && newblend >= numfakecmaps)
+			newblend = 0;
+	} else {
+		newblend = 0;
+	}
+
+	// [RH] Don't override testblend unless entering a sector with a
+	//		blend different from the previous sector's. Same goes with
+	//		NormalLight's maps pointer.
+	if (oldblend != newblend) {
+		oldblend = newblend;
+		if (APART(newblend)) {
+			BaseBlendR = RPART(newblend);
+			BaseBlendG = GPART(newblend);
+			BaseBlendB = BPART(newblend);
+			BaseBlendA = APART(newblend) / 255.0f;
+			NormalLight.maps = realcolormaps;
+		} else {
+			NormalLight.maps = realcolormaps + (NUMCOLORMAPS+1)*256*newblend;
+			BaseBlendR = BaseBlendG = BaseBlendB = 0;
+			BaseBlendA = 0.0f;
+		}
+	}
+
+	if (camera == player->mo && player->fixedcolormap)
+	{
+		if (screens[0].is8bit)
+			fixedcolormap =
+				DefaultPalette->maps.colormaps
+				+ player->fixedcolormap*256;
+		else
+			fixedcolormap = (lighttable_t *)
+				(DefaultPalette->maps.shades
+				+ player->fixedcolormap*256);
 		
 		walllights = scalelightfixed;
 
-		for (i=0 ; i<MAXLIGHTSCALE ; i++)
-			scalelightfixed[i] = fixedcolormap;
+		// [RH] scalelightfixed is an int* now, not a lighttable_t**
+		memset (scalelightfixed, 0, MAXLIGHTSCALE*sizeof(*scalelightfixed));
 	}
 	else
-		fixedcolormap = 0;
+		fixedcolormap = NULL;
 
 	// [RH] freelook stuff
-	dy = FixedMul (freelookviewheight << (FRACBITS/2), player->mo->pitch) >> 9;
+	dy = FixedMul (freelookviewheight << (FRACBITS/2), camera->pitch) >> 9;
 	yslope = yslopetab + (freelookviewheight >> 1) + dy + freediff;
 	centery = (viewheight >> 1) - dy;
 	centeryfrac = centery << FRACBITS;
@@ -927,8 +919,16 @@ void R_SetupFrame (player_t* player)
 //
 // R_RenderView
 //
-void R_RenderPlayerView (player_t* player)
-{		
+void R_RenderPlayerView (player_t *player)
+{
+	angle_t an;
+
+	// [RH] Shift view for earthquakes
+	if (player->xviewshift) {
+		an = (player->mo->angle-ANG90) >> ANGLETOFINESHIFT;
+		player->mo->x += finecosine[an]*player->xviewshift;
+		player->mo->y += finesine[an]*player->xviewshift;
+	}
 	R_SetupFrame (player);
 
 	// Clear buffers.
@@ -958,6 +958,12 @@ void R_RenderPlayerView (player_t* player)
 
 	// [RH] Apply detail mode doubling
 	R_DetailDouble ();
+
+	// [RH] Undo view shift
+	if (player->xviewshift) {
+		player->mo->x -= finecosine[an]*player->xviewshift;
+		player->mo->y -= finesine[an]*player->xviewshift;
+	}
 }
 
 // [RH] Do all multires stuff. Called from V_SetResolution()

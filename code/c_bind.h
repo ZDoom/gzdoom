@@ -2,9 +2,10 @@
 #define __C_BINDINGS_H__
 
 #include "doomtype.h"
+#include "d_event.h"
 #include <stdio.h>
 
-BOOL C_DoKey (int key, BOOL up);
+BOOL C_DoKey (event_t *ev);
 void C_ArchiveBindings (FILE *f);
 
 // Stuff used by the customize controls menu

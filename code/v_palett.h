@@ -56,6 +56,15 @@ typedef struct palette_s palette_t;
 #define LAP_TEXTURE			(3)
 
 
+struct dyncolormap_s {
+	byte *maps;
+	unsigned int color;
+	unsigned int fade;
+	struct dyncolormap_s *next;
+};
+typedef struct dyncolormap_s dyncolormap_t;
+
+
 // InitPalettes()
 //	input: name:  the name of the default palette lump
 //				  (normally GAMEPAL)
@@ -150,6 +159,7 @@ void V_ForceBlend (int blendr, int blendg, int blendb, int blenda);
 void RGBtoHSV (float r, float g, float b, float *h, float *s, float *v);
 void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v);
 
+dyncolormap_t *GetSpecialLights (int lr, int lg, int lb, int fr, int fg, int fb);
 
 struct cvar_s;
 

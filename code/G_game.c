@@ -24,13 +24,16 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stddef.h>
 
+#include "version.h"
+#include "minilzo.h"
+#include "m_alloc.h"
 #include "doomdef.h" 
 #include "doomstat.h"
-
 #include "d_proto.h"
 #include "d_netinf.h"
-
 #include "z_zone.h"
 #include "f_finale.h"
 #include "m_argv.h"
@@ -38,42 +41,26 @@
 #include "m_menu.h"
 #include "m_random.h"
 #include "i_system.h"
-
 #include "p_setup.h"
 #include "p_saveg.h"
 #include "p_tick.h"
-
 #include "d_main.h"
-
 #include "wi_stuff.h"
 #include "hu_stuff.h"
 #include "st_stuff.h"
 #include "am_map.h"
-
 #include "c_consol.h"
 #include "c_cvars.h"
 #include "c_bind.h"
 #include "c_dispch.h"
-
-// Needs access to LFB.
 #include "v_video.h"
-
 #include "w_wad.h"
-
 #include "p_local.h" 
-
 #include "s_sound.h"
-
-// Data.
 #include "dstrings.h"
-#include "sounds.h"
-
-// SKY handling - still the wrong place.
 #include "r_data.h"
 #include "r_sky.h"
-
 #include "r_draw.h"
-
 #include "g_game.h"
 #include "g_level.h"
 
@@ -81,6 +68,9 @@
 #define SAVEGAMESIZE	0x2c000
 #define SAVESTRINGSIZE	24
 
+#define TURN180_TICKS	9				// [RH] # of ticks to complete a turn180
+
+size_t	savegamesize = SAVEGAMESIZE;	// killough	// [RH] made global
 
 BOOL	G_CheckDemoStatus (void); 
 void	G_ReadDemoTiccmd (ticcmd_t* cmd, int player); 
@@ -89,7 +79,6 @@ void	G_PlayerReborn (int player);
  
 void	G_DoReborn (int playernum); 
  
-void	G_DoLoadLevel (void); 
 void	G_DoNewGame (void); 
 void	G_DoLoadGame (void); 
 void	G_DoPlayDemo (void); 
@@ -116,7 +105,8 @@ BOOL 			noblit; 				// for comparative timing purposes
  
 BOOL	 		viewactive; 
  
-cvar_t			*deathmatch; 			// only if started as net death 
+cvar_t			*deathmatch; 			// deathmatch?
+cvar_t			*teamplay;				// [RH] teamplay flag
 BOOL 			netgame;				// only true if packets are broadcast 
 BOOL 			playeringame[MAXPLAYERS]; 
 player_t		players[MAXPLAYERS]; 
@@ -131,7 +121,7 @@ BOOL 			demoplayback;
 BOOL 			netdemo; 
 byte*			demobuffer;
 byte*			demo_p;
-byte*			demoend;
+size_t			maxdemosize;
 byte*			zdemformend;			// end of FORM ZDEM chunk
 byte*			zdembodyend;			// end of ZDEM BODY chunk
 BOOL 			singledemo; 			// quit after playing a demo from cmdline 
@@ -171,7 +161,10 @@ int 			turnheld;								// for accelerative turning
 int 			mousex;
 int 			mousey; 		
 
-// joystick values are repeated 
+// joystick values are repeated
+// [RH] now, if the joystick is enabled, it will generate an event every tick
+//		so the values here are reset to zero after each tic build (in case
+//		use_joystick gets set to 0 when the joystick is off center)
 int 			joyxmove;
 int 			joyymove;
  
@@ -180,8 +173,6 @@ char			savedescription[32];
 
 // [RH] Name of screenshot file to generate (usually NULL)
 char			*shotfile;
-
-#define BODYQUESIZE 	32
 
 mobj_t* 		bodyque[BODYQUESIZE]; 
 int 			bodyqueslot; 
@@ -227,14 +218,86 @@ void Cmd_Pause (player_t *plyr, int argc, char **argv)
 	sendpause = true;
 }
 
+static int turntick;
+
+void Cmd_Turn180 (player_t *plyr, int argc, char **argv)
+{
+	turntick = TURN180_TICKS;
+}
+
+//
+// [RH] WeapNext and WeapPrev commands
+//
+
+static const char *weaponnames[] = {
+	"Fist",
+	"Pistol",
+	"Shotgun",
+	"Chaingun",
+	"Rocket Launcher",
+	"Plasma Gun",
+	"BFG9000",
+	"Chainsaw",
+	"Super Shotgun",
+	"Chainsaw"
+};
+
+void Cmd_WeapNext (player_t *plyr, int argc, char **argv)
+{
+	gitem_t *item = FindItem (weaponnames[plyr->readyweapon]);
+	int selected_weapon;
+	int i, index;
+
+	if (!item)
+		return;
+
+	selected_weapon = ITEM_INDEX(item);
+
+	for (i = 1; i <= num_items; i++) {
+		index = (selected_weapon + i) % num_items;
+		if (!(itemlist[index].flags & IT_WEAPON))
+			continue;
+		if (!plyr->weaponowned[itemlist[index].offset])
+			continue;
+		if (!plyr->ammo[weaponinfo[itemlist[index].offset].ammo])
+			continue;
+		Impulse = itemlist[index].offset + 50;
+		return;
+	}
+}
+
+void Cmd_WeapPrev (player_t *plyr, int argc, char **argv)
+{
+	gitem_t *item = FindItem (weaponnames[plyr->readyweapon]);
+	int selected_weapon;
+	int i, index;
+
+	if (!item)
+		return;
+
+	selected_weapon = ITEM_INDEX(item);
+
+	for (i = 1; i <= num_items; i++) {
+		index = (selected_weapon + num_items - i) % num_items;
+		if (!(itemlist[index].flags & IT_WEAPON))
+			continue;
+		if (!plyr->weaponowned[itemlist[index].offset])
+			continue;
+		if (!plyr->ammo[weaponinfo[itemlist[index].offset].ammo])
+			continue;
+		Impulse = itemlist[index].offset + 50;
+		return;
+	}
+}
+
 //
 // G_BuildTiccmd
 // Builds a ticcmd from all of the available inputs
-// or reads it from the demo buffer. 
-// If recording a demo, write it out 
-// 
-void G_BuildTiccmd (ticcmd_t* cmd) 
-{ 
+// or reads it from the demo buffer.
+// If recording a demo, write it out
+//
+void G_BuildTiccmd (ticcmd_t *cmd)
+{
 	BOOL 		strafe;
 	int 		speed;
 	int 		tspeed; 
@@ -242,66 +305,53 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	int 		side;
 	int			look;
 	int			fly;
-	
+
 	ticcmd_t*	base;
 
 	base = I_BaseTiccmd (); 			// empty, or external driver
-	memcpy (cmd,base,sizeof(*cmd)); 
-		
-	cmd->consistancy = 
-		consistancy[consoleplayer][maketic%BACKUPTICS]; 
+	memcpy (cmd,base,sizeof(*cmd));
 
- 
+	cmd->consistancy = consistancy[consoleplayer][maketic%BACKUPTICS];
+
 	strafe = Actions & ACTION_STRAFE;
 	speed = ((Actions & ACTION_SPEED) || (cl_run->value)) ? 1 : 0;
- 
-	forward = side = look = fly = 0;
-	
-	// use two stage accelerative turning
-	// on the keyboard and joystick
-	if (joyxmove < 0
-		|| joyxmove > 0  
-		|| (Actions & ACTION_LEFT)
-		|| (Actions & ACTION_RIGHT))
-		turnheld += ticdup; 
-	else 
-		turnheld = 0; 
 
-	if (turnheld < SLOWTURNTICS) 
-		tspeed = 2; 			// slow turn 
-	else 
+	forward = side = look = fly = 0;
+
+	// [RH] only use two stage accelerative turning on the keyboard
+	//		and not the joystick, since we treat the joystick as
+	//		the analog device it is.
+	if ((Actions & ACTION_LEFT) || (Actions & ACTION_RIGHT))
+		turnheld += ticdup;
+	else
+		turnheld = 0;
+
+	if (turnheld < SLOWTURNTICS)
+		tspeed = 2; 			// slow turn
+	else
 		tspeed = speed;
 	
 	// let movement keys cancel each other out
-	if (strafe) 
-	{ 
-		if (Actions & ACTION_RIGHT) 
+	if (strafe)
+	{
+		if (Actions & ACTION_RIGHT)
 		{
 			// fprintf(stderr, "strafe right\n");
-			side += sidemove[speed]; 
+			side += sidemove[speed];
 		}
-		if (Actions & ACTION_LEFT) 
+		if (Actions & ACTION_LEFT)
 		{
 			//	fprintf(stderr, "strafe left\n");
-			side -= sidemove[speed]; 
+			side -= sidemove[speed];
 		}
-		if (joyxmove > 0) 
-			side += sidemove[speed]; 
-		if (joyxmove < 0) 
-			side -= sidemove[speed]; 
- 
-	} 
-	else 
-	{ 
-		if (Actions & ACTION_RIGHT) 
-			cmd->ucmd.yaw -= angleturn[tspeed]; 
-		if (Actions & ACTION_LEFT) 
-			cmd->ucmd.yaw += angleturn[tspeed]; 
-		if (joyxmove > 0) 
-			cmd->ucmd.yaw -= angleturn[tspeed]; 
-		if (joyxmove < 0) 
-			cmd->ucmd.yaw += angleturn[tspeed]; 
-	} 
+	}
+	else
+	{
+		if (Actions & ACTION_RIGHT)
+			cmd->ucmd.yaw -= angleturn[tspeed];
+		if (Actions & ACTION_LEFT)
+			cmd->ucmd.yaw += angleturn[tspeed];
+	}
 
 	if (Actions & ACTION_LOOKUP)
 		look += lookspeed[speed];
@@ -325,30 +375,45 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 			forward -= forwardmove[speed];
 	}
 
-	if (joyymove < 0) 
-		forward += forwardmove[speed]; 
-	if (joyymove > 0) 
-		forward -= forwardmove[speed]; 
-	if (Actions & ACTION_MOVERIGHT) 
-		side += sidemove[speed]; 
-	if (Actions & ACTION_MOVELEFT) 
+	if (Actions & ACTION_MOVERIGHT)
+		side += sidemove[speed];
+	if (Actions & ACTION_MOVELEFT)
 		side -= sidemove[speed];
 
 	// buttons
-	if (Actions & ACTION_ATTACK) 
-		cmd->ucmd.buttons |= BT_ATTACK; 
- 
-	if (Actions & ACTION_USE) 
+	if (Actions & ACTION_ATTACK)
+		cmd->ucmd.buttons |= BT_ATTACK;
+
+	if (Actions & ACTION_USE)
 		cmd->ucmd.buttons |= BT_USE;
 
 	if (Actions & ACTION_JUMP)
 		cmd->ucmd.buttons |= BT_JUMP;
 
-	// chainsaw overrides 
-	if (Impulse >= 1 && Impulse <= NUMWEAPONS-1) {
+	// [RH] Handle impulses. If they are between 1 and 7,
+	//		they get sent as weapon change events.
+	if (Impulse >= 1 && Impulse <= 7) {
 		cmd->ucmd.buttons |= BT_CHANGE;
 		cmd->ucmd.buttons |= (Impulse - 1) << BT_WEAPONSHIFT;
-		Impulse = 0;
+	} else {
+		cmd->ucmd.impulse = Impulse;
+	}
+	Impulse = 0;
+
+	// [RH] Scale joystick moves to full range of allowed speeds
+	if (strafe || lookstrafe->value)
+		side += (MAXPLMOVE * joyxmove) / 256;
+	else 
+		cmd->ucmd.yaw -= (angleturn[1] * joyxmove) / 256; 
+
+	// [RH] Scale joystick moves over full range
+	if (Actions & ACTION_MLOOK) {
+		if (invertmouse->value)
+			look -= (joyymove * 32767) / 256;
+		else
+			look += (joyymove * 32767) / 256;
+	} else {
+		forward += (MAXPLMOVE * joyymove) / 256;
 	}
 
 	if ((Actions & ACTION_MLOOK) || freelook->value) {
@@ -359,10 +424,6 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 			look -= val;
 		else
 			look += val;
-		if (look > 32767)
-			look = 32767;
-		else if (look < -32767)
-			look = -32767;
 	} else {
 		forward += (int)((float)mousey * m_forward->value);
 	}
@@ -370,6 +431,11 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	if (sendcenterview) {
 		sendcenterview = false;
 		look = -32768;
+	} else {
+		if (look > 32767)
+			look = 32767;
+		else if (look < -32767)
+			look = -32767;
 	}
 
 	if (strafe || lookstrafe->value)
@@ -378,7 +444,7 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 		cmd->ucmd.yaw -= (int)((float)(mousex*0x8) * m_yaw->value); 
 
 	mousex = mousey = 0; 
-		 
+
 	if (forward > MAXPLMOVE) 
 		forward = MAXPLMOVE; 
 	else if (forward < -MAXPLMOVE) 
@@ -408,6 +474,15 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 
 	cmd->ucmd.forwardmove <<= 8;
 	cmd->ucmd.sidemove <<= 8;
+
+	// [RH] 180-degree turn overrides all other yaws
+	if (turntick) {
+		turntick--;
+		cmd->ucmd.yaw = (ANG180 / TURN180_TICKS) >> 16;
+	}
+
+	joyxmove = 0;
+	joyymove = 0;
 } 
  
 
@@ -418,7 +493,8 @@ static void ChangeSpy (void)
 	// [RH] Use some BOOM code here:
 	ST_Start();		// killough 3/7/98: switch status bar views too
 	HU_Start();
-	S_UpdateSounds(players[displayplayer].mo);
+	players[consoleplayer].camera = players[displayplayer].mo;
+	S_UpdateSounds(players[consoleplayer].camera);
 }
 
 void Cmd_SpyNext (player_t *plyr, int argc, char **argv)
@@ -461,8 +537,7 @@ BOOL G_Responder (event_t* ev)
 	// any other key pops up menu if in demos
 	// [RH] But only if the key isn't bound to a "special" command
 	if (gameaction == ga_nothing && !singledemo && 
-		(demoplayback || gamestate == GS_DEMOSCREEN) 
-		) 
+		(demoplayback || gamestate == GS_DEMOSCREEN)) 
 	{
 		char *cmd = C_GetBinding (ev->data1);
 
@@ -483,11 +558,11 @@ BOOL G_Responder (event_t* ev)
 				M_StartControlPanel (); 
 				return true; 
 			} else {
-				return C_DoKey (ev->data1, false);
+				return C_DoKey (ev);
 			}
 		}
 		if (cmd && cmd[0] == '+')
-			return C_DoKey (ev->data1, true);
+			return C_DoKey (ev);
 
 		return false; 
 	} 
@@ -520,12 +595,12 @@ BOOL G_Responder (event_t* ev)
 	switch (ev->type) 
 	{ 
 	  case ev_keydown:
-		if (C_DoKey (ev->data1, false))
-		  return true;
+		if (C_DoKey (ev))
+			return true;
 		break;
  
 	  case ev_keyup: 
-		C_DoKey (ev->data1, true);
+		C_DoKey (ev);
 		break;
 
 	  // [RH] mouse buttons are now sent with key up/down events
@@ -578,7 +653,7 @@ void G_Ticker (void)
 		switch (gameaction) 
 		{ 
 		  case ga_loadlevel: 
-			G_DoLoadLevel (); 
+			G_DoLoadLevel (-1); 
 			break; 
 		  case ga_newgame: 
 			G_DoNewGame (); 
@@ -610,9 +685,14 @@ void G_Ticker (void)
 			}
 			gameaction = ga_nothing; 
 			break; 
+		  case ga_fullconsole:
+			C_FullConsole ();
+			gameaction = ga_nothing;
+			break;
 		  case ga_nothing: 
 			break; 
-		} 
+		}
+		C_AdjustBottom ();
 	}
 
 	// get commands, check consistancy,
@@ -636,7 +716,7 @@ void G_Ticker (void)
 			if (cmd->ucmd.forwardmove > TURBOTHRESHOLD
 				&& !(gametic&31) && ((gametic>>5)&3) == i )
 			{
-				Printf ("%s is turbo!\n",players[i].userinfo->netname);
+				Printf ("%s is turbo!\n", players[i].userinfo.netname);
 			}
 
 			if (netgame && !netdemo && !(gametic%ticdup) )
@@ -764,7 +844,7 @@ void G_PlayerReborn (int player)
 	int 		killcount;
 	int 		itemcount;
 	int 		secretcount;
-	userinfo_t  *userinfo;	// [RH] Save userinfo
+	userinfo_t  userinfo;	// [RH] Save userinfo
 
 	p = &players[player];
 
@@ -773,7 +853,7 @@ void G_PlayerReborn (int player)
 	killcount = p->killcount;
 	itemcount = p->itemcount;
 	secretcount = p->secretcount;
-	userinfo = p->userinfo;
+	memcpy (&userinfo, &p->userinfo, sizeof(userinfo));
 
 	memset (p, 0, sizeof(*p));
 
@@ -782,17 +862,17 @@ void G_PlayerReborn (int player)
 	p->killcount = killcount;
 	p->itemcount = itemcount;
 	p->secretcount = secretcount;
-	p->userinfo = userinfo;
+	memcpy (&p->userinfo, &userinfo, sizeof(userinfo));
 
 	p->usedown = p->attackdown = p->jumpdown = true;	// don't do anything immediately
 	p->playerstate = PST_LIVE;
-	p->health = deh_StartHealth;		// [RH] Used to be MAXHEALTH
+	p->health = deh.StartHealth;		// [RH] Used to be MAXHEALTH
 	p->readyweapon = p->pendingweapon = wp_pistol;
 	p->weaponowned[wp_fist] = true;
 	p->weaponowned[wp_pistol] = true;
-	p->ammo[am_clip] = deh_StartBullets; // [RH] Used to be 50
+	p->ammo[am_clip] = deh.StartBullets; // [RH] Used to be 50
 
-	for (i=0 ; i<NUMAMMO ; i++)
+	for (i = 0; i < NUMAMMO; i++)
 		p->maxammo[i] = maxammo[i];
 }
 
@@ -824,15 +904,25 @@ BOOL G_CheckSpot (int playernum, mapthing2_t *mthing)
 	if (!players[playernum].mo)
 	{
 		// first spawn of level, before corpses
-		for (i=0 ; i<playernum ; i++)
-			if (players[i].mo->x == x
-				&& players[i].mo->y == y)
+		for (i = 0; i < playernum; i++)
+			if (players[i].mo->x == x && players[i].mo->y == y)
 				return false;
 		return true;
 	}
 
 	players[playernum].mo->z = z;	// [RH] Checks are now full 3-D
-	if (!P_CheckPosition (players[playernum].mo, x, y))
+
+	// killough 4/2/98: fix bug where P_CheckPosition() uses a non-solid
+	// corpse to detect collisions with other players in DM starts
+	//
+	// Old code:
+	// if (!P_CheckPosition (players[playernum].mo, x, y))
+	//    return false;
+
+	players[playernum].mo->flags |=  MF_SOLID;
+	i = P_CheckPosition(players[playernum].mo, x, y);
+	players[playernum].mo->flags &= ~MF_SOLID;
+	if (!i)
 		return false;
 
 	// flush an old corpse if needed
@@ -848,9 +938,8 @@ BOOL G_CheckSpot (int playernum, mapthing2_t *mthing)
 					  , z
 					  , MT_TFOG, 0);
 
-	// [RH] consoleplayer changed to displayplayer
-	if (players[displayplayer].viewz != 1)
-		S_StartSound (mo, sfx_telept);	// don't start sound on first frame 
+	if (level.time)
+		S_StartSound (mo, "misc/teleport", 32);	// don't start sound on first frame 
 
 	return true;
 }
@@ -912,12 +1001,12 @@ static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, int selections)
 		i = P_Random (pr_dmspawn) % selections;
 		if (G_CheckSpot (playernum, &deathmatchstarts[i]) )
 		{
-
 			return &deathmatchstarts[i];
 		}
 	}
 
-	return NULL;
+	// [RH] return a spot anyway, since we allow telefragging when a player spawns
+	return olddemo ? NULL : &deathmatchstarts[i];
 }
 
 void G_DeathMatchSpawnPlayer (int playernum)
@@ -926,10 +1015,9 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	mapthing2_t *spot;
 
 	selections = deathmatch_p - deathmatchstarts;
-	// [RH] 4 changed to doomcom->numplayers
-	if (selections < doomcom->numplayers)
-		I_Error ("Only %i deathmatch spots, %d required",
-				 selections, doomcom->numplayers); 
+	// [RH] We can get by with just 1 deathmatch start
+	if (selections < 1)
+		I_Error ("No deathmatch starts");
 
 	// At level start, none of the players have mobjs attached to them,
 	// so we always use the random deathmatch spawn. During the game,
@@ -969,7 +1057,8 @@ void G_DoReborn (int playernum)
 		// respawn at the start
 
 		// first dissasociate the corpse
-		players[playernum].mo->player = NULL;
+		if (players[playernum].mo)
+			players[playernum].mo->player = NULL;
 
 		// spawn at random spot if in death match
 		if (deathmatch->value)
@@ -990,10 +1079,9 @@ void G_DoReborn (int playernum)
 			if (G_CheckSpot (playernum, &playerstarts[i]) )
 			{
 				int oldtype = playerstarts[i].type;
-				if (playernum < 4)
-					playerstarts[i].type = playernum+1; 	// fake as other player
-				else
-					playerstarts[i].type = playernum+4001-4;	// [RH] fake as high player
+
+				// fake as other player
+				playerstarts[i].type = (playernum < 4) ? playernum + 1 : playernum + 4001 - 4;
 				P_SpawnPlayer (&playerstarts[i]);
 				playerstarts[i].type = oldtype; 			// restore 
 				return;
@@ -1022,7 +1110,7 @@ void G_ScreenShot (char *filename)
 extern BOOL setsizeneeded;
 void R_ExecuteSetViewSize (void);
 
-char	savename[256];
+char savename[256];
 
 void G_LoadGame (char* name)
 {
@@ -1030,52 +1118,59 @@ void G_LoadGame (char* name)
 	gameaction = ga_loadgame;
 }
 
-#define VERSIONSIZE 			16
-
 
 void G_DoLoadGame (void)
 {
 	int 		length;
 	int 		i;
-	char		vcheck[VERSIONSIZE];
 	char		mapname[9];
 
 	gameaction = ga_nothing;
 
 	length = M_ReadFile (savename, &savebuffer);
-	save_p = savebuffer + SAVESTRINGSIZE;
+	save_p = savebuffer + SAVESTRINGSIZE;	// skip the description field
 
-	// skip the description field
-	memset (vcheck,0,sizeof(vcheck));
-	sprintf (vcheck,"version %ia",VERSION);
-	if (strcmp (save_p, vcheck))
-		return; 						// bad version
-	save_p += VERSIONSIZE;
+	if (strncmp (save_p, SAVESIG, 16))	// Bad version
+		I_Error ("Savegame is from a different version\n");
+
+	save_p += 16;
 
 	memcpy (mapname, save_p, 8);
 	mapname[8] = 0;
+
 	save_p += 8;
 	for (i=0 ; i<MAXPLAYERS ; i++)
 		playeringame[i] = *save_p++;
 
-	C_ReadCVars (&save_p);			// [RH] Read server info cvars
-
-	// load a base level
-	G_InitNew (mapname);
+	C_ReadCVars (&save_p);		// [RH] read server info cvars
 
 	// dearchive all the modifications
-	P_UnArchiveLevelLocals ();		// [RH] dearchive level locals
+	G_UnArchiveSnapshots ();	// [RH] restore all level snapshots
 	P_UnArchivePlayers ();
-	P_UnArchiveWorld ();
-	P_UnArchiveThinkers ();
-	P_UnArchiveSpecials ();
 	P_UnArchiveRNGState ();		// [RH] retrieve the state of the RNG
+	P_UnArchiveACSDefereds ();	// [RH] restore script info on other maps
+
+	// load a base level
+	{
+		// [RH] G_InitNew zaps these
+		byte *saved = save_p, *savedbuffer = savebuffer;
+		savegamerestore = true;		// [RH] Use the player mobjs in the savegame
+		G_InitNew (mapname);
+		savegamerestore = false;
+		save_p = saved;
+		savebuffer = savedbuffer;
+	}
+	level.time = ReadLong (&save_p);
+
+	memcpy (WorldVars, save_p, sizeof(WorldVars));	// [RH] restore world vars
+	save_p += sizeof(WorldVars);
 
 	if (*save_p != 0x1d)
 		I_Error ("Bad savegame");
 
 	// done
 	Z_Free (savebuffer);
+	save_p = savebuffer = NULL;
 
 	if (setsizeneeded)
 		R_ExecuteSetViewSize ();
@@ -1097,56 +1192,85 @@ void G_SaveGame (int slot, char *description)
 	sendsave = true;
 }
 
+void G_BuildSaveName (char *name, int slot)
+{
+	if (M_CheckParm ("-cdrom"))
+		sprintf(name, "c:\\zdoomdat\\%s%d.zds", SAVEGAMENAME, slot);
+	else
+		sprintf (name, "%s%d.zds", SAVEGAMENAME, slot);
+}
+
+// Check for overrun and realloc if necessary -- Lee Killough 1/22/98
+void CheckSaveGame (size_t size)
+{
+	size_t pos = save_p - savebuffer;
+	size += 1024;	// breathing room
+	if (pos+size > savegamesize)
+		save_p = (savebuffer = Realloc (savebuffer,
+			   savegamesize += (size+1023) & ~1023)) + pos;
+}
+
 void G_DoSaveGame (void)
 {
 	char		name[100];
-	char		name2[VERSIONSIZE];
 	char*		description;
-	int 		length;
 	int 		i;
 
-	if (M_CheckParm("-cdrom"))
-		sprintf(name,"c:\\doomdata\\"SAVEGAMENAME"%d.dsg",savegameslot);
-	else
-		sprintf (name,SAVEGAMENAME"%d.dsg",savegameslot);
+	G_SnapshotLevel ();
+
+	G_BuildSaveName (name, savegameslot);
 	description = savedescription;
 
-	save_p = savebuffer = Z_Malloc (SAVEGAMESIZE + 0x4000, PU_STATIC, 0);
+	save_p = savebuffer = Malloc (savegamesize);
 
+	CheckSaveGame (SAVESTRINGSIZE+16+sizeof(unsigned long));
 	memcpy (save_p, description, SAVESTRINGSIZE);
 	save_p += SAVESTRINGSIZE;
-	memset (name2,0,sizeof(name2));
-	sprintf (name2,"version %ia",VERSION);
-	memcpy (save_p, name2, VERSIONSIZE);
-	save_p += VERSIONSIZE;
+
+	strncpy (save_p, SAVESIG, 16);
+	save_p += 16;
 
 	memcpy (save_p, level.mapname, 8);
 	save_p += 8;
+
 	for (i=0 ; i<MAXPLAYERS ; i++)
 		*save_p++ = playeringame[i];
 	C_WriteCVars (&save_p, CVAR_SERVERINFO);	// [RH] Save serverinfo cvars
 
-	P_ArchiveLevelLocals ();	// [RH] Archive level locals
+	// killough 3/22/98: add Z_CheckHeap after each call to ensure consistency
+	Z_CheckHeap ();
+	G_ArchiveSnapshots ();		// [RH] save level snapshots
+	Z_CheckHeap ();
 	P_ArchivePlayers ();
-	P_ArchiveWorld ();
-	P_ArchiveThinkers ();
-	P_ArchiveSpecials ();
+	Z_CheckHeap ();
 	P_ArchiveRNGState ();		// [RH] save the state of the RNG
+	Z_CheckHeap ();
+	P_ArchiveACSDefereds ();	// [RH] archive script info on other maps
+	Z_CheckHeap ();
+	WriteLong (level.time, &save_p);
+	memcpy (save_p, WorldVars, sizeof(WorldVars));	// [RH] Save world vars
+	save_p += sizeof(WorldVars);
 
 	*save_p++ = 0x1d;			// consistancy marker
 
-	length = save_p - savebuffer;
-	if (length > SAVEGAMESIZE)
-		I_Error ("Savegame buffer overrun");
-	M_WriteFile (name, savebuffer, length);
-	Z_Free (savebuffer);
+	{
+		FILE *file = fopen (name, "wb");
+
+		if (file) {
+			fwrite (savebuffer, 1, save_p - savebuffer, file);
+			fclose (file);
+		} else {
+			Printf ("Could not create savegame\n");
+		}
+	}
+
+	free (savebuffer);
+	savebuffer = save_p = NULL;
+
 	gameaction = ga_nothing;
 	savedescription[0] = 0;
 
 	players[consoleplayer].message = GGSAVED;
-
-	// draw the pattern into the back screen
-	R_FillBackScreen ();
 }
 
 
@@ -1228,6 +1352,7 @@ void Cmd_Stop (player_t *plyr, int argc, char **argv)
 {
 	stoprecording = true;
 }
+extern byte *lenspot;
 
 void G_WriteDemoTiccmd (ticcmd_t *cmd, int player)
 {
@@ -1263,10 +1388,15 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player)
 		memcpy (&LastUserCmd, &cmd->ucmd, sizeof(usercmd_t));
 	}
 
-	if (demo_p > demoend - 16) {
-		// no more space
-		G_CheckDemoStatus (); 
-		return; 
+	// [RH] Bigger safety margin
+	if (demo_p > demobuffer + maxdemosize - 64) {
+		ptrdiff_t pos = demo_p - demobuffer;
+		ptrdiff_t spot = lenspot - demobuffer;
+		// [RH] Allocate more space for the demo
+		maxdemosize += 0x20000;
+		demobuffer = Realloc (demobuffer, maxdemosize);
+		demo_p = demobuffer + pos;
+		lenspot = demobuffer + spot;
 	}
 
 //	if (!clonecount)
@@ -1281,21 +1411,17 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player)
 void G_RecordDemo (char* name)
 {
 	int	i;
-	int	maxsize;
 
 	usergame = false;
 	strcpy (demoname, name);
 	FixPathSeperator (demoname);
 	DefaultExtension (demoname, ".lmp");
-	maxsize = 0x20000;
 	i = M_CheckParm ("-maxdemo");
-	if (i && i<myargc-1) {
-		maxsize = atoi(myargv[i+1])*1024;
-		if (maxsize < 0x20000)
-			maxsize = 0x20000;
-	}
-	demobuffer = Z_Malloc (maxsize,PU_STATIC,NULL);
-	demoend = demobuffer + maxsize;
+	if (i && i<myargc-1)
+		maxdemosize = atoi(myargv[i+1])*1024;
+	if (maxdemosize < 0x20000)
+		maxdemosize = 0x20000;
+	demobuffer = Malloc (maxdemosize);
 
 	demorecording = true; 
 }
@@ -1521,25 +1647,23 @@ void G_DoPlayDemo (void)
 
 		SetCVarFloat (gameskill, skill);
 
-		AddCommandString ("set fraglimit 0; set timelimit 0; set cheats 0, sv_gravity 800");
+		AddCommandString ("set fraglimit 0; set timelimit 0; set cheats 0; sv_gravity 800");
 
 		{
 			// Setup compatible userinfo
-			static char greenPlayer[] = "\\name\\Green\\autoaim\\50000\\color\\74 fc 6c";
-			static char indigoPlayer[] = "\\name\\Indigo\\autoaim\\50000\\color\\80 80 80";
-			static char brownPlayer[] = "\\name\\Brown\\autoaim\\50000\\color\\bc 78 48";
-			static char redPlayer[] = "\\name\\Red\\autoaim\\50000\\color\\fc 00 00";
+			static char *playerStreams[4] = {
+				"\\name\\Green\\autoaim\\5000\\color\\74 fc 6c\\skin\\base\\gender\\male",
+				"\\name\\Indigo\\autoaim\\5000\\color\\80 80 80\\skin\\base\\gender\\male",
+				"\\name\\Brown\\autoaim\\5000\\color\\bc 78 48\\skin\\base\\gender\\male",
+				"\\name\\Red\\autoaim\\5000\\color\\fc 00 00\\skin\\base\\gender\\male"
+			};
 			byte *stream;
+			int jookie;
 
-			stream = greenPlayer;
-			D_ReadUserInfoStrings (0, &stream, false);
-			stream = indigoPlayer;
-			D_ReadUserInfoStrings (1, &stream, false);
-			stream = brownPlayer;
-			D_ReadUserInfoStrings (2, &stream, false);
-			stream = redPlayer;
-			D_ReadUserInfoStrings (3, &stream, false);
-
+			for (jookie = 0; jookie < 4; jookie++) {
+				stream = playerStreams[jookie];
+				D_ReadUserInfoStrings (jookie, &stream, false);
+			}
 			R_BuildCompatiblePlayerTranslations ();
 		}
 	} else {
@@ -1589,10 +1713,12 @@ extern cvar_t *color;
 
 BOOL G_CheckDemoStatus (void)
 {
+	if (!demorecording) {
 	// [RH] Restore the player's userinfo settings.
-	D_UserInfoChanged (name);
-	D_UserInfoChanged (autoaim);
-	D_UserInfoChanged (color);
+		D_UserInfoChanged (name);
+		D_UserInfoChanged (autoaim);
+		D_UserInfoChanged (color);
+	}
 
 	if (timingdemo)
 	{
@@ -1602,8 +1728,8 @@ BOOL G_CheckDemoStatus (void)
 		endtime = I_GetTimeReally () - starttime;
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 
-		I_Error ("timed %i gametics in %i realtics (%.1f fps)",gametic 
-				 , endtime, (float)gametic/(float)endtime*(float)TICRATE);
+		I_Error ("timed %i gametics in %i realtics (%.1f fps)", gametic,
+				 endtime, (float)gametic/(float)endtime*(float)TICRATE);
 	}
 
 	if (demoplayback)
@@ -1611,7 +1737,7 @@ BOOL G_CheckDemoStatus (void)
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 
 		if (singledemo)
-			I_Quit ();
+			exit (0);
 
 		Z_ChangeTag (demobuffer, PU_CACHE);
 		olddemo = false;
@@ -1644,10 +1770,10 @@ BOOL G_CheckDemoStatus (void)
 		WriteLong (demo_p - demobuffer - 8, &formlen);
 
 		M_WriteFile (demoname, demobuffer, demo_p - demobuffer); 
-		Z_Free (demobuffer); 
+		free (demobuffer); 
 		demorecording = false;
 		stoprecording = false;
-		I_Error ("Demo %s recorded",demoname); 
+		Printf ("Demo %s recorded\n", demoname); 
 	}
 
 	return false; 

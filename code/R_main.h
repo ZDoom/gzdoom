@@ -50,7 +50,7 @@ extern fixed_t			projection;
 extern fixed_t			projectiony;	// [RH] fix aspect ratio (from doom3)
 extern fixed_t			skytopfrac;		// [RH] virtual top of the sky (for freelooking)
 
-
+extern byte*			basecolormap;	// [RH] Colormap for sector currently being drawn
 
 extern int				validcount;
 
@@ -70,16 +70,21 @@ extern int				loopcount;
 #define LIGHTSEGSHIFT			 4
 
 #define MAXLIGHTSCALE			48
-#define LIGHTSCALESHIFT 		12
+#define LIGHTSCALEMULBITS		 8	// [RH] for hires lighting fix
+#define LIGHTSCALESHIFT 		(12+LIGHTSCALEMULBITS)
 #define MAXLIGHTZ			   128
 #define LIGHTZSHIFT 			20
 
-extern lighttable_t*	scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
-extern lighttable_t*	scalelightfixed[MAXLIGHTSCALE];
-extern lighttable_t*	zlight[LIGHTLEVELS][MAXLIGHTZ];
+// [RH] Changed from lighttable_t* to int.
+extern int				scalelight[LIGHTLEVELS][MAXLIGHTSCALE];
+extern int				scalelightfixed[MAXLIGHTSCALE];
+extern int				zlight[LIGHTLEVELS][MAXLIGHTZ];
 
 extern int				extralight;
 extern lighttable_t*	fixedcolormap;
+
+extern int				lightscalexmul;	// [RH] for hires lighting fix
+extern int				lightscaleymul;
 
 
 // Number of diminishing brightness levels.
@@ -129,11 +134,6 @@ R_PointToAngle2
   fixed_t		y1,
   fixed_t		x2,
   fixed_t		y2 );
-
-fixed_t
-R_PointToDist
-( fixed_t		x,
-  fixed_t		y );
 
 
 fixed_t R_ScaleFromGlobalAngle (angle_t visangle);

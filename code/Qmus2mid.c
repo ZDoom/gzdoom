@@ -20,6 +20,7 @@
 */
 
 /* Hacked for DOOM Win32 port by Petteri Kangaslampi <pekangas@sci.fi> */
+// [RH] And then further to not use any intermediate files
 
 //#define MSDOG
 
@@ -63,14 +64,14 @@ char tmp[MAXPATH] ;
 
 size_t fwrite2(const int2 *ptr, size_t size, FILE *file)
 {
-  int4 rev = 0, work;
+  int4 rev = 0;
   int i;
 
   for( i = 0 ; (size_t)i < size ; i++ ) {
 // VC++ didn't like this magic (but only for the release build!)
 //    rev = (rev << 8) + (((*ptr) >> (i*8)) & 0xFF) ;
+    int4 work = (*ptr) >> (i << 3);
     rev <<= 8;
-    work = (*ptr) >> (i << 3);
     rev |= (work & 0xFF);
   }
 
@@ -628,55 +629,4 @@ int convert( const char *mus, const char *mid, int nodisplay, int div,
 
   return 0 ;
 }
-
-
-int CheckParm( char *check, int argc, char *argv[] )
-{
-  int i;
-
-  for ( i = 1 ; i<argc ; i++ )
-#ifdef MSDOG
-    if( !stricmp( check, argv[i] ) )
-#else
-    if( !strcmp( check, argv[i] ) )
-#endif
-      return i ;
-
-  return 0;
-}
-
-
-void PrintHeader( void )
-{
-/*  Print( "===============================================================================\n"
-         "              Quick MUS->MID v2.0 ! (C) 1995,96 Sebastien Bacquet\n"
-         "                        E-mail : bacquet@iie.cnam.fr\n"
-         "===============================================================================\n" ) ;*/
-}
-
-
-void PrintSyntax( void )
-{
-  PrintHeader() ;
-  Printf(
-#ifdef MSDOG
-         "\nSyntax : QMUS2MID musfile1[.mus] {musfile2[.mus] ... | "
-         "midifile.mid} [options]\n"
-         "   Wildcards are accepted.\n"
-         "   Options are :\n"
-         "     -query    : Query before processing\n"
-         "     -ow       : OK, overwrite (without query)\n"
-#else
-         "\nSyntax : QMUS2MID musfile midifile [options]\n"
-         "   Options are :\n"
-#endif
-         "     -noow     : Don't overwrite !\n"
-         "     -nodisp   : Display nothing ! (except errors)\n"
-         "     -nocomp   : Don't compress !\n"
-         "     -size ### : Set the track buffer size to ### (in KB). "
-         "Default = 64 KB\n"
-         "     -t ###    : Ticks per quarter note. Default = 89\n"
-         ) ;
-}
-
 

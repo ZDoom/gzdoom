@@ -68,7 +68,7 @@ R_FindPlane
   int			picnum,
   int			lightlevel,
   fixed_t		xoffs,		// killough 2/28/98: add x-y offsets
-  fixed_t		yoffs);
+  fixed_t		yoffs );
 
 visplane_t*
 R_CheckPlane

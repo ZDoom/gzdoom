@@ -18,6 +18,7 @@
 //
 // DESCRIPTION:
 //		Handles WAD file header, directory, lump I/O.
+//		[RH] Changed to use buffered I/O (fread, etc)
 //
 //-----------------------------------------------------------------------------
 
@@ -57,14 +58,19 @@ int				numlumps;
 void**			lumpcache;
 
 
-int W_filelength (int handle) 
+int W_filelength (FILE *handle) 
 {
-	struct stat	fileinfo;
+	int len;
 
-	if (fstat (handle,&fileinfo) == -1)
-		I_Error ("Error fstating");
+	if (fseek (handle, 0, SEEK_END))
+		I_Error ("Error fseeking");
 
-	return fileinfo.st_size;
+	len = ftell (handle);
+
+	if (fseek (handle, 0, SEEK_SET))
+		I_Error ("Error fseeking");
+
+	return len;
 }
 
 // [RH] Copy up to 8 chars, upper-casing them in the process
@@ -102,7 +108,7 @@ void W_AddFile (char *filename)
 	wadinfo_t		header;
 	lumpinfo_t*		lump_p;
 	unsigned		i;
-	int				handle;
+	FILE			*handle;
 	int				length;
 	int				startlump;
 	filelump_t*		fileinfo, *fileinfo2free;
@@ -116,17 +122,17 @@ void W_AddFile (char *filename)
 
 	// open the file and add to directory
 
-	if ((handle = open (name, O_RDONLY | O_BINARY)) == -1)
+	if ((handle = fopen (name, "rb")) == NULL)
 	{
 		Printf (" couldn't open %s\n",filename);
 		return;
 	}
 
-	Printf (" adding %s",filename);
+	Printf (" adding %s", name);
 	startlump = numlumps;
 	
 	// [RH] Determine if file is a WAD based on its signature, not its name.
-	read (handle, &header, sizeof(header));
+	fread (&header, sizeof(header), 1, handle);
 
 	if (header.identification == IWAD_ID ||
 		header.identification == PWAD_ID) {
@@ -136,8 +142,8 @@ void W_AddFile (char *filename)
 		header.infotableofs = LONG(header.infotableofs);
 		length = header.numlumps * sizeof(filelump_t);
 		fileinfo = fileinfo2free = Z_Malloc (length, PU_STATIC, 0);
-		lseek (handle, header.infotableofs, SEEK_SET);
-		read (handle, fileinfo, length);
+		fseek (handle, header.infotableofs, SEEK_SET);
+		fread (fileinfo, 1, length, handle);
 		numlumps += header.numlumps;
 		Printf (" (%d lumps)", header.numlumps);
 	} else {
@@ -188,7 +194,7 @@ void W_AddFile (char *filename)
 // The name searcher looks backwards, so a later file
 //  does override all earlier ones.
 //
-void W_InitMultipleFiles (char** filenames)
+void W_InitMultipleFiles (wadlist_t **filenames)
 {
 	int i;
 
@@ -198,11 +204,16 @@ void W_InitMultipleFiles (char** filenames)
 	// will be realloced as lumps are added
 	lumpinfo = NULL;		// [RH] Start out as NULL
 
-	for ( ; *filenames ; filenames++)
-		W_AddFile (*filenames);
+	while (*filenames) {
+		wadlist_t *next = (*filenames)->next;
+
+		W_AddFile ((*filenames)->name);
+		Z_Free (*filenames);
+		*filenames = next;
+	}
 
 	if (!numlumps)
-		I_Error ("W_InitFiles: no files found");
+		I_FatalError ("W_InitFiles: no files found");
 
 	// [RH] Set namespace markers to global for everything
 	for (i = 0; i < numlumps; i++)
@@ -232,13 +243,13 @@ void W_InitMultipleFiles (char** filenames)
 // W_InitFile
 // Just initialize from a single file.
 //
-void W_InitFile (char* filename)
+void W_InitFile (char *filename)
 {
-	char *names[2];
+	wadlist_t *names = Z_Malloc (sizeof(*names)+strlen(filename), PU_STATIC, 0);
 
-	names[0] = filename;
-	names[1] = NULL;
-	W_InitMultipleFiles (names);
+	names->next = NULL;
+	strcpy (names->name, filename);
+	W_InitMultipleFiles (&names);
 }
 
 
@@ -328,8 +339,8 @@ void W_ReadLump (int lump, void *dest)
 
 	l = lumpinfo + lump;
 	
-	lseek (l->handle, l->position, SEEK_SET);
-	c = read (l->handle, dest, l->size);
+	fseek (l->handle, l->position, SEEK_SET);
+	c = fread (dest, 1, l->size, l->handle);
 
 	if (c < l->size)
 		I_Error ("W_ReadLump: only read %i of %i on lump %i",
@@ -348,7 +359,7 @@ void *W_CacheLumpNum (int lump, int tag)
 	int lumplen;
 
 	if ((unsigned)lump >= numlumps)
-		I_Error ("W_CacheLumpNum: %i >= numlumps",lump);
+		I_Error ("W_CacheLumpNum: %u >= numlumps",lump);
 
 	if (!lumpcache[lump])
 	{
@@ -463,8 +474,8 @@ void W_MergeLumps (const char *start, const char *end, int space)
 				if (!newlumps) {
 					newlumps++;
 					strncpy (newlumpinfos[0].name, ustart, 8);
-					newlumpinfos[0].handle =
-						newlumpinfos[0].position =
+					newlumpinfos[0].handle = NULL;
+					newlumpinfos[0].position =
 						newlumpinfos[0].size = 0;
 					newlumpinfos[0].namespc = ns_global;
 				}
@@ -492,8 +503,8 @@ void W_MergeLumps (const char *start, const char *end, int space)
 	// Only create an end marker if there was one in the original list.
 	if (haveEndMarker) {
 		strncpy (newlumpinfos[newlumps].name, uend, 8);
-		newlumpinfos[newlumps].handle =
-			newlumpinfos[newlumps].position =
+		newlumpinfos[newlumps].handle = NULL;
+		newlumpinfos[newlumps].position =
 			newlumpinfos[newlumps].size = 0;
 		newlumpinfos[newlumps].namespc = ns_global;
 		newlumps++;
@@ -623,4 +634,29 @@ BOOL W_CheckLumpName (int lump, const char *name)
 		return false;
 
 	return !strnicmp (lumpinfo[lump].name, name, 8);
+}
+
+// [RH] Copies the lump name to to using uppercopy
+void W_GetLumpName (char *to, int lump)
+{
+	if (lump >= numlumps)
+		*to = 0;
+	else
+		uppercopy (to, lumpinfo[lump].name);
+}
+
+// [RH] Returns file ptr for specified lump
+FILE *W_GetLumpFile (int lump)
+{
+	if (lump >= numlumps)
+		return NULL;
+	else
+		return lumpinfo[lump].handle;
+}
+
+// [RH] Put a lump in a certain namespace
+void W_SetLumpNamespace (int lump, int nmspace)
+{
+	if (lump < numlumps)
+		lumpinfo[lump].namespc = nmspace;
 }

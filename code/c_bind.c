@@ -3,6 +3,8 @@
 #include "cmdlib.h"
 #include "c_dispch.h"
 #include "c_bind.h"
+#include "g_level.h"
+#include "dstrings.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -57,7 +59,7 @@ char DefBindings[] =
 	"bind \\ +showscores; "				// <- Another new command
 	"bind f12 spynext";
 
-static const char *KeyNames[256+8+32] = {
+static const char *KeyNames[NUM_KEYS] = {
 	// This array is dependant on the particular keyboard input
 	// codes generated in i_input.c. If they change there, they
 	// also need to change here. In this case, we use the
@@ -98,9 +100,9 @@ static const char *KeyNames[256+8+32] = {
 	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,	NULL,		"pause",	//F8
 
 	// non-keyboard buttons that can be bound
-	"mouse1",	"mouse2",	"mouse3",	"mouse4",		// DInput has four of these...
-	NULL,		NULL,		NULL,		NULL,			// Space for double clicking if I feel like it
-	"joy1",		"joy2",		"joy3",		"joy4",			// 32 joystick buttons!
+	"mouse1",	"mouse2",	"mouse3",	"mouse4",		// 4 mouse buttons
+	"mwheelup",	"mwheeldown",NULL,		NULL,			// the wheel and some extra space
+	"joy1",		"joy2",		"joy3",		"joy4",			// 32 joystick buttons
 	"joy5",		"joy6",		"joy7",		"joy8",
 	"joy9",		"joy10",	"joy11",	"joy12",
 	"joy13",	"joy14",	"joy15",	"joy16",
@@ -110,7 +112,10 @@ static const char *KeyNames[256+8+32] = {
 	"joy29",	"joy30",	"joy31",	"joy32"
 };
 
-static char *Bindings[256+8+32];
+static char *Bindings[NUM_KEYS];
+static char *DoubleBindings[NUM_KEYS];
+static int DClickTime[NUM_KEYS];
+static byte DClicked[(NUM_KEYS+7)/8];
 
 static int GetKeyFromName (const char *name)
 {
@@ -122,7 +127,7 @@ static int GetKeyFromName (const char *name)
 	}
 
 	// Otherwise, we scan the KeyNames[] array for a matching name
-	for (i = 0; i < 256+8+32; i++) {
+	for (i = 0; i < NUM_KEYS; i++) {
 		if (KeyNames[i] && !stricmp (KeyNames[i], name))
 			return i;
 	}
@@ -144,12 +149,17 @@ void Cmd_Unbindall (void *plyr, int argc, char **argv)
 {
 	int i;
 
-	for (i = 0; i < 256+8+32; i++) {
+	for (i = 0; i < NUM_KEYS; i++)
 		if (Bindings[i]) {
 			free (Bindings[i]);
 			Bindings[i] = NULL;
 		}
-	}
+
+	for (i = 0; i < NUM_KEYS; i++)
+		if (DoubleBindings[i]) {
+			free (DoubleBindings[i]);
+			DoubleBindings[i] = NULL;
+		}
 }
 
 void Cmd_Unbind (void *plyr, int argc, char **argv)
@@ -183,17 +193,57 @@ void Cmd_Bind (void *plyr, int argc, char **argv)
 		if (argc == 2) {
 			Printf ("\"%s\" = \"%s\"\n", argv[1], (Bindings[i] ? Bindings[i] : ""));
 		} else {
-			if (Bindings[i])
-				free (Bindings[i]);
-
-			Bindings[i] = copystring (argv[2]);
+			ReplaceString (&Bindings[i], argv[2]);
 		}
 	} else {
 		Printf ("Current key bindings:\n");
 		
-		for (i = 0; i < 256+8+32; i++) {
+		for (i = 0; i < NUM_KEYS; i++) {
 			if (Bindings[i])
 				Printf ("%s \"%s\"\n", KeyName (i), Bindings[i]);
+		}
+	}
+}
+
+void Cmd_UnDoubleBind (void *plyr, int argc, char **argv)
+{
+	int i;
+
+	if (argc > 1) {
+		if ( (i = GetKeyFromName (argv[1])) ) {
+			if (DoubleBindings[i]) {
+				free (DoubleBindings[i]);
+				DoubleBindings[i] = NULL;
+			}
+		} else {
+			Printf ("Unknown key \"%s\"\n", argv[1]);
+			return;
+		}
+
+	}
+}
+
+void Cmd_DoubleBind (void *plyr, int argc, char **argv)
+{
+	int i;
+
+	if (argc > 1) {
+		i = GetKeyFromName (argv[1]);
+		if (!i) {
+			Printf ("Unknown key \"%s\"\n", argv[1]);
+			return;
+		}
+		if (argc == 2) {
+			Printf ("\"%s\" = \"%s\"\n", argv[1], (DoubleBindings[i] ? DoubleBindings[i] : ""));
+		} else {
+			ReplaceString (&DoubleBindings[i], argv[2]);
+		}
+	} else {
+		Printf ("Current key doublebindings:\n");
+		
+		for (i = 0; i < NUM_KEYS; i++) {
+			if (DoubleBindings[i])
+				Printf ("%s \"%s\"\n", KeyName (i), DoubleBindings[i]);
 		}
 	}
 }
@@ -203,23 +253,55 @@ void Cmd_BindDefaults (void *plyr, int argc, char **argv)
 	AddCommandString (DefBindings);
 }
 
-BOOL C_DoKey (int key, BOOL up)
+BOOL C_DoKey (event_t *ev)
 {
 	extern BOOL chat_on;
+	char *binding = NULL;
+	int dclickspot;
+	byte dclickmask;
 
-	if (Bindings[key] && (!chat_on || key < 256)) {
-		if (!up) {
-			AddCommandString (Bindings[key]);
+	if (ev->type != ev_keydown && ev->type != ev_keyup)
+		return false;
+
+	dclickspot = ev->data1 >> 3;
+	dclickmask = 1 << (ev->data1 & 7);
+
+	if (DClickTime[ev->data1] > level.time && ev->type == ev_keydown) {
+		// Key pressed for a double click
+		binding = DoubleBindings[ev->data1];
+		DClicked[dclickspot] |= dclickmask;
+	} else {
+		if (ev->type == ev_keydown) {
+			// Key pressed for a normal press
+			binding = Bindings[ev->data1];
+			DClickTime[ev->data1] = level.time + 20;
+		} else if (DClicked[dclickspot] & dclickmask) {
+			// Key released from a double click
+			binding = DoubleBindings[ev->data1];
+			DClicked[dclickspot] &= ~dclickmask;
+			DClickTime[ev->data1] = 0;
+		} else {
+			// Key released from a normal press
+			binding = Bindings[ev->data1];
+		}
+	}
+
+	if (!binding)
+		binding = Bindings[ev->data1];
+
+	if (binding && (!chat_on || ev->data1 < 256)) {
+		if (ev->type == ev_keydown) {
+			AddCommandString (binding);
 		} else {
 			char *achar;
 		
-			achar = strchr (Bindings[key], '+');
+			achar = strchr (binding, '+');
 			if (!achar)
 				return false;
 
-			if ((achar == Bindings[key]) || (*(achar - 1) <= ' ')) {
+			if ((achar == binding) || (*(achar - 1) <= ' ')) {
 				*achar = '-';
-				AddCommandString (Bindings[key]);
+				AddCommandString (binding);
 				*achar = '+';
 			}
 		}
@@ -233,11 +315,12 @@ void C_ArchiveBindings (FILE *f)
 	int i;
 
 	fprintf (f, "unbindall\n");
-	for (i = 0; i < 256+8+32; i++) {
-		if (Bindings[i]) {
+	for (i = 0; i < NUM_KEYS; i++)
+		if (Bindings[i])
 			fprintf (f, "bind \"%s\" \"%s\"\n", KeyName (i), Bindings[i]);
-		}
-	}
+	for (i = 0; i < NUM_KEYS; i++)
+		if (DoubleBindings[i])
+			fprintf (f, "doublebind \"%s\" \"%s\"\n", KeyName (i), DoubleBindings[i]);
 }
 
 int C_GetKeysForCommand (char *cmd, int *first, int *second)
@@ -246,7 +329,7 @@ int C_GetKeysForCommand (char *cmd, int *first, int *second)
 
 	*first = *second = c = i = 0;
 
-	while (i < 256+8+32 && c < 2) {
+	while (i < NUM_KEYS && c < 2) {
 		if (Bindings[i] && !stricmp (cmd, Bindings[i])) {
 			if (c++ == 0)
 				*first = i;
@@ -283,7 +366,7 @@ void C_UnbindACommand (char *str)
 {
 	int i;
 
-	for (i = 0; i < 256+8+32; i++) {
+	for (i = 0; i < NUM_KEYS; i++) {
 		if (Bindings[i] && !stricmp (str, Bindings[i])) {
 			free (Bindings[i]);
 			Bindings[i] = NULL;

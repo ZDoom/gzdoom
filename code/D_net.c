@@ -22,7 +22,7 @@
 //
 //-----------------------------------------------------------------------------
 
-
+#include "version.h"
 #include "m_alloc.h"
 #include "m_menu.h"
 #include "i_system.h"
@@ -34,7 +34,6 @@
 #include "c_consol.h"
 #include "d_netinf.h"
 #include "cmdlib.h"
-#include "sounds.h"
 #include "s_sound.h"
 #include "m_cheat.h"
 
@@ -70,6 +69,9 @@ BOOL 			nodeingame[MAXNETNODES];				// set false as nodes leave game
 BOOL	 		remoteresend[MAXNETNODES];				// set when local needs tics
 int 			resendto[MAXNETNODES];					// set when remote needs tics
 int 			resendcount[MAXNETNODES];
+
+unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
+unsigned int	currrecvtime[MAXPLAYERS];
 
 int 			nodeforplayer[MAXPLAYERS];
 
@@ -288,6 +290,10 @@ void GetPackets (void)
 						
 		netconsole = netbuffer->player & ~PL_DRONE;
 		netnode = doomcom->remotenode;
+
+		// [RH] Get "ping" times
+		lastrecvtime[netconsole] = currrecvtime[netconsole];
+		currrecvtime[netconsole] = I_MSTime ();
 		
 		// to save bytes, only the low byte of tic numbers are sent
 		// Figure out what the rest of the bytes are
@@ -305,10 +311,10 @@ void GetPackets (void)
 
 			if (deathmatch->value) {
 				Printf ("%s left the game with %d frags\n",
-						 players[netconsole].userinfo->netname,
+						 players[netconsole].userinfo.netname,
 						 players[netconsole].fragcount);
 			} else {
-				Printf ("%s left the game\n", players[netconsole].userinfo->netname);
+				Printf ("%s left the game\n", players[netconsole].userinfo.netname);
 			}
 
 			if (demorecording) {
@@ -492,11 +498,12 @@ void CheckAbort (void)
 {
 	event_t *ev;
 	int 		stoptic;
-		
+
+	Printf ("");	// [RH] Give the console a chance to redraw itself
 	stoptic = I_GetTime () + 2; 
 	while (I_GetTime() < stoptic) 
 		I_StartTic (); 
-		
+
 	I_StartTic ();
 	for ( ; eventtail != eventhead 
 			  ; eventtail = (++eventtail)&(MAXEVENTS-1) ) 
@@ -531,7 +538,7 @@ void D_ArbitrateNetStart (void)
 	nodesdetected[0] = 1;	// Detect ourselves
 
 	// [RH] Rewrote this loop based on Doom Legacy 1.11's code.
-	Printf ("Waiting for %d more players...\n", doomcom->numnodes - 1);
+	Printf ("Waiting for %d more player%s...\n", doomcom->numnodes - 1, (doomcom->numnodes == 2) ? "" : "s");
 	do {
 		CheckAbort ();
 
@@ -569,7 +576,7 @@ void D_ArbitrateNetStart (void)
 								D_ReadUserInfoStrings (netbuffer->player, &stream, false);
 
 								Printf ("%s joined the game (node %d, player %d)\n",
-										players[netbuffer->player].userinfo->netname,
+										players[netbuffer->player].userinfo.netname,
 										doomcom->remotenode,
 										netbuffer->player);
 							}
@@ -644,7 +651,7 @@ void D_CheckNetGame (void)
 	// I_InitNetwork sets doomcom and netgame
 	I_InitNetwork ();
 	if (doomcom->id != DOOMCOM_ID)
-		I_Error ("Doomcom buffer invalid!");
+		I_FatalError ("Doomcom buffer invalid!");
 	
 	netbuffer = &doomcom->data;
 	consoleplayer = displayplayer = doomcom->consoleplayer;
@@ -652,36 +659,22 @@ void D_CheckNetGame (void)
 	// [RH] Setup user info
 	D_SetupUserInfo ();
 
-	UnlatchCVars ();
-
 	if (netgame)
 		D_ArbitrateNetStart ();
 
-	UnlatchCVars ();
-
-	{
-		char map[9];
-		strncpy (map, startmap, 8);
-		map[8] = 0;
-
-		Printf ("skill: %g  deathmatch: %g  map: %s  dmflags: %i\n",
-				gameskill->value, deathmatch->value, map, dmflags);
-	}
-		
 	// read values out of doomcom
 	ticdup = doomcom->ticdup;
 	maxsend = BACKUPTICS/(2*ticdup)-1;
 	if (maxsend<1)
 		maxsend = 1;
 						
-	for (i=0 ; i<doomcom->numplayers ; i++)
+	for (i = 0; i < doomcom->numplayers; i++)
 		playeringame[i] = true;
-	for (i=0 ; i<doomcom->numnodes ; i++)
+	for (i = 0; i < doomcom->numnodes; i++)
 		nodeingame[i] = true;
 		
 	Printf ("player %i of %i (%i nodes)\n",
 			consoleplayer+1, doomcom->numplayers, doomcom->numnodes);
-
 }
 
 
@@ -692,7 +685,7 @@ void D_CheckNetGame (void)
 //
 void D_QuitNetGame (void)
 {
-	int 			i, j;
+	int i, j;
 		
 	if (debugfile)
 		fclose (debugfile);
@@ -703,9 +696,9 @@ void D_QuitNetGame (void)
 	// send a bunch of packets for security
 	netbuffer->player = consoleplayer;
 	netbuffer->numtics = 0;
-	for (i=0 ; i<4 ; i++)
+	for (i = 0; i < 4; i++)
 	{
-		for (j=1 ; j<doomcom->numnodes ; j++)
+		for (j = 1; j < doomcom->numnodes; j++)
 			if (nodeingame[j])
 				HSendPacket (j, NCMD_EXIT, myoffsetof(doomdata_t,cmds));
 		I_WaitVBL (1);
@@ -938,16 +931,28 @@ void Net_DoCommand (int type, byte **stream, int player)
 	switch (type) {
 		case DEM_SAY:
 			{
-				int who = ReadByte (stream);
+				byte who = ReadByte (stream);
 
 				s = ReadString (stream);
-				if (!who || (who - 1) == consoleplayer) {
-					Printf_Bold ("%s: %s\n", players[player].userinfo->netname, s);
+				if ((who == 0) || players[player].userinfo.team[0] == 0) {
+					// Said to everyone
+					Printf_Bold ("%s: %s\n", players[player].userinfo.netname, s);
 					
-					if (gamemode == commercial)
-						S_StartSound(ORIGIN_AMBIENT3, sfx_radio);
-					else
-						S_StartSound(ORIGIN_AMBIENT3, sfx_tink);
+					if (gamemode == commercial) {
+						S_StartSound (ORIGIN_AMBIENT3, "misc/chat", 60);
+					} else {
+						S_StartSound (ORIGIN_AMBIENT3, "misc/chat2", 60);
+					}
+				} else if (!stricmp (players[player].userinfo.team,
+									 players[consoleplayer].userinfo.team)) {
+					// Said only to members of the player's team
+					Printf_Bold ("(%s): %s\n", players[player].userinfo.netname, s);
+					
+					if (gamemode == commercial) {
+						S_StartSound (ORIGIN_AMBIENT3, "misc/chat", 60);
+					} else {
+						S_StartSound (ORIGIN_AMBIENT3, "misc/chat2", 60);
+					}
 				}
 			}
 			break;
@@ -989,7 +994,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 			strncpy (level.nextmap, s, 8);
 			// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
 			level.flags |= LEVEL_CHANGEMAPCHEAT;
-			G_ExitLevel ();
+			G_ExitLevel (0);
 			break;
 
 		case DEM_SUICIDE:
@@ -1003,4 +1008,15 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 	if (s)
 		free (s);
+}
+
+// [RH] List ping times
+void Cmd_Pings (void *plyr, int argc, char **argv)
+{
+	int i;
+
+	for (i = 0; i < MAXPLAYERS; i++)
+		if (playeringame[i])
+			Printf ("% 4u %s\n", currrecvtime[i] - lastrecvtime[i],
+					players[i].userinfo.netname);
 }

@@ -29,18 +29,7 @@ gamedir will hold progdir + the game directory (id1, id2, etc)
 
   */
 
-char		progdir[1024];
-
-void SetProgDir (void)
-{
-#ifdef _WIN32
-    GetModuleFileName (NULL, progdir, 1024);
-    *(strrchr (progdir, '\\') + 1) = 0;
-	FixPathSeperator (progdir);
-#else
-	Printf ("SetProgDir: Rewrite this\n");
-#endif
-}
+char progdir[1024];
 
 void FixPathSeperator (char *path)
 {
@@ -215,9 +204,27 @@ void DefaultExtension (char *path, char *extension)
 Extract file parts
 ====================
 */
+// FIXME: should include the slash, otherwise
+// backing to an empty path will be wrong when appending a slash
+void ExtractFilePath (char *path, char *dest)
+{
+	char *src;
+
+	src = path + strlen(path) - 1;
+
+//
+// back up until a \ or the start
+//
+	while (src != path && *(src-1) != '\\' && *(src-1) != '/')
+		src--;
+
+	memcpy (dest, path, src-path);
+	dest[src-path] = 0;
+}
+
 void ExtractFileBase (char *path, char *dest)
 {
-	char    *src;
+	char *src;
 
 	src = path + strlen(path) - 1;
 
@@ -242,8 +249,8 @@ ParseNum / ParseHex
 */
 int ParseHex (char *hex)
 {
-	char    *str;
-	int    num;
+	char *str;
+	int num;
 
 	num = 0;
 	str = hex;
@@ -285,7 +292,7 @@ BOOL IsNum (char *str)
 	BOOL result = true;
 
 	while (*str) {
-		if ((*str < '0') || (*str > '9')) {
+		if (((*str < '0') || (*str > '9')) && (*str != '-')) {
 			result = false;
 			break;
 		}

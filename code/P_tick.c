@@ -25,10 +25,13 @@
 
 #include "z_zone.h"
 #include "p_local.h"
+#include "p_acs.h"
+#include "c_consol.h"
 
 #include "doomstat.h"
 
-extern int ConsoleState;
+extern constate_e ConsoleState;
+extern gamestate_t wipegamestate;
 
 //
 // THINKERS
@@ -41,7 +44,7 @@ extern int ConsoleState;
 
 
 // Both the head and tail of the thinker list.
-thinker_t		thinkercap;
+thinker_t thinkercap;
 
 
 //
@@ -49,7 +52,7 @@ thinker_t		thinkercap;
 //
 void P_InitThinkers (void)
 {
-	thinkercap.prev = thinkercap.next  = &thinkercap;
+	thinkercap.prev = thinkercap.next = &thinkercap;
 }
 
 
@@ -130,7 +133,7 @@ void P_RunThinkers (void)
 
 void P_Ticker (void)
 {
-	int 		i;
+	int i;
 
 	// run the tic
 	if (paused)
@@ -138,22 +141,35 @@ void P_Ticker (void)
 
 	// pause if in menu or console and at least one tic has been run
 	if ( !netgame
-		 && (menuactive || ConsoleState == 1 || ConsoleState == 2)
+		 && (menuactive || ConsoleState == c_down || ConsoleState == c_falling)
 		 && !demoplayback
 		 && !demorecording
-		 && players[consoleplayer].viewz != 1)
+		 && players[consoleplayer].viewz != 1
+		 && wipegamestate == gamestate)
 	{
 		return;
 	}
 
 
-	for (i=0 ; i<MAXPLAYERS ; i++)
+	for (i = 0; i<MAXPLAYERS; i++)
 		if (playeringame[i])
 			P_PlayerThink (&players[i]);
 
 	P_RunThinkers ();
+	P_RunScripts ();	// [RH] Execute any active scripts
+	P_RunQuakes ();		// [RH] Shake the earth a little
 	P_UpdateSpecials ();
 	P_RespawnSpecials ();
+
+	// [RH] Apply falling damage
+	for (i = 0; i < MAXPLAYERS; i++)
+		if (playeringame[i]) {
+			P_FallingDamage (players[i].mo);
+
+			players[i].oldvelocity[0] = players[i].mo->momx;
+			players[i].oldvelocity[1] = players[i].mo->momy;
+			players[i].oldvelocity[2] = players[i].mo->momz;
+		}
 
 	// for par times
 	level.time++;

@@ -7,6 +7,9 @@ void C_InstallCommands (void);
 // am_map.c
 CMD(Cmd_Togglemap)
 
+// d_main.c
+CMD(Cmd_Endgame)
+
 // m_menu.c
 CMD(Cmd_Menu_Main)
 CMD(Cmd_Menu_Load)
@@ -34,9 +37,12 @@ CMD(Cmd_Menu_Gameplay)
 CMD(Cmd_Impulse)
 CMD(Cmd_CenterView)
 CMD(Cmd_Pause)
+CMD(Cmd_WeapNext)
+CMD(Cmd_WeapPrev)
 CMD(Cmd_Stop)
 CMD(Cmd_SpyNext)
 CMD(Cmd_SpyPrev)
+CMD(Cmd_Turn180)
 
 // g_level.c
 CMD(Cmd_Map)
@@ -51,6 +57,8 @@ CMD(Cmd_Bind)
 CMD(Cmd_BindDefaults)
 CMD(Cmd_Unbind)
 CMD(Cmd_Unbindall)
+CMD(Cmd_DoubleBind)
+CMD(Cmd_UnDoubleBind)
 
 // c_consol.c
 void C_ToggleConsole (void);
@@ -78,6 +86,12 @@ CMD(Cmd_DumpHeap)
 CMD(Cmd_Logfile)
 CMD(Cmd_Limits)
 CMD(Cmd_ChangeMap)
+CMD(Cmd_Quit)
+CMD(Cmd_Puke)
+CMD(Cmd_Error)
+
+// d_net.c
+CMD(Cmd_Pings)
 
 // p_inter.c
 CMD(Cmd_Kill)
@@ -92,5 +106,17 @@ CMD(Cmd_Screenshot)
 // hu_stuff.c
 CMD(Cmd_MessageMode)
 CMD(Cmd_Say)
+CMD(Cmd_MessageMode2)
+CMD(Cmd_Say_Team)
+
+// r_things.c
+CMD(Cmd_Skins)
+
+// s_sounds.c
+CMD(Cmd_Soundlist)
+CMD(Cmd_Soundlinks)
+
+// z_zone.c
+CMD(Cmd_Mem)
 
 #undef CMD

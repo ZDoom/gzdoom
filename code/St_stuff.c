@@ -58,7 +58,6 @@
 
 // Data.
 #include "dstrings.h"
-#include "sounds.h"
 
 // Cheats and cvars
 #include "c_cmds.h"
@@ -84,19 +83,15 @@ void ST_initNew (void);
 void ST_unloadNew (void);
 void ST_newDraw (void);
 
+// [RH] Base blending values (for e.g. underwater)
+int BaseBlendR, BaseBlendG, BaseBlendB;
+float BaseBlendA;
+
+
 //
 // STATUS BAR DATA
 //
 
-
-// Palette indices.
-// For damage/bonus red-/gold-shifts
-#define STARTREDPALS			1
-#define STARTBONUSPALS			9
-#define NUMREDPALS				8
-#define NUMBONUSPALS			4
-// Radiation suit, green shift.
-#define RADIATIONPAL			13
 
 // N/256*100% probability
 //	that the normal face state will change
@@ -106,10 +101,7 @@ void ST_newDraw (void);
 #define ST_TOGGLECHAT			KEY_ENTER
 
 // Location of status bar
-#define ST_X2					(104)
-
 #define ST_FX					(143)
-#define ST_FY					(1)
 
 // Should be set to patch width
 //	for tall numbers later on
@@ -298,9 +290,6 @@ BOOL					st_firsttime;
 // used to execute ST_Init() only once
 static int				veryfirsttime = 1;
 
-// lump number for PLAYPAL
-static int				lu_palette;
-
 // used for timing
 static unsigned int 	st_clock;
 
@@ -348,11 +337,10 @@ patch_t*		 		tallpercent;
 // 0-9, short, yellow (,different!) numbers
 static patch_t* 		shortnum[10];
 
-// 3 key-cards, 3 skulls
-static patch_t* 		keys[NUMCARDS]; 
+// 3 key-cards, 3 skulls, [RH] 3 combined
+static patch_t* 		keys[NUMCARDS+NUMCARDS/2]; 
 
-// face status patches
-// [RH] no longer static
+// face status patches [RH] no longer static
 patch_t* 				faces[ST_NUMFACES];
 
 // face background
@@ -535,8 +523,7 @@ void ST_refreshBackground(void)
 		if (netgame) {
 			// [RH] Always draw faceback with the player's color
 			//		using a translation rather than a different patch.
-			//		Use displayplayer instead of consoleplayer.
-			V_ColorMap = translationtables + displayplayer*256;
+			V_ColorMap = translationtables + (plyr - players)*256;
 			V_DrawTranslatedPatch (ST_FX, 0, &BG, faceback);
 		}
 
@@ -552,15 +539,15 @@ void ST_refreshBackground(void)
 
 BOOL CheckCheatmode (void);
 
-// Respond to keyboard input events,
-//	intercept cheats.
+// Respond to keyboard input events, intercept cheats.
+// [RH] Cheats eat the last keypress used to trigger them
 BOOL ST_Responder (event_t *ev)
 {
+  BOOL eat = false;
   int i;
 	
   // Filter automap on/off.
-  if (ev->type == ev_keyup
-	  && ((ev->data1 & 0xffff0000) == AM_MSGHEADER))
+  if (ev->type == ev_keyup && ((ev->data1 & 0xffff0000) == AM_MSGHEADER))
   {
 	switch(ev->data1)
 	{
@@ -570,7 +557,6 @@ BOOL ST_Responder (event_t *ev)
 		break;
 		
 	  case AM_MSGEXITED:
-		//		fprintf(stderr, "AM exited\n");
 		st_gamestate = FirstPersonState;
 		break;
 	}
@@ -590,6 +576,7 @@ BOOL ST_Responder (event_t *ev)
 
 		  Net_WriteByte (DEM_GENERICCHEAT);
 		  Net_WriteByte (CHT_IDDQD);
+		  eat = true;
 	  }
 
 	  // 'fa' cheat for killer fucking arsenal
@@ -600,6 +587,7 @@ BOOL ST_Responder (event_t *ev)
 
 		  Net_WriteByte (DEM_GENERICCHEAT);
 		  Net_WriteByte (CHT_IDFA);
+		  eat = true;
 	  }
 
 	  // 'kfa' cheat for key full ammo
@@ -610,6 +598,7 @@ BOOL ST_Responder (event_t *ev)
 
 		  Net_WriteByte (DEM_GENERICCHEAT);
 		  Net_WriteByte (CHT_IDKFA);
+		  eat = true;
 	  }
 
 	  // Simplified, accepting both "noclip" and "idspispopd".
@@ -622,6 +611,7 @@ BOOL ST_Responder (event_t *ev)
 
 		  Net_WriteByte (DEM_GENERICCHEAT);
 		  Net_WriteByte (CHT_NOCLIP);
+		  eat = true;
 	  }
 	  // 'behold?' power-up cheats
 	  for (i=0;i<6;i++)
@@ -633,6 +623,7 @@ BOOL ST_Responder (event_t *ev)
 
 			Net_WriteByte (DEM_GENERICCHEAT);
 			Net_WriteByte ((byte)(CHT_BEHOLDV + i));
+			eat = true;
 		}
 	  }
 	  
@@ -650,12 +641,14 @@ BOOL ST_Responder (event_t *ev)
 	  {
 		  Net_WriteByte (DEM_GENERICCHEAT);
 		  Net_WriteByte (CHT_CHAINSAW);
+		  eat = true;
 	  }
 
 	  // 'mypos' for player position
 	  else if (cht_CheckCheat(&cheat_mypos, (char)ev->data2))
 	  {
 		AddCommandString ("toggle idmypos");
+		eat = true;
 	  }
 	
 	  // 'clev' change-level cheat
@@ -670,6 +663,7 @@ BOOL ST_Responder (event_t *ev)
 		argv[0] = "idclev";
 		argv[1] = buf;
 		Cmd_idclev (plyr, 2, argv);
+		eat = true;
 	  }
 
 	  // 'idmus' change-music cheat
@@ -682,10 +676,11 @@ BOOL ST_Responder (event_t *ev)
 
 		sprintf (buf + 3, "idmus %s\n", buf);
 		AddCommandString (buf + 3);
+		eat = true;
 	  }
 	}
 
-  return false;
+  return eat;
 }
 
 
@@ -918,8 +913,9 @@ void ST_updateWidgets(void)
 	{
 		keyboxes[i] = plyr->cards[i] ? i : -1;
 
+		// [RH] show multiple keys per box, too
 		if (plyr->cards[i+3])
-			keyboxes[i] = i+3;
+			keyboxes[i] = (keyboxes[i] == -1) ? i+3 : i+6;
 	}
 
 	// refresh everything if this is him coming back to life
@@ -951,21 +947,66 @@ void ST_Ticker (void)
 
 }
 
-static int st_palette = 0;
+static float st_palette[4];
+
+// [RH] Amount of red flash for up to 114 damage points. Calculated by hand
+//		using a logarithmic scale and my trusty HP48G.
+static byte damageToAlpha[114] = {
+	  0,   8,  16,  23,  30,  36,  42,  47,  53,  58,  62,  67,  71,  75,  79,
+	 83,  87,  90,  94,  97, 100, 103, 107, 109, 112, 115, 118, 120, 123, 125,
+	128, 130, 133, 135, 137, 139, 141, 143, 145, 147, 149, 151, 153, 155, 157,
+	159, 160, 162, 164, 165, 167, 169, 170, 172, 173, 175, 176, 178, 179, 181,
+	182, 183, 185, 186, 187, 189, 190, 191, 192, 194, 195, 196, 197, 198, 200,
+	201, 202, 203, 204, 205, 206, 207, 209, 210, 211, 212, 213, 214, 215, 216,
+	217, 218, 219, 220, 221, 221, 222, 223, 224, 225, 226, 227, 228, 229, 229,
+	230, 231, 232, 233, 234, 235, 235, 236, 237
+};
+
+/*
+=============
+SV_AddBlend
+[RH] This is from Q2.
+=============
+*/
+void SV_AddBlend (float r, float g, float b, float a, float *v_blend)
+{
+	float a2, a3;
+
+	if (a <= 0)
+		return;
+	a2 = v_blend[3] + (1-v_blend[3])*a;	// new total alpha
+	a3 = v_blend[3]/a2;		// fraction of color from old
+
+	v_blend[0] = v_blend[0]*a3 + r*(1-a3);
+	v_blend[1] = v_blend[1]*a3 + g*(1-a3);
+	v_blend[2] = v_blend[2]*a3 + b*(1-a3);
+	v_blend[3] = a2;
+}
 
 void ST_doPaletteStuff (void)
 {
+	float blend[4];
+	int cnt;
 
-	int 		palette;
-	int 		cnt;
-	int 		bzc;
+	blend[0] = blend[1] = blend[2] = blend[3] = 0;
 
-	cnt = plyr->damagecount << 1;
+	SV_AddBlend (BaseBlendR / 255.0f, BaseBlendG / 255.0f, BaseBlendB / 255.0f, BaseBlendA, blend);
+	if (plyr->powers[pw_ironfeet] > 4*32 || plyr->powers[pw_ironfeet]&8)
+		SV_AddBlend (0.0f, 1.0f, 0.0f, 0.125f, blend);
+	if (plyr->bonuscount) {
+		cnt = plyr->bonuscount << 3;
+		SV_AddBlend (0.8431f, 0.7294f, 0.2706f, cnt > 128 ? 0.5f : cnt / 255.0f, blend);
+	}
+
+	if (plyr->damagecount < 114)
+		cnt = damageToAlpha[plyr->damagecount];
+	else
+		cnt = damageToAlpha[113];
 
 	if (plyr->powers[pw_strength])
 	{
 		// slowly fade the berzerk out
-		bzc = 128 - ((plyr->powers[pw_strength]>>3) & (~0x1f));
+		int bzc = 128 - ((plyr->powers[pw_strength]>>3) & (~0x1f));
 
 		if (bzc > cnt)
 			cnt = bzc;
@@ -975,31 +1016,14 @@ void ST_doPaletteStuff (void)
 	{
 		if (cnt > 228)
 			cnt = 228;
-		else if (cnt < 28)
-			cnt = 28;
 
-		palette = MAKEARGB(cnt,255,0,0);
+		SV_AddBlend (1.0f, 0.0f, 0.0f, cnt / 255.0f, blend);
 	}
 
-	else if (plyr->bonuscount)
-	{
-		cnt = plyr->bonuscount << 3;
-
-		palette = MAKEARGB((cnt > 128) ? 128 : cnt,215,186,69);
-	}
-
-	else if ( plyr->powers[pw_ironfeet] > 4*32
-			  || plyr->powers[pw_ironfeet]&8)
-	{
-		palette = MAKEARGB(32,0,255,0);
-	}
-	
-	else 
-		palette = MAKEARGB(0,0,0,0);
-
-	if (palette != st_palette) {
-		st_palette = palette;
-		V_SetBlend (RPART(palette), GPART(palette), BPART(palette), APART(palette));
+	if (memcmp (blend, st_palette, sizeof(blend))) {
+		memcpy (st_palette, blend, sizeof(blend));
+		V_SetBlend ((int)(blend[0] * 255.0f), (int)(blend[1] * 255.0f),
+					(int)(blend[2] * 255.0f), (int)(blend[3] * 256.0f));
 	}
 }
 
@@ -1062,7 +1086,7 @@ void ST_diffDraw(void)
 
 void ST_Drawer (BOOL fullscreen, BOOL refresh)
 {
-  
+
 	st_statusbaron = (!fullscreen) || automapactive;
 	st_firsttime = st_firsttime || refresh;
 
@@ -1081,22 +1105,26 @@ void ST_Drawer (BOOL fullscreen, BOOL refresh)
 	V_UnlockScreen (&stbarscreen);
 
 	// [RH] Hey, it's somewhere to put the idmypos stuff!
-	//		Use displayplayer instead of consoleplayer
 	if (idmypos->value)
 		Printf ("ang=%d;x,y=(%d,%d)\n",
-				players[displayplayer].mo->angle/FRACUNIT,
-				players[displayplayer].mo->x/FRACUNIT,
-				players[displayplayer].mo->y/FRACUNIT);
+				players[consoleplayer].camera->angle/FRACUNIT,
+				players[consoleplayer].camera->x/FRACUNIT,
+				players[consoleplayer].camera->y/FRACUNIT);
 }
 
 void ST_loadGraphics(void)
 {
-
-	int 		i;
-	int 		j;
-	int 		facenum;
+	playerskin_t *skin;
+	int i, j;
+	int namespc;
+	int facenum;
 	
-	char		namebuf[9];
+	char namebuf[9];
+
+	if (plyr)
+		skin = &skins[plyr->userinfo.skin];
+	else
+		skin = &skins[players[consoleplayer].userinfo.skin];
 
 	// Load the numbers, tall and short
 	for (i=0;i<10;i++)
@@ -1113,7 +1141,7 @@ void ST_loadGraphics(void)
 	tallpercent = (patch_t *) W_CacheLumpName("STTPRCNT", PU_STATIC);
 
 	// key cards
-	for (i=0;i<NUMCARDS;i++)
+	for (i=0;i<NUMCARDS+NUMCARDS/2;i++)
 	{
 		sprintf(namebuf, "STKEYS%d", i);
 		keys[i] = (patch_t *) W_CacheLumpName(namebuf, PU_STATIC);
@@ -1144,32 +1172,44 @@ void ST_loadGraphics(void)
 
 	// face states
 	facenum = 0;
-	for (i=0;i<ST_NUMPAINFACES;i++)
+
+	// [RH] Use face specified by "skin"
+	if (skin->face[0]) {
+		// The skin has its own face
+		strncpy (namebuf, skin->face, 3);
+		namespc = skin->namespc;
+	} else {
+		// The skin doesn't have its own face; use the normal one
+		namebuf[0] = 'S'; namebuf[1] = 'T'; namebuf[2] = 'F';
+		namespc = ns_global;
+	}
+
+	for (i = 0; i < ST_NUMPAINFACES; i++)
 	{
-		for (j=0;j<ST_NUMSTRAIGHTFACES;j++)
+		for (j = 0; j < ST_NUMSTRAIGHTFACES; j++)
 		{
-			sprintf(namebuf, "STFST%d%d", i, j);
+			sprintf(namebuf+3, "ST%d%d", i, j);
 			faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
 		}
-		sprintf(namebuf, "STFTR%d0", i);		// turn right
-		faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
-		sprintf(namebuf, "STFTL%d0", i);		// turn left
-		faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
-		sprintf(namebuf, "STFOUCH%d", i);		// ouch!
-		faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
-		sprintf(namebuf, "STFEVL%d", i);		// evil grin ;)
-		faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
-		sprintf(namebuf, "STFKILL%d", i);		// pissed off
-		faces[facenum++] = W_CacheLumpName(namebuf, PU_STATIC);
+		sprintf(namebuf+3, "TR%d0", i);		// turn right
+		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		sprintf(namebuf+3, "TL%d0", i);		// turn left
+		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		sprintf(namebuf+3, "OUCH%d", i);		// ouch!
+		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		sprintf(namebuf+3, "EVL%d", i);		// evil grin ;)
+		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+		sprintf(namebuf+3, "KILL%d", i);		// pissed off
+		faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
 	}
-	faces[facenum++] = W_CacheLumpName("STFGOD0", PU_STATIC);
-	faces[facenum++] = W_CacheLumpName("STFDEAD0", PU_STATIC);
-
+	strcpy (namebuf+3, "GOD0");
+	faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
+	strcpy (namebuf+3, "DEAD0");
+	faces[facenum++] = W_CacheLumpNum ((W_CheckNumForName)(namebuf, namespc), PU_STATIC);
 }
 
 void ST_loadData(void)
 {
-	lu_palette = W_GetNumForName ("PLAYPAL");
 	ST_loadGraphics();
 }
 
@@ -1195,7 +1235,7 @@ void ST_unloadGraphics(void)
 		Z_ChangeTag(arms[i][0], PU_CACHE);
 	
 	// unload the key cards
-	for (i=0;i<NUMCARDS;i++)
+	for (i=0;i<NUMCARDS+NUMCARDS/2;i++)
 		Z_ChangeTag(keys[i], PU_CACHE);
 
 	Z_ChangeTag(sbar, PU_CACHE);
@@ -1222,7 +1262,10 @@ void ST_initData(void)
 	int i;
 
 	st_firsttime = true;
-	plyr = &players[displayplayer];		// [RH] Not consoleplayer
+	if (players[consoleplayer].camera && players[consoleplayer].camera->player)
+		plyr = players[consoleplayer].camera->player;		// [RH] use camera
+	else
+		plyr = &players[consoleplayer];
 
 	st_clock = 0;
 	st_chatstate = StartChatState;
@@ -1233,7 +1276,7 @@ void ST_initData(void)
 	st_cursoron = false;
 
 	st_faceindex = 0;
-	st_palette = -1;
+	memset (st_palette, 255, sizeof(st_palette));
 
 	st_oldhealth = -1;
 

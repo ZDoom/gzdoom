@@ -5,12 +5,19 @@
 
 extern cvar_t *autoaim;
 
-#define MAXPLAYERNAME	23
+#define MAXPLAYERNAME	15
+
+#define GENDER_MALE		0
+#define GENDER_FEMALE	1
+#define GENDER_NEUTER	2
 
 struct userinfo_s {
 	char		netname[MAXPLAYERNAME+1];
+	char		team[MAXPLAYERNAME+1];
 	fixed_t		aimdist;
 	int			color;
+	int			skin;
+	int			gender;
 };
 typedef struct userinfo_s userinfo_t;
 

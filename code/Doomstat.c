@@ -28,7 +28,7 @@
 
 
 // Game Mode - identify IWAD as shareware, retail etc.
-GameMode_t		gamemode = indetermined;
+GameMode_t		gamemode = undetermined;
 GameMission_t	gamemission = doom;
 
 // Language.
@@ -42,6 +42,9 @@ cvar_t			*developer;
 
 // True if an old demo is being played back.
 BOOL			olddemo;
+
+// [RH] Feature control cvars
+cvar_t *boom_friction, *boom_pushers;
 
 // [RH] Deathmatch flags
 cvar_t			*dmflagsvar;

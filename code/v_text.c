@@ -85,7 +85,7 @@ void V_InitConChars (byte transcolor)
 extern void STACK_ARGS PrintChar1P (long *charimg, byte *dest, int screenpitch);
 extern void STACK_ARGS PrintChar2P_MMX (long *charimg, byte *dest, int screenpitch);
 
-void V_PrintStr (int x, int y, byte *str, int count, byte ormask)
+void V_PrintStr (int x, int y, byte *str, int count)
 {
 	byte *temp;
 	long *charimg;
@@ -110,7 +110,7 @@ void V_PrintStr (int x, int y, byte *str, int count, byte ormask)
 	temp = screens[0].buffer + y * screens[0].pitch;
 
 	while (count && x <= (screens[0].width - 8)) {
-		charimg = (long *)&ConChars[((*str) | ormask) * 128];
+		charimg = (long *)&ConChars[(*str) * 128];
 		if (screens[0].is8bit) {
 #ifdef USEASM
 			PrintChar1P (charimg, temp + x, screens[0].pitch);
@@ -133,10 +133,11 @@ void V_PrintStr (int x, int y, byte *str, int count, byte ormask)
 
 			writepos = (int *)(temp + (x << 2));
 			for (z = 0; z < 8; z++) {
+#define BYTEIMG ((byte *)charimg)
 #define SPOT(a) \
-	writepos[a] = writepos[a] & \
-				((((byte *)charimg)[a+8]<<16) | ((((byte *)charimg)[a+8]<<8) | \
-				((((byte *)charimg)[a+8]))	  | (V_Palette[((byte *)charimg)[a]])))
+	writepos[a] = (writepos[a] & \
+				 ((BYTEIMG[a+8]<<16)|(BYTEIMG[a+8]<<8)|(BYTEIMG[a+8]))) \
+				 ^ V_Palette[BYTEIMG[a]]
 
 				SPOT(0);
 				SPOT(1);
@@ -147,6 +148,7 @@ void V_PrintStr (int x, int y, byte *str, int count, byte ormask)
 				SPOT(6);
 				SPOT(7);
 #undef SPOT
+#undef BYTEIMG
 				writepos += screens[0].pitch >> 2;
 				charimg += 4;
 			}
@@ -161,7 +163,7 @@ void V_PrintStr (int x, int y, byte *str, int count, byte ormask)
 // V_PrintStr2
 // Same as V_PrintStr but doubles the size of every character.
 //
-void V_PrintStr2 (int x, int y, byte *str, int count, byte ormask)
+void V_PrintStr2 (int x, int y, byte *str, int count)
 {
 	byte *temp;
 	long *charimg;
@@ -186,7 +188,7 @@ void V_PrintStr2 (int x, int y, byte *str, int count, byte ormask)
 	temp = screens[0].buffer + y * screens[0].pitch;
 
 	while (count && x <= (screens[0].width - 16)) {
-		charimg = (long *)&ConChars[((*str) | ormask) * 128];
+		charimg = (long *)&ConChars[(*str) * 128];
 #ifdef USEASM
 		if (UseMMX) {
 			PrintChar2P_MMX (charimg, temp + x, screens[0].pitch);
@@ -525,7 +527,7 @@ int V_StringWidth (byte *string)
 // [RH] Break long lines of text into multiple lines no
 //		longer than maxwidth pixels.
 //
-static void breakit (brokenlines_t *line, const byte *start, const byte *string, int w)
+static void breakit (brokenlines_t *line, const byte *start, const byte *string)
 {
 	// Leave out trailing white space
 	while (string > start && isspace (*(string - 1)))
@@ -534,7 +536,7 @@ static void breakit (brokenlines_t *line, const byte *start, const byte *string,
 	line->string = Z_Malloc (string - start + 1, PU_STATIC, 0);
 	strncpy (line->string, start, string - start);
 	line->string[string - start] = 0;
-	line->width = w;
+	line->width = V_StringWidth (line->string);
 }
 
 brokenlines_t *V_BreakLines (int maxwidth, const byte *string)
@@ -567,7 +569,7 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string)
 			if (!space)
 				space = string - 1;
 
-			breakit (&lines[i], start, space, w);
+			breakit (&lines[i], start, space);
 
 			i++;
 			w = 0;
@@ -587,7 +589,7 @@ brokenlines_t *V_BreakLines (int maxwidth, const byte *string)
 
 		while (s < string) {
 			if (!isspace (*s++)) {
-				breakit (&lines[i++], start, string, w);
+				breakit (&lines[i++], start, string);
 				break;
 			}
 		}

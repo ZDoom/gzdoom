@@ -39,13 +39,14 @@
 #define PU_DAVE 				4		// anything else Dave wants static
 #define PU_LEVEL				50		// static until level exited
 #define PU_LEVSPEC				51		// a special thinker in a level
+#define PU_LEVACS				52		// [RH] An ACS script in a level
 // Tags >= 100 are purgable whenever needed.
 #define PU_PURGELEVEL			100
 #define PU_CACHE				101
 
 
 void	Z_Init (void);
-void*	Z_Malloc (int size, int tag, void *ptr);
+void*	Z_Malloc (size_t size, int tag, void *ptr);
 void	Z_Free2 (void *ptr, char *f, int l);
 #define Z_Free(p) Z_Free2 ((p), __FILE__, __LINE__)
 void	Z_FreeTags (int lowtag, int hightag);
@@ -53,12 +54,12 @@ void	Z_DumpHeap (int lowtag, int hightag);
 void	Z_FileDumpHeap (FILE *f);
 void	Z_CheckHeap (void);
 void	Z_ChangeTag2 (void *ptr, int tag);
-int 	Z_FreeMemory (void);
+size_t 	Z_FreeMemory (void);
 
 
 typedef struct memblock_s
 {
-	int 				size;	// including the header and possibly tiny fragments
+	size_t 				size;	// including the header and possibly tiny fragments
 	void**				user;	// NULL if a free block
 	int 				tag;	// purgelevel
 	int 				id; 	// should be ZONEID
@@ -73,7 +74,7 @@ typedef struct memblock_s
 #define Z_ChangeTag(p,t) \
 { \
 	if (( (memblock_t *)( (byte *)(p) - sizeof(memblock_t)))->id!=0x1d4a11) \
-		I_Error("Z_CT at "__FILE__":%i",__LINE__); \
+		I_FatalError("Z_CT at "__FILE__":%i",__LINE__); \
 	Z_ChangeTag2(p,t); \
 };
 

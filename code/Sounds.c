@@ -31,6 +31,7 @@
 //
 // Information about all the sfx
 //
+#if 0
 
 sfxinfo_t S_sfx[] =
 {
@@ -212,4 +213,5 @@ sfxinfo_t S_sfx[] =
   { 0L, false, 32, 0, -1, -1, 0 },
   { 0L, false, 32, 0, -1, -1, 0 }
 };
+#endif
 

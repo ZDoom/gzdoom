@@ -46,6 +46,9 @@
 
 #include "v_video.h"
 
+#include "cmdlib.h"
+#include "s_sound.h"
+
 
 
 #define MINZ							(FRACUNIT*4)
@@ -58,19 +61,6 @@ cvar_t *crosshair;
 cvar_t *r_drawfuzz;
 
 
-typedef struct
-{
-	int 		x1;
-	int 		x2;
-		
-	int 		column;
-	int 		topclip;
-	int 		bottomclip;
-
-} maskdraw_t;
-
-
-
 //
 // Sprite rotation 0 is facing the viewer,
 //	rotation 1 is one angle turn CLOCKWISE around the axis.
@@ -80,11 +70,11 @@ typedef struct
 //
 fixed_t 		pspritescale;
 fixed_t 		pspriteiscale;
-fixed_t			pspriteyscale;		// [RH] Aspect ratio handling (from doom3)
+fixed_t			pspriteyscale;		// [RH] Aspect ratio handling (from doom legacy)
 fixed_t			sky1scale;			// [RH] Sky 1 scale factor
 fixed_t			sky2scale;			// [RH] Sky 2 scale factor
 
-lighttable_t**	spritelights;
+int*			spritelights;		// [RH] Changed from lighttable_t** to int*
 
 // constant arrays
 //	used for psprite clipping and initializing clipping
@@ -109,6 +99,9 @@ spriteframe_t	sprtemp[MAX_SPRITE_FRAMES];
 int 			maxframe;
 char*			spritename;
 
+// [RH] skin globals
+playerskin_t	*skins;
+size_t			numskins;
 
 
 //
@@ -118,11 +111,20 @@ char*			spritename;
 // [RH] Removed checks for coexistance of rotation 0 with other
 //		rotations and made it look more like BOOM's version.
 //
-void R_InstallSpriteLump (int lump, unsigned frame, unsigned rotation, BOOL flipped)
+static void R_InstallSpriteLump (int lump, unsigned frame, unsigned rotation, BOOL flipped)
 {
+	// [RH] Record the sprite's width, offset, and topoffset here
+	//		instead of in R_InitSpriteLumps().
+	patch_t *patch;
+
 	if (frame >= MAX_SPRITE_FRAMES || rotation > 8)
-		I_Error("R_InstallSpriteLump: Bad frame characters in lump %i", lump);
-		
+		I_FatalError ("R_InstallSpriteLump: Bad frame characters in lump %i", lump);
+
+	patch = W_CacheLumpNum (lump, PU_CACHE);
+
+	if (!(lump & 127))
+		Printf (".");	// [RH] Print ticker
+
 	if ((int)frame > maxframe)
 		maxframe = frame;
 				
@@ -134,19 +136,78 @@ void R_InstallSpriteLump (int lump, unsigned frame, unsigned rotation, BOOL flip
 
 		for (r = 7; r >= 0; r--)
 			if (sprtemp[frame].lump[r] == -1) {
-				sprtemp[frame].lump[r] = (short)(lump - firstspritelump);
+				sprtemp[frame].lump[r] = (short)(lump);
 				sprtemp[frame].flip[r] = (byte)flipped;
 				sprtemp[frame].rotate = false;
+
+				// [RH] Need to set these, too.
+				sprtemp[frame].width[r] = SHORT(patch->width)<<FRACBITS;
+				sprtemp[frame].offset[r] = SHORT(patch->leftoffset)<<FRACBITS;
+				sprtemp[frame].topoffset[r] = SHORT(patch->topoffset)<<FRACBITS;
 			}
 	} else if (sprtemp[frame].lump[--rotation] == -1) {
 		// the lump is only used for one rotation
-		sprtemp[frame].lump[rotation] = (short)(lump - firstspritelump);
+		sprtemp[frame].lump[rotation] = (short)(lump);
 		sprtemp[frame].flip[rotation] = (byte)flipped;
 		sprtemp[frame].rotate = true;
+
+		// [RH] Need to set these, too.
+		sprtemp[frame].width[rotation] = SHORT(patch->width)<<FRACBITS;
+		sprtemp[frame].offset[rotation] = SHORT(patch->leftoffset)<<FRACBITS;
+		sprtemp[frame].topoffset[rotation] = SHORT(patch->topoffset)<<FRACBITS;
 	}
 }
 
 
+// [RH] Seperated out of R_InitSpriteDefs()
+static void R_InstallSprite (const char *name, int num)
+{
+	char sprname[5];
+	int frame;
+
+	if (maxframe == -1) {
+		sprites[num].numframes = 0;
+		return;
+	}
+
+	strncpy (sprname, name, 4);
+	sprname[4] = 0;
+
+	maxframe++;
+	
+	for (frame = 0 ; frame < maxframe ; frame++)
+	{
+		switch ((int)sprtemp[frame].rotate)
+		{
+		  case -1:
+			// no rotations were found for that frame at all
+			I_FatalError ("R_InstallSprite: No patches found for %s frame %c", sprname, frame+'A');
+			break;
+			
+		  case 0:
+			// only the first rotation is needed
+			break;
+					
+		  case 1:
+			// must have all 8 frames
+			{
+				int rotation;
+
+				for (rotation = 0; rotation < 8; rotation++)
+					if (sprtemp[frame].lump[rotation] == -1)
+						I_FatalError ("R_InstallSprite: Sprite %s frame %c is missing rotations",
+									  sprname, frame+'A');
+			}
+			break;
+		}
+	}
+	
+	// allocate space for the frames present and copy sprtemp to it
+	sprites[num].numframes = maxframe;
+	sprites[num].spriteframes = 
+		Z_Malloc (maxframe * sizeof(spriteframe_t), PU_STATIC, NULL);
+	memcpy (sprites[num].spriteframes, sprtemp, maxframe * sizeof(spriteframe_t));
+}
 
 
 //
@@ -164,21 +225,25 @@ void R_InstallSpriteLump (int lump, unsigned frame, unsigned rotation, BOOL flip
 //	letter/number appended.
 // The rotation character can be 0 to signify no rotations.
 //
-void R_InitSpriteDefs (char** namelist) 
+void R_InitSpriteDefs (char **namelist) 
 { 
-	int			i;
-	int 		l;
-	int 		intname;
-	int 		start;
-	int 		end;
+	int i;
+	int l;
+	int intname;
+	int start;
+	int end;
+	int realsprites;
 				
 	// count the number of sprite names
 	for (numsprites = 0; namelist[numsprites]; numsprites++)
 		;
+	// [RH] include skins in the count
+	realsprites = numsprites;
+	numsprites += numskins - 1;
 		
 	if (!numsprites)
 		return;
-				
+
 	sprites = Z_Malloc (numsprites * sizeof(*sprites), PU_STATIC, NULL);
 		
 	start = firstspritelump - 1;
@@ -187,7 +252,7 @@ void R_InitSpriteDefs (char** namelist)
 	// scan all the lump names for each of the names,
 	//	noting the highest frame letter.
 	// Just compare 4 characters as ints
-	for (i = 0; i < numsprites; i++)
+	for (i = 0; i < realsprites; i++)
 	{
 		spritename = namelist[i];
 		memset (sprtemp, -1, sizeof(sprtemp));
@@ -214,59 +279,213 @@ void R_InitSpriteDefs (char** namelist)
 			}
 		}
 		
-		// check the frames that were found for completeness
-		if (maxframe == -1)
-		{
-			sprites[i].numframes = 0;
+		R_InstallSprite (namelist[i], i);
+	}
+}
+
+// [RH]
+// R_InitSkins
+// Reads in everything applicable to a skin. The skins should have already
+// been counted and had their identifiers assigned to namespaces.
+//
+static const char *skinsoundnames[8][2] = {
+	"dsplpain",	NULL,
+	"dspldeth",	NULL,
+	"dspdiehi",	"xdeath1",
+	"dsoof",	"land1",
+	"dsnoway",	"grunt1",
+	"dsslop",	"gibbed",
+	"dspunch",	"fist",
+	"dsjump",	"jump1",
+};
+
+static char facenames[7][8] = {
+	"xxxTR", "xxxTL", "xxxOUCH", "xxxEVL", "xxxKILL", "xxxGOD0", "xxxDEAD0"
+};
+static const int facelens[7] = {
+	5, 5, 7, 6, 7, 7, 8
+};
+
+void R_InitSkins (void)
+{
+	char sndname[128];
+	int sndlumps[8];
+	char key[10];
+	int intname;
+	size_t i;
+	int j, k, base;
+	int stop;
+	char *def;
+
+	key[9] = 0;
+
+	for (i = 1; i < numskins; i++) {
+		for (j = 0; j < 8; j++)
+			sndlumps[j] = -1;
+		base = (W_CheckNumForName) ("S_SKIN", skins[i].namespc);
+		// The player sprite has 23 frames. This means that the S_SKIN
+		// marker needs a minimum of 23 lumps after it (probably more).
+		if (base >= numlumps - 23 || base == -1)
 			continue;
-		}
-				
-		maxframe++;
-		
-		{
-			int frame;
+		def = W_CacheLumpNum (base, PU_CACHE);
+		intname = 0;
 
-			for (frame = 0 ; frame < maxframe ; frame++)
-			{
-				switch ((int)sprtemp[frame].rotate)
-				{
-				  case -1:
-					// no rotations were found for that frame at all
-					I_Error ("R_InitSprites: No patches found "
-							 "for %s frame %c", namelist[i], frame+'A');
-					break;
-					
-				  case 0:
-					// only the first rotation is needed
-					break;
-							
-				  case 1:
-					// must have all 8 frames
-					{
-						int rotation;
-
-						for (rotation=0 ; rotation<8 ; rotation++)
-							if (sprtemp[frame].lump[rotation] == -1)
-								I_Error ("R_InitSprites: Sprite %s frame %c "
-										 "is missing rotations",
-										 namelist[i], frame+'A');
+		// Data is stored as "key = data". Don't see why the =
+		// is necessary, but that's the way the Doom Legacy
+		// guys decided to do it.
+		while (def = COM_Parse (def)) {
+			strncpy (key, com_token, 9);
+			def = COM_Parse (def);
+			if (com_token[0] != '=') {
+				Printf ("Bad format for skin %d: %s %s", i, key, com_token);
+				break;
+			}
+			def = COM_Parse (def);
+			if (!stricmp (key, "name")) {
+				strncpy (skins[i].name, com_token, 16);
+			} else if (!stricmp (key, "sprite")) {
+				for (j = 3; j >= 0; j--)
+					com_token[j] = toupper (com_token[j]);
+				intname = *((int *)com_token);
+			} else if (!stricmp (key, "face")) {
+				for (j = 2; j >= 0; j--)
+					skins[i].face[j] = toupper (com_token[j]);
+			} else {
+				for (j = 0; j < 8; j++) {
+					if (!stricmp (key, skinsoundnames[j][0])) {
+						// Can't use W_CheckNumForName because skin sounds
+						// haven't been assigned a namespace yet.
+						for (k = base + 1; k < numlumps &&
+										   lumpinfo[k].handle == lumpinfo[base].handle; k++) {
+							if (!strnicmp (com_token, lumpinfo[k].name, 8)) {
+								W_SetLumpNamespace (k, skins[i].namespc);
+								sndlumps[j] = k;
+								break;
+							}
+						}
+						if (sndlumps[j] == -1) {
+							// Replacement not found, try finding it in the global namespace
+							sndlumps[j] = S_FindSoundByLump (W_CheckNumForName (com_token));
+						}
+						break;
 					}
-					break;
+				}
+				//if (j == 8)
+				//	Printf ("Funny info for skin %i: %s = %s\n", i, key, com_token);
+			}
+		}
+
+		if (skins[i].name[0] == 0)
+			sprintf (skins[i].name, "skin%i", i);
+
+		// Register any sounds this skin provides
+		for (j = 0; j < 8; j++) {
+			if (sndlumps[j] != -1) {
+				if (j > 1) {
+					sprintf (sndname, "player/%s/%s", skins[i].name, skinsoundnames[j][1]);
+					S_AddSoundLump (sndname, sndlumps[j]);
+				} else if (j == 1) {
+					int r;
+
+					for (r = 1; r <= 4; r++) {
+						sprintf (sndname, "player/%s/death%d", skins[i].name, r);
+						S_AddSoundLump (sndname, sndlumps[j]);
+					}
+				} else {	// j == 0
+					int l, r;
+
+					for (l =  1; l <= 4; l++)
+						for (r = 1; r <= 2; r++) {
+							sprintf (sndname, "player/%s/pain%d_%d", skins[i].name, l*25, r);
+							S_AddSoundLump (sndname, sndlumps[j]);
+						}
 				}
 			}
 		}
-		
-		// allocate space for the frames present and copy sprtemp to it
-		sprites[i].numframes = maxframe;
-		sprites[i].spriteframes = 
-			Z_Malloc (maxframe * sizeof(spriteframe_t), PU_STATIC, NULL);
-		memcpy (sprites[i].spriteframes, sprtemp, maxframe*sizeof(spriteframe_t));
-	}
 
+		// Now collect the sprite frames for this skin. If the sprite name was not
+		// specified, use whatever immediately follows the specifier lump.
+		if (intname == 0) {
+			intname = *(int *)(lumpinfo[base+1].name);
+			for (stop = base + 2; stop < numlumps &&
+								  lumpinfo[stop].handle == lumpinfo[base].handle &&
+								  *(int *)lumpinfo[stop].name == intname; stop++)
+				;
+		} else {
+			stop = numlumps;
+		}
+
+		memset (sprtemp, -1, sizeof(sprtemp));
+		maxframe = -1;
+
+		for (k = base + 1;
+			 k < stop && lumpinfo[k].handle == lumpinfo[base].handle;
+			 k++) {
+			if (*(int *)lumpinfo[k].name == intname)
+			{
+
+				R_InstallSpriteLump (k, 
+									 lumpinfo[k].name[4] - 'A',
+									 lumpinfo[k].name[5] - '0',
+									 false);
+
+				if (lumpinfo[k].name[6])
+					R_InstallSpriteLump (k,
+									 lumpinfo[k].name[6] - 'A',
+									 lumpinfo[k].name[7] - '0',
+									 true);
+
+				W_SetLumpNamespace (k, skins[i].namespc);
+			}
+		}
+		R_InstallSprite ((char *)&intname, (skins[i].sprite = numsprites - numskins + i));
+
+		// Now go back and check for face graphics (if necessary)
+		if (skins[i].face[0] == 0 || skins[i].face[1] == 0 || skins[i].face[2] == 0) {
+			// No face name specified, so this skin doesn't replace it
+			skins[i].face[0] = 0;
+		} else {
+			// Need to go through and find all face graphics for the skin
+			// and assign them to the skin's namespace.
+			for (j = 0; j < 7; j++)
+				strncpy (facenames[j], skins[i].face, 3);
+
+			for (k = base + 1;
+				 k < numlumps && lumpinfo[k].handle == lumpinfo[base].handle;
+				 k++) {
+				for (j = 0; j < 7; j++)
+					if (!strncmp (facenames[j], lumpinfo[k].name, facelens[j])) {
+						W_SetLumpNamespace (k, skins[i].namespc);
+						break;
+					}
+			}
+		}
+	}
+	// Grrk. May have changed sound table. Fix it.
+	if (numskins > 1)
+		S_HashSounds ();
 }
 
+// [RH] Find a skin by name
+int R_FindSkin (char *name)
+{
+	int i;
 
+	for (i = 0; i < numskins; i++)
+		if (!strnicmp (skins[i].name, name, 16))
+			return i;
 
+	return 0;
+}
+
+// [RH] List the names of all installed skins
+void Cmd_Skins (player_t *plyr, int argc, char **argv)
+{
+	int i;
+
+	for (i = 0; i < numskins; i++)
+		Printf ("% 3d %s\n", i, skins[i].name);
+}
 
 //
 // GAME FUNCTIONS
@@ -283,13 +502,48 @@ int 			newvissprite;
 // R_InitSprites
 // Called at program start.
 //
-void R_InitSprites (char** namelist)
+void R_InitSprites (char **namelist)
 {
+	int i;
+
 	MaxVisSprites = 128;	// [RH] This is the initial default value. It grows as needed.
 	vissprites = Malloc (MaxVisSprites * sizeof(vissprite_t));
 	lastvissprite = &vissprites[MaxVisSprites];
 
+	// [RH] Count the number of skins, rename each S_SKIN?? identifier
+	//		to just S_SKIN, and assign it a unique namespace.
+	for (i = 0; i < numlumps; i++) {
+		if (!strncmp (lumpinfo[i].name, "S_SKIN", 6)) {
+			numskins++;
+			lumpinfo[i].name[6] = lumpinfo[i].name[7] = 0;
+			W_SetLumpNamespace (i, ns_skinbase + numskins);
+		}
+	}
+
+	// [RH] We always have a default "base" skin.
+	numskins++;
+
+	// [RH] We may have just renamed some lumps, so we need to create the
+	//		hash chains again.
+	W_InitHashChains ();
+
+	// [RH] Do some preliminary setup
+	skins = Z_Malloc (sizeof(*skins) * numskins, PU_STATIC, 0);
+	memset (skins, 0, sizeof(*skins) * numskins);
+	for (i = 1; i < numskins; i++) {
+		skins[i].namespc = i + ns_skinbase;
+	}
+
 	R_InitSpriteDefs (namelist);
+	R_InitSkins ();		// [RH] Finish loading skin data
+
+	// [RH] Set up base skin
+	strcpy (skins[0].name, "Base");
+	skins[0].face[0] = 'S';
+	skins[0].face[1] = 'T';
+	skins[0].face[2] = 'F';
+	skins[0].sprite = SPR_PLAY;
+	skins[0].namespc = ns_global;
 }
 
 
@@ -307,12 +561,12 @@ void R_ClearSprites (void)
 //
 // R_NewVisSprite
 //
-vissprite_t* R_NewVisSprite (void)
+vissprite_t *R_NewVisSprite (void)
 {
 	if (vissprite_p == lastvissprite) {
 		int prevvisspritenum = vissprite_p - vissprites;
 
-		MaxVisSprites += 64;
+		MaxVisSprites *= 2;
 		vissprites = Realloc (vissprites, MaxVisSprites * sizeof(vissprite_t));
 		lastvissprite = &vissprites[MaxVisSprites];
 		vissprite_p = &vissprites[prevvisspritenum];
@@ -322,7 +576,6 @@ vissprite_t* R_NewVisSprite (void)
 	vissprite_p++;
 	return vissprite_p-1;
 }
-
 
 
 //
@@ -391,20 +644,18 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 	// [RH] Tutti-Frutti fix (also allows sprites up to 256 pixels tall)
 	dc_mask = 0xff;
 		
-	patch = W_CacheLumpNum (vis->patch+firstspritelump, PU_CACHE);
+	patch = W_CacheLumpNum (vis->patch, PU_CACHE);
 
 	dc_colormap = vis->colormap;
 	
-	if (!dc_colormap)
+	if (vis->mobjflags & MF_SHADOW)
 	{
 		// NULL colormap = shadow draw
-		if (!r_drawfuzz->value && TransTable) {
-			dc_colormap = DefaultPalette->maps.colormaps;
-			colfunc = lucentcolfunc;
-			dc_transmap = TransTable + 65536;
-		} else {
-			colfunc = fuzzcolfunc;
-		}
+		// [RH] I use MF_SHADOW to recognize fuzz effect now instead of
+		//		a NULL colormap. This allow proper substition of
+		//		MF_TRANSLUC25 with light levels if desired.
+		dc_transmap = TransTable + 65536;	// Just in case
+		colfunc = r_drawfuzz->value ? fuzzcolfunc : lucentcolfunc;
 	}
 	else if (vis->palette)
 	{
@@ -424,6 +675,10 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 	{
 		colfunc = lucentcolfunc;
 		dc_transmap = TransTable + ((vis->mobjflags & MF_TRANSLUCBITS) >> (MF_TRANSLUCSHIFT - 16));
+	}
+	else
+	{
+		colfunc = basecolfunc;
 	}
 		
 	//dc_iscale = abs(vis->xiscale)>>detailshift;
@@ -459,7 +714,7 @@ void R_DrawVisSprite (vissprite_t *vis, int x1, int x2)
 // Generates a vissprite for a thing
 //	if it might be visible.
 //
-void R_ProjectSprite (mobj_t* thing)
+void R_ProjectSprite (mobj_t *thing)
 {
 	fixed_t 			tr_x;
 	fixed_t 			tr_y;
@@ -495,7 +750,7 @@ void R_ProjectSprite (mobj_t* thing)
 
 
 	// [RH] Andy Baker's stealth monsters
-	if (thing->invisible == true)
+	if (thing->flags2 & MF2_INVISIBLE)
 		return;
 
 	// transform the origin point
@@ -550,26 +805,26 @@ void R_ProjectSprite (mobj_t* thing)
 	else
 	{
 		// use single rotation for all views
-		lump = sprframe->lump[0];
+		lump = sprframe->lump[rot = 0];
 		flip = (BOOL)sprframe->flip[0];
 	}
 	
 	// calculate edges of the shape
-	tx -= spriteoffset[lump];	
+	tx -= sprframe->offset[rot];	// [RH] Moved out of spriteoffset[]
 	x1 = (centerxfrac + FixedMul (tx,xscale) ) >>FRACBITS;
 
 	// off the right side?
 	if (x1 > viewwidth)
 		return;
 	
-	tx +=  spritewidth[lump];
+	tx += sprframe->width[rot];	// [RH] Moved out of spritewidth[]
 	x2 = ((centerxfrac + FixedMul (tx,xscale) ) >>FRACBITS) - 1;
 
 	// off the left side
 	if (x2 < 0)
 		return;
 
-	gzt = thing->z + spritetopoffset[lump];
+	gzt = thing->z + sprframe->topoffset[rot];	// [RH] Moved out of spritetopoffset[]
 
 	// killough 4/9/98: clip things which are out of view due to height
 // [RH] This doesn't work too well with freelook
@@ -585,7 +840,7 @@ void R_ProjectSprite (mobj_t* thing)
 
 	if (heightsec != -1)	// only clip things which are in special sectors
 	{
-		int phs = viewplayer->mo->subsector->sector->heightsec;
+		int phs = camera->subsector->sector->heightsec;
 
 		if (phs != -1 && viewz < sectors[phs].floorheight ?
 			thing->z >= sectors[heightsec].floorheight :
@@ -618,7 +873,7 @@ void R_ProjectSprite (mobj_t* thing)
 
 	if (flip)
 	{
-		vis->startfrac = spritewidth[lump]-1;
+		vis->startfrac = sprframe->width[rot]-1;	// [RH] Moved out of spritewidth
 		vis->xiscale = -iscale;
 	}
 	else
@@ -632,12 +887,7 @@ void R_ProjectSprite (mobj_t* thing)
 	vis->patch = lump;
 	
 	// get light level
-	if (thing->flags & MF_SHADOW)
-	{
-		// shadow draw
-		vis->colormap = NULL;
-	}
-	else if (fixedcolormap)
+	if (fixedcolormap)
 	{
 		// fixed map
 		vis->colormap = fixedcolormap;
@@ -645,29 +895,26 @@ void R_ProjectSprite (mobj_t* thing)
 	else if (thing->frame & FF_FULLBRIGHT)
 	{
 		// full bright
-		vis->colormap = DefaultPalette->maps.colormaps;
+		vis->colormap = basecolormap;	// [RH] Use basecolormap
 	}
-	
 	else
 	{
 		// diminished light
-		index = xscale>>LIGHTSCALESHIFT;
+		index = (xscale*lightscalexmul)>>LIGHTSCALESHIFT;	// [RH]
 
 		if (index >= MAXLIGHTSCALE) 
 			index = MAXLIGHTSCALE-1;
 
-		vis->colormap = spritelights[index];
+		vis->colormap = spritelights[index] + basecolormap;	// [RH] Use basecolormap
 	}	
 }
-
-
 
 
 //
 // R_AddSprites
 // During BSP traversal, this adds sprites by sector.
 //
-void R_AddSprites (sector_t* sec)
+void R_AddSprites (sector_t *sec)
 {
 	mobj_t *thing;
 	int 	lightnum;
@@ -722,7 +969,7 @@ void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 	sprdef = &sprites[psp->state->sprite];
 #ifdef RANGECHECK
 	if ( (psp->state->frame & FF_FRAMEMASK)  >= sprdef->numframes) {
-		DPrintf ("R_ProjectSprite: invalid sprite frame %i : %i\n", psp->state->sprite, psp->state->frame);
+		DPrintf ("R_DrawPSprite: invalid sprite frame %i : %i\n", psp->state->sprite, psp->state->frame);
 		return;
 	}
 #endif
@@ -734,14 +981,14 @@ void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 	// calculate edges of the shape
 	tx = psp->sx-((320/2)<<FRACBITS);
 		
-	tx -= spriteoffset[lump];	
+	tx -= sprframe->offset[0];	// [RH] Moved out of spriteoffset[]
 	x1 = (centerxfrac + FixedMul (tx,pspritescale) ) >>FRACBITS;
 
 	// off the right side
 	if (x1 > viewwidth)
 		return; 		
 
-	tx +=  spritewidth[lump];
+	tx += sprframe->width[0];	// [RH] Moved out of spritewidth[]
 	x2 = ((centerxfrac + FixedMul (tx, pspritescale) ) >>FRACBITS) - 1;
 
 	// off the left side
@@ -751,7 +998,8 @@ void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 	// store information in a vissprite
 	vis = &avis;
 	vis->mobjflags = flags;
-	vis->texturemid = (BASEYCENTER<<FRACBITS)+FRACUNIT/2-(psp->sy-spritetopoffset[lump]);
+	vis->texturemid = (BASEYCENTER<<FRACBITS)+FRACUNIT/2-
+		(psp->sy-sprframe->topoffset[0]);	// [RH] Moved out of spritetopoffset[]
 	vis->x1 = x1 < 0 ? 0 : x1;
 	vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;		
 	vis->scale = pspriteyscale;
@@ -760,7 +1008,7 @@ void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 	if (flip)
 	{
 		vis->xiscale = -pspriteiscale;
-		vis->startfrac = spritewidth[lump]-1;
+		vis->startfrac = sprframe->width[0]-1;	// [RH] Moved out of spritewidth[]
 	}
 	else
 	{
@@ -773,13 +1021,7 @@ void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 
 	vis->patch = lump;
 
-	if (viewplayer->powers[pw_invisibility] > 4*32
-		|| viewplayer->powers[pw_invisibility] & 8)
-	{
-		// shadow draw
-		vis->colormap = NULL;
-	}
-	else if (fixedcolormap)
+	if (fixedcolormap)
 	{
 		// fixed color
 		vis->colormap = fixedcolormap;
@@ -787,12 +1029,19 @@ void R_DrawPSprite (pspdef_t* psp, unsigned flags)
 	else if (psp->state->frame & FF_FULLBRIGHT)
 	{
 		// full bright
-		vis->colormap = DefaultPalette->maps.colormaps;
+		vis->colormap = basecolormap;	// [RH] use basecolormap
 	}
 	else
 	{
 		// local light
-		vis->colormap = spritelights[MAXLIGHTSCALE-1];
+		vis->colormap = spritelights[MAXLIGHTSCALE-1] + basecolormap;	// [RH] add basecolormap
+		if (camera->player &&
+			(camera->player->powers[pw_invisibility] > 4*32
+			 || camera->player->powers[pw_invisibility] & 8))
+		{
+			// shadow draw
+			vis->mobjflags = MF_SHADOW;
+		}
 	}
 		
 	R_DrawVisSprite (vis, vis->x1, vis->x2);
@@ -810,10 +1059,12 @@ void R_DrawPlayerSprites (void)
 	pspdef_t*	psp;
 	
 	if (r_drawplayersprites->value) {
+		// [RH] set basecolormap
+		basecolormap = camera->subsector->sector->colormap->maps;
+
 		// get light level
 		lightnum =
-			(viewplayer->mo->subsector->sector->lightlevel >> LIGHTSEGSHIFT) 
-			+extralight;
+			(camera->subsector->sector->lightlevel >> LIGHTSEGSHIFT) + extralight;
 
 		if (lightnum < 0)				
 			spritelights = scalelight[0];
@@ -834,17 +1085,18 @@ void R_DrawPlayerSprites (void)
 			centeryfrac = centery << FRACBITS;
 
 			// add all active psprites
-			for (i=0, psp=viewplayer->psprites;
-				 i<NUMPSPRITES;
-				 i++,psp++)
-			{
-				if (psp->state) {
-					if (i == 1)
-						R_DrawPSprite (psp, MF_TRANSLUC75);
-					else
-						R_DrawPSprite (psp, 0);
+			if (camera->player)
+				for (i=0, psp=camera->player->psprites;
+					 i<NUMPSPRITES;
+					 i++,psp++)
+				{
+					if (psp->state) {
+						if (i == 1)
+							R_DrawPSprite (psp, MF_TRANSLUC75);
+						else
+							R_DrawPSprite (psp, 0);
+					}
 				}
-			}
 
 			centery = centerhack;
 			centeryfrac = centerhack << FRACBITS;
@@ -902,6 +1154,13 @@ void R_SortVisSprites (void)
 // [RH] Allocated in R_MultiresInit() to
 // SCREENWIDTH entries each.
 short *r_dsclipbot, *r_dscliptop;
+
+// [RH] The original code used -2 to indicate that a sprite was not clipped.
+//		With ZDoom's freelook, it's possible that the rendering process
+//		could actually generate a clip value of -2, and the rendering code
+//		would mistake this to indicate the the sprite wasn't clipped.
+#define NOT_CLIPPED		(-32768)
+
 //
 // R_DrawSprite
 //
@@ -915,7 +1174,7 @@ void R_DrawSprite (vissprite_t* spr)
 	fixed_t 			lowscale;
 
 	for (x = spr->x1 ; x<=spr->x2 ; x++)
-		r_dsclipbot[x] = r_dscliptop[x] = -2;
+		r_dsclipbot[x] = r_dscliptop[x] = NOT_CLIPPED;
 	
 	// Scan drawsegs from end to start for obscuring segs.
 	// The first drawseg that has a greater scale is the clip seg.
@@ -968,13 +1227,13 @@ void R_DrawSprite (vissprite_t* spr)
 
 		if (ds->silhouette&SIL_BOTTOM && spr->gz < ds->bsilheight) //bottom sil
 			for (x=r1 ; x<=r2 ; x++)
-				if (r_dsclipbot[x] == -2)
+				if (r_dsclipbot[x] == NOT_CLIPPED)
 					r_dsclipbot[x] = ds->sprbottomclip[x];
 
 		if (ds->silhouette&SIL_TOP && spr->gzt > ds->tsilheight)   // top sil
 			for (x=r1 ; x<=r2 ; x++)
-			if (r_dscliptop[x] == -2)
-				r_dscliptop[x] = ds->sprtopclip[x];
+				if (r_dscliptop[x] == NOT_CLIPPED)
+					r_dscliptop[x] = ds->sprtopclip[x];
 	}
 
 	// killough 3/27/98:
@@ -985,20 +1244,24 @@ void R_DrawSprite (vissprite_t* spr)
 	if (spr->heightsec != -1)	// only things in specially marked sectors
 	{
 		fixed_t h,mh;
-		int phs = viewplayer->mo->subsector->sector->heightsec;
+		int phs = camera->subsector->sector->heightsec;
 		if ((mh = sectors[spr->heightsec].floorheight) > spr->gz &&
 			(h = centeryfrac - FixedMul(mh-=viewz, spr->scale)) >= 0 &&
 			(h >>= FRACBITS) < viewheight)
-		if (mh <= 0 || (phs != -1 && viewz > sectors[phs].floorheight))
-		{							// clip bottom
-			for (x=spr->x1 ; x<=spr->x2 ; x++)
-				if (r_dsclipbot[x] == -2 || h < r_dsclipbot[x])
-					r_dsclipbot[x] = h;
+		{
+			if (mh <= 0 || (phs != -1 && viewz > sectors[phs].floorheight))
+			{						// clip bottom
+				for (x=spr->x1 ; x<=spr->x2 ; x++)
+					if (r_dsclipbot[x] == NOT_CLIPPED || h < r_dsclipbot[x])
+						r_dsclipbot[x] = h;
+			}
+			else 
+			{						// clip top
+				for (x=spr->x1 ; x<=spr->x2 ; x++)
+					if (r_dscliptop[x] == NOT_CLIPPED || h > r_dscliptop[x])
+						r_dscliptop[x] = h;
+			}
 		}
-		else						// clip top
-			for (x=spr->x1 ; x<=spr->x2 ; x++)
-				if (r_dscliptop[x] == -2 || h > r_dscliptop[x])
-					r_dscliptop[x] = h;
 
 		if ((mh = sectors[spr->heightsec].ceilingheight) < spr->gzt &&
 			(h = centeryfrac - FixedMul(mh-viewz, spr->scale)) >= 0 &&
@@ -1007,13 +1270,13 @@ void R_DrawSprite (vissprite_t* spr)
 			if (phs != -1 && viewz >= sectors[phs].ceilingheight)
 			{						// clip bottom
 				for (x=spr->x1 ; x<=spr->x2 ; x++)
-					if (r_dsclipbot[x] == -2 || h < r_dsclipbot[x])
+					if (r_dsclipbot[x] == NOT_CLIPPED || h < r_dsclipbot[x])
 						r_dsclipbot[x] = h;
 			}
 			else
 			{						// clip top
 				for (x=spr->x1 ; x<=spr->x2 ; x++)
-					if (r_dscliptop[x] == -2 || h > r_dscliptop[x])
+					if (r_dscliptop[x] == NOT_CLIPPED || h > r_dscliptop[x])
 						r_dscliptop[x] = h;
 			}
 		}
@@ -1025,10 +1288,10 @@ void R_DrawSprite (vissprite_t* spr)
 	// check for unclipped columns
 	for (x = spr->x1 ; x<=spr->x2 ; x++)
 	{
-		if (r_dsclipbot[x] == -2)			
+		if (r_dsclipbot[x] == NOT_CLIPPED)			
 			r_dsclipbot[x] = (short)viewheight;
 
-		if (r_dscliptop[x] == -2)
+		if (r_dscliptop[x] == NOT_CLIPPED)
 			r_dscliptop[x] = -1;
 	}
 				
@@ -1122,6 +1385,3 @@ void R_DrawMasked (void)
 		R_DrawPlayerSprites ();
 	}
 }
-
-
-

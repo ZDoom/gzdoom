@@ -5,6 +5,9 @@
 #include "doomdef.h"
 #include "m_fixed.h"
 
+#define NUM_MAPVARS				32
+#define NUM_WORLDVARS			64
+
 #define LEVEL_NOINTERMISSION	0x00000001
 #define	LEVEL_DOUBLESKY			0x00000004
 #define LEVEL_NOSOUNDCLIPPING	0x00000008
@@ -23,6 +26,7 @@
 #define LEVEL_CHANGEMAPCHEAT	0x40000000		// Don't display cluster messages
 #define LEVEL_VISITED			0x80000000		// Used for intermission map
 
+struct acsdefered_s;
 
 struct level_info_s {
 	char		mapname[8];
@@ -36,6 +40,8 @@ struct level_info_s {
 	char		music[8];
 	unsigned	flags;
 	int			cluster;
+	byte		*snapshot;
+	struct acsdefered_s *defered;
 };
 typedef struct level_info_s level_info_t;
 
@@ -51,11 +57,15 @@ struct level_pwad_info_s {
 	char		music[8];
 	unsigned	flags;
 	int			cluster;
+	byte		*snapshot;
+	struct acsdefered_s *defered;
 
 	char		skypic2[8];
 	fixed_t		skyspeed1;
 	fixed_t		skyspeed2;
 	unsigned	fadeto;
+	char		fadetable[8];
+	unsigned	outsidefog;
 };
 typedef struct level_pwad_info_s level_pwad_info_t;
 
@@ -76,6 +86,7 @@ struct level_locals_s {
 	unsigned	flags;
 
 	unsigned	fadeto;					// The color the palette fades to (usually black)
+	unsigned	outsidefog;				// The fog for sectors with sky ceilings
 
 	char		music[8];
 	char		skypic1[8];
@@ -92,6 +103,12 @@ struct level_locals_s {
 
 	int			total_monsters;
 	int			killed_monsters;
+
+	// The following are all used for ACS scripting
+	byte		*behavior;
+	int			*scripts;
+	int			*strings;
+	int			vars[NUM_MAPVARS];
 };
 typedef struct level_locals_s level_locals_t;
 
@@ -101,12 +118,20 @@ struct cluster_info_s {
 	char		finaleflat[8];
 	char		*exittext;
 	char		*entertext;
+	int			flags;
 };
 typedef struct cluster_info_s cluster_info_t;
+
+// Only one cluster flag right now
+#define CLUSTER_HUB		0x00000001
 
 extern level_locals_t level;
 extern level_info_t LevelInfos[];
 extern cluster_info_t ClusterInfos[];
+
+extern int WorldVars[NUM_WORLDVARS];
+
+extern BOOL savegamerestore;
 
 void G_InitNew (char *mapname);
 
@@ -115,10 +140,10 @@ void G_InitNew (char *mapname);
 // but a warp test can start elsewhere
 void G_DeferedInitNew (char *mapname);
 
-void G_ExitLevel (void);
-void G_SecretExitLevel (void);
+void G_ExitLevel (int position);
+void G_SecretExitLevel (int position);
 
-void G_DoLoadLevel (void);
+void G_DoLoadLevel (int position);
 
 void G_InitLevelLocals (void);
 
@@ -131,5 +156,11 @@ level_info_t *FindLevelByNum (int num);
 char *CalcMapName (int episode, int level);
 
 void G_ParseMapInfo (void);
+
+void G_ClearSnapshots (void);
+void G_SnapshotLevel (void);
+void G_UnSnapshotLevel (BOOL keepPlayers);
+void G_ArchiveSnapshots (void);
+void G_UnArchiveSnapshots (void);
 
 #endif //__G_LEVEL_H__

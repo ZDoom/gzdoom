@@ -28,6 +28,7 @@
 
 #include "m_alloc.h"
 #include <stdlib.h>
+#include <stddef.h>
 
 #include "i_system.h"
 
@@ -54,7 +55,7 @@ static int		midtexture;
 angle_t 		rw_normalangle;	// angle to line origin
 int 			rw_angle1;
 fixed_t 		rw_distance;
-lighttable_t**	walllights;
+int*			walllights;		// [RH] Changed from lighttable_t** to int*
 
 //
 // regular wall
@@ -104,11 +105,24 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 	// OPTIMIZE: get rid of LIGHTSEGSHIFT globally
 	curline = ds->curline;
 
+	// killough 4/11/98: draw translucent 2s normal textures
+	// [RH] modified because we don't use user-definable
+	//		translucency maps
+	colfunc = basecolfunc;
+	if (curline->linedef->lucency < 240)
+	{
+		colfunc = lucentcolfunc;
+		dc_transmap = TransTable + ((curline->linedef->lucency << 10) & 0x30000);
+	}
+	// killough 4/11/98: end translucent 2s normal code
+
 	frontsector = curline->frontsector;
 	backsector = curline->backsector;
 
 	texnum = texturetranslation[curline->sidedef->midtexture];
-		
+
+	basecolormap = frontsector->colormap->maps;	// [RH] Set basecolormap
+
 	// killough 4/13/98: get correct lightlevel for 2s normal textures
 	lightnum = (R_FakeFlat(frontsector, &tempsec, NULL, NULL, false)
 				->lightlevel >> LIGHTSEGSHIFT)+extralight;
@@ -154,12 +168,12 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			// calculate lighting
 			if (!fixedcolormap)
 			{
-				unsigned index = spryscale>>LIGHTSCALESHIFT;
+				unsigned index = (spryscale*lightscalexmul)>>LIGHTSCALESHIFT;	// [RH]
 
 				if (index >= MAXLIGHTSCALE)
 					index = MAXLIGHTSCALE-1;
 
-				dc_colormap = walllights[index];
+				dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
 			}
 						
 			// killough 3/2/98:
@@ -175,7 +189,7 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 			{
 				__int64 t = ((__int64) centeryfrac << FRACBITS) -
 					(__int64) dc_texturemid * spryscale;
-// [RH] This doesn't work properly as-is with freelook
+// [RH] This doesn't work properly as-is with freelook. Probably just me.
 //				if (t + (__int64) textureheight[texnum] * spryscale < 0 ||
 //					 t > (__int64) screens[0].height << FRACBITS*2)
 //					continue;		// skip if the texture is out of screen's range
@@ -219,17 +233,13 @@ void R_RenderMaskedSegRange (drawseg_t *ds, int x1, int x2)
 
 void R_RenderSegLoop (void)
 {
-	angle_t 			angle;
-	unsigned			index;
-	int 				yl;
-	int 				yh;
-	int 				mid;
-	fixed_t 			texturecolumn;
-	int 				top;
-	int 				bottom;
+	int 	yl;
+	int 	yh;
+	fixed_t texturecolumn;
 
-	//texturecolumn = 0;								// shut up compiler warning
-		
+	if (fixedcolormap)
+		dc_colormap = fixedcolormap;
+
 	for ( ; rw_x < rw_stopx ; rw_x++)
 	{
 		// mark floor / ceiling areas
@@ -241,8 +251,8 @@ void R_RenderSegLoop (void)
 		
 		if (markceiling)
 		{
-			top = ceilingclip[rw_x]+1;
-			bottom = yl-1;
+			int top = ceilingclip[rw_x]+1;
+			int bottom = yl-1;
 
 			if (bottom >= floorclip[rw_x])
 				bottom = floorclip[rw_x]-1;
@@ -261,8 +271,8 @@ void R_RenderSegLoop (void)
 
 		if (markfloor)
 		{
-			top = yh+1;
-			bottom = floorclip[rw_x]-1;
+			int top = yh+1;
+			int bottom = floorclip[rw_x]-1;
 			if (top <= ceilingclip[rw_x])
 				top = ceilingclip[rw_x]+1;
 			if (top <= bottom)
@@ -276,16 +286,19 @@ void R_RenderSegLoop (void)
 		if (segtextured)
 		{
 			// calculate texture offset
-			angle = (rw_centerangle + xtoviewangle[rw_x])>>ANGLETOFINESHIFT;
-			texturecolumn = rw_offset-FixedMul(finetangent[angle],rw_distance);
+			texturecolumn = rw_offset-FixedMul(finetangent[(rw_centerangle + xtoviewangle[rw_x])>>ANGLETOFINESHIFT],rw_distance);
 			texturecolumn >>= FRACBITS;
-			// calculate lighting
-			index = rw_scale>>LIGHTSCALESHIFT;
 
-			if (index >=  MAXLIGHTSCALE )
-				index = MAXLIGHTSCALE-1;
+			if (!fixedcolormap) {
+				// calculate lighting
+				unsigned index = (rw_scale*lightscalexmul)>>LIGHTSCALESHIFT;
 
-			dc_colormap = walllights[index];
+				if (index >= MAXLIGHTSCALE)
+					index = MAXLIGHTSCALE-1;
+
+				dc_colormap = walllights[index] + basecolormap;	// [RH] add basecolormap
+			}
+
 			dc_x = rw_x;
 			dc_iscale = 0xffffffffu / (unsigned)rw_scale;
 		}
@@ -308,7 +321,7 @@ void R_RenderSegLoop (void)
 			if (toptexture)
 			{
 				// top wall
-				mid = pixhigh>>HEIGHTBITS;
+				int mid = pixhigh>>HEIGHTBITS;
 				pixhigh += pixhighstep;
 
 				if (mid >= floorclip[rw_x])
@@ -336,7 +349,7 @@ void R_RenderSegLoop (void)
 			if (bottomtexture)
 			{
 				// bottom wall
-				mid = (pixlow+HEIGHTUNIT-1)>>HEIGHTBITS;
+				int mid = (pixlow+HEIGHTUNIT-1)>>HEIGHTBITS;
 				pixlow += pixlowstep;
 
 				// no space above wall?
@@ -411,7 +424,7 @@ void R_StoreWallRange (int start, int stop)
 	angle_t 			distangle, offsetangle;
 	fixed_t 			vtop;
 	int 				lightnum;
-				
+
 #ifdef RANGECHECK
 	if (start >=viewwidth || start > stop)
 		I_Error ("Bad R_RenderWallRange: %i to %i", start , stop);
@@ -419,11 +432,11 @@ void R_StoreWallRange (int start, int stop)
 
 	// don't overflow and crash
 	if (ds_p == &drawsegs[MaxDrawSegs]) {
-		unsigned pos = ds_p - drawsegs;
 		// [RH] Grab some more drawsegs
-		MaxDrawSegs = MaxDrawSegs ? MaxDrawSegs*2 : 32;
-		drawsegs = Realloc (drawsegs, MaxDrawSegs * sizeof(drawseg_t));
-		ds_p = drawsegs + pos;
+		size_t newdrawsegs = MaxDrawSegs ? MaxDrawSegs*2 : 32;
+		drawsegs = Realloc (drawsegs, newdrawsegs * sizeof(drawseg_t));
+		ds_p = drawsegs + MaxDrawSegs;
+		MaxDrawSegs = newdrawsegs;
 		DPrintf ("MaxDrawSegs increased to %d\n", MaxDrawSegs);
 	}
 	
@@ -441,18 +454,18 @@ void R_StoreWallRange (int start, int stop)
 		offsetangle = ANG90;
 
 	distangle = ANG90 - offsetangle;
-	hyp = R_PointToDist (curline->v1->x, curline->v1->y);
+	hyp = (viewx == curline->v1->x && viewy == curline->v1->y) ?
+		0 : R_PointToDist (curline->v1->x, curline->v1->y);
 	sineval = finesine[distangle>>ANGLETOFINESHIFT];
 	rw_distance = FixedMul (hyp, sineval);
-				
-		
+
 	ds_p->x1 = rw_x = start;
 	ds_p->x2 = stop;
 	ds_p->curline = curline;
 	rw_stopx = stop+1;
-	
+
 	{	// killough 1/6/98, 2/1/98: remove limit on openings
-		size_t pos = lastopening - openings;
+		ptrdiff_t pos = lastopening - openings;
 		size_t need = (rw_stopx - start)*4 + pos;
 
 		if (need > maxopenings)
@@ -464,7 +477,7 @@ void R_StoreWallRange (int start, int stop)
 			do
 				maxopenings = maxopenings ? maxopenings*2 : 16384;
 			while (need > maxopenings);
-			openings = Realloc(openings, maxopenings * sizeof(*openings));
+			openings = Realloc (openings, maxopenings * sizeof(*openings));
 			lastopening = openings + pos;
 			DPrintf ("MaxOpenings increased to %u\n", maxopenings);
 
@@ -485,7 +498,7 @@ void R_StoreWallRange (int start, int stop)
 	ds_p->scale1 = rw_scale = 
 		R_ScaleFromGlobalAngle (viewangle + xtoviewangle[start]);
 	
-	if (stop > start )
+	if (stop > start)
 	{
 		ds_p->scale2 = R_ScaleFromGlobalAngle (viewangle + xtoviewangle[stop]);
 		ds_p->scalestep = rw_scalestep = 
@@ -612,16 +625,14 @@ void R_StoreWallRange (int start, int stop)
 		worldlow = backsector->floorheight - viewz;
 				
 		// hack to allow height changes in outdoor areas
-		if (frontsector->ceilingpic == skyflatnum 
-			&& backsector->ceilingpic == skyflatnum)
+		if (frontsector->ceilingpic == skyflatnum && backsector->ceilingpic == skyflatnum)
 		{
 			worldtop = worldhigh;
 		}
-		
-						
+								
 		markfloor = worldlow != worldbottom
-			|| backsector->floorpic != frontsector->floorpic
 			|| backsector->lightlevel != frontsector->lightlevel
+			|| backsector->floorpic != frontsector->floorpic
 
 			// killough 3/7/98: Add checks for (x,y) offsets
 			|| backsector->floor_xoffs != frontsector->floor_xoffs
@@ -633,11 +644,14 @@ void R_StoreWallRange (int start, int stop)
 
 			// killough 4/17/98: draw floors if different light levels
 			|| backsector->floorlightsec != frontsector->floorlightsec
+
+			// [RH] Add checks for colormaps
+			|| backsector->colormap != frontsector->colormap
 			;
 
 		markceiling = worldhigh != worldtop
-			|| backsector->ceilingpic != frontsector->ceilingpic
 			|| backsector->lightlevel != frontsector->lightlevel
+			|| backsector->ceilingpic != frontsector->ceilingpic
 
 			// killough 3/7/98: Add checks for (x,y) offsets
 			|| backsector->ceiling_xoffs != frontsector->ceiling_xoffs
@@ -650,6 +664,9 @@ void R_StoreWallRange (int start, int stop)
 
 			// killough 4/17/98: draw ceilings if different light levels
 			|| backsector->ceilinglightsec != frontsector->ceilinglightsec
+
+			// [RH] Add check for colormaps
+			|| backsector->colormap != frontsector->colormap
 			;
 
 		if (backsector->ceilingheight <= frontsector->floorheight
@@ -773,8 +790,7 @@ void R_StoreWallRange (int start, int stop)
 	// if a floor / ceiling plane is on the wrong side
 	//	of the view plane, it is definitely invisible
 	//	and doesn't need to be marked.
-	
-  
+
 	// killough 3/7/98: add deep water check
 	if (frontsector->heightsec == -1)
 	{
@@ -814,17 +830,19 @@ void R_StoreWallRange (int start, int stop)
 	}
 	
 	// render it
-	if (markceiling)
+	if (markceiling) {
 	    if (ceilingplane)	// killough 4/11/98: add NULL ptr checks
 			ceilingplane = R_CheckPlane (ceilingplane, rw_x, rw_stopx-1);
 		else
 			markceiling = 0;
+	}
 	
-	if (markfloor)
+	if (markfloor) {
 	    if (floorplane)		// killough 4/11/98: add NULL ptr checks
 			floorplane = R_CheckPlane (floorplane, rw_x, rw_stopx-1);
 		else
 			markfloor = 0;
+	}
 
 	R_RenderSegLoop ();
 

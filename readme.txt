@@ -1,4 +1,4 @@
-This is the source code for ZDoom 1.14 released on 14 July 1998.
+This is the source code for ZDoom 1.16 released on 22 December 1998.
 
 It is based on the Linux DOOM sources that were prepared by B. Krenheimer
 and generously released by John Carmack shortly before Christmas, 1997. If
@@ -40,17 +40,16 @@ packages if you don't already have them. These are:
     will not work unmodified with ZDoom. A context diff has been provided
     along with a copy of GNU patch to generate a version of PTC that works
     with ZDoom. To use it, you need to download the source code for PTC
-    0.73b (available by following the Developers link from the above page).
-    Extract it to some directory (in my case e:/ptc/source), then using a
-    DOS window, CD to that directory and apply the ptc.diff file using the
-    command line:
+    0.72 and the DirectX fix. Extract it to some directory (in my case
+    f:/games/doom/ptc/source), then using a DOS window, CD to that
+    directory and apply the ptc.diff file using the command line:
 
         patch < ptc.diff
 
     Then you'll need to build at least the release build of PTC. The
     batch files provided with PTC to do this will generate the library
     somewhere in ../library. In my case, this ends up being
-    e:/ptc/library/win32/vc5.x.
+    d:/games/doom/ptc/library/win32/vc5.x.
 
   NASM (for the assembly files)
     http://www.cryogen.com/Nasm
@@ -63,20 +62,16 @@ assumptions about the development environment:
 
     MIDAS is installed at the same location in the directory hierarchy as
     the ZDoom source code. In my case, I have the source in
-    f:/games/doom/code, so MIDAS is in f:/games/doom/midas. I_music.c and
+    d:/games/doom/code, so MIDAS is in d:/games/doom/midas. I_music.c and
     I_sound.c also look for MIDAS include files in the "../midas"
     directory.
 
     NASM is installed in d:/nasm.
 
-    PTC is installed in e:/ptc.
+    PTC is installed in d:/games/doom/ptc.
 
 If you want to put things in different places, you'll need to adjust the
 project file accordingly.
-
-The file doom.mak is what VC++ generated when I told it to "Export
-Makefile...." I have no idea if it's of any use to anyone, but if you don't
-have VC++ 5.x, it may be worthwhile to try adapting it to your compiler.
 
 This code should also compile with Watcom C 10.6 (and presumably newer
 versions as well). If you use Watcom, please tell me if the following NASM

@@ -11,6 +11,10 @@
 
 #define C_BLINKRATE			(TICRATE/2)
 
+typedef enum cstate_t {
+	c_up=0, c_down=1, c_falling=2, c_rising=3
+} constate_e;
+
 // Initialize the console
 void C_InitConsole (int width, int height, BOOL ingame);
 
@@ -26,7 +30,9 @@ int Printf_Bold (const char *format, ...);
 void C_AddNotifyString (const char *s);
 void C_DrawConsole (void);
 void C_ToggleConsole (void);
+void C_FullConsole (void);
 void C_HideConsole (void);
+void C_AdjustBottom (void);
 void C_FlushDisplay (void);
 
 void C_MidPrint (char *message);

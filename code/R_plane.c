@@ -21,6 +21,17 @@
 //		 while maintaining a per column clipping list only.
 //		Moreover, the sky areas have to be determined.
 //
+// MAXVISPLANES is no longer a limit on the number of visplanes,
+// but a limit on the number of hash slots; larger numbers mean
+// better performance usually but after a point they are wasted,
+// and memory and time overheads creep in.
+//
+// For more information on visplanes, see:
+//
+// http://classicgaming.com/doom/editing/
+//
+// Lee Killough
+//
 //-----------------------------------------------------------------------------
 
 
@@ -43,18 +54,26 @@
 planefunction_t 		floorfunc;
 planefunction_t 		ceilingfunc;
 
+// Here comes the obnoxious "visplane".
+#define MAXVISPLANES 128    /* must be a power of 2 */
+
+static visplane_t		*visplanes[MAXVISPLANES];	// killough
+static visplane_t		*freetail;					// killough
+static visplane_t		**freehead = &freetail;		// killough
+
+visplane_t 				*floorplane;
+visplane_t 				*ceilingplane;
+
+// killough -- hash function for visplanes
+// Empirically verified to be fairly uniform:
+
+#define visplane_hash(picnum,lightlevel,height) \
+  ((unsigned)((picnum)*3+(lightlevel)+(height)*7) & (MAXVISPLANES-1))
+
 //
 // opening
 //
 
-// Here comes the obnoxious "visplane".
-int						MaxVisPlanes;
-visplane_t				*visplanes;
-visplane_t 				*lastvisplane;
-visplane_t 				*floorplane;
-visplane_t 				*ceilingplane;
-
-// ?
 size_t					maxopenings;
 short					*openings;
 short					*lastopening;
@@ -78,7 +97,7 @@ int 					*spanstop;
 //
 // texture mapping
 //
-lighttable_t**			planezlight;
+int*					planezlight;	// [RH] Changed from lighttable_t** to int*
 fixed_t 				planeheight;
 
 fixed_t 				*yslopetab;		// [RH] Added for freelook. ylook points into it
@@ -94,52 +113,12 @@ fixed_t 				*cachedxstep;
 fixed_t 				*cachedystep;
 
 
-static void PrepVisPlanes (int min)
-{
-	int i;
-	unsigned short *stuff;
-
-	for (i = min; i < MaxVisPlanes; i++) {
-		stuff = (unsigned short *)Calloc (screens[0].width * 2 + 4, sizeof(unsigned short));
-		visplanes[i].top = stuff + 1;
-		visplanes[i].bottom = stuff + screens[0].width + 3;
-	}
-}
-
 //
 // R_InitPlanes
 // Only at game startup.
-// [RH] This function is actually used now.
 //
 void R_InitPlanes (void)
 {
-	MaxVisPlanes = 128;			// Default. Increased as needed.
-	visplanes = (visplane_t *)Calloc (MaxVisPlanes, sizeof(visplane_t));
-	PrepVisPlanes (0);
-}
-
-static void GetMoreVisPlanes (visplane_t **toupdate)
-{
-	int oldMax;
-	visplane_t *old = visplanes;
-
-	oldMax = MaxVisPlanes;
-	MaxVisPlanes += 32;
-	visplanes = (visplane_t *)Realloc (visplanes, (MaxVisPlanes) * sizeof(visplane_t));
-
-	DPrintf ("MaxVisPlanes increased to %d\n", MaxVisPlanes);
-	
-	PrepVisPlanes (oldMax);
-
-	if (visplanes == old)
-		return;
-
-	*toupdate = &visplanes[*toupdate - old];
-	lastvisplane = &visplanes[lastvisplane - old];
-	if (floorplane)
-		floorplane = &visplanes[floorplane - old];
-	if (ceilingplane)
-		ceilingplane = &visplanes[ceilingplane - old];
 }
 
 //
@@ -154,6 +133,7 @@ static void GetMoreVisPlanes (visplane_t **toupdate)
 //	viewy
 //	xoffs
 //	yoffs
+//	basecolormap	// [RH]
 //
 // BASIC PRIMITIVE
 //
@@ -200,17 +180,16 @@ void R_MapPlane (int y, int x1, int x2)
 	{
 		index = distance >> LIGHTZSHIFT;
 		
-		if (index >= MAXLIGHTZ )
+		if (index >= MAXLIGHTZ)
 			index = MAXLIGHTZ-1;
 
-		ds_colormap = planezlight[index];
+		ds_colormap = planezlight[index] + basecolormap;	// [RH] add basecolormap
 	}
 		
 	ds_y = y;
 	ds_x1 = x1;
 	ds_x2 = x2;
 
-	// high or low detail
 	spanfunc ();		
 }
 
@@ -225,27 +204,47 @@ void R_ClearPlanes (void)
 	angle_t 	angle;
 	
 	// opening / clipping determination
-	for (i=0 ; i<viewwidth ; i++)
+	for (i = 0; i < viewwidth ; i++)
 	{
 		floorclip[i] = (short)viewheight;
 		ceilingclip[i] = -1;
 	}
 
-	lastvisplane = visplanes;
+	for (i = 0; i < MAXVISPLANES; i++)	// new code -- killough
+		for (*freehead = visplanes[i], visplanes[i] = NULL; *freehead; )
+			freehead = &(*freehead)->next;
+
 	lastopening = openings;
 	
 	// texture calculation
-	memset (cachedheight, 0, sizeof(fixed_t) * screens[0].height);
+	memset (cachedheight, 0, sizeof(*cachedheight) * screens[0].height);
 
 	// left to right mapping
-	angle = (viewangle-ANG90)>>ANGLETOFINESHIFT;
+	angle = (viewangle - ANG90)>>ANGLETOFINESHIFT;
 		
 	// scale will be unit scale at SCREENWIDTH/2 distance
 	basexscale = FixedDiv (finecosine[angle],centerxfrac);
 	baseyscale = -FixedDiv (finesine[angle],centerxfrac);
 }
 
+// New function, by Lee Killough
+// [RH] top and bottom buffers get allocated immediately
+//		after the visplane.
 
+static visplane_t *new_visplane(unsigned hash)
+{
+	visplane_t *check = freetail;
+
+	if (!check) {
+		check = Calloc (1, sizeof(*check) + sizeof(*check->top)*(screens[0].width*2));
+		check->bottom = &check->top[screens[0].width+2];
+	} else
+		if (!(freetail = freetail->next))
+			freehead = &freetail;
+	check->next = visplanes[hash];
+	visplanes[hash] = check;
+	return check;
+}
 
 
 //
@@ -257,40 +256,35 @@ visplane_t *R_FindPlane (fixed_t height, int picnum, int lightlevel,
 						 fixed_t xoffs, fixed_t yoffs)
 {
 	visplane_t *check;
+	unsigned hash;						// killough
 
 	if (picnum == skyflatnum)
 		height = lightlevel = 0;		// all skys map together
 		
-	for (check=visplanes; check<lastvisplane; check++)
-	{
-		if (height == check->height
-			&& picnum == check->picnum
-			&& lightlevel == check->lightlevel
-			&& xoffs == check->xoffs
-			&& yoffs == check->yoffs
-			)
-		{
-			break;
-		}
-	}
+	// New visplane algorithm uses hash table -- killough
+	hash = visplane_hash (picnum, lightlevel, height);
 
-	if (check < lastvisplane)
-		return check;
-				
-	if (lastvisplane - visplanes == MaxVisPlanes)
-		GetMoreVisPlanes (&check);
-				
-	lastvisplane++;
+	for (check = visplanes[hash]; check; check = check->next)	// killough
+		if (height == check->height &&
+			picnum == check->picnum &&
+			lightlevel == check->lightlevel &&
+			xoffs == check->xoffs &&	// killough 2/28/98: Add offset checks
+			yoffs == check->yoffs &&
+			basecolormap == check->colormap)	// [RH] Add colormap check
+		  return check;
+
+	check = new_visplane (hash);		// killough
 
 	check->height = height;
 	check->picnum = picnum;
 	check->lightlevel = lightlevel;
-	check->xoffs = xoffs;		// killough 2/28/98: Save offsets
+	check->xoffs = xoffs;				// killough 2/28/98: Save offsets
 	check->yoffs = yoffs;
+	check->colormap = basecolormap;		// [RH] Save colormap
 	check->minx = screens[0].width;
 	check->maxx = -1;
 	
-	memset (check->top,0xff,sizeof(short) * screens[0].width);
+	memset (check->top, 0xff, sizeof(*check->top) * screens[0].width);
 				
 	return check;
 }
@@ -329,37 +323,30 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		intrh = stop;
 	}
 
-	for (x=intrl ; x<= intrh ; x++)
-		if (pl->top[x] != 0xffff)
-			break;
+	for (x=intrl ; x <= intrh && pl->top[x] == 0xffff; x++)
+		;
 
 	if (x > intrh)
 	{
 		pl->minx = unionl;
 		pl->maxx = unionh;
-
-		// use the same one
-		return pl;				
 	}
-		
-	// [RH] Need to make sure we actually have this lastvisplane
-	if (lastvisplane - visplanes == MaxVisPlanes)
-		GetMoreVisPlanes (&pl);
+	else
+	{
+		unsigned hash = visplane_hash (pl->picnum, pl->lightlevel, pl->height);
+		visplane_t *new_pl = new_visplane (hash);
 
-	// make a new visplane
-	lastvisplane->height = pl->height;
-	lastvisplane->picnum = pl->picnum;
-	lastvisplane->lightlevel = pl->lightlevel;
-    lastvisplane->xoffs = pl->xoffs;			// killough 2/28/98
-    lastvisplane->yoffs = pl->yoffs;
-	
-	pl = lastvisplane++;
-
-	pl->minx = start;
-	pl->maxx = stop;
-
-	memset (pl->top,0xff,sizeof(short) * screens[0].width);
-				
+		new_pl->height = pl->height;
+		new_pl->picnum = pl->picnum;
+		new_pl->lightlevel = pl->lightlevel;
+		new_pl->xoffs = pl->xoffs;			// killough 2/28/98
+		new_pl->yoffs = pl->yoffs;
+		new_pl->colormap = pl->colormap;	// [RH] Copy colormap
+		pl = new_pl;
+		pl->minx = start;
+		pl->maxx = stop;
+		memset (pl->top, 0xff, sizeof(*pl->top) * screens[0].width);
+	}
 	return pl;
 }
 
@@ -369,37 +356,20 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 //
 void R_MakeSpans (int x, int t1, int b1, int t2, int b2)
 {
-	//if (t1 != 0xffff)
-		while (t1 < t2 && t1<=b1)
-		{
-			R_MapPlane (t1,spanstart[t1],x-1);
-			t1++;
-		}
-	//if (b1 != 0xffff)
-		while (b1 > b2 && b1>=t1)
-		{
-			R_MapPlane (b1,spanstart[b1],x-1);
-			b1--;
-		}
-		
-	//if (t2 != 0xffff)
-		while (t2 < t1 && t2<=b2)
-		{
-			spanstart[t2] = x;
-			t2++;
-		}
-	//if (b2 != 0xffff)
-		while (b2 > b1 && b2>=t2)
-		{
-			spanstart[b2] = x;
-			b2--;
-		}
+	for (; t1 < t2 && t1 <= b1; t1++)
+		R_MapPlane(t1, spanstart[t1], x-1);
+	for (; b1 > b2 && b1 >= t1; b1--)
+		R_MapPlane(b1, spanstart[b1] ,x-1);
+	while (t2 < t1 && t2 <= b2)
+		spanstart[t2++] = x;
+	while (b2 > b1 && b2 >= t2)
+		spanstart[b2--] = x;
 }
 
 // [RH] This was separated from R_DrawPlanes() on 11.5.1998.
 //		Also added support for columns with holes since double skies
 //		opens up that possibility (modified from R_DrawMaskedColumn).
-//		One implication of this is that the sky will always wrap
+//		One implication of this is that the sky should always wrap
 //		properly, provided that it is tall enough.
 
 static void R_DrawMaskedSky (int skytexture, int skypos, fixed_t scale, fixed_t height, visplane_t *pl)
@@ -492,77 +462,78 @@ static void R_DrawSky (int skytexture, int skypos, visplane_t *pl)
 //
 void R_DrawPlanes (void)
 {
-	visplane_t* 		pl;
-	int 				light;
-	int 				x;
-	int 				stop;
+	visplane_t *pl;
+	int i;
 	
-	for (pl = visplanes ; pl < lastvisplane ; pl++)
-	{
-		if (pl->minx > pl->maxx)
-			continue;
-		
-		// sky flat
-		if (pl->picnum == skyflatnum)
+	for (i = 0; i < MAXVISPLANES; i++)
+		for (pl = visplanes[i]; pl; pl = pl->next)
 		{
-			// Sky is allways drawn full bright,
-			//	i.e. colormaps[0] is used.
-			// Because of this hack, sky is not affected
-			//	by INVUL inverse mapping.
-			dc_colormap = DefaultPalette->maps.colormaps;
+			if (pl->minx > pl->maxx)
+				continue;
+			
+			// sky flat
+			if (pl->picnum == skyflatnum)
+			{
+				// Sky is allways drawn full bright,
+				//	i.e. colormaps[0] is used.
+				// Because of this hack, sky is not affected
+				//	by INVUL inverse mapping.
+				dc_colormap = DefaultPalette->maps.colormaps;
 
-			if (level.flags & LEVEL_DOUBLESKY) {
-				dc_iscale = sky2iscale >> sky2stretch;
-				dc_texturemid = sky2texturemid;
-				if (textureheight[sky2texture] == (128<<FRACBITS))
-					R_DrawSky (sky2texture, sky2pos, pl);
+				if (level.flags & LEVEL_DOUBLESKY) {
+					dc_iscale = sky2iscale >> sky2stretch;
+					dc_texturemid = sky2texturemid;
+					if (textureheight[sky2texture] == (128<<FRACBITS))
+						R_DrawSky (sky2texture, sky2pos, pl);
+					else
+						R_DrawMaskedSky (sky2texture, sky2pos, sky2scale, sky2height, pl);
+				}
+
+				dc_iscale = sky1iscale >> sky1stretch;
+				dc_texturemid = sky1texturemid;
+				if ((level.flags & LEVEL_DOUBLESKY) || (textureheight[sky1texture] != (128<<FRACBITS)))
+					R_DrawMaskedSky (sky1texture, sky1pos, sky1scale, sky1height, pl);
 				else
-					R_DrawMaskedSky (sky2texture, sky2pos, sky2scale, sky2height, pl);
+					R_DrawSky (sky1texture, sky1pos, pl);
 			}
-
-			dc_iscale = sky1iscale >> sky1stretch;
-			dc_texturemid = sky1texturemid;
-			if ((level.flags & LEVEL_DOUBLESKY) || (textureheight[sky1texture] != (128<<FRACBITS)))
-				R_DrawMaskedSky (sky1texture, sky1pos, sky1scale, sky1height, pl);
 			else
-				R_DrawSky (sky1texture, sky1pos, pl);
+			{
+				// regular flat
+				int light, stop, x;
 
-			continue;
-		}
-		
-		// regular flat
-		ds_source = W_CacheLumpNum(firstflat +
-								   flattranslation[pl->picnum],
-								   PU_STATIC);
-		
-		xoffs = pl->xoffs;	// killough 2/28/98: Add offsets
-		yoffs = pl->yoffs;
-		planeheight = abs(pl->height-viewz);
-		light = (pl->lightlevel >> LIGHTSEGSHIFT)+extralight;
-
-		if (light >= LIGHTLEVELS)
-			light = LIGHTLEVELS-1;
-
-		if (light < 0)
-			light = 0;
-
-		planezlight = zlight[light];
-
-		pl->top[pl->maxx+1] = 0xffff;
-		pl->top[pl->minx-1] = 0xffff;
+				ds_source = W_CacheLumpNum(firstflat +
+										   flattranslation[pl->picnum],
+										   PU_STATIC);
 				
-		stop = pl->maxx + 1;
+				xoffs = pl->xoffs;	// killough 2/28/98: Add offsets
+				yoffs = pl->yoffs;
+				basecolormap = pl->colormap;	// [RH] set basecolormap
+				planeheight = abs(pl->height-viewz);
+				light = (pl->lightlevel >> LIGHTSEGSHIFT) + extralight;
 
-		for (x=pl->minx ; x<= stop ; x++)
-		{
-			R_MakeSpans(x,pl->top[x-1],
-						pl->bottom[x-1],
-						pl->top[x],
-						pl->bottom[x]);
+				if (light >= LIGHTLEVELS)
+					light = LIGHTLEVELS-1;
+				else if (light < 0)
+					light = 0;
+
+				planezlight = zlight[light];
+
+				pl->top[pl->maxx+1] = 0xffff;
+				pl->top[pl->minx-1] = 0xffff;
+						
+				stop = pl->maxx + 1;
+
+				for (x = pl->minx; x <= stop; x++)
+				{
+					R_MakeSpans(x,pl->top[x-1],
+								pl->bottom[x-1],
+								pl->top[x],
+								pl->bottom[x]);
+				}
+				
+				Z_ChangeTag (ds_source, PU_CACHE);
+			}
 		}
-		
-		Z_ChangeTag (ds_source, PU_CACHE);
-	}
 }
 
 BOOL R_PlaneInitData (void)
@@ -577,26 +548,41 @@ BOOL R_PlaneInitData (void)
 	if (cachedxstep)	free (cachedxstep);
 	if (cachedystep)	free (cachedystep);
 
-	floorclip = Calloc (screens[0].width, sizeof(short));
-	ceilingclip = Calloc (screens[0].width, sizeof(short));
+	floorclip = Calloc (screens[0].width, sizeof(*floorclip));
+	ceilingclip = Calloc (screens[0].width, sizeof(*ceilingclip));
 
-	spanstart = Calloc (screens[0].height, sizeof(int));
-	spanstop = Calloc (screens[0].height, sizeof(int));
+	spanstart = Calloc (screens[0].height, sizeof(*spanstart));
+	spanstop = Calloc (screens[0].height, sizeof(*spanstop));
 
-	yslopetab = Calloc ((screens[0].height<<1)+(screens[0].height>>1), sizeof(fixed_t));
-	distscale = Calloc (screens[0].width, sizeof(fixed_t));
-	cachedheight = Calloc (screens[0].height, sizeof(fixed_t));
-	cacheddistance = Calloc (screens[0].height, sizeof(fixed_t));
-	cachedxstep = Calloc (screens[0].height, sizeof(fixed_t));
-	cachedystep = Calloc (screens[0].height, sizeof(fixed_t));
+	yslopetab = Calloc ((screens[0].height<<1)+(screens[0].height>>1), sizeof(*yslopetab));
+	distscale = Calloc (screens[0].width, sizeof(*distscale));
+	cachedheight = Calloc (screens[0].height, sizeof(*cachedheight));
+	cacheddistance = Calloc (screens[0].height, sizeof(*cacheddistance));
+	cachedxstep = Calloc (screens[0].height, sizeof(*cachedxstep));
+	cachedystep = Calloc (screens[0].height, sizeof(*cachedystep));
 
-	if (visplanes) {
+	// Free all visplanes and let them be re-allocated as needed.
+	{
 		int i;
+		visplane_t *pl = freetail;
 
-		for (i = 0; i < MaxVisPlanes; i++)
-			free (visplanes[i].top - 1);
+		while (pl) {
+			visplane_t *next = pl->next;
+			free (pl);
+			pl = next;
+		}
+		freetail = NULL;
+		freehead = &freetail;
 
-		PrepVisPlanes (0);
+		for (i = 0; i < MAXVISPLANES; i++) {
+			pl = visplanes[i];
+			visplanes[i] = NULL;
+			while (pl) {
+				visplane_t *next = pl->next;
+				free (pl);
+				pl = next;
+			}
+		}
 	}
 
 	return true;

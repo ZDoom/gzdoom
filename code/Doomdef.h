@@ -30,11 +30,6 @@
 //
 // Global parameters/defines.
 //
-// DOOM version
-enum { VERSION =  114 };
-#define VERSIONSTR "114"
-#define GAMEVER (0x010e)
-
 
 // Game mode handling - identify IWAD version
 //	to handle IWAD dependend animations etc.
@@ -45,7 +40,7 @@ typedef enum
   commercial,	// DOOM 2 retail, E1 M34
   // DOOM 2 german edition not handled
   retail,		// DOOM 1 retail, E4, M36
-  indetermined	// Well, no IWAD found.
+  undetermined	// Well, no IWAD found.
   
 } GameMode_t;
 
@@ -69,43 +64,12 @@ typedef enum
   french,
   german,
   unknown
-
 } Language_t;
 
 
 // If rangecheck is undefined,
 // most parameter validation debugging code will not be compiled
 #define RANGECHECK
-
-// Do or do not use external soundserver.
-// The sndserver binary to be run separately
-//	has been introduced by Dave Taylor.
-// The integrated sound support is experimental,
-//	and unfinished. Default is synchronous.
-// Experimental asynchronous timer based is
-//	handled by SNDINTR. 
-#define SNDSERV  1
-//#define SNDINTR  1
-
-
-// This one switches between MIT SHM (no proper mouse)
-// and XFree86 DGA (mickey sampling). The original
-// linuxdoom used SHM, which is default.
-//#define X11_DGA				1
-
-
-//
-// For resize of screen, at start of game.
-// It will not work dynamically, see visplanes.
-//
-#define BASE_WIDTH				320
-
-// It is educational but futile to change this
-//	scaling e.g. to 2. Drawing of status bar,
-//	menues etc. is tied to the scale implied
-//	by the graphics.
-#define SCREEN_MUL				1
-#define INV_ASPECT_RATIO		0.625 // 0.75, ideally
 
 // The maximum number of players, multiplayer/networking.
 #define MAXPLAYERS				8
@@ -121,7 +85,10 @@ typedef enum
 	GS_LEVEL,
 	GS_INTERMISSION,
 	GS_FINALE,
-	GS_DEMOSCREEN
+	GS_DEMOSCREEN,
+	GS_FULLCONSOLE,		// [RH]	Fullscreen console
+	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
+	GS_STARTUP			// [RH] Console is fullscreen, and game is just starting
 } gamestate_t;
 
 //
@@ -138,11 +105,11 @@ typedef enum
 
 typedef float skill_t;
 
-#define sk_baby 				0.0
-#define sk_easy 				1.0
-#define sk_medium				2.0
-#define sk_hard 				3.0
-#define sk_nightmare			4.0
+#define sk_baby 				0.0f
+#define sk_easy 				1.0f
+#define sk_medium				2.0f
+#define sk_hard 				3.0f
+#define sk_nightmare			4.0f
 
 
 
@@ -288,6 +255,8 @@ typedef enum
 #define KEY_MOUSE2				0x101
 #define KEY_MOUSE3				0x102
 #define KEY_MOUSE4				0x103
+#define KEY_MWHEELUP			0x104
+#define KEY_MWHEELDOWN			0x105
 
 #define KEY_JOY1				0x108
 #define KEY_JOY2				0x109
@@ -322,13 +291,14 @@ typedef enum
 #define KEY_JOY31				0x126
 #define KEY_JOY32				0x127
 
+#define NUM_KEYS				0x128
 
 // [RH] dmflags->value flags (based on Q2's)
 #define	DF_NO_HEALTH		1		// Do not spawn health items (DM)
 #define	DF_NO_ITEMS			2		// Do not spawn powerups (DM)
 #define	DF_WEAPONS_STAY		4		// Leave weapons around after pickup (DM)
 #define	DF_YES_FALLING		8		// Falling too far hurts
-#define DF_YES_FALLING_LOTS	16		// Falling too far hurts a lot
+#define DF_NO_FRIENDLY_FIRE	16		// Can't hurt teammates
 //#define	DF_INVENTORY_ITEMS	32		// Wait for player to use powerups when picked up
 #define	DF_SAME_LEVEL		64		// Stay on the same map when someone exits (DM)
 #define	DF_SPAWN_FARTHEST	128		// Spawn players as far as possible from other players (DM)
@@ -342,5 +312,15 @@ typedef enum
 #define DF_FAST_MONSTERS	32768	// Monsters are fast (replaces -fast parm)
 #define DF_NO_JUMP			65536	// Don't allow jumping
 #define DF_NO_FREELOOK		131072	// Don't allow freelook
+
+// phares 3/20/98:
+//
+// Player friction is variable, based on controlling
+// linedefs. More friction can create mud, sludge,
+// magnetized floors, etc. Less friction can create ice.
+
+#define MORE_FRICTION_MOMENTUM 15000	// mud factor based on momentum
+#define ORIG_FRICTION          0xE800	// original value
+#define ORIG_FRICTION_FACTOR   2048		// original value
 
 #endif			// __DOOMDEF__

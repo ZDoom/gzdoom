@@ -41,6 +41,7 @@
 
 
 
+
 // Silhouette, needed for clipping Segs (mainly)
 // and sprites representing things.
 #define SIL_NONE				0
@@ -90,10 +91,13 @@ struct degenmobj_s
 
 };
 typedef struct degenmobj_s degenmobj_t;
+
 //
 // The SECTORS record, at runtime.
 // Stores things/mobjs.
 //
+struct dyncolormap_s;
+
 struct sector_s
 {
 	fixed_t 	floorheight;
@@ -103,6 +107,7 @@ struct sector_s
 	short		lightlevel;
 	short		special;
 	short		tag;
+	int			nexttag,firsttag;	// killough 1/30/98: improves searches for tags.
 
 	int 		soundtraversed;	// 0 = untraversed, 1,2 = sndlines -1
 	mobj_t* 	soundtarget;	// thing that made a sound (or null)
@@ -131,6 +136,10 @@ struct sector_s
 	// killough 4/11/98: support for lightlevels coming from another sector
 	int floorlightsec, ceilinglightsec;
 
+	unsigned int bottommap, midmap, topmap; // killough 4/4/98: dynamic colormaps
+											// [RH] these can also be blend values if
+											//		the alpha mask is non-zero
+
 	// list of mobjs that are at least partially in the sector
 	// thinglist is a subset of touching_thinglist
 	struct msecnode_s *touching_thinglist;				// phares 3/14/98
@@ -138,6 +147,10 @@ struct sector_s
 	int linecount;
 	struct line_s **lines;		// [linecount] size
 	
+	float gravity;		// [RH] Sector gravity (1.0 is normal)
+	short damage;		// [RH] Damage to do while standing on floor
+	short mod;			// [RH] Means-of-death for applied damage
+	struct dyncolormap_s *colormap;	// [RH] Per-sector colormap
 };
 typedef struct sector_s sector_t;
 
@@ -160,6 +173,9 @@ struct side_s
 	short		toptexture;
 	short		bottomtexture;
 	short		midtexture;
+
+	// [RH] Bah. Had to add this for BOOM
+	byte		special;
 
 	// Sector the SideDef is facing.
 	sector_t*	sector;
@@ -194,9 +210,13 @@ struct line_s
 
 	// Animation related.
 	short		flags;
-	short		special;
-	short		tag;
-	byte		args[5];	// [RH] Hexen-style arguments
+	byte		special;	// [RH] Only one byte per special.
+	byte		lucency;	// <--- Translucency (0-255/255=opaque)
+	short		id;			// <--- Same as tag or set with Line_SetIdentification.
+	short		args[5];	// <--- Hexen-style arguments
+							//		Note that these are shorts in order to support
+							//		the tag parameter from DOOM.
+	int			firstid, nextid;
 
 	// Visual appearance: SideDefs.
 	//	sidenum[1] will be -1 if one sided
@@ -216,9 +236,6 @@ struct line_s
 
 	// if == validcount, already checked
 	int 		validcount;
-
-	// thinker_t for reversable actions
-	void*		specialdata;			
 };
 typedef struct line_s line_t;
 
@@ -377,7 +394,6 @@ struct drawseg_s
 	short*				sprtopclip; 			
 	short*				sprbottomclip;	
 	short*				maskedtexturecol;
-	
 };
 typedef struct drawseg_s drawseg_t;
 
@@ -430,8 +446,7 @@ struct vissprite_s
 	fixed_t 			texturemid;
 	int 				patch;
 
-	// for color translation and shadow draw,
-	//	maxbright frames as well
+	// for color translation and maxbright frames as well
 	lighttable_t*		colormap;
    
 	int 				mobjflags;
@@ -471,12 +486,17 @@ struct spriteframe_s
 	// Lump to use for view angles 0-7.
 	short		lump[8];
 
+	// [RH] Move some data out of spritewidth, spriteoffset,
+	//		and spritetopoffset arrays.
+	fixed_t		width[8];
+	fixed_t		topoffset[8];
+	fixed_t		offset[8];
+
 	// Flip bit (1 = flip) to use for view angles 0-7.
 	byte		flip[8];
 	
 };
 typedef struct spriteframe_s spriteframe_t;
-
 
 //
 // A sprite definition:
@@ -490,28 +510,36 @@ struct spritedef_s
 };
 typedef struct spritedef_s spritedef_t;
 
+//
+// [RH] Internal "skin" definition.
+//
+struct playerskin_s
+{
+	char				name[17];	// 16 chars + NULL
+	char				face[3];
+	int					sprite;
+	int					namespc;	// namespace for this skin
+	int					gender;		// This skin's gender (not used)
+};
+typedef struct playerskin_s playerskin_t;
 
 //
-// Now what is a visplane, anyway?
+// The infamous visplane
 // 
 struct visplane_s
 {
-  fixed_t				height;
-  int					picnum;
-  int					lightlevel;
-  fixed_t				xoffs;
-  fixed_t				yoffs;
-  int					minx;
-  int					maxx;
-  
-  // leave pads for [minx-1]/[maxx+1]
-  
-  // Here lies the rub for all
-  //  dynamic resize/change of resolution.
+	struct visplane_s *next;		// Next visplane in hash chain -- killough
 
-  // These actually point one short past the memory
-  // area allocated (for padding)
-  unsigned short				*top, *bottom;
+	fixed_t		height;
+	int			picnum;
+	int			lightlevel;
+	fixed_t		xoffs, yoffs;		// killough 2/28/98: Support scrolling flats
+	int			minx, maxx;
+	byte		*colormap;			// [RH] Support multiple colormaps
+
+	unsigned short *bottom;			// [RH] bottom and top arrays are dynamically
+	unsigned short pad;				//		allocated immediately after the
+	unsigned short top[3];			//		visplane.
 };
 typedef struct visplane_s visplane_t;
 

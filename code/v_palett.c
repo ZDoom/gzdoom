@@ -9,20 +9,15 @@
 #include "i_video.h"
 #include "c_dispch.h"
 #include "g_level.h"
+#include "st_stuff.h"
 
+void BuildColoredLights (byte *maps, int lr, int lg, int lb, int fr, int fg, int fb);
 static void DoBlending (unsigned *from, unsigned *to, unsigned count, int tor, int tog, int tob, int toa);
 static void Cmd_TestBlend (void *plyr, int argc, char **argv);
 static void Cmd_TestFade (void *plyr, int argc, char **argv);
+static void Cmd_TestColor (void *plyr, int argc, char **argv);
 
-struct palmap {
-	union {
-		char	name[8];
-		int		nameint[2];
-	} n;
-	char		palette[8];
-};
-
-struct palmap *Pals[4];
+dyncolormap_t NormalLight;
 
 palette_t DefPal;
 palette_t *FirstPal;
@@ -136,6 +131,7 @@ palette_t *InitPalettes (char *name)
 
 	C_RegisterCommand ("testblend", Cmd_TestBlend);
 	C_RegisterCommand ("testfade", Cmd_TestFade);
+	C_RegisterCommand ("testcolor", Cmd_TestColor);
 
 	if ( (colors = W_CacheLumpName (name, PU_CACHE)) )
 		if (InternalCreatePalette (&DefPal, name, colors, 256,
@@ -297,6 +293,8 @@ void RefreshPalette (palette_t *pal)
 			r = RPART (level.fadeto);
 			g = GPART (level.fadeto);
 			b = BPART (level.fadeto);
+			if (pal->maps.colormaps && pal->maps.colormaps - pal->colormapsbase >= 256)
+				free (pal->maps.colormaps);
 			pal->colormapsbase = Realloc (pal->colormapsbase, (NUMCOLORMAPS + 1) * 256 + 255);
 			pal->maps.colormaps = (byte *)(((int)(pal->colormapsbase) + 255) & ~0xff);
 
@@ -328,6 +326,46 @@ void RefreshPalette (palette_t *pal)
 				}
 			}
 		}
+	} else {
+		if (pal->flags & PALETTEF_SHADE) {
+			r = newgamma[RPART (level.fadeto)];
+			g = newgamma[GPART (level.fadeto)];
+			b = newgamma[BPART (level.fadeto)];
+			if (pal->colormapsbase) {
+				free (pal->colormapsbase);
+				pal->colormapsbase = NULL;
+			}
+			pal->maps.shades = Realloc (pal->colormapsbase, (NUMCOLORMAPS + 1)*256*sizeof(unsigned int) + 255);
+
+			// build normal light mappings
+			for (l = 0; l < NUMCOLORMAPS; l++) {
+				DoBlending (pal->colors,
+							pal->maps.shades + (l << pal->shadeshift),
+							pal->numcolors,
+							r, g, b,
+							l * (256 / NUMCOLORMAPS));
+			}
+
+			// build special maps (e.g. invulnerability)
+			{
+				unsigned *shade = pal->maps.shades + (NUMCOLORMAPS << pal->shadeshift);
+				int grayint;
+
+				for (c = 0; c < pal->numcolors; c++) {
+					grayint = (int)(255.0f * (1.0f -
+						(RPART(pal->colors[c]) * 0.00116796875f +
+						 GPART(pal->colors[c]) * 0.00229296875f +
+						 BPART(pal->colors[c]) * 0.0005625)));
+					*shade++ = MAKERGB (grayint, grayint, grayint);
+				}
+			}
+		}
+	}
+
+	if (pal == &DefPal) {
+		NormalLight.maps = DefPal.maps.colormaps;
+		NormalLight.color = MAKERGB(255,255,255);
+		NormalLight.fade = level.fadeto;
 	}
 }
 
@@ -419,7 +457,11 @@ static void Cmd_TestBlend (void *plyr, int argc, char **argv)
 			amt = 1.0f;
 		else if (amt < 0.0f)
 			amt = 0.0f;
-		V_SetBlend (RPART(color), GPART(color), BPART(color), (int)(amt * 256.0f));
+		//V_SetBlend (RPART(color), GPART(color), BPART(color), (int)(amt * 256.0f));
+		BaseBlendR = RPART(color);
+		BaseBlendG = GPART(color);
+		BaseBlendB = BPART(color);
+		BaseBlendA = amt;
 	}
 }
 
@@ -439,6 +481,7 @@ static void Cmd_TestFade (void *plyr, int argc, char **argv)
 		}
 		level.fadeto = color;
 		RefreshPalettes();
+		NormalLight.maps = DefPal.maps.colormaps;
 	}
 }
 
@@ -512,5 +555,80 @@ void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v)
 		case 3:		*r = p; *g = q; *b = v; break;
 		case 4:		*r = t; *g = p; *b = v; break;
 		default:	*r = v; *g = p; *b = q; break;
+	}
+}
+
+/****** Colored Lighting Stuffs (Sorry, 8-bit only) ******/
+
+// Builds NUMCOLORMAPS colormaps lit with the specified color
+void BuildColoredLights (byte *maps, int lr, int lg, int lb, int r, int g, int b)
+{
+	unsigned int l,c;
+	unsigned int colors[256];
+	byte *shade;
+
+	// The default palette is assumed to contain the maps for white light.
+	if (!screens[0].is8bit || !maps)
+		return;
+
+	// build normal (but colored) light mappings
+	for (l = 0; l < NUMCOLORMAPS; l++) {
+		DoBlending (DefPal.basecolors, colors, DefPal.numcolors, r, g, b, l * (256 / NUMCOLORMAPS));
+
+		shade = maps + 256*l;
+		for (c = 0; c < 256; c++) {
+			*shade++ = BestColor (DefPal.basecolors,
+								  (RPART(colors[c])*lr)/255,
+								  (GPART(colors[c])*lg)/255,
+								  (BPART(colors[c])*lb)/255,
+								  256);
+		}
+	}
+}
+
+dyncolormap_t *GetSpecialLights (int lr, int lg, int lb, int fr, int fg, int fb)
+{
+	unsigned int color = MAKERGB (lr, lg, lb);
+	unsigned int fade = MAKERGB (fr, fg, fb);
+	dyncolormap_t *colormap = &NormalLight;
+
+	// Bah! Simple linear search because I want to get this done.
+	while (colormap) {
+		if (color == colormap->color && fade == colormap->fade)
+			return colormap;
+		else
+			colormap = colormap->next;
+	}
+
+	// Not found. Create it.
+	colormap = Z_Malloc (sizeof(*colormap), PU_LEVEL, 0);
+	colormap->maps = Z_Malloc (NUMCOLORMAPS*256+3+255, PU_LEVEL, 0);
+	colormap->maps = (byte *)(((int)colormap->maps + 255) & ~0xff);
+	colormap->color = color;
+	colormap->fade = fade;
+	colormap->next = NormalLight.next;
+	NormalLight.next = colormap;
+
+	BuildColoredLights (colormap->maps, lr, lg, lb, fr, fg, fb);
+
+	return colormap;
+}
+
+static void Cmd_TestColor (void *plyr, int argc, char **argv)
+{
+	char *colorstring;
+	int color;
+
+	if (argc < 2) {
+		Printf ("testcolor <color>\n");
+	} else {
+		if ( (colorstring = V_GetColorStringByName (argv[1])) ) {
+			color = V_GetColorFromString (NULL, colorstring);
+			free (colorstring);
+		} else {
+			color = V_GetColorFromString (NULL, argv[1]);
+		}
+		BuildColoredLights (NormalLight.maps, RPART(color), GPART(color), BPART(color),
+			RPART(level.fadeto), GPART(level.fadeto), BPART(level.fadeto));
 	}
 }

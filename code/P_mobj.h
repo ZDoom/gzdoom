@@ -207,6 +207,40 @@ typedef enum
 	MF_TRANSLUC50		= 0x40000000,
 	MF_TRANSLUC75		= 0x60000000,
 
+	// [RH] These are all based on Hexen's. Very few are used.
+	MF2_LOWGRAVITY		= 0x00000001,
+	MF2_BLOWN			= 0x00000002,
+	MF2_BOUNCES			= 0x00000004,
+	MF2_PROJECTILEPUSH	= 0x00000008,
+	MF2_DROPUP			= 0x00000010,
+	MF2_INLIQUID		= 0x00000020,
+	MF2_STARTONFLOOR	= 0x00000040,
+	MF2_NOTELEPORT		= 0x00000080,
+	MF2_PIERCING		= 0x00000100,
+	MF2_PUSHABLE		= 0x00000200,
+	MF2_DONTHURTPLAYERS = 0x00000400,
+	MF2_NOADJUST		= 0x00000800,
+	MF2_POTSOMETHING	= 0x00001000,
+	MF2_PARTICLE		= 0x00002000,
+	MF2_DORMANT			= 0x00004000,
+	MF2_BOSS			= 0x00008000,
+	MF2_XDEATHONLY		= 0x00010000,
+	MF2_DOESNOTPUSH		= 0x00020000,
+	MF2_TELEFRAGS		= 0x00040000,
+	MF2_BOB				= 0x00080000,
+	MF2_INVISIBLE		= 0x00100000,
+	MF2_ACTIVATEIMPACT	= 0x00200000,
+	MF2_JUMPING			= 0x00400000,
+	MF2_ACTIVATEMCROSS	= 0x00800000,
+	MF2_ACTIVATEPCROSS	= 0x01000000,
+	MF2_PASSPROJECTILES	= 0x02000000,
+	MF2_STALKERSOMETHING= 0x04000000,
+	MF2_INVULNERABLE	= 0x08000000,
+	MF2_INDESTRUCTABLE	= 0x10000000,
+	MF2_ICYDEATH		= 0x20000000,
+	MF2_HOMINGSOMETHING	= 0x40000000,
+	MF2_REFLECTIVE		= 0x80000000
+
 } mobjflag_t;
 
 
@@ -220,6 +254,10 @@ typedef struct mobj_s
 	fixed_t	 			x;
 	fixed_t	 			y;
 	fixed_t	 			z;
+
+	int					tid;	// [RH] Thing ID
+	struct mobj_s*		inext;	// [RH] links to other mobjs whose
+	struct mobj_s*		iprev;	//		tid hash to the same value.
 
 	// More list: links in sector (if needed)
 	struct mobj_s*		snext;
@@ -261,6 +299,7 @@ typedef struct mobj_s
 	int 				tics;	// state tic counter
 	state_t*			state;
 	int 				flags;
+	int					flags2;	// [RH] more flags
 	int 				health;
 
 	// Movement direction, movement generation (zig-zagging).
@@ -273,7 +312,7 @@ typedef struct mobj_s
 
 	// Reaction time: if non 0, don't attack yet.
 	// Used by player to freeze a bit after teleporting.
-	int 				reactiontime;	
+	int 				reactiontime;
 
 	// If >0, the target will be chased
 	// no matter what (even if shot)
@@ -292,11 +331,14 @@ typedef struct mobj_s
 	// Thing being chased/attacked for tracers.
 	struct mobj_s*		tracer; 
 
-	// [RH] Andy Baker's stealth monsters
-	BOOL				invisible;
+	// new field: last known enemy -- killough 2/15/98
+	struct mobj_s*      lastenemy;
+
+	// [RH] The goal this monster is moving toward (if target is NULL)
+	struct mobj_s*		goal;
 
 	// [RH] Z-Check
-	// Gametic when a missile will be able to impact
+	// Time until a missile will be able to impact
 	// whoever shot it. Used to prevent the missile
 	// from blowing up in the shooter's face before
 	// it gets anywhere.
@@ -308,8 +350,16 @@ typedef struct mobj_s
 	// than a full-fledged palette.
 	struct palette_s	*palette;
 
-    // a linked list of sectors where this object appears
-    struct msecnode_s	*touching_sectorlist;				// phares 3/14/98
+	// Friction values for the sector the object is in
+	int friction;											// phares 3/17/98
+	int movefactor;
+
+	// a linked list of sectors where this object appears
+	struct msecnode_s	*touching_sectorlist;				// phares 3/14/98
+
+	// [RH] Thing special
+	byte				special;
+	byte				args[5];
 
 } mobj_t;
 

@@ -167,6 +167,7 @@ typedef enum
 	SPR_BRS1,
 	SPR_TLMP,
 	SPR_TLP2,
+	SPR_TNT1,
 	// [RH] Gibs
 	SPR_GIB0,
 	SPR_GIB1,
@@ -178,6 +179,7 @@ typedef enum
 	SPR_GIB7,
 	// [RH] Dummy for unknown mapthing
 	SPR_UNKN,
+	SPR_TLGL,
 	NUMSPRITES
 
 } spritenum_t;
@@ -1151,6 +1153,7 @@ typedef enum
 	S_TECH2LAMP2,
 	S_TECH2LAMP3,
 	S_TECH2LAMP4,
+	S_TNT1,
 	// [RH] gibs
 	S_GIB0,
 	S_GIB1,
@@ -1162,6 +1165,12 @@ typedef enum
 	S_GIB7,
 	S_AMBIENTSOUND,
 	S_UNKNOWNTHING,
+	S_BRIDGE1,
+	S_BRIDGE2,
+	S_BRIDGE3,
+	S_BRIDGE4,
+	S_BRIDGE5,
+	S_SWITCHTEMP,
 	NUMSTATES
 } statenum_t;
 
@@ -1333,7 +1342,7 @@ typedef enum {
 	MT_STEALTHUNDEAD,
 	MT_STEALTHSHOTGUY,
 	MT_STEALTHZOMBIE,
-	// [RH] Gibs
+	// [RH] Gibs (code is disabled)
 	MT_GIB0,
 	MT_GIB1,
 	MT_GIB2,
@@ -1342,72 +1351,18 @@ typedef enum {
 	MT_GIB5,
 	MT_GIB6,
 	MT_GIB7,
+	// [RH] Miscellaneous things
 	MT_UNKNOWNTHING,
-	// [RH] Ambient sounds (up to 64)
-	MT_AMBIENT0,
-	MT_AMBIENT1,
-	MT_AMBIENT2,
-	MT_AMBIENT3,
-	MT_AMBIENT4,
-	MT_AMBIENT5,
-	MT_AMBIENT6,
-	MT_AMBIENT7,
-	MT_AMBIENT8,
-	MT_AMBIENT9,
-	MT_AMBIENT10,
-	MT_AMBIENT11,
-	MT_AMBIENT12,
-	MT_AMBIENT13,
-	MT_AMBIENT14,
-	MT_AMBIENT15,
-	MT_AMBIENT16,
-	MT_AMBIENT17,
-	MT_AMBIENT18,
-	MT_AMBIENT19,
-	MT_AMBIENT20,
-	MT_AMBIENT21,
-	MT_AMBIENT22,
-	MT_AMBIENT23,
-	MT_AMBIENT24,
-	MT_AMBIENT25,
-	MT_AMBIENT26,
-	MT_AMBIENT27,
-	MT_AMBIENT28,
-	MT_AMBIENT29,
-	MT_AMBIENT30,
-	MT_AMBIENT31,
-	MT_AMBIENT32,
-	MT_AMBIENT33,
-	MT_AMBIENT34,
-	MT_AMBIENT35,
-	MT_AMBIENT36,
-	MT_AMBIENT37,
-	MT_AMBIENT38,
-	MT_AMBIENT39,
-	MT_AMBIENT40,
-	MT_AMBIENT41,
-	MT_AMBIENT42,
-	MT_AMBIENT43,
-	MT_AMBIENT44,
-	MT_AMBIENT45,
-	MT_AMBIENT46,
-	MT_AMBIENT47,
-	MT_AMBIENT48,
-	MT_AMBIENT49,
-	MT_AMBIENT50,
-	MT_AMBIENT51,
-	MT_AMBIENT52,
-	MT_AMBIENT53,
-	MT_AMBIENT54,
-	MT_AMBIENT55,
-	MT_AMBIENT56,
-	MT_AMBIENT57,
-	MT_AMBIENT58,
-	MT_AMBIENT59,
-	MT_AMBIENT60,
-	MT_AMBIENT61,
-	MT_AMBIENT62,
-	MT_AMBIENT63,
+	MT_MAPSPOT,
+	MT_MAPSPOTGRAV,
+	MT_BRIDGE,
+	MT_PUSH,		// Boom's push thing
+	MT_PULL,		// Boom's pull thing
+	MT_PATHNODE,
+	MT_AMBIENT,		// Ambient sounds
+	MT_SWITCHTEMP,	// Temporary mobj for switch sounds
+	MT_TELEPORTMAN2,// Teleport destination that pays attention to its height
+	MT_CAMERA,		// Camera used for "cutscenes"
 	NUMMOBJTYPES
 
 } mobjtype_t;
@@ -1418,23 +1373,23 @@ typedef struct
 	int spawnstate;
 	int spawnhealth;
 	int seestate;
-	int seesound;
+	char *seesound;		// [RH] not int
 	int reactiontime;
-	int attacksound;
+	char *attacksound;	// [RH] not int
 	int painstate;
 	int painchance;
-	int painsound;
+	char *painsound;	// [RH] not int
 	int meleestate;
 	int missilestate;
 	int deathstate;
 	int xdeathstate;
-	int deathsound;
+	char *deathsound;	// [RH] not int
 	int speed;
 	int radius;
 	int height;
 	int mass;
 	int damage;
-	int activesound;
+	char *activesound;	// [RH] not int
 	int flags;
 	int raisestate;
 

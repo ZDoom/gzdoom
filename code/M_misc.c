@@ -26,6 +26,7 @@
 
 
 #include "doomtype.h"
+#include "version.h"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -146,6 +147,9 @@ char *GetConfigPath (void)
 		return copystring (myargv[p+1]);
 	}
 
+	if (M_CheckParm ("-cdrom"))
+		return copystring ("c:\\zdoomdat\\zdoom.cfg");
+
 	path = Malloc (strlen (progdir) + 11);
 
 	strcpy (path, progdir);
@@ -156,24 +160,36 @@ char *GetConfigPath (void)
 char *GetAutoexecPath (void)
 {
 	cvar_t *autovar;
-	char *path = Malloc (strlen (progdir) + 13);
 
-	strcpy (path, progdir);
-	strcat (path, "autoexec.cfg");
+	if (M_CheckParm ("-cdrom")) {
+		return copystring ("c:\\zdoomdat\\autoexec.cfg");
+	} else {
+		char *path = Malloc (strlen (progdir) + 13);
 
-	autovar = cvar ("autoexec", path, CVAR_ARCHIVE);
-	free (path);
+		strcpy (path, progdir);
+		strcat (path, "autoexec.cfg");
 
-	return autovar->string;
+		autovar = cvar ("autoexec", path, CVAR_ARCHIVE);
+		free (path);
+
+		return autovar->string;
+	}
 }
 
 //
 // M_SaveDefaults
 //
+
+// [RH] Don't write a config file if M_LoadDefaults hasn't been called.
+static BOOL DefaultsLoaded;
+
 void M_SaveDefaults (void)
 {
-	FILE*		f;
-	char*		configfile;
+	FILE *f;
+	char *configfile;
+
+	if (!DefaultsLoaded)
+		return;
 
 	configfile = GetConfigPath ();
 
@@ -201,7 +217,8 @@ void M_SaveDefaults (void)
 //
 // M_LoadDefaults
 //
-extern byte 	scantokey[128];
+extern byte scantokey[128];
+extern int cvar_defflags;
 
 void M_LoadDefaults (void)
 {
@@ -220,15 +237,17 @@ void M_LoadDefaults (void)
 	configver = cvar ("configver", VERSIONSTR, CVAR_ARCHIVE);
 
 	configfile = GetConfigPath ();
-	execcommand = Malloc (strlen (configfile) + 6);
-	sprintf (execcommand, "exec %s", configfile);
+	execcommand = Malloc (strlen (configfile) + 8);
+	sprintf (execcommand, "exec \"%s\"", configfile);
 	free (configfile);
+	cvar_defflags = CVAR_ARCHIVE;
 	AddCommandString (execcommand);
+	cvar_defflags = 0;
 	free (execcommand);
 
 	configfile = GetAutoexecPath ();
-	execcommand = Malloc (strlen (configfile) + 6);
-	sprintf (execcommand, "exec %s", configfile);
+	execcommand = Malloc (strlen (configfile) + 8);
+	sprintf (execcommand, "exec \"%s\"", configfile);
 	AddCommandString (execcommand);
 	free (execcommand);
 
@@ -237,6 +256,8 @@ void M_LoadDefaults (void)
 		if (!stricmp (C_GetBinding (KEY_F5), "menu_video"))
 			AddCommandString ("bind f5 menu_display");
 	}
+
+	DefaultsLoaded = true;
 }
 
 
@@ -354,16 +375,23 @@ extern unsigned IndexedPalette[256];
 
 void M_ScreenShot (char *filename)
 {
-	byte*		linear;
-	char		lbmname[16];
+	byte *linear;
+	char  autoname[32];
+	char *lbmname;
 	
 	// find a file name to save it to
 	if (!filename) {
+		if (M_CheckParm ("-cdrom")) {
+			strcpy (autoname, "C:\\ZDOOMDAT\\");
+			lbmname = autoname + 12;
+		} else {
+			lbmname = autoname;
+		}
 		if (!FindFreeName (lbmname, "tga\0pcx" + (screens[0].is8bit << 2))) {
 			Printf ("M_ScreenShot: Delete some screenshots\n");
 			return;
 		}
-		filename = lbmname;
+		filename = autoname;
 	}
 
 	if (screens[0].is8bit) {

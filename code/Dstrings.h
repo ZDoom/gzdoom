@@ -31,9 +31,6 @@ void D_InitStrings (void);
 void ReplaceString (char **ptr, char *str);
 
 
-// Misc. other strings.
-#define SAVEGAMENAME	"zdoomsv"
-
 // QuitDOOM messages
 #define NUM_QUITMESSAGES   14
 
@@ -42,13 +39,13 @@ extern char* endmsg[];
 // [RH] String handling has changed significantly and is no longer static per build.
 typedef enum {
 	str_notchanged,
-	str_foreign,
 	str_patched,
 	str_custom
 } strtype_t;
 
 typedef struct gamestring_s {
 	strtype_t	 type;
+	char		*name;
 	char		*builtin;
 	char		*string;
 } gamestring_t;
@@ -370,7 +367,89 @@ typedef struct gamestring_s {
 #define CC_CYBER			(Strings[258].string)
 #define CC_HERO				(Strings[259].string)
 
-#define NUMSTRINGS			260
+#define PD_BLUEC			(Strings[260].string)
+#define PD_REDC				(Strings[261].string)
+#define PD_YELLOWC			(Strings[262].string)
+#define PD_BLUES			(Strings[263].string)
+#define PD_REDS				(Strings[264].string)
+#define PD_YELLOWS			(Strings[265].string)
+#define PD_ANY				(Strings[266].string)
+#define PD_ALL3				(Strings[267].string)
+#define PD_ALL6				(Strings[268].string)
+
+#define OB_SUICIDE			(Strings[269].string)
+#define OB_FALLING			(Strings[270].string)
+#define OB_CRUSH			(Strings[271].string)
+#define OB_EXIT				(Strings[272].string)
+#define OB_WATER			(Strings[273].string)
+#define OB_SLIME			(Strings[274].string)
+#define OB_LAVA				(Strings[275].string)
+#define OB_BARREL			(Strings[276].string)
+#define OB_SPLASH			(Strings[277].string)
+#define OB_R_SPLASH			(Strings[278].string)
+#define OB_ROCKET			(Strings[279].string)
+#define OB_KILLEDSELF		(Strings[280].string)
+#define OB_STEALTHBABY		(Strings[281].string)
+#define OB_STEALTHVILE		(Strings[282].string)
+#define OB_STEALTHBARON		(Strings[283].string)
+#define OB_STEALTHCACO		(Strings[284].string)
+#define OB_STEALTHCHAINGUY	(Strings[285].string)
+#define OB_STEALTHDEMON		(Strings[286].string)
+#define OB_STEALTHKNIGHT	(Strings[287].string)
+#define OB_STEALTHIMP		(Strings[288].string)
+#define OB_STEALTHFATSO		(Strings[289].string)
+#define OB_STEALTHUNDEAD	(Strings[290].string)
+#define OB_STEALTHSHOTGUY	(Strings[291].string)
+#define OB_STEALTHZOMBIE	(Strings[292].string)
+#define OB_UNDEADHIT		(Strings[293].string)
+#define OB_IMPHIT			(Strings[294].string)
+#define OB_CACOHIT			(Strings[295].string)
+#define OB_DEMONHIT			(Strings[296].string)
+#define OB_SPECTREHIT		(Strings[297].string)
+#define OB_BARONHIT			(Strings[298].string)
+#define OB_KNIGHTHIT		(Strings[299].string)
+#define OB_ZOMBIE			(Strings[300].string)
+#define OB_SHOTGUY			(Strings[301].string)
+#define OB_VILE				(Strings[302].string)
+#define OB_UNDEAD			(Strings[303].string)
+#define OB_FATSO			(Strings[304].string)
+#define OB_CHAINGUY			(Strings[305].string)
+#define OB_SKULL			(Strings[306].string)
+#define OB_IMP				(Strings[307].string)
+#define OB_CACO				(Strings[308].string)
+#define OB_BARON			(Strings[309].string)
+#define OB_KNIGHT			(Strings[310].string)
+#define OB_SPIDER			(Strings[311].string)
+#define OB_BABY				(Strings[312].string)
+#define OB_CYBORG			(Strings[313].string)
+#define OB_WOLFSS			(Strings[314].string)
+#define OB_MPFIST			(Strings[315].string)
+#define OB_MPCHAINSAW		(Strings[316].string)
+#define OB_MPPISTOL			(Strings[317].string)
+#define OB_MPSHOTGUN		(Strings[318].string)
+#define OB_MPSSHOTGUN		(Strings[319].string)
+#define OB_MPCHAINGUN		(Strings[320].string)
+#define OB_MPROCKET			(Strings[321].string)
+#define OB_MPR_SPLASH		(Strings[322].string)
+#define OB_MPPLASMARIFLE	(Strings[323].string)
+#define OB_MPBFG_BOOM		(Strings[324].string)
+#define OB_MPBFG_SPLASH		(Strings[325].string)
+#define OB_MPTELEFRAG		(Strings[326].string)
+#define OB_DEFAULT			(Strings[327].string)
+#define OB_FRIENDLY1		(Strings[328].string)
+#define OB_FRIENDLY2		(Strings[329].string)
+#define OB_FRIENDLY3		(Strings[330].string)
+#define OB_FRIENDLY4		(Strings[331].string)
+
+#define SAVEGAMENAME		(Strings[332].string)
+
+#define STARTUP1			(Strings[333].string)
+#define STARTUP2			(Strings[334].string)
+#define STARTUP3			(Strings[335].string)
+#define STARTUP4			(Strings[336].string)
+#define STARTUP5			(Strings[337].string)
+
+#define NUMSTRINGS			338
 
 extern gamestring_t Strings[];
 

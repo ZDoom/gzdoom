@@ -28,7 +28,9 @@
 // NOT called by W_Ticker. Fixme.
 //
 // [RH] The only parameter used is mapname, so I removed playermask and skill.
-void P_SetupLevel (char *mapname);
+//		On September 1, 1998, I added the position to indicate which set
+//		of single-player start spots should be spawned in the level.
+void P_SetupLevel (char *mapname, int position);
 
 // Called by startup code.
 void P_Init (void);

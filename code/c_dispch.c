@@ -21,24 +21,24 @@ struct CmdData *Commands[HASH_SIZE];
 struct CmdData *Aliases[HASH_SIZE];
 
 struct ActionBits actionbits[NUM_ACTIONS] = {
-	{ 0x116716a2, ACTION_SPEED,		 "speed" },
-	{ 0x1e60dad4, ACTION_RIGHT,		 "right" },
-	{ 0x206c10aa, ACTION_KLOOK,		 "klook" },
-	{ 0x226a20ae, ACTION_MLOOK,		 "mlook" },
-	{ 0x4d63cc88, ACTION_USE,		 "use" },
-	{ 0x50183a64, ACTION_SHOWSCORES, "showscores" },
-	{ 0x620a3c5e, ACTION_MOVELEFT,	 "moveleft" },
-	{ 0x6d157234, ACTION_LOOKDOWN,	 "lookdown" },
-	{ 0x6f03745a, ACTION_MOVEDOWN,	 "movedown" },
-	{ 0x78086cf0, ACTION_ATTACK,	 "attack" },
-	{ 0x8517869e, ACTION_STRAFE,	 "strafe" },
-	{ 0x910b0cac, ACTION_BACK,		 "back" },
-	{ 0x9a02b460, ACTION_LOOKUP,	 "lookup" },
-	{ 0x9c14ae86, ACTION_MOVEUP,	 "moveup" },
-	{ 0xab1b201e, ACTION_LEFT,		 "left" },
-	{ 0xbc02544e, ACTION_JUMP,		 "jump" },
-	{ 0xd571f880, ACTION_MOVERIGHT,	 "moveright" },
-	{ 0xf57be8e2, ACTION_FORWARD,	 "forward" }
+	{ 0x00409, ACTION_USE,		  "use" },
+	{ 0x0074d, ACTION_BACK,		  "back" },
+	{ 0x007e4, ACTION_LEFT,		  "left" },
+	{ 0x00816, ACTION_JUMP,		  "jump" },
+	{ 0x0106d, ACTION_KLOOK,	  "klook" },
+	{ 0x0109d, ACTION_MLOOK,	  "mlook" },
+	{ 0x010d8, ACTION_RIGHT,	  "right" },
+	{ 0x0110a, ACTION_SPEED,	  "speed" },
+	{ 0x01fc5, ACTION_ATTACK,	  "attack" },
+	{ 0x021ae, ACTION_LOOKUP,	  "lookup" },
+	{ 0x021fe, ACTION_MOVEUP,	  "moveup" },
+	{ 0x02315, ACTION_STRAFE,	  "strafe" },
+	{ 0x041c4, ACTION_FORWARD,	  "forward" },
+	{ 0x08788, ACTION_LOOKDOWN,	  "lookdown" },
+	{ 0x088c4, ACTION_MOVELEFT,	  "moveleft" },
+	{ 0x088c8, ACTION_MOVEDOWN,	  "movedown" },
+	{ 0x11268, ACTION_MOVERIGHT,  "moveright" },
+	{ 0x2314d, ACTION_SHOWSCORES, "showscores" }
 };
 int Actions;
 
@@ -53,21 +53,18 @@ static int ListActionCommands (void)
 	return NUM_ACTIONS * 2;
 }
 
-unsigned int MakeKey (char *s)
+unsigned int MakeKey (const char *s)
 {
-	byte a,b,c,d,e;
+	register unsigned int v = 0;
 
-	a = b = c = d = 0;
+	if (*s)
+		v = tolower(*s++);
+	if (*s)
+		v = (v*3) + tolower(*s++);
+	while (*s)
+		v = (v << 1) + tolower(*s++);
 
-	while (*s) {
-		e = tolower (*s++);
-		a += e;
-		b ^= e;
-		c += a - b;
-		d += a + b;
-	}
-
-	return (a << 24) | (b << 16) | (c << 8) | d;
+	return v;
 }
 
 // GetActionBit scans through the actionbits[] array

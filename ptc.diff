@@ -1,6 +1,6 @@
-diff -c -d ptc-073b/globals.h ptc/source/GLOBALS.H
-*** ptc-073b/globals.h	Thu May 28 20:03:10 1998
---- ptc/source/GLOBALS.H	Tue May 05 23:29:34 1998
+diff -c -r -d ptcnew/source/GLOBALS.H ptc/source/GLOBALS.H
+*** ptcnew/source/GLOBALS.H	Thu May 28 20:03:10 1998
+--- ptc/source/GLOBALS.H	Wed Dec 16 17:52:16 1998
 ***************
 *** 37,42 ****
 --- 37,43 ----
@@ -25,9 +25,9 @@ diff -c -d ptc-073b/globals.h ptc/source/GLOBALS.H
   
   
   
-diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
-*** ptc-073b/idirectx.cpp	Mon Jun 08 13:21:36 1998
---- ptc/source/Idirectx.cpp	Wed Jul 08 20:49:18 1998
+diff -c -r -d ptcnew/source/IDIRECTX.CPP ptc/source/IDIRECTX.CPP
+*** ptcnew/source/IDIRECTX.CPP	Mon Jun 08 13:21:36 1998
+--- ptc/source/IDIRECTX.CPP	Wed Dec 16 17:52:12 1998
 ***************
 *** 23,30 ****
   IDirectX::IDirectX(WINDOW window)
@@ -1081,12 +1081,16 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
 ***************
 *** 870,875 ****
---- 994,1001 ----
+--- 994,1005 ----
   
           // clear buffer
           Buffer=NULL;
 + 
-+ 		if (lpFDDS) lpFDDS->Flip (NULL, DDFLIP_WAIT);
++ 		if (lpFDDS) {
++ 			HRESULT dderr = lpFDDS->Flip (NULL, DDFLIP_WAIT);
++ 			if (dderr == DDERR_SURFACELOST)
++ 				Restore();
++ 		}
       }
   
       // decrement lock count
@@ -1119,7 +1123,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // success
       return 1;
---- 1019,1029 ----
+--- 1023,1033 ----
   
   int IDirectX::SURFACE::Restore()
   {
@@ -1167,7 +1171,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
           CloseDisplay();
           return 0;
       }
---- 1118,1163 ----
+--- 1122,1167 ----
   
   int IDirectX::InitDisplay(int x,int y,int id,int output,int frequency,int layout)
   {
@@ -1279,7 +1283,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
           return 1;
       }
       
---- 1166,1244 ----
+--- 1170,1248 ----
       if (!EnterDisplayMode(x,y,id,frequency)) 
       {
           // failure
@@ -1368,7 +1372,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
           CloseDisplay();
           return 0;
       }
---- 1246,1254 ----
+--- 1250,1258 ----
       if (!InitDisplayStart(x,y,output,frequency,layout))
       {
           // failure
@@ -1387,7 +1391,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
           CloseDisplay();
           return 0;
       }
---- 1257,1265 ----
+--- 1261,1269 ----
       if (!EnterDisplayMode(x,y,format,frequency)) 
       {
           // failure
@@ -1419,7 +1423,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // leave display mode
       LeaveDisplayMode();
---- 1268,1293 ----
+--- 1272,1297 ----
       if (!InitDisplayFinish(x,y,format,output,frequency,layout)) 
       {
           // failure
@@ -1455,7 +1459,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   }
   
   
---- 1298,1306 ----
+--- 1302,1310 ----
       // close display Window
       CloseDisplayWindow();
   
@@ -1480,7 +1484,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
           return 0;
       }
   
---- 1310,1326 ----
+--- 1314,1330 ----
   
   
   int IDirectX::EnterDisplayMode(int x,int y,int id,int frequency)
@@ -1517,7 +1521,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // check format
       if (!format.ok()) return 0;
---- 1349,1369 ----
+--- 1353,1373 ----
       }
   
       // set by bits per pixel
@@ -1573,7 +1577,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       }
       else return 0;
       
---- 1371,1439 ----
+--- 1375,1443 ----
       // enter exclusive mode
       if (!EnterExclusiveMode())
       {
@@ -1674,7 +1678,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // success
       return 1;
---- 1444,1490 ----
+--- 1448,1494 ----
   
   int IDirectX::SetDisplayMode(int x,int y,FORMAT const &format,int frequency)
   {
@@ -1767,7 +1771,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
           if (result==DDERR_HWNDALREADYSET)
           {
               // close old
---- 1634,1682 ----
+--- 1638,1686 ----
   
   int IDirectX::EnterExclusiveMode()
   {   
@@ -1860,7 +1864,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       return 1;
   }
   
---- 1685,1731 ----
+--- 1689,1735 ----
               // reinitialize directdraw
               if (!InitDirectDraw()) 
               {
@@ -1923,7 +1927,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   }
   
   
---- 1733,1749 ----
+--- 1737,1753 ----
   void IDirectX::LeaveExclusiveMode()
   {
       // debug
@@ -1950,7 +1954,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // close old
       CloseDirectDraw();
---- 1754,1762 ----
+--- 1758,1766 ----
   
   int IDirectX::InitDirectDraw()
   {
@@ -1969,7 +1973,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
           return 0;
       }
   
---- 1765,1773 ----
+--- 1769,1777 ----
       DirectDrawInstance=(HMODULE)LoadLibrary("ddraw.dll");
       if (!DirectDrawInstance)
       {
@@ -1996,7 +2000,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
           if (lpDD) lpDD->Release();
           lpDD=NULL;
           return 0;
---- 1775,1793 ----
+--- 1779,1797 ----
       DIRECTDRAWCREATE_FUNCTION DirectDrawCreateFunction = (DIRECTDRAWCREATE_FUNCTION) GetProcAddress(DirectDrawInstance,"DirectDrawCreate");    
       if (!DirectDrawCreateFunction)
       {
@@ -2030,7 +2034,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       return 1;
   }
   
---- 1812,1829 ----
+--- 1816,1833 ----
       if (result!=DD_OK) 
       {
           // failure
@@ -2058,7 +2062,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   }
   
   
---- 1845,1854 ----
+--- 1849,1858 ----
       lpDD2=NULL;    
   
       // release ddraw.dll
@@ -2078,7 +2082,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       {
           // todo: fix mode changes fullscreen->fullscreen
       }
---- 1868,1874 ----
+--- 1872,1878 ----
           // resize existing window
           if (ResizeDisplayWindow(width,height,output)) return 1;
       }
@@ -2096,7 +2100,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // specific initialization
       if (output==WINDOWED)
---- 1879,1886 ----
+--- 1883,1890 ----
       // adjust window size
       AdjustWindowSize(width,height,output);
   
@@ -2117,7 +2121,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       }
       else return 0;
   
---- 1888,1897 ----
+--- 1892,1901 ----
           // create windowed output window
           if (!CreateManagedWindow("PTC_DIRECTX_WINDOWED",WS_OVERLAPPEDWINDOW,SW_NORMAL,CW_USEDEFAULT,CW_USEDEFAULT,width,height)) return 0;
       }
@@ -2139,7 +2143,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // enter critical section
       EnterWindowCriticalSection();
---- 1936,1946 ----
+--- 1940,1950 ----
   
   
   
@@ -2160,7 +2164,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // initialize new video memory surface (primary)
       Primary=new Surface(this,XResolution,YResolution,Format,VIDEO);
---- 1952,1958 ----
+--- 1956,1962 ----
       int result=1;
   
       // set primary flag
@@ -2180,7 +2184,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // finished
       return result;
---- 1969,1978 ----
+--- 1973,1982 ----
       // leave critical section
       LeaveWindowCriticalSection();
       
@@ -2201,7 +2205,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       return 0;
   }
   
---- 2006,2013 ----
+--- 2010,2017 ----
       // enumerate directx modes
       if (lpDD2) if (lpDD2->EnumDisplayModes(0,NULL,(LPVOID)this,(LPDDENUMMODESCALLBACK)EnumDisplayModesCallback)==DD_OK) return 1;
       else if (lpDD) if (lpDD->EnumDisplayModes(0,NULL,(LPVOID)this,(LPDDENUMMODESCALLBACK)EnumDisplayModesCallback)==DD_OK) return 1;
@@ -2219,7 +2223,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   }
   
   
---- 2074,2080 ----
+--- 2078,2084 ----
           // indexed 8bit color
           return format.init(INDEX8);
       }
@@ -2236,7 +2240,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       return 0;
   }
   
---- 2116,2124 ----
+--- 2120,2128 ----
       }
   
       // failure
@@ -2279,7 +2283,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // default frequency is UNKNOWN (?)
       if (frequency==DEFAULT) frequency=UNKNOWN;
---- 2131,2171 ----
+--- 2135,2175 ----
   int IDirectX::InitDisplayStart(int &x,int &y,int &output,int &frequency,int &layout)
   {
       // debug
@@ -2401,7 +2405,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
       // clear primary palette
       uint *data=(uint*)PrimaryPalette.Lock();
---- 2173,2267 ----
+--- 2177,2271 ----
       // check layout
       if (layout!=DEFAULT && layout!=LINEAR) 
       {
@@ -2583,7 +2587,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       return format;
   }
   
---- 2275,2347 ----
+--- 2279,2351 ----
       }
   
       // success
@@ -2666,7 +2670,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
       // leave critical section
       LeaveStaticCriticalSection();
       return result;
---- 2390,2396 ----
+--- 2394,2400 ----
           // next
           current=iterator.next();
       }
@@ -2684,7 +2688,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
               // hide cursor
               SetCursor(NULL);
---- 2565,2574 ----
+--- 2569,2578 ----
       switch (message) 
       { 
           case WM_CREATE:
@@ -2704,7 +2708,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
               /*
               // check primary surface
---- 2576,2584 ----
+--- 2580,2588 ----
   
           case WM_PAINT:
   
@@ -2736,7 +2740,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
                   // hide cursor
                   SetCursor(NULL);
---- 2627,2652 ----
+--- 2631,2656 ----
   
           case WM_SETCURSOR: 
               
@@ -2778,7 +2782,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
                       // disable window deactivation
                       SetActiveWindow(hWnd);
                       SetForegroundWindow(hWnd);
---- 2656,2670 ----
+--- 2660,2674 ----
               }
               else
               {
@@ -2804,7 +2808,7 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
                       // check
                       if (i)
                       {
---- 2672,2680 ----
+--- 2676,2684 ----
                   else
                   {
                       // allow window deactivation
@@ -2823,17 +2827,17 @@ diff -c -d ptc-073b/idirectx.cpp ptc/source/Idirectx.cpp
   
           default:
   
---- 2716,2721 ----
-diff -c -d ptc-073b/idirectx.h ptc/source/idirectx.h
-*** ptc-073b/idirectx.h	Sun Jun 07 16:26:52 1998
---- ptc/source/idirectx.h	Tue Jun 09 16:26:02 1998
+--- 2720,2725 ----
+diff -c -r -d ptcnew/source/IDIRECTX.H ptc/source/Idirectx.h
+*** ptcnew/source/IDIRECTX.H	Sun Jun 07 16:26:52 1998
+--- ptc/source/Idirectx.h	Wed Dec 16 18:07:06 1998
 ***************
 *** 121,126 ****
 --- 121,127 ----
                   void *Buffer;                   // surface buffer
                   LPDIRECTDRAWSURFACE lpDDS;      // directdraw surface
                   LPDIRECTDRAWSURFACE2 lpDDS2;    // directdraw surface 2
-+ 				LPDIRECTDRAWSURFACE lpFDDS;		// [RH] front directdraw surface (when double buffering)
++                 LPDIRECTDRAWSURFACE lpFDDS;     // [RH] front directdraw surface (when double buffering)
                   int Count;                      // surface lock count
                   int Primary;                    // primary surface flag
                   IDirectX *LocalInterface;       // local interface
@@ -2854,9 +2858,58 @@ diff -c -d ptc-073b/idirectx.h ptc/source/idirectx.h
           void ClosePrimary();
   
           // modelist routines
-diff -c -d ptc-073b/iwin32.cpp ptc/source/Iwin32.cpp
-*** ptc-073b/iwin32.cpp	Mon Jun 08 13:09:24 1998
---- ptc/source/Iwin32.cpp	Tue Jun 09 16:39:50 1998
+diff -c -r -d ptcnew/source/IWIN32.CPP ptc/source/Iwin32.cpp
+*** ptcnew/source/IWIN32.CPP	Mon Jun 08 13:09:24 1998
+--- ptc/source/Iwin32.cpp	Wed Dec 16 18:09:46 1998
+***************
+*** 293,300 ****
+  
+  int IWin32::CreateManagedWindow(char wndclass[],uint style,int show,int x,int y,int width,int height)
+  {
+!     //printf("IWin32::CreateManagedWindow\n");
+! 
+      // fail if not managed
+      if (!Managed) return 0;
+  
+--- 293,299 ----
+  
+  int IWin32::CreateManagedWindow(char wndclass[],uint style,int show,int x,int y,int width,int height)
+  {
+! 	//printf("IWin32::CreateManagedWindow\n");
+      // fail if not managed
+      if (!Managed) return 0;
+  
+***************
+*** 360,373 ****
+      
+      // close window thread info event
+      if (info.event) CloseHandle(info.event);
+! 
+!     // just to be safe ...
+!     //printf("before sleep\n");
+!     Sleep(200);
+!     //printf("after sleep\n");
+  
+      // success
+!     //printf("IWin32::CreateManagedWindow ok\n");
+      return 1;
+  }
+  
+--- 359,372 ----
+      
+      // close window thread info event
+      if (info.event) CloseHandle(info.event);
+!     
+! 	// just to be safe...
+! 	//printf("before sleep\n");
+! 	Sleep(200);
+! 	//printf("after sleep\n");
+  
+      // success
+! 	//printf("IWin32::CreateManagedWindow ok\n");
+      return 1;
+  }
+  
 ***************
 *** 417,429 ****
   
@@ -2889,6 +2942,134 @@ diff -c -d ptc-073b/iwin32.cpp ptc/source/Iwin32.cpp
           // cleanup
           delete WindowThread;
 ***************
+*** 619,629 ****
+          SetFocus(window);
+  
+          // force window to foreground
+!         //printf("SetForegroundWindow\n");
+          SetForegroundWindow(window);
+  
+          // todo: set event to indicate message loop is ready
+!         //printf("starting message loop\n");
+  
+          // signal window event
+          SetEvent(info->event);
+--- 620,630 ----
+          SetFocus(window);
+  
+          // force window to foreground
+! 		//printf("SetForegroundWindow\n");
+          SetForegroundWindow(window);
+  
+          // todo: set event to indicate message loop is ready
+! 		//printf("starting message loop\n");
+  
+          // signal window event
+          SetEvent(info->event);
+***************
+*** 631,638 ****
+          // message loop
+          MSG msg;
+          while (GetMessage(&msg,NULL,0,0)==TRUE)
+!         {       
+!             //printf("translating message\n");
+              TranslateMessage(&msg);
+              DispatchMessage(&msg);
+          }
+--- 632,639 ----
+          // message loop
+          MSG msg;
+          while (GetMessage(&msg,NULL,0,0)==TRUE)
+!         {
+! 			//printf("translating message\n");
+              TranslateMessage(&msg);
+              DispatchMessage(&msg);
+          }
+***************
+*** 640,648 ****
+      else
+      {
+          // failure
+!         //printf("bad window create\n");
+          SetEvent(info->event);
+!         //printf("SetEvent(info->event)\n");
+      }
+  }
+  
+--- 641,649 ----
+      else
+      {
+          // failure
+! 		//printf("bad window create\n");
+          SetEvent(info->event);
+! 		//printf("SetEvent(info->event)\n");
+      }
+  }
+  
+***************
+*** 659,667 ****
+      if (i)
+      {
+          switch (message) 
+!         {
+              case WM_KEYDOWN: 
+!             { 
+                  //printf("IWin32::WndProc - WM_KEYDOWN (i)\n");
+  
+                  // enter critical section
+--- 660,668 ----
+      if (i)
+      {
+          switch (message) 
+!         { 
+              case WM_KEYDOWN: 
+!             {   
+                  //printf("IWin32::WndProc - WM_KEYDOWN (i)\n");
+  
+                  // enter critical section
+***************
+*** 705,713 ****
+                      // fill window with black
+                      RECT rect;
+                      GetClientRect(hWnd,&rect);
+!                     HBRUSH black=GetStockObject(BLACK_BRUSH);
+                      HDC dc=GetDC(hWnd);
+!                     HBRUSH old=SelectObject(dc,black);
+                      Rectangle(dc,rect.left,rect.top,rect.right,rect.bottom);
+                      SelectObject(dc,old);
+                      ReleaseDC(hWnd,dc);
+--- 706,714 ----
+                      // fill window with black
+                      RECT rect;
+                      GetClientRect(hWnd,&rect);
+!                     HBRUSH black=(HBRUSH)GetStockObject(BLACK_BRUSH);
+                      HDC dc=GetDC(hWnd);
+!                     HBRUSH old=(HBRUSH)SelectObject(dc,black);
+                      Rectangle(dc,rect.left,rect.top,rect.right,rect.bottom);
+                      SelectObject(dc,old);
+                      ReleaseDC(hWnd,dc);
+***************
+*** 757,765 ****
+                  // fill window with black
+                  RECT rect;
+                  GetClientRect(hWnd,&rect);
+!                 HBRUSH black=GetStockObject(BLACK_BRUSH);
+                  HDC dc=GetDC(hWnd);
+!                 HBRUSH old=SelectObject(dc,black);
+                  Rectangle(dc,rect.left,rect.top,rect.right,rect.bottom);
+                  SelectObject(dc,old);
+                  ReleaseDC(hWnd,dc);
+--- 758,766 ----
+                  // fill window with black
+                  RECT rect;
+                  GetClientRect(hWnd,&rect);
+!                 HBRUSH black=(HBRUSH)GetStockObject(BLACK_BRUSH);
+                  HDC dc=GetDC(hWnd);
+!                 HBRUSH old=(HBRUSH)SelectObject(dc,black);
+                  Rectangle(dc,rect.left,rect.top,rect.right,rect.bottom);
+                  SelectObject(dc,old);
+                  ReleaseDC(hWnd,dc);
+***************
 *** 864,866 ****
 --- 865,883 ----
   
@@ -2896,7 +3077,7 @@ diff -c -d ptc-073b/iwin32.cpp ptc/source/Iwin32.cpp
   #endif
 + 
 + 
-+ // [RH] Debugginf printf for Win32 debuggers
++ // [RH] Debugging printf for Win32 debuggers
 + #ifdef HAVEDPRINTF
 + void Dprintf (char *fmt, ...)
 + {
@@ -2911,3 +3092,231 @@ diff -c -d ptc-073b/iwin32.cpp ptc/source/Iwin32.cpp
 + }
 + #endif
 \ No newline at end of file
+diff -c -r -d ptcnew/source/source.dsp ptc/source/source.dsp
+*** ptcnew/source/source.dsp	Thu May 28 20:03:12 1998
+--- ptc/source/source.dsp	Thu Nov 26 18:24:14 1998
+***************
+*** 61,74 ****
+  # PROP Intermediate_Dir "..\library\win32\vc5.x\debug"
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /GX /Z7 /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
+! # ADD CPP /nologo /G5 /MTd /W3 /GX /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /c
+  # SUBTRACT CPP /YX
+  BSC32=bscmake.exe
+  # ADD BASE BSC32 /nologo
+  # ADD BSC32 /nologo
+  LIB32=link.exe -lib
+  # ADD BASE LIB32 /nologo
+! # ADD LIB32 /nologo /out:"..\library\win32\vc5.x\debug.lib"
+  
+  !ENDIF 
+  
+--- 61,75 ----
+  # PROP Intermediate_Dir "..\library\win32\vc5.x\debug"
+  # PROP Target_Dir ""
+  # ADD BASE CPP /nologo /W3 /GX /Z7 /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /YX /FD /c
+! # ADD CPP /nologo /G5 /MTd /W3 /GX /Zi /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FD /c
+  # SUBTRACT CPP /YX
+  BSC32=bscmake.exe
+  # ADD BASE BSC32 /nologo
+  # ADD BSC32 /nologo
+  LIB32=link.exe -lib
+  # ADD BASE LIB32 /nologo
+! # ADD LIB32 /out:"..\library\win32\vc5.x\debug.lib"
+! # SUBTRACT LIB32 /nologo
+  
+  !ENDIF 
+  
+***************
+*** 480,486 ****
+  InputName=mmx_16
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 481,487 ----
+  InputName=mmx_16
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 511,517 ****
+  InputName=mmx_32
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 512,518 ----
+  InputName=mmx_32
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 542,548 ****
+  InputName=mmx_8
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 543,549 ----
+  InputName=mmx_8
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 573,579 ****
+  InputName=mmx_copy
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 574,580 ----
+  InputName=mmx_copy
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 604,610 ****
+  InputName=mmx_fake
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 605,611 ----
+  InputName=mmx_fake
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 635,641 ****
+  InputName=tables
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 636,642 ----
+  InputName=tables
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 666,672 ****
+  InputName=x86_16
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 667,673 ----
+  InputName=x86_16
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 697,703 ****
+  InputName=x86_32
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 698,704 ----
+  InputName=x86_32
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 728,734 ****
+  InputName=x86_8
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 729,735 ----
+  InputName=x86_8
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 759,765 ****
+  InputName=x86_copy
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 760,766 ----
+  InputName=x86_copy
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+***************
+*** 790,796 ****
+  InputName=x86_fake
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	nasm $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+--- 791,797 ----
+  InputName=x86_fake
+  
+  "$(OutDir)\$(InputName).obj" : $(SOURCE) "$(INTDIR)" "$(OUTDIR)"
+! 	d:\nasm\nasmw $(InputPath) -f coff -o $(OutDir)\$(InputName).obj
+  
+  # End Custom Build
+  
+Only in ptc/source: SOURCE.DSW
+Only in ptc/source: SOURCE.ncb
+Only in ptc/source: SOURCE.OPT
+Only in ptc/source: SOURCE.PLG
+Only in ptc/source: vc5x.ncb
+Only in ptc/source: vc5x.opt

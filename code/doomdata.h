@@ -116,8 +116,7 @@ typedef struct
 // Blocks monsters only.
 #define ML_BLOCKMONSTERS			0x0002
 
-// Backside will not be present at all
-//	if not two sided.
+// Backside will not be present at all if not two sided.
 #define ML_TWOSIDED 				0x0004
 
 // If a texture is pegged, the texture will have
@@ -160,11 +159,16 @@ typedef struct
 #define ML_ACTIVATEPUSH				0x1000
 #define ML_ACTIVATEPROJECTILECROSS	0x1400
 
+// [RH] Monsters (as well as players) can active the line
+#define ML_MONSTERSCANACTIVATE		0x2000
+
 // [RH] BOOM's ML_PASSUSE flag (conflicts with ML_REPEATABLE)
 #define ML_PASSUSEORG				0x0200
 // [RH] Remapped to work with Hexen-style LineDefs.
-#define ML_PASSUSE					0x2000
+#define ML_PASSUSE					0x4000
 
+// [RH] Line blocks everything
+#define ML_BLOCKEVERYTHING			0x8000
 
 // Sector definition, from editing.
 typedef struct
@@ -241,7 +245,7 @@ typedef struct
 // [RH] Hexen-compatible MapThing.
 typedef struct
 {
-	short		thingid;
+	unsigned short thingid;
 	short		x;
 	short		y;
 	short		z;

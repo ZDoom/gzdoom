@@ -52,7 +52,7 @@ extern	weaponinfo_t	weaponinfo[NUMWEAPONS];
 #define IT_ARMOR				4
 #define IT_KEY					8
 #define IT_ARTIFACT 			16				// Don't auto-activate item (unused)
-#define IT_POWER				32				// Auto-activate item
+#define IT_POWERUP				32				// Auto-activate item
 
 struct gitem_s
 {
@@ -67,16 +67,18 @@ struct gitem_s
 };
 typedef struct gitem_s gitem_t;
 
-extern gitem_t ItemList[];
+extern int num_items;
+
+extern gitem_t itemlist[];
 
 void InitItems (void);
 
 // FindItem
 gitem_t	*GetItemByIndex (int index);
-gitem_t	*FindItemByClassname (char *classname);
-gitem_t *FindItem (char *pickup_name);
+gitem_t	*FindItemByClassname (const char *classname);
+gitem_t *FindItem (const char *pickup_name);
 
-#define ITEM_INDEX(i)	((i)-ItemList)
+#define ITEM_INDEX(i)	((i)-itemlist)
 
 
 #endif

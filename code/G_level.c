@@ -22,6 +22,16 @@
 #include "v_video.h"
 #include "st_stuff.h"
 #include "hu_stuff.h"
+#include "p_saveg.h"
+#include "p_acs.h"
+#include "d_proto.h"
+
+#include "minilzo.h"
+
+// [RH] Output buffer size for LZO compression.
+//		Extra space in case uncompressable.
+#define OUT_LEN(a)		((a) + (a) / 64 + 16 + 3)
+
 
 static level_info_t *FindDefLevelInfo (char *mapname);
 static cluster_info_t *FindDefClusterInfo (int cluster);
@@ -32,7 +42,12 @@ extern int timingdemo;
 int starttime;
 
 
+// ACS variables with world scope
+int WorldVars[NUM_WORLDVARS];
+
+
 extern BOOL netdemo;
+BOOL savegamerestore;
 
 extern int mousex, mousey, joyxmove, joyymove, Impulse;
 extern BOOL sendpause, sendsave, sendcenterview;
@@ -45,6 +60,9 @@ static level_pwad_info_t *wadlevelinfos;
 static cluster_info_t *wadclusterinfos;
 static int numwadlevelinfos = 0;
 static int numwadclusterinfos = 0;
+
+BOOL HexenHack;
+
 
 static int FindWadLevelInfo (char *name)
 {
@@ -110,6 +128,9 @@ void G_ParseMapInfo (void)
 					int map = atoi (com_token);
 					sprintf (com_token, "MAP%02u", map);
 					SKYFLATNAME[5] = 0;
+					// Hexen levels are automatically nointermission
+					levelflags = LEVEL_NOINTERMISSION;
+					HexenHack = true;
 				}
 				if ((levelindex = FindWadLevelInfo (com_token)) == -1)
 				{
@@ -118,14 +139,27 @@ void G_ParseMapInfo (void)
 					memset (wadlevelinfos + levelindex, 0, sizeof(level_pwad_info_t));
 				}
 				levelinfo = wadlevelinfos + levelindex;
+				levelinfo->snapshot = NULL;
+				levelinfo->outsidefog = 0xff000000;
 				strncpy (levelinfo->mapname, com_token, 8);
+				strncpy (levelinfo->fadetable, "COLORMAP", 8);
+
 				data = COM_Parse (data);
 				ReplaceString (&levelinfo->level_name, com_token);
 
 				mapinfo = data;
+
+				// Set up levelnum now so that the Teleport_NewMap specials
+				// in hexen.wad work without modification.
+				if (!strnicmp (levelinfo->mapname, "MAP", 3) && levelinfo->mapname[5] == 0) {
+					int mapnum = atoi (levelinfo->mapname + 3);
+
+					if (mapnum >= 1 && mapnum <= 99)
+						levelinfo->levelnum = mapnum;
+				}
+
 			} else if (levelindex > -1) {
-				if (!stricmp (com_token, "levelnum") ||
-					!stricmp (com_token, "warptrans")) {
+				if (!stricmp (com_token, "levelnum")) {
 					// levelnum <levelnum>
 					mapinfo = COM_Parse (data);
 					levelinfo->levelnum = atoi (com_token);
@@ -149,6 +183,11 @@ void G_ParseMapInfo (void)
 					// cluster <clusternum>
 					mapinfo = COM_Parse (data);
 					levelinfo->cluster = atoi (com_token);
+					if (HexenHack) {
+						cluster_info_t *cluster = FindClusterInfo (levelinfo->cluster);
+						if (cluster)
+							cluster->flags |= CLUSTER_HUB;
+					}
 
 				} else if (!stricmp (com_token, "sky1")) {
 					// sky1 <sky1texture> <sky1scrollspeed>
@@ -174,6 +213,18 @@ void G_ParseMapInfo (void)
 						free (colorstring);
 					} else {
 						levelinfo->fadeto = V_GetColorFromString (NULL, com_token);
+					}
+				
+				} else if (!stricmp (com_token, "outsidefog")) {
+					// outsidefog <colorname> OR fade <colordescriptor>
+					char *colorstring;
+
+					mapinfo = COM_Parse (data);
+					if ( (colorstring = V_GetColorStringByName (com_token)) ) {
+						levelinfo->outsidefog = V_GetColorFromString (NULL, colorstring);
+						free (colorstring);
+					} else {
+						levelinfo->outsidefog = V_GetColorFromString (NULL, com_token);
 					}
 				
 				} else if (!stricmp (com_token, "titlepatch")) {
@@ -250,14 +301,19 @@ void G_ParseMapInfo (void)
 					// lightning
 					mapinfo = data;
 
+				} else if (!stricmp (com_token, "fadetable")) {
+					// fadetable
+					mapinfo = COM_Parse (data);
+					uppercopy (levelinfo->fadetable, com_token);
+
 				} else if (!stricmp (com_token, "cdtrack") ||
-						   !stricmp (com_token, "fadetable") ||
 						   !stricmp (com_token, "cd_start_track") ||
 						   !stricmp (com_token, "cd_end1_track") ||
 						   !stricmp (com_token, "cd_end2_track") ||
 						   !stricmp (com_token, "cd_end3_track") ||
 						   !stricmp (com_token, "cd_intermission_track") ||
-						   !stricmp (com_token, "cd_title_track")) {
+						   !stricmp (com_token, "cd_title_track") ||
+						   !stricmp (com_token, "warptrans")) {
 					mapinfo = COM_Parse (data);
 
 				}
@@ -301,6 +357,11 @@ void G_ParseMapInfo (void)
 					mapinfo = COM_Parse (data);
 					strncpy (clusterinfo->finaleflat, com_token, 8);
 
+				} else if (!stricmp (com_token, "hub")) {
+					// hub
+					mapinfo = data;
+					clusterinfo->flags |= CLUSTER_HUB;
+
 				}
 			}
 		}
@@ -312,12 +373,38 @@ void G_ParseMapInfo (void)
 	}
 }
 
+static void zapDefereds (acsdefered_t *def)
+{
+	while (def) {
+		acsdefered_t *next = def->next;
+		Z_Free (def);
+		def = next;
+	}
+}
+
+void P_RemoveDefereds (void)
+{
+	int i;
+
+	// Remove any existing defereds
+	for (i = 0; i < numwadlevelinfos; i++)
+		if (wadlevelinfos[i].defered) {
+			zapDefereds (wadlevelinfos[i].defered);
+			wadlevelinfos[i].defered = NULL;
+		}
+
+	for (i = 0; LevelInfos[i].level_name; i++)
+		if (LevelInfos[i].defered) {
+			zapDefereds (LevelInfos[i].defered);
+			LevelInfos[i].defered = NULL;
+		}
+}
 //
 // G_InitNew
 // Can be called by the startup code or the menu task,
 // consoleplayer, displayplayer, playeringame[] should be set.
 //
-static char		d_mapname[9];
+static char d_mapname[9];
 
 void G_DeferedInitNew (char *mapname)
 {
@@ -367,12 +454,17 @@ void G_InitNew (char *mapname)
 {
 	int i;
 
-	// [RH] Mark all levels as not visited
-	for (i = 0; i < numwadlevelinfos; i++)
-		wadlevelinfos[i].flags &= ~LEVEL_VISITED;
+	if (!savegamerestore)
+		G_ClearSnapshots ();
 
-	for (i = 0; LevelInfos[i].mapname[0]; i++)
-		LevelInfos[i].flags &= ~LEVEL_VISITED;
+	// [RH] Mark all levels as not visited
+	if (!savegamerestore) {
+		for (i = 0; i < numwadlevelinfos; i++)
+			wadlevelinfos[i].flags &= ~LEVEL_VISITED;
+
+		for (i = 0; LevelInfos[i].mapname[0]; i++)
+			LevelInfos[i].flags &= ~LEVEL_VISITED;
+	}
 
 	UnlatchCVars ();
 
@@ -391,7 +483,7 @@ void G_InitNew (char *mapname)
 
 	// [RH] If this map doesn't exist, bomb out
 	if (W_CheckNumForName (mapname) == -1) {
-		I_Error ("Could not start map %s\n", mapname);
+		I_Error ("Could not find map %s\n", mapname);
 	}
 
 	if ((gameskill->value == sk_nightmare) || (dmflags & DF_MONSTERS_RESPAWN) )
@@ -418,44 +510,70 @@ void G_InitNew (char *mapname)
 		mobjinfo[MT_TROOPSHOT].speed = 10*FRACUNIT;
 	}
 
-	M_ClearRandom ();
+	if (!savegamerestore)
+		M_ClearRandom ();
+
+	// [RH] Clear ACS world variables and time
+	//		(Savegame restores them after calling G_InitNew)
+	memset (WorldVars, 0, sizeof(WorldVars));
+	level.time = 0;
 
 	// force players to be initialized upon first level load
-	for (i=0 ; i<MAXPLAYERS ; i++)
-		players[i].playerstate = PST_REBORN;
+	if (!savegamerestore)
+		for (i=0 ; i<MAXPLAYERS ; i++)
+			players[i].playerstate = PST_REBORN;
 
 	usergame = true;				// will be set false if a demo
 	paused = false;
 	demoplayback = false;
 	automapactive = false;
 	viewactive = true;
- 
-	viewactive = true;
 
 	strncpy (level.mapname, mapname, 8);
-	G_DoLoadLevel ();
+	G_DoLoadLevel (0);
 }
 
 //
 // G_DoCompleted
 //
 BOOL 			secretexit;
+static int		startpos;	// [RH] Support for multiple starts per level
 extern char*	pagename;
- 
-void G_ExitLevel (void)
+extern BOOL		NoWipe;		// [RH] Don't wipe when travelling in hubs
+
+// [RH] The position parameter to these next two functions should
+//		match the first parameter of the single player start spots
+//		that should appear in the next map.
+static void goOn (int position)
+{
+	cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
+	cluster_info_t *nextcluster = FindClusterInfo (FindLevelInfo (level.nextmap)->cluster);
+
+
+	startpos = position;
+	gameaction = ga_completed;
+
+	if (thiscluster && (thiscluster->flags & CLUSTER_HUB)) {
+		if ((level.flags & LEVEL_NOINTERMISSION) || (nextcluster == thiscluster))
+			NoWipe = 4;
+		D_DrawIcon = "TELEICON";
+	}
+}
+
+void G_ExitLevel (int position)
 {
 	secretexit = false;
-	gameaction = ga_completed;
+	goOn (position);
 }
 
 // Here's for the german edition.
-void G_SecretExitLevel (void) 
+void G_SecretExitLevel (int position) 
 {
 	// [RH] Check for secret levels is done in 
 	//		G_DoCompleted()
 
 	secretexit = true;
-	gameaction = ga_completed;
+	goOn (position);
 }
 
 void G_DoCompleted (void) 
@@ -468,17 +586,8 @@ void G_DoCompleted (void)
 	if (!(level.flags & LEVEL_CHANGEMAPCHEAT))
 		FindLevelInfo (level.mapname)->flags |= LEVEL_VISITED;
 
-	for (i=0 ; i<MAXPLAYERS ; i++)
-		if (playeringame[i])
-			G_PlayerFinishLevel (i);		// take away cards and stuff 
-
 	if (automapactive)
 		AM_Stop ();
-
-	if (level.flags & LEVEL_NOINTERMISSION) {
-		G_WorldDone ();
-		return;
-	}
 
 	wminfo.epsd = level.cluster - 1;		// Only used for DOOM I.
 	strncpy (wminfo.lname0, level.info->pname, 8);
@@ -524,11 +633,46 @@ void G_DoCompleted (void)
 		wminfo.plyr[i].fragcount = players[i].fragcount;
 	}
 
+	// [RH] If we're in a hub and staying within that hub, take a snapshot
+	//		of the level. If we're traveling to a new hub, take stuff from
+	//		the player and clear the world vars. If this is just an
+	//		ordinary cluster (not a hub), take stuff from the player, but
+	//		leave the world vars alone.
+	{
+		cluster_info_t *thiscluster = FindClusterInfo (level.cluster);
+		cluster_info_t *nextcluster = FindClusterInfo (FindLevelInfo (level.nextmap)->cluster);
+
+		if (thiscluster != nextcluster ||
+			deathmatch->value ||
+			!(thiscluster->flags & CLUSTER_HUB)) {
+			for (i=0 ; i<MAXPLAYERS ; i++)
+				if (playeringame[i])
+					G_PlayerFinishLevel (i);	// take away cards and stuff
+
+				if (nextcluster->flags & CLUSTER_HUB) {
+					memset (WorldVars, 0, sizeof(WorldVars));
+					P_RemoveDefereds ();
+					G_ClearSnapshots ();
+				}
+		} else {
+			G_SnapshotLevel ();
+		}
+		if (!(nextcluster->flags & CLUSTER_HUB) || !(thiscluster->flags & CLUSTER_HUB))
+			level.time = 0;	// Reset time to zero if not entering/staying in a hub
+
+		if (!deathmatch->value &&
+			(level.flags & LEVEL_NOINTERMISSION) ||
+			((nextcluster == thiscluster) && (thiscluster->flags & CLUSTER_HUB))) {
+			G_WorldDone ();
+			return;
+		}
+	}
+
 	gamestate = GS_INTERMISSION;
 	viewactive = false;
 	automapactive = false;
 
-// [RH] If you ever get a statistics driver operational, uncomment this.
+// [RH] If you ever get a statistics driver operational, adapt this.
 //	if (statcopy)
 //		memcpy (statcopy, &wminfo, sizeof(wminfo));
 		
@@ -538,19 +682,33 @@ void G_DoCompleted (void)
 //
 // G_DoLoadLevel 
 //
-extern	gamestate_t 	wipegamestate; 
+extern gamestate_t 	wipegamestate; 
+extern float BaseBlendA;
  
-void G_DoLoadLevel (void) 
+void G_DoLoadLevel (int position) 
 { 
-	int i; 
+	static int lastposition = 0;
+	gamestate_t oldgs = gamestate;
+	int i;
+
+	if (position == -1)
+		position = lastposition;
+	else
+		lastposition = position;
 
 	G_InitLevelLocals ();
 
 	Printf ("\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n%s\n\n",
 			level.level_name);
+
+	if (wipegamestate == GS_LEVEL) 
+		wipegamestate = -1; 			// force a wipe 
+
+	gamestate = GS_LEVEL; 
 	
-	C_HideConsole ();
+	if (demoplayback || oldgs == GS_STARTUP)
+		C_HideConsole ();
 	C_FlushDisplay ();
 
 	// Set the sky map.
@@ -568,11 +726,6 @@ void G_DoLoadLevel (void)
 
 	// [RH] Set up details about sky rendering
 	R_InitSkyMap (r_stretchsky);
-
-	if (wipegamestate == GS_LEVEL) 
-		wipegamestate = -1; 			// force a wipe 
-
-	gamestate = GS_LEVEL; 
 
 	for (i=0 ; i<MAXPLAYERS ; i++) 
 	{ 
@@ -592,9 +745,7 @@ void G_DoLoadLevel (void)
 		headsecnode = NULL;
 	}
 
-
-	S_ClearAmbients ();							// [RH] Clear all ambient sounds
-	P_SetupLevel (level.mapname);	 
+	P_SetupLevel (level.mapname, position);	 
 	displayplayer = consoleplayer;				// view the guy you are playing
 	ST_Start();		// [RH] Make sure status bar knows who we are
 	HU_Start();
@@ -609,6 +760,10 @@ void G_DoLoadLevel (void)
 	sendpause = sendsave = paused = sendcenterview = false; 
 
 	level.starttime = I_GetTime ();
+
+	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
+
+	P_DoDeferedScripts ();	// [RH] Do script actions that were triggerd on another map.
 
 	if (timingdemo) {
 		static BOOL firstTime = true;
@@ -643,8 +798,9 @@ void G_WorldDone (void)
 		else
 			nextcluster = FindClusterInfo (FindLevelInfo (level.secretmap)->cluster);
 
-		if (nextcluster->cluster != level.cluster) {
-			// Only start the finale if the next level's cluster is different than the current one.
+		if (nextcluster->cluster != level.cluster && !deathmatch->value) {
+			// Only start the finale if the next level's cluster is different
+			// than the current one and we're not in deathmatch.
 			if (nextcluster->entertext) {
 				F_StartFinale (nextcluster->messagemusic, nextcluster->finaleflat, nextcluster->entertext);
 			} else if (thiscluster->exittext) {
@@ -664,12 +820,14 @@ void G_DoWorldDone (void)
 	} else {
 		strncpy (level.mapname, wminfo.next, 8);
 	}
-	G_DoLoadLevel (); 
+	G_DoLoadLevel (startpos);
+	startpos = 0;
 	gameaction = ga_nothing; 
 	viewactive = true; 
 } 
  
 
+extern dyncolormap_t NormalLight;
 
 void G_InitLevelLocals ()
 {
@@ -677,21 +835,32 @@ void G_InitLevelLocals ()
 	level_info_t *info;
 	int i;
 
+	BaseBlendA = 0.0f;		// Remove underwater blend effect, if any
+	NormalLight.maps = realcolormaps;
+
 	if ((i = FindWadLevelInfo (level.mapname)) > -1) {
 		level_pwad_info_t *pinfo = wadlevelinfos + i;
 
 		level.info = (level_info_t *)pinfo;
 		level.skyspeed1 = pinfo->skyspeed1;
 		level.skyspeed2 = pinfo->skyspeed2;
-		level.fadeto = pinfo->fadeto;
 		info = (level_info_t *)pinfo;
 		strncpy (level.skypic2, pinfo->skypic2, 8);
+		level.fadeto = pinfo->fadeto;
+		if (level.fadeto) {
+			NormalLight.maps = DefaultPalette->maps.colormaps;
+		} else {
+			R_SetDefaultColormap (pinfo->fadetable);
+		}
+		level.outsidefog = pinfo->outsidefog;
 	} else {
 		info = FindDefLevelInfo (level.mapname);
 		level.info = info;
 		level.skyspeed1 =  level.skyspeed2 = 0;
 		level.fadeto = 0;
+		level.outsidefog = 0xff000000;	// 0xff000000 signals not to handle it special
 		level.skypic2[0] = 0;
+		R_SetDefaultColormap ("COLORMAP");
 	}
 
 	if (info->level_name) {
@@ -718,6 +887,8 @@ void G_InitLevelLocals ()
 		level.flags = 0;
 		level.levelnum = 1;
 	}
+
+	memset (level.vars, 0, sizeof(level.vars));
 
 	if (oldfade != level.fadeto)
 		RefreshPalettes ();
@@ -866,6 +1037,255 @@ void G_SetLevelStrings (void)
 	if (level.info)
 		strncpy (level.level_name, level.info->level_name, 63);
 }
+
+
+// Archives the current level
+void G_SnapshotLevel (void)
+{
+	save_p = savebuffer = Malloc (savegamesize);
+
+	if (level.info->snapshot)
+		Z_Free (level.info->snapshot);
+
+	WriteLong (level.flags, &save_p);
+	WriteLong (level.fadeto, &save_p);
+	WriteLong (level.found_secrets, &save_p);
+	WriteLong (level.found_items, &save_p);
+	WriteLong (level.killed_monsters, &save_p);
+	memcpy (save_p, level.vars, sizeof(level.vars));
+	save_p += sizeof(level.vars);
+
+	P_ArchiveWorld ();
+	Z_CheckHeap ();
+	P_ArchiveThinkers ();
+	Z_CheckHeap ();
+	P_ArchiveSpecials ();
+	Z_CheckHeap ();
+	P_ArchiveScripts ();
+	Z_CheckHeap ();
+
+	// Now compress it. This seems to shrink the data down to
+	// about 20% of its original size fairly consistantly.
+	{
+		int outlen;
+		int len = save_p - savebuffer;
+		lzo_byte *compressed;
+		lzo_byte *wrkmem;
+		int r;
+
+		compressed = Z_Malloc (OUT_LEN(len), PU_STATIC, 0);
+		wrkmem = Z_Malloc (LZO1X_1_MEM_COMPRESS, PU_STATIC, 0);
+		r = lzo1x_1_compress (savebuffer, len, compressed, &outlen, wrkmem);
+		Z_Free (wrkmem);
+
+		// If the data could not be compressed, store it as-is.
+		if (r != LZO_E_OK || outlen > len) {
+			DPrintf ("Snapshot uncompressable\n");
+			outlen = 0;
+		} else {
+			DPrintf ("Snapshot: %d .. %d bytes\n", len, outlen);
+		}
+
+		level.info->snapshot = Z_Malloc (((outlen == 0) ? len : outlen) + sizeof(int)*2, PU_STATIC, 0);
+		((int *)(level.info->snapshot))[0] = outlen;
+		((int *)(level.info->snapshot))[1] = len;
+		if (outlen == 0)
+			memcpy (level.info->snapshot + sizeof(int)*2, savebuffer, len);
+		else
+			memcpy (level.info->snapshot + sizeof(int)*2, compressed, outlen);
+		Z_Free (compressed);
+	}
+	free (savebuffer);
+	savebuffer = save_p = NULL;
+}
+
+// Unarchives the current level based on its snapshot
+// The level should have already been loaded and setup.
+void G_UnSnapshotLevel (BOOL keepPlayers)
+{
+	int expandsize, cprlen;
+	byte *expand;
+
+	if (!level.info->snapshot)
+		return;
+
+	cprlen = ((int *)(level.info->snapshot))[0];
+	expandsize = ((int *)(level.info->snapshot))[1];
+	
+	if (cprlen) {
+		int r, newlen;
+
+		expand = Z_Malloc (expandsize, PU_STATIC, 0);
+		r = lzo1x_decompress (level.info->snapshot + sizeof(int)*2, cprlen, expand, &newlen, NULL);
+		if (r != LZO_E_OK || newlen != expandsize) {
+			Printf ("Could not decompress snapshot");
+			Z_Free (expand);
+			return;
+		}
+		save_p = expand;
+	} else {
+		save_p = level.info->snapshot + sizeof(int)*2;
+		expand = NULL;
+	}
+
+	level.flags = ReadLong (&save_p);
+	level.fadeto = ReadLong (&save_p);
+	level.found_secrets = ReadLong (&save_p);
+	level.found_items = ReadLong (&save_p);
+	level.killed_monsters = ReadLong (&save_p);
+	memcpy (level.vars, save_p, sizeof(level.vars));
+	save_p += sizeof(level.vars);
+
+	P_UnArchiveWorld ();
+	P_UnArchiveThinkers (keepPlayers);
+	P_UnArchiveSpecials ();
+	P_UnArchiveScripts ();
+
+	if (expand)
+		Z_Free (expand);
+
+	// No reason to keep the snapshot around once the level's been entered.
+	Z_Free (level.info->snapshot);
+	level.info->snapshot = NULL;
+
+	save_p = NULL;
+}
+
+void G_ClearSnapshots (void)
+{
+	int i;
+
+	for (i = 0; i < numwadlevelinfos; i++)
+		if (wadlevelinfos[i].snapshot) {
+			Z_Free (wadlevelinfos[i].snapshot);
+			wadlevelinfos[i].snapshot = NULL;
+		}
+
+	for (i = 0; LevelInfos[i].level_name; i++)
+		if (LevelInfos[i].snapshot) {
+			Z_Free (LevelInfos[i].snapshot);
+			LevelInfos[i].snapshot = NULL;
+		}
+}
+
+static void writeSnapShot (level_info_t *i)
+{
+	int len;
+
+	len = ((int *)(i->snapshot))[0];
+	if (len == 0)
+		len = ((int *)(i->snapshot))[1];
+
+	CheckSaveGame (len + 8 + sizeof(int)*2 + 4);
+
+	memcpy (save_p, i->mapname, 8);
+	save_p += 8;
+	PADSAVEP();
+	memcpy (save_p, i->snapshot, len + sizeof(int)*2);
+	save_p += len + sizeof(int)*2;
+}
+
+void G_ArchiveSnapshots (void)
+{
+	int i;
+
+	for (i = 0; i < numwadlevelinfos; i++)
+		if (wadlevelinfos[i].snapshot)
+			writeSnapShot ((level_info_t *)&wadlevelinfos[i]);
+
+	for (i = 0; LevelInfos[i].level_name; i++)
+		if (LevelInfos[i].snapshot)
+			writeSnapShot (&LevelInfos[i]);
+
+	// Signal end of snapshots
+	CheckSaveGame (1);
+	*save_p++ = 0;
+}
+
+void G_UnArchiveSnapshots (void)
+{
+	level_info_t *i;
+	int shortsize, fullsize, savesize;
+
+	G_ClearSnapshots ();
+	while (*save_p) {
+		i = FindLevelInfo (save_p);
+		save_p += 8;
+		PADSAVEP();
+		shortsize = ((int *)save_p)[0];
+		fullsize = ((int *)save_p)[1];
+		savesize = (shortsize ? shortsize : fullsize) + sizeof(int)*2;
+		if (i) {
+			i->snapshot = Z_Malloc (savesize, PU_STATIC, 0);
+			memcpy (i->snapshot, save_p, savesize);
+		}
+		save_p += savesize;
+	}
+	save_p++;
+}
+
+
+static void writeDefereds (level_info_t *i)
+{
+	acsdefered_t *def = i->defered;
+
+	memcpy (save_p, i->mapname, 8);
+	save_p += 8;
+
+	while (def) {
+		CheckSaveGame (sizeof (*def));
+		memcpy (save_p, def, sizeof(*def));
+		save_p += sizeof(*def);
+		def = def->next;
+	}
+}
+
+void P_ArchiveACSDefereds (void)
+{
+	int i;
+
+	for (i = 0; i < numwadlevelinfos; i++)
+		if (wadlevelinfos[i].defered)
+			writeDefereds ((level_info_t *)&wadlevelinfos[i]);
+
+	for (i = 0; LevelInfos[i].level_name; i++)
+		if (LevelInfos[i].defered)
+			writeDefereds (&LevelInfos[i]);
+
+	// Signal end of defereds
+	CheckSaveGame (1);
+	*save_p++ = 0;
+}
+
+void P_UnArchiveACSDefereds (void)
+{
+	level_info_t *i;
+	acsdefered_t *def, **prev;
+
+	P_RemoveDefereds ();
+
+	while (*save_p) {
+		i = FindLevelInfo (save_p);
+		if (!i) {
+			char name[9];
+
+			strncpy (name, save_p, 8);
+			name[8] = 0;
+			I_Error ("Unknown map %s in savegame", name);
+		}
+		save_p += 8;
+		prev = &i->defered;
+		do {
+			def = Z_Malloc (sizeof(*def), PU_STATIC, 0);
+			memcpy (def, save_p, sizeof(*def));
+			save_p += sizeof(*def);
+			*prev = def;
+			prev = &def->next;
+		} while (*prev);
+	}
+	save_p++;
+}
+
 
 // Static level info from original game
 // The level names and cluster messages now get filled in

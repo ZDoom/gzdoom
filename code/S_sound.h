@@ -25,38 +25,56 @@
 
 
 
+#define MAX_SNDNAME	63
 
 //
+// SoundFX struct.
+//
+typedef struct sfxinfo_struct sfxinfo_t;
+
+struct sfxinfo_struct
+{
+	char		name[MAX_SNDNAME+1];	// [RH] Sound name defined in SNDINFO
+	void*		data;					// sound data
+
+	struct sfxinfo_struct *link;
+
+	// this is checked every second to see if sound
+	// can be thrown out (if 0, then decrement, if -1,
+	// then throw out, if > 0, then it is in use)
+	int 		usefulness;
+
+	int 		lumpnum;				// lump number of sfx
+	unsigned int ms;					// [RH] length of sfx in milliseconds
+	unsigned int next, index;			// [RH] For hashing
+};
+
+// the complete set of sound effects
+extern sfxinfo_t *S_sfx;
+
+// [RH] Number of defined sounds
+extern int numsfx;
+
 // Initializes sound stuff, including volume
 // Sets channels, SFX and music volume,
 //	allocates channel buffer, sets S_sfx lookup.
 //
-void
-S_Init
-( int			sfxVolume,
-  int			musicVolume );
+void S_Init (int sfxVolume, int musicVolume);
 
-
-
-
-//
 // Per level startup code.
 // Kills playing sounds at start of level,
 //	determines music if any, changes music.
 //
 void S_Start(void);
 
-
-//
-// Start sound for thing at <origin>
-//	using <sound_id> from sounds.h
-//
-void S_StartSound (void *origin, int sound_id);
-
-
+// Start sound for thing at <origin> using <sound_id> from sounds.h
+// [RH] macro-fied
+#define S_StartSound(o,n,p) S_StartSoundAtVolume (o,n,p,255)
+#define S_StartSfx(o,n,p) S_StartSfxAtVolume (o,n,p,255)
 
 // Will start a sound at a given volume.
-void S_StartSoundAtVolume (void *origin, int sound_id, int volume);
+void S_StartSoundAtVolume (void *origin, char *name, int pri, int volume);
+void S_StartSfxAtVolume (void *origin, int sfxid, int pri, int volume);
 
 #define ORIGIN_SURROUNDBIT (128)
 #define ORIGIN_AMBIENT	(NULL)					// Sound is not attenuated
@@ -71,10 +89,13 @@ void S_StartSoundAtVolume (void *origin, int sound_id, int volume);
 
 #define ORIGIN_STARTOFNORMAL	((void *)256)	// [RH] Used internally
 
+// [RH] Simplified world ambient playing. Will cycle through all
+//		ORIGIN_WORLDAMBIENTS positions automatically.
+void S_StartAmbient (char *name, int volume, int surround);
+
 
 // Stop sound for thing at <origin>
 void S_StopSound (void *origin);
-
 
 // Start music using <music_name>
 void S_StartMusic (char *music_name);
@@ -100,15 +121,25 @@ void S_SetMusicVolume (int volume);
 void S_SetSfxVolume (int volume);
 
 
-// [RH] Parses all SNDINFO lumps. Should be called from I_InitSound()
-void S_ParseSndInfo (void);
-
 // [RH] Activates an ambient sound. Called when the thing is added to the map.
 //		(0-biased)
 void S_ActivateAmbient (void *mobj, int ambient);
 
-// [RH] Deactivates all ambient sounds.
-void S_ClearAmbients (void);
+// [RH] S_sfx "maintenance" routines
+void S_ParseSndInfo (void);
+
+void S_HashSounds (void);
+int S_FindSound (const char *logicalname);
+int S_FindSoundByLump (int lump);
+int S_AddSound (char *logicalname, char *lumpname);	// Add sound by lumpname
+int S_AddSoundLump (char *logicalname, int lump);	// Add sound by lump index
+
+// [RH] Prints sound debug info to the screen.
+//		Modelled after Hexen's noise cheat.
+void S_NoiseDebug (void);
+extern struct cvar_s *noisedebug;
+
+
 
 #endif
 //-----------------------------------------------------------------------------

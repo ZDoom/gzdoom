@@ -28,10 +28,9 @@
 
 #include "doomdef.h"
 #include "d_event.h"
-
 #include "p_local.h"
-
 #include "doomstat.h"
+#include "s_sound.h"
 
 
 
@@ -80,14 +79,20 @@ void P_CalcHeight (player_t* player)
 	// OPTIMIZE: tablify angle
 	// Note: a LUT allows for effects
 	//	like a ramp with low health.
-	player->bob =
-		FixedMul (player->mo->momx, player->mo->momx)
-		+ FixedMul (player->mo->momy,player->mo->momy);
-
+	player->bob = FixedMul(player->mo->momx,player->mo->momx)
+				+ FixedMul(player->mo->momy,player->mo->momy);
 	player->bob >>= 2;
 
-	if (player->bob>MAXBOB)
-		player->bob = MAXBOB;
+	// phares 9/9/98: If player is standing on ice, reduce his bobbing.
+
+	if (player->mo->friction > ORIG_FRICTION) // ice?
+	{
+		if (player->bob > (MAXBOB>>2))
+			player->bob = MAXBOB>>2;
+	}
+	else													//   ^
+		if (player->bob > MAXBOB)							//   |
+			player->bob = MAXBOB;							// phares 2/26/98
 
 	if ((player->cheats & CF_NOMOMENTUM) || !onground)
 	{
@@ -96,7 +101,11 @@ void P_CalcHeight (player_t* player)
 		if (player->viewz > player->mo->ceilingz-4*FRACUNIT)
 			player->viewz = player->mo->ceilingz-4*FRACUNIT;
 
-		player->viewz = player->mo->z + player->viewheight;
+// The following line was in the Id source and appears		// phares 2/25/98
+// to be a bug. player->viewz is checked in a similar
+// manner at a different exit below.
+
+//		player->viewz = player->mo->z + player->viewheight;
 		return;
 	}
 				
@@ -143,25 +152,32 @@ void P_CalcHeight (player_t* player)
 void P_MovePlayer (player_t *player)
 {
 	ticcmd_t *cmd = &player->cmd;
-		
+	int		  movefactor;       // movement factor                    // phares
+	fixed_t	  forwardmove;
+	fixed_t	  sidemove;
+
 	player->mo->angle += (cmd->ucmd.yaw<<16);
 
-	// [RH] allow very limited movement if not on ground.
 	onground = P_FindFloor (player->mo);
 
-	if (onground) {
-		if (cmd->ucmd.forwardmove)
-			P_Thrust (player, player->mo->angle, cmd->ucmd.forwardmove*8);
-
-		if (cmd->ucmd.sidemove)
-			P_Thrust (player, player->mo->angle-ANG90, cmd->ucmd.sidemove*8);
-	} else if (!olddemo) {
-		if (cmd->ucmd.forwardmove)
-			P_Thrust (player, player->mo->angle, cmd->ucmd.forwardmove/8);
-
-		if (cmd->ucmd.sidemove)
-			P_Thrust (player, player->mo->angle-ANG90, cmd->ucmd.sidemove/8);
+	movefactor = P_GetMoveFactor (player->mo);
+	if (!onground) {
+		if (!olddemo) {
+			// [RH] allow very limited movement if not on ground.
+			movefactor >>= 8;
+		} else {
+			movefactor = 0;
+		}
 	}
+
+	forwardmove = (cmd->ucmd.forwardmove * movefactor) >> 8;
+	sidemove = (cmd->ucmd.sidemove * movefactor) >> 8;
+
+	if (forwardmove)
+		P_Thrust (player, player->mo->angle, forwardmove);
+
+	if (sidemove)
+		P_Thrust (player, player->mo->angle-ANG90, sidemove);
 
 	if ( (cmd->ucmd.forwardmove || cmd->ucmd.sidemove) 
 		 && player->mo->state == &states[S_PLAY] )
@@ -170,6 +186,60 @@ void P_MovePlayer (player_t *player)
 	}
 }		
 
+// [RH] (Adapted from Q2)
+// P_FallingDamage
+//
+void P_FallingDamage (mobj_t *ent)
+{
+	mobj_t *groundentity;
+	float	delta;
+	int		damage;
+
+	if (!ent->player)
+		return;		// not a player
+
+	if (ent->flags & MF_NOCLIP)
+		return;
+
+	groundentity = P_FindFloor (ent);
+
+	if ((ent->player->oldvelocity[2] < 0) && (ent->momz > ent->player->oldvelocity[2]) && (!groundentity))
+	{
+		delta = (float)ent->player->oldvelocity[2];
+	}
+	else
+	{
+		if (!groundentity)
+			return;
+		delta = (float)(ent->momz - ent->player->oldvelocity[2]);
+	}
+	delta = delta*delta * 2.03904313e-11f;
+
+	if (delta < 1)
+		return;
+
+	if (delta < 15)
+	{
+		//ent->s.event = EV_FOOTSTEP;
+		return;
+	}
+
+	if (delta > 30)
+	{
+		damage = (int)((delta-30)/2);
+		if (damage < 1)
+			damage = 1;
+
+		if (dmflags & DF_YES_FALLING)
+			P_DamageMobj (ent, NULL, NULL, damage, MOD_FALLING);
+	}
+	else
+	{
+		//ent->s.event = EV_FALLSHORT;
+		return;
+	}
+
+}
 
 
 //
@@ -237,11 +307,13 @@ void P_DeathThink (player_t* player)
 //
 // P_PlayerThink
 //
-void P_PlayerThink (player_t* player)
+void P_PlayerThink (player_t *player)
 {
-	ticcmd_t*			cmd;
-	weapontype_t		newweapon;
-		
+	ticcmd_t *cmd;
+	weapontype_t newweapon;
+
+	player->xviewshift = 0;		// [RH] Make sure view is in right place
+
 	// fixme: do this in the cheat code
 	if (player->cheats & CF_NOCLIP)
 		player->mo->flags |= MF_NOCLIP;
@@ -299,7 +371,7 @@ void P_PlayerThink (player_t* player)
 
 	P_CalcHeight (player);
 
-	if (player->mo->subsector->sector->special)
+	if (player->mo->subsector->sector->special || player->mo->subsector->sector->damage)
 		P_PlayerInSpecialSector (player);
 
 	// Check for weapon change.
@@ -307,44 +379,63 @@ void P_PlayerThink (player_t* player)
 	// A special event has no other buttons.
 	if (cmd->ucmd.buttons & BT_SPECIAL)
 		cmd->ucmd.buttons = 0;						
-				
-	if (cmd->ucmd.buttons & BT_CHANGE)
+	
+	if ((cmd->ucmd.buttons & BT_CHANGE) || cmd->ucmd.impulse >= 50)
 	{
-		// The actual changing of the weapon is done
-		//	when the weapon psprite can do it
-		//	(read: not in the middle of an attack).
-		newweapon = (cmd->ucmd.buttons&BT_WEAPONMASK)>>BT_WEAPONSHIFT;
-		
-		if (newweapon == wp_fist
-			&& player->weaponowned[wp_chainsaw]
-			&& !(player->readyweapon == wp_chainsaw
-				 && player->powers[pw_strength]))
-		{
-			newweapon = wp_chainsaw;
-		}
-		
-		if ( (gamemode == commercial)
-			&& newweapon == wp_shotgun 
-			&& player->weaponowned[wp_supershotgun]
-			&& player->readyweapon != wp_supershotgun)
-		{
-			newweapon = wp_supershotgun;
-		}
-		
-
-		if (player->weaponowned[newweapon]
-			&& newweapon != player->readyweapon)
-		{
-			// Do not go to plasma or BFG in shareware,
-			//	even if cheated.
-			if ((newweapon != wp_plasma
-				 && newweapon != wp_bfg)
-				|| (gamemode != shareware) )
+		// [RH] Support direct weapon changes
+		if (cmd->ucmd.impulse) {
+			newweapon = cmd->ucmd.impulse - 50;
+		} else {
+			// The actual changing of the weapon is done
+			//	when the weapon psprite can do it
+			//	(read: not in the middle of an attack).
+			newweapon = (cmd->ucmd.buttons&BT_WEAPONMASK)>>BT_WEAPONSHIFT;
+			
+			if (newweapon == wp_fist
+				&& player->weaponowned[wp_chainsaw]
+				&& !(player->readyweapon == wp_chainsaw
+					 && player->powers[pw_strength]))
 			{
-				player->pendingweapon = newweapon;
+				newweapon = wp_chainsaw;
+			}
+			
+			if ( (gamemode == commercial)
+				&& newweapon == wp_shotgun 
+				&& player->weaponowned[wp_supershotgun]
+				&& player->readyweapon != wp_supershotgun)
+			{
+				newweapon = wp_supershotgun;
+			}
+		}
+
+		if (newweapon >= 0 && newweapon < NUMWEAPONS) {
+			if (player->weaponowned[newweapon]
+				&& newweapon != player->readyweapon)
+			{
+				// Do not go to plasma or BFG in shareware,
+				//	even if cheated.
+				if ((newweapon != wp_plasma
+					 && newweapon != wp_bfg)
+					|| (gamemode != shareware) )
+				{
+					player->pendingweapon = newweapon;
+				}
 			}
 		}
 	}
+
+	// [RH] check for jump
+	if ((cmd->ucmd.buttons & BT_JUMP) == BT_JUMP) {
+		if (!player->jumpdown && !(dmflags & DF_NO_JUMP)) {
+			// only jump if we are on the ground
+			if (P_FindFloor (player->mo)) {
+				player->mo->momz += 8 * FRACUNIT;
+				player->mo->flags2 |= MF2_JUMPING;
+				S_StartSound (player->mo, "*jump1", 100);
+			}
+			player->jumpdown = true;
+		}
+	} else player->jumpdown = false;
 
 	// check for use
 	if (cmd->ucmd.buttons & BT_USE)
@@ -357,16 +448,6 @@ void P_PlayerThink (player_t* player)
 	}
 	else
 		player->usedown = false;
-
-	// [RH] check for jump
-	if ((cmd->ucmd.buttons & BT_JUMP) == BT_JUMP) {
-		if (!player->jumpdown && !(dmflags & DF_NO_JUMP)) {
-			// only jump if we are on the ground
-			if (P_FindFloor (player->mo))
-				player->mo->momz += 8 * FRACUNIT;
-			player->jumpdown = true;
-		}
-	} else player->jumpdown = false;
 
 	// cycle psprites
 	P_MovePsprites (player);
@@ -420,5 +501,4 @@ void P_PlayerThink (player_t* player)
 	else
 		player->fixedcolormap = 0;
 }
-
 

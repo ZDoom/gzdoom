@@ -40,7 +40,6 @@
 
 // Data.
 #include "dstrings.h"
-#include "sounds.h"
 
 #include "c_consol.h"
 #include "c_dispch.h"
@@ -71,7 +70,7 @@ cvar_t *chat_macros[10];
 
 static player_t*	plr;
 patch_t*			hu_font[HU_FONTSIZE];
-BOOL 				chat_on;
+int 				chat_on;
 static hu_itext_t	w_chat;
 
 static BOOL			message_on;
@@ -120,11 +119,15 @@ void HU_Start(void)
 	if (headsupactive)
 		HU_Stop();
 
-	plr = &players[displayplayer];		// [RH] Not consoleplayer
+	// [RH] Give status bar preference to the camera
+	if (players[consoleplayer].camera && players[consoleplayer].camera->player)
+		plr = players[consoleplayer].camera->player;
+	else
+		plr = &players[consoleplayer];
 	message_on = false;
 	message_dontfuckwithme = false;
 	message_nottobefuckedwith = false;
-	chat_on = false;
+	chat_on = 0;
 
 	// create the chat widget
 	HUlib_initIText(&w_chat,
@@ -139,8 +142,8 @@ void HU_Drawer(void)
 {
 	HUlib_drawIText(&w_chat);
 
-	if (deathmatch->value && ((Actions & ACTION_SHOWSCORES) || players[displayplayer].health <= 0))
-		HU_DrawScores (displayplayer);
+	if (deathmatch->value && ((Actions & ACTION_SHOWSCORES) || plr->health <= 0))
+		HU_DrawScores (plr - players);
 }
 
 void HU_Erase(void)
@@ -170,7 +173,9 @@ void HU_DrawScores (int player)
 	maxwidth = 0;
 	for (i = 0; i < MAXPLAYERS; i++) {
 		if (playeringame[i]) {
-			int width = V_StringWidth (players[i].userinfo->netname);
+			int width = V_StringWidth (players[i].userinfo.netname);
+			if (teamplay->value)
+				width += V_StringWidth (players[i].userinfo.team) + 24;
 			if (width > maxwidth)
 				maxwidth = width;
 		}
@@ -183,7 +188,7 @@ void HU_DrawScores (int player)
 	if (y < 48) y = 48;
 
 	for (i = 0; i < MAXPLAYERS && y < ST_Y - 12 * CleanYfac; i++) {
-		int color = players[sortedplayers[i]].userinfo->color;
+		int color = players[sortedplayers[i]].userinfo.color;
 		char str[24];
 
 		if (playeringame[sortedplayers[i]]) {
@@ -197,7 +202,11 @@ void HU_DrawScores (int player)
 			sprintf (str, "%d", players[sortedplayers[i]].fragcount);
 			V_DrawTextClean (margin, y, str);
 
-			strcpy (str, players[sortedplayers[i]].userinfo->netname);
+			if (teamplay->value)
+				sprintf (str, "%s (%s)", players[sortedplayers[i]].userinfo.netname,
+						 players[sortedplayers[i]].userinfo.team);
+			else
+				strcpy (str, players[sortedplayers[i]].userinfo.netname);
 
 			if (sortedplayers[i] != player)
 				for (j = 0; j < 23 && str[j]; j++)
@@ -258,6 +267,12 @@ BOOL HU_Responder (event_t *ev)
 
 	if (chat_on)
 	{
+		// [RH] You can actually cancel out of messagemode now
+		if (ev->data1 == KEY_ESCAPE) {
+			chat_on = 0;
+			return true;
+		}
+
 		c = ev->data3;	// [RH] Use localized keymap
 
 		// send a macro
@@ -268,10 +283,10 @@ BOOL HU_Responder (event_t *ev)
 			if (c > 9)
 				return false;
 
-			ShoveChatStr (chat_macros[c]->string, 0);
+			ShoveChatStr (chat_macros[c]->string, chat_on - 1);
 			
 			// leave chat mode
-			chat_on = false;
+			chat_on = 0;
 			eatkey = true;
 		}
 		else
@@ -281,10 +296,10 @@ BOOL HU_Responder (event_t *ev)
 			eatkey = HUlib_keyInIText(&w_chat, c);
 
 			if (ev->data1 == KEY_ENTER) {
-				chat_on = false;
-				ShoveChatStr (w_chat.l.l, 0);
+				ShoveChatStr (w_chat.l.l, chat_on - 1);
+				chat_on = 0;
 			} else if (ev->data1 == KEY_ESCAPE)
-				chat_on = false;
+				chat_on = 0;
 		}
 	}
 
@@ -293,16 +308,28 @@ BOOL HU_Responder (event_t *ev)
 
 void Cmd_MessageMode (player_t *plyr, int argc, char **argv)
 {
-	if (netgame) {
-		chat_on = true;
-		C_HideConsole ();
-		HUlib_resetIText (&w_chat);
-	}
+	chat_on = 1;
+	C_HideConsole ();
+	HUlib_resetIText (&w_chat);
 }
 
 void Cmd_Say (player_t *plyr, int argc, char **argv)
 {
 	if (argc > 1) {
 		ShoveChatStr (BuildString (argc - 1, argv + 1), 0);
+	}
+}
+
+void Cmd_MessageMode2 (player_t *plyr, int argc, char **argv)
+{
+	chat_on = 2;
+	C_HideConsole ();
+	HUlib_resetIText (&w_chat);
+}
+
+void Cmd_Say_Team (player_t *plyr, int argc, char **argv)
+{
+	if (argc > 1) {
+		ShoveChatStr (BuildString (argc - 1, argv + 1), 1);
 	}
 }

@@ -83,7 +83,10 @@ extern	BOOL 			respawnmonsters;
 extern	BOOL			netgame;
 
 // Flag: true only if started as net deathmatch.
-extern	cvar_t			*deathmatch; 	
+extern	cvar_t			*deathmatch;
+
+// [RH] Teamplay mode
+extern	cvar_t			*teamplay;
 		
 // -------------------------
 // Internal parameters for sound rendering.
@@ -278,26 +281,30 @@ void EndMMX (void);
 
 #endif
 
+extern cvar_t *boom_friction;
+extern cvar_t *boom_pushers;
+
 
 // [RH] Miscellaneous info for DeHackEd support
-
-extern int deh_StartHealth;
-extern int deh_StartBullets;
-extern int deh_MaxHealth;
-extern int deh_MaxArmor;
-extern int deh_GreenAC;
-extern int deh_BlueAC;
-extern int deh_MaxSoulsphere;
-extern int deh_SoulsphereHealth;
-extern int deh_MegasphereHealth;
-extern int deh_GodHealth;
-extern int deh_FAArmor;
-extern int deh_FAAC;
-extern int deh_KFAArmor;
-extern int deh_KFAAC;
-extern int deh_BFGCells;
-extern int deh_Infight;
-
+struct DehInfo {
+	int StartHealth;
+	int StartBullets;
+	int MaxHealth;
+	int MaxArmor;
+	int GreenAC;
+	int BlueAC;
+	int MaxSoulsphere;
+	int SoulsphereHealth;
+	int MegasphereHealth;
+	int GodHealth;
+	int FAArmor;
+	int FAAC;
+	int KFAArmor;
+	int KFAAC;
+	int BFGCells;
+	int Infight;
+};
+extern struct DehInfo deh;
 
 // [RH] Deathmatch flags
 

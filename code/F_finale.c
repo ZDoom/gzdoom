@@ -31,15 +31,17 @@
 #include "m_swap.h"
 #include "z_zone.h"
 #include "v_video.h"
+#include "v_text.h"
 #include "w_wad.h"
 #include "s_sound.h"
 
 // Data.
 #include "dstrings.h"
-#include "sounds.h"
 
 #include "doomstat.h"
 #include "r_state.h"
+
+#include "hu_stuff.h"
 
 // ?
 //#include "doomstat.h"
@@ -129,7 +131,7 @@ BOOL F_Responder (event_t *event)
 //
 void F_Ticker (void)
 {
-	int 		i;
+	int i;
 	
 	// check for skipping
 	// [RH] Non-commercial can be skipped now, too
@@ -176,9 +178,7 @@ void F_Ticker (void)
 //
 // F_TextWrite
 //
-
-#include "hu_stuff.h"
-extern	patch_t *hu_font[HU_FONTSIZE];
+extern patch_t *hu_font[HU_FONTSIZE];
 
 
 void F_TextWrite (void)
@@ -270,6 +270,7 @@ castinfo_t		castorder[] = {
 
 int 			castnum;
 int 			casttics;
+int				castsprite;	// [RH] For overriding the player sprite with a skin
 state_t*		caststate;
 BOOL	 		castdeath;
 int 			castframes;
@@ -307,6 +308,10 @@ void F_StartCast (void)
 	wipegamestate = -1; 		// force a screen wipe
 	castnum = 0;
 	caststate = &states[mobjinfo[castorder[castnum].type].seestate];
+	if (castorder[castnum].type == MT_PLAYER)
+		castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
+	else
+		castsprite = caststate->sprite;
 	casttics = caststate->tics;
 	castdeath = false;
 	finalestage = 2;	
@@ -322,9 +327,8 @@ void F_StartCast (void)
 //
 void F_CastTicker (void)
 {
-	int 		st;
-	int 		sfx;
-	void		*origin;
+	int st;
+	void *origin;
 
 	if (--casttics > 0)
 		return; 				// not time to change state yet
@@ -346,13 +350,19 @@ void F_CastTicker (void)
 					origin = ORIGIN_AMBIENT;
 					break;
 			}
-			S_StartSound (origin, mobjinfo[castorder[castnum].type].seesound);
+			S_StartSound (origin, mobjinfo[castorder[castnum].type].seesound, 90);
 		}
 		caststate = &states[mobjinfo[castorder[castnum].type].seestate];
+		if (castorder[castnum].type == MT_PLAYER)
+			castsprite = skins[players[consoleplayer].userinfo.skin].sprite;
+		else
+			castsprite = caststate->sprite;
 		castframes = 0;
 	}
 	else
 	{
+		char *sfx;
+
 		// just advance to next state in animation
 		if (caststate == &states[S_PLAY_ATK1])
 			goto stopattack;	// Oh, gross hack!
@@ -363,37 +373,37 @@ void F_CastTicker (void)
 		// sound hacks....
 		switch (st)
 		{
-		  case S_PLAY_ATK1: 	sfx = sfx_dshtgn; break;
-		  case S_POSS_ATK2: 	sfx = sfx_pistol; break;
-		  case S_SPOS_ATK2: 	sfx = sfx_shotgn; break;
-		  case S_VILE_ATK2: 	sfx = sfx_vilatk; break;
-		  case S_SKEL_FIST2:	sfx = sfx_skeswg; break;
-		  case S_SKEL_FIST4:	sfx = sfx_skepch; break;
-		  case S_SKEL_MISS2:	sfx = sfx_skeatk; break;
+		  case S_PLAY_ATK1: 	sfx = "weapons/sshotf"; break;
+		  case S_POSS_ATK2: 	sfx = "grunt/attack"; break;
+		  case S_SPOS_ATK2: 	sfx = "shotguy/attack"; break;
+		  case S_VILE_ATK2: 	sfx = "vile/start"; break;
+		  case S_SKEL_FIST2:	sfx = "skeleton/swing"; break;
+		  case S_SKEL_FIST4:	sfx = "skeleton/melee"; break;
+		  case S_SKEL_MISS2:	sfx = "skeleton/attack"; break;
 		  case S_FATT_ATK8:
 		  case S_FATT_ATK5:
-		  case S_FATT_ATK2: 	sfx = sfx_firsht; break;
+		  case S_FATT_ATK2: 	sfx = "fatso/attack"; break;
 		  case S_CPOS_ATK2:
 		  case S_CPOS_ATK3:
-		  case S_CPOS_ATK4: 	sfx = sfx_shotgn; break;
-		  case S_TROO_ATK3: 	sfx = sfx_claw; break;
-		  case S_SARG_ATK2: 	sfx = sfx_sgtatk; break;
+		  case S_CPOS_ATK4: 	sfx = "chainguy/attack"; break;
+		  case S_TROO_ATK3: 	sfx = "imp/attack"; break;
+		  case S_SARG_ATK2: 	sfx = "demon/melee"; break;
 		  case S_BOSS_ATK2:
 		  case S_BOS2_ATK2:
-		  case S_HEAD_ATK2: 	sfx = sfx_firsht; break;
-		  case S_SKULL_ATK2:	sfx = sfx_sklatk; break;
+		  case S_HEAD_ATK2: 	sfx = "caco/attack"; break;
+		  case S_SKULL_ATK2:	sfx = "skull/melee"; break;
 		  case S_SPID_ATK2:
-		  case S_SPID_ATK3: 	sfx = sfx_shotgn; break;
-		  case S_BSPI_ATK2: 	sfx = sfx_plasma; break;
+		  case S_SPID_ATK3: 	sfx = "spider/attack"; break;
+		  case S_BSPI_ATK2: 	sfx = "baby/attack"; break;
 		  case S_CYBER_ATK2:
 		  case S_CYBER_ATK4:
-		  case S_CYBER_ATK6:	sfx = sfx_rlaunc; break;
-		  case S_PAIN_ATK3: 	sfx = sfx_sklatk; break;
+		  case S_CYBER_ATK6:	sfx = "weapons/rocklf"; break;
+		  case S_PAIN_ATK3: 	sfx = "skull/melee"; break;
 		  default: sfx = 0; break;
 		}
 				
 		if (sfx)
-			S_StartSound (ORIGIN_AMBIENT, sfx);
+			S_StartSound (ORIGIN_AMBIENT, sfx, 90);
 	}
 		
 	if (castframes == 12)
@@ -464,61 +474,38 @@ BOOL F_CastResponder (event_t* ev)
 				origin = ORIGIN_AMBIENT;
 				break;
 		}
-		S_StartSound (origin, mobjinfo[castorder[castnum].type].deathsound);
+		if (castorder[castnum].type == MT_PLAYER) {
+			static const char sndtemplate[] = "player/%s/death1";
+			static const char *genders[] = { "male", "female", "neuter" };
+			char nametest[128];
+			int sndnum;
+
+			sprintf (nametest, sndtemplate, skins[players[consoleplayer].userinfo.skin].name);
+			sndnum = S_FindSound (nametest);
+			if (sndnum == -1) {
+				sprintf (nametest, sndtemplate, genders);
+				sndnum = S_FindSound (nametest);
+				if (sndnum == -1)
+					sndnum = S_FindSound ("player/male/death1");
+			}
+			S_StartSfx (origin, sndnum, 90);
+		} else
+			S_StartSound (origin, mobjinfo[castorder[castnum].type].deathsound, 90);
 	}
 		
 	return true;
 }
 
 
-void F_CastPrint (char* text)
+void F_CastPrint (char *text)
 {
-	char*		ch;
-	int 		c;
-	int 		cx;
-	int 		w;
-	int 		width;
-	
-	// find width
-	ch = text;
-	width = 0;
-		
-	while (ch)
-	{
-		c = *ch++;
-		if (!c)
-			break;
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c> HU_FONTSIZE)
-		{
-			width += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		width += w;
-	}
-	
-	// draw it
-	cx = (CleanWidth-width)/2;
-	ch = text;
-	while (ch)
-	{
-		c = *ch++;
-		if (!c)
-			break;
-		c = toupper(c) - HU_FONTSTART;
-		if (c < 0 || c> HU_FONTSIZE)
-		{
-			cx += 4;
-			continue;
-		}
-				
-		w = SHORT (hu_font[c]->width);
-		V_DrawPatchCleanNoMove (cx, (screens[0].height * 180) / 200, &screens[0], hu_font[c]);
-		cx+=w;
-	}
-		
+	char text2[80], *t2 = text2;
+
+	while (*text)
+		*t2++ = *text++ ^ 0x80;
+	*t2 = 0;
+	V_DrawTextClean ((screens[0].width - V_StringWidth (text2) * CleanXfac) >> 1,
+					 (screens[0].height * 180) / 200, text2);
 }
 
 int V_DrawPatchFlipped (int, int, screen_t *, patch_t *);
@@ -539,12 +526,12 @@ void F_CastDrawer (void)
 	F_CastPrint (castorder[castnum].name);
 	
 	// draw the current frame in the middle of the screen
-	sprdef = &sprites[caststate->sprite];
+	sprdef = &sprites[castsprite];
 	sprframe = &sprdef->spriteframes[ caststate->frame & FF_FRAMEMASK];
 	lump = sprframe->lump[0];
 	flip = (BOOL)sprframe->flip[0];
 						
-	patch = W_CacheLumpNum (lump+firstspritelump, PU_CACHE);
+	patch = W_CacheLumpNum (lump, PU_CACHE);
 	if (flip)
 		V_DrawPatchFlipped (160,170,&screens[0],patch);
 	else
@@ -703,7 +690,7 @@ void F_BunnyScroll (void)
 		stage = 6;
 	if (stage > laststage)
 	{
-		S_StartSound (ORIGIN_AMBIENT, sfx_pistol);
+		S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 64);
 		laststage = stage;
 	}
 		

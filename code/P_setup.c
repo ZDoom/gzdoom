@@ -26,6 +26,7 @@
 #include <math.h>
 
 #include "m_alloc.h"
+#include "m_argv.h"
 
 #include "z_zone.h"
 
@@ -43,9 +44,15 @@
 #include "s_sound.h"
 
 #include "doomstat.h"
+#include "p_lnspec.h"
+#include "v_palett.h"
 
 
-void	P_SpawnMapThing (mapthing2_t *mthing);
+extern void P_SpawnMapThing (mapthing2_t *mthing, int position);
+
+extern void P_TranslateLineDef (line_t *ld, maplinedef_t *mld);
+extern void P_TranslateTeleportThings (void);
+extern int	P_TranslateSectorSpecial (int);
 
 
 //
@@ -74,7 +81,8 @@ int 			numsides;
 side_t* 		sides;
 
 // [RH] Set true if the map contains a BEHAVIOR lump
-static	BOOL	HasBehavior;
+BOOL			HasBehavior;
+
 
 // BLOCKMAP
 // Created from axis aligned bounding box
@@ -122,30 +130,25 @@ mapthing2_t		playerstarts[MAXPLAYERS];
 //
 void P_LoadVertexes (int lump)
 {
-	byte*				data;
-	int 				i;
-	mapvertex_t*		ml;
-	vertex_t*			li;
+	byte *data;
+	int i;
 
-	// Determine number of lumps:
+	// Determine number of vertices:
 	//	total lump length / vertex record length.
 	numvertexes = W_LumpLength (lump) / sizeof(mapvertex_t);
 
 	// Allocate zone memory for buffer.
-	vertexes = Z_Malloc (numvertexes*sizeof(vertex_t),PU_LEVEL,0);		
+	vertexes = Z_Malloc (numvertexes*sizeof(vertex_t), PU_LEVEL, 0);		
 
 	// Load data into cache.
-	data = W_CacheLumpNum (lump,PU_STATIC);
+	data = W_CacheLumpNum (lump, PU_STATIC);
 		
-	ml = (mapvertex_t *)data;
-	li = vertexes;
-
 	// Copy and convert vertex coordinates,
 	// internal representation as fixed.
-	for (i=0 ; i<numvertexes ; i++, li++, ml++)
+	for (i = 0; i < numvertexes; i++)
 	{
-		li->x = SHORT(ml->x)<<FRACBITS;
-		li->y = SHORT(ml->y)<<FRACBITS;
+		vertexes[i].x = SHORT(((mapvertex_t *)data)[i].x)<<FRACBITS;
+		vertexes[i].y = SHORT(((mapvertex_t *)data)[i].y)<<FRACBITS;
 	}
 
 	// Free buffer memory.
@@ -157,29 +160,107 @@ void P_LoadVertexes (int lump)
 //
 // P_LoadSegs
 //
+// killough 5/3/98: reformatted, cleaned up
+
 void P_LoadSegs (int lump)
 {
-	byte*				data;
-	int 				i;
-	mapseg_t*			ml;
-	seg_t*				li;
-	line_t* 			ldef;
-	int 				linedef;
-	int 				side;
-		
-	numsegs = W_LumpLength (lump) / sizeof(mapseg_t);
-	segs = Z_Malloc (numsegs*sizeof(seg_t),PU_LEVEL,0); 
-	memset (segs, 0, numsegs*sizeof(seg_t));
-	data = W_CacheLumpNum (lump,PU_STATIC);
-		
-	ml = (mapseg_t *)data;
-	li = segs;
-	for (i=0 ; i<numsegs ; i++, li++, ml++)
+	int  i;
+	byte *data;
+	byte *vertchanged = Z_Malloc(numvertexes,PU_LEVEL,0);	// phares 10/4/98
+	line_t* line;		// phares 10/4/98
+	int ptp_angle;		// phares 10/4/98
+	int delta_angle;	// phares 10/4/98
+	int dis;			// phares 10/4/98
+	int dx,dy;			// phares 10/4/98
+	int vnum1,vnum2;	// phares 10/4/98
+
+	memset(vertchanged,0,numvertexes); // phares 10/4/98
+
+	numsegs = W_LumpLength(lump) / sizeof(mapseg_t);
+	segs = Z_Malloc(numsegs*sizeof(seg_t),PU_LEVEL,0);
+	memset(segs, 0, numsegs*sizeof(seg_t));
+	data = W_CacheLumpNum(lump,PU_STATIC);
+
+	// phares: 10/4/98: Vertchanged is an array that represents the vertices.
+	// Mark those used by linedefs. A marked vertex is one that is not a
+	// candidate for movement further down.
+
+	line = lines;
+	for (i = 0; i < numlines ; i++,line++)
 	{
+		vertchanged[line->v1 - vertexes] = vertchanged[line->v2 - vertexes] = 1;
+	}
+
+	for (i = 0; i < numsegs; i++)
+	{
+		seg_t *li = segs+i;
+		mapseg_t *ml = (mapseg_t *) data + i;
+
+		int side, linedef;
+		line_t *ldef;
+
 		li->v1 = &vertexes[SHORT(ml->v1)];
 		li->v2 = &vertexes[SHORT(ml->v2)];
-										
+
 		li->angle = (SHORT(ml->angle))<<16;
+
+// phares 10/4/98: In the case of a lineseg that was created by splitting
+// another line, it appears that the line angle is inherited from the
+// father line. Due to roundoff, the new vertex may have been placed 'off
+// the line'. When you get close to such a line, and it is very short,
+// it's possible that the roundoff error causes 'firelines', the thin
+// lines that can draw from screen top to screen bottom occasionally. This
+// is due to all the angle calculations that are done based on the line
+// angle, the angles from the viewer to the vertices, and the viewer's
+// angle in the world. In the case of firelines, the rounded-off position
+// of one of the vertices determines one of these angles, and introduces
+// an error in the scaling factor for mapping textures and determining
+// where on the screen the ceiling and floor spans should be shown. For a
+// fireline, the engine thinks the ceiling bottom and floor top are at the
+// midpoint of the screen. So you get ceilings drawn all the way down to the
+// screen midpoint, and floors drawn all the way up. Thus 'firelines'. The
+// name comes from the original sighting, which involved a fire texture.
+//
+// To correct this, reset the vertex that was added so that it sits ON the
+// split line.
+//
+// To know which of the two vertices was added, its number is greater than
+// that of the last of the author-created vertices. If both vertices of the
+// line were added by splitting, pick the higher-numbered one. Once you've
+// changed a vertex, don't change it again if it shows up in another seg.
+//
+// To determine if there's an error in the first place, find the
+// angle of the line between the two seg vertices. If it's one degree or more
+// off, then move one vertex. This may seem insignificant, but one degree
+// errors _can_ cause firelines.
+
+		ptp_angle = R_PointToAngle2(li->v1->x,li->v1->y,li->v2->x,li->v2->y);
+		dis = 0;
+		delta_angle = (abs(ptp_angle-li->angle)>>ANGLETOFINESHIFT)*360/8192;
+
+		if (delta_angle != 0)
+		{
+			dx = (li->v1->x - li->v2->x)>>FRACBITS;
+			dy = (li->v1->y - li->v2->y)>>FRACBITS;
+			dis = ((int) sqrt(dx*dx + dy*dy))<<FRACBITS;
+			dx = finecosine[li->angle>>ANGLETOFINESHIFT];
+			dy = finesine[li->angle>>ANGLETOFINESHIFT];
+			vnum1 = li->v1 - vertexes; 
+			vnum2 = li->v2 - vertexes; 
+			if ((vnum2 > vnum1) && (vertchanged[vnum2] == 0))
+			{
+				li->v2->x = li->v1->x + FixedMul(dis,dx);
+				li->v2->y = li->v1->y + FixedMul(dis,dy);
+				vertchanged[vnum2] = 1; // this was changed
+			}
+			else if (vertchanged[vnum1] == 0)
+			{
+				li->v1->x = li->v2->x - FixedMul(dis,dx);
+				li->v1->y = li->v2->y - FixedMul(dis,dy);
+				vertchanged[vnum1] = 1; // this was changed
+			}
+		}
+
 		li->offset = (SHORT(ml->offset))<<16;
 		linedef = SHORT(ml->linedef);
 		ldef = &lines[linedef];
@@ -187,13 +268,19 @@ void P_LoadSegs (int lump)
 		side = SHORT(ml->side);
 		li->sidedef = &sides[ldef->sidenum[side]];
 		li->frontsector = sides[ldef->sidenum[side]].sector;
-		if (ldef-> flags & ML_TWOSIDED)
+
+		// killough 5/3/98: ignore 2s flag if second sidedef missing:
+		if (ldef->flags & ML_TWOSIDED && ldef->sidenum[side^1]!=-1)
 			li->backsector = sides[ldef->sidenum[side^1]].sector;
-		else
+		else {
 			li->backsector = 0;
+			// [RH] And clear it, since it will crash in p_sight.c if the line comes into view
+			ldef->flags &= ~ML_TWOSIDED;
+		}
 	}
-		
+
 	Z_Free (data);
+	Z_Free(vertchanged); // phares 10/4/98
 }
 
 
@@ -202,23 +289,19 @@ void P_LoadSegs (int lump)
 //
 void P_LoadSubsectors (int lump)
 {
-	byte*				data;
-	int 				i;
-	mapsubsector_t* 	ms;
-	subsector_t*		ss;
+	byte *data;
+	int i;
 		
 	numsubsectors = W_LumpLength (lump) / sizeof(mapsubsector_t);
 	subsectors = Z_Malloc (numsubsectors*sizeof(subsector_t),PU_LEVEL,0);		
 	data = W_CacheLumpNum (lump,PU_STATIC);
 		
-	ms = (mapsubsector_t *)data;
-	memset (subsectors,0, numsubsectors*sizeof(subsector_t));
-	ss = subsectors;
+	memset (subsectors, 0, numsubsectors*sizeof(subsector_t));
 	
-	for (i=0 ; i<numsubsectors ; i++, ss++, ms++)
+	for (i = 0; i < numsubsectors; i++)
 	{
-		ss->numlines = SHORT(ms->numsegs);
-		ss->firstline = SHORT(ms->firstseg);
+		subsectors[i].numlines = SHORT(((mapsubsector_t *)data)[i].numsegs);
+		subsectors[i].firstline = SHORT(((mapsubsector_t *)data)[i].firstseg);
 	}
 		
 	Z_Free (data);
@@ -237,20 +320,23 @@ void P_LoadSectors (int lump)
 	sector_t*			ss;
 		
 	numsectors = W_LumpLength (lump) / sizeof(mapsector_t);
-	sectors = Z_Malloc (numsectors*sizeof(sector_t),PU_LEVEL,0);		
+	sectors = Z_Malloc (numsectors*sizeof(sector_t), PU_LEVEL, 0);		
 	memset (sectors, 0, numsectors*sizeof(sector_t));
-	data = W_CacheLumpNum (lump,PU_STATIC);
-		
+	data = W_CacheLumpNum (lump, PU_STATIC);
+
 	ms = (mapsector_t *)data;
 	ss = sectors;
-	for (i=0 ; i<numsectors ; i++, ss++, ms++)
+	for (i = 0; i < numsectors; i++, ss++, ms++)
 	{
 		ss->floorheight = SHORT(ms->floorheight)<<FRACBITS;
 		ss->ceilingheight = SHORT(ms->ceilingheight)<<FRACBITS;
 		ss->floorpic = (short)R_FlatNumForName(ms->floorpic);
 		ss->ceilingpic = (short)R_FlatNumForName(ms->ceilingpic);
 		ss->lightlevel = SHORT(ms->lightlevel);
-		ss->special = SHORT(ms->special);
+		if (HasBehavior)
+			ss->special = SHORT(ms->special);
+		else	// [RH] Translate to new sector special
+			ss->special = P_TranslateSectorSpecial (SHORT(ms->special));
 		ss->tag = SHORT(ms->tag);
 		ss->thinglist = NULL;
 		ss->touching_thinglist = NULL;		// phares 3/14/98
@@ -269,6 +355,17 @@ void P_LoadSectors (int lump)
 
 		// killough 4/11/98 sector used to get ceiling lighting:
 		ss->ceilinglightsec = -1;
+
+		ss->gravity = 1.0f;	// [RH] Default sector gravity of 1.0
+
+		// [RH] Sectors default to white light with the default fade.
+		//		If they are outside (have a sky ceiling), they use the outside fog.
+		if (level.outsidefog != 0xff000000 && ss->ceilingpic == skyflatnum)
+			ss->colormap = GetSpecialLights (255,255,255,
+				RPART(level.outsidefog),GPART(level.outsidefog),BPART(level.outsidefog));
+		else
+			ss->colormap = GetSpecialLights (255,255,255,
+				RPART(level.fadeto),GPART(level.fadeto),BPART(level.fadeto));
 	}
 		
 	Z_Free (data);
@@ -294,16 +391,16 @@ void P_LoadNodes (int lump)
 	mn = (mapnode_t *)data;
 	no = nodes;
 	
-	for (i=0 ; i<numnodes ; i++, no++, mn++)
+	for (i = 0; i < numnodes; i++, no++, mn++)
 	{
 		no->x = SHORT(mn->x)<<FRACBITS;
 		no->y = SHORT(mn->y)<<FRACBITS;
 		no->dx = SHORT(mn->dx)<<FRACBITS;
 		no->dy = SHORT(mn->dy)<<FRACBITS;
-		for (j=0 ; j<2 ; j++)
+		for (j = 0; j < 2; j++)
 		{
 			no->children[j] = SHORT(mn->children[j]);
-			for (k=0 ; k<4 ; k++)
+			for (k = 0; k < 4; k++)
 				no->bbox[j][k] = SHORT(mn->bbox[j][k])<<FRACBITS;
 		}
 	}
@@ -318,17 +415,13 @@ void P_LoadNodes (int lump)
 void P_LoadThings (int lump)
 {
 	mapthing2_t mt2;		// [RH] for translation
-	byte *data = W_CacheLumpNum (lump,PU_STATIC);
+	byte *data = W_CacheLumpNum (lump, PU_STATIC);
 	mapthing_t *mt = (mapthing_t *)data;
 	mapthing_t *lastmt = (mapthing_t *)(data + W_LumpLength (lump));
 
-	// [RH] I'm (considering) moving toward Hexen-style maps
-	//		as the native format for ZDoom. This is the only
-	//		place where Doom-style Things are ever referenced,
-	//		and we translate them into a Hexen-style thing.
-	//		Thanks to recent talks with Ty Halderman, I may
-	//		not actually complete this, although the process
-	//		has been started.
+	// [RH] ZDoom now uses Hexen-style maps as its native format.
+	//		Since this is the only place where Doom-style Things are ever
+	//		referenced, we translate them into a Hexen-style thing.
 	memset (&mt2, 0, sizeof(mt2));
 
 	for ( ; mt < lastmt; mt++)
@@ -340,7 +433,7 @@ void P_LoadThings (int lump)
 
 		// [RH] Need to translate the spawn flags to Hexen format.
 		short flags = SHORT(mt->options);
-		mt2.flags = (short)((flags & 0xf) | 0x700);
+		mt2.flags = (short)((flags & 0xf) | 0x7e0);
 		if (flags & BTF_NOTSINGLE)			mt2.flags &= ~MTF_SINGLE;
 		if (flags & BTF_NOTDEATHMATCH)		mt2.flags &= ~MTF_DEATHMATCH;
 		if (flags & BTF_NOTCOOPERATIVE)		mt2.flags &= ~MTF_COOPERATIVE;
@@ -350,7 +443,7 @@ void P_LoadThings (int lump)
 		mt2.angle = SHORT(mt->angle);
 		mt2.type = SHORT(mt->type);
 		
-		P_SpawnMapThing (&mt2);
+		P_SpawnMapThing (&mt2, 0);
 	}
 		
 	Z_Free (data);
@@ -360,9 +453,11 @@ void P_LoadThings (int lump)
 // P_LoadThings2
 //
 // Same as P_LoadThings() except it assumes Things are
-// saved Hexen-style.
+// saved Hexen-style. Position also controls which single-
+// player start spots are spawned by filtering out those
+// whose first parameter don't match position.
 //
-void P_LoadThings2 (int lump)
+void P_LoadThings2 (int lump, int position)
 {
 	byte *data = W_CacheLumpNum (lump, PU_STATIC);
 	mapthing2_t *mt = (mapthing2_t *)data;
@@ -383,7 +478,7 @@ void P_LoadThings2 (int lump)
 		mt->type = SHORT(mt->type);
 		mt->flags = SHORT(mt->flags);
 
-		P_SpawnMapThing (mt);
+		P_SpawnMapThing (mt, position);
 	}
 
 	Z_Free (data);
@@ -392,11 +487,16 @@ void P_LoadThings2 (int lump)
 
 //
 // P_LoadLineDefs
-// Also counts secret lines for intermissions.
 //
-static void P_AdjustLine (line_t *ld)
+// killough 4/4/98: split into two functions, to allow sidedef overloading
+//
+// [RH] Actually split into four functions to allow for Hexen and Doom
+//		linedefs.
+void P_AdjustLine (line_t *ld)
 {
 	vertex_t *v1, *v2;
+
+	ld->lucency = 255;	// [RH] Opaque by default
 
 	v1 = ld->v1;
 	v2 = ld->v2;
@@ -404,17 +504,12 @@ static void P_AdjustLine (line_t *ld)
 	ld->dx = v2->x - v1->x;
 	ld->dy = v2->y - v1->y;
 	
-	if (!ld->dx)
+	if (ld->dx == 0)
 		ld->slopetype = ST_VERTICAL;
-	else if (!ld->dy)
+	else if (ld->dy == 0)
 		ld->slopetype = ST_HORIZONTAL;
 	else
-	{
-		if (FixedDiv (ld->dy , ld->dx) > 0)
-			ld->slopetype = ST_POSITIVE;
-		else
-			ld->slopetype = ST_NEGATIVE;
-	}
+		ld->slopetype = (FixedDiv (ld->dy , ld->dx) > 0) ? ST_POSITIVE : ST_NEGATIVE;
 			
 	if (v1->x < v2->x)
 	{
@@ -438,39 +533,75 @@ static void P_AdjustLine (line_t *ld)
 		ld->bbox[BOXTOP] = v1->y;
 	}
 
-	if (ld->sidenum[0] != -1)
-		ld->frontsector = sides[ld->sidenum[0]].sector;
-	else
-		ld->frontsector = 0;
+	// [RH] Set line id (as appropriate) here
+	if (ld->special == Line_SetIdentification ||
+		ld->special == Teleport_Line ||
+		ld->special == TranslucentLine ||
+		ld->special == Scroll_Texture_Model) {
+		ld->id = ld->args[0];
+	}
+	// killough 4/4/98: support special sidedef interpretation below
+	if (ld->sidenum[0] != -1 && ld->special)
+		sides[*ld->sidenum].special = ld->special;
+}
 
-	if (ld->sidenum[1] != -1)
-		ld->backsector = sides[ld->sidenum[1]].sector;
-	else
-		ld->backsector = 0;
+// killough 4/4/98: delay using sidedefs until they are loaded
+void P_FinishLoadingLineDefs (void)
+{
+	int i = numlines;
+	register line_t *ld = lines;
+
+	for (; i--; ld++) {
+		ld->frontsector = ld->sidenum[0]!=-1 ? sides[ld->sidenum[0]].sector : 0;
+		ld->backsector  = ld->sidenum[1]!=-1 ? sides[ld->sidenum[1]].sector : 0;
+
+		switch (ld->special)
+		{						// killough 4/11/98: handle special types
+			int j;
+
+			case TranslucentLine:			// killough 4/11/98: translucent 2s textures
+#if 0
+				lump = sides[*ld->sidenum].special;		// translucency from sidedef
+				if (!ld->tag)							// if tag==0,
+					ld->tranlump = lump;				// affect this linedef only
+				else
+					for (j=0;j<numlines;j++)			// if tag!=0,
+						if (lines[j].tag == ld->tag)	// affect all matching linedefs
+							lines[j].tranlump = lump;
+#else
+				// [RH] Second arg controls how opaque it is.
+				if (!ld->args[0])
+					ld->lucency = (byte)ld->args[1];
+				else
+					for (j = 0; j < numlines; j++)
+						if (lines[j].id == ld->args[0])
+							lines[j].lucency = (byte)ld->args[1];
+#endif
+				break;
+		}
+	}
 }
 
 void P_LoadLineDefs (int lump)
 {
-	byte*				data;
-	int 				i;
-	maplinedef_t*		mld;
-	line_t* 			ld;
+	byte *data;
+	int i;
+	line_t *ld;
 		
 	numlines = W_LumpLength (lump) / sizeof(maplinedef_t);
 	lines = Z_Malloc (numlines*sizeof(line_t),PU_LEVEL,0);		
 	memset (lines, 0, numlines*sizeof(line_t));
 	data = W_CacheLumpNum (lump,PU_STATIC);
 		
-	mld = (maplinedef_t *)data;
 	ld = lines;
-	for (i=0 ; i<numlines ; i++, mld++, ld++)
+	for (i=0 ; i<numlines ; i++, ld++)
 	{
-		ld->flags = SHORT(mld->flags);
-		// [RH] Remap ML_PASSUSE flag from BOOM.
-		if (ld->flags & ML_PASSUSEORG)
-			ld->flags = (ld->flags & ~ML_PASSUSEORG) | ML_PASSUSE;
-		ld->special = SHORT(mld->special);
-		ld->tag = SHORT(mld->tag);
+		maplinedef_t *mld = ((maplinedef_t *)data) + i;
+
+		// [RH] Translate old linedef special and flags to be
+		//		compatible with the new format.
+		P_TranslateLineDef (ld, mld);
+
 		ld->v1 = &vertexes[SHORT(mld->v1)];
 		ld->v2 = &vertexes[SHORT(mld->v2)];
 
@@ -492,18 +623,22 @@ void P_LoadLineDefs2 (int lump)
 	line_t* 			ld;
 		
 	numlines = W_LumpLength (lump) / sizeof(maplinedef2_t);
-	lines = Z_Malloc (numlines*sizeof(line_t),PU_LEVEL,0);		
+	lines = Z_Malloc (numlines*sizeof(line_t), PU_LEVEL,0 );		
 	memset (lines, 0, numlines*sizeof(line_t));
-	data = W_CacheLumpNum (lump,PU_STATIC);
+	data = W_CacheLumpNum (lump, PU_STATIC);
 		
 	mld = (maplinedef2_t *)data;
 	ld = lines;
 	for (i=0 ; i<numlines ; i++, mld++, ld++)
 	{
+		int j;
+
+		for (j = 0; j < 5; j++)
+			ld->args[j] = mld->args[j];
+
 		ld->flags = SHORT(mld->flags);
 		ld->special = mld->special;
-		memcpy (ld->args, mld->args, 5);
-		ld->tag = ld->args[0];
+
 		ld->v1 = &vertexes[SHORT(mld->v1)];
 		ld->v2 = &vertexes[SHORT(mld->v2)];
 
@@ -520,33 +655,403 @@ void P_LoadLineDefs2 (int lump)
 //
 // P_LoadSideDefs
 //
+// killough 4/4/98: split into two functions
 void P_LoadSideDefs (int lump)
 {
-	byte*				data;
-	int 				i;
-	mapsidedef_t*		msd;
-	side_t* 			sd;
-		
 	numsides = W_LumpLength (lump) / sizeof(mapsidedef_t);
-	sides = Z_Malloc (numsides*sizeof(side_t),PU_LEVEL,0);		
+	sides = Z_Malloc (numsides*sizeof(side_t), PU_LEVEL, 0);
 	memset (sides, 0, numsides*sizeof(side_t));
-	data = W_CacheLumpNum (lump,PU_STATIC);
-		
-	msd = (mapsidedef_t *)data;
-	sd = sides;
-	for (i=0 ; i<numsides ; i++, msd++, sd++)
+}
+
+// [RH] Figure out blends for deep water sectors
+static void SetTexture (short *texture, unsigned int *blend, char *name)
+{
+	if ((*blend = R_ColormapNumForName (name)) == 0) {
+		if ((*texture = R_CheckTextureNumForName (name)) == -1) {
+			char name2[9];
+			char *stop;
+			strncpy (name2, name, 8);
+			name2[8] = 0;
+			*blend = strtoul (name2, &stop, 16);
+			*texture = 0;
+		} else {
+			*blend = 0;
+		}
+	} else {
+		*texture = 0;
+	}
+}
+
+// killough 4/4/98: delay using texture names until
+// after linedefs are loaded, to allow overloading.
+// killough 5/3/98: reformatted, cleaned up
+
+void P_LoadSideDefs2 (int lump)
+{
+	byte *data = W_CacheLumpNum(lump,PU_STATIC);
+	int  i;
+
+	for (i=0; i<numsides; i++)
 	{
+		register mapsidedef_t *msd = (mapsidedef_t *) data + i;
+		register side_t *sd = sides + i;
+		register sector_t *sec;
+
 		sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
 		sd->rowoffset = SHORT(msd->rowoffset)<<FRACBITS;
-		sd->toptexture = (short)R_TextureNumForName(msd->toptexture);
-		sd->bottomtexture = (short)R_TextureNumForName(msd->bottomtexture);
-		sd->midtexture = (short)R_TextureNumForName(msd->midtexture);
-		sd->sector = &sectors[SHORT(msd->sector)];
+
+		// killough 4/4/98: allow sidedef texture names to be overloaded
+		// killough 4/11/98: refined to allow colormaps to work as wall
+		// textures if invalid as colormaps but valid as textures.
+
+		sd->sector = sec = &sectors[SHORT(msd->sector)];
+		switch (sd->special)
+		{
+		  case Transfer_Heights:	// variable colormap via 242 linedef
+			  // [RH] The colormap num we get here isn't really a colormap,
+			  //	  but a packed ARGB word for blending, so we also allow
+			  //	  the blend to be specified directly by the texture names
+			  //	  instead of figuring something out from the colormap.
+			SetTexture (&sd->bottomtexture, &sec->bottommap, msd->bottomtexture);
+			SetTexture (&sd->midtexture, &sec->midmap, msd->midtexture);
+			SetTexture (&sd->toptexture, &sec->topmap, msd->toptexture);
+			break;
+/*
+		  case TranslucentLine:	// killough 4/11/98: apply translucency to 2s normal texture
+			sd->midtexture = strncasecmp("TRANMAP", msd->midtexture, 8) ?
+				(sd->special = W_CheckNumForName(msd->midtexture)) < 0 ||
+				W_LumpLength(sd->special) != 65536 ?
+				sd->special=0, R_TextureNumForName(msd->midtexture) :
+					(sd->special++, 0) : (sd->special=0);
+			sd->toptexture = R_TextureNumForName(msd->toptexture);
+			sd->bottomtexture = R_TextureNumForName(msd->bottomtexture);
+			break;
+*/
+		  default:			// normal cases
+			sd->midtexture = R_TextureNumForName(msd->midtexture);
+			sd->toptexture = R_TextureNumForName(msd->toptexture);
+			sd->bottomtexture = R_TextureNumForName(msd->bottomtexture);
+			break;
+		}
 	}
-		
 	Z_Free (data);
 }
 
+
+//
+// jff 10/6/98
+// New code added to speed up calculation of internal blockmap
+// Algorithm is order of nlines*(ncols+nrows) not nlines*ncols*nrows
+// 
+
+#define blkshift 7               /* places to shift rel position for cell num */
+#define blkmask ((1<<blkshift)-1)/* mask for rel position within cell */
+#define blkmargin 0              /* size guardband around map used */
+                                 // jff 10/8/98 use guardband>0 
+                                 // jff 10/12/98 0 ok with + 1 in rows,cols
+
+typedef struct linelist_t        // type used to list lines in each block
+{
+  long num;
+  struct linelist_t *next;
+} linelist_t;
+
+//
+// Subroutine to add a line number to a block list
+// It simply returns if the line is already in the block
+//
+
+static void AddBlockLine
+(
+	linelist_t **lists,
+	int *count,
+	int *done,
+	int blockno,
+	long lineno
+)
+{
+	linelist_t *l;
+
+	if (done[blockno])
+		return;
+
+	l = Malloc (sizeof(linelist_t));
+	l->num = lineno;
+	l->next = lists[blockno];
+	lists[blockno] = l;
+	count[blockno]++;
+	done[blockno] = 1;
+}
+
+//
+// Actually construct the blockmap lump from the level data
+//
+// This finds the intersection of each linedef with the column and
+// row lines at the left and bottom of each blockmap cell. It then
+// adds the line to all block lists touching the intersection.
+//
+
+void P_CreateBlockMap()
+{
+	int xorg,yorg;					// blockmap origin (lower left)
+	int nrows,ncols;				// blockmap dimensions
+	linelist_t **blocklists=NULL;	// array of pointers to lists of lines
+	int *blockcount=NULL;			// array of counters of line lists
+	int *blockdone=NULL;			// array keeping track of blocks/line
+	int NBlocks;					// number of cells = nrows*ncols
+	long linetotal=0;				// total length of all blocklists
+	int i,j;
+	int map_minx=MAXINT;			// init for map limits search
+	int map_miny=MAXINT;
+	int map_maxx=MININT;
+	int map_maxy=MININT;
+
+	// scan for map limits, which the blockmap must enclose
+
+	for (i = 0; i < numvertexes; i++)
+	{
+		fixed_t t;
+
+		if ((t=vertexes[i].x) < map_minx)
+			map_minx = t;
+		else if (t > map_maxx)
+			map_maxx = t;
+		if ((t=vertexes[i].y) < map_miny)
+			map_miny = t;
+		else if (t > map_maxy)
+			map_maxy = t;
+	}
+	map_minx >>= FRACBITS;    // work in map coords, not fixed_t
+	map_maxx >>= FRACBITS;
+	map_miny >>= FRACBITS;
+	map_maxy >>= FRACBITS;
+
+	// set up blockmap area to enclose level plus margin
+
+	xorg = map_minx-blkmargin;
+	yorg = map_miny-blkmargin;
+	ncols = (map_maxx+blkmargin-xorg+1+blkmask)>>blkshift;	//jff 10/12/98
+	nrows = (map_maxy+blkmargin-yorg+1+blkmask)>>blkshift;	//+1 needed for
+	NBlocks = ncols*nrows;									//map exactly 1 cell
+
+	// create the array of pointers on NBlocks to blocklists
+	// also create an array of linelist counts on NBlocks
+	// finally make an array in which we can mark blocks done per line
+
+	blocklists = Malloc (NBlocks*sizeof(linelist_t *));
+	memset (blocklists, 0, NBlocks*sizeof(linelist_t *));
+	blockcount = Malloc (NBlocks*sizeof(int));
+	memset (blockcount, 0, NBlocks*sizeof(int));
+	blockdone = Malloc (NBlocks*sizeof(int));
+
+	// initialize each blocklist, and enter the trailing -1 in all blocklists
+	// note the linked list of lines grows backwards
+
+	for (i = 0; i < NBlocks; i++)
+	{
+		blocklists[i] = Malloc(sizeof(linelist_t));
+		blocklists[i]->num = -1;
+		blocklists[i]->next = NULL;
+		blockcount[i]++;
+	}
+
+	// For each linedef in the wad, determine all blockmap blocks it touches,
+	// and add the linedef number to the blocklists for those blocks
+
+	for (i = 0; i < numlines; i++)
+	{
+		int x1 = lines[i].v1->x>>FRACBITS;		// lines[i] map coords
+		int y1 = lines[i].v1->y>>FRACBITS;
+		int x2 = lines[i].v2->x>>FRACBITS;
+		int y2 = lines[i].v2->y>>FRACBITS;
+		int dx = x2-x1;
+		int dy = y2-y1;
+		int vert = !dx;							// lines[i] slopetype
+		int horiz = !dy;
+		int spos = (dx^dy) > 0;
+		int sneg = (dx^dy) < 0;
+		int bx,by;								// block cell coords
+		int minx = x1>x2? x2 : x1;				// extremal lines[i] coords
+		int maxx = x1>x2? x1 : x2;
+		int miny = y1>y2? y2 : y1;
+		int maxy = y1>y2? y1 : y2;
+
+		// no blocks done for this linedef yet
+
+		memset (blockdone, 0, NBlocks*sizeof(int));
+
+		// The line always belongs to the blocks containing its endpoints
+
+		bx = (x1-xorg) >> blkshift;
+		by = (y1-yorg) >> blkshift;
+		AddBlockLine (blocklists, blockcount, blockdone, by*ncols+bx, i);
+		bx = (x2-xorg) >> blkshift;
+		by = (y2-yorg) >> blkshift;
+		AddBlockLine (blocklists, blockcount, blockdone, by*ncols+bx, i);
+
+		// For each column, see where the line along its left edge, which 
+		// it contains, intersects the Linedef i. Add i to each corresponding
+		// blocklist.
+
+		if (!vert)    // don't interesect vertical lines with columns
+		{
+			for (j=0;j<ncols;j++)
+			{
+				// intersection of Linedef with x=xorg+(j<<blkshift)
+				// (y-y1)*dx = dy*(x-x1)
+				// y = dy*(x-x1)+y1*dx;
+
+				int x = xorg+(j<<blkshift);		// (x,y) is intersection
+				int y = (dy*(x-x1))/dx+y1;
+				int yb = (y-yorg)>>blkshift;	// block row number
+				int yp = (y-yorg)&blkmask;		// y position within block
+
+				if (yb<0 || yb>nrows-1)			// outside blockmap, continue
+					continue;
+
+				if (x<minx || x>maxx)			// line doesn't touch column
+					continue;
+
+				// The cell that contains the intersection point is always added
+
+				AddBlockLine(blocklists,blockcount,blockdone,ncols*yb+j,i);
+
+				// if the intersection is at a corner it depends on the slope
+				// (and whether the line extends past the intersection) which 
+				// blocks are hit
+
+				if (yp==0)			// intersection at a corner
+				{
+					if (sneg)		//   \ - blocks x,y-, x-,y
+					{
+						if (yb>0 && miny<y)
+							AddBlockLine(blocklists, blockcount, blockdone, ncols*(yb-1)+j, i);
+						if (j>0 && minx<x)
+							AddBlockLine(blocklists, blockcount, blockdone, ncols*yb+j-1, i);
+					}
+					else if (spos)	//   / - block x-,y-
+					{
+						if (yb>0 && j>0 && minx<x)
+							AddBlockLine(blocklists,blockcount,blockdone,ncols*(yb-1)+j-1,i);
+					}
+					else if (horiz)	//   - - block x-,y
+					{
+						if (j>0 && minx<x)
+							AddBlockLine(blocklists,blockcount,blockdone,ncols*yb+j-1,i);
+					}
+				}
+				else if (j>0 && minx<x)	// else not at corner: x-,y
+					AddBlockLine(blocklists,blockcount,blockdone,ncols*yb+j-1,i);
+			}
+		}
+
+		// For each row, see where the line along its bottom edge, which 
+		// it contains, intersects the Linedef i. Add i to all the corresponding
+		// blocklists.
+
+		if (!horiz)
+		{
+			for (j=0;j<nrows;j++)
+			{
+				// intersection of Linedef with y=yorg+(j<<blkshift)
+				// (x,y) on Linedef i satisfies: (y-y1)*dx = dy*(x-x1)
+				// x = dx*(y-y1)/dy+x1;
+
+				int y = yorg+(j<<blkshift);		// (x,y) is intersection
+				int x = (dx*(y-y1))/dy+x1;
+				int xb = (x-xorg)>>blkshift;	// block column number
+				int xp = (x-xorg)&blkmask;		// x position within block
+
+				if (xb<0 || xb>ncols-1)			// outside blockmap, continue
+					continue;
+
+				if (y<miny || y>maxy)			 // line doesn't touch row
+					continue;
+
+				// The cell that contains the intersection point is always added
+
+				AddBlockLine (blocklists, blockcount, blockdone, ncols*j+xb, i);
+
+				// if the intersection is at a corner it depends on the slope
+				// (and whether the line extends past the intersection) which 
+				// blocks are hit
+
+				if (xp==0)			// intersection at a corner
+				{
+					if (sneg)       //   \ - blocks x,y-, x-,y
+					{
+						if (j>0 && miny<y)
+							AddBlockLine (blocklists, blockcount, blockdone, ncols*(j-1)+xb, i);
+						if (xb>0 && minx<x)
+							AddBlockLine (blocklists, blockcount, blockdone, ncols*j+xb-1, i);
+					}
+					else if (vert)  //   | - block x,y-
+					{
+						if (j>0 && miny<y)
+							AddBlockLine (blocklists, blockcount, blockdone, ncols*(j-1)+xb, i);
+					}
+					else if (spos)  //   / - block x-,y-
+					{
+						if (xb>0 && j>0 && miny<y)
+							AddBlockLine (blocklists, blockcount, blockdone, ncols*(j-1)+xb-1, i);
+					}
+				}
+				else if (j>0 && miny<y) // else not on a corner: x,y-
+					AddBlockLine (blocklists, blockcount, blockdone, ncols*(j-1)+xb, i);
+			}
+		}
+	}
+
+	// Add initial 0 to all blocklists
+	// count the total number of lines (and 0's and -1's)
+
+	memset (blockdone, 0, NBlocks*sizeof(int));
+	for (i = 0, linetotal = 0; i < NBlocks; i++)
+	{
+		AddBlockLine (blocklists, blockcount, blockdone, i, 0);
+		linetotal += blockcount[i];
+	}
+
+	// Create the blockmap lump
+
+	blockmaplump = Z_Malloc(sizeof(*blockmaplump) * (4+NBlocks+linetotal),
+							PU_LEVEL, 0);
+	// blockmap header
+
+	blockmaplump[0] = bmaporgx = xorg << FRACBITS;
+	blockmaplump[1] = bmaporgy = yorg << FRACBITS;
+	blockmaplump[2] = bmapwidth  = ncols;
+	blockmaplump[3] = bmapheight = nrows;
+
+	// offsets to lists and block lists
+
+	for (i = 0; i < NBlocks; i++)
+	{
+		linelist_t *bl = blocklists[i];
+		long offs = blockmaplump[4+i] =   // set offset to block's list
+			(i? blockmaplump[4+i-1] : 4+NBlocks) + (i? blockcount[i-1] : 0);
+
+		// add the lines in each block's list to the blockmaplump
+		// delete each list node as we go
+
+		while (bl)
+		{
+			linelist_t *tmp = bl->next;
+			blockmaplump[offs++] = bl->num;
+			free(bl);
+			bl = tmp;
+		}
+	}
+
+	// free all temporary storage
+
+	free (blocklists);
+	free (blockcount);
+	free (blockdone);
+}
+
+// jff 10/6/98
+// End new code added to speed up calculation of internal blockmap
 
 //
 // P_LoadBlockMap
@@ -555,30 +1060,33 @@ void P_LoadSideDefs (int lump)
 //
 void P_LoadBlockMap (int lump)
 {
-	int i, count;
-	short *wadblockmaplump;
+	int count;
 	
-	count = W_LumpLength (lump) >> 1;
-	wadblockmaplump = W_CacheLumpNum (lump, PU_LEVEL);
-	blockmaplump = Z_Malloc(sizeof(*blockmaplump) * count, PU_LEVEL, 0);
+	if (M_CheckParm("-blockmap") || (count = W_LumpLength(lump)/2) >= 0x10000)
+		P_CreateBlockMap();
+	else {
+		short *wadblockmaplump = W_CacheLumpNum (lump, PU_LEVEL);
+		int i;
+		blockmaplump = Z_Malloc(sizeof(*blockmaplump) * count, PU_LEVEL, 0);
 
-	// killough 3/1/98: Expand wad blockmap into larger internal one,
-	// by treating all offsets except -1 as unsigned and zero-extending
-	// them. This potentially doubles the size of blockmaps allowed,
-	// because Doom originally considered the offsets as always signed.
+		// killough 3/1/98: Expand wad blockmap into larger internal one,
+		// by treating all offsets except -1 as unsigned and zero-extending
+		// them. This potentially doubles the size of blockmaps allowed,
+		// because Doom originally considered the offsets as always signed.
 
-	blockmaplump[0] = SHORT(wadblockmaplump[0]);
-	blockmaplump[1] = SHORT(wadblockmaplump[1]);
-	blockmaplump[2] = (long)(SHORT(wadblockmaplump[2])) & 0xffff;
-	blockmaplump[3] = (long)(SHORT(wadblockmaplump[3])) & 0xffff;
+		blockmaplump[0] = SHORT(wadblockmaplump[0]);
+		blockmaplump[1] = SHORT(wadblockmaplump[1]);
+		blockmaplump[2] = (long)(SHORT(wadblockmaplump[2])) & 0xffff;
+		blockmaplump[3] = (long)(SHORT(wadblockmaplump[3])) & 0xffff;
 
-	for (i=4 ; i<count ; i++)
-	{
-		short t = SHORT(wadblockmaplump[i]);          // killough 3/1/98
-		blockmaplump[i] = t == -1 ? -1l : (long) t & 0xffff;
+		for (i=4 ; i<count ; i++)
+		{
+			short t = SHORT(wadblockmaplump[i]);          // killough 3/1/98
+			blockmaplump[i] = t == -1 ? -1l : (long) t & 0xffff;
+		}
+
+		Z_Free (wadblockmaplump);
 	}
-
-	Z_Free(wadblockmaplump);
 
 	bmaporgx = blockmaplump[0]<<FRACBITS;
 	bmaporgy = blockmaplump[1]<<FRACBITS;
@@ -587,7 +1095,7 @@ void P_LoadBlockMap (int lump)
 
 	// clear out mobj chains
 	count = sizeof(*blocklinks) * bmapwidth*bmapheight;
-	blocklinks = Z_Malloc (count,PU_LEVEL, 0);
+	blocklinks = Z_Malloc (count, PU_LEVEL, 0);
 	memset (blocklinks, 0, count);
 	blockmap = blockmaplump+4;
 }
@@ -607,23 +1115,17 @@ void P_GroupLines (void)
 	int 				total;
 	line_t* 			li;
 	sector_t*			sector;
-	subsector_t*		ss;
-	seg_t*				seg;
 	fixed_t 			bbox[4];
 	int 				block;
 		
 	// look up sector number for each subsector
-	ss = subsectors;
-	for (i=0 ; i<numsubsectors ; i++, ss++)
-	{
-		seg = &segs[ss->firstline];
-		ss->sector = seg->sidedef->sector;
-	}
+	for (i = 0; i < numsubsectors; i++)
+		subsectors[i].sector = segs[subsectors[i].firstline].sidedef->sector;
 
 	// count number of lines in each sector
 	li = lines;
 	total = 0;
-	for (i=0 ; i<numlines ; i++, li++)
+	for (i = 0; i < numlines; i++, li++)
 	{
 		total++;
 		li->frontsector->linecount++;
@@ -679,14 +1181,43 @@ void P_GroupLines (void)
 		
 }
 
+//
+// [RH] P_LoadBehavior
+//
+static int sortscripts (const void *a, const void *b)
+{
+	return ((*(int *)a)%1000 - (*(int *)b)%1000);
+}
+
+void P_LoadBehavior (int lumpnum)
+{
+	byte *behavior = W_CacheLumpNum (lumpnum, PU_LEVEL);
+
+	if (strncmp (behavior, "ACS", 4)) {
+		Z_Free (behavior);
+		return;
+	}
+
+	level.behavior = behavior;
+	level.scripts = (int *)(behavior + ((int *)behavior)[1]);
+	level.strings = &level.scripts[level.scripts[0]*3+1];
+
+	// Make sure scripts are listed in order (to make finding them quicker)
+	qsort (&level.scripts[1], level.scripts[0], 3*sizeof(int), sortscripts);
+
+	DPrintf ("Loaded %d scripts, %d strings\n", level.scripts[0], level.strings[0]);
+}
 
 //
 // P_SetupLevel
 //
-void P_SetupLevel (char *lumpname)
+extern dyncolormap_t NormalLight;
+extern mobj_t *bodyquesize[];
+
+// [RH] position indicates the start spot to spawn at
+void P_SetupLevel (char *lumpname, int position)
 {
-	int		i;
-	int 	lumpnum;
+	int i, lumpnum;
 		
 	level.total_monsters = level.total_items = level.total_secrets =
 		level.killed_monsters = level.found_items = level.found_secrets =
@@ -703,7 +1234,10 @@ void P_SetupLevel (char *lumpname)
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start (); 				
-	
+
+	// [RH] Clear all ThingID hash chains.
+	P_ClearTidHashes ();
+
 #if 0 // UNUSED
 	if (debugfile)
 	{
@@ -713,6 +1247,7 @@ void P_SetupLevel (char *lumpname)
 	else
 #endif
 	Z_FreeTags (PU_LEVEL, PU_PURGELEVEL-1);
+	NormalLight.next = NULL;	// [RH] Z_FreeTags frees all the custom colormaps
 
 	// UNUSED W_Profile ();
 	P_InitThinkers ();
@@ -726,27 +1261,38 @@ void P_SetupLevel (char *lumpname)
 
 	// [RH] Check if this map is Hexen-style.
 	//		LINEDEFS and THINGS need to be handled accordingly.
+	//		If it is, we also need to distinguish between projectile cross and hit
 	HasBehavior = W_CheckLumpName (lumpnum+ML_BEHAVIOR, "BEHAVIOR");
+	oldshootactivation = !HasBehavior;
 
 	// note: most of this ordering is important 
-	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
-
 	P_LoadVertexes (lumpnum+ML_VERTEXES);
 	P_LoadSectors (lumpnum+ML_SECTORS);
 	P_LoadSideDefs (lumpnum+ML_SIDEDEFS);
-
 	if (!HasBehavior)
 		P_LoadLineDefs (lumpnum+ML_LINEDEFS);
 	else
 		P_LoadLineDefs2 (lumpnum+ML_LINEDEFS);	// [RH] Load Hexen-style linedefs
+	P_LoadSideDefs2 (lumpnum+ML_SIDEDEFS);
+	P_FinishLoadingLineDefs ();
+	P_LoadBlockMap (lumpnum+ML_BLOCKMAP);
 	P_LoadSubsectors (lumpnum+ML_SSECTORS);
 	P_LoadNodes (lumpnum+ML_NODES);
 	P_LoadSegs (lumpnum+ML_SEGS);
 		
-	rejectmatrix = W_CacheLumpNum (lumpnum+ML_REJECT,PU_LEVEL);
+	rejectmatrix = W_CacheLumpNum (lumpnum+ML_REJECT, PU_LEVEL);
 	P_GroupLines ();
 
 	bodyqueslot = 0;
+// phares 8/10/98: Clear body queue so the corpses from previous games are
+// not assumed to be from this one. The mobj_t's belonging to these corpses
+// are cleared in the normal freeing of zoned memory between maps, so all
+// we have to do here is clear the pointers to them.
+
+	if (bodyque)
+		for (i = 0; i < BODYQUESIZE; i++)
+			bodyque[i] = 0;
+
 	if (!deathmatchstarts) {
 		MaxDeathmatchStarts = 10;	// [RH] Default. Increased as needed.
 		deathmatchstarts = Malloc (MaxDeathmatchStarts * sizeof(mapthing2_t));
@@ -756,8 +1302,18 @@ void P_SetupLevel (char *lumpname)
 	if (!HasBehavior)
 		P_LoadThings (lumpnum+ML_THINGS);
 	else
-		P_LoadThings2 (lumpnum+ML_THINGS);	// [RH] Load Hexen-style things
+		P_LoadThings2 (lumpnum+ML_THINGS, position);	// [RH] Load Hexen-style things
 	
+	if (!HasBehavior)
+		P_TranslateTeleportThings();	// [RH] Assign teleport destination TIDs
+
+	// [RH] Load in the BEHAVIOR lump
+	level.behavior = NULL;
+	level.scripts = level.strings = NULL;
+	P_ClearScripts ();
+	if (HasBehavior)
+		P_LoadBehavior (lumpnum+ML_BEHAVIOR);
+
 	// if deathmatch, randomly spawn the active players
 	if (deathmatch->value)
 	{
@@ -770,12 +1326,16 @@ void P_SetupLevel (char *lumpname)
 						
 	}
 
+	// killough 3/26/98: Spawn icon landings:
+	if (gamemode == commercial)
+		P_SpawnBrainTargets();
+
 	// clear special respawning que
 	iquehead = iquetail = 0;			
 		
 	// set up world state
 	P_SpawnSpecials ();
-		
+
 	// build subsector connect matrix
 	//	UNUSED P_ConnectSubsectors ();
 
@@ -784,8 +1344,6 @@ void P_SetupLevel (char *lumpname)
 		R_PrecacheLevel ();
 
 	//Printf ("free memory: 0x%x\n", Z_FreeMemory());
-		
-	level.time = 0;
 }
 
 
@@ -793,8 +1351,15 @@ void P_SetupLevel (char *lumpname)
 //
 // P_Init
 //
+extern void SplashFactorCallback (cvar_t *);
+extern cvar_t *splashfactor;
+
 void P_Init (void)
 {
+	// [RH] Set callback for splashfactor cvar.
+	splashfactor->u.callback = SplashFactorCallback;
+	SplashFactorCallback (splashfactor);
+
 	P_InitSwitchList ();
 	P_InitPicAnims ();
 	R_InitSprites (sprnames);

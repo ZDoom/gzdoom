@@ -30,7 +30,7 @@
 
 #include "doomdef.h"
 #include "p_local.h"
-#include "sounds.h"
+#include "p_lnspec.h"
 
 #include "st_stuff.h"
 #include "hu_stuff.h"
@@ -47,7 +47,6 @@ cvar_t *sv_friction;
 
 
 void G_PlayerReborn (int player);
-void P_SpawnMapThing (mapthing2_t *mthing);
 
 
 //
@@ -83,7 +82,8 @@ BOOL P_SetMobjState (mobj_t *mobj, statenum_t state)
 		st = &states[state];
 		mobj->state = st;
 		mobj->tics = st->tics;
-		mobj->sprite = st->sprite;
+		if (!mobj->player)			// [RH] Only change sprite if not a player
+			mobj->sprite = st->sprite;
 		mobj->frame = st->frame;
 
 		// Modified handling.
@@ -129,13 +129,16 @@ void P_ExplodeMissile (mobj_t* mo)
 	mo->flags &= ~MF_MISSILE;
 
 	if (mo->info->deathsound)
-		S_StartSound (mo, mo->info->deathsound);
+		S_StartSound (mo, mo->info->deathsound, 70);
 }
 
 
 //
 // P_XYMovement  
 //
+extern int numspechit;
+extern line_t **spechit;
+
 #define STOPSPEED				0x1000
 #define FRICTION				0xe800
 
@@ -146,7 +149,9 @@ void P_XYMovement (mobj_t* mo)
 	player_t*	player;
 	fixed_t 	xmove;
 	fixed_t 	ymove;
-						
+	fixed_t   oldx,oldy;	// phares 9/10/98: reducing bobbing/momentum on ice
+							// when up against walls
+					
 	if (!mo->momx && !mo->momy)
 	{
 		if (mo->flags & MF_SKULLFLY)
@@ -175,6 +180,9 @@ void P_XYMovement (mobj_t* mo)
 	xmove = mo->momx;
 	ymove = mo->momy;
 		
+	oldx = mo->x;	// phares 9/10/98: new code to reduce bobbing/momentum
+	oldy = mo->y;	// when on ice & up against wall. These will be compared
+					// to your x,y values later to see if you were able to move
 	do
 	{
 		if (xmove > MAXMOVE/2 || ymove > MAXMOVE/2)
@@ -191,15 +199,28 @@ void P_XYMovement (mobj_t* mo)
 			xmove = ymove = 0;
 		}
 				
-		if (!P_TryMove (mo, ptryx, ptryy))
+		// killough 3/15/98: Allow objects to drop off
+
+		if (!P_TryMove (mo, ptryx, ptryy, true))
 		{
 			// blocked move
 			if (mo->player)
-			{	// try to slide along it
+			{
+				// [RH] Activate any potential special lines
+				while (numspechit-- > 0)
+					P_PushSpecialLine (mo,
+					   P_PointOnLineSide (mo->x, mo->y, spechit[numspechit]),
+					   spechit[numspechit]);
+		
+				// try to slide along it
 				P_SlideMove (mo);
 			}
 			else if (mo->flags & MF_MISSILE)
 			{
+				// [RH] missiles can activate projectile hit lines, too
+				if (!olddemo)
+					while (numspechit > 0)
+						P_ShootSpecialLine (mo, spechit[--numspechit]);
 				// explode a missile
 				if (ceilingline &&
 					ceilingline->backsector &&
@@ -269,20 +290,42 @@ void P_XYMovement (mobj_t* mo)
 	}
 	else
 	{
-		mo->momx = FixedMul (mo->momx, FRICTION);
-		mo->momy = FixedMul (mo->momy, FRICTION);
+		// phares 3/17/98
+		// Friction will have been adjusted by friction thinkers for icy
+		// or muddy floors. Otherwise it was never touched and
+		// remained set at ORIG_FRICTION
+
+		// phares 9/10/98: reduce bobbing/momentum when on ice & up against wall
+
+		if ((oldx == mo->x) && (oldy == mo->y)) // Did you go anywhere?
+		{	// No. Use original friction. This allows you to not bob so much
+			// if you're on ice, but keeps enough momentum around to break free
+			// when you're mildly stuck in a wall.
+			mo->momx = FixedMul(mo->momx,ORIG_FRICTION);
+			mo->momy = FixedMul(mo->momy,ORIG_FRICTION);
+		}
+		else
+		{	// Yes. Use stored friction.
+			mo->momx = FixedMul(mo->momx,mo->friction);
+			mo->momy = FixedMul(mo->momy,mo->friction);
+		}
+		mo->friction = ORIG_FRICTION;	// reset to normal for next tic
 	}
 }
 
 //
 // P_ZMovement
 //
-void P_ZMovement (mobj_t* mo)
+void P_ZMovement (mobj_t *mo)
 {
 	fixed_t 	dist;
 	fixed_t 	delta;
 	mobj_t		*other;
+	fixed_t		movez;
 	
+	if (mo->flags2 & MF2_NOADJUST)
+		return;
+
 	// check for smooth step up
 	if (mo->player && mo->z < mo->floorz)
 	{
@@ -293,14 +336,13 @@ void P_ZMovement (mobj_t* mo)
 	}
 
 	// adjust height
-	mo->z += mo->momz;
+	mo->z += (movez = mo->momz);
 		
 	if ( mo->flags & MF_FLOAT
 		 && mo->target)
 	{
 		// float down towards target if too close
-		if ( !(mo->flags & MF_SKULLFLY)
-			 && !(mo->flags & MF_INFLOAT) )
+		if ( !(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT) )
 		{
 			dist = P_AproxDistance (mo->x - mo->target->x,
 									mo->y - mo->target->y);
@@ -323,7 +365,7 @@ void P_ZMovement (mobj_t* mo)
 			other = NULL;
 	} else {
 		other = P_FindFloor (mo);			// [RH] Z-Check
-		if ((mo->flags & MF_MISSILE) && (other == mo->target) && (gametic < (signed)mo->targettic))
+		if ((mo->flags & MF_MISSILE) && (other == mo->target) && mo->targettic)
 			other = NULL;
 	}
 
@@ -342,48 +384,14 @@ void P_ZMovement (mobj_t* mo)
 		if (mo->momz < 0)
 		{
 			if (mo->player
-				&& mo->momz < (fixed_t)(sv_gravity->value * -655.36))		
+				&& mo->momz < (fixed_t)(sv_gravity->value * mo->subsector->sector->gravity * -655.36f))		
 			{
-				// [RH] Andy Kempling's fall damage mod.
-				//		(adapted to work with ZDoom)
-				// calculate the number of broken bones... (joke)
-				// damage player according to the height fallen.
-				//
-				if (dmflags & (DF_YES_FALLING|DF_YES_FALLING_LOTS)) {
-					fixed_t minvelocity;
-					fixed_t damage;
-					float divisor;
-
-					if (dmflags & DF_YES_FALLING_LOTS) {
-						// Original values
-						minvelocity = -741455*4/3;
-						divisor = -26214400.0f;
-					} else {
-						// Not-quite-so-damaging values
-						minvelocity = -741455*5/3;
-						divisor = -39321600.0f;
-					}
-
-					if (mo->momz < minvelocity) {
-						damage = (fixed_t)((float)(mo->momz) * sv_gravity->value / divisor);
-						if (other != (mobj_t *)-1) {
-							// [RH] We landed on another thing. Give half the damage to it.
-							damage >>= 1;
-							P_DamageMobj (other, mo, mo, damage, MOD_FALLXFER);
-						}
-						if (mo->player)	{
-							// Monsters don't take falling damage
-							P_DamageMobj(mo, mo, mo, damage, MOD_FALLING);
-						}
-					}
-				}
-
 				// Squat down.
 				// Decrease viewheight for a moment
 				// after hitting the ground (hard),
 				// and utter appropriate sound.
 				mo->player->deltaviewheight = mo->momz>>3;
-				S_StartSound (mo, sfx_oof);
+				S_StartSound (mo, "*land1", 96);
 			}
 			mo->momz = 0;
 		}
@@ -401,15 +409,14 @@ void P_ZMovement (mobj_t* mo)
 			P_ExplodeMissile (mo);
 			return;
 		}
-
 		P_StandOnThing (mo, other);
 	}
 	else if (! (mo->flags & MF_NOGRAVITY) )
 	{
 		if (mo->momz == 0)
-			mo->momz = (fixed_t)(sv_gravity->value * -163.84);
+			mo->momz = (fixed_t)(sv_gravity->value * mo->subsector->sector->gravity * -163.84);
 		else
-			mo->momz -= (fixed_t)(sv_gravity->value * 81.92);
+			mo->momz -= (fixed_t)(sv_gravity->value * mo->subsector->sector->gravity * 81.92);
 	}
 
 	if (olddemo) {
@@ -419,7 +426,7 @@ void P_ZMovement (mobj_t* mo)
 			other = NULL;
 	} else {
 		other = P_FindCeiling (mo);			// [RH] Z-Check
-		if ((mo->flags & MF_MISSILE) && (other == mo->target) && (gametic < (signed)mo->targettic))
+		if ((mo->flags & MF_MISSILE) && (other == mo->target) && mo->targettic)
 			other = NULL;
 	}
 
@@ -464,7 +471,7 @@ void P_ZMovement (mobj_t* mo)
 //
 // P_NightmareRespawn
 //
-void P_NightmareRespawn (mobj_t* mobj)
+void P_NightmareRespawn (mobj_t *mobj)
 {
 	fixed_t 			x;
 	fixed_t 			y;
@@ -488,7 +495,7 @@ void P_NightmareRespawn (mobj_t* mobj)
 					  mobj->y,
 					  0, MT_TFOG, ONFLOORZ);
 	// initiate teleport sound
-	S_StartSound (mo, sfx_telept);
+	S_StartSound (mo, "misc/teleport", 32);
 
 	ss = R_PointInSubsector (x,y);
 
@@ -500,7 +507,7 @@ void P_NightmareRespawn (mobj_t* mobj)
 
 	mo = P_SpawnMobj (x, y, z, MT_TFOG, onfloor);
 
-	S_StartSound (mo, sfx_telept);
+	S_StartSound (mo, "misc/teleport", 32);
 
 	// spawn the new monster
 	mthing = &mobj->spawnpoint;
@@ -522,14 +529,133 @@ void P_NightmareRespawn (mobj_t* mobj)
 
 
 //
+// [RH] Some new functions to work with Thing IDs. ------->
+//
+static mobj_t *tidhash[128];
+#define TIDHASH(i) ((i)&127)
+
+//
+// P_ClearTidHashes
+//
+// Clears the tid hashtable.
+//
+void P_ClearTidHashes (void)
+{
+	int i;
+
+	for (i = 0; i < 128; i++)
+		tidhash[i] = NULL;
+}
+
+//
+// P_AddMobjToHash
+//
+// Inserts an mobj into the correct chain based on its tid.
+// If its tid is 0, this function does nothing.
+//
+void P_AddMobjToHash (mobj_t *mobj)
+{
+	if (mobj->tid == 0) {
+		mobj->inext = mobj->iprev = NULL;
+		return;
+	} else {
+		int hash = TIDHASH(mobj->tid);
+
+		mobj->inext = tidhash[hash];
+		mobj->iprev = NULL;
+		tidhash[hash] = mobj;
+	}
+}
+
+//
+// P_RemoveMobjFromHash
+//
+// Removes an mobj from its hash chain.
+//
+void P_RemoveMobjFromHash (mobj_t *mobj)
+{
+	if (mobj->tid == 0)
+		return;
+	else {
+		if (mobj->iprev == NULL) {
+			// First mobj in the chain (probably)
+			int hash = TIDHASH(mobj->tid);
+
+			if (tidhash[hash] == mobj)
+				tidhash[hash] = mobj->inext;
+			if (mobj->inext) {
+				mobj->inext->iprev = NULL;
+				mobj->inext = NULL;
+			}
+		} else {
+			// Not the first mobj in the chain
+			mobj->iprev->inext = mobj->inext;
+			if (mobj->inext) {
+				mobj->inext->iprev = mobj->iprev;
+				mobj->inext = NULL;
+			}
+			mobj->iprev = NULL;
+		}
+	}
+}
+
+//
+// P_FindMobjByTid
+//
+// Returns the next mobj with the tid after the one given,
+// or the first with that tid if no mobj is passed. Returns
+// NULL if there are no more.
+//
+mobj_t *P_FindMobjByTid (mobj_t *mobj, int tid)
+{
+	// Mobjs without tid are never stored.
+	if (tid == 0)
+		return NULL;
+
+	if (!mobj)
+		mobj = tidhash[TIDHASH(tid)];
+	else
+		mobj = mobj->inext;
+
+	while (mobj && mobj->tid != tid)
+		mobj = mobj->inext;
+
+	return mobj;
+}
+
+//
+// P_FindGoal
+//
+// Like P_FindMobjByTid except it also matcheds on type.
+//
+mobj_t *P_FindGoal (mobj_t *mobj, int tid, int kind)
+{
+	mobj_t *goal;
+	
+	do {
+		goal = P_FindMobjByTid (mobj, tid);
+	} while (goal && goal->type != kind);
+
+	return goal;
+}
+
+// <------- [RH] End new functions
+
+
+//
 // P_MobjThinker
 //
-void P_MobjThinker (mobj_t* mobj)
+void P_MobjThinker (mobj_t *mobj)
 {
+	if (mobj == (mobj_t *)0x0131E0D8) {
+		int foo = 50;
+	}
+	// [RH] Decrement targettic
+	if (mobj->targettic)
+		mobj->targettic--;
+
 	// momentum movement
-	if (mobj->momx
-		|| mobj->momy
-		|| (mobj->flags&MF_SKULLFLY) )
+	if (mobj->momx || mobj->momy || (mobj->flags&MF_SKULLFLY) )
 	{
 		P_XYMovement (mobj);
 
@@ -537,8 +663,7 @@ void P_MobjThinker (mobj_t* mobj)
 		if (mobj->thinker.function.acv == (actionf_v) (-1))
 			return; 			// mobj was removed
 	}
-	if ( (mobj->z != mobj->floorz)
-		 || mobj->momz )
+	if ( (mobj->z != mobj->floorz) || mobj->momz )
 	{
 		P_ZMovement (mobj);
 		
@@ -547,6 +672,9 @@ void P_MobjThinker (mobj_t* mobj)
 			return; 			// mobj was removed
 	}
 
+	// [RH] Dormant things do no state changes
+	if (mobj->flags2 & MF2_DORMANT)
+		return;
 	
 	// cycle through states,
 	// calling action functions at transitions
@@ -581,7 +709,6 @@ void P_MobjThinker (mobj_t* mobj)
 
 		P_NightmareRespawn (mobj);
 	}
-
 }
 
 
@@ -609,6 +736,10 @@ mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int onflo
 	mobj->height = info->height;
 	mobj->flags = info->flags;
 	mobj->health = info->spawnhealth;
+	if (type == MT_BRIDGE)	// [RH] Floating bridge never adjusts its Z-position
+		mobj->flags2 |= MF2_NOADJUST;
+	if (mobj->flags & MF_STEALTH)	// [RH] Stealth monsters start out invisible
+		mobj->flags2 |= MF2_INVISIBLE;
 
 	if (gameskill->value != sk_nightmare)
 		mobj->reactiontime = info->reactiontime;
@@ -637,13 +768,10 @@ mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int onflo
 	else 
 		mobj->z = z;
 
-	mobj->thinker.function.acp1 = (actionf_p1)P_MobjThinker;
-		
-	P_AddThinker (&mobj->thinker);
+	mobj->friction = ORIG_FRICTION;		// phares 3/17/98
 
-	// [RH] If it's an ambient sound, activate it
-	if (type >= MT_AMBIENT0 && type <= MT_AMBIENT63)
-		S_ActivateAmbient (mobj, type - MT_AMBIENT0);
+	mobj->thinker.function.acp1 = (actionf_p1)P_MobjThinker;
+	P_AddThinker (&mobj->thinker);
 
 	return mobj;
 }
@@ -676,6 +804,9 @@ void P_RemoveMobj (mobj_t* mobj)
 		
 	// unlink from sector and block lists
 	P_UnsetThingPosition (mobj);
+
+	// [RH] Unlink from tid chain
+	P_RemoveMobjFromHash (mobj);
 
 	// Delete all nodes on the current sector_list			phares 3/16/98
 
@@ -744,7 +875,7 @@ void P_RespawnSpecials (void)
 	// spawn a teleport fog at the new spot
 	ss = R_PointInSubsector (x,y); 
 	mo = P_SpawnMobj (x, y, z, MT_IFOG, onfloor);
-	S_StartSound (mo, sfx_itmbk);
+	S_StartSound (mo, "misc/spawn", 100);
 
 	// spawn it
 	mo = P_SpawnMobj (x,y,z, i, onfloor);
@@ -766,50 +897,39 @@ void P_RespawnSpecials (void)
 //
 void P_SpawnPlayer (mapthing2_t *mthing)
 {
+	int		  playernum;
 	player_t *p;
-	fixed_t   x;
-	fixed_t   y;
-	fixed_t   z;
-
 	mobj_t	 *mobj;
-
 	int 	  i;
 
-	// not playing?
-	// [RH] Things 4001-? are also multiplayer starts.
-	if (mthing->type > 4000) {
-		if (!playeringame[mthing->type - 4001 + 4])
-			return;
-		else {
-			p = &players[mthing->type - 4001 + 4];
-			if (p->playerstate == PST_REBORN)
-				G_PlayerReborn (mthing->type - 4001 + 4);
-		}
-	} else {
-		if (!playeringame[mthing->type-1])
-			return;
-		else {
-			p = &players[mthing->type-1];
-			if (p->playerstate == PST_REBORN)
-				G_PlayerReborn (mthing->type - 1);
-		}
-	}
+	// [RH] Things 4001-? are also multiplayer starts. Just like 1-4.
+	//		To make things simpler, figure out which player is being
+	//		spawned here.
+	playernum = (mthing->type > 4000) ? mthing->type - 4001 + 4 : mthing->type - 1;
 
-	x	 = mthing->x << FRACBITS;
-	y	 = mthing->y << FRACBITS;
-	z	 = mthing->z << FRACBITS;
-	mobj = P_SpawnMobj (x,y,z, MT_PLAYER, ONFLOORZ);
+	// not playing?
+	if (playernum >= MAXPLAYERS || !playeringame[playernum])
+		return;
+
+	p = &players[playernum];
+	if (p->playerstate == PST_REBORN)
+		G_PlayerReborn (playernum);
+
+	mobj = P_SpawnMobj (mthing->x << FRACBITS, mthing->y << FRACBITS, 0, MT_PLAYER, ONFLOORZ);
 
 	// set color translations for player sprites
 	// [RH] Different now: MF_TRANSLATION is not used.
-	mobj->palette = (struct palette_s *)(translationtables + (mthing->type-1)*256);
+	mobj->palette = (struct palette_s *)(translationtables + 256*playernum);
 
 	mobj->angle = ANG45 * (mthing->angle/45);
 	mobj->pitch = mobj->roll = 0;
 	mobj->player = p;
 	mobj->health = p->health;
 
-	p->mo = mobj;
+	// [RH] Set player sprite based on skin
+	mobj->sprite = skins[p->userinfo.skin].sprite;
+
+	p->camera = p->mo = mobj;	// [RH]
 	p->playerstate = PST_LIVE;
 	p->refire = 0;
 	p->message = NULL;
@@ -827,14 +947,17 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 		for (i=0 ; i<NUMCARDS ; i++)
 			p->cards[i] = true;
 
-	if (consoleplayer ==
-		(mthing->type > 4000 ? mthing->type - 4001 + 4 : mthing->type - 1))
+	if (consoleplayer == playernum)
 	{
 		// wake up the status bar
 		ST_Start ();
 		// wake up the heads up text
 		HU_Start ();
 	}
+
+	// [RH] If someone is in the way, kill them
+	if (!olddemo)
+		P_TeleportMove (mobj, mobj->x, mobj->y, mobj->z, true);
 }
 
 
@@ -843,7 +966,8 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 // The fields of the mapthing should
 // already be in host byte order.
 //
-void P_SpawnMapThing (mapthing2_t *mthing)
+// [RH] position is used to weed out unwanted start spots
+void P_SpawnMapThing (mapthing2_t *mthing, int position)
 {
 	int 				i;
 	int 				bit;
@@ -858,7 +982,7 @@ void P_SpawnMapThing (mapthing2_t *mthing)
 	{
 		if (deathmatch_p == &deathmatchstarts[MaxDeathmatchStarts]) {
 			// [RH] Get more deathmatchstarts
-			MaxDeathmatchStarts += 8;
+			MaxDeathmatchStarts *= 2;
 			deathmatchstarts = Realloc (deathmatchstarts, MaxDeathmatchStarts * sizeof(mapthing2_t));
 			deathmatch_p = &deathmatchstarts[MaxDeathmatchStarts - 8];
 		}
@@ -870,6 +994,10 @@ void P_SpawnMapThing (mapthing2_t *mthing)
 	// check for players specially
 	if (mthing->type <= 4 && mthing->type > 0)
 	{
+		// [RH] Only spawn spots that match position.
+		if (mthing->args[0] != position)
+			return;
+
 		// save spots for respawning in network games
 		playerstarts[mthing->type-1] = *mthing;
 		if (!deathmatch->value)
@@ -878,6 +1006,11 @@ void P_SpawnMapThing (mapthing2_t *mthing)
 		return;
 	} else if (mthing->type >= 4001 && mthing->type <= 4001 + MAXPLAYERS - 4) {
 		// [RH] Multiplayer starts for players 5-?
+
+		// [RH] Only spawn spots that match position.
+		if (mthing->args[0] != position)
+			return;
+
 		playerstarts[mthing->type - 4001 + 4] = *mthing;
 		if (!deathmatch->value)
 			P_SpawnPlayer (mthing);
@@ -892,8 +1025,10 @@ void P_SpawnMapThing (mapthing2_t *mthing)
 			if (!(mthing->flags & MTF_COOPERATIVE))
 				return;
 		}
-	} else if (!(mthing->flags & MTF_SINGLE))
-		return;
+	} else {
+		if (!(mthing->flags & MTF_SINGLE))
+			return;
+	}
 				
 	// check for apropriate skill level
 	if (gameskill->value == sk_baby)
@@ -906,10 +1041,18 @@ void P_SpawnMapThing (mapthing2_t *mthing)
 	if (!(mthing->flags & bit) )
 		return;
 		
-	// find which type to spawn
-	for (i=0 ; i< NUMMOBJTYPES ; i++)
-		if (mthing->type == mobjinfo[i].doomednum)
-			break;
+	// [RH] Determine if it is an old ambient thing, and if so,
+	//		map it to MT_AMBIENT with the proper parameter.
+	if (mthing->type >= 14001 && mthing->type <= 14064) {
+		mthing->args[0] = mthing->type - 14000;
+		mthing->type = 14065;
+		i = MT_AMBIENT;
+	} else {
+		// find which type to spawn
+		for (i=0 ; i< NUMMOBJTYPES ; i++)
+			if (mthing->type == mobjinfo[i].doomednum)
+				break;
+	}
 		
 	if (i==NUMMOBJTYPES) {
 		// [RH] Don't die if the map tries to spawn an unknown thing
@@ -994,6 +1137,14 @@ void P_SpawnMapThing (mapthing2_t *mthing)
 	mobj = P_SpawnMobj (x,y,z, i, onfloor);
 	mobj->spawnpoint = *mthing;
 
+	// [RH] Set the thing's special
+	mobj->special = mthing->special;
+	memcpy (mobj->args, mthing->args, sizeof(mobj->args));
+
+	// [RH] If it's an ambient sound, activate it
+	if (i == MT_AMBIENT)
+		S_ActivateAmbient (mobj, mobj->args[0]);
+
 	if (mobj->tics > 0)
 		mobj->tics = 1 + (P_Random (pr_spawnmapthing) % mobj->tics);
 	if (mobj->flags & MF_COUNTKILL)
@@ -1004,6 +1155,14 @@ void P_SpawnMapThing (mapthing2_t *mthing)
 	mobj->angle = ANG45 * (mthing->angle/45);
 	if (mthing->flags & MTF_AMBUSH)
 		mobj->flags |= MF_AMBUSH;
+
+	// [RH] Add ThingID to mobj and link it in with the others
+	mobj->tid = mthing->thingid;
+	P_AddMobjToHash (mobj);
+
+	// [RH] Go dormant as needed
+	if (mthing->flags & MTF_DORMANT)
+		P_DeactivateMobj (mobj);
 }
 
 
@@ -1043,8 +1202,7 @@ void P_SpawnPuff (fixed_t x, fixed_t y, fixed_t z)
 //
 // P_SpawnBlood
 // 
-void
-P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, int damage)
+void P_SpawnBlood (fixed_t x, fixed_t y, fixed_t z, int damage)
 {
 	mobj_t *th;
 	int t;
@@ -1077,8 +1235,9 @@ void P_CheckMissileSpawn (mobj_t* th)
 	if (th->tics < 1)
 		th->tics = 1;
 
-	// Give the missile time to get away from the shooter
-	th->targettic = gametic + 10;
+	// [RH] Give the missile time to get away from the shooter
+	if (!olddemo)
+		th->targettic = 10;
 	
 	// move a little forward so an angle can
 	// be computed if it immediately explodes
@@ -1086,9 +1245,10 @@ void P_CheckMissileSpawn (mobj_t* th)
 	th->y += th->momy>>1;
 	th->z += th->momz>>1;
 
-	if (!P_TryMove (th, th->x, th->y)) {
+	// killough 3/15/98: no dropoff (really = don't care for missiles)
+
+	if (!P_TryMove (th, th->x, th->y, false))
 		P_ExplodeMissile (th);
-	}
 }
 
 
@@ -1106,7 +1266,7 @@ mobj_t *P_SpawnMissile (mobj_t *source, mobj_t *dest, mobjtype_t type)
 					  source->z + 4*8*FRACUNIT, type, 0);
 	
 	if (th->info->seesound)
-		S_StartSound (th, th->info->seesound);
+		S_StartSound (th, th->info->seesound, 70);
 
 	th->target = source;		// where it came from
 	an = R_PointToAngle2 (source->x, source->y, dest->x, dest->y);		
@@ -1178,7 +1338,7 @@ void P_SpawnPlayerMissile (mobj_t *source, mobjtype_t type)
 
 	if (linetarget && source->player)
 		if (!(dmflags & DF_NO_FREELOOK)
-			&& abs(slope - pitchslope) > source->player->userinfo->aimdist) {
+			&& abs(slope - pitchslope) > source->player->userinfo.aimdist) {
 			an = source->angle;
 			slope = pitchslope;
 		}
@@ -1190,7 +1350,7 @@ void P_SpawnPlayerMissile (mobj_t *source, mobjtype_t type)
 	th = P_SpawnMobj (x,y,z, type, 0);
 
 	if (th->info->seesound)
-		S_StartSound (th, th->info->seesound);
+		S_StartSound (th, th->info->seesound, 70);
 
 	th->target = source;
 	th->angle = an;

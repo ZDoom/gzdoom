@@ -91,7 +91,8 @@ void P_DropWeapon (player_t* player);
 //
 // P_USER
 //
-void	P_PlayerThink (player_t* player);
+void	P_FallingDamage (mobj_t *ent);
+void	P_PlayerThink (player_t *player);
 
 
 //
@@ -109,7 +110,15 @@ extern int				iquehead;
 extern int				iquetail;
 
 
-void P_RespawnSpecials (void);
+// [RH] Functions to work with ThingIDs.
+void	P_ClearTidHashes (void);
+void	P_AddMobjToHash (mobj_t *mobj);
+void	P_RemoveMobjFromHash (mobj_t *mobj);
+mobj_t *P_FindMobjByTid (mobj_t *mobj, int tid);
+mobj_t *P_FindGoal (mobj_t *mobj, int tid, int type);
+
+
+void	P_RespawnSpecials (void);
 
 mobj_t *P_SpawnMobj (fixed_t x, fixed_t y, fixed_t z, mobjtype_t type, int onfloor);
 
@@ -127,9 +136,27 @@ void	ThrowGib (mobj_t *self, mobjtype_t gibtype, int damage);
 
 
 //
+// [RH] P_THINGS
+//
+extern int SpawnableThings[];
+extern const int NumSpawnableThings;
+
+BOOL	P_Thing_Spawn (int tid, int type, angle_t angle, BOOL fog);
+BOOL	P_Thing_Projectile (int tid, int type, angle_t angle,
+							fixed_t speed, fixed_t vspeed, BOOL gravity);
+BOOL	P_ActivateMobj (mobj_t *mobj);
+BOOL	P_DeactivateMobj (mobj_t *mobj);
+
+
+//
 // P_ENEMY
 //
 void	P_NoiseAlert (mobj_t* target, mobj_t* emmiter);
+void	P_SpawnBrainTargets(void);	// killough 3/26/98: spawn icon landings
+
+extern struct brain_s {				// killough 3/26/98: global state of boss brain
+	int easy, targeton;
+} brain;
 
 // [RH] Andy Baker's stealth monsters
 void	 P_BecomeVisible (mobj_t *actor);
@@ -212,17 +239,18 @@ extern BOOL				floatok;
 extern fixed_t			tmfloorz;
 extern fixed_t			tmceilingz;
 extern msecnode_t		*sector_list;		// phares 3/16/98
+extern BOOL				oldshootactivation;	// [RH]
 
 extern	line_t* 		ceilingline;
 
 BOOL	P_CheckPosition (mobj_t *thing, fixed_t x, fixed_t y);
-BOOL	P_TryMove (mobj_t* thing, fixed_t x, fixed_t y);
+BOOL	P_TryMove (mobj_t* thing, fixed_t x, fixed_t y, BOOL dropoff);
 BOOL	P_TeleportMove (mobj_t* thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefrag);	// [RH] Added z and telefrag parameters
 void	P_SlideMove (mobj_t* mo);
-BOOL	P_CheckSight (const mobj_t* t1, const mobj_t* t2);
+BOOL	P_CheckSight (const mobj_t* t1, const mobj_t* t2, BOOL ignoreInvisibility);
 void	P_UseLines (player_t* player);
 
-BOOL	P_ChangeSector (sector_t* sector, BOOL crunch);
+BOOL	P_ChangeSector (sector_t* sector, int crunch);
 
 extern	mobj_t*	linetarget; 	// who got hit (or NULL)
 
@@ -234,7 +262,7 @@ void	P_LineAttack (mobj_t *t1, angle_t angle, fixed_t distance, fixed_t slope, i
 void	P_RadiusAttack (mobj_t *spot, mobj_t *source, int damage, int mod);
 
 //jff 3/19/98 P_CheckSector(): new routine to replace P_ChangeSector()
-BOOL	P_CheckSector(sector_t *sector, BOOL crunch);
+BOOL	P_CheckSector(sector_t *sector, int crunch);
 void	P_DelSeclist(msecnode_t *);							// phares 3/16/98
 void	P_CreateSecNodeList(mobj_t*,fixed_t,fixed_t);		// phares 3/14/98
 int		P_GetMoveFactor(mobj_t* mo);						// phares  3/6/98
@@ -306,7 +334,6 @@ void P_DamageMobj (mobj_t *target, mobj_t *inflictor, mobj_t *source, int damage
 #define MOD_EXIT			20
 #define MOD_SPLASH			21
 #define MOD_HIT				22
-#define MOD_FALLXFER		23
 #define MOD_FRIENDLY_FIRE	0x80000000
 
 extern	int MeansOfDeath;

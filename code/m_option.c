@@ -43,8 +43,6 @@
 #include "m_misc.h"
 
 // Data.
-#include "sounds.h"
-
 #include "m_menu.h"
 
 //
@@ -79,90 +77,22 @@ void M_ClearMenus (void);
 
 
 
-typedef struct oldmenu_s
-{
-	short				numitems;		// # of menu items
-	struct oldmenu_s*	prevMenu;		// previous menu
-	void		* 		menuitems;		// menu items
-	void				(*routine)();	// draw routine
-	short				x;
-	short				y;				// x,y of menu
-	short				lastOn; 		// last item user was on in menu
-} oldmenu_t;
-
 extern oldmenu_t MainDef;
 extern short	 itemOn;
 extern oldmenu_t *currentMenu;
 
 
-typedef enum {
-	whitetext,
-	redtext,
-	more,
-	slider,
-	discrete,
-	control,
-	screenres,
-	bitflag,
-} itemtype;
-
-typedef struct menuitem_s {
-	itemtype		  type;
-	char			 *label;
-	union {
-		cvar_t			**cvar;
-		int				  selmode;
-		int				  flagmask;
-	} a;
-	union {
-		float			  min;		/* aka numvalues aka invflag */
-		int				  key1;
-		char			 *res1;
-	} b;
-	union {
-		float			  max;
-		int				  key2;
-		char			 *res2;
-	} c;
-	union {
-		float			  step;
-		char			 *res3;
-	} d;
-	union {
-		struct value_s	 *values;
-		char			 *command;
-		void			(*cfunc)(cvar_t *cvar, float newval);
-		void			(*mfunc)(void);
-		int				  highlight;
-		int				 *flagint;
-	} e;
-} menuitem_t;
-
-typedef struct menu_s {
-	char			title[8];
-	int				lastOn;
-	int				numitems;
-	int				indent;
-	menuitem_t	   *items;
-	struct menu_s  *prevmenu;
-} menu_t;
-
-typedef struct value_s {
-	float		value;
-	char		*name;
-} value_t;
-
-value_t YesNo[] = {
+value_t YesNo[2] = {
 	{ 0.0, "No" },
 	{ 1.0, "Yes" }
 };
 
-value_t NoYes[] = {
+value_t NoYes[2] = {
 	{ 0.0, "Yes" },
 	{ 1.0, "No" }
 };
 
-value_t OnOff[] = {
+value_t OnOff[2] = {
 	{ 0.0, "Off" },
 	{ 1.0, "On" }
 };
@@ -186,6 +116,8 @@ static void GoToConsole (void);
 void Reset2Defaults (void);
 void Reset2Saved (void);
 
+extern cvar_t *snd_MidiVolume;
+
 static void SetVidMode (void);
 
 menuitem_t OptionItems[] = {
@@ -196,7 +128,8 @@ menuitem_t OptionItems[] = {
 	{ more,		"Set video mode",		NULL,					0.0, 0.0,	0.0, (value_t *)SetVidMode },
 	{ redtext,	" ",					NULL,					0.0, 0.0,	0.0, NULL },
 	{ slider,	"Mouse speed",			&mouseSensitivity,		0.5, 2.5,	0.1, NULL },
-	{ slider,	"MOD Music volume",		&snd_MusicVolume,		0.0, 64.0,	1.0, NULL },
+	{ slider,	"MIDI music volume",	&snd_MidiVolume,		0.0, 1.0,	0.05, NULL },
+	{ slider,	"MOD music volume",		&snd_MusicVolume,		0.0, 64.0,	1.0, NULL },
 	{ slider,	"Sound volume",			&snd_SfxVolume,			0.0, 15.0,	1.0, NULL },
 	{ discrete,	"Always Run",			&cl_run,				2.0, 0.0,	0.0, OnOff },
 	{ discrete, "Always Mouselook",		&freelook,				2.0, 0.0,	0.0, OnOff },
@@ -228,7 +161,8 @@ menuitem_t ControlsItems[] = {
 	{ whitetext,"ENTER to change, BACKSPACE to clear", NULL, 0.0, 0.0, 0.0, NULL },
 	{ whitetext," ", NULL, 0.0, 0.0, 0.0, NULL },
 	{ control,	"Attack",				NULL, 0.0, 0.0, 0.0, (value_t *)"+attack" },
-//	{ control,	"Next Weapon",			NULL, 0.0, 0.0, 0.0, (value_t *)"weapnext" },
+	{ control,	"Next Weapon",			NULL, 0.0, 0.0, 0.0, (value_t *)"weapnext" },	// Was already here
+	{ control,	"Previous Weapon",		NULL, 0.0, 0.0, 0.0, (value_t *)"weapprev" },	// TIJ
 	{ control,	"Use / Open",			NULL, 0.0, 0.0, 0.0, (value_t *)"+use" },
 	{ control,	"Jump",					NULL, 0.0, 0.0, 0.0, (value_t *)"+jump" },
 	{ control,	"Walk forward",			NULL, 0.0, 0.0, 0.0, (value_t *)"+forward" },
@@ -250,7 +184,8 @@ menuitem_t ControlsItems[] = {
 menu_t ControlsMenu = {
 	"M_CONTRO",
 	2,
-	19,
+	21,	// TIJ	Was: 19
+		//		Now: 21 (2 more Control menu items: Prev and Next Weapon)
 	0,
 	ControlsItems,
 	&OptionMenu
@@ -317,33 +252,35 @@ menu_t VideoMenu = {
  *=======================================*/
 
 extern BOOL setmodeneeded;
-extern int	NewWidth, NewHeight, NewBpp;
+extern int NewWidth, NewHeight, NewID;
+extern int DisplayID;
+extern char *IdStrings[22];
 
 int testingmode;		// Holds time to revert to old mode
-int OldWidth, OldHeight, OldBpp;
+int OldWidth, OldHeight, OldID;
 float OldFS;
 
-static void BuildModesList (int hiwidth, int hiheight, int hibpp);
+static void BuildModesList (int hiwidth, int hiheight, int hi_id);
 static BOOL GetSelectedSize (int line, int *width, int *height);
-static void SetModesMenu (int w, int h, int bpp);
+static void SetModesMenu (int w, int h, int id);
 
 // Found in i_video.c.
-void I_StartModeIterator (int bpp);
+void I_StartModeIterator (int id);
 BOOL I_NextMode (int *width, int *height);
 
-extern cvar_t *vid_defwidth, *vid_defheight, *vid_defbpp;
+extern cvar_t *vid_defwidth, *vid_defheight, *vid_defid;
 
 static cvar_t DummyDepthCvar, DummyFSCvar;
 static cvar_t *DummyDepthPtr, *DummyFSPtr;
 extern cvar_t *fullscreen;
 
-static value_t Depths[4];
+static value_t Depths[22];
 
 static char VMEnterText[] = "Press ENTER to set mode";
 static char VMTestText[] = "T to test mode for 5 seconds";
 
 menuitem_t ModesItems[] = {
-	{ discrete, "Screen depth",			(cvar_t **)&DummyDepthPtr,0.0, 0.0,0.0, Depths },
+	{ discrete, "Screen mode",			(cvar_t **)&DummyDepthPtr,0.0, 0.0,0.0, Depths },
 	{ redtext,	" ",					NULL,					0.0, 0.0,	0.0, NULL },
 	{ discrete, "Fullscreen",			(cvar_t **)&DummyFSPtr,	2.0, 0.0,	0.0, YesNo },
 	{ redtext,	" ",					NULL,					0.0, 0.0,	0.0, NULL },
@@ -356,7 +293,7 @@ menuitem_t ModesItems[] = {
 	{ screenres,NULL,					NULL,					0.0, 0.0,	0.0, NULL },
 	{ screenres,NULL,					NULL,					0.0, 0.0,	0.0, NULL },
 	{ screenres,NULL,					NULL,					0.0, 0.0,	0.0, NULL },
-	{ whitetext,"Note: Only 8 bpp modes are fully supported",NULL,0.0, 0.0,	0.0, NULL },
+	{ whitetext,"Note: Only 8 bpp modes are supported",NULL,	0.0, 0.0,	0.0, NULL },
 	{ redtext,  VMEnterText,			NULL,					0.0, 0.0,	0.0, NULL },
 	{ redtext,	" ",					NULL,					0.0, 0.0,	0.0, NULL },
 	{ redtext,  VMTestText,				NULL,					0.0, 0.0,	0.0, NULL },
@@ -381,6 +318,16 @@ menu_t ModesMenu = {
 	&OptionMenu
 };
 
+extern byte IdTobpp[22];
+
+static int IdToBpp (int id) {
+	id -= 1000;
+	if (id < 0 || id > 21)
+		return 0;
+	else
+		return IdTobpp[id];
+}
+
 
 /*=======================================
  *
@@ -391,7 +338,7 @@ menu_t ModesMenu = {
 static cvar_t *flagsvar;
 
 static menuitem_t DMFlagsItems[] = {
-	{ bitflag,	"Falling damage",		(cvar_t **)DF_YES_FALLING_LOTS, 0, 0, 0, (value_t *)&dmflags },
+	{ bitflag,	"Falling damage",		(cvar_t **)DF_YES_FALLING,		0, 0, 0, (value_t *)&dmflags },
 	{ bitflag,	"Weapons stay (DM)",	(cvar_t **)DF_WEAPONS_STAY,		0, 0, 0, (value_t *)&dmflags },
 	{ bitflag,	"Allow powerups (DM)",	(cvar_t **)DF_NO_ITEMS,			1, 0, 0, (value_t *)&dmflags },
 	{ bitflag,	"Allow health (DM)",	(cvar_t **)DF_NO_HEALTH,		1, 0, 0, (value_t *)&dmflags },
@@ -406,13 +353,16 @@ static menuitem_t DMFlagsItems[] = {
 	{ bitflag,	"Powerups respawn",		(cvar_t **)DF_ITEMS_RESPAWN,	0, 0, 0, (value_t *)&dmflags },
 	{ bitflag,	"Fast monsters",		(cvar_t **)DF_FAST_MONSTERS,	0, 0, 0, (value_t *)&dmflags },
 	{ bitflag,	"Allow jump",			(cvar_t **)DF_NO_JUMP,			1, 0, 0, (value_t *)&dmflags },
-	{ bitflag,	"Allow freelook",		(cvar_t **)DF_NO_FREELOOK,		1, 0, 0, (value_t *)&dmflags }
+	{ bitflag,	"Allow freelook",		(cvar_t **)DF_NO_FREELOOK,		1, 0, 0, (value_t *)&dmflags },
+	{ bitflag,	"Friendly fire",		(cvar_t **)DF_NO_FRIENDLY_FIRE,	1, 0, 0, (value_t *)&dmflags },
+	{ redtext,	" ",					NULL,					0.0, 0.0,	0.0, NULL },
+	{ discrete, "Teamplay",				(cvar_t **)&teamplay,	2.0, 0.0,	0.0, OnOff }
 };
 
 static menu_t DMFlagsMenu = {
 	"M_GMPLAY",
 	0,
-	16,
+	19,
 	0,
 	DMFlagsItems,
 	&OptionMenu
@@ -436,39 +386,25 @@ void M_FreeValues (value_t **values, int num)
 //
 //		Set some stuff up for the video modes menu
 //
+static int IDTranslate[22];
+
 void M_OptInit (void)
 {
-	int currval = 0, dummy1, dummy2;
+	int currval = 0, dummy1, dummy2, i;
+	char name[24];
 
 	DummyDepthPtr = &DummyDepthCvar;
 	DummyFSPtr = &DummyFSCvar;
 
-	I_StartModeIterator (8);
-	if (I_NextMode (&dummy1, &dummy2)) {
-		Depths[currval].value = 1.0;
-		Depths[currval].name = "8 bpp (Indexed)";
-		currval++;
-	}
-
-	I_StartModeIterator (32);
-	if (I_NextMode (&dummy1, &dummy2)) {
-		Depths[currval].value = 4.0;
-		Depths[currval].name = "32 bpp (True Color)";
-		currval++;
-	}
-
-	I_StartModeIterator (24);
-	if (I_NextMode (&dummy1, &dummy2)) {
-		Depths[currval].value = 3.0;
-		Depths[currval].name = "24 bpp (True Color)";
-		currval++;
-	}
-
-	I_StartModeIterator (16);
-	if (I_NextMode (&dummy1, &dummy2)) {
-		Depths[currval].value = 2.0;
-		Depths[currval].name = "16 bpp (High Color)";
-		currval++;
+	for (i = 1000; i < 1022; i++) {
+		I_StartModeIterator (i);
+		if (I_NextMode (&dummy1, &dummy2)) {
+			Depths[currval].value = currval;
+			sprintf (name, "%d bit (%s)", IdToBpp (i), IdStrings[i-1000]);
+			Depths[currval].name = copystring (name);
+			IDTranslate[currval] = i;
+			currval++;
+		}
 	}
 
 	ModesItems[VM_DEPTHITEM].b.min = (float)currval;
@@ -505,13 +441,13 @@ void M_SizeDisplay (float diff)
 void Cmd_Sizedown (void *plyr, int argc, char **argv)
 {
 	M_SizeDisplay (-1.0);
-	S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
+	S_StartSound (ORIGIN_AMBIENT, "plats/pt1_mid", 100);
 }
 
 void Cmd_Sizeup (void *plyr, int argc, char **argv)
 {
 	M_SizeDisplay(1.0);
-	S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
+	S_StartSound (ORIGIN_AMBIENT, "plats/pt1_mid", 100);
 }
 
 void M_BuildKeyList (menuitem_t *item, int numitems)
@@ -597,7 +533,8 @@ void M_OptDrawer (void)
 	
 	V_DrawPatchClean (160-title->width/2,10,&screens[0],title);
 
-	for (i = 0, y = 20 + title->height; i < CurrentMenu->numitems; i++, y += 8) {
+//	for (i = 0, y = 20 + title->height; i < CurrentMenu->numitems; i++, y += 8)	{
+	for (i = 0, y = 15 + title->height; i < CurrentMenu->numitems; i++, y += 8)	{	// TIJ
 		item = CurrentMenu->items + i;
 
 		if (item->type != screenres) {
@@ -616,6 +553,11 @@ void M_OptDrawer (void)
 				case whitetext:
 					x = 160 - width / 2;
 					drawer = V_DrawWhiteTextClean;
+					break;
+
+				case listelement:
+					x = CurrentMenu->indent + 14;
+					drawer = V_DrawRedTextClean;
 					break;
 
 				default:
@@ -774,7 +716,7 @@ BOOL M_OptResponder (event_t *ev)
 				if (CurrentMenu->items[CurrentItem].type == screenres)
 					CurrentMenu->items[CurrentItem].a.selmode = modecol;
 
-				S_StartSound (ORIGIN_AMBIENT, sfx_pstop);
+				S_StartSound (ORIGIN_AMBIENT, "plats/pt1_stop", 100);
 			}
 			break;
 
@@ -800,7 +742,7 @@ BOOL M_OptResponder (event_t *ev)
 				if (CurrentMenu->items[CurrentItem].type == screenres)
 					CurrentMenu->items[CurrentItem].a.selmode = modecol;
 
-				S_StartSound (ORIGIN_AMBIENT, sfx_pstop);
+				S_StartSound (ORIGIN_AMBIENT, "plats/pt1_stop", 100);
 			}
 			break;
 
@@ -818,7 +760,7 @@ BOOL M_OptResponder (event_t *ev)
 						else
 							SetCVarFloat (*item->a.cvar, newval);
 					}
-					S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
+					S_StartSound (ORIGIN_AMBIENT, "plats/pt1_mid", 100);
 					break;
 
 				case discrete:
@@ -835,9 +777,9 @@ BOOL M_OptResponder (event_t *ev)
 
 						// Hack hack. Rebuild list of resolutions
 						if (item->e.values == Depths)
-							BuildModesList (screens[0].width, screens[0].height, screens[0].Bpp << 3);
+							BuildModesList (screens[0].width, screens[0].height, DisplayID);
 					}
-					S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
+					S_StartSound (ORIGIN_AMBIENT, "plats/pt1_mid", 100);
 					break;
 
 				case screenres:
@@ -856,7 +798,7 @@ BOOL M_OptResponder (event_t *ev)
 							item->a.selmode = col;
 						}
 					}
-					S_StartSound(ORIGIN_AMBIENT,sfx_pstop);
+					S_StartSound (ORIGIN_AMBIENT, "plats/pt1_stop", 100);
 					break;
 
 				default:
@@ -878,7 +820,7 @@ BOOL M_OptResponder (event_t *ev)
 						else
 							SetCVarFloat (*item->a.cvar, newval);
 					}
-					S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
+					S_StartSound (ORIGIN_AMBIENT, "plats/pt1_mid", 100);
 					break;
 
 				case discrete:
@@ -895,9 +837,9 @@ BOOL M_OptResponder (event_t *ev)
 
 						// Hack hack. Rebuild list of resolutions
 						if (item->e.values == Depths)
-							BuildModesList (screens[0].width, screens[0].height, screens[0].Bpp << 3);
+							BuildModesList (screens[0].width, screens[0].height, DisplayID);
 					}
-					S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
+					S_StartSound (ORIGIN_AMBIENT, "plats/pt1_mid", 100);
 					break;
 
 				case screenres:
@@ -918,7 +860,7 @@ BOOL M_OptResponder (event_t *ev)
 							item->a.selmode = col;
 						}
 					}
-					S_StartSound(ORIGIN_AMBIENT,sfx_pstop);
+					S_StartSound (ORIGIN_AMBIENT, "plats/pt1_stop", 100);
 					break;
 
 				default:
@@ -940,13 +882,13 @@ BOOL M_OptResponder (event_t *ev)
 					NewWidth = screens[0].width;
 					NewHeight = screens[0].height;
 				}
-				NewBpp = (int)DummyDepthCvar.value << 3;
+				NewID = IDTranslate[(int)DummyDepthCvar.value];
 				setmodeneeded = true;
-				S_StartSound(ORIGIN_AMBIENT,sfx_pistol);
-				SetModesMenu (NewWidth, NewHeight, NewBpp);
+				S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 100);
+				SetModesMenu (NewWidth, NewHeight, NewID);
 			} else if (item->type == more && item->e.mfunc) {
 				CurrentMenu->lastOn = CurrentItem;
-				S_StartSound(ORIGIN_AMBIENT,sfx_pistol);
+				S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 100);
 				item->e.mfunc();
 			} else if (item->type == discrete) {
 				int cur;
@@ -961,15 +903,19 @@ BOOL M_OptResponder (event_t *ev)
 
 				// Hack hack. Rebuild list of resolutions
 				if (item->e.values == Depths)
-					BuildModesList (screens[0].width, screens[0].height, screens[0].Bpp << 3);
+					BuildModesList (screens[0].width, screens[0].height, DisplayID);
 
-				S_StartSound(ORIGIN_AMBIENT,sfx_stnmov);
+				S_StartSound (ORIGIN_AMBIENT, "plats/pt1_mid", 100);
 			} else if (item->type == control) {
 				WaitingForKey = true;
 				OldMessage = CurrentMenu->items[0].label;
 				OldType = CurrentMenu->items[0].type;
 				CurrentMenu->items[0].label = "Press new key for control or ESC to cancel";
 				CurrentMenu->items[0].type = redtext;
+			} else if (item->type == listelement) {
+				CurrentMenu->lastOn = CurrentItem;
+				S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 100);
+				item->e.lfunc (CurrentItem);
 			} else if (item->type == screenres) {
 			}
 			break;
@@ -979,12 +925,12 @@ BOOL M_OptResponder (event_t *ev)
 			if (CurrentMenu->prevmenu) {
 				CurrentMenu = CurrentMenu->prevmenu;
 				CurrentItem = CurrentMenu->lastOn;
-				S_StartSound (ORIGIN_AMBIENT, sfx_swtchn);
+				S_StartSound (ORIGIN_AMBIENT, "switches/normbutn", 100);
 				return true;
 			} else {
 				currentMenu = &MainDef;
 				itemOn = currentMenu->lastOn;
-				S_StartSound (ORIGIN_AMBIENT, sfx_swtchn);
+				S_StartSound (ORIGIN_AMBIENT, "switches/normbutn", 100);
 				return false;
 			}
 
@@ -1000,19 +946,19 @@ BOOL M_OptResponder (event_t *ev)
 					}
 					OldWidth = screens[0].width;
 					OldHeight = screens[0].height;
-					OldBpp = screens[0].Bpp << 3;
-					NewBpp = (int)DummyDepthCvar.value << 3;
+					OldID = DisplayID;
+					NewID = IDTranslate[(int)DummyDepthCvar.value];
 					setmodeneeded = true;
 					testingmode = I_GetTime() + 5 * TICRATE;
-					S_StartSound(ORIGIN_AMBIENT,sfx_pistol);
-					SetModesMenu (NewWidth, NewHeight, NewBpp);
+					S_StartSound (ORIGIN_AMBIENT, "weapons/pistol", 100);
+					SetModesMenu (NewWidth, NewHeight, NewID);
 				}
 			} else if (ev->data2 == 'd' && CurrentMenu == &ModesMenu) {
 				// Make current resolution the default
 				SetCVarFloat (vid_defwidth, (float)screens[0].width);
 				SetCVarFloat (vid_defheight, (float)screens[0].height);
-				SetCVarFloat (vid_defbpp, (float)(screens[0].Bpp << 3));
-				SetModesMenu (screens[0].width, screens[0].height, screens[0].Bpp << 3);
+				SetCVar (vid_defid, IdStrings[DisplayID-1000]);
+				SetModesMenu (screens[0].width, screens[0].height, DisplayID);
 			}
 			break;
 	}
@@ -1028,8 +974,6 @@ static void GoToConsole (void)
 static void UpdateStuff (void)
 {
 	M_SizeDisplay (0.0);
-	S_SetSfxVolume ((int)snd_SfxVolume->value);
-	S_SetMusicVolume ((int)snd_MusicVolume->value);
 }
 
 void Reset2Defaults (void)
@@ -1044,8 +988,8 @@ void Reset2Saved (void)
 	char *execcommand;
 	char *configfile = GetConfigPath ();
 
-	execcommand = Malloc (strlen (configfile) + 6);
-	sprintf (execcommand, "exec %s", configfile);
+	execcommand = Malloc (strlen (configfile) + 8);
+	sprintf (execcommand, "exec \"%s\"", configfile);
 	free (configfile);
 	AddCommandString (execcommand);
 	free (execcommand);
@@ -1061,7 +1005,7 @@ static void CustomizeControls (void)
 void Cmd_Menu_Keys (void *plyr, int argc, char **argv)
 {
 	M_StartControlPanel ();
-	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	S_StartSound (ORIGIN_AMBIENT, "switches/normbutn", 100);
 	OptionsActive = true;
 	CustomizeControls();
 }
@@ -1075,7 +1019,7 @@ static void GameplayOptions (void)
 void Cmd_Menu_Gameplay (void *plyr, int argc, char **argv)
 {
 	M_StartControlPanel ();
-	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	S_StartSound (ORIGIN_AMBIENT, "switches/normbutn", 100);
 	OptionsActive = true;
 	GameplayOptions ();
 }
@@ -1088,20 +1032,20 @@ static void VideoOptions (void)
 void Cmd_Menu_Display (void *plyr, int argc, char **argv)
 {
 	M_StartControlPanel ();
-	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	S_StartSound (ORIGIN_AMBIENT, "switches/normbutn", 100);
 	OptionsActive = true;
 	M_SwitchMenu (&VideoMenu);
 }
 
-static void BuildModesList (int hiwidth, int hiheight, int hibpp)
+static void BuildModesList (int hiwidth, int hiheight, int hi_id)
 {
 	char strtemp[32], **str;
 	int	 i, c;
-	int	 width, height, showbpp;
+	int	 width, height, showid;
 
-	showbpp = (int)DummyDepthCvar.value << 3;
+	showid = IDTranslate[(int)DummyDepthCvar.value];
 
-	I_StartModeIterator (showbpp);
+	I_StartModeIterator (showid);
 
 	for (i = VM_RESSTART; ModesItems[i].type == screenres; i++) {
 		ModesItems[i].e.highlight = -1;
@@ -1118,7 +1062,7 @@ static void BuildModesList (int hiwidth, int hiheight, int hibpp)
 					break;
 			}
 			if (I_NextMode (&width, &height)) {
-				if (/* hibpp == showbpp && */ width == hiwidth && height == hiheight)
+				if (/* hi_id == showid && */ width == hiwidth && height == hiheight)
 					ModesItems[i].e.highlight = ModesItems[i].a.selmode = c;
 				
 				sprintf (strtemp, "%dx%d", width, height);
@@ -1140,7 +1084,7 @@ static BOOL GetSelectedSize (int line, int *width, int *height)
 	if (ModesItems[line].type != screenres) {
 		return false;
 	} else {
-		I_StartModeIterator ((int)DummyDepthCvar.value * 8);
+		I_StartModeIterator (IDTranslate[(int)DummyDepthCvar.value]);
 
 		stopat = (line - VM_RESSTART) * 3 + ModesItems[line].a.selmode + 1;
 
@@ -1152,11 +1096,23 @@ static BOOL GetSelectedSize (int line, int *width, int *height)
 	return true;
 }
 
-static void SetModesMenu (int w, int h, int bpp)
+static int FindId (int id)
+{
+	int i;
+
+	for (i = 0; i < 22; i++) {
+		if (IDTranslate[i] == id)
+			return i;
+	}
+
+	return 0;
+}
+
+static void SetModesMenu (int w, int h, int id)
 {
 	char strtemp[64];
 
-	SetCVarFloat (&DummyDepthCvar, (float)(bpp >> 3));
+	SetCVarFloat (&DummyDepthCvar, (float)FindId (id));
 	SetCVarFloat (&DummyFSCvar, fullscreen->value);
 
 	if (!testingmode) {
@@ -1165,39 +1121,39 @@ static void SetModesMenu (int w, int h, int bpp)
 		ModesItems[VM_ENTERLINE].label = VMEnterText;
 		ModesItems[VM_TESTLINE].label = VMTestText;
 
-		sprintf (strtemp, "D to make %dx%dx%d the default", w, h, bpp);
+		sprintf (strtemp, "D to make %dx%d (%s) the default", w, h, IdStrings[id-1000]);
 		ReplaceString (&ModesItems[VM_MAKEDEFLINE].label, strtemp);
 
-		sprintf (strtemp, "Current default is %dx%dx%d",
+		sprintf (strtemp, "Current default is %dx%d (%s)",
 				 (int)vid_defwidth->value,
 				 (int)vid_defheight->value,
-				 (int)vid_defbpp->value);
+				 vid_defid->string);
 		ReplaceString (&ModesItems[VM_CURDEFLINE].label, strtemp);
 	} else {
-		sprintf (strtemp, "TESTING %dx%dx%d", w, h, bpp);
+		sprintf (strtemp, "TESTING %dx%d (%s)", w, h, IdStrings[id-1000]);
 		ModesItems[VM_ENTERLINE].label = copystring (strtemp);
 		ModesItems[VM_TESTLINE].label = "Please wait 5 seconds...";
 		ModesItems[VM_MAKEDEFLINE].label = copystring (" ");
 		ModesItems[VM_CURDEFLINE].label = copystring (" ");
 	}
 
-	BuildModesList (w, h, bpp);
+	BuildModesList (w, h, id);
 }
 
 void M_RestoreMode (void)
 {
 	NewWidth = OldWidth;
 	NewHeight = OldHeight;
-	NewBpp = OldBpp;
+	NewID = OldID;
 	setmodeneeded = true;
 	testingmode = 0;
 	SetCVarFloat (fullscreen, OldFS);
-	SetModesMenu (OldWidth, OldHeight, (int)DummyDepthCvar.value << 3);
+	SetModesMenu (OldWidth, OldHeight, OldID);
 }
 
 static void SetVidMode (void)
 {
-	SetModesMenu (screens[0].width, screens[0].height, screens[0].Bpp << 3);
+	SetModesMenu (screens[0].width, screens[0].height, DisplayID);
 	if (ModesMenu.items[ModesMenu.lastOn].type == screenres) {
 		if (ModesMenu.items[ModesMenu.lastOn].a.selmode == -1) {
 			ModesMenu.items[ModesMenu.lastOn].a.selmode++;
@@ -1209,7 +1165,7 @@ static void SetVidMode (void)
 void Cmd_Menu_Video (void *plyr, int argc, char **argv)
 {
 	M_StartControlPanel ();
-	S_StartSound(ORIGIN_AMBIENT,sfx_swtchn);
+	S_StartSound (ORIGIN_AMBIENT, "switches/normbutn", 100);
 	OptionsActive = true;
 	SetVidMode ();
 }

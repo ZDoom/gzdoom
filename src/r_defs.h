@@ -387,7 +387,7 @@ struct side_s
 	sector_t*	sector;			// Sector the SideDef is facing.
 	ADecal*		BoundActors;	// [RH] Decals bound to the wall
 	short		toptexture, bottomtexture, midtexture;	// texture indices
-	short		linenum;
+	WORD		linenum;
 	WORD		LeftSide, RightSide;	// [RH] Group walls into loops
 	WORD		TexelLength;
 	SBYTE		Light;

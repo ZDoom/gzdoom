@@ -522,7 +522,7 @@ static void ParseFriction (int keyword, void *fields)
 	// These calculations should match those in P_SetSectorFriction().
 	// A friction of 1.0 is equivalent to ORIG_FRICTION.
 
-	friction = (0x1EB8*(sc_Float*100))/0x80 + 0xD001;
+	friction = (fixed_t)(0x1EB8*(sc_Float*100))/0x80 + 0xD001;
 	friction = clamp<fixed_t> (friction, 0, FRACUNIT);
 
 	if (friction > ORIG_FRICTION)	// ice

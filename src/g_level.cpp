@@ -904,11 +904,11 @@ void G_InitNew (char *mapname)
 		// force players to be initialized upon first level load
 		for (i = 0; i < MAXPLAYERS; i++)
 			players[i].playerstate = PST_ENTER;	// [BC]
-
-		// [RH] Send weapon assignments now
-		Net_WriteByte (DEM_SLOTSCHANGE);
-		LocalWeapons.StreamOutSlots ();
 	}
+
+	// [RH] Send weapon assignments now
+	Net_WriteByte (DEM_SLOTSCHANGE);
+	LocalWeapons.StreamOutSlots ();
 
 	usergame = true;				// will be set false if a demo
 	paused = 0;

@@ -745,7 +745,9 @@ static void S_AddSNDINFO (int lump)
 				SC_MustGetString ();
 				sfx = S_FindSoundTentative (sc_String);
 				SC_MustGetNumber ();
-				S_sfx[sfx].MaxChannels = clamp<BYTE> (sc_Number, 0, 255);
+				//S_sfx[sfx].MaxChannels = clamp<BYTE> (sc_Number, 0, 255);
+				//Can't use clamp because of GCC bugs
+				S_sfx[sfx].MaxChannels = MIN (MAX (sc_Number, 0), 255);
 				}
 				break;
 

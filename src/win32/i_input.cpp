@@ -51,6 +51,23 @@
 
 #include <dinput.h>
 
+// Compensate for w32api's lack
+#ifndef WM_XBUTTONDOWN
+#define WM_XBUTTONDOWN 0x020B
+#define WM_XBUTTONUP 0x020C
+#define GET_XBUTTON_WPARAM(wParam) (HIWORD(wParam))
+#endif
+#ifndef WM_WTSSESSION_CHANGE
+#define WM_WTSSESSION_CHANGE 0x02B1
+#define WTS_CONSOLE_CONNECT 1
+#define WTS_CONSOLE_DISCONNECT 2
+#define WTS_SESSION_LOCK 7
+#define WTS_SESSION_UNLOCK 8
+#endif
+#ifndef SetClassLongPtr
+#define SetClassLongPtr SetClassLong
+#endif
+
 #include "c_dispatch.h"
 #include "doomtype.h"
 #include "doomdef.h"
@@ -555,7 +572,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #ifndef NOWTS
 	case WM_WTSSESSION_CHANGE:
 		{
-			if (lParam == SessionID)
+			if (lParam == (LPARAM)SessionID)
 			{
 				int oldstate = SessionState;
 

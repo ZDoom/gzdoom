@@ -190,6 +190,7 @@ enum
 	TRANSLATION_Standard,
 	TRANSLATION_LevelScripted,
 	TRANSLATION_Decals,
+	TRANSLATION_PlayerCorpses,
 
 	NUM_TRANSLATION_TABLES
 };
@@ -197,9 +198,18 @@ enum
 extern byte*			translationtables[NUM_TRANSLATION_TABLES];
 extern byte*			dc_translation;
 
-#define TRANSLATION(a,b)	(((a)<<8)|(b))
+inline WORD TRANSLATION(BYTE a, BYTE b)
+{
+	return (a<<8) | b;
+}
 
 const int MAX_ACS_TRANSLATIONS = 32;
+
+inline void R_CopyTranslation (WORD to, WORD from)
+{
+	memcpy (&translationtables[to>>8][(to&255)*256],
+		&translationtables[from>>8][(from&255)*256], 256);
+}
 
 
 // [RH] Double view pixels by detail mode

@@ -103,7 +103,14 @@ public:
 		int curHealth;
 
 		FBaseStatusBar::Tick ();
-		curHealth = CPlayer->mo->health;
+		if (CPlayer->mo == NULL)
+		{
+			curHealth = 0;
+		}
+		else
+		{
+			curHealth = CPlayer->mo->health;
+		}
 		if (curHealth < 0)
 		{
 			curHealth = 0;

@@ -52,7 +52,7 @@
 #include "v_video.h"
 #include "v_pfx.h"
 #include "stats.h"
-#include "errors.h"
+#include "doomerrors.h"
 
 #include "win32iface.h"
 
@@ -126,9 +126,9 @@ CUSTOM_CVAR (Bool, vid_vsync, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 Win32Video::Win32Video (int parm)
 : m_Modes (NULL),
+  m_IsFullscreen (false),
   m_Have320x200x8 (false),
-  m_Have320x240x8 (false),
-  m_IsFullscreen (false)
+  m_Have320x240x8 (false)
 {
 	STARTLOG;
 
@@ -152,14 +152,14 @@ Win32Video::Win32Video (int parm)
 		dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_INPROC_SERVER, IID_IDirectDraw2, (void **)&DDraw);
 
 		if (FAILED(dderr))
-			I_FatalError ("Could not create DirectDraw object: %08x", dderr);
+			I_FatalError ("Could not create DirectDraw object: %08lx", dderr);
 
 		dderr = DDraw->Initialize (0);
 		if (FAILED(dderr))
 		{
 			DDraw->Release ();
 			DDraw = NULL;
-			I_FatalError ("Could not initialize IDirectDraw2 interface: %08x", dderr);
+			I_FatalError ("Could not initialize IDirectDraw2 interface: %08lx", dderr);
 		}
 
 		DDraw->SetCooperativeLevel (Window, DDSCL_NORMAL);
@@ -169,7 +169,7 @@ Win32Video::Win32Video (int parm)
 		{
 			DDraw->Release ();
 			DDraw = NULL;
-			I_FatalError ("Could not enumerate display modes: %08x", dderr);
+			I_FatalError ("Could not enumerate display modes: %08lx", dderr);
 		}
 		if (m_Modes == NULL)
 		{
@@ -255,7 +255,7 @@ bool Win32Video::GoFullscreen (bool yes)
 			if (count != 0)
 			{
 // Ack! Cannot print because the screen does not exist right now.
-//				Printf ("Setting %s mode failed. Error %08x\n",
+//				Printf ("Setting %s mode failed. Error %08lx\n",
 //					yestypes[!yes], hr[0]);
 			}
 			m_IsFullscreen = yes;
@@ -264,8 +264,8 @@ bool Win32Video::GoFullscreen (bool yes)
 		yes = !yes;
 	}
 
-	I_FatalError ("Could not set %s mode: %08x\n",
-				  "Could not set %s mode: %08x\n",
+	I_FatalError ("Could not set %s mode: %08lx\n"
+				  "Could not set %s mode: %08lx\n",
 				  yestypes[yes], hr[0], yestypes[!yes], hr[1]);
 
 	// Appease the compiler, even though we never return if we get here.
@@ -432,7 +432,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 			}
 			delete fb;
 
-			LOG1 ("fb is bad: %08x\n", hr);
+			LOG1 ("fb is bad: %08lx\n", hr);
 		}
 		else
 		{
@@ -462,8 +462,8 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 
 		default:
 			// I give up!
-			LOG3 ("Could not create new screen (%d x %d): %08x", owidth, oheight, hr);
-			I_FatalError ("Could not create new screen (%d x %d): %08x", owidth, oheight, hr);
+			LOG3 ("Could not create new screen (%d x %d): %08lx", owidth, oheight, hr);
+			I_FatalError ("Could not create new screen (%d x %d): %08lx", owidth, oheight, hr);
 		}
 
 		++retry;
@@ -549,7 +549,7 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 		HRESULT hr = DDraw->GetCaps (&hwcaps, NULL);
 		if (SUCCEEDED(hr))
 		{
-			LOG2 ("dwCaps = %08x, dwSVBCaps = %08x\n", hwcaps.dwCaps, hwcaps.dwSVBCaps);
+			LOG2 ("dwCaps = %08lx, dwSVBCaps = %08lx\n", hwcaps.dwCaps, hwcaps.dwSVBCaps);
 			if (hwcaps.dwCaps & DDCAPS_BLT)
 			{
 				LOG ("Driver supports blits\n");
@@ -658,7 +658,7 @@ bool DDrawFB::CreateResources ()
 		if (!SetWindowPos (Window, NULL, 0, 0, sizew, sizeh,
 			SWP_DRAWFRAME | SWP_NOCOPYBITS | SWP_NOMOVE | SWP_NOZORDER))
 		{
-			LOG1 ("SetWindowPos failed because %08x\n", GetLastError());
+			LOG1 ("SetWindowPos failed because %08lx\n", GetLastError());
 		}
 		VidResizing = false;
 		ShowWindow (Window, SW_SHOWNORMAL);
@@ -669,7 +669,7 @@ bool DDrawFB::CreateResources ()
 		do
 		{
 			hr = DDraw->CreateSurface (&ddsd, &PrimarySurf, NULL);
-			LOG1 ("Create primary: %08x\n", hr);
+			LOG1 ("Create primary: %08lx\n", hr);
 		} while (0);
 		if (FAILED(hr))
 		{
@@ -681,7 +681,7 @@ bool DDrawFB::CreateResources ()
 
 		// Create the clipper
 		hr = DDraw->CreateClipper (0, &Clipper, NULL);
-		LOG1 ("Create clipper: %08x\n", hr);
+		LOG1 ("Create clipper: %08lx\n", hr);
 		if (FAILED(hr))
 		{
 			LastHR = hr;
@@ -699,7 +699,7 @@ bool DDrawFB::CreateResources ()
 		ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | (UseBlitter ? DDSCAPS_SYSTEMMEMORY : 0);
 
 		hr = DDraw->CreateSurface (&ddsd, &BackSurf, NULL);
-		LOG1 ("Create backbuffer: %08x\n", hr);
+		LOG1 ("Create backbuffer: %08lx\n", hr);
 		if (FAILED(hr))
 		{
 			LastHR = hr;
@@ -750,7 +750,7 @@ bool DDrawFB::CreateSurfacesAttached ()
 		hr = PrimarySurf->GetAttachedSurface (&caps, &LockingSurf);
 		if (FAILED (hr))
 		{
-			LOG1 ("Could not get attached surface: %08x\n", hr);
+			LOG1 ("Could not get attached surface: %08lx\n", hr);
 			if (BackSurf2 != NULL)
 			{
 				PrimarySurf->DeleteAttachedSurface (0, BackSurf2);
@@ -789,7 +789,7 @@ bool DDrawFB::AddBackBuf (LPDIRECTDRAWSURFACE *surface, int num)
 	hr = DDraw->CreateSurface (&ddsd, surface, NULL);
 	if (FAILED(hr))
 	{
-		LOG2 ("could not create back buf %d: %08x\n", num, hr);
+		LOG2 ("could not create back buf %d: %08lx\n", num, hr);
 		return false;
 	}
 	else
@@ -797,7 +797,7 @@ bool DDrawFB::AddBackBuf (LPDIRECTDRAWSURFACE *surface, int num)
 		hr = PrimarySurf->AddAttachedSurface (*surface);
 		if (FAILED(hr))
 		{
-			LOG2 ("could not add back buf %d: %08x\n", num, hr);
+			LOG2 ("could not add back buf %d: %08lx\n", num, hr);
 			(*surface)->Release ();
 			*surface = NULL;
 			return false;
@@ -876,7 +876,7 @@ bool DDrawFB::CreateSurfacesComplex ()
 		hr = PrimarySurf->GetAttachedSurface (&caps, &LockingSurf);
 		if (FAILED (hr))
 		{
-			LOG1 ("Could not get attached surface: %08x\n", hr);
+			LOG1 ("Could not get attached surface: %08lx\n", hr);
 //			MustBuffer = true;
 			LockingSurf = PrimarySurf;
 		}
@@ -906,13 +906,13 @@ bool DDrawFB::CreateBlitterSource ()
 	hr = DDraw->CreateSurface (&ddsd, &BlitSurf, NULL);
 	if (FAILED(hr))
 	{
-		LOG1 ("Trying to create blitter source with only one surface (%08x)\n", hr);
+		LOG1 ("Trying to create blitter source with only one surface (%08lx)\n", hr);
 		ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
 		ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
 		hr = DDraw->CreateSurface (&ddsd, &BlitSurf, NULL);
 		if (FAILED(hr))
 		{
-			LOG1 ("Could not create blitter source: %08x\n", hr);
+			LOG1 ("Could not create blitter source: %08lx\n", hr);
 			MustBuffer = true;
 			return false;
 		}
@@ -1148,7 +1148,7 @@ bool DDrawFB::Lock (bool useSimpleCanvas)
 	else
 	{
 		HRESULT hr = BlitSurf->Flip (NULL, DDFLIP_WAIT);
-		LOG1 ("Blit flip = %08x\n", hr);
+		LOG1 ("Blit flip = %08lx\n", hr);
 		LockSurfRes res = LockSurf (NULL, BlitSurf);
 		
 		if (res == NoGood)
@@ -1219,7 +1219,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 	}
 
 	hr = toLock->Lock (lockrect, &desc, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
-	LOG2 ("LockSurf %p: %08x\n", toLock, hr);
+	LOG2 ("LockSurf %p: %08lx\n", toLock, hr);
 
 	if (hr == DDERR_SURFACELOST)
 	{
@@ -1234,7 +1234,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 			hr = BlitSurf->Restore ();
 			if (FAILED (hr))
 			{
-				LOG1 ("Could not restore blitter surface: %08x", hr);
+				LOG1 ("Could not restore blitter surface: %08lx", hr);
 				BlitSurf->Release ();
 				if (BlitSurf == toLock)
 				{
@@ -1262,7 +1262,7 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 				{
 					if (LastHR != DDERR_UNSUPPORTEDMODE || k == 20)
 					{
-						I_FatalError ("Could not rebuild framebuffer: %08x", LastHR);
+						I_FatalError ("Could not rebuild framebuffer: %08lx", LastHR);
 					}
 					// Wait a bit before trying again.
 					Sleep (100);
@@ -1281,8 +1281,8 @@ DDrawFB::LockSurfRes DDrawFB::LockSurf (LPRECT lockrect, LPDIRECTDRAWSURFACE toL
 	}
 	if (FAILED (hr))
 	{ // Still could not restore the surface, so don't draw anything
-		//I_FatalError ("Could not lock framebuffer: %08x", hr);
-		LOG1 ("Final result after restoration attempts: %08x\n", hr);
+		//I_FatalError ("Could not lock framebuffer: %08lx", hr);
+		LOG1 ("Final result after restoration attempts: %08lx\n", hr);
 		return NoGood;
 	}
 	Buffer = (BYTE *)desc.lpSurface;
@@ -1301,13 +1301,13 @@ HRESULT DDrawFB::AttemptRestore ()
 		ReleaseResources ();
 		if (!CreateResources ())
 		{
-			LOG1 ("Could not recreate framebuffer: %08x", LastHR);
+			LOG1 ("Could not recreate framebuffer: %08lx", LastHR);
 			return LastHR;
 		}
 	}
 	else if (FAILED (hr))
 	{
-		LOG1 ("Could not restore primary surface: %08x", hr);
+		LOG1 ("Could not restore primary surface: %08lx", hr);
 		return hr;
 	}
 	if (BackSurf && FAILED(BackSurf->IsLost ()))
@@ -1316,7 +1316,7 @@ HRESULT DDrawFB::AttemptRestore ()
 		hr = BackSurf->Restore ();
 		if (FAILED (hr))
 		{
-			I_FatalError ("Could not restore backbuffer: %08x", hr);
+			I_FatalError ("Could not restore backbuffer: %08lx", hr);
 		}
 	}
 	if (BackSurf2 && FAILED(BackSurf2->IsLost ()))
@@ -1325,7 +1325,7 @@ HRESULT DDrawFB::AttemptRestore ()
 		hr = BackSurf2->Restore ();
 		if (FAILED (hr))
 		{
-			I_FatalError ("Could not restore backbuffer 2: %08x", hr);
+			I_FatalError ("Could not restore backbuffer 2: %08lx", hr);
 		}
 	}
 	return 0;
@@ -1441,7 +1441,7 @@ void DDrawFB::Update ()
 			hr = LockingSurf->BltFast (0, 0, BlitSurf, &srcRect, DDBLTFAST_NOCOLORKEY|DDBLTFAST_WAIT);
 			if (FAILED (hr))
 			{
-				LOG1 ("Could not blit: %08x\n", hr);
+				LOG1 ("Could not blit: %08lx\n", hr);
 				if (hr == DDERR_SURFACELOST)
 				{
 					if (SUCCEEDED (AttemptRestore ()))
@@ -1449,7 +1449,7 @@ void DDrawFB::Update ()
 						hr = LockingSurf->BltFast (0, 0, BlitSurf, &srcRect, DDBLTFAST_NOCOLORKEY|DDBLTFAST_WAIT);
 						if (FAILED (hr))
 						{
-							LOG1 ("Blit retry also failed: %08x\n", hr);
+							LOG1 ("Blit retry also failed: %08lx\n", hr);
 						}
 					}
 				}
@@ -1475,7 +1475,7 @@ void DDrawFB::Update ()
 	if (!Windowed && AppActive && !SessionState /*&& !UseBlitter && !MustBuffer*/)
 	{
 		HRESULT hr = PrimarySurf->Flip (NULL, FlipFlags);
-		LOG1 ("Flip = %08x\n", hr);
+		LOG1 ("Flip = %08lx\n", hr);
 		if (hr == DDERR_INVALIDPARAMS)
 		{
 			if (FlipFlags & DDFLIP_NOVSYNC)

@@ -44,6 +44,8 @@
 #include "c_dispatch.h"
 #include "sbar.h"
 #include "gi.h"
+#include "m_misc.h"
+#include "gameconfigfile.h"
 
 #define NCMD_EXIT				0x80000000
 #define NCMD_RETRANSMIT 		0x40000000
@@ -920,6 +922,9 @@ void D_CheckNetGame (void)
 	
 	netbuffer = &doomcom->data;
 	consoleplayer = displayplayer = doomcom->consoleplayer;
+
+	// [RH] Read network ServerInfo cvars
+	GameConfig->ReadNetVars ();
 
 	// [RH] Setup user info
 	D_SetupUserInfo ();

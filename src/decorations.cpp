@@ -563,7 +563,6 @@ static void ParseSpriteFrames (FActorInfo *info, TArray<FState> &states)
 		while (*token == ' ')
 			token++;
 
-		int frame = -1;
 		int rate = 5;
 		bool firstState = true;
 		char *colon = strchr (token, ':');

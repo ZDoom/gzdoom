@@ -4,6 +4,7 @@
 #include "p_enemy.h"
 #include "p_local.h"
 #include "a_sharedglobal.h"
+#include "s_sound.h"
 
 static FRandom pr_thrustraise ("ThrustRaise");
 
@@ -95,6 +96,9 @@ public:
 	fixed_t GetSinkSpeed () { return 6*FRACUNIT; }
 	fixed_t GetRaiseSpeed () { return special2*FRACUNIT; }
 
+	void Activate (AActor *activator);
+	void Deactivate (AActor *activator);
+
 	ADirtClump *DirtClump;
 };
 
@@ -175,6 +179,31 @@ BEGIN_DEFAULTS (AThrustFloor, Hexen, -1, 0)
 	PROP_HeightFixed (128)
 END_DEFAULTS
 
+void AThrustFloor::Activate (AActor *activator)
+{
+	if (args[0] == 0)
+	{
+		S_Sound (this, CHAN_BODY, "ThrustSpikeLower", 1, ATTN_NORM);
+		renderflags &= ~RF_INVISIBLE;
+		if (args[1])
+			SetState (&States[S_BTHRUSTRAISE]);
+		else
+			SetState (&States[S_THRUSTRAISE]);
+	}
+}
+
+void AThrustFloor::Deactivate (AActor *activator)
+{
+	if (args[0] == 1)
+	{
+		S_Sound (this, CHAN_BODY, "ThrustSpikeRaise", 1, ATTN_NORM);
+		if (args[1])
+			SetState (&States[S_BTHRUSTLOWER]);
+		else
+			SetState (&States[S_THRUSTLOWER]);
+	}
+}
+
 // Spike up -----------------------------------------------------------------
 
 class AThrustFloorUp : public AThrustFloor
@@ -182,7 +211,7 @@ class AThrustFloorUp : public AThrustFloor
 	DECLARE_STATELESS_ACTOR (AThrustFloorUp, AThrustFloor)
 };
 
-IMPLEMENT_STATELESS_ACTOR (AThrustFloorUp, Hexen, 10091, 0)
+IMPLEMENT_STATELESS_ACTOR (AThrustFloorUp, Hexen, 10091, 104)
 	PROP_Flags (MF_SOLID)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_FLOORCLIP)
 	PROP_SpawnState (S_THRUSTINIT2)
@@ -195,7 +224,7 @@ class AThrustFloorDown : public AThrustFloor
 	DECLARE_STATELESS_ACTOR (AThrustFloorDown, AThrustFloor)
 };
 
-IMPLEMENT_STATELESS_ACTOR (AThrustFloorDown, Hexen, 10090, 0)
+IMPLEMENT_STATELESS_ACTOR (AThrustFloorDown, Hexen, 10090, 105)
 	PROP_Flags2 (MF2_NOTELEPORT|MF2_FLOORCLIP)
 	PROP_RenderFlags (RF_INVISIBLE)
 	PROP_SpawnState (S_THRUSTINIT1)

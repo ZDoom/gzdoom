@@ -50,6 +50,7 @@ public:
 	void ArchiveGameData (const char *gamename);
 	void AddAutoexec (DArgs *list, const char *gamename);
 	char *GetConfigPath (bool tryProg);
+	void ReadNetVars ();
 
 protected:
 	void WriteCommentHeader (FILE *file) const;
@@ -63,6 +64,9 @@ private:
 	void SetupWeaponList (const char *gamename);
 
 	bool bMigrating;
+
+	char section[64];
+	char *subsection;
 };
 
 #endif //__GAMECONFIGFILE_H__

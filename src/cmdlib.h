@@ -24,7 +24,6 @@
 // the dec offsetof macro doesnt work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)0)->identifier)
 
-
 int		Q_filelength (FILE *f);
 BOOL FileExists (const char *filename);
 

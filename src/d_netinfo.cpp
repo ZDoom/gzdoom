@@ -465,8 +465,9 @@ void D_WriteUserInfoStrings (int i, byte **stream, bool compact)
 					 "\\gender\\%s"
 					 "\\neverswitchonpickup\\%d"
 					 "\\movebob\\%g"
-					 "\\stillbob\\%g",
-					 "\\playerclass\\%s",
+					 "\\stillbob\\%g"
+					 "\\playerclass\\%s"
+					 ,
 					 info->netname,
 					 (double)info->aimdist / (float)ANGLE_1,
 					 RPART(info->color), GPART(info->color), BPART(info->color),

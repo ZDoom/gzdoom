@@ -607,7 +607,10 @@ BOOL PIT_CheckThing (AActor *thing)
 
 		// [RH] Extend DeHacked infighting to allow for monsters
 		// to never fight each other
-		if ((infighting < 0) && !thing->player && (!tmthing->target || !tmthing->target->player) && thing != tmthing->target)
+		if ((infighting < 0 && tmthing->target != NULL && (tmthing->target->flags & MF_SHOOTABLE)) &&
+			!thing->player &&
+			(!tmthing->target || !tmthing->target->player) &&
+			thing != tmthing->target)
 		{
 			return false;
 		}
@@ -3213,7 +3216,10 @@ void P_DoCrunch (AActor *thing)
 	if ((crushchange > 0) && !(level.time & 3))
 	{
 		P_DamageMobj (thing, NULL, NULL, crushchange, MOD_CRUSH);
-		P_TraceBleed (crushchange, thing);
+		if (!(thing->flags & MF_NOBLOOD))
+		{
+			P_TraceBleed (crushchange, thing);
+		}
 
 		// spray blood in a random direction
 		if ((!(thing->flags&MF_NOBLOOD)) &&

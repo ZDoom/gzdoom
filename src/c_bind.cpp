@@ -127,13 +127,14 @@ static const FBinding DefHexenBindings[] =
 {
 	{ "/", "+jump" },
 	{ "backspace", "invuseall" },
-	// \ arti_health
-	// 0 arti_poisonbag
-	// 9 arti_blastradius
-	// 8 arti_teleport
-	// 7 arti_teleportother
-	// 6 arti_egg
-	// 5 arti_invulnerability
+	{ "\\", "use ArtiHealth" },
+	{ "0", "useflechette" },
+	{ "9", "use ArtiBlastRadius" },
+	{ "8", "use ArtiTeleport" },
+	{ "7", "use ArtiTeleportOther" },
+	{ "6", "use ArtiEgg" },
+	{ "5", "use ArtiInvulnerability" },
+	{ "scroll", "+showscores" },
 	{ NULL }
 };
 

@@ -2359,3 +2359,4 @@ const TypeInfo *ADehackedPickup::DetermineType ()
 	}
 	return NULL;
 }
+

@@ -287,11 +287,6 @@ void DCajunMaster::End ()
 
 bool DCajunMaster::SpawnBot (const char *name, int color)
 {
-#if 0
-	int num=0;
-	static bool red; //ctf, spawning helper, spawn first blue then a red ...
-#endif
-	int i;
 	int playernumber;
 
 	//COLORS
@@ -310,16 +305,15 @@ bool DCajunMaster::SpawnBot (const char *name, int color)
 		"\\color\\cf df 90"		//10 = Bleached Bone
 	};
 
-	for (i = 0; i < MAXPLAYERS; i++)
+	for (playernumber = 0; playernumber < MAXPLAYERS; playernumber++)
 	{
-		if (!playeringame[i] && !waitingforspawn[i])
+		if (!playeringame[playernumber] && !waitingforspawn[playernumber])
 		{
-			playernumber = i;
 			break;
 		}
 	}
 
-	if (i == MAXPLAYERS)
+	if (playernumber == MAXPLAYERS)
 	{
 		Printf ("The maximum of %d players/bots has been reached\n", MAXPLAYERS);
 		return false;
@@ -401,6 +395,8 @@ void DCajunMaster::DoAddBot (int bnum, char *info)
 	{
 		Printf ("%s tried to join, but there was no player %d start\n",
 			players[bnum].userinfo.netname, bnum+1);
+		ClearPlayer (bnum, false);	// Make the bot inactive again
+		botnum--;
 	}
 	else
 	{

@@ -186,12 +186,21 @@ private:
 	byte Weapons[MAX_WEAPONS_PER_SLOT];
 };
 
+// FWeaponSlots::AddDefaultWeapon return codes
+enum ESlotDef
+{
+	SLOTDEF_Exists,		// Weapon was already assigned a slot
+	SLOTDEF_Added,		// Weapon was successfully added
+	SLOTDEF_Full		// The specifed slot was full
+};
+
 struct FWeaponSlots
 {
 	FWeaponSlot Slots[NUM_WEAPON_SLOTS];
 
 	void Clear ();
 	bool LocateWeapon (weapontype_t weap, int *const slot, int *const index);
+	ESlotDef AddDefaultWeapon (int slot, const char *weapName, weapontype_t weap);
 	void RestoreSlots (FConfigFile &config);
 	void SaveSlots (FConfigFile &config);
 	void StreamOutSlots ();

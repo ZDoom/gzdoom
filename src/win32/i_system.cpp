@@ -37,7 +37,7 @@
 #include <mmsystem.h>
 
 #include "hardware.h"
-#include "errors.h"
+#include "doomerrors.h"
 #include <math.h>
 
 #include "doomtype.h"
@@ -251,7 +251,7 @@ void I_DetectOS (void)
 		break;
 	}
 
-	Printf ("OS: Windows %s %u.%u (Build %u)\n",
+	Printf ("OS: Windows %s %lu.%lu (Build %lu)\n",
 			osname,
 			info.dwMajorVersion, info.dwMinorVersion,
 			OSPlatform == os_Win95 ? info.dwBuildNumber & 0xffff : info.dwBuildNumber);

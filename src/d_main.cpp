@@ -40,7 +40,7 @@
 #include <time.h>
 #include <math.h>
 
-#include "errors.h"
+#include "doomerrors.h"
 
 #include "d_gui.h"
 #include "m_alloc.h"
@@ -144,8 +144,8 @@ extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CVAR (Int, fraglimit, 0, CVAR_SERVERINFO);
-CVAR (Float, timelimit, 0.f, CVAR_SERVERINFO);
+CVAR (Int, fraglimit, 0, CVAR_ARCHIVE|CVAR_SERVERINFO);
+CVAR (Float, timelimit, 0.f, CVAR_ARCHIVE|CVAR_SERVERINFO);
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
@@ -261,7 +261,7 @@ void D_PostEvent (const event_t *ev)
 //
 //==========================================================================
 
-CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, dmflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
 	// In case DF_NO_FREELOOK was changed, reinitialize the sky
 	// map. (If no freelook, then no need to stretch the sky.)
@@ -309,7 +309,7 @@ CVAR (Flag, sv_nofov,			dmflags, DF_NO_FOV);
 //
 //==========================================================================
 
-CVAR (Int, dmflags2, 0, CVAR_SERVERINFO);
+CVAR (Int, dmflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO);
 CVAR (Flag, sv_weapondrop,		dmflags2, DF2_YES_WEAPONDROP);
 CVAR (Flag, sv_nobfgaim,		dmflags2, DF2_NO_FREEAIMBFG);
 CVAR (Flag, sv_respawnprotect,	dmflags2, DF2_YES_INVUL);
@@ -321,7 +321,7 @@ CVAR (Flag, sv_barrelrespawn,	dmflags2, DF2_BARRELS_RESPAWN);
 //
 //==========================================================================
 
-CVAR (Int, compatflags, 0, CVAR_SERVERINFO);
+CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO);
 CVAR (Flag, compat_shortTex,	compatflags, COMPATF_SHORTTEX);
 CVAR (Flag, compat_stairs,		compatflags, COMPATF_STAIRINDEX);
 CVAR (Flag, compat_limitpain,	compatflags, COMPATF_LIMITPAIN);

@@ -1,4 +1,70 @@
+December 24, 2002
+- Fixed: When "Monsters Ignore Each Other" was set, monsters could not be
+  hurt by ACS-spawned projectiles.
+- Fixed: Underwater reverb did not work on Audigies anymore because FMOD was
+  only reporting them as supporting EAX3 reverb and not also EAX2 reverb.
+- Fixed: Empty console command lines are not added to the history list.
+- Added a new ini section so that select ServerInfo cvars can be remembered
+  across games. There is a different one for single player games and for net
+  games, and the net game version is only saved on the machine that acts as
+  host.
+- Added useflechette command, which acts like "use ArtiPoisonBag1,2,or3"
+  depending on the player that uses it.
+- Moved the default +showscores key in Hexen to Scroll Lock, because \ is
+  already used by "use ArtiHealth".
+- Added the Hexen default keys for quick-use of inventory items.
+- Added addslotdefault command to only put a weapon in a slot if it isn't
+  already assigned to a slot.
+- Changed P_FindNamedInventory() to use the same names as the actors that
+  represent the inventory items, for consistancy.
+- Gave the pod and explosive barrel MF3_DONTGIB flags so that if 
+- Changed the setslot and addslot commands so that you cannot have more than
+  one copy of a weapon in a single slot.
+
+December 23, 2002
+- Did some cleanup for GCC 3.2.
+- Added a fix for wads that have things like FF_END immediately followed by
+  F_END.
+  
+December 22, 2002
+- Fixed: ThrustFloorUp and ThrustFloorDown did not have spawnids, nor did they
+  override Activate() and Deactivate().
+- Fixed: P_LoadBuildMap() read numsectors out of the Build map before checking
+  to make sure there was actually enough data for numsectors to be present.
+
+December 21, 2002
+- Changed pointer tracking in pointy classes to use pointers to members instead
+  of offsetof, as per GCC 3.2's suggestion.
+
+December 20, 2002
+- Turned the vertex and linedef indices in the map data structures into
+  unsigned words. Everything compiled without warning, so maybe big level
+  support really is that easy.
+- Fixed: Maps with >32k unpacked sidedefs could not be loaded because
+  sidei_t::a.map in p_setup.cpp was still signed.
+- Changed: REJECT lumps with 0 length won't even be loaded now. And REJECTs
+  that have some length but are nothing but 0s will be freed.
+- Fixed: The sprintf in the first case of D_WriteUserInfoStrings() had an
+  extra comma, so it would crash, making demo recording impossible.
+- Fixed: DArgs::CheckValue() did not check to ensure that value is valid.
+  (That is, that it does not begin with + or -).
+- Fixed: Trying to add more bots than there are starts in a coop game would
+  leave the extra bots as "active", so you could not spawn them even after
+  removing the existing bots.
+- Fixed: Players could not choose their weapons if they loaded a savegame
+  before starting a new game because weapon assignments were only transmitted
+  at the start of a new game.
+- Added separate translation tables for the player corpses so that when a
+  player dies and comes back with a sprite that uses a different palette
+  translation range (i.e. a mage dies and is reincarnated as a fighter),
+  the corpse will retain the translation the player had at death. This also
+  means you can't change the color of your corpses anymore.
+
 December 19, 2002
+- Uploaded 27.cab.
+- Fixed: The internal node builder was not setting bPolySeg, so segs would
+  be randomly marked as belonging to polyobjects if you used the internal
+  node builder.
 - Uploaded 26.cab.
 - Fixed: TELEFOGHEIGHT was not being used everywhere it needed to be.
 - Changed: P_DropItem() uses the standard Doom drop for items that don't

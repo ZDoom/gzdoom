@@ -37,9 +37,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <zlib.h>
-#if _MSC_VER
+#ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
 #endif
 

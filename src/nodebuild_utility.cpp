@@ -1,4 +1,7 @@
+#include <stdlib.h>
+#ifdef _MSC_VER
 #include <malloc.h>
+#endif
 #include <string.h>
 #include <stdio.h>
 
@@ -176,8 +179,8 @@ void FNodeBuilder::GroupSegPlanes ()
 		fixed_t y2 = Vertices[seg->v2].y;
 		angle_t ang = PointToAngle (x2 - x1, y2 - y1);
 
-		if (ang >= 1<<31)
-			ang += 1<<31;
+		if (ang >= 1u<<31)
+			ang += 1u<<31;
 
 		FPrivSeg *check = buckets[ang >>= 31-bucketbits];
 

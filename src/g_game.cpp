@@ -339,6 +339,23 @@ CCMD (use)
 	}
 }
 
+CCMD (useflechette)
+{ // Select from one of arti_poisonbag1-3, whichever the player has
+	int i, j;
+
+	i = (m_Instigator->player->CurrentPlayerClass + 2) % 3;
+
+	for (j = 0; j < 3; ++j)
+	{
+		artitype_t type = (artitype_t)(arti_poisonbag1 + (i+j)%3);
+		if (m_Instigator->player->inventory[type] != 0)
+		{
+			SendItemUse = type;
+			break;
+		}
+	}
+}
+
 CCMD (select)
 {
 	if (argv.argc() > 1)
@@ -1197,6 +1214,12 @@ static void G_QueueBody (AActor *body)
 		bodyque[modslot]->Destroy ();
 	}
 	bodyque[modslot] = body;
+
+	// Copy the player's translation in case they respawn as something that uses
+	// a different translation range.
+	R_CopyTranslation (TRANSLATION(TRANSLATION_PlayerCorpses,modslot), body->Translation);
+	body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
+
 	bodyqueslot++;
 }
 

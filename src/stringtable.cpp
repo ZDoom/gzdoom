@@ -103,7 +103,7 @@ void FStringTable::FreeStandardStrings ()
 	}
 }
 
-#include "errors.h"
+#include "doomerrors.h"
 void FStringTable::LoadStrings (int lump, int expectedSize, bool enuOnly)
 {
 	BYTE *strData = (BYTE *)W_CacheLumpNum (lump, PU_CACHE);

@@ -209,15 +209,15 @@ int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 
 	switch (type)
 	{
-	case CVAR_Bool:		res = (int)value.Bool; break;
-	case CVAR_Int:		res = value.Int; break;
+	case CVAR_Bool:         res = (int)value.Bool; break;
+	case CVAR_Int:          res = value.Int; break;
 #if __GNUC__ <= 2
-	case CVAR_Float:	tmp = value.Float; res = (int)tmp; break;
+	case CVAR_Float:        tmp = value.Float; res = (int)tmp; break;
 #else
-	case CVAR_Float:	res = (int)value.Float; break;
+	case CVAR_Float:        res = (int)value.Float; break;
 #endif
-	case CVAR_String:	res = strtol (value.String, NULL, 0); break;
-	default:			res = 0; break;
+	case CVAR_String:       res = strtol (value.String, NULL, 0); break;
+	default:                        res = 0; break;
 	}
 	return res;
 }
@@ -448,7 +448,7 @@ void FBaseCVar::EnableCallbacks ()
 //
 
 FBoolCVar::FBoolCVar (const char *name, bool def, DWORD flags, void (*callback)(FBoolCVar &))
-	: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
+: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
 {
 	DefaultValue = def;
 	if (Flags & CVAR_ISDEFAULT)
@@ -506,7 +506,7 @@ void FBoolCVar::DoSet (UCVarValue value, ECVarType type)
 //
 
 FIntCVar::FIntCVar (const char *name, int def, DWORD flags, void (*callback)(FIntCVar &))
-	: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
+: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
 {
 	DefaultValue = def;
 	if (Flags & CVAR_ISDEFAULT)
@@ -564,7 +564,7 @@ void FIntCVar::DoSet (UCVarValue value, ECVarType type)
 //
 
 FFloatCVar::FFloatCVar (const char *name, float def, DWORD flags, void (*callback)(FFloatCVar &))
-	: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
+: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
 {
 	DefaultValue = def;
 	if (Flags & CVAR_ISDEFAULT)
@@ -622,7 +622,7 @@ void FFloatCVar::DoSet (UCVarValue value, ECVarType type)
 //
 
 FStringCVar::FStringCVar (const char *name, const char *def, DWORD flags, void (*callback)(FStringCVar &))
-	: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
+: FBaseCVar (name, flags, reinterpret_cast<void (*)(FBaseCVar &)>(callback))
 {
 	DefaultValue = copystring (def);
 	if (Flags & CVAR_ISDEFAULT)
@@ -682,7 +682,7 @@ void FStringCVar::DoSet (UCVarValue value, ECVarType type)
 //
 
 FColorCVar::FColorCVar (const char *name, int def, DWORD flags, void (*callback)(FColorCVar &))
-	: FIntCVar (name, def, flags, reinterpret_cast<void (*)(FIntCVar &)>(callback))
+: FIntCVar (name, def, flags, reinterpret_cast<void (*)(FIntCVar &)>(callback))
 {
 }
 
@@ -798,9 +798,9 @@ void FBaseCVar::ResetToDefault ()
 //
 
 FFlagCVar::FFlagCVar (const char *name, FIntCVar &realvar, DWORD bitval)
-	: FBaseCVar (name, 0, NULL),
-	ValueVar (realvar),
-	BitVal (bitval)
+: FBaseCVar (name, 0, NULL),
+ValueVar (realvar),
+BitVal (bitval)
 {
 	Flags &= ~CVAR_ISDEFAULT;
 }
@@ -932,7 +932,7 @@ void C_ReadCVars (byte **demo_p)
 		return;
 
 	if (*ptr == '\\')
-	{	// compact mode
+	{       // compact mode
 		TArray<FBaseCVar *> cvars;
 		FBaseCVar *cvar;
 		DWORD filter;
@@ -1119,23 +1119,27 @@ void C_ArchiveCVars (FConfigFile *f, int type)
 	// type 2: Unknown cvars
 	// type 3: Unknown global cvars
 	// type 4: User info cvars
-	static const DWORD filters[5] =
+	// type 5: Server info cvars
+	static const DWORD filters[6] =
 	{
 		CVAR_ARCHIVE,
 		CVAR_ARCHIVE|CVAR_GLOBALCONFIG,
 		CVAR_ARCHIVE|CVAR_AUTO,
 		CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_AUTO,
-		CVAR_ARCHIVE|CVAR_USERINFO
+		CVAR_ARCHIVE|CVAR_USERINFO,
+		CVAR_ARCHIVE|CVAR_SERVERINFO
 	};
 
 	FBaseCVar *cvar = CVars;
 	DWORD filter;
-	
+
 	filter = filters[type];
 
 	while (cvar)
 	{
-		if ((cvar->Flags & (CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_AUTO|CVAR_USERINFO)) == filter)
+		if ((cvar->Flags &
+			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE))
+			== filter)
 		{
 			UCVarValue val;
 			val = cvar->GetGenericRep (CVAR_String);
@@ -1150,7 +1154,7 @@ void FBaseCVar::CmdSet (const char *newval)
 	UCVarValue val;
 
 	// Casting away the const is safe in this case.
-	val.String = const_cast<char *>(newval);	
+	val.String = const_cast<char *>(newval);        
 	SetGenericRep (val, CVAR_String);
 
 	if (GetFlags() & CVAR_NOSET)
@@ -1266,11 +1270,11 @@ void FBaseCVar::ListVars (const char *filter, bool plain)
 			Printf ("%c%c%c %s : :%s\n",
 				flags & CVAR_ARCHIVE ? 'A' : ' ',
 				flags & CVAR_USERINFO ? 'U' :
-					flags & CVAR_SERVERINFO ? 'S' :
-					flags & CVAR_AUTO ? 'C' : ' ',
+			flags & CVAR_SERVERINFO ? 'S' :
+			flags & CVAR_AUTO ? 'C' : ' ',
 				flags & CVAR_NOSET ? '-' :
-					flags & CVAR_LATCH ? 'L' :
-					flags & CVAR_UNSETTABLE ? '*' : ' ',
+			flags & CVAR_LATCH ? 'L' :
+			flags & CVAR_UNSETTABLE ? '*' : ' ',
 				var->GetName(),
 				var->GetGenericRep (CVAR_String).String);
 		}

@@ -79,24 +79,24 @@ typedef struct
 // A LineDef, as used for editing, and as input to the BSP builder.
 typedef struct
 {
-	short	v1;
-	short	v2;
-	short	flags;
+	WORD	v1;
+	WORD	v2;
+	WORD	flags;
 	short	special;
 	short	tag;
-	short	sidenum[2];	// sidenum[1] will be -1 if one sided
+	WORD	sidenum[2];	// sidenum[1] will be -1 if one sided
 
 } maplinedef_t;
 
 // [RH] Hexen-compatible LineDef.
 typedef struct
 {
-	short	v1;
-	short	v2;
+	WORD	v1;
+	WORD	v2;
 	short	flags;
 	byte	special;
 	byte	args[5];
-	short	sidenum[2];
+	WORD	sidenum[2];
 } maplinedef2_t;
 
 
@@ -170,10 +170,10 @@ typedef struct
 // using partition lines selected by BSP builder.
 typedef struct
 {
-	short	v1;
-	short	v2;
+	WORD	v1;
+	WORD	v2;
 	short	angle;
-	short	linedef;
+	WORD	linedef;
 	short	side;
 	short	offset;
 } mapseg_t;

@@ -773,7 +773,7 @@ void FNodeBuilder::SplitSegs (WORD set, node_t &node, int splitseg, WORD &outset
 
 			if (seg->loopnum)
 			{
-				Printf ("   Split seg %d (%d,%d)-(%d,%d) of sector %d in loop %d\n",
+				Printf ("   Split seg %d (%ld,%ld)-(%ld,%ld) of sector %d in loop %d\n",
 					set,
 					Vertices[seg->v1].x>>16, Vertices[seg->v1].y>>16,
 					Vertices[seg->v2].x>>16, Vertices[seg->v2].y>>16,
@@ -954,6 +954,7 @@ void FNodeBuilder::RemoveSegFromVert1 (int segnum, int vertnum)
 	else
 	{
 		int prev, curr;
+		prev = 0;
 		curr = v->segs;
 		while (curr != NO_INDEX && curr != segnum)
 		{
@@ -978,6 +979,7 @@ void FNodeBuilder::RemoveSegFromVert2 (int segnum, int vertnum)
 	else
 	{
 		int prev, curr;
+		prev = 0;
 		curr = v->segs2;
 		while (curr != NO_INDEX && curr != segnum)
 		{
@@ -1043,7 +1045,7 @@ void FNodeBuilder::PrintSet (int l, WORD set)
 	Printf ("set %d:\n", l);
 	for (; set != NO_INDEX; set = Segs[set].next)
 	{
-		Printf ("\t%d(%d):%d(%ld,%ld)-%d(%ld,%ld) ", set, Segs[set].frontsector,
+		Printf ("\t%d(%d):%d(%ld,%ld)-%d(%ld,%ld) ", set, Segs[set].frontsector-sectors,
 			Segs[set].v1,
 			Vertices[Segs[set].v1].x>>16, Vertices[Segs[set].v1].y>>16,
 			Segs[set].v2,

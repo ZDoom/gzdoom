@@ -36,6 +36,7 @@
 #include <windows.h>
 #include <tlhelp32.h>
 #include "resource.h"
+#include "gccseh.h"
 
 #define MAX_CRASH_REPORT (256*1024)
 
@@ -148,14 +149,14 @@ void CreateCrashLog (char *(*userCrashInfo)(char *text, char *maxtext))
 		return;
 	CrashMax = CrashText + MAX_CRASH_REPORT;
 
-	for (i = 0; i < sizeof(exceptions)/sizeof(exceptions[0]); ++i)
+	for (i = 0; (size_t)i < sizeof(exceptions)/sizeof(exceptions[0]); ++i)
 	{
 		if (exceptions[i].Code == CrashPointers.ExceptionRecord->ExceptionCode)
 		{
 			break;
 		}
 	}
-	if (i < sizeof(exceptions)/sizeof(exceptions[0]))
+	if ((size_t)i < sizeof(exceptions)/sizeof(exceptions[0]))
 	{
 		CrashPtr = CrashText + wsprintf (CrashText, "Code: %s\r\n", exceptions[i].Text);
 	}
@@ -194,7 +195,7 @@ void CreateCrashLog (char *(*userCrashInfo)(char *text, char *maxtext))
 
 		DWORD j;
 
-		for (i = 0, j = 1; i < sizeof(eflagsBits)/sizeof(eflagsBits[0]); j <<= 1, ++i)
+		for (i = 0, j = 1; (size_t)i < sizeof(eflagsBits)/sizeof(eflagsBits[0]); j <<= 1, ++i)
 		{
 			if (eflagsBits[i][0] != 'x')
 			{
@@ -432,11 +433,15 @@ static void StackWalk ()
 	DWORD *addr = (DWORD *)DumpAddress;
 	DWORD_PTR *seh_stack;
 
+#ifdef __GNUC__
+    asm volatile ("movl %%fs:($0),%%eax;" : "=a" (seh_stack));
+#else
 	__asm
 	{
 		mov eax, fs:[0]
 		mov seh_stack, eax
 	}
+#endif
 
 	BYTE *pBaseOfImage = (BYTE *)GetModuleHandle (0);
 	IMAGE_OPTIONAL_HEADER *pHeader = (IMAGE_OPTIONAL_HEADER *)(pBaseOfImage +

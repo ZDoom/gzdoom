@@ -113,7 +113,7 @@ char *DArgs::CheckValue (const char *check) const
 	int i = CheckParm (check);
 
 	if (i > 0 && i < m_ArgC - 1)
-		return m_ArgV[i+1];
+		return m_ArgV[i+1][0] != '+' && m_ArgV[i+1][0] != '-' ? m_ArgV[i+1] : NULL;
 	else
 		return NULL;
 }

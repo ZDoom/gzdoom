@@ -143,6 +143,10 @@ static void CalcPlane (SlopeWork &slope, secplane_t &plane);
 
 bool P_LoadBuildMap (BYTE *data, size_t len, mapthing2_t *buildstart)
 {
+	if (len < 26)
+	{
+		return false;
+	}
 	numsectors = SHORT(*(WORD *)(data + 20));
 	int numwalls;
 

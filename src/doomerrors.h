@@ -1,5 +1,6 @@
 /*
-** version.h
+** doomerrors.h
+** Contains error classes that can be thrown around
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2001 Randy Heit
@@ -31,25 +32,54 @@
 **
 */
 
-#ifndef __VERSION_H__
-#define __VERSION_H__
+#ifndef __ERRORS_H__
+#define __ERRORS_H__
 
-// Lots of different representations for the version number
-enum { VERSION = 202 };
-#define STRVERSION "202"
-#define DOTVERSIONSTR "2.0.28"
-#define GAMEVER (2*256+1)
+#include <string.h>
+#include <stdio.h>
 
-// SAVEVER is the version of the information stored in level snapshots.
-// Note that SAVEVER is not directly comparable to VERSION.
-// SAVESIG should match SAVEVER.
-#define SAVEVER 204
-#define SAVESIG "ZDOOMSAVE204"
+#define MAX_ERRORTEXT	1024
 
-// MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER 200
+class CDoomError
+{
+public:
+	CDoomError ()
+	{
+		m_Message[0] = '\0';
+	}
+	CDoomError (const char *message)
+	{
+		SetMessage (message);
+	}
+	void SetMessage (const char *message)
+	{
+		strncpy (m_Message, message, MAX_ERRORTEXT-1);
+		m_Message[MAX_ERRORTEXT-1] = '\0';
+	}
+	const char *GetMessage (void) const
+	{
+		if (m_Message[0] != '\0')
+			return (const char *)m_Message;
+		else
+			return NULL;
+	}
 
-// The maximum length of one save game description for the menus.
-#define SAVESTRINGSIZE		24
+private:
+	char m_Message[MAX_ERRORTEXT];
+};
 
-#endif //__VERSION_H__
+class CRecoverableError : public CDoomError
+{
+public:
+	CRecoverableError() : CDoomError() {}
+	CRecoverableError(const char *message) : CDoomError(message) {}
+};
+
+class CFatalError : public CDoomError
+{
+public:
+	CFatalError() : CDoomError() {}
+	CFatalError(const char *message) : CDoomError(message) {}
+};
+
+#endif //__ERRORS_H__

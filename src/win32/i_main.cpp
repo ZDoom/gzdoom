@@ -28,19 +28,20 @@
 #include <objbase.h>
 #include <commctrl.h>
 #ifndef NOWTS
-#include <wtsapi32.h>
+//#include <wtsapi32.h>
+#define NOTIFY_FOR_THIS_SESSION 0
 #endif
 #ifdef _MSC_VER
 #include <eh.h>
+#include <new.h>
 #endif
 #include "resource.h"
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
-#include <new.h>
 
-#include "errors.h"
+#include "doomerrors.h"
 #include "hardware.h"
 
 #include "doomtype.h"
@@ -52,7 +53,7 @@
 #include "version.h"
 #include "i_video.h"
 #include "i_sound.h"
-#include "errorrep.h"
+#include "gccseh.h"
 
 #include "stats.h"
 
@@ -273,7 +274,6 @@ void DoMain (HINSTANCE hInstance)
 					FARPROC reg = GetProcAddress (hwtsapi32, "WTSRegisterSessionNotification");
 					if (reg == 0 || !((BOOL(WINAPI *)(HWND, DWORD))reg) (Window, NOTIFY_FOR_THIS_SESSION))
 					{
-						HRESULT hr = GetLastError();
 						FreeLibrary (hwtsapi32);
 						hwtsapi32 = 0;
 					}
@@ -300,7 +300,7 @@ void DoMain (HINSTANCE hInstance)
 		I_DetectOS ();
 		D_DoomMain ();
 	}
-	catch (CDoomError &error)
+	catch (class CDoomError &error)
 	{
 		I_ShutdownHardware ();
 		SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
@@ -435,6 +435,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	MainThread = INVALID_HANDLE_VALUE;
 	DuplicateHandle (GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &MainThread,
 		0, FALSE, DUPLICATE_SAME_ACCESS);
+#ifndef __GNUC__
 	if (MainThread != INVALID_HANDLE_VALUE)
 	{
 		SetUnhandledExceptionFilter (CatchAllExceptions);
@@ -457,6 +458,11 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 		}
 		DisplayCrashLog ();
 	}
+#else
+	// GCC is not nice enough to support SEH, so we can't gather crash info with it.
+	// It could probably be faked with inline assembly, but that's too much trouble.
+	DoMain (hInstance);
+#endif
 	CloseHandle (MainThread);
 	MainThread = INVALID_HANDLE_VALUE;
 	return 0;

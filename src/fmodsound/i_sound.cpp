@@ -890,7 +890,7 @@ void I_UpdateListener (AActor *listener)
 		FSOUND_3D_Listener_SetAttributes (pos, vel,
 			cosf (angle), 0.f, sinf (angle), 0.f, 1.f, 0.f);
 
-		if (DriverCaps & FSOUND_CAPS_EAX2)
+		if (DriverCaps & (FSOUND_CAPS_EAX2|FSOUND_CAPS_EAX3))
 		{
 			static FSOUND_REVERB_PROPERTIES water = FSOUND_PRESET_UNDERWATER;
 			static FSOUND_REVERB_PROPERTIES off = FSOUND_PRESET_OFF;

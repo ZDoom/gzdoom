@@ -159,21 +159,21 @@ void I_InitSound_Simple ()
 	hr = CoCreateInstance (CLSID_DirectSound, 0, CLSCTX_INPROC_SERVER, IID_IDirectSound, (void **)&lpds);
 	if (FAILED (hr))
 	{
-		Printf ("Could not create DirectSound interface: %08x\n", hr);
+		Printf ("Could not create DirectSound interface: %08lx\n", hr);
 		goto fail;
 	}
 
 	hr = lpds->Initialize (0);
 	if (FAILED (hr))
 	{
-		Printf ("Could not initialize DirectSound interface: %08x\n", hr);
+		Printf ("Could not initialize DirectSound interface: %08lx\n", hr);
 		goto fail;
 	}
 
 	hr = lpds->SetCooperativeLevel (Window, DSSCL_PRIORITY);
 	if (FAILED (hr))
 	{
-		Printf ("Could not set DirectSound co-op level: %08x\n", hr);
+		Printf ("Could not set DirectSound co-op level: %08lx\n", hr);
 		lpds->Release ();
 		goto fail;
 	}
@@ -181,7 +181,7 @@ void I_InitSound_Simple ()
 	hr = lpds->CreateSoundBuffer (&dsbdesc, &lpdsbPrimary, NULL);
 	if (FAILED (hr))
 	{
-		Printf ("Could not get DirectSound primary buffer: %08x\n", hr);
+		Printf ("Could not get DirectSound primary buffer: %08lx\n", hr);
 		lpds->Release ();
 		goto fail;
 	}
@@ -205,14 +205,14 @@ void I_InitSound_Simple ()
 	hr = lpds->CreateSoundBuffer (&dsbdesc, &lpdsb, NULL);
 	if (FAILED (hr))
 	{
-		Printf ("Could not create secondary DirectSound buffer: %08x\n", hr);
+		Printf ("Could not create secondary DirectSound buffer: %08lx\n", hr);
 		goto fail;
 	}
 
 	hr = lpdsb->Play (0, 0, DSBPLAY_LOOPING);
 	if (FAILED (hr))
 	{
-		Printf ("Could not play secondary buffer: %08x\n", hr);
+		Printf ("Could not play secondary buffer: %08lx\n", hr);
 		goto fail;
 	}
 
@@ -226,7 +226,7 @@ void I_InitSound_Simple ()
 	MixerEvent = CreateEvent (NULL, FALSE, FALSE, NULL);
 	if (MixerEvent == NULL)
 	{
-		Printf ("Could not create mixer event: %08x\n", GetLastError());
+		Printf ("Could not create mixer event: %08lx\n", GetLastError());
 		goto fail;
 	}
 
@@ -236,7 +236,7 @@ void I_InitSound_Simple ()
 	MixerThread = CreateThread (NULL, 0, MixerThreadFunc, NULL, 0, &dummy);
 	if (MixerThread == NULL)
 	{
-		Printf ("Could not create mixer thread: %08x\n", GetLastError());
+		Printf ("Could not create mixer thread: %08lx\n", GetLastError());
 		goto fail;
 	}
 	SetThreadPriority (MixerThread, THREAD_PRIORITY_ABOVE_NORMAL);
@@ -306,7 +306,7 @@ static void STACK_ARGS I_ShutdownSound_Simple ()
 		{
 			if (S_sfx[i].data != NULL)
 			{
-				delete[] S_sfx[i].data;
+				delete[] (BYTE *)S_sfx[i].data;
 				S_sfx[i].data = NULL;
 			}
 		}
@@ -825,9 +825,7 @@ static void AddChannel8 (Channel *chan, DWORD count)
 	right = chan->RightVolume * Amp;
 	step = chan->SampleStep;
 
-	DWORD start = count;
-
-	for (count; count; --count)
+	for (; count; --count)
 	{
 		SDWORD sample = (SDWORD)from[chan->HighPos];
 		chan->SamplePos += step;
@@ -875,9 +873,7 @@ static void AddChannel16 (Channel *chan, DWORD count)
 	right = (chan->RightVolume * Amp) >> 8;
 	step = chan->SampleStep;
 
-	DWORD start = count;
-
-	for (count; count; --count)
+	for (; count; --count)
 	{
 		SDWORD sample = (SDWORD)from[chan->HighPos];
 		chan->SamplePos += step;

@@ -747,8 +747,29 @@ void W_InitHashChains (void)
 
 static BOOL IsMarker (const lumpinfo_t *lump, const char *marker)
 {
-	return (lump->namespc == ns_global) && (!strncmp (lump->name, marker, 8) || 
-			(*(lump->name) == *marker && !strncmp (lump->name + 1, marker, 7)));
+	if (lump->namespc != ns_global)
+	{
+		return false;
+	}
+	if (strncmp (lump->name, marker, 8) == 0)
+	{
+		// If the previous lump was of the form FF_END and this one is
+		// of the form F_END, ignore this as a marker
+		if (marker[2] == 'E' && lump > lumpinfo)
+		{
+			if ((lump - 1)->name[0] == *marker &&
+				strncmp ((lump - 1)->name + 1, marker, 7) == 0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	if (lump->name[0] == *marker && strncmp (lump->name + 1, marker, 7) == 0)
+	{
+		return true;
+	}
+	return false;
 }
 
 //==========================================================================
@@ -772,6 +793,7 @@ void W_MergeLumps (const char *start, const char *end, int space)
 	uppercopy (uend, end);
 
 	// Some pwads use an icky hack to get extra flats with regular Doom.
+	// They have an F_END without a corresponding F_START or FF_START.
 	// This tries to detect them.
 	flatHack = 0;
 	if (strcmp ("F_START", ustart) == 0 && !Args.CheckParm ("-noflathack"))

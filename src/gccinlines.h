@@ -24,6 +24,11 @@
 
 #include <stdlib.h>
 
+#ifndef alloca
+// MinGW does not seem to come with alloca defined.
+#define alloca __builtin_alloca
+#endif
+
 inline SDWORD Scale (SDWORD a, SDWORD b, SDWORD c)
 {
 	SDWORD result, dummy;
@@ -110,53 +115,53 @@ inline SDWORD MulScale32 (SDWORD a, SDWORD b)
 
 inline SDWORD DMulScale (SDWORD a, SDWORD b, SDWORD c, SDWORD d, int s)
 {
-	SDWORD result, dummy1, dummy2, dummy3;
-
+	SDWORD f, g, h, i;
 	asm volatile
-		("imull %5\n\t"
-		 "movl %%eax,%3\n\t"
-		 "movl %6,%%eax\n\t"
-		 "movl %%edx,%2\n\t"
-		 "imull %7\n\t"
-		 "addl %%eax,%3\n\t"
-		 "adcl %%edx,%2\n\t"
-		 "shrdl %b8,%2,%3"
-		 :"=a" (dummy1),	// 0
-		  "=d" (dummy2),	// 1
-		  "=r" (dummy3),	// 2
-		  "=&r" (result)	// 3
-		 :  "0" (a),		// 4
-		    "1" (b),		// 5
-		    "2" (c),		// 6
-		    "r" (d),		// 7
-		    "c" (s)			// 8
-		 : "%cc");
-	return result;
+		("imull %3\n\t"
+		:"=a,a" (f), "=d,d" (g)
+		: "%0,%0,%0" (a),  "r,m" (b)
+		:"%cc");
+	asm volatile
+		("imull %3\n\t"
+		:"=a,a" (h), "=d,d" (i)
+		: "%0,%0,%0" (c),  "r,m" (d)
+		:"%cc");
+	asm volatile
+		("addl %4,%2\n\t"
+		 "adcl %5,%3\n\t"
+		:"=a,a" (h), "=d,d" (i)
+		: "0,0" (h), "1,1" (i), "m,r" (f), "m,r" (g)
+		:"%cc");
+	asm volatile
+		("shrd %2,%1,%0\n\t"
+		:"=a,a" (h), "=d,d" (i)
+		:"I,c" (s)
+		:"%cc");
+	return h;
 }
 
 #define MAKECONSTDMulScale(s) \
 	inline SDWORD DMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d) \
 	{ \
-		SDWORD result, dummy1, dummy2, dummy3; \
+		SDWORD f, g, h, i; \
 		asm volatile \
-		("imull %5\n\t" \
-		 "movl %%eax,%3\n\t" \
-		 "movl %6,%%eax\n\t" \
-		 "movl %%edx,%2\n\t" \
-		 "imull %7\n\t" \
-		 "addl %%eax,%3\n\t" \
-		 "adcl %%edx,%2\n\t" \
-		 "shrdl $" #s ",%2,%3" \
-		 :"=a" (dummy1), \
-		  "=d" (dummy2), \
-		  "=r" (dummy3), \
-		  "=&r" (result) \
-		 : "0" (a), \
-		   "1" (b), \
-		   "2" (c), \
-		   "r" (d) \
-		 : "%cc"); \
-		return result; \
+			("imull %3\n\t" \
+			:"=a" (f), "=d" (g) \
+			: "%0" (a),  "r" (b) \
+			:"%cc"); \
+		asm volatile \
+			("imull %3\n\t" \
+			:"=a,a" (h), "=d,d" (i) \
+			: "%0,%0" (c),  "r,m" (d) \
+			:"%cc"); \
+		asm volatile \
+			("addl %4,%2\n\t" \
+			"adcl %5,%3\n\t" \
+			"shrd $" #s ",%3,%2\n\t" \
+			:"=a,a" (h), "=d,d" (i) \
+			: "0,0" (h), "1,1" (i), "m,r" (f), "m,r" (g) \
+			:"%cc"); \
+		return h; \
 	}
 
 MAKECONSTDMulScale(1)
@@ -194,57 +199,59 @@ MAKECONSTDMulScale(31)
 
 inline SDWORD DMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d)
 {
-	SDWORD result, dummy1, dummy2, dummy3;
-
+	SDWORD f, g, h, i;
 	asm volatile
-		("imull %5\n\t"
-		 "movl %%eax,%3\n\t"
-		 "movl %6,%%eax\n\t"
-		 "movl %%edx,%2\n\t"
-		 "imull %7\n\t"
-		 "addl %%eax,%3\n\t"
-		 "adcl %%edx,%2\n\t"
-		 :"=a" (dummy1),	// 0
-		  "=d" (dummy2),	// 1
-		  "=&r" (result),	// 2
-		  "=&r" (dummy3)	// 3
-		 :  "0" (a),		// 4
-			"1" (b),		// 5
-			"2" (c),		// 6
-			"r" (d)		// 7
-		 : "%cc");
-	return result;
+		("imull %3\n\t"
+		:"=a" (f), "=d" (g)
+		: "%0" (a), "r" (b)
+		:"%cc");
+	asm volatile
+		("imull %3\n\t"
+		:"=a,a" (h), "=d,d" (i)
+		: "%0,%0" (c),"r,m" (d)
+		:"%cc");
+	asm volatile
+		("addl %4,%2\n\t"
+		 "adcl %5,%3\n\t"
+		:"=a,a" (h), "=d,d" (i)
+		: "0,0" (h), "1,1" (i), "r,m" (f), "r,m" (g)
+		:"%cc");
+	return i;
 }
 
 #define MAKECONSTTMulScale(s) \
-	inline SDWORD TMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f) \
+	inline SDWORD TMulScale##s (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD ee) \
 	{ \
-		SDWORD result, dummy1, dummy2, dummy3; \
+		SDWORD f, g, h, i; \
 		asm volatile \
-			("imull %5\n\t" \
-			 "movl %%eax,%3\n\t" \
-			 "movl %6,%%eax\n\t" \
-			 "movl %%edx,%2\n\t" \
-			 "imull %7\n\t" \
-			 "add %%eax,%3\n\t" \
-			 "mov %8,%%eax\n\t" \
-			 "adc %%edx,%2\n\t" \
-			 "imull %9\n\t" \
-			 "add %3,%%eax\n\t" \
-			 "adc %2,%%edx\n\t" \
-			 "shrd $" #s ",%%edx,%%eax" \
-			 :"=a" (dummy2), \
-			  "=d" (dummy1), \
-			  "=&r" (result), \
-			  "=&r" (dummy3) \
-			 :  "0" (a), \
-				"1" (b), \
-				"2" (c), \
-				"r" (d), \
-				"r" (e), \
-				"m" (f) \
-			 : "%cc"); \
-		return dummy2; \
+			("imull %3\n\t" \
+			:"=a,a" (f), "=d,d" (g) \
+			: "%0,%0" (a),  "r,m" (b) \
+			:"%cc"); \
+		asm volatile \
+			("imull %3\n\t" \
+			:"=a,a" (h), "=d,d" (i) \
+			: "%0,%0" (c),  "r,m" (d) \
+			:"%cc"); \
+		asm volatile \
+			("addl %2,%4\n\t" \
+			"adcl %3,%5\n\t" \
+			:"=r,m" (f), "=r,m" (g) \
+			: "a,a" (h), "d,d" (i), "0,0" (f), "1,1" (g) \
+			:"%cc"); \
+		asm volatile \
+			("imull %3\n\t" \
+			:"=a,a" (h), "=d,d" (i) \
+			: "%0,%0" (e),  "r,m" (ee) \
+			:"%cc"); \
+		asm volatile \
+			("addl %4,%2\n\t" \
+			"adcl %5,%3\n\t" \
+			"shrd $" #s ",%3,%2\n\t" \
+			:"=a,a" (h), "=d,d" (i) \
+			: "0,0" (h), "1,1" (i), "r,m" (f), "r,m" (g) \
+			:"%cc"); \
+		return h; \
 	}
 
 MAKECONSTTMulScale(1)
@@ -280,33 +287,37 @@ MAKECONSTTMulScale(30)
 MAKECONSTTMulScale(31)
 #undef MAKECONSTTMulScale
 
-inline SDWORD TMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD f)
+inline SDWORD TMulScale32 (SDWORD a, SDWORD b, SDWORD c, SDWORD d, SDWORD e, SDWORD ee)
 {
-	SDWORD result, dummy1, dummy2, dummy3;
+	SDWORD f, g, h, i, j, k;
 	asm volatile
-		("imull %5\n\t"
-		 "movl %%eax,%3\n\t"
-		 "movl %6,%%eax\n\t"
-		 "movl %%edx,%2\n\t"
-		 "imul %7\n\t"
-		 "add %%eax,%3\n\t"
-		 "mov %8,%%eax\n\t"
-		 "adc %%edx,%2\n\t"
-		 "imul %9\n\t"
-		 "add %%eax,%3\n\t"
-		 "adc %%edx,%2\n\t"
-		 :"=a" (dummy1),
-		  "=d" (dummy2),
-		  "=&r" (result),
-		  "=&r" (dummy3)
-		 :  "0" (a),
-			"1" (b),
-			"2" (c),
-			"r" (d),
-			"r" (e),
-			"r" (f)
-		 : "%cc");
-	return result;
+		("imull %3\n\t"
+		:"=a,a" (f), "=d,d" (g)
+		: "%0,%0" (a),  "r,m" (b)
+		:"%cc");
+	asm volatile
+		("imull %3\n\t"
+		:"=a,a" (h), "=d,d" (i)
+		: "%0,%0" (c),  "r,m" (d)
+		:"%cc");
+	asm volatile
+		("addl %2,%4\n\t"
+		 "adcl %3,%5\n\t"
+		:"=m,r" (f), "=m,r" (g)
+		: "a,a" (h), "d,d" (i), "0,0" (f), "1,1" (g)
+		:"%cc");
+	asm volatile
+		("imull %3\n\t"
+		:"=a,a" (j), "=d,d" (k)
+		: "%0,%0" (e),  "r,m" (ee)
+		:"%cc");
+	asm volatile
+		("addl %4,%2\n\t"
+		"adcl %5,%3\n\t"
+		:"=a,a" (j), "=d,d" (k)
+		: "0,0" (j), "1,1" (k), "m,r" (f), "m,r" (g)
+		:"%cc");
+	return k;
 }
 
 inline SDWORD BoundMulScale (SDWORD a, SDWORD b, SDWORD c)

@@ -392,7 +392,8 @@ bool P_CheckSight (const AActor *t1, const AActor *t2, BOOL ignoreInvisibility)
 //
 // check for trivial rejection
 //
-	if (rejectmatrix[pnum>>3] & (1 << (pnum & 7)))
+	if (rejectmatrix != NULL &&
+		(rejectmatrix[pnum>>3] & (1 << (pnum & 7))))
 	{
 sightcounts[0]++;
 		res = false;			// can't possibly be connected

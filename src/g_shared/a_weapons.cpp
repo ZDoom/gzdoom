@@ -310,6 +310,8 @@ bool FWeaponSlot::AddWeapon (weapontype_t weap)
 
 	for (i = 0; i < MAX_WEAPONS_PER_SLOT; i++)
 	{
+		if (Weapons[i] == weap)
+			return true;	// Already present
 		if (Weapons[i] == NUMWEAPONS)
 			break;
 	}
@@ -391,6 +393,35 @@ void FWeaponSlots::Clear ()
 	{
 		Slots[i].Clear ();
 	}
+}
+
+// If the weapon already exists in a slot, don't add it. If it doesn't,
+// then add it to the specified slot. False is returned if the weapon was
+// not in a slot and could not be added. True is returned otherwise.
+
+ESlotDef FWeaponSlots::AddDefaultWeapon (int slot, const char *weapName, weapontype_t weap)
+{
+	int currSlot, index;
+
+	if (!LocateWeapon (weap, &currSlot, &index))
+	{
+		if (slot >= 0 && slot < NUM_WEAPON_SLOTS)
+		{
+			bool added;
+
+			if (weapName != NULL)
+			{
+				added = Slots[slot].AddWeapon (weapName);
+			}
+			else
+			{
+				added = Slots[slot].AddWeapon (weap);
+			}
+			return added ? SLOTDEF_Added : SLOTDEF_Full;
+		}
+		return SLOTDEF_Full;
+	}
+	return SLOTDEF_Exists;
 }
 
 bool FWeaponSlots::LocateWeapon (weapontype_t weap, int *const slot, int *const index)
@@ -588,6 +619,33 @@ CCMD (addslot)
 		Net_WriteByte (DEM_SLOTCHANGE);
 		Net_WriteByte (slot);
 		LocalWeapons.Slots[slot].StreamOut ();
+	}
+}
+
+CCMD (addslotdefault)
+{
+	size_t slot;
+
+	if (argv.argc() != 3 || (slot = atoi (argv[1])) >= NUM_WEAPON_SLOTS)
+	{
+		Printf ("Usage: addslotdefault <slot> <weapon>\n");
+		return;
+	}
+
+	switch (LocalWeapons.AddDefaultWeapon (slot, argv[2], wp_nochange))
+	{
+	case SLOTDEF_Full:
+		Printf ("Could not add %s to slot %d\n", argv[2], slot);
+		break;
+
+	case SLOTDEF_Added:
+		Net_WriteByte (DEM_SLOTCHANGE);
+		Net_WriteByte (slot);
+		LocalWeapons.Slots[slot].StreamOut ();
+		break;
+
+	case SLOTDEF_Exists:
+		break;
 	}
 }
 

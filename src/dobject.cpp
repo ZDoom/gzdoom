@@ -169,7 +169,7 @@ DObject *TypeInfo::CreateNew () const
 	if (ActorInfo != NULL)
 	{
 		AActor *actor = (AActor *)mem;
-		memcpy (&(actor->x), &(((AActor *)ActorInfo->Defaults)->x), SizeOf - myoffsetof(AActor,x));
+		memcpy (&(actor->x), &(((AActor *)ActorInfo->Defaults)->x), SizeOf - ((BYTE *)&actor->x - (BYTE *)actor));
 	}
 	else if (ParentType != 0 &&
 		ConstructNative == ParentType->ConstructNative &&
@@ -270,7 +270,7 @@ TArray<DObject *> DObject::ToDestroy;
 bool DObject::Inactive;
 
 DObject::DObject ()
-: Class(0), ObjectFlags(0)
+: ObjectFlags(0), Class(0)
 {
 	if (FreeIndices.Pop (Index))
 		Objects[Index] = this;
@@ -279,7 +279,7 @@ DObject::DObject ()
 }
 
 DObject::DObject (TypeInfo *inClass)
-: Class(inClass), ObjectFlags(0)
+: ObjectFlags(0), Class(inClass)
 {
 	if (FreeIndices.Pop (Index))
 		Objects[Index] = this;
@@ -388,14 +388,14 @@ void DObject::DestroyScan (DObject *obj)
 			const TypeInfo *info = NATIVE_TYPE(current);
 			while (info)
 			{
-				const size_t *offsets = info->Pointers;
+				DObject *DObject::* const *offsets = info->Pointers;
 				if (offsets)
 				{
-					while (*offsets != (size_t)~0)
+					while (*offsets != 0)
 					{
-						if (*((DObject **)(((byte *)current) + *offsets)) == obj)
+						if (current->**offsets == obj)
 						{
-							*((DObject **)(((byte *)current) + *offsets)) = NULL;
+							current->**offsets = 0;
 						}
 						offsets++;
 					}
@@ -453,17 +453,16 @@ void DObject::DestroyScan ()
 			const TypeInfo *info = NATIVE_TYPE(current);
 			while (info)
 			{
-				const size_t *offsets = info->Pointers;
+				DObject *DObject::* const *offsets = info->Pointers;
 				if (offsets)
 				{
-					
-					while (*offsets != (size_t)~0)
+					while (*offsets != 0)
 					{
 						j = destroycount;
 						do
 						{
-							if (*((DObject **)(((byte *)current) + *offsets)) == *(destroybase + j))
-								*((DObject **)(((byte *)current) + *offsets)) = NULL;
+							if (current->**offsets == *(destroybase + j))
+								current->**offsets = 0;
 						} while (++j);
 						offsets++;
 					}

@@ -8,6 +8,7 @@
 #include "p_local.h"
 #include "p_terrain.h"
 #include "p_enemy.h"
+#include "statnums.h"
 
 static FRandom pr_freezedeath ("FreezeDeath");
 static FRandom pr_icesettics ("IceSetTics");
@@ -256,153 +257,135 @@ void A_FreezeDeathChunks (AActor *actor)
 // Corpse queue for monsters - this should be saved out
 #define CORPSEQUEUESIZE	64
 
+class DCorpsePointer : public DThinker
+{
+	DECLARE_CLASS (DCorpsePointer, DThinker)
+	HAS_OBJECT_POINTERS
+public:
+	DCorpsePointer (AActor *ptr);
+	void Destroy ();
+	void Serialize (FArchive &arc);
+	AActor *Corpse;
+	DWORD Count;	// Only the first corpse pointer's count is valid.
+private:
+	DCorpsePointer () {}
+};
+
+IMPLEMENT_POINTY_CLASS(DCorpsePointer)
+ DECLARE_POINTER(Corpse)
+END_POINTERS
+ 
+
+DCorpsePointer::DCorpsePointer (AActor *ptr)
+: DThinker (STAT_CORPSEPOINTER), Corpse (ptr)
+{
+	Count = 0;
+
+	// Thinkers are added to the end of their respective lists, so
+	// the first thinker in the list is the oldest one.
+	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
+	DCorpsePointer *first = iterator.Next ();
+
+	if (first != this)
+	{
+		if (first->Count >= CORPSEQUEUESIZE)
+		{
+			first->Destroy ();
+			first = iterator.Next ();
+		}
+	}
+	++first->Count;
+}
+
+void DCorpsePointer::Destroy ()
+{
+	// Store the count of corpses in the first thinker in the list
+	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
+	DCorpsePointer *first = iterator.Next ();
+
+	int prevCount = first->Count;
+
+	if (first == this)
+	{
+		first = iterator.Next ();
+	}
+
+	if (first != NULL)
+	{
+		first->Count = prevCount - 1;
+	}
+
+	if (Corpse != NULL)
+	{
+		Corpse->Destroy ();
+	}
+	Super::Destroy ();
+}
+
+void DCorpsePointer::Serialize (FArchive &arc)
+{
+	arc << Corpse << Count;
+}
+
+// Pointers to members cannot be assigned to single array elements,
+// so this class is deprecated. It exists now only for compatibility with
+// old savegames.
+
 class DCorpseQueue : public DThinker
 {
 	DECLARE_CLASS (DCorpseQueue, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-	DCorpseQueue ();
 	void Serialize (FArchive &arc);
-	void Enqueue (AActor *);
-	void Dequeue (AActor *);
+	void Tick ();
 protected:
 	AActor *CorpseQueue[CORPSEQUEUESIZE];
-	int CorpseQueueSlot;
 };
-
-IMPLEMENT_POINTY_CLASS (DCorpseQueue)
- DECLARE_POINTER (CorpseQueue[0])
- DECLARE_POINTER (CorpseQueue[1])
- DECLARE_POINTER (CorpseQueue[2])
- DECLARE_POINTER (CorpseQueue[3])
- DECLARE_POINTER (CorpseQueue[4])
- DECLARE_POINTER (CorpseQueue[5])
- DECLARE_POINTER (CorpseQueue[6])
- DECLARE_POINTER (CorpseQueue[7])
- DECLARE_POINTER (CorpseQueue[8])
- DECLARE_POINTER (CorpseQueue[9])
- DECLARE_POINTER (CorpseQueue[10])
- DECLARE_POINTER (CorpseQueue[11])
- DECLARE_POINTER (CorpseQueue[12])
- DECLARE_POINTER (CorpseQueue[13])
- DECLARE_POINTER (CorpseQueue[14])
- DECLARE_POINTER (CorpseQueue[15])
- DECLARE_POINTER (CorpseQueue[16])
- DECLARE_POINTER (CorpseQueue[17])
- DECLARE_POINTER (CorpseQueue[18])
- DECLARE_POINTER (CorpseQueue[19])
- DECLARE_POINTER (CorpseQueue[20])
- DECLARE_POINTER (CorpseQueue[21])
- DECLARE_POINTER (CorpseQueue[22])
- DECLARE_POINTER (CorpseQueue[23])
- DECLARE_POINTER (CorpseQueue[24])
- DECLARE_POINTER (CorpseQueue[25])
- DECLARE_POINTER (CorpseQueue[26])
- DECLARE_POINTER (CorpseQueue[27])
- DECLARE_POINTER (CorpseQueue[28])
- DECLARE_POINTER (CorpseQueue[29])
- DECLARE_POINTER (CorpseQueue[30])
- DECLARE_POINTER (CorpseQueue[31])
- DECLARE_POINTER (CorpseQueue[32])
- DECLARE_POINTER (CorpseQueue[33])
- DECLARE_POINTER (CorpseQueue[34])
- DECLARE_POINTER (CorpseQueue[35])
- DECLARE_POINTER (CorpseQueue[36])
- DECLARE_POINTER (CorpseQueue[37])
- DECLARE_POINTER (CorpseQueue[38])
- DECLARE_POINTER (CorpseQueue[39])
- DECLARE_POINTER (CorpseQueue[40])
- DECLARE_POINTER (CorpseQueue[41])
- DECLARE_POINTER (CorpseQueue[42])
- DECLARE_POINTER (CorpseQueue[43])
- DECLARE_POINTER (CorpseQueue[44])
- DECLARE_POINTER (CorpseQueue[45])
- DECLARE_POINTER (CorpseQueue[46])
- DECLARE_POINTER (CorpseQueue[47])
- DECLARE_POINTER (CorpseQueue[48])
- DECLARE_POINTER (CorpseQueue[49])
- DECLARE_POINTER (CorpseQueue[50])
- DECLARE_POINTER (CorpseQueue[51])
- DECLARE_POINTER (CorpseQueue[52])
- DECLARE_POINTER (CorpseQueue[53])
- DECLARE_POINTER (CorpseQueue[54])
- DECLARE_POINTER (CorpseQueue[55])
- DECLARE_POINTER (CorpseQueue[56])
- DECLARE_POINTER (CorpseQueue[57])
- DECLARE_POINTER (CorpseQueue[58])
- DECLARE_POINTER (CorpseQueue[59])
- DECLARE_POINTER (CorpseQueue[60])
- DECLARE_POINTER (CorpseQueue[61])
- DECLARE_POINTER (CorpseQueue[62])
- DECLARE_POINTER (CorpseQueue[63])
-END_POINTERS
-
-DCorpseQueue::DCorpseQueue ()
-{
-	CorpseQueueSlot = 0;
-	memset (CorpseQueue, 0, sizeof(CorpseQueue));
-}
 
 void DCorpseQueue::Serialize (FArchive &arc)
 {
+	int foo = 0;
 	int i;
 
 	Super::Serialize (arc);
-	for (i = 0; i < CORPSEQUEUESIZE; i++)
+	for (i = 0; i < CORPSEQUEUESIZE; ++i)
 		arc << CorpseQueue[i];
-	arc << CorpseQueueSlot;
+	arc << foo;
+}
+
+void DCorpseQueue::Tick ()
+{
+	for (int i = 0; i < CORPSEQUEUESIZE; ++i)
+	{
+		if (CorpseQueue[i] != NULL)
+		{
+			new DCorpsePointer (CorpseQueue[i]);
+		}
+	}
+	Destroy ();
 }
 
 // throw another corpse on the queue
-void DCorpseQueue::Enqueue (AActor *actor)
-{
-	if (CorpseQueue[CorpseQueueSlot] != NULL)
-	{ // Too many corpses - remove an old one
-		CorpseQueue[CorpseQueueSlot]->Destroy ();
-	}
-	CorpseQueue[CorpseQueueSlot] = actor;
-	CorpseQueueSlot = (CorpseQueueSlot + 1) % CORPSEQUEUESIZE;
-}
-
-// Remove a mobj from the queue (for resurrection)
-void DCorpseQueue::Dequeue (AActor *actor)
-{
-	int slot;
-
-	for (slot = 0; slot < CORPSEQUEUESIZE; slot++)
-	{
-		if (CorpseQueue[slot] == actor)
-		{
-			CorpseQueue[slot] = NULL;
-			break;
-		}
-	}
-}
-
 void A_QueueCorpse (AActor *actor)
 {
-	DCorpseQueue *queue;
-	TThinkerIterator<DCorpseQueue> iterator;
-
-	queue = iterator.Next ();
-	if (queue == NULL)
-	{
-		queue = new DCorpseQueue;
-	}
-	queue->Enqueue (actor);
+	new DCorpsePointer (actor);
 }
 
+// Remove an actor from the queue (for resurrection)
 void A_DeQueueCorpse (AActor *actor)
 {
-	DCorpseQueue *queue;
-	TThinkerIterator<DCorpseQueue> iterator;
+	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
+	DCorpsePointer *corpsePtr;
 
-	queue = iterator.Next ();
-	if (queue == NULL)
+	while ((corpsePtr = iterator.Next()) != NULL)
 	{
-		queue = new DCorpseQueue;
+		if (corpsePtr->Corpse == actor)
+		{
+			corpsePtr->Corpse = NULL;
+			corpsePtr->Destroy ();
+			return;
+		}
 	}
-	queue->Dequeue (actor);
 }
 
 //============================================================================

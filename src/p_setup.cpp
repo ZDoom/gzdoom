@@ -104,7 +104,8 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 		// properties based on linedefs.
 		struct
 		{
-			short tag, special, map;
+			short tag, special;
+			WORD map;
 		} a;
 
 		// Used when grouping sidedefs into loops.
@@ -152,7 +153,6 @@ AActor**		blocklinks;		// for thing chains
 //	used as a PVS lookup as well.
 //
 byte*			rejectmatrix;
-BOOL			rejectempty;
 
 static bool		ForceNodeBuild;
 
@@ -968,7 +968,7 @@ void P_FinishLoadingLineDefs ()
 {
 	WORD len;
 	int i, linenum;
-	register line_t *ld = lines;
+	line_t *ld = lines;
 
 	for (i = numlines, linenum = 0; i--; ld++, linenum++)
 	{
@@ -1074,9 +1074,9 @@ void P_LoadLineDefs (int lump)
 		}
 		else
 		{
-			if (SHORT(mld->sidenum[0]) != -1)
+			if (SHORT(mld->sidenum[0]) != NO_INDEX)
 				sidecount++;
-			if (SHORT(mld->sidenum[1]) != -1)
+			if (SHORT(mld->sidenum[1]) != NO_INDEX)
 				sidecount++;
 			linemap[i] = i+skipped;
 			i++;
@@ -1140,9 +1140,9 @@ void P_LoadLineDefs2 (int lump)
 		}
 		else
 		{
-			if (SHORT(mld->sidenum[0]) != -1)
+			if (SHORT(mld->sidenum[0]) != NO_INDEX)
 				sidecount++;
-			if (SHORT(mld->sidenum[1]) != -1)
+			if (SHORT(mld->sidenum[1]) != NO_INDEX)
 				sidecount++;
 			linemap[i] = i+skipped;
 			i++;
@@ -1202,7 +1202,7 @@ static void P_AllocateSideDefs (int count)
 	for (i = 0; i < count; i++)
 	{
 		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
-		sidetemp[i].a.map = -1;
+		sidetemp[i].a.map = NO_INDEX;
 	}
 	if (count < numsides)
 	{
@@ -1359,13 +1359,13 @@ void P_LoadSideDefs2 (int lump)
 
 	for (i = 0; i < numsides; i++)
 	{
-		register mapsidedef_t *msd = (mapsidedef_t *)data + sidetemp[i].a.map;
-		register side_t *sd = sides + i;
-		register sector_t *sec;
+		mapsidedef_t *msd = (mapsidedef_t *)data + sidetemp[i].a.map;
+		side_t *sd = sides + i;
+		sector_t *sec;
 
 		sd->textureoffset = SHORT(msd->textureoffset)<<FRACBITS;
 		sd->rowoffset = SHORT(msd->rowoffset)<<FRACBITS;
-		sd->linenum = -1;
+		sd->linenum = NO_INDEX;
 
 		// killough 4/4/98: allow sidedef texture names to be overloaded
 		// killough 4/11/98: refined to allow colormaps to work as wall
@@ -1839,9 +1839,9 @@ static void P_CreateBlockMap ()
 	delete[] BlockLists;
 
 	blockmaplump = (int *)Z_Malloc(sizeof(*blockmaplump) * BlockMap.Size(), PU_LEVEL, 0);
-	for (i = 0; i < BlockMap.Size(); ++i)
+	for (size_t ii = 0; ii < BlockMap.Size(); ++ii)
 	{
-		blockmaplump[i] = BlockMap[i];
+		blockmaplump[ii] = BlockMap[ii];
 	}
 }
 
@@ -2147,7 +2147,7 @@ void FExtraLight::InsertLight (const secplane_t &inplane, line_t *line, int type
 
 	vertex_t **triangle = line->frontsector->Triangle;
 	int i, j;
-	fixed_t diff;
+	fixed_t diff = 0;
 	secplane_t plane = inplane;
 
 	if (type != 2)
@@ -2203,18 +2203,46 @@ void P_LoadReject (int lump, bool junk)
 		{
 			Printf ("REJECT is %d byte%s too small.\n", neededsize - rejectsize,
 				neededsize-rejectsize==1?"":"s");
-		}
-		rejectmatrix = (byte *)Z_Malloc (neededsize, PU_LEVEL, 0);
-		if (rejectsize > 0)
-		{
+			rejectmatrix = (byte *)Z_Malloc (neededsize, PU_LEVEL, 0);
 			W_ReadLump (lump, rejectmatrix);
+			memset (rejectmatrix+rejectsize, 0, neededsize-rejectsize);
 		}
-		memset (rejectmatrix+rejectsize, 0, neededsize-rejectsize);
+		else
+		{
+			rejectmatrix = NULL;
+		}
 	}
 	else
 	{
 		rejectmatrix = (byte *)W_CacheLumpNum (lump, PU_LEVEL);
 	}
+
+	// Check if the reject has some actual content. If not, free it.
+	rejectsize = MIN (rejectsize, neededsize);
+	int qwords = rejectsize / 8;
+	int i;
+
+	if (qwords > 0)
+	{
+		QWORD *qreject = (QWORD *)rejectmatrix;
+
+		for (i = 0; i < qwords; ++i)
+		{
+			if (qreject != 0)
+				return;
+		}
+	}
+	rejectsize &= 7;
+	qwords *= 8;
+	for (i = 0; i < rejectsize; ++i)
+	{
+		if (rejectmatrix[qwords+rejectsize] != 0)
+			return;
+	}
+
+	// Reject has no data, so pretend it isn't there.
+	Z_Free (rejectmatrix);
+	rejectmatrix = NULL;
 }
 
 //

@@ -369,10 +369,18 @@ void cht_Give (player_t *player, char *name, int amount)
 
 	if (giveall || stricmp (name, "artifacts") == 0)
 	{
+		int pbagType = arti_poisonbag1 + (player->CurrentPlayerClass + 2) % 3;
 		for (i = arti_none+1; i < arti_firstpuzzitem; ++i)
 		{
 			if (W_CheckNumForName (ArtiPics[i], ns_sprites) >= 0)
 			{
+				if (i >= arti_poisonbag1 && i <= arti_poisonbag3)
+				{ // Hide the fact that there is more than one flechette artifact
+					if (i != pbagType)
+					{
+						continue;
+					}
+				}
 				for (int j = 0; j < 25; ++j)
 				{
 					P_GiveArtifact (player, (artitype_t)i);

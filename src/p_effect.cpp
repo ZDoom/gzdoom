@@ -153,7 +153,7 @@ void P_RunEffects ()
 		{
 			// Only run the effect if the actor is potentially visible
 			int rnum = pnum + int(actor->Sector - sectors);
-			if (rejectempty || !(rejectmatrix[rnum>>3] & (1 << (rnum & 7))))
+			if (rejectmatrix == NULL || !(rejectmatrix[rnum>>3] & (1 << (rnum & 7))))
 				P_RunEffect (actor, actor->effects);
 		}
 	}

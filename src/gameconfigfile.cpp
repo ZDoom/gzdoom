@@ -55,6 +55,7 @@ extern HWND Window;
 #include "m_misc.h"
 #include "v_font.h"
 #include "a_pickups.h"
+#include "doomstat.h"
 
 EXTERN_CVAR (Bool, con_centernotify)
 EXTERN_CVAR (Int, msg0color)
@@ -261,7 +262,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					noblitter->ResetToDefault ();
 				}
 			}
-			else if (last < 201)
+			if (last < 201)
 			{
 				// Be sure the Hexen fourth weapons are assigned to slot 4
 				// If this section does not already exist, then they will be
@@ -271,14 +272,27 @@ void FGameConfigFile::DoGlobalSetup ()
 					SetValueForKey ("Slot[4]", "FWeapQuietus CWeapWraithverge MWeapBloodscourge");
 				}
 			}
+			if (last < 202)
+			{
+				// Make sure the Hexen hotkeys are accessible by default.
+				if (SetSection ("Hexen.Bindings"))
+				{
+					SetValueForKey ("\\", "use ArtiHealth");
+					SetValueForKey ("scroll", "+showscores");
+					SetValueForKey ("0", "useflechette");
+					SetValueForKey ("9", "use ArtiBlastRadius");
+					SetValueForKey ("8", "use ArtiTeleport");
+					SetValueForKey ("7", "use ArtiTeleportOther");
+					SetValueForKey ("6", "use ArtiEgg");
+					SetValueForKey ("5", "use ArtiInvulnerability");
+				}
+			}
 		}
 	}
 }
 
 void FGameConfigFile::DoGameSetup (const char *gamename)
 {
-	char section[64];
-	char *subsection;
 	const char *key;
 	const char *value;
 	enum { Doom, Heretic, Hexen } game;
@@ -311,6 +325,14 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		}
 	}
 	else
+	{
+		ReadCVars (0);
+	}
+
+	// The NetServerInfo section will be read when it's determined that
+	// a netgame is being played.
+	strcpy (subsection, "LocalServerInfo");
+	if (SetSection (section))
 	{
 		ReadCVars (0);
 	}
@@ -376,6 +398,15 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	}
 }
 
+void FGameConfigFile::ReadNetVars ()
+{
+	strcpy (subsection, "NetServerInfo");
+	if (SetSection (section))
+	{
+		ReadCVars (0);
+	}
+}
+
 void FGameConfigFile::ReadCVars (DWORD flags)
 {
 	const char *key, *value;
@@ -410,6 +441,15 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 	SetSection (section, true);
 	ClearCurrentSection ();
 	C_ArchiveCVars (this, 0);
+
+	strcpy (subsection, netgame ? "NetServerInfo" : "LocalServerInfo");
+	if (!netgame || consoleplayer == 0)
+	{ // Do not overwrite this section if playing a netgame, and the
+	  // this machine was not the initial host.
+		SetSection (section, true);
+		ClearCurrentSection ();
+		C_ArchiveCVars (this, 5);
+	}
 
 	strcpy (subsection, "UnknownConsoleVariables");
 	SetSection (section, true);

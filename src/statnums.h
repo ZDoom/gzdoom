@@ -40,6 +40,7 @@ enum
 { // Thinkers that don't actually think
 	STAT_INFO,								// An info queue
 	STAT_DECAL,								// A decal
+	STAT_CORPSEPOINTER,						// An entry in Hexen's corpse queue
 
   // Thinkers that do think
 	STAT_FIRST_THINKING=32,

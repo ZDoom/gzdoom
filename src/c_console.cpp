@@ -1065,6 +1065,8 @@ static void makestartposgood ()
 
 static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 {
+	int i;
+
 	if (ev->subtype == EV_GUI_Char)
 	{ // Add keypress to command line
 		if (buffer[0] < len)
@@ -1279,7 +1281,14 @@ static BOOL C_HandleKey (event_t *ev, byte *buffer, int len)
 
 			buffer[2 + buffer[0]] = 0;
 
-			if (HistHead && stricmp (HistHead->String, (char *)&buffer[2]) == 0)
+			for (i = 0; i < buffer[0] && isspace(buffer[2+i]); ++i)
+			{
+			}
+			if (i == buffer[0])
+			{
+				 // Command line is empty, so do nothing to the history
+			}
+			else if (HistHead && stricmp (HistHead->String, (char *)&buffer[2]) == 0)
 			{
 				// Command line was the same as the previous one,
 				// so leave the history list alone

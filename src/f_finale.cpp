@@ -62,7 +62,7 @@ static BYTE *DemonBuffer;
 static SBYTE FadeDir;
 static bool FinaleHasPic;
 
-static char *FinaleText;
+static const char *FinaleText;
 static size_t FinaleTextLen;
 static char *FinaleFlat;
 
@@ -300,7 +300,7 @@ void F_TextWrite (void)
 {
 	int w, h, xo, yo;
 	size_t count;
-	char *ch;
+	const char *ch;
 	int c;
 	int cx;
 	int cy;
@@ -1108,7 +1108,7 @@ static void GetFinaleText (const char *msgLumpName)
 	else
 	{
 		FinaleTextLen = strlen (msgLumpName) + sizeof("Unknown message ") + 1;
-		FinaleText = (char *)Z_Malloc (FinaleTextLen, PU_LEVEL, 0);
-		sprintf (FinaleText, "Unknown message %s", msgLumpName);
+		FinaleText = (const char *)Z_Malloc (FinaleTextLen, PU_LEVEL, 0);
+		sprintf (const_cast<char *>(FinaleText), "Unknown message %s", msgLumpName);
 	}
 }

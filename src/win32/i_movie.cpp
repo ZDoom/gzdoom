@@ -40,6 +40,8 @@
 
 #ifdef I_DO_NOT_LIKE_BIG_DOWNLOADS
 
+#include "i_movie.h"
+
 int I_PlayMovie (const char *movie)
 {
 	return MOVIE_Failed;
@@ -49,6 +51,7 @@ int I_PlayMovie (const char *movie)
 
 #define WIN32_LEAN_AND_MEAN
 
+#include <windows.h>
 #include <dshow.h>
 
 #include "i_movie.h"

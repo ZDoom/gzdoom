@@ -2539,7 +2539,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	if (multiplayer)
 	{
 		unsigned an = ( ANG45 * (mthing->angle/45) ) >> ANGLETOFINESHIFT;
-		AActor *fog = Spawn ("TeleportFog", mobj->x+20*finecosine[an], mobj->y+20*finesine[an], mobj->z + TELEFOGHEIGHT);
+		Spawn ("TeleportFog", mobj->x+20*finecosine[an], mobj->y+20*finesine[an], mobj->z + TELEFOGHEIGHT);
 	}
 
 	// [RH] If someone is in the way, kill them

@@ -1,4 +1,4 @@
-// Emacs style mode select	 -*- C++ -*- 
+// Emacs style mode select       -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
 // $Id: doomtype.h,v 1.2 1997/12/29 19:50:48 pekangas Exp $
@@ -15,9 +15,9 @@
 // for more details.
 //
 // DESCRIPTION:
-//		Simple basic typedefs, isolated here to make it easier
-//		 separating modules.
-//	  
+//              Simple basic typedefs, isolated here to make it easier
+//               separating modules.
+//        
 //-----------------------------------------------------------------------------
 
 
@@ -26,7 +26,7 @@
 
 #include <limits.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 // VC++ does not define PATH_MAX, but the Windows headers do define MAX_PATH.
 // However, we want to avoid including the Windows headers in most of the
 // source files, so we can't use it. So define PATH_MAX to be what MAX_PATH
@@ -59,17 +59,17 @@ typedef unsigned char byte;
 #define __int64 long long
 #endif
 
-typedef unsigned char		BYTE;
-typedef signed char			SBYTE;
+typedef unsigned char           BYTE;
+typedef signed char                     SBYTE;
 
-typedef unsigned short		WORD;
-typedef signed short		SWORD;
+typedef unsigned short          WORD;
+typedef signed short            SWORD;
 
-typedef unsigned long		DWORD;
-typedef signed long			SDWORD;
+typedef unsigned long           DWORD;
+typedef signed long                     SDWORD;
 
-typedef unsigned __int64	QWORD;
-typedef signed __int64		SQWORD;
+typedef unsigned __int64        QWORD;
+typedef signed __int64          SQWORD;
 
 // a 64-bit constant
 #ifdef __GNUC__
@@ -80,19 +80,19 @@ typedef signed __int64		SQWORD;
 #define UCONST64(v) ((QWORD)(v))
 #endif
 
-typedef DWORD				BITFIELD;
+typedef DWORD                           BITFIELD;
 
 //
 // Fixed point, 32bit as 16.16.
 //
-#define FRACBITS			16
-#define FRACUNIT			(1<<FRACBITS)
+#define FRACBITS                        16
+#define FRACUNIT                        (1<<FRACBITS)
 
-typedef SDWORD				fixed_t;
-typedef DWORD				dsfixed_t;		// fixedpt used by span drawer
+typedef SDWORD                          fixed_t;
+typedef DWORD                           dsfixed_t;              // fixedpt used by span drawer
 
-#define FIXED_MAX			(signed)(0x7fffffff)
-#define FIXED_MIN			(signed)(0x80000000)
+#define FIXED_MAX                       (signed)(0x7fffffff)
+#define FIXED_MIN                       (signed)(0x80000000)
 
 #ifndef NOASM
 #ifndef USEASM
@@ -106,9 +106,9 @@ typedef DWORD				dsfixed_t;		// fixedpt used by span drawer
 
 
 #ifdef __GNUC__
-#define GCCPRINTF(stri,firstargi)	__attribute__((format(printf,stri,firstargi)))
-#define GCCFORMAT(stri)				__attribute__((format(printf,stri,0)))
-#define GCCNOWARN					__attribute__((unused))
+#define GCCPRINTF(stri,firstargi)       __attribute__((format(printf,stri,firstargi)))
+#define GCCFORMAT(stri)                         __attribute__((format(printf,stri,0)))
+#define GCCNOWARN                                       __attribute__((unused))
 #else
 #define GCCPRINTF(a,b)
 #define GCCFORMAT(a)
@@ -126,17 +126,17 @@ int STACK_ARGS DPrintf (const char *, ...) GCCPRINTF(1,2);
 // game print flags
 enum
 {
-	PRINT_LOW,		// pickup messages
-	PRINT_MEDIUM,	// death messages
-	PRINT_HIGH,		// critical messages
-	PRINT_CHAT,		// chat messages
-	PRINT_TEAMCHAT	// chat messages from a teammate
+        PRINT_LOW,              // pickup messages
+        PRINT_MEDIUM,   // death messages
+        PRINT_HIGH,             // critical messages
+        PRINT_CHAT,             // chat messages
+        PRINT_TEAMCHAT  // chat messages from a teammate
 };
-#define	PRINT_LOW			0		// pickup messages
-#define	PRINT_MEDIUM		1		// death messages
-#define	PRINT_HIGH			2		// critical messages
-#define	PRINT_CHAT			3		// chat messages
-#define PRINT_TEAMCHAT		4		// chat messages from a teammate
-#define PRINT_BOLD			200		// What Printf_Bold used
+#define PRINT_LOW                       0               // pickup messages
+#define PRINT_MEDIUM            1               // death messages
+#define PRINT_HIGH                      2               // critical messages
+#define PRINT_CHAT                      3               // chat messages
+#define PRINT_TEAMCHAT          4               // chat messages from a teammate
+#define PRINT_BOLD                      200             // What Printf_Bold used
 
 #endif

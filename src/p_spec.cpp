@@ -1029,7 +1029,7 @@ void P_UpdateSpecials ()
 // SPECIAL SPAWNING
 //
 
-CUSTOM_CVAR (Bool, forcewater, false, CVAR_SERVERINFO)
+CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 {
 	if (gamestate == GS_LEVEL)
 	{

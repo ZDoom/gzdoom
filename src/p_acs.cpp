@@ -1978,7 +1978,7 @@ void DLevelScript::DoFadeRange (int r1, int g1, int b1, int a1,
 	player_t *viewer;
 	float ftime = (float)time / 65536.f;
 	bool fadingFrom = a1 >= 0;
-	float fr1, fg1, fb1, fa1;
+	float fr1 GCCNOWARN, fg1, fb1, fa1;
 	float fr2, fg2, fb2, fa2;
 	int i;
 

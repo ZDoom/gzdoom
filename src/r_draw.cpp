@@ -36,6 +36,7 @@
 #include "doomstat.h"
 #include "st_stuff.h"
 #include "a_hexenglobal.h"
+#include "g_game.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -1130,7 +1131,13 @@ void R_InitTranslationTables ()
 	// Diminishing translucency tables for shaded actors. Not really
 	// translation tables, but putting them here was convenient, particularly
 	// since translationtables[0] would otherwise be wasted.
-	translationtables[0] = new BYTE[(NUMCOLORMAPS*16+MAXPLAYERS*2+3+MAX_ACS_TRANSLATIONS)*256];
+	translationtables[0] = new BYTE[256*
+		(NUMCOLORMAPS*16			// Shaded
+		 +MAXPLAYERS*2				// Players + PlayersExtra
+		 +3							// Standard
+		 +MAX_ACS_TRANSLATIONS		// LevelScripted
+		 +BODYQUESIZE				// PlayerCorpses
+		 )];
 
 	// Player translations, one for each player
 	translationtables[TRANSLATION_Players] =
@@ -1146,6 +1153,9 @@ void R_InitTranslationTables ()
 
 	translationtables[TRANSLATION_LevelScripted] =
 		translationtables[TRANSLATION_Standard] + 3*256;
+
+	translationtables[TRANSLATION_PlayerCorpses] =
+		translationtables[TRANSLATION_LevelScripted] + MAX_ACS_TRANSLATIONS*256;
 
 	// [RH] Each player now gets their own translation table. These are set
 	//		up during netgame arbitration and as-needed rather than in here.

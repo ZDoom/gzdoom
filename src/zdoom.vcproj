@@ -1837,6 +1837,9 @@
 				RelativePath=".\doomdef.h">
 			</File>
 			<File
+				RelativePath="doomerrors.h">
+			</File>
+			<File
 				RelativePath=".\doomstat.h">
 			</File>
 			<File
@@ -1847,9 +1850,6 @@
 			</File>
 			<File
 				RelativePath=".\dthinker.h">
-			</File>
-			<File
-				RelativePath=".\errors.h">
 			</File>
 			<File
 				RelativePath=".\f_finale.h">
@@ -1955,15 +1955,6 @@
 			</File>
 			<File
 				RelativePath=".\p_local.h">
-			</File>
-			<File
-				RelativePath=".\p_nodebuild.h">
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="TRUE">
-					<Tool
-						Name="VCCustomBuildTool"/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\p_pspr.h">
@@ -2227,6 +2218,9 @@
 						Name="VCCLCompilerTool"
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="win32\gccseh.h">
 			</File>
 			<File
 				RelativePath=".\win32\hardware.cpp">

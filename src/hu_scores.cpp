@@ -246,7 +246,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int x, int y, int h
 	screen->Clear (x, y, x + 24*CleanXfac, y + height, color);
 
 	if (gameinfo.gametype == GAME_Hexen &&
-		player->CurrentPlayerClass >= 0 && player->CurrentPlayerClass < 3)
+		player->CurrentPlayerClass < 3)
 	{
 		int lump = W_CheckNumForName (FaceNames[player->CurrentPlayerClass]);
 		if (lump != -1)

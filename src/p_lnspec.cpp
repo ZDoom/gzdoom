@@ -1877,13 +1877,18 @@ FUNC(LS_ChangeCamera)
 	return true;
 }
 
+enum
+{
+	PROP_FROZEN,
+	PROP_NOTARGET,
+	PROP_INSTANTWEAPONSWITCH,
+	PROP_FLY,
+	PROP_TOTALLYFROZEN
+};
+
 FUNC(LS_SetPlayerProperty)
 // SetPlayerProperty (who, set, which)
 {
-#define PROP_FROZEN					0
-#define PROP_NOTARGET				1
-#define PROP_INSTANTWEAPONSWITCH	2
-
 	int mask = 0;
 
 	if ((!it || !it->player) && !arg0)
@@ -1899,6 +1904,12 @@ FUNC(LS_SetPlayerProperty)
 		break;
 	case PROP_INSTANTWEAPONSWITCH:
 		mask = CF_INSTANTWEAPSWITCH;
+		break;
+	case PROP_FLY:
+		mask = CF_FLY;
+		break;
+	case PROP_TOTALLYFROZEN:
+		mask = CF_TOTALLYFROZEN;
 		break;
 	}
 

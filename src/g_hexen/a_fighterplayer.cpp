@@ -154,7 +154,14 @@ void AdjustPlayerAngle (AActor *pmo)
 	difference = (int)angle - (int)pmo->angle;
 	if (abs(difference) > MAX_ANGLE_ADJUST)
 	{
-		pmo->angle += difference > 0 ? MAX_ANGLE_ADJUST : -MAX_ANGLE_ADJUST;
+		if (difference > 0)
+		{
+			pmo->angle += MAX_ANGLE_ADJUST;
+		}
+		else
+		{
+			pmo->angle -= MAX_ANGLE_ADJUST;
+		}
 	}
 	else
 	{

@@ -486,10 +486,6 @@ void P_MovePlayer (player_t *player)
 
 	onground = (mo->z <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ);
 
-	// [RH] Don't let frozen players move
-	if (player->cheats & CF_FROZEN)
-		return;
-
 	// killough 10/98:
 	//
 	// We must apply thrust to the player and bobbing separately, to avoid
@@ -644,9 +640,9 @@ void P_DeathThink (player_t *player)
 		player->deltaviewheight = 0;
 		if (onground)
 		{
-			if (player->mo->pitch > -ANGLE_1*19)
+			if (player->mo->pitch > -(int)ANGLE_1*19)
 			{
-				lookDelta = (-ANGLE_1*19 - player->mo->pitch) / 8;
+				lookDelta = (-(int)ANGLE_1*19 - player->mo->pitch) / 8;
 				player->mo->pitch += lookDelta;
 			}
 		}
@@ -853,6 +849,25 @@ void P_PlayerThink (player_t *player)
 		cmd->ucmd.forwardmove = 0xc800/2;
 		cmd->ucmd.sidemove = 0;
 		player->mo->flags &= ~MF_JUSTATTACKED;
+	}
+
+	// [RH] Being totally frozen zeros out most input parameters.
+	if (player->cheats & CF_TOTALLYFROZEN)
+	{
+		cmd->ucmd.buttons &= BT_USE;
+		cmd->ucmd.pitch = 0;
+		cmd->ucmd.yaw = 0;
+		cmd->ucmd.roll = 0;
+		cmd->ucmd.forwardmove = 0;
+		cmd->ucmd.sidemove = 0;
+		cmd->ucmd.upmove = 0;
+		player->turnticks = 0;
+	}
+	else if (player->cheats & CF_FROZEN)
+	{
+		cmd->ucmd.forwardmove = 0;
+		cmd->ucmd.sidemove = 0;
+		cmd->ucmd.upmove = 0;
 	}
 
 	if (player->playerstate == PST_DEAD)

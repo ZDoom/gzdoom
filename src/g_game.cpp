@@ -1527,10 +1527,19 @@ void G_SaveGame (const char *filename, const char *description)
 
 void G_BuildSaveName (char *name, const char *prefix, int slot)
 {
-#ifndef unix
 	const char *leader;
+	const char *slash = "";
 
-	if (Args.CheckParm ("-cdrom"))
+	if (NULL != (leader = Args.CheckValue ("-savedir")))
+	{
+		size_t len = strlen (leader);
+		if (leader[len-1] != '\\' && leader[len-1] != '/')
+		{
+			slash = "/";
+		}
+	}
+#ifndef unix
+	else if (Args.CheckParm ("-cdrom"))
 	{
 		leader = "c:/zdoomdat/";
 	}
@@ -1538,26 +1547,27 @@ void G_BuildSaveName (char *name, const char *prefix, int slot)
 	{
 		leader = progdir;
 	}
-	if (slot < 0)
-	{
-		sprintf (name, "%s%s", leader, prefix);
-	}
-	else
-	{
-		sprintf (name, "%s%s%d.zds", leader, prefix, slot);
-	}
 #else
+	else
+	{
+		leader = "";
+	}
+#endif
 	if (slot < 0)
 	{
-		sprintf (name, "%s", prefix);
+		sprintf (name, "%s%s%s", leader, slash, prefix);
 	}
 	else
 	{
-		sprintf (name, "%s%d.zds", prefix, slot);
+		sprintf (name, "%s%s%s%d.zds", leader, slash, prefix, slot);
 	}
-	char *path = GetUserFile (name);
-	strcpy (name, path);
-	delete[] path;
+#ifdef unix
+	if (leader[0] == 0)
+	{
+		char *path = GetUserFile (name);
+		strcpy (name, path);
+		delete[] path;
+	}
 #endif
 }
 
@@ -1707,7 +1717,10 @@ void G_DoSaveGame (bool okForQuicksave)
 	char name[9];
 
 	if (demoplayback)
+	{
+		gameaction = ga_nothing;
 		return;
+	}
 
 	G_SnapshotLevel ();
 

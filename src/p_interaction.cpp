@@ -345,9 +345,12 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	// [RH] If the thing has a special, execute and remove it
 	//		Note that the thing that killed it is considered
 	//		the activator of the script.
-	if (special && !(flags & MF_SPECIAL) && special)
+	// New: In Hexen, the thing that died is the activator,
+	//		so now a level flag selects who the activator gets to be.
+	if (special && !(flags & MF_SPECIAL))
 	{
-		LineSpecials[special] (NULL, source, args[0], args[1], args[2], args[3], args[4]);
+		LineSpecials[special] (NULL, level.flags & LEVEL_ACTOWNSPECIAL
+			? this : source, args[0], args[1], args[2], args[3], args[4]);
 		special = 0;
 	}
 
@@ -357,6 +360,9 @@ void AActor::Die (AActor *source, AActor *inflictor)
 		{ // count for intermission
 			source->player->killcount++;
 			level.killed_monsters++;
+			// [RH] If the monster gets gibbed, don't reduce the monster
+			// count when the body is destroyed.
+			flags &= ~MF_COUNTKILL;
 		}
 
 		// Don't count any frags at level start, because they're just telefrags
@@ -491,12 +497,13 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			}
 		}
 	}
-	else if (!multiplayer && (flags & MF_COUNTKILL) )
+	else if (!multiplayer && (flags & MF_COUNTKILL))
 	{
 		// count all monster deaths,
 		// even those caused by other monsters
 		players[0].killcount++;
 		level.killed_monsters++;
+		flags &= ~MF_COUNTKILL;
 	}
 	
 	if (player)

@@ -37,6 +37,7 @@
 #include "p_local.h"
 #include "statnums.h"
 #include "i_system.h"
+#include "doomerrors.h"
 
 
 static cycle_t ThinkCycles;
@@ -102,16 +103,26 @@ void DThinker::SerializeAll (FArchive &arc, bool hubLoad)
 
 		// Prevent the constructor from inserting thinkers into a list.
 		bSerialOverride = true;
-		arc << statcount;
-		while (statcount > 0)
+
+		try
 		{
-			arc << stat << thinker;
-			while (thinker != NULL)
+			arc << statcount;
+			while (statcount > 0)
 			{
-				Thinkers[stat].AddTail (thinker);
-				arc << thinker;
+				arc << stat << thinker;
+				while (thinker != NULL)
+				{
+					Thinkers[stat].AddTail (thinker);
+					arc << thinker;
+				}
+				statcount--;
 			}
-			statcount--;
+		}
+		catch (class CDoomError &)
+		{
+			bSerialOverride = false;
+			DestroyAllThinkers ();
+			throw;
 		}
 		bSerialOverride = false;
 	}

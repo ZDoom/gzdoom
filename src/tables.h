@@ -71,15 +71,16 @@ extern cosine_inline finecosine;
 extern fixed_t			finetangent[FINEANGLES/2];
 
 // Binary Angle Measument, BAM.
-#define ANG45			0x20000000
-#define ANG90			0x40000000
-#define ANG180			0x80000000
-#define ANG270			0xc0000000
+#define ANG45			(0x20000000)
+#define ANG90			(0x40000000)
+#define ANG180			(0x80000000)
+#define ANG270			(0xc0000000)
 
-#define ANGLE_45		0x20000000
-#define ANGLE_90		0x40000000
-#define ANGLE_180		0x80000000
-#define ANGLE_MAX		0xffffffff
+#define ANGLE_45		(0x20000000)
+#define ANGLE_90		(0x40000000)
+#define ANGLE_180		(0x80000000)
+#define ANGLE_270		(0xc0000000)
+#define ANGLE_MAX		(0xffffffff)
 #define ANGLE_1			(ANGLE_45/45)
 #define ANGLE_60		(ANGLE_180/3)
 

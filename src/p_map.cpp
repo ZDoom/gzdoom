@@ -91,6 +91,7 @@ int				tmfloorpic;
 sector_t		*tmfloorsector;
 
 static fixed_t	tmfbbox[4];
+static AActor	*tmfthing;
 fixed_t			tmffloorz;
 fixed_t			tmfceilingz;
 fixed_t			tmfdropoffz;
@@ -167,7 +168,7 @@ static BOOL PIT_FindFloorCeiling (line_t *ld)
 		}
 		else if (r >= (1<<24))
 		{
-			P_LineOpening (ld, sx=ld->v2->x, sy=ld->v2->y, tmthing->x, tmthing->y);
+			P_LineOpening (ld, sx=ld->v2->x, sy=ld->v2->y, tmfthing->x, tmfthing->y);
 		}
 		else
 		{
@@ -221,6 +222,7 @@ void P_FindFloorCeiling (AActor *actor)
 	tmfceilingz = sec->ceilingplane.ZatPoint (x, y);
 	tmffloorpic = sec->floorpic;
 	tmffloorsector = sec;
+	tmfthing = actor;
 	validcount++;
 
 	xl = (tmfbbox[BOXLEFT] - bmaporgx) >> MAPBLOCKSHIFT;
@@ -320,6 +322,7 @@ BOOL P_TeleportMove (AActor *thing, fixed_t x, fixed_t y, fixed_t z, BOOL telefr
 	tmfceilingz = newsubsec->sector->ceilingplane.ZatPoint (x, y);
 	tmffloorpic = newsubsec->sector->floorpic;
 	tmffloorsector = newsubsec->sector;
+	tmfthing = tmthing;
 					
 	validcount++;
 	spechit.Clear ();
@@ -1015,7 +1018,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	validcount++;
 	spechit.Clear ();
 
-	if (tmflags & MF_NOCLIP && !(tmflags & MF_SKULLFLY))
+	if ((tmflags & MF_NOCLIP) && !(tmflags & MF_SKULLFLY))
 		return true;
 	
 	// Check things first, possibly picking things up.
@@ -3483,7 +3486,8 @@ void PIT_FloorDrop (AActor *thing)
 	P_AdjustFloorCeil (thing);
 
 	if (thing->momz == 0 &&
-		(!(thing->flags & MF_NOGRAVITY) || thing->z == oldfloorz))
+		(!(thing->flags & MF_NOGRAVITY) ||
+		 (thing->z == oldfloorz && !(thing->flags & MF_NOLIFTDROP))))
 	{ // If float bob, always stay the same approximate distance above
 	  // the floor, otherwise only move things standing on the floor,
 	  // and only do it if the drop is slow enough.

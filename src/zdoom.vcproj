@@ -4422,6 +4422,9 @@
 			Name="OPL Synth"
 			Filter="">
 			<File
+				RelativePath="oplsynth\DEFTYPES.H">
+			</File>
+			<File
 				RelativePath="oplsynth\fmopl.cpp">
 			</File>
 			<File

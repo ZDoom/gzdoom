@@ -199,6 +199,7 @@ static char		endstring[160];
 static short	itemOn; 			// menu item skull is on
 static short	whichSkull; 		// which skull to draw
 static int		SkullBaseLump;		// Heretic's spinning skull
+static int		MauloBaseLump;		// Hexen's maulotaur menu graphic
 static int		MenuTime;
 static int		InfoType;
 
@@ -1328,20 +1329,36 @@ void M_DrawMainMenu (void)
 
 void M_DrawHereticMainMenu ()
 {
-	int frame = (MenuTime / 3) % 18;
 	const patch_t *patch;
 
 	patch = (patch_t *)W_MapLumpName("M_HTIC");
 	screen->DrawPatchClean (patch, 88, 0);
 	W_UnMapLump (patch);
 
-	patch = (patch_t *)W_MapLumpNum(SkullBaseLump+(17-frame));
-	screen->DrawPatchClean (patch, 40, 10);
-	W_UnMapLump (patch);
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		int frame = (MenuTime / 5) % 7;
 
-	patch = (patch_t *)W_MapLumpNum(SkullBaseLump+frame);
-	screen->DrawPatchClean (patch, 232, 10);
-	W_UnMapLump (patch);
+		patch = (patch_t *)W_MapLumpNum(MauloBaseLump+(frame+2)%7);
+		screen->DrawPatchClean (patch, 37, 80);
+		W_UnMapLump (patch);
+
+		patch = (patch_t *)W_MapLumpNum(MauloBaseLump+frame);
+		screen->DrawPatchClean (patch, 278, 80);
+		W_UnMapLump (patch);
+	}
+	else
+	{
+		int frame = (MenuTime / 3) % 18;
+
+		patch = (patch_t *)W_MapLumpNum(SkullBaseLump+(17-frame));
+		screen->DrawPatchClean (patch, 40, 10);
+		W_UnMapLump (patch);
+
+		patch = (patch_t *)W_MapLumpNum(SkullBaseLump+frame);
+		screen->DrawPatchClean (patch, 232, 10);
+		W_UnMapLump (patch);
+	}
 }
 
 //
@@ -2965,6 +2982,7 @@ void M_Init (void)
 	messageLastMenuActive = menuactive;
 	quickSaveSlot = NULL;
 	SkullBaseLump = W_CheckNumForName ("M_SKL00");
+	MauloBaseLump = W_CheckNumForName ("FBULA0", ns_sprites);
 	strcpy (NewSaveNode.Title, "<New Save Game>");
 
 	underscore[0] = (gameinfo.gametype == GAME_Doom) ? '_' : '[';

@@ -2,7 +2,7 @@
 ** version.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2003 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 // Lots of different representations for the version number
 enum { VERSION = 202 };
 #define STRVERSION "202"
-#define DOTVERSIONSTR "2.0.35"
+#define DOTVERSIONSTR "2.0.36"
 #define GAMEVER (2*256+1)
 
 // SAVEVER is the version of the information stored in level snapshots.

@@ -8,9 +8,6 @@ static FRandom pr_orbit ("Orbit");
 void A_BridgeOrbit (AActor *);
 void A_BridgeInit (AActor *);
 
-static int orbitTableX[256];
-static int orbitTableY[256];
-
 // The Hexen (and Heretic) version of the bridge spawns extra floating
 // "balls" orbiting the bridge. The Doom version only shows the bridge
 // itself.
@@ -25,13 +22,12 @@ class ABridgeBall : public AActor
 FState ABridgeBall::States[] =
 {
 	S_NORMAL (TLGL, 'A',    2, NULL                         , &States[1]),
-	S_NORMAL (TLGL, 'A',    5, A_BridgeOrbit                , &States[1])
+	S_NORMAL (TLGL, 'A',    1, A_BridgeOrbit                , &States[1])
 };
 
 IMPLEMENT_ACTOR (ABridgeBall, Any, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY)
 	PROP_Flags2 (MF2_NOTELEPORT)
-
 	PROP_SpawnState (0)
 END_DEFAULTS
 
@@ -62,7 +58,7 @@ FState ABridge::States[] =
 };
 
 IMPLEMENT_ACTOR (ABridge, Any, 118, 21)
-	PROP_Flags (MF_SOLID|MF_NOGRAVITY)
+	PROP_Flags (MF_SOLID|MF_NOGRAVITY|MF_NOLIFTDROP)
 END_DEFAULTS
 
 AT_GAME_SET (Bridge)
@@ -87,23 +83,7 @@ AT_GAME_SET (Bridge)
 
 // Action functions for the non-Doom bridge --------------------------------
 
-#define ORBIT_RADIUS	(15*FRACUNIT)
-void GenerateOrbitTable ()
-{
-	static bool inited = false;
-	int angle;
-
-	if (inited)
-		return;
-
-	inited = true;
-
-	for (angle = 0; angle < 256; angle++)
-	{
-		orbitTableX[angle] = FixedMul (ORBIT_RADIUS, finecosine[angle<<5]);
-		orbitTableY[angle] = FixedMul (ORBIT_RADIUS, finesine[angle<<5]);
-	}
-}
+#define ORBIT_RADIUS	15
 
 // New bridge stuff
 //	Parent
@@ -111,7 +91,7 @@ void GenerateOrbitTable ()
 //
 //	Child
 //		target		pointer to center mobj
-//		args[0]		angle of ball
+//		angle		angle of ball
 
 void A_BridgeOrbit (AActor *self)
 {
@@ -124,37 +104,36 @@ void A_BridgeOrbit (AActor *self)
 	{
 		self->SetState (NULL);
 	}
-	self->args[0] = (self->args[0] + 3) & 255;
-	self->x = self->target->x + orbitTableX[self->args[0]];
-	self->y = self->target->y + orbitTableY[self->args[0]];
+	// Every five tics, Hexen moved the ball 3/256th of a revolution.
+	self->angle += ANGLE_45/32*3/5;
+	self->x = self->target->x + ORBIT_RADIUS * finecosine[self->angle >> ANGLETOFINESHIFT];
+	self->y = self->target->y + ORBIT_RADIUS * finesine[self->angle >> ANGLETOFINESHIFT];
 	self->z = self->target->z;
 }
 
 void A_BridgeInit (AActor *self)
 {
-	byte startangle;
+	angle_t startangle;
 	AActor *ball1, *ball2, *ball3;
 	fixed_t cx, cy, cz;
-
-	GenerateOrbitTable ();
 
 	cx = self->x;
 	cy = self->y;
 	cz = self->z;
-	startangle = pr_orbit ();
+	startangle = pr_orbit() << 24;
 	self->special1 = 0;
 
 	// Spawn triad into world
 	ball1 = Spawn<ABridgeBall> (cx, cy, cz);
-	ball1->args[0] = startangle;
+	ball1->angle = startangle;
 	ball1->target = self;
 
 	ball2 = Spawn<ABridgeBall> (cx, cy, cz);
-	ball2->args[0] = (startangle + 85) & 255;
+	ball2->angle = startangle + ANGLE_45/32*85;
 	ball2->target = self;
 
 	ball3 = Spawn<ABridgeBall> (cx, cy, cz);
-	ball3->args[0] = (startangle + 170) & 255;
+	ball3->angle = startangle + (angle_t)ANGLE_45/32*170;
 	ball3->target = self;
 
 	A_BridgeOrbit (ball1);

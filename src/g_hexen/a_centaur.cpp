@@ -323,7 +323,7 @@ void A_CentaurDropStuff (AActor *actor)
 		mo = Spawn (DropTypes[i], actor->x, actor->y, actor->z+45*FRACUNIT);
 		if (mo)
 		{
-			angle_t angle = actor->angle+(i?ANG90:-ANG90);
+			angle_t angle = actor->angle + (i ? ANGLE_90 : ANGLE_270);
 			mo->momz = FRACUNIT*8+(pr_centaurdrop()<<10);
 			mo->momx = FixedMul(((pr_centaurdrop()-128)<<11)+FRACUNIT,
 				finecosine[angle>>ANGLETOFINESHIFT]);

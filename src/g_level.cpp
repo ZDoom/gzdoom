@@ -206,6 +206,7 @@ static const char *MapInfoMapLevel[] =
 	"par",
 	"music",
 	"nointermission",
+	"intermission",
 	"doublesky",
 	"nosoundclipping",
 	"allowmonstertelefrags",
@@ -247,6 +248,8 @@ static const char *MapInfoMapLevel[] =
 	"gravity",
 	"aircontrol",
 	"filterstarts",
+	"activateowndeathspecials",
+	"killeractivatesdeathspecials",
 	NULL
 };
 
@@ -262,6 +265,7 @@ enum EMIType
 	MITYPE_LUMPNAME,
 	MITYPE_SKY,
 	MITYPE_SETFLAG,
+	MITYPE_CLRFLAG,
 	MITYPE_SCFLAGS,
 	MITYPE_CLUSTER,
 	MITYPE_STRING,
@@ -289,6 +293,7 @@ MapHandlers[] =
 	{ MITYPE_INT,		lioffset(partime), 0 },
 	{ MITYPE_MUSIC,		lioffset(music), lioffset(musicorder) },
 	{ MITYPE_SETFLAG,	LEVEL_NOINTERMISSION, 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_NOINTERMISSION, 0 },
 	{ MITYPE_SETFLAG,	LEVEL_DOUBLESKY, 0 },
 	{ MITYPE_IGNORE,	0, 0 },	// was nosoundclipping
 	{ MITYPE_SETFLAG,	LEVEL_MONSTERSTELEFRAG, 0 },
@@ -330,6 +335,8 @@ MapHandlers[] =
 	{ MITYPE_FLOAT,		lioffset(gravity), 0 },
 	{ MITYPE_FLOAT,		lioffset(aircontrol), 0 },
 	{ MITYPE_SETFLAG,	LEVEL_FILTERSTARTS, 0 },
+	{ MITYPE_SETFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
+	{ MITYPE_CLRFLAG,	LEVEL_ACTOWNSPECIAL, 0 },
 };
 
 static const char *MapInfoClusterLevel[] =
@@ -436,10 +443,12 @@ void G_ParseMapInfo ()
 					SKYFLATNAME[5] = 0;
 					HexenHack = true;
 					// Hexen levels are automatically nointermission,
-					// no auto sound sequences, and falling damage.
+					// no auto sound sequences, falling damage, and
+					// monsters activate their own specials.
 					levelflags |= LEVEL_NOINTERMISSION
 								| LEVEL_SNDSEQTOTALCTRL
-								| LEVEL_FALLDMG_HX;
+								| LEVEL_FALLDMG_HX
+								| LEVEL_ACTOWNSPECIAL;
 				}
 				levelindex = FindWadLevelInfo (sc_String);
 				if (levelindex == -1)
@@ -633,6 +642,10 @@ static void ParseMapInfoLower (MapInfoHandler *handlers,
 
 		case MITYPE_SETFLAG:
 			flags |= handler->data1;
+			break;
+
+		case MITYPE_CLRFLAG:
+			flags &= ~handler->data1;
 			break;
 
 		case MITYPE_SCFLAGS:

@@ -2340,6 +2340,12 @@ void AActor::Destroy ()
 		sector_list = NULL;
 	}
 
+	// [RH] If destroyed before death, reduce the monster count
+	if (flags & MF_COUNTKILL)
+	{
+		level.total_monsters--;
+	}
+
 	// stop any playing sound
 	S_RelinkSound (this, NULL);
 

@@ -636,9 +636,9 @@ static void TossChunks (AActor *actor, const TypeInfo *const chunks[])
 	for (i = 4; i >= 0; --i)
 	{
 		mo = Spawn (chunks[i], actor->x, actor->y, actor->z+45*FRACUNIT);
-		if(mo)
+		if (mo)
 		{
-			angle = actor->angle+(i<4?-ANG90:ANG90);
+			angle = actor->angle + (i<4 ? ANGLE_270 : ANGLE_90);
 			mo->momz = 8*FRACUNIT;
 			mo->momx = FixedMul((pr_demonchunks()<<10)+FRACUNIT,
 				finecosine[angle>>ANGLETOFINESHIFT]);

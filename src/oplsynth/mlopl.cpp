@@ -48,6 +48,9 @@
 #include <io.h>
 #include "muslib.h"
 
+#include "stats.h"
+#include "v_font.h"
+
 /* Internal variables */
 static uint	OPLsinglevoice = 0;
 static struct OP2instrEntry *OPLinstruments = NULL;
@@ -238,6 +241,7 @@ static int releaseChannel(struct musicBlock *mus, uint slot, uint killed)
 	struct channelEntry *ch = &channels[slot];
 	writeFrequency(slot, ch->realnote, ch->pitch, 0);
 	ch->channel |= CH_FREE;
+	ch->time = MLtime;
 	ch->flags = CH_FREE;
 	if (killed)
 	{
@@ -260,50 +264,83 @@ static int releaseSustain(struct musicBlock *mus, uint channel)
 	return 0;
 }
 
-static int findFreeChannel(struct musicBlock *mus, uint flag)
+#include "c_cvars.h"
+CVAR (Bool, va, 0, 0)
+
+static int findFreeChannel(struct musicBlock *mus, uint flag, uint channel, uchar note)
 {
 	static uint last = 1000000;
 	uint i;
 	uint oldest = 1000000;
 	ulong oldesttime = MLtime;
 
-	if (last >= OPLchannels)
+	if (!va)
 	{
-		last = 1000000;
-	}
+		ulong bestfit = 0;
+		uint bestvoice = 0;
 
-	/* find free channel */
-	for (i = 0; i < OPLchannels; i++)
-	{
-		if (++last >= OPLchannels)	/* use cyclic `Next Fit' algorithm */
-			last = 0;
-		if (channels[last].flags & CH_FREE)
-			return last;
-	}
-
-	if (flag & 1)
-		return -1;			/* stop searching if bit 0 is set */
-
-	/* find some 2nd-voice channel and determine the oldest */
-	for (i = 0; i < OPLchannels; i++)
-	{
-		if (channels[i].flags & CH_SECONDARY)
+		for (i = 0; i < OPLchannels; ++i)
 		{
-			releaseChannel(mus, i, 1);
-			return i;
-		}
-		else if (channels[i].time < oldesttime)
-		{
-			oldesttime = channels[i].time;
-			oldest = i;
-		}
-	}
+			ulong magic;
 
-	/* if possible, kill the oldest channel */
-	if ( !(flag & 2) && oldest != 1000000)
+			magic = ((channels[i].flags & CH_FREE) << 24) |
+					((channels[i].note == note &&
+					  channels[i].channel == channel) << 30) |
+					((channels[i].flags & CH_SUSTAIN) << 28) |
+					((MLtime - channels[i].time) & 0x1fffffff);
+			if (magic > bestfit)
+			{
+				bestfit = magic;
+				bestvoice = i;
+			}
+		}
+		if ((flag & 1) && !(bestfit & 0x80000000))
+		{
+			return -1;
+		}
+		releaseChannel (mus, bestvoice, 1);
+		return bestvoice;
+	}
+	else
 	{
-		releaseChannel(mus, oldest, 1);
-		return oldest;
+		if (last >= OPLchannels)
+		{
+			last = 1000000;
+		}
+
+		/* find free channel */
+		for (i = 0; i < OPLchannels; i++)
+		{
+			if (++last >= OPLchannels)	/* use cyclic `Next Fit' algorithm */
+				last = 0;
+			if (channels[last].flags & CH_FREE)
+				return last;
+		}
+
+		if (flag & 1)
+			return -1;			/* stop searching if bit 0 is set */
+
+		/* find some 2nd-voice channel and determine the oldest */
+		for (i = 0; i < OPLchannels; i++)
+		{
+			if (channels[i].flags & CH_SECONDARY)
+			{
+				releaseChannel(mus, i, 1);
+				return i;
+			}
+			else if (channels[i].time < oldesttime)
+			{
+				oldesttime = channels[i].time;
+				oldest = i;
+			}
+		}
+
+		/* if possible, kill the oldest channel */
+		if ( !(flag & 2) && oldest != 1000000)
+		{
+			releaseChannel(mus, oldest, 1);
+			return oldest;
+		}
 	}
 
 	/* can't find any free channel */
@@ -335,15 +372,21 @@ void OPLplayNote(struct musicBlock *mus, uint channel, uchar note, int volume)
 	int i;
 	struct OP2instrEntry *instr;
 
+	if (volume == 0)
+	{
+		OPLreleaseNote (mus, channel, note);
+		return;
+	}
+
 	if ( (instr = getInstrument(mus, channel, note)) == NULL )
 		return;
 
-	if ( (i = findFreeChannel(mus, (channel == PERCUSSION) ? 2 : 0)) != -1)
+	if ( (i = findFreeChannel(mus, (channel == PERCUSSION) ? 2 : 0, channel, note)) != -1)
 	{
 		occupyChannel(mus, i, channel, note, volume, instr, 0);
 		if (!OPLsinglevoice && instr->flags == FL_DOUBLE_VOICE)
 		{
-			if ( (i = findFreeChannel(mus, (channel == PERCUSSION) ? 3 : 1)) != -1)
+			if ( (i = findFreeChannel(mus, (channel == PERCUSSION) ? 3 : 1, channel, note)) != -1)
 				occupyChannel(mus, i, channel, note, volume, instr, 1);
 		}
 	}
@@ -358,6 +401,7 @@ void OPLreleaseNote(struct musicBlock *mus, uint channel, uchar note)
 	uint sustain = data->channelSustain[channel];
 
 	for(i = 0; i < OPLchannels; i++)
+	{
 		if (channels[i].channel == id && channels[i].note == note)
 		{
 			if (sustain < 0x40)
@@ -365,6 +409,7 @@ void OPLreleaseNote(struct musicBlock *mus, uint channel, uchar note)
 			else
 				channels[i].flags |= CH_SUSTAIN;
 		}
+	}
 }
 
 // code 2: change pitch wheel (bender)
@@ -462,8 +507,9 @@ void OPLplayMusic(struct musicBlock *mus)
 
 	for (i = 0; i < CHANNELS; i++)
 	{
-		data->channelVolume[i] = 64;	/* default volume 127 (full volume) */ /* [RH] default to 64 */
-		data->channelSustain[i] = data->channelLastVolume[i] = 0;
+		data->channelVolume[i] = 127;	/* default volume 127 (full volume) */
+		data->channelSustain[i] = 0;
+		data->channelLastVolume[i] = 64;
 	}
 }
 
@@ -528,4 +574,35 @@ int OPLloadBank (const void *data)
 	}
 	OPLinstruments = instruments;
 	return 0;
+}
+
+ADD_STAT (opl, out)
+{
+	uint i;
+
+	for (i = 0; i < OPLchannels; ++i)
+	{
+		int color;
+
+		if (channels[i].flags & CH_FREE)
+		{
+			color = CR_BRICK;
+		}
+		else if (channels[i].flags & CH_SUSTAIN)
+		{
+			color = CR_ORANGE;
+		}
+		else if (channels[i].flags & CH_SECONDARY)
+		{
+			color = CR_BLUE;
+		}
+		else
+		{
+			color = CR_GREEN;
+		}
+		out[i*3+0] = '\x1c';
+		out[i*3+1] = 'A'+color;
+		out[i*3+2] = '*';
+	}
+	out[i*3] = 0;
 }

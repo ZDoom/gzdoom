@@ -1,3 +1,43 @@
+January 10, 2003
+- Uploaded 36.cab.
+- Added a new player property for ACS (PROP_TOTALLYFROZEN #4). When active, it
+  won't let the player do anything but press +use, which is what PROP_FROZEN
+  was really supposed to be.
+- Added MF_NOLIFTDROP flag for no-gravity things that should not move down
+  with lifts if they are standing on the lift. This is only used with the
+  various bridge actors because various ZDoom maps break if they move with the
+  lift, and the Hexen bridge has visual glitches if it moves so I doubt
+  anybody used this Hexen behavior.
+- Got rid of the orbit table for Hexen's bridge balls. Now they move every tic
+  instead of every fifth tic and use the finecosine/finesine tables directly.
+- Fixed: When a monster was spawned through a script but there was no room
+  for it, it would still count toward the total monsters on the level.
+- Fixed: P_Thing_Spawn() set MF2_PASSMOBJ for flags instead of flags2, so it
+  was really setting MF_NOCLIP, and the P_TestMobjLocation() check would
+  always succeed.
+
+January 9, 2003
+- Added a new player property for ACS (PROP_FLY #3).
+- Added a level flag to set monster death special behavior to the Hexen mode:
+  The things that die activate the specials; not the things that kill them.
+  You can use MAPINFO to turn this off in Hexen and turn it on in Heretic/Doom.
+- Fixed: The Heresiarch used its death inflictor instead of itself as the
+  activator of its death script.
+- Fixed: DLevelScript did not have its activator member recorded in its list
+  of object pointers.
+- Fixed: Saving a game in a demo would cause the program to hang when that
+  point was reached in the demo.
+- Made the game recover from failures during dearchiving thinkers so that
+  you can actually do more stuff without it crashing. Just needed to add
+  a try/catch block so that it can undo what was done before it failed.
+- Added the -savedir option to specify where savegames are stored.
+- Fixed a bug in PIT_FindFloorCeiling(): It used tmthing even though
+  P_FindFloorCeiling() didn't set it.
+
+January 8, 2003
+- Fixed: The hexen main menu showed the spinning skulls from Heretic instead
+  of the fire bulls.
+
 January 7, 2003
 - Uploaded 35.cab.
 - Fixed the node builder to successfully create GL nodes with >64k segs.

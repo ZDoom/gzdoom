@@ -146,7 +146,7 @@ enum
 	MF_NOTDMATCH	= 0x02000000,	// don't spawn in death match (key cards)
 
 	MF_UNMORPHED	= 0x10000000,	// [RH] Actor is the unmorphed version of something else
-					//0x20000000
+	MF_NOLIFTDROP	= 0x20000000,	// [RH] Used with MF_NOGRAVITY to avoid dropping with lifts
 	MF_STEALTH		= 0x40000000,	// [RH] Andy Baker's stealth monsters
 	MF_ICECORPSE	= 0x80000000,	// a frozen corpse (for blasting) [RH] was 0x800000
 

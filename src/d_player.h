@@ -105,6 +105,7 @@ typedef enum
 	CF_STEPLEFT			= 512,	// [RH] Play left footstep sound next time
 	CF_FRIGHTENING		= 1024,	// [RH] Scare monsters away
 	CF_INSTANTWEAPSWITCH= 2048,	// [RH] Switch weapons instantly
+	CF_TOTALLYFROZEN	= 4096, // [RH] All players can do is press +use
 } cheat_t;
 
 #define WPIECE1		1

@@ -169,6 +169,7 @@ private:
 class DLevelScript : public DObject
 {
 	DECLARE_CLASS (DLevelScript, DObject)
+	HAS_OBJECT_POINTERS
 public:
 
 	// P-codes for ACS scripts

@@ -1635,7 +1635,9 @@ void DACSThinker::Tick ()
 	}
 }
 
-IMPLEMENT_CLASS (DLevelScript)
+IMPLEMENT_POINTY_CLASS (DLevelScript)
+ DECLARE_POINTER (activator)
+END_POINTERS
 
 void DLevelScript::Serialize (FArchive &arc)
 {

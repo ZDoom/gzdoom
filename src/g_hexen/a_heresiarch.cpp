@@ -100,7 +100,7 @@ public:
 
 		if (script != 0)
 		{
-			P_StartScript (inflictor, NULL, script, level.mapname, 0, 0, 0, 0, 0);
+			P_StartScript (this, NULL, script, level.mapname, 0, 0, 0, 0, 0);
 		}
 	}
 

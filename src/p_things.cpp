@@ -70,8 +70,8 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 
 		if (mobj != NULL)
 		{
-			DWORD oldFlags = mobj->flags;
-			mobj->flags |= MF2_PASSMOBJ;
+			DWORD oldFlags2 = mobj->flags2;
+			mobj->flags2 |= MF2_PASSMOBJ;
 			if (P_TestMobjLocation (mobj))
 			{
 				rtn++;
@@ -84,13 +84,13 @@ bool P_Thing_Spawn (int tid, int type, angle_t angle, bool fog, int newtid)
 					mobj->flags |= MF_DROPPED;	// Don't respawn
 				mobj->tid = newtid;
 				mobj->AddToHash ();
+				mobj->flags2 = oldFlags2;
 			}
 			else
 			{
 				mobj->Destroy ();
 				rtn = false;
 			}
-			mobj->flags = oldFlags;
 		}
 	}
 

@@ -91,14 +91,14 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 		struct
 		{
 			short tag, special, map;
-		};
+		} a;
 
 		// Used when grouping sidedefs into loops.
 		struct
 		{
 			short first, next;
 			char lineside;
-		};
+		} b;
 	};
 }				*sidetemp;
 
@@ -643,12 +643,12 @@ void P_AdjustLine (line_t *ld)
 		// [RH] Save Static_Init only if it's interested in the textures
 		(ld->special != Static_Init || ld->args[1] == Init_Color))
 	{
-		sidetemp[*ld->sidenum].special = ld->special;
-		sidetemp[*ld->sidenum].tag = ld->args[0];
+		sidetemp[*ld->sidenum].a.special = ld->special;
+		sidetemp[*ld->sidenum].a.tag = ld->args[0];
 	}
 	else
 	{
-		sidetemp[*ld->sidenum].special = 0;
+		sidetemp[*ld->sidenum].a.special = 0;
 	}
 }
 
@@ -825,8 +825,8 @@ static void P_AllocateSideDefs (int count)
 		*sizeof(sidei_t), PU_LEVEL, 0);
 	for (i = 0; i < count; i++)
 	{
-		sidetemp[i].special = sidetemp[i].tag = 0;
-		sidetemp[i].map = -1;
+		sidetemp[i].a.special = sidetemp[i].a.tag = 0;
+		sidetemp[i].a.map = -1;
 	}
 	if (count < numsides)
 	{
@@ -845,7 +845,7 @@ static void P_SetSideNum (short *sidenum_p, short sidenum)
 	}
 	else if (sidecount < numsides)
 	{
-		sidetemp[sidecount].map = sidenum;
+		sidetemp[sidecount].a.map = sidenum;
 		*sidenum_p = sidecount++;
 	}
 	else
@@ -863,12 +863,12 @@ static void P_LoopSidedefs ()
 
 	for (i = 0; i < numvertexes; ++i)
 	{
-		sidetemp[i].first = -1;
-		sidetemp[i].next = -1;
+		sidetemp[i].b.first = -1;
+		sidetemp[i].b.next = -1;
 	}
 	for (; i < numsides; ++i)
 	{
-		sidetemp[i].next = -1;
+		sidetemp[i].b.next = -1;
 	}
 
 	for (i = 0; i < numsides; ++i)
@@ -879,9 +879,9 @@ static void P_LoopSidedefs ()
 		int lineside = (line->sidenum[0] != i);
 		int vert = (lineside ? line->v2 : line->v1) - vertexes;
 		
-		sidetemp[i].lineside = lineside;
-		sidetemp[i].next = sidetemp[vert].first;
-		sidetemp[vert].first = i;
+		sidetemp[i].b.lineside = lineside;
+		sidetemp[i].b.next = sidetemp[vert].b.first;
+		sidetemp[vert].b.first = i;
 
 		// Set each side so that it is the only member of its loop
 		sides[i].LeftSide = -1;
@@ -901,11 +901,11 @@ static void P_LoopSidedefs ()
 		// instead of as part of another loop
 		if (line->frontsector == line->backsector)
 		{
-			right = line->sidenum[!sidetemp[i].lineside];
+			right = line->sidenum[!sidetemp[i].b.lineside];
 		}
 		else
 		{
-			if (sidetemp[i].lineside)
+			if (sidetemp[i].b.lineside)
 			{
 				right = line->v1 - vertexes;
 			}
@@ -914,7 +914,7 @@ static void P_LoopSidedefs ()
 				right = line->v2 - vertexes;
 			}
 
-			right = sidetemp[right].first;
+			right = sidetemp[right].b.first;
 
 			if (right == -1)
 			{ // There is no right side!
@@ -922,7 +922,7 @@ static void P_LoopSidedefs ()
 				continue;
 			}
 
-			if (sidetemp[right].next != -1)
+			if (sidetemp[right].b.next != -1)
 			{
 				int bestright = right;	// Shut up, GCC
 				angle_t bestang = ANGLE_MAX;
@@ -931,7 +931,7 @@ static void P_LoopSidedefs ()
 
 				leftline = &lines[sides[i].linenum];
 				ang1 = R_PointToAngle (leftline->dx, leftline->dy);
-				if (!sidetemp[i].lineside)
+				if (!sidetemp[i].b.lineside)
 				{
 					ang1 += ANGLE_180;
 				}
@@ -944,7 +944,7 @@ static void P_LoopSidedefs ()
 						if (rightline->frontsector != rightline->backsector)
 						{
 							ang2 = R_PointToAngle (rightline->dx, rightline->dy);
-							if (sidetemp[right].lineside)
+							if (sidetemp[right].b.lineside)
 							{
 								ang2 += ANGLE_180;
 							}
@@ -958,7 +958,7 @@ static void P_LoopSidedefs ()
 							}
 						}
 					}
-					right = sidetemp[right].next;
+					right = sidetemp[right].b.next;
 				}
 				right = bestright;
 			}
@@ -983,7 +983,7 @@ void P_LoadSideDefs2 (int lump)
 
 	for (i = 0; i < numsides; i++)
 	{
-		register mapsidedef_t *msd = (mapsidedef_t *)data + sidetemp[i].map;
+		register mapsidedef_t *msd = (mapsidedef_t *)data + sidetemp[i].a.map;
 		register side_t *sd = sides + i;
 		register sector_t *sec;
 
@@ -1004,7 +1004,7 @@ void P_LoadSideDefs2 (int lump)
 		{
 			sd->sector = sec = &sectors[SHORT(msd->sector)];
 		}
-		switch (sidetemp[i].special)
+		switch (sidetemp[i].a.special)
 		{
 		case Transfer_Heights:	// variable colormap via 242 linedef
 			  // [RH] The colormap num we get here isn't really a colormap,
@@ -1037,7 +1037,7 @@ void P_LoadSideDefs2 (int lump)
 
 					for (s = 0; s < numsectors; s++)
 					{
-						if (sectors[s].tag == sidetemp[i].tag)
+						if (sectors[s].tag == sidetemp[i].a.tag)
 						{
 							sectors[s].ceilingcolormap =
 								sectors[s].floorcolormap = colormap;

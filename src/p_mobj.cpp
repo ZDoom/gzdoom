@@ -2220,8 +2220,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 		G_PlayerReborn (playernum);
 	}
 
-	// set color translations for player sprites
-	// [RH] Different now: MF_TRANSLATION is not used.
+	// [RH] set color translations for player sprites
 	mobj->Translation = TRANSLATION(TRANSLATION_Players,playernum);
 
 	mobj->angle = ANG45 * (mthing->angle/45);

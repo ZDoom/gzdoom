@@ -1936,11 +1936,8 @@ void P_BounceWall (AActor *mo)
 		leady = mo->y-mo->radius;
 	}
 	bestslidefrac = FRACUNIT+1;
-	if (P_PathTraverse(leadx, leady, leadx+mo->momx, leady+mo->momy,
-		PT_ADDLINES, PTR_BounceTraverse))
-	{ // Could not find a wall, so don't bounce.
-		return;
-	}
+	P_PathTraverse(leadx, leady, leadx+mo->momx, leady+mo->momy,
+		PT_ADDLINES, PTR_BounceTraverse);
 
 	side = P_PointOnLineSide(mo->x, mo->y, bestslideline);
 	lineangle = R_PointToAngle2(0, 0, bestslideline->dx,

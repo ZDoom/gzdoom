@@ -998,6 +998,10 @@ void I_InitSound ()
 			}
 			FSOUND_GetDriverCaps (FSOUND_GetDriver(), &DriverCaps);
 			Printf ("  Initialization");
+			if (snd_samplerate == 0)
+			{
+				snd_samplerate = 11025;
+			}
 			if (!FModLog (FSOUND_Init (snd_samplerate, 64,
 				FSOUND_INIT_USEDEFAULTMIDISYNTH)))
 			{

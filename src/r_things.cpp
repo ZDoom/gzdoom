@@ -1080,11 +1080,6 @@ void R_ProjectSprite (AActor *thing, int fakeside)
 	vis->x2 = x2 > WindowRight ? WindowRight : x2;
 	vis->Translation = thing->Translation;		// [RH] thing translation table
 	vis->FakeFlatStat = fakeside;
-	if (vis->Translation == 0 && (thing->flags & MF_TRANSLATION))
-	{
-		vis->Translation = TRANSLATION (TRANSLATION_Players,
-			((thing->flags & MF_TRANSLATION) >> (MF_TRANSSHIFT))-1);
-	}
 	vis->alpha = thing->alpha;
 	vis->picnum = lump;
 	iscale = DivScale32 (1, xscale);

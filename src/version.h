@@ -37,7 +37,7 @@
 // Lots of different representations for the version number
 enum { VERSION = 123 };
 #define STRVERSION "123"
-#define DOTVERSIONSTR "1.23 beta 29"
+#define DOTVERSIONSTR "1.23 beta 30"
 #define GAMEVER (1*256+23)
 
 // SAVESIG is the save game signature. It should be the minimum version

@@ -40,7 +40,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <string.h>
 #include <stddef.h>
 
@@ -62,6 +61,7 @@
 #include "c_dispatch.h"
 #include "decallib.h"
 #include "z_zone.h"
+#include "r_draw.h"
 
 extern int clipammo[NUMAMMO];
 
@@ -726,6 +726,12 @@ static int GetLine (void)
 
 static int PatchThing (int thingy)
 {
+	enum
+	{
+		MF_TRANSLATION	= 0x0c000000,	// if 0x4 0x8 or 0xc, use a translation
+		MF_TRANSSHIFT	= 26,			// table for player colormaps
+	};
+
 	static const struct Key keys[] = {
 		{ "Hit points",			myoffsetof(AActor,health) },
 		{ "Reaction time",		myoffsetof(AActor,reactiontime) },
@@ -945,6 +951,12 @@ static int PatchThing (int thingy)
 					}
 					if (vchanged[0])
 					{
+						if (value[0] & MF_TRANSLATION)
+						{
+							info->Translation = TRANSLATION (TRANSLATION_Standard,
+								((value[0] & MF_TRANSLATION) >> (MF_TRANSSHIFT))-1);
+							value[0] &= ~MF_TRANSLATION;
+						}
 						info->flags = value[0];
 					}
 					if (vchanged[1])
@@ -1336,6 +1348,10 @@ static int PatchWeapon (int weapNum)
 					info->ammo = (ammotype_t)val;
 				}
 				info->ammogive = clipammo[val];
+			}
+			else if (stricmp (Line1, "Ammo use") == 0)
+			{
+				info->ammouse = val;
 			}
 			else
 			{

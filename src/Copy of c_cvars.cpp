@@ -206,11 +206,25 @@ int FBaseCVar::ToInt (UCVarValue value, ECVarType type)
 
 	switch (type)
 	{
-	case CVAR_Bool:		res = (int)value.Bool; break;
-	case CVAR_Int:		res = value.Int; break;
-	case CVAR_Float:	res = (int)value.Float; break;
-	default:			res = 0; break;
-	case CVAR_String:	res = strtol (value.String, NULL, 0); break;
+	case CVAR_Bool:
+		res = (int)value.Bool;
+		break;
+
+	case CVAR_Int:
+		res = value.Int;
+		break;
+
+	case CVAR_Float:
+		res = (int)value.Float;
+		break;
+
+	case CVAR_String:
+		res = strtol (value.String, NULL, 0);
+		break;
+
+	default:
+		res = 0;
+		break;
 	}
 	return res;
 }

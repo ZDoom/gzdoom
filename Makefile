@@ -20,7 +20,7 @@ GZIP = gzip
 basename = zdoom-1.23
 
 # the OS type we are building for; should match a directory in src_dir
-SYSTEM = linux
+SYSTEM = $(shell uname -s)
 
 # distribution names
 BINTAR = $(basename)-i586.tar.gz
@@ -162,8 +162,10 @@ srctar: $(ALLSOURCES) Makefile $(SRCDOC) docs/* other/*
 			$(basename)/Makefile \
 			$(basename)/docs/* \
 			$(basename)/other/* \
+			$(basename)/util/*.c \
+			$(basename)/util/*dos \
 			$(basename)/$(src_dir)/* \
-			$(basename)/$(src_dir)/linux/* \
+			$(basename)/$(src_dir)/Linux/* \
 			$(basename)/$(src_dir)/win32/* \
 			$(basename)/$(src_dir)/fmodsound/* \
 			$(basename)/$(src_dir)/g_heretic/* \

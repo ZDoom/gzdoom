@@ -58,7 +58,7 @@
 #define true TRUE
 #define false FALSE
 
-#if 1
+#if 0
 #define STARTLOG		do { if (!dbg) dbg = fopen ("c:/vid.log", "w"); } while(0)
 #define STOPLOG			do { if (dbg) { fclose (dbg); dbg=NULL; } } while(0)
 #define LOG(x)			do { if (dbg) { fprintf (dbg, x); fflush (dbg); } } while(0)

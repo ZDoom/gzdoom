@@ -151,9 +151,6 @@ enum
 	MF_SKULLFLY		= 0x01000000,	// skull in flight
 	MF_NOTDMATCH	= 0x02000000,	// don't spawn in death match (key cards)
 
-	MF_TRANSLATION	= 0x0c000000,	// if 0x4 0x8 or 0xc, use a translation
-	MF_TRANSSHIFT	= 26,			// table for player colormaps
-
 	MF_UNMORPHED	= 0x10000000,	// [RH] Actor is the unmorphed version of something else
 	MF_FALLING		= 0x20000000,
 	MF_STEALTH		= 0x40000000,	// [RH] Andy Baker's stealth monsters

@@ -1,3 +1,16 @@
+January 22, 2002
+- Fixed palette translation through Dehacked again. While I was at it, I
+  decided to remove translation control from the actor's flags member
+  entirely and just rely on the Translation member.
+- Added "Ammo use" field for dehacked weapon modifications.
+- Fixed: Bouncing a missile off a floor/ceiling near a wall could crash if
+  no missiles had already bounced off a wall.
+- Fixed: PIT_RadiusAttack() only pushed things in directions with positive
+  x and y.
+- Gave names to the anonymous structs in p_setup.cpp/sidei_t so that it
+  compiles with GCC 2.95.3.
+- Rearranged FBaseCVar::ToInt() to try and compile it with GCC 2.95.3.
+
 January 20, 2002
 - Fixed: Picking items up when item respawn is enabled would mess up collision
   detection because the items would move themselves back to their original

@@ -200,15 +200,15 @@ static const char * flag3names[]=
 
 static const char * flag4names[]=
 {
-	"**",					// NOHATEPLAYERS
-	"*QUICKTORETALIATE",
-	"*NOICEDEATH",
-	"**",					// BOSSDEATH
-	"*RANDOMIZE",
-	"**",					// NOSKIN
-	"*FIXMAPTHINGPOS",
-	"*ACTLIKEBRIDGE",
-	"*STRIFEDAMAGE",
+	"*",					// NOHATEPLAYERS
+	"QUICKTORETALIATE",
+	"NOICEDEATH",
+	"*",					// BOSSDEATH
+	"RANDOMIZE",
+	"*",					// NOSKIN
+	"FIXMAPTHINGPOS",
+	"ACTLIKEBRIDGE",
+	"STRIFEDAMAGE",
 	NULL
 };
 
@@ -276,6 +276,7 @@ struct FMissileAttack
 	fixed_t SpawnHeight;
 	fixed_t Spawnofs_XY;
 	angle_t Angle;
+	bool aimparallel;
 };
 
 TArray<FMissileAttack> AttackList;
@@ -515,8 +516,10 @@ void A_Jump(AActor * self)
 void A_CustomMissile(AActor * self)
 {
 	int index=self->state->GetMisc2()+256*self->state->GetMisc1();
+	AActor * targ;
+	AActor * missile;
 
-	if (index>=0 && index<AttackList.Size())
+	if (self->target && index>=0 && index<AttackList.Size())
 	{
 		FMissileAttack * att=&AttackList[index];
 
@@ -524,23 +527,52 @@ void A_CustomMissile(AActor * self)
 		if (ti) 
 		{
 			angle_t ang = (self->angle - ANGLE_90) >> ANGLETOFINESHIFT;
-			fixed_t x = self->x + att->Spawnofs_XY * finecosine[ang];
-			fixed_t y = self->y + att->Spawnofs_XY * finesine[ang];
+			fixed_t x = att->Spawnofs_XY * finecosine[ang];
+			fixed_t y = att->Spawnofs_XY * finesine[ang];
+			fixed_t z = att->SpawnHeight-32*FRACUNIT;
 
-			// same adjustment as above - for better aiming!
-			self->z+=att->SpawnHeight-32*FRACUNIT;
-			AActor * missile = P_SpawnMissileXYZ(x,y,self->z+32*FRACUNIT, self, self->target, ti);
-			self->z-=att->SpawnHeight-32*FRACUNIT;
-
-			missile->angle += att->Angle;
-			ang = missile->angle >> ANGLETOFINESHIFT;
-			missile->momx = FixedMul (missile->Speed, finecosine[ang]);
-			missile->momy = FixedMul (missile->Speed, finesine[ang]);
-
-			// automatic handling of seeker missiles
-			if (missile && missile->flags2&MF2_SEEKERMISSILE)
+			if (!att->aimparallel)
 			{
-				missile->tracer=self->target;
+				// same adjustment as above (in all 3 directions this time) - for better aiming!
+				self->x+=x;
+				self->y+=y;
+				self->z+=z;
+				missile = P_SpawnMissile(self, self->target, ti);
+				self->x-=x;
+				self->y-=y;
+				self->z-=z;
+			}
+			else
+			{
+				missile = P_SpawnMissileXYZ(self->x+x, self->y+y, self->z+att->SpawnHeight, self, self->target, ti);
+			}
+
+			if (missile)
+			{
+				missile->angle += att->Angle;
+				ang = missile->angle >> ANGLETOFINESHIFT;
+				missile->momx = FixedMul (missile->Speed, finecosine[ang]);
+				missile->momy = FixedMul (missile->Speed, finesine[ang]);
+
+				// handle projectile shooting projectiles - track the
+				// links back to a real owner
+				if (self->flags & MF_MISSILE)
+				{
+					AActor * owner=self->target;
+					while (owner->flags&MF_MISSILE && owner->target) owner=owner->target;
+					targ=owner;
+					missile->target=owner;
+					// automatic handling of seeker missiles
+					if (self->flags2 & missile->flags2 & MF2_SEEKERMISSILE)
+					{
+						missile->tracer=self->tracer;
+					}
+				}
+				else if (missile->flags2&MF2_SEEKERMISSILE)
+				{
+					// automatic handling of seeker missiles
+					missile->tracer=self->target;
+				}
 			}
 		}
 	}
@@ -994,11 +1026,15 @@ static int ProcessStates(FActorInfo * actor, ACustomActor * defaults)
 					att.Spawnofs_XY=sc_Number;
 					SC_MustGetStringName (",");
 					SC_MustGetNumber();
-					if (sc_Number<-90 || sc_Number>90)
-					{
-						SC_ScriptError("The fourth parameter of A_CustomMissile must be in the range [-90..90]");
-					}
 					att.Angle=sc_Number*ANGLE_1;
+
+					if (SC_TestToken(","))
+					{
+						SC_MustGetNumber();
+						att.aimparallel=!!sc_Number;
+					}
+					else att.aimparallel = false;
+
 					SC_MustGetStringName (")");
 
 					int v=AttackList.Push(att);

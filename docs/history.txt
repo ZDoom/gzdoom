@@ -1,0 +1,534 @@
+ZDoom Release History
+
+More detailed info can be found in the file docs/rh-log.txt included with
+the source code.
+
+
+1.22 (12 December 1999)
+=======================
+* Scroll_Texture_Both and TranslucentLine specials can now be used from ACS.
+* Fixed compiler-dependent cvar ordering during netgame arbitration.
+* Fixed certain polyobject movement combinations that would not stop even
+  though they were supposed to.
+* Did some cleanup for Alpha processors.
+
+
+1.21 (26 November 1999)
+=======================
+* Fixed problems with thinkers removing themselves and causing other thinkers
+  to not get a chance to think.
+* Added hud_scale cvar.
+
+
+1.20 (25 November 1999)
+=======================
+* Fixed saving, reloading, and then resaving games when travelling between
+  levels in a hub.
+* Fixed saving of ACS scripts scheduled to occur on a future level.
+
+
+1.19 (24 November 1999)
+=======================
+* DeHackEd patches that set an actor's death sound to 0 without removing
+  the A_Scream call no longer crash.
+* Fixed sync problems when playing with bullet puffs as particles vs as
+  sprites.
+* Fixed friction when walking on the bottom of swimmable water.
+* Added Jeffrey Cuenco's fixes to get -host and -join to work properly.
+* Fixed BOOM generalized locked doors so that the open/close type will
+  actually close.
+* Added pointer tracking and cleanup. This should fix the occasional
+  crashes when saving games and various other anomalies.
+
+
+1.18b (15 September 1999)
+=========================
+* Fixed crash when saving games with more than 1024 objects.
+* Fixed crash when loading a game without starting a new one first.
+* Reduced the size and frequency of pregame network packets, under the
+  assumption that problems people were having using 1.18 on the Internet
+  are a result of limited modem bandwidth. 
+
+
+1.18a (12 September 1999)
+=========================
+* Fixed liquid warping temporarily stopping when changing levels.
+* +/-mlook commands do not generate unknown command messages.
+* Fixed support for maps with >10 deathmatch starts. Thanks to Roman
+  Hatsiev.
+* Fixed support for the special "maps" EndGame? in MAPINFO lumps.
+* Teleport destination (no gravity) now works as intended.
+* Hopefully fixed savegame problems.
+* Bots are restored from savegames.
+* Fixed keyboard turning speed when -dup is used.
+* Network commands get executed only once when -dup is used.
+* In sectors with damaging floors and swimmable deep water, the damage
+  will also be applied while the player is swimming and not just when
+  the player is on the ground.
+
+
+1.18 (5 September 1999)
+=======================
+* Replaced the older Cajun 0.71 with Cajun 0.97.
+* Fixed handling of status bar faces with skins that provide them.
+* Added swimmable water.
+* Messages printed to the middle of the screen also print to the console.
+* Skill and other server cvars get saved in savegames again.
+* Added liquid texture warping.
+* Bad MAPINFO lumps generate error messages instead of hanging.
+* Realized that it's impossible to guarantee that all object pointers will
+  be valid without some effort, so FArchive saves DObject objects as NULL
+  objects now instead of aborting with an error.
+* Added the ACS built-in functions localambientsound, activatorsound, and
+  setlinemonsterblocking.
+* Added a thing that does nothing but count toward the number of secrets.
+* Added a fly mode.
+* Finally implemented the +moveup and +movedown commands.
+
+
+118test10-source only (14 August 1999)
+======================================
+* Reimplemented hub travel.
+* Optimized R_MapPlane slightly.
+* Added fov command.
+* Added vertical sub-pixel accuracy to the renderer.
+* Added searches for an IWAD in the current directory, $DOOMWADDIR, and
+  $HOME.
+
+
+118test9 (9 August 1999)
+========================
+* Fixed the "wild" bot spinning problem.
+* Commands like changemap that could make network games go out of sync
+  should work properly now. The reason they would do that is closely related
+  to the reason that the bots would start spinning.
+* Finished the serializer. Now savegames work. Hubs don't, because I haven't
+  written the player travelling code yet.
+* Various other code cleanup.
+
+
+118test8 (20 July 1999)
+=======================
+* Fixed a crash problem with the "burn" screen wipe.
+* Fixed a crash problem with playing non-assigned sound sequences.
+* Fixed a crash problem related to trying to shutdown the music subsystem
+  twice.
+* If you try to add more coop bots than there are coop starts, the extra
+  bot leaves quietly instead of ending the game.
+* Weapondrop is now a "server" cvar, which it should have been in the
+  first place.
+* Changed the nodetable file format to be more compact.
+* Bots can now be recorded in demos.
+* Bots work in multiplayer games. Still buggy. Spawning bots can cause
+  consistancy failures, and they can start spinning wildly.
+
+
+118test7 (12 July 1999)
+=======================
+* Fixed handling of maps with scrolling walls.
+* Single player works again. In test6, all games were considered either coop
+  or deathmatch.
+* Disabled the bot thinking code in single player games, so you don't suffer
+  a performance hitwhen not using bots.
+* Added some performance counters accessible through the stat command.
+
+
+118test6 (10 July 1999)
+=======================
+* Rewrote the wu line drawer to look better (especially in overlay mode).
+* Stretched skies now get stretched horizontally as well as vertically.
+* Did an initial integration of the Cajun Bot 0.71 code.
+
+
+118test5 (6 July 1999)
+======================
+* Fixed a potential infinite loop that was introduced in 118test1.
+* Delayed the initial execution of cvar callbacks.
+* Added Heretic's anti-aliased Wu line drawer to the automap.
+
+
+118test4 (3 July 1999)
+======================
+* Fixed the "Bad DCanvas::CopyRect" problem introduced in test3.
+* Fixed sound sequences that should not be cut off when stopped (such as
+  the standard doors).
+
+
+118test3 (2 July 1999)
+======================
+* Removed unnecessary display mode switches.
+* Created a DCanvas class to encapsulate most 2D rendering.
+
+
+118test2 (1 July 1999)
+======================
+* Fixed vertical aim clipping (BFG works again).
+* Fixed monster wandering.
+* Maps with mapthings of type 0 no longer generate warning messages.
+* Crushers that do no damage no longer act as if they inflict pain to
+  actors.
+* The alias command lists aliases again.
+* Aliases are saved to the config file again.
+
+
+118test1 (30 June 1999)
+=======================
+* Tweaked the optimized renderer for fifth-generation processors.
+* Added the following specials:
+    - Line_AlignFloor
+    - Line_AlignCeiling
+    - Sector_SetRotation
+    - Sector_SetCeilingPanning
+    - Sector_SetFloorPanning
+    - Secter_SetCeilingScale
+    - Sector_SetFloorScale
+* Added an additional parameter to the Transfer_Heights special.
+* Switched to the OpenPTC library for display.
+* Converted lots of code to an object-oriented C++ architecture.
+
+
+1.17c (5 May 1999)
+==================
+* Fixed game saving crashes on maps with wind/current effects.
+* In deep water sectors, the underwater light and fog colors can now be
+  set independently of the area above water.
+* Added nojump, allowjump, nofreelook, and allowfreelook keywords for
+  use in MAPINFO lumps.
+* The random number seed now changes each time you run the program.
+
+
+1.17b (15 March 1999)
+=====================
+1.17b contains some minor bug fixes over 1.17 and 1.17a. It also loads
+faster because the sprite dimensions are not cached until they are
+actually needed. There are also some other internal changes in
+preparation for supporting Heretic and Hexen, but those don't affect
+the user yet.
+
+
+1.17a (21 February 1999)
+========================
+1.17a is mostly minor bug fixes and was released because Herian 2 needed
+some of those fixes. There are a few new features, however:
+
+* If you have a skins directory in the same directory as zdoom.exe,
+  every wad file in it will be automatically loaded when the game starts.
+  This way, you don't have to load your skins by hand to use them.
+* New formatting options for text printed using ACS.
+* A code pointer to make monsters fire a railgun.
+
+
+1.17 (17 February 1999)
+=======================
+* I'm releasing both DOS and Win32 versions simultaneously. (The DOS version
+  does not support MIDI/MUS music or a joystick.)
+
+Bug fixes:
+* Multiplayer games with monsters do not crash.
+* Player corpses do not levitate and then fall down when a player respawns
+  in multiplayer games.
+* Using togglemap outside of a game will not crash.
+* Monsters stop attacking their target once it's dead.
+* EV_StopPlat() does not get stuck in an infinite loop if there are moving
+  platforms.
+* Partially invisible players are drawn the proper colors (instead of
+  green) if r_drawfuzz is 0.
+* If you are invisible, so are your muzzle flashes.
+* Trying to execute a non-existant script will not crash.
+* Using a ChangeCamera special from an open script will not crash.
+* The FloorAndCeiling_RaiseByValue and FloorAndCeiling_LowerByValues now
+  behave like Hexen's.
+* Using -loadgame from the command line works.
+* Fixed a memory leak during generation of the translucency tables.
+* In high resolutions, weapon sprites meet the bottom of the screen.
+* Sounds will not cut out mysteriously when there is no reason for them to
+  do so.
+* Sounds will also not be stopped immediately when a thing is removed, so
+  explosion sounds will play to their full length.
+* Things can make more than one sound at once.
+* The deathmatch scoreboard is aligned properly at high resolutions.
+* Spynext and spyprev work properly instead of leaving the status bar
+  "lagging behind" the player being viewed.
+* The light-amp does not disable colored lighting.
+* The sky gets inverted when using the invulnerability powerup.
+* Implemented better z-checking code (from Heretic/Hexen).
+* Pain elementals will spawn one lost soul at a time instead of two inside
+  of each other.
+* Bex patches that use thing mnemonics really do work now, and unknown bit
+  messages aren't generated for regular DeHackEd patches.
+* Linedef type 134 for regular DOOM/BOOM maps requires a red key for
+  activation (it was being improperly translated to require a blue one).
+* Monsters can activate secret lines when they cross them. (See DOOM2/MAP08).
+* The player extreme death sound is used.
+* When a player leaves a network game, their body is removed instead of
+  being left empty.
+* 0-length sounds are treated as empty sounds instead of sounds 4 gigs long.
+* Skins that replaced player sounds with sounds in the IWAD work.
+* Muzzle flashes do not light up foggy areas, and fullbright sprites stay
+  shrouded in fog.
+* Alphanumeric keys no longer automatically repeat on the console.
+* Wads such as gothicdm2 that used new flats in addition to the ones in the
+  IWAD with the regular doom.exe work.
+
+New features:
+* Significant speed improvements on modern processors.
+* Armor and keys are shown on the fullscreen HUD.
+* Colored text.
+* A playdemo console command.
+* A chasecam.
+* A particle sytsem.
+* An optional railgun to show off the particle system. (Start the game with
+  -deh railgun.bex if you want to use it.)
+
+New features interesting for wad authors:
+* Polyobjects.
+* Sound sequences.
+* WAVE files can be used as sound lumps without converting them to DMX's
+  format first.
+* A sky can be specified to not be stretched even if it is shorter than 200
+  pixels.
+* Sparks.
+* Particle fountains.
+* Parallax skies.
+* Some new DeHackEd thing flags from Hexen (bobbing, reflective, etc.).
+
+
+1.16 (22 December 1998)
+=======================
+Bug fixes:
+* No more limit on size of savegames or demos.
+* Screen resolutions above 320x200 are now the proper brightness (they were
+  too bright before.)
+* Improved the brightness of the console font.
+* Bullet puffs can show up on the floor and ceiling and not just walls.
+* Missile weapons can trigger gun activation lines.
+* Barrels now bounce around as much as they did in original DOOM. (They were
+  too "inert" in 1.14.)
+* If a demo is being recorded, quitting the game normally will save the demo
+  to disk. (Previously, you had to use the stop command to do this.)
+
+New features for players:
+* Proper support for BOOM maps.
+* Mouse wheel support and weapnext/weapprev commands.
+* Doublebindings.
+* Better analog joystick support.
+* 180 degree turn command for keyboarders.
+* Damage done by a rocket to its shooter is configurable and defaults to the
+  original Doom behavior.
+* User-configurable gender. (Even though I don't have any new player sounds,
+  at least the obituaries are gender-aware. :-)
+* Teamplay mode.
+* New cvar to disable manual aiming of the BFG to prevent someone from
+  shooting it at the floor and quickly triggering tracer damage before.
+* Maps no longer need to have as many deathmatch starts as there are players
+  in a deathmatch game.
+* Support for Doom Legacy skins.
+* Rewrote the MIDI/MUS code so that it has a working volume control.
+* Many more console commands and cvars.
+
+New features for editors:
+* Proper support for BOOM maps.
+* Obituaries are configurable with a .bex patch.
+* Moster paths
+* Colored lighting
+* Fog can be applied to only part of a level instead of all of it.
+* Per-sector gravity settings.
+* Support for up to 256 ambient sounds (as opposed to the limit of 64 in
+  earlier versions).
+* Sector damage adjustable from between 0-255 points of damage.
+* Changable camera views.
+* The following editing features that were introduced in Hexen are also
+  available in ZDoom:
+  - Most line specials take arguments that modify their behavior.
+  - ACS scripting.
+  - Hubs.
+  - Earthquakes.
+  - Dormant monsters.
+  - Trigger events to happen on monster deaths.
+  - "Waggling" floors.
+  - Pillar builders.
+  - Push activation lines (walking into a wall can trigger an event).
+  - Thing spawning (e.g. for traps/gifts).
+
+
+1.14a (27 July 1998)
+====================
+Bugs fixed are:
+
+* No more crashing about freeing a pointer without ZONEID when changing
+  levels.
+* Skies wider than 256 pixels are drawn correctly.
+* Monsters' heights are once again the same as they were in id's original
+  DOOM, so certain areas work properly again.
+* Monsters shouldn't teleport into each other anymore.
+* Improved support for international keyboards.
+* The skill level chosen for a new game is no longer ignored if the new
+  game is started while a demo is playing.
+
+Cosmetic changes:
+
+* No more "sv_gravity changed to...", "skill changed to...", etc. messages
+  in single player games.
+* Activating the player setup menu automatically stops any playing demos,
+  since it doesn't work properly while they play.
+* Barrels don't go flying away when exploding anymore.
+* Added def_patch cvar to automatically load a DeHackEd patch each time the
+  game is started.
+* ZDoom save games now use the name zdoomsv?.dsg instead of doomsav?.dsg.
+
+This version also includes some preliminary BOOM support as I started
+integrating some of the BOOM source code with ZDoom:
+
+* Medusa fix.
+* Openings limit removed.
+* Removed limit on switches and animations.
+* Added support for BOOM-like ANIMATED and SWITCHES lumps in PWADs.
+* Added support for BOOM-style scrollers (including conveyors).
+* Added partial deep-water support.
+
+
+1.14 (14 July 1998)
+===================
+Bugs fixed:
+* The bunny scroller at the end of E3M8 no longer crashes the game.
+* The IDKFA cheat gives the proper amount of armor again.
+* Demo recording works again.
+* Telefragging works again.
+* Picking up the invulnerability sphere displays the correct colors now.
+* DeHackEd patches containing text replacements no longer crash the game.
+* Printing a string containing "%s" to the console and then changing the
+  video mode will no longer crash the game.
+* Chat mode finally works again.
+* If MIDAS can't initialize, you can still play the game but without sound.
+* Pistol and chaingun sounds no longer cut out when there are lots of
+  zombie men shooting their pistols at you.
+* Mouse input should no longer be so jerky under Windows NT.
+* The crosshair is finally accurate for aiming.
+* Autoaim is properly remembered each time you start ZDoom.
+* Switches in the Ultimate Doom that aren't also in the shareware Doom
+  properly change their appearance when switched.
+
+New features:
+* Players can choose their own colors and names.
+  (Player setup menu is included).
+* 8-player support (untested but should work).
+* Miscellaneous internal code changes have been borrowed from the BOOM
+  source. (This does *not* mean that ZDoom supports BOOM levels yet.)
+* Cheats, chat messages, and gamestate changes are now recorded in demos.
+* Single-player demos recorded with ZDoom are generally smaller than
+  before.
+* Quake 2-style deathmatch flags.
+* Cheats (optionally) work in multiplayer games.
+* Mode X is now supported under Win95, so all the machines that couldn't
+  run ZDoom in 320x200 before should be able to now.
+* Fewer conditions result in error messages that quit the game. (If you
+  have Heretic, try this: Start ZDoom with -file heretic and go to the
+  console and type "MAP E1M1".)
+* Keys can repeat in the console.
+* The console and chat mode now use the localized keymap set with the
+  Keyboard control panel.
+* Messages at the top of the screen now break along between words instead
+  of in the middle of them.
+* Added -config command line parameter.
+* Added -fastdemo command line parameter.
+* Added new screen shot command. (bound to "Print Screen" key by default)
+* Added Quake-like +showscores command. (bound to "\" key by default)
+* Aliases are now saved in the config file.
+* Added support for multiple pitched sounds like in very old version of
+  Doom. (Use the snd_pitched cvar to turn it on and off.)
+
+
+1.13 (26 May 1998)
+==================
+* Fixed some major bugs (that crashed the game) and other lesser bugs that were
+  just annoying.
+* 3-D collisions for walking under and standing on other things.
+* The status bar can be scaled to the full width of the screen.
+* The screen mode can be selected from a menu inside the game.
+* ZDoom can run in a window on the desktop.
+* Better DeHackEd support. Only a few text replacements are not supported.
+  Everything else works (including monster infighting which I haven't seen
+  in any other port).
+* New features for level designers (see editing.txt for details):
+    Specification of next and secret maps on a per-map basis.
+    Specify sky texture on a per-map basis.
+    Use any lump in a wad as music for a map.
+    Give maps a custom name without using a DeHackEd patch.
+    Maps can be named anything (not just E?M? or MAP??).
+    Place any messages of any length between any two maps.
+    Hexen-style fog (of any color).
+    Ambient sounds--either point like Quake or global like Heretic and Hexen.
+    Automatic use of DeHackEd patches in PWADs.
+    No more tutti-frutti for short textures of certain heights.
+    zdoom.wcf file for use with WadAuthor.
+* Rocket jumping. (One very important note about this: You need to be *in the
+  air* when your rocket explodes for rocket jumping to work. This is different
+  from Quake, and I will probably rewrite it for the next release.)
+* Dynamic palette flashes.
+* Supports stretching skies for freelook.
+* Larger freelook range.
+* Added tab-completion to the console.
+* zdoom.cfg is now the name of the default configuration file since Doom
+  Legacy decided to start using config.cfg.
+* French language support. (Set language cvar to "french".)
+* Player obituaries.
+* Unlimited ammo cheat (use g_unlimitedammo cvar).
+
+
+1.12 (7 April 1998)
+===================
+* Some visual enhancements were made such as centering the menus and 
+  drawing borders around the status bar in higher resolutions.
+* Console commands can now be specified on the command line.
+* Removed some of DOOM's limits such as VisPlanes, VisSprites, and 2S 
+  HOM.
+* Rewrote some of the inner loops in assembly. (There was some assembly 
+  in 1.11, but it never got used.)
+* New cvars relating to mouse movement. (invertmouse, m_pitch, m_yaw, 
+  etc.)
+* Mouse movement doesn't get sluggish in high resolutions.
+* Automap colors are customizable.
+* Automap overlay and rotation are available.
+* Eight crosshairs.
+* Shoot up/down.
+* Alt-Tab and Pause work properly on all machines now.
+* The +jump command now works.
+* 25% and 75% translucency levels in addition to 50%. The translucency 
+  tables now get saved to disk, too, so they only need to be calculated 
+  once instead of every time the game is run.
+* The console font is now editable.
+* Near complete support for DeHackEd patches. (Only monster infighting 
+  and changing a few minor text strings are not supported.)
+* Sky height and position is now fixed for high resolutions. (It still 
+  wraps if you look up, but at least now if you look straight ahead, it 
+  never will.)
+* Weapon sprite is always drawn at the correct location. (It was being 
+  drawn too low in some resolutions like 400x300.)
+* New options menu, which includes a key configuration screen.
+* "Stealth" monsters.
+* New full-screen HUD.
+* And a few other things not worth mentioning separately.
+
+
+1.11 (6 March 1998) Initial Release
+===================================
+* Works under both Windows 95 and NT 4.0, although it works best under 
+  Win95.
+* Limited support for the Pause key. It works with some keyboards on 
+  some machines.
+* Supports any resolution compatible with your DirectDraw drivers.
+* Look up/down ala Heretic.
+* Translucency for selected objects.
+* Has a console with most of the functionality of Quake's. The only 
+  significant missing feature is Tab-completion.
+* Notarget cheat.
+* Command to kill all monsters in a level or yourself.
+* Can play MUS, MIDI, and MOD music.
+* Selected sounds are played in surround sound.
+* Doors that need keys to open are highlighted on the automap.
+* Automap now shows various statistics in addition to the level name.
+* True keybindings. Bind any key to any command or sequence of 
+  commands.
+* Intermission screen can now display your stats using absolute values 
+  rather than percentages.
+* A new more general demo format.

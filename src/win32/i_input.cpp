@@ -116,6 +116,7 @@ const DIDATAFORMAT c_dfDIMouse2 =
 #include "m_misc.h"
 #include "gameconfigfile.h"
 #include "win32iface.h"
+#include "templates.h"
 
 #define DINPUT_BUFFERSIZE	32
 
@@ -201,6 +202,7 @@ static int JoyActive;
 static BYTE JoyButtons[128];
 static BYTE JoyPOV[4];
 static BYTE JoyAxisMap[8];
+static float JoyAxisThresholds[8];
 char *JoyAxisNames[8];
 static const size_t Axes[8] =
 {
@@ -290,6 +292,39 @@ CUSTOM_CVAR (Int, joy_dial,		JOYAXIS_NONE,	 CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	MapAxis (self, 7);
 }
 
+CUSTOM_CVAR (Float, joy_xthreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[0] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_ythreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[1] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_zthreshold,		0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[2] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_xrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[3] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_yrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[4] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_zrotthreshold,	0.15f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[5] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_sliderthreshold,	0.f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[6] = clamp (self * 256.f, 0.f, 256.f);
+}
+CUSTOM_CVAR (Float, joy_dialthreshold,	0.f,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	JoyAxisThresholds[7] = clamp (self * 256.f, 0.f, 256.f);
+}
+
 CVAR (Float, joy_speedmultiplier,1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Float, joy_yawspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Float, joy_pitchspeed,	-.75f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -300,6 +335,7 @@ CVAR (Float, joy_upspeed,		-1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 static FBaseCVar * const JoyConfigVars[] =
 {
 	&joy_xaxis, &joy_yaxis, &joy_zaxis, &joy_xrot, &joy_yrot, &joy_zrot, &joy_slider, &joy_dial,
+	&joy_xthreshold, &joy_ythreshold, &joy_zthreshold, &joy_xrotthreshold, &joy_yrotthreshold, &joy_zrotthreshold, &joy_sliderthreshold, &joy_dialthreshold,
 	&joy_speedmultiplier, &joy_yawspeed, &joy_pitchspeed, &joy_forwardspeed, &joy_sidespeed,
 	&joy_upspeed
 };
@@ -914,7 +950,19 @@ void DI_JoyCheck ()
 	{
 		if (JoyAxisMap[i] != JOYAXIS_NONE)
 		{
-			JoyAxes[JoyAxisMap[i]] += *((LONG *)((BYTE *)&js + Axes[i])) * mul;
+			float axisval = *((LONG *)((BYTE *)&js + Axes[i]));
+			if (abs(axisval) > JoyAxisThresholds[i])
+			{
+				if (axisval > 0.f)
+				{
+					axisval -= JoyAxisThresholds[i];
+				}
+				else
+				{
+					axisval += JoyAxisThresholds[i];
+				}
+				JoyAxes[JoyAxisMap[i]] += axisval * mul * 256.f / (256.f - JoyAxisThresholds[i]);
+			}
 		}
 	}
 
@@ -1002,8 +1050,11 @@ void LoadJoystickConfig ()
 			const char *val = GameConfig->GetValueForKey (JoyConfigVars[i]->GetName());
 			UCVarValue cval;
 
-			cval.String = const_cast<char *>(val);
-			JoyConfigVars[i]->SetGenericRep (cval, CVAR_String);
+			if (val != NULL)
+			{
+				cval.String = const_cast<char *>(val);
+				JoyConfigVars[i]->SetGenericRep (cval, CVAR_String);
+			}
 		}
 	}
 }
@@ -1608,6 +1659,8 @@ static void PostMouseMove (int x, int y)
 		ev.x = x;
 		ev.y = y;
 	}
+	lastx = x;
+	lasty = y;
 	if (ev.x | ev.y)
 	{
 		ev.type = EV_Mouse;

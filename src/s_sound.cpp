@@ -1311,7 +1311,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	else
 	{
 		int lumpnum = -1;
-		FileReader *file;
+		int offset, length;
 
 		if (!FileExists (musicname))
 		{
@@ -1320,11 +1320,13 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				Printf ("Music \"%s\" not found\n", musicname);
 				return false;
 			}
-			file = Wads.ReopenLumpNum (lumpnum);
+			offset = Wads.GetLumpOffset (lumpnum);
+			length = Wads.LumpLength (lumpnum);
 		}
 		else
 		{
-			file = new FileReader (musicname);
+			offset = 0;
+			length = 0;
 		}
 
 		// shutdown old music
@@ -1335,7 +1337,9 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		{
 			delete[] mus_playing.name;
 		}
-		mus_playing.handle = I_RegisterSong (file);
+		mus_playing.handle = I_RegisterSong (lumpnum != -1 ?
+			Wads.GetWadFullName (Wads.GetLumpFile (lumpnum)) :
+			musicname, offset, length);
 	}
 
 	mus_playing.loop = looping;

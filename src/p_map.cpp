@@ -666,6 +666,8 @@ BOOL PIT_CheckLine (line_t *ld)
 //
 // PIT_CheckThing
 //
+static AActor *stepthing;
+
 static // killough 3/26/98: make static
 BOOL PIT_CheckThing (AActor *thing)
 {
@@ -685,16 +687,28 @@ BOOL PIT_CheckThing (AActor *thing)
 	if (abs(thing->x - tmx) >= blockdist || abs(thing->y - tmy) >= blockdist)
 	{
 		// didn't hit thing
-		return true;	
+		return true;
 	}
 	BlockingMobj = thing;
 	topz = thing->z + thing->height;
-	if (!(compatflags & COMPATF_NO_PASSMOBJ) && !(tmthing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY)))
+	if (!(compatflags & COMPATF_NO_PASSMOBJ) && !(tmthing->flags & (MF_FLOAT|MF_MISSILE|MF_SKULLFLY|MF_NOGRAVITY)) &&
+		(thing->flags & MF_SOLID) && (thing->flags4 & MF4_ACTLIKEBRIDGE))
 	{
-		// [RH] Let monsters stand on actors as well as floors
-		if ((thing->flags & MF_SOLID) && topz > tmfloorz && topz <= tmthing->z + 24*FRACUNIT)
+		// [RH] Let monsters walk on actors as well as floors
+		if ((tmthing->flags3 & MF3_ISMONSTER) &&
+			topz >= tmfloorz && topz <= tmthing->z + 24*FRACUNIT)
 		{
-			tmfloorz = topz;
+			// The commented-out if is an attempt to prevent monsters from walking off a
+			// thing further than they would walk off a ledge. I can't think of an easy
+			// way to do this, so I restrict them to only walking on bridges instead.
+			// Uncommenting the if here makes it almost impossible for them to walk on
+			// anything, bridge or otherwise.
+//			if (abs(thing->x - tmx) <= thing->radius &&
+//				abs(thing->y - tmy) <= thing->radius)
+			{
+				stepthing = thing;
+				tmfloorz = topz;
+			}
 		}
 	}
 	if ((tmthing->flags2 & MF2_PASSMOBJ) && !(compatflags & COMPATF_NO_PASSMOBJ))
@@ -933,8 +947,12 @@ BOOL PIT_CheckOnmobjZ (AActor *thing)
 	{ // Can't hit thing
 		return true;
 	}
-	if (thing->flags & (MF_CORPSE|MF_SPECIAL))
-	{ // [RH] Corpses and specials don't block moves
+	if (thing->flags & (MF_CORPSE|MF_SPECIAL|MF_NOCLIP))
+	{ // [RH] Corpses and specials and noclippers don't block moves
+		return true;
+	}
+	if (!(thing->flags4 & MF4_ACTLIKEBRIDGE) && (tmthing->flags & MF_SPECIAL))
+	{ // [RH] Only bridges block pickup items
 		return true;
 	}
 	if (thing == tmthing)
@@ -1086,6 +1104,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 			AActor *robin = NULL;
 			do
 			{
+				stepthing = NULL;
 				if (!P_BlockThingsIterator (bx, by, PIT_CheckThing, robin))
 				{ // [RH] If a thing can be stepped up on, we need to continue checking
 				  // other things in the blocks and see if we hit something that is
@@ -1162,6 +1181,7 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	yh = (tmbbox[BOXTOP] - bmaporgy)>>MAPBLOCKSHIFT;
 
 	fixed_t thingdropoffz = tmfloorz;
+	//bool onthing = (thingdropoffz != tmdropoffz);
 	tmfloorz = tmdropoffz;
 
 	for (bx=xl ; bx<=xh ; bx++)
@@ -1169,7 +1189,10 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 			if (!P_BlockLinesIterator (bx,by,PIT_CheckLine))
 				return false;
 
-	tmdropoffz = MAX(tmdropoffz, thingdropoffz);
+	if (stepthing != NULL)
+	{
+		tmdropoffz = thingdropoffz;
+	}
 
 	return (BlockingMobj = thingblocker) == NULL;
 }

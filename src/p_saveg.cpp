@@ -82,10 +82,25 @@ void P_SerializeWorld (FArchive &arc)
 		arc << sec->floorplane
 			<< sec->ceilingplane
 			<< sec->floortexz
-			<< sec->ceilingtexz
-			<< sec->floorpic
-			<< sec->ceilingpic
-			<< sec->lightlevel
+			<< sec->ceilingtexz;
+
+		if (SaveVersion < 217)
+		{
+			// Skip floorpic and ceilingpic in old savegames
+			short dummy;
+			arc << dummy << dummy;
+		}
+		else if (arc.IsStoring ())
+		{
+			TexMan.WriteTexture (arc, sec->floorpic);
+			TexMan.WriteTexture (arc, sec->ceilingpic);
+		}
+		else
+		{
+			sec->floorpic = TexMan.ReadTexture (arc);
+			sec->ceilingpic = TexMan.ReadTexture (arc);
+		}
+		arc << sec->lightlevel
 			<< sec->special
 			<< sec->tag
 			<< sec->soundtraversed
@@ -110,12 +125,8 @@ void P_SerializeWorld (FArchive &arc)
 			<< sec->bottommap << sec->midmap << sec->topmap
 			<< sec->gravity
 			<< sec->damage
-			<< sec->mod;
-		if (SaveVersion < 211)
-		{
-			arc << waterflag;
-		}
-		arc << sec->SecActTarget
+			<< sec->mod
+			<< sec->SecActTarget
 			<< sec->FloorLight
 			<< sec->CeilingLight
 			<< sec->FloorFlags
@@ -132,22 +143,7 @@ void P_SerializeWorld (FArchive &arc)
 		{
 			arc << sec->FloorSkyBox << sec->CeilingSkyBox;
 		}
-		if (SaveVersion >= 211)
-		{
-			arc << sec->ZoneNumber;
-		}
-		else
-		{
-			sec->ZoneNumber = 0;
-			if (waterflag == 1)
-			{
-				sec->MoreFlags |= SECF_UNDERWATER;
-			}
-			else if (waterflag == 2)
-			{
-				sec->MoreFlags |= SECF_FORCEDUNDERWATER;
-			}
-		}
+		arc << sec->ZoneNumber;
 		if (arc.IsStoring ())
 		{
 			arc << sec->ColorMap->Color
@@ -169,28 +165,14 @@ void P_SerializeWorld (FArchive &arc)
 				arc << desaturate;
 			}
 			sec->ColorMap = GetSpecialLights (color, fade, desaturate);
-			if (SaveVersion < 201)
-			{ // Version 200 had separate colormaps for the floor and ceiling,
-			  // even though they were always the same.
-				arc << color << fade;
-			}
 		}
 	}
 
 	// do lines
 	for (i = 0, li = lines; i < numlines; i++, li++)
 	{
-		if (SaveVersion < 211)
-		{
-			short sflags;
-			arc << sflags;
-			li->flags = sflags;
-		}
-		else
-		{
-			arc << li->flags;
-		}
-		arc << li->special
+		arc << li->flags
+			<< li->special
 			<< li->alpha
 			<< li->id
 			<< li->args[0] << li->args[1] << li->args[2] << li->args[3] << li->args[4];
@@ -202,11 +184,28 @@ void P_SerializeWorld (FArchive &arc)
 
 			side_t *si = &sides[li->sidenum[j]];
 			arc << si->textureoffset
-				<< si->rowoffset
-				<< si->toptexture
-				<< si->bottomtexture
-				<< si->midtexture
-				<< si->Light
+				<< si->rowoffset;
+
+			if (SaveVersion < 217)
+			{
+				// Skip toptexture, bottomtexture, and midtexture stored in
+				// old savegames, because their indices are sure to be wrong.
+				short dummy;
+				arc << dummy << dummy << dummy;
+			}
+			else if (arc.IsStoring ())
+			{
+				TexMan.WriteTexture (arc, si->toptexture);
+				TexMan.WriteTexture (arc, si->bottomtexture);
+				TexMan.WriteTexture (arc, si->midtexture);
+			}
+			else
+			{
+				si->toptexture = TexMan.ReadTexture (arc);
+				si->bottomtexture = TexMan.ReadTexture (arc);
+				si->midtexture = TexMan.ReadTexture (arc);
+			}
+			arc << si->Light
 				<< si->Flags
 				<< si->LeftSide
 				<< si->RightSide;
@@ -215,29 +214,20 @@ void P_SerializeWorld (FArchive &arc)
 	}
 
 	// do zones
-	if (SaveVersion < 211)
+	arc << numzones;
+
+	if (arc.IsLoading())
 	{
-		numzones = 1;
-		zones = new zone_t[1];
-		zones[0].Environment = DefaultEnvironments[0];
+		if (zones != NULL)
+		{
+			delete[] zones;
+		}
+		zones = new zone_t[numzones];
 	}
-	else
+
+	for (i = 0, zn = zones; i < numzones; ++i, ++zn)
 	{
-		arc << numzones;
-
-		if (arc.IsLoading())
-		{
-			if (zones != NULL)
-			{
-				delete[] zones;
-			}
-			zones = new zone_t[numzones];
-		}
-
-		for (i = 0, zn = zones; i < numzones; ++i, ++zn)
-		{
-			arc << zn->Environment;
-		}
+		arc << zn->Environment;
 	}
 }
 

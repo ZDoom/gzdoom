@@ -162,7 +162,7 @@ TimiditySong::~TimiditySong ()
 	}
 }
 
-TimiditySong::TimiditySong (FileReader *file)
+TimiditySong::TimiditySong (FILE *file, int len)
 	: DiskName ("zmid"),
 #ifdef _WIN32
 	  ReadWavePipe (INVALID_HANDLE_VALUE), WriteWavePipe (INVALID_HANDLE_VALUE),
@@ -194,9 +194,8 @@ TimiditySong::TimiditySong (FileReader *file)
 		return;
 	}
 
-	int len = file->GetLength();
 	BYTE *buf = new BYTE[len];
-	file->Read (buf, len);
+	fread (buf, 1, len, file);
 
 	// The file type has already been checked before this class instance was
 	// created, so we only need to check one character to determine if this

@@ -1,3 +1,39 @@
+October 25, 2003
+- Increased MAX_ACS_TRANSLATIONS to 255.
+- Added APROP_Invulnerable.
+- Changed savegames so that they store textures by name and usetype instead of
+  by index. Also removed support for loading save games created with ZDoom
+  versions earlier than 2.0.43 just for the purpose of removing obsolete code.
+- Fixed: Unscaled skies taller than 128 were positioned incorrectly.
+- Fixed: Redefining a clusterinfo with MAPINFO would not zero out the old
+  clusterinfo.
+- Fixed: When a palette had no duplicate entries, it used the blue and green
+  parts of color 255 to pick a replacement for color 0.
+
+October 24, 2003
+- Added MF4_ACTLIKEBRIDGE flag.
+- Fixed: Inventory items would fall through invisible bridges.
+- Changed the P_TeleportMove() call in P_SpawnPlayer() so that it uses ONFLOORZ
+  instead of mobj->z, which fixes some stuckiness that can occur with start
+  spots that are too near a wall.
+
+October 23, 2003
+- Fixed: Overlapping bridge things would stand on each other.
+- Changed TX_START/TX_END loading to load textures from first to last instead
+  of last to first, so ANIMDEFS animations that use them will behave as
+  expected.
+- Fixed: m_filter did not average the mouse input. It just cut it in half.
+- Fixed: Mouse pitch only changed in increments of 16.
+- Fixed: ZDoom set the display mode twice at startup: Once at the very
+  beginning and again right after its initialization finished.
+- Fixed: AImpactDecal::StaticCreate() checked the texture on a wall using
+  translation, so it would stick decals on animated textures unless the
+  first frame was showing.
+- FMOD_File_SetCallbacks() does not seem to work with FMOD 3.70. Fortunately,
+  FMOD 3.70 also makes it obsolete for my purposes, so I can work around it.
+  (Okay, so it was fixed again in a later FMOD 3.70. But I already removed
+  the use of FMOD file callbacks, so I won't undo my changes now.)
+
 October 22, 2003
 - Rewrote my TAG_MORE handling to use va_list and make GCC happy.
 - Fixed the default Heretic/Hexen automap wall colors so that they look

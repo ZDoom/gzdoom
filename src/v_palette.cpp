@@ -99,7 +99,7 @@ int BestColor (const DWORD *pal_in, int r, int g, int b, int first, int num)
 #ifdef USEASM
 	if (CPU.bMMX)
 	{
-		int pre = 256 - num;
+		int pre = 256 - num - first;
 		return BestColor_MMX (((first+pre)<<24)|(r<<16)|(g<<8)|b, pal_in-pre) - pre;
 	}
 #endif
@@ -187,6 +187,7 @@ void FPalette::MakeGoodRemap ()
 				Remap[new0] = sortcopy[i-1].a;
 				BaseColors[new0] = color0;
 				Colors[new0] = Colors[0];
+				break;
 			}
 		}
 	}
@@ -344,7 +345,7 @@ void InitPalette ()
 		if (GPalette.Remap[0] == 0)
 		{ // No duplicates, so settle for something close to color 0
 			GPalette.Remap[0] = BestColor ((DWORD *)GPalette.BaseColors,
-				GPalette.BaseColors[0].r, GPalette.BaseColors[255].g, GPalette.BaseColors[255].b, 0, 255);
+				GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 		}
 
 		// Make color 0 magenta

@@ -627,7 +627,7 @@ AImpactDecal *AImpactDecal::StaticCreate (const FDecal *decal, fixed_t x, fixed_
 			return NULL;
 
 		int stickypic = actor->StickToWall (wall);
-		FTexture *tex = TexMan(stickypic);
+		FTexture *tex = TexMan[stickypic];
 
 		if (tex != NULL && tex->bNoDecals)
 		{

@@ -7,7 +7,7 @@
 class OPLmusicBlock : protected musicBlock
 {
 public:
-	OPLmusicBlock (FileReader *file, int rate, int maxSamples);
+	OPLmusicBlock (FILE *file, int len, int rate, int maxSamples);
 	~OPLmusicBlock ();
 	bool IsValid () const;
 

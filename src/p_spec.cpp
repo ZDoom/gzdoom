@@ -147,7 +147,7 @@ static void P_SpawnScrollers();
 static void P_SpawnFriction ();		// phares 3/16/98
 static void P_SpawnPushers ();		// phares 3/20/98
 
-static void ParseAnim (byte istex);
+static void ParseAnim (bool istex);
 
 //
 //		Animating line specials
@@ -214,7 +214,7 @@ static void P_InitAnimDefs ()
 	}
 }
 
-static void ParseAnim (byte istex)
+static void ParseAnim (bool istex)
 {
 	TArray<FAnimDef::FAnimFrame> frames (32);
 	FAnimDef::FAnimFrame frame;
@@ -227,6 +227,11 @@ static void ParseAnim (byte istex)
 
 	SC_MustGetString ();
 	picnum = TexMan.CheckForTexture (sc_String, istex ? FTexture::TEX_Wall : FTexture::TEX_Flat);
+
+	if (picnum < 0)
+	{
+		Printf (PRINT_BOLD, "ANIMDEFS: Can't find %s\n", sc_String);
+	}
 
 	sink.CurFrame = 0;
 	sink.BasePic = picnum;

@@ -255,6 +255,14 @@ EXTERN_CVAR (Int, joy_yrot)
 EXTERN_CVAR (Int, joy_zrot)
 EXTERN_CVAR (Int, joy_slider)
 EXTERN_CVAR (Int, joy_dial)
+EXTERN_CVAR (Float, joy_xthreshold)
+EXTERN_CVAR (Float, joy_ythreshold)
+EXTERN_CVAR (Float, joy_zthreshold)
+EXTERN_CVAR (Float, joy_xrotthreshold)
+EXTERN_CVAR (Float, joy_yrotthreshold)
+EXTERN_CVAR (Float, joy_zrotthreshold)
+EXTERN_CVAR (Float, joy_sliderthreshold)
+EXTERN_CVAR (Float, joy_dialthreshold)
 EXTERN_CVAR (Float, joy_yawspeed)
 EXTERN_CVAR (Float, joy_pitchspeed)
 EXTERN_CVAR (Float, joy_forwardspeed)
@@ -306,19 +314,16 @@ static menuitem_t JoystickItems[] =
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-
-#if 0
-	{ absslider,"Horizontal sensitivity",{&joy_xsensitivity},	{0.9}, {2.0},	{0.2}, {NULL} },
-	{ inverter,	"Flip horizontal axis",	{&joy_xsensitivity},	{0.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-	{ absslider,"Vertical sensitivity",	{&joy_ysensitivity},	{0.9}, {2.0},	{0.2}, {NULL} },
-	{ inverter,	"Flip vertical axis",	{&joy_ysensitivity},	{0.0}, {0.0},	{0.0}, {YesNo} },
 	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
-
-	// Are these next two even meaningful under Windows?
-	{ slider,	"Horizontal dead zone",	{&joy_xthreshold},		{0.0}, {0.9},	{0.1}, {NULL} },
-	{ slider,	"Vertical dead zone",	{&joy_ythreshold},		{0.0}, {0.9},	{0.1}, {NULL} },
-#endif
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
+	{ redtext,	" ",					{NULL},					{0.0}, {0.0},	{0.0}, {NULL} },
 };
 
 menu_t JoystickMenu =
@@ -1926,6 +1931,12 @@ void UpdateJoystickMenu ()
 		&joy_yawspeed, &joy_pitchspeed, &joy_forwardspeed,
 		&joy_sidespeed, &joy_upspeed
 	};
+	static FFloatCVar * const cvars3[8] =
+	{
+		&joy_xthreshold, &joy_ythreshold, &joy_zthreshold,
+		&joy_xrotthreshold, &joy_yrotthreshold, &joy_zrotthreshold,
+		&joy_sliderthreshold, &joy_dialthreshold
+	};
 
 	int i, line;
 
@@ -1981,6 +1992,28 @@ void UpdateJoystickMenu ()
 			JoystickItems[line].a.cvar = cvars2[i];
 			JoystickItems[line].e.values = Inversion;
 			line++;
+		}
+
+		JoystickItems[line].type = redtext;
+		JoystickItems[line].label = " ";
+		line++;
+
+		JoystickItems[line].type = whitetext;
+		JoystickItems[line].label = "Axis Dead Zones";
+		line++;
+
+		for (i = 0; i < 8; ++i)
+		{
+			if (JoyAxisNames[i] != NULL)
+			{
+				JoystickItems[line].label = JoyAxisNames[i];
+				JoystickItems[line].type = slider;
+				JoystickItems[line].a.cvar = cvars3[i];
+				JoystickItems[line].b.min = 0.0;
+				JoystickItems[line].c.max = 0.9;
+				JoystickItems[line].d.step = 0.05;
+				line++;
+			}
 		}
 	}
 

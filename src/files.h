@@ -11,6 +11,7 @@ class FileReader
 public:
 	FileReader (const char *filename);
 	FileReader (FILE *file);
+	FileReader (FILE *file, long length);
 	~FileReader ();
 
 	long Tell () const;
@@ -59,7 +60,6 @@ public:
 
 protected:
 	FileReader (const FileReader &other, long length);
-	FileReader (FILE *file, long length);
 	FileReader ();
 
 	FILE *File;

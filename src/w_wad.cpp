@@ -488,6 +488,24 @@ int FWadCollection::LumpLength (int lump) const
 
 //==========================================================================
 //
+// GetLumpOffset
+//
+// Returns the offset from the beginning of the file to the lump.
+//
+//==========================================================================
+
+int FWadCollection::GetLumpOffset (int lump) const
+{
+	if ((size_t)lump >= NumLumps)
+	{
+		I_Error ("W_LumpLength: %i >= NumLumps",lump);
+	}
+
+	return LumpInfo[lump].position;
+}
+
+//==========================================================================
+//
 // W_LumpNameHash
 //
 // NOTE: s should already be uppercase, in contrast to the BOOM version.

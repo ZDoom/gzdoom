@@ -11,7 +11,7 @@
 
 EXTERN_CVAR (Bool, opl_onechip)
 
-OPLmusicBlock::OPLmusicBlock (FileReader *file, int rate, int maxSamples)
+OPLmusicBlock::OPLmusicBlock (FILE *file, int len, int rate, int maxSamples)
 	: SampleRate (rate), NextTickIn (0), Looping (false)
 {
 	static bool gotInstrs;
@@ -34,9 +34,8 @@ OPLmusicBlock::OPLmusicBlock (FileReader *file, int rate, int maxSamples)
 
 	SampleBuff = new int[maxSamples];
 
-	scoredata = new BYTE[file->GetLength()];
-	file->Read (scoredata, file->GetLength());
-	if (OPLinit (TwoChips + 1, rate))
+	scoredata = new BYTE[len];
+	if (fread (scoredata, 1, len, file) != len || OPLinit (TwoChips + 1, rate))
 	{
 		delete[] scoredata;
 		scoredata = NULL;

@@ -61,22 +61,16 @@ StreamSong::~StreamSong ()
 	{
 		FSOUND_Stream_Close (m_Stream);
 		m_Stream = NULL;
-
-		// If the stream was not created, then I_RegisterSong()
-		// deletes the file object, and we should not do the same.
-		if (m_File != NULL)
-		{
-			delete m_File;
-			m_File = NULL;
-		}
 	}
 }
 
-StreamSong::StreamSong (FileReader *file)
-: m_Channel (-1), m_File (file)
+StreamSong::StreamSong (const char *filename, int offset, int len)
+: m_Channel (-1)
 {
-	m_Stream = FSOUND_Stream_Open ((const char *)file,
-		FSOUND_LOOP_NORMAL|FSOUND_NORMAL|FSOUND_2D, 0, 0);
+	m_Stream = FSOUND_Stream_Open (filename,
+		FSOUND_LOOP_NORMAL|FSOUND_NORMAL|FSOUND_2D, offset, len);
+	int err = FSOUND_GetError ();
+	err = err;
 }
 
 bool StreamSong::IsPlaying ()

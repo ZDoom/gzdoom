@@ -111,11 +111,6 @@ END_DEFAULTS
 void ABossEye::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
-	if (SaveVersion < 212)
-	{
-		AActor *foo;
-		arc << foo;
-	}
 }
 
 IMPLEMENT_STATELESS_ACTOR (ABossTarget, Doom, 87, 0)

@@ -95,6 +95,7 @@ bool			r_NoInterpolate;
 
 angle_t			LocalViewAngle;
 int				LocalViewPitch;
+bool			LocalKeyboardTurner;
 
 fixed_t			GlobVis;
 fixed_t			FocalTangent;
@@ -812,7 +813,8 @@ void R_InterpolateView (player_t *player, fixed_t frac)
 		player->mo->reactiontime == 0 &&
 		!NoInterpolateView &&
 		!paused &&
-		(!netgame || !cl_noprediction))
+		(!netgame || !cl_noprediction) &&
+		!LocalKeyboardTurner)
 	{
 		viewangle = nviewangle + (LocalViewAngle & 0xFFFF0000);
 		viewpitch = clamp<int> (nviewpitch - (LocalViewPitch & 0xFFFF0000), -ANGLE_1*32, +ANGLE_1*56);

@@ -223,22 +223,14 @@ void AActor::Serialize (FArchive &arc)
 		<< threshold
 		<< player;
 
-	if (SaveVersion < 207)
+	arc << TIDtoHate;
+	if (TIDtoHate == 0)
 	{
 		arc << LastLook.PlayerNumber;
-		TIDtoHate = 0;
 	}
 	else
 	{
-		arc << TIDtoHate;
-		if (TIDtoHate == 0)
-		{
-			arc << LastLook.PlayerNumber;
-		}
-		else
-		{
-			arc << LastLook.Actor;
-		}
+		arc << LastLook.Actor;
 	}
 
 	arc << tracer
@@ -251,9 +243,46 @@ void AActor::Serialize (FArchive &arc)
 		<< waterlevel
 		<< xscale
 		<< yscale
-		<< renderflags
-		<< picnum
-		<< RenderStyle
+		<< renderflags;
+	if (SaveVersion < 217)
+	{
+		// Skip picnum in old savegames, because the index will be wrong
+		WORD dummy;
+		arc << dummy;
+		if (dummy == 0xFFFF)
+		{
+			picnum = dummy;
+		}
+	}
+	else if (arc.IsStoring ())
+	{
+		BYTE ff;
+		if (picnum == 0xFFFF)
+		{
+			ff = 0xFF;
+			arc << ff;
+		}
+		else
+		{
+			ff = 0;
+			arc << ff;
+			TexMan.WriteTexture (arc, picnum);
+		}
+	}
+	else
+	{
+		BYTE ff;
+		arc << ff;
+		if (ff == 0xFF)
+		{
+			picnum = 0xFFFF;
+		}
+		else
+		{
+			picnum = TexMan.ReadTexture (arc);
+		}
+	}
+	arc << RenderStyle
 		<< AR_SOUNDW(SeeSound)
 		<< AR_SOUNDW(AttackSound)
 		<< AR_SOUNDW(PainSound)
@@ -281,10 +310,7 @@ void AActor::Serialize (FArchive &arc)
 		<< alphacolor
 		<< Translation;
 
-	if (SaveVersion >= 208)
-	{
-		arc << flags4;
-	}
+	arc << flags4;
 
 	if (flags2 & MF2_FLOATBOB)
 	{
@@ -2108,7 +2134,7 @@ void AActor::Tick ()
 		(z - FloatBobOffsets[(FloatBobPhase + level.time) & 63] != floorz)
 		)))
 	{	// Handle Z momentum and gravity
-		if ((flags2 & MF2_PASSMOBJ) && !(compatflags & COMPATF_NO_PASSMOBJ))
+		if (((flags2 & MF2_PASSMOBJ) || (flags & MF_SPECIAL)) && !(compatflags & COMPATF_NO_PASSMOBJ))
 		{
 			if (!(onmo = P_CheckOnmobj (this)))
 			{
@@ -2127,7 +2153,7 @@ void AActor::Tick ()
 				}
 				if (onmo->z + onmo->height - z <= 24*FRACUNIT)
 				{
-					if (player && player->mo == this)
+					if (player && player->mo == this && player->deltaviewheight == 0)
 					{
 						player->viewheight -= onmo->z + onmo->height - z;
 						player->deltaviewheight =
@@ -2733,7 +2759,7 @@ void P_SpawnPlayer (mapthing2_t *mthing)
 	}
 
 	// [RH] If someone is in the way, kill them
-	P_TeleportMove (mobj, mobj->x, mobj->y, mobj->z, true);
+	P_TeleportMove (mobj, mobj->x, mobj->y, ONFLOORZ, true);
 
 	// [BC] Do script stuff
 	if (level.behavior != NULL)

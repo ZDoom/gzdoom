@@ -599,9 +599,25 @@ static void G_DoParseMapInfo (int lump)
 			{
 				clusterindex = numwadclusterinfos++;
 				wadclusterinfos = (cluster_info_t *)Realloc (wadclusterinfos, sizeof(cluster_info_t)*numwadclusterinfos);
-				memset (wadclusterinfos + clusterindex, 0, sizeof(cluster_info_t));
+				clusterinfo = wadclusterinfos + clusterindex;
 			}
-			clusterinfo = wadclusterinfos + clusterindex;
+			else
+			{
+				clusterinfo = wadclusterinfos + clusterindex;
+				if (clusterinfo->entertext != NULL)
+				{
+					delete[] clusterinfo->entertext;
+				}
+				if (clusterinfo->exittext != NULL)
+				{
+					delete[] clusterinfo->exittext;
+				}
+				if (clusterinfo->messagemusic != NULL)
+				{
+					delete[] clusterinfo->messagemusic;
+				}
+			}
+			memset (clusterinfo, 0, sizeof(cluster_info_t));
 			clusterinfo->cluster = sc_Number;
 			ParseMapInfoLower (ClusterHandlers, MapInfoClusterLevel, NULL, clusterinfo, 0);
 			break;
@@ -1953,10 +1969,7 @@ void G_SerializeLevel (FArchive &arc, bool hubLoad)
 	StatusBar->Serialize (arc);
 	SerializeInterpolations (arc);
 
-	if (SaveVersion >= 210)
-	{
-		arc << level.total_monsters << level.total_items << level.total_secrets;
-	}
+	arc << level.total_monsters << level.total_items << level.total_secrets;
 
 	// Does this level have custom translations?
 	if (arc.IsStoring ())
@@ -2155,19 +2168,7 @@ void G_ReadSnapshots (PNGHandle *png)
 		FPNGChunkArchive arc (png->File->GetFile(), SNAP_ID, chunkLen);
 		DWORD snapver;
 
-		if (SaveVersion < 203)
-		{
-			snapver = SaveVersion;
-		}
-		else
-		{
-			arc << snapver;
-			// Fix version number for snapshots that should have been 205
-			if (snapver == 204 && SaveVersion == 205)
-			{
-				snapver = 205;
-			}
-		}
+		arc << snapver;
 		arc << namelen;
 		arc.Read (mapname, namelen);
 		mapname[namelen] = 0;

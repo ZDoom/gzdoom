@@ -57,9 +57,9 @@ MODSong::~MODSong ()
 	}
 }
 
-MODSong::MODSong (FileReader *file)
+MODSong::MODSong (const char *file, int offset, int length)
 {
-	m_Module = FMUSIC_LoadSongEx ((const char *)file, 0, 0, FSOUND_LOOP_NORMAL, NULL, 0);
+	m_Module = FMUSIC_LoadSongEx (file, offset, length, FSOUND_LOOP_NORMAL, NULL, 0);
 }
 
 bool MODSong::IsPlaying ()

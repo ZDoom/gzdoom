@@ -245,6 +245,7 @@ enum
 	MF4_RANDOMIZE		= 0x00000010,	// Missile has random initial tic count
 	MF4_NOSKIN			= 0x00000020,	// Player cannot use skins
 	MF4_FIXMAPTHINGPOS	= 0x00000040,	// Fix this actor's position when spawned as a map thing
+	MF4_ACTLIKEBRIDGE	= 0x00000080,	// Pickups can "stand" on this actor
 
 // --- mobj.renderflags ---
 

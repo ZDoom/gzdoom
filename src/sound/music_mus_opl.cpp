@@ -21,12 +21,12 @@ CUSTOM_CVAR (Bool, opl_onechip, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 }
 
 
-OPLMUSSong::OPLMUSSong (FileReader *file)
+OPLMUSSong::OPLMUSSong (FILE *file, int len)
 {
 	int rate = *opl_frequency;
 	int samples = rate/14;
 
-	Music = new OPLmusicBlock (file, rate, samples);
+	Music = new OPLmusicBlock (file, len, rate, samples);
 
 	m_Stream = FSOUND_Stream_Create (FillStream, samples*2,
 		FSOUND_SIGNED | FSOUND_2D | FSOUND_MONO | FSOUND_16BITS,

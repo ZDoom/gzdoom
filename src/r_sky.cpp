@@ -98,7 +98,7 @@ void R_InitSkyMap ()
 	}
 	else
 	{
-		skytexturemid = MulScale3 (199<<FRACBITS, skytex1->ScaleY);
+		skytexturemid = MulScale3 (199<<FRACBITS, skytex1->ScaleY ? skytex1->ScaleY : 8);
 		skystretch = 0;
 	}
 	skyheight = fskyheight << skystretch;

@@ -12,7 +12,6 @@
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
 #include "mus2midi.h"
-#include "files.h"
 
 void I_InitMusicWin32 ();
 void I_ShutdownMusicWin32 ();
@@ -48,7 +47,7 @@ public:
 class MUSSong2 : public MusInfo
 {
 public:
-	MUSSong2 (FileReader *file);
+	MUSSong2 (FILE *file, int length);
 	~MUSSong2 ();
 
 	void SetVolume (float volume);
@@ -91,7 +90,7 @@ protected:
 class MIDISong2 : public MusInfo
 {
 public:
-	MIDISong2 (FileReader *file);
+	MIDISong2 (FILE *file, int length);
 	~MIDISong2 ();
 
 	void SetVolume (float volume);
@@ -137,7 +136,7 @@ protected:
 class MODSong : public MusInfo
 {
 public:
-	MODSong (FileReader *file);
+	MODSong (const char *file, int offset, int length);
 	~MODSong ();
 	void SetVolume (float volume);
 	void Play (bool looping);
@@ -160,7 +159,7 @@ protected:
 class StreamSong : public MusInfo
 {
 public:
-	StreamSong (FileReader *file);
+	StreamSong (const char *file, int offset, int length);
 	~StreamSong ();
 	void SetVolume (float volume);
 	void Play (bool looping);
@@ -172,13 +171,11 @@ public:
 	bool IsValid () const { return m_Stream != NULL; }
 
 protected:
-	StreamSong () : m_Stream(NULL), m_Channel(-1), m_File(NULL) {}
+	StreamSong () : m_Stream(NULL), m_Channel(-1) {}
 
 	FSOUND_STREAM *m_Stream;
 	int m_Channel;
 	int m_LastPos;
-
-	FileReader *m_File;
 };
 
 // SPC file, rendered with SNESAPU.DLL and streamed through FMOD ------------
@@ -194,7 +191,7 @@ typedef void *(__stdcall *EmuAPU_TYPE) (void *, DWORD, BYTE);
 class SPCSong : public StreamSong
 {
 public:
-	SPCSong (FileReader *file);
+	SPCSong (FILE *file, int length);
 	~SPCSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -223,7 +220,7 @@ protected:
 class TimiditySong : public StreamSong
 {
 public:
-	TimiditySong (FileReader *file);
+	TimiditySong (FILE *file, int length);
 	~TimiditySong ();
 	void Play (bool looping);
 	void Stop ();
@@ -260,7 +257,7 @@ protected:
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (FileReader *file);
+	OPLMUSSong (FILE *file, int length);
 	~OPLMUSSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -278,7 +275,7 @@ protected:
 class FLACSong : public StreamSong
 {
 public:
-	FLACSong (FileReader *file);
+	FLACSong (FILE *file, int length);
 	~FLACSong ();
 	void Play (bool looping);
 	bool IsPlaying ();
@@ -320,7 +317,7 @@ protected:
 class CDDAFile : public CDSong
 {
 public:
-	CDDAFile (FileReader *file);
+	CDDAFile (FILE *file, int length);
 };
 
 // --------------------------------------------------------------------------

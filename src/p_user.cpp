@@ -1326,15 +1326,8 @@ void player_s::Serialize (FArchive &arc)
 		<< armortype
 		<< readyArtifact
 		<< artifactCount
-		<< inventorytics;
-
-	if (SaveVersion < 206)
-	{ // Skip inventorySlotNum field
-		int foo;
-		arc << foo;
-	}
-
-	arc << pieces
+		<< inventorytics
+		<< pieces
 		<< backpack
 		<< fragcount
 		<< spreecount
@@ -1372,95 +1365,42 @@ void player_s::Serialize (FArchive &arc)
 		<< BlendB
 		<< BlendA;
 	for (i = 0; i < NUMARMOR; i++)
+	{
 		arc << armorpoints[i];
-	if (SaveVersion < 206)
-	{ // versions before 205 do not have arti_pork
-		static const BYTE compatArtiNums[] =
+	}
+	// Post-205 stores inventory names with their counts,
+	// so new artifacts can be added freely without breaking
+	// savegames.
+	if (arc.IsStoring())
+	{
+		for (i = 0; i < NUMINVENTORYSLOTS; ++i)
 		{
-			arti_none,
-			arti_invulnerability,
-			arti_invisibility,
-			arti_health,
-			arti_superhealth,
-			arti_tomeofpower,
-			arti_healingradius,
-			arti_summon,
-			arti_torch,
-			arti_firebomb,
-			arti_egg,
-			arti_pork,
-			arti_fly,
-			arti_blastradius,
-			arti_poisonbag1,
-			arti_poisonbag2,
-			arti_poisonbag3,
-			arti_teleportother,
-			arti_speed,
-			arti_boostmana,
-			arti_boostarmor,
-			arti_teleport,
-			arti_firstpuzzitem,
-			arti_puzzskull,
-			arti_puzzgembig,
-			arti_puzzgemred,
-			arti_puzzgemgreen1,
-			arti_puzzgemgreen2,
-			arti_puzzgemblue1,
-			arti_puzzgemblue2,
-			arti_puzzbook1,
-			arti_puzzbook2,
-			arti_puzzskull2,
-			arti_puzzfweapon,
-			arti_puzzcweapon,
-			arti_puzzmweapon,
-			arti_puzzgear1,
-			arti_puzzgear2,
-			arti_puzzgear3,
-			arti_puzzgear4
-		};
-
-		for (i = 0; i < 11; ++i)
-			arc << inventory[compatArtiNums[i]];
-		if (SaveVersion == 205)
-			arc << inventory[compatArtiNums[12]];
-		for (i = 13; (size_t)i < sizeof(compatArtiNums); ++i)
-			arc << inventory[compatArtiNums[i]];
+			if (inventory[i] != 0)
+			{
+				arc.WriteString (ArtifactNames[i]);
+				arc.WriteCount (inventory[i]);
+			}
+		}
+		arc.WriteString (NULL);
 	}
 	else
-	{ // Post-205 stores inventory names with their counts,
-	  // so new artifacts can be added freely without breaking
-	  // savegames.
-		if (arc.IsStoring())
-		{
-			for (i = 0; i < NUMINVENTORYSLOTS; ++i)
-			{
-				if (inventory[i] != 0)
-				{
-					arc.WriteString (ArtifactNames[i]);
-					arc.WriteCount (inventory[i]);
-				}
-			}
-			arc.WriteString (NULL);
-		}
-		else
-		{
-			char *str = NULL;
+	{
+		char *str = NULL;
 
-			memset (inventory, 0, sizeof(inventory));
+		memset (inventory, 0, sizeof(inventory));
+		arc << str;
+		while (str != NULL)
+		{
+			artitype_t arti;
+			DWORD count;
+
+			arti = P_FindNamedInventory (str);
+			count = arc.ReadCount ();
+			if (arti != arti_none)
+			{
+				inventory[arti] = (WORD)count;
+			}
 			arc << str;
-			while (str != NULL)
-			{
-				artitype_t arti;
-				DWORD count;
-
-				arti = P_FindNamedInventory (str);
-				count = arc.ReadCount ();
-				if (arti != arti_none)
-				{
-					inventory[arti] = (WORD)count;
-				}
-				arc << str;
-			}
 		}
 	}
 	for (i = 0; i < NUMPOWERS; i++)
@@ -1476,25 +1416,7 @@ void player_s::Serialize (FArchive &arc)
 	for (i = 0; i < NUMPSPRITES; i++)
 		arc << psprites[i];
 
-	if (SaveVersion < 204)
-	{ // I'm the only one who would have been playing with some class
-	  // other than the Fighter with an earlier version savegame, so
-	  // setting this to zero is okay.
-		CurrentPlayerClass = 0;
-	}
-	else
-	{
-		arc << CurrentPlayerClass;
-	}
-
-	if (SaveVersion < 202)
-	{
-		mstaffcount = cholycount = 0;
-	}
-	else
-	{
-		arc << mstaffcount << cholycount;
-	}
+	arc << CurrentPlayerClass << mstaffcount << cholycount;
 
 	if (isbot)
 	{

@@ -104,11 +104,11 @@ extern BOOL AppActive;
 extern int SessionState;
 extern bool FullscreenReset;
 extern bool VidResizing;
-extern HMODULE hd3d8;	// handle to d3d8.dll
+
+EXTERN_CVAR (Bool, fullscreen)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-//static IDirect3D8 *D3D;
 static IDirectDraw2 *DDraw;
 static cycle_t BlitCycles;
 static DWORD FlipFlags;
@@ -136,86 +136,46 @@ Win32Video::Win32Video (int parm)
 
 	HRESULT dderr;
 
-#if 0
-	if (hd3d8 != 0)
+	dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_INPROC_SERVER, IID_IDirectDraw2, (void **)&DDraw);
+
+	if (FAILED(dderr))
+		I_FatalError ("Could not create DirectDraw object: %08lx", dderr);
+
+	dderr = DDraw->Initialize (0);
+	if (FAILED(dderr))
 	{
-		FARPROC d3dcreate = GetProcAddress (hd3d8, "Direct3DCreate8");
-		if (d3dcreate != 0)
-		{
-			LOG ("Trying to create IDirect3D8 interface\n");
-			D3D = ((IDirect3D8*(WINAPI *)(UINT))d3dcreate) (D3D_SDK_VERSION);
-		}
+		DDraw->Release ();
+		DDraw = NULL;
+		I_FatalError ("Could not initialize IDirectDraw2 interface: %08lx", dderr);
 	}
-	if (D3D == 0)
-#endif
+
+	DDraw->SetCooperativeLevel (Window, DDSCL_NORMAL);
+	FreeModes ();
+	dderr = DDraw->EnumDisplayModes (0, NULL, this, EnumDDModesCB);
+	if (FAILED(dderr))
 	{
-		// Use the DirectX 3 path
-		//LOG ("IDirect3D8 interface is unavailable, trying IDirectDraw2\n");
-		dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_INPROC_SERVER, IID_IDirectDraw2, (void **)&DDraw);
-
-		if (FAILED(dderr))
-			I_FatalError ("Could not create DirectDraw object: %08lx", dderr);
-
-		dderr = DDraw->Initialize (0);
-		if (FAILED(dderr))
-		{
-			DDraw->Release ();
-			DDraw = NULL;
-			I_FatalError ("Could not initialize IDirectDraw2 interface: %08lx", dderr);
-		}
-
-		DDraw->SetCooperativeLevel (Window, DDSCL_NORMAL);
-		FreeModes ();
-		dderr = DDraw->EnumDisplayModes (0, NULL, this, EnumDDModesCB);
-		if (FAILED(dderr))
-		{
-			DDraw->Release ();
-			DDraw = NULL;
-			I_FatalError ("Could not enumerate display modes: %08lx", dderr);
-		}
-		if (m_Modes == NULL)
-		{
-			DDraw->Release ();
-			DDraw = NULL;
-			I_FatalError ("DirectDraw returned no display modes.\n\n"
-						"If you started ZDoom from a fullscreen DOS box, run it from "
-						"a DOS window instead. If that does not work, you may need to reboot.");
-		}
-		if (OSPlatform == os_Win95)
-		{
-			// Windows 95 will let us use Mode X. If we didn't find any linear
-			// modes in the loop above, add the Mode X modes here.
-
-			if (!m_Have320x200x8)
-				AddMode (320, 200, 8);
-			if (!m_Have320x240x8)
-				AddMode (320, 240, 8);
-		}
+		DDraw->Release ();
+		DDraw = NULL;
+		I_FatalError ("Could not enumerate display modes: %08lx", dderr);
 	}
-#if 0
-	else
+	if (m_Modes == NULL)
 	{
-		// Use the DirectX 8 path
-		UINT totalModes = D3D->GetAdapterModeCount (D3DADAPTER_DEFAULT);
-
-		FreeModes ();
-		for (UINT i = 0; i < totalModes; ++i)
-		{
-			D3DDISPLAYMODE mode;
-			if (D3D_OK == D3D->EnumAdapterModes (D3DADAPTER_DEFAULT, i, &mode))
-			{
-				if (mode.Format == D3DFMT_P8 &&
-					(mode.Width & 7) == 0 &&
-					mode.Width <= MAXWIDTH &&
-					mode.Height <= MAXHEIGHT)
-				{
-					AddMode (mode.Width, mode.Height, 8);
-				}
-			}
-		}
-		exit (0);
+		DDraw->Release ();
+		DDraw = NULL;
+		I_FatalError ("DirectDraw returned no display modes.\n\n"
+					"If you started ZDoom from a fullscreen DOS box, run it from "
+					"a DOS window instead. If that does not work, you may need to reboot.");
 	}
-#endif
+	if (OSPlatform == os_Win95)
+	{
+		// Windows 95 will let us use Mode X. If we didn't find any linear
+		// modes in the loop above, add the Mode X modes here.
+
+		if (!m_Have320x200x8)
+			AddMode (320, 200, 8);
+		if (!m_Have320x240x8)
+			AddMode (320, 240, 8);
+	}
 }
 
 Win32Video::~Win32Video ()
@@ -394,14 +354,14 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-/*		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
+		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
 		if (fb->Width == width &&
 			fb->Height == height &&
 			fb->Windowed == !fullscreen)
 		{
 			return old;
 		}
-*/		old->GetFlash (flashColor, flashAmount);
+		old->GetFlash (flashColor, flashAmount);
 		delete old;
 	}
 	else
@@ -440,6 +400,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		{
 			LOG ("Could not create fb at all\n");
 		}
+		screen = NULL;
 
 		LOG1 ("Retry number %d\n", retry);
 
@@ -503,7 +464,6 @@ DDrawFB::DDrawFB (int width, int height, bool fullscreen)
 	BackSurf2 = NULL;
 	BlitSurf = NULL;
 	Clipper = NULL;
-	//GammaControl = NULL;
 	GDIPalette = NULL;
 	ClipRegion = NULL;
 	ClipSize = 0;
@@ -628,23 +588,6 @@ bool DDrawFB::CreateResources ()
 		{
 			UseBlitter = CreateBlitterSource ();
 		}
-
-/* I have a video card that supports gamma control now, but is it worth it?
-		DDCAPS caps;
-
-		memset (&caps, 0, sizeof(caps));
-		caps.dwSize = sizeof(caps);
-
-		hr = DDraw->GetCaps (&caps, NULL);
-		if (SUCCEEDED(hr) && (caps.dwCaps2 & DDCAPS2_PRIMARYGAMMA))
-		{
-			hr = PrimarySurf->QueryInterface (IID_IDirectDrawGammaControl, (LPVOID *)&GammaControl);
-			if (SUCCEEDED(hr))
-			{
-				LOG ("got gamma control\n");
-			}
-		}
-*/
 	}
 	else
 	{
@@ -837,10 +780,24 @@ bool DDrawFB::CreateSurfacesComplex ()
 		| DDSCAPS_FLIP | DDSCAPS_COMPLEX;
 	do
 	{
+		LOG1 ("Try #%d\n", tries);
 		ddsd.dwBackBufferCount = UseBlitter ? 1 : 2;
 		hr = DDraw->CreateSurface (&ddsd, &PrimarySurf, NULL);
 		if (FAILED(hr))
 		{
+			if (hr == DDERR_NOEXCLUSIVEMODE)
+			{
+				LOG ("Exclusive mode was lost, so restoring it now.\n");
+				hr = DDraw->SetCooperativeLevel (Window, DDSCL_ALLOWMODEX | DDSCL_ALLOWREBOOT | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+				LOG1 ("SetCooperativeLevel result: %08lx\n", hr);
+				hr = DDraw->SetDisplayMode (Width, Height, 8, 0, 0);
+				//hr = DDraw->RestoreDisplayMode ();
+				LOG1 ("SetDisplayMode result: %08lx\n", hr);
+				++tries;
+				hr = E_FAIL;
+				continue;
+			}
+
 			LOG1 ("Could not create with 2 backbuffers: %lx\n", hr);
 			ddsd.dwBackBufferCount = 1;
 			hr = DDraw->CreateSurface (&ddsd, &PrimarySurf, NULL);
@@ -871,6 +828,12 @@ bool DDrawFB::CreateSurfacesComplex ()
 	}
 
 	LOG1 ("Complex surface chain @ %p\n", PrimarySurf);
+	if (PrimarySurf == NULL)
+	{
+		LOG ("It's NULL but it didn't fail?!?\n");
+		LastHR = E_FAIL;
+		return false;
+	}
 
 	if (ddsd.dwBackBufferCount == 0)
 	{
@@ -1056,11 +1019,6 @@ void DDrawFB::ReleaseResources ()
 		Palette->Release ();
 		Palette = NULL;
 	}
-	//if (GammaControl != NULL)
-	//{
-	//	GammaControl->Release ();
-	//	GammaControl = NULL;
-	//}
 	if (GDIPalette != NULL)
 	{
 		HDC dc = GetDC (Window);
@@ -1079,7 +1037,7 @@ int DDrawFB::GetPageCount ()
 int DDrawFB::QueryNewPalette ()
 {
 	LOG ("QueryNewPalette\n");
-	if (GDIPalette == NULL)
+	if (GDIPalette == NULL && Windowed)
 	{
 		if (Write8bit)
 		{
@@ -1364,15 +1322,8 @@ void DDrawFB::Update ()
 	if (NeedGammaUpdate)
 	{
 		NeedGammaUpdate = false;
-		//if (GammaControl == NULL)
-		{
-			CalcGamma (Gamma, GammaTable);
-			NeedPalUpdate = true;
-		}
-		//else
-		{
-			// FIXME
-		}
+		CalcGamma (Gamma, GammaTable);
+		NeedPalUpdate = true;
 	}
 	
 	if (NeedPalUpdate || vid_palettehack)
@@ -1386,7 +1337,7 @@ void DDrawFB::Update ()
 				PalEntries[i].peGreen = GammaTable[SourcePalette[i].g];
 				PalEntries[i].peBlue = GammaTable[SourcePalette[i].b];
 			}
-			if (FlashAmount /*&& GammaControl == NULL*/)
+			if (FlashAmount)
 			{
 				DoBlending ((PalEntry *)PalEntries, (PalEntry *)PalEntries,
 					256, GammaTable[Flash.b], GammaTable[Flash.g], GammaTable[Flash.r],
@@ -1416,7 +1367,7 @@ void DDrawFB::Update ()
 				((PalEntry *)PalEntries)[i].g = GammaTable[SourcePalette[i].g];
 				((PalEntry *)PalEntries)[i].b = GammaTable[SourcePalette[i].b];
 			}
-			if (FlashAmount /*&& GammaControl == NULL*/)
+			if (FlashAmount)
 			{
 				DoBlending ((PalEntry *)PalEntries, (PalEntry *)PalEntries,
 					256, GammaTable[Flash.r], GammaTable[Flash.g], GammaTable[Flash.b],
@@ -1554,14 +1505,7 @@ bool DDrawFB::SetFlash (PalEntry rgb, int amount)
 {
 	Flash = rgb;
 	FlashAmount = amount;
-	//if (GammaControl != NULL)
-	//{
-	//	// FIXME
-	//}
-	//else
-	{
-		NeedPalUpdate = true;
-	}
+	NeedPalUpdate = true;
 	return true;
 }
 
@@ -1576,7 +1520,7 @@ void DDrawFB::GetFlash (PalEntry &rgb, int &amount)
 void DDrawFB::GetFlashedPalette (PalEntry pal[256])
 {
 	memcpy (pal, SourcePalette, 256*sizeof(PalEntry));
-	if (FlashAmount /*&& GammaControl == NULL*/)
+	if (FlashAmount)
 	{
 		DoBlending (pal, pal, 256, Flash.r, Flash.g, Flash.b, FlashAmount);
 	}

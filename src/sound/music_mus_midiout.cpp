@@ -25,13 +25,14 @@ static const BYTE CtrlTranslate[15] =
 	121, // reset all controllers
 };
 
-MUSSong2::MUSSong2 (FileReader *file)
+MUSSong2::MUSSong2 (FILE *file, int len)
 : MidiOut (0), PlayerThread (0),
   PauseEvent (0), ExitEvent (0), VolumeChangeEvent (0),
   MusBuffer (0), MusHeader (0)
 {
-	MusHeader = (MUSHeader *)new BYTE[file->GetLength()];
-	file->Read (MusHeader, file->GetLength());
+	MusHeader = (MUSHeader *)new BYTE[len];
+	if (fread (MusHeader, 1, len, file) != len)
+		return;
 
 	// Do some validation of the MUS file
 	if (MusHeader->Magic != MAKE_ID('M','U','S','\x1a'))
@@ -59,7 +60,7 @@ MUSSong2::MUSSong2 (FileReader *file)
 	}
 
 	MusBuffer = (BYTE *)MusHeader + SHORT(MusHeader->SongStart);
-	MaxMusP = MIN<int> (SHORT(MusHeader->SongLen), file->GetLength() - SHORT(MusHeader->SongStart));
+	MaxMusP = MIN<int> (SHORT(MusHeader->SongLen), len - SHORT(MusHeader->SongStart));
 	MusP = 0;
 }
 

@@ -721,6 +721,9 @@ public:
 	int CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
 	int GetTexture (const char *name, int usetype, BITFIELD flags=0);
 
+	void WriteTexture (FArchive &arc, int picnum);
+	int ReadTexture (FArchive &arc);
+
 	void AddTexturesLump (int lumpnum, int patcheslump, bool texture1);
 	void AddFlats ();
 	void AddSprites ();

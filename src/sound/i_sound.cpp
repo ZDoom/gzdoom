@@ -174,30 +174,6 @@ static const char *FmodErrors[] =
 };
 #endif
 
-static unsigned int F_CALLBACKAPI OpenCallback (const char *notreallyname)
-{
-	return (unsigned int)notreallyname;
-}
-
-static void F_CALLBACKAPI CloseCallback (unsigned int handle)
-{
-}
-
-static int F_CALLBACKAPI ReadCallback (void *buffer, int size, unsigned int handle)
-{
-	return ((FileReader *)handle)->Read (buffer, size);
-}
-
-static int F_CALLBACKAPI SeekCallback (unsigned int handle, int pos, signed char mode)
-{
-	return ((FileReader *)handle)->Seek (pos, mode);
-}
-
-static int F_CALLBACKAPI TellCallback (unsigned int handle)
-{
-	return ((FileReader *)handle)->Tell ();
-}
-
 // FSOUND_Sample_Upload seems to mess up the signedness of sound data when
 // uploading to hardware buffers. The pattern is not particularly predictable,
 // so this is a replacement for it that loads the data manually. Source data
@@ -1162,7 +1138,6 @@ void I_InitSound ()
 		SoundDown = false;
 	}
 
-	FSOUND_File_SetCallbacks (OpenCallback, CloseCallback, ReadCallback, SeekCallback, TellCallback);
 	I_InitMusic ();
 
 	snd_sfxvolume.Callback ();

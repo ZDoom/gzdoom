@@ -408,9 +408,15 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 			tspeed *= 2;		// slow turn
 		
 		if (Button_Right.bDown)
+		{
 			G_AddViewAngle (angleturn[tspeed]);
+			LocalKeyboardTurner = true;
+		}
 		if (Button_Left.bDown)
+		{
 			G_AddViewAngle (-angleturn[tspeed]);
+			LocalKeyboardTurner = true;
+		}
 	}
 
 	if (Button_LookUp.bDown)
@@ -566,11 +572,19 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 void G_AddViewPitch (int look)
 {
 	LocalViewPitch += look << 16;
+	if (look != 0)
+	{
+		LocalKeyboardTurner = false;
+	}
 }
 
 void G_AddViewAngle (int yaw)
 {
 	LocalViewAngle -= yaw << 16;
+	if (yaw != 0)
+	{
+		LocalKeyboardTurner = false;
+	}
 }
 
 // [RH] Spy mode has been separated into two console commands.
@@ -1477,34 +1491,12 @@ void G_DoLoadGame ()
 
 	if (!M_GetPNGText (png, "ZDoom Save Version", sigcheck, 16) ||
 		0 != strncmp (sigcheck, SAVESIG, 9) ||		// ZDOOMSAVE is the first 9 chars
-		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)	// 200 is the minimum supported savever
+		(SaveVersion = atoi (sigcheck+9)) < MINSAVEVER)
 	{
 		Printf ("Savegame is from an incompatible version\n");
 		delete png;
 		fclose (stdfile);
 		return;
-	}
-
-	// Version 205 saves are created by version 2.0.33-2.0.36 but are marked as version
-	// 204 because I did not realize I needed to change the save version when adding
-	// inventory items. Later versions start with 206 because I redesigned the way
-	// inventory items are saved to avoid this problem in the future. So there will
-	// never be any savegames that are actually marked as being version 205.
-	if (SaveVersion == 204)
-	{
-		text = M_GetPNGText (png, "Software");
-		if (text != NULL)
-		{
-			if (strncmp (text, "ZDoom 2.0.", 10) == 0)
-			{
-				int revision = atoi (text+10);
-				if (revision >= 33 && revision <= 36)
-				{
-					SaveVersion = 205;
-				}
-			}
-			delete[] text;
-		}
 	}
 
 	if (!G_CheckSaveGameWads (png))

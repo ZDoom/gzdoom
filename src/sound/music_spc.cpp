@@ -46,8 +46,10 @@ CUSTOM_CVAR (Int, spc_frequency, 32000, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-SPCSong::SPCSong (FileReader *file)
+SPCSong::SPCSong (FILE *iofile, int len)
 {
+	FileReader file (iofile, len);
+
 	if (!LoadEmu ())
 	{
 		return;
@@ -73,10 +75,8 @@ SPCSong::SPCSong (FileReader *file)
 		(spc_lowpass ? 1 : 0) | (spc_oldsamples ? 2 : 0) | (spc_surround ? 4 : 0) | (spc_noecho ? 16 : 0));
 
 	BYTE spcfile[66048];
-	int len;
 
-	len = file->GetLength();
-	file->Read (spcfile, 66048);
+	file.Read (spcfile, 66048);
 
 	void *apuram;
 	BYTE *extraram;
@@ -95,19 +95,19 @@ SPCSong::SPCSong (FileReader *file)
 	{
 		DWORD id;
 
-		file->Read (&id, 4);
+		file.Read (&id, 4);
 		if (id == MAKE_ID('x','i','d','6'))
 		{
 			DWORD size;
 
-			*file >> size;
+			file >> size;
 			DWORD pos = 66056;
 
 			while (pos < size)
 			{
 				XID6Tag tag;
 				
-				file->Read (&tag, 4);
+				file.Read (&tag, 4);
 				if (tag.Type == 0)
 				{
 					// Don't care about these
@@ -119,7 +119,7 @@ SPCSong::SPCSong (FileReader *file)
 						if (tag.Type == 4 && tag.ID == 0x36)
 						{
 							DWORD amp;
-							*file >> amp;
+							file >> amp;
 							if (APUVersion < 98)
 							{
 								amp >>= 12;
@@ -128,7 +128,7 @@ SPCSong::SPCSong (FileReader *file)
 							break;
 						}
 					}
-					file->Seek (SHORT(tag.Value), SEEK_CUR);
+					file.Seek (SHORT(tag.Value), SEEK_CUR);
 				}
 			}
 		}

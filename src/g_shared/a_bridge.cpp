@@ -171,6 +171,7 @@ IMPLEMENT_ACTOR (AInvisibleBridge, Any, 9990, 0)
 	PROP_SpawnState (0)
 	PROP_RadiusFixed (32)
 	PROP_HeightFixed (4)
+	PROP_Flags4 (MF4_ACTLIKEBRIDGE)
 END_DEFAULTS
 
 void AInvisibleBridge::BeginPlay ()

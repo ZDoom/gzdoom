@@ -30,18 +30,17 @@ extern UINT mididevice;
 static BYTE EventLengths[7] = { 2, 2, 2, 2, 1, 1, 2 };
 static BYTE CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 
-MIDISong2::MIDISong2 (FileReader *file)
+MIDISong2::MIDISong2 (FILE *file, int len)
 : MidiOut (0), PlayerThread (0),
   PauseEvent (0), ExitEvent (0), VolumeChangeEvent (0),
   MusHeader (0)
 {
-	int len;
 	int p;
 	int i;
 
-	len = file->GetLength();
 	MusHeader = new BYTE[len];
-	file->Read (MusHeader, len);
+	if (fread (MusHeader, 1, len, file) != len)
+		return;
 
 	// Do some validation of the MIDI file
 	if (MusHeader[4] != 0 || MusHeader[5] != 0 || MusHeader[6] != 0 || MusHeader[7] != 6)

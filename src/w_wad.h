@@ -157,6 +157,7 @@ public:
 	static DWORD LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
 
 	int LumpLength (int lump) const;
+	int GetLumpOffset (int lump) const;				// [RH] Returns offset of lump in the wadfile
 	void GetLumpName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
 	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to

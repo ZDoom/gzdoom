@@ -78,31 +78,31 @@ bool CDSong::IsPlaying ()
 	return m_Status != STATE_Stopped;
 }
 
-CDDAFile::CDDAFile (FileReader *file)
+CDDAFile::CDDAFile (FILE *file, int length)
 	: CDSong ()
 {
 	DWORD chunk;
 	WORD track;
 	DWORD discid;
-	long endpos = file->Tell() + file->GetLength() - 8;
+	long endpos = ftell (file) + length - 8;
 
 	// I_RegisterSong already identified this as a CDDA file, so we
 	// just need to check the contents we're interested in.
-	file->Seek (12, SEEK_CUR);
+	fseek (file, 12, SEEK_CUR);
 
-	while (file->Tell() < endpos)
+	while (ftell (file) < endpos)
 	{
-		*file >> chunk;
+		fread (&chunk, 4, 1, file);
 		if (chunk != (('f')|(('m')<<8)|(('t')<<16)|((' ')<<24)))
 		{
-			*file >> chunk;
-			file->Seek (chunk, SEEK_CUR);
+			fread (&chunk, 4, 1, file);
+			fseek (file, chunk, SEEK_CUR);
 		}
 		else
 		{
-			file->Seek (6, SEEK_CUR);
-			*file >> track;
-			*file >> discid;
+			fseek (file, 6, SEEK_CUR);
+			fread (&track, 2, 1, file);
+			fread (&discid, 4, 1, file);
 
 			if (CD_InitID (discid) && CD_CheckTrack (track))
 			{

@@ -346,7 +346,7 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 			picnum = TexMan.CheckForTexture (sc_String, FTexture::TEX_Wall);
 			if (picnum < 0 && !ignoreBad)
 			{
-				Printf ("Unknown switch texture %s\n", sc_String);
+				//Printf ("Unknown switch texture %s\n", sc_String);
 				bad = true;
 			}
 			pics[numframes] = picnum;

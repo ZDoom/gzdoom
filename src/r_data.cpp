@@ -164,7 +164,16 @@ int FTextureManager::CheckForTexture (const char *name, int usetype, BITFIELD fl
 
 int FTextureManager::GetTexture (const char *name, int usetype, BITFIELD flags)
 {
-	int i = CheckForTexture (name, usetype, flags | TEXMAN_TryAny);
+	int i;
+
+	if (name == NULL || name[0] == 0)
+	{
+		i = 0;
+	}
+	else
+	{
+		i = CheckForTexture (name, usetype, flags | TEXMAN_TryAny);
+	}
 
 	if (i == -1)
 	{
@@ -173,6 +182,34 @@ int FTextureManager::GetTexture (const char *name, int usetype, BITFIELD flags)
 		i = DefaultTexture;
 	}
 	return i;
+}
+
+void FTextureManager::WriteTexture (FArchive &arc, int picnum)
+{
+	FTexture *pic;
+
+	if ((size_t)picnum >= Textures.Size())
+	{
+		pic = Textures[0].Texture;
+	}
+	else
+	{
+		pic = Textures[picnum].Texture;
+	}
+
+	arc.WriteCount (pic->UseType);
+	arc.WriteName (pic->Name);
+}
+
+int FTextureManager::ReadTexture (FArchive &arc)
+{
+	int usetype;
+	const char *name;
+
+	usetype = arc.ReadCount ();
+	name = arc.ReadName ();
+
+	return GetTexture (name, usetype);
 }
 
 void FTextureManager::UnloadAll ()
@@ -517,15 +554,18 @@ void FTextureManager::AddExtraTextures ()
 
 	name[8] = 0;
 
-	// Go from last to first so that later ones override earlier ones,
-	// as is the custom for individual wad lumps.
-	for (lasttx -= 1; lasttx > firsttx; --lasttx)
-	{
-		Wads.GetLumpName (name, lasttx);
+	// Go from first to last so that ANIMDEFS work as expected. However,
+	// to avoid duplicates (and to keep earlier entries from overriding
+	// later ones), the texture is only inserted if it is the one returned
+	// by doing a check by name in the list of wads.
 
-		if (CheckForTexture (name, FTexture::TEX_Override, false) == -1)
+	for (firsttx += 1; firsttx < lasttx; ++firsttx)
+	{
+		Wads.GetLumpName (name, firsttx);
+
+		if (Wads.CheckNumForName (name, ns_newtextures) == firsttx)
 		{
-			CreateTexture (lasttx, FTexture::TEX_Override);
+			CreateTexture (firsttx, FTexture::TEX_Override);
 		}
 	}
 	DefaultTexture = CheckForTexture ("-NOFLAT-", FTexture::TEX_Override, 0);
@@ -631,16 +671,16 @@ void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool textur
 
 	// Textures defined earlier in the lump take precedence over those defined later,
 	// but later TEXTUREx lumps take precedence over earlier ones.
-	for (i = 0, directory = maptex; i <= numtextures; ++i)
+	for (i = 1, directory = maptex; i <= numtextures; ++i)
 	{
-		if (i == 0 && texture1)
+		if (i == 1 && texture1)
 		{
-			// The very first texture is just a dummy. Copy its dimensions to texture 0,
-			// but do nothing else with it.
+			// The very first texture is just a dummy. Copy its dimensions to texture 0.
+			// It still needs to be created in case someone uses it by name.
+			offset = LONG(directory[0]);
 			const maptexture_t *tex = (const maptexture_t *)((const BYTE *)maptex + offset);
 			FDummyTexture *tex0 = static_cast<FDummyTexture *>(Textures[0].Texture);
 			tex0->SetSize (SAFESHORT(tex->width), SAFESHORT(tex->height));
-			continue;
 		}
 
 		offset = LONG(directory[i]);
@@ -659,7 +699,12 @@ void FTextureManager::AddTexturesLump (int lumpnum, int patcheslump, bool textur
 		}
 		if (j == 0)
 		{
-			AddTexture (new FMultiPatchTexture ((const BYTE *)maptex + offset, patchlookup, numpatches, isStrife));
+			FTexture *tex = new FMultiPatchTexture ((const BYTE *)maptex + offset, patchlookup, numpatches, isStrife);
+			if (i == 1 && texture1)
+			{
+				tex->UseType = FTexture::TEX_Null;
+			}
+			AddTexture (tex);
 		}
 	}
 }
@@ -2451,6 +2496,7 @@ void R_SetDefaultColormap (const char *name)
 		int lump, i, j;
 		BYTE map[256];
 		BYTE unremap[256];
+		BYTE remap[256];
 
 		// [RH] If using BUILD's palette.dat, generate the colormap
 		if (Args.CheckValue ("-bpal") != NULL)
@@ -2471,9 +2517,11 @@ void R_SetDefaultColormap (const char *name)
 
 			// [RH] The colormap may not have been designed for the specific
 			// palette we are using, so remap it to match the current palette.
+			memcpy (remap, GPalette.Remap, 256);
+			remap[0] = 0;	// Mapping to color 0 is okay.
 			for (i = 0; i < 256; ++i)
 			{
-				unremap[GPalette.Remap[i]] = i;
+				unremap[remap[i]] = i;
 			}
 			for (i = 0; i < NUMCOLORMAPS; ++i)
 			{
@@ -2482,7 +2530,7 @@ void R_SetDefaultColormap (const char *name)
 				map2[0] = 0;
 				for (j = 1; j < 256; ++j)
 				{
-					map2[j] = GPalette.Remap[map[unremap[j]]];
+					map2[j] = remap[map[unremap[j]]];
 				}
 			}
 		}
@@ -2963,3 +3011,9 @@ CCMD (printspans)
 	}
 }
 #endif
+
+CCMD (picnum)
+{
+	int picnum = TexMan.GetTexture (argv[1], FTexture::TEX_Any);
+	Printf ("%d: %s - %s\n", picnum, TexMan[picnum]->Name, TexMan(picnum)->Name);
+}

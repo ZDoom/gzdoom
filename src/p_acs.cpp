@@ -1694,8 +1694,10 @@ void DLevelScript::Serialize (FArchive &arc)
 	arc << next << prev
 		<< script;
 
-	if (SaveVersion < 306)
+	if (SaveVersion < 217)
 	{
+		// Woops. Versions 206-216 wrote random junk here because the test above
+		// was against 306 instead of 206.
 		int sp;
 		arc << sp;
 	}
@@ -2130,6 +2132,7 @@ void DLevelScript::DoSetFont (int fontnum)
 #define APROP_Alpha			3
 #define APROP_RenderStyle	4
 #define APROP_Ambush		10
+#define APROP_Invulnerable	11
 #define APROP_SeeSound		5	// Sounds can only be set, not gotten
 #define APROP_AttackSound	6
 #define APROP_PainSound		7
@@ -2174,6 +2177,7 @@ void DLevelScript::DoSetActorProperty (AActor *actor, int property, int value)
 	case APROP_Alpha:		actor->alpha = value;		break;
 	case APROP_RenderStyle:	actor->RenderStyle = value;	break;
 	case APROP_Ambush:		if (value) actor->flags |= MF_AMBUSH; else actor->flags &= ~MF_AMBUSH;		break;
+	case APROP_Invulnerable:if (value) actor->flags2 |= MF2_INVULNERABLE; else actor->flags2 &= ~MF2_INVULNERABLE;		break;
 	case APROP_SeeSound:	actor->SeeSound = S_FindSound (FBehavior::StaticLookupString (value));		break;
 	case APROP_AttackSound:	actor->AttackSound = S_FindSound (FBehavior::StaticLookupString (value));	break;
 	case APROP_PainSound:	actor->PainSound = S_FindSound (FBehavior::StaticLookupString (value));		break;

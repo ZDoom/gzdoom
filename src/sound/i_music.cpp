@@ -209,46 +209,60 @@ void I_UnRegisterSong (void *handle)
 	}
 }
 
-void *I_RegisterSong (FileReader *mem)
+void *I_RegisterSong (const char *filename, int offset, int len)
 {
-	// When is the FileReader deleted? If the song loads all its data
-	// immediately, this function will delete it before returning.
-	// If the song streams its data while playing, the song object
-	// will delete it when it gets destroyed.
-
-	int len;
+	FILE *file;
 	MusInfo *info = NULL;
 	DWORD id;
 	bool needdelete = true;
 
 	if (nomusic)
 	{
-		delete mem;
 		return 0;
 	}
 
-	len = mem->GetLength();
-	*mem >> id;
-	mem->Seek (-4, SEEK_CUR);
+	file = fopen (filename, "rb");
+	if (file == NULL)
+	{
+		return 0;
+	}
+
+	if (len == 0 && offset == 0)
+	{
+		fseek (file, 0, SEEK_END);
+		len = ftell (file);
+		fseek (file, 0, SEEK_SET);
+	}
+	else
+	{
+		fseek (file, offset, SEEK_SET);
+	}
+
+	if (fread (&id, 4, 1, file) != 1)
+	{
+		fclose (file);
+		return 0;
+	}
+	fseek (file, -4, SEEK_CUR);
 
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
 		// This is a mus file
 		if (!nofmod && opl_enable)
 		{
-			info = new OPLMUSSong (mem);
+			info = new OPLMUSSong (file, len);
 		}
 		if (info == NULL)
 		{
 #ifdef _WIN32
 			if (snd_mididevice != -2)
 			{
-				info = new MUSSong2 (mem);
+				info = new MUSSong2 (file, len);
 			}
 			else if (!nofmod)
 #endif // _WIN32
 			{
-				info = new TimiditySong (mem);
+				info = new TimiditySong (file, len);
 			}
 		}
 	}
@@ -258,31 +272,35 @@ void *I_RegisterSong (FileReader *mem)
 #ifdef _WIN32
 		if (snd_mididevice != -2)
 		{
-			info = new MIDISong2 (mem);
+			info = new MIDISong2 (file, len);
 		}
 		else if (!nofmod)
 #endif // _WIN32
 		{
-			info = new TimiditySong (mem);
+			info = new TimiditySong (file, len);
 		}
 	}
 	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
 	{
 		char header[0x23];
 
-		mem->Read (header, 0x23);
-		mem->Seek (-4, SEEK_CUR);
+		if (fread (header, 1, 0x23, file) != 0x23)
+		{
+			fclose (file);
+			return 0;
+		}
+		fseek (file, -0x23, SEEK_CUR);
 		if (strncmp (header+4, "-SPC700 Sound File Data", 23) == 0 &&
 			header[0x21] == '\x1a' &&
 			header[0x22] == '\x1a')
 		{
-			info = new SPCSong (mem);
+			info = new SPCSong (file, len);
 		}
 	}
 	else if (id == MAKE_ID('f','L','a','C'))
 	{
-		needdelete = false;
-		info = new FLACSong (mem);
+		info = new FLACSong (file, len);
+		file = NULL;
 	}
 
 	if (info == NULL)
@@ -291,25 +309,30 @@ void *I_RegisterSong (FileReader *mem)
 		{
 			DWORD subid;
 
-			mem->Seek (8, SEEK_CUR);
-			*mem >> subid;
-			mem->Seek (-12, SEEK_CUR);
+			fseek (file, 8, SEEK_CUR);
+			if (fread (&subid, 4, 1, file) != 1)
+			{
+				fclose (file);
+				return 0;
+			}
+			fseek (file, -12, SEEK_CUR);
 
 			if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
 			{
 				// This is a CDDA file
-				info = new CDDAFile (mem);
+				info = new CDDAFile (file, len);
 			}
 		}
 		if (info == NULL && !nofmod)	// no FMOD => no modules/streams
 		{
 			// First try loading it as MOD, then as a stream
-			info = new MODSong (mem);
+			fclose (file);
+			file = NULL;
+			info = new MODSong (filename, offset, len);
 			if (!info->IsValid ())
 			{
 				delete info;
-				needdelete = false;
-				info = new StreamSong (mem);
+				info = new StreamSong (filename, offset, len);
 			}
 		}
 	}
@@ -318,12 +341,11 @@ void *I_RegisterSong (FileReader *mem)
 	{
 		delete info;
 		info = NULL;
-		needdelete = true;
 	}
 
-	if (needdelete)
+	if (file != NULL)
 	{
-		delete mem;
+		fclose (file);
 	}
 
 	return info;

@@ -42,8 +42,9 @@ extern fixed_t			FocalLengthX, FocalLengthY;
 extern float			FocalLengthXfloat;
 extern fixed_t			InvZtoScale;
 
-extern angle_t			LocalViewAngle;		// [RH] Added to consoleplayer's angle
-extern int				LocalViewPitch;		// [RH] Used directly instead of consoleplayer's pitch
+extern angle_t			LocalViewAngle;			// [RH] Added to consoleplayer's angle
+extern int				LocalViewPitch;			// [RH] Used directly instead of consoleplayer's pitch
+extern bool				LocalKeyboardTurner;	// [RH] The local player used the keyboard to turn, so interpolate
 
 extern float			WallTMapScale;
 extern float			WallTMapScale2;

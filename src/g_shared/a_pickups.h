@@ -83,6 +83,7 @@ enum
 	IF_INVBAR			= 1<<6,	// Item appears in the inventory bar
 	IF_HUBPOWER			= 1<<7,	// Powerup is kept when moving in a hub
 	IF_INTERHUBSTRIP	= 1<<8,	// Item is removed when travelling between hubs
+	IF_PICKUPFLASH		= 1<<9,	// Item "flashes" when picked up
 };
 
 struct vissprite_t;
@@ -97,6 +98,7 @@ public:
 
 	virtual void BeginPlay ();
 	virtual void Destroy ();
+	virtual void Tick ();
 	virtual bool ShouldRespawn ();
 	virtual bool ShouldStay ();
 	virtual void Hide ();
@@ -120,6 +122,7 @@ public:
 	int MaxAmount;				// Max amount of item this instance can have
 	int RespawnTics;			// Tics from pickup time to respawn time
 	int Icon;					// Icon to show on status bar or HUD
+	int DropTime;				// Countdown after dropping
 
 	DWORD ItemFlags;
 

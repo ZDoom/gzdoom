@@ -2,6 +2,7 @@
 #include "a_hexenglobal.h"
 #include "p_local.h"
 #include "gstrings.h"
+#include "s_sound.h"
 
 // Blue mana ----------------------------------------------------------------
 
@@ -158,6 +159,7 @@ class AArtiBoostMana : public AInventory
 public:
 	bool Use ();
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 protected:
 	bool FillMana (const TypeInfo *type);
 };
@@ -172,9 +174,16 @@ IMPLEMENT_ACTOR (AArtiBoostMana, Hexen, 8003, 26)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIBMAN")
 END_DEFAULTS
+
+void AArtiBoostMana::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+		toucher == NULL || toucher == players[consoleplayer].camera
+		? ATTN_SURROUND : ATTN_NORM);
+}
 
 bool AArtiBoostMana::Use ()
 {

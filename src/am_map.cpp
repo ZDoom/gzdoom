@@ -1842,7 +1842,7 @@ void AM_rotatePoint (fixed_t *x, fixed_t *y)
 
 void
 AM_drawLineCharacter
-( mline_t*	lineguy,
+( const mline_t *lineguy,
   int		lineguylines,
   fixed_t	scale,
   angle_t	angle,
@@ -1987,21 +1987,18 @@ void AM_drawThings (int color)
 			(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,
 			 16<<MAPBITS, angle, color, p.x, p.y);
 
-			mline_t l;
-			l.a.x = (t->x - t->radius) >> FRACTOMAPBITS;
-			l.a.y = (t->y - t->radius) >> FRACTOMAPBITS;
-			l.b.x = (t->x + t->radius) >> FRACTOMAPBITS;
-			l.b.y = l.a.y;
-			AM_drawMline (&l, color);
-			l.a = l.b;
-			l.b.y = (t->y + t->radius) >> FRACTOMAPBITS;
-			AM_drawMline (&l, color);
-			l.a = l.b;
-			l.b.x = (t->x - t->radius) >> FRACTOMAPBITS;
-			AM_drawMline (&l, color);
-			l.a = l.b;
-			l.b.y = (t->y - t->radius) >> FRACTOMAPBITS;
-			AM_drawMline (&l, color);
+			if (am_cheat >= 3)
+			{
+				static const mline_t box[4] =
+				{
+					{ -MAPUNIT, -MAPUNIT,  MAPUNIT, -MAPUNIT },
+					{  MAPUNIT, -MAPUNIT,  MAPUNIT,  MAPUNIT },
+					{  MAPUNIT,  MAPUNIT, -MAPUNIT,  MAPUNIT },
+					{ -MAPUNIT,  MAPUNIT, -MAPUNIT, -MAPUNIT },
+				};
+
+				AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, ANG90 - players[consoleplayer].camera->angle, color, p.x, p.y);
+			}
 			t = t->snext;
 		}
 	}

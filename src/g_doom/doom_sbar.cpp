@@ -691,7 +691,7 @@ private:
 				{
 					for (item = CPlayer->InvFirst; item != NULL && i < 7; item = item->NextInv(), ++i)
 					{
-						screen->DrawTexture (Images[imgARTIBOX], -160+i*31, -32,
+						screen->DrawTexture (Images[imgARTIBOX], -106+i*31, -32,
 							DTA_HUDRules, HUD_HorizCenter,
 							DTA_Alpha, HX_SHADOW,
 							TAG_DONE);
@@ -723,7 +723,7 @@ private:
 					{
 						screen->DrawTexture (Images[!(level.time & 4) ?
 							imgINVLFGEM1 : imgINVLFGEM2], -118, -33,
-							DTA_HUDRules, HUD_Normal,
+							DTA_HUDRules, HUD_HorizCenter,
 							TAG_DONE);
 					}
 					// Is there something to the right?
@@ -731,7 +731,7 @@ private:
 					{
 						screen->DrawTexture (Images[!(level.time & 4) ?
 							imgINVRTGEM1 : imgINVRTGEM2], 113, -33,
-							DTA_HUDRules, HUD_Normal,
+							DTA_HUDRules, HUD_HorizCenter,
 							TAG_DONE);
 					}
 				}

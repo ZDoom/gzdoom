@@ -1151,7 +1151,7 @@ void R_Subsector (subsector_t *sub)
 // Renders all subsectors below a given node, traversing subtree recursively.
 // Just call with BSP root and -1.
 // killough 5/2/98: reformatted, removed tail recursion
-#include "v_video.h"
+
 void R_RenderBSPNode (void *node)
 {
 	if (numnodes == 0)

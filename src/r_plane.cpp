@@ -617,7 +617,7 @@ visplane_t *R_CheckPlane (visplane_t *pl, int start, int stop)
 		// make a new visplane
 		unsigned hash;
 
-		if (pl->skybox != NULL && !pl->skybox->bInSkybox && (pl->picnum == skyflatnum || pl->skybox->bAlways))
+		if (pl->skybox != NULL && !pl->skybox->bInSkybox && (pl->picnum == skyflatnum || pl->skybox->bAlways) && viewactive)
 		{
 			hash = MAXVISPLANES;
 		}

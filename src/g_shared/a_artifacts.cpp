@@ -292,8 +292,14 @@ void APowerInvulnerable::EndEffect ()
 {
 	Owner->flags2 &= ~MF2_INVULNERABLE;
 	Owner->effects &= ~FX_RESPAWNINVUL;
-	Owner->player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Stop);
-	Owner->player->fixedcolormap = 0;
+	if (Owner->player != NULL)
+	{
+		if (Owner->player->mo != NULL)
+		{
+			Owner->player->mo->SpecialInvulnerabilityHandling (APlayerPawn::INVUL_Stop);
+		}
+		Owner->player->fixedcolormap = 0;
+	}
 }
 
 // Strength (aka Berserk) Powerup --------------------------------------------
@@ -301,7 +307,7 @@ void APowerInvulnerable::EndEffect ()
 IMPLEMENT_STATELESS_ACTOR (APowerStrength, Any, -1, 0)
 	PROP_Powerup_EffectTics (1)
 	PROP_Powerup_Color (128, 255, 0, 0)
-	PROP_Inventory_Flags (IF_HUBPOWER)
+	PROP_Inventory_FlagsSet (IF_HUBPOWER)
 END_DEFAULTS
 
 //===========================================================================
@@ -524,7 +530,7 @@ void APowerTorch::DoEffect ()
 
 IMPLEMENT_STATELESS_ACTOR (APowerFlight, Any, -1, 0)
 	PROP_Powerup_EffectTics (-FLIGHTTICS)
-	PROP_Inventory_Flags (IF_HUBPOWER)
+	PROP_Inventory_FlagsSet (IF_HUBPOWER)
 END_DEFAULTS
 
 //===========================================================================
@@ -830,7 +836,7 @@ FState APowerTargeter::States[] =
 
 IMPLEMENT_ACTOR (APowerTargeter, Any, -1, 0)
 	PROP_Powerup_EffectTics (160*TICRATE)
-	PROP_Inventory_Flags (IF_HUBPOWER)
+	PROP_Inventory_FlagsSet (IF_HUBPOWER)
 END_DEFAULTS
 
 void APowerTargeter::InitEffect ()
@@ -900,5 +906,5 @@ void APowerTargeter::PositionAccuracy ()
 
 IMPLEMENT_STATELESS_ACTOR (APowerScanner, Any, -1, 0)
 	PROP_Powerup_EffectTics (80*TICRATE)
-	PROP_Inventory_Flags (IF_HUBPOWER)
+	PROP_Inventory_FlagsSet (IF_HUBPOWER)
 END_DEFAULTS

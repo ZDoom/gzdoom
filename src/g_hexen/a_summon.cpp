@@ -17,6 +17,7 @@ class AArtiDarkServant : public AInventory
 public:
 	bool Use ();
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiDarkServant::States[] =
@@ -31,13 +32,20 @@ IMPLEMENT_ACTOR (AArtiDarkServant, Hexen, 86, 16)
 	PROP_SpawnState (S_ARTI_SUMMON)
 	PROP_Inventory_RespawnTics (30+4200)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTISUMN")
 END_DEFAULTS
 
 const char *AArtiDarkServant::PickupMessage ()
 {
 	return GStrings(TXT_ARTISUMMON);
+}
+
+void AArtiDarkServant::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+		toucher == NULL || toucher == players[consoleplayer].camera
+		? ATTN_SURROUND : ATTN_NORM);
 }
 
 // Summoning Doll -----------------------------------------------------------

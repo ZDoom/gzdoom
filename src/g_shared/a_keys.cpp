@@ -209,7 +209,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 }
 
 IMPLEMENT_STATELESS_ACTOR (AKey, Any, -1, 0)
- PROP_Inventory_Flags (IF_INTERHUBSTRIP)
+ PROP_Inventory_FlagsSet (IF_INTERHUBSTRIP)
 END_DEFAULTS
 
 bool AKey::HandlePickup (AInventory *item)

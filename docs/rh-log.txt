@@ -1,3 +1,34 @@
+October 21, 2004
+- 2.0.91 time, just so people stop posting the same crash log.
+- Added a pickup delay after dropping, but it still seems to be problematic.
+- Fixed: Classic BEHAVIOR lumps weren't having their scripts sorted.
+- Fixed: P_TestActivateLine() always returned false for SPAC_MCROSS lines if the
+  ML_MONSTERSCANACTIVATE line was not set.
+- Fixed: A_Wander() now clears the MF4_INCOMBAT flag, so you can talk to peasants
+  after fighting in their vicinity. Strife does not clear this flag there, nor do
+  I know if it ever cleared it anywhere.
+- Fixed: AInventory::GoAwayAndDie() left the MF_SPECIAL flag set, so it was possible
+  for a player to try to pick up the item in the next tic before it destroyed itself.
+- Fixed: AHealthPickup::TryPickup() ignored its superclass's return value.
+- Fixed: Intermission screen tried to show post-E3 maps in Heretic.
+- Fixed: Now that FWadCollection::FindLump() ignores lumps outside the global
+  namespace, skins couldn't be loaded.
+- Fixed: PROP_Weapon_YAdjust used an unsigned byte, so negative yadjusts didn't work.
+- Changed the size boxes around actors in map cheat view into a real feature instead
+  of something I quickly threw in for debugging. It's now accessed with am_cheat 3
+  and works properly with rotating maps.
+- Fixed: FActorInfo::BuildDefaults() checked ADEF_SkipSuper as a byte instead of
+  a word.
+- Fixed: The artifact flash was not cleared from the Raven status bars when the
+  last item was used.
+- Fixed: A_CustomBulletAttack tried to use A_CustomMissile instead.
+- Fixed: New flag4 names in thingdef.cpp.
+- Fixed: Cyberdemon was MF4_LONGMELEERANGE instead of MF4_MISSILEMORE.
+- Fixed: Fullscreen inventory bar positions were wrong in Doom.
+- Fixed: Hexen armor was quite broken.
+- Fixed: S_StartSound() no longer tries to play sound ids below 0.
+- Fixed: Terrain splash sounds were initialized to -1 instead of 0.
+
 October 20, 2004
 - Time to release 2.0.90, I think?
 - Added some Strife keys to the controls menu.

@@ -238,7 +238,7 @@ IMPLEMENT_ACTOR (ATeleporterBeacon, Strife, 10, 0)
 	PROP_HeightFixed (16)
 	PROP_Inventory_MaxAmount (3)
 	PROP_Flags (MF_SPECIAL|MF_DROPPED)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_Icon ("I_BEAC")
 	PROP_Tag ("Teleporter_Beacon")
 END_DEFAULTS

@@ -4,6 +4,7 @@
 #include "gstrings.h"
 #include "p_local.h"
 #include "gi.h"
+#include "s_sound.h"
 
 // Boost Armor Artifact (Dragonskin Bracers) --------------------------------
 
@@ -13,6 +14,7 @@ class AArtiBoostArmor : public AInventory
 public:
 	bool Use ();
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiBoostArmor::States[] =
@@ -33,7 +35,7 @@ IMPLEMENT_ACTOR (AArtiBoostArmor, Hexen, 8041, 22)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIBRAC")
 END_DEFAULTS
 
@@ -83,4 +85,11 @@ bool AArtiBoostArmor::Use ()
 const char *AArtiBoostArmor::PickupMessage ()
 {
 	return GStrings(TXT_ARTIBOOSTARMOR);
+}
+
+void AArtiBoostArmor::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+		toucher == NULL || toucher == players[consoleplayer].camera
+		? ATTN_SURROUND : ATTN_NORM);
 }

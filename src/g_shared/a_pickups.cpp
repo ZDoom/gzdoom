@@ -335,6 +335,32 @@ void A_RestoreSpecialPosition (AActor *self)
 	}
 }
 
+// Pickup flash -------------------------------------------------------------
+
+class APickupFlash : public AActor
+{
+	DECLARE_ACTOR (APickupFlash, AActor)
+};
+
+FState APickupFlash::States[] =
+{
+	S_NORMAL (ACLO, 'D',    3, NULL                         , &States[1]),
+	S_NORMAL (ACLO, 'C',    3, NULL                         , &States[2]),
+	S_NORMAL (ACLO, 'D',    3, NULL                         , &States[3]),
+	S_NORMAL (ACLO, 'C',    3, NULL                         , &States[4]),
+	S_NORMAL (ACLO, 'B',    3, NULL                         , &States[5]),
+	S_NORMAL (ACLO, 'C',    3, NULL                         , &States[6]),
+	S_NORMAL (ACLO, 'B',    3, NULL                         , &States[7]),
+	S_NORMAL (ACLO, 'A',    3, NULL                         , &States[8]),
+	S_NORMAL (ACLO, 'B',    3, NULL                         , &States[9]),
+	S_NORMAL (ACLO, 'A',    3, NULL                         , NULL)
+};
+
+IMPLEMENT_ACTOR (APickupFlash, Raven, -1, 0)
+	PROP_SpawnState (0)
+	PROP_Flags (MF_NOGRAVITY)
+END_DEFAULTS
+
 /***************************************************************************/
 /* AInventory implementation											   */
 /***************************************************************************/
@@ -364,7 +390,7 @@ FState AInventory::States[] =
 	S_NORMAL (TNT1, 'A',   -1, NULL							, NULL),
 
 #define S_HOLDANDDESTROY (S_HELD+1)
-	S_NORMAL (TNT1, 'A',	1, NULL							, NULL)
+	S_NORMAL (TNT1, 'A',	1, NULL							, NULL),
 };
 
 int AInventory::StaticLastMessageTic;
@@ -379,6 +405,24 @@ BEGIN_DEFAULTS (AInventory, Any, -1, 0)
 	PROP_Inventory_MaxAmount (1)
 	PROP_UseSound ("misc/invuse")
 END_DEFAULTS
+
+//===========================================================================
+//
+// AInventory :: Tick
+//
+//===========================================================================
+
+void AInventory::Tick ()
+{
+	Super::Tick ();
+	if (DropTime)
+	{
+		if (--DropTime == 0)
+		{
+			flags |= MF_SPECIAL;
+		}
+	}
+}
 
 //===========================================================================
 //
@@ -487,10 +531,20 @@ bool AInventory::GoAway ()
 {
 	// Dropped items never stick around
 	if (flags & MF_DROPPED)
+	{
+		if (ItemFlags & IF_PICKUPFLASH)
+		{
+			Spawn<APickupFlash> (x, y, z);
+		}
 		return false;
+	}
 
 	if (!ShouldStay ())
 	{
+		if (ItemFlags & IF_PICKUPFLASH)
+		{
+			Spawn<APickupFlash> (x, y, z);
+		}
 		Hide ();
 		if (ShouldRespawn ())
 		{
@@ -513,6 +567,7 @@ void AInventory::GoAwayAndDie ()
 {
 	if (!GoAway ())
 	{
+		flags &= ~MF_SPECIAL;
 		SetState (&States[S_HOLDANDDESTROY]);
 	}
 }
@@ -572,6 +627,8 @@ AInventory *AInventory::CreateTossable ()
 	if (Amount == 1 && !IsKindOf (RUNTIME_CLASS(AAmmo)))
 	{
 		BecomePickup ();
+		DropTime = 30;
+		flags &= ~MF_SPECIAL;
 		return this;
 	}
 	copy = static_cast<AInventory *>(Spawn (GetClass(), Owner->x,
@@ -582,6 +639,8 @@ AInventory *AInventory::CreateTossable ()
 		copy->Amount = 1;
 		Amount--;
 	}
+	copy->DropTime = 30;
+	copy->flags &= ~MF_SPECIAL;
 	return copy;
 }
 
@@ -952,7 +1011,7 @@ bool AInventory::DrawPowerup (int x, int y)
 IMPLEMENT_STATELESS_ACTOR (APowerupGiver, Any, -1, 0)
 	PROP_Inventory_RespawnTics (30+1400)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 END_DEFAULTS
 
 //===========================================================================
@@ -1040,6 +1099,7 @@ bool AInventory::TryPickup (AActor *toucher)
 			{
 				if (--copy->Amount <= 0)
 				{
+					flags &= ~MF_SPECIAL;
 					SetState (&States[S_HOLDANDDESTROY]);
 				}
 			}
@@ -1099,12 +1159,12 @@ END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (ABasicArmorPickup, Any, -1, 0)
 	PROP_Inventory_MaxAmount (0)
-	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (ABasicArmorBonus, Any, -1, 0)
 	PROP_Inventory_MaxAmount (0)
-	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
 END_DEFAULTS
 
 IMPLEMENT_STATELESS_ACTOR (AHexenArmor, Any, -1, 0)
@@ -1122,6 +1182,10 @@ void ABasicArmorPickup::Serialize (FArchive &arc)
 {
 	Super::Serialize (arc);
 	arc << SavePercent << SaveAmount;
+	if (SaveVersion >= 222)
+	{
+		arc << DropTime;
+	}
 }
 
 //===========================================================================
@@ -1330,10 +1394,10 @@ void AHexenArmor::Serialize (FArchive &arc)
 AInventory *AHexenArmor::CreateCopy (AActor *other)
 {
 	// Like BasicArmor, HexenArmor is used in the inventory but not the map.
-	// Amount is the slot this armor occupies.
-	// MaxAmount is the quantity to give (0 = normal max).
+	// health is the slot this armor occupies.
+	// Amount is the quantity to give (0 = normal max).
 	AHexenArmor *copy = Spawn<AHexenArmor> (0, 0, 0);
-	copy->AddArmorToSlot (other, Amount, MaxAmount);
+	copy->AddArmorToSlot (other, health, Amount);
 	GoAwayAndDie ();
 	return copy;
 }
@@ -1361,7 +1425,7 @@ bool AHexenArmor::HandlePickup (AInventory *item)
 {
 	if (item->IsKindOf (RUNTIME_CLASS(AHexenArmor)))
 	{
-		if (AddArmorToSlot (Owner, Amount, MaxAmount))
+		if (AddArmorToSlot (Owner, item->health, item->Amount))
 		{
 			item->ItemFlags |= IF_PICKUPGOOD;
 		}
@@ -1428,8 +1492,13 @@ bool AHexenArmor::AddArmorToSlot (AActor *actor, int slot, int amount)
 
 void AHexenArmor::AbsorbDamage (int damage, int &newdamage)
 {
-	fixed_t savedPercent = player->mo->GetAutoArmorSave ()
-		+ Slots[0] + Slots[1] + Slots[2] + Slots[3];
+	fixed_t savedPercent = Slots[0] + Slots[1] + Slots[2] + Slots[3];
+	APlayerPawn *ppawn = Owner->player != NULL ? Owner->player->mo : NULL;
+
+	if (ppawn != NULL)
+	{
+		savedPercent += ppawn->GetAutoArmorSave ();
+	}
 	if (savedPercent)
 	{ // armor absorbed some damage
 		if (savedPercent > 100*FRACUNIT)
@@ -1445,7 +1514,8 @@ void AHexenArmor::AbsorbDamage (int damage, int &newdamage)
 				if (damage < 10000)
 				{
 					Slots[i] -= 
-						Scale (damage, player->mo->GetArmorIncrement (i), 300);
+						Scale (damage, ppawn != NULL ? ppawn->GetArmorIncrement (i) : 5*FRACUNIT, 300);
+					Printf ("%d\n", Slots[i]>>16);
 					if (Slots[i] < 2*FRACUNIT)
 					{
 						Slots[i] = 0;
@@ -1520,7 +1590,7 @@ bool AHealth::TryPickup (AActor *other)
 
 IMPLEMENT_STATELESS_ACTOR (AHealthPickup, Any, -1, 0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 END_DEFAULTS
 
 //===========================================================================

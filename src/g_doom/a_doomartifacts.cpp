@@ -34,7 +34,7 @@ FState AInvulnerabilitySphere::States[] =
 IMPLEMENT_ACTOR (AInvulnerabilitySphere, Doom, 2022, 133)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
-	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
 	PROP_PowerupGiver_Powerup ("PowerInvulnerable")
 END_DEFAULTS
 
@@ -168,7 +168,7 @@ FState ABerserk::States[] =
 IMPLEMENT_ACTOR (ABerserk, Doom, 2023, 134)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
-	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
 	PROP_PowerupGiver_Powerup ("PowerStrength")
 END_DEFAULTS
 
@@ -207,7 +207,7 @@ IMPLEMENT_ACTOR (ABlurSphere, Doom, 2024, 135)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_RenderStyle (STYLE_Translucent)
 	PROP_SpawnState (0)
-	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
 	PROP_PowerupGiver_Powerup ("PowerInvisibility")
 END_DEFAULTS
 
@@ -232,7 +232,7 @@ IMPLEMENT_ACTOR (ARadSuit, Doom, 2025, 136)
 	PROP_HeightFixed (46)
 	PROP_Flags (MF_SPECIAL)
 	PROP_SpawnState (0)
-	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
 	PROP_PowerupGiver_Powerup ("PowerIronFeet")
 END_DEFAULTS
 
@@ -257,7 +257,7 @@ FState AInfrared::States[] =
 IMPLEMENT_ACTOR (AInfrared, Doom, 2045, 138)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_SpawnState (0)
-	PROP_Inventory_Flags (IF_AUTOACTIVATE)
+	PROP_Inventory_FlagsSet (IF_AUTOACTIVATE)
 	PROP_PowerupGiver_Powerup ("PowerLightAmp")
 END_DEFAULTS
 

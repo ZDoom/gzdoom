@@ -155,7 +155,7 @@ public:
 	FWadLump OpenLumpName (const char *name) { return OpenLumpNum (GetNumForName (name)); }
 	FWadLump *ReopenLumpNum (int lump);	// Opens a new, independant FILE
 
-	int FindLump (const char *name, int *lastlump);		// [RH] Find lumps with duplication
+	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	bool CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name
 
 	static DWORD LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name

@@ -163,7 +163,10 @@ public:
 
 		if (ArtifactFlash > 0)
 		{
-			ArtifactFlash--;
+			if (--ArtifactFlash == 0)
+			{
+				ArtiRefresh = screen->GetPageCount ();
+			}
 		}
 	}
 

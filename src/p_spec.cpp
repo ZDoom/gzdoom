@@ -737,7 +737,10 @@ BOOL P_TestActivateLine (line_t *line, AActor *mo, int side, int activationType)
 	{ 
 		return false;
 	}
-	if (!mo->player && !(mo->flags & MF_MISSILE) && !(line->flags & ML_MONSTERSCANACTIVATE))
+	if (!mo->player &&
+		!(mo->flags & MF_MISSILE) &&
+		!(line->flags & ML_MONSTERSCANACTIVATE) &&
+		activationType != SPAC_MCROSS)
 	{ // [RH] monsters' ability to activate this line depends on its type
 		// In Hexen, only MCROSS lines could be activated by monsters. With
 		// lax activation checks, monsters can also activate certain lines

@@ -282,7 +282,8 @@ enum
 	ADEF_Inventory_MaxAmount,
 	ADEF_Inventory_DefMaxAmount,
 	ADEF_Inventory_RespawnTics,
-	ADEF_Inventory_Flags,
+	ADEF_Inventory_FlagsSet,
+	ADEF_Inventory_FlagsClear,
 
 	ADEF_PuzzleItem_Number,	// Identifies the puzzle item for UsePuzzleItem
 

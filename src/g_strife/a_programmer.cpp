@@ -170,7 +170,7 @@ public:
 };
 
 IMPLEMENT_STATELESS_ACTOR (AProgLevelEnder, Strife, -1, 0)
-	PROP_Inventory_Flags (IF_UNDROPPABLE)
+	PROP_Inventory_FlagsSet (IF_UNDROPPABLE)
 END_DEFAULTS
 
 //============================================================================

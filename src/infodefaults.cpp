@@ -59,7 +59,7 @@ void FActorInfo::BuildDefaults ()
 		{
 			TypeInfo *parent;
 
-			if (DefaultList[0] == ADEF_SkipSuper)
+			if (*(WORD *)DefaultList == ADEF_SkipSuper)
 			{
 				parent = RUNTIME_CLASS(AActor);
 			}
@@ -272,7 +272,8 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_StrifeType:	if (!(gameinfo.flags & GI_SHAREWARE)) StrifeTypes[dataint] = Class;	break;
 		case ADEF_StrifeTeaserType: if (gameinfo.flags & GI_SHAREWARE) StrifeTypes[dataint] = Class; break;
 
-		case ADEF_Inventory_Flags:		((AInventory*)actor)->ItemFlags = dataint; break;
+		case ADEF_Inventory_FlagsSet:	((AInventory*)actor)->ItemFlags |= dataint; break;
+		case ADEF_Inventory_FlagsClear:	((AInventory*)actor)->ItemFlags &= ~dataint; break;
 		case ADEF_Inventory_Amount:		((AInventory*)actor)->Amount = dataint;	break;
 		case ADEF_Inventory_RespawnTics:((AInventory*)actor)->RespawnTics = dataint; break;
 		case ADEF_Inventory_MaxAmount:	item->MaxAmount = dataint; break;
@@ -287,7 +288,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_BasicArmorBonus_SavePercent:		armorb->SavePercent = dataint; break;
 		case ADEF_BasicArmorBonus_SaveAmount:		armorb->SaveAmount = dataint; break;
 		case ADEF_BasicArmorBonus_MaxSaveAmount:	armorb->MaxSaveAmount = dataint; break;
-		case ADEF_HexenArmor_ArmorAmount:			item->MaxAmount = dataint; break;
+		case ADEF_HexenArmor_ArmorAmount:			item->Amount = dataint; break;
 
 		case ADEF_PuzzleItem_Number:	puzzl->PuzzleItemNumber = dataint; break;
 
@@ -311,7 +312,7 @@ void FActorInfo::ApplyDefaults (BYTE *defaults)
 		case ADEF_Weapon_AmmoUse1:		weapon->AmmoUse1 = dataint; break;
 		case ADEF_Weapon_AmmoUse2:		weapon->AmmoUse2 = dataint; break;
 		case ADEF_Weapon_Kickback:		weapon->Kickback = dataint; break;
-		case ADEF_Weapon_YAdjust:		weapon->YAdjust = dataint; break;
+		case ADEF_Weapon_YAdjust:		weapon->YAdjust = (dataint<<8)>>8; break;
 		case ADEF_Weapon_SelectionOrder:weapon->SelectionOrder = dataint; break;
 		case ADEF_Weapon_MoveCombatDist:weapon->MoveCombatDist = dataint; break;
 		case ADEF_Weapon_UpState:		weapon->UpState = datastate; break;

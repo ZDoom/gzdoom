@@ -189,11 +189,18 @@ static const char * flag4names[]=
 	"FIXMAPTHINGPOS",
 	"ACTLIKEBRIDGE",
 	"STRIFEDAMAGE",
-	"LONGMELEERANGE",		// new stuff 
-	"LONGMISSILERANGE",
-	"HIGHMISSILEPROB",
+	"LONGMELEERANGE",		// new stuff
+	"MISSILEMORE",
+	"MISSILEEVENMORE",
 	"SHORTMISSILERANGE",
 	"DONTFALL",
+	"SEESDAGGERS",
+	"INCOMBAT",
+	"LOOKALLAROUND",
+	"STANDSTILL",
+	"SPECTRAL",
+	"FIRERESIST",
+	"NOSPLASHALERT",
 	NULL
 };
 
@@ -1593,7 +1600,7 @@ bool DoSpecialFunctions(FState & state, bool multistate, int * statecount, Bagga
 		SC_MustGetStringName (")");
 
 		state.SetMisc1_2 (BulletAttackList.Push(att));
-		state.Action = A_CustomMissile;
+		state.Action = A_CustomBulletAttack;
 		return true;
 	}
 	if (SC_Compare("A_JumpIfHealthLower"))

@@ -27,6 +27,7 @@ IMPLEMENT_ACTOR (AArtiInvisibility, Heretic, 75, 135)
 	PROP_Alpha (HR_SHADOW)
 	PROP_SpawnState (0)
 	PROP_Inventory_RespawnTics (30+4200)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIINVS")
 	PROP_PowerupGiver_Powerup ("PowerInvisibility")
 END_DEFAULTS
@@ -129,6 +130,7 @@ class AArtiTimeBomb : public AInventory
 public:
 	bool Use ();
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiTimeBomb::States[] =
@@ -141,7 +143,7 @@ IMPLEMENT_ACTOR (AArtiTimeBomb, Heretic, 34, 72)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIFBMB")
 END_DEFAULTS
 
@@ -159,4 +161,11 @@ bool AArtiTimeBomb::Use ()
 const char *AArtiTimeBomb::PickupMessage ()
 {
 	return GStrings(TXT_ARTIFIREBOMB);
+}
+
+void AArtiTimeBomb::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+		toucher == NULL || toucher == players[consoleplayer].camera
+		? ATTN_SURROUND : ATTN_NORM);
 }

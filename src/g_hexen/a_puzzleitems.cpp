@@ -30,7 +30,7 @@ enum
 
 IMPLEMENT_STATELESS_ACTOR (APuzzleItem, Any, -1, 0)
 	PROP_Flags (MF_SPECIAL|MF_NOGRAVITY)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_DefMaxAmount
 END_DEFAULTS
 

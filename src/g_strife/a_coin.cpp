@@ -14,7 +14,7 @@ IMPLEMENT_ACTOR (ACoin, Strife, 93, 0)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL|MF_DROPPED|MF_NOTDMATCH)
 	PROP_Inventory_MaxAmountLong (INT_MAX)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_Icon ("I_COIN")
 	PROP_Tag ("coin")
 END_DEFAULTS

@@ -13,6 +13,7 @@ class AArtiHealth : public AHealthPickup
 	DECLARE_ACTOR (AArtiHealth, AHealthPickup)
 public:
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiHealth::States[] =
@@ -27,12 +28,20 @@ IMPLEMENT_ACTOR (AArtiHealth, Raven, 82, 24)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnHealth (25)
 	PROP_SpawnState (0)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIPTN2")
 END_DEFAULTS
 
 const char *AArtiHealth::PickupMessage ()
 {
 	return GStrings(TXT_ARTIHEALTH);
+}
+
+void AArtiHealth::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+		toucher == NULL || toucher == players[consoleplayer].camera
+		? ATTN_SURROUND : ATTN_NORM);
 }
 
 // Super health -------------------------------------------------------------
@@ -42,6 +51,7 @@ class AArtiSuperHealth : public AHealthPickup
 	DECLARE_ACTOR (AArtiSuperHealth, AHealthPickup)
 public:
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiSuperHealth::States[] =
@@ -54,12 +64,20 @@ IMPLEMENT_ACTOR (AArtiSuperHealth, Raven, 32, 25)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_SpawnHealth (100)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTISPHL")
 END_DEFAULTS
 
 const char *AArtiSuperHealth::PickupMessage ()
 {
 	return GStrings(TXT_ARTISUPERHEALTH);
+}
+
+void AArtiSuperHealth::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+		toucher == NULL || toucher == players[consoleplayer].camera
+		? ATTN_SURROUND : ATTN_NORM);
 }
 
 // Flight -------------------------------------------------------------------
@@ -84,7 +102,7 @@ IMPLEMENT_ACTOR (AArtiFly, Raven, 83, 15)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_RespawnTics (30+4200)
-	PROP_Inventory_Flags (IF_INTERHUBSTRIP)
+	PROP_Inventory_FlagsSet (IF_INTERHUBSTRIP|IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTISOAR")
 	PROP_PowerupGiver_Powerup ("PowerFlight")
 END_DEFAULTS
@@ -116,6 +134,7 @@ IMPLEMENT_ACTOR (AArtiInvulnerability, Raven, 84, 133)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_RespawnTics (30+4200)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIINVU")
 	PROP_PowerupGiver_Powerup ("PowerInvulnerable")
 END_DEFAULTS
@@ -152,6 +171,7 @@ IMPLEMENT_ACTOR (AArtiTorch, Raven, 33, 73)
 	PROP_Flags (MF_SPECIAL|MF_COUNTITEM)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
+	PROP_Inventory_FlagsSet (IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTITRCH")
 	PROP_PowerupGiver_Powerup ("PowerTorch")
 END_DEFAULTS

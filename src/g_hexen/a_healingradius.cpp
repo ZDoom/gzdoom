@@ -20,6 +20,7 @@ class AArtiHealingRadius : public AInventory
 public:
 	bool Use ();
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiHealingRadius::States[] =
@@ -47,7 +48,7 @@ IMPLEMENT_ACTOR (AArtiHealingRadius, Hexen, 10120, 0)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (0)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTIHRAD")
 END_DEFAULTS
 
@@ -72,4 +73,11 @@ bool AArtiHealingRadius::Use ()
 const char *AArtiHealingRadius::PickupMessage ()
 {
 	return GStrings(TXT_ARTIHEALINGRADIUS);
+}
+
+void AArtiHealingRadius::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+		toucher == NULL || toucher == players[consoleplayer].camera
+		? ATTN_SURROUND : ATTN_NORM);
 }

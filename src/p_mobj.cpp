@@ -668,6 +668,7 @@ AInventory *AActor::DropInventory (AInventory *item)
 	an = angle >> ANGLETOFINESHIFT;
 	/* 92682 = sqrt(2) * FRACUNIT */
 	dropdist = FixedMul (92682, radius + 8*FRACUNIT + item->radius);
+#if 0
 	drop->x = x + momx + FixedMul (dropdist, finecosine[an]);
 	drop->y = y + momy + FixedMul (dropdist, finesine[an]);
 	drop->z = z + momz + 10*FRACUNIT;
@@ -685,6 +686,11 @@ AInventory *AActor::DropInventory (AInventory *item)
 			return drop;
 		}
 	}
+#else
+	drop->x = x;
+	drop->y = y;
+	drop->z = z + 10*FRACUNIT;
+#endif
 	drop->angle = angle;
 	drop->momx = momx + 5 * finecosine[an];
 	drop->momy = momy + 5 * finesine[an];

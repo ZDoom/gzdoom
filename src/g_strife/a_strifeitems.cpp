@@ -159,7 +159,7 @@ IMPLEMENT_ACTOR (ADegninOre, Strife, 59, 0)
 	PROP_Inventory_MaxAmount (10)
 	PROP_Flags (MF_SPECIAL|MF_SOLID|MF_SHOOTABLE|MF_NOBLOOD)
 	PROP_Flags4 (MF4_INCOMBAT)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Tag ("Degnin_Ore")		// "Thalite_Ore" in the Teaser
 	PROP_DeathSound ("ore/explode")
 	PROP_Inventory_Icon ("I_XPRK")
@@ -216,7 +216,7 @@ IMPLEMENT_ACTOR (ABeldinsRing, Strife, -1, 0)
 	PROP_Flags (MF_SPECIAL|MF_NOTDMATCH)
 	PROP_StrifeType (173)
 	PROP_StrifeTeaserType (165)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Tag ("ring")
 	PROP_Inventory_Icon ("I_RING")
 END_DEFAULTS
@@ -258,7 +258,7 @@ IMPLEMENT_ACTOR (AOfferingChalice, Strife, 205, 0)
 	PROP_RadiusFixed (10)
 	PROP_HeightFixed (16)
 	PROP_Flags (MF_SPECIAL|MF_DROPPED)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Tag ("Offering_Chalice")
 	PROP_Inventory_Icon ("I_RELC")
 END_DEFAULTS
@@ -298,7 +298,7 @@ IMPLEMENT_ACTOR (AEar, Strife, -1, 0)
 	PROP_StrifeTeaserType (167)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Tag ("ear")
 	PROP_Inventory_Icon ("I_EARS")
 END_DEFAULTS
@@ -337,8 +337,7 @@ IMPLEMENT_ACTOR (ABrokenPowerCoupling, Strife, 226, 0)
 	PROP_StrifeType (289)
 	PROP_SpawnHealth (40)
 	PROP_SpawnState (0)
-//	PROP_Speed (33554440)	// ???
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_RadiusFixed (16)
 	PROP_HeightFixed (16)
 	PROP_Inventory_MaxAmount (1)
@@ -449,7 +448,7 @@ IMPLEMENT_ACTOR (AGuardUniform, Strife, 90, 0)
 	PROP_StrifeTeaserType (158)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Tag ("Guard_Uniform")
 	PROP_Inventory_Icon ("I_UNIF")
 END_DEFAULTS
@@ -488,7 +487,7 @@ IMPLEMENT_ACTOR (AOfficersUniform, Strife, 52, 0)
 	PROP_StrifeTeaserType (159)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Tag ("Officer's_Uniform")
 	PROP_Inventory_Icon ("I_OFIC")
 END_DEFAULTS
@@ -542,7 +541,7 @@ IMPLEMENT_ACTOR (AGunTraining, Strife, -1, 0)
 	PROP_StrifeType (310)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_MaxAmount (100)
 	PROP_Tag ("Accuracy")
 	PROP_Inventory_Icon ("I_GUNT")
@@ -566,7 +565,7 @@ IMPLEMENT_ACTOR (AHealthTraining, Strife, -1, 0)
 	PROP_StrifeType (309)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Inventory_MaxAmount (100)
 	PROP_Tag ("Toughness")
 	PROP_Inventory_Icon ("I_HELT")
@@ -574,18 +573,21 @@ END_DEFAULTS
 
 bool AHealthTraining::TryPickup (AActor *toucher)
 {
-	Super::TryPickup (toucher);
-	toucher->GiveInventoryType (RUNTIME_CLASS(AGunTraining));
-	AInventory *coin = Spawn<ACoin> (0,0,0);
-	if (coin != NULL)
+	if (Super::TryPickup (toucher))
 	{
-		coin->Amount = toucher->player->accuracy*5 + 300;
-		if (!coin->TryPickup (toucher))
+		toucher->GiveInventoryType (RUNTIME_CLASS(AGunTraining));
+		AInventory *coin = Spawn<ACoin> (0,0,0);
+		if (coin != NULL)
 		{
-			coin->Destroy ();
+			coin->Amount = toucher->player->accuracy*5 + 300;
+			if (!coin->TryPickup (toucher))
+			{
+				coin->Destroy ();
+			}
 		}
+		return true;
 	}
-	return true;
+	return false;
 }
 
 // Info ---------------------------------------------------------------------
@@ -607,7 +609,7 @@ IMPLEMENT_ACTOR (AInfo, Strife, -1, 0)
 	PROP_StrifeTeaserType (282)
 	PROP_SpawnState (0)
 	PROP_Flags (MF_SPECIAL)
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR)
 	PROP_Tag ("info")
 	PROP_Inventory_Icon ("I_TOKN")
 END_DEFAULTS

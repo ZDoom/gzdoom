@@ -29,6 +29,7 @@ class AArtiTeleportOther : public AInventory
 public:
 	bool Use ();
 	const char *PickupMessage ();
+	void PlayPickupSound (AActor *toucher);
 };
 
 FState AArtiTeleportOther::States[] =
@@ -45,13 +46,20 @@ IMPLEMENT_ACTOR (AArtiTeleportOther, Hexen, 10040, 17)
 	PROP_Flags2 (MF2_FLOATBOB)
 	PROP_SpawnState (S_ARTI_TELOTHER1)
 	PROP_Inventory_DefMaxAmount
-	PROP_Inventory_Flags (IF_INVBAR)
+	PROP_Inventory_FlagsSet (IF_INVBAR|IF_PICKUPFLASH)
 	PROP_Inventory_Icon ("ARTITELO")
 END_DEFAULTS
 
 const char *AArtiTeleportOther::PickupMessage ()
 {
 	return GStrings(TXT_ARTITELEPORTOTHER);
+}
+
+void AArtiTeleportOther::PlayPickupSound (AActor *toucher)
+{
+	S_Sound (toucher, CHAN_PICKUP, "misc/p_pkup", 1,
+		toucher == NULL || toucher == players[consoleplayer].camera
+		? ATTN_SURROUND : ATTN_NORM);
 }
 
 // Teleport Other FX --------------------------------------------------------

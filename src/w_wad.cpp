@@ -1019,7 +1019,7 @@ void FWadCollection::FindStrifeTeaserVoices ()
 //
 //==========================================================================
 
-int FWadCollection::FindLump (const char *name, int *lastlump)
+int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 {
 	char name8[8];
 	LumpRecord *lump_p;
@@ -1029,7 +1029,7 @@ int FWadCollection::FindLump (const char *name, int *lastlump)
 	lump_p = LumpInfo + *lastlump;
 	while (lump_p < LumpInfo + NumLumps)
 	{
-		if (lump_p->namespc == ns_global &&
+		if ((anyns || lump_p->namespc == ns_global) &&
 			*(__int64 *)&lump_p->name == *(__int64 *)&name8)
 		{
 			int lump = lump_p - LumpInfo;

@@ -1037,14 +1037,14 @@ void FBehavior::LoadScriptsDirectory ()
 		Scripts[i].VarCount = LOCAL_SIZE;
 	}
 
-	if (Format == ACS_Old)
-		return;
-
 	// Sort scripts, so we can use a binary search to find them
 	if (NumScripts > 1)
 	{
 		qsort (Scripts, NumScripts, sizeof(ScriptPtr), SortScripts);
 	}
+
+	if (Format == ACS_Old)
+		return;
 
 	// Load script flags
 	scripts.b = FindChunk (MAKE_ID('S','F','L','G'));

@@ -4,7 +4,7 @@
 #include "gstrings.h"
 #include "p_local.h"
 
-#define PROP_HexenArmor_Class	PROP_Inventory_Amount
+#define PROP_HexenArmor_Class	PROP_SpawnHealth
 
 enum
 {
@@ -18,7 +18,7 @@ enum
 
 class AMeshArmor : public AHexenArmor
 {
-	DECLARE_ACTOR (AMeshArmor, AArmor)
+	DECLARE_ACTOR (AMeshArmor, AHexenArmor)
 protected:
 	const char *PickupMessage ()
 	{

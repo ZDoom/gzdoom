@@ -433,7 +433,7 @@ void R_InitSkins (void)
 		playersoundrefs[j] = S_FindSound (skinsoundnames[j][1]);
 	}
 
-	while ((base = Wads.FindLump ("S_SKIN", &lastlump)) != -1)
+	while ((base = Wads.FindLump ("S_SKIN", &lastlump, true)) != -1)
 	{
 		// The player sprite has 23 frames. This means that the S_SKIN
 		// marker needs a minimum of 23 lumps after it.
@@ -738,7 +738,7 @@ void R_InitSprites ()
 	lastlump = 0;
 	if (gameinfo.gametype != GAME_Hexen)
 	{
-		while ((lump = Wads.FindLump ("S_SKIN", &lastlump)) != -1)
+		while ((lump = Wads.FindLump ("S_SKIN", &lastlump, true)) != -1)
 		{
 			numskins++;
 		}

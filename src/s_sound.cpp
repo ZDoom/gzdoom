@@ -500,7 +500,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	static int sndcount = 0;
 	int chan;
 
-	if (sound_id == 0 || volume <= 0)
+	if (sound_id <= 0 || volume <= 0)
 		return;
 
 	org_id = sound_id;

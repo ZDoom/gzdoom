@@ -123,7 +123,7 @@ static void STACK_ARGS call_terms (void)
 #ifdef _MSC_VER
 static int STACK_ARGS NewFailure (size_t size)
 {
-	I_FatalError ("Failed to allocate %d bytes from process heap");
+	I_FatalError ("Failed to allocate %d bytes from process heap", size);
 	return 0;
 }
 #endif

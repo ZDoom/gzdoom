@@ -1255,6 +1255,10 @@ void A_Wander (AActor *self)
 {
 	int delta;
 
+	// [RH] Strife probably clears this flag somewhere, but I couldn't find where.
+	// This seems as good a place as any.
+	self->flags4 &= ~MF4_INCOMBAT;
+
 	if (self->flags4 & MF4_STANDSTILL)
 		return;
 

@@ -415,7 +415,7 @@ void ParseSplash ()
 	if (!SC_Compare ("modify") || (SC_MustGetString(), isnew))
 	{ // Set defaults
 		splashdef->SmallSplashSound =
-			splashdef->NormalSplashSound = -1;
+			splashdef->NormalSplashSound = 0;
 		splashdef->SmallSplash =
 			splashdef->SplashBase =
 			splashdef->SplashChunk = NULL;

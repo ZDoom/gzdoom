@@ -577,9 +577,12 @@ void WI_initAnimatedBack ()
 	}
 	else if (state == ShowNextLoc)
 	{
-		char name[9];
-		sprintf (name, "MAPE%d", epsd + 1);
-		background = TexMan[name];
+		if (epsd <= 2)
+		{
+			char name[9];
+			sprintf (name, "MAPE%d", epsd + 1);
+			background = TexMan[name];
+		}
 	}
 }
 

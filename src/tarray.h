@@ -3,7 +3,7 @@
 ** Templated, automatically resizing array
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,43 @@
 #include <stdlib.h>
 #include "m_alloc.h"
 
+// Specialize this function for any type that needs to have its destructor called.
+template<class T>
+bool NeedsDestructor ()
+{
+	return false;
+}
+
+// This function is called once for each entry in the TArray after it grows.
+// The old entries will be immediately freed afterwards, so if they need to
+// be destroyed, it needs to happen in this function.
+template<class T>
+void CopyForTArray (T &dst, T &src)
+{
+	dst = src;
+	if (NeedsDestructor<T>())
+	{
+		src.~T();
+	}
+}
+
+// This function is called by Push to copy the the element to an unconstructed
+// area of memory. Basically, if NeedsDestructor is overloaded to return true,
+// then this should be overloaded to use placement new.
+template<class T>
+void ConstructInTArray (T *dst, const T &src)
+{
+	//new (dst) T(src);
+	*dst = src;
+}
+
+// This function is much like the above function, except it is called when
+// the array is explicitly enlarged without using Push.
+template<class T>
+void ConstructEmptyInTArray (T *dst)
+{
+}
+
 template <class T>
 class TArray
 {
@@ -64,6 +101,7 @@ public:
 		{
 			if (Array != NULL)
 			{
+				DoDelete (0, Count-1);
 				free (Array);
 			}
 			DoCopy (other);
@@ -73,20 +111,23 @@ public:
 	~TArray ()
 	{
 		if (Array)
+		{
+			DoDelete (0, Count-1);
 			free (Array);
+		}
 	}
-	T &operator[] (size_t index) const
+	T &operator[] (unsigned int index) const
 	{
 		return Array[index];
 	}
-	size_t Push (const T &item)
+	unsigned int Push (const T &item)
 	{
 		if (Count >= Most)
 		{
 			Most = (Most >= 16) ? Most + Most / 2 : 16;
-			Array = (T *)Realloc (Array, sizeof(T)*Most);
+			DoResize ();
 		}
-		Array[Count] = item;
+		ConstructInTArray (&Array[Count], item);
 		return Count++;
 	}
 	bool Pop (T &item)
@@ -94,15 +135,17 @@ public:
 		if (Count > 0)
 		{
 			item = Array[--Count];
+			DoDelete (Count, Count);
 			return true;
 		}
 		return false;
 	}
 	void Delete (int index)
 	{
+		DoDelete (index, index);
 		if (index < Count-1)
-			memmove (Array + index, Array + index + 1, (Count - index) * sizeof(T));
-		else if (index < Count)
+			memmove (Array + index, Array + index + 1, (Count - index - 1) * sizeof(T));
+		if (index < Count)
 			Count--;
 	}
 	void ShrinkToFit ()
@@ -120,59 +163,67 @@ public:
 			}
 			else
 			{
-				Array = (T *)Realloc (Array, sizeof(T)*Most);
+				DoResize ();
 			}
 		}
 	}
 	// Grow Array to be large enough to hold amount more entries without
 	// further growing.
-	void Grow (size_t amount)
+	void Grow (unsigned int amount)
 	{
 		if (Count + amount > Most)
 		{
-			const size_t choicea = Count + amount;
-			const size_t choiceb = Most + Most/2;
+			const unsigned int choicea = Count + amount;
+			const unsigned int choiceb = Most + Most/2;
 			Most = (choicea > choiceb ? choicea : choiceb);
-			Array = (T *)Realloc (Array, sizeof(T)*Most);
+			DoResize ();
 		}
 	}
 	// Resize Array so that it has exactly amount entries in use.
-	void Resize (size_t amount)
+	void Resize (unsigned int amount)
 	{
 		if (Count < amount)
 		{
 			Grow (amount - Count);
 		}
+		if (NeedsDestructor<T>())
+		{
+			for (unsigned int i = Count; i < amount; ++i)
+			{
+				ConstructEmptyInTArray (&Array[i]);
+			}
+		}
 		Count = amount;
 	}
 	// Reserves amount entries at the end of the array, but does nothing
 	// with them.
-	size_t Reserve (size_t amount)
+	unsigned int Reserve (unsigned int amount)
 	{
 		if (Count + amount > Most)
 		{
 			Grow (amount);
 		}
-		size_t place = Count;
+		unsigned int place = Count;
 		Count += amount;
 		return place;
 	}
-	size_t Size () const
+	unsigned int Size () const
 	{
 		return Count;
 	}
-	size_t Max () const
+	unsigned int Max () const
 	{
 		return Most;
 	}
 	void Clear ()
 	{
+		DoDelete (0, Count-1);
 		Count = 0;
 	}
 private:
 	T *Array;
-	size_t Most;
-	size_t Count;
+	unsigned int Most;
+	unsigned int Count;
 
 	void DoCopy (const TArray<T> &other)
 	{
@@ -180,7 +231,7 @@ private:
 		if (Count != 0)
 		{
 			Array = (T *)Malloc (sizeof(T)*Most);
-			for (size_t i = 0; i < Count; ++i)
+			for (unsigned int i = 0; i < Count; ++i)
 			{
 				Array[i] = other.Array[i];
 			}
@@ -188,6 +239,28 @@ private:
 		else
 		{
 			Array = NULL;
+		}
+	}
+
+	void DoResize ()
+	{
+		T *newarray = (T *)Malloc (sizeof(T)*Most);
+		for (unsigned int i = 0; i < Count; ++i)
+		{
+			CopyForTArray (newarray[i], Array[i]);
+		}
+		free (Array);
+		Array = newarray;
+	}
+
+	void DoDelete (unsigned int first, unsigned int last)
+	{
+		if (NeedsDestructor<T>())
+		{
+			for (unsigned int i = first; i <= last; ++i)
+			{
+				Array[i].~T();
+			}
 		}
 	}
 };
@@ -200,7 +273,7 @@ template <class T>
 class TAutoGrowArray : public TArray<T>
 {
 public:
-	T GetVal (size_t index)
+	T GetVal (unsigned int index)
 	{
 		if (index >= this->Size())
 		{
@@ -208,7 +281,7 @@ public:
 		}
 		return (*this)[index];
 	}
-	void SetVal (size_t index, T val)
+	void SetVal (unsigned int index, T val)
 	{
 		if (index >= this->Size())
 		{

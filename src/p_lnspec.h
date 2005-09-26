@@ -3,7 +3,7 @@
 ** New line and sector specials (Using Hexen as a base.)
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -345,6 +345,9 @@ typedef enum {
 	Damage_InstantDeath = 115,
 	sDamage_SuperHellslime = 116,
 	Scroll_StrifeCurrent = 118,
+
+	// Caverns of Darkness healing sector
+	Sector_Heal = 196,
 
 	Light_OutdoorLightning = 197,
 	Light_IndoorLightning1 = 198,

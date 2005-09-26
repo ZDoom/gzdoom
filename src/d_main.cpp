@@ -83,6 +83,7 @@
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
+#include "r_polymost.h"
 
 #include "v_text.h"
 
@@ -258,6 +259,8 @@ void D_ProcessEvents (void)
 			continue;				// console ate the event
 		if (M_Responder (ev))
 			continue;				// menu ate the event
+		if (testpolymost)
+			Polymost_Responder (ev);
 		G_Responder (ev);
 	}
 }
@@ -273,7 +276,7 @@ void D_ProcessEvents (void)
 void D_PostEvent (const event_t *ev)
 {
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && !paused && menuactive == MENU_Off &&
+	if (ev->type == EV_Mouse && !testpolymost && !paused && menuactive == MENU_Off &&
 		ConsoleState != c_down && ConsoleState != c_falling)
 	{
 		if (Button_Mlook.bDown || freelook)
@@ -477,59 +480,68 @@ void D_Display (bool screenshot)
 		wipe = false;
 	}
 
-	switch (gamestate)
+	if (testpolymost)
 	{
-	case GS_FULLCONSOLE:
-		C_DrawConsole ();
-		M_Drawer ();
-		if (!screenshot)
-			screen->Update ();
-		return;
+		drawpolymosttest();
+		C_DrawConsole();
+		M_Drawer();
+	}
+	else
+	{
+		switch (gamestate)
+		{
+		case GS_FULLCONSOLE:
+			C_DrawConsole ();
+			M_Drawer ();
+			if (!screenshot)
+				screen->Update ();
+			return;
 
-	case GS_LEVEL:
-	case GS_TITLELEVEL:
-		if (!gametic)
+		case GS_LEVEL:
+		case GS_TITLELEVEL:
+			if (!gametic)
+				break;
+
+			R_RefreshViewBorder ();
+			R_RenderActorView (players[consoleplayer].mo);
+			R_DetailDouble ();		// [RH] Apply detail mode expansion
+			// [RH] Let cameras draw onto textures that were visible this frame.
+			FCanvasTextureInfo::UpdateAll ();
+			if (automapactive)
+			{
+				AM_Drawer ();
+			}
+			if (realviewheight == SCREENHEIGHT && viewactive)
+			{
+				StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
+				StatusBar->DrawTopStuff (DrawFSHUD ? HUD_Fullscreen : HUD_None);
+			}
+			else
+			{
+				StatusBar->Draw (HUD_StatusBar);
+				StatusBar->DrawTopStuff (HUD_StatusBar);
+			}
+			CT_Drawer ();
 			break;
 
-		R_RefreshViewBorder ();
-		R_RenderActorView (players[consoleplayer].mo);
-		R_DetailDouble ();		// [RH] Apply detail mode expansion
-		// [RH] Let cameras draw onto textures that were visible this frame.
-		FCanvasTextureInfo::UpdateAll ();
-		if (automapactive)
-		{
-			AM_Drawer ();
+		case GS_INTERMISSION:
+			WI_Drawer ();
+			CT_Drawer ();
+			break;
+
+		case GS_FINALE:
+			F_Drawer ();
+			CT_Drawer ();
+			break;
+
+		case GS_DEMOSCREEN:
+			D_PageDrawer ();
+			CT_Drawer ();
+			break;
+
+		default:
+			break;
 		}
-		if (realviewheight == SCREENHEIGHT && viewactive)
-		{
-			StatusBar->Draw (DrawFSHUD ? HUD_Fullscreen : HUD_None);
-			StatusBar->DrawTopStuff (DrawFSHUD ? HUD_Fullscreen : HUD_None);
-		}
-		else
-		{
-			StatusBar->Draw (HUD_StatusBar);
-			StatusBar->DrawTopStuff (HUD_StatusBar);
-		}
-		CT_Drawer ();
-		break;
-
-	case GS_INTERMISSION:
-		WI_Drawer ();
-		CT_Drawer ();
-		break;
-
-	case GS_FINALE:
-		F_Drawer ();
-		CT_Drawer ();
-		break;
-
-	case GS_DEMOSCREEN:
-		D_PageDrawer ();
-		CT_Drawer ();
-		break;
-
-	default:
-	    break;
 	}
 
 	// draw pause pic
@@ -1983,8 +1995,7 @@ void D_DoomMain (void)
 	Wads.InitMultipleFiles (&wadfiles);
 
 	// [RH] Initialize localizable strings.
-	GStrings.LoadStrings (Wads.GetNumForName ("LANGUAGE"), STRING_TABLE_SIZE, false);
-	GStrings.Compact ();
+	GStrings.LoadStrings (false);
 
 	//P_InitXlat ();
 
@@ -2052,11 +2063,11 @@ void D_DoomMain (void)
 	FActorInfo::StaticSetActorNums ();
 
 	// [RH] User-configurable startup strings. Because BOOM does.
-	if (GStrings(STARTUP1)[0])	Printf ("%s\n", GStrings(STARTUP1));
-	if (GStrings(STARTUP2)[0])	Printf ("%s\n", GStrings(STARTUP2));
-	if (GStrings(STARTUP3)[0])	Printf ("%s\n", GStrings(STARTUP3));
-	if (GStrings(STARTUP4)[0])	Printf ("%s\n", GStrings(STARTUP4));
-	if (GStrings(STARTUP5)[0])	Printf ("%s\n", GStrings(STARTUP5));
+	if (GStrings["STARTUP1"])	Printf ("%s\n", GStrings("STARTUP1"));
+	if (GStrings["STARTUP2"])	Printf ("%s\n", GStrings("STARTUP2"));
+	if (GStrings["STARTUP3"])	Printf ("%s\n", GStrings("STARTUP3"));
+	if (GStrings["STARTUP4"])	Printf ("%s\n", GStrings("STARTUP4"));
+	if (GStrings["STARTUP5"])	Printf ("%s\n", GStrings("STARTUP5"));
 
 	//Added by MC:
 	bglobal.getspawned = Args.GatherFiles ("-bots", "", false);
@@ -2153,7 +2164,7 @@ void D_DoomMain (void)
 	}
 	if (devparm)
 	{
-		Printf (GStrings(D_DEVSTR));
+		Printf (GStrings("D_DEVSTR"));
 	}
 
 #ifndef unix
@@ -2162,7 +2173,7 @@ void D_DoomMain (void)
 	// the user's home directory.
 	if (Args.CheckParm("-cdrom"))
 	{
-		Printf (GStrings(D_CDROM));
+		Printf (GStrings("D_CDROM"));
 		mkdir ("c:\\zdoomdat", 0);
 	}
 #endif

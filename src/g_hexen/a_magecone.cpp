@@ -29,7 +29,7 @@ class AMWeapFrost : public AMageWeapon
 public:
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_M2);
+		return GStrings("TXT_WEAPON_M2");
 	}
 };
 

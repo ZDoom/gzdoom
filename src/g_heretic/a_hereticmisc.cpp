@@ -281,6 +281,7 @@ IMPLEMENT_ACTOR (ATeleGlitter1, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (0)
+	PROP_Damage (0)
 END_DEFAULTS
 
 // Teleglitter 2 ------------------------------------------------------------
@@ -303,6 +304,7 @@ IMPLEMENT_ACTOR (ATeleGlitter2, Heretic, -1, 0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
 	PROP_RenderStyle (STYLE_Add)
 	PROP_SpawnState (0)
+	PROP_Damage (0)
 END_DEFAULTS
 
 // --- Teleglitter action functions -----------------------------------------
@@ -363,7 +365,7 @@ class ASuperMap : public AMapRevealer
 protected:
 	const char *PickupMessage ()
 	{
-		return GStrings(TXT_ITEMSUPERMAP);
+		return GStrings("TXT_ITEMSUPERMAP");
 	}
 };
 

@@ -204,6 +204,10 @@ void APigPlayer::ActivateMorphWeapon ()
 	{
 		P_SetPsprite (player, ps_weapon, player->ReadyWeapon->GetReadyState());
 	}
+	else
+	{
+		P_SetPsprite (player, ps_weapon, NULL);
+	}
 }
 
 // Pig (non-player) ---------------------------------------------------------
@@ -286,7 +290,7 @@ void APig::Destroy ()
 
 const char *APig::GetObituary ()
 {
-	//return GStrings(OB_CHICKEN);
+	//return GStrings("OB_CHICKEN");
 	return Super::GetObituary ();
 }
 

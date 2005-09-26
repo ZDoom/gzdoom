@@ -840,7 +840,7 @@ static bool FindToken (char *tok, int *type)
 	return 0;
 }
 
-yyerror (char *s)
+int yyerror (char *s)
 {
 	if (SourceName != NULL)
 		printf ("%s, line %d: %s\n", SourceName, SourceLine, s);

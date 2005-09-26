@@ -8,7 +8,7 @@
 #include "muslib.h"
 #include "files.h"
 
-class OPLmusicBlock : protected musicBlock
+class OPLmusicBlock : public musicBlock
 {
 public:
 	OPLmusicBlock (FILE *file, int len, int rate, int maxSamples);
@@ -19,6 +19,7 @@ public:
 	void Restart ();
 	void SetLooping (bool loop);
 	void ResetChips ();
+	int PlayTick ();
 
 protected:
 	int SampleRate;
@@ -26,6 +27,8 @@ protected:
 	int SamplesPerTick;
 	bool TwoChips;
 	bool Looping;
+	enum { NotRaw, RDosPlay, IMF } RawPlayer;
+	int ScoreLen;
 
 	int *SampleBuff;
 

@@ -3,7 +3,7 @@
 ** Miscellaneous console commands.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -248,7 +248,7 @@ CCMD (idclev)
 			return;
 
 		// So be it.
-		Printf ("%s\n", GStrings(STSTR_CLEV));
+		Printf ("%s\n", GStrings("STSTR_CLEV"));
       	G_DeferedInitNew (mapname);
 		players[0].health = 0;		// Force reset
 	}
@@ -271,7 +271,7 @@ CCMD (hxvisit)
 			if (Wads.CheckNumForName (mapname) != -1)
 			{
 				// So be it.
-				Printf ("%s\n", GStrings(STSTR_CLEV));
+				Printf ("%s\n", GStrings("STSTR_CLEV"));
       			G_DeferedInitNew (mapname);
 				return;
 			}
@@ -345,17 +345,15 @@ CCMD (print)
 		Printf ("print <name>: Print a string from the string table\n");
 		return;
 	}
-	GStrings.LoadNames ();
-	int strnum = GStrings.FindString (argv[1]);
-	if (strnum < 0)
+	const char *str = GStrings[argv[1]];
+	if (str == NULL)
 	{
 		Printf ("%s unknown\n", argv[1]);
 	}
 	else
 	{
-		Printf ("%s\n", GStrings(strnum));
+		Printf ("%s\n", str);
 	}
-	GStrings.FlushNames ();
 }
 
 CCMD (exec)

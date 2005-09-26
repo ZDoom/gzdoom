@@ -3,7 +3,7 @@
 ** This file contains the tails of lists stored in special data segments
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -49,9 +49,6 @@ void *GRegTail = 0;
 #pragma data_seg(".sreg$z")
 void *SRegTail = 0;
 
-#pragma data_seg(".wreg$z")
-void *WRegTail = 0;
-
 #pragma data_seg()
 
 
@@ -63,7 +60,6 @@ void *ARegTail __attribute__((section("areg"))) = 0;
 void *CRegTail __attribute__((section("creg"))) = 0;
 void *GRegTail __attribute__((section("greg"))) = 0;
 void *SRegTail __attribute__((section("sreg"))) = 0;
-void *WRegTail __attribute__((section("wreg"))) = 0;
 #else
 
 // I can't find any way to specify the order to link files with
@@ -75,7 +71,6 @@ void **ARegTail;
 void **CRegTail;
 void **GRegTail;
 void **SRegTail;
-void **WRegTail;
 #endif
 
 #elif

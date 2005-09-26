@@ -373,7 +373,7 @@ void S_Start ()
 
 void S_PrecacheLevel ()
 {
-	size_t i;
+	unsigned int i;
 
 	if (GSnd)
 	{
@@ -608,6 +608,7 @@ static void S_StartSound (fixed_t *pt, AActor *mover, int channel,
 	if (sfx->lumpnum == sfx_empty)
 	{
 		basepriority = -1000;
+		return;
 	}
 	else if (attenuation <= 0)
 	{
@@ -1033,9 +1034,8 @@ void S_StopSound (AActor *ent, int channel)
 
 void S_StopAllChannels ()
 {
-	int i;
-
-	for (i = 0; i < numChannels; i++)
+	SN_StopAllSequences ();
+	for (int i = 0; i < numChannels; i++)
 		if (Channel[i].sfxinfo)
 			S_StopChannel (i);
 }
@@ -1520,7 +1520,7 @@ void S_StopMusic (bool force)
 static void S_StopChannel (int cnum)
 {
 
-	int 		i;
+//	int 		i;
 	channel_t*	c = &Channel[cnum];
 
 	if (c->sfxinfo)
@@ -1530,14 +1530,14 @@ static void S_StopChannel (int cnum)
 
 		// check to see
 		//	if other channels are playing the sound
-		for (i = 0; i < numChannels; i++)
+/*		for (i = 0; i < numChannels; i++)
 		{
 			if (cnum != i && c->sfxinfo == Channel[i].sfxinfo)
 			{
 				break;
 			}
 		}
-		
+*/		
 		// degrade usefulness of sound data
 //		c->sfxinfo->usefulness--;
 
@@ -1583,7 +1583,7 @@ CCMD (idmus)
 				map = CalcMapName (0, l);
 			else
 			{
-				Printf ("%s\n", GStrings(STSTR_NOMUS));
+				Printf ("%s\n", GStrings("STSTR_NOMUS"));
 				return;
 			}
 		}
@@ -1597,12 +1597,12 @@ CCMD (idmus)
 			if (info->music)
 			{
 				S_ChangeMusic (info->music, info->musicorder);
-				Printf ("%s\n", GStrings(STSTR_MUS));
+				Printf ("%s\n", GStrings("STSTR_MUS"));
 			}
 		}
 		else
 		{
-			Printf ("%s\n", GStrings(STSTR_NOMUS));
+			Printf ("%s\n", GStrings("STSTR_NOMUS"));
 		}
 	}
 }

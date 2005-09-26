@@ -2,7 +2,7 @@
 ** dobject.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -130,6 +130,15 @@ private:
 	void CopyMeta (const FMetaTable *other);
 };
 
+#ifdef __GNUC__
+// With some options and versions, GCC initializes the pointer list at run-time, so these
+// entries must not be const. Otherwise, you get an access violation.
+#	define POINTY_TYPE(cls) DObject *cls::*
+#else
+#	define POINTY_TYPE(cls) DObject *cls::* const
+#endif
+
+
 struct TypeInfo
 {
 #if !defined(_MSC_VER) && !defined(__GNUC__)
@@ -159,7 +168,7 @@ struct TypeInfo
 	const char *Name;
 	TypeInfo *ParentType;
 	unsigned int SizeOf;
-	DObject *DObject::* const *Pointers;
+	POINTY_TYPE(DObject) *Pointers;
 	void (*ConstructNative)(void *);
 	FActorInfo *ActorInfo;
 	unsigned int HashNext;
@@ -216,9 +225,9 @@ private: \
 		private: static void InPlaceConstructor (void *mem);
 
 #define HAS_OBJECT_POINTERS \
-	static DObject *ThisClass::* const _Pointers_[];
+	static POINTY_TYPE(ThisClass) _Pointers_[];
 
-#define DECLARE_POINTER(field)  (DObject *ThisClass::* const)&ThisClass::field,
+#define DECLARE_POINTER(field)  (POINTY_TYPE(ThisClass))&ThisClass::field,
 #define END_POINTERS			0 };
 
 #if !defined(_MSC_VER) && !defined(__GNUC__)
@@ -250,8 +259,8 @@ private: \
 
 #define IMPLEMENT_POINTY_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
-	_IMP_TYPEINFO(cls,(DObject *DObject::* const *)cls::_Pointers_,cls::InPlaceConstructor) \
-	DObject *cls::* const cls::_Pointers_[] = {
+	_IMP_TYPEINFO(cls,(POINTY_TYPE(DObject) *)cls::_Pointers_,cls::InPlaceConstructor) \
+	POINTY_TYPE(cls) cls::_Pointers_[] = {
 
 #define IMPLEMENT_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
@@ -363,7 +372,7 @@ private:
 	void RemoveFromArray ();
 
 	static bool Inactive;
-	size_t Index;
+	unsigned int Index;
 };
 
 #endif //__DOBJECT_H__

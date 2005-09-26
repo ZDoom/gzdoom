@@ -3,7 +3,7 @@
 ** Cameras that move and related neat stuff
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -592,13 +592,16 @@ void AActorMover::Activate (AActor *activator)
 
 void AActorMover::Deactivate (AActor *activator)
 {
-	Super::Deactivate (activator);
-	if (tracer != NULL)
+	if (bActive)
 	{
-		tracer->UnlinkFromWorld ();
-		tracer->flags = special1;
-		tracer->LinkToWorld ();
-		tracer->flags2 = special2;
+		Super::Deactivate (activator);
+		if (tracer != NULL)
+		{
+			tracer->UnlinkFromWorld ();
+			tracer->flags = special1;
+			tracer->LinkToWorld ();
+			tracer->flags2 = special2;
+		}
 	}
 }
 

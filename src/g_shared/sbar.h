@@ -3,7 +3,7 @@
 ** Base status bar definition
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -173,6 +173,7 @@ public:
 	bool CheckMessage (DHUDMessage *msg);
 	void ShowPlayerName ();
 	fixed_t GetDisplacement () { return Displacement; }
+	int GetPlayer ();
 
 	virtual void Serialize (FArchive &arc);
 

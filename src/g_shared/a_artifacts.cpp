@@ -334,6 +334,22 @@ END_DEFAULTS
 
 //===========================================================================
 //
+// APowerStrength :: HandlePickup
+//
+//===========================================================================
+
+bool APowerStrength::HandlePickup (AInventory *item)
+{
+	if (item->GetClass() == GetClass())
+	{ // Setting EffectTics to 0 will force Powerup's HandlePickup()
+	  // method to reset the tic count so you get the red flash again.
+		EffectTics = 0;
+	}
+	return Super::HandlePickup (item);
+}
+
+//===========================================================================
+//
 // APowerStrength :: InitEffect
 //
 //===========================================================================
@@ -725,9 +741,13 @@ bool APowerFlight::DrawPowerup (int x, int y)
 {
 	if (EffectTics > BLINKTHRESHOLD || !(EffectTics & 16))
 	{
-		int picnum = TexMan.GetTexture ("SPFLY0", FTexture::TEX_MiscPatch);
+		int picnum = TexMan.CheckForTexture ("SPFLY0", FTexture::TEX_MiscPatch);
 		int frame = (level.time/3) & 15;
 
+		if (picnum <= 0)
+		{
+			return false;
+		}
 		if (Owner->flags & MF_NOGRAVITY)
 		{
 			if (HitCenterFrame && (frame != 15 && frame != 0))

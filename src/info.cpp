@@ -3,7 +3,7 @@
 ** Keeps track of available actors and their states
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2002 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -38,11 +38,11 @@
 */
 
 
+#include "info.h"
 #include "m_fixed.h"
 #include "c_dispatch.h"
 #include "autosegs.h"
 
-#include "info.h"
 #include "gi.h"
 
 #include "actor.h"
@@ -97,7 +97,7 @@ FArchive &operator<< (FArchive &arc, FState *&state)
 			}
 		}
 
-		for (size_t i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
+		for (unsigned int i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
 		{
 			FActorInfo *info = TypeInfo::m_RuntimeActors[i]->ActorInfo;
 			if (state >= info->OwnedStates &&
@@ -145,7 +145,7 @@ static void ProcessStates (FState *states, int numstates)
 	{
 		if (sprite == -1 || strncmp (sprites[sprite].name, states->sprite.name, 4) != 0)
 		{
-			size_t i;
+			unsigned int i;
 
 			sprite = -1;
 			for (i = 0; i < sprites.Size (); ++i)
@@ -238,7 +238,7 @@ void FActorInfo::StaticSetActorNums ()
 		reg->RegisterIDs ();
 	}
 
-	for (size_t i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
+	for (unsigned int i = 0; i < TypeInfo::m_RuntimeActors.Size(); ++i)
 	{
 		TypeInfo::m_RuntimeActors[i]->ActorInfo->RegisterIDs ();
 	}

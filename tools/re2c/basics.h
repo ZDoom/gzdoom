@@ -4,7 +4,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif _MSC_VER
+#elif _WIN32
 #include "configwin.h"
 #endif
 

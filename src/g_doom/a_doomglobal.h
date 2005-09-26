@@ -14,7 +14,7 @@ class AExplosiveBarrel : public AActor
 {
 	DECLARE_ACTOR (AExplosiveBarrel, AActor)
 public:
-	int GetMOD () { return MOD_BARREL; }
+	const char *GetObituary ();
 };
 
 class ABulletPuff : public AActor
@@ -29,7 +29,7 @@ class ARocket : public AActor
 	DECLARE_ACTOR (ARocket, AActor)
 public:
 	void BeginPlay ();
-	int GetMOD () { return MOD_ROCKET; }
+	const char *GetObituary ();
 };
 
 class AArchvile : public AActor
@@ -56,14 +56,14 @@ public:
 class APlasmaBall : public AActor
 {
 	DECLARE_ACTOR (APlasmaBall, AActor)
-	int GetMOD () { return MOD_PLASMARIFLE; }
+	const char *GetObituary ();
 };
 
 class ABFGBall : public AActor
 {
 	DECLARE_ACTOR (ABFGBall, AActor)
 public:
-	int GetMOD () { return MOD_BFG_BOOM; }
+	const char *GetObituary ();
 };
 
 class AScriptedMarine : public AActor

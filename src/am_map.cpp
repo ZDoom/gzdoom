@@ -942,16 +942,16 @@ BOOL AM_Responder (event_t *ev)
 			case AM_FOLLOWKEY:
 				followplayer = !followplayer;
 				f_oldloc.x = FIXED_MAX;
-				Printf ("%s\n", GStrings(followplayer ? AMSTR_FOLLOWON : AMSTR_FOLLOWOFF));
+				Printf ("%s\n", GStrings(followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
 				break;
 			case AM_GRIDKEY:
 				grid = !grid;
-				Printf ("%s\n", GStrings(grid ? AMSTR_GRIDON : AMSTR_GRIDOFF));
+				Printf ("%s\n", GStrings(grid ? "AMSTR_GRIDON" : "AMSTR_GRIDOFF"));
 				break;
 			case AM_MARKKEY:
 				if (AM_addMark())
 				{
-					Printf ("%s %d\n", GStrings(AMSTR_MARKEDSPOT), markpointnum);
+					Printf ("%s %d\n", GStrings("AMSTR_MARKEDSPOT"), markpointnum);
 				}
 				else
 				{
@@ -961,7 +961,7 @@ BOOL AM_Responder (event_t *ev)
 			case AM_CLEARMARKKEY:
 				if (AM_clearMarks())
 				{
-					Printf ("%s\n", GStrings(AMSTR_MARKSCLEARED));
+					Printf ("%s\n", GStrings("AMSTR_MARKSCLEARED"));
 				}
 				else
 				{

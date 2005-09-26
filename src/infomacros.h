@@ -2,7 +2,7 @@
 ** infomacros.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -70,12 +70,12 @@ typedef void (*voidfunc_)();
 #pragma data_seg(".sreg$u")		// AT_SPEED_SET list
 #pragma data_seg()
 
-#define DOOMEDNUMOF(actor) actor##Defaults_.DoomEdNum
+#define DOOMEDNUMOF(actor) actor##ActorInfo.DoomEdNum
 
 #define BEGIN_DEFAULTS_PRE(actor) \
-	extern FActorInfo actor##Defaults_; \
-	__declspec(allocate(".areg$u")) FActorInfo *actor##DefaultsReg = &actor##Defaults_; \
-	FActorInfo actor##Defaults_ = {
+	extern FActorInfo actor##ActorInfo; \
+	__declspec(allocate(".areg$u")) FActorInfo *actor##DefaultsReg = &actor##ActorInfo; \
+	FActorInfo actor##ActorInfo = {
 
 #define BEGIN_DEFAULTS_POST(actor,game,ednum,id) \
 	GAME_##game, id, ednum,
@@ -108,36 +108,37 @@ typedef void (*voidfunc_)();
 	__declspec(allocate(".sreg$u")) void (*ns##_gsr)(EGameSpeed) = ns##_ss; \
 	void ns##_ss (EGameSpeed varname)
 
-#elif defined(__GNUC__)
+#else
 
-/************************************************
-****************** GCC macros *******************
+/***********************************************
+************* Non-Visual C++ macros ************
 ************************************************/
 
-#define DOOMEDNUMOF(actor) actor##Defaults_::TheInfo.DoomEdNum
+#define DOOMEDNUMOF(actor) actor##ActorInfo.DoomEdNum
+
+extern void ApplyActorDefault (int defnum, const char *datastr);
+extern void ApplyActorDefault (int defnum, int dataint);
 
 // All variables used for the default list must be declared extern to
 // ensure that GCC actually generates them in the object file.
 #define BEGIN_DEFAULTS_PRE(actor) \
-	namespace actor##Defaults_ { \
-	extern FActorInfo *DefaultsReg; \
-	extern FActorInfo TheInfo; \
-	FActorInfo *DefaultsReg __attribute__((section("areg"))) = &TheInfo; \
-	FActorInfo TheInfo = {
+	extern FActorInfo actor##ActorInfo; \
+	extern FActorInfo *actor##DefaultsReg; \
+	extern void actor##DefaultsConstructor(); \
+	FActorInfo *actor##DefaultsReg __attribute__((section("areg"))) = &actor##ActorInfo; \
+	FActorInfo actor##ActorInfo = {
 
 #define BEGIN_DEFAULTS_POST(actor,game,ednum,id) \
-	GAME_##game, id, ednum };
+	GAME_##game, id, ednum, actor##DefaultsConstructor }; \
+	void actor##DefaultsConstructor() { \
 
-// Be very careful! If any of these arrays ends up being all zero, later GCCs will move the array into the BSS
-// section, which we do not want.
-#define END_DEFAULTS extern BYTE endoflist[2]; BYTE endoflist[2] = { BREAK_WORD(ADEF_EOL) }; }
+#define END_DEFAULTS }
 
-#define ADD_BYTE_PROP(prop,val) extern BYTE prop##_1[3]; BYTE prop##_1[3] = { BREAK_WORD(prop|ADEFTYPE_Byte), val };
-#define ADD_FIXD_PROP(prop,val) extern BYTE prop##_1[3]; BYTE prop##_1[3] = { BREAK_WORD(prop|ADEFTYPE_FixedMul), val };
-#define ADD_WORD_PROP(prop,val) extern BYTE prop##_1[4]; BYTE prop##_1[4] = { BREAK_WORD(prop|ADEFTYPE_Word), BREAK_WORD(val) };
-#define ADD_LONG_PROP(prop,val) extern BYTE prop##_1[6]; BYTE prop##_1[6] = { BREAK_WORD(prop|ADEFTYPE_Long), BREAK_LONG(val) };
-#define ADD_STRING_PROP(prop1,prop2,val) struct prop1##_s { BYTE label[2]; BYTE content[sizeof(val)]; }; extern prop1##_s prop1##_1; \
-								prop1##_s prop1##_1 = { BREAK_WORD(prop1), val };
+#define ADD_BYTE_PROP(prop,val) ApplyActorDefault (prop, (val));
+#define ADD_FIXD_PROP(prop,val) ApplyActorDefault (prop, ((val)<<FRACBITS));
+#define ADD_WORD_PROP(prop,val) ApplyActorDefault (prop, (val));
+#define ADD_LONG_PROP(prop,val) ApplyActorDefault (prop, (val));
+#define ADD_STRING_PROP(prop1,prop2,val) ApplyActorDefault (prop1, (val));
 	
 #define AT_GAME_SET(ns) \
 	extern void ns##_gs(); \
@@ -150,10 +151,6 @@ typedef void (*voidfunc_)();
 	extern void ns##_ss(EGameSpeed); \
 	void (*ns##_gsr)(EGameSpeed) __attribute__((section("sreg"))) = ns##_ss; \
 	void ns##_ss (EGameSpeed varname)
-
-#else
-
-#error Actor default lists are only implemented for Visual C++ and GCC
 
 #endif
 
@@ -176,12 +173,12 @@ public:
 
 #define BEGIN_DEFAULTS(actor,game,ednum,spawnid) \
 	BEGIN_DEFAULTS_PRE(actor) \
-	RUNTIME_CLASS(actor), &actor::States[0], NULL, sizeof(actor::States)/sizeof(actor::States[0]), \
+	RUNTIME_CLASS(actor), &actor::States[0], NULL, NULL, sizeof(actor::States)/sizeof(actor::States[0]), \
 	BEGIN_DEFAULTS_POST(actor,game,ednum,spawnid)
 
 #define BEGIN_STATELESS_DEFAULTS(actor,game,ednum,spawnid) \
 	BEGIN_DEFAULTS_PRE(actor) \
-	RUNTIME_CLASS(actor), NULL, NULL, 0, \
+	RUNTIME_CLASS(actor), NULL, NULL, NULL, 0, \
 	BEGIN_DEFAULTS_POST(actor,game,ednum,spawnid)
 
 // IMPLEMENT_ACTOR combines IMPLEMENT_CLASS and BEGIN_DEFAULTS
@@ -193,6 +190,13 @@ public:
 
 #define IMPLEMENT_ABSTRACT_ACTOR(actor) \
 	IMPLEMENT_STATELESS_ACTOR(actor,Any,-1,0) END_DEFAULTS
+
+#define ACTOR_STATE_NAMES(actor) \
+	extern FStateName actor##StateNames[]; \
+	extern FActorInfo actor##ActorInfo; \
+	struct actor##StateNamesAssignerClass { actor##StateNamesAssignerClass() { actor##ActorInfo.StateNames = actor##StateNames; } } \
+		actor##StateNamesAssigner; \
+	FStateName actor##StateNames[]
 
 #define PROP_SeeSound(x)				ADD_STRING_PROP(ADEF_SeeSound,"\1",x)
 #define PROP_AttackSound(x)				ADD_STRING_PROP(ADEF_AttackSound,"\2",x)
@@ -311,7 +315,5 @@ public:
 #define PROP_Weapon_AltHoldAtkState(x)	ADD_BYTE_PROP(ADEF_Weapon_AltHoldAtkState,x)
 #define PROP_Weapon_FlashState(x)		ADD_BYTE_PROP(ADEF_Weapon_FlashState,x)
 #define PROP_Sigil_NumPieces(x)			ADD_BYTE_PROP(ADEF_Sigil_NumPieces,x)
-
-#define PROP_SKIP_SUPER					ADD_BYTE_PROP(ADEF_SkipSuper,0)
 
 #endif //__INFOMACROS_H__

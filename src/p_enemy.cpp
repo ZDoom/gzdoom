@@ -1556,7 +1556,12 @@ void A_Chase (AActor *actor)
 		}
 		if (player->attacker && player->attacker->health > 0 && player->attacker->flags & MF_SHOOTABLE && pr_newchasedir() < 80)
 		{
-			actor->target = player->attacker;
+			if (!(player->attacker->flags & MF_FRIENDLY) ||
+				(deathmatch && actor->FriendPlayer != 0 && player->attacker->FriendPlayer != 0 &&
+				actor->FriendPlayer != player->attacker->FriendPlayer))
+			{
+				actor->target = player->attacker;
+			} 
 		}
 	}
 	if (!actor->target || !(actor->target->flags & MF_SHOOTABLE))
@@ -1630,8 +1635,6 @@ void A_Chase (AActor *actor)
 			}
 			actor->target = NULL;
 			actor->flags |= MF_JUSTATTACKED;
-			actor->flags4 |= MF4_INCOMBAT;
-			actor->SetState (actor->SpawnState);
 			actor->flags &= ~MF_INCHASE;
 			return;
 		}
@@ -2128,7 +2131,7 @@ int P_Massacre ()
 				actor->flags2 &= ~(MF2_DORMANT|MF2_INVULNERABLE);
 				do
 				{
-					P_DamageMobj (actor, NULL, NULL, 1000000, MOD_UNKNOWN);
+					P_DamageMobj (actor, NULL, NULL, 1000000, MOD_MASSACRE);
 				}
 				while (actor->health > 0);
 			}

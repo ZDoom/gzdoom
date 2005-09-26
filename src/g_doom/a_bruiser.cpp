@@ -16,8 +16,8 @@ class ABaronOfHell : public AActor
 {
 	DECLARE_ACTOR (ABaronOfHell, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_BARON); }
-	const char *GetHitObituary () { return GStrings(OB_BARONHIT); }
+	const char *GetObituary () { return GStrings("OB_BARON"); }
+	const char *GetHitObituary () { return GStrings("OB_BARONHIT"); }
 };
 
 FState ABaronOfHell::States[] =
@@ -93,8 +93,8 @@ class AStealthBaron : public ABaronOfHell
 {
 	DECLARE_STATELESS_ACTOR (AStealthBaron, ABaronOfHell)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHBARON); }
-	const char *GetHitObituary () { return GStrings(OB_STEALTHBARON); }
+	const char *GetObituary () { return GStrings("OB_STEALTHBARON"); }
+	const char *GetHitObituary () { return GStrings("OB_STEALTHBARON"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthBaron, Doom, 9052, 100)
@@ -146,8 +146,8 @@ class AHellKnight : public ABaronOfHell
 {
 	DECLARE_ACTOR (AHellKnight, ABaronOfHell)
 public:
-	const char *GetObituary () { return GStrings(OB_KNIGHT); }
-	const char *GetHitObituary () { return GStrings(OB_KNIGHTHIT); }
+	const char *GetObituary () { return GStrings("OB_KNIGHT"); }
+	const char *GetHitObituary () { return GStrings("OB_KNIGHTHIT"); }
 };
 
 FState AHellKnight::States[] =
@@ -223,8 +223,8 @@ class AStealthHellKnight : public AHellKnight
 {
 	DECLARE_STATELESS_ACTOR (AStealthHellKnight, AHellKnight)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHKNIGHT); }
-	const char *GetHitObituary () { return GStrings(OB_STEALTHKNIGHT); }
+	const char *GetObituary () { return GStrings("OB_STEALTHKNIGHT"); }
+	const char *GetHitObituary () { return GStrings("OB_STEALTHKNIGHT"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthHellKnight, Doom, 9056, 101)

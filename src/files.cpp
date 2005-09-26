@@ -83,7 +83,7 @@ long FileReader::Read (void *buffer, long len)
 	{
 		len = Length - FilePos + StartPos;
 	}
-	len = fread (buffer, 1, len, File);
+	len = (long)fread (buffer, 1, len, File);
 	FilePos += len;
 	return len;
 }

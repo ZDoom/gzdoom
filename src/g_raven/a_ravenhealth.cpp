@@ -12,7 +12,7 @@ class ACrystalVial : public AHealth
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(TXT_ITEMHEALTH);
+		return GStrings("TXT_ITEMHEALTH");
 	}
 };
 

@@ -216,7 +216,7 @@ static bool P_SightTraverseIntercepts ()
 	size_t count;
 	fixed_t dist;
 	intercept_t *scan, *in;
-	size_t scanpos;
+	unsigned int scanpos;
 	divline_t dl;
 
 	count = intercepts.Size ();

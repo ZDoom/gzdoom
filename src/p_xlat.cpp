@@ -3,7 +3,7 @@
 ** Translate old Doom format maps to the Hexen format
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -187,6 +187,10 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld)
 				case 5<<5:					// Fifth argument is a tag
 					ld->args[4] = tag;
 					break;
+				}
+				if (ld->flags & ML_SECRET)
+				{
+					ld->flags &= ~ML_MONSTERSCANACTIVATE;
 				}
 				return;
 			}
@@ -426,6 +430,12 @@ int P_TranslateSectorSpecial (int special)
 				{
 					return high | (special + 100);
 				}
+			}
+			else if (level.flags & LEVEL_CAVERNS_OF_DARKNESS)
+			{
+				// CoD uses 18 as an instant death sector type and 19 for healing the palyer
+				if (special == 18) return high | Damage_InstantDeath;
+				if (special == 19) return high | Sector_Heal;
 			}
 			return high | (special + 64);
 		}

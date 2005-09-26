@@ -2,7 +2,7 @@
 ** farchive.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -213,9 +213,9 @@ protected:
 		const TypeInfo *ReadStoredClass (const TypeInfo *wanttype);
 		DWORD HashObject (const DObject *obj) const;
 		DWORD AddName (const char *name);
-		DWORD AddName (size_t start);	// Name has already been added to storage
+		DWORD AddName (unsigned int start);	// Name has already been added to storage
 		DWORD FindName (const char *name) const;
-		DWORD FindName (const char *name, size_t bucket) const;
+		DWORD FindName (const char *name, unsigned int bucket) const;
 
 		bool m_Persistent;		// meant for persistent storage (disk)?
 		bool m_Loading;			// extracting objects?
@@ -249,7 +249,7 @@ protected:
 		};
 		TArray<NameMap> m_Names;
 		TArray<char> m_NameStorage;
-		size_t m_NameHash[EObjectHashSize];
+		unsigned int m_NameHash[EObjectHashSize];
 
 		int *m_SpriteMap;
 		size_t m_NumSprites;

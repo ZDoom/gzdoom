@@ -2205,7 +2205,7 @@ static void P_CreateBlockMap ()
 	delete[] BlockLists;
 
 	blockmaplump = new int[BlockMap.Size()];
-	for (size_t ii = 0; ii < BlockMap.Size(); ++ii)
+	for (unsigned int ii = 0; ii < BlockMap.Size(); ++ii)
 	{
 		blockmaplump[ii] = BlockMap[ii];
 	}
@@ -2292,7 +2292,7 @@ static void P_GroupLines (bool buildmap)
 	sector_t*			sector;
 	DBoundingBox		bbox;
 	bool				flaggedNoFronts = false;
-	size_t				ii, jj;
+	unsigned int		ii, jj;
 		
 	// look up sector number for each subsector
 	clock (times[0]);

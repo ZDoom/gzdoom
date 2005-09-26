@@ -78,12 +78,12 @@ fixed_t			rw_frontcz1, rw_frontcz2;
 fixed_t			rw_frontfz1, rw_frontfz2;
 
 
-size_t			MaxDrawSegs;
+unsigned int	MaxDrawSegs;
 drawseg_t		*drawsegs;
 drawseg_t*		firstdrawseg;
 drawseg_t*		ds_p;
 
-size_t			FirstInterestingDrawseg;
+unsigned int	FirstInterestingDrawseg;
 TArray<size_t>	InterestingDrawsegs;
 
 fixed_t			WallTX1, WallTX2;	// x coords at left, right of wall in view space
@@ -858,7 +858,7 @@ void R_AddLine (seg_t *line)
 // Checks BSP node/subtree bounding box.
 // Returns true if some part of the bbox might be visible.
 //
-static const int checkcoord[12][4] = // killough -- static const
+extern "C" const int checkcoord[12][4] =
 {
 	{3,0,2,1},
 	{3,0,2,0},
@@ -1121,7 +1121,7 @@ void R_Subsector (subsector_t *sub)
 
 	// [RH] Add particles
 	int shade = LIGHT2SHADE((floorlightlevel + ceilinglightlevel)/2 + r_actualextralight);
-	for (WORD i = ParticlesInSubsec[sub-subsectors]; i != NO_PARTICLE; i = Particles[i].snext)
+	for (WORD i = ParticlesInSubsec[(unsigned int)(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
 	{
 		R_ProjectParticle (Particles + i, subsectors[sub-subsectors].sector, shade, FakeSide);
 	}

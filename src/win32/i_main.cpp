@@ -67,10 +67,11 @@
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 
-extern void CreateCrashLog (char *(*userCrashInfo)(char *text, char *maxtext));
+void CreateCrashLog (HANDLE process, DWORD processID, DWORD threadID, LPEXCEPTION_POINTERS exceptionRecord, char *custominfo, DWORD customsize);
 extern void DisplayCrashLog ();
 extern EXCEPTION_POINTERS CrashPointers;
-extern char *CrashText;
+extern EXCEPTION_RECORD MyExceptionRecord;
+extern CONTEXT MyContextRecord;
 
 // Will this work with something besides VC++?
 // Answer: yes it will.
@@ -89,6 +90,7 @@ WNDCLASS		WndClass;
 HWND			Window, ConWindow;
 DWORD			SessionID;
 HANDLE			MainThread;
+DWORD			MainThreadID;
 
 HMODULE			hwtsapi32;		// handle to wtsapi32.dll
 
@@ -160,7 +162,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SIZE:
 		if (wParam != SIZE_MAXHIDE && wParam != SIZE_MAXSHOW)
 		{
-			MoveWindow ((HWND)GetWindowLongPtr (hWnd, GWLP_USERDATA),
+			MoveWindow ((HWND)(LONG_PTR)GetWindowLongPtr (hWnd, GWLP_USERDATA),
 				0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
 		}
 		return 0;
@@ -176,7 +178,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			WS_CHILD | WS_VISIBLE | WS_VSCROLL |
 			ES_LEFT | ES_MULTILINE,
 			0, 0, 0, 0,
-			hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+			hWnd, NULL, (HINSTANCE)(LONG_PTR)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
 		if (view == NULL)
 		{
 			return -1;
@@ -187,14 +189,6 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	}
 	return DefWindowProc (hWnd, msg, wParam, lParam);
-}
-
-void I_HideLogWindow ()
-{
-	if (ConWindow != NULL && 0)
-	{
-		ShowWindow (ConWindow, SW_HIDE);
-	}
 }
 
 void DoMain (HINSTANCE hInstance)
@@ -210,13 +204,12 @@ void DoMain (HINSTANCE hInstance)
 		_set_new_handler (NewFailure);
 #endif
 
-		g_hInst = hInstance;
 		Args.SetArgs (__argc, __argv);
 
 		// Under XP, get our session ID so we can know when the user changes/locks sessions.
 		// Since we need to remain binary compatible with older versions of Windows, we
 		// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
-		HMODULE kernel = LoadLibraryA ("kernel32.dll");
+		HMODULE kernel = GetModuleHandle ("kernel32.dll");
 		if (kernel != 0)
 		{
 			pIsDebuggerPresent = (BOOL(*)())GetProcAddress (kernel, "IsDebuggerPresent");
@@ -261,9 +254,6 @@ void DoMain (HINSTANCE hInstance)
 		}
 	}
 #endif
-
-		// Let me see fancy visual styles under XP
-		InitCommonControls ();
 
 		// Set the timer to be as accurate as possible
 		if (timeGetDevCaps (&tc, sizeof(tc)) != TIMERR_NOERROR)
@@ -368,7 +358,6 @@ void DoMain (HINSTANCE hInstance)
 					}
 				}
 			}
-			FreeLibrary (kernel);
 		}
 
 		GetClientRect (Window, &cRect);
@@ -399,67 +388,46 @@ void DoMain (HINSTANCE hInstance)
 	}
 }
 
-char *DoomSpecificInfo (char *text, char *maxtext)
+void DoomSpecificInfo (char *buffer)
 {
 	const char *arg;
 	int i;
 
-	text += wsprintf (text, "\r\nZDoom version " DOTVERSIONSTR "\r\n");
+	buffer += wsprintf (buffer, "ZDoom version " DOTVERSIONSTR " (" __DATE__ ")\r\n");
+	buffer += wsprintf (buffer, "\r\nCommand line: %s\r\n", GetCommandLine());
 
-	text += wsprintf (text, "\r\nCommand line:\r\n");
-	for (i = 0; i < Args.NumArgs(); ++i)
+	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)
 	{
-		arg = Args.GetArg(i);
-		if (text + strlen(arg) + 4 >= maxtext)
-			goto done;
-		text += wsprintf (text, " %s", arg);
-	}
-
-	arg = Wads.GetWadName (FWadCollection::IWAD_FILENUM);
-	if (arg != NULL)
-	{
-		if (text + strlen(arg) + 10 >= maxtext)
-			goto done;
-		text += wsprintf (text, "\r\nIWAD: %s", arg);
+		buffer += wsprintf (buffer, "\r\nWad %d: %s", i, arg);
 	}
 
 	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
 	{
-		if (text + 32 < maxtext)
-			text += wsprintf (text, "\r\n\r\nNot in a level.");
+		buffer += wsprintf (buffer, "\r\n\r\nNot in a level.");
 	}
 	else
 	{
 		char name[9];
-		if (text + 32 < maxtext)
-		{
-			strncpy (name, level.mapname, 8);
-			name[8] = 0;
-			text += wsprintf (text, "\r\n\r\nCurrent map: %s", name);
-		}
+
+		strncpy (name, level.mapname, 8);
+		name[8] = 0;
+		buffer += wsprintf (buffer, "\r\n\r\nCurrent map: %s", name);
+
 		if (!viewactive)
 		{
-			if (text + 32 < maxtext)
-				text += wsprintf (text, "\r\n\r\nView not active.");
+			buffer += wsprintf (buffer, "\r\n\r\nView not active.");
 		}
 		else
 		{
-			if (text + 32 < maxtext)
-				text += wsprintf (text, "\r\n\r\nviewx = %d", viewx);
-			if (text + 32 < maxtext)
-				text += wsprintf (text, "\r\nviewy = %d", viewy);
-			if (text + 32 < maxtext)
-				text += wsprintf (text, "\r\nviewz = %d", viewz);
-			if (text + 32 < maxtext)
-				text += wsprintf (text, "\r\nviewangle = %u", viewangle);
+			buffer += wsprintf (buffer, "\r\n\r\nviewx = %d", viewx);
+			buffer += wsprintf (buffer, "\r\nviewy = %d", viewy);
+			buffer += wsprintf (buffer, "\r\nviewz = %d", viewz);
+			buffer += wsprintf (buffer, "\r\nviewangle = %x", viewangle);
 		}
 	}
-
-done:
-	*text++ = '\r';
-	*text++ = '\n';
-	*text = 0;
-	return text;
+	*buffer++ = '\r';
+	*buffer++ = '\n';
+	*buffer++ = '\0';
 }
 
 extern FILE *Logfile;
@@ -488,20 +456,58 @@ extern FILE *Logfile;
 // To make this work with MinGW, you will need to use inline assembly
 // because GCC offers no native support for Windows' SEH.
 
-#ifndef __GNUC__
 void SleepForever ()
 {
 	Sleep (INFINITE);
 }
 
+LONG WINAPI ExitMessedUp (LPEXCEPTION_POINTERS foo)
+{
+	// An exception occurred while exiting, so don't do any
+	// standard processing. Just die.
+	ExitProcess (1000);
+}
+
 void CALLBACK TimeToDie (ULONG_PTR dummy)
 {
-	RaiseException (0xE0000000+'D'+'i'+'e'+'!', EXCEPTION_NONCONTINUABLE, 0, NULL);
+	SetUnhandledExceptionFilter (ExitMessedUp);
+	I_ShutdownHardware ();
+	SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
+	exit (-1);
+}
+
+void CALLBACK SpawnFailed (ULONG_PTR dummy)
+{
+	SetUnhandledExceptionFilter (ExitMessedUp);
+	I_ShutdownHardware ();
+	SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
+	DisplayCrashLog ();
+	exit (-1);
+}
+
+void GetInfo (PEXCEPTION_POINTERS dst, PEXCEPTION_POINTERS src)
+{
+	dst->ExceptionRecord = &MyExceptionRecord;
+	dst->ContextRecord = &MyContextRecord;
+	MyExceptionRecord = *src->ExceptionRecord;
+	MyContextRecord = *src->ContextRecord;
 }
 
 LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 {
-	CrashPointers = *info;
+	static bool caughtsomething = false;
+
+	if (caughtsomething) return EXCEPTION_EXECUTE_HANDLER;
+	caughtsomething = true;
+
+	char *custominfo = (char *)HeapAlloc (GetProcessHeap(), 0, 16384);
+	PAPCFUNC apcfunc;
+	char cmdline[128];
+	char modname[_MAX_PATH];
+	STARTUPINFO startup = { sizeof(startup) };
+	PROCESS_INFORMATION newproc;
+
+	GetInfo (&CrashPointers, info);
 
 #ifdef _DEBUG
 	if (info->ExceptionRecord->ExceptionCode == EXCEPTION_BREAKPOINT)
@@ -510,18 +516,115 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	}
 #endif
 
-	CreateCrashLog (DoomSpecificInfo);
-	QueueUserAPC (TimeToDie, MainThread, 0);
+	CrashPointers = *info;
+	DoomSpecificInfo (custominfo);
 
-	// Put the crashing thread to sleep until the process exits.
-	info->ContextRecord->Eip = (DWORD)SleepForever;
+	// Spawn off a new copy of ourself to handle the information gathering and reporting.
+	wsprintf (cmdline, "IDidCrash:OuchieBooboo %x %x %p %p %lx", GetCurrentProcessId(),
+		GetCurrentThreadId(), &CrashPointers, custominfo, strlen(custominfo));
+	GetModuleFileName (NULL, modname, _MAX_PATH);
+	modname[_MAX_PATH-1] = 0;
+	if (!CreateProcess (modname, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &newproc))
+	{
+		// CreateProcess failed. We'll have to do everything ourself!
+		CreateCrashLog (GetCurrentProcess(), GetCurrentProcessId(), GetCurrentThreadId(), &CrashPointers, custominfo, (DWORD)strlen(custominfo));
+		apcfunc = SpawnFailed;
+		QueueUserAPC (SpawnFailed, MainThread, 0);
+	}
+	else
+	{
+		// Give our new debugger process a chance to get up and running and attach
+		// itself to us. Calling SuspendThread (so that we wait only as long as actually
+		// needed) does not work, because it interferes with the receipt of the
+		// exception information. I'm not sure why.
+		Sleep (1000);
+		apcfunc = TimeToDie;
+	}
+
+	// If the main thread crashed, then make it clean up after itself.
+	// Otherwise, put the crashing thread to sleep and signal the main thread to clean up.
+	if (GetCurrentThreadId() == MainThreadID)
+	{
+		info->ContextRecord->Eip = (DWORD_PTR)apcfunc;
+	}
+	else
+	{
+		info->ContextRecord->Eip = (DWORD_PTR)SleepForever;
+		QueueUserAPC (apcfunc, MainThread, 0);
+	}
 	return EXCEPTION_CONTINUE_EXECUTION;
-	//return EXCEPTION_EXECUTE_HANDLER;
 }
-#endif
 
 int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
 {
+	g_hInst = hInstance;
+
+	InitCommonControls ();	// Be pretty under XP
+
+	if (strncmp (GetCommandLine(), "IDidCrash:OuchieBooboo ", 23) == 0 && __argc == 6)
+	{ // We are being run to handle a crash in another instance of ourself.
+	  // argv[1] is the process ID of the instance that crashed.
+	  // argv[2] is the thread ID of the crasher.
+	  // argv[3] is a pointer to the exception information in that process's address space.
+	  // argv[4] is a pointer to a text buffer for ZDoom-specific info.
+	  // argv[5] is the length of argv[4]'s buffer
+		DWORD pid, tid;
+		LPEXCEPTION_POINTERS info;
+		char *info2;
+		DWORD info2len;
+		BOOL debugging;
+		HANDLE debuggee;
+		DEBUG_EVENT debugev;
+
+		pid = strtoul (__argv[1], NULL, 16);
+		tid = strtoul (__argv[2], NULL, 16);
+		sscanf (__argv[3], "%p", &info);
+		sscanf (__argv[4], "%p", &info2);
+		info2len = strtoul (__argv[5], NULL, 16);
+
+		// DebugActiveProcess will suspend all threads in the other process,
+		// so that's why we call it. When it resumes, it will shut down
+		// as cleanly as it can.
+		debugging = DebugActiveProcess (pid);
+//		if (MessageBox (NULL, GetCommandLine(), "foo", MB_OKCANCEL) == IDCANCEL) exit (0);
+		debuggee = OpenProcess (PROCESS_ALL_ACCESS, FALSE, pid);
+		CreateCrashLog (debuggee, pid, tid, info, info2, info2len);
+		if (debugging)
+		{ // Now let the crashing process resume. Process debug events until the process
+		  // has exited. We don't care about the events, we just wanted the debugger status
+		  // so that the process would be suspended while we gathered info on it.
+			while (WaitForDebugEvent (&debugev, INFINITE))
+			{
+				ContinueDebugEvent(debugev.dwProcessId, debugev.dwThreadId, DBG_CONTINUE);
+				if (debugev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
+				{
+					// In this case, ContinueDebugEvent closes the process handle for us,
+					// so we don't need to (and we must be sure not to reference it again).
+					break;
+				}
+			}
+		}
+		DisplayCrashLog ();
+		exit (0);
+	}
+#if !defined(__GNUC__) && defined(_DEBUG)
+	if (__argc == 2 && strcmp (__argv[1], "TestCrash") == 0)
+	{
+		EXCEPTION_POINTERS info;
+		__try
+		{
+			*(int *)0 = 0;
+		}
+		__except(GetInfo (&info, GetExceptionInformation()),
+			CreateCrashLog (GetCurrentProcess(), GetCurrentProcessId(), GetCurrentThreadId(), &info, __argv[1], 9),
+			EXCEPTION_EXECUTE_HANDLER)
+		{
+		}
+		DisplayCrashLog ();
+		exit (0);
+	}
+#endif
+
 #ifdef REGEXEPEEK
 	InitAutoSegMarkers ();
 #endif
@@ -529,6 +632,19 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	MainThread = INVALID_HANDLE_VALUE;
 	DuplicateHandle (GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &MainThread,
 		0, FALSE, DUPLICATE_SAME_ACCESS);
+	MainThreadID = GetCurrentThreadId();
+
+	if (MainThread != INVALID_HANDLE_VALUE)
+	{
+		// SetUnhandledExceptionFilter is not supposed to do anything if a debugger
+		// is attached to the process, but one time I did see my exception filter
+		// used instead of breaking into the debugger. (Or maybe I just forgot to
+		// run it in the debugger. Whatever. It doesn't hurt to check for one.)
+#ifdef _DEBUG
+		if (!IsDebuggerPresent ())
+#endif
+			SetUnhandledExceptionFilter (CatchAllExceptions);
+	}
 
 #ifdef _DEBUG
 	// Uncomment this line to make the Visual C++ CRT check the heap before
@@ -537,35 +653,22 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	//_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF);
 #endif
 
-#if !defined(__GNUC__) && !defined(_DEBUG)
-	if (MainThread != INVALID_HANDLE_VALUE)
-	{
-		SetUnhandledExceptionFilter (CatchAllExceptions);
-	}
-
-	__try
-	{
-		DoMain (hInstance);
-	}
-	__except (pIsDebuggerPresent && pIsDebuggerPresent() ? EXCEPTION_CONTINUE_SEARCH :
-		(CrashPointers = *GetExceptionInformation(), CreateCrashLog (DoomSpecificInfo), EXCEPTION_EXECUTE_HANDLER))
-	{
-		SetUnhandledExceptionFilter (NULL);
-		I_ShutdownHardware ();
-		SetWindowPos (Window, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
-		call_terms ();
-		if (CrashText != NULL && Logfile != NULL)
-		{
-			fprintf (Logfile, "**** EXCEPTION CAUGHT ****\n%s", CrashText);
-		}
-		DisplayCrashLog ();
-	}
-#else
-	// GCC is not nice enough to support SEH, so we can't gather crash info with it.
-	// It could probably be faked with inline assembly, but that's too much trouble.
 	DoMain (hInstance);
-#endif
+
 	CloseHandle (MainThread);
 	MainThread = INVALID_HANDLE_VALUE;
 	return 0;
+}
+
+#include "c_dispatch.h"
+CCMD (crashout)
+{
+	*(int *)0 = 0;
+}
+
+#include "zstring.h"
+TArray<string> Foo;
+void bar (string &h, int *&a)
+{
+	Foo.Push (h);
 }

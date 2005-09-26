@@ -122,10 +122,10 @@ void F_StartFinale (char *music, int musicorder, int cdtrack, unsigned int cdid,
 	}
 	if (lookupText)
 	{
-		int strnum = GStrings.FindString (FinaleText);
-		if (strnum >= 0)
+		const char *str = GStrings[FinaleText];
+		if (str != NULL)
 		{
-			ReplaceString (&FinaleText, GStrings(strnum));
+			ReplaceString (&FinaleText, str);
 			FinaleTextLen = strlen (FinaleText) + 1;
 		}
 	}
@@ -357,7 +357,7 @@ void F_Ticker ()
 
 static void FadePic ()
 {
-	int blend = 256*FinaleCount/70;
+	int blend = int(256*FinaleCount/70);
 
 	if (FadeDir < 0)
 	{
@@ -453,30 +453,30 @@ void F_TextWrite (void)
 //
 typedef struct
 {
-	int				name;
+	const char		*name;
 	const char		*type;
 	const AActor	*info;
 } castinfo_t;
 
 castinfo_t castorder[] =
 {
-	{CC_ZOMBIE,		"ZombieMan"},
-	{CC_SHOTGUN,	"ShotgunGuy"},
-	{CC_HEAVY,		"ChaingunGuy"},
-	{CC_IMP,		"DoomImp"},
-	{CC_DEMON,		"Demon"},
-	{CC_LOST,		"LostSoul"},
-	{CC_CACO,		"Cacodemon"},
-	{CC_HELL,		"HellKnight"},
-	{CC_BARON,		"BaronOfHell"},
-	{CC_ARACH,		"Arachnotron"},
-	{CC_PAIN,		"PainElemental"},
-	{CC_REVEN,		"Revenant"},
-	{CC_MANCU,		"Fatso"},
-	{CC_ARCH,		"Archvile"},
-	{CC_SPIDER,		"SpiderMastermind"},
-	{CC_CYBER,		"Cyberdemon"},
-	{CC_HERO,		"DoomPlayer"},
+	{"CC_ZOMBIE",	"ZombieMan"},
+	{"CC_SHOTGUN",	"ShotgunGuy"},
+	{"CC_HEAVY",	"ChaingunGuy"},
+	{"CC_IMP",		"DoomImp"},
+	{"CC_DEMON",	"Demon"},
+	{"CC_LOST",		"LostSoul"},
+	{"CC_CACO",		"Cacodemon"},
+	{"CC_HELL",		"HellKnight"},
+	{"CC_BARON",	"BaronOfHell"},
+	{"CC_ARACH",	"Arachnotron"},
+	{"CC_PAIN",		"PainElemental"},
+	{"CC_REVEN",	"Revenant"},
+	{"CC_MANCU",	"Fatso"},
+	{"CC_ARCH",		"Archvile"},
+	{"CC_SPIDER",	"SpiderMastermind"},
+	{"CC_CYBER",	"Cyberdemon"},
+	{"CC_HERO",		"DoomPlayer"},
 
 	{0, NULL}
 };
@@ -793,7 +793,7 @@ void F_DemonScroll ()
 		screen->FillBorder (NULL);
 		return;
 	}
-	yval = FinaleCount - 70;
+	yval = int(FinaleCount) - 70;
 	if (yval < 600)
 	{
 		yval = Scale (yval, fheight, 600);

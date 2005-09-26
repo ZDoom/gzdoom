@@ -282,4 +282,7 @@ inline FArchive &operator<< (FArchive &arc, player_s *&p)
 	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
 }
 
+#define MAX_DN_ANGLE	89//56		// Max looking down angle
+#define MAX_UP_ANGLE	89//32		// Max looking up angle
+
 #endif // __D_PLAYER_H__

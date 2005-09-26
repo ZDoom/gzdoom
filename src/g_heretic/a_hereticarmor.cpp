@@ -13,7 +13,7 @@ class ASilverShield : public ABasicArmorPickup
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(TXT_ITEMSHIELD1);
+		return GStrings("TXT_ITEMSHIELD1");
 	}
 };
 
@@ -39,7 +39,7 @@ class AEnchantedShield : public ABasicArmorPickup
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(TXT_ITEMSHIELD2);
+		return GStrings("TXT_ITEMSHIELD2");
 	}
 };
 

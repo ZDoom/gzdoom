@@ -1,0 +1,27 @@
+EXE = dehsupp.exe
+
+CCDV = @../../ccdv
+CC = gcc
+CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
+
+BISON = bison
+BISONFLAGS = 
+
+OBJS = parse.tab.o
+
+all: $(EXE)
+
+$(EXE): $(OBJS)
+	$(CCDV) $(CC) -o $(EXE) $(OBJS)
+
+.PHONY: clean
+
+clean:
+	-del /q /f $(EXE) 2>nul
+	-del /q /f *.o 2>nul
+
+parse.tab.o: parse.tab.c
+	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
+	
+parse.tab.c: parse.y
+	$(CCDV) $(BISON) $(BISONFLAGS) -o $@ $<

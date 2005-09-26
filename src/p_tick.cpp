@@ -47,12 +47,11 @@ void P_Ticker (void)
 	if (paused)
 		return;
 
-	P_ResetSightCounters (false);
-
 	// pause if in menu or console and at least one tic has been run
 	if ( !netgame
 		 && gamestate != GS_TITLELEVEL
-		 && ((menuactive != MENU_Off && menuactive != MENU_OnNoPause) || ConsoleState == c_down || ConsoleState == c_falling)
+		 && ((menuactive != MENU_Off && menuactive != MENU_OnNoPause) ||
+			 ConsoleState == c_down || ConsoleState == c_falling)
 		 && !demoplayback
 		 && !demorecording
 		 && players[consoleplayer].viewz != 1
@@ -60,6 +59,8 @@ void P_Ticker (void)
 	{
 		return;
 	}
+
+	P_ResetSightCounters (false);
 
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;

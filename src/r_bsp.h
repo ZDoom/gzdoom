@@ -58,7 +58,7 @@ extern drawseg_t	*firstdrawseg;
 extern drawseg_t*	ds_p;
 
 extern TArray<size_t>	InterestingDrawsegs;	// drawsegs that have something drawn on them
-extern size_t			FirstInterestingDrawseg;
+extern unsigned int		FirstInterestingDrawseg;
 
 extern int			WindowLeft, WindowRight;
 extern WORD			MirrorFlags;

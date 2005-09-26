@@ -3,7 +3,7 @@
 ** Terrain maintenance
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -685,7 +685,7 @@ static void ParseFloor ()
 
 int FindSplash (const char *name)
 {
-	size_t i;
+	unsigned int i;
 
 	for (i = 0; i < Splashes.Size (); i++)
 	{
@@ -705,7 +705,7 @@ int FindSplash (const char *name)
 
 int FindTerrain (const char *name)
 {
-	size_t i;
+	unsigned int i;
 
 	for (i = 0; i < Terrains.Size (); i++)
 	{

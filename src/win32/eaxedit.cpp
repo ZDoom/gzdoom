@@ -401,7 +401,7 @@ LRESULT CALLBACK EditControlProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 		{
 			if (wParam == VK_ESCAPE)
 			{ // Put the original value back in the edit control.
-				env = (const EnvControl *)GetWindowLongPtr (hWnd, GWLP_USERDATA);
+				env = (const EnvControl *)(LONG_PTR)GetWindowLongPtr (hWnd, GWLP_USERDATA);
 				int vali = SendMessage (env->SliderHWND, TBM_GETPOS, 0, 0);
 				if (env->Float)
 				{
@@ -422,7 +422,7 @@ LRESULT CALLBACK EditControlProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 	case WM_KILLFOCUS:
 		// Validate the new value and update the corresponding slider.
-		env = (const EnvControl *)GetWindowLongPtr (hWnd, GWLP_USERDATA);
+		env = (const EnvControl *)(LONG_PTR)GetWindowLongPtr (hWnd, GWLP_USERDATA);
 		val = 0.0;
 		if (CallWindowProc (StdEditProc, hWnd, WM_GETTEXT, 16, (LPARAM)buff) > 0)
 		{
@@ -464,7 +464,7 @@ void SetupEnvControls (HWND hDlg)
 		SendMessage (EnvControls[i].SliderHWND, TBM_SETRANGEMIN, FALSE, EnvControls[i].Min);
 		SendMessage (EnvControls[i].SliderHWND, TBM_SETRANGEMAX, TRUE, EnvControls[i].Max);
 		SendMessage (EnvControls[i].EditHWND, EM_LIMITTEXT, 10, 0);
-		StdEditProc = (WNDPROC)SetWindowLongPtr (EnvControls[i].EditHWND, GWLP_WNDPROC,
+		StdEditProc = (WNDPROC)(LONG_PTR)SetWindowLongPtr (EnvControls[i].EditHWND, GWLP_WNDPROC,
 			(LONG_PTR)(EnvControls[i].Float ? EditControlProc : EditControlProcNoDeci));
 		SetWindowLongPtr (EnvControls[i].EditHWND, GWLP_USERDATA, (LONG_PTR)&EnvControls[i]);
 		SetWindowLongPtr (EnvControls[i].SliderHWND, GWLP_USERDATA, (LONG_PTR)&EnvControls[i]);
@@ -595,7 +595,7 @@ INT_PTR CALLBACK EAXProp (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 
 	case WM_HSCROLL:
-		env = (const EnvControl *)GetWindowLongPtr ((HWND)lParam, GWLP_USERDATA);
+		env = (const EnvControl *)(LONG_PTR)GetWindowLongPtr ((HWND)lParam, GWLP_USERDATA);
 		UpdateControl (env, SendMessage ((HWND)lParam, TBM_GETPOS, 0, 0), false);
 		return TRUE;
 
@@ -985,7 +985,7 @@ UINT_PTR CALLBACK SaveHookProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPara
 			return 1;
 
 		case CDN_FILEOK:
-			msd = (MySaveData *)GetWindowLongPtr (hDlg, DWLP_USER);
+			msd = (MySaveData *)(LONG_PTR)GetWindowLongPtr (hDlg, DWLP_USER);
 			hWnd = GetDlgItem (hDlg, IDC_ENVLIST);
 			ns = ListView_GetSelectedCount (hWnd);
 			if (ns == 0)

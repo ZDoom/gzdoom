@@ -44,9 +44,11 @@ zdoom.wad: zdoom.lst \
 	xlat/heretic.x \
 	xlat/strife.x \
 	animated.lmp \
-	language.lmp \
 	spaldoom.lmp \
 	spalhtic.lmp \
+	languages/english-us.txt \
+	languages/french.txt \
+	languages/italian.txt \
 	x11r6rgb.txt \
 	stkeys6.lmp \
 	stkeys7.lmp \

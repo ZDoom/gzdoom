@@ -55,6 +55,14 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICON1               ICON                    "icon1.ico"
+IDI_BOING1              ICON                    "boing1.ico"
+IDI_BOING2              ICON                    "boing2.ico"
+IDI_BOING3              ICON                    "boing3.ico"
+IDI_BOING4              ICON                    "boing4.ico"
+IDI_BOING5              ICON                    "boing5.ico"
+IDI_BOING6              ICON                    "boing6.ico"
+IDI_BOING7              ICON                    "boing7.ico"
+IDI_BOING8              ICON                    "boing8.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -77,15 +85,7 @@ BEGIN
         LEFTMARGIN, 5
         RIGHTMARGIN, 205
         TOPMARGIN, 7
-        BOTTOMMARGIN, 144
-    END
-
-    IDD_CRASHDIALOG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 394
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 276
+        BOTTOMMARGIN, 179
     END
 
     IDD_EAXPROPERTYLIST, DIALOG
@@ -124,6 +124,40 @@ BEGIN
         BOTTOMMARGIN, 88
         HORZGUIDE, 12
     END
+
+    IDD_CRASHDIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 401
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 303
+        HORZGUIDE, 49
+        HORZGUIDE, 242
+    END
+
+    IDD_CRASHOVERVIEW, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 384
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 257
+    END
+
+    IDD_CRASHDETAILS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 384
+        TOPMARGIN, 7
+        HORZGUIDE, 76
+    END
+
+    IDD_BOING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 180
+        VERTGUIDE, 33
+        TOPMARGIN, 7
+    END
 END
 #endif    // APSTUDIO_INVOKED
 
@@ -134,7 +168,7 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,0,96,0
+ FILEVERSION 2,0,97,0
  PRODUCTVERSION 2,1,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
@@ -153,9 +187,9 @@ BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
             VALUE "CompanyName", " "
             VALUE "FileDescription", "ZDoom"
-            VALUE "FileVersion", "2.0.96"
+            VALUE "FileVersion", "2.0.97"
             VALUE "InternalName", "ZDoom"
-            VALUE "LegalCopyright", "Copyright © 1993-1996, id Software & 1998-2004, Randy Heit"
+            VALUE "LegalCopyright", "Copyright © 1993-1996, id Software & 1998-2005, Randy Heit"
             VALUE "LegalTrademarks", "Doom® is a Registered Trademark of id Software, Inc."
             VALUE "OriginalFilename", "zdoom.exe"
             VALUE "ProductName", "ZDoom"
@@ -188,39 +222,23 @@ BEGIN
                     IDC_STATIC,7,7,116,42
 END
 
-IDD_IWADDIALOG DIALOGEX 0, 0, 212, 151
+IDD_IWADDIALOG DIALOGEX 0, 0, 212, 186
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | 
     WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Select an IWAD to use"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    LISTBOX         IDC_IWADLIST,5,25,200,85,LBS_NOINTEGRALHEIGHT | 
+    LISTBOX         IDC_IWADLIST,5,25,200,124,LBS_NOINTEGRALHEIGHT | 
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Don't ask me this again",IDC_DONTASKIWAD,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,61,115,89,10
-    DEFPUSHBUTTON   "OK",IDOK,5,130,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,155,130,50,14
+                    BS_AUTOCHECKBOX | WS_TABSTOP,61,153,89,10
+    DEFPUSHBUTTON   "OK",IDOK,5,165,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,155,165,50,14
     LTEXT           "ZDoom found more than one IWAD present.",IDC_STATIC,5,5,
                     140,8
     LTEXT           "Select from the list below to determine which one to use:",
                     IDC_STATIC,5,15,200,8
-END
-
-IDD_CRASHDIALOG DIALOGEX 0, 0, 401, 283
-STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | 
-    DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-EXSTYLE WS_EX_APPWINDOW
-CAPTION "ZDoom Very Fatal Error"
-FONT 8, "MS Shell Dlg", 400, 0, 0x0
-BEGIN
-    DEFPUSHBUTTON   "Die!",IDOK,176,262,50,14
-    EDITTEXT        IDC_CRASHINFO,7,49,387,208,ES_MULTILINE | ES_AUTOHSCROLL | 
-                    ES_READONLY | WS_VSCROLL | WS_HSCROLL
-    LTEXT           "ZDoom has crashed most unexpectedly. Please e-mail the following along with any other information you feel is relevant. With luck, this will provide me with enough information to fix the problem for future versions of ZDoom.",
-                    IDC_STATIC,7,7,387,19
-    LTEXT           "Note that you can highlight this text, copy it with the right mouse button or Ctrl+C, and then paste it into Notepad or your e-mail program. If console logging was turned on, this information will also be stored in the console log.",
-                    IDC_STATIC,7,28,387,19
 END
 
 IDD_EAXPROPERTYLIST DIALOGEX 0, 0, 265, 404
@@ -429,6 +447,71 @@ BEGIN
     PUSHBUTTON      "Select None",IDC_SELECTNONE,320,31,50,14
 END
 
+IDD_CRASHDIALOG DIALOGEX 0, 0, 405, 308
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | 
+    DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_CONTROLPARENT | WS_EX_APPWINDOW
+CAPTION "ZDoom Very Fatal Error"
+FONT 8, "MS Shell Dlg", 400, 0, 0x0
+BEGIN
+    CONTROL         "",IDC_CRASHTAB,"SysTabControl32",WS_TABSTOP,4,4,397,280
+    PUSHBUTTON      "&Send Error Report",IDYES,139,289,91,14,WS_DISABLED
+    PUSHBUTTON      "Save Report to Disk...",IDC_SAVEREPORT,235,289,91,14
+    PUSHBUTTON      "&Discard Report",IDNO,331,289,70,14
+END
+
+IDD_CRASHOVERVIEW DIALOGEX 1, 13, 391, 264
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VISIBLE
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_CRASHINFO,7,126,377,90,ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_WANTRETURN | WS_VSCROLL
+    CONTROL         "",IDC_PLEASETELLUS,"RichEdit20A",ES_MULTILINE | 
+                    ES_READONLY,7,50,377,54,WS_EX_TRANSPARENT
+    LTEXT           "(Optional) To help diagnose the cause of this error, please describe what you were doing when the error occured. If you were playing with custom wads, please also indicate where to obtain them:",
+                    IDC_STATIC,7,108,377,16,0,WS_EX_TRANSPARENT
+    CONTROL         131,IDC_DEADGUYVIEWER,"Static",SS_BITMAP,345,7,23,26
+    CONTROL         "",IDC_CRASHHEADER,"RichEdit20A",ES_MULTILINE | 
+                    ES_AUTOHSCROLL | ES_READONLY,18,13,306,25,
+                    WS_EX_TRANSPARENT
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,42,407,1
+    GROUPBOX        "Summary",IDC_STATIC,7,223,377,34
+    LTEXT           "Static",IDC_CRASHSUMMARY,14,233,363,20
+END
+
+IDD_CRASHDETAILS DIALOGEX 0, 0, 391, 164
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "The error report contains these files:",IDC_STATIC,7,5,
+                    119,8
+    LTEXT           "The selected file contains this information:",
+                    IDC_STATIC,7,74,136,8
+    RTEXT           "Static",IDC_CRASHFILESIZE,329,74,55,8
+    LISTBOX         IDC_CRASHFILES,7,15,377,53,LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_CRASHFILECONTENTS,"RichEdit20A",ES_MULTILINE | 
+                    ES_READONLY | WS_BORDER | WS_VSCROLL | WS_TABSTOP,7,83,
+                    377,174
+END
+
+IDD_BOING DIALOGEX 0, 0, 187, 196
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTERMOUSE | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
+CAPTION "Upload status"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Close",IDOK,130,175,50,14,WS_DISABLED
+    ICON            IDI_BOING1,IDC_BOING,7,7,21,20
+    LTEXT           "Static",IDC_BOINGSTATUS,33,12,147,8
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,166,189,1
+    CONTROL         "",IDC_BOINGEDIT,"RichEdit20A",ES_MULTILINE | 
+                    ES_READONLY | WS_BORDER | WS_VSCROLL | WS_TABSTOP,7,34,
+                    173,124
+    CONTROL         "",IDC_BOINGPROGRESS,"msctls_progress32",NOT WS_VISIBLE | 
+                    WS_BORDER | 0x1,33,22,147,9
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -436,6 +519,13 @@ END
 //
 
 IDC_INVISIBLECURSOR     CURSOR                  "cursor1.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_DEADGUY             BITMAP                  "deadguy.bmp"
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 

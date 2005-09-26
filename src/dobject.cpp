@@ -3,7 +3,7 @@
 ** Implements the base class DObject, which most other classes derive from
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -206,6 +206,8 @@ TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
 		info->GameFilter = GAME_Any;
 		info->SpawnID = 0;
 		info->DoomEdNum = -1;
+		info->OwnedStates = NULL;
+		info->NumOwnedStates = 0;
 
 		memcpy (info->Defaults, ActorInfo->Defaults, SizeOf);
 		if (size > SizeOf)
@@ -433,7 +435,7 @@ DObject::~DObject ()
 			// object is queued for deletion, but is not being deleted
 			// by the destruction process, so remove it from the
 			// ToDestroy array and do other necessary stuff.
-			size_t i;
+			unsigned int i;
 
 			for (i = ToDestroy.Size() - 1; i-- > 0; )
 			{
@@ -493,12 +495,12 @@ void DObject::EndFrame ()
 
 void DObject::RemoveFromArray ()
 {
-	if (Objects.Size () == Index + 1)
+	if (Objects.Size() == Index + 1)
 	{
 		DObject *dummy;
 		Objects.Pop (dummy);
 	}
-	else
+	else if (Objects.Size() > Index)
 	{
 		Objects[Index] = NULL;
 		FreeIndices.Push (Index);
@@ -507,7 +509,7 @@ void DObject::RemoveFromArray ()
 
 void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 {
-	size_t i, highest;
+	unsigned int i, highest;
 	highest = Objects.Size ();
 
 	for (i = 0; i <= highest; i++)
@@ -562,7 +564,7 @@ void DObject::DestroyScan (DObject *obj)
 // destruction and NULL them.
 void DObject::DestroyScan ()
 {
-	size_t i, highest;
+	unsigned int i, highest;
 	int j, destroycount;
 	DObject **destroybase;
 	destroycount = (int)ToDestroy.Size ();

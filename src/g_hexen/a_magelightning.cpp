@@ -37,7 +37,7 @@ class AMWeapLightning : public AMageWeapon
 public:
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_M3);
+		return GStrings("TXT_WEAPON_M3");
 	}
 };
 
@@ -563,6 +563,7 @@ void A_LastZap (AActor *actor)
 	{
 		mo->SetState (&ALightningZap::States[S_LIGHTNING_ZAP_X1]);
 		mo->momz = 40*FRACUNIT;
+		mo->damage = 0;
 	}
 }
 

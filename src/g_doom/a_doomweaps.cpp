@@ -29,7 +29,7 @@ class AClip : public AAmmo
 public:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTCLIP);
+		return GStrings("GOTCLIP");
 	}
 };
 
@@ -58,7 +58,7 @@ class AClipBox : public AClip
 public:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTCLIPBOX);
+		return GStrings("GOTCLIPBOX");
 	}
 };
 
@@ -83,7 +83,7 @@ class ARocketAmmo : public AAmmo
 public:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTROCKET);
+		return GStrings("GOTROCKET");
 	}
 };
 
@@ -112,7 +112,7 @@ class ARocketBox : public ARocketAmmo
 public:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTROCKBOX);
+		return GStrings("GOTROCKBOX");
 	}
 };
 
@@ -137,7 +137,7 @@ class ACell : public AAmmo
 public:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTCELL);
+		return GStrings("GOTCELL");
 	}
 };
 
@@ -166,7 +166,7 @@ class ACellPack : public ACell
 public:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTCELLBOX);
+		return GStrings("GOTCELLBOX");
 	}
 };
 
@@ -191,7 +191,7 @@ class AShell : public AAmmo
 public:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTSHELLS);
+		return GStrings("GOTSHELLS");
 	}
 };
 
@@ -220,7 +220,7 @@ class AShellBox : public AShell
 public:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTSHELLBOX);
+		return GStrings("GOTSHELLBOX");
 	}
 };
 
@@ -282,7 +282,7 @@ END_DEFAULTS
 
 const char *AFist::GetObituary ()
 {
-	return GStrings (OB_MPFIST);
+	return GStrings("OB_MPFIST");
 }
 
 //
@@ -381,7 +381,7 @@ END_DEFAULTS
 
 const char *APistol::GetObituary ()
 {
-	return GStrings(OB_MPPISTOL);
+	return GStrings("OB_MPPISTOL");
 }
 
 //
@@ -468,12 +468,12 @@ END_DEFAULTS
 
 const char *AChainsaw::PickupMessage ()
 {
-	return GStrings(GOTCHAINSAW);
+	return GStrings("GOTCHAINSAW");
 }
 
 const char *AChainsaw::GetObituary ()
 {
-	return GStrings(OB_MPCHAINSAW);
+	return GStrings("OB_MPCHAINSAW");
 }
 
 //
@@ -601,12 +601,12 @@ END_DEFAULTS
 
 const char *AShotgun::PickupMessage ()
 {
-	return GStrings(GOTSHOTGUN);
+	return GStrings("GOTSHOTGUN");
 }
 
 const char *AShotgun::GetObituary ()
 {
-	return GStrings(OB_MPSHOTGUN);
+	return GStrings("OB_MPSHOTGUN");
 }
 
 //
@@ -710,12 +710,12 @@ END_DEFAULTS
 
 const char *ASuperShotgun::PickupMessage ()
 {
-	return GStrings(GOTSHOTGUN2);
+	return GStrings("GOTSHOTGUN2");
 }
 
 const char *ASuperShotgun::GetObituary ()
 {
-	return GStrings(OB_MPSSHOTGUN);
+	return GStrings("OB_MPSSHOTGUN");
 }
 
 //
@@ -840,12 +840,12 @@ END_DEFAULTS
 
 const char *AChaingun::PickupMessage ()
 {
-	return GStrings(GOTCHAINGUN);
+	return GStrings("GOTCHAINGUN");
 }
 
 const char *AChaingun::GetObituary ()
 {
-	return GStrings(OB_MPCHAINGUN);
+	return GStrings("OB_MPCHAINGUN");
 }
 
 //
@@ -869,7 +869,7 @@ void A_FireCGun (AActor *actor)
 		if (weapon->FlashState != NULL)
 		{
 			// [RH] Fix for Sparky's messed-up Dehacked patch! Blargh!
-			int theflash = clamp (players->psprites[ps_weapon].state - weapon->AtkState, 0, 1);
+			int theflash = clamp (int(players->psprites[ps_weapon].state - weapon->AtkState), 0, 1);
 
 			if (weapon->FlashState[theflash].sprite.index != weapon->FlashState->sprite.index)
 			{
@@ -948,7 +948,7 @@ END_DEFAULTS
 
 const char *ARocketLauncher::PickupMessage ()
 {
-	return GStrings(GOTLAUNCHER);
+	return GStrings("GOTLAUNCHER");
 }
 
 FState ARocket::States[] =
@@ -982,6 +982,11 @@ void ARocket::BeginPlay ()
 {
 	Super::BeginPlay ();
 	effects |= FX_ROCKET;
+}
+
+const char *ARocket::GetObituary ()
+{
+	return GStrings("OB_MPROCKET");
 }
 
 //
@@ -1061,7 +1066,7 @@ END_DEFAULTS
 
 const char *APlasmaRifle::PickupMessage ()
 {
-	return GStrings(GOTPLASMA);
+	return GStrings("GOTPLASMA");
 }
 
 FState APlasmaBall::States[] =
@@ -1096,6 +1101,11 @@ IMPLEMENT_ACTOR (APlasmaBall, Doom, -1, 51)
 	PROP_SeeSound ("weapons/plasmaf")
 	PROP_DeathSound ("weapons/plasmax")
 END_DEFAULTS
+
+const char *APlasmaBall::GetObituary ()
+{
+	return GStrings("OB_MPPLASMARIFLE");
+}
 
 //
 // A_FirePlasma
@@ -1238,7 +1248,7 @@ END_DEFAULTS
 
 const char *ABFG9000::PickupMessage ()
 {
-	return GStrings(GOTBFG9000);
+	return GStrings("GOTBFG9000");
 }
 
 FState ABFGBall::States[] =
@@ -1272,6 +1282,11 @@ IMPLEMENT_ACTOR (ABFGBall, Doom, -1, 128)
 
 	PROP_DeathSound ("weapons/bfgx")
 END_DEFAULTS
+
+const char *ABFGBall::GetObituary ()
+{
+	return GStrings("OB_MPBFG_BOOM");
+}
 
 FState ABFGExtra::States[] =
 {

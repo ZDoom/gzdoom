@@ -1,0 +1,30 @@
+EXE = xlatcc.exe
+
+CCDV = @../../ccdv
+CC = gcc
+CFLAGS = $(LOC) -Os -Wall -fomit-frame-pointer
+
+BISON = bison
+BISONFLAGS = 
+
+OBJS = gen.o xlat-parse.tab.o
+
+all: $(EXE)
+
+$(EXE): $(OBJS)
+	$(CCDV) $(CC) -o $(EXE) $(OBJS)
+
+.PHONY: clean
+
+clean:
+	-del /q /f $(EXE) 2>nul
+	-del /q /f *.o 2>nul
+
+xlat-parse.tab.o: xlat-parse.tab.c xlat.h
+	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<
+
+xlat-parse.tab.c: xlat-parse.y
+	$(CCDV) $(BISON) $(BISONFLAGS) -o $@ $<
+   
+gen.o: gen.c xlat.h
+	$(CCDV) $(CC) $(CFLAGS) -c -o $@ $<

@@ -3,7 +3,7 @@
 ** ACS script stuff
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -130,7 +130,6 @@ public:
 	BYTE *FindChunk (DWORD id) const;
 	BYTE *NextChunk (BYTE *chunk) const;
 	const ScriptPtr *FindScript (int number) const;
-	void PrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
 	void StartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow);
 	DWORD PC2Ofs (int *pc) const { return (DWORD)((BYTE *)pc - Data); }
 	int *Ofs2PC (DWORD ofs) const {	return (int *)(Data + ofs); }
@@ -154,8 +153,6 @@ public:
 
 	static const ScriptPtr *StaticFindScript (int script, FBehavior *&module);
 	static const char *StaticLookupString (DWORD index);
-	static const char *StaticLocalizeString (DWORD index);
-	static void StaticPrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef);
 	static void StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1=0, bool runNow=false);
 
 private:
@@ -175,8 +172,7 @@ private:
 	int NumArrays;
 	ArrayInfo **Arrays;
 	int NumTotalArrays;
-	DWORD LanguageNeutral;
-	DWORD Localized;
+	DWORD StringTable;
 	SDWORD MapVarStore[NUM_MAPVARS];
 	TArray<FBehavior *> Imports;
 	DWORD LibraryID;
@@ -187,13 +183,9 @@ private:
 	void LoadScriptsDirectory ();
 
 	static int STACK_ARGS SortScripts (const void *a, const void *b);
-	void AddLanguage (DWORD lang);
-	DWORD FindLanguage (DWORD lang, bool ignoreregion) const;
-	DWORD *CheckIfInList (DWORD lang);
 	void UnencryptStrings ();
 	int FindStringInChunk (DWORD *chunk, const char *varname) const;
-	const char *LookupString (DWORD index, DWORD ofs=0) const;
-	const char *LocalizeString (DWORD index) const;
+	const char *LookupString (DWORD index) const;
 
 	void SerializeVars (FArchive &arc);
 	void SerializeVarSet (FArchive &arc, SDWORD *vars, int max);
@@ -484,6 +476,7 @@ public:
 		PCD_PRINTMAPCHARARRAY,		// [JB] start of new p-codes
 		PCD_PRINTWORLDCHARARRAY,
 		PCD_PRINTGLOBALCHARARRAY,	// [JB] end of new p-codes
+		PCD_SETACTORANGLE,			// [GRB]
 
 		PCODE_COMMAND_COUNT
 	};
@@ -505,7 +498,8 @@ public:
 	enum {
 		GAME_SINGLE_PLAYER =	0,
 		GAME_NET_COOPERATIVE =	1,
-		GAME_NET_DEATHMATCH =	2
+		GAME_NET_DEATHMATCH =	2,
+		GAME_TITLE_MAP =		3
 	};
 	enum {
 		CLASS_FIGHTER =			0,
@@ -522,7 +516,8 @@ public:
 	enum {
 		BLOCK_NOTHING =			0,
 		BLOCK_CREATURES =		1,
-		BLOCK_EVERYTHING =		2
+		BLOCK_EVERYTHING =		2,
+		BLOCK_RAILING =			3
 	};
 	enum {
 		LEVELINFO_PAR_TIME,
@@ -533,7 +528,8 @@ public:
 		LEVELINFO_TOTAL_ITEMS,
 		LEVELINFO_FOUND_ITEMS,
 		LEVELINFO_TOTAL_MONSTERS,
-		LEVELINFO_KILLED_MONSTERS
+		LEVELINFO_KILLED_MONSTERS,
+		LEVELINFO_SUCK_TIME
 	};
 
 	enum EScriptState

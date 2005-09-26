@@ -61,9 +61,15 @@ hereticx    xlat/heretic.x
 strifex	    xlat/strife.x
 
 animated    animated.lmp
-language    language.lmp
 spaldoom    spaldoom.lmp
 spalhtic    spalhtic.lmp
+
+========
+# Language lumps
+
+language    languages/english-us.txt
+language    languages/french.txt
+language    languages/italian.txt
 
 ========
 

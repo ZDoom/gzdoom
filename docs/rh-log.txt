@@ -1,3 +1,300 @@
+September 26, 2005
+- Released this old code as 2.0.97.
+- Backported the text-based LANGUAGE and IMF code from 2.1.0.
+- Updated to zlib 1.2.3.
+
+February 21, 2005
+- Provided alternate versions of the TArray-related friend template functions for
+  the string and name classes. I have no idea which compiler is right, but VC++ is
+  certainly nicer about it.
+
+February 19, 2005
+- Fixed: In C mode, SC_GetString() would not consider '-' to be a token.
+- Added a global name table.
+
+February 18, 2005
+- Added lots of explicit casts and changed some types to turn off 64-bit compatibility
+  warnings.
+- Added a string class I've been playing with for a while now and made some
+  adjustments to TArray so that it can work with non-basic types.
+
+February 11, 2005
+- Removed the MOD_FIRE hack in PIT_RadiusAttack and replaced it with a new thrustless
+  flag to P_RadiusAttack.
+- Removed the multiplayer check from AInventory::ShouldRespawn(). Now the dmflag is
+  always respected, even without alwaysapplydmflags.
+- Added a check for a NULL StatusBar to PlayerIsGone() in d_net.cpp.
+- Fixed: ADehackedPickup::TryPickup() set the MF_DROPPED flag. This flag is now set
+  by default, so it should clear it instead. This kept hacked weapons from staying
+  and respawning, because the RealPickup it tests against was always flagged as
+  dropped.
+- Fixed: The MagePlayer used A_Scream instead of A_PlayerScream when he died.
+- Fixed: The Heresiarch spawned new balls above its head after it killed its target
+  and re-entered its SpawnState.
+- Fixed: Using chasecam while spying on another player would not show that player.
+- Rewrote the spy code to not need displayplayer.
+- Switched to the combination of DirectDrawCreate/QueryInterface to obtain an
+  IDirectDraw2 interface. That should be slightly more compatible, since
+  DirectDrawCreate can create an IDirectDraw interface even if it isn't properly
+  registered.
+
+February 10, 2005
+- Fixed: The screen fading ACS commands did not work when viewing through a camera
+  because FBaseStatusBar::BlendView() did not think there was a player to get those
+  values from. Now, the blend comes from either the player viewing from or the
+  console player if the current view is not from a player.
+- Fixed: Returning to a previously visited level in a hub with fewer players than you
+  had when you left the level would result in "zombie" bodies from the former players.
+  The fix is in G_UnSnapshotLevel(): After restoring the level, any actors that point
+  to a player who is no longer in the game are destroyed.
+- Fixed: P_ExplodeMissile() should zero the projectile's speed before putting it into
+  its DeathState, not after. Strife's flamethrower needs it like this, and I'm not
+  sure when or why it was moved to happen after the state change.
+- Fixed: R_DrawSkyBoxes() needs to save and restory viewx and viewy as well as viewz
+  for drawing masked items.
+- Fixed: P_MorphPlayer() did not properly transfer ownership of inventory items, so
+  when it destroyed the player's armor, it also unlinked anything after the armor in
+  the player's inventory.
+- Fixed: The Hexen players should call A_FireScream() on the first frame of their
+  fire death, not the first shared frame of their fire death.
+- Attached obituaries to the projectiles used by Doom's projectile weapons, so they
+  can have obituaries again. This is just something I put off finishing when I changed
+  from a means-of-death system to a damage type system.
+- Fixed: Pain Elementals did not transfer their friendly flag to the Lost Souls
+  they spawn. And since I've got the same code doing this sort of thing in several
+  places, I replaced them all with a call to the new method AActor::CopyFriendliness.
+- Fixed: Bots are idiots after co-op level changes because the CajunMaster forgets
+  about them and so doesn't tell them to do anything different from what they were
+  when the level change happened.
+- Fixed: G_FinishTravel() needs to retrieve the next player before changing the
+  current one's statnum.
+- Made some fixes to SDLVideo's Lock() and and Update() synchronization.
+- Fixed: DSimpleCanvas::Lock() and ::Unlock() did not properly use the lock count.
+- Fixed: In Strife, the fastCrushAndRaise ceilings (line types 6 and 77) are twice
+  as fast as their Doom counterparts.
+- Fixed: Strife auto-uses the best ammo first, not the worst. I got confused because
+  in Strife ARM1 is the best armor, but in Doom it's ARM2 that is best.
+- Fixed: Strife does not double ammo at it's highest skill level.
+- New: Using Degnin Ore will drop it, similar to the Teleporter Beacon.
+- Fixed: In nightmare skill, every actor is spawned with a reactiontime of 0. This
+  make's Strife's HE Grenades explode immediately, because they use their reactiontime
+  as a countdown timer. The solution: Only set the reactiontime to 0 for monsters.
+  (Strife may not do this at all. I'm not sure.)
+
+February 9, 2005
+- New feature: Missiles with negative damage now give you health.
+- Changed P_GiveBody so that it works with any actor, not just players.
+- Fixed: Picking up a BasicArmorPickup without any existing BasicArmor gave you
+  a new BasicArmor without calling BecomeItem to unlink it from the world. Since
+  there are probably other areas where this happens, and it's kind of easy to forget
+- Added a division-by-0 check to the very end of P_HitSlideLine for the very rare
+  cases when inter3 ends up being 0.
+- Clamped the upmove speed in P_PlayerThink() to avoid super fast speeds from
+  joystick users.
+- Fixed: A_SorcererRaise() did not transfer friendliness info to the new D'Sparil.
+- Added: Trying to use actors that have the UsePuzzleItem special now works just
+  like trying to use a wall with the same special: You use the item if you have it,
+  and you say "hmm" if you don't.
+- Fixed: APuzzleItem::Use() should not remove the item from the inventory but let
+  the caller do it instead.
+- Fixed: P_TranslateLineDef() should clear the ML_MONSTERSCANACTIVATE flag on lines
+  with ML_SECRET set. Otherwise, monsters can open otherwise secret doors in Doom
+  format maps.
+- Renamed the Porkalator's missile sprite from EGGM to PRKM, so it doesn't have the
+  same name as the Morph Ovum's missile.
+- Fixed: The warp cheat was always applied to the local player and not the player who
+  used it.
+- TypeInfo::CreateDerivedClass() now initializes OwnedStates and NumOwnedStates for
+  actors.
+- Fixed: PrepWall and PrepLWall clamped the final texture column so that it was not
+  visible unless it was fully visible.
+- Fixed writing of RDosPlay raw songs. It was a very very very stupid mistake: I had
+  the order of the register and data bytes reversed. Now it works fine, and since it
+  took me a while to figure out the problem, ZDoom can now play raw OPL songs.
+
+February 7, 2005
+- Added the writeopl command to write a song in RDosPlay raw OPL format. It's usage is:
+    writeopl [songname] <filename>
+  If the currently playing song is a MUS song being played through the OPL emulation,
+  then you just need to specify the filename. Otherwise, you need to provide the
+  songname (such as D_E1M1) as well. Unfortunately, the result is unplayable with
+  AdPlug, so I must be doing something wrong.
+
+February 4, 2005
+- Merged in Graf Zahl's Caverns of Darkness patch.
+- Fixed: Using the screenshot command to specify a filename without any extension
+  automatically adds the extension.
+
+February 3, 2005
+- Played around with polymost some more. The good: Wall projection is now totally
+  independant of the non-polymost code, so walls don't get clipped to what would have
+  been the screen boundaries without true look up/down. With the filled polygon mode,
+  it looks awesome. The bad: I'm getting precision problems when clipping the left
+  side of walls to SCISDIST. This problem is not present when clipping the right side,
+  and it's not present in jfDuke, so what am I doing wrong? Setting SCISDIST to a large
+  value like 128 makes the problem disappear, but that's much too large. Someday, when
+  it can handle doing a second pass to draw behind you, SCISDIST needs to be as small as
+  possible to avoid a visible gap between the front and back views.
+
+February 2, 2005
+- Added a damagetype parameter to AActor::TakeSpecialDamage(). The default implementation
+  of this function now uses it to reject damage if the actor doesn't have a matching
+  death state. (Meaning, you can leave an actor without a normal death state, and it will
+  only take damage from special attacks.) Since this negates the need for A_TreeDeath,
+  that function is gone.
+- Fixed: The adjustment for negative y-offset, non-power-of-2-height textures is
+  now only done for textures aligned at the top and not the bottom.
+- Fixed: APowerFlight::DrawPowerup() did not check if SPFLY0 actually existed before
+  using it.
+- Fixed: P_SpeekerMissile() did not check for zero-speed actors, so you could get a
+  division by zero error if it needed to move vertically.
+
+January 30, 2005
+- Threw together a quicx mock-up of a polymost-based renderer. It is essentially
+  just the standard software renderer with some parts commented out and the clipping
+  done with polymost instead of a few one-dimensional arrays. The display itself is
+  just the standard view with the polymost view overlayed in wireframe.
+
+January 29, 2005
+- Fixed: BOOM-style carrying floors that use speeds values less than STOPSPEED
+  no longer change the actor's momx and momy but are passed as extra parameters
+  to P_XYMovement(). Faster speeds still change momx and momy, so conveyor belts
+  can fling objects off of them.
+- Fixed: Items in inventory would "scroll" on scrolling floors.
+- Fixed: Every place that copies the friendly flag from one actor to another also
+  needs to copy the FriendPlayer.
+- Fixed: In A_Chase(), a friend's selection of target based on who last hurt the
+  player did not take into consideration that a friend may have accidentally hurt
+  the player.
+- Fixed: P_NightmareRespawn() did not copy a monster's custom translation to
+  its new body.
+- Fixed: FMODStreamCapsule::Play() did not record the channel the stream was
+  playing on, so you could not change its volume during playback.
+- Added the sucktime mapinfo option. This is the time, in hours, that the
+  player must play before the intermission tells them their time sucks. If this
+  is 0, then they cannot suck. If they do suck, their time is still shown
+  (unlike Doom) in the normal spot, with the suck above it. I had to shift the
+  positions of the time displays in the Doom intermission a little so that there
+  was room for the hour field. This is also retrievable with the GetLevelInfo()
+  command by passing LEVELINFO_SUCK_TIME.
+- Fixed: Using the suicide cheat on the "end of game hell hack" on E1M8 would
+  infinitely loop because that sector type actually prevents you from dying,
+  but the cheat code was waiting for you to die.
+
+January 27, 2005
+- Added mouse handling to the testpolymost screen so that I can actually drive
+  it. That let me find a few more bugs in my port of the code that needed to be
+  fixed.
+
+January 26, 2005
+- Changed the Puffy actor (used by Heretic's weredragon/beast's fireball trail)
+  to do 0 damage. Similarly, A_LastZap() now sets the projectile it spawns to
+  do 0 damage so it can be once again like Hexen.
+- Fixed: Picking up an ammo item for the first time with more than the max
+  amount for that ammo type would let you get more than the max.
+- Fixed: Specifying a defaultmap in MAPINFO disabled lax monster activation
+  checking instead of deducing it from the game's Hexen/not-Hexen status.
+- Fixed: Mirrors were accumulated to the WallMirrors list while viewing the
+  automap, so after you turned the map off, a few thousand mirrors could be
+  processed, resulting in a noticable delay before the view became visible.
+- Added support for using the Teleport_NewMap class of specials with title maps
+  so that you can use more than one map as a title map. Using the gametype()
+  ACS function will return GAME_TITLE_MAP if the map is being used for a title
+  display instead of regular play.
+- Added a fourth parameter to ThrustThing to accept a TID of something to
+  thrust.
+- Fixed: Deactivating an actor mover without activating it first reset its
+  target's flags to 0.
+- Fixed: Picking up two or more berserk packs only gave the red tinting for
+  the first one.
+- Fixed: Monsters following a path entered their see state whenever they
+  reached a patrol point. I don't know what I was thinking when I did that.
+- Fixed: Since pre-2.0.90 demos no longer play back, they should be rejected
+  without even trying to play them. Similarly, new demos need to be
+  recorded indicating they won't play back with earlier game versions.
+  Unfortunately, I didn't bump the demo version between 2.0.63a and 2.0.90, so
+  anything pre-2.0.97 won't play with 2.0.97, even though there's probably
+  no changes that would cause desynching between 96 and 97. Oh well.
+- Fixed FBaseStatusBar::DrBNumber(Outer) to work when some of the big number
+  graphics are missing.
+
+January 15, 2005
+- Fixed: ACS cos and sin were using signed shifts when calculating the fineangle.
+
+January 13, 2005
+- Fixed: Instead of assigning the empty sound a basepriority of -1000,
+  S_StartSound() should not even attempt to play it.
+- Fixed: FCanvasTextureInfo::Add() did not change the FOV when reassigning an
+  existing camera->texture mapping.
+- Fixed: SetCameraToTexture did not check if the texture name actually existed as
+  a texture. It just assumed it did.
+
+January 10, 2005
+- Fixed: P_MorphPlayer() needs to set the player's momx and momy to 0, because
+  morphing doesn't maintain the player's momentum.
+- Fixed: The Cyberdemon, SpiderMastermind, AlienSpectre*, Crusader, and
+  Programmer need MF3_DONTMORPH set. Otherwise, morphing them and killing them
+  before they unmorph will skip any of their special death actions. Technically,
+  the Inquisitor doesn't need it set, but he's a boss monster, so it seems best
+  if he can't be morphed. (For that matter, should any of the mechanical monsters
+  in Strife be morphable, since they're not organic?)
+- Redid: Invnext and invprev wrap around the inventory list.
+- Unmorphing a player now removes the weapon(s) they received in their morphed
+  form.
+- Redid the dehsupp fix from March 22, 2002.
+
+January 8, 2005
+- Fixed: Dead players could still be morphed, at least with the morphme cheat.
+  I'm not sure if morph projectiles did it or not, but now they definitely don't.
+- Added a call to SN_StopAllSequences() inside S_StopAllChannels(). This
+  prevents moving sector sounds from playing during the finale (and any other
+  time when sound effects were supposed to have been stopped).
+- Fixed: R_DetailDouble() must not do anything when viewactive is false.
+
+January 7, 2005
+- Ported the polymost visualization code from Ken's prototype so that I can
+  verify the correctness of my C++ port. Which was not quite correct. :-(
+
+January 5, 2005
+- Fixed: R_SetupBuffer() calculated ylookup for the height of the screen, and
+  not the height of the render target. This meant using camera textures taller
+  than the screen would probably crash. But wait! There's more! new_visplane
+  must also allocate top and bottom arrays wide enough for any view, not just
+  the screen. So I decided to just make it allocate enough for MAXWIDTH.
+- Removed some possible unused variable warnings spewed by GCC.
+- Fixed: The parser for DEM_SUMMON(FRIEND) tested if type was NULL when it
+  should have tested typeinfo instead.
+- Changed the actor defaults for GCC to use a function to initialize the
+  default actors instead of an initializer list. With newer GCC versions, I
+  can no longer count on variables being emitted in the same order they are
+  defined, so using an initializer list is impossible. This looks like it adds
+  ~300k to the executable, which I suppose isn't too bad.
+
+January 4, 2005
+- Changed the object pointer offset lists to not be const when compiling with
+  GCC. Some versions and options cause GCC to try to initialize them at
+  run-time, even though they are read-only and therefor protected from
+  writing.
+- Added Makefiles for building with MinGW. Since Chris did the hard part by
+  posting a Makefile for the main exe on the forum, I only needed to make
+  Makefiles for the auxilliary projects. And then I spent some time porting
+  ccdv to Win32, so the make output will look pretty.
+
+January 3, 2005
+- Fixed: The self-modifying code in tmap3.nas was still in the .data section
+  instead of .rtext, so it couldn't be used with data-execution prevention
+  enabled.
+
+January 1, 2005
+- Fixed: ParseDecorate() needlessly allocated new TypeInfo objects.
+- Fixed: The status bar constructor did not initialize CPlayer. Thus, when
+  the Doom status bar's AttachToPlayer method was called it would not do
+  the proper face initialization if the status bar was freed and then
+  reallocated in the exact same spot. This bug didn't show up in the debug
+  build, because the debug CRT automatically fills newly freed and allocated
+  memory.
+- Fixed: P_SpawnMapThing() does not need a special check for the Lost Soul.
+
 December 24, 2004
 - New: Instead of using a static image as a title, you can now use a map.
   Just create it as normal, being sure to do something interesting with

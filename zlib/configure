@@ -82,14 +82,21 @@ if test "$gcc" -eq 1 && ($cc -c $cflags $test.c) 2>/dev/null; then
   QNX*)  # This is for QNX6. I suppose that the QNX rule below is for QNX2,QNX4
          # (alain.bonnefoy@icbt.com)
                  LDSHARED=${LDSHARED-"$cc -shared -Wl,-hlibz.so.1"};;
-  HP-UX*)        LDSHARED=${LDSHARED-"$cc -shared $SFLAGS"}
+  HP-UX*)
+         LDSHARED=${LDSHARED-"$cc -shared $SFLAGS"}
+         case `(uname -m || echo unknown) 2>/dev/null` in
+         ia64)
+                 shared_ext='.so'
+                 SHAREDLIB='libz.so';;
+         *)
                  shared_ext='.sl'
                  SHAREDLIB='libz.sl';;
+         esac;;
   Darwin*)   shared_ext='.dylib'
              SHAREDLIB=libz$shared_ext
              SHAREDLIBV=libz.$VER$shared_ext
              SHAREDLIBM=libz.$VER1$shared_ext
-             LDSHARED=${LDSHARED-"$cc -dynamiclib -install_name $libdir/$SHAREDLIBV -compatibility_version $VER2 -current_version $VER"};;
+             LDSHARED=${LDSHARED-"$cc -dynamiclib -install_name $libdir/$SHAREDLIBM -compatibility_version $VER1 -current_version $VER"};;
   *)             LDSHARED=${LDSHARED-"$cc -shared"};;
   esac
 else
@@ -100,8 +107,14 @@ else
              CFLAGS=${CFLAGS-"-O"}
 #            LDSHARED=${LDSHARED-"ld -b +vnocompatwarnings"}
              LDSHARED=${LDSHARED-"ld -b"}
+         case `(uname -m || echo unknown) 2>/dev/null` in
+         ia64)
+             shared_ext='.so'
+             SHAREDLIB='libz.so';;
+         *)
              shared_ext='.sl'
              SHAREDLIB='libz.sl';;
+         esac;;
   IRIX*)     SFLAGS=${CFLAGS-"-ansi -O2 -rpath ."}
              CFLAGS=${CFLAGS-"-ansi -O2"}
              LDSHARED=${LDSHARED-"cc -shared"};;
@@ -125,6 +138,9 @@ else
   SunOS\ 4*) SFLAGS=${CFLAGS-"-O2 -PIC"}
              CFLAGS=${CFLAGS-"-O2"}
              LDSHARED=${LDSHARED-"ld"};;
+  SunStudio\ 9*) SFLAGS=${CFLAGS-"-DUSE_MMAP -fast -xcode=pic32 -xtarget=ultra3 -xarch=v9b"}
+             CFLAGS=${CFLAGS-"-DUSE_MMAP -fast -xtarget=ultra3 -xarch=v9b"}
+             LDSHARED=${LDSHARED-"cc -xarch=v9b"};;
   UNIX_System_V\ 4.2.0)
              SFLAGS=${CFLAGS-"-KPIC -O"}
              CFLAGS=${CFLAGS-"-O"}

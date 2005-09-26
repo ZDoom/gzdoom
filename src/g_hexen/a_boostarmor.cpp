@@ -84,5 +84,5 @@ bool AArtiBoostArmor::Use (bool pickup)
 
 const char *AArtiBoostArmor::PickupMessage ()
 {
-	return GStrings(TXT_ARTIBOOSTARMOR);
+	return GStrings("TXT_ARTIBOOSTARMOR");
 }

@@ -2,7 +2,9 @@
 "POLYMOST" code written by Ken Silverman
 **************************************************************************************************/
 
-typedef void (*pmostcallbacktype)(double *dpx, double *dpy, int n);
+#include "c_cvars.h"
+
+typedef void (*pmostcallbacktype)(double *dpx, double *dpy, int n, void *userdata);
 
 class PolyClipper
 {
@@ -12,7 +14,7 @@ public:
 
 	void InitMosts (double *px, double *py, int n);
 	bool TestVisibleMost (float x0, float x1);
-	int DoMost (float x0, float y0, float x1, float y1, pmostcallbacktype callback);
+	int DoMost (float x0, float y0, float x1, float y1, pmostcallbacktype callback, void *callbackdata);
 
 private:
     struct vsptype
@@ -44,4 +46,12 @@ private:
 	void AddGroup ();
 	vsptype *GetVsp ();
 	void FreeVsp (vsptype *vsp);
+
+	friend void drawpolymosttest();
+
 };
+
+EXTERN_CVAR(Bool, testpolymost)
+
+extern void drawpolymosttest();
+struct event_t; void Polymost_Responder (event_t *ev);

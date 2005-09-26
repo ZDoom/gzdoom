@@ -3,7 +3,7 @@
 ** Holds a collection of images
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -78,4 +78,13 @@ void FImageCollection::Uninit ()
 		ImageMap = NULL;
 	}
 	NumImages = 0;
+}
+
+FTexture *FImageCollection::operator[] (int index) const
+{
+	if ((unsigned int)index >= (unsigned int)NumImages)
+	{
+		return NULL;
+	}
+	return ImageMap[index] < 0 ? NULL : TexMan[ImageMap[index]];
 }

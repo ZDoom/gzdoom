@@ -126,7 +126,7 @@ enum
 	MF_DROPOFF		= 0x00000400,	// allow jumps from high places
 	MF_PICKUP		= 0x00000800,	// for players to pick up items
 	MF_NOCLIP		= 0x00001000,	// player cheat
-	MF_INCHASE		= 0x00002000,	// used by A_Chase and A_Look to avoid recursion
+	MF_INCHASE		= 0x00002000,	// [RH] used by A_Chase and A_Look to avoid recursion
 	MF_FLOAT		= 0x00004000,	// allow moves to any height, no gravity
 	MF_TELEPORT		= 0x00008000,	// don't cross lines or look at heights
 	MF_MISSILE		= 0x00010000,	// don't hit same species, explode on block
@@ -416,9 +416,6 @@ public:
 	// Smallest yaw interval for a mapthing to be spawned with
 	virtual angle_t AngleIncrements ();
 
-	// Means-of-death for this actor
-	virtual int GetMOD ();
-
 	// Normal/ranged obituary if this actor is the attacker
 	virtual const char *GetObituary ();
 
@@ -442,7 +439,7 @@ public:
 	virtual int DoSpecialDamage (AActor *target, int damage);
 
 	// Like DoSpecialDamage, but called on the actor receiving the damage.
-	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage);
+	virtual int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype);
 
 	// Centaurs and ettins squeal when electrocuted, poisoned, or "holy"-ed
 	virtual void Howl ();
@@ -534,6 +531,12 @@ public:
 
 	// Plays a conversation animation
 	virtual void ConversationAnimation (int animnum);
+
+	// Make this actor hate the same things as another actor
+	void CopyFriendliness (const AActor *other, bool changeTarget);
+
+	// Moves the other actor's inventory to this one
+	void ObtainInventory (AActor *other);
 
 // info for drawing
 // NOTE: The first member variable *must* be x.

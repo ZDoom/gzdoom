@@ -1225,7 +1225,7 @@ static void KillSegLists ()
 static void IterFindPolySegs (vertex_t *v1, vertex_t *v2p, seg_t **segList)
 {
 	SDWORD j;
-	int v2 = v2p - vertexes;
+	int v2 = int(v2p - vertexes);
 	int i;
 
 	// This for loop exists solely to avoid infinitely looping on badly
@@ -1256,7 +1256,7 @@ static void IterFindPolySegs (vertex_t *v1, vertex_t *v2p, seg_t **segList)
 				segs[j].bPolySeg = true;
 			}
 		}
-		v2 = segs[j].v2 - vertexes;
+		v2 = int(segs[j].v2 - vertexes);
 	}
 	I_Error ("IterFindPolySegs: Non-closed Polyobj around (%ld,%ld).\n",
 		v1->x >> FRACBITS, v1->y >> FRACBITS);
@@ -1271,7 +1271,7 @@ static void IterFindPolySegs (vertex_t *v1, vertex_t *v2p, seg_t **segList)
 
 static void SpawnPolyobj (int index, int tag, int type)
 {
-	size_t ii;
+	unsigned int ii;
 	int i;
 	int j;
 	int psIndex;

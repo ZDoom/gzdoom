@@ -1,0 +1,989 @@
+/* U.S. English. (Sorry, it's not English English.) */
+
+[enu default]
+
+D_DEVSTR = "Useless mode ON.\n";
+D_CDROM = "CD-ROM Version: zdoom.ini from c:\\zdoomdat\n";
+PRESSKEY = "press a key.";
+PRESSYN = "press y or n.";
+
+QUITMSG = "are you sure you want to\nquit this great game?";
+
+// QuitDoom1 messages
+QUITMSG1 = "please don't leave, there's more\ndemons to toast!";
+QUITMSG2 = "let's beat it -- this is turning\ninto a bloodbath!";
+QUITMSG3 = "i wouldn't leave if i were you.\ndos is much worse.";
+QUITMSG4 = "you're trying to say you like dos\nbetter than me, right?";
+QUITMSG5 = "don't leave yet -- there's a\ndemon around that corner!";
+QUITMSG6 = "ya know, next time you come in here\ni'm gonna toast ya.";
+QUITMSG7 = "go ahead and leave. see if i care.";
+
+// QuitDOOM II messages
+QUITMSG8 = "you want to quit?\nthen, thou hast lost an eighth!";
+QUITMSG9 = "don't go now, there's a \ndimensional shambler waiting\nat the dos prompt!";
+QUITMSG10 = "get outta here and go back\nto your boring programs.";
+QUITMSG11 = "if i were your boss, i'd \n deathmatch ya in a minute!";
+QUITMSG12 = "look, bud. you leave now\nand you forfeit your body count!";
+QUITMSG13 = "just leave. when you come\nback, i'll be waiting with a bat.";
+QUITMSG14 = "you're lucky i don't smack\nyou for thinking about leaving.";
+
+LOADNET = "you can't do load while in a net game!\n\npress a key.";
+QLOADNET = "you can't quickload during a netgame!\n\npress a key.";
+QSAVESPOT = "you haven't picked a quicksave slot yet!\n\npress a key.";
+SAVEDEAD = "you can't save if you aren't playing!\n\npress a key.";
+QSPROMPT = "quicksave over your game named\n\n'%s'?\n\npress y or n.";
+QLPROMPT = "do you want to quickload the game named\n\n'%s'?\n\npress y or n.";
+NEWGAME = "you can't start a new game\nwhile in a network game.\n\npress a key.";
+NIGHTMARE = "are you sure? this skill level\nisn't even remotely fair.\n\npress y or n.";
+SWSTRING = "this is the shareware version of doom.\n\nyou need to order the entire trilogy.\n\npress a key.";
+MSGOFF = "Messages OFF";
+MSGON = "Messages ON";
+NETEND = "you can't end a netgame!\n\npress a key.";
+ENDGAME = "are you sure you want to end the game?\n\npress y or n.";
+DOSY = "(press y to quit)";
+EMPTYSTRING = "empty slot";
+GOTARMOR = "Picked up the armor.";
+GOTMEGA = "Picked up the MegaArmor!";
+GOTHTHBONUS = "Picked up a health bonus.";
+GOTARMBONUS = "Picked up an armor bonus.";
+GOTSTIM = "Picked up a stimpack.";
+GOTMEDINEED = "Picked up a medikit that you REALLY need!";
+GOTMEDIKIT = "Picked up a medikit.";
+GOTSUPER = "Supercharge!";
+GOTBLUECARD = "Picked up a blue keycard.";
+GOTYELWCARD = "Picked up a yellow keycard.";
+GOTREDCARD = "Picked up a red keycard.";
+GOTBLUESKUL = "Picked up a blue skull key.";
+GOTYELWSKUL = "Picked up a yellow skull key.";
+GOTREDSKUL = "Picked up a red skull key.";
+GOTINVUL = "Invulnerability!";
+GOTBERSERK = "Berserk!";
+GOTINVIS = "Partial Invisibility";
+GOTSUIT = "Radiation Shielding Suit";
+GOTMAP = "Computer Area Map";
+GOTVISOR = "Light Amplification Visor";
+GOTMSPHERE = "MegaSphere!";
+GOTCLIP = "Picked up a clip.";
+GOTCLIPBOX = "Picked up a box of bullets.";
+GOTROCKET = "Picked up a rocket.";
+GOTROCKBOX = "Picked up a box of rockets.";
+GOTCELL = "Picked up an energy cell.";
+GOTCELLBOX = "Picked up an energy cell pack.";
+GOTSHELLS = "Picked up 4 shotgun shells.";
+GOTSHELLBOX = "Picked up a box of shotgun shells.";
+GOTBACKPACK = "Picked up a backpack full of ammo!";
+GOTBFG9000 = "You got the BFG9000!  Oh, yes.";
+GOTCHAINGUN = "You got the chaingun!";
+GOTCHAINSAW = "A chainsaw!  Find some meat!";
+GOTLAUNCHER = "You got the rocket launcher!";
+GOTPLASMA = "You got the plasma gun!";
+GOTSHOTGUN = "You got the shotgun!";
+GOTSHOTGUN2 = "You got the super shotgun!";
+PD_BLUEO = "You need a blue key to activate this object";
+PD_REDO = "You need a red key to activate this object";
+PD_YELLOWO = "You need a yellow key to activate this object";
+PD_BLUEK = "You need a blue key to open this door";
+PD_REDK = "You need a red key to open this door";
+PD_YELLOWK = "You need a yellow key to open this door";
+GGSAVED = "game saved.";
+HUSTR_MSGU = "[Message unsent]";
+
+// Level names
+HUSTR_E1M1 = "E1M1: Hangar";
+HUSTR_E1M2 = "E1M2: Nuclear Plant";
+HUSTR_E1M3 = "E1M3: Toxin Refinery";
+HUSTR_E1M4 = "E1M4: Command Control";
+HUSTR_E1M5 = "E1M5: Phobos Lab";
+HUSTR_E1M6 = "E1M6: Central Processing";
+HUSTR_E1M7 = "E1M7: Computer Station";
+HUSTR_E1M8 = "E1M8: Phobos Anomaly";
+HUSTR_E1M9 = "E1M9: Military Base";
+HUSTR_E2M1 = "E2M1: Deimos Anomaly";
+HUSTR_E2M2 = "E2M2: Containment Area";
+HUSTR_E2M3 = "E2M3: Refinery";
+HUSTR_E2M4 = "E2M4: Deimos Lab";
+HUSTR_E2M5 = "E2M5: Command Center";
+HUSTR_E2M6 = "E2M6: Halls of the Damned";
+HUSTR_E2M7 = "E2M7: Spawning Vats";
+HUSTR_E2M8 = "E2M8: Tower of Babel";
+HUSTR_E2M9 = "E2M9: Fortress of Mystery";
+HUSTR_E3M1 = "E3M1: Hell Keep";
+HUSTR_E3M2 = "E3M2: Slough of Despair";
+HUSTR_E3M3 = "E3M3: Pandemonium";
+HUSTR_E3M4 = "E3M4: House of Pain";
+HUSTR_E3M5 = "E3M5: Unholy Cathedral";
+HUSTR_E3M6 = "E3M6: Mt. Erebus";
+HUSTR_E3M7 = "E3M7: Limbo";
+HUSTR_E3M8 = "E3M8: Dis";
+HUSTR_E3M9 = "E3M9: Warrens";
+HUSTR_E4M1 = "E4M1: Hell Beneath";
+HUSTR_E4M2 = "E4M2: Perfect Hatred";
+HUSTR_E4M3 = "E4M3: Sever The Wicked";
+HUSTR_E4M4 = "E4M4: Unruly Evil";
+HUSTR_E4M5 = "E4M5: They Will Repent";
+HUSTR_E4M6 = "E4M6: Against Thee Wickedly";
+HUSTR_E4M7 = "E4M7: And Hell Followed";
+HUSTR_E4M8 = "E4M8: Unto The Cruel";
+HUSTR_E4M9 = "E4M9: Fear";
+
+HUSTR_1 = "level 1: entryway";
+HUSTR_2 = "level 2: underhalls";
+HUSTR_3 = "level 3: the gantlet";
+HUSTR_4 = "level 4: the focus";
+HUSTR_5 = "level 5: the waste tunnels";
+HUSTR_6 = "level 6: the crusher";
+HUSTR_7 = "level 7: dead simple";
+HUSTR_8 = "level 8: tricks and traps";
+HUSTR_9 = "level 9: the pit";
+HUSTR_10 = "level 10: refueling base";
+HUSTR_11 = "level 11: 'o' of destruction!";
+HUSTR_12 = "level 12: the factory";
+HUSTR_13 = "level 13: downtown";
+HUSTR_14 = "level 14: the inmost dens";
+HUSTR_15 = "level 15: industrial zone";
+HUSTR_16 = "level 16: suburbs";
+HUSTR_17 = "level 17: tenements";
+HUSTR_18 = "level 18: the courtyard";
+HUSTR_19 = "level 19: the citadel";
+HUSTR_20 = "level 20: gotcha!";
+HUSTR_21 = "level 21: nirvana";
+HUSTR_22 = "level 22: the catacombs";
+HUSTR_23 = "level 23: barrels o' fun";
+HUSTR_24 = "level 24: the chasm";
+HUSTR_25 = "level 25: bloodfalls";
+HUSTR_26 = "level 26: the abandoned mines";
+HUSTR_27 = "level 27: monster condo";
+HUSTR_28 = "level 28: the spirit world";
+HUSTR_29 = "level 29: the living end";
+HUSTR_30 = "level 30: icon of sin";
+HUSTR_31 = "level 31: wolfenstein";
+HUSTR_32 = "level 32: grosse";
+
+PHUSTR_1 = "level 1: congo";
+PHUSTR_2 = "level 2: well of souls";
+PHUSTR_3 = "level 3: aztec";
+PHUSTR_4 = "level 4: caged";
+PHUSTR_5 = "level 5: ghost town";
+PHUSTR_6 = "level 6: baron's lair";
+PHUSTR_7 = "level 7: caughtyard";
+PHUSTR_8 = "level 8: realm";
+PHUSTR_9 = "level 9: abattoire";
+PHUSTR_10 = "level 10: onslaught";
+PHUSTR_11 = "level 11: hunted";
+PHUSTR_12 = "level 12: speed";
+PHUSTR_13 = "level 13: the crypt";
+PHUSTR_14 = "level 14: genesis";
+PHUSTR_15 = "level 15: the twilight";
+PHUSTR_16 = "level 16: the omen";
+PHUSTR_17 = "level 17: compound";
+PHUSTR_18 = "level 18: neurosphere";
+PHUSTR_19 = "level 19: nme";
+PHUSTR_20 = "level 20: the death domain";
+PHUSTR_21 = "level 21: slayer";
+PHUSTR_22 = "level 22: impossible mission";
+PHUSTR_23 = "level 23: tombstone";
+PHUSTR_24 = "level 24: the final frontier";
+PHUSTR_25 = "level 25: the temple of darkness";
+PHUSTR_26 = "level 26: bunker";
+PHUSTR_27 = "level 27: anti-christ";
+PHUSTR_28 = "level 28: the sewers";
+PHUSTR_29 = "level 29: odyssey of noises";
+PHUSTR_30 = "level 30: the gateway of hell";
+PHUSTR_31 = "level 31: cyberden";
+PHUSTR_32 = "level 32: go 2 it";
+
+THUSTR_1 = "level 1: system control";
+THUSTR_2 = "level 2: human bbq";
+THUSTR_3 = "level 3: power control";
+THUSTR_4 = "level 4: wormhole";
+THUSTR_5 = "level 5: hanger";
+THUSTR_6 = "level 6: open season";
+THUSTR_7 = "level 7: prison";
+THUSTR_8 = "level 8: metal";
+THUSTR_9 = "level 9: stronghold";
+THUSTR_10 = "level 10: redemption";
+THUSTR_11 = "level 11: storage facility";
+THUSTR_12 = "level 12: crater";
+THUSTR_13 = "level 13: nukage processing";
+THUSTR_14 = "level 14: steel works";
+THUSTR_15 = "level 15: dead zone";
+THUSTR_16 = "level 16: deepest reaches";
+THUSTR_17 = "level 17: processing area";
+THUSTR_18 = "level 18: mill";
+THUSTR_19 = "level 19: shipping/respawning";
+THUSTR_20 = "level 20: central processing";
+THUSTR_21 = "level 21: administration center";
+THUSTR_22 = "level 22: habitat";
+THUSTR_23 = "level 23: lunar mining project";
+THUSTR_24 = "level 24: quarry";
+THUSTR_25 = "level 25: baron's den";
+THUSTR_26 = "level 26: ballistyx";
+THUSTR_27 = "level 27: mount pain";
+THUSTR_28 = "level 28: heck";
+THUSTR_29 = "level 29: river styx";
+THUSTR_30 = "level 30: last call";
+THUSTR_31 = "level 31: pharaoh";
+THUSTR_32 = "level 32: caribbean";
+
+HUSTR_TALKTOSELF1 = "You mumble to yourself";
+HUSTR_TALKTOSELF2 = "Who's there?";
+HUSTR_TALKTOSELF3 = "You scare yourself";
+HUSTR_TALKTOSELF4 = "You start to rave";
+HUSTR_TALKTOSELF5 = "You've lost it...";
+HUSTR_MESSAGESENT = "[Message Sent]";
+
+AMSTR_FOLLOWON = "Follow Mode ON";
+AMSTR_FOLLOWOFF = "Follow Mode OFF";
+AMSTR_GRIDON = "Grid ON";
+AMSTR_GRIDOFF = "Grid OFF";
+AMSTR_MARKEDSPOT = "Marked Spot";
+AMSTR_MARKSCLEARED = "All Marks Cleared";
+STSTR_MUS = "Music Change";
+STSTR_NOMUS = "IMPOSSIBLE SELECTION";
+STSTR_DQDON = "Degreelessness Mode ON";
+STSTR_DQDOFF = "Degreelessness Mode OFF";
+STSTR_KFAADDED = "Very Happy Ammo Added";
+STSTR_FAADDED = "Ammo (no keys) Added";
+STSTR_NCON = "No Clipping Mode ON";
+STSTR_NCOFF = "No Clipping Mode OFF";
+STSTR_BEHOLD = "inVuln, Str, Inviso, Rad, Allmap, or Lite-amp";
+STSTR_BEHOLDX = "Power-up Toggled";
+STSTR_CHOPPERS = "... doesn't suck - GM";
+STSTR_CLEV = "Changing Level...\n";
+
+E1TEXT =
+	"Once you beat the big badasses and\n"
+	"clean out the moon base you're supposed\n"
+	"to win, aren't you? Aren't you? Where's\n"
+	"your fat reward and ticket home? What\n"
+	"the hell is this? It's not supposed to\n"
+	"end this way!\n"
+	"\n"
+	"It stinks like rotten meat, but looks\n"
+	"like the lost Deimos base.  Looks like\n"
+	"you're stuck on The Shores of Hell.\n"
+	"The only way out is through.\n"
+	"\n"
+	"To continue the DOOM experience, play\n"
+	"The Shores of Hell and its amazing\n"
+	"sequel, Inferno!\n";
+E2TEXT =
+	"You've done it! The hideous cyber-\n"
+	"demon lord that ruled the lost Deimos\n"
+	"moon base has been slain and you\n"
+	"are triumphant! But ... where are\n"
+	"you? You clamber to the edge of the\n"
+	"moon and look down to see the awful\n"
+	"truth.\n"
+	"\n"
+	"Deimos floats above Hell itself!\n"
+	"You've never heard of anyone escaping\n"
+	"from Hell, but you'll make the bastards\n"
+	"sorry they ever heard of you! Quickly,\n"
+	"you rappel down to  the surface of\n"
+	"Hell.\n"
+	"\n"
+	"Now, it's on to the final chapter of\n"
+	"DOOM! -- Inferno.";
+E3TEXT =
+	"The loathsome spiderdemon that\n"
+	"masterminded the invasion of the moon\n"
+	"bases and caused so much death has had\n"
+	"its ass kicked for all time.\n"
+	"\n"
+	"A hidden doorway opens and you enter.\n"
+	"You've proven too tough for Hell to\n"
+	"contain, and now Hell at last plays\n"
+	"fair -- for you emerge from the door\n"
+	"to see the green fields of Earth!\n"
+	"Home at last.\n"
+	"\n"
+	"You wonder what's been happening on\n"
+	"Earth while you were battling evil\n"
+	"unleashed. It's good that no Hell-\n"
+	"spawn could have come through that\n"
+	"door with you ...";
+E4TEXT =
+	"the spider mastermind must have sent forth\n"
+	"its legions of hellspawn before your\n"
+	"final confrontation with that terrible\n"
+	"beast from hell.  but you stepped forward\n"
+	"and brought forth eternal damnation and\n"
+	"suffering upon the horde as a true hero\n"
+	"would in the face of something so evil.\n"
+	"\n"
+	"besides, someone was gonna pay for what\n"
+	"happened to daisy, your pet rabbit.\n"
+	"\n"
+	"but now, you see spread before you more\n"
+	"potential pain and gibbitude as a nation\n"
+	"of demons run amok among our cities.\n"
+	"\n"
+	"next stop, hell on earth!";
+C1TEXT =
+	"YOU HAVE ENTERED DEEPLY INTO THE INFESTED\n"
+	"STARPORT. BUT SOMETHING IS WRONG. THE\n"
+	"MONSTERS HAVE BROUGHT THEIR OWN REALITY\n"
+	"WITH THEM, AND THE STARPORT'S TECHNOLOGY\n"
+	"IS BEING SUBVERTED BY THEIR PRESENCE.\n"
+	"\n"
+	"AHEAD, YOU SEE AN OUTPOST OF HELL, A\n"
+	"FORTIFIED ZONE. IF YOU CAN GET PAST IT,\n"
+	"YOU CAN PENETRATE INTO THE HAUNTED HEART\n"
+	"OF THE STARBASE AND FIND THE CONTROLLING\n"
+	"SWITCH WHICH HOLDS EARTH'S POPULATION\n"
+	"HOSTAGE.";
+C2TEXT =
+	"YOU HAVE WON! YOUR VICTORY HAS ENABLED\n"
+	"HUMANKIND TO EVACUATE EARTH AND ESCAPE\n"
+	"THE NIGHTMARE.  NOW YOU ARE THE ONLY\n"
+	"HUMAN LEFT ON THE FACE OF THE PLANET.\n"
+	"CANNIBAL MUTATIONS, CARNIVOROUS ALIENS,\n"
+	"AND EVIL SPIRITS ARE YOUR ONLY NEIGHBORS.\n"
+	"YOU SIT BACK AND WAIT FOR DEATH, CONTENT\n"
+	"THAT YOU HAVE SAVED YOUR SPECIES.\n"
+	"\n"
+	"BUT THEN, EARTH CONTROL BEAMS DOWN A\n"
+	"MESSAGE FROM SPACE: \"SENSORS HAVE LOCATED\n"
+	"THE SOURCE OF THE ALIEN INVASION. IF YOU\n"
+	"GO THERE, YOU MAY BE ABLE TO BLOCK THEIR\n"
+	"ENTRY.  THE ALIEN BASE IS IN THE HEART OF\n"
+	"YOUR OWN HOME CITY, NOT FAR FROM THE\n"
+	"STARPORT.\" SLOWLY AND PAINFULLY YOU GET\n"
+	"UP AND RETURN TO THE FRAY.";
+C3TEXT =
+	"YOU ARE AT THE CORRUPT HEART OF THE CITY,\n"
+	"SURROUNDED BY THE CORPSES OF YOUR ENEMIES.\n"
+	"YOU SEE NO WAY TO DESTROY THE CREATURES'\n"
+	"ENTRYWAY ON THIS SIDE, SO YOU CLENCH YOUR\n"
+	"TEETH AND PLUNGE THROUGH IT.\n"
+	"\n"
+	"THERE MUST BE A WAY TO CLOSE IT ON THE\n"
+	"OTHER SIDE. WHAT DO YOU CARE IF YOU'VE\n"
+	"GOT TO GO THROUGH HELL TO GET TO IT?";
+C4TEXT =
+	"THE HORRENDOUS VISAGE OF THE BIGGEST\n"
+	"DEMON YOU'VE EVER SEEN CRUMBLES BEFORE\n"
+	"YOU, AFTER YOU PUMP YOUR ROCKETS INTO\n"
+	"HIS EXPOSED BRAIN. THE MONSTER SHRIVELS\n"
+	"UP AND DIES, ITS THRASHING LIMBS\n"
+	"DEVASTATING UNTOLD MILES OF HELL'S\n"
+	"SURFACE.\n"
+	"\n"
+	"YOU'VE DONE IT. THE INVASION IS OVER.\n"
+	"EARTH IS SAVED. HELL IS A WRECK. YOU\n"
+	"WONDER WHERE BAD FOLKS WILL GO WHEN THEY\n"
+	"DIE, NOW. WIPING THE SWEAT FROM YOUR\n"
+	"FOREHEAD YOU BEGIN THE LONG TREK BACK\n"
+	"HOME. REBUILDING EARTH OUGHT TO BE A\n"
+	"LOT MORE FUN THAN RUINING IT WAS.\n";
+C5TEXT =
+	"CONGRATULATIONS, YOU'VE FOUND THE SECRET\n"
+	"LEVEL! LOOKS LIKE IT'S BEEN BUILT BY\n"
+	"HUMANS, RATHER THAN DEMONS. YOU WONDER\n"
+	"WHO THE INMATES OF THIS CORNER OF HELL\n"
+	"WILL BE.";
+C6TEXT =
+	"CONGRATULATIONS, YOU'VE FOUND THE\n"
+	"SUPER SECRET LEVEL!  YOU'D BETTER\n"
+	"BLAZE THROUGH THIS ONE!\n";
+P1TEXT =
+	"You gloat over the steaming carcass of the\n"
+	"Guardian.  With its death, you've wrested\n"
+	"the Accelerator from the stinking claws\n"
+	"of Hell.  You relax and glance around the\n"
+	"room.  Damn!  There was supposed to be at\n"
+	"least one working prototype, but you can't\n"
+	"see it. The demons must have taken it.\n"
+	"\n"
+	"You must find the prototype, or all your\n"
+	"struggles will have been wasted. Keep\n"
+	"moving, keep fighting, keep killing.\n"
+	"Oh yes, keep living, too.";
+P2TEXT =
+	"Even the deadly Arch-Vile labyrinth could\n"
+	"not stop you, and you've gotten to the\n"
+	"prototype Accelerator which is soon\n"
+	"efficiently and permanently deactivated.\n"
+	"\n"
+	"You're good at that kind of thing.";
+P3TEXT =
+	"You've bashed and battered your way into\n"
+	"the heart of the devil-hive.  Time for a\n"
+	"Search-and-Destroy mission, aimed at the\n"
+	"Gatekeeper, whose foul offspring is\n"
+	"cascading to Earth.  Yeah, he's bad. But\n"
+	"you know who's worse!\n"
+	"\n"
+	"Grinning evilly, you check your gear, and\n"
+	"get ready to give the bastard a little Hell\n"
+	"of your own making!";
+P4TEXT =
+	"The Gatekeeper's evil face is splattered\n"
+	"all over the place.  As its tattered corpse\n"
+	"collapses, an inverted Gate forms and\n"
+	"sucks down the shards of the last\n"
+	"prototype Accelerator, not to mention the\n"
+	"few remaining demons.  You're done. Hell\n"
+	"has gone back to pounding bad dead folks \n"
+	"instead of good live ones.  Remember to\n"
+	"tell your grandkids to put a rocket\n"
+	"launcher in your coffin. If you go to Hell\n"
+	"when you die, you'll need it for some\n"
+	"final cleaning-up ...";
+P5TEXT =
+	"You've found the second-hardest level we\n"
+	"got. Hope you have a saved game a level or\n"
+	"two previous.  If not, be prepared to die\n"
+	"aplenty. For master marines only.";
+P6TEXT =
+	"Betcha wondered just what WAS the hardest\n"
+	"level we had ready for ya?  Now you know.\n"
+	"No one gets out alive.";
+T1TEXT =
+	"You've fought your way out of the infested\n"
+	"experimental labs.   It seems that UAC has\n"
+	"once again gulped it down.  With their\n"
+	"high turnover, it must be hard for poor\n"
+	"old UAC to buy corporate health insurance\n"
+	"nowadays..\n"
+	"\n"
+	"Ahead lies the military complex, now\n"
+	"swarming with diseased horrors hot to get\n"
+	"their teeth into you. With luck, the\n"
+	"complex still has some warlike ordnance\n"
+	"laying around.";
+T2TEXT =
+	"You hear the grinding of heavy machinery\n"
+	"ahead.  You sure hope they're not stamping\n"
+	"out new hellspawn, but you're ready to\n"
+	"ream out a whole herd if you have to.\n"
+	"They might be planning a blood feast, but\n"
+	"you feel about as mean as two thousand\n"
+	"maniacs packed into one mad killer.\n"
+	"\n"
+	"You don't plan to go down easy.";
+T3TEXT =
+	"The vista opening ahead looks real damn\n"
+	"familiar. Smells familiar, too -- like\n"
+	"fried excrement. You didn't like this\n"
+	"place before, and you sure as hell ain't\n"
+	"planning to like it now. The more you\n"
+	"brood on it, the madder you get.\n"
+	"Hefting your gun, an evil grin trickles\n"
+	"onto your face. Time to take some names.";
+T4TEXT =
+	"Suddenly, all is silent, from one horizon\n"
+	"to the other. The agonizing echo of Hell\n"
+	"fades away, the nightmare sky turns to\n"
+	"blue, the heaps of monster corpses start \n"
+	"to evaporate along with the evil stench \n"
+	"that filled the air. Jeeze, maybe you've\n"
+	"done it. Have you really won?\n"
+	"\n"
+	"Something rumbles in the distance.\n"
+	"A blue light begins to glow inside the\n"
+	"ruined skull of the demon-spitter.";
+T5TEXT =
+	"What now? Looks totally different. Kind\n"
+	"of like King Tut's condo. Well,\n"
+	"whatever's here can't be any worse\n"
+	"than usual. Can it?  Or maybe it's best\n"
+	"to let sleeping gods lie..";
+T6TEXT =
+	"Time for a vacation. You've burst the\n"
+	"bowels of hell and by golly you're ready\n"
+	"for a break. You mutter to yourself,\n"
+	"Maybe someone else can kick Hell's ass\n"
+	"next time around. Ahead lies a quiet town,\n"
+	"with peaceful flowing water, quaint\n"
+	"buildings, and presumably no Hellspawn.\n"
+	"\n"
+	"As you step off the transport, you hear\n"
+	"the stomp of a cyberdemon's iron shoe.";
+
+// Cast list (must appear in this order)
+CC_ZOMBIE = "ZOMBIEMAN";
+CC_SHOTGUN = "SHOTGUN GUY";
+CC_HEAVY = "HEAVY WEAPON DUDE";
+CC_IMP = "IMP";
+CC_DEMON = "DEMON";
+CC_LOST = "LOST SOUL";
+CC_CACO = "CACODEMON";
+CC_HELL = "HELL KNIGHT";
+CC_BARON = "BARON OF HELL";
+CC_ARACH = "ARACHNOTRON";
+CC_PAIN = "PAIN ELEMENTAL";
+CC_REVEN = "REVENANT";
+CC_MANCU = "MANCUBUS";
+CC_ARCH = "ARCH-VILE";
+CC_SPIDER = "THE SPIDER MASTERMIND";
+CC_CYBER = "THE CYBERDEMON";
+CC_HERO = "OUR HERO";
+
+// New strings from BOOM
+PD_BLUEC = "You need a blue card to open this door";
+PD_REDC = "You need a red card to open this door";
+PD_YELLOWC = "You need a yellow card to open this door";
+PD_BLUES = "You need a blue skull to open this door";
+PD_REDS = "You need a red skull to open this door";
+PD_YELLOWS = "You need a yellow skull to open this door";
+PD_ANY = "Any key will open this door";
+PD_ALL3 = "You need all three keys to open this door";
+PD_ALL6 = "You need all six keys to open this door";
+
+// Gameflow messages
+TXT_FRAGLIMIT = "Fraglimit hit.";
+TXT_TIMELIMIT = "Timelimit hit.";
+
+// Spree messages
+SPREEKILLSELF = "%o was looking good until %g killed %hself!";
+SPREEOVER = "%o's killing spree was ended by %k";
+SPREE5 = "%k is on a killing spree!";
+SPREE10 = "%k is on a rampage!";
+SPREE15 = "%k is dominating!";
+SPREE20 = "%k is unstoppable!";
+SPREE25 = "%k is Godlike!";
+
+// Mulitkill messages
+MULTI2 = "Double kill!";
+MULTI3 = "Multi kill!";
+MULTI4 = "Ultra kill!";
+MULTI5 = "Monster kill!";
+
+// Obituary strings
+// First the self-kills, then the other-kills
+OB_SUICIDE = "%o suicides.";
+OB_FALLING = "%o fell too far.";
+OB_CRUSH = "%o was squished.";
+OB_EXIT = "%o tried to leave.";
+OB_WATER = "%o can't swim.";
+OB_SLIME = "%o mutated.";
+OB_LAVA = "%o melted.";
+OB_BARREL = "%o went boom.";
+OB_SPLASH = "%o stood in the wrong spot.";
+OB_R_SPLASH = "%o should have stood back.";
+OB_ROCKET = "%o should have stood back.";
+OB_KILLEDSELF = "%o killed %hself.";
+
+OB_STEALTHBABY = "%o thought %g saw an arachnotron.";
+OB_STEALTHVILE = "%o thought %g saw an archvile.";
+OB_STEALTHBARON = "%o thought %g saw a Baron of Hell.";
+OB_STEALTHCACO = "%o thought %g saw a cacodemon.";
+OB_STEALTHCHAINGUY = "%o thought %g saw a chaingunner.";
+OB_STEALTHDEMON = "%o thought %g saw a demon.";
+OB_STEALTHKNIGHT = "%o thought %g saw a Hell Knight.";
+OB_STEALTHIMP = "%o thought %g saw an imp.";
+OB_STEALTHFATSO = "%o thought %g saw a mancubus.";
+OB_STEALTHUNDEAD = "%o thought %g saw a revenant.";
+OB_STEALTHSHOTGUY = "%o thought %g saw a sergeant.";
+OB_STEALTHZOMBIE = "%o thought %g saw a zombieman.";
+OB_UNDEADHIT = "%o was punched by a revenant.";
+OB_IMPHIT = "%o was slashed by an imp.";
+OB_CACOHIT = "%o got too close to a cacodemon.";
+OB_DEMONHIT = "%o was bit by a demon.";
+OB_SPECTREHIT = "%o was eaten by a spectre.";
+OB_BARONHIT = "%o was ripped open by a Baron of Hell.";
+OB_KNIGHTHIT = "%o was gutted by a Hell Knight.";
+OB_ZOMBIE = "%o was killed by a zombieman.";
+OB_SHOTGUY = "%o was shot by a sergeant.";
+OB_VILE = "%o was incinerated by an archvile.";
+OB_UNDEAD = "%o couldn't evade a revenant's fireball.";
+OB_FATSO = "%o was squashed by a mancubus.";
+OB_CHAINGUY = "%o was perforated by a chaingunner.";
+OB_SKULL = "%o was spooked by a lost soul.";
+OB_IMP = "%o was burned by an imp.";
+OB_CACO = "%o was smitten by a cacodemon.";
+OB_BARON = "%o was bruised by a Baron of Hell.";
+OB_KNIGHT = "%o was splayed by a Hell Knight.";
+OB_SPIDER = "%o stood in awe of the spider demon.";
+OB_BABY = "%o let an arachnotron get %h.";
+OB_CYBORG = "%o was splattered by a cyberdemon.";
+OB_WOLFSS = "%o met a Nazi.";
+
+OB_CHICKEN = "%o was pecked to death.";
+OB_BEAST = "%o was charred by a beast.";
+OB_CLINK = "%o was slashed by a clink.";
+OB_DSPARIL1 = "%o was scalded by D'Sparil's serpent.";
+OB_DSPARIL1HIT = "%o was chewed up by D'Sparil's serpent.";
+OB_DSPARIL2 = "%o was no match for D'Sparil.";
+OB_DSPARIL2HIT = "%o was smacked down by D'Sparil.";
+OB_HERETICIMP = "%o was scarred by an imp.";
+OB_HERETICIMPHIT = "%o was hacked by an imp.";
+OB_IRONLICH = "%o was devastated by an ironlich.";
+OB_IRONLICHHIT = "%o got up-close and personal with an ironlich.";
+OB_BONEKNIGHT = "%o was axed by a knight.";
+OB_BONEKNIGHTHIT = "%o was slain by a knight.";
+OB_MUMMY = "%o was smashed by a mummy.";
+OB_MUMMYLEADER = "%o was shrieked to death by a mummy.";
+OB_SNAKE = "%o was rattled by a snake.";
+OB_WIZARD = "%o was cursed by a wizard.";
+OB_WIZARDHIT = "%o was palpated by a wizard.";
+
+OB_MPFIST = "%o chewed on %k's fist.";
+OB_MPCHAINSAW = "%o was mowed over by %k's chainsaw.";
+OB_MPPISTOL = "%o was tickled by %k's pea shooter.";
+OB_MPSHOTGUN = "%o chewed on %k's boomstick.";
+OB_MPSSHOTGUN = "%o was splattered by %k's super shotgun.";
+OB_MPCHAINGUN = "%o was mowed down by %k's chaingun.";
+OB_MPROCKET = "%o rode %k's rocket.";
+OB_MPR_SPLASH = "%o almost dodged %k's rocket.";
+OB_MPPLASMARIFLE = "%o was melted by %k's plasma gun.";
+OB_MPBFG_BOOM = "%o was splintered by %k's BFG.";
+OB_MPBFG_SPLASH = "%o couldn't hide from %k's BFG.";
+OB_MPTELEFRAG = "%o was telefragged by %k.";
+OB_RAILGUN = "%o was railed by %k.";
+
+// Same as OB_MPTELEFRAG, but shown when a monster telefrags you
+OB_MONTELEFRAG = "%o was telefragged.";
+
+OB_DEFAULT = "%o died.";
+OB_FRIENDLY1 = "%k mows down a teammate.";
+OB_FRIENDLY2 = "%k checks %p glasses.";
+OB_FRIENDLY3 = "%k gets a frag for the other team.";
+OB_FRIENDLY4 = "%k loses another friend.";
+
+SAVEGAMENAME = "zdoomsv";
+STARTUP1 = "";
+STARTUP2 = "";
+STARTUP3 = "";
+STARTUP4 = "";
+STARTUP5 = "";
+
+// Heretic strings
+HE1TEXT =
+		"with the destruction of the iron\n"
+		"liches and their minions, the last\n"
+		"of the undead are cleared from this\n"
+		"plane of existence.\n\n"
+		"those creatures had to come from\n"
+		"somewhere, though, and you have the\n"
+		"sneaky suspicion that the fiery\n"
+		"portal of hell's maw opens onto\n"
+		"their home dimension.\n\n"
+		"to make sure that more undead\n"
+		"(or even worse things) don't come\n"
+		"through, you'll have to seal hell's\n"
+		"maw from the other side. of course\n"
+		"this means you may get stuck in a\n"
+		"very unfriendly world, but no one\n"
+		"ever said being a Heretic was easy!";
+HE2TEXT =
+		"the mighty maulotaurs have proved\n"
+		"to be no match for you, and as\n"
+		"their steaming corpses slide to the\n"
+		"ground you feel a sense of grim\n"
+		"satisfaction that they have been\n"
+		"destroyed.\n\n"
+		"the gateways which they guarded\n"
+		"have opened, revealing what you\n"
+		"hope is the way home. but as you\n"
+		"step through, mocking laughter\n"
+		"rings in your ears.\n\n"
+		"was some other force controlling\n"
+		"the maulotaurs? could there be even\n"
+		"more horrific beings through this\n"
+		"gate? the sweep of a crystal dome\n"
+		"overhead where the sky should be is\n"
+		"certainly not a good sign....";
+HE3TEXT =
+		"the death of d'sparil has loosed\n"
+		"the magical bonds holding his\n"
+		"creatures on this plane, their\n"
+		"dying screams overwhelming his own\n"
+		"cries of agony.\n\n"
+		"your oath of vengeance fulfilled,\n"
+		"you enter the portal to your own\n"
+		"world, mere moments before the dome\n"
+		"shatters into a million pieces.\n\n"
+		"but if d'sparil's power is broken\n"
+		"forever, why don't you feel safe?\n"
+		"was it that last shout just before\n"
+		"his death, the one that sounded\n"
+		"like a curse? or a summoning? you\n"
+		"can't really be sure, but it might\n"
+		"just have been a scream.\n\n"
+		"then again, what about the other\n"
+		"serpent riders?";
+HE4TEXT =
+		"you thought you would return to your\n"
+		"own world after d'sparil died, but\n"
+		"his final act banished you to his\n"
+		"own plane. here you entered the\n"
+		"shattered remnants of lands\n"
+		"conquered by d'sparil. you defeated\n"
+		"the last guardians of these lands,\n"
+		"but now you stand before the gates\n"
+		"to d'sparil's stronghold. until this\n"
+		"moment you had no doubts about your\n"
+		"ability to face anything you might\n"
+		"encounter, but beyond this portal\n"
+		"lies the very heart of the evil\n"
+		"which invaded your world. d'sparil\n"
+		"might be dead, but the pit where he\n"
+		"was spawned remains. now you must\n"
+		"enter that pit in the hopes of\n"
+		"finding a way out. and somewhere,\n"
+		"in the darkest corner of d'sparil's\n"
+		"demesne, his personal bodyguards\n"
+		"await your arrival ...";
+HE5TEXT =
+		"as the final maulotaur bellows his\n"
+		"death-agony, you realize that you\n"
+		"have never come so close to your own\n"
+		"destruction. not even the fight with\n"
+		"d'sparil and his disciples had been\n"
+		"this desperate. grimly you stare at\n"
+		"the gates which open before you,\n"
+		"wondering if they lead home, or if\n"
+		"they open onto some undreamed-of\n"
+		"horror. you find yourself wondering\n"
+		"if you have the strength to go on,\n"
+		"if nothing but death and pain await\n"
+		"you. but what else can you do, if\n"
+		"the will to fight is gone? can you\n"
+		"force yourself to continue in the\n"
+		"face of such despair? do you have\n"
+		"the courage? you find, in the end,\n"
+		"that it is not within you to\n"
+		"surrender without a fight. eyes\n"
+		"wide, you go to meet your fate.";
+
+// EPISODE 1 - THE CITY OF THE DAMNED
+HHUSTR_E1M1 = "THE DOCKS";
+HHUSTR_E1M2 = "THE DUNGEONS";
+HHUSTR_E1M3 = "THE GATEHOUSE";
+HHUSTR_E1M4 = "THE GUARD TOWER";
+HHUSTR_E1M5 = "THE CITADEL";
+HHUSTR_E1M6 = "THE CATHEDRAL";
+HHUSTR_E1M7 = "THE CRYPTS";
+HHUSTR_E1M8 = "HELL'S MAW";
+HHUSTR_E1M9 = "THE GRAVEYARD";
+
+// EPISODE 2 - HELL'S MAW
+HHUSTR_E2M1 = "THE CRATER";
+HHUSTR_E2M2 = "THE LAVA PITS";
+HHUSTR_E2M3 = "THE RIVER OF FIRE";
+HHUSTR_E2M4 = "THE ICE GROTTO";
+HHUSTR_E2M5 = "THE CATACOMBS";
+HHUSTR_E2M6 = "THE LABYRINTH";
+HHUSTR_E2M7 = "THE GREAT HALL";
+HHUSTR_E2M8 = "THE PORTALS OF CHAOS";
+HHUSTR_E2M9 = "THE GLACIER";
+
+// EPISODE 3 - THE DOME OF D'SPARIL
+HHUSTR_E3M1 = "THE STOREHOUSE";
+HHUSTR_E3M2 = "THE CESSPOOL";
+HHUSTR_E3M3 = "THE CONFLUENCE";
+HHUSTR_E3M4 = "THE AZURE FORTRESS";
+HHUSTR_E3M5 = "THE OPHIDIAN LAIR";
+HHUSTR_E3M6 = "THE HALLS OF FEAR";
+HHUSTR_E3M7 = "THE CHASM";
+HHUSTR_E3M8 = "D'SPARIL'S KEEP";
+HHUSTR_E3M9 = "THE AQUIFER";
+
+// EPISODE 4: THE OSSUARY
+HHUSTR_E4M1 = "CATAFALQUE";
+HHUSTR_E4M2 = "BLOCKHOUSE";
+HHUSTR_E4M3 = "AMBULATORY";
+HHUSTR_E4M4 = "SEPULCHER";
+HHUSTR_E4M5 = "GREAT STAIR";
+HHUSTR_E4M6 = "HALLS OF THE APOSTATE";
+HHUSTR_E4M7 = "RAMPARTS OF PERDITION";
+HHUSTR_E4M8 = "SHATTERED BRIDGE";
+HHUSTR_E4M9 = "MAUSOLEUM";
+
+// EPISODE 5: THE STAGNANT DEMESNE
+HHUSTR_E5M1 = "OCHRE CLIFFS";
+HHUSTR_E5M2 = "RAPIDS";
+HHUSTR_E5M3 = "QUAY";
+HHUSTR_E5M4 = "COURTYARD";
+HHUSTR_E5M5 = "HYDRATYR";
+HHUSTR_E5M6 = "COLONNADE";
+HHUSTR_E5M7 = "FOETID MANSE";
+HHUSTR_E5M8 = "FIELD OF JUDGEMENT";
+HHUSTR_E5M9 = "SKEIN OF D'SPARIL";
+
+// Keys
+
+TXT_GOTBLUEKEY = "BLUE KEY";
+TXT_GOTYELLOWKEY = "YELLOW KEY";
+TXT_GOTGREENKEY = "GREEN KEY";
+
+// Artifacts
+
+TXT_ARTIHEALTH = "QUARTZ FLASK";
+TXT_ARTIFLY = "WINGS OF WRATH";
+TXT_ARTIINVULNERABILITY = "RING OF INVINCIBILITY";
+TXT_ARTITOMEOFPOWER = "TOME OF POWER";
+TXT_ARTIINVISIBILITY = "SHADOWSPHERE";
+TXT_ARTIEGG = "MORPH OVUM";
+TXT_ARTISUPERHEALTH = "MYSTIC URN";
+TXT_ARTITORCH = "TORCH";
+TXT_ARTIFIREBOMB = "TIME BOMB OF THE ANCIENTS";
+TXT_ARTITELEPORT = "CHAOS DEVICE";
+
+// Items
+
+TXT_ITEMHEALTH = "CRYSTAL VIAL";
+TXT_ITEMBAGOFHOLDING = "BAG OF HOLDING";
+TXT_ITEMSHIELD1 = "SILVER SHIELD";
+TXT_ITEMSHIELD2 = "ENCHANTED SHIELD";
+TXT_ITEMSUPERMAP = "MAP SCROLL";
+
+// Ammo
+
+TXT_AMMOGOLDWAND1 = "WAND CRYSTAL";
+TXT_AMMOGOLDWAND2 = "CRYSTAL GEODE";
+TXT_AMMOMACE1 = "MACE SPHERES";
+TXT_AMMOMACE2 = "PILE OF MACE SPHERES";
+TXT_AMMOCROSSBOW1 = "ETHEREAL ARROWS";
+TXT_AMMOCROSSBOW2 = "QUIVER OF ETHEREAL ARROWS";
+TXT_AMMOBLASTER1 = "CLAW ORB";
+TXT_AMMOBLASTER2 = "ENERGY ORB";
+TXT_AMMOSKULLROD1 = "LESSER RUNES";
+TXT_AMMOSKULLROD2 = "GREATER RUNES";
+TXT_AMMOPHOENIXROD1 = "FLAME ORB";
+TXT_AMMOPHOENIXROD2 = "INFERNO ORB";
+
+// Weapons
+
+TXT_WPNMACE = "FIREMACE";
+TXT_WPNCROSSBOW = "ETHEREAL CROSSBOW";
+TXT_WPNBLASTER = "DRAGON CLAW";
+TXT_WPNSKULLROD = "HELLSTAFF";
+TXT_WPNPHOENIXROD = "PHOENIX ROD";
+TXT_WPNGAUNTLETS = "GAUNTLETS OF THE NECROMANCER";
+
+TXT_NEEDBLUEKEY = "YOU NEED A BLUE KEY TO OPEN THIS DOOR";
+TXT_NEEDGREENKEY = "YOU NEED A GREEN KEY TO OPEN THIS DOOR";
+TXT_NEEDYELLOWKEY = "YOU NEED A YELLOW KEY TO OPEN THIS DOOR";
+
+TXT_CHEATHEALTH = "FULL HEALTH";
+TXT_CHEATKEYS = "ALL KEYS";
+TXT_CHEATSOUNDON = "SOUND DEBUG ON";
+TXT_CHEATSOUNDOFF = "SOUND DEBUG OFF";
+TXT_CHEATIDDQD = "TRYING TO CHEAT, EH?  NOW YOU DIE!";
+TXT_CHEATIDKFA = "CHEATER - YOU DON'T DESERVE WEAPONS";
+TXT_CHEATTICKERON = "TICKER ON";
+TXT_CHEATTICKEROFF = "TICKER OFF";
+TXT_CHEATARTIFACTS3 = "YOU GOT IT";
+
+RAVENQUITMSG = "ARE YOU SURE YOU WANT TO QUIT?";
+
+// Hexen strings
+
+// Mana
+
+TXT_MANA_1 = "BLUE MANA";
+TXT_MANA_2 = "GREEN MANA";
+TXT_MANA_BOTH = "COMBINED MANA";
+
+// Keys
+
+TXT_KEY_STEEL = "STEEL KEY";
+TXT_KEY_CAVE = "CAVE KEY";
+TXT_KEY_AXE = "AXE KEY";
+TXT_KEY_FIRE = "FIRE KEY";
+TXT_KEY_EMERALD = "EMERALD KEY";
+TXT_KEY_DUNGEON = "DUNGEON KEY";
+TXT_KEY_SILVER = "SILVER KEY";
+TXT_KEY_RUSTED = "RUSTED KEY";
+TXT_KEY_HORN = "HORN KEY";
+TXT_KEY_SWAMP = "SWAMP KEY";
+TXT_KEY_CASTLE = "CASTLE KEY";
+
+// Artifacts
+
+TXT_ARTIINVULNERABILITY2 = "ICON OF THE DEFENDER";
+TXT_ARTISUMMON = "DARK SERVANT";
+TXT_ARTIEGG2 = "PORKALATOR";
+TXT_ARTIPOISONBAG = "FLECHETTE";
+TXT_ARTITELEPORTOTHER = "BANISHMENT DEVICE";
+TXT_ARTISPEED = "BOOTS OF SPEED";
+TXT_ARTIBOOSTMANA = "KRATER OF MIGHT";
+TXT_ARTIBOOSTARMOR = "DRAGONSKIN BRACERS";
+TXT_ARTIBLASTRADIUS = "DISC OF REPULSION";
+TXT_ARTIHEALINGRADIUS = "MYSTIC AMBIT INCANT";
+
+// Puzzle artifacts
+
+TXT_ARTIPUZZSKULL = "YORICK'S SKULL";
+TXT_ARTIPUZZGEMBIG = "HEART OF D'SPARIL";
+TXT_ARTIPUZZGEMRED = "RUBY PLANET";
+TXT_ARTIPUZZGEMGREEN1 = "EMERALD PLANET";
+TXT_ARTIPUZZGEMGREEN2 = "EMERALD PLANET";
+TXT_ARTIPUZZGEMBLUE1 = "SAPPHIRE PLANET";
+TXT_ARTIPUZZGEMBLUE2 = "SAPPHIRE PLANET";
+TXT_ARTIPUZZBOOK1 = "DAEMON CODEX";
+TXT_ARTIPUZZBOOK2 = "LIBER OSCURA";
+TXT_ARTIPUZZSKULL2 = "FLAME MASK";
+TXT_ARTIPUZZFWEAPON = "GLAIVE SEAL";
+TXT_ARTIPUZZCWEAPON = "HOLY RELIC";
+TXT_ARTIPUZZMWEAPON = "SIGIL OF THE MAGUS";
+TXT_ARTIPUZZGEAR = "CLOCK GEAR";
+TXT_USEPUZZLEFAILED = "YOU CANNOT USE THIS HERE";
+
+// Items
+
+TXT_ARMOR1 = "MESH ARMOR";
+TXT_ARMOR2 = "FALCON SHIELD";
+TXT_ARMOR3 = "PLATINUM HELMET";
+TXT_ARMOR4 = "AMULET OF WARDING";
+
+// Weapons
+
+TXT_WEAPON_F2 = "TIMON'S AXE";
+TXT_WEAPON_F3 = "HAMMER OF RETRIBUTION";
+TXT_WEAPON_F4 = "QUIETUS ASSEMBLED";
+TXT_WEAPON_C2 = "SERPENT STAFF";
+TXT_WEAPON_C3 = "FIRESTORM";
+TXT_WEAPON_C4 = "WRAITHVERGE ASSEMBLED";
+TXT_WEAPON_M2 = "FROST SHARDS";
+TXT_WEAPON_M3 = "ARC OF DEATH";
+TXT_WEAPON_M4 = "BLOODSCOURGE ASSEMBLED";
+TXT_QUIETUS_PIECE = "SEGMENT OF QUIETUS";
+TXT_WRAITHVERGE_PIECE = "SEGMENT OF WRAITHVERGE";
+TXT_BLOODSCOURGE_PIECE = "SEGMENT OF BLOODSCOURGE";
+
+
+// Bloodbath announcer
+
+BBA_BONED = "%k boned %o like a fish";
+BBA_CASTRA = "%k castrated %o";
+BBA_CREAMED = "%k creamed %o";
+BBA_DECIMAT = "%k decimated %o";
+BBA_DESTRO = "%k destroyed %o";
+BBA_DICED = "%k diced %o";
+BBA_DISEMBO = "%k disembowled %o";
+BBA_FLATTE = "%k flattened %o";
+BBA_JUSTICE = "%k gave %o Anal Justice";
+BBA_MADNESS = "%k gave AnAl MaDnEsS to %o";
+BBA_KILLED = "%k killed %o";
+BBA_MINCMEAT = "%k made mincemeat out of %o";
+BBA_MASSACR = "%k massacred %o";
+BBA_MUTILA = "%k mutilated %o";
+BBA_REAMED = "%k reamed %o";
+BBA_RIPPED = "%k ripped %o a new orifice";
+BBA_SLAUGHT = "%k slaughtered %o";
+BBA_SMASHED = "%k smashed %o";
+BBA_SODOMIZ = "%k sodomized %o";
+BBA_SPLATT = "%k splattered %o";
+BBA_SQUASH = "%k squashed %o";
+BBA_THROTTL = "%k throttled %o";
+BBA_WASTED = "%k wasted %o";
+BBA_BODYBAG = "%k body bagged %o";
+BBA_HELL = "%k sent %o to Hell";
+BBA_TOAST = "%k toasted %o";
+BBA_SNUFF = "%k snuffed %o";
+BBA_HOSED = "%k hosed %o";
+BBA_SPRAYED = "%k sprayed %o";
+BBA_DOGMEAT = "%k made dog meat out of %o";
+BBA_BEATEN = "%k beat %o like a cur";
+
+BBA_EXCREMENT = "%o is excrement";
+BBA_HAMBURGER = "%o is hamburger";
+BBA_SCROTUM = "%o suffered scrotum separation";
+BBA_POPULATION = "%o volunteered for population control";
+BBA_SUICIDE = "%o has suicided";
+BBA_DARWIN = "%o received the Darwin Award";

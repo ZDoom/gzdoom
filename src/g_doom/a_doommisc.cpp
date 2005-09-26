@@ -7,6 +7,7 @@
 #include "m_random.h"
 #include "gi.h"
 #include "doomstat.h"
+#include "gstrings.h"
 
 static FRandom pr_spawnpuffx ("SpawnPuffX");
 
@@ -44,6 +45,11 @@ IMPLEMENT_ACTOR (AExplosiveBarrel, Doom, 2035, 125)
 
 	PROP_DeathSound ("world/barrelx")
 END_DEFAULTS
+
+const char *AExplosiveBarrel::GetObituary ()
+{
+	return GStrings("OB_BARREL");
+}
 
 void A_BarrelDestroy (AActor *actor)
 {

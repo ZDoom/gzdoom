@@ -1140,7 +1140,7 @@ void M_LoadGame (int choice)
 {
 	if (netgame)
 	{
-		M_StartMessage (GStrings(LOADNET), NULL, false);
+		M_StartMessage (GStrings("LOADNET"), NULL, false);
 		return;
 	}
 		
@@ -1213,7 +1213,7 @@ void M_SaveGame (int choice)
 {
 	if (!usergame || (players[consoleplayer].health <= 0 && !multiplayer))
 	{
-		M_StartMessage (GStrings(SAVEDEAD), NULL, false);
+		M_StartMessage (GStrings("SAVEDEAD"), NULL, false);
 		return;
 	}
 		
@@ -1268,7 +1268,7 @@ void M_QuickSave ()
 		M_SaveGame (0);
 		return;
 	}
-	sprintf (tempstring, GStrings(QSPROMPT), quickSaveSlot->Title);
+	sprintf (tempstring, GStrings("QSPROMPT"), quickSaveSlot->Title);
 	strcpy (savegamestring, quickSaveSlot->Title);
 	M_StartMessage (tempstring, M_QuickSaveResponse, true);
 }
@@ -1292,7 +1292,7 @@ void M_QuickLoad ()
 {
 	if (netgame)
 	{
-		M_StartMessage (GStrings(QLOADNET), NULL, false);
+		M_StartMessage (GStrings("QLOADNET"), NULL, false);
 		return;
 	}
 		
@@ -1304,7 +1304,7 @@ void M_QuickLoad ()
 		M_LoadGame (0);
 		return;
 	}
-	sprintf (tempstring, GStrings(QLPROMPT), quickSaveSlot->Title);
+	sprintf (tempstring, GStrings("QLPROMPT"), quickSaveSlot->Title);
 	M_StartMessage (tempstring, M_QuickLoadResponse, true);
 }
 
@@ -1410,7 +1410,7 @@ void M_NewGame(int choice)
 {
 	if (netgame && !demoplayback)
 	{
-		M_StartMessage (GStrings(NEWGAME), NULL, false);
+		M_StartMessage (GStrings("NEWGAME"), NULL, false);
 		return;
 	}
 
@@ -1534,7 +1534,7 @@ void M_ChooseSkill (int choice)
 {
 	if (gameinfo.gametype == GAME_Doom && choice == NewDef.numitems - 1)
 	{
-		M_StartMessage (GStrings(NIGHTMARE), M_VerifyNightmare, true);
+		M_StartMessage (GStrings("NIGHTMARE"), M_VerifyNightmare, true);
 		return;
 	}
 
@@ -1555,7 +1555,7 @@ void M_Episode (int choice)
 	{
 		if (gameinfo.gametype == GAME_Doom)
 		{
-			M_StartMessage(GStrings(SWSTRING),NULL,false);
+			M_StartMessage(GStrings("SWSTRING"),NULL,false);
 			//M_SetupNextMenu(&ReadDef);
 		}
 		else
@@ -1584,7 +1584,7 @@ static void SCClass (int option)
 {
 	if (netgame)
 	{
-		M_StartMessage (GStrings(NEWGAME), NULL, false);
+		M_StartMessage (GStrings("NEWGAME"), NULL, false);
 		return;
 	}
 	MenuPClass = option < 3 ? option : -1;
@@ -1668,11 +1668,11 @@ void M_EndGame(int choice)
 		
 	if (netgame)
 	{
-		M_StartMessage(GStrings(NETEND),NULL,false);
+		M_StartMessage(GStrings("NETEND"),NULL,false);
 		return;
 	}
 		
-	M_StartMessage(GStrings(ENDGAME),M_EndGameResponse,true);
+	M_StartMessage(GStrings("ENDGAME"),M_EndGameResponse,true);
 }
 
 
@@ -1738,12 +1738,20 @@ void M_QuitDOOM (int choice)
 	//  or one at random, between 1 and maximum number.
 	if (gameinfo.gametype == GAME_Doom)
 	{
-		sprintf (endstring, "%s\n\n%s",
-			GStrings(QUITMSG + (gametic % NUM_QUITMESSAGES)), GStrings(DOSY));
+		int quitmsg = gametic % NUM_QUITMESSAGES;
+		if (quitmsg != 0)
+		{
+			sprintf (endstring, "QUITMSG%d", quitmsg);
+			sprintf (endstring, "%s\n\n%s", GStrings(endstring), GStrings("DOSY"));
+		}
+		else
+		{
+			sprintf (endstring, "%s\n\n%s", GStrings("QUITMSG"), GStrings("DOSY"));
+		}
 	}
 	else
 	{
-		strcpy (endstring, GStrings(RAVENQUITMSG));
+		strcpy (endstring, GStrings("RAVENQUITMSG"));
 	}
 
 	M_StartMessage (endstring, M_QuitResponse, true);

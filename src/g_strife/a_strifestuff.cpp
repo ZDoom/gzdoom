@@ -393,7 +393,7 @@ class AForceFieldGuard : public AActor
 {
 	DECLARE_ACTOR (AForceFieldGuard, AActor)
 public:
-	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage);
+	int TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype);
 };
 
 FState AForceFieldGuard::States[] =
@@ -414,7 +414,7 @@ IMPLEMENT_ACTOR (AForceFieldGuard, Strife, 25, 0)
 	PROP_Flags4 (MF4_INCOMBAT)
 END_DEFAULTS
 
-int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage)
+int AForceFieldGuard::TakeSpecialDamage (AActor *inflictor, AActor *source, int damage, int damagetype)
 {
 	if (inflictor == NULL || !inflictor->IsKindOf (RUNTIME_CLASS(ADegninOre)))
 	{

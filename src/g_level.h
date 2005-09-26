@@ -2,7 +2,7 @@
 ** g_level.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -92,6 +92,9 @@
 #define LEVEL_LAXMONSTERACTIVATION	UCONST64(0x400000000)		// Monsters can open doors depending on the door speed
 #define LEVEL_LAXACTIVATIONMAPINFO	UCONST64(0x800000000)		// LEVEL_LAXMONSTERACTIVATION is not a default.
 
+#define LEVEL_ADDITIVE_SCROLLERS	UCONST64(0x1000000000)		// scrollers add their momentum instead of averaging it
+#define LEVEL_CAVERNS_OF_DARKNESS	UCONST64(0x2000000000)		// to translate the special sector types of CoD.
+
 struct acsdefered_s;
 class FBehavior;
 
@@ -105,6 +108,7 @@ struct level_info_s
 	char		skypic1[9];
 	int			cluster;
 	int			partime;
+	int			sucktime;
 	QWORD		flags;
 	char		*music;
 	char		*level_name;
@@ -146,6 +150,7 @@ struct level_locals_s
 	int			time;
 	int			starttime;
 	int			partime;
+	int			sucktime;
 
 	level_info_t *info;
 	int			cluster;

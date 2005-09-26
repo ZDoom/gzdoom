@@ -281,7 +281,7 @@ void AActor::UnlinkFromWorld ()
 		if ((*prev = next))  // unlink from sector list
 			next->sprev = prev;
 		snext = NULL;
-		sprev = (AActor **)0xBeefCafe;	// Woo! Bug-catching value!
+		sprev = (AActor **)(size_t)0xBeefCafe;	// Woo! Bug-catching value!
 
 		// phares 3/14/98
 		//
@@ -896,9 +896,9 @@ BOOL PIT_AddThingIntercepts (AActor* thing)
 // 
 BOOL P_TraverseIntercepts (traverser_t func, fixed_t maxfrac)
 {
-	size_t 		 count;
+	unsigned int count;
 	fixed_t 	 dist;
-	size_t		 scanpos;
+	unsigned int scanpos;
 	intercept_t *scan;
 	intercept_t *in = NULL;
 

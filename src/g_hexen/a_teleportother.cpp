@@ -52,7 +52,7 @@ END_DEFAULTS
 
 const char *AArtiTeleportOther::PickupMessage ()
 {
-	return GStrings(TXT_ARTITELEPORTOTHER);
+	return GStrings("TXT_ARTITELEPORTOTHER");
 }
 
 // Teleport Other FX --------------------------------------------------------
@@ -297,7 +297,7 @@ void P_TeleportToPlayerStarts (AActor *victim)
 
 void P_TeleportToDeathmatchStarts (AActor *victim)
 {
-	size_t i, selections;
+	unsigned int i, selections;
 	fixed_t destX,destY;
 	angle_t destAngle;
 

@@ -327,18 +327,15 @@ bool SDLFB::Relock ()
 
 void SDLFB::Unlock ()
 {
-	if (LockCount == 0)
-	{
-		return;
-	}
 	if (UpdatePending && LockCount == 1)
 	{
 		Update ();
 	}
-	else if (--LockCount == 0)
+	else if (--LockCount <= 0)
 	{
 		Buffer = NULL;
-	}			
+		LockCount = 0;
+	}
 }
 
 void SDLFB::Update ()
@@ -352,15 +349,17 @@ void SDLFB::Update ()
 		}
 		return;
 	}
-	
+
 	DrawRateStuff ();
-			
-	Unlock ();
+
+	Buffer = NULL;
+	LockCount = 0;
+	UpdatePending = false;
 
 	BlitCycles = 0;
 	SDLFlipCycles = 0;
 	clock (BlitCycles);
-	
+
 	if (SDL_LockSurface (Screen) == -1)
 		return;
 

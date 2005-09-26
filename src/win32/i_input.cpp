@@ -3,7 +3,7 @@
 ** Handles input from keyboard, mouse, and joystick
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -817,7 +817,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			wParam == DBT_DEVICEARRIVAL ||
 			wParam == DBT_CONFIGCHANGED)
 		{
-			size_t i;
+			unsigned int i;
 			TArray<GUID> oldjoys;
 
 			for (i = 0; i < JoystickNames.Size(); ++i)
@@ -835,7 +835,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					bool wasListed = false;
 
-					for (size_t j = 0; j < oldjoys.Size(); ++j)
+					for (unsigned int j = 0; j < oldjoys.Size(); ++j)
 					{
 						if (oldjoys[j] == JoystickNames[i].ID)
 						{
@@ -1094,7 +1094,7 @@ BOOL CALLBACK EnumJoysticksCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 
 void DI_EnumJoy ()
 {
-	size_t i;
+	unsigned int i;
 
 	for (i = 0; i < JoystickNames.Size(); ++i)
 	{
@@ -1113,7 +1113,7 @@ void DI_EnumJoy ()
 BOOL DI_InitJoy (void)
 {
 	HRESULT hr;
-	size_t i;
+	unsigned int i;
 
 	if (g_pdi == NULL)
 	{

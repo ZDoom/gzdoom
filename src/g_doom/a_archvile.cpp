@@ -96,14 +96,14 @@ END_DEFAULTS
 
 const char *AArchvile::GetObituary ()
 {
-	return GStrings(OB_VILE);
+	return GStrings("OB_VILE");
 }
 
 class AStealthArchvile : public AArchvile
 {
 	DECLARE_STATELESS_ACTOR (AStealthArchvile, AArchvile)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHVILE); }
+	const char *GetObituary () { return GStrings("OB_STEALTHVILE"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthArchvile, Doom, 9051, 118)
@@ -278,11 +278,7 @@ void A_VileChase (AActor *self)
 					corpsehit->lastenemy = NULL;
 
 					// You are the Archvile's minion now, so hate what it hates
-					corpsehit->TIDtoHate = self->TIDtoHate;
-					corpsehit->LastLook = self->LastLook;
-					corpsehit->flags3 |= self->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
-					corpsehit->flags4 |= self->flags4 & MF4_NOHATEPLAYERS;
-					corpsehit->flags = (corpsehit->flags & ~MF_FRIENDLY) | (self->flags & MF_FRIENDLY);
+					corpsehit->CopyFriendliness (self, false);
 
 					// [RH] If it's a monster, it gets to count as another kill
 					if (corpsehit->flags & MF_COUNTKILL)

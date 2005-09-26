@@ -405,7 +405,7 @@ void FWadCollection::AddFile (const char *filename)
 
 bool FWadCollection::CheckIfWadLoaded (const char *name)
 {
-	size_t i;
+	unsigned int i;
 
 	if (strrchr (name, '/') != NULL)
 	{
@@ -813,6 +813,7 @@ void FWadCollection::RenameSprites (int startlump)
 	  MAKE_ID('R','O','C','K'), MAKE_ID('R','O','K','K'),		// rocks and dirt in a_debris.cpp
 	  MAKE_ID('W','A','T','R'), MAKE_ID('H','W','A','T'),		// Strife also has WATR
 	  MAKE_ID('G','I','B','S'), MAKE_ID('P','O','L','5'),		// RealGibs
+	  MAKE_ID('E','G','G','M'), MAKE_ID('P','R','K','M'),		// PorkFX
 	};
 
 	static const DWORD StrifeRenames[] =
@@ -898,7 +899,7 @@ int FWadCollection::MergeLumps (const char *start, const char *end, int space)
 	LumpRecord *newlumpinfos;
 	int newlumps, oldlumps;
 	int markerpos = -1;
-    size_t i;
+    unsigned int i;
 	BOOL insideBlock;
 
 	uppercopy (ustart, start);
@@ -1374,6 +1375,7 @@ static void PrintLastError ()
 #else
 static void PrintLastError ()
 {
+	Printf (TEXTCOLOR_RED "  %s\n", strerror(errno));
 }
 #endif
 

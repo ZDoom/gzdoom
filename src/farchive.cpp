@@ -3,7 +3,7 @@
 ** Implements an archiver for DObject serialization.
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -1215,7 +1215,7 @@ int FArchive::ReadSprite ()
 DWORD FArchive::AddName (const char *name)
 {
 	DWORD index;
-	size_t hash = MakeKey (name) % EObjectHashSize;
+	unsigned int hash = MakeKey (name) % EObjectHashSize;
 
 	index = FindName (name, hash);
 	if (index == NameMap::NO_INDEX)
@@ -1230,7 +1230,7 @@ DWORD FArchive::AddName (const char *name)
 	return index;
 }
 
-DWORD FArchive::AddName (size_t start)
+DWORD FArchive::AddName (unsigned int start)
 {
 	DWORD hash = MakeKey (&m_NameStorage[start]) % EObjectHashSize;
 	NameMap mapper = { (DWORD)start, (DWORD)m_NameHash[hash] };
@@ -1242,9 +1242,9 @@ DWORD FArchive::FindName (const char *name) const
 	return FindName (name, MakeKey (name) % EObjectHashSize);
 }
 
-DWORD FArchive::FindName (const char *name, size_t bucket) const
+DWORD FArchive::FindName (const char *name, unsigned int bucket) const
 {
-	size_t map = m_NameHash[bucket];
+	unsigned int map = m_NameHash[bucket];
 
 	while (map != NameMap::NO_INDEX)
 	{

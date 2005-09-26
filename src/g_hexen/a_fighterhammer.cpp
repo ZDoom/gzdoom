@@ -30,7 +30,7 @@ class AFWeapHammer : public AFighterWeapon
 public:
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_F3);
+		return GStrings("TXT_WEAPON_F3");
 	}
 };
 

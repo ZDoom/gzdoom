@@ -1852,3 +1852,26 @@ static bool CalcVoice (FM_OPL *OPL, int voice, INT32 *buffer, int length)
 	}
 	return true;
 }
+
+void YM3812GetVoiceString(char *out)
+{
+	FM_OPL *OPL = OPL_YM3812[0];
+	int i;
+	for (i = 0; i <= 8; ++i)
+	{
+		int color;
+
+		if (OPL != NULL && (OPL->P_CH[i].SLOT[0].state != EG_OFF || OPL->P_CH[i].SLOT[1].state != EG_OFF))
+		{
+			color = 'D';	// Green means in use
+		}
+		else
+		{
+			color = 'A';	// Brick means free
+		}
+		out[i*3+0] = '\x1c';
+		out[i*3+1] = color;
+		out[i*3+2] = '*';
+	}
+	out[i*3] = 0;
+}

@@ -41,7 +41,7 @@ END_DEFAULTS
 
 const char *AInvulnerabilitySphere::PickupMessage ()
 {
-	return GStrings(GOTINVUL);
+	return GStrings("GOTINVUL");
 }
 
 bool AInvulnerabilitySphere::ShouldRespawn ()
@@ -67,7 +67,7 @@ public:
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTSUPER);
+		return GStrings("GOTSUPER");
 	}
 };
 
@@ -114,7 +114,7 @@ public:
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTMSPHERE);
+		return GStrings("GOTMSPHERE");
 	}
 };
 
@@ -141,7 +141,7 @@ class ABerserk : public APowerupGiver
 public:
 	virtual bool Use (bool pickup)
 	{
-		P_GiveBody (Owner->player, -100);
+		P_GiveBody (Owner, -100);
 		if (Super::Use (pickup))
 		{
 			const TypeInfo *fistType = TypeInfo::FindType ("Fist");
@@ -161,7 +161,7 @@ public:
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTBERSERK);
+		return GStrings("GOTBERSERK");
 	}
 };
 
@@ -197,7 +197,7 @@ public:
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTINVIS);
+		return GStrings("GOTINVIS");
 	}
 };
 
@@ -226,7 +226,7 @@ class ARadSuit : public APowerupGiver
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTSUIT);
+		return GStrings("GOTSUIT");
 	}
 };
 
@@ -252,7 +252,7 @@ class AInfrared : public APowerupGiver
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTVISOR);
+		return GStrings("GOTVISOR");
 	}
 };
 
@@ -278,7 +278,7 @@ class AAllmap : public AMapRevealer
 protected:
 	const char *PickupMessage ()
 	{
-		return GStrings(GOTMAP);
+		return GStrings("GOTMAP");
 	}
 };
 

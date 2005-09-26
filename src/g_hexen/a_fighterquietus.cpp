@@ -33,7 +33,7 @@ IMPLEMENT_ABSTRACT_ACTOR (AFighterWeaponPiece)
 
 const char *AFighterWeaponPiece::PieceMessage ()
 {
-	return GStrings (TXT_QUIETUS_PIECE);
+	return GStrings("TXT_QUIETUS_PIECE");
 }
 
 bool AFighterWeaponPiece::MatchPlayerClass (AActor *toucher)
@@ -148,7 +148,7 @@ class AFWeapQuietus : public AFighterWeapon
 public:
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_F4);
+		return GStrings("TXT_WEAPON_F4");
 	}
 };
 

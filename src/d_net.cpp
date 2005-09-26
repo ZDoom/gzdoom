@@ -612,8 +612,10 @@ void PlayerIsGone (int netnode, int netconsole)
 	if (players[consoleplayer].camera == players[netconsole].mo)
 	{
 		players[consoleplayer].camera = players[consoleplayer].mo;
-		StatusBar->AttachToPlayer (&players[consoleplayer]);
-		displayplayer = consoleplayer;
+		if (StatusBar != NULL)
+		{
+			StatusBar->AttachToPlayer (&players[consoleplayer]);
+		}
 	}
 
 	// [RH] Make the player disappear
@@ -1579,7 +1581,7 @@ void D_CheckNetGame (void)
 	if (doomcom->id != DOOMCOM_ID)
 		I_FatalError ("Doomcom buffer invalid!");
 	
-	consoleplayer = displayplayer = doomcom->consoleplayer;
+	consoleplayer = doomcom->consoleplayer;
 
 	v = Args.CheckValue ("-netmode");
 	if (v != NULL)
@@ -2006,7 +2008,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 			int x, y;
 			x = ReadWord (stream);
 			y = ReadWord (stream);
-			P_TeleportMove (players[consoleplayer].mo, x * 65536, y * 65536, ONFLOORZ, true);
+			P_TeleportMove (players[player].mo, x * 65536, y * 65536, ONFLOORZ, true);
 		}
 		break;
 
@@ -2101,7 +2103,7 @@ void Net_DoCommand (int type, byte **stream, int player)
 
 			s = ReadString (stream);
 			typeinfo = TypeInfo::FindType (s);
-			if (type != NULL && typeinfo->ActorInfo != NULL)
+			if (typeinfo != NULL && typeinfo->ActorInfo != NULL)
 			{
 				AActor *source = players[player].mo;
 				if (source != NULL)

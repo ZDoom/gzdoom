@@ -56,10 +56,7 @@ CVAR (Float, teamdamage, 0.f, CVAR_SERVERINFO);
 CUSTOM_CVAR (String, language, "auto", CVAR_ARCHIVE)
 {
 	SetLanguageIDs ();
-	FBehavior::StaticPrepLocale (LanguageIDs[0], LanguageIDs[1],
-			LanguageIDs[2], LanguageIDs[3]);
-	GStrings.ReloadStrings ();
-	GStrings.Compact ();
+	GStrings.LoadStrings (false);
 	G_MaybeLookupLevelName (NULL);
 }
 

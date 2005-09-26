@@ -2,7 +2,7 @@
 ** c_dispatch.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -152,5 +152,6 @@ void ResetButtonTriggers ();	// Call ResetTriggers for all buttons
 void ResetButtonStates ();		// Same as above, but also clear bDown
 
 extern unsigned int MakeKey (const char *s);
+extern unsigned int MakeKey (const char *s, size_t len);
 
 #endif //__C_DISPATCH_H__

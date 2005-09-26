@@ -90,6 +90,14 @@ void DScroller::Serialize (FArchive &arc)
 		<< m_LastHeight
 		<< m_vdx << m_vdy
 		<< m_Accel;
+	if (SaveVersion < 228)
+	{
+		if (m_Type == sc_carry)
+		{
+			m_dx = FixedDiv (m_dx, CARRYFACTOR);
+			m_dy = FixedDiv (m_dy, CARRYFACTOR);
+		}
+	}
 }
 
 DPusher::DPusher ()
@@ -236,7 +244,7 @@ static void P_InitAnimDefs ()
 				SC_MustGetNumber ();
 				height = sc_Number;
 				int picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Flat, texflags);
-				FTexture *viewer = new FCanvasTexture (sc_String, width, height);
+				FTexture *viewer = new FCanvasTexture (picname, width, height);
 				if (picnum != -1)
 				{
 					FTexture *oldtex = TexMan[picnum];
@@ -249,6 +257,9 @@ static void P_InitAnimDefs ()
 				{
 					fitwidth = width;
 					fitheight = height;
+					// [GRB] No need for oldtex
+					viewer->UseType = FTexture::TEX_Wall;
+					TexMan.AddTexture (viewer);
 				}
 				delete[] picname;
 				if (SC_GetString())
@@ -291,7 +302,7 @@ static void ParseAnim (bool istex)
 	int picnum;
 	int framenum;
 	int min, max;
-	size_t i;
+	unsigned int i;
 	bool optional = false, missing = false;
 
 	SC_MustGetString ();
@@ -599,7 +610,7 @@ void P_AddSimpleAnim (int picnum, int animcount, int animtype, int animspeed)
 // animation range use the same setting for bNoDecals.
 static void P_FixAnimations ()
 {
-	size_t i;
+	unsigned int i;
 	int j;
 
 	for (i = 0; i < Anims.Size(); ++i)
@@ -913,6 +924,12 @@ void P_PlayerInSpecialSector (player_t *player)
 	{
 		switch (special)
 		{
+		case Sector_Heal:
+			// CoD's healing sector
+			if (!(level.time & 0x1f))
+				P_GiveBody (player->mo, 1);
+			break;
+
 		case Damage_InstantDeath:
 			// Strife's instant death sector
 			P_DamageMobj (player->mo, NULL, NULL, 999, MOD_UNKNOWN);
@@ -1094,7 +1111,7 @@ EXTERN_CVAR (Float, timelimit)
 
 void P_UpdateSpecials ()
 {
-	size_t j;
+	unsigned int j;
 	int i;
 	
 	// LEVEL TIMER
@@ -1102,7 +1119,7 @@ void P_UpdateSpecials ()
 	{
 		if (level.time >= (int)(timelimit * TICRATE * 60))
 		{
-			Printf ("%s\n", GStrings(TXT_TIMELIMIT));
+			Printf ("%s\n", GStrings("TXT_TIMELIMIT"));
 			G_ExitLevel(0, false);
 		}
 	}
@@ -1787,8 +1804,6 @@ static void P_SpawnScrollers(void)
 
 			if (l->args[2] > 0)
 			{ // carry objects on the floor
-				dx = FixedMul (dx, CARRYFACTOR);
-				dy = FixedMul (dy, CARRYFACTOR);
 				for (s=-1; (s = P_FindSectorFromTag (l->args[0],s)) >= 0;)
 					new DScroller (DScroller::sc_carry, dx, dy, control, s, accel);
 			}

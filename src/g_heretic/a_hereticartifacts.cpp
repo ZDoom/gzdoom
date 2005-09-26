@@ -34,7 +34,7 @@ END_DEFAULTS
 
 const char *AArtiInvisibility::PickupMessage ()
 {
-	return GStrings(TXT_ARTIINVISIBILITY);
+	return GStrings("TXT_ARTIINVISIBILITY");
 }
 
 // Tome of power ------------------------------------------------------------
@@ -84,7 +84,7 @@ bool AArtiTomeOfPower::Use (bool pickup)
 
 const char *AArtiTomeOfPower::PickupMessage ()
 {
-	return GStrings(TXT_ARTITOMEOFPOWER);
+	return GStrings("TXT_ARTITOMEOFPOWER");
 }
 
 // Time bomb ----------------------------------------------------------------
@@ -161,5 +161,5 @@ bool AArtiTimeBomb::Use (bool pickup)
 
 const char *AArtiTimeBomb::PickupMessage ()
 {
-	return GStrings(TXT_ARTIFIREBOMB);
+	return GStrings("TXT_ARTIFIREBOMB");
 }

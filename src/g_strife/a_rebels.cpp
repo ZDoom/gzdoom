@@ -289,7 +289,7 @@ void A_Beacon (AActor *self)
 	self->flags &= ~MF_SPECIAL;
 	static_cast<AInventory *>(self)->DropTime = 0;
 	// Set up the new rebel.
-	friendNum = owner->player != NULL ? owner->player - players + 1 : 0;
+	friendNum = owner->player != NULL ? int(owner->player - players + 1) : 0;
 	rebel->FriendPlayer = friendNum;
 	rebel->threshold = 100;
 	rebel->target = NULL;

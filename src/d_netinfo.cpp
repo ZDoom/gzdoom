@@ -3,7 +3,7 @@
 ** Manages transport of user and "server" cvars across a network
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -262,7 +262,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 	}
 	// Let the player take on the team's color
 	R_BuildPlayerTranslation (pnum);
-	if (StatusBar != NULL && pnum == displayplayer)
+	if (StatusBar != NULL && StatusBar->GetPlayer() == pnum)
 	{
 		StatusBar->AttachToPlayer (&players[pnum]);
 	}
@@ -452,13 +452,13 @@ void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType 
 
 void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set)
 {
-	size_t namelen;
+	int namelen;
 
-	namelen = strlen (cvar->GetName ());
+	namelen = (int)strlen (cvar->GetName ());
 
 	Net_WriteByte (DEM_SINFCHANGEDXOR);
 	Net_WriteByte (namelen);
-	Net_WriteBytes ((BYTE *)cvar->GetName (), (int)namelen);
+	Net_WriteBytes ((BYTE *)cvar->GetName (), namelen);
 	Net_WriteByte (bitnum | (set << 5));
 }
 
@@ -640,7 +640,7 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 			case INFO_Color:
 				info->color = V_GetColorFromString (NULL, value);
 				R_BuildPlayerTranslation (i);
-				if (StatusBar != NULL && i == displayplayer)
+				if (StatusBar != NULL && i == StatusBar->GetPlayer())
 				{
 					StatusBar->AttachToPlayer (&players[i]);
 				}
@@ -665,7 +665,7 @@ void D_ReadUserInfoStrings (int i, byte **stream, bool update)
 					// than the old one.
 					R_BuildPlayerTranslation (i);
 				}
-				if (StatusBar != NULL && i == displayplayer)
+				if (StatusBar != NULL && i == StatusBar->GetPlayer())
 				{
 					StatusBar->SetFace (&skins[info->skin]);
 				}

@@ -147,7 +147,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 				{
 					return true;
 				}
-				failtext = (keynum & 0x80) ? GStrings(PD_ALL3) : GStrings(PD_ALL6);
+				failtext = (keynum & 0x80) ? GStrings("PD_ALL3") : GStrings("PD_ALL6");
 				break;
 
 			case GAME_Heretic:
@@ -155,7 +155,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 				{
 					return true;
 				}
-				failtext = GStrings(PD_ALL3);
+				failtext = GStrings("PD_ALL3");
 				break;
 
 			case GAME_Hexen:
@@ -186,7 +186,7 @@ bool P_CheckKeys (AActor *owner, int keynum, bool remote)
 			FindValidKeys ();
 		}
 
-		for (size_t i = 0; i < KeyTypes.Size(); ++i)
+		for (unsigned int i = 0; i < KeyTypes.Size(); ++i)
 		{
 			AKey *keydef = (AKey *)GetDefaultByType (KeyTypes[i]);
 			if (keydef->KeyNumber == keynum || keydef->AltKeyNumber == keynum)

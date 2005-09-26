@@ -3,7 +3,7 @@
 ** Arrays built at link-time
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -62,10 +62,6 @@ extern REGINFO SRegTail;
 // List of TypeInfos
 extern REGINFO CRegHead;
 extern REGINFO CRegTail;
-
-// List of WeaponInfoInits
-extern REGINFO WRegHead;
-extern REGINFO WRegTail;
 
 template<class T, REGINFO *head, REGINFO *tail>
 class TAutoSegIteratorNoArrow

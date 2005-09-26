@@ -13,7 +13,7 @@ class AArmorBonus : public ABasicArmorBonus
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTARMBONUS);
+		return GStrings("GOTARMBONUS");
 	}
 };
 
@@ -49,7 +49,7 @@ class AGreenArmor : public ABasicArmorPickup
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTARMOR);
+		return GStrings("GOTARMOR");
 	}
 };
 
@@ -79,7 +79,7 @@ class ABlueArmor : public ABasicArmorPickup
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTMEGA);
+		return GStrings("GOTMEGA");
 	}
 };
 

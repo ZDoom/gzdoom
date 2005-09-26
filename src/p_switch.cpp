@@ -3,7 +3,7 @@
 ** Switch and button maintenance and animation
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -410,7 +410,7 @@ FSwitchDef *ParseSwitchDef (bool ignoreBad)
 
 static WORD AddSwitchDef (FSwitchDef *def)
 {
-	size_t i;
+	unsigned int i;
 
 	for (i = SwitchList.Size (); i-- > 0; )
 	{

@@ -84,7 +84,7 @@ END_DEFAULTS
 
 const char *ASnake::GetObituary ()
 {
-	return GStrings(OB_SNAKE);
+	return GStrings("OB_SNAKE");
 }
 
 // Snake projectile A -------------------------------------------------------

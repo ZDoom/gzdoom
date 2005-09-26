@@ -107,7 +107,7 @@ const char *ASurgeryKit::PickupMessage ()
 
 bool ASurgeryKit::Use (bool pickup)
 {
-	return P_GiveBody (Owner->player, -100);
+	return P_GiveBody (Owner, -100);
 }
 
 // StrifeMap ----------------------------------------------------------------
@@ -202,6 +202,31 @@ void A_RemoveForceField (AActor *self)
 			sides[line->sidenum[0]].midtexture = 0;
 			sides[line->sidenum[1]].midtexture = 0;
 		}
+	}
+}
+
+bool ADegninOre::Use (bool pickup)
+{
+	if (pickup)
+	{
+		return false;
+	}
+	else
+	{
+		AInventory *drop;
+
+		// Increase the amount by one so that when DropInventory decrements it,
+		// the actor will have the same number of beacons that he started with.
+		// When we return to UseInventory, it will take care of decrementing
+		// Amount again and disposing of this item if there are no more.
+		Amount++;
+		drop = Owner->DropInventory (this);
+		if (drop == NULL)
+		{
+			Amount--;
+			return false;
+		}
+		return true;
 	}
 }
 
@@ -916,7 +941,7 @@ bool AHealthFillup::TryPickup (AActor *toucher)
 {
 	static const int skillhealths[5] = { -100, -75, -50, -50, -100 };
 
-	if (!P_GiveBody (toucher->player, skillhealths[gameskill]))
+	if (!P_GiveBody (toucher, skillhealths[gameskill]))
 	{
 		return false;
 	}
@@ -937,7 +962,7 @@ bool AUpgradeStamina::TryPickup (AActor *toucher)
 	if (toucher->player == NULL || toucher->player->stamina >= 100)
 		return false;
 	toucher->player->stamina += 10;
-	P_GiveBody (toucher->player, 200);
+	P_GiveBody (toucher, 200);
 	GoAwayAndDie ();
 	return true;
 }

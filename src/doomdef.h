@@ -278,8 +278,6 @@ enum
 #define MOD_UNKNOWN			0
 #define MOD_ROCKET			5
 #define MOD_R_SPLASH		6
-#define MOD_PLASMARIFLE		7
-#define MOD_BFG_BOOM		8
 #define MOD_BFG_SPLASH		9
 #define MOD_WATER			12
 #define MOD_SLIME			13
@@ -297,6 +295,7 @@ enum
 #define MOD_DISINTEGRATE	25
 #define MOD_POISON			26
 #define MOD_ELECTRIC		27
+#define MOD_MASSACRE		1000		// Damaged by the massacre cheat
 #define MOD_FRIENDLY_FIRE	0x80000000
 
 #define BLINKTHRESHOLD (4*32)

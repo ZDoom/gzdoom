@@ -340,6 +340,18 @@ BOOL SC_GetString (void)
 		if (CMode)
 		{
 			stopchars = "`~!@#$%^&*(){}[]/=\?+|;:<>,";
+
+			// '-' can be its own token, or it can be part of a negative number
+			if (*ScriptPtr == '-')
+			{
+				*text++ = '-';
+				ScriptPtr++;
+				if (ScriptPtr < ScriptEndPtr || *ScriptPtr >= '0' && *ScriptPtr <= '9')
+				{
+					goto grabtoken;
+				}
+				goto gottoken;
+			}
 		}
 		else
 		{
@@ -351,7 +363,8 @@ BOOL SC_GetString (void)
 		}
 		else
 		{
-			while ((*ScriptPtr > 32) && (strchr (stopchars, *ScriptPtr) == NULL)
+grabtoken:
+			while ((*ScriptPtr > ' ') && (strchr (stopchars, *ScriptPtr) == NULL)
 				&& (CMode || *ScriptPtr != ASCII_COMMENT)
 				&& !(ScriptPtr[0] == CPP_COMMENT && (ScriptPtr < ScriptEndPtr - 1) &&
 					 (ScriptPtr[1] == CPP_COMMENT || ScriptPtr[1] == C_COMMENT)))
@@ -365,6 +378,7 @@ BOOL SC_GetString (void)
 			}
 		}
 	}
+gottoken:
 	*text = 0;
 	sc_StringLen = text - sc_String;
 	return true;

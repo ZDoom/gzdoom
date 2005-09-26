@@ -65,11 +65,11 @@ extern fixed_t globaluclip, globaldclip;
 // killough 1/6/98: replaced globals with statics where appropriate
 
 static BOOL		segtextured;	// True if any of the segs textures might be visible.
-static bool		markfloor;		// False if the back side is the same plane.
-static bool		markceiling;
-static FTexture *toptexture;
-static FTexture *bottomtexture;
-static FTexture *midtexture;
+bool		markfloor;		// False if the back side is the same plane.
+bool		markceiling;
+FTexture *toptexture;
+FTexture *bottomtexture;
+FTexture *midtexture;
 
 int OWallMost (short *mostbuf, fixed_t z);
 int WallMost (short *mostbuf, const secplane_t &plane);
@@ -812,7 +812,7 @@ void R_RenderSegLoop ()
 	rw_offset = xoffset;
 }
 
-void R_NewWall ()
+void R_NewWall (bool needlights)
 {
 	fixed_t rowoffset;
 
@@ -839,10 +839,6 @@ void R_NewWall ()
 			{
 				midtexture = TexMan(sidedef->midtexture);
 				rowoffset = sidedef->rowoffset;
-				if (rowoffset < 0 && midtexture != NULL)
-				{
-					rowoffset += midtexture->GetHeight() << FRACBITS;
-				}
 				if (linedef->flags & ML_DONTPEGBOTTOM)
 				{ // bottom of texture at bottom
 					rw_midtexturemid = frontsector->floortexz + (midtexture->GetHeight() << FRACBITS);
@@ -850,6 +846,10 @@ void R_NewWall ()
 				else
 				{ // top of texture at top
 					rw_midtexturemid = frontsector->ceilingtexz;
+					if (rowoffset < 0 && midtexture != NULL)
+					{
+						rowoffset += midtexture->GetHeight() << FRACBITS;
+					}
 				}
 				if (midtexture->bWorldPanning)
 				{
@@ -966,18 +966,18 @@ void R_NewWall ()
 			toptexture = TexMan(sidedef->toptexture);
 			const int scale = toptexture->ScaleY ? toptexture->ScaleY : ty;
 
+			rowoffset = sidedef->rowoffset;
 			if (linedef->flags & ML_DONTPEGTOP)
 			{ // top of texture at top
 				rw_toptexturemid = MulScale3 (frontsector->ceilingtexz - viewz, scale);
+				if (rowoffset < 0 && toptexture != NULL)
+				{
+					rowoffset += toptexture->GetHeight() << FRACBITS;
+				}
 			}
 			else
 			{ // bottom of texture at bottom
 				rw_toptexturemid = MulScale3 (backsector->ceilingtexz - viewz, scale) + (toptexture->GetHeight() << FRACBITS);
-			}
-			rowoffset = sidedef->rowoffset;
-			if (rowoffset < 0 && toptexture != NULL)
-			{
-				rowoffset += toptexture->GetHeight() << FRACBITS;
 			}
 			if (toptexture->bWorldPanning)
 			{
@@ -992,6 +992,7 @@ void R_NewWall ()
 		{ // bottom texture
 			bottomtexture = TexMan(sidedef->bottomtexture);
 
+			rowoffset = sidedef->rowoffset;
 			if (linedef->flags & ML_DONTPEGBOTTOM)
 			{ // bottom of texture at bottom
 				rw_bottomtexturemid = rw_frontlowertop;
@@ -999,11 +1000,10 @@ void R_NewWall ()
 			else
 			{ // top of texture at top
 				rw_bottomtexturemid = backsector->floortexz;
-			}
-			rowoffset = sidedef->rowoffset;
-			if (rowoffset < 0 && bottomtexture != NULL)
-			{
-				rowoffset += bottomtexture->GetHeight() << FRACBITS;
+				if (rowoffset < 0 && bottomtexture != NULL)
+				{
+					rowoffset += bottomtexture->GetHeight() << FRACBITS;
+				}
 			}
 			if (bottomtexture->bWorldPanning)
 			{
@@ -1036,7 +1036,7 @@ void R_NewWall ()
 	segtextured = TexMan(sidedef->midtexture) != NULL || toptexture != NULL || bottomtexture != NULL;
 
 	// calculate light table
-	if (segtextured || (backsector && IsFogBoundary (frontsector, backsector)))
+	if (needlights && (segtextured || (backsector && IsFogBoundary (frontsector, backsector))))
 	{
 		lwallscale = TexMan(sidedef->midtexture) ? TexMan(sidedef->midtexture)->ScaleX :
 							toptexture ? toptexture->ScaleX :
@@ -1137,7 +1137,7 @@ void R_StoreWallRange (int start, int stop)
 	if (!rw_prepped)
 	{
 		rw_prepped = true;
-		R_NewWall ();
+		R_NewWall (true);
 	}
 
 	rw_offset = sidedef->textureoffset;
@@ -1641,13 +1641,12 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 	*/
 
 	// fix for rounding errors
-	walxrepeat -= FRACUNIT;
-	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat : 0;
+	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat-1 : 0;
 	if (WallSX1 > 0)
 	{
 		for (x = WallSX1; x < WallSX2; x++)
 		{
-			if ((unsigned)lwall[x] > (unsigned)walxrepeat)
+			if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
 			{
 				lwall[x] = fix;
 			}
@@ -1657,10 +1656,10 @@ void PrepWall (fixed_t *swall, fixed_t *lwall, fixed_t walxrepeat)
 			}
 		}
 	}
-	fix = walxrepeat - fix;
+	fix = walxrepeat - 1 - fix;
 	for (x = WallSX2-1; x >= WallSX1; x--)
 	{
-		if ((unsigned)lwall[x] > (unsigned)walxrepeat)
+		if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
 		{
 			lwall[x] = fix;
 		}
@@ -1723,13 +1722,12 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 	}
 
 	// fix for rounding errors
-	walxrepeat -= FRACUNIT;
-	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat : 0;
+	fixed_t fix = (MirrorFlags & RF_XFLIP) ? walxrepeat-1 : 0;
 	if (WallSX1 > 0)
 	{
 		for (x = WallSX1; x < WallSX2; x++)
 		{
-			if ((unsigned)lwall[x] > (unsigned)walxrepeat)
+			if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
 			{
 				lwall[x] = fix;
 			}
@@ -1739,10 +1737,10 @@ void PrepLWall (fixed_t *lwall, fixed_t walxrepeat)
 			}
 		}
 	}
-	fix = walxrepeat - fix;
+	fix = walxrepeat - 1 - fix;
 	for (x = WallSX2-1; x >= WallSX1; x--)
 	{
-		if ((unsigned)lwall[x] > (unsigned)walxrepeat)
+		if ((unsigned)lwall[x] >= (unsigned)walxrepeat)
 		{
 			lwall[x] = fix;
 		}

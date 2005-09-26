@@ -15,8 +15,8 @@ class ADoomImp : public AActor
 {
 	DECLARE_ACTOR (ADoomImp, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_IMP); }
-	const char *GetHitObituary () { return GStrings(OB_IMPHIT); }
+	const char *GetObituary () { return GStrings("OB_IMP"); }
+	const char *GetHitObituary () { return GStrings("OB_IMPHIT"); }
 };
 
 FState ADoomImp::States[] =
@@ -98,8 +98,8 @@ class AStealthDoomImp : public ADoomImp
 {
 	DECLARE_STATELESS_ACTOR (AStealthDoomImp, ADoomImp)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHIMP); }
-	const char *GetHitObituary () { return GStrings(OB_STEALTHIMP); }
+	const char *GetObituary () { return GStrings("OB_STEALTHIMP"); }
+	const char *GetHitObituary () { return GStrings("OB_STEALTHIMP"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthDoomImp, Doom, 9057, 122)
@@ -177,6 +177,26 @@ class ADeadDoomImp : public ADoomImp
 };
 
 IMPLEMENT_STATELESS_ACTOR (ADeadDoomImp, Doom, 20, 0)
-	PROP_SKIP_SUPER
 	PROP_SpawnState (S_TROO_DIE+4)
+
+	// Undo all the changes to default Actor properties that ADoomImp made
+	PROP_SpawnHealth (1000)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (16)
+	PROP_Mass (100)
+	PROP_SpeedFixed (0)
+	PROP_PainChance (0)
+	PROP_Flags (0)
+	PROP_Flags2 (0)
+	PROP_SeeState (255)
+	PROP_PainState (255)
+	PROP_MissileState (255)
+	PROP_DeathState (255)
+	PROP_XDeathState (255)
+	PROP_RaiseState (255)
+	PROP_SeeSound ("")
+	PROP_PainSound ("")
+	PROP_DeathSound ("")
+	PROP_ActiveSound ("")
+	PROP_AttackSound ("")
 END_DEFAULTS

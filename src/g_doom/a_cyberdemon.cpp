@@ -17,7 +17,7 @@ class ACyberdemon : public AActor
 {
 	DECLARE_ACTOR (ACyberdemon, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_CYBORG); }
+	const char *GetObituary () { return GStrings("OB_CYBORG"); }
 };
 
 FState ACyberdemon::States[] =
@@ -69,7 +69,7 @@ IMPLEMENT_ACTOR (ACyberdemon, Doom, 16, 114)
 	PROP_PainChance (20)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_BOSS|MF2_FLOORCLIP)
-	PROP_Flags3 (MF3_NORADIUSDMG)
+	PROP_Flags3 (MF3_NORADIUSDMG|MF3_DONTMORPH)
 	PROP_Flags4 (MF4_BOSSDEATH|MF4_MISSILEMORE)
 	PROP_MinMissileChance (160)
 

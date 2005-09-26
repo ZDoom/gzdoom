@@ -22,7 +22,7 @@ class AMeshArmor : public AHexenArmor
 protected:
 	const char *PickupMessage ()
 	{
-		return GStrings(TXT_ARMOR1);
+		return GStrings("TXT_ARMOR1");
 	}
 };
 
@@ -46,7 +46,7 @@ class AFalconShield : public AHexenArmor
 protected:
 	const char *PickupMessage ()
 	{
-		return GStrings(TXT_ARMOR2);
+		return GStrings("TXT_ARMOR2");
 	}
 };
 
@@ -70,7 +70,7 @@ class APlatinumHelm : public AHexenArmor
 protected:
 	const char *PickupMessage ()
 	{
-		return GStrings(TXT_ARMOR3);
+		return GStrings("TXT_ARMOR3");
 	}
 };
 
@@ -94,7 +94,7 @@ class AAmuletOfWarding : public AHexenArmor
 protected:
 	const char *PickupMessage ()
 	{
-		return GStrings(TXT_ARMOR4);
+		return GStrings("TXT_ARMOR4");
 	}
 };
 

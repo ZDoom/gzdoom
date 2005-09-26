@@ -18,7 +18,7 @@ class ASpiderMastermind : public AActor
 {
 	DECLARE_ACTOR (ASpiderMastermind, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_SPIDER); }
+	const char *GetObituary () { return GStrings("OB_SPIDER"); }
 };
 
 FState ASpiderMastermind::States[] =
@@ -74,7 +74,7 @@ IMPLEMENT_ACTOR (ASpiderMastermind, Doom, 7, 7)
 	PROP_PainChance (40)
 	PROP_Flags (MF_SOLID|MF_SHOOTABLE|MF_COUNTKILL)
 	PROP_Flags2 (MF2_MCROSS|MF2_PASSMOBJ|MF2_PUSHWALL|MF2_BOSS|MF2_FLOORCLIP)
-	PROP_Flags3 (MF3_NORADIUSDMG)
+	PROP_Flags3 (MF3_NORADIUSDMG|MF3_DONTMORPH)
 	PROP_Flags4 (MF4_BOSSDEATH|MF4_MISSILEMORE)
 
 	PROP_SpawnState (S_SPID_STND)

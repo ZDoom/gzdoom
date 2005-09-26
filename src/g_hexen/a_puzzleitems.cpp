@@ -56,16 +56,11 @@ bool APuzzleItem::Use (bool pickup)
 {
 	if (P_UsePuzzleItem (Owner, PuzzleItemNumber))
 	{
-		if (--Amount == 0)
-		{
-			Owner->RemoveInventory (this);
-			Destroy ();
-		}
 		return true;
 	}
 	// [RH] Always play the sound if the use fails.
 	S_Sound (Owner, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
-	C_MidPrintBold (GStrings(TXT_USEPUZZLEFAILED));
+	C_MidPrintBold (GStrings("TXT_USEPUZZLEFAILED"));
 	return false;
 }
 
@@ -96,7 +91,7 @@ END_DEFAULTS
 
 const char *APuzzSkull::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZSKULL);
+	return GStrings("TXT_ARTIPUZZSKULL");
 }
 
 // Heart of D'Sparil --------------------------------------------------------
@@ -121,7 +116,7 @@ END_DEFAULTS
 
 const char *APuzzGemBig::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEMBIG);
+	return GStrings("TXT_ARTIPUZZGEMBIG");
 }
 
 // Red Gem (Ruby Planet) ----------------------------------------------------
@@ -146,7 +141,7 @@ END_DEFAULTS
 
 const char *APuzzGemRed::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEMRED);
+	return GStrings("TXT_ARTIPUZZGEMRED");
 }
 
 // Green Gem 1 (Emerald Planet) ---------------------------------------------
@@ -171,7 +166,7 @@ END_DEFAULTS
 
 const char *APuzzGemGreen1::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEMGREEN1);
+	return GStrings("TXT_ARTIPUZZGEMGREEN1");
 }
 
 // Green Gem 2 (Emerald Planet) ---------------------------------------------
@@ -196,7 +191,7 @@ END_DEFAULTS
 
 const char *APuzzGemGreen2::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEMGREEN2);
+	return GStrings("TXT_ARTIPUZZGEMGREEN2");
 }
 
 // Blue Gem 1 (Sapphire Planet) ---------------------------------------------
@@ -221,7 +216,7 @@ END_DEFAULTS
 
 const char *APuzzGemBlue1::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEMBLUE1);
+	return GStrings("TXT_ARTIPUZZGEMBLUE1");
 }
 
 // Blue Gem 2 (Sapphire Planet) ---------------------------------------------
@@ -246,7 +241,7 @@ END_DEFAULTS
 
 const char *APuzzGemBlue2::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEMBLUE2);
+	return GStrings("TXT_ARTIPUZZGEMBLUE2");
 }
 
 // Book 1 (Daemon Codex) ----------------------------------------------------
@@ -271,7 +266,7 @@ END_DEFAULTS
 
 const char *APuzzBook1::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZBOOK1);
+	return GStrings("TXT_ARTIPUZZBOOK1");
 }
 
 // Book 2 (Liber Oscura) ----------------------------------------------------
@@ -296,7 +291,7 @@ END_DEFAULTS
 
 const char *APuzzBook2::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZBOOK2);
+	return GStrings("TXT_ARTIPUZZBOOK2");
 }
 
 // Flame Mask ---------------------------------------------------------------
@@ -321,7 +316,7 @@ END_DEFAULTS
 
 const char *APuzzFlameMask::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZSKULL2);
+	return GStrings("TXT_ARTIPUZZSKULL2");
 }
 
 // Fighter Weapon (Glaive Seal) ---------------------------------------------
@@ -346,7 +341,7 @@ END_DEFAULTS
 
 const char *APuzzFWeapon::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZFWEAPON);
+	return GStrings("TXT_ARTIPUZZFWEAPON");
 }
 
 // Cleric Weapon (Holy Relic) -----------------------------------------------
@@ -371,7 +366,7 @@ END_DEFAULTS
 
 const char *APuzzCWeapon::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZCWEAPON);
+	return GStrings("TXT_ARTIPUZZCWEAPON");
 }
 
 // Mage Weapon (Sigil of the Magus) -----------------------------------------
@@ -396,7 +391,7 @@ END_DEFAULTS
 
 const char *APuzzMWeapon::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZMWEAPON);
+	return GStrings("TXT_ARTIPUZZMWEAPON");
 }
 
 // Clock Gear 1 -------------------------------------------------------------
@@ -428,7 +423,7 @@ END_DEFAULTS
 
 const char *APuzzGear1::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEAR);
+	return GStrings("TXT_ARTIPUZZGEAR");
 }
 
 // Clock Gear 2 -------------------------------------------------------------
@@ -460,7 +455,7 @@ END_DEFAULTS
 
 const char *APuzzGear2::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEAR);
+	return GStrings("TXT_ARTIPUZZGEAR");
 }
 
 // Clock Gear 3 -------------------------------------------------------------
@@ -492,7 +487,7 @@ END_DEFAULTS
 
 const char *APuzzGear3::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEAR);
+	return GStrings("TXT_ARTIPUZZGEAR");
 }
 
 // Clock Gear 4 -------------------------------------------------------------
@@ -524,5 +519,5 @@ END_DEFAULTS
 
 const char *APuzzGear4::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPUZZGEAR);
+	return GStrings("TXT_ARTIPUZZGEAR");
 }

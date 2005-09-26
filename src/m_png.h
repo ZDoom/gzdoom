@@ -2,7 +2,7 @@
 ** m_png.h
 **
 **---------------------------------------------------------------------------
-** Copyright 2002-2003 Randy Heit
+** Copyright 2002-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@ struct PNGHandle
 	bool			bDeleteFilePtr;
 	TArray<Chunk>	Chunks;
 	TArray<char *>	TextChunks;
-	size_t			ChunkPt;
+	unsigned int	ChunkPt;
 
 	PNGHandle(FILE *file);
 	PNGHandle(FileReader *file);
@@ -86,11 +86,11 @@ PNGHandle *M_VerifyPNG (FILE *file);
 // Finds a chunk in a PNG file. The file pointer will be positioned at the
 // beginning of the chunk data, and its length will be returned. A return
 // value of 0 indicates the chunk was either not present or had 0 length.
-size_t M_FindPNGChunk (PNGHandle *png, DWORD chunkID);
+unsigned int M_FindPNGChunk (PNGHandle *png, DWORD chunkID);
 
 // Finds a chunk in the PNG file, starting its search at whatever chunk
 // the file pointer is currently positioned at.
-size_t M_NextPNGChunk (PNGHandle *png, DWORD chunkID);
+unsigned int M_NextPNGChunk (PNGHandle *png, DWORD chunkID);
 
 // Finds a PNG text chunk with the given signature and returns a pointer
 // to a NULL-terminated string if present. Returns NULL on failure.
@@ -105,4 +105,4 @@ DCanvas *M_CreateCanvasFromPNG (PNGHandle *png);
 // The file must be positioned at the start of the first IDAT. It reads
 // image data into the provided buffer. Returns true on success.
 bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitch,
-				 BYTE bitdepth, BYTE colortype, BYTE interlace, size_t idatlen);
+				 BYTE bitdepth, BYTE colortype, BYTE interlace, unsigned int idatlen);

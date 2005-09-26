@@ -3,7 +3,7 @@
 ** Parses dehacked/bex patches and changes game structures accordingly
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -247,6 +247,8 @@ static int	 dversion, pversion;
 static BOOL  including, includenotext;
 
 static const char *unknown_str = "Unknown key %s encountered in %s %d.\n";
+
+static FStringTable *EnglishStrings;
 
 // This is an offset to be used for computing the text stuff.
 // Straight from the DeHackEd source which was
@@ -714,10 +716,10 @@ static int PatchThing (int thingy)
 	SWORD *ednum, dummyed;
 
 	type = NULL;
+	info = &dummy;
+	ednum = &dummyed;
 	if (thingy > NumInfos || thingy <= 0)
 	{
-		info = &dummy;
-		ednum = &dummyed;
 		Printf ("Thing %d out of range.\n", thingy);
 	}
 	else
@@ -910,9 +912,10 @@ static int PatchThing (int thingy)
 				{
 					if (IsNum (strval))
 					{
-						// Force the top 4 bits to 0 so that the user is forced
-						// to use the mnemonics to change them.
-						value[0] |= atoi(strval) & 0x0fffffff;
+						// Force the top 5 bits to 0 so that the user is forced
+						// to use the mnemonics to change them. And MF_SLIDE doesn't
+						// exist anymore, so 0 that too.
+						value[0] |= atoi(strval) & 0x07ffdfff;
 						vchanged[0] = true;
 					}
 					else
@@ -1187,7 +1190,7 @@ static int PatchFrame (int frameNum)
 		}
 		else if (keylen == 13 && stricmp (Line1, "Sprite number") == 0)
 		{
-			size_t i;
+			unsigned int i;
 
 			if (val < NumSprites)
 			{
@@ -1310,6 +1313,7 @@ static int PatchAmmo (int ammoNum)
 		Printf ("Ammo %d out of range.\n", ammoNum);
 		ammoType = NULL;
 		max = per = &dummy;
+		defaultAmmo = NULL;
 	}
 
 	oldclip = *per;
@@ -1885,10 +1889,11 @@ static int PatchText (int oldSize)
 		goto donewithtext;
 	
 	// Search through most other texts
-	i = GStrings.MatchString (oldStr);
-	if (i != -1)
+	const char *str;
+	str = EnglishStrings->MatchString (oldStr);
+	if (str != NULL)
 	{
-		GStrings.SetString (i, newStr);
+		GStrings.SetString (str, newStr);
 		good = true;
 	}
 
@@ -1921,8 +1926,6 @@ static int PatchStrings (int dummy)
 
 	while ((result = GetLine()) == 1)
 	{
-		int i;
-
 		*holdstring = '\0';
 		do
 		{
@@ -1941,39 +1944,13 @@ static int PatchStrings (int dummy)
 				Line2 = NULL;
 		} while (Line2 && *Line2);
 
-		i = GStrings.FindString (Line1);
-
-		if (i == -1)
-		{
-			Printf ("Unknown string: %s\n", Line1);
-		}
-		else
-		{
-			ReplaceSpecialChars (holdstring);
-			if ((i >= OB_SUICIDE && i <= OB_DEFAULT &&
-				strstr (holdstring, "%o") == NULL) ||
-				(i >= OB_FRIENDLY1 && i <= OB_FRIENDLY4 &&
-				strstr (holdstring, "%k") == NULL))
-			{
-				size_t len = strlen (holdstring);
-				memmove (holdstring+3, holdstring, len);
-				holdstring[0] = '%';
-				holdstring[1] = i <= OB_DEFAULT ? 'o' : 'k';
-				holdstring[2] = ' ';
-				holdstring[3+len] = '.';
-				holdstring[4+len] = 0;
-				if (i >= OB_MPFIST && i <= OB_RAILGUN)
-				{
-					char *spot = strstr (holdstring, "%s");
-					if (spot != NULL)
-					{
-						spot[1] = 'k';
-					}
-				}
-			}
-			GStrings.SetString (i, holdstring);
-			DPrintf ("%s set to:\n%s\n", Line1, holdstring);
-		}
+		ReplaceSpecialChars (holdstring);
+		// [RH] There used to be some code here to add % specifiers to
+		// obituaries that lacked them for compatibility with old ZDoom
+		// versions. This code was removed when the string table was
+		// switched to something completely dynamic.
+		GStrings.SetString (Line1, holdstring);
+		DPrintf ("%s set to:\n%s\n", Line1, holdstring);
 	}
 
 	return result;
@@ -2309,8 +2286,10 @@ static void UnloadDehSupp ()
 			UnchangedSpriteNames = NULL;
 			NumUnchangedSprites = 0;
 		}
-		GStrings.FlushNames ();
-		GStrings.Compact ();
+		if (EnglishStrings != NULL)
+		{
+			delete EnglishStrings;
+		}
 	}
 }
 
@@ -2329,6 +2308,12 @@ static bool LoadDehSupp ()
 	if (++DehUseCount > 1)
 	{
 		return true;
+	}
+
+	if (EnglishStrings == NULL)
+	{
+		EnglishStrings = new FStringTable;
+		EnglishStrings->LoadStrings (true);
 	}
 
 	if (UnchangedSpriteNames == NULL)
@@ -2510,7 +2495,7 @@ static bool LoadDehSupp ()
 
 void FinishDehPatch ()
 {
-	size_t touchedIndex;
+	unsigned int touchedIndex;
 
 	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
 	{
@@ -2579,9 +2564,9 @@ bool ADehackedPickup::TryPickup (AActor *toucher)
 	RealPickup = static_cast<AInventory *>(Spawn (type, x, y, z));
 	if (RealPickup != NULL)
 	{
-		if (flags & MF_DROPPED)
+		if (!(flags & MF_DROPPED))
 		{
-			RealPickup->flags |= MF_DROPPED;
+			RealPickup->flags &= ~MF_DROPPED;
 		}
 		if (!RealPickup->TryPickup (toucher))
 		{

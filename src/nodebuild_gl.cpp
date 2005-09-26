@@ -4,7 +4,7 @@
 ** Extra functions for the node builder to create minisegs.
 **
 **---------------------------------------------------------------------------
-** Copyright 2002 Randy Heit
+** Copyright 2002-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -101,7 +101,7 @@ double FNodeBuilder::AddIntersection (const node_t &node, int vertex)
 // seg information will be messed up in the generated tree.
 void FNodeBuilder::FixSplitSharers (const node_t &node)
 {
-	for (size_t i = 0; i < SplitSharers.Size(); ++i)
+	for (unsigned int i = 0; i < SplitSharers.Size(); ++i)
 	{
 		DWORD seg = SplitSharers[i].Seg;
 		int v2 = Segs[seg].v2;

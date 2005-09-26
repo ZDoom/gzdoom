@@ -59,11 +59,11 @@ FState AClericPlayer::States[] =
 	S_NORMAL (CLER, '\\',	1, A_FreezeDeathChunks	    , &States[S_CPLAY_ICE+1]),
 
 #define S_PLAY_C_FDTH (S_CPLAY_ICE+2)
-	S_BRIGHT (FDTH, 'C',	5, NULL					    , &States[S_PLAY_C_FDTH+1]),
+	S_BRIGHT (FDTH, 'C',	5, A_FireScream			    , &States[S_PLAY_C_FDTH+1]),
 	S_BRIGHT (FDTH, 'D',	4, NULL					    , &States[S_PLAY_C_FDTH+2]),
 
 #define S_PLAY_FDTH (S_PLAY_C_FDTH+2)
-	S_BRIGHT (FDTH, 'G',	5, A_FireScream				, &States[S_PLAY_FDTH+1]),
+	S_BRIGHT (FDTH, 'G',	5, NULL						, &States[S_PLAY_FDTH+1]),
 	S_BRIGHT (FDTH, 'H',	4, A_PlayerScream 			, &States[S_PLAY_FDTH+2]),
 	S_BRIGHT (FDTH, 'I',	5, NULL 					, &States[S_PLAY_FDTH+3]),
 	S_BRIGHT (FDTH, 'J',	4, NULL 					, &States[S_PLAY_FDTH+4]),

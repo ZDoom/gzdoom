@@ -3,7 +3,7 @@
 ** Functions for controlling CD playback
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -181,7 +181,7 @@ bool FCDThread::Init ()
 		return false;
 
 	CD_Window = CreateWindow (
-		(LPCTSTR)(int)CD_WindowAtom,
+		(LPCTSTR)CD_WindowAtom,
 		"ZDoom CD Player",
 		0,
 		0, 0, 10, 10,
@@ -192,7 +192,7 @@ bool FCDThread::Init ()
 
 	if (CD_Window == NULL)
 	{
-		UnregisterClass ((LPCTSTR)(int)CD_WindowAtom, g_hInst);
+		UnregisterClass ((LPCTSTR)CD_WindowAtom, g_hInst);
 		CD_WindowAtom = 0;
 		return false;
 	}
@@ -217,7 +217,7 @@ void FCDThread::Deinit ()
 	}
 	if (CD_WindowAtom)
 	{
-		UnregisterClass ((LPCTSTR)(int)CD_WindowAtom, g_hInst);
+		UnregisterClass ((LPCTSTR)CD_WindowAtom, g_hInst);
 		CD_WindowAtom = 0;
 	}
 	if (DeviceID)

@@ -14,7 +14,7 @@ class ADemon : public AActor
 {
 	DECLARE_ACTOR (ADemon, AActor)
 public:
-	const char *GetHitObituary () { return GStrings(OB_DEMONHIT); }
+	const char *GetHitObituary () { return GStrings("OB_DEMONHIT"); }
 };
 
 FState ADemon::States[] =
@@ -113,8 +113,8 @@ class AStealthDemon : public ADemon
 {
 	DECLARE_STATELESS_ACTOR (AStealthDemon, ADemon)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHDEMON); }
-	const char *GetHitObituary () { return GStrings(OB_STEALTHDEMON); }
+	const char *GetObituary () { return GStrings("OB_STEALTHDEMON"); }
+	const char *GetHitObituary () { return GStrings("OB_STEALTHDEMON"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthDemon, Doom, 9055, 121)
@@ -127,7 +127,7 @@ class ASpectre : public ADemon
 {
 	DECLARE_STATELESS_ACTOR (ASpectre, ADemon)
 public:
-	const char *GetHitObituary () { return GStrings(OB_SPECTREHIT); }
+	const char *GetHitObituary () { return GStrings("OB_SPECTREHIT"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (ASpectre, Doom, 58, 9)
@@ -164,6 +164,25 @@ class ADeadDemon : public ADemon
 };
 
 IMPLEMENT_STATELESS_ACTOR (ADeadDemon, Doom, 21, 0)
-	PROP_SKIP_SUPER
 	PROP_SpawnState (S_SARG_DIE+5)
+
+	// Undo all the changes to default Actor properties that ADemon made
+	PROP_SpawnHealth (1000)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (16)
+	PROP_Mass (100)
+	PROP_SpeedFixed (0)
+	PROP_PainChance (0)
+	PROP_Flags (0)
+	PROP_Flags2 (0)
+	PROP_SeeState (255)
+	PROP_PainState (255)
+	PROP_MissileState (255)
+	PROP_DeathState (255)
+	PROP_RaiseState (255)
+	PROP_SeeSound ("")
+	PROP_PainSound ("")
+	PROP_DeathSound ("")
+	PROP_ActiveSound ("")
+	PROP_AttackSound ("")
 END_DEFAULTS

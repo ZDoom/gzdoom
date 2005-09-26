@@ -461,8 +461,8 @@ static visplane_t *new_visplane (unsigned hash)
 
 	if (check == NULL)
 	{
-		check = (visplane_t *)Calloc (1, sizeof(*check) + sizeof(*check->top)*(SCREENWIDTH*2));
-		check->bottom = &check->top[SCREENWIDTH+2];
+		check = (visplane_t *)Calloc (1, sizeof(*check) + sizeof(*check->top)*(MAXWIDTH*2));
+		check->bottom = &check->top[MAXWIDTH+2];
 	}
 	else if (NULL == (freetail = freetail->next))
 	{
@@ -976,7 +976,7 @@ void R_DrawSkyBoxes ()
 	static TArray<size_t> interestingStack;
 	static TArray<ptrdiff_t> drawsegStack;
 	static TArray<ptrdiff_t> visspriteStack;
-	static TArray<fixed_t> viewzStack;
+	static TArray<fixed_t> viewxStack, viewyStack, viewzStack;
 	static TArray<VisplaneAndAlpha> visplaneStack;
 
 	if (visplanes[MAXVISPLANES] == NULL)
@@ -991,7 +991,7 @@ void R_DrawSkyBoxes ()
 	ptrdiff_t savedvissprite_p = vissprite_p - vissprites;
 	ptrdiff_t savedds_p = ds_p - drawsegs;
 	ptrdiff_t savedlastopening = lastopening;
-	size_t savedinteresting = FirstInterestingDrawseg;
+	unsigned int savedinteresting = FirstInterestingDrawseg;
 	float savedvisibility = R_GetVisibility ();
 	AActor *savedcamera = camera;
 	sector_t *savedsector = viewsector;
@@ -1090,6 +1090,8 @@ void R_DrawSkyBoxes ()
 		interestingStack.Push (FirstInterestingDrawseg);
 		drawsegStack.Push (firstdrawseg - drawsegs);
 		visspriteStack.Push (firstvissprite - vissprites);
+		viewxStack.Push (viewx);
+		viewyStack.Push (viewy);
 		viewzStack.Push (viewz);
 		vaAdder.Visplane = pl;
 		vaAdder.Alpha = sky->PlaneAlpha;
@@ -1112,7 +1114,9 @@ void R_DrawSkyBoxes ()
 		firstdrawseg = drawsegs + pd;
 		visspriteStack.Pop (pd);
 		firstvissprite = vissprites + pd;
-		viewzStack.Pop (viewz);	// Masked textures use viewz for positioning
+		viewxStack.Pop (viewx);	// Masked textures and planes need the view
+		viewyStack.Pop (viewy); // coordinates restored for proper positioning.
+		viewzStack.Pop (viewz);
 
 		R_DrawMasked ();
 

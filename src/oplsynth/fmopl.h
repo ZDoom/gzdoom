@@ -42,4 +42,6 @@ void YM3812SetTimerHandler(int which, OPL_TIMERHANDLER TimerHandler, int channel
 void YM3812SetIRQHandler(int which, OPL_IRQHANDLER IRQHandler, int param);
 void YM3812SetUpdateHandler(int which, OPL_UPDATEHANDLER UpdateHandler, int param);
 
+void YM3812GetVoiceString(char *out);
+
 #endif

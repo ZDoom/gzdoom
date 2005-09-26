@@ -55,14 +55,15 @@ void *FLAC__memory_alloc_aligned(size_t bytes, void **aligned_address)
 
 FLAC__bool FLAC__memory_alloc_aligned_int32_array(unsigned elements, FLAC__int32 **unaligned_pointer, FLAC__int32 **aligned_pointer)
 {
-	FLAC__int32 *pa, *pu; /* aligned pointer, unaligned pointer */
+	union { void *v; FLAC__int32 *i; } pa;
+	FLAC__int32 *pu; /* aligned pointer, unaligned pointer */
 
 	FLAC__ASSERT(elements > 0);
 	FLAC__ASSERT(0 != unaligned_pointer);
 	FLAC__ASSERT(0 != aligned_pointer);
 	FLAC__ASSERT(unaligned_pointer != aligned_pointer);
 
-	pu = (FLAC__int32*)FLAC__memory_alloc_aligned(sizeof(FLAC__int32) * elements, (void**)&pa);
+	pu = (FLAC__int32*)FLAC__memory_alloc_aligned(sizeof(FLAC__int32) * elements, &pa.v);
 	if(0 == pu) {
 		return false;
 	}
@@ -70,21 +71,22 @@ FLAC__bool FLAC__memory_alloc_aligned_int32_array(unsigned elements, FLAC__int32
 		if(*unaligned_pointer != 0)
 			free(*unaligned_pointer);
 		*unaligned_pointer = pu;
-		*aligned_pointer = pa;
+		*aligned_pointer = pa.i;
 		return true;
 	}
 }
 
 FLAC__bool FLAC__memory_alloc_aligned_uint32_array(unsigned elements, FLAC__uint32 **unaligned_pointer, FLAC__uint32 **aligned_pointer)
 {
-	FLAC__uint32 *pa, *pu; /* aligned pointer, unaligned pointer */
+	union { void *v; FLAC__uint32 *i; } pa;
+	FLAC__uint32 *pu; /* aligned pointer, unaligned pointer */
 
 	FLAC__ASSERT(elements > 0);
 	FLAC__ASSERT(0 != unaligned_pointer);
 	FLAC__ASSERT(0 != aligned_pointer);
 	FLAC__ASSERT(unaligned_pointer != aligned_pointer);
 
-	pu = (FLAC__uint32*)FLAC__memory_alloc_aligned(sizeof(FLAC__uint32) * elements, (void**)&pa);
+	pu = (FLAC__uint32*)FLAC__memory_alloc_aligned(sizeof(FLAC__uint32) * elements, &pa.v);
 	if(0 == pu) {
 		return false;
 	}
@@ -92,21 +94,22 @@ FLAC__bool FLAC__memory_alloc_aligned_uint32_array(unsigned elements, FLAC__uint
 		if(*unaligned_pointer != 0)
 			free(*unaligned_pointer);
 		*unaligned_pointer = pu;
-		*aligned_pointer = pa;
+		*aligned_pointer = pa.i;
 		return true;
 	}
 }
 
 FLAC__bool FLAC__memory_alloc_aligned_uint64_array(unsigned elements, FLAC__uint64 **unaligned_pointer, FLAC__uint64 **aligned_pointer)
 {
-	FLAC__uint64 *pa, *pu; /* aligned pointer, unaligned pointer */
+	union { void *v; FLAC__uint64 *i; } pa;
+	FLAC__uint64 *pu; /* aligned pointer, unaligned pointer */
 
 	FLAC__ASSERT(elements > 0);
 	FLAC__ASSERT(0 != unaligned_pointer);
 	FLAC__ASSERT(0 != aligned_pointer);
 	FLAC__ASSERT(unaligned_pointer != aligned_pointer);
 
-	pu = (FLAC__uint64*)FLAC__memory_alloc_aligned(sizeof(FLAC__uint64) * elements, (void**)&pa);
+	pu = (FLAC__uint64*)FLAC__memory_alloc_aligned(sizeof(FLAC__uint64) * elements, &pa.v);
 	if(0 == pu) {
 		return false;
 	}
@@ -114,21 +117,22 @@ FLAC__bool FLAC__memory_alloc_aligned_uint64_array(unsigned elements, FLAC__uint
 		if(*unaligned_pointer != 0)
 			free(*unaligned_pointer);
 		*unaligned_pointer = pu;
-		*aligned_pointer = pa;
+		*aligned_pointer = pa.i;
 		return true;
 	}
 }
 
 FLAC__bool FLAC__memory_alloc_aligned_unsigned_array(unsigned elements, unsigned **unaligned_pointer, unsigned **aligned_pointer)
 {
-	unsigned *pa, *pu; /* aligned pointer, unaligned pointer */
+	union { void *v; unsigned *i; } pa;
+	unsigned *pu; /* aligned pointer, unaligned pointer */
 
 	FLAC__ASSERT(elements > 0);
 	FLAC__ASSERT(0 != unaligned_pointer);
 	FLAC__ASSERT(0 != aligned_pointer);
 	FLAC__ASSERT(unaligned_pointer != aligned_pointer);
 
-	pu = (unsigned*)FLAC__memory_alloc_aligned(sizeof(unsigned) * elements, (void**)&pa);
+	pu = (unsigned*)FLAC__memory_alloc_aligned(sizeof(unsigned) * elements, &pa.v);
 	if(0 == pu) {
 		return false;
 	}
@@ -136,21 +140,22 @@ FLAC__bool FLAC__memory_alloc_aligned_unsigned_array(unsigned elements, unsigned
 		if(*unaligned_pointer != 0)
 			free(*unaligned_pointer);
 		*unaligned_pointer = pu;
-		*aligned_pointer = pa;
+		*aligned_pointer = pa.i;
 		return true;
 	}
 }
 
 FLAC__bool FLAC__memory_alloc_aligned_real_array(unsigned elements, FLAC__real **unaligned_pointer, FLAC__real **aligned_pointer)
 {
-	FLAC__real *pa, *pu; /* aligned pointer, unaligned pointer */
+	union { void *v; FLAC__real *r; } pa;
+	FLAC__real *pu; /* aligned pointer, unaligned pointer */
 
 	FLAC__ASSERT(elements > 0);
 	FLAC__ASSERT(0 != unaligned_pointer);
 	FLAC__ASSERT(0 != aligned_pointer);
 	FLAC__ASSERT(unaligned_pointer != aligned_pointer);
 
-	pu = (FLAC__real*)FLAC__memory_alloc_aligned(sizeof(FLAC__real) * elements, (void**)&pa);
+	pu = (FLAC__real*)FLAC__memory_alloc_aligned(sizeof(FLAC__real) * elements, &pa.v);
 	if(0 == pu) {
 		return false;
 	}
@@ -158,7 +163,7 @@ FLAC__bool FLAC__memory_alloc_aligned_real_array(unsigned elements, FLAC__real *
 		if(*unaligned_pointer != 0)
 			free(*unaligned_pointer);
 		*unaligned_pointer = pu;
-		*aligned_pointer = pa;
+		*aligned_pointer = pa.r;
 		return true;
 	}
 }

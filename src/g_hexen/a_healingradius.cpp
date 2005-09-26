@@ -72,5 +72,5 @@ bool AArtiHealingRadius::Use (bool pickup)
 
 const char *AArtiHealingRadius::PickupMessage ()
 {
-	return GStrings(TXT_ARTIHEALINGRADIUS);
+	return GStrings("TXT_ARTIHEALINGRADIUS");
 }

@@ -458,7 +458,7 @@ static void DoAttack (AActor *self, bool domelee, bool domissile)
 	if (self->target == NULL)
 		return;
 
-	size_t index = self->state->GetMisc1_2();
+	unsigned int index = self->state->GetMisc1_2();
 	if (index >= BasicAttackList.Size())
 		return;
 
@@ -621,7 +621,7 @@ void A_ExplodeParms (AActor *self)
 	int damage = 128;
 	int distance = 128;
 	bool hurtSource = true;
-	size_t index = self->state->GetMisc1_2();
+	unsigned int index = self->state->GetMisc1_2();
 
 	if (index < ExplodeList.Size())
 	{
@@ -664,7 +664,7 @@ void A_NoBlocking (AActor *actor)
 
 	actor->flags &= ~MF_SOLID;
 
-	size_t index = actor->GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
+	unsigned int index = actor->GetClass()->Meta.GetMetaInt (ACMETA_DropItems) - 1;
 
 	// If the actor has a conversation that sets an item to drop, drop that.
 	if (actor->Conversation != NULL && actor->Conversation->DropType != NULL)
@@ -716,7 +716,7 @@ void A_CallSpecial(AActor * self)
 //==========================================================================
 void A_CustomMissile(AActor * self)
 {
-	size_t index = self->state->GetMisc1_2();
+	unsigned int index = self->state->GetMisc1_2();
 	AActor * targ;
 	AActor * missile;
 
@@ -791,7 +791,7 @@ void A_CustomBulletAttack (AActor *self)
 	int bslope;
 	const TypeInfo *pufftype;
 
-	size_t index=self->state->GetMisc1_2();
+	unsigned int index=self->state->GetMisc1_2();
 
 	if (self->target && index>=0 && index<BulletAttackList.Size())
 	{
@@ -1915,10 +1915,10 @@ bool DoSpecialWeaponFunctions(FState & state, bool multistate, int * statecount)
 static int ProcessStates(FActorInfo * actor, AActor * defaults, Baggage &bag, int rangetype)
 {
 	char statestring[256];
-	int count = StateArray.Size();
+	ptrdiff_t count = StateArray.Size();
 	FState state;
 	FState * laststate=NULL;
-	int lastlabel;
+	ptrdiff_t lastlabel;
 	FState ** stp;
 	int minrequiredstate=0;
 
@@ -2088,14 +2088,14 @@ static int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 	// adjust the state pointers
 	for(stp=&defaults->SpawnState;stp<=&defaults->RaiseState;stp++)
 	{
-		int v=(int)*stp;
+		ptrdiff_t v=(ptrdiff_t)*stp;
 		if (v>=1 && v<0x10000) *stp=actor->OwnedStates+v-1;
 	}
 
 	for(i = currange = 0; i < count; i++)
 	{
 		// resolve labels and jumps
-		switch((int)realstates[i].NextState)
+		switch((ptrdiff_t)realstates[i].NextState)
 		{
 		case 0:		// next
 			realstates[i].NextState=(i<count-1? &realstates[i+1]:&realstates[0]);
@@ -2110,9 +2110,9 @@ static int FinishStates (FActorInfo *actor, AActor *defaults, Baggage &bag)
 			break;
 
 		default:	// loop
-			if (((int)realstates[i].NextState)<0x10000)
+			if (((ptrdiff_t)realstates[i].NextState)<0x10000)
 			{
-				realstates[i].NextState=&realstates[(int)realstates[i].NextState-1];
+				realstates[i].NextState=&realstates[(ptrdiff_t)realstates[i].NextState-1];
 			}
 			else	// goto
 			{

@@ -36,5 +36,5 @@ END_DEFAULTS
 
 const char *AArtiSpeedBoots::PickupMessage ()
 {
-	return GStrings(TXT_ARTISPEED);
+	return GStrings("TXT_ARTISPEED");
 }

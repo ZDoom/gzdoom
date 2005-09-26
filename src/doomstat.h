@@ -148,9 +148,8 @@ extern	"C" int			detailyshift;		// [RH] Y shift for vertical detail level
 // ANG90 = left side, ANG270 = right
 extern	int				viewangleoffset;
 
-// Player taking events, and displaying.
+// Player taking events. i.e. The local player.
 extern	int				consoleplayer;	
-extern	int				displayplayer;
 
 
 extern level_locals_t level;

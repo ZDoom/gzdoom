@@ -3,7 +3,7 @@
 ** New options menu code
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -679,9 +679,9 @@ CUSTOM_CVAR (Bool, vid_tft, false, CVAR_ARCHIVE)
 	{
 		ModesItems[VM_ASPECTITEM].b.numvalues = 4.f;
 		ModesItems[VM_ASPECTITEM].e.values = Ratios;
-		if (menu_screenratios == 4.f)
+		if (menu_screenratios == 4)
 		{
-			menu_screenratios = 0.f;
+			menu_screenratios = 0;
 		}
 	}
 	BuildModesList (SCREENWIDTH, SCREENHEIGHT, DisplayBits);
@@ -743,7 +743,7 @@ static menuitem_t CompatibilityItems[] = {
 	{ bitflag,	"Limit Pain Elementals to 20 Lost Souls",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_LIMITPAIN} },
 	{ bitflag,	"Don't let others hear your pickups",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_SILENTPICKUP} },
 	{ bitflag,	"Actors are infinitely tall",				{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NO_PASSMOBJ} },
-	{ bitflag,	"Allow silent BFG trick",					{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MAGICSILENCE} },
+	{ bitflag,	"Cripple sound for silent BFG trick",		{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_MAGICSILENCE} },
 	{ bitflag,	"Enable wall running",						{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_WALLRUN} },
 	{ bitflag,	"Spawn item drops on the floor",			{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_NOTOSSDROPS} },
 	{ bitflag,  "All special lines can block use lines",	{&compatflags}, {0}, {0}, {0}, {(value_t *)COMPATF_USEBLOCKING} },
@@ -986,12 +986,12 @@ void M_ChangeMessages ()
 {
 	if (show_messages)
 	{
-		Printf (128, "%s\n", GStrings(MSGOFF));
+		Printf (128, "%s\n", GStrings("MSGOFF"));
 		show_messages = false;
 	}
 	else
 	{
-		Printf (128, "%s\n", GStrings(MSGON));
+		Printf (128, "%s\n", GStrings("MSGON"));
 		show_messages = true;
 	}
 }
@@ -2263,9 +2263,9 @@ static void BuildModesList (int hiwidth, int hiheight, int hi_bits)
 
 			switch (c)
 			{
-			case 0: str = &ModesItems[i].b.res1; break;
-			case 1: str = &ModesItems[i].c.res2; break;
-			case 2: str = &ModesItems[i].d.res3; break;
+			default: str = &ModesItems[i].b.res1; break;
+			case 1:  str = &ModesItems[i].c.res2; break;
+			case 2:  str = &ModesItems[i].d.res3; break;
 			}
 			while ((haveMode = I_NextMode (&width, &height, &letterbox)) &&
 				(ratiomatch >= 0 && CheckRatio (width, height) != ratiomatch))
@@ -2310,9 +2310,9 @@ static BOOL GetSelectedSize (int line, int *width, int *height)
 
 		switch (ModesItems[line].a.selmode)
 		{
-		case 0: res = ModesItems[line].b.res1; break;
-		case 1: res = ModesItems[line].c.res2; break;
-		case 2: res = ModesItems[line].d.res3; break;
+		default: res = ModesItems[line].b.res1; break;
+		case 1:  res = ModesItems[line].c.res2; break;
+		case 2:  res = ModesItems[line].d.res3; break;
 		}
 		x = strtol (res, &breakpt, 10);
 		y = strtol (breakpt+1, NULL, 10);
@@ -2443,8 +2443,8 @@ void M_SaveCustomKeys (FConfigFile *config, char *section, char *subsection)
 		return;
 
 	// Start after the normal controls
-	size_t i = sizeof(ControlsItems)/sizeof(ControlsItems[0]);
-	size_t most = CustomControlsItems.Size();
+	unsigned int i = sizeof(ControlsItems)/sizeof(ControlsItems[0]);
+	unsigned int most = CustomControlsItems.Size();
 
 	while (i < most)
 	{

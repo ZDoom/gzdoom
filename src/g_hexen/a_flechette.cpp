@@ -354,7 +354,7 @@ AInventory *AArtiPoisonBag::CreateCopy (AActor *other)
 
 const char *AArtiPoisonBag::PickupMessage ()
 {
-	return GStrings(TXT_ARTIPOISONBAG);
+	return GStrings("TXT_ARTIPOISONBAG");
 }
 
 //============================================================================

@@ -44,6 +44,10 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	{ // Player is already a beast
 		return false;
 	}
+	if (p->health <= 0)
+	{ // Dead players cannot morph
+		return false;
+	}
 
 	if (spawntype == NULL)
 	{
@@ -73,6 +77,8 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 	p->morphTics = MORPHTICS;
 	p->health = morphed->health;
 	p->mo = static_cast<APlayerPawn *>(morphed);
+	p->momx = p->momy = 0;
+	morphed->ObtainInventory (actor);
 	// Remove all armor
 	for (item = actor->Inventory; item != NULL; )
 	{
@@ -83,8 +89,6 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 		}
 		item = next;
 	}
-	morphed->Inventory = actor->Inventory;
-	actor->Inventory = NULL;
 	morphed->ActivateMorphWeapon ();
 	if (p->camera == actor)
 	{
@@ -101,6 +105,7 @@ bool P_MorphPlayer (player_t *p, const TypeInfo *spawntype)
 
 bool P_UndoPlayerMorph (player_t *player, bool force)
 {
+	AWeapon *beastweap;
 	APlayerPawn *mo;
 	AActor *pmo;
 	angle_t angle;
@@ -158,7 +163,23 @@ bool P_UndoPlayerMorph (player_t *player, bool force)
 		pmo->y + 20*finesine[angle], pmo->z + TELEFOGHEIGHT);
 	mo->Inventory = pmo->Inventory;
 	pmo->Inventory = NULL;
-	player->PremorphWeapon->PostMorphWeapon ();
+	beastweap = player->ReadyWeapon;
+	if (player->PremorphWeapon != NULL)
+	{
+		player->PremorphWeapon->PostMorphWeapon ();
+	}
+	else
+	{
+		player->ReadyWeapon = player->PendingWeapon = NULL;
+	}
+	if (beastweap != NULL)
+	{ // You don't get to keep your morphed weapon.
+		if (beastweap->SisterWeapon != NULL)
+		{
+			beastweap->SisterWeapon->Destroy ();
+		}
+		beastweap->Destroy ();
+	}
 	pmo->tracer = NULL;
 	pmo->Destroy ();
 	return true;
@@ -187,18 +208,14 @@ bool P_MorphMonster (AActor *actor, const TypeInfo *spawntype)
 	DObject::PointerSubstitution (actor, morphed);
 	morphed->tid = actor->tid;
 	morphed->angle = actor->angle;
-	morphed->target = actor->target;
 	morphed->tracer = actor;
 	morphed->special1 = MORPHTICS + pr_morphmonst();
 	morphed->special2 = actor->flags & ~MF_JUSTHIT;
 	//morphed->special = actor->special;
 	//memcpy (morphed->args, actor->args, sizeof(actor->args));
-	morphed->TIDtoHate = actor->TIDtoHate;
-	morphed->LastLook = actor->LastLook;
-	morphed->LastHeard = actor->LastHeard;
-	morphed->flags |= actor->flags & (MF_FRIENDLY | MF_SHADOW);
-	morphed->flags3 |= actor->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS | MF3_GHOST);
-	morphed->flags4 |= actor->flags4 & MF4_NOHATEPLAYERS;
+	morphed->CopyFriendliness (actor, true);
+	morphed->flags |= actor->flags & MF_SHADOW;
+	morphed->flags3 |= actor->flags3 & MF3_GHOST;
 	if (actor->renderflags & RF_INVISIBLE)
 	{
 		morphed->special2 |= MF_JUSTHIT;
@@ -245,6 +262,7 @@ bool P_UpdateMorphedMonster (AActor *beast, int tics)
 	}
 	actor->angle = beast->angle;
 	actor->target = beast->target;
+	actor->FriendPlayer = beast->FriendPlayer;
 	actor->flags = beast->special2 & ~MF_JUSTHIT;
 	actor->flags  = (actor->flags & ~(MF_FRIENDLY|MF_SHADOW)) | (beast->flags & (MF_FRIENDLY|MF_SHADOW));
 	actor->flags3 = (actor->flags3 & ~(MF3_NOSIGHTCHECK|MF3_HUNTPLAYERS|MF3_GHOST))
@@ -357,7 +375,7 @@ bool AArtiEgg::Use (bool pickup)
 
 const char *AArtiEgg::PickupMessage ()
 {
-	return GStrings (TXT_ARTIEGG);
+	return GStrings("TXT_ARTIEGG");
 }
 
 // Pork missile --------------------------------------------------------------
@@ -372,11 +390,11 @@ public:
 FState APorkFX::States[] =
 {
 //#define S_EGGFX 0
-	S_NORMAL (EGGM, 'A',	4, NULL, &States[S_EGGFX+1]),
-	S_NORMAL (EGGM, 'B',	4, NULL, &States[S_EGGFX+2]),
-	S_NORMAL (EGGM, 'C',	4, NULL, &States[S_EGGFX+3]),
-	S_NORMAL (EGGM, 'D',	4, NULL, &States[S_EGGFX+4]),
-	S_NORMAL (EGGM, 'E',	4, NULL, &States[S_EGGFX+0]),
+	S_NORMAL (PRKM, 'A',	4, NULL, &States[S_EGGFX+1]),
+	S_NORMAL (PRKM, 'B',	4, NULL, &States[S_EGGFX+2]),
+	S_NORMAL (PRKM, 'C',	4, NULL, &States[S_EGGFX+3]),
+	S_NORMAL (PRKM, 'D',	4, NULL, &States[S_EGGFX+4]),
+	S_NORMAL (PRKM, 'E',	4, NULL, &States[S_EGGFX+0]),
 
 #define S_EGGFXI2 (S_EGGFX+5)
 	S_BRIGHT (FHFX, 'I',	3, NULL, &States[S_EGGFXI2+1]),
@@ -454,5 +472,5 @@ bool AArtiPork::Use (bool pickup)
 
 const char *AArtiPork::PickupMessage ()
 {
-	return GStrings(TXT_ARTIEGG2);
+	return GStrings("TXT_ARTIEGG2");
 }

@@ -297,7 +297,7 @@ void FLACSong::FLACStreamer::metadata_callback(const ::FLAC__StreamMetadata *met
 				return;
 		}
 		SampleRate = metadata->data.stream_info.sample_rate;
-		NumChannels = MIN (2u, metadata->data.stream_info.channels);
+		NumChannels = (unsigned int)MIN (2u, metadata->data.stream_info.channels);
 		SampleBits = metadata->data.stream_info.bits_per_sample;
 		PoolSize = metadata->data.stream_info.max_blocksize * 2;
 

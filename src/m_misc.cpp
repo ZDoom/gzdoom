@@ -539,7 +539,7 @@ void M_ScreenShot (char *filename)
 	// find a file name to save it to
 	if (filename == NULL)
 	{
-		int dirlen;
+		size_t dirlen;
 
 #ifndef unix
 		if (Args.CheckParm ("-cdrom"))
@@ -567,6 +567,13 @@ void M_ScreenShot (char *filename)
 			Printf ("M_ScreenShot: Delete some screenshots\n");
 			return;
 		}
+		filename = autoname;
+	}
+	else
+	{
+		autoname = (char *)alloca (strlen (filename) + 5);
+		strcpy (autoname, filename);
+		DefaultExtension (autoname, writepcx ? ".pcx" : ".png");
 		filename = autoname;
 	}
 

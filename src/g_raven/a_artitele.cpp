@@ -45,8 +45,8 @@ bool AArtiTeleport::Use (bool pickup)
 
 	if (deathmatch)
 	{
-		size_t selections = deathmatchstarts.Size ();
-		size_t i = pr_tele() % selections;
+		unsigned int selections = deathmatchstarts.Size ();
+		unsigned int i = pr_tele() % selections;
 		destX = deathmatchstarts[i].x << FRACBITS;
 		destY = deathmatchstarts[i].y << FRACBITS;
 		destAngle = ANG45 * (deathmatchstarts[i].angle/45);
@@ -71,7 +71,7 @@ bool AArtiTeleport::Use (bool pickup)
 
 const char *AArtiTeleport::PickupMessage ()
 {
-	return GStrings(TXT_ARTITELEPORT);
+	return GStrings("TXT_ARTITELEPORT");
 }
 
 //---------------------------------------------------------------------------

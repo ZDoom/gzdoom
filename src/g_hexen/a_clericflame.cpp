@@ -30,7 +30,7 @@ class ACWeapFlame : public AClericWeapon
 public:
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_C3);
+		return GStrings("TXT_WEAPON_C3");
 	}
 };
 

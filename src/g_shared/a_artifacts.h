@@ -69,6 +69,7 @@ public:
 protected:
 	void InitEffect ();
 	void DoEffect ();
+	bool HandlePickup (AInventory *item);
 };
 
 class APowerInvisibility : public APowerup

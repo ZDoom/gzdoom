@@ -565,11 +565,11 @@ void I_PrintStr (const char *cp, bool lineBreak)
 		return;
 
 	static bool newLine = true;
-	HWND edit = (HWND)GetWindowLongPtr (ConWindow, GWLP_USERDATA);
+	HWND edit = (HWND)(LONG_PTR)GetWindowLongPtr (ConWindow, GWLP_USERDATA);
 	char buf[256];
 	int bpos = 0;
 
-	SendMessage (edit, EM_SETSEL, -1, 0);
+	SendMessage (edit, EM_SETSEL, (WPARAM)-1, 0);
 
 	if (lineBreak && !newLine)
 	{
@@ -577,7 +577,7 @@ void I_PrintStr (const char *cp, bool lineBreak)
 		buf[1] = '\n';
 		bpos = 2;
 	}
-	while (*cp != NULL)
+	while (*cp != 0)
 	{
 		if (*cp == 28)
 		{ // Skip color changes

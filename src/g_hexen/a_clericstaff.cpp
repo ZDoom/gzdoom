@@ -28,7 +28,7 @@ class ACWeapStaff : public AClericWeapon
 public:
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_C2);
+		return GStrings("TXT_WEAPON_C2");
 	}
 };
 

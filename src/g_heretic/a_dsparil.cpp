@@ -141,12 +141,12 @@ END_DEFAULTS
 
 const char *ASorcerer1::GetObituary ()
 {
-	return GStrings(OB_DSPARIL1);
+	return GStrings("OB_DSPARIL1");
 }
 
 const char *ASorcerer1::GetHitObituary ()
 {
-	return GStrings(OB_DSPARIL1HIT);
+	return GStrings("OB_DSPARIL1HIT");
 }
 
 // Sorcerer FX 1 ------------------------------------------------------------
@@ -311,12 +311,12 @@ bool ASorcerer2::OkayToSwitchTarget (AActor *other)
 
 const char *ASorcerer2::GetObituary ()
 {
-	return GStrings(OB_DSPARIL2);
+	return GStrings("OB_DSPARIL2");
 }
 
 const char *ASorcerer2::GetHitObituary ()
 {
-	return GStrings(OB_DSPARIL2HIT);
+	return GStrings("OB_DSPARIL2HIT");
 }
 
 // Sorcerer 2 FX 1 ----------------------------------------------------------
@@ -547,7 +547,7 @@ void A_SorcererRise (AActor *actor)
 	mo = Spawn<ASorcerer2> (actor->x, actor->y, actor->z);
 	mo->SetState (&ASorcerer2::States[S_SOR2_RISE]);
 	mo->angle = actor->angle;
-	mo->target = actor->target;
+	mo->CopyFriendliness (actor, true);
 }
 
 //----------------------------------------------------------------------------
@@ -708,14 +708,7 @@ void A_GenWizard (AActor *actor)
 		}
 		else
 		{ // [RH] Make the new wizards inherit D'Sparil's target
-			AActor *master = actor->target;
-
-			mo->target = master->target;
-			mo->TIDtoHate = master->TIDtoHate;
-			mo->LastLook = master->LastLook;
-			mo->flags3 |= master->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
-			mo->flags4 |= master->flags4 & MF4_NOHATEPLAYERS;
-			mo->flags = (mo->flags & ~MF_FRIENDLY) | (master->flags & MF_FRIENDLY);
+			mo->CopyFriendliness (actor->target, true);
 
 			actor->momx = actor->momy = actor->momz = 0;
 			actor->SetState (actor->DeathState);

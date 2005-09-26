@@ -66,13 +66,13 @@ char MLversion[] = "MUS Lib V"MLVERSIONSTR;
 char MLcopyright[] = "Copyright (c) 1994-1996 QA-Software";
 
 /* Program */
-int playTick(struct musicBlock *mus)
+int musicBlock::playTick()
 {
 	int delay = 0;
 
     while (delay == 0)
     {
-		uchar data = *mus->score++;
+		uchar data = *score++;
 		uchar command = (data >> 4) & 7;
 		uchar channel = data & 0x0F;
 		uchar last = data & 0x80;
@@ -80,27 +80,27 @@ int playTick(struct musicBlock *mus)
 		switch (command)
 		{
 		case 0:	// release note
-			mus->playingcount--;
-			OPLreleaseNote(mus, channel, *mus->score++);
+			playingcount--;
+			OPLreleaseNote(channel, *score++);
 			break;
 		case 1: {	// play note
-			uchar note = *mus->score++;
-			mus->playingcount++;
+			uchar note = *score++;
+			playingcount++;
 			if (note & 0x80)	// note with volume
-				OPLplayNote(mus, channel, note & 0x7F, *mus->score++);
+				OPLplayNote(channel, note & 0x7F, *score++);
 			else
-				OPLplayNote(mus, channel, note, -1);
+				OPLplayNote(channel, note, -1);
 				} break;
 		case 2:	// pitch wheel
-			OPLpitchWheel(mus, channel, *mus->score++);
+			OPLpitchWheel(channel, *score++);
 			break;
 		case 3:	// system event (valueless controller)
-			OPLchangeControl(mus, channel, *mus->score++, 0);
+			OPLchangeControl(channel, *score++, 0);
 			break;
 		case 4: {	// change control
-			uchar ctrl = *mus->score++;
-			uchar value = *mus->score++;
-			OPLchangeControl(mus, channel, ctrl, value);
+			uchar ctrl = *score++;
+			uchar value = *score++;
+			OPLchangeControl(channel, ctrl, value);
 				} break;
 		case 6:	// end
 			return 0;
@@ -114,7 +114,7 @@ int playTick(struct musicBlock *mus)
 			
 			do
 			{
-				t = *mus->score++;
+				t = *score++;
 				delay = (delay << 7) | (t & 127);
 			} while (t & 128);
 		}

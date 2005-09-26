@@ -214,11 +214,11 @@ static int WriteNODES (FILE *file)
 			WORD child;
 			if ((size_t)nodes[i].children[j] & 1)
 			{
-				child = NF_SUBSECTOR | ((subsector_t *)((byte *)nodes[i].children[j] - 1) - subsectors);
+				child = NF_SUBSECTOR | WORD((subsector_t *)((byte *)nodes[i].children[j] - 1) - subsectors);
 			}
 			else
 			{
-				child = (node_t *)nodes[i].children[j] - nodes;
+				child = WORD((node_t *)nodes[i].children[j] - nodes);
 			}
 			mn.children[j] = SHORT(child);
 		}

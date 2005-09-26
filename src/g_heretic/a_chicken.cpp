@@ -285,7 +285,7 @@ void AChicken::Destroy ()
 
 const char *AChicken::GetObituary ()
 {
-	return GStrings(OB_CHICKEN);
+	return GStrings("OB_CHICKEN");
 }
 
 void AChicken::Die (AActor *source, AActor *inflictor)

@@ -52,12 +52,12 @@ END_DEFAULTS
 
 const char *AKeyGreen::PickupMessage ()
 {
-	return GStrings(TXT_GOTGREENKEY);
+	return GStrings("TXT_GOTGREENKEY");
 }
 
 const char *AKeyGreen::NeedKeyMessage (bool remote, int keynum)
 {
-	return GStrings(TXT_NEEDGREENKEY);
+	return GStrings("TXT_NEEDGREENKEY");
 }
 
 // Blue key -----------------------------------------------------------------
@@ -92,12 +92,12 @@ END_DEFAULTS
 
 const char *AKeyBlue::PickupMessage ()
 {
-	return GStrings(TXT_GOTBLUEKEY);
+	return GStrings("TXT_GOTBLUEKEY");
 }
 
 const char *AKeyBlue::NeedKeyMessage (bool remote, int keynum)
 {
-	return GStrings(TXT_NEEDBLUEKEY);
+	return GStrings("TXT_NEEDBLUEKEY");
 }
 
 // Yellow key ---------------------------------------------------------------
@@ -131,12 +131,12 @@ END_DEFAULTS
 
 const char *AKeyYellow::PickupMessage ()
 {
-	return GStrings(TXT_GOTYELLOWKEY);
+	return GStrings("TXT_GOTYELLOWKEY");
 }
 
 const char *AKeyYellow::NeedKeyMessage (bool remote, int keynum)
 {
-	return GStrings(TXT_NEEDYELLOWKEY);
+	return GStrings("TXT_NEEDYELLOWKEY");
 }
 
 // --- Key gizmos -----------------------------------------------------------

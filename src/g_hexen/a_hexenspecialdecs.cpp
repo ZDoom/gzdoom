@@ -807,8 +807,6 @@ END_DEFAULTS
 
 // Shrub1 -------------------------------------------------------------------
 
-void A_TreeDeath (AActor *);
-
 class AZShrub1 : public AActor
 {
 	DECLARE_ACTOR (AZShrub1, AActor)
@@ -819,10 +817,7 @@ FState AZShrub1::States[] =
 #define S_ZSHRUB1 0
 	S_NORMAL (SHB1, 'A',   -1, NULL 					, NULL),
 
-#define S_ZSHRUB1_DIE (S_ZSHRUB1+1)
-	S_NORMAL (SHB1, 'A',	1, A_TreeDeath				, &States[S_ZSHRUB1+0]),
-
-#define S_ZSHRUB1_X (S_ZSHRUB1_DIE+1)
+#define S_ZSHRUB1_X (S_ZSHRUB1+1)
 	S_BRIGHT (SHB1, 'B',	7, NULL 					, &States[S_ZSHRUB1_X+1]),
 	S_BRIGHT (SHB1, 'C',	6, A_Scream 				, &States[S_ZSHRUB1_X+2]),
 	S_BRIGHT (SHB1, 'D',	5, NULL 					, NULL)
@@ -836,8 +831,7 @@ IMPLEMENT_ACTOR (AZShrub1, Hexen, 8101, 0)
 	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZSHRUB1)
-	PROP_MeleeState (S_ZSHRUB1_X)
-	PROP_DeathState (S_ZSHRUB1_DIE)
+	PROP_BDeathState (S_ZSHRUB1_X)
 
 	PROP_DeathSound ("TreeExplode")
 END_DEFAULTS
@@ -856,10 +850,7 @@ FState AZShrub2::States[] =
 #define S_ZSHRUB2 0
 	S_NORMAL (SHB2, 'A',   -1, NULL 					, NULL),
 
-#define S_ZSHRUB2_DIE (S_ZSHRUB2+1)
-	S_NORMAL (SHB2, 'A',	1, A_TreeDeath				, &States[S_ZSHRUB2+1]),
-
-#define S_ZSHRUB2_X (S_ZSHRUB2_DIE+1)
+#define S_ZSHRUB2_X (S_ZSHRUB2+1)
 	S_BRIGHT (SHB2, 'B',	7, NULL 					, &States[S_ZSHRUB2_X+1]),
 	S_BRIGHT (SHB2, 'C',	6, A_Scream 				, &States[S_ZSHRUB2_X+2]),
 	S_BRIGHT (SHB2, 'D',	5, A_Explode				, &States[S_ZSHRUB2_X+3]),
@@ -874,8 +865,7 @@ IMPLEMENT_ACTOR (AZShrub2, Hexen, 8102, 0)
 	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZSHRUB2)
-	PROP_MeleeState (S_ZSHRUB2_X)
-	PROP_DeathState (S_ZSHRUB2_DIE)
+	PROP_BDeathState (S_ZSHRUB2_X)
 
 	PROP_DeathSound ("TreeExplode")
 END_DEFAULTS
@@ -1246,10 +1236,7 @@ FState AZXmasTree::States[] =
 #define S_ZXMAS_TREE 0
 	S_NORMAL (XMAS, 'A',   -1, NULL 					, NULL),
 
-#define S_ZXMAS_TREE_DIE (S_ZXMAS_TREE+1)
-	S_NORMAL (XMAS, 'A',	4, A_TreeDeath				, &States[S_ZXMAS_TREE]),
-
-#define S_ZXMAS_TREE_X (S_ZXMAS_TREE_DIE+1)
+#define S_ZXMAS_TREE_X (S_ZXMAS_TREE+1)
 	S_BRIGHT (XMAS, 'B',	6, NULL 					, &States[S_ZXMAS_TREE_X+1]),
 	S_BRIGHT (XMAS, 'C',	6, A_Scream 				, &States[S_ZXMAS_TREE_X+2]),
 	S_BRIGHT (XMAS, 'D',	5, NULL 					, &States[S_ZXMAS_TREE_X+3]),
@@ -1271,8 +1258,7 @@ IMPLEMENT_ACTOR (AZXmasTree, Hexen, 8068, 0)
 	PROP_Flags4 (MF4_NOICEDEATH)
 
 	PROP_SpawnState (S_ZXMAS_TREE)
-	PROP_MeleeState (S_ZXMAS_TREE_X)
-	PROP_DeathState (S_ZXMAS_TREE_DIE)
+	PROP_BDeathState (S_ZXMAS_TREE_X)
 
 	PROP_DeathSound ("TreeExplode")
 END_DEFAULTS

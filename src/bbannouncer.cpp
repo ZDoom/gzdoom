@@ -3,7 +3,7 @@
 ** The announcer from Blood (The Voice).
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@
 
 struct SoundAndString
 {
-	int Message;
+	const char *Message;
 	const char *Sound;
 };
 
@@ -83,52 +83,52 @@ static const char *BeginSounds[] =
 
 static const SoundAndString WorldKillSounds[] =
 {
-	{ BBA_EXCREMENT,	"VO7.SFX" },		// Excrement
-	{ BBA_HAMBURGER,	"VO8.SFX" },		// Hamburger
-	{ BBA_SCROTUM,		"VO9.SFX" },		// Scrotum separation
+	{ "BBA_EXCREMENT",	"VO7.SFX" },		// Excrement
+	{ "BBA_HAMBURGER",	"VO8.SFX" },		// Hamburger
+	{ "BBA_SCROTUM",	"VO9.SFX" },		// Scrotum separation
 };
 
 static const SoundAndString SuicideSounds[] =
 {
-	{ BBA_SUICIDE,		"VO13.SFX" },		// Unassisted death
-	{ BBA_SUICIDE,		"VO5.SFX" },		// Kevorkian approves
-	{ BBA_POPULATION,	"VO12.SFX" },		// Population control
-	{ BBA_DARWIN,		"VO16.SFX" }		// Darwin award
+	{ "BBA_SUICIDE",	"VO13.SFX" },		// Unassisted death
+	{ "BBA_SUICIDE",	"VO5.SFX" },		// Kevorkian approves
+	{ "BBA_POPULATION",	"VO12.SFX" },		// Population control
+	{ "BBA_DARWIN",		"VO16.SFX" }		// Darwin award
 };
 
 static const SoundAndString KillSounds[] =
 {
-	{ BBA_BONED,		"BONED.SFX" },		// Boned
-	{ BBA_CREAMED,		"CREAMED.SFX" },	// Creamed
-	{ BBA_DECIMAT,		"DECIMAT.SFX" },	// Decimated
-	{ BBA_DESTRO,		"DESTRO.SFX" },		// Destroyed
-	{ BBA_DICED,		"DICED.SFX" },		// Diced
-	{ BBA_DISEMBO,		"DISEMBO.SFX" },	// Disembowled
-	{ BBA_FLATTE,		"FLATTE.SFX" },		// Flattened
-	{ BBA_JUSTICE,		"JUSTICE.SFX" },	// Justice
-	{ BBA_MADNESS,		"MADNESS.SFX" },	// Madness
-	{ BBA_KILLED,		"KILLED.SFX" },		// Killed
-	{ BBA_MINCMEAT,		"MINCMEAT.SFX" },	// Mincemeat
-	{ BBA_MASSACR,		"MASSACR.SFX" },	// Massacred
-	{ BBA_MUTILA,		"MUTILA.SFX" },		// Mutilated
-	{ BBA_REAMED,		"REAMED.SFX" },		// Reamed
-	{ BBA_RIPPED,		"RIPPED.SFX" },		// Ripped
-	{ BBA_SLAUGHT,		"SLAUGHT.SFX" },	// Slaughtered
-	{ BBA_SMASHED,		"SMASHED.SFX" },	// Smashed
-	{ BBA_SODOMIZ,		"SODOMIZ.SFX" },	// Sodomized
-	{ BBA_SPLATT,		"SPLATT.SFX" },		// Splattered
-	{ BBA_SQUASH,		"SQUASH.SFX" },		// Squashed
-	{ BBA_THROTTL,		"THROTTL.SFX" },	// Throttled
-	{ BBA_WASTED,		"WASTED.SFX" },		// Wasted
-	{ BBA_BODYBAG,		"VO10.SFX" },		// Body bagged
-	{ BBA_HOSED,		"VO25.SFX" },		// Hosed
-	{ BBA_TOAST,		"VO27.SFX" },		// Toasted
-	{ BBA_HELL,			"VO28.SFX" },		// Sent to hell
-	{ BBA_SPRAYED,		"VO35.SFX" },		// Sprayed
-	{ BBA_DOGMEAT,		"VO36.SFX" },		// Dog meat
-	{ BBA_BEATEN,		"VO39.SFX" },		// Beaten like a cur
-	{ BBA_SNUFF,		"VO41.SFX" },		// Snuffed
-	{ BBA_CASTRA,		"CASTRA.SFX" },		// Castrated
+	{ "BBA_BONED",		"BONED.SFX" },		// Boned
+	{ "BBA_CREAMED",	"CREAMED.SFX" },	// Creamed
+	{ "BBA_DECIMAT",	"DECIMAT.SFX" },	// Decimated
+	{ "BBA_DESTRO",		"DESTRO.SFX" },		// Destroyed
+	{ "BBA_DICED",		"DICED.SFX" },		// Diced
+	{ "BBA_DISEMBO",	"DISEMBO.SFX" },	// Disembowled
+	{ "BBA_FLATTE",		"FLATTE.SFX" },		// Flattened
+	{ "BBA_JUSTICE",	"JUSTICE.SFX" },	// Justice
+	{ "BBA_MADNESS",	"MADNESS.SFX" },	// Madness
+	{ "BBA_KILLED",		"KILLED.SFX" },		// Killed
+	{ "BBA_MINCMEAT",	"MINCMEAT.SFX" },	// Mincemeat
+	{ "BBA_MASSACR",	"MASSACR.SFX" },	// Massacred
+	{ "BBA_MUTILA",		"MUTILA.SFX" },		// Mutilated
+	{ "BBA_REAMED",		"REAMED.SFX" },		// Reamed
+	{ "BBA_RIPPED",		"RIPPED.SFX" },		// Ripped
+	{ "BBA_SLAUGHT",	"SLAUGHT.SFX" },	// Slaughtered
+	{ "BBA_SMASHED",	"SMASHED.SFX" },	// Smashed
+	{ "BBA_SODOMIZ",	"SODOMIZ.SFX" },	// Sodomized
+	{ "BBA_SPLATT",		"SPLATT.SFX" },		// Splattered
+	{ "BBA_SQUASH",		"SQUASH.SFX" },		// Squashed
+	{ "BBA_THROTTL",	"THROTTL.SFX" },	// Throttled
+	{ "BBA_WASTED",		"WASTED.SFX" },		// Wasted
+	{ "BBA_BODYBAG",	"VO10.SFX" },		// Body bagged
+	{ "BBA_HOSED",		"VO25.SFX" },		// Hosed
+	{ "BBA_TOAST",		"VO27.SFX" },		// Toasted
+	{ "BBA_HELL",		"VO28.SFX" },		// Sent to hell
+	{ "BBA_SPRAYED",	"VO35.SFX" },		// Sprayed
+	{ "BBA_DOGMEAT",	"VO36.SFX" },		// Dog meat
+	{ "BBA_BEATEN",		"VO39.SFX" },		// Beaten like a cur
+	{ "BBA_SNUFF",		"VO41.SFX" },		// Snuffed
+	{ "BBA_CASTRA",		"CASTRA.SFX" },		// Castrated
 };
 
 static const char *GoodJobSounds[] =
@@ -296,7 +296,7 @@ bool AnnounceTelefrag (AActor *killer, AActor *killee)
 
 	if (cl_bbannounce && multiplayer)
 	{
-		const char *message = GStrings (OB_MPTELEFRAG);
+		const char *message = GStrings("OB_MPTELEFRAG");
 		if (message != NULL)
 		{
 			char assembled[1024];

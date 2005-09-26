@@ -105,7 +105,7 @@ FTextureManager::FTextureManager ()
 
 FTextureManager::~FTextureManager ()
 {
-	for (size_t i = 0; i < Textures.Size(); ++i)
+	for (unsigned int i = 0; i < Textures.Size(); ++i)
 	{
 		delete Textures[i].Texture;
 	}
@@ -211,7 +211,7 @@ int FTextureManager::ReadTexture (FArchive &arc)
 
 void FTextureManager::UnloadAll ()
 {
-	for (size_t i = 0; i < Textures.Size(); ++i)
+	for (unsigned int i = 0; i < Textures.Size(); ++i)
 	{
 		Textures[i].Texture->Unload ();
 	}
@@ -2575,12 +2575,12 @@ void R_InitTextures (void)
 	int lastlump = 0, lump;
 	int texlump1 = -1, texlump2 = -1, texlump1a, texlump2a;
 	int i;
-	int pfile;
+	int pfile = -1;
 
 	// For each PNAMES lump, load the TEXTURE1 and/or TEXTURE2 lumps from the same wad.
 	while ((lump = Wads.FindLump ("PNAMES", &lastlump)) != -1)
 	{
-		pfile = Wads.GetLumpFile (lump);
+		int pfile = Wads.GetLumpFile (lump);
 
 		TexMan.AddPatches (lump);
 		texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, pfile);

@@ -4,7 +4,7 @@
 ** Simple, no frills DirectSound player.
 **
 **---------------------------------------------------------------------------
-** Copyright 2002-2004 Randy Heit
+** Copyright 2002-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -393,7 +393,7 @@ void AltSoundRenderer::Shutdown ()
 			NumChannels = 0;
 		}
 
-		for (size_t i = 0; i < S_sfx.Size(); ++i)
+		for (unsigned int i = 0; i < S_sfx.Size(); ++i)
 		{
 			if (S_sfx[i].data != NULL)
 			{

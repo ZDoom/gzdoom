@@ -45,7 +45,7 @@ END_DEFAULTS
 
 const char *AArtiBlastRadius::PickupMessage ()
 {
-	return GStrings(TXT_ARTIBLASTRADIUS);
+	return GStrings("TXT_ARTIBLASTRADIUS");
 }
 
 // Blast Effect -------------------------------------------------------------

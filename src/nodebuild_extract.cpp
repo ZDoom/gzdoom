@@ -5,7 +5,7 @@
 ** internal format to the format used by the rest of the game.
 **
 **---------------------------------------------------------------------------
-** Copyright 2002 Randy Heit
+** Copyright 2002-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -102,7 +102,7 @@ void FNodeBuilder::Extract (node_t *&outNodes, int &nodeCount,
 		{
 			if (outSegs[i].PartnerSeg != NULL)
 			{
-				outSegs[i].PartnerSeg = &outSegs[Segs[(size_t)outSegs[i].PartnerSeg-1].storedseg];
+				outSegs[i].PartnerSeg = &outSegs[Segs[(unsigned int)(size_t)outSegs[i].PartnerSeg-1].storedseg];
 			}
 		}
 	}
@@ -244,7 +244,7 @@ DWORD FNodeBuilder::PushGLSeg (TArray<seg_t> &segs, const FPrivSeg *seg, vertex_
 		newseg.linedef = NULL;
 		newseg.sidedef = NULL;
 	}
-	newseg.PartnerSeg = (seg_t *)(seg->partner == DWORD_MAX ? 0 : seg->partner + 1);
+	newseg.PartnerSeg = (seg_t *)(seg->partner == DWORD_MAX ? 0 : (size_t)seg->partner + 1);
 	newseg.bPolySeg = false;
 	return (DWORD)segs.Push (newseg);
 }

@@ -3,7 +3,7 @@
 ** Parses DECALDEFs and creates a "library" of decals
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -998,7 +998,7 @@ FDecalLib::FTranslation::FTranslation (DWORD start, DWORD end)
 	DWORD ri, gi, bi, rs, gs, bs;
 	PalEntry *first, *last;
 	BYTE *table;
-	size_t i, tablei;
+	unsigned int i, tablei;
 
 	StartColor = start;
 	EndColor = end;
@@ -1288,7 +1288,7 @@ DThinker *FDecalCombinerAnim::CreateThinker (AActor *actor) const
 
 FDecalAnimator *FDecalLib::FindAnimator (const char *name)
 {
-	size_t i;
+	unsigned int i;
 
 	for (i = Animators.Size ()-1; i >= 0; --i)
 	{

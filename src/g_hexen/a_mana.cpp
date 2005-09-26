@@ -34,7 +34,7 @@ END_DEFAULTS
 
 const char *AMana1::PickupMessage ()
 {
-	return GStrings(TXT_MANA_1);
+	return GStrings("TXT_MANA_1");
 }
 
 // Green mana ---------------------------------------------------------------
@@ -74,7 +74,7 @@ END_DEFAULTS
 
 const char *AMana2::PickupMessage ()
 {
-	return GStrings(TXT_MANA_2);
+	return GStrings("TXT_MANA_2");
 }
 
 // Combined mana ------------------------------------------------------------
@@ -98,7 +98,7 @@ public:
 protected:
 	const char *PickupMessage ()
 	{
-		return GStrings(TXT_MANA_BOTH);
+		return GStrings("TXT_MANA_BOTH");
 	}
 	bool GiveMana (AActor *other, const TypeInfo *type)
 	{
@@ -212,5 +212,5 @@ bool AArtiBoostMana::FillMana (const TypeInfo *type)
 
 const char *AArtiBoostMana::PickupMessage ()
 {
-	return GStrings(TXT_ARTIBOOSTMANA);
+	return GStrings("TXT_ARTIBOOSTMANA");
 }

@@ -288,7 +288,7 @@ void FLACSampleLoader::metadata_callback(const ::FLAC__StreamMetadata *metadata)
 			DPrintf ("FLAC is too long\n");
 		}
 		SampleRate = metadata->data.stream_info.sample_rate;
-		NumChannels = MIN (2u, metadata->data.stream_info.channels);
+		NumChannels = (unsigned int)MIN (2u, metadata->data.stream_info.channels);
 		SampleBits = metadata->data.stream_info.bits_per_sample;
 		NumSamples = (unsigned int)metadata->data.stream_info.total_samples;
 	}

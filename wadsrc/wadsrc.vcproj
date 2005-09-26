@@ -152,9 +152,50 @@
 					RelativePath=".\decals\scorch1.png">
 				</File>
 			</Filter>
+			<Filter
+				Name="MapInfos"
+				Filter="">
+				<File
+					RelativePath=".\mapinfo\doom1.txt">
+				</File>
+				<File
+					RelativePath=".\mapinfo\doom2.txt">
+				</File>
+				<File
+					RelativePath=".\mapinfo\heretic.txt">
+				</File>
+				<File
+					RelativePath=".\mapinfo\hexen.txt">
+				</File>
+				<File
+					RelativePath=".\mapinfo\plutonia.txt">
+				</File>
+				<File
+					RelativePath=".\mapinfo\strife.txt">
+				</File>
+				<File
+					RelativePath=".\mapinfo\tnt.txt">
+				</File>
+			</Filter>
+			<Filter
+				Name="Languages"
+				Filter="">
+				<File
+					RelativePath=".\languages\english-us.txt">
+				</File>
+				<File
+					RelativePath=".\languages\french.txt">
+				</File>
+				<File
+					RelativePath=".\languages\italian.txt">
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\Makefile">
+		</File>
+		<File
+			RelativePath=".\Makefile.mgw">
 		</File>
 		<File
 			RelativePath=".\Makefile2">

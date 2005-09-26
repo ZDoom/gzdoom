@@ -2,7 +2,7 @@
 ** stringtable.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -33,8 +33,6 @@
 ** FStringTable
 **
 ** This class manages a list of localizable strings stored in a wad file.
-** It does not support adding new strings, although existing ones can
-** be changed.
 */
 
 #ifndef __STRINGTABLE_H__
@@ -51,45 +49,29 @@
 class FStringTable
 {
 public:
-	FStringTable () :
-		StringStatus(NULL),
-		NumStrings (0),
-		Names(NULL),
-		Strings(NULL),
-		CompactBase(NULL),
-		CompactSize(0),
-		LumpNum (-1) {}
-	~FStringTable () { FreeData (); }
+	struct StringEntry;
 
-	void LoadStrings (int lump, int expectedSize, bool enuOnly);
-	void ReloadStrings ();
+	FStringTable ();
+	~FStringTable ();
 
-	void LoadNames () const;
-	void FlushNames () const;
-	int FindString (const char *stringName) const;
-	int MatchString (const char *string) const;
+	void LoadStrings (bool enuOnly);
 
-	void SetString (int index, const char *newString);
-	void Compact ();
-	const char *operator() (int index) { return Strings[index]; }
+	const char *operator() (const char *name) const;	// Never returns NULL
+	const char *operator[] (const char *name) const;	// Can return NULL
+
+	const char *MatchString (const char *string) const;
+	void SetString (const char *name, const char *newString);
 
 private:
-	struct Header;
+	enum { HASH_SIZE = 128 };
 
-	BYTE *StringStatus;
-	int NumStrings;
-	mutable BYTE *Names;
-	char **Strings;
-	char *CompactBase;
-	size_t CompactSize;
-	int LumpNum;
+	StringEntry *Buckets[HASH_SIZE];
 
 	void FreeData ();
-	void FreeStrings ();
-	void FreeStandardStrings ();
-	int SumStringSizes () const;
-	int LoadLanguage (DWORD code, bool exactMatch, BYTE *startPos, BYTE *endPos);
-	void DoneLoading (BYTE *startPos, BYTE *endPos);
+	void FreeNonDehackedStrings ();
+	void LoadLanguage (int lumpnum, DWORD code, bool exactMatch, int passnum);
+	static size_t ProcessEscapes (char *str);
+	void FindString (const char *stringName, StringEntry **&pentry, StringEntry *&entry);
 };
 
 #endif //__STRINGTABLE_H__

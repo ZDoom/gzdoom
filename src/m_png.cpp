@@ -3,7 +3,7 @@
 ** Routines for manipulating PNG files.
 **
 **---------------------------------------------------------------------------
-** Copyright 2002 Randy Heit
+** Copyright 2002-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ PNGHandle::PNGHandle (FILE *file) : File(0), bDeleteFilePtr(true), ChunkPt(0)
 PNGHandle::PNGHandle (FileReader *file) : File(file), bDeleteFilePtr(false), ChunkPt(0) {}
 PNGHandle::~PNGHandle ()
 {
-	for (size_t i = 0; i < TextChunks.Size(); ++i)
+	for (unsigned int i = 0; i < TextChunks.Size(); ++i)
 	{
 		delete TextChunks[i];
 	}
@@ -276,7 +276,7 @@ bool M_AppendPNGText (FILE *file, const char *keyword, const char *text)
 //
 //==========================================================================
 
-size_t M_FindPNGChunk (PNGHandle *png, DWORD id)
+unsigned int M_FindPNGChunk (PNGHandle *png, DWORD id)
 {
 	png->ChunkPt = 0;
 	return M_NextPNGChunk (png, id);
@@ -290,7 +290,7 @@ size_t M_FindPNGChunk (PNGHandle *png, DWORD id)
 //
 //==========================================================================
 
-size_t M_NextPNGChunk (PNGHandle *png, DWORD id)
+unsigned int M_NextPNGChunk (PNGHandle *png, DWORD id)
 {
 	for ( ; png->ChunkPt < png->Chunks.Size(); ++png->ChunkPt)
 	{
@@ -314,7 +314,8 @@ size_t M_NextPNGChunk (PNGHandle *png, DWORD id)
 
 char *M_GetPNGText (PNGHandle *png, const char *keyword)
 {
-	size_t i, keylen, textlen;
+	unsigned int i;
+	size_t keylen, textlen;
 
 	for (i = 0; i < png->TextChunks.Size(); ++i)
 	{
@@ -335,7 +336,8 @@ char *M_GetPNGText (PNGHandle *png, const char *keyword)
 
 bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buffsize)
 {
-	size_t i, keylen;
+	unsigned int i;
+	size_t keylen;
 
 	for (i = 0; i < png->TextChunks.Size(); ++i)
 	{
@@ -466,7 +468,7 @@ DCanvas *M_CreateCanvasFromPNG (PNGHandle *png)
 	IHDR imageHeader;
 	DSimpleCanvas *canvas;
 	int width, height;
-	size_t chunklen;
+	unsigned int chunklen;
 
 	if (M_FindPNGChunk (png, MAKE_ID('I','H','D','R')) == 0)
 	{
@@ -521,7 +523,7 @@ DCanvas *M_CreateCanvasFromPNG (PNGHandle *png)
 //==========================================================================
 
 bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitch,
-				 BYTE bitdepth, BYTE colortype, BYTE interlace, size_t chunklen)
+				 BYTE bitdepth, BYTE colortype, BYTE interlace, unsigned int chunklen)
 {
 	Byte *inputLine, *prev, *curr;
 	Byte chunkbuffer[4096];
@@ -566,7 +568,7 @@ bool M_ReadIDAT (FileReader *file, BYTE *buffer, int width, int height, int pitc
 			if (stream.avail_in == 0 && chunklen > 0)
 			{
 				stream.next_in = chunkbuffer;
-				stream.avail_in = (uInt)file->Read (chunkbuffer, MIN(chunklen,sizeof(chunkbuffer)));
+				stream.avail_in = (uInt)file->Read (chunkbuffer, MIN<long>(chunklen,sizeof(chunkbuffer)));
 				chunklen -= stream.avail_in;
 			}
 

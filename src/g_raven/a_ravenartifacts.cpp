@@ -34,7 +34,7 @@ END_DEFAULTS
 
 const char *AArtiHealth::PickupMessage ()
 {
-	return GStrings(TXT_ARTIHEALTH);
+	return GStrings("TXT_ARTIHEALTH");
 }
 
 // Super health -------------------------------------------------------------
@@ -63,7 +63,7 @@ END_DEFAULTS
 
 const char *AArtiSuperHealth::PickupMessage ()
 {
-	return GStrings(TXT_ARTISUPERHEALTH);
+	return GStrings("TXT_ARTISUPERHEALTH");
 }
 
 // Flight -------------------------------------------------------------------
@@ -95,7 +95,7 @@ END_DEFAULTS
 
 const char *AArtiFly::PickupMessage ()
 {
-	return GStrings(TXT_ARTIFLY);
+	return GStrings("TXT_ARTIFLY");
 }
 
 // Invulnerability ----------------------------------------------------------
@@ -129,11 +129,11 @@ const char *AArtiInvulnerability::PickupMessage ()
 {
 	if (gameinfo.gametype == GAME_Hexen)
 	{
-		return GStrings (TXT_ARTIINVULNERABILITY2);
+		return GStrings("TXT_ARTIINVULNERABILITY2");
 	}
 	else
 	{
-		return GStrings (TXT_ARTIINVULNERABILITY);
+		return GStrings("TXT_ARTIINVULNERABILITY");
 	}
 }
 
@@ -164,5 +164,5 @@ END_DEFAULTS
 
 const char *AArtiTorch::PickupMessage ()
 {
-	return GStrings(TXT_ARTITORCH);
+	return GStrings("TXT_ARTITORCH");
 }

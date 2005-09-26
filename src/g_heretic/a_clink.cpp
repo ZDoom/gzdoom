@@ -82,7 +82,7 @@ void AClink::NoBlockingSet ()
 
 const char *AClink::GetObituary ()
 {
-	return GStrings(OB_CLINK);
+	return GStrings("OB_CLINK");
 }
 
 //----------------------------------------------------------------------------

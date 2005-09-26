@@ -3,7 +3,7 @@
 ** This file contains the heads of lists stored in special data segments
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -60,9 +60,6 @@ void *GRegHead = 0;
 #pragma data_seg(".sreg$a")
 void *SRegHead = 0;
 
-#pragma data_seg(".wreg$a")
-void *WRegHead = 0;
-
 #pragma data_seg()
 
 
@@ -74,7 +71,6 @@ void *ARegHead __attribute__((section("areg"))) = 0;
 void *CRegHead __attribute__((section("creg"))) = 0;
 void *GRegHead __attribute__((section("greg"))) = 0;
 void *SRegHead __attribute__((section("sreg"))) = 0;
-void *WRegHead __attribute__((section("wreg"))) = 0;
 #else
 
 // I can't find any way to specify the order to link files with
@@ -86,7 +82,6 @@ void **ARegHead;
 void **CRegHead;
 void **GRegHead;
 void **SRegHead;
-void **WRegHead;
 
 #endif
 
@@ -116,7 +111,6 @@ static const AutoSegStuff Stuff[5] =
 	{ "creg", &CRegHead, &CRegTail },
 	{ "greg", &GRegHead, &GRegTail },
 	{ "sreg", &SRegHead, &SRegTail },
-	{ "wreg", &WRegHead, &WRegTail }
 };
 
 void InitAutoSegMarkers ()

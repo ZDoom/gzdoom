@@ -173,7 +173,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 {
 	int	mod;
 	const char *message;
-	int messagenum;
+	const char *messagename;
 	char gendermessage[1024];
 	BOOL friendly;
 	int  gender;
@@ -197,7 +197,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	friendly = MeansOfDeath & MOD_FRIENDLY_FIRE;
 	mod = MeansOfDeath & ~MOD_FRIENDLY_FIRE;
 	message = NULL;
-	messagenum = 0;
+	messagename = NULL;
 
 	if (attacker == NULL || attacker->player != NULL)
 	{
@@ -215,19 +215,19 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 
 	switch (mod)
 	{
-	case MOD_SUICIDE:		messagenum = OB_SUICIDE;	break;
-	case MOD_FALLING:		messagenum = OB_FALLING;	break;
-	case MOD_CRUSH:			messagenum = OB_CRUSH;		break;
-	case MOD_EXIT:			messagenum = OB_EXIT;		break;
-	case MOD_WATER:			messagenum = OB_WATER;		break;
-	case MOD_SLIME:			messagenum = OB_SLIME;		break;
-	case MOD_FIRE:			messagenum = OB_LAVA;		break;
-	case MOD_BARREL:		messagenum = OB_BARREL;		break;
-	case MOD_SPLASH:		messagenum = OB_SPLASH;		break;
+	case MOD_SUICIDE:		messagename = "OB_SUICIDE";		break;
+	case MOD_FALLING:		messagename = "OB_FALLING";		break;
+	case MOD_CRUSH:			messagename = "OB_CRUSH";		break;
+	case MOD_EXIT:			messagename = "OB_EXIT";		break;
+	case MOD_WATER:			messagename = "OB_WATER";		break;
+	case MOD_SLIME:			messagename = "OB_SLIME";		break;
+	case MOD_FIRE:			messagename = "OB_LAVA";		break;
+	case MOD_BARREL:		messagename = "OB_BARREL";		break;
+	case MOD_SPLASH:		messagename = "OB_SPLASH";		break;
 	}
 
-	if (messagenum)
-		message = GStrings(messagenum);
+	if (messagename != NULL)
+		message = GStrings(messagename);
 
 	if (attacker != NULL && message == NULL)
 	{
@@ -235,17 +235,17 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 		{
 			switch (mod)
 			{
-			case MOD_R_SPLASH:	messagenum = OB_R_SPLASH;		break;
-			case MOD_ROCKET:	messagenum = OB_ROCKET;			break;
-			default:			messagenum = OB_KILLEDSELF;		break;
+			case MOD_R_SPLASH:	messagename = "OB_R_SPLASH";		break;
+			case MOD_ROCKET:	messagename = "OB_ROCKET";			break;
+			default:			messagename = "OB_KILLEDSELF";		break;
 			}
-			message = GStrings(messagenum);
+			message = GStrings(messagename);
 		}
 		else if (attacker->player == NULL)
 		{
 			if (mod == MOD_TELEFRAG)
 			{
-				message = GStrings(OB_MONTELEFRAG);
+				message = GStrings("OB_MONTELEFRAG");
 			}
 			else if (mod == MOD_HIT)
 			{
@@ -282,36 +282,44 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 	{
 		if (friendly)
 		{
-			int rnum = pr_obituary();
-
 			attacker->player->fragcount -= 2;
 			attacker->player->frags[attacker->player - players]++;
 			self = attacker;
 			gender = self->player->userinfo.gender;
-
-			messagenum = OB_FRIENDLY1 + (rnum & 3);
+			sprintf (gendermessage, "OB_FRIENDLY%c", '1' + (pr_obituary() & 3));
+			message = GStrings(gendermessage);
 		}
 		else
 		{
-			switch (mod)
+			if (inflictor != NULL)
 			{
-			default:
-				if (attacker->player->ReadyWeapon != NULL)
+				message = inflictor->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+				if (message == NULL)
+				{
+					message = inflictor->GetObituary ();
+				}
+			}
+			if (message == NULL)
+			{
+				message = attacker->player->ReadyWeapon->GetClass()->Meta.GetMetaString (AMETA_Obituary);
+				if (message == NULL)
 				{
 					message = attacker->player->ReadyWeapon->GetObituary ();
 				}
-				break;
-			case MOD_ROCKET:		messagenum = OB_MPROCKET;		break;
-			case MOD_R_SPLASH:		messagenum = OB_MPR_SPLASH;		break;
-			case MOD_PLASMARIFLE:	messagenum = OB_MPPLASMARIFLE;	break;
-			case MOD_BFG_BOOM:		messagenum = OB_MPBFG_BOOM;		break;
-			case MOD_BFG_SPLASH:	messagenum = OB_MPBFG_SPLASH;	break;
-			case MOD_TELEFRAG:		messagenum = OB_MPTELEFRAG;		break;
-			case MOD_RAILGUN:		messagenum = OB_RAILGUN;		break;
+			}
+			if (message == NULL)
+			{
+				switch (mod)
+				{
+				case MOD_R_SPLASH:		messagename = "OB_MPR_SPLASH";		break;
+				case MOD_BFG_SPLASH:	messagename = "OB_MPBFG_SPLASH";	break;
+				case MOD_TELEFRAG:		messagename = "OB_MPTELEFRAG";		break;
+				case MOD_RAILGUN:		messagename = "OB_RAILGUN";			break;
+				}
+				if (messagename != NULL)
+					message = GStrings(messagename);
 			}
 		}
-		if (messagenum)
-			message = GStrings(messagenum);
 	}
 
 	if (message)
@@ -322,7 +330,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker)
 		return;
 	}
 
-	SexMessage (GStrings(OB_DEFAULT), gendermessage, gender,
+	SexMessage (GStrings("OB_DEFAULT"), gendermessage, gender,
 		self->player->userinfo.netname, self->player->userinfo.netname);
 	Printf (PRINT_MEDIUM, "%s\n", gendermessage);
 }
@@ -420,7 +428,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 				player->fragcount--;
 				if (deathmatch && player->spreecount >= 5 && cl_showsprees)
 				{
-					SexMessage (GStrings(SPREEKILLSELF), buff,
+					SexMessage (GStrings("SPREEKILLSELF"), buff,
 						player->userinfo.gender, player->userinfo.netname,
 						player->userinfo.netname);
 					StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
@@ -443,19 +451,19 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					switch (source->player->spreecount)
 					{
 					case 5:
-						spreemsg = GStrings(SPREE5);
+						spreemsg = GStrings("SPREE5");
 						break;
 					case 10:
-						spreemsg = GStrings(SPREE10);
+						spreemsg = GStrings("SPREE10");
 						break;
 					case 15:
-						spreemsg = GStrings(SPREE15);
+						spreemsg = GStrings("SPREE15");
 						break;
 					case 20:
-						spreemsg = GStrings(SPREE20);
+						spreemsg = GStrings("SPREE20");
 						break;
 					case 25:
-						spreemsg = GStrings(SPREE25);
+						spreemsg = GStrings("SPREE25");
 						break;
 					default:
 						spreemsg = NULL;
@@ -466,7 +474,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 					{
 						if (!AnnounceSpreeLoss (this))
 						{
-							SexMessage (GStrings(SPREEOVER), buff, player->userinfo.gender,
+							SexMessage (GStrings("SPREEOVER"), buff, player->userinfo.gender,
 								player->userinfo.netname, source->player->userinfo.netname);
 							StatusBar->AttachMessage (new DHUDMessageFadeOut (buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
@@ -506,16 +514,16 @@ void AActor::Die (AActor *source, AActor *inflictor)
 						multimsg = NULL;
 						break;
 					case 2:
-						multimsg = GStrings(MULTI2);
+						multimsg = GStrings("MULTI2");
 						break;
 					case 3:
-						multimsg = GStrings(MULTI3);
+						multimsg = GStrings("MULTI3");
 						break;
 					case 4:
-						multimsg = GStrings(MULTI4);
+						multimsg = GStrings("MULTI4");
 						break;
 					default:
-						multimsg = GStrings(MULTI5);
+						multimsg = GStrings("MULTI5");
 						break;
 					}
 					if (multimsg != NULL)
@@ -538,7 +546,7 @@ void AActor::Die (AActor *source, AActor *inflictor)
 			if (deathmatch && fraglimit &&
 				fraglimit == D_GetFragCount (source->player))
 			{
-				Printf ("%s\n", GStrings(TXT_FRAGLIMIT));
+				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
 				G_ExitLevel (0, false);
 			}
 		}
@@ -641,7 +649,22 @@ void AActor::Die (AActor *source, AActor *inflictor)
 	else
 	{ // Normal death
 		DamageType = MOD_UNKNOWN;	// [RH] "Frozen" barrels shouldn't do freezing damage
-		SetState (DeathState);
+		if (DeathState != NULL)		// [RH] DeathState might be NULL, so try others as needed
+		{
+			SetState (DeathState);
+		}
+		else if (EDeathState != NULL)
+		{
+			SetState (EDeathState);
+		}
+		else if (BDeathState != NULL)
+		{
+			SetState (BDeathState);
+		}
+		else if (IDeathState != NULL)
+		{
+			SetState (IDeathState);
+		}
 	}
 
 	tics -= pr_killmobj() & 3;
@@ -871,7 +894,7 @@ void P_DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage
 			return;
 		}
 	}
-	damage = target->TakeSpecialDamage (inflictor, source, damage);
+	damage = target->TakeSpecialDamage (inflictor, source, damage, mod);
 	if (damage == -1)
 	{
 		return;

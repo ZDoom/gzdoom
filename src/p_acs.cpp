@@ -3,7 +3,7 @@
 ** General BEHAVIOR management and ACS execution environment
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,7 @@
 #include "v_video.h"
 #include "w_wad.h"
 #include "r_sky.h"
+#include "gstrings.h"
 
 extern FILE *Logfile;
 
@@ -174,6 +175,13 @@ static void DoGiveInv (AActor *actor, const TypeInfo *info, int amount)
 	bool hadweap = actor->player != NULL ? actor->player->ReadyWeapon != NULL : true;
 
 	AInventory *item = static_cast<AInventory *>(Spawn (info, 0,0,0));
+
+	// This shouldn't count for the item statistics!
+	if (item->flags & MF_COUNTITEM) 
+	{
+		level.total_items--;
+		item->flags &= ~MF_COUNTITEM;
+	}
 	if (info->IsDescendantOf (RUNTIME_CLASS(ABasicArmorPickup)))
 	{
 		if (static_cast<ABasicArmorPickup*>(item)->SaveAmount != 0)
@@ -447,7 +455,7 @@ void DPlaneWatcher::Tick ()
 
 FBehavior *FBehavior::StaticLoadModule (int lumpnum)
 {
-	for (size_t i = 0; i < StaticModules.Size(); ++i)
+	for (unsigned int i = 0; i < StaticModules.Size(); ++i)
 	{
 		if (StaticModules[i]->LumpNum == lumpnum)
 		{
@@ -460,7 +468,7 @@ FBehavior *FBehavior::StaticLoadModule (int lumpnum)
 
 bool FBehavior::StaticCheckAllGood ()
 {
-	for (size_t i = 0; i < StaticModules.Size(); ++i)
+	for (unsigned int i = 0; i < StaticModules.Size(); ++i)
 	{
 		if (!StaticModules[i]->IsGood())
 		{
@@ -472,7 +480,7 @@ bool FBehavior::StaticCheckAllGood ()
 
 void FBehavior::StaticUnloadModules ()
 {
-	for (size_t i = StaticModules.Size(); i-- > 0; )
+	for (unsigned int i = StaticModules.Size(); i-- > 0; )
 	{
 		delete StaticModules[i];
 	}
@@ -693,14 +701,13 @@ FBehavior::FBehavior (int lumpnum)
 
 	if (Format == ACS_Old)
 	{
-		LanguageNeutral = ((DWORD *)Data)[1];
-		LanguageNeutral += ((DWORD *)(Data + LanguageNeutral))[0] * 12 + 4;
+		StringTable = ((DWORD *)Data)[1];
+		StringTable += ((DWORD *)(Data + StringTable))[0] * 12 + 4;
 	}
 	else
 	{
 		UnencryptStrings ();
-		LanguageNeutral = FindLanguage (0, false);
-		PrepLocale (LanguageIDs[0], LanguageIDs[1], LanguageIDs[2], LanguageIDs[3]);
+		StringTable = FindChunk (MAKE_ID('S','T','R','L')) - Data + 8;
 	}
 
 	if (Format == ACS_Old)
@@ -1328,21 +1335,11 @@ const char *FBehavior::StaticLookupString (DWORD index)
 	return StaticModules[lib]->LookupString (index & 0xffff);
 }
 
-const char *FBehavior::StaticLocalizeString (DWORD index)
-{
-	DWORD lib = index >> 16;
-	if (lib >= (DWORD)StaticModules.Size())
-	{
-		return NULL;
-	}
-	return StaticModules[lib]->LocalizeString (index & 0xffff);
-}
-
-const char *FBehavior::LookupString (DWORD index, DWORD ofs) const
+const char *FBehavior::LookupString (DWORD index) const
 {
 	if (Format == ACS_Old)
 	{
-		DWORD *list = (DWORD *)(Data + LanguageNeutral);
+		DWORD *list = (DWORD *)(Data + StringTable);
 
 		if (index >= list[0])
 			return NULL;	// Out of range for this list;
@@ -1350,168 +1347,17 @@ const char *FBehavior::LookupString (DWORD index, DWORD ofs) const
 	}
 	else
 	{
-		if (ofs == 0)
-		{
-			ofs = LanguageNeutral;
-			if (ofs == 0)
-			{
-				return NULL;
-			}
-		}
-		DWORD *list = (DWORD *)(Data + ofs);
+		DWORD *list = (DWORD *)(Data + StringTable);
 
 		if (index >= list[1])
 			return NULL;	// Out of range for this list
-		if (list[3+index] == 0)
-			return NULL;	// Not defined in this list
-		return (const char *)(Data + ofs + list[3+index]);
+		return (const char *)(Data + StringTable + list[3+index]);
 	}
-}
-
-const char *FBehavior::LocalizeString (DWORD index) const
-{
-	if (Format != ACS_Old)
-	{
-		DWORD ofs = Localized;
-		const char *str = NULL;
-
-		while (ofs != 0 && (str = LookupString (index, ofs)) == NULL)
-		{
-			ofs = ((DWORD *)(Data + ofs))[2];
-		}
-		return str;
-	}
-	else
-	{
-		return LookupString (index);
-	}
-}
-
-void FBehavior::StaticPrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef)
-{
-	for (size_t i = 0; i < StaticModules.Size(); ++i)
-	{
-		StaticModules[i]->PrepLocale (userpref, userdef, syspref, sysdef);
-	}
-}
-
-void FBehavior::PrepLocale (DWORD userpref, DWORD userdef, DWORD syspref, DWORD sysdef)
-{
-	BYTE *chunk;
-	DWORD *list;
-
-	// Clear away any existing links
-	for (chunk = Chunks; chunk < Data + DataSize; chunk += ((DWORD *)chunk)[1] + 8)
-	{
-		list = (DWORD *)chunk;
-		if (list[0] == MAKE_ID('S','T','R','L'))
-		{
-			list[4] = 0;
-		}
-	}
-	Localized = 0;
-
-	if (userpref)
-		AddLanguage (userpref);
-	if (userpref & LANGREGIONMASK)
-		AddLanguage (userpref & ~LANGREGIONMASK);
-	if (userdef)
-		AddLanguage (userdef);
-	if (userdef & LANGREGIONMASK)
-		AddLanguage (userdef & ~LANGREGIONMASK);
-	if (syspref)
-		AddLanguage (syspref);
-	if (syspref & LANGREGIONMASK)
-		AddLanguage (syspref & ~LANGREGIONMASK);
-	if (sysdef)
-		AddLanguage (sysdef);
-	if (sysdef & LANGREGIONMASK)
-		AddLanguage (sysdef & ~LANGREGIONMASK);
-	AddLanguage (MAKE_ID('e','n',0,0));		// Use English as a fallback
-	AddLanguage (0);			// Failing that, use language independent strings
-}
-
-void FBehavior::AddLanguage (DWORD langid)
-{
-	DWORD ofs, *ofsput;
-	DWORD *list;
-	BYTE *chunk;
-
-	// First, make sure language is not already inserted
-	ofsput = CheckIfInList (langid);
-	if (ofsput == NULL)
-	{ // Already in list
-		return;
-	}
-
-	// Try to find an exact match first
-	ofs = FindLanguage (langid, false);
-	if (ofs != 0)
-	{
-		*ofsput = ofs;
-		return;
-	}
-
-	// If langid has no sublanguage, add all languages that match the major
-	// type, if not in list already
-	if ((langid & LANGREGIONMASK) == 0)
-	{
-		for (chunk = Chunks; chunk < Data + DataSize; chunk += ((DWORD *)chunk)[1] + 8)
-		{
-			list = (DWORD *)chunk;
-			if (list[0] != MAKE_ID('S','T','R','L'))
-				continue;	// not a string list
-			if ((list[2] & ~LANGREGIONMASK) != langid)
-				continue;	// wrong language
-			if (list[4] != 0)
-				continue;	// definitely in language list
-			ofsput = CheckIfInList (list[2]);
-			if (ofsput != NULL)
-				*ofsput = chunk - Data + 8;	// add to language list
-		}
-	}
-}
-
-DWORD *FBehavior::CheckIfInList (DWORD langid)
-{
-	DWORD ofs, *ofsput;
-	DWORD *list;
-
-	ofs = Localized;
-	ofsput = &Localized;
-	while (ofs != 0)
-	{
-		list = (DWORD *)(Data + ofs);
-		if (list[0] == langid)
-			return NULL;
-		ofsput = &list[2];
-		ofs = list[2];
-	}
-	return ofsput;
-}
-
-DWORD FBehavior::FindLanguage (DWORD langid, bool ignoreregion) const
-{
-	BYTE *chunk;
-	DWORD *list;
-	DWORD langmask;
-
-	langmask = ignoreregion ? ~LANGREGIONMASK : ~0;
-
-	for (chunk = Chunks; chunk < Data + DataSize; chunk += ((DWORD *)chunk)[1] + 8)
-	{
-		list = (DWORD *)chunk;
-		if (list[0] == MAKE_ID('S','T','R','L') && (list[2] & langmask) == langid)
-		{
-			return chunk - Data + 8;
-		}
-	}
-	return 0;
 }
 
 void FBehavior::StaticStartTypedScripts (WORD type, AActor *activator, bool always, int arg1, bool runNow)
 {
-	for (size_t i = 0; i < StaticModules.Size(); ++i)
+	for (unsigned int i = 0; i < StaticModules.Size(); ++i)
 	{
 		StaticModules[i]->StartTypedScripts (type, activator, always, arg1, runNow);
 	}
@@ -3291,7 +3137,7 @@ int DLevelScript::RunScript ()
 
 		case PCD_CASEGOTOSORTED:
 			// The count and jump table are 4-byte aligned
-			pc = (int *)((BYTE *)pc + (4 - (((long)pc & 3)) & 3));
+			pc = (int *)((BYTE *)pc + (4 - (((size_t)pc & 3)) & 3));
 			{
 				int numcases = NEXTWORD;
 				int min = 0, max = numcases-1;
@@ -3329,9 +3175,11 @@ int DLevelScript::RunScript ()
 
 		case PCD_PRINTSTRING:
 		case PCD_PRINTLOCALIZED:
-			lookup = (pcd == PCD_PRINTSTRING ?
-				FBehavior::StaticLookupString (STACK(1)) :
-				FBehavior::StaticLocalizeString (STACK(1)));
+			lookup = FBehavior::StaticLookupString (STACK(1));
+			if (pcd == PCD_PRINTLOCALIZED)
+			{
+				lookup = GStrings(lookup);
+			}
 			if (lookup != NULL)
 			{
 				workwhere += sprintf (workwhere, "%s", lookup);
@@ -3563,7 +3411,9 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_GAMETYPE:
-			if (deathmatch)
+			if (gamestate == GS_TITLELEVEL)
+				PushToStack (GAME_TITLE_MAP);
+			else if (deathmatch)
 				PushToStack (GAME_NET_DEATHMATCH);
 			else if (multiplayer)
 				PushToStack (GAME_NET_COOPERATIVE);
@@ -3706,15 +3556,20 @@ int DLevelScript::RunScript ()
 					switch (STACK(1))
 					{
 					case BLOCK_NOTHING:
-						lines[line].flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING);
+						lines[line].flags &= ~(ML_BLOCKING|ML_BLOCKEVERYTHING|ML_RAILING);
 						break;
 					case BLOCK_CREATURES:
 					default:
-						lines[line].flags &= ~ML_BLOCKEVERYTHING;
+						lines[line].flags &= ~(ML_BLOCKEVERYTHING|ML_RAILING);
 						lines[line].flags |= ML_BLOCKING;
 						break;
 					case BLOCK_EVERYTHING:
+						lines[line].flags &= ~ML_RAILING;
 						lines[line].flags |= ML_BLOCKING|ML_BLOCKEVERYTHING;
+						break;
+					case BLOCK_RAILING:
+						lines[line].flags &= ~ML_BLOCKEVERYTHING;
+						lines[line].flags |= ML_RAILING|ML_BLOCKING;
 						break;
 					}
 				}
@@ -4209,11 +4064,11 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SIN:
-			STACK(1) = finesine[(STACK(1)<<16)>>ANGLETOFINESHIFT];
+			STACK(1) = finesine[angle_t(STACK(1)<<16)>>ANGLETOFINESHIFT];
 			break;
 
 		case PCD_COS:
-			STACK(1) = finecosine[(STACK(1)<<16)>>ANGLETOFINESHIFT];
+			STACK(1) = finecosine[angle_t(STACK(1)<<16)>>ANGLETOFINESHIFT];
 			break;
 
 		case PCD_VECTORANGLE:
@@ -4399,7 +4254,7 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_STRLEN:
-			STACK(1) = strlen(FBehavior::StaticLookupString (STACK(1)));
+			STACK(1) = SDWORD(strlen(FBehavior::StaticLookupString (STACK(1))));
 			break;
 
 		case PCD_GETCVAR:
@@ -4431,6 +4286,7 @@ int DLevelScript::RunScript ()
 			switch (STACK(1))
 			{
 			case LEVELINFO_PAR_TIME:		STACK(1) = level.partime;			break;
+			case LEVELINFO_SUCK_TIME:		STACK(1) = level.sucktime;			break;
 			case LEVELINFO_CLUSTERNUM:		STACK(1) = level.cluster;			break;
 			case LEVELINFO_LEVELNUM:		STACK(1) = level.levelnum;			break;
 			case LEVELINFO_TOTAL_SECRETS:	STACK(1) = level.total_secrets;		break;
@@ -4481,10 +4337,30 @@ int DLevelScript::RunScript ()
 				if (camera != NULL)
 				{
 					int picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
-					FCanvasTextureInfo::Add (camera, picnum, STACK(1));
+					if (picnum < 0)
+					{
+						Printf ("SetCameraToTexture: %s is not a texture\n", picname);
+					}
+					else
+					{
+						FCanvasTextureInfo::Add (camera, picnum, STACK(1));
+					}
 				}
 				sp -= 3;
 			}
+			break;
+
+		case PCD_SETACTORANGLE:		// [GRB]
+			{
+				FActorIterator iterator (STACK(2));
+				AActor *actor;
+
+				while ( (actor = iterator.Next ()) )
+				{
+					actor->angle = STACK(1) << 16;
+				}
+			}
+			sp -= 2;
 			break;
 		}
 	}

@@ -42,7 +42,7 @@ public:
 
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_F2);
+		return GStrings("TXT_WEAPON_F2");
 	}
 };
 

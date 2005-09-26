@@ -4,7 +4,7 @@
 ** Miscellaneous node builder utility functions.
 **
 **---------------------------------------------------------------------------
-** Copyright 2002 Randy Heit
+** Copyright 2002-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -88,8 +88,8 @@ void FNodeBuilder::FindUsedVertices (vertex_t *oldverts, int max)
 
 	for (i = 0; i < Level.NumLines; ++i)
 	{
-		int v1 = Level.Lines[i].v1 - oldverts;
-		int v2 = Level.Lines[i].v2 - oldverts;
+		ptrdiff_t v1 = Level.Lines[i].v1 - oldverts;
+		ptrdiff_t v2 = Level.Lines[i].v2 - oldverts;
 
 		if (map[v1] == (size_t)-1)
 		{
@@ -111,7 +111,7 @@ void FNodeBuilder::FindUsedVertices (vertex_t *oldverts, int max)
 
 int FNodeBuilder::SelectVertexExact (FPrivVert &vertex)
 {
-	for (size_t i = 0; i < Vertices.Size(); ++i)
+	for (unsigned int i = 0; i < Vertices.Size(); ++i)
 	{
 		if (Vertices[i].x == vertex.x && Vertices[i].y == vertex.y)
 		{
@@ -150,8 +150,8 @@ void FNodeBuilder::MakeSegsFromSides ()
 			backside = Level.Lines[i].sidenum[1];
 			seg.frontsector = Level.Lines[i].frontsector;
 			seg.backsector = Level.Lines[i].backsector;
-			seg.v1 = (size_t)Level.Lines[i].v1;
-			seg.v2 = (size_t)Level.Lines[i].v2;
+			seg.v1 = (int)(size_t)Level.Lines[i].v1;
+			seg.v2 = (int)(size_t)Level.Lines[i].v2;
 			seg.nextforvert = Vertices[seg.v1].segs;
 			seg.nextforvert2 = Vertices[seg.v2].segs2;
 			share1 = CheckSegForDuplicate (&seg);
@@ -180,8 +180,8 @@ void FNodeBuilder::MakeSegsFromSides ()
 			backside = Level.Lines[i].sidenum[0];
 			seg.frontsector = Level.Lines[i].backsector;
 			seg.backsector = Level.Lines[i].frontsector;
-			seg.v1 = (size_t)Level.Lines[i].v2;
-			seg.v2 = (size_t)Level.Lines[i].v1;
+			seg.v1 = (int)(size_t)Level.Lines[i].v2;
+			seg.v2 = (int)(size_t)Level.Lines[i].v1;
 			seg.nextforvert = Vertices[seg.v1].segs;
 			seg.nextforvert2 = Vertices[seg.v2].segs2;
 			share2 = CheckSegForDuplicate (&seg);
@@ -332,7 +332,7 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 {
 	int loop = 1;
 
-	for (size_t i = 0; i < spots.Size(); ++i)
+	for (unsigned int i = 0; i < spots.Size(); ++i)
 	{
 		FPolyStart *spot = &spots[i];
 		fixed_t bbox[4];
@@ -341,7 +341,7 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 		{
 			FPolyStart *anchor;
 
-			size_t j;
+			unsigned int j;
 
 			for (j = 0; j < anchors.Size(); ++j)
 			{
@@ -370,7 +370,7 @@ void FNodeBuilder::FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolySt
 
 				P(Printf ("start %d,%d -- center %d, %d\n", spot->x>>16, spot->y>>16, center.x>>16, center.y>>16));
 
-				for (size_t j = 0; j < Segs.Size(); ++j)
+				for (unsigned int j = 0; j < Segs.Size(); ++j)
 				{
 					FPrivSeg *seg = &Segs[j];
 					FPrivVert *v1 = &Vertices[seg->v1];
@@ -469,7 +469,7 @@ int FNodeBuilder::MarkLoop (DWORD firstseg, int loopnum)
 
 bool FNodeBuilder::GetPolyExtents (int polynum, fixed_t bbox[4])
 {
-	size_t i;
+	unsigned int i;
 
 	bbox[BOXLEFT] = bbox[BOXBOTTOM] = FIXED_MAX;
 	bbox[BOXRIGHT] = bbox[BOXTOP] = FIXED_MIN;
@@ -487,7 +487,7 @@ bool FNodeBuilder::GetPolyExtents (int polynum, fixed_t bbox[4])
 	if (i < Segs.Size())
 	{
 		vertex_t start;
-		size_t vert;
+		unsigned int vert;
 
 		vert = Segs[i].v1;
 

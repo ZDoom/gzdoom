@@ -3,7 +3,7 @@
 ** System interface for sound; uses fmod.dll
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -136,12 +136,12 @@ public:
 
 	bool Play (float volume)
 	{
-		int channel = FSOUND_Stream_PlayEx (FSOUND_FREE, Stream, NULL, true);
-		if (channel != -1)
+		Channel = FSOUND_Stream_PlayEx (FSOUND_FREE, Stream, NULL, true);
+		if (Channel != -1)
 		{
-			FSOUND_SetVolumeAbsolute (channel, int(volume * 255.f));
-			FSOUND_SetPan (channel, FSOUND_STEREOPAN);
-			FSOUND_SetPaused (channel, false);
+			FSOUND_SetVolumeAbsolute (Channel, int(volume * 255.f));
+			FSOUND_SetPan (Channel, FSOUND_STEREOPAN);
+			FSOUND_SetPaused (Channel, false);
 			return true;
 		}
 		return false;
@@ -473,7 +473,7 @@ void FMODSoundRenderer::Shutdown ()
 {
 	if (DidInit)
 	{
-		size_t i;
+		unsigned int i;
 
 		FSOUND_StopSound (FSOUND_ALL);
 		if (ChannelMap)
@@ -640,7 +640,7 @@ long FMODSoundRenderer::StartSound (sfxinfo_t *sfx, int vol, int sep, int pitch,
 	if (!ChannelMap)
 		return 0;
 
-	int id = sfx - &S_sfx[0];
+	int id = int(sfx - &S_sfx[0]);
 	long volume;
 	long pan;
 	long freq;
@@ -688,7 +688,7 @@ long FMODSoundRenderer::StartSound3D (sfxinfo_t *sfx, float vol, int pitch, int 
 	if (!Sound3D || !ChannelMap)
 		return 0;
 
-	int id = sfx - &S_sfx[0];
+	int id = int(sfx - &S_sfx[0]);
 	long freq;
 	long chan;
 

@@ -118,12 +118,12 @@ END_DEFAULTS
 
 const char *AHereticImp::GetObituary ()
 {
-	return GStrings(OB_HERETICIMP);
+	return GStrings("OB_HERETICIMP");
 }
 
 const char *AHereticImp::GetHitObituary ()
 {
-	return GStrings(OB_HERETICIMPHIT);
+	return GStrings("OB_HERETICIMPHIT");
 }
 
 // Heretic imp leader -------------------------------------------------------

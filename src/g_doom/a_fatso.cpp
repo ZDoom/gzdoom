@@ -16,7 +16,7 @@ class AFatso : public AActor
 {
 	DECLARE_ACTOR (AFatso, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_FATSO); }
+	const char *GetObituary () { return GStrings("OB_FATSO"); }
 };
 
 FState AFatso::States[] =
@@ -106,7 +106,7 @@ class AStealthFatso : public AFatso
 {
 	DECLARE_STATELESS_ACTOR (AStealthFatso, AFatso)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHFATSO); }
+	const char *GetObituary () { return GStrings("OB_STEALTHFATSO"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthFatso, Doom, 9058, 123)

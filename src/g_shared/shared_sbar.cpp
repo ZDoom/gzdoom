@@ -3,7 +3,7 @@
 ** Base status bar implementation
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -149,6 +149,7 @@ FBaseStatusBar::FBaseStatusBar (int reltop)
 	RelTop = reltop;
 	Messages = NULL;
 	Displacement = 0;
+	CPlayer = NULL;
 
 	SetScaled (st_scale);
 }
@@ -218,6 +219,17 @@ void FBaseStatusBar::AttachToPlayer (player_s *player)
 {
 	CPlayer = player;
 	SB_state = screen->GetPageCount ();
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC GetPlayer
+//
+//---------------------------------------------------------------------------
+
+int FBaseStatusBar::GetPlayer ()
+{
+	return int(CPlayer - players);
 }
 
 //---------------------------------------------------------------------------
@@ -545,7 +557,10 @@ void FBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
 	if (val == 0)
 	{
 		pic = Images[imgBNumbers];
-		DrawImage (pic, xpos - pic->GetWidth()/2 - w, y);
+		if (pic != NULL)
+		{
+			DrawImage (pic, xpos - pic->GetWidth()/2 - w, y);
+		}
 		return;
 	}
 	while (val != 0 && size--)
@@ -555,13 +570,19 @@ void FBaseStatusBar::DrBNumber (signed int val, int x, int y, int size) const
 		val /= 10;
 		index = imgBNumbers + (oldval - val*10);
 		pic = Images[index];
-		DrawImage (pic, xpos - pic->GetWidth()/2, y);
+		if (pic != NULL)
+		{
+			DrawImage (pic, xpos - pic->GetWidth()/2, y);
+		}
 	}
 	if (neg)
 	{
 		xpos -= w;
 		pic = Images[imgBNEGATIVE];
-		DrawImage (pic, xpos - pic->GetWidth()/2, y);
+		if (pic != NULL)
+		{
+			DrawImage (pic, xpos - pic->GetWidth()/2, y);
+		}
 	}
 }
 
@@ -690,14 +711,17 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 	if (val == 0)
 	{
 		pic = Images[imgBNumbers];
-		screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
-			DTA_HUDRules, HUD_Normal,
-			DTA_Alpha, HR_SHADOW,
-			DTA_FillColor, 0,
-			TAG_DONE);
-		screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-			DTA_HUDRules, HUD_Normal,
-			TAG_DONE);
+		if (pic != NULL)
+		{
+			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
+				DTA_HUDRules, HUD_Normal,
+				DTA_Alpha, HR_SHADOW,
+				DTA_FillColor, 0,
+				TAG_DONE);
+			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
+				DTA_HUDRules, HUD_Normal,
+				TAG_DONE);
+		}
 		return;
 	}
 	else if (val < 0)
@@ -713,11 +737,14 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 	while (val != 0)
 	{
 		pic = Images[val % 10 + imgBNumbers];
-		screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
-			DTA_HUDRules, HUD_Normal,
-			DTA_Alpha, HR_SHADOW,
-			DTA_FillColor, 0,
-			TAG_DONE);
+		if (pic != NULL)
+		{
+			screen->DrawTexture (pic, xpos - pic->GetWidth()/2 + 2, y + 2,
+				DTA_HUDRules, HUD_Normal,
+				DTA_Alpha, HR_SHADOW,
+				DTA_FillColor, 0,
+				TAG_DONE);
+		}
 		val /= 10;
 		xpos -= w;
 	}
@@ -740,9 +767,12 @@ void FBaseStatusBar::DrBNumberOuter (signed int val, int x, int y, int size) con
 	while (val != 0)
 	{
 		pic = Images[val % 10 + imgBNumbers];
-		screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
-			DTA_HUDRules, HUD_Normal,
-			TAG_DONE);
+		if (pic != NULL)
+		{
+			screen->DrawTexture (pic, xpos - pic->GetWidth()/2, y,
+				DTA_HUDRules, HUD_Normal,
+				TAG_DONE);
+		}
 		val /= 10;
 		xpos -= w;
 	}
@@ -1355,9 +1385,9 @@ void FBaseStatusBar::BlendView (float blend[4])
 		AddBlend (0.25f, 0.25f, 0.853f, 0.4f, blend);
 	}
 
-	if (CPlayer->camera != NULL && CPlayer->camera->player != NULL)
+	if (CPlayer->camera != NULL)
 	{
-		player_t *player = CPlayer->camera->player;
+		player_t *player = (CPlayer->camera->player != NULL) ? CPlayer->camera->player : CPlayer;
 		AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
 	}
 

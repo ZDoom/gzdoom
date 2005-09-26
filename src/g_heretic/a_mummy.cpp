@@ -88,7 +88,7 @@ void AMummy::NoBlockingSet ()
 
 const char *AMummy::GetHitObituary ()
 {
-	return GStrings(OB_MUMMY);
+	return GStrings("OB_MUMMY");
 }
 
 // Mummy leader -------------------------------------------------------------
@@ -120,7 +120,7 @@ END_DEFAULTS
 
 const char *AMummyLeader::GetObituary ()
 {
-	return GStrings (OB_MUMMYLEADER);
+	return GStrings("OB_MUMMYLEADER");
 }
 
 // Mummy ghost --------------------------------------------------------------

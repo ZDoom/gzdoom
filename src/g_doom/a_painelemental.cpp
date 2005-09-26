@@ -169,12 +169,8 @@ void A_PainShootSkull (AActor *self, angle_t angle)
 	}
 
 	// [RH] Lost souls hate the same things as their pain elementals
-	other->TIDtoHate = self->TIDtoHate;
-	other->LastLook = self->LastLook;
-	other->flags3 |= self->flags3 & (MF3_NOSIGHTCHECK | MF3_HUNTPLAYERS);
-	other->flags4 |= self->flags4 & MF4_NOHATEPLAYERS;
-				
-	other->target = self->target;
+	other->CopyFriendliness (self, true);
+
 	A_SkullAttack (other);
 }
 

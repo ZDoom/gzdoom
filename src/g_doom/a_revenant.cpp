@@ -21,8 +21,8 @@ class ARevenant : public AActor
 {
 	DECLARE_ACTOR (ARevenant, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_UNDEAD); }
-	const char *GetHitObituary () { return GStrings(OB_UNDEADHIT); }
+	const char *GetObituary () { return GStrings("OB_UNDEAD"); }
+	const char *GetHitObituary () { return GStrings("OB_UNDEADHIT"); }
 };
 
 FState ARevenant::States[] =
@@ -108,8 +108,8 @@ class AStealthRevenant : public ARevenant
 {
 	DECLARE_STATELESS_ACTOR (AStealthRevenant, ARevenant)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHUNDEAD); }
-	const char *GetHitObituary () { return GStrings(OB_STEALTHUNDEAD); }
+	const char *GetObituary () { return GStrings("OB_STEALTHUNDEAD"); }
+	const char *GetHitObituary () { return GStrings("OB_STEALTHUNDEAD"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthRevenant, Doom, 9059, 124)

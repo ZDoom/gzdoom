@@ -89,7 +89,7 @@ CVAR (Bool, r_drawplayersprites, true, 0)	// [RH] Draw player sprites?
 //	and range check thing_t sprites patches
 TArray<spritedef_t> sprites;
 TArray<spriteframe_t> SpriteFrames;
-size_t			NumStdSprites;		// The first x sprites that don't belong to skins.
+DWORD			NumStdSprites;		// The first x sprites that don't belong to skins.
 
 struct spriteframewithrotate : public spriteframe_t
 {
@@ -319,7 +319,7 @@ void R_InitSpriteDefs ()
 	{
 		WORD Head, Next;
 	} *hashes;
-	size_t i, max;
+	unsigned int i, max;
 	DWORD intname;
 
 	// Create a hash table to speed up the process
@@ -699,7 +699,7 @@ void R_InitSprites ()
 {
 	byte rangestart, rangeend;
 	int lump, lastlump;
-	size_t i;
+	unsigned int i;
 
 	clearbufshort (zeroarray, MAXWIDTH, 0);
 
@@ -1382,7 +1382,7 @@ void R_DrawPSprite (pspdef_t* psp, int pspnum, AActor *owner, fixed_t sx, fixed_
 		realviewheight == RenderTarget->GetHeight() ||
 		(RenderTarget->GetWidth() > 320 && !st_scale)))
 	{	// Adjust PSprite for fullscreen views
-		AWeapon *weapon;
+		AWeapon *weapon = NULL;
 		if (camera->player != NULL)
 		{
 			weapon = camera->player->ReadyWeapon;
@@ -1692,7 +1692,7 @@ void R_SortVisSprites (int (STACK_ARGS *compare)(const void *, const void *), si
 	int i;
 	vissprite_t **spr;
 
-	vsprcount = vissprite_p - &vissprites[first];
+	vsprcount = int(vissprite_p - &vissprites[first]);
 
 	if (vsprcount == 0)
 		return;
@@ -2190,7 +2190,7 @@ static void R_DrawMaskedSegsBehindParticle (const vissprite_t *vis)
 
 	// Draw any masked textures behind this particle so that when the
 	// particle is drawn, it will be in front of them.
-	for (size_t p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
+	for (unsigned int p = InterestingDrawsegs.Size(); p-- > FirstInterestingDrawseg; )
 	{
 		drawseg_t *ds = &drawsegs[InterestingDrawsegs[p]];
 		if (ds->x1 >= x2 || ds->x2 < x1)

@@ -76,12 +76,7 @@ setupvlinetallasm:
 	mov	[shift12+2], cl
 	ret
 
-%ifdef M_TARGET_WATCOM
-  SEGMENT DATA PUBLIC ALIGN=16 CLASS=DATA USE32
-  SEGMENT DATA
-%else
-  SECTION .data
-%endif
+	SECTION .rtext	progbits alloc exec write align=64
 
 ALIGN 16
 

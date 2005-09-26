@@ -58,8 +58,9 @@ typedef struct wbstartstruct_s
 	int			maxsecret;
 	int			maxfrags;
 
-	// the par time
-	int			partime;
+	// the par time and sucktime
+	int			partime;	// in tics
+	int			sucktime;	// in minutes
 	
 	// index of this player in game
 	int			pnum;	

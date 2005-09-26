@@ -86,12 +86,12 @@ void AIronlich::NoBlockingSet ()
 
 const char *AIronlich::GetObituary ()
 {
-	return GStrings(OB_IRONLICH);
+	return GStrings("OB_IRONLICH");
 }
 
 const char *AIronlich::GetHitObituary ()
 {
-	return GStrings(OB_IRONLICHHIT);
+	return GStrings("OB_IRONLICHHIT");
 }
 
 // Head FX 1 ----------------------------------------------------------------

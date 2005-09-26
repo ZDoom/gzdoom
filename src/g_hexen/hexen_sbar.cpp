@@ -817,7 +817,7 @@ private:
 	fixed_t GetArmorPercent (AHexenArmor **armorp)
 	{
 		AHexenArmor *harmor = CPlayer->mo->FindInventory<AHexenArmor>();
-		fixed_t amount;
+		fixed_t amount = 0;
 		if (harmor != NULL)
 		{
 			amount  = harmor->Slots[0]

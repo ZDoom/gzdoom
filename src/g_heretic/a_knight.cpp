@@ -91,12 +91,12 @@ void AKnight::NoBlockingSet ()
 
 const char *AKnight::GetObituary ()
 {
-	return GStrings(OB_BONEKNIGHT);
+	return GStrings("OB_BONEKNIGHT");
 }
 
 const char *AKnight::GetHitObituary ()
 {
-	return GStrings(OB_BONEKNIGHTHIT);
+	return GStrings("OB_BONEKNIGHTHIT");
 }
 
 // Knight ghost -------------------------------------------------------------

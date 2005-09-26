@@ -15,7 +15,7 @@ class AArachnotron : public AActor
 {
 	DECLARE_ACTOR (AArachnotron, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_BABY); }
+	const char *GetObituary () { return GStrings("OB_BABY"); }
 };
 
 FState AArachnotron::States[] =
@@ -98,7 +98,7 @@ class AStealthArachnotron : public AArachnotron
 {
 	DECLARE_STATELESS_ACTOR (AStealthArachnotron, AArachnotron)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHBABY); }
+	const char *GetObituary () { return GStrings("OB_STEALTHBABY"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthArachnotron, Doom, 9050, 117)

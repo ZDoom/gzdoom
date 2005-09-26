@@ -34,7 +34,7 @@ IMPLEMENT_ABSTRACT_ACTOR (AMageWeaponPiece)
 
 const char *AMageWeaponPiece::PieceMessage ()
 {
-	return GStrings (TXT_BLOODSCOURGE_PIECE);
+	return GStrings("TXT_BLOODSCOURGE_PIECE");
 }
 
 bool AMageWeaponPiece::MatchPlayerClass (AActor *toucher)
@@ -154,7 +154,7 @@ public:
 	}
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_M4);
+		return GStrings("TXT_WEAPON_M4");
 	}
 	PalEntry GetBlend ()
 	{

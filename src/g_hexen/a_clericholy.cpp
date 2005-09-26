@@ -45,7 +45,7 @@ IMPLEMENT_ABSTRACT_ACTOR (AClericWeaponPiece)
 
 const char *AClericWeaponPiece::PieceMessage ()
 {
-	return GStrings (TXT_WRAITHVERGE_PIECE);
+	return GStrings("TXT_WRAITHVERGE_PIECE");
 }
 
 bool AClericWeaponPiece::MatchPlayerClass (AActor *toucher)
@@ -166,7 +166,7 @@ public:
 	}
 	const char *PickupMessage ()
 	{
-		return GStrings (TXT_WEAPON_C4);
+		return GStrings("TXT_WEAPON_C4");
 	}
 	PalEntry GetBlend ()
 	{

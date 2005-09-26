@@ -122,8 +122,7 @@ BOOL			multiplayer;
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
-int 			consoleplayer;			// player taking events and displaying 
-int 			displayplayer;			// view being displayed 
+int 			consoleplayer;			// player taking events
 int 			gametic;
 
 CVAR(Bool, demo_compress, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -303,23 +302,51 @@ CCMD (invnext)
 	if (m_Instigator == NULL)
 		return;
 
-	if (m_Instigator->player->InvSel != NULL && (next = m_Instigator->player->InvSel->NextInv()) != NULL)
+	if (m_Instigator->player->InvSel != NULL)
 	{
-		m_Instigator->player->InvSel = next;
+		if ((next = m_Instigator->player->InvSel->NextInv()) != NULL)
+		{
+			m_Instigator->player->InvSel = next;
+		}
+		else
+		{
+			// Select the first item in the inventory
+			if (!(m_Instigator->Inventory->ItemFlags & IF_INVBAR))
+			{
+				m_Instigator->player->InvSel = m_Instigator->Inventory->NextInv();
+			}
+			else
+			{
+				m_Instigator->player->InvSel = m_Instigator->Inventory;
+			}
+		}
 	}
 	m_Instigator->player->inventorytics = 5*TICRATE;
 }
 
 CCMD (invprev)
 {
-	AInventory *prev;
+	AInventory *item, *newitem;
 
 	if (m_Instigator == NULL)
 		return;
 
-	if (m_Instigator->player->InvSel != NULL && (prev = m_Instigator->player->InvSel->PrevInv()) != NULL)
+	if (m_Instigator->player->InvSel != NULL)
 	{
-		m_Instigator->player->InvSel = prev;
+		if ((item = m_Instigator->player->InvSel->PrevInv()) != NULL)
+		{
+			m_Instigator->player->InvSel = item;
+		}
+		else
+		{
+			// Select the last item in the inventory
+			item = m_Instigator->player->InvSel;
+			while ((newitem = item->NextInv()) != NULL)
+			{
+				item = newitem;
+			}
+			m_Instigator->player->InvSel = item;
+		}
 	}
 	m_Instigator->player->inventorytics = 5*TICRATE;
 }
@@ -625,66 +652,60 @@ void G_AddViewAngle (int yaw)
 	}
 }
 
+CVAR (Bool, bot_allowspy, false, 0)
+
 // [RH] Spy mode has been separated into two console commands.
 //		One goes forward; the other goes backward.
-static void ChangeSpy (void)
+static void ChangeSpy (bool forward)
 {
-	players[consoleplayer].camera = players[displayplayer].mo;
+	// If you're not in a level, then you can't spy.
+	if (gamestate != GS_LEVEL)
+	{
+		return;
+	}
+
+	// If not viewing through a player, return your eyes to your own head.
+	if (players[consoleplayer].camera->player == NULL)
+	{
+		players[consoleplayer].camera = players[consoleplayer].mo;
+		return;
+	}
+
+	// Otherwise, cycle to the next player.
+	bool checkTeam = !demoplayback && deathmatch;
+	int pnum = players[consoleplayer].camera->player - players;
+
+	do
+	{
+		if (forward) pnum++; else pnum--;
+		pnum &= MAXPLAYERS-1;
+		if (playeringame[pnum] &&
+			(!checkTeam || players[pnum].mo->IsTeammate (players[consoleplayer].mo) ||
+			(bot_allowspy && players[pnum].isbot)))
+		{
+			break;
+		}
+	} while (pnum != consoleplayer);
+
+	players[consoleplayer].camera = players[pnum].mo;
 	S_UpdateSounds(players[consoleplayer].camera);
-	StatusBar->AttachToPlayer (&players[displayplayer]);
+	StatusBar->AttachToPlayer (&players[pnum]);
 	if (demoplayback || multiplayer)
 	{
 		StatusBar->ShowPlayerName ();
 	}
 }
 
-CVAR (Bool, bot_allowspy, false, 0)
-
 CCMD (spynext)
 {
 	// allow spy mode changes even during the demo
-	if (gamestate == GS_LEVEL)
-	{
-		bool checkTeam = !demoplayback && deathmatch;
-
-		do
-		{
-			displayplayer++;
-			if (displayplayer == MAXPLAYERS)
-				displayplayer = 0;
-			if (playeringame[displayplayer] &&
-				(!checkTeam || players[displayplayer].mo->IsTeammate (players[consoleplayer].mo) ||
-				(bot_allowspy && players[displayplayer].isbot)))
-			{
-				break;
-			}
-		} while (displayplayer != consoleplayer);
-
-		ChangeSpy ();
-	}
+	ChangeSpy (true);
 }
 
 CCMD (spyprev)
 {
 	// allow spy mode changes even during the demo
-	if (gamestate == GS_LEVEL)
-	{
-		bool checkTeam = !demoplayback && deathmatch;
-
-		do
-		{
-			displayplayer--;
-			if (displayplayer < 0)
-				displayplayer = MAXPLAYERS - 1;
-			if (playeringame[displayplayer] &&
-				(!checkTeam || players[displayplayer].mo->IsTeammate (players[consoleplayer].mo) ||
-				(bot_allowspy && players[displayplayer].isbot)))
-			{
-				break;
-			}
-		} while (displayplayer != consoleplayer);
-		ChangeSpy ();
-	}
+	ChangeSpy (false);
 }
 
 
@@ -1207,7 +1228,7 @@ static mapthing2_t *SelectFarthestDeathmatchSpot (size_t selections)
 {
 	fixed_t bestdistance = 0;
 	mapthing2_t *bestspot = NULL;
-	size_t i;
+	unsigned int i;
 
 	for (i = 0; i < selections; i++)
 	{
@@ -1224,9 +1245,9 @@ static mapthing2_t *SelectFarthestDeathmatchSpot (size_t selections)
 }
 
 // [RH] Select a deathmatch spawn spot at random (original mechanism)
-static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, size_t selections)
+static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, unsigned int selections)
 {
-	size_t i, j;
+	unsigned int i, j;
 
 	for (j = 0; j < 20; j++)
 	{
@@ -1243,7 +1264,7 @@ static mapthing2_t *SelectRandomDeathmatchSpot (int playernum, size_t selections
 
 void G_DeathMatchSpawnPlayer (int playernum)
 {
-	size_t selections;
+	unsigned int selections;
 	mapthing2_t *spot;
 
 	selections = deathmatchstarts.Size ();
@@ -1513,7 +1534,7 @@ static void ReadVars (PNGHandle *png, SDWORD *vars, size_t count, DWORD id)
 static void ReadArrayVars (PNGHandle *png, TArray<SDWORD> *vars, size_t count, DWORD id)
 {
 	size_t len = M_FindPNGChunk (png, id);
-	size_t i, k;
+	unsigned int i, k;
 
 	for (i = 0; i < count; ++i)
 	{
@@ -1846,9 +1867,9 @@ static void WriteVars (FILE *file, SDWORD *vars, size_t count, DWORD id)
 	}
 }
 
-static void WriteArrayVars (FILE *file, TArray<SDWORD> *vars, size_t count, DWORD id)
+static void WriteArrayVars (FILE *file, TArray<SDWORD> *vars, unsigned int count, DWORD id)
 {
-	size_t i, j, k;
+	unsigned int i, j, k;
 	SDWORD val;
 
 	for (i = 0; i < count; ++i)
@@ -1946,7 +1967,7 @@ void G_DoSaveGame (bool okForQuicksave)
 	M_FinishPNG (stdfile);
 	fclose (stdfile);
 
-	Printf ("%s\n", GStrings(GGSAVED));
+	Printf ("%s\n", GStrings("GGSAVED"));
 
 	strcpy (BackupSaveName, savegamefile);
 
@@ -2097,7 +2118,7 @@ void G_BeginRecording (void)
 	StartChunk (ZDHD_ID, &demo_p);
 	WriteWord (GAMEVER, &demo_p);			// Write ZDoom version
 	*demo_p++ = 2;							// Write minimum version needed to use this demo.
-	*demo_p++ = 0;							// (Useful?)
+	*demo_p++ = 3;							// (Useful?)
 	for (i = 0; i < 8; i++)					// Write name of map demo was recorded on.
 	{
 		*demo_p++ = level.mapname[i];
@@ -2213,6 +2234,11 @@ BOOL G_ProcessIFFDemo (char *mapname)
 			headerHit = true;
 
 			demover = ReadWord (&demo_p);	// ZDoom version demo was created with
+			if (demover < 0x203)
+			{
+				Printf ("Demo requires an older version of ZDoom!\n");
+				//return true;
+			}
 			if (ReadWord (&demo_p) > GAMEVER)		// Minimum ZDoom version
 			{
 				Printf ("Demo requires a newer version of ZDoom!\n");
@@ -2223,7 +2249,7 @@ BOOL G_ProcessIFFDemo (char *mapname)
 			demo_p += 8;
 			rngseed = ReadLong (&demo_p);
 			FRandom::StaticClearRandom ();
-			consoleplayer = displayplayer = *demo_p++;
+			consoleplayer = *demo_p++;
 			break;
 
 		case VARS_ID:

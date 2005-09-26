@@ -564,15 +564,15 @@ bool DSimpleCanvas::Lock ()
 {
 	if (LockCount == 0)
 	{
-		LockCount++;
 		Buffer = MemBuffer;
 	}
+	LockCount++;
 	return false;		// System surfaces are never lost
 }
 
 void DSimpleCanvas::Unlock ()
 {
-	if (LockCount <= 1)
+	if (--LockCount <= 0)
 	{
 		LockCount = 0;
 		Buffer = NULL;	// Enforce buffer access only between Lock/Unlock
@@ -964,9 +964,9 @@ int CheckRatio (int width, int height)
 // Fourth column: Width or height multiplier
 const int BaseRatioSizes[5][4] =
 {
-	{  960, 600, 0,            48 },				// 320,      200,      multiplied by three
-	{ 1280, 450, 0,            48*3/4 },			// 426.6667, 150,      multiplied by three
-	{ 1152, 500, 0,            48*5/6 },			// 386,      166.6667, multiplied by three
-	{  960, 600, 0,            48 },
-	{  960, 640, 6.5*FRACUNIT, 48*15/16 }			// 320,      213.3333, multiplied by three
+	{  960, 600, 0,                   48 },			// 320,      200,      multiplied by three
+	{ 1280, 450, 0,                   48*3/4 },		// 426.6667, 150,      multiplied by three
+	{ 1152, 500, 0,                   48*5/6 },		// 386,      166.6667, multiplied by three
+	{  960, 600, 0,                   48 },
+	{  960, 640, (int)(6.5*FRACUNIT), 48*15/16 }	// 320,      213.3333, multiplied by three
 };

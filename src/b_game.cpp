@@ -489,7 +489,7 @@ void DCajunMaster::ForgetBots ()
 bool DCajunMaster::LoadBots ()
 {
 	char *tmp;
-	bool gotteam;
+	bool gotteam = false;
 
 	bglobal.ForgetBots ();
 #ifndef unix

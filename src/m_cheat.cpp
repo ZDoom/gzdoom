@@ -40,6 +40,7 @@
 #include "w_wad.h"
 #include "a_keys.h"
 #include "templates.h"
+#include "p_lnspec.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
@@ -79,18 +80,18 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_GOD:
 		player->cheats ^= CF_GODMODE;
 		if (player->cheats & CF_GODMODE)
-			msg = GStrings(STSTR_DQDON);
+			msg = GStrings("STSTR_DQDON");
 		else
-			msg = GStrings(STSTR_DQDOFF);
+			msg = GStrings("STSTR_DQDOFF");
 		SB_state = screen->GetPageCount ();
 		break;
 
 	case CHT_NOCLIP:
 		player->cheats ^= CF_NOCLIP;
 		if (player->cheats & CF_NOCLIP)
-			msg = GStrings(STSTR_NCON);
+			msg = GStrings("STSTR_NCON");
 		else
-			msg = GStrings(STSTR_NCOFF);
+			msg = GStrings("STSTR_NCOFF");
 		break;
 
 	case CHT_NOMOMENTUM:
@@ -163,7 +164,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		{
 			player->mo->GiveInventoryType (type);
 		}
-		msg = GStrings(STSTR_CHOPPERS);
+		msg = GStrings("STSTR_CHOPPERS");
 		// [RH] The original cheat also set powers[pw_invulnerability] to true.
 		// Since this is a timer and not a boolean, it effectively turned off
 		// the invulnerability powerup, although it looks like it was meant to
@@ -180,7 +181,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "ammo");
 		cht_Give (player, "keys");
 		cht_Give (player, "armor");
-		msg = GStrings(STSTR_KFAADDED);
+		msg = GStrings("STSTR_KFAADDED");
 		break;
 
 	case CHT_IDFA:
@@ -188,7 +189,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		cht_Give (player, "weapons");
 		cht_Give (player, "ammo");
 		cht_Give (player, "armor");
-		msg = GStrings(STSTR_FAADDED);
+		msg = GStrings("STSTR_FAADDED");
 		break;
 
 	case CHT_BEHOLDV:
@@ -218,7 +219,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				item->Destroy ();
 			}
 		}
-		msg = GStrings(STSTR_BEHOLDX);
+		msg = GStrings("STSTR_BEHOLDX");
 		break;
 
 	case CHT_MASSACRE:
@@ -233,12 +234,12 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	case CHT_HEALTH:
 		player->health = player->mo->health = player->mo->GetDefault()->health;
-		msg = GStrings(TXT_CHEATHEALTH);
+		msg = GStrings("TXT_CHEATHEALTH");
 		break;
 
 	case CHT_KEYS:
 		cht_Give (player, "keys");
-		msg = GStrings(TXT_CHEATKEYS);
+		msg = GStrings("TXT_CHEATKEYS");
 		break;
 
 	case CHT_TAKEWEAPS:
@@ -261,22 +262,22 @@ void cht_DoCheat (player_t *player, int cheat)
 			}
 			item = next;
 		}
-		msg = GStrings(TXT_CHEATIDKFA);
+		msg = GStrings("TXT_CHEATIDKFA");
 		break;
 
 	case CHT_NOWUDIE:
 		cht_Suicide (player);
-		msg = GStrings(TXT_CHEATIDDQD);
+		msg = GStrings("TXT_CHEATIDDQD");
 		break;
 
 	case CHT_ALLARTI:
 		cht_Give (player, "artifacts");
-		msg = GStrings(TXT_CHEATARTIFACTS3);
+		msg = GStrings("TXT_CHEATARTIFACTS3");
 		break;
 
 	case CHT_PUZZLE:
 		cht_Give (player, "puzzlepieces");
-		msg = GStrings(TXT_CHEATARTIFACTS3);
+		msg = GStrings("TXT_CHEATARTIFACTS3");
 		break;
 
 	case CHT_MDK:
@@ -581,8 +582,12 @@ void cht_Suicide (player_t *plyr)
 {
 	if (plyr->mo != NULL)
 	{
+		int minhealth;
+
+		// The end of game hell hack actually prevents your death
+		minhealth = (plyr->mo->Sector->special & 255) == dDamage_End ? 1 : 0;
 		plyr->mo->flags |= MF_SHOOTABLE;
-		while (plyr->health > 0)
+		while (plyr->health > minhealth )
 			P_DamageMobj (plyr->mo, plyr->mo, plyr->mo, 1000000, MOD_SUICIDE);
 		plyr->mo->flags &= ~MF_SHOOTABLE;
 	}

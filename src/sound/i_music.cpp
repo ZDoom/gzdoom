@@ -3,7 +3,7 @@
 ** Plays music
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2001 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,6 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** I appologize for the mess that this file has become. It works, but it's
-** not pretty. The SPC, Timidity, and OPL playback routines are also too
-** FMOD-specific. I should have made some generic streaming class for them
-** to utilize so that they can work with other sound systems, too.
 */
 
 #ifdef _WIN32
@@ -243,9 +239,9 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 	}
 	fseek (file, -4, SEEK_CUR);
 
+	// Check for MUS format
 	if (id == MAKE_ID('M','U','S',0x1a))
 	{
-		// This is a mus file
 		if (GSnd != NULL && opl_enable)
 		{
 			info = new OPLMUSSong (file, len);
@@ -264,9 +260,9 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 			}
 		}
 	}
+	// Check for MIDI format
 	else if (id == MAKE_ID('M','T','h','d'))
 	{
-		// This is a midi file
 #ifdef _WIN32
 		if (snd_mididevice != -2)
 		{
@@ -278,6 +274,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 			info = new TimiditySong (file, len);
 		}
 	}
+	// Check for SPC format
 	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
 	{
 		char header[0x23];
@@ -295,14 +292,48 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 			info = new SPCSong (file, len);
 		}
 	}
+	// Check for FLAC format
 	else if (id == MAKE_ID('f','L','a','C'))
 	{
 		info = new FLACSong (file, len);
 		file = NULL;
 	}
+	// Check for RDosPlay raw OPL format
+	else if (id == MAKE_ID('R','A','W','A') && len >= 12)
+	{
+		DWORD fullsig[2];
+
+		if (fread (fullsig, 4, 2, file) != 2)
+		{
+			fclose (file);
+			return 0;
+		}
+		fseek (file, -8, SEEK_CUR);
+		if (fullsig[1] == MAKE_ID('D','A','T','A'))
+		{
+			info = new OPLMUSSong (file, len);
+		}
+	}
+	// Check for Martin Fernandez's modified IMF format
+	else if (id == MAKE_ID('A','D','L','I'))
+	{
+		char fullhead[6];
+
+		if (fread (fullhead, 1, 6, file) != 6)
+		{
+			fclose (file);
+			return 0;
+		}
+		fseek (file, -6, SEEK_CUR);
+		if (fullhead[4] == 'B' && fullhead[5] == 1)
+		{
+			info = new OPLMUSSong (file, len);
+		}
+	}
 
 	if (info == NULL)
 	{
+		// Check for CDDA "format"
 		if (id == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
 		{
 			DWORD subid;

@@ -51,7 +51,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib"
+				AdditionalDependencies="ddraw.lib dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib ws2_32.lib winmm.lib fmodvc.lib setupapi.lib"
 				ShowProgress="0"
 				OutputFile="../zdoom.exe"
 				LinkIncremental="1"
@@ -122,6 +122,7 @@
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="TRUE"
+				Detect64BitPortabilityProblems="TRUE"
 				DebugInformationFormat="4"
 				CompileAs="0"/>
 			<Tool
@@ -129,7 +130,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="dxguid.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib"
+				AdditionalDependencies="dxguid.lib ddraw.lib dinput8.lib comctl32.lib strmiids.lib wsock32.lib winmm.lib fmodvc.lib setupapi.lib ws2_32.lib"
 				OutputFile="../zdoomd.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="TRUE"
@@ -961,6 +962,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\src\name.cpp">
+			</File>
+			<File
 				RelativePath=".\src\nodebuild.cpp">
 			</File>
 			<File
@@ -1762,6 +1766,15 @@
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\src\zstrformat.cpp">
+			</File>
+			<File
+				RelativePath=".\src\zstring.cpp">
+			</File>
+			<File
+				RelativePath=".\src\zstringpool.cpp">
+			</File>
 			<Filter
 				Name="Decorate++"
 				Filter="">
@@ -1969,6 +1982,9 @@
 				RelativePath=".\src\mus2midi.h">
 			</File>
 			<File
+				RelativePath=".\src\name.h">
+			</File>
+			<File
 				RelativePath=".\src\nodebuild.h">
 			</File>
 			<File
@@ -2035,9 +2051,6 @@
 				RelativePath=".\src\stats.h">
 			</File>
 			<File
-				RelativePath=".\src\stringenums.h">
-			</File>
-			<File
 				RelativePath=".\src\stringtable.h">
 			</File>
 			<File
@@ -2081,6 +2094,9 @@
 			</File>
 			<File
 				RelativePath=".\src\wi_stuff.h">
+			</File>
+			<File
+				RelativePath=".\src\zstring.h">
 			</File>
 		</Filter>
 		<Filter
@@ -2196,7 +2212,34 @@
 			Name="Win32 Files"
 			Filter="">
 			<File
+				RelativePath=".\src\win32\boing1.ico">
+			</File>
+			<File
+				RelativePath=".\src\win32\boing2.ico">
+			</File>
+			<File
+				RelativePath=".\src\win32\boing3.ico">
+			</File>
+			<File
+				RelativePath=".\src\win32\boing4.ico">
+			</File>
+			<File
+				RelativePath=".\src\win32\boing5.ico">
+			</File>
+			<File
+				RelativePath=".\src\win32\boing6.ico">
+			</File>
+			<File
+				RelativePath=".\src\win32\boing7.ico">
+			</File>
+			<File
+				RelativePath=".\src\win32\boing8.ico">
+			</File>
+			<File
 				RelativePath=".\src\win32\cursor1.cur">
+			</File>
+			<File
+				RelativePath=".\src\win32\deadguy.bmp">
 			</File>
 			<File
 				RelativePath="src\win32\eaxedit.cpp">
@@ -2343,6 +2386,9 @@
 				RelativePath=".\src\win32\icon1.ico">
 			</File>
 			<File
+				RelativePath=".\src\win32\icon2.ico">
+			</File>
+			<File
 				RelativePath=".\src\win32\resource.h">
 			</File>
 			<File
@@ -2362,9 +2408,6 @@
 						Name="VCCLCompilerTool"
 						AdditionalOptions="&quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot;  &quot;  /I /fmod/api/inc&quot; "/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="src\win32\zdoom.exe.manifest">
 			</File>
 		</Filter>
 		<Filter
@@ -4264,9 +4307,6 @@
 		<Filter
 			Name="Render Core"
 			Filter="">
-			<File
-				RelativePath=".\src\r_polymost.h">
-			</File>
 			<Filter
 				Name="Render Sources"
 				Filter="">
@@ -4434,6 +4474,9 @@
 					RelativePath=".\src\r_plane.h">
 				</File>
 				<File
+					RelativePath=".\src\r_polymost.h">
+				</File>
+				<File
 					RelativePath=".\src\r_segs.h">
 				</File>
 				<File
@@ -4495,6 +4538,9 @@
 				RelativePath=".\src\version.h">
 			</File>
 			<File
+				RelativePath="src\win32\zdoom.exe.manifest">
+			</File>
+			<File
 				RelativePath=".\src\win32\zdoom.rc">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -4508,43 +4554,6 @@
 						Name="VCResourceCompilerTool"
 						AdditionalIncludeDirectories="src\win32;$(NoInherit)"/>
 				</FileConfiguration>
-			</File>
-		</Filter>
-		<Filter
-			Name="OPL Synth"
-			Filter="">
-			<File
-				RelativePath=".\src\oplsynth\DEFTYPES.H">
-			</File>
-			<File
-				RelativePath=".\src\oplsynth\fmopl.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						AssemblerOutput="0"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\src\oplsynth\fmopl.h">
-			</File>
-			<File
-				RelativePath=".\src\oplsynth\mlkernel.cpp">
-			</File>
-			<File
-				RelativePath=".\src\oplsynth\mlopl.cpp">
-			</File>
-			<File
-				RelativePath=".\src\oplsynth\mlopl_io.cpp">
-			</File>
-			<File
-				RelativePath=".\src\oplsynth\muslib.h">
-			</File>
-			<File
-				RelativePath=".\src\oplsynth\opl_mus_player.cpp">
-			</File>
-			<File
-				RelativePath=".\src\oplsynth\opl_mus_player.h">
 			</File>
 		</Filter>
 		<Filter
@@ -4616,10 +4625,44 @@
 			<File
 				RelativePath="src\sound\sample_flac.h">
 			</File>
+			<Filter
+				Name="OPL Synth"
+				Filter="">
+				<File
+					RelativePath=".\src\oplsynth\DEFTYPES.H">
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\fmopl.cpp">
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							AssemblerOutput="0"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\fmopl.h">
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\mlkernel.cpp">
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\mlopl.cpp">
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\mlopl_io.cpp">
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\muslib.h">
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\opl_mus_player.cpp">
+				</File>
+				<File
+					RelativePath=".\src\oplsynth\opl_mus_player.h">
+				</File>
+			</Filter>
 		</Filter>
-		<File
-			RelativePath="src\win32\icon2.ico">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

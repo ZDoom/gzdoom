@@ -58,6 +58,9 @@
 #define WATER_SINK_SPEED		(FRACUNIT/2)
 #define WATER_JUMP_SPEED		(FRACUNIT*7/2)
 
+#define USE_PUZZLE_ITEM_SPECIAL 129
+
+
 CVAR (Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 
 static void CheckForPushSpecial (line_t *line, int side, AActor *mobj);
@@ -970,7 +973,7 @@ BOOL PIT_CheckThing (AActor *thing)
 			damage &= 7;
 		}
 		damage = (damage + 1) * tmthing->damage;
-		if (damage)
+		if (damage > 0)
 		{
 			P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);
 			if (gameinfo.gametype != GAME_Doom &&
@@ -986,6 +989,10 @@ BOOL PIT_CheckThing (AActor *thing)
 			{
 				P_TraceBleed (damage, thing, tmthing);
 			}
+		}
+		else if (damage < 0)
+		{
+			P_GiveBody (thing, -damage);
 		}
 		return false;		// don't traverse any more
 	}
@@ -1929,8 +1936,15 @@ void P_HitSlideLine (line_t* ld)
 		inter2 = P_InterceptVector (&dll, &dlv);
 		inter3 = P_InterceptVector (&dlv, &dll);
 
-		tmxmove = Scale (inter2-inter1, dll.dx, inter3);
-		tmymove = Scale (inter2-inter1, dll.dy, inter3);
+		if (inter3 != 0)
+		{
+			tmxmove = Scale (inter2-inter1, dll.dx, inter3);
+			tmymove = Scale (inter2-inter1, dll.dy, inter3);
+		}
+		else
+		{
+			tmxmove = tmymove = 0;
+		}
 #endif
 	}																// phares
 }
@@ -2644,6 +2658,12 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 		}
 		else
 		{
+			bool axeBlood;
+
+			axeBlood = (t1->player != NULL &&
+				t1->player->ReadyWeapon != NULL &&
+				(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
+
 			// Hit a thing, so it could be either a puff or blood
 			hitx = t1->x + FixedMul (vx, trace.Distance);
 			hity = t1->y + FixedMul (vy, trace.Distance);
@@ -2658,6 +2678,7 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 				puff = P_SpawnPuff (pufftype, hitx, hity, hitz, angle - ANG180, 2, true);
 			}
 			if ((gameinfo.gametype & (GAME_Doom|GAME_Strife)) &&
+				!axeBlood &&
 				!(trace.Actor->flags & MF_NOBLOOD) &&
 				!(trace.Actor->flags2 & (MF2_INVULNERABLE|MF2_DORMANT)))
 			{
@@ -2666,14 +2687,8 @@ void P_LineAttack (AActor *t1, angle_t angle, fixed_t distance,
 
 			if (damage)
 			{
-				if (gameinfo.gametype != GAME_Doom)
+				if ((gameinfo.gametype & GAME_Raven) || axeBlood)
 				{
-					bool axeBlood;
-
-					axeBlood = (t1->player != NULL &&
-						t1->player->ReadyWeapon != NULL &&
-						(t1->player->ReadyWeapon->WeaponFlags & WIF_AXEBLOOD));
-
 					if (!(trace.Actor->flags&MF_NOBLOOD) &&
 						!(trace.Actor->flags2&(MF2_INVULNERABLE|MF2_DORMANT)))
 					{
@@ -2927,7 +2942,7 @@ void P_RailAttack (AActor *source, int damage, int offset)
 	}
 
 	// Now hurt anything the trace hit
-	size_t i;
+	unsigned int i;
 
 	for (i = 0; i < RailHits.Size (); i++)
 	{
@@ -3004,9 +3019,19 @@ bool foundline;
 
 BOOL PTR_UseTraverse (intercept_t *in)
 {
-	// [RH] Check for things to talk with
+	// [RH] Check for things to talk with or use a puzzle item on
 	if (!in->isaline)
 	{
+		// Check thing
+
+		// Check for puzzle item use
+		if (in->d.thing->special == USE_PUZZLE_ITEM_SPECIAL)
+		{
+			LineSpecials[USE_PUZZLE_ITEM_SPECIAL] (NULL, usething, false,
+				in->d.thing->args[0], in->d.thing->args[1], in->d.thing->args[2],
+				in->d.thing->args[3], in->d.thing->args[4]);
+			return true;
+		}
 		// Dead things can't talk.
 		if (in->d.thing->health <= 0)
 		{
@@ -3160,8 +3185,6 @@ void P_UseLines (player_t *player)
 //
 //==========================================================================
 
-#define USE_PUZZLE_ITEM_SPECIAL 129
-
 static AActor *PuzzleItemUser;
 static int PuzzleItemType;
 static bool PuzzleActivated;
@@ -3252,6 +3275,7 @@ float	bombdistancefloat;
 bool	DamageSource;
 int		bombmod;
 vec3_t	bombvec;
+bool	bombthrustless;
 
 //=============================================================================
 //
@@ -3359,17 +3383,13 @@ BOOL PIT_RadiusAttack (AActor *thing)
 			{
 				P_TraceBleed (damage, thing, bombspot);
 
-				thrust = points * 0.5f / (float)thing->Mass;
-				if (bombsource == thing)
+				if (!bombthrustless)
 				{
-					thrust *= selfthrustscale;
-				}
-				if (bombmod == MOD_FIRE)
-				{
-					momz = 0.f;
-				}
-				else
-				{
+					thrust = points * 0.5f / (float)thing->Mass;
+					if (bombsource == thing)
+					{
+						thrust *= selfthrustscale;
+					}
 					momz = (float)(thing->z + (thing->height>>1) - bombspot->z) * thrust;
 					if (bombsource != thing)
 					{
@@ -3379,11 +3399,11 @@ BOOL PIT_RadiusAttack (AActor *thing)
 					{
 						momz *= 0.8f;
 					}
+					angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
+					thing->momx += fixed_t (finecosine[ang] * thrust);
+					thing->momy += fixed_t (finesine[ang] * thrust);
+					thing->momz += (fixed_t)momz;
 				}
-				angle_t ang = R_PointToAngle2 (bombspot->x, bombspot->y, thing->x, thing->y) >> ANGLETOFINESHIFT;
-				thing->momx += fixed_t (finecosine[ang] * thrust);
-				thing->momy += fixed_t (finesine[ang] * thrust);
-				thing->momz += (fixed_t)momz;
 			}
 		}
 	}
@@ -3424,7 +3444,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 // Source is the creature that caused the explosion at spot.
 //
 void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int damageType,
-	bool hurtSource)
+	bool hurtSource, bool thrustless)
 {
 	static TArray<AActor *> radbt;
 
@@ -3445,6 +3465,7 @@ void P_RadiusAttack (AActor *spot, AActor *source, int damage, int distance, int
 	bombdamage = damage;
 	bombdistance = distance;
 	bombdistancefloat = 1.f / (float)distance;
+	bombthrustless = thrustless;
 	DamageSource = hurtSource;
 	bombdamagefloat = (float)damage;
 	bombmod = damageType;
@@ -3765,8 +3786,8 @@ void P_DoCrunch (AActor *thing)
 
 int P_PushUp (AActor *thing)
 {
-	size_t firstintersect = intersectors.Size ();
-	size_t lastintersect;
+	unsigned int firstintersect = intersectors.Size ();
+	unsigned int lastintersect;
 	int mymass = thing->Mass;
 
 	if (thing->z + thing->height > thing->ceilingz)
@@ -3807,8 +3828,8 @@ int P_PushUp (AActor *thing)
 
 int P_PushDown (AActor *thing)
 {
-	size_t firstintersect = intersectors.Size ();
-	size_t lastintersect;
+	unsigned int firstintersect = intersectors.Size ();
+	unsigned int lastintersect;
 	int mymass = thing->Mass;
 
 	if (thing->z <= thing->floorz)

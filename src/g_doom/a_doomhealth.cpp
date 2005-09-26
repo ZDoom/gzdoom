@@ -12,7 +12,7 @@ class AHealthBonus : public AHealth
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTHTHBONUS);
+		return GStrings("GOTHTHBONUS");
 	}
 };
 
@@ -44,7 +44,7 @@ class AStimpack : public AHealth
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings(GOTSTIM);
+		return GStrings("GOTSTIM");
 	}
 };
 
@@ -75,7 +75,7 @@ public:
 protected:
 	virtual const char *PickupMessage ()
 	{
-		return GStrings((PrevHealth < 25) ? GOTMEDINEED : GOTMEDIKIT);
+		return GStrings((PrevHealth < 25) ? "GOTMEDINEED" : "GOTMEDIKIT");
 	}
 	int PrevHealth;
 };

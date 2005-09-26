@@ -2,7 +2,7 @@
 ** info.h
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@
 #include "dthinker.h"
 #include "farchive.h"
 #include "doomdef.h"
+#include "name.h"
 
 const BYTE SF_WEAPONPARAM= 0x20;
 const BYTE SF_FULLBRIGHT = 0x40;
@@ -325,11 +326,17 @@ enum
 	ADEF_Weapon_FlashState,
 	ADEF_Sigil_NumPieces,
 
-	// The following are not properties but effect how the list is parsed
+	// The following are not properties but affect how the list is parsed
 	ADEF_FirstCommand,
 	ADEF_SkipSuper = ADEF_FirstCommand,	// Take defaults from AActor instead of superclass(es)
 
 	ADEF_EOL = 0xED5E		// End Of List
+};
+
+struct FStateName
+{
+	FState *AActor::*State;
+	name Name;
 };
 
 #if _MSC_VER
@@ -351,13 +358,19 @@ struct FActorInfo
 	TypeInfo *Class;
 	FState *OwnedStates;
 	BYTE *Defaults;
+	FStateName *StateNames;
 	int NumOwnedStates;
 	BYTE GameFilter;
 	BYTE SpawnID;
 	SWORD DoomEdNum;
 
-	// Followed by a 0-terminated list of default properties
+#if _MSC_VER
+	// A 0-terminated list of default properties
 	BYTE DefaultList[];
+#else
+	// A function to initialize the defaults for this actor
+	void (*DefaultsConstructor)(); 
+#endif
 };
 
 #if _MSC_VER

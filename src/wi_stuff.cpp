@@ -76,7 +76,7 @@ void WI_unloadData ();
 #define SP_STATSX				50
 #define SP_STATSY				50
 
-#define SP_TIMEX				16
+#define SP_TIMEX				8
 #define SP_TIMEY				(200-32)
 
 
@@ -770,39 +770,50 @@ void WI_drawPercent (int x, int y, int p, int b)
 //
 void WI_drawTime (int x, int y, int t)
 {
+	bool sucky;
+
 	if (t<0)
 		return;
 
-	if (t <= 61*59 || gameinfo.gametype != GAME_Doom)
-	{
-		int hours = t / 3600;
-		t -= hours * 3600;
-		int minutes = t / 60;
-		t -= minutes * 60;
-		int seconds = t;
-		/*
-		int numspacing = SHORT(num[0]->width)*2;
-		int spacing = numspacing + SHORT(colon->width);
-		*/
+	sucky = t >= wbs->sucktime * 60 * 60 && wbs->sucktime > 0;
+	int hours = t / 3600;
+	t -= hours * 3600;
+	int minutes = t / 60;
+	t -= minutes * 60;
+	int seconds = t;
+	/*
+	int numspacing = SHORT(num[0]->width)*2;
+	int spacing = numspacing + SHORT(colon->width);
+	*/
 
-		x -= 34*2 + 26;
-		if (hours)
-		{
-			WI_drawNum (x, y, hours, 2);
-			WI_DrawCharPatch (colon, x + 26, y);
-		}
-		x += 34;
-		if (minutes | hours)
-		{
-			WI_drawNum (x, y, minutes, 2);
-		}
-		x += 34;
-		WI_DrawCharPatch (colon, x - 8, y);
-		WI_drawNum (x, y, seconds, 2);
+	x -= 34*2 + 26;
+	if (hours)
+	{
+		WI_drawNum (x, y, hours, 2);
+		WI_DrawCharPatch (colon, x + 26, y);
 	}
-	else
+	x += 34;
+	if (minutes | hours)
+	{
+		WI_drawNum (x, y, minutes, 2);
+	}
+	x += 34;
+	WI_DrawCharPatch (colon, x - 8, y);
+	WI_drawNum (x, y, seconds, 2);
+
+	if (sucky)
 	{ // "sucks"
-		screen->DrawTexture (sucks, x - sucks->GetWidth(), y, DTA_Clean, true, TAG_DONE); 
+		if (sucks != NULL)
+		{
+			screen->DrawTexture (sucks, x - sucks->GetWidth(), y - num[0]->GetHeight() - 2, DTA_Clean, true, TAG_DONE); 
+		}
+		else
+		{
+			screen->SetFont (BigFont);
+			screen->DrawText (CR_UNTRANSLATED, x  - BigFont->StringWidth("SUCKS"), y - BigFont->GetHeight() - 2,
+				"SUCKS", DTA_Clean, true, TAG_DONE);
+			screen->SetFont (SmallFont);
+		}
 	}
 }
 

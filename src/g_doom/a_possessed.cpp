@@ -25,7 +25,7 @@ class AZombieMan : public AActor
 	DECLARE_ACTOR (AZombieMan, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary () { return GStrings(OB_ZOMBIE); }
+	const char *GetObituary () { return GStrings("OB_ZOMBIE"); }
 };
 
 FState AZombieMan::States[] =
@@ -112,7 +112,7 @@ class AStealthZombieMan : public AZombieMan
 {
 	DECLARE_STATELESS_ACTOR (AStealthZombieMan, AZombieMan)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHZOMBIE); }
+	const char *GetObituary () { return GStrings("OB_STEALTHZOMBIE"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthZombieMan, Doom, 9061, 102)
@@ -153,8 +153,28 @@ public:
 };
 
 IMPLEMENT_STATELESS_ACTOR (ADeadZombieMan, Doom, 18, 0)
-	PROP_SKIP_SUPER
 	PROP_SpawnState (S_POSS_DIE+4)
+
+	// Undo all the changes to default Actor properties that AZombieMan made
+	PROP_SpawnHealth (1000)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (16)
+	PROP_Mass (100)
+	PROP_SpeedFixed (0)
+	PROP_PainChance (0)
+	PROP_Flags (0)
+	PROP_Flags2 (0)
+	PROP_SeeState (255)
+	PROP_PainState (255)
+	PROP_MissileState (255)
+	PROP_DeathState (255)
+	PROP_XDeathState (255)
+	PROP_RaiseState (255)
+	PROP_SeeSound ("")
+	PROP_PainSound ("")
+	PROP_DeathSound ("")
+	PROP_ActiveSound ("")
+	PROP_AttackSound ("")
 END_DEFAULTS
 
 // Shotgun guy -------------------------------------------------------------
@@ -164,7 +184,7 @@ class AShotgunGuy : public AActor
 	DECLARE_ACTOR (AShotgunGuy, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary () { return GStrings(OB_SHOTGUY); }
+	const char *GetObituary () { return GStrings("OB_SHOTGUY"); }
 };
 
 FState AShotgunGuy::States[] =
@@ -253,7 +273,7 @@ class AStealthShotgunGuy : public AShotgunGuy
 {
 	DECLARE_STATELESS_ACTOR (AStealthShotgunGuy, AShotgunGuy)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHSHOTGUY); }
+	const char *GetObituary () { return GStrings("OB_STEALTHSHOTGUY"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthShotgunGuy, Doom, 9060, 103)
@@ -310,8 +330,28 @@ public:
 };
 
 IMPLEMENT_STATELESS_ACTOR (ADeadShotgunGuy, Doom, 19, 0)
-	PROP_SKIP_SUPER
 	PROP_SpawnState (S_SPOS_DIE+4)
+
+	// Undo all the changes to default Actor properties that AShotgunGuy made
+	PROP_SpawnHealth (1000)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (16)
+	PROP_Mass (100)
+	PROP_SpeedFixed (0)
+	PROP_PainChance (0)
+	PROP_Flags (0)
+	PROP_Flags2 (0)
+	PROP_SeeState (255)
+	PROP_PainState (255)
+	PROP_MissileState (255)
+	PROP_DeathState (255)
+	PROP_XDeathState (255)
+	PROP_RaiseState (255)
+	PROP_SeeSound ("")
+	PROP_PainSound ("")
+	PROP_DeathSound ("")
+	PROP_ActiveSound ("")
+	PROP_AttackSound ("")
 END_DEFAULTS
 
 // Chaingun guy ------------------------------------------------------------
@@ -321,7 +361,7 @@ class AChaingunGuy : public AActor
 	DECLARE_ACTOR (AChaingunGuy, AActor)
 public:
 	void NoBlockingSet ();
-	const char *GetObituary () { return GStrings(OB_CHAINGUY); }
+	const char *GetObituary () { return GStrings("OB_CHAINGUY"); }
 };
 
 FState AChaingunGuy::States[] =
@@ -411,7 +451,7 @@ class AStealthChaingunGuy : public AChaingunGuy
 {
 	DECLARE_STATELESS_ACTOR (AStealthChaingunGuy, AChaingunGuy)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHCHAINGUY); }
+	const char *GetObituary () { return GStrings("OB_STEALTHCHAINGUY"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthChaingunGuy, Doom, 9054, 120)
@@ -426,7 +466,7 @@ class AWolfensteinSS : public AActor
 {
 	DECLARE_ACTOR (AWolfensteinSS, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_WOLFSS); }
+	const char *GetObituary () { return GStrings("OB_WOLFSS"); }
 	void NoBlockingSet ();
 };
 

@@ -4,7 +4,7 @@
 ** The main logic for the internal node builder.
 **
 **---------------------------------------------------------------------------
-** Copyright 2002 Randy Heit
+** Copyright 2002-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -169,7 +169,7 @@ int FNodeBuilder::CreateSubsector (DWORD set, fixed_t bbox[4])
 void FNodeBuilder::CreateSubsectorsForReal ()
 {
 	subsector_t sub;
-	size_t i;
+	unsigned int i;
 
 	sub.poly = NULL;
 
@@ -192,7 +192,7 @@ void FNodeBuilder::CreateSubsectorsForReal ()
 		qsort (&SegList[sub.firstline], sub.numlines, sizeof(int), SortSegs);
 
 		// Convert seg pointers into indices
-		for (size_t i = sub.firstline; i < SegList.Size(); ++i)
+		for (unsigned int i = sub.firstline; i < SegList.Size(); ++i)
 		{
 			SegList[i].SegNum = SegList[i].SegPtr - &Segs[0];
 		}
@@ -520,7 +520,7 @@ int FNodeBuilder::Heuristic (node_t &node, DWORD set, bool honorNoSplit)
 	int sidev1, sidev2;
 	int side;
 	bool splitter = false;
-	size_t max, m2, p, q;
+	unsigned int max, m2, p, q;
 
 	Touched.Clear ();
 	Colinear.Clear ();
@@ -807,9 +807,9 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 		default: // seg needs to be split
 			double frac;
 			FPrivVert newvert;
-			size_t vertnum;
+			unsigned int vertnum;
 			int seg2;
-			size_t i;
+			unsigned int i;
 
 			if (seg->loopnum)
 			{
@@ -841,7 +841,7 @@ void FNodeBuilder::SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &ou
 			{
 				newvert.segs = DWORD_MAX;
 				newvert.segs2 = DWORD_MAX;
-				vertnum = (int)Vertices.Push (newvert);
+				vertnum = Vertices.Push (newvert);
 			}
 
 			seg2 = SplitSeg (set, vertnum, sidev1);

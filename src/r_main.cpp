@@ -70,6 +70,8 @@ struct InterpolationViewer
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void R_SpanInitData ();
+void RP_RenderBSPNode (void *node);
+bool RP_SetupFrame (bool backside);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -92,10 +94,13 @@ static fixed_t MaxVisForFloor;
 static FRandom pr_torchflicker ("TorchFlicker");
 static TArray<InterpolationViewer> PastViewers;
 static int centerxwide;
+static bool polyclipped;
+static bool r_showviewer;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (String, r_viewsize, "", CVAR_NOSET)
+CVAR (Int, r_polymost, 0, 0)
 
 fixed_t			r_BaseVisibility;
 fixed_t			r_WallVisibility;
@@ -850,7 +855,7 @@ void R_InterpolateView (player_t *player, fixed_t frac, InterpolationViewer *ivi
 		!LocalKeyboardTurner)
 	{
 		viewangle = iview->nviewangle + (LocalViewAngle & 0xFFFF0000);
-		viewpitch = clamp<int> (iview->nviewpitch - (LocalViewPitch & 0xFFFF0000), -ANGLE_1*32, +ANGLE_1*56);
+		viewpitch = clamp<int> (iview->nviewpitch - (LocalViewPitch & 0xFFFF0000), -ANGLE_1*MAX_UP_ANGLE, +ANGLE_1*MAX_DN_ANGLE);
 	}
 	else
 	{
@@ -895,7 +900,7 @@ void R_SetViewAngle ()
 
 static InterpolationViewer *FindPastViewer (AActor *actor)
 {
-	for (size_t i = 0; i < PastViewers.Size(); ++i)
+	for (unsigned int i = 0; i < PastViewers.Size(); ++i)
 	{
 		if (PastViewers[i].ViewActor == actor)
 		{
@@ -980,6 +985,7 @@ void R_SetupFrame (AActor *actor)
 		iview->nviewy = CameraY;
 		iview->nviewz = CameraZ;
 		viewsector = CameraSector;
+		r_showviewer = true;
 	}
 	else
 	{
@@ -987,6 +993,7 @@ void R_SetupFrame (AActor *actor)
 		iview->nviewy = camera->y;
 		iview->nviewz = camera->player ? camera->player->viewz : camera->z;
 		viewsector = camera->Sector;
+		r_showviewer = false;
 	}
 	iview->nviewpitch = camera->pitch;
 	if (camera->player != 0)
@@ -1002,7 +1009,7 @@ void R_SetupFrame (AActor *actor)
 	}
 
 	r_TicFrac = I_GetTimeFrac (&r_FrameTime);
-	if (cl_capfps || r_NoInterpolate/* || netgame*/)
+	if (cl_capfps || r_NoInterpolate)
 	{
 		r_TicFrac = FRACUNIT;
 	}
@@ -1127,99 +1134,53 @@ void R_SetupFrame (AActor *actor)
 		globaldclip = FixedDiv ((viewheight<<FRACBITS)-centeryfrac, InvZtoScale);
 
 		//centeryfrac &= 0xffff0000;
-		int i = lastcenteryfrac - centeryfrac;
-		if (i != 0)
-		{
-			int e;
+		int e, i;
 
-			if ((i & (FRACUNIT-1)) == 0)	// Unlikely, but possible
+		i = 0;
+		e = viewheight;
+		fixed_t focus = FocalLengthY;
+		fixed_t den;
+		if (i < centery)
+		{
+			den = centeryfrac - (i << FRACBITS) - FRACUNIT/2;
+			if (e <= centery)
 			{
-				i >>= FRACBITS;
-				if (abs (i) < viewheight)
-				{
-					fixed_t *from, *to;
-					if (i > 0)
-					{
-//						memmove (yslope, yslope + i, (viewheight - i) * sizeof(fixed_t));
-						int index = 0;
-						from = yslope + i;
-						to = yslope;
-						i = e = viewheight - i;
-						do
-						{
-							*(to + index) = *(from + index);
-							index++;
-						} while (--e);
-						e = viewheight;
-					}
-					else
-					{
-//						memmove (yslope - i, yslope, (viewheight + i) * sizeof(fixed_t));
-						from = yslope;
-						to = yslope - i;
-						e = viewheight + i - 1;
-						do
-						{
-							*(to + e) = *(from + e);
-						} while (--e >= 0);
-						e = -i;
-						i = 0;
-					}
-				}
-				else
-				{
-					i = 0;
-					e = viewheight;
-				}
+				do {
+					yslope[i] = FixedDiv (focus, den);
+					den -= FRACUNIT;
+				} while (++i < e);
 			}
 			else
 			{
-				i = 0;
-				e = viewheight;
-			}
-
-			{
-				fixed_t focus = FocalLengthY;
-				fixed_t den;
-				if (i < centery)
-				{
-					den = centeryfrac - (i << FRACBITS) - FRACUNIT/2;
-					if (e <= centery)
-					{
-						do {
-							yslope[i] = FixedDiv (focus, den);
-							den -= FRACUNIT;
-						} while (++i < e);
-					}
-					else
-					{
-						do {
-							yslope[i] = FixedDiv (focus, den);
-							den -= FRACUNIT;
-						} while (++i < centery);
-						den = (i << FRACBITS) - centeryfrac + FRACUNIT/2;
-						do {
-							yslope[i] = FixedDiv (focus, den);
-							den += FRACUNIT;
-						} while (++i < e);
-					}
-				}
-				else
-				{
-					den = (i << FRACBITS) - centeryfrac + FRACUNIT/2;
-					do {
-						yslope[i] = FixedDiv (focus, den);
-						den += FRACUNIT;
-					} while (++i < e);
-				}
+				do {
+					yslope[i] = FixedDiv (focus, den);
+					den -= FRACUNIT;
+				} while (++i < centery);
+				den = (i << FRACBITS) - centeryfrac + FRACUNIT/2;
+				do {
+					yslope[i] = FixedDiv (focus, den);
+					den += FRACUNIT;
+				} while (++i < e);
 			}
 		}
-		lastcenteryfrac = centeryfrac;
+		else
+		{
+			den = (i << FRACBITS) - centeryfrac + FRACUNIT/2;
+			do {
+				yslope[i] = FixedDiv (focus, den);
+				den += FRACUNIT;
+			} while (++i < e);
+		}
 	}
 
 	P_UnPredictPlayer ();
 	framecount++;
 	validcount++;
+
+	if (r_polymost)
+	{
+		polyclipped = RP_SetupFrame (false);
+	}
 }
 
 //==========================================================================
@@ -1265,7 +1226,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	fixed_t startx = viewx;
 	fixed_t starty = viewy;
 
-	size_t mirrorsAtStart = WallMirrors.Size ();
+	unsigned int mirrorsAtStart = WallMirrors.Size ();
 
 	vertex_t *v1 = ds->curline->v1;
 
@@ -1325,7 +1286,7 @@ void R_EnterMirror (drawseg_t *ds, int depth)
 	// Allow up to 4 recursions through a mirror
 	if (depth < 4)
 	{
-		size_t mirrorsAtEnd = WallMirrors.Size ();
+		unsigned int mirrorsAtEnd = WallMirrors.Size ();
 
 		for (; mirrorsAtStart < mirrorsAtEnd; mirrorsAtStart++)
 		{
@@ -1377,7 +1338,7 @@ void R_SetupBuffer (bool inview)
 #endif
 		}
 		dc_destorg = lineptr;
-		for (int i = 0; i < screen->GetHeight(); i++)
+		for (int i = 0; i < RenderTarget->GetHeight(); i++)
 		{
 			ylookup[i] = i * pitch;
 		}
@@ -1435,20 +1396,17 @@ void R_RenderActorView (AActor *actor)
 	R_FindParticleSubsectors ();
 
 	clock (WallCycles);
+	WORD savedflags = camera->renderflags;
 	// Never draw the player unless in chasecam mode
-	if (camera->player && !(camera->player->cheats & CF_CHASECAM) && camera->health > 0)
+	if (!r_showviewer)
 	{
-		WORD savedflags = camera->renderflags;
 		camera->renderflags |= RF_INVISIBLE;
-//memset (screen->GetBuffer(), 255, screen->GetWidth()*screen->GetHeight());
-		R_RenderBSPNode (nodes + numnodes - 1);
-		camera->renderflags = savedflags;
 	}
-	else
-	{	// The head node is the last node output.
-		// [[RH] Not that this tells me anything...]
-		R_RenderBSPNode (nodes + numnodes - 1);
+	if (r_polymost < 2)
+	{
+		R_RenderBSPNode (nodes + numnodes - 1);	// The head node is the last node output.
 	}
+	camera->renderflags = savedflags;
 	unclock (WallCycles);
 
 	NetUpdate ();
@@ -1462,11 +1420,10 @@ void R_RenderActorView (AActor *actor)
 
 		// [RH] Walk through mirrors
 		size_t lastmirror = WallMirrors.Size ();
-		for (size_t i = 0; i < lastmirror; i++)
+		for (unsigned int i = 0; i < lastmirror; i++)
 		{
 			R_EnterMirror (drawsegs + WallMirrors[i], 0);
 		}
-		WallMirrors.Clear ();
 
 		NetUpdate ();
 		
@@ -1475,7 +1432,18 @@ void R_RenderActorView (AActor *actor)
 		unclock (MaskedCycles);
 
 		NetUpdate ();
+
+		if (r_polymost)
+		{
+			RP_RenderBSPNode (nodes + numnodes - 1);
+			if (polyclipped)
+			{
+				RP_SetupFrame (true);
+				RP_RenderBSPNode (nodes + numnodes - 1);
+			}
+		}
 	}
+	WallMirrors.Clear ();
 
 	restoreinterpolations ();
 
@@ -1538,6 +1506,10 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, int picnum, int fov)
 	FCanvasTextureInfo *probe;
 	FCanvasTexture *texture;
 
+	if (picnum < 0)
+	{
+		return;
+	}
 	texture = static_cast<FCanvasTexture *>(TexMan[picnum]);
 	if (!texture->bHasCanvas)
 	{
@@ -1545,13 +1517,14 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, int picnum, int fov)
 		return;
 	}
 
-	// First, is this texture already assigned to a camera?
+	// Is this texture already assigned to a camera?
 	for (probe = List; probe != NULL; probe = probe->Next)
 	{
 		if (probe->Texture == texture)
 		{
 			// Yes, change its assignment to this new camera
 			probe->Viewpoint = viewpoint;
+			probe->FOV = fov;
 			return;
 		}
 	}
@@ -1776,9 +1749,9 @@ void FActiveInterpolation::DoAnInterpolation (fixed_t smoothratio)
 	*adr2 = oldipos[1] + FixedMul (pos - oldipos[1], smoothratio);
 }
 
-int FActiveInterpolation::HashKey (EInterpType type, void *interptr)
+size_t FActiveInterpolation::HashKey (EInterpType type, void *interptr)
 {
-	return (int)type * ((int)interptr>>5);
+	return ((size_t)(interptr))>>5;
 }
 
 int FActiveInterpolation::CountInterpolations ()
@@ -1825,7 +1798,7 @@ int FActiveInterpolation::CountInterpolations (int *usedbuckets, int *minbucketf
 
 FActiveInterpolation *FActiveInterpolation::FindInterpolation (EInterpType type, void *interptr, FActiveInterpolation **&interp_p)
 {
-	int hash = HashKey (type, interptr) % INTERPOLATION_BUCKETS;
+	size_t hash = HashKey (type, interptr) % INTERPOLATION_BUCKETS;
 	FActiveInterpolation *probe, **probe_p;
 
 	for (probe_p = &curiposhash[hash], probe = *probe_p;
@@ -1961,7 +1934,7 @@ void SerializeInterpolations (FArchive &arc)
 			FActiveInterpolation **interp_p;
 			arc << interp;
 			if (FActiveInterpolation::FindInterpolation (interp->Type, interp->Address, interp_p) == NULL)
-			{ // Should always return NULL, because there should never been any duplicates stored.
+			{ // Should always return NULL, because there should never be any duplicates stored.
 				interp->Next = *interp_p;
 				*interp_p = interp;
 			}

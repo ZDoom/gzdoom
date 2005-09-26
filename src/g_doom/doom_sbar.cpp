@@ -232,6 +232,8 @@ private:
 		StatusBarTex.DrawToBar ("STTPRCNT", 221, 3);	// Armor %
 
 		SB_state = screen->GetPageCount ();
+		FaceLastAttackDown = -1;
+		FacePriority = 0;
 	}
 
 	void DrawMainBar ()
@@ -776,21 +778,19 @@ private:
 		int 		i;
 		angle_t 	badguyangle;
 		angle_t 	diffang;
-		static int	lastattackdown = -1;
-		static int	priority = 0;
 
-		if (priority < 10)
+		if (FacePriority < 10)
 		{
 			// dead
 			if (CPlayer->health <= 0)
 			{
-				priority = 9;
+				FacePriority = 9;
 				FaceIndex = ST_DEADFACE;
 				FaceCount = 1;
 			}
 		}
 
-		if (priority < 9)
+		if (FacePriority < 9)
 		{
 			if (CPlayer->bonuscount)
 			{
@@ -799,27 +799,27 @@ private:
 				{
 					// evil grin if just picked up weapon
 					bEvilGrin = false;
-					priority = 8;
+					FacePriority = 8;
 					FaceCount = ST_EVILGRINCOUNT;
 					FaceIndex = CalcPainOffset() + ST_EVILGRINOFFSET;
 				}
 			}
 		}
   
-		if (priority < 8)
+		if (FacePriority < 8)
 		{
 			if (CPlayer->damagecount
 				&& CPlayer->attacker
 				&& CPlayer->attacker != CPlayer->mo)
 			{
 				// being attacked
-				priority = 7;
+				FacePriority = 7;
 				
 				if (FaceHealth != -9999 && FaceHealth - CPlayer->health > ST_MUCHPAIN)
 				{
 					FaceCount = ST_TURNCOUNT;
 					FaceIndex = CalcPainOffset() + ST_OUCHOFFSET;
-					priority = 8;
+					FacePriority = 8;
 				}
 				else
 				{
@@ -864,20 +864,20 @@ private:
 			}
 		}
   
-		if (priority < 7)
+		if (FacePriority < 7)
 		{
 			// getting hurt because of your own damn stupidity
 			if (CPlayer->damagecount)
 			{
 				if (OldHealth != -1 && CPlayer->health - OldHealth > ST_MUCHPAIN)
 				{
-					priority = 7;
+					FacePriority = 7;
 					FaceCount = ST_TURNCOUNT;
 					FaceIndex = CalcPainOffset() + ST_OUCHOFFSET;
 				}
 				else
 				{
-					priority = 6;
+					FacePriority = 6;
 					FaceCount = ST_TURNCOUNT;
 					FaceIndex = CalcPainOffset() + ST_RAMPAGEOFFSET;
 				}
@@ -886,34 +886,34 @@ private:
 
 		}
   
-		if (priority < 6)
+		if (FacePriority < 6)
 		{
 			// rapid firing
 			if (CPlayer->cmd.ucmd.buttons & BT_ATTACK)
 			{
-				if (lastattackdown==-1)
-					lastattackdown = ST_RAMPAGEDELAY;
-				else if (!--lastattackdown)
+				if (FaceLastAttackDown==-1)
+					FaceLastAttackDown = ST_RAMPAGEDELAY;
+				else if (!--FaceLastAttackDown)
 				{
-					priority = 5;
+					FacePriority = 5;
 					FaceIndex = CalcPainOffset() + ST_RAMPAGEOFFSET;
 					FaceCount = 1;
-					lastattackdown = 1;
+					FaceLastAttackDown = 1;
 				}
 			}
 			else
 			{
-				lastattackdown = -1;
+				FaceLastAttackDown = -1;
 			}
 		}
   
-		if (priority < 5)
+		if (FacePriority < 5)
 		{
 			// invulnerability
 			if ((CPlayer->cheats & CF_GODMODE)
 				|| (CPlayer->mo != NULL && CPlayer->mo->flags2 & MF2_INVULNERABLE))
 			{
-				priority = 4;
+				FacePriority = 4;
 				FaceIndex = ST_GODFACE;
 				FaceCount = 1;
 			}
@@ -924,7 +924,7 @@ private:
 		{
 			FaceIndex = CalcPainOffset() + (RandomNumber % 3);
 			FaceCount = ST_STRAIGHTFACECOUNT;
-			priority = 0;
+			FacePriority = 0;
 		}
 
 		FaceCount--;
@@ -996,6 +996,8 @@ private:
 	int OldActiveAmmo;
 	int OldFrags;
 	int FaceHealth;
+	int	FaceLastAttackDown;
+	int	FacePriority;
 
 	char HealthRefresh;
 	char ArmorRefresh;

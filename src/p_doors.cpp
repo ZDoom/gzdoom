@@ -212,6 +212,7 @@ void DDoor::DoorSound (bool raise) const
 		switch (gameinfo.gametype)
 		{
 		default:
+			snd = NULL;
 			break;
 
 		case GAME_Heretic:
@@ -280,7 +281,10 @@ void DDoor::DoorSound (bool raise) const
 			}
 			break;
 		}
-		SN_StartSequence (m_Sector, snd);
+		if (snd != NULL)
+		{
+			SN_StartSequence (m_Sector, snd);
+		}
 	}
 }
 
@@ -478,7 +482,7 @@ TArray<FDoorAnimation> DoorAnimations;
 //
 static int P_FindSlidingDoorType (int picnum)
 {
-	size_t i;
+	unsigned int i;
 
 	for (i = 0; i < DoorAnimations.Size(); ++i)
 	{

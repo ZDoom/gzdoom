@@ -42,7 +42,7 @@ enum EGenericEvent
 };
 
 // Event structure.
-typedef struct
+struct event_t
 {
 	BYTE		type;
 	BYTE		subtype;
@@ -51,7 +51,7 @@ typedef struct
 	SWORD		data3;
 	int 		x;			// mouse/joystick x move
 	int 		y;			// mouse/joystick y move
-} event_t;
+};
 
  
 typedef enum

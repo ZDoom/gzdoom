@@ -1,7 +1,7 @@
 /* $Id: main.cc,v 1.10 2004/05/13 03:47:52 nuffer Exp $ */
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-#elif _MSC_VER
+#elif _WIN32
 #include "configwin.h"
 #endif
 

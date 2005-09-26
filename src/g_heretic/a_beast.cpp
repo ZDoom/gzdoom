@@ -98,7 +98,7 @@ void ABeast::NoBlockingSet ()
 
 const char *ABeast::GetObituary ()
 {
-	return GStrings(OB_BEAST);
+	return GStrings("OB_BEAST");
 }
 
 // Beast ball ---------------------------------------------------------------
@@ -167,7 +167,7 @@ IMPLEMENT_ACTOR (APuffy, Heretic, -1, 0)
 	PROP_RadiusFixed (6)
 	PROP_HeightFixed (8)
 	PROP_SpeedFixed (10)
-	PROP_Damage (2)
+	PROP_Damage (0)
 	PROP_Flags (MF_NOBLOCKMAP|MF_NOGRAVITY|MF_MISSILE)
 	PROP_Flags2 (MF2_NOTELEPORT)
 	PROP_Flags3 (MF3_DONTSPLASH)

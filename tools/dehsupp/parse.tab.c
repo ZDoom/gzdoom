@@ -1677,7 +1677,7 @@ static name FindName (char *name)
 
 	while (probe != NULL)
 	{
-		if (strcmp (probe->String, name) == 0)
+		if (stricmp (probe->String, name) == 0)
 		{
 			return count;
 		}
@@ -1928,7 +1928,7 @@ static void SortNames ()
 	}
 }
 
-yyerror (char *s)
+int yyerror (char *s)
 {
 	printf ("Line %d: %s\n", SourceLine, s);
 	ErrorCount++;

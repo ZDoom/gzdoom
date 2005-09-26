@@ -38,7 +38,7 @@ END_DEFAULTS
 
 const char *AArtiDarkServant::PickupMessage ()
 {
-	return GStrings(TXT_ARTISUMMON);
+	return GStrings("TXT_ARTISUMMON");
 }
 
 // Summoning Doll -----------------------------------------------------------
@@ -158,7 +158,7 @@ void A_Summon (AActor *actor)
 			power->TryPickup (actor->tracer);
 			if (actor->tracer->player != NULL)
 			{
-				mo->FriendPlayer = actor->tracer->player - players + 1;
+				mo->FriendPlayer = int(actor->tracer->player - players + 1);
 			}
 		}
 

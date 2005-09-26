@@ -1,0 +1,22 @@
+MAKEWAD=../tools/makewad/makewad
+XLATCC=../tools/xlatcc/xlatcc
+DEHSUPP=../tools/dehsupp/dehsupp
+
+ifneq ($(MAKECMDGOALS),clean)
+include Makefile2
+endif
+
+wadmake: zdoom.lst $(MAKEWAD).exe $(XLATCC).exe $(DEHSUPP).exe
+	$(MAKEWAD) -make wadmake zdoom.lst
+
+clean:
+	del /q /f wadmake zdoom.wad xlat\*.x dehsupp.lmp 2>nul
+
+../tools/makewad/makewad.exe:
+	$(MAKE) -C ../tools/makewad -f Makefile.mgw
+	
+../tools/xlatcc/xlatcc.exe:
+	$(MAKE) -C ../tools/xlatcc -f Makefile.mgw
+	
+../tools/dehsupp/dehsupp.exe:
+	$(MAKE) -C ../tools/dehsupp -f Makefile.mgw

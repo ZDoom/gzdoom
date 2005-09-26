@@ -15,8 +15,8 @@ class ACacodemon : public AActor
 {
 	DECLARE_ACTOR (ACacodemon, AActor)
 public:
-	const char *GetObituary () { return GStrings(OB_CACO); }
-	const char *GetHitObituary () { return GStrings(OB_CACOHIT); }
+	const char *GetObituary () { return GStrings("OB_CACO"); }
+	const char *GetHitObituary () { return GStrings("OB_CACOHIT"); }
 };
 
 FState ACacodemon::States[] =
@@ -82,8 +82,8 @@ class AStealthCacodemon : public ACacodemon
 {
 	DECLARE_STATELESS_ACTOR (AStealthCacodemon, ACacodemon)
 public:
-	const char *GetObituary () { return GStrings(OB_STEALTHCACO); }
-	const char *GetHitObituary () { return GStrings(OB_STEALTHCACO); }
+	const char *GetObituary () { return GStrings("OB_STEALTHCACO"); }
+	const char *GetHitObituary () { return GStrings("OB_STEALTHCACO"); }
 };
 
 IMPLEMENT_STATELESS_ACTOR (AStealthCacodemon, Doom, 9053, 119)
@@ -158,6 +158,25 @@ class ADeadCacodemon : public ACacodemon
 };
 
 IMPLEMENT_STATELESS_ACTOR (ADeadCacodemon, Doom, 22, 0)
-	PROP_SKIP_SUPER
 	PROP_SpawnState (S_HEAD_DIE+5)
+
+	// Undo all the changes to default Actor properties that ACacodemon made
+	PROP_SpawnHealth (1000)
+	PROP_RadiusFixed (20)
+	PROP_HeightFixed (16)
+	PROP_Mass (100)
+	PROP_SpeedFixed (0)
+	PROP_PainChance (0)
+	PROP_Flags (0)
+	PROP_Flags2 (0)
+	PROP_SeeState (255)
+	PROP_PainState (255)
+	PROP_MissileState (255)
+	PROP_DeathState (255)
+	PROP_RaiseState (255)
+	PROP_SeeSound ("")
+	PROP_PainSound ("")
+	PROP_DeathSound ("")
+	PROP_ActiveSound ("")
+	PROP_AttackSound ("")
 END_DEFAULTS

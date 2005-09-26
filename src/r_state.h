@@ -52,7 +52,7 @@ extern BYTE				OtherGameSkinRemap[256];
 // Lookup tables for map data.
 //
 extern TArray<spritedef_t> sprites;
-extern size_t NumStdSprites;
+extern DWORD NumStdSprites;
 
 extern int				numvertexes;
 extern vertex_t*		vertexes;

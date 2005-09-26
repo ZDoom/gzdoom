@@ -3,7 +3,7 @@
 ** Code to let ZDoom use DirectDraw
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2004 Randy Heit
+** Copyright 1998-2005 Randy Heit
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -153,23 +153,28 @@ Win32Video::Win32Video (int parm)
 : m_Modes (NULL),
   m_IsFullscreen (false)
 {
+	LPDIRECTDRAW ddraw1;
 	STARTLOG;
 
 	HRESULT dderr;
 	ModeInfo *mode, *nextmode;
 
-	dderr = CoCreateInstance (CLSID_DirectDraw, 0, CLSCTX_INPROC_SERVER, IID_IDirectDraw2, (void **)&DDraw);
+	dderr = DirectDrawCreate (NULL, &ddraw1, NULL);
 
 	if (FAILED(dderr))
 		I_FatalError ("Could not create DirectDraw object: %08lx", dderr);
 
-	dderr = DDraw->Initialize (0);
+	dderr = ddraw1->QueryInterface (IID_IDirectDraw2, (LPVOID*)&DDraw);
 	if (FAILED(dderr))
 	{
-		DDraw->Release ();
+		ddraw1->Release ();
 		DDraw = NULL;
 		I_FatalError ("Could not initialize IDirectDraw2 interface: %08lx", dderr);
 	}
+
+	// Okay, we have the IDirectDraw2 interface now, so we can release the
+	// really old-fashioned IDirectDraw one.
+	ddraw1->Release ();
 
 	DDraw->SetCooperativeLevel (Window, DDSCL_NORMAL);
 	FreeModes ();

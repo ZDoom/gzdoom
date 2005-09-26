@@ -44,9 +44,7 @@
 #include "muslib.h"
 #include "fmopl.h"
 
-uint OPLchannels = OPL2CHANNELS;
-
-void OPLwriteReg(int which, uint reg, uchar data)
+void OPLio::OPLwriteReg(int which, uint reg, uchar data)
 {
 	YM3812Write (which, 0, reg);
 	YM3812Write (which, 1, data);
@@ -56,7 +54,7 @@ void OPLwriteReg(int which, uint reg, uchar data)
 * Write to an operator pair. To be used for register bases of 0x20, 0x40,
 * 0x60, 0x80 and 0xE0.
 */
-void OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2)
+void OPLio::OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2)
 {
 	static const uint op_num[] = {
 		0x000, 0x001, 0x002, 0x008, 0x009, 0x00A, 0x010, 0x011, 0x012,
@@ -72,7 +70,7 @@ void OPLwriteChannel(uint regbase, uint channel, uchar data1, uchar data2)
 * Write to channel a single value. To be used for register bases of
 * 0xA0, 0xB0 and 0xC0.
 */
-inline void OPLwriteValue(uint regbase, uint channel, uchar value)
+void OPLio::OPLwriteValue(uint regbase, uint channel, uchar value)
 {
 	static const uint reg_num[] = {
 		0x000, 0x001, 0x002, 0x003, 0x004, 0x005, 0x006, 0x007, 0x008,
@@ -146,7 +144,7 @@ static WORD frequencies[] =
 /*
 * Write frequency/octave/keyon data to a channel
 */
-void OPLwriteFreq(uint channel, uint freq, uint octave, uint keyon)
+void OPLio::OPLwriteFreq(uint channel, uint freq, uint octave, uint keyon)
 {
 	int i;
 	int j = (freq<<5) + octave;
@@ -174,7 +172,7 @@ void OPLwriteFreq(uint channel, uint freq, uint octave, uint keyon)
 /*
 * Adjust volume value (register 0x40)
 */
-inline uint OPLconvertVolume(uint data, uint volume)
+inline uint OPLio::OPLconvertVolume(uint data, uint volume)
 {
 	static uchar volumetable[128] = {
 		0,   1,   3,   5,   6,   8,  10,  11,
@@ -199,7 +197,7 @@ inline uint OPLconvertVolume(uint data, uint volume)
 
 }
 
-uint OPLpanVolume(uint volume, int pan)
+uint OPLio::OPLpanVolume(uint volume, int pan)
 {
 	if (pan >= 0)
 		return volume;
@@ -210,7 +208,7 @@ uint OPLpanVolume(uint volume, int pan)
 /*
 * Write volume data to a channel
 */
-void OPLwriteVolume(uint channel, struct OPL2instrument *instr, uint volume)
+void OPLio::OPLwriteVolume(uint channel, struct OPL2instrument *instr, uint volume)
 {
 	if (instr != 0)
 	{
@@ -223,7 +221,7 @@ void OPLwriteVolume(uint channel, struct OPL2instrument *instr, uint volume)
 /*
 * Write pan (balance) data to a channel
 */
-void OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
+void OPLio::OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
 {
 	if (instr != 0)
 	{
@@ -250,7 +248,7 @@ void OPLwritePan(uint channel, struct OPL2instrument *instr, int pan)
 *    data[5]    data[12]  reg. 0x40 - output level (bottom 6 bits only)
 *          data[6]        reg. 0xC0 - feedback/AM-FM (both operators)
 */
-void OPLwriteInstrument(uint channel, struct OPL2instrument *instr)
+void OPLio::OPLwriteInstrument(uint channel, struct OPL2instrument *instr)
 {
 	OPLwriteChannel(0x40, channel, 0x3F, 0x3F);		// no volume
 	OPLwriteChannel(0x20, channel, instr->trem_vibr_1, instr->trem_vibr_2);
@@ -263,7 +261,7 @@ void OPLwriteInstrument(uint channel, struct OPL2instrument *instr)
 /*
 * Stop all sounds
 */
-void OPLshutup(void)
+void OPLio::OPLshutup(void)
 {
 	uint i;
 
@@ -279,7 +277,7 @@ void OPLshutup(void)
 /*
 * Initialize hardware upon startup
 */
-int OPLinit(uint numchips, uint rate)
+int OPLio::OPLinit(uint numchips, uint rate)
 {
 	if (!YM3812Init (numchips, 3579545, rate))
 	{
@@ -304,7 +302,7 @@ int OPLinit(uint numchips, uint rate)
 /*
 * Deinitialize hardware before shutdown
 */
-void OPLdeinit(void)
+void OPLio::OPLdeinit(void)
 {
 	YM3812Shutdown ();
 }

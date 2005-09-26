@@ -1561,16 +1561,18 @@ public:
 	int DoSpecialDamage (AActor *target, int damage);
 };
 
+void A_BurnArea (AActor *);
+
 FState APhosphorousFire::States[] =
 {
 #define S_BURNINATION 0
-	S_BRIGHT (BNG3, 'B',	2, A_Explode,			&States[S_BURNINATION+1]),
+	S_BRIGHT (BNG3, 'B',	2, A_BurnArea,			&States[S_BURNINATION+1]),
 	S_BRIGHT (BNG3, 'C',	2, A_Countdown,			&States[S_BURNINATION+2]),
 	S_BRIGHT (FLBE, 'A',	2, A_Burnination,		&States[S_BURNINATION+3]),
 	S_BRIGHT (FLBE, 'B',	2, A_Countdown,			&States[S_BURNINATION+4]),
-	S_BRIGHT (FLBE, 'C',	2, A_Explode,			&States[S_BURNINATION+5]),
+	S_BRIGHT (FLBE, 'C',	2, A_BurnArea,			&States[S_BURNINATION+5]),
 	S_BRIGHT (FLBE, 'D',	3, A_Countdown,			&States[S_BURNINATION+6]),
-	S_BRIGHT (FLBE, 'E',	3, A_Explode,			&States[S_BURNINATION+7]),
+	S_BRIGHT (FLBE, 'E',	3, A_BurnArea,			&States[S_BURNINATION+7]),
 	S_BRIGHT (FLBE, 'F',	3, A_Countdown,			&States[S_BURNINATION+8]),
 	S_BRIGHT (FLBE, 'G',	3, A_Burnination,		&States[S_BURNINATION+5]),
 
@@ -1603,6 +1605,11 @@ int APhosphorousFire::DoSpecialDamage (AActor *target, int damage)
 void A_SpawnBurn (AActor *self)
 {
 	Spawn<APhosphorousFire> (self->x, self->y, self->z);
+}
+
+void A_BurnArea (AActor *self)
+{
+	P_RadiusAttack (self, self->target, 128, 128, self->DamageType, true, true);
 }
 
 void A_Burnination (AActor *self)

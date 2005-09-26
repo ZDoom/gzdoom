@@ -42,6 +42,7 @@ class ADegninOre : public AInventory
 public:
 	const char *PickupMessage ();
 	void GetExplodeParms (int &damage, int &dist, bool &hurtSource);
+	bool Use (bool pickup);
 };
 
 class ACoin : public AInventory

@@ -52,13 +52,13 @@ END_DEFAULTS
 
 const char *ABlueCard::PickupMessage ()
 {
-	return GStrings(GOTBLUECARD);
+	return GStrings("GOTBLUECARD");
 }
 
 const char *ABlueCard::NeedKeyMessage (bool remote, int keynum)
 {
-	return remote ? GStrings(PD_BLUEO) : keynum == it_bluecard ?
-		GStrings(PD_BLUEC) : GStrings(PD_BLUEK);
+	return remote ? GStrings("PD_BLUEO") : keynum == it_bluecard ?
+		GStrings("PD_BLUEC") : GStrings("PD_BLUEK");
 }
 
 // Yellow key card ----------------------------------------------------------
@@ -86,13 +86,13 @@ END_DEFAULTS
 
 const char *AYellowCard::PickupMessage ()
 {
-	return GStrings(GOTYELWCARD);
+	return GStrings("GOTYELWCARD");
 }
 
 const char *AYellowCard::NeedKeyMessage (bool remote, int keynum)
 {
-	return remote ? GStrings(PD_YELLOWO) : keynum == it_yellowcard ?
-		GStrings(PD_YELLOWC) : GStrings(PD_YELLOWK);
+	return remote ? GStrings("PD_YELLOWO") : keynum == it_yellowcard ?
+		GStrings("PD_YELLOWC") : GStrings("PD_YELLOWK");
 }
 
 // Red key card -------------------------------------------------------------
@@ -120,13 +120,13 @@ END_DEFAULTS
 
 const char *ARedCard::PickupMessage ()
 {
-	return GStrings(GOTREDCARD);
+	return GStrings("GOTREDCARD");
 }
 
 const char *ARedCard::NeedKeyMessage (bool remote, int keynum)
 {
-	return remote ? GStrings(PD_REDO) : keynum == it_redcard ?
-		GStrings(PD_REDC) : GStrings(PD_REDK);
+	return remote ? GStrings("PD_REDO") : keynum == it_redcard ?
+		GStrings("PD_REDC") : GStrings("PD_REDK");
 }
 
 // Blue skull key -----------------------------------------------------------
@@ -154,13 +154,13 @@ END_DEFAULTS
 
 const char *ABlueSkull::PickupMessage ()
 {
-	return GStrings(GOTBLUESKUL);
+	return GStrings("GOTBLUESKUL");
 }
 
 const char *ABlueSkull::NeedKeyMessage (bool remote, int keynum)
 {
-	return remote ? GStrings(PD_BLUEO) : keynum == it_blueskull ?
-		GStrings(PD_BLUES) : GStrings(PD_BLUEK);
+	return remote ? GStrings("PD_BLUEO") : keynum == it_blueskull ?
+		GStrings("PD_BLUES") : GStrings("PD_BLUEK");
 }
 
 // Yellow skull key ---------------------------------------------------------
@@ -188,13 +188,13 @@ END_DEFAULTS
 
 const char *AYellowSkull::PickupMessage ()
 {
-	return GStrings(GOTYELWSKUL);
+	return GStrings("GOTYELWSKUL");
 }
 
 const char *AYellowSkull::NeedKeyMessage (bool remote, int keynum)
 {
-	return remote ? GStrings(PD_YELLOWO) : keynum == it_yellowskull ?
-		GStrings(PD_YELLOWS) : GStrings(PD_YELLOWK);
+	return remote ? GStrings("PD_YELLOWO") : keynum == it_yellowskull ?
+		GStrings("PD_YELLOWS") : GStrings("PD_YELLOWK");
 }
 
 // Red skull key ------------------------------------------------------------
@@ -222,12 +222,12 @@ END_DEFAULTS
 
 const char *ARedSkull::PickupMessage ()
 {
-	return GStrings(GOTREDSKUL);
+	return GStrings("GOTREDSKUL");
 }
 
 const char *ARedSkull::NeedKeyMessage (bool remote, int keynum)
 {
-	return remote ? GStrings(PD_REDO) : keynum == it_redskull ?
-		GStrings(PD_REDS) : GStrings(PD_REDK);
+	return remote ? GStrings("PD_REDO") : keynum == it_redskull ?
+		GStrings("PD_REDS") : GStrings("PD_REDK");
 }
 

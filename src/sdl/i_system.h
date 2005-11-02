@@ -24,10 +24,13 @@
 #define __I_SYSTEM__
 
 #include <dirent.h>
+#include <ctype.h>
 
 #include "d_main.h"
 #include "d_ticcmd.h"
 #include "d_event.h"
+
+#define SHARE_DIR "/usr/local/share/"
 
 // Index values into the LanguageIDs array
 enum
@@ -174,7 +177,7 @@ void addterm (void (STACK_ARGS *func)(void), const char *name);
 void popterm ();
 
 // Print a console string
-void I_PrintStr (int x, const char *str, int count, BOOL scroll);
+void I_PrintStr (const char *str, bool scroll);
 
 // Set the title string of the startup window
 void I_SetTitleString (const char *title);
@@ -211,5 +214,16 @@ int I_FindAttr (findstate_t *fileinfo);
 #define FA_SYSTEM	4
 #define FA_DIREC	8
 #define FA_ARCH		16
+
+static inline char *strlwr(char *str)
+{
+	char *ptr = str;
+	while(*ptr)
+	{
+		*ptr = tolower(*ptr);
+		++ptr;
+	}
+	return str;
+}
 
 #endif

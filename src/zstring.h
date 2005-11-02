@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include "tarray.h"
 
 //#define NOPOOLS
@@ -113,6 +114,7 @@ public:
 	double ToDouble () const;
 
 	size_t Len() const { return Chars == NULL ? 0 : ((StringHeader *)(Chars - sizeof(StringHeader)))->Len; }
+	bool IsEmpty() const { return Len() == 0; }
 
 	int Compare (const string &other) const { return strcmp (Chars, other.Chars); }
 	int Compare (const char *other) const { return strcmp (Chars, other); }

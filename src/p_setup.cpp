@@ -200,7 +200,7 @@ static void SetTexture (short *texture, DWORD *blend, char *name8)
 	}
 }
 
-static void SetTextureNoErr (short *texture, DWORD *color, char *name8)
+static void SetTextureNoErr (short *texture, DWORD *color, char *name8, bool *validcolor)
 {
 	char name[9];
 	strncpy (name, name8, 8);
@@ -215,6 +215,11 @@ static void SetTextureNoErr (short *texture, DWORD *color, char *name8)
 		name2[8] = 0;
 		*color = strtoul (name2, &stop, 16);
 		*texture = 0;
+		*validcolor = (*stop == 0) && (stop == name2 + 6);
+	}
+	else
+	{
+		*validcolor = false;
 	}
 }
 
@@ -1760,22 +1765,31 @@ void P_LoadSideDefs2 (int lump)
 			// upper "texture" is light color
 			// lower "texture" is fog color
 			{
-				DWORD color = 0xffffff, fog = 0x000000;
+				DWORD color, fog;
+				bool colorgood, foggood;
 
-				SetTextureNoErr (&sd->bottomtexture, &fog, msd->bottomtexture);
-				SetTextureNoErr (&sd->toptexture, &color, msd->toptexture);
+				SetTextureNoErr (&sd->bottomtexture, &fog, msd->bottomtexture, &foggood);
+				SetTextureNoErr (&sd->toptexture, &color, msd->toptexture, &colorgood);
 				strncpy (name, msd->midtexture, 8);
 				sd->midtexture = TexMan.GetTexture (name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
 
-				if (fog != 0x000000 || color != 0xffffff)
+				if (colorgood | foggood)
 				{
 					int s;
-					FDynamicColormap *colormap = GetSpecialLights (color, fog, 0);
+					FDynamicColormap *colormap = NULL;
 
 					for (s = 0; s < numsectors; s++)
 					{
 						if (sectors[s].tag == sidetemp[i].a.tag)
 						{
+							if (!colorgood) color = sectors[s].ColorMap->Color;
+							if (!foggood) fog = sectors[s].ColorMap->Fade;
+							if (colormap == NULL ||
+								colormap->Color != color ||
+								colormap->Fade != fog)
+							{
+								colormap = GetSpecialLights (color, fog, 0);
+							}
 							sectors[s].ColorMap = colormap;
 						}
 					}

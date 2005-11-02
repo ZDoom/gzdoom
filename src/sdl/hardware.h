@@ -48,9 +48,8 @@ class IVideo
 	virtual DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old) = 0;
 
 	virtual bool FullscreenChanged (bool fs) = 0;
-	virtual int GetModeCount () = 0;
 	virtual void StartModeIterator (int bits) = 0;
-	virtual bool NextMode (int *width, int *height) = 0;
+	virtual bool NextMode (int *width, int *height, bool *letterbox) = 0;
 };
 
 class IInputDevice

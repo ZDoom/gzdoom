@@ -53,7 +53,9 @@ extern HINSTANCE g_hInst;
 #include <math.h>
 
 #include "fmodsound.h"
+#ifdef _WIN32
 #include "altsound.h"
+#endif
 
 #include "m_swap.h"
 #include "stats.h"
@@ -71,8 +73,6 @@ extern HINSTANCE g_hInst;
 #include "gi.h"
 
 #include "doomdef.h"
-
-extern void CalcPosVel (fixed_t *pt, AActor *mover, int constz, float pos[3], float vel[3]);
 
 EXTERN_CVAR (Float, snd_sfxvolume)
 CVAR (Int, snd_samplerate, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -206,6 +206,8 @@ void I_InitSound ()
 			GSnd = new AltSoundRenderer;
 		}
 	}
+#else
+	GSnd = new FMODSoundRenderer;
 #endif
 
 	if (!GSnd->IsValid ())
@@ -259,8 +261,11 @@ CCMD (snd_status)
 CCMD (snd_reset)
 {
 	SoundRenderer *snd = GSnd;
-	snd->MovieDisableSound ();
-	GSnd = NULL;
+	if (snd != NULL)
+	{
+		snd->MovieDisableSound ();
+		GSnd = NULL;
+	}
 	I_InitSound ();
 	S_Init ();
 	S_RestartMusic ();

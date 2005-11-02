@@ -698,13 +698,13 @@ void A_GenWizard (AActor *actor)
 {
 	AActor *mo;
 
-	mo = Spawn<AWizard> (actor->x, actor->y,
-		actor->z - GetDefault<AWizard>()->height/2);
+	mo = Spawn<AWizard> (actor->x, actor->y, actor->z - GetDefault<AWizard>()->height/2);
 	if (mo != NULL)
 	{
 		if (!P_TestMobjLocation (mo))
 		{ // Didn't fit
 			mo->Destroy ();
+			level.total_monsters--;
 		}
 		else
 		{ // [RH] Make the new wizards inherit D'Sparil's target

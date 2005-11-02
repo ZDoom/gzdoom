@@ -351,7 +351,7 @@ int FFont::SimpleTranslation (byte *colorsused, byte *translation, byte *reverse
 		}
 	}
 
-	qsort (reverse, j, 1, compare);
+	qsort (reverse+1, j-1, 1, compare);
 
 	*luminosity = new double[j];
 	max = 0.0;

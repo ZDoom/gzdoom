@@ -41,6 +41,7 @@
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "sdlvideo.h"
+#include "v_text.h"
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
@@ -113,7 +114,7 @@ bool I_CheckResolution (int width, int height, int bits)
 
 	Video->FullscreenChanged (screen ? screen->IsFullscreen() : fullscreen);
 	Video->StartModeIterator (bits);
-	while (Video->NextMode (&twidth, &theight))
+	while (Video->NextMode (&twidth, &theight, NULL))
 	{
 		if (width == twidth && height == theight)
 			return true;
@@ -132,7 +133,7 @@ void I_ClosestResolution (int *width, int *height, int bits)
 	for (iteration = 0; iteration < 2; iteration++)
 	{
 		Video->StartModeIterator (bits);
-		while (Video->NextMode (&twidth, &theight))
+		while (Video->NextMode (&twidth, &theight, NULL))
 		{
 			if (twidth == *width && theight == *height)
 				return;
@@ -164,9 +165,9 @@ void I_StartModeIterator (int bits)
 	Video->StartModeIterator (bits);
 }
 
-bool I_NextMode (int *width, int *height)
+bool I_NextMode (int *width, int *height, bool *letterbox)
 {
-	return Video->NextMode (width, height);
+	return Video->NextMode (width, height, letterbox);
 }
 
 DCanvas *I_NewStaticCanvas (int width, int height)
@@ -205,16 +206,24 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CCMD (vid_listmodes)
 {
+	static const char *ratios[5] = { "", " - 16:9", " - 16:10", "", " - 5:4" };
 	int width, height, bits;
+	bool letterbox;
 
 	for (bits = 1; bits <= 32; bits++)
 	{
 		Video->StartModeIterator (bits);
-		while (Video->NextMode (&width, &height))
+		while (Video->NextMode (&width, &height, &letterbox))
 		{
-			Printf ((width == DisplayWidth && height == DisplayHeight && bits == DisplayBits)
-				? PRINT_BOLD : PRINT_HIGH,
-				"%4d x%5d x%3d\n", width, height, bits);
+			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
+			int ratio = CheckRatio (width, height);
+			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
+				"%s%4d x%5d x%3d%s%s\n",
+				thisMode || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
+				width, height, bits,
+				ratios[ratio],
+				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"
+				);
 		}
 	}
 }

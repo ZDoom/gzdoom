@@ -87,7 +87,7 @@ int P_StartScript (AActor *who, line_t *where, int script, char *map, bool backS
 
 extern byte		*demo_p;		// [RH] Special "ticcmds" get recorded in demos
 extern char		savedescription[SAVESTRINGSIZE];
-extern char		*savegamefile;
+extern string	savegamefile;
 
 extern short consistancy[MAXPLAYERS][BACKUPTICS];
 
@@ -2159,8 +2159,8 @@ void Net_DoCommand (int type, byte **stream, int player)
 			{
 				// Paths sent over the network will be valid for the system that sent
 				// the save command. For other systems, the path needs to be changed.
-				char *fileonly = savegamefile;
-				char *slash = strrchr (savegamefile, '\\');
+				char *fileonly = savegamefile.GetChars();
+				char *slash = strrchr (savegamefile.GetChars(), '\\');
 				if (slash != NULL)
 				{
 					fileonly = slash + 1;
@@ -2170,13 +2170,9 @@ void Net_DoCommand (int type, byte **stream, int player)
 				{
 					fileonly = slash + 1;
 				}
-				if (fileonly != savegamefile)
+				if (fileonly != savegamefile.GetChars())
 				{
-					char newname[PATH_MAX];
-
-					G_BuildSaveName (newname, fileonly, -1);
-					delete[] savegamefile;
-					savegamefile = copystring(newname);
+					savegamefile = G_BuildSaveName (fileonly, -1);
 				}
 			}
 		}

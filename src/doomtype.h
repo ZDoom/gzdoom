@@ -37,6 +37,7 @@
 #endif
 
 #include <limits.h>
+#include "zstring.h"
 
 #ifndef __BYTEBOOL__
 #define __BYTEBOOL__

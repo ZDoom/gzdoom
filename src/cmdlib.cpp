@@ -15,9 +15,6 @@
 
 #include "m_alloc.h"
 
-#define PATHSEPERATOR   '/'
-
-
 /*
 progdir will hold the path up to the game directory, including the slash
 
@@ -30,12 +27,23 @@ gamedir will hold progdir + the game directory (id1, id2, etc)
 
 char progdir[1024];
 
+static inline bool IsSeperator (int c)
+{
+	if (c == '/')
+		return true;
+#ifdef WIN32
+	if (c == '\\' || c == ':')
+		return true;
+#endif
+	return false;
+}
+
 void FixPathSeperator (char *path)
 {
 	while (*path)
 	{
 		if (*path == '\\')
-			*path = PATHSEPERATOR;
+			*path = '/';
 		path++;
 	}
 }
@@ -126,11 +134,7 @@ void DefaultExtension (char *path, const char *extension)
 //
 	src = path + strlen(path) - 1;
 
-	while (src != path && *src != PATHSEPERATOR
-#ifdef _WIN32
-		&& *src != '\\'
-#endif
-		)
+	while (src != path && !IsSeperator(*src))
 	{
 		if (*src == '.')
 			return;                 // it has an extension
@@ -138,6 +142,20 @@ void DefaultExtension (char *path, const char *extension)
 	}
 
 	strcat (path, extension);
+}
+
+void DefaultExtension (string &path, const char *extension)
+{
+	char *src = &path[int(path.Len())-1];
+
+	while (src != &path[0] && !IsSeperator(*src))
+	{
+		if (*src == '.')
+			return;                 // it has an extension
+		src--;
+	}
+
+	path += extension;
 }
 
 
@@ -157,7 +175,7 @@ void ExtractFilePath (const char *path, char *dest)
 //
 // back up until a \ or the start
 //
-	while (src != path && *(src-1) != '\\' && *(src-1) != '/')
+	while (src != path && !IsSeperator(*(src-1)))
 		src--;
 
 	memcpy (dest, path, src-path);
@@ -173,7 +191,7 @@ void ExtractFileBase (const char *path, char *dest)
 	if (src >= path)
 	{
 		// back up until a / or the start
-		while (src != path && *(src-1) != PATHSEPERATOR)
+		while (src != path && !IsSeperator(*(src-1)))
 			src--;
 
 		// Check for files with drive specification but no path

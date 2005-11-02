@@ -114,7 +114,7 @@ SDWORD ACS_GlobalVars[NUM_GLOBALVARS];
 TAutoGrowArray<SDWORD> ACS_GlobalArrays[NUM_GLOBALVARS];
 
 extern BOOL netdemo;
-extern char BackupSaveName[PATH_MAX];
+extern string BackupSaveName;
 
 BOOL savegamerestore;
 
@@ -1151,7 +1151,7 @@ void G_NewInit ()
 	{
 		players[i].playerstate = PST_DEAD;
 	}
-	BackupSaveName[0] = 0;
+	BackupSaveName = "";
 	consoleplayer = 0;
 	NextSkill = -1;
 }

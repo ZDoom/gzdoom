@@ -83,7 +83,7 @@ public:
 	void Die (AActor *source, AActor *inflictor);
 };
 
-class APlayerChunk : APlayerPawn
+class APlayerChunk : public APlayerPawn
 {
 	DECLARE_STATELESS_ACTOR (APlayerChunk, APlayerPawn)
 };
@@ -178,6 +178,7 @@ public:
 	bool		centering;
 	byte		turnticks;
 	short		oldbuttons;
+	bool		attackdown;
 	int			health;					// only used between levels, mo->health
 										// is used during levels
 
@@ -282,7 +283,7 @@ inline FArchive &operator<< (FArchive &arc, player_s *&p)
 	return arc.SerializePointer (players, (BYTE **)&p, sizeof(*players));
 }
 
-#define MAX_DN_ANGLE	89//56		// Max looking down angle
-#define MAX_UP_ANGLE	89//32		// Max looking up angle
+#define MAX_DN_ANGLE	56		// Max looking down angle
+#define MAX_UP_ANGLE	32		// Max looking up angle
 
 #endif // __D_PLAYER_H__

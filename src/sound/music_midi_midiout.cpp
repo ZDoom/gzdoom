@@ -449,7 +449,7 @@ void MIDISong2::SendCommand (TrackInfo *track)
 				}
 				else
 				{
-					// Some device don't support master volume
+					// Some devices don't support master volume
 					// (e.g. the Audigy's software MIDI synth--but not its two hardware ones),
 					// so assume none of them do and scale channel volumes manually.
 					ChannelVolumes[event & 15] = data2;

@@ -43,9 +43,9 @@ END_DEFAULTS
 
 // A chunk of ice that is also a player -------------------------------------
 
-class AIceChunkHead : public APlayerPawn
+class AIceChunkHead : public APlayerChunk
 {
-	DECLARE_ACTOR (AIceChunkHead, APlayerPawn)
+	DECLARE_ACTOR (AIceChunkHead, APlayerChunk)
 };
 
 FState AIceChunkHead::States[] =

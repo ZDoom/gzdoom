@@ -49,7 +49,7 @@ public:
 	void ArchiveGlobalData ();
 	void ArchiveGameData (const char *gamename);
 	void AddAutoexec (DArgs *list, const char *gamename);
-	char *GetConfigPath (bool tryProg);
+	string GetConfigPath (bool tryProg);
 	void ReadNetVars ();
 
 protected:

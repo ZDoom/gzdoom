@@ -275,6 +275,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 		}
 	}
 	// Check for SPC format
+#ifdef _WIN32
 	else if (id == MAKE_ID('S','N','E','S') && len >= 66048)
 	{
 		char header[0x23];
@@ -292,6 +293,7 @@ void *I_RegisterSong (const char *filename, int offset, int len)
 			info = new SPCSong (file, len);
 		}
 	}
+#endif
 	// Check for FLAC format
 	else if (id == MAKE_ID('f','L','a','C'))
 	{

@@ -588,6 +588,7 @@ void FDecalLib::ParseGenerator ()
 	}
 
 	actor->DecalGenerator = decal;
+	decal->Users.Push (type);
 }
 
 void FDecalLib::ParseFader ()
@@ -823,6 +824,7 @@ void FDecalLib::AddDecal (FDecalBase *decal)
 
 	decal->SpawnID = 0;
 
+	// Check if this decal already exists.
 	while (node != NULL)
 	{
 		int lexx = stricmp (decal->Name, node->Name);
@@ -842,19 +844,27 @@ void FDecalLib::AddDecal (FDecalBase *decal)
 		}
 	}
 	if (node == NULL)
-	{
+	{ // No, add it.
 		decal->SpawnID = 0;
 		*prev = decal;
 		decal->Left = NULL;
 		decal->Right = NULL;
 	}
 	else
-	{
+	{ // Yes, replace the old one.
 		decal->Left = node->Left;
 		decal->Right = node->Right;
 		*prev = decal;
+
+		// Fix references to the old decal so that they use the new one instead.
+		for (unsigned int i = 0; i < node->Users.Size(); ++i)
+		{
+			((AActor *)node->Users[i]->ActorInfo->Defaults)->DecalGenerator = decal;
+		}
+		decal->Users = node->Users;
 		delete node;
 	}
+	// If this decal has an ID, make sure no existing decals have the same ID.
 	if (num != 0)
 	{
 		FDecalBase *spawner = ScanTreeForNum (num, Root);

@@ -1538,7 +1538,6 @@ static EIWADType IdentifyVersion (void)
 	WadStuff wads[sizeof(IWADNames)/sizeof(char *)];
 	size_t foundwads[NUM_IWAD_TYPES] = { 0 };
 	const char *iwadparm = Args.CheckValue ("-iwad");
-	char *homepath = NULL;
 	size_t numwads;
 	int pickwad;
 	size_t i;
@@ -1590,10 +1589,8 @@ static EIWADType IdentifyVersion (void)
 #ifdef unix
 					else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
 					{
-						homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
-						CheckIWAD (homepath, wads);
-						delete[] homepath;
-						homepath = NULL;
+						string homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
+						CheckIWAD (homepath.GetChars(), wads);
 					}
 #endif
 					else
@@ -1680,9 +1677,6 @@ static EIWADType IdentifyVersion (void)
 		delete[] wads[i].Path;
 	}
 
-	if (homepath)
-		delete[] homepath;
-
 	return wads[pickwad].Type;
 }
 
@@ -1715,7 +1709,7 @@ static const char *BaseFileSearch (const char *file, const char *ext)
 			if (stricmp (key, "Path") == 0)
 			{
 				const char *dir;
-				char *homepath = NULL;
+				string homepath;
 
 				if (*value == '$')
 				{
@@ -1732,7 +1726,7 @@ static const char *BaseFileSearch (const char *file, const char *ext)
 				else if (*value == '~' && (*(value + 1) == 0 || *(value + 1) == '/'))
 				{
 					homepath = GetUserFile (*(value + 1) ? value + 2 : value + 1);
-					dir = homepath;
+					dir = homepath.GetChars();
 				}
 #endif
 				else
@@ -1742,11 +1736,6 @@ static const char *BaseFileSearch (const char *file, const char *ext)
 				if (dir != NULL)
 				{
 					sprintf (wad, "%s%s%s", dir, dir[strlen (dir) - 1] != '/' ? "/" : "", file);
-					if (homepath != NULL)
-					{
-						delete[] homepath;
-						homepath = NULL;
-					}
 					if (FileExists (wad))
 					{
 						return wad;
@@ -1759,10 +1748,9 @@ static const char *BaseFileSearch (const char *file, const char *ext)
 	// Retry, this time with a default extension
 	if (ext != NULL)
 	{
-		static char tmp[PATH_MAX];
-		strcpy (tmp, file);
+		string tmp = file;
 		DefaultExtension (tmp, ext);
-		return BaseFileSearch (tmp, NULL);
+		return BaseFileSearch (tmp.GetChars(), NULL);
 	}
 	return NULL;
 }

@@ -56,6 +56,7 @@ extern HWND Window;
 #include "v_font.h"
 #include "a_pickups.h"
 #include "doomstat.h"
+#include "i_system.h"
 
 EXTERN_CVAR (Bool, con_centernotify)
 EXTERN_CVAR (Int, msg0color)
@@ -73,12 +74,11 @@ char *WeaponSection;
 
 FGameConfigFile::FGameConfigFile ()
 {
-	char *pathname;
+	string pathname;
 	
 	bMigrating = false;
 	pathname = GetConfigPath (true);
 	ChangePathName (pathname);
-	delete[] pathname;
 	LoadConfigFile (MigrateStub, NULL);
 
 	if (!HaveSections ())
@@ -91,7 +91,6 @@ FGameConfigFile::FGameConfigFile ()
 	// directory, this effectively does nothing.
 	pathname = GetConfigPath (false);
 	ChangePathName (pathname);
-	delete[] pathname;
 
 	// Set default IWAD search paths if none present
 	if (!SetSection ("IWADSearch.Directories"))
@@ -395,10 +394,8 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 		}
 	}
 
-	// Until all the Strife weapons are coded, always reset
-	// the Strife weapon slots.
 	strcpy (subsection, "WeaponSlots");
-	if (game != Strife && SetSection (section))
+	if (SetSection (section))
 	{
 		LocalWeapons.RestoreSlots (*this);
 	}
@@ -511,13 +508,14 @@ void FGameConfigFile::ArchiveGlobalData ()
 	C_ArchiveCVars (this, 3);
 }
 
-char *FGameConfigFile::GetConfigPath (bool tryProg)
+string FGameConfigFile::GetConfigPath (bool tryProg)
 {
-	char *path;
+	char *pathval;
+	string path;
 
-	path = Args.CheckValue ("-config");
-	if (path)
-		return copystring (path);
+	pathval = Args.CheckValue ("-config");
+	if (pathval != NULL)
+		return string(pathval);
 
 #ifndef unix
 	path = NULL;
@@ -541,23 +539,23 @@ char *FGameConfigFile::GetConfigPath (bool tryProg)
 			++probe;
 		}
 
-		path = new char[strlen (uname) + strlen (progdir) + 11];
-		sprintf (path, "%szdoom-%s.ini", progdir, uname);
+		path = progdir;
+		path += "zdoom-";
+		path += uname;
+		path += ".ini";
 		if (tryProg)
 		{
-			if (!FileExists (path))
+			if (!FileExists (path.GetChars()))
 			{
-				delete[] path;
-				path = NULL;
+				path = "";
 			}
 		}
 		else
 		{ // check if writeable
-			FILE *checker = fopen (path, "a");
+			FILE *checker = fopen (path.GetChars(), "a");
 			if (checker == NULL)
 			{
-				delete[] path;
-				path = NULL;
+				path = "";
 			}
 			else
 			{
@@ -566,13 +564,13 @@ char *FGameConfigFile::GetConfigPath (bool tryProg)
 		}
 	}
 
-	if (path == NULL)
+	if (path.IsEmpty())
 	{
 		if (Args.CheckParm ("-cdrom"))
 			return copystring ("c:\\zdoomdat\\zdoom.ini");
 
-		path = new char[strlen (progdir) + 10];
-		sprintf (path, "%szdoom.ini", progdir);
+		path = progdir;
+		path += "zdoom.ini";
 	}
 	return path;
 #else
@@ -612,7 +610,7 @@ void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 		// with a default autoexec.cfg file present.
 		if (!SetSection (section))
 		{
-			char *path;
+			string path;
 			
 #ifndef unix
 			if (Args.CheckParm ("-cdrom"))
@@ -621,16 +619,14 @@ void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
 			}
 			else
 			{
-				path = new char[strlen (progdir) + 13];
-				strcpy (path, progdir);
-				strcat (path, "autoexec.cfg");
+				path = progdir;
+				path += "autoexec.cfg";
 			}
 #else
 			path = GetUserFile ("autoexec.cfg");
 #endif
 			SetSection (section, true);
-			SetValueForKey ("Path", path);
-			delete[] path;
+			SetValueForKey ("Path", path.GetChars());
 		}
 		// Run any files listed in the <game>.AutoExec section
 		if (SetSection (section))
@@ -756,7 +752,6 @@ void FGameConfigFile::SetupWeaponList (const char *gamename)
 
 CCMD (whereisini)
 {
-	char *path = GameConfig->GetConfigPath (false);
-	Printf ("%s\n", path);
-	delete[] path;
+	string path = GameConfig->GetConfigPath (false);
+	Printf ("%s\n", path.GetChars());
 }

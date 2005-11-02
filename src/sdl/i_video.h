@@ -47,7 +47,7 @@ void I_ClosestResolution (int *width, int *height, int bits);
 bool I_SetResolution (int width, int height, int bits);
 
 void I_StartModeIterator (int bits);
-bool I_NextMode (int *width, int *height);
+bool I_NextMode (int *width, int *height, bool letterbox);
 
 bool I_AllocateScreen (DCanvas *canvas, int width, int height, int bits);
 void I_FreeScreen (DCanvas *canvas);

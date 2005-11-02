@@ -130,54 +130,25 @@ private:
 	void CopyMeta (const FMetaTable *other);
 };
 
-#ifdef __GNUC__
-// With some options and versions, GCC initializes the pointer list at run-time, so these
-// entries must not be const. Otherwise, you get an access violation.
-#	define POINTY_TYPE(cls) DObject *cls::*
-#else
-#	define POINTY_TYPE(cls) DObject *cls::* const
-#endif
-
-
 struct TypeInfo
 {
-#if !defined(_MSC_VER) && !defined(__GNUC__)
-	TypeInfo () : Pointers (NULL) { RegisterType(); }
-	TypeInfo (Dobject *DObject::*  *p, const char *inName, TypeInfo *inParentType, unsigned int inSize)
-		: Name (inName),
-		ParentType (inParentType),
-		SizeOf (inSize),
-		Pointers (p),
-		TypeIndex (0),
-		ActorInfo (NULL),
-		HashNext (0)
-	{ RegisterType(); }
-	TypeInfo (DObject *Dobject::* const *p, const char *inName, TypeInfo *inParentType, unsigned int inSize, void (*inNew)(void *))
-		: Name (inName),
-		ParentType (inParentType),
-		SizeOf (inSize),
-		Pointers (p),
-		ConstructNative (inNew),
-		TypeIndex(0),
-		ActorInfo (NULL),
-		HashNext (0)
-	{ RegisterType(); }
-#else
 	static void StaticInit ();
-#endif
+
 	const char *Name;
 	TypeInfo *ParentType;
 	unsigned int SizeOf;
-	POINTY_TYPE(DObject) *Pointers;
+	const size_t *Pointers;	// object pointers defined by this class *only*
 	void (*ConstructNative)(void *);
 	FActorInfo *ActorInfo;
 	unsigned int HashNext;
 	unsigned short TypeIndex;
 	FMetaTable Meta;
+	const size_t *FlatPointers;	// object pointers defined by this class and all its superclasses; not initialized by default
 
 	void RegisterType ();
 	DObject *CreateNew () const;
 	TypeInfo *CreateDerivedClass (char *name, unsigned int size);
+	void BuildFlatPointers ();
 
 	// Returns true if this type is an ancestor of (or same as) the passed type.
 	bool IsAncestorOf (const TypeInfo *ti) const
@@ -208,7 +179,6 @@ struct TypeInfo
 
 #define RUNTIME_TYPE(object)    (object->GetClass())    // Passed an object, returns the type of that object
 #define RUNTIME_CLASS(cls)              (&cls::_StaticType)             // Passed a class name, returns a TypeInfo representing that class
-#define NATIVE_TYPE(object)             (object->StaticType())  // Passed an object, returns the type of the C++ class representing the object
 
 enum EInPlace { EC_InPlace };
 
@@ -225,10 +195,12 @@ private: \
 		private: static void InPlaceConstructor (void *mem);
 
 #define HAS_OBJECT_POINTERS \
-	static POINTY_TYPE(ThisClass) _Pointers_[];
+	static const size_t PointerOffsets[];
 
-#define DECLARE_POINTER(field)  (POINTY_TYPE(ThisClass))&ThisClass::field,
-#define END_POINTERS			0 };
+// Taking the address of a field in an object at address 1 instead of
+// address 0 keeps GCC from complaining about possible misuse of offsetof.
+#define DECLARE_POINTER(field)	(size_t)&((ThisClass*)1)->field - 1,
+#define END_POINTERS			~0 };
 
 #if !defined(_MSC_VER) && !defined(__GNUC__)
 #       define _IMP_TYPEINFO(cls,ptr,create) \
@@ -259,8 +231,8 @@ private: \
 
 #define IMPLEMENT_POINTY_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \
-	_IMP_TYPEINFO(cls,(POINTY_TYPE(DObject) *)cls::_Pointers_,cls::InPlaceConstructor) \
-	POINTY_TYPE(cls) cls::_Pointers_[] = {
+	_IMP_TYPEINFO(cls,cls::PointerOffsets,cls::InPlaceConstructor) \
+	const size_t cls::PointerOffsets[] = {
 
 #define IMPLEMENT_CLASS(cls) \
 	_IMP_CREATE_OBJ(cls) \

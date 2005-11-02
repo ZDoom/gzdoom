@@ -1317,6 +1317,7 @@ void A_SpawnBishop(AActor *actor)
 		if (!P_TestMobjLocation(mo))
 		{
 			mo->Destroy ();
+			level.total_monsters--;
 		}
 		else if (actor->target != NULL)
 		{ // [RH] Make the new bishops inherit the Heriarch's target

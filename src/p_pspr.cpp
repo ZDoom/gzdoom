@@ -396,8 +396,7 @@ void P_CheckWeaponFire (player_t *player)
 	if (weapon == NULL)
 		return;
 
-	// Put the weapon away if the player has a pending weapon or has
-	// died.
+	// Put the weapon away if the player has a pending weapon or has died.
 	if ((player->morphTics == 0 && player->PendingWeapon != WP_NOCHANGE) || player->health <= 0)
 	{
 		P_SetPsprite (player, ps_weapon, weapon->GetDownState());
@@ -407,12 +406,16 @@ void P_CheckWeaponFire (player_t *player)
 	// Check for fire. Some weapons do not auto fire.
 	if (player->cmd.ucmd.buttons & BT_ATTACK)
 	{
-		if (!(player->oldbuttons & BT_ATTACK) || !(weapon->flags & WIF_NOAUTOFIRE))
+		if (!player->attackdown || !(weapon->WeaponFlags & WIF_NOAUTOFIRE))
 		{
-			player->oldbuttons |= BT_ATTACK;
+			player->attackdown = true;
 			P_FireWeapon (player);
 			return;
 		}
+	}
+	else
+	{
+		player->attackdown = false;
 	}
 }
 

@@ -192,6 +192,7 @@ void DThinker::DestroyAllThinkers ()
 {
 	int i;
 
+	DObject::BeginFrame ();
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
 		if (i != STAT_TRAVELLING)
@@ -200,6 +201,7 @@ void DThinker::DestroyAllThinkers ()
 			DestroyThinkersInList (FreshThinkers[i].Head);
 		}
 	}
+	DObject::EndFrame ();
 }
 
 // Destroy all thinkers except for player-controlled actors
@@ -209,6 +211,7 @@ void DThinker::DestroyMostThinkers ()
 {
 	int i;
 
+	DObject::BeginFrame ();
 	for (i = 0; i <= MAX_STATNUM; i++)
 	{
 		if (i != STAT_TRAVELLING)
@@ -217,6 +220,7 @@ void DThinker::DestroyMostThinkers ()
 			DestroyMostThinkersInList (FreshThinkers[i], i);
 		}
 	}
+	DObject::EndFrame ();
 }
 
 void DThinker::DestroyThinkersInList (Node *node)
@@ -224,9 +228,7 @@ void DThinker::DestroyThinkersInList (Node *node)
 	while (node->Succ != NULL)
 	{
 		Node *next = node->Succ;
-		DObject::BeginFrame ();
 		static_cast<DThinker *> (node)->Destroy ();
-		DObject::EndFrame ();
 		node = next;
 	}
 }

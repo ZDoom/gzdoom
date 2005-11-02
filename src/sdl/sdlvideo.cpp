@@ -149,7 +149,7 @@ void SDLVideo::StartModeIterator (int bits)
 	IteratorBits = bits;
 }
 
-bool SDLVideo::NextMode (int *width, int *height)
+bool SDLVideo::NextMode (int *width, int *height, bool *letterbox)
 {
 	if (IteratorBits != 8)
 		return false;
@@ -394,10 +394,11 @@ void SDLFB::Update ()
 
 	if (NeedGammaUpdate)
 	{
+		bool Windowed = false;
 		NeedGammaUpdate = false;
-		CalcGamma (Windowed || rgamma == 0.f ? Gamma : Gamma * rgamma, GammaTable[0]);
-		CalcGamma (Windowed || ggamma == 0.f ? Gamma : Gamma * ggamma, GammaTable[1]);
-		CalcGamma (Windowed || bgamma == 0.f ? Gamma : Gamma * bgamma, GammaTable[2]);
+		CalcGamma ((Windowed || rgamma == 0.f) ? Gamma : (Gamma * rgamma), GammaTable[0]);
+		CalcGamma ((Windowed || ggamma == 0.f) ? Gamma : (Gamma * ggamma), GammaTable[1]);
+		CalcGamma ((Windowed || bgamma == 0.f) ? Gamma : (Gamma * bgamma), GammaTable[2]);
 		NeedPalUpdate = true;
 	}
 	

@@ -341,16 +341,11 @@ void I_SetTitleString (const char *title)
 	strcpy (DoomStartupTitle, title);
 }
 
-void I_PrintStr (int xp, const char *cp, int count, BOOL scroll)
+void I_PrintStr (const char *cp, bool scroll)
 {
-	char string[4096];
-
-	memcpy (string, cp, count);
+	fputs (cp, stdout);
 	if (scroll)
-		string[count++] = '\n';
-	string[count] = 0;
-
-	fputs (string, stdout);
+		putc ('\n', stdout);
 	fflush (stdout);
 }
 
@@ -403,7 +398,7 @@ void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
     {
 		return fileinfo;
     }
-    return NULL;
+    return (void*)-1;
 }
 
 int I_FindNext (void *handle, findstate_t *fileinfo)

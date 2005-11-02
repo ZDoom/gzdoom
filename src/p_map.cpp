@@ -951,7 +951,10 @@ BOOL PIT_CheckThing (AActor *thing)
 				S_Sound (tmthing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
 				damage = ((pr_checkthing()&3)+2)*tmthing->damage;
 				P_DamageMobj (thing, tmthing, tmthing->target, damage, tmthing->DamageType);
-				P_TraceBleed (damage, thing, tmthing);
+				if (!(tmthing->flags3 & MF3_BLOODLESSIMPACT))
+				{
+					P_TraceBleed (damage, thing, tmthing);
+				}
 				if (thing->flags2 & MF2_PUSHABLE
 					&& !(tmthing->flags2 & MF2_CANNOTPUSH))
 				{ // Push thing
@@ -1311,9 +1314,6 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 	thing->height = realheight;
 	if (tmflags & MF_NOCLIP)
 		return (BlockingMobj = thingblocker) == NULL;
-	if (tmceilingz - tmfloorz < thing->height)
-		return false;
-
 	xl = (tmbbox[BOXLEFT] - bmaporgx)>>MAPBLOCKSHIFT;
 	xh = (tmbbox[BOXRIGHT] - bmaporgx)>>MAPBLOCKSHIFT;
 	yl = (tmbbox[BOXBOTTOM] - bmaporgy)>>MAPBLOCKSHIFT;
@@ -1327,6 +1327,9 @@ BOOL P_CheckPosition (AActor *thing, fixed_t x, fixed_t y)
 		for (by=yl ; by<=yh ; by++)
 			if (!P_BlockLinesIterator (bx,by,PIT_CheckLine))
 				return false;
+
+	if (tmceilingz - tmfloorz < thing->height)
+		return false;
 
 	if (stepthing != NULL)
 	{
@@ -1460,8 +1463,8 @@ static void CheckForPushSpecial (line_t *line, int side, AActor *mobj)
 		}
 		else if (mobj->flags2 & MF2_IMPACT)
 		{
-			P_ActivateLine (line, (mobj->flags & MF_MISSILE) ? mobj->target : mobj,
-				side, SPAC_IMPACT);
+			P_ActivateLine (line, ((mobj->flags & MF_MISSILE) && (mobj->target != NULL))
+				? mobj->target : mobj, side, SPAC_IMPACT);
 		}	
 	}
 }
@@ -3339,7 +3342,7 @@ BOOL PIT_RadiusAttack (AActor *thing)
 
 			if (bombspot->z > thing->z)
 			{
-				dz = float (thing->z + thing->height - bombspot->z);
+				dz = float (bombspot->z - thing->z - thing->height);
 			}
 			else
 			{

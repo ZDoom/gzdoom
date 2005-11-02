@@ -1243,6 +1243,7 @@ bool ABasicArmorPickup::Use (bool pickup)
 	if (armor == NULL)
 	{
 		armor = Spawn<ABasicArmor> (0,0,0);
+		armor->BecomeItem ();
 		armor->SavePercent = SavePercent;
 		armor->Amount = armor->MaxAmount = SaveAmount;
 		armor->Icon = Icon;
@@ -1313,6 +1314,7 @@ bool ABasicArmorBonus::Use (bool pickup)
 	if (armor == NULL)
 	{
 		armor = Spawn<ABasicArmor> (0,0,0);
+		armor->BecomeItem ();
 		armor->SavePercent = SavePercent;
 		armor->Amount = saveAmount;
 		armor->MaxAmount = MaxSaveAmount;

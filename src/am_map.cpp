@@ -2031,10 +2031,10 @@ void AM_drawThings (int color)
 			{
 				static const mline_t box[4] =
 				{
-					{ -MAPUNIT, -MAPUNIT,  MAPUNIT, -MAPUNIT },
-					{  MAPUNIT, -MAPUNIT,  MAPUNIT,  MAPUNIT },
-					{  MAPUNIT,  MAPUNIT, -MAPUNIT,  MAPUNIT },
-					{ -MAPUNIT,  MAPUNIT, -MAPUNIT, -MAPUNIT },
+					{ { -MAPUNIT, -MAPUNIT }, {  MAPUNIT, -MAPUNIT } },
+					{ {  MAPUNIT, -MAPUNIT }, {  MAPUNIT,  MAPUNIT } },
+					{ {  MAPUNIT,  MAPUNIT }, { -MAPUNIT,  MAPUNIT } },
+					{ { -MAPUNIT,  MAPUNIT }, { -MAPUNIT, -MAPUNIT } },
 				};
 
 				AM_drawLineCharacter (box, 4, t->radius >> FRACTOMAPBITS, angle - t->angle, color, p.x, p.y);

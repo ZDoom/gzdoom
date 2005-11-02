@@ -13,6 +13,7 @@
 #endif
 
 #include "doomtype.h"
+#include "zstring.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,6 +33,7 @@ extern	char	progdir[1024];
 void	FixPathSeperator (char *path);
 
 void 	DefaultExtension (char *path, const char *extension);
+void 	DefaultExtension (string &path, const char *extension);
 
 void	ExtractFilePath (const char *path, char *dest);
 void 	ExtractFileBase (const char *path, char *dest);

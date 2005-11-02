@@ -580,12 +580,6 @@ bool AActor::SetStateNF (FState *newstate)
 
 void AActor::AddInventory (AInventory *item)
 {
-	// If it's still linked into the world, unlink it
-	if (!(item->flags & MF_NOSECTOR))
-	{
-		item->BecomeItem ();
-	}
-
 	// Check if it's already attached to an actor
 	if (item->Owner != NULL)
 	{

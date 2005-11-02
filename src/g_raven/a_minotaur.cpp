@@ -258,7 +258,7 @@ void AMinotaur::Die (AActor *source, AActor *inflictor)
 			//if (!(mo->flags&MF_COUNTKILL)) continue;		// for morphed minotaurs
 			if (mo->flags&MF_CORPSE) continue;
 			if (mo->StartTime >= 0 && (level.time - StartTime) >= MAULATORTICS) continue;
-			if (mo->tracer->player == tracer->player) break;
+			if (mo->tracer != NULL && mo->tracer->player == tracer->player) break;
 		}
 
 		if (mo == NULL)

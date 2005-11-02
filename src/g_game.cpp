@@ -179,7 +179,7 @@ int 			turnheld;								// for accelerative turning
 int 			mousex;
 int 			mousey; 		
 
-char			*savegamefile;
+string			savegamefile;
 char			savedescription[SAVESTRINGSIZE];
 
 // [RH] Name of screenshot file to generate (usually NULL)
@@ -190,8 +190,8 @@ int 			bodyqueslot;
 
 void R_ExecuteSetViewSize (void);
 
-char savename[PATH_MAX];
-char BackupSaveName[PATH_MAX];
+string savename;
+string BackupSaveName;
 
 bool SendLand;
 const AInventory *SendItemUse, *SendItemDrop;
@@ -592,10 +592,9 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	{
 		sendsave = false;
 		Net_WriteByte (DEM_SAVEGAME);
-		Net_WriteString (savegamefile);
+		Net_WriteString (savegamefile.GetChars());
 		Net_WriteString (savedescription);
-		delete[] savegamefile;
-		savegamefile = NULL;
+		savegamefile = "";
 	}
 	if (SendItemUse == (const AInventory *)1)
 	{
@@ -1121,7 +1120,7 @@ void G_PlayerReborn (int player)
 
     p->skill = b_skill;	//Added by MC:
 
-	p->oldbuttons = 255;	// don't do anything immediately
+	p->oldbuttons = 255, p->attackdown = true;	// don't do anything immediately
 	p->playerstate = PST_LIVE;
 
 	if (gamestate != GS_TITLELEVEL)
@@ -1326,14 +1325,14 @@ void G_DoReborn (int playernum, bool freshbot)
 {
 	if (!multiplayer)
 	{
-		if (BackupSaveName[0] && FileExists (BackupSaveName))
+		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName.GetChars()))
 		{ // Load game from the last point it was saved
-			strcpy (savename, BackupSaveName);
+			savename = BackupSaveName;
 			gameaction = ga_loadgame;
 		}
 		else
 		{ // Reload the level from scratch
-			BackupSaveName[0] = 0;
+			BackupSaveName = "";
 			G_InitNew (level.mapname, false);
 //			gameaction = ga_loadlevel;
 		}
@@ -1457,7 +1456,7 @@ void G_LoadGame (char* name)
 {
 	if (name != NULL)
 	{
-		strcpy (savename, name);
+		savename = name;
 		gameaction = ga_loadgame;
 	}
 }
@@ -1575,10 +1574,10 @@ void G_DoLoadGame ()
 
 	gameaction = ga_nothing;
 
-	FILE *stdfile = fopen (savename, "rb");
+	FILE *stdfile = fopen (savename.GetChars(), "rb");
 	if (stdfile == NULL)
 	{
-		Printf ("Could not read savegame '%s'\n", savename);
+		Printf ("Could not read savegame '%s'\n", savename.GetChars());
 		return;
 	}
 
@@ -1586,7 +1585,7 @@ void G_DoLoadGame ()
 	if (png == NULL)
 	{
 		fclose (stdfile);
-		Printf ("'%s' is not a valid (PNG) savegame\n", savename);
+		Printf ("'%s' is not a valid (PNG) savegame\n", savename.GetChars());
 		return;
 	}
 
@@ -1669,7 +1668,7 @@ void G_DoLoadGame ()
 		level.info->snapshot = NULL;
 	}
 
-	strcpy (BackupSaveName, savename);
+	BackupSaveName = savename;
 
 	delete png;
 	fclose (stdfile);
@@ -1683,13 +1682,14 @@ void G_DoLoadGame ()
 //
 void G_SaveGame (const char *filename, const char *description)
 {
-	savegamefile = copystring (filename);
+	savegamefile = filename;
 	strcpy (savedescription, description);
 	sendsave = true;
 }
 
-void G_BuildSaveName (char *name, const char *prefix, int slot)
+string G_BuildSaveName (const char *prefix, int slot)
 {
+	string name;
 	const char *leader;
 	const char *slash = "";
 
@@ -1718,20 +1718,19 @@ void G_BuildSaveName (char *name, const char *prefix, int slot)
 #endif
 	if (slot < 0)
 	{
-		sprintf (name, "%s%s%s", leader, slash, prefix);
+		name.Format ("%s%s%s", leader, slash, prefix);
 	}
 	else
 	{
-		sprintf (name, "%s%s%s%d.zds", leader, slash, prefix, slot);
+		name.Format ("%s%s%s%d.zds", leader, slash, prefix, slot);
 	}
 #ifdef unix
 	if (leader[0] == 0)
 	{
-		char *path = GetUserFile (name);
-		strcpy (name, path);
-		delete[] path;
+		name = GetUserFile (name);
 	}
 #endif
+	return name;
 }
 
 CVAR (Int, autosavenum, 0, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -1753,14 +1752,12 @@ void G_DoAutoSave ()
 
 	// Keep up to four autosaves at a time
 	UCVarValue num;
-	char name[PATH_MAX];
 	char *readableTime;
 	
 	num.Int = (autosavenum + 1) & 3;
 	autosavenum.ForceSet (num, CVAR_Int);
 
-	G_BuildSaveName (name, "auto", num.Int);
-	savegamefile = copystring (name);
+	savegamefile = G_BuildSaveName ("auto", num.Int);
 
 	readableTime = myasctime ();
 	strcpy (savedescription, "Autosave ");
@@ -1911,13 +1908,12 @@ void G_DoSaveGame (bool okForQuicksave)
 
 	G_SnapshotLevel ();
 
-	FILE *stdfile = fopen (savegamefile, "wb");
+	FILE *stdfile = fopen (savegamefile.GetChars(), "wb");
 
 	if (stdfile == NULL)
 	{
-		Printf ("Could not create savegame '%s'\n", savegamefile);
-		delete[] savegamefile;
-		savegamefile = NULL;
+		Printf ("Could not create savegame '%s'\n", savegamefile.GetChars());
+		savegamefile = "";
 		gameaction = ga_nothing;
 		return;
 	}
@@ -1960,7 +1956,7 @@ void G_DoSaveGame (bool okForQuicksave)
 		M_AppendPNGChunk (stdfile, MAKE_ID('s','n','X','t'), &next, 1);
 	}
 
-	M_NotifyNewSave (savegamefile, savedescription, okForQuicksave);
+	M_NotifyNewSave (savegamefile.GetChars(), savedescription, okForQuicksave);
 	gameaction = ga_nothing;
 	savedescription[0] = 0;
 
@@ -1969,10 +1965,8 @@ void G_DoSaveGame (bool okForQuicksave)
 
 	Printf ("%s\n", GStrings("GGSAVED"));
 
-	strcpy (BackupSaveName, savegamefile);
-
-	delete[] savegamefile;
-	savegamefile = NULL;
+	BackupSaveName = savegamefile;
+	savegamefile = "";
 }
 
 

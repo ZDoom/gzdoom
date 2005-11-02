@@ -356,7 +356,11 @@ void WI_slamBackground ()
 {
 	if (background)
 	{
-		screen->DrawTexture (background, 0, 0, DTA_320x200, true, TAG_DONE);
+		screen->DrawTexture (background, 0, 0,
+			DTA_VirtualWidth, background->GetWidth(),
+			DTA_VirtualHeight, background->GetHeight(),
+			DTA_Masked, false,
+			TAG_DONE);
 		screen->FillBorder (NULL);
 		if (DrawFoM)
 		{

@@ -7,6 +7,13 @@
 
 #include "zstring.h"
 
+#ifndef _MSC_VER
+#include <stdint.h>
+#else
+typedef unsigned __int64 uint64_t;
+typedef signed __int64 int64_t;
+#endif
+
 // Even though the standard C library has a function to do printf-style formatting in a
 // generic way, there is no standard interface to this function. So if you want to do
 // some printf formatting that doesn't fit in the context of the provided functions,
@@ -233,7 +240,7 @@ namespace StringFormat
 		int bufflen = 0;
 		int outlen = 0;
 		unsigned int intarg = 0;
-		unsigned __int64 int64arg = 0;
+		uint64_t int64arg = 0;
 		const void *voidparg;
 		const char *charparg;
 		const char *xits = hexits;
@@ -264,7 +271,7 @@ namespace StringFormat
 				}
 				else
 				{
-					int64arg = (unsigned __int64)(size_t)voidparg;
+					int64arg = (uint64_t)(size_t)voidparg;
 					precision = 16;
 					size = F_LONGLONG;
 				}
@@ -284,16 +291,16 @@ namespace StringFormat
 				else if (size == F_LONG)
 				{
 					if (sizeof(long) == sizeof(int)) intarg = va_arg (arglist, int);
-					else { int64arg = va_arg (arglist, __int64); size = F_LONGLONG; }
+					else { int64arg = va_arg (arglist, int64_t); size = F_LONGLONG; }
 				}
 				else if (size == F_BIGI)
 				{
 					if (sizeof(void*) == sizeof(int)) intarg = va_arg (arglist, int);
-					else { int64arg = va_arg (arglist, __int64); size = F_LONGLONG; }
+					else { int64arg = va_arg (arglist, int64_t); size = F_LONGLONG; }
 				}
 				else if (size == F_LONGLONG)
 				{
-					int64arg = va_arg (arglist, __int64);
+					int64arg = va_arg (arglist, int64_t);
 				}
 				else
 				{
@@ -334,7 +341,7 @@ namespace StringFormat
 						if (type != 'u')
 						{
 							// If a signed number is negative, set the negative flag and make it positive.
-							signed __int64 sint64arg = (signed __int64)int64arg;
+							int64_t sint64arg = (int64_t)int64arg;
 							if (sint64arg < 0)
 							{
 								flags |= F_NEGATIVE;
@@ -477,7 +484,7 @@ namespace StringFormat
 			}
 			else if (size == F_LONGLONG)
 			{
-				*va_arg (arglist, __int64 *) = inlen;
+				*va_arg (arglist, int64_t *) = inlen;
 			}
 			else if (size == F_BIGI)
 			{
@@ -507,7 +514,7 @@ namespace StringFormat
 			if (precision < 0) precision = 6;
 
 			flags |= F_SIGNED;
-			int64arg = *(unsigned __int64 *)&number;
+			int64arg = *(uint64_t*)&number;
 
 			if ((int64arg & FP_EXPONENT_MASK) == FP_EXPONENT_MASK)
 			{

@@ -600,3 +600,63 @@ CCMD (warp)
 		Net_WriteWord (atoi (argv[2]));
 	}
 }
+
+//==========================================================================
+//
+// CCMD load
+//
+// Load a saved game.
+//
+//==========================================================================
+
+CCMD (load)
+{
+    if (argv.argc() != 2)
+	{
+        Printf ("usage: load <filename>\n");
+        return;
+    }
+	if (netgame)
+	{
+		Printf ("cannot load during a network game\n");
+		return;
+	}
+	string fname = argv[1];
+	DefaultExtension (fname, ".zds");
+    G_LoadGame (fname.GetChars());
+}
+
+//==========================================================================
+//
+// CCMD save
+//
+// Save the current game.
+//
+//==========================================================================
+
+CCMD (save)
+{
+    if (argv.argc() < 2 || argv.argc() > 3)
+	{
+        Printf ("usage: save <filename> [description]\n");
+        return;
+    }
+    if (!usergame)
+	{
+        Printf ("not in a saveable game\n");
+        return;
+    }
+    if (gamestate != GS_LEVEL)
+	{
+        Printf ("not in a level\n");
+        return;
+    }
+    if(players[consoleplayer].health <= 0 && !multiplayer)
+    {
+        Printf ("player is dead in a single-player game\n");
+        return;
+    }
+    string fname = argv[1];
+	DefaultExtension (fname, ".zds");
+	G_SaveGame (fname.GetChars(), argv.argc() > 2 ? argv[2] : argv[1]);
+}

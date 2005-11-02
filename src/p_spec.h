@@ -774,6 +774,7 @@ protected:
 	int			m_PerStepTime;
 
 	void StartFloorSound ();
+	void SetFloorChangeType (sector_t *sec, int change);
 
 	friend bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 		fixed_t stairsize, fixed_t speed, int delay, int reset, int igntxt,

@@ -256,6 +256,26 @@ void DElevator::Tick ()
 	}
 }
 
+void DFloor::SetFloorChangeType (sector_t *sec, int change)
+{
+	m_Texture = sec->floorpic;
+
+	switch (change & 3)
+	{
+	case 1:
+		m_NewSpecial = 0;
+		m_Type = DFloor::genFloorChg0;
+		break;
+	case 2:
+		m_Type = DFloor::genFloorChg;
+		break;
+	case 3:
+		m_NewSpecial = sec->special & ~SECRET_MASK;
+		m_Type = DFloor::genFloorChgT;
+		break;
+	}
+}
+
 static void StartFloorSound (sector_t *sec)
 {
 	if (sec->seqType >= 0)
@@ -520,42 +540,13 @@ manual_floor:
 
 				if (modelsec != NULL)
 				{
-					floor->m_Texture = modelsec->floorpic;
-					switch (change & 3)
-					{
-					case 1:
-						floor->m_NewSpecial = 0;
-						floor->m_Type = DFloor::genFloorChg0;
-						break;
-					case 2:
-						floor->m_NewSpecial = sec->special & ~SECRET_MASK;
-						floor->m_Type = DFloor::genFloorChgT;
-						break;
-					case 3:
-						floor->m_Type = DFloor::genFloorChg;
-						break;
-					}
+					floor->SetFloorChangeType (modelsec, change);
 				}
 			}
 			else if (line)
 			{
 				// Trigger model change
-				floor->m_Texture = line->frontsector->floorpic;
-
-				switch (change & 3)
-				{
-				case 1:
-					floor->m_NewSpecial = 0;
-					floor->m_Type = DFloor::genFloorChg0;
-					break;
-				case 2:
-					floor->m_NewSpecial = sec->special & ~SECRET_MASK;
-					floor->m_Type = DFloor::genFloorChgT;
-					break;
-				case 3:
-					floor->m_Type = DFloor::genFloorChg;
-					break;
-				}
+				floor->SetFloorChangeType (line->frontsector, change);
 			}
 		}
 		if (manual)

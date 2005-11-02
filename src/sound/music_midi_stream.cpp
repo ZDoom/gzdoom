@@ -6,7 +6,6 @@
 #include "v_text.h"
 #include "m_menu.h"
 
-static HANDLE	BufferReturnEvent;
 static DWORD	nummididevices;
 static bool		nummididevicesset;
 	   DWORD	midivolume;
@@ -64,8 +63,11 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (oldmididev != mididevice && currSong)
 	{
 		MusInfo *song = currSong;
-		I_StopSong (song);
-		I_PlaySong (song, song->m_Looping);
+		if (song->m_Status == MusInfo::STATE_Playing)
+		{
+			I_StopSong (song);
+			I_PlaySong (song, song->m_Looping);
+		}
 	}
 }
 
@@ -74,23 +76,10 @@ void I_InitMusicWin32 ()
 	nummididevices = midiOutGetNumDevs ();
 	nummididevicesset = true;
 	snd_mididevice.Callback ();
-	if (!nomusic)
-	{
-		if ((BufferReturnEvent = CreateEvent (NULL, FALSE, FALSE, NULL)) == NULL)
-		{
-			Printf ("Could not create MIDI callback event.\nMIDI music will be disabled.\n");
-			nomusic = true;
-		}
-	}
 }
 
 void I_ShutdownMusicWin32 ()
 {
-	if (BufferReturnEvent)
-	{
-		CloseHandle (BufferReturnEvent);
-		BufferReturnEvent = NULL;
-	}
 	// I don't know if this is an NT 4.0 bug or an FMOD bug, but if waveout
 	// is used for sound, and a MIDI is also played, then when I quit, the OS
 	// tells me a free block was modified after being freed. This is

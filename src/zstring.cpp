@@ -115,9 +115,23 @@ string &string::operator = (const char *copyStr)
 	{
 		Pond.Free (Chars);
 	}
-	size_t len = strlen (copyStr);
-	Chars = Pond.Alloc (this, len);
-	StrCopy (Chars, copyStr, len);
+	if (copyStr == NULL)
+	{
+		Chars = NULL;
+	}
+	else
+	{
+		size_t len = strlen (copyStr);
+		if (len == 0)
+		{
+			Chars = NULL;
+		}
+		else
+		{
+			Chars = Pond.Alloc (this, len);
+			StrCopy (Chars, copyStr, len);
+		}
+	}
 	return *this;
 }
 

@@ -35,6 +35,7 @@
 #include "c_console.h"
 #include "errors.h"
 #include "version.h"
+#include "w_wad.h"
 
 DArgs Args;
 
@@ -76,8 +77,66 @@ static void STACK_ARGS NewFailure ()
     I_FatalError ("Failed to allocate memory from system heap");
 }
 
+extern "C" int cc_install_handlers(int, int*, const char*, int(*)(char*, char*));
+static int DoomSpecificInfo (char *buffer, char *end)
+{
+	const char *arg;
+	int size = end-buffer;
+	int i, p;
+
+	SDL_Quit();
+
+	p = 0;
+	p += snprintf (buffer+p, size-p, "ZDoom version " DOTVERSIONSTR " (" __DATE__ ")\n");
+	p += snprintf (buffer+p, size-p, "\nCommand line:");
+	for (i = 0; i < Args.NumArgs(); ++i)
+	{
+		p += snprintf (buffer+p, size-p, " %s", Args.GetArg(i));
+	}
+	p += snprintf (buffer+p, size-p, "\n");
+	
+	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)
+	{
+		p += snprintf (buffer+p, size-p, "\nWad %d: %s", i, arg);
+	}
+
+	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
+	{
+		p += snprintf (buffer+p, size-p, "\n\nNot in a level.");
+	}
+	else
+	{
+		char name[9];
+
+		strncpy (name, level.mapname, 8);
+		name[8] = 0;
+		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", name);
+
+		if (!viewactive)
+		{
+			buffer += snprintf (buffer+p, size-p, "\n\nView not active.");
+		}
+		else
+		{
+			p += snprintf (buffer+p, size-p, "\n\nviewx = %d", (int)viewx);
+			p += snprintf (buffer+p, size-p, "\nviewy = %d", (int)viewy);
+			p += snprintf (buffer+p, size-p, "\nviewz = %d", (int)viewz);
+			p += snprintf (buffer+p, size-p, "\nviewangle = %x", (unsigned int)viewangle);
+		}
+	}
+	buffer[p++] = '\n';
+	buffer[p++] = '\0';
+
+	return p;
+}
+
 int main (int argc, char **argv)
 {
+	{
+		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
+		cc_install_handlers(4, s, "zdoom-crash.log", DoomSpecificInfo);
+	}
+
 	seteuid (getuid ());
     std::set_new_handler (NewFailure);
 

@@ -37,10 +37,12 @@
 #include <string.h>
 
 #include "doomtype.h"
+#include "tarray.h"
 
 class AActor;
 class FDecal;
 struct FDecalAnimator;
+struct TypeInfo;
 
 class FDecalBase
 {
@@ -55,6 +57,7 @@ protected:
 	FDecalBase *Left, *Right;
 	char *Name;
 	BYTE SpawnID;
+	TArray<const TypeInfo *> Users;	// Which actors generate this decal
 };
 
 class FDecal : public FDecalBase

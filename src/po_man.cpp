@@ -187,9 +187,9 @@ void DRotatePoly::Tick ()
 {
 	if (PO_RotatePolyobj (m_PolyObj, m_Speed))
 	{
-		int absSpeed = abs (m_Speed);
+		unsigned int absSpeed = abs (m_Speed);
 
-		if (m_Dist == -1)
+		if (m_Dist == ~0u)
 		{ // perpetual polyobj
 			return;
 		}
@@ -304,7 +304,7 @@ void DMovePoly::Tick ()
 
 	if (PO_MovePolyobj (m_PolyObj, m_xSpeed, m_ySpeed))
 	{
-		int absSpeed = abs (m_Speed);
+		unsigned int absSpeed = abs (m_Speed);
 		m_Dist -= absSpeed;
 		if (m_Dist <= 0)
 		{
@@ -471,7 +471,7 @@ void DPolyDoor::Tick ()
 		if (PO_RotatePolyobj (m_PolyObj, m_Speed))
 		{
 			absSpeed = abs (m_Speed);
-			if (m_Dist == -1)
+			if (m_Dist == ~0u)
 			{ // perpetual polyobj
 				return;
 			}

@@ -488,21 +488,21 @@ void DCajunMaster::ForgetBots ()
 
 bool DCajunMaster::LoadBots ()
 {
-	char *tmp;
+	string tmp;
 	bool gotteam = false;
 
 	bglobal.ForgetBots ();
 #ifndef unix
-	tmp = new char[8 + strlen(BOTFILENAME) + strlen(progdir)];
-	sprintf (tmp, "%szcajun/" BOTFILENAME, progdir);
-	if (!FileExists (tmp))
+	tmp = progdir;
+	tmp += "zcajun/" BOTFILENAME;
+	if (!FileExists (tmp.GetChars()))
 	{
 		DPrintf ("No " BOTFILENAME ", so no bots\n");
 		return false;
 	}
 #else
 	tmp = GetUserFile (BOTFILENAME);
-	if (!FileExists (tmp))
+	if (!FileExists (tmp.GetChars()))
 	{
 		if (!FileExists (SHARE_DIR BOTFILENAME))
 		{
@@ -515,11 +515,7 @@ bool DCajunMaster::LoadBots ()
 #endif
 	else
 	{
-		SC_OpenFile (tmp);
-	}
-	if (tmp)
-	{
-		delete[] tmp;
+		SC_OpenFile (tmp.GetChars());
 	}
 
 	while (SC_GetString ())

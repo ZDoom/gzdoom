@@ -145,9 +145,9 @@ void AHereticPlayer::GiveDefaultInventory ()
 
 // The player's skull -------------------------------------------------------
 
-class ABloodySkull : public APlayerPawn
+class ABloodySkull : public APlayerChunk
 {
-	DECLARE_ACTOR (ABloodySkull, APlayerPawn)
+	DECLARE_ACTOR (ABloodySkull, APlayerChunk)
 };
 
 FState ABloodySkull::States[] =

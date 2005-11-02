@@ -42,6 +42,7 @@
 #include "gi.h"
 #include "p_conversation.h"
 #include "a_strifeglobal.h"
+#include "templates.h"
 
 static void FadePic ();
 static void GetFinaleText (const char *msgLumpName);
@@ -897,24 +898,41 @@ void F_DrawUnderwater(void)
 */
 void F_BunnyScroll (void)
 {
+	static const char tex1name[2][8] = { "CREDIT",  "PFUB1" };
+	static const char tex2name[2][8] = { "VELLOGO", "PFUB2" };
+
+	static size_t laststage;
+
+	bool		bunny = EndSequences[FinaleSequence].EndType != END_BuyStrife;
 	int 		scrolled;
 	char		name[10];
 	size_t 		stage;
-	static size_t laststage;
-	bool		bunny = EndSequences[FinaleSequence].EndType != END_BuyStrife;
+	FTexture   *tex;
+    int			fwidth;
+	int			fheight; 
 
 	V_MarkRect (0, 0, SCREENWIDTH, SCREENHEIGHT);
 
-	scrolled = ((signed)FinaleCount-230)/2;
-	if (scrolled > 320)
-		scrolled = 320;
-	else if (scrolled < 0)
-		scrolled = 0;
+	tex = TexMan(tex1name[bunny]);
+	fwidth = tex->GetWidth();
+	fheight = tex->GetHeight();
 
-	screen->DrawTexture (TexMan(bunny ? "PFUB1" : "CREDIT"), scrolled, 0,
-		DTA_320x200, true, DTA_Masked, false, TAG_DONE);
-	screen->DrawTexture (TexMan(bunny ? "PFUB2" : "VELLOGO"), scrolled - 320, 0,
-		DTA_320x200, true, DTA_Masked, false, TAG_DONE);
+	scrolled = clamp (((signed)FinaleCount-230)*fwidth/640, 0, fwidth);
+
+	tex = TexMan(tex1name[bunny]);
+	screen->DrawTexture (tex, scrolled, 0,
+		DTA_VirtualWidth, fwidth,
+		DTA_VirtualHeight, fheight,
+		DTA_Masked, false,
+		TAG_DONE);
+
+	tex = TexMan(tex2name[bunny]);
+	screen->DrawTexture (tex, scrolled - fwidth, 0,
+		DTA_VirtualWidth, fwidth,
+		DTA_VirtualHeight, fheight,
+		DTA_Masked, false,
+		TAG_DONE);
+
 	screen->FillBorder (TexMan(FinaleFlat));
 
 	if (bunny)

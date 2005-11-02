@@ -38,6 +38,7 @@
 #ifdef _WIN32
 #include <io.h>
 #else
+#include <unistd.h>
 #define O_BINARY 0
 #endif
 #include <fcntl.h>

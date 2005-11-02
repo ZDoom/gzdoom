@@ -1,3 +1,82 @@
+November 2, 2005
+- Fixed: WIF_NOAUTOFIRE did not actually do anything.
+- Added zloba's save/load console commands.
+- Adjusted Static_Init:Init_Color so that you don't have to specify both
+  fog and color with it.
+- Fixed: A_GenWizard() and A_SpawnBishop() did not decrement total_monsters if
+  the monster spawned inside something and needed to be destroyed.
+- Fixed: Hexen monsters also move faster in nightmare mode.
+- Added a map color customization menu.
+- Renamed the "Standard map colors" option to "Use traditional Doom map colors".
+- Fixed: Switching the MIDI device after a one-shot song had finished would
+  try to restart the song.
+- Removed the BufferReturnEvent from music_midi_stream.cpp, since it was
+  unused.
+
+October 26, 2005
+- Merged in Chris's Linux patch.
+- Fixed: Redefining a decal that had already been assigned to an actor would
+  not update the actor's reference to the decal.
+- Fixed: CheckForPushSpecial() could pass a NULL actor to P_ActivateLine() if
+  a missile did not have an "owner."
+- Fixed: snd_reset assumed GSnd was valid, but it wouldn't be if you passed
+  -nosound on the command line.
+- Fixed: When a doll-spawned minotaur in Hexen died, it checked to see if any
+  other minotaur were still up for that player. It assumed there were no free-
+  standing minotaurs and crashed if there were.
+
+October 24, 2005
+- Added armor->BecomeItem() calls to ABasicArmorPickup::Use() and
+  ABasicArmorBonus::Use(). AActor::AddInventory() no longer calls BecomeItem()
+  itself.
+
+October 22, 2005
+- Fixed: FloorAndCeiling_LowerRaise would move one or the other but not both.
+- Fixed: PIT_RadiusAttack() calculated negative distances for things exploding
+  directly above other things.
+- Fixed: Ripper missiles ignored MF3_BLOODLESSIMPACT and always sprayed blood
+  onto the walls.
+- Fixed: Firing a missile into a wall while standing right next to the wall
+  would not cause any specials to activate on that wall.
+
+October 18, 2005
+- Changed: DThinker::DestroyThinkersInList() performed a pointer cleanup after
+  destroying each and every thinker. The better thing to do is clean up in the
+  functions that call it: DestroyAllThinkers() and DestroyMostThinkers().
+
+October 17, 2005
+- Fixed: BloodySkull and IceChunkHead are supposed to subclass PlayerChunk, not
+  PlayerPawn.
+- Fixed: Behaviors for Generic_Floor change types 2 and 3 were swapped.
+- Fixed: Non-320x200 INTERPICs once again display properly.
+- Changed drawing operations in F_BunnyScroller() so that non-320x200 background
+  images should work.
+- Fixed: The m_Dist member of DPolyAction was declared signed when it should have
+  been unsigned.
+- Fixed: SetScriptState() in p_acs.cpp did not check to make sure the ACS thinker
+  actually existed.
+- Fixed: Crashing when travelling between maps in a hub. For some reason the list
+  of pointers for AActor used 12-byte-wide pointers-to-members. Every other class
+  (including those that derive from AActor) use 4-byte-wide values. This left
+  DObject::PointerSubstitution() and DObject::DestroyScan() able to identify only
+  the first pointer declared in AActor. Rather than try to figure out why
+  pointers-to-members of AActor are weird, I decided to revert to my original
+  implementation: An array of offsets into the class. GCC complained about this,
+  which is why I switched to a pointers-to-members implementation. But I found a
+  way to make GCC compile it without warning, so yay!
+  
+  And since I was working with this code anyway, I decided to make a change that-
+  is hopefully a speed optimization. Rather than walking up the chain of TypeInfos
+  every time an object's pointers need to be checked, I now do this once and build
+  an array of every pointer in a class instance (as opposed to just those pointers
+  defined for that class and not any of its superclasses). This should mean fewer
+  scattered memory accesses and hence, better cache utilization.
+  
+  (Question: Why did this problem show up in 2.0.97 and not 2.0.96? The only
+  relevant change to the code was a macro to make the array const for VC++ but not
+  for GCC, because some GCC optimizations tried to write to it at runtime despite
+  its constness.)
+
 September 26, 2005
 - Released this old code as 2.0.97.
 - Backported the text-based LANGUAGE and IMF code from 2.1.0.

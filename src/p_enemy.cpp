@@ -1503,7 +1503,7 @@ void A_Chase (AActor *actor)
 		}
 	}
 
-	if (gameinfo.gametype == GAME_Heretic &&
+	if ((gameinfo.gametype & GAME_Raven) &&
 		(gameskill == sk_nightmare || (dmflags & DF_FAST_MONSTERS)))
 	{ // Monsters move faster in nightmare mode
 		actor->tics -= actor->tics / 2;

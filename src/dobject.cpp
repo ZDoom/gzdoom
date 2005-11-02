@@ -195,6 +195,7 @@ TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
 	type->ConstructNative = ConstructNative;
 	type->RegisterType();
 	type->Meta = Meta;
+	type->FlatPointers = NULL;
 
 	// If this class has an actor info, then any classes derived from it
 	// also need an actor info.
@@ -221,6 +222,59 @@ TypeInfo *TypeInfo::CreateDerivedClass (char *name, unsigned int size)
 		type->ActorInfo = NULL;
 	}
 	return type;
+}
+
+// Create the FlatPointers array, if it doesn't exist already.
+// It comprises all the Pointers from superclasses plus this class's own Pointers.
+// If this class does not define any new Pointers, then FlatPointers will be set
+// to the same array as the super class's.
+void TypeInfo::BuildFlatPointers ()
+{
+	static const size_t TheEnd = ~0;
+
+	if (FlatPointers != NULL)
+	{ // Already built: Do nothing.
+		return;
+	}
+	else if (ParentType == NULL)
+	{ // No parent: FlatPointers is the same as Pointers.
+		if (Pointers == NULL)
+		{ // No pointers: Make FlatPointers a harmless non-NULL.
+			FlatPointers = &TheEnd;
+		}
+		else
+		{
+			FlatPointers = Pointers;
+		}
+	}
+	else
+	{
+		ParentType->BuildFlatPointers ();
+		if (Pointers == NULL)
+		{ // No new pointers: Just use the same FlatPointers as the parent.
+			FlatPointers = ParentType->FlatPointers;
+		}
+		else
+		{ // New pointers: Create a new FlatPointers array and add them.
+			int numPointers, numSuperPointers;
+
+			// Count pointers defined by this class.
+			for (numPointers = 0; Pointers[numPointers] != ~(size_t)0; numPointers++)
+			{ }
+			// Count pointers defined by superclasses.
+			for (numSuperPointers = 0; ParentType->FlatPointers[numSuperPointers] != ~(size_t)0; numSuperPointers++)
+			{ }
+
+			// Concatenate them into a new array
+			size_t *flat = new size_t[numPointers + numSuperPointers + 1];
+			if (numSuperPointers > 0)
+			{
+				memcpy (flat, ParentType->FlatPointers, sizeof(size_t)*numSuperPointers);
+			}
+			memcpy (flat + numSuperPointers, Pointers, sizeof(size_t)*(numPointers+1));
+			FlatPointers = flat;
+		}
+	}
 }
 
 FMetaTable::~FMetaTable ()
@@ -517,22 +571,20 @@ void DObject::PointerSubstitution (DObject *old, DObject *notOld)
 		DObject *current = i < highest ? Objects[i] : &bglobal;
 		if (current)
 		{
-			const TypeInfo *info = NATIVE_TYPE(current);
-			while (info)
+			const TypeInfo *info = current->GetClass();
+			const size_t *offsets = info->FlatPointers;
+			if (offsets == NULL)
 			{
-				DObject *DObject::* const *offsets = info->Pointers;
-				if (offsets)
+				const_cast<TypeInfo *>(info)->BuildFlatPointers();
+				offsets = info->FlatPointers;
+			}
+			while (*offsets != ~(size_t)0)
+			{
+				if (*(DObject **)((BYTE *)current + *offsets) == old)
 				{
-					while (*offsets != 0)
-					{
-						if (current->**offsets == old)
-						{
-							current->**offsets = notOld;
-						}
-						offsets++;
-					}
+					*(DObject **)((BYTE *)current + *offsets) = notOld;
 				}
-				info = info->ParentType;
+				offsets++;
 			}
 		}
 	}
@@ -579,24 +631,24 @@ void DObject::DestroyScan ()
 		DObject *current = i < highest ? Objects[i] : &bglobal;
 		if (current)
 		{
-			const TypeInfo *info = NATIVE_TYPE(current);
-			while (info)
+			const TypeInfo *info = current->GetClass();
+			const size_t *offsets = info->FlatPointers;
+			if (offsets == NULL)
 			{
-				DObject *DObject::* const *offsets = info->Pointers;
-				if (offsets)
+				const_cast<TypeInfo *>(info)->BuildFlatPointers();
+				offsets = info->FlatPointers;
+			}
+			while (*offsets != ~(size_t)0)
+			{
+				j = destroycount;
+				do
 				{
-					while (*offsets != 0)
+					if (*(DObject **)((BYTE *)current + *offsets) == *(destroybase + j))
 					{
-						j = destroycount;
-						do
-						{
-							if (current->**offsets == *(destroybase + j))
-								current->**offsets = 0;
-						} while (++j);
-						offsets++;
+						*(DObject **)((BYTE *)current + *offsets) = NULL;
 					}
-				}
-				info = info->ParentType;
+				} while (++j);
+				offsets++;
 			}
 		}
 	}

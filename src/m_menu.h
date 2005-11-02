@@ -99,6 +99,9 @@ typedef enum {
 	listelement,
 	nochoice,
 	numberedmore,
+	colorpicker,
+	intslider,
+	palettegrid,
 } itemtype;
 
 struct GUIDName;
@@ -110,7 +113,9 @@ typedef struct menuitem_s {
 		FBaseCVar		 *cvar;
 		FIntCVar		 *intcvar;
 		FGUIDCVar		 *guidcvar;
+		FColorCVar		 *colorcvar;
 		int				  selmode;
+		float			  fval;
 	} a;
 	union {
 		float			  min;		/* aka numvalues aka invflag */

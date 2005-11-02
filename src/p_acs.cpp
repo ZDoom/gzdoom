@@ -4458,7 +4458,7 @@ static void SetScriptState (int script, DLevelScript::EScriptState state)
 {
 	DACSThinker *controller = DACSThinker::ActiveThinker;
 
-	if (controller->RunningScripts[script])
+	if (controller != NULL && controller->RunningScripts[script])
 		controller->RunningScripts[script]->SetState (state);
 }
 

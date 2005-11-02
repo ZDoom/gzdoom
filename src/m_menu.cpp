@@ -77,7 +77,7 @@
 struct FSaveGameNode : public Node
 {
 	char Title[SAVESTRINGSIZE];
-	char *Filename;
+	string Filename;
 	bool bOldVersion;
 };
 
@@ -611,18 +611,17 @@ void M_ReadSaveStrings ()
 	{
 		void *filefirst;
 		findstate_t c_file;
-		char filter[PATH_MAX];
+		string filter;
 
-		G_BuildSaveName (filter, "*.zds", -1);
-		filefirst = I_FindFirst (filter, &c_file);
+		filter = G_BuildSaveName ("*.zds", -1);
+		filefirst = I_FindFirst (filter.GetChars(), &c_file);
 		if (filefirst != ((void *)(-1)))
 		{
 			do
 			{
 				// I_FindName only returns the file's name and not its full path
-				char filepath[PATH_MAX];
-				G_BuildSaveName (filepath, I_FindName(&c_file), -1);
-				FILE *file = fopen (filepath, "rb");
+				string filepath = G_BuildSaveName (I_FindName(&c_file), -1);
+				FILE *file = fopen (filepath.GetChars(), "rb");
 
 				if (file != NULL)
 				{
@@ -704,7 +703,7 @@ void M_ReadSaveStrings ()
 					if (addIt)
 					{
 						FSaveGameNode *node = new FSaveGameNode;
-						node->Filename = copystring (filepath);
+						node->Filename = filepath;
 						node->bOldVersion = oldVer;
 						memcpy (node->Title, title, SAVESTRINGSIZE);
 						M_InsertSaveNode (node);
@@ -767,16 +766,10 @@ void M_NotifyNewSave (const char *file, const char *title, bool okForQuicksave)
 		 node->Succ != NULL;
 		 node = static_cast<FSaveGameNode *>(node->Succ))
 	{
-		// Why would the node's filename be NULL? I don't know, but I saw one
-		// crash report where it happened.
-		if (node->Filename == NULL)
-		{
-			continue;
-		}
 #ifdef unix
-		if (strcmp (node->Filename, file) == 0)
+		if (node->Filename.Compare (file) == 0)
 #else
-		if (stricmp (node->Filename, file) == 0)
+		if (node->Filename.CompareNoCase (file) == 0)
 #endif
 		{
 			strcpy (node->Title, title);
@@ -864,9 +857,9 @@ static void M_ExtractSaveData (const FSaveGameNode *node)
 
 	if (node != NULL &&
 		node->Succ != NULL &&
-		node->Filename != NULL &&
+		!node->Filename.IsEmpty() &&
 		!node->bOldVersion &&
-		(file = fopen (node->Filename, "rb")) != NULL)
+		(file = fopen (node->Filename.GetChars(), "rb")) != NULL)
 	{
 		if (NULL != (png = M_VerifyPNG (file)))
 		{
@@ -1181,26 +1174,26 @@ void M_DoSave (FSaveGameNode *node)
 {
 	if (node != &NewSaveNode)
 	{
-		G_SaveGame (node->Filename, savegamestring);
+		G_SaveGame (node->Filename.GetChars(), savegamestring);
 	}
 	else
 	{
-		// Find an unused filename, and save as that
-		char filename[PATH_MAX];
+		// Find an unused filename and save as that
+		string filename;
 		int i;
 		FILE *test;
 
 		for (i = 0;; ++i)
 		{
-			G_BuildSaveName (filename, "save", i);
-			test = fopen (filename, "rb");
+			filename = G_BuildSaveName ("save", i);
+			test = fopen (filename.GetChars(), "rb");
 			if (test == NULL)
 			{
 				break;
 			}
 			fclose (test);
 		}
-		G_SaveGame (filename, savegamestring);
+		G_SaveGame (filename.GetChars(), savegamestring);
 	}
 	M_ClearMenus ();
 	BorderNeedRefresh = screen->GetPageCount ();
@@ -1216,10 +1209,10 @@ void M_SaveGame (int choice)
 		M_StartMessage (GStrings("SAVEDEAD"), NULL, false);
 		return;
 	}
-		
+
 	if (gamestate != GS_LEVEL)
 		return;
-		
+
 	M_SetupNextMenu(&SaveDef);
 	drawSkull = false;
 
@@ -2653,9 +2646,9 @@ BOOL M_SaveLoadResponder (event_t *ev)
 		switch (ev->data1)
 		{
 		case GK_F1:
-			if (SelSaveGame->Filename != NULL)
+			if (!SelSaveGame->Filename.IsEmpty())
 			{
-				sprintf (workbuf, "File on disk:\n%s", SelSaveGame->Filename);
+				sprintf (workbuf, "File on disk:\n%s", SelSaveGame->Filename.GetChars());
 				if (SaveComment != NULL)
 				{
 					V_FreeBrokenLines (SaveComment);
@@ -2731,7 +2724,7 @@ BOOL M_SaveLoadResponder (event_t *ev)
 
 static void M_LoadSelect (const FSaveGameNode *file)
 {
-	G_LoadGame (file->Filename);
+	G_LoadGame (file->Filename.GetChars());
 	if (gamestate == GS_FULLCONSOLE)
 	{
 		gamestate = GS_HIDECONSOLE;
@@ -2780,7 +2773,7 @@ static void M_DeleteSaveResponse (int choice)
 			}
 		}
 
-		remove (SelSaveGame->Filename);
+		remove (SelSaveGame->Filename.GetChars());
 		M_UnloadSaveData ();
 		if (SelSaveGame == TopSaveGame)
 		{
@@ -2791,7 +2784,6 @@ static void M_DeleteSaveResponse (int choice)
 			quickSaveSlot = NULL;
 		}
 		SelSaveGame->Remove ();
-		delete[] SelSaveGame->Filename;
 		delete SelSaveGame;
 		SelSaveGame = next;
 		M_ExtractSaveData (SelSaveGame);
